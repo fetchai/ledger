@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/main_serializer.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/regularisers/regularisation.hpp"
 
@@ -51,11 +52,11 @@ void Deserialize(S &serializer, OpType &operation_type)
 struct SaveableParamsInterface
 {
   explicit SaveableParamsInterface(OpType op_type)
-    : OP_DESCRIPTOR(op_type)
+    : op_type(op_type)
   {}
   virtual ~SaveableParamsInterface() = default;
 
-  fetch::ml::OpType OP_DESCRIPTOR = OpType::NONE;
+  fetch::ml::OpType op_type = OpType::NONE;
 };
 
 template <class TensorType>
@@ -195,7 +196,7 @@ void DeserializeImplementation(S &serializer, std::shared_ptr<SaveableParamsInte
 template <typename S, class TensorType>
 void Serialize(S &serializer, std::shared_ptr<SaveableParamsInterface> const &nsp)
 {
-  OpType operation_type = nsp->OP_DESCRIPTOR;
+  OpType operation_type = nsp->op_type;
   serializer << operation_type;
 
   assert(operation_type != OpType::NONE);
@@ -373,9 +374,9 @@ void Deserialize(S &serializer, std::shared_ptr<SaveableParamsInterface> &nsp)
 template <class TensorType>
 struct GraphSaveableParams : public SaveableParamsInterface
 {
-  using DataType                  = typename TensorType::Type;
-  using SizeType                  = typename TensorType::SizeType;
-  fetch::ml::OpType OP_DESCRIPTOR = OpType::GRAPH;
+  using DataType            = typename TensorType::Type;
+  using SizeType            = typename TensorType::SizeType;
+  fetch::ml::OpType op_type = OpType::GRAPH;
 
   std::vector<std::pair<std::string, std::vector<std::string>>>             connections;
   std::unordered_map<std::string, std::shared_ptr<SaveableParamsInterface>> nodes;
@@ -398,7 +399,7 @@ struct GraphSaveableParams : public SaveableParamsInterface
   template <typename S>
   friend void Serialize(S &serializer, GraphSaveableParams const &gsp)
   {
-    Serialize(serializer, gsp.OP_DESCRIPTOR);
+    Serialize(serializer, gsp.op_type);
     serializer << gsp.connections;
 
     for (auto const &node : gsp.nodes)
@@ -411,7 +412,7 @@ struct GraphSaveableParams : public SaveableParamsInterface
   template <typename S>
   friend void Deserialize(S &serializer, GraphSaveableParams &gsp)
   {
-    Deserialize(serializer, gsp.OP_DESCRIPTOR);
+    Deserialize(serializer, gsp.op_type);
     serializer >> gsp.connections;
     auto num_nodes = gsp.connections.size();
     for (SizeType i = 0; i < num_nodes; i++)
@@ -421,12 +422,12 @@ struct GraphSaveableParams : public SaveableParamsInterface
 
       std::shared_ptr<SaveableParamsInterface> nsp_ptr;
       //      std::shared_ptr<SaveableParamsInterface> nsp_ptr =
-      //          Deserialize<S, gsp.nodes[node_name]->OP_DESCRIPTOR, TensorType>(serializer);
+      //          Deserialize<S, gsp.nodes[node_name]->op_type, TensorType>(serializer);
       //
       //      gsp.nodes.insert(std::make_pair(node_name, nsp_ptr));
 
       Deserialize<S, TensorType>(serializer, nsp_ptr);
-      //      Serialize<S, node.second->OP_DESCRIPTOR, TensorType>(serializer, node.second);
+      //      Serialize<S, node.second->op_type, TensorType>(serializer, node.second);
     }
   }
 };
@@ -434,8 +435,8 @@ struct GraphSaveableParams : public SaveableParamsInterface
 template <class TensorType>
 struct SubGraphSaveableParams : GraphSaveableParams<TensorType>
 {
-  using SizeType                  = typename TensorType::SizeType;
-  fetch::ml::OpType OP_DESCRIPTOR = OpType::SUBGRAPH;
+  using SizeType            = typename TensorType::SizeType;
+  fetch::ml::OpType op_type = OpType::SUBGRAPH;
 
   std::vector<std::string> input_node_names;
   std::string              output_node_name;
@@ -456,7 +457,7 @@ struct SubGraphSaveableParams : GraphSaveableParams<TensorType>
   template <typename S>
   friend void Serialize(S &serializer, SubGraphSaveableParams const &gsp)
   {
-    Serialize(serializer, gsp.OP_DESCRIPTOR);
+    Serialize(serializer, gsp.op_type);
 
     // serialize parent class first
     auto base_pointer = static_cast<GraphSaveableParams<TensorType> const *>(&gsp);
@@ -469,7 +470,7 @@ struct SubGraphSaveableParams : GraphSaveableParams<TensorType>
   template <typename S>
   friend void Deserialize(S &serializer, SubGraphSaveableParams &gsp)
   {
-    Deserialize(serializer, gsp.OP_DESCRIPTOR);
+    Deserialize(serializer, gsp.op_type);
 
     // deserialize parent class first
     auto base_pointer = static_cast<GraphSaveableParams<TensorType> *>(&gsp);
@@ -494,19 +495,7 @@ struct AbsSaveableParams : public SaveableParamsInterface
   AbsSaveableParams()
     : SaveableParamsInterface(OpType::ABS)
   {}
-  fetch::ml::OpType OP_DESCRIPTOR = OpType::ABS;
-
-  template <class S>
-  friend void Serialize(S &serializer, AbsSaveableParams const &sp)
-  {
-    Serialize(serializer, sp.OP_DESCRIPTOR);
-  }
-
-  template <class S>
-  friend void Deserialize(S &serializer, AbsSaveableParams &sp)
-  {
-    Deserialize(serializer, sp.OP_DESCRIPTOR);
-  }
+  fetch::ml::OpType op_type = OpType::ABS;
 };
 
 /**
@@ -519,19 +508,7 @@ struct AddSaveableParams : public SaveableParamsInterface
   AddSaveableParams()
     : SaveableParamsInterface(OpType::ADD)
   {}
-  fetch::ml::OpType OP_DESCRIPTOR = OpType::ADD;
-
-  template <class S>
-  friend void Serialize(S &serializer, AddSaveableParams const &sp)
-  {
-    Serialize(serializer, sp.OP_DESCRIPTOR);
-  }
-
-  template <class S>
-  friend void Deserialize(S &serializer, AddSaveableParams &sp)
-  {
-    Deserialize(serializer, sp.OP_DESCRIPTOR);
-  }
+  fetch::ml::OpType op_type = OpType::ADD;
 };
 
 /**
@@ -541,26 +518,12 @@ struct AddSaveableParams : public SaveableParamsInterface
 template <class TensorType>
 struct ConcatenateSaveableParams : public SaveableParamsInterface
 {
-  fetch::math::SizeType axis          = fetch::math::numeric_max<fetch::math::SizeType>();
-  fetch::ml::OpType     OP_DESCRIPTOR = OpType::CONCATENATE;
+  fetch::math::SizeType axis    = fetch::math::numeric_max<fetch::math::SizeType>();
+  fetch::ml::OpType     op_type = OpType::CONCATENATE;
 
   ConcatenateSaveableParams()
     : SaveableParamsInterface(OpType::CONCATENATE)
   {}
-
-  template <class S>
-  friend void Serialize(S &serializer, ConcatenateSaveableParams const &sp)
-  {
-    Serialize(serializer, sp.OP_DESCRIPTOR);
-    serializer << sp.axis;
-  }
-
-  template <class S>
-  friend void Deserialize(S &serializer, ConcatenateSaveableParams &sp)
-  {
-    Deserialize(serializer, sp.OP_DESCRIPTOR);
-    serializer >> sp.axis;
-  }
 };
 
 /**
@@ -573,23 +536,8 @@ struct Convolution1DSaveableParams : public SaveableParamsInterface
   Convolution1DSaveableParams()
     : SaveableParamsInterface(OpType::CONVOLUTION_1D)
   {}
-  //  static constexpr fetch::ml::OpType OP_DESCRIPTOR = OpType::CONVOLUTION_1D;
-  fetch::ml::OpType     OP_DESCRIPTOR = OpType::CONVOLUTION_1D;
-  fetch::math::SizeType stride_size   = fetch::math::numeric_max<fetch::math::SizeType>();
-
-  template <class S>
-  friend void Serialize(S &serializer, Convolution1DSaveableParams const &sp)
-  {
-    Serialize(serializer, sp.OP_DESCRIPTOR);
-    serializer << sp.stride_size;
-  }
-
-  template <class S>
-  friend void Deserialize(S &serializer, Convolution1DSaveableParams &sp)
-  {
-    Deserialize(serializer, sp.OP_DESCRIPTOR);
-    serializer >> sp.stride_size;
-  }
+  fetch::ml::OpType     op_type     = OpType::CONVOLUTION_1D;
+  fetch::math::SizeType stride_size = fetch::math::numeric_max<fetch::math::SizeType>();
 };
 
 /**
@@ -602,22 +550,8 @@ struct Convolution2DSaveableParams : public SaveableParamsInterface
   Convolution2DSaveableParams()
     : SaveableParamsInterface(OpType::CONVOLUTION_2D)
   {}
-  fetch::ml::OpType     OP_DESCRIPTOR = OpType::CONVOLUTION_2D;
-  fetch::math::SizeType stride_size   = fetch::math::numeric_max<fetch::math::SizeType>();
-
-  template <class S>
-  friend void Serialize(S &serializer, Convolution2DSaveableParams const &sp)
-  {
-    Serialize(serializer, sp.OP_DESCRIPTOR);
-    serializer << sp.stride_size;
-  }
-
-  template <class S>
-  friend void Deserialize(S &serializer, Convolution2DSaveableParams &sp)
-  {
-    Deserialize(serializer, sp.OP_DESCRIPTOR);
-    serializer >> sp.stride_size;
-  }
+  fetch::ml::OpType     op_type     = OpType::CONVOLUTION_2D;
+  fetch::math::SizeType stride_size = fetch::math::numeric_max<fetch::math::SizeType>();
 };
 
 /**
@@ -630,22 +564,7 @@ struct CrossEntropyLossSaveableParams : public SaveableParamsInterface
   CrossEntropyLossSaveableParams()
     : SaveableParamsInterface(OpType::CROSS_ENTROPY_LOSS)
   {}
-  fetch::ml::OpType     OP_DESCRIPTOR = OpType::CROSS_ENTROPY_LOSS;
-  fetch::math::SizeType stride_size   = fetch::math::numeric_max<fetch::math::SizeType>();
-
-  template <class S>
-  friend void Serialize(S &serializer, CrossEntropyLossSaveableParams const &sp)
-  {
-    Serialize(serializer, sp.OP_DESCRIPTOR);
-    serializer << sp.stride_size;
-  }
-
-  template <class S>
-  friend void Deserialize(S &serializer, CrossEntropyLossSaveableParams &sp)
-  {
-    Deserialize(serializer, sp.OP_DESCRIPTOR);
-    serializer >> sp.stride_size;
-  }
+  fetch::ml::OpType op_type = OpType::CROSS_ENTROPY_LOSS;
 };
 
 /**
@@ -658,19 +577,7 @@ struct DivideSaveableParams : public SaveableParamsInterface
   DivideSaveableParams()
     : SaveableParamsInterface(OpType::DIVIDE)
   {}
-  fetch::ml::OpType OP_DESCRIPTOR = OpType::DIVIDE;
-
-  template <class S>
-  friend void Serialize(S &serializer, DivideSaveableParams const &sp)
-  {
-    Serialize(serializer, sp.OP_DESCRIPTOR);
-  }
-
-  template <class S>
-  friend void Deserialize(S &serializer, DivideSaveableParams &sp)
-  {
-    Deserialize(serializer, sp.OP_DESCRIPTOR);
-  }
+  fetch::ml::OpType op_type = OpType::DIVIDE;
 };
 
 /**
@@ -684,33 +591,13 @@ struct DropoutSaveableParams : public SaveableParamsInterface
     : SaveableParamsInterface(OpType::DROPOUT)
   {}
 
-  using DataType                      = typename TensorType::Type;
-  using SizeType                      = typename TensorType::SizeType;
-  fetch::ml::OpType     OP_DESCRIPTOR = OpType::DROPOUT;
+  using DataType                = typename TensorType::Type;
+  using SizeType                = typename TensorType::SizeType;
+  fetch::ml::OpType     op_type = OpType::DROPOUT;
   SizeType              random_seed{};
   DataType              probability{};
   std::vector<uint64_t> buffer{};
   uint64_t              index = fetch::math::numeric_max<uint64_t>();
-
-  template <class S>
-  friend void Serialize(S &serializer, DropoutSaveableParams const &sp)
-  {
-    Serialize(serializer, sp.OP_DESCRIPTOR);
-    serializer << sp.random_seed;
-    serializer << sp.probability;
-    serializer << sp.buffer;
-    serializer << sp.index;
-  }
-
-  template <class S>
-  friend void Deserialize(S &serializer, DropoutSaveableParams &sp)
-  {
-    Deserialize(serializer, sp.OP_DESCRIPTOR);
-    serializer >> sp.random_seed;
-    serializer >> sp.probability;
-    serializer >> sp.buffer;
-    serializer >> sp.index;
-  }
 };
 
 /**
@@ -720,27 +607,13 @@ struct DropoutSaveableParams : public SaveableParamsInterface
 template <class TensorType>
 struct EluSaveableParams : public SaveableParamsInterface
 {
-  fetch::ml::OpType OP_DESCRIPTOR = OpType::ELU;
-  using DataType                  = typename TensorType::Type;
+  fetch::ml::OpType op_type = OpType::ELU;
+  using DataType            = typename TensorType::Type;
   DataType a;
 
   EluSaveableParams()
     : SaveableParamsInterface(OpType::ELU)
   {}
-
-  template <class S>
-  friend void Serialize(S &serializer, EluSaveableParams const &sp)
-  {
-    Serialize(serializer, sp.OP_DESCRIPTOR);
-    serializer << sp.a;
-  }
-
-  template <class S>
-  friend void Deserialize(S &serializer, EluSaveableParams &sp)
-  {
-    Deserialize(serializer, sp.OP_DESCRIPTOR);
-    serializer >> sp.a;
-  }
 };
 
 /**
@@ -753,27 +626,7 @@ struct EmbeddingsSaveableParams : public WeightsSaveableParams<TensorType>
   EmbeddingsSaveableParams()
     : WeightsSaveableParams<TensorType>(OpType::EMBEDDINGS)
   {}
-  fetch::ml::OpType OP_DESCRIPTOR = OpType::EMBEDDINGS;
-
-  template <class S>
-  friend void Serialize(S &serializer, EmbeddingsSaveableParams const &sp)
-  {
-    Serialize(serializer, sp.OP_DESCRIPTOR);
-
-    // serialize parent class first
-    auto base_pointer = static_cast<WeightsSaveableParams<TensorType> const *>(&sp);
-    Serialize(serializer, *base_pointer);
-  }
-
-  template <class S>
-  friend void Deserialize(S &serializer, EmbeddingsSaveableParams &sp)
-  {
-    Deserialize(serializer, sp.OP_DESCRIPTOR);
-
-    // deserialize parent class first
-    auto base_pointer = static_cast<WeightsSaveableParams<TensorType> *>(&sp);
-    Deserialize(serializer, *base_pointer);
-  }
+  fetch::ml::OpType op_type = OpType::EMBEDDINGS;
 };
 
 /**
@@ -786,19 +639,7 @@ struct ExpSaveableParams : public SaveableParamsInterface
   ExpSaveableParams()
     : SaveableParamsInterface(OpType::EXP)
   {}
-  fetch::ml::OpType OP_DESCRIPTOR = OpType::EXP;
-
-  template <class S>
-  friend void Serialize(S &serializer, ExpSaveableParams const &sp)
-  {
-    Serialize(serializer, sp.OP_DESCRIPTOR);
-  }
-
-  template <class S>
-  friend void Deserialize(S &serializer, ExpSaveableParams &sp)
-  {
-    Deserialize(serializer, sp.OP_DESCRIPTOR);
-  }
+  fetch::ml::OpType op_type = OpType::EXP;
 };
 
 /**
@@ -811,19 +652,7 @@ struct FlattenSaveableParams : public SaveableParamsInterface
   FlattenSaveableParams()
     : SaveableParamsInterface(OpType::FLATTEN)
   {}
-  fetch::ml::OpType OP_DESCRIPTOR = OpType::FLATTEN;
-
-  template <class S>
-  friend void Serialize(S &serializer, FlattenSaveableParams const &sp)
-  {
-    Serialize(serializer, sp.OP_DESCRIPTOR);
-  }
-
-  template <class S>
-  friend void Deserialize(S &serializer, FlattenSaveableParams &sp)
-  {
-    Deserialize(serializer, sp.OP_DESCRIPTOR);
-  }
+  fetch::ml::OpType op_type = OpType::FLATTEN;
 };
 
 template <class TensorType>
@@ -831,7 +660,7 @@ struct ConvolutionLayer1DSaveableParams : SubGraphSaveableParams<TensorType>
 {
   ConvolutionLayer1DSaveableParams() = default;
 
-  fetch::ml::OpType OP_DESCRIPTOR = OpType::LAYER_CONVOLUTION_1D;
+  fetch::ml::OpType op_type = OpType::LAYER_CONVOLUTION_1D;
 
   using SizeType = typename TensorType::SizeType;
 
@@ -839,36 +668,6 @@ struct ConvolutionLayer1DSaveableParams : SubGraphSaveableParams<TensorType>
   SizeType input_channels;
   SizeType output_channels;
   SizeType stride_size;
-
-  template <typename S>
-  friend void Serialize(S &serializer, ConvolutionLayer1DSaveableParams const &sp)
-  {
-    Serialize(serializer, sp.OP_DESCRIPTOR);
-
-    // serialize parent class first
-    auto base_pointer = static_cast<SubGraphSaveableParams<TensorType> const *>(&sp);
-    Serialize(serializer, *base_pointer);
-
-    serializer << sp.kernel_size;
-    serializer << sp.input_channels;
-    serializer << sp.output_channels;
-    serializer << sp.stride_size;
-  }
-
-  template <typename S>
-  friend void Deserialize(S &serializer, ConvolutionLayer1DSaveableParams &sp)
-  {
-    Deserialize(serializer, sp.OP_DESCRIPTOR);
-
-    // deserialize parent class first
-    auto base_pointer = static_cast<SubGraphSaveableParams<TensorType> *>(&sp);
-    Deserialize(serializer, *base_pointer);
-
-    serializer >> sp.kernel_size;
-    serializer >> sp.input_channels;
-    serializer >> sp.output_channels;
-    serializer >> sp.stride_size;
-  }
 };
 
 template <class TensorType>
@@ -876,7 +675,7 @@ struct ConvolutionLayer2DSaveableParams : SubGraphSaveableParams<TensorType>
 {
   ConvolutionLayer2DSaveableParams() = default;
 
-  fetch::ml::OpType OP_DESCRIPTOR = OpType::LAYER_CONVOLUTION_2D;
+  fetch::ml::OpType op_type = OpType::LAYER_CONVOLUTION_2D;
 
   using SizeType = typename TensorType::SizeType;
 
@@ -884,36 +683,6 @@ struct ConvolutionLayer2DSaveableParams : SubGraphSaveableParams<TensorType>
   SizeType input_channels;
   SizeType output_channels;
   SizeType stride_size;
-
-  template <typename S>
-  friend void Serialize(S &serializer, ConvolutionLayer2DSaveableParams const &sp)
-  {
-    Serialize(serializer, sp.OP_DESCRIPTOR);
-
-    // serialize parent class first
-    auto base_pointer = static_cast<SubGraphSaveableParams<TensorType> const *>(&sp);
-    Serialize(serializer, *base_pointer);
-
-    serializer << sp.kernel_size;
-    serializer << sp.input_channels;
-    serializer << sp.output_channels;
-    serializer << sp.stride_size;
-  }
-
-  template <typename S>
-  friend void Deserialize(S &serializer, ConvolutionLayer2DSaveableParams &sp)
-  {
-    Deserialize(serializer, sp.OP_DESCRIPTOR);
-
-    // deserialize parent class first
-    auto base_pointer = static_cast<SubGraphSaveableParams<TensorType> *>(&sp);
-    Deserialize(serializer, *base_pointer);
-
-    serializer >> sp.kernel_size;
-    serializer >> sp.input_channels;
-    serializer >> sp.output_channels;
-    serializer >> sp.stride_size;
-  }
 };
 
 /**
@@ -923,40 +692,14 @@ struct ConvolutionLayer2DSaveableParams : SubGraphSaveableParams<TensorType>
 template <class TensorType>
 struct FullyConnectedSaveableParams : SubGraphSaveableParams<TensorType>
 {
-  using SizeType                  = typename TensorType::SizeType;
-  fetch::ml::OpType OP_DESCRIPTOR = OpType::LAYER_FULLY_CONNECTED;
-  SizeType          in_size       = fetch::math::numeric_max<SizeType>();
-  SizeType          out_size      = fetch::math::numeric_max<SizeType>();
+  using SizeType             = typename TensorType::SizeType;
+  fetch::ml::OpType op_type  = OpType::LAYER_FULLY_CONNECTED;
+  SizeType          in_size  = fetch::math::numeric_max<SizeType>();
+  SizeType          out_size = fetch::math::numeric_max<SizeType>();
 
   FullyConnectedSaveableParams()
     : SubGraphSaveableParams<TensorType>(OpType::LAYER_FULLY_CONNECTED)
   {}
-
-  template <class S>
-  friend void Serialize(S &serializer, FullyConnectedSaveableParams const &sp)
-  {
-    Serialize(serializer, sp.OP_DESCRIPTOR);
-
-    // serialize parent class first
-    auto base_pointer = static_cast<SubGraphSaveableParams<TensorType> const *>(&sp);
-    Serialize(serializer, *base_pointer);
-
-    serializer << sp.in_size;
-    serializer << sp.out_size;
-  }
-
-  template <class S>
-  friend void Deserialize(S &serializer, FullyConnectedSaveableParams &sp)
-  {
-    Deserialize(serializer, sp.OP_DESCRIPTOR);
-
-    // deserialize parent class first
-    auto base_pointer = static_cast<SubGraphSaveableParams<TensorType> *>(&sp);
-    Deserialize(serializer, *base_pointer);
-
-    serializer >> sp.in_size;
-    serializer >> sp.out_size;
-  }
 };
 
 /**
@@ -968,25 +711,11 @@ struct LeakyReluSaveableParams : public SaveableParamsInterface
 {
   using DataType = typename TensorType::Type;
   DataType          a;
-  fetch::ml::OpType OP_DESCRIPTOR = OpType::LEAKY_RELU;
+  fetch::ml::OpType op_type = OpType::LEAKY_RELU;
 
   LeakyReluSaveableParams()
     : SaveableParamsInterface(OpType::LEAKY_RELU)
   {}
-
-  template <class S>
-  friend void Serialize(S &serializer, LeakyReluSaveableParams const &sp)
-  {
-    Serialize(serializer, sp.OP_DESCRIPTOR);
-    serializer << sp.a;
-  }
-
-  template <class S>
-  friend void Deserialize(S &serializer, LeakyReluSaveableParams &sp)
-  {
-    Deserialize(serializer, sp.OP_DESCRIPTOR);
-    serializer >> sp.a;
-  }
 };
 
 /**
@@ -998,25 +727,11 @@ struct LeakyReluOpSaveableParams : public SaveableParamsInterface
 {
   using DataType = typename TensorType::Type;
   DataType          a;
-  fetch::ml::OpType OP_DESCRIPTOR = OpType::LEAKY_RELU_OP;
+  fetch::ml::OpType op_type = OpType::LEAKY_RELU_OP;
 
   LeakyReluOpSaveableParams()
     : SaveableParamsInterface(OpType::LEAKY_RELU_OP)
   {}
-
-  template <class S>
-  friend void Serialize(S &serializer, LeakyReluOpSaveableParams const &sp)
-  {
-    Serialize(serializer, sp.OP_DESCRIPTOR);
-    serializer << sp.a;
-  }
-
-  template <class S>
-  friend void Deserialize(S &serializer, LeakyReluOpSaveableParams &sp)
-  {
-    Deserialize(serializer, sp.OP_DESCRIPTOR);
-    serializer >> sp.a;
-  }
 };
 
 /**
@@ -1026,24 +741,12 @@ struct LeakyReluOpSaveableParams : public SaveableParamsInterface
 template <class TensorType>
 struct LogSaveableParams : public SaveableParamsInterface
 {
-  using DataType                  = typename TensorType::Type;
-  fetch::ml::OpType OP_DESCRIPTOR = OpType::LOG;
+  using DataType            = typename TensorType::Type;
+  fetch::ml::OpType op_type = OpType::LOG;
 
   LogSaveableParams()
     : SaveableParamsInterface(OpType::LOG)
   {}
-
-  template <class S>
-  friend void Serialize(S &serializer, LogSaveableParams const &sp)
-  {
-    Serialize(serializer, sp.OP_DESCRIPTOR);
-  }
-
-  template <class S>
-  friend void Deserialize(S &serializer, LogSaveableParams &sp)
-  {
-    Deserialize(serializer, sp.OP_DESCRIPTOR);
-  }
 };
 
 /**
@@ -1055,25 +758,11 @@ struct LogSigmoidSaveableParams : public SaveableParamsInterface
 {
   using DataType = typename TensorType::Type;
   DataType          a;
-  fetch::ml::OpType OP_DESCRIPTOR = OpType::LOGSIGMOID;
+  fetch::ml::OpType op_type = OpType::LOGSIGMOID;
 
   LogSigmoidSaveableParams()
     : SaveableParamsInterface(OpType::LOGSIGMOID)
   {}
-
-  template <class S>
-  friend void Serialize(S &serializer, LogSigmoidSaveableParams const &sp)
-  {
-    Serialize(serializer, sp.OP_DESCRIPTOR);
-    serializer << sp.a;
-  }
-
-  template <class S>
-  friend void Deserialize(S &serializer, LogSigmoidSaveableParams &sp)
-  {
-    Deserialize(serializer, sp.OP_DESCRIPTOR);
-    serializer >> sp.a;
-  }
 };
 
 /**
@@ -1083,104 +772,46 @@ struct LogSigmoidSaveableParams : public SaveableParamsInterface
 template <class TensorType>
 struct LogSoftmaxSaveableParams : public SaveableParamsInterface
 {
-  fetch::math::SizeType axis          = fetch::math::numeric_max<fetch::math::SizeType>();
-  fetch::ml::OpType     OP_DESCRIPTOR = OpType::LOGSOFTMAX;
+  fetch::math::SizeType axis    = fetch::math::numeric_max<fetch::math::SizeType>();
+  fetch::ml::OpType     op_type = OpType::LOGSOFTMAX;
 
   LogSoftmaxSaveableParams()
     : SaveableParamsInterface(OpType::LOGSOFTMAX)
   {}
-
-  template <class S>
-  friend void Serialize(S &serializer, LogSoftmaxSaveableParams const &sp)
-  {
-    Serialize(serializer, sp.OP_DESCRIPTOR);
-    serializer << sp.axis;
-  }
-
-  template <class S>
-  friend void Deserialize(S &serializer, LogSoftmaxSaveableParams &sp)
-  {
-    Deserialize(serializer, sp.OP_DESCRIPTOR);
-    serializer >> sp.axis;
-  }
 };
 
 template <class TensorType>
 struct MatrixMultiplySaveableParams : public SaveableParamsInterface
 {
-  fetch::ml::OpType OP_DESCRIPTOR = OpType::MATRIX_MULTIPLY;
+  fetch::ml::OpType op_type = OpType::MATRIX_MULTIPLY;
 
   MatrixMultiplySaveableParams()
     : SaveableParamsInterface(OpType::MATRIX_MULTIPLY)
   {}
-
-  template <class S>
-  friend void Serialize(S &serializer, MatrixMultiplySaveableParams const &sp)
-  {
-    Serialize(serializer, sp.OP_DESCRIPTOR);
-  }
-
-  template <class S>
-  friend void Deserialize(S &serializer, MatrixMultiplySaveableParams &sp)
-  {
-    Deserialize(serializer, sp.OP_DESCRIPTOR);
-  }
 };
 
 template <class TensorType>
 struct MaxPool1DSaveableParams : public SaveableParamsInterface
 {
-  fetch::math::SizeType kernel_size   = fetch::math::numeric_max<fetch::math::SizeType>();
-  fetch::math::SizeType stride_size   = fetch::math::numeric_max<fetch::math::SizeType>();
-  fetch::ml::OpType     OP_DESCRIPTOR = OpType::MAX_POOL_1D;
+  fetch::math::SizeType kernel_size = fetch::math::numeric_max<fetch::math::SizeType>();
+  fetch::math::SizeType stride_size = fetch::math::numeric_max<fetch::math::SizeType>();
+  fetch::ml::OpType     op_type     = OpType::MAX_POOL_1D;
 
   MaxPool1DSaveableParams()
     : SaveableParamsInterface(OpType::MAX_POOL_1D)
   {}
-
-  template <class S>
-  friend void Serialize(S &serializer, MaxPool1DSaveableParams const &sp)
-  {
-    Serialize(serializer, sp.OP_DESCRIPTOR);
-    serializer << sp.kernel_size;
-    serializer << sp.stride_size;
-  }
-
-  template <class S>
-  friend void Deserialize(S &serializer, MaxPool1DSaveableParams &sp)
-  {
-    Deserialize(serializer, sp.OP_DESCRIPTOR);
-    serializer >> sp.kernel_size;
-    serializer >> sp.stride_size;
-  }
 };
 
 template <class TensorType>
 struct MaxPool2DSaveableParams : public SaveableParamsInterface
 {
-  fetch::math::SizeType kernel_size   = fetch::math::numeric_max<fetch::math::SizeType>();
-  fetch::math::SizeType stride_size   = fetch::math::numeric_max<fetch::math::SizeType>();
-  fetch::ml::OpType     OP_DESCRIPTOR = OpType::MAX_POOL_2D;
+  fetch::math::SizeType kernel_size = fetch::math::numeric_max<fetch::math::SizeType>();
+  fetch::math::SizeType stride_size = fetch::math::numeric_max<fetch::math::SizeType>();
+  fetch::ml::OpType     op_type     = OpType::MAX_POOL_2D;
 
   MaxPool2DSaveableParams()
     : SaveableParamsInterface(OpType::MAX_POOL_2D)
   {}
-
-  template <class S>
-  friend void Serialize(S &serializer, MaxPool2DSaveableParams const &sp)
-  {
-    Serialize(serializer, sp.OP_DESCRIPTOR);
-    serializer << sp.kernel_size;
-    serializer << sp.stride_size;
-  }
-
-  template <class S>
-  friend void Deserialize(S &serializer, MaxPool2DSaveableParams &sp)
-  {
-    Deserialize(serializer, sp.OP_DESCRIPTOR);
-    serializer >> sp.kernel_size;
-    serializer >> sp.stride_size;
-  }
 };
 
 /**
@@ -1190,24 +821,12 @@ struct MaxPool2DSaveableParams : public SaveableParamsInterface
 template <class TensorType>
 struct MeanSquareErrorSaveableParams : public SaveableParamsInterface
 {
-  using DataType                  = typename TensorType::Type;
-  fetch::ml::OpType OP_DESCRIPTOR = OpType::MEAN_SQUARE_ERROR_LOSS;
+  using DataType            = typename TensorType::Type;
+  fetch::ml::OpType op_type = OpType::MEAN_SQUARE_ERROR_LOSS;
 
   MeanSquareErrorSaveableParams()
     : SaveableParamsInterface(OpType::MEAN_SQUARE_ERROR_LOSS)
   {}
-
-  template <class S>
-  friend void Serialize(S &serializer, MeanSquareErrorSaveableParams const &sp)
-  {
-    Serialize(serializer, sp.OP_DESCRIPTOR);
-  }
-
-  template <class S>
-  friend void Deserialize(S &serializer, MeanSquareErrorSaveableParams &sp)
-  {
-    Deserialize(serializer, sp.OP_DESCRIPTOR);
-  }
 };
 
 /**
@@ -1217,24 +836,12 @@ struct MeanSquareErrorSaveableParams : public SaveableParamsInterface
 template <class TensorType>
 struct MaximumSaveableParams : public SaveableParamsInterface
 {
-  using DataType                  = typename TensorType::Type;
-  fetch::ml::OpType OP_DESCRIPTOR = OpType::MAXIMUM;
+  using DataType            = typename TensorType::Type;
+  fetch::ml::OpType op_type = OpType::MAXIMUM;
 
   MaximumSaveableParams()
     : SaveableParamsInterface(OpType::MAXIMUM)
   {}
-
-  template <class S>
-  friend void Serialize(S &serializer, MaximumSaveableParams const &sp)
-  {
-    Serialize(serializer, sp.OP_DESCRIPTOR);
-  }
-
-  template <class S>
-  friend void Deserialize(S &serializer, MaximumSaveableParams &sp)
-  {
-    Deserialize(serializer, sp.OP_DESCRIPTOR);
-  }
 };
 
 /**
@@ -1244,106 +851,43 @@ struct MaximumSaveableParams : public SaveableParamsInterface
 template <class TensorType>
 struct MultiplySaveableParams : public SaveableParamsInterface
 {
-  using DataType                  = typename TensorType::Type;
-  fetch::ml::OpType OP_DESCRIPTOR = OpType::MULTIPLY;
+  using DataType            = typename TensorType::Type;
+  fetch::ml::OpType op_type = OpType::MULTIPLY;
 
   MultiplySaveableParams()
     : SaveableParamsInterface(OpType::MULTIPLY)
   {}
-
-  template <class S>
-  friend void Serialize(S &serializer, MultiplySaveableParams const &sp)
-  {
-    Serialize(serializer, sp.OP_DESCRIPTOR);
-  }
-
-  template <class S>
-  friend void Deserialize(S &serializer, MultiplySaveableParams &sp)
-  {
-    Deserialize(serializer, sp.OP_DESCRIPTOR);
-  }
 };
 
 template <class TensorType>
 struct PlaceholderSaveableParams : public SaveableParamsInterface
 {
+  fetch::ml::OpType           op_type = OpType::PLACEHOLDER;
   std::shared_ptr<TensorType> output;
-  fetch::ml::OpType           OP_DESCRIPTOR = OpType::PLACEHOLDER;
 
   PlaceholderSaveableParams()
     : SaveableParamsInterface(OpType::PLACEHOLDER)
   {}
-
-  template <class S>
-  friend void Serialize(S &serializer, PlaceholderSaveableParams<TensorType> const &sp)
-  {
-    Serialize(serializer, sp.OP_DESCRIPTOR);
-    if (sp.output)
-    {
-      serializer << bool{true};
-      serializer << *(sp.output);
-    }
-    else
-    {
-      serializer << bool{false};
-    }
-  }
-
-  template <class S>
-  friend void Deserialize(S &serializer, PlaceholderSaveableParams<TensorType> &sp)
-  {
-    Deserialize(serializer, sp.OP_DESCRIPTOR);
-    bool has_weights{};
-    serializer >> has_weights;
-    if (has_weights)
-    {
-      TensorType output_temp;
-      serializer >> output_temp;
-      sp.output = std::make_shared<TensorType>(output_temp);
-    }
-  }
 };
 
 template <class TensorType>
 struct RandomisedReluSaveableParams : public SaveableParamsInterface
 {
-  using DataType                      = typename TensorType::Type;
-  using SizeType                      = typename TensorType::SizeType;
-  DataType              lower_bound   = fetch::math::numeric_max<DataType>();
-  DataType              upper_bound   = fetch::math::numeric_max<DataType>();
-  SizeType              random_seed   = fetch::math::numeric_max<SizeType>();
-  std::vector<uint64_t> buffer        = {};
-  uint64_t              index         = fetch::math::numeric_max<uint64_t>();
-  DataType              random_value  = fetch::math::numeric_max<DataType>();
-  fetch::ml::OpType     OP_DESCRIPTOR = OpType::RANDOMISED_RELU;
+  using DataType = typename TensorType::Type;
+  using SizeType = typename TensorType::SizeType;
+
+  fetch::ml::OpType op_type = OpType::RANDOMISED_RELU;
+
+  DataType              lower_bound  = fetch::math::numeric_max<DataType>();
+  DataType              upper_bound  = fetch::math::numeric_max<DataType>();
+  SizeType              random_seed  = fetch::math::numeric_max<SizeType>();
+  std::vector<uint64_t> buffer       = {};
+  uint64_t              index        = fetch::math::numeric_max<uint64_t>();
+  DataType              random_value = fetch::math::numeric_max<DataType>();
 
   RandomisedReluSaveableParams()
     : SaveableParamsInterface(OpType::RANDOMISED_RELU)
   {}
-
-  template <class S>
-  friend void Serialize(S &serializer, RandomisedReluSaveableParams<TensorType> const &sp)
-  {
-    Serialize(serializer, sp.OP_DESCRIPTOR);
-    serializer << sp.lower_bound;
-    serializer << sp.upper_bound;
-    serializer << sp.random_seed;
-    serializer << sp.buffer;
-    serializer << sp.index;
-    serializer << sp.random_value;
-  }
-
-  template <class S>
-  friend void Deserialize(S &serializer, RandomisedReluSaveableParams<TensorType> &sp)
-  {
-    Deserialize(serializer, sp.OP_DESCRIPTOR);
-    serializer >> sp.lower_bound;
-    serializer >> sp.upper_bound;
-    serializer >> sp.random_seed;
-    serializer >> sp.buffer;
-    serializer >> sp.index;
-    serializer >> sp.random_value;
-  }
 };
 
 /**
@@ -1353,49 +897,23 @@ struct RandomisedReluSaveableParams : public SaveableParamsInterface
 template <class TensorType>
 struct ReluSaveableParams : public SaveableParamsInterface
 {
-  using DataType                  = typename TensorType::Type;
-  fetch::ml::OpType OP_DESCRIPTOR = OpType::RELU;
+  using DataType            = typename TensorType::Type;
+  fetch::ml::OpType op_type = OpType::RELU;
 
   ReluSaveableParams()
     : SaveableParamsInterface(OpType::RELU)
   {}
-
-  template <class S>
-  friend void Serialize(S &serializer, ReluSaveableParams const &sp)
-  {
-    Serialize(serializer, sp.OP_DESCRIPTOR);
-  }
-
-  template <class S>
-  friend void Deserialize(S &serializer, ReluSaveableParams &sp)
-  {
-    Deserialize(serializer, sp.OP_DESCRIPTOR);
-  }
 };
 
 template <class TensorType>
 struct ReshapeSaveableParams : public SaveableParamsInterface
 {
   std::vector<fetch::math::SizeType> new_shape;
-  fetch::ml::OpType                  OP_DESCRIPTOR = OpType::RESHAPE;
+  fetch::ml::OpType                  op_type = OpType::RESHAPE;
 
   ReshapeSaveableParams()
     : SaveableParamsInterface(OpType::RESHAPE)
   {}
-
-  template <class S>
-  friend void Serialize(S &serializer, ReshapeSaveableParams const &sp)
-  {
-    Serialize(serializer, sp.OP_DESCRIPTOR);
-    serializer << sp.new_shape;
-  }
-
-  template <class S>
-  friend void Deserialize(S &serializer, ReshapeSaveableParams &sp)
-  {
-    Deserialize(serializer, sp.OP_DESCRIPTOR);
-    serializer >> sp.new_shape;
-  }
 };
 
 /**
@@ -1405,49 +923,23 @@ struct ReshapeSaveableParams : public SaveableParamsInterface
 template <class TensorType>
 struct SigmoidSaveableParams : public SaveableParamsInterface
 {
-  using DataType                  = typename TensorType::Type;
-  fetch::ml::OpType OP_DESCRIPTOR = OpType::SIGMOID;
+  using DataType            = typename TensorType::Type;
+  fetch::ml::OpType op_type = OpType::SIGMOID;
 
   SigmoidSaveableParams()
     : SaveableParamsInterface(OpType::SIGMOID)
   {}
-
-  template <class S>
-  friend void Serialize(S &serializer, SigmoidSaveableParams const &sp)
-  {
-    Serialize(serializer, sp.OP_DESCRIPTOR);
-  }
-
-  template <class S>
-  friend void Deserialize(S &serializer, SigmoidSaveableParams &sp)
-  {
-    Deserialize(serializer, sp.OP_DESCRIPTOR);
-  }
 };
 
 template <class TensorType>
 struct SoftmaxSaveableParams : public SaveableParamsInterface
 {
-  fetch::math::SizeType axis          = fetch::math::numeric_max<fetch::math::SizeType>();
-  fetch::ml::OpType     OP_DESCRIPTOR = OpType::SOFTMAX;
+  fetch::math::SizeType axis    = fetch::math::numeric_max<fetch::math::SizeType>();
+  fetch::ml::OpType     op_type = OpType::SOFTMAX;
 
   SoftmaxSaveableParams()
     : SaveableParamsInterface(OpType::SOFTMAX)
   {}
-
-  template <class S>
-  friend void Serialize(S &serializer, SoftmaxSaveableParams const &sp)
-  {
-    Serialize(serializer, sp.OP_DESCRIPTOR);
-    serializer << sp.axis;
-  }
-
-  template <class S>
-  friend void Deserialize(S &serializer, SoftmaxSaveableParams &sp)
-  {
-    Deserialize(serializer, sp.OP_DESCRIPTOR);
-    serializer >> sp.axis;
-  }
 };
 
 /**
@@ -1457,24 +949,12 @@ struct SoftmaxSaveableParams : public SaveableParamsInterface
 template <class TensorType>
 struct SoftmaxCrossEntropySaveableParams : public SaveableParamsInterface
 {
-  using DataType                  = typename TensorType::Type;
-  fetch::ml::OpType OP_DESCRIPTOR = OpType::SOFTMAX_CROSS_ENTROPY_LOSS;
+  using DataType            = typename TensorType::Type;
+  fetch::ml::OpType op_type = OpType::SOFTMAX_CROSS_ENTROPY_LOSS;
 
   SoftmaxCrossEntropySaveableParams()
     : SaveableParamsInterface(OpType::SOFTMAX_CROSS_ENTROPY_LOSS)
   {}
-
-  template <class S>
-  friend void Serialize(S &serializer, SoftmaxCrossEntropySaveableParams const &sp)
-  {
-    Serialize(serializer, sp.OP_DESCRIPTOR);
-  }
-
-  template <class S>
-  friend void Deserialize(S &serializer, SoftmaxCrossEntropySaveableParams &sp)
-  {
-    Deserialize(serializer, sp.OP_DESCRIPTOR);
-  }
 };
 
 /**
@@ -1484,24 +964,12 @@ struct SoftmaxCrossEntropySaveableParams : public SaveableParamsInterface
 template <class TensorType>
 struct SQRTSaveableParams : public SaveableParamsInterface
 {
-  using DataType                  = typename TensorType::Type;
-  fetch::ml::OpType OP_DESCRIPTOR = OpType::SQRT;
+  using DataType            = typename TensorType::Type;
+  fetch::ml::OpType op_type = OpType::SQRT;
 
   SQRTSaveableParams()
     : SaveableParamsInterface(OpType::SQRT)
   {}
-
-  template <class S>
-  friend void Serialize(S &serializer, SQRTSaveableParams const &sp)
-  {
-    Serialize(serializer, sp.OP_DESCRIPTOR);
-  }
-
-  template <class S>
-  friend void Deserialize(S &serializer, SQRTSaveableParams &sp)
-  {
-    Deserialize(serializer, sp.OP_DESCRIPTOR);
-  }
 };
 
 /**
@@ -1511,24 +979,12 @@ struct SQRTSaveableParams : public SaveableParamsInterface
 template <class TensorType>
 struct SubtractSaveableParams : public SaveableParamsInterface
 {
-  using DataType                  = typename TensorType::Type;
-  fetch::ml::OpType OP_DESCRIPTOR = OpType::SUBTRACT;
+  using DataType            = typename TensorType::Type;
+  fetch::ml::OpType op_type = OpType::SUBTRACT;
 
   SubtractSaveableParams()
     : SaveableParamsInterface(OpType::SUBTRACT)
   {}
-
-  template <class S>
-  friend void Serialize(S &serializer, SubtractSaveableParams const &sp)
-  {
-    Serialize(serializer, sp.OP_DESCRIPTOR);
-  }
-
-  template <class S>
-  friend void Deserialize(S &serializer, SubtractSaveableParams &sp)
-  {
-    Deserialize(serializer, sp.OP_DESCRIPTOR);
-  }
 };
 
 /**
@@ -1538,58 +994,33 @@ struct SubtractSaveableParams : public SaveableParamsInterface
 template <class TensorType>
 struct TanhSaveableParams : public SaveableParamsInterface
 {
-  using DataType                  = typename TensorType::Type;
-  fetch::ml::OpType OP_DESCRIPTOR = OpType::TANH;
+  using DataType            = typename TensorType::Type;
+  fetch::ml::OpType op_type = OpType::TANH;
 
   TanhSaveableParams()
     : SaveableParamsInterface(OpType::TANH)
   {}
-
-  template <class S>
-  friend void Serialize(S &serializer, TanhSaveableParams const &sp)
-  {
-    Serialize(serializer, sp.OP_DESCRIPTOR);
-  }
-
-  template <class S>
-  friend void Deserialize(S &serializer, TanhSaveableParams &sp)
-  {
-    Deserialize(serializer, sp.OP_DESCRIPTOR);
-  }
 };
 
 template <class TensorType>
 struct TransposeSaveableParams : public SaveableParamsInterface
 {
   std::vector<fetch::math::SizeType> transpose_vector;
-  fetch::ml::OpType                  OP_DESCRIPTOR = OpType::TRANSPOSE;
+  fetch::ml::OpType                  op_type = OpType::TRANSPOSE;
 
   TransposeSaveableParams()
     : SaveableParamsInterface(OpType::TRANSPOSE)
   {}
-
-  template <class S>
-  friend void Serialize(S &serializer, TransposeSaveableParams const &sp)
-  {
-    Serialize(serializer, sp.OP_DESCRIPTOR);
-    serializer << sp.transpose_vector;
-  }
-
-  template <class S>
-  friend void Deserialize(S &serializer, TransposeSaveableParams &sp)
-  {
-    Deserialize(serializer, sp.OP_DESCRIPTOR);
-    serializer >> sp.transpose_vector;
-  }
 };
 
 template <class TensorType>
 struct WeightsSaveableParams : public SaveableParamsInterface
 {
+  fetch::ml::OpType                                                 op_type = OpType::WEIGHTS;
   std::shared_ptr<TensorType>                                       output;
+  std::shared_ptr<TensorType>                                       gradient_accumulation;
   std::shared_ptr<fetch::ml::regularisers::Regulariser<TensorType>> regulariser;
   typename TensorType::Type                                         regularisation_rate;
-  fetch::ml::OpType                                                 OP_DESCRIPTOR = OpType::WEIGHTS;
 
   WeightsSaveableParams()
     : SaveableParamsInterface(OpType::WEIGHTS)
@@ -1600,26 +1031,9 @@ struct WeightsSaveableParams : public SaveableParamsInterface
   {}
 
   template <class S>
-  friend void Serialize(S &serializer, WeightsSaveableParams<TensorType> const &sp)
-  {
-    Serialize(serializer, sp.OP_DESCRIPTOR);
-    if (sp.output)
-    {
-      serializer << bool{true};
-      serializer << *(sp.output);
-    }
-    else
-    {
-      serializer << bool{false};
-    }
-    serializer << static_cast<int>(sp.regularisation_type);
-    serializer << sp.regularisation_rate;
-  }
-
-  template <class S>
   friend void Deserialize(S &serializer, WeightsSaveableParams<TensorType> &sp)
   {
-    Deserialize(serializer, sp.OP_DESCRIPTOR);
+    Deserialize(serializer, sp.op_type);
     bool has_weights{};
     serializer >> has_weights;
     if (has_weights)
@@ -1636,4 +1050,1158 @@ struct WeightsSaveableParams : public SaveableParamsInterface
 };
 
 }  // namespace ml
+namespace serializers {
+
+/**
+ * serializer for abs saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::AbsSaveableParams<TensorType>, D>
+{
+  using Type       = ml::AbsSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const OP_CODE = 1;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(1);
+    map.Append(OP_CODE, sp.op_type);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+  }
+};
+
+/**
+ * serializer for add saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::AddSaveableParams<TensorType>, D>
+{
+  using Type       = ml::AddSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const OP_CODE = 1;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(1);
+    map.Append(OP_CODE, sp.op_type);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+  }
+};
+
+/**
+ * serializer for add saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::ConcatenateSaveableParams<TensorType>, D>
+{
+  using Type       = ml::ConcatenateSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const OP_CODE = 1;
+  static uint8_t const AXIS    = 2;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(1);
+    map.Append(OP_CODE, sp.op_type);
+    map.Append(AXIS, sp.op_type);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+    map.ExpectKeyGetValue(AXIS, sp.axis);
+  }
+};
+
+/**
+ * serializer for add saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::Convolution1DSaveableParams<TensorType>, D>
+{
+  using Type       = ml::Convolution1DSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const OP_CODE     = 1;
+  static uint8_t const STRIDE_SIZE = 2;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(1);
+    map.Append(OP_CODE, sp.op_type);
+    map.Append(STRIDE_SIZE, sp.stride_size);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+    map.ExpectKeyGetValue(STRIDE_SIZE, sp.stride_size);
+  }
+};
+
+/**
+ * serializer for add saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::Convolution2DSaveableParams<TensorType>, D>
+{
+  using Type       = ml::Convolution2DSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const OP_CODE     = 1;
+  static uint8_t const STRIDE_SIZE = 2;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(1);
+    map.Append(OP_CODE, sp.op_type);
+    map.Append(STRIDE_SIZE, sp.stride_size);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+    map.ExpectKeyGetValue(STRIDE_SIZE, sp.stride_size);
+  }
+};
+
+/**
+ * serializer for add saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::CrossEntropyLossSaveableParams<TensorType>, D>
+{
+  using Type       = ml::CrossEntropyLossSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const OP_CODE = 1;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(1);
+    map.Append(OP_CODE, sp.op_type);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+  }
+};
+
+/**
+ * serializer for divide saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::DivideSaveableParams<TensorType>, D>
+{
+  using Type       = ml::DivideSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const OP_CODE = 1;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(1);
+    map.Append(OP_CODE, sp.op_type);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+  }
+};
+
+/**
+ * serializer for divide saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::DropoutSaveableParams<TensorType>, D>
+{
+  using Type       = ml::DropoutSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const OP_CODE     = 1;
+  static uint8_t const RANDOM_SEED = 2;
+  static uint8_t const PROBABILITY = 3;
+  static uint8_t const BUFFER      = 4;
+  static uint8_t const INDEX       = 5;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(1);
+    map.Append(OP_CODE, sp.op_type);
+    map.Append(RANDOM_SEED, sp.random_seed);
+    map.Append(PROBABILITY, sp.probability);
+    map.Append(BUFFER, sp.buffer);
+    map.Append(INDEX, sp.index);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+    map.ExpectKeyGetValue(RANDOM_SEED, sp.random_seed);
+    map.ExpectKeyGetValue(PROBABILITY, sp.probability);
+    map.ExpectKeyGetValue(BUFFER, sp.buffer);
+    map.ExpectKeyGetValue(INDEX, sp.index);
+  }
+};
+
+/**
+ * serializer for Elu saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::EluSaveableParams<TensorType>, D>
+{
+  using Type       = ml::EluSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const OP_CODE = 1;
+  static uint8_t const VALUE   = 2;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(1);
+    map.Append(OP_CODE, sp.op_type);
+    map.Append(VALUE, sp.a);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+    map.ExpectKeyGetValue(VALUE, sp.a);
+  }
+};
+
+/**
+ * serializer for Embeddings saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::EmbeddingsSaveableParams<TensorType>, D>
+{
+  using Type       = ml::EmbeddingsSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const OP_CODE = 1;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(1);
+    map.Append(OP_CODE, sp.op_type);
+
+    // serialize parent class first
+    auto base_pointer = static_cast<ml::WeightsSaveableParams<TensorType> const *>(&sp);
+    Serialize(map_constructor, *base_pointer);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+
+    auto base_pointer = static_cast<ml::WeightsSaveableParams<TensorType> *>(&sp);
+    Deserialize(map, *base_pointer);
+  }
+};
+
+/**
+ * serializer for Embeddings saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::ExpSaveableParams<TensorType>, D>
+{
+  using Type       = ml::ExpSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const OP_CODE = 1;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(1);
+    map.Append(OP_CODE, sp.op_type);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+  }
+};
+
+/**
+ * serializer for Embeddings saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::FlattenSaveableParams<TensorType>, D>
+{
+  using Type       = ml::FlattenSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const OP_CODE = 1;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(1);
+    map.Append(OP_CODE, sp.op_type);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+  }
+};
+
+/**
+ * serializer for Embeddings saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::ConvolutionLayer1DSaveableParams<TensorType>, D>
+{
+  using Type       = ml::ConvolutionLayer1DSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const OP_CODE         = 1;
+  static uint8_t const KERNEL_SIZE     = 1;
+  static uint8_t const INPUT_CHANNELS  = 1;
+  static uint8_t const OUTPUT_CHANNELS = 1;
+  static uint8_t const STRIDE_SIZE     = 1;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(5);
+    map.Append(OP_CODE, sp.op_type);
+    map.Append(KERNEL_SIZE, sp.kernel_size);
+    map.Append(INPUT_CHANNELS, sp.input_channels);
+    map.Append(OP_CODE, sp.output_channels);
+    map.Append(OUTPUT_CHANNELS, sp.stride_size);
+
+    // serialize parent class first
+    auto base_pointer = static_cast<ml::SubGraphSaveableParams<TensorType> const *>(&sp);
+    Serialize(map_constructor, *base_pointer);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+    map.ExpectKeyGetValue(KERNEL_SIZE, sp.kernel_size);
+    map.ExpectKeyGetValue(INPUT_CHANNELS, sp.input_channels);
+    map.ExpectKeyGetValue(OP_CODE, sp.output_channels);
+    map.ExpectKeyGetValue(OUTPUT_CHANNELS, sp.stride_size);
+
+    // deserialize parent class first
+    auto base_pointer = static_cast<ml::SubGraphSaveableParams<TensorType> *>(&sp);
+    Deserialize(map, *base_pointer);
+  }
+};
+
+/**
+ * serializer for Conv2d layer saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::ConvolutionLayer2DSaveableParams<TensorType>, D>
+{
+  using Type       = ml::ConvolutionLayer2DSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const OP_CODE         = 1;
+  static uint8_t const KERNEL_SIZE     = 1;
+  static uint8_t const INPUT_CHANNELS  = 1;
+  static uint8_t const OUTPUT_CHANNELS = 1;
+  static uint8_t const STRIDE_SIZE     = 1;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(5);
+    map.Append(OP_CODE, sp.op_type);
+    map.Append(KERNEL_SIZE, sp.kernel_size);
+    map.Append(INPUT_CHANNELS, sp.input_channels);
+    map.Append(OP_CODE, sp.output_channels);
+    map.Append(OUTPUT_CHANNELS, sp.stride_size);
+
+    // serialize parent class first
+    auto base_pointer = static_cast<ml::SubGraphSaveableParams<TensorType> const *>(&sp);
+    Serialize(map_constructor, *base_pointer);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+    map.ExpectKeyGetValue(KERNEL_SIZE, sp.kernel_size);
+    map.ExpectKeyGetValue(INPUT_CHANNELS, sp.input_channels);
+    map.ExpectKeyGetValue(OP_CODE, sp.output_channels);
+    map.ExpectKeyGetValue(OUTPUT_CHANNELS, sp.stride_size);
+
+    // deserialize parent class first
+    auto base_pointer = static_cast<ml::SubGraphSaveableParams<TensorType> *>(&sp);
+    Deserialize(map, *base_pointer);
+  }
+};
+
+/**
+ * serializer for Conv2d layer saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::FullyConnectedSaveableParams<TensorType>, D>
+{
+  using Type       = ml::FullyConnectedSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const OP_CODE  = 1;
+  static uint8_t const IN_SIZE  = 2;
+  static uint8_t const OUT_SIZE = 3;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(3);
+    map.Append(OP_CODE, sp.op_type);
+    map.Append(IN_SIZE, sp.in_size);
+    map.Append(OUT_SIZE, sp.out_size);
+
+    // serialize parent class first
+    auto base_pointer = static_cast<ml::SubGraphSaveableParams<TensorType> const *>(&sp);
+    Serialize(map_constructor, *base_pointer);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+    map.ExpectKeyGetValue(IN_SIZE, sp.in_size);
+    map.ExpectKeyGetValue(OUT_SIZE, sp.out_size);
+
+    // deserialize parent class first
+    auto base_pointer = static_cast<ml::SubGraphSaveableParams<TensorType> *>(&sp);
+    Deserialize(map, *base_pointer);
+  }
+};
+
+/**
+ * serializer for Embeddings saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::LeakyReluSaveableParams<TensorType>, D>
+{
+  using Type       = ml::LeakyReluSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const OP_CODE = 1;
+  static uint8_t const VAL     = 2;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(2);
+    map.Append(OP_CODE, sp.op_type);
+    map.Append(VAL, sp.a);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+    map.ExpectKeyGetValue(VAL, sp.a);
+  }
+};
+
+/**
+ * serializer for Embeddings saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::LeakyReluOpSaveableParams<TensorType>, D>
+{
+  using Type       = ml::LeakyReluOpSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const OP_CODE = 1;
+  static uint8_t const VAL     = 2;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(2);
+    map.Append(OP_CODE, sp.op_type);
+    map.Append(VAL, sp.a);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+    map.ExpectKeyGetValue(VAL, sp.a);
+  }
+};
+
+/**
+ * serializer for Embeddings saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::LogSaveableParams<TensorType>, D>
+{
+  using Type       = ml::LogSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const OP_CODE = 1;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(1);
+    map.Append(OP_CODE, sp.op_type);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+  }
+};
+
+/**
+ * serializer for Embeddings saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::LogSigmoidSaveableParams<TensorType>, D>
+{
+  using Type       = ml::LogSigmoidSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const OP_CODE = 1;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(1);
+    map.Append(OP_CODE, sp.op_type);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+  }
+};
+
+/**
+ * serializer for Embeddings saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::LogSoftmaxSaveableParams<TensorType>, D>
+{
+  using Type       = ml::LogSoftmaxSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const OP_CODE = 1;
+  static uint8_t const AXIS    = 2;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(2);
+    map.Append(OP_CODE, sp.op_type);
+    map.Append(AXIS, sp.axis);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+    map.ExpectKeyGetValue(AXIS, sp.axis);
+  }
+};
+
+/**
+ * serializer for Embeddings saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::MatrixMultiplySaveableParams<TensorType>, D>
+{
+  using Type       = ml::MatrixMultiplySaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const OP_CODE = 1;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(1);
+    map.Append(OP_CODE, sp.op_type);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+  }
+};
+
+/**
+ * serializer for Embeddings saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::MaxPool1DSaveableParams<TensorType>, D>
+{
+  using Type       = ml::MaxPool1DSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const OP_CODE     = 1;
+  static uint8_t const KERNEL_SIZE = 2;
+  static uint8_t const STRIDE_SIZE = 3;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(1);
+    map.Append(OP_CODE, sp.op_type);
+    map.Append(KERNEL_SIZE, sp.kernel_size);
+    map.Append(STRIDE_SIZE, sp.stride_size);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+    map.ExpectKeyGetValue(KERNEL_SIZE, sp.kernel_size);
+    map.ExpectKeyGetValue(STRIDE_SIZE, sp.stride_size);
+  }
+};
+
+/**
+ * serializer for Embeddings saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::MaxPool2DSaveableParams<TensorType>, D>
+{
+  using Type       = ml::MaxPool2DSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const OP_CODE     = 1;
+  static uint8_t const KERNEL_SIZE = 2;
+  static uint8_t const STRIDE_SIZE = 3;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(3);
+    map.Append(OP_CODE, sp.op_type);
+    map.Append(KERNEL_SIZE, sp.kernel_size);
+    map.Append(STRIDE_SIZE, sp.stride_size);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+    map.ExpectKeyGetValue(KERNEL_SIZE, sp.kernel_size);
+    map.ExpectKeyGetValue(STRIDE_SIZE, sp.stride_size);
+  }
+};
+
+/**
+ * serializer for Embeddings saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::MeanSquareErrorSaveableParams<TensorType>, D>
+{
+  using Type       = ml::MeanSquareErrorSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const OP_CODE = 1;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(1);
+    map.Append(OP_CODE, sp.op_type);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+  }
+};
+
+/**
+ * serializer for Embeddings saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::MaximumSaveableParams<TensorType>, D>
+{
+  using Type       = ml::MaximumSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const OP_CODE = 1;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(1);
+    map.Append(OP_CODE, sp.op_type);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+  }
+};
+
+/**
+ * serializer for Embeddings saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::MultiplySaveableParams<TensorType>, D>
+{
+  using Type       = ml::MultiplySaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const OP_CODE = 1;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(1);
+    map.Append(OP_CODE, sp.op_type);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+  }
+};
+
+/**
+ * serializer for Embeddings saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::PlaceholderSaveableParams<TensorType>, D>
+{
+  using Type       = ml::PlaceholderSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const OP_CODE        = 1;
+  static uint8_t const OUTPUT_PRESENT = 2;
+  static uint8_t const OUTPUT         = 3;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(3);
+    map.Append(OP_CODE, sp.op_type);
+    if (sp.output)
+    {
+      map.Append(OUTPUT_PRESENT, true);
+      map.Append(OUTPUT, *(sp.output));
+    }
+    else
+    {
+      map.Append(OUTPUT_PRESENT, false);
+    }
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+    bool has_weights = true;
+    map.ExpectKeyGetValue(OUTPUT_PRESENT, has_weights);
+    if (has_weights)
+    {
+      TensorType output;
+      map.ExpectKeyGetValue(OUTPUT, output);
+      sp.output = std::make_shared<TensorType>(output);
+    }
+  }
+};
+
+/**
+ * serializer for Embeddings saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::RandomisedReluSaveableParams<TensorType>, D>
+{
+  using Type       = ml::RandomisedReluSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const OP_CODE      = 1;
+  static uint8_t const LOWER_BOUND  = 2;
+  static uint8_t const UPPER_BOUND  = 3;
+  static uint8_t const RANDOM_SEED  = 4;
+  static uint8_t const BUFFER       = 5;
+  static uint8_t const INDEX        = 6;
+  static uint8_t const RANDOM_VALUE = 7;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(7);
+    map.Append(OP_CODE, sp.op_type);
+    map.Append(LOWER_BOUND, sp.op_type);
+    map.Append(UPPER_BOUND, sp.op_type);
+    map.Append(RANDOM_SEED, sp.op_type);
+    map.Append(BUFFER, sp.op_type);
+    map.Append(INDEX, sp.op_type);
+    map.Append(RANDOM_VALUE, sp.op_type);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+    map.ExpectKeyGetValue(LOWER_BOUND, sp.op_type);
+    map.ExpectKeyGetValue(UPPER_BOUND, sp.op_type);
+    map.ExpectKeyGetValue(RANDOM_SEED, sp.op_type);
+    map.ExpectKeyGetValue(BUFFER, sp.op_type);
+    map.ExpectKeyGetValue(INDEX, sp.op_type);
+    map.ExpectKeyGetValue(RANDOM_VALUE, sp.op_type);
+  }
+};
+
+/**
+ * serializer for Embeddings saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::ReluSaveableParams<TensorType>, D>
+{
+  using Type       = ml::ReluSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const OP_CODE = 1;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(7);
+    map.Append(OP_CODE, sp.op_type);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+  }
+};
+
+/**
+ * serializer for Embeddings saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::ReshapeSaveableParams<TensorType>, D>
+{
+  using Type       = ml::ReshapeSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const OP_CODE   = 1;
+  static uint8_t const NEW_SHAPE = 2;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(2);
+    map.Append(OP_CODE, sp.op_type);
+    map.Append(NEW_SHAPE, sp.new_shape);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+    map.ExpectKeyGetValue(NEW_SHAPE, sp.new_shape);
+  }
+};
+
+/**
+ * serializer for Embeddings saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::SigmoidSaveableParams<TensorType>, D>
+{
+  using Type       = ml::SigmoidSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const OP_CODE = 1;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(1);
+    map.Append(OP_CODE, sp.op_type);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+  }
+};
+
+/**
+ * serializer for Embeddings saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::SoftmaxSaveableParams<TensorType>, D>
+{
+  using Type       = ml::SoftmaxSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const OP_CODE = 1;
+  static uint8_t const AXIS    = 2;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(1);
+    map.Append(OP_CODE, sp.op_type);
+    map.Append(AXIS, sp.axis);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+    map.ExpectKeyGetValue(AXIS, sp.axis);
+  }
+};
+
+/**
+ * serializer for Embeddings saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::SoftmaxCrossEntropySaveableParams<TensorType>, D>
+{
+  using Type       = ml::SoftmaxCrossEntropySaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const OP_CODE = 1;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(1);
+    map.Append(OP_CODE, sp.op_type);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+  }
+};
+
+/**
+ * serializer for Embeddings saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::SQRTSaveableParams<TensorType>, D>
+{
+  using Type       = ml::SQRTSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const OP_CODE = 1;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(1);
+    map.Append(OP_CODE, sp.op_type);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+  }
+};
+
+/**
+ * serializer for Embeddings saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::SubtractSaveableParams<TensorType>, D>
+{
+  using Type       = ml::SubtractSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const OP_CODE = 1;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(1);
+    map.Append(OP_CODE, sp.op_type);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+  }
+};
+
+/**
+ * serializer for Embeddings saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::TanhSaveableParams<TensorType>, D>
+{
+  using Type       = ml::TanhSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const OP_CODE = 1;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(1);
+    map.Append(OP_CODE, sp.op_type);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+  }
+};
+
+/**
+ * serializer for Embeddings saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::TransposeSaveableParams<TensorType>, D>
+{
+  using Type       = ml::TransposeSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const OP_CODE          = 1;
+  static uint8_t const TRANSPOSE_VECTOR = 2;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(1);
+    map.Append(OP_CODE, sp.op_type);
+    map.Append(TRANSPOSE_VECTOR, sp.transpose_vector);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+    map.ExpectKeyGetValue(TRANSPOSE_VECTOR, sp.transpose_vector);
+  }
+};
+
+/**
+ * serializer for Embeddings saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::WeightsSaveableParams<TensorType>, D>
+{
+  using Type       = ml::WeightsSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const OP_CODE               = 1;
+  static uint8_t const OUTPUT_PRESENT        = 2;
+  static uint8_t const OUTPUT                = 3;
+  static uint8_t const REGULARISER           = 4;
+  static uint8_t const REGULARISATION_RATE   = 5;
+  static uint8_t const GRADIENT_ACCUMULATION = 6;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(6);
+    map.Append(OP_CODE, sp.op_type);
+    if (sp.output)
+    {
+      map.Append(OUTPUT_PRESENT, true);
+      map.Append(OUTPUT, *(sp.output));
+    }
+    else
+    {
+      map.Append(OUTPUT_PRESENT, false);
+    }
+    map.Append(REGULARISER, static_cast<int>(sp.regularisation_type));
+    map.Append(REGULARISATION_RATE, sp.regularisation_type);
+    map.Append(GRADIENT_ACCUMULATION, sp.gradient_accumulation);
+  }
+};
+
+};  // namespace serializers
 }  // namespace fetch

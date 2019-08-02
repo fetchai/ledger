@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/main_serializer.hpp"
 #include "math/base_types.hpp"
 #include "math/tensor.hpp"
 #include "ml/ops/add.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
-#include "vectorise/fixed_point/serializers.hpp"
 
 #include "gtest/gtest.h"
 
@@ -138,7 +138,7 @@ TYPED_TEST(AddTest, saveparams_test)
   auto dsp = std::dynamic_pointer_cast<SPType>(sp);
 
   // serialize
-  fetch::serializers::ByteArrayBuffer b;
+  fetch::serializers::MsgPackSerializer b;
   b << *dsp;
 
   // deserialize
@@ -219,5 +219,4 @@ TYPED_TEST(AddTest, backward_2D_broadcast_test)
                                      fetch::math::function_tolerance<DataType>()));
   ASSERT_TRUE(prediction[1].AllClose(gt_2, fetch::math::function_tolerance<DataType>(),
                                      fetch::math::function_tolerance<DataType>()));
->>>>>>> b8130ec82b32edb98fd8f14a28bfff8e7f29cea7
 }

@@ -149,7 +149,7 @@ TYPED_TEST(MeanSquareErrorTest, saveparams_test)
   auto dsp = std::dynamic_pointer_cast<SPType>(sp);
 
   // serialize
-  fetch::serializers::ByteArrayBuffer b;
+  fetch::serializers::MsgPackSerializer b;
   b << *dsp;
 
   // make another prediction with the original graph

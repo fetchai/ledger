@@ -16,11 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/main_serializer.hpp"
 #include "math/base_types.hpp"
+
 #include "math/tensor.hpp"
 #include "ml/ops/divide.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
-#include "vectorise/fixed_point/serializers.hpp"
 
 #include "gtest/gtest.h"
 
@@ -140,7 +141,7 @@ TYPED_TEST(DivideTest, saveparams_test)
   auto dsp = std::dynamic_pointer_cast<SPType>(sp);
 
   // serialize
-  fetch::serializers::ByteArrayBuffer b;
+  fetch::serializers::MsgPackSerializer b;
   b << *dsp;
 
   // deserialize

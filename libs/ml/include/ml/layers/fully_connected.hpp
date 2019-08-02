@@ -55,7 +55,7 @@ public:
   using WeightsType    = typename fetch::ml::ops::Weights<ArrayType>;
   using WeightsPtrType = typename std::shared_ptr<WeightsType>;
 
-//  FullyConnected(std::shared_ptr<>)
+  //  FullyConnected(std::shared_ptr<>)
 
   /**
    * This initializer allows weight sharing to another fully connected layer through node interface
@@ -131,11 +131,11 @@ public:
     OpPtrType      target_weights_node_ptr = target_graph_ptr->GetNode(name + "_Weights")->GetOp();
     WeightsPtrType target_weights_ptr =
         std::dynamic_pointer_cast<WeightsType>(target_weights_node_ptr);
-    OpPtrType    target_bias_node_ptr = target_graph_ptr->GetNode(name + "_Bias")->GetOp();
+    OpPtrType      target_bias_node_ptr = target_graph_ptr->GetNode(name + "_Bias")->GetOp();
     WeightsPtrType target_bias_ptr  = std::dynamic_pointer_cast<WeightsType>(target_bias_node_ptr);
-    OpPtrType    weights_node_ptr = this->GetNode(name + "_Weights")->GetOp();
+    OpPtrType      weights_node_ptr = this->GetNode(name + "_Weights")->GetOp();
     WeightsPtrType weights_ptr      = std::dynamic_pointer_cast<WeightsType>(weights_node_ptr);
-    OpPtrType    bias_node_ptr    = this->GetNode(name + "_Bias")->GetOp();
+    OpPtrType      bias_node_ptr    = this->GetNode(name + "_Bias")->GetOp();
     WeightsPtrType bias_ptr         = std::dynamic_pointer_cast<WeightsType>(bias_node_ptr);
 
     // check if the shared weight is compatible with input shape

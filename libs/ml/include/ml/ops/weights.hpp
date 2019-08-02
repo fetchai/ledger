@@ -82,6 +82,7 @@ public:
     {
       tp.output = std::make_shared<ArrayType>(this->output_->Copy());
     }
+    tp.gradient_accumulation = std::make_shared<ArrayType>(gradient_accumulation_->Copy());
     tp.regulariser         = this->regulariser_;
     tp.regularisation_rate = this->regularisation_rate_;
     return std::make_shared<SPType>(tp);
