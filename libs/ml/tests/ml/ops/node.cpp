@@ -17,47 +17,49 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor.hpp"
+#include "ml/meta/ml_type_traits.hpp"
 #include "ml/core/node.hpp"
 #include "ml/ops/activations/relu.hpp"
 #include "ml/ops/placeholder.hpp"
 
 #include "gtest/gtest.h"
 
-TEST(node_test, node_placeholder)
+template <typename T>
+class NodeTest : public ::testing::Test
 {
-  fetch::ml::Node<fetch::math::Tensor<int>, fetch::ml::ops::PlaceHolder<fetch::math::Tensor<int>>>
-                           placeholder("PlaceHolder");
-  fetch::math::Tensor<int> data(std::vector<std::uint64_t>({5, 5}));
-  placeholder.SetData(data);
+};
 
-  fetch::math::Tensor<int> output(placeholder.ComputeOutputShape({}));
+using MyTypes = ::testing::Types<fetch::math::Tensor<int32_t>, fetch::math::Tensor<float>, fetch::math::Tensor<double>,
+                                 fetch::math::Tensor<fetch::fixed_point::fp32_t>,
+                                 fetch::math::Tensor<fetch::fixed_point::fp64_t>>;
+
+TYPED_TEST_CASE(NodeTest, MyTypes);
+
+TYPED_TEST(NodeTest, node_placeholder)
+{
+  fetch::ml::Node<TypeParam> placeholder(fetch::ml::OpType::PLACEHOLDER, "PlaceHolder");
+  TypeParam data(std::vector<std::uint64_t>({5, 5}));
+  std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder.GetOp())->SetData(data);
+
+  TypeParam output((std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder.GetOp()))->ComputeOutputShape({}));
   placeholder.Forward({}, output);
 
   EXPECT_EQ(output, data);
   EXPECT_EQ(*placeholder.Evaluate(true), data);
 }
 
-TEST(node_test, node_relu)
+TYPED_TEST(NodeTest, node_relu)
 {
   using SizeType = fetch::math::SizeType;
 
-  std::shared_ptr<fetch::ml::Node<fetch::math::Tensor<int>,
-                                  fetch::ml::ops::PlaceHolder<fetch::math::Tensor<int>>>>
-      placeholder =
-          std::make_shared<fetch::ml::Node<fetch::math::Tensor<int>,
-                                           fetch::ml::ops::PlaceHolder<fetch::math::Tensor<int>>>>(
-              "PlaceHolder");
+  auto placeholder = std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::PLACEHOLDER, "PlaceHolder");
 
-  std::shared_ptr<
-      fetch::ml::Node<fetch::math::Tensor<int>, fetch::ml::ops::Relu<fetch::math::Tensor<int>>>>
-      relu =
-          std::make_shared<fetch::ml::Node<fetch::math::Tensor<int>,
-                                           fetch::ml::ops::Relu<fetch::math::Tensor<int>>>>("Relu");
+  auto relu = std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::RELU, "Relu");
 
   relu->AddInput(placeholder);
 
-  fetch::math::Tensor<int> data(std::vector<std::uint64_t>({4, 4}));
-  fetch::math::Tensor<int> gt(std::vector<std::uint64_t>({4, 4}));
+  TypeParam data(std::vector<std::uint64_t>({4, 4}));
+  TypeParam gt(std::vector<std::uint64_t>({4, 4}));
   std::vector<int> dataValues({0, -1, 2, -3, 4, -5, 6, -7, 8, -9, 10, -11, 12, -13, 14, -15, 16});
   std::vector<int> gtValues({0, 0, 2, 0, 4, 0, 6, 0, 8, 0, 10, 0, 12, 0, 14, 0, 16});
   placeholder->SetData(data);
@@ -72,7 +74,7 @@ TEST(node_test, node_relu)
     }
   }
 
-  fetch::math::Tensor<int> output(placeholder->ComputeOutputShape({}));
+  TypeParam output(placeholder->ComputeOutputShape({}));
   placeholder->Forward({}, output);
 
   EXPECT_EQ(output, data);

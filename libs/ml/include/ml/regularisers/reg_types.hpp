@@ -17,60 +17,44 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
-#include "math/tensor.hpp"
-
 namespace fetch {
 namespace ml {
-namespace regularisers {
 
-/*
- * Abstract Regulariser interface
- */
-template <class T>
-class Regulariser
+enum class RegularisationType : uint8_t
 {
-public:
-  using ArrayType = T;
-  using DataType  = typename ArrayType::Type;
-
-  Regulariser(RegularisationType rt)
-    : reg_type(rt)
-  {}
-
-  virtual ~Regulariser()                                                            = default;
-  virtual void ApplyRegularisation(ArrayType &weight, DataType regularisation_rate) = 0;
-
-  RegularisationType reg_type;
+  NONE,
+  L1,
+  L2,
 };
+}
 
-}  // namespace regularisers
-}  // namespace ml
 namespace serializers {
 
 /**
- * serializer for Embeddings saveable params
+ * serializer for OpType
  * @tparam TensorType
  */
-template <typename TensorType, typename D>
-struct MapSerializer<ml::regularisers::Regulariser<TensorType>, D>
+template <typename D>
+struct MapSerializer<ml::RegularisationType, D>
 {
-  using Type       = ml::regularisers::Regulariser<TensorType>;
+  using Type       = ml::RegularisationType;
   using DriverType = D;
 
   static uint8_t const REG_TYPE = 1;
 
   template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &sp)
+  static void Serialize(Constructor &map_constructor, Type const &body)
   {
     auto map = map_constructor(1);
-    map.Append(REG_TYPE, sp.reg_type);
+    map.Append(REG_TYPE, static_cast<uint8_t>(body));
   }
 
   template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &sp)
+  static void Deserialize(MapDeserializer &map, Type &body)
   {
-    map.ExpectKeyGetValue(REG_TYPE, sp.reg_type);
+    uint8_t reg_type = 0;
+    map.ExpectKeyGetValue(REG_TYPE, reg_type);
+    body = static_cast<ml::RegularisationType>(reg_type);
   }
 };
 

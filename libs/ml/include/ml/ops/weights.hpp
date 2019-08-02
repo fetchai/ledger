@@ -70,7 +70,7 @@ public:
     {
       this->SetData(*sp.output);
     }
-    this->SetRegularisation(sp.regularisation_type, sp.regularisation_rate);
+    this->SetRegularisation(sp.regulariser, sp.regularisation_rate);
   }
 
   ~Weights() override = default;
@@ -83,8 +83,8 @@ public:
       tp.output = std::make_shared<ArrayType>(this->output_->Copy());
     }
     tp.gradient_accumulation = std::make_shared<ArrayType>(gradient_accumulation_->Copy());
-    tp.regulariser         = this->regulariser_;
-    tp.regularisation_rate = this->regularisation_rate_;
+    tp.regulariser           = this->regulariser_;
+    tp.regularisation_rate   = this->regularisation_rate_;
     return std::make_shared<SPType>(tp);
   }
 

@@ -19,6 +19,7 @@
 
 #include "core/assert.hpp"
 #include "math/tensor.hpp"
+#include "ml/regularisers/reg_types.hpp"
 #include "ml/regularisers/regulariser.hpp"
 
 namespace fetch {
@@ -34,6 +35,10 @@ class L1Regulariser : public Regulariser<T>
 public:
   using ArrayType = T;
   using DataType  = typename ArrayType::Type;
+
+  L1Regulariser()
+    : Regulariser<T>(RegularisationType::L1)
+  {}
 
   ~L1Regulariser() override = default;
 

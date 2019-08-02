@@ -1320,7 +1320,7 @@ struct MapSerializer<ml::EmbeddingsSaveableParams<TensorType>, D>
   using Type       = ml::EmbeddingsSaveableParams<TensorType>;
   using DriverType = D;
 
-  static uint8_t const OP_CODE = 1;
+  static uint8_t const OP_CODE    = 1;
   static uint8_t const BASE_CLASS = 2;
 
   template <typename Constructor>
@@ -1784,7 +1784,7 @@ struct MapSerializer<ml::MeanSquareErrorSaveableParams<TensorType>, D>
 };
 
 /**
- * serializer for Embeddings saveable params
+ * serializer for MaximumSaveableParams saveable params
  * @tparam TensorType
  */
 template <typename TensorType, typename D>
@@ -1810,7 +1810,7 @@ struct MapSerializer<ml::MaximumSaveableParams<TensorType>, D>
 };
 
 /**
- * serializer for Embeddings saveable params
+ * serializer for MultiplySaveableParams saveable params
  * @tparam TensorType
  */
 template <typename TensorType, typename D>
@@ -1836,7 +1836,7 @@ struct MapSerializer<ml::MultiplySaveableParams<TensorType>, D>
 };
 
 /**
- * serializer for Embeddings saveable params
+ * serializer for PlaceholderSaveableParams saveable params
  * @tparam TensorType
  */
 template <typename TensorType, typename D>
@@ -1881,7 +1881,7 @@ struct MapSerializer<ml::PlaceholderSaveableParams<TensorType>, D>
 };
 
 /**
- * serializer for Embeddings saveable params
+ * serializer for RandomisedReluSaveableParams
  * @tparam TensorType
  */
 template <typename TensorType, typename D>
@@ -1925,7 +1925,7 @@ struct MapSerializer<ml::RandomisedReluSaveableParams<TensorType>, D>
 };
 
 /**
- * serializer for Embeddings saveable params
+ * serializer for ReluSaveableParams
  * @tparam TensorType
  */
 template <typename TensorType, typename D>
@@ -1939,7 +1939,7 @@ struct MapSerializer<ml::ReluSaveableParams<TensorType>, D>
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(7);
+    auto map = map_constructor(1);
     map.Append(OP_CODE, sp.op_type);
   }
 
@@ -1951,7 +1951,7 @@ struct MapSerializer<ml::ReluSaveableParams<TensorType>, D>
 };
 
 /**
- * serializer for Embeddings saveable params
+ * serializer for ReshapeSaveableParams
  * @tparam TensorType
  */
 template <typename TensorType, typename D>
@@ -1980,7 +1980,7 @@ struct MapSerializer<ml::ReshapeSaveableParams<TensorType>, D>
 };
 
 /**
- * serializer for Embeddings saveable params
+ * serializer for SigmoidSaveableParams
  * @tparam TensorType
  */
 template <typename TensorType, typename D>
@@ -2006,7 +2006,7 @@ struct MapSerializer<ml::SigmoidSaveableParams<TensorType>, D>
 };
 
 /**
- * serializer for Embeddings saveable params
+ * serializer for SoftmaxSaveableParams
  * @tparam TensorType
  */
 template <typename TensorType, typename D>
@@ -2021,7 +2021,7 @@ struct MapSerializer<ml::SoftmaxSaveableParams<TensorType>, D>
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(1);
+    auto map = map_constructor(2);
     map.Append(OP_CODE, sp.op_type);
     map.Append(AXIS, sp.axis);
   }
@@ -2035,7 +2035,7 @@ struct MapSerializer<ml::SoftmaxSaveableParams<TensorType>, D>
 };
 
 /**
- * serializer for Embeddings saveable params
+ * serializer for SoftmaxCrossEntropySaveableParams
  * @tparam TensorType
  */
 template <typename TensorType, typename D>
@@ -2061,7 +2061,7 @@ struct MapSerializer<ml::SoftmaxCrossEntropySaveableParams<TensorType>, D>
 };
 
 /**
- * serializer for Embeddings saveable params
+ * serializer for SQRTSaveableParams
  * @tparam TensorType
  */
 template <typename TensorType, typename D>
@@ -2087,7 +2087,7 @@ struct MapSerializer<ml::SQRTSaveableParams<TensorType>, D>
 };
 
 /**
- * serializer for Embeddings saveable params
+ * serializer for SubtractSaveableParams
  * @tparam TensorType
  */
 template <typename TensorType, typename D>
@@ -2113,7 +2113,7 @@ struct MapSerializer<ml::SubtractSaveableParams<TensorType>, D>
 };
 
 /**
- * serializer for Embeddings saveable params
+ * serializer for TanhSaveableParams
  * @tparam TensorType
  */
 template <typename TensorType, typename D>
@@ -2139,7 +2139,7 @@ struct MapSerializer<ml::TanhSaveableParams<TensorType>, D>
 };
 
 /**
- * serializer for Embeddings saveable params
+ * serializer for TransposeSaveableParams
  * @tparam TensorType
  */
 template <typename TensorType, typename D>
@@ -2154,7 +2154,7 @@ struct MapSerializer<ml::TransposeSaveableParams<TensorType>, D>
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(1);
+    auto map = map_constructor(2);
     map.Append(OP_CODE, sp.op_type);
     map.Append(TRANSPOSE_VECTOR, sp.transpose_vector);
   }
@@ -2168,7 +2168,7 @@ struct MapSerializer<ml::TransposeSaveableParams<TensorType>, D>
 };
 
 /**
- * serializer for Embeddings saveable params
+ * serializer for WeightsSaveableParams
  * @tparam TensorType
  */
 template <typename TensorType, typename D>
@@ -2198,9 +2198,9 @@ struct MapSerializer<ml::WeightsSaveableParams<TensorType>, D>
     {
       map.Append(OUTPUT_PRESENT, false);
     }
-    map.Append(REGULARISER, static_cast<int>(sp.regulariser));
-    map.Append(REGULARISATION_RATE, sp.regularisation_type);
-    map.Append(GRADIENT_ACCUMULATION, sp.gradient_accumulation);
+    map.Append(REGULARISER, *(sp.regulariser));
+    map.Append(REGULARISATION_RATE, sp.regularisation_rate);
+    map.Append(GRADIENT_ACCUMULATION, *(sp.gradient_accumulation));
   }
 
   template <typename MapDeserializer>
@@ -2215,13 +2215,12 @@ struct MapSerializer<ml::WeightsSaveableParams<TensorType>, D>
       map.ExpectKeyGetValue(OUTPUT, output);
       sp.output = std::make_shared<TensorType>(output);
     }
-    map.ExpectKeyGetValue(REGULARISER, sp.regulariser);
-    map.ExpectKeyGetValue(REGULARISATION_RATE, sp.regularisation_type);
+    map.ExpectKeyGetValue(REGULARISER, *(sp.regulariser));
+    map.ExpectKeyGetValue(REGULARISATION_RATE, sp.regularisation_rate);
 
     TensorType ga;
     map.ExpectKeyGetValue(GRADIENT_ACCUMULATION, ga);
     sp.gradient_accumulation = std::make_shared<TensorType>(ga);
-
   }
 };
 

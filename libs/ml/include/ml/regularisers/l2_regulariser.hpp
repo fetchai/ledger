@@ -35,6 +35,10 @@ public:
   using ArrayType = T;
   using DataType  = typename ArrayType::Type;
 
+  L2Regulariser()
+    : Regulariser<T>(RegularisationType::L2)
+  {}
+
   ~L2Regulariser() override = default;
 
   /**
