@@ -41,8 +41,9 @@ TYPED_TEST(NodeTest, node_placeholder)
   TypeParam data(std::vector<std::uint64_t>({5, 5}));
   std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder.GetOp())->SetData(data);
 
-  TypeParam output((std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder.GetOp()))->ComputeOutputShape({}));
-  placeholder.Forward({}, output);
+  auto placeholder_ptr = std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder.GetOp());
+  TypeParam output(placeholder_ptr->ComputeOutputShape({}));
+  placeholder_ptr->Forward({}, output);
 
   EXPECT_EQ(output, data);
   EXPECT_EQ(*placeholder.Evaluate(true), data);
@@ -50,34 +51,25 @@ TYPED_TEST(NodeTest, node_placeholder)
 
 TYPED_TEST(NodeTest, node_relu)
 {
-  using SizeType = fetch::math::SizeType;
-
   auto placeholder = std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::PLACEHOLDER, "PlaceHolder");
+  auto placeholder_ptr = std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder->GetOp());
 
   auto relu = std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::RELU, "Relu");
 
   relu->AddInput(placeholder);
 
-  TypeParam data(std::vector<std::uint64_t>({4, 4}));
-  TypeParam gt(std::vector<std::uint64_t>({4, 4}));
-  std::vector<int> dataValues({0, -1, 2, -3, 4, -5, 6, -7, 8, -9, 10, -11, 12, -13, 14, -15, 16});
-  std::vector<int> gtValues({0, 0, 2, 0, 4, 0, 6, 0, 8, 0, 10, 0, 12, 0, 14, 0, 16});
-  placeholder->SetData(data);
+  auto data = TypeParam::FromString("0, -1, 2, -3, 4, -5, 6, -7, 8, -9, 10, -11, 12, -13, 14, -15, 16");
+  data.Reshape({4, 4});
+  auto gt = TypeParam::FromString("0, 0, 2, 0, 4, 0, 6, 0, 8, 0, 10, 0, 12, 0, 14, 0, 16");
+  gt.Reshape({4, 4});
+
+  placeholder_ptr->SetData(data);
   relu->ResetCache(true);
 
-  for (SizeType i(0); i < 4; ++i)
-  {
-    for (SizeType j(0); j < 4; ++j)
-    {
-      data.Set(i, j, dataValues[i * 4 + j]);
-      gt.Set(i, j, gtValues[i * 4 + j]);
-    }
-  }
-
-  TypeParam output(placeholder->ComputeOutputShape({}));
-  placeholder->Forward({}, output);
+  TypeParam output(placeholder_ptr->ComputeOutputShape({}));
+  placeholder_ptr->Forward({}, output);
 
   EXPECT_EQ(output, data);
-  EXPECT_EQ(*placeholder->Evaluate(true), data);
+  EXPECT_EQ(*(placeholder->Evaluate(true)), data);
   EXPECT_TRUE(relu->Evaluate(true)->Copy().AllClose(gt));
 }
