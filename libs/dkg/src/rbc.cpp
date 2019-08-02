@@ -26,15 +26,6 @@ namespace dkg {
 
 constexpr char const *LOGGING_NAME = "RBC";
 
-/**
- * Helper function to compute truncation of message hash to 8 bytes. Truncation from left side.
- */
-TruncatedHash MessageHash(SerialisedMessage const &msg)
-{
-  byte_array::ByteArray msg_hash_256{crypto::Hash<crypto::SHA256>(msg)};
-  return msg_hash_256.SubArray(24);
-}
-
 std::string RBC::MsgTypeToString(MsgType msg_type)
 {
   switch (msg_type)
@@ -170,7 +161,7 @@ void RBC::SendRBroadcast(SerialisedMessage const &msg)
  * Sets the message for a particular tag in broadcasts_
  *
  * @param tag Unique tag of a message sent via RBC
- * @param msg_ptr Shared pointer of the RMessage message (RBCMessage containing a message_)
+ * @param msg Reference of the RMessage message (RBCMessage containing a message_)
  * @param sender_index Index of the sender in current_cabinet_
  * @return Bool for whether the value is set
  */
@@ -193,7 +184,7 @@ bool RBC::SetMbar(TagType tag, RMessage const &msg, uint32_t sender_index)
  * Sets the message hash for a particular tag in broadcasts_
  *
  * @param tag Unique tag of a message sent via RBC
- * @param msg_ptr Shared pointer of the RHash (RBCMesssage containing a hash_)
+ * @param msg Reference of the RHash (RBCMesssage containing a hash_)
  * @return Bool for whether the hash contained in RHash equals the MessageHash of message stored in
  * mbar for this tag
  */
@@ -212,7 +203,7 @@ bool RBC::SetDbar(TagType tag, RHash const &msg)
 /**
  * Increments counter for REcho messages
  * @param tag Unique tag of a message sent via RBC
- * @param msg_ptr Shared pointer to REcho message
+ * @param msg Reference to REcho message
  * @return Bool for whether we have reached the message count for REcho messages
  */
 bool RBC::ReceivedEcho(TagType tag, REcho const &msg)
@@ -227,7 +218,7 @@ bool RBC::ReceivedEcho(TagType tag, REcho const &msg)
 /**
  * Increments counter for RReady messages
  * @param tag Unique tag of a message sent via RBC
- * @param msg_ptr Shared pointer to RReady message
+ * @param msg Reference to RReady message
  * @return MsgCount for tag in broadcasts_
  */
 struct RBC::MsgCount RBC::ReceivedReady(TagType tag, RHash const &msg)
@@ -346,7 +337,7 @@ void RBC::OnRBC(MuddleAddress const &from, RBCEnvelope const &envelope)
 /**
  * Handler for RBroadcast messages. If valid, broadcasts REcho message for this tag
  *
- * @param msg_ptr Shared pointer to RBroadcast message
+ * @param msg Reference to RBroadcast message
  * @param sender_index Index of sender in current_cabinet_
  */
 void RBC::OnRBroadcast(RBroadcast const &msg, uint32_t sender_index)
@@ -383,7 +374,7 @@ void RBC::OnRBroadcast(RBroadcast const &msg, uint32_t sender_index)
  * Handler for REcho messages. If ReceivedEcho returns true then broadcasts a RReady message for
  * this tag
  *
- * @param msg_ptr Shared pointer to REcho message
+ * @param msg Reference to REcho message
  * @param sender_index Index of sender in current_cabinet_
  */
 void RBC::OnREcho(REcho const &msg, uint32_t sender_index)
@@ -397,7 +388,7 @@ void RBC::OnREcho(REcho const &msg, uint32_t sender_index)
     return;
   }
   FETCH_LOG_TRACE(LOGGING_NAME, "onREcho: Node ", id_, " received msg ", tag, " from node ",
-                  sender_index, " with counter ", msg_ptr->counter(), " and id ", msg_ptr->id());
+                  sender_index, " with counter ", msg.counter(), " and id ", msg.id());
   if (ReceivedEcho(tag, msg))
   {
     RReady      ready_msg{msg.channel(), msg.id(), msg.counter(), msg.hash()};
@@ -412,7 +403,7 @@ void RBC::OnREcho(REcho const &msg, uint32_t sender_index)
  * tag and hash then the message is ready to be delivered. A RRequest message is sent to 2 *
  * threshold_ + 1 peers if SetDBar returns false
  *
- * @param msg_ptr Shared pointer to RReady message
+ * @param msg Reference to RReady message
  * @param sender_index Index of sender in current_cabinet_
  */
 void RBC::OnRReady(RReady const &msg, uint32_t sender_index)
@@ -426,7 +417,7 @@ void RBC::OnRReady(RReady const &msg, uint32_t sender_index)
     return;
   }
   FETCH_LOG_TRACE(LOGGING_NAME, "onRReady: Node ", id_, " received msg ", tag, " from node ",
-                  sender_index, " with counter ", msg_ptr->counter(), " and id ", msg_ptr->id());
+                  sender_index, " with counter ", msg.counter(), " and id ", msg.id());
   auto msgsCount = ReceivedReady(tag, msg);
   if (threshold_ > 0 && msgsCount.ready_count == threshold_ + 1 &&
       msgsCount.echo_count < (current_cabinet_.size() - threshold_))
@@ -438,7 +429,6 @@ void RBC::OnRReady(RReady const &msg, uint32_t sender_index)
   }
   else if (msgsCount.ready_count == 2 * threshold_ + 1)
   {
-    TruncatedHash msg_hash;
     if (!SetDbar(tag, msg))
     {
       RBCEnvelope env{RRequest{msg.channel(), msg.id(), msg.counter()}};
@@ -452,8 +442,8 @@ void RBC::OnRReady(RReady const &msg, uint32_t sender_index)
         {
           Send(env, *im);
           ++counter;
-          ++im;
         }
+        ++im;
       }
     }
     else if (CheckTag(msg) && msg.id() != id_)
@@ -469,7 +459,7 @@ void RBC::OnRReady(RReady const &msg, uint32_t sender_index)
  * Handler for RRequest message. If valid and we have the requested message then send a RAnswer
  * message containing message back to sender
  *
- * @param msg_ptr Shared pointer to RRequest message
+ * @param msg Reference to RRequest message
  * @param sender_index Index of sender in current_cabinet_
  */
 void RBC::OnRRequest(RRequest const &msg, uint32_t sender_index)
@@ -483,7 +473,7 @@ void RBC::OnRRequest(RRequest const &msg, uint32_t sender_index)
     return;
   }
   FETCH_LOG_TRACE(LOGGING_NAME, "onRRequest: Node ", id_, " received msg ", tag, " from node ",
-                  sender_index, " with counter ", msg_ptr->counter(), " and id ", msg_ptr->id());
+                  sender_index, " with counter ", msg.counter(), " and id ", msg.id());
   if (!broadcasts_[tag].mbar.empty())
   {
     RBCEnvelope env{RAnswer{msg.channel(), msg.id(), msg.counter(), broadcasts_[tag].mbar}};
@@ -496,7 +486,7 @@ void RBC::OnRRequest(RRequest const &msg, uint32_t sender_index)
 /**
  * Handler for RAnswer messages. If valid, set mbar in broadcasts_ for this tag
  *
- * @param msg_ptr Shared pointer to RAnswer message
+ * @param msg Reference to RAnswer message
  * @param sender_index Index of sender in current_cabinet_
  */
 void RBC::OnRAnswer(RAnswer const &msg, uint32_t sender_index)
@@ -507,7 +497,7 @@ void RBC::OnRAnswer(RAnswer const &msg, uint32_t sender_index)
     return;
   }
   // If have not set dbar then we did not send a request message
-  if (broadcasts_[tag].dbar == 0)
+  if (broadcasts_[tag].dbar.empty())
   {
     return;
   }
@@ -640,6 +630,15 @@ bool RBC::SetPartyFlag(uint32_t sender_index, TagType tag, MsgType msg_type)
   }
   iter.set(index);
   return true;
+}
+
+/**
+ * Helper function to compute truncation of message hash to 8 bytes. Truncation from left side.
+ */
+TruncatedHash MessageHash(SerialisedMessage const &msg)
+{
+  byte_array::ByteArray msg_hash_256{crypto::Hash<crypto::SHA256>(msg)};
+  return msg_hash_256.SubArray(24);
 }
 
 }  // namespace dkg
