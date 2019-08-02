@@ -59,20 +59,20 @@ fetch::math::meta::IfIsMath<T, T> Log10(VM *, T const &a)
 
 void BindLog(Module &module)
 {
-  module.CreateFreeFunction<float_t>("log", &Log<float_t>);
-  module.CreateFreeFunction<double_t>("log", &Log<double_t>);
-  module.CreateFreeFunction<fixed_point::fp32_t>("log", &Log<fixed_point::fp32_t>);
-  module.CreateFreeFunction<fixed_point::fp64_t>("log", &Log<fixed_point::fp64_t>);
+  module.CreateFreeFunction("log", &Log<float_t>);
+  module.CreateFreeFunction("log", &Log<double_t>);
+  module.CreateFreeFunction("log", &Log<fixed_point::fp32_t>);
+  module.CreateFreeFunction("log", &Log<fixed_point::fp64_t>);
 
-  module.CreateFreeFunction<float_t>("log2", &Log2<float_t>);
-  module.CreateFreeFunction<double_t>("log2", &Log2<double_t>);
-  module.CreateFreeFunction<fixed_point::fp32_t>("log2", &Log2<fixed_point::fp32_t>);
-  module.CreateFreeFunction<fixed_point::fp64_t>("log2", &Log2<fixed_point::fp64_t>);
+  module.CreateFreeFunction("log2", &Log2<float_t>);
+  module.CreateFreeFunction("log2", &Log2<double_t>);
+  module.CreateFreeFunction("log2", &Log2<fixed_point::fp32_t>);
+  module.CreateFreeFunction("log2", &Log2<fixed_point::fp64_t>);
 
-  module.CreateFreeFunction<float_t>("log10", &Log10<float_t>);
-  module.CreateFreeFunction<double_t>("log10", &Log10<double_t>);
-  module.CreateFreeFunction<fixed_point::fp32_t>("log10", &Log10<fixed_point::fp32_t>);
-  module.CreateFreeFunction<fixed_point::fp64_t>("log10", &Log10<fixed_point::fp64_t>);
+  module.CreateFreeFunction("log10", &Log10<float_t>);
+  module.CreateFreeFunction("log10", &Log10<double_t>);
+  module.CreateFreeFunction("log10", &Log10<fixed_point::fp32_t>);
+  module.CreateFreeFunction("log10", &Log10<fixed_point::fp64_t>);
 }
 
 }  // namespace math

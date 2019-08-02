@@ -23,7 +23,7 @@ namespace fetch {
 namespace http {
 namespace middleware {
 
-HTTPServer::response_middleware_type Telemetry();
+HTTPServer::ResponseMiddleware Telemetry();
 
 }  // namespace middleware
 }  // namespace http
