@@ -58,10 +58,10 @@ public:
   UInt256Wrapper(fetch::vm::VM *vm, fetch::vm::TypeId type_id, uint64_t data);
 
   static fetch::vm::Ptr<UInt256Wrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
-                                                    fetch::vm::Ptr<ByteArrayWrapper> const &ba);
-
-  static fetch::vm::Ptr<UInt256Wrapper> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
                                                     uint64_t val);
+
+  static fetch::vm::Ptr<UInt256Wrapper> ConstructorFromBytes(
+      fetch::vm::VM *vm, fetch::vm::TypeId type_id, fetch::vm::Ptr<ByteArrayWrapper> const &ba);
 
   double ToFloat64() const;
 
