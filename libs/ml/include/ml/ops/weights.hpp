@@ -224,12 +224,12 @@ public:
     {
     case WeightsInitialisation::ONES:
     {
-      array.Fill(static_cast<typename ArrayType::Type>(1);
+      array.Fill(static_cast<typename ArrayType::Type>(1));
       break;
     }
     case WeightsInitialisation::ZEROS:
     {
-      array.Fill(static_cast<typename ArrayType::Type>(0);
+      array.Fill(static_cast<typename ArrayType::Type>(0));
       break;
     }
     case WeightsInitialisation::XAVIER_GLOROT:
