@@ -56,8 +56,10 @@ std::string RBC::MsgTypeToString(MsgType msg_type)
  * @param dkg
  */
 RBC::RBC(Endpoint &endpoint, MuddleAddress address, CabinetMembers const &cabinet,
-         std::function<void(MuddleAddress const &, byte_array::ConstByteArray const &)> call_back)
-  : address_{std::move(address)}
+         std::function<void(MuddleAddress const &, byte_array::ConstByteArray const &)> call_back,
+         uint8_t                                                                        channel)
+  : CHANNEL_BROADCAST{channel}
+  , address_{std::move(address)}
   , endpoint_{endpoint}
   , current_cabinet_{cabinet}
   , deliver_msg_callback_{std::move(call_back)}
