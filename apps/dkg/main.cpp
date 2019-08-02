@@ -105,11 +105,9 @@ int main(int argc, char **argv)
   reactor.Attach(dkg->GetWeakRunnable());
   reactor.Start();
 
-  std::this_thread::sleep_for(std::chrono::seconds(30));  // 1 min
 
-  muddle->Stop();
-  muddle->Shutdown();
-  network_manager.Stop();
+  std::this_thread::sleep_for(std::chrono::seconds(300));  // 1 min
+
   FETCH_LOG_INFO(LOGGING_NAME, "Finished. Quitting");
 
   return 0;

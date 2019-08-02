@@ -95,6 +95,7 @@ void PreDkgSync::ResetCabinet(PeersList const &peers)
   {
     cabinet_.insert(peer.first);
   }
+  assert(cabinet_.size() == peers_.size());
   rbc_.ResetCabinet();
 }
 
