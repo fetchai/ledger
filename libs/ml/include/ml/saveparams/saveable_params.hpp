@@ -1321,16 +1321,17 @@ struct MapSerializer<ml::EmbeddingsSaveableParams<TensorType>, D>
   using DriverType = D;
 
   static uint8_t const OP_CODE = 1;
+  static uint8_t const BASE_CLASS = 2;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(1);
+    auto map = map_constructor(2);
     map.Append(OP_CODE, sp.op_type);
 
     // serialize parent class first
     auto base_pointer = static_cast<ml::WeightsSaveableParams<TensorType> const *>(&sp);
-    Serialize(map_constructor, *base_pointer);
+    map.Append(BASE_CLASS, *base_pointer);
   }
 
   template <typename MapDeserializer>
@@ -1339,7 +1340,7 @@ struct MapSerializer<ml::EmbeddingsSaveableParams<TensorType>, D>
     map.ExpectKeyGetValue(OP_CODE, sp.op_type);
 
     auto base_pointer = static_cast<ml::WeightsSaveableParams<TensorType> *>(&sp);
-    Deserialize(map, *base_pointer);
+    map.ExpectKeyGetValue(BASE_CLASS, *base_pointer);
   }
 };
 
@@ -2197,9 +2198,30 @@ struct MapSerializer<ml::WeightsSaveableParams<TensorType>, D>
     {
       map.Append(OUTPUT_PRESENT, false);
     }
-    map.Append(REGULARISER, static_cast<int>(sp.regularisation_type));
+    map.Append(REGULARISER, static_cast<int>(sp.regulariser));
     map.Append(REGULARISATION_RATE, sp.regularisation_type);
     map.Append(GRADIENT_ACCUMULATION, sp.gradient_accumulation);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+    bool output_present = true;
+    map.ExpectKeyGetValue(OUTPUT_PRESENT, output_present);
+    if (output_present)
+    {
+      TensorType output;
+      map.ExpectKeyGetValue(OUTPUT, output);
+      sp.output = std::make_shared<TensorType>(output);
+    }
+    map.ExpectKeyGetValue(REGULARISER, sp.regulariser);
+    map.ExpectKeyGetValue(REGULARISATION_RATE, sp.regularisation_type);
+
+    TensorType ga;
+    map.ExpectKeyGetValue(GRADIENT_ACCUMULATION, ga);
+    sp.gradient_accumulation = std::make_shared<TensorType>(ga);
+
   }
 };
 
