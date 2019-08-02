@@ -105,7 +105,6 @@ int main(int argc, char **argv)
   reactor.Attach(dkg->GetWeakRunnable());
   reactor.Start();
 
-
   std::this_thread::sleep_for(std::chrono::seconds(300));  // 1 min
 
   FETCH_LOG_INFO(LOGGING_NAME, "Finished. Quitting");

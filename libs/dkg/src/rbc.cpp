@@ -248,7 +248,8 @@ void RBC::OnRBC(MuddleAddress const &from, RBCEnvelope const &envelope)
   }
   else if (current_cabinet_.find(from) == current_cabinet_.end())
   {
-    FETCH_LOG_ERROR(LOGGING_NAME, "Node ", id_, " received message from unknown sender: ", from.ToBase64());
+    FETCH_LOG_ERROR(LOGGING_NAME, "Node ", id_,
+                    " received message from unknown sender: ", from.ToBase64());
     return;
   }
   uint32_t sender_index{CabinetIndex(from)};

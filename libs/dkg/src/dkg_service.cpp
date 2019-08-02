@@ -110,13 +110,13 @@ DkgService::DkgService(Endpoint &endpoint, ConstByteArray address)
   shares_subscription->SetMessageHandler([this](ConstByteArray const &from, uint16_t, uint16_t,
                                                 uint16_t, muddle::Packet::Payload const &payload,
                                                 ConstByteArray) {
-      fetch::serializers::MsgPackSerializer serialiser(payload);
+    fetch::serializers::MsgPackSerializer serialiser(payload);
 
-      std::pair<std::string, std::string> shares;
-      serialiser >> shares;
+    std::pair<std::string, std::string> shares;
+    serialiser >> shares;
 
-      // Dispatch the event
-      dkg_.OnNewShares(from, shares);
+    // Dispatch the event
+    dkg_.OnNewShares(from, shares);
   });
 
   // RPC server registration
@@ -132,7 +132,6 @@ DkgService::DkgService(Endpoint &endpoint, ConstByteArray address)
           state_machine_->RegisterHandler(State::COMPLETE,            this, &DkgService::OnCompleteState);
   // clang-format on
 }
-
 
 /**
  * DKG call to send secret share
