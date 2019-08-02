@@ -51,7 +51,7 @@ VMTensor::VMTensor(VM *vm, TypeId type_id)
 
 Ptr<VMTensor> VMTensor::Constructor(VM *vm, TypeId type_id, Ptr<Array<SizeType>> const &shape)
 {
-  return {new VMTensor(vm, type_id, shape->elements)};
+  return new VMTensor(vm, type_id, shape->elements);
 }
 
 void VMTensor::Bind(Module &module)
