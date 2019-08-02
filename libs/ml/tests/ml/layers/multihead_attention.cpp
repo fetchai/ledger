@@ -83,7 +83,8 @@ TYPED_TEST(MultiheadAttention, backward_test)  // Use the class as an Ops
        std::make_shared<TypeParam>(input_data)},
       error_signal);
 
-  // check there are proper number of error signals
+  // check there are proper number of error signals, this is an indirect test for subgraph backward
+  // signal pass
   ASSERT_EQ(backprop_error.size(), 3);
 
   // check all shape are the same
