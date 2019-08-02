@@ -224,15 +224,12 @@ public:
     {
     case WeightsInitialisation::ONES:
     {
-      array.Fill(1);
+      array.Fill(static_cast<typename ArrayType::Type>(1));
       break;
     }
     case WeightsInitialisation::ZEROS:
     {
-      for (std::uint64_t j = 0; j < array.data().size(); ++j)
-      {
-        array.data()[j] = typename ArrayType::Type(0);
-      }
+      array.Fill(static_cast<typename ArrayType::Type>(0));
       break;
     }
     case WeightsInitialisation::XAVIER_GLOROT:
