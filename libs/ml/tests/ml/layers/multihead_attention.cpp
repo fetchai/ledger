@@ -84,7 +84,7 @@ TYPED_TEST(MultiheadAttention, backward_test)  // Use the class as an Ops
       error_signal);
 
   // check there are proper number of error signals
-  ASSERT_EQ(backprop_error.size(), 3 * 4);
+  ASSERT_EQ(backprop_error.size(), 3);
 
   // check all shape are the same
   bool                  all_same_shape = true;
