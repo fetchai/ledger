@@ -29,6 +29,7 @@ namespace fetch {
 namespace vm {
 
 namespace {
+
 bool is_not_whitespace(int ch)
 {
   return !std::isspace(ch);
