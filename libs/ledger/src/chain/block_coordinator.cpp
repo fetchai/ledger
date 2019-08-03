@@ -34,8 +34,8 @@
 #include "ledger/upow/synergetic_execution_manager.hpp"
 #include "ledger/upow/synergetic_executor.hpp"
 #include "telemetry/counter.hpp"
-#include "telemetry/registry.hpp"
 #include "telemetry/histogram.hpp"
+#include "telemetry/registry.hpp"
 
 #include <cassert>
 #include <chrono>
@@ -171,11 +171,14 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr
   , executed_tx_count_{telemetry::Registry::Instance().CreateCounter(
         "ledger_block_coordinator_executed_tx_total", "The total number of executed transactions")}
   , request_tx_count_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_block_coordinator_request_tx_total", "The total number of times an explicit request for transactions was made")}
+        "ledger_block_coordinator_request_tx_total",
+        "The total number of times an explicit request for transactions was made")}
   , unable_to_find_tx_count_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_block_coordinator_invalidated_tx_total", "The total number of times a block was invalidated because transactions were not found")}
-  , tx_sync_times_{telemetry::Registry::Instance().CreateHistogram({0.001, 0.01, 0.1, 1, 10, 100},
-        "ledger_block_coordinator_tx_sync_times", "The histogram of the time it takes to sync transactions")}
+        "ledger_block_coordinator_invalidated_tx_total",
+        "The total number of times a block was invalidated because transactions were not found")}
+  , tx_sync_times_{telemetry::Registry::Instance().CreateHistogram(
+        {0.001, 0.01, 0.1, 1, 10, 100}, "ledger_block_coordinator_tx_sync_times",
+        "The histogram of the time it takes to sync transactions")}
 {
   // configure the state machine
   // clang-format off
@@ -684,12 +687,12 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, S
       }
     }
   }
-  else // this is the first time in this state
+  else  // this is the first time in this state
   {
     // Only just started waiting for transactions - reset countdown to issuing request to peers
     wait_before_asking_for_missing_tx_.Restart(WAIT_BEFORE_ASKING_FOR_MISSING_TX_INTERVAL);
     have_asked_for_missing_txs_ = false;
-    start_waiting_for_tx_ = Clock::now(); // cache the start time
+    start_waiting_for_tx_       = Clock::now();  // cache the start time
   }
 
   // TODO(HUT): this might need to check that storage has whatever this dag epoch needs wrt
