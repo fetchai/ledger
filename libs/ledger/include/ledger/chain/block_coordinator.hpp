@@ -341,6 +341,7 @@ private:
   PeriodicAction  tx_wait_periodic_;       ///< Periodic print for transaction waiting
   PeriodicAction  exec_wait_periodic_;     ///< Periodic print for execution
   PeriodicAction  syncing_periodic_;       ///< Periodic print for synchronisation
+  Timepoint       start_waiting_for_tx_{}; ///< The time at which we started waiting for txs
   DeadlineTimer   wait_for_tx_timeout_{"bc:deadline"};  ///< Timeout when waiting for transactions
   DeadlineTimer   wait_before_asking_for_missing_tx_{
       "bc:deadline"};              ///< Time to wait before asking peers for any missing txs
@@ -374,6 +375,9 @@ private:
   telemetry::CounterPtr executed_block_count_;
   telemetry::CounterPtr mined_block_count_;
   telemetry::CounterPtr executed_tx_count_;
+  telemetry::CounterPtr request_tx_count_;
+  telemetry::CounterPtr unable_to_find_tx_count_;
+  telemetry::HistogramPtr tx_sync_times_;
   /// @}
 };
 

@@ -19,6 +19,7 @@
 #include "core/byte_array/encoders.hpp"
 #include "core/feature_flags.hpp"
 #include "core/threading.hpp"
+#include "core/time/to_seconds.hpp"
 #include "ledger/block_packer_interface.hpp"
 #include "ledger/block_sink_interface.hpp"
 #include "ledger/chain/block_coordinator.hpp"
@@ -34,6 +35,7 @@
 #include "ledger/upow/synergetic_executor.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/registry.hpp"
+#include "telemetry/histogram.hpp"
 
 #include <cassert>
 #include <chrono>
@@ -168,6 +170,12 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr
         "ledger_block_coordinator_mined_block_total", "The total number of mined blocks")}
   , executed_tx_count_{telemetry::Registry::Instance().CreateCounter(
         "ledger_block_coordinator_executed_tx_total", "The total number of executed transactions")}
+  , request_tx_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_request_tx_total", "The total number of times an explicit request for transactions was made")}
+  , unable_to_find_tx_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_invalidated_tx_total", "The total number of times a block was invalidated because transactions were not found")}
+  , tx_sync_times_{telemetry::Registry::Instance().CreateHistogram({0.001, 0.01, 0.1, 1, 10, 100},
+        "ledger_block_coordinator_tx_sync_times", "The histogram of the time it takes to sync transactions")}
 {
   // configure the state machine
   // clang-format off
@@ -656,6 +664,8 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, S
       // FSM is stuck waiting for transactions - has timeout elapsed?
       if (wait_for_tx_timeout_.HasExpired())
       {
+        unable_to_find_tx_count_->increment();
+
         // Assume block was invalid and discard it
         chain_.RemoveBlock(current_block_->body.hash);
 
@@ -666,17 +676,20 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, S
     {
       if (wait_before_asking_for_missing_tx_.HasExpired())
       {
+        request_tx_count_->increment();
+
         storage_unit_.IssueCallForMissingTxs(*pending_txs_);
         have_asked_for_missing_txs_ = true;
         wait_for_tx_timeout_.Restart(WAIT_FOR_TX_TIMEOUT_INTERVAL);
       }
     }
   }
-  else
+  else // this is the first time in this state
   {
     // Only just started waiting for transactions - reset countdown to issuing request to peers
     wait_before_asking_for_missing_tx_.Restart(WAIT_BEFORE_ASKING_FOR_MISSING_TX_INTERVAL);
     have_asked_for_missing_txs_ = false;
+    start_waiting_for_tx_ = Clock::now(); // cache the start time
   }
 
   // TODO(HUT): this might need to check that storage has whatever this dag epoch needs wrt
@@ -724,6 +737,9 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, S
   // much easier all around
   if (pending_txs_->empty() && dag_is_ready)
   {
+    // record the time this successful syncing took place
+    tx_sync_times_->Add(ToSeconds(Clock::now() - start_waiting_for_tx_));
+
     FETCH_LOG_DEBUG(LOGGING_NAME, "All transactions have been synchronised!");
 
     // clear the pending transaction set
