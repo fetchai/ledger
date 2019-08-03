@@ -59,8 +59,8 @@ using DAGPtr               = std::shared_ptr<ledger::DAGInterface>;
 const std::chrono::milliseconds TX_SYNC_NOTIFY_INTERVAL{1000};
 const std::chrono::milliseconds EXEC_NOTIFY_INTERVAL{5000};
 const std::chrono::seconds      NOTIFY_INTERVAL{10};
-const std::chrono::seconds      WAIT_BEFORE_ASKING_FOR_MISSING_TX_INTERVAL{30};
-const std::chrono::seconds      WAIT_FOR_TX_TIMEOUT_INTERVAL{30};
+const std::chrono::seconds      WAIT_BEFORE_ASKING_FOR_MISSING_TX_INTERVAL{5};
+const std::chrono::seconds      WAIT_FOR_TX_TIMEOUT_INTERVAL{600};
 const uint32_t                  THRESHOLD_FOR_FAST_SYNCING{100u};
 const std::size_t               DIGEST_LENGTH_BYTES{32};
 
