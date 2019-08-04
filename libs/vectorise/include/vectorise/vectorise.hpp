@@ -17,11 +17,25 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vectorise/info.hpp"
+#include "vectorise/register.hpp"
 #ifdef __AVX2__
 #include "vectorise/arch/avx2.hpp"
 #else
-#include "vectorise/info.hpp"
-#include "vectorise/register.hpp"
-#endif
 
+#include "vectorise/fixed_point/fixed_point.hpp"
+
+namespace fetch {
+namespace vectorise {
+
+ADD_REGISTER_SIZE(int32_t, sizeof(int32_t));
+ADD_REGISTER_SIZE(int64_t, sizeof(int64_t));
+ADD_REGISTER_SIZE(float, sizeof(float));
+ADD_REGISTER_SIZE(double, sizeof(double));
+ADD_REGISTER_SIZE(fixed_point::fp32_t, sizeof(fixed_point::fp32_t));
+ADD_REGISTER_SIZE(fixed_point::fp64_t, sizeof(fixed_point::fp64_t));
+
+}  // namespace vectorise
+}  // namespace fetch
+#endif
 #include "vectorise/iterator.hpp"
