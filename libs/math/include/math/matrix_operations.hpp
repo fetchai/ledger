@@ -619,8 +619,8 @@ meta::IfIsMathArray<ArrayType, ArrayType> ReduceMean(ArrayType const &          
 {
   using Type = typename ArrayType::Type;
 
-  Type n   = static_cast<Type>(obj1.shape().at(axis));
-  Type ret = ReduceSum(obj1, axis);
+  Type      n   = static_cast<Type>(obj1.shape().at(axis));
+  ArrayType ret = ReduceSum(obj1, axis);
   Divide(ret, n, ret);
   return ret;
 }
