@@ -19,6 +19,33 @@
 
 #include "vectorise/info.hpp"
 
+#include <cmath>
+#include <cstddef>
+#include <cstdint>
+#include <ostream>
+
+namespace fetch {
+namespace vectorise {
+
+template <typename T>
+struct VectorRegisterSize
+{
+  enum
+  {
+    value = 64
+  };
+};
+
+#define ADD_REGISTER_SIZE(type, size) \
+  template <>                         \
+  struct VectorRegisterSize<type>     \
+  {                                   \
+    enum                              \
+    {                                 \
+      value = (size)                  \
+    };                                \
+  }
+
 #include <cstddef>
 #include <cmath>
 #include <ostream>
@@ -53,9 +80,6 @@ struct UnrollSet<T, 0>
   FUNCTION(|)                         \
   FUNCTION (^)
 // clang-format on
-
-namespace fetch {
-namespace vectorise {
 
 template <typename T, std::size_t N = sizeof(T)>
 class VectorRegister
@@ -117,7 +141,11 @@ private:
 };
 
 template <typename T, std::size_t N = sizeof(T)>
-std::ostream &operator<<(std::ostream &s, VectorRegister<T, N> const &n);
+inline std::ostream &operator<<(std::ostream &s, VectorRegister<T, N> const &n)
+{
+  s << n;
+  return s;
+}
 
 template <typename T, std::size_t N = sizeof(T)>
 inline VectorRegister<T, N> abs(VectorRegister<T, N> const &x)
@@ -150,13 +178,6 @@ inline VectorRegister<T, N> shift_elements_left(VectorRegister<T, N> const &x)
 }
 
 template <typename T, std::size_t N = sizeof(T)>
-inline bool any_less_than(VectorRegister<T, N> const &x,
-                          VectorRegister<T, N> const &y)
-{
-  return x.data() < y.data();
-}
-
-template <typename T, std::size_t N = sizeof(T)>
 inline T first_element(VectorRegister<T, N> const &x)
 {
   return x.data();
@@ -166,6 +187,35 @@ template <typename T, std::size_t N = sizeof(T)>
 inline T reduce(VectorRegister<T, N> const &x)
 {
   return x.data();
+}
+
+template <typename T, std::size_t N = sizeof(T)>
+inline bool all_less_than(VectorRegister<T, N> const &x,
+                          VectorRegister<T, N> const &y)
+{
+  return x.data() < y.data();
+}
+
+template <typename T, std::size_t N = sizeof(T)>
+inline bool any_less_than(VectorRegister<T, N> const &x,
+                          VectorRegister<T, N> const &y)
+{
+  return x.data() < y.data();
+}
+
+
+template <typename T, std::size_t N = sizeof(T)>
+inline bool all_equal_to(VectorRegister<T, N> const &x,
+                         VectorRegister<T, N> const &y)
+{
+return x.data() == y.data();
+}
+
+template <typename T, std::size_t N = sizeof(T)>
+inline bool any_equal_to(VectorRegister<T, N> const &x,
+                         VectorRegister<T, N> const &y)
+{
+  return x.data() == y.data();
 }
 
 #undef APPLY_OPERATOR_LIST

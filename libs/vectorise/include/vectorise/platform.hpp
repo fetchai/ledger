@@ -32,42 +32,6 @@ struct Parallelisation
   };
 };
 
-template <typename T>
-struct VectorRegisterSize
-{
-  enum
-  {
-#ifdef __AVX2__
-    value = 256
-#else
-    value = 64
-#endif
-  };
-};
-
-#define ADD_REGISTER_SIZE(type, size) \
-  template <>                         \
-  struct VectorRegisterSize<type>     \
-  {                                   \
-    enum                              \
-    {                                 \
-      value = (size)                  \
-    };                                \
-  }
-
-#ifdef __AVX2__
-
-ADD_REGISTER_SIZE(int, 256);
-ADD_REGISTER_SIZE(double, 256);
-ADD_REGISTER_SIZE(float, 256);
-
-#else
-
-ADD_REGISTER_SIZE(int, sizeof(int));
-
-#endif
-#undef ADD_REGISTER_SIZE
-
 constexpr bool has_avx2()
 {
 #ifdef __AVX2__
