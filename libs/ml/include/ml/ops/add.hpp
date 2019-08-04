@@ -38,6 +38,9 @@ public:
   Add()           = default;
   ~Add() override = default;
 
+  // for inputs to the add layer, if broadcasting is required, make sure the first input is the one
+  // with the complete shape
+
   void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(inputs.size() == 2);
