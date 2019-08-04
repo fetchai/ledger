@@ -17,7 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/info.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
+
 #include <cstddef>
 #include <cstdint>
 #include <emmintrin.h>
@@ -30,99 +31,128 @@ namespace vectorise {
 template <>
 struct VectorInfo<uint8_t, 128>
 {
-  using naitve_type   = uint8_t;
+  using native_type   = uint8_t;
   using register_type = __m128i;
 };
 
 template <>
 struct VectorInfo<uint16_t, 128>
 {
-  using naitve_type   = uint16_t;
+  using native_type   = uint16_t;
   using register_type = __m128i;
 };
 
 template <>
 struct VectorInfo<uint32_t, 128>
 {
-  using naitve_type   = uint32_t;
+  using native_type   = uint32_t;
   using register_type = __m128i;
 };
 
 template <>
 struct VectorInfo<uint64_t, 128>
 {
-  using naitve_type   = uint64_t;
+  using native_type   = uint64_t;
   using register_type = __m128i;
 };
 
 template <>
 struct VectorInfo<int, 128>
 {
-  using naitve_type   = int;
+  using native_type   = int;
   using register_type = __m128i;
 };
 
 template <>
 struct VectorInfo<float, 128>
 {
-  using naitve_type   = float;
+  using native_type   = float;
   using register_type = __m128;
 };
 
 template <>
 struct VectorInfo<double, 128>
 {
-  using naitve_type   = double;
+  using native_type   = double;
   using register_type = __m128d;
+};
+
+template <>
+struct VectorInfo<fixed_point::fp32_t, 128>
+{
+  using native_type   = fixed_point::fp32_t;
+  using register_type = __m128i;
+};
+
+template <>
+struct VectorInfo<fixed_point::fp64_t, 128>
+{
+  using native_type   = fixed_point::fp64_t;
+  using register_type = __m128i;
 };
 
 template <>
 struct VectorInfo<uint8_t, 256>
 {
-  using naitve_type   = uint8_t;
+  using native_type   = uint8_t;
   using register_type = __m256i;
 };
 
 template <>
 struct VectorInfo<uint16_t, 256>
 {
-  using naitve_type   = uint16_t;
+  using native_type   = uint16_t;
   using register_type = __m256i;
 };
 
 template <>
 struct VectorInfo<uint32_t, 256>
 {
-  using naitve_type   = uint32_t;
+  using native_type   = uint32_t;
   using register_type = __m256i;
 };
 
 template <>
 struct VectorInfo<uint64_t, 256>
 {
-  using naitve_type   = uint64_t;
+  using native_type   = uint64_t;
   using register_type = __m256i;
 };
 
 template <>
 struct VectorInfo<int, 256>
 {
-  using naitve_type   = int;
+  using native_type   = int;
   using register_type = __m256i;
 };
 
 template <>
 struct VectorInfo<float, 256>
 {
-  using naitve_type   = float;
+  using native_type   = float;
   using register_type = __m256;
 };
 
 template <>
 struct VectorInfo<double, 256>
 {
-  using naitve_type   = double;
+  using native_type   = double;
   using register_type = __m256d;
 };
+
+template <>
+struct VectorInfo<fixed_point::fp32_t, 256>
+{
+  using native_type   = fixed_point::fp32_t;
+  using register_type = __m256i;
+};
+
+template <>
+struct VectorInfo<fixed_point::fp64_t, 256>
+{
+  using native_type   = fixed_point::fp64_t;
+  using register_type = __m256i;
+};
+
 }  // namespace vectorise
 }  // namespace fetch
