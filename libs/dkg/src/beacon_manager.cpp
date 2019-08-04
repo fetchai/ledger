@@ -33,9 +33,6 @@ void BeaconManager::Reset(uint64_t cabinet_size, uint32_t threshold)
   received_shares_.resize(cabinet_size);
 
   // Creating member id
-  // TODO(tfr): Make loadable
-  certificate_.reset(new ECDSASigner());
-  certificate_->GenerateKeys();
   auto id = crypto::bls::PrivateKeyByCSPRNG();
   id_.v   = id.v;
 }
@@ -125,6 +122,7 @@ BeaconManager::SignedMessage BeaconManager::Sign()
   SignedMessage smsg;
   smsg.signature  = crypto::bls::Sign(secret_key_share_, current_message_);
   smsg.public_key = public_key_;
+  smsg.identity   = identity();
 
   if (!crypto::bls::Verify(smsg.signature, smsg.public_key, current_message_))
   {

@@ -1,204 +1,168 @@
+#include "core/reactor.hpp"
+#include "core/serializers/counter.hpp"
+#include "core/serializers/main_serializer.hpp"
+#include "core/service_ids.hpp"
+#include "core/state_machine.hpp"
 #include "crypto/bls_base.hpp"
 #include "crypto/bls_dkg.hpp"
+#include "crypto/ecdsa.hpp"
+#include "crypto/prover.hpp"
 #include "dkg/beacon_manager.hpp"
+#include "dkg/dkg_service.hpp"
+#include "network/generics/requesting_queue.hpp"
+#include "network/muddle/muddle.hpp"
+#include "network/muddle/rpc/client.hpp"
+#include "network/muddle/rpc/server.hpp"
+#include "network/muddle/subscription.hpp"
+
+#include "beacon_round.hpp"
+#include "beacon_service.hpp"
+#include "beacon_setup_protocol.hpp"
+#include "beacon_setup_service.hpp"
+#include "cabinet_member_details.hpp"
+#include "entropy.hpp"
 
 #include <cstdint>
+#include <deque>
 #include <iostream>
 #include <random>
 #include <stdexcept>
 #include <unordered_map>
 #include <vector>
-/*
-struct BeaconRoundDetails
+using namespace fetch;
+using namespace fetch::beacon;
+
+using Prover         = fetch::crypto::Prover;
+using ProverPtr      = std::shared_ptr<Prover>;
+using Certificate    = fetch::crypto::Prover;
+using CertificatePtr = std::shared_ptr<Certificate>;
+using Address        = fetch::muddle::Packet::Address;
+
+ProverPtr CreateNewCertificate()
 {
-  BeaconManager manager{};
-  std::unordered_set< Identity > members{};
-  uint32_t round{0};
-  std::atomic< bool > ready{false};
-};
+  using Signer    = fetch::crypto::ECDSASigner;
+  using SignerPtr = std::shared_ptr<Signer>;
 
+  SignerPtr certificate = std::make_shared<Signer>();
 
+  certificate->GenerateKeys();
 
-class BeaconSetupService
+  return certificate;
+}
+
+struct CabinetNode
 {
-public:
-  using SharedBeacon     = std::shared_ptr<BeaconRoundDetails>;  
-  using CallbackFunction = std::function< void(SharedBeacon) >;
-
-  enum class State
-  {
-    IDLE              = 0
-    BROADCAST_ID      ,
-    WAIT_FOR_IDS,
-    CREATE_AND_SEND_SHARES,
-    WAIT_FOR_SHARES,
-    GENERATE_KEYS,
-    BEACON_READY
-    // TODO: Support for complaints and valid nodes
-  };
-
-  BeaconSetupService() 
-  {
-    state_machine_->RegisterHandler(State::IDLE, this, &BeaconSetupService::OnIdle);
-    state_machine_->RegisterHandler(State::BROADCAST_ID, this, &BeaconSetupService::OnBroadcastID);
-    state_machine_->RegisterHandler(State::WAIT_FOR_IDS, this, &BeaconSetupService::WaitForIDs);
-    state_machine_->RegisterHandler(State::CREATE_AND_SEND_SHARES, this, &BeaconSetupService::CreateAndSendShares);
-    state_machine_->RegisterHandler(State::WAIT_FOR_SHARES, this, &BeaconSetupService::OnWaitForShares);
-    state_machine_->RegisterHandler(State::GENERATE_KEYS, this, &BeaconSetupService::OnGenerateKeys);    
-    state_machine_->RegisterHandler(State::BEACON_READY, this, &BeaconSetupService::OnBeaconReady);    
-  }
-
-  State OnIdle()
-  {
-
-  }
-
-  State OnBroadcastID()
-  {
-
-  }
-
-  State WaitForIDs()
-  {
-
-  }
-
-  State CreateAndSendShares()
-  {
-
-  }
-
-  State OnWaitForShares()
-  {
-
-  }
-
-  State OnGenerateKeys()
-  {
-
-  }
-
-  State OnBeaconReady()
-  {
-
-  }
-
-
-
-  void QueueSetup(SharedBeacon beacon)
-  {
-    std::lock_guard< std::mutex > lock(mutex_);
-    beacon_queue_.push_back(beacon);
-  }
-
-  // TODO: ... steps - rbc? ...
-  // TODO: support for complaints
-
-  void Final()
-  {
-    std::lock_guard< std::mutex > lock(mutex_);
-    if(callback_function_)
-    {
-      callback_function_(next_beacon_)
-    }
-
-  }
-
-  void SetBeaconReadyCallback(CallbackFunction callback)
-  {
-    std::lock_guard< std::mutex > lock(mutex_);
-    callback_function_ = callback;
-  }
-private:
-  std::mutex mutex_;
-  CallbackFunction callback_function_;
-  std::deque< SharedBeacon > beacon_queue_;
-  SharedBeacon next_beacon_;
-
-  MuddleEndpoint &                      muddle_endpoint_;
-  ClientPtr                             client_;
-  std::shared_ptr<StateMachine>         state_machine_;
-};
-
-class BeaconService
-{
-public:
-  using Prover         = fetch::crypto::Prover;
+  using Prover         = crypto::Prover;
   using ProverPtr      = std::shared_ptr<Prover>;
-  using Certificate    = fetch::crypto::Prover;
+  using Certificate    = crypto::Prover;
   using CertificatePtr = std::shared_ptr<Certificate>;
-  using Address        = fetch::muddle::Packet::Address;
-  using BeaconManager  = fetch::crypto::BeaconManager;
-  using SharedBeacon   = std::shared_ptr<BeaconRoundDetails>;
+  using Muddle         = muddle::Muddle;
 
-  BeaconService() 
+  uint16_t                muddle_port;
+  network::NetworkManager network_manager;
+  core::Reactor           reactor;
+  ProverPtr               muddle_certificate;
+  Muddle                  muddle;
+  BeaconService           beacon_service;
+
+  CabinetNode(uint16_t port_number, uint16_t index)
+    : muddle_port{port_number}
+    , network_manager{"NetworkManager" + std::to_string(index), 1}
+    , reactor{"ReactorName" + std::to_string(index)}
+    , muddle_certificate{CreateNewCertificate()}
+    , muddle{fetch::muddle::NetworkId{"TestNetwork"}, muddle_certificate, network_manager, true,
+             true}
+    , beacon_service{muddle.AsEndpoint(), muddle_certificate}
   {
-    cabinet_creator_,OnBeaconReady([this](SharedBeacon beacon)
-    {
-      std::lock_guard< std::mutex > lock(mutex_);
-      beacon_queue_.push_back(beacon);
-    })
-
-  /// Maintainance logic
-  /// @{
-  /// @brief this function is called when the node is in the cabinet
-  void StartNewCabinet(std::unordered_set< Identity > members, uint32_t threshold)
-  {
-    std::lock_guard< std::mutex > lock(mutex_);
-
-    SharedBeacon beacon = std::make_shared< BeaconRoundDetails >();
-
-    beacon->manager.Reset(members.size(), threshold);
-    beacon->round   = next_cabinet_generation_number_;
-    beacon->members = std::move(members);
-
-    cabinet_creator_.QueueSetup(beacon);
-    ++next_cabinet_generation_number_;
+    network_manager.Start();
+    muddle.Start({muddle_port});
   }
-
-  /// @brief this function is called when the node is not.
-  void SkipRound()
-  {
-    std::lock_guard< std::mutex > lock(mutex_);
-    ++next_cabinet_generation_number_;
-  }
-
-  bool SwitchCabinet()
-  {
-    std::lock_guard< std::mutex > lock(mutex_);
-    if(beacon_queue_.size() == 0)
-    {
-      return false;
-    }
-
-    auto f = beacon_queue_.front();
-    active_beacon_.reset();
-
-    if(f->round == next_cabinet_number_)
-    {
-      active_beacon_ = f;
-    }
-
-    ++next_cabinet_number_;
-  }
-
-  /// @}
-
-
-private:
-  std::mutex mutex_;  
-  std::shared_ptr<BeaconRoundDetails> active_beacon_;
-
-  uint64_t next_cabinet_generation_number_{0};
-  uint64_t next_cabinet_number_{0};
-
-  std::deque< SharedBeacon > beacon_queue_;
-
-  BeaconSetupService cabinet_creator_;
 };
-*/
+
 int main()
 {
+  constexpr uint16_t cabinet_size       = 8;
+  constexpr uint16_t number_of_cabinets = 1;
+
+  // Initialising the BLS library
+  crypto::bls::Init();
+
+  CabinetNode x{8080, 0};
+
+  std::vector<std::unique_ptr<CabinetNode>> committee;
+  for (uint16_t ii = 0; ii < cabinet_size; ++ii)
+  {
+    auto port_number = static_cast<uint16_t>(9000 + ii);
+    committee.emplace_back(new CabinetNode{port_number, ii});
+  }
+  std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+  // Connect muddles together (localhost for this example)
+  for (uint32_t ii = 0; ii < cabinet_size; ii++)
+  {
+    for (uint32_t jj = ii + 1; jj < cabinet_size; jj++)
+    {
+      committee[ii]->muddle.AddPeer(
+          fetch::network::Uri{"tcp://127.0.0.1:" + std::to_string(committee[jj]->muddle_port)});
+    }
+  }
+
+  // Waiting until all are connected
+
+  uint32_t kk = 0;
+  while (kk != cabinet_size)
+  {
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    for (uint32_t mm = kk; mm < cabinet_size; ++mm)
+    {
+      if (committee[mm]->muddle.AsEndpoint().GetDirectlyConnectedPeers().size() !=
+          (cabinet_size - 1))
+      {
+        break;
+      }
+      else
+      {
+        ++kk;
+      }
+    }
+  }
+
+  // Creating two cabinets
+  BeaconService::CabinetMemberList all_cabinets[number_of_cabinets];
+
+  uint64_t i = 0;
+  for (auto &member : committee)
+  {
+    all_cabinets[i % number_of_cabinets].insert(member->muddle_certificate->identity());
+    ++i;
+  }
+
+  // Attaching the cabinet logic
+  for (auto &member : committee)
+  {
+    member->reactor.Attach(member->beacon_service.GetMainRunnable());
+    member->reactor.Attach(member->beacon_service.GetSetupRunnable());
+  }
+
+  // Starting the beacon
+  for (auto &member : committee)
+  {
+    member->reactor.Start();
+  }
+
+  // Ready
+  i = 0;
+  while (true)
+  {
+    for (auto &member : committee)
+    {
+      auto cabinet = all_cabinets[i % number_of_cabinets];
+      member->beacon_service.StartNewCabinet(cabinet, static_cast<uint32_t>(cabinet.size() / 2));
+    }
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(200000));
+    ++i;
+  }
 
   return 0;
 }

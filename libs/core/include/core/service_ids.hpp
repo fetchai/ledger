@@ -52,6 +52,8 @@ static constexpr uint64_t CHANNEL_RPC_BROADCAST = 301;
 static constexpr uint16_t CHANNEL_SECRET_KEY    = 400;
 static constexpr uint16_t CHANNEL_CONTRIBUTIONS = 401;
 
+static constexpr uint16_t CHANNEL_ID_DISTRIBUTION = 450;
+
 // RPC Protocol identifiers
 static constexpr uint64_t RPC_MAIN_CHAIN = 199;
 
@@ -68,5 +70,8 @@ static constexpr uint64_t RPC_P2P_RESOLVER      = 209;
 static constexpr uint64_t RPC_MISSING_TX_FINDER = 210;
 static constexpr uint64_t RPC_DAG_STORE_SYNC    = 211;
 static constexpr uint64_t RPC_DKG_BEACON        = 212;
+
+static constexpr uint64_t RPC_BEACON_SETUP = 250;
+static constexpr uint64_t RPC_BEACON       = 251;
 
 }  // namespace fetch

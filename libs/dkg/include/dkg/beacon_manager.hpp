@@ -41,9 +41,9 @@ public:
   using PrivateKey = crypto::bls::PrivateKey;
   using Id         = crypto::bls::Id;
 
-  using ECDSASigner = crypto::ECDSASigner;
-  using Certificate = std::shared_ptr<ECDSASigner>;
-  using Identity    = crypto::Identity;
+  using Certificate    = crypto::Prover;
+  using CertificatePtr = std::shared_ptr<Certificate>;
+  using Identity       = crypto::Identity;
 
   using Contribution   = crypto::bls::dkg::Contribution;
   using ConstByteArray = fetch::byte_array::ConstByteArray;
@@ -52,11 +52,26 @@ public:
   {
     Signature signature;
     PublicKey public_key;
+    Identity  identity;
   };
 
-  BeaconManager()                      = default;
+  BeaconManager(CertificatePtr cert = nullptr)
+    : certificate_{cert}
+  {
+    if (certificate_ == nullptr)
+    {
+      auto ptr = new crypto::ECDSASigner();
+      certificate_.reset(ptr);
+      ptr->GenerateKeys();
+    }
+  }
   BeaconManager(BeaconManager const &) = delete;
   BeaconManager &operator=(BeaconManager const &) = delete;
+
+  void SetCertificate(CertificatePtr cert)
+  {
+    certificate_ = cert;
+  }
 
   /*
    * @brief resets the class back to a state where a new cabinet is set up.
@@ -158,9 +173,9 @@ private:
 
   /// Member identity and secrets
   /// @{
-  Certificate  certificate_;
-  Id           id_;
-  Contribution contribution_;
+  CertificatePtr certificate_;
+  Id             id_;
+  Contribution   contribution_;
   /// }
 
   /// Beacon keys
@@ -187,4 +202,39 @@ private:
 };
 
 }  // namespace dkg
+
+namespace serializers {
+
+template <typename D>
+struct MapSerializer<dkg::BeaconManager::SignedMessage, D>
+{
+public:
+  using Type       = dkg::BeaconManager::SignedMessage;
+  using DriverType = D;
+
+  static uint8_t const SIGNATURE  = 0;
+  static uint8_t const PUBLIC_KEY = 1;
+  static uint8_t const IDENTITY   = 2;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &member)
+  {
+    auto map = map_constructor(3);
+
+    map.Append(SIGNATURE, member.signature);
+    map.Append(PUBLIC_KEY, member.public_key);
+    map.Append(IDENTITY, member.identity);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &member)
+  {
+    map.ExpectKeyGetValue(SIGNATURE, member.signature);
+    map.ExpectKeyGetValue(PUBLIC_KEY, member.public_key);
+    map.ExpectKeyGetValue(IDENTITY, member.identity);
+  }
+};
+
+}  // namespace serializers
+
 }  // namespace fetch

@@ -129,7 +129,6 @@ int main()
   // Start at RBC for each muddle
   {
 
-
     for (auto &member : committee)
     {
       member->dkg_service.ResetCabinet(cabinet, threshold);
