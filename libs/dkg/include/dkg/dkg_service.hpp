@@ -128,7 +128,6 @@ public:
   /// @name External Events
   /// @{
   void SubmitSignatureShare(uint64_t round, uint32_t const &id, std::string const &signature);
-  void SubmitShare(MuddleAddress const &address, std::pair<std::string, std::string> const &shares);
   void OnRbcDeliver(MuddleAddress const &from, byte_array::ConstByteArray const &payload);
   /// @}
 
@@ -240,15 +239,17 @@ private:
   RoundPtr LookupRound(uint64_t round, bool create = false);
   /// @}
 
-  ConstByteArray const     address_;        ///< Our muddle address
-  uint32_t                 id_;             ///< Our DKG ID (derived from index in current_cabinet_)
-  Endpoint &               endpoint_;       ///< The muddle endpoint to communicate on
-  muddle::rpc::Server      rpc_server_;     ///< The services' RPC server
-  muddle::rpc::Client      rpc_client_;     ///< The services' RPC client
-  RpcProtocolPtr           rpc_proto_;      ///< The services RPC protocol
-  StateMachinePtr          state_machine_;  ///< The service state machine
-  RBC                      rbc_;            ///< Runs the RBC protocol
-  DistributedKeyGeneration dkg_;            ///< Runs DKG protocol
+  ConstByteArray const address_;        ///< Our muddle address
+  uint32_t             id_;             ///< Our DKG ID (derived from index in current_cabinet_)
+  Endpoint &           endpoint_;       ///< The muddle endpoint to communicate on
+  muddle::rpc::Server  rpc_server_;     ///< The services' RPC server
+  muddle::rpc::Client  rpc_client_;     ///< The services' RPC client
+  RpcProtocolPtr       rpc_proto_;      ///< The services RPC protocol
+  StateMachinePtr      state_machine_;  ///< The service state machine
+  std::shared_ptr<muddle::Subscription>
+                           shares_subscription;  ///< Subscription for receiving secret shares
+  RBC                      rbc_;                 ///< Runs the RBC protocol
+  DistributedKeyGeneration dkg_;                 ///< Runs DKG protocol
 
   /// @name State Machine Data
   /// @{

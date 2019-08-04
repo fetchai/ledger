@@ -44,7 +44,8 @@ public:
   using SubscriptionPtr = std::shared_ptr<muddle::Subscription>;
 
   RBC(Endpoint &endpoint, MuddleAddress address, CabinetMembers const &cabinet,
-      std::function<void(MuddleAddress const &, byte_array::ConstByteArray const &)> call_back);
+      std::function<void(MuddleAddress const &, byte_array::ConstByteArray const &)> call_back,
+      uint8_t                                                                        channel = 2);
 
   // Operators
   void ResetCabinet();
@@ -91,8 +92,8 @@ protected:
   std::mutex mutex_broadcast_;  // protects broadcasts_
 
   // For broadcast
-  static constexpr uint16_t SERVICE_DKG       = 5001;
-  static constexpr uint8_t  CHANNEL_BROADCAST = 2;  ///< Channel for reliable broadcast
+  static constexpr uint16_t SERVICE_DKG = 5001;
+  uint8_t                   CHANNEL_BROADCAST;  ///< Channel for reliable broadcast
 
   MuddleAddress const address_;   ///< Our muddle address
   Endpoint &          endpoint_;  ///< The muddle endpoint to communicate on
