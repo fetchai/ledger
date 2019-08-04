@@ -17,9 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/arch/avx2/info.hpp"
-#include "vectorise/arch/avx2/register_int64.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+#include "vectorise/arch/avx2/register_int64.hpp"
 
 #include <cmath>
 #include <cstddef>
@@ -32,6 +31,8 @@
 
 namespace fetch {
 namespace vectorise {
+
+ADD_REGISTER_SIZE(fetch::fixed_point::fp64_t, 256);
 
 template <>
 class VectorRegister<fixed_point::fp64_t, 128>
@@ -355,13 +356,18 @@ inline fixed_point::fp64_t first_element(
   return fixed_point::fp64_t{};
 }
 
-inline fixed_point::fp64_t reduce(
-    VectorRegister<fixed_point::fp64_t, 128> const & /*x*/)
+inline fixed_point::fp64_t reduce(VectorRegister<fixed_point::fp64_t, 128> const &x)
 {
-  throw std::runtime_error("reduce not implemented.");
-  return fixed_point::fp64_t{};
+  __m128i r = _mm_add_epi64(x.data(), _mm_bslli_si128(x.data(), 8));
+  return fixed_point::fp64_t::FromBase(_mm_extract_epi64(r, 0));
 }
 
+inline fixed_point::fp64_t reduce(VectorRegister<fixed_point::fp64_t, 256> const &x)
+{
+  __m256i r = _mm256_add_epi64(x.data(), _mm256_bslli_epi128(x.data(), 8));
+  r        = _mm256_add_epi64(x.data(), _mm256_bslli_epi128(r, 8));
+  return fixed_point::fp64_t::FromBase(_mm256_extract_epi64(r, 0));
+}
 
 inline bool all_less_than(VectorRegister<fixed_point::fp64_t, 128> const &x,
                           VectorRegister<fixed_point::fp64_t, 128> const &y)
@@ -405,7 +411,7 @@ inline bool all_equal_to(VectorRegister<fixed_point::fp64_t, 256> const &x,
 {
   __m256i r = (x == y).data();
   std::cout << "r = " << VectorRegister<fixed_point::fp64_t, 256>(r) << std::endl;
-  uint64_t mask = _mm256_movemask_epi8(r);
+  uint64_t mask = static_cast<uint64_t>(_mm256_movemask_epi8(r));
   std::cout << "mask = " << std::hex << mask << std::endl;
   return mask == 0xffffffffffffffffULL;
 }
