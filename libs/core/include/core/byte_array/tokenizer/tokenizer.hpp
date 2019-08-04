@@ -20,8 +20,10 @@
 #include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/tokenizer/token.hpp"
+
+#include <cstddef>
+#include <cstdint>
 #include <functional>
-#include <map>
 #include <vector>
 
 namespace fetch {
@@ -32,8 +34,7 @@ class Tokenizer : public std::vector<Token>
 public:
   using byte_array_type        = ConstByteArray;
   using consumer_function_type = std::function<int(byte_array_type const &, uint64_t &)>;
-  using indexer_function_type =
-      std::function<int(byte_array_type const &, uint64_t const &, int const &)>;
+  using indexer_function_type  = std::function<int(byte_array_type const &, uint64_t, int const &)>;
 
   static constexpr char const *LOGGING_NAME = "Tokenizer";
 

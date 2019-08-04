@@ -38,10 +38,10 @@ class TransactionProcessor : public TransactionSink
 public:
   static constexpr char const *LOGGING_NAME = "TransactionProcessor";
   using DAGPtr                              = std::shared_ptr<::fetch::ledger::DAGInterface>;
-
+  using TxStatusCachePtr                    = std::shared_ptr<TransactionStatusCache>;
   // Construction / Destruction
   TransactionProcessor(DAGPtr dag, StorageUnitInterface &storage, BlockPackerInterface &packer,
-                       TransactionStatusCache &tx_status_cache, std::size_t num_threads);
+                       TxStatusCachePtr tx_status_cache, std::size_t num_threads);
   TransactionProcessor(TransactionProcessor const &) = delete;
   TransactionProcessor(TransactionProcessor &&)      = delete;
   ~TransactionProcessor() override;
@@ -69,13 +69,13 @@ private:
   using Flag      = std::atomic<bool>;
   using ThreadPtr = std::unique_ptr<std::thread>;
 
-  DAGPtr                  dag_;
-  StorageUnitInterface &  storage_;
-  BlockPackerInterface &  packer_;
-  TransactionStatusCache &status_cache_;
-  TransactionVerifier     verifier_;
-  ThreadPtr               poll_new_tx_thread_;
-  Flag                    running_{false};
+  DAGPtr                dag_;
+  StorageUnitInterface &storage_;
+  BlockPackerInterface &packer_;
+  TxStatusCachePtr      status_cache_;
+  TransactionVerifier   verifier_;
+  ThreadPtr             poll_new_tx_thread_;
+  Flag                  running_{false};
 
   void ThreadEntryPoint();
 };

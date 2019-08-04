@@ -19,6 +19,7 @@
 
 #include "settings/detail/environment_wrapper.hpp"
 
+#include <functional>
 #include <vector>
 
 namespace fetch {
@@ -33,6 +34,8 @@ class SettingBase;
 class SettingCollection
 {
 public:
+  static constexpr char const *LOGGING_NAME = "SettingCollection";
+
   using Settings = std::vector<SettingBase *>;
 
   Settings const &settings() const;

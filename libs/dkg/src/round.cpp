@@ -18,6 +18,7 @@
 
 #include "core/mutex.hpp"
 #include "crypto/hash.hpp"
+#include "crypto/mcl_dkg.hpp"
 #include "crypto/sha256.hpp"
 #include "dkg/round.hpp"
 
@@ -25,34 +26,17 @@
 #include <cstdint>
 #include <cstring>
 
-static bool operator==(::blsId const &a, ::blsId const &b)
-{
-  bool equal{false};
-
-  if (&a == &b)
-  {
-    equal = true;
-  }
-  else
-  {
-    equal = (0 == std::memcmp(&a, &b, sizeof(::blsId)));
-  }
-
-  return equal;
-}
-
 namespace fetch {
 namespace dkg {
 
-void Round::AddShare(crypto::bls::Id const &id, crypto::bls::Signature const &sig)
+void Round::AddShare(uint32_t const &id, bn::G1 const &sig)
 {
   FETCH_LOCK(lock_);
 
   // ensure no duplicates are present
-  if (std::find(sig_ids_.begin(), sig_ids_.end(), id) == sig_ids_.end())
+  if (round_sig_shares_.find(id) == round_sig_shares_.end())
   {
-    sig_ids_.push_back(id);
-    sig_shares_.push_back(sig);
+    round_sig_shares_.insert({id, sig});
     ++num_shares_;
   }
 }
@@ -63,7 +47,7 @@ uint64_t Round::GetEntropy() const
   return *reinterpret_cast<uint64_t const *>(round_entropy_.pointer());
 }
 
-void Round::SetSignature(crypto::bls::Signature const &sig)
+void Round::SetSignature(bn::G1 const &sig)
 {
   FETCH_LOCK(lock_);
   round_signature_ = sig;
@@ -78,9 +62,9 @@ byte_array::ConstByteArray Round::GetRoundEntropy() const
 void Round::RecoverSignature()
 {
   FETCH_LOCK(lock_);
-  round_signature_ = crypto::bls::RecoverSignature(sig_shares_, sig_ids_);
+  round_signature_ = LagrangeInterpolation(round_sig_shares_);
   has_signature_   = true;
-  round_entropy_   = crypto::Hash<crypto::SHA256>(crypto::bls::ToBinary(round_signature_));
+  round_entropy_   = crypto::Hash<crypto::SHA256>(round_signature_.getStr());
 }
 
 }  // namespace dkg

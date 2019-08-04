@@ -21,6 +21,10 @@
 #include "ml/graph.hpp"
 #include "ml/optimisation/optimiser.hpp"
 
+#include <memory>
+#include <string>
+#include <vector>
+
 namespace fetch {
 namespace ml {
 namespace optimisers {
@@ -51,7 +55,7 @@ public:
                    fetch::ml::optimisers::LearningRateParam<DataType> const &learning_rate_param,
                    DataType const &epsilon = DataType{1e-8f});
 
-  virtual ~AdaGradOptimiser() = default;
+  ~AdaGradOptimiser() override = default;
 
 private:
   std::vector<ArrayType> cache_;

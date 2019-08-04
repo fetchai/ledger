@@ -21,7 +21,7 @@
 #include "core/byte_array/encoders.hpp"
 #include "core/commandline/parameter_parser.hpp"
 #include "core/json/document.hpp"
-#include "core/serializers/byte_array.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "variant/variant.hpp"
 #include "version/cli_header.hpp"
 #include "version/fetch_version.hpp"
@@ -48,17 +48,13 @@
 
 namespace {
 
-using fetch::vm::Executable;
-using fetch::vm::Ptr;
-using fetch::vm::VM;
-using fetch::vm::String;
-using fetch::vm::TypeId;
 using fetch::vm_modules::VMFactory;
-using fetch::variant::Variant;
 using fetch::json::JSONDocument;
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::FromHex;
 using fetch::byte_array::ToHex;
+
+using namespace fetch::vm;
 
 class Parameters
 {
@@ -160,12 +156,14 @@ Ptr<String> Argv(VM *vm, TypeId, int32_t index)
 }
 
 // placeholder class
-struct System : public fetch::vm::Object
+struct System : public Object
 {
 };
 
-struct JsonStateMap : public fetch::vm::IoObserverInterface
+struct JsonStateMap : public IoObserverInterface
 {
+  using Variant = fetch::variant::Variant;
+
 public:
   // Construction / Destruction
   JsonStateMap()                     = default;
@@ -345,13 +343,13 @@ int main(int argc, char **argv)
     state_map.LoadFromFile(data_path.c_str());
   }
 
-  vm->AttachOutputDevice(fetch::vm::VM::STDOUT, std::cout);
+  vm->AttachOutputDevice(VM::STDOUT, std::cout);
 
   // Execute the requested function
-  std::string        error;
-  std::string        console;
-  fetch::vm::Variant output;
-  bool const         success =
+  std::string error;
+  std::string console;
+  Variant     output;
+  bool const  success =
       vm->Execute(*executable, params.program().GetParam("func", "main"), error, output);
 
   if (!success)

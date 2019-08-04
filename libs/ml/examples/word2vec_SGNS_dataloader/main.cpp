@@ -17,20 +17,20 @@
 //------------------------------------------------------------------------------
 
 #include "file_loader.hpp"
-#include "model_saver.hpp"
-
 #include "math/clustering/knn.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
 #include "ml/dataloaders/word2vec_loaders/sgns_w2v_dataloader.hpp"
 #include "ml/graph.hpp"
 #include "ml/layers/skip_gram.hpp"
+#include "ml/ops/loss_functions.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
+#include "model_saver.hpp"
 
 #include <iostream>
-#include <ml/ops/loss_functions.hpp>
 #include <string>
+#include <utility>
 #include <vector>
 
 using namespace fetch::ml;

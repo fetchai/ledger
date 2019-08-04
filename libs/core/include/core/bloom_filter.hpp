@@ -198,7 +198,7 @@ public:
    */
   bool ReportFalsePositives(std::size_t);
 
-public:
+private:
   BitVector                         bits_;
   internal::HashSourceFactory const hash_source_factory_;
   std::size_t                       entry_count_{};

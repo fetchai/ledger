@@ -28,6 +28,8 @@
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "network/details/thread_pool.hpp"
 #include "storage/object_store.hpp"
+#include "telemetry/telemetry.hpp"
+#include "transaction_status_cache.hpp"
 
 #include <atomic>
 #include <condition_variable>
@@ -56,7 +58,7 @@ public:
 
   // Construction / Destruction
   ExecutionManager(std::size_t num_executors, uint32_t log2_num_lanes, StorageUnitPtr storage,
-                   ExecutorFactory const &factory);
+                   ExecutorFactory const &factory, TransactionStatusCache::ShrdPtr tx_status_cache);
 
   /// @name Execution Manager Interface
   /// @{
@@ -101,6 +103,8 @@ private:
   using AtomicState       = std::atomic<State>;
   using SyncCounters      = SynchronisedState<Counters>;
   using SyncedState       = SynchronisedState<State>;
+  using CounterPtr        = telemetry::CounterPtr;
+  using HistogramPtr      = telemetry::HistogramPtr;
 
   uint32_t const log2_num_lanes_;
 
@@ -131,6 +135,14 @@ private:
 
   ThreadPool thread_pool_;
   ThreadPtr  monitor_thread_;
+
+  TransactionStatusCache::ShrdPtr tx_status_cache_;  ///< Ref to the tx status cache
+  // Telemetry
+  CounterPtr   tx_executed_count_;
+  CounterPtr   slices_executed_count_;
+  CounterPtr   fees_settled_count_;
+  CounterPtr   blocks_completed_count_;
+  HistogramPtr execution_duration_;
 
   void MonitorThreadEntrypoint();
 

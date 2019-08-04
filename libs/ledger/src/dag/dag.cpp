@@ -16,8 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/byte_array.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/dag/dag.hpp"
 #include "ledger/dag/dag_node.hpp"
@@ -205,7 +204,7 @@ void DAG::AddWork(Work const &solution)
   // Create a new dag node containing this data
   DAGNodePtr new_node = std::make_shared<DAGNode>();
 
-  serializers::ByteArrayBuffer buffer;
+  serializers::MsgPackSerializer buffer;
   buffer << solution;
 
   new_node->type            = DAGNode::WORK;
@@ -456,7 +455,7 @@ bool DAG::GetWork(ConstByteArray const &hash, Work &work)
   {
     try
     {
-      serializers::ByteArrayBuffer buffer{node.contents};
+      serializers::MsgPackSerializer buffer{node.contents};
       buffer >> work;
 
       // add fields normally not serialised

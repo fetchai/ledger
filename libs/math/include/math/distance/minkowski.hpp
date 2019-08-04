@@ -22,8 +22,6 @@
 #include "math/meta/math_type_traits.hpp"
 #include "math/standard_functions/pow.hpp"
 
-#include <cmath>
-
 namespace fetch {
 namespace math {
 namespace distance {
@@ -42,6 +40,7 @@ inline meta::IfIsMathArray<ArrayType, typename ArrayType::Type> Minkowski(
     sum += Pow(Max(val, *b_it) - Min(val, *b_it), n);
     ++b_it;
   }
+
   return Pow(sum, DataType{1} / DataType{n});
 }
 

@@ -42,7 +42,7 @@ public:
   static constexpr std::size_t size_in_bytes = 8u;
 
   FNV();
-  ~FNV()           = default;
+  ~FNV() override  = default;
   FNV(FNV const &) = delete;
   FNV(FNV &&)      = delete;
 

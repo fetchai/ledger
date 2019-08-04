@@ -36,23 +36,23 @@ namespace muddle {
 
 struct DevNull : public network::AbstractConnection
 {
-  virtual void Send(network::message_type const &) override
+  void Send(network::message_type const &) override
   {}
 
-  virtual uint16_t Type() const override
+  uint16_t Type() const override
   {
     return 0xFFFF;
   }
 
-  virtual void Close() override
+  void Close() override
   {}
 
-  virtual bool Closed() const override
+  bool Closed() const override
   {
     return false;
   }
 
-  virtual bool is_alive() const override
+  bool is_alive() const override
   {
     return true;
   }
@@ -83,7 +83,7 @@ protected:
     , connection_(std::make_shared<fetch::muddle::DevNull>())
   {}
 
-  Dispatcher         dispatcher_;
+  Dispatcher         dispatcher_{NetworkId{"TEST"}, "addresss"};
   MuddleRegister     register_;
   Router             router_;
   PeerConnectionList peer_list_;

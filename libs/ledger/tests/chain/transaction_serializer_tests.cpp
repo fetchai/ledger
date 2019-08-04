@@ -26,8 +26,11 @@
 
 #include "gtest/gtest.h"
 
+#include <cstddef>
+#include <memory>
 #include <random>
 #include <string>
+#include <vector>
 
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::FromHex;
@@ -45,8 +48,6 @@ struct Identities
   char const *public_key;
   char const *private_key;
 };
-
-static constexpr char const *LOGGING_NAME = "TxSerialTests";
 
 static Identities const IDENTITIES[] = {
     {"532398dd883d1990f7dad3fde6a53a53347afc2680a04748f7f15ad03cadc4d4",
@@ -462,8 +463,6 @@ protected:
   void ValidateTransaction(Transaction const &tx, ConstByteArray const &serialised_data,
                            std::string const &expected_hex_payload)
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Serial TX: ", serialised_data.ToHex());
-
     // calculate  the expected payload size
     std::size_t const base_sig_serial_length = EXPECTED_SIGN_FINAL_LENGTH * tx.signatories().size();
     std::size_t const signature_serial_length = base_sig_serial_length;
@@ -486,8 +485,6 @@ protected:
       // extract the signature
       auto sig = serialised_data.SubArray(sig_offset + EXPECTED_SIGN_LEN_FIELD,
                                           EXPECTED_SIGNATURE_BYTE_LEN);
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Sig: ", sig.ToHex());
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Payload: ", payload_data.ToHex());
 
       ECDSAVerifier verifier{signatory.identity};
       EXPECT_TRUE(verifier.Verify(payload_data, sig));

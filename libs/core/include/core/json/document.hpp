@@ -72,9 +72,9 @@ public:
     variant_ = Variant::Object();
   }
 
-  JSONDocument(JSONDocument const &) = delete;
-  JSONDocument(JSONDocument &&)      = default;
-  ~JSONDocument()                    = default;
+  JSONDocument(JSONDocument const &)     = default;
+  JSONDocument(JSONDocument &&) noexcept = default;
+  ~JSONDocument()                        = default;
 
   Variant &operator[](std::size_t i)
   {

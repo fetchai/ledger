@@ -22,6 +22,7 @@
 #include "ledger/chaincode/chain_code_cache.hpp"
 #include "ledger/executor_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
+#include "telemetry/telemetry.hpp"
 
 #include <cstdint>
 #include <memory>
@@ -65,7 +66,6 @@ private:
   bool ExecuteTransactionContract(Result &result);
   bool ProcessTransfers(Result &result);
   void DeductFees(Result &result);
-  bool Cleanup();
 
   /// @name Resources
   /// @{
@@ -84,6 +84,14 @@ private:
   TransactionPtr          current_tx_{};
   CachedStorageAdapterPtr storage_cache_;
   /// @}
+
+  telemetry::HistogramPtr overall_duration_;
+  telemetry::HistogramPtr tx_retrieve_duration_;
+  telemetry::HistogramPtr validation_checks_duration_;
+  telemetry::HistogramPtr contract_execution_duration_;
+  telemetry::HistogramPtr transfers_duration_;
+  telemetry::HistogramPtr deduct_fees_duration_;
+  telemetry::HistogramPtr settle_fees_duration_;
 };
 
 }  // namespace ledger

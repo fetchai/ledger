@@ -53,13 +53,11 @@ TYPED_TEST(PReluTest, set_input_and_evaluate_test)  // Use the class as a subgra
 
 TYPED_TEST(PReluTest, ops_forward_test)  // Use the class as an Ops
 {
-  using VecTensorType = typename fetch::ml::Ops<TypeParam>::VecTensorType;
-
   fetch::ml::layers::PRelu<TypeParam> pr(50);
   TypeParam input_data(std::vector<typename TypeParam::SizeType>({5, 10, 2}));
 
-  TypeParam output(pr.ComputeOutputShape({input_data}));
-  pr.Forward(VecTensorType({input_data}), output);
+  TypeParam output(pr.ComputeOutputShape({std::make_shared<TypeParam>(input_data)}));
+  pr.Forward({std::make_shared<TypeParam>(input_data)}, output);
 
   ASSERT_EQ(output.shape().size(), 3);
   ASSERT_EQ(output.shape()[0], 5);
@@ -72,11 +70,12 @@ TYPED_TEST(PReluTest, ops_backward_test)  // Use the class as an Ops
 {
   fetch::ml::layers::PRelu<TypeParam> fc(50);
   TypeParam input_data(std::vector<typename TypeParam::SizeType>({5, 10, 2}));
-  TypeParam output(fc.ComputeOutputShape({input_data}));
-  fc.Forward({input_data}, output);
+  TypeParam output(fc.ComputeOutputShape({std::make_shared<TypeParam>(input_data)}));
+  fc.Forward({std::make_shared<TypeParam>(input_data)}, output);
   TypeParam error_signal(std::vector<typename TypeParam::SizeType>({50, 2}));
 
-  std::vector<TypeParam> bp_err = fc.Backward({input_data}, error_signal);
+  std::vector<TypeParam> bp_err =
+      fc.Backward({std::make_shared<TypeParam>(input_data)}, error_signal);
   ASSERT_EQ(bp_err.size(), 1);
   ASSERT_EQ(bp_err[0].shape().size(), 3);
   ASSERT_EQ(bp_err[0].shape()[0], 5);
@@ -96,7 +95,7 @@ TYPED_TEST(PReluTest, node_forward_test)  // Use the class as a Node
   fetch::ml::Node<TypeParam, fetch::ml::layers::PRelu<TypeParam>> fc("PRelu", 50u, "PRelu");
   fc.AddInput(placeholder);
 
-  TypeParam prediction = fc.Evaluate(true);
+  TypeParam prediction = *fc.Evaluate(true);
 
   ASSERT_EQ(prediction.shape().size(), 3);
   ASSERT_EQ(prediction.shape()[0], 5);
@@ -113,7 +112,7 @@ TYPED_TEST(PReluTest, node_backward_test)  // Use the class as a Node
 
   fetch::ml::Node<TypeParam, fetch::ml::layers::PRelu<TypeParam>> fc("PRelu", 50u, "PRelu");
   fc.AddInput(placeholder);
-  TypeParam prediction = fc.Evaluate(true);
+  TypeParam prediction = *fc.Evaluate(true);
 
   TypeParam error_signal(std::vector<typename TypeParam::SizeType>({5, 10, 2}));
   auto      bp_err = fc.BackPropagateSignal(error_signal);

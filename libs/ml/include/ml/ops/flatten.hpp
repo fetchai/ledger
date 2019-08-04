@@ -20,6 +20,10 @@
 #include "math/matrix_operations.hpp"
 #include "ml/ops/ops.hpp"
 
+#include <cassert>
+#include <memory>
+#include <vector>
+
 namespace fetch {
 namespace ml {
 namespace ops {
@@ -33,22 +37,22 @@ public:
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
-  Flatten()          = default;
-  virtual ~Flatten() = default;
+  Flatten()           = default;
+  ~Flatten() override = default;
 
-  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
+  void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(inputs.size() == 1);
     assert(output.shape() == ComputeOutputShape(inputs));
-    input_shape_ = inputs.front().get().shape();
+    input_shape_ = inputs.front()->shape();
 
     assert(output.shape().at(output.shape().size() - 1) ==
-           inputs.front().get().shape().at(inputs.front().get().shape().size() - 1));
-    output.Assign(inputs.front().get().View());
+           inputs.front()->shape().at(inputs.front()->shape().size() - 1));
+    output.Assign(inputs.front()->View());
   }
 
-  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                          ArrayType const &    error_signal)
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override
   {
     FETCH_UNUSED(inputs);
     assert(inputs.size() == 1);
@@ -61,14 +65,13 @@ public:
     return {ret};
   }
 
-  virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    SizeType batch_size =
-        inputs.at(0).get().shape().at(inputs.at(0).get().shape().size() - SizeType{1});
-    SizeType data_size = 1;
-    for (SizeType i{0}; i < inputs.at(0).get().shape().size() - SizeType{1}; i++)
+    SizeType batch_size = inputs.at(0)->shape().at(inputs.at(0)->shape().size() - SizeType{1});
+    SizeType data_size  = 1;
+    for (SizeType i{0}; i < inputs.at(0)->shape().size() - SizeType{1}; i++)
     {
-      data_size *= inputs.at(0).get().shape().at(i);
+      data_size *= inputs.at(0)->shape().at(i);
     }
 
     return {data_size, batch_size};

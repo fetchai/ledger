@@ -44,7 +44,7 @@ public:
 
   /// @name Measurement Interface
   /// @{
-  void ToStream(std::ostream &stream, StreamMode mode) const override;
+  void ToStream(OutputStream &stream) const override;
   /// @}
 
   // Operators

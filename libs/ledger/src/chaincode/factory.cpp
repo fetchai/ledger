@@ -16,18 +16,19 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chaincode/factory.hpp"
-
 #include "core/logger.hpp"
-#include "core/serializers/byte_array.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "ledger/chaincode/dummy_contract.hpp"
+#include "ledger/chaincode/factory.hpp"
 #include "ledger/chaincode/smart_contract.hpp"
 #include "ledger/chaincode/smart_contract_manager.hpp"
 #include "ledger/chaincode/token_contract.hpp"
 
+#include <functional>
 #include <stdexcept>
+#include <string>
 #include <unordered_map>
+#include <utility>
 
 static constexpr char const *LOGGING_NAME = "ChainCodeFactory";
 
@@ -90,7 +91,7 @@ ChainCodeFactory::ContractPtr ChainCodeFactory::Create(Identifier const &contrac
       ConstByteArray contract_source;
 
       // deserialise the contract source
-      serializers::ByteArrayBuffer adapter{result.document};
+      serializers::MsgPackSerializer adapter{result.document};
       adapter >> contract_source;
 
       // attempt to construct the smart contract in question

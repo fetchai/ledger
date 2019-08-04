@@ -16,17 +16,16 @@
 //
 //------------------------------------------------------------------------------
 
-#include <iostream>
-
 #include "core/random/lfg.hpp"
-#include "core/serializers/byte_array.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
+#include "core/serializers/base_types.hpp"
 #include "core/serializers/counter.hpp"
-#include "core/serializers/stl_types.hpp"
-
+#include "core/serializers/main_serializer.hpp"
 #include "network/service/server.hpp"
 #include "network/service/service_client.hpp"
+
+#include <algorithm>
 #include <chrono>
+#include <iostream>
 #include <vector>
 
 using namespace fetch::serializers;
@@ -36,6 +35,7 @@ using namespace std::chrono;
 
 fetch::random::LaggedFibonacciGenerator<> lfg;
 ByteArray                                 TestString;
+
 enum
 {
   GET     = 1,
@@ -104,12 +104,12 @@ void TestSerializationSpeed()
     //    if(i % 3) c.push_back(entry);
   }
 
-  ByteArrayBuffer buffer;
+  MsgPackSerializer buffer;
 
   high_resolution_clock::time_point t1 = high_resolution_clock::now();
   std::sort(a.begin(), a.end());
 
-  SizeCounter<ByteArrayBuffer> counter;
+  SizeCounter counter;
 
   counter << a;
   buffer.Reserve(counter.size());

@@ -29,6 +29,7 @@
 #include "math/linalg/blas/gemm_tn_vector.hpp"
 #include "math/linalg/prototype.hpp"
 #include "math/meta/math_type_traits.hpp"
+#include "math/tensor_reduce.hpp"
 
 #include <cassert>
 #include <numeric>
@@ -319,7 +320,7 @@ void Max(ArrayType const &array, typename ArrayType::SizeType const &axis, Array
       for (SizeType n{1}; n < axis_length; ++n)
       {
         auto cur_slice    = array.Slice(n, axis);
-        auto cur_slice_it = cur_slice.begin();
+        auto cur_slice_it = cur_slice.cbegin();
         auto rit          = ret.begin();
 
         // check every element in the n-1 dimensional return
@@ -437,7 +438,7 @@ void Min(ArrayType const &array, typename ArrayType::SizeType const &axis, Array
       for (SizeType n{1}; n < axis_length; ++n)
       {
         auto cur_slice    = array.Slice(n, axis);
-        auto cur_slice_it = cur_slice.begin();
+        auto cur_slice_it = cur_slice.cbegin();
         auto rit          = ret.begin();
 
         // check every element in the n-1 dimensional return
@@ -513,70 +514,86 @@ meta::IfIsMathArray<ArrayType, typename ArrayType::Type> Sum(ArrayType const &ar
   return ret;
 }
 
+/**
+ * Sums cells of Tensor along given axis
+ * @tparam ArrayType
+ * @param obj1
+ * @param axis Axis along which sum is computed
+ * @param ret Output Tensor of shape of input with size 1 along given axis
+ */
 template <typename ArrayType>
 void ReduceSum(ArrayType const &obj1, SizeType axis, ArrayType &ret)
 {
-  assert((axis == 0) || (axis == 1));
-  assert(obj1.shape().size() == 2);
 
-  SizeVector access_idx{0, 0};
-  if (axis == 0)
-  {
-    assert(ret.shape()[0] == 1);
-    assert(ret.shape()[1] == obj1.shape()[1]);
+  using DataType = typename ArrayType::Type;
+  ret.Fill(static_cast<DataType>(0));
 
-    auto it  = obj1.cbegin();
-    auto rit = ret.begin();
-    while (rit.is_valid())
-    {
-      *rit = typename ArrayType::Type{0};
-      for (SizeType j{0}; j < obj1.shape().at(0); ++j)
-      {
-        *rit += *it;
-        ++it;
-      }
-      ++rit;
-    }
-  }
-  else
-  {
-    assert(ret.shape()[0] == obj1.shape()[0]);
-    assert(ret.shape()[1] == 1);
-
-    auto rit = ret.begin();
-    for (SizeType i = 0; i < ret.size(); ++i)
-    {
-      *rit = typename ArrayType::Type{0};
-      for (SizeType j = 0; j < obj1.shape().at(1); ++j)
-      {
-        // Todo(issue 1015) Replace with transposed iterator
-        *rit += obj1(i, j);
-      }
-      ++rit;
-    }
-  }
+  Reduce(axis, [](const DataType &x, DataType &y) { y += x; }, obj1, ret);
 }
 
+/**
+ * Sums cells of Tensor along given axis
+ * @tparam ArrayType
+ * @param obj1 Input Tensor
+ * @param axis Axis along which sum is computed
+ * @return  Output Tensor of shape of input with size 1 along given axis
+ */
 template <typename ArrayType>
 ArrayType ReduceSum(ArrayType const &obj1, SizeType axis)
 {
-  assert((axis == 0) || (axis == 1));
-  if (axis == 0)
-  {
-    SizeVector new_shape{1, obj1.shape()[1]};
-    ArrayType  ret{new_shape};
-    ReduceSum(obj1, axis, ret);
-    return ret;
-  }
-  else
-  {
-    SizeVector new_shape{obj1.shape()[0], 1};
-    ArrayType  ret{new_shape};
-    ReduceSum(obj1, axis, ret);
-    return ret;
-  }
+  SizeVector new_shape = obj1.shape();
+  new_shape.at(axis)   = 1;
+  ArrayType ret{new_shape};
+  ReduceSum(obj1, axis, ret);
+  return ret;
 }
 
+/**
+ * Sums cells of Tensor along multiple given axes
+ * @tparam ArrayType
+ * @param obj1 Input Tensor
+ * @param axes Vector of axes along which sum is computed
+ * @param ret Output Tensor of shape of input with size 1 along given axes
+ */
+template <typename ArrayType>
+void ReduceSum(ArrayType const &obj1, std::vector<SizeType> axes, ArrayType &ret)
+{
+
+  using DataType = typename ArrayType::Type;
+  ret.Fill(static_cast<DataType>(0));
+
+  Reduce(axes, [](const DataType &x, DataType &y) { y += x; }, obj1, ret);
+}
+
+/**
+ * Sums cells of Tensor along multiple given axes
+ * @tparam ArrayType
+ * @param obj1 Input Tensor
+ * @param axes Vector of axes along which sum is computed
+ * @return Output Tensor of shape of input with size 1 along given axes
+ */
+template <typename ArrayType>
+ArrayType ReduceSum(ArrayType const &obj1, std::vector<SizeType> axes)
+{
+  SizeVector new_shape = obj1.shape();
+
+  for (SizeType i{0}; i < axes.size(); i++)
+  {
+    new_shape.at(axes.at(i)) = 1;
+  }
+
+  ArrayType ret{new_shape};
+  ReduceSum(obj1, axes, ret);
+  return ret;
+}
+
+/**
+ * Average cells of Tensor along given axis
+ * @tparam ArrayType
+ * @param obj1 Input Tensor
+ * @param axis Axis along which mean is computed
+ * @param ret Output Tensor of shape of input with size 1 along given axis
+ */
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> ReduceMean(ArrayType const &                   obj1,
                                                 typename ArrayType::SizeType const &axis,
@@ -584,22 +601,74 @@ meta::IfIsMathArray<ArrayType, void> ReduceMean(ArrayType const &               
 {
   using Type = typename ArrayType::Type;
 
-  assert(axis == 0 || axis == 1);
-  Type n = static_cast<Type>(obj1.shape().at(1 - axis));
+  Type n = static_cast<Type>(obj1.shape().at(axis));
   ReduceSum(obj1, axis, ret);
   Divide(ret, n, ret);
 }
 
+/**
+ * Average cells of Tensor along given axis
+ * @tparam ArrayType
+ * @param obj1 Input Tensor
+ * @param axis Axis along which mean is computed
+ * @return Output Tensor of shape of input with size 1 along given axis
+ */
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, ArrayType> ReduceMean(ArrayType const &                   obj1,
                                                      typename ArrayType::SizeType const &axis)
 {
   using Type = typename ArrayType::Type;
 
-  assert(axis == 0 || axis == 1);
-  Type n   = static_cast<Type>(obj1.shape().at(1 - axis));
+  Type n   = static_cast<Type>(obj1.shape().at(axis));
   Type ret = ReduceSum(obj1, axis);
   Divide(ret, n, ret);
+  return ret;
+}
+
+/**
+ * Average cells of Tensor along multiple given axes
+ * @tparam ArrayType
+ * @param obj1 Input Tensor
+ * @param axes Vector of axes along which mean is computed
+ * @param ret Output Tensor of shape of input with size 1 along given axes
+ */
+template <typename ArrayType>
+meta::IfIsMathArray<ArrayType, void> ReduceMean(ArrayType const &            obj1,
+                                                std::vector<SizeType> const &axes, ArrayType &ret)
+{
+  using Type = typename ArrayType::Type;
+
+  SizeType n{1};
+  for (SizeType i{0}; i < axes.size(); i++)
+  {
+    n *= obj1.shape().at(axes.at(i));
+  }
+
+  ReduceSum(obj1, axes, ret);
+  Divide(ret, static_cast<Type>(n), ret);
+}
+
+/**
+ * Average cells of Tensor along multiple given axes
+ * @tparam ArrayType
+ * @param obj1 Input Tensor
+ * @param axes Vector of axes along which mean is computed
+ * @return Output Tensor of shape of input with size 1 along given axes
+ */
+template <typename ArrayType>
+meta::IfIsMathArray<ArrayType, ArrayType> ReduceMean(ArrayType const &            obj1,
+                                                     std::vector<SizeType> const &axes)
+{
+  using Type = typename ArrayType::Type;
+
+  SizeType n{1};
+  for (SizeType i{0}; i < axes.size(); i++)
+  {
+    n *= obj1.shape().at(axes.at(i));
+  }
+
+  Type ret = ReduceSum(obj1, axes);
+  Divide(ret, static_cast<Type>(n), ret);
   return ret;
 }
 
@@ -709,7 +778,7 @@ void PeakToPeak(ArrayType const &array, typename ArrayType::SizeType const &axis
       for (SizeType n{1}; n < axis_length; ++n)
       {
         auto cur_slice    = array.Slice(n, axis);
-        auto cur_slice_it = cur_slice.begin();
+        auto cur_slice_it = cur_slice.cbegin();
         auto rit          = ret.begin();
         auto mit          = min.begin();
 
@@ -741,6 +810,79 @@ ArrayType PeakToPeak(ArrayType const &array, typename ArrayType::SizeType const 
 {
   ArrayType ret(Divide(Product(array.shape()), array.shape().at(axis)));
   PeakToPeak(array, axis, ret);
+  return ret;
+}
+
+/**
+ * Computes maximums of cells of Tensor along multiple given axis
+ * @tparam ArrayType
+ * @param obj1 Input Tensor
+ * @param axis Axis along which max is computed
+ * @param ret Output Tensor of shape of input with size 1 along given axis
+ */
+template <typename ArrayType>
+void ReduceMax(ArrayType const &obj1, SizeType axis, ArrayType &ret)
+{
+
+  using DataType = typename ArrayType::Type;
+  ret.Fill(std::numeric_limits<DataType>::min());
+
+  Reduce(axis, [](const DataType &x, DataType &y) { y = (x < y) ? y : x; }, obj1, ret);
+}
+
+/**
+ * Computes maximums of cells of Tensor along multiple given axis
+ * @tparam ArrayType
+ * @param obj1 Input Tensor
+ * @param axis Axis along which max is computed
+ * @return Output Tensor of shape of input with size 1 along given axis
+ */
+template <typename ArrayType>
+ArrayType ReduceMax(ArrayType const &obj1, SizeType axis)
+{
+  SizeVector new_shape = obj1.shape();
+  new_shape.at(axis)   = 1;
+  ArrayType ret{new_shape};
+  ReduceMax(obj1, axis, ret);
+  return ret;
+}
+
+/**
+ * Computes maximums of cells of Tensor along multiple given axis
+ * @tparam ArrayType
+ * @param obj1 Input Tensor
+ * @param axes Vector of axes along which max is computed
+ * @param ret Output Tensor of shape of input with size 1 along given axes
+ */
+template <typename ArrayType>
+void ReduceMax(ArrayType const &obj1, std::vector<SizeType> axes, ArrayType &ret)
+{
+
+  using DataType = typename ArrayType::Type;
+  ret.Fill(std::numeric_limits<DataType>::min());
+
+  Reduce(axes, [](const DataType &x, DataType &y) { y = (x < y) ? y : x; }, obj1, ret);
+}
+
+/**
+ * Computes maximums of cells of Tensor along multiple given axis
+ * @tparam ArrayType
+ * @param obj1
+ * @param axes Vector of axes along which max is computed
+ * @return Output Tensor of shape of input with size 1 along given axes
+ */
+template <typename ArrayType>
+ArrayType ReduceMax(ArrayType const &obj1, std::vector<SizeType> axes)
+{
+  SizeVector new_shape = obj1.shape();
+
+  for (SizeType i{0}; i < axes.size(); i++)
+  {
+    new_shape.at(axes.at(i)) = 1;
+  }
+
+  ArrayType ret{new_shape};
+  ReduceMax(obj1, axes, ret);
   return ret;
 }
 
@@ -823,7 +965,7 @@ meta::IfIsMathArray<ArrayType, void> ArgMax(ArrayType const &array, ArrayType &r
         auto cur_slice = array.Slice(n, axis);
 
         auto max_slice_it = max_slice.begin();
-        auto cur_slice_it = cur_slice.begin();
+        auto cur_slice_it = cur_slice.cbegin();
         auto ret_it       = ret.begin();
 
         // check every element in the n-1 dimensional return

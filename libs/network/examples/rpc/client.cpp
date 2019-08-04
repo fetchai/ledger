@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "core/logger.hpp"
-#include "core/serializers/byte_array.hpp"
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
@@ -67,11 +66,12 @@ int main()
     std::exit(1);
   }
 
-  auto prom = client->CallSpecificAddress(target_address, MYPROTO, GREET, "Fetch");
+  auto prom = client->CallSpecificAddress(target_address, MYPROTO, GREET, std::string("Fetch"));
   auto res  = prom->As<std::string>();
   std::cout << res << std::endl;
 
-  auto px = client->CallSpecificAddress(target_address, MYPROTO, SLOWFUNCTION, "Greet");
+  auto px =
+      client->CallSpecificAddress(target_address, MYPROTO, SLOWFUNCTION, std::string("Greet"));
 
   // Promises
   auto p1 = client->CallSpecificAddress(target_address, MYPROTO, SLOWFUNCTION, 2, 7);

@@ -16,13 +16,16 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/service/server.hpp"
-#include "service_consts.hpp"
-#include <iostream>
-
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
+#include "network/service/server.hpp"
+#include "service_consts.hpp"
+
+#include <chrono>
+#include <iostream>
+#include <memory>
+#include <thread>
 
 using namespace fetch::service;
 using namespace fetch::byte_array;

@@ -24,7 +24,6 @@
 
 #include "core/assert.hpp"
 #include "core/mutex.hpp"
-#include "core/serializers/byte_array.hpp"
 #include "network/management/abstract_connection.hpp"
 #include "network/service/callable_class_member.hpp"
 #include "network/service/error_codes.hpp"

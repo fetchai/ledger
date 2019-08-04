@@ -136,7 +136,7 @@ TYPED_TEST(OptimisersTest, sgd_optimiser_training)
   TypeParam gt;
   PrepareTestDataAndLabels1D(data, gt);
 
-  // Initialize Optimiser
+  // Initialise Optimiser
   fetch::ml::optimisers::SGDOptimiser<TypeParam> optimiser(g, {input_name}, label_name, output_name,
                                                            learning_rate);
 
@@ -182,7 +182,7 @@ TYPED_TEST(OptimisersTest, sgd_optimiser_training_2D)
   TypeParam gt;
   PrepareTestDataAndLabels2D(data, gt);
 
-  // Initialize Optimiser
+  // Initialise Optimiser
   fetch::ml::optimisers::SGDOptimiser<TypeParam> optimiser(g, {input_name}, label_name, output_name,
                                                            learning_rate);
 
@@ -228,7 +228,7 @@ TYPED_TEST(OptimisersTest, momentum_optimiser_training)
   TypeParam gt;
   PrepareTestDataAndLabels1D(data, gt);
 
-  // Initialize Optimiser
+  // Initialise Optimiser
   fetch::ml::optimisers::MomentumOptimiser<TypeParam> optimiser(g, {input_name}, label_name,
                                                                 output_name, learning_rate);
 
@@ -274,7 +274,7 @@ TYPED_TEST(OptimisersTest, momentum_optimiser_training_2D)
   TypeParam gt;
   PrepareTestDataAndLabels2D(data, gt);
 
-  // Initialize Optimiser
+  // Initialise Optimiser
   fetch::ml::optimisers::MomentumOptimiser<TypeParam> optimiser(g, {input_name}, label_name,
                                                                 output_name, learning_rate);
 
@@ -320,7 +320,7 @@ TYPED_TEST(OptimisersTest, adagrad_optimiser_training)
   TypeParam gt;
   PrepareTestDataAndLabels1D(data, gt);
 
-  // Initialize Optimiser
+  // Initialise Optimiser
   fetch::ml::optimisers::AdaGradOptimiser<TypeParam> optimiser(g, {input_name}, label_name,
                                                                output_name, learning_rate);
 
@@ -366,7 +366,7 @@ TYPED_TEST(OptimisersTest, adagrad_optimiser_training_2D)
   TypeParam gt;
   PrepareTestDataAndLabels2D(data, gt);
 
-  // Initialize Optimiser
+  // Initialise Optimiser
   fetch::ml::optimisers::AdaGradOptimiser<TypeParam> optimiser(g, {input_name}, label_name,
                                                                output_name, learning_rate);
 
@@ -412,7 +412,7 @@ TYPED_TEST(OptimisersTest, rmsprop_optimiser_training)
   TypeParam gt;
   PrepareTestDataAndLabels1D(data, gt);
 
-  // Initialize Optimiser
+  // Initialise Optimiser
   fetch::ml::optimisers::RMSPropOptimiser<TypeParam> optimiser(g, {input_name}, label_name,
                                                                output_name, learning_rate);
 
@@ -458,7 +458,7 @@ TYPED_TEST(OptimisersTest, rmsprop_optimiser_training_2D)
   TypeParam gt;
   PrepareTestDataAndLabels2D(data, gt);
 
-  // Initialize Optimiser
+  // Initialise Optimiser
   fetch::ml::optimisers::RMSPropOptimiser<TypeParam> optimiser(g, {input_name}, label_name,
                                                                output_name, learning_rate);
 
@@ -504,7 +504,7 @@ TYPED_TEST(OptimisersTest, adam_optimiser_training)
   TypeParam gt;
   PrepareTestDataAndLabels1D(data, gt);
 
-  // Initialize Optimiser
+  // Initialise Optimiser
   fetch::ml::optimisers::AdamOptimiser<TypeParam> optimiser(g, {input_name}, label_name,
                                                             output_name, learning_rate);
 
@@ -549,7 +549,7 @@ TYPED_TEST(OptimisersTest, adam_optimiser_training_2D)
   TypeParam gt;
   PrepareTestDataAndLabels2D(data, gt);
 
-  // Initialize Optimiser
+  // Initialise Optimiser
   fetch::ml::optimisers::AdamOptimiser<TypeParam> optimiser(g, {input_name}, label_name,
                                                             output_name, learning_rate);
 
@@ -595,7 +595,7 @@ TYPED_TEST(OptimisersTest, adam_optimiser_minibatch_training)
   TypeParam gt;
   PrepareTestDataAndLabels1D(data, gt);
 
-  // Initialize Optimiser
+  // Initialise Optimiser
   fetch::ml::optimisers::AdamOptimiser<TypeParam> optimiser(g, {input_name}, label_name,
                                                             output_name, learning_rate);
 

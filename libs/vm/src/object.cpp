@@ -254,13 +254,13 @@ void Object::InplaceRightDivide(Ptr<Object> const & /* lhso*/, Variant const & /
   RuntimeError(std::string(__func__) + "operator not implemented");
 }
 
-bool Object::SerializeTo(ByteArrayBuffer & /*buffer*/)
+bool Object::SerializeTo(MsgPackSerializer & /*buffer*/)
 {
   vm_->RuntimeError("Serializer for " + GetUniqueId() + " is not defined.");
   return false;
 }
 
-bool Object::DeserializeFrom(ByteArrayBuffer & /*buffer*/)
+bool Object::DeserializeFrom(MsgPackSerializer & /*buffer*/)
 {
   vm_->RuntimeError("Deserializer for " + GetUniqueId() + " is not defined.");
   return false;

@@ -240,9 +240,10 @@ Module::Module()
 
   GetClassInterface<Address>()
       .CreateSerializeDefaultConstructor<>()
-      //      .CreateConstructor<>()
       .CreateConstructor<Ptr<String>>()
       .CreateMemberFunction("signedTx", &Address::HasSignedTx);
+
+  CreateFreeFunction("toString", &Address::ToString);
 
   GetClassInterface<IState>()
       .CreateConstructor<Ptr<String>>()

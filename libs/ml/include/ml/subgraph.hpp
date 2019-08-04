@@ -38,7 +38,7 @@ class SubGraph : public Graph<T>, public Ops<T>
 {
 public:
   using ArrayType     = T;
-  using VecTensorType = std::vector<std::reference_wrapper<ArrayType const>>;
+  using VecTensorType = std::vector<std::shared_ptr<ArrayType const>>;
 
   virtual void                   Forward(VecTensorType const &inputs, ArrayType &output);
   virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
@@ -69,9 +69,9 @@ void SubGraph<T>::Forward(VecTensorType const &inputs, ArrayType &output)
   assert(inputs.size() == this->input_nodes_.size());
   for (uint64_t i(0); i < inputs.size(); ++i)
   {
-    this->SetInput(input_nodes_[i], inputs.at(i));
+    this->SetInput(input_nodes_[i], *(inputs.at(i)));
   }
-  output = output_node_->Evaluate(this->is_training_);
+  output = *(output_node_->Evaluate(this->is_training_));
 }
 
 template <typename T>

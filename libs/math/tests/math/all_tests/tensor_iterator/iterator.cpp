@@ -21,6 +21,10 @@
 
 #include "gtest/gtest.h"
 
+#include <cassert>
+#include <iterator>
+#include <vector>
+
 using namespace fetch::math;
 
 TEST(tensor_iterator, reshape_iterator_test)
@@ -43,7 +47,6 @@ TEST(tensor_iterator, reshape_iterator_test)
 
 TEST(tensor_iterator, simple_iterator_permute_test)
 {
-
   // set up an initial array
   Tensor<double> array{Tensor<double>::Arange(0., 77., 1.)};
   array.Reshape({7, 11});
@@ -86,7 +89,6 @@ TEST(tensor_iterator, simple_iterator_permute_test)
 
 TEST(tensor_iterator, iterator_4dim_copy_test)
 {
-
   // set up an initial array
   Tensor<double> array{Tensor<double>::Arange(0., 1008., 1.)};
   array.Reshape({4, 6, 7, 6});
@@ -99,7 +101,6 @@ TEST(tensor_iterator, iterator_4dim_copy_test)
 
   while (it2)
   {
-
     assert(bool(it));
     assert(bool(it2));
 
@@ -126,7 +127,6 @@ TEST(tensor_iterator, iterator_4dim_copy_test)
 
 TEST(Tensor, iterator_4dim_permute_test)
 {
-
   // set up an initial array
   Tensor<double> array{Tensor<double>::Arange(0., 1008., 1.)};
   array.Reshape({4, 6, 7, 6});
@@ -140,7 +140,6 @@ TEST(Tensor, iterator_4dim_permute_test)
   it.PermuteAxes(1, 3);
   while (it2)
   {
-
     assert(bool(it));
     assert(bool(it2));
 
@@ -201,6 +200,7 @@ TEST(Tensor, simple_iterator_transpose_test)
     ++it_arr;
     ++it_ret;
   }
+
   for (SizeType i = 0; i < array.shape()[0]; ++i)
   {
     for (SizeType j = 0; j < array.shape()[1]; ++j)

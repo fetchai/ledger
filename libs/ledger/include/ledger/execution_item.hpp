@@ -36,6 +36,7 @@ public:
   using BlockIndex = ExecutorInterface::BlockIndex;
   using SliceIndex = ExecutorInterface::SliceIndex;
   using Status     = ExecutorInterface::Status;
+  using Result     = ExecutorInterface::Result;
 
   static constexpr char const *LOGGING_NAME = "ExecutionItem";
 
@@ -49,8 +50,8 @@ public:
   /// @{
   Digest const &   digest() const;
   BitVector const &shards() const;
-  Status           status() const;
-  uint64_t         fee() const;
+  Result const &   result() const;
+  TokenAmount      fee() const;
   /// @}
 
   void Execute(ExecutorInterface &executor);
@@ -60,15 +61,14 @@ public:
   ExecutionItem &operator=(ExecutionItem &&) = delete;
 
 private:
-  using AtomicStatus = std::atomic<Status>;
-  using AtomicFee    = std::atomic<uint64_t>;
+  using AtomicFee = std::atomic<uint64_t>;
 
-  Digest       digest_;
-  BlockIndex   block_{0};
-  SliceIndex   slice_{0};
-  BitVector    shards_;
-  AtomicStatus status_{Status::NOT_RUN};
-  AtomicFee    fee_{0};
+  Digest      digest_;
+  BlockIndex  block_{0};
+  SliceIndex  slice_{0};
+  BitVector   shards_;
+  Result      result_;
+  TokenAmount fee_{0};
 };
 
 inline ExecutionItem::ExecutionItem(Digest digest, BlockIndex block, SliceIndex slice,
@@ -89,9 +89,9 @@ inline BitVector const &ExecutionItem::shards() const
   return shards_;
 }
 
-inline ExecutionItem::Status ExecutionItem::status() const
+inline ExecutionItem::Result const &ExecutionItem::result() const
 {
-  return status_;
+  return result_;
 }
 
 inline uint64_t ExecutionItem::fee() const
@@ -103,17 +103,14 @@ inline void ExecutionItem::Execute(ExecutorInterface &executor)
 {
   try
   {
-    auto const result = executor.Execute(digest_, block_, slice_, shards_);
-
-    // update the internal results
-    status_ = result.status;
-    fee_ += result.fee;
+    result_ = executor.Execute(digest_, block_, slice_, shards_);
+    fee_ += result_.fee;
   }
   catch (std::exception const &ex)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Exception thrown while executing transaction: ", ex.what());
 
-    status_ = Status::RESOURCE_FAILURE;
+    result_ = {ContractExecutionStatus::RESOURCE_FAILURE};
   }
 }
 
