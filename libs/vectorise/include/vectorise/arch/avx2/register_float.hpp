@@ -17,10 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/arch/avx2/info.hpp"
-#include "vectorise/info.hpp"
-#include "vectorise/register.hpp"
-
 #include <limits>
 #include <cmath>
 #include <cstddef>
@@ -34,6 +30,8 @@
 
 namespace fetch {
 namespace vectorise {
+
+ADD_REGISTER_SIZE(float, 256);
 
 template <>
 class VectorRegister<float, 128>
@@ -402,7 +400,7 @@ inline bool all_equal_to(VectorRegister<float, 256> const &x,
                           VectorRegister<float, 256> const &y)
 {
   __m256i r = _mm256_castps_si256((x == y).data());
-  uint32_t mask = _mm256_movemask_epi8(r);
+  uint32_t mask = static_cast<uint32_t>(_mm256_movemask_epi8(r));
   return mask == 0xFFFFFFFFUL;
 }
 
