@@ -17,11 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/arch/avx2/info.hpp"
-#include "vectorise/arch/avx2/register_int32.hpp"
-#include "vectorise/arch/avx2/register_int64.hpp"
-#include "vectorise/arch/avx2/register_double.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+#include "vectorise/arch/avx2/register_int32.hpp"
 
 #include <cmath>
 #include <cstddef>
@@ -34,6 +31,8 @@
 
 namespace fetch {
 namespace vectorise {
+
+ADD_REGISTER_SIZE(fetch::fixed_point::fp32_t, 256);
 
 template <>
 class VectorRegister<fixed_point::fp32_t, 128>
@@ -439,7 +438,7 @@ inline bool all_equal_to(VectorRegister<fixed_point::fp32_t, 256> const &x,
                           VectorRegister<fixed_point::fp32_t, 256> const &y)
 {
   __m256i r = (x == y).data();
-  uint32_t mask = _mm256_movemask_epi8(r);
+  uint32_t mask = static_cast<uint32_t>(_mm256_movemask_epi8(r));
   return mask == 0xFFFFFFFFUL;
 }
 
