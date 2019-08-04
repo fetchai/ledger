@@ -34,7 +34,7 @@ fetch::meta::IsIterableTwoArg<T1, T2, void> PolyfillInlineAdd(T1 &ret, T2 const 
   // To vectorise this operation, we add column by column
   // as the framework garantuees continous aligned segments
   // of memory along the columns
-  memory::TrivialRange range(0, std::size_t(ret.height()));
+  memory::Range range(0, std::size_t(ret.height()));
   for (uint64_t j = 0; j < ret.width(); ++j)
   {
     auto ret_slice = ret.data().slice(ret.padded_height() * j, ret.padded_height());
@@ -53,7 +53,7 @@ fetch::meta::IsIterableTwoArg<T1, T2, void> Assign(T1 ret, T2 const &other)
   using Type               = typename T1::Type;
   using VectorRegisterType = typename TensorView<Type>::VectorRegisterType;
 
-  memory::TrivialRange range(0, std::size_t(ret.height()));
+  memory::Range range(0, std::size_t(ret.height()));
 
   // To vectorise this operation, we assign column by column
   // as the framework guarantees continuous aligned segments

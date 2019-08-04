@@ -54,7 +54,7 @@ void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
         VectorRegisterType fetch_vec_zero(static_cast<Type>(0.0));
 
         auto                 ret_slice = c.data().slice(c.padded_height() * j, c.height());
-        memory::TrivialRange range(std::size_t(0), std::size_t(c.height()));
+        memory::Range range(std::size_t(0), std::size_t(c.height()));
         ret_slice.in_parallel().Apply(
             range, [fetch_vec_zero](VectorRegisterType &vw_c_j) { vw_c_j = fetch_vec_zero; });
       }
@@ -68,7 +68,7 @@ void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
 
         auto ret_slice = c.data().slice(c.padded_height() * j, c.height());
         auto slice_c_j = c.data().slice(c.padded_height() * std::size_t(j), c.padded_height());
-        memory::TrivialRange range(std::size_t(0), std::size_t(c.height()));
+        memory::Range range(std::size_t(0), std::size_t(c.height()));
         ret_slice.in_parallel().Apply(
             range,
             [fetch_vec_beta](VectorRegisterType const &vr_c_j, VectorRegisterType &vw_c_j) {

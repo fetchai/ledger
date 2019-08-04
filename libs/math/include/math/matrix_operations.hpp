@@ -52,7 +52,7 @@ inline void Min(ArrayType const &array, typename ArrayType::Type &ret)
   using VectorRegisterType = typename ArrayType::VectorRegisterType;
 
   ret = array.data().in_parallel().Reduce(
-      memory::TrivialRange(0, array.size()),
+      memory::Range(0, array.size()),
       [](VectorRegisterType const &a, VectorRegisterType const &b) { return min(a, b); });
 }
 
@@ -70,7 +70,7 @@ void Product(ArrayType const &obj1, typename ArrayType::Type &ret)
   if (obj1.padding() == 1)
   {
     ret =
-        obj1.data().in_parallel().Reduce(memory::TrivialRange(0, obj1.size()),
+        obj1.data().in_parallel().Reduce(memory::Range(0, obj1.size()),
                                          [](typename ArrayType::VectorRegisterType const &a,
                                             typename ArrayType::VectorRegisterType const &b) ->
                                          typename ArrayType::VectorRegisterType { return a * b; });
@@ -97,7 +97,7 @@ void Product(ArrayType const &obj1, typename ArrayType::Type &ret)
 template <typename ArrayType>
 void Sum(ArrayType const &obj1, typename ArrayType::Type &ret)
 {
-  ret = obj1.data().in_parallel().Reduce(memory::TrivialRange(0, obj1.size()),
+  ret = obj1.data().in_parallel().Reduce(memory::Range(0, obj1.size()),
                                          [](typename ArrayType::VectorRegisterType const &a,
                                             typename ArrayType::VectorRegisterType const &b) ->
                                          typename ArrayType::VectorRegisterType { return a + b; });

@@ -56,7 +56,7 @@ meta::IfIsMathArray<ArrayType, void> Add(ArrayType const &array1, ArrayType cons
   }
   else
   {
-    auto r = range.ToTrivialRange(ret.data().size());
+    auto r = range.SubRange(ret.data().size());
 
     ret.data().in_parallel().Apply(r,
                                    [](VectorRegisterType const &x, VectorRegisterType const &y,
@@ -130,7 +130,7 @@ meta::IfIsMathArray<ArrayType, void> Multiply(ArrayType const &obj1, ArrayType c
   }
   else
   {
-    auto r = range.ToTrivialRange(ret.data().size());
+    auto r = range.SubRange(ret.data().size());
 
     ret.data().in_parallel().Apply(r,
                                    [](VectorRegisterType const &x, VectorRegisterType const &y,
@@ -164,7 +164,7 @@ meta::IfIsMathArray<ArrayType, void> Subtract(ArrayType const &obj1, ArrayType c
   }
   else
   {
-    auto r = range.ToTrivialRange(ret.data().size());
+    auto r = range.SubRange(ret.data().size());
 
     ret.data().in_parallel().Apply(r,
                                    [](VectorRegisterType const &x, VectorRegisterType const &y,
@@ -262,7 +262,7 @@ meta::IfIsMathArray<ArrayType, void> Divide(ArrayType const &obj1, ArrayType con
     }
     else
     {
-      auto r = range.ToTrivialRange(ret.data().size());
+      auto r = range.SubRange(ret.data().size());
 
       ret.data().in_parallel().Apply(r,
                                      [](VectorRegisterType const &x, VectorRegisterType const &y,

@@ -306,7 +306,7 @@ void W2VModel<ArrayType>::SGNSTrain(  // TODO (#1304) CBOW implementation not SG
       // Embeddings: step for all weights
       float learning_rate      = alpha_;
       using VectorRegisterType = typename fetch::math::TensorView<DataType>::VectorRegisterType;
-      fetch::memory::TrivialRange range(0, std::size_t(gradient_weights_.height()));
+      fetch::memory::Range range(0, std::size_t(gradient_weights_.height()));
       VectorRegisterType          rate(learning_rate);
       VectorRegisterType          zero(static_cast<DataType>(0));
 
@@ -451,7 +451,7 @@ void W2VModel<ArrayType>::CBOWTrain(ArrayType &target, ArrayType &context)
   // Embeddings: Step in
   float learning_rate      = alpha_;
   using VectorRegisterType = typename fetch::math::TensorView<DataType>::VectorRegisterType;
-  fetch::memory::TrivialRange range(0, std::size_t(gradient_weights_.height()));
+  fetch::memory::Range range(0, std::size_t(gradient_weights_.height()));
   VectorRegisterType          rate(learning_rate);
   VectorRegisterType          zero(static_cast<DataType>(0));
 

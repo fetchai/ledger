@@ -36,7 +36,7 @@ public:
 
   enum
   {
-    vector_size = platform::VectorRegisterSize<type>::value
+    vector_size = vectorise::VectorRegisterSize<type>::value
   };
   using VectorRegisterType         = typename vectorise::VectorRegister<type, vector_size>;
   using VectorRegisterIteratorType = vectorise::VectorRegisterIterator<type, vector_size>;
@@ -119,7 +119,7 @@ public:
   }
 
   template <typename F, typename V>
-  typename std::enable_if<!std::is_same<F, TrivialRange>::value, type>::type SumReduce(
+  typename std::enable_if<!std::is_same<F, Range>::value, type>::type SumReduce(
       F &&vector_reduce, V const &a)
   {
     VectorRegisterIteratorType self_iter(this->pointer(), this->size());
@@ -163,7 +163,7 @@ public:
   /// @{
 
   template <typename F, typename V>
-  type SumReduce(TrivialRange const &range, F &&vector_reduce, V const &a, V const &b, V const &c)
+  type SumReduce(Range const &range, F &&vector_reduce, V const &a, V const &b, V const &c)
   {
     int SFL      = int(range.SIMDFromLower<VectorRegisterType::E_BLOCK_COUNT>());
     int SF       = int(range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>());
@@ -237,7 +237,7 @@ public:
   }
 
   template <typename F, typename V>
-  type SumReduce(TrivialRange const &range, F &&vector_reduce, V const &a, V const &b)
+  type SumReduce(Range const &range, F &&vector_reduce, V const &a, V const &b)
   {
     VectorRegisterType c(type(0)), tmp, self;
 
@@ -306,7 +306,7 @@ public:
   }
 
   template <typename F, typename V>
-  type SumReduce(TrivialRange const &range, F &&vector_reduce, V const &a)
+  type SumReduce(Range const &range, F &&vector_reduce, V const &a)
   {
     int SFL      = int(range.SIMDFromLower<VectorRegisterType::E_BLOCK_COUNT>());
     int SF       = int(range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>());
@@ -369,7 +369,7 @@ public:
   }
 
   template <typename F>
-  type SumReduce(TrivialRange const &range, F &&vector_reduce)
+  type SumReduce(Range const &range, F &&vector_reduce)
   {
     int SFL      = int(range.SIMDFromLower<VectorRegisterType::E_BLOCK_COUNT>());
     int SF       = int(range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>());
@@ -451,7 +451,7 @@ public:
     return reduce(c);
   }
 
-  type Reduce(TrivialRange const &range,
+  type Reduce(Range const &range,
               VectorRegisterType (*vector_reduction)(VectorRegisterType const &,
                                                      VectorRegisterType const &)) const
   {
@@ -513,7 +513,7 @@ public:
     return ret;
   }
 
-  type Reduce(TrivialRange const &range,
+  type Reduce(Range const &range,
               type (*register_reduction)(type const &, type const &)) const
   {
     type ret = 0;
@@ -602,7 +602,7 @@ public:
 
   enum
   {
-    vector_size = platform::VectorRegisterSize<type>::value
+    vector_size = vectorise::VectorRegisterSize<type>::value
   };
   using VectorRegisterType         = typename vectorise::VectorRegister<type, vector_size>;
   using VectorRegisterIteratorType = vectorise::VectorRegisterIterator<type, vector_size>;
@@ -651,7 +651,7 @@ public:
   }
 
   template <typename F>
-  void Apply(TrivialRange const &range, F &&apply)
+  void Apply(Range const &range, F &&apply)
   {
     int SFL = int(range.SIMDFromLower<VectorRegisterType::E_BLOCK_COUNT>());
 
@@ -699,7 +699,7 @@ public:
   }
 
   template <typename F, typename... Args>
-  void Apply(TrivialRange const &range, F &&apply, Args &&... args)
+  void Apply(Range const &range, F &&apply, Args &&... args)
   {
     int SFL = int(range.SIMDFromLower<VectorRegisterType::E_BLOCK_COUNT>());
 
