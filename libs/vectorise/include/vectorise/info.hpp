@@ -26,8 +26,9 @@ namespace vectorise {
 template <typename T, std::size_t>
 struct VectorInfo
 {
-  using naitve_type   = T;
+  using native_type   = T;
   using register_type = T;
 };
+
 }  // namespace vectorise
 }  // namespace fetch
