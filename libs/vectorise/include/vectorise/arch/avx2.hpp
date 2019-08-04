@@ -35,4 +35,6 @@
 #include "vectorise/arch/avx2/math/pow.hpp"
 #include "vectorise/arch/avx2/math/sqrt.hpp"
 
+#undef ADD_REGISTER_SIZE
+
 #endif
