@@ -22,6 +22,7 @@
 #include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
 #include "dkg/dkg_service.hpp"
+#include "dkg/pre_dkg_sync.hpp"
 #include "network/muddle/muddle.hpp"
 
 #include <chrono>
@@ -30,6 +31,7 @@
 #include <thread>
 #include <vector>
 
+using namespace fetch;
 using namespace fetch::network;
 using namespace fetch::crypto;
 using namespace fetch::muddle;
@@ -56,7 +58,7 @@ ProverPtr CreateNewCertificate()
 int main()
 {
 
-  uint32_t cabinet_size = 4;
+  uint32_t cabinet_size = 3;
 
   struct CabinetMember
   {
@@ -66,6 +68,7 @@ int main()
     ProverPtr            muddle_certificate;
     Muddle               muddle;
     DkgService           dkg_service;
+    PreDkgSync           pre_sync;
     CabinetMember(uint16_t port_number, uint16_t index)
       : muddle_port{port_number}
       , network_manager{"NetworkManager" + std::to_string(index), 1}
@@ -74,29 +77,34 @@ int main()
       , muddle{fetch::muddle::NetworkId{"TestNetwork"}, muddle_certificate, network_manager, true,
                true}
       , dkg_service{muddle.AsEndpoint(), muddle_certificate->identity().identifier()}
+      , pre_sync{muddle, 4}
     {
       network_manager.Start();
       muddle.Start({muddle_port});
     }
   };
 
-  std::vector<std::unique_ptr<CabinetMember>> committee;
+  std::vector<std::unique_ptr<CabinetMember>>                         committee;
+  std::unordered_map<byte_array::ConstByteArray, fetch::network::Uri> peers_list;
   for (uint16_t ii = 0; ii < cabinet_size; ++ii)
   {
     auto port_number = static_cast<uint16_t>(9000 + ii);
     committee.emplace_back(new CabinetMember{port_number, ii});
+    peers_list.insert({committee[ii]->muddle_certificate->identity().identifier(),
+                       fetch::network::Uri{"tcp://127.0.0.1:" + std::to_string(port_number)}});
   }
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(500));
-
-  // Connect muddles together (localhost for this example)
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  // Reset cabinet for rbc in pre-dkg sync
   for (uint32_t ii = 0; ii < cabinet_size; ii++)
   {
-    for (uint32_t jj = ii + 1; jj < cabinet_size; jj++)
-    {
-      committee[ii]->muddle.AddPeer(
-          fetch::network::Uri{"tcp://127.0.0.1:" + std::to_string(committee[jj]->muddle_port)});
-    }
+    committee[ii]->pre_sync.ResetCabinet(peers_list);
+  }
+
+  // Wait until everyone else has connected
+  for (uint32_t ii = 0; ii < cabinet_size; ii++)
+  {
+    committee[ii]->pre_sync.Connect();
   }
 
   uint32_t kk = 0;
@@ -105,8 +113,7 @@ int main()
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     for (uint32_t mm = kk; mm < cabinet_size; ++mm)
     {
-      if (committee[mm]->muddle.AsEndpoint().GetDirectlyConnectedPeers().size() !=
-          (cabinet_size - 1))
+      if (!committee[mm]->pre_sync.ready())
       {
         break;
       }
@@ -126,7 +133,7 @@ int main()
 
   // Start at RBC for each muddle
   {
-    uint32_t threshold{1};
+    uint32_t threshold{2};
 
     for (auto &member : committee)
     {
@@ -148,6 +155,8 @@ int main()
   {
     member->reactor.Stop();
     member->muddle.Stop();
+    member->muddle.Shutdown();
+    member->network_manager.Stop();
   }
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
