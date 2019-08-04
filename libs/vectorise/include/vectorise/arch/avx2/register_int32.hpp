@@ -17,10 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/arch/avx2/info.hpp"
-#include "vectorise/info.hpp"
-#include "vectorise/register.hpp"
-
 #include <limits>
 #include <cmath>
 #include <cstddef>
@@ -34,6 +30,8 @@
 
 namespace fetch {
 namespace vectorise {
+
+ADD_REGISTER_SIZE(int32_t, 256);
 
 template <>
 class VectorRegister<int32_t, 128>
@@ -249,7 +247,6 @@ inline VectorRegister<int32_t, 256> operator*(VectorRegister<int32_t, 256> const
 inline VectorRegister<int32_t, 128> operator/(VectorRegister<int32_t, 128> const &a,
                                               VectorRegister<int32_t, 128> const &b)
 {
-
   // TODO(private 440): SSE implementation required
   int32_t d1[4];
   _mm_store_si128(reinterpret_cast<__m128i *>(d1), a.data());
@@ -462,7 +459,7 @@ inline bool all_equal_to(VectorRegister<int32_t, 256> const &x,
                           VectorRegister<int32_t, 256> const &y)
 {
   __m256i r = (x == y).data();
-  uint32_t mask = _mm256_movemask_epi8(r);
+  uint32_t mask = static_cast<uint32_t>(_mm256_movemask_epi8(r));
   return mask == 0xFFFFFFFFUL;
 }
 
