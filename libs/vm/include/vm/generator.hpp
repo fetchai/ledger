@@ -158,7 +158,7 @@ struct Executable
     uint16_t AddVariable(std::string name, TypeId type_id, uint16_t scope_number)
     {
       auto const index = static_cast<uint16_t>(num_variables++);
-      variables.push_back(Variable(std::move(name), type_id, scope_number));
+      variables.emplace_back(std::move(name), type_id, scope_number);
       return index;
     }
     uint16_t AddInstruction(Instruction instruction)
