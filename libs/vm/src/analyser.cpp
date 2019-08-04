@@ -649,8 +649,10 @@ void Analyser::AnnotateBlock(BlockNodePtr const &block_node)
       break;
     }
     case NodeKind::InitialiserList:
+    {
       AddError(child->line, "cannot infer list type");
       break;
+    }
 
     default:
     {
