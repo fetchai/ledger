@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "crypto/prover.hpp"
-#include "network/muddle/network_id.hpp"
+#include "muddle/network_id.hpp"
 
 #include <chrono>
 #include <vector>

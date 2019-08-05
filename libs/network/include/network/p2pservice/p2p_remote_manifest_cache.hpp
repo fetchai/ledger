@@ -20,7 +20,7 @@
 #include "core/future_timepoint.hpp"
 #include "core/mutex.hpp"
 #include "crypto/fnv.hpp"
-#include "network/muddle/packet.hpp"
+#include "muddle/packet.hpp"
 #include "network/p2pservice/manifest.hpp"
 
 #include <unordered_set>

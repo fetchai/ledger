@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/muddle/muddle.hpp"
-#include "network/muddle/rpc/client.hpp"
-#include "network/muddle/rpc/server.hpp"
+#include "muddle/muddle.hpp"
+#include "muddle/rpc/client.hpp"
+#include "muddle/rpc/server.hpp"
 #include "network/service/server.hpp"
 #include "service_consts.hpp"
 

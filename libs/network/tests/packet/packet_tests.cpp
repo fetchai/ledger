@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "crypto/ecdsa.hpp"
-#include "network/muddle/packet.hpp"
+#include "muddle/packet.hpp"
 
 #include "gmock/gmock.h"
 

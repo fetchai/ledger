@@ -26,9 +26,9 @@
 #include "network/generics/backgrounded_work.hpp"
 #include "network/generics/has_worker_thread.hpp"
 #include "network/generics/requesting_queue.hpp"
-#include "network/muddle/rpc/client.hpp"
-#include "network/muddle/rpc/server.hpp"
-#include "network/muddle/subscription.hpp"
+#include "muddle/rpc/client.hpp"
+#include "muddle/rpc/server.hpp"
+#include "muddle/subscription.hpp"
 #include "network/p2pservice/p2ptrust_interface.hpp"
 #include "telemetry/telemetry.hpp"
 

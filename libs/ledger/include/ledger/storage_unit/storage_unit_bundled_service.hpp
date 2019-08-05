@@ -20,7 +20,7 @@
 #include "ledger/shard_config.hpp"
 #include "ledger/storage_unit/lane_service.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
-#include "network/muddle/muddle_endpoint.hpp"
+#include "muddle/muddle_endpoint.hpp"
 #include "network/p2pservice/p2p_service_defs.hpp"
 #include "storage/document_store_protocol.hpp"
 #include "storage/object_store.hpp"

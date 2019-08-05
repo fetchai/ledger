@@ -38,7 +38,7 @@
 #include "ledger/transaction_processor.hpp"
 #include "ledger/transaction_status_cache.hpp"
 #include "miner/basic_miner.hpp"
-#include "network/muddle/muddle.hpp"
+#include "muddle/muddle.hpp"
 #include "network/p2pservice/manifest.hpp"
 #include "network/p2pservice/p2p_service.hpp"
 #include "network/p2pservice/p2ptrust_bayrank.hpp"

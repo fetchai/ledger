@@ -19,7 +19,7 @@
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "dkg/rbc.hpp"
-#include "network/muddle/muddle.hpp"
+#include "muddle/muddle.hpp"
 
 #include <unordered_map>
 

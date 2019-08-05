@@ -19,7 +19,7 @@
 
 #include "core/mutex.hpp"
 #include "crypto/fnv.hpp"
-#include "network/muddle/muddle.hpp"
+#include "muddle/muddle.hpp"
 #include "network/uri.hpp"
 
 #include <chrono>

@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "dkg/rbc_messages.hpp"
-#include "network/muddle/packet.hpp"
+#include "muddle/packet.hpp"
 
 namespace fetch {
 namespace dkg {

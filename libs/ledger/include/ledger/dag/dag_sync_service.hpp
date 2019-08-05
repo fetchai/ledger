@@ -25,10 +25,10 @@
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/transaction_verifier.hpp"
 #include "network/generics/requesting_queue.hpp"
-#include "network/muddle/muddle.hpp"
-#include "network/muddle/rpc/client.hpp"
-#include "network/muddle/rpc/server.hpp"
-#include "network/muddle/subscription.hpp"
+#include "muddle/muddle.hpp"
+#include "muddle/rpc/client.hpp"
+#include "muddle/rpc/server.hpp"
+#include "muddle/subscription.hpp"
 
 #include <cstddef>
 #include <cstdint>

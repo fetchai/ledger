@@ -28,8 +28,8 @@
 #include "ledger/storage_unit/transaction_store_sync_protocol.hpp"
 #include "ledger/storage_unit/transaction_store_sync_service.hpp"
 #include "meta/log2.hpp"
-#include "network/muddle/muddle.hpp"
-#include "network/muddle/rpc/server.hpp"
+#include "muddle/muddle.hpp"
+#include "muddle/rpc/server.hpp"
 #include "storage/document_store_protocol.hpp"
 #include "storage/new_revertible_document_store.hpp"
 

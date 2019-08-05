@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
-#include "network/muddle/muddle.hpp"
+#include "muddle/muddle.hpp"
 #include "variant/variant.hpp"
 
 #include <list>

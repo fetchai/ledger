@@ -21,7 +21,7 @@
 #include "dkg/dkg_service.hpp"
 #include "dkg/pre_dkg_sync.hpp"
 #include "network/management/network_manager.hpp"
-#include "network/muddle/muddle.hpp"
+#include "muddle/muddle.hpp"
 
 // TODO(WK) Extract to library: .cpp file include == ++ungood
 #include "../../apps/constellation/key_generator.cpp"

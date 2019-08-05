@@ -19,8 +19,8 @@
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "ledger/chain/address.hpp"
-#include "network/muddle/muddle_endpoint.hpp"
-#include "network/muddle/rpc/server.hpp"
+#include "muddle/muddle_endpoint.hpp"
+#include "muddle/rpc/server.hpp"
 #include "rbc_envelope.hpp"
 
 #include <bitset>

@@ -26,7 +26,7 @@
 #include "network/details/thread_pool.hpp"
 #include "network/generics/milli_timer.hpp"
 #include "network/management/connection_register.hpp"
-#include "network/muddle/muddle.hpp"
+#include "muddle/muddle.hpp"
 #include "network/service/call_context.hpp"
 #include "network/service/promise.hpp"
 #include "network/service/protocol.hpp"

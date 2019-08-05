@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/storage_unit/lane_identity.hpp"
-#include "network/muddle/muddle.hpp"
+#include "muddle/muddle.hpp"
 
 #include <unordered_map>
 #include <unordered_set>

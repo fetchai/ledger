@@ -19,7 +19,7 @@
 
 #include "core/mutex.hpp"
 #include "ledger/shard_config.hpp"
-#include "network/muddle/rpc/client.hpp"
+#include "muddle/rpc/client.hpp"
 #include "network/p2pservice/p2p_lane_management.hpp"
 
 #include <cstdint>

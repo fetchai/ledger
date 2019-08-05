@@ -23,9 +23,9 @@
 #include "crypto/prover.hpp"
 #include "dkg/dkg.hpp"
 #include "dkg/rbc.hpp"
-#include "network/muddle/muddle.hpp"
-#include "network/muddle/rpc/client.hpp"
-#include "network/muddle/rpc/server.hpp"
+#include "muddle/muddle.hpp"
+#include "muddle/rpc/client.hpp"
+#include "muddle/rpc/server.hpp"
 
 #include "gtest/gtest.h"
 #include <iostream>

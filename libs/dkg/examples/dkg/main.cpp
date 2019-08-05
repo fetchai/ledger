@@ -23,7 +23,7 @@
 #include "crypto/prover.hpp"
 #include "dkg/dkg_service.hpp"
 #include "dkg/pre_dkg_sync.hpp"
-#include "network/muddle/muddle.hpp"
+#include "muddle/muddle.hpp"
 
 #include <chrono>
 #include <cstdint>

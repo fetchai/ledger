@@ -21,7 +21,7 @@
 #include "ledger/shard_config.hpp"
 #include "network/generics/backgrounded_work.hpp"
 #include "network/generics/has_worker_thread.hpp"
-#include "network/muddle/muddle.hpp"
+#include "muddle/muddle.hpp"
 #include "storage/object_store_protocol.hpp"
 #include "storage/transient_object_store.hpp"
 

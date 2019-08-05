@@ -21,9 +21,9 @@
 #include "core/byte_array/encoders.hpp"
 #include "crypto/ecdsa.hpp"
 #include "network/management/network_manager.hpp"
-#include "network/muddle/muddle.hpp"
-#include "network/muddle/rpc/client.hpp"
-#include "network/muddle/rpc/server.hpp"
+#include "muddle/muddle.hpp"
+#include "muddle/rpc/client.hpp"
+#include "muddle/rpc/server.hpp"
 #include "network/service/protocol.hpp"
 
 #include <iostream>

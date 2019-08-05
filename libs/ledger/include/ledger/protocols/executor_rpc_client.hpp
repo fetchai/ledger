@@ -24,9 +24,9 @@
 #include "ledger/protocols/executor_rpc_protocol.hpp"
 #include "network/generics/backgrounded_work.hpp"
 #include "network/generics/has_worker_thread.hpp"
-#include "network/muddle/muddle.hpp"
-#include "network/muddle/rpc/client.hpp"
-#include "network/muddle/rpc/server.hpp"
+#include "muddle/muddle.hpp"
+#include "muddle/rpc/client.hpp"
+#include "muddle/rpc/server.hpp"
 #include "network/service/service_client.hpp"
 #include "network/tcp/tcp_client.hpp"
 
