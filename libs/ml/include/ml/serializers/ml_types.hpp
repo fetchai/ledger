@@ -384,7 +384,7 @@ struct MapSerializer<ml::GraphSaveableParams<TensorType>, D>
     auto it1 = connections_first.begin();
     for (auto const &it2 : connections_second)
     {
-      sp.connections.push_back(std::make_pair(*it1, it2));
+      sp.connections.emplace_back(std::make_pair(*it1, it2));
       ++it1;
     }
 
@@ -796,39 +796,42 @@ struct MapSerializer<ml::ConvolutionLayer1DSaveableParams<TensorType>, D>
   using Type       = ml::ConvolutionLayer1DSaveableParams<TensorType>;
   using DriverType = D;
 
-  static uint8_t const OP_CODE         = 1;
-  static uint8_t const KERNEL_SIZE     = 1;
-  static uint8_t const INPUT_CHANNELS  = 1;
-  static uint8_t const OUTPUT_CHANNELS = 1;
-  static uint8_t const STRIDE_SIZE     = 1;
+  static uint8_t const SUB_GRAPH       = 1;
+  static uint8_t const OP_CODE         = 2;
+  static uint8_t const KERNEL_SIZE     = 3;
+  static uint8_t const INPUT_CHANNELS  = 4;
+  static uint8_t const OUTPUT_CHANNELS = 5;
+  static uint8_t const STRIDE_SIZE     = 6;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(5);
+    auto map = map_constructor(6);
+
+    // serialize parent class first
+    auto base_pointer = static_cast<ml::SubGraphSaveableParams<TensorType> const *>(&sp);
+    map.Append(SUB_GRAPH, *base_pointer);
+
     map.Append(OP_CODE, sp.op_type);
     map.Append(KERNEL_SIZE, sp.kernel_size);
     map.Append(INPUT_CHANNELS, sp.input_channels);
     map.Append(OP_CODE, sp.output_channels);
     map.Append(OUTPUT_CHANNELS, sp.stride_size);
-
-    // serialize parent class first
-    auto base_pointer = static_cast<ml::SubGraphSaveableParams<TensorType> const *>(&sp);
-    Serialize(map_constructor, *base_pointer);
   }
 
   template <typename MapDeserializer>
   static void Deserialize(MapDeserializer &map, Type &sp)
   {
+    // deserialize parent class first
+    auto base_pointer = static_cast<ml::SubGraphSaveableParams<TensorType> *>(&sp);
+    map.ExpectKeyGetValue(SUB_GRAPH, *base_pointer);
+
     map.ExpectKeyGetValue(OP_CODE, sp.op_type);
     map.ExpectKeyGetValue(KERNEL_SIZE, sp.kernel_size);
     map.ExpectKeyGetValue(INPUT_CHANNELS, sp.input_channels);
     map.ExpectKeyGetValue(OP_CODE, sp.output_channels);
     map.ExpectKeyGetValue(OUTPUT_CHANNELS, sp.stride_size);
 
-    // deserialize parent class first
-    auto base_pointer = static_cast<ml::SubGraphSaveableParams<TensorType> *>(&sp);
-    Deserialize(map, *base_pointer);
   }
 };
 
@@ -842,39 +845,41 @@ struct MapSerializer<ml::ConvolutionLayer2DSaveableParams<TensorType>, D>
   using Type       = ml::ConvolutionLayer2DSaveableParams<TensorType>;
   using DriverType = D;
 
-  static uint8_t const OP_CODE         = 1;
-  static uint8_t const KERNEL_SIZE     = 1;
-  static uint8_t const INPUT_CHANNELS  = 1;
-  static uint8_t const OUTPUT_CHANNELS = 1;
-  static uint8_t const STRIDE_SIZE     = 1;
+  static uint8_t const SUB_GRAPH       = 1;
+  static uint8_t const OP_CODE         = 2;
+  static uint8_t const KERNEL_SIZE     = 3;
+  static uint8_t const INPUT_CHANNELS  = 4;
+  static uint8_t const OUTPUT_CHANNELS = 5;
+  static uint8_t const STRIDE_SIZE     = 6;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(5);
+    auto map = map_constructor(6);
+
+    // serialize parent class first
+    auto base_pointer = static_cast<ml::SubGraphSaveableParams<TensorType> const *>(&sp);
+    map.Append(SUB_GRAPH, *base_pointer);
+
     map.Append(OP_CODE, sp.op_type);
     map.Append(KERNEL_SIZE, sp.kernel_size);
     map.Append(INPUT_CHANNELS, sp.input_channels);
     map.Append(OP_CODE, sp.output_channels);
     map.Append(OUTPUT_CHANNELS, sp.stride_size);
-
-    // serialize parent class first
-    auto base_pointer = static_cast<ml::SubGraphSaveableParams<TensorType> const *>(&sp);
-    Serialize(map_constructor, *base_pointer);
   }
 
   template <typename MapDeserializer>
   static void Deserialize(MapDeserializer &map, Type &sp)
   {
+    // deserialize parent class first
+    auto base_pointer = static_cast<ml::SubGraphSaveableParams<TensorType> const *>(&sp);
+    map.ExpectKeyGetValue(SUB_GRAPH, *base_pointer);
+
     map.ExpectKeyGetValue(OP_CODE, sp.op_type);
     map.ExpectKeyGetValue(KERNEL_SIZE, sp.kernel_size);
     map.ExpectKeyGetValue(INPUT_CHANNELS, sp.input_channels);
     map.ExpectKeyGetValue(OP_CODE, sp.output_channels);
     map.ExpectKeyGetValue(OUTPUT_CHANNELS, sp.stride_size);
-
-    // deserialize parent class first
-    auto base_pointer = static_cast<ml::SubGraphSaveableParams<TensorType> *>(&sp);
-    Deserialize(map, *base_pointer);
   }
 };
 
@@ -1268,6 +1273,47 @@ struct MapSerializer<ml::PlaceholderSaveableParams<TensorType>, D>
       map.ExpectKeyGetValue(OUTPUT, output);
       sp.output = std::make_shared<TensorType>(output);
     }
+  }
+};
+
+/**
+ * serializer for Conv2d layer saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::PReluSaveableParams<TensorType>, D>
+{
+  using Type       = ml::PReluSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const SUB_GRAPH = 1;
+  static uint8_t const OP_CODE   = 2;
+  static uint8_t const IN_SIZE   = 3;
+  static uint8_t const OUT_SIZE  = 4;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(4);
+
+    // serialize parent class first
+    auto base_pointer = static_cast<ml::SubGraphSaveableParams<TensorType> const *>(&sp);
+    map.Append(SUB_GRAPH, *base_pointer);
+
+    map.Append(OP_CODE, sp.op_type);
+    map.Append(IN_SIZE, sp.in_size);
+    map.Append(OUT_SIZE, sp.out_size);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    auto base_pointer = static_cast<ml::SubGraphSaveableParams<TensorType> *>(&sp);
+    map.ExpectKeyGetValue(SUB_GRAPH, *base_pointer);
+
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+    map.ExpectKeyGetValue(IN_SIZE, sp.in_size);
+    map.ExpectKeyGetValue(OUT_SIZE, sp.out_size);
   }
 };
 
