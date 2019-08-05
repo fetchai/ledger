@@ -51,6 +51,24 @@ TYPED_TEST(FreeFunctionsTest, BooleanMask_SetAll)
   EXPECT_EQ(ret.shape(), array1.shape());
 }
 
+TYPED_TEST(FreeFunctionsTest, Switch_SetAll)
+{
+  TypeParam array1{4};
+  array1.Fill(static_cast<typename TypeParam::Type>(1));
+  TypeParam array2{4};
+  array2.Fill(static_cast<typename TypeParam::Type>(-1));
+  TypeParam mask{4};
+  mask.SetAllZero();
+  auto ret = fetch::math::Switch(mask, array1, array2);
+  EXPECT_EQ(ret.size(), 4);
+  EXPECT_TRUE(ret.AllClose(array2));
+
+  mask.SetAllOne();
+  ret = fetch::math::Switch(mask, array1, array2);
+  EXPECT_EQ(ret.size(), 4);
+  EXPECT_TRUE(ret.AllClose(array1));
+}
+
 TYPED_TEST(FreeFunctionsTest, Scatter1D_SetAll)
 {
   using DataType = typename TypeParam::Type;
