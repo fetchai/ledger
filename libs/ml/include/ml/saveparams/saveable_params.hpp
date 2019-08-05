@@ -155,204 +155,6 @@ struct TransposeSaveableParams;
 template <class TensorType>
 struct WeightsSaveableParams;
 
-///////////////////////////////////////////
-/// OP SPECIFIC SERIALISATION FUNCTIONS ///
-///////////////////////////////////////////
-
-namespace {
-template <typename S, class SP>
-void SerializeImplementation(S &serializer, std::shared_ptr<SaveableParamsInterface> const &nsp)
-{
-  auto castnode = std::dynamic_pointer_cast<SP>(nsp);
-  serializer << *castnode;
-}
-
-template <typename S, class SP>
-void DeserializeImplementation(S &serializer, std::shared_ptr<SaveableParamsInterface> &nsp)
-{
-  auto castnode = std::dynamic_pointer_cast<SP>(nsp);
-  serializer >> *castnode;
-}
-}  // namespace
-
-template <typename S, class TensorType>
-void Serialize(S &serializer, std::shared_ptr<SaveableParamsInterface> const &nsp)
-{
-  OpType operation_type = nsp->op_type;
-  serializer << operation_type;
-
-  assert(operation_type != OpType::NONE);
-  assert(operation_type != OpType::GRAPH);
-  assert(operation_type != OpType::SUBGRAPH);
-
-  switch (operation_type)
-  {
-  case OpType::PLACEHOLDER:
-  {
-    SerializeImplementation<S, PlaceholderSaveableParams<TensorType>>(serializer, nsp);
-    break;
-  }
-  case OpType::WEIGHTS:
-  {
-    SerializeImplementation<S, WeightsSaveableParams<TensorType>>(serializer, nsp);
-    break;
-  }
-  case OpType::DROPOUT:
-  {
-    SerializeImplementation<S, DropoutSaveableParams<TensorType>>(serializer, nsp);
-    break;
-  }
-  case OpType::LEAKY_RELU:
-  {
-    SerializeImplementation<S, LeakyReluSaveableParams<TensorType>>(serializer, nsp);
-    break;
-  }
-  case OpType::RANDOMISED_RELU:
-  {
-    SerializeImplementation<S, RandomisedReluSaveableParams<TensorType>>(serializer, nsp);
-    break;
-  }
-  case OpType::SOFTMAX:
-  {
-    SerializeImplementation<S, SoftmaxSaveableParams<TensorType>>(serializer, nsp);
-    break;
-  }
-  case OpType::CONVOLUTION_1D:
-  {
-    SerializeImplementation<S, Convolution1DSaveableParams<TensorType>>(serializer, nsp);
-    break;
-  }
-  case OpType::MAX_POOL_1D:
-  {
-    SerializeImplementation<S, MaxPool1DSaveableParams<TensorType>>(serializer, nsp);
-    break;
-  }
-  case OpType::MAX_POOL_2D:
-  {
-    SerializeImplementation<S, MaxPool2DSaveableParams<TensorType>>(serializer, nsp);
-    break;
-  }
-  case OpType::TRANSPOSE:
-  {
-    SerializeImplementation<S, TransposeSaveableParams<TensorType>>(serializer, nsp);
-    break;
-  }
-  case OpType::RESHAPE:
-  {
-    SerializeImplementation<S, ReshapeSaveableParams<TensorType>>(serializer, nsp);
-    break;
-  }
-  case OpType::LAYER_FULLY_CONNECTED:
-  {
-    SerializeImplementation<S, FullyConnectedSaveableParams<TensorType>>(serializer, nsp);
-    break;
-  }
-  case OpType::LAYER_CONVOLUTION_1D:
-  {
-    SerializeImplementation<S, ConvolutionLayer1DSaveableParams<TensorType>>(serializer, nsp);
-    break;
-  }
-  case OpType::LAYER_CONVOLUTION_2D:
-  {
-    SerializeImplementation<S, ConvolutionLayer2DSaveableParams<TensorType>>(serializer, nsp);
-    break;
-  }
-  default:
-  {
-    throw std::runtime_error("Unknown type for Serialization");
-  }
-  }
-}
-
-template <typename S, class TensorType>
-void Deserialize(S &serializer, std::shared_ptr<SaveableParamsInterface> &nsp)
-{
-  OpType operation_type = OpType::NONE;
-  serializer >> operation_type;
-
-  assert(operation_type != OpType::NONE);
-  assert(operation_type != OpType::GRAPH);
-  assert(operation_type != OpType::SUBGRAPH);
-
-  switch (operation_type)
-  {
-  case OpType::PLACEHOLDER:
-  {
-    DeserializeImplementation<S, PlaceholderSaveableParams<TensorType>>(serializer, nsp);
-    break;
-  }
-  case OpType::WEIGHTS:
-  {
-    DeserializeImplementation<S, WeightsSaveableParams<TensorType>>(serializer, nsp);
-    break;
-  }
-  case OpType::DROPOUT:
-  {
-    DeserializeImplementation<S, DropoutSaveableParams<TensorType>>(serializer, nsp);
-    break;
-  }
-  case OpType::LEAKY_RELU:
-  {
-    DeserializeImplementation<S, LeakyReluSaveableParams<TensorType>>(serializer, nsp);
-    break;
-  }
-  case OpType::RANDOMISED_RELU:
-  {
-    DeserializeImplementation<S, RandomisedReluSaveableParams<TensorType>>(serializer, nsp);
-    break;
-  }
-  case OpType::SOFTMAX:
-  {
-    DeserializeImplementation<S, SoftmaxSaveableParams<TensorType>>(serializer, nsp);
-    break;
-  }
-  case OpType::CONVOLUTION_1D:
-  {
-    DeserializeImplementation<S, Convolution1DSaveableParams<TensorType>>(serializer, nsp);
-    break;
-  }
-  case OpType::MAX_POOL_1D:
-  {
-    DeserializeImplementation<S, MaxPool1DSaveableParams<TensorType>>(serializer, nsp);
-    break;
-  }
-  case OpType::MAX_POOL_2D:
-  {
-    DeserializeImplementation<S, MaxPool2DSaveableParams<TensorType>>(serializer, nsp);
-    break;
-  }
-  case OpType::TRANSPOSE:
-  {
-    DeserializeImplementation<S, TransposeSaveableParams<TensorType>>(serializer, nsp);
-    break;
-  }
-  case OpType::RESHAPE:
-  {
-    DeserializeImplementation<S, ReshapeSaveableParams<TensorType>>(serializer, nsp);
-    break;
-  }
-  case OpType::LAYER_FULLY_CONNECTED:
-  {
-    DeserializeImplementation<S, FullyConnectedSaveableParams<TensorType>>(serializer, nsp);
-    break;
-  }
-  case OpType::LAYER_CONVOLUTION_1D:
-  {
-    DeserializeImplementation<S, ConvolutionLayer1DSaveableParams<TensorType>>(serializer, nsp);
-    break;
-  }
-  case OpType::LAYER_CONVOLUTION_2D:
-  {
-    DeserializeImplementation<S, ConvolutionLayer2DSaveableParams<TensorType>>(serializer, nsp);
-    break;
-  }
-  default:
-  {
-    throw std::runtime_error("Unknown type for Serialization");
-  }
-  }
-}
-
 template <class TensorType>
 struct GraphSaveableParams : public SaveableParamsInterface
 {
@@ -389,14 +191,15 @@ struct NodeSaveableParams : public SaveableParamsInterface
   TensorType  cached_output;
   uint8_t     cached_output_status;
   OpType      operation_type;
+  std::shared_ptr<SaveableParamsInterface> op;
 
-  Ops<TensorType> op;
   NodeSaveableParams(std::string in_name, TensorType const &in_cached_output,
-                     uint8_t in_cached_output_status, OpType in_operation_type)
-    : name(in_name)
+                     uint8_t in_cached_output_status, OpType in_operation_type, std::shared_ptr<SaveableParamsInterface> in_op)
+    : name(std::move(in_name))
     , cached_output(in_cached_output)
     , cached_output_status(in_cached_output_status)
     , operation_type(in_operation_type)
+    , op(std::move(in_op))
   {}
 };
 

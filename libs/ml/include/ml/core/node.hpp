@@ -95,8 +95,9 @@ public:
 
   std::shared_ptr<SaveableParamsInterface> GetNodeSaveableParams()
   {
+    auto ops_save_params = op_ptr_->GetOpSaveableParams();
     SPType sp{std::move(name_), cached_output_, static_cast<uint8_t>(cached_output_status_),
-              operation_type_};
+              operation_type_, ops_save_params};
     return std::make_shared<SPType>(sp);
   }
 
