@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/threading/synchronised_state.hpp"
+#include "core/threading/waitable.hpp"
 
 #include "gmock/gmock.h"
 
@@ -28,13 +28,13 @@ namespace {
 using namespace fetch;
 using namespace testing;
 
-class SynchronisedStateTests : public Test
+class WaitableTests : public Test
 {
 public:
-  SynchronisedState<uint32_t> waitable{0u};
+  Waitable<uint32_t> waitable{0u};
 };
 
-TEST_F(SynchronisedStateTests, WaitFor_returns_when_the_condition_is_true)
+TEST_F(WaitableTests, WaitFor_returns_when_the_condition_is_true)
 {
   auto check = [this]() -> void {
     for (auto i = 0; i < 10000; ++i)

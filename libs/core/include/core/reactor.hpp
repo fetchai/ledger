@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/runnable.hpp"
-#include "core/threading/protect.hpp"
+#include "core/threading/protected.hpp"
 
 #include <atomic>
 #include <map>
@@ -51,9 +51,9 @@ public:
   Reactor &operator=(Reactor &&) = delete;
 
 private:
-  using RunnableMap     = Protect<std::map<Runnable const *, WeakRunnable>>;
+  using RunnableMap     = Protected<std::map<Runnable const *, WeakRunnable>>;
   using Flag            = std::atomic<bool>;
-  using ProtectedThread = Protect<std::thread>;
+  using ProtectedThread = Protected<std::thread>;
   using ThreadPtr       = std::unique_ptr<ProtectedThread>;
 
   void StartWorker();

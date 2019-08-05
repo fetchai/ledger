@@ -21,7 +21,7 @@
 #include "core/macros.hpp"
 #include "core/runnable.hpp"
 #include "core/state_machine_interface.hpp"
-#include "core/threading/protect.hpp"
+#include "core/threading/protected.hpp"
 
 #include <atomic>
 #include <chrono>
@@ -54,7 +54,7 @@ private:
   using Callback                     = std::function<State(State /*current*/, State /*previous*/)>;
   using StateChangeCallback          = std::function<void(State /*current*/, State /*previous*/)>;
   using StateMapper                  = std::function<char const *(State)>;
-  using ProtectedStateChangeCallback = Protect<StateChangeCallback>;
+  using ProtectedStateChangeCallback = Protected<StateChangeCallback>;
 
 public:
   // Construction / Destruction
@@ -106,7 +106,7 @@ private:
   using Timepoint            = Clock::time_point;
   using Duration             = Clock::duration;
   using CallbackMap          = std::unordered_map<State, Callback>;
-  using ProtectedCallbackMap = Protect<CallbackMap>;
+  using ProtectedCallbackMap = Protected<CallbackMap>;
 
   void Reset();
 

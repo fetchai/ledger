@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/threading/protect.hpp"
+#include "core/threading/protected.hpp"
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
@@ -29,7 +29,7 @@
 #include <utility>
 #include <vector>
 
-using fetch::Protect;
+using fetch::Protected;
 using fetch::muddle::Muddle;
 using fetch::muddle::NetworkId;
 using fetch::muddle::rpc::Server;
@@ -98,7 +98,7 @@ private:
   MuddlePtr    muddle_;
   RpcClientPtr client_{
       std::make_shared<Client>("RRPClient", muddle_->AsEndpoint(), SERVICE_TEST, CHANNEL_RPC)};
-  Protect<AddressSet> node_set_{};
+  Protected<AddressSet> node_set_{};
 };
 
 // Next we make a protocol for the implementation

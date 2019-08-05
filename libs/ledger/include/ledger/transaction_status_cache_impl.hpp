@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
-#include "core/threading/synchronised_state.hpp"
+#include "core/threading/waitable.hpp"
 #include "ledger/chain/digest.hpp"
 #include "ledger/execution_result.hpp"
 #include "ledger/transaction_status_cache.hpp"

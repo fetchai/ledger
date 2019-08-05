@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/threading/protect.hpp"
-#include "core/threading/synchronised_state.hpp"
+#include "core/threading/protected.hpp"
+#include "core/threading/waitable.hpp"
 
 #include "gmock/gmock.h"
 
@@ -242,56 +242,56 @@ std::unique_ptr<MutexSpy> ThreadSafeWrapperTests::mutex_spy = nullptr;
 
 TEST_F(ThreadSafeWrapperTests, wrapper_passes_ctor_arguments_to_its_payload)
 {
-  wrapper_passes_ctor_arguments_to_its_payload<Protect>();
-  wrapper_passes_ctor_arguments_to_its_payload<SynchronisedState>();
+  wrapper_passes_ctor_arguments_to_its_payload<Protected>();
+  wrapper_passes_ctor_arguments_to_its_payload<Waitable>();
 }
 
 TEST_F(ThreadSafeWrapperTests, const_protect_on_const_type_allows_read_only_access)
 {
-  const_protect_on_const_type_allows_read_only_access<Protect>();
-  const_protect_on_const_type_allows_read_only_access<SynchronisedState>();
+  const_protect_on_const_type_allows_read_only_access<Protected>();
+  const_protect_on_const_type_allows_read_only_access<Waitable>();
 }
 
 TEST_F(ThreadSafeWrapperTests, nonconst_protect_on_const_type_allows_read_only_access)
 {
-  nonconst_protect_on_const_type_allows_read_only_access<Protect>();
-  nonconst_protect_on_const_type_allows_read_only_access<SynchronisedState>();
+  nonconst_protect_on_const_type_allows_read_only_access<Protected>();
+  nonconst_protect_on_const_type_allows_read_only_access<Waitable>();
 }
 
 TEST_F(ThreadSafeWrapperTests, const_protect_on_nonconst_type_allows_read_only_access)
 {
-  const_protect_on_nonconst_type_allows_read_only_access<Protect>();
-  const_protect_on_nonconst_type_allows_read_only_access<SynchronisedState>();
+  const_protect_on_nonconst_type_allows_read_only_access<Protected>();
+  const_protect_on_nonconst_type_allows_read_only_access<Waitable>();
 }
 
 TEST_F(ThreadSafeWrapperTests, nonconst_protect_on_nonconst_type_allows_read_and_write_access)
 {
-  nonconst_protect_on_nonconst_type_allows_read_and_write_access<Protect>();
-  nonconst_protect_on_nonconst_type_allows_read_and_write_access<SynchronisedState>();
+  nonconst_protect_on_nonconst_type_allows_read_and_write_access<Protected>();
+  nonconst_protect_on_nonconst_type_allows_read_and_write_access<Waitable>();
 }
 
 TEST_F(ThreadSafeWrapperTests, handler_return_value_is_passed_to_WithLock)
 {
-  handler_return_value_is_passed_to_WithLock<Protect>();
-  handler_return_value_is_passed_to_WithLock<SynchronisedState>();
+  handler_return_value_is_passed_to_WithLock<Protected>();
+  handler_return_value_is_passed_to_WithLock<Waitable>();
 }
 
 TEST_F(ThreadSafeWrapperTests, wrapper_may_be_used_with_arbitrary_mutex_type)
 {
-  wrapper_may_be_used_with_arbitrary_mutex_type<Protect>();
-  wrapper_may_be_used_with_arbitrary_mutex_type<SynchronisedState>();
+  wrapper_may_be_used_with_arbitrary_mutex_type<Protected>();
+  wrapper_may_be_used_with_arbitrary_mutex_type<Waitable>();
 }
 
 TEST_F(ThreadSafeWrapperTests, call_to_WithLock_locks_and_then_releases_the_mutex)
 {
-  call_to_WithLock_locks_and_then_releases_the_mutex<Protect>();
-  call_to_WithLock_locks_and_then_releases_the_mutex<SynchronisedState>();
+  call_to_WithLock_locks_and_then_releases_the_mutex<Protected>();
+  call_to_WithLock_locks_and_then_releases_the_mutex<Waitable>();
 }
 
 TEST_F(ThreadSafeWrapperTests, each_call_to_WithLock_locks_mutex_independently)
 {
-  each_call_to_WithLock_locks_mutex_independently<Protect>();
-  each_call_to_WithLock_locks_mutex_independently<SynchronisedState>();
+  each_call_to_WithLock_locks_mutex_independently<Protected>();
+  each_call_to_WithLock_locks_mutex_independently<Waitable>();
 }
 
 }  // namespace

@@ -21,7 +21,7 @@
 #include "core/mutex.hpp"
 #include "core/periodic_action.hpp"
 #include "core/state_machine.hpp"
-#include "core/threading/protect.hpp"
+#include "core/threading/protected.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/transaction.hpp"
@@ -268,7 +268,7 @@ private:
   using StateMachinePtr      = std::shared_ptr<StateMachine>;
   using MinerPtr             = std::shared_ptr<consensus::ConsensusMinerInterface>;
   using TxDigestSetPtr       = std::unique_ptr<DigestSet>;
-  using LastExecutedBlock    = Protect<ConstByteArray>;
+  using LastExecutedBlock    = Protected<ConstByteArray>;
   using FutureTimepoint      = fetch::core::FutureTimepoint;
   using DeadlineTimer        = fetch::moment::DeadlineTimer;
   using SynergeticExecMgrPtr = std::unique_ptr<SynergeticExecutionManagerInterface>;

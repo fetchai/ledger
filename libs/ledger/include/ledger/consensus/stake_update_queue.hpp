@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/threading/protect.hpp"
+#include "core/threading/protected.hpp"
 #include "ledger/chain/address.hpp"
 #include "ledger/consensus/stake_update_interface.hpp"
 
@@ -66,7 +66,7 @@ private:
   using StakeMap     = std::unordered_map<Address, StakeAmount>;
   using BlockUpdates = std::map<BlockIndex, StakeMap>;
 
-  Protect<BlockUpdates> updates_{};  ///< The update queue
+  Protected<BlockUpdates> updates_{};  ///< The update queue
 };
 
 /**

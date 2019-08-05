@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/threading/protect.hpp"
+#include "core/threading/protected.hpp"
 #include "crypto/ecdsa_signature.hpp"
 #include "crypto/prover.hpp"
 #include "crypto/verifier.hpp"
@@ -129,7 +129,7 @@ public:
   }
 
 private:
-  Protect<PrivateKey> private_key_;
+  Protected<PrivateKey> private_key_;
 };
 
 }  // namespace crypto

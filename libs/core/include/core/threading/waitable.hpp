@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/threading/protect.hpp"
+#include "core/threading/protected.hpp"
 
 #include <chrono>
 #include <condition_variable>
@@ -28,21 +28,21 @@
 namespace fetch {
 
 template <typename T, typename M = std::mutex>
-class SynchronisedState
+class Waitable
 {
 private:
   mutable std::condition_variable condition_{};
-  Protect<T, M>                   protected_payload_;
+  Protected<T, M>                 protected_payload_;
 
 public:
   template <typename... Args>
-  explicit SynchronisedState(Args &&... args);
-  SynchronisedState(SynchronisedState const &) = delete;
-  SynchronisedState(SynchronisedState &&)      = delete;
-  ~SynchronisedState()                         = default;
+  explicit Waitable(Args &&... args);
+  Waitable(Waitable const &) = delete;
+  Waitable(Waitable &&)      = delete;
+  ~Waitable()                = default;
 
-  SynchronisedState &operator=(SynchronisedState const &) = delete;
-  SynchronisedState &operator=(SynchronisedState &&) = delete;
+  Waitable &operator=(Waitable const &) = delete;
+  Waitable &operator=(Waitable &&) = delete;
 
   template <typename Handler>
   auto WithLock(Handler &&handler)
@@ -90,13 +90,13 @@ public:
 
 template <typename T, typename M>
 template <typename... Args>
-SynchronisedState<T, M>::SynchronisedState(Args &&... args)
+Waitable<T, M>::Waitable(Args &&... args)
   : protected_payload_{std::forward<Args>(args)...}
 {}
 
 template <typename T, typename M>
 template <typename Predicate>
-void SynchronisedState<T, M>::Wait(Predicate &&predicate) const
+void Waitable<T, M>::Wait(Predicate &&predicate) const
 {
   std::unique_lock<M> lock{protected_payload_.mutex_};
 
@@ -106,8 +106,8 @@ void SynchronisedState<T, M>::Wait(Predicate &&predicate) const
 
 template <typename T, typename M>
 template <typename Predicate, typename R, typename P>
-bool SynchronisedState<T, M>::Wait(Predicate &&                       predicate,
-                                   std::chrono::duration<R, P> const &max_wait_time) const
+bool Waitable<T, M>::Wait(Predicate &&                       predicate,
+                          std::chrono::duration<R, P> const &max_wait_time) const
 {
   std::unique_lock<M> lock{protected_payload_.mutex_};
 

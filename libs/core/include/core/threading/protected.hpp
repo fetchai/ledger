@@ -24,7 +24,7 @@
 namespace fetch {
 
 template <typename T, typename M = std::mutex>
-class Protect
+class Protected
 {
 private:
   mutable M mutex_;
@@ -32,13 +32,13 @@ private:
 
 public:
   template <typename... Args>
-  explicit Protect(Args &&...);
-  ~Protect()               = default;
-  Protect(Protect const &) = delete;
-  Protect(Protect &&)      = delete;
+  explicit Protected(Args &&...);
+  ~Protected()                 = default;
+  Protected(Protected const &) = delete;
+  Protected(Protected &&)      = delete;
 
-  Protect &operator=(Protect const &) = delete;
-  Protect &operator=(Protect &&) = delete;
+  Protected &operator=(Protected const &) = delete;
+  Protected &operator=(Protected &&) = delete;
 
   template <typename Handler>
   auto WithLock(Handler &&handler)
@@ -79,12 +79,12 @@ public:
   }
 
   template <typename TT, typename MM>
-  friend class SynchronisedState;
+  friend class Waitable;
 };
 
 template <typename T, typename M>
 template <typename... Args>
-Protect<T, M>::Protect(Args &&... args)
+Protected<T, M>::Protected(Args &&... args)
   : mutex_{}
   , payload_{std::forward<Args>(args)...}
 {}
