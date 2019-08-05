@@ -69,11 +69,11 @@ public:
     , max_contexts_(max_contexts_){};
 
   ContextLabelPair        GetNextContext();
-  ContextTensorsLabelPair GetNext() override;
+  ContextTensorsLabelPair GetNext(bool is_test = false) override;
 
-  SizeType Size() const override;
-  bool     IsDone() const override;
-  void     Reset() override;
+  SizeType Size(bool is_test = false) const override;
+  bool     IsDone(bool is_test = false) const override;
+  void     Reset(bool is_test = false) override;
   void     AddData(std::string const &text);
   void     createIdxUMaps();
 
@@ -192,7 +192,7 @@ C2VLoader<LabelType, DataType>::GetNextContext()
  */
 template <typename LabelType, typename DataType>
 typename C2VLoader<LabelType, DataType>::ContextTensorsLabelPair
-C2VLoader<LabelType, DataType>::GetNext()
+C2VLoader<LabelType, DataType>::GetNext(bool is_test)
 {
   if (this->random_mode_)
   {
@@ -208,14 +208,14 @@ C2VLoader<LabelType, DataType>::GetNext()
     {
       auto             current_context_position = this->iterator_position_get_next_context_;
       ContextLabelPair input                    = this->GetNextContext();
-      if ((iteration_start || (input.first == old_function_index)) && !this->IsDone())
+      if ((iteration_start || (input.first == old_function_index)) && !this->IsDone(is_test))
       {
         old_function_index = input.first;
         context_positions.push_back(current_context_position);
       }
       else
       {
-        if (!this->IsDone())
+        if (!this->IsDone(is_test))
         {
           this->iterator_position_get_next_context_--;
         }
@@ -281,8 +281,9 @@ C2VLoader<LabelType, DataType>::GetNext()
  * @return std::uint64_t
  */
 template <typename LabelType, typename DataType>
-typename DataType::SizeType C2VLoader<LabelType, DataType>::Size() const
+typename DataType::SizeType C2VLoader<LabelType, DataType>::Size(bool is_test) const
 {
+  (void)is_test;
   return this->data.size();
 }
 
@@ -293,8 +294,9 @@ typename DataType::SizeType C2VLoader<LabelType, DataType>::Size() const
  * @return false
  */
 template <typename LabelType, typename DataType>
-bool C2VLoader<LabelType, DataType>::IsDone() const
+bool C2VLoader<LabelType, DataType>::IsDone(bool is_test) const
 {
+  (void)is_test;
   return ((this->data).size() == (this->iterator_position_get_next_context_));
 }
 
@@ -303,8 +305,9 @@ bool C2VLoader<LabelType, DataType>::IsDone() const
  *
  */
 template <typename LabelType, typename DataType>
-void C2VLoader<LabelType, DataType>::Reset()
+void C2VLoader<LabelType, DataType>::Reset(bool is_test)
 {
+  (void)is_test;
   this->iterator_position_get_next_context_ = SizeType{0};
 }
 

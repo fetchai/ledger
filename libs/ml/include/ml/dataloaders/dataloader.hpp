@@ -47,13 +47,14 @@ public:
   {}
   virtual ~DataLoader() = default;
 
-  virtual ReturnType GetNext() = 0;
+  virtual ReturnType GetNext(bool is_test = false) = 0;
 
-  virtual ReturnType PrepareBatch(fetch::math::SizeType subset_size, bool &is_done_set);
+  virtual ReturnType PrepareBatch(fetch::math::SizeType subset_size, bool &is_done_set,
+                                  bool is_test = false);
 
-  virtual std::uint64_t Size() const   = 0;
-  virtual bool          IsDone() const = 0;
-  virtual void          Reset()        = 0;
+  virtual std::uint64_t Size(bool is_test = false) const   = 0;
+  virtual bool          IsDone(bool is_test = false) const = 0;
+  virtual void          Reset(bool is_test = false)        = 0;
 
 protected:
   bool random_mode_ = false;
@@ -96,12 +97,12 @@ void DataLoader<LabelType, DataType>::SetDataSize(
  */
 template <typename LabelType, typename DataType>
 typename DataLoader<LabelType, DataType>::ReturnType DataLoader<LabelType, DataType>::PrepareBatch(
-    fetch::math::SizeType batch_size, bool &is_done_set)
+    fetch::math::SizeType batch_size, bool &is_done_set, bool is_test)
 {
   if (size_not_set_)
   {
     // first ever call to PrepareBatch requires a dummy GetNext to identify tensor shapes
-    cur_training_pair_ = GetNext();
+    cur_training_pair_ = GetNext(is_test);
     Reset();
 
     this->SetDataSize(cur_training_pair_);
@@ -134,14 +135,14 @@ typename DataLoader<LabelType, DataType>::ReturnType DataLoader<LabelType, DataT
   while (data_idx < batch_size)
   {
     // check if end of data
-    if (IsDone())
+    if (IsDone(is_test))
     {
       is_done_set = true;
-      Reset();
+      Reset(is_test);
     }
 
     // get next datum & label
-    cur_training_pair_ = GetNext();
+    cur_training_pair_ = GetNext(is_test);
 
     // Fill label view
     auto label_view = ret_pair_.first.View(data_idx);

@@ -40,8 +40,12 @@ public:
   using ReturnType = std::pair<LabelType, std::vector<T>>;
 
 private:
-  std::uint32_t                  cursor_;
+  std::uint32_t                  train_cursor_;
+  std::uint32_t                  test_cursor_;
+  std::uint32_t                  train_size_;
+  std::uint32_t                  test_size_;
   std::uint32_t                  size_;
+  std::uint32_t                  test_offset_;
   static constexpr std::uint32_t FIGURE_WIDTH  = 28;
   static constexpr std::uint32_t FIGURE_HEIGHT = 28;
   static constexpr std::uint32_t FIGURE_SIZE   = 28 * 28;
@@ -51,11 +55,12 @@ public:
   MNISTLoader(std::string const &images_file, std::string const &labelsFile,
               bool random_mode = false)
     : DataLoader<LabelType, T>(random_mode)
-    , cursor_(0)
+    , train_cursor_(0)
+    , test_cursor_(0)
   {
     std::uint32_t record_length(0);
-    data_   = read_mnist_images(images_file, size_, record_length);
-    labels_ = read_mnist_labels(labelsFile, size_);
+    data_   = read_mnist_images(images_file, train_size_, record_length);
+    labels_ = read_mnist_labels(labelsFile, train_size_);
     assert(record_length == FIGURE_SIZE);
 
     // Prepare return buffer
@@ -63,33 +68,70 @@ public:
     buffer_.first = LabelType({LABEL_SIZE, 1u});
   }
 
-  virtual SizeType Size() const override
+  virtual SizeType Size(bool is_test = false) const override
   {
     // MNIST files store the size as uint32_t but Dataloader interface require uint64_t
-    return static_cast<SizeType>(size_);
-  }
-
-  virtual bool IsDone() const override
-  {
-    return cursor_ >= size_;
-  }
-
-  virtual void Reset() override
-  {
-    cursor_ = 0;
-  }
-
-  virtual ReturnType GetNext() override
-  {
-    if (this->random_mode_)
+    if (is_test)
     {
-      GetAtIndex((SizeType)rand() % Size(), buffer_);
-      return buffer_;
+      return static_cast<SizeType>(size_);
     }
     else
     {
-      GetAtIndex(static_cast<SizeType>(cursor_++), buffer_);
-      return buffer_;
+      return static_cast<SizeType>(train_size_);
+    }
+  }
+
+  virtual bool IsDone(bool is_test = false) const override
+  {
+    if (is_test)
+    {
+      return test_offset_ + test_cursor_ >= size_;
+    }
+    else
+    {
+      return train_cursor_ >= train_size_;
+    }
+  }
+
+  virtual void Reset(bool is_test = false) override
+  {
+    if (is_test)
+    {
+      test_cursor_ = 0;
+    }
+    else
+    {
+      train_cursor_ = 0;
+    }
+  }
+
+  virtual ReturnType GetNext(bool is_test = false) override
+  {
+    if (is_test)
+    {
+      if (this->random_mode_)
+      {
+        GetAtIndex(test_offset_ + ((SizeType)rand() % test_size_), buffer_);
+        return buffer_;
+      }
+      else
+      {
+        GetAtIndex(static_cast<SizeType>(test_offset_ + (test_cursor_++)), buffer_);
+        return buffer_;
+      }
+    }
+    else
+    {
+      if (this->random_mode_)
+      {
+        GetAtIndex((SizeType)rand() % train_size_, buffer_);
+        return buffer_;
+      }
+      else
+      {
+        GetAtIndex(static_cast<SizeType>(train_cursor_++), buffer_);
+        return buffer_;
+      }
     }
   }
 
@@ -107,7 +149,7 @@ public:
     std::cout << std::endl;
   }
 
-  ReturnType PrepareBatch(SizeType subset_size, bool &is_done_set) override
+  ReturnType PrepareBatch(SizeType subset_size, bool &is_done_set, bool is_test = false) override
   {
     T ret_labels({LABEL_SIZE, subset_size});
 
@@ -121,17 +163,37 @@ public:
       auto     it = ret_images.at(0).View(index).begin();
       while (it.is_valid())
       {
-        *it = static_cast<DataType>(data_[cursor_][i]) / DataType{256};
+        if (is_test)
+        {
+          *it = static_cast<DataType>(data_[test_offset_ + test_cursor_][i]) / DataType{256};
+        }
+        else
+        {
+          *it = static_cast<DataType>(data_[train_cursor_][i]) / DataType{256};
+        }
+
         i++;
         ++it;
       }
-      ret_labels(labels_[cursor_], index) = static_cast<typename LabelType::Type>(1);
 
-      ++cursor_;
-      if (IsDone())
+      if (is_test)
+      {
+        ret_labels(labels_[test_offset_ + test_cursor_], index) =
+            static_cast<typename LabelType::Type>(1);
+
+        ++test_cursor_;
+      }
+      else
+      {
+        ret_labels(labels_[train_cursor_], index) = static_cast<typename LabelType::Type>(1);
+
+        ++train_cursor_;
+      }
+
+      if (IsDone(is_test))
       {
         is_done_set = true;
-        Reset();
+        Reset(is_test);
       }
     }
 

@@ -46,11 +46,11 @@ public:
   GraphW2VLoader(SizeType window_size, SizeType negative_samples, T freq_thresh,
                  SizeType max_word_count, bool mode, SizeType seed = 1337);
 
-  bool       IsDone() const override;
-  void       Reset() override;
+  bool       IsDone(bool is_test = false) const override;
+  void       Reset(bool is_test = false) override;
   void       RemoveInfrequent(SizeType min);
   void       InitUnigramTable(SizeType size = 1e8);
-  ReturnType GetNext() override;
+  ReturnType GetNext(bool is_test = false) override;
 
   void BuildVocab(std::vector<std::string> const &sents, SizeType min_count = 0);
   void SaveVocab(std::string const &filename);
@@ -60,7 +60,7 @@ public:
   bool WordKnown(std::string const &word) const;
 
   /// accessors and helper functions ///
-  SizeType         Size() const override;
+  SizeType         Size(bool is_test = false) const override;
   SizeType         vocab_size() const;
   VocabType const &vocab() const;
   std::string      WordFromIndex(SizeType index) const;
@@ -162,8 +162,9 @@ T GraphW2VLoader<T>::EstimatedSampleNumber()
  * @return
  */
 template <typename T>
-math::SizeType GraphW2VLoader<T>::Size() const
+math::SizeType GraphW2VLoader<T>::Size(bool is_test) const
 {
+  (void)is_test;
   return size_;
 }
 
@@ -191,8 +192,9 @@ void GraphW2VLoader<T>::Update()
  * @return
  */
 template <typename T>
-bool GraphW2VLoader<T>::IsDone() const
+bool GraphW2VLoader<T>::IsDone(bool is_test) const
 {
+  (void)is_test;
   if (current_sentence_ < data_.size() - 1)
   {
     return false;
@@ -215,8 +217,9 @@ bool GraphW2VLoader<T>::IsDone() const
  * @tparam T
  */
 template <typename T>
-void GraphW2VLoader<T>::Reset()
+void GraphW2VLoader<T>::Reset(bool is_test)
 {
+  (void)is_test;
   current_sentence_ = 0;
   current_word_     = 0;
   unigram_table_.Reset();
@@ -432,8 +435,9 @@ void GraphW2VLoader<T>::BufferNextSamples()
  * @return
  */
 template <typename T>
-typename GraphW2VLoader<T>::ReturnType GraphW2VLoader<T>::GetNext()
+typename GraphW2VLoader<T>::ReturnType GraphW2VLoader<T>::GetNext(bool is_test)
 {
+  (void)is_test;
   T input_word, output_word;
 
   T label = labels_.At(buffer_pos_);  // check if we have drained the buffer, either no more valid
