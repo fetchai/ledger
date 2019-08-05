@@ -44,117 +44,6 @@ struct SaveableParamsInterface
 ////////////////////////////
 
 template <class TensorType>
-struct AbsSaveableParams;
-
-template <class TensorType>
-struct AddSaveableParams;
-
-template <class TensorType>
-struct ConcatenateSaveableParams;
-
-template <class TensorType>
-struct Convolution1DSaveableParams;
-
-template <class TensorType>
-struct Convolution2DSaveableParams;
-
-template <class TensorType>
-struct CrossEntropyLossSaveableParams;
-
-template <class TensorType>
-struct DivideSaveableParams;
-
-template <class TensorType>
-struct DropoutSaveableParams;
-
-template <class TensorType>
-struct EluSaveableParams;
-
-template <class TensorType>
-struct EmbeddingsSaveableParams;
-
-template <class TensorType>
-struct ExpSaveableParams;
-
-template <class TensorType>
-struct FlattenSaveableParams;
-
-template <class TensorType>
-struct ConvolutionLayer1DSaveableParams;
-
-template <class TensorType>
-struct ConvolutionLayer2DSaveableParams;
-
-template <class TensorType>
-struct FullyConnectedSaveableParams;
-
-template <class TensorType>
-struct LeakyReluSaveableParams;
-
-template <class TensorType>
-struct LeakyReluOpSaveableParams;
-
-template <class TensorType>
-struct LogSaveableParams;
-
-template <class TensorType>
-struct LogSigmoidSaveableParams;
-
-template <class TensorType>
-struct LogSoftmaxSaveableParams;
-
-template <class TensorType>
-struct MatrixMultiplySaveableParams;
-
-template <class TensorType>
-struct MaxPool1DSaveableParams;
-
-template <class TensorType>
-struct MaxPool2DSaveableParams;
-
-template <class TensorType>
-struct MeanSquareErrorSaveableParams;
-
-template <class TensorType>
-struct MaximumSaveableParams;
-
-template <class TensorType>
-struct MultiplySaveableParams;
-
-template <class TensorType>
-struct PlaceholderSaveableParams;
-
-template <class TensorType>
-struct RandomisedReluSaveableParams;
-
-template <class TensorType>
-struct ReluSaveableParams;
-
-template <class TensorType>
-struct ReshapeSaveableParams;
-
-template <class TensorType>
-struct SigmoidSaveableParams;
-
-template <class TensorType>
-struct SoftmaxSaveableParams;
-
-template <class TensorType>
-struct SoftmaxCrossEntropySaveableParams;
-
-template <class TensorType>
-struct SQRTSaveableParams;
-
-template <class TensorType>
-struct SubtractSaveableParams;
-
-template <class TensorType>
-struct TanhSaveableParams;
-
-template <class TensorType>
-struct TransposeSaveableParams;
-
-template <class TensorType>
 struct WeightsSaveableParams;
 
 template <class TensorType>
@@ -460,7 +349,7 @@ struct ConvolutionLayer2DSaveableParams : SubGraphSaveableParams<TensorType>
 };
 
 /**
- * Saveable parameters for Flatten op
+ * Saveable parameters for FullyConnectedLayer
  * @tparam TensorType
  */
 template <class TensorType>
@@ -644,6 +533,21 @@ struct PlaceholderSaveableParams : public SaveableParamsInterface
   {}
 };
 
+/**
+ * Saveable parameters for Flatten op
+ * @tparam TensorType
+ */
+template <class TensorType>
+struct PReluSaveableParams : SubGraphSaveableParams<TensorType>
+{
+  using SizeType             = typename TensorType::SizeType;
+  fetch::ml::OpType op_type  = OpType::LAYER_PRELU;
+
+  PReluSaveableParams()
+    : SubGraphSaveableParams<TensorType>(OpType::LAYER_PRELU)
+  {}
+};
+
 template <class TensorType>
 struct RandomisedReluSaveableParams : public SaveableParamsInterface
 {
@@ -691,6 +595,23 @@ struct ReshapeSaveableParams : public SaveableParamsInterface
 };
 
 /**
+ * Saveable parameters for Self Attention Layer
+ * @tparam TensorType
+ */
+template <class TensorType>
+struct SelfAttentionSaveableParams : SubGraphSaveableParams<TensorType>
+{
+  using SizeType             = typename TensorType::SizeType;
+  fetch::ml::OpType op_type  = OpType::LAYER_SELF_ATTENTION;
+  SizeType          in_size  = fetch::math::numeric_max<SizeType>();
+  SizeType          out_size = fetch::math::numeric_max<SizeType>();
+
+  SelfAttentionSaveableParams()
+    : SubGraphSaveableParams<TensorType>(OpType::LAYER_SELF_ATTENTION)
+  {}
+};
+
+/**
  * Saveable parameters for Relu op
  * @tparam TensorType
  */
@@ -702,6 +623,24 @@ struct SigmoidSaveableParams : public SaveableParamsInterface
 
   SigmoidSaveableParams()
     : SaveableParamsInterface(OpType::SIGMOID)
+  {}
+};
+
+/**
+ * Saveable parameters for Self Attention Layer
+ * @tparam TensorType
+ */
+template <class TensorType>
+struct SkipGramSaveableParams : SubGraphSaveableParams<TensorType>
+{
+  using SizeType             = typename TensorType::SizeType;
+  fetch::ml::OpType op_type  = OpType::LAYER_SKIP_GRAM;
+  std::string       embed_in = "";
+  SizeType          in_size  = fetch::math::numeric_max<SizeType>();
+  SizeType          out_size = fetch::math::numeric_max<SizeType>();
+
+  SkipGramSaveableParams()
+    : SubGraphSaveableParams<TensorType>(OpType::LAYER_SKIP_GRAM)
   {}
 };
 

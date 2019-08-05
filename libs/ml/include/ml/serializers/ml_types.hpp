@@ -1417,6 +1417,47 @@ struct MapSerializer<ml::ReshapeSaveableParams<TensorType>, D>
 };
 
 /**
+ * serializer for self attention layer saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::SelfAttentionSaveableParams<TensorType>, D>
+{
+  using Type       = ml::SelfAttentionSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const SUB_GRAPH = 1;
+  static uint8_t const OP_CODE   = 2;
+  static uint8_t const IN_SIZE   = 3;
+  static uint8_t const OUT_SIZE  = 4;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(4);
+
+    // serialize parent class first
+    auto base_pointer = static_cast<ml::SubGraphSaveableParams<TensorType> const *>(&sp);
+    map.Append(SUB_GRAPH, *base_pointer);
+
+    map.Append(OP_CODE, sp.op_type);
+    map.Append(IN_SIZE, sp.in_size);
+    map.Append(OUT_SIZE, sp.out_size);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    auto base_pointer = static_cast<ml::SubGraphSaveableParams<TensorType> *>(&sp);
+    map.ExpectKeyGetValue(SUB_GRAPH, *base_pointer);
+
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+    map.ExpectKeyGetValue(IN_SIZE, sp.in_size);
+    map.ExpectKeyGetValue(OUT_SIZE, sp.out_size);
+  }
+};
+
+/**
  * serializer for SigmoidSaveableParams
  * @tparam TensorType
  */
@@ -1439,6 +1480,49 @@ struct MapSerializer<ml::SigmoidSaveableParams<TensorType>, D>
   static void Deserialize(MapDeserializer &map, Type &sp)
   {
     map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+  }
+};
+/**
+ * serializer for self attention layer saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::SkipGramSaveableParams<TensorType>, D>
+{
+  using Type       = ml::SkipGramSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const SUB_GRAPH = 1;
+  static uint8_t const OP_CODE   = 2;
+  static uint8_t const IN_SIZE   = 3;
+  static uint8_t const OUT_SIZE  = 4;
+  static uint8_t const EMBED_IN  = 5;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(5);
+
+    // serialize parent class first
+    auto base_pointer = static_cast<ml::SubGraphSaveableParams<TensorType> const *>(&sp);
+    map.Append(SUB_GRAPH, *base_pointer);
+
+    map.Append(OP_CODE, sp.op_type);
+    map.Append(IN_SIZE, sp.in_size);
+    map.Append(OUT_SIZE, sp.out_size);
+    map.Append(EMBED_IN, sp.embed_in);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    auto base_pointer = static_cast<ml::SubGraphSaveableParams<TensorType> *>(&sp);
+    map.ExpectKeyGetValue(SUB_GRAPH, *base_pointer);
+
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+    map.ExpectKeyGetValue(IN_SIZE, sp.in_size);
+    map.ExpectKeyGetValue(OUT_SIZE, sp.out_size);
+    map.ExpectKeyGetValue(EMBED_IN, sp.embed_in);
   }
 };
 

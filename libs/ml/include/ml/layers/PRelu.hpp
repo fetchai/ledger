@@ -41,7 +41,7 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using WeightsInit   = fetch::ml::ops::WeightsInitialisation;
   using VecTensorType = typename SubGraph<T>::VecTensorType;
-  using SPType        = SubGraphSaveableParams<ArrayType>;
+  using SPType        = PReluSaveableParams<ArrayType>;
 
   explicit PRelu(std::uint64_t in, std::string const &name = "PRelu",
                  WeightsInit init_mode = WeightsInit::XAVIER_GLOROT)

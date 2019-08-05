@@ -44,6 +44,7 @@ public:
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using WeightsInit   = fetch::ml::ops::WeightsInitialisation;
   using VecTensorType = typename SubGraph<T>::VecTensorType;
+  using SPType        = SkipGramSaveableParams<T>;
 
   SkipGram(SizeType in_size, SizeType out, SizeType embedding_size, SizeType vocab_size,
            std::string const &name = "SkipGram", WeightsInit init_mode = WeightsInit::XAVIER_GLOROT)
@@ -90,7 +91,19 @@ public:
 
   std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
-    throw std::runtime_error("This shouldn't be called!");
+    auto sp      = std::make_shared<SPType>();
+    auto ret_sgsp_pointer = std::dynamic_pointer_cast<SubGraphSaveableParams<ArrayType>>(sp);
+
+    auto base_pointer = std::dynamic_pointer_cast<SubGraph<ArrayType>>(this);
+    auto this_sgsp_ptr = base_pointer->GetOpSaveableParams();
+
+    *ret_sgsp_pointer = *this_sgsp_ptr;
+
+    sp->in_size  = in_size_;
+    sp->out_size = out_size_;
+    sp->embed_in = embed_in_;
+
+    return sp;
   }
 
   std::shared_ptr<ops::Embeddings<ArrayType>> GetEmbeddings(std::shared_ptr<SkipGram<ArrayType>> &g)

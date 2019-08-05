@@ -43,6 +43,7 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename SubGraph<T>::VecTensorType;
+  using SPType        = SelfAttentionSaveableParams<ArrayType>;
 
   SelfAttention(std::uint64_t in, std::uint64_t out, std::uint64_t hidden,
                 std::string const &name = "SA")
@@ -89,6 +90,21 @@ public:
 
     this->AddInputNode(input);
     this->SetOutputNode(output);
+  }
+
+  std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
+  {
+    auto sp      = std::make_shared<SPType>();
+    auto ret_sgsp_pointer = std::dynamic_pointer_cast<SubGraphSaveableParams<ArrayType>>(sp);
+
+    auto base_pointer = std::dynamic_pointer_cast<SubGraph<ArrayType>>(this);
+    auto this_sgsp_ptr = base_pointer->GetOpSaveableParams();
+
+    *ret_sgsp_pointer = *this_sgsp_ptr;
+
+    sp->in_size  = in_size_;
+    sp->out_size = out_size_;
+    return sp;
   }
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override

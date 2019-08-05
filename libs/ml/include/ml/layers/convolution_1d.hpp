@@ -102,14 +102,20 @@ public:
 
   std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
+    auto sp      = std::make_shared<SPType>();
+    auto ret_sgsp_pointer = std::dynamic_pointer_cast<SubGraphSaveableParams<ArrayType>>(sp);
+
+    auto base_pointer = std::dynamic_pointer_cast<SubGraph<ArrayType>>(this);
+    auto this_sgsp_ptr = base_pointer->GetOpSaveableParams();
+
+    *ret_sgsp_pointer = *this_sgsp_ptr;
+
     // get graph and subgraph saveable params
-    auto sp             = std::make_shared<SPType>();
     sp->kernel_size     = kernel_size_;
     sp->input_channels  = input_channels_;
     sp->output_channels = output_channels_;
     sp->stride_size     = stride_size_;
 
-    SubGraph<ArrayType>::CopySaveableParams(sp);
     return sp;
   }
 
