@@ -49,10 +49,10 @@ public:
 
   ~CommodityDataLoader() override = default;
 
-  ReturnType GetNext() override;
-  SizeType   Size() const override;
-  bool       IsDone() const override;
-  void       Reset() override;
+  ReturnType GetNext(bool is_test = false) override;
+  SizeType   Size(bool is_test = false) const override;
+  bool       IsDone(bool is_test = false) const override;
+  void       Reset(bool is_test = false) override;
 
   void AddData(std::string const &xfilename, std::string const &yfilename);
 
@@ -98,11 +98,11 @@ void CommodityDataLoader<LabelType, InputType>::AddData(std::string const &xfile
  */
 template <typename LabelType, typename InputType>
 typename CommodityDataLoader<LabelType, InputType>::ReturnType
-CommodityDataLoader<LabelType, InputType>::GetNext()
+CommodityDataLoader<LabelType, InputType>::GetNext(bool is_test)
 {
   if (this->random_mode_)
   {
-    GetAtIndex(static_cast<SizeType>(decltype(rand)::generator()) % Size());
+    GetAtIndex(static_cast<SizeType>(decltype(rand)::generator()) % Size(is_test));
     return buffer_;
   }
   else
@@ -118,14 +118,16 @@ CommodityDataLoader<LabelType, InputType>::GetNext()
  */
 template <typename LabelType, typename InputType>
 typename CommodityDataLoader<LabelType, InputType>::SizeType
-CommodityDataLoader<LabelType, InputType>::Size() const
+CommodityDataLoader<LabelType, InputType>::Size(bool is_test) const
 {
+  (void)is_test;
   return static_cast<SizeType>(size_);
 }
 
 template <typename LabelType, typename InputType>
-bool CommodityDataLoader<LabelType, InputType>::IsDone() const
+bool CommodityDataLoader<LabelType, InputType>::IsDone(bool is_test) const
 {
+  (void)is_test;
   return cursor_ >= size_;
 }
 
@@ -133,8 +135,9 @@ bool CommodityDataLoader<LabelType, InputType>::IsDone() const
  * Resets the cursor to 0
  */
 template <typename LabelType, typename InputType>
-void CommodityDataLoader<LabelType, InputType>::Reset()
+void CommodityDataLoader<LabelType, InputType>::Reset(bool is_test)
 {
+  (void)is_test;
   cursor_ = 0;
 }
 

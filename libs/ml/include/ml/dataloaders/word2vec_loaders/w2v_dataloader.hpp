@@ -50,19 +50,19 @@ public:
 
   W2VLoader(SizeType window_size, SizeType negative_samples, bool mode);
 
-  bool       IsDone() const override;
-  void       Reset() override;
+  bool       IsDone(bool is_test = false) const override;
+  void       Reset(bool is_test = false) override;
   void       RemoveInfrequent(SizeType min);
   void       InitUnigramTable();
   void       GetNext(ReturnType &t);
-  ReturnType GetNext() override;
+  ReturnType GetNext(bool is_test = false) override;
 
   bool BuildVocab(std::string const &s);
   void SaveVocab(std::string const &filename);
   void LoadVocab(std::string const &filename);
 
   /// accessors and helper functions ///
-  SizeType         Size() const override;
+  SizeType         Size(bool is_test = false) const override;
   SizeType         vocab_size() const;
   VocabType const &vocab() const;
   std::string      WordFromIndex(SizeType index) const;
@@ -112,8 +112,9 @@ W2VLoader<T>::W2VLoader(SizeType window_size, SizeType negative_samples, bool mo
  * @return
  */
 template <typename T>
-math::SizeType W2VLoader<T>::Size() const
+math::SizeType W2VLoader<T>::Size(bool is_test) const
 {
+  (void)is_test;
   SizeType size(0);
   for (auto const &s : data_)
   {
@@ -132,8 +133,9 @@ math::SizeType W2VLoader<T>::Size() const
  * @return
  */
 template <typename T>
-bool W2VLoader<T>::IsDone() const
+bool W2VLoader<T>::IsDone(bool is_test) const
 {
+  (void)is_test;
   if (current_sentence_ >= data_.size())
   {
     return true;
@@ -153,8 +155,9 @@ bool W2VLoader<T>::IsDone() const
  * @tparam T
  */
 template <typename T>
-void W2VLoader<T>::Reset()
+void W2VLoader<T>::Reset(bool is_test)
 {
+  (void)is_test;
   current_sentence_ = 0;
   current_word_     = 0;
   rng_.Seed(1337);
@@ -271,8 +274,9 @@ void W2VLoader<T>::GetNext(ReturnType &ret)
 }
 
 template <typename T>
-typename W2VLoader<T>::ReturnType W2VLoader<T>::GetNext()
+typename W2VLoader<T>::ReturnType W2VLoader<T>::GetNext(bool is_test)
 {
+  (void)is_test;
   ReturnType p(label_, {target_});
   GetNext(p);
   return p;

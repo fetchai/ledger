@@ -56,12 +56,12 @@ public:
   }
   ~TensorDataLoader() override = default;
 
-  ReturnType   GetNext() override;
+  ReturnType   GetNext(bool is_test = false) override;
   virtual bool AddData(TensorType const &data, TensorType const &labels);
 
-  SizeType Size() const override;
-  bool     IsDone() const override;
-  void     Reset() override;
+  SizeType Size(bool is_test = false) const override;
+  bool     IsDone(bool is_test = false) const override;
+  void     Reset(bool is_test = false) override;
 
 protected:
   SizeType data_cursor_  = 0;
@@ -82,8 +82,9 @@ protected:
 
 template <typename LabelType, typename InputType>
 typename TensorDataLoader<LabelType, InputType>::ReturnType
-TensorDataLoader<LabelType, InputType>::GetNext()
+TensorDataLoader<LabelType, InputType>::GetNext(bool is_test)
 {
+  (void)is_test;
   if (this->random_mode_)
   {
     throw std::runtime_error("random mode not implemented for tensor dataloader");
@@ -118,20 +119,23 @@ bool TensorDataLoader<LabelType, InputType>::AddData(TensorType const &data,
 
 template <typename LabelType, typename InputType>
 typename TensorDataLoader<LabelType, InputType>::SizeType
-TensorDataLoader<LabelType, InputType>::Size() const
+TensorDataLoader<LabelType, InputType>::Size(bool is_test) const
 {
+  (void)is_test;
   return n_samples_;
 }
 
 template <typename LabelType, typename InputType>
-bool TensorDataLoader<LabelType, InputType>::IsDone() const
+bool TensorDataLoader<LabelType, InputType>::IsDone(bool is_test) const
 {
+  (void)is_test;
   return (data_cursor_ >= data_.shape(batch_data_dim_));
 }
 
 template <typename LabelType, typename InputType>
-void TensorDataLoader<LabelType, InputType>::Reset()
+void TensorDataLoader<LabelType, InputType>::Reset(bool is_test)
 {
+  (void)is_test;
   data_cursor_  = 0;
   label_cursor_ = 0;
 }
