@@ -39,7 +39,7 @@ void recursively_increment_n_times(Wrapper &protected_value, uint8_t n)
 {
   if (n > 0)
   {
-    protected_value.Apply([&protected_value, n](auto &payload) -> void {
+    protected_value.WithLock([&protected_value, n](auto &payload) -> void {
       ++payload;
       recursively_increment_n_times(protected_value, static_cast<uint8_t>(n - 1));
     });
@@ -106,7 +106,7 @@ public:
   {
     Wrapper<std::vector<std::string>, std::mutex> protected_vector(3u, "abc");
 
-    protected_vector.Apply([](auto &vector_payload) -> void {
+    protected_vector.WithLock([](auto &vector_payload) -> void {
       EXPECT_EQ(vector_payload.size(), 3u);
       EXPECT_EQ(vector_payload[0], std::string{"abc"});
     });
@@ -117,7 +117,7 @@ public:
   {
     const Wrapper<ConstType, std::mutex> const_protected_const_value(initial_value);
 
-    const_protected_const_value.Apply([this](auto &payload) -> void {
+    const_protected_const_value.WithLock([this](auto &payload) -> void {
       EXPECT_TRUE(is_read_only(payload));
 
       EXPECT_EQ(payload, initial_value);
@@ -129,7 +129,7 @@ public:
   {
     Wrapper<ConstType, std::mutex> protected_const_value(initial_value);
 
-    protected_const_value.Apply([this](auto &payload) -> void {
+    protected_const_value.WithLock([this](auto &payload) -> void {
       EXPECT_TRUE(is_read_only(payload));
 
       EXPECT_EQ(payload, initial_value);
@@ -141,7 +141,7 @@ public:
   {
     const Wrapper<Type, std::mutex> const_protected_value(initial_value);
 
-    const_protected_value.Apply([this](auto &payload) -> void {
+    const_protected_value.WithLock([this](auto &payload) -> void {
       EXPECT_TRUE(is_read_only(payload));
 
       EXPECT_EQ(payload, initial_value);
@@ -153,7 +153,7 @@ public:
   {
     Wrapper<Type, std::mutex> protected_value(initial_value);
 
-    protected_value.Apply([this](auto &payload) -> void {
+    protected_value.WithLock([this](auto &payload) -> void {
       EXPECT_FALSE(is_read_only(payload));
 
       EXPECT_EQ(payload, initial_value);
@@ -162,15 +162,15 @@ public:
       EXPECT_EQ(payload, new_value);
     });
 
-    protected_value.Apply([this](auto &payload) -> void { EXPECT_EQ(payload, new_value); });
+    protected_value.WithLock([this](auto &payload) -> void { EXPECT_EQ(payload, new_value); });
   }
 
   template <template <typename, typename> class Wrapper>
-  void handler_return_value_is_passed_to_Apply()
+  void handler_return_value_is_passed_to_WithLock()
   {
     Wrapper<Type, std::mutex> protected_value(initial_value);
 
-    auto const result = protected_value.Apply([](auto &payload) -> std::vector<Type> {
+    auto const result = protected_value.WithLock([](auto &payload) -> std::vector<Type> {
       return {payload, 3 * payload};
     });
 
@@ -191,14 +191,14 @@ public:
     // would deadlock with non-recursive mutex
     recursively_increment_n_times(protected_value_with_recursive_mutex, iterations);
 
-    protected_value_with_recursive_mutex.Apply([this](auto &payload) -> void {
+    protected_value_with_recursive_mutex.WithLock([this](auto &payload) -> void {
       auto const final_value = initial_value + iterations;
       EXPECT_EQ(payload, final_value);
     });
   }
 
   template <template <typename, typename> class Wrapper>
-  void call_to_Apply_locks_and_then_releases_the_mutex()
+  void call_to_WithLock_locks_and_then_releases_the_mutex()
   {
     PayloadSpy payload_spy;
 
@@ -209,11 +209,12 @@ public:
 
     Wrapper<Type, TestMutex> protected_value_with_test_mutex{};
 
-    protected_value_with_test_mutex.Apply([&payload_spy](auto &) -> void { payload_spy.call(); });
+    protected_value_with_test_mutex.WithLock(
+        [&payload_spy](auto &) -> void { payload_spy.call(); });
   }
 
   template <template <typename, typename> class Wrapper>
-  void each_call_to_Apply_locks_mutex_independently()
+  void each_call_to_WithLock_locks_mutex_independently()
   {
     PayloadSpy payload_spy;
 
@@ -225,11 +226,12 @@ public:
     EXPECT_CALL(*mutex_spy, unlock()).Times(2);
 
     Wrapper<Type, TestMutex> protected_value_with_test_mutex{};
-    protected_value_with_test_mutex.Apply([&protected_value_with_test_mutex,
-                                           &payload_spy](auto &) -> void {
-      payload_spy.call();
-      protected_value_with_test_mutex.Apply([&payload_spy](auto &) -> void { payload_spy.call(); });
-    });
+    protected_value_with_test_mutex.WithLock(
+        [&protected_value_with_test_mutex, &payload_spy](auto &) -> void {
+          payload_spy.call();
+          protected_value_with_test_mutex.WithLock(
+              [&payload_spy](auto &) -> void { payload_spy.call(); });
+        });
   }
 
   ConstType initial_value;
@@ -268,10 +270,10 @@ TEST_F(ThreadSafeWrapperTests, nonconst_protect_on_nonconst_type_allows_read_and
   nonconst_protect_on_nonconst_type_allows_read_and_write_access<SynchronisedState>();
 }
 
-TEST_F(ThreadSafeWrapperTests, handler_return_value_is_passed_to_Apply)
+TEST_F(ThreadSafeWrapperTests, handler_return_value_is_passed_to_WithLock)
 {
-  handler_return_value_is_passed_to_Apply<Protect>();
-  handler_return_value_is_passed_to_Apply<SynchronisedState>();
+  handler_return_value_is_passed_to_WithLock<Protect>();
+  handler_return_value_is_passed_to_WithLock<SynchronisedState>();
 }
 
 TEST_F(ThreadSafeWrapperTests, wrapper_may_be_used_with_arbitrary_mutex_type)
@@ -280,16 +282,16 @@ TEST_F(ThreadSafeWrapperTests, wrapper_may_be_used_with_arbitrary_mutex_type)
   wrapper_may_be_used_with_arbitrary_mutex_type<SynchronisedState>();
 }
 
-TEST_F(ThreadSafeWrapperTests, call_to_Apply_locks_and_then_releases_the_mutex)
+TEST_F(ThreadSafeWrapperTests, call_to_WithLock_locks_and_then_releases_the_mutex)
 {
-  call_to_Apply_locks_and_then_releases_the_mutex<Protect>();
-  call_to_Apply_locks_and_then_releases_the_mutex<SynchronisedState>();
+  call_to_WithLock_locks_and_then_releases_the_mutex<Protect>();
+  call_to_WithLock_locks_and_then_releases_the_mutex<SynchronisedState>();
 }
 
-TEST_F(ThreadSafeWrapperTests, each_call_to_Apply_locks_mutex_independently)
+TEST_F(ThreadSafeWrapperTests, each_call_to_WithLock_locks_mutex_independently)
 {
-  each_call_to_Apply_locks_mutex_independently<Protect>();
-  each_call_to_Apply_locks_mutex_independently<SynchronisedState>();
+  each_call_to_WithLock_locks_mutex_independently<Protect>();
+  each_call_to_WithLock_locks_mutex_independently<SynchronisedState>();
 }
 
 }  // namespace

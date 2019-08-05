@@ -45,38 +45,38 @@ public:
   SynchronisedState &operator=(SynchronisedState &&) = delete;
 
   template <typename Handler>
-  auto Apply(Handler &&handler)
-      -> std::enable_if_t<std::is_void<decltype(protected_payload_.Apply(handler))>::value, void>
+  auto WithLock(Handler &&handler)
+      -> std::enable_if_t<std::is_void<decltype(protected_payload_.WithLock(handler))>::value, void>
   {
-    protected_payload_.Apply(handler);
+    protected_payload_.WithLock(handler);
     condition_.notify_all();
   }
 
   template <typename Handler>
-  auto Apply(Handler &&handler) const
-      -> std::enable_if_t<std::is_void<decltype(protected_payload_.Apply(handler))>::value, void>
+  auto WithLock(Handler &&handler) const
+      -> std::enable_if_t<std::is_void<decltype(protected_payload_.WithLock(handler))>::value, void>
   {
-    protected_payload_.Apply(handler);
+    protected_payload_.WithLock(handler);
     condition_.notify_all();
   }
 
   template <typename Handler>
-  auto Apply(Handler &&handler)
-      -> std::enable_if_t<!std::is_void<decltype(protected_payload_.Apply(handler))>::value,
-                          decltype(protected_payload_.Apply(handler))>
+  auto WithLock(Handler &&handler)
+      -> std::enable_if_t<!std::is_void<decltype(protected_payload_.WithLock(handler))>::value,
+                          decltype(protected_payload_.WithLock(handler))>
   {
-    auto const result = protected_payload_.Apply(handler);
+    auto const result = protected_payload_.WithLock(handler);
     condition_.notify_all();
 
     return std::move(result);
   }
 
   template <typename Handler>
-  auto Apply(Handler &&handler) const
-      -> std::enable_if_t<!std::is_void<decltype(protected_payload_.Apply(handler))>::value,
-                          decltype(protected_payload_.Apply(handler)) const>
+  auto WithLock(Handler &&handler) const
+      -> std::enable_if_t<!std::is_void<decltype(protected_payload_.WithLock(handler))>::value,
+                          decltype(protected_payload_.WithLock(handler)) const>
   {
-    auto const result = protected_payload_.Apply(handler);
+    auto const result = protected_payload_.WithLock(handler);
     condition_.notify_all();
 
     return std::move(result);

@@ -41,7 +41,7 @@ public:
   Protect &operator=(Protect &&) = delete;
 
   template <typename Handler>
-  auto Apply(Handler &&handler)
+  auto WithLock(Handler &&handler)
       -> std::enable_if_t<std::is_void<decltype(handler(payload_))>::value, void>
   {
     std::lock_guard<M> lock(mutex_);
@@ -50,7 +50,7 @@ public:
   }
 
   template <typename Handler>
-  auto Apply(Handler &&handler) const
+  auto WithLock(Handler &&handler) const
       -> std::enable_if_t<std::is_void<decltype(handler(payload_))>::value, void>
   {
     std::lock_guard<M> lock(mutex_);
@@ -59,7 +59,7 @@ public:
   }
 
   template <typename Handler>
-  auto Apply(Handler &&handler)
+  auto WithLock(Handler &&handler)
       -> std::enable_if_t<!std::is_void<decltype(handler(payload_))>::value,
                           decltype(handler(payload_))>
   {
@@ -69,7 +69,7 @@ public:
   }
 
   template <typename Handler>
-  auto Apply(Handler &&handler) const
+  auto WithLock(Handler &&handler) const
       -> std::enable_if_t<!std::is_void<decltype(handler(payload_))>::value,
                           decltype(handler(payload_)) const>
   {
