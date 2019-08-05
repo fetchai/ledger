@@ -16,16 +16,18 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/service/server.hpp"
-
 #include "core/threading/synchronised_state.hpp"
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
+#include "network/service/server.hpp"
 #include "service_ids.hpp"
 
 #include <iostream>
-#include <set>
+#include <memory>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
 using fetch::muddle::Muddle;
 using fetch::muddle::NetworkId;
@@ -45,12 +47,11 @@ public:
     : muddle_{std::move(muddle)}
   {}
 
-  void Register(CallContext const *context)
+  void Register(CallContext const context)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Registering: ", context->sender_address.ToBase64());
+    FETCH_LOG_INFO(LOGGING_NAME, "Registering: ", context.sender_address.ToBase64());
 
-    node_set_.Apply(
-        [context](AddressSet &addresses) { addresses.insert(context->sender_address); });
+    node_set_.Apply([context](AddressSet &addresses) { addresses.insert(context.sender_address); });
   }
 
   Strings SearchFor(std::string const &val)

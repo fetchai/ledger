@@ -70,7 +70,7 @@ void BM_Setup_And_Train(benchmark::State &state)
     std::string error_name = g->template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TensorType>>(
         "", {output_name, label_name});
 
-    // Initialize Optimiser
+    // Initialise Optimiser
     fetch::ml::optimisers::SGDOptimiser<TensorType> optimiser(g, {input_name}, label_name,
                                                               error_name, learning_rate);
 

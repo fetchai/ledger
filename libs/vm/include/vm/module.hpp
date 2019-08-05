@@ -30,9 +30,11 @@
 #include "vm/module/functor_invoke.hpp"
 #include "vm/module/member_function_invoke.hpp"
 #include "vm/module/static_member_function_invoke.hpp"
+#include "vm/object.hpp"
 #include "vm/state.hpp"
 #include "vm/vm.hpp"
 
+#include <cassert>
 #include <functional>
 #include <string>
 #include <tuple>
@@ -43,44 +45,6 @@
 
 namespace fetch {
 namespace vm {
-
-namespace details {
-template <typename T, typename... Ts>
-struct CreateSerializeConstructor
-{
-  static DefaultConstructorHandler Apply()
-  {
-    return [](VM *vm, TypeId) -> Ptr<Object> {
-      vm->RuntimeError("No support for non-default constructors.");
-      return nullptr;
-    };
-  }
-
-  static DefaultConstructorHandler Apply(Ts... args)
-  {
-    return [args...](VM *vm, TypeId id) -> Ptr<Object> { return T::Constructor(vm, id, args...); };
-  }
-};
-
-template <typename T>
-struct CreateSerializeConstructor<T>
-{
-  static DefaultConstructorHandler Apply()
-  {
-    return [](VM *vm, TypeId id) -> Ptr<Object> { return T::Constructor(vm, id); };
-  }
-};
-
-template <>
-struct CreateSerializeConstructor<String>
-{
-  static DefaultConstructorHandler Apply()
-  {
-    return [](VM *vm, TypeId /*id*/) -> Ptr<Object> { return new String(vm, ""); };
-  }
-};
-
-}  // namespace details
 
 class Module
 {
@@ -97,52 +61,37 @@ public:
       , type_index_(type_index__)
     {}
 
-    template <typename... Ts>
-    ClassInterface &CreateConstuctor()
+    template <typename ReturnType>
+    ClassInterface &CreateConstructor(ReturnType (*constructor)(VM *, TypeId))
     {
-      TypeIndex const type_index__ = type_index_;
-      TypeIndexArray  parameter_type_index_array;
-      UnrollTypes<Ts...>::Unroll(parameter_type_index_array);
-      Handler handler = [](VM *vm) {
-        InvokeConstructor<Type, Ts...>(vm, vm->instruction_->type_id);
-      };
-      auto compiler_setup_function = [type_index__, parameter_type_index_array,
-                                      handler](Compiler *compiler) {
-        compiler->CreateConstructor(type_index__, parameter_type_index_array, handler);
-      };
-
-      module_->AddCompilerSetupFunction(compiler_setup_function);
-
-      if (sizeof...(Ts) == 0)
-      {
-        DefaultConstructorHandler h = details::CreateSerializeConstructor<Type, Ts...>::Apply();
-        module_->deserialization_constructors_.insert({type_index__, std::move(h)});
-      }
-
-      return *this;
+      return InternalCreateConstructor(constructor).CreateSerializeDefaultConstructor(constructor);
     }
 
-    template <typename... Ts>
-    ClassInterface &CreateSerializeDefaultConstuctor(Ts... args)
+    template <typename ReturnType, typename Arg1, typename... Args>
+    ClassInterface &CreateConstructor(ReturnType (*constructor)(VM *, TypeId, Arg1, Args...))
+    {
+      return InternalCreateConstructor(constructor);
+    }
+
+    template <typename Constructor>
+    ClassInterface &CreateSerializeDefaultConstructor(Constructor const &constructor)
     {
       TypeIndex const type_index__ = type_index_;
-      TypeIndexArray  parameter_type_index_array;
-      UnrollTypes<Ts...>::Unroll(parameter_type_index_array);
 
-      DefaultConstructorHandler h =
-          details::CreateSerializeConstructor<Type, Ts...>::Apply(std::forward<Ts>(args)...);
+      DefaultConstructorHandler h{constructor};
+
       module_->deserialization_constructors_.insert({type_index__, std::move(h)});
 
       return *this;
     }
 
-    template <typename ReturnType, typename... Ts>
+    template <typename ReturnType, typename... Args>
     ClassInterface &CreateStaticMemberFunction(std::string const &function_name,
-                                               ReturnType (*f)(VM *, TypeId, Ts...))
+                                               ReturnType (*f)(VM *, TypeId, Args...))
     {
       TypeIndex const type_index__ = type_index_;
       TypeIndexArray  parameter_type_index_array;
-      UnrollParameterTypes<Ts...>::Unroll(parameter_type_index_array);
+      UnrollParameterTypes<Args...>::Unroll(parameter_type_index_array);
       TypeIndex const return_type_index = TypeGetter<ReturnType>::GetTypeIndex();
       Handler         handler           = [f](VM *vm) {
         InvokeStaticMemberFunction(vm, vm->instruction_->data, vm->instruction_->type_id, f);
@@ -156,19 +105,19 @@ public:
       return *this;
     }
 
-    template <typename ReturnType, typename... Ts>
-    ClassInterface &CreateMemberFunction(std::string const &name, ReturnType (Type::*f)(Ts...))
+    template <typename ReturnType, typename... Args>
+    ClassInterface &CreateMemberFunction(std::string const &name, ReturnType (Type::*f)(Args...))
     {
-      using MemberFunction = ReturnType (Type::*)(Ts...);
-      return InternalCreateMemberFunction<ReturnType, MemberFunction, Ts...>(name, f);
+      using MemberFunction = ReturnType (Type::*)(Args...);
+      return InternalCreateMemberFunction<ReturnType, MemberFunction, Args...>(name, f);
     }
 
-    template <typename ReturnType, typename... Ts>
+    template <typename ReturnType, typename... Args>
     ClassInterface &CreateMemberFunction(std::string const &name,
-                                         ReturnType (Type::*f)(Ts...) const)
+                                         ReturnType (Type::*f)(Args...) const)
     {
-      using MemberFunction = ReturnType (Type::*)(Ts...) const;
-      return InternalCreateMemberFunction<ReturnType, MemberFunction, Ts...>(name, f);
+      using MemberFunction = ReturnType (Type::*)(Args...) const;
+      return InternalCreateMemberFunction<ReturnType, MemberFunction, Args...>(name, f);
     }
 
     ClassInterface &EnableOperator(Operator op)
@@ -181,36 +130,12 @@ public:
       return *this;
     }
 
-    // input type 1, input type 2 ... input type N, output type
-    template <typename... Types>
-    ClassInterface &EnableIndexOperator()  // order changed!
+    template <typename GetterReturnType, typename... GetterArgs, typename SetterReturnType,
+              typename... SetterArgs>
+    ClassInterface &EnableIndexOperator(GetterReturnType (Type::*getter)(GetterArgs...),
+                                        SetterReturnType (Type::*setter)(SetterArgs...))
     {
-      static_assert(sizeof...(Types) >= 2, "2 or more types expected");
-      using Tuple       = std::tuple<Types...>;
-      using InputsTuple = typename meta::RemoveLastType<Tuple>::type;
-      using OutputType  = typename meta::GetLastType<Tuple>::type;
-      using Getter      = typename IndexedValueGetter<Type, InputsTuple, OutputType>::type;
-      using Setter      = typename IndexedValueSetter<Type, InputsTuple, OutputType>::type;
-      TypeIndex const type_index__ = type_index_;
-      TypeIndexArray  input_type_index_array;
-      UnrollTypes<Types...>::Unroll(input_type_index_array);
-      TypeIndex const output_type_index = input_type_index_array.back();
-      input_type_index_array.pop_back();
-      Getter  gf          = &Type::GetIndexedValue;
-      Handler get_handler = [gf](VM *vm) {
-        InvokeMemberFunction(vm, vm->instruction_->type_id, gf);
-      };
-      Setter  sf          = &Type::SetIndexedValue;
-      Handler set_handler = [sf](VM *vm) {
-        InvokeMemberFunction(vm, vm->instruction_->type_id, sf);
-      };
-      auto compiler_setup_function = [type_index__, input_type_index_array, output_type_index,
-                                      get_handler, set_handler](Compiler *compiler) {
-        compiler->EnableIndexOperator(type_index__, input_type_index_array, output_type_index,
-                                      get_handler, set_handler);
-      };
-      module_->AddCompilerSetupFunction(compiler_setup_function);
-      return *this;
+      return InternalEnableIndexOperator(getter, setter);
     }
 
     template <typename InstantiationType>
@@ -231,12 +156,80 @@ public:
     }
 
   private:
-    template <typename ReturnType, typename MemberFunction, typename... Ts>
+    template <typename ReturnType, typename... Args>
+    ClassInterface &InternalCreateConstructor(ReturnType (*constructor)(VM *, TypeId, Args...))
+    {
+      static_assert(IsPtr<ReturnType>::value, "Constructors must return a fetch::vm::Ptr");
+
+      TypeIndex const type_index__ = type_index_;
+      TypeIndexArray  parameter_type_index_array;
+      UnrollParameterTypes<Args...>::Unroll(parameter_type_index_array);
+
+      Handler handler = [constructor](VM *vm) {
+        InvokeConstructor(vm, vm->instruction_->type_id, constructor);
+      };
+
+      auto compiler_setup_function = [type_index__, parameter_type_index_array,
+                                      handler](Compiler *compiler) {
+        compiler->CreateConstructor(type_index__, parameter_type_index_array, handler);
+      };
+
+      module_->AddCompilerSetupFunction(compiler_setup_function);
+
+      return *this;
+    }
+
+    template <typename GetterReturnType, typename... GetterArgs, typename SetterReturnType,
+              typename... SetterArgs>
+    ClassInterface &InternalEnableIndexOperator(GetterReturnType (Type::*getter)(GetterArgs...),
+                                                SetterReturnType (Type::*setter)(SetterArgs...))
+    {
+      static_assert(sizeof...(GetterArgs) >= 1, "Getter should take at least one parameter");
+      static_assert(sizeof...(SetterArgs) >= 2, "Setter should take at least two parameters");
+      static_assert(
+          std::is_same<
+              GetterReturnType,
+              std::decay_t<typename meta::GetLastType<std::tuple<SetterArgs...>>::type>>::value,
+          "Inconsistent getter and setter definitions: getter return type should be the "
+          "same as last setter parameter type (allowing for const and reference declarators)");
+
+      TypeIndex const type_index__ = type_index_;
+
+      TypeIndexArray setter_args_type_index_array;
+      UnrollParameterTypes<SetterArgs...>::Unroll(setter_args_type_index_array);
+      TypeIndex const output_type_index = setter_args_type_index_array.back();
+      setter_args_type_index_array.pop_back();
+
+      {  // sanity checks
+        TypeIndexArray getter_args_type_index_array;
+        UnrollParameterTypes<GetterArgs...>::Unroll(getter_args_type_index_array);
+        assert(getter_args_type_index_array == setter_args_type_index_array);
+        assert(output_type_index == TypeIndex(typeid(GetterReturnType)));
+      }
+
+      Handler get_handler = [getter](VM *vm) {
+        InvokeMemberFunction(vm, vm->instruction_->type_id, getter);
+      };
+      Handler set_handler = [setter](VM *vm) {
+        InvokeMemberFunction(vm, vm->instruction_->type_id, setter);
+      };
+
+      auto compiler_setup_function = [type_index__, setter_args_type_index_array, output_type_index,
+                                      get_handler, set_handler](Compiler *compiler) {
+        compiler->EnableIndexOperator(type_index__, setter_args_type_index_array, output_type_index,
+                                      get_handler, set_handler);
+      };
+      module_->AddCompilerSetupFunction(compiler_setup_function);
+
+      return *this;
+    }
+
+    template <typename ReturnType, typename MemberFunction, typename... Args>
     ClassInterface &InternalCreateMemberFunction(std::string const &function_name, MemberFunction f)
     {
       TypeIndex const type_index__ = type_index_;
       TypeIndexArray  parameter_type_index_array;
-      UnrollParameterTypes<Ts...>::Unroll(parameter_type_index_array);
+      UnrollParameterTypes<Args...>::Unroll(parameter_type_index_array);
       TypeIndex const return_type_index = TypeGetter<ReturnType>::GetTypeIndex();
       Handler handler = [f](VM *vm) { InvokeMemberFunction(vm, vm->instruction_->type_id, f); };
       auto    compiler_setup_function = [type_index__, function_name, parameter_type_index_array,
@@ -252,11 +245,11 @@ public:
     TypeIndex type_index_;
   };
 
-  template <typename ReturnType, typename... Ts>
-  void CreateFreeFunction(std::string const &name, ReturnType (*f)(VM *, Ts...))
+  template <typename ReturnType, typename... Args>
+  void CreateFreeFunction(std::string const &name, ReturnType (*f)(VM *, Args...))
   {
     TypeIndexArray parameter_type_index_array;
-    UnrollParameterTypes<Ts...>::Unroll(parameter_type_index_array);
+    UnrollParameterTypes<Args...>::Unroll(parameter_type_index_array);
     TypeIndex const return_type_index = TypeGetter<ReturnType>::GetTypeIndex();
     Handler         handler = [f](VM *vm) { InvokeFreeFunction(vm, vm->instruction_->type_id, f); };
     auto            compiler_setup_function = [name, parameter_type_index_array, return_type_index,

@@ -4,9 +4,7 @@
 *.db
 CMakeCache.txt
 
-# docs build
 /docs/build
-
 
 # Merge Outputs
 *.orig
@@ -30,4 +28,3 @@ tags
 
 *.DS_Store
 *.ipynb_checkpoints/
-

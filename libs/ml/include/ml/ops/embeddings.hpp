@@ -19,7 +19,11 @@
 
 #include "core/assert.hpp"
 #include "ml/ops/weights.hpp"
+
+#include <cassert>
+#include <memory>
 #include <set>
+#include <vector>
 
 namespace fetch {
 namespace ml {
@@ -42,26 +46,26 @@ public:
     this->SetData(weights);
   }
 
-  Embeddings(ArrayType &weights)
+  explicit Embeddings(ArrayType &weights)
   {
     this->SetData(weights);
   }
 
-  virtual ~Embeddings() = default;
+  ~Embeddings() override = default;
 
-  virtual void Forward(VecTensorType const &inputs, ArrayType &output) override
+  void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(this->output_);
     assert(inputs.size() == 1);
-    assert(inputs.front().get().shape().size() == 2);
+    assert(inputs.front()->shape().size() == 2);
 
-    SizeType batch_size = inputs.front().get().shape().at(1);
+    SizeType batch_size = inputs.front()->shape().at(1);
 
     // test embeddings_output_ not null ptr
     if (!this->embeddings_output_)
     {
       this->embeddings_output_ = std::make_shared<ArrayType>(std::vector<SizeType>(
-          {this->output_->shape().at(0), inputs.front().get().shape(0), batch_size}));
+          {this->output_->shape().at(0), inputs.front()->shape(0), batch_size}));
     }
     // test embeddings_output_ batch size has changed
     else if (this->embeddings_output_->shape().at(2) != batch_size)
@@ -71,12 +75,12 @@ public:
     }
 
     assert(this->embeddings_output_->shape().at(0) == this->output_->shape().at(0));
-    assert(this->embeddings_output_->shape().at(1) == inputs.front().get().shape().at(0));
+    assert(this->embeddings_output_->shape().at(1) == inputs.front()->shape().at(0));
     assert(this->embeddings_output_->shape().at(2) == batch_size);
 
-    ArrayType transposed_input = inputs.front().get().Transpose();
+    ArrayType transposed_input = inputs.front()->Transpose();
     auto      e_it             = transposed_input.begin();
-    for (SizeType i{0}; i < inputs.front().get().shape().at(0); i++)
+    for (SizeType i{0}; i < inputs.front()->shape().at(0); i++)
     {
       for (SizeType n{0}; n < batch_size; n++)
       {
@@ -94,17 +98,17 @@ public:
     output = *this->embeddings_output_;
   }
 
-  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                          ArrayType const &    error_signal) override
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override
   {
     assert(inputs.size() == 1);
-    assert(inputs.front().get().shape().size() == 2);
+    assert(inputs.front()->shape().size() == 2);
 
-    SizeType batch_size = inputs.front().get().shape(1);
+    SizeType batch_size = inputs.front()->shape(1);
 
-    ArrayType transposed_input = inputs.front().get().Transpose();
+    ArrayType transposed_input = inputs.front()->Transpose();
     auto      e_it             = transposed_input.begin();
-    for (SizeType i{0}; i < inputs.front().get().shape().at(0); i++)
+    for (SizeType i{0}; i < inputs.front()->shape().at(0); i++)
     {
       for (SizeType n{0}; n < batch_size; n++)
       {
@@ -130,7 +134,7 @@ public:
     return {ArrayType(error_signal.shape())};
   }
 
-  virtual void Step(typename T::Type learning_rate) override
+  void Step(typename T::Type learning_rate) override
   {
     for (auto const &r : updated_rows_)
     {
@@ -154,8 +158,8 @@ public:
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    std::vector<SizeType> output_shape = {
-        this->output_->shape().at(0), inputs.front().get().shape(0), inputs.front().get().shape(1)};
+    std::vector<SizeType> output_shape = {this->output_->shape().at(0), inputs.front()->shape(0),
+                                          inputs.front()->shape(1)};
     return output_shape;
   }
 

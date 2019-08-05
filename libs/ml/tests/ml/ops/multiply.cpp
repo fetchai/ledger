@@ -16,12 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/multiply.hpp"
-
 #include "math/tensor.hpp"
+#include "ml/ops/multiply.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
+
+#include <vector>
 
 template <typename T>
 class MultiplyTest : public ::testing::Test
@@ -53,15 +54,135 @@ TYPED_TEST(MultiplyTest, forward_test)
 
   fetch::ml::ops::Multiply<ArrayType> op;
 
-  TypeParam prediction(op.ComputeOutputShape({data_1, data_2}));
-  op.Forward({data_1, data_2}, prediction);
+  TypeParam prediction(op.ComputeOutputShape(
+      {std::make_shared<ArrayType>(data_1), std::make_shared<ArrayType>(data_2)}));
+  op.Forward({std::make_shared<ArrayType>(data_1), std::make_shared<ArrayType>(data_2)},
+             prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>(),
                                   fetch::math::function_tolerance<DataType>()));
 }
 
-TYPED_TEST(MultiplyTest, backward_test)
+TYPED_TEST(MultiplyTest, backward_test_NMB_N11)
+{
+  using DataType  = typename TypeParam::Type;
+  using ArrayType = TypeParam;
+
+  ArrayType data_1 = ArrayType::FromString(
+      "1, 2, 5, 6;"
+      "3, 4, 7, 8");
+  data_1.Reshape({2, 2, 2});
+
+  ArrayType data_2 = ArrayType::FromString("1, -1");
+  data_2.Reshape({2, 1, 1});
+
+  ArrayType error = ArrayType::FromString(
+      "0, 1, 4, 5;"
+      "2, 3, 6, 7");
+  error.Reshape({2, 2, 2});
+
+  ArrayType gt_1 = ArrayType::FromString(
+      "0, 1, 4, 5;"
+      "-2, -3, -6, -7");
+  gt_1.Reshape({2, 2, 2});
+
+  ArrayType gt_2 = ArrayType::FromString(
+      "52;"
+      "116");
+  gt_2.Reshape({2, 1, 1});
+
+  fetch::ml::ops::Multiply<ArrayType> op;
+  std::vector<ArrayType>              prediction = op.Backward(
+      {std::make_shared<ArrayType>(data_1), std::make_shared<ArrayType>(data_2)}, error);
+
+  // test correct values and shape
+  ASSERT_TRUE(prediction[0].AllClose(gt_1, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
+  ASSERT_TRUE(prediction[0].shape() == data_1.shape());
+  ASSERT_TRUE(prediction[1].AllClose(gt_2, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
+  ASSERT_TRUE(prediction[1].shape() == data_2.shape());
+}
+
+TYPED_TEST(MultiplyTest, backward_test_NMB_111)
+{
+  using DataType  = typename TypeParam::Type;
+  using ArrayType = TypeParam;
+
+  ArrayType data_1 = ArrayType::FromString(
+      "1, 2, 5, 6;"
+      "3, 4, 7, 8");
+  data_1.Reshape({2, 2, 2});
+
+  ArrayType data_2 = ArrayType::FromString("-1");
+  data_2.Reshape({1, 1, 1});
+
+  ArrayType error = ArrayType::FromString(
+      "0, 1, 4, 5;"
+      "2, 3, 6, 7");
+  error.Reshape({2, 2, 2});
+
+  ArrayType gt_1 = ArrayType::FromString(
+      "0, -1, -4, -5;"
+      "-2, -3, -6, -7");
+  gt_1.Reshape({2, 2, 2});
+
+  ArrayType gt_2 = ArrayType::FromString("168");
+  gt_2.Reshape({1, 1, 1});
+
+  fetch::ml::ops::Multiply<ArrayType> op;
+  std::vector<ArrayType>              prediction = op.Backward(
+      {std::make_shared<ArrayType>(data_1), std::make_shared<ArrayType>(data_2)}, error);
+
+  // test correct values and shape
+  ASSERT_TRUE(prediction[0].AllClose(gt_1, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
+  ASSERT_TRUE(prediction[0].shape() == data_1.shape());
+  ASSERT_TRUE(prediction[1].AllClose(gt_2, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
+  ASSERT_TRUE(prediction[1].shape() == data_2.shape());
+}
+
+TYPED_TEST(MultiplyTest, backward_test_NB_N1)
+{
+  using DataType  = typename TypeParam::Type;
+  using ArrayType = TypeParam;
+
+  ArrayType data_1 = ArrayType::FromString(
+      "1, 2, 5, 6;"
+      "3, 4, 7, 8");
+
+  ArrayType data_2 = ArrayType::FromString("1, -1");
+  data_2.Reshape({2, 1});
+
+  ArrayType error = ArrayType::FromString(
+      "0, 1, 4, 5;"
+      "2, 3, 6, 7");
+
+  ArrayType gt_1 = ArrayType::FromString(
+      "0, 1, 4, 5;"
+      "-2, -3, -6, -7");
+
+  ArrayType gt_2 = ArrayType::FromString(
+      "52;"
+      "116");
+  gt_2.Reshape({2, 1});
+
+  fetch::ml::ops::Multiply<ArrayType> op;
+  std::vector<ArrayType>              prediction = op.Backward(
+      {std::make_shared<ArrayType>(data_1), std::make_shared<ArrayType>(data_2)}, error);
+
+  // test correct values and shape
+  ASSERT_TRUE(prediction[0].shape() == data_1.shape());
+  ASSERT_TRUE(prediction[1].shape() == data_2.shape());
+  ASSERT_TRUE(prediction[0].AllClose(gt_1, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
+  ASSERT_TRUE(prediction[1].AllClose(gt_2, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
+}
+
+TYPED_TEST(MultiplyTest, backward_test_NB_NB)
 {
   using ArrayType = TypeParam;
   using DataType  = typename TypeParam::Type;
@@ -87,7 +208,8 @@ TYPED_TEST(MultiplyTest, backward_test)
       "5, -5, 6, -6, 7, -7, 8, -8");
 
   fetch::ml::ops::Multiply<ArrayType> op;
-  std::vector<ArrayType>              prediction = op.Backward({data_1, data_2}, error);
+  std::vector<ArrayType>              prediction = op.Backward(
+      {std::make_shared<ArrayType>(data_1), std::make_shared<ArrayType>(data_2)}, error);
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt_1, fetch::math::function_tolerance<DataType>(),

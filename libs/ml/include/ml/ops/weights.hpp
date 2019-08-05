@@ -22,9 +22,12 @@
 #include "ml/regularisers/regulariser.hpp"
 #include "ml/state_dict.hpp"
 
+#include <cassert>
 #include <cmath>
 #include <cstdint>
+#include <iostream>
 #include <memory>
+#include <utility>
 #include <vector>
 
 namespace fetch {
@@ -36,6 +39,7 @@ namespace ops {
  */
 enum class WeightsInitialisation
 {
+  ONES,
   ZEROS,
   XAVIER_GLOROT,
   XAVIER_FAN_IN,
@@ -79,21 +83,27 @@ template <class T>
 class Weights : public fetch::ml::ops::PlaceHolder<T>, public Trainable<T>
 {
 public:
-  using ArrayType     = T;
-  using SizeType      = typename ArrayType::SizeType;
-  using DataType      = typename ArrayType::Type;
-  using ArrayPtrType  = std::shared_ptr<ArrayType>;
-  using VecTensorType = typename PlaceHolder<T>::VecTensorType;
+  using ArrayType      = T;
+  using SizeType       = typename ArrayType::SizeType;
+  using DataType       = typename ArrayType::Type;
+  using ArrayPtrType   = std::shared_ptr<ArrayType>;
+  using VecTensorType  = typename PlaceHolder<T>::VecTensorType;
+  using WeightsPtrType = typename std::shared_ptr<Weights<ArrayType>>;
 
 protected:
   ArrayPtrType gradient_accumulation_;
 
 public:
-  Weights()          = default;
-  virtual ~Weights() = default;
+  Weights()           = default;
+  ~Weights() override = default;
 
-  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                          ArrayType const &    error_signal)
+  ArrayPtrType GetShareableWeights()
+  {
+    return this->output_;
+  }
+
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override
   {
     FETCH_UNUSED(inputs);
     assert(inputs.empty());
@@ -101,7 +111,7 @@ public:
     return {};
   }
 
-  virtual bool SetData(ArrayType const &data)
+  bool SetData(ArrayType const &data) override
   {
     if (PlaceHolder<T>::SetData(data))  // if input_size_changed
     {
@@ -111,14 +121,14 @@ public:
     return false;
   }
 
-  virtual void Step(typename T::Type learning_rate)
+  void Step(typename T::Type learning_rate) override
   {
     this->gradient_accumulation_->InlineMultiply(-learning_rate);
     this->output_->InlineAdd(*gradient_accumulation_);
     ResetGradients();
   }
 
-  virtual void ApplyGradient(ArrayType const &grad)
+  void ApplyGradient(ArrayType const &grad) override
   {
     this->output_->InlineAdd(grad);
     ResetGradients();
@@ -127,12 +137,12 @@ public:
   /**
    * Set all gradient values to 0
    */
-  virtual void ResetGradients()
+  void ResetGradients() override
   {
     gradient_accumulation_->Fill(typename T::Type(0));
   }
 
-  void ApplyRegularisation()
+  void ApplyRegularisation() override
   {
     if (this->regulariser_)
     {
@@ -144,7 +154,7 @@ public:
    * constructs a state dictionary used for exporting/saving weights
    * @return
    */
-  virtual struct fetch::ml::StateDict<T> StateDict() const
+  struct fetch::ml::StateDict<T> StateDict() const override
   {
     struct fetch::ml::StateDict<T> d;
     d.weights_ = this->output_;
@@ -155,8 +165,8 @@ public:
    * load from a state dictionary to import weights
    * @param dict
    */
-  virtual void
-  LoadStateDict(struct fetch::ml::StateDict<T> const &dict)
+  void
+  LoadStateDict(struct fetch::ml::StateDict<T> const &dict) override
   {
     assert(dict.dict_.empty());
     SetData(*dict.weights_);
@@ -202,10 +212,41 @@ public:
   }
 
   /**
+   * interface to call standard weights initialisation routines. defaults to xavier.
+   * Fan in and fan out xavier not permitted with input and output sizes not known independently
+   * @param mode  An enum indicating which type of initialisation to perform
+   */
+  static void Initialise(ArrayType &array, std::uint64_t data_size,
+                         WeightsInitialisation mode = WeightsInitialisation::XAVIER_GLOROT,
+                         SizeType              seed = 123456789)
+  {
+    switch (mode)
+    {
+    case WeightsInitialisation::ONES:
+    {
+      array.Fill(static_cast<typename ArrayType::Type>(1));
+      break;
+    }
+    case WeightsInitialisation::ZEROS:
+    {
+      array.Fill(static_cast<typename ArrayType::Type>(0));
+      break;
+    }
+    case WeightsInitialisation::XAVIER_GLOROT:
+    {
+      XavierInitialisation(array, std::sqrt(2.0 / double(data_size)), seed);
+      break;
+    }
+    default:
+      std::cerr << "unrecognised weights initialisation" << std::endl;
+      throw;
+    }
+  }
+  /**
    * exports the weight values Array
    * @return const reference to internal values Array
    */
-  ArrayType const &get_weights() const
+  ArrayType const &get_weights() const override
   {
     return *this->output_;
   }
@@ -214,7 +255,7 @@ public:
    * exports the weight gradients Array
    * @return const reference to internal accumulated gradient Array
    */
-  ArrayType const &get_gradients() const
+  ArrayType const &get_gradients() const override
   {
     return *this->gradient_accumulation_;
   }

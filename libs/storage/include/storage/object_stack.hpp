@@ -19,13 +19,16 @@
 
 #include "storage/object_store.hpp"
 
+#include <cstddef>
+#include <cstdint>
+#include <string>
+
 namespace fetch {
 namespace storage {
 
 /**
  * Stores objects of type T in a stack type structure by using an object store,
  * where push and pop use uint64_t to string as the key
- *
  */
 template <typename T, std::size_t S = 2048>
 class ObjectStack : public ObjectStore<T, S>

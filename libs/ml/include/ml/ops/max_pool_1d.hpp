@@ -55,7 +55,7 @@ public:
   {
     assert(inputs.size() == 1);
     // Input must be a 3D tensor [C x W x N]
-    assert(inputs.at(0).get().shape().size() == 3);
+    assert(inputs.at(0)->shape().size() == 3);
     assert(output.shape() == ComputeOutputShape(inputs));
 
     SizeType iter;
@@ -71,12 +71,12 @@ public:
         iter = i * stride_size_;
         for (SizeType c{0}; c < output.shape().at(0); ++c)  // Iterate over output channels
         {
-          max = inputs.at(0).get().At(c, iter, n_i);
+          max = inputs.at(0)->At(c, iter, n_i);
 
           // Get maximum value on kernel_size_ window
           for (SizeType j{1}; j < kernel_size_; j++)  // Iterate over kernel width
           {
-            val = inputs.at(0).get().At(c, iter + j, n_i);
+            val = inputs.at(0)->At(c, iter + j, n_i);
             if (val > max)
             {
               max = val;
@@ -108,7 +108,7 @@ public:
     assert(inputs.size() == 1);
     assert(error_signal.shape() == ComputeOutputShape(inputs));
 
-    ArrayType return_signal{inputs.at(0).get().shape()};
+    ArrayType return_signal{inputs.at(0)->shape()};
 
     auto output_shape = error_signal.shape();
 
@@ -125,13 +125,13 @@ public:
         iter = i * stride_size_;
         for (SizeType c{0}; c < output_shape.at(0); ++c)  // Iterate over output channels
         {
-          max      = inputs.at(0).get().At(c, iter, n_i);
+          max      = inputs.at(0)->At(c, iter, n_i);
           max_iter = iter;
 
           // Find max node
           for (SizeType j{0}; j < kernel_size_; j++)  // Iterate over kernel width
           {
-            val = inputs.at(0).get().At(c, iter + j, n_i);
+            val = inputs.at(0)->At(c, iter + j, n_i);
             if (val > max)
             {
               max      = val;
@@ -154,12 +154,12 @@ public:
     std::vector<SizeType> output_shape;
 
     // output_shape_[0]=number of output channels
-    output_shape.emplace_back(inputs.at(0).get().shape().at(0));
+    output_shape.emplace_back(inputs.at(0)->shape().at(0));
     // output_shape_[1]=number of stride_size steps over input size
-    output_shape.emplace_back((inputs.at(0).get().shape().at(1) - (kernel_size_ - stride_size_)) /
+    output_shape.emplace_back((inputs.at(0)->shape().at(1) - (kernel_size_ - stride_size_)) /
                               stride_size_);
     // output_shape_[2]=batch dimension
-    output_shape.emplace_back(inputs.at(0).get().shape().at(2));
+    output_shape.emplace_back(inputs.at(0)->shape().at(2));
     return output_shape;
   }
 

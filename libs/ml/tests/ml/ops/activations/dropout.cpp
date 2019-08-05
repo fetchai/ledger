@@ -46,8 +46,8 @@ TYPED_TEST(DropoutTest, forward_test)
 
   fetch::ml::ops::Dropout<ArrayType> op(prob, 12345);
 
-  ArrayType     prediction(op.ComputeOutputShape({data}));
-  VecTensorType vec_data({data});
+  ArrayType     prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
+  VecTensorType vec_data({std::make_shared<const ArrayType>(data)});
 
   op.Forward(vec_data, prediction);
 
@@ -58,7 +58,7 @@ TYPED_TEST(DropoutTest, forward_test)
   gt = ArrayType::FromString(R"(1, -2, 3, 0, 5, 0, 7, 0)");
   fetch::math::Multiply(gt, DataType{1} / prob, gt);
 
-  op.Forward(VecTensorType({data}), prediction);
+  op.Forward(VecTensorType({std::make_shared<const ArrayType>(data)}), prediction);
 
   // test correct values
   EXPECT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -68,7 +68,7 @@ TYPED_TEST(DropoutTest, forward_test)
 
   gt = ArrayType::FromString(R"(1, -2, 3, -4, 5, -6, 7, -8)");
 
-  op.Forward(VecTensorType({data}), prediction);
+  op.Forward(VecTensorType({std::make_shared<const ArrayType>(data)}), prediction);
 
   // test correct values
   EXPECT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -76,10 +76,9 @@ TYPED_TEST(DropoutTest, forward_test)
 
 TYPED_TEST(DropoutTest, forward_3d_tensor_test)
 {
-  using DataType      = typename TypeParam::Type;
-  using ArrayType     = TypeParam;
-  using SizeType      = typename TypeParam::SizeType;
-  using VecTensorType = typename fetch::ml::Ops<ArrayType>::VecTensorType;
+  using DataType  = typename TypeParam::Type;
+  using ArrayType = TypeParam;
+  using SizeType  = typename TypeParam::SizeType;
 
   ArrayType           data({2, 2, 2});
   ArrayType           gt({2, 2, 2});
@@ -101,8 +100,8 @@ TYPED_TEST(DropoutTest, forward_3d_tensor_test)
   fetch::math::Multiply(gt, DataType{1} / prob, gt);
 
   fetch::ml::ops::Dropout<ArrayType> op(prob, 12345);
-  TypeParam                          prediction(op.ComputeOutputShape({data}));
-  op.Forward(VecTensorType({data}), prediction);
+  TypeParam prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
+  op.Forward({std::make_shared<const ArrayType>(data)}, prediction);
 
   // test correct values
   EXPECT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -110,9 +109,8 @@ TYPED_TEST(DropoutTest, forward_3d_tensor_test)
 
 TYPED_TEST(DropoutTest, backward_test)
 {
-  using DataType      = typename TypeParam::Type;
-  using ArrayType     = TypeParam;
-  using VecTensorType = typename fetch::ml::Ops<ArrayType>::VecTensorType;
+  using DataType  = typename TypeParam::Type;
+  using ArrayType = TypeParam;
 
   ArrayType data  = ArrayType::FromString(R"(1, -2, 3, -4, 5, -6, 7, -8)");
   ArrayType error = ArrayType::FromString(R"(0, 0, 0, 0, 1, 1, 0, 0)");
@@ -123,21 +121,21 @@ TYPED_TEST(DropoutTest, backward_test)
   fetch::ml::ops::Dropout<ArrayType> op(prob, 12345);
 
   // It's necessary to do Forward pass first
-  ArrayType output(op.ComputeOutputShape({data}));
-  op.Forward(VecTensorType({data}), output);
+  ArrayType output(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
+  op.Forward({std::make_shared<const ArrayType>(data)}, output);
 
-  std::vector<ArrayType> prediction = op.Backward({data}, error);
+  std::vector<ArrayType> prediction = op.Backward({std::make_shared<const ArrayType>(data)}, error);
 
   // test correct values
   EXPECT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
 
   // Test after generating new random alpha value
   // Forward pass will update random value
-  op.Forward(VecTensorType({data}), output);
+  op.Forward({std::make_shared<const ArrayType>(data)}, output);
 
   gt = ArrayType::FromString(R"(0, 0, 0, 0, 1, 0, 0, 0)");
   fetch::math::Multiply(gt, DataType{1} / prob, gt);
-  prediction = op.Backward({data}, error);
+  prediction = op.Backward({std::make_shared<const ArrayType>(data)}, error);
 
   // test correct values
   EXPECT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -175,10 +173,10 @@ TYPED_TEST(DropoutTest, backward_3d_tensor_test)
   fetch::ml::ops::Dropout<ArrayType> op(prob, 12345);
 
   // It's necessary to do Forward pass first
-  ArrayType output(op.ComputeOutputShape({data}));
-  op.Forward(VecTensorType({data}), output);
+  ArrayType output(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
+  op.Forward(VecTensorType({std::make_shared<const ArrayType>(data)}), output);
 
-  std::vector<ArrayType> prediction = op.Backward({data}, error);
+  std::vector<ArrayType> prediction = op.Backward({std::make_shared<const ArrayType>(data)}, error);
 
   // test correct values
   EXPECT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));

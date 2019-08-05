@@ -160,7 +160,7 @@ Optimiser<T>::Optimiser(std::shared_ptr<Graph<T>>      graph,
   , epoch_(0)
   , learning_rate_param_(learning_rate_param)
 {
-  // initialize learning rate
+  // initialise learning rate
   learning_rate_ = learning_rate_param_.starting_learning_rate;
 
   Init();
@@ -265,8 +265,10 @@ typename T::Type Optimiser<T>::Run(std::vector<ArrayType> const &data, ArrayType
     UpdateLearningRate();
   }
   epoch_++;
+
   return loss_sum_;
 }
+
 /**
  * Does 1 training epoch using DataLoader
  * @tparam T ArrayType

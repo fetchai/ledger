@@ -33,7 +33,7 @@ namespace {
 
 class QueueTests : public ::testing::Test
 {
-protected:
+public:
   static constexpr std::size_t ELEMENT_SIZE = 1024;
   using Element                             = std::array<uint16_t, ELEMENT_SIZE>;
 
@@ -51,10 +51,11 @@ protected:
     }
   }
 
-  template <std::size_t NUM_PROD_THREADS, std::size_t NUM_CONS_THREADS, std::size_t NUM_LOOPS,
-            typename Queue>
+  template <std::size_t NUM_PROD_THREADS, std::size_t NUM_CONS_THREADS, typename Queue>
   void ProducerConsumerTest(Queue &queue)
   {
+    constexpr std::size_t NUM_LOOPS = 500;
+
     // ensure the queue element type is valid
     static_assert(std::is_same<typename Queue::Element, Element>::value, "");
 
@@ -152,78 +153,62 @@ protected:
       ASSERT_EQ(count, NUM_ELEMENTS_PER_THREAD);
     }
   }
+
+  static constexpr std::size_t QUEUE_SIZE = 1024;
 };
 
-TEST_F(QueueTests, ProducerConsumer_100p_100c_1000x)
+TEST_F(QueueTests, ProducerConsumer_50p_50c)
 {
-  static constexpr std::size_t QUEUE_SIZE = 1024;
-
   fetch::core::MPMCQueue<Element, QUEUE_SIZE> queue;
-  ProducerConsumerTest<100, 100, 1000>(queue);
+  ProducerConsumerTest<50, 50>(queue);
 }
 
-TEST_F(QueueTests, ProducerConsumer_50p_50c_1000x)
+TEST_F(QueueTests, ProducerConsumer_50p_2c)
 {
-  static constexpr std::size_t QUEUE_SIZE = 1024;
-
   fetch::core::MPMCQueue<Element, QUEUE_SIZE> queue;
-  ProducerConsumerTest<50, 50, 1000>(queue);
+  ProducerConsumerTest<50, 2>(queue);
 }
 
-TEST_F(QueueTests, ProducerConsumer_50p_2c_1000x)
+TEST_F(QueueTests, ProducerConsumer_2p_50c)
 {
-  static constexpr std::size_t QUEUE_SIZE = 1024;
-
   fetch::core::MPMCQueue<Element, QUEUE_SIZE> queue;
-  ProducerConsumerTest<50, 2, 1000>(queue);
+  ProducerConsumerTest<2, 50>(queue);
 }
 
-TEST_F(QueueTests, ProducerConsumer_50p_1c_1000x_MPSCQueue)
+TEST_F(QueueTests, ProducerConsumer_50p_1c_MPSCQueue)
 {
-  static constexpr std::size_t QUEUE_SIZE = 1024;
-
   fetch::core::MPSCQueue<Element, QUEUE_SIZE> queue;
-  ProducerConsumerTest<50, 1, 1000>(queue);
+  ProducerConsumerTest<50, 1>(queue);
 }
 
-TEST_F(QueueTests, ProducerConsumer_50p_1c_1000x_MPMCQueue)
+TEST_F(QueueTests, ProducerConsumer_50p_1c_MPMCQueue)
 {
-  static constexpr std::size_t QUEUE_SIZE = 1024;
-
   fetch::core::MPMCQueue<Element, QUEUE_SIZE> queue;
-  ProducerConsumerTest<50, 1, 1000>(queue);
+  ProducerConsumerTest<50, 1>(queue);
 }
 
-TEST_F(QueueTests, ProducerConsumer_1p_1c_1000x_SPSCQueue)
+TEST_F(QueueTests, ProducerConsumer_1p_1c_SPSCQueue)
 {
-  static constexpr std::size_t QUEUE_SIZE = 1024;
-
   fetch::core::SPSCQueue<Element, QUEUE_SIZE> queue;
-  ProducerConsumerTest<1, 1, 1000>(queue);
+  ProducerConsumerTest<1, 1>(queue);
 }
 
-TEST_F(QueueTests, ProducerConsumer_1p_1c_1000x_MPMCQueue)
+TEST_F(QueueTests, ProducerConsumer_1p_1c_MPMCQueue)
 {
-  static constexpr std::size_t QUEUE_SIZE = 1024;
-
   fetch::core::MPMCQueue<Element, QUEUE_SIZE> queue;
-  ProducerConsumerTest<1, 1, 1000>(queue);
+  ProducerConsumerTest<1, 1>(queue);
 }
 
-TEST_F(QueueTests, ProducerConsumer_1p_50c_1000x_SPMCQueue)
+TEST_F(QueueTests, ProducerConsumer_1p_50c_SPMCQueue)
 {
-  static constexpr std::size_t QUEUE_SIZE = 1024;
-
   fetch::core::SPMCQueue<Element, QUEUE_SIZE> queue;
-  ProducerConsumerTest<1, 50, 1000>(queue);
+  ProducerConsumerTest<1, 50>(queue);
 }
 
-TEST_F(QueueTests, ProducerConsumer_1p_50c_1000x__MPMCQueue)
+TEST_F(QueueTests, ProducerConsumer_1p_50c_MPMCQueue)
 {
-  static constexpr std::size_t QUEUE_SIZE = 1024;
-
   fetch::core::SPMCQueue<Element, QUEUE_SIZE> queue;
-  ProducerConsumerTest<1, 50, 1000>(queue);
+  ProducerConsumerTest<1, 50>(queue);
 }
 
 }  // namespace

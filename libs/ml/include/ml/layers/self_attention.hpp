@@ -39,9 +39,10 @@ template <class T>
 class SelfAttention : public SubGraph<T>
 {
 public:
-  using ArrayType    = T;
-  using SizeType     = typename ArrayType::SizeType;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using ArrayType     = T;
+  using SizeType      = typename ArrayType::SizeType;
+  using ArrayPtrType  = std::shared_ptr<ArrayType>;
+  using VecTensorType = typename SubGraph<T>::VecTensorType;
 
   SelfAttention(std::uint64_t in, std::uint64_t out, std::uint64_t hidden,
                 std::string const &name = "SA")
@@ -90,10 +91,9 @@ public:
     this->SetOutputNode(output);
   }
 
-  virtual std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const
+  virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
   {
-    return inputs.front().get().shape();
+    return inputs.front()->shape();
   }
 
   static constexpr char const *DESCRIPTOR = "SelfAttention";

@@ -16,8 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/tx_query_http_interface.hpp"
-
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/logger.hpp"
@@ -25,8 +23,14 @@
 #include "http/json_response.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
+#include "ledger/tx_query_http_interface.hpp"
 #include "miner/resource_mapper.hpp"
 #include "variant/variant.hpp"
+
+#include <cstddef>
+#include <memory>
+#include <utility>
+#include <vector>
 
 static constexpr char const *LOGGING_NAME = "TxQueryAPI";
 
@@ -39,7 +43,10 @@ namespace ledger {
 TxQueryHttpInterface::TxQueryHttpInterface(StorageUnitInterface &storage_unit)
   : storage_unit_{storage_unit}
 {
-  Get("/api/tx/(digest=[a-fA-F0-9]{64})/",
+  Get("/api/tx/(digest=[a-fA-F0-9]{64})/", "Retrieves a transaction.",
+      {
+          {"digest", "The transaction hash.", http::validators::StringValue()},
+      },
       [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
         FETCH_UNUSED(request);
 
@@ -86,7 +93,7 @@ TxQueryHttpInterface::TxQueryHttpInterface(StorageUnitInterface &storage_unit)
         case Transaction::ContractMode::NOT_PRESENT:
           break;
         case Transaction::ContractMode::PRESENT:
-          tx_obj["contractDigest"]  = tx.contract_digest().display();
+          tx_obj["contractDigest"]  = tx.contract_digest().address().ToHex();
           tx_obj["contractAddress"] = tx.contract_address().display();
           tx_obj["action"]          = tx.action();
           tx_obj["data"]            = tx.data().ToBase64();

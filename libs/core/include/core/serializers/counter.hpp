@@ -17,17 +17,27 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
-#include "core/common.hpp"
+#include "core/byte_array/const_byte_array.hpp"
+#include "core/logger.hpp"
 #include "core/macros.hpp"
-#include "core/serializers/stl_types.hpp"
-#include "core/serializers/type_register.hpp"
+#include "core/serializers/array_interface.hpp"
+#include "core/serializers/binary_interface.hpp"
+#include "core/serializers/container_constructor_interface.hpp"
+
+#include "core/serializers/exception.hpp"
+#include "core/serializers/group_definitions.hpp"
+#include "core/serializers/map_interface.hpp"
+#include "vectorise/platform.hpp"
+
+#include <cstddef>
+#include <cstdint>
 #include <type_traits>
 
 namespace fetch {
 namespace serializers {
 
-template <typename S>
 class SizeCounter
 {
 public:
@@ -64,7 +74,7 @@ public:
   void Reserve(std::size_t size, ResizeParadigm const &resize_paradigm = ResizeParadigm::RELATIVE,
                bool const zero_reserved_space = true)
   {
-    (void)zero_reserved_space;
+    FETCH_UNUSED(zero_reserved_space);
 
     switch (resize_paradigm)
     {
@@ -81,6 +91,11 @@ public:
     };
   }
 
+  void WriteByte(uint8_t)
+  {
+    ++pos_;
+  }
+
   void WriteBytes(uint8_t const *, std::size_t size)
   {
     pos_ += size;
@@ -92,18 +107,57 @@ public:
   }
 
   template <typename T>
-  self_type &operator<<(T const *val)
-  {
-    Serialize(*this, val);
-    return *this;
-  }
+  typename IgnoredSerializer<T, SizeCounter>::DriverType &operator<<(T const &);
 
   template <typename T>
-  self_type &operator<<(T const &val)
-  {
-    Serialize(*this, val);
-    return *this;
-  }
+  typename IgnoredSerializer<T, SizeCounter>::DriverType &operator>>(T &);
+
+  template <typename T>
+  typename ForwardSerializer<T, SizeCounter>::DriverType &operator<<(T const &val);
+
+  template <typename T>
+  typename ForwardSerializer<T, SizeCounter>::DriverType &operator>>(T &val);
+
+  template <typename T>
+  typename IntegerSerializer<T, SizeCounter>::DriverType &operator<<(T const &val);
+
+  template <typename T>
+  typename IntegerSerializer<T, SizeCounter>::DriverType &operator>>(T &val);
+
+  template <typename T>
+  typename FloatSerializer<T, SizeCounter>::DriverType &operator<<(T const &val);
+
+  template <typename T>
+  typename FloatSerializer<T, SizeCounter>::DriverType &operator>>(T &val);
+
+  template <typename T>
+  typename BooleanSerializer<T, SizeCounter>::DriverType &operator<<(T const &val);
+
+  template <typename T>
+  typename BooleanSerializer<T, SizeCounter>::DriverType &operator>>(T &val);
+
+  template <typename T>
+  typename StringSerializer<T, SizeCounter>::DriverType &operator<<(T const &val);
+
+  template <typename T>
+  typename StringSerializer<T, SizeCounter>::DriverType &operator>>(T &val);
+
+  template <typename T>
+  typename BinarySerializer<T, SizeCounter>::DriverType &operator<<(T const &val);
+
+  template <typename T>
+  typename BinarySerializer<T, SizeCounter>::DriverType &operator>>(T &val);
+
+  template <typename T>
+  typename ArraySerializer<T, SizeCounter>::DriverType &operator<<(T const &val);
+
+  template <typename T>
+  typename ArraySerializer<T, SizeCounter>::DriverType &operator>>(T &val);
+  template <typename T>
+  typename MapSerializer<T, SizeCounter>::DriverType &operator<<(T const &val);
+
+  template <typename T>
+  typename MapSerializer<T, SizeCounter>::DriverType &operator>>(T &val);
 
   template <typename T>
   self_type &Pack(T const *val)
@@ -166,6 +220,298 @@ private:
 };
 
 template <typename T>
+typename IgnoredSerializer<T, SizeCounter>::DriverType &SizeCounter::operator<<(T const &)
+{
+  return *this;
+}
+
+template <typename T>
+typename IgnoredSerializer<T, SizeCounter>::DriverType &SizeCounter::operator>>(T &)
+{
+  return *this;
+}
+
+template <typename T>
+typename ForwardSerializer<T, SizeCounter>::DriverType &SizeCounter::operator<<(T const &val)
+{
+  try
+  {
+    ForwardSerializer<T, SizeCounter>::Serialize(*this, val);
+  }
+  catch (std::exception const &e)
+  {
+    throw std::runtime_error("Error serializing " + static_cast<std::string>(typeid(T).name()) +
+                             ".\n" + std::string(e.what()));
+  }
+
+  return *this;
+}
+
+template <typename T>
+typename ForwardSerializer<T, SizeCounter>::DriverType &SizeCounter::operator>>(T &val)
+{
+  try
+  {
+    ForwardSerializer<T, SizeCounter>::Deserialize(*this, val);
+  }
+  catch (std::exception const &e)
+  {
+    throw std::runtime_error("Error deserializing " + static_cast<std::string>(typeid(T).name()) +
+                             ".\n" + std::string(e.what()));
+  }
+
+  return *this;
+}
+
+template <typename T>
+typename IntegerSerializer<T, SizeCounter>::DriverType &SizeCounter::operator<<(T const &val)
+{
+  try
+  {
+    IntegerSerializer<T, SizeCounter>::Serialize(*this, val);
+  }
+  catch (std::exception const &e)
+  {
+    throw std::runtime_error("Error serializing " + static_cast<std::string>(typeid(T).name()) +
+                             ".\n" + std::string(e.what()));
+  }
+
+  return *this;
+}
+
+template <typename T>
+typename IntegerSerializer<T, SizeCounter>::DriverType &SizeCounter::operator>>(T &val)
+{
+  try
+  {
+    IntegerSerializer<T, SizeCounter>::Deserialize(*this, val);
+  }
+  catch (std::exception const &e)
+  {
+    throw std::runtime_error("Error deserializing " + static_cast<std::string>(typeid(T).name()) +
+                             ".\n" + std::string(e.what()));
+  }
+
+  return *this;
+}
+
+template <typename T>
+typename FloatSerializer<T, SizeCounter>::DriverType &SizeCounter::operator<<(T const &val)
+{
+  try
+  {
+    FloatSerializer<T, SizeCounter>::Serialize(*this, val);
+  }
+  catch (std::exception const &e)
+  {
+    throw std::runtime_error("Error serializing " + static_cast<std::string>(typeid(T).name()) +
+                             ".\n" + std::string(e.what()));
+  }
+
+  return *this;
+}
+
+template <typename T>
+typename FloatSerializer<T, SizeCounter>::DriverType &SizeCounter::operator>>(T &val)
+{
+  try
+  {
+    FloatSerializer<T, SizeCounter>::Deserialize(*this, val);
+  }
+  catch (std::exception const &e)
+  {
+    throw std::runtime_error("Error deserializing " + static_cast<std::string>(typeid(T).name()) +
+                             ".\n" + std::string(e.what()));
+  }
+
+  return *this;
+}
+
+template <typename T>
+typename BooleanSerializer<T, SizeCounter>::DriverType &SizeCounter::operator<<(T const &val)
+{
+  try
+  {
+    BooleanSerializer<T, SizeCounter>::Serialize(*this, val);
+  }
+  catch (std::exception const &e)
+  {
+    throw std::runtime_error("Error serializing " + static_cast<std::string>(typeid(T).name()) +
+                             ".\n" + std::string(e.what()));
+  }
+
+  return *this;
+}
+
+template <typename T>
+typename BooleanSerializer<T, SizeCounter>::DriverType &SizeCounter::operator>>(T &val)
+{
+  try
+  {
+    BooleanSerializer<T, SizeCounter>::Deserialize(*this, val);
+  }
+  catch (std::exception const &e)
+  {
+    throw std::runtime_error("Error deserializing " + static_cast<std::string>(typeid(T).name()) +
+                             ".\n" + std::string(e.what()));
+  }
+
+  return *this;
+}
+
+template <typename T>
+typename StringSerializer<T, SizeCounter>::DriverType &SizeCounter::operator<<(T const &val)
+{
+  try
+  {
+    StringSerializer<T, SizeCounter>::Serialize(*this, val);
+  }
+  catch (std::exception const &e)
+  {
+    throw std::runtime_error("Error serializing " + static_cast<std::string>(typeid(T).name()) +
+                             ".\n" + std::string(e.what()));
+  }
+
+  return *this;
+}
+
+template <typename T>
+typename StringSerializer<T, SizeCounter>::DriverType &SizeCounter::operator>>(T &val)
+{
+  try
+  {
+    StringSerializer<T, SizeCounter>::Deserialize(*this, val);
+  }
+  catch (std::exception const &e)
+  {
+    throw std::runtime_error("Error deserializing " + static_cast<std::string>(typeid(T).name()) +
+                             ".\n" + std::string(e.what()));
+  }
+  return *this;
+}
+
+template <typename T>
+typename BinarySerializer<T, SizeCounter>::DriverType &SizeCounter::operator<<(T const &val)
+{
+  using Serializer = BinarySerializer<T, SizeCounter>;
+  using Constructor =
+      interfaces::BinaryConstructorInterface<SizeCounter, TypeCodes::BINARY_CODE_FIXED,
+                                             TypeCodes::BINARY_CODE16, TypeCodes::BINARY_CODE32>;
+
+  try
+  {
+    Constructor constructor(*this);
+    Serializer::Serialize(constructor, val);
+  }
+  catch (std::exception const &e)
+  {
+    throw std::runtime_error("Error deserializing " + static_cast<std::string>(typeid(T).name()) +
+                             ".\n" + std::string(e.what()));
+  }
+
+  return *this;
+}
+
+template <typename T>
+typename BinarySerializer<T, SizeCounter>::DriverType &SizeCounter::operator>>(T &val)
+{
+  using Serializer = BinarySerializer<T, SizeCounter>;
+  try
+  {
+    interfaces::BinaryDeserializer<SizeCounter> stream(*this);
+    Serializer::Deserialize(stream, val);
+  }
+  catch (std::exception const &e)
+  {
+    throw std::runtime_error("Error deserializing " + static_cast<std::string>(typeid(T).name()) +
+                             ".\n" + std::string(e.what()));
+  }
+
+  return *this;
+}
+
+template <typename T>
+typename ArraySerializer<T, SizeCounter>::DriverType &SizeCounter::operator<<(T const &val)
+{
+  using Serializer  = ArraySerializer<T, SizeCounter>;
+  using Constructor = interfaces::ContainerConstructorInterface<
+      SizeCounter, interfaces::ArrayInterface<SizeCounter>, TypeCodes::ARRAY_CODE_FIXED,
+      TypeCodes::ARRAY_CODE16, TypeCodes::ARRAY_CODE32>;
+
+  try
+  {
+    Constructor constructor(*this);
+    Serializer::Serialize(constructor, val);
+  }
+  catch (std::exception const &e)
+  {
+    throw std::runtime_error("Error deserializing " + static_cast<std::string>(typeid(T).name()) +
+                             ".\n" + std::string(e.what()));
+  }
+
+  return *this;
+}
+
+template <typename T>
+typename ArraySerializer<T, SizeCounter>::DriverType &SizeCounter::operator>>(T &val)
+{
+  using Serializer = ArraySerializer<T, SizeCounter>;
+  try
+  {
+    interfaces::ArrayDeserializer<SizeCounter> array(*this);
+    Serializer::Deserialize(array, val);
+  }
+  catch (std::exception const &e)
+  {
+    throw std::runtime_error("Error deserializing " + static_cast<std::string>(typeid(T).name()) +
+                             ".\n" + std::string(e.what()));
+  }
+
+  return *this;
+}
+
+template <typename T>
+typename MapSerializer<T, SizeCounter>::DriverType &SizeCounter::operator<<(T const &val)
+{
+  using Serializer = MapSerializer<T, SizeCounter>;
+  using Constructor =
+      interfaces::ContainerConstructorInterface<SizeCounter, interfaces::MapInterface<SizeCounter>,
+                                                TypeCodes::MAP_CODE_FIXED, TypeCodes::MAP_CODE16,
+                                                TypeCodes::MAP_CODE32>;
+
+  try
+  {
+    Constructor constructor(*this);
+    Serializer::Serialize(constructor, val);
+  }
+  catch (std::exception const &e)
+  {
+    throw std::runtime_error("Error deserializing " + static_cast<std::string>(typeid(T).name()) +
+                             ".\n" + std::string(e.what()));
+  }
+
+  return *this;
+}
+
+template <typename T>
+typename MapSerializer<T, SizeCounter>::DriverType &SizeCounter::operator>>(T &val)
+{
+  using Serializer = MapSerializer<T, SizeCounter>;
+  try
+  {
+    interfaces::MapDeserializer<SizeCounter> map(*this);
+    Serializer::Deserialize(map, val);
+  }
+  catch (std::exception const &e)
+  {
+    throw std::runtime_error("Error deserializing " + static_cast<std::string>(typeid(T).name()) +
+                             ".\n" + std::string(e.what()));
+  }
+
+  return *this;
+}
+
+template <typename T>
 auto sizeCounterGuardFactory(T &size_counter);
 
 /**
@@ -179,8 +525,8 @@ auto sizeCounterGuardFactory(T &size_counter);
  * This guard is implemented as class to ensure correct functionality in exception based
  * environment.
  *
- * @tparam T Represents type with STREAM/BUFFER like API (e.g. SizeCounter, ByteArrayBuffer,
- * TypedByteArrayBuffer, etc. ...), with clear preference to use here size count
+ * @tparam T Represents type with STREAM/BUFFER like API (e.g. SizeCounter, MsgPackSerializer,
+ * MsgPackSerializer, etc. ...), with clear preference to use here size count
  * implementation (SizeCounter class) due to performance reasons.
  */
 template <typename T>

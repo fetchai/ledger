@@ -23,18 +23,21 @@
 #include "ml/ops/log.hpp"
 #include "ml/ops/matrix_multiply.hpp"
 #include "ml/ops/multiply.hpp"
+#include "ml/ops/ops.hpp"
 #include "ml/ops/sqrt.hpp"
 #include "ml/ops/subtract.hpp"
-
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "benchmark/benchmark.h"
 
 #include <vector>
 
-template <class T, int F, int N, int B>
+template <typename T, int F, int N, int B>
 void BM_MatrixMultiply_Forward(benchmark::State &state)
 {
+  using TensorType    = typename fetch::math::Tensor<T>;
+  using VecTensorType = typename fetch::ml::Ops<TensorType>::VecTensorType;
+
   fetch::math::Tensor<T> input_1({F, N, B});
   fetch::math::Tensor<T> input_2({F, N, B});
   fetch::math::Tensor<T> output({F, N, B});
@@ -44,9 +47,9 @@ void BM_MatrixMultiply_Forward(benchmark::State &state)
   input_2.FillUniformRandom();
   output.FillUniformRandom();
 
-  std::vector<std::reference_wrapper<fetch::math::Tensor<T> const>> inputs;
-  inputs.push_back(input_1);
-  inputs.push_back(input_2);
+  VecTensorType inputs;
+  inputs.emplace_back(std::make_shared<TensorType>(input_1));
+  inputs.emplace_back(std::make_shared<TensorType>(input_2));
   fetch::ml::ops::MatrixMultiply<fetch::math::Tensor<T>> matmul;
 
   for (auto _ : state)
@@ -100,6 +103,9 @@ BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, fetch::fixed_point::fp64_t, 256, 2
 template <class T, int F, int N, int B>
 void BM_MatrixMultiply_Backward(benchmark::State &state)
 {
+  using TensorType    = typename fetch::math::Tensor<T>;
+  using VecTensorType = typename fetch::ml::Ops<TensorType>::VecTensorType;
+
   fetch::math::Tensor<T> input_1({F, N, B});
   fetch::math::Tensor<T> input_2({F, N, B});
   fetch::math::Tensor<T> err_sig({F, N, B});
@@ -109,9 +115,9 @@ void BM_MatrixMultiply_Backward(benchmark::State &state)
   input_2.FillUniformRandom();
   err_sig.FillUniformRandom();
 
-  std::vector<std::reference_wrapper<fetch::math::Tensor<T> const>> inputs;
-  inputs.push_back(input_1);
-  inputs.push_back(input_2);
+  VecTensorType inputs;
+  inputs.emplace_back(std::make_shared<TensorType>(input_1));
+  inputs.emplace_back(std::make_shared<TensorType>(input_2));
   fetch::ml::ops::MatrixMultiply<fetch::math::Tensor<T>> matmul;
 
   for (auto _ : state)
@@ -164,6 +170,9 @@ BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, fetch::fixed_point::fp64_t, 256, 
 template <class T, int N>
 void BM_SqrtForward(benchmark::State &state)
 {
+  using TensorType    = typename fetch::math::Tensor<T>;
+  using VecTensorType = typename fetch::ml::Ops<TensorType>::VecTensorType;
+
   fetch::math::Tensor<T> input({1, N});
   fetch::math::Tensor<T> output({1, N});
 
@@ -171,8 +180,8 @@ void BM_SqrtForward(benchmark::State &state)
   input.FillUniformRandom();
   output.FillUniformRandom();
 
-  std::vector<std::reference_wrapper<fetch::math::Tensor<T> const>> inputs;
-  inputs.push_back(input);
+  VecTensorType inputs;
+  inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::Sqrt<fetch::math::Tensor<T>> sqrt1;
 
   for (auto _ : state)
@@ -212,6 +221,9 @@ BENCHMARK_TEMPLATE(BM_SqrtForward, fetch::fixed_point::fp64_t, 4096)->Unit(bench
 template <class T, int N>
 void BM_SqrtBackward(benchmark::State &state)
 {
+  using TensorType    = typename fetch::math::Tensor<T>;
+  using VecTensorType = typename fetch::ml::Ops<TensorType>::VecTensorType;
+
   fetch::math::Tensor<T> input({1, N});
   fetch::math::Tensor<T> error_signal({1, N});
 
@@ -219,8 +231,8 @@ void BM_SqrtBackward(benchmark::State &state)
   input.FillUniformRandom();
   error_signal.FillUniformRandom();
 
-  std::vector<std::reference_wrapper<fetch::math::Tensor<T> const>> inputs;
-  inputs.push_back(input);
+  VecTensorType inputs;
+  inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::Sqrt<fetch::math::Tensor<T>> sqrt1;
 
   for (auto _ : state)
@@ -266,6 +278,9 @@ BENCHMARK_TEMPLATE(BM_SqrtBackward, fetch::fixed_point::fp64_t, 4096)
 template <class T, int N>
 void BM_LogForward(benchmark::State &state)
 {
+  using TensorType    = typename fetch::math::Tensor<T>;
+  using VecTensorType = typename fetch::ml::Ops<TensorType>::VecTensorType;
+
   fetch::math::Tensor<T> input({1, N});
   fetch::math::Tensor<T> output({1, N});
 
@@ -273,8 +288,8 @@ void BM_LogForward(benchmark::State &state)
   input.FillUniformRandom();
   output.FillUniformRandom();
 
-  std::vector<std::reference_wrapper<fetch::math::Tensor<T> const>> inputs;
-  inputs.push_back(input);
+  VecTensorType inputs;
+  inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::Log<fetch::math::Tensor<T>> log1;
 
   for (auto _ : state)
@@ -314,6 +329,9 @@ BENCHMARK_TEMPLATE(BM_LogForward, fetch::fixed_point::fp64_t, 4096)->Unit(benchm
 template <class T, int N>
 void BM_LogBackward(benchmark::State &state)
 {
+  using TensorType    = typename fetch::math::Tensor<T>;
+  using VecTensorType = typename fetch::ml::Ops<TensorType>::VecTensorType;
+
   fetch::math::Tensor<T> input({1, N});
   fetch::math::Tensor<T> error_signal({1, N});
 
@@ -321,8 +339,8 @@ void BM_LogBackward(benchmark::State &state)
   input.FillUniformRandom();
   error_signal.FillUniformRandom();
 
-  std::vector<std::reference_wrapper<fetch::math::Tensor<T> const>> inputs;
-  inputs.push_back(input);
+  VecTensorType inputs;
+  inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::Log<fetch::math::Tensor<T>> log1;
 
   for (auto _ : state)
@@ -362,6 +380,9 @@ BENCHMARK_TEMPLATE(BM_LogBackward, fetch::fixed_point::fp64_t, 4096)->Unit(bench
 template <class T, int N>
 void BM_ExpForward(benchmark::State &state)
 {
+  using TensorType    = typename fetch::math::Tensor<T>;
+  using VecTensorType = typename fetch::ml::Ops<TensorType>::VecTensorType;
+
   fetch::math::Tensor<T> input({1, N});
   fetch::math::Tensor<T> output({1, N});
 
@@ -369,8 +390,8 @@ void BM_ExpForward(benchmark::State &state)
   input.FillUniformRandom();
   output.FillUniformRandom();
 
-  std::vector<std::reference_wrapper<fetch::math::Tensor<T> const>> inputs;
-  inputs.push_back(input);
+  VecTensorType inputs;
+  inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::Exp<fetch::math::Tensor<T>> exp1;
 
   for (auto _ : state)
@@ -410,6 +431,9 @@ BENCHMARK_TEMPLATE(BM_ExpForward, fetch::fixed_point::fp64_t, 4096)->Unit(benchm
 template <class T, int N>
 void BM_ExpBackward(benchmark::State &state)
 {
+  using TensorType    = typename fetch::math::Tensor<T>;
+  using VecTensorType = typename fetch::ml::Ops<TensorType>::VecTensorType;
+
   fetch::math::Tensor<T> input({1, N});
   fetch::math::Tensor<T> error_signal({1, N});
 
@@ -417,8 +441,8 @@ void BM_ExpBackward(benchmark::State &state)
   input.FillUniformRandom();
   error_signal.FillUniformRandom();
 
-  std::vector<std::reference_wrapper<fetch::math::Tensor<T> const>> inputs;
-  inputs.push_back(input);
+  VecTensorType inputs;
+  inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::Exp<fetch::math::Tensor<T>> exp1;
 
   for (auto _ : state)
@@ -458,6 +482,9 @@ BENCHMARK_TEMPLATE(BM_ExpBackward, fetch::fixed_point::fp64_t, 4096)->Unit(bench
 template <class T, int N>
 void BM_DivideForward(benchmark::State &state)
 {
+  using TensorType    = typename fetch::math::Tensor<T>;
+  using VecTensorType = typename fetch::ml::Ops<TensorType>::VecTensorType;
+
   fetch::math::Tensor<T> input_1({1, N});
   fetch::math::Tensor<T> input_2({1, N});
   fetch::math::Tensor<T> output({1, N});
@@ -467,9 +494,9 @@ void BM_DivideForward(benchmark::State &state)
   input_2.FillUniformRandom();
   output.FillUniformRandom();
 
-  std::vector<std::reference_wrapper<fetch::math::Tensor<T> const>> inputs;
-  inputs.push_back(input_1);
-  inputs.push_back(input_2);
+  VecTensorType inputs;
+  inputs.emplace_back(std::make_shared<TensorType>(input_1));
+  inputs.emplace_back(std::make_shared<TensorType>(input_2));
   fetch::ml::ops::Divide<fetch::math::Tensor<T>> div1;
 
   for (auto _ : state)
@@ -519,6 +546,9 @@ BENCHMARK_TEMPLATE(BM_DivideForward, fetch::fixed_point::fp64_t, 4096)
 template <class T, int N>
 void BM_DivideBackward(benchmark::State &state)
 {
+  using TensorType    = typename fetch::math::Tensor<T>;
+  using VecTensorType = typename fetch::ml::Ops<TensorType>::VecTensorType;
+
   fetch::math::Tensor<T> input_1({1, N});
   fetch::math::Tensor<T> input_2({1, N});
   fetch::math::Tensor<T> error_signal({1, N});
@@ -528,9 +558,9 @@ void BM_DivideBackward(benchmark::State &state)
   input_2.FillUniformRandom();
   error_signal.FillUniformRandom();
 
-  std::vector<std::reference_wrapper<fetch::math::Tensor<T> const>> inputs;
-  inputs.push_back(input_1);
-  inputs.push_back(input_2);
+  VecTensorType inputs;
+  inputs.emplace_back(std::make_shared<TensorType>(input_1));
+  inputs.emplace_back(std::make_shared<TensorType>(input_2));
   fetch::ml::ops::Divide<fetch::math::Tensor<T>> div1;
 
   for (auto _ : state)
@@ -580,6 +610,9 @@ BENCHMARK_TEMPLATE(BM_DivideBackward, fetch::fixed_point::fp64_t, 4096)
 template <class T, int N>
 void BM_MultiplyForward(benchmark::State &state)
 {
+  using TensorType    = typename fetch::math::Tensor<T>;
+  using VecTensorType = typename fetch::ml::Ops<TensorType>::VecTensorType;
+
   fetch::math::Tensor<T> input_1({1, N});
   fetch::math::Tensor<T> input_2({1, N});
   fetch::math::Tensor<T> output({1, N});
@@ -589,9 +622,9 @@ void BM_MultiplyForward(benchmark::State &state)
   input_2.FillUniformRandom();
   output.FillUniformRandom();
 
-  std::vector<std::reference_wrapper<fetch::math::Tensor<T> const>> inputs;
-  inputs.push_back(input_1);
-  inputs.push_back(input_2);
+  VecTensorType inputs;
+  inputs.emplace_back(std::make_shared<TensorType>(input_1));
+  inputs.emplace_back(std::make_shared<TensorType>(input_2));
   fetch::ml::ops::Multiply<fetch::math::Tensor<T>> mul1;
 
   for (auto _ : state)
@@ -641,6 +674,9 @@ BENCHMARK_TEMPLATE(BM_MultiplyForward, fetch::fixed_point::fp64_t, 4096)
 template <class T, int N>
 void BM_MultiplyBackward(benchmark::State &state)
 {
+  using TensorType    = typename fetch::math::Tensor<T>;
+  using VecTensorType = typename fetch::ml::Ops<TensorType>::VecTensorType;
+
   fetch::math::Tensor<T> input_1({1, N});
   fetch::math::Tensor<T> input_2({1, N});
   fetch::math::Tensor<T> error_signal({1, N});
@@ -650,9 +686,9 @@ void BM_MultiplyBackward(benchmark::State &state)
   input_2.FillUniformRandom();
   error_signal.FillUniformRandom();
 
-  std::vector<std::reference_wrapper<fetch::math::Tensor<T> const>> inputs;
-  inputs.push_back(input_1);
-  inputs.push_back(input_2);
+  VecTensorType inputs;
+  inputs.emplace_back(std::make_shared<TensorType>(input_1));
+  inputs.emplace_back(std::make_shared<TensorType>(input_2));
   fetch::ml::ops::Multiply<fetch::math::Tensor<T>> mul1;
 
   for (auto _ : state)
@@ -704,6 +740,9 @@ BENCHMARK_TEMPLATE(BM_MultiplyBackward, fetch::fixed_point::fp64_t, 4096)
 template <class T, int N>
 void BM_AddForward(benchmark::State &state)
 {
+  using TensorType    = typename fetch::math::Tensor<T>;
+  using VecTensorType = typename fetch::ml::Ops<TensorType>::VecTensorType;
+
   fetch::math::Tensor<T> input_1({1, N});
   fetch::math::Tensor<T> input_2({1, N});
   fetch::math::Tensor<T> output({1, N});
@@ -713,9 +752,9 @@ void BM_AddForward(benchmark::State &state)
   input_2.FillUniformRandom();
   output.FillUniformRandom();
 
-  std::vector<std::reference_wrapper<fetch::math::Tensor<T> const>> inputs;
-  inputs.push_back(input_1);
-  inputs.push_back(input_2);
+  VecTensorType inputs;
+  inputs.emplace_back(std::make_shared<TensorType>(input_1));
+  inputs.emplace_back(std::make_shared<TensorType>(input_2));
   fetch::ml::ops::Add<fetch::math::Tensor<T>> add1;
 
   for (auto _ : state)
@@ -755,6 +794,9 @@ BENCHMARK_TEMPLATE(BM_AddForward, fetch::fixed_point::fp64_t, 4096)->Unit(benchm
 template <class T, int N>
 void BM_AddBackward(benchmark::State &state)
 {
+  using TensorType    = typename fetch::math::Tensor<T>;
+  using VecTensorType = typename fetch::ml::Ops<TensorType>::VecTensorType;
+
   fetch::math::Tensor<T> input_1({1, N});
   fetch::math::Tensor<T> input_2({1, N});
   fetch::math::Tensor<T> error_signal({1, N});
@@ -764,9 +806,9 @@ void BM_AddBackward(benchmark::State &state)
   input_2.FillUniformRandom();
   error_signal.FillUniformRandom();
 
-  std::vector<std::reference_wrapper<fetch::math::Tensor<T> const>> inputs;
-  inputs.push_back(input_1);
-  inputs.push_back(input_2);
+  VecTensorType inputs;
+  inputs.emplace_back(std::make_shared<TensorType>(input_1));
+  inputs.emplace_back(std::make_shared<TensorType>(input_2));
   fetch::ml::ops::Add<fetch::math::Tensor<T>> add1;
 
   for (auto _ : state)
@@ -806,6 +848,9 @@ BENCHMARK_TEMPLATE(BM_AddBackward, fetch::fixed_point::fp64_t, 4096)->Unit(bench
 template <class T, int N>
 void BM_SubtractForward(benchmark::State &state)
 {
+  using TensorType    = typename fetch::math::Tensor<T>;
+  using VecTensorType = typename fetch::ml::Ops<TensorType>::VecTensorType;
+
   fetch::math::Tensor<T> input_1({1, N});
   fetch::math::Tensor<T> input_2({1, N});
   fetch::math::Tensor<T> output({1, N});
@@ -815,9 +860,9 @@ void BM_SubtractForward(benchmark::State &state)
   input_2.FillUniformRandom();
   output.FillUniformRandom();
 
-  std::vector<std::reference_wrapper<fetch::math::Tensor<T> const>> inputs;
-  inputs.push_back(input_1);
-  inputs.push_back(input_2);
+  VecTensorType inputs;
+  inputs.emplace_back(std::make_shared<TensorType>(input_1));
+  inputs.emplace_back(std::make_shared<TensorType>(input_2));
   fetch::ml::ops::Subtract<fetch::math::Tensor<T>> subtract1;
 
   for (auto _ : state)
@@ -867,6 +912,9 @@ BENCHMARK_TEMPLATE(BM_SubtractForward, fetch::fixed_point::fp64_t, 4096)
 template <class T, int N>
 void BM_SubtractBackward(benchmark::State &state)
 {
+  using TensorType    = typename fetch::math::Tensor<T>;
+  using VecTensorType = typename fetch::ml::Ops<TensorType>::VecTensorType;
+
   fetch::math::Tensor<T> input_1({1, N});
   fetch::math::Tensor<T> input_2({1, N});
   fetch::math::Tensor<T> error_signal({1, N});
@@ -876,9 +924,9 @@ void BM_SubtractBackward(benchmark::State &state)
   input_2.FillUniformRandom();
   error_signal.FillUniformRandom();
 
-  std::vector<std::reference_wrapper<fetch::math::Tensor<T> const>> inputs;
-  inputs.push_back(input_1);
-  inputs.push_back(input_2);
+  VecTensorType inputs;
+  inputs.emplace_back(std::make_shared<TensorType>(input_1));
+  inputs.emplace_back(std::make_shared<TensorType>(input_2));
   fetch::ml::ops::Subtract<fetch::math::Tensor<T>> sub1;
 
   for (auto _ : state)

@@ -39,7 +39,7 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
-  explicit LogSoftmax(SizeType axis = 0)
+  explicit LogSoftmax(SizeType axis = 1)
     : axis_(axis)
   {}
   ~LogSoftmax() override = default;
@@ -48,7 +48,7 @@ public:
   {
     assert(output.shape() == ComputeOutputShape(inputs));
     assert(inputs.size() == 1);
-    fetch::math::Softmax(inputs.front().get(), output, axis_);
+    fetch::math::Softmax((*inputs.front()), output, axis_);
     fetch::math::Log(output, output);
   }
 
@@ -56,30 +56,19 @@ public:
                                   ArrayType const &    error_signal) override
   {
     assert(inputs.size() == 1);
-    assert(inputs.front().get().shape() == error_signal.shape());
+    assert(inputs.front()->shape() == error_signal.shape());
 
     ArrayType return_signal = error_signal.Copy();
     ArrayType t(error_signal.shape());
-    fetch::math::Softmax(inputs.front().get(), t, axis_);
+    fetch::math::Softmax((*inputs.front()), t, axis_);
 
     // return_signal.InlineMultiply(t);
 
-    // 1D softmax
-    if (inputs.front().get().shape().size() == 1)
+    // N-D softmax with 1 batch dimension
+    if (inputs.front()->shape().size() > 1)
     {
-      typename ArrayType::Type sum = return_signal.Sum();
+      ArrayType sum = ReduceSum(return_signal, axis_);
       t.InlineMultiply(sum);
-    }
-    // 2D softmax
-    else if (inputs.front().get().shape().size() == 2)
-    {
-      ArrayType sum;
-      sum = ReduceSum(return_signal, 1 - axis_);
-      t.InlineMultiply(sum);
-    }
-    else
-    {
-      throw std::runtime_error("Softmax over >= 3 dimensions not implemented");
     }
 
     return_signal.InlineSubtract(t);
@@ -88,7 +77,7 @@ public:
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    return inputs.front().get().shape();
+    return inputs.front()->shape();
   }
 
   static constexpr char const *DESCRIPTOR = "LogSoftmax";

@@ -19,6 +19,7 @@
 #include "core/byte_array/encoders.hpp"
 #include "vectorise/uint/uint.hpp"
 
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 #include <cstddef>
@@ -27,11 +28,13 @@
 using namespace fetch::vectorise;
 using namespace fetch::byte_array;
 
+using testing::HasSubstr;
+
 TEST(big_number_gtest, elementary_left_shift)
 {
-  UInt<256> n1(0);
+  UInt<256> n1(0ull);
   // testing elementary left shifting
-  n1 = 3;
+  n1 = 3ull;
   EXPECT_EQ(3, n1[0]);
   n1 <<= 8;
   EXPECT_EQ(0, n1[0]);
@@ -45,7 +48,7 @@ TEST(big_number_gtest, elementary_left_shift)
   n1 <<= 35;
   n1 <<= 58;
 
-  UInt<512> n2(INT_MAX);
+  UInt<512> n2(UINT_MAX);
   n2 <<= 63;
 }
 TEST(big_number_gtest, incrementer_tests)
@@ -257,7 +260,7 @@ TEST(big_number_gtest, right_shift_tests)
 
 TEST(big_number_gtest, testing_comparisons)
 {
-  UInt<256> a(0), b(0);
+  UInt<256> a(0u), b(0u);
   for (std::size_t count = 0; count < (1ul << 8u); ++count)
   {
     EXPECT_EQ(a, b);
@@ -283,4 +286,117 @@ TEST(big_number_gtest, testing_comparisons)
       ++a;
     }
   }
+}
+
+TEST(big_number_gtest, test_bits_size_not_alligned_with_wide_element_array_size)
+{
+  UInt<272> n1{ULONG_MAX};
+  n1 <<= (272 - 64);
+  EXPECT_EQ(n1.ElementAt(0), 0);
+  EXPECT_EQ(n1.ElementAt(1), 0);
+  EXPECT_EQ(n1.ElementAt(2), 0);
+  EXPECT_EQ(n1.ElementAt(3), 0xffffffffffff0000);
+  EXPECT_EQ(n1.ElementAt(4), 0x000000000000ffff);
+  n1 >>= 8;
+  EXPECT_EQ(n1.ElementAt(0), 0);
+  EXPECT_EQ(n1.ElementAt(1), 0);
+  EXPECT_EQ(n1.ElementAt(2), 0);
+  EXPECT_EQ(n1.ElementAt(3), 0xffffffffffffff00);
+  EXPECT_EQ(n1.ElementAt(4), 0x00000000000000ff);
+}
+
+TEST(big_number_gtest, test_construction_from_byte_array_fails_if_too_long)
+{
+  constexpr std::size_t bits{256};
+
+  // Verify that construction pass is size is <= bits/8
+  UInt<bits> shall_pass{ConstByteArray(bits / 8)};
+
+  bool exception_thrown = false;
+  try
+  {
+    UInt<bits> shall_throw{ConstByteArray(bits / 8 + 1)};
+  }
+  catch (std::runtime_error const &ex)
+  {
+    EXPECT_THAT(ex.what(), HasSubstr("Size of input byte array is bigger than"));
+    exception_thrown = true;
+  }
+
+  EXPECT_TRUE(exception_thrown);
+}
+
+TEST(big_number_gtest, test_bit_inverse)
+{
+  using UIntT = UInt<72>;
+
+  UIntT const inv{~UIntT::_0};
+  EXPECT_EQ(inv.ElementAt(0), 0xffffffffffffffff);
+  EXPECT_EQ(inv.ElementAt(1), 0xff);
+  EXPECT_EQ(UIntT::max, inv);
+
+  // UIntT val{};
+  // val.ElementAt(0) = 0xf0f0f0f0f0f0f0f0;
+  // val.ElementAt(1) = 0xf0;
+  UIntT val{UIntT::WideType{0xf0f0f0f0f0f0f0f0ull}, UIntT::WideType{0xf0ull}};
+
+  auto const inv2{~val};
+
+  ASSERT_EQ(inv2.ElementAt(0), 0x0f0f0f0f0f0f0f0f);
+  ASSERT_EQ(inv2.ElementAt(1), 0x0f);
+}
+
+TEST(big_number_gtest, test_default_constructor)
+{
+  using UIntT = UInt<72>;
+
+  UIntT const def;
+  ASSERT_EQ(def.ElementAt(0), 0u);
+  ASSERT_EQ(def.ElementAt(1), 0u);
+}
+
+TEST(big_number_gtest, test_zero)
+{
+  using UIntT = UInt<72>;
+
+  EXPECT_EQ(UIntT::_0.ElementAt(0), 0u);
+  EXPECT_EQ(UIntT::_0.ElementAt(1), 0u);
+}
+
+// TODO(issue 1383): Enable test when issue is resolved
+TEST(big_number_gtest, DISABLED_test_issue_1383_demo_with_bitshift_oper)
+{
+  using UIntT = UInt<72>;
+
+  UIntT n1{1u};
+
+  // Scenario where bit-shift does *NOT* go over UIntT::UINT_SIZE boundary
+  ASSERT_EQ(n1, 1u);
+  n1 <<= UIntT::UINT_SIZE - 1;
+  n1 >>= UIntT::UINT_SIZE - 1;
+  ASSERT_EQ(n1, 1u);
+
+  // Scenario where bit-shift *GOES* over UIntT::UINT_SIZE boundary
+  n1 <<= UIntT::UINT_SIZE;
+  n1 >>= UIntT::UINT_SIZE;
+
+  EXPECT_EQ(n1, 0u);
+}
+
+// TODO(issue 1383): Enable test when issue is resolved
+TEST(big_number_gtest, DISABLED_test_issue_1383_demo_overflow_with_plus_minus_oper)
+{
+  using UIntT = UInt<72>;
+  UIntT n1{UIntT::max};
+  ASSERT_EQ(UIntT::max.ElementAt(0), ~UIntT::WideType{0});
+  ASSERT_EQ(UIntT::max.ElementAt(1), 0xff);
+
+  ASSERT_EQ(n1.ElementAt(0), ~UIntT::WideType{0});
+  ASSERT_EQ(n1.ElementAt(1),
+            ~UIntT::WideType{0} >>
+                (UIntT::WIDE_ELEMENT_SIZE - (UIntT::UINT_SIZE % UIntT::WIDE_ELEMENT_SIZE)));
+
+  n1 += 1u;
+  n1 -= 1u;
+  EXPECT_EQ(n1, 0u);
 }
