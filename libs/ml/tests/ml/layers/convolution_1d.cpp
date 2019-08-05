@@ -16,13 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/main_serializer.hpp"
+#include "gtest/gtest.h"
 #include "math/tensor.hpp"
 #include "ml/layers/convolution_1d.hpp"
+#include "ml/serializers/ml_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
-//#include "vectorise/fixed_point/serializers.hpp"
-#include "core/serializers/main_serializer.hpp"
-
-#include "gtest/gtest.h"
 
 template <typename T>
 class Convolution1DTest : public ::testing::Test
@@ -406,7 +405,7 @@ TYPED_TEST(Convolution1DTest, getStateDict)
   EXPECT_FLOAT_EQ(static_cast<float>(weights_ptr->At(4, 2, 2, 0)), -0.97583634f);
 }
 
- TYPED_TEST(Convolution1DTest, saveparams_test)
+TYPED_TEST(Convolution1DTest, saveparams_test)
 {
   using DataType = typename TypeParam::Type;
   using SizeType = typename TypeParam::SizeType;
@@ -452,10 +451,10 @@ TYPED_TEST(Convolution1DTest, getStateDict)
   b >> *dsp2;
 
   // rebuild
-  fetch::ml::layers::Convolution1D<TypeParam> conv2(*dsp2);
+  auto conv2 = fetch::ml::layers::Convolution1D<TypeParam>::BuildConvolution1D(*dsp2);
 
-  conv2.SetInput("Conv1D_Input", input);
-  TypeParam output2 = conv2.Evaluate("Conv1D_Conv1D", true);
+  conv2->SetInput("Conv1D_Input", input);
+  TypeParam output2 = conv2->Evaluate("Conv1D_Conv1D", true);
 
   ASSERT_TRUE(output.AllClose(output2, fetch::math::function_tolerance<DataType>(),
                               fetch::math::function_tolerance<DataType>()));

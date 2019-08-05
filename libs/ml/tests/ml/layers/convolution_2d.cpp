@@ -22,6 +22,7 @@
 #include "ml/meta/ml_type_traits.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
+#include "ml/serializers/ml_types.hpp"
 #include "gtest/gtest.h"
 
 template <typename T>
@@ -563,10 +564,10 @@ TYPED_TEST(Convolution2DTest, getStateDict)
   b >> *dsp2;
 
   // rebuild
-  fetch::ml::layers::Convolution2D<TypeParam> conv2(*dsp2);
+  auto conv2 = fetch::ml::layers::Convolution2D<TypeParam>::BuildConvolution2D(*dsp2);
 
-  conv2.SetInput("Conv2D_Input", input);
-  TypeParam output2 = conv2.Evaluate("Conv2D_Conv2D", true);
+  conv2->SetInput("Conv2D_Input", input);
+  TypeParam output2 = conv2->Evaluate("Conv2D_Conv2D", true);
 
   ASSERT_TRUE(output.AllClose(output2, fetch::math::function_tolerance<DataType>(),
                               fetch::math::function_tolerance<DataType>()));

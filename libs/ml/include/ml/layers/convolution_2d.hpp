@@ -41,7 +41,9 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using WeightsInit   = fetch::ml::ops::WeightsInitialisation;
   using VecTensorType = typename SubGraph<T>::VecTensorType;
-  using SPType        = ConvolutionLayer1DSaveableParams<ArrayType>;
+  using SPType        = ConvolutionLayer2DSaveableParams<ArrayType>;
+
+  Convolution2D() = default;
 
   /**
    * Creates 2D convolution layer with trainable kernel
@@ -86,13 +88,18 @@ public:
     this->SetOutputNode(output);
   }
 
-  explicit Convolution2D(SPType const &gs)
-    : SubGraph<ArrayType>(gs)
+  template <typename X>
+  static std::shared_ptr<Convolution2D<X>> BuildConvolution2D(
+      ConvolutionLayer2DSaveableParams<X> const &sp)
   {
-    kernel_size_     = gs.kernel_size;
-    input_channels_  = gs.input_channels;
-    output_channels_ = gs.output_channels;
-    stride_size_     = gs.stride_size;
+    auto ret = std::make_shared<Convolution2D<X>>();
+
+    ret->kernel_size_     = sp.kernel_size;
+    ret->input_channels_  = sp.input_channels;
+    ret->output_channels_ = sp.output_channels;
+    ret->stride_size_     = sp.stride_size;
+
+    return ret;
   }
 
   std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
@@ -102,7 +109,7 @@ public:
     auto sg_ptr1 = std::dynamic_pointer_cast<typename SubGraph<ArrayType>::SPType>(sgsp);
 
     // assign base class saveable params to ret
-    auto ret      = std::make_shared<SPType>();
+    auto ret     = std::make_shared<SPType>();
     auto sg_ptr2 = std::static_pointer_cast<typename SubGraph<ArrayType>::SPType>(ret);
     *sg_ptr2     = *sg_ptr1;
 

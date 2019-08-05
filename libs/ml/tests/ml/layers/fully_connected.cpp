@@ -22,6 +22,7 @@
 #include "ml/optimisation/sgd_optimiser.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
+#include "ml/serializers/ml_types.hpp"
 #include "gtest/gtest.h"
 
 template <typename T>

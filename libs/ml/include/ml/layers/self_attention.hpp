@@ -99,7 +99,7 @@ public:
     auto sg_ptr1 = std::dynamic_pointer_cast<typename SubGraph<ArrayType>::SPType>(sgsp);
 
     // assign base class saveable params to ret
-    auto ret      = std::make_shared<SPType>();
+    auto ret     = std::make_shared<SPType>();
     auto sg_ptr2 = std::static_pointer_cast<typename SubGraph<ArrayType>::SPType>(ret);
     *sg_ptr2     = *sg_ptr1;
 

@@ -109,7 +109,8 @@ struct SubGraphSaveableParams : public GraphSaveableParams<TensorType>
   SubGraphSaveableParams() = default;
 
   explicit SubGraphSaveableParams(OpType operation_type)
-    : GraphSaveableParams<TensorType>(operation_type), op_type(operation_type)
+    : GraphSaveableParams<TensorType>(operation_type)
+    , op_type(operation_type)
   {}
 
   SubGraphSaveableParams &operator=(SubGraphSaveableParams const &sgsp)

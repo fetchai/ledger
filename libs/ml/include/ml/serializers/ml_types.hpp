@@ -51,7 +51,9 @@ void DeserializeImplementation(MapType &map, uint8_t code,
 {
   auto sp_interface_ptr = std::make_shared<SP>();
   map.ExpectKeyGetValue(code, *sp_interface_ptr);
-  auto deserialised_data_ptr = std::dynamic_pointer_cast<std::shared_ptr<fetch::ml::SaveableParamsInterface>>(sp_interface_ptr);
+  auto deserialised_data_ptr =
+      std::dynamic_pointer_cast<std::shared_ptr<fetch::ml::SaveableParamsInterface>>(
+          sp_interface_ptr);
   (*op) = *(*deserialised_data_ptr);
 }
 }  // namespace
@@ -146,7 +148,8 @@ void SerializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_type
 }
 
 template <class TensorType, typename D, typename MapType>
-void DeserializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const & op_type, std::shared_ptr<fetch::ml::SaveableParamsInterface> &op)
+void DeserializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_type,
+                      std::shared_ptr<fetch::ml::SaveableParamsInterface> &op)
 {
 
   switch (op_type)
@@ -407,13 +410,13 @@ struct MapSerializer<ml::GraphSaveableParams<TensorType>, D>
 template <typename TensorType, typename D>
 struct MapSerializer<ml::SubGraphSaveableParams<TensorType>, D>
 {
-  using Type       = ml::SubGraphSaveableParams<TensorType>;
+  using Type = ml::SubGraphSaveableParams<TensorType>;
 
-  using DriverType = D;
-  static uint8_t const GRAPH              = 1;
-  static uint8_t const OP_CODE            = 2;
-  static uint8_t const INPUT_NODE_NAMES   = 3;
-  static uint8_t const OUTPUT_NODE_NAME   = 4;
+  using DriverType                      = D;
+  static uint8_t const GRAPH            = 1;
+  static uint8_t const OP_CODE          = 2;
+  static uint8_t const INPUT_NODE_NAMES = 3;
+  static uint8_t const OUTPUT_NODE_NAME = 4;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
@@ -439,7 +442,6 @@ struct MapSerializer<ml::SubGraphSaveableParams<TensorType>, D>
     map.ExpectKeyGetValue(INPUT_NODE_NAMES, sp.input_node_names);
     map.ExpectKeyGetValue(OUTPUT_NODE_NAME, sp.output_node_name);
   }
-
 };
 
 /**
@@ -915,7 +917,9 @@ struct MapSerializer<ml::ConvolutionLayer2DSaveableParams<TensorType>, D>
     auto subgraph_sp_ptr = std::make_shared<ml::SubGraphSaveableParams<TensorType>>();
     map.ExpectKeyGetValue(SUB_GRAPH, *subgraph_sp_ptr);
     std::shared_ptr<Type> conv_sp_ptr = std::make_shared<Type>(sp);
-    auto base_pointer = std::dynamic_pointer_cast<std::shared_ptr<ml::SubGraphSaveableParams<TensorType>>>(conv_sp_ptr);
+    auto                  base_pointer =
+        std::dynamic_pointer_cast<std::shared_ptr<ml::SubGraphSaveableParams<TensorType>>>(
+            conv_sp_ptr);
     *(*base_pointer) = (*subgraph_sp_ptr);
 
     map.ExpectKeyGetValue(OP_CODE, sp.op_type);
