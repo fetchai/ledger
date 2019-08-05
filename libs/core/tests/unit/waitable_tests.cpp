@@ -20,42 +20,71 @@
 
 #include "gmock/gmock.h"
 
+#include <chrono>
 #include <cstdint>
 #include <thread>
+#include <vector>
 
 namespace {
 
 using namespace fetch;
 using namespace testing;
 
+using Semaphore = Waitable<uint32_t>;
+
 class WaitableTests : public Test
 {
 public:
-  Waitable<uint32_t> waitable{0u};
+  Semaphore                  semaphore{3u};
+  Waitable<std::vector<int>> waitable{};
 };
 
-TEST_F(WaitableTests, WaitFor_returns_when_the_condition_is_true)
+TEST_F(WaitableTests, Wait_returns_when_the_condition_is_true)
 {
   auto check = [this]() -> void {
-    for (auto i = 0; i < 10000; ++i)
-    {
-      waitable.Wait([](auto const &number) -> bool { return number > 5000; });
-      waitable.Apply([](auto const &number) -> void { ASSERT_THAT(number, Gt(5000)); });
-    }
+    semaphore.Apply([](auto &count) -> void { --count; });
+    semaphore.Wait([](auto const &count) -> bool { return count == 0u; });
+
+    waitable.Wait([](auto const &payload) -> bool { return payload.size() > 9000; });
+    waitable.Apply([](auto const &payload) -> void { ASSERT_THAT(payload.size(), Gt(9000)); });
   };
 
   auto increment = [this]() -> void {
+    semaphore.Apply([](auto &count) -> void { --count; });
+    semaphore.Wait([](auto const &count) -> bool { return count == 0u; });
+
     for (auto i = 0; i < 10000; ++i)
     {
-      waitable.Apply([](auto &number) -> void { ++number; });
+      waitable.Apply([](auto &payload) -> void { payload.push_back(123); });
     }
   };
 
   auto check_thread     = std::thread(std::move(check));
   auto increment_thread = std::thread(std::move(increment));
 
-  check_thread.join();
+  semaphore.Apply([](auto &count) -> void { --count; });
+
   increment_thread.join();
+  check_thread.join();
+}
+
+TEST_F(WaitableTests,
+       Wait_allows_to_specify_optional_timeout_and_returns_true_if_condition_was_true_on_return)
+{
+  auto const no_timeout =
+      waitable.Wait([](auto const &) { return true; }, std::chrono::milliseconds{1u});
+
+  ASSERT_TRUE(no_timeout);
+}
+
+TEST_F(
+    WaitableTests,
+    on_timeout_Wait_returns_even_if_condition_is_false_and_returns_false_if_return_was_due_to_timeout)
+{
+  auto const no_timeout =
+      waitable.Wait([](auto const &) { return false; }, std::chrono::milliseconds{1u});
+
+  ASSERT_FALSE(no_timeout);
 }
 
 }  // namespace

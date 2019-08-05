@@ -48,16 +48,20 @@ public:
   auto Apply(Handler &&handler)
       -> std::enable_if_t<std::is_void<decltype(protected_payload_.Apply(handler))>::value, void>
   {
-    protected_payload_.Apply(handler);
-    condition_.notify_all();
+    protected_payload_.Apply([this, handler](auto &payload) -> void {
+      handler(payload);
+      condition_.notify_all();
+    });
   }
 
   template <typename Handler>
   auto Apply(Handler &&handler) const
       -> std::enable_if_t<std::is_void<decltype(protected_payload_.Apply(handler))>::value, void>
   {
-    protected_payload_.Apply(handler);
-    condition_.notify_all();
+    protected_payload_.Apply([this, handler](auto const &payload) -> void {
+      handler(payload);
+      condition_.notify_all();
+    });
   }
 
   template <typename Handler>
@@ -65,10 +69,12 @@ public:
       -> std::enable_if_t<!std::is_void<decltype(protected_payload_.Apply(handler))>::value,
                           decltype(protected_payload_.Apply(handler))>
   {
-    auto const result = protected_payload_.Apply(handler);
-    condition_.notify_all();
+    return protected_payload_.Apply([this, handler](auto &payload) -> decltype(handler(payload)) {
+      auto const result = handler(payload);
+      condition_.notify_all();
 
-    return std::move(result);
+      return std::move(result);
+    });
   }
 
   template <typename Handler>
@@ -76,10 +82,13 @@ public:
       -> std::enable_if_t<!std::is_void<decltype(protected_payload_.Apply(handler))>::value,
                           decltype(protected_payload_.Apply(handler)) const>
   {
-    auto const result = protected_payload_.Apply(handler);
-    condition_.notify_all();
+    return protected_payload_.Apply(
+        [this, handler](auto const &payload) -> decltype(handler(payload)) {
+          auto const result = handler(payload);
+          condition_.notify_all();
 
-    return std::move(result);
+          return std::move(result);
+        });
   }
 
   template <typename Predicate>
