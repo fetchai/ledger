@@ -540,8 +540,8 @@ struct PlaceholderSaveableParams : public SaveableParamsInterface
 template <class TensorType>
 struct PReluSaveableParams : SubGraphSaveableParams<TensorType>
 {
-  using SizeType             = typename TensorType::SizeType;
-  fetch::ml::OpType op_type  = OpType::LAYER_PRELU;
+  using SizeType            = typename TensorType::SizeType;
+  fetch::ml::OpType op_type = OpType::LAYER_PRELU;
 
   PReluSaveableParams()
     : SubGraphSaveableParams<TensorType>(OpType::LAYER_PRELU)

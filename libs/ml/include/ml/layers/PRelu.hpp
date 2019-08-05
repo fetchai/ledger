@@ -70,7 +70,8 @@ public:
 
   std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
-    return SubGraph<ArrayType>::GetOpSaveableParams();
+    auto base_pointer  = std::dynamic_pointer_cast<SubGraph<ArrayType>>(this);
+    return base_pointer->GetOpSaveableParams();
   }
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
