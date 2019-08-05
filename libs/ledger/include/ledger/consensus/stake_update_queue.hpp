@@ -70,29 +70,6 @@ private:
 };
 
 /**
- * Gets the number of block updates currently pending in the queue
-
- * @return The number of pending updates
- */
-inline std::size_t StakeUpdateQueue::size() const
-{
-  return updates_.Apply([](BlockUpdates const &updates) -> std::size_t { return updates.size(); });
-}
-
-/**
- * Adds / Updates the change of stake to be applied at a given block index
- *
- * @param block_index The block index at which to apply the update
- * @param address The address of the stake holder
- * @param stake The amount of tokens to be staked
- */
-inline void StakeUpdateQueue::AddStakeUpdate(BlockIndex block_index, Address const &address,
-                                             StakeAmount stake)
-{
-  updates_.Apply([&](BlockUpdates &updates) -> void { updates[block_index][address] = stake; });
-}
-
-/**
  * Visit the underlying queue container directly
  *
  * @tparam Visitor The type of the visitor functor
@@ -101,7 +78,7 @@ inline void StakeUpdateQueue::AddStakeUpdate(BlockIndex block_index, Address con
 template <typename Visitor>
 void StakeUpdateQueue::VisitUnderlyingQueue(Visitor &&visitor)
 {
-  updates_.Apply([&](BlockUpdates &updates) -> void { visitor(updates); });
+  updates_.WithLock([&](BlockUpdates &updates) -> void { visitor(updates); });
 }
 
 }  // namespace ledger

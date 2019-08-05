@@ -153,7 +153,7 @@ void ThreadPoolImplementation::Start()
 
   // start all the threads
   {
-    threads_.Apply([this](auto &threads) -> void {
+    threads_.WithLock([this](auto &threads) -> void {
       if (!threads.empty())
       {
         throw std::runtime_error("Attempting to start the thread pool multiple times");
@@ -194,7 +194,7 @@ void ThreadPoolImplementation::Start()
  */
 void ThreadPoolImplementation::Stop()
 {
-  threads_.Apply([this](auto &threads) -> void {
+  threads_.WithLock([this](auto &threads) -> void {
     // We have made the design decision that we will not allow pooled work to stop the thread pool.
     // While strictly not necessary, this has been done as a guard against desired behaviour. If
     // this assumption should prove to be invalid in the future removing this check here should
