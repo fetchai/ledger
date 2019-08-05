@@ -18,7 +18,8 @@
 
 #include "math/tensor.hpp"
 #include "ml/graph.hpp"
-#include "ml/layers/self_attention.hpp"
+#include "ml/layers/fully_connected.hpp"
+#include "ml/layers/scaled_dot_product_attention.hpp"
 #include "ml/ops/activations/relu.hpp"
 #include "ml/ops/loss_functions.hpp"
 #include "ml/ops/multiply.hpp"
@@ -588,7 +589,7 @@ TYPED_TEST(OptimisersTest, adam_optimiser_minibatch_training)
   std::string                                  output_name;
   std::shared_ptr<fetch::ml::Graph<TypeParam>> g =
 
-      PrepareTestGraph<TypeParam>(1, 1, input_name, label_name, output_name);
+      PrepareTestGraph<TypeParam>(1u, 1u, input_name, label_name, output_name);
 
   // Prepare data and labels
   TypeParam data;
