@@ -327,6 +327,7 @@ struct MapSerializer<ml::OpType, D>
   }
 };
 
+
 /**
  * serializer for GraphSaveableParams
  * @tparam TensorType
@@ -338,34 +339,66 @@ struct MapSerializer<ml::GraphSaveableParams<TensorType>, D>
   using DriverType = D;
 
   static uint8_t const OP_CODE     = 1;
-  static uint8_t const CONNECTIONS = 2;
-  static uint8_t const NODES       = 3;
+  static uint8_t const CONNECTIONS_FIRST = 2;
+  static uint8_t const CONNECTIONS_SECOND = 3;
+  static uint8_t const NODES       = 4;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(1);
+    auto map = map_constructor(3);
     map.Append(OP_CODE, sp.op_type);
-    map.Append(CONNECTIONS, sp.connections);
 
-    //    for (auto const &node : gsp.nodes)
-    //    {
-    //      serializer << node.first;
-    //      Serialize<S, TensorType>(serializer, node.second);
-    //    }
-    for (auto const &node : sp.nodes)
-    {
-      map.Append(NODES, node);
+    // split connections into keys and values
+    std::vector<std::string> connections_first;
+    std::vector<std::vector<std::string>> connections_second;
+
+    std::transform(begin(sp.connections), end(sp.connections),
+                   std::back_inserter(connections_first),
+                   [](auto const& pair){ return pair.first; });
+
+    std::transform(begin(sp.connections), end(sp.connections),
+                   std::back_inserter(connections_second),
+                   [](auto const& pair){ return pair.second; });
+
+    map.Append(CONNECTIONS_FIRST, connections_first);
+    map.Append(CONNECTIONS_SECOND, connections_second);
+
+    std::vector<ml::NodeSaveableParams<TensorType>> nodevec;
+    for (auto node_name : connections_first){
+      auto nsp = std::dynamic_pointer_cast<ml::NodeSaveableParams<TensorType>> (sp.nodes.at(node_name));
+      nodevec.emplace_back(*nsp);
     }
-    map.Append(NODES, sp.nodes);
+
+    map.Append(NODES, nodevec);
+
   }
 
   template <typename MapDeserializer>
   static void Deserialize(MapDeserializer &map, Type &sp)
   {
+    std::vector<std::string> connections_first;
+    std::vector<std::vector<std::string>> connections_second;
+
     map.ExpectKeyGetValue(OP_CODE, sp.op_type);
-    map.ExpectKeyGetValue(CONNECTIONS, sp.connections);
-    map.ExpectKeyGetValue(NODES, sp.nodes);
+    map.ExpectKeyGetValue(CONNECTIONS_FIRST, connections_first);
+    map.ExpectKeyGetValue(CONNECTIONS_SECOND, connections_second);
+
+    auto it1 = connections_first.begin();
+    for (auto const & it2 : connections_second){
+      sp.connections.push_back(std::make_pair(*it1, it2));
+      ++it1;
+    }
+
+    std::vector<ml::NodeSaveableParams<TensorType>> nodevec;
+    map.ExpectKeyGetValue(NODES, nodevec);
+
+    auto it3 = nodevec.begin();
+    for (auto const &node_name : connections_first){
+      auto nsp = std::make_shared<ml::NodeSaveableParams<TensorType>>(*it3);
+      sp.nodes.insert(std::make_pair(node_name, nsp));
+      ++it3;
+    }
   }
 };
 

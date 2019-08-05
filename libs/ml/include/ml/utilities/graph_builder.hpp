@@ -66,6 +66,9 @@ namespace fetch {
 namespace ml {
 namespace utilities {
 
+template <typename TensorType, typename GraphType>
+std::shared_ptr<GraphType> LoadGraph(std::shared_ptr<GraphSaveableParams<TensorType>> gsp);
+
 /**
  * method for constructing a graph given saveparams
  * @tparam TensorType
@@ -78,9 +81,9 @@ std::shared_ptr<fetch::ml::SubGraph<TensorType>> LoadSubGraph(
     std::shared_ptr<SubGraphSaveableParams<TensorType>> sgsp)
 {
   auto graph_ptr =
-      LoadGraph(std::static_pointer_cast<std::shared_ptr<GraphSaveableParams<TensorType>>>(sgsp));
+      LoadGraph<TensorType, SubGraph<TensorType>>(std::static_pointer_cast<GraphSaveableParams<TensorType>>(sgsp));
   return SubGraph<TensorType>::BuildSubGraph(
-      std::static_pointer_cast<std::shared_ptr<SubGraphSaveableParams<TensorType>>>(graph_ptr));
+      std::static_pointer_cast<SubGraphSaveableParams<TensorType>>(graph_ptr));
 }
 
 /**
@@ -207,11 +210,10 @@ void AddToGraph(OpType const &operation_type, std::shared_ptr<Graph<TensorType>>
   case OpType::LAYER_CONVOLUTION_1D:
   {
     auto sg_ptr = LoadSubGraph<TensorType>(
-        std::dynamic_pointer_cast<std::shared_ptr<SubGraphSaveableParams<TensorType>>>(saved_node));
+        std::dynamic_pointer_cast<SubGraphSaveableParams<TensorType>>(saved_node));
     auto conv_ptr =
         fetch::ml::layers::Convolution1D<TensorType>::template BuildConvolution1D<TensorType>(
-            std::dynamic_pointer_cast<
-                std::shared_ptr<ConvolutionLayer1DSaveableParams<TensorType>>>(sg_ptr));
+            *(std::dynamic_pointer_cast<ConvolutionLayer1DSaveableParams<TensorType>>(sg_ptr)));
 
     // CALL graph ADD NODE TO add fully formed layer to graph
 
@@ -250,7 +252,7 @@ std::shared_ptr<GraphType> LoadGraph(std::shared_ptr<GraphSaveableParams<TensorT
     std::string              name   = node.first;
     std::vector<std::string> inputs = node.second;
 
-    AddToGraph<TensorType>(gsp->nodes[name]->OP_DESCRIPTOR, ret, gsp->nodes[name], name, inputs);
+    AddToGraph<TensorType>(gsp->nodes[name]->op_type, ret, gsp->nodes[name], name, inputs);
   }
 
   return ret;
