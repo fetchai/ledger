@@ -59,10 +59,6 @@ public:
         this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Key", {});
     std::string value =
         this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Value", {});
-    
-    // a mask to mask out unused position
-	  std::string mask =
-	   this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Mask", {});
 
     // Be advised that the matrix multiplication sequence is different from what is proposed in the
     // paper as our batch dimension is the last dimension, which the feature dimension is the first
@@ -104,7 +100,6 @@ public:
     this->AddInputNode(query);
     this->AddInputNode(key);
     this->AddInputNode(value);
-//    this->AddInputNode(mask);
     this->SetOutputNode(weight_value_matmul);
   }
 

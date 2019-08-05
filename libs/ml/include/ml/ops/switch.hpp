@@ -29,21 +29,24 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class BooleanMask: public fetch::ml::Ops<T>
+class Switch : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType     = T;
+  using DataType      = typename ArrayType::Type;
   using SizeType      = typename ArrayType::SizeType;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
-  BooleanMask()           = default;
-  ~BooleanMask() override = default;
+  Switch()           = default;
+  ~Switch() override = default;
 
   /**
    * based on boolean condition, switch between second and third array's element.
-   * N.B. the backprop is only done on the second array, the third array is only used to spcify the masked value
-   * @param inputs - three inputs, first is condition, second is the then array, third is the else array
+   * N.B. the backprop is only done on the second array, the third array is only used to spcify the
+   * masked value
+   * @param inputs - three inputs, first is condition, second is the then array, third is the else
+   * array
    * @return
    */
   void Forward(VecTensorType const &inputs, ArrayType &output) override
@@ -51,16 +54,10 @@ public:
     assert(inputs.size() == 3);
     assert(output.shape() == this->ComputeOutputShape(inputs));
     assert(inputs.at(0)->shape() == inputs.at(1)->shape());
-	  assert(inputs.at(1)->shape() == inputs.at(2)->shape());
-	  
-	  // make sure the condition mask is a boolean matrix
-	  for(auto i : *inputs.front()){
-	  	assert((i == 0) || (i == 1));
-	  }
+    assert(inputs.at(1)->shape() == inputs.at(2)->shape());
 
-	  output = inputs.at(2)->Copy();
-    fetch::math::BooleanMask(*inputs.at(1), *inputs.at(0), output);
-    
+    output = inputs.at(2)->Copy();
+    fetch::math::Switch(*(inputs.at(0)), *(inputs.at(1)), *(inputs.at(2)), output);
   }
 
   /**
@@ -71,21 +68,20 @@ public:
                                   ArrayType const &    error_signal) override
   {
     assert(inputs.size() == 3);
-	  assert(inputs.at(0)->shape() == inputs.at(1)->shape());
-	  assert(inputs.at(1)->shape() == inputs.at(2)->shape());
+    assert(inputs.at(0)->shape() == inputs.at(1)->shape());
+    assert(inputs.at(1)->shape() == inputs.at(2)->shape());
     assert(error_signal.size() == inputs.at(0)->size());
-	
-	  // make sure the condition mask is a boolean matrix
-	  for(auto i : *inputs.front()){
-		  assert((i == 0) || (i == 1));
-	  }
-    
-    ArrayType return_signal(inputs.at(0)->shape());
-		ArrayType zero_return_signal(inputs.at(0)->shape());
-		
-		fetch::math::Multiply(*(inputs.front()), error_signal, return_signal);
 
-    return {zero_return_signal, return_signal, zero_return_signal};
+    ArrayType then_return_signal(inputs.at(0)->shape());
+    ArrayType else_return_signal(inputs.at(0)->shape());
+    ArrayType mask_return_signal(inputs.at(0)->shape());
+
+    fetch::math::Multiply(*(inputs.front()), error_signal, then_return_signal);
+    fetch::math::Subtract(error_signal, then_return_signal, else_return_signal);
+
+    // be adivsed, it is not reasonable to return gradient for mask, so the mask gradient is set to
+    // zero here
+    return {mask_return_signal, then_return_signal, else_return_signal};
   }
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
@@ -93,7 +89,7 @@ public:
     return inputs.front()->shape();
   }
 
-  static constexpr char const *DESCRIPTOR = "BooleanMask";
+  static constexpr char const *DESCRIPTOR = "Switch";
 };
 
 }  // namespace ops
