@@ -424,8 +424,9 @@ struct MapSerializer<ml::SubGraphSaveableParams<TensorType>, D>
     auto map = map_constructor(4);
 
     // serialize parent class first
-    auto base_pointer = static_cast<ml::SubGraphSaveableParams<TensorType> const *>(&sp);
-    map.Append(GRAPH, *base_pointer);
+    auto sp_ptr = std::make_shared<ml::GraphSaveableParams<TensorType>>(sp);
+    map.Append(GRAPH, *(sp_ptr));
+//    auto base_pointer = std::dynamic_pointer_cast<std::shared_ptr<ml::GraphSaveableParams<TensorType>>>(sp);
 
     map.Append(OP_CODE, sp.op_type);
     map.Append(INPUT_NODE_NAMES, sp.input_node_names);
@@ -435,8 +436,9 @@ struct MapSerializer<ml::SubGraphSaveableParams<TensorType>, D>
   template <typename MapDeserializer>
   static void Deserialize(MapDeserializer &map, Type &sp)
   {
-    auto base_pointer = static_cast<ml::SubGraphSaveableParams<TensorType> *>(&sp);
-    map.ExpectKeyGetValue(GRAPH, *base_pointer);
+    auto graph_ptr = std::make_shared<ml::GraphSaveableParams<TensorType>>(sp);
+    auto base_pointer = std::dynamic_pointer_cast<ml::GraphSaveableParams<TensorType>>(graph_ptr);
+    map.ExpectKeyGetValue(GRAPH, (*base_pointer));
 
     map.ExpectKeyGetValue(OP_CODE, sp.op_type);
     map.ExpectKeyGetValue(INPUT_NODE_NAMES, sp.input_node_names);

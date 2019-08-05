@@ -22,8 +22,8 @@
 #include "ml/meta/ml_type_traits.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
-#include "ml/serializers/ml_types.hpp"
 #include "gtest/gtest.h"
+#include "ml/serializers/ml_types.hpp"
 
 template <typename T>
 class Convolution2DTest : public ::testing::Test
@@ -518,7 +518,7 @@ TYPED_TEST(Convolution2DTest, getStateDict)
   EXPECT_FLOAT_EQ(static_cast<float>(weights_ptr->At(4, 2, 2, 2, 0)), -0.096136682f);
 }
 
- TYPED_TEST(Convolution2DTest, saveparams_test)
+TYPED_TEST(Convolution2DTest, saveparams_test)
 {
   using DataType = typename TypeParam::Type;
   using SizeType = typename TypeParam::SizeType;

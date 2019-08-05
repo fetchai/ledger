@@ -104,13 +104,19 @@ public:
 
   std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
-    // get base class saveable params
+    // get all base classes saveable params
     std::shared_ptr<SaveableParamsInterface> sgsp = SubGraph<ArrayType>::GetOpSaveableParams();
-    auto sg_ptr1 = std::dynamic_pointer_cast<typename SubGraph<ArrayType>::SPType>(sgsp);
 
-    // assign base class saveable params to ret
     auto ret     = std::make_shared<SPType>();
-    auto sg_ptr2 = std::static_pointer_cast<typename SubGraph<ArrayType>::SPType>(ret);
+
+    // copy graph saveable params over
+    auto g_ptr1 = std::dynamic_pointer_cast<typename Graph<ArrayType>::SPType>(sgsp);
+    auto g_ptr2 = std::dynamic_pointer_cast<typename Graph<ArrayType>::SPType>(ret);
+    *g_ptr2 = *g_ptr1;
+
+    // copy subgraph saveable params over
+    auto sg_ptr1 = std::dynamic_pointer_cast<typename SubGraph<ArrayType>::SPType>(sgsp);
+    auto sg_ptr2 = std::dynamic_pointer_cast<typename SubGraph<ArrayType>::SPType>(ret);
     *sg_ptr2     = *sg_ptr1;
 
     // asign layer specific params

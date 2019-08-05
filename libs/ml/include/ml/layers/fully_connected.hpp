@@ -55,7 +55,7 @@ public:
   using WeightsType    = typename fetch::ml::ops::Weights<ArrayType>;
   using WeightsPtrType = typename std::shared_ptr<WeightsType>;
 
-  //  FullyConnected(std::shared_ptr<>)
+  FullyConnected() = default;
 
   /**
    * This initializer allows weight sharing to another fully connected layer through node interface
@@ -178,11 +178,16 @@ public:
                             regularisation_rate);
   }
 
-  explicit FullyConnected(SPType const &gs)
-    : SubGraph<ArrayType>(gs)
+  template <typename X>
+  static std::shared_ptr<FullyConnected<X>> BuildFullyConnected(
+      FullyConnectedSaveableParams<X> const &sp)
   {
-    in_size_  = gs.in_size;
-    out_size_ = gs.out_size;
+    auto ret = std::make_shared<FullyConnected<X>>();
+
+    ret->in_size_  = sp.in_size;
+    ret->out_size_ = sp.out_size;
+
+    return ret;
   }
 
   std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override

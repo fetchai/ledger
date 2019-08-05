@@ -20,8 +20,8 @@
 #include "ml/layers/fully_connected.hpp"
 #include "ml/layers/self_attention.hpp"
 
-#include "ml/serializers/ml_types.hpp"
 #include "gtest/gtest.h"
+#include "ml/serializers/ml_types.hpp"
 
 template <typename T>
 class SelfAttentionTest : public ::testing::Test

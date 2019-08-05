@@ -339,8 +339,9 @@ typename Graph<ArrayType>::NodePtrType Graph<ArrayType>::GetNode(std::string con
 template <typename ArrayType>
 void Graph<ArrayType>::SetInput(std::string const &node_name, ArrayType data)
 {
-  PlaceholderPtrType placeholder =
-      std::dynamic_pointer_cast<PlaceholderType>(nodes_[node_name]->GetOp());
+  auto tmp = nodes_[node_name];
+
+  PlaceholderPtrType placeholder = std::dynamic_pointer_cast<PlaceholderType>(tmp->GetOp());
 
   if (placeholder)
   {

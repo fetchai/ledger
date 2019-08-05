@@ -22,8 +22,8 @@
 #include "ml/optimisation/sgd_optimiser.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
-#include "ml/serializers/ml_types.hpp"
 #include "gtest/gtest.h"
+#include "ml/serializers/ml_types.hpp"
 
 template <typename T>
 class FullyConnectedTest : public ::testing::Test
@@ -336,4 +336,41 @@ TYPED_TEST(FullyConnectedTest, getStateDict)
   ASSERT_NE(sd.dict_["FullyConnected_Bias"].weights_, nullptr);
   EXPECT_EQ(sd.dict_["FullyConnected_Bias"].weights_->shape(),
             std::vector<typename TypeParam::SizeType>({10, 1}));
+}
+
+TYPED_TEST(FullyConnectedTest, saveparams_test)
+{
+  using DataType = typename TypeParam::Type;
+
+  TypeParam input({10, 10});
+  input.FillUniformRandom();
+
+  // Evaluate
+  fetch::ml::layers::FullyConnected<TypeParam> fc(10, 20);
+  fc.SetInput("FC_Input", input);
+  TypeParam output = fc.Evaluate("FC_FC", true);
+
+  // extract saveparams
+  auto sp = fc.GetOpSaveableParams();
+
+  // downcast to correct type
+  auto dsp =
+      std::dynamic_pointer_cast<typename fetch::ml::layers::FullyConnected<TypeParam>::SPType>(sp);
+
+  // serialize
+  fetch::serializers::MsgPackSerializer b;
+  b << *dsp;
+
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<typename fetch::ml::layers::FullyConnected<TypeParam>::SPType>();
+  b >> *dsp2;
+
+  // rebuild
+  auto fc2 = fetch::ml::layers::FullyConnected<TypeParam>::BuildFullyConnected(*dsp2);
+  fc2->SetInput("FC_Input", input);
+  TypeParam output2 = fc2->Evaluate("FC_FC", true);
+
+  ASSERT_TRUE(output.AllClose(output2, fetch::math::function_tolerance<DataType>(),
+                              fetch::math::function_tolerance<DataType>()));
 }

@@ -21,8 +21,8 @@
 #include "ml/meta/ml_type_traits.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
-#include "ml/serializers/ml_types.hpp"
 #include "gtest/gtest.h"
+#include "ml/serializers/ml_types.hpp"
 
 #include <memory>
 #include <vector>
