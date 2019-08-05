@@ -91,19 +91,21 @@ public:
 
   std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
-    auto sp               = std::make_shared<SPType>();
-    auto ret_sgsp_pointer = std::dynamic_pointer_cast<std::shared_ptr<SubGraphSaveableParams<ArrayType>>>(sp);
+    // get base class saveable params
+    std::shared_ptr<SaveableParamsInterface> sgsp = SubGraph<ArrayType>::GetOpSaveableParams();
+    auto sg_ptr1 = std::dynamic_pointer_cast<typename SubGraph<ArrayType>::SPType>(sgsp);
 
-    auto base_pointer  = std::dynamic_pointer_cast<SubGraph<ArrayType>>(this);
-    auto this_sgsp_ptr = base_pointer->GetOpSaveableParams();
+    // assign base class saveable params to ret
+    auto ret      = std::make_shared<SPType>();
+    auto sg_ptr2 = std::static_pointer_cast<typename SubGraph<ArrayType>::SPType>(ret);
+    *sg_ptr2     = *sg_ptr1;
 
-    *ret_sgsp_pointer = *this_sgsp_ptr;
+    // asign layer specific params
+    ret->in_size  = in_size_;
+    ret->out_size = out_size_;
+    ret->embed_in = embed_in_;
 
-    sp->in_size  = in_size_;
-    sp->out_size = out_size_;
-    sp->embed_in = embed_in_;
-
-    return sp;
+    return ret;
   }
 
   std::shared_ptr<ops::Embeddings<ArrayType>> GetEmbeddings(std::shared_ptr<SkipGram<ArrayType>> &g)
