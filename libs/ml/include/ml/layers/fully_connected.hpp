@@ -115,11 +115,7 @@ public:
   void InitializeWeights(WeightsInit init_mode)
   {
     // get correct name for the layer
-    std::string name = DESCRIPTOR;
-    if (time_distributed_)
-    {
-      name = "TimeDistributed_" + name;
-    }
+    std::string name = GetName();
 
     // initialize weight with specified method
     ArrayType weights_data(std::vector<SizeType>({out_size_, in_size_}));
@@ -142,11 +138,7 @@ public:
   void ShareWeights(NodePtrType target_node_ptr)
   {
     // get correct name for the layer
-    std::string name = DESCRIPTOR;
-    if (time_distributed_)
-    {
-      name = "TimeDistributed_" + name;
-    }
+    std::string name = GetName();
 
     // Get ptr to each weights layer
     GraphPtrType   target_graph_ptr        = std::dynamic_pointer_cast<GraphType>(target_node_ptr);
@@ -186,11 +178,8 @@ public:
                          DataType regularisation_rate = static_cast<DataType>(0))
   {
     // get correct name for the layer
-    std::string name = DESCRIPTOR;
-    if (time_distributed_)
-    {
-      name = "TimeDistributed_" + name;
-    }
+    std::string name = GetName();
+
     // start to set up the structure
     std::string input =
         this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Input", {});
@@ -252,6 +241,16 @@ private:
   void Initialise(ArrayType &weights, WeightsInit init_mode)
   {
     fetch::ml::ops::Weights<ArrayType>::Initialise(weights, in_size_, out_size_, init_mode);
+  }
+
+  std::string GetName()
+  {
+    std::string name = DESCRIPTOR;
+    if (time_distributed_)
+    {
+      name = "TimeDistributed_" + name;
+    }
+    return name;
   }
 };
 
