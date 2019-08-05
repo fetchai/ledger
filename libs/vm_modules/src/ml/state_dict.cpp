@@ -57,13 +57,13 @@ void VMStateDict::SetWeights(Ptr<String> const &                           noden
   *weights_tensor     = weights->GetTensor();
 }
 
-bool VMStateDict::SerializeTo(serializers::ByteArrayBuffer &buffer) override
+bool VMStateDict::SerializeTo(fetch::vm::MsgPackSerializer &buffer)
 {
   buffer << state_dict_;
   return true;
 }
 
-bool VMStateDict::DeserializeFrom(serializers::ByteArrayBuffer &buffer) override
+bool VMStateDict::DeserializeFrom(serializers::MsgPackSerializer &buffer)
 {
   buffer >> state_dict_;
   return true;

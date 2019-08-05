@@ -36,42 +36,21 @@
 namespace fetch {
 namespace ml {
 
-// template <class T>
-// class NodeInterface
-//{
-// public:
-//  using ArrayType   = T;
-//  using NodePtrType = std::shared_ptr<NodeInterface<T>>;
-//
-//  virtual std::shared_ptr<T>                                    Evaluate(bool is_training)      =
-//  0; virtual void                                                  AddInput(NodePtrType const &i)
-//  = 0; virtual void                                                  AddOutput(NodePtrType const
-//  &i) = 0; virtual std::vector<std::pair<NodeInterface<T> *, ArrayType>> BackPropagateSignal(
-//      ArrayType const &error_signal)                                                   = 0;
-//  virtual void                                     ResetCache(bool input_size_changed) = 0;
-//  virtual std::vector<NodePtrType> const &         GetOutputs() const                  = 0;
-//  virtual std::shared_ptr<SaveableParamsInterface> GetNodeSaveableParams()             = 0;
-//};
-
-// template <class T, class O>
-// class Node : public NodeInterface<T>
 template <typename T>
 class Node
 {
 private:
-  enum class CachedOutputState
-  {
-    VALID_CACHE,
-    CHANGED_CONTENT,
-    CHANGED_SIZE
-  };
-
+enum class CachedOutputState : uint8_t
+{
+  VALID_CACHE,
+  CHANGED_CONTENT,
+  CHANGED_SIZE
+};
 public:
   using ArrayType     = T;
   using NodePtrType   = std::shared_ptr<Node<T>>;
   using VecTensorType = typename fetch::ml::ops::Ops<T>::VecTensorType;
 
-  //  template <typename... Params>
   Node(OpType const &operation_type, std::string name,
        std::function<std::shared_ptr<ops::Ops<ArrayType>>()> const &constructor)
     : name_(std::move(name))
@@ -81,15 +60,12 @@ public:
     op_ptr_ = constructor();
   }
 
-  //  template <typename... Params>
   Node(OpType const &operation_type, std::string name, std::shared_ptr<ops::Ops<ArrayType>> op_ptr)
     : name_(std::move(name))
     , cached_output_status_(CachedOutputState::CHANGED_SIZE)
     , operation_type_(operation_type)
     , op_ptr_(op_ptr)
   {}
-
-  //  template <typename... Params>
 
   /**
    * This method CANNOT be extended to include making any op that is a layer
@@ -141,7 +117,11 @@ public:
     return op_ptr_;
   }
 
-  OpType GetOpType()
+  /**
+   * returns the stored operation type
+   * @return
+   */
+  OpType const & get_op_type()
   {
     return operation_type_;
   }

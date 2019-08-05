@@ -18,8 +18,10 @@
 //------------------------------------------------------------------------------
 
 #include "ml/state_dict.hpp"
+#include "ml/serializers/ml_types.hpp"
 #include "vm/object.hpp"
 #include "vm_modules/math/type.hpp"
+#include "core/serializers/main_serializer.hpp"
 
 #include <utility>
 
@@ -49,17 +51,9 @@ public:
 
   static void Bind(fetch::vm::Module &module);
 
-  bool SerializeTo(serializers::ByteArrayBuffer &buffer) override
-  {
-    buffer << state_dict_;
-    return true;
-  }
+  bool SerializeTo(serializers::MsgPackSerializer &buffer) override;
 
-  bool DeserializeFrom(serializers::ByteArrayBuffer &buffer) override
-  {
-    buffer >> state_dict_;
-    return true;
-  }
+  bool DeserializeFrom(serializers::MsgPackSerializer &buffer) override;
 
   fetch::ml::StateDict<fetch::math::Tensor<DataType>> state_dict_;
 };

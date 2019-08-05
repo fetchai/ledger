@@ -78,6 +78,12 @@ enum class OpType : uint16_t
 template <typename T>
 class Graph;
 
+template <typename T>
+class Node;
+
+template <typename T>
+class Ops;
+
 namespace layers {
 template <typename T>
 class FullyConnected;
