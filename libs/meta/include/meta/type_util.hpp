@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include <tuple>
 #include <type_traits>
 #include <utility>
 
@@ -195,18 +196,12 @@ struct Head<Car, Cdr...> : TypeConstant<Car>
 };
 
 template <class... Ts>
-struct Last;
+struct Last : std::tuple_element<sizeof...(Ts) - 1, std::tuple<Ts...>>
+{
+};
 
 template <class... Ts>
 using LastT = typename Last<Ts...>::type;
-
-template <class... Ts>
-struct Last : Accumulate<LastT, Ts...>;
-
-template <class Car, class Cdr>
-struct Last<Car, Cdr> : TypeConstant<Cdr>
-{
-};
 
 template <class T>
 struct HeadArgument;

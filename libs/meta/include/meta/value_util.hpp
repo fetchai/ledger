@@ -27,30 +27,17 @@
 namespace fetch {
 namespace value_util {
 
-namespace detail_ {
-template <class F, typename A struct IsNothrowAccumulatable;
-
-template <class F, typename... Seq>
-static constexpr auto IsNothrowAccumulatableV = IsNothrowAccumulatable<F, Seq...>::value;
-
-template <class F, class A, class B, class... Tail>
-struct IsNothrowAccumulatable<F, A, B, Tail...>
-  : std::integral_constant<bool,
-                           meta::IsNothrowInvocableV<std::add_lvalue_reference_t<F>, A, B> &&
-                               IsNothrowAccumulatableV<F, meta::InvokeResultT<F, A, B>, Tail...>>
-{
-};
-
-template <class F, class A, class B>
-struct IsNothrowAccumulatable<F, A, B> : meta::IsNothrowInvocable<F, A, B>
-{
-};
-
-template <class F, class A>
-struct IsNothrowAccumulatable<F, A> : std::is_nothrow_move_constructible<A>
-{
-};
-}  // namespace detail_
+/**
+ * No-op as it is.
+ * When invoked on any arguments it does nothing at all.
+ * One of its possible uses, it can simplify/facilitate writing noexcept specifications:
+ * noexcept(no_op(a, b...)) should be the same as noexcept(a) && noecxept(b) && ...
+ *
+ * @param _ an arbitrary amount of ignored arguments of any types.
+ */
+template <class... Ts>
+constexpr void NoOp(Ts &&...)
+{}
 
 /**
  * Accumulate(f, a0, a1, a2, ..., an) returns f(f(...(f(a0, a1), a2), ...), an).
@@ -60,26 +47,24 @@ struct IsNothrowAccumulatable<F, A> : std::is_nothrow_move_constructible<A>
 
 // The zero case: the pack is empty past a0.
 template <class F, typename RV>
-constexpr auto Accumulate(F &&, RV &&rv) noexcept(detail_::IsNothrowAccumulatableV<F, RV>)
+constexpr auto Accumulate(F &&, RV &&rv) noexcept(std::is_nothrow_move_constructible<RV>::value)
 {
   return std::forward<RV>(rv);
 }
 
-template <class F, typename A, typename B, typename... Seq>
-constexpr auto Accumulate(F &&f, A &&a, B &&b, Seq &&... seq) noexcept(
-    detail_::IsNothrowAccumulatableV<F, A, B, Seq...>);
-
 // The recursion base: last step, only two values left.
 template <class F, typename A, typename B>
-constexpr auto Accumulate(F &&f, A &&a, B &&b) noexcept(detail_::IsNothrowAccumulatableV<F, A, B>)
+constexpr auto Accumulate(F &&f, A &&a, B &&b)
 {
   return std::forward<F>(f)(std::forward<A>(a), std::forward<B>(b));
 }
 
 // The generic case.
 template <class F, typename A, typename B, typename... Seq>
-constexpr auto Accumulate(F &&f, A &&a, B &&b,
-                          Seq &&... seq) noexcept(detail_::IsNothrowAccumulatableV<F, A, B, Seq...>)
+constexpr auto Accumulate(F &&f, A &&a, B &&b, Seq &&... seq);
+
+template <class F, typename A, typename B, typename... Seq>
+constexpr auto Accumulate(F &&f, A &&a, B &&b, Seq &&... seq)
 {
   return Accumulate(std::forward<F>(f), f(std::forward<A>(a), std::forward<B>(b)),
                     std::forward<Seq>(seq)...);
@@ -88,27 +73,45 @@ constexpr auto Accumulate(F &&f, A &&a, B &&b,
 // Simple uses of Accumulate().
 // Since Accumulate() itself operates on packs rather than ranges,
 // there's no special overload to calculate simple sum, like in STL.
+
+/*
+ * Sum computes arithmetic sum (in the sense of operator+, so std::strings are allowed, too) of its
+ * arguments.
+ *
+ * @param h the very first summand, distinct from the rest of the pack mostly to infer return type.
+ * @param ts... al the rest summands
+ * @return h + ts...
+ */
 template <typename H, typename... Ts>
-constexpr auto Sum(H &&h, Ts &&... ts) noexcept(
-    detail_::IsNothrowAccumulatableV<std::plus<void>, H, Ts...>)
+constexpr auto Sum(H &&h,
+                   Ts &&... ts) noexcept(noexcept(Accumulate(std::plus<void>{}, std::forward<H>(h),
+                                                             std::forward<Ts>(ts)...)))
 {
   return Accumulate(std::plus<void>{}, std::forward<H>(h), std::forward<Ts>(ts)...);
 }
 
+/*
+ * Product computes arithmetic product (in the sense of operator*) of its arguments.
+ *
+ * @param h the very first operand, distinct from the rest of the pack mostly to infer return type.
+ * @param ts... al the rest operands
+ * @return h * ts...
+ */
 template <typename H, typename... Ts>
 constexpr auto Product(H &&h, Ts &&... ts) noexcept(
-    detail_::IsNothrowAccumulatableV<std::multiplies<void>, H, Ts...>)
+    noexcept(Accumulate(std::multiplies<void>{}, std::forward<H>(h), std::forward<Ts>(ts)...)))
 {
   return Accumulate(std::multiplies<void>{}, std::forward<H>(h), std::forward<Ts>(ts)...);
 }
 
-template <class LHS, class RHS>
-using IsNothrowComparable =
-    std::integral_constant<bool, noexcept(std::declval<LHS>() == std::declval<RHS>())>;
-
-template <class LHS, class RHS>
-static constexpr bool IsNothrowComparableV = IsNothrowComparable<LHS, RHS>::value;
-
+/**
+ * IsAnyOf tells if one of the rest arguments is equal (in the sense of operator==) to the head
+ * argument. There's its namesake analog in namespace type_util.
+ *
+ * @param value the expression to be matched against all the patterns
+ * @param ts... pattern pack
+ * @return true if there's p among patterns such that value == p
+ */
 template <class T>
 constexpr bool IsAnyOf(T &&) noexcept
 {
@@ -116,105 +119,170 @@ constexpr bool IsAnyOf(T &&) noexcept
 }
 
 template <class T, class Last>
-constexpr bool IsAnyOf(T &&value, Last &&last) noexcept(IsNothrowComparableV<T, Last>)
+constexpr bool IsAnyOf(T &&value, Last &&pattern) noexcept(noexcept(std::forward<T>(value) ==
+                                                                    std::forward<Last>(pattern)))
 {
-  return std::forward<T>(value) == std::forward<Last>(last);
+  return std::forward<T>(value) == std::forward<Last>(pattern);
 }
 
-// TODO(bipll): here and below, noexcept specifications are not actually correct and need to be
-// fixed
 template <class T, class H, class... Ts>
-constexpr bool IsAnyOf(T &&value, H &&h, Ts &&... ts) noexcept(
-    type_util::ConjunctionV<IsNothrowComparable<T, H>, IsNothrowComparable<T, Ts>...>);
+constexpr bool IsAnyOf(T &&value, H &&pattern,
+                       Ts &&... patterns) noexcept(noexcept(no_op(value == pattern,
+                                                                  value == patterns...)));
 
 template <class T, class H, class... Ts>
-constexpr bool IsAnyOf(T &&value, H &&h, Ts &&... ts) noexcept(
-    type_util::ConjunctionV<IsNothrowComparable<T, H>, IsNothrowComparable<T, Ts>...>)
+constexpr bool IsAnyOf(T &&value, H &&pattern,
+                       Ts &&... patterns) noexcept(noexcept(no_op(value == pattern,
+                                                                  value == patterns...)))
 {
-  return value == std::forward<H>(h) || IsAnyOf(std::forward<T>(value), std::forward<Ts>(ts)...);
+  return value == std::forward<H>(pattern) ||
+         IsAnyOf(std::forward<T>(value), std::forward<Ts>(patterns)...);
 }
 
+// Lisp-style boolean operators
+namespace detail_ {
+
+template <class H, class... Ts>
+using BoolResultT = std::decay_t<type_util::LastT<H, Ts...>>;
+
+template <class... Ts>
+static constexpr bool IsNothrowAndableV = false;
+
+template <class H, class... Ts>
+static constexpr bool IsNothrowAndableV<H, Ts...> =
+    noexcept(bool(std::declval<H>())) &&
+    IsNothrowAndableV<Ts...> &&std::is_nothrow_constructible<BoolResultT<H, Ts...>>::value;
+
+template <class L>
+static constexpr bool IsNothrowAndableV<L> = std::is_nothrow_move_constructible<L>::value;
+
+template <class... Ts>
+static constexpr bool IsNothrowOrableV = false;
+
+template <class H, class... Ts>
+static constexpr bool IsNothrowOrableV<H, Ts...> =
+    noexcept(bool(std::declval<H>())) && IsNothrowOrableV<Ts...>;
+
+template <class L>
+static constexpr bool IsNothrowOrableV<L> = std::is_nothrow_move_constructible<L>::value;
+
+}  // namespace detail_
+
+/**
+ * And returns lisp-style conjunction of its arguments.
+ * All (but the last) arguments should be coercible to bool.
+ * As a special trick, the last argument needs not to.
+ *
+ * param values... pack of values
+ * @return the first value to prove false in boolean context, or the last of the arguments if none
+ */
 constexpr bool And() noexcept
 {
   return true;
 }
 
 template <class Last>
-constexpr std::decay_t<Last> And(Last &&last) noexcept(
-    std::is_nothrow_move_constructible<Last>::value)
+constexpr auto And(Last &&value) noexcept(std::is_nothrow_move_constructible<Last>::value)
 {
-  return std::forward<Last>(last);
+  return std::forward<Last>(value);
 }
 
 template <class H, class... Ts>
-constexpr auto And(H &&h, Ts &&... ts) noexcept(
-    noexcept(bool(std::declval<std::add_lvalue_reference_t<H>>())) &&
-    type_util::AllV<type_util::Bind<std::is_nothrow_constructible, bool>::template type, Ts...> &&
-    std::is_nothrow_constructible<std::decay_t<type_util::LastT<H, Ts...>>>::value)
+constexpr auto And(H &&value,
+                   Ts &&... values) noexcept(noexcept(detail_::IsNothrowAndableV<H, Ts...>));
+
+template <class H, class... Ts>
+constexpr auto And(H &&value,
+                   Ts &&... values) noexcept(noexcept(detail_::IsNothrowAndableV<H, Ts...>))
 {
-  using RetVal = std::decay_t<type_util::LastT<H, Ts...>>;
-  return h ? And(std::forward<Ts>(ts)...) : RetVal{};
+  using RetVal = detail_::BoolResultT<H, Ts...>;
+  return value ? And(std::forward<Ts>(values)...) : RetVal{};
 }
 
+/**
+ * Or returns lisp-style disjunction of its arguments.
+ * All (but the last) arguments should be coercible to bool.
+ * As a special trick, the last argument needs not to.
+ *
+ * param values... pack of values
+ * @return the first value to prove true in boolean context, or the last of the arguments if none
+ */
 constexpr bool Or() noexcept
 {
-  return false;
+  return true;
 }
 
 template <class Last>
-constexpr auto Or(Last &&last) noexcept(
-    std::is_nothrow_constructible<typename std::decay<Last>::type, Last>::value)
+constexpr auto Or(Last &&value) noexcept(std::is_nothrow_move_constructible<Last>::value)
 {
-  return std::forward<Last>(last);
+  return std::forward<Last>(value);
 }
 
 template <class H, class... Ts>
-constexpr auto Or(H &&h, Ts &&... ts) noexcept(
-    noexcept(bool(std::declval<std::add_lvalue_reference<H>::type>())) &&
-    type_util::AllV<type_util::Bind<std::is_nothrow_constructible, bool>::template type, Ts...> &&
-    std::is_nothrow_constructible<std::decay_t<type_util::LastT<H, Ts...>>>::value)
+constexpr auto Or(H &&value,
+                  Ts &&... values) noexcept(noexcept(detail_::IsNothrowOrableV<H, Ts...>));
+
+template <class H, class... Ts>
+constexpr auto Or(H &&value,
+                  Ts &&... values) noexcept(noexcept(detail_::IsNothrowOrableV<H, Ts...>))
 {
-  using RetVal = std::decay_t<type_util::LastT<H, Ts...>>;
-  return h ? RetVal(std::forward<H>(h)) : Or(std::forward<Ts>(ts)...);
+  return value ? std::forward<H>(value) : Or(std::forward<Ts>(values)...);
 }
 
+/**
+ * Invoke functor for each value of the pack.
+ *
+ * @param f a callable (either templated or overloaded) that can be invoked on each value of the
+ * pack
+ * @param values... a pack of values to invoke the function on
+ */
 template <class F>
 constexpr void ForEach(F &&) noexcept
 {}
 
 template <class F, class T>
-constexpr void ForEach(F &&f, T &&t) noexcept(meta::IsNothrowInvocableV<F, T>)
+constexpr void ForEach(F &&f, T &&value)
 {
-  std::forward<F>(f)(std::forward<T>(t));
+  std::forward<F>(f)(std::forward<T>(value));
 }
 
 template <class F, class T, class... Ts>
-constexpr void ForEach(F &&f, T &&t, Ts &&... ts) noexcept(
-    type_util::AllV<type_util::Bind<meta::IsNothrowInvocable, F>::template type, T, Ts...>);
+constexpr void ForEach(F &&f, T &&value, Ts &&... values);
 
 template <class F, class T, class... Ts>
-constexpr void ForEach(F &&f, T &&t, Ts &&... ts) noexcept(
-    type_util::AllV<type_util::Bind<meta::IsNothrowInvocable, F>::template type, T, Ts...>)
+constexpr void ForEach(F &&f, T &&value, Ts &&... values)
 {
-  f(std::forward<T>(t)), ForEach(std::forward<F>(f), std::forward<Ts>(ts)...);
+  f(std::forward<T>(value));
+  ForEach(std::forward<F>(f), std::forward<Ts>(values)...);
 }
 
+/**
+ * Reset (value-initialize) a single argument to zero
+ */
 struct ZeroOne
 {
   template <class T>
-  constexpr void operator()(T &&t) noexcept(std::is_nothrow_constructible<std::decay_t<T>>::value
-                                                &&noexcept(std::forward<T>(t) = std::decay_t<T>{}))
+  constexpr void operator()(T &&t) noexcept(noexcept(std::forward<T>(t) = std::decay_t<T>{}))
   {
     std::forward<T>(t) = std::decay_t<T>{};
   }
 };
 
+/**
+ * Reset (value-initialize) a pack of arguments to zero each
+ */
 template <class... Ts>
 constexpr void ZeroAll(Ts &&... ts) noexcept(noexcept(ForEach(ZeroOne{}, std::forward<Ts>(ts)...)))
 {
   ForEach(ZeroOne{}, std::forward<Ts>(ts)...);
 }
 
+/**
+ * Clear (either invoke member clear() or Clear()) on a single argument.
+ *
+ * @param t an instance of class with either method Clear() or clear() defined (but not both)
+ * @return whatever member t.[Cc]lear() returns
+ */
 struct ClearOne
 {
   template <class T>
@@ -232,6 +300,12 @@ struct ClearOne
   }
 };
 
+/**
+ * Clear (either invoke member clear() or Clear()) on a single argument.
+ *
+ * @param ts... instances of classes, each on having either method Clear() or clear() defined (but
+ * not both)
+ */
 template <class... Ts>
 constexpr void ClearAll(Ts &&... ts) noexcept(noexcept(ForEach(ClearOne{},
                                                                std::forward<Ts>(ts)...)))
@@ -239,55 +313,52 @@ constexpr void ClearAll(Ts &&... ts) noexcept(noexcept(ForEach(ClearOne{},
   ForEach(ClearOne{}, std::forward<Ts>(ts)...);
 }
 
-template <class... Ts>
-constexpr void no_op(Ts &&... /*ts*/) noexcept
-{}
-
+/**
+ * Invoke a function on arguments.
+ * Special overloads are defined for member functions.
+ *
+ * @param f either a free a function, or a member function of the first of the (non-empty) args pack
+ * @param args... possibly empty pack of arguments perfectly forwarded to f
+ * @return whatever f returns
+ */
 template <class F, class... Args>
-constexpr decltype(auto) Invoke(F &&f,
-                                Args &&... args) noexcept(meta::IsNothrowInvocableV<F, Args...>)
+constexpr decltype(auto) Invoke(F &&f, Args &&... args)
 {
   return std::forward<F>(f)(std::forward<Args>(args)...);
 }
 
 template <class RV, class C, class... Args1, class... Args>
-constexpr decltype(auto) Invoke(RV (std::decay_t<C>::*f)(Args1...), C &&c,
-                                Args &&... args) /* noexcept(...) */
+constexpr decltype(auto) Invoke(RV (std::decay_t<C>::*f)(Args1...), C &&c, Args &&... args)
 {
   return (std::forward<C>(c).*f)(std::forward<Args>(args)...);
 }
 
 template <class RV, class C, class... Args1, class... Args>
-constexpr decltype(auto) Invoke(RV (std::decay_t<C>::*f)(Args1...) const, C &&c,
-                                Args &&... args) /* noexcept(...) */
+constexpr decltype(auto) Invoke(RV (std::decay_t<C>::*f)(Args1...) const, C &&c, Args &&... args)
 {
   return (std::forward<C>(c).*f)(std::forward<Args>(args)...);
 }
 
 template <class RV, class C, class... Args1, class... Args>
-constexpr decltype(auto) Invoke(RV (std::decay_t<C>::*f)(Args1...) &, C &&c,
-                                Args &&... args) /* noexcept(...) */
+constexpr decltype(auto) Invoke(RV (std::decay_t<C>::*f)(Args1...) &, C &&c, Args &&... args)
 {
   return (std::forward<C>(c).*f)(std::forward<Args>(args)...);
 }
 
 template <class RV, class C, class... Args1, class... Args>
-constexpr decltype(auto) Invoke(RV (std::decay_t<C>::*f)(Args1...) const &, C &&c,
-                                Args &&... args) /* noexcept(...) */
+constexpr decltype(auto) Invoke(RV (std::decay_t<C>::*f)(Args1...) const &, C &&c, Args &&... args)
 {
   return (std::forward<C>(c).*f)(std::forward<Args>(args)...);
 }
 
 template <class RV, class C, class... Args1, class... Args>
-constexpr decltype(auto) Invoke(RV (std::decay_t<C>::*f)(Args1...) &&, C &&c,
-                                Args &&... args) /* noexcept(...) */
+constexpr decltype(auto) Invoke(RV (std::decay_t<C>::*f)(Args1...) &&, C &&c, Args &&... args)
 {
   return (std::forward<C>(c).*f)(std::forward<Args>(args)...);
 }
 
 template <class RV, class C, class... Args1, class... Args>
-constexpr decltype(auto) Invoke(RV (std::decay_t<C>::*f)(Args1...) const &&, C &&c,
-                                Args &&... args) /* noexcept(...) */
+constexpr decltype(auto) Invoke(RV (std::decay_t<C>::*f)(Args1...) const &&, C &&c, Args &&... args)
 {
   return (std::forward<C>(c).*f)(std::forward<Args>(args)...);
 }
