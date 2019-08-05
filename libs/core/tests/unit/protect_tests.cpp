@@ -65,88 +65,183 @@ public:
   MOCK_METHOD0(call, void());
 };
 
-// class ProtectTests : public Test//???
-//{
-// public:
-//  using Type      = int;
-//  using ConstType = Type const;
-//
-//  ProtectTests()
-//    : initial_value{5}
-//    , new_value{42}
-//    , const_protected_const_value(Type{initial_value})
-//    , protected_const_value(Type{initial_value})
-//    , const_protected_value(Type{initial_value})
-//    , protected_value(Type{initial_value})
-//  {}
-//
-//  ~ProtectTests() override
-//  {}
-//
-//  ConstType initial_value;
-//  ConstType new_value;
-//
-//  Protect<ConstType> const const_protected_const_value;
-//  Protect<ConstType>       protected_const_value;
-//  Protect<Type> const      const_protected_value;
-//  Protect<Type>            protected_value;
-//};
-
-//???
-
 class ThreadSafeWrapperTests : public Test
 {
 public:
-};
+  using Type      = int;
+  using ConstType = Type const;
 
-static std::unique_ptr<MutexSpy> mutex_spy;  //???use fixture?
+  static std::unique_ptr<MutexSpy> mutex_spy;
 
-class TestMutex
-{
-public:
-  void lock()
+  ThreadSafeWrapperTests()
+    : initial_value{5}
+    , new_value{42}
   {
-    assert(mutex_spy != nullptr);
-    mutex_spy->lock();
+    mutex_spy = std::make_unique<MutexSpy>();
   }
 
-  void unlock()
+  ~ThreadSafeWrapperTests() override
   {
-    assert(mutex_spy != nullptr);
-    mutex_spy->unlock();
+    mutex_spy = nullptr;
   }
+
+  class TestMutex
+  {
+  public:
+    void lock()
+    {
+      assert(mutex_spy != nullptr);
+      mutex_spy->lock();
+    }
+
+    void unlock()
+    {
+      assert(mutex_spy != nullptr);
+      mutex_spy->unlock();
+    }
+  };
+
+  template <template <typename, typename> class Wrapper>
+  void wrapper_passes_ctor_arguments_to_its_payload()
+  {
+    Wrapper<std::vector<std::string>, std::mutex> protected_vector(3u, "abc");
+
+    protected_vector.Apply([](auto &vector_payload) -> void {
+      EXPECT_EQ(vector_payload.size(), 3u);
+      EXPECT_EQ(vector_payload[0], std::string{"abc"});
+    });
+  }
+
+  template <template <typename, typename> class Wrapper>
+  void const_protect_on_const_type_allows_read_only_access()
+  {
+    const Wrapper<ConstType, std::mutex> const_protected_const_value(initial_value);
+
+    const_protected_const_value.Apply([this](auto &payload) -> void {
+      EXPECT_TRUE(is_read_only(payload));
+
+      EXPECT_EQ(payload, initial_value);
+    });
+  }
+
+  template <template <typename, typename> class Wrapper>
+  void nonconst_protect_on_const_type_allows_read_only_access()
+  {
+    Wrapper<ConstType, std::mutex> protected_const_value(initial_value);
+
+    protected_const_value.Apply([this](auto &payload) -> void {
+      EXPECT_TRUE(is_read_only(payload));
+
+      EXPECT_EQ(payload, initial_value);
+    });
+  }
+
+  template <template <typename, typename> class Wrapper>
+  void const_protect_on_nonconst_type_allows_read_only_access()
+  {
+    const Wrapper<Type, std::mutex> const_protected_value(initial_value);
+
+    const_protected_value.Apply([this](auto &payload) -> void {
+      EXPECT_TRUE(is_read_only(payload));
+
+      EXPECT_EQ(payload, initial_value);
+    });
+  }
+
+  template <template <typename, typename> class Wrapper>
+  void nonconst_protect_on_nonconst_type_allows_read_and_write_access()
+  {
+    Wrapper<Type, std::mutex> protected_value(initial_value);
+
+    protected_value.Apply([this](auto &payload) -> void {
+      EXPECT_FALSE(is_read_only(payload));
+
+      EXPECT_EQ(payload, initial_value);
+      payload = new_value;
+
+      EXPECT_EQ(payload, new_value);
+    });
+
+    protected_value.Apply([this](auto &payload) -> void { EXPECT_EQ(payload, new_value); });
+  }
+
+  template <template <typename, typename> class Wrapper>
+  void handler_return_value_is_passed_to_Apply()
+  {
+    Wrapper<Type, std::mutex> protected_value(initial_value);
+
+    auto const result = protected_value.Apply([](auto &payload) -> std::vector<Type> {
+      return {payload, 3 * payload};
+    });
+
+    auto const expected = std::vector<Type>{initial_value, 3 * initial_value};
+
+    EXPECT_EQ(result, expected);
+  }
+
+  template <template <typename, typename> class Wrapper>
+  void wrapper_may_be_used_with_arbitrary_mutex_type()
+  {
+    auto const iterations = 5;
+
+    // Use recursive mutex
+    Wrapper<Type, std::recursive_mutex> protected_value_with_recursive_mutex{
+        static_cast<uint8_t>(initial_value)};
+
+    // would deadlock with non-recursive mutex
+    recursively_increment_n_times(protected_value_with_recursive_mutex, iterations);
+
+    protected_value_with_recursive_mutex.Apply([this](auto &payload) -> void {
+      auto const final_value = initial_value + iterations;
+      EXPECT_EQ(payload, final_value);
+    });
+  }
+
+  template <template <typename, typename> class Wrapper>
+  void call_to_Apply_locks_and_then_releases_the_mutex()
+  {
+    PayloadSpy payload_spy;
+
+    InSequence in_sequence;
+    EXPECT_CALL(*mutex_spy, lock());
+    EXPECT_CALL(payload_spy, call());
+    EXPECT_CALL(*mutex_spy, unlock());
+
+    Wrapper<Type, TestMutex> protected_value_with_test_mutex{};
+
+    protected_value_with_test_mutex.Apply([&payload_spy](auto &) -> void { payload_spy.call(); });
+  }
+
+  template <template <typename, typename> class Wrapper>
+  void each_call_to_Apply_locks_mutex_independently()
+  {
+    PayloadSpy payload_spy;
+
+    InSequence in_sequence;
+    EXPECT_CALL(*mutex_spy, lock());
+    EXPECT_CALL(payload_spy, call());
+    EXPECT_CALL(*mutex_spy, lock());
+    EXPECT_CALL(payload_spy, call());
+    EXPECT_CALL(*mutex_spy, unlock()).Times(2);
+
+    Wrapper<Type, TestMutex> protected_value_with_test_mutex{};
+    protected_value_with_test_mutex.Apply([&protected_value_with_test_mutex,
+                                           &payload_spy](auto &) -> void {
+      payload_spy.call();
+      protected_value_with_test_mutex.Apply([&payload_spy](auto &) -> void { payload_spy.call(); });
+    });
+  }
+
+  ConstType initial_value;
+  ConstType new_value;
 };
 
-// std::unique_ptr<MutexSpy> ThreadSafeWrapperTests::mutex_spy = nullptr;//???
-
-template <template <typename, typename> class Wrapper>
-void wrapper_passes_ctor_arguments_to_its_payload()
-{
-  Wrapper<std::vector<std::string>, std::mutex> protected_vector(3u, "abc");
-
-  protected_vector.Apply([](auto &vector_payload) -> void {
-    EXPECT_EQ(vector_payload.size(), 3u);
-    EXPECT_EQ(vector_payload[0], std::string{"abc"});
-  });
-}
+std::unique_ptr<MutexSpy> ThreadSafeWrapperTests::mutex_spy = nullptr;
 
 TEST_F(ThreadSafeWrapperTests, wrapper_passes_ctor_arguments_to_its_payload)
 {
   wrapper_passes_ctor_arguments_to_its_payload<Protect>();
   wrapper_passes_ctor_arguments_to_its_payload<SynchronisedState>();
-}
-
-template <template <typename, typename> class Wrapper>
-void const_protect_on_const_type_allows_read_only_access()
-{
-  auto const                           initial_value = 5;  //???use fixture
-  const Wrapper<int const, std::mutex> const_protected_const_value(initial_value);
-
-  const_protected_const_value.Apply([initial_value](auto &payload) -> void {
-    EXPECT_TRUE(is_read_only(payload));
-
-    EXPECT_EQ(payload, initial_value);
-  });
 }
 
 TEST_F(ThreadSafeWrapperTests, const_protect_on_const_type_allows_read_only_access)
@@ -155,36 +250,10 @@ TEST_F(ThreadSafeWrapperTests, const_protect_on_const_type_allows_read_only_acce
   const_protect_on_const_type_allows_read_only_access<SynchronisedState>();
 }
 
-template <template <typename, typename> class Wrapper>
-void nonconst_protect_on_const_type_allows_read_only_access()
-{
-  auto const                     initial_value = 5;  //???use fixture
-  Wrapper<int const, std::mutex> protected_const_value(initial_value);
-
-  protected_const_value.Apply([initial_value](auto &payload) -> void {
-    EXPECT_TRUE(is_read_only(payload));
-
-    EXPECT_EQ(payload, initial_value);
-  });
-}
-
 TEST_F(ThreadSafeWrapperTests, nonconst_protect_on_const_type_allows_read_only_access)
 {
   nonconst_protect_on_const_type_allows_read_only_access<Protect>();
   nonconst_protect_on_const_type_allows_read_only_access<SynchronisedState>();
-}
-
-template <template <typename, typename> class Wrapper>
-void const_protect_on_nonconst_type_allows_read_only_access()
-{
-  auto const                     initial_value = 5;  //???use fixture
-  const Wrapper<int, std::mutex> const_protected_value(initial_value);
-
-  const_protected_value.Apply([initial_value](auto &payload) -> void {
-    EXPECT_TRUE(is_read_only(payload));
-
-    EXPECT_EQ(payload, initial_value);
-  });
 }
 
 TEST_F(ThreadSafeWrapperTests, const_protect_on_nonconst_type_allows_read_only_access)
@@ -193,44 +262,10 @@ TEST_F(ThreadSafeWrapperTests, const_protect_on_nonconst_type_allows_read_only_a
   const_protect_on_nonconst_type_allows_read_only_access<SynchronisedState>();
 }
 
-template <template <typename, typename> class Wrapper>
-void nonconst_protect_on_nonconst_type_allows_read_and_write_access()
-{
-  auto const               initial_value = 5;    //???use fixture
-  auto const               new_value     = 123;  //???use fixture
-  Wrapper<int, std::mutex> protected_value(initial_value);
-
-  protected_value.Apply([initial_value, new_value](auto &payload) -> void {
-    EXPECT_FALSE(is_read_only(payload));
-
-    EXPECT_EQ(payload, initial_value);
-    payload = new_value;
-
-    EXPECT_EQ(payload, new_value);
-  });
-
-  protected_value.Apply([new_value](auto &payload) -> void { EXPECT_EQ(payload, new_value); });
-}
-
 TEST_F(ThreadSafeWrapperTests, nonconst_protect_on_nonconst_type_allows_read_and_write_access)
 {
   nonconst_protect_on_nonconst_type_allows_read_and_write_access<Protect>();
   nonconst_protect_on_nonconst_type_allows_read_and_write_access<SynchronisedState>();
-}
-
-template <template <typename, typename> class Wrapper>
-void handler_return_value_is_passed_to_Apply()
-{
-  auto const               initial_value = 5;  //???use fixture
-  Wrapper<int, std::mutex> protected_value(initial_value);
-
-  auto const result = protected_value.Apply([](auto &payload) -> std::vector<int> {
-    return {payload, 3 * payload};
-  });
-
-  auto const expected = std::vector<int>{initial_value, 3 * initial_value};
-
-  EXPECT_EQ(result, expected);
 }
 
 TEST_F(ThreadSafeWrapperTests, handler_return_value_is_passed_to_Apply)
@@ -239,73 +274,16 @@ TEST_F(ThreadSafeWrapperTests, handler_return_value_is_passed_to_Apply)
   handler_return_value_is_passed_to_Apply<SynchronisedState>();
 }
 
-template <template <typename, typename> class Wrapper>
-void wrapper_may_be_used_with_arbitrary_mutex_type()
-{
-  auto const initial_value = 123;  //???use fixture
-  auto const iterations    = 5;
-
-  Wrapper<int, std::recursive_mutex> protected_value_with_recursive_mutex{
-      static_cast<uint8_t>(initial_value)};
-
-  // would deadlock with non-recursive mutex
-  recursively_increment_n_times(protected_value_with_recursive_mutex, iterations);
-
-  protected_value_with_recursive_mutex.Apply([](auto &payload) -> void {
-    auto const final_value = initial_value + iterations;
-    EXPECT_EQ(payload, final_value);
-  });
-}
-
 TEST_F(ThreadSafeWrapperTests, wrapper_may_be_used_with_arbitrary_mutex_type)
 {
   wrapper_may_be_used_with_arbitrary_mutex_type<Protect>();
   wrapper_may_be_used_with_arbitrary_mutex_type<SynchronisedState>();
 }
 
-template <template <typename, typename> class Wrapper>
-void call_to_Apply_locks_and_then_releases_the_mutex()
-{
-  mutex_spy = std::make_unique<MutexSpy>();
-  PayloadSpy payload_spy;
-
-  InSequence in_sequence;
-  EXPECT_CALL(*mutex_spy, lock());
-  EXPECT_CALL(payload_spy, call());
-  EXPECT_CALL(*mutex_spy, unlock());
-
-  Wrapper<int, TestMutex> protected_value_with_test_mutex{};
-
-  protected_value_with_test_mutex.Apply([&payload_spy](auto &) -> void { payload_spy.call(); });
-  mutex_spy.reset();  //???make this unnecessary
-}
-
 TEST_F(ThreadSafeWrapperTests, call_to_Apply_locks_and_then_releases_the_mutex)
 {
   call_to_Apply_locks_and_then_releases_the_mutex<Protect>();
   call_to_Apply_locks_and_then_releases_the_mutex<SynchronisedState>();
-}
-
-template <template <typename, typename> class Wrapper>
-void each_call_to_Apply_locks_mutex_independently()
-{
-  mutex_spy = std::make_unique<MutexSpy>();
-  PayloadSpy payload_spy;
-
-  InSequence in_sequence;
-  EXPECT_CALL(*mutex_spy, lock());
-  EXPECT_CALL(payload_spy, call());
-  EXPECT_CALL(*mutex_spy, lock());
-  EXPECT_CALL(payload_spy, call());
-  EXPECT_CALL(*mutex_spy, unlock()).Times(2);
-
-  Wrapper<int, TestMutex> protected_value_with_test_mutex{};
-  protected_value_with_test_mutex.Apply([&protected_value_with_test_mutex,
-                                         &payload_spy](auto &) -> void {
-    payload_spy.call();
-    protected_value_with_test_mutex.Apply([&payload_spy](auto &) -> void { payload_spy.call(); });
-  });
-  mutex_spy.reset();  //???make this unnecessary
 }
 
 TEST_F(ThreadSafeWrapperTests, each_call_to_Apply_locks_mutex_independently)
