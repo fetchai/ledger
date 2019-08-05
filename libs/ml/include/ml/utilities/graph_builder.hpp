@@ -80,8 +80,8 @@ template <typename TensorType>
 std::shared_ptr<fetch::ml::SubGraph<TensorType>> LoadSubGraph(
     std::shared_ptr<SubGraphSaveableParams<TensorType>> sgsp)
 {
-  auto graph_ptr =
-      LoadGraph<TensorType, SubGraph<TensorType>>(std::static_pointer_cast<GraphSaveableParams<TensorType>>(sgsp));
+  auto graph_ptr = LoadGraph<TensorType, SubGraph<TensorType>>(
+      std::static_pointer_cast<GraphSaveableParams<TensorType>>(sgsp));
   return SubGraph<TensorType>::BuildSubGraph(
       std::static_pointer_cast<SubGraphSaveableParams<TensorType>>(graph_ptr));
 }
