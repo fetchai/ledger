@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/threading/protected.hpp"
+#include "core/synchronisation/protected.hpp"
 #include "ledger/chain/address.hpp"
 #include "ledger/consensus/stake_update_interface.hpp"
 

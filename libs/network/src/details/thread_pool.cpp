@@ -18,7 +18,7 @@
 
 #include "core/assert.hpp"
 #include "core/logger.hpp"
-#include "core/threading.hpp"
+#include "core/set_thread_name.hpp"
 #include "network/details/thread_pool.hpp"
 
 #include <algorithm>

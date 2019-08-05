@@ -21,8 +21,8 @@
 #include "core/logger.hpp"
 #include "core/mutex.hpp"
 #include "core/runnable.hpp"
+#include "core/set_thread_name.hpp"
 #include "core/state_machine.hpp"
-#include "core/threading.hpp"
 #include "ledger/chain/transaction_layout.hpp"
 #include "storage/object_store.hpp"
 

@@ -19,7 +19,7 @@
 #include "core/byte_array/encoders.hpp"
 #include "core/feature_flags.hpp"
 #include "core/macros.hpp"
-#include "core/threading.hpp"
+#include "core/set_thread_name.hpp"
 #include "ledger/block_packer_interface.hpp"
 #include "ledger/block_sink_interface.hpp"
 #include "ledger/chain/block_coordinator.hpp"

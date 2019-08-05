@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/runnable.hpp"
-#include "core/threading/protected.hpp"
+#include "core/synchronisation/protected.hpp"
 
 #include <atomic>
 #include <map>

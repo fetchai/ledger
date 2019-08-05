@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/threading/protected.hpp"
-#include "core/threading/waitable.hpp"
+#include "core/synchronisation/protected.hpp"
+#include "core/synchronisation/waitable.hpp"
 
 #include "gmock/gmock.h"
 

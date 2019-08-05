@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/threading/protected.hpp"
+#include "core/synchronisation/protected.hpp"
 
 #include <chrono>
 #include <condition_variable>

@@ -21,7 +21,7 @@
 #include "core/macros.hpp"
 #include "core/runnable.hpp"
 #include "core/state_machine_interface.hpp"
-#include "core/threading/protected.hpp"
+#include "core/synchronisation/protected.hpp"
 
 #include <atomic>
 #include <chrono>

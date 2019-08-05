@@ -19,8 +19,8 @@
 
 #include "core/byte_array/encoders.hpp"
 #include "core/mutex.hpp"
-#include "core/threading/protected.hpp"
-#include "core/threading/waitable.hpp"
+#include "core/synchronisation/protected.hpp"
+#include "core/synchronisation/waitable.hpp"
 #include "ledger/chain/address.hpp"
 #include "ledger/chain/constants.hpp"
 #include "ledger/execution_item.hpp"

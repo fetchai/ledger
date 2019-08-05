@@ -19,7 +19,7 @@
 
 #include "core/byte_array/encoders.hpp"
 #include "core/mutex.hpp"
-#include "core/threading/protected.hpp"
+#include "core/synchronisation/protected.hpp"
 #include "network/service/protocol.hpp"
 #include "storage/document_store.hpp"
 #include "storage/new_revertible_document_store.hpp"

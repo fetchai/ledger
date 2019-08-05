@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
-#include "core/threading.hpp"
+#include "core/set_thread_name.hpp"
 
 #include <condition_variable>
 #include <functional>

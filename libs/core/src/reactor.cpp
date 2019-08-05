@@ -19,7 +19,7 @@
 #include "core/logger.hpp"
 #include "core/reactor.hpp"
 #include "core/runnable.hpp"
-#include "core/threading.hpp"
+#include "core/set_thread_name.hpp"
 
 #include <chrono>
 #include <deque>
