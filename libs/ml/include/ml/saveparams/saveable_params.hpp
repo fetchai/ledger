@@ -29,6 +29,8 @@ namespace ml {
  */
 struct SaveableParamsInterface
 {
+  SaveableParamsInterface() = default;
+
   explicit SaveableParamsInterface(OpType op_type)
     : op_type(op_type)
   {}
