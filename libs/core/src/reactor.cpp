@@ -48,7 +48,7 @@ bool Reactor::Attach(WeakRunnable runnable)
   auto concrete_runnable = runnable.lock();
   if (concrete_runnable)
   {
-    success = work_map_.WithLock([&concrete_runnable, &runnable](auto &work_map) -> bool {
+    success = work_map_.Apply([&concrete_runnable, &runnable](auto &work_map) -> bool {
       // attempt to insert the element into the map
       auto const result = work_map.insert(std::make_pair(concrete_runnable.get(), runnable));
 
@@ -62,7 +62,7 @@ bool Reactor::Attach(WeakRunnable runnable)
 
 bool Reactor::Detach(Runnable const &runnable)
 {
-  return work_map_.WithLock(
+  return work_map_.Apply(
       [&runnable](auto &work_map) -> bool { return work_map.erase(&runnable) > 0; });
 }
 
@@ -100,7 +100,7 @@ void Reactor::StopWorker()
 
   if (worker_)
   {
-    worker_->WithLock([](auto &worker) -> void { worker.join(); });
+    worker_->Apply([](auto &worker) -> void { worker.join(); });
     worker_.reset();
   }
 }
@@ -117,7 +117,7 @@ void Reactor::Monitor()
     // Step 1. If we have run out of work to execute then gather all the runnables that are ready
     if (work_queue.empty())
     {
-      work_map_.WithLock([&work_queue](auto &work_map) -> void {
+      work_map_.Apply([&work_queue](auto &work_map) -> void {
         // loop through and evaluate the map
         auto it = work_map.begin();
         while (it != work_map.end())

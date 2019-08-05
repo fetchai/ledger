@@ -250,7 +250,7 @@ BlockCoordinator::State BlockCoordinator::OnReloadState()
       // we need to update the execution manager state and also our locally cached state about the
       // last block that has been executed
       execution_manager_.SetLastProcessedBlock(current_block_->body.hash);
-      last_executed_block_.WithLock(
+      last_executed_block_.Apply(
           [this](auto &digest) -> void { digest = current_block_->body.hash; });
     }
   }
@@ -884,7 +884,7 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
     }
 
     // signal the last block that has been executed
-    last_executed_block_.WithLock(
+    last_executed_block_.Apply(
         [this](auto &digest) -> void { digest = current_block_->body.hash; });
 
     // update the telemetry
@@ -1058,8 +1058,7 @@ BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
                      " number: ", next_block_->body.block_number);
 
       // signal the last block that has been executed
-      last_executed_block_.WithLock(
-          [this](auto &digest) -> void { digest = next_block_->body.hash; });
+      last_executed_block_.Apply([this](auto &digest) -> void { digest = next_block_->body.hash; });
 
       // dispatch the block that has been generated
       block_sink_.OnBlock(*next_block_);
@@ -1278,7 +1277,7 @@ char const *BlockCoordinator::ToString(ExecutionStatus state)
 
 void BlockCoordinator::Reset()
 {
-  last_executed_block_.WithLock([](auto &digest) -> void { digest = GENESIS_DIGEST; });
+  last_executed_block_.Apply([](auto &digest) -> void { digest = GENESIS_DIGEST; });
   execution_manager_.SetLastProcessedBlock(GENESIS_DIGEST);
   chain_.Reset();
 }

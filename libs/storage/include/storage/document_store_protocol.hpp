@@ -126,7 +126,7 @@ public:
     }
 
     bool has_lock = false;
-    lock_status_.WithLock([&context, &has_lock](LockStatus const &status) {
+    lock_status_.Apply([&context, &has_lock](LockStatus const &status) {
       has_lock = (status.is_locked && (status.client == context.sender_address));
     });
 
@@ -146,7 +146,7 @@ public:
 
     // attempt to lock this shard
     bool success = false;
-    lock_status_.WithLock([&context, &success](LockStatus &status) {
+    lock_status_.Apply([&context, &success](LockStatus &status) {
       if (!status.is_locked)
       {
         status.is_locked = true;
@@ -177,7 +177,7 @@ public:
 
     // attempt to unlock this shard
     bool success = false;
-    lock_status_.WithLock([&context, &success](LockStatus &status) {
+    lock_status_.Apply([&context, &success](LockStatus &status) {
       if (status.is_locked && (status.client == context.sender_address))
       {
         status.is_locked = false;

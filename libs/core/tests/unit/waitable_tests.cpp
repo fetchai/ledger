@@ -40,14 +40,14 @@ TEST_F(WaitableTests, WaitFor_returns_when_the_condition_is_true)
     for (auto i = 0; i < 10000; ++i)
     {
       waitable.Wait([](auto const &number) -> bool { return number > 5000; });
-      waitable.WithLock([](auto const &number) -> void { ASSERT_THAT(number, Gt(5000)); });
+      waitable.Apply([](auto const &number) -> void { ASSERT_THAT(number, Gt(5000)); });
     }
   };
 
   auto increment = [this]() -> void {
     for (auto i = 0; i < 10000; ++i)
     {
-      waitable.WithLock([](auto &number) -> void { ++number; });
+      waitable.Apply([](auto &number) -> void { ++number; });
     }
   };
 

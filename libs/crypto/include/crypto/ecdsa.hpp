@@ -88,12 +88,12 @@ public:
 
   void SetPrivateKey(ConstByteArray const &private_key)
   {
-    private_key_.WithLock([&private_key](auto &key) -> void { key = PrivateKey{private_key}; });
+    private_key_.Apply([&private_key](auto &key) -> void { key = PrivateKey{private_key}; });
   }
 
   void GenerateKeys()
   {
-    private_key_.WithLock([](auto &key) -> void { key = PrivateKey{}; });
+    private_key_.Apply([](auto &key) -> void { key = PrivateKey{}; });
   }
 
   ConstByteArray Sign(ConstByteArray const &text) const final
@@ -101,7 +101,7 @@ public:
     ConstByteArray signature{};
 
     // sign the message in a thread safe way
-    private_key_.WithLock([&signature, &text](PrivateKey const &key) {
+    private_key_.Apply([&signature, &text](PrivateKey const &key) {
       signature = Signature::Sign(key, text).signature();
     });
 
@@ -116,7 +116,7 @@ public:
   ConstByteArray public_key() const
   {
     ConstByteArray public_key{};
-    private_key_.WithLock(
+    private_key_.Apply(
         [&public_key](PrivateKey const &key) { public_key = key.publicKey().keyAsBin(); });
     return public_key;
   }
@@ -124,7 +124,7 @@ public:
   ConstByteArray private_key()
   {
     ConstByteArray private_key{};
-    private_key_.WithLock([&private_key](PrivateKey const &key) { private_key = key.KeyAsBin(); });
+    private_key_.Apply([&private_key](PrivateKey const &key) { private_key = key.KeyAsBin(); });
     return private_key;
   }
 

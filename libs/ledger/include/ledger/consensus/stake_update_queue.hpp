@@ -78,7 +78,7 @@ private:
 template <typename Visitor>
 void StakeUpdateQueue::VisitUnderlyingQueue(Visitor &&visitor)
 {
-  updates_.WithLock([&](BlockUpdates &updates) -> void { visitor(updates); });
+  updates_.Apply([&](BlockUpdates &updates) -> void { visitor(updates); });
 }
 
 }  // namespace ledger

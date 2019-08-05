@@ -225,15 +225,14 @@ public:
 
   ConstByteArray GetLastExecutedBlock() const
   {
-    return last_executed_block_.WithLock(
-        [](auto const &last_executed_block_hash) -> ConstByteArray {
-          return last_executed_block_hash;
-        });
+    return last_executed_block_.Apply([](auto const &last_executed_block_hash) -> ConstByteArray {
+      return last_executed_block_hash;
+    });
   }
 
   bool IsSynced() const
   {
-    return last_executed_block_.WithLock([this](auto const &last_executed_block_hash) -> bool {
+    return last_executed_block_.Apply([this](auto const &last_executed_block_hash) -> bool {
       return (state_machine_->state() == State::SYNCHRONISED) &&
              (last_executed_block_hash == chain_.GetHeaviestBlockHash());
     });
