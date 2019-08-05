@@ -30,28 +30,56 @@ namespace {
 using namespace fetch;
 using namespace testing;
 
-using Semaphore = Waitable<uint32_t>;
+class Semaphore
+{
+public:
+  Semaphore(uint32_t count)
+    : count_{count}
+  {}
+
+  Semaphore()                  = delete;
+  Semaphore(Semaphore const &) = delete;
+  Semaphore(Semaphore &&)      = delete;
+  ~Semaphore()                 = default;
+  Semaphore &operator=(Semaphore const &) = delete;
+  Semaphore &operator=(Semaphore &&) = delete;
+
+  void Signal()
+  {
+    count_.Apply([](auto &count) -> void { --count; });
+  }
+
+  void Wait()
+  {
+    count_.Wait([](auto const &count) -> bool { return count == 0u; });
+  }
+
+private:
+  Waitable<uint32_t> count_;
+};
 
 class WaitableTests : public Test
 {
 public:
-  Semaphore                  semaphore{3u};
+  // Main thread, increment, and check
+  uint32_t const             number_of_threads{3u};
+  Semaphore                  semaphore{number_of_threads};
   Waitable<std::vector<int>> waitable{};
 };
 
 TEST_F(WaitableTests, Wait_returns_when_the_condition_is_true)
 {
   auto check = [this]() -> void {
-    semaphore.Apply([](auto &count) -> void { --count; });
-    semaphore.Wait([](auto const &count) -> bool { return count == 0u; });
+    semaphore.Signal();
+    semaphore.Wait();
 
     waitable.Wait([](auto const &payload) -> bool { return payload.size() > 9000; });
     waitable.Apply([](auto const &payload) -> void { ASSERT_THAT(payload.size(), Gt(9000)); });
   };
 
   auto increment = [this]() -> void {
-    semaphore.Apply([](auto &count) -> void { --count; });
-    semaphore.Wait([](auto const &count) -> bool { return count == 0u; });
+    semaphore.Signal();
+    semaphore.Wait();
 
     for (auto i = 0; i < 10000; ++i)
     {
@@ -62,7 +90,7 @@ TEST_F(WaitableTests, Wait_returns_when_the_condition_is_true)
   auto check_thread     = std::thread(std::move(check));
   auto increment_thread = std::thread(std::move(increment));
 
-  semaphore.Apply([](auto &count) -> void { --count; });
+  semaphore.Signal();
 
   increment_thread.join();
   check_thread.join();
