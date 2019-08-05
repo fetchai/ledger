@@ -45,8 +45,9 @@ struct MapSerializer<ml::RegularisationType, D>
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &body)
   {
-    auto map = map_constructor(1);
-    map.Append(REG_TYPE, static_cast<uint8_t>(body));
+    auto    map      = map_constructor(1);
+    uint8_t reg_type = static_cast<uint8_t>(body);
+    map.Append(REG_TYPE, reg_type);
   }
 
   template <typename MapDeserializer>

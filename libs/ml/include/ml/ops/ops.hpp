@@ -19,6 +19,8 @@
 
 #include "core/assert.hpp"
 #include "math/tensor.hpp"
+#include "ml/regularisers/reg_types.hpp"
+#include "ml/regularisers/regulariser.hpp"
 #include "ml/saveparams/saveable_params.hpp"
 #include "ml/state_dict.hpp"
 
@@ -100,8 +102,8 @@ public:
 
   void SetRegularisation(RegPtrType regulariser, DataType regularisation_rate = DataType{0.0})
   {
-    this->regulariser_         = regulariser;
-    this->regularisation_rate_ = regularisation_rate;
+    regulariser_         = regulariser;
+    regularisation_rate_ = regularisation_rate;
   }
 
 protected:

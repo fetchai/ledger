@@ -19,6 +19,7 @@
 
 #include "core/assert.hpp"
 #include "math/tensor.hpp"
+#include "ml/regularisers/reg_types.hpp"
 
 namespace fetch {
 namespace ml {
@@ -34,14 +35,14 @@ public:
   using ArrayType = T;
   using DataType  = typename ArrayType::Type;
 
-  Regulariser(RegularisationType rt)
+  explicit Regulariser(RegularisationType rt)
     : reg_type(rt)
   {}
 
   virtual ~Regulariser()                                                            = default;
   virtual void ApplyRegularisation(ArrayType &weight, DataType regularisation_rate) = 0;
 
-  RegularisationType reg_type;
+  RegularisationType reg_type = RegularisationType::NONE;
 };
 
 }  // namespace regularisers
