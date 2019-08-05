@@ -206,17 +206,5 @@ struct InvokeResult<RV (C::*)(Args...) const, Args1...>
   using type = RV;
 };
 
-template <class L, class R>
-struct IsSimilar : std::is_same<L, R>
-{
-};
-template <class L, class R>
-static constexpr auto IsSimilarV = IsSimilar<L, R>::value;
-
-template <template <class...> class Ctor, class... LArgs, class... RArgs>
-struct IsSimilar<Ctor<LArgs...>, Ctor<RArgs...>> : std::true_type
-{
-};
-
 }  // namespace meta
 }  // namespace fetch

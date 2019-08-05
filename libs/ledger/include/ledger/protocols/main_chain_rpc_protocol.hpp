@@ -33,8 +33,8 @@ public:
   enum
   {
     HEAVIEST_CHAIN   = 1,
-    COMMON_SUB_CHAIN = 2,
-    TIME_TRAVEL      = 3
+    TIME_TRAVEL      = 2,
+    COMMON_SUB_CHAIN = 3
   };
 
   explicit MainChainProtocol(MainChain &chain)

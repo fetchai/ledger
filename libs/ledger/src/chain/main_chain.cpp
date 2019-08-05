@@ -389,7 +389,7 @@ MainChain::Blocks MainChain::GetHeaviestChain(uint64_t limit) const
 {
   // Note: min needs a reference to something, so this is a workaround since UPPER_BOUND is a
   // constexpr
-  limit = std::min(limit, std::uint64_t{MainChain::UPPER_BOUND});
+  limit = std::min(limit, uint64_t{MainChain::UPPER_BOUND});
   MilliTimer myTimer("MainChain::HeaviestChain");
 
   FETCH_LOCK(lock_);
@@ -405,7 +405,7 @@ MainChain::Blocks MainChain::GetHeaviestChain(uint64_t limit) const
  * @return The array of blocks
  * @throws std::runtime_error if a block lookup occurs
  */
-MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, std::uint64_t limit) const
+MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) const
 {
   if (limit == 0)
   {
@@ -451,15 +451,15 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, std::uint64_t li
  * @return The array of blocks
  * @throws std::runtime_error if a block lookup occurs
  */
-MainChain::Blocks MainChain::TimeTravel(BlockHash start, std::int64_t limit) const
+MainChain::Blocks MainChain::TimeTravel(BlockHash start, int64_t limit) const
 {
   if (limit <= 0)
   {
-    return GetChainPreceding(std::move(start), static_cast<std::uint64_t>(-limit));
+    return GetChainPreceding(std::move(start), static_cast<uint64_t>(-limit));
   }
 
   const auto lim =
-      static_cast<std::size_t>(std::min(limit, static_cast<std::int64_t>(MainChain::UPPER_BOUND)));
+      static_cast<std::size_t>(std::min(limit, static_cast<int64_t>(MainChain::UPPER_BOUND)));
   MilliTimer myTimer("MainChain::ChainPreceding");
 
   FETCH_LOCK(lock_);
@@ -505,9 +505,9 @@ MainChain::Blocks MainChain::TimeTravel(BlockHash start, std::int64_t limit) con
  * @return true if successful, otherwise false
  */
 bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash node,
-                                        std::uint64_t limit, BehaviourWhenLimit behaviour) const
+                                        uint64_t limit, BehaviourWhenLimit behaviour) const
 {
-  limit = std::min(limit, std::uint64_t{MainChain::UPPER_BOUND});
+  limit = std::min(limit, uint64_t{MainChain::UPPER_BOUND});
   MilliTimer myTimer("MainChain::GetPathToCommonAncestor", 500);
 
   FETCH_LOCK(lock_);
@@ -669,7 +669,7 @@ MainChain::BlockHashSet MainChain::GetMissingTips() const
  */
 MainChain::BlockHashes MainChain::GetMissingBlockHashes(uint64_t limit) const
 {
-  limit = std::min(limit, std::uint64_t{MainChain::UPPER_BOUND});
+  limit = std::min(limit, uint64_t{MainChain::UPPER_BOUND});
   FETCH_LOCK(lock_);
 
   BlockHashes results;
@@ -801,7 +801,7 @@ void MainChain::RecoverFromFile(Mode mode)
       }
 
       // Sanity check
-      std::uint64_t heaviest_block_num = GetHeaviestBlock()->body.block_number;
+      uint64_t heaviest_block_num = GetHeaviestBlock()->body.block_number;
       FETCH_LOG_INFO(LOGGING_NAME, "Heaviest block: ", heaviest_block_num);
 
       DetermineHeaviestTip();
@@ -929,18 +929,18 @@ void MainChain::WriteToFile()
  */
 void MainChain::TrimCache()
 {
-  static const std::uint64_t CACHE_TRIM_THRESHOLD = 2 * FINALITY_PERIOD;
+  static const uint64_t CACHE_TRIM_THRESHOLD = 2 * FINALITY_PERIOD;
   assert(static_cast<bool>(block_store_));
 
   MilliTimer myTimer("MainChain::TrimCache");
 
   FETCH_LOCK(lock_);
 
-  std::uint64_t const heaviest_block_num = GetHeaviestBlock()->body.block_number;
+  uint64_t const heaviest_block_num = GetHeaviestBlock()->body.block_number;
 
   if (CACHE_TRIM_THRESHOLD < heaviest_block_num)
   {
-    std::uint64_t const trim_threshold = heaviest_block_num - CACHE_TRIM_THRESHOLD;
+    uint64_t const trim_threshold = heaviest_block_num - CACHE_TRIM_THRESHOLD;
 
     // Loop through the block chain store looking for blocks which are outside of our finality
     // period. This is needed to ensure that the block chain map does not grow forever
@@ -1390,9 +1390,9 @@ bool MainChain::ReindexTips()
   FETCH_LOCK(lock_);
 
   // Tips are hashes of cached non-loose blocks that don't have any forward references
-  TipsMap       new_tips;
-  std::uint64_t max_weight{};
-  BlockHash     max_hash;
+  TipsMap   new_tips;
+  uint64_t  max_weight{};
+  BlockHash max_hash;
 
   for (auto const &block_entry : block_chain_)
   {
@@ -1412,8 +1412,8 @@ bool MainChain::ReindexTips()
       continue;
     }
     // this hash has no next blocks
-    auto const &        block{*block_entry.second};
-    const std::uint64_t weight{block.total_weight};
+    auto const &   block{*block_entry.second};
+    const uint64_t weight{block.total_weight};
     new_tips[hash] = Tip{weight};
     // check if this tip is the current heaviest
     if (weight > max_weight || (weight == max_weight && hash > max_hash))

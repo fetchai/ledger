@@ -28,8 +28,7 @@ namespace fetch {
 namespace value_util {
 
 namespace detail_ {
-template <class F, typename A
-struct IsNothrowAccumulatable;
+template <class F, typename A struct IsNothrowAccumulatable;
 
 template <class F, typename... Seq>
 static constexpr auto IsNothrowAccumulatableV = IsNothrowAccumulatable<F, Seq...>::value;
@@ -291,35 +290,6 @@ constexpr decltype(auto) Invoke(RV (std::decay_t<C>::*f)(Args1...) const &&, C &
                                 Args &&... args) /* noexcept(...) */
 {
   return (std::forward<C>(c).*f)(std::forward<Args>(args)...);
-}
-
-template <class... StoredTypes>
-class KeptValues
-{
-  using StorageType = std::tuple<StoredTypes...>;
-  using RecoverType = std::tuple<StoredTypes &...>;
-
-  StorageType storage_;
-  RecoverType recover_;
-
-public:
-  constexpr KeptValues(StoredTypes &... values) noexcept(
-      std::is_nothrow_constructible<StorageType, StoredTypes &...>::value
-          &&std::is_nothrow_constructible<RecoverType, StoredTypes &...>::value)
-    : storage_{values...}
-    , recover_{values...}
-  {}
-
-  ~KeptValues()
-  {
-    recover_ = std::move(storage_);
-  }
-};
-template <class... StoredTypes>
-inline constexpr KeptValues<StoredTypes...> KeepValues(StoredTypes &... values) noexcept(
-    std::is_nothrow_constructible<KeptValues<StoredTypes...>, StoredTypes &...>::value)
-{
-  return KeptValues<StoredTypes...>(values...);
 }
 
 }  // namespace value_util

@@ -44,6 +44,16 @@
 namespace fetch {
 namespace ledger {
 
+using std::int8_t;
+using std::int16_t;
+using std::int32_t;
+using std::int64_t;
+
+using std::uint8_t;
+using std::uint16_t;
+using std::uint32_t;
+using std::uint64_t;
+
 /**
  * Main chain contains and manages block headers. No verification of headers is
  * done, the structure will purely accept new headers and provide the current
@@ -59,7 +69,7 @@ namespace ledger {
  */
 struct Tip
 {
-  std::uint64_t total_weight{0};
+  uint64_t total_weight{0};
 };
 
 enum class BlockStatus
@@ -103,8 +113,8 @@ public:
   using BlockHashSet         = std::unordered_set<BlockHash>;
   using TransactionLayoutSet = std::unordered_set<TransactionLayout>;
 
-  static constexpr char const *  LOGGING_NAME = "MainChain";
-  static constexpr std::uint64_t UPPER_BOUND  = 5000ull;
+  static constexpr char const *LOGGING_NAME = "MainChain";
+  static constexpr uint64_t    UPPER_BOUND  = 5000ull;
 
   enum class Mode
   {
@@ -142,11 +152,11 @@ public:
   BlockPtr  GetHeaviestBlock() const;
   BlockHash GetHeaviestBlockHash() const;
   Blocks    GetHeaviestChain(uint64_t limit = UPPER_BOUND) const;
-  Blocks    GetChainPreceding(BlockHash at, std::uint64_t limit = UPPER_BOUND) const;
-  Blocks    TimeTravel(BlockHash    starting_point,
-                       std::int64_t limit = static_cast<std::int64_t>(UPPER_BOUND)) const;
+  Blocks    GetChainPreceding(BlockHash at, uint64_t limit = UPPER_BOUND) const;
+  Blocks    TimeTravel(BlockHash starting_point,
+                       int64_t   limit = static_cast<int64_t>(UPPER_BOUND)) const;
   bool      GetPathToCommonAncestor(
-           Blocks &blocks, BlockHash tip, BlockHash node, std::uint64_t limit = UPPER_BOUND,
+           Blocks &blocks, BlockHash tip, BlockHash node, uint64_t limit = UPPER_BOUND,
            BehaviourWhenLimit behaviour = BehaviourWhenLimit::RETURN_MOST_RECENT) const;
   /// @}
 
@@ -200,8 +210,8 @@ private:
 
   struct HeaviestTip
   {
-    std::uint64_t weight{0};
-    BlockHash     hash{GENESIS_DIGEST};
+    uint64_t  weight{0};
+    BlockHash hash{GENESIS_DIGEST};
 
     bool Update(Block const &);
   };
