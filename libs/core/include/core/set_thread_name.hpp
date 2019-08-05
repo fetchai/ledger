@@ -22,7 +22,7 @@
 
 namespace fetch {
 
-void SetThreadName(std::string const &name);
+void SetThreadName(std::string name);
 void SetThreadName(std::string const &prefix, std::size_t index);
 
 }  // namespace fetch
