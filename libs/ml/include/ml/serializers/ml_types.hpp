@@ -831,7 +831,6 @@ struct MapSerializer<ml::ConvolutionLayer1DSaveableParams<TensorType>, D>
     map.ExpectKeyGetValue(INPUT_CHANNELS, sp.input_channels);
     map.ExpectKeyGetValue(OP_CODE, sp.output_channels);
     map.ExpectKeyGetValue(OUTPUT_CHANNELS, sp.stride_size);
-
   }
 };
 
