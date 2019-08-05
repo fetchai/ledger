@@ -16,39 +16,22 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/meta/math_type_traits.hpp"
-#include "math/standard_functions/exp.hpp"
-#include "vm/module.hpp"
-#include "vm_modules/math/exp.hpp"
+#include "core/logging.hpp"
+#include "http/authentication_level.hpp"
+#include "http/middleware/token_auth.hpp"
 
-#include <cmath>
-
-using namespace fetch::vm;
+#include <memory>
 
 namespace fetch {
-namespace vm_modules {
-namespace math {
+namespace http {
+namespace middleware {
 
-namespace {
-
-template <typename T>
-fetch::math::meta::IfIsMath<T, T> Exp(VM *, T const &a)
+HTTPServer::RequestMiddleware DenyAll()
 {
-  T x;
-  fetch::math::Exp(a, x);
-  return x;
+  // return the handler
+  return [](HTTPRequest &req) { req.SetAuthentication("", AuthenticationLevel::NO_ACCESS); };
 }
 
-}  // namespace
-
-void BindExp(Module &module)
-{
-  module.CreateFreeFunction("exp", &Exp<float_t>);
-  module.CreateFreeFunction("exp", &Exp<double_t>);
-  module.CreateFreeFunction("exp", &Exp<fixed_point::fp32_t>);
-  module.CreateFreeFunction("exp", &Exp<fixed_point::fp64_t>);
-}
-
-}  // namespace math
-}  // namespace vm_modules
+}  // namespace middleware
+}  // namespace http
 }  // namespace fetch

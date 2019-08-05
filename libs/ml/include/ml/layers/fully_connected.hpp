@@ -176,9 +176,9 @@ public:
                             regularisation_rate);
   }
 
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &) const
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
   {
-    return {this->out_size_, 1};
+    return {this->out_size_, inputs.front()->shape(inputs.front()->shape().size() - 1)};
   }
 
   static constexpr char const *DESCRIPTOR = "FullyConnected";
