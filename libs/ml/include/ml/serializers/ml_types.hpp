@@ -37,19 +37,15 @@ namespace serializers {
 ///////////////////////////////////////////
 
 namespace {
-template <class TensorType, typename D, class SP>
-void SerializeImplementation(MapSerializer<ml::NodeSaveableParams<TensorType>, D> &     map,
-                             uint8_t                                                    code,
-                             std::shared_ptr<fetch::ml::SaveableParamsInterface> const &op)
+template <class TensorType, typename D, class SP, typename MapType>
+void SerializeImplementation(MapType & map, uint8_t code, std::shared_ptr<fetch::ml::SaveableParamsInterface> const &op)
 {
   auto castnode = std::dynamic_pointer_cast<SP>(op);
   map.Append(code, *castnode);
 }
 
-template <class TensorType, typename D, class SP>
-void DeserializeImplementation(MapSerializer<ml::NodeSaveableParams<TensorType>, D> &     map,
-                               uint8_t                                                    code,
-                               std::shared_ptr<fetch::ml::SaveableParamsInterface> const &op)
+template <class TensorType, typename D, class SP, typename MapType>
+void DeserializeImplementation(MapType & map, uint8_t code, std::shared_ptr<fetch::ml::SaveableParamsInterface> const &op)
 {
   SP sp_interface;
   map.ExpectKeyGetValue(code, sp_interface);
@@ -57,10 +53,8 @@ void DeserializeImplementation(MapSerializer<ml::NodeSaveableParams<TensorType>,
 }
 }  // namespace
 
-template <class TensorType, typename D>
-void Serialize(MapSerializer<ml::NodeSaveableParams<TensorType>, D> &map, uint8_t code,
-               fetch::ml::OpType const &                                  op_type,
-               std::shared_ptr<fetch::ml::SaveableParamsInterface> const &op)
+template <class TensorType, typename D, typename MapType>
+void SerializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const & op_type, std::shared_ptr<fetch::ml::SaveableParamsInterface> const &op)
 {
   switch (op_type)
   {
@@ -148,7 +142,7 @@ void Serialize(MapSerializer<ml::NodeSaveableParams<TensorType>, D> &map, uint8_
 }
 
 template <class TensorType, typename D>
-void Deserialize(MapSerializer<ml::NodeSaveableParams<TensorType>, D> &map, uint8_t code,
+void DeserializeAnyOp(MapSerializer<ml::NodeSaveableParams<TensorType>, D> &map, uint8_t code,
                  fetch::ml::OpType const &                            op_type,
                  std::shared_ptr<fetch::ml::SaveableParamsInterface> &op)
 {
@@ -428,7 +422,7 @@ struct MapSerializer<ml::NodeSaveableParams<TensorType>, D>
     map.Append(CACHED_OUTPUT_STATUS, sp.cached_output_status);
     map.Append(OP_CODE, sp.op_type);
 
-    Serialize(map, OP, sp.op_type, sp.op);
+    SerializeAnyOp<TensorType, D>(map, OP, sp.op_type, sp.op);
   }
 
   template <typename MapDeserializer>
@@ -439,7 +433,7 @@ struct MapSerializer<ml::NodeSaveableParams<TensorType>, D>
     map.ExpectKeyGetValue(CACHED_OUTPUT_STATUS, sp.cached_output_status);
     map.ExpectKeyGetValue(OP_CODE, sp.op_type);
 
-    Deserialize(map, OP, sp.op_type, sp.op);
+    DeserializeAnyOp<TensorType, D>(map, OP, sp.op_type, sp.op);
   }
 };
 
