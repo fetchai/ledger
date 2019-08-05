@@ -29,7 +29,7 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Abs : public fetch::ml::Ops<T>
+class BooleanMask: public fetch::ml::Ops<T>
 {
 public:
   using ArrayType     = T;
@@ -37,56 +37,55 @@ public:
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
-  Abs()           = default;
-  ~Abs() override = default;
+  BooleanMask()           = default;
+  ~BooleanMask() override = default;
 
   /**
-   * based on boolean condition, switch between second and third array's element
-   * @param inputs - three inputs, first is condition, second is then array, third is else array
+   * based on boolean condition, switch between second and third array's element.
+   * N.B. the backprop is only done on the second array, the third array is only used to spcify the masked value
+   * @param inputs - three inputs, first is condition, second is the then array, third is the else array
    * @return
    */
   void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(inputs.size() == 3);
     assert(output.shape() == this->ComputeOutputShape(inputs));
-    assert(inputs.at(0)->shape == inputs.at(1)->shape);
-	  assert(inputs.at(1)->shape == inputs.at(2)->shape);
+    assert(inputs.at(0)->shape() == inputs.at(1)->shape());
+	  assert(inputs.at(1)->shape() == inputs.at(2)->shape());
+	  
+	  // make sure the condition mask is a boolean matrix
+	  for(auto i : *inputs.front()){
+	  	assert((i == 0) || (i == 1));
+	  }
 
-    fetch::math::BooleanMask(inputs.at(0), inputs.at(1), inputs.at(2));
+	  output = inputs.at(2)->Copy();
+    fetch::math::BooleanMask(*inputs.at(1), *inputs.at(0), output);
+    
   }
 
   /**
-   * elementwise absolute value gradient is:
-   * f'(input0)=sign(input0)*error_signal
+   * elementwise gradient for second input (the then input) is:
+   * error' = mask * error_signal
    */
   std::vector<ArrayType> Backward(VecTensorType const &inputs,
                                   ArrayType const &    error_signal) override
   {
-    assert(inputs.size() == 1);
+    assert(inputs.size() == 3);
+	  assert(inputs.at(0)->shape() == inputs.at(1)->shape());
+	  assert(inputs.at(1)->shape() == inputs.at(2)->shape());
     assert(error_signal.size() == inputs.at(0)->size());
-
+	
+	  // make sure the condition mask is a boolean matrix
+	  for(auto i : *inputs.front()){
+		  assert((i == 0) || (i == 1));
+	  }
+    
     ArrayType return_signal(inputs.at(0)->shape());
+		ArrayType zero_return_signal(inputs.at(0)->shape());
+		
+		fetch::math::Multiply(*(inputs.front()), error_signal, return_signal);
 
-    auto a_it   = inputs.at(0)->cbegin();
-    auto err_it = error_signal.cbegin();
-    auto r_it   = return_signal.begin();
-    while (a_it.is_valid())
-    {
-      if (*a_it > 0)
-      {
-        *r_it = *err_it;
-      }
-      else
-      {
-        *r_it = -*err_it;
-      }
-
-      ++a_it;
-      ++err_it;
-      ++r_it;
-    }
-
-    return {return_signal};
+    return {zero_return_signal, return_signal, zero_return_signal};
   }
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
@@ -94,7 +93,7 @@ public:
     return inputs.front()->shape();
   }
 
-  static constexpr char const *DESCRIPTOR = "Abs";
+  static constexpr char const *DESCRIPTOR = "BooleanMask";
 };
 
 }  // namespace ops
