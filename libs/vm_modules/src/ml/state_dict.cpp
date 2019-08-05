@@ -50,8 +50,7 @@ Ptr<VMStateDict> VMStateDict::Constructor(VM *vm, TypeId type_id)
   return new VMStateDict(vm, type_id);
 }
 
-void VMStateDict::SetWeights(Ptr<String> const &                           nodename,
-                             Ptr<fetch::vm_modules::math::VMTensor> const &weights)
+void VMStateDict::SetWeights(Ptr<String> const &nodename, Ptr<math::VMTensor> const &weights)
 {
   auto weights_tensor = state_dict_.dict_[nodename->str].weights_;
   *weights_tensor     = weights->GetTensor();
@@ -60,7 +59,7 @@ void VMStateDict::SetWeights(Ptr<String> const &                           noden
 void VMStateDict::Bind(Module &module)
 {
   module.CreateClassType<VMStateDict>("StateDict")
-      .CreateConstructor<>()
+      .CreateConstructor(&VMStateDict::Constructor)
       .CreateMemberFunction("setWeights", &VMStateDict::SetWeights);
 }
 

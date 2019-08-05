@@ -41,13 +41,26 @@ public:
   explicit Softmax(SizeType axis = 0)
     : axis_(axis)
   {}
+
+  explicit Softmax(std::vector<SizeType> axes)
+    : axes_(axes)
+  {}
+
   ~Softmax() override = default;
 
   void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(output.shape() == ComputeOutputShape(inputs));
     assert(inputs.size() == 1);
-    fetch::math::Softmax((*inputs.at(0)), output, axis_);
+
+    if (axes_.size() == 0)
+    {
+      fetch::math::Softmax((*inputs.at(0)), output, axis_);
+    }
+    else
+    {
+      fetch::math::Softmax((*inputs.at(0)), output, axes_);
+    }
   }
 
   std::vector<ArrayType> Backward(VecTensorType const &inputs,
@@ -71,8 +84,16 @@ public:
     // N-D softmax
     else
     {
-      ArrayType sum = ReduceSum(return_signal, axis_);
-      fetch::math::Multiply(t, sum, t);
+      if (axes_.size() == 0)
+      {
+        ArrayType sum = ReduceSum(return_signal, axis_);
+        fetch::math::Multiply(t, sum, t);
+      }
+      else
+      {
+        ArrayType sum = ReduceSum(return_signal, axes_);
+        fetch::math::Multiply(t, sum, t);
+      }
     }
 
     fetch::math::Subtract(return_signal, t, return_signal);
@@ -88,7 +109,8 @@ public:
   static constexpr char const *DESCRIPTOR = "Softmax";
 
 private:
-  SizeType axis_;
+  SizeType              axis_;
+  std::vector<SizeType> axes_;
 };
 
 }  // namespace ops
