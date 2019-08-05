@@ -385,29 +385,19 @@ struct NodeSaveableParams : public SaveableParamsInterface
   using DataType = typename TensorType::Type;
   using SizeType = typename TensorType::SizeType;
 
-  std::vector<std::shared_ptr<Node<TensorType>>> input_nodes;
-  std::vector<std::shared_ptr<Node<TensorType>>> outputs;
-  std::string                                    name;
-  TensorType                                     cached_output_;
-  uint8_t                                        cached_output_status_;
+  std::string name;
+  TensorType  cached_output;
+  uint8_t     cached_output_status;
+  OpType      operation_type;
 
-  OpType                     operation_type_;
-  fetch::ml::Ops<TensorType> op;
-
-  //  GraphSaveableParams()
-  //    : SaveableParamsInterface(OpType::GRAPH)
-  //  {}
-  //
-  //  explicit GraphSaveableParams(OpType operation_type)
-  //    : SaveableParamsInterface(operation_type)
-  //  {}
-  //
-  //  GraphSaveableParams &operator=(GraphSaveableParams const &gsp)
-  //  {
-  //    connections = gsp.connections;
-  //    nodes       = gsp.nodes;
-  //    return *this;
-  //  }
+  Ops<TensorType> op;
+  NodeSaveableParams(std::string in_name, TensorType const &in_cached_output,
+                     uint8_t in_cached_output_status, OpType in_operation_type)
+    : name(in_name)
+    , cached_output(in_cached_output)
+    , cached_output_status(in_cached_output_status)
+    , operation_type(in_operation_type)
+  {}
 };
 
 template <class TensorType>

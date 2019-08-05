@@ -58,7 +58,9 @@ TYPED_TEST(NodeTest, node_relu)
   auto placeholder_ptr =
       std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder->GetOp());
 
-  auto relu = std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::RELU, "Relu");
+  auto relu = std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::RELU, "Relu", []() {
+    return std::make_shared<fetch::ml::ops::Relu<TypeParam>>();
+  });
 
   relu->AddInput(placeholder);
 

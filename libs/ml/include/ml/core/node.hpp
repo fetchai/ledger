@@ -51,6 +51,7 @@ public:
   using ArrayType     = T;
   using NodePtrType   = std::shared_ptr<Node<T>>;
   using VecTensorType = typename fetch::ml::ops::Ops<T>::VecTensorType;
+  using SPType        = fetch::ml::NodeSaveableParams<T>;
 
   Node(OpType const &operation_type, std::string name,
        std::function<std::shared_ptr<ops::Ops<ArrayType>>()> const &constructor)
@@ -94,7 +95,9 @@ public:
 
   std::shared_ptr<SaveableParamsInterface> GetNodeSaveableParams()
   {
-    return op_ptr_->GetOpSaveableParams();
+    SPType sp{std::move(name_), cached_output_, static_cast<uint8_t>(cached_output_status_),
+              operation_type_};
+    return std::make_shared<SPType>(sp);
   }
 
   ~Node() = default;
@@ -130,11 +133,12 @@ public:
 private:
   std::vector<NodePtrType> input_nodes_;
   std::vector<NodePtrType> outputs_;
-  std::string              name_;
-  ArrayType                cached_output_;
-  CachedOutputState        cached_output_status_;
 
-  OpType                       operation_type_;
+  std::string       name_;
+  ArrayType         cached_output_;
+  CachedOutputState cached_output_status_;
+  OpType            operation_type_;
+
   std::shared_ptr<ops::Ops<T>> op_ptr_;
 };
 
