@@ -145,7 +145,7 @@ void SerializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_type
 }
 
 template <class TensorType, typename D>
-void DeserializeAnyOp(MapSerializer<ml::NodeSaveableParams<TensorType>, D> &map, uint8_t code,
+void DeserializeAnyOp(interfaces::MapDeserializer<D> &map, uint8_t code,
                       fetch::ml::OpType const &                            op_type,
                       std::shared_ptr<fetch::ml::SaveableParamsInterface> &op)
 {
@@ -342,7 +342,7 @@ struct MapSerializer<ml::GraphSaveableParams<TensorType>, D>
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(3);
+    auto map = map_constructor(4);
     map.Append(OP_CODE, sp.op_type);
 
     // split connections into keys and values
