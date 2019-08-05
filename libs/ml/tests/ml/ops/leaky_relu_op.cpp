@@ -16,14 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-
 #include "math/base_types.hpp"
 
+#include "gtest/gtest.h"
 #include "math/tensor.hpp"
 #include "ml/ops/leaky_relu_op.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
 #include "ml/serializers/ml_types.hpp"
-#include "gtest/gtest.h"
+#include "vectorise/fixed_point/fixed_point.hpp"
 #include <core/serializers/main_serializer_definition.hpp>
 template <typename T>
 class LeakyReluOpTest : public ::testing::Test

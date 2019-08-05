@@ -16,14 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-
 #include "math/base_types.hpp"
 
+#include "gtest/gtest.h"
 #include "math/tensor.hpp"
 #include "ml/ops/flatten.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
 #include "ml/serializers/ml_types.hpp"
-#include "gtest/gtest.h"
+#include "vectorise/fixed_point/fixed_point.hpp"
 #include <core/serializers/main_serializer_definition.hpp>
 #include <cstdint>
 

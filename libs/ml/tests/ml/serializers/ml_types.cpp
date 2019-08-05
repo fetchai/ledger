@@ -16,15 +16,16 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/base_types.hpp"
-#include "core/serializers/main_serializer.hpp"
 #include "math/tensor.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/placeholder.hpp"
-#include "ml/serializers/ml_types.hpp"
 
 #include "ml/utilities/graph_builder.hpp"
+
+#include "core/serializers/base_types.hpp"
+#include "core/serializers/main_serializer.hpp"
+#include "ml/serializers/ml_types.hpp"
 
 #include "gtest/gtest.h"
 
@@ -65,7 +66,7 @@ TYPED_TEST(SerializersTest, serialize_state_dict)
 TYPED_TEST(SerializersTest, serialize_empty_graph_saveable_params)
 {
   fetch::ml::GraphSaveableParams<TypeParam> gsp1;
-  fetch::serializers::ByteArrayBuffer       b;
+  fetch::serializers::MsgPackSerializer     b;
   b << gsp1;
   b.seek(0);
   fetch::ml::GraphSaveableParams<TypeParam> gsp2;
@@ -97,7 +98,7 @@ TYPED_TEST(SerializersTest, serialize_graph_saveable_params)
       reg_rate);
 
   fetch::ml::GraphSaveableParams<TypeParam> gsp1 = g->GetGraphSaveableParams();
-  fetch::serializers::ByteArrayBuffer       b;
+  fetch::serializers::MsgPackSerializer     b;
   b << gsp1;
   b.seek(0);
 

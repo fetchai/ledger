@@ -24,28 +24,6 @@
 namespace fetch {
 namespace ml {
 
-///////////////////////////////////////////
-/// DEFINE SERIALIZERS FOR OPTYPE ENUMS ///
-///////////////////////////////////////////
-
-//template <typename S>
-//void Serialize(S &serializer, OpType const &operation_type)
-//{
-//  serializer << static_cast<uint16_t>(operation_type);
-//}
-//
-//template <typename S>
-//void Deserialize(S &serializer, OpType &operation_type)
-//{
-//  uint16_t enum_val = 0;
-//  serializer >> enum_val;
-//  operation_type = static_cast<OpType>(enum_val);
-//}
-
-////////////////////////////
-/// FORWARD DECLARATIONS ///
-////////////////////////////
-
 /**
  * Generic container for all the saveable params of an op.
  */
@@ -58,6 +36,10 @@ struct SaveableParamsInterface
 
   fetch::ml::OpType op_type = OpType::NONE;
 };
+
+////////////////////////////
+/// FORWARD DECLARATIONS ///
+////////////////////////////
 
 template <class TensorType>
 struct AbsSaveableParams;
@@ -400,32 +382,32 @@ struct GraphSaveableParams : public SaveableParamsInterface
 template <class TensorType>
 struct NodeSaveableParams : public SaveableParamsInterface
 {
-  using DataType            = typename TensorType::Type;
-  using SizeType            = typename TensorType::SizeType;
+  using DataType = typename TensorType::Type;
+  using SizeType = typename TensorType::SizeType;
 
   std::vector<std::shared_ptr<Node<TensorType>>> input_nodes;
   std::vector<std::shared_ptr<Node<TensorType>>> outputs;
-  std::string              name;
-  TensorType               cached_output_;
-  uint8_t                  cached_output_status_;
+  std::string                                    name;
+  TensorType                                     cached_output_;
+  uint8_t                                        cached_output_status_;
 
   OpType                     operation_type_;
   fetch::ml::Ops<TensorType> op;
 
-//  GraphSaveableParams()
-//    : SaveableParamsInterface(OpType::GRAPH)
-//  {}
-//
-//  explicit GraphSaveableParams(OpType operation_type)
-//    : SaveableParamsInterface(operation_type)
-//  {}
-//
-//  GraphSaveableParams &operator=(GraphSaveableParams const &gsp)
-//  {
-//    connections = gsp.connections;
-//    nodes       = gsp.nodes;
-//    return *this;
-//  }
+  //  GraphSaveableParams()
+  //    : SaveableParamsInterface(OpType::GRAPH)
+  //  {}
+  //
+  //  explicit GraphSaveableParams(OpType operation_type)
+  //    : SaveableParamsInterface(operation_type)
+  //  {}
+  //
+  //  GraphSaveableParams &operator=(GraphSaveableParams const &gsp)
+  //  {
+  //    connections = gsp.connections;
+  //    nodes       = gsp.nodes;
+  //    return *this;
+  //  }
 };
 
 template <class TensorType>
@@ -449,32 +431,32 @@ struct SubGraphSaveableParams : GraphSaveableParams<TensorType>
     output_node_name = sgsp.output_node_name;
     return *this;
   }
-//
-//  template <typename S>
-//  friend void Serialize(S &serializer, SubGraphSaveableParams const &gsp)
-//  {
-//    Serialize(serializer, gsp.op_type);
-//
-//    // serialize parent class first
-//    auto base_pointer = static_cast<GraphSaveableParams<TensorType> const *>(&gsp);
-//    Serialize(serializer, *base_pointer);
-//
-//    serializer << gsp.input_node_names;
-//    serializer << gsp.output_node_name;
-//  }
-//
-//  template <typename S>
-//  friend void Deserialize(S &serializer, SubGraphSaveableParams &gsp)
-//  {
-//    Deserialize(serializer, gsp.op_type);
-//
-//    // deserialize parent class first
-//    auto base_pointer = static_cast<GraphSaveableParams<TensorType> *>(&gsp);
-//    Deserialize(serializer, *base_pointer);
-//
-//    serializer >> gsp.input_node_names;
-//    serializer >> gsp.output_node_name;
-//  }
+  //
+  //  template <typename S>
+  //  friend void Serialize(S &serializer, SubGraphSaveableParams const &gsp)
+  //  {
+  //    Serialize(serializer, gsp.op_type);
+  //
+  //    // serialize parent class first
+  //    auto base_pointer = static_cast<GraphSaveableParams<TensorType> const *>(&gsp);
+  //    Serialize(serializer, *base_pointer);
+  //
+  //    serializer << gsp.input_node_names;
+  //    serializer << gsp.output_node_name;
+  //  }
+  //
+  //  template <typename S>
+  //  friend void Deserialize(S &serializer, SubGraphSaveableParams &gsp)
+  //  {
+  //    Deserialize(serializer, gsp.op_type);
+  //
+  //    // deserialize parent class first
+  //    auto base_pointer = static_cast<GraphSaveableParams<TensorType> *>(&gsp);
+  //    Deserialize(serializer, *base_pointer);
+  //
+  //    serializer >> gsp.input_node_names;
+  //    serializer >> gsp.output_node_name;
+  //  }
 };
 
 ///////////////////////////////
@@ -1026,24 +1008,24 @@ struct WeightsSaveableParams : public SaveableParamsInterface
     : SaveableParamsInterface(operation_type)
   {}
 
-//  template <class S>
-//  friend void Deserialize(S &serializer, WeightsSaveableParams<TensorType> &sp)
-//  {
-//    Deserialize(serializer, sp.op_type);
-//    bool has_weights{};
-//    serializer >> has_weights;
-//    if (has_weights)
-//    {
-//      TensorType output_temp;
-//      serializer >> output_temp;
-//      sp.output = std::make_shared<TensorType>(output_temp);
-//    }
-//    int reg_type_int{};
-//    serializer >> reg_type_int;
-//    sp.regularisation_type = static_cast<fetch::ml::details::RegularisationType>(reg_type_int);
-//    serializer >> sp.regularisation_rate;
-//  }
+  //  template <class S>
+  //  friend void Deserialize(S &serializer, WeightsSaveableParams<TensorType> &sp)
+  //  {
+  //    Deserialize(serializer, sp.op_type);
+  //    bool has_weights{};
+  //    serializer >> has_weights;
+  //    if (has_weights)
+  //    {
+  //      TensorType output_temp;
+  //      serializer >> output_temp;
+  //      sp.output = std::make_shared<TensorType>(output_temp);
+  //    }
+  //    int reg_type_int{};
+  //    serializer >> reg_type_int;
+  //    sp.regularisation_type = static_cast<fetch::ml::details::RegularisationType>(reg_type_int);
+  //    serializer >> sp.regularisation_rate;
+  //  }
 };
 
-}
+}  // namespace ml
 }  // namespace fetch

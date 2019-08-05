@@ -123,6 +123,7 @@ public:
   void ApplyGradient(ArrayType const &grad) override
   {
     this->output_->InlineAdd(grad);
+    ResetGradients();
   }
 
   /**

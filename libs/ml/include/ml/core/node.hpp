@@ -40,12 +40,13 @@ template <typename T>
 class Node
 {
 private:
-enum class CachedOutputState : uint8_t
-{
-  VALID_CACHE,
-  CHANGED_CONTENT,
-  CHANGED_SIZE
-};
+  enum class CachedOutputState : uint8_t
+  {
+    VALID_CACHE,
+    CHANGED_CONTENT,
+    CHANGED_SIZE
+  };
+
 public:
   using ArrayType     = T;
   using NodePtrType   = std::shared_ptr<Node<T>>;
@@ -121,7 +122,7 @@ public:
    * returns the stored operation type
    * @return
    */
-  OpType const & get_op_type()
+  OpType const &get_op_type()
   {
     return operation_type_;
   }

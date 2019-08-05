@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-
 #include "math/tensor.hpp"
 #include "ml/ops/activations/leaky_relu.hpp"
 #include "ml/serializers/ml_types.hpp"

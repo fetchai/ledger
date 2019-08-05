@@ -28,7 +28,7 @@ namespace ml {
 template <typename T>
 struct StateDict;
 
-} // ml
+}  // namespace ml
 
 namespace serializers {
 
@@ -88,7 +88,6 @@ public:
   }
 };
 
-
 /**
  * serializer for OpType
  * @tparam TensorType
@@ -104,7 +103,7 @@ struct MapSerializer<ml::OpType, D>
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &body)
   {
-    auto map = map_constructor(1);
+    auto map      = map_constructor(1);
     auto enum_val = static_cast<uint16_t>(body);
     map.Append(OP_CODE, enum_val);
   }
@@ -128,9 +127,9 @@ struct MapSerializer<ml::GraphSaveableParams<TensorType>, D>
   using Type       = ml::GraphSaveableParams<TensorType>;
   using DriverType = D;
 
-  static uint8_t const OP_CODE = 1;
+  static uint8_t const OP_CODE     = 1;
   static uint8_t const CONNECTIONS = 2;
-  static uint8_t const NODES = 3;
+  static uint8_t const NODES       = 3;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
@@ -139,11 +138,15 @@ struct MapSerializer<ml::GraphSaveableParams<TensorType>, D>
     map.Append(OP_CODE, sp.op_type);
     map.Append(CONNECTIONS, sp.connections);
 
-//    for (auto const &node : gsp.nodes)
-//    {
-//      serializer << node.first;
-//      Serialize<S, TensorType>(serializer, node.second);
-//    }
+    //    for (auto const &node : gsp.nodes)
+    //    {
+    //      serializer << node.first;
+    //      Serialize<S, TensorType>(serializer, node.second);
+    //    }
+    for (auto const &node : sp.nodes)
+    {
+      map.Append(NODES, node);
+    }
     map.Append(NODES, sp.nodes);
   }
 
@@ -153,8 +156,6 @@ struct MapSerializer<ml::GraphSaveableParams<TensorType>, D>
     map.ExpectKeyGetValue(OP_CODE, sp.op_type);
     map.ExpectKeyGetValue(CONNECTIONS, sp.connections);
     map.ExpectKeyGetValue(NODES, sp.nodes);
-
-
   }
 };
 
@@ -169,35 +170,33 @@ struct MapSerializer<ml::NodeSaveableParams<TensorType>, D>
   using DriverType = D;
 
   static uint8_t const OP_CODE = 1;
-//  static uint8_t const CONNECTIONS = 2;
-//  static uint8_t const CACHED_OUTPUT = 3;
-//  static uint8_t const CACHED_OUTPUT_STATUS = 4;
-//  static uint8_t const VEC_IN_NODES = 2;
-//  static uint8_t const VEC_OUT = 3;
+  //  static uint8_t const CONNECTIONS = 2;
+  //  static uint8_t const CACHED_OUTPUT = 3;
+  //  static uint8_t const CACHED_OUTPUT_STATUS = 4;
+  //  static uint8_t const VEC_IN_NODES = 2;
+  //  static uint8_t const VEC_OUT = 3;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
     auto map = map_constructor(1);
     map.Append(OP_CODE, sp.op_type);
-//    map.Append(CONNECTIONS, sp.connections);
+    //    map.Append(CONNECTIONS, sp.connections);
 
-//    for (auto const &node : gsp.nodes)
-//    {
-//      serializer << node.first;
-//      Serialize<S, TensorType>(serializer, node.second);
-//    }
-//    map.Append(NODES, sp.nodes);
+    //    for (auto const &node : gsp.nodes)
+    //    {
+    //      serializer << node.first;
+    //      Serialize<S, TensorType>(serializer, node.second);
+    //    }
+    //    map.Append(NODES, sp.nodes);
   }
 
   template <typename MapDeserializer>
   static void Deserialize(MapDeserializer &map, Type &sp)
   {
     map.ExpectKeyGetValue(OP_CODE, sp.op_type);
-//    map.ExpectKeyGetValue(CONNECTIONS, sp.connections);
-//    map.ExpectKeyGetValue(NODES, sp.nodes);
-
-
+    //    map.ExpectKeyGetValue(CONNECTIONS, sp.connections);
+    //    map.ExpectKeyGetValue(NODES, sp.nodes);
   }
 };
 
@@ -478,7 +477,7 @@ struct MapSerializer<ml::EmbeddingsSaveableParams<TensorType>, D>
     auto map = map_constructor(2);
     map.Append(OP_CODE, sp.op_type);
 
-    // serialize parent class first
+    // serialize parent class
     auto base_pointer = static_cast<ml::WeightsSaveableParams<TensorType> const *>(&sp);
     map.Append(BASE_CLASS, *base_pointer);
   }
@@ -1052,24 +1051,24 @@ struct MapSerializer<ml::RandomisedReluSaveableParams<TensorType>, D>
   {
     auto map = map_constructor(7);
     map.Append(OP_CODE, sp.op_type);
-    map.Append(LOWER_BOUND, sp.op_type);
-    map.Append(UPPER_BOUND, sp.op_type);
-    map.Append(RANDOM_SEED, sp.op_type);
-    map.Append(BUFFER, sp.op_type);
-    map.Append(INDEX, sp.op_type);
-    map.Append(RANDOM_VALUE, sp.op_type);
+    map.Append(LOWER_BOUND, sp.lower_bound);
+    map.Append(UPPER_BOUND, sp.upper_bound);
+    map.Append(RANDOM_SEED, sp.random_seed);
+    map.Append(BUFFER, sp.buffer);
+    map.Append(INDEX, sp.index);
+    map.Append(RANDOM_VALUE, sp.random_value);
   }
 
   template <typename MapDeserializer>
   static void Deserialize(MapDeserializer &map, Type &sp)
   {
     map.ExpectKeyGetValue(OP_CODE, sp.op_type);
-    map.ExpectKeyGetValue(LOWER_BOUND, sp.op_type);
-    map.ExpectKeyGetValue(UPPER_BOUND, sp.op_type);
-    map.ExpectKeyGetValue(RANDOM_SEED, sp.op_type);
-    map.ExpectKeyGetValue(BUFFER, sp.op_type);
-    map.ExpectKeyGetValue(INDEX, sp.op_type);
-    map.ExpectKeyGetValue(RANDOM_VALUE, sp.op_type);
+    map.ExpectKeyGetValue(LOWER_BOUND, sp.lower_bound);
+    map.ExpectKeyGetValue(UPPER_BOUND, sp.upper_bound);
+    map.ExpectKeyGetValue(RANDOM_SEED, sp.random_seed);
+    map.ExpectKeyGetValue(BUFFER, sp.buffer);
+    map.ExpectKeyGetValue(INDEX, sp.index);
+    map.ExpectKeyGetValue(RANDOM_VALUE, sp.random_value);
   }
 };
 
@@ -1356,7 +1355,7 @@ struct MapSerializer<ml::WeightsSaveableParams<TensorType>, D>
   static void Deserialize(MapDeserializer &map, Type &sp)
   {
     map.ExpectKeyGetValue(OP_CODE, sp.op_type);
-    bool output_present = true;
+    bool output_present;
     map.ExpectKeyGetValue(OUTPUT_PRESENT, output_present);
     if (output_present)
     {
@@ -1372,7 +1371,6 @@ struct MapSerializer<ml::WeightsSaveableParams<TensorType>, D>
     sp.gradient_accumulation = std::make_shared<TensorType>(ga);
   }
 };
-
 
 }  // namespace serializers
 }  // namespace fetch

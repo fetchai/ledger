@@ -16,14 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-
 #include "math/base_types.hpp"
 
+#include "gtest/gtest.h"
 #include "math/tensor.hpp"
 #include "ml/ops/max_pool_1d.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
 #include "ml/serializers/ml_types.hpp"
-#include "gtest/gtest.h"
+#include "vectorise/fixed_point/fixed_point.hpp"
 #include <core/serializers/main_serializer_definition.hpp>
 template <typename T>
 class MaxPool1DTest : public ::testing::Test

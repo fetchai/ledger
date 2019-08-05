@@ -496,10 +496,6 @@ meta::IfIsTrainable<ArrayType, OperationType, void> Graph<ArrayType>::AddTrainab
 {
   auto op_ptr = node_ptr->GetOp();
 
-  if (trainable_lookup_.find(name) != trainable_lookup_.end())
-  {
-  }
-
   // it must be safe to cast this op down to a weight
   trainable_.emplace_back(std::dynamic_pointer_cast<ops::Weights<ArrayType>>(op_ptr));
   trainable_lookup_[name] = trainable_.size() - 1;

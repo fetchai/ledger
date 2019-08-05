@@ -24,7 +24,6 @@
 
 #include "gtest/gtest.h"
 
-//#include <core/serializers/main_serializer_definition.hpp>
 #include "core/serializers/main_serializer.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include <vector>
