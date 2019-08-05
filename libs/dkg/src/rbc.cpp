@@ -233,6 +233,29 @@ struct RBC::MsgCount RBC::ReceivedReady(TagType tag, RHash const &msg)
 }
 
 /**
+ * Helper function to check basic details of the message to determine if it should be processed
+ *
+ * @param from Muddle address of sender
+ * @param msg_ptr Shared pointer of message
+ * @return Bool of whether the message passes the test or not
+ */
+bool RBC::BasicMsgCheck(MuddleAddress const &from, std::shared_ptr<RBCMessage> const &msg_ptr)
+{
+  if (msg_ptr == nullptr)
+  {
+    return false;  // To catch nullptr return in Message() switch statement default
+  }
+  else if (current_cabinet_.find(from) == current_cabinet_.end() or
+           msg_ptr->channel() != CHANNEL_BROADCAST)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Node ", id_,
+                   " received message from unknown sender/wrong channel");
+    return false;
+  }
+  return true;
+}
+
+/**
  * Handler for a new RBCEnvelope message
  *
  * @param from Muddle address of sender
@@ -242,12 +265,9 @@ struct RBC::MsgCount RBC::ReceivedReady(TagType tag, RHash const &msg)
 void RBC::OnRBC(MuddleAddress const &from, RBCEnvelope const &envelope)
 {
   auto msg_ptr = envelope.Message();
-  if (msg_ptr == nullptr)
+  if (!BasicMsgCheck(from, msg_ptr))
   {
-    return;  // To catch nullptr return in Message() switch statement default
-  }
-  else if (current_cabinet_.find(from) == current_cabinet_.end())
-  {
+
     FETCH_LOG_ERROR(LOGGING_NAME, "Node ", id_,
                     " received message from unknown sender: ", from.ToBase64());
     return;
@@ -265,8 +285,8 @@ void RBC::OnRBC(MuddleAddress const &from, RBCEnvelope const &envelope)
     }
     else
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Node: ", id_, " can not process payload from node ",
-                      sender_index);
+      FETCH_LOG_WARN(LOGGING_NAME, "Node: ", id_, " can not process payload from node ",
+                     sender_index);
     }
     break;
   }
@@ -281,8 +301,8 @@ void RBC::OnRBC(MuddleAddress const &from, RBCEnvelope const &envelope)
     }
     else
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Node: ", id_, " can not process payload from node ",
-                      sender_index);
+      FETCH_LOG_WARN(LOGGING_NAME, "Node: ", id_, " can not process payload from node ",
+                     sender_index);
     }
     break;
   }
@@ -296,8 +316,8 @@ void RBC::OnRBC(MuddleAddress const &from, RBCEnvelope const &envelope)
     }
     else
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Node: ", id_, " can not process payload from node ",
-                      sender_index);
+      FETCH_LOG_WARN(LOGGING_NAME, "Node: ", id_, " can not process payload from node ",
+                     sender_index);
     }
     break;
   }
@@ -311,8 +331,8 @@ void RBC::OnRBC(MuddleAddress const &from, RBCEnvelope const &envelope)
     }
     else
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Node: ", id_, " can not process payload from node ",
-                      sender_index);
+      FETCH_LOG_WARN(LOGGING_NAME, "Node: ", id_, " can not process payload from node ",
+                     sender_index);
     }
     break;
   }
@@ -326,14 +346,14 @@ void RBC::OnRBC(MuddleAddress const &from, RBCEnvelope const &envelope)
     }
     else
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Node: ", id_, " can not process payload from node ",
-                      sender_index);
+      FETCH_LOG_WARN(LOGGING_NAME, "Node: ", id_, " can not process payload from node ",
+                     sender_index);
     }
     break;
   }
   default:
-    FETCH_LOG_ERROR(LOGGING_NAME, "Node: ", id_, " can not process payload from node ",
-                    sender_index);
+    FETCH_LOG_WARN(LOGGING_NAME, "Node: ", id_, " can not process payload from node ",
+                   sender_index);
   }
 }
 
@@ -449,7 +469,7 @@ void RBC::OnRReady(RReady const &msg, uint32_t sender_index)
         ++im;
       }
     }
-    else if (CheckTag(msg) && msg.id() != id_)
+    else if (msg.id() != id_ && CheckTag(msg))
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, " delivered msg ", tag, " with counter ",
                      msg.counter(), " and id ", msg.id());
@@ -526,7 +546,7 @@ void RBC::OnRAnswer(RAnswer const &msg, uint32_t sender_index)
     return;
   }
 
-  if (CheckTag(msg) && msg.id() != id_)
+  if (msg.id() != id_ && CheckTag(msg))
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, " delivered msg ", tag, " with counter ",
                    msg.counter(), " and id ", msg.id());
@@ -545,6 +565,7 @@ void RBC::Deliver(SerialisedMessage const &msg, uint32_t sender_index)
   assert(parties_.size() == current_cabinet_.size());
   MuddleAddress miner_id{*std::next(current_cabinet_.begin(), sender_index)};
   deliver_msg_callback_(miner_id, msg);
+  ++parties_[sender_index].deliver_s;  // Increase counter
   // Try to deliver old messages
   std::lock_guard<std::mutex> lock(mutex_deliver_);
   if (!parties_[sender_index].undelivered_msg.empty())
@@ -555,7 +576,9 @@ void RBC::Deliver(SerialisedMessage const &msg, uint32_t sender_index)
            old_tag_msg->second.id() == CHANNEL_BROADCAST &&
            old_tag_msg->second.counter() == parties_[id_].deliver_s)
     {
+      assert(!broadcasts_[old_tag_msg->second.tag()].mbar.empty());
       deliver_msg_callback_(miner_id, broadcasts_[old_tag_msg->second.tag()].mbar);
+      ++parties_[sender_index].deliver_s;  // Increase counter
       old_tag_msg = parties_[sender_index].undelivered_msg.erase(old_tag_msg);
     }
   }
@@ -586,20 +609,20 @@ bool RBC::CheckTag(RBCMessage const &msg)
   std::lock_guard<std::mutex> lock(mutex_deliver_);
   if (msg.id() >= current_cabinet_.size())
   {
-    FETCH_LOG_ERROR(LOGGING_NAME, "Node ", id_, " received message with unknown tag id");
+    FETCH_LOG_WARN(LOGGING_NAME, "Node ", id_, " received message with unknown tag id");
   }
   assert(parties_.size() == current_cabinet_.size());
   uint8_t msg_counter = parties_[msg.id()].deliver_s;
   FETCH_LOG_TRACE(LOGGING_NAME, "Node ", id_, " has counter ", msg_counter, " for node ", msg.id());
-  if (msg.channel() == CHANNEL_BROADCAST && msg.counter() == msg_counter)
+  assert(msg.channel() == CHANNEL_BROADCAST);
+  if (msg.counter() == msg_counter)
   {
-    ++parties_[msg.id()].deliver_s;  // Increase counter
     return true;
   }
-  else if (msg.channel() == CHANNEL_BROADCAST && msg.counter() > msg_counter)
+  else if (msg.counter() > msg_counter)
   {
-    FETCH_LOG_TRACE(LOGGING_NAME, "Node ", id_, " has counter ", msg_counter,
-                    " does not match tag counter ", msg.counter(), " for node ", msg.id());
+    FETCH_LOG_WARN(LOGGING_NAME, "Node ", id_, " has counter ", msg_counter,
+                   " does not match tag counter ", msg.counter(), " for node ", msg.id());
     // Store tag of message for processing later
     if (parties_[msg.id()].undelivered_msg.find(msg.counter()) ==
         parties_[msg.id()].undelivered_msg.end())

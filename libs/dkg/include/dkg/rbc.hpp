@@ -117,12 +117,13 @@ protected:
 
   static std::string MsgTypeToString(MsgType msg_type);
   uint32_t           CabinetIndex(MuddleAddress const &other_address) const;
-  bool               CheckTag(RBCMessage const &msg);
-  bool               SetMbar(TagType tag, RMessage const &msg, uint32_t sender_index);
-  bool               SetDbar(TagType tag, RHash const &msg);
-  bool               ReceivedEcho(TagType tag, REcho const &msg);
-  struct MsgCount    ReceivedReady(TagType tag, RHash const &msg);
-  bool               SetPartyFlag(uint32_t sender_index, TagType tag, MsgType msg_type);
+  bool BasicMsgCheck(MuddleAddress const &from, std::shared_ptr<RBCMessage> const &msg_ptr);
+  bool CheckTag(RBCMessage const &msg);
+  bool SetMbar(TagType tag, RMessage const &msg, uint32_t sender_index);
+  bool SetDbar(TagType tag, RHash const &msg);
+  bool ReceivedEcho(TagType tag, REcho const &msg);
+  struct MsgCount ReceivedReady(TagType tag, RHash const &msg);
+  bool            SetPartyFlag(uint32_t sender_index, TagType tag, MsgType msg_type);
 };
 
 TruncatedHash MessageHash(SerialisedMessage const &msg);
