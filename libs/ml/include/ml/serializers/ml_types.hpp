@@ -47,11 +47,12 @@ void SerializeImplementation(MapType &map, uint8_t code,
 
 template <class TensorType, typename D, class SP, typename MapType>
 void DeserializeImplementation(MapType &map, uint8_t code,
-                               std::shared_ptr<fetch::ml::SaveableParamsInterface> const &op)
+                               std::shared_ptr<fetch::ml::SaveableParamsInterface> &op)
 {
-  SP sp_interface;
-  map.ExpectKeyGetValue(code, sp_interface);
-  op = std::dynamic_pointer_cast<fetch::ml::SaveableParamsInterface>(sp_interface);
+  auto sp_interface_ptr = std::make_shared<SP>();
+  map.ExpectKeyGetValue(code, *sp_interface_ptr);
+  auto deserialised_data_ptr = std::dynamic_pointer_cast<std::shared_ptr<fetch::ml::SaveableParamsInterface>>(sp_interface_ptr);
+  (*op) = *(*deserialised_data_ptr);
 }
 }  // namespace
 
@@ -144,10 +145,8 @@ void SerializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_type
   }
 }
 
-template <class TensorType, typename D>
-void DeserializeAnyOp(MapSerializer<ml::NodeSaveableParams<TensorType>, D> &map, uint8_t code,
-                      fetch::ml::OpType const &                            op_type,
-                      std::shared_ptr<fetch::ml::SaveableParamsInterface> &op)
+template <class TensorType, typename D, typename MapType>
+void DeserializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const & op_type, std::shared_ptr<fetch::ml::SaveableParamsInterface> &op)
 {
 
   switch (op_type)
@@ -342,7 +341,7 @@ struct MapSerializer<ml::GraphSaveableParams<TensorType>, D>
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(3);
+    auto map = map_constructor(4);
     map.Append(OP_CODE, sp.op_type);
 
     // split connections into keys and values
@@ -399,6 +398,48 @@ struct MapSerializer<ml::GraphSaveableParams<TensorType>, D>
       ++it3;
     }
   }
+};
+
+/**
+ * serializer for SubGraphSaveableParams
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::SubGraphSaveableParams<TensorType>, D>
+{
+  using Type       = ml::SubGraphSaveableParams<TensorType>;
+
+  using DriverType = D;
+  static uint8_t const GRAPH              = 1;
+  static uint8_t const OP_CODE            = 2;
+  static uint8_t const INPUT_NODE_NAMES   = 3;
+  static uint8_t const OUTPUT_NODE_NAME   = 4;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(4);
+
+    // serialize parent class first
+    auto base_pointer = static_cast<ml::SubGraphSaveableParams<TensorType> const *>(&sp);
+    map.Append(GRAPH, *base_pointer);
+
+    map.Append(OP_CODE, sp.op_type);
+    map.Append(INPUT_NODE_NAMES, sp.input_node_names);
+    map.Append(OUTPUT_NODE_NAME, sp.output_node_name);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    auto base_pointer = static_cast<ml::SubGraphSaveableParams<TensorType> *>(&sp);
+    map.ExpectKeyGetValue(GRAPH, *base_pointer);
+
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+    map.ExpectKeyGetValue(INPUT_NODE_NAMES, sp.input_node_names);
+    map.ExpectKeyGetValue(OUTPUT_NODE_NAME, sp.output_node_name);
+  }
+
 };
 
 /**
@@ -871,8 +912,11 @@ struct MapSerializer<ml::ConvolutionLayer2DSaveableParams<TensorType>, D>
   static void Deserialize(MapDeserializer &map, Type &sp)
   {
     // deserialize parent class first
-    auto base_pointer = static_cast<ml::SubGraphSaveableParams<TensorType> const *>(&sp);
-    map.ExpectKeyGetValue(SUB_GRAPH, *base_pointer);
+    auto subgraph_sp_ptr = std::make_shared<ml::SubGraphSaveableParams<TensorType>>();
+    map.ExpectKeyGetValue(SUB_GRAPH, *subgraph_sp_ptr);
+    std::shared_ptr<Type> conv_sp_ptr = std::make_shared<Type>(sp);
+    auto base_pointer = std::dynamic_pointer_cast<std::shared_ptr<ml::SubGraphSaveableParams<TensorType>>>(conv_sp_ptr);
+    *(*base_pointer) = (*subgraph_sp_ptr);
 
     map.ExpectKeyGetValue(OP_CODE, sp.op_type);
     map.ExpectKeyGetValue(KERNEL_SIZE, sp.kernel_size);

@@ -75,7 +75,7 @@ public:
     auto gsp = this->GetGraphSaveableParams();
 
     auto sp    = std::make_shared<SPType>();
-    auto g_ptr = std::static_pointer_cast<GraphSaveableParams<ArrayType>>(sp);
+    auto g_ptr = std::dynamic_pointer_cast<GraphSaveableParams<ArrayType>>(sp);
     *g_ptr     = gsp;
 
     sp->input_node_names = input_node_names_;

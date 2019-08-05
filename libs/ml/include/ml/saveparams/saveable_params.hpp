@@ -84,6 +84,8 @@ struct NodeSaveableParams : public SaveableParamsInterface
   OpType                                   operation_type;
   std::shared_ptr<SaveableParamsInterface> op;
 
+  NodeSaveableParams() = default;
+
   NodeSaveableParams(std::string in_name, TensorType const &in_cached_output,
                      uint8_t in_cached_output_status, OpType in_operation_type,
                      std::shared_ptr<SaveableParamsInterface> in_op)
@@ -96,7 +98,7 @@ struct NodeSaveableParams : public SaveableParamsInterface
 };
 
 template <class TensorType>
-struct SubGraphSaveableParams : GraphSaveableParams<TensorType>
+struct SubGraphSaveableParams : public GraphSaveableParams<TensorType>
 {
   using SizeType            = typename TensorType::SizeType;
   fetch::ml::OpType op_type = OpType::SUBGRAPH;
@@ -107,7 +109,7 @@ struct SubGraphSaveableParams : GraphSaveableParams<TensorType>
   SubGraphSaveableParams() = default;
 
   explicit SubGraphSaveableParams(OpType operation_type)
-    : GraphSaveableParams<TensorType>(operation_type)
+    : GraphSaveableParams<TensorType>(operation_type), op_type(operation_type)
   {}
 
   SubGraphSaveableParams &operator=(SubGraphSaveableParams const &sgsp)
@@ -116,32 +118,6 @@ struct SubGraphSaveableParams : GraphSaveableParams<TensorType>
     output_node_name = sgsp.output_node_name;
     return *this;
   }
-  //
-  //  template <typename S>
-  //  friend void Serialize(S &serializer, SubGraphSaveableParams const &gsp)
-  //  {
-  //    Serialize(serializer, gsp.op_type);
-  //
-  //    // serialize parent class first
-  //    auto base_pointer = static_cast<GraphSaveableParams<TensorType> const *>(&gsp);
-  //    Serialize(serializer, *base_pointer);
-  //
-  //    serializer << gsp.input_node_names;
-  //    serializer << gsp.output_node_name;
-  //  }
-  //
-  //  template <typename S>
-  //  friend void Deserialize(S &serializer, SubGraphSaveableParams &gsp)
-  //  {
-  //    Deserialize(serializer, gsp.op_type);
-  //
-  //    // deserialize parent class first
-  //    auto base_pointer = static_cast<GraphSaveableParams<TensorType> *>(&gsp);
-  //    Deserialize(serializer, *base_pointer);
-  //
-  //    serializer >> gsp.input_node_names;
-  //    serializer >> gsp.output_node_name;
-  //  }
 };
 
 ///////////////////////////////
