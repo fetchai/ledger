@@ -178,18 +178,6 @@ public:
                             regularisation_rate);
   }
 
-  template <typename X>
-  static std::shared_ptr<FullyConnected<X>> BuildFullyConnected(
-      FullyConnectedSaveableParams<X> const &sp)
-  {
-    auto ret = std::make_shared<FullyConnected<X>>();
-
-    ret->in_size_  = sp.in_size;
-    ret->out_size_ = sp.out_size;
-
-    return ret;
-  }
-
   std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
     auto ret     = std::make_shared<SPType>();

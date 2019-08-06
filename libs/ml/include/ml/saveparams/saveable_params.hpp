@@ -55,6 +55,8 @@ struct GraphSaveableParams : public SaveableParamsInterface
 
   std::vector<std::pair<std::string, std::vector<std::string>>>             connections;
   std::unordered_map<std::string, std::shared_ptr<SaveableParamsInterface>> nodes;
+  std::unordered_map<std::string, SizeType>    trainable_lookup_;
+
 
   GraphSaveableParams()
     : SaveableParamsInterface(OpType::GRAPH)

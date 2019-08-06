@@ -111,9 +111,9 @@ private:
   template <typename OperationType>
   bool UpdateVariableName(std::string const &name, std::string &ret);
 
-  template <class OperationType>
-  void LinkNodesInGraph(std::string const &node_name, std::vector<std::string> const &inputs,
-                        std::shared_ptr<fetch::ml::Node<ArrayType>> op);
+public:
+  static void LinkNodesInGraph(std::string const &node_name, std::vector<std::string> const &inputs,
+      std::unordered_map<std::string, NodePtrType> nodes);
 
 protected:
   std::unordered_map<std::string, NodePtrType> nodes_;
@@ -167,7 +167,7 @@ bool Graph<ArrayType>::SetRegularisation(std::string node_name, RegPtrType regul
 template <typename ArrayType>
 ArrayType Graph<ArrayType>::Evaluate(std::string const &node_name, bool is_training)
 {
-  if (nodes_[node_name])
+  if (nodes_.find(node_name) != nodes_.end())
   {
     return *(nodes_[node_name]->Evaluate(is_training));
   }
@@ -261,8 +261,11 @@ meta::IfIsShareable<ArrayType, OperationType, std::string> Graph<ArrayType>::Add
         });
   }
 
+  // put node in look up table
+  nodes_[node_name] = node_ptr;
+
   // assign inputs and outputs to the new node
-  LinkNodesInGraph<OperationType>(updated_name, inputs, node_ptr);
+  LinkNodesInGraph(updated_name, inputs, nodes_);
 
   // add to map of trainable ops if necessary
   AddTrainable<OperationType>(updated_name, node_ptr);
@@ -294,8 +297,11 @@ meta::IfIsNotShareable<ArrayType, OperationType, std::string> Graph<ArrayType>::
       OperationType::OpCode(), updated_name,
       [params...]() { return std::make_shared<OperationType>(params...); });
 
+  // put node in look up table
+  nodes_[node_name] = node_ptr;
+
   // assign inputs and outputs to the new node
-  LinkNodesInGraph<OperationType>(updated_name, inputs, node_ptr);
+  LinkNodesInGraph(updated_name, inputs, nodes_);
 
   // add to map of trainable ops if necessary
   AddTrainable<OperationType>(updated_name, node_ptr);
@@ -313,7 +319,14 @@ meta::IfIsNotShareable<ArrayType, OperationType, std::string> Graph<ArrayType>::
 template <typename T>
 bool Graph<T>::InsertNode(std::string const &node_name, NodePtrType node_ptr)
 {
-  return nodes_.insert(std::pair<std::string, NodePtrType>(node_name, node_ptr)).second;
+  // put node in look up table
+  nodes_[node_name] = node_ptr;
+
+  // todo: add to trainable
+  // add to map of trainable ops if necessary
+//  AddTrainable<OperationType>(updated_name, node_ptr);
+
+  return nodes_.find(node_name) != nodes_.end();
 }
 
 template <typename ArrayType>
@@ -335,6 +348,9 @@ GraphSaveableParams<ArrayType> Graph<ArrayType>::GetGraphSaveableParams()
     auto nsp = node.second->GetNodeSaveableParams();
     (gs.nodes).insert(std::make_pair(node.first, nsp));
   }
+
+  gs.trainable_lookup_ = trainable_lookup_;
+
   return gs;
 }
 
@@ -358,7 +374,7 @@ typename Graph<ArrayType>::NodePtrType Graph<ArrayType>::GetNode(std::string con
 template <typename ArrayType>
 void Graph<ArrayType>::SetInput(std::string const &node_name, ArrayType data)
 {
-  auto tmp = nodes_[node_name];
+  auto tmp = nodes_.at(node_name);
 
   PlaceholderPtrType placeholder = std::dynamic_pointer_cast<PlaceholderType>(tmp->GetOp());
 
@@ -487,19 +503,15 @@ void Graph<ArrayType>::ApplyGradients(std::vector<ArrayType> &grad)
  * @param op
  */
 template <typename ArrayType>
-template <class OperationType>
 void Graph<ArrayType>::LinkNodesInGraph(std::string const &                         node_name,
                                         std::vector<std::string> const &            inputs,
-                                        std::shared_ptr<fetch::ml::Node<ArrayType>> node_ptr)
+                                        std::unordered_map<std::string, NodePtrType> nodes)
 {
-  // put node in look up table
-  nodes_[node_name] = node_ptr;
-
   // assign inputs and outputs
   for (auto const &i : inputs)
   {
-    nodes_[node_name]->AddInput(nodes_[i]);
-    nodes_[i]->AddOutput(nodes_[node_name]);
+    nodes.at(node_name)->AddInput(nodes.at(i));
+    nodes[i]->AddOutput(nodes[node_name]);
   }
 }
 
