@@ -35,12 +35,18 @@ public:
   using ArrayType = T;
   using DataType  = typename ArrayType::Type;
 
+  Regulariser() = default;
+
   explicit Regulariser(RegularisationType rt)
     : reg_type(rt)
   {}
 
   virtual ~Regulariser()                                                            = default;
-  virtual void ApplyRegularisation(ArrayType &weight, DataType regularisation_rate) = 0;
+  virtual void ApplyRegularisation(ArrayType &weight, DataType regularisation_rate)
+  {
+    FETCH_UNUSED(weight);
+    FETCH_UNUSED(regularisation_rate);
+  };
 
   RegularisationType reg_type = RegularisationType::NONE;
 };
