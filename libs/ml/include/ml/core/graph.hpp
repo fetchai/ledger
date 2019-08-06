@@ -70,6 +70,9 @@ public:
   meta::IfIsShareable<ArrayType, OperationType, std::string> AddNode(
       std::string const &node_name, std::vector<std::string> const &inputs, Params... params);
 
+  bool InsertNode(std::string const &node_name, NodePtrType node_ptr);
+
+
   NodePtrType GetNode(std::string const &node_name) const;
   void        SetInput(std::string const &node_name, ArrayType data);
   void        ResetGraphCache(std::shared_ptr<Node<T>> const &n, bool input_size_changed);
@@ -301,6 +304,18 @@ meta::IfIsNotShareable<ArrayType, OperationType, std::string> Graph<ArrayType>::
 
   // return unique node name (may not be identical to node_name)
   return updated_name;
+}
+
+/**
+ * Method for directly inserting nodes to graph - used for serialisation
+ * @tparam T
+ * @param node_name
+ * @return
+ */
+template <typename T>
+bool Graph<T>::InsertNode(std::string const &node_name, NodePtrType node_ptr)
+{
+  return nodes_.insert(std::pair<std::string, NodePtrType>(node_name, node_ptr)).second;
 }
 
 template <typename ArrayType>

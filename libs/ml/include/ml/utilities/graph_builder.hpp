@@ -66,197 +66,117 @@ namespace fetch {
 namespace ml {
 namespace utilities {
 
-template <typename TensorType, typename GraphType>
-std::shared_ptr<GraphType> LoadGraph(std::shared_ptr<GraphSaveableParams<TensorType>> gsp);
+template <typename T>
+std::shared_ptr<Node<T>> BuildNode(NodeSaveableParams<T> const & nsp);
 
-/**
- * method for constructing a graph given saveparams
- * @tparam TensorType
- * @tparam GraphType
- * @param gsp shared pointer to a graph
- * @return
- */
-template <typename TensorType>
-std::shared_ptr<fetch::ml::SubGraph<TensorType>> LoadSubGraph(
-    std::shared_ptr<SubGraphSaveableParams<TensorType>> sgsp)
+template <typename T>
+void BuildGraph(GraphSaveableParams<T> const & sp, std::shared_ptr<Graph<T>> ret)
 {
-  auto graph_ptr = LoadGraph<TensorType, SubGraph<TensorType>>(
-      std::static_pointer_cast<GraphSaveableParams<TensorType>>(sgsp));
-  return SubGraph<TensorType>::BuildSubGraph(
-      std::static_pointer_cast<SubGraphSaveableParams<TensorType>>(graph_ptr));
-}
-
-/**
- * method for constructing a graph given saveparams
- * @tparam TensorType
- * @tparam GraphType
- * @param gsp shared pointer to a graph
- * @return
- */
-template <typename TensorType>
-std::shared_ptr<fetch::ml::layers::Convolution1D<TensorType>> LoadConvolution1DLayer(
-    std::shared_ptr<ConvolutionLayer1DSaveableParams<TensorType>> csp)
-{
-  auto sg_ptr = LoadSubGraph<TensorType>(
-      std::dynamic_pointer_cast<std::shared_ptr<SubGraphSaveableParams<TensorType>>>(csp));
-  return fetch::ml::layers::Convolution1D<TensorType>::template BuildConvolution1D<TensorType>(
-      std::dynamic_pointer_cast<std::shared_ptr<ConvolutionLayer1DSaveableParams<TensorType>>>(
-          csp));
-}
-
-// TODO: this should be recursive
-// when you want to add a subgraph call this with the subgraph as GraphType
-// Use AddNode to add nodes that are not graphs
-// MyAddSubgraph currently does nothing! But should call this.
-// Pass in a pointer to the current graph to graph reconstructor.
-// TODO: self_attention need getopsaveableparams
-// TODO: tests for all the layers
-
-template <typename TensorType>
-void AddToGraph(OpType const &operation_type, std::shared_ptr<Graph<TensorType>> g_ptr,
-                std::shared_ptr<SaveableParamsInterface> const &saved_node,
-                std::string const &node_name, std::vector<std::string> const &inputs)
-{
-  assert(operation_type != OpType::NONE);
-  assert(operation_type != OpType::GRAPH);
-  assert(operation_type != OpType::SUBGRAPH);
-
-  switch (operation_type)
-  {
-  case OpType::PLACEHOLDER:
-  {
-    g_ptr->template AddNode<ops::PlaceHolder<TensorType>>(
-        node_name, inputs,
-        *(std::dynamic_pointer_cast<PlaceholderSaveableParams<TensorType>>(saved_node)));
-    break;
-  }
-  case OpType::WEIGHTS:
-  {
-    g_ptr->template AddNode<ops::Weights<TensorType>>(
-        node_name, inputs,
-        *(std::dynamic_pointer_cast<WeightsSaveableParams<TensorType>>(saved_node)));
-    break;
-  }
-  case OpType::DROPOUT:
-  {
-    g_ptr->template AddNode<ops::Dropout<TensorType>>(
-        node_name, inputs,
-        *(std::dynamic_pointer_cast<DropoutSaveableParams<TensorType>>(saved_node)));
-    break;
-  }
-  case OpType::LEAKY_RELU:
-  {
-    g_ptr->template AddNode<ops::LeakyRelu<TensorType>>(
-        node_name, inputs,
-        *(std::dynamic_pointer_cast<LeakyReluSaveableParams<TensorType>>(saved_node)));
-    break;
-  }
-  case OpType::RANDOMISED_RELU:
-  {
-    g_ptr->template AddNode<ops::RandomisedRelu<TensorType>>(
-        node_name, inputs,
-        *(std::dynamic_pointer_cast<RandomisedReluSaveableParams<TensorType>>(saved_node)));
-    break;
-  }
-  case OpType::SOFTMAX:
-  {
-    g_ptr->template AddNode<ops::Softmax<TensorType>>(
-        node_name, inputs,
-        *(std::dynamic_pointer_cast<SoftmaxSaveableParams<TensorType>>(saved_node)));
-    break;
-  }
-  case OpType::CONVOLUTION_1D:
-  {
-    g_ptr->template AddNode<ops::Convolution1D<TensorType>>(
-        node_name, inputs,
-        *(std::dynamic_pointer_cast<Convolution1DSaveableParams<TensorType>>(saved_node)));
-    break;
-  }
-  case OpType::MAX_POOL_1D:
-  {
-    g_ptr->template AddNode<ops::MaxPool1D<TensorType>>(
-        node_name, inputs,
-        *(std::dynamic_pointer_cast<MaxPool1DSaveableParams<TensorType>>(saved_node)));
-    break;
-  }
-  case OpType::MAX_POOL_2D:
-  {
-    g_ptr->template AddNode<ops::MaxPool2D<TensorType>>(
-        node_name, inputs,
-        *(std::dynamic_pointer_cast<MaxPool2DSaveableParams<TensorType>>(saved_node)));
-    break;
-  }
-  case OpType::TRANSPOSE:
-  {
-    g_ptr->template AddNode<ops::Transpose<TensorType>>(
-        node_name, inputs,
-        *(std::dynamic_pointer_cast<TransposeSaveableParams<TensorType>>(saved_node)));
-    break;
-  }
-  case OpType::RESHAPE:
-  {
-    g_ptr->template AddNode<ops::Reshape<TensorType>>(
-        node_name, inputs,
-        *(std::dynamic_pointer_cast<ReshapeSaveableParams<TensorType>>(saved_node)));
-    break;
-  }
-  case OpType::LAYER_FULLY_CONNECTED:
-  {
-    g_ptr->template AddNode<layers::FullyConnected<TensorType>>(
-        node_name, inputs,
-        *(std::dynamic_pointer_cast<FullyConnectedSaveableParams<TensorType>>(saved_node)));
-    break;
-  }
-  case OpType::LAYER_CONVOLUTION_1D:
-  {
-    auto sg_ptr = LoadSubGraph<TensorType>(
-        std::dynamic_pointer_cast<SubGraphSaveableParams<TensorType>>(saved_node));
-    auto conv_ptr =
-        fetch::ml::layers::Convolution1D<TensorType>::template BuildConvolution1D<TensorType>(
-            *(std::dynamic_pointer_cast<ConvolutionLayer1DSaveableParams<TensorType>>(sg_ptr)));
-
-    // CALL graph ADD NODE TO add fully formed layer to graph
-
-    break;
-  }
-  case OpType::LAYER_CONVOLUTION_2D:
-  {
-    g_ptr->template AddNode<layers::Convolution2D<TensorType>>(
-        node_name, inputs,
-        *(std::dynamic_pointer_cast<ConvolutionLayer2DSaveableParams<TensorType>>(saved_node)));
-    break;
-  }
-  default:
-  {
-    throw std::runtime_error("Unknown type for Serialization");
-  }
-  }
-}
-
-/**
- * method for constructing a graph given saveparams
- * @tparam TensorType
- * @tparam GraphType
- * @param gsp shared pointer to a graph
- * @return
- */
-template <typename TensorType, typename GraphType>
-std::shared_ptr<GraphType> LoadGraph(std::shared_ptr<GraphSaveableParams<TensorType>> gsp)
-{
-  // set up the return graph
-  auto ret = std::make_shared<GraphType>();
-
   // loop through nodenames adding nodes
-  for (auto &node : gsp->connections)
+  for (auto &node : sp.connections)
   {
     std::string              name   = node.first;
-    std::vector<std::string> inputs = node.second;
-
-    AddToGraph<TensorType>(gsp->nodes[name]->op_type, ret, gsp->nodes[name], name, inputs);
+    auto node_ptr = BuildNode(*(std::dynamic_pointer_cast<NodeSaveableParams<T>>(sp.nodes.at(name))));
+    bool success = ret->InsertNode(name, node_ptr);
+    assert(success);
   }
+}
+
+template <typename T>
+void BuildSubGraph(SubGraphSaveableParams<T> const &sgsp, std::shared_ptr<SubGraph<T>> ret)
+{
+  BuildGraph<T>(sgsp, ret);
+
+  for (auto const & name : sgsp.input_node_names)
+  {
+    ret->AddInputNode(name);
+  }
+  ret->SetOutputNode(sgsp.output_node_name);
+}
+
+template <typename T>
+std::shared_ptr<layers::Convolution1D<T>> BuildLayerConvolution1D(ConvolutionLayer1DSaveableParams<T> const &sp)
+{
+  auto ret = std::make_shared<layers::Convolution1D<T>>();
+  BuildSubGraph<T>(sp, ret);
+  ret->SetOpSaveableParams(sp);
 
   return ret;
 }
+
+template <typename T>
+std::shared_ptr<layers::Convolution2D<T>> BuildLayerConvolution2D(ConvolutionLayer2DSaveableParams<T> const &sp)
+{
+  auto ret = std::make_shared<layers::Convolution2D<T>>();
+  BuildSubGraph<T>(sp, ret);
+  ret->SetOpSaveableParams(sp);
+
+  return ret;
+}
+
+
+namespace {
+template <class OperationType>
+std::shared_ptr<OperationType> GetOp(std::shared_ptr<SaveableParamsInterface> op_save_params)
+{
+  return std::make_shared<OperationType>(*(std::dynamic_pointer_cast<typename OperationType::SPType>(op_save_params)));
+}
+}
+
+template <typename T>
+std::shared_ptr<Node<T>> BuildNode(NodeSaveableParams<T> const & nsp)
+{
+  auto node = std::make_shared<Node<T>>();
+  // construct the concrete op
+  // if the op is a layer, invoke the layer Build method
+
+  std::shared_ptr<ops::Ops<T>> op_ptr;
+  switch (nsp.operation_type)
+  {
+    case ops::Abs<T>::OpCode():
+    {
+      op_ptr = GetOp<ops::Abs<T>>(nsp.op_save_params);
+      break;
+    }
+    case ops::PlaceHolder<T>::OpCode():
+    {
+      op_ptr = GetOp<ops::PlaceHolder<T>>(nsp.op_save_params);
+      break;
+    }
+    case ops::Weights<T>::OpCode():
+    {
+      op_ptr = GetOp<ops::Weights<T>>(nsp.op_save_params);
+      break;
+    }
+    case ops::Convolution1D<T>::OpCode():
+    {
+      op_ptr = GetOp<ops::Convolution1D<T>>(nsp.op_save_params);
+      break;
+    }
+    case ops::Convolution2D<T>::OpCode():
+    {
+      op_ptr = GetOp<ops::Convolution2D<T>>(nsp.op_save_params);
+      break;
+    }
+    case OpType::LAYER_CONVOLUTION_1D:
+    {
+      op_ptr = BuildLayerConvolution1D(*(std::dynamic_pointer_cast<ConvolutionLayer1DSaveableParams<T>>(nsp.op_save_params)));
+      break;
+    }
+    case OpType::LAYER_CONVOLUTION_2D:
+    {
+      op_ptr = BuildLayerConvolution2D(*(std::dynamic_pointer_cast<ConvolutionLayer2DSaveableParams<T>>(nsp.op_save_params)));
+      break;
+    }
+    default:
+      throw std::runtime_error("unknown node type");
+  }
+
+  node->SetNodeSaveableParams(nsp, op_ptr);
+  return node;
+}
+
+
 
 }  // namespace utilities
 }  // namespace ml

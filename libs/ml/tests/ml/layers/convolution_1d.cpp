@@ -19,8 +19,11 @@
 #include "core/serializers/main_serializer.hpp"
 #include "gtest/gtest.h"
 #include "math/tensor.hpp"
+
 #include "ml/layers/convolution_1d.hpp"
 #include "ml/serializers/ml_types.hpp"
+#include "ml/utilities/graph_builder.hpp"
+
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 template <typename T>
@@ -451,7 +454,7 @@ TYPED_TEST(Convolution1DTest, saveparams_test)
   b >> *dsp2;
 
   // rebuild
-  auto conv2 = fetch::ml::layers::Convolution1D<TypeParam>::BuildConvolution1D(*dsp2);
+  auto conv2 = fetch::ml::utilities::BuildLayerConvolution1D<TypeParam>(*dsp2);
 
   conv2->SetInput("Conv1D_Input", input);
   TypeParam output2 = conv2->Evaluate("Conv1D_Conv1D", true);

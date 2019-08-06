@@ -78,11 +78,11 @@ struct NodeSaveableParams : public SaveableParamsInterface
   using DataType = typename TensorType::Type;
   using SizeType = typename TensorType::SizeType;
 
-  std::string                              name;
-  TensorType                               cached_output;
-  uint8_t                                  cached_output_status;
-  OpType                                   operation_type;
-  std::shared_ptr<SaveableParamsInterface> op;
+  std::string                              name = "";
+  TensorType                               cached_output{};
+  uint8_t                                  cached_output_status = fetch::math::numeric_max<uint8_t>();
+  OpType                                   operation_type = OpType::NONE;
+  std::shared_ptr<SaveableParamsInterface> op_save_params = std::make_shared<SaveableParamsInterface>();
 
   NodeSaveableParams() = default;
 
@@ -93,7 +93,7 @@ struct NodeSaveableParams : public SaveableParamsInterface
     , cached_output(in_cached_output)
     , cached_output_status(in_cached_output_status)
     , operation_type(in_operation_type)
-    , op(std::move(in_op))
+    , op_save_params(std::move(in_op))
   {}
 };
 

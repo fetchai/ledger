@@ -38,31 +38,20 @@ template <class T>
 class SubGraph : public Graph<T>, public ops::Ops<T>
 {
 public:
-  using ArrayType     = T;
-  using VecTensorType = std::vector<std::shared_ptr<ArrayType const>>;
-  using SPType        = SubGraphSaveableParams<ArrayType>;
+  using TensorType     = T;
+  using VecTensorType = std::vector<std::shared_ptr<TensorType const>>;
+  using SPType        = SubGraphSaveableParams<TensorType>;
 
-  void                   Forward(VecTensorType const &inputs, ArrayType &output) override;
-  std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                  ArrayType const &    error_signal) override;
-
-  template <typename X>
-  static std::shared_ptr<SubGraph<X>> BuildSubGraph(SubGraphSaveableParams<X> const &sgsp)
-  {
-    auto ret = std::make_shared<SubGraph<X>>();
-
-    ret->input_node_names_ = sgsp.input_node_names;
-    ret->output_node_name_ = sgsp.output_node_name;
-
-    return ret;
-  }
+  void                   Forward(VecTensorType const &inputs, TensorType &output) override;
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                  TensorType const &    error_signal) override;
 
   std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
     auto gsp = this->GetGraphSaveableParams();
 
     auto sp    = std::make_shared<SPType>();
-    auto g_ptr = std::dynamic_pointer_cast<GraphSaveableParams<ArrayType>>(sp);
+    auto g_ptr = std::dynamic_pointer_cast<GraphSaveableParams<TensorType>>(sp);
     *g_ptr     = gsp;
 
     sp->input_node_names = input_node_names_;
@@ -73,17 +62,14 @@ public:
 
   static constexpr char const *DESCRIPTOR = "SubGraph";
 
-protected:
   void AddInputNode(std::string const &node_name);
   void SetOutputNode(std::string const &node_name);
 
 protected:
   SubGraph() = default;
 
-public:
-  std::vector<std::string> input_node_names_;
-
 private:
+  std::vector<std::string> input_node_names_;
   std::string output_node_name_;
 };
 
@@ -95,7 +81,7 @@ private:
  * @return
  */
 template <typename T>
-void SubGraph<T>::Forward(VecTensorType const &inputs, ArrayType &output)
+void SubGraph<T>::Forward(VecTensorType const &inputs, TensorType &output)
 {
   assert(inputs.size() == this->input_node_names_.size());
   for (uint64_t i(0); i < inputs.size(); ++i)
@@ -106,13 +92,13 @@ void SubGraph<T>::Forward(VecTensorType const &inputs, ArrayType &output)
 }
 
 template <typename T>
-std::vector<T> SubGraph<T>::Backward(VecTensorType const &inputs, ArrayType const &error_signal)
+std::vector<T> SubGraph<T>::Backward(VecTensorType const &inputs, TensorType const &error_signal)
 {
   assert(inputs.size() == this->input_node_names_.size());
   FETCH_UNUSED(inputs);
-  std::vector<std::pair<Node<T> *, ArrayType>> non_back_prop_err_signal =
+  std::vector<std::pair<Node<T> *, TensorType>> non_back_prop_err_signal =
       this->nodes_[output_node_name_]->BackPropagateSignal(error_signal);
-  std::vector<ArrayType> back_prop_err_signal;
+  std::vector<TensorType> back_prop_err_signal;
 
   for (std::string const &s : input_node_names_)
   {

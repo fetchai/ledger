@@ -526,18 +526,25 @@ TYPED_TEST(Convolution2DTest, saveparams_test)
   SizeType const input_channels  = 3;
   SizeType const output_channels = 5;
   SizeType const input_height    = 3;
+  SizeType const input_width     = 3;
   SizeType const kernel_height   = 3;
-  //  SizeType const output_height   = 1;
-  SizeType const stride_size = 1;
+  SizeType const output_height   = 1;
+  SizeType const output_width    = 1;
+  SizeType const stride_size     = 1;
 
   // Generate input
-  TypeParam input(std::vector<typename TypeParam::SizeType>({input_channels, input_height, 1}));
+  TypeParam input(
+      std::vector<typename TypeParam::SizeType>({input_channels, input_height, input_width, 1}));
 
   for (SizeType i_ic{0}; i_ic < input_channels; ++i_ic)
   {
     for (SizeType i_i{0}; i_i < input_height; ++i_i)
     {
-      input(i_ic, i_i, 0) = static_cast<DataType>(i_i + 1);
+      for (SizeType j_i{0}; j_i < input_width; ++j_i)
+      {
+
+        input.Set(i_ic, i_i, j_i, 0, static_cast<DataType>(i_i * j_i + 1));
+      }
     }
   }
 

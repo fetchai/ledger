@@ -36,12 +36,12 @@ template <class T>
 class Convolution2D : public SubGraph<T>
 {
 public:
-  using ArrayType     = T;
-  using ArrayPtrType  = std::shared_ptr<ArrayType>;
-  using SizeType      = typename ArrayType::SizeType;
+  using TensorType     = T;
+  using ArrayPtrType  = std::shared_ptr<TensorType>;
+  using SizeType      = typename TensorType::SizeType;
   using WeightsInit   = fetch::ml::ops::WeightsInitialisation;
   using VecTensorType = typename SubGraph<T>::VecTensorType;
-  using SPType        = ConvolutionLayer2DSaveableParams<ArrayType>;
+  using SPType        = ConvolutionLayer2DSaveableParams<TensorType>;
 
   Convolution2D() = default;
 
@@ -68,17 +68,17 @@ public:
     , stride_size_{stride_size}
   {
     std::string input =
-        this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Input", {});
+        this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Input", {});
 
     std::string weights =
-        this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Weights", {});
+        this->template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Weights", {});
 
-    ArrayType weights_data(
+    TensorType weights_data(
         std::vector<SizeType>{{output_channels_, input_channels_, kernel_size_, kernel_size_, 1}});
-    fetch::ml::ops::Weights<ArrayType>::Initialise(weights_data, 1, 1, init_mode, seed);
+    fetch::ml::ops::Weights<TensorType>::Initialise(weights_data, 1, 1, init_mode, seed);
     this->SetInput(weights, weights_data);
 
-    std::string output = this->template AddNode<fetch::ml::ops::Convolution2D<ArrayType>>(
+    std::string output = this->template AddNode<fetch::ml::ops::Convolution2D<TensorType>>(
         name + "_Conv2D", {input, weights}, stride_size_);
 
     output = fetch::ml::details::AddActivationNode<T>(activation_type, this, name + "_Activation",
@@ -104,13 +104,34 @@ public:
 
   std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
-    // get base class saveable params
-    std::shared_ptr<SaveableParamsInterface> sgsp = SubGraph<ArrayType>::GetOpSaveableParams();
-    auto sg_ptr1 = std::dynamic_pointer_cast<typename SubGraph<ArrayType>::SPType>(sgsp);
+//    // get base class saveable params
+//    std::shared_ptr<SaveableParamsInterface> sgsp = SubGraph<TensorType>::GetOpSaveableParams();
+//    auto sg_ptr1 = std::dynamic_pointer_cast<typename SubGraph<TensorType>::SPType>(sgsp);
+//
+//    // assign base class saveable params to ret
+//    auto ret     = std::make_shared<SPType>();
+//    auto sg_ptr2 = std::static_pointer_cast<typename SubGraph<TensorType>::SPType>(ret);
+//    *sg_ptr2     = *sg_ptr1;
+//
+//    // asign layer specific params
+//    ret->kernel_size     = kernel_size_;
+//    ret->input_channels  = input_channels_;
+//    ret->output_channels = output_channels_;
+//    ret->stride_size     = stride_size_;
+//    return ret;
+    // get all base classes saveable params
+    std::shared_ptr<SaveableParamsInterface> sgsp = SubGraph<TensorType>::GetOpSaveableParams();
 
-    // assign base class saveable params to ret
-    auto ret     = std::make_shared<SPType>();
-    auto sg_ptr2 = std::static_pointer_cast<typename SubGraph<ArrayType>::SPType>(ret);
+    auto ret = std::make_shared<SPType>();
+
+    // copy graph saveable params over
+    auto g_ptr1 = std::dynamic_pointer_cast<typename Graph<TensorType>::SPType>(sgsp);
+    auto g_ptr2 = std::dynamic_pointer_cast<typename Graph<TensorType>::SPType>(ret);
+    *g_ptr2     = *g_ptr1;
+
+    // copy subgraph saveable params over
+    auto sg_ptr1 = std::dynamic_pointer_cast<typename SubGraph<TensorType>::SPType>(sgsp);
+    auto sg_ptr2 = std::dynamic_pointer_cast<typename SubGraph<TensorType>::SPType>(ret);
     *sg_ptr2     = *sg_ptr1;
 
     // asign layer specific params
@@ -118,15 +139,25 @@ public:
     ret->input_channels  = input_channels_;
     ret->output_channels = output_channels_;
     ret->stride_size     = stride_size_;
+
     return ret;
+  }
+
+  void SetOpSaveableParams(ConvolutionLayer2DSaveableParams<T> const & sp)
+  {
+    // assign layer specific params
+    kernel_size_     = sp.kernel_size;
+    input_channels_  = sp.input_channels;
+    output_channels_ = sp.output_channels;
+    stride_size_     = sp.stride_size;
   }
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    ArrayType weights_data(
+    TensorType weights_data(
         std::vector<SizeType>{{output_channels_, input_channels_, kernel_size_, kernel_size_, 1}});
-    return fetch::ml::ops::Convolution2D<ArrayType>(stride_size_)
-        .ComputeOutputShape({inputs.at(0), std::make_shared<ArrayType>(weights_data)});
+    return fetch::ml::ops::Convolution2D<TensorType>(stride_size_)
+        .ComputeOutputShape({inputs.at(0), std::make_shared<TensorType>(weights_data)});
   }
 
   static constexpr OpType OpCode()
@@ -137,9 +168,9 @@ public:
   static constexpr char const *DESCRIPTOR = "Convolution2DLayer";
 
 private:
-  void Initialise(ArrayType &weights, WeightsInit init_mode)
+  void Initialise(TensorType &weights, WeightsInit init_mode)
   {
-    fetch::ml::ops::Weights<ArrayType>::Initialise(weights, input_channels_, output_channels_,
+    fetch::ml::ops::Weights<TensorType>::Initialise(weights, input_channels_, output_channels_,
                                                    init_mode);
   }
 

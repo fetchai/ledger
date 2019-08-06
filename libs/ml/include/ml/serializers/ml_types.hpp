@@ -46,15 +46,12 @@ void SerializeImplementation(MapType &map, uint8_t code,
 }
 
 template <class TensorType, typename D, class SP, typename MapType>
-void DeserializeImplementation(MapType &map, uint8_t code,
-                               std::shared_ptr<fetch::ml::SaveableParamsInterface> &op)
+std::shared_ptr<SP> DeserializeImplementation(MapType &map, uint8_t code)
 {
-  auto sp_interface_ptr = std::make_shared<SP>();
-  map.ExpectKeyGetValue(code, *sp_interface_ptr);
-  auto deserialised_data_ptr =
-      std::dynamic_pointer_cast<std::shared_ptr<fetch::ml::SaveableParamsInterface>>(
-          sp_interface_ptr);
-  (*op) = *(*deserialised_data_ptr);
+  // deserialize concrete op type
+  auto sp_ptr = std::make_shared<SP>();
+  map.ExpectKeyGetValue(code, *sp_ptr);
+  return sp_ptr;
 }
 }  // namespace
 
@@ -156,82 +153,76 @@ void DeserializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_ty
   {
   case ml::OpType::PLACEHOLDER:
   {
-    DeserializeImplementation<TensorType, D, ml::PlaceholderSaveableParams<TensorType>>(map, code,
-                                                                                        op);
+    op = DeserializeImplementation<TensorType, D, ml::PlaceholderSaveableParams<TensorType>>(map, code);
     break;
   }
   case ml::OpType::WEIGHTS:
   {
-    DeserializeImplementation<TensorType, D, ml::WeightsSaveableParams<TensorType>>(map, code, op);
+    op = DeserializeImplementation<TensorType, D, ml::WeightsSaveableParams<TensorType>>(map, code);
     break;
   }
   case ml::OpType::DROPOUT:
   {
-    DeserializeImplementation<TensorType, D, ml::DropoutSaveableParams<TensorType>>(map, code, op);
+    op = DeserializeImplementation<TensorType, D, ml::DropoutSaveableParams<TensorType>>(map, code);
     break;
   }
   case ml::OpType::LEAKY_RELU:
   {
-    DeserializeImplementation<TensorType, D, ml::LeakyReluSaveableParams<TensorType>>(map, code,
-                                                                                      op);
+    op = DeserializeImplementation<TensorType, D, ml::LeakyReluSaveableParams<TensorType>>(map, code);
     break;
   }
   case ml::OpType::RANDOMISED_RELU:
   {
-    DeserializeImplementation<TensorType, D, ml::RandomisedReluSaveableParams<TensorType>>(
-        map, code, op);
+    op = DeserializeImplementation<TensorType, D, ml::RandomisedReluSaveableParams<TensorType>>(
+        map, code);
     break;
   }
   case ml::OpType::SOFTMAX:
   {
-    DeserializeImplementation<TensorType, D, ml::SoftmaxSaveableParams<TensorType>>(map, code, op);
+    op = DeserializeImplementation<TensorType, D, ml::SoftmaxSaveableParams<TensorType>>(map, code);
     break;
   }
   case ml::OpType::CONVOLUTION_1D:
   {
-    DeserializeImplementation<TensorType, D, ml::Convolution1DSaveableParams<TensorType>>(map, code,
-                                                                                          op);
+    op = DeserializeImplementation<TensorType, D, ml::Convolution1DSaveableParams<TensorType>>(map, code);
     break;
   }
   case ml::OpType::MAX_POOL_1D:
   {
-    DeserializeImplementation<TensorType, D, ml::MaxPool1DSaveableParams<TensorType>>(map, code,
-                                                                                      op);
+    op = DeserializeImplementation<TensorType, D, ml::MaxPool1DSaveableParams<TensorType>>(map, code);
     break;
   }
   case ml::OpType::MAX_POOL_2D:
   {
-    DeserializeImplementation<TensorType, D, ml::MaxPool2DSaveableParams<TensorType>>(map, code,
-                                                                                      op);
+    op = DeserializeImplementation<TensorType, D, ml::MaxPool2DSaveableParams<TensorType>>(map, code);
     break;
   }
   case ml::OpType::TRANSPOSE:
   {
-    DeserializeImplementation<TensorType, D, ml::TransposeSaveableParams<TensorType>>(map, code,
-                                                                                      op);
+    op = DeserializeImplementation<TensorType, D, ml::TransposeSaveableParams<TensorType>>(map, code);
     break;
   }
   case ml::OpType::RESHAPE:
   {
-    DeserializeImplementation<TensorType, D, ml::ReshapeSaveableParams<TensorType>>(map, code, op);
+    op = DeserializeImplementation<TensorType, D, ml::ReshapeSaveableParams<TensorType>>(map, code);
     break;
   }
   case ml::OpType::LAYER_FULLY_CONNECTED:
   {
-    DeserializeImplementation<TensorType, D, ml::FullyConnectedSaveableParams<TensorType>>(
-        map, code, op);
+    op = DeserializeImplementation<TensorType, D, ml::FullyConnectedSaveableParams<TensorType>>(
+        map, code);
     break;
   }
   case ml::OpType::LAYER_CONVOLUTION_1D:
   {
-    DeserializeImplementation<TensorType, D, ml::ConvolutionLayer1DSaveableParams<TensorType>>(
-        map, code, op);
+    op = DeserializeImplementation<TensorType, D, ml::ConvolutionLayer1DSaveableParams<TensorType>>(
+        map, code);
     break;
   }
   case ml::OpType::LAYER_CONVOLUTION_2D:
   {
-    DeserializeImplementation<TensorType, D, ml::ConvolutionLayer2DSaveableParams<TensorType>>(
-        map, code, op);
+    op = DeserializeImplementation<TensorType, D, ml::ConvolutionLayer2DSaveableParams<TensorType>>(
+        map, code);
     break;
   }
   default:
@@ -322,6 +313,7 @@ struct MapSerializer<ml::OpType, D>
   {
     uint16_t op_code_int = 0;
     map.ExpectKeyGetValue(OP_CODE, op_code_int);
+
     body = static_cast<Type>(op_code_int);
   }
 };
@@ -424,10 +416,8 @@ struct MapSerializer<ml::SubGraphSaveableParams<TensorType>, D>
     auto map = map_constructor(4);
 
     // serialize parent class first
-    auto sp_ptr = std::make_shared<ml::GraphSaveableParams<TensorType>>(sp);
-    map.Append(GRAPH, *(sp_ptr));
-    //    auto base_pointer =
-    //    std::dynamic_pointer_cast<std::shared_ptr<ml::GraphSaveableParams<TensorType>>>(sp);
+    auto base_pointer = static_cast<ml::GraphSaveableParams<TensorType> const *>(&sp);
+    map.Append(GRAPH, *(base_pointer));
 
     map.Append(OP_CODE, sp.op_type);
     map.Append(INPUT_NODE_NAMES, sp.input_node_names);
@@ -437,8 +427,7 @@ struct MapSerializer<ml::SubGraphSaveableParams<TensorType>, D>
   template <typename MapDeserializer>
   static void Deserialize(MapDeserializer &map, Type &sp)
   {
-    auto graph_ptr    = std::make_shared<ml::GraphSaveableParams<TensorType>>(sp);
-    auto base_pointer = std::dynamic_pointer_cast<ml::GraphSaveableParams<TensorType>>(graph_ptr);
+    auto base_pointer = static_cast<ml::GraphSaveableParams<TensorType> *>(&sp);
     map.ExpectKeyGetValue(GRAPH, (*base_pointer));
 
     map.ExpectKeyGetValue(OP_CODE, sp.op_type);
@@ -473,7 +462,7 @@ struct MapSerializer<ml::NodeSaveableParams<TensorType>, D>
     map.Append(CACHED_OUTPUT_STATUS, sp.cached_output_status);
     map.Append(OP_CODE, sp.operation_type);
 
-    SerializeAnyOp<TensorType, D>(map, OP, sp.operation_type, sp.op);
+    SerializeAnyOp<TensorType, D>(map, OP, sp.operation_type, sp.op_save_params);
   }
 
   template <typename MapDeserializer>
@@ -484,7 +473,7 @@ struct MapSerializer<ml::NodeSaveableParams<TensorType>, D>
     map.ExpectKeyGetValue(CACHED_OUTPUT_STATUS, sp.cached_output_status);
     map.ExpectKeyGetValue(OP_CODE, sp.operation_type);
 
-    DeserializeAnyOp<TensorType, D>(map, OP, sp.operation_type, sp.op);
+    DeserializeAnyOp<TensorType, D>(map, OP, sp.operation_type, sp.op_save_params);
   }
 };
 
@@ -861,8 +850,8 @@ struct MapSerializer<ml::ConvolutionLayer1DSaveableParams<TensorType>, D>
     map.Append(OP_CODE, sp.op_type);
     map.Append(KERNEL_SIZE, sp.kernel_size);
     map.Append(INPUT_CHANNELS, sp.input_channels);
-    map.Append(OP_CODE, sp.output_channels);
-    map.Append(OUTPUT_CHANNELS, sp.stride_size);
+    map.Append(OUTPUT_CHANNELS, sp.output_channels);
+    map.Append(STRIDE_SIZE, sp.stride_size);
   }
 
   template <typename MapDeserializer>
@@ -875,8 +864,8 @@ struct MapSerializer<ml::ConvolutionLayer1DSaveableParams<TensorType>, D>
     map.ExpectKeyGetValue(OP_CODE, sp.op_type);
     map.ExpectKeyGetValue(KERNEL_SIZE, sp.kernel_size);
     map.ExpectKeyGetValue(INPUT_CHANNELS, sp.input_channels);
-    map.ExpectKeyGetValue(OP_CODE, sp.output_channels);
-    map.ExpectKeyGetValue(OUTPUT_CHANNELS, sp.stride_size);
+    map.ExpectKeyGetValue(OUTPUT_CHANNELS, sp.output_channels);
+    map.ExpectKeyGetValue(STRIDE_SIZE, sp.stride_size);
   }
 };
 
@@ -909,8 +898,8 @@ struct MapSerializer<ml::ConvolutionLayer2DSaveableParams<TensorType>, D>
     map.Append(OP_CODE, sp.op_type);
     map.Append(KERNEL_SIZE, sp.kernel_size);
     map.Append(INPUT_CHANNELS, sp.input_channels);
-    map.Append(OP_CODE, sp.output_channels);
-    map.Append(OUTPUT_CHANNELS, sp.stride_size);
+    map.Append(OUTPUT_CHANNELS, sp.output_channels);
+    map.Append(STRIDE_SIZE, sp.stride_size);
   }
 
   template <typename MapDeserializer>
@@ -928,13 +917,13 @@ struct MapSerializer<ml::ConvolutionLayer2DSaveableParams<TensorType>, D>
     map.ExpectKeyGetValue(OP_CODE, sp.op_type);
     map.ExpectKeyGetValue(KERNEL_SIZE, sp.kernel_size);
     map.ExpectKeyGetValue(INPUT_CHANNELS, sp.input_channels);
-    map.ExpectKeyGetValue(OP_CODE, sp.output_channels);
-    map.ExpectKeyGetValue(OUTPUT_CHANNELS, sp.stride_size);
+    map.ExpectKeyGetValue(OUTPUT_CHANNELS, sp.output_channels);
+    map.ExpectKeyGetValue(STRIDE_SIZE, sp.stride_size);
   }
 };
 
 /**
- * serializer for Conv2d layer saveable params
+ * serializer for FullyConnectedLayer saveable params
  * @tparam TensorType
  */
 template <typename TensorType, typename D>
@@ -1327,7 +1316,7 @@ struct MapSerializer<ml::PlaceholderSaveableParams<TensorType>, D>
 };
 
 /**
- * serializer for Conv2d layer saveable params
+ * serializer for PRELU layer saveable params
  * @tparam TensorType
  */
 template <typename TensorType, typename D>

@@ -53,6 +53,8 @@ public:
   using VecTensorType = typename fetch::ml::ops::Ops<T>::VecTensorType;
   using SPType        = fetch::ml::NodeSaveableParams<T>;
 
+  Node() = default;
+
   Node(OpType const &operation_type, std::string name,
        std::function<std::shared_ptr<ops::Ops<ArrayType>>()> const &constructor)
     : name_(std::move(name))
@@ -71,6 +73,10 @@ public:
 
   /**
    * This method CANNOT be extended to include making any op that is a layer
+   */
+
+  /**
+   * This is a convenience constructor for returning a Node with a specified operation type that uses default parameters
    */
   Node(OpType const &operation_type, std::string name)
     : name_(std::move(name))
@@ -100,6 +106,17 @@ public:
               operation_type_, ops_save_params};
     return std::make_shared<SPType>(sp);
   }
+
+  void SetNodeSaveableParams(NodeSaveableParams<T> const & nsp, std::shared_ptr<ops::Ops<T>> op_ptr)
+  {
+    name_ = nsp.name;
+    cached_output_ = nsp.cached_output;
+    cached_output_status_ = static_cast<CachedOutputState>(nsp.cached_output_status);
+    operation_type_ = nsp.operation_type;
+
+    op_ptr_ = op_ptr;
+  }
+
 
   ~Node() = default;
 
