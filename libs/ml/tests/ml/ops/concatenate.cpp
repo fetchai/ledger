@@ -51,6 +51,20 @@ TYPED_TEST(ConcatenateTest, forward_test)
   ASSERT_EQ(prediction.shape(), std::vector<typename TypeParam::SizeType>({8, 16}));
 }
 
+TYPED_TEST(ConcatenateTest, compute_output_shape_test)
+{
+  TypeParam data1(std::vector<fetch::math::SizeType>({8, 8, 10}));
+  TypeParam data2(std::vector<fetch::math::SizeType>({8, 8, 2}));
+
+  fetch::ml::ops::Concatenate<TypeParam> op{2};
+
+  std::vector<typename TypeParam::SizeType> output_shape = op.ComputeOutputShape(
+      {std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)});
+
+  // test correct computed output shape
+  ASSERT_EQ(output_shape, std::vector<typename TypeParam::SizeType>({8, 8, 12}));
+}
+
 TYPED_TEST(ConcatenateTest, backward_test)
 {
   TypeParam data1(std::vector<fetch::math::SizeType>({8, 8}));
