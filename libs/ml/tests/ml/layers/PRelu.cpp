@@ -19,6 +19,7 @@
 #include "math/tensor.hpp"
 #include "ml/layers/PRelu.hpp"
 #include "ml/meta/ml_type_traits.hpp"
+#include "ml/utilities/graph_builder.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
@@ -163,4 +164,42 @@ TYPED_TEST(PReluTest, getStateDict)
   ASSERT_NE(sd.dict_["PReluTest_Alpha"].weights_, nullptr);
   EXPECT_EQ(sd.dict_["PReluTest_Alpha"].weights_->shape(),
             std::vector<typename TypeParam::SizeType>({50, 1}));
+}
+
+TYPED_TEST(PReluTest, saveparams_test)
+{
+  using DataType = typename TypeParam::Type;
+
+  TypeParam data(std::vector<typename TypeParam::SizeType>({5, 10, 2}));
+
+  fetch::math::SizeType in_size = 50u;
+  auto prelu_layer = std::make_shared<fetch::ml::layers::PRelu<TypeParam>>(in_size, "PRelu");
+
+  prelu_layer->SetInput("PRelu_Input", data);
+
+  TypeParam output = prelu_layer->Evaluate("PRelu_LeakyReluOp", true);
+
+  // extract saveparams
+  auto sp = prelu_layer->GetOpSaveableParams();
+
+  // downcast to correct type
+  auto dsp = std::dynamic_pointer_cast<typename fetch::ml::layers::PRelu<TypeParam>::SPType>(sp);
+
+  // serialize
+  fetch::serializers::MsgPackSerializer b;
+  b << *dsp;
+
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<typename fetch::ml::layers::PRelu<TypeParam>::SPType>();
+  b >> *dsp2;
+
+  // rebuild
+  auto prelu2 = fetch::ml::utilities::BuildLayerPrelu<TypeParam>(*dsp2);
+
+  prelu2->SetInput("PRelu_Input", data);
+  TypeParam output2 = prelu2->Evaluate("PRelu_LeakyReluOp", true);
+
+  ASSERT_TRUE(output.AllClose(output2, fetch::math::function_tolerance<DataType>(),
+                              fetch::math::function_tolerance<DataType>()));
 }

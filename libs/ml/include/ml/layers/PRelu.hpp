@@ -36,28 +36,30 @@ template <class T>
 class PRelu : public SubGraph<T>
 {
 public:
-  using ArrayType     = T;
-  using ArrayPtrType  = std::shared_ptr<ArrayType>;
-  using SizeType      = typename ArrayType::SizeType;
+  using TensorType    = T;
+  using ArrayPtrType  = std::shared_ptr<TensorType>;
+  using SizeType      = typename TensorType::SizeType;
   using WeightsInit   = fetch::ml::ops::WeightsInitialisation;
   using VecTensorType = typename SubGraph<T>::VecTensorType;
-  using SPType        = PReluSaveableParams<ArrayType>;
+  using SPType        = PReluSaveableParams<TensorType>;
+
+  PRelu() = default;
 
   explicit PRelu(std::uint64_t in, std::string const &name = "PRelu",
                  WeightsInit init_mode = WeightsInit::XAVIER_GLOROT)
   {
     std::string input =
-        this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Input", {});
+        this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Input", {});
 
     std::string alpha =
-        this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Alpha", {});
+        this->template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Alpha", {});
 
-    ArrayType alpha_data(std::vector<SizeType>({in, 1}));
-    fetch::ml::ops::Weights<ArrayType>::Initialise(alpha_data, in, in, init_mode);
+    TensorType alpha_data(std::vector<SizeType>({in, 1}));
+    fetch::ml::ops::Weights<TensorType>::Initialise(alpha_data, in, in, init_mode);
 
     this->SetInput(alpha, alpha_data);
 
-    std::string output = this->template AddNode<fetch::ml::ops::LeakyReluOp<ArrayType>>(
+    std::string output = this->template AddNode<fetch::ml::ops::LeakyReluOp<TensorType>>(
         name + "_LeakyReluOp", {input, alpha});
 
     this->AddInputNode(input);
@@ -65,21 +67,32 @@ public:
   }
 
   explicit PRelu(SPType const &gs)
-    : SubGraph<ArrayType>(gs)
+    : SubGraph<TensorType>(gs)
   {}
 
   std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
     // get base class saveable params
-    std::shared_ptr<SaveableParamsInterface> sgsp = SubGraph<ArrayType>::GetOpSaveableParams();
-    auto sg_ptr1 = std::dynamic_pointer_cast<typename SubGraph<ArrayType>::SPType>(sgsp);
+    std::shared_ptr<SaveableParamsInterface> sgsp = SubGraph<TensorType>::GetOpSaveableParams();
 
-    // assign base class saveable params to ret
-    auto ret     = std::make_shared<SPType>();
-    auto sg_ptr2 = std::static_pointer_cast<typename SubGraph<ArrayType>::SPType>(ret);
+    auto ret = std::make_shared<SPType>();
+
+    // copy graph saveable params over
+    auto g_ptr1 = std::dynamic_pointer_cast<typename Graph<TensorType>::SPType>(sgsp);
+    auto g_ptr2 = std::dynamic_pointer_cast<typename Graph<TensorType>::SPType>(ret);
+    *g_ptr2     = *g_ptr1;
+
+    // copy subgraph saveable params over
+    auto sg_ptr1 = std::dynamic_pointer_cast<typename SubGraph<TensorType>::SPType>(sgsp);
+    auto sg_ptr2 = std::dynamic_pointer_cast<typename SubGraph<TensorType>::SPType>(ret);
     *sg_ptr2     = *sg_ptr1;
 
     return ret;
+  }
+
+  void SetOpSaveableParams(SPType const &sp)
+  {
+    FETCH_UNUSED(sp);
   }
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override

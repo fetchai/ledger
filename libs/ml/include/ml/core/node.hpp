@@ -29,6 +29,7 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <ml/ops/leaky_relu_op.hpp>
 #include <string>
 #include <utility>
 #include <vector>
@@ -72,12 +73,9 @@ public:
   {}
 
   /**
-   * This method CANNOT be extended to include making any op that is a layer
-   */
-
-  /**
    * This is a convenience constructor for returning a Node with a specified operation type that
-   * uses default parameters
+   * uses default parameters.
+   * Note that this constructor cannot invoke layers since this would cause circular dependencies.
    */
   Node(OpType const &operation_type, std::string name)
     : name_(std::move(name))
@@ -88,6 +86,9 @@ public:
     {
     case ops::Abs<ArrayType>::OpCode():
       op_ptr_ = std::make_shared<fetch::ml::ops::Abs<ArrayType>>();
+      break;
+    case ops::LeakyReluOp<ArrayType>::OpCode():
+      op_ptr_ = std::make_shared<fetch::ml::ops::LeakyReluOp<ArrayType>>();
       break;
     case ops::PlaceHolder<ArrayType>::OpCode():
       op_ptr_ = std::make_shared<fetch::ml::ops::PlaceHolder<ArrayType>>();

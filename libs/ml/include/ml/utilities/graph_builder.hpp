@@ -117,6 +117,16 @@ std::shared_ptr<layers::Convolution2D<T>> BuildLayerConvolution2D(
   return ret;
 }
 
+template <typename T>
+std::shared_ptr<layers::PRelu<T>> BuildLayerPrelu(PReluSaveableParams<T> const &sp)
+{
+  auto ret = std::make_shared<layers::PRelu<T>>();
+  BuildSubGraph<T>(sp, ret);
+  ret->SetOpSaveableParams(sp);
+
+  return ret;
+}
+
 namespace {
 template <class OperationType>
 std::shared_ptr<OperationType> GetOp(std::shared_ptr<SaveableParamsInterface> op_save_params)
@@ -141,16 +151,6 @@ std::shared_ptr<Node<T>> BuildNode(NodeSaveableParams<T> const &nsp)
     op_ptr = GetOp<ops::Abs<T>>(nsp.op_save_params);
     break;
   }
-  case ops::PlaceHolder<T>::OpCode():
-  {
-    op_ptr = GetOp<ops::PlaceHolder<T>>(nsp.op_save_params);
-    break;
-  }
-  case ops::Weights<T>::OpCode():
-  {
-    op_ptr = GetOp<ops::Weights<T>>(nsp.op_save_params);
-    break;
-  }
   case ops::Convolution1D<T>::OpCode():
   {
     op_ptr = GetOp<ops::Convolution1D<T>>(nsp.op_save_params);
@@ -159,6 +159,21 @@ std::shared_ptr<Node<T>> BuildNode(NodeSaveableParams<T> const &nsp)
   case ops::Convolution2D<T>::OpCode():
   {
     op_ptr = GetOp<ops::Convolution2D<T>>(nsp.op_save_params);
+    break;
+  }
+  case ops::LeakyReluOp<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::LeakyReluOp<T>>(nsp.op_save_params);
+    break;
+  }
+  case ops::PlaceHolder<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::PlaceHolder<T>>(nsp.op_save_params);
+    break;
+  }
+  case ops::Weights<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::Weights<T>>(nsp.op_save_params);
     break;
   }
   case OpType::LAYER_CONVOLUTION_1D:
@@ -171,6 +186,12 @@ std::shared_ptr<Node<T>> BuildNode(NodeSaveableParams<T> const &nsp)
   {
     op_ptr = BuildLayerConvolution2D(
         *(std::dynamic_pointer_cast<ConvolutionLayer2DSaveableParams<T>>(nsp.op_save_params)));
+    break;
+  }
+  case OpType::LAYER_PRELU:
+  {
+    op_ptr = BuildLayerPrelu(
+        *(std::dynamic_pointer_cast<PReluSaveableParams<T>>(nsp.op_save_params)));
     break;
   }
   default:

@@ -82,6 +82,12 @@ void SerializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_type
     SerializeImplementation<TensorType, D, ml::LeakyReluSaveableParams<TensorType>>(map, code, op);
     break;
   }
+  case ml::OpType::LEAKY_RELU_OP:
+  {
+    SerializeImplementation<TensorType, D, ml::LeakyReluOpSaveableParams<TensorType>>(map, code,
+                                                                                      op);
+    break;
+  }
   case ml::OpType::RANDOMISED_RELU:
   {
     SerializeImplementation<TensorType, D, ml::RandomisedReluSaveableParams<TensorType>>(map, code,
@@ -143,6 +149,11 @@ void SerializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_type
         map, code, op);
     break;
   }
+  case ml::OpType::LAYER_PRELU:
+  {
+    SerializeImplementation<TensorType, D, ml::PReluSaveableParams<TensorType>>(map, code, op);
+    break;
+  }
   default:
   {
     throw std::runtime_error("Unknown type for Serialization");
@@ -177,6 +188,12 @@ void DeserializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_ty
   {
     op = DeserializeImplementation<TensorType, D, ml::LeakyReluSaveableParams<TensorType>>(map,
                                                                                            code);
+    break;
+  }
+  case ml::OpType::LEAKY_RELU_OP:
+  {
+    op = DeserializeImplementation<TensorType, D, ml::LeakyReluOpSaveableParams<TensorType>>(map,
+                                                                                             code);
     break;
   }
   case ml::OpType::RANDOMISED_RELU:
@@ -241,6 +258,11 @@ void DeserializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_ty
   {
     op = DeserializeImplementation<TensorType, D, ml::ConvolutionLayer2DSaveableParams<TensorType>>(
         map, code);
+    break;
+  }
+  case ml::OpType::LAYER_PRELU:
+  {
+    op = DeserializeImplementation<TensorType, D, ml::PReluSaveableParams<TensorType>>(map, code);
     break;
   }
   default:
@@ -1340,21 +1362,17 @@ struct MapSerializer<ml::PReluSaveableParams<TensorType>, D>
 
   static uint8_t const SUB_GRAPH = 1;
   static uint8_t const OP_CODE   = 2;
-  static uint8_t const IN_SIZE   = 3;
-  static uint8_t const OUT_SIZE  = 4;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(4);
+    auto map = map_constructor(2);
 
     // serialize parent class first
     auto base_pointer = static_cast<ml::SubGraphSaveableParams<TensorType> const *>(&sp);
     map.Append(SUB_GRAPH, *base_pointer);
 
     map.Append(OP_CODE, sp.op_type);
-    map.Append(IN_SIZE, sp.in_size);
-    map.Append(OUT_SIZE, sp.out_size);
   }
 
   template <typename MapDeserializer>
@@ -1364,8 +1382,6 @@ struct MapSerializer<ml::PReluSaveableParams<TensorType>, D>
     map.ExpectKeyGetValue(SUB_GRAPH, *base_pointer);
 
     map.ExpectKeyGetValue(OP_CODE, sp.op_type);
-    map.ExpectKeyGetValue(IN_SIZE, sp.in_size);
-    map.ExpectKeyGetValue(OUT_SIZE, sp.out_size);
   }
 };
 
