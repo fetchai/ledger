@@ -131,7 +131,7 @@ meta::IfIsMathArray<ArrayType, void> Switch(ArrayType const &mask, ArrayType con
   while (rit.is_valid())
   {
     assert((*mask_it == 1) || (*mask_it == 0));
-    *rit = (*mask_it ? *then_it : *else_it);
+    *rit = (*mask_it > 0) ? *then_it : *else_it;
     ++mask_it;
     ++then_it;
     ++else_it;
