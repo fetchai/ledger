@@ -107,6 +107,52 @@ void Sum(ArrayType const &obj1, typename ArrayType::Type &ret)
 }  // namespace details_vectorisation
 
 /**
+ * applies elementwise switch mask to arrays
+ * @tparam ArrayType
+ * @param mask : the condition boolean array
+ * @param then_array : if condition is true then
+ * @param else_array : if condition is not true then
+ * @param ret : return array
+ * @return
+ */
+template <typename ArrayType>
+meta::IfIsMathArray<ArrayType, void> Switch(ArrayType const &mask, ArrayType const &then_array,
+                                            ArrayType const &else_array, ArrayType &ret)
+{
+  assert(mask.size() == then_array.size());
+  assert(mask.size() == else_array.size());
+  assert(ret.size() == mask.size());
+
+  auto mask_it = mask.cbegin();
+  auto then_it = then_array.cbegin();
+  auto else_it = else_array.cbegin();
+  auto rit     = ret.begin();
+
+  while (rit.is_valid())
+  {
+    assert((*mask_it == 1) || (*mask_it == 0));
+    *rit = (*mask_it > 0) ? *then_it : *else_it;
+    ++mask_it;
+    ++then_it;
+    ++else_it;
+    ++rit;
+  }
+}
+
+/**
+ * applies elementwise switch mask to arrays
+ * @param x
+ */
+template <typename ArrayType>
+meta::IfIsMathArray<ArrayType, ArrayType> Switch(ArrayType const &mask, ArrayType const &then_array,
+                                                 ArrayType const &else_array)
+{
+  ArrayType ret(mask.shape());
+  Switch(mask, then_array, else_array, ret);
+  return ret;
+}
+
+/**
  * applies bit mask to one array storing result in new array
  * @param x
  */
@@ -114,6 +160,8 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> BooleanMask(ArrayType const &input_array,
                                                  ArrayType const &mask, ArrayType &ret)
 {
+  // TODO (#1453) this is a wrong implementation of boolean mask, the return array will always be
+  // all zero unless all conditions are true
   assert(input_array.size() == mask.size());
   assert(ret.size() >= typename ArrayType::SizeType(Sum(mask)));
 
