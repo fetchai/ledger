@@ -157,7 +157,7 @@ public:
     dropout_ = sp.dropout;
   }
 
-  virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     return inputs.front()->shape();
   }
