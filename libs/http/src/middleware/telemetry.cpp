@@ -68,7 +68,7 @@ void TelemetryData::Update(HTTPRequest const &request, HTTPResponse const &respo
   durations_->Add(path, request.GetDuration());
 
   // update the counters
-  status_counts_->Increment({{"path", path}, {"code", status_code}});
+  status_counts_->Increment({{"code", status_code}});
 }
 
 using TelemetryDataPtr = std::shared_ptr<TelemetryData>();
