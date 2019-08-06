@@ -137,7 +137,7 @@ Ptr<VMStateDict> VMGraph::StateDict()
 void VMGraph::Bind(Module &module)
 {
   module.CreateClassType<VMGraph>("Graph")
-      .CreateConstructor<>()
+      .CreateConstructor(&VMGraph::Constructor)
       .CreateMemberFunction("setInput", &VMGraph::SetInput)
       .CreateMemberFunction("evaluate", &VMGraph::Evaluate)
       .CreateMemberFunction("backPropagate", &VMGraph::BackPropagateError)

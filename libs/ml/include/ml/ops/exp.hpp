@@ -87,7 +87,7 @@ public:
 
   static constexpr OpType OpCode()
   {
-    return OpType::EXP;
+    return OpType::OP_EXP;
   }
   static constexpr char const *DESCRIPTOR = "Exp";
 };

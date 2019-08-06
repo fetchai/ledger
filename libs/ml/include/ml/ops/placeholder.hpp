@@ -54,7 +54,7 @@ public:
   std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
     SPType tp{};
-    tp.op_type = OpType::PLACEHOLDER;
+    tp.op_type = OpType::OP_PLACEHOLDER;
     if (output_)
     {
       tp.output = std::make_shared<ArrayType>(output_->Copy());
@@ -97,7 +97,7 @@ public:
 
   static constexpr OpType OpCode()
   {
-    return OpType::PLACEHOLDER;
+    return OpType::OP_PLACEHOLDER;
   }
 
   static constexpr char const *DESCRIPTOR = "PlaceHolder";

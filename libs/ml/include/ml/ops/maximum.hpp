@@ -114,7 +114,7 @@ public:
 
   static constexpr OpType OpCode()
   {
-    return OpType::MAXIMUM;
+    return OpType::OP_MAXIMUM;
   }
   static constexpr char const *DESCRIPTOR = "Maximum";
 };

@@ -50,6 +50,8 @@ public:
     return std::make_shared<SPType>();
   }
 
+  // for inputs to the add layer, if broadcasting is required, make sure the first input is the one
+  // with the complete shape
   void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(inputs.size() == 2);
@@ -87,7 +89,7 @@ public:
 
   static constexpr OpType OpCode()
   {
-    return OpType::ADD;
+    return OpType::OP_ADD;
   }
 
   static constexpr char const *DESCRIPTOR = "Add";

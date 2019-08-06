@@ -106,7 +106,7 @@ public:
 
   static constexpr OpType OpCode()
   {
-    return OpType::ELU;
+    return OpType::OP_ELU;
   }
   static constexpr char const *DESCRIPTOR = "Elu";
 

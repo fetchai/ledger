@@ -39,7 +39,7 @@ using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 TYPED_TEST_CASE(SerializersTest, MyTypes);
 //
-//TYPED_TEST(SerializersTest, serialize_empty_state_dict)
+// TYPED_TEST(SerializersTest, serialize_empty_state_dict)
 //{
 //  fetch::ml::StateDict<TypeParam>       sd1;
 //  fetch::serializers::MsgPackSerializer b;
@@ -50,7 +50,7 @@ TYPED_TEST_CASE(SerializersTest, MyTypes);
 //  EXPECT_EQ(sd1, sd2);
 //}
 //
-//TYPED_TEST(SerializersTest, serialize_state_dict)
+// TYPED_TEST(SerializersTest, serialize_state_dict)
 //{
 //  // Generate a plausible state dict out of a fully connected layer
 //  fetch::ml::layers::FullyConnected<TypeParam> fc(10, 10);
@@ -63,7 +63,7 @@ TYPED_TEST_CASE(SerializersTest, MyTypes);
 //  EXPECT_EQ(sd1, sd2);
 //}
 //
-//TYPED_TEST(SerializersTest, serialize_empty_graph_saveable_params)
+// TYPED_TEST(SerializersTest, serialize_empty_graph_saveable_params)
 //{
 //  fetch::ml::GraphSaveableParams<TypeParam> gsp1;
 //  fetch::serializers::MsgPackSerializer     b;

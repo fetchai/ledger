@@ -134,7 +134,7 @@ public:
 
   static constexpr OpType OpCode()
   {
-    return OpType::DROPOUT;
+    return OpType::OP_DROPOUT;
   }
   static constexpr char const *DESCRIPTOR = "Dropout";
 

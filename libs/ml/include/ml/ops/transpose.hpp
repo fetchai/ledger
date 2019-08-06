@@ -113,7 +113,7 @@ public:
 
   static constexpr OpType OpCode()
   {
-    return OpType::TRANSPOSE;
+    return OpType::OP_TRANSPOSE;
   }
   static constexpr char const *DESCRIPTOR = "Transpose";
 };

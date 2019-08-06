@@ -91,7 +91,7 @@ public:
 
   static constexpr OpType OpCode()
   {
-    return OpType::FLATTEN;
+    return OpType::OP_FLATTEN;
   }
   static constexpr char const *DESCRIPTOR = "Flatten";
 

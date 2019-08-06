@@ -86,7 +86,7 @@ public:
 
   static constexpr OpType OpCode()
   {
-    return OpType::LOG;
+    return OpType::OP_LOG;
   }
   static constexpr char const *DESCRIPTOR = "Log";
 };

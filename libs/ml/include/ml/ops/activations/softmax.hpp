@@ -121,7 +121,7 @@ public:
 
   static constexpr OpType OpCode()
   {
-    return OpType::SOFTMAX;
+    return OpType::OP_SOFTMAX;
   }
   static constexpr char const *DESCRIPTOR = "Softmax";
 

@@ -97,7 +97,7 @@ public:
 
   static constexpr OpType OpCode()
   {
-    return OpType::TANH;
+    return OpType::OP_TANH;
   }
 
   static constexpr char const *DESCRIPTOR = "TanH";

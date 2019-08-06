@@ -107,7 +107,7 @@ public:
 
   static constexpr OpType OpCode()
   {
-    return OpType::LEAKY_RELU;
+    return OpType::OP_LEAKY_RELU;
   }
   static constexpr char const *DESCRIPTOR = "LeakyRelu";
 

@@ -205,7 +205,7 @@ public:
 
   static constexpr OpType OpCode()
   {
-    return OpType::MAX_POOL_2D;
+    return OpType::OP_MAX_POOL_2D;
   }
   static constexpr char const *DESCRIPTOR = "MaxPool2D";
 

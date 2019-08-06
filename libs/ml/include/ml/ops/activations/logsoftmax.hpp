@@ -96,7 +96,7 @@ public:
 
   static constexpr OpType OpCode()
   {
-    return OpType::LOGSOFTMAX;
+    return OpType::OP_LOGSOFTMAX;
   }
   static constexpr char const *DESCRIPTOR = "LogSoftmax";
 

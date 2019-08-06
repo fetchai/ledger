@@ -102,7 +102,7 @@ public:
 
   static constexpr OpType OpCode()
   {
-    return OpType::PRELU;
+    return OpType::LAYER_PRELU;
   }
 
   static constexpr char const *DESCRIPTOR = "ParametricRelu";

@@ -92,13 +92,13 @@ TYPED_TEST(PReluTest, node_forward_test)  // Use the class as a Node
 {
   TypeParam data(std::vector<typename TypeParam::SizeType>({5, 10, 2}));
   auto      placeholder_node =
-      std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::PLACEHOLDER, "Input");
+      std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::OP_PLACEHOLDER, "Input");
   auto placeholder_op_ptr =
       std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder_node->GetOp());
   placeholder_op_ptr->SetData(data);
 
   fetch::math::SizeType in_size = 50u;
-  auto prelu_node = fetch::ml::Node<TypeParam>(fetch::ml::OpType::PRELU, "PRelu", [in_size]() {
+  auto prelu_node = fetch::ml::Node<TypeParam>(fetch::ml::OpType::OP_PRELU, "PRelu", [in_size]() {
     return std::make_shared<fetch::ml::layers::PRelu<TypeParam>>(in_size, "PRelu");
   });
   prelu_node.AddInput(placeholder_node);
@@ -114,13 +114,13 @@ TYPED_TEST(PReluTest, node_backward_test)  // Use the class as a Node
 {
   TypeParam data({5, 10, 2});
   auto      placeholder_node =
-      std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::PLACEHOLDER, "Input");
+      std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::OP_PLACEHOLDER, "Input");
   auto placeholder_op_ptr =
       std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder_node->GetOp());
   placeholder_op_ptr->SetData(data);
 
   fetch::math::SizeType in_size = 50u;
-  auto prelu_node = fetch::ml::Node<TypeParam>(fetch::ml::OpType::PRELU, "PRelu", [in_size]() {
+  auto prelu_node = fetch::ml::Node<TypeParam>(fetch::ml::OpType::OP_PRELU, "PRelu", [in_size]() {
     return std::make_shared<fetch::ml::layers::PRelu<TypeParam>>(in_size);
   });
   prelu_node.AddInput(placeholder_node);
@@ -195,7 +195,8 @@ TYPED_TEST(PReluTest, saveparams_test)
   b >> *dsp2;
 
   // rebuild
-  auto prelu2 = fetch::ml::utilities::BuildLayerPrelu<TypeParam>(*dsp2);
+  auto prelu2 =
+      fetch::ml::utilities::BuildLayer<TypeParam, fetch::ml::layers::PRelu<TypeParam>>(*dsp2);
 
   prelu2->SetInput("PRelu_Input", data);
   TypeParam output2 = prelu2->Evaluate("PRelu_LeakyReluOp", true);

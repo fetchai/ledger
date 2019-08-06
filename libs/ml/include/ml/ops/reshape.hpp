@@ -93,7 +93,7 @@ public:
 
   static constexpr OpType OpCode()
   {
-    return OpType::RESHAPE;
+    return OpType::OP_RESHAPE;
   }
   static constexpr char const *DESCRIPTOR = "Reshape";
 

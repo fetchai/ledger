@@ -78,7 +78,7 @@ public:
 
   static constexpr OpType OpCode()
   {
-    return OpType::SUBTRACT;
+    return OpType::OP_SUBTRACT;
   }
   static constexpr char const *DESCRIPTOR = "Subtract";
 };

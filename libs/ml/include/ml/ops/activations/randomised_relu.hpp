@@ -137,7 +137,7 @@ public:
 
   static constexpr OpType OpCode()
   {
-    return OpType::RANDOMISED_RELU;
+    return OpType::OP_RANDOMISED_RELU;
   }
   static constexpr char const *DESCRIPTOR = "RandomisedRelu";
 

@@ -89,7 +89,7 @@ public:
 
   static constexpr OpType OpCode()
   {
-    return OpType::SQRT;
+    return OpType::OP_SQRT;
   }
   static constexpr char const *DESCRIPTOR = "Sqrt";
 };

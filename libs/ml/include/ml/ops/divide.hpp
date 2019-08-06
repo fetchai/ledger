@@ -129,7 +129,7 @@ public:
 
   static constexpr OpType OpCode()
   {
-    return OpType::DIVIDE;
+    return OpType::OP_DIVIDE;
   }
   static constexpr char const *DESCRIPTOR = "Divide";
 };

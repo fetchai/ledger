@@ -125,7 +125,7 @@ public:
 
   static constexpr OpType OpCode()
   {
-    return OpType::SKIP_GRAM;
+    return OpType::LAYER_SKIP_GRAM;
   }
 
   static constexpr char const *DESCRIPTOR = "SkipGram";

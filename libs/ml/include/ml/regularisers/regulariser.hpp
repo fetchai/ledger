@@ -41,7 +41,7 @@ public:
     : reg_type(rt)
   {}
 
-  virtual ~Regulariser()                                                            = default;
+  virtual ~Regulariser() = default;
   virtual void ApplyRegularisation(ArrayType &weight, DataType regularisation_rate)
   {
     FETCH_UNUSED(weight);

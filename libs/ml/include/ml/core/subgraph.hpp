@@ -96,21 +96,35 @@ std::vector<T> SubGraph<T>::Backward(VecTensorType const &inputs, TensorType con
 {
   assert(inputs.size() == this->input_node_names_.size());
   FETCH_UNUSED(inputs);
+
   std::vector<std::pair<Node<T> *, TensorType>> non_back_prop_err_signal =
       this->nodes_[output_node_name_]->BackPropagateSignal(error_signal);
   std::vector<TensorType> back_prop_err_signal;
 
-  for (std::string const &s : input_node_names_)
+  // aggregate the error to each input, if there are more than one error signal for one input
+  for (std::size_t i = 0; i < input_node_names_.size(); i++)
   {
-    std::shared_ptr<Node<T>> node = this->nodes_[s];
+    std::shared_ptr<Node<T>> node     = this->nodes_[input_node_names_[i]];
+    bool                     is_first = true;
     for (auto const &grad : non_back_prop_err_signal)
     {
       if (grad.first == node.get())
       {
-        back_prop_err_signal.emplace_back(grad.second);
+        if (is_first)
+        {
+          back_prop_err_signal.emplace_back(grad.second);
+          is_first = false;
+        }
+        else
+        {
+          fetch::math::Add(back_prop_err_signal.at(i), grad.second, back_prop_err_signal.at(i));
+        }
       }
     }
+    // make sure every input node has at least one error signal
+    assert(!is_first);
   }
+
   return back_prop_err_signal;
 }
 

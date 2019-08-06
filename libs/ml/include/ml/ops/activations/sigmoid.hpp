@@ -90,7 +90,7 @@ public:
 
   static constexpr OpType OpCode()
   {
-    return OpType::SIGMOID;
+    return OpType::OP_SIGMOID;
   }
   static constexpr char const *DESCRIPTOR = "Sigmoid";
 

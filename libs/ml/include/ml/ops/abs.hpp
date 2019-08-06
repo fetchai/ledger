@@ -107,7 +107,7 @@ public:
 
   static constexpr OpType OpCode()
   {
-    return OpType::ABS;
+    return OpType::OP_ABS;
   }
 
   static constexpr char const *DESCRIPTOR = "Abs";

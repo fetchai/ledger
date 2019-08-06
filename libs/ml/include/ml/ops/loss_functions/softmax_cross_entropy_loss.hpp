@@ -93,7 +93,7 @@ public:
 
   static constexpr OpType OpCode()
   {
-    return OpType::SOFTMAX_CROSS_ENTROPY_LOSS;
+    return OpType::OP_SOFTMAX_CROSS_ENTROPY_LOSS;
   }
   static constexpr char const *DESCRIPTOR = "SoftmaxCrossEntropyLoss";
 };

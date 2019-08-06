@@ -68,7 +68,7 @@ public:
 
   static constexpr OpType OpCode()
   {
-    return OpType::CONVOLUTION_1D;
+    return OpType::OP_CONVOLUTION_1D;
   }
   static constexpr char const *DESCRIPTOR = "Convolution1D";
 

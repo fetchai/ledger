@@ -60,7 +60,7 @@ public:
 
   static constexpr OpType OpCode()
   {
-    return OpType::MATRIX_MULTIPLY;
+    return OpType::OP_MATRIX_MULTIPLY;
   }
   static constexpr char const *DESCRIPTOR = "MatrixMultiply";
 

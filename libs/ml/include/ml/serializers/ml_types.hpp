@@ -61,94 +61,93 @@ void SerializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_type
 {
   switch (op_type)
   {
-  case ml::OpType::ADD:
+  case ml::OpType::OP_ADD:
   {
     SerializeImplementation<TensorType, D, ml::AddSaveableParams<TensorType>>(map, code, op);
     break;
   }
-  case ml::OpType::PLACEHOLDER:
+  case ml::OpType::OP_PLACEHOLDER:
   {
     SerializeImplementation<TensorType, D, ml::PlaceholderSaveableParams<TensorType>>(map, code,
                                                                                       op);
     break;
   }
-  case ml::OpType::WEIGHTS:
+  case ml::OpType::OP_WEIGHTS:
   {
     SerializeImplementation<TensorType, D, ml::WeightsSaveableParams<TensorType>>(map, code, op);
     break;
   }
-  case ml::OpType::DROPOUT:
+  case ml::OpType::OP_DROPOUT:
   {
     SerializeImplementation<TensorType, D, ml::DropoutSaveableParams<TensorType>>(map, code, op);
     break;
   }
-  case ml::OpType::FLATTEN:
+  case ml::OpType::OP_FLATTEN:
   {
     SerializeImplementation<TensorType, D, ml::FlattenSaveableParams<TensorType>>(map, code, op);
     break;
   }
-  case ml::OpType::LEAKY_RELU:
+  case ml::OpType::OP_LEAKY_RELU:
   {
     SerializeImplementation<TensorType, D, ml::LeakyReluSaveableParams<TensorType>>(map, code, op);
     break;
   }
-  case ml::OpType::LEAKY_RELU_OP:
+  case ml::OpType::OP_LEAKY_RELU_OP:
   {
     SerializeImplementation<TensorType, D, ml::LeakyReluOpSaveableParams<TensorType>>(map, code,
                                                                                       op);
     break;
   }
-  case ml::OpType::RANDOMISED_RELU:
+  case ml::OpType::OP_RANDOMISED_RELU:
   {
     SerializeImplementation<TensorType, D, ml::RandomisedReluSaveableParams<TensorType>>(map, code,
                                                                                          op);
     break;
   }
-  case ml::OpType::RELU:
+  case ml::OpType::OP_RELU:
   {
-    SerializeImplementation<TensorType, D, ml::ReluSaveableParams<TensorType>>(map, code,
-                                                                                         op);
+    SerializeImplementation<TensorType, D, ml::ReluSaveableParams<TensorType>>(map, code, op);
     break;
   }
-  case ml::OpType::SOFTMAX:
+  case ml::OpType::OP_SOFTMAX:
   {
     SerializeImplementation<TensorType, D, ml::SoftmaxSaveableParams<TensorType>>(map, code, op);
     break;
   }
-  case ml::OpType::CONVOLUTION_1D:
+  case ml::OpType::OP_CONVOLUTION_1D:
   {
     SerializeImplementation<TensorType, D, ml::Convolution1DSaveableParams<TensorType>>(map, code,
                                                                                         op);
     break;
   }
-  case ml::OpType::CONVOLUTION_2D:
+  case ml::OpType::OP_CONVOLUTION_2D:
   {
     SerializeImplementation<TensorType, D, ml::Convolution2DSaveableParams<TensorType>>(map, code,
                                                                                         op);
     break;
   }
-  case ml::OpType::MATRIX_MULTIPLY:
+  case ml::OpType::OP_MATRIX_MULTIPLY:
   {
     SerializeImplementation<TensorType, D, ml::MatrixMultiplySaveableParams<TensorType>>(map, code,
                                                                                          op);
     break;
   }
-  case ml::OpType::MAX_POOL_1D:
+  case ml::OpType::OP_MAX_POOL_1D:
   {
     SerializeImplementation<TensorType, D, ml::MaxPool1DSaveableParams<TensorType>>(map, code, op);
     break;
   }
-  case ml::OpType::MAX_POOL_2D:
+  case ml::OpType::OP_MAX_POOL_2D:
   {
     SerializeImplementation<TensorType, D, ml::MaxPool2DSaveableParams<TensorType>>(map, code, op);
     break;
   }
-  case ml::OpType::TRANSPOSE:
+  case ml::OpType::OP_TRANSPOSE:
   {
     SerializeImplementation<TensorType, D, ml::TransposeSaveableParams<TensorType>>(map, code, op);
     break;
   }
-  case ml::OpType::RESHAPE:
+  case ml::OpType::OP_RESHAPE:
   {
     SerializeImplementation<TensorType, D, ml::ReshapeSaveableParams<TensorType>>(map, code, op);
     break;
@@ -176,10 +175,10 @@ void SerializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_type
     SerializeImplementation<TensorType, D, ml::PReluSaveableParams<TensorType>>(map, code, op);
     break;
   }
-  case ml::OpType::LAYER_SELF_ATTENTION:
+  case ml::OpType::LAYER_SELF_ATTENTION_ENCODER:
   {
-    SerializeImplementation<TensorType, D, ml::SelfAttentionSaveableParams<TensorType>>(map, code,
-                                                                                        op);
+    SerializeImplementation<TensorType, D, ml::SelfAttentionEncoderSaveableParams<TensorType>>(
+        map, code, op);
     break;
   }
   default:
@@ -196,98 +195,97 @@ void DeserializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_ty
 
   switch (op_type)
   {
-  case ml::OpType::ADD:
+  case ml::OpType::OP_ADD:
   {
     op = DeserializeImplementation<TensorType, D, ml::AddSaveableParams<TensorType>>(map, code);
     break;
   }
-  case ml::OpType::PLACEHOLDER:
+  case ml::OpType::OP_PLACEHOLDER:
   {
     op = DeserializeImplementation<TensorType, D, ml::PlaceholderSaveableParams<TensorType>>(map,
                                                                                              code);
     break;
   }
-  case ml::OpType::WEIGHTS:
+  case ml::OpType::OP_WEIGHTS:
   {
     op = DeserializeImplementation<TensorType, D, ml::WeightsSaveableParams<TensorType>>(map, code);
     break;
   }
-  case ml::OpType::DROPOUT:
+  case ml::OpType::OP_DROPOUT:
   {
     op = DeserializeImplementation<TensorType, D, ml::DropoutSaveableParams<TensorType>>(map, code);
     break;
   }
-  case ml::OpType::FLATTEN:
+  case ml::OpType::OP_FLATTEN:
   {
     op = DeserializeImplementation<TensorType, D, ml::FlattenSaveableParams<TensorType>>(map, code);
     break;
   }
-  case ml::OpType::LEAKY_RELU:
+  case ml::OpType::OP_LEAKY_RELU:
   {
     op = DeserializeImplementation<TensorType, D, ml::LeakyReluSaveableParams<TensorType>>(map,
                                                                                            code);
     break;
   }
-  case ml::OpType::LEAKY_RELU_OP:
+  case ml::OpType::OP_LEAKY_RELU_OP:
   {
     op = DeserializeImplementation<TensorType, D, ml::LeakyReluOpSaveableParams<TensorType>>(map,
                                                                                              code);
     break;
   }
-  case ml::OpType::MATRIX_MULTIPLY:
+  case ml::OpType::OP_MATRIX_MULTIPLY:
   {
     op = DeserializeImplementation<TensorType, D, ml::MatrixMultiplySaveableParams<TensorType>>(
         map, code);
     break;
   }
-  case ml::OpType::RANDOMISED_RELU:
+  case ml::OpType::OP_RANDOMISED_RELU:
   {
     op = DeserializeImplementation<TensorType, D, ml::RandomisedReluSaveableParams<TensorType>>(
         map, code);
     break;
   }
-  case ml::OpType::RELU:
+  case ml::OpType::OP_RELU:
   {
-    op = DeserializeImplementation<TensorType, D, ml::ReluSaveableParams<TensorType>>(
-        map, code);
+    op = DeserializeImplementation<TensorType, D, ml::ReluSaveableParams<TensorType>>(map, code);
     break;
   }
-  case ml::OpType::SOFTMAX:
+  case ml::OpType::OP_SOFTMAX:
   {
     op = DeserializeImplementation<TensorType, D, ml::SoftmaxSaveableParams<TensorType>>(map, code);
     break;
   }
-  case ml::OpType::CONVOLUTION_1D:
+  case ml::OpType::OP_CONVOLUTION_1D:
   {
     op = DeserializeImplementation<TensorType, D, ml::Convolution1DSaveableParams<TensorType>>(
         map, code);
     break;
   }
-  case ml::OpType::CONVOLUTION_2D:
+  case ml::OpType::OP_CONVOLUTION_2D:
   {
     op = DeserializeImplementation<TensorType, D, ml::Convolution2DSaveableParams<TensorType>>(
         map, code);
     break;
   }
-  case ml::OpType::MAX_POOL_1D:
+  case ml::OpType::OP_MAX_POOL_1D:
   {
     op = DeserializeImplementation<TensorType, D, ml::MaxPool1DSaveableParams<TensorType>>(map,
                                                                                            code);
     break;
   }
-  case ml::OpType::MAX_POOL_2D:
+  case ml::OpType::OP_MAX_POOL_2D:
   {
     op = DeserializeImplementation<TensorType, D, ml::MaxPool2DSaveableParams<TensorType>>(map,
                                                                                            code);
     break;
   }
-  case ml::OpType::TRANSPOSE:
+  case ml::OpType::OP_TRANSPOSE:
   {
     op = DeserializeImplementation<TensorType, D, ml::TransposeSaveableParams<TensorType>>(map,
                                                                                            code);
     break;
   }
-  case ml::OpType::RESHAPE:
+  case ml::OpType::OP_RESHAPE:
   {
     op = DeserializeImplementation<TensorType, D, ml::ReshapeSaveableParams<TensorType>>(map, code);
     break;
@@ -315,10 +313,10 @@ void DeserializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_ty
     op = DeserializeImplementation<TensorType, D, ml::PReluSaveableParams<TensorType>>(map, code);
     break;
   }
-  case ml::OpType::LAYER_SELF_ATTENTION:
+  case ml::OpType::LAYER_SELF_ATTENTION_ENCODER:
   {
-    op = DeserializeImplementation<TensorType, D, ml::SelfAttentionSaveableParams<TensorType>>(
-        map, code);
+    op = DeserializeImplementation<TensorType, D,
+                                   ml::SelfAttentionEncoderSaveableParams<TensorType>>(map, code);
     break;
   }
   default:
@@ -1545,28 +1543,36 @@ struct MapSerializer<ml::ReshapeSaveableParams<TensorType>, D>
  * @tparam TensorType
  */
 template <typename TensorType, typename D>
-struct MapSerializer<ml::SelfAttentionSaveableParams<TensorType>, D>
+struct MapSerializer<ml::SelfAttentionEncoderSaveableParams<TensorType>, D>
 {
-  using Type       = ml::SelfAttentionSaveableParams<TensorType>;
+  using Type       = ml::SelfAttentionEncoderSaveableParams<TensorType>;
   using DriverType = D;
 
-  static uint8_t const SUB_GRAPH = 1;
-  static uint8_t const OP_CODE   = 2;
-  static uint8_t const IN_SIZE   = 3;
-  static uint8_t const OUT_SIZE  = 4;
+  static uint8_t const SUB_GRAPH           = 1;
+  static uint8_t const OP_CODE             = 2;
+  static uint8_t const N_HEADS             = 3;
+  static uint8_t const MODEL_DIM           = 4;
+  static uint8_t const FF_DIM              = 5;
+  static uint8_t const RESIDUAL_DROPOUT    = 6;
+  static uint8_t const ATTENTION_DROPOUT   = 7;
+  static uint8_t const FEEDFORWARD_DROPOUT = 8;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(4);
+    auto map = map_constructor(8);
 
     // serialize parent class first
     auto base_pointer = static_cast<ml::SubGraphSaveableParams<TensorType> const *>(&sp);
     map.Append(SUB_GRAPH, *base_pointer);
 
     map.Append(OP_CODE, sp.op_type);
-    map.Append(IN_SIZE, sp.in_size);
-    map.Append(OUT_SIZE, sp.out_size);
+    map.Append(N_HEADS, sp.n_heads);
+    map.Append(MODEL_DIM, sp.model_dim);
+    map.Append(FF_DIM, sp.ff_dim);
+    map.Append(RESIDUAL_DROPOUT, sp.residual_dropout);
+    map.Append(ATTENTION_DROPOUT, sp.attention_dropout);
+    map.Append(FEEDFORWARD_DROPOUT, sp.feedforward_dropout);
   }
 
   template <typename MapDeserializer>
@@ -1576,8 +1582,12 @@ struct MapSerializer<ml::SelfAttentionSaveableParams<TensorType>, D>
     map.ExpectKeyGetValue(SUB_GRAPH, *base_pointer);
 
     map.ExpectKeyGetValue(OP_CODE, sp.op_type);
-    map.ExpectKeyGetValue(IN_SIZE, sp.in_size);
-    map.ExpectKeyGetValue(OUT_SIZE, sp.out_size);
+    map.ExpectKeyGetValue(N_HEADS, sp.n_heads);
+    map.ExpectKeyGetValue(MODEL_DIM, sp.model_dim);
+    map.ExpectKeyGetValue(FF_DIM, sp.ff_dim);
+    map.ExpectKeyGetValue(RESIDUAL_DROPOUT, sp.residual_dropout);
+    map.ExpectKeyGetValue(ATTENTION_DROPOUT, sp.attention_dropout);
+    map.ExpectKeyGetValue(FEEDFORWARD_DROPOUT, sp.feedforward_dropout);
   }
 };
 

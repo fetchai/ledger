@@ -178,7 +178,7 @@ public:
 
   static constexpr OpType OpCode()
   {
-    return OpType::EMBEDDINGS;
+    return OpType::OP_EMBEDDINGS;
   }
   static constexpr char const *DESCRIPTOR = "Embedding";
 

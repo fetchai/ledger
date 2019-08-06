@@ -30,6 +30,7 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <ml/ops/layer_norm.hpp>
 #include <ml/ops/leaky_relu_op.hpp>
 #include <string>
 #include <utility>
@@ -87,6 +88,9 @@ public:
     {
     case ops::Abs<ArrayType>::OpCode():
       op_ptr_ = std::make_shared<fetch::ml::ops::Abs<ArrayType>>();
+      break;
+    case ops::LayerNorm<ArrayType>::OpCode():
+      op_ptr_ = std::make_shared<fetch::ml::ops::LayerNorm<ArrayType>>();
       break;
     case ops::LeakyReluOp<ArrayType>::OpCode():
       op_ptr_ = std::make_shared<fetch::ml::ops::LeakyReluOp<ArrayType>>();
