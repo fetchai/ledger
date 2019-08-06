@@ -22,6 +22,7 @@
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
+#include "ml/serializers/ml_types.hpp"
 
 template <typename T>
 class SelfAttentionEncoder : public ::testing::Test
@@ -79,18 +80,18 @@ TYPED_TEST(SelfAttentionEncoder, saveparams_test)
 {
   using DataType = typename TypeParam::Type;
 
-  TypeParam data(std::vector<typename TypeParam::SizeType>({5, 10, 2}));
+  TypeParam data(std::vector<typename TypeParam::SizeType>({12, 25, 4}));
 
-  fetch::math::SizeType in_size     = 50u;
-  fetch::math::SizeType out_size    = 42u;
-  fetch::math::SizeType hidden_size = 10u;
+  fetch::math::SizeType n_heads   = 4;
+  fetch::math::SizeType model_dim = 12;
+  fetch::math::SizeType ff_dim    = 24;
 
   auto sa_layer = std::make_shared<fetch::ml::layers::SelfAttentionEncoder<TypeParam>>(
-      in_size, out_size, hidden_size, "SelfAttention");
+      n_heads, model_dim, ff_dim);
 
-  sa_layer->SetInput("SelfAttention_Input", data);
+  sa_layer->SetInput("SelfAttentionEncoder_Input", data);
 
-  TypeParam output = sa_layer->Evaluate("SelfAttention_OutputFC", true);
+  TypeParam output = sa_layer->Evaluate("SelfAttentionEncoder_Feedforward_Residual", true);
 
   // extract saveparams
   auto sp = sa_layer->GetOpSaveableParams();
@@ -114,8 +115,8 @@ TYPED_TEST(SelfAttentionEncoder, saveparams_test)
       fetch::ml::utilities::BuildLayer<TypeParam,
                                        fetch::ml::layers::SelfAttentionEncoder<TypeParam>>(*dsp2);
 
-  sa2->SetInput("SelfAttention_Input", data);
-  TypeParam output2 = sa2->Evaluate("SelfAttention_OutputFC", true);
+  sa2->SetInput("SelfAttentionEncoder_Input", data);
+  TypeParam output2 = sa2->Evaluate("SelfAttentionEncoder_Feedforward_Residual", true);
 
   ASSERT_TRUE(output.AllClose(output2, fetch::math::function_tolerance<DataType>(),
                               fetch::math::function_tolerance<DataType>()));
