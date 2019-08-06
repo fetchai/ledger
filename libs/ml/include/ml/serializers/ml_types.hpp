@@ -63,8 +63,7 @@ void SerializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_type
   {
   case ml::OpType::ADD:
   {
-    SerializeImplementation<TensorType, D, ml::AddSaveableParams<TensorType>>(map, code,
-                                                                                      op);
+    SerializeImplementation<TensorType, D, ml::AddSaveableParams<TensorType>>(map, code, op);
     break;
   }
   case ml::OpType::PLACEHOLDER:
@@ -124,7 +123,8 @@ void SerializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_type
   }
   case ml::OpType::MATRIX_MULTIPLY:
   {
-    SerializeImplementation<TensorType, D, ml::MatrixMultiplySaveableParams<TensorType>>(map, code, op);
+    SerializeImplementation<TensorType, D, ml::MatrixMultiplySaveableParams<TensorType>>(map, code,
+                                                                                         op);
     break;
   }
   case ml::OpType::MAX_POOL_1D:
@@ -192,8 +192,7 @@ void DeserializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_ty
   {
   case ml::OpType::ADD:
   {
-    op = DeserializeImplementation<TensorType, D, ml::AddSaveableParams<TensorType>>(map,
-                                                                                             code);
+    op = DeserializeImplementation<TensorType, D, ml::AddSaveableParams<TensorType>>(map, code);
     break;
   }
   case ml::OpType::PLACEHOLDER:
@@ -231,8 +230,8 @@ void DeserializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_ty
   }
   case ml::OpType::MATRIX_MULTIPLY:
   {
-    op = DeserializeImplementation<TensorType, D, ml::MatrixMultiplySaveableParams<TensorType>>(map,
-                                                                                             code);
+    op = DeserializeImplementation<TensorType, D, ml::MatrixMultiplySaveableParams<TensorType>>(
+        map, code);
     break;
   }
   case ml::OpType::RANDOMISED_RELU:
