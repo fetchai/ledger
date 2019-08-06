@@ -41,18 +41,18 @@ template <class T>
 class FullyConnected : public SubGraph<T>
 {
 public:
-  using ArrayType     = T;
-  using ArrayPtrType  = std::shared_ptr<ArrayType>;
-  using SizeType      = typename ArrayType::SizeType;
-  using DataType      = typename ArrayType::Type;
+  using TensorType     = T;
+  using ArrayPtrType  = std::shared_ptr<TensorType>;
+  using SizeType      = typename TensorType::SizeType;
+  using DataType      = typename TensorType::Type;
   using WeightsInit   = fetch::ml::ops::WeightsInitialisation;
   using VecTensorType = typename SubGraph<T>::VecTensorType;
-  using SPType        = FullyConnectedSaveableParams<ArrayType>;
+  using SPType        = FullyConnectedSaveableParams<TensorType>;
 
-  using OpPtrType      = typename std::shared_ptr<fetch::ml::ops::Ops<ArrayType>>;
-  using GraphType      = typename fetch::ml::Graph<ArrayType>;
+  using OpPtrType      = typename std::shared_ptr<fetch::ml::ops::Ops<TensorType>>;
+  using GraphType      = typename fetch::ml::Graph<TensorType>;
   using GraphPtrType   = typename std::shared_ptr<GraphType>;
-  using WeightsType    = typename fetch::ml::ops::Weights<ArrayType>;
+  using WeightsType    = typename fetch::ml::ops::Weights<TensorType>;
   using WeightsPtrType = typename std::shared_ptr<WeightsType>;
 
   FullyConnected() = default;
@@ -116,10 +116,10 @@ public:
   {
     // initialize weight with specified method
     std::string name = DESCRIPTOR;
-    ArrayType   weights_data(std::vector<SizeType>({out_size_, in_size_}));
+    TensorType   weights_data(std::vector<SizeType>({out_size_, in_size_}));
     this->Initialise(weights_data, init_mode);
     this->SetInput(name + "_Weights", weights_data);
-    ArrayType bias_data(std::vector<SizeType>({out_size_, 1}));
+    TensorType bias_data(std::vector<SizeType>({out_size_, 1}));
     this->SetInput(name + "_Bias", bias_data);
   }
 
@@ -157,16 +157,16 @@ public:
   {
     std::string name = DESCRIPTOR;
     std::string input =
-        this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Input", {});
+        this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Input", {});
     std::string flat_input =
-        this->template AddNode<fetch::ml::ops::Flatten<ArrayType>>(name + "_Flatten", {input});
+        this->template AddNode<fetch::ml::ops::Flatten<TensorType>>(name + "_Flatten", {input});
     std::string weights =
-        this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Weights", {});
-    std::string weights_matmul = this->template AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>(
+        this->template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Weights", {});
+    std::string weights_matmul = this->template AddNode<fetch::ml::ops::MatrixMultiply<TensorType>>(
         name + "_MatrixMultiply", {weights, flat_input});
     std::string bias =
-        this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Bias", {});
-    std::string output = this->template AddNode<fetch::ml::ops::Add<ArrayType>>(
+        this->template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Bias", {});
+    std::string output = this->template AddNode<fetch::ml::ops::Add<TensorType>>(
         name + "_Add", {weights_matmul, bias});
 
     output = fetch::ml::details::AddActivationNode<T>(activation_type, this, name + "_Activation",
@@ -192,19 +192,31 @@ public:
 
   std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
+    auto ret     = std::make_shared<SPType>();
     // get base class saveable params
-    std::shared_ptr<SaveableParamsInterface> sgsp = SubGraph<ArrayType>::GetOpSaveableParams();
-    auto sg_ptr1 = std::dynamic_pointer_cast<typename SubGraph<ArrayType>::SPType>(sgsp);
+    std::shared_ptr<SaveableParamsInterface> sgsp = SubGraph<TensorType>::GetOpSaveableParams();
+
+    // copy graph saveable params over
+    auto g_ptr1 = std::dynamic_pointer_cast<typename Graph<TensorType>::SPType>(sgsp);
+    auto g_ptr2 = std::dynamic_pointer_cast<typename Graph<TensorType>::SPType>(ret);
+    *g_ptr2     = *g_ptr1;
 
     // assign base class saveable params to ret
-    auto ret     = std::make_shared<SPType>();
-    auto sg_ptr2 = std::static_pointer_cast<typename SubGraph<ArrayType>::SPType>(ret);
+    auto sg_ptr1 = std::dynamic_pointer_cast<typename SubGraph<TensorType>::SPType>(sgsp);
+    auto sg_ptr2 = std::static_pointer_cast<typename SubGraph<TensorType>::SPType>(ret);
     *sg_ptr2     = *sg_ptr1;
 
     // asign layer specific params
     ret->in_size  = in_size_;
     ret->out_size = out_size_;
     return ret;
+  }
+
+  void SetOpSaveableParams(FullyConnectedSaveableParams<T> const & sp)
+  {
+    // assign layer specific params
+    in_size_ = sp.in_size;
+    out_size_ = sp.out_size;
   }
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &) const override
@@ -223,9 +235,9 @@ private:
   SizeType in_size_;
   SizeType out_size_;
 
-  void Initialise(ArrayType &weights, WeightsInit init_mode)
+  void Initialise(TensorType &weights, WeightsInit init_mode)
   {
-    fetch::ml::ops::Weights<ArrayType>::Initialise(weights, in_size_, out_size_, init_mode);
+    fetch::ml::ops::Weights<TensorType>::Initialise(weights, in_size_, out_size_, init_mode);
   }
 };
 

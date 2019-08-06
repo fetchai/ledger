@@ -138,6 +138,16 @@ std::shared_ptr<layers::SelfAttention<T>> BuildLayerSelfAttention(
   return ret;
 }
 
+template <typename T>
+std::shared_ptr<layers::FullyConnected<T>> BuildLayerFullyConnected(FullyConnectedSaveableParams<T> const &sp)
+{
+  auto ret = std::make_shared<layers::FullyConnected<T>>();
+  BuildSubGraph<T>(sp, ret);
+  ret->SetOpSaveableParams(sp);
+
+  return ret;
+}
+
 namespace {
 template <class OperationType>
 std::shared_ptr<OperationType> GetOp(std::shared_ptr<SaveableParamsInterface> op_save_params)
@@ -197,6 +207,16 @@ std::shared_ptr<Node<T>> BuildNode(NodeSaveableParams<T> const &nsp)
     op_ptr = GetOp<ops::PlaceHolder<T>>(nsp.op_save_params);
     break;
   }
+  case ops::Relu<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::Relu<T>>(nsp.op_save_params);
+    break;
+  }
+  case ops::Softmax<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::Softmax<T>>(nsp.op_save_params);
+    break;
+  }
   case ops::Transpose<T>::OpCode():
   {
     op_ptr = GetOp<ops::Transpose<T>>(nsp.op_save_params);
@@ -217,6 +237,11 @@ std::shared_ptr<Node<T>> BuildNode(NodeSaveableParams<T> const &nsp)
   {
     op_ptr = BuildLayerConvolution2D(
         *(std::dynamic_pointer_cast<ConvolutionLayer2DSaveableParams<T>>(nsp.op_save_params)));
+    break;
+  }
+  case OpType::LAYER_FULLY_CONNECTED:
+  {
+    op_ptr = BuildLayerFullyConnected(*(std::dynamic_pointer_cast<FullyConnectedSaveableParams<T>>(nsp.op_save_params)));
     break;
   }
   case OpType::LAYER_PRELU:

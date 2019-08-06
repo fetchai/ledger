@@ -105,6 +105,12 @@ void SerializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_type
                                                                                          op);
     break;
   }
+  case ml::OpType::RELU:
+  {
+    SerializeImplementation<TensorType, D, ml::ReluSaveableParams<TensorType>>(map, code,
+                                                                                         op);
+    break;
+  }
   case ml::OpType::SOFTMAX:
   {
     SerializeImplementation<TensorType, D, ml::SoftmaxSaveableParams<TensorType>>(map, code, op);
@@ -124,7 +130,8 @@ void SerializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_type
   }
   case ml::OpType::MATRIX_MULTIPLY:
   {
-    SerializeImplementation<TensorType, D, ml::MatrixMultiplySaveableParams<TensorType>>(map, code, op);
+    SerializeImplementation<TensorType, D, ml::MatrixMultiplySaveableParams<TensorType>>(map, code,
+                                                                                        op);
     break;
   }
   case ml::OpType::MAX_POOL_1D:
@@ -238,6 +245,12 @@ void DeserializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_ty
   case ml::OpType::RANDOMISED_RELU:
   {
     op = DeserializeImplementation<TensorType, D, ml::RandomisedReluSaveableParams<TensorType>>(
+        map, code);
+    break;
+  }
+  case ml::OpType::RELU:
+  {
+    op = DeserializeImplementation<TensorType, D, ml::ReluSaveableParams<TensorType>>(
         map, code);
     break;
   }
@@ -1825,7 +1838,7 @@ struct MapSerializer<ml::WeightsSaveableParams<TensorType>, D>
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(7);
+    auto map = map_constructor(8);
     map.Append(OP_CODE, sp.op_type);
     if (sp.output)
     {
@@ -1878,20 +1891,15 @@ struct MapSerializer<ml::WeightsSaveableParams<TensorType>, D>
     }
 
     bool has_regularisation;
-    if (sp.regulariser)
+    map.ExpectKeyGetValue(HAS_REGULARISATION, has_regularisation);
+    if (has_regularisation)
     {
-      has_regularisation = true;
-      map.ExpectKeyGetValue(HAS_REGULARISATION, has_regularisation);
-      map.ExpectKeyGetValue(REGULARISER, *(sp.regulariser));
+      auto reg = std::make_shared<fetch::ml::regularisers::Regulariser<TensorType>>();
+      map.ExpectKeyGetValue(REGULARISER, *reg);
+      sp.regulariser = reg;
       map.ExpectKeyGetValue(REGULARISATION_RATE, sp.regularisation_rate);
     }
-    else
-    {
-      has_regularisation = false;
-      map.ExpectKeyGetValue(HAS_REGULARISATION, has_regularisation);
-    }
 
-    //
     bool has_gradient;
     map.ExpectKeyGetValue(HAS_GRADIENT, has_gradient);
     if (has_gradient)
