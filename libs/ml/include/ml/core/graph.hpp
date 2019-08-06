@@ -19,7 +19,6 @@
 
 #include "ml/core/node.hpp"
 #include "ml/meta/ml_type_traits.hpp"
-#include "ml/ops/op_interface.hpp"
 #include "ml/ops/weights.hpp"
 
 #include <algorithm>

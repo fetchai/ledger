@@ -190,8 +190,8 @@ std::shared_ptr<Node<T>> BuildNode(NodeSaveableParams<T> const &nsp)
   }
   case OpType::LAYER_PRELU:
   {
-    op_ptr = BuildLayerPrelu(
-        *(std::dynamic_pointer_cast<PReluSaveableParams<T>>(nsp.op_save_params)));
+    op_ptr =
+        BuildLayerPrelu(*(std::dynamic_pointer_cast<PReluSaveableParams<T>>(nsp.op_save_params)));
     break;
   }
   default:

@@ -18,11 +18,12 @@
 //------------------------------------------------------------------------------
 
 #include "core/logger.hpp"
-#include "ml/ops/op_interface.hpp"
 #include "ml/ops/ops.hpp"
 #include "ml/saveparams/saveable_params.hpp"
 
 #include "ml/ops/abs.hpp"
+#include "ml/ops/placeholder.hpp"
+#include "ml/ops/weights.hpp"
 
 #include <algorithm>
 #include <cassert>
