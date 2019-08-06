@@ -41,7 +41,7 @@ public:
 	Gelu()           = default;
 	~Gelu() override = default;
 	
-	// f(x)=max(0,x);
+	// 0.5x(1+tanh(0.797885x+0.035677x^3))
 	void Forward(VecTensorType const &inputs, ArrayType &output) override
 	{
 		assert(inputs.size() == 1);
@@ -97,7 +97,9 @@ public:
 		// final value
 		fetch::math::Multiply(intermediate1, half, intermediate1);
 		
-		return intermediate1;
+		fetch::math::Multiply(intermediate1, error_signal, intermediate1);
+		
+		return {intermediate1};
 	}
 	
 	std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override

@@ -49,7 +49,7 @@ TYPED_TEST(GeluTest, forward_test_3d) {
 	ArrayType prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
 	op.Forward({std::make_shared<const ArrayType>(data)}, prediction);
 	// test correct values
-	ASSERT_TRUE(prediction.AllClose(gt, 0, static_cast<DataType>(2.8) * fetch::math::function_tolerance<DataType>()));
+	ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>(), static_cast<DataType>(2.8) * fetch::math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(GeluTest, backward_3d_test)
@@ -58,15 +58,17 @@ TYPED_TEST(GeluTest, backward_3d_test)
 	using DataType = typename ArrayType::Type;
 	
 	ArrayType data = ArrayType::FromString("-10, -2, -1, -0.5, 0, 0.2, 1.6, 5.7, 12");
-	data.Reshape({3, 1, 3});
-	ArrayType error_signal  = ArrayType::FromString("-3, 2, 3, 4.5, 0.2, 6.6, 7.1, 10, 0.02");
-	error_signal.Reshape({3, 1, 3});
+//	data.Reshape({3, 1, 3});
+//	ArrayType error_signal  = ArrayType::FromString("-3, 2, 3, 4.5, 0.2, 6.6, 7.1, 10, 0.02");
+	ArrayType error_signal  = ArrayType::FromString("1, 1, 1, 1, 1, 1, 1, 1, 1");
+//	error_signal.Reshape({3, 1, 3});
 	ArrayType gt   = ArrayType::FromString("0.0000000000, -0.1721984446, -0.2488922477,  0.5968354940, 0.1000000015,  4.3392238617,  7.9740133286, 10.0000000000, 0.0199999996");
-	gt.Reshape({3, 1, 3});
+//	gt.Reshape({3, 1, 3});
 	
 	fetch::ml::ops::Gelu<ArrayType> op;
 	std::vector<ArrayType> prediction = op.Backward({std::make_shared<const ArrayType>(data)}, error_signal);
 	
+	std::cout << "prediction[0].ToString(): " << prediction[0].ToString() << std::endl;
 	// test correct values
-	ASSERT_TRUE(prediction[0].AllClose(gt, 0, static_cast<DataType>(4) * fetch::math::function_tolerance<DataType>()));
+	ASSERT_TRUE(prediction[0].AllClose(gt, fetch::math::function_tolerance<DataType>(), static_cast<DataType>(5) * fetch::math::function_tolerance<DataType>()));
 }

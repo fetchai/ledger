@@ -25,6 +25,7 @@
 #include "ml/ops/activations/relu.hpp"
 #include "ml/ops/activations/sigmoid.hpp"
 #include "ml/ops/activations/softmax.hpp"
+#include "ml/ops/activations/gelu.hpp"
 
 namespace fetch {
 namespace ml {
@@ -37,7 +38,8 @@ enum class ActivationType
   LOG_SOFTMAX,
   RELU,
   SIGMOID,
-  SOFTMAX
+  SOFTMAX,
+	GELU
 };
 
 template <class T>
@@ -62,6 +64,9 @@ std::string AddActivationNode(ActivationType type, Graph<T> *g, std::string name
 
   case ActivationType::SOFTMAX:
     return g->template AddNode<fetch::ml::ops::Softmax<T>>(name, {input});
+	
+  case ActivationType::GELU:
+	  return g->template AddNode<fetch::ml::ops::Gelu<T>>(name, {input});
 
   default:
     return input;
