@@ -16,13 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/fixed_point/fixed_point.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "ml/layers/self_attention_encoder.hpp"
 #include "ml/utilities/graph_builder.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
-
 
 template <typename T>
 class SelfAttentionEncoder : public ::testing::Test
@@ -106,11 +105,14 @@ TYPED_TEST(SelfAttentionEncoder, saveparams_test)
 
   // deserialize
   b.seek(0);
-  auto dsp2 = std::make_shared<typename fetch::ml::layers::SelfAttentionEncoder<TypeParam>::SPType>();
+  auto dsp2 =
+      std::make_shared<typename fetch::ml::layers::SelfAttentionEncoder<TypeParam>::SPType>();
   b >> *dsp2;
 
   // rebuild
-  auto sa2 = fetch::ml::utilities::BuildLayer<TypeParam, fetch::ml::layers::SelfAttentionEncoder<TypeParam>>(*dsp2);
+  auto sa2 =
+      fetch::ml::utilities::BuildLayer<TypeParam,
+                                       fetch::ml::layers::SelfAttentionEncoder<TypeParam>>(*dsp2);
 
   sa2->SetInput("SelfAttention_Input", data);
   TypeParam output2 = sa2->Evaluate("SelfAttention_OutputFC", true);

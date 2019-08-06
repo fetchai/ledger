@@ -110,9 +110,10 @@ TYPED_TEST(LayerNormTest, node_backward_test)  // Use the class as a Node
   std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder->GetOp())
       ->SetData(data);
 
-  fetch::ml::Node<TypeParam> ln(fetch::ml::OpType::LAYER_LAYER_NORM,
-          "LayerNorm",
-          []() {return std::make_shared<fetch::ml::layers::LayerNorm<TypeParam>>(std::vector<fetch::math::SizeType>({5, 10}));});
+  fetch::ml::Node<TypeParam> ln(fetch::ml::OpType::LAYER_LAYER_NORM, "LayerNorm", []() {
+    return std::make_shared<fetch::ml::layers::LayerNorm<TypeParam>>(
+        std::vector<fetch::math::SizeType>({5, 10}));
+  });
   ln.AddInput(placeholder);
 
   TypeParam prediction = *ln.Evaluate(true);

@@ -20,10 +20,10 @@
 #include "layers.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/layers/scaled_dot_product_attention.hpp"
-#include "ml/saveparams/saveable_params.hpp"
 #include "ml/ops/add.hpp"
 #include "ml/ops/concatenate.hpp"
 #include "ml/ops/placeholder.hpp"
+#include "ml/saveparams/saveable_params.hpp"
 
 #include <string>
 
@@ -35,7 +35,7 @@ template <class T>
 class MultiheadAttention : public SubGraph<T>
 {
 public:
-  using TensorType     = T;
+  using TensorType    = T;
   using SizeType      = typename TensorType::SizeType;
   using ArrayPtrType  = std::shared_ptr<TensorType>;
   using DataType      = typename T::Type;
@@ -139,27 +139,32 @@ public:
     *sg_ptr2     = *sg_ptr1;
 
     // asign layer specific params
-    ret->key_dim     = key_dim_;
-    ret->value_dim   = value_dim_;
-    ret->n_heads    = n_heads_;
-    ret->model_dim  = model_dim_;
-    ret->dropout = dropout_;
+    ret->key_dim   = key_dim_;
+    ret->value_dim = value_dim_;
+    ret->n_heads   = n_heads_;
+    ret->model_dim = model_dim_;
+    ret->dropout   = dropout_;
     return ret;
   }
 
   void SetOpSaveableParams(SelfAttentionEncoderSaveableParams<T> const &sp)
   {
     // assign layer specific params
-    key_dim_          = sp.key_dim;
-    value_dim_              = sp.value_dim;
-    n_heads_    = sp.n_heads;
-    model_dim_   = sp.model_dim;
-    dropout_ = sp.dropout;
+    key_dim_   = sp.key_dim;
+    value_dim_ = sp.value_dim;
+    n_heads_   = sp.n_heads;
+    model_dim_ = sp.model_dim;
+    dropout_   = sp.dropout;
   }
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     return inputs.front()->shape();
+  }
+
+  static constexpr OpType OpCode()
+  {
+    return OpType::LAYER_MULTI_HEAD_ATTENTION;
   }
 
   static constexpr char const *DESCRIPTOR = "MultiheadAttention";

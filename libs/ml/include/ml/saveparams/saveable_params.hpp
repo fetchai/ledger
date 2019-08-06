@@ -534,12 +534,12 @@ struct MultiHeadSaveableParams : public SaveableParamsInterface
   using SizeType = typename TensorType::SizeType;
 
   fetch::ml::OpType op_type = OpType::LAYER_MULTI_HEAD_ATTENTION;
-//
-//  DataType   epsilon;
-//  SizeType   axis;
-//  TensorType prev_input;
-//  TensorType cached_inv_sqrt_var;
-//  TensorType cached_output;
+
+  SizeType value_dim;
+  SizeType key_dim;
+  SizeType n_heads;
+  SizeType model_dim;
+  DataType dropout;
 
   MultiHeadSaveableParams()
     : SaveableParamsInterface(OpType::LAYER_MULTI_HEAD_ATTENTION)
