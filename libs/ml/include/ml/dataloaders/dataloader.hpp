@@ -52,6 +52,11 @@ public:
   virtual ReturnType PrepareBatch(fetch::math::SizeType subset_size, bool &is_done_set,
                                   bool is_test = false);
 
+  virtual inline bool IsValidable()
+  {
+    return (Size(true) != 0);
+  }
+
   virtual std::uint64_t Size(bool is_test = false) const   = 0;
   virtual bool          IsDone(bool is_test = false) const = 0;
   virtual void          Reset(bool is_test = false)        = 0;

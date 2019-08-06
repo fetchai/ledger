@@ -53,14 +53,18 @@ private:
 
 public:
   MNISTLoader(std::string const &images_file, std::string const &labelsFile,
-              bool random_mode = false)
+              bool random_mode = false, float test_to_train_ratio = 0.0)
     : DataLoader<LabelType, T>(random_mode)
     , train_cursor_(0)
     , test_cursor_(0)
   {
     std::uint32_t record_length(0);
-    data_   = read_mnist_images(images_file, train_size_, record_length);
-    labels_ = read_mnist_labels(labelsFile, train_size_);
+    data_   = read_mnist_images(images_file, size_, record_length);
+    labels_ = read_mnist_labels(labelsFile, size_);
+
+    train_size_ = static_cast<std::uint32_t>((1.0 - test_to_train_ratio) * size_);
+    test_size_  = size_ - train_size_;
+
     assert(record_length == FIGURE_SIZE);
 
     // Prepare return buffer

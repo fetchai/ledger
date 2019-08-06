@@ -73,7 +73,7 @@ public:
 
   virtual bool Train(SizeType n_steps)                        = 0;
   virtual bool Train(SizeType n_steps, DataType &loss)        = 0;
-  virtual bool Validate()                                     = 0;
+  virtual bool Validate(DataType &validation_loss)            = 0;
   virtual bool Predict(TensorType &input, TensorType &output) = 0;
 
 protected:

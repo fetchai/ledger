@@ -214,6 +214,7 @@ typename T::Type Optimiser<T>::Run(std::vector<ArrayType> const &data, ArrayType
   {
     batch_labels_ = ArrayType{labels_size};
   }
+  SizeType i{0};
   while (step_ < n_data)
   {
     // Prepare batch
@@ -259,6 +260,7 @@ typename T::Type Optimiser<T>::Run(std::vector<ArrayType> const &data, ArrayType
     cumulative_step_ += batch_size;
 
     loss_sum_ += loss_;
+    i++;
     loss_ = static_cast<DataType>(0);
     PrintStats(batch_size, n_data);
 
@@ -266,7 +268,7 @@ typename T::Type Optimiser<T>::Run(std::vector<ArrayType> const &data, ArrayType
   }
   epoch_++;
 
-  return loss_sum_;
+  return loss_sum_ / static_cast<DataType>(i);
 }
 
 /**
@@ -325,6 +327,7 @@ typename T::Type Optimiser<T>::RunImplementation(
   bool is_done_set = loader.IsDone();
 
   std::pair<ArrayType, std::vector<ArrayType>> input;
+  SizeType                                     i{0};
 
   // - check not completed more steps than user specified subset_size
   // - is_done_set checks if loader.IsDone inside PrepareBatch
@@ -358,6 +361,7 @@ typename T::Type Optimiser<T>::RunImplementation(
     cumulative_step_ += batch_size;
     // reset loss
     loss_sum_ += loss_;
+    i++;
     loss_ = DataType{0};
     // update learning rate
     UpdateLearningRate();
@@ -367,7 +371,7 @@ typename T::Type Optimiser<T>::RunImplementation(
   }
 
   epoch_++;
-  return loss_sum_;
+  return loss_sum_ / static_cast<DataType>(i);
 }
 
 template <typename T>
