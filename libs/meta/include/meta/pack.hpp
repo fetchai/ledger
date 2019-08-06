@@ -57,8 +57,8 @@ namespace pack {
  * @param T an arbitrary type
  * @return structure S such that S::type is T
  */
-// The default declaration accepts an arbitrary pack, so Constant can be tail-called with arbitrary arg packs
-// (known to be non-empty though).
+// The default declaration accepts an arbitrary pack, so Constant can be tail-called with arbitrary
+// arg packs (known to be non-empty though).
 template <class...>
 struct Constant;
 template <class T>
@@ -69,7 +69,6 @@ struct Constant<T, Ts...>
 {
   using type = T;
 };
-
 
 // The fundamental typelist definition.
 template <class... Ts>
@@ -105,7 +104,6 @@ struct Cons<Car, Pack<Cdr...>> : Constant<Pack<Car, Cdr...>>
 {
 };
 
-
 /**
  * HasMemberTypeV detects if its argument has member type type.
  *
@@ -135,7 +133,8 @@ static constexpr bool HasMemberTypeV = sizeof(detail_::HasType(std::declval<Arg>
  * Extracts its argument's member type type and wraps it back in a struct.
  *
  * @param T an arbitrary type
- * @return struct S such that S::type is T::type if the latter is a public type of kind *; empty struct otherwise
+ * @return struct S such that S::type is T::type if the latter is a public type of kind *; empty
+ * struct otherwise
  */
 template <class Arg, bool = HasMemberTypeV<Arg>>
 struct MemberType
@@ -151,13 +150,8 @@ struct MemberType<Arg, false>
 };
 
 /**
- * Returns its argument if that has public member type type, otherwise wraps its argument in a struct.
- * If
- *    struct A { using type = int; };
- *    struct B {};
- * then
- *    Flat<A> is A;
- *    Flat<B>::type is B.
+ * Returns its argument if that has public member type type, otherwise wraps its argument in a
+ * struct. If struct A { using type = int; }; struct B {}; then Flat<A> is A; Flat<B>::type is B.
  *
  * @param T an arbitrary type
  * @return
@@ -173,7 +167,8 @@ using FlatT = typename Flat<T>::type;
  *     Flatten<A>::type is int.
  *
  * @param T an arbitrary type
- * @return struct S such that S::type is T::type:: ... ::type and S::type has no member type called type
+ * @return struct S such that S::type is T::type:: ... ::type and S::type has no member type called
+ * type
  */
 template <class T, bool = HasMemberTypeV<T>>
 struct Flatten : Constant<T>
@@ -247,7 +242,8 @@ static constexpr auto NotV = Not<B>::value;
 /**
  * Function composition.
  * The first argument serves as a root in AST, all the other ones are its branches.
- * Note that the result should be used as Compose<F, Gs...>::template type. Consequently, ComposeT is not defined.
+ * Note that the result should be used as Compose<F, Gs...>::template type. Consequently, ComposeT
+ * is not defined.
  *
  * @param F the root of the AST
  * @param Gs... branches
@@ -320,7 +316,8 @@ struct Transform<F, Pack<Ts...>> : Constant<Pack<F<Ts>...>>
 /**
  * Filter a pack through a predicate.
  *
- * @param F a template class such that its instantiations have static constant value coercible to bool
+ * @param F a template class such that its instantiations have static constant value coercible to
+ * bool
  * @param P a Pack
  * @return Pack comprised of all elements Tn of P such that F<Pn> is a true type for each n
  */
@@ -535,7 +532,8 @@ using InitT = typename Init<P>::type;
 
 namespace std {
 
-// Old clang a) defines std::tuple_size and std::tuple_element as classes and b) incorrectly issues a warning when a struct instantiates a class template.
+// Old clang a) defines std::tuple_size and std::tuple_element as classes and b) incorrectly issues
+// a warning when a struct instantiates a class template.
 #if defined(__clang__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmismatched-tags"
@@ -632,7 +630,8 @@ struct Concat<> : Constant<Nil>
 
 /**
  * Partial function application.
- * Note that the result should be used as Bind<F, Args>::template type. Consequently, BindT is not defined.
+ * Note that the result should be used as Bind<F, Args>::template type. Consequently, BindT is not
+ * defined.
  *
  * @param F an arbitrary class template
  * @param Prefix a Pack<T0, ..., Tn>, n is less than F's maximum arity
@@ -662,9 +661,10 @@ template <class A, class B>
 static constexpr auto AndV = And<A, B>::value;
 
 /**
- * A lisp-style operator && accepting an arbitrary amount of arguments an returning the leftmost false of them, or the very last one if all others are true.
- * Conjunction of an empty pack is a true type.
- * Warning: ConjunctionT returns a member type type of the leftmost false type, not that latter itself.
+ * A lisp-style operator && accepting an arbitrary amount of arguments an returning the leftmost
+ * false of them, or the very last one if all others are true. Conjunction of an empty pack is a
+ * true type. Warning: ConjunctionT returns a member type type of the leftmost false type, not that
+ * latter itself.
  *
  * @param P a Pack
  * @return the leftmost false element of P, or the last one, if none
@@ -681,7 +681,8 @@ static constexpr auto ConjunctionV = Conjunction<P>::value;
 /**
  * Check if every element of a pack satisfies a predicate.
  *
- * @param F a class template that evaluates to a bool-valued class on each element of the pack (until one of them breaks the predicate, at least)
+ * @param F a class template that evaluates to a bool-valued class on each element of the pack
+ * (until one of them breaks the predicate, at least)
  * @param P a Pack
  * @return
  */
@@ -705,9 +706,10 @@ template <class A, class B>
 static constexpr auto OrV = Or<A, B>::value;
 
 /**
- * A lisp-style operator || accepting an arbitrary amount of arguments an returning the leftmost true of them, or the very last one if all others are false.
- * Disjunction of an empty pack is a false type.
- * Warning: DisjunctionT returns a member type type of the leftmost true type, not that latter itself.
+ * A lisp-style operator || accepting an arbitrary amount of arguments an returning the leftmost
+ * true of them, or the very last one if all others are false. Disjunction of an empty pack is a
+ * false type. Warning: DisjunctionT returns a member type type of the leftmost true type, not that
+ * latter itself.
  *
  * @param P a Pack
  * @return the leftmost true element of P, or the last one, if none
@@ -724,7 +726,8 @@ static constexpr auto DisjunctionV = Disjunction<Pack>::value;
 /**
  * Check if at least one element of a pack satisfies a predicate.
  *
- * @param F a class template that evaluates to a bool-valued class on each element of the pack (until one of them satisfies the predicate, at least)
+ * @param F a class template that evaluates to a bool-valued class on each element of the pack
+ * (until one of them satisfies the predicate, at least)
  * @param P a Pack
  * @return
  */
@@ -764,7 +767,8 @@ constexpr char Invocable(...) noexcept;
  *
  * @param F a function type
  * @param P a Pack<T0...> of argument types
- * @return true type if f(t0...) is a valid expression, where f is of type F and tn is of type Tn, for each n
+ * @return true type if f(t0...) is a valid expression, where f is of type F and tn is of type Tn,
+ * for each n
  */
 template <class F, class P>
 struct IsInvocable;
@@ -780,12 +784,13 @@ struct IsInvocable<F, Pack<Args...>>
 };
 
 /**
- * Get the result type of an invocation of a function (here, the real C++ function) over arguments of such types.
- * Warning: IsInvocable<F, P> should be a true type.
+ * Get the result type of an invocation of a function (here, the real C++ function) over arguments
+ * of such types. Warning: IsInvocable<F, P> should be a true type.
  *
  * @param F a function type
  * @param P a Pack<T0...> of argument types
- * @return struct S such that f(t0...) is of type S::type, where f is of type F and tn is of type Tn, for each n
+ * @return struct S such that f(t0...) is of type S::type, where f is of type F and tn is of type
+ * Tn, for each n
  */
 template <class F, class P>
 struct InvokeResult;
@@ -984,7 +989,8 @@ struct IsUniquelySorted<Nil> : std::true_type
 };
 
 /**
- * Remove duplicates, in the sense of std::is_same, from a pack without changing the order of unique elements.
+ * Remove duplicates, in the sense of std::is_same, from a pack without changing the order of unique
+ * elements.
  *
  * Original taken from A. Alexandrescu's Modern C++ Design, and converted into this library wording.
  *
