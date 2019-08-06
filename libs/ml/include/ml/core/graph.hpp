@@ -72,7 +72,6 @@ public:
 
   bool InsertNode(std::string const &node_name, NodePtrType node_ptr);
 
-
   NodePtrType GetNode(std::string const &node_name) const;
   void        SetInput(std::string const &node_name, ArrayType data);
   void        ResetGraphCache(std::shared_ptr<Node<T>> const &n, bool input_size_changed);

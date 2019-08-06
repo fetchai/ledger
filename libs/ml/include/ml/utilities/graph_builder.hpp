@@ -67,16 +67,17 @@ namespace ml {
 namespace utilities {
 
 template <typename T>
-std::shared_ptr<Node<T>> BuildNode(NodeSaveableParams<T> const & nsp);
+std::shared_ptr<Node<T>> BuildNode(NodeSaveableParams<T> const &nsp);
 
 template <typename T>
-void BuildGraph(GraphSaveableParams<T> const & sp, std::shared_ptr<Graph<T>> ret)
+void BuildGraph(GraphSaveableParams<T> const &sp, std::shared_ptr<Graph<T>> ret)
 {
   // loop through nodenames adding nodes
   for (auto &node : sp.connections)
   {
-    std::string              name   = node.first;
-    auto node_ptr = BuildNode(*(std::dynamic_pointer_cast<NodeSaveableParams<T>>(sp.nodes.at(name))));
+    std::string name = node.first;
+    auto        node_ptr =
+        BuildNode(*(std::dynamic_pointer_cast<NodeSaveableParams<T>>(sp.nodes.at(name))));
     bool success = ret->InsertNode(name, node_ptr);
     assert(success);
   }
@@ -87,7 +88,7 @@ void BuildSubGraph(SubGraphSaveableParams<T> const &sgsp, std::shared_ptr<SubGra
 {
   BuildGraph<T>(sgsp, ret);
 
-  for (auto const & name : sgsp.input_node_names)
+  for (auto const &name : sgsp.input_node_names)
   {
     ret->AddInputNode(name);
   }
@@ -95,7 +96,8 @@ void BuildSubGraph(SubGraphSaveableParams<T> const &sgsp, std::shared_ptr<SubGra
 }
 
 template <typename T>
-std::shared_ptr<layers::Convolution1D<T>> BuildLayerConvolution1D(ConvolutionLayer1DSaveableParams<T> const &sp)
+std::shared_ptr<layers::Convolution1D<T>> BuildLayerConvolution1D(
+    ConvolutionLayer1DSaveableParams<T> const &sp)
 {
   auto ret = std::make_shared<layers::Convolution1D<T>>();
   BuildSubGraph<T>(sp, ret);
@@ -105,7 +107,8 @@ std::shared_ptr<layers::Convolution1D<T>> BuildLayerConvolution1D(ConvolutionLay
 }
 
 template <typename T>
-std::shared_ptr<layers::Convolution2D<T>> BuildLayerConvolution2D(ConvolutionLayer2DSaveableParams<T> const &sp)
+std::shared_ptr<layers::Convolution2D<T>> BuildLayerConvolution2D(
+    ConvolutionLayer2DSaveableParams<T> const &sp)
 {
   auto ret = std::make_shared<layers::Convolution2D<T>>();
   BuildSubGraph<T>(sp, ret);
@@ -114,17 +117,17 @@ std::shared_ptr<layers::Convolution2D<T>> BuildLayerConvolution2D(ConvolutionLay
   return ret;
 }
 
-
 namespace {
 template <class OperationType>
 std::shared_ptr<OperationType> GetOp(std::shared_ptr<SaveableParamsInterface> op_save_params)
 {
-  return std::make_shared<OperationType>(*(std::dynamic_pointer_cast<typename OperationType::SPType>(op_save_params)));
+  return std::make_shared<OperationType>(
+      *(std::dynamic_pointer_cast<typename OperationType::SPType>(op_save_params)));
 }
-}
+}  // namespace
 
 template <typename T>
-std::shared_ptr<Node<T>> BuildNode(NodeSaveableParams<T> const & nsp)
+std::shared_ptr<Node<T>> BuildNode(NodeSaveableParams<T> const &nsp)
 {
   auto node = std::make_shared<Node<T>>();
   // construct the concrete op
@@ -133,50 +136,50 @@ std::shared_ptr<Node<T>> BuildNode(NodeSaveableParams<T> const & nsp)
   std::shared_ptr<ops::Ops<T>> op_ptr;
   switch (nsp.operation_type)
   {
-    case ops::Abs<T>::OpCode():
-    {
-      op_ptr = GetOp<ops::Abs<T>>(nsp.op_save_params);
-      break;
-    }
-    case ops::PlaceHolder<T>::OpCode():
-    {
-      op_ptr = GetOp<ops::PlaceHolder<T>>(nsp.op_save_params);
-      break;
-    }
-    case ops::Weights<T>::OpCode():
-    {
-      op_ptr = GetOp<ops::Weights<T>>(nsp.op_save_params);
-      break;
-    }
-    case ops::Convolution1D<T>::OpCode():
-    {
-      op_ptr = GetOp<ops::Convolution1D<T>>(nsp.op_save_params);
-      break;
-    }
-    case ops::Convolution2D<T>::OpCode():
-    {
-      op_ptr = GetOp<ops::Convolution2D<T>>(nsp.op_save_params);
-      break;
-    }
-    case OpType::LAYER_CONVOLUTION_1D:
-    {
-      op_ptr = BuildLayerConvolution1D(*(std::dynamic_pointer_cast<ConvolutionLayer1DSaveableParams<T>>(nsp.op_save_params)));
-      break;
-    }
-    case OpType::LAYER_CONVOLUTION_2D:
-    {
-      op_ptr = BuildLayerConvolution2D(*(std::dynamic_pointer_cast<ConvolutionLayer2DSaveableParams<T>>(nsp.op_save_params)));
-      break;
-    }
-    default:
-      throw std::runtime_error("unknown node type");
+  case ops::Abs<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::Abs<T>>(nsp.op_save_params);
+    break;
+  }
+  case ops::PlaceHolder<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::PlaceHolder<T>>(nsp.op_save_params);
+    break;
+  }
+  case ops::Weights<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::Weights<T>>(nsp.op_save_params);
+    break;
+  }
+  case ops::Convolution1D<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::Convolution1D<T>>(nsp.op_save_params);
+    break;
+  }
+  case ops::Convolution2D<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::Convolution2D<T>>(nsp.op_save_params);
+    break;
+  }
+  case OpType::LAYER_CONVOLUTION_1D:
+  {
+    op_ptr = BuildLayerConvolution1D(
+        *(std::dynamic_pointer_cast<ConvolutionLayer1DSaveableParams<T>>(nsp.op_save_params)));
+    break;
+  }
+  case OpType::LAYER_CONVOLUTION_2D:
+  {
+    op_ptr = BuildLayerConvolution2D(
+        *(std::dynamic_pointer_cast<ConvolutionLayer2DSaveableParams<T>>(nsp.op_save_params)));
+    break;
+  }
+  default:
+    throw std::runtime_error("unknown node type");
   }
 
   node->SetNodeSaveableParams(nsp, op_ptr);
   return node;
 }
-
-
 
 }  // namespace utilities
 }  // namespace ml

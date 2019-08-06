@@ -99,6 +99,12 @@ void SerializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_type
                                                                                         op);
     break;
   }
+  case ml::OpType::CONVOLUTION_2D:
+  {
+    SerializeImplementation<TensorType, D, ml::Convolution2DSaveableParams<TensorType>>(map, code,
+                                                                                        op);
+    break;
+  }
   case ml::OpType::MAX_POOL_1D:
   {
     SerializeImplementation<TensorType, D, ml::MaxPool1DSaveableParams<TensorType>>(map, code, op);
@@ -153,7 +159,8 @@ void DeserializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_ty
   {
   case ml::OpType::PLACEHOLDER:
   {
-    op = DeserializeImplementation<TensorType, D, ml::PlaceholderSaveableParams<TensorType>>(map, code);
+    op = DeserializeImplementation<TensorType, D, ml::PlaceholderSaveableParams<TensorType>>(map,
+                                                                                             code);
     break;
   }
   case ml::OpType::WEIGHTS:
@@ -168,7 +175,8 @@ void DeserializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_ty
   }
   case ml::OpType::LEAKY_RELU:
   {
-    op = DeserializeImplementation<TensorType, D, ml::LeakyReluSaveableParams<TensorType>>(map, code);
+    op = DeserializeImplementation<TensorType, D, ml::LeakyReluSaveableParams<TensorType>>(map,
+                                                                                           code);
     break;
   }
   case ml::OpType::RANDOMISED_RELU:
@@ -184,22 +192,32 @@ void DeserializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_ty
   }
   case ml::OpType::CONVOLUTION_1D:
   {
-    op = DeserializeImplementation<TensorType, D, ml::Convolution1DSaveableParams<TensorType>>(map, code);
+    op = DeserializeImplementation<TensorType, D, ml::Convolution1DSaveableParams<TensorType>>(
+        map, code);
+    break;
+  }
+  case ml::OpType::CONVOLUTION_2D:
+  {
+    op = DeserializeImplementation<TensorType, D, ml::Convolution2DSaveableParams<TensorType>>(
+        map, code);
     break;
   }
   case ml::OpType::MAX_POOL_1D:
   {
-    op = DeserializeImplementation<TensorType, D, ml::MaxPool1DSaveableParams<TensorType>>(map, code);
+    op = DeserializeImplementation<TensorType, D, ml::MaxPool1DSaveableParams<TensorType>>(map,
+                                                                                           code);
     break;
   }
   case ml::OpType::MAX_POOL_2D:
   {
-    op = DeserializeImplementation<TensorType, D, ml::MaxPool2DSaveableParams<TensorType>>(map, code);
+    op = DeserializeImplementation<TensorType, D, ml::MaxPool2DSaveableParams<TensorType>>(map,
+                                                                                           code);
     break;
   }
   case ml::OpType::TRANSPOSE:
   {
-    op = DeserializeImplementation<TensorType, D, ml::TransposeSaveableParams<TensorType>>(map, code);
+    op = DeserializeImplementation<TensorType, D, ml::TransposeSaveableParams<TensorType>>(map,
+                                                                                           code);
     break;
   }
   case ml::OpType::RESHAPE:
@@ -227,7 +245,7 @@ void DeserializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_ty
   }
   default:
   {
-    throw std::runtime_error("Unknown type for Serialization");
+    throw std::runtime_error("Unknown type for Deserialization");
   }
   }
 }
@@ -588,7 +606,7 @@ struct MapSerializer<ml::Convolution1DSaveableParams<TensorType>, D>
 };
 
 /**
- * serializer for add saveable params
+ * serializer for conv2d saveable params
  * @tparam TensorType
  */
 template <typename TensorType, typename D>
@@ -906,13 +924,8 @@ struct MapSerializer<ml::ConvolutionLayer2DSaveableParams<TensorType>, D>
   static void Deserialize(MapDeserializer &map, Type &sp)
   {
     // deserialize parent class first
-    auto subgraph_sp_ptr = std::make_shared<ml::SubGraphSaveableParams<TensorType>>();
-    map.ExpectKeyGetValue(SUB_GRAPH, *subgraph_sp_ptr);
-    std::shared_ptr<Type> conv_sp_ptr = std::make_shared<Type>(sp);
-    auto                  base_pointer =
-        std::dynamic_pointer_cast<std::shared_ptr<ml::SubGraphSaveableParams<TensorType>>>(
-            conv_sp_ptr);
-    *(*base_pointer) = (*subgraph_sp_ptr);
+    auto base_pointer = static_cast<ml::SubGraphSaveableParams<TensorType> *>(&sp);
+    map.ExpectKeyGetValue(SUB_GRAPH, *base_pointer);
 
     map.ExpectKeyGetValue(OP_CODE, sp.op_type);
     map.ExpectKeyGetValue(KERNEL_SIZE, sp.kernel_size);

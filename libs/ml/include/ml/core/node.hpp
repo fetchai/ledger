@@ -76,7 +76,8 @@ public:
    */
 
   /**
-   * This is a convenience constructor for returning a Node with a specified operation type that uses default parameters
+   * This is a convenience constructor for returning a Node with a specified operation type that
+   * uses default parameters
    */
   Node(OpType const &operation_type, std::string name)
     : name_(std::move(name))
@@ -107,16 +108,15 @@ public:
     return std::make_shared<SPType>(sp);
   }
 
-  void SetNodeSaveableParams(NodeSaveableParams<T> const & nsp, std::shared_ptr<ops::Ops<T>> op_ptr)
+  void SetNodeSaveableParams(NodeSaveableParams<T> const &nsp, std::shared_ptr<ops::Ops<T>> op_ptr)
   {
-    name_ = nsp.name;
-    cached_output_ = nsp.cached_output;
+    name_                 = nsp.name;
+    cached_output_        = nsp.cached_output;
     cached_output_status_ = static_cast<CachedOutputState>(nsp.cached_output_status);
-    operation_type_ = nsp.operation_type;
+    operation_type_       = nsp.operation_type;
 
     op_ptr_ = op_ptr;
   }
-
 
   ~Node() = default;
 

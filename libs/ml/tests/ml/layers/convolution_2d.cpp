@@ -20,6 +20,8 @@
 #include "math/tensor.hpp"
 #include "ml/layers/convolution_2d.hpp"
 #include "ml/meta/ml_type_traits.hpp"
+#include "ml/utilities/graph_builder.hpp"
+
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
@@ -528,8 +530,6 @@ TYPED_TEST(Convolution2DTest, saveparams_test)
   SizeType const input_height    = 3;
   SizeType const input_width     = 3;
   SizeType const kernel_height   = 3;
-  SizeType const output_height   = 1;
-  SizeType const output_width    = 1;
   SizeType const stride_size     = 1;
 
   // Generate input
@@ -571,7 +571,7 @@ TYPED_TEST(Convolution2DTest, saveparams_test)
   b >> *dsp2;
 
   // rebuild
-  auto conv2 = fetch::ml::layers::Convolution2D<TypeParam>::BuildConvolution2D(*dsp2);
+  auto conv2 = fetch::ml::utilities::BuildLayerConvolution2D<TypeParam>(*dsp2);
 
   conv2->SetInput("Conv2D_Input", input);
   TypeParam output2 = conv2->Evaluate("Conv2D_Conv2D", true);

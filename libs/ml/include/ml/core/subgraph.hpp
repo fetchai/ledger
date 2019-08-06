@@ -38,13 +38,13 @@ template <class T>
 class SubGraph : public Graph<T>, public ops::Ops<T>
 {
 public:
-  using TensorType     = T;
+  using TensorType    = T;
   using VecTensorType = std::vector<std::shared_ptr<TensorType const>>;
   using SPType        = SubGraphSaveableParams<TensorType>;
 
-  void                   Forward(VecTensorType const &inputs, TensorType &output) override;
+  void                    Forward(VecTensorType const &inputs, TensorType &output) override;
   std::vector<TensorType> Backward(VecTensorType const &inputs,
-                                  TensorType const &    error_signal) override;
+                                   TensorType const &   error_signal) override;
 
   std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
@@ -70,7 +70,7 @@ protected:
 
 private:
   std::vector<std::string> input_node_names_;
-  std::string output_node_name_;
+  std::string              output_node_name_;
 };
 
 /**

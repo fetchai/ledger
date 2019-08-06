@@ -36,7 +36,7 @@ template <class T>
 class Convolution2D : public SubGraph<T>
 {
 public:
-  using TensorType     = T;
+  using TensorType    = T;
   using ArrayPtrType  = std::shared_ptr<TensorType>;
   using SizeType      = typename TensorType::SizeType;
   using WeightsInit   = fetch::ml::ops::WeightsInitialisation;
@@ -88,37 +88,8 @@ public:
     this->SetOutputNode(output);
   }
 
-  template <typename X>
-  static std::shared_ptr<Convolution2D<X>> BuildConvolution2D(
-      ConvolutionLayer2DSaveableParams<X> const &sp)
-  {
-    auto ret = std::make_shared<Convolution2D<X>>();
-
-    ret->kernel_size_     = sp.kernel_size;
-    ret->input_channels_  = sp.input_channels;
-    ret->output_channels_ = sp.output_channels;
-    ret->stride_size_     = sp.stride_size;
-
-    return ret;
-  }
-
   std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
-//    // get base class saveable params
-//    std::shared_ptr<SaveableParamsInterface> sgsp = SubGraph<TensorType>::GetOpSaveableParams();
-//    auto sg_ptr1 = std::dynamic_pointer_cast<typename SubGraph<TensorType>::SPType>(sgsp);
-//
-//    // assign base class saveable params to ret
-//    auto ret     = std::make_shared<SPType>();
-//    auto sg_ptr2 = std::static_pointer_cast<typename SubGraph<TensorType>::SPType>(ret);
-//    *sg_ptr2     = *sg_ptr1;
-//
-//    // asign layer specific params
-//    ret->kernel_size     = kernel_size_;
-//    ret->input_channels  = input_channels_;
-//    ret->output_channels = output_channels_;
-//    ret->stride_size     = stride_size_;
-//    return ret;
     // get all base classes saveable params
     std::shared_ptr<SaveableParamsInterface> sgsp = SubGraph<TensorType>::GetOpSaveableParams();
 
@@ -143,7 +114,7 @@ public:
     return ret;
   }
 
-  void SetOpSaveableParams(ConvolutionLayer2DSaveableParams<T> const & sp)
+  void SetOpSaveableParams(ConvolutionLayer2DSaveableParams<T> const &sp)
   {
     // assign layer specific params
     kernel_size_     = sp.kernel_size;
@@ -171,7 +142,7 @@ private:
   void Initialise(TensorType &weights, WeightsInit init_mode)
   {
     fetch::ml::ops::Weights<TensorType>::Initialise(weights, input_channels_, output_channels_,
-                                                   init_mode);
+                                                    init_mode);
   }
 
   SizeType kernel_size_;

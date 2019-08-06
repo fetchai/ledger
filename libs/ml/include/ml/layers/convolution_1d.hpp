@@ -36,7 +36,7 @@ template <class T>
 class Convolution1D : public SubGraph<T>
 {
 public:
-  using TensorType     = T;
+  using TensorType    = T;
   using ArrayPtrType  = std::shared_ptr<TensorType>;
   using SizeType      = typename TensorType::SizeType;
   using WeightsInit   = fetch::ml::ops::WeightsInitialisation;
@@ -114,7 +114,7 @@ public:
     return ret;
   }
 
-  void SetOpSaveableParams(ConvolutionLayer1DSaveableParams<T> const & sp)
+  void SetOpSaveableParams(ConvolutionLayer1DSaveableParams<T> const &sp)
   {
     // assign layer specific params
     kernel_size_     = sp.kernel_size;
