@@ -51,8 +51,8 @@ public:
 	
 	/**
 	 * Gradients for backprop with Gelu are as follows:
-	 * x>0 f'(x)=1, x<=0 f'(x)=0
-	 * therefore we should return error_signal but zeroed out at the relevant places
+	 * a = 0.797885, b = 0.035677
+	 * 0.5 * (1 + tanh(ax + bx^3) + x * sech^2(ax + bx^3)(a + 3bx^2))
 	 * @param inputs
 	 * @param error_signal
 	 * @return
@@ -63,29 +63,41 @@ public:
 		assert(inputs.size() == 1);
 		assert(inputs.at(0)->shape() == error_signal.shape());
 		
-		ArrayType const &input = (*inputs.front());
-		ArrayType        return_signal{error_signal.shape()};
+		ArrayType const &input = *(inputs.front());
+		ArrayType intermediate1({input.shape()}), intermediate2({input.shape()}), intermediate3({input.shape()});
 		
-		auto it1    = input.begin();
-		auto it2    = return_signal.begin();
-		auto err_it = error_signal.cbegin();
+		DataType one{1}, two{2}, half{static_cast<DataType>(0.5)}, three{3}, a{static_cast<DataType>(0.797885)}, b{static_cast<DataType>(0.035677)};
 		
-		while (it1.is_valid())
-		{
-			if (*it1 <= static_cast<DataType>(0))
-			{
-				*it2 = static_cast<DataType>(0);
-			}
-			else
-			{
-				*it2 = *err_it;
-			}
-			++it1;
-			++it2;
-			++err_it;
-		}
+		// get ax + bx^3
+		fetch::math::Multiply(input, a, intermediate1);
+		fetch::math::Pow(input, three, intermediate2);
+		fetch::math::Multiply(intermediate2, b, intermediate2);
+		fetch::math::Add(intermediate1, intermediate2, intermediate1);
 		
-		return {return_signal};
+		// get tanh() term
+		fetch::math::TanH(intermediate1, intermediate2);
+		
+		// get x * sech^2() term
+		fetch::math::CosH(intermediate1, intermediate3);
+		fetch::math::Pow(intermediate3, two, intermediate3);
+		fetch::math::Divide(one, intermediate3, intermediate3);
+		fetch::math::Multiply(input, intermediate3, intermediate3);
+		
+		// get a + 3bx^2 term
+		fetch::math::Pow(input, two, intermediate1);
+		fetch::math::Multiply(intermediate1, b, intermediate1);
+		fetch::math::Multiply(intermediate1, three, intermediate1);
+		fetch::math::Add(intermediate1, a);
+		
+		// 1 + tanh(ax + bx^3) + x * sech^2(ax + bx^3)(a + 3bx^2)
+		fetch::math::Multiply(intermediate1, intermediate3, intermediate1);
+		fetch::math::Add(intermediate1, intermediate2, intermediate1);
+		fetch::math::Add(intermediate1, one, intermediate1);
+		
+		// final value
+		fetch::math::Multiply(intermediate1, half, intermediate1);
+		
+		return intermediate1;
 	}
 	
 	std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
