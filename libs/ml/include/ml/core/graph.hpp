@@ -118,8 +118,6 @@ protected:
   std::unordered_map<std::string, NodePtrType> nodes_;
   std::unordered_map<std::string, SizeType>    trainable_lookup_;
   std::vector<TrainablePtrType>                trainable_;
-  std::vector<std::pair<std::string, std::vector<std::string>>>
-      connections_;  // unique node name to list of inputs
 };
 
 /**
@@ -308,8 +306,16 @@ meta::IfIsNotShareable<ArrayType, OperationType, std::string> Graph<ArrayType>::
 template <typename ArrayType>
 GraphSaveableParams<ArrayType> Graph<ArrayType>::GetGraphSaveableParams()
 {
+  // build connections object that describes input node names to each node
+  std::vector<std::pair<std::string, std::vector<std::string>>> connections;
+  for (auto const &cur_node : nodes_)
+  {
+    connections.emplace_back(
+        std::make_pair(cur_node.first, nodes_[cur_node.first]->GetInputNames()));
+  }
+
   GraphSaveableParams<ArrayType> gs;
-  gs.connections = connections_;
+  gs.connections = connections;
 
   for (auto const &node : nodes_)
   {
@@ -515,16 +521,7 @@ meta::IfIsGraph<ArrayType, OperationType, void> Graph<ArrayType>::AddTrainable(
     std::string const &name, std::shared_ptr<Node<ArrayType>> op)
 {
   auto concrete_op_ptr = std::dynamic_pointer_cast<OperationType>(op->GetOp());
-  //  for (auto &trainable : graph_ptr->trainable_lookup_)
-  //  {
-  //    // guarantee unique op name
-  //    std::string node_name(name + "_" + trainable.first);
-  //    std::string resolved_name;
-  //    UpdateVariableName<OperationType>(node_name, resolved_name);
-  //
-  //    trainable_.emplace_back(graph_ptr->trainable_.at(trainable.second));
-  //    trainable_lookup_[resolved_name] = trainable_.size() - 1;
-  //  }
+
   for (auto &trainable : concrete_op_ptr->trainable_lookup_)
   {
     // guarantee unique op name

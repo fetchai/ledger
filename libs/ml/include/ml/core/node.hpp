@@ -108,6 +108,7 @@ public:
   std::vector<std::pair<Node<T> *, ArrayType>> BackPropagateSignal(ArrayType const &error_signal);
 
   void                            AddInput(NodePtrType const &i);
+  std::vector<std::string>        GetInputNames();
   void                            AddOutput(NodePtrType const &o);
   std::vector<NodePtrType> const &GetOutputs() const;
   void                            ResetCache(bool input_size_changed);
@@ -242,6 +243,23 @@ template <typename T>
 void Node<T>::AddInput(NodePtrType const &i)
 {
   input_nodes_.push_back(i);
+}
+
+/**
+ * registers a node as an input to this node
+ * @tparam T tensor type
+ * @tparam O operation class
+ * @param i pointer to the input node
+ */
+template <typename T>
+std::vector<std::string> Node<T>::GetInputNames()
+{
+  std::vector<std::string> ret{};
+  for (auto const &input_node : input_nodes_)
+  {
+    ret.emplace_back(input_node->name_);
+  }
+  return ret;
 }
 
 /**

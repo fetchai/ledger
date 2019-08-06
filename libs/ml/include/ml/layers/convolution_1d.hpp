@@ -107,12 +107,12 @@ public:
     // get all base classes saveable params
     std::shared_ptr<SaveableParamsInterface> sgsp = SubGraph<ArrayType>::GetOpSaveableParams();
 
-    auto ret     = std::make_shared<SPType>();
+    auto ret = std::make_shared<SPType>();
 
     // copy graph saveable params over
     auto g_ptr1 = std::dynamic_pointer_cast<typename Graph<ArrayType>::SPType>(sgsp);
     auto g_ptr2 = std::dynamic_pointer_cast<typename Graph<ArrayType>::SPType>(ret);
-    *g_ptr2 = *g_ptr1;
+    *g_ptr2     = *g_ptr1;
 
     // copy subgraph saveable params over
     auto sg_ptr1 = std::dynamic_pointer_cast<typename SubGraph<ArrayType>::SPType>(sgsp);
