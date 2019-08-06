@@ -471,9 +471,9 @@ struct MapSerializer<ml::NodeSaveableParams<TensorType>, D>
     map.Append(NAME, sp.name);
     map.Append(CACHED_OUTPUT, sp.cached_output);
     map.Append(CACHED_OUTPUT_STATUS, sp.cached_output_status);
-    map.Append(OP_CODE, sp.op_type);
+    map.Append(OP_CODE, sp.operation_type);
 
-    SerializeAnyOp<TensorType, D>(map, OP, sp.op_type, sp.op);
+    SerializeAnyOp<TensorType, D>(map, OP, sp.operation_type, sp.op);
   }
 
   template <typename MapDeserializer>
@@ -482,9 +482,9 @@ struct MapSerializer<ml::NodeSaveableParams<TensorType>, D>
     map.ExpectKeyGetValue(NAME, sp.name);
     map.ExpectKeyGetValue(CACHED_OUTPUT, sp.cached_output);
     map.ExpectKeyGetValue(CACHED_OUTPUT_STATUS, sp.cached_output_status);
-    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+    map.ExpectKeyGetValue(OP_CODE, sp.operation_type);
 
-    DeserializeAnyOp<TensorType, D>(map, OP, sp.op_type, sp.op);
+    DeserializeAnyOp<TensorType, D>(map, OP, sp.operation_type, sp.op);
   }
 };
 
