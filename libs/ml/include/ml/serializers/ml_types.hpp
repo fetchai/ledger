@@ -1591,7 +1591,6 @@ struct MapSerializer<ml::SelfAttentionEncoderSaveableParams<TensorType>, D>
   }
 };
 
-
 /**
  * serializer for self attention layer saveable params
  * @tparam TensorType
@@ -1602,12 +1601,12 @@ struct MapSerializer<ml::MultiHeadSaveableParams<TensorType>, D>
   using Type       = ml::MultiHeadSaveableParams<TensorType>;
   using DriverType = D;
 
-  static uint8_t const SUB_GRAPH           = 1;
-  static uint8_t const OP_CODE             = 2;
-  static uint8_t const VALUE_DIM             = 3;
-  static uint8_t const KEY_DIM           = 4;
-  static uint8_t const N_HEADS              = 5;
-  static uint8_t const MODEL_DIM    = 6;
+  static uint8_t const SUB_GRAPH = 1;
+  static uint8_t const OP_CODE   = 2;
+  static uint8_t const VALUE_DIM = 3;
+  static uint8_t const KEY_DIM   = 4;
+  static uint8_t const N_HEADS   = 5;
+  static uint8_t const MODEL_DIM = 6;
   static uint8_t const DROPOUT   = 7;
 
   template <typename Constructor>

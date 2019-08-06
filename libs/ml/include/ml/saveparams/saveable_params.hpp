@@ -528,7 +528,7 @@ struct MultiplySaveableParams : public SaveableParamsInterface
  * @tparam TensorType
  */
 template <class TensorType>
-struct MultiHeadSaveableParams : public SaveableParamsInterface
+struct MultiHeadSaveableParams : public SubGraphSaveableParams<TensorType>
 {
   using DataType = typename TensorType::Type;
   using SizeType = typename TensorType::SizeType;
@@ -542,7 +542,7 @@ struct MultiHeadSaveableParams : public SaveableParamsInterface
   DataType dropout;
 
   MultiHeadSaveableParams()
-    : SaveableParamsInterface(OpType::LAYER_MULTI_HEAD_ATTENTION)
+    : SubGraphSaveableParams<TensorType>(OpType::LAYER_MULTI_HEAD_ATTENTION)
   {}
 };
 
