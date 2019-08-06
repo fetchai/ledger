@@ -18,22 +18,12 @@
 //------------------------------------------------------------------------------
 
 #include "layers.hpp"
-#include "math/standard_functions/sqrt.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/layers/scaled_dot_product_attention.hpp"
 #include "ml/ops/add.hpp"
 #include "ml/ops/concatenate.hpp"
-#include "ml/ops/divide.hpp"
-#include "ml/ops/flatten.hpp"
-#include "ml/ops/matrix_multiply.hpp"
 #include "ml/ops/placeholder.hpp"
-#include "ml/ops/transpose.hpp"
 
-#include <cmath>
-#include <cstdint>
-#include <memory>
-#include <ml/ops/concatenate.hpp>
-#include <random>
 #include <string>
 
 namespace fetch {
@@ -78,7 +68,7 @@ public:
 
     // do n_heads time linear transformation
     std::vector<std::string> heads;
-    for (SizeType i = 0; i < n_heads_; i++)
+    for (SizeType i{0}; i < n_heads_; i++)
     {
       std::string head_name             = name + "_Head_No_" + std::to_string(static_cast<int>(i));
       std::string head_attention_output = create_one_attention_head(head_name, query, key, value);
