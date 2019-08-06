@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/fixed_point/fixed_point.hpp"
 #include "ml/layers/multihead_attention.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
 
