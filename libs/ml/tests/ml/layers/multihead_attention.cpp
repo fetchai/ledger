@@ -132,7 +132,7 @@ TYPED_TEST(MultiheadAttention, saveparams_test)
   mha_layer->SetInput("MultiheadAttention_Key", key_data);
   mha_layer->SetInput("MultiheadAttention_Value", value_data);
 
-  auto output = mha_layer->Evaluate("ScaledDotProductAttention", true);
+  auto output = mha_layer->Evaluate("MultiheadAttention_Final_Transformation", true);
 
   // extract saveparams
   auto sp = mha_layer->GetOpSaveableParams();
@@ -160,7 +160,7 @@ TYPED_TEST(MultiheadAttention, saveparams_test)
   sa2->SetInput("MultiheadAttention_Key", key_data);
   sa2->SetInput("MultiheadAttention_Value", value_data);
 
-  TypeParam output2 = sa2->Evaluate("ScaledDotProductAttention", true);
+  TypeParam output2 = sa2->Evaluate("MultiheadAttention_Final_Transformation", true);
 
   ASSERT_TRUE(output.AllClose(output2, fetch::math::function_tolerance<DataType>(),
                               fetch::math::function_tolerance<DataType>()));

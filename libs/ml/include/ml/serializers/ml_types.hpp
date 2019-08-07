@@ -299,6 +299,12 @@ void SerializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_type
     SerializeImplementation<TensorType, D, ml::LayerPReluSaveableParams<TensorType>>(map, code, op);
     break;
   }
+  case ml::OpType::LAYER_SCALED_DOT_PRODUCT_ATTENTION:
+  {
+    SerializeImplementation<TensorType, D, ml::LayerScaledDotProductAttentionSaveableParams<TensorType>>(
+        map, code, op);
+    break;
+  }
   case ml::OpType::LAYER_SELF_ATTENTION_ENCODER:
   {
     SerializeImplementation<TensorType, D, ml::LayerSelfAttentionEncoderSaveableParams<TensorType>>(
@@ -572,6 +578,12 @@ void DeserializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_ty
   case ml::OpType::LAYER_PRELU:
   {
     op = DeserializeImplementation<TensorType, D, ml::LayerPReluSaveableParams<TensorType>>(map,
+                                                                                            code);
+    break;
+  }
+  case ml::OpType::LAYER_SCALED_DOT_PRODUCT_ATTENTION:
+  {
+    op = DeserializeImplementation<TensorType, D, ml::LayerScaledDotProductAttentionSaveableParams<TensorType>>(map,
                                                                                             code);
     break;
   }
@@ -2138,15 +2150,20 @@ struct MapSerializer<ml::LayerLayerNormSaveableParams<TensorType>, D>
   using Type       = ml::LayerLayerNormSaveableParams<TensorType>;
   using DriverType = D;
 
-  static uint8_t const OP_CODE    = 1;
-  static uint8_t const DATA_SHAPE = 2;
-  static uint8_t const AXIS       = 3;
-  static uint8_t const EPSILON    = 4;
+  static uint8_t const SUB_GRAPH = 1;
+  static uint8_t const OP_CODE    = 2;
+  static uint8_t const DATA_SHAPE = 3;
+  static uint8_t const AXIS       = 4;
+  static uint8_t const EPSILON    = 5;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(4);
+    auto map = map_constructor(5);
+    // serialize parent class first
+    auto base_pointer = static_cast<ml::SubGraphSaveableParams<TensorType> const *>(&sp);
+    map.Append(SUB_GRAPH, *base_pointer);
+
     map.Append(OP_CODE, sp.op_type);
     map.Append(DATA_SHAPE, sp.data_shape);
     map.Append(AXIS, sp.axis);
@@ -2156,6 +2173,9 @@ struct MapSerializer<ml::LayerLayerNormSaveableParams<TensorType>, D>
   template <typename MapDeserializer>
   static void Deserialize(MapDeserializer &map, Type &sp)
   {
+    auto base_pointer = static_cast<ml::SubGraphSaveableParams<TensorType> *>(&sp);
+    map.ExpectKeyGetValue(SUB_GRAPH, *base_pointer);
+
     map.ExpectKeyGetValue(OP_CODE, sp.op_type);
     map.ExpectKeyGetValue(DATA_SHAPE, sp.data_shape);
     map.ExpectKeyGetValue(AXIS, sp.axis);

@@ -343,6 +343,11 @@ std::shared_ptr<Node<T>> BuildNode(NodeSaveableParams<T> const &nsp)
     op_ptr = BuildLayer<T, layers::PRelu<T>>(nsp.op_save_params);
     break;
   }
+  case OpType::LAYER_SCALED_DOT_PRODUCT_ATTENTION:
+  {
+    op_ptr = BuildLayer<T, layers::ScaledDotProductAttention<T>>(nsp.op_save_params);
+    break;
+  }
   case OpType::LAYER_SELF_ATTENTION_ENCODER:
   {
     op_ptr = BuildLayer<T, layers::SelfAttentionEncoder<T>>(nsp.op_save_params);

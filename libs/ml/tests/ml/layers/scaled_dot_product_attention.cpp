@@ -159,11 +159,11 @@ TYPED_TEST(ScaledDotProductAttention, saveparams_test)
   auto mha_layer =
       std::make_shared<fetch::ml::layers::ScaledDotProductAttention<TypeParam>>(key_dim);
 
-  mha_layer->SetInput("MultiheadAttention_Query", query_data);
-  mha_layer->SetInput("MultiheadAttention_Key", key_data);
-  mha_layer->SetInput("MultiheadAttention_Value", value_data);
+  mha_layer->SetInput("ScaledDotProductAttention_Query", query_data);
+  mha_layer->SetInput("ScaledDotProductAttention_Key", key_data);
+  mha_layer->SetInput("ScaledDotProductAttention_Value", value_data);
 
-  auto output = mha_layer->Evaluate("ScaledDotProductAttention", true);
+  auto output = mha_layer->Evaluate("ScaledDotProductAttention_Value_Weight_MatMul", true);
 
   // extract saveparams
   auto sp = mha_layer->GetOpSaveableParams();
@@ -186,11 +186,11 @@ TYPED_TEST(ScaledDotProductAttention, saveparams_test)
   auto sa2 = fetch::ml::utilities::BuildLayer<
       TypeParam, fetch::ml::layers::ScaledDotProductAttention<TypeParam>>(dsp2);
 
-  sa2->SetInput("MultiheadAttention_Query", query_data);
-  sa2->SetInput("MultiheadAttention_Key", key_data);
-  sa2->SetInput("MultiheadAttention_Value", value_data);
+  sa2->SetInput("ScaledDotProductAttention_Query", query_data);
+  sa2->SetInput("ScaledDotProductAttention_Key", key_data);
+  sa2->SetInput("ScaledDotProductAttention_Value", value_data);
 
-  TypeParam output2 = sa2->Evaluate("ScaledDotProductAttention", true);
+  TypeParam output2 = sa2->Evaluate("ScaledDotProductAttention_Value_Weight_MatMul", true);
 
   ASSERT_TRUE(output.AllClose(output2, fetch::math::function_tolerance<DataType>(),
                               fetch::math::function_tolerance<DataType>()));
