@@ -90,8 +90,8 @@ public:
 
   void                           ResetGradients();
   GraphSaveableParams<ArrayType> GetGraphSaveableParams();
-  void SetGraphSaveableParams(GraphSaveableParams<ArrayType> const & sp);
-  static constexpr char const *DESCRIPTOR = "Graph";
+  void                           SetGraphSaveableParams(GraphSaveableParams<ArrayType> const &sp);
+  static constexpr char const *  DESCRIPTOR = "Graph";
 
 private:
   void ApplyRegularisation();
@@ -347,21 +347,24 @@ GraphSaveableParams<ArrayType> Graph<ArrayType>::GetGraphSaveableParams()
   return gs;
 }
 
-
 template <typename ArrayType>
-void Graph<ArrayType>::SetGraphSaveableParams(GraphSaveableParams<ArrayType> const & sp) {
+void Graph<ArrayType>::SetGraphSaveableParams(GraphSaveableParams<ArrayType> const &sp)
+{
   assert(nodes_.size() == sp.connections.size());
 
   // assign inputs and outputs to the nodes
-  for (auto &node : sp.connections) {
+  for (auto &node : sp.connections)
+  {
     LinkNodesInGraph(node.first, node.second);
   }
 
   trainable_lookup_ = sp.trainable_lookup_;
 
   trainable_ = std::vector<TrainablePtrType>(trainable_lookup_.size());
-  for (auto & node : sp.trainable_lookup_) {
-    trainable_[node.second] = std::dynamic_pointer_cast<fetch::ml::ops::Trainable<ArrayType>>(nodes_[node.first]);
+  for (auto &node : sp.trainable_lookup_)
+  {
+    trainable_[node.second] =
+        std::dynamic_pointer_cast<fetch::ml::ops::Trainable<ArrayType>>(nodes_[node.first]);
   }
 }
 
@@ -514,8 +517,8 @@ void Graph<ArrayType>::ApplyGradients(std::vector<ArrayType> &grad)
  * @param op
  */
 template <typename ArrayType>
-void Graph<ArrayType>::LinkNodesInGraph(std::string const &                         node_name,
-                                        std::vector<std::string> const &            inputs)
+void Graph<ArrayType>::LinkNodesInGraph(std::string const &             node_name,
+                                        std::vector<std::string> const &inputs)
 {
   // assign inputs and outputs
   for (auto const &i : inputs)

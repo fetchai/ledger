@@ -76,14 +76,12 @@ void BuildGraph(GraphSaveableParams<T> const &sp, std::shared_ptr<Graph<T>> ret)
   for (auto &node : sp.nodes)
   {
     std::string name = node.first;
-    auto        node_ptr =
-        BuildNode(*(std::dynamic_pointer_cast<NodeSaveableParams<T>>(node.second)));
+    auto node_ptr    = BuildNode(*(std::dynamic_pointer_cast<NodeSaveableParams<T>>(node.second)));
 
-    if(!(ret->InsertNode(name, node_ptr)))
+    if (!(ret->InsertNode(name, node_ptr)))
     {
       throw std::runtime_error("BuildGraph unable to insert node");
     }
-
   }
   ret->SetGraphSaveableParams(sp);
 }
@@ -214,8 +212,8 @@ std::shared_ptr<Node<T>> BuildNode(NodeSaveableParams<T> const &nsp)
   }
   case OpType::LAYER_SELF_ATTENTION_ENCODER:
   {
-    op_ptr = BuildLayer<T, layers::SelfAttentionEncoder<T>>(
-        *(std::dynamic_pointer_cast<LayerSelfAttentionEncoderSaveableParams<T>>(nsp.op_save_params)));
+    op_ptr = BuildLayer<T, layers::SelfAttentionEncoder<T>>(*(
+        std::dynamic_pointer_cast<LayerSelfAttentionEncoderSaveableParams<T>>(nsp.op_save_params)));
     break;
   }
   default:

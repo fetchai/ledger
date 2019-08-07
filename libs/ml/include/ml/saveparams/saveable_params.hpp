@@ -537,8 +537,8 @@ struct LayerLayerNormSaveableParams : public SaveableParamsInterface
   fetch::ml::OpType op_type = OpType::LAYER_LAYER_NORM;
 
   std::vector<SizeType> data_shape;
-  SizeType   axis;
-  DataType   epsilon;
+  SizeType              axis;
+  DataType              epsilon;
 
   LayerLayerNormSaveableParams()
     : SaveableParamsInterface(OpType::LAYER_LAYER_NORM)

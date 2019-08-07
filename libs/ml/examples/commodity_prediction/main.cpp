@@ -382,11 +382,12 @@ int main(int argc, char **argv)
     // deserialize
     b.seek(0);
     auto gsp2 = std::make_shared<fetch::ml::GraphSaveableParams<ArrayType>>();
-    b >> gsp2;
+    b >> *gsp2;
 
     // remake graph
-    std::shared_ptr<GraphType> newgraph_ptr =
-        fetch::ml::utilities::LoadGraph<ArrayType, GraphType>(gsp2);
+
+    auto newgraph_ptr = std::make_shared<GraphType>();
+    fetch::ml::utilities::BuildGraph<ArrayType>(*gsp2, newgraph_ptr);
 
     //// run same test as above:
     /// LOAD DATA ///
