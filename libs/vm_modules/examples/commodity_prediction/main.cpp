@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/const_byte_array.hpp"
 #include "core/json/document.hpp"
-#include "core/serializers/byte_array.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "ledger/state_adapter.hpp"
 #include "math/tensor.hpp"
 #include "ml/dataloaders/ReadCSV.hpp"
+#include "ml/serializers/ml_types.hpp"
 #include "variant/variant.hpp"
 #include "vm/io_observer_interface.hpp"
 #include "vm/module.hpp"
