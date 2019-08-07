@@ -218,8 +218,8 @@ std::shared_ptr<Node<T>> BuildNode(NodeSaveableParams<T> const &nsp)
   }
   case OpType::LAYER_SKIP_GRAM:
   {
-    op_ptr = BuildLayer<T, layers::SkipGram<T>>(*(
-        std::dynamic_pointer_cast<LayerSkipGramSaveableParams<T>>(nsp.op_save_params)));
+    op_ptr = BuildLayer<T, layers::SkipGram<T>>(
+        *(std::dynamic_pointer_cast<LayerSkipGramSaveableParams<T>>(nsp.op_save_params)));
     break;
   }
   default:
