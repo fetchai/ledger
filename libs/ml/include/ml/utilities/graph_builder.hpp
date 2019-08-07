@@ -204,6 +204,12 @@ std::shared_ptr<Node<T>> BuildNode(NodeSaveableParams<T> const &nsp)
         *(std::dynamic_pointer_cast<LayerFullyConnectedSaveableParams<T>>(nsp.op_save_params)));
     break;
   }
+  case OpType::LAYER_MULTI_HEAD_ATTENTION:
+  {
+    op_ptr = BuildLayer<T, layers::MultiheadAttention<T>>(
+        *(std::dynamic_pointer_cast<LayerMultiHeadSaveableParams<T>>(nsp.op_save_params)));
+    break;
+  }
   case OpType::LAYER_PRELU:
   {
     op_ptr = BuildLayer<T, layers::PRelu<T>>(
