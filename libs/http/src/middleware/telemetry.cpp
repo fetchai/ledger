@@ -19,6 +19,7 @@
 #include "core/logging.hpp"
 #include "core/string/join.hpp"
 #include "core/string/split.hpp"
+#include "core/string/starts_with.hpp"
 #include "http/middleware/telemetry.hpp"
 #include "telemetry/counter_map.hpp"
 #include "telemetry/histogram_map.hpp"
@@ -64,21 +65,18 @@ void TelemetryData::Update(HTTPRequest const &request, HTTPResponse const &respo
 {
   FETCH_UNUSED(response);
 
-  auto const path        = static_cast<std::string>(request.uri());
+  auto       path        = static_cast<std::string>(request.uri());
   auto const status_code = std::to_string(static_cast<int>(response.status()));
 
-  auto path_segments = core::Split(path, "/");
-  if (!path_segments.empty())
+  if (core::StartsWith(path, "/api/tx/"))
   {
-    path_segments.pop_back();
+    path = "/api/tx";
   }
-  auto const truncated_path = core::Join(path_segments, "/");
-
   // update the duration stats
-  durations_->Add(truncated_path, request.GetDuration());
+  durations_->Add(path, request.GetDuration());
 
   // update the counters
-  status_counts_->Increment({{"path", truncated_path}, {"code", status_code}});
+  status_counts_->Increment({{"path", path}, {"code", status_code}});
 }
 
 }  // namespace
