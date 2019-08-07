@@ -92,7 +92,7 @@ TYPED_TEST(SelfAttentionEncoder, saveparams_test)
 
   sa_layer->SetInput("SelfAttentionEncoder_Input", data);
 
-  TypeParam output = sa_layer->Evaluate("SelfAttentionEncoder_Feedforward_Residual", true);
+  TypeParam output = sa_layer->Evaluate("SelfAttentionEncoder_Feedforward_Residual_LayerNorm", true);
 
   // extract saveparams
   auto sp = sa_layer->GetOpSaveableParams();
@@ -117,7 +117,7 @@ TYPED_TEST(SelfAttentionEncoder, saveparams_test)
                                        fetch::ml::layers::SelfAttentionEncoder<TypeParam>>(dsp2);
 
   sa2->SetInput("SelfAttentionEncoder_Input", data);
-  TypeParam output2 = sa2->Evaluate("SelfAttentionEncoder_Feedforward_Residual", true);
+  TypeParam output2 = sa2->Evaluate("SelfAttentionEncoder_Feedforward_Residual_LayerNorm", true);
 
   ASSERT_TRUE(output.AllClose(output2, fetch::math::function_tolerance<DataType>(),
                               fetch::math::function_tolerance<DataType>()));
