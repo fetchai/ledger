@@ -16,13 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logging.hpp"
 #include "core/string/starts_with.hpp"
 #include "http/middleware/telemetry.hpp"
 #include "telemetry/counter_map.hpp"
 #include "telemetry/histogram_map.hpp"
 #include "telemetry/registry.hpp"
 
+#include <memory>
 #include <memory>
 
 namespace fetch {
@@ -61,8 +61,6 @@ private:
 
 void TelemetryData::Update(HTTPRequest const &request, HTTPResponse const &response)
 {
-  FETCH_UNUSED(response);
-
   auto       path        = static_cast<std::string>(request.uri());
   auto const status_code = std::to_string(static_cast<int>(response.status()));
 
