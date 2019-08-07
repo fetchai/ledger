@@ -29,7 +29,7 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Switch : public fetch::ml::Ops<T>
+class Switch : public fetch::ml::ops::Ops<T>
 {
 public:
   using ArrayType     = T;
@@ -39,7 +39,12 @@ public:
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpSwitchSaveableParams<T>;
 
-  Switch()           = default;
+  Switch() = default;
+
+  explicit Switch(SPType const &sp)
+    : Ops<T>(sp)
+  {}
+
   ~Switch() override = default;
 
   /**

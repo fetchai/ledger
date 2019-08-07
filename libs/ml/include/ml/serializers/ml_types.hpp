@@ -2282,7 +2282,7 @@ struct MapSerializer<ml::LayerScaledDotProductAttentionSaveableParams<TensorType
     map.ExpectKeyGetValue(SUB_GRAPH, *base_pointer);
 
     map.ExpectKeyGetValue(OP_CODE, sp.op_type);
-    map.ExpectKeyGetValue(KEY_DIM, sp.n_heads);
+    map.ExpectKeyGetValue(KEY_DIM, sp.key_dim);
   }
 };
 

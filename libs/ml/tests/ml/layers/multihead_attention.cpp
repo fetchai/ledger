@@ -152,9 +152,7 @@ TYPED_TEST(MultiheadAttention, saveparams_test)
   b >> *dsp2;
 
   // rebuild
-  auto sa2 =
-      fetch::ml::utilities::BuildLayer<TypeParam, fetch::ml::layers::MultiheadAttention<TypeParam>>(
-          *dsp2);
+  auto sa2 = fetch::ml::utilities::BuildLayer<TypeParam, fetch::ml::layers::MultiheadAttention<TypeParam>>(dsp2);
 
   sa2->SetInput("MultiheadAttention_Query", query_data);
   sa2->SetInput("MultiheadAttention_Key", key_data);

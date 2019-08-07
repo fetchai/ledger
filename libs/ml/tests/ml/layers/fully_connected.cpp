@@ -615,7 +615,7 @@ TYPED_TEST(FullyConnectedTest, saveparams_test)
   // rebuild
   auto fc2 =
       fetch::ml::utilities::BuildLayer<TypeParam, fetch::ml::layers::FullyConnected<TypeParam>>(
-          *dsp2);
+          dsp2);
   fc2->SetInput("FullyConnected_Input", input);
   TypeParam output2 = fc2->Evaluate("FullyConnected_MatrixMultiply", true);
 

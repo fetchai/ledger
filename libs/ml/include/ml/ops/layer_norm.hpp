@@ -46,6 +46,16 @@ public:
     , axis_(axis)
   {}
 
+  explicit LayerNorm(SPType const &sp)
+    : Ops<T>(sp)
+  {
+    epsilon_             = sp.epsilon;
+    axis_                = sp.axis;
+    prev_input_          = sp.prev_input;
+    cached_inv_sqrt_var_ = sp.cached_inv_sqrt_var;
+    cached_output_       = sp.cached_output;
+  }
+
   ~LayerNorm() override = default;
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override

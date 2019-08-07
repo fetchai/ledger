@@ -21,6 +21,10 @@
 
 #include "ml/layers/normalisation/layer_norm.hpp"
 #include "ml/meta/ml_type_traits.hpp"
+
+#include "ml/serializers/ml_types.hpp"
+#include "ml/utilities/graph_builder.hpp"
+
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
@@ -202,3 +206,48 @@ TYPED_TEST(LayerNormTest, getStateDict)
   EXPECT_EQ(sd.dict_["LayerNorm_Beta"].weights_->shape(),
             std::vector<typename TypeParam::SizeType>({50, 1, 1}));
 }
+
+TYPED_TEST(LayerNormTest, saveparams_test)
+{
+  using DataType = typename TypeParam::Type;
+
+  std::vector<fetch::math::SizeType> data_shape = {3, 2};
+  TypeParam data = TypeParam::FromString(
+      "1, 2, 3, 0;"
+      "2, 3, 2, 1;"
+      "3, 6, 4, 13");
+  data.Reshape({3, 2, 2});
+
+  auto mha_layer = std::make_shared<fetch::ml::layers::LayerNorm<TypeParam>>(data_shape);
+  mha_layer->SetInput("LayerNorm_Input", data);
+
+  auto output = mha_layer->Evaluate("LayerNorm_Beta_Addition", true);
+
+  // extract saveparams
+  auto sp = mha_layer->GetOpSaveableParams();
+
+  // downcast to correct type
+  auto dsp =
+      std::dynamic_pointer_cast<typename fetch::ml::layers::LayerNorm<TypeParam>::SPType>(
+          sp);
+
+  // serialize
+  fetch::serializers::MsgPackSerializer b;
+  b << *dsp;
+
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<typename fetch::ml::layers::LayerNorm<TypeParam>::SPType>();
+  b >> *dsp2;
+
+  // rebuild
+  auto sa2 = fetch::ml::utilities::BuildLayer<TypeParam, fetch::ml::layers::LayerNorm<TypeParam>>(dsp2);
+
+  sa2->SetInput("LayerNorm_Input", data);
+
+  TypeParam output2 = sa2->Evaluate("LayerNorm_Beta_Addition", true);
+
+  ASSERT_TRUE(output.AllClose(output2, fetch::math::function_tolerance<DataType>(),
+                              fetch::math::function_tolerance<DataType>()));
+}
+

@@ -20,6 +20,10 @@
 #include "ml/layers/scaled_dot_product_attention.hpp"
 #include "ml/ops/loss_functions.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
+
+#include "ml/serializers/ml_types.hpp"
+#include "ml/utilities/graph_builder.hpp"
+
 #include "ml/regularisers/regulariser.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
@@ -140,4 +144,52 @@ TYPED_TEST(ScaledDotProductAttention,
   ASSERT_TRUE(backprop_error[2].AllClose(
       gt_value_grad, fetch::math::function_tolerance<DataType>(),
       static_cast<DataType>(10) * fetch::math::function_tolerance<DataType>()));
+}
+
+TYPED_TEST(ScaledDotProductAttention, saveparams_test)
+{
+  using DataType = typename TypeParam::Type;
+
+  fetch::math::SizeType key_dim   = 4;
+
+  TypeParam query_data = TypeParam({12, 25, 4});
+  TypeParam key_data   = query_data;
+  TypeParam value_data = query_data;
+
+  auto mha_layer = std::make_shared<fetch::ml::layers::ScaledDotProductAttention<TypeParam>>(key_dim);
+
+  mha_layer->SetInput("MultiheadAttention_Query", query_data);
+  mha_layer->SetInput("MultiheadAttention_Key", key_data);
+  mha_layer->SetInput("MultiheadAttention_Value", value_data);
+
+  auto output = mha_layer->Evaluate("ScaledDotProductAttention", true);
+
+  // extract saveparams
+  auto sp = mha_layer->GetOpSaveableParams();
+
+  // downcast to correct type
+  auto dsp =
+      std::dynamic_pointer_cast<typename fetch::ml::layers::ScaledDotProductAttention<TypeParam>::SPType>(
+          sp);
+
+  // serialize
+  fetch::serializers::MsgPackSerializer b;
+  b << *dsp;
+
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<typename fetch::ml::layers::ScaledDotProductAttention<TypeParam>::SPType>();
+  b >> *dsp2;
+
+  // rebuild
+  auto sa2 = fetch::ml::utilities::BuildLayer<TypeParam, fetch::ml::layers::ScaledDotProductAttention<TypeParam>>(dsp2);
+
+  sa2->SetInput("MultiheadAttention_Query", query_data);
+  sa2->SetInput("MultiheadAttention_Key", key_data);
+  sa2->SetInput("MultiheadAttention_Value", value_data);
+
+  TypeParam output2 = sa2->Evaluate("ScaledDotProductAttention", true);
+
+  ASSERT_TRUE(output.AllClose(output2, fetch::math::function_tolerance<DataType>(),
+                              fetch::math::function_tolerance<DataType>()));
 }

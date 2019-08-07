@@ -48,7 +48,8 @@ public:
   using VecTensorType = typename SubGraph<T>::VecTensorType;
   using SPType        = LayerScaledDotProductAttentionSaveableParams<T>;
 
-  ScaledDotProductAttention(SizeType dk, DataType dropout = 0.9)
+  ScaledDotProductAttention() = default;
+  ScaledDotProductAttention(SizeType dk, DataType dropout = static_cast<DataType>(0.9))
     : key_dim_(dk)
   {
     std::string name = DESCRIPTOR;

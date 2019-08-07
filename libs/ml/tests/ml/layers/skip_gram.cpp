@@ -69,8 +69,7 @@ TYPED_TEST(SkipGramTest, saveparams_test)
   b >> *dsp2;
 
   // rebuild
-  auto sa2 =
-      fetch::ml::utilities::BuildLayer<TypeParam, fetch::ml::layers::SkipGram<TypeParam>>(*dsp2);
+  auto sa2 = fetch::ml::utilities::BuildLayer<TypeParam, fetch::ml::layers::SkipGram<TypeParam>>(dsp2);
 
   sa2->SetInput("SkipGram_Input", input);
   sa2->SetInput("SkipGram_Context", context);

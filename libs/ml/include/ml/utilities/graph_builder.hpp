@@ -57,6 +57,7 @@
 #include "ml/ops/reshape.hpp"
 #include "ml/ops/sqrt.hpp"
 #include "ml/ops/subtract.hpp"
+#include "ml/ops/switch.hpp"
 #include "ml/ops/tanh.hpp"
 #include "ml/ops/transpose.hpp"
 #include "ml/ops/weights.hpp"
@@ -99,8 +100,9 @@ void BuildSubGraph(SubGraphSaveableParams<T> const &sgsp, std::shared_ptr<SubGra
 }
 
 template <typename T, typename OperationType>
-std::shared_ptr<OperationType> BuildLayer(typename OperationType::SPType const &sp)
+std::shared_ptr<OperationType> BuildLayer(std::shared_ptr<SaveableParamsInterface> op_save_params)
 {
+  auto sp  = *(std::dynamic_pointer_cast<typename OperationType::SPType>(op_save_params));
   auto ret = std::make_shared<OperationType>();
   BuildSubGraph<T>(sp, ret);
   ret->SetOpSaveableParams(sp);
@@ -136,6 +138,11 @@ std::shared_ptr<Node<T>> BuildNode(NodeSaveableParams<T> const &nsp)
     op_ptr = GetOp<ops::Add<T>>(nsp.op_save_params);
     break;
   }
+  case ops::Concatenate<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::Concatenate<T>>(nsp.op_save_params);
+    break;
+  }
   case ops::Convolution1D<T>::OpCode():
   {
     op_ptr = GetOp<ops::Convolution1D<T>>(nsp.op_save_params);
@@ -146,9 +153,49 @@ std::shared_ptr<Node<T>> BuildNode(NodeSaveableParams<T> const &nsp)
     op_ptr = GetOp<ops::Convolution2D<T>>(nsp.op_save_params);
     break;
   }
+  case ops::CrossEntropyLoss<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::CrossEntropyLoss<T>>(nsp.op_save_params);
+    break;
+  }
+  case ops::Divide<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::Divide<T>>(nsp.op_save_params);
+    break;
+  }
+  case ops::Dropout<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::Dropout<T>>(nsp.op_save_params);
+    break;
+  }
+  case ops::Elu<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::Elu<T>>(nsp.op_save_params);
+    break;
+  }
+  case ops::Embeddings<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::Embeddings<T>>(nsp.op_save_params);
+    break;
+  }
+  case ops::Exp<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::Exp<T>>(nsp.op_save_params);
+    break;
+  }
   case ops::Flatten<T>::OpCode():
   {
     op_ptr = GetOp<ops::Flatten<T>>(nsp.op_save_params);
+    break;
+  }
+  case ops::LayerNorm<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::LayerNorm<T>>(nsp.op_save_params);
+    break;
+  }
+  case ops::LeakyRelu<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::LeakyRelu<T>>(nsp.op_save_params);
     break;
   }
   case ops::LeakyReluOp<T>::OpCode():
@@ -156,9 +203,49 @@ std::shared_ptr<Node<T>> BuildNode(NodeSaveableParams<T> const &nsp)
     op_ptr = GetOp<ops::LeakyReluOp<T>>(nsp.op_save_params);
     break;
   }
+  case ops::Log<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::Log<T>>(nsp.op_save_params);
+    break;
+  }
+  case ops::LogSigmoid<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::LogSigmoid<T>>(nsp.op_save_params);
+    break;
+  }
+  case ops::LogSoftmax<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::LogSoftmax<T>>(nsp.op_save_params);
+    break;
+  }
   case ops::MatrixMultiply<T>::OpCode():
   {
     op_ptr = GetOp<ops::MatrixMultiply<T>>(nsp.op_save_params);
+    break;
+  }
+  case ops::MeanSquareErrorLoss<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::MeanSquareErrorLoss<T>>(nsp.op_save_params);
+    break;
+  }
+  case ops::MaxPool1D<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::MaxPool1D<T>>(nsp.op_save_params);
+    break;
+  }
+  case ops::MaxPool2D<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::MaxPool2D<T>>(nsp.op_save_params);
+    break;
+  }
+  case ops::Maximum<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::Maximum<T>>(nsp.op_save_params);
+    break;
+  }
+  case ops::Multiply<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::Multiply<T>>(nsp.op_save_params);
     break;
   }
   case ops::PlaceHolder<T>::OpCode():
@@ -166,9 +253,19 @@ std::shared_ptr<Node<T>> BuildNode(NodeSaveableParams<T> const &nsp)
     op_ptr = GetOp<ops::PlaceHolder<T>>(nsp.op_save_params);
     break;
   }
+  case ops::RandomisedRelu<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::RandomisedRelu<T>>(nsp.op_save_params);
+    break;
+  }
   case ops::Relu<T>::OpCode():
   {
     op_ptr = GetOp<ops::Relu<T>>(nsp.op_save_params);
+    break;
+  }
+  case ops::Reshape<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::Reshape<T>>(nsp.op_save_params);
     break;
   }
   case ops::Sigmoid<T>::OpCode():
@@ -179,6 +276,31 @@ std::shared_ptr<Node<T>> BuildNode(NodeSaveableParams<T> const &nsp)
   case ops::Softmax<T>::OpCode():
   {
     op_ptr = GetOp<ops::Softmax<T>>(nsp.op_save_params);
+    break;
+  }
+  case ops::SoftmaxCrossEntropyLoss<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::SoftmaxCrossEntropyLoss<T>>(nsp.op_save_params);
+    break;
+  }
+  case ops::Sqrt<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::Sqrt<T>>(nsp.op_save_params);
+    break;
+  }
+  case ops::Subtract<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::Subtract<T>>(nsp.op_save_params);
+    break;
+  }
+  case ops::Switch<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::Switch<T>>(nsp.op_save_params);
+    break;
+  }
+  case ops::TanH<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::TanH<T>>(nsp.op_save_params);
     break;
   }
   case ops::Transpose<T>::OpCode():
@@ -193,44 +315,42 @@ std::shared_ptr<Node<T>> BuildNode(NodeSaveableParams<T> const &nsp)
   }
   case OpType::LAYER_CONVOLUTION_1D:
   {
-    op_ptr = BuildLayer<T, layers::Convolution1D<T>>(
-        *(std::dynamic_pointer_cast<LayerConvolution1DSaveableParams<T>>(nsp.op_save_params)));
+    op_ptr = BuildLayer<T, layers::Convolution1D<T>>(nsp.op_save_params);
     break;
   }
   case OpType::LAYER_CONVOLUTION_2D:
   {
-    op_ptr = BuildLayer<T, layers::Convolution2D<T>>(
-        *(std::dynamic_pointer_cast<LayerConvolution2DSaveableParams<T>>(nsp.op_save_params)));
+    op_ptr = BuildLayer<T, layers::Convolution2D<T>>(nsp.op_save_params);
     break;
   }
   case OpType::LAYER_FULLY_CONNECTED:
   {
-    op_ptr = BuildLayer<T, layers::FullyConnected<T>>(
-        *(std::dynamic_pointer_cast<LayerFullyConnectedSaveableParams<T>>(nsp.op_save_params)));
+    op_ptr = BuildLayer<T, layers::FullyConnected<T>>(nsp.op_save_params);
+    break;
+  }
+  case OpType::LAYER_LAYER_NORM:
+  {
+    op_ptr = BuildLayer<T, layers::LayerNorm<T>>(nsp.op_save_params);
     break;
   }
   case OpType::LAYER_MULTI_HEAD_ATTENTION:
   {
-    op_ptr = BuildLayer<T, layers::MultiheadAttention<T>>(
-        *(std::dynamic_pointer_cast<LayerMultiHeadSaveableParams<T>>(nsp.op_save_params)));
+    op_ptr = BuildLayer<T, layers::MultiheadAttention<T>>(nsp.op_save_params);
     break;
   }
   case OpType::LAYER_PRELU:
   {
-    op_ptr = BuildLayer<T, layers::PRelu<T>>(
-        *(std::dynamic_pointer_cast<LayerPReluSaveableParams<T>>(nsp.op_save_params)));
+    op_ptr = BuildLayer<T, layers::PRelu<T>>(nsp.op_save_params);
     break;
   }
   case OpType::LAYER_SELF_ATTENTION_ENCODER:
   {
-    op_ptr = BuildLayer<T, layers::SelfAttentionEncoder<T>>(*(
-        std::dynamic_pointer_cast<LayerSelfAttentionEncoderSaveableParams<T>>(nsp.op_save_params)));
+    op_ptr = BuildLayer<T, layers::SelfAttentionEncoder<T>>(nsp.op_save_params);
     break;
   }
   case OpType::LAYER_SKIP_GRAM:
   {
-    op_ptr = BuildLayer<T, layers::SkipGram<T>>(
-        *(std::dynamic_pointer_cast<LayerSkipGramSaveableParams<T>>(nsp.op_save_params)));
+    op_ptr = BuildLayer<T, layers::SkipGram<T>>(nsp.op_save_params);
     break;
   }
   default:

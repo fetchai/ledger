@@ -195,8 +195,7 @@ TYPED_TEST(PReluTest, saveparams_test)
   b >> *dsp2;
 
   // rebuild
-  auto prelu2 =
-      fetch::ml::utilities::BuildLayer<TypeParam, fetch::ml::layers::PRelu<TypeParam>>(*dsp2);
+  auto prelu2 = fetch::ml::utilities::BuildLayer<TypeParam, fetch::ml::layers::PRelu<TypeParam>>(dsp2);
 
   prelu2->SetInput("PRelu_Input", data);
   TypeParam output2 = prelu2->Evaluate("PRelu_LeakyReluOp", true);
