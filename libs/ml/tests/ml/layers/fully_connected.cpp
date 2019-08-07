@@ -32,7 +32,7 @@ class FullyConnectedTest : public ::testing::Test
 };
 
 template <typename T>
-class FullyConnectedSharedWeightTest : public ::testing::Test
+class FullyConnectedTestNoInt : public ::testing::Test
 {
 };
 
@@ -43,8 +43,9 @@ using HasIntTypes = ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tens
 using NoIntTypes  = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
                                     fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>,
                                     fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>>;
+
 TYPED_TEST_CASE(FullyConnectedTest, HasIntTypes);
-TYPED_TEST_CASE(FullyConnectedSharedWeightTest, NoIntTypes);
+TYPED_TEST_CASE(FullyConnectedTestNoInt, NoIntTypes);
 
 TYPED_TEST(FullyConnectedTest, set_input_and_evaluate_test)  // Use the class as a subgraph
 {
@@ -144,7 +145,7 @@ TYPED_TEST(FullyConnectedTest, ops_backward_test_time_distributed)  // Use the c
   // No way to test actual values for now as weights are randomly initialised.
 }
 
-TYPED_TEST(FullyConnectedSharedWeightTest, share_weight_backward_test)
+TYPED_TEST(FullyConnectedTestNoInt, share_weight_backward_test)
 {
   using ArrayType       = TypeParam;
   using DataType        = typename ArrayType::Type;
@@ -301,7 +302,7 @@ TYPED_TEST(FullyConnectedSharedWeightTest, share_weight_backward_test)
   }
 }
 
-TYPED_TEST(FullyConnectedSharedWeightTest, share_weight_backward_test_time_distributed)
+TYPED_TEST(FullyConnectedTestNoInt, share_weight_backward_test_time_distributed)
 {
   using ArrayType       = TypeParam;
   using DataType        = typename ArrayType::Type;
@@ -583,7 +584,7 @@ TYPED_TEST(FullyConnectedTest, getStateDict_time_distributed)
             std::vector<typename TypeParam::SizeType>({10, 1, 1}));
 }
 
-TYPED_TEST(FullyConnectedTest, saveparams_test)
+TYPED_TEST(FullyConnectedTestNoInt, saveparams_test)
 {
   using DataType = typename TypeParam::Type;
 
