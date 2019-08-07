@@ -47,7 +47,7 @@ public:
   using DataType      = typename TensorType::Type;
   using WeightsInit   = fetch::ml::ops::WeightsInitialisation;
   using VecTensorType = typename SubGraph<T>::VecTensorType;
-  using SPType        = FullyConnectedSaveableParams<TensorType>;
+  using SPType        = LayerFullyConnectedSaveableParams<TensorType>;
 
   using OpPtrType      = typename std::shared_ptr<fetch::ml::ops::Ops<TensorType>>;
   using GraphType      = typename fetch::ml::Graph<TensorType>;
@@ -234,7 +234,7 @@ public:
     return ret;
   }
 
-  void SetOpSaveableParams(FullyConnectedSaveableParams<T> const &sp)
+  void SetOpSaveableParams(LayerFullyConnectedSaveableParams<T> const &sp)
   {
     // assign layer specific params
     in_size_  = sp.in_size;

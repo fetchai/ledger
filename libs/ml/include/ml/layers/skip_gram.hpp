@@ -44,7 +44,7 @@ public:
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using WeightsInit   = fetch::ml::ops::WeightsInitialisation;
   using VecTensorType = typename SubGraph<T>::VecTensorType;
-  using SPType        = SkipGramSaveableParams<T>;
+  using SPType        = LayerSkipGramSaveableParams<T>;
 
   SkipGram(SizeType in_size, SizeType out, SizeType embedding_size, SizeType vocab_size,
            std::string const &name = "SkipGram", WeightsInit init_mode = WeightsInit::XAVIER_GLOROT)

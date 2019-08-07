@@ -41,7 +41,7 @@ public:
   using SizeType      = typename TensorType::SizeType;
   using WeightsInit   = fetch::ml::ops::WeightsInitialisation;
   using VecTensorType = typename SubGraph<T>::VecTensorType;
-  using SPType        = PReluSaveableParams<TensorType>;
+  using SPType        = LayerPReluSaveableParams<TensorType>;
 
   PRelu() = default;
 

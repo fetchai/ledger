@@ -20,9 +20,9 @@
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/loss_functions.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
-#include "ml/utilities/graph_builder.hpp"
 #include "ml/serializers/ml_types.hpp"
+#include "ml/utilities/graph_builder.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
 
@@ -593,7 +593,7 @@ TYPED_TEST(FullyConnectedTest, saveparams_test)
   // Evaluate
   fetch::ml::layers::FullyConnected<TypeParam> fc(10, 20);
   fc.SetInput("FullyConnected_Input", input);
-//  TypeParam output = fc.Evaluate("FC_FC", true);
+  //  TypeParam output = fc.Evaluate("FC_FC", true);
   TypeParam output = fc.Evaluate("FullyConnected_MatrixMultiply", true);
 
   // extract saveparams
@@ -613,7 +613,9 @@ TYPED_TEST(FullyConnectedTest, saveparams_test)
   b >> *dsp2;
 
   // rebuild
-  auto fc2 = fetch::ml::utilities::BuildLayer<TypeParam, fetch::ml::layers::FullyConnected<TypeParam>>(*dsp2);
+  auto fc2 =
+      fetch::ml::utilities::BuildLayer<TypeParam, fetch::ml::layers::FullyConnected<TypeParam>>(
+          *dsp2);
   fc2->SetInput("FullyConnected_Input", input);
   TypeParam output2 = fc2->Evaluate("FullyConnected_MatrixMultiply", true);
 

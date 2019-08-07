@@ -37,7 +37,7 @@ public:
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using DataType      = typename T::Type;
-  using SPType        = DivideSaveableParams<ArrayType>;
+  using SPType        = OpDivideSaveableParams<ArrayType>;
 
   Divide() = default;
 

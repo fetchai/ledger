@@ -39,7 +39,7 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using RNG           = fetch::random::LaggedFibonacciGenerator<>;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  using SPType        = RandomisedReluSaveableParams<ArrayType>;
+  using SPType        = OpRandomisedReluSaveableParams<ArrayType>;
 
   RandomisedRelu(DataType const lower_bound, DataType const upper_bound,
                  SizeType const &random_seed = 25102015)

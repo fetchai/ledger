@@ -37,7 +37,7 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  using SPType        = AbsSaveableParams<T>;
+  using SPType        = OpAbsSaveableParams<T>;
 
   Abs() = default;
 

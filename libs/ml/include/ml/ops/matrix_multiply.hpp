@@ -37,7 +37,7 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using SizeVector    = typename ArrayType::SizeVector;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  using SPType        = MatrixMultiplySaveableParams<T>;
+  using SPType        = OpMatrixMultiplySaveableParams<T>;
 
   MatrixMultiply() = default;
 

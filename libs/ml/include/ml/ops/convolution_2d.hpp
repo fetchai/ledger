@@ -37,7 +37,7 @@ public:
   using DataType      = typename ArrayType::Type;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  using SPType        = Convolution2DSaveableParams<ArrayType>;
+  using SPType        = OpConvolution2DSaveableParams<ArrayType>;
 
   explicit Convolution2D(SizeType stride_size = 1)
     : stride_size_(stride_size)

@@ -34,7 +34,7 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  using SPType        = TransposeSaveableParams<T>;
+  using SPType        = OpTransposeSaveableParams<T>;
 
   explicit Transpose(std::vector<SizeType> transpose_vector = {1, 0, 2})
     : transpose_vector_(transpose_vector)

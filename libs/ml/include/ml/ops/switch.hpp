@@ -37,6 +37,7 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SPType        = OpSwitchSaveableParams<T>;
 
   Switch()           = default;
   ~Switch() override = default;
@@ -84,10 +85,22 @@ public:
     return {mask_return_signal, then_return_signal, else_return_signal};
   }
 
+  std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
+  {
+    SPType sp{};
+    return std::make_shared<SPType>(sp);
+  }
+
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     return inputs.front()->shape();
   }
+
+  static constexpr OpType OpCode()
+  {
+    return OpType::OP_SWITCH;
+  }
+
 
   static constexpr char const *DESCRIPTOR = "Switch";
 };

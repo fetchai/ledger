@@ -41,7 +41,7 @@ public:
   using SizeType      = typename TensorType::SizeType;
   using WeightsInit   = fetch::ml::ops::WeightsInitialisation;
   using VecTensorType = typename SubGraph<T>::VecTensorType;
-  using SPType        = ConvolutionLayer2DSaveableParams<TensorType>;
+  using SPType        = LayerConvolution2DSaveableParams<TensorType>;
 
   Convolution2D() = default;
 

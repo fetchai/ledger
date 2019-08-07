@@ -56,7 +56,7 @@ public:
   using DataType       = typename ArrayType::Type;
   using ArrayPtrType   = std::shared_ptr<ArrayType>;
   using VecTensorType  = typename PlaceHolder<T>::VecTensorType;
-  using SPType         = WeightsSaveableParams<ArrayType>;
+  using SPType         = OpWeightsSaveableParams<ArrayType>;
   using WeightsPtrType = typename std::shared_ptr<Weights<ArrayType>>;
 
 protected:

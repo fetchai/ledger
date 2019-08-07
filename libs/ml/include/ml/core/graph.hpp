@@ -113,7 +113,7 @@ private:
 
 public:
   static void LinkNodesInGraph(std::string const &node_name, std::vector<std::string> const &inputs,
-      std::unordered_map<std::string, NodePtrType> nodes);
+                               std::unordered_map<std::string, NodePtrType> nodes);
 
 protected:
   std::unordered_map<std::string, NodePtrType> nodes_;
@@ -324,7 +324,7 @@ bool Graph<T>::InsertNode(std::string const &node_name, NodePtrType node_ptr)
 
   // todo: add to trainable
   // add to map of trainable ops if necessary
-//  AddTrainable<OperationType>(updated_name, node_ptr);
+  //  AddTrainable<OperationType>(updated_name, node_ptr);
 
   return nodes_.find(node_name) != nodes_.end();
 }
@@ -503,8 +503,8 @@ void Graph<ArrayType>::ApplyGradients(std::vector<ArrayType> &grad)
  * @param op
  */
 template <typename ArrayType>
-void Graph<ArrayType>::LinkNodesInGraph(std::string const &                         node_name,
-                                        std::vector<std::string> const &            inputs,
+void Graph<ArrayType>::LinkNodesInGraph(std::string const &                          node_name,
+                                        std::vector<std::string> const &             inputs,
                                         std::unordered_map<std::string, NodePtrType> nodes)
 {
   // assign inputs and outputs
