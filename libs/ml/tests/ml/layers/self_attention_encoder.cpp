@@ -29,20 +29,10 @@ class SelfAttentionEncoder : public ::testing::Test
 {
 };
 
-template <typename T>
-class SelfAttentionEncoderNoInts : public ::testing::Test
-{
-};
-
-using HasIntTypes = ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tensor<float>,
-                                     fetch::math::Tensor<double>,
-                                     fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>,
-                                     fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>>;
-using NoIntTypes  = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
+using Types  = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
                                     fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>,
                                     fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>>;
-TYPED_TEST_CASE(SelfAttentionEncoder, HasIntTypes);
-TYPED_TEST_CASE(SelfAttentionEncoderNoInts, NoIntTypes);
+TYPED_TEST_CASE(SelfAttentionEncoder, Types);
 
 TYPED_TEST(SelfAttentionEncoder, input_output_dimension_test)  // Use the class as a part of a graph
 {
@@ -87,7 +77,7 @@ TYPED_TEST(SelfAttentionEncoder, backward_dimension_test)  // Use the class as a
   ASSERT_EQ(backprop_error[0].shape()[2], 5);
 }
 
-TYPED_TEST(SelfAttentionEncoderNoInts, saveparams_test)
+TYPED_TEST(SelfAttentionEncoder, saveparams_test)
 {
   using DataType = typename TypeParam::Type;
 
