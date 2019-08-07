@@ -151,7 +151,8 @@ TYPED_TEST(LayerNormTest, graph_forward_test_exact_value_2D)  // Use the class a
                           static_cast<DataType>(5) * fetch::math::function_tolerance<DataType>()));
 }
 
-// TODO (#1458) enable large dimension test once Add and Multiply layers can handle input of more than 3 dims
+// TODO (#1458) enable large dimension test once Add and Multiply layers can handle input of more
+// than 3 dims
 
 TYPED_TEST(LayerNormTest, getStateDict)
 {
