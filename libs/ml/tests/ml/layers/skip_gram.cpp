@@ -37,17 +37,19 @@ TYPED_TEST(SkipGramTest, saveparams_test)
 {
   using DataType = typename TypeParam::Type;
 
-  TypeParam data(std::vector<typename TypeParam::SizeType>({12, 25, 4}));
+  TypeParam input(std::vector<typename TypeParam::SizeType>({100, 1}));
+  TypeParam context(std::vector<typename TypeParam::SizeType>({100, 1}));
 
-  fetch::math::SizeType in_size    = 10;
-  fetch::math::SizeType out_size   = 16;
+  fetch::math::SizeType in_size    = 1;
+  fetch::math::SizeType out_size   = 1;
   fetch::math::SizeType embed_size = 100;
   fetch::math::SizeType vocab_size = 1000;
 
   auto sg_layer = std::make_shared<fetch::ml::layers::SkipGram<TypeParam>>(in_size, out_size,
                                                                            embed_size, vocab_size);
 
-  sg_layer->SetInput("SkipGram_Input", data);
+  sg_layer->SetInput("SkipGram_Input", input);
+  sg_layer->SetInput("SkipGram_Context", context);
 
   TypeParam output = sg_layer->Evaluate("SkipGram_Sigmoid", true);
 
@@ -70,7 +72,9 @@ TYPED_TEST(SkipGramTest, saveparams_test)
   auto sa2 =
       fetch::ml::utilities::BuildLayer<TypeParam, fetch::ml::layers::SkipGram<TypeParam>>(*dsp2);
 
-  sa2->SetInput("SkipGram_Input", data);
+  sa2->SetInput("SkipGram_Input", input);
+  sa2->SetInput("SkipGram_Context", context);
+
   TypeParam output2 = sa2->Evaluate("SkipGram_Sigmoid", true);
 
   ASSERT_TRUE(output.AllClose(output2, fetch::math::function_tolerance<DataType>(),
