@@ -72,8 +72,6 @@ std::shared_ptr<Node<T>> BuildNode(NodeSaveableParams<T> const &nsp);
 template <typename T>
 void BuildGraph(GraphSaveableParams<T> const &sp, std::shared_ptr<Graph<T>> ret)
 {
-  std::unordered_map<std::string, std::shared_ptr<Node<T>>> nodes_map;
-
   // loop through connections adding nodes
   for (auto &node : sp.nodes)
   {
@@ -86,17 +84,8 @@ void BuildGraph(GraphSaveableParams<T> const &sp, std::shared_ptr<Graph<T>> ret)
       throw std::runtime_error("BuildGraph unable to insert node");
     }
 
-    nodes_map[name] = node_ptr;
   }
-
-  // assign inputs and outputs to the nodes
-  for (auto &node : sp.connections) {
-    Graph<T>::LinkNodesInGraph(node.first, node.second, nodes_map);
-  }
-
-  // add to trainable
-  // todo: recreate trainables
-
+  ret->SetGraphSaveableParams(sp);
 }
 
 template <typename T>

@@ -106,6 +106,8 @@ public:
     }
   }
 
+  virtual ~Node() = default;
+
   std::shared_ptr<SaveableParamsInterface> GetNodeSaveableParams()
   {
     auto   ops_save_params = op_ptr_->GetOpSaveableParams();
@@ -123,8 +125,6 @@ public:
 
     op_ptr_ = op_ptr;
   }
-
-  ~Node() = default;
 
   VecTensorType                                GatherInputs() const;
   std::shared_ptr<T>                           Evaluate(bool is_training);

@@ -90,7 +90,7 @@ public:
 
   void                           ResetGradients();
   GraphSaveableParams<ArrayType> GetGraphSaveableParams();
-
+  void SetGraphSaveableParams(GraphSaveableParams<ArrayType> const & sp);
   static constexpr char const *DESCRIPTOR = "Graph";
 
 private:
@@ -111,9 +111,7 @@ private:
   template <typename OperationType>
   bool UpdateVariableName(std::string const &name, std::string &ret);
 
-public:
-  static void LinkNodesInGraph(std::string const &node_name, std::vector<std::string> const &inputs,
-      std::unordered_map<std::string, NodePtrType> nodes);
+  void LinkNodesInGraph(std::string const &node_name, std::vector<std::string> const &inputs);
 
 protected:
   std::unordered_map<std::string, NodePtrType> nodes_;
@@ -265,7 +263,7 @@ meta::IfIsShareable<ArrayType, OperationType, std::string> Graph<ArrayType>::Add
   nodes_[updated_name] = node_ptr;
 
   // assign inputs and outputs to the new node
-  LinkNodesInGraph(updated_name, inputs, nodes_);
+  LinkNodesInGraph(updated_name, inputs);
 
   // add to map of trainable ops if necessary
   AddTrainable<OperationType>(updated_name, node_ptr);
@@ -301,7 +299,7 @@ meta::IfIsNotShareable<ArrayType, OperationType, std::string> Graph<ArrayType>::
   nodes_[node_name] = node_ptr;
 
   // assign inputs and outputs to the new node
-  LinkNodesInGraph(updated_name, inputs, nodes_);
+  LinkNodesInGraph(updated_name, inputs);
 
   // add to map of trainable ops if necessary
   AddTrainable<OperationType>(updated_name, node_ptr);
@@ -321,11 +319,6 @@ bool Graph<T>::InsertNode(std::string const &node_name, NodePtrType node_ptr)
 {
   // put node in look up table
   nodes_[node_name] = node_ptr;
-
-  // todo: add to trainable
-  // add to map of trainable ops if necessary
-//  AddTrainable<OperationType>(updated_name, node_ptr);
-
   return nodes_.find(node_name) != nodes_.end();
 }
 
@@ -352,6 +345,24 @@ GraphSaveableParams<ArrayType> Graph<ArrayType>::GetGraphSaveableParams()
   gs.trainable_lookup_ = trainable_lookup_;
 
   return gs;
+}
+
+
+template <typename ArrayType>
+void Graph<ArrayType>::SetGraphSaveableParams(GraphSaveableParams<ArrayType> const & sp) {
+  assert(nodes_.size() == sp.connections.size());
+
+  // assign inputs and outputs to the nodes
+  for (auto &node : sp.connections) {
+    LinkNodesInGraph(node.first, node.second);
+  }
+
+  trainable_lookup_ = sp.trainable_lookup_;
+
+  trainable_ = std::vector<TrainablePtrType>(trainable_lookup_.size());
+  for (auto & node : sp.trainable_lookup_) {
+    trainable_[node.second] = std::dynamic_pointer_cast<fetch::ml::ops::Trainable<ArrayType>>(nodes_[node.first]);
+  }
 }
 
 template <typename ArrayType>
@@ -504,14 +515,13 @@ void Graph<ArrayType>::ApplyGradients(std::vector<ArrayType> &grad)
  */
 template <typename ArrayType>
 void Graph<ArrayType>::LinkNodesInGraph(std::string const &                         node_name,
-                                        std::vector<std::string> const &            inputs,
-                                        std::unordered_map<std::string, NodePtrType> nodes)
+                                        std::vector<std::string> const &            inputs)
 {
   // assign inputs and outputs
   for (auto const &i : inputs)
   {
-    nodes.at(node_name)->AddInput(nodes.at(i));
-    nodes[i]->AddOutput(nodes[node_name]);
+    nodes_.at(node_name)->AddInput(nodes_.at(i));
+    nodes_[i]->AddOutput(nodes_[node_name]);
   }
 }
 
