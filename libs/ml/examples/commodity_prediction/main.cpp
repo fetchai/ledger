@@ -372,48 +372,6 @@ int main(int argc, char **argv)
     {
       std::cout << "Graph output is the different from the test output - fail." << std::endl;
     }
-
-    // now for the interesting bit
-    auto gsp = g_ptr->GetGraphSaveableParams();
-    // serialize
-    fetch::serializers::MsgPackSerializer b;
-    b << gsp;
-
-    // deserialize
-    b.seek(0);
-    auto gsp2 = std::make_shared<fetch::ml::GraphSaveableParams<ArrayType>>();
-    b >> *gsp2;
-
-    // remake graph
-
-    auto newgraph_ptr = std::make_shared<GraphType>();
-    fetch::ml::utilities::BuildGraph<ArrayType>(*gsp2, newgraph_ptr);
-
-    //// run same test as above:
-    /// LOAD DATA ///
-    loader.Reset();
-
-    /// FORWARD PASS PREDICTIONS ///
-    j = 0;
-    while (!loader.IsDone())
-    {
-      auto input = loader.GetNext();
-      newgraph_ptr->SetInput("num_input", input.second.at(0));
-
-      auto slice_output = newgraph_ptr->Evaluate(node_names.at(node_names.size() - 2), false);
-      output.Slice(j).Assign(slice_output);
-      test_y.Slice(j).Assign(input.first);
-      j++;
-    }
-
-    if (output.AllClose(test_y, 0.00001f))
-    {
-      std::cout << "Graph2 output is the same as the test output - success!" << std::endl;
-    }
-    else
-    {
-      std::cout << "Graph2 output is the different from the test output - fail." << std::endl;
-    }
   }
   else
   {
