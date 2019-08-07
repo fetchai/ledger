@@ -47,13 +47,13 @@ public:
   using SPType          = fetch::ml::LayerMultiHeadSaveableParams<T>;
 
   MultiheadAttention() = default;
-  
+
   MultiheadAttention(SizeType n_heads, SizeType model_dim, DataType dropout = static_cast<DataType>(0.9))
     : n_heads_(n_heads)
     , model_dim_(model_dim)
     , dropout_(dropout)
   {
-    // make sure all heads can be concatenate together to form model_dim
+    // make sure all heads can be concatenated together to form model_dim
     assert(model_dim_ % n_heads_ == 0);
     key_dim_ = model_dim_ / n_heads_;
 
@@ -149,7 +149,7 @@ public:
     return ret;
   }
 
-  void SetOpSaveableParams(LayerMultiHeadSaveableParams<T> const &sp)
+  void SetOpSaveableParams(SPType const &sp)
   {
     // assign layer specific params
     key_dim_   = sp.key_dim;

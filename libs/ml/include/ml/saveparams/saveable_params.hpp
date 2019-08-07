@@ -529,7 +529,7 @@ struct OpMultiplySaveableParams : public SaveableParamsInterface
  * @tparam TensorType
  */
 template <class TensorType>
-struct LayerLayerNormSaveableParams : public SaveableParamsInterface
+struct LayerLayerNormSaveableParams : public SubGraphSaveableParams<TensorType>
 {
   using DataType = typename TensorType::Type;
   using SizeType = typename TensorType::SizeType;
@@ -541,7 +541,7 @@ struct LayerLayerNormSaveableParams : public SaveableParamsInterface
   DataType              epsilon;
 
   LayerLayerNormSaveableParams()
-    : SaveableParamsInterface(OpType::LAYER_LAYER_NORM)
+    : SubGraphSaveableParams<TensorType>(OpType::LAYER_LAYER_NORM)
   {}
 };
 

@@ -328,8 +328,8 @@ int main(int argc, char **argv)
 
         assert(bias.shape()[0] == weights.shape()[0]);
 
-        auto weights_tensor = sd.dict_[name + "_FC_Weights"].weights_;
-        auto bias_tensor    = sd.dict_[name + "_FC_Bias"].weights_;
+        auto weights_tensor = sd.dict_.at(name + "_FullyConnected_Weights").weights_;
+        auto bias_tensor    = sd.dict_.at(name + "_FullyConnected_Bias").weights_;
 
         *weights_tensor     = weights;
         *bias_tensor        = bias;

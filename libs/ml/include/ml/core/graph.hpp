@@ -296,7 +296,7 @@ meta::IfIsNotShareable<ArrayType, OperationType, std::string> Graph<ArrayType>::
       [params...]() { return std::make_shared<OperationType>(params...); });
 
   // put node in look up table
-  nodes_[node_name] = node_ptr;
+  nodes_[updated_name] = node_ptr;
 
   // assign inputs and outputs to the new node
   LinkNodesInGraph(updated_name, inputs);
