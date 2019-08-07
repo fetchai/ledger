@@ -46,7 +46,7 @@ public:
   using ActivationType  = fetch::ml::details::ActivationType;
   using SPType          = fetch::ml::LayerMultiHeadSaveableParams<T>;
 
-  MultiheadAttention(SizeType n_heads, SizeType model_dim, DataType dropout = 0.9)
+  MultiheadAttention(SizeType n_heads, SizeType model_dim, DataType dropout = static_cast<DataType>(0.9))
     : n_heads_(n_heads)
     , model_dim_(model_dim)
     , dropout_(dropout)
