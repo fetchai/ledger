@@ -21,9 +21,10 @@
 #include "ml/ops/loss_functions.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+#include "ml/utilities/graph_builder.hpp"
+#include "ml/serializers/ml_types.hpp"
 
 #include "gtest/gtest.h"
-#include "ml/serializers/ml_types.hpp"
 
 template <typename T>
 class FullyConnectedTest : public ::testing::Test
@@ -591,8 +592,9 @@ TYPED_TEST(FullyConnectedTest, saveparams_test)
 
   // Evaluate
   fetch::ml::layers::FullyConnected<TypeParam> fc(10, 20);
-  fc.SetInput("FC_Input", input);
-  TypeParam output = fc.Evaluate("FC_FC", true);
+  fc.SetInput("FullyConnected_Input", input);
+//  TypeParam output = fc.Evaluate("FC_FC", true);
+  TypeParam output = fc.Evaluate("FullyConnected_MatrixMultiply", true);
 
   // extract saveparams
   auto sp = fc.GetOpSaveableParams();
@@ -611,9 +613,9 @@ TYPED_TEST(FullyConnectedTest, saveparams_test)
   b >> *dsp2;
 
   // rebuild
-  auto fc2 = fetch::ml::layers::FullyConnected<TypeParam>::BuildFullyConnected(*dsp2);
-  fc2->SetInput("FC_Input", input);
-  TypeParam output2 = fc2->Evaluate("FC_FC", true);
+  auto fc2 = fetch::ml::utilities::BuildLayer<TypeParam, fetch::ml::layers::FullyConnected<TypeParam>>(*dsp2);
+  fc2->SetInput("FullyConnected_Input", input);
+  TypeParam output2 = fc2->Evaluate("FullyConnected_MatrixMultiply", true);
 
   ASSERT_TRUE(output.AllClose(output2, fetch::math::function_tolerance<DataType>(),
                               fetch::math::function_tolerance<DataType>()));

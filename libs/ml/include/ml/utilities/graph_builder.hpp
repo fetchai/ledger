@@ -72,15 +72,31 @@ std::shared_ptr<Node<T>> BuildNode(NodeSaveableParams<T> const &nsp);
 template <typename T>
 void BuildGraph(GraphSaveableParams<T> const &sp, std::shared_ptr<Graph<T>> ret)
 {
-  // loop through nodenames adding nodes
-  for (auto &node : sp.connections)
+  std::unordered_map<std::string, std::shared_ptr<Node<T>>> nodes_map;
+
+  // loop through connections adding nodes
+  for (auto &node : sp.nodes)
   {
     std::string name = node.first;
     auto        node_ptr =
-        BuildNode(*(std::dynamic_pointer_cast<NodeSaveableParams<T>>(sp.nodes.at(name))));
-    bool success = ret->InsertNode(name, node_ptr);
-    assert(success);
+        BuildNode(*(std::dynamic_pointer_cast<NodeSaveableParams<T>>(node.second)));
+
+    if(!(ret->InsertNode(name, node_ptr)))
+    {
+      throw std::runtime_error("BuildGraph unable to insert node");
+    }
+
+    nodes_map[name] = node_ptr;
   }
+
+  // assign inputs and outputs to the nodes
+  for (auto &node : sp.connections) {
+    Graph<T>::LinkNodesInGraph(node.first, node.second, nodes_map);
+  }
+
+  // add to trainable
+  // todo: recreate trainables
+
 }
 
 template <typename T>
