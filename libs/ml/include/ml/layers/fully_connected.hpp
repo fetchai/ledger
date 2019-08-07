@@ -234,7 +234,7 @@ public:
     return ret;
   }
 
-  void SetOpSaveableParams(LayerFullyConnectedSaveableParams<T> const &sp)
+  void SetOpSaveableParams(SPType const & sp)
   {
     // assign layer specific params
     in_size_  = sp.in_size;

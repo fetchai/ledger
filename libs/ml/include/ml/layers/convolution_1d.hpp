@@ -114,7 +114,7 @@ public:
     return ret;
   }
 
-  void SetOpSaveableParams(LayerConvolution1DSaveableParams<T> const &sp)
+  void SetOpSaveableParams(SPType const &sp)
   {
     // assign layer specific params
     kernel_size_     = sp.kernel_size;

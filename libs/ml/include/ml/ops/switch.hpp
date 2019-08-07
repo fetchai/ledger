@@ -101,7 +101,6 @@ public:
     return OpType::OP_SWITCH;
   }
 
-
   static constexpr char const *DESCRIPTOR = "Switch";
 };
 

@@ -102,18 +102,19 @@ public:
 
   std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
-    auto ret = std::make_shared<SPType>();
-    // get base class saveable params
+    // get all base classes saveable params
     std::shared_ptr<SaveableParamsInterface> sgsp = SubGraph<TensorType>::GetOpSaveableParams();
+
+    auto ret = std::make_shared<SPType>();
 
     // copy graph saveable params over
     auto g_ptr1 = std::dynamic_pointer_cast<typename Graph<TensorType>::SPType>(sgsp);
     auto g_ptr2 = std::dynamic_pointer_cast<typename Graph<TensorType>::SPType>(ret);
     *g_ptr2     = *g_ptr1;
 
-    // assign base class saveable params to ret
+    // copy subgraph saveable params over
     auto sg_ptr1 = std::dynamic_pointer_cast<typename SubGraph<TensorType>::SPType>(sgsp);
-    auto sg_ptr2 = std::static_pointer_cast<typename SubGraph<TensorType>::SPType>(ret);
+    auto sg_ptr2 = std::dynamic_pointer_cast<typename SubGraph<TensorType>::SPType>(ret);
     *sg_ptr2     = *sg_ptr1;
 
     // asign layer specific params
@@ -127,7 +128,7 @@ public:
     return ret;
   }
 
-  void SetOpSaveableParams(LayerSelfAttentionEncoderSaveableParams<T> const &sp)
+  void SetOpSaveableParams(SPType const &sp)
   {
     // assign layer specific params
     n_heads_             = sp.n_heads;

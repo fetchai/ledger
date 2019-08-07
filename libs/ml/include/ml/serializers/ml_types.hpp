@@ -73,24 +73,26 @@ void SerializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_type
   }
   case ml::OpType::OP_CONCATENATE:
   {
-    SerializeImplementation<TensorType, D, ml::OpConcatenateSaveableParams<TensorType>>(map, code, op);
+    SerializeImplementation<TensorType, D, ml::OpConcatenateSaveableParams<TensorType>>(map, code,
+                                                                                        op);
     break;
   }
   case ml::OpType::OP_CONVOLUTION_1D:
   {
     SerializeImplementation<TensorType, D, ml::OpConvolution1DSaveableParams<TensorType>>(map, code,
-                                                                                        op);
+                                                                                          op);
     break;
   }
   case ml::OpType::OP_CONVOLUTION_2D:
   {
     SerializeImplementation<TensorType, D, ml::OpConvolution2DSaveableParams<TensorType>>(map, code,
-                                                                                        op);
+                                                                                          op);
     break;
   }
   case ml::OpType::OP_CROSS_ENTROPY_LOSS:
   {
-    SerializeImplementation<TensorType, D, ml::OpCrossEntropyLossSaveableParams<TensorType>>(map, code, op);
+    SerializeImplementation<TensorType, D, ml::OpCrossEntropyLossSaveableParams<TensorType>>(
+        map, code, op);
     break;
   }
   case ml::OpType::OP_DIVIDE:
@@ -110,7 +112,8 @@ void SerializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_type
   }
   case ml::OpType::OP_EMBEDDINGS:
   {
-    SerializeImplementation<TensorType, D, ml::OpEmbeddingsSaveableParams<TensorType>>(map, code, op);
+    SerializeImplementation<TensorType, D, ml::OpEmbeddingsSaveableParams<TensorType>>(map, code,
+                                                                                       op);
     break;
   }
   case ml::OpType::OP_EXP:
@@ -125,18 +128,20 @@ void SerializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_type
   }
   case ml::OpType::OP_LAYER_NORM:
   {
-    SerializeImplementation<TensorType, D, ml::OpLayerNormSaveableParams<TensorType>>(map, code, op);
+    SerializeImplementation<TensorType, D, ml::OpLayerNormSaveableParams<TensorType>>(map, code,
+                                                                                      op);
     break;
   }
   case ml::OpType::OP_LEAKY_RELU:
   {
-    SerializeImplementation<TensorType, D, ml::OpLeakyReluSaveableParams<TensorType>>(map, code, op);
+    SerializeImplementation<TensorType, D, ml::OpLeakyReluSaveableParams<TensorType>>(map, code,
+                                                                                      op);
     break;
   }
   case ml::OpType::OP_LEAKY_RELU_OP:
   {
     SerializeImplementation<TensorType, D, ml::OpLeakyReluOpSaveableParams<TensorType>>(map, code,
-                                                                                      op);
+                                                                                        op);
     break;
   }
   case ml::OpType::OP_LOG:
@@ -146,33 +151,38 @@ void SerializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_type
   }
   case ml::OpType::OP_LOGSIGMOID:
   {
-    SerializeImplementation<TensorType, D, ml::OpLogSigmoidSaveableParams<TensorType>>(map, code, op);
+    SerializeImplementation<TensorType, D, ml::OpLogSigmoidSaveableParams<TensorType>>(map, code,
+                                                                                       op);
     break;
   }
   case ml::OpType::OP_LOGSOFTMAX:
   {
-    SerializeImplementation<TensorType, D, ml::OpLogSoftmaxSaveableParams<TensorType>>(map, code, op);
+    SerializeImplementation<TensorType, D, ml::OpLogSoftmaxSaveableParams<TensorType>>(map, code,
+                                                                                       op);
     break;
   }
   case ml::OpType::OP_MATRIX_MULTIPLY:
   {
-    SerializeImplementation<TensorType, D, ml::OpMatrixMultiplySaveableParams<TensorType>>(map, code,
-                                                                                         op);
+    SerializeImplementation<TensorType, D, ml::OpMatrixMultiplySaveableParams<TensorType>>(
+        map, code, op);
     break;
   }
   case ml::OpType::OP_MEAN_SQUARE_ERROR_LOSS:
   {
-    SerializeImplementation<TensorType, D, ml::OpMeanSquareErrorSaveableParams<TensorType>>(map, code, op);
+    SerializeImplementation<TensorType, D, ml::OpMeanSquareErrorSaveableParams<TensorType>>(
+        map, code, op);
     break;
   }
   case ml::OpType::OP_MAX_POOL_1D:
   {
-    SerializeImplementation<TensorType, D, ml::OpMaxPool1DSaveableParams<TensorType>>(map, code, op);
+    SerializeImplementation<TensorType, D, ml::OpMaxPool1DSaveableParams<TensorType>>(map, code,
+                                                                                      op);
     break;
   }
   case ml::OpType::OP_MAX_POOL_2D:
   {
-    SerializeImplementation<TensorType, D, ml::OpMaxPool2DSaveableParams<TensorType>>(map, code, op);
+    SerializeImplementation<TensorType, D, ml::OpMaxPool2DSaveableParams<TensorType>>(map, code,
+                                                                                      op);
     break;
   }
   case ml::OpType::OP_MAXIMUM:
@@ -188,13 +198,13 @@ void SerializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_type
   case ml::OpType::OP_PLACEHOLDER:
   {
     SerializeImplementation<TensorType, D, ml::OpPlaceholderSaveableParams<TensorType>>(map, code,
-                                                                                      op);
+                                                                                        op);
     break;
   }
   case ml::OpType::OP_RANDOMISED_RELU:
   {
-    SerializeImplementation<TensorType, D, ml::OpRandomisedReluSaveableParams<TensorType>>(map, code,
-                                                                                         op);
+    SerializeImplementation<TensorType, D, ml::OpRandomisedReluSaveableParams<TensorType>>(
+        map, code, op);
     break;
   }
   case ml::OpType::OP_RELU:
@@ -219,7 +229,8 @@ void SerializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_type
   }
   case ml::OpType::OP_SOFTMAX_CROSS_ENTROPY_LOSS:
   {
-    SerializeImplementation<TensorType, D, ml::OpSoftmaxCrossEntropySaveableParams<TensorType>>(map, code, op);
+    SerializeImplementation<TensorType, D, ml::OpSoftmaxCrossEntropySaveableParams<TensorType>>(
+        map, code, op);
     break;
   }
   case ml::OpType::OP_SQRT:
@@ -244,7 +255,8 @@ void SerializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_type
   }
   case ml::OpType::OP_TRANSPOSE:
   {
-    SerializeImplementation<TensorType, D, ml::OpTransposeSaveableParams<TensorType>>(map, code, op);
+    SerializeImplementation<TensorType, D, ml::OpTransposeSaveableParams<TensorType>>(map, code,
+                                                                                      op);
     break;
   }
   case ml::OpType::OP_WEIGHTS:
@@ -266,19 +278,20 @@ void SerializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_type
   }
   case ml::OpType::LAYER_FULLY_CONNECTED:
   {
-    SerializeImplementation<TensorType, D, ml::LayerFullyConnectedSaveableParams<TensorType>>(map, code,
-                                                                                         op);
+    SerializeImplementation<TensorType, D, ml::LayerFullyConnectedSaveableParams<TensorType>>(
+        map, code, op);
     break;
   }
   case ml::OpType::LAYER_LAYER_NORM:
   {
-    SerializeImplementation<TensorType, D, ml::LayerLayerNormSaveableParams<TensorType>>(map, code, op);
+    SerializeImplementation<TensorType, D, ml::LayerLayerNormSaveableParams<TensorType>>(map, code,
+                                                                                         op);
     break;
   }
-
   case ml::OpType::LAYER_MULTI_HEAD_ATTENTION:
   {
-    SerializeImplementation<TensorType, D, ml::LayerMultiHeadSaveableParams<TensorType>>(map, code, op);
+    SerializeImplementation<TensorType, D, ml::LayerMultiHeadSaveableParams<TensorType>>(map, code,
+                                                                                         op);
     break;
   }
   case ml::OpType::LAYER_PRELU:
@@ -294,8 +307,8 @@ void SerializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_type
   }
   case ml::OpType::LAYER_SKIP_GRAM:
   {
-    SerializeImplementation<TensorType, D, ml::LayerSkipGramSaveableParams<TensorType>>(
-        map, code, op);
+    SerializeImplementation<TensorType, D, ml::LayerSkipGramSaveableParams<TensorType>>(map, code,
+                                                                                        op);
     break;
   }
   default:
@@ -323,7 +336,8 @@ void DeserializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_ty
   }
   case ml::OpType::OP_CONCATENATE:
   {
-    op = DeserializeImplementation<TensorType, D, ml::OpConcatenateSaveableParams<TensorType>>(map, code);
+    op = DeserializeImplementation<TensorType, D, ml::OpConcatenateSaveableParams<TensorType>>(
+        map, code);
     break;
   }
   case ml::OpType::OP_CONVOLUTION_1D:
@@ -346,13 +360,14 @@ void DeserializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_ty
   }
   case ml::OpType::OP_DIVIDE:
   {
-    op = DeserializeImplementation<TensorType, D, ml::OpDivideSaveableParams<TensorType>>(
-        map, code);
+    op =
+        DeserializeImplementation<TensorType, D, ml::OpDivideSaveableParams<TensorType>>(map, code);
     break;
   }
   case ml::OpType::OP_DROPOUT:
   {
-    op = DeserializeImplementation<TensorType, D, ml::OpDropoutSaveableParams<TensorType>>(map, code);
+    op = DeserializeImplementation<TensorType, D, ml::OpDropoutSaveableParams<TensorType>>(map,
+                                                                                           code);
     break;
   }
   case ml::OpType::OP_ELU:
@@ -362,7 +377,8 @@ void DeserializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_ty
   }
   case ml::OpType::OP_EMBEDDINGS:
   {
-    op = DeserializeImplementation<TensorType, D, ml::OpEmbeddingsSaveableParams<TensorType>>(map, code);
+    op = DeserializeImplementation<TensorType, D, ml::OpEmbeddingsSaveableParams<TensorType>>(map,
+                                                                                              code);
     break;
   }
   case ml::OpType::OP_EXP:
@@ -372,42 +388,43 @@ void DeserializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_ty
   }
   case ml::OpType::OP_FLATTEN:
   {
-    op = DeserializeImplementation<TensorType, D, ml::OpFlattenSaveableParams<TensorType>>(map, code);
+    op = DeserializeImplementation<TensorType, D, ml::OpFlattenSaveableParams<TensorType>>(map,
+                                                                                           code);
     break;
   }
   case ml::OpType::OP_LAYER_NORM:
   {
-    op = DeserializeImplementation<TensorType, D, ml::OpLayerNormSaveableParams<TensorType>>(map, code);
+    op = DeserializeImplementation<TensorType, D, ml::OpLayerNormSaveableParams<TensorType>>(map,
+                                                                                             code);
     break;
   }
   case ml::OpType::OP_LEAKY_RELU:
   {
     op = DeserializeImplementation<TensorType, D, ml::OpLeakyReluSaveableParams<TensorType>>(map,
-                                                                                           code);
+                                                                                             code);
     break;
   }
   case ml::OpType::OP_LEAKY_RELU_OP:
   {
-    op = DeserializeImplementation<TensorType, D, ml::OpLeakyReluOpSaveableParams<TensorType>>(map,
-                                                                                             code);
+    op = DeserializeImplementation<TensorType, D, ml::OpLeakyReluOpSaveableParams<TensorType>>(
+        map, code);
     break;
   }
   case ml::OpType::OP_LOG:
   {
-    op = DeserializeImplementation<TensorType, D, ml::OpLogSaveableParams<TensorType>>(map,
-                                                                                             code);
+    op = DeserializeImplementation<TensorType, D, ml::OpLogSaveableParams<TensorType>>(map, code);
     break;
   }
   case ml::OpType::OP_LOGSIGMOID:
   {
     op = DeserializeImplementation<TensorType, D, ml::OpLogSigmoidSaveableParams<TensorType>>(map,
-                                                                                             code);
+                                                                                              code);
     break;
   }
   case ml::OpType::OP_LOGSOFTMAX:
   {
     op = DeserializeImplementation<TensorType, D, ml::OpLogSoftmaxSaveableParams<TensorType>>(map,
-                                                                                             code);
+                                                                                              code);
     break;
   }
   case ml::OpType::OP_MATRIX_MULTIPLY:
@@ -418,38 +435,38 @@ void DeserializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_ty
   }
   case ml::OpType::OP_MEAN_SQUARE_ERROR_LOSS:
   {
-    op = DeserializeImplementation<TensorType, D, ml::OpMeanSquareErrorSaveableParams<TensorType>>(map,
-                                                                                             code);
+    op = DeserializeImplementation<TensorType, D, ml::OpMeanSquareErrorSaveableParams<TensorType>>(
+        map, code);
     break;
   }
   case ml::OpType::OP_MAX_POOL_1D:
   {
     op = DeserializeImplementation<TensorType, D, ml::OpMaxPool1DSaveableParams<TensorType>>(map,
-                                                                                           code);
+                                                                                             code);
     break;
   }
   case ml::OpType::OP_MAX_POOL_2D:
   {
     op = DeserializeImplementation<TensorType, D, ml::OpMaxPool2DSaveableParams<TensorType>>(map,
-                                                                                           code);
+                                                                                             code);
     break;
   }
   case ml::OpType::OP_MAXIMUM:
   {
     op = DeserializeImplementation<TensorType, D, ml::OpMaximumSaveableParams<TensorType>>(map,
-                                                                                             code);
+                                                                                           code);
     break;
   }
   case ml::OpType::OP_MULTIPLY:
   {
     op = DeserializeImplementation<TensorType, D, ml::OpMultiplySaveableParams<TensorType>>(map,
-                                                                                             code);
+                                                                                            code);
     break;
   }
   case ml::OpType::OP_PLACEHOLDER:
   {
-    op = DeserializeImplementation<TensorType, D, ml::OpPlaceholderSaveableParams<TensorType>>(map,
-                                                                                             code);
+    op = DeserializeImplementation<TensorType, D, ml::OpPlaceholderSaveableParams<TensorType>>(
+        map, code);
     break;
   }
   case ml::OpType::OP_RANDOMISED_RELU:
@@ -465,22 +482,26 @@ void DeserializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_ty
   }
   case ml::OpType::OP_RESHAPE:
   {
-    op = DeserializeImplementation<TensorType, D, ml::OpReshapeSaveableParams<TensorType>>(map, code);
+    op = DeserializeImplementation<TensorType, D, ml::OpReshapeSaveableParams<TensorType>>(map,
+                                                                                           code);
     break;
   }
   case ml::OpType::OP_SIGMOID:
   {
-    op = DeserializeImplementation<TensorType, D, ml::OpSigmoidSaveableParams<TensorType>>(map, code);
+    op = DeserializeImplementation<TensorType, D, ml::OpSigmoidSaveableParams<TensorType>>(map,
+                                                                                           code);
     break;
   }
   case ml::OpType::OP_SOFTMAX:
   {
-    op = DeserializeImplementation<TensorType, D, ml::OpSoftmaxSaveableParams<TensorType>>(map, code);
+    op = DeserializeImplementation<TensorType, D, ml::OpSoftmaxSaveableParams<TensorType>>(map,
+                                                                                           code);
     break;
   }
   case ml::OpType::OP_SOFTMAX_CROSS_ENTROPY_LOSS:
   {
-    op = DeserializeImplementation<TensorType, D, ml::OpSoftmaxCrossEntropySaveableParams<TensorType>>(map, code);
+    op = DeserializeImplementation<TensorType, D,
+                                   ml::OpSoftmaxCrossEntropySaveableParams<TensorType>>(map, code);
     break;
   }
   case ml::OpType::OP_SQRT:
@@ -490,12 +511,14 @@ void DeserializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_ty
   }
   case ml::OpType::OP_SUBTRACT:
   {
-    op = DeserializeImplementation<TensorType, D, ml::OpSubtractSaveableParams<TensorType>>(map, code);
+    op = DeserializeImplementation<TensorType, D, ml::OpSubtractSaveableParams<TensorType>>(map,
+                                                                                            code);
     break;
   }
   case ml::OpType::OP_SWITCH:
   {
-    op = DeserializeImplementation<TensorType, D, ml::OpSwitchSaveableParams<TensorType>>(map, code);
+    op =
+        DeserializeImplementation<TensorType, D, ml::OpSwitchSaveableParams<TensorType>>(map, code);
     break;
   }
   case ml::OpType::OP_TANH:
@@ -506,12 +529,13 @@ void DeserializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_ty
   case ml::OpType::OP_TRANSPOSE:
   {
     op = DeserializeImplementation<TensorType, D, ml::OpTransposeSaveableParams<TensorType>>(map,
-                                                                                           code);
+                                                                                             code);
     break;
   }
   case ml::OpType::OP_WEIGHTS:
   {
-    op = DeserializeImplementation<TensorType, D, ml::OpWeightsSaveableParams<TensorType>>(map, code);
+    op = DeserializeImplementation<TensorType, D, ml::OpWeightsSaveableParams<TensorType>>(map,
+                                                                                           code);
     break;
   }
   case ml::OpType::LAYER_CONVOLUTION_1D:
@@ -528,34 +552,40 @@ void DeserializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_ty
   }
   case ml::OpType::LAYER_FULLY_CONNECTED:
   {
-    op = DeserializeImplementation<TensorType, D, ml::LayerFullyConnectedSaveableParams<TensorType>>(
-        map, code);
+    op =
+        DeserializeImplementation<TensorType, D, ml::LayerFullyConnectedSaveableParams<TensorType>>(
+            map, code);
     break;
   }
   case ml::OpType::LAYER_LAYER_NORM:
   {
-    op = DeserializeImplementation<TensorType, D, ml::LayerLayerNormSaveableParams<TensorType>>(map, code);
+    op = DeserializeImplementation<TensorType, D, ml::LayerLayerNormSaveableParams<TensorType>>(
+        map, code);
     break;
   }
   case ml::OpType::LAYER_MULTI_HEAD_ATTENTION:
   {
-    op = DeserializeImplementation<TensorType, D, ml::LayerMultiHeadSaveableParams<TensorType>>(map, code);
+    op = DeserializeImplementation<TensorType, D, ml::LayerMultiHeadSaveableParams<TensorType>>(
+        map, code);
     break;
   }
   case ml::OpType::LAYER_PRELU:
   {
-    op = DeserializeImplementation<TensorType, D, ml::LayerPReluSaveableParams<TensorType>>(map, code);
+    op = DeserializeImplementation<TensorType, D, ml::LayerPReluSaveableParams<TensorType>>(map,
+                                                                                            code);
     break;
   }
   case ml::OpType::LAYER_SELF_ATTENTION_ENCODER:
   {
     op = DeserializeImplementation<TensorType, D,
-                                   ml::LayerSelfAttentionEncoderSaveableParams<TensorType>>(map, code);
+                                   ml::LayerSelfAttentionEncoderSaveableParams<TensorType>>(map,
+                                                                                            code);
     break;
   }
   case ml::OpType::LAYER_SKIP_GRAM:
   {
-    op = DeserializeImplementation<TensorType, D, ml::LayerSkipGramSaveableParams<TensorType>>(map, code);
+    op = DeserializeImplementation<TensorType, D, ml::LayerSkipGramSaveableParams<TensorType>>(
+        map, code);
     break;
   }
   default:
@@ -1154,7 +1184,6 @@ struct MapSerializer<ml::OpFlattenSaveableParams<TensorType>, D>
   }
 };
 
-
 /**
  * serializer for OpMaximumSaveableParams saveable params
  * @tparam TensorType
@@ -1165,12 +1194,12 @@ struct MapSerializer<ml::OpLayerNormSaveableParams<TensorType>, D>
   using Type       = ml::OpLayerNormSaveableParams<TensorType>;
   using DriverType = D;
 
-  static uint8_t const OP_CODE = 1;
-  static uint8_t const EPSILON = 2;
-  static uint8_t const AXIS = 3;
-  static uint8_t const PREV_INPUT = 4;
+  static uint8_t const OP_CODE             = 1;
+  static uint8_t const EPSILON             = 2;
+  static uint8_t const AXIS                = 3;
+  static uint8_t const PREV_INPUT          = 4;
   static uint8_t const CACHED_INV_SQRT_VAR = 5;
-  static uint8_t const CACHED_OUTPUT = 6;
+  static uint8_t const CACHED_OUTPUT       = 6;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
@@ -1193,7 +1222,6 @@ struct MapSerializer<ml::OpLayerNormSaveableParams<TensorType>, D>
     map.ExpectKeyGetValue(PREV_INPUT, sp.prev_input);
     map.ExpectKeyGetValue(CACHED_INV_SQRT_VAR, sp.cached_inv_sqrt_var);
     map.ExpectKeyGetValue(CACHED_OUTPUT, sp.cached_output);
-
   }
 };
 
@@ -2110,10 +2138,10 @@ struct MapSerializer<ml::LayerLayerNormSaveableParams<TensorType>, D>
   using Type       = ml::LayerLayerNormSaveableParams<TensorType>;
   using DriverType = D;
 
-  static uint8_t const OP_CODE = 1;
+  static uint8_t const OP_CODE    = 1;
   static uint8_t const DATA_SHAPE = 2;
-  static uint8_t const AXIS = 3;
-  static uint8_t const EPSILON = 4;
+  static uint8_t const AXIS       = 3;
+  static uint8_t const EPSILON    = 4;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
@@ -2225,6 +2253,44 @@ struct MapSerializer<ml::LayerPReluSaveableParams<TensorType>, D>
  * @tparam TensorType
  */
 template <typename TensorType, typename D>
+struct MapSerializer<ml::LayerScaledDotProductAttentionSaveableParams<TensorType>, D>
+{
+  using Type       = ml::LayerScaledDotProductAttentionSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const SUB_GRAPH           = 1;
+  static uint8_t const OP_CODE             = 2;
+  static uint8_t const KEY_DIM             = 3;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(3);
+
+    // serialize parent class first
+    auto base_pointer = static_cast<ml::SubGraphSaveableParams<TensorType> const *>(&sp);
+    map.Append(SUB_GRAPH, *base_pointer);
+
+    map.Append(OP_CODE, sp.op_type);
+    map.Append(KEY_DIM, sp.key_dim);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    auto base_pointer = static_cast<ml::SubGraphSaveableParams<TensorType> *>(&sp);
+    map.ExpectKeyGetValue(SUB_GRAPH, *base_pointer);
+
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+    map.ExpectKeyGetValue(KEY_DIM, sp.n_heads);
+  }
+};
+
+/**
+ * serializer for self attention layer saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
 struct MapSerializer<ml::LayerSelfAttentionEncoderSaveableParams<TensorType>, D>
 {
   using Type       = ml::LayerSelfAttentionEncoderSaveableParams<TensorType>;
@@ -2316,7 +2382,6 @@ struct MapSerializer<ml::LayerSkipGramSaveableParams<TensorType>, D>
     map.ExpectKeyGetValue(EMBED_IN, sp.embed_in);
   }
 };
-
 
 }  // namespace serializers
 }  // namespace fetch

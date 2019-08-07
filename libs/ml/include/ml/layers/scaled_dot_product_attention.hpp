@@ -41,11 +41,12 @@ template <class T>
 class ScaledDotProductAttention : public SubGraph<T>
 {
 public:
-  using ArrayType     = T;
-  using SizeType      = typename ArrayType::SizeType;
-  using ArrayPtrType  = std::shared_ptr<ArrayType>;
+  using TensorType     = T;
+  using SizeType      = typename TensorType::SizeType;
+  using ArrayPtrType  = std::shared_ptr<TensorType>;
   using DataType      = typename T::Type;
   using VecTensorType = typename SubGraph<T>::VecTensorType;
+  using SPType        = LayerScaledDotProductAttentionSaveableParams<T>;
 
   ScaledDotProductAttention(SizeType dk, DataType dropout = 0.9)
     : key_dim_(dk)
@@ -54,43 +55,43 @@ public:
 
     // all input shapes are (feature_length, query/key/value_num, batch_num)
     std::string query =
-        this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Query", {});
+        this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Query", {});
     std::string key =
-        this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Key", {});
+        this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Key", {});
     std::string value =
-        this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Value", {});
+        this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Value", {});
 
     // Be advised that the matrix multiplication sequence is different from what is proposed in the
     // paper as our batch dimension is the last dimension, which the feature dimension is the first
     // one. in the paper, feature dimension is the col dimension please refer to
     // http://jalammar.github.io/illustrated-transformer/
     std::string transpose_key =
-        this->template AddNode<fetch::ml::ops::Transpose<ArrayType>>(name + "_TransposeKey", {key});
-    std::string kq_matmul = this->template AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>(
+        this->template AddNode<fetch::ml::ops::Transpose<TensorType>>(name + "_TransposeKey", {key});
+    std::string kq_matmul = this->template AddNode<fetch::ml::ops::MatrixMultiply<TensorType>>(
         name + "_Key_Query_MatMul", {transpose_key, query});
 
-    ArrayType sqrt_dk_tensor = std::vector<SizeType>({1, 1, 1});
+    TensorType sqrt_dk_tensor = std::vector<SizeType>({1, 1, 1});
     sqrt_dk_tensor(0, 0, 0)  = fetch::math::Sqrt(static_cast<DataType>(key_dim_));
     std::string sqrt_dk_ph =
-        this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Sqrt_Key_Dim", {});
+        this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Sqrt_Key_Dim", {});
     this->SetInput(sqrt_dk_ph, sqrt_dk_tensor);
 
     // scale the QK matrix multiplication
-    std::string scaled_kq_matmul = this->template AddNode<fetch::ml::ops::Divide<ArrayType>>(
+    std::string scaled_kq_matmul = this->template AddNode<fetch::ml::ops::Divide<TensorType>>(
         name + "_Scaled_Key_Query_MatMul", {kq_matmul, sqrt_dk_ph});
 
     // softmax
-    std::string attention_weight = this->template AddNode<fetch::ml::ops::Softmax<ArrayType>>(
+    std::string attention_weight = this->template AddNode<fetch::ml::ops::Softmax<TensorType>>(
         name + "_Softmax", {scaled_kq_matmul}, static_cast<SizeType>(0));
 
     // dropout
     std::string dropout_attention_weight =
-        this->template AddNode<fetch::ml::ops::Dropout<ArrayType>>(name + "_Dropout",
+        this->template AddNode<fetch::ml::ops::Dropout<TensorType>>(name + "_Dropout",
                                                                    {attention_weight}, dropout);
 
     // attention vectors
     std::string weight_value_matmul =
-        this->template AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>(
+        this->template AddNode<fetch::ml::ops::MatrixMultiply<TensorType>>(
             name + "_Value_Weight_MatMul", {value, dropout_attention_weight});
 
     // in the end, the output is of shape (feature_length, query_num, batch_num)
@@ -103,7 +104,34 @@ public:
     this->SetOutputNode(weight_value_matmul);
   }
 
-  virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
+  {
+    auto ret = std::make_shared<SPType>();
+    // get base class saveable params
+    std::shared_ptr<SaveableParamsInterface> sgsp = SubGraph<TensorType>::GetOpSaveableParams();
+
+    // copy graph saveable params over
+    auto g_ptr1 = std::dynamic_pointer_cast<typename Graph<TensorType>::SPType>(sgsp);
+    auto g_ptr2 = std::dynamic_pointer_cast<typename Graph<TensorType>::SPType>(ret);
+    *g_ptr2     = *g_ptr1;
+
+    // assign base class saveable params to ret
+    auto sg_ptr1 = std::dynamic_pointer_cast<typename SubGraph<TensorType>::SPType>(sgsp);
+    auto sg_ptr2 = std::static_pointer_cast<typename SubGraph<TensorType>::SPType>(ret);
+    *sg_ptr2     = *sg_ptr1;
+
+    // asign layer specific params
+    ret->key_dim   = key_dim_;
+    return ret;
+  }
+
+  void SetOpSaveableParams(SPType const &sp)
+  {
+    // assign layer specific params
+    key_dim_   = sp.key_dim;
+  }
+
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     return {inputs.at(2)->shape(0), inputs.front()->shape(1), inputs.front()->shape(2)};
   }

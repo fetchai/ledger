@@ -39,9 +39,9 @@ template <class T>
 class SkipGram : public SubGraph<T>
 {
 public:
-  using ArrayType     = T;
+  using TensorType     = T;
   using SizeType      = typename T::SizeType;
-  using ArrayPtrType  = std::shared_ptr<ArrayType>;
+  using ArrayPtrType  = std::shared_ptr<TensorType>;
   using WeightsInit   = fetch::ml::ops::WeightsInitialisation;
   using VecTensorType = typename SubGraph<T>::VecTensorType;
   using SPType        = LayerSkipGramSaveableParams<T>;
@@ -54,34 +54,30 @@ public:
 
     // define input and context placeholders
     std::string input =
-        this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Input", {});
+        this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Input", {});
     std::string context =
-        this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Context", {});
+        this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Context", {});
 
-    ArrayType weights = std::vector<SizeType>({embedding_size, vocab_size});
+    TensorType weights = std::vector<SizeType>({embedding_size, vocab_size});
     this->Initialise(weights, init_mode);
 
     // embed both inputs
-    embed_in_ = this->template AddNode<fetch::ml::ops::Embeddings<ArrayType>>(
+    embed_in_ = this->template AddNode<fetch::ml::ops::Embeddings<TensorType>>(
         name + "_Embed_Inputs", {input}, weights);
-    std::string embed_ctx = this->template AddNode<fetch::ml::ops::Embeddings<ArrayType>>(
+    std::string embed_ctx = this->template AddNode<fetch::ml::ops::Embeddings<TensorType>>(
         name + "_Embed_Context", {context}, weights);
 
     // dot product input and context embeddings
-    std::string transpose_ctx = this->template AddNode<fetch::ml::ops::Transpose<ArrayType>>(
+    std::string transpose_ctx = this->template AddNode<fetch::ml::ops::Transpose<TensorType>>(
         name + "_TransposeCtx", {embed_ctx});
 
-    std::string in_ctx_matmul = this->template AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>(
+    std::string in_ctx_matmul = this->template AddNode<fetch::ml::ops::MatrixMultiply<TensorType>>(
         name + "_In_Ctx_MatMul", {transpose_ctx, embed_in_});
 
-    std::string in_ctx_matmul_flat = this->template AddNode<fetch::ml::ops::Flatten<ArrayType>>(
+    std::string in_ctx_matmul_flat = this->template AddNode<fetch::ml::ops::Flatten<TensorType>>(
         name + "_In_Ctx_MatMul_Flat", {in_ctx_matmul});
 
-    //    std::string in_ctx_matmul_flat = this->template
-    //    AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
-    //          name + "_In_Ctx_MatMul_Flat", {in_ctx_matmul}, in_size, out);
-
-    std::string output = this->template AddNode<fetch::ml::ops::Sigmoid<ArrayType>>(
+    std::string output = this->template AddNode<fetch::ml::ops::Sigmoid<TensorType>>(
         name + "_Sigmoid", {in_ctx_matmul_flat});
 
     this->AddInputNode(input);
@@ -91,16 +87,22 @@ public:
 
   std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
-    // get base class saveable params
-    std::shared_ptr<SaveableParamsInterface> sgsp = SubGraph<ArrayType>::GetOpSaveableParams();
-    auto sg_ptr1 = std::dynamic_pointer_cast<typename SubGraph<ArrayType>::SPType>(sgsp);
+    // get all base classes saveable params
+    std::shared_ptr<SaveableParamsInterface> sgsp = SubGraph<TensorType>::GetOpSaveableParams();
 
-    // assign base class saveable params to ret
-    auto ret     = std::make_shared<SPType>();
-    auto sg_ptr2 = std::static_pointer_cast<typename SubGraph<ArrayType>::SPType>(ret);
+    auto ret = std::make_shared<SPType>();
+
+    // copy graph saveable params over
+    auto g_ptr1 = std::dynamic_pointer_cast<typename Graph<TensorType>::SPType>(sgsp);
+    auto g_ptr2 = std::dynamic_pointer_cast<typename Graph<TensorType>::SPType>(ret);
+    *g_ptr2     = *g_ptr1;
+
+    // copy subgraph saveable params over
+    auto sg_ptr1 = std::dynamic_pointer_cast<typename SubGraph<TensorType>::SPType>(sgsp);
+    auto sg_ptr2 = std::dynamic_pointer_cast<typename SubGraph<TensorType>::SPType>(ret);
     *sg_ptr2     = *sg_ptr1;
 
-    // asign layer specific params
+    // assign layer specific params
     ret->in_size  = in_size_;
     ret->out_size = out_size_;
     ret->embed_in = embed_in_;
@@ -108,9 +110,17 @@ public:
     return ret;
   }
 
-  std::shared_ptr<ops::Embeddings<ArrayType>> GetEmbeddings(std::shared_ptr<SkipGram<ArrayType>> &g)
+  void SetOpSaveableParams(SPType const &sp)
   {
-    return std::dynamic_pointer_cast<ops::Embeddings<ArrayType>>((g->GetNode(embed_in_))->GetOp());
+    // assign layer specific params
+    in_size_             = sp.in_size;
+    out_size_           = sp.out_size;
+    embed_in_              = sp.embed_in;
+  }
+  
+  std::shared_ptr<ops::Embeddings<TensorType>> GetEmbeddings(std::shared_ptr<SkipGram<TensorType>> &g)
+  {
+    return std::dynamic_pointer_cast<ops::Embeddings<TensorType>>((g->GetNode(embed_in_))->GetOp());
   }
 
   std::string GetEmbedName()
@@ -135,9 +145,9 @@ private:
   SizeType    in_size_;
   SizeType    out_size_;
 
-  void Initialise(ArrayType &weights, WeightsInit init_mode)
+  void Initialise(TensorType &weights, WeightsInit init_mode)
   {
-    fetch::ml::ops::Weights<ArrayType>::Initialise(weights, in_size_, out_size_, init_mode);
+    fetch::ml::ops::Weights<TensorType>::Initialise(weights, in_size_, out_size_, init_mode);
   }
 };
 

@@ -38,11 +38,12 @@ template <class T>
 class LayerNorm : public SubGraph<T>
 {
 public:
-  using ArrayType     = T;
-  using TensorPtrType = std::shared_ptr<ArrayType>;
-  using SizeType      = typename ArrayType::SizeType;
-  using DataType      = typename ArrayType::Type;
+  using TensorType     = T;
+  using TensorPtrType = std::shared_ptr<TensorType>;
+  using SizeType      = typename TensorType::SizeType;
+  using DataType      = typename TensorType::Type;
   using VecTensorType = typename SubGraph<T>::VecTensorType;
+  using SPType        = LayerLayerNormSaveableParams<T>;
 
   LayerNorm() = default;
 
@@ -64,39 +65,72 @@ public:
 
     // instantiate gamma and beta (the multiplicative training component)
     std::string gamma =
-        this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Gamma", {});
+        this->template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Gamma", {});
     std::string beta =
-        this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Beta", {});
+        this->template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Beta", {});
 
     // initialization: gamma to all 1, beta to all zero, and with corresponding shape
     std::vector<SizeType> weight_shape(data_shape_.size() + 1, 1);
     weight_shape[axis_] = data_shape_[axis_];
-    ArrayType gamma_data(weight_shape), beta_data(weight_shape);
+    TensorType gamma_data(weight_shape), beta_data(weight_shape);
     gamma_data.Fill(static_cast<DataType>(1));
     this->SetInput(gamma, gamma_data);
     this->SetInput(beta, beta_data);
 
     // setup input
     std::string input =
-        this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Input", {});
+        this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Input", {});
 
     // do the normalization
-    std::string normalized_output = this->template AddNode<fetch::ml::ops::LayerNorm<ArrayType>>(
+    std::string normalized_output = this->template AddNode<fetch::ml::ops::LayerNorm<TensorType>>(
         name + "_LayerNorm", {input}, axis_);
 
     // do the rescaling
-    std::string scaled_output = this->template AddNode<fetch::ml::ops::Multiply<ArrayType>>(
+    std::string scaled_output = this->template AddNode<fetch::ml::ops::Multiply<TensorType>>(
         name + "_Gamma_Multiply", {normalized_output, gamma});
 
     // do the re-shifting
-    std::string shifted_output = this->template AddNode<fetch::ml::ops::Add<ArrayType>>(
+    std::string shifted_output = this->template AddNode<fetch::ml::ops::Add<TensorType>>(
         name + "_Beta_Addition", {normalized_output, beta});
 
     this->AddInputNode(input);
     this->SetOutputNode(shifted_output);
   }
 
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
+  {
+    // get all base classes saveable params
+    std::shared_ptr<SaveableParamsInterface> sgsp = SubGraph<TensorType>::GetOpSaveableParams();
+
+    auto ret = std::make_shared<SPType>();
+
+    // copy graph saveable params over
+    auto g_ptr1 = std::dynamic_pointer_cast<typename Graph<TensorType>::SPType>(sgsp);
+    auto g_ptr2 = std::dynamic_pointer_cast<typename Graph<TensorType>::SPType>(ret);
+    *g_ptr2     = *g_ptr1;
+
+    // copy subgraph saveable params over
+    auto sg_ptr1 = std::dynamic_pointer_cast<typename SubGraph<TensorType>::SPType>(sgsp);
+    auto sg_ptr2 = std::dynamic_pointer_cast<typename SubGraph<TensorType>::SPType>(ret);
+    *sg_ptr2     = *sg_ptr1;
+
+    // asign layer specific params
+    ret->data_shape     = data_shape_;
+    ret->axis  = axis_;
+    ret->epsilon = epsilon_;
+
+    return ret;
+  }
+
+  void SetOpSaveableParams(SPType const &sp)
+  {
+    // assign layer specific params
+    data_shape_     = sp.data_shape;
+    axis_  = sp.axis;
+    epsilon_ = sp.epsilon;
+  }
+
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     return {inputs.at(0)->shape()};
   }

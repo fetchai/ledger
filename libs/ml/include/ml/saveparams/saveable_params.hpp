@@ -537,8 +537,8 @@ struct LayerLayerNormSaveableParams : public SaveableParamsInterface
   fetch::ml::OpType op_type = OpType::LAYER_LAYER_NORM;
 
   std::vector<SizeType> data_shape;
-  SizeType   axis;
-  DataType   epsilon;
+  SizeType              axis;
+  DataType              epsilon;
 
   LayerLayerNormSaveableParams()
     : SaveableParamsInterface(OpType::LAYER_LAYER_NORM)
@@ -637,6 +637,24 @@ struct OpReshapeSaveableParams : public SaveableParamsInterface
 
   OpReshapeSaveableParams()
     : SaveableParamsInterface(OpType::OP_RESHAPE)
+  {}
+};
+
+/**
+ * Saveable parameters for Self Attention Layer
+ * @tparam TensorType
+ */
+template <class TensorType>
+struct LayerScaledDotProductAttentionSaveableParams : SubGraphSaveableParams<TensorType>
+{
+  using SizeType = typename TensorType::SizeType;
+  using DataType = typename TensorType::Type;
+
+  fetch::ml::OpType op_type             = OpType::LAYER_SCALED_DOT_PRODUCT_ATTENTION;
+  SizeType          key_dim             = fetch::math::numeric_max<SizeType>();
+
+  LayerScaledDotProductAttentionSaveableParams()
+    : SubGraphSaveableParams<TensorType>(OpType::LAYER_SCALED_DOT_PRODUCT_ATTENTION)
   {}
 };
 
