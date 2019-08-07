@@ -66,7 +66,7 @@ public:
 		ArrayType const &input = *(inputs.front());
 		ArrayType intermediate1({input.shape()}), intermediate2({input.shape()}), intermediate3({input.shape()});
 		
-		DataType one{1}, two{2}, half{static_cast<DataType>(0.5)}, three{3}, a{static_cast<DataType>(0.797885)}, b{static_cast<DataType>(0.035677)};
+		DataType one{1}, two{2}, neg_two{static_cast<DataType>(-2)}, three{3}, half{static_cast<DataType>(0.5)}, a{static_cast<DataType>(0.797885)}, b{static_cast<DataType>(0.035677)};
 		
 		// get ax + bx^3
 		fetch::math::Multiply(input, a, intermediate1);
@@ -79,23 +79,24 @@ public:
 		
 		// get x * sech^2() term
 		fetch::math::CosH(intermediate1, intermediate3);
-		fetch::math::Pow(intermediate3, two, intermediate3);
-		fetch::math::Divide(one, intermediate3, intermediate3);
+		fetch::math::Pow(intermediate3, neg_two, intermediate3);
 		fetch::math::Multiply(input, intermediate3, intermediate3);
 		
 		// get a + 3bx^2 term
 		fetch::math::Pow(input, two, intermediate1);
 		fetch::math::Multiply(intermediate1, b, intermediate1);
 		fetch::math::Multiply(intermediate1, three, intermediate1);
-		fetch::math::Add(intermediate1, a);
+		fetch::math::Add(intermediate1, a, intermediate1);
 		
 		// 1 + tanh(ax + bx^3) + x * sech^2(ax + bx^3)(a + 3bx^2)
 		fetch::math::Multiply(intermediate1, intermediate3, intermediate1);
 		fetch::math::Add(intermediate1, intermediate2, intermediate1);
 		fetch::math::Add(intermediate1, one, intermediate1);
 		
+		
 		// final value
 		fetch::math::Multiply(intermediate1, half, intermediate1);
+		std::cout << "intermediate1.ToString(): " << intermediate1.ToString() << std::endl;
 		
 		fetch::math::Multiply(intermediate1, error_signal, intermediate1);
 		

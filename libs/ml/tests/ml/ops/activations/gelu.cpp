@@ -59,8 +59,7 @@ TYPED_TEST(GeluTest, backward_3d_test)
 	
 	ArrayType data = ArrayType::FromString("-10, -2, -1, -0.5, 0, 0.2, 1.6, 5.7, 12");
 //	data.Reshape({3, 1, 3});
-//	ArrayType error_signal  = ArrayType::FromString("-3, 2, 3, 4.5, 0.2, 6.6, 7.1, 10, 0.02");
-	ArrayType error_signal  = ArrayType::FromString("1, 1, 1, 1, 1, 1, 1, 1, 1");
+	ArrayType error_signal  = ArrayType::FromString("-3, 2, 3, 4.5, 0.2, 6.6, 7.1, 10, 0.02");
 //	error_signal.Reshape({3, 1, 3});
 	ArrayType gt   = ArrayType::FromString("0.0000000000, -0.1721984446, -0.2488922477,  0.5968354940, 0.1000000015,  4.3392238617,  7.9740133286, 10.0000000000, 0.0199999996");
 //	gt.Reshape({3, 1, 3});
