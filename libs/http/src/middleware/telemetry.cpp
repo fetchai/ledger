@@ -22,7 +22,7 @@
 #include "telemetry/histogram_map.hpp"
 #include "telemetry/registry.hpp"
 
-#include <memory>
+#include <string>
 #include <memory>
 
 namespace fetch {
