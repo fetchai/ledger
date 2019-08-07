@@ -88,7 +88,8 @@ TYPED_TEST(SerializersTest, serialize_graph_saveable_params)
   auto g = std::make_shared<GraphType>();
 
   std::string input = g->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
-  std::string label_name = g->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("label", {});
+  std::string label_name =
+      g->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("label", {});
 
   std::string layer_1 = g->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
       "FC1", {input}, 10u, 20u, fetch::ml::details::ActivationType::RELU, regulariser, reg_rate);
@@ -99,7 +100,7 @@ TYPED_TEST(SerializersTest, serialize_graph_saveable_params)
       reg_rate);
 
   // Add loss function
-  std::string error_output = g->template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TensorType >>(
+  std::string error_output = g->template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TensorType>>(
       "num_error", {output, label_name});
 
   fetch::ml::GraphSaveableParams<TypeParam> gsp1 = g->GetGraphSaveableParams();
@@ -124,7 +125,7 @@ TYPED_TEST(SerializersTest, serialize_graph_saveable_params)
   auto g2 = std::make_shared<GraphType>();
   fetch::ml::utilities::BuildGraph<TensorType>(*gsp2, g2);
 
-  TensorType data = TensorType::FromString("1, 2, 3, 4, 5, 6, 7, 8, 9, 10");
+  TensorType data   = TensorType::FromString("1, 2, 3, 4, 5, 6, 7, 8, 9, 10");
   TensorType labels = TensorType::FromString("1; 2; 3; 4; 5; 6; 7; 8; 9; 100");
 
   g->SetInput("Input", data.Transpose());
@@ -151,14 +152,13 @@ TYPED_TEST(SerializersTest, serialize_graph_saveable_params)
   g2->Step(DataType{0.1f});
 
   TensorType prediction3 = g->Evaluate(output);
-//  std::cout << "prediction3.ToString(): " << prediction3.ToString() << std::endl;
+  //  std::cout << "prediction3.ToString(): " << prediction3.ToString() << std::endl;
 
   TensorType prediction4 = g2->Evaluate(output);
 
   EXPECT_FALSE(prediction.AllClose(prediction3, fetch::math::function_tolerance<DataType>(),
-                                  fetch::math::function_tolerance<DataType>()));
+                                   fetch::math::function_tolerance<DataType>()));
 
   EXPECT_TRUE(prediction3.AllClose(prediction4, fetch::math::function_tolerance<DataType>(),
-                                  fetch::math::function_tolerance<DataType>()));
-
+                                   fetch::math::function_tolerance<DataType>()));
 }
