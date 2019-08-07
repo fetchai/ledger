@@ -147,7 +147,7 @@ public:
     return ret;
   }
 
-  void SetOpSaveableParams(LayerSelfAttentionEncoderSaveableParams<T> const &sp)
+  void SetOpSaveableParams(LayerMultiHeadSaveableParams<T> const &sp)
   {
     // assign layer specific params
     key_dim_   = sp.key_dim;

@@ -18,6 +18,10 @@
 
 #include "ml/layers/multihead_attention.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+#include "ml/serializers/ml_types.hpp"
+#include "ml/utilities/graph_builder.hpp"
+
+
 
 #include "gtest/gtest.h"
 
@@ -110,4 +114,56 @@ TYPED_TEST(MultiheadAttention, backward_test)  // Use the class as an Ops
   ASSERT_EQ(backprop_error[0].shape()[0], 12);
   ASSERT_EQ(backprop_error[0].shape()[1], 20);
   ASSERT_EQ(backprop_error[0].shape()[2], 5);
+}
+
+TYPED_TEST(MultiheadAttention, saveparams_test)
+{
+  using DataType = typename TypeParam::Type;
+
+  fetch::math::SizeType n_heads = 4;
+  fetch::math::SizeType model_dim = 12;
+
+
+  TypeParam query_data = TypeParam({12, 25, 4});
+  TypeParam key_data   = query_data;
+  TypeParam value_data = query_data;
+
+  auto mha_layer = std::make_shared<fetch::ml::layers::MultiheadAttention<TypeParam>>(n_heads, model_dim);
+
+  mha_layer->SetInput("MultiheadAttention_Query", query_data);
+  mha_layer->SetInput("MultiheadAttention_Key", key_data);
+  mha_layer->SetInput("MultiheadAttention_Value", value_data);
+
+  auto output = mha_layer->Evaluate("ScaledDotProductAttention", true);
+
+  // extract saveparams
+  auto sp = mha_layer->GetOpSaveableParams();
+
+  // downcast to correct type
+  auto dsp = std::dynamic_pointer_cast<
+      typename fetch::ml::layers::MultiheadAttention<TypeParam>::SPType>(sp);
+
+  // serialize
+  fetch::serializers::MsgPackSerializer b;
+  b << *dsp;
+
+  // deserialize
+  b.seek(0);
+  auto dsp2 =
+      std::make_shared<typename fetch::ml::layers::MultiheadAttention<TypeParam>::SPType>();
+  b >> *dsp2;
+
+  // rebuild
+  auto sa2 =
+      fetch::ml::utilities::BuildLayer<TypeParam,
+                                       fetch::ml::layers::MultiheadAttention<TypeParam>>(*dsp2);
+
+  sa2->SetInput("MultiheadAttention_Query", query_data);
+  sa2->SetInput("MultiheadAttention_Key", key_data);
+  sa2->SetInput("MultiheadAttention_Value", value_data);
+
+  TypeParam output2 = sa2->Evaluate("ScaledDotProductAttention", true);
+
+  ASSERT_TRUE(output.AllClose(output2, fetch::math::function_tolerance<DataType>(),
+                              fetch::math::function_tolerance<DataType>()));
 }
