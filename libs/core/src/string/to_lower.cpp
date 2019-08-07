@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,12 +16,21 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/string/to_lower.hpp"
+
+#include <cctype>
 #include <string>
 
 namespace fetch {
 namespace string {
 
-std::string Replace(std::string value, char before, char after);
+void ToLower(std::string &text)
+{
+  for (char &c : text)
+  {
+    c = static_cast<char>(std::tolower(c));
+  }
+}
 
 }  // namespace string
 }  // namespace fetch

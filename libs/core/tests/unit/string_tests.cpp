@@ -17,11 +17,22 @@
 //------------------------------------------------------------------------------
 
 #include "core/string/ends_with.hpp"
+#include "core/string/replace.hpp"
 #include "core/string/starts_with.hpp"
+#include "core/string/to_lower.hpp"
+#include "core/string/trim.hpp"
 
 #include "gtest/gtest.h"
 
 using namespace fetch::core;
+
+template <class T, class U>
+inline bool Equal(T &&t, U &&u)
+{
+  return t == u;
+}
+
+#define EXPECT_EQUAL(...) EXPECT_TRUE(Equal(__VA_ARGS__))
 
 namespace {
 
@@ -49,6 +60,87 @@ TEST(StringTests, check_StartsWith)
   EXPECT_FALSE(StartsWith("Hello World", "World"));
   EXPECT_FALSE(StartsWith("Hello World", "Hello World..."));
   EXPECT_FALSE(StartsWith("Hello World", "...Hello World"));
+}
+
+using namespace fetch::string;
+
+TEST(StringTests, check_Replace)
+{
+  EXPECT_EQUAL(Replace("Space shuttle ready to start", 's', 'z'), "Space zhuttle ready to ztart");
+  EXPECT_EQUAL(Replace("Space shuttle ready to start", 'z', 's'), "Space shuttle ready to start");
+}
+
+TEST(StringTests, check_Trim)
+{
+  std::string s;
+
+  // TrimFromRight
+  s = "    1234";
+  TrimFromRight(s);
+  EXPECT_EQ(s, "1234");
+
+  s = "1234";
+  TrimFromRight(s);
+  EXPECT_EQ(s, "1234");
+
+  s = "    ";
+  TrimFromRight(s);
+  EXPECT_EQ(s, "");
+
+  // TrimFromLeft
+  s = "1234    ";
+  TrimFromLeft(s);
+  EXPECT_EQ(s, "1234");
+
+  s = "1234";
+  TrimFromLeft(s);
+  EXPECT_EQ(s, "1234");
+
+  s = "    ";
+  TrimFromLeft(s);
+  EXPECT_EQ(s, "");
+
+  // Trim
+  s = "1234    ";
+  Trim(s);
+  EXPECT_EQ(s, "1234");
+
+  s = "    1234";
+  Trim(s);
+  EXPECT_EQ(s, "1234");
+
+  s = "    1234     ";
+  Trim(s);
+  EXPECT_EQ(s, "1234");
+
+  s = "1234";
+  Trim(s);
+  EXPECT_EQ(s, "1234");
+
+  s = "    ";
+  Trim(s);
+  EXPECT_EQ(s, "");
+}
+
+TEST(StringTests, check_ToLower)
+{
+  std::string s;
+
+  s = "Hi there!";
+  ToLower(s);
+  EXPECT_EQ(s, "hi there!");
+
+  s = "I SAID HI THERE!!!1111";
+  ToLower(s);
+  EXPECT_EQ(s, "i said hi there!!!1111");
+
+  s = "oh, well, okay...";
+  ToLower(s);
+  EXPECT_EQ(s, "oh, well, okay...");
+
+  s = "12345";
+  ToLower(s);
+  EXPECT_EQ(s, "12345");
 }
 
 }  // namespace
