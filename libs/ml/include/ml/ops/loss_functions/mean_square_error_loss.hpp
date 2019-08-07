@@ -61,7 +61,7 @@ public:
 
     if (weightings_.size() == static_cast<SizeType>(0))
     {
-      output(0, 0) = fetch::math::MeanSquareError((*inputs.at(0)), (*inputs.at(1)));
+      output(0, 0) = fetch::math::MeanSquareError((*(inputs.at(0))), (*(inputs.at(1))));
     }
     // rescale according to weights
     else
