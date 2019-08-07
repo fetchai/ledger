@@ -141,12 +141,14 @@ TYPED_TEST(SerializersTest, serialize_graph_saveable_params)
 
   // train g
   g->SetInput(label_name, labels);
+  g->SetInput("Input", data.Transpose());
   g->Evaluate(error_output);
   g->BackPropagateError(error_output);
   g->Step(DataType{0.1f});
 
   // train g2
   g2->SetInput(label_name, labels);
+  g2->SetInput("Input", data.Transpose());
   g2->Evaluate(error_output);
   g2->BackPropagateError(error_output);
   g2->Step(DataType{0.1f});

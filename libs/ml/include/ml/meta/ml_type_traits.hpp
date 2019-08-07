@@ -99,9 +99,6 @@ namespace ops {
 template <typename T>
 class Trainable;
 
-template <typename T>
-class Abs;
-
 }  // namespace ops
 
 namespace meta {
