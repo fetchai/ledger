@@ -22,7 +22,6 @@
 #include "ml/layers/convolution_1d.hpp"
 #include "ml/layers/convolution_2d.hpp"
 #include "ml/layers/fully_connected.hpp"
-#include "ml/layers/layers_declaration.hpp"
 #include "ml/layers/self_attention_encoder.hpp"
 #include "ml/layers/skip_gram.hpp"
 
