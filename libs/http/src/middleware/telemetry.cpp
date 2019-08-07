@@ -27,6 +27,7 @@
 namespace fetch {
 namespace http {
 namespace middleware {
+
 namespace {
 
 using telemetry::CounterMapPtr;
@@ -70,8 +71,6 @@ void TelemetryData::Update(HTTPRequest const &request, HTTPResponse const &respo
   // update the counters
   status_counts_->Increment({{"code", status_code}});
 }
-
-using TelemetryDataPtr = std::shared_ptr<TelemetryData>();
 
 }  // namespace
 

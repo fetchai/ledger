@@ -20,16 +20,18 @@
 
 #include "gtest/gtest.h"
 
+using namespace fetch::core;
+
 namespace {
 
-TEST(StringTests, CheckEndsWith)
+TEST(StringTests, check_EndsWith)
 {
-  EXPECT_TRUE(fetch::core::EndsWith("Hello World", "Hello World"));
-  EXPECT_TRUE(fetch::core::EndsWith("Hello World", "World"));
-  EXPECT_FALSE(fetch::core::EndsWith("Hello World", "World2"));
-  EXPECT_TRUE(fetch::core::EndsWith("Hello World", ""));
-  EXPECT_FALSE(fetch::core::EndsWith("Hello World", "o"));
-  EXPECT_FALSE(fetch::core::EndsWith("Hello World", "Hello"));
+  EXPECT_TRUE(EndsWith("Hello World", "Hello World"));
+  EXPECT_TRUE(EndsWith("Hello World", "World"));
+  EXPECT_FALSE(EndsWith("Hello World", "World2"));
+  EXPECT_TRUE(EndsWith("Hello World", ""));
+  EXPECT_FALSE(EndsWith("Hello World", "o"));
+  EXPECT_FALSE(EndsWith("Hello World", "Hello"));
 }
 
 }  // namespace
