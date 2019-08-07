@@ -22,7 +22,8 @@ if (FETCH_ENABLE_EXAMPLES)
   target_link_libraries(example-network-subscribe PRIVATE fetch-network)
   target_include_directories(example-network-subscribe PRIVATE subscribe)
 
-  add_executable(example-network-listener subscribe/listener.cpp ../../ml/include/ml/ops/activations/gelu.hpp)
+  add_executable(example-network-listener ../../ml/include/ml/ops/activations/gelu.hpp
+                                          subscribe/listener.cpp)
   target_link_libraries(example-network-listener PRIVATE fetch-network)
   target_include_directories(example-network-listener PRIVATE subscribe)
 

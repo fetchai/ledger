@@ -36,14 +36,15 @@ namespace math {
  * @param ret
  */
 template <typename ArrayType>
-void Gelu(ArrayType const &t,  ArrayType &ret)
+void Gelu(ArrayType const &t, ArrayType &ret)
 {
   assert(t.size() == ret.size());
   using DataType = typename ArrayType::Type;
 
-  DataType one{1}, half{static_cast<DataType>(0.5)}, three{3}, coeff1{static_cast<DataType>(0.797885)}, coeff2{static_cast<DataType>(0.035677)};
+  DataType one{1}, half{static_cast<DataType>(0.5)}, three{3},
+      coeff1{static_cast<DataType>(0.797885)}, coeff2{static_cast<DataType>(0.035677)};
   ArrayType intermediate = t.Copy();
-  
+
   Multiply(t, coeff1, intermediate);
   Pow(t, three, ret);
   Multiply(ret, coeff2, ret);
