@@ -29,9 +29,9 @@ class SelfAttentionEncoder : public ::testing::Test
 {
 };
 
-using Types  = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                    fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>,
-                                    fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>>;
+using Types = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
+                               fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>,
+                               fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>>;
 TYPED_TEST_CASE(SelfAttentionEncoder, Types);
 
 TYPED_TEST(SelfAttentionEncoder, input_output_dimension_test)  // Use the class as a part of a graph

@@ -18,7 +18,6 @@
 
 #include "math/tensor.hpp"
 #include "ml/core/graph.hpp"
-#include "ml/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/layers/scaled_dot_product_attention.hpp"
 #include "ml/ops/activations/relu.hpp"

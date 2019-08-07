@@ -301,8 +301,9 @@ void SerializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_type
   }
   case ml::OpType::LAYER_SCALED_DOT_PRODUCT_ATTENTION:
   {
-    SerializeImplementation<TensorType, D, ml::LayerScaledDotProductAttentionSaveableParams<TensorType>>(
-        map, code, op);
+    SerializeImplementation<TensorType, D,
+                            ml::LayerScaledDotProductAttentionSaveableParams<TensorType>>(map, code,
+                                                                                          op);
     break;
   }
   case ml::OpType::LAYER_SELF_ATTENTION_ENCODER:
@@ -583,8 +584,9 @@ void DeserializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_ty
   }
   case ml::OpType::LAYER_SCALED_DOT_PRODUCT_ATTENTION:
   {
-    op = DeserializeImplementation<TensorType, D, ml::LayerScaledDotProductAttentionSaveableParams<TensorType>>(map,
-                                                                                            code);
+    op = DeserializeImplementation<TensorType, D,
+                                   ml::LayerScaledDotProductAttentionSaveableParams<TensorType>>(
+        map, code);
     break;
   }
   case ml::OpType::LAYER_SELF_ATTENTION_ENCODER:
@@ -2150,7 +2152,7 @@ struct MapSerializer<ml::LayerLayerNormSaveableParams<TensorType>, D>
   using Type       = ml::LayerLayerNormSaveableParams<TensorType>;
   using DriverType = D;
 
-  static uint8_t const SUB_GRAPH = 1;
+  static uint8_t const SUB_GRAPH  = 1;
   static uint8_t const OP_CODE    = 2;
   static uint8_t const DATA_SHAPE = 3;
   static uint8_t const AXIS       = 4;
