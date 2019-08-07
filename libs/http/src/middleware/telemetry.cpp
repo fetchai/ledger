@@ -17,8 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "core/logging.hpp"
-#include "core/string/join.hpp"
-#include "core/string/split.hpp"
 #include "core/string/starts_with.hpp"
 #include "http/middleware/telemetry.hpp"
 #include "telemetry/counter_map.hpp"
