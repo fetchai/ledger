@@ -92,7 +92,8 @@ TYPED_TEST(SelfAttentionEncoder, saveparams_test)
 
   sa_layer->SetInput("SelfAttentionEncoder_Input", data);
 
-  TypeParam output = sa_layer->Evaluate("SelfAttentionEncoder_Feedforward_Residual_LayerNorm", true);
+  TypeParam output =
+      sa_layer->Evaluate("SelfAttentionEncoder_Feedforward_Residual_LayerNorm", true);
 
   // extract saveparams
   auto sp = sa_layer->GetOpSaveableParams();
