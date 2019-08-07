@@ -47,7 +47,6 @@ namespace core {
 template <typename State>
 class StateMachine : public StateMachineInterface, public Runnable
 {
-private:
   static_assert(std::is_enum<State>::value, "");
 
   using Callback            = std::function<State(State /*current*/, State /*previous*/)>;

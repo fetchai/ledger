@@ -80,7 +80,7 @@ public:
       throw SerializableException(std::string("Constructor is one time use only."));
     }
 
-    if (count < (1 << 8))
+    if (count < (1ull << 8u))
     {
       auto opcode = static_cast<uint8_t>(CODE8);
       serializer_.Allocate(sizeof(opcode));
@@ -91,7 +91,7 @@ public:
       serializer_.Allocate(sizeof(size));
       serializer_.WriteBytes(&size, sizeof(size));
     }
-    else if (count < (1u << 16u))
+    else if (count < (1ull << 16u))
     {
       auto opcode = static_cast<uint8_t>(CODE16);
       serializer_.Allocate(sizeof(opcode));
@@ -102,7 +102,7 @@ public:
       serializer_.Allocate(sizeof(size));
       serializer_.WriteBytes(reinterpret_cast<uint8_t *>(&size), sizeof(size));
     }
-    else if (count < (1ull << 32))
+    else if (count < (1ull << 32u))
     {
       auto opcode = static_cast<uint8_t>(CODE32);
       serializer_.Allocate(sizeof(opcode));
