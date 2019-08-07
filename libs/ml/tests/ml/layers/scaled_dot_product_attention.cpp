@@ -150,13 +150,14 @@ TYPED_TEST(ScaledDotProductAttention, saveparams_test)
 {
   using DataType = typename TypeParam::Type;
 
-  fetch::math::SizeType key_dim   = 4;
+  fetch::math::SizeType key_dim = 4;
 
   TypeParam query_data = TypeParam({12, 25, 4});
   TypeParam key_data   = query_data;
   TypeParam value_data = query_data;
 
-  auto mha_layer = std::make_shared<fetch::ml::layers::ScaledDotProductAttention<TypeParam>>(key_dim);
+  auto mha_layer =
+      std::make_shared<fetch::ml::layers::ScaledDotProductAttention<TypeParam>>(key_dim);
 
   mha_layer->SetInput("MultiheadAttention_Query", query_data);
   mha_layer->SetInput("MultiheadAttention_Key", key_data);
@@ -168,9 +169,8 @@ TYPED_TEST(ScaledDotProductAttention, saveparams_test)
   auto sp = mha_layer->GetOpSaveableParams();
 
   // downcast to correct type
-  auto dsp =
-      std::dynamic_pointer_cast<typename fetch::ml::layers::ScaledDotProductAttention<TypeParam>::SPType>(
-          sp);
+  auto dsp = std::dynamic_pointer_cast<
+      typename fetch::ml::layers::ScaledDotProductAttention<TypeParam>::SPType>(sp);
 
   // serialize
   fetch::serializers::MsgPackSerializer b;
@@ -178,11 +178,13 @@ TYPED_TEST(ScaledDotProductAttention, saveparams_test)
 
   // deserialize
   b.seek(0);
-  auto dsp2 = std::make_shared<typename fetch::ml::layers::ScaledDotProductAttention<TypeParam>::SPType>();
+  auto dsp2 =
+      std::make_shared<typename fetch::ml::layers::ScaledDotProductAttention<TypeParam>::SPType>();
   b >> *dsp2;
 
   // rebuild
-  auto sa2 = fetch::ml::utilities::BuildLayer<TypeParam, fetch::ml::layers::ScaledDotProductAttention<TypeParam>>(dsp2);
+  auto sa2 = fetch::ml::utilities::BuildLayer<
+      TypeParam, fetch::ml::layers::ScaledDotProductAttention<TypeParam>>(dsp2);
 
   sa2->SetInput("MultiheadAttention_Query", query_data);
   sa2->SetInput("MultiheadAttention_Key", key_data);

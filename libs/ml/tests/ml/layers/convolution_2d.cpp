@@ -571,7 +571,9 @@ TYPED_TEST(Convolution2DTest, saveparams_test)
   b >> *dsp2;
 
   // rebuild
-  auto conv2 = fetch::ml::utilities::BuildLayer<TypeParam, fetch::ml::layers::Convolution2D<TypeParam>>(dsp2);
+  auto conv2 =
+      fetch::ml::utilities::BuildLayer<TypeParam, fetch::ml::layers::Convolution2D<TypeParam>>(
+          dsp2);
 
   conv2->SetInput("Conv2D_Input", input);
   TypeParam output2 = conv2->Evaluate("Conv2D_Conv2D", true);

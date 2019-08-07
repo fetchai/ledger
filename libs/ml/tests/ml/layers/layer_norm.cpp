@@ -212,7 +212,7 @@ TYPED_TEST(LayerNormTest, saveparams_test)
   using DataType = typename TypeParam::Type;
 
   std::vector<fetch::math::SizeType> data_shape = {3, 2};
-  TypeParam data = TypeParam::FromString(
+  TypeParam                          data       = TypeParam::FromString(
       "1, 2, 3, 0;"
       "2, 3, 2, 1;"
       "3, 6, 4, 13");
@@ -228,8 +228,7 @@ TYPED_TEST(LayerNormTest, saveparams_test)
 
   // downcast to correct type
   auto dsp =
-      std::dynamic_pointer_cast<typename fetch::ml::layers::LayerNorm<TypeParam>::SPType>(
-          sp);
+      std::dynamic_pointer_cast<typename fetch::ml::layers::LayerNorm<TypeParam>::SPType>(sp);
 
   // serialize
   fetch::serializers::MsgPackSerializer b;
@@ -241,7 +240,8 @@ TYPED_TEST(LayerNormTest, saveparams_test)
   b >> *dsp2;
 
   // rebuild
-  auto sa2 = fetch::ml::utilities::BuildLayer<TypeParam, fetch::ml::layers::LayerNorm<TypeParam>>(dsp2);
+  auto sa2 =
+      fetch::ml::utilities::BuildLayer<TypeParam, fetch::ml::layers::LayerNorm<TypeParam>>(dsp2);
 
   sa2->SetInput("LayerNorm_Input", data);
 
@@ -250,4 +250,3 @@ TYPED_TEST(LayerNormTest, saveparams_test)
   ASSERT_TRUE(output.AllClose(output2, fetch::math::function_tolerance<DataType>(),
                               fetch::math::function_tolerance<DataType>()));
 }
-

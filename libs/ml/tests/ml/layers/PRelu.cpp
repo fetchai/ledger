@@ -33,8 +33,7 @@ class PReluTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<float>,
-                                 fetch::math::Tensor<double>,
+using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>>;
 TYPED_TEST_CASE(PReluTest, MyTypes);
@@ -195,7 +194,8 @@ TYPED_TEST(PReluTest, saveparams_test)
   b >> *dsp2;
 
   // rebuild
-  auto prelu2 = fetch::ml::utilities::BuildLayer<TypeParam, fetch::ml::layers::PRelu<TypeParam>>(dsp2);
+  auto prelu2 =
+      fetch::ml::utilities::BuildLayer<TypeParam, fetch::ml::layers::PRelu<TypeParam>>(dsp2);
 
   prelu2->SetInput("PRelu_Input", data);
   TypeParam output2 = prelu2->Evaluate("PRelu_LeakyReluOp", true);
