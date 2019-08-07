@@ -67,7 +67,7 @@ using namespace fetch::string;
 TEST(StringTests, check_Replace)
 {
   EXPECT_EQUAL(Replace("Space shuttle ready to start", 's', 'z'), "Space zhuttle ready to ztart");
-  EXPECT_EQUAL(Replace("Space shuttle ready to start", 'z', 's'), "Space shuttle ready to start");
+  EXPECT_EQUAL(Replace("Space shuttle ready to start", 'z', 'm'), "Space shuttle ready to start");
 }
 
 TEST(StringTests, check_Trim)
