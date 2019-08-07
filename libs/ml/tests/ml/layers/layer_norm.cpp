@@ -151,31 +151,7 @@ TYPED_TEST(LayerNormTest, graph_forward_test_exact_value_2D)  // Use the class a
                           static_cast<DataType>(5) * fetch::math::function_tolerance<DataType>()));
 }
 
-// TODO () this test should be enabled once Add layer can handle input of more than 3 dims
-// TYPED_TEST(LayerNormTest, graph_forward_test_shape_5D)  // Use the class as a Node
-//{
-//	using ArrayType = TypeParam;
-//	using SizeType = typename TypeParam::SizeType;
-//
-//	fetch::ml::Graph<TypeParam> g;
-//
-//	g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Input", {});
-//	g.template AddNode<fetch::ml::layers::LayerNorm<TypeParam>>(
-//	 "LayerNorm", {"Input"}, std::vector<typename TypeParam::SizeType>({10, 6, 6, 4, 3}),
-// static_cast<SizeType>(3));
-//
-//	ArrayType data({10, 6, 6, 4, 3, 19});
-//	std::vector<SizeType> gt_output_shape = {10, 6, 6, 4, 3, 19};
-//	g.SetInput("Input", data);
-//
-//	TypeParam prediction = g.Evaluate("LayerNorm", true);
-//
-//	// test correct shape
-//	for(size_t i=0; i<gt_output_shape.size(); i++){
-//		ASSERT_EQ(gt_output_shape[i], prediction.shape(i));
-//	}
-//
-//}
+// TODO (#1458) enable large dimension test once Add and Multiply layers can handle input of more than 3 dims
 
 TYPED_TEST(LayerNormTest, getStateDict)
 {
