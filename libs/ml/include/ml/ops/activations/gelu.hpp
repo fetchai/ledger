@@ -67,7 +67,8 @@ public:
     ArrayType        intermediate1({input.shape()}), intermediate2({input.shape()}),
         intermediate3({input.shape()});
 
-    DataType one{1}, two{2}, neg_two{static_cast<DataType>(-2)}, three{3},
+    DataType one{static_cast<DataType>(1)}, two{static_cast<DataType>(2)},
+        neg_two{static_cast<DataType>(-2)}, three{static_cast<DataType>(3)},
         half{static_cast<DataType>(0.5)}, a{static_cast<DataType>(0.797885)},
         b{static_cast<DataType>(0.035677)};
 
