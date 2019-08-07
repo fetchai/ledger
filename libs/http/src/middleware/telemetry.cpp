@@ -68,7 +68,10 @@ void TelemetryData::Update(HTTPRequest const &request, HTTPResponse const &respo
   auto const status_code = std::to_string(static_cast<int>(response.status()));
 
   auto path_segments = core::Split(path, "/");
-  path_segments.pop_back();
+  if (!path_segments.empty())
+  {
+    path_segments.pop_back();
+  }
   auto const truncated_path = core::Join(path_segments, "/");
 
   // update the duration stats
