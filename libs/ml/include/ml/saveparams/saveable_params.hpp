@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-//#include "core/serializers/main_serializer.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/regularisers/regularisation.hpp"
 
@@ -717,7 +716,8 @@ struct LayerSkipGramSaveableParams : SubGraphSaveableParams<TensorType>
 template <class TensorType>
 struct OpSoftmaxSaveableParams : public SaveableParamsInterface
 {
-  fetch::math::SizeType axis    = fetch::math::numeric_max<fetch::math::SizeType>();
+  fetch::math::SizeType axis                 = fetch::math::numeric_max<fetch::math::SizeType>();
+  std::vector<fetch::math::SizeType> axes{};
   fetch::ml::OpType     op_type = OpType::OP_SOFTMAX;
 
   OpSoftmaxSaveableParams()

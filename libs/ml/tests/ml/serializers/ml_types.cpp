@@ -153,7 +153,6 @@ TYPED_TEST(SerializersTest, serialize_graph_saveable_params)
 
   g->SetInput("Input", data.Transpose());
   TensorType prediction3 = g->Evaluate(output);
-  //  std::cout << "prediction3.ToString(): " << prediction3.ToString() << std::endl;
 
   g2->SetInput("Input", data.Transpose());
   TensorType prediction4 = g2->Evaluate(output);

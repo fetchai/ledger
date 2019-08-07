@@ -907,7 +907,7 @@ struct MapSerializer<ml::OpAddSaveableParams<TensorType>, D>
 };
 
 /**
- * serializer for add saveable params
+ * serializer for concatenate saveable params
  * @tparam TensorType
  */
 template <typename TensorType, typename D>
@@ -936,7 +936,7 @@ struct MapSerializer<ml::OpConcatenateSaveableParams<TensorType>, D>
 };
 
 /**
- * serializer for add saveable params
+ * serializer for conv1d saveable params
  * @tparam TensorType
  */
 template <typename TensorType, typename D>
@@ -994,7 +994,7 @@ struct MapSerializer<ml::OpConvolution2DSaveableParams<TensorType>, D>
 };
 
 /**
- * serializer for add saveable params
+ * serializer for OpCrossEntropyLossSaveableParams
  * @tparam TensorType
  */
 template <typename TensorType, typename D>
@@ -1728,13 +1728,15 @@ struct MapSerializer<ml::OpSoftmaxSaveableParams<TensorType>, D>
 
   static uint8_t const OP_CODE = 1;
   static uint8_t const AXIS    = 2;
+  static uint8_t const AXES    = 3;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(2);
+    auto map = map_constructor(3);
     map.Append(OP_CODE, sp.op_type);
     map.Append(AXIS, sp.axis);
+    map.Append(AXES, sp.axes);
   }
 
   template <typename MapDeserializer>
@@ -1742,6 +1744,7 @@ struct MapSerializer<ml::OpSoftmaxSaveableParams<TensorType>, D>
   {
     map.ExpectKeyGetValue(OP_CODE, sp.op_type);
     map.ExpectKeyGetValue(AXIS, sp.axis);
+    map.ExpectKeyGetValue(AXES, sp.axes);
   }
 };
 
@@ -1772,7 +1775,7 @@ struct MapSerializer<ml::OpSoftmaxCrossEntropySaveableParams<TensorType>, D>
 };
 
 /**
- * serializer for OpSoftmaxCrossEntropySaveableParams
+ * serializer for OpSwitchSaveableParams
  * @tparam TensorType
  */
 template <typename TensorType, typename D>

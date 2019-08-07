@@ -58,6 +58,7 @@ public:
   {
     auto sp_ptr  = std::make_shared<SPType>();
     sp_ptr->axis = axis_;
+    sp_ptr->axes = axes_;
     return sp_ptr;
   }
 
