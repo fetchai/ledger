@@ -34,7 +34,7 @@ public:
   using ArrayType     = T;
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  using SPType        = ReshapeSaveableParams<T>;
+  using SPType        = OpReshapeSaveableParams<T>;
 
   explicit Reshape(std::vector<SizeType> new_shape)
     : new_shape_(new_shape)

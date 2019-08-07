@@ -191,31 +191,31 @@ std::shared_ptr<Node<T>> BuildNode(NodeSaveableParams<T> const &nsp)
   case OpType::LAYER_CONVOLUTION_1D:
   {
     op_ptr = BuildLayer<T, layers::Convolution1D<T>>(
-        *(std::dynamic_pointer_cast<ConvolutionLayer1DSaveableParams<T>>(nsp.op_save_params)));
+        *(std::dynamic_pointer_cast<LayerConvolution1DSaveableParams<T>>(nsp.op_save_params)));
     break;
   }
   case OpType::LAYER_CONVOLUTION_2D:
   {
     op_ptr = BuildLayer<T, layers::Convolution2D<T>>(
-        *(std::dynamic_pointer_cast<ConvolutionLayer2DSaveableParams<T>>(nsp.op_save_params)));
+        *(std::dynamic_pointer_cast<LayerConvolution2DSaveableParams<T>>(nsp.op_save_params)));
     break;
   }
   case OpType::LAYER_FULLY_CONNECTED:
   {
     op_ptr = BuildLayer<T, layers::FullyConnected<T>>(
-        *(std::dynamic_pointer_cast<FullyConnectedSaveableParams<T>>(nsp.op_save_params)));
+        *(std::dynamic_pointer_cast<LayerFullyConnectedSaveableParams<T>>(nsp.op_save_params)));
     break;
   }
   case OpType::LAYER_PRELU:
   {
     op_ptr = BuildLayer<T, layers::PRelu<T>>(
-        *(std::dynamic_pointer_cast<PReluSaveableParams<T>>(nsp.op_save_params)));
+        *(std::dynamic_pointer_cast<LayerPReluSaveableParams<T>>(nsp.op_save_params)));
     break;
   }
   case OpType::LAYER_SELF_ATTENTION_ENCODER:
   {
     op_ptr = BuildLayer<T, layers::SelfAttentionEncoder<T>>(
-        *(std::dynamic_pointer_cast<SelfAttentionEncoderSaveableParams<T>>(nsp.op_save_params)));
+        *(std::dynamic_pointer_cast<LayerSelfAttentionEncoderSaveableParams<T>>(nsp.op_save_params)));
     break;
   }
   default:

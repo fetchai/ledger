@@ -38,7 +38,7 @@ public:
   using DataType      = typename ArrayType::Type;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  using SPType        = LayerNormSaveableParams<T>;
+  using SPType        = OpLayerNormSaveableParams<T>;
 
   explicit LayerNorm(SizeType axis    = static_cast<SizeType>(0),
                      DataType epsilon = fetch::math::function_tolerance<DataType>())

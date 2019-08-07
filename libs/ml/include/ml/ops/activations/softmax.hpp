@@ -37,7 +37,7 @@ public:
   using DataType      = typename ArrayType::Type;
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  using SPType        = SoftmaxSaveableParams<T>;
+  using SPType        = OpSoftmaxSaveableParams<T>;
 
   explicit Softmax(SizeType axis = 0)
     : axis_(axis)

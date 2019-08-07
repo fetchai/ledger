@@ -36,7 +36,7 @@ public:
   using DataType      = typename ArrayType::Type;
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  using SPType        = MeanSquareErrorSaveableParams<T>;
+  using SPType        = OpMeanSquareErrorSaveableParams<T>;
 
   explicit MeanSquareErrorLoss(SPType const &sp)
     : Ops<T>(sp)

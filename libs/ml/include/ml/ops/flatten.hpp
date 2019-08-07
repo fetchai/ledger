@@ -36,7 +36,7 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  using SPType        = FlattenSaveableParams<T>;
+  using SPType        = OpFlattenSaveableParams<T>;
 
   Flatten() = default;
 

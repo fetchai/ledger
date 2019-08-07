@@ -50,7 +50,7 @@ public:
   using RegType         = fetch::ml::details::RegularisationType;
   using WeightsInitType = fetch::ml::ops::WeightsInitialisation;
   using ActivationType  = fetch::ml::details::ActivationType;
-  using SPType          = SelfAttentionEncoderSaveableParams<T>;
+  using SPType          = LayerSelfAttentionEncoderSaveableParams<T>;
 
   SelfAttentionEncoder() = default;
 
@@ -127,7 +127,7 @@ public:
     return ret;
   }
 
-  void SetOpSaveableParams(SelfAttentionEncoderSaveableParams<T> const &sp)
+  void SetOpSaveableParams(LayerSelfAttentionEncoderSaveableParams<T> const &sp)
   {
     // assign layer specific params
     n_heads_             = sp.n_heads;

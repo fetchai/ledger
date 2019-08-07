@@ -38,7 +38,7 @@ public:
   using DataType      = typename ArrayType::Type;
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  using SPType        = LogSoftmaxSaveableParams<T>;
+  using SPType        = OpLogSoftmaxSaveableParams<T>;
 
   explicit LogSoftmax(SizeType axis = 1)
     : axis_(axis)

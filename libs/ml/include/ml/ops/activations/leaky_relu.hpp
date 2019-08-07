@@ -37,7 +37,7 @@ public:
   using DataType      = typename ArrayType::Type;
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  using SPType        = LeakyReluSaveableParams<ArrayType>;
+  using SPType        = OpLeakyReluSaveableParams<ArrayType>;
 
   explicit LeakyRelu(DataType a = DataType(0.01))
     : a_(a)

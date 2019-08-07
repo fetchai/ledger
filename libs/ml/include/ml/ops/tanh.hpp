@@ -37,7 +37,7 @@ public:
   using DataType      = typename ArrayType::Type;
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  using SPType        = TanhSaveableParams<T>;
+  using SPType        = OpTanhSaveableParams<T>;
 
   TanH() = default;
 

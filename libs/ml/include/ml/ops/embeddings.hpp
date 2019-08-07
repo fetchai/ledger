@@ -38,7 +38,7 @@ public:
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Weights<T>::VecTensorType;
-  using SPType        = EmbeddingsSaveableParams<ArrayType>;
+  using SPType        = OpEmbeddingsSaveableParams<ArrayType>;
 
   Embeddings(SizeType dimensions, SizeType data_points)
   {

@@ -41,7 +41,7 @@ public:
   using SizeType      = typename TensorType::SizeType;
   using WeightsInit   = fetch::ml::ops::WeightsInitialisation;
   using VecTensorType = typename SubGraph<T>::VecTensorType;
-  using SPType        = ConvolutionLayer1DSaveableParams<TensorType>;
+  using SPType        = LayerConvolution1DSaveableParams<TensorType>;
 
   Convolution1D() = default;
 
@@ -114,7 +114,7 @@ public:
     return ret;
   }
 
-  void SetOpSaveableParams(ConvolutionLayer1DSaveableParams<T> const &sp)
+  void SetOpSaveableParams(LayerConvolution1DSaveableParams<T> const &sp)
   {
     // assign layer specific params
     kernel_size_     = sp.kernel_size;

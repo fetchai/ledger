@@ -37,7 +37,7 @@ public:
   using DataType      = typename ArrayType::Type;
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  using SPType        = EluSaveableParams<ArrayType>;
+  using SPType        = OpEluSaveableParams<ArrayType>;
 
   explicit Elu(DataType a)
     : a_(a)

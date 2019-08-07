@@ -34,7 +34,7 @@ public:
   using ArrayType     = T;
   using SizeType      = fetch::math::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  using SPType        = ConcatenateSaveableParams<T>;
+  using SPType        = OpConcatenateSaveableParams<T>;
 
   explicit Concatenate(SizeType axis)
     : axis_(axis)
