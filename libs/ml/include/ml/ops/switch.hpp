@@ -39,7 +39,7 @@ public:
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpSwitchSaveableParams<T>;
 
-  Switch()           = default;
+  Switch() = default;
 
   explicit Switch(SPType const &sp)
     : Ops<T>(sp)
