@@ -39,12 +39,14 @@ template <class T>
 class SkipGram : public SubGraph<T>
 {
 public:
-  using TensorType     = T;
+  using TensorType    = T;
   using SizeType      = typename T::SizeType;
   using ArrayPtrType  = std::shared_ptr<TensorType>;
   using WeightsInit   = fetch::ml::ops::WeightsInitialisation;
   using VecTensorType = typename SubGraph<T>::VecTensorType;
   using SPType        = LayerSkipGramSaveableParams<T>;
+
+  SkipGram() = default;
 
   SkipGram(SizeType in_size, SizeType out, SizeType embedding_size, SizeType vocab_size,
            std::string const &name = "SkipGram", WeightsInit init_mode = WeightsInit::XAVIER_GLOROT)
@@ -113,12 +115,13 @@ public:
   void SetOpSaveableParams(SPType const &sp)
   {
     // assign layer specific params
-    in_size_             = sp.in_size;
-    out_size_           = sp.out_size;
-    embed_in_              = sp.embed_in;
+    in_size_  = sp.in_size;
+    out_size_ = sp.out_size;
+    embed_in_ = sp.embed_in;
   }
-  
-  std::shared_ptr<ops::Embeddings<TensorType>> GetEmbeddings(std::shared_ptr<SkipGram<TensorType>> &g)
+
+  std::shared_ptr<ops::Embeddings<TensorType>> GetEmbeddings(
+      std::shared_ptr<SkipGram<TensorType>> &g)
   {
     return std::dynamic_pointer_cast<ops::Embeddings<TensorType>>((g->GetNode(embed_in_))->GetOp());
   }

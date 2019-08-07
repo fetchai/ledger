@@ -650,8 +650,8 @@ struct LayerScaledDotProductAttentionSaveableParams : SubGraphSaveableParams<Ten
   using SizeType = typename TensorType::SizeType;
   using DataType = typename TensorType::Type;
 
-  fetch::ml::OpType op_type             = OpType::LAYER_SCALED_DOT_PRODUCT_ATTENTION;
-  SizeType          key_dim             = fetch::math::numeric_max<SizeType>();
+  fetch::ml::OpType op_type = OpType::LAYER_SCALED_DOT_PRODUCT_ATTENTION;
+  SizeType          key_dim = fetch::math::numeric_max<SizeType>();
 
   LayerScaledDotProductAttentionSaveableParams()
     : SubGraphSaveableParams<TensorType>(OpType::LAYER_SCALED_DOT_PRODUCT_ATTENTION)

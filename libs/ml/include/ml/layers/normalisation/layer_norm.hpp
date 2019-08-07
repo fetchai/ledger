@@ -38,7 +38,7 @@ template <class T>
 class LayerNorm : public SubGraph<T>
 {
 public:
-  using TensorType     = T;
+  using TensorType    = T;
   using TensorPtrType = std::shared_ptr<TensorType>;
   using SizeType      = typename TensorType::SizeType;
   using DataType      = typename TensorType::Type;
@@ -115,9 +115,9 @@ public:
     *sg_ptr2     = *sg_ptr1;
 
     // asign layer specific params
-    ret->data_shape     = data_shape_;
-    ret->axis  = axis_;
-    ret->epsilon = epsilon_;
+    ret->data_shape = data_shape_;
+    ret->axis       = axis_;
+    ret->epsilon    = epsilon_;
 
     return ret;
   }
@@ -125,9 +125,9 @@ public:
   void SetOpSaveableParams(SPType const &sp)
   {
     // assign layer specific params
-    data_shape_     = sp.data_shape;
-    axis_  = sp.axis;
-    epsilon_ = sp.epsilon;
+    data_shape_ = sp.data_shape;
+    axis_       = sp.axis;
+    epsilon_    = sp.epsilon;
   }
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override

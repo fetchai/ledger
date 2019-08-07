@@ -44,7 +44,8 @@ TYPED_TEST(SkipGramTest, saveparams_test)
   fetch::math::SizeType embed_size = 100;
   fetch::math::SizeType vocab_size = 1000;
 
-  auto sg_layer = std::make_shared<fetch::ml::layers::SkipGram<TypeParam>>(in_size, out_size, embed_size, vocab_size);
+  auto sg_layer = std::make_shared<fetch::ml::layers::SkipGram<TypeParam>>(in_size, out_size,
+                                                                           embed_size, vocab_size);
 
   sg_layer->SetInput("SkipGram_Input", data);
 
@@ -54,8 +55,7 @@ TYPED_TEST(SkipGramTest, saveparams_test)
   auto sp = sg_layer->GetOpSaveableParams();
 
   // downcast to correct type
-  auto dsp = std::dynamic_pointer_cast<
-      typename fetch::ml::layers::SkipGram<TypeParam>::SPType>(sp);
+  auto dsp = std::dynamic_pointer_cast<typename fetch::ml::layers::SkipGram<TypeParam>::SPType>(sp);
 
   // serialize
   fetch::serializers::MsgPackSerializer b;
@@ -63,12 +63,12 @@ TYPED_TEST(SkipGramTest, saveparams_test)
 
   // deserialize
   b.seek(0);
-  auto dsp2 =
-      std::make_shared<typename fetch::ml::layers::SkipGram<TypeParam>::SPType>();
+  auto dsp2 = std::make_shared<typename fetch::ml::layers::SkipGram<TypeParam>::SPType>();
   b >> *dsp2;
 
   // rebuild
-  auto sa2 = fetch::ml::utilities::BuildLayer<TypeParam, fetch::ml::layers::SkipGram<TypeParam>>(*dsp2);
+  auto sa2 =
+      fetch::ml::utilities::BuildLayer<TypeParam, fetch::ml::layers::SkipGram<TypeParam>>(*dsp2);
 
   sa2->SetInput("SkipGram_Input", data);
   TypeParam output2 = sa2->Evaluate("SkipGram_Sigmoid", true);

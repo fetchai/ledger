@@ -216,6 +216,12 @@ std::shared_ptr<Node<T>> BuildNode(NodeSaveableParams<T> const &nsp)
         std::dynamic_pointer_cast<LayerSelfAttentionEncoderSaveableParams<T>>(nsp.op_save_params)));
     break;
   }
+  case OpType::LAYER_SKIP_GRAM:
+  {
+    op_ptr = BuildLayer<T, layers::SkipGram<T>>(*(
+        std::dynamic_pointer_cast<LayerSkipGramSaveableParams<T>>(nsp.op_save_params)));
+    break;
+  }
   default:
     throw std::runtime_error("unknown node type");
   }

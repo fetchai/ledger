@@ -2258,9 +2258,9 @@ struct MapSerializer<ml::LayerScaledDotProductAttentionSaveableParams<TensorType
   using Type       = ml::LayerScaledDotProductAttentionSaveableParams<TensorType>;
   using DriverType = D;
 
-  static uint8_t const SUB_GRAPH           = 1;
-  static uint8_t const OP_CODE             = 2;
-  static uint8_t const KEY_DIM             = 3;
+  static uint8_t const SUB_GRAPH = 1;
+  static uint8_t const OP_CODE   = 2;
+  static uint8_t const KEY_DIM   = 3;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)

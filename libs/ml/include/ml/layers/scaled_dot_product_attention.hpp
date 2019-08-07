@@ -41,7 +41,7 @@ template <class T>
 class ScaledDotProductAttention : public SubGraph<T>
 {
 public:
-  using TensorType     = T;
+  using TensorType    = T;
   using SizeType      = typename TensorType::SizeType;
   using ArrayPtrType  = std::shared_ptr<TensorType>;
   using DataType      = typename T::Type;
@@ -65,13 +65,13 @@ public:
     // paper as our batch dimension is the last dimension, which the feature dimension is the first
     // one. in the paper, feature dimension is the col dimension please refer to
     // http://jalammar.github.io/illustrated-transformer/
-    std::string transpose_key =
-        this->template AddNode<fetch::ml::ops::Transpose<TensorType>>(name + "_TransposeKey", {key});
+    std::string transpose_key = this->template AddNode<fetch::ml::ops::Transpose<TensorType>>(
+        name + "_TransposeKey", {key});
     std::string kq_matmul = this->template AddNode<fetch::ml::ops::MatrixMultiply<TensorType>>(
         name + "_Key_Query_MatMul", {transpose_key, query});
 
     TensorType sqrt_dk_tensor = std::vector<SizeType>({1, 1, 1});
-    sqrt_dk_tensor(0, 0, 0)  = fetch::math::Sqrt(static_cast<DataType>(key_dim_));
+    sqrt_dk_tensor(0, 0, 0)   = fetch::math::Sqrt(static_cast<DataType>(key_dim_));
     std::string sqrt_dk_ph =
         this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Sqrt_Key_Dim", {});
     this->SetInput(sqrt_dk_ph, sqrt_dk_tensor);
@@ -87,7 +87,7 @@ public:
     // dropout
     std::string dropout_attention_weight =
         this->template AddNode<fetch::ml::ops::Dropout<TensorType>>(name + "_Dropout",
-                                                                   {attention_weight}, dropout);
+                                                                    {attention_weight}, dropout);
 
     // attention vectors
     std::string weight_value_matmul =
@@ -121,14 +121,14 @@ public:
     *sg_ptr2     = *sg_ptr1;
 
     // asign layer specific params
-    ret->key_dim   = key_dim_;
+    ret->key_dim = key_dim_;
     return ret;
   }
 
   void SetOpSaveableParams(SPType const &sp)
   {
     // assign layer specific params
-    key_dim_   = sp.key_dim;
+    key_dim_ = sp.key_dim;
   }
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
