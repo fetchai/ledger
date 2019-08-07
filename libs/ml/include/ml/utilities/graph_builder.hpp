@@ -171,6 +171,11 @@ std::shared_ptr<Node<T>> BuildNode(NodeSaveableParams<T> const &nsp)
     op_ptr = GetOp<ops::Relu<T>>(nsp.op_save_params);
     break;
   }
+  case ops::Sigmoid<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::Sigmoid<T>>(nsp.op_save_params);
+    break;
+  }
   case ops::Softmax<T>::OpCode():
   {
     op_ptr = GetOp<ops::Softmax<T>>(nsp.op_save_params);
