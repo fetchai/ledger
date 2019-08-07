@@ -98,6 +98,10 @@ TYPED_TEST(SerializersTest, serialize_graph_saveable_params)
   std::string output = g->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
       "FC3", {layer_2}, 10u, 10u, fetch::ml::details::ActivationType::SOFTMAX, regulariser,
       reg_rate);
+  std::string layer_1 = g->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
+      "FC1", {input}, 10u, 20u, fetch::ml::details::ActivationType::RELU, regulariser, reg_rate);
+  std::string layer_2 = g->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
+      "FC2", {layer_1}, 20u, 10u, fetch::ml::details::ActivationType::RELU, regulariser, reg_rate);
 
   // Add loss function
   std::string error_output = g->template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TensorType>>(
@@ -141,12 +145,14 @@ TYPED_TEST(SerializersTest, serialize_graph_saveable_params)
 
   // train g
   g->SetInput(label_name, labels);
+  g->SetInput("Input", data.Transpose());
   g->Evaluate(error_output);
   g->BackPropagateError(error_output);
   g->Step(DataType{0.1f});
 
   // train g2
   g2->SetInput(label_name, labels);
+  g2->SetInput("Input", data.Transpose());
   g2->Evaluate(error_output);
   g2->BackPropagateError(error_output);
   g2->Step(DataType{0.1f});
