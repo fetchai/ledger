@@ -323,21 +323,22 @@ private:
 
   /// @name State Machine State
   /// @{
-  Address         mining_address_;         ///< The miners address
-  StateMachinePtr state_machine_;          ///< The main state machine for this service
-  std::size_t     block_difficulty_;       ///< The number of leading zeros needed in the proof
-  std::size_t     num_lanes_;              ///< The current number of lanes
-  std::size_t     num_slices_;             ///< The current number of slices
-  Flag            mining_{false};          ///< Flag to signal if this node generating blocks
-  Flag            mining_enabled_{false};  ///< Short term signal to toggle on and off
-  BlockPeriod     block_period_;           ///< The desired period before a block is generated
-  Timepoint       next_block_time_;        ///< The next point that a block should be generated
-  BlockPtr        current_block_{};        ///< The pointer to the current block (read only)
-  NextBlockPtr    next_block_{};           ///< The next block being created (read / write)
-  TxDigestSetPtr  pending_txs_{};          ///< The list of pending txs that are being waited on
-  PeriodicAction  tx_wait_periodic_;       ///< Periodic print for transaction waiting
-  PeriodicAction  exec_wait_periodic_;     ///< Periodic print for execution
-  PeriodicAction  syncing_periodic_;       ///< Periodic print for synchronisation
+  Address         mining_address_;          ///< The miners address
+  StateMachinePtr state_machine_;           ///< The main state machine for this service
+  std::size_t     block_difficulty_;        ///< The number of leading zeros needed in the proof
+  std::size_t     num_lanes_;               ///< The current number of lanes
+  std::size_t     num_slices_;              ///< The current number of slices
+  Flag            mining_{false};           ///< Flag to signal if this node generating blocks
+  Flag            mining_enabled_{false};   ///< Short term signal to toggle on and off
+  BlockPeriod     block_period_;            ///< The desired period before a block is generated
+  Timepoint       next_block_time_;         ///< The next point that a block should be generated
+  BlockPtr        current_block_{};         ///< The pointer to the current block (read only)
+  NextBlockPtr    next_block_{};            ///< The next block being created (read / write)
+  TxDigestSetPtr  pending_txs_{};           ///< The list of pending txs that are being waited on
+  PeriodicAction  tx_wait_periodic_;        ///< Periodic print for transaction waiting
+  PeriodicAction  exec_wait_periodic_;      ///< Periodic print for execution
+  PeriodicAction  syncing_periodic_;        ///< Periodic print for synchronisation
+  Timepoint       start_waiting_for_tx_{};  ///< The time at which we started waiting for txs
   DeadlineTimer   wait_for_tx_timeout_{"bc:deadline"};  ///< Timeout when waiting for transactions
   DeadlineTimer   wait_before_asking_for_missing_tx_{
       "bc:deadline"};              ///< Time to wait before asking peers for any missing txs
@@ -352,25 +353,28 @@ private:
 
   /// @name Telemetry
   /// @{
-  telemetry::CounterPtr reload_state_count_;
-  telemetry::CounterPtr synchronising_state_count_;
-  telemetry::CounterPtr synchronised_state_count_;
-  telemetry::CounterPtr pre_valid_state_count_;
-  telemetry::CounterPtr wait_tx_state_count_;
-  telemetry::CounterPtr syn_exec_state_count_;
-  telemetry::CounterPtr sch_block_state_count_;
-  telemetry::CounterPtr wait_exec_state_count_;
-  telemetry::CounterPtr post_valid_state_count_;
-  telemetry::CounterPtr pack_block_state_count_;
-  telemetry::CounterPtr new_syn_state_count_;
-  telemetry::CounterPtr new_exec_state_count_;
-  telemetry::CounterPtr new_wait_exec_state_count_;
-  telemetry::CounterPtr proof_search_state_count_;
-  telemetry::CounterPtr transmit_state_count_;
-  telemetry::CounterPtr reset_state_count_;
-  telemetry::CounterPtr executed_block_count_;
-  telemetry::CounterPtr mined_block_count_;
-  telemetry::CounterPtr executed_tx_count_;
+  telemetry::CounterPtr   reload_state_count_;
+  telemetry::CounterPtr   synchronising_state_count_;
+  telemetry::CounterPtr   synchronised_state_count_;
+  telemetry::CounterPtr   pre_valid_state_count_;
+  telemetry::CounterPtr   wait_tx_state_count_;
+  telemetry::CounterPtr   syn_exec_state_count_;
+  telemetry::CounterPtr   sch_block_state_count_;
+  telemetry::CounterPtr   wait_exec_state_count_;
+  telemetry::CounterPtr   post_valid_state_count_;
+  telemetry::CounterPtr   pack_block_state_count_;
+  telemetry::CounterPtr   new_syn_state_count_;
+  telemetry::CounterPtr   new_exec_state_count_;
+  telemetry::CounterPtr   new_wait_exec_state_count_;
+  telemetry::CounterPtr   proof_search_state_count_;
+  telemetry::CounterPtr   transmit_state_count_;
+  telemetry::CounterPtr   reset_state_count_;
+  telemetry::CounterPtr   executed_block_count_;
+  telemetry::CounterPtr   mined_block_count_;
+  telemetry::CounterPtr   executed_tx_count_;
+  telemetry::CounterPtr   request_tx_count_;
+  telemetry::CounterPtr   unable_to_find_tx_count_;
+  telemetry::HistogramPtr tx_sync_times_;
   /// @}
 };
 
