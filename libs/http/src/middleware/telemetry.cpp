@@ -22,8 +22,8 @@
 #include "telemetry/histogram_map.hpp"
 #include "telemetry/registry.hpp"
 
-#include <string>
 #include <memory>
+#include <string>
 
 namespace fetch {
 namespace http {
