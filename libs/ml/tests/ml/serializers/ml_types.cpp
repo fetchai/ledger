@@ -125,7 +125,7 @@ TYPED_TEST(SerializersTest, serialize_graph_saveable_params)
   fetch::ml::utilities::BuildGraph<TensorType>(*gsp2, g2);
 
   TensorType data = TensorType::FromString("1, 2, 3, 4, 5, 6, 7, 8, 9, 10");
-  TensorType labels = TensorType::FromString("1, 2, 3, 4, 5, 6, 7, 8, 9, 10");
+  TensorType labels = TensorType::FromString("1; 2; 3; 4; 5; 6; 7; 8; 9; 100");
 
   g->SetInput("Input", data.Transpose());
   g2->SetInput("Input", data.Transpose());
@@ -138,25 +138,27 @@ TYPED_TEST(SerializersTest, serialize_graph_saveable_params)
   EXPECT_TRUE(prediction.AllClose(prediction2, fetch::math::function_tolerance<DataType>(),
                                   fetch::math::function_tolerance<DataType>()));
 
-  // train graph
-  // Set Label
+  // train g
   g->SetInput(label_name, labels);
-
-  auto loss_tensor = g->Evaluate(output);
-  g->BackPropagateError(output);
-
-  // Compute and apply gradient
-  g->ApplyGradients();
+  g->Evaluate(error_output);
+  g->BackPropagateError(error_output);
+  g->Step(DataType{0.1f});
 
   // train g2
   g2->SetInput(label_name, labels);
+  g2->Evaluate(error_output);
+  g2->BackPropagateError(error_output);
+  g2->Step(DataType{0.1f});
 
-  auto loss_tensor2 = g2->Evaluate(output);
-  g2->BackPropagateError(output);
+  TensorType prediction3 = g->Evaluate(output);
+//  std::cout << "prediction3.ToString(): " << prediction3.ToString() << std::endl;
 
-  // Compute and apply gradient
-  g2->ApplyGradients();
+  TensorType prediction4 = g2->Evaluate(output);
 
-  // todo: evaluate, check equal
+  EXPECT_FALSE(prediction.AllClose(prediction3, fetch::math::function_tolerance<DataType>(),
+                                  fetch::math::function_tolerance<DataType>()));
+
+  EXPECT_TRUE(prediction3.AllClose(prediction4, fetch::math::function_tolerance<DataType>(),
+                                  fetch::math::function_tolerance<DataType>()));
 
 }
