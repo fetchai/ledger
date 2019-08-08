@@ -93,9 +93,6 @@ public:
   void                           SetGraphSaveableParams(GraphSaveableParams<ArrayType> const &sp);
   static constexpr char const *  DESCRIPTOR = "Graph";
 
-private:
-  void ApplyRegularisation();
-
   template <class OperationType>
   meta::IfIsTrainable<ArrayType, OperationType, void> AddTrainable(
       std::string const &name, std::shared_ptr<Node<ArrayType>> op);
@@ -107,6 +104,9 @@ private:
   template <class OperationType>
   meta::IfIsNotGraphOrTrainable<ArrayType, OperationType, void> AddTrainable(
       std::string const &name, std::shared_ptr<Node<ArrayType>> op);
+
+private:
+  void ApplyRegularisation();
 
   template <typename OperationType>
   bool UpdateVariableName(std::string const &name, std::string &ret);
@@ -165,6 +165,10 @@ bool Graph<ArrayType>::SetRegularisation(std::string node_name, RegPtrType regul
 template <typename ArrayType>
 ArrayType Graph<ArrayType>::Evaluate(std::string const &node_name, bool is_training)
 {
+  auto fc_ptr =
+      std::dynamic_pointer_cast<fetch::ml::Graph<ArrayType>>(this->nodes_.at("FC1")->GetOp());
+  FETCH_UNUSED(fc_ptr);
+
   if (nodes_.find(node_name) != nodes_.end())
   {
     return *(nodes_[node_name]->Evaluate(is_training));
@@ -183,6 +187,10 @@ ArrayType Graph<ArrayType>::Evaluate(std::string const &node_name, bool is_train
 template <typename ArrayType>
 void Graph<ArrayType>::BackPropagateError(std::string const &node_name)
 {
+  auto fc_ptr =
+      std::dynamic_pointer_cast<fetch::ml::Graph<ArrayType>>(this->nodes_.at("FC1")->GetOp());
+  FETCH_UNUSED(fc_ptr);
+
   ArrayType error_signal;
   nodes_[node_name]->BackPropagateSignal(error_signal);
 
@@ -209,6 +217,9 @@ void Graph<ArrayType>::BackPropagateSignal(std::string const &node_name,
 template <typename ArrayType>
 void Graph<ArrayType>::Step(DataType learning_rate)
 {
+  auto fc_ptr =
+      std::dynamic_pointer_cast<fetch::ml::Graph<ArrayType>>(this->nodes_.at("FC1")->GetOp());
+  FETCH_UNUSED(fc_ptr);
   for (auto &t : trainable_)
   {
     t->Step(learning_rate);
@@ -342,8 +353,6 @@ GraphSaveableParams<ArrayType> Graph<ArrayType>::GetGraphSaveableParams()
     (gs.nodes).insert(std::make_pair(node.first, nsp));
   }
 
-  gs.trainable_lookup = trainable_lookup_;
-
   return gs;
 }
 
@@ -356,19 +365,6 @@ void Graph<ArrayType>::SetGraphSaveableParams(GraphSaveableParams<ArrayType> con
   for (auto &node : sp.connections)
   {
     LinkNodesInGraph(node.first, node.second);
-  }
-
-  trainable_lookup_ = sp.trainable_lookup;
-
-  trainable_ = std::vector<TrainablePtrType>(trainable_lookup_.size());
-  for (auto &node : sp.trainable_lookup)
-  {
-    auto node_ptr = nodes_.at(node.first);
-    auto trainable_ptr =
-        std::dynamic_pointer_cast<fetch::ml::ops::Trainable<ArrayType>>(node_ptr->GetOp());
-    assert(trainable_ptr);
-
-    trainable_[node.second] = trainable_ptr;
   }
 }
 
@@ -560,9 +556,9 @@ meta::IfIsTrainable<ArrayType, OperationType, void> Graph<ArrayType>::AddTrainab
 template <typename ArrayType>
 template <class OperationType>
 meta::IfIsGraph<ArrayType, OperationType, void> Graph<ArrayType>::AddTrainable(
-    std::string const &name, std::shared_ptr<Node<ArrayType>> op)
+    std::string const &name, std::shared_ptr<Node<ArrayType>> node_ptr)
 {
-  auto concrete_op_ptr = std::dynamic_pointer_cast<OperationType>(op->GetOp());
+  auto concrete_op_ptr = std::dynamic_pointer_cast<OperationType>(node_ptr->GetOp());
 
   for (auto &trainable : concrete_op_ptr->trainable_lookup_)
   {

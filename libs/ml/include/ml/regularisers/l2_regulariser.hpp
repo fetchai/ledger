@@ -38,7 +38,6 @@ public:
   L2Regulariser()
     : Regulariser<T>(RegularisationType::L2)
   {}
-
   ~L2Regulariser() override = default;
 
   /**
@@ -63,4 +62,36 @@ public:
 
 }  // namespace regularisers
 }  // namespace ml
+
+namespace serializers {
+
+/**
+ * serializer for regularisers
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::regularisers::L2Regulariser<TensorType>, D>
+{
+  using Type       = ml::regularisers::L2Regulariser<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const REG_TYPE = 1;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(1);
+    map.Append(REG_TYPE, static_cast<uint8_t>(sp.GetRegType()));
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    FETCH_UNUSED(map);
+    FETCH_UNUSED(sp);
+  }
+};
+
+}  // namespace serializers
+
 }  // namespace fetch

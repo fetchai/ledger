@@ -47,7 +47,7 @@ int main(int ac, char **av)
   SizeType                               subset_size{100};
   SizeType                               epochs{10};
   SizeType                               batch_size{10};
-  fetch::ml::details::RegularisationType regulariser = fetch::ml::details::RegularisationType::L1;
+  fetch::ml::RegularisationType regulariser = fetch::ml::RegularisationType::L1;
   DataType                               reg_rate{0.01f};
 
   if (ac < 3)

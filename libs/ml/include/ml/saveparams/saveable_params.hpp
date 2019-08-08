@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "ml/meta/ml_type_traits.hpp"
-#include "ml/regularisers/regularisation.hpp"
 
 namespace fetch {
 namespace ml {
@@ -54,7 +53,7 @@ struct GraphSaveableParams : public SaveableParamsInterface
   fetch::ml::OpType                                                         op_type = OpType::GRAPH;
   std::vector<std::pair<std::string, std::vector<std::string>>>             connections;
   std::unordered_map<std::string, std::shared_ptr<SaveableParamsInterface>> nodes;
-  std::unordered_map<std::string, SizeType>                                 trainable_lookup;
+  //  std::unordered_map<std::string, SizeType>                                 trainable_lookup;
 
   GraphSaveableParams()
     : SaveableParamsInterface(OpType::GRAPH)
@@ -82,19 +81,10 @@ struct NodeSaveableParams : public SaveableParamsInterface
   TensorType  cached_output{};
   uint8_t     cached_output_status = fetch::math::numeric_max<uint8_t>();
   OpType      operation_type       = OpType::NONE;
-  std::shared_ptr<SaveableParamsInterface> op_save_params =
-      std::make_shared<SaveableParamsInterface>();
+  std::shared_ptr<SaveableParamsInterface> op_save_params;
 
-  NodeSaveableParams() = default;
-
-  NodeSaveableParams(std::string in_name, TensorType const &in_cached_output,
-                     uint8_t in_cached_output_status, OpType in_operation_type,
-                     std::shared_ptr<SaveableParamsInterface> in_op)
-    : name(std::move(in_name))
-    , cached_output(in_cached_output)
-    , cached_output_status(in_cached_output_status)
-    , operation_type(in_operation_type)
-    , op_save_params(std::move(in_op))
+  NodeSaveableParams()
+    : SaveableParamsInterface()
   {}
 };
 
@@ -514,6 +504,7 @@ struct OpMeanSquareErrorSaveableParams : public SaveableParamsInterface
 {
   using DataType            = typename TensorType::Type;
   fetch::ml::OpType op_type = OpType::OP_MEAN_SQUARE_ERROR_LOSS;
+  TensorType        weightings;
 
   OpMeanSquareErrorSaveableParams()
     : SaveableParamsInterface(OpType::OP_MEAN_SQUARE_ERROR_LOSS)
@@ -831,24 +822,6 @@ struct OpTransposeSaveableParams : public SaveableParamsInterface
 
   OpTransposeSaveableParams()
     : SaveableParamsInterface(OpType::OP_TRANSPOSE)
-  {}
-};
-
-template <class TensorType>
-struct OpWeightsSaveableParams : public SaveableParamsInterface
-{
-  fetch::ml::OpType                                                 op_type = OpType::OP_WEIGHTS;
-  std::shared_ptr<TensorType>                                       output;
-  std::shared_ptr<TensorType>                                       gradient_accumulation;
-  std::shared_ptr<fetch::ml::regularisers::Regulariser<TensorType>> regulariser;
-  typename TensorType::Type                                         regularisation_rate;
-
-  OpWeightsSaveableParams()
-    : SaveableParamsInterface(OpType::OP_WEIGHTS)
-  {}
-
-  explicit OpWeightsSaveableParams(OpType operation_type)
-    : SaveableParamsInterface(operation_type)
   {}
 };
 

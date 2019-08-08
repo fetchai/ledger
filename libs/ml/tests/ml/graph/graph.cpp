@@ -112,13 +112,13 @@ TYPED_TEST(GraphTest, multi_nodes_have_same_name)
   std::string input = g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
   std::string fc_1  = g.template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
       "FC1", {input}, 10u, 10u, fetch::ml::details::ActivationType::NOTHING,
-      fetch::ml::details::RegularisationType::NONE, static_cast<DataType>(0));
+      fetch::ml::RegularisationType::NONE, static_cast<DataType>(0));
   std::string fc_2 = g.template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
       "FC1", {fc_1}, 10u, 10u, fetch::ml::details::ActivationType::NOTHING,
-      fetch::ml::details::RegularisationType::NONE, static_cast<DataType>(0));
+      fetch::ml::RegularisationType::NONE, static_cast<DataType>(0));
   std::string fc_3 = g.template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
       "FC1", {fc_2}, 10u, 10u, fetch::ml::details::ActivationType::NOTHING,
-      fetch::ml::details::RegularisationType::NONE, static_cast<DataType>(0));
+      fetch::ml::RegularisationType::NONE, static_cast<DataType>(0));
 
   // check the naming is correct
   ASSERT_EQ(fc_1, "FC1");

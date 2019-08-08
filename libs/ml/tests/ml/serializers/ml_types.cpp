@@ -81,8 +81,8 @@ TYPED_TEST(SerializersTest, serialize_graph_saveable_params)
   using DataType   = typename TypeParam::Type;
   using GraphType  = typename fetch::ml::Graph<TensorType>;
 
-  fetch::ml::details::RegularisationType regulariser = fetch::ml::details::RegularisationType::L1;
-  DataType                               reg_rate{0.01f};
+  fetch::ml::RegularisationType regulariser = fetch::ml::RegularisationType::L1;
+  DataType                      reg_rate{0.01f};
 
   // Prepare graph with fairly random architecture
   auto g = std::make_shared<GraphType>();
@@ -91,13 +91,14 @@ TYPED_TEST(SerializersTest, serialize_graph_saveable_params)
   std::string label_name =
       g->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("label", {});
 
-  std::string layer_1 = g->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
-      "FC1", {input}, 10u, 20u, fetch::ml::details::ActivationType::RELU, regulariser, reg_rate);
-  std::string layer_2 = g->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
-      "FC2", {layer_1}, 20u, 10u, fetch::ml::details::ActivationType::RELU, regulariser, reg_rate);
   std::string output = g->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
-      "FC3", {layer_2}, 10u, 10u, fetch::ml::details::ActivationType::SOFTMAX, regulariser,
-      reg_rate);
+      "FC1", {input}, 10u, 10u, fetch::ml::details::ActivationType::SOFTMAX, regulariser, reg_rate);
+  //  std::string layer_2 = g->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
+  //      "FC2", {layer_1}, 20u, 10u, fetch::ml::details::ActivationType::RELU, regulariser,
+  //      reg_rate);
+  //  std::string output = g->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
+  //      "FC3", {layer_2}, 10u, 10u, fetch::ml::details::ActivationType::SOFTMAX, regulariser,
+  //      reg_rate);
 
   // Add loss function
   std::string error_output = g->template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TensorType>>(
@@ -131,8 +132,7 @@ TYPED_TEST(SerializersTest, serialize_graph_saveable_params)
   g->SetInput("Input", data.Transpose());
   g2->SetInput("Input", data.Transpose());
 
-  TensorType prediction = g->Evaluate(output);
-
+  TensorType prediction  = g->Evaluate(output);
   TensorType prediction2 = g2->Evaluate(output);
 
   // test correct values

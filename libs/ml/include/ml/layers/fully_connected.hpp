@@ -69,10 +69,9 @@ public:
    * @param init_mode
    */
   FullyConnected(OpPtrType target_node_ptr, SizeType in, SizeType out,
-                 details::ActivationType activation_type = details::ActivationType::NOTHING,
-                 fetch::ml::details::RegularisationType regulariser =
-                     fetch::ml::details::RegularisationType::NONE,
-                 DataType    regularisation_rate = static_cast<DataType>(0),
+                 details::ActivationType       activation_type = details::ActivationType::NOTHING,
+                 fetch::ml::RegularisationType regulariser = fetch::ml::RegularisationType::NONE,
+                 DataType                      regularisation_rate = static_cast<DataType>(0),
                  WeightsInit init_mode = WeightsInit::XAVIER_GLOROT, bool time_distributed = false)
     : in_size_(in)
     , out_size_(out)
@@ -98,10 +97,9 @@ public:
    * @param init_mode
    */
   FullyConnected(SizeType in, SizeType out,
-                 details::ActivationType activation_type = details::ActivationType::NOTHING,
-                 fetch::ml::details::RegularisationType regulariser =
-                     fetch::ml::details::RegularisationType::NONE,
-                 DataType    regularisation_rate = static_cast<DataType>(0),
+                 details::ActivationType       activation_type = details::ActivationType::NOTHING,
+                 fetch::ml::RegularisationType regulariser = fetch::ml::RegularisationType::NONE,
+                 DataType                      regularisation_rate = static_cast<DataType>(0),
                  WeightsInit init_mode = WeightsInit::XAVIER_GLOROT, bool time_distributed = false)
     : in_size_(in)
     , out_size_(out)
@@ -174,10 +172,10 @@ public:
     this->SetInput(name + "_Bias", shared_bias);
   }
 
-  void SetupArchitecture(details::ActivationType activation_type = details::ActivationType::NOTHING,
-                         fetch::ml::details::RegularisationType regulariser =
-                             fetch::ml::details::RegularisationType::NONE,
-                         DataType regularisation_rate = static_cast<DataType>(0))
+  void SetupArchitecture(
+      details::ActivationType       activation_type     = details::ActivationType::NOTHING,
+      fetch::ml::RegularisationType regulariser         = fetch::ml::RegularisationType::NONE,
+      DataType                      regularisation_rate = static_cast<DataType>(0))
   {
     // get correct name for the layer
     std::string name = GetName();

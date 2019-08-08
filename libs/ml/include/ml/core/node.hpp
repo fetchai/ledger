@@ -110,10 +110,15 @@ public:
 
   std::shared_ptr<SaveableParamsInterface> GetNodeSaveableParams()
   {
-    auto   ops_save_params = op_ptr_->GetOpSaveableParams();
-    SPType sp{std::move(name_), cached_output_, static_cast<uint8_t>(cached_output_status_),
-              operation_type_, ops_save_params};
-    return std::make_shared<SPType>(sp);
+    auto sp_ptr = std::make_shared<SPType>();
+
+    sp_ptr->name                 = name_;
+    sp_ptr->cached_output        = cached_output_;
+    sp_ptr->cached_output_status = static_cast<uint8_t>(cached_output_status_);
+    sp_ptr->operation_type       = operation_type_;
+    sp_ptr->op_save_params       = op_ptr_->GetOpSaveableParams();
+
+    return sp_ptr;
   }
 
   void SetNodeSaveableParams(NodeSaveableParams<T> const &nsp, std::shared_ptr<ops::Ops<T>> op_ptr)

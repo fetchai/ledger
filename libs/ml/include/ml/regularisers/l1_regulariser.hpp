@@ -21,6 +21,7 @@
 #include "math/tensor.hpp"
 #include "ml/regularisers/reg_types.hpp"
 #include "ml/regularisers/regulariser.hpp"
+#include "ml/saveparams/saveable_params.hpp"
 
 namespace fetch {
 namespace ml {
@@ -39,7 +40,6 @@ public:
   L1Regulariser()
     : Regulariser<T>(RegularisationType::L1)
   {}
-
   ~L1Regulariser() override = default;
 
   /**

@@ -47,7 +47,7 @@ public:
   using DataType      = typename T::Type;
   using VecTensorType = typename SubGraph<T>::VecTensorType;
 
-  using RegType         = fetch::ml::details::RegularisationType;
+  using RegType         = fetch::ml::RegularisationType;
   using WeightsInitType = fetch::ml::ops::WeightsInitialisation;
   using ActivationType  = fetch::ml::details::ActivationType;
   using SPType          = LayerSelfAttentionEncoderSaveableParams<T>;

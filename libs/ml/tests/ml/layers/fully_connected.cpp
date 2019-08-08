@@ -65,7 +65,7 @@ TYPED_TEST(FullyConnectedTest,
 {
   using ArrayType       = TypeParam;
   using DataType        = typename ArrayType::Type;
-  using RegType         = fetch::ml::details::RegularisationType;
+  using RegType         = fetch::ml::RegularisationType;
   using WeightsInitType = fetch::ml::ops::WeightsInitialisation;
   using ActivationType  = fetch::ml::details::ActivationType;
 
@@ -121,7 +121,7 @@ TYPED_TEST(FullyConnectedTest, ops_backward_test_time_distributed)  // Use the c
 {
   using ArrayType       = TypeParam;
   using DataType        = typename ArrayType::Type;
-  using RegType         = fetch::ml::details::RegularisationType;
+  using RegType         = fetch::ml::RegularisationType;
   using WeightsInitType = fetch::ml::ops::WeightsInitialisation;
   using ActivationType  = fetch::ml::details::ActivationType;
 
@@ -152,7 +152,7 @@ TYPED_TEST(FullyConnectedTestNoInt, share_weight_backward_test)
   using SizeType        = typename ArrayType::SizeType;
   using GraphType       = typename fetch::ml::Graph<ArrayType>;
   using FCType          = typename fetch::ml::layers::FullyConnected<ArrayType>;
-  using RegType         = fetch::ml::details::RegularisationType;
+  using RegType         = fetch::ml::RegularisationType;
   using WeightsInitType = fetch::ml::ops::WeightsInitialisation;
   using ActivationType  = fetch::ml::details::ActivationType;
 
@@ -309,7 +309,7 @@ TYPED_TEST(FullyConnectedTestNoInt, share_weight_backward_test_time_distributed)
   using SizeType        = typename ArrayType::SizeType;
   using GraphType       = typename fetch::ml::Graph<ArrayType>;
   using FCType          = typename fetch::ml::layers::FullyConnected<ArrayType>;
-  using RegType         = fetch::ml::details::RegularisationType;
+  using RegType         = fetch::ml::RegularisationType;
   using WeightsInitType = fetch::ml::ops::WeightsInitialisation;
   using ActivationType  = fetch::ml::details::ActivationType;
 
@@ -543,7 +543,7 @@ TYPED_TEST(FullyConnectedTest, graph_forward_test)  // Use the class as a Node
 TYPED_TEST(FullyConnectedTest, getStateDict)
 {
   using DataType = typename TypeParam::Type;
-  using RegType  = fetch::ml::details::RegularisationType;
+  using RegType  = fetch::ml::RegularisationType;
 
   fetch::ml::layers::FullyConnected<TypeParam> fc(
       50, 10, fetch::ml::details::ActivationType::NOTHING, RegType::NONE, DataType{0});
@@ -564,7 +564,7 @@ TYPED_TEST(FullyConnectedTest, getStateDict)
 TYPED_TEST(FullyConnectedTest, getStateDict_time_distributed)
 {
   using DataType        = typename TypeParam::Type;
-  using RegType         = fetch::ml::details::RegularisationType;
+  using RegType         = fetch::ml::RegularisationType;
   using WeightsInitType = fetch::ml::ops::WeightsInitialisation;
 
   fetch::ml::layers::FullyConnected<TypeParam> fc(
