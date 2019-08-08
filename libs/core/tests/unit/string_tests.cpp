@@ -17,19 +17,38 @@
 //------------------------------------------------------------------------------
 
 #include "core/string/ends_with.hpp"
+#include "core/string/starts_with.hpp"
 
 #include "gtest/gtest.h"
 
+using namespace fetch::core;
+
 namespace {
 
-TEST(StringTests, CheckEndsWith)
+TEST(StringTests, check_EndsWith)
 {
-  EXPECT_TRUE(fetch::core::EndsWith("Hello World", "Hello World"));
-  EXPECT_TRUE(fetch::core::EndsWith("Hello World", "World"));
-  EXPECT_FALSE(fetch::core::EndsWith("Hello World", "World2"));
-  EXPECT_TRUE(fetch::core::EndsWith("Hello World", ""));
-  EXPECT_FALSE(fetch::core::EndsWith("Hello World", "o"));
-  EXPECT_FALSE(fetch::core::EndsWith("Hello World", "Hello"));
+  EXPECT_TRUE(EndsWith("Hello World", "Hello World"));
+  EXPECT_TRUE(EndsWith("Hello World", "World"));
+  EXPECT_FALSE(EndsWith("Hello World", "World2"));
+  EXPECT_FALSE(EndsWith("Hello World", "2World"));
+  EXPECT_TRUE(EndsWith("Hello World", ""));
+  EXPECT_FALSE(EndsWith("Hello World", "o"));
+  EXPECT_FALSE(EndsWith("Hello World", "Hello"));
+  EXPECT_FALSE(EndsWith("Hello World", "Hello World..."));
+  EXPECT_FALSE(EndsWith("Hello World", "...Hello World"));
+}
+
+TEST(StringTests, check_StartsWith)
+{
+  EXPECT_TRUE(StartsWith("Hello World", "Hello World"));
+  EXPECT_TRUE(StartsWith("Hello World", "Hello"));
+  EXPECT_FALSE(StartsWith("Hello World", "Hello2"));
+  EXPECT_FALSE(StartsWith("Hello World", "2Hello"));
+  EXPECT_TRUE(StartsWith("Hello World", ""));
+  EXPECT_FALSE(StartsWith("Hello World", "o"));
+  EXPECT_FALSE(StartsWith("Hello World", "World"));
+  EXPECT_FALSE(StartsWith("Hello World", "Hello World..."));
+  EXPECT_FALSE(StartsWith("Hello World", "...Hello World"));
 }
 
 }  // namespace

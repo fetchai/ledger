@@ -16,23 +16,16 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/string/ends_with.hpp"
+#include "core/string/starts_with.hpp"
 
 #include <string>
 
 namespace fetch {
 namespace core {
 
-bool EndsWith(std::string const &value, std::string const &ending)
+bool StartsWith(std::string const &value, std::string const &prefix)
 {
-  bool success{false};
-
-  if (value.size() >= ending.size())
-  {
-    success = (value.substr(value.size() - ending.size()) == ending);
-  }
-
-  return success;
+  return value.find(prefix) == 0;
 }
 
 }  // namespace core
