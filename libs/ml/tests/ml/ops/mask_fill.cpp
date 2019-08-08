@@ -16,13 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "gtest/gtest.h"
 #include "math/base_types.hpp"
 #include "math/tensor.hpp"
 #include "ml/ops/abs.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
-#include "gtest/gtest.h"
-#include <vector>
 #include <ml/ops/mask_fill.hpp>
+#include <vector>
 
 template <typename T>
 class MaskFillTest : public ::testing::Test
@@ -51,8 +51,8 @@ TYPED_TEST(MaskFillTest, forward_test)
 
   fetch::ml::ops::MaskFill<ArrayType> op(static_cast<DataType>(-100));
 
-  TypeParam prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(mask),
-                                              std::make_shared<const ArrayType>(then_array)}));
+  TypeParam prediction(op.ComputeOutputShape(
+      {std::make_shared<const ArrayType>(mask), std::make_shared<const ArrayType>(then_array)}));
   op.Forward(
       {std::make_shared<const ArrayType>(mask), std::make_shared<const ArrayType>(then_array)},
       prediction);

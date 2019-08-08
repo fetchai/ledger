@@ -37,10 +37,10 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
-	
-	MaskFill(DataType fill_value)
-	: fill_value_(fill_value)
-	{}
+
+  MaskFill(DataType fill_value)
+    : fill_value_(fill_value)
+  {}
   ~MaskFill() override = default;
 
   /**
@@ -54,10 +54,11 @@ public:
     assert(inputs.size() == 2);
     assert(output.shape() == this->ComputeOutputShape(inputs));
     assert(inputs.at(0)->shape() == inputs.at(1)->shape());
-    
-    if(fill_array_.shape() != inputs.front()->shape()){
-	    fill_array_.Reshape(inputs.front()->shape());
-	    fill_array_.Fill(fill_value_);
+
+    if (fill_array_.shape() != inputs.front()->shape())
+    {
+      fill_array_.Reshape(inputs.front()->shape());
+      fill_array_.Fill(fill_value_);
     }
     fetch::math::Switch(*(inputs.at(0)), *(inputs.at(1)), fill_array_, output);
   }
@@ -89,10 +90,10 @@ public:
   }
 
   static constexpr char const *DESCRIPTOR = "MaskFill";
-  
+
 private:
-	DataType fill_value_;
-	ArrayType fill_array_;
+  DataType  fill_value_;
+  ArrayType fill_array_;
 };
 
 }  // namespace ops
