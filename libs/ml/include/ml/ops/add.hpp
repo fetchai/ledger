@@ -47,7 +47,7 @@ public:
 
   std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
-    auto ret = std::make_shared<SPType>();
+    auto ret  = std::make_shared<SPType>();
     ret->axes = axes_;
     return ret;
   }

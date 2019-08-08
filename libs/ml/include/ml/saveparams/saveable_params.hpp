@@ -48,13 +48,13 @@ struct OpWeightsSaveableParams;
 template <class TensorType>
 struct GraphSaveableParams : public SaveableParamsInterface
 {
-  using DataType            = typename TensorType::Type;
-  using SizeType            = typename TensorType::SizeType;
+  using DataType = typename TensorType::Type;
+  using SizeType = typename TensorType::SizeType;
 
-  fetch::ml::OpType op_type = OpType::GRAPH;
+  fetch::ml::OpType                                                         op_type = OpType::GRAPH;
   std::vector<std::pair<std::string, std::vector<std::string>>>             connections;
   std::unordered_map<std::string, std::shared_ptr<SaveableParamsInterface>> nodes;
-  std::unordered_map<std::string, SizeType>    trainable_lookup;
+  std::unordered_map<std::string, SizeType>                                 trainable_lookup;
 
   GraphSaveableParams()
     : SaveableParamsInterface(OpType::GRAPH)
@@ -63,13 +63,13 @@ struct GraphSaveableParams : public SaveableParamsInterface
   explicit GraphSaveableParams(OpType operation_type)
     : SaveableParamsInterface(operation_type)
   {}
-//
-//  GraphSaveableParams &operator=(GraphSaveableParams const &gsp)
-//  {
-//    connections = gsp.connections;
-//    nodes       = gsp.nodes;
-//    return *this;
-//  }
+  //
+  //  GraphSaveableParams &operator=(GraphSaveableParams const &gsp)
+  //  {
+  //    connections = gsp.connections;
+  //    nodes       = gsp.nodes;
+  //    return *this;
+  //  }
 };
 
 template <class TensorType>
@@ -146,7 +146,7 @@ struct OpAbsSaveableParams : public SaveableParamsInterface
 template <class TensorType>
 struct OpAddSaveableParams : public SaveableParamsInterface
 {
-  fetch::ml::OpType op_type = OpType::OP_ADD;
+  fetch::ml::OpType                  op_type = OpType::OP_ADD;
   std::vector<fetch::math::SizeType> axes{};
 
   OpAddSaveableParams()
@@ -292,13 +292,12 @@ struct OpExpSaveableParams : public SaveableParamsInterface
 template <class TensorType>
 struct OpFlattenSaveableParams : public SaveableParamsInterface
 {
-  fetch::ml::OpType op_type = OpType::OP_FLATTEN;
+  fetch::ml::OpType                  op_type = OpType::OP_FLATTEN;
   std::vector<fetch::math::SizeType> input_shape;
 
   OpFlattenSaveableParams()
     : SaveableParamsInterface(OpType::OP_FLATTEN)
   {}
-
 };
 
 template <class TensorType>

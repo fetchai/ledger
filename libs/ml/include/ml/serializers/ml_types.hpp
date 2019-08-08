@@ -742,7 +742,6 @@ struct MapSerializer<ml::GraphSaveableParams<TensorType>, D>
 
     map.Append(NODES, nodevec);
     map.Append(TRAINABLE_LOOKUP, sp.trainable_lookup);
-
   }
 
   template <typename MapDeserializer>
@@ -776,7 +775,6 @@ struct MapSerializer<ml::GraphSaveableParams<TensorType>, D>
     std::unordered_map<std::string, fetch::math::SizeType> tl;
     map.ExpectKeyGetValue(TRAINABLE_LOOKUP, tl);
     sp.trainable_lookup = tl;
-
   }
 };
 
@@ -899,7 +897,7 @@ struct MapSerializer<ml::OpAddSaveableParams<TensorType>, D>
   using DriverType = D;
 
   static uint8_t const OP_CODE = 1;
-  static uint8_t const AXES = 2;
+  static uint8_t const AXES    = 2;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
@@ -1193,7 +1191,7 @@ struct MapSerializer<ml::OpFlattenSaveableParams<TensorType>, D>
   using Type       = ml::OpFlattenSaveableParams<TensorType>;
   using DriverType = D;
 
-  static uint8_t const OP_CODE = 1;
+  static uint8_t const OP_CODE     = 1;
   static uint8_t const INPUT_SHAPE = 2;
 
   template <typename Constructor>

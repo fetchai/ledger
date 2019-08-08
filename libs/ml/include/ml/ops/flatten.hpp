@@ -49,7 +49,7 @@ public:
   std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
     SPType sp{};
-    auto ret = std::make_shared<SPType>(sp);
+    auto   ret = std::make_shared<SPType>(sp);
 
     ret->input_shape = input_shape_;
     return ret;

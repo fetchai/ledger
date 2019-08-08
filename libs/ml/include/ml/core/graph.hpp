@@ -364,7 +364,8 @@ void Graph<ArrayType>::SetGraphSaveableParams(GraphSaveableParams<ArrayType> con
   for (auto &node : sp.trainable_lookup)
   {
     auto node_ptr = nodes_.at(node.first);
-    auto trainable_ptr = std::dynamic_pointer_cast<fetch::ml::ops::Trainable<ArrayType>>(node_ptr->GetOp());
+    auto trainable_ptr =
+        std::dynamic_pointer_cast<fetch::ml::ops::Trainable<ArrayType>>(node_ptr->GetOp());
     assert(trainable_ptr);
 
     trainable_[node.second] = trainable_ptr;
