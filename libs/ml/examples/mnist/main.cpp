@@ -43,12 +43,12 @@ using DataLoaderType = typename fetch::ml::dataloaders::MNISTLoader<ArrayType, A
 
 int main(int ac, char **av)
 {
-  DataType                               learning_rate{0.01f};
-  SizeType                               subset_size{100};
-  SizeType                               epochs{10};
-  SizeType                               batch_size{10};
+  DataType                      learning_rate{0.01f};
+  SizeType                      subset_size{100};
+  SizeType                      epochs{10};
+  SizeType                      batch_size{10};
   fetch::ml::RegularisationType regulariser = fetch::ml::RegularisationType::L1;
-  DataType                               reg_rate{0.01f};
+  DataType                      reg_rate{0.01f};
 
   if (ac < 3)
   {

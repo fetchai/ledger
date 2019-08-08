@@ -91,14 +91,13 @@ TYPED_TEST(SerializersTest, serialize_graph_saveable_params)
   std::string label_name =
       g->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("label", {});
 
+  std::string layer_1 = g->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
+      "FC1", {input}, 10u, 20u, fetch::ml::details::ActivationType::RELU, regulariser, reg_rate);
+  std::string layer_2 = g->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
+      "FC2", {layer_1}, 20u, 10u, fetch::ml::details::ActivationType::RELU, regulariser, reg_rate);
   std::string output = g->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
-      "FC1", {input}, 10u, 10u, fetch::ml::details::ActivationType::SOFTMAX, regulariser, reg_rate);
-  //  std::string layer_2 = g->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
-  //      "FC2", {layer_1}, 20u, 10u, fetch::ml::details::ActivationType::RELU, regulariser,
-  //      reg_rate);
-  //  std::string output = g->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
-  //      "FC3", {layer_2}, 10u, 10u, fetch::ml::details::ActivationType::SOFTMAX, regulariser,
-  //      reg_rate);
+      "FC3", {layer_2}, 10u, 10u, fetch::ml::details::ActivationType::SOFTMAX, regulariser,
+      reg_rate);
 
   // Add loss function
   std::string error_output = g->template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TensorType>>(
@@ -159,9 +158,6 @@ TYPED_TEST(SerializersTest, serialize_graph_saveable_params)
 
   EXPECT_FALSE(prediction.AllClose(prediction3, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));
-
-  std::cout << "prediction3.ToString(): " << prediction3.ToString() << std::endl;
-  std::cout << "prediction4.ToString(): " << prediction4.ToString() << std::endl;
 
   EXPECT_TRUE(prediction3.AllClose(prediction4, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));
