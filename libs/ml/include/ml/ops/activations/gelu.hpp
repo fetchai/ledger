@@ -30,19 +30,31 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Gelu : public fetch::ml::Ops<T>
+class Gelu : public Ops<T>
 {
 public:
-  using ArrayType     = T;
-  using DataType      = typename ArrayType::Type;
-  using SizeType      = typename ArrayType::SizeType;
+  using TensorType    = T;
+  using DataType      = typename TensorType::Type;
+  using SizeType      = typename TensorType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SPType        = OpGeluSaveableParams<TensorType>;
 
-  Gelu()           = default;
+  Gelu() = default;
+
+  explicit Gelu(SPType const &sp)
+    : Ops<T>(sp)
+  {}
+
   ~Gelu() override = default;
 
+  std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
+  {
+    auto sp = std::make_shared<SPType>();
+    return sp;
+  }
+
   // 0.5x(1+tanh(0.797885x+0.035677x^3))
-  void Forward(VecTensorType const &inputs, ArrayType &output) override
+  void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(inputs.size() == 1);
     assert(output.shape() == this->ComputeOutputShape(inputs));
@@ -57,14 +69,14 @@ public:
    * @param error_signal
    * @return
    */
-  std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                  ArrayType const &    error_signal) override
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     assert(inputs.size() == 1);
     assert(inputs.at(0)->shape() == error_signal.shape());
 
-    ArrayType const &input = *(inputs.front());
-    ArrayType        intermediate1({input.shape()}), intermediate2({input.shape()}),
+    TensorType const &input = *(inputs.front());
+    TensorType        intermediate1({input.shape()}), intermediate2({input.shape()}),
         intermediate3({input.shape()});
 
     DataType one{static_cast<DataType>(1)}, two{static_cast<DataType>(2)},
@@ -108,6 +120,11 @@ public:
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     return inputs.front()->shape();
+  }
+
+  static constexpr OpType OpCode()
+  {
+    return OpType::OP_GELU;
   }
 
   static constexpr char const *DESCRIPTOR = "Gelu";

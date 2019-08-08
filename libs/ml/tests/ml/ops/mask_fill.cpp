@@ -20,8 +20,10 @@
 #include "math/base_types.hpp"
 #include "math/tensor.hpp"
 #include "ml/ops/abs.hpp"
+#include "ml/ops/mask_fill.hpp"
+#include "ml/serializers/ml_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
-#include <ml/ops/mask_fill.hpp>
+
 #include <vector>
 
 template <typename T>
@@ -37,24 +39,24 @@ TYPED_TEST_CASE(MaskFillTest, MyTypes);
 
 TYPED_TEST(MaskFillTest, forward_test)
 {
-  using ArrayType = TypeParam;
-  using DataType  = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
 
-  ArrayType mask = ArrayType::FromString("1, 0, 1, 0, 0, 0, 0, 1, 1");
+  TensorType mask = TensorType::FromString("1, 0, 1, 0, 0, 0, 0, 1, 1");
   mask.Reshape({3, 3, 1});
 
-  ArrayType then_array = ArrayType::FromString("3, 6, 2, 1, 3, -2, 2, 1, -9");
+  TensorType then_array = TensorType::FromString("3, 6, 2, 1, 3, -2, 2, 1, -9");
   then_array.Reshape({3, 3, 1});
 
-  ArrayType gt = ArrayType::FromString("3, -100, 2, -100, -100, -100, -100, 1, -9");
+  TensorType gt = TensorType::FromString("3, -100, 2, -100, -100, -100, -100, 1, -9");
   gt.Reshape({3, 3, 1});
 
-  fetch::ml::ops::MaskFill<ArrayType> op(static_cast<DataType>(-100));
+  fetch::ml::ops::MaskFill<TensorType> op(static_cast<DataType>(-100));
 
   TypeParam prediction(op.ComputeOutputShape(
-      {std::make_shared<const ArrayType>(mask), std::make_shared<const ArrayType>(then_array)}));
+      {std::make_shared<const TensorType>(mask), std::make_shared<const TensorType>(then_array)}));
   op.Forward(
-      {std::make_shared<const ArrayType>(mask), std::make_shared<const ArrayType>(then_array)},
+      {std::make_shared<const TensorType>(mask), std::make_shared<const TensorType>(then_array)},
       prediction);
 
   // test correct values
@@ -64,24 +66,24 @@ TYPED_TEST(MaskFillTest, forward_test)
 
 TYPED_TEST(MaskFillTest, forward_test_mask_broadcasted)
 {
-  using ArrayType = TypeParam;
-  using DataType  = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
 
-  ArrayType mask = ArrayType::FromString("1, 1, 0");
+  TensorType mask = TensorType::FromString("1, 1, 0");
   mask.Reshape({1, 3, 1});
 
-  ArrayType then_array = ArrayType::FromString("3, 6, 2, 1, 3, -2, 2, 1, -9");
+  TensorType then_array = TensorType::FromString("3, 6, 2, 1, 3, -2, 2, 1, -9");
   then_array.Reshape({3, 3, 1});
 
-  ArrayType gt = ArrayType::FromString("3, 6, 2, 1, 3, -2, -100, -100, -100");
+  TensorType gt = TensorType::FromString("3, 6, 2, 1, 3, -2, -100, -100, -100");
   gt.Reshape({3, 3, 1});
 
-  fetch::ml::ops::MaskFill<ArrayType> op(static_cast<DataType>(-100));
+  fetch::ml::ops::MaskFill<TensorType> op(static_cast<DataType>(-100));
 
   TypeParam prediction(op.ComputeOutputShape(
-      {std::make_shared<const ArrayType>(mask), std::make_shared<const ArrayType>(then_array)}));
+      {std::make_shared<const TensorType>(mask), std::make_shared<const TensorType>(then_array)}));
   op.Forward(
-      {std::make_shared<const ArrayType>(mask), std::make_shared<const ArrayType>(then_array)},
+      {std::make_shared<const TensorType>(mask), std::make_shared<const TensorType>(then_array)},
       prediction);
 
   // test correct values
@@ -91,27 +93,27 @@ TYPED_TEST(MaskFillTest, forward_test_mask_broadcasted)
 
 TYPED_TEST(MaskFillTest, back_test)
 {
-  using ArrayType = TypeParam;
-  using DataType  = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
 
-  ArrayType mask = ArrayType::FromString("1, 0, 1, 0, 0, 0, 0, 1, 1");
+  TensorType mask = TensorType::FromString("1, 0, 1, 0, 0, 0, 0, 1, 1");
   mask.Reshape({3, 3, 1});
 
-  ArrayType target_input = ArrayType::FromString("3, 6, 2, 1, 3, -2, 2, 1, -9");
+  TensorType target_input = TensorType::FromString("3, 6, 2, 1, 3, -2, 2, 1, -9");
   target_input.Reshape({3, 3, 1});
 
-  ArrayType error_signal = ArrayType::FromString("1, 2, 3, 4, 5, 6, 7, 8, 9");
+  TensorType error_signal = TensorType::FromString("1, 2, 3, 4, 5, 6, 7, 8, 9");
   error_signal.Reshape({3, 3, 1});
 
-  ArrayType gt_mask({3, 3, 1});
+  TensorType gt_mask({3, 3, 1});
 
-  ArrayType gt_then = ArrayType::FromString("1, 0, 3, 0, 0, 0, 0, 8, 9");
+  TensorType gt_then = TensorType::FromString("1, 0, 3, 0, 0, 0, 0, 8, 9");
   gt_then.Reshape({3, 3, 1});
 
-  fetch::ml::ops::MaskFill<ArrayType> op(static_cast<DataType>(-100));
+  fetch::ml::ops::MaskFill<TensorType> op(static_cast<DataType>(-100));
 
   std::vector<TypeParam> prediction = op.Backward(
-      {std::make_shared<const ArrayType>(mask), std::make_shared<const ArrayType>(target_input)},
+      {std::make_shared<const TensorType>(mask), std::make_shared<const TensorType>(target_input)},
       error_signal);
 
   // test correct values
@@ -123,27 +125,27 @@ TYPED_TEST(MaskFillTest, back_test)
 
 TYPED_TEST(MaskFillTest, back_test_broadcast_mask)
 {
-  using ArrayType = TypeParam;
-  using DataType  = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
 
-  ArrayType mask = ArrayType::FromString("1, 1, 0");
+  TensorType mask = TensorType::FromString("1, 1, 0");
   mask.Reshape({1, 3, 1});
 
-  ArrayType target_input = ArrayType::FromString("3, 6, 2, 1, 3, -2, 2, 1, -9");
+  TensorType target_input = TensorType::FromString("3, 6, 2, 1, 3, -2, 2, 1, -9");
   target_input.Reshape({3, 3, 1});
 
-  ArrayType error_signal = ArrayType::FromString("1, 2, 3, 4, 5, 6, 7, 8, 9");
+  TensorType error_signal = TensorType::FromString("1, 2, 3, 4, 5, 6, 7, 8, 9");
   error_signal.Reshape({3, 3, 1});
 
-  ArrayType gt_mask({1, 3, 1});
+  TensorType gt_mask({1, 3, 1});
 
-  ArrayType gt_then = ArrayType::FromString("1, 2, 3, 4, 5, 6, 0, 0, 0");
+  TensorType gt_then = TensorType::FromString("1, 2, 3, 4, 5, 6, 0, 0, 0");
   gt_then.Reshape({3, 3, 1});
 
-  fetch::ml::ops::MaskFill<ArrayType> op(static_cast<DataType>(-100));
+  fetch::ml::ops::MaskFill<TensorType> op(static_cast<DataType>(-100));
 
   std::vector<TypeParam> prediction = op.Backward(
-      {std::make_shared<const ArrayType>(mask), std::make_shared<const ArrayType>(target_input)},
+      {std::make_shared<const TensorType>(mask), std::make_shared<const TensorType>(target_input)},
       error_signal);
 
   // test correct values
@@ -151,4 +153,57 @@ TYPED_TEST(MaskFillTest, back_test_broadcast_mask)
                                         fetch::math::function_tolerance<DataType>()));
   ASSERT_TRUE(prediction.at(1).AllClose(gt_then, fetch::math::function_tolerance<DataType>(),
                                         fetch::math::function_tolerance<DataType>()));
+}
+
+TYPED_TEST(MaskFillTest, saveparams_test)
+{
+  using DataType   = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using SPType     = typename fetch::ml::ops::MaskFill<TensorType>::SPType;
+
+  TensorType mask = TensorType::FromString("1, 0, 1, 0, 0, 0, 0, 1, 1");
+  mask.Reshape({3, 3, 1});
+
+  TensorType then_array = TensorType::FromString("3, 6, 2, 1, 3, -2, 2, 1, -9");
+  then_array.Reshape({3, 3, 1});
+
+  TensorType gt = TensorType::FromString("3, -100, 2, -100, -100, -100, -100, 1, -9");
+  gt.Reshape({3, 3, 1});
+
+  fetch::ml::ops::MaskFill<TensorType> op(static_cast<DataType>(-100));
+
+  TypeParam prediction(op.ComputeOutputShape(
+      {std::make_shared<const TensorType>(mask), std::make_shared<const TensorType>(then_array)}));
+  op.Forward(
+      {std::make_shared<const TensorType>(mask), std::make_shared<const TensorType>(then_array)},
+      prediction);
+
+  // extract saveparams
+  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
+
+  // downcast to correct type
+  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
+
+  // serialize
+  fetch::serializers::MsgPackSerializer b;
+  b << *dsp;
+
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<SPType>();
+  b >> *dsp2;
+
+  // rebuild node
+  fetch::ml::ops::MaskFill<TensorType> new_op(*dsp2);
+
+  // check that new predictions match the old
+
+  TypeParam new_prediction(op.ComputeOutputShape(
+      {std::make_shared<const TensorType>(mask), std::make_shared<const TensorType>(then_array)}));
+  new_op.Forward(
+      {std::make_shared<const TensorType>(mask), std::make_shared<const TensorType>(then_array)},
+      new_prediction);
+
+  // test correct values
+  EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{1e-5f}, DataType{1e-5f}));
 }

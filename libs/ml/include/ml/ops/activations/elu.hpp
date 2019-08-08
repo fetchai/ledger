@@ -44,6 +44,7 @@ public:
   {}
 
   explicit Elu(SPType const &sp)
+    : Ops<T>(sp)
   {
     a_ = sp.a;
   }

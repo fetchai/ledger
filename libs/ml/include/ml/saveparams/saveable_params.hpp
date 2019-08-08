@@ -186,6 +186,17 @@ struct OpEluSaveableParams : public SaveableParamsInterface
 };
 
 /**
+ * Saveable parameters for Elu op
+ * @tparam TensorType
+ */
+template <class TensorType>
+struct OpGeluSaveableParams : public SaveableParamsInterface
+{
+  fetch::ml::OpType op_type = OpType::OP_GELU;
+  using DataType            = typename TensorType::Type;
+};
+
+/**
  * Saveable parameters for Embeddings op
  * @tparam TensorType
  */
@@ -331,6 +342,16 @@ struct OpLogSoftmaxSaveableParams : public SaveableParamsInterface
 {
   fetch::math::SizeType axis    = fetch::math::numeric_max<fetch::math::SizeType>();
   fetch::ml::OpType     op_type = OpType::OP_LOGSOFTMAX;
+};
+
+/**
+ * Saveable parameters for Log op
+ * @tparam TensorType
+ */
+template <class TensorType>
+struct OpMaskFillSaveableParams : public SaveableParamsInterface
+{
+  typename TensorType::Type fill_value = fetch::math::numeric_max<typename TensorType::Type>();
 };
 
 template <class TensorType>

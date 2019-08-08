@@ -112,6 +112,11 @@ void SerializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_type
     SerializeImplementation<TensorType, D, ml::OpEluSaveableParams<TensorType>>(map, code, op);
     break;
   }
+  case ml::OpType::OP_GELU:
+  {
+    SerializeImplementation<TensorType, D, ml::OpGeluSaveableParams<TensorType>>(map, code, op);
+    break;
+  }
   case ml::OpType::OP_EMBEDDINGS:
   {
     SerializeImplementation<TensorType, D, ml::OpEmbeddingsSaveableParams<TensorType>>(map, code,
@@ -382,6 +387,11 @@ void DeserializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_ty
   case ml::OpType::OP_ELU:
   {
     op = DeserializeImplementation<TensorType, D, ml::OpEluSaveableParams<TensorType>>(map, code);
+    break;
+  }
+  case ml::OpType::OP_GELU:
+  {
+    op = DeserializeImplementation<TensorType, D, ml::OpGeluSaveableParams<TensorType>>(map, code);
     break;
   }
   case ml::OpType::OP_EMBEDDINGS:
@@ -1208,6 +1218,32 @@ struct MapSerializer<ml::OpFlattenSaveableParams<TensorType>, D>
 };
 
 /**
+ * serializer for Elu saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::OpGeluSaveableParams<TensorType>, D>
+{
+  using Type       = ml::OpGeluSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const OP_CODE = 1;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(2);
+    map.Append(OP_CODE, sp.op_type);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+  }
+};
+
+/**
  * serializer for OpMaximumSaveableParams saveable params
  * @tparam TensorType
  */
@@ -1384,6 +1420,35 @@ struct MapSerializer<ml::OpLogSoftmaxSaveableParams<TensorType>, D>
   {
     map.ExpectKeyGetValue(OP_CODE, sp.op_type);
     map.ExpectKeyGetValue(AXIS, sp.axis);
+  }
+};
+
+/**
+ * serializer for Embeddings saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::OpMaskFillSaveableParams<TensorType>, D>
+{
+  using Type       = ml::OpMaskFillSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const OP_CODE    = 1;
+  static uint8_t const FILL_VALUE = 2;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(2);
+    map.Append(OP_CODE, sp.op_type);
+    map.Append(FILL_VALUE, sp.fill_value);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+    map.ExpectKeyGetValue(FILL_VALUE, sp.fill_value);
   }
 };
 

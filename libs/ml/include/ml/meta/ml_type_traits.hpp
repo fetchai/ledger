@@ -40,6 +40,7 @@ enum class OpType : uint16_t
   OP_EMBEDDINGS,
   OP_EXP,
   OP_FLATTEN,
+  OP_GELU,
   OP_LAYER_NORM,
   OP_LEAKY_RELU,
   OP_LEAKY_RELU_OP,
@@ -86,9 +87,6 @@ class Graph;
 
 template <typename T>
 class Node;
-
-template <typename T>
-class Ops;
 
 namespace layers {
 template <typename T>

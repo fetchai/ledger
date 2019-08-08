@@ -72,7 +72,7 @@ TYPED_TEST(SwitchTest, forward_test)
 TYPED_TEST(SwitchTest, forward_test_mask_broadcasted)
 {
   using TensorType = TypeParam;
-  using DataType  = typename TypeParam::Type;
+  using DataType   = typename TypeParam::Type;
 
   TensorType mask = TensorType::FromString("1, 1, 0");
   mask.Reshape({1, 3, 1});
@@ -145,7 +145,7 @@ TYPED_TEST(SwitchTest, backward_test)
 TYPED_TEST(SwitchTest, back_test_broadcast_mask)
 {
   using TensorType = TypeParam;
-  using DataType = typename TypeParam::Type;
+  using DataType   = typename TypeParam::Type;
 
   TensorType mask = TensorType::FromString("1, 1, 0");
   mask.Reshape({1, 3, 1});
