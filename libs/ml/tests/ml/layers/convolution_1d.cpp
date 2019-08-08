@@ -417,7 +417,7 @@ TYPED_TEST(Convolution1DTest, saveparams_test)
   SizeType const output_channels = 5;
   SizeType const input_height    = 3;
   SizeType const kernel_height   = 3;
-  SizeType const stride_size = 1;
+  SizeType const stride_size     = 1;
 
   // Generate input
   TypeParam input(std::vector<typename TypeParam::SizeType>({input_channels, input_height, 1}));
