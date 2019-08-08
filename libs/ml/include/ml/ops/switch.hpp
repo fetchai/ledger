@@ -51,7 +51,6 @@ public:
   {
     assert(inputs.size() == 3);
     assert(output.shape() == this->ComputeOutputShape(inputs));
-    assert(inputs.at(0)->shape() == inputs.at(1)->shape());
     assert(inputs.at(1)->shape() == inputs.at(2)->shape());
 
     fetch::math::Switch(*(inputs.at(0)), *(inputs.at(1)), *(inputs.at(2)), output);
@@ -65,12 +64,11 @@ public:
                                   ArrayType const &    error_signal) override
   {
     assert(inputs.size() == 3);
-    assert(inputs.at(0)->shape() == inputs.at(1)->shape());
     assert(inputs.at(1)->shape() == inputs.at(2)->shape());
-    assert(error_signal.size() == inputs.at(0)->size());
+    assert(error_signal.size() == inputs.at(1)->size());
 
-    ArrayType then_return_signal(inputs.at(0)->shape());
-    ArrayType else_return_signal(inputs.at(0)->shape());
+    ArrayType then_return_signal(inputs.at(1)->shape());
+    ArrayType else_return_signal(inputs.at(2)->shape());
     ArrayType mask_return_signal(inputs.at(0)->shape());
 
     fetch::math::Multiply(*(inputs.front()), error_signal, then_return_signal);
@@ -83,7 +81,7 @@ public:
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    return inputs.front()->shape();
+    return inputs.at(1)->shape();
   }
 
   static constexpr char const *DESCRIPTOR = "Switch";

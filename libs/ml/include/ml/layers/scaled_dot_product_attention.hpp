@@ -59,9 +59,7 @@ public:
         this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Key", {});
     std::string value =
         this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Value", {});
-    std::string mask =
-        this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Mask", {});
-
+    
     // Be advised that the matrix multiplication sequence is different from what is proposed in the
     // paper as our batch dimension is the last dimension, which the feature dimension is the first
     // one. in the paper, feature dimension is the col dimension please refer to
@@ -80,8 +78,6 @@ public:
     // scale the QK matrix multiplication
     std::string scaled_kq_matmul = this->template AddNode<fetch::ml::ops::Divide<ArrayType>>(
         name + "_Scaled_Key_Query_MatMul", {kq_matmul, sqrt_dk_ph});
-    
-    //
 
     // softmax
     std::string attention_weight = this->template AddNode<fetch::ml::ops::Softmax<ArrayType>>(
@@ -104,7 +100,6 @@ public:
     this->AddInputNode(query);
     this->AddInputNode(key);
     this->AddInputNode(value);
-    this->AddInputNode(mask);
     this->SetOutputNode(weight_value_matmul);
   }
 

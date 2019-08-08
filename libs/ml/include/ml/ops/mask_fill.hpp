@@ -44,7 +44,7 @@ public:
   ~MaskFill() override = default;
 
   /**
-   * based on boolean condition, decide if we need to fill the element with fill_value.
+   * based on boolean condition mask, decide if we need to fill the element with fill_value.
    * @param inputs - two inputs, first is mask, second is the array to be masked
    * array
    * @return
@@ -53,11 +53,10 @@ public:
   {
     assert(inputs.size() == 2);
     assert(output.shape() == this->ComputeOutputShape(inputs));
-    assert(inputs.at(0)->shape() == inputs.at(1)->shape());
 
-    if (fill_array_.shape() != inputs.front()->shape())
+    if (fill_array_.shape() != inputs.at(1)->shape())
     {
-      fill_array_.Reshape(inputs.front()->shape());
+      fill_array_.Reshape(inputs.at(1)->shape());
       fill_array_.Fill(fill_value_);
     }
     fetch::math::Switch(*(inputs.at(0)), *(inputs.at(1)), fill_array_, output);
@@ -71,10 +70,9 @@ public:
                                   ArrayType const &    error_signal) override
   {
     assert(inputs.size() == 2);
-    assert(inputs.at(0)->shape() == inputs.at(1)->shape());
-    assert(error_signal.size() == inputs.at(0)->size());
+    assert(error_signal.size() == inputs.at(1)->size());
 
-    ArrayType return_signal(inputs.at(0)->shape());
+    ArrayType return_signal(inputs.at(1)->shape());
     ArrayType mask_return_signal(inputs.at(0)->shape());
 
     fetch::math::Multiply(*(inputs.front()), error_signal, return_signal);
@@ -86,7 +84,7 @@ public:
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    return inputs.front()->shape();
+    return inputs.at(1)->shape();
   }
 
   static constexpr char const *DESCRIPTOR = "MaskFill";
