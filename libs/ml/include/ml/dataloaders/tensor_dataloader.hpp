@@ -64,8 +64,7 @@ public:
   void     Reset(bool is_test = false) override;
 
 protected:
-  SizeType data_cursor_  = 0;
-  SizeType label_cursor_ = 0;
+  SizeType train_cursor_  = 0;
   SizeType n_samples_    = 0;  // number of data samples
 
   TensorType data_;
@@ -91,10 +90,9 @@ TensorDataLoader<LabelType, InputType>::GetNext(bool is_test)
   }
   else
   {
-    ReturnType ret(labels_.View(label_cursor_).Copy(one_sample_label_shape_),
-                   {data_.View(data_cursor_).Copy(one_sample_data_shapes_.at(0))});
-    data_cursor_++;
-    label_cursor_++;
+    ReturnType ret(labels_.View(train_cursor_).Copy(one_sample_label_shape_),
+                   {data_.View(train_cursor_).Copy(one_sample_data_shapes_.at(0))});
+    train_cursor_++;
     return ret;
   }
 }
@@ -106,8 +104,7 @@ bool TensorDataLoader<LabelType, InputType>::AddData(TensorType const &data,
 
   data_         = data.Copy();
   labels_       = labels.Copy();
-  data_cursor_  = 0;
-  label_cursor_ = 0;
+  train_cursor_ = 0;
 
   n_samples_ = data_.shape().at(data_.shape().size() - 1);
 
@@ -129,15 +126,14 @@ template <typename LabelType, typename InputType>
 bool TensorDataLoader<LabelType, InputType>::IsDone(bool is_test) const
 {
   (void)is_test;
-  return (data_cursor_ >= data_.shape(batch_data_dim_));
+  return (train_cursor_ >= data_.shape(batch_data_dim_));
 }
 
 template <typename LabelType, typename InputType>
 void TensorDataLoader<LabelType, InputType>::Reset(bool is_test)
 {
   (void)is_test;
-  data_cursor_  = 0;
-  label_cursor_ = 0;
+  train_cursor_ = 0;
 }
 
 }  // namespace dataloaders
