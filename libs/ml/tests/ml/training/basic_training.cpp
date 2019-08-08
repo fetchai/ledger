@@ -123,7 +123,7 @@ void PlusOneTest()
     g.BackPropagateError(error_name);
   }
 
-  for (auto &w : g.GetTrainable())
+  for (auto &w : g.GetTrainables())
   {
     TypeParam grad = w->get_gradients();
     fetch::math::Multiply(grad, DataType{-alpha}, grad);
@@ -156,7 +156,7 @@ void PlusOneTest()
     EXPECT_GE(current_loss, loss);
     current_loss = loss;
 
-    for (auto &w : g.GetTrainable())
+    for (auto &w : g.GetTrainables())
     {
       TypeParam grad = w->get_gradients();
       fetch::math::Multiply(grad, DataType{-alpha}, grad);
@@ -234,7 +234,7 @@ void CategoricalPlusOneTest(bool add_softmax = false)
     g.BackPropagateError(error_name);
   }
 
-  for (auto &w : g.GetTrainable())
+  for (auto &w : g.GetTrainables())
   {
     TypeParam grad = w->get_gradients();
     fetch::math::Multiply(grad, DataType{-alpha}, grad);
@@ -267,7 +267,7 @@ void CategoricalPlusOneTest(bool add_softmax = false)
     EXPECT_GE(current_loss, loss);
     current_loss = loss;
 
-    for (auto &w : g.GetTrainable())
+    for (auto &w : g.GetTrainables())
     {
       TypeParam grad = w->get_gradients();
       fetch::math::Multiply(grad, DataType{-alpha}, grad);
@@ -336,7 +336,7 @@ void CategoricalXorTest(bool add_softmax = false)
     g.BackPropagateError(error_name);
   }
 
-  for (auto &w : g.GetTrainable())
+  for (auto &w : g.GetTrainables())
   {
     TypeParam grad = w->get_gradients();
     fetch::math::Multiply(grad, DataType{-alpha}, grad);
@@ -366,7 +366,7 @@ void CategoricalXorTest(bool add_softmax = false)
     EXPECT_GE(current_loss, loss);
     current_loss = loss;
 
-    for (auto &w : g.GetTrainable())
+    for (auto &w : g.GetTrainables())
     {
       TypeParam grad = w->get_gradients();
       fetch::math::Multiply(grad, DataType{-alpha}, grad);

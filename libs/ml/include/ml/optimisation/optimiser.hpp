@@ -128,7 +128,7 @@ private:
 template <class T>
 void Optimiser<T>::Init()
 {
-  graph_trainables_ = graph_->GetTrainable();
+  graph_trainables_ = graph_->GetTrainables();
   for (auto &train : graph_trainables_)
   {
     this->gradients_.emplace_back(ArrayType(train->get_weights().shape()));

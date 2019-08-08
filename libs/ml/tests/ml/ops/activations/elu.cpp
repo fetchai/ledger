@@ -21,10 +21,10 @@
 #include "ml/ops/activations/elu.hpp"
 #include "ml/serializers/ml_types.hpp"
 
+#include "core/serializers/main_serializer_definition.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
-#include <core/serializers/main_serializer_definition.hpp>
 template <typename T>
 class EluTest : public ::testing::Test
 {

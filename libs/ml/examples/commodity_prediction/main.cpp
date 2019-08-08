@@ -321,7 +321,7 @@ int main(int argc, char **argv)
         ArrayType bias = fetch::ml::dataloaders::ReadCSV<ArrayType>(
             node_weights_dir + "/bias:0.csv", 0, 0, false);
 
-        assert(bias.shape()[0] == weights.shape()[0]);
+        assert(bias.shape().at(0) == weights.shape().at(0));
 
         auto weights_tensor = sd.dict_.at(name + "_FullyConnected_Weights").weights_;
         auto bias_tensor    = sd.dict_.at(name + "_FullyConnected_Bias").weights_;
