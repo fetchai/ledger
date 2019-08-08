@@ -59,7 +59,7 @@ public:
         this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Key", {});
     std::string value =
         this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Value", {});
-    
+
     // Be advised that the matrix multiplication sequence is different from what is proposed in the
     // paper as our batch dimension is the last dimension, which the feature dimension is the first
     // one. in the paper, feature dimension is the col dimension please refer to
