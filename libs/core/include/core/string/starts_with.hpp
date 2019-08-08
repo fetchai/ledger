@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,24 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/string/ends_with.hpp"
-
 #include <string>
 
 namespace fetch {
 namespace core {
 
-bool EndsWith(std::string const &value, std::string const &ending)
-{
-  bool success{false};
-
-  if (value.size() >= ending.size())
-  {
-    success = (value.substr(value.size() - ending.size()) == ending);
-  }
-
-  return success;
-}
+bool StartsWith(std::string const &value, std::string const &prefix);
 
 }  // namespace core
 }  // namespace fetch

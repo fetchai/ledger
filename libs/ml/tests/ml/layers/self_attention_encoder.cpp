@@ -16,17 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
-#include "ml/layers/scaled_dot_product_attention.hpp"
-#include "ml/ops/loss_functions.hpp"
-#include "ml/optimisation/sgd_optimiser.hpp"
-#include "ml/regularisers/regulariser.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
-#include <ml/layers/multihead_attention.hpp>
 
 #include "gtest/gtest.h"
 
-#include <chrono>
 #include <ml/layers/self_attention_encoder.hpp>
 
 template <typename T>

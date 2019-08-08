@@ -16,19 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
-#include "ml/layers/scaled_dot_product_attention.hpp"
-#include "ml/ops/loss_functions.hpp"
-#include "ml/optimisation/sgd_optimiser.hpp"
-#include "ml/regularisers/regulariser.hpp"
+#include "ml/layers/multihead_attention.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
-#include <ml/layers/multihead_attention.hpp>
-
-#include "ml/layers/fully_connected.hpp"
 
 #include "gtest/gtest.h"
-
-#include <chrono>
 
 template <typename T>
 class MultiheadAttention : public ::testing::Test
@@ -66,52 +57,19 @@ TYPED_TEST(MultiheadAttention, input_output_dimension_check)  // Use the class a
   ASSERT_EQ(prediction.shape()[2], 4);
 }
 
-TYPED_TEST(MultiheadAttention, trivial_test)
-{
-  //	using SizeType = typename TypeParam::SizeType;
-  using DataType = typename TypeParam::Type;
-
-  TypeParam data1 = TypeParam::UniformRandom(100u);
-  TypeParam gt    = TypeParam::UniformRandom(100u);
-
-  data1.Reshape({10, 10});
-  gt.Reshape({10, 10});
-
-  auto g = std::make_shared<fetch::ml::Graph<TypeParam>>();
-
-  std::string in1 = g->template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("in1", {});
-  std::string fc1 =
-      g->template AddNode<fetch::ml::layers::FullyConnected<TypeParam>>("fc1", {in1}, 10, 10);
-  std::string fc3 =
-      g->template AddNode<fetch::ml::layers::FullyConnected<TypeParam>>("fc3", {fc1}, 10, 10);
-  std::string fc4 =
-      g->template AddNode<fetch::ml::layers::FullyConnected<TypeParam>>("fc4", {fc1}, 10, 10);
-  std::string sum = g->template AddNode<fetch::ml::ops::Add<TypeParam>>("add", {fc3, fc4});
-
-  std::string label = g->template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("label", {});
-  std::string error =
-      g->template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TypeParam>>("mse", {sum, label});
-
-  auto optimiser = fetch::ml::optimisers::SGDOptimiser<TypeParam>(g, {in1}, label, error,
-                                                                  static_cast<DataType>(0.9));
-
-  optimiser.Run({data1}, gt);
-}
-
 TYPED_TEST(MultiheadAttention, backward_test)  // Use the class as an Ops
 {
   using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
-
   fetch::ml::layers::MultiheadAttention<TypeParam> m_att(static_cast<SizeType>(4),
-                                                         static_cast<SizeType>(16), DataType(0.9));
-  TypeParam input_data(std::vector<typename TypeParam::SizeType>({16, 20, 5}));
+                                                         static_cast<SizeType>(12), DataType(0.9));
+  TypeParam input_data(std::vector<typename TypeParam::SizeType>({12, 20, 5}));
   TypeParam output(m_att.ComputeOutputShape({std::make_shared<TypeParam>(input_data)}));
   m_att.Forward({std::make_shared<TypeParam>(input_data), std::make_shared<TypeParam>(input_data),
                  std::make_shared<TypeParam>(input_data)},
                 output);
 
-  TypeParam error_signal(std::vector<typename TypeParam::SizeType>({16, 20, 5}));
+  TypeParam error_signal(std::vector<typename TypeParam::SizeType>({12, 20, 5}));
 
   std::vector<TypeParam> backprop_error = m_att.Backward(
       {std::make_shared<TypeParam>(input_data), std::make_shared<TypeParam>(input_data),
@@ -149,7 +107,7 @@ TYPED_TEST(MultiheadAttention, backward_test)  // Use the class as an Ops
   ASSERT_TRUE(all_same_shape);
 
   ASSERT_EQ(backprop_error[0].shape().size(), 3);
-  ASSERT_EQ(backprop_error[0].shape()[0], 16);
+  ASSERT_EQ(backprop_error[0].shape()[0], 12);
   ASSERT_EQ(backprop_error[0].shape()[1], 20);
   ASSERT_EQ(backprop_error[0].shape()[2], 5);
 }

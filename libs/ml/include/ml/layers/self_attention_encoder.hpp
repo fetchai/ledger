@@ -51,47 +51,6 @@ public:
   using WeightsInitType = fetch::ml::ops::WeightsInitialisation;
   using ActivationType  = fetch::ml::details::ActivationType;
 
-  std::string positionwise_feedforward(std::string name, std::string const &input)
-  {
-    // position wise feedforward with relu acitvation
-    std::string ff_first_layer =
-        this->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
-            name + "_Feedforward_No_1", {input}, static_cast<SizeType>(model_dim_),
-            static_cast<SizeType>(ff_dim_), ActivationType::RELU, RegType::NONE,
-            static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT, true);
-
-    // do dropout
-    std::string ff_first_layer_dropout = this->template AddNode<fetch::ml::ops::Dropout<ArrayType>>(
-        name + "_Dropout", {ff_first_layer}, feedforward_dropout_);
-
-    // position wise feedforward stage 2
-    std::string ff_second_layer =
-        this->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
-            name + "_Feedforward_No_2", {ff_first_layer_dropout}, static_cast<SizeType>(ff_dim_),
-            static_cast<SizeType>(model_dim_), ActivationType::NOTHING, RegType::NONE,
-            static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT, true);
-
-    return ff_second_layer;
-  }
-
-  std::string residual_connection(std::string name, std::string const &prev_layer_input,
-                                  std::string const &prev_layer_output)
-  {
-    // do a dropout of prev output before doing residual connection
-    std::string dropout_output = this->template AddNode<fetch::ml::ops::Dropout<ArrayType>>(
-        name + "_Dropout", {prev_layer_output}, residual_dropout_);
-    std::string residual_addition = this->template AddNode<fetch::ml::ops::Add<ArrayType>>(
-        name + "_Residual_Addition", {prev_layer_input, dropout_output});
-
-    // create sudo shape for layernorm
-    std::vector<SizeType> data_shape({model_dim_, 1});
-    std::string           normalized_residual =
-        this->template AddNode<fetch::ml::layers::LayerNorm<ArrayType>>(
-            name + "_LayerNorm", {residual_addition}, data_shape, static_cast<SizeType>(0));
-
-    return normalized_residual;
-  }
-
   SelfAttentionEncoder(SizeType n_heads, SizeType model_dim, SizeType ff_dim,
                        DataType residual_dropout    = static_cast<DataType>(0.9),
                        DataType attention_dropout   = static_cast<DataType>(0.9),
@@ -131,6 +90,47 @@ public:
 
     this->AddInputNode(input);
     this->SetOutputNode(feedforward_residual);
+  }
+
+  std::string positionwise_feedforward(std::string name, std::string const &input)
+  {
+    // position wise feedforward with relu acitvation
+    std::string ff_first_layer =
+        this->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
+            name + "_Feedforward_No_1", {input}, static_cast<SizeType>(model_dim_),
+            static_cast<SizeType>(ff_dim_), ActivationType::RELU, RegType::NONE,
+            static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT, true);
+
+    // do dropout
+    std::string ff_first_layer_dropout = this->template AddNode<fetch::ml::ops::Dropout<ArrayType>>(
+        name + "_Dropout", {ff_first_layer}, feedforward_dropout_);
+
+    // position wise feedforward stage 2
+    std::string ff_second_layer =
+        this->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
+            name + "_Feedforward_No_2", {ff_first_layer_dropout}, static_cast<SizeType>(ff_dim_),
+            static_cast<SizeType>(model_dim_), ActivationType::NOTHING, RegType::NONE,
+            static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT, true);
+
+    return ff_second_layer;
+  }
+
+  std::string residual_connection(std::string name, std::string const &prev_layer_input,
+                                  std::string const &prev_layer_output)
+  {
+    // do a dropout of prev output before doing residual connection
+    std::string dropout_output = this->template AddNode<fetch::ml::ops::Dropout<ArrayType>>(
+        name + "_Dropout", {prev_layer_output}, residual_dropout_);
+    std::string residual_addition = this->template AddNode<fetch::ml::ops::Add<ArrayType>>(
+        name + "_Residual_Addition", {prev_layer_input, dropout_output});
+
+    // create sudo shape for layernorm
+    std::vector<SizeType> data_shape({model_dim_, 1});
+    std::string           normalized_residual =
+        this->template AddNode<fetch::ml::layers::LayerNorm<ArrayType>>(
+            name + "_LayerNorm", {residual_addition}, data_shape, static_cast<SizeType>(0));
+
+    return normalized_residual;
   }
 
   virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
