@@ -29,6 +29,7 @@ namespace fetch {
 namespace vm {
 
 namespace {
+
 bool is_not_whitespace(int ch)
 {
   return !std::isspace(ch);
@@ -216,13 +217,13 @@ void String::Add(Ptr<Object> &lhso, Ptr<Object> &rhso)
   }
 }
 
-bool String::SerializeTo(ByteArrayBuffer &buffer)
+bool String::SerializeTo(MsgPackSerializer &buffer)
 {
   buffer << str;
   return true;
 }
 
-bool String::DeserializeFrom(ByteArrayBuffer &buffer)
+bool String::DeserializeFrom(MsgPackSerializer &buffer)
 {
   buffer >> str;
   return true;

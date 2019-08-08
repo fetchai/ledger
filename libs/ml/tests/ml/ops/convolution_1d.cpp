@@ -47,8 +47,9 @@ TYPED_TEST(Convolution1DTest, forward_1x1x2_1x1x1x2)
   weights.At(0, 0, 0, 0) = DataType{-4};
   fetch::ml::ops::Convolution1D<ArrayType> c;
 
-  ArrayType output(c.ComputeOutputShape({input, weights}));
-  c.Forward({input, weights}, output);
+  ArrayType output(c.ComputeOutputShape(
+      {std::make_shared<ArrayType>(input), std::make_shared<ArrayType>(weights)}));
+  c.Forward({std::make_shared<ArrayType>(input), std::make_shared<ArrayType>(weights)}, output);
 
   ASSERT_EQ(output.shape(), std::vector<SizeType>({1, 1, 2}));
   EXPECT_EQ(output.At(0, 0, 0), DataType{-20});
@@ -70,8 +71,9 @@ TYPED_TEST(Convolution1DTest, forward_1x3x1_1x1x3x1)
   }
   fetch::ml::ops::Convolution1D<ArrayType> c;
 
-  ArrayType output(c.ComputeOutputShape({input, weights}));
-  c.Forward({input, weights}, output);
+  ArrayType output(c.ComputeOutputShape(
+      {std::make_shared<ArrayType>(input), std::make_shared<ArrayType>(weights)}));
+  c.Forward({std::make_shared<ArrayType>(input), std::make_shared<ArrayType>(weights)}, output);
 
   ASSERT_EQ(output.shape(), std::vector<SizeType>({1, 1, 1}));
   EXPECT_EQ(output.At(0, 0, 0), DataType{5});
@@ -87,8 +89,9 @@ TYPED_TEST(Convolution1DTest, forward_3x3x1_5x3x3x1)
   ArrayType                                weights({5, 3, 3, 1});
   fetch::ml::ops::Convolution1D<ArrayType> c;
 
-  ArrayType output(c.ComputeOutputShape({input, weights}));
-  c.Forward({input, weights}, output);
+  ArrayType output(c.ComputeOutputShape(
+      {std::make_shared<ArrayType>(input), std::make_shared<ArrayType>(weights)}));
+  c.Forward({std::make_shared<ArrayType>(input), std::make_shared<ArrayType>(weights)}, output);
 
   ASSERT_EQ(output.shape(), std::vector<SizeType>({5, 1, 1}));
 }
@@ -103,8 +106,9 @@ TYPED_TEST(Convolution1DTest, forward_1x5x1_1x1x3x1)
   ArrayType                                weights({1, 1, 3, 1});
   fetch::ml::ops::Convolution1D<ArrayType> c;
 
-  ArrayType output(c.ComputeOutputShape({input, weights}));
-  c.Forward({input, weights}, output);
+  ArrayType output(c.ComputeOutputShape(
+      {std::make_shared<ArrayType>(input), std::make_shared<ArrayType>(weights)}));
+  c.Forward({std::make_shared<ArrayType>(input), std::make_shared<ArrayType>(weights)}, output);
 
   ASSERT_EQ(output.shape(), std::vector<SizeType>({1, 3, 1}));
 }
@@ -119,8 +123,9 @@ TYPED_TEST(Convolution1DTest, forward_1x5x1_1x1x3x1_stride_2)
   ArrayType                                weights({1, 1, 3, 1});
   fetch::ml::ops::Convolution1D<ArrayType> c(2);
 
-  ArrayType output(c.ComputeOutputShape({input, weights}));
-  c.Forward({input, weights}, output);
+  ArrayType output(c.ComputeOutputShape(
+      {std::make_shared<ArrayType>(input), std::make_shared<ArrayType>(weights)}));
+  c.Forward({std::make_shared<ArrayType>(input), std::make_shared<ArrayType>(weights)}, output);
 
   ASSERT_EQ(output.shape(), std::vector<SizeType>({1, 2, 1}));
 }
@@ -134,8 +139,9 @@ TYPED_TEST(Convolution1DTest, forward_1x5x2_1x1x3x2_stride_2)
   ArrayType                                weights({1, 1, 3, 1});
   fetch::ml::ops::Convolution1D<ArrayType> c(2);
 
-  ArrayType output(c.ComputeOutputShape({input, weights}));
-  c.Forward({input, weights}, output);
+  ArrayType output(c.ComputeOutputShape(
+      {std::make_shared<ArrayType>(input), std::make_shared<ArrayType>(weights)}));
+  c.Forward({std::make_shared<ArrayType>(input), std::make_shared<ArrayType>(weights)}, output);
 
   ASSERT_EQ(output.shape(), std::vector<SizeType>({1, 2, 2}));
 }
@@ -182,8 +188,9 @@ TYPED_TEST(Convolution1DTest, forward_3x3x2_5x3x3x2)
   }
 
   fetch::ml::ops::Convolution1D<ArrayType> op;
-  ArrayType                                output(op.ComputeOutputShape({input, kernels}));
-  op.Forward({input, kernels}, output);
+  ArrayType                                output(op.ComputeOutputShape(
+      {std::make_shared<ArrayType>(input), std::make_shared<ArrayType>(kernels)}));
+  op.Forward({std::make_shared<ArrayType>(input), std::make_shared<ArrayType>(kernels)}, output);
 
   // Generate gt
   gt(0, 0, 0) = DataType{9};
@@ -273,7 +280,8 @@ TYPED_TEST(Convolution1DTest, backward_3x3x2_5x3x3x2)
   }
 
   fetch::ml::ops::Convolution1D<ArrayType> op;
-  std::vector<ArrayType>                   prediction = op.Backward({input, kernels}, error);
+  std::vector<ArrayType>                   prediction = op.Backward(
+      {std::make_shared<ArrayType>(input), std::make_shared<ArrayType>(kernels)}, error);
 
   // Test correct gradient shape
   ASSERT_EQ(prediction.at(0).shape(), input.shape());

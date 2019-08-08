@@ -18,6 +18,8 @@
 
 #include "open_api_http_module.hpp"
 
+#include <mutex>
+
 namespace fetch {
 
 OpenAPIHttpModule::OpenAPIHttpModule()

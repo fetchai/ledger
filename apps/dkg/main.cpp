@@ -18,14 +18,15 @@
 
 #include "core/macros.hpp"
 #include "core/reactor.hpp"
-
 #include "dkg/dkg_service.hpp"
-
 #include "network/management/network_manager.hpp"
 #include "network/muddle/muddle.hpp"
 
+// TODO(WK) Extract to library: .cpp file include == ++ungood
 #include "../../apps/constellation/key_generator.cpp"
 #include "../../apps/constellation/key_generator.hpp"
+
+#include <iostream>
 
 using namespace fetch;
 using namespace fetch::crypto;

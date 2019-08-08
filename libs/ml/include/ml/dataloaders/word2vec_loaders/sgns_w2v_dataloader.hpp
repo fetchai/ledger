@@ -500,8 +500,8 @@ void GraphW2VLoader<T>::BuildVocab(std::vector<std::string> const &sents, SizeTy
   std::cout << "Removing infrequent words" << std::endl;
   RemoveInfrequent(min_count);
 
-  // initialize unigram
-  std::cout << "Initializing unigram" << std::endl;
+  // initialise unigram
+  std::cout << "Initialising unigram" << std::endl;
   InitUnigramTable();
 }
 
@@ -580,7 +580,7 @@ typename GraphW2VLoader<T>::SizeType GraphW2VLoader<T>::WindowSize()
 }
 
 /**
- * converts string to indices and inserts into vocab as necessary
+ * converts string to indices and inserts into vocab as necessary
  * @tparam T
  * @param strings
  * @return

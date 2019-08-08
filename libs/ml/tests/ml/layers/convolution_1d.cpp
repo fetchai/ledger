@@ -105,8 +105,8 @@ TYPED_TEST(Convolution1DTest, ops_forward_test)  // Use the class as an Ops
   fetch::ml::layers::Convolution1D<TypeParam> conv(output_channels, input_channels, kernel_height,
                                                    stride_size);
 
-  ArrayType output(conv.ComputeOutputShape({input}));
-  conv.Forward({input}, output);
+  ArrayType output(conv.ComputeOutputShape({std::make_shared<TypeParam>(input)}));
+  conv.Forward({std::make_shared<TypeParam>(input)}, output);
 
   // test correct values
   ASSERT_EQ(output.shape().size(), 3);
@@ -164,10 +164,11 @@ TYPED_TEST(Convolution1DTest, ops_backward_test)  // Use the class as an Ops
   fetch::ml::layers::Convolution1D<TypeParam> conv(output_channels, input_channels, kernel_height,
                                                    stride_size);
 
-  ArrayType output(conv.ComputeOutputShape({input}));
-  conv.Forward({input}, output);
+  ArrayType output(conv.ComputeOutputShape({std::make_shared<TypeParam>(input)}));
+  conv.Forward({std::make_shared<TypeParam>(input)}, output);
 
-  std::vector<TypeParam> backprop_error = conv.Backward({input}, error_signal);
+  std::vector<TypeParam> backprop_error =
+      conv.Backward({std::make_shared<TypeParam>(input)}, error_signal);
 
   // test correct values
   ASSERT_EQ(backprop_error.size(), 1);
@@ -220,7 +221,7 @@ TYPED_TEST(Convolution1DTest, node_forward_test)  // Use the class as a Node
       "Convolution1D", output_channels, input_channels, kernel_height, stride_size);
   conv.AddInput(placeholder);
 
-  TypeParam prediction = conv.Evaluate(true);
+  TypeParam prediction = *conv.Evaluate(true);
 
   // test correct values
   ASSERT_EQ(prediction.shape().size(), 3);
@@ -282,7 +283,7 @@ TYPED_TEST(Convolution1DTest, node_backward_test)  // Use the class as a Node
   fetch::ml::Node<TypeParam, fetch::ml::layers::Convolution1D<TypeParam>> conv(
       "Convolution1D", output_channels, input_channels, kernel_height, stride_size);
   conv.AddInput(placeholder);
-  TypeParam prediction     = conv.Evaluate(true);
+  TypeParam prediction     = *conv.Evaluate(true);
   auto      backprop_error = conv.BackPropagateSignal(error_signal);
 
   // test correct values
@@ -371,7 +372,7 @@ TYPED_TEST(Convolution1DTest, getStateDict)
   SizeType const kernel_height   = 3;
   SizeType const stride_size     = 1;
 
-  // Initialize weights
+  // Initialise weights
   fetch::ml::layers::Convolution1D<ArrayType> conv(
       output_channels, input_channels, kernel_height, stride_size,
       fetch::ml::details::ActivationType::NOTHING, "ConvTest");

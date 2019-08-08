@@ -92,7 +92,7 @@ int main(int ac, char **av)
   std::pair<ArrayType, std::vector<ArrayType>>              input =
       data_loader.PrepareBatch(SUBSET_SIZE, is_done);
 
-  // Initialize TSNE
+  // Initialise TSNE
   std::cout << "Running TSNE init. " << std::endl;
   TSNE<Tensor<DataType>> tsn(input.second.at(0), N_OUTPUT_FEATURE_SIZE, PERPLEXITY, RANDOM_SEED);
 

@@ -18,11 +18,18 @@
 
 #include "core/json/document.hpp"
 #include "http/json_response.hpp"
+#include "http/middleware/deny_all.hpp"
+#include "http/middleware/token_auth.hpp"
 #include "http/server.hpp"
 #include "http/validators.hpp"
 
+#include <atomic>
+#include <chrono>
+#include <cstdint>
 #include <fstream>
 #include <iostream>
+#include <string>
+#include <thread>
 
 using namespace fetch::http;
 using namespace fetch::json;
@@ -35,14 +42,28 @@ struct ExampleModule : HTTPModule
     Get("/pages", "Gets the pages",
         [](fetch::http::ViewParameters const & /*params*/,
            fetch::http::HTTPRequest const & /*request*/) {
-          return fetch::http::CreateJsonResponse("{}",
-                                                 fetch::http::Status::CLIENT_ERROR_BAD_REQUEST);
+          return fetch::http::CreateJsonResponse("{}", fetch::http::Status::SUCCESS_OK);
         });
 
-    Get("/pages/(id=\\d+)/", "Get a specific page",
+    Get("/pages/(id=\\d+)", "Get a specific page",
         {{"id", "The page id.", validators::StringValue()}},
+        [](fetch::http::HTTPRequest req) {
+          if (req.authentication_level() < 900)
+          {
+            return false;
+          }
+          return true;
+        },
         [](fetch::http::ViewParameters const & /*params*/,
            fetch::http::HTTPRequest const & /*request*/) {
+          return fetch::http::CreateJsonResponse(R"({"error": "It's all good!"})",
+                                                 fetch::http::Status::SUCCESS_OK);
+        });
+
+    Get("/throw", "Throws an exception",
+        [](fetch::http::ViewParameters const & /*params*/,
+           fetch::http::HTTPRequest const & /*request*/) {
+          throw std::runtime_error("some exception!");
           return fetch::http::CreateJsonResponse("{}",
                                                  fetch::http::Status::CLIENT_ERROR_BAD_REQUEST);
         });
@@ -51,7 +72,6 @@ struct ExampleModule : HTTPModule
 
 int main()
 {
-
   fetch::network::NetworkManager tm{"NetMgr", 1};
 
   ExampleModule module;
@@ -59,6 +79,10 @@ int main()
   server.Start(8080);
 
   server.AddModule(module);
+  // server.AddMiddleware(middleware::DenyAll()); //< Add this line to deny all requests unless
+  // authenticated
+  middleware::SimpleTokenAuthentication token_auth_middle("Hello");
+  server.AddMiddleware(token_auth_middle);
   server.AddMiddleware([](HTTPRequest &) { std::cout << "Middleware 1" << std::endl; });
   server.AddMiddleware([](HTTPResponse &res, HTTPRequest const &req) {
     std::cout << static_cast<uint16_t>(res.status()) << " " << req.uri() << std::endl;

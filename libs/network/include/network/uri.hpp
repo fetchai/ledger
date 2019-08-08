@@ -17,26 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-//------------------------------------------------------------------------------
-//
-//   Copyright 2018 Fetch.AI Limited
-//
-//   Licensed under the Apache License, Version 2.0 (the "License");
-//   you may not use this file except in compliance with the License.
-//   You may obtain a copy of the License at
-//
-//       http://www.apache.org/licenses/LICENSE-2.0
-//
-//   Unless required by applicable law or agreed to in writing, software
-//   distributed under the License is distributed on an "AS IS" BASIS,
-//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//   See the License for the specific language governing permissions and
-//   limitations under the License.
-//
-//---
-
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
+#include "core/serializers/group_definitions.hpp"
 #include "crypto/fnv.hpp"
 #include "network/peer.hpp"
 
@@ -95,11 +78,8 @@ public:
 
   std::string ToString() const;
 
-  template <typename T>
-  friend void Serialize(T &serializer, Uri const &x);
-
-  template <typename T>
-  friend void Deserialize(T &serializer, Uri &x);
+  template <typename T, typename D>
+  friend struct serializers::MapSerializer;
 
   static Uri  FromIdentity(ConstByteArray const &identity);
   static bool IsUri(const std::string &possible_uri);
@@ -158,30 +138,47 @@ inline bool Uri::IsDirectlyConnectable() const
   return scheme_ != Uri::Scheme::Muddle && scheme_ != Uri::Scheme::Unknown;
 }
 
-template <typename T>
-void Serialize(T &serializer, Uri const &x)
-{
-  serializer << x.uri_;
-}
-
-template <typename T>
-void Deserialize(T &serializer, Uri &x)
-{
-  byte_array::ConstByteArray uri;
-  serializer >> uri;
-
-  if (!x.Parse(uri))
-  {
-    throw std::runtime_error("Failed to deserialize uri");
-  }
-}
-
 inline Uri Uri::FromIdentity(ConstByteArray const &identity)
 {
   return Uri{"muddle://" + byte_array::ToBase64(identity)};
 }
 
 }  // namespace network
+
+namespace serializers {
+
+template <typename D>
+struct MapSerializer<network::Uri, D>  // TODO(issue 1423): Change to forward serializer
+{
+public:
+  using DriverType = D;
+  using Type       = network::Uri;
+
+  static const uint8_t URI = 1;
+
+  template <typename T>
+  static inline void Serialize(T &map_constructor, Type const &x)
+  {
+    auto map = map_constructor(1);
+    map.Append(URI, x.uri_);
+  }
+
+  template <typename T>
+  static inline void Deserialize(T &map, Type &x)
+  {
+    byte_array::ConstByteArray uri;
+    uint8_t                    key;
+    map.GetNextKeyPair(key, uri);  // TODO(tfr): check
+
+    if (!x.Parse(uri))
+    {
+      throw std::runtime_error("Failed to deserialize uri");
+    }
+  }
+};
+
+}  // namespace serializers
+
 }  // namespace fetch
 
 template <>

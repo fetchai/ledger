@@ -46,12 +46,11 @@ public:
 protected:
   /// @name HTTP Client Controls
   /// @{
-  bool                Connect() override;
-  virtual void        Write(asio::streambuf const &buffer, std::error_code &ec) override;
-  virtual std::size_t ReadUntil(asio::streambuf &buffer, char const *delimiter,
-                                std::error_code &ec) override;
-  virtual void        ReadExactly(asio::streambuf &buffer, std::size_t length,
-                                  std::error_code &ec) override;
+  bool        Connect() override;
+  void        Write(asio::streambuf const &buffer, std::error_code &ec) override;
+  std::size_t ReadUntil(asio::streambuf &buffer, char const *delimiter,
+                        std::error_code &ec) override;
+  void ReadExactly(asio::streambuf &buffer, std::size_t length, std::error_code &ec) override;
   /// @}
 
 private:

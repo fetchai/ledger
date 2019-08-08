@@ -117,7 +117,7 @@ public:
   using ConstByteArray = byte_array::ConstByteArray;
   using MuddleAddress  = ConstByteArray;
   using CabinetMembers = std::set<MuddleAddress>;
-  using RBCMessageType = DKGEnvelop;
+  using RBCMessageType = DKGEnvelope;
 
   // Construction / Destruction
   explicit DkgService(Endpoint &endpoint, ConstByteArray address);
@@ -144,16 +144,33 @@ public:
     return state_machine_;
   }
 
-  void ResetCabinet(CabinetMembers cabinet, uint32_t threshold)
+  void ResetCabinet(CabinetMembers cabinet,
+                    uint32_t       threshold = std::numeric_limits<uint32_t>::max())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Resetting cabinet. Cabinet size: ", cabinet.size(),
-                   " threshold: ", threshold);
     FETCH_LOCK(cabinet_lock_);
-    assert(cabinet.size() > 3 * threshold);  // To meet the requirements for the RBC
-    current_cabinet_   = std::move(cabinet);
-    current_threshold_ = threshold;
-    id_                = static_cast<uint32_t>(
+    assert(cabinet.size() > threshold);
+    // Check threshold meets the requirements for the RBC
+    if (cabinet.size() % 3 == 0)
+    {
+      assert(threshold >= static_cast<uint32_t>(cabinet.size() / 3 - 1));
+    }
+    else
+    {
+      assert(threshold >= static_cast<uint32_t>(cabinet.size() / 3));
+    }
+    current_cabinet_ = std::move(cabinet);
+    if (threshold == std::numeric_limits<uint32_t>::max())
+    {
+      current_threshold_ = static_cast<uint32_t>(current_cabinet_.size() / 2 - 1);
+    }
+    else
+    {
+      current_threshold_ = threshold;
+    }
+    id_ = static_cast<uint32_t>(
         std::distance(current_cabinet_.begin(), current_cabinet_.find(address_)));
+    FETCH_LOG_INFO(LOGGING_NAME, "Resetting cabinet. Cabinet size: ", current_cabinet_.size(),
+                   " threshold: ", threshold);
     dkg_.ResetCabinet();
     rbc_.ResetCabinet();
   }
@@ -216,7 +233,7 @@ private:
   muddle::rpc::Client      rpc_client_;     ///< The services' RPC client
   RpcProtocolPtr           rpc_proto_;      ///< The services RPC protocol
   StateMachinePtr          state_machine_;  ///< The service state machine
-  rbc::RBC                 rbc_;            ///< Runs the RBC protocol
+  RBC                      rbc_;            ///< Runs the RBC protocol
   DistributedKeyGeneration dkg_;            ///< Runs DKG protocol
 
   /// @name State Machine Data
@@ -247,4 +264,5 @@ private:
 };
 
 }  // namespace dkg
+
 }  // namespace fetch

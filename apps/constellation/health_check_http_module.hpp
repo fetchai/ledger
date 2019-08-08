@@ -40,7 +40,7 @@ public:
           return http::CreateJsonResponse("{}");
         });
 
-    Get("/api/health/ready", "Retrieves the current syncronisation status.",
+    Get("/api/health/ready", "Retrieves the current synchronisation status.",
         [this](http::ViewParameters const &, http::HTTPRequest const &) {
           // determine the state of the machine system state machines
           bool const chain_synced = chain_service_.IsSynced();

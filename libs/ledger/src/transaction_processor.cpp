@@ -40,13 +40,13 @@ namespace ledger {
  * @param miner The reference to the system miner
  */
 TransactionProcessor::TransactionProcessor(DAGPtr dag, StorageUnitInterface &storage,
-                                           BlockPackerInterface &  packer,
-                                           TransactionStatusCache &tx_status_cache,
-                                           std::size_t             num_threads)
+                                           BlockPackerInterface &packer,
+                                           TxStatusCachePtr      tx_status_cache,
+                                           std::size_t           num_threads)
   : dag_{std::move(dag)}
   , storage_{storage}
   , packer_{packer}
-  , status_cache_{tx_status_cache}
+  , status_cache_{std::move(tx_status_cache)}
   , verifier_{*this, num_threads, "TxV-P"}
   , running_{false}
 {}
@@ -86,7 +86,10 @@ void TransactionProcessor::OnTransaction(TransactionPtr const &tx)
     packer_.EnqueueTransaction(*tx);
 
     // update the status cache with the state of this transaction
-    status_cache_.Update(tx->digest(), TransactionStatus::PENDING);
+    if (status_cache_)
+    {
+      status_cache_->Update(tx->digest(), TransactionStatus::PENDING);
+    }
     break;
 
   case Transaction::ContractMode::SYNERGETIC:
@@ -96,7 +99,10 @@ void TransactionProcessor::OnTransaction(TransactionPtr const &tx)
       dag_->AddTransaction(*tx, DAGInterface::DAGTypes::DATA);
 
       // update the status cache with the state of this transaction
-      status_cache_.Update(tx->digest(), TransactionStatus::SUBMITTED);
+      if (status_cache_)
+      {
+        status_cache_->Update(tx->digest(), TransactionStatus::SUBMITTED);
+      }
     }
 
     break;

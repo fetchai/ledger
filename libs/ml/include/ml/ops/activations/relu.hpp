@@ -45,7 +45,7 @@ public:
   {
     assert(inputs.size() == 1);
     assert(output.shape() == this->ComputeOutputShape(inputs));
-    fetch::math::Relu(inputs.front().get(), output);
+    fetch::math::Relu((*inputs.front()), output);
   }
 
   /**
@@ -60,9 +60,9 @@ public:
                                   ArrayType const &    error_signal) override
   {
     assert(inputs.size() == 1);
-    assert(inputs.at(0).get().shape() == error_signal.shape());
+    assert(inputs.at(0)->shape() == error_signal.shape());
 
-    ArrayType const &input = inputs.front().get();
+    ArrayType const &input = (*inputs.front());
     ArrayType        return_signal{error_signal.shape()};
 
     auto it1    = input.begin();
@@ -89,7 +89,7 @@ public:
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    return inputs.front().get().shape();
+    return inputs.front()->shape();
   }
 
   static constexpr char const *DESCRIPTOR = "Relu";

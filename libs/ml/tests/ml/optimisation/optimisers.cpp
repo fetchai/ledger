@@ -18,7 +18,8 @@
 
 #include "math/tensor.hpp"
 #include "ml/graph.hpp"
-#include "ml/layers/self_attention.hpp"
+#include "ml/layers/fully_connected.hpp"
+#include "ml/layers/scaled_dot_product_attention.hpp"
 #include "ml/ops/activations/relu.hpp"
 #include "ml/ops/loss_functions.hpp"
 #include "ml/ops/multiply.hpp"
@@ -136,7 +137,7 @@ TYPED_TEST(OptimisersTest, sgd_optimiser_training)
   TypeParam gt;
   PrepareTestDataAndLabels1D(data, gt);
 
-  // Initialize Optimiser
+  // Initialise Optimiser
   fetch::ml::optimisers::SGDOptimiser<TypeParam> optimiser(g, {input_name}, label_name, output_name,
                                                            learning_rate);
 
@@ -182,7 +183,7 @@ TYPED_TEST(OptimisersTest, sgd_optimiser_training_2D)
   TypeParam gt;
   PrepareTestDataAndLabels2D(data, gt);
 
-  // Initialize Optimiser
+  // Initialise Optimiser
   fetch::ml::optimisers::SGDOptimiser<TypeParam> optimiser(g, {input_name}, label_name, output_name,
                                                            learning_rate);
 
@@ -228,7 +229,7 @@ TYPED_TEST(OptimisersTest, momentum_optimiser_training)
   TypeParam gt;
   PrepareTestDataAndLabels1D(data, gt);
 
-  // Initialize Optimiser
+  // Initialise Optimiser
   fetch::ml::optimisers::MomentumOptimiser<TypeParam> optimiser(g, {input_name}, label_name,
                                                                 output_name, learning_rate);
 
@@ -274,7 +275,7 @@ TYPED_TEST(OptimisersTest, momentum_optimiser_training_2D)
   TypeParam gt;
   PrepareTestDataAndLabels2D(data, gt);
 
-  // Initialize Optimiser
+  // Initialise Optimiser
   fetch::ml::optimisers::MomentumOptimiser<TypeParam> optimiser(g, {input_name}, label_name,
                                                                 output_name, learning_rate);
 
@@ -320,7 +321,7 @@ TYPED_TEST(OptimisersTest, adagrad_optimiser_training)
   TypeParam gt;
   PrepareTestDataAndLabels1D(data, gt);
 
-  // Initialize Optimiser
+  // Initialise Optimiser
   fetch::ml::optimisers::AdaGradOptimiser<TypeParam> optimiser(g, {input_name}, label_name,
                                                                output_name, learning_rate);
 
@@ -366,7 +367,7 @@ TYPED_TEST(OptimisersTest, adagrad_optimiser_training_2D)
   TypeParam gt;
   PrepareTestDataAndLabels2D(data, gt);
 
-  // Initialize Optimiser
+  // Initialise Optimiser
   fetch::ml::optimisers::AdaGradOptimiser<TypeParam> optimiser(g, {input_name}, label_name,
                                                                output_name, learning_rate);
 
@@ -412,7 +413,7 @@ TYPED_TEST(OptimisersTest, rmsprop_optimiser_training)
   TypeParam gt;
   PrepareTestDataAndLabels1D(data, gt);
 
-  // Initialize Optimiser
+  // Initialise Optimiser
   fetch::ml::optimisers::RMSPropOptimiser<TypeParam> optimiser(g, {input_name}, label_name,
                                                                output_name, learning_rate);
 
@@ -458,7 +459,7 @@ TYPED_TEST(OptimisersTest, rmsprop_optimiser_training_2D)
   TypeParam gt;
   PrepareTestDataAndLabels2D(data, gt);
 
-  // Initialize Optimiser
+  // Initialise Optimiser
   fetch::ml::optimisers::RMSPropOptimiser<TypeParam> optimiser(g, {input_name}, label_name,
                                                                output_name, learning_rate);
 
@@ -504,7 +505,7 @@ TYPED_TEST(OptimisersTest, adam_optimiser_training)
   TypeParam gt;
   PrepareTestDataAndLabels1D(data, gt);
 
-  // Initialize Optimiser
+  // Initialise Optimiser
   fetch::ml::optimisers::AdamOptimiser<TypeParam> optimiser(g, {input_name}, label_name,
                                                             output_name, learning_rate);
 
@@ -549,7 +550,7 @@ TYPED_TEST(OptimisersTest, adam_optimiser_training_2D)
   TypeParam gt;
   PrepareTestDataAndLabels2D(data, gt);
 
-  // Initialize Optimiser
+  // Initialise Optimiser
   fetch::ml::optimisers::AdamOptimiser<TypeParam> optimiser(g, {input_name}, label_name,
                                                             output_name, learning_rate);
 
@@ -588,14 +589,14 @@ TYPED_TEST(OptimisersTest, adam_optimiser_minibatch_training)
   std::string                                  output_name;
   std::shared_ptr<fetch::ml::Graph<TypeParam>> g =
 
-      PrepareTestGraph<TypeParam>(1, 1, input_name, label_name, output_name);
+      PrepareTestGraph<TypeParam>(1u, 1u, input_name, label_name, output_name);
 
   // Prepare data and labels
   TypeParam data;
   TypeParam gt;
   PrepareTestDataAndLabels1D(data, gt);
 
-  // Initialize Optimiser
+  // Initialise Optimiser
   fetch::ml::optimisers::AdamOptimiser<TypeParam> optimiser(g, {input_name}, label_name,
                                                             output_name, learning_rate);
 

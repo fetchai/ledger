@@ -42,8 +42,8 @@ TYPED_TEST(SigmoidTest, forward_test)
       R"(0.73106, 0.1192029, 0.952574, 0.01798620996, 0.993307149, 0.002472623156635, 0.999088948806, 0.000335350130466)");
 
   fetch::ml::ops::Sigmoid<ArrayType> op;
-  ArrayType                          prediction(op.ComputeOutputShape({data}));
-  op.Forward({data}, prediction);
+  ArrayType prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
+  op.Forward({std::make_shared<const ArrayType>(data)}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -74,8 +74,8 @@ TYPED_TEST(SigmoidTest, forward_3d_tensor_test)
   }
 
   fetch::ml::ops::Sigmoid<ArrayType> op;
-  ArrayType                          prediction(op.ComputeOutputShape({data}));
-  op.Forward({data}, prediction);
+  ArrayType prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
+  op.Forward({std::make_shared<const ArrayType>(data)}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -91,7 +91,7 @@ TYPED_TEST(SigmoidTest, backward_test)
   ArrayType gt    = ArrayType::FromString(R"(0, 0, 0, 0.00883135, 0.00664803, 0.00246651, 0, 0)");
 
   fetch::ml::ops::Sigmoid<ArrayType> op;
-  std::vector<ArrayType>             prediction = op.Backward({data}, error);
+  std::vector<ArrayType> prediction = op.Backward({std::make_shared<const ArrayType>(data)}, error);
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -124,7 +124,7 @@ TYPED_TEST(SigmoidTest, backward_3d_tensor_test)
   }
 
   fetch::ml::ops::Sigmoid<ArrayType> op;
-  std::vector<ArrayType>             prediction = op.Backward({data}, error);
+  std::vector<ArrayType> prediction = op.Backward({std::make_shared<const ArrayType>(data)}, error);
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));

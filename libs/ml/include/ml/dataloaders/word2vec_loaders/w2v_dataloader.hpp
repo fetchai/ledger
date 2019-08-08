@@ -373,7 +373,7 @@ typename W2VLoader<T>::SizeType W2VLoader<T>::window_size()
 }
 
 /**
- * converts string to indices and inserts into vocab as necessary
+ * converts string to indices and inserts into vocab as necessary
  * @tparam T
  * @param strings
  * @return

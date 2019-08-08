@@ -20,6 +20,8 @@
 #include "settings/setting.hpp"
 
 #include <istream>
+#include <ostream>
+#include <string>
 #include <unordered_set>
 
 namespace fetch {

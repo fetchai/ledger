@@ -38,7 +38,7 @@ class SubGraph : public Graph<T>, public Ops<T>
 {
 public:
   using ArrayType     = T;
-  using VecTensorType = std::vector<std::reference_wrapper<ArrayType const>>;
+  using VecTensorType = std::vector<std::shared_ptr<ArrayType const>>;
 
   virtual void                   Forward(VecTensorType const &inputs, ArrayType &output);
   virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
@@ -69,9 +69,9 @@ void SubGraph<T>::Forward(VecTensorType const &inputs, ArrayType &output)
   assert(inputs.size() == this->input_nodes_.size());
   for (uint64_t i(0); i < inputs.size(); ++i)
   {
-    this->SetInput(input_nodes_[i], inputs.at(i));
+    this->SetInput(input_nodes_[i], *(inputs.at(i)));
   }
-  output = output_node_->Evaluate(this->is_training_);
+  output = *(output_node_->Evaluate(this->is_training_));
 }
 
 template <typename T>
@@ -79,21 +79,35 @@ std::vector<T> SubGraph<T>::Backward(VecTensorType const &inputs, ArrayType cons
 {
   assert(inputs.size() == this->input_nodes_.size());
   FETCH_UNUSED(inputs);
+
   std::vector<std::pair<NodeInterface<T> *, ArrayType>> non_back_prop_err_signal =
       this->output_node_->BackPropagateSignal(error_signal);
   std::vector<ArrayType> back_prop_err_signal;
 
-  for (std::string const &s : input_nodes_)
+  // aggregate the error to each input, if there are more than one error signal for one input
+  for (size_t i = 0; i < input_nodes_.size(); i++)
   {
-    std::shared_ptr<NodeInterface<T>> node = this->nodes_[s];
+    bool                              is_first = true;
+    std::shared_ptr<NodeInterface<T>> node     = this->nodes_[input_nodes_[i]];
     for (auto const &grad : non_back_prop_err_signal)
     {
       if (grad.first == node.get())
       {
-        back_prop_err_signal.emplace_back(grad.second);
+        if (is_first)
+        {
+          back_prop_err_signal.emplace_back(grad.second);
+          is_first = false;
+        }
+        else
+        {
+          fetch::math::Add(back_prop_err_signal.at(i), grad.second, back_prop_err_signal.at(i));
+        }
       }
     }
+    // make sure every input node has at least one error signal
+    assert(!is_first);
   }
+
   return back_prop_err_signal;
 }
 

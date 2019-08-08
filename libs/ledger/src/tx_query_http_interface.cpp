@@ -16,8 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/tx_query_http_interface.hpp"
-
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/logger.hpp"
@@ -25,8 +23,14 @@
 #include "http/json_response.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
+#include "ledger/tx_query_http_interface.hpp"
 #include "miner/resource_mapper.hpp"
 #include "variant/variant.hpp"
+
+#include <cstddef>
+#include <memory>
+#include <utility>
+#include <vector>
 
 static constexpr char const *LOGGING_NAME = "TxQueryAPI";
 

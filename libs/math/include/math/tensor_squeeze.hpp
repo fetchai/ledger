@@ -18,16 +18,14 @@
 //------------------------------------------------------------------------------
 
 #include "math/base_types.hpp"
+#include "math/tensor_declaration.hpp"
 #include "math/tensor_slice_iterator.hpp"
+
 #include <cassert>
 #include <unordered_set>
 
 namespace fetch {
 namespace math {
-
-// need to forward declare
-template <typename T, typename C>
-class Tensor;
 
 /* Computes the shape resulting from squeezing.
  * @param a is the input shape.
@@ -161,7 +159,7 @@ inline void Reduce(F fnc, Tensor<T, C> const &input, Tensor<T, C> &output, SizeT
   {
     // Move the axis we want to reduce to the front
     // to make it iterable in the inner most loop.
-    it_a.MoveAxesToFront(axis);
+    it_a.MoveAxisToFront(axis);
   }
 
   N = it_a.range(0).total_steps;
@@ -199,7 +197,7 @@ inline void Reduce(F fnc, Tensor<T, C> const &input, Tensor<T, C> &output, SizeV
 
   // Move the axis we want to reduce to the front
   // to make it iterable in the inner most loop.
-  it_a.MoveAxesToFront(axes);
+  it_a.MoveAxisToFront(axes);
 
   N = 1;
   for (SizeType i = 0; i < axes.size(); ++i)

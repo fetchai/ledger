@@ -79,7 +79,7 @@ public:
   Variant() = default;
   Variant(Variant const &);
   Variant(Variant &&) noexcept = default;
-  ~Variant();
+  ~Variant()                   = default;
 
   template <typename T>
   explicit Variant(T const &value, meta::IfIsBoolean<T> * = nullptr);
@@ -294,12 +294,6 @@ inline Variant::Variant(Variant const &other)
 {
   *this = other;
 }
-
-/**
- * Destructor
- */
-inline Variant::~Variant()
-{}
 
 /**
  * Boolean constructor
@@ -561,7 +555,6 @@ meta::IfIsStdString<T, std::string> Variant::As() const
 template <typename T>
 meta::IfIsBoolean<T, Variant &> Variant::operator=(T const &value)
 {
-
   type_              = Type::BOOLEAN;
   primitive_.boolean = value;
 
@@ -578,7 +571,6 @@ meta::IfIsBoolean<T, Variant &> Variant::operator=(T const &value)
 template <typename T>
 meta::IfIsInteger<T, Variant &> Variant::operator=(T const &value)
 {
-
   type_              = Type::INTEGER;
   primitive_.integer = static_cast<int64_t>(value);
 
@@ -595,7 +587,6 @@ meta::IfIsInteger<T, Variant &> Variant::operator=(T const &value)
 template <typename T>
 meta::IfIsFloat<T, Variant &> Variant::operator=(T const &value)
 {
-
   type_                  = Type::FLOATING_POINT;
   primitive_.float_point = static_cast<double>(value);
 
@@ -612,7 +603,6 @@ meta::IfIsFloat<T, Variant &> Variant::operator=(T const &value)
 template <typename T>
 meta::IfIsFixedPoint<T, Variant &> Variant::operator=(T const &value)
 {
-
   type_              = Type::FIXED_POINT;
   primitive_.integer = value.Data();
 
@@ -629,7 +619,6 @@ meta::IfIsFixedPoint<T, Variant &> Variant::operator=(T const &value)
 template <typename T>
 meta::IfIsAByteArray<T, Variant &> Variant::operator=(T const &value)
 {
-
   type_   = Type::STRING;
   string_ = value;
 
@@ -646,7 +635,6 @@ meta::IfIsAByteArray<T, Variant &> Variant::operator=(T const &value)
 template <typename T>
 meta::IfIsStdString<T, Variant &> Variant::operator=(T const &value)
 {
-
   type_   = Type::STRING;
   string_ = ConstByteArray{value};
 
@@ -661,7 +649,6 @@ meta::IfIsStdString<T, Variant &> Variant::operator=(T const &value)
  */
 inline Variant &Variant::operator=(char const *value)
 {
-
   type_   = Type::STRING;
   string_ = ConstByteArray{value};
 

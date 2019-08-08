@@ -23,8 +23,8 @@
 
 
 
-int Set(fetch::vm::Token* token, const fetch::vm::Token::Kind kind, const char* text,
-	const uint16_t length, fetch::vm::Location* location)
+int Set(fetch::vm::Token *token, const fetch::vm::Token::Kind kind, char const *text,
+	uint16_t const length, fetch::vm::Location *location)
 {
 	//printf("kind=%d text=[%s] length=%d line=%d offset=%d\n",
 		//kind, text, length, location->line, location->offset);
@@ -175,6 +175,10 @@ IDENT		[_a-zA-Z][_a-zA-Z0-9]*
 "return"      {return Set(yylval, fetch::vm::Token::Kind::Return, yytext, yyleng, yyextra);}
 "break"       {return Set(yylval, fetch::vm::Token::Kind::Break, yytext, yyleng, yyextra);}
 "continue"    {return Set(yylval, fetch::vm::Token::Kind::Continue, yytext, yyleng, yyextra);}
+"persistent"  {return Set(yylval, fetch::vm::Token::Kind::Persistent, yytext, yyleng, yyextra);}
+"use"         {return Set(yylval, fetch::vm::Token::Kind::Use, yytext, yyleng, yyextra);}
+"as"          {return Set(yylval, fetch::vm::Token::Kind::As, yytext, yyleng, yyextra);}
+
 
 	/* identifiers */
 {IDENT} {

@@ -19,6 +19,9 @@
 
 #include "ml/ops/ops.hpp"
 
+#include <cassert>
+#include <vector>
+
 namespace fetch {
 namespace ml {
 namespace ops {
@@ -32,42 +35,42 @@ public:
   using SizeType      = typename ArrayType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
-  Exp()          = default;
-  virtual ~Exp() = default;
+  Exp()           = default;
+  ~Exp() override = default;
 
   /**
    * elementwise exp
    * @param inputs vector containing one tensor which is the input tensor to Exp
    * @return
    */
-  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
+  void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
     assert(inputs.size() == 1);
     assert(output.shape() == this->ComputeOutputShape(inputs));
 
-    fetch::math::Exp(inputs.at(0).get(), output);
+    fetch::math::Exp((*inputs.at(0)), output);
   }
 
   /**
    * elementwise exp gradient is:
    * f'(input0)= e^x * error_signal
    */
-  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                          ArrayType const &    error_signal)
+  std::vector<ArrayType> Backward(VecTensorType const &inputs,
+                                  ArrayType const &    error_signal) override
   {
     assert(inputs.size() == 1);
     assert(error_signal.shape() == this->ComputeOutputShape(inputs));
 
-    ArrayType ret_error_signal(inputs.at(0).get().shape());
-    fetch::math::Exp(inputs.at(0).get(), ret_error_signal);
+    ArrayType ret_error_signal(inputs.at(0)->shape());
+    fetch::math::Exp((*inputs.at(0)), ret_error_signal);
     fetch::math::Multiply(error_signal, ret_error_signal, ret_error_signal);
 
     return {ret_error_signal};
   }
 
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    return inputs.front().get().shape();
+    return inputs.front()->shape();
   }
 
   static constexpr char const *DESCRIPTOR = "Exp";

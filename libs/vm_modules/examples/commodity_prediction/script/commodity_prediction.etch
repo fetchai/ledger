@@ -74,7 +74,7 @@ if (testing)
     endwhile
 else
     // Set up the optimiser
-    var optimiser = AdamOptimiser(graph, "num_input", "softmax_3", "error");
+    var optimiser = Optimiser("adam", graph, "num_input", "softmax_3", "error");
 
     // Begin the training loop
     var training_iterations = 10;

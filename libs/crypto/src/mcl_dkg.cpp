@@ -17,9 +17,13 @@
 //------------------------------------------------------------------------------
 
 #include "crypto/mcl_dkg.hpp"
-#include <cstddef>
-#include <iostream>
+
 #include <mcl/bn256.hpp>
+
+#include <cassert>
+#include <cstddef>
+#include <stdexcept>
+#include <unordered_map>
 
 namespace bn = mcl::bn256;
 
@@ -30,7 +34,6 @@ namespace dkg {
  * LHS and RHS functions are used for checking consistency between publicly broadcasted coefficients
  * and secret shares distributed privately
  */
-
 bn::G2 ComputeLHS(bn::G2 &tmpG, bn::G2 const &G, bn::G2 const &H, bn::Fr const &share1,
                   bn::Fr const &share2)
 {
@@ -72,7 +75,7 @@ bn::G2 ComputeRHS(uint32_t rank, std::vector<bn::G2> const &input)
   tmpG.clear();
   rhsG.clear();
   assert(!input.empty());
-  // initialize rhsG
+  // initialise rhsG
   rhsG = input[0];
   UpdateRHS(rank, rhsG, input);
   return rhsG;
@@ -113,7 +116,7 @@ void ComputeShares(bn::Fr &s_i, bn::Fr &sprime_i, std::vector<bn::Fr> const &a_i
  * @param shares The value of polynomial at the points parties
  * @return The value of the polynomial evaluated at 0 (z_i)
  */
-bn::Fr ComputeZi(std::vector<uint32_t> const &parties, std::vector<bn::Fr> const &shares)
+bn::Fr ComputeZi(std::set<uint32_t> const &parties, std::vector<bn::Fr> const &shares)
 {
   // compute $z_i$ using Lagrange interpolation (without corrupted parties)
   bn::Fr z{0};
@@ -165,19 +168,18 @@ std::vector<bn::Fr> InterpolatePolynom(std::vector<bn::Fr> const &a, std::vector
   for (size_t k = 0; k < m; k++)
   {
     t1 = 1;
-    for (std::size_t i = k - 1; i != 0; i--)
+    for (long i = static_cast<long>(k - 1); i >= 0; i--)
     {
       bn::Fr::mul(t1, t1, a[k]);
-      bn::Fr::add(t1, t1, prod[i]);
+      bn::Fr::add(t1, t1, prod[static_cast<size_t>(i)]);
     }
 
     t2 = 0;
-    for (std::size_t i = k - 1; i != 0; i--)
+    for (long i = static_cast<long>(k - 1); i >= 0; i--)
     {
       bn::Fr::mul(t2, t2, a[k]);
-      bn::Fr::add(t2, t2, res[i]);
+      bn::Fr::add(t2, t2, res[static_cast<size_t>(i)]);
     }
-    //	throw false;
     bn::Fr::neg(t1, t1);
 
     bn::Fr::sub(t2, b[k], t2);
@@ -199,10 +201,10 @@ std::vector<bn::Fr> InterpolatePolynom(std::vector<bn::Fr> const &a, std::vector
       {
         bn::Fr::neg(t1, a[k]);
         bn::Fr::add(prod[k], t1, prod[k - 1]);
-        for (std::size_t i = k - 1; i >= 1; i--)
+        for (long i = static_cast<long>(k - 1); i >= 1; i--)
         {
-          bn::Fr::mul(t2, prod[i], t1);
-          bn::Fr::add(prod[i], t2, prod[i - 1]);
+          bn::Fr::mul(t2, prod[static_cast<size_t>(i)], t1);
+          bn::Fr::add(prod[static_cast<size_t>(i)], t2, prod[static_cast<size_t>(i - 1)]);
         }
         bn::Fr::mul(prod[0], prod[0], t1);
       }

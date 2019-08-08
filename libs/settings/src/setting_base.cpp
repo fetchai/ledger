@@ -19,6 +19,9 @@
 #include "settings/setting_base.hpp"
 #include "settings/setting_collection.hpp"
 
+#include <string>
+#include <utility>
+
 namespace fetch {
 namespace settings {
 
@@ -27,6 +30,16 @@ SettingBase::SettingBase(SettingCollection &reg, std::string &&name, std::string
   , description_{std::move(description)}
 {
   reg.Add(*this);
+}
+
+std::string const &SettingBase::name() const
+{
+  return name_;
+}
+
+std::string const &SettingBase::description() const
+{
+  return description_;
 }
 
 }  // namespace settings

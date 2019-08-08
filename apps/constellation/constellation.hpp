@@ -91,6 +91,7 @@ public:
     bool           sign_broadcasts{false};
     bool           dump_state_file{false};
     bool           load_state_file{false};
+    std::string    stakefile_location{""};
     bool           proof_of_stake{false};
     NetworkMode    network_mode{NetworkMode::PUBLIC_NETWORK};
     ConstByteArray beacon_address{};
@@ -173,10 +174,11 @@ private:
 
   /// @name Transaction and State Database shards
   /// @{
-  TxStatusCache        tx_status_cache_;  ///< Cache of transaction status
-  LaneServices         lane_services_;    ///< The lane services
-  StorageUnitClientPtr storage_;          ///< The storage client to the lane services
-  LaneRemoteControl    lane_control_;     ///< The lane control client for the lane services
+  TxStatusCache::ShrdPtr tx_status_cache_{
+      TxStatusCache::factory()};        ///< Cache of transaction status
+  LaneServices         lane_services_;  ///< The lane services
+  StorageUnitClientPtr storage_;        ///< The storage client to the lane services
+  LaneRemoteControl    lane_control_;   ///< The lane control client for the lane services
 
   DAGPtr             dag_;
   DAGServicePtr      dag_service_;

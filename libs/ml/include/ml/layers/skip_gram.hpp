@@ -39,10 +39,11 @@ template <class T>
 class SkipGram : public SubGraph<T>
 {
 public:
-  using ArrayType    = T;
-  using SizeType     = typename T::SizeType;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
-  using WeightsInit  = fetch::ml::ops::WeightsInitialisation;
+  using ArrayType     = T;
+  using SizeType      = typename T::SizeType;
+  using ArrayPtrType  = std::shared_ptr<ArrayType>;
+  using WeightsInit   = fetch::ml::ops::WeightsInitialisation;
+  using VecTensorType = typename SubGraph<T>::VecTensorType;
 
   SkipGram(SizeType in_size, SizeType out, SizeType embedding_size, SizeType vocab_size,
            std::string const &name = "SkipGram", WeightsInit init_mode = WeightsInit::XAVIER_GLOROT)
@@ -97,10 +98,9 @@ public:
     return embed_in_;
   }
 
-  virtual std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &inputs) const
+  virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
   {
-    return {inputs.front().get().shape().at(1), 1};
+    return {inputs.front()->shape().at(1), 1};
   }
 
   static constexpr char const *DESCRIPTOR = "SkipGram";

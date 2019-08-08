@@ -17,12 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "http/validators.hpp"
-#include "http/view_parameters.hpp"
-
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/logger.hpp"
+#include "http/validators.hpp"
+#include "http/view_parameters.hpp"
+
 #include <functional>
 #include <regex>
 #include <vector>
@@ -36,9 +36,9 @@ class Route
 {
 public:
   static constexpr char const *LOGGING_NAME = "HttpRoute";
-  using match_function_type =
+  using MatchFunction =
       std::function<bool(std::size_t &, byte_array::ByteArray const &, ViewParameters &)>;
-  using MatchingVector = std::vector<match_function_type>;
+  using MatchingVector = std::vector<MatchFunction>;
   using ParameterList  = std::vector<byte_array::ConstByteArray>;
   using ValidatorMap   = std::unordered_map<byte_array::ConstByteArray, validators::Validator>;
 
@@ -191,7 +191,7 @@ private:
           {
             if (matches.size() != 1)
             {
-              // Ambigous matches are treated as non-matches.
+              // Ambiguous matches are treated as non-matches.
               return false;
             }
 

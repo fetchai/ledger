@@ -41,7 +41,7 @@ public:
 
   void Anneal()
   {
-    Initialize();
+    Initialise();
     SetBeta(beta0_);
 
     double          db = (beta1_ - beta0_) / double(sweeps_ - 1);
@@ -263,7 +263,7 @@ public:
     beta1_ = b1;
   }
 
-  void Initialize()
+  void Initialise()
   {
     attempts_ = 0;
     accepted_ = 0;

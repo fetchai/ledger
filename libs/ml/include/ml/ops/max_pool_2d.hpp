@@ -55,7 +55,7 @@ public:
   {
     assert(inputs.size() == 1);
     // Input must be a 4D tensor [C x W x H x N]
-    assert(inputs.at(0).get().shape().size() == 4);
+    assert(inputs.at(0)->shape().size() == 4);
     assert(output.shape() == ComputeOutputShape(inputs));
 
     SizeType iterw;
@@ -76,14 +76,14 @@ public:
 
           for (SizeType c{0}; c < output.shape().at(0); ++c)  // Iterate over output channels
           {
-            max = inputs.at(0).get().At(c, iterw, iterh, n_i);
+            max = inputs.at(0)->At(c, iterw, iterh, n_i);
 
             // Get maximum value on kernel_size_ x kernel_size_ window
             for (SizeType jw{0}; jw < kernel_size_; jw++)  // Iterate over kernel width
             {
               for (SizeType jh{0}; jh < kernel_size_; jh++)  // Iterate over kernel width
               {
-                val = inputs.at(0).get().At(c, iterw + jw, iterh + jh, n_i);
+                val = inputs.at(0)->At(c, iterw + jw, iterh + jh, n_i);
                 if (val > max)
                 {
                   max = val;
@@ -116,7 +116,7 @@ public:
   {
     assert(inputs.size() == 1);
     assert(error_signal.shape() == ComputeOutputShape(inputs));
-    ArrayType return_signal{inputs.at(0).get().shape()};
+    ArrayType return_signal{inputs.at(0)->shape()};
 
     SizeType iterh;
     SizeType iterw;
@@ -138,7 +138,7 @@ public:
           // Iterate over output channels
           for (SizeType c{0}; c < error_signal.shape().at(0); ++c)
           {
-            max       = inputs.at(0).get().At(c, iterw, iterh, n_i);
+            max       = inputs.at(0)->At(c, iterw, iterh, n_i);
             max_iterw = iterw;
             max_iterh = iterh;
 
@@ -148,7 +148,7 @@ public:
               for (SizeType jh{0}; jh < kernel_size_; jh++)  // Iterate over kernel width
               {
 
-                val = inputs.at(0).get().At(c, iterw + jw, iterh + jh, n_i);
+                val = inputs.at(0)->At(c, iterw + jw, iterh + jh, n_i);
                 if (val > max)
                 {
                   max       = val;
@@ -175,15 +175,15 @@ public:
     std::vector<SizeType> output_shape;
 
     // output_shape_[0]=number of output channels
-    output_shape.emplace_back(inputs.at(0).get().shape().at(0));
+    output_shape.emplace_back(inputs.at(0)->shape().at(0));
     // output_shape_[1]=number of stride_size steps over input height
-    output_shape.emplace_back((inputs.at(0).get().shape().at(1) - (kernel_size_ - stride_size_)) /
+    output_shape.emplace_back((inputs.at(0)->shape().at(1) - (kernel_size_ - stride_size_)) /
                               stride_size_);
     // output_shape_[2]=number of stride_size steps over input width
-    output_shape.emplace_back((inputs.at(0).get().shape().at(2) - (kernel_size_ - stride_size_)) /
+    output_shape.emplace_back((inputs.at(0)->shape().at(2) - (kernel_size_ - stride_size_)) /
                               stride_size_);
     // output_shape_[3]=batch dimension
-    output_shape.emplace_back(inputs.at(0).get().shape().at(3));
+    output_shape.emplace_back(inputs.at(0)->shape().at(3));
     return output_shape;
   }
 

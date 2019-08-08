@@ -16,17 +16,19 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logging.hpp"
+#include "core/string/starts_with.hpp"
 #include "http/middleware/telemetry.hpp"
 #include "telemetry/counter_map.hpp"
 #include "telemetry/histogram_map.hpp"
 #include "telemetry/registry.hpp"
 
 #include <memory>
+#include <string>
 
 namespace fetch {
 namespace http {
 namespace middleware {
+
 namespace {
 
 using telemetry::CounterMapPtr;
@@ -59,11 +61,13 @@ private:
 
 void TelemetryData::Update(HTTPRequest const &request, HTTPResponse const &response)
 {
-  FETCH_UNUSED(response);
-
-  auto const path        = static_cast<std::string>(request.uri());
+  auto       path        = static_cast<std::string>(request.uri());
   auto const status_code = std::to_string(static_cast<int>(response.status()));
 
+  if (core::StartsWith(path, "/api/tx/"))
+  {
+    path = "/api/tx";
+  }
   // update the duration stats
   durations_->Add(path, request.GetDuration());
 
@@ -71,11 +75,9 @@ void TelemetryData::Update(HTTPRequest const &request, HTTPResponse const &respo
   status_counts_->Increment({{"path", path}, {"code", status_code}});
 }
 
-using TelemetryDataPtr = std::shared_ptr<TelemetryData>();
-
 }  // namespace
 
-HTTPServer::response_middleware_type Telemetry()
+HTTPServer::ResponseMiddleware Telemetry()
 {
   // create the data structure
   auto data = std::make_shared<TelemetryData>();

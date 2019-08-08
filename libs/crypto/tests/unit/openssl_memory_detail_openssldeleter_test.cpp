@@ -16,12 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/openssl_memory.hpp"
-
-#include <functional>
-#include <memory>
+#include "crypto/openssl_memory_detail.hpp"
 
 #include "gmock/gmock.h"
+
+#include <memory>
+#include <type_traits>
+#include <utility>
 
 namespace fetch {
 namespace crypto {
