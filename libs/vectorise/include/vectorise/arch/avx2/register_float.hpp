@@ -31,6 +31,7 @@
 namespace fetch {
 namespace vectorise {
 
+// ADD_REGISTER_SIZE(float, 128);
 ADD_REGISTER_SIZE(float, 256);
 
 template <>

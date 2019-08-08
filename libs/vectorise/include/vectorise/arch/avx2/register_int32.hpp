@@ -126,18 +126,16 @@ public:
   {
     data_ = _mm256_load_si256(reinterpret_cast<mm_register_type const *>(list.begin()));
   }
+  VectorRegister(mm_register_type const &d)
+    : data_(d)
+  {}
+  VectorRegister(mm_register_type &&d)
+    : data_(d)
+  {}
   VectorRegister(type const &c)
   {
     data_ = _mm256_set1_epi32(c);
   }
-
-  VectorRegister(mm_register_type const &d)
-    : data_(d)
-  {}
-
-  VectorRegister(mm_register_type &&d)
-    : data_(d)
-  {}
 
   explicit operator mm_register_type()
   {

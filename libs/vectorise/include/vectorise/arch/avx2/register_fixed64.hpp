@@ -350,10 +350,15 @@ inline VectorRegister<fixed_point::fp64_t, 128> shift_elements_right(
 }
 
 inline fixed_point::fp64_t first_element(
-    VectorRegister<fixed_point::fp64_t, 128> const & /*x*/)
+    VectorRegister<fixed_point::fp64_t, 128> const &x)
 {
-  throw std::runtime_error("first_element not implemented.");
-  return fixed_point::fp64_t{};
+  return fixed_point::fp64_t::FromBase(first_element(VectorRegister<int64_t, 128>(x.data())));
+}
+
+inline fixed_point::fp64_t first_element(
+    VectorRegister<fixed_point::fp64_t, 256> const &x)
+{
+  return fixed_point::fp64_t::FromBase(first_element(VectorRegister<int64_t, 256>(x.data())));
 }
 
 inline fixed_point::fp64_t reduce(VectorRegister<fixed_point::fp64_t, 128> const &x)

@@ -379,9 +379,15 @@ inline VectorRegister<fixed_point::fp32_t, 128> shift_elements_right(
 }
 
 inline fixed_point::fp32_t first_element(
-    VectorRegister<fixed_point::fp32_t, 128> const & x)
+    VectorRegister<fixed_point::fp32_t, 128> const &x)
 {
-  return static_cast<fixed_point::fp32_t>(_mm_extract_epi32(x.data(), 0));
+  return fixed_point::fp32_t::FromBase(first_element(VectorRegister<int32_t, 128>(x.data())));
+}
+
+inline fixed_point::fp32_t first_element(
+    VectorRegister<fixed_point::fp32_t, 256> const &x)
+{
+  return fixed_point::fp32_t::FromBase(first_element(VectorRegister<int32_t, 256>(x.data())));
 }
 
 inline fixed_point::fp32_t reduce(VectorRegister<fixed_point::fp32_t, 128> const &x)
