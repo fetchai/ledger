@@ -301,14 +301,6 @@ struct OpWeightsSaveableParams : public SaveableParamsInterface
   std::shared_ptr<TensorType> gradient_accumulation;
   RegularisationType          regularisation_type;
   typename TensorType::Type   regularisation_rate;
-
-  OpWeightsSaveableParams()
-    : SaveableParamsInterface(OpType::OP_WEIGHTS)
-  {}
-
-  explicit OpWeightsSaveableParams(OpType operation_type)
-    : SaveableParamsInterface(operation_type)
-  {}
 };
 
 }  // namespace ml
