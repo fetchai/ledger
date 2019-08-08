@@ -49,7 +49,10 @@ public:
   std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
     SPType sp{};
-    return std::make_shared<SPType>(sp);
+    auto   ret = std::make_shared<SPType>(sp);
+
+    ret->input_shape = input_shape_;
+    return ret;
   }
 
   void Forward(VecTensorType const &inputs, ArrayType &output) override
@@ -96,7 +99,7 @@ public:
   static constexpr char const *DESCRIPTOR = "Flatten";
 
 private:
-  std::vector<std::uint64_t> input_shape_;
+  std::vector<SizeType> input_shape_;
 };
 
 }  // namespace ops

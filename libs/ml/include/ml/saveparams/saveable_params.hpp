@@ -111,7 +111,8 @@ struct OpAbsSaveableParams : public SaveableParamsInterface
 template <class TensorType>
 struct OpAddSaveableParams : public SaveableParamsInterface
 {
-  fetch::ml::OpType op_type = OpType::OP_ADD;
+  fetch::ml::OpType                  op_type = OpType::OP_ADD;
+  std::vector<fetch::math::SizeType> axes{};
 };
 
 /**
@@ -222,7 +223,8 @@ struct OpExpSaveableParams : public SaveableParamsInterface
 template <class TensorType>
 struct OpFlattenSaveableParams : public SaveableParamsInterface
 {
-  fetch::ml::OpType op_type = OpType::OP_FLATTEN;
+  fetch::ml::OpType                  op_type = OpType::OP_FLATTEN;
+  std::vector<fetch::math::SizeType> input_shape;
 };
 
 template <class TensorType>
@@ -258,10 +260,11 @@ struct LayerConvolution2DSaveableParams : SubGraphSaveableParams<TensorType>
 template <class TensorType>
 struct LayerFullyConnectedSaveableParams : SubGraphSaveableParams<TensorType>
 {
-  using SizeType             = typename TensorType::SizeType;
-  fetch::ml::OpType op_type  = OpType::LAYER_FULLY_CONNECTED;
-  SizeType          in_size  = fetch::math::numeric_max<SizeType>();
-  SizeType          out_size = fetch::math::numeric_max<SizeType>();
+  using SizeType                     = typename TensorType::SizeType;
+  fetch::ml::OpType op_type          = OpType::LAYER_FULLY_CONNECTED;
+  SizeType          in_size          = fetch::math::numeric_max<SizeType>();
+  SizeType          out_size         = fetch::math::numeric_max<SizeType>();
+  bool              time_distributed = false;
 };
 
 /**
@@ -344,7 +347,29 @@ struct OpLogSoftmaxSaveableParams : public SaveableParamsInterface
 template <class TensorType>
 struct OpMatrixMultiplySaveableParams : public SaveableParamsInterface
 {
+  using SizeType   = fetch::math::SizeType;
+  using SizeVector = std::vector<SizeType>;
+
   fetch::ml::OpType op_type = OpType::OP_MATRIX_MULTIPLY;
+
+  TensorType error_signal_1;
+  TensorType error_signal_2;
+
+  // forward pass
+  SizeVector fwd_input_shape_1{};
+  SizeVector fwd_input_shape_2{};
+  TensorType output_view_tensor;
+  TensorType fwd_in1_view_tensor;
+  TensorType fwd_in2_view_tensor;
+
+  // backward pass
+  SizeVector back_input_shape_1{};
+  SizeVector back_input_shape_2{};
+  TensorType back_in1_view_tensor;
+  TensorType back_in2_view_tensor;
+  TensorType err_sig_view_tensor;
+  TensorType err1;
+  TensorType err2;
 };
 
 template <class TensorType>
@@ -440,7 +465,7 @@ struct OpPlaceholderSaveableParams : public SaveableParamsInterface
 };
 
 /**
- * Saveable parameters for Flatten op
+ * Saveable parameters for Layer PRelu saveable params
  * @tparam TensorType
  */
 template <class TensorType>
@@ -545,8 +570,10 @@ struct LayerSkipGramSaveableParams : SubGraphSaveableParams<TensorType>
 template <class TensorType>
 struct OpSoftmaxSaveableParams : public SaveableParamsInterface
 {
-  fetch::math::SizeType axis    = fetch::math::numeric_max<fetch::math::SizeType>();
-  fetch::ml::OpType     op_type = OpType::OP_SOFTMAX;
+  fetch::math::SizeType              axis = fetch::math::numeric_max<fetch::math::SizeType>();
+  std::vector<fetch::math::SizeType> axes{};
+  fetch::ml::OpType                  op_type = OpType::OP_SOFTMAX;
+
 };
 
 /**

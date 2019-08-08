@@ -153,13 +153,15 @@ TYPED_TEST(SerializersTest, serialize_graph_saveable_params)
 
   g->SetInput("Input", data.Transpose());
   TensorType prediction3 = g->Evaluate(output);
-  //  std::cout << "prediction3.ToString(): " << prediction3.ToString() << std::endl;
 
   g2->SetInput("Input", data.Transpose());
   TensorType prediction4 = g2->Evaluate(output);
 
   EXPECT_FALSE(prediction.AllClose(prediction3, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));
+
+  std::cout << "prediction3.ToString(): " << prediction3.ToString() << std::endl;
+  std::cout << "prediction4.ToString(): " << prediction4.ToString() << std::endl;
 
   EXPECT_TRUE(prediction3.AllClose(prediction4, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));

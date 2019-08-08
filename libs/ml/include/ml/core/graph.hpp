@@ -342,7 +342,7 @@ GraphSaveableParams<ArrayType> Graph<ArrayType>::GetGraphSaveableParams()
     (gs.nodes).insert(std::make_pair(node.first, nsp));
   }
 
-  gs.trainable_lookup_ = trainable_lookup_;
+  gs.trainable_lookup = trainable_lookup_;
 
   return gs;
 }
@@ -358,13 +358,17 @@ void Graph<ArrayType>::SetGraphSaveableParams(GraphSaveableParams<ArrayType> con
     LinkNodesInGraph(node.first, node.second);
   }
 
-  trainable_lookup_ = sp.trainable_lookup_;
+  trainable_lookup_ = sp.trainable_lookup;
 
   trainable_ = std::vector<TrainablePtrType>(trainable_lookup_.size());
-  for (auto &node : sp.trainable_lookup_)
+  for (auto &node : sp.trainable_lookup)
   {
-    trainable_[node.second] =
-        std::dynamic_pointer_cast<fetch::ml::ops::Trainable<ArrayType>>(nodes_[node.first]);
+    auto node_ptr = nodes_.at(node.first);
+    auto trainable_ptr =
+        std::dynamic_pointer_cast<fetch::ml::ops::Trainable<ArrayType>>(node_ptr->GetOp());
+    assert(trainable_ptr);
+
+    trainable_[node.second] = trainable_ptr;
   }
 }
 

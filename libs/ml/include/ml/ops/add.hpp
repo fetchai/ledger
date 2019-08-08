@@ -47,7 +47,9 @@ public:
 
   std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
-    return std::make_shared<SPType>();
+    auto ret  = std::make_shared<SPType>();
+    ret->axes = axes_;
+    return ret;
   }
 
   // for inputs to the add layer, if broadcasting is required, make sure the first input is the one
@@ -105,7 +107,7 @@ private:
     {
       if (inputs.at(0)->shape().at(i) != inputs.at(1)->shape().at(i))
       {
-        if (cnt >= this->axes_.size() || this->axes_.at(cnt) != i)
+        if (cnt >= axes_.size() || axes_.at(cnt) != i)
         {
           axes_changed = true;
           break;
@@ -114,7 +116,7 @@ private:
       }
     }
 
-    if (this->axes_.size() == 0)
+    if (axes_.size() == 0)
     {
       axes_changed = true;
     }
@@ -122,13 +124,13 @@ private:
     // Update axes if necessary
     if (axes_changed)
     {
-      this->axes_.clear();
+      axes_.clear();
       // Get axes
       for (SizeType i{0}; i < inputs.at(0)->shape().size(); i++)
       {
         if (inputs.at(0)->shape().at(i) != inputs.at(1)->shape().at(i))
         {
-          this->axes_.emplace_back(i);
+          axes_.emplace_back(i);
         }
       }
     }
