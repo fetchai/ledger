@@ -64,7 +64,7 @@ public:
   void     Reset(bool is_test = false) override;
 
 protected:
-  SizeType train_cursor_  = 0;
+  SizeType train_cursor_ = 0;
   SizeType n_samples_    = 0;  // number of data samples
 
   TensorType data_;
@@ -83,7 +83,11 @@ template <typename LabelType, typename InputType>
 typename TensorDataLoader<LabelType, InputType>::ReturnType
 TensorDataLoader<LabelType, InputType>::GetNext(bool is_test)
 {
-  (void)is_test;
+  if (is_test)
+  {
+    throw std::runtime_error("Validation set splitting not implemented yet");
+  }
+
   if (this->random_mode_)
   {
     throw std::runtime_error("random mode not implemented for tensor dataloader");
@@ -118,21 +122,33 @@ template <typename LabelType, typename InputType>
 typename TensorDataLoader<LabelType, InputType>::SizeType
 TensorDataLoader<LabelType, InputType>::Size(bool is_test) const
 {
-  (void)is_test;
+  if (is_test)
+  {
+    throw std::runtime_error("Validation set splitting not implemented yet");
+  }
+
   return n_samples_;
 }
 
 template <typename LabelType, typename InputType>
 bool TensorDataLoader<LabelType, InputType>::IsDone(bool is_test) const
 {
-  (void)is_test;
+  if (is_test)
+  {
+    throw std::runtime_error("Validation set splitting not implemented yet");
+  }
+
   return (train_cursor_ >= data_.shape(batch_data_dim_));
 }
 
 template <typename LabelType, typename InputType>
 void TensorDataLoader<LabelType, InputType>::Reset(bool is_test)
 {
-  (void)is_test;
+  if (is_test)
+  {
+    throw std::runtime_error("Validation set splitting not implemented yet");
+  }
+
   train_cursor_ = 0;
 }
 

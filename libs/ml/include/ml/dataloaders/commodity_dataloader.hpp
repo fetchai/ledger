@@ -120,14 +120,22 @@ template <typename LabelType, typename InputType>
 typename CommodityDataLoader<LabelType, InputType>::SizeType
 CommodityDataLoader<LabelType, InputType>::Size(bool is_test) const
 {
-  (void)is_test;
+  if (is_test)
+  {
+    throw std::runtime_error("Validation set splitting not implemented yet");
+  }
+
   return static_cast<SizeType>(size_);
 }
 
 template <typename LabelType, typename InputType>
 bool CommodityDataLoader<LabelType, InputType>::IsDone(bool is_test) const
 {
-  (void)is_test;
+  if (is_test)
+  {
+    throw std::runtime_error("Validation set splitting not implemented yet");
+  }
+
   return cursor_ >= size_;
 }
 
@@ -137,7 +145,11 @@ bool CommodityDataLoader<LabelType, InputType>::IsDone(bool is_test) const
 template <typename LabelType, typename InputType>
 void CommodityDataLoader<LabelType, InputType>::Reset(bool is_test)
 {
-  (void)is_test;
+  if (is_test)
+  {
+    throw std::runtime_error("Validation set splitting not implemented yet");
+  }
+
   cursor_ = 0;
 }
 

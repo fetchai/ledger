@@ -114,7 +114,11 @@ W2VLoader<T>::W2VLoader(SizeType window_size, SizeType negative_samples, bool mo
 template <typename T>
 math::SizeType W2VLoader<T>::Size(bool is_test) const
 {
-  (void)is_test;
+  if (is_test)
+  {
+    throw std::runtime_error("Validation set splitting not implemented yet");
+  }
+
   SizeType size(0);
   for (auto const &s : data_)
   {
@@ -135,7 +139,11 @@ math::SizeType W2VLoader<T>::Size(bool is_test) const
 template <typename T>
 bool W2VLoader<T>::IsDone(bool is_test) const
 {
-  (void)is_test;
+  if (is_test)
+  {
+    throw std::runtime_error("Validation set splitting not implemented yet");
+  }
+
   if (current_sentence_ >= data_.size())
   {
     return true;
@@ -157,7 +165,11 @@ bool W2VLoader<T>::IsDone(bool is_test) const
 template <typename T>
 void W2VLoader<T>::Reset(bool is_test)
 {
-  (void)is_test;
+  if (is_test)
+  {
+    throw std::runtime_error("Validation set splitting not implemented yet");
+  }
+
   current_sentence_ = 0;
   current_word_     = 0;
   rng_.Seed(1337);
@@ -276,7 +288,11 @@ void W2VLoader<T>::GetNext(ReturnType &ret)
 template <typename T>
 typename W2VLoader<T>::ReturnType W2VLoader<T>::GetNext(bool is_test)
 {
-  (void)is_test;
+  if (is_test)
+  {
+    throw std::runtime_error("Validation set splitting not implemented yet");
+  }
+
   ReturnType p(label_, {target_});
   GetNext(p);
   return p;
