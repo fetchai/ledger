@@ -229,16 +229,19 @@ public:
     *sg_ptr2     = *sg_ptr1;
 
     // asign layer specific params
-    ret->in_size  = in_size_;
-    ret->out_size = out_size_;
+    ret->in_size          = in_size_;
+    ret->out_size         = out_size_;
+    ret->time_distributed = time_distributed_;
+
     return ret;
   }
 
   void SetOpSaveableParams(SPType const &sp)
   {
     // assign layer specific params
-    in_size_  = sp.in_size;
-    out_size_ = sp.out_size;
+    in_size_          = sp.in_size;
+    out_size_         = sp.out_size;
+    time_distributed_ = sp.time_distributed;
   }
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
@@ -270,9 +273,9 @@ public:
   static constexpr char const *DESCRIPTOR = "FullyConnected";
 
 private:
-  SizeType in_size_;
-  SizeType out_size_;
-  bool     time_distributed_;
+  SizeType in_size_          = fetch::math::numeric_max<SizeType>();
+  SizeType out_size_         = fetch::math::numeric_max<SizeType>();
+  bool     time_distributed_ = false;
 
   void Initialise(TensorType &weights, WeightsInit init_mode)
   {
