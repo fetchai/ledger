@@ -88,7 +88,15 @@ public:
     }
     tp.gradient_accumulation = std::make_shared<ArrayType>(gradient_accumulation_->Copy());
 
-    tp.regularisation_type = this->regulariser_->reg_type;
+    if (this->regulariser_)
+    {
+      tp.regularisation_type = this->regulariser_->reg_type;
+    }
+    else
+    {
+      tp.regularisation_type = RegularisationType::NONE;
+    }
+
     tp.regularisation_rate = this->regularisation_rate_;
     return std::make_shared<SPType>(tp);
   }
