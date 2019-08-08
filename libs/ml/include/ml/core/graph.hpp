@@ -165,10 +165,6 @@ bool Graph<ArrayType>::SetRegularisation(std::string node_name, RegPtrType regul
 template <typename ArrayType>
 ArrayType Graph<ArrayType>::Evaluate(std::string const &node_name, bool is_training)
 {
-  auto fc_ptr =
-      std::dynamic_pointer_cast<fetch::ml::Graph<ArrayType>>(this->nodes_.at("FC1")->GetOp());
-  FETCH_UNUSED(fc_ptr);
-
   if (nodes_.find(node_name) != nodes_.end())
   {
     return *(nodes_[node_name]->Evaluate(is_training));
@@ -187,10 +183,6 @@ ArrayType Graph<ArrayType>::Evaluate(std::string const &node_name, bool is_train
 template <typename ArrayType>
 void Graph<ArrayType>::BackPropagateError(std::string const &node_name)
 {
-  auto fc_ptr =
-      std::dynamic_pointer_cast<fetch::ml::Graph<ArrayType>>(this->nodes_.at("FC1")->GetOp());
-  FETCH_UNUSED(fc_ptr);
-
   ArrayType error_signal;
   nodes_[node_name]->BackPropagateSignal(error_signal);
 
@@ -217,9 +209,6 @@ void Graph<ArrayType>::BackPropagateSignal(std::string const &node_name,
 template <typename ArrayType>
 void Graph<ArrayType>::Step(DataType learning_rate)
 {
-  auto fc_ptr =
-      std::dynamic_pointer_cast<fetch::ml::Graph<ArrayType>>(this->nodes_.at("FC1")->GetOp());
-  FETCH_UNUSED(fc_ptr);
   for (auto &t : trainable_)
   {
     t->Step(learning_rate);

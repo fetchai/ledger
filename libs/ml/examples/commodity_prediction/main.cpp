@@ -31,7 +31,6 @@
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "ml/state_dict.hpp"
 
-
 #include <fstream>
 #include <iostream>
 #include <sstream>
