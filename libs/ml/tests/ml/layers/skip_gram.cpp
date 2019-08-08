@@ -77,6 +77,5 @@ TYPED_TEST(SkipGramTest, saveparams_test)
 
   TypeParam output2 = sa2->Evaluate("SkipGram_Sigmoid", true);
 
-  ASSERT_TRUE(output.AllClose(output2, fetch::math::function_tolerance<DataType>(),
-                              fetch::math::function_tolerance<DataType>()));
+  ASSERT_TRUE(output.AllClose(output2, static_cast<DataType>(0), static_cast<DataType>(0)));
 }

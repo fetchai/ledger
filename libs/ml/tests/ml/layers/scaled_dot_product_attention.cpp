@@ -192,6 +192,5 @@ TYPED_TEST(ScaledDotProductAttention, saveparams_test)
 
   TypeParam output2 = sa2->Evaluate("ScaledDotProductAttention_Value_Weight_MatMul", true);
 
-  ASSERT_TRUE(output.AllClose(output2, fetch::math::function_tolerance<DataType>(),
-                              fetch::math::function_tolerance<DataType>()));
+  ASSERT_TRUE(output.AllClose(output2, static_cast<DataType>(0), static_cast<DataType>(0)));
 }

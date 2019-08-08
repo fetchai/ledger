@@ -120,6 +120,5 @@ TYPED_TEST(SelfAttentionEncoder, saveparams_test)
   sa2->SetInput("SelfAttentionEncoder_Input", data);
   TypeParam output2 = sa2->Evaluate("SelfAttentionEncoder_Feedforward_Residual_LayerNorm", true);
 
-  ASSERT_TRUE(output.AllClose(output2, fetch::math::function_tolerance<DataType>(),
-                              fetch::math::function_tolerance<DataType>()));
+  ASSERT_TRUE(output.AllClose(output2, static_cast<DataType>(0), static_cast<DataType>(0)));
 }

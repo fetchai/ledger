@@ -224,6 +224,5 @@ TYPED_TEST(LayerNormTest, saveparams_test)
 
   TypeParam output2 = sa2->Evaluate("LayerNorm_Beta_Addition", true);
 
-  ASSERT_TRUE(output.AllClose(output2, fetch::math::function_tolerance<DataType>(),
-                              fetch::math::function_tolerance<DataType>()));
+  ASSERT_TRUE(output.AllClose(output2, static_cast<DataType>(0), static_cast<DataType>(0)));
 }

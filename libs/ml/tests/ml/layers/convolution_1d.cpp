@@ -460,6 +460,5 @@ TYPED_TEST(Convolution1DTest, saveparams_test)
   conv2->SetInput("Conv1D_Input", input);
   TypeParam output2 = conv2->Evaluate("Conv1D_Conv1D", true);
 
-  ASSERT_TRUE(output.AllClose(output2, fetch::math::function_tolerance<DataType>(),
-                              fetch::math::function_tolerance<DataType>()));
+  ASSERT_TRUE(output.AllClose(output2, static_cast<DataType>(0), static_cast<DataType>(0)));
 }

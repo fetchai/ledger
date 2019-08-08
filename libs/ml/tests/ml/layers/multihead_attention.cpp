@@ -162,6 +162,5 @@ TYPED_TEST(MultiheadAttention, saveparams_test)
 
   TypeParam output2 = sa2->Evaluate("MultiheadAttention_Final_Transformation", true);
 
-  ASSERT_TRUE(output.AllClose(output2, fetch::math::function_tolerance<DataType>(),
-                              fetch::math::function_tolerance<DataType>()));
+  ASSERT_TRUE(output.AllClose(output2, static_cast<DataType>(0), static_cast<DataType>(0)));
 }

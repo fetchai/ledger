@@ -200,6 +200,5 @@ TYPED_TEST(PReluTest, saveparams_test)
   prelu2->SetInput("PRelu_Input", data);
   TypeParam output2 = prelu2->Evaluate("PRelu_LeakyReluOp", true);
 
-  ASSERT_TRUE(output.AllClose(output2, fetch::math::function_tolerance<DataType>(),
-                              fetch::math::function_tolerance<DataType>()));
+  ASSERT_TRUE(output.AllClose(output2, static_cast<DataType>(0), static_cast<DataType>(0)));
 }

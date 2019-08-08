@@ -614,6 +614,5 @@ TYPED_TEST(FullyConnectedTest, saveparams_test)
   fc2->SetInput("FullyConnected_Input", input);
   TypeParam output2 = fc2->Evaluate("FullyConnected_MatrixMultiply", true);
 
-  ASSERT_TRUE(output.AllClose(output2, fetch::math::function_tolerance<DataType>(),
-                              fetch::math::function_tolerance<DataType>()));
+  ASSERT_TRUE(output.AllClose(output2, static_cast<DataType>(0), static_cast<DataType>(0)));
 }
