@@ -54,12 +54,10 @@ public:
     assert(inputs.size() == 2);
     assert(output.shape() == this->ComputeOutputShape(inputs));
 
-    if (fill_array_.shape() != inputs.at(1)->shape())
-    {
-      fill_array_.Reshape(inputs.at(1)->shape());
-      fill_array_.Fill(fill_value_);
-    }
-    fetch::math::Switch(*(inputs.at(0)), *(inputs.at(1)), fill_array_, output);
+    fetch::math::Multiply(*(inputs.at(0)), *(inputs.at(1)), output);
+    ArrayType inv_mask = fetch::math::Subtract(static_cast<DataType>(1), *(inputs.at(0)));
+    fetch::math::Multiply(inv_mask, fill_value_, inv_mask);
+    fetch::math::Add(output, inv_mask, output);
   }
 
   /**
@@ -90,8 +88,7 @@ public:
   static constexpr char const *DESCRIPTOR = "MaskFill";
 
 private:
-  DataType  fill_value_;
-  ArrayType fill_array_;
+  DataType fill_value_;
 };
 
 }  // namespace ops
