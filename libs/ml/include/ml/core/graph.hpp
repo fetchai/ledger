@@ -86,7 +86,6 @@ public:
   void                   ApplyGradients(std::vector<ArrayType> &grad);
 
   std::vector<TrainablePtrType>             GetTrainable();
-  std::unordered_map<std::string, SizeType> GetTrainableLookup();
 
   void                           ResetGradients();
   GraphSaveableParams<ArrayType> GetGraphSaveableParams();
@@ -625,13 +624,6 @@ std::vector<typename std::shared_ptr<fetch::ml::ops::Trainable<ArrayType>>>
 Graph<ArrayType>::GetTrainable()
 {
   return trainable_;
-}
-
-template <typename ArrayType>
-std::unordered_map<std::string, typename Graph<ArrayType>::SizeType>
-Graph<ArrayType>::GetTrainableLookup()
-{
-  return trainable_lookup_;
 }
 
 }  // namespace ml
