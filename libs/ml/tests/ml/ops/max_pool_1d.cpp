@@ -36,12 +36,12 @@ TYPED_TEST_CASE(MaxPool1DTest, MyTypes);
 
 TYPED_TEST(MaxPool1DTest, forward_test_3_2_2)
 {
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
-  using SizeType  = typename TypeParam::SizeType;
+  using DataType   = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using SizeType   = typename TypeParam::SizeType;
 
-  ArrayType           data({1, 10, 2});
-  ArrayType           gt({1, 4, 2});
+  TensorType          data({1, 10, 2});
+  TensorType          gt({1, 4, 2});
   std::vector<double> data_input({1, -2, 3, -4, 5, -6, 7, -8, 9, -10});
   std::vector<double> gt_input({3, 5, 7, 9});
 
@@ -57,10 +57,10 @@ TYPED_TEST(MaxPool1DTest, forward_test_3_2_2)
     }
   }
 
-  fetch::ml::ops::MaxPool1D<ArrayType> op(3, 2);
+  fetch::ml::ops::MaxPool1D<TensorType> op(3, 2);
 
-  ArrayType prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
-  op.Forward({std::make_shared<const ArrayType>(data)}, prediction);
+  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -68,13 +68,13 @@ TYPED_TEST(MaxPool1DTest, forward_test_3_2_2)
 
 TYPED_TEST(MaxPool1DTest, backward_test)
 {
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
-  using SizeType  = typename TypeParam::SizeType;
+  using DataType   = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using SizeType   = typename TypeParam::SizeType;
 
-  ArrayType           data({1, 10, 2});
-  ArrayType           error({1, 4, 2});
-  ArrayType           gt({1, 10, 2});
+  TensorType          data({1, 10, 2});
+  TensorType          error({1, 4, 2});
+  TensorType          gt({1, 10, 2});
   std::vector<double> data_input({1, -2, 3, -4, 10, -6, 7, -8, 9, -10});
   std::vector<double> errorInput({2, 3, 4, 5});
   std::vector<double> gt_input1({0, 0, 2, 0, 7, 0, 0, 0, 5, 0});
@@ -98,8 +98,9 @@ TYPED_TEST(MaxPool1DTest, backward_test)
     gt(0, i, 1) = static_cast<DataType>(gt_input2[i]);
   }
 
-  fetch::ml::ops::MaxPool1D<ArrayType> op(3, 2);
-  std::vector<ArrayType> prediction = op.Backward({std::make_shared<const ArrayType>(data)}, error);
+  fetch::ml::ops::MaxPool1D<TensorType> op(3, 2);
+  std::vector<TensorType>               prediction =
+      op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -107,13 +108,13 @@ TYPED_TEST(MaxPool1DTest, backward_test)
 
 TYPED_TEST(MaxPool1DTest, backward_test_2_channels)
 {
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
-  using SizeType  = typename TypeParam::SizeType;
+  using DataType   = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using SizeType   = typename TypeParam::SizeType;
 
-  ArrayType           data({2, 5, 2});
-  ArrayType           error({2, 2, 2});
-  ArrayType           gt({2, 5, 2});
+  TensorType          data({2, 5, 2});
+  TensorType          error({2, 2, 2});
+  TensorType          gt({2, 5, 2});
   std::vector<double> data_input({1, -2, 3, -4, 10, -6, 7, -8, 9, -10});
   std::vector<double> errorInput({2, 3, 4, 5});
   std::vector<double> gt_input({0, 0, 2, 0, 3, 0, 0, 0, 9, 0});
@@ -135,8 +136,9 @@ TYPED_TEST(MaxPool1DTest, backward_test_2_channels)
     }
   }
 
-  fetch::ml::ops::MaxPool1D<ArrayType> op(4, 1);
-  std::vector<ArrayType> prediction = op.Backward({std::make_shared<const ArrayType>(data)}, error);
+  fetch::ml::ops::MaxPool1D<TensorType> op(4, 1);
+  std::vector<TensorType>               prediction =
+      op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -144,12 +146,12 @@ TYPED_TEST(MaxPool1DTest, backward_test_2_channels)
 
 TYPED_TEST(MaxPool1DTest, forward_test_4_2)
 {
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
-  using SizeType  = typename TypeParam::SizeType;
+  using DataType   = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using SizeType   = typename TypeParam::SizeType;
 
-  ArrayType           data({1, 10, 1});
-  ArrayType           gt({1, 4, 1});
+  TensorType          data({1, 10, 1});
+  TensorType          gt({1, 4, 1});
   std::vector<double> data_input({1, -2, 3, -4, 5, -6, 7, -8, 9, -10});
   std::vector<double> gt_input({3, 5, 7, 9});
   for (SizeType i{0}; i < 10; ++i)
@@ -162,10 +164,10 @@ TYPED_TEST(MaxPool1DTest, forward_test_4_2)
     gt(0, i, 0) = static_cast<DataType>(gt_input[i]);
   }
 
-  fetch::ml::ops::MaxPool1D<ArrayType> op(4, 2);
+  fetch::ml::ops::MaxPool1D<TensorType> op(4, 2);
 
-  ArrayType prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
-  op.Forward({std::make_shared<const ArrayType>(data)}, prediction);
+  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -173,12 +175,12 @@ TYPED_TEST(MaxPool1DTest, forward_test_4_2)
 
 TYPED_TEST(MaxPool1DTest, forward_test_2_channels_4_1_2)
 {
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
-  using SizeType  = typename TypeParam::SizeType;
+  using DataType   = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using SizeType   = typename TypeParam::SizeType;
 
-  ArrayType           data({2, 5, 2});
-  ArrayType           gt({2, 2, 2});
+  TensorType          data({2, 5, 2});
+  TensorType          gt({2, 2, 2});
   std::vector<double> data_input({1, -2, 3, -4, 5, -6, 7, -8, 9, -10});
   std::vector<double> gt_input({3, 5, 9, 9});
 
@@ -203,10 +205,10 @@ TYPED_TEST(MaxPool1DTest, forward_test_2_channels_4_1_2)
     }
   }
 
-  fetch::ml::ops::MaxPool1D<ArrayType> op(4, 1);
+  fetch::ml::ops::MaxPool1D<TensorType> op(4, 1);
 
-  ArrayType prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
-  op.Forward({std::make_shared<const ArrayType>(data)}, prediction);
+  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -214,12 +216,12 @@ TYPED_TEST(MaxPool1DTest, forward_test_2_channels_4_1_2)
 
 TYPED_TEST(MaxPool1DTest, forward_test_2_4_2)
 {
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
-  using SizeType  = typename TypeParam::SizeType;
+  using DataType   = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using SizeType   = typename TypeParam::SizeType;
 
-  ArrayType           data({1, 10, 2});
-  ArrayType           gt({1, 3, 2});
+  TensorType          data({1, 10, 2});
+  TensorType          gt({1, 3, 2});
   std::vector<double> data_input({1, -2, 3, -4, 5, -6, 7, -8, 9, -10});
   std::vector<double> gt_input({1, 5, 9});
   for (SizeType i{0}; i < 10; ++i)
@@ -232,10 +234,10 @@ TYPED_TEST(MaxPool1DTest, forward_test_2_4_2)
     gt(0, i, 0) = static_cast<DataType>(gt_input[i]);
   }
 
-  fetch::ml::ops::MaxPool1D<ArrayType> op(2, 4);
+  fetch::ml::ops::MaxPool1D<TensorType> op(2, 4);
 
-  ArrayType prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
-  op.Forward({std::make_shared<const ArrayType>(data)}, prediction);
+  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -243,15 +245,15 @@ TYPED_TEST(MaxPool1DTest, forward_test_2_4_2)
 
 TYPED_TEST(MaxPool1DTest, saveparams_test)
 {
-  using ArrayType     = TypeParam;
+  using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
-  using VecTensorType = typename fetch::ml::ops::Ops<ArrayType>::VecTensorType;
-  using SPType        = typename fetch::ml::ops::MaxPool1D<ArrayType>::SPType;
-  using OpType        = typename fetch::ml::ops::MaxPool1D<ArrayType>;
+  using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
+  using SPType        = typename fetch::ml::ops::MaxPool1D<TensorType>::SPType;
+  using OpType        = typename fetch::ml::ops::MaxPool1D<TensorType>;
   using SizeType      = typename TypeParam::SizeType;
 
-  ArrayType           data({2, 5, 2});
-  ArrayType           gt({2, 2, 2});
+  TensorType          data({2, 5, 2});
+  TensorType          gt({2, 2, 2});
   std::vector<double> data_input({1, -2, 3, -4, 5, -6, 7, -8, 9, -10});
   std::vector<double> gt_input({3, 5, 9, 9});
 
@@ -278,8 +280,8 @@ TYPED_TEST(MaxPool1DTest, saveparams_test)
 
   OpType op(4, 1);
 
-  ArrayType     prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
-  VecTensorType vec_data({std::make_shared<const ArrayType>(data)});
+  TensorType    prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  VecTensorType vec_data({std::make_shared<const TensorType>(data)});
 
   op.Forward(vec_data, prediction);
 
@@ -302,7 +304,7 @@ TYPED_TEST(MaxPool1DTest, saveparams_test)
   OpType new_op(*dsp2);
 
   // check that new predictions match the old
-  ArrayType new_prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
+  TensorType new_prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values

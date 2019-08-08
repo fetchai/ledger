@@ -51,7 +51,7 @@ private:
   };
 
 public:
-  using ArrayType     = T;
+  using TensorType    = T;
   using NodePtrType   = std::shared_ptr<Node<T>>;
   using VecTensorType = typename fetch::ml::ops::Ops<T>::VecTensorType;
   using SPType        = fetch::ml::NodeSaveableParams<T>;
@@ -59,7 +59,7 @@ public:
   Node() = default;
 
   Node(OpType const &operation_type, std::string name,
-       std::function<std::shared_ptr<ops::Ops<ArrayType>>()> const &constructor)
+       std::function<std::shared_ptr<ops::Ops<TensorType>>()> const &constructor)
     : name_(std::move(name))
     , cached_output_status_(CachedOutputState::CHANGED_SIZE)
     , operation_type_(operation_type)
@@ -67,7 +67,7 @@ public:
     op_ptr_ = constructor();
   }
 
-  Node(OpType const &operation_type, std::string name, std::shared_ptr<ops::Ops<ArrayType>> op_ptr)
+  Node(OpType const &operation_type, std::string name, std::shared_ptr<ops::Ops<TensorType>> op_ptr)
     : name_(std::move(name))
     , cached_output_status_(CachedOutputState::CHANGED_SIZE)
     , operation_type_(operation_type)
@@ -86,20 +86,20 @@ public:
   {
     switch (operation_type)
     {
-    case ops::Abs<ArrayType>::OpCode():
-      op_ptr_ = std::make_shared<fetch::ml::ops::Abs<ArrayType>>();
+    case ops::Abs<TensorType>::OpCode():
+      op_ptr_ = std::make_shared<fetch::ml::ops::Abs<TensorType>>();
       break;
-    case ops::LayerNorm<ArrayType>::OpCode():
-      op_ptr_ = std::make_shared<fetch::ml::ops::LayerNorm<ArrayType>>();
+    case ops::LayerNorm<TensorType>::OpCode():
+      op_ptr_ = std::make_shared<fetch::ml::ops::LayerNorm<TensorType>>();
       break;
-    case ops::LeakyReluOp<ArrayType>::OpCode():
-      op_ptr_ = std::make_shared<fetch::ml::ops::LeakyReluOp<ArrayType>>();
+    case ops::LeakyReluOp<TensorType>::OpCode():
+      op_ptr_ = std::make_shared<fetch::ml::ops::LeakyReluOp<TensorType>>();
       break;
-    case ops::PlaceHolder<ArrayType>::OpCode():
-      op_ptr_ = std::make_shared<fetch::ml::ops::PlaceHolder<ArrayType>>();
+    case ops::PlaceHolder<TensorType>::OpCode():
+      op_ptr_ = std::make_shared<fetch::ml::ops::PlaceHolder<TensorType>>();
       break;
-    case ops::Weights<ArrayType>::OpCode():
-      op_ptr_ = std::make_shared<fetch::ml::ops::Weights<ArrayType>>();
+    case ops::Weights<TensorType>::OpCode():
+      op_ptr_ = std::make_shared<fetch::ml::ops::Weights<TensorType>>();
       break;
     default:
       throw std::runtime_error("unknown node type");
@@ -131,9 +131,9 @@ public:
     op_ptr_ = op_ptr;
   }
 
-  VecTensorType                                GatherInputs() const;
-  std::shared_ptr<T>                           Evaluate(bool is_training);
-  std::vector<std::pair<Node<T> *, ArrayType>> BackPropagateSignal(ArrayType const &error_signal);
+  VecTensorType                                 GatherInputs() const;
+  std::shared_ptr<T>                            Evaluate(bool is_training);
+  std::vector<std::pair<Node<T> *, TensorType>> BackPropagateSignal(TensorType const &error_signal);
 
   void                            AddInput(NodePtrType const &i);
   std::vector<std::string>        GetInputNames();
@@ -165,7 +165,7 @@ private:
   std::vector<NodePtrType> outputs_;
 
   std::string       name_;
-  ArrayType         cached_output_;
+  TensorType        cached_output_;
   CachedOutputState cached_output_status_;
   OpType            operation_type_;
 
@@ -174,7 +174,7 @@ private:
 
 /**
  * returns a vector of all nodes which provide input to this node
- * @tparam ArrayType tensor
+ * @tparam TensorType tensor
  * @return vector of reference_wrapped tensors
  */
 template <class T>
@@ -231,11 +231,11 @@ std::shared_ptr<T> Node<T>::Evaluate(bool is_training)
  * @return
  */
 template <typename T>
-std::vector<std::pair<Node<T> *, T>> Node<T>::BackPropagateSignal(ArrayType const &error_signal)
+std::vector<std::pair<Node<T> *, T>> Node<T>::BackPropagateSignal(TensorType const &error_signal)
 {
-  VecTensorType          inputs                        = GatherInputs();
-  std::vector<ArrayType> back_propagated_error_signals = op_ptr_->Backward(inputs, error_signal);
-  std::vector<std::pair<Node<T> *, ArrayType>> non_back_propagated_error_signals;
+  VecTensorType           inputs                        = GatherInputs();
+  std::vector<TensorType> back_propagated_error_signals = op_ptr_->Backward(inputs, error_signal);
+  std::vector<std::pair<Node<T> *, TensorType>> non_back_propagated_error_signals;
   assert(back_propagated_error_signals.size() == inputs.size() || inputs.empty());
 
   auto bp_it = back_propagated_error_signals.begin();

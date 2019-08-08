@@ -36,19 +36,19 @@ TYPED_TEST_CASE(LeakyReluOpTest, MyTypes);
 
 TYPED_TEST(LeakyReluOpTest, forward_test)
 {
-  using ArrayType = TypeParam;
+  using TensorType = TypeParam;
 
-  ArrayType data =
-      ArrayType::FromString("1, -2, 3,-4, 5,-6, 7,-8; -1,  2,-3, 4,-5, 6,-7, 8").Transpose();
+  TensorType data =
+      TensorType::FromString("1, -2, 3,-4, 5,-6, 7,-8; -1,  2,-3, 4,-5, 6,-7, 8").Transpose();
 
-  ArrayType gt =
-      ArrayType::FromString(
+  TensorType gt =
+      TensorType::FromString(
           "1,-0.4,   3,-1.6,   5,-3.6,   7,-6.4; -0.1,   2,-0.9,   4,-2.5,   6,-4.9,   8")
           .Transpose();
 
-  ArrayType alpha = ArrayType::FromString("0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8").Transpose();
+  TensorType alpha = TensorType::FromString("0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8").Transpose();
 
-  fetch::ml::ops::LeakyReluOp<ArrayType> op;
+  fetch::ml::ops::LeakyReluOp<TensorType> op;
 
   TypeParam prediction(op.ComputeOutputShape(
       {std::make_shared<TypeParam>(data), std::make_shared<TypeParam>(alpha)}));
@@ -61,30 +61,30 @@ TYPED_TEST(LeakyReluOpTest, forward_test)
 
 TYPED_TEST(LeakyReluOpTest, backward_test)
 {
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
+  using DataType   = typename TypeParam::Type;
+  using TensorType = TypeParam;
 
-  ArrayType alpha = ArrayType::FromString(R"(
+  TensorType alpha = TensorType::FromString(R"(
     0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)")
-                        .Transpose();
+                         .Transpose();
 
-  ArrayType data = ArrayType::FromString(R"(
+  TensorType data = TensorType::FromString(R"(
   	 1, -2, 3,-4, 5,-6, 7,-8;
     -1,  2,-3, 4,-5, 6,-7, 8)")
-                       .Transpose();
-
-  ArrayType gt = ArrayType::FromString(R"(
-    0, 0, 0, 0, 1, 0.6, 0, 0;
-    0, 0, 0, 0, 0.5, 1, 0, 0)")
-                     .Transpose();
-
-  ArrayType error = ArrayType::FromString(R"(
-  	0, 0, 0, 0, 1, 1, 0, 0;
-    0, 0, 0, 0, 1, 1, 0, 0)")
                         .Transpose();
 
-  fetch::ml::ops::LeakyReluOp<ArrayType> op;
-  std::vector<ArrayType>                 prediction =
+  TensorType gt = TensorType::FromString(R"(
+    0, 0, 0, 0, 1, 0.6, 0, 0;
+    0, 0, 0, 0, 0.5, 1, 0, 0)")
+                      .Transpose();
+
+  TensorType error = TensorType::FromString(R"(
+  	0, 0, 0, 0, 1, 1, 0, 0;
+    0, 0, 0, 0, 1, 1, 0, 0)")
+                         .Transpose();
+
+  fetch::ml::ops::LeakyReluOp<TensorType> op;
+  std::vector<TensorType>                 prediction =
       op.Backward({std::make_shared<TypeParam>(data), std::make_shared<TypeParam>(alpha)}, error);
 
   // test correct values
@@ -93,25 +93,25 @@ TYPED_TEST(LeakyReluOpTest, backward_test)
 
 TYPED_TEST(LeakyReluOpTest, saveparams_test)
 {
-  using ArrayType     = TypeParam;
+  using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
-  using VecTensorType = typename fetch::ml::ops::Ops<ArrayType>::VecTensorType;
-  using SPType        = typename fetch::ml::ops::LeakyReluOp<ArrayType>::SPType;
-  using OpType        = typename fetch::ml::ops::LeakyReluOp<ArrayType>;
+  using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
+  using SPType        = typename fetch::ml::ops::LeakyReluOp<TensorType>::SPType;
+  using OpType        = typename fetch::ml::ops::LeakyReluOp<TensorType>;
 
-  ArrayType data =
-      ArrayType::FromString("1, -2, 3,-4, 5,-6, 7,-8; -1,  2,-3, 4,-5, 6,-7, 8").Transpose();
+  TensorType data =
+      TensorType::FromString("1, -2, 3,-4, 5,-6, 7,-8; -1,  2,-3, 4,-5, 6,-7, 8").Transpose();
 
-  ArrayType gt =
-      ArrayType::FromString(
+  TensorType gt =
+      TensorType::FromString(
           "1,-0.4,   3,-1.6,   5,-3.6,   7,-6.4; -0.1,   2,-0.9,   4,-2.5,   6,-4.9,   8")
           .Transpose();
 
-  ArrayType alpha = ArrayType::FromString("0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8").Transpose();
+  TensorType alpha = TensorType::FromString("0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8").Transpose();
 
   OpType op;
 
-  ArrayType     prediction(op.ComputeOutputShape(
+  TensorType    prediction(op.ComputeOutputShape(
       {std::make_shared<TypeParam>(data), std::make_shared<TypeParam>(alpha)}));
   VecTensorType vec_data({std::make_shared<TypeParam>(data), std::make_shared<TypeParam>(alpha)});
 
@@ -136,7 +136,7 @@ TYPED_TEST(LeakyReluOpTest, saveparams_test)
   OpType new_op(*dsp2);
 
   // check that new predictions match the old
-  ArrayType new_prediction(op.ComputeOutputShape(
+  TensorType new_prediction(op.ComputeOutputShape(
       {std::make_shared<TypeParam>(data), std::make_shared<TypeParam>(alpha)}));
   new_op.Forward(vec_data, new_prediction);
 

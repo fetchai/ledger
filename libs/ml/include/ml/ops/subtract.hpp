@@ -31,9 +31,9 @@ template <class T>
 class Subtract : public fetch::ml::ops::Ops<T>
 {
 public:
-  using ArrayType     = T;
-  using DataType      = typename ArrayType::Type;
-  using SizeType      = typename ArrayType::SizeType;
+  using TensorType    = T;
+  using DataType      = typename TensorType::Type;
+  using SizeType      = typename TensorType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpSubtractSaveableParams<T>;
 
@@ -51,7 +51,7 @@ public:
     return std::make_shared<SPType>(sp);
   }
 
-  void Forward(VecTensorType const &inputs, ArrayType &output) override
+  void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(inputs.size() == 2);
     assert(inputs.at(0)->size() == inputs.at(1)->size());
@@ -60,8 +60,8 @@ public:
     fetch::math::Subtract((*inputs.at(0)), (*inputs.at(1)), output);
   }
 
-  std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                  ArrayType const &    error_signal) override
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     FETCH_UNUSED(inputs);
     assert(inputs.size() == 2);

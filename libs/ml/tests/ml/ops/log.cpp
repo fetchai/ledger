@@ -59,18 +59,18 @@ TYPED_TEST_CASE(LogBothTest, BothTypes);
 
 TYPED_TEST(LogBothTest, forward_all_positive_test)
 {
-  using ArrayType = TypeParam;
-  using DataType  = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
 
-  ArrayType data = ArrayType::FromString("1, 2, 4, 8, 100, 1000");
-  ArrayType gt   = ArrayType::FromString(
+  TensorType data = TensorType::FromString("1, 2, 4, 8, 100, 1000");
+  TensorType gt   = TensorType::FromString(
       "0, 0.693147180559945, 1.38629436111989, 2.07944154167984, 4.60517018598809, "
       "6.90775527898214");
 
   fetch::ml::ops::Log<TypeParam> op;
 
-  TypeParam prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
-  op.Forward({std::make_shared<const ArrayType>(data)}, prediction);
+  TypeParam prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>(),
                                   fetch::math::function_tolerance<DataType>()));
@@ -79,14 +79,14 @@ TYPED_TEST(LogBothTest, forward_all_positive_test)
 // TODO(1195): fixed point and floating point tests should be unified.
 TYPED_TEST(LogFloatTest, forward_all_negative_test)
 {
-  using ArrayType = TypeParam;
+  using TensorType = TypeParam;
 
-  ArrayType data = ArrayType::FromString("-1, -2, -4, -10, -100");
+  TensorType data = TensorType::FromString("-1, -2, -4, -10, -100");
 
   fetch::ml::ops::Log<TypeParam> op;
 
-  TypeParam pred(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
-  op.Forward({std::make_shared<const ArrayType>(data)}, pred);
+  TypeParam pred(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  op.Forward({std::make_shared<const TensorType>(data)}, pred);
 
   // gives NaN because log of a negative number is undefined
   for (auto p_it : pred)
@@ -97,35 +97,36 @@ TYPED_TEST(LogFloatTest, forward_all_negative_test)
 
 TYPED_TEST(LogFixedTest, forward_all_negative_test)
 {
-  using ArrayType = TypeParam;
+  using TensorType = TypeParam;
 
-  ArrayType data = ArrayType::FromString("-1, -2, -4, -10, -100");
+  TensorType data = TensorType::FromString("-1, -2, -4, -10, -100");
 
   fetch::ml::ops::Log<TypeParam> op;
 
-  TypeParam pred(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
-  op.Forward({std::make_shared<const ArrayType>(data)}, pred);
+  TypeParam pred(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  op.Forward({std::make_shared<const TensorType>(data)}, pred);
 
   // gives NaN because log of a negative number is undefined
   for (auto p_it : pred)
   {
-    EXPECT_TRUE(ArrayType::Type::IsNaN(p_it));
+    EXPECT_TRUE(TensorType::Type::IsNaN(p_it));
   }
 }
 
 TYPED_TEST(LogBothTest, backward_test)
 {
-  using ArrayType = TypeParam;
-  using DataType  = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
 
-  ArrayType data  = ArrayType::FromString("1, -2, 4, -10, 100");
-  ArrayType error = ArrayType::FromString("1, 1, 1, 2, 0");
+  TensorType data  = TensorType::FromString("1, -2, 4, -10, 100");
+  TensorType error = TensorType::FromString("1, 1, 1, 2, 0");
   // (1 / data) * error = gt
-  ArrayType gt = ArrayType::FromString("1,-0.5,0.25,-0.2,0");
+  TensorType gt = TensorType::FromString("1,-0.5,0.25,-0.2,0");
 
   fetch::ml::ops::Log<TypeParam> op;
 
-  std::vector<ArrayType> prediction = op.Backward({std::make_shared<const ArrayType>(data)}, error);
+  std::vector<TensorType> prediction =
+      op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   ASSERT_TRUE(prediction.at(0).AllClose(gt, fetch::math::function_tolerance<DataType>(),
                                         fetch::math::function_tolerance<DataType>()));
@@ -133,21 +134,21 @@ TYPED_TEST(LogBothTest, backward_test)
 
 TYPED_TEST(LogBothTest, saveparams_test)
 {
-  using ArrayType     = TypeParam;
+  using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
-  using VecTensorType = typename fetch::ml::ops::Ops<ArrayType>::VecTensorType;
-  using SPType        = typename fetch::ml::ops::Log<ArrayType>::SPType;
-  using OpType        = typename fetch::ml::ops::Log<ArrayType>;
+  using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
+  using SPType        = typename fetch::ml::ops::Log<TensorType>::SPType;
+  using OpType        = typename fetch::ml::ops::Log<TensorType>;
 
-  ArrayType data = ArrayType::FromString("1, 2, 4, 8, 100, 1000");
-  ArrayType gt   = ArrayType::FromString(
+  TensorType data = TensorType::FromString("1, 2, 4, 8, 100, 1000");
+  TensorType gt   = TensorType::FromString(
       "0, 0.693147180559945, 1.38629436111989, 2.07944154167984, 4.60517018598809, "
       "6.90775527898214");
 
   OpType op;
 
-  ArrayType     prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
-  VecTensorType vec_data({std::make_shared<const ArrayType>(data)});
+  TensorType    prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  VecTensorType vec_data({std::make_shared<const TensorType>(data)});
 
   op.Forward(vec_data, prediction);
 
@@ -170,7 +171,7 @@ TYPED_TEST(LogBothTest, saveparams_test)
   OpType new_op(*dsp2);
 
   // check that new predictions match the old
-  ArrayType new_prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
+  TensorType new_prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values

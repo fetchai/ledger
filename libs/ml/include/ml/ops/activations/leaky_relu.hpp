@@ -33,11 +33,11 @@ template <class T>
 class LeakyRelu : public fetch::ml::ops::Ops<T>
 {
 public:
-  using ArrayType     = T;
-  using DataType      = typename ArrayType::Type;
-  using SizeType      = typename ArrayType::SizeType;
+  using TensorType    = T;
+  using DataType      = typename TensorType::Type;
+  using SizeType      = typename TensorType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  using SPType        = OpLeakyReluSaveableParams<ArrayType>;
+  using SPType        = OpLeakyReluSaveableParams<TensorType>;
 
   explicit LeakyRelu(DataType a = DataType(0.01))
     : a_(a)
@@ -57,21 +57,21 @@ public:
     return std::make_shared<SPType>(sp);
   }
 
-  void Forward(VecTensorType const &inputs, ArrayType &output) override
+  void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(inputs.size() == 1);
     fetch::math::LeakyRelu((*inputs.front()), a_, output);
   }
 
-  std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                  ArrayType const &    error_signal) override
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     assert(inputs.size() == 1);
     assert(inputs.front()->shape() == error_signal.shape());
-    DataType  zero{0};
-    DataType  one{1};
-    ArrayType ret{error_signal.shape()};
-    ArrayType t{inputs.front()->shape()};
+    DataType   zero{0};
+    DataType   one{1};
+    TensorType ret{error_signal.shape()};
+    TensorType t{inputs.front()->shape()};
 
     // gradient of leaky relu function is a where x<0; and 1.0 where x>=0
     this->Forward(inputs, t);

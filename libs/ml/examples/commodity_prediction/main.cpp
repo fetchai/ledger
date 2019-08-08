@@ -39,9 +39,9 @@
 #include <vector>
 
 using DataType      = double;
-using ArrayType     = fetch::math::Tensor<DataType>;
-using GraphType     = fetch::ml::Graph<ArrayType>;
-using OptimiserType = typename fetch::ml::optimisers::AdamOptimiser<ArrayType>;
+using TensorType    = fetch::math::Tensor<DataType>;
+using GraphType     = fetch::ml::Graph<TensorType>;
+using OptimiserType = typename fetch::ml::optimisers::AdamOptimiser<TensorType>;
 
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
@@ -139,11 +139,11 @@ std::pair<std::string, std::vector<std::string>> ReadArchitecture(
   node_names.emplace_back(previous_layer_name);
 
   // add input node
-  g->AddNode<PlaceHolder<ArrayType>>(layer_name, {});
+  g->AddNode<PlaceHolder<TensorType>>(layer_name, {});
 
   // Add label node
   std::string label_name = "num_label";
-  g->AddNode<PlaceHolder<ArrayType>>(label_name, {});
+  g->AddNode<PlaceHolder<TensorType>>(label_name, {});
   node_names.push_back(label_name);
 
   // Iterate through fields adding nodes to graph
@@ -157,21 +157,21 @@ std::pair<std::string, std::vector<std::string>> ReadArchitecture(
     case LayerType::SOFTMAX:
     {
       previous_layer_name =
-          g->AddNode<fetch::ml::ops::Softmax<ArrayType>>(layer_name, {previous_layer_name});
+          g->AddNode<fetch::ml::ops::Softmax<TensorType>>(layer_name, {previous_layer_name});
       break;
     }
     case LayerType::DROPOUT:
     {
       ss >> dropout_prob >> delimiter;
       previous_layer_name =
-          g->AddNode<Dropout<ArrayType>>(layer_name, {previous_layer_name}, dropout_prob);
+          g->AddNode<Dropout<TensorType>>(layer_name, {previous_layer_name}, dropout_prob);
       break;
     }
     case LayerType::DENSE:
     {
       ss >> layer_size >> delimiter;
-      previous_layer_name = g->AddNode<FullyConnected<ArrayType>>(layer_name, {previous_layer_name},
-                                                                  previous_layer_size, layer_size);
+      previous_layer_name = g->AddNode<FullyConnected<TensorType>>(
+          layer_name, {previous_layer_name}, previous_layer_size, layer_size);
       previous_layer_size = layer_size;
       break;
     }
@@ -190,7 +190,7 @@ std::pair<std::string, std::vector<std::string>> ReadArchitecture(
   if (layer_type == LayerType::SOFTMAX)
   {
     previous_layer_name =
-        g->AddNode<fetch::ml::ops::Softmax<ArrayType>>(layer_name, {previous_layer_name});
+        g->AddNode<fetch::ml::ops::Softmax<TensorType>>(layer_name, {previous_layer_name});
     node_names.emplace_back(previous_layer_name);
   }
   else
@@ -199,7 +199,7 @@ std::pair<std::string, std::vector<std::string>> ReadArchitecture(
   }
 
   // Add loss function
-  std::string error_output = g->AddNode<fetch::ml::ops::MeanSquareErrorLoss<ArrayType>>(
+  std::string error_output = g->AddNode<fetch::ml::ops::MeanSquareErrorLoss<TensorType>>(
       "num_error", {layer_name, label_name});
   node_names.emplace_back(error_output);
 
@@ -227,9 +227,9 @@ int ArgPos(char *str, int argc, char **argv)
 DataType get_loss(std::shared_ptr<GraphType> const &g_ptr, std::string const &test_x_file,
                   std::string const &test_y_file, std::vector<std::string> node_names)
 {
-  DataType                                                          loss         = 0;
-  DataType                                                          loss_counter = 0;
-  fetch::ml::dataloaders::CommodityDataLoader<ArrayType, ArrayType> loader;
+  DataType                                                            loss         = 0;
+  DataType                                                            loss_counter = 0;
+  fetch::ml::dataloaders::CommodityDataLoader<TensorType, TensorType> loader;
 
   loader.AddData(test_x_file, test_y_file);
 
@@ -283,7 +283,7 @@ int main(int argc, char **argv)
 
   /// DEFINE NEURAL NET ARCHITECTURE ///
 
-  auto g_ptr = std::make_shared<fetch::ml::Graph<ArrayType>>(GraphType());
+  auto g_ptr = std::make_shared<fetch::ml::Graph<TensorType>>(GraphType());
 
   auto                     arch_tuple = ReadArchitecture(architecture_file, g_ptr, model_num);
   std::string              dataname   = arch_tuple.first;
@@ -316,9 +316,9 @@ int main(int argc, char **argv)
 
         std::string node_weights_dir = weights_dir + "/" + name + "/" + actual_dirs[0];
         // the weights array for the node has number of columns = number of features
-        ArrayType weights = fetch::ml::dataloaders::ReadCSV<ArrayType>(
+        TensorType weights = fetch::ml::dataloaders::ReadCSV<TensorType>(
             node_weights_dir + "/kernel:0.csv", 0, 0, true);
-        ArrayType bias = fetch::ml::dataloaders::ReadCSV<ArrayType>(
+        TensorType bias = fetch::ml::dataloaders::ReadCSV<TensorType>(
             node_weights_dir + "/bias:0.csv", 0, 0, false);
 
         assert(bias.shape().at(0) == weights.shape().at(0));
@@ -339,13 +339,13 @@ int main(int argc, char **argv)
 
     std::string test_x_file = filename_root + "x_test.csv";
     std::string test_y_file = filename_root + "y_pred_test.csv";
-    fetch::ml::dataloaders::CommodityDataLoader<ArrayType, ArrayType> loader;
+    fetch::ml::dataloaders::CommodityDataLoader<TensorType, TensorType> loader;
     loader.AddData(test_x_file, test_y_file);
 
     /// FORWARD PASS PREDICTIONS ///
 
-    ArrayType output({loader.Size(), output_feature_size});
-    ArrayType test_y({loader.Size(), output_feature_size});
+    TensorType output({loader.Size(), output_feature_size});
+    TensorType test_y({loader.Size(), output_feature_size});
 
     SizeType j = 0;
     while (!loader.IsDone())
@@ -378,7 +378,7 @@ int main(int argc, char **argv)
     OptimiserType optimiser(g_ptr, {node_names.front()}, node_names.at(1), node_names.back(),
                             LEARNING_RATE);
 
-    fetch::ml::dataloaders::CommodityDataLoader<ArrayType, ArrayType> loader;
+    fetch::ml::dataloaders::CommodityDataLoader<TensorType, TensorType> loader;
 
     // three training rounds
     for (SizeType j = 0; j < 3; j++)

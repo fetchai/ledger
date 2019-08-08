@@ -39,26 +39,26 @@ TYPED_TEST_CASE(MaximumTest, MyTypes);
 
 TYPED_TEST(MaximumTest, forward_test)
 {
-  using ArrayType = TypeParam;
-  using DataType  = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
 
-  ArrayType data_1 = ArrayType::FromString(
+  TensorType data_1 = TensorType::FromString(
       "1, -2, 3,-4, 5,-6, 7,-8;"
       "1,  2, 3, 4, 5, 6, 7, 8");
 
-  ArrayType data_2 = ArrayType::FromString(
+  TensorType data_2 = TensorType::FromString(
       "8, -7, 6,-5, 4,-3, 2,-1;"
       "-8,  7,-6, 5,-4, 3,-2, 1");
 
-  ArrayType gt = ArrayType::FromString(
+  TensorType gt = TensorType::FromString(
       "8,	-2, 6, -4, 5, -3, 7, -1;"
       "1,  7, 3,  5, 5,  6, 7,  8");
 
-  fetch::ml::ops::Maximum<ArrayType> op;
+  fetch::ml::ops::Maximum<TensorType> op;
 
   TypeParam prediction(op.ComputeOutputShape(
-      {std::make_shared<ArrayType>(data_1), std::make_shared<ArrayType>(data_2)}));
-  op.Forward({std::make_shared<ArrayType>(data_1), std::make_shared<ArrayType>(data_2)},
+      {std::make_shared<TensorType>(data_1), std::make_shared<TensorType>(data_2)}));
+  op.Forward({std::make_shared<TensorType>(data_1), std::make_shared<TensorType>(data_2)},
              prediction);
 
   // test correct values
@@ -68,32 +68,32 @@ TYPED_TEST(MaximumTest, forward_test)
 
 TYPED_TEST(MaximumTest, backward_test)
 {
-  using ArrayType = TypeParam;
-  using DataType  = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
 
-  ArrayType data_1 = ArrayType::FromString(
+  TensorType data_1 = TensorType::FromString(
       "1, -2, 3,-4, 5,-6, 7,-8;"
       "1,  2, 3, 4, 5, 6, 7, 8");
 
-  ArrayType data_2 = ArrayType::FromString(
+  TensorType data_2 = TensorType::FromString(
       "8, -7, 6,-5, 4,-3, 2,-1;"
       "-8,  7,-6, 5,-4, 3,-2, 1");
 
-  ArrayType gt_1 = ArrayType::FromString(
+  TensorType gt_1 = TensorType::FromString(
       "0, -1, 0, -2, 3, 0, 4, 0;"
       "5, 0, 6, 0, 7, -7, 8, -8");
 
-  ArrayType gt_2 = ArrayType::FromString(
+  TensorType gt_2 = TensorType::FromString(
       "1, 0, 2, 0, 0, -3, 0, -4;"
       "0, -5, 0, -6, 0, 0, 0, 0");
 
-  ArrayType error = ArrayType::FromString(
+  TensorType error = TensorType::FromString(
       "1, -1, 2, -2, 3, -3, 4, -4;"
       "5, -5, 6, -6, 7, -7, 8, -8");
 
-  fetch::ml::ops::Maximum<ArrayType> op;
-  std::vector<ArrayType>             prediction = op.Backward(
-      {std::make_shared<ArrayType>(data_1), std::make_shared<ArrayType>(data_2)}, error);
+  fetch::ml::ops::Maximum<TensorType> op;
+  std::vector<TensorType>             prediction = op.Backward(
+      {std::make_shared<TensorType>(data_1), std::make_shared<TensorType>(data_2)}, error);
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt_1, fetch::math::function_tolerance<DataType>(),
@@ -104,30 +104,30 @@ TYPED_TEST(MaximumTest, backward_test)
 
 TYPED_TEST(MaximumTest, saveparams_test)
 {
-  using ArrayType     = TypeParam;
+  using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
-  using VecTensorType = typename fetch::ml::ops::Ops<ArrayType>::VecTensorType;
-  using SPType        = typename fetch::ml::ops::Maximum<ArrayType>::SPType;
-  using OpType        = typename fetch::ml::ops::Maximum<ArrayType>;
+  using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
+  using SPType        = typename fetch::ml::ops::Maximum<TensorType>::SPType;
+  using OpType        = typename fetch::ml::ops::Maximum<TensorType>;
 
-  ArrayType data_1 = ArrayType::FromString(
+  TensorType data_1 = TensorType::FromString(
       "1, -2, 3,-4, 5,-6, 7,-8;"
       "1,  2, 3, 4, 5, 6, 7, 8");
 
-  ArrayType data_2 = ArrayType::FromString(
+  TensorType data_2 = TensorType::FromString(
       "8, -7, 6,-5, 4,-3, 2,-1;"
       "-8,  7,-6, 5,-4, 3,-2, 1");
 
-  ArrayType gt = ArrayType::FromString(
+  TensorType gt = TensorType::FromString(
       "8,	-2, 6, -4, 5, -3, 7, -1;"
       "1,  7, 3,  5, 5,  6, 7,  8");
 
   OpType op;
 
-  ArrayType     prediction(op.ComputeOutputShape(
-      {std::make_shared<const ArrayType>(data_1), std::make_shared<const ArrayType>(data_2)}));
+  TensorType    prediction(op.ComputeOutputShape(
+      {std::make_shared<const TensorType>(data_1), std::make_shared<const TensorType>(data_2)}));
   VecTensorType vec_data(
-      {std::make_shared<const ArrayType>(data_1), std::make_shared<const ArrayType>(data_2)});
+      {std::make_shared<const TensorType>(data_1), std::make_shared<const TensorType>(data_2)});
 
   op.Forward(vec_data, prediction);
 
@@ -150,8 +150,8 @@ TYPED_TEST(MaximumTest, saveparams_test)
   OpType new_op(*dsp2);
 
   // check that new predictions match the old
-  ArrayType new_prediction(op.ComputeOutputShape(
-      {std::make_shared<const ArrayType>(data_1), std::make_shared<const ArrayType>(data_2)}));
+  TensorType new_prediction(op.ComputeOutputShape(
+      {std::make_shared<const TensorType>(data_1), std::make_shared<const TensorType>(data_2)}));
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values

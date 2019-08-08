@@ -32,8 +32,8 @@ template <class T>
 class L2Regulariser : public Regulariser<T>
 {
 public:
-  using ArrayType = T;
-  using DataType  = typename ArrayType::Type;
+  using TensorType = T;
+  using DataType   = typename TensorType::Type;
 
   L2Regulariser()
     : Regulariser<T>(RegularisationType::L2)
@@ -47,7 +47,7 @@ public:
    * @param weight tensor reference
    * @param regularisation_rate
    */
-  void ApplyRegularisation(ArrayType &weight, DataType regularisation_rate) override
+  void ApplyRegularisation(TensorType &weight, DataType regularisation_rate) override
   {
     DataType coef = static_cast<DataType>(2) * regularisation_rate;
 

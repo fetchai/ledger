@@ -32,12 +32,12 @@ template <class T>
 class Divide : public fetch::ml::ops::Ops<T>
 {
 public:
-  using ArrayType     = T;
-  using SizeType      = typename ArrayType::SizeType;
-  using ArrayPtrType  = std::shared_ptr<ArrayType>;
+  using TensorType    = T;
+  using SizeType      = typename TensorType::SizeType;
+  using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using DataType      = typename T::Type;
-  using SPType        = OpDivideSaveableParams<ArrayType>;
+  using SPType        = OpDivideSaveableParams<TensorType>;
 
   Divide() = default;
 
@@ -58,7 +58,7 @@ public:
    * @param inputs  left & right inputs to Divide
    * @return
    */
-  void Forward(VecTensorType const &inputs, ArrayType &output) override
+  void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(inputs.size() == 2);
     assert(inputs.at(0)->shape() == output.shape());
@@ -77,11 +77,11 @@ public:
    * f'(a)=(1/b)*err
    * f'(b)=-(a/(b^2))*err
    */
-  std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                  ArrayType const &    error_signal) override
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
-    ArrayType return_signal_1(inputs.at(0)->shape());
-    ArrayType return_signal_2(inputs.at(1)->shape());
+    TensorType return_signal_1(inputs.at(0)->shape());
+    TensorType return_signal_2(inputs.at(1)->shape());
 
     auto a_it   = inputs.at(0)->cbegin();
     auto b_it   = inputs.at(1)->cbegin();

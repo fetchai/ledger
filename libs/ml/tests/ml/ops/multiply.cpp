@@ -39,26 +39,26 @@ TYPED_TEST_CASE(MultiplyTest, MyTypes);
 
 TYPED_TEST(MultiplyTest, forward_test)
 {
-  using ArrayType = TypeParam;
-  using DataType  = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
 
-  ArrayType data_1 = ArrayType::FromString(
+  TensorType data_1 = TensorType::FromString(
       "1, -2, 3,-4, 5,-6, 7,-8;"
       "1,  2, 3, 4, 5, 6, 7, 8");
 
-  ArrayType data_2 = ArrayType::FromString(
+  TensorType data_2 = TensorType::FromString(
       "8, -7, 6,-5, 4,-3, 2,-1;"
       "-8,  7,-6, 5,-4, 3,-2, 1");
 
-  ArrayType gt = ArrayType::FromString(
+  TensorType gt = TensorType::FromString(
       "8, 14, 18,20, 20,18, 14,8;"
       "-8,  14,-18, 20,-20, 18,-14, 8");
 
-  fetch::ml::ops::Multiply<ArrayType> op;
+  fetch::ml::ops::Multiply<TensorType> op;
 
   TypeParam prediction(op.ComputeOutputShape(
-      {std::make_shared<ArrayType>(data_1), std::make_shared<ArrayType>(data_2)}));
-  op.Forward({std::make_shared<ArrayType>(data_1), std::make_shared<ArrayType>(data_2)},
+      {std::make_shared<TensorType>(data_1), std::make_shared<TensorType>(data_2)}));
+  op.Forward({std::make_shared<TensorType>(data_1), std::make_shared<TensorType>(data_2)},
              prediction);
 
   // test correct values
@@ -68,35 +68,35 @@ TYPED_TEST(MultiplyTest, forward_test)
 
 TYPED_TEST(MultiplyTest, backward_test_NMB_N11)
 {
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
+  using DataType   = typename TypeParam::Type;
+  using TensorType = TypeParam;
 
-  ArrayType data_1 = ArrayType::FromString(
+  TensorType data_1 = TensorType::FromString(
       "1, 2, 5, 6;"
       "3, 4, 7, 8");
   data_1.Reshape({2, 2, 2});
 
-  ArrayType data_2 = ArrayType::FromString("1, -1");
+  TensorType data_2 = TensorType::FromString("1, -1");
   data_2.Reshape({2, 1, 1});
 
-  ArrayType error = ArrayType::FromString(
+  TensorType error = TensorType::FromString(
       "0, 1, 4, 5;"
       "2, 3, 6, 7");
   error.Reshape({2, 2, 2});
 
-  ArrayType gt_1 = ArrayType::FromString(
+  TensorType gt_1 = TensorType::FromString(
       "0, 1, 4, 5;"
       "-2, -3, -6, -7");
   gt_1.Reshape({2, 2, 2});
 
-  ArrayType gt_2 = ArrayType::FromString(
+  TensorType gt_2 = TensorType::FromString(
       "52;"
       "116");
   gt_2.Reshape({2, 1, 1});
 
-  fetch::ml::ops::Multiply<ArrayType> op;
-  std::vector<ArrayType>              prediction = op.Backward(
-      {std::make_shared<ArrayType>(data_1), std::make_shared<ArrayType>(data_2)}, error);
+  fetch::ml::ops::Multiply<TensorType> op;
+  std::vector<TensorType>              prediction = op.Backward(
+      {std::make_shared<TensorType>(data_1), std::make_shared<TensorType>(data_2)}, error);
 
   // test correct values and shape
   ASSERT_TRUE(prediction[0].AllClose(gt_1, fetch::math::function_tolerance<DataType>(),
@@ -109,33 +109,33 @@ TYPED_TEST(MultiplyTest, backward_test_NMB_N11)
 
 TYPED_TEST(MultiplyTest, backward_test_NMB_111)
 {
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
+  using DataType   = typename TypeParam::Type;
+  using TensorType = TypeParam;
 
-  ArrayType data_1 = ArrayType::FromString(
+  TensorType data_1 = TensorType::FromString(
       "1, 2, 5, 6;"
       "3, 4, 7, 8");
   data_1.Reshape({2, 2, 2});
 
-  ArrayType data_2 = ArrayType::FromString("-1");
+  TensorType data_2 = TensorType::FromString("-1");
   data_2.Reshape({1, 1, 1});
 
-  ArrayType error = ArrayType::FromString(
+  TensorType error = TensorType::FromString(
       "0, 1, 4, 5;"
       "2, 3, 6, 7");
   error.Reshape({2, 2, 2});
 
-  ArrayType gt_1 = ArrayType::FromString(
+  TensorType gt_1 = TensorType::FromString(
       "0, -1, -4, -5;"
       "-2, -3, -6, -7");
   gt_1.Reshape({2, 2, 2});
 
-  ArrayType gt_2 = ArrayType::FromString("168");
+  TensorType gt_2 = TensorType::FromString("168");
   gt_2.Reshape({1, 1, 1});
 
-  fetch::ml::ops::Multiply<ArrayType> op;
-  std::vector<ArrayType>              prediction = op.Backward(
-      {std::make_shared<ArrayType>(data_1), std::make_shared<ArrayType>(data_2)}, error);
+  fetch::ml::ops::Multiply<TensorType> op;
+  std::vector<TensorType>              prediction = op.Backward(
+      {std::make_shared<TensorType>(data_1), std::make_shared<TensorType>(data_2)}, error);
 
   // test correct values and shape
   ASSERT_TRUE(prediction[0].AllClose(gt_1, fetch::math::function_tolerance<DataType>(),
@@ -148,32 +148,32 @@ TYPED_TEST(MultiplyTest, backward_test_NMB_111)
 
 TYPED_TEST(MultiplyTest, backward_test_NB_N1)
 {
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
+  using DataType   = typename TypeParam::Type;
+  using TensorType = TypeParam;
 
-  ArrayType data_1 = ArrayType::FromString(
+  TensorType data_1 = TensorType::FromString(
       "1, 2, 5, 6;"
       "3, 4, 7, 8");
 
-  ArrayType data_2 = ArrayType::FromString("1, -1");
+  TensorType data_2 = TensorType::FromString("1, -1");
   data_2.Reshape({2, 1});
 
-  ArrayType error = ArrayType::FromString(
+  TensorType error = TensorType::FromString(
       "0, 1, 4, 5;"
       "2, 3, 6, 7");
 
-  ArrayType gt_1 = ArrayType::FromString(
+  TensorType gt_1 = TensorType::FromString(
       "0, 1, 4, 5;"
       "-2, -3, -6, -7");
 
-  ArrayType gt_2 = ArrayType::FromString(
+  TensorType gt_2 = TensorType::FromString(
       "52;"
       "116");
   gt_2.Reshape({2, 1});
 
-  fetch::ml::ops::Multiply<ArrayType> op;
-  std::vector<ArrayType>              prediction = op.Backward(
-      {std::make_shared<ArrayType>(data_1), std::make_shared<ArrayType>(data_2)}, error);
+  fetch::ml::ops::Multiply<TensorType> op;
+  std::vector<TensorType>              prediction = op.Backward(
+      {std::make_shared<TensorType>(data_1), std::make_shared<TensorType>(data_2)}, error);
 
   // test correct values and shape
   ASSERT_TRUE(prediction[0].shape() == data_1.shape());
@@ -186,32 +186,32 @@ TYPED_TEST(MultiplyTest, backward_test_NB_N1)
 
 TYPED_TEST(MultiplyTest, backward_test_NB_NB)
 {
-  using ArrayType = TypeParam;
-  using DataType  = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
 
-  ArrayType data_1 = ArrayType::FromString(
+  TensorType data_1 = TensorType::FromString(
       "1, -2, 3,-4, 5,-6, 7,-8;"
       "1,  2, 3, 4, 5, 6, 7, 8");
 
-  ArrayType data_2 = ArrayType::FromString(
+  TensorType data_2 = TensorType::FromString(
       "8, -7, 6,-5, 4,-3, 2,-1;"
       "-8,  7,-6, 5,-4, 3,-2, 1");
 
-  ArrayType gt_1 = ArrayType::FromString(
+  TensorType gt_1 = TensorType::FromString(
       "8,	   7,  12,  10,  12,   9,   8,  4;"
       "-40, -35, -36, -30,	-28, -21, -16, -8");
 
-  ArrayType gt_2 = ArrayType::FromString(
+  TensorType gt_2 = TensorType::FromString(
       "1,   2,	 6,	  8, 15,  18, 28,  32;"
       "5, -10, 18,	-24, 35, -42, 56, -64");
 
-  ArrayType error = ArrayType::FromString(
+  TensorType error = TensorType::FromString(
       "1, -1, 2, -2, 3, -3, 4, -4;"
       "5, -5, 6, -6, 7, -7, 8, -8");
 
-  fetch::ml::ops::Multiply<ArrayType> op;
-  std::vector<ArrayType>              prediction = op.Backward(
-      {std::make_shared<ArrayType>(data_1), std::make_shared<ArrayType>(data_2)}, error);
+  fetch::ml::ops::Multiply<TensorType> op;
+  std::vector<TensorType>              prediction = op.Backward(
+      {std::make_shared<TensorType>(data_1), std::make_shared<TensorType>(data_2)}, error);
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt_1, fetch::math::function_tolerance<DataType>(),
@@ -222,30 +222,30 @@ TYPED_TEST(MultiplyTest, backward_test_NB_NB)
 
 TYPED_TEST(MultiplyTest, saveparams_test)
 {
-  using ArrayType     = TypeParam;
+  using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
-  using VecTensorType = typename fetch::ml::ops::Ops<ArrayType>::VecTensorType;
-  using SPType        = typename fetch::ml::ops::Multiply<ArrayType>::SPType;
-  using OpType        = typename fetch::ml::ops::Multiply<ArrayType>;
+  using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
+  using SPType        = typename fetch::ml::ops::Multiply<TensorType>::SPType;
+  using OpType        = typename fetch::ml::ops::Multiply<TensorType>;
 
-  ArrayType data_1 = ArrayType::FromString(
+  TensorType data_1 = TensorType::FromString(
       "1, -2, 3,-4, 5,-6, 7,-8;"
       "1,  2, 3, 4, 5, 6, 7, 8");
 
-  ArrayType data_2 = ArrayType::FromString(
+  TensorType data_2 = TensorType::FromString(
       "8, -7, 6,-5, 4,-3, 2,-1;"
       "-8,  7,-6, 5,-4, 3,-2, 1");
 
-  ArrayType gt = ArrayType::FromString(
+  TensorType gt = TensorType::FromString(
       "8, 14, 18,20, 20,18, 14,8;"
       "-8,  14,-18, 20,-20, 18,-14, 8");
 
   OpType op;
 
-  ArrayType     prediction(op.ComputeOutputShape(
-      {std::make_shared<const ArrayType>(data_1), std::make_shared<const ArrayType>(data_2)}));
+  TensorType    prediction(op.ComputeOutputShape(
+      {std::make_shared<const TensorType>(data_1), std::make_shared<const TensorType>(data_2)}));
   VecTensorType vec_data(
-      {std::make_shared<const ArrayType>(data_1), std::make_shared<const ArrayType>(data_2)});
+      {std::make_shared<const TensorType>(data_1), std::make_shared<const TensorType>(data_2)});
 
   op.Forward(vec_data, prediction);
 
@@ -268,8 +268,8 @@ TYPED_TEST(MultiplyTest, saveparams_test)
   OpType new_op(*dsp2);
 
   // check that new predictions match the old
-  ArrayType new_prediction(op.ComputeOutputShape(
-      {std::make_shared<const ArrayType>(data_1), std::make_shared<const ArrayType>(data_2)}));
+  TensorType new_prediction(op.ComputeOutputShape(
+      {std::make_shared<const TensorType>(data_1), std::make_shared<const TensorType>(data_2)}));
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values

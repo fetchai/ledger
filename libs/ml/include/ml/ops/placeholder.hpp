@@ -33,11 +33,11 @@ template <class T>
 class PlaceHolder : public fetch::ml::ops::Ops<T>
 {
 public:
-  using ArrayType     = T;
-  using SizeType      = typename ArrayType::SizeType;
-  using ArrayPtrType  = std::shared_ptr<ArrayType>;
+  using TensorType    = T;
+  using SizeType      = typename TensorType::SizeType;
+  using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  using SPType        = OpPlaceholderSaveableParams<ArrayType>;
+  using SPType        = OpPlaceholderSaveableParams<TensorType>;
 
   PlaceHolder() = default;
 
@@ -56,12 +56,12 @@ public:
     SPType tp{};
     if (output_)
     {
-      tp.output = std::make_shared<ArrayType>(output_->Copy());
+      tp.output = std::make_shared<TensorType>(output_->Copy());
     }
     return std::make_shared<SPType>(tp);
   }
 
-  void Forward(VecTensorType const &inputs, ArrayType &output) override
+  void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     FETCH_UNUSED(inputs);
     assert(inputs.empty());
@@ -69,22 +69,22 @@ public:
     output = *(this->output_);
   }
 
-  std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                  ArrayType const &    error_signal) override
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     FETCH_UNUSED(inputs);
     assert(inputs.empty());
     return {error_signal};
   }
 
-  virtual bool SetData(ArrayType const &data)
+  virtual bool SetData(TensorType const &data)
   {
     bool shape_changed = true;
     if (this->output_)
     {
       shape_changed = (this->output_->shape() != data.shape());
     }
-    this->output_ = std::make_shared<ArrayType>(data);
+    this->output_ = std::make_shared<TensorType>(data);
     return shape_changed;
   }
 

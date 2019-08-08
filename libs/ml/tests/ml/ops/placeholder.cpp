@@ -79,18 +79,18 @@ TYPED_TEST(PlaceholderTest, resetData)
 
 TYPED_TEST(PlaceholderTest, saveparams_test)
 {
-  using ArrayType = TypeParam;
-  using DataType  = typename TypeParam::Type;
-  using SPType    = typename fetch::ml::ops::PlaceHolder<ArrayType>::SPType;
-  using OpType    = typename fetch::ml::ops::PlaceHolder<ArrayType>;
+  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
+  using SPType     = typename fetch::ml::ops::PlaceHolder<TensorType>::SPType;
+  using OpType     = typename fetch::ml::ops::PlaceHolder<TensorType>;
 
-  ArrayType data = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
-  ArrayType gt   = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
+  TensorType data = TensorType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
+  TensorType gt   = TensorType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
 
   OpType op;
   op.SetData(data);
 
-  ArrayType prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
+  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
 
   op.Forward({}, prediction);
 
@@ -113,7 +113,7 @@ TYPED_TEST(PlaceholderTest, saveparams_test)
   OpType new_op(*dsp2);
 
   // check that new predictions match the old
-  ArrayType new_prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
+  TensorType new_prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
   new_op.Forward({}, new_prediction);
 
   // test correct values

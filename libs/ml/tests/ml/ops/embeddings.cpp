@@ -98,9 +98,9 @@ TYPED_TEST(EmbeddingsTest, forward)
 
 TYPED_TEST(EmbeddingsTest, backward)
 {
-  using ArrayType = TypeParam;
-  using DataType  = typename TypeParam::Type;
-  using SizeType  = typename TypeParam::SizeType;
+  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
+  using SizeType   = typename TypeParam::SizeType;
 
   fetch::ml::ops::Embeddings<TypeParam> e(6, 10);
   TypeParam                             weights(std::vector<uint64_t>({6, 10}));
@@ -113,14 +113,14 @@ TYPED_TEST(EmbeddingsTest, backward)
   }
   e.SetData(weights);
 
-  ArrayType input(std::vector<uint64_t>({2, 1}));
+  TensorType input(std::vector<uint64_t>({2, 1}));
   input.At(0, 0) = DataType{3};
   input.At(1, 0) = DataType{5};
 
-  ArrayType output(e.ComputeOutputShape({std::make_shared<TypeParam>(input)}));
+  TensorType output(e.ComputeOutputShape({std::make_shared<TypeParam>(input)}));
   e.Forward({std::make_shared<TypeParam>(input)}, output);
 
-  ArrayType error_signal(std::vector<uint64_t>({6, 2, 1}));
+  TensorType error_signal(std::vector<uint64_t>({6, 2, 1}));
   for (SizeType j{0}; j < 2; ++j)
   {
     for (SizeType k{0}; k < 6; ++k)
@@ -131,17 +131,17 @@ TYPED_TEST(EmbeddingsTest, backward)
 
   e.Backward({std::make_shared<TypeParam>(input)}, error_signal);
 
-  ArrayType grad = e.get_gradients();
+  TensorType grad = e.get_gradients();
   fetch::math::Multiply(grad, DataType{-1}, grad);
   e.ApplyGradient(grad);
 
   // Get a copy of the gradients and check that they were zeroed out after Step
-  ArrayType grads_copy = e.get_gradients();
+  TensorType grads_copy = e.get_gradients();
 
-  EXPECT_TRUE(ArrayType::Zeroes({6, 1}).AllClose(grads_copy.View(SizeType(input(0, 0))).Copy()));
-  EXPECT_TRUE(ArrayType::Zeroes({6, 1}).AllClose(grads_copy.View(SizeType(input(1, 0))).Copy()));
+  EXPECT_TRUE(TensorType::Zeroes({6, 1}).AllClose(grads_copy.View(SizeType(input(0, 0))).Copy()));
+  EXPECT_TRUE(TensorType::Zeroes({6, 1}).AllClose(grads_copy.View(SizeType(input(1, 0))).Copy()));
 
-  output = ArrayType(e.ComputeOutputShape({std::make_shared<TypeParam>(input)}));
+  output = TensorType(e.ComputeOutputShape({std::make_shared<TypeParam>(input)}));
   e.Forward({std::make_shared<TypeParam>(input)}, output);
 
   std::vector<int> gt{30, 30, 30, 30, 30, 30, 44, 44, 44, 44, 44, 44};
@@ -157,10 +157,10 @@ TYPED_TEST(EmbeddingsTest, backward)
 
 TYPED_TEST(EmbeddingsTest, saveparams_test)
 {
-  using ArrayType = TypeParam;
-  using DataType  = typename TypeParam::Type;
-  using SPType    = typename fetch::ml::ops::Embeddings<ArrayType>::SPType;
-  using OpType    = typename fetch::ml::ops::Embeddings<ArrayType>;
+  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
+  using SPType     = typename fetch::ml::ops::Embeddings<TensorType>::SPType;
+  using OpType     = typename fetch::ml::ops::Embeddings<TensorType>;
 
   TypeParam weights(std::vector<uint64_t>({6, 10}));
 
@@ -178,9 +178,9 @@ TYPED_TEST(EmbeddingsTest, saveparams_test)
   OpType op(6, 10);
   op.SetData(weights);
 
-  ArrayType prediction(op.ComputeOutputShape({std::make_shared<ArrayType const>(weights)}));
+  TensorType prediction(op.ComputeOutputShape({std::make_shared<TensorType const>(weights)}));
 
-  op.Forward({std::make_shared<ArrayType const>(input)}, prediction);
+  op.Forward({std::make_shared<TensorType const>(input)}, prediction);
 
   // extract saveparams
   std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
@@ -201,8 +201,8 @@ TYPED_TEST(EmbeddingsTest, saveparams_test)
   OpType new_op(*dsp2);
 
   // check that new predictions match the old
-  ArrayType new_prediction(op.ComputeOutputShape({std::make_shared<ArrayType const>(weights)}));
-  new_op.Forward({std::make_shared<ArrayType const>(input)}, new_prediction);
+  TensorType new_prediction(op.ComputeOutputShape({std::make_shared<TensorType const>(weights)}));
+  new_op.Forward({std::make_shared<TensorType const>(input)}, new_prediction);
 
   // test correct values
   EXPECT_TRUE(new_prediction.AllClose(prediction, fetch::math::function_tolerance<DataType>(),

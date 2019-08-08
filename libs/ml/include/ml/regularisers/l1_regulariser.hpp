@@ -34,8 +34,8 @@ template <class T>
 class L1Regulariser : public Regulariser<T>
 {
 public:
-  using ArrayType = T;
-  using DataType  = typename ArrayType::Type;
+  using TensorType = T;
+  using DataType   = typename TensorType::Type;
 
   L1Regulariser()
     : Regulariser<T>(RegularisationType::L1)
@@ -49,7 +49,7 @@ public:
    * @param weight tensor reference
    * @param regularisation_rate
    */
-  void ApplyRegularisation(ArrayType &weight, DataType regularisation_rate) override
+  void ApplyRegularisation(TensorType &weight, DataType regularisation_rate) override
   {
     auto it = weight.begin();
     while (it.is_valid())

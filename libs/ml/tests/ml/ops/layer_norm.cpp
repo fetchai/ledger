@@ -37,23 +37,23 @@ TYPED_TEST_CASE(LayerNormTest, MyTypes);
 
 TYPED_TEST(LayerNormTest, forward_test_2d)
 {
-  using ArrayType = TypeParam;
-  using DataType  = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
 
-  ArrayType data = ArrayType::FromString(
+  TensorType data = TensorType::FromString(
       "1, 2;"
       "2, 3;"
       "3, 6");
 
-  ArrayType gt = ArrayType::FromString(
+  TensorType gt = TensorType::FromString(
       "-1.2247448, -0.98058067;"
       "0, -0.39223227;"
       "1.22474487, 1.372812945");
 
-  fetch::ml::ops::LayerNorm<ArrayType> op(static_cast<typename TypeParam::SizeType>(0));
+  fetch::ml::ops::LayerNorm<TensorType> op(static_cast<typename TypeParam::SizeType>(0));
 
-  ArrayType prediction(op.ComputeOutputShape({std::make_shared<ArrayType>(data)}));
-  op.Forward({std::make_shared<ArrayType>(data)}, prediction);
+  TensorType prediction(op.ComputeOutputShape({std::make_shared<TensorType>(data)}));
+  op.Forward({std::make_shared<TensorType>(data)}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>(),
@@ -62,10 +62,10 @@ TYPED_TEST(LayerNormTest, forward_test_2d)
 
 TYPED_TEST(LayerNormTest, forward_test_3d)
 {
-  using ArrayType = TypeParam;
-  using DataType  = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
 
-  ArrayType data = ArrayType::FromString(
+  TensorType data = TensorType::FromString(
       "1, 2, 3, 0;"
       "2, 3, 2, 1;"
       "3, 6, 4, 13");
@@ -74,15 +74,15 @@ TYPED_TEST(LayerNormTest, forward_test_3d)
   auto s1 = data.View(0).Copy().ToString();
   auto s2 = data.View(1).Copy().ToString();
 
-  ArrayType gt = ArrayType::FromString(
+  TensorType gt = TensorType::FromString(
       "-1.22474487, -0.98058068, 0, -0.79006571;"
       "0, -0.39223227, -1.22474487,  -0.62076591;"
       "1.22474487,  1.37281295, 1.22474487, 1.41083162");
 
-  fetch::ml::ops::LayerNorm<ArrayType> op(static_cast<typename TypeParam::SizeType>(0));
+  fetch::ml::ops::LayerNorm<TensorType> op(static_cast<typename TypeParam::SizeType>(0));
 
-  ArrayType prediction(op.ComputeOutputShape({std::make_shared<ArrayType>(data)}));
-  op.Forward({std::make_shared<ArrayType>(data)}, prediction);
+  TensorType prediction(op.ComputeOutputShape({std::make_shared<TensorType>(data)}));
+  op.Forward({std::make_shared<TensorType>(data)}, prediction);
 
   // test correct values
   ASSERT_TRUE(
@@ -92,27 +92,27 @@ TYPED_TEST(LayerNormTest, forward_test_3d)
 
 TYPED_TEST(LayerNormTest, backward_test_2d)
 {
-  using ArrayType = TypeParam;
-  using DataType  = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
 
-  ArrayType data = ArrayType::FromString(
+  TensorType data = TensorType::FromString(
       "1, 1;"
       "2, 0;"
       "1, 1");
 
-  ArrayType error_signal = ArrayType::FromString(
+  TensorType error_signal = TensorType::FromString(
       "-1, 2;"
       "2, 0;"
       "1, 1");
 
-  ArrayType gt = ArrayType::FromString(
+  TensorType gt = TensorType::FromString(
       "-2.12132050, 1.06066041;"
       "0.000001272, -0.00000095;"
       "2.12131923, -1.06065946");
 
-  fetch::ml::ops::LayerNorm<ArrayType> op(static_cast<typename TypeParam::SizeType>(0));
+  fetch::ml::ops::LayerNorm<TensorType> op(static_cast<typename TypeParam::SizeType>(0));
 
-  auto backward_errors = op.Backward({std::make_shared<ArrayType>(data)}, error_signal).at(0);
+  auto backward_errors = op.Backward({std::make_shared<TensorType>(data)}, error_signal).at(0);
 
   std::cout << "backward_errors.ToString(): \n" << backward_errors.ToString() << std::endl;
 
@@ -124,31 +124,31 @@ TYPED_TEST(LayerNormTest, backward_test_2d)
 
 TYPED_TEST(LayerNormTest, backward_test_3d)
 {
-  using ArrayType = TypeParam;
-  using DataType  = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
 
-  ArrayType data = ArrayType::FromString(
+  TensorType data = TensorType::FromString(
       "1, 1, 0.5, 2;"
       "2, 0, 3, 1;"
       "1, 1, 7, 9");
   data.Reshape({3, 2, 2});
 
-  ArrayType error_signal = ArrayType::FromString(
+  TensorType error_signal = TensorType::FromString(
       "-1, 2, 1, 1;"
       "2, 0, 1, 3;"
       "1, 1, 1, 6");
   error_signal.Reshape({3, 2, 2});
 
-  ArrayType gt = ArrayType::FromString(
+  TensorType gt = TensorType::FromString(
       "-2.12132050, 1.06066041, 0, -0.374634325;"
       "0.000001272, -0.00000095, 0, 0.327805029;"
       "2.12131923, -1.06065946, 0, 0.0468292959");
   gt.Reshape({3, 2, 2});
 
-  fetch::ml::ops::LayerNorm<ArrayType> op(static_cast<typename TypeParam::SizeType>(0));
+  fetch::ml::ops::LayerNorm<TensorType> op(static_cast<typename TypeParam::SizeType>(0));
 
-  ArrayType prediction(op.ComputeOutputShape({std::make_shared<ArrayType>(data)}));
-  auto      backward_errors = op.Backward({std::make_shared<ArrayType>(data)}, error_signal).at(0);
+  TensorType prediction(op.ComputeOutputShape({std::make_shared<TensorType>(data)}));
+  auto backward_errors = op.Backward({std::make_shared<TensorType>(data)}, error_signal).at(0);
 
   // test correct values
   ASSERT_TRUE(backward_errors.AllClose(

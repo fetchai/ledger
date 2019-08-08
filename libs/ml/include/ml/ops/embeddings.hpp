@@ -33,21 +33,21 @@ template <class T>
 class Embeddings : public fetch::ml::ops::Weights<T>
 {
 public:
-  using ArrayType     = T;
-  using DataType      = typename ArrayType::Type;
-  using ArrayPtrType  = std::shared_ptr<ArrayType>;
-  using SizeType      = typename ArrayType::SizeType;
+  using TensorType    = T;
+  using DataType      = typename TensorType::Type;
+  using ArrayPtrType  = std::shared_ptr<TensorType>;
+  using SizeType      = typename TensorType::SizeType;
   using VecTensorType = typename Weights<T>::VecTensorType;
-  using SPType        = OpEmbeddingsSaveableParams<ArrayType>;
+  using SPType        = OpEmbeddingsSaveableParams<TensorType>;
 
   Embeddings(SizeType dimensions, SizeType data_points)
   {
-    ArrayType weights = ArrayType(std::vector<SizeType>({dimensions, data_points}));
-    fetch::ml::ops::Weights<ArrayType>::Initialise(weights, dimensions, data_points);
+    TensorType weights = TensorType(std::vector<SizeType>({dimensions, data_points}));
+    fetch::ml::ops::Weights<TensorType>::Initialise(weights, dimensions, data_points);
     this->SetData(weights);
   }
 
-  explicit Embeddings(ArrayType const &weights)
+  explicit Embeddings(TensorType const &weights)
   {
     this->SetData(weights);
   }
@@ -62,11 +62,11 @@ public:
   std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
     auto tp    = std::make_shared<SPType>();
-    tp->output = std::make_shared<ArrayType>(this->output_->Copy());
+    tp->output = std::make_shared<TensorType>(this->output_->Copy());
     return tp;
   }
 
-  void Forward(VecTensorType const &inputs, ArrayType &output) override
+  void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(this->output_);
     assert(inputs.size() == 1);
@@ -77,7 +77,7 @@ public:
     // test embeddings_output_ not null ptr
     if (!this->embeddings_output_)
     {
-      this->embeddings_output_ = std::make_shared<ArrayType>(std::vector<SizeType>(
+      this->embeddings_output_ = std::make_shared<TensorType>(std::vector<SizeType>(
           {this->output_->shape().at(0), inputs.front()->shape(0), batch_size}));
     }
     // test embeddings_output_ batch size has changed
@@ -91,8 +91,8 @@ public:
     assert(this->embeddings_output_->shape().at(1) == inputs.front()->shape().at(0));
     assert(this->embeddings_output_->shape().at(2) == batch_size);
 
-    ArrayType transposed_input = inputs.front()->Transpose();
-    auto      e_it             = transposed_input.begin();
+    TensorType transposed_input = inputs.front()->Transpose();
+    auto       e_it             = transposed_input.begin();
     for (SizeType i{0}; i < inputs.front()->shape().at(0); i++)
     {
       for (SizeType n{0}; n < batch_size; n++)
@@ -111,16 +111,16 @@ public:
     output = *this->embeddings_output_;
   }
 
-  std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                  ArrayType const &    error_signal) override
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     assert(inputs.size() == 1);
     assert(inputs.front()->shape().size() == 2);
 
     SizeType batch_size = inputs.front()->shape(1);
 
-    ArrayType transposed_input = inputs.front()->Transpose();
-    auto      e_it             = transposed_input.begin();
+    TensorType transposed_input = inputs.front()->Transpose();
+    auto       e_it             = transposed_input.begin();
     for (SizeType i{0}; i < inputs.front()->shape().at(0); i++)
     {
       for (SizeType n{0}; n < batch_size; n++)
@@ -144,7 +144,7 @@ public:
       }
     }
 
-    return {ArrayType(error_signal.shape())};
+    return {TensorType(error_signal.shape())};
   }
 
   void Step(typename T::Type learning_rate) override
@@ -183,10 +183,10 @@ public:
   static constexpr char const *DESCRIPTOR = "Embedding";
 
 private:
-  ArrayPtrType                           embeddings_output_;
-  std::set<typename ArrayType::SizeType> updated_rows_;
-  std::vector<SizeType>                  trailing_indices1 = {0, 0};
-  std::vector<SizeType>                  trailing_indices2 = {0};
+  ArrayPtrType                            embeddings_output_;
+  std::set<typename TensorType::SizeType> updated_rows_;
+  std::vector<SizeType>                   trailing_indices1 = {0, 0};
+  std::vector<SizeType>                   trailing_indices2 = {0};
 };
 
 }  // namespace ops

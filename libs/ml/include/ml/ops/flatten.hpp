@@ -32,9 +32,9 @@ template <class T>
 class Flatten : public fetch::ml::ops::Ops<T>
 {
 public:
-  using ArrayType     = T;
-  using SizeType      = typename ArrayType::SizeType;
-  using ArrayPtrType  = std::shared_ptr<ArrayType>;
+  using TensorType    = T;
+  using SizeType      = typename TensorType::SizeType;
+  using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpFlattenSaveableParams<T>;
 
@@ -55,7 +55,7 @@ public:
     return ret;
   }
 
-  void Forward(VecTensorType const &inputs, ArrayType &output) override
+  void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(inputs.size() == 1);
     assert(output.shape() == ComputeOutputShape(inputs));
@@ -66,12 +66,12 @@ public:
     output.Assign(inputs.front()->View());
   }
 
-  std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                  ArrayType const &    error_signal) override
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     FETCH_UNUSED(inputs);
     assert(inputs.size() == 1);
-    ArrayType ret(input_shape_);
+    TensorType ret(input_shape_);
 
     assert(ret.shape().at(ret.shape().size() - 1) ==
            error_signal.shape().at(error_signal.shape().size() - 1));

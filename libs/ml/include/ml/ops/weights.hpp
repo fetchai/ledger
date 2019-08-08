@@ -51,13 +51,13 @@ template <class T>
 class Weights : public fetch::ml::ops::PlaceHolder<T>, public Trainable<T>
 {
 public:
-  using ArrayType      = T;
-  using SizeType       = typename ArrayType::SizeType;
-  using DataType       = typename ArrayType::Type;
-  using ArrayPtrType   = std::shared_ptr<ArrayType>;
+  using TensorType     = T;
+  using SizeType       = typename TensorType::SizeType;
+  using DataType       = typename TensorType::Type;
+  using ArrayPtrType   = std::shared_ptr<TensorType>;
   using VecTensorType  = typename PlaceHolder<T>::VecTensorType;
-  using SPType         = OpWeightsSaveableParams<ArrayType>;
-  using WeightsPtrType = typename std::shared_ptr<Weights<ArrayType>>;
+  using SPType         = OpWeightsSaveableParams<TensorType>;
+  using WeightsPtrType = typename std::shared_ptr<Weights<TensorType>>;
 
 protected:
   ArrayPtrType gradient_accumulation_;
@@ -73,7 +73,7 @@ public:
     }
 
     this->SetRegularisation(
-        fetch::ml::details::CreateRegulariser<ArrayType>(sp.regularisation_type),
+        fetch::ml::details::CreateRegulariser<TensorType>(sp.regularisation_type),
         sp.regularisation_rate);
   }
 
@@ -84,9 +84,9 @@ public:
     SPType tp{};
     if (this->output_)
     {
-      tp.output = std::make_shared<ArrayType>(this->output_->Copy());
+      tp.output = std::make_shared<TensorType>(this->output_->Copy());
     }
-    tp.gradient_accumulation = std::make_shared<ArrayType>(gradient_accumulation_->Copy());
+    tp.gradient_accumulation = std::make_shared<TensorType>(gradient_accumulation_->Copy());
 
     if (this->regulariser_)
     {
@@ -106,8 +106,8 @@ public:
     return this->output_;
   }
 
-  std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                  ArrayType const &    error_signal) override
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     FETCH_UNUSED(inputs);
     assert(inputs.empty());
@@ -115,12 +115,12 @@ public:
     return {};
   }
 
-  bool SetData(ArrayType const &data) override
+  bool SetData(TensorType const &data) override
   {
     bool shape_changed = PlaceHolder<T>::SetData(data);
     if (shape_changed)
     {
-      gradient_accumulation_ = std::make_shared<ArrayType>(this->output_->shape());
+      gradient_accumulation_ = std::make_shared<TensorType>(this->output_->shape());
       return true;
     }
     return false;
@@ -133,7 +133,7 @@ public:
     ResetGradients();
   }
 
-  void ApplyGradient(ArrayType const &grad) override
+  void ApplyGradient(TensorType const &grad) override
   {
     this->output_->InlineAdd(grad);
     ResetGradients();
@@ -181,7 +181,7 @@ public:
    * interface to call standard weights initialisation routines. defaults to xavier
    * @param mode  An enum indicating which type of initialisation to perform
    */
-  static void Initialise(ArrayType &array, std::uint64_t in_size, std::uint64_t out_size,
+  static void Initialise(TensorType &array, std::uint64_t in_size, std::uint64_t out_size,
                          WeightsInitialisation mode = WeightsInitialisation::XAVIER_GLOROT,
                          SizeType              seed = 123456789)
   {
@@ -191,7 +191,7 @@ public:
     {
       for (std::uint64_t j = 0; j < array.data().size(); ++j)
       {
-        array.data()[j] = typename ArrayType::Type(0);
+        array.data()[j] = typename TensorType::Type(0);
       }
       break;
     }
@@ -221,7 +221,7 @@ public:
    * Fan in and fan out xavier not permitted with input and output sizes not known independently
    * @param mode  An enum indicating which type of initialisation to perform
    */
-  static void Initialise(ArrayType &array, std::uint64_t data_size,
+  static void Initialise(TensorType &array, std::uint64_t data_size,
                          WeightsInitialisation mode = WeightsInitialisation::XAVIER_GLOROT,
                          SizeType              seed = 123456789)
   {
@@ -229,12 +229,12 @@ public:
     {
     case WeightsInitialisation::ONES:
     {
-      array.Fill(static_cast<typename ArrayType::Type>(1));
+      array.Fill(static_cast<typename TensorType::Type>(1));
       break;
     }
     case WeightsInitialisation::ZEROS:
     {
-      array.Fill(static_cast<typename ArrayType::Type>(0));
+      array.Fill(static_cast<typename TensorType::Type>(0));
       break;
     }
     case WeightsInitialisation::XAVIER_GLOROT:
@@ -251,7 +251,7 @@ public:
    * exports the weight values Array
    * @return const reference to internal values Array
    */
-  ArrayType const &get_weights() const override
+  TensorType const &get_weights() const override
   {
     return *this->output_;
   }
@@ -260,7 +260,7 @@ public:
    * exports the weight gradients Array
    * @return const reference to internal accumulated gradient Array
    */
-  ArrayType const &get_gradients() const override
+  TensorType const &get_gradients() const override
   {
     return *this->gradient_accumulation_;
   }
@@ -277,7 +277,7 @@ private:
    * using a normal distribution with mean 0 and variance 2 / (input nodes + output nodes)
    * @param weights
    */
-  static void XavierInitialisation(ArrayType &array, double normalising_factor,
+  static void XavierInitialisation(TensorType &array, double normalising_factor,
                                    SizeType seed = 123456789)
   {
     // TODO (665) this is a uniform distribution; in principle we should be using a guassian
@@ -293,7 +293,7 @@ private:
       ran_val *= 2.0;                 // random value in range -1 <-> +1
       ran_val *= normalising_factor;  // random value in range -sigma <-> +sigma
 
-      *it = typename ArrayType::Type(ran_val);
+      *it = typename TensorType::Type(ran_val);
       ++it;
     }
   }

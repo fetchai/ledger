@@ -45,13 +45,13 @@ TYPED_TEST(WeightsTest, allocation_test)
 
 TYPED_TEST(WeightsTest, gradient_step_test)
 {
-  using ArrayType = TypeParam;
-  using DataType  = typename TypeParam::Type;
-  using SizeType  = typename TypeParam::SizeType;
+  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
+  using SizeType   = typename TypeParam::SizeType;
 
-  ArrayType        data(8);
-  ArrayType        error(8);
-  ArrayType        gt(8);
+  TensorType       data(8);
+  TensorType       error(8);
+  TensorType       gt(8);
   std::vector<int> dataInput({1, -2, 3, -4, 5, -6, 7, -8});
   std::vector<int> errorInput({-1, 2, 3, -5, -8, 13, -21, -34});
   std::vector<int> gtInput({2, -4, 0, 1, 13, -19, 28, 26});
@@ -62,20 +62,20 @@ TYPED_TEST(WeightsTest, gradient_step_test)
     gt.Set(i, static_cast<DataType>(gtInput[i]));
   }
 
-  fetch::ml::ops::Weights<ArrayType> w;
+  fetch::ml::ops::Weights<TensorType> w;
   w.SetData(data);
 
-  ArrayType prediction(w.ComputeOutputShape({}));
+  TensorType prediction(w.ComputeOutputShape({}));
   w.Forward({}, prediction);
 
   EXPECT_EQ(prediction, data);
-  std::vector<ArrayType> error_signal = w.Backward({}, error);
+  std::vector<TensorType> error_signal = w.Backward({}, error);
 
-  ArrayType grad = w.get_gradients();
+  TensorType grad = w.get_gradients();
   fetch::math::Multiply(grad, DataType{-1}, grad);
   w.ApplyGradient(grad);
 
-  prediction = ArrayType(w.ComputeOutputShape({}));
+  prediction = TensorType(w.ComputeOutputShape({}));
   w.Forward({}, prediction);
 
   ASSERT_TRUE(prediction.AllClose(gt));  // with new values
@@ -113,18 +113,18 @@ TYPED_TEST(WeightsTest, loadStateDict)
 
 TYPED_TEST(WeightsTest, saveparams_test)
 {
-  using ArrayType = TypeParam;
-  using DataType  = typename TypeParam::Type;
-  using SPType    = typename fetch::ml::ops::Weights<ArrayType>::SPType;
-  using OpType    = typename fetch::ml::ops::Weights<ArrayType>;
+  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
+  using SPType     = typename fetch::ml::ops::Weights<TensorType>::SPType;
+  using OpType     = typename fetch::ml::ops::Weights<TensorType>;
 
-  ArrayType data = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
-  ArrayType gt   = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
+  TensorType data = TensorType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
+  TensorType gt   = TensorType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
 
   OpType op;
   op.SetData(data);
 
-  ArrayType prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
+  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
 
   op.Forward({}, prediction);
 
@@ -147,7 +147,7 @@ TYPED_TEST(WeightsTest, saveparams_test)
   OpType new_op(*dsp2);
 
   // check that new predictions match the old
-  ArrayType new_prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
+  TensorType new_prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
   new_op.Forward({}, new_prediction);
 
   // test correct values

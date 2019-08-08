@@ -31,7 +31,7 @@ template <class T>
 class Concatenate : public fetch::ml::ops::Ops<T>
 {
 public:
-  using ArrayType     = T;
+  using TensorType    = T;
   using SizeType      = fetch::math::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpConcatenateSaveableParams<T>;
@@ -57,15 +57,15 @@ public:
   /**
    * concatenates multiple input tensors into one
    */
-  void Forward(VecTensorType const &inputs, ArrayType &output) override
+  void Forward(VecTensorType const &inputs, TensorType &output) override
   {
-    std::vector<ArrayType> tensors;
+    std::vector<TensorType> tensors;
     for (auto const &e : inputs)
     {
       tensors.emplace_back(*e);
     }
 
-    output = ArrayType::Concat(tensors, axis_);
+    output = TensorType::Concat(tensors, axis_);
   }
 
   /**
@@ -74,8 +74,8 @@ public:
    * @param error_signal
    * @return
    */
-  std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                  ArrayType const &    error_signal) override
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     concat_points_.resize(inputs.size());
     auto c_it = concat_points_.begin();
@@ -85,7 +85,7 @@ public:
       ++c_it;
     }
 
-    return ArrayType::Split(error_signal, concat_points_, axis_);
+    return TensorType::Split(error_signal, concat_points_, axis_);
   }
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override

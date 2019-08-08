@@ -32,8 +32,8 @@ template <class T>
 class Regulariser
 {
 public:
-  using ArrayType = T;
-  using DataType  = typename ArrayType::Type;
+  using TensorType = T;
+  using DataType   = typename TensorType::Type;
 
   Regulariser()
     : reg_type(RegularisationType::NONE)
@@ -42,8 +42,8 @@ public:
     : reg_type(reg_type)
   {}
 
-  virtual ~Regulariser()                                                            = default;
-  virtual void ApplyRegularisation(ArrayType &weight, DataType regularisation_rate) = 0;
+  virtual ~Regulariser()                                                             = default;
+  virtual void ApplyRegularisation(TensorType &weight, DataType regularisation_rate) = 0;
 
   RegularisationType reg_type;
 };

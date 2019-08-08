@@ -37,33 +37,33 @@ using namespace fetch::ml;
 using namespace fetch::ml::dataloaders;
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
-using DataType  = double;
-using ArrayType = fetch::math::Tensor<DataType>;
-using SizeType  = typename ArrayType::SizeType;
+using DataType   = double;
+using TensorType = fetch::math::Tensor<DataType>;
+using SizeType   = typename TensorType::SizeType;
 
 ////////////////////////
 /// MODEL DEFINITION ///
 ////////////////////////
 
-std::pair<std::string, std::string> Model(fetch::ml::Graph<ArrayType> &g, SizeType embeddings_size,
+std::pair<std::string, std::string> Model(fetch::ml::Graph<TensorType> &g, SizeType embeddings_size,
                                           SizeType vocab_size)
 {
-  g.AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
-  g.AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Context", {});
-  std::string label    = g.AddNode<PlaceHolder<ArrayType>>("Label", {});
-  std::string skipgram = g.AddNode<fetch::ml::layers::SkipGram<ArrayType>>(
+  g.AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
+  g.AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Context", {});
+  std::string label    = g.AddNode<PlaceHolder<TensorType>>("Label", {});
+  std::string skipgram = g.AddNode<fetch::ml::layers::SkipGram<TensorType>>(
       "SkipGram", {"Input", "Context"}, SizeType(1), SizeType(1), embeddings_size, vocab_size);
 
-  std::string error = g.AddNode<CrossEntropyLoss<ArrayType>>("Error", {skipgram, label});
+  std::string error = g.AddNode<CrossEntropyLoss<TensorType>>("Error", {skipgram, label});
 
   return std::pair<std::string, std::string>(error, skipgram);
 }
 
-void PrintWordAnalogy(GraphW2VLoader<DataType> const &dl, ArrayType const &embeddings,
+void PrintWordAnalogy(GraphW2VLoader<DataType> const &dl, TensorType const &embeddings,
                       std::string const &word1, std::string const &word2, std::string const &word3,
                       SizeType k)
 {
-  ArrayType arr = embeddings;
+  TensorType arr = embeddings;
 
   if (!dl.WordKnown(word1) || !dl.WordKnown(word2) || !dl.WordKnown(word3))
   {
@@ -81,17 +81,17 @@ void PrintWordAnalogy(GraphW2VLoader<DataType> const &dl, ArrayType const &embed
   SizeType word3_idx = dl.IndexFromWord(word3);
 
   // get word vectors for words
-  ArrayType word1_vec = embeddings.Slice(word1_idx, 1).Copy();
-  ArrayType word2_vec = embeddings.Slice(word2_idx, 1).Copy();
-  ArrayType word3_vec = embeddings.Slice(word3_idx, 1).Copy();
+  TensorType word1_vec = embeddings.Slice(word1_idx, 1).Copy();
+  TensorType word2_vec = embeddings.Slice(word2_idx, 1).Copy();
+  TensorType word3_vec = embeddings.Slice(word3_idx, 1).Copy();
 
   word1_vec /= fetch::math::L2Norm(word1_vec);
   word2_vec /= fetch::math::L2Norm(word2_vec);
   word3_vec /= fetch::math::L2Norm(word3_vec);
 
-  ArrayType word4_vec = word2_vec - word1_vec + word3_vec;
+  TensorType word4_vec = word2_vec - word1_vec + word3_vec;
 
-  std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> output =
+  std::vector<std::pair<typename TensorType::SizeType, typename TensorType::Type>> output =
       fetch::math::clustering::KNNCosine(arr, word4_vec, k);
 
   for (std::size_t l = 0; l < output.size(); ++l)
@@ -102,19 +102,19 @@ void PrintWordAnalogy(GraphW2VLoader<DataType> const &dl, ArrayType const &embed
   }
 }
 
-void PrintKNN(GraphW2VLoader<DataType> const &dl, ArrayType const &embeddings,
+void PrintKNN(GraphW2VLoader<DataType> const &dl, TensorType const &embeddings,
               std::string const &word0, SizeType k)
 {
-  ArrayType arr = embeddings;
+  TensorType arr = embeddings;
 
   if (dl.IndexFromWord(word0) == fetch::math::numeric_max<SizeType>())
   {
     throw std::runtime_error("WARNING! could not find [" + word0 + "] in vocabulary");
   }
 
-  SizeType  idx        = dl.IndexFromWord(word0);
-  ArrayType one_vector = embeddings.Slice(idx, 1).Copy();
-  std::vector<std::pair<typename ArrayType::SizeType, typename ArrayType::Type>> output =
+  SizeType   idx        = dl.IndexFromWord(word0);
+  TensorType one_vector = embeddings.Slice(idx, 1).Copy();
+  std::vector<std::pair<typename TensorType::SizeType, typename TensorType::Type>> output =
       fetch::math::clustering::KNNCosine(arr, one_vector, k);
 
   for (std::size_t l = 0; l < output.size(); ++l)
@@ -125,18 +125,18 @@ void PrintKNN(GraphW2VLoader<DataType> const &dl, ArrayType const &embeddings,
   }
 }
 
-void TestEmbeddings(Graph<ArrayType> const &g, std::string const &skip_gram_name,
+void TestEmbeddings(Graph<TensorType> const &g, std::string const &skip_gram_name,
                     GraphW2VLoader<DataType> const &dl, std::string word0, std::string word1,
                     std::string word2, std::string word3, SizeType K)
 {
 
   // first get hold of the skipgram layer by searching the return name in the graph
-  std::shared_ptr<fetch::ml::layers::SkipGram<ArrayType>> sg_layer =
-      std::dynamic_pointer_cast<fetch::ml::layers::SkipGram<ArrayType>>(
+  std::shared_ptr<fetch::ml::layers::SkipGram<TensorType>> sg_layer =
+      std::dynamic_pointer_cast<fetch::ml::layers::SkipGram<TensorType>>(
           (g.GetNode(skip_gram_name))->GetOp());
 
   // next get hold of the embeddings
-  std::shared_ptr<fetch::ml::ops::Embeddings<ArrayType>> embeddings =
+  std::shared_ptr<fetch::ml::ops::Embeddings<TensorType>> embeddings =
       sg_layer->GetEmbeddings(sg_layer);
 
   std::cout << std::endl;
@@ -241,7 +241,7 @@ int main(int argc, char **argv)
 
   // set up model architecture
   std::cout << "building model architecture...: " << std::endl;
-  auto                                g = std::make_shared<fetch::ml::Graph<ArrayType>>();
+  auto                                g = std::make_shared<fetch::ml::Graph<TensorType>>();
   std::pair<std::string, std::string> error_and_skipgram_layer =
       Model(*g, tp.embedding_size, data_loader.vocab_size());
   std::string error          = error_and_skipgram_layer.first;
@@ -254,8 +254,8 @@ int main(int argc, char **argv)
   std::cout << "beginning training...: " << std::endl;
 
   // Initialise Optimiser
-  fetch::ml::optimisers::SGDOptimiser<ArrayType> optimiser(g, {"Input", "Context"}, "Label", error,
-                                                           tp.learning_rate_param);
+  fetch::ml::optimisers::SGDOptimiser<TensorType> optimiser(g, {"Input", "Context"}, "Label", error,
+                                                            tp.learning_rate_param);
 
   // Training loop
   for (SizeType i{0}; i < tp.training_epochs; i++)

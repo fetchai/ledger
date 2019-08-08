@@ -39,16 +39,16 @@ template <class T>
 class Ops
 {
 public:
-  using ArrayType     = T;
-  using SizeType      = typename ArrayType::SizeType;
-  using ArrayPtrType  = std::shared_ptr<ArrayType>;
-  using VecTensorType = std::vector<std::shared_ptr<ArrayType const>>;
+  using TensorType    = T;
+  using SizeType      = typename TensorType::SizeType;
+  using ArrayPtrType  = std::shared_ptr<TensorType>;
+  using VecTensorType = std::vector<std::shared_ptr<TensorType const>>;
 
   virtual ~Ops() = default;
 
-  virtual void                   Forward(VecTensorType const &inputs, ArrayType &output) = 0;
-  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                          ArrayType const &    error_signal)                 = 0;
+  virtual void                    Forward(VecTensorType const &inputs, TensorType &output) = 0;
+  virtual std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                           TensorType const &   error_signal)                 = 0;
   /*
    * ComputeOutputShape is usually expensive function and should be used only for initialisation or
    * in ASSERT. On Forward you can use output.shape() and on Backward there is error_signal.shape()
@@ -86,19 +86,19 @@ template <class T>
 class Trainable
 {
 public:
-  using ArrayType    = T;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
-  using DataType     = typename ArrayType::Type;
+  using TensorType   = T;
+  using ArrayPtrType = std::shared_ptr<TensorType>;
+  using DataType     = typename TensorType::Type;
   using RegPtrType   = std::shared_ptr<fetch::ml::regularisers::Regulariser<T>>;
 
-  virtual void                           Step(typename T::Type learning_rate)        = 0;
-  virtual struct fetch::ml::StateDict<T> StateDict() const                           = 0;
-  virtual void             LoadStateDict(struct fetch::ml::StateDict<T> const &dict) = 0;
-  virtual ArrayType const &get_weights() const                                       = 0;
-  virtual ArrayType const &get_gradients() const                                     = 0;
-  virtual void             ResetGradients()                                          = 0;
-  virtual void             ApplyGradient(ArrayType const &grad)                      = 0;
-  virtual void             ApplyRegularisation()                                     = 0;
+  virtual void                           Step(typename T::Type learning_rate)         = 0;
+  virtual struct fetch::ml::StateDict<T> StateDict() const                            = 0;
+  virtual void              LoadStateDict(struct fetch::ml::StateDict<T> const &dict) = 0;
+  virtual TensorType const &get_weights() const                                       = 0;
+  virtual TensorType const &get_gradients() const                                     = 0;
+  virtual void              ResetGradients()                                          = 0;
+  virtual void              ApplyGradient(TensorType const &grad)                     = 0;
+  virtual void              ApplyRegularisation()                                     = 0;
 
   void SetRegularisation(RegPtrType regulariser, DataType regularisation_rate = DataType{0.0})
   {

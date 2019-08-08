@@ -33,11 +33,11 @@ template <class T>
 class Elu : public fetch::ml::ops::Ops<T>
 {
 public:
-  using ArrayType     = T;
-  using DataType      = typename ArrayType::Type;
-  using SizeType      = typename ArrayType::SizeType;
+  using TensorType    = T;
+  using DataType      = typename TensorType::Type;
+  using SizeType      = typename TensorType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  using SPType        = OpEluSaveableParams<ArrayType>;
+  using SPType        = OpEluSaveableParams<TensorType>;
 
   explicit Elu(DataType a)
     : a_(a)
@@ -57,18 +57,18 @@ public:
     return sp;
   }
 
-  void Forward(VecTensorType const &inputs, ArrayType &output) override
+  void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(inputs.size() == 1);
     fetch::math::Elu((*inputs.front()), a_, output);
   }
 
-  std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                  ArrayType const &    error_signal) override
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     assert(inputs.size() == 1);
     assert(inputs.front()->shape() == error_signal.shape());
-    ArrayType ret{error_signal.shape()};
+    TensorType ret{error_signal.shape()};
 
     DataType zero{0};
     DataType one{1};

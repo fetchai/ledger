@@ -113,11 +113,11 @@ TYPED_TEST(FlattenTest, backward_test)
 
 TYPED_TEST(FlattenTest, saveparams_test)
 {
-  using ArrayType     = TypeParam;
+  using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
-  using VecTensorType = typename fetch::ml::ops::Ops<ArrayType>::VecTensorType;
-  using SPType        = typename fetch::ml::ops::Flatten<ArrayType>::SPType;
-  using OpType        = typename fetch::ml::ops::Flatten<ArrayType>;
+  using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
+  using SPType        = typename fetch::ml::ops::Flatten<TensorType>::SPType;
+  using OpType        = typename fetch::ml::ops::Flatten<TensorType>;
 
   using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
@@ -143,8 +143,8 @@ TYPED_TEST(FlattenTest, saveparams_test)
 
   OpType op;
 
-  ArrayType     prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
-  VecTensorType vec_data({std::make_shared<const ArrayType>(data)});
+  TensorType    prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  VecTensorType vec_data({std::make_shared<const TensorType>(data)});
 
   op.Forward(vec_data, prediction);
 
@@ -167,7 +167,7 @@ TYPED_TEST(FlattenTest, saveparams_test)
   OpType new_op(*dsp2);
 
   // check that new predictions match the old
-  ArrayType new_prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
+  TensorType new_prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values

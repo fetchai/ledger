@@ -27,16 +27,16 @@ namespace optimisers {
 /**
  * Adaptive Momentum optimiser
  * i.e.  Stochastic gradient descent with momentum
- * @tparam T ArrayType
+ * @tparam T TensorType
  * @tparam C CriterionType
  */
 template <class T>
 class MomentumOptimiser : public Optimiser<T>
 {
 public:
-  using ArrayType = T;
-  using DataType  = typename ArrayType::Type;
-  using SizeType  = typename ArrayType::SizeType;
+  using TensorType = T;
+  using DataType   = typename TensorType::Type;
+  using SizeType   = typename TensorType::SizeType;
 
   MomentumOptimiser(std::shared_ptr<Graph<T>>       graph,
                     std::vector<std::string> const &input_node_names,
@@ -53,10 +53,10 @@ public:
   ~MomentumOptimiser() override = default;
 
 private:
-  std::vector<ArrayType> momentum_;
-  DataType               momentum_update_;
-  DataType               negative_one_{-1};
-  DataType               zero_{0};
+  std::vector<TensorType> momentum_;
+  DataType                momentum_update_;
+  DataType                negative_one_{-1};
+  DataType                zero_{0};
 
   void ApplyGradients(SizeType batch_size) override;
   void ResetMomentum();
@@ -68,7 +68,7 @@ void MomentumOptimiser<T>::Init()
 {
   for (auto &train : this->graph_trainables_)
   {
-    this->momentum_.emplace_back(ArrayType(train->get_weights().shape()));
+    this->momentum_.emplace_back(TensorType(train->get_weights().shape()));
   }
   ResetMomentum();
 }

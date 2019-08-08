@@ -33,9 +33,9 @@ template <class T>
 class MatrixMultiply : public fetch::ml::ops::Ops<T>
 {
 public:
-  using ArrayType     = T;
-  using SizeType      = typename ArrayType::SizeType;
-  using SizeVector    = typename ArrayType::SizeVector;
+  using TensorType    = T;
+  using SizeType      = typename TensorType::SizeType;
+  using SizeVector    = typename TensorType::SizeVector;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpMatrixMultiplySaveableParams<T>;
 
@@ -69,10 +69,10 @@ public:
     return sp;
   }
 
-  void                   Forward(VecTensorType const &inputs, ArrayType &output) override;
-  std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                  ArrayType const &    error_signal) override;
-  std::vector<SizeType>  ComputeOutputShape(VecTensorType const &inputs) const override;
+  void                    Forward(VecTensorType const &inputs, TensorType &output) override;
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override;
+  std::vector<SizeType>   ComputeOutputShape(VecTensorType const &inputs) const override;
 
   static constexpr OpType OpCode()
   {
@@ -82,31 +82,31 @@ public:
 
 private:
   // caching tensors and shapes
-  ArrayType error_signal_1_;
-  ArrayType error_signal_2_;
+  TensorType error_signal_1_;
+  TensorType error_signal_2_;
 
   // forward pass
   SizeVector fwd_input_shape_1_{};
   SizeVector fwd_input_shape_2_{};
-  ArrayType  output_view_tensor_;
-  ArrayType  fwd_in1_view_tensor_;
-  ArrayType  fwd_in2_view_tensor_;
+  TensorType output_view_tensor_;
+  TensorType fwd_in1_view_tensor_;
+  TensorType fwd_in2_view_tensor_;
 
   // backward pass
   SizeVector back_input_shape_1_{};
   SizeVector back_input_shape_2_{};
-  ArrayType  back_in1_view_tensor_;
-  ArrayType  back_in2_view_tensor_;
-  ArrayType  err_sig_view_tensor_;
-  ArrayType  err1_;
-  ArrayType  err2_;
+  TensorType back_in1_view_tensor_;
+  TensorType back_in2_view_tensor_;
+  TensorType err_sig_view_tensor_;
+  TensorType err1_;
+  TensorType err2_;
 
   void UpdateContainersForward(VecTensorType const &inputs);
-  void UpdateContainersBackward(VecTensorType const &inputs, ArrayType const &error_signal);
+  void UpdateContainersBackward(VecTensorType const &inputs, TensorType const &error_signal);
 };
 
 template <class T>
-void MatrixMultiply<T>::Forward(VecTensorType const &inputs, ArrayType &output)
+void MatrixMultiply<T>::Forward(VecTensorType const &inputs, TensorType &output)
 {
   assert(inputs.size() == 2);
   assert(output.shape() == ComputeOutputShape(inputs));
@@ -174,7 +174,7 @@ void MatrixMultiply<T>::Forward(VecTensorType const &inputs, ArrayType &output)
 
 template <class T>
 std::vector<T> MatrixMultiply<T>::Backward(VecTensorType const &inputs,
-                                           ArrayType const &    error_signal)
+                                           TensorType const &   error_signal)
 {
   assert(inputs.size() == 2);
 
@@ -312,9 +312,9 @@ void MatrixMultiply<T>::UpdateContainersForward(VecTensorType const &inputs)
   {
     fwd_input_shape_1_   = inputs.at(0)->shape();
     fwd_input_shape_2_   = inputs.at(1)->shape();
-    fwd_in1_view_tensor_ = ArrayType({inputs.at(0)->shape().at(0), inputs.at(0)->shape().at(1)});
-    fwd_in2_view_tensor_ = ArrayType({inputs.at(1)->shape().at(0), inputs.at(1)->shape().at(1)});
-    output_view_tensor_  = ArrayType({inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(1)});
+    fwd_in1_view_tensor_ = TensorType({inputs.at(0)->shape().at(0), inputs.at(0)->shape().at(1)});
+    fwd_in2_view_tensor_ = TensorType({inputs.at(1)->shape().at(0), inputs.at(1)->shape().at(1)});
+    output_view_tensor_  = TensorType({inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(1)});
   }
 }
 
@@ -326,7 +326,7 @@ void MatrixMultiply<T>::UpdateContainersForward(VecTensorType const &inputs)
  */
 template <typename T>
 void MatrixMultiply<T>::UpdateContainersBackward(VecTensorType const &inputs,
-                                                 ArrayType const &    error_signal)
+                                                 TensorType const &   error_signal)
 {
   if (!((inputs.at(0)->shape() == back_input_shape_1_) &&
         (inputs.at(1)->shape() == back_input_shape_2_)))
@@ -334,14 +334,14 @@ void MatrixMultiply<T>::UpdateContainersBackward(VecTensorType const &inputs,
     back_input_shape_1_ = inputs.at(0)->shape();
     back_input_shape_2_ = inputs.at(1)->shape();
 
-    back_in1_view_tensor_ = ArrayType({inputs.at(0)->shape().at(0), inputs.at(0)->shape().at(1)});
-    back_in2_view_tensor_ = ArrayType({inputs.at(1)->shape().at(0), inputs.at(1)->shape().at(1)});
+    back_in1_view_tensor_ = TensorType({inputs.at(0)->shape().at(0), inputs.at(0)->shape().at(1)});
+    back_in2_view_tensor_ = TensorType({inputs.at(1)->shape().at(0), inputs.at(1)->shape().at(1)});
 
-    err1_                = ArrayType(error_signal_1_.shape());
-    err2_                = ArrayType(error_signal_2_.shape());
-    error_signal_1_      = ArrayType(back_input_shape_1_);
-    error_signal_2_      = ArrayType(back_input_shape_2_);
-    err_sig_view_tensor_ = ArrayType({error_signal.shape().at(0), error_signal.shape().at(1)});
+    err1_                = TensorType(error_signal_1_.shape());
+    err2_                = TensorType(error_signal_2_.shape());
+    error_signal_1_      = TensorType(back_input_shape_1_);
+    error_signal_2_      = TensorType(back_input_shape_2_);
+    err_sig_view_tensor_ = TensorType({error_signal.shape().at(0), error_signal.shape().at(1)});
   }
 }
 

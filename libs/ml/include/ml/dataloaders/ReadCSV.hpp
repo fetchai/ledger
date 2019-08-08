@@ -30,7 +30,7 @@ namespace ml {
 namespace dataloaders {
 
 /**
- * Loads a csv file into an ArrayType (a Tensor)
+ * Loads a csv file into an TensorType (a Tensor)
  * The Tensor will have the same number of rows as this file has (minus rows_to_skip) and the same
  * number of columns (minus cols_to_skip) as the file, unless transpose=true is specified in which
  * case it will be transposed.
@@ -38,13 +38,13 @@ namespace dataloaders {
  * @param cols_to_skip  number of columns to skip
  * @param rows_to_skip  number of rows to skip
  * @param transpose  whether to transpose the resulting Tensor
- * @return ArrayType with data
+ * @return TensorType with data
  */
-template <typename ArrayType>
-ArrayType ReadCSV(std::string const &filename, math::SizeType const cols_to_skip = 0,
-                  math::SizeType rows_to_skip = 0, bool transpose = false)
+template <typename TensorType>
+TensorType ReadCSV(std::string const &filename, math::SizeType const cols_to_skip = 0,
+                   math::SizeType rows_to_skip = 0, bool transpose = false)
 {
-  using DataType = typename ArrayType::Type;
+  using DataType = typename TensorType::Type;
   std::ifstream file(filename);
   if (file.fail())
   {
@@ -71,7 +71,7 @@ ArrayType ReadCSV(std::string const &filename, math::SizeType const cols_to_skip
     ++row;
   }
 
-  ArrayType weights({row - rows_to_skip, col - cols_to_skip});
+  TensorType weights({row - rows_to_skip, col - cols_to_skip});
 
   // read data into weights array
   std::string token;

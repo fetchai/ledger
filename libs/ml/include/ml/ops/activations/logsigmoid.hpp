@@ -35,9 +35,9 @@ template <class T>
 class LogSigmoid : public fetch::ml::ops::Ops<T>
 {
 public:
-  using ArrayType     = T;
-  using DataType      = typename ArrayType::Type;
-  using SizeType      = typename ArrayType::SizeType;
+  using TensorType    = T;
+  using DataType      = typename TensorType::Type;
+  using SizeType      = typename TensorType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpLogSigmoidSaveableParams<T>;
 
@@ -55,7 +55,7 @@ public:
     return sp;
   }
 
-  void Forward(VecTensorType const &inputs, ArrayType &output) override
+  void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(inputs.size() == 1);
     assert(output.shape() == this->ComputeOutputShape(inputs));
@@ -70,12 +70,12 @@ public:
     }
   }
 
-  std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                  ArrayType const &    error_signal) override
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     assert(inputs.size() == 1);
     assert(inputs.front()->shape() == error_signal.shape());
-    ArrayType return_signal{error_signal.shape()};
+    TensorType return_signal{error_signal.shape()};
 
     // gradient of log-sigmoid function is 1/(e^x + 1))
     fetch::math::Add(fetch::math::Exp((*inputs.front())), static_cast<DataType>(1), return_signal);

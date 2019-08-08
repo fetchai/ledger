@@ -41,21 +41,21 @@ TYPED_TEST_CASE(AbsTest, MyTypes);
 
 TYPED_TEST(AbsTest, forward_test)
 {
-  using ArrayType = TypeParam;
-  using DataType  = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
 
-  ArrayType data = ArrayType::FromString(
+  TensorType data = TensorType::FromString(
       "1, -2, 3,-4, 5,-6, 7,-8;"
       "1,  2, 3, 4, 5, 6, 7, 8");
 
-  ArrayType gt = ArrayType::FromString(
+  TensorType gt = TensorType::FromString(
       "1, 2, 3, 4, 5, 6, 7, 8;"
       "1, 2, 3, 4, 5, 6, 7, 8");
 
-  fetch::ml::ops::Abs<ArrayType> op;
+  fetch::ml::ops::Abs<TensorType> op;
 
-  TypeParam prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
-  op.Forward({std::make_shared<const ArrayType>(data)}, prediction);
+  TypeParam prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>(),
@@ -64,23 +64,24 @@ TYPED_TEST(AbsTest, forward_test)
 
 TYPED_TEST(AbsTest, backward_test)
 {
-  using ArrayType = TypeParam;
-  using DataType  = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
 
-  ArrayType data = ArrayType::FromString(
+  TensorType data = TensorType::FromString(
       "1, -2, 3,-4, 5,-6, 7,-8;"
       "1,  2, 3, 4, 5, 6, 7, 8");
 
-  ArrayType gt = ArrayType::FromString(
+  TensorType gt = TensorType::FromString(
       "1, 1, 2, 2, 3, 3, 4, 4;"
       "5, -5, 6, -6, 7, -7, 8, -8");
 
-  ArrayType error = ArrayType::FromString(
+  TensorType error = TensorType::FromString(
       "1, -1, 2, -2, 3, -3, 4, -4;"
       "5, -5, 6, -6, 7, -7, 8, -8");
 
-  fetch::ml::ops::Abs<ArrayType> op;
-  std::vector<ArrayType> prediction = op.Backward({std::make_shared<const ArrayType>(data)}, error);
+  fetch::ml::ops::Abs<TensorType> op;
+  std::vector<TensorType>         prediction =
+      op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt, fetch::math::function_tolerance<DataType>(),
@@ -89,24 +90,24 @@ TYPED_TEST(AbsTest, backward_test)
 
 TYPED_TEST(AbsTest, saveparams_test)
 {
-  using ArrayType     = TypeParam;
+  using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
-  using VecTensorType = typename fetch::ml::ops::Ops<ArrayType>::VecTensorType;
-  using SPType        = typename fetch::ml::ops::Abs<ArrayType>::SPType;
-  using OpType        = typename fetch::ml::ops::Abs<ArrayType>;
+  using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
+  using SPType        = typename fetch::ml::ops::Abs<TensorType>::SPType;
+  using OpType        = typename fetch::ml::ops::Abs<TensorType>;
 
-  ArrayType data = ArrayType::FromString(
+  TensorType data = TensorType::FromString(
       "1, -2, 3,-4, 5,-6, 7,-8;"
       "1,  2, 3, 4, 5, 6, 7, 8");
 
-  ArrayType gt = ArrayType::FromString(
+  TensorType gt = TensorType::FromString(
       "1, 2, 3, 4, 5, 6, 7, 8;"
       "1, 2, 3, 4, 5, 6, 7, 8");
 
   OpType op;
 
-  ArrayType     prediction(op.ComputeOutputShape({std::make_shared<ArrayType const>(data)}));
-  VecTensorType vec_data({std::make_shared<const ArrayType>(data)});
+  TensorType    prediction(op.ComputeOutputShape({std::make_shared<TensorType const>(data)}));
+  VecTensorType vec_data({std::make_shared<const TensorType>(data)});
 
   op.Forward(vec_data, prediction);
 
@@ -129,7 +130,7 @@ TYPED_TEST(AbsTest, saveparams_test)
   OpType new_op(*dsp2);
 
   // check that new predictions match the old
-  ArrayType new_prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
+  TensorType new_prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values

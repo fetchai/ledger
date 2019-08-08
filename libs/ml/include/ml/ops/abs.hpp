@@ -33,9 +33,9 @@ template <class T>
 class Abs : public Ops<T>
 {
 public:
-  using ArrayType     = T;
-  using SizeType      = typename ArrayType::SizeType;
-  using ArrayPtrType  = std::shared_ptr<ArrayType>;
+  using TensorType    = T;
+  using SizeType      = typename TensorType::SizeType;
+  using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpAbsSaveableParams<T>;
 
@@ -57,7 +57,7 @@ public:
    * @param inputs - one input for elementwise abs
    * @return
    */
-  void Forward(VecTensorType const &inputs, ArrayType &output) override
+  void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(inputs.size() == 1);
     assert(inputs.at(0)->shape() == output.shape());
@@ -70,13 +70,13 @@ public:
    * elementwise absolute value gradient is:
    * f'(input0)=sign(input0)*error_signal
    */
-  std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                  ArrayType const &    error_signal) override
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     assert(inputs.size() == 1);
     assert(error_signal.size() == inputs.at(0)->size());
 
-    ArrayType return_signal(inputs.at(0)->shape());
+    TensorType return_signal(inputs.at(0)->shape());
 
     auto a_it   = inputs.at(0)->cbegin();
     auto err_it = error_signal.cbegin();

@@ -32,9 +32,9 @@ template <class T>
 class Relu : public fetch::ml::ops::Ops<T>
 {
 public:
-  using ArrayType     = T;
-  using DataType      = typename ArrayType::Type;
-  using SizeType      = typename ArrayType::SizeType;
+  using TensorType    = T;
+  using DataType      = typename TensorType::Type;
+  using SizeType      = typename TensorType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpReluSaveableParams<T>;
 
@@ -53,7 +53,7 @@ public:
   }
 
   // f(x)=max(0,x);
-  void Forward(VecTensorType const &inputs, ArrayType &output) override
+  void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(inputs.size() == 1);
     assert(output.shape() == this->ComputeOutputShape(inputs));
@@ -68,14 +68,14 @@ public:
    * @param error_signal
    * @return
    */
-  std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                  ArrayType const &    error_signal) override
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     assert(inputs.size() == 1);
     assert(inputs.at(0)->shape() == error_signal.shape());
 
-    ArrayType const &input = (*inputs.front());
-    ArrayType        return_signal{error_signal.shape()};
+    TensorType const &input = (*inputs.front());
+    TensorType        return_signal{error_signal.shape()};
 
     auto it1    = input.begin();
     auto it2    = return_signal.begin();

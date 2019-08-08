@@ -36,12 +36,12 @@ TYPED_TEST_CASE(RandomisedReluTest, MyTypes);
 
 TYPED_TEST(RandomisedReluTest, forward_test)
 {
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
-  using SizeType  = typename TypeParam::SizeType;
+  using DataType   = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using SizeType   = typename TypeParam::SizeType;
 
-  ArrayType           data(8);
-  ArrayType           gt(8);
+  TensorType          data(8);
+  TensorType          gt(8);
   std::vector<double> data_input({1, -2, 3, -4, 5, -6, 7, -8});
   std::vector<double> gt_input({1, -0.062793536, 3, -0.12558707, 5, -0.1883806, 7, -0.2511741});
   for (SizeType i{0}; i < 8; ++i)
@@ -49,9 +49,9 @@ TYPED_TEST(RandomisedReluTest, forward_test)
     data.Set(i, static_cast<DataType>(data_input[i]));
     gt.Set(i, static_cast<DataType>(gt_input[i]));
   }
-  fetch::ml::ops::RandomisedRelu<ArrayType> op(DataType{0.03f}, DataType{0.08f}, 12345);
-  ArrayType prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
-  op.Forward({std::make_shared<const ArrayType>(data)}, prediction);
+  fetch::ml::ops::RandomisedRelu<TensorType> op(DataType{0.03f}, DataType{0.08f}, 12345);
+  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -63,8 +63,8 @@ TYPED_TEST(RandomisedReluTest, forward_test)
     gt.Set(i, static_cast<DataType>(gt_input[i]));
   }
 
-  prediction = ArrayType(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
-  op.Forward({std::make_shared<const ArrayType>(data)}, prediction);
+  prediction = TensorType(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -78,8 +78,8 @@ TYPED_TEST(RandomisedReluTest, forward_test)
     gt.Set(i, static_cast<DataType>(gt_input[i]));
   }
 
-  prediction = ArrayType(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
-  op.Forward({std::make_shared<const ArrayType>(data)}, prediction);
+  prediction = TensorType(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -87,12 +87,12 @@ TYPED_TEST(RandomisedReluTest, forward_test)
 
 TYPED_TEST(RandomisedReluTest, forward_3d_tensor_test)
 {
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
-  using SizeType  = typename TypeParam::SizeType;
+  using DataType   = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using SizeType   = typename TypeParam::SizeType;
 
-  ArrayType           data({2, 2, 2});
-  ArrayType           gt({2, 2, 2});
+  TensorType          data({2, 2, 2});
+  TensorType          gt({2, 2, 2});
   std::vector<double> data_input({1, -2, 3, -4, 5, -6, 7, -8});
   std::vector<double> gt_input({1, -0.062793536, 3, -0.12558707, 5, -0.1883806, 7, -0.2511741});
 
@@ -108,9 +108,9 @@ TYPED_TEST(RandomisedReluTest, forward_3d_tensor_test)
     }
   }
 
-  fetch::ml::ops::RandomisedRelu<ArrayType> op(DataType{0.03f}, DataType{0.08f}, 12345);
-  ArrayType prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
-  op.Forward({std::make_shared<const ArrayType>(data)}, prediction);
+  fetch::ml::ops::RandomisedRelu<TensorType> op(DataType{0.03f}, DataType{0.08f}, 12345);
+  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -118,13 +118,13 @@ TYPED_TEST(RandomisedReluTest, forward_3d_tensor_test)
 
 TYPED_TEST(RandomisedReluTest, backward_test)
 {
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
-  using SizeType  = typename TypeParam::SizeType;
+  using DataType   = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using SizeType   = typename TypeParam::SizeType;
 
-  ArrayType           data(8);
-  ArrayType           error(8);
-  ArrayType           gt(8);
+  TensorType          data(8);
+  TensorType          error(8);
+  TensorType          gt(8);
   std::vector<double> data_input({1, -2, 3, -4, 5, -6, 7, -8});
   std::vector<double> errorInput({0, 0, 0, 0, 1, 1, 0, 0});
   std::vector<double> gt_input({0, 0, 0, 0, 1, 0.079588953, 0, 0});
@@ -134,23 +134,24 @@ TYPED_TEST(RandomisedReluTest, backward_test)
     error.Set(i, static_cast<DataType>(errorInput[i]));
     gt.Set(i, static_cast<DataType>(gt_input[i]));
   }
-  fetch::ml::ops::RandomisedRelu<ArrayType> op(DataType{0.03f}, DataType{0.08f}, 12345);
-  std::vector<ArrayType> prediction = op.Backward({std::make_shared<const ArrayType>(data)}, error);
+  fetch::ml::ops::RandomisedRelu<TensorType> op(DataType{0.03f}, DataType{0.08f}, 12345);
+  std::vector<TensorType>                    prediction =
+      op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
 
   // Test after generating new random alpha value
   // Forward pass will update random value
-  ArrayType output(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
-  op.Forward({std::make_shared<const ArrayType>(data)}, output);
+  TensorType output(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  op.Forward({std::make_shared<const TensorType>(data)}, output);
 
   gt_input = {0, 0, 0, 0, 1, 0.0788452, 0, 0};
   for (SizeType i{0}; i < 8; ++i)
   {
     gt.Set(i, static_cast<DataType>(gt_input[i]));
   }
-  prediction = op.Backward({std::make_shared<const ArrayType>(data)}, error);
+  prediction = op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -163,7 +164,7 @@ TYPED_TEST(RandomisedReluTest, backward_test)
   {
     gt.Set(i, static_cast<DataType>(gt_input[i]));
   }
-  prediction = op.Backward({std::make_shared<const ArrayType>(data)}, error);
+  prediction = op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -171,13 +172,13 @@ TYPED_TEST(RandomisedReluTest, backward_test)
 
 TYPED_TEST(RandomisedReluTest, backward_3d_tensor_test)
 {
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
-  using SizeType  = typename TypeParam::SizeType;
+  using DataType   = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using SizeType   = typename TypeParam::SizeType;
 
-  ArrayType           data({2, 2, 2});
-  ArrayType           error({2, 2, 2});
-  ArrayType           gt({2, 2, 2});
+  TensorType          data({2, 2, 2});
+  TensorType          error({2, 2, 2});
+  TensorType          gt({2, 2, 2});
   std::vector<double> data_input({1, -2, 3, -4, 5, -6, 7, -8});
   std::vector<double> errorInput({0, 0, 0, 0, 1, 1, 0, 0});
   std::vector<double> gt_input({0, 0, 0, 0, 1, 0.079588953, 0, 0});
@@ -195,8 +196,9 @@ TYPED_TEST(RandomisedReluTest, backward_3d_tensor_test)
     }
   }
 
-  fetch::ml::ops::RandomisedRelu<ArrayType> op(DataType{0.03f}, DataType{0.08f}, 12345);
-  std::vector<ArrayType> prediction = op.Backward({std::make_shared<const ArrayType>(data)}, error);
+  fetch::ml::ops::RandomisedRelu<TensorType> op(DataType{0.03f}, DataType{0.08f}, 12345);
+  std::vector<TensorType>                    prediction =
+      op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -205,18 +207,18 @@ TYPED_TEST(RandomisedReluTest, backward_3d_tensor_test)
 TYPED_TEST(RandomisedReluTest, saveparams_test)
 {
   using DataType      = typename TypeParam::Type;
-  using ArrayType     = TypeParam;
-  using VecTensorType = typename fetch::ml::ops::Ops<ArrayType>::VecTensorType;
-  using SPType        = typename fetch::ml::ops::RandomisedRelu<ArrayType>::SPType;
-  using OpType        = typename fetch::ml::ops::RandomisedRelu<ArrayType>;
+  using TensorType    = TypeParam;
+  using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
+  using SPType        = typename fetch::ml::ops::RandomisedRelu<TensorType>::SPType;
+  using OpType        = typename fetch::ml::ops::RandomisedRelu<TensorType>;
 
-  ArrayType data = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
-  ArrayType gt =
-      ArrayType::FromString("1, -0.062793536, 3, -0.12558707, 5, -0.1883806, 7, -0.2511741");
+  TensorType data = TensorType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
+  TensorType gt =
+      TensorType::FromString("1, -0.062793536, 3, -0.12558707, 5, -0.1883806, 7, -0.2511741");
 
-  fetch::ml::ops::RandomisedRelu<ArrayType> op(DataType{0.03f}, DataType{0.08f}, 12345);
-  ArrayType     prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
-  VecTensorType vec_data({std::make_shared<const ArrayType>(data)});
+  fetch::ml::ops::RandomisedRelu<TensorType> op(DataType{0.03f}, DataType{0.08f}, 12345);
+  TensorType    prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  VecTensorType vec_data({std::make_shared<const TensorType>(data)});
 
   op.Forward(vec_data, prediction);
 
@@ -242,7 +244,7 @@ TYPED_TEST(RandomisedReluTest, saveparams_test)
   OpType new_op(*dsp2);
 
   // check that new predictions match the old
-  ArrayType new_prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
+  TensorType new_prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values

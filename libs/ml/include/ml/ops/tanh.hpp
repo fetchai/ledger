@@ -33,9 +33,9 @@ template <class T>
 class TanH : public fetch::ml::ops::Ops<T>
 {
 public:
-  using ArrayType     = T;
-  using DataType      = typename ArrayType::Type;
-  using SizeType      = typename ArrayType::SizeType;
+  using TensorType    = T;
+  using DataType      = typename TensorType::Type;
+  using SizeType      = typename TensorType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpTanhSaveableParams<T>;
 
@@ -53,7 +53,7 @@ public:
     return std::make_shared<SPType>(sp);
   }
 
-  void Forward(VecTensorType const &inputs, ArrayType &output) override
+  void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(inputs.size() == 1);
     assert(output.shape() == this->ComputeOutputShape(inputs));
@@ -68,16 +68,16 @@ public:
     }
   }
 
-  std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                  ArrayType const &    error_signal) override
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     assert(inputs.size() == 1);
 
     assert(inputs.front()->shape() == error_signal.shape());
 
-    ArrayType return_signal = error_signal.Copy();
+    TensorType return_signal = error_signal.Copy();
 
-    ArrayType t(this->ComputeOutputShape(inputs));
+    TensorType t(this->ComputeOutputShape(inputs));
     Forward(inputs, t);
 
     // gradient of tanh: 1 - tanh(x)^2

@@ -36,20 +36,20 @@ TYPED_TEST_CASE(Convolution2DTest, MyTypes);
 
 TYPED_TEST(Convolution2DTest, forward_1x1x1x2_1x1x1x1x2)
 {
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
-  using SizeType  = typename TypeParam::SizeType;
+  using DataType   = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using SizeType   = typename TypeParam::SizeType;
 
-  ArrayType input({1, 1, 1, 2});
-  ArrayType weights({1, 1, 1, 1, 1});
+  TensorType input({1, 1, 1, 2});
+  TensorType weights({1, 1, 1, 1, 1});
   input.At(0, 0, 0, 0)      = DataType{5};
   input.At(0, 0, 0, 1)      = DataType{6};
   weights.At(0, 0, 0, 0, 0) = DataType{-4};
-  fetch::ml::ops::Convolution2D<ArrayType> c;
+  fetch::ml::ops::Convolution2D<TensorType> c;
 
-  ArrayType output(c.ComputeOutputShape(
-      {std::make_shared<ArrayType>(input), std::make_shared<ArrayType>(weights)}));
-  c.Forward({std::make_shared<ArrayType>(input), std::make_shared<ArrayType>(weights)}, output);
+  TensorType output(c.ComputeOutputShape(
+      {std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights)}));
+  c.Forward({std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights)}, output);
 
   ASSERT_EQ(output.shape(), std::vector<SizeType>({1, 1, 1, 2}));
   EXPECT_EQ(output.At(0, 0, 0, 0), DataType{-20});
@@ -58,12 +58,12 @@ TYPED_TEST(Convolution2DTest, forward_1x1x1x2_1x1x1x1x2)
 
 TYPED_TEST(Convolution2DTest, forward_1x3x3x1_1x1x3x3x1)
 {
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
-  using SizeType  = typename TypeParam::SizeType;
+  using DataType   = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using SizeType   = typename TypeParam::SizeType;
 
-  ArrayType input({1, 3, 3, 1});
-  ArrayType weights({1, 1, 3, 3, 1});
+  TensorType input({1, 3, 3, 1});
+  TensorType weights({1, 1, 3, 3, 1});
   for (SizeType i{0}; i < 3; ++i)
   {
     for (SizeType j{0}; j < 3; ++j)
@@ -72,11 +72,11 @@ TYPED_TEST(Convolution2DTest, forward_1x3x3x1_1x1x3x3x1)
       weights.At(0, 0, i, j, 0) = static_cast<DataType>((i * 3) + j);
     }
   }
-  fetch::ml::ops::Convolution2D<ArrayType> c;
+  fetch::ml::ops::Convolution2D<TensorType> c;
 
-  ArrayType output(c.ComputeOutputShape(
-      {std::make_shared<ArrayType>(input), std::make_shared<ArrayType>(weights)}));
-  c.Forward({std::make_shared<ArrayType>(input), std::make_shared<ArrayType>(weights)}, output);
+  TensorType output(c.ComputeOutputShape(
+      {std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights)}));
+  c.Forward({std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights)}, output);
 
   ASSERT_EQ(output.shape(), std::vector<SizeType>({1, 1, 1, 1}));
   EXPECT_EQ(output.At(0, 0, 0, 0), DataType{204});
@@ -84,13 +84,13 @@ TYPED_TEST(Convolution2DTest, forward_1x3x3x1_1x1x3x3x1)
 
 TYPED_TEST(Convolution2DTest, forward_3x3x3x1_1x3x3x3x1)
 {
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
-  using SizeType  = typename TypeParam::SizeType;
+  using DataType   = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using SizeType   = typename TypeParam::SizeType;
 
-  ArrayType input({3, 3, 3, 1});
-  ArrayType weights({1, 3, 3, 3, 1});
-  SizeType  counter = 0;
+  TensorType input({3, 3, 3, 1});
+  TensorType weights({1, 3, 3, 3, 1});
+  SizeType   counter = 0;
   for (SizeType i{0}; i < 3; ++i)
   {
     for (SizeType j{0}; j < 3; ++j)
@@ -103,11 +103,11 @@ TYPED_TEST(Convolution2DTest, forward_3x3x3x1_1x3x3x3x1)
       }
     }
   }
-  fetch::ml::ops::Convolution2D<ArrayType> c;
+  fetch::ml::ops::Convolution2D<TensorType> c;
 
-  ArrayType output(c.ComputeOutputShape(
-      {std::make_shared<ArrayType>(input), std::make_shared<ArrayType>(weights)}));
-  c.Forward({std::make_shared<ArrayType>(input), std::make_shared<ArrayType>(weights)}, output);
+  TensorType output(c.ComputeOutputShape(
+      {std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights)}));
+  c.Forward({std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights)}, output);
 
   ASSERT_EQ(output.shape(), std::vector<SizeType>({1, 1, 1, 1}));
   EXPECT_EQ(output.At(0, 0, 0, 0), DataType{6201});
@@ -116,16 +116,16 @@ TYPED_TEST(Convolution2DTest, forward_3x3x3x1_1x3x3x3x1)
 TYPED_TEST(Convolution2DTest, forward_3x3x3x1_5x3x3x3x1)
 {
   // using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
-  using SizeType  = typename TypeParam::SizeType;
+  using TensorType = TypeParam;
+  using SizeType   = typename TypeParam::SizeType;
 
-  ArrayType                                input(std::vector<SizeType>({3, 3, 3, 1}));
-  ArrayType                                weights(std::vector<SizeType>({5, 3, 3, 3, 1}));
-  fetch::ml::ops::Convolution2D<ArrayType> c;
+  TensorType                                input(std::vector<SizeType>({3, 3, 3, 1}));
+  TensorType                                weights(std::vector<SizeType>({5, 3, 3, 3, 1}));
+  fetch::ml::ops::Convolution2D<TensorType> c;
 
-  ArrayType output(c.ComputeOutputShape(
-      {std::make_shared<ArrayType>(input), std::make_shared<ArrayType>(weights)}));
-  c.Forward({std::make_shared<ArrayType>(input), std::make_shared<ArrayType>(weights)}, output);
+  TensorType output(c.ComputeOutputShape(
+      {std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights)}));
+  c.Forward({std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights)}, output);
 
   ASSERT_EQ(output.shape(), std::vector<SizeType>({5, 1, 1, 1}));
 }
@@ -133,16 +133,16 @@ TYPED_TEST(Convolution2DTest, forward_3x3x3x1_5x3x3x3x1)
 TYPED_TEST(Convolution2DTest, forward_1x5x5x3_1x1x3x3x3)
 {
   // using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
-  using SizeType  = typename TypeParam::SizeType;
+  using TensorType = TypeParam;
+  using SizeType   = typename TypeParam::SizeType;
 
-  ArrayType                                input(std::vector<SizeType>({1, 5, 5, 3}));
-  ArrayType                                weights(std::vector<SizeType>({1, 1, 3, 3, 1}));
-  fetch::ml::ops::Convolution2D<ArrayType> c;
+  TensorType                                input(std::vector<SizeType>({1, 5, 5, 3}));
+  TensorType                                weights(std::vector<SizeType>({1, 1, 3, 3, 1}));
+  fetch::ml::ops::Convolution2D<TensorType> c;
 
-  ArrayType output(c.ComputeOutputShape(
-      {std::make_shared<ArrayType>(input), std::make_shared<ArrayType>(weights)}));
-  c.Forward({std::make_shared<ArrayType>(input), std::make_shared<ArrayType>(weights)}, output);
+  TensorType output(c.ComputeOutputShape(
+      {std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights)}));
+  c.Forward({std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights)}, output);
 
   ASSERT_EQ(output.shape(), std::vector<SizeType>({1, 3, 3, 3}));
 }
@@ -150,25 +150,25 @@ TYPED_TEST(Convolution2DTest, forward_1x5x5x3_1x1x3x3x3)
 TYPED_TEST(Convolution2DTest, forward_1x5x5x3_1x1x3x3x3_stride_2)
 {
   // using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
-  using SizeType  = typename TypeParam::SizeType;
+  using TensorType = TypeParam;
+  using SizeType   = typename TypeParam::SizeType;
 
-  ArrayType                                input(std::vector<SizeType>({1, 5, 5, 3}));
-  ArrayType                                weights(std::vector<SizeType>({1, 1, 3, 3, 3}));
-  fetch::ml::ops::Convolution2D<ArrayType> c(2);
+  TensorType                                input(std::vector<SizeType>({1, 5, 5, 3}));
+  TensorType                                weights(std::vector<SizeType>({1, 1, 3, 3, 3}));
+  fetch::ml::ops::Convolution2D<TensorType> c(2);
 
-  ArrayType output(c.ComputeOutputShape(
-      {std::make_shared<ArrayType>(input), std::make_shared<ArrayType>(weights)}));
-  c.Forward({std::make_shared<ArrayType>(input), std::make_shared<ArrayType>(weights)}, output);
+  TensorType output(c.ComputeOutputShape(
+      {std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights)}));
+  c.Forward({std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights)}, output);
 
   ASSERT_EQ(output.shape(), std::vector<SizeType>({1, 2, 2, 3}));
 }
 
 TYPED_TEST(Convolution2DTest, backward_3x3x3x2_5x3x3x3x2)
 {
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
-  using SizeType  = typename TypeParam::SizeType;
+  using DataType   = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using SizeType   = typename TypeParam::SizeType;
 
   SizeType const input_channels  = 3;
   SizeType const output_channels = 5;
@@ -184,11 +184,11 @@ TYPED_TEST(Convolution2DTest, backward_3x3x3x2_5x3x3x3x2)
 
   SizeType const batch_size = 2;
 
-  ArrayType input({input_channels, input_height, input_width, batch_size});
-  ArrayType kernels({output_channels, input_channels, kernel_height, kernel_width, 1});
-  ArrayType error({output_channels, output_height, output_width, batch_size});
-  ArrayType gt1(input.shape());
-  ArrayType gt2(kernels.shape());
+  TensorType input({input_channels, input_height, input_width, batch_size});
+  TensorType kernels({output_channels, input_channels, kernel_height, kernel_width, 1});
+  TensorType error({output_channels, output_height, output_width, batch_size});
+  TensorType gt1(input.shape());
+  TensorType gt2(kernels.shape());
 
   // Generate input
   for (SizeType i_b{0}; i_b < batch_size; ++i_b)
@@ -237,9 +237,9 @@ TYPED_TEST(Convolution2DTest, backward_3x3x3x2_5x3x3x3x2)
     }
   }
 
-  fetch::ml::ops::Convolution2D<ArrayType> op;
-  std::vector<ArrayType>                   prediction = op.Backward(
-      {std::make_shared<ArrayType>(input), std::make_shared<ArrayType>(kernels)}, error);
+  fetch::ml::ops::Convolution2D<TensorType> op;
+  std::vector<TensorType>                   prediction = op.Backward(
+      {std::make_shared<TensorType>(input), std::make_shared<TensorType>(kernels)}, error);
 
   // Test correct gradient shape
   ASSERT_EQ(prediction.at(0).shape(), input.shape());
@@ -252,16 +252,16 @@ TYPED_TEST(Convolution2DTest, backward_3x3x3x2_5x3x3x3x2)
 
 TYPED_TEST(Convolution2DTest, saveparams_test)
 {
-  using ArrayType     = TypeParam;
+  using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
-  using VecTensorType = typename fetch::ml::ops::Ops<ArrayType>::VecTensorType;
-  using SPType        = typename fetch::ml::ops::Convolution2D<ArrayType>::SPType;
-  using OpType        = typename fetch::ml::ops::Convolution2D<ArrayType>;
+  using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
+  using SPType        = typename fetch::ml::ops::Convolution2D<TensorType>::SPType;
+  using OpType        = typename fetch::ml::ops::Convolution2D<TensorType>;
   using SizeType      = typename TypeParam::SizeType;
 
-  ArrayType input({3, 3, 3, 1});
-  ArrayType weights({1, 3, 3, 3, 1});
-  SizeType  counter = 0;
+  TensorType input({3, 3, 3, 1});
+  TensorType weights({1, 3, 3, 3, 1});
+  SizeType   counter = 0;
   for (SizeType i{0}; i < 3; ++i)
   {
     for (SizeType j{0}; j < 3; ++j)
@@ -277,10 +277,10 @@ TYPED_TEST(Convolution2DTest, saveparams_test)
 
   OpType op;
 
-  ArrayType     prediction(op.ComputeOutputShape(
-      {std::make_shared<const ArrayType>(input), std::make_shared<const ArrayType>(weights)}));
+  TensorType    prediction(op.ComputeOutputShape(
+      {std::make_shared<const TensorType>(input), std::make_shared<const TensorType>(weights)}));
   VecTensorType vec_data(
-      {std::make_shared<const ArrayType>(input), std::make_shared<const ArrayType>(weights)});
+      {std::make_shared<const TensorType>(input), std::make_shared<const TensorType>(weights)});
 
   op.Forward(vec_data, prediction);
 
@@ -303,8 +303,8 @@ TYPED_TEST(Convolution2DTest, saveparams_test)
   OpType new_op(*dsp2);
 
   // check that new predictions match the old
-  ArrayType new_prediction(op.ComputeOutputShape(
-      {std::make_shared<const ArrayType>(input), std::make_shared<const ArrayType>(weights)}));
+  TensorType new_prediction(op.ComputeOutputShape(
+      {std::make_shared<const TensorType>(input), std::make_shared<const TensorType>(weights)}));
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values

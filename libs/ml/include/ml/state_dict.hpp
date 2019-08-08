@@ -32,8 +32,8 @@ namespace ml {
 template <class T>
 struct StateDict
 {
-  using ArrayType    = T;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
+  using TensorType   = T;
+  using ArrayPtrType = std::shared_ptr<TensorType>;
   using SizeType     = fetch::math::SizeType;
 
   ArrayPtrType                        weights_;
@@ -45,7 +45,7 @@ struct StateDict
              (dict_ != o.dict_));
   }
 
-  void InlineDivide(typename ArrayType::Type n)
+  void InlineDivide(typename TensorType::Type n)
   {
     if (weights_)
     {
@@ -61,7 +61,7 @@ struct StateDict
   {
     if (o.weights_ && !weights_ && !strict)
     {
-      weights_ = std::make_shared<ArrayType>(o.weights_->shape());
+      weights_ = std::make_shared<TensorType>(o.weights_->shape());
     }
     assert(!((bool(weights_) ^ bool(o.weights_))));
     if (weights_)
@@ -86,7 +86,7 @@ struct StateDict
     {
       ret.InlineAdd(sd, false);
     }
-    ret.InlineDivide(static_cast<typename ArrayType::Type>(stateDictList.size()));
+    ret.InlineDivide(static_cast<typename TensorType::Type>(stateDictList.size()));
     return ret;
   }
 
@@ -102,8 +102,8 @@ struct StateDict
     {
       if (weights_)
       {
-        weights_->InlineMultiply(typename ArrayType::Type(1.0f - ratio));
-        weights_->InlineAdd(o.weights_->Copy().InlineMultiply(typename ArrayType::Type(ratio)));
+        weights_->InlineMultiply(typename TensorType::Type(1.0f - ratio));
+        weights_->InlineAdd(o.weights_->Copy().InlineMultiply(typename TensorType::Type(ratio)));
       }
       for (auto &e : dict_)
       {
@@ -151,9 +151,9 @@ struct StateDict
     serializer >> hasweights;
     if (hasweights)
     {
-      ArrayType weights;
+      TensorType weights;
       serializer >> weights;
-      t.weights_ = std::make_shared<ArrayType>(weights);
+      t.weights_ = std::make_shared<TensorType>(weights);
     }
     serializer >> dictsize;
 

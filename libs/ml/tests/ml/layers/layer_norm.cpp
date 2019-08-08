@@ -134,8 +134,8 @@ TYPED_TEST(LayerNormTest, node_backward_test)  // Use the class as a Node
 
 TYPED_TEST(LayerNormTest, graph_forward_test_exact_value_2D)  // Use the class as a Node
 {
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
+  using DataType   = typename TypeParam::Type;
+  using TensorType = TypeParam;
 
   fetch::ml::Graph<TypeParam> g;
 
@@ -143,13 +143,13 @@ TYPED_TEST(LayerNormTest, graph_forward_test_exact_value_2D)  // Use the class a
   g.template AddNode<fetch::ml::layers::LayerNorm<TypeParam>>(
       "LayerNorm", {"Input"}, std::vector<typename TypeParam::SizeType>({3, 2}));
 
-  ArrayType data = ArrayType::FromString(
+  TensorType data = TensorType::FromString(
       "1, 2, 3, 0;"
       "2, 3, 2, 1;"
       "3, 6, 4, 13");
   data.Reshape({3, 2, 2});
 
-  ArrayType gt = ArrayType::FromString(
+  TensorType gt = TensorType::FromString(
       "-1.22474487, -0.98058068, 0, -0.79006571;"
       "0, -0.39223227, -1.22474487,  -0.62076591;"
       "1.22474487,  1.37281295, 1.22474487, 1.41083162");

@@ -121,11 +121,11 @@ TYPED_TEST(MatrixMultiplyTest, backward_batch_test)
 
 TYPED_TEST(MatrixMultiplyTest, saveparams_test)
 {
-  using ArrayType     = TypeParam;
+  using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
-  using VecTensorType = typename fetch::ml::ops::Ops<ArrayType>::VecTensorType;
-  using SPType        = typename fetch::ml::ops::MatrixMultiply<ArrayType>::SPType;
-  using OpType        = typename fetch::ml::ops::MatrixMultiply<ArrayType>;
+  using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
+  using SPType        = typename fetch::ml::ops::MatrixMultiply<TensorType>::SPType;
+  using OpType        = typename fetch::ml::ops::MatrixMultiply<TensorType>;
 
   TypeParam data_1 = TypeParam::FromString("1, 2, -3, 4, 5");
   TypeParam data_2 = TypeParam::FromString(
@@ -134,10 +134,10 @@ TYPED_TEST(MatrixMultiplyTest, saveparams_test)
 
   OpType op;
 
-  ArrayType     prediction(op.ComputeOutputShape(
-      {std::make_shared<const ArrayType>(data_1), std::make_shared<const ArrayType>(data_2)}));
+  TensorType    prediction(op.ComputeOutputShape(
+      {std::make_shared<const TensorType>(data_1), std::make_shared<const TensorType>(data_2)}));
   VecTensorType vec_data(
-      {std::make_shared<const ArrayType>(data_1), std::make_shared<const ArrayType>(data_2)});
+      {std::make_shared<const TensorType>(data_1), std::make_shared<const TensorType>(data_2)});
 
   op.Forward(vec_data, prediction);
 
@@ -160,8 +160,8 @@ TYPED_TEST(MatrixMultiplyTest, saveparams_test)
   OpType new_op(*dsp2);
 
   // check that new predictions match the old
-  ArrayType new_prediction(op.ComputeOutputShape(
-      {std::make_shared<const ArrayType>(data_1), std::make_shared<const ArrayType>(data_2)}));
+  TensorType new_prediction(op.ComputeOutputShape(
+      {std::make_shared<const TensorType>(data_1), std::make_shared<const TensorType>(data_2)}));
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values

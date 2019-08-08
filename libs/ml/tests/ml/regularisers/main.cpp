@@ -40,18 +40,18 @@ TYPED_TEST(WeightsTest, allocation_test)
 
 TYPED_TEST(WeightsTest, l1_regulariser_test)
 {
-  using ArrayType = TypeParam;
-  using DataType  = typename TypeParam::Type;
-  using RegType   = fetch::ml::regularisers::L1Regulariser<ArrayType>;
+  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
+  using RegType    = fetch::ml::regularisers::L1Regulariser<TensorType>;
 
   // Initialise values
   auto regularisation_rate = static_cast<DataType>(0.1f);
   auto regulariser         = std::make_shared<RegType>();
 
-  ArrayType data = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
-  ArrayType gt   = ArrayType::FromString("0.9, -1.9, 2.9, -3.9, 4.9, -5.9, 6.9, -7.9");
+  TensorType data = TensorType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
+  TensorType gt   = TensorType::FromString("0.9, -1.9, 2.9, -3.9, 4.9, -5.9, 6.9, -7.9");
 
-  fetch::ml::ops::Weights<ArrayType> w;
+  fetch::ml::ops::Weights<TensorType> w;
   w.SetData(data);
 
   // Apply regularisation
@@ -59,7 +59,7 @@ TYPED_TEST(WeightsTest, l1_regulariser_test)
   w.ApplyRegularisation();
 
   // Evaluate weight
-  ArrayType prediction(w.ComputeOutputShape({}));
+  TensorType prediction(w.ComputeOutputShape({}));
   w.Forward({}, prediction);
 
   // Test actual values
@@ -68,18 +68,18 @@ TYPED_TEST(WeightsTest, l1_regulariser_test)
 
 TYPED_TEST(WeightsTest, l2_regulariser_test)
 {
-  using ArrayType = TypeParam;
-  using DataType  = typename TypeParam::Type;
-  using RegType   = fetch::ml::regularisers::L2Regulariser<ArrayType>;
+  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
+  using RegType    = fetch::ml::regularisers::L2Regulariser<TensorType>;
 
   // Initialise values
   auto regularisation_rate = static_cast<DataType>(0.1f);
   auto regulariser         = std::make_shared<RegType>();
 
-  ArrayType data = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
-  ArrayType gt   = ArrayType::FromString("0.8, -1.6, 2.4, -3.2, 4.0, -4.8, 5.6, -6.4");
+  TensorType data = TensorType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
+  TensorType gt   = TensorType::FromString("0.8, -1.6, 2.4, -3.2, 4.0, -4.8, 5.6, -6.4");
 
-  fetch::ml::ops::Weights<ArrayType> w;
+  fetch::ml::ops::Weights<TensorType> w;
   w.SetData(data);
 
   // Apply regularisation
@@ -87,7 +87,7 @@ TYPED_TEST(WeightsTest, l2_regulariser_test)
   w.ApplyRegularisation();
 
   // Evaluate weight
-  ArrayType prediction(w.ComputeOutputShape({}));
+  TensorType prediction(w.ComputeOutputShape({}));
   w.Forward({}, prediction);
 
   // Test actual values

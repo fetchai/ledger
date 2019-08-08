@@ -37,14 +37,14 @@ TYPED_TEST_CASE(ReluTest, MyTypes);
 
 TYPED_TEST(ReluTest, forward_all_positive_test)
 {
-  using ArrayType = TypeParam;
+  using TensorType = TypeParam;
 
-  ArrayType data = ArrayType::FromString(R"(1, 2, 3, 4, 5, 6, 7, 8)");
-  ArrayType gt   = ArrayType::FromString(R"(1, 2, 3, 4, 5, 6, 7, 8)");
+  TensorType data = TensorType::FromString(R"(1, 2, 3, 4, 5, 6, 7, 8)");
+  TensorType gt   = TensorType::FromString(R"(1, 2, 3, 4, 5, 6, 7, 8)");
 
-  fetch::ml::ops::Relu<ArrayType> op;
-  ArrayType prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
-  op.Forward({std::make_shared<const ArrayType>(data)}, prediction);
+  fetch::ml::ops::Relu<TensorType> op;
+  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt));
@@ -52,12 +52,12 @@ TYPED_TEST(ReluTest, forward_all_positive_test)
 
 TYPED_TEST(ReluTest, forward_3d_tensor_test)
 {
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
-  using SizeType  = typename TypeParam::SizeType;
+  using DataType   = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using SizeType   = typename TypeParam::SizeType;
 
-  ArrayType           data({2, 2, 2});
-  ArrayType           gt({2, 2, 2});
+  TensorType          data({2, 2, 2});
+  TensorType          gt({2, 2, 2});
   std::vector<double> data_input({1, -2, 3, -4, 5, -6, 7, -8});
   std::vector<double> gt_input({1, 0, 3, 0, 5, 0, 7, 0});
 
@@ -73,9 +73,9 @@ TYPED_TEST(ReluTest, forward_3d_tensor_test)
     }
   }
 
-  fetch::ml::ops::Relu<ArrayType> op;
-  ArrayType prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
-  op.Forward({std::make_shared<const ArrayType>(data)}, prediction);
+  fetch::ml::ops::Relu<TensorType> op;
+  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, static_cast<DataType>(1e-5), static_cast<DataType>(1e-5)));
@@ -83,14 +83,14 @@ TYPED_TEST(ReluTest, forward_3d_tensor_test)
 
 TYPED_TEST(ReluTest, forward_all_negative_integer_test)
 {
-  using ArrayType = TypeParam;
+  using TensorType = TypeParam;
 
-  ArrayType data = ArrayType::FromString(R"(-1, -2, -3, -4, -5, -6, -7, -8)");
-  ArrayType gt   = ArrayType::FromString(R"(0, 0, 0, 0, 0, 0, 0, 0)");
+  TensorType data = TensorType::FromString(R"(-1, -2, -3, -4, -5, -6, -7, -8)");
+  TensorType gt   = TensorType::FromString(R"(0, 0, 0, 0, 0, 0, 0, 0)");
 
-  fetch::ml::ops::Relu<ArrayType> op;
-  ArrayType prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
-  op.Forward({std::make_shared<const ArrayType>(data)}, prediction);
+  fetch::ml::ops::Relu<TensorType> op;
+  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt));
@@ -98,14 +98,14 @@ TYPED_TEST(ReluTest, forward_all_negative_integer_test)
 
 TYPED_TEST(ReluTest, forward_mixed_test)
 {
-  using ArrayType = TypeParam;
+  using TensorType = TypeParam;
 
-  ArrayType data = ArrayType::FromString(R"(1, -2, 3, -4, 5, -6, 7, -8)");
-  ArrayType gt   = ArrayType::FromString(R"(1, 0, 3, 0, 5, 0, 7, 0)");
+  TensorType data = TensorType::FromString(R"(1, -2, 3, -4, 5, -6, 7, -8)");
+  TensorType gt   = TensorType::FromString(R"(1, 0, 3, 0, 5, 0, 7, 0)");
 
-  fetch::ml::ops::Relu<ArrayType> op;
-  ArrayType prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
-  op.Forward({std::make_shared<const ArrayType>(data)}, prediction);
+  fetch::ml::ops::Relu<TensorType> op;
+  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt));
@@ -113,14 +113,15 @@ TYPED_TEST(ReluTest, forward_mixed_test)
 
 TYPED_TEST(ReluTest, backward_mixed_test)
 {
-  using ArrayType = TypeParam;
+  using TensorType = TypeParam;
 
-  ArrayType data  = ArrayType::FromString(R"(1, -2, 3, -4, 5, -6, 7, -8)");
-  ArrayType error = ArrayType::FromString(R"(-1, 2, 3, -5, -8, 13, -21, -34)");
-  ArrayType gt    = ArrayType::FromString(R"(-1, 0, 3, 0, -8, 0, -21, 0)");
+  TensorType data  = TensorType::FromString(R"(1, -2, 3, -4, 5, -6, 7, -8)");
+  TensorType error = TensorType::FromString(R"(-1, 2, 3, -5, -8, 13, -21, -34)");
+  TensorType gt    = TensorType::FromString(R"(-1, 0, 3, 0, -8, 0, -21, 0)");
 
-  fetch::ml::ops::Relu<ArrayType> op;
-  std::vector<ArrayType> prediction = op.Backward({std::make_shared<const ArrayType>(data)}, error);
+  fetch::ml::ops::Relu<TensorType> op;
+  std::vector<TensorType>          prediction =
+      op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt));
@@ -128,13 +129,13 @@ TYPED_TEST(ReluTest, backward_mixed_test)
 
 TYPED_TEST(ReluTest, backward_3d_tensor_test)
 {
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
-  using SizeType  = typename TypeParam::SizeType;
+  using DataType   = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using SizeType   = typename TypeParam::SizeType;
 
-  ArrayType        data({2, 2, 2});
-  ArrayType        error({2, 2, 2});
-  ArrayType        gt({2, 2, 2});
+  TensorType       data({2, 2, 2});
+  TensorType       error({2, 2, 2});
+  TensorType       gt({2, 2, 2});
   std::vector<int> data_input({1, -2, 3, -4, 5, -6, 7, -8});
   std::vector<int> errorInput({-1, 2, 3, -5, -8, 13, -21, -34});
   std::vector<int> gt_input({-1, 0, 3, 0, -8, 0, -21, 0});
@@ -152,8 +153,9 @@ TYPED_TEST(ReluTest, backward_3d_tensor_test)
     }
   }
 
-  fetch::ml::ops::Relu<ArrayType> op;
-  std::vector<ArrayType> prediction = op.Backward({std::make_shared<const ArrayType>(data)}, error);
+  fetch::ml::ops::Relu<TensorType> op;
+  std::vector<TensorType>          prediction =
+      op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt, static_cast<DataType>(1e-5), static_cast<DataType>(1e-5)));
@@ -161,18 +163,18 @@ TYPED_TEST(ReluTest, backward_3d_tensor_test)
 
 TYPED_TEST(ReluTest, saveparams_test)
 {
-  using ArrayType     = TypeParam;
+  using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
   using VecTensorType = typename fetch::ml::ops::Ops<TypeParam>::VecTensorType;
-  using SPType        = typename fetch::ml::ops::Relu<ArrayType>::SPType;
-  using OpType        = typename fetch::ml::ops::Relu<ArrayType>;
+  using SPType        = typename fetch::ml::ops::Relu<TensorType>::SPType;
+  using OpType        = typename fetch::ml::ops::Relu<TensorType>;
 
-  ArrayType data = ArrayType::FromString("1, 2, 3, 4, 5, 6, 7, 8");
-  ArrayType gt   = ArrayType::FromString("1, 2, 3, 4, 5, 6, 7, 8");
+  TensorType data = TensorType::FromString("1, 2, 3, 4, 5, 6, 7, 8");
+  TensorType gt   = TensorType::FromString("1, 2, 3, 4, 5, 6, 7, 8");
 
-  fetch::ml::ops::Relu<ArrayType> op;
-  ArrayType     prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
-  VecTensorType vec_data({std::make_shared<const ArrayType>(data)});
+  fetch::ml::ops::Relu<TensorType> op;
+  TensorType    prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  VecTensorType vec_data({std::make_shared<const TensorType>(data)});
 
   op.Forward(vec_data, prediction);
 
@@ -195,7 +197,7 @@ TYPED_TEST(ReluTest, saveparams_test)
   OpType new_op(*dsp2);
 
   // check that new predictions match the old
-  ArrayType new_prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
+  TensorType new_prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values

@@ -30,9 +30,9 @@ template <class T>
 class Exp : public fetch::ml::ops::Ops<T>
 {
 public:
-  using ArrayType     = T;
-  using DataType      = typename ArrayType::Type;
-  using SizeType      = typename ArrayType::SizeType;
+  using TensorType    = T;
+  using DataType      = typename TensorType::Type;
+  using SizeType      = typename TensorType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpExpSaveableParams<T>;
 
@@ -55,7 +55,7 @@ public:
    * @param inputs vector containing one tensor which is the input tensor to Exp
    * @return
    */
-  void Forward(VecTensorType const &inputs, ArrayType &output) override
+  void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(inputs.size() == 1);
     assert(output.shape() == this->ComputeOutputShape(inputs));
@@ -67,13 +67,13 @@ public:
    * elementwise exp gradient is:
    * f'(input0)= e^x * error_signal
    */
-  std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                  ArrayType const &    error_signal) override
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     assert(inputs.size() == 1);
     assert(error_signal.shape() == this->ComputeOutputShape(inputs));
 
-    ArrayType ret_error_signal(inputs.at(0)->shape());
+    TensorType ret_error_signal(inputs.at(0)->shape());
     fetch::math::Exp((*inputs.at(0)), ret_error_signal);
     fetch::math::Multiply(error_signal, ret_error_signal, ret_error_signal);
 

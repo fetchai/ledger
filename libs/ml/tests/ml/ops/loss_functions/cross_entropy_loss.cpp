@@ -283,10 +283,10 @@ TYPED_TEST(CrossEntropyTest, non_one_hot_dimensional_backward_test)
 
 TYPED_TEST(CrossEntropyTest, saveparams_test)
 {
-  using ArrayType = TypeParam;
-  using DataType  = typename TypeParam::Type;
-  using SPType    = typename fetch::ml::ops::CrossEntropyLoss<ArrayType>::SPType;
-  using OpType    = typename fetch::ml::ops::CrossEntropyLoss<ArrayType>;
+  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
+  using SPType     = typename fetch::ml::ops::CrossEntropyLoss<TensorType>::SPType;
+  using OpType     = typename fetch::ml::ops::CrossEntropyLoss<TensorType>;
 
   std::uint64_t n_classes     = 4;
   std::uint64_t n_data_points = 8;

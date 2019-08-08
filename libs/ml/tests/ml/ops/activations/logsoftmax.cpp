@@ -36,16 +36,16 @@ TYPED_TEST_CASE(LogSoftmaxTest, MyTypes);
 
 TYPED_TEST(LogSoftmaxTest, forward_test)
 {
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
+  using DataType   = typename TypeParam::Type;
+  using TensorType = TypeParam;
 
-  ArrayType data = ArrayType::FromString(R"(1, -2, 3, -4, 5, -6, 7, -8)");
-  ArrayType gt   = ArrayType::FromString(
+  TensorType data = TensorType::FromString(R"(1, -2, 3, -4, 5, -6, 7, -8)");
+  TensorType gt   = TensorType::FromString(
       R"(-6.14520134, -9.14520134, -4.14520134, -11.14520134, -2.14520134, -13.14520134, -0.14520134, -15.14520134)");
 
-  fetch::ml::ops::LogSoftmax<ArrayType> op;
-  ArrayType prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
-  op.Forward({std::make_shared<const ArrayType>(data)}, prediction);
+  fetch::ml::ops::LogSoftmax<TensorType> op;
+  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-3f}, DataType{1e-3f}));
@@ -53,12 +53,12 @@ TYPED_TEST(LogSoftmaxTest, forward_test)
 
 TYPED_TEST(LogSoftmaxTest, forward_3d_tensor_axis_0_test)
 {
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
-  using SizeType  = typename TypeParam::SizeType;
+  using DataType   = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using SizeType   = typename TypeParam::SizeType;
 
-  ArrayType           data({3, 3, 1});
-  ArrayType           gt({3, 3, 1});
+  TensorType          data({3, 3, 1});
+  TensorType          gt({3, 3, 1});
   std::vector<double> data_input({1, -2, 3, -4, 5, -6, 7, -8, 9});
   std::vector<double> gt_input({-2.1328e+00, -5.1328e+00, -1.3285e-01, -9.0001e+00, -1.4008e-04,
                                 -1.1000e+01, -2.1269e+00, -1.7127e+01, -1.2693e-01});
@@ -71,9 +71,9 @@ TYPED_TEST(LogSoftmaxTest, forward_3d_tensor_axis_0_test)
     }
   }
 
-  fetch::ml::ops::LogSoftmax<ArrayType> op{1};
-  ArrayType prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
-  op.Forward({std::make_shared<const ArrayType>(data)}, prediction);
+  fetch::ml::ops::LogSoftmax<TensorType> op{1};
+  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, DataType{1e-3f}, DataType{1e-3f}));
@@ -81,17 +81,18 @@ TYPED_TEST(LogSoftmaxTest, forward_3d_tensor_axis_0_test)
 
 TYPED_TEST(LogSoftmaxTest, backward_test)
 {
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
+  using DataType   = typename TypeParam::Type;
+  using TensorType = TypeParam;
 
-  ArrayType data  = ArrayType::FromString("1; -2; 3; -4; 5; -6; 7; -8");
-  ArrayType error = ArrayType::FromString("0; 0; 0; 1; 1; 1; 0; 0");
-  ArrayType gt    = ArrayType::FromString(
+  TensorType data  = TensorType::FromString("1; -2; 3; -4; 5; -6; 7; -8");
+  TensorType error = TensorType::FromString("0; 0; 0; 1; 1; 1; 0; 0");
+  TensorType gt    = TensorType::FromString(
       "-6.4312e-03; -3.2019e-04; -4.7521e-02;  9.9996e-01;  6.4887e-01; 9.9999e-01; -2.59454; "
       "-7.9368e-07");
 
-  fetch::ml::ops::LogSoftmax<ArrayType> op{0};
-  std::vector<ArrayType> prediction = op.Backward({std::make_shared<const ArrayType>(data)}, error);
+  fetch::ml::ops::LogSoftmax<TensorType> op{0};
+  std::vector<TensorType>                prediction =
+      op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -99,13 +100,13 @@ TYPED_TEST(LogSoftmaxTest, backward_test)
 
 TYPED_TEST(LogSoftmaxTest, backward_3d_tensor_axis_0_test)
 {
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
-  using SizeType  = typename TypeParam::SizeType;
+  using DataType   = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using SizeType   = typename TypeParam::SizeType;
 
-  ArrayType           data({3, 3, 1});
-  ArrayType           error({3, 3, 1});
-  ArrayType           gt({3, 3, 1});
+  TensorType          data({3, 3, 1});
+  TensorType          error({3, 3, 1});
+  TensorType          gt({3, 3, 1});
   std::vector<double> data_input({1, -2, 3, -4, 5, -6, 7, -8, 9});
   std::vector<double> errorInput({0.1, 0, 0, 0, 0.5, 0, 0, 0, 0.9});
   std::vector<double> gt_input({8.8150e-02, -5.8998e-04, -8.7560e-02, -6.1696e-05, 7.0026e-05,
@@ -119,8 +120,9 @@ TYPED_TEST(LogSoftmaxTest, backward_3d_tensor_axis_0_test)
       gt.Set(i, j, 0, static_cast<DataType>(gt_input[j + 3 * i]));
     }
   }
-  fetch::ml::ops::LogSoftmax<ArrayType> op{1};
-  std::vector<ArrayType> prediction = op.Backward({std::make_shared<const ArrayType>(data)}, error);
+  fetch::ml::ops::LogSoftmax<TensorType> op{1};
+  std::vector<TensorType>                prediction =
+      op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt, DataType{1e-5f}, DataType{1e-5f}));
@@ -129,19 +131,19 @@ TYPED_TEST(LogSoftmaxTest, backward_3d_tensor_axis_0_test)
 TYPED_TEST(LogSoftmaxTest, saveparams_test)
 {
   using DataType      = typename TypeParam::Type;
-  using ArrayType     = TypeParam;
-  using VecTensorType = typename fetch::ml::ops::Ops<ArrayType>::VecTensorType;
-  using SPType        = typename fetch::ml::ops::LogSoftmax<ArrayType>::SPType;
-  using OpType        = typename fetch::ml::ops::LogSoftmax<ArrayType>;
+  using TensorType    = TypeParam;
+  using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
+  using SPType        = typename fetch::ml::ops::LogSoftmax<TensorType>::SPType;
+  using OpType        = typename fetch::ml::ops::LogSoftmax<TensorType>;
 
-  ArrayType data = ArrayType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
-  ArrayType gt   = ArrayType::FromString(
+  TensorType data = TensorType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
+  TensorType gt   = TensorType::FromString(
       "-6.14520134, -9.14520134, -4.14520134, -11.14520134, -2.14520134, -13.14520134, "
       "-0.14520134, -15.14520134");
 
-  fetch::ml::ops::LogSoftmax<ArrayType> op;
-  ArrayType     prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
-  VecTensorType vec_data({std::make_shared<const ArrayType>(data)});
+  fetch::ml::ops::LogSoftmax<TensorType> op;
+  TensorType    prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  VecTensorType vec_data({std::make_shared<const TensorType>(data)});
 
   op.Forward(vec_data, prediction);
   // extract saveparams
@@ -163,7 +165,7 @@ TYPED_TEST(LogSoftmaxTest, saveparams_test)
   OpType new_op(*dsp2);
 
   // check that new predictions match the old
-  ArrayType new_prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
+  TensorType new_prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values

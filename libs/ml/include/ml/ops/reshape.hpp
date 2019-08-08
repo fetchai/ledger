@@ -31,8 +31,8 @@ template <class T>
 class Reshape : public fetch::ml::ops::Ops<T>
 {
 public:
-  using ArrayType     = T;
-  using SizeType      = typename ArrayType::SizeType;
+  using TensorType    = T;
+  using SizeType      = typename TensorType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpReshapeSaveableParams<T>;
 
@@ -54,7 +54,7 @@ public:
     return std::make_shared<SPType>(sp);
   }
 
-  void Forward(VecTensorType const &inputs, ArrayType &output) override
+  void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(inputs.size() == 1);
     assert(output.shape() == ComputeOutputShape(inputs));
@@ -63,11 +63,11 @@ public:
     output.Assign((*inputs.front()));
   }
 
-  std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                  ArrayType const &    error_signal) override
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     assert(inputs.size() == 1);
-    ArrayType ret(inputs.front()->shape());
+    TensorType ret(inputs.front()->shape());
     ret.Assign(error_signal);
     return {ret};
   }

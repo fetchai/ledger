@@ -26,37 +26,37 @@
 
 #include "gtest/gtest.h"
 
-template <typename ArrayType>
-ArrayType GenerateXorData()
+template <typename TensorType>
+TensorType GenerateXorData()
 {
-  ArrayType data{{2, 4}};
-  data.Fill(typename ArrayType::Type(0));
-  data.Set(1, 1, typename ArrayType::Type(1));
-  data.Set(0, 2, typename ArrayType::Type(1));
-  data.Set(0, 3, typename ArrayType::Type(1));
-  data.Set(1, 3, typename ArrayType::Type(1));
+  TensorType data{{2, 4}};
+  data.Fill(typename TensorType::Type(0));
+  data.Set(1, 1, typename TensorType::Type(1));
+  data.Set(0, 2, typename TensorType::Type(1));
+  data.Set(0, 3, typename TensorType::Type(1));
+  data.Set(1, 3, typename TensorType::Type(1));
 
   return data;
 }
 
-template <typename ArrayType>
-ArrayType GenerateXorGt(typename ArrayType::SizeType dims)
+template <typename TensorType>
+TensorType GenerateXorGt(typename TensorType::SizeType dims)
 {
   assert((dims == 1) || (dims == 2));
 
-  ArrayType gt{{dims, 4}};
-  gt.Fill(typename ArrayType::Type(0));
+  TensorType gt{{dims, 4}};
+  gt.Fill(typename TensorType::Type(0));
   if (dims == 1)
   {
-    gt.Set(1, typename ArrayType::Type(1));
-    gt.Set(2, typename ArrayType::Type(1));
+    gt.Set(1, typename TensorType::Type(1));
+    gt.Set(2, typename TensorType::Type(1));
   }
   else
   {
-    gt.Set(0, 0, typename ArrayType::Type(1));
-    gt.Set(1, 1, typename ArrayType::Type(1));
-    gt.Set(1, 2, typename ArrayType::Type(1));
-    gt.Set(0, 3, typename ArrayType::Type(1));
+    gt.Set(0, 0, typename TensorType::Type(1));
+    gt.Set(1, 1, typename TensorType::Type(1));
+    gt.Set(1, 2, typename TensorType::Type(1));
+    gt.Set(0, 3, typename TensorType::Type(1));
   }
 
   return gt;

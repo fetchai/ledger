@@ -86,11 +86,11 @@ TYPED_TEST(ConcatenateTest, backward_test)
 
 TYPED_TEST(ConcatenateTest, saveparams_test)
 {
-  using ArrayType     = TypeParam;
+  using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
-  using VecTensorType = typename fetch::ml::ops::Ops<ArrayType>::VecTensorType;
-  using SPType        = typename fetch::ml::ops::Concatenate<ArrayType>::SPType;
-  using OpType        = typename fetch::ml::ops::Concatenate<ArrayType>;
+  using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
+  using SPType        = typename fetch::ml::ops::Concatenate<TensorType>::SPType;
+  using OpType        = typename fetch::ml::ops::Concatenate<TensorType>;
 
   TypeParam data1 = TypeParam::UniformRandom(64);
   TypeParam data2 = TypeParam::UniformRandom(64);
@@ -99,10 +99,10 @@ TYPED_TEST(ConcatenateTest, saveparams_test)
 
   OpType op(1);
 
-  ArrayType     prediction(op.ComputeOutputShape(
-      {std::make_shared<const ArrayType>(data1), std::make_shared<const ArrayType>(data2)}));
+  TensorType    prediction(op.ComputeOutputShape(
+      {std::make_shared<const TensorType>(data1), std::make_shared<const TensorType>(data2)}));
   VecTensorType vec_data(
-      {std::make_shared<const ArrayType>(data1), std::make_shared<const ArrayType>(data2)});
+      {std::make_shared<const TensorType>(data1), std::make_shared<const TensorType>(data2)});
 
   op.Forward(vec_data, prediction);
 
@@ -125,8 +125,8 @@ TYPED_TEST(ConcatenateTest, saveparams_test)
   OpType new_op(*dsp2);
 
   // check that new predictions match the old
-  ArrayType new_prediction(op.ComputeOutputShape(
-      {std::make_shared<const ArrayType>(data1), std::make_shared<const ArrayType>(data2)}));
+  TensorType new_prediction(op.ComputeOutputShape(
+      {std::make_shared<const TensorType>(data1), std::make_shared<const TensorType>(data2)}));
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values
