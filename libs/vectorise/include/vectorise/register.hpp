@@ -143,7 +143,7 @@ private:
 template <typename T, std::size_t N = sizeof(T)>
 inline std::ostream &operator<<(std::ostream &s, VectorRegister<T, N> const &n)
 {
-  s << n;
+  s << n.data();
   return s;
 }
 
