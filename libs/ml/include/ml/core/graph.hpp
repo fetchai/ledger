@@ -321,6 +321,15 @@ bool Graph<T>::InsertNode(std::string const &node_name, NodePtrType node_ptr)
   return nodes_.find(node_name) != nodes_.end();
 }
 
+/**
+ * @brief Method for constructing a graph saveable params object for serializing a Graph
+ * This method constructs and returns a graph saveable params object containing all
+ * necessary data for serialising and deserialising a Graph object. In order to do this
+ * it must first construct a vector of connections to store, and then repeatedly call
+ * the Node save params construction method
+ * @tparam ArrayType
+ * @return GraphSaveableParams object fully defining a graph
+ */
 template <typename ArrayType>
 GraphSaveableParams<ArrayType> Graph<ArrayType>::GetGraphSaveableParams()
 {

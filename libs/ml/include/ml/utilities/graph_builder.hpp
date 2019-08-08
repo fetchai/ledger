@@ -79,11 +79,6 @@ void BuildGraph(GraphSaveableParams<T> const &sp, std::shared_ptr<Graph<T>> ret)
     std::string name = node.first;
     BuildNodeAndInsertTrainables(*(std::dynamic_pointer_cast<NodeSaveableParams<T>>(node.second)),
                                  name, ret);
-
-    //    if (!(ret->InsertNode(name, node_ptr)))
-    //    {
-    //      throw std::runtime_error("BuildGraph unable to insert node");
-    //    }
   }
   ret->SetGraphSaveableParams(sp);
 }
