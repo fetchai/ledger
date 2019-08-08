@@ -49,8 +49,6 @@ public:
 
   /**
    * based on boolean condition, switch between second and third array's element.
-   * N.B. the backprop is only done on the second array, the third array is only used to spcify the
-   * masked value
    * @param inputs - three inputs, first is condition, second is the then array, third is the else
    * array
    * @return
@@ -59,10 +57,8 @@ public:
   {
     assert(inputs.size() == 3);
     assert(output.shape() == this->ComputeOutputShape(inputs));
-    assert(inputs.at(0)->shape() == inputs.at(1)->shape());
     assert(inputs.at(1)->shape() == inputs.at(2)->shape());
 
-    output = inputs.at(2)->Copy();
     fetch::math::Switch(*(inputs.at(0)), *(inputs.at(1)), *(inputs.at(2)), output);
   }
 
@@ -74,12 +70,11 @@ public:
                                    TensorType const &   error_signal) override
   {
     assert(inputs.size() == 3);
-    assert(inputs.at(0)->shape() == inputs.at(1)->shape());
     assert(inputs.at(1)->shape() == inputs.at(2)->shape());
-    assert(error_signal.size() == inputs.at(0)->size());
+    assert(error_signal.size() == inputs.at(1)->size());
 
-    TensorType then_return_signal(inputs.at(0)->shape());
-    TensorType else_return_signal(inputs.at(0)->shape());
+    TensorType then_return_signal(inputs.at(1)->shape());
+    TensorType else_return_signal(inputs.at(2)->shape());
     TensorType mask_return_signal(inputs.at(0)->shape());
 
     fetch::math::Multiply(*(inputs.front()), error_signal, then_return_signal);
@@ -98,7 +93,7 @@ public:
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    return inputs.front()->shape();
+    return inputs.at(1)->shape();
   }
 
   static constexpr OpType OpCode()
