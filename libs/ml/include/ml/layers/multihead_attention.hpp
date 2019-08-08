@@ -101,7 +101,7 @@ public:
   std::string create_one_attention_head(std::string const &head_name, std::string const &query,
                                         std::string const &key, std::string const &value)
   {
-    // tansform input vectors to attention space
+    // transform input vectors to attention space
     std::string transformed_query =
         this->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
             head_name + "_Query_Transform", {query}, static_cast<SizeType>(model_dim_),
@@ -130,11 +130,6 @@ public:
     auto ret = std::make_shared<SPType>();
     // get base class saveable params
     std::shared_ptr<SaveableParamsInterface> sgsp = SubGraph<TensorType>::GetOpSaveableParams();
-
-    // copy graph saveable params over
-    auto g_ptr1 = std::dynamic_pointer_cast<typename Graph<TensorType>::SPType>(sgsp);
-    auto g_ptr2 = std::dynamic_pointer_cast<typename Graph<TensorType>::SPType>(ret);
-    *g_ptr2     = *g_ptr1;
 
     // assign base class saveable params to ret
     auto sg_ptr1 = std::dynamic_pointer_cast<typename SubGraph<TensorType>::SPType>(sgsp);

@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-//#include "core/serializers/main_serializer.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/regularisers/regularisation.hpp"
 
@@ -31,9 +30,6 @@ struct SaveableParamsInterface
 {
   SaveableParamsInterface() = default;
 
-  explicit SaveableParamsInterface(OpType op_type)
-    : op_type(op_type)
-  {}
   virtual ~SaveableParamsInterface() = default;
 
   fetch::ml::OpType op_type = OpType::NONE;
@@ -56,21 +52,6 @@ struct GraphSaveableParams : public SaveableParamsInterface
   std::vector<std::pair<std::string, std::vector<std::string>>>             connections;
   std::unordered_map<std::string, std::shared_ptr<SaveableParamsInterface>> nodes;
   std::unordered_map<std::string, SizeType>                                 trainable_lookup_;
-
-  GraphSaveableParams()
-    : SaveableParamsInterface(OpType::GRAPH)
-  {}
-
-  explicit GraphSaveableParams(OpType operation_type)
-    : SaveableParamsInterface(operation_type)
-  {}
-
-  GraphSaveableParams &operator=(GraphSaveableParams const &gsp)
-  {
-    connections = gsp.connections;
-    nodes       = gsp.nodes;
-    return *this;
-  }
 };
 
 template <class TensorType>
@@ -107,20 +88,6 @@ struct SubGraphSaveableParams : public GraphSaveableParams<TensorType>
 
   std::vector<std::string> input_node_names;
   std::string              output_node_name;
-
-  SubGraphSaveableParams() = default;
-
-  explicit SubGraphSaveableParams(OpType operation_type)
-    : GraphSaveableParams<TensorType>(operation_type)
-    , op_type(operation_type)
-  {}
-
-  SubGraphSaveableParams &operator=(SubGraphSaveableParams const &sgsp)
-  {
-    input_node_names = sgsp.input_node_names;
-    output_node_name = sgsp.output_node_name;
-    return *this;
-  }
 };
 
 ///////////////////////////////
@@ -134,9 +101,6 @@ struct SubGraphSaveableParams : public GraphSaveableParams<TensorType>
 template <class TensorType>
 struct OpAbsSaveableParams : public SaveableParamsInterface
 {
-  OpAbsSaveableParams()
-    : SaveableParamsInterface(OpType::OP_ABS)
-  {}
   fetch::ml::OpType op_type = OpType::OP_ABS;
 };
 
@@ -147,9 +111,6 @@ struct OpAbsSaveableParams : public SaveableParamsInterface
 template <class TensorType>
 struct OpAddSaveableParams : public SaveableParamsInterface
 {
-  OpAddSaveableParams()
-    : SaveableParamsInterface(OpType::OP_ADD)
-  {}
   fetch::ml::OpType op_type = OpType::OP_ADD;
 };
 
@@ -162,10 +123,6 @@ struct OpConcatenateSaveableParams : public SaveableParamsInterface
 {
   fetch::math::SizeType axis    = fetch::math::numeric_max<fetch::math::SizeType>();
   fetch::ml::OpType     op_type = OpType::OP_CONCATENATE;
-
-  OpConcatenateSaveableParams()
-    : SaveableParamsInterface(OpType::OP_CONCATENATE)
-  {}
 };
 
 /**
@@ -175,9 +132,6 @@ struct OpConcatenateSaveableParams : public SaveableParamsInterface
 template <class TensorType>
 struct OpConvolution1DSaveableParams : public SaveableParamsInterface
 {
-  OpConvolution1DSaveableParams()
-    : SaveableParamsInterface(OpType::OP_CONVOLUTION_1D)
-  {}
   fetch::ml::OpType     op_type     = OpType::OP_CONVOLUTION_1D;
   fetch::math::SizeType stride_size = fetch::math::numeric_max<fetch::math::SizeType>();
 };
@@ -189,9 +143,6 @@ struct OpConvolution1DSaveableParams : public SaveableParamsInterface
 template <class TensorType>
 struct OpConvolution2DSaveableParams : public SaveableParamsInterface
 {
-  OpConvolution2DSaveableParams()
-    : SaveableParamsInterface(OpType::OP_CONVOLUTION_2D)
-  {}
   fetch::ml::OpType     op_type     = OpType::OP_CONVOLUTION_2D;
   fetch::math::SizeType stride_size = fetch::math::numeric_max<fetch::math::SizeType>();
 };
@@ -203,9 +154,6 @@ struct OpConvolution2DSaveableParams : public SaveableParamsInterface
 template <class TensorType>
 struct OpCrossEntropyLossSaveableParams : public SaveableParamsInterface
 {
-  OpCrossEntropyLossSaveableParams()
-    : SaveableParamsInterface(OpType::OP_CROSS_ENTROPY_LOSS)
-  {}
   fetch::ml::OpType op_type = OpType::OP_CROSS_ENTROPY_LOSS;
 };
 
@@ -216,9 +164,6 @@ struct OpCrossEntropyLossSaveableParams : public SaveableParamsInterface
 template <class TensorType>
 struct OpDivideSaveableParams : public SaveableParamsInterface
 {
-  OpDivideSaveableParams()
-    : SaveableParamsInterface(OpType::OP_DIVIDE)
-  {}
   fetch::ml::OpType op_type = OpType::OP_DIVIDE;
 };
 
@@ -229,10 +174,6 @@ struct OpDivideSaveableParams : public SaveableParamsInterface
 template <class TensorType>
 struct OpDropoutSaveableParams : public SaveableParamsInterface
 {
-  OpDropoutSaveableParams()
-    : SaveableParamsInterface(OpType::OP_DROPOUT)
-  {}
-
   using DataType                = typename TensorType::Type;
   using SizeType                = typename TensorType::SizeType;
   fetch::ml::OpType     op_type = OpType::OP_DROPOUT;
@@ -252,10 +193,6 @@ struct OpEluSaveableParams : public SaveableParamsInterface
   fetch::ml::OpType op_type = OpType::OP_ELU;
   using DataType            = typename TensorType::Type;
   DataType a;
-
-  OpEluSaveableParams()
-    : SaveableParamsInterface(OpType::OP_ELU)
-  {}
 };
 
 /**
@@ -265,9 +202,6 @@ struct OpEluSaveableParams : public SaveableParamsInterface
 template <class TensorType>
 struct OpEmbeddingsSaveableParams : public OpWeightsSaveableParams<TensorType>
 {
-  OpEmbeddingsSaveableParams()
-    : OpWeightsSaveableParams<TensorType>(OpType::OP_EMBEDDINGS)
-  {}
   fetch::ml::OpType op_type = OpType::OP_EMBEDDINGS;
 };
 
@@ -278,9 +212,6 @@ struct OpEmbeddingsSaveableParams : public OpWeightsSaveableParams<TensorType>
 template <class TensorType>
 struct OpExpSaveableParams : public SaveableParamsInterface
 {
-  OpExpSaveableParams()
-    : SaveableParamsInterface(OpType::OP_EXP)
-  {}
   fetch::ml::OpType op_type = OpType::OP_EXP;
 };
 
@@ -291,17 +222,12 @@ struct OpExpSaveableParams : public SaveableParamsInterface
 template <class TensorType>
 struct OpFlattenSaveableParams : public SaveableParamsInterface
 {
-  OpFlattenSaveableParams()
-    : SaveableParamsInterface(OpType::OP_FLATTEN)
-  {}
   fetch::ml::OpType op_type = OpType::OP_FLATTEN;
 };
 
 template <class TensorType>
 struct LayerConvolution1DSaveableParams : SubGraphSaveableParams<TensorType>
 {
-  LayerConvolution1DSaveableParams() = default;
-
   fetch::ml::OpType op_type = OpType::LAYER_CONVOLUTION_1D;
 
   using SizeType = typename TensorType::SizeType;
@@ -315,8 +241,6 @@ struct LayerConvolution1DSaveableParams : SubGraphSaveableParams<TensorType>
 template <class TensorType>
 struct LayerConvolution2DSaveableParams : SubGraphSaveableParams<TensorType>
 {
-  LayerConvolution2DSaveableParams() = default;
-
   fetch::ml::OpType op_type = OpType::LAYER_CONVOLUTION_2D;
 
   using SizeType = typename TensorType::SizeType;
@@ -338,10 +262,6 @@ struct LayerFullyConnectedSaveableParams : SubGraphSaveableParams<TensorType>
   fetch::ml::OpType op_type  = OpType::LAYER_FULLY_CONNECTED;
   SizeType          in_size  = fetch::math::numeric_max<SizeType>();
   SizeType          out_size = fetch::math::numeric_max<SizeType>();
-
-  LayerFullyConnectedSaveableParams()
-    : SubGraphSaveableParams<TensorType>(OpType::LAYER_FULLY_CONNECTED)
-  {}
 };
 
 /**
@@ -361,10 +281,6 @@ struct OpLayerNormSaveableParams : public SaveableParamsInterface
   TensorType prev_input;
   TensorType cached_inv_sqrt_var;
   TensorType cached_output;
-
-  OpLayerNormSaveableParams()
-    : SaveableParamsInterface(OpType::OP_LAYER_NORM)
-  {}
 };
 
 /**
@@ -377,10 +293,6 @@ struct OpLeakyReluSaveableParams : public SaveableParamsInterface
   using DataType = typename TensorType::Type;
   DataType          a;
   fetch::ml::OpType op_type = OpType::OP_LEAKY_RELU;
-
-  OpLeakyReluSaveableParams()
-    : SaveableParamsInterface(OpType::OP_LEAKY_RELU)
-  {}
 };
 
 /**
@@ -393,10 +305,6 @@ struct OpLeakyReluOpSaveableParams : public SaveableParamsInterface
   using DataType = typename TensorType::Type;
   DataType          a;
   fetch::ml::OpType op_type = OpType::OP_LEAKY_RELU_OP;
-
-  OpLeakyReluOpSaveableParams()
-    : SaveableParamsInterface(OpType::OP_LEAKY_RELU_OP)
-  {}
 };
 
 /**
@@ -408,10 +316,6 @@ struct OpLogSaveableParams : public SaveableParamsInterface
 {
   using DataType            = typename TensorType::Type;
   fetch::ml::OpType op_type = OpType::OP_LOG;
-
-  OpLogSaveableParams()
-    : SaveableParamsInterface(OpType::OP_LOG)
-  {}
 };
 
 /**
@@ -424,10 +328,6 @@ struct OpLogSigmoidSaveableParams : public SaveableParamsInterface
   using DataType = typename TensorType::Type;
   DataType          a;
   fetch::ml::OpType op_type = OpType::OP_LOGSIGMOID;
-
-  OpLogSigmoidSaveableParams()
-    : SaveableParamsInterface(OpType::OP_LOGSIGMOID)
-  {}
 };
 
 /**
@@ -439,20 +339,12 @@ struct OpLogSoftmaxSaveableParams : public SaveableParamsInterface
 {
   fetch::math::SizeType axis    = fetch::math::numeric_max<fetch::math::SizeType>();
   fetch::ml::OpType     op_type = OpType::OP_LOGSOFTMAX;
-
-  OpLogSoftmaxSaveableParams()
-    : SaveableParamsInterface(OpType::OP_LOGSOFTMAX)
-  {}
 };
 
 template <class TensorType>
 struct OpMatrixMultiplySaveableParams : public SaveableParamsInterface
 {
   fetch::ml::OpType op_type = OpType::OP_MATRIX_MULTIPLY;
-
-  OpMatrixMultiplySaveableParams()
-    : SaveableParamsInterface(OpType::OP_MATRIX_MULTIPLY)
-  {}
 };
 
 template <class TensorType>
@@ -461,10 +353,6 @@ struct OpMaxPool1DSaveableParams : public SaveableParamsInterface
   fetch::math::SizeType kernel_size = fetch::math::numeric_max<fetch::math::SizeType>();
   fetch::math::SizeType stride_size = fetch::math::numeric_max<fetch::math::SizeType>();
   fetch::ml::OpType     op_type     = OpType::OP_MAX_POOL_1D;
-
-  OpMaxPool1DSaveableParams()
-    : SaveableParamsInterface(OpType::OP_MAX_POOL_1D)
-  {}
 };
 
 template <class TensorType>
@@ -473,10 +361,6 @@ struct OpMaxPool2DSaveableParams : public SaveableParamsInterface
   fetch::math::SizeType kernel_size = fetch::math::numeric_max<fetch::math::SizeType>();
   fetch::math::SizeType stride_size = fetch::math::numeric_max<fetch::math::SizeType>();
   fetch::ml::OpType     op_type     = OpType::OP_MAX_POOL_2D;
-
-  OpMaxPool2DSaveableParams()
-    : SaveableParamsInterface(OpType::OP_MAX_POOL_2D)
-  {}
 };
 
 /**
@@ -488,10 +372,6 @@ struct OpMeanSquareErrorSaveableParams : public SaveableParamsInterface
 {
   using DataType            = typename TensorType::Type;
   fetch::ml::OpType op_type = OpType::OP_MEAN_SQUARE_ERROR_LOSS;
-
-  OpMeanSquareErrorSaveableParams()
-    : SaveableParamsInterface(OpType::OP_MEAN_SQUARE_ERROR_LOSS)
-  {}
 };
 
 /**
@@ -503,10 +383,6 @@ struct OpMaximumSaveableParams : public SaveableParamsInterface
 {
   using DataType            = typename TensorType::Type;
   fetch::ml::OpType op_type = OpType::OP_MAXIMUM;
-
-  OpMaximumSaveableParams()
-    : SaveableParamsInterface(OpType::OP_MAXIMUM)
-  {}
 };
 
 /**
@@ -518,10 +394,6 @@ struct OpMultiplySaveableParams : public SaveableParamsInterface
 {
   using DataType            = typename TensorType::Type;
   fetch::ml::OpType op_type = OpType::OP_MULTIPLY;
-
-  OpMultiplySaveableParams()
-    : SaveableParamsInterface(OpType::OP_MULTIPLY)
-  {}
 };
 
 /**
@@ -539,10 +411,6 @@ struct LayerLayerNormSaveableParams : SubGraphSaveableParams<TensorType>
   std::vector<SizeType> data_shape;
   SizeType              axis;
   DataType              epsilon;
-
-  LayerLayerNormSaveableParams()
-    : SubGraphSaveableParams<TensorType>(OpType::LAYER_LAYER_NORM)
-  {}
 };
 
 /**
@@ -562,10 +430,6 @@ struct LayerMultiHeadSaveableParams : public SubGraphSaveableParams<TensorType>
   SizeType n_heads;
   SizeType model_dim;
   DataType dropout;
-
-  LayerMultiHeadSaveableParams()
-    : SubGraphSaveableParams<TensorType>(OpType::LAYER_MULTI_HEAD_ATTENTION)
-  {}
 };
 
 template <class TensorType>
@@ -573,10 +437,6 @@ struct OpPlaceholderSaveableParams : public SaveableParamsInterface
 {
   fetch::ml::OpType           op_type = OpType::OP_PLACEHOLDER;
   std::shared_ptr<TensorType> output;
-
-  OpPlaceholderSaveableParams()
-    : SaveableParamsInterface(OpType::OP_PLACEHOLDER)
-  {}
 };
 
 /**
@@ -588,10 +448,6 @@ struct LayerPReluSaveableParams : SubGraphSaveableParams<TensorType>
 {
   using SizeType            = typename TensorType::SizeType;
   fetch::ml::OpType op_type = OpType::LAYER_PRELU;
-
-  LayerPReluSaveableParams()
-    : SubGraphSaveableParams<TensorType>(OpType::LAYER_PRELU)
-  {}
 };
 
 template <class TensorType>
@@ -608,10 +464,6 @@ struct OpRandomisedReluSaveableParams : public SaveableParamsInterface
   std::vector<uint64_t> buffer       = {};
   uint64_t              index        = fetch::math::numeric_max<uint64_t>();
   DataType              random_value = fetch::math::numeric_max<DataType>();
-
-  OpRandomisedReluSaveableParams()
-    : SaveableParamsInterface(OpType::OP_RANDOMISED_RELU)
-  {}
 };
 
 /**
@@ -623,10 +475,6 @@ struct OpReluSaveableParams : public SaveableParamsInterface
 {
   using DataType            = typename TensorType::Type;
   fetch::ml::OpType op_type = OpType::OP_RELU;
-
-  OpReluSaveableParams()
-    : SaveableParamsInterface(OpType::OP_RELU)
-  {}
 };
 
 template <class TensorType>
@@ -634,10 +482,6 @@ struct OpReshapeSaveableParams : public SaveableParamsInterface
 {
   std::vector<fetch::math::SizeType> new_shape;
   fetch::ml::OpType                  op_type = OpType::OP_RESHAPE;
-
-  OpReshapeSaveableParams()
-    : SaveableParamsInterface(OpType::OP_RESHAPE)
-  {}
 };
 
 /**
@@ -652,10 +496,6 @@ struct LayerScaledDotProductAttentionSaveableParams : SubGraphSaveableParams<Ten
 
   fetch::ml::OpType op_type = OpType::LAYER_SCALED_DOT_PRODUCT_ATTENTION;
   SizeType          key_dim = fetch::math::numeric_max<SizeType>();
-
-  LayerScaledDotProductAttentionSaveableParams()
-    : SubGraphSaveableParams<TensorType>(OpType::LAYER_SCALED_DOT_PRODUCT_ATTENTION)
-  {}
 };
 
 /**
@@ -675,10 +515,6 @@ struct LayerSelfAttentionEncoderSaveableParams : SubGraphSaveableParams<TensorTy
   DataType          residual_dropout    = fetch::math::numeric_max<DataType>();
   DataType          attention_dropout   = fetch::math::numeric_max<DataType>();
   DataType          feedforward_dropout = fetch::math::numeric_max<DataType>();
-
-  LayerSelfAttentionEncoderSaveableParams()
-    : SubGraphSaveableParams<TensorType>(OpType::LAYER_SELF_ATTENTION_ENCODER)
-  {}
 };
 
 /**
@@ -690,10 +526,6 @@ struct OpSigmoidSaveableParams : public SaveableParamsInterface
 {
   using DataType            = typename TensorType::Type;
   fetch::ml::OpType op_type = OpType::OP_SIGMOID;
-
-  OpSigmoidSaveableParams()
-    : SaveableParamsInterface(OpType::OP_SIGMOID)
-  {}
 };
 
 /**
@@ -708,10 +540,6 @@ struct LayerSkipGramSaveableParams : SubGraphSaveableParams<TensorType>
   std::string       embed_in = "";
   SizeType          in_size  = fetch::math::numeric_max<SizeType>();
   SizeType          out_size = fetch::math::numeric_max<SizeType>();
-
-  LayerSkipGramSaveableParams()
-    : SubGraphSaveableParams<TensorType>(OpType::LAYER_SKIP_GRAM)
-  {}
 };
 
 template <class TensorType>
@@ -719,10 +547,6 @@ struct OpSoftmaxSaveableParams : public SaveableParamsInterface
 {
   fetch::math::SizeType axis    = fetch::math::numeric_max<fetch::math::SizeType>();
   fetch::ml::OpType     op_type = OpType::OP_SOFTMAX;
-
-  OpSoftmaxSaveableParams()
-    : SaveableParamsInterface(OpType::OP_SOFTMAX)
-  {}
 };
 
 /**
@@ -734,10 +558,6 @@ struct OpSoftmaxCrossEntropySaveableParams : public SaveableParamsInterface
 {
   using DataType            = typename TensorType::Type;
   fetch::ml::OpType op_type = OpType::OP_SOFTMAX_CROSS_ENTROPY_LOSS;
-
-  OpSoftmaxCrossEntropySaveableParams()
-    : SaveableParamsInterface(OpType::OP_SOFTMAX_CROSS_ENTROPY_LOSS)
-  {}
 };
 
 /**
@@ -749,10 +569,6 @@ struct OpSQRTSaveableParams : public SaveableParamsInterface
 {
   using DataType            = typename TensorType::Type;
   fetch::ml::OpType op_type = OpType::OP_SQRT;
-
-  OpSQRTSaveableParams()
-    : SaveableParamsInterface(OpType::OP_SQRT)
-  {}
 };
 
 /**
@@ -764,10 +580,6 @@ struct OpSubtractSaveableParams : public SaveableParamsInterface
 {
   using DataType            = typename TensorType::Type;
   fetch::ml::OpType op_type = OpType::OP_SUBTRACT;
-
-  OpSubtractSaveableParams()
-    : SaveableParamsInterface(OpType::OP_SUBTRACT)
-  {}
 };
 
 template <class TensorType>
@@ -775,10 +587,6 @@ struct OpSwitchSaveableParams : public SaveableParamsInterface
 {
   fetch::ml::OpType           op_type = OpType::OP_SWITCH;
   std::shared_ptr<TensorType> output;
-
-  OpSwitchSaveableParams()
-    : SaveableParamsInterface(OpType::OP_SWITCH)
-  {}
 };
 
 /**
@@ -790,10 +598,6 @@ struct OpTanhSaveableParams : public SaveableParamsInterface
 {
   using DataType            = typename TensorType::Type;
   fetch::ml::OpType op_type = OpType::OP_TANH;
-
-  OpTanhSaveableParams()
-    : SaveableParamsInterface(OpType::OP_TANH)
-  {}
 };
 
 template <class TensorType>
@@ -801,10 +605,6 @@ struct OpTransposeSaveableParams : public SaveableParamsInterface
 {
   std::vector<fetch::math::SizeType> transpose_vector;
   fetch::ml::OpType                  op_type = OpType::OP_TRANSPOSE;
-
-  OpTransposeSaveableParams()
-    : SaveableParamsInterface(OpType::OP_TRANSPOSE)
-  {}
 };
 
 template <class TensorType>
@@ -815,14 +615,6 @@ struct OpWeightsSaveableParams : public SaveableParamsInterface
   std::shared_ptr<TensorType>                                       gradient_accumulation;
   std::shared_ptr<fetch::ml::regularisers::Regulariser<TensorType>> regulariser;
   typename TensorType::Type                                         regularisation_rate;
-
-  OpWeightsSaveableParams()
-    : SaveableParamsInterface(OpType::OP_WEIGHTS)
-  {}
-
-  explicit OpWeightsSaveableParams(OpType operation_type)
-    : SaveableParamsInterface(operation_type)
-  {}
 };
 
 }  // namespace ml

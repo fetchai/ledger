@@ -111,11 +111,6 @@ public:
     // get base class saveable params
     std::shared_ptr<SaveableParamsInterface> sgsp = SubGraph<TensorType>::GetOpSaveableParams();
 
-    // copy graph saveable params over
-    auto g_ptr1 = std::dynamic_pointer_cast<typename Graph<TensorType>::SPType>(sgsp);
-    auto g_ptr2 = std::dynamic_pointer_cast<typename Graph<TensorType>::SPType>(ret);
-    *g_ptr2     = *g_ptr1;
-
     // assign base class saveable params to ret
     auto sg_ptr1 = std::dynamic_pointer_cast<typename SubGraph<TensorType>::SPType>(sgsp);
     auto sg_ptr2 = std::static_pointer_cast<typename SubGraph<TensorType>::SPType>(ret);
