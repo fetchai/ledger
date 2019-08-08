@@ -29,7 +29,7 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Switch : public fetch::ml::Ops<T>
+class MaskFill : public fetch::ml::Ops<T>
 {
 public:
   using ArrayType     = T;
@@ -38,22 +38,26 @@ public:
   using ArrayPtrType  = std::shared_ptr<ArrayType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
 
-  Switch()           = default;
-  ~Switch() override = default;
+  MaskFill(DataType fill_value)
+    : fill_value_(fill_value)
+  {}
+  ~MaskFill() override = default;
 
   /**
-   * based on boolean condition, switch between second and third array's element.
-   * @param inputs - three inputs, first is condition, second is the then array, third is the else
+   * based on boolean condition mask, decide if we need to fill the element with fill_value.
+   * @param inputs - two inputs, first is mask, second is the array to be masked
    * array
    * @return
    */
   void Forward(VecTensorType const &inputs, ArrayType &output) override
   {
-    assert(inputs.size() == 3);
+    assert(inputs.size() == 2);
     assert(output.shape() == this->ComputeOutputShape(inputs));
-    assert(inputs.at(1)->shape() == inputs.at(2)->shape());
 
-    fetch::math::Switch(*(inputs.at(0)), *(inputs.at(1)), *(inputs.at(2)), output);
+    fetch::math::Multiply(*(inputs.at(0)), *(inputs.at(1)), output);
+    ArrayType inv_mask = fetch::math::Subtract(static_cast<DataType>(1), *(inputs.at(0)));
+    fetch::math::Multiply(inv_mask, fill_value_, inv_mask);
+    fetch::math::Add(output, inv_mask, output);
   }
 
   /**
@@ -63,20 +67,17 @@ public:
   std::vector<ArrayType> Backward(VecTensorType const &inputs,
                                   ArrayType const &    error_signal) override
   {
-    assert(inputs.size() == 3);
-    assert(inputs.at(1)->shape() == inputs.at(2)->shape());
+    assert(inputs.size() == 2);
     assert(error_signal.size() == inputs.at(1)->size());
 
-    ArrayType then_return_signal(inputs.at(1)->shape());
-    ArrayType else_return_signal(inputs.at(2)->shape());
+    ArrayType return_signal(inputs.at(1)->shape());
     ArrayType mask_return_signal(inputs.at(0)->shape());
 
-    fetch::math::Multiply(*(inputs.front()), error_signal, then_return_signal);
-    fetch::math::Subtract(error_signal, then_return_signal, else_return_signal);
+    fetch::math::Multiply(*(inputs.front()), error_signal, return_signal);
 
     // be adivsed, it is not reasonable to return gradient for mask, so the mask gradient is set to
     // zero here
-    return {mask_return_signal, then_return_signal, else_return_signal};
+    return {mask_return_signal, return_signal};
   }
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
@@ -84,7 +85,10 @@ public:
     return inputs.at(1)->shape();
   }
 
-  static constexpr char const *DESCRIPTOR = "Switch";
+  static constexpr char const *DESCRIPTOR = "MaskFill";
+
+private:
+  DataType fill_value_;
 };
 
 }  // namespace ops

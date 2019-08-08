@@ -25,17 +25,26 @@
 #include "gtest/gtest.h"
 
 template <typename T>
-class SerializersTest : public ::testing::Test
+class SerializersTestWithInt : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<int32_t>, fetch::math::Tensor<float>,
-                                 fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
-TYPED_TEST_CASE(SerializersTest, MyTypes);
+template <typename T>
+class SerializersTestNoInt : public ::testing::Test
+{
+};
 
-TYPED_TEST(SerializersTest, serialize_empty_state_dict)
+using WithIntTypes = ::testing::Types<fetch::math::Tensor<int32_t>, fetch::math::Tensor<float>,
+                                      fetch::math::Tensor<double>,
+                                      fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
+                                      fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
+using NoIntTypes   = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
+                                    fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>,
+                                    fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
+TYPED_TEST_CASE(SerializersTestWithInt, WithIntTypes);
+TYPED_TEST_CASE(SerializersTestNoInt, NoIntTypes);
+
+TYPED_TEST(SerializersTestWithInt, serialize_empty_state_dict)
 {
   fetch::ml::StateDict<TypeParam>       sd1;
   fetch::serializers::MsgPackSerializer b;
@@ -46,7 +55,7 @@ TYPED_TEST(SerializersTest, serialize_empty_state_dict)
   EXPECT_EQ(sd1, sd2);
 }
 
-TYPED_TEST(SerializersTest, serialize_state_dict)
+TYPED_TEST(SerializersTestNoInt, serialize_state_dict)
 {
   // Generate a plausible state dict out of a fully connected layer
   fetch::ml::layers::FullyConnected<TypeParam> fc(10, 10);
