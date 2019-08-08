@@ -33,7 +33,7 @@ namespace {
 std::string Escape(std::string const &s)
 {
   std::string::size_type i0{};
-  std::string            ret_val(1, '"');
+  std::string            ret_val{'"'};
   for (auto i = s.find_first_of("\n\t"); i != std::string::npos;
        i0 = i + 1, i = s.find_first_of("\n\t", i + 1))
   {
