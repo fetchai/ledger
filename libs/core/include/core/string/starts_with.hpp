@@ -17,6 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "fully_connected.hpp"
-#include "scaled_dot_product_attention.hpp"
-#include "skip_gram.hpp"
+#include <string>
+
+namespace fetch {
+namespace core {
+
+bool StartsWith(std::string const &value, std::string const &prefix);
+
+}  // namespace core
+}  // namespace fetch

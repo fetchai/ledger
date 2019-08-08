@@ -16,6 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/string/ends_with.hpp"
+
 #include <string>
 
 namespace fetch {

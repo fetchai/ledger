@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,6 +16,17 @@
 //
 //------------------------------------------------------------------------------
 
-#include "fully_connected.hpp"
-#include "scaled_dot_product_attention.hpp"
-#include "skip_gram.hpp"
+#include "core/string/starts_with.hpp"
+
+#include <string>
+
+namespace fetch {
+namespace core {
+
+bool StartsWith(std::string const &value, std::string const &prefix)
+{
+  return value.find(prefix) == 0;
+}
+
+}  // namespace core
+}  // namespace fetch
