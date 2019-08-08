@@ -589,7 +589,6 @@ TYPED_TEST(FullyConnectedTest, saveparams_test)
   // Evaluate
   fetch::ml::layers::FullyConnected<TypeParam> fc(10, 20);
   fc.SetInput("FullyConnected_Input", input);
-  //  TypeParam output = fc.Evaluate("FC_FC", true);
   TypeParam output = fc.Evaluate("FullyConnected_MatrixMultiply", true);
 
   // extract saveparams

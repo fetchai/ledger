@@ -59,7 +59,6 @@ public:
     rng_.Seed(sp.random_seed);
     rng_.SetBuffer(sp.buffer);
     rng_.SetIndex(sp.index);
-    //    UpdateRandomValue();
     random_value_ = sp.random_value;
   }
 

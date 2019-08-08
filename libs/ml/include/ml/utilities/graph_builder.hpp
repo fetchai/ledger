@@ -18,10 +18,13 @@
 //------------------------------------------------------------------------------
 
 #include "ml/core/graph.hpp"
+
 #include "ml/layers/PRelu.hpp"
 #include "ml/layers/convolution_1d.hpp"
 #include "ml/layers/convolution_2d.hpp"
 #include "ml/layers/fully_connected.hpp"
+#include "ml/layers/multihead_attention.hpp"
+#include "ml/layers/scaled_dot_product_attention.hpp"
 #include "ml/layers/self_attention_encoder.hpp"
 #include "ml/layers/skip_gram.hpp"
 

@@ -48,8 +48,7 @@ public:
 
   std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
-    auto sp_ptr = std::make_shared<SPType>();
-    return sp_ptr;
+    return std::make_shared<SPType>();
   }
 
   // f(x)=max(0,x);
