@@ -42,7 +42,7 @@ public:
 
   explicit Reshape(SPType const &sp)
   {
-    new_shape_ = sp.new_shape;  // todo: tests for this
+    new_shape_ = sp.new_shape;
   }
 
   ~Reshape() = default;

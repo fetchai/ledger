@@ -130,8 +130,8 @@ struct StateDict
       serializer << false;
     }
 
-    SizeType dictsize = t.dict_.size();
-    serializer << dictsize;
+    SizeType dict_size = t.dict_.size();
+    serializer << dict_size;
 
     for (auto const &d : t.dict_)
     {
@@ -143,25 +143,25 @@ struct StateDict
   template <typename S>
   friend void Deserialize(S &serializer, StateDict &t)
   {
-    SizeType    dictsize{0};
-    std::string nodename{};
+    SizeType    dict_size{0};
+    std::string node_name{};
     StateDict   node_sd;
-    bool        hasweights{};
+    bool        has_weights{};
 
-    serializer >> hasweights;
-    if (hasweights)
+    serializer >> has_weights;
+    if (has_weights)
     {
       TensorType weights;
       serializer >> weights;
       t.weights_ = std::make_shared<TensorType>(weights);
     }
-    serializer >> dictsize;
+    serializer >> dict_size;
 
-    for (SizeType i = 0; i < dictsize; i++)
+    for (SizeType i = 0; i < dict_size; i++)
     {
-      serializer >> nodename;
+      serializer >> node_name;
       Deserialize(serializer, node_sd);
-      t.dict_.emplace(std::make_pair(nodename, node_sd));
+      t.dict_.emplace(std::make_pair(node_name, node_sd));
     }
   }
 };

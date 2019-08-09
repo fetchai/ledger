@@ -156,7 +156,7 @@ TYPED_TEST(LogSigmoidTest, saveparams_test)
   std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
 
   // downcast to correct type
-  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
+  auto dsp = std::static_pointer_cast<SPType>(sp);
 
   // serialize
   fetch::serializers::MsgPackSerializer b;
