@@ -207,3 +207,63 @@ TYPED_TEST(MaskFillTest, saveparams_test)
   EXPECT_TRUE(
       new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
 }
+
+TYPED_TEST(MaskFillTest, saveparams_back_test_broadcast_mask)
+{
+  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
+  using OpType        = typename fetch::ml::ops::MaskFill<TensorType>;
+  using SPType        = typename OpType ::SPType;
+
+  TensorType mask = TensorType::FromString("1, 1, 0");
+  mask.Reshape({1, 3, 1});
+
+  TensorType target_input = TensorType::FromString("3, 6, 2, 1, 3, -2, 2, 1, -9");
+  target_input.Reshape({3, 3, 1});
+
+  TensorType error_signal = TensorType::FromString("1, 2, 3, 4, 5, 6, 7, 8, 9");
+  error_signal.Reshape({3, 3, 1});
+
+  fetch::ml::ops::MaskFill<TensorType> op(static_cast<DataType>(-100));
+
+  std::vector<TypeParam> prediction = op.Backward(
+      {std::make_shared<const TensorType>(mask), std::make_shared<const TensorType>(target_input)},
+      error_signal);
+
+  // extract saveparams
+  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
+
+  // downcast to correct type
+  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
+
+  // serialize
+  fetch::serializers::MsgPackSerializer b;
+  b << *dsp;
+
+  // make another prediction with the original op
+  prediction = op.Backward(
+      {std::make_shared<const TensorType>(mask), std::make_shared<const TensorType>(target_input)},
+      error_signal);
+
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<SPType>();
+  b >> *dsp2;
+
+  // rebuild node
+  OpType new_op(*dsp2);
+
+  // check that new predictions match the old
+  std::vector<TensorType> new_prediction = new_op.Backward(
+      {std::make_shared<const TensorType>(mask), std::make_shared<const TensorType>(target_input)},
+      error_signal);
+
+  // test correct values
+  EXPECT_TRUE(prediction.at(0).AllClose(
+      new_prediction.at(0), fetch::math::function_tolerance<typename TypeParam::Type>(),
+      fetch::math::function_tolerance<typename TypeParam::Type>()));
+
+  EXPECT_TRUE(prediction.at(1).AllClose(
+      new_prediction.at(1), fetch::math::function_tolerance<typename TypeParam::Type>(),
+      fetch::math::function_tolerance<typename TypeParam::Type>()));
+}

@@ -311,3 +311,67 @@ TYPED_TEST(MaxPool1DTest, saveparams_test)
   EXPECT_TRUE(
       new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
 }
+
+TYPED_TEST(MaxPool1DTest, saveparams_backward_test_2_channels)
+{
+  using DataType   = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using SizeType   = typename TypeParam::SizeType;
+  using OpType        = typename fetch::ml::ops::MaxPool1D<TensorType>;
+  using SPType        = typename OpType ::SPType;
+
+  TensorType          data({2, 5, 2});
+  TensorType          error({2, 2, 2});
+  std::vector<double> data_input({1, -2, 3, -4, 10, -6, 7, -8, 9, -10});
+  std::vector<double> errorInput({2, 3, 4, 5});
+
+  for (SizeType i{0}; i < 2; ++i)
+  {
+    for (SizeType j{0}; j < 5; ++j)
+    {
+      data(i, j, 0) = static_cast<DataType>(data_input[i * 5 + j]);
+    }
+  }
+
+  for (SizeType i{0}; i < 2; ++i)
+  {
+    for (SizeType j{0}; j < 2; ++j)
+    {
+      error(i, j, 0) = static_cast<DataType>(errorInput[i * 2 + j]);
+    }
+  }
+
+  fetch::ml::ops::MaxPool1D<TensorType> op(4, 1);
+  std::vector<TensorType>               prediction =
+      op.Backward({std::make_shared<const TensorType>(data)}, error);
+
+  // extract saveparams
+  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
+
+  // downcast to correct type
+  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
+
+  // serialize
+  fetch::serializers::MsgPackSerializer b;
+  b << *dsp;
+
+  // make another prediction with the original op
+  prediction = op.Backward({std::make_shared<const TensorType>(data)}, error);
+
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<SPType>();
+  b >> *dsp2;
+
+  // rebuild node
+  OpType new_op(*dsp2);
+
+  // check that new predictions match the old
+  std::vector<TensorType> new_prediction =
+      new_op.Backward({std::make_shared<const TensorType>(data)}, error);
+
+  // test correct values
+  EXPECT_TRUE(prediction.at(0).AllClose(
+      new_prediction.at(0), fetch::math::function_tolerance<typename TypeParam::Type>(),
+      fetch::math::function_tolerance<typename TypeParam::Type>()));
+}

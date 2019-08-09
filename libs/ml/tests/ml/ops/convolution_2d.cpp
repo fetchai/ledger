@@ -311,3 +311,114 @@ TYPED_TEST(Convolution2DTest, saveparams_test)
   EXPECT_TRUE(
       new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
 }
+
+TYPED_TEST(Convolution2DTest, saveparams_backward_3x3x3x2_5x3x3x3x2)
+{
+  using DataType   = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using SizeType   = typename TypeParam::SizeType;
+  using OpType        = typename fetch::ml::ops::Convolution2D<TensorType>;
+  using SPType        = typename OpType ::SPType;
+
+  SizeType const input_channels  = 3;
+  SizeType const output_channels = 5;
+
+  SizeType const input_width  = 3;
+  SizeType const input_height = 3;
+
+  SizeType const kernel_width  = 3;
+  SizeType const kernel_height = 3;
+
+  SizeType const output_width  = 1;
+  SizeType const output_height = 1;
+
+  SizeType const batch_size = 2;
+
+  TensorType input({input_channels, input_height, input_width, batch_size});
+  TensorType kernels({output_channels, input_channels, kernel_height, kernel_width, 1});
+  TensorType error({output_channels, output_height, output_width, batch_size});
+
+  // Generate input
+  for (SizeType i_b{0}; i_b < batch_size; ++i_b)
+  {
+    for (SizeType i_ic{0}; i_ic < input_channels; ++i_ic)
+    {
+      for (SizeType i_i{0}; i_i < input_height; ++i_i)
+      {
+        for (SizeType j_i{0}; j_i < input_width; ++j_i)
+        {
+          input(i_ic, i_i, j_i, i_b) = static_cast<DataType>(i_i + 1);
+        }
+      }
+    }
+  }
+
+  // Generate kernels
+  for (SizeType i_oc{0}; i_oc < output_channels; ++i_oc)
+  {
+    for (SizeType i_ic{0}; i_ic < input_channels; ++i_ic)
+    {
+      for (SizeType i_k{0}; i_k < kernel_height; ++i_k)
+      {
+        for (SizeType j_k{0}; j_k < kernel_width; ++j_k)
+        {
+          kernels(i_oc, i_ic, i_k, j_k, 0) = DataType{2};
+        }
+      }
+    }
+  }
+
+  // Generate error signal
+  for (SizeType i_b{0}; i_b < batch_size; ++i_b)
+  {
+    for (SizeType i_oc{0}; i_oc < output_channels; ++i_oc)
+    {
+      for (SizeType i_o{0}; i_o < output_height; ++i_o)
+      {
+        for (SizeType j_o{0}; j_o < output_width; ++j_o)
+        {
+          error(i_oc, i_o, j_o, i_b) = static_cast<DataType>(i_o + 1);
+        }
+      }
+    }
+  }
+
+  fetch::ml::ops::Convolution2D<TensorType> op;
+  std::vector<TensorType>                   prediction = op.Backward(
+      {std::make_shared<TensorType>(input), std::make_shared<TensorType>(kernels)}, error);
+
+  // extract saveparams
+  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
+
+  // downcast to correct type
+  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
+
+  // serialize
+  fetch::serializers::MsgPackSerializer b;
+  b << *dsp;
+
+  // make another prediction with the original op
+  prediction = op.Backward(
+      {std::make_shared<TensorType>(input), std::make_shared<TensorType>(kernels)}, error);
+
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<SPType>();
+  b >> *dsp2;
+
+  // rebuild node
+  OpType new_op(*dsp2);
+
+  // check that new predictions match the old
+  std::vector<TensorType>                   new_prediction = new_op.Backward(
+      {std::make_shared<TensorType>(input), std::make_shared<TensorType>(kernels)}, error);
+
+  // test correct values
+  EXPECT_TRUE(prediction.at(0).AllClose(
+      new_prediction.at(0), fetch::math::function_tolerance<typename TypeParam::Type>(),
+      fetch::math::function_tolerance<typename TypeParam::Type>()));
+  // test correct values
+  EXPECT_TRUE(prediction.at(1).AllClose(
+      new_prediction.at(1), fetch::math::function_tolerance<typename TypeParam::Type>(),
+      fetch::math::function_tolerance<typename TypeParam::Type>()));
+}

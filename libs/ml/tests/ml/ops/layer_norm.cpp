@@ -210,3 +210,55 @@ TYPED_TEST(LayerNormTest, saveparams_test)
   EXPECT_TRUE(
       new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
 }
+
+TYPED_TEST(LayerNormTest, saveparams_backward_test_3d)
+{
+  using TensorType = TypeParam;
+  using OpType        = typename fetch::ml::ops::LayerNorm<TensorType>;
+  using SPType        = typename OpType ::SPType;
+
+  TensorType data = TensorType::FromString(
+      "1, 1, 0.5, 2;"
+      "2, 0, 3, 1;"
+      "1, 1, 7, 9");
+  data.Reshape({3, 2, 2});
+
+  TensorType error_signal = TensorType::FromString(
+      "-1, 2, 1, 1;"
+      "2, 0, 1, 3;"
+      "1, 1, 1, 6");
+  error_signal.Reshape({3, 2, 2});
+
+  fetch::ml::ops::LayerNorm<TensorType> op(static_cast<typename TypeParam::SizeType>(0));
+
+  auto prediction = op.Backward({std::make_shared<TensorType>(data)}, error_signal);
+
+  // extract saveparams
+  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
+
+  // downcast to correct type
+  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
+
+  // serialize
+  fetch::serializers::MsgPackSerializer b;
+  b << *dsp;
+
+  // make another prediction with the original op
+  prediction = op.Backward({std::make_shared<TensorType>(data)}, error_signal);
+
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<SPType>();
+  b >> *dsp2;
+
+  // rebuild node
+  OpType new_op(*dsp2);
+
+  // check that new predictions match the old
+  auto new_prediction = new_op.Backward({std::make_shared<TensorType>(data)}, error_signal);
+
+  // test correct values
+  EXPECT_TRUE(prediction.at(0).AllClose(
+      new_prediction.at(0), fetch::math::function_tolerance<typename TypeParam::Type>(),
+      fetch::math::function_tolerance<typename TypeParam::Type>()));
+}

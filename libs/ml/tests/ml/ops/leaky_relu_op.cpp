@@ -144,3 +144,58 @@ TYPED_TEST(LeakyReluOpTest, saveparams_test)
   EXPECT_TRUE(
       new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
 }
+
+TYPED_TEST(LeakyReluOpTest, saveparams_backward_test)
+{
+  using TensorType = TypeParam;
+  using OpType        = typename fetch::ml::ops::LeakyReluOp<TensorType>;
+  using SPType        = typename OpType ::SPType;
+
+  TensorType alpha = TensorType::FromString(R"(
+    0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)")
+                         .Transpose();
+
+  TensorType data = TensorType::FromString(R"(
+  	 1, -2, 3,-4, 5,-6, 7,-8;
+    -1,  2,-3, 4,-5, 6,-7, 8)")
+                        .Transpose();
+
+  TensorType error = TensorType::FromString(R"(
+  	0, 0, 0, 0, 1, 1, 0, 0;
+    0, 0, 0, 0, 1, 1, 0, 0)")
+                         .Transpose();
+
+  fetch::ml::ops::LeakyReluOp<TensorType> op;
+  std::vector<TensorType>                 prediction =
+      op.Backward({std::make_shared<TypeParam>(data), std::make_shared<TypeParam>(alpha)}, error);
+
+  // extract saveparams
+  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
+
+  // downcast to correct type
+  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
+
+  // serialize
+  fetch::serializers::MsgPackSerializer b;
+  b << *dsp;
+
+  // make another prediction with the original op
+  prediction = op.Backward({std::make_shared<TypeParam>(data), std::make_shared<TypeParam>(alpha)}, error);
+
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<SPType>();
+  b >> *dsp2;
+
+  // rebuild node
+  OpType new_op(*dsp2);
+
+  // check that new predictions match the old
+  std::vector<TensorType>                 new_prediction =
+      new_op.Backward({std::make_shared<TypeParam>(data), std::make_shared<TypeParam>(alpha)}, error);
+
+  // test correct values
+  EXPECT_TRUE(prediction.at(0).AllClose(
+      new_prediction.at(0), fetch::math::function_tolerance<typename TypeParam::Type>(),
+      fetch::math::function_tolerance<typename TypeParam::Type>()));
+}

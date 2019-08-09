@@ -134,3 +134,56 @@ TYPED_TEST(ConcatenateTest, saveparams_test)
   EXPECT_TRUE(
       new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
 }
+
+TYPED_TEST(ConcatenateTest, saveparams_backward_test)
+{
+  using TensorType    = TypeParam;
+  using OpType        = typename fetch::ml::ops::Concatenate<TensorType >;
+  using SPType        = typename OpType ::SPType;
+
+  TypeParam data1(std::vector<fetch::math::SizeType>({8, 8}));
+  TypeParam data2(std::vector<fetch::math::SizeType>({8, 8}));
+
+  fetch::ml::ops::Concatenate<TypeParam> op{1};
+
+  TypeParam prediction(op.ComputeOutputShape(
+      {std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}));
+  op.Forward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, prediction);
+
+  TypeParam              error_signal(prediction.shape());
+  std::vector<TypeParam> gradients = op.Backward(
+      {std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, error_signal);
+
+  // extract saveparams
+  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
+
+  // downcast to correct type
+  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
+
+  // serialize
+  fetch::serializers::MsgPackSerializer b;
+  b << *dsp;
+
+  // make another prediction with the original op
+  gradients = op.Backward(
+      {std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, error_signal);
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<SPType>();
+  b >> *dsp2;
+
+  // rebuild node
+  OpType new_op(*dsp2);
+
+  // check that new predictions match the old
+  std::vector<TypeParam> new_gradients = new_op.Backward(
+      {std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, error_signal);
+
+  // test correct values
+  EXPECT_TRUE(gradients.at(0).AllClose(
+      new_gradients.at(0), fetch::math::function_tolerance<typename TypeParam::Type>(),
+      fetch::math::function_tolerance<typename TypeParam::Type>()));
+  EXPECT_TRUE(gradients.at(1).AllClose(
+      new_gradients.at(1), fetch::math::function_tolerance<typename TypeParam::Type>(),
+      fetch::math::function_tolerance<typename TypeParam::Type>()));
+}
