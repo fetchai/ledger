@@ -170,5 +170,6 @@ TYPED_TEST(LeakyReluTest, saveparams_test)
   new_op.Forward(VecTensorType({std::make_shared<const TensorType>(data)}), new_prediction);
 
   // test correct values
-  EXPECT_TRUE(new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
+  EXPECT_TRUE(
+      new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
 }
