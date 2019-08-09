@@ -72,10 +72,6 @@ public:
     {
       gradient_accumulation_ = sp.gradient_accumulation;
     }
-    else
-    {
-      gradient_accumulation_ = std::make_shared<TensorType>();
-    }
 
     this->SetRegularisation(
         fetch::ml::details::CreateRegulariser<TensorType>(sp.regularisation_type),

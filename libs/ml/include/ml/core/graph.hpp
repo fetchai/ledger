@@ -386,9 +386,8 @@ typename Graph<TensorType>::NodePtrType Graph<TensorType>::GetNode(
 template <typename TensorType>
 void Graph<TensorType>::SetInput(std::string const &node_name, TensorType data)
 {
-  auto tmp = nodes_.at(node_name);
-
-  PlaceholderPtrType placeholder = std::dynamic_pointer_cast<PlaceholderType>(tmp->GetOp());
+  PlaceholderPtrType placeholder =
+      std::dynamic_pointer_cast<PlaceholderType>(nodes_.at(node_name)->GetOp());
 
   if (placeholder)
   {

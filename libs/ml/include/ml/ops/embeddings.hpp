@@ -54,7 +54,13 @@ public:
 
   explicit Embeddings(SPType const &sp)
     : Weights<T>(sp)
-  {}
+  {
+    embeddings_output_ = sp.embeddings_output;
+    updated_rows_ =
+        std::set<typename TensorType::SizeType>(sp.updated_rows.begin(), sp.updated_rows.begin());
+    trailing_indices1_ = sp.trailing_indices1;
+    trailing_indices2_ = sp.trailing_indices2;
+  }
 
   ~Embeddings() override = default;
 
@@ -65,6 +71,11 @@ public:
 
     auto cast_sp = std::static_pointer_cast<OpWeightsSaveableParams<TensorType>>(sp);
     *cast_sp     = *(std::static_pointer_cast<OpWeightsSaveableParams<TensorType>>(w_sp));
+
+    sp->embeddings_output = embeddings_output_;
+    std::copy(updated_rows_.begin(), updated_rows_.end(), std::back_inserter(sp->updated_rows));
+    sp->trailing_indices1 = trailing_indices1_;
+    sp->trailing_indices2 = trailing_indices2_;
 
     return sp;
   }
@@ -100,11 +111,11 @@ public:
     {
       for (SizeType n{0}; n < batch_size; n++)
       {
-        trailing_indices1.at(0) = i;
-        trailing_indices1.at(1) = n;
-        auto embedding_view     = this->embeddings_output_->View(trailing_indices1);
-        trailing_indices2.at(0) = static_cast<SizeType>(*e_it);
-        auto output_view        = this->output_->View(trailing_indices2);
+        trailing_indices1_.at(0) = i;
+        trailing_indices1_.at(1) = n;
+        auto embedding_view      = this->embeddings_output_->View(trailing_indices1_);
+        trailing_indices2_.at(0) = static_cast<SizeType>(*e_it);
+        auto output_view         = this->output_->View(trailing_indices2_);
 
         embedding_view.Assign(output_view);
         ++e_it;
@@ -129,11 +140,11 @@ public:
       for (SizeType n{0}; n < batch_size; n++)
       {
 
-        trailing_indices1.at(0) = i;
-        trailing_indices1.at(1) = n;
-        auto error_view         = error_signal.View(trailing_indices1);
-        trailing_indices2.at(0) = static_cast<SizeType>(*e_it);
-        auto gradient_view      = this->gradient_accumulation_->View(trailing_indices2);
+        trailing_indices1_.at(0) = i;
+        trailing_indices1_.at(1) = n;
+        auto error_view          = error_signal.View(trailing_indices1_);
+        trailing_indices2_.at(0) = static_cast<SizeType>(*e_it);
+        auto gradient_view       = this->gradient_accumulation_->View(trailing_indices2_);
 
         auto error_view_it    = error_view.cbegin();
         auto gradient_view_it = gradient_view.begin();
@@ -188,8 +199,8 @@ public:
 private:
   ArrayPtrType                            embeddings_output_;
   std::set<typename TensorType::SizeType> updated_rows_;
-  std::vector<SizeType>                   trailing_indices1 = {0, 0};
-  std::vector<SizeType>                   trailing_indices2 = {0};
+  std::vector<SizeType>                   trailing_indices1_ = {0, 0};
+  std::vector<SizeType>                   trailing_indices2_ = {0};
 };
 
 }  // namespace ops
