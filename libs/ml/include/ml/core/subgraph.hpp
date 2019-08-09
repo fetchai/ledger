@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "ml/core/graph.hpp"
-#include "ml/core/node.hpp"
 
 #include <cassert>
 #include <memory>

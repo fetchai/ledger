@@ -47,14 +47,14 @@ var testing = true;
 if (testing)
     read_weights(graph);
     printLn("Weights read");
-    var predstring = "";
+    var pred_string = "";
     while(!loader.IsDone())
         var input_data = loader.GetNext();
         graph.SetInput("num_input", input_data.Data());
         var pred = graph.Evaluate("softmax_3");
-        predstring = pred.ToString(true);
+        pred_string = pred.ToString(true);
     endwhile
-    print(predstring);
+    print(pred_string);
     printLn("Finished successfully");
 else
     // Set up the optimiser

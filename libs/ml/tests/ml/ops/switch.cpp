@@ -16,14 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "gtest/gtest.h"
 #include "math/base_types.hpp"
 #include "math/tensor.hpp"
-#include "ml/ops/abs.hpp"
+#include "ml/ops/switch.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
-#include "gtest/gtest.h"
-
-#include <ml/ops/switch.hpp>
 #include <vector>
 
 template <typename T>
