@@ -257,8 +257,8 @@ TYPED_TEST(RandomisedReluTest, saveparams_backward_3d_tensor_test)
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
   using SizeType   = typename TypeParam::SizeType;
-  using OpType        = typename fetch::ml::ops::RandomisedRelu<TensorType>;
-  using SPType        = typename OpType ::SPType;
+  using OpType     = typename fetch::ml::ops::RandomisedRelu<TensorType>;
+  using SPType     = typename OpType ::SPType;
 
   TensorType          data({2, 2, 2});
   TensorType          error({2, 2, 2});
@@ -297,8 +297,7 @@ TYPED_TEST(RandomisedReluTest, saveparams_backward_3d_tensor_test)
   b << *dsp;
 
   // make another prediction with the original op
-  prediction =
-      op.Backward({std::make_shared<const TensorType>(data)}, error);
+  prediction = op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // deserialize
   b.seek(0);
@@ -313,8 +312,7 @@ TYPED_TEST(RandomisedReluTest, saveparams_backward_3d_tensor_test)
       new_op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
-  EXPECT_TRUE(
-      prediction.at(0).AllClose(new_prediction.at(0),
-                               fetch::math::function_tolerance<typename TypeParam::Type>(),
-                               fetch::math::function_tolerance<typename TypeParam::Type>()));
+  EXPECT_TRUE(prediction.at(0).AllClose(
+      new_prediction.at(0), fetch::math::function_tolerance<typename TypeParam::Type>(),
+      fetch::math::function_tolerance<typename TypeParam::Type>()));
 }

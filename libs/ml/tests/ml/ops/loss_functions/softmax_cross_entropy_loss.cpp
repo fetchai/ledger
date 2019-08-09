@@ -357,5 +357,4 @@ TYPED_TEST(SoftmaxCrossEntropyTest, saveparams_backward_test)
                                fetch::math::function_tolerance<typename TypeParam::Type>() * 4,
                                fetch::math::function_tolerance<typename TypeParam::Type>()) *
       4);
-
 }

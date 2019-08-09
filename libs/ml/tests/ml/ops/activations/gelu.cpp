@@ -130,8 +130,8 @@ TYPED_TEST(GeluTest, saveparams_test)
 TYPED_TEST(GeluTest, saveparams_backward_3d_test)
 {
   using TensorType = TypeParam;
-  using OpType = typename fetch::ml::ops::Gelu<TensorType>;
-  using SPType        = typename fetch::ml::ops::Gelu<TensorType>::SPType;
+  using OpType     = typename fetch::ml::ops::Gelu<TensorType>;
+  using SPType     = typename fetch::ml::ops::Gelu<TensorType>::SPType;
 
   TensorType data = TensorType::FromString("-1.1, -0.4, -0.5, -0.2, 0, 0.2, 1.6, 1.7, 2");
   data.Reshape({3, 1, 3});
@@ -159,8 +159,7 @@ TYPED_TEST(GeluTest, saveparams_backward_3d_test)
   b << *dsp;
 
   // make another prediction with the original op
-  prediction =
-      op.Backward({std::make_shared<const TensorType>(data)}, error);
+  prediction = op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // deserialize
   b.seek(0);
@@ -175,8 +174,7 @@ TYPED_TEST(GeluTest, saveparams_backward_3d_test)
       new_op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
-  EXPECT_TRUE(
-      prediction.at(0).AllClose(new_prediction.at(0),
-                               fetch::math::function_tolerance<typename TypeParam::Type>(),
-                               fetch::math::function_tolerance<typename TypeParam::Type>()));
+  EXPECT_TRUE(prediction.at(0).AllClose(
+      new_prediction.at(0), fetch::math::function_tolerance<typename TypeParam::Type>(),
+      fetch::math::function_tolerance<typename TypeParam::Type>()));
 }
