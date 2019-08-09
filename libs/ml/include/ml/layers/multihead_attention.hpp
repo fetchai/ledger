@@ -65,13 +65,15 @@ public:
         this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Key", {});
     std::string value =
         this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Value", {});
+	  std::string mask =
+	      this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Mask", {});
 
     // do n_heads time linear transformation
     std::vector<std::string> heads;
     for (SizeType i{0}; i < n_heads_; i++)
     {
       std::string head_name             = name + "_Head_No_" + std::to_string(static_cast<int>(i));
-      std::string head_attention_output = create_one_attention_head(head_name, query, key, value);
+      std::string head_attention_output = create_one_attention_head(head_name, query, key, value, mask);
       heads.emplace_back(head_attention_output);
     }
 
@@ -90,11 +92,12 @@ public:
     this->AddInputNode(query);
     this->AddInputNode(key);
     this->AddInputNode(value);
+    this->AddInputNode(mask);
     this->SetOutputNode(transformed_multihead);
   }
 
   std::string create_one_attention_head(std::string const &head_name, std::string const &query,
-                                        std::string const &key, std::string const &value)
+                                        std::string const &key, std::string const &value, std::string const &mask)
   {
     // tansform input vectors to attention space
     std::string transformed_query =
@@ -116,7 +119,7 @@ public:
     std::string attention_output =
         this->template AddNode<fetch::ml::layers::ScaledDotProductAttention<ArrayType>>(
             head_name + "_Scaled_Dot_Product_Attention",
-            {transformed_query, transformed_key, transformed_value}, key_dim_, dropout_);
+            {transformed_query, transformed_key, transformed_value, mask}, key_dim_, dropout_);
     return attention_output;
   }
 
