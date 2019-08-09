@@ -150,9 +150,9 @@ TYPED_TEST(TransposeTest, saveparams_test)
 
 TYPED_TEST(TransposeTest, saveparams_backward_batch_test)
 {
-  using TensorType    = TypeParam;
-  using OpType        = typename fetch::ml::ops::Transpose<TensorType>;
-  using SPType        = typename OpType ::SPType;
+  using TensorType = TypeParam;
+  using OpType     = typename fetch::ml::ops::Transpose<TensorType>;
+  using SPType     = typename OpType ::SPType;
   TypeParam a({4, 5, 2});
   TypeParam error({5, 4, 2});
 
@@ -161,7 +161,7 @@ TYPED_TEST(TransposeTest, saveparams_backward_batch_test)
       op.Backward({std::make_shared<TypeParam>(a)}, error);
 
   // extract saveparams
-  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
+  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
 
   // downcast to correct type
   auto dsp = std::dynamic_pointer_cast<SPType>(sp);
@@ -171,8 +171,7 @@ TYPED_TEST(TransposeTest, saveparams_backward_batch_test)
   b << *dsp;
 
   // make another prediction with the original op
-  backpropagated_signals =
-      op.Backward({std::make_shared<TypeParam>(a)}, error);
+  backpropagated_signals = op.Backward({std::make_shared<TypeParam>(a)}, error);
 
   // deserialize
   b.seek(0);
@@ -183,7 +182,7 @@ TYPED_TEST(TransposeTest, saveparams_backward_batch_test)
   OpType new_op(*dsp2);
 
   // check that new predictions match the old
-  std::vector<TypeParam>               new_backpropagated_signals =
+  std::vector<TypeParam> new_backpropagated_signals =
       new_op.Backward({std::make_shared<TypeParam>(a)}, error);
 
   // test correct values
