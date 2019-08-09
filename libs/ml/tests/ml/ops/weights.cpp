@@ -154,3 +154,73 @@ TYPED_TEST(WeightsTest, saveparams_test)
   EXPECT_TRUE(
       new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
 }
+
+TYPED_TEST(WeightsTest, saveparams_gradient_step_test)
+{
+  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
+  using SizeType   = typename TypeParam::SizeType;
+  using OpType        = typename fetch::ml::ops::Weights<TensorType>;
+  using SPType        = typename OpType ::SPType;
+
+  TensorType       data(8);
+  TensorType       error(8);
+  std::vector<int> dataInput({1, -2, 3, -4, 5, -6, 7, -8});
+  std::vector<int> errorInput({-1, 2, 3, -5, -8, 13, -21, -34});
+  for (SizeType i{0}; i < 8; ++i)
+  {
+    data.Set(i, static_cast<DataType>(dataInput[i]));
+    error.Set(i, static_cast<DataType>(errorInput[i]));
+  }
+
+  fetch::ml::ops::Weights<TensorType> op;
+  op.SetData(data);
+
+  TensorType prediction(op.ComputeOutputShape({}));
+  op.Forward({}, prediction);
+
+  std::vector<TensorType> error_signal = op.Backward({}, error);
+
+  // extract saveparams
+  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
+
+  // downcast to correct type
+  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
+
+  // serialize
+  fetch::serializers::MsgPackSerializer b;
+  b << *dsp;
+
+  // make another prediction with the original op
+  op.Backward({}, error);
+
+  TensorType grad = op.get_gradients();
+  fetch::math::Multiply(grad, DataType{-1}, grad);
+  op.ApplyGradient(grad);
+
+  prediction = TensorType(op.ComputeOutputShape({}));
+  op.Forward({}, prediction);
+
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<SPType>();
+  b >> *dsp2;
+
+  // rebuild node
+  OpType new_op(*dsp2);
+
+  // check that new predictions match the old
+  new_op.Backward({}, error);
+
+  TensorType new_grad = new_op.get_gradients();
+  fetch::math::Multiply(new_grad, DataType{-1}, new_grad);
+  new_op.ApplyGradient(new_grad);
+
+  TensorType new_prediction = TensorType(new_op.ComputeOutputShape({}));
+  new_op.Forward({}, new_prediction);
+
+  // test correct values
+  EXPECT_TRUE(prediction.AllClose(
+      new_prediction, fetch::math::function_tolerance<typename TypeParam::Type>(),
+      fetch::math::function_tolerance<typename TypeParam::Type>()));
+}

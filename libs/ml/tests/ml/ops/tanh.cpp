@@ -180,3 +180,55 @@ TYPED_TEST(TanHTest, saveparams_test)
   EXPECT_TRUE(
       new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
 }
+
+TYPED_TEST(TanHTest, saveparams_backward_all_negative_test)
+{
+  using TensorType    = TypeParam;
+  using OpType        = typename fetch::ml::ops::TanH<TensorType>;
+  using SPType        = typename OpType ::SPType;
+
+  uint8_t             n = 8;
+  TypeParam           data{n};
+  TypeParam           error{n};
+  std::vector<double> dataInput({-0, -0.2, -0.4, -0.6, -0.8, -1.2, -1.4, -10});
+  std::vector<double> errorInput({{-0.2, -0.1, -0.3, -0.2, -0.5, -0.1, -0.0, -0.3}});
+
+  for (std::uint64_t i(0); i < n; ++i)
+  {
+    data.Set(i, typename TypeParam::Type(dataInput[i]));
+    error.Set(i, typename TypeParam::Type(errorInput[i]));
+  }
+
+  fetch::ml::ops::TanH<TypeParam> op;
+  std::vector<TypeParam> prediction = op.Backward({std::make_shared<const TypeParam>(data)}, error);
+
+  // extract saveparams
+  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
+
+  // downcast to correct type
+  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
+
+  // serialize
+  fetch::serializers::MsgPackSerializer b;
+  b << *dsp;
+
+  // make another prediction with the original op
+  prediction = op.Backward({std::make_shared<const TensorType>(data)}, error);
+
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<SPType>();
+  b >> *dsp2;
+
+  // rebuild node
+  OpType new_op(*dsp2);
+
+  // check that new predictions match the old
+  std::vector<TensorType> new_prediction =
+      new_op.Backward({std::make_shared<const TensorType>(data)}, error);
+
+  // test correct values
+  EXPECT_TRUE(prediction.at(0).AllClose(
+      new_prediction.at(0), fetch::math::function_tolerance<typename TypeParam::Type>(),
+      fetch::math::function_tolerance<typename TypeParam::Type>()));
+}
