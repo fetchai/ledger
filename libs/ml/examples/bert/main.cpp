@@ -19,6 +19,9 @@
 #include "math/tensor.hpp"
 #include "ml/graph.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
+#include "ml/ops/embeddings.hpp"
+#include "ml/ops/add.hpp"
+#include "ml/layers/self_attention_encoder.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 
 #include <iostream>
@@ -46,10 +49,37 @@ int main(int ac, char **av)
 
   std::cout << "FETCH BERT Demo" << std::endl;
   
-  // Prepare input with segment embedding, position embedding and token embedding
+  // set up input shape
+  SizeType n_encoder_layers = 12u;
+  SizeType max_seq_len = 512u;
+  SizeType model_dims = 768u;
+  SizeType n_heads = 12u;
+  SizeType ff_dims = 4u * model_dims;
+  DataType dropout_keep_prob = static_cast<DataType>(0.9);
   
-  
+  // Prepare input with segment embedding, position embedding, token embedding and masking
+	fetch::ml::Graph<ArrayType> g;
+	std::string segment = g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Segment", {});
+	std::string position = g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Position", {});
+	std::string tokens = g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Tokens", {});
+	std::string mask  = g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Mask", {});
+	
+	// prepare embedding for segment, position and tokens
+	std::string segment_embedding = g.template AddNode<fetch::ml::ops::Embeddings<ArrayType>>("Segment_Embedding", {segment}, static_cast<SizeType>(model_dims), static_cast<SizeType>(2));
+	std::string position_embedding = g.template AddNode<fetch::ml::ops::Embeddings<ArrayType>>("Position_Embedding", {position}, static_cast<SizeType>(model_dims), static_cast<SizeType>(max_seq_len));
+	std::string token_embedding = g.template AddNode<fetch::ml::ops::Embeddings<ArrayType>>("Token_Embedding", {tokens}, static_cast<SizeType>(model_dims), static_cast<SizeType>(6000));
+ 
+	// summ embedding together
+	std::string seg_pos_add = g.template AddNode<fetch::ml::ops::Add<ArrayType>>("seg_pos_add", {segment_embedding, position_embedding});
+	std::string sum_input = g.template AddNode<fetch::ml::ops::Add<ArrayType>>("all_input_add", {token_embedding, seg_pos_add});
+	
   // Ensemble the whole bert model
+  std::string layer_output = sum_input;
+  for(SizeType i=0u; i<n_encoder_layers; i++){
+	  layer_output = g.template AddNode<fetch::ml::layers::SelfAttentionEncoder<ArrayType>>(
+	   "SelfAttentionEncoder_No_" + std::to_string(i), {layer_output, mask}, n_heads, model_dims, ff_dims, dropout_keep_prob);
+  }
+	
   
   
   // Create a sudo data for input

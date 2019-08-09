@@ -42,7 +42,7 @@ TYPED_TEST(SelfAttentionEncoder, input_output_dimension_test)  // Use the class 
   std::string mask  = g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Mask", {});
 
   std::string output = g.template AddNode<fetch::ml::layers::SelfAttentionEncoder<TypeParam>>(
-      "ScaledAttentionEncoder", {input, mask}, static_cast<SizeType>(4), static_cast<SizeType>(12),
+      "SelfAttentionEncoder", {input, mask}, static_cast<SizeType>(4), static_cast<SizeType>(12),
       static_cast<SizeType>(24));
   TypeParam input_data = TypeParam({12, 25, 4});
   TypeParam mask_data  = TypeParam({25, 25, 4});

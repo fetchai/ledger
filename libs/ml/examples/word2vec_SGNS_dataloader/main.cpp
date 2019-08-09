@@ -26,6 +26,7 @@
 #include "ml/ops/loss_functions.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
+#include "ml/optimisation/adam_optimiser.hpp"
 #include "model_saver.hpp"
 
 #include <iostream>
@@ -168,7 +169,7 @@ struct TrainingParams
   SizeType training_epochs = 1;
   SizeType test_frequency  = 1;
   DataType starting_learning_rate_per_sample =
-      0.025;  // these are the learning rates we have for each sample
+      0.0000001;  // these are the learning rates we have for each sample
   DataType ending_learning_rate_per_sample = 0.0001;
   DataType starting_learning_rate;  // this is the true learning rate set for the graph training
   DataType ending_learning_rate;
@@ -253,7 +254,7 @@ int main(int argc, char **argv)
   std::cout << "beginning training...: " << std::endl;
 
   // Initialise Optimiser
-  fetch::ml::optimisers::SGDOptimiser<ArrayType> optimiser(g, {"Input", "Context"}, "Label", error,
+  fetch::ml::optimisers::AdamOptimiser<ArrayType> optimiser(g, {"Input", "Context"}, "Label", error,
                                                            tp.learning_rate_param);
 
   // Training loop
