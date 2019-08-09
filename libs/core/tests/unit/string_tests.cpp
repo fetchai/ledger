@@ -17,13 +17,31 @@
 //------------------------------------------------------------------------------
 
 #include "core/string/ends_with.hpp"
+#include "core/string/replace.hpp"
 #include "core/string/starts_with.hpp"
+#include "core/string/to_lower.hpp"
+#include "core/string/trim.hpp"
 
 #include "gtest/gtest.h"
+
+#include <string>
 
 using namespace fetch::core;
 
 namespace {
+
+std::string Escape(std::string const &s)
+{
+  std::string::size_type i0{};
+  std::string            ret_val{'"'};
+  for (auto i = s.find_first_of("\n\t"); i != std::string::npos;
+       i0 = i + 1, i = s.find_first_of("\n\t", i + 1))
+  {
+    ret_val.append(s, i0, i - i0) += '\\';
+    ret_val += (s[i] == '\n' ? 'n' : 't');
+  }
+  return std::move(ret_val.append(s, i0) += '"');
+}
 
 TEST(StringTests, check_EndsWith)
 {
@@ -49,6 +67,90 @@ TEST(StringTests, check_StartsWith)
   EXPECT_FALSE(StartsWith("Hello World", "World"));
   EXPECT_FALSE(StartsWith("Hello World", "Hello World..."));
   EXPECT_FALSE(StartsWith("Hello World", "...Hello World"));
+}
+
+using namespace fetch::string;
+
+TEST(StringTests, check_Replace)
+{
+  auto s = Replace("Space shuttle ready to start", 's', 'z');
+  EXPECT_EQ(s, "Space zhuttle ready to ztart")
+      << "Replace(\"Space shuttle ready to start\", 's', 'z')";
+
+  s = Replace("Space shuttle ready to start", 'z', 'm');
+  EXPECT_EQ(s, "Space shuttle ready to start")
+      << "Replace(\"Space shuttle ready to start\", 'z', 'm')";
+}
+
+TEST(StringTests, check_TrimFromRight)
+{
+  for (std::string s : {"    1234", " \t \n 1234", "1234"})
+  {
+    TrimFromRight(s);
+    EXPECT_EQ(s, "1234") << Escape(s);
+  }
+
+  std::string s = "    ";
+  TrimFromRight(s);
+  EXPECT_EQ(s, "");
+
+  s = " \t \n ";
+  TrimFromRight(s);
+  EXPECT_EQ(s, "");
+}
+
+TEST(StringTests, check_TrimFromLeft)
+{
+  for (std::string s : {"1234    ", "1234 \t \n ", "1234"})
+  {
+    TrimFromLeft(s);
+    EXPECT_EQ(s, "1234") << Escape(s);
+  }
+
+  std::string s = "    ";
+  TrimFromLeft(s);
+  EXPECT_EQ(s, "");
+
+  s = " \t \n ";
+  TrimFromLeft(s);
+  EXPECT_EQ(s, "");
+}
+
+TEST(StringTests, check_Trim)
+{
+  for (std::string s : {"1234    ", "1234 \t \n ", "    1234", " \t \n 1234", "    1234     ",
+                        " \t \n 1234     ", "    1234 \t \n  ", " \t \n 1234 \t \n  ", "1234"})
+  {
+    Trim(s);
+    EXPECT_EQ(s, "1234");
+  }
+
+  std::string s = "    ";
+  Trim(s);
+  EXPECT_EQ(s, "");
+
+  s = " \t \n ";
+  Trim(s);
+  EXPECT_EQ(s, "");
+}
+
+TEST(StringTests, check_ToLower)
+{
+  std::string s = "Hi there!";
+  ToLower(s);
+  EXPECT_EQ(s, "hi there!");
+
+  s = "I SAID HI THERE!!!1111";
+  ToLower(s);
+  EXPECT_EQ(s, "i said hi there!!!1111");
+
+  s = "oh, well, okay...";
+  ToLower(s);
+  EXPECT_EQ(s, "oh, well, okay...");
+
+  s = "12345";
+  ToLower(s);
+  EXPECT_EQ(s, "12345");
 }
 
 }  // namespace

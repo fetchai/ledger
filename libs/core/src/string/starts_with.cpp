@@ -18,6 +18,7 @@
 
 #include "core/string/starts_with.hpp"
 
+#include <algorithm>
 #include <string>
 
 namespace fetch {
@@ -25,7 +26,7 @@ namespace core {
 
 bool StartsWith(std::string const &value, std::string const &prefix)
 {
-  return value.find(prefix) == 0;
+  return value.size() >= prefix.size() && std::equal(prefix.begin(), prefix.end(), value.begin());
 }
 
 }  // namespace core
