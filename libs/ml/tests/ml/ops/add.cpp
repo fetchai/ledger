@@ -191,63 +191,6 @@ TYPED_TEST(AddTest, backward_test_NB_N1)
                                      fetch::math::function_tolerance<DataType>()));
 }
 
-TYPED_TEST(AddTest, saveparams_test)
-{
-  using TensorType    = TypeParam;
-  using DataType      = typename TypeParam::Type;
-  using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
-  using SPType        = typename fetch::ml::ops::Add<TensorType>::SPType;
-  using OpType        = typename fetch::ml::ops::Add<TensorType>;
-
-  TensorType data_1 = TensorType::FromString(
-      "1, -2, 3,-4, 5,-6, 7,-8;"
-      "1,  2, 3, 4, 5, 6, 7, 8");
-
-  TensorType data_2 = TensorType::FromString(
-      "8;"
-      "-8");
-
-  TensorType gt = TensorType::FromString(
-      "9,  6, 11,  4, 13,  2, 15, 0;"
-      "-7, -6, -5, -4, -3,	-2,	-1,	0");
-
-  OpType op;
-
-  TensorType    prediction(op.ComputeOutputShape(
-      {std::make_shared<const TensorType>(data_1), std::make_shared<const TensorType>(data_2)}));
-  VecTensorType vec_data(
-      {std::make_shared<const TensorType>(data_1), std::make_shared<const TensorType>(data_2)});
-
-  op.Forward(vec_data, prediction);
-
-  // extract saveparams
-  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
-
-  // downcast to correct type
-  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
-
-  // serialize
-  fetch::serializers::MsgPackSerializer b;
-  b << *dsp;
-
-  // deserialize
-  b.seek(0);
-  auto dsp2 = std::make_shared<SPType>();
-  b >> *dsp2;
-
-  // rebuild node
-  OpType new_op(*dsp2);
-
-  // check that new predictions match the old
-  TensorType new_prediction(op.ComputeOutputShape(
-      {std::make_shared<const TensorType>(data_1), std::make_shared<const TensorType>(data_2)}));
-  new_op.Forward(vec_data, new_prediction);
-
-  // test correct values
-  EXPECT_TRUE(new_prediction.AllClose(prediction, fetch::math::function_tolerance<DataType>(),
-                                      fetch::math::function_tolerance<DataType>()));
-}
-
 TYPED_TEST(AddTest, forward_2D_broadcast_test)
 {
   using TensorType = TypeParam;
@@ -308,4 +251,61 @@ TYPED_TEST(AddTest, backward_2D_broadcast_test)
                                      fetch::math::function_tolerance<DataType>()));
   ASSERT_TRUE(prediction[1].AllClose(gt_2, fetch::math::function_tolerance<DataType>(),
                                      fetch::math::function_tolerance<DataType>()));
+}
+
+TYPED_TEST(AddTest, saveparams_test)
+{
+  using TensorType    = TypeParam;
+  using DataType      = typename TypeParam::Type;
+  using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
+  using SPType        = typename fetch::ml::ops::Add<TensorType>::SPType;
+  using OpType        = typename fetch::ml::ops::Add<TensorType>;
+
+  TensorType data_1 = TensorType::FromString(
+      "1, -2, 3,-4, 5,-6, 7,-8;"
+      "1,  2, 3, 4, 5, 6, 7, 8");
+
+  TensorType data_2 = TensorType::FromString(
+      "8;"
+      "-8");
+
+  TensorType gt = TensorType::FromString(
+      "9,  6, 11,  4, 13,  2, 15, 0;"
+      "-7, -6, -5, -4, -3,	-2,	-1,	0");
+
+  OpType op;
+
+  TensorType    prediction(op.ComputeOutputShape(
+      {std::make_shared<const TensorType>(data_1), std::make_shared<const TensorType>(data_2)}));
+  VecTensorType vec_data(
+      {std::make_shared<const TensorType>(data_1), std::make_shared<const TensorType>(data_2)});
+
+  op.Forward(vec_data, prediction);
+
+  // extract saveparams
+  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
+
+  // downcast to correct type
+  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
+
+  // serialize
+  fetch::serializers::MsgPackSerializer b;
+  b << *dsp;
+
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<SPType>();
+  b >> *dsp2;
+
+  // rebuild node
+  OpType new_op(*dsp2);
+
+  // check that new predictions match the old
+  TensorType new_prediction(op.ComputeOutputShape(
+      {std::make_shared<const TensorType>(data_1), std::make_shared<const TensorType>(data_2)}));
+  new_op.Forward(vec_data, new_prediction);
+
+  // test correct values
+  EXPECT_TRUE(
+      new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
 }

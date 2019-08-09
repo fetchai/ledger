@@ -173,10 +173,10 @@ TYPED_TEST(SwitchTest, back_test_broadcast_mask)
       error_signal);
 
   // test correct values
-  ASSERT_TRUE(prediction.at(0).AllClose(gt_mask, fetch::math::function_tolerance<DataType>(),
-                                        fetch::math::function_tolerance<DataType>()));
-  ASSERT_TRUE(prediction.at(1).AllClose(gt_then, fetch::math::function_tolerance<DataType>(),
-                                        fetch::math::function_tolerance<DataType>()));
-  ASSERT_TRUE(prediction.at(2).AllClose(gt_else, fetch::math::function_tolerance<DataType>(),
-                                        fetch::math::function_tolerance<DataType>()));
+  ASSERT_TRUE(
+      prediction.at(0).AllClose(gt_mask, static_cast<DataType>(0), static_cast<DataType>(0)));
+  ASSERT_TRUE(
+      prediction.at(1).AllClose(gt_then, static_cast<DataType>(0), static_cast<DataType>(0)));
+  ASSERT_TRUE(
+      prediction.at(2).AllClose(gt_else, static_cast<DataType>(0), static_cast<DataType>(0)));
 }

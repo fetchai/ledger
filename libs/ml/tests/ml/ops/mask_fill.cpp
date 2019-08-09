@@ -205,5 +205,6 @@ TYPED_TEST(MaskFillTest, saveparams_test)
       new_prediction);
 
   // test correct values
-  EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{1e-5f}, DataType{1e-5f}));
+  EXPECT_TRUE(
+      new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
 }
