@@ -40,10 +40,11 @@ class TensorDataLoader : public DataLoader<LabelType, InputType>
 
 public:
   TensorDataLoader(SizeVector const &label_shape, std::vector<SizeVector> const &data_shapes,
-                   bool random_mode = false)
+                   bool random_mode = false, float test_to_train_ratio = 0.0)
     : DataLoader<LabelType, TensorType>(random_mode)
     , label_shape_(label_shape)
     , data_shapes_(data_shapes)
+    , test_to_train_ratio_(test_to_train_ratio)
   {
     one_sample_label_shape_                                        = label_shape;
     one_sample_label_shape_.at(one_sample_label_shape_.size() - 1) = 1;
@@ -54,6 +55,7 @@ public:
       one_sample_data_shapes_.at(i).at(one_sample_data_shapes_.at(i).size() - 1) = 1;
     }
   }
+
   ~TensorDataLoader() override = default;
 
   ReturnType   GetNext(bool is_test = false) override;
@@ -64,8 +66,14 @@ public:
   void     Reset(bool is_test = false) override;
 
 protected:
-  SizeType train_cursor_ = 0;
-  SizeType n_samples_    = 0;  // number of data samples
+  SizeType train_cursor_        = 0;
+  SizeType test_cursor_         = 0;
+  SizeType test_offset_         = 0;
+  float    test_to_train_ratio_ = 0.0;
+
+  SizeType n_samples_       = 0;  // number of all samples
+  SizeType n_test_samples_  = 0;  // number of train samples
+  SizeType n_train_samples_ = 0;  // number of test samples
 
   TensorType data_;
   TensorType labels_;
@@ -83,14 +91,17 @@ template <typename LabelType, typename InputType>
 typename TensorDataLoader<LabelType, InputType>::ReturnType
 TensorDataLoader<LabelType, InputType>::GetNext(bool is_test)
 {
-  if (is_test)
-  {
-    throw std::runtime_error("Validation set splitting not implemented yet");
-  }
-
   if (this->random_mode_)
   {
     throw std::runtime_error("random mode not implemented for tensor dataloader");
+  }
+
+  if (is_test)
+  {
+    ReturnType ret(labels_.View(test_cursor_).Copy(one_sample_label_shape_),
+                   {data_.View(test_cursor_).Copy(one_sample_data_shapes_.at(0))});
+    test_cursor_++;
+    return ret;
   }
   else
   {
@@ -105,15 +116,18 @@ template <typename LabelType, typename InputType>
 bool TensorDataLoader<LabelType, InputType>::AddData(TensorType const &data,
                                                      TensorType const &labels)
 {
-
   data_         = data.Copy();
   labels_       = labels.Copy();
   train_cursor_ = 0;
 
-  n_samples_ = data_.shape().at(data_.shape().size() - 1);
-
   batch_label_dim_ = labels_.shape().size() - 1;
   batch_data_dim_  = data_.shape().size() - 1;
+
+  n_samples_ = data_.shape().at(batch_data_dim_);
+
+  n_train_samples_ = static_cast<SizeType>((1.0 - test_to_train_ratio_) * n_samples_);
+  n_test_samples_  = static_cast<SizeType>((test_to_train_ratio_)*n_samples_);
+  test_offset_     = n_test_samples_;
 
   return true;
 }
@@ -124,10 +138,12 @@ TensorDataLoader<LabelType, InputType>::Size(bool is_test) const
 {
   if (is_test)
   {
-    throw std::runtime_error("Validation set splitting not implemented yet");
+    return n_test_samples_;
   }
-
-  return n_samples_;
+  else
+  {
+    return n_train_samples_;
+  }
 }
 
 template <typename LabelType, typename InputType>
@@ -138,7 +154,14 @@ bool TensorDataLoader<LabelType, InputType>::IsDone(bool is_test) const
     throw std::runtime_error("Validation set splitting not implemented yet");
   }
 
-  return (train_cursor_ >= data_.shape(batch_data_dim_));
+  if (is_test)
+  {
+    return (train_cursor_ >= n_train_samples_);
+  }
+  else
+  {
+    return (test_cursor_ >= test_offset_ + n_test_samples_);
+  }
 }
 
 template <typename LabelType, typename InputType>
@@ -146,10 +169,12 @@ void TensorDataLoader<LabelType, InputType>::Reset(bool is_test)
 {
   if (is_test)
   {
-    throw std::runtime_error("Validation set splitting not implemented yet");
+    test_cursor_ = 0;
   }
-
-  train_cursor_ = 0;
+  else
+  {
+    train_cursor_ = 0;
+  }
 }
 
 }  // namespace dataloaders

@@ -62,8 +62,9 @@ public:
     data_   = read_mnist_images(images_file, size_, record_length);
     labels_ = read_mnist_labels(labelsFile, size_);
 
-    train_size_ = static_cast<std::uint32_t>((1.0 - test_to_train_ratio) * size_);
-    test_size_  = size_ - train_size_;
+    test_size_   = static_cast<std::uint32_t>(test_to_train_ratio * static_cast<float>(size_));
+    train_size_  = size_ - test_size_;
+    test_offset_ = test_size_;
 
     assert(record_length == FIGURE_SIZE);
 
