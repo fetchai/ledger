@@ -113,6 +113,11 @@ TYPED_TEST(SerializersTestNoInt, serialize_graph_saveable_params)
   std::string error_output = g->template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TensorType>>(
       "num_error", {output, label_name});
 
+  /// make a prediction and do nothing with it
+  TensorType tmp_data = TensorType::FromString("1, 2, 3, 4, 5, 6, 7, 8, 9, 10");
+  g->SetInput("Input", tmp_data.Transpose());
+  TensorType tmp_prediction = g->Evaluate(output);
+
   fetch::ml::GraphSaveableParams<TypeParam> gsp1 = g->GetGraphSaveableParams();
   fetch::serializers::MsgPackSerializer     b;
   b << gsp1;
