@@ -1175,6 +1175,7 @@ struct MapSerializer<ml::OpEmbeddingsSaveableParams<TensorType>, D>
     TensorType e_out;
     map.ExpectKeyGetValue(EMBED_OUTPUT, e_out);
     sp.embeddings_output = std::make_shared<TensorType>(e_out);
+
     map.ExpectKeyGetValue(UPDATED_ROWS, sp.updated_rows);
     map.ExpectKeyGetValue(TRAILING_IND_1, sp.trailing_indices1);
     map.ExpectKeyGetValue(TRAILING_IND_2, sp.trailing_indices2);

@@ -37,8 +37,8 @@ TYPED_TEST(SkipGramTest, saveparams_test)
 {
   using DataType = typename TypeParam::Type;
 
-  TypeParam input(std::vector<typename TypeParam::SizeType>({100, 1}));
-  TypeParam context(std::vector<typename TypeParam::SizeType>({100, 1}));
+  TypeParam input(std::vector<typename TypeParam::SizeType>({1, 1}));
+  TypeParam context(std::vector<typename TypeParam::SizeType>({1, 1}));
 
   fetch::math::SizeType in_size    = 1;
   fetch::math::SizeType out_size   = 1;
