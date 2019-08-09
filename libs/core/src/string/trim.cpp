@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,12 +16,33 @@
 //
 //------------------------------------------------------------------------------
 
+// after
+// http://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring
+#include "core/string/trim.hpp"
+
+#include <algorithm>
+#include <cctype>
 #include <string>
 
 namespace fetch {
 namespace string {
 
-std::string Replace(std::string value, char before, char after);
+void TrimFromRight(std::string &s)
+{
+  s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int c) { return !std::isspace(c); }));
+}
+
+void TrimFromLeft(std::string &s)
+{
+  s.erase(std::find_if(s.rbegin(), s.rend(), [](int c) { return !std::isspace(c); }).base(),
+          s.end());
+}
+
+void Trim(std::string &s)
+{
+  TrimFromLeft(s);
+  TrimFromRight(s);
+}
 
 }  // namespace string
 }  // namespace fetch
