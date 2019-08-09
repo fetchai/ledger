@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,12 +16,19 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/string/replace.hpp"
+
+#include <algorithm>
 #include <string>
 
 namespace fetch {
 namespace string {
 
-std::string Replace(std::string value, char before, char after);
+std::string Replace(std::string value, char before, char after)
+{
+  std::replace(value.begin(), value.end(), before, after);
+  return value;
+}
 
 }  // namespace string
 }  // namespace fetch
