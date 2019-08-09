@@ -51,6 +51,7 @@ public:
     : Ops<T>(sp)
   {
     axis_ = sp.axis;
+    axes_ = sp.axes;
   }
 
   ~Softmax() override = default;
