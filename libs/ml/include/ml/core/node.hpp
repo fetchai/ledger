@@ -30,6 +30,7 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <ml/ops/embeddings.hpp>
 #include <ml/ops/layer_norm.hpp>
 #include <ml/ops/leaky_relu_op.hpp>
 #include <string>
@@ -121,15 +122,13 @@ public:
     return sp_ptr;
   }
 
-  void SetNodeSaveableParams(NodeSaveableParams<T> const &nsp, std::shared_ptr<ops::Ops<T>> op_ptr)
-  {
-    name_                 = nsp.name;
-    cached_output_        = nsp.cached_output;
-    cached_output_status_ = static_cast<CachedOutputState>(nsp.cached_output_status);
-    operation_type_       = nsp.operation_type;
+  template <class OperationType>
+  meta::IfIsNotTrainable<TensorType, OperationType, void> SetNodeSaveableParams(
+      NodeSaveableParams<T> const &nsp, std::shared_ptr<ops::Ops<T>> op_ptr);
 
-    op_ptr_ = op_ptr;
-  }
+  template <typename OperationType>
+  meta::IfIsTrainable<TensorType, OperationType, void> SetNodeSaveableParams(
+      NodeSaveableParams<T> const &nsp, std::shared_ptr<ops::Ops<T>> op_ptr);
 
   VecTensorType                                 GatherInputs() const;
   std::shared_ptr<T>                            Evaluate(bool is_training);
@@ -170,6 +169,9 @@ private:
   OpType            operation_type_;
 
   std::shared_ptr<ops::Ops<T>> op_ptr_;
+
+  void SetNodeSaveParamsImplementation(NodeSaveableParams<T> const &nsp,
+                                       std::shared_ptr<ops::Ops<T>> op_ptr);
 };
 
 /**
@@ -325,6 +327,57 @@ void Node<T>::ResetCache(bool input_size_changed)
 {
   cached_output_status_ =
       input_size_changed ? CachedOutputState::CHANGED_SIZE : CachedOutputState::CHANGED_CONTENT;
+}
+
+/**
+ * For non-trainable nodes this just calls the default implementation
+ * @tparam TensorType
+ * @tparam OperationType
+ * @param nsp
+ * @param op_ptr
+ * @return
+ */
+template <typename TensorType>
+template <class OperationType>
+meta::IfIsNotTrainable<TensorType, OperationType, void> Node<TensorType>::SetNodeSaveableParams(
+    NodeSaveableParams<TensorType> const &nsp, std::shared_ptr<ops::Ops<TensorType>> op_ptr)
+{
+  SetNodeSaveParamsImplementation(nsp, op_ptr);
+}
+
+/**
+ * For trainable nodes it is necessary to re-link the op output and the node cached output
+ * @tparam TensorType
+ * @tparam OperationType
+ * @param nsp
+ * @param op_ptr
+ * @return
+ */
+template <typename TensorType>
+template <typename OperationType>
+meta::IfIsTrainable<TensorType, OperationType, void> Node<TensorType>::SetNodeSaveableParams(
+    NodeSaveableParams<TensorType> const &nsp, std::shared_ptr<ops::Ops<TensorType>> op_ptr)
+{
+  SetNodeSaveParamsImplementation(nsp, op_ptr);
+
+  auto trainable_ptr = std::static_pointer_cast<OperationType>(op_ptr_);
+  trainable_ptr->SetData(cached_output_);
+}
+
+/**
+ * the shared implementation for setting node saveable parameters - general to all nodes
+ * @param nsp
+ * @param op_ptr
+ */
+template <typename T>
+void Node<T>::SetNodeSaveParamsImplementation(NodeSaveableParams<T> const &nsp,
+                                              std::shared_ptr<ops::Ops<T>> op_ptr)
+{
+  name_                 = nsp.name;
+  cached_output_        = nsp.cached_output;
+  cached_output_status_ = static_cast<CachedOutputState>(nsp.cached_output_status);
+  operation_type_       = nsp.operation_type;
+  op_ptr_               = op_ptr;
 }
 
 }  // namespace ml

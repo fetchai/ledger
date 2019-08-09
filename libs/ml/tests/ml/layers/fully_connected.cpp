@@ -640,6 +640,7 @@ TYPED_TEST(FullyConnectedTest, saveparams_test)
   fc.SetInput(label_name, labels);
   TypeParam loss = fc.Evaluate(error_output);
   fc.BackPropagateError(error_output);
+
   fc.Step(DataType{0.1f});
 
   // train g2
@@ -659,9 +660,6 @@ TYPED_TEST(FullyConnectedTest, saveparams_test)
 
   EXPECT_FALSE(prediction.AllClose(prediction3, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));
-
-  std::cout << "prediction3.ToString(): " << prediction3.ToString() << std::endl;
-  std::cout << "prediction4.ToString(): " << prediction4.ToString() << std::endl;
 
   EXPECT_TRUE(prediction3.AllClose(prediction4, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));

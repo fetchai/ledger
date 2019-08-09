@@ -208,6 +208,9 @@ void Graph<TensorType>::BackPropagateSignal(std::string const &node_name,
 template <typename TensorType>
 void Graph<TensorType>::Step(DataType learning_rate)
 {
+  auto tmp = std::dynamic_pointer_cast<fetch::ml::ops::Weights<TensorType>>(
+      nodes_["FullyConnected_Weights"]->GetOp());
+  FETCH_UNUSED(tmp);
   for (auto &t : trainable_)
   {
     t->Step(learning_rate);

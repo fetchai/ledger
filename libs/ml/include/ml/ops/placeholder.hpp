@@ -66,8 +66,8 @@ public:
   {
     FETCH_UNUSED(inputs);
     assert(inputs.empty());
-    assert(this->output_);
-    output = *(this->output_);
+    assert(output_);
+    output = *(output_);
   }
 
   std::vector<TensorType> Backward(VecTensorType const &inputs,
@@ -92,7 +92,7 @@ public:
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     FETCH_UNUSED(inputs);
-    return this->output_->shape();
+    return output_->shape();
   }
 
   static constexpr OpType OpCode()
