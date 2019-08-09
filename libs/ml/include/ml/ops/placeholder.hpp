@@ -42,12 +42,23 @@ public:
   PlaceHolder() = default;
 
   explicit PlaceHolder(SPType const &sp)
+    : Ops<T>(sp)
   {
     if (sp.output)
     {
       SetData(*(sp.output));
     }
   }
+  //
+  //  explicit PlaceHolder(SaveableParamsInterface const &sp)
+  //    : Ops<T>(sp)
+  //  {
+  //    auto p_sp = static_cast<SPType>(sp);
+  //    if (p_sp.output)
+  //    {
+  //      SetData(*(p_sp.output));
+  //    }
+  //  }
 
   ~PlaceHolder() override = default;
 

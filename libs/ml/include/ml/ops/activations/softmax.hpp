@@ -48,6 +48,7 @@ public:
   {}
 
   explicit Softmax(SPType const &sp)
+    : Ops<T>(sp)
   {
     axis_ = sp.axis;
     axes_ = sp.axes;

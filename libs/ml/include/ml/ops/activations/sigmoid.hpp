@@ -50,8 +50,7 @@ public:
 
   std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
-    SPType sp{};
-    return std::make_shared<SPType>(sp);
+    return std::make_shared<SPType>();
   }
 
   void Forward(VecTensorType const &inputs, TensorType &output) override

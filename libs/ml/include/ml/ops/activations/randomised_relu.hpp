@@ -52,6 +52,7 @@ public:
   }
 
   explicit RandomisedRelu(SPType const &sp)
+    : Ops<T>(sp)
   {
     lower_bound_ = sp.lower_bound;
     upper_bound_ = sp.upper_bound;
@@ -66,14 +67,14 @@ public:
 
   std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
-    SPType sp{};
-    sp.lower_bound  = lower_bound_;
-    sp.upper_bound  = upper_bound_;
-    sp.random_seed  = rng_.Seed();
-    sp.buffer       = rng_.GetBuffer();
-    sp.index        = rng_.GetIndex();
-    sp.random_value = random_value_;
-    return std::make_shared<SPType>(sp);
+    auto sp          = std::make_shared<SPType>();
+    sp->lower_bound  = lower_bound_;
+    sp->upper_bound  = upper_bound_;
+    sp->random_seed  = rng_.Seed();
+    sp->buffer       = rng_.GetBuffer();
+    sp->index        = rng_.GetIndex();
+    sp->random_value = random_value_;
+    return sp;
   }
 
   void Forward(VecTensorType const &inputs, TensorType &output) override

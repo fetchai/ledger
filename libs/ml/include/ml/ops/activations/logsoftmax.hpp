@@ -45,6 +45,7 @@ public:
   {}
 
   explicit LogSoftmax(SPType const &sp)
+    : Ops<T>(sp)
   {
     axis_ = sp.axis;
   }

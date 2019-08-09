@@ -40,9 +40,8 @@ public:
 
   explicit MeanSquareErrorLoss(SPType const &sp)
     : Ops<T>(sp)
-  {
-    weightings_ = sp.weightings;
-  }
+    , weightings_(sp.weightings)
+  {}
 
   explicit MeanSquareErrorLoss(TensorType const &weightings = TensorType())
     : weightings_(weightings)

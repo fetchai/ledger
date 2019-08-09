@@ -50,6 +50,7 @@ public:
   }
 
   explicit Dropout(SPType const &sp)
+    : Ops<T>(sp)
   {
     probability_ = sp.probability;
     drop_values_ = sp.drop_values;

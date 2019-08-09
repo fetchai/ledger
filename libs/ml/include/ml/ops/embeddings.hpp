@@ -53,6 +53,7 @@ public:
   }
 
   explicit Embeddings(SPType const &sp)
+    : Weights<T>(sp)
   {
     this->SetData(*sp.output);
   }
