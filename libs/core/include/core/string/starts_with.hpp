@@ -20,9 +20,9 @@
 #include <string>
 
 namespace fetch {
-namespace string {
+namespace core {
 
-std::string Replace(std::string value, char before, char after);
+bool StartsWith(std::string const &value, std::string const &prefix);
 
-}  // namespace string
+}  // namespace core
 }  // namespace fetch

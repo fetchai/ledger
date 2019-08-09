@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,12 +16,18 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/string/starts_with.hpp"
+
+#include <algorithm>
 #include <string>
 
 namespace fetch {
-namespace string {
+namespace core {
 
-std::string Replace(std::string value, char before, char after);
+bool StartsWith(std::string const &value, std::string const &prefix)
+{
+  return value.size() >= prefix.size() && std::equal(prefix.begin(), prefix.end(), value.begin());
+}
 
-}  // namespace string
+}  // namespace core
 }  // namespace fetch
