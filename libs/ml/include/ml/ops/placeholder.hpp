@@ -42,6 +42,7 @@ public:
   PlaceHolder() = default;
 
   explicit PlaceHolder(SPType const &sp)
+    : Ops<T>(sp)
   {
     if (sp.output)
     {

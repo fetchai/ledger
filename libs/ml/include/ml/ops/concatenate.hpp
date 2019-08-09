@@ -41,6 +41,7 @@ public:
   {}
 
   explicit Concatenate(SPType const &sp)
+    : Ops<T>(sp)
   {
     axis_ = sp.axis;
   }

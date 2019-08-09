@@ -44,6 +44,7 @@ public:
   {}
 
   explicit Convolution2D(SPType const &sp)
+    : Ops<T>(sp)
   {
     stride_size_ = sp.stride_size;
   }

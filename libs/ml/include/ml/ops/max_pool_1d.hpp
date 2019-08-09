@@ -44,6 +44,7 @@ public:
   {}
 
   explicit MaxPool1D(SPType const &sp)
+    : Ops<T>(sp)
   {
     kernel_size_ = sp.kernel_size;
     stride_size_ = sp.stride_size;

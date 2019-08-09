@@ -41,7 +41,9 @@ public:
 
   explicit Add(SPType const &sp)
     : Ops<T>(sp)
-  {}
+  {
+    axes_ = sp.axes;
+  }
 
   ~Add() override = default;
 

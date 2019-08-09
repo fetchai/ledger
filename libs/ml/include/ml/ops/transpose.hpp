@@ -40,7 +40,7 @@ public:
     : transpose_vector_(transpose_vector)
   {}
 
-  explicit Transpose(SPType const &sp)
+  explicit Transpose(SPType const &sp) : Ops<T>(sp)
   {
     transpose_vector_ = sp.transpose_vector;
   }
