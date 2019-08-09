@@ -52,8 +52,8 @@ public:
   explicit Dropout(SPType const &sp)
   {
     probability_ = sp.probability;
+    drop_values_ = sp.drop_values;
     rng_.Seed(sp.random_seed);
-    drop_values_ = TensorType{0};
     rng_.SetBuffer(sp.buffer);
     rng_.SetIndex(sp.index);
   }
@@ -63,8 +63,9 @@ public:
   std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
     SPType sp{};
-    sp.random_seed = rng_.Seed();
     sp.probability = probability_;
+    sp.drop_values = drop_values_;
+    sp.random_seed = rng_.Seed();
     sp.buffer      = rng_.GetBuffer();
     sp.index       = rng_.GetIndex();
     return std::make_shared<SPType>(sp);

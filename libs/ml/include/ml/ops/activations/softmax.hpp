@@ -50,6 +50,7 @@ public:
   explicit Softmax(SPType const &sp)
   {
     axis_ = sp.axis;
+    axes_ = sp.axes;
   }
 
   ~Softmax() override = default;

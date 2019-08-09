@@ -167,8 +167,9 @@ struct OpDropoutSaveableParams : public SaveableParamsInterface
   using DataType                = typename TensorType::Type;
   using SizeType                = typename TensorType::SizeType;
   fetch::ml::OpType     op_type = OpType::OP_DROPOUT;
-  SizeType              random_seed{};
   DataType              probability{};
+  TensorType            drop_values;
+  SizeType              random_seed{};
   std::vector<uint64_t> buffer{};
   uint64_t              index = fetch::math::numeric_max<uint64_t>();
 };

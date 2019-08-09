@@ -393,3 +393,74 @@ TYPED_TEST(SoftmaxTest, saveparams_test)
   EXPECT_TRUE(
       new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
 }
+
+TYPED_TEST(SoftmaxTest, saveparams_backward_3d_tensor_axes_0_2_test)
+{
+  using DataType   = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using SizeType   = typename TypeParam::SizeType;
+  using OpType        = typename fetch::ml::ops::Softmax<TensorType>;
+  using SPType        = typename OpType ::SPType;
+
+  TensorType          data({2, 2, 2});
+  TensorType          error({2, 2, 2});
+  TensorType          gt({2, 2, 2});
+  std::vector<double> data_input({1, -2, 3, -4, 5, -6, 7, -8});
+  std::vector<double> errorInput({0, 0, 0, 0, 1, 0, 0, 0});
+  std::vector<double> gt_input({-0.0176305, -0.000877773, 0, 0, 0.0185244, -1.6077e-05, 0, 0});
+
+  SizeType cnt  = 0;
+  auto     it_d = data.begin();
+  auto     it_e = error.begin();
+  auto     it_g = gt.begin();
+
+  while (it_d.is_valid())
+  {
+    *it_d = static_cast<DataType>(data_input.at(cnt));
+    *it_e = static_cast<DataType>(errorInput.at(cnt));
+    *it_g = static_cast<DataType>(gt_input.at(cnt));
+
+    cnt++;
+    ++it_d;
+    ++it_e;
+    ++it_g;
+  }
+
+  fetch::ml::ops::Softmax<TensorType> op({0, 2});
+
+  // run op once to make sure caches etc. have been filled. Otherwise the test might be trivial!
+  std::vector<TensorType> prediction =
+      op.Backward({std::make_shared<const TensorType>(data)}, error);
+
+  // extract saveparams
+  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
+
+  // downcast to correct type
+  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
+
+  // serialize
+  fetch::serializers::MsgPackSerializer b;
+  b << *dsp;
+
+  // make another prediction with the original op
+  prediction =
+      op.Backward({std::make_shared<const TensorType>(data)}, error);
+
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<SPType>();
+  b >> *dsp2;
+
+  // rebuild node
+  OpType new_op(*dsp2);
+
+  // check that new predictions match the old
+  std::vector<TensorType> new_prediction =
+      new_op.Backward({std::make_shared<const TensorType>(data)}, error);
+
+  // test correct values
+  EXPECT_TRUE(
+      prediction.at(0).AllClose(new_prediction.at(0),
+                               fetch::math::function_tolerance<typename TypeParam::Type>(),
+                               fetch::math::function_tolerance<typename TypeParam::Type>()));
+}
