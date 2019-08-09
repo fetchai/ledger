@@ -1141,10 +1141,10 @@ struct MapSerializer<ml::OpEmbeddingsSaveableParams<TensorType>, D>
   using Type       = ml::OpEmbeddingsSaveableParams<TensorType>;
   using DriverType = D;
 
-  static uint8_t const OP_CODE    = 1;
-  static uint8_t const BASE_CLASS = 2;
-  static uint8_t const EMBED_OUTPUT = 3;
-  static uint8_t const UPDATED_ROWS = 4;
+  static uint8_t const OP_CODE        = 1;
+  static uint8_t const BASE_CLASS     = 2;
+  static uint8_t const EMBED_OUTPUT   = 3;
+  static uint8_t const UPDATED_ROWS   = 4;
   static uint8_t const TRAILING_IND_1 = 5;
   static uint8_t const TRAILING_IND_2 = 6;
 
@@ -1162,7 +1162,6 @@ struct MapSerializer<ml::OpEmbeddingsSaveableParams<TensorType>, D>
     map.Append(UPDATED_ROWS, sp.updated_rows);
     map.Append(TRAILING_IND_1, sp.trailing_indices1);
     map.Append(TRAILING_IND_2, sp.trailing_indices2);
-
   }
 
   template <typename MapDeserializer>
