@@ -49,7 +49,8 @@ public:
     drop_values_ = TensorType{0};
   }
 
-  explicit Dropout(SPType const &sp) : Ops<T>(sp)
+  explicit Dropout(SPType const &sp)
+    : Ops<T>(sp)
   {
     probability_ = sp.probability;
     rng_.Seed(sp.random_seed);

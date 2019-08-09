@@ -51,7 +51,8 @@ public:
     UpdateRandomValue();
   }
 
-  explicit RandomisedRelu(SPType const &sp) : Ops<T>(sp)
+  explicit RandomisedRelu(SPType const &sp)
+    : Ops<T>(sp)
   {
     lower_bound_ = sp.lower_bound;
     upper_bound_ = sp.upper_bound;
@@ -66,7 +67,7 @@ public:
 
   std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
-    auto sp = std::make_shared<SPType>();
+    auto sp          = std::make_shared<SPType>();
     sp->lower_bound  = lower_bound_;
     sp->upper_bound  = upper_bound_;
     sp->random_seed  = rng_.Seed();

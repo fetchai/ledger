@@ -40,7 +40,8 @@ public:
     : new_shape_(new_shape)
   {}
 
-  explicit Reshape(SPType const &sp) : Ops<T>(sp)
+  explicit Reshape(SPType const &sp)
+    : Ops<T>(sp)
   {
     new_shape_ = sp.new_shape;
   }

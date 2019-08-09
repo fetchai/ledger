@@ -65,7 +65,8 @@ protected:
 public:
   Weights() = default;
 
-  explicit Weights(SPType const &sp) : PlaceHolder<T>(sp)
+  explicit Weights(SPType const &sp)
+    : PlaceHolder<T>(sp)
   {
     if (sp.output)
     {

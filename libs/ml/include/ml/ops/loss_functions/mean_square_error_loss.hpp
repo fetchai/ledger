@@ -39,8 +39,16 @@ public:
   using SPType        = OpMeanSquareErrorSaveableParams<T>;
 
   explicit MeanSquareErrorLoss(SPType const &sp)
-    : Ops<T>(sp), weightings_(sp.weightings)
+<<<<<<< HEAD
+    : Ops<T>(sp)
+    , weightings_(sp.weightings)
   {}
+=======
+    : Ops<T>(sp)
+  {
+    weightings_ = sp.weightings;
+  }
+>>>>>>> ab819f12400ad9a2d957f8614ff3a7847c17137c
 
   explicit MeanSquareErrorLoss(TensorType const &weightings = TensorType())
     : weightings_(weightings)
@@ -50,8 +58,7 @@ public:
 
   std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
-    SPType sp{};
-    auto   ret = std::make_shared<SPType>(sp);
+    auto ret = std::make_shared<SPType>();
 
     ret->weightings = weightings_;
     return ret;

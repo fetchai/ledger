@@ -586,10 +586,22 @@ TYPED_TEST(FullyConnectedTest, saveparams_test)
   TypeParam input({10, 10});
   input.FillUniformRandom();
 
-  // Evaluate
+  // Create layer
   fetch::ml::layers::FullyConnected<TypeParam> fc(10, 20);
-  fc.SetInput("FullyConnected_Input", input);
-  TypeParam output = fc.Evaluate("FullyConnected_MatrixMultiply", true);
+  std::string                                  input_name  = "FullyConnected_Input";
+  std::string                                  output_name = "FullyConnected_MatrixMultiply";
+
+  // add label node
+  std::string label_name = fc.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("label", {});
+
+  // Add loss function
+  std::string error_output = fc.template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TypeParam>>(
+      "num_error", {output_name, label_name});
+
+  // set input and evaluate
+  fc.SetInput(input_name, input);
+  TypeParam prediction;
+  prediction = fc.Evaluate(output_name, true);
 
   // extract saveparams
   auto sp = fc.GetOpSaveableParams();
@@ -611,8 +623,46 @@ TYPED_TEST(FullyConnectedTest, saveparams_test)
   auto fc2 =
       fetch::ml::utilities::BuildLayer<TypeParam, fetch::ml::layers::FullyConnected<TypeParam>>(
           dsp2);
-  fc2->SetInput("FullyConnected_Input", input);
-  TypeParam output2 = fc2->Evaluate("FullyConnected_MatrixMultiply", true);
 
-  ASSERT_TRUE(output.AllClose(output2, static_cast<DataType>(0), static_cast<DataType>(0)));
+  // test equality
+  fc.SetInput(input_name, input);
+  prediction = fc.Evaluate(output_name, true);
+  fc2->SetInput(input_name, input);
+  TypeParam prediction2 = fc2->Evaluate(output_name, true);
+
+  ASSERT_TRUE(prediction.AllClose(prediction2, fetch::math::function_tolerance<DataType>(),
+                                  fetch::math::function_tolerance<DataType>()));
+
+  TypeParam labels({20, 10});
+  input.FillUniformRandom();
+
+  // train g
+  fc.SetInput(label_name, labels);
+  TypeParam loss = fc.Evaluate(error_output);
+  fc.BackPropagateError(error_output);
+  fc.Step(DataType{0.1f});
+
+  // train g2
+  fc2->SetInput(label_name, labels);
+  TypeParam loss2 = fc2->Evaluate(error_output);
+  fc2->BackPropagateError(error_output);
+  fc2->Step(DataType{0.1f});
+
+  EXPECT_TRUE(loss.AllClose(loss2, fetch::math::function_tolerance<DataType>(),
+                            fetch::math::function_tolerance<DataType>()));
+
+  fc.SetInput(input_name, input);
+  TypeParam prediction3 = fc.Evaluate(output_name);
+
+  fc2->SetInput(input_name, input);
+  TypeParam prediction4 = fc2->Evaluate(output_name);
+
+  EXPECT_FALSE(prediction.AllClose(prediction3, fetch::math::function_tolerance<DataType>(),
+                                   fetch::math::function_tolerance<DataType>()));
+
+  std::cout << "prediction3.ToString(): " << prediction3.ToString() << std::endl;
+  std::cout << "prediction4.ToString(): " << prediction4.ToString() << std::endl;
+
+  EXPECT_TRUE(prediction3.AllClose(prediction4, fetch::math::function_tolerance<DataType>(),
+                                   fetch::math::function_tolerance<DataType>()));
 }

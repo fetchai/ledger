@@ -43,7 +43,8 @@ public:
     : a_(a)
   {}
 
-  explicit LeakyRelu(SPType const &sp) : Ops<T>(sp)
+  explicit LeakyRelu(SPType const &sp)
+    : Ops<T>(sp)
   {
     a_ = sp.a;
   }
