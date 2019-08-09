@@ -351,6 +351,7 @@ struct OpLogSoftmaxSaveableParams : public SaveableParamsInterface
 template <class TensorType>
 struct OpMaskFillSaveableParams : public SaveableParamsInterface
 {
+  fetch::ml::OpType     op_type = OpType::OP_MASK_FILL;
   typename TensorType::Type fill_value = fetch::math::numeric_max<typename TensorType::Type>();
 };
 
