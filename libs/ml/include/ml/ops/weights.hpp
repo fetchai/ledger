@@ -43,7 +43,10 @@ enum class WeightsInitialisation
   ZEROS,
   XAVIER_GLOROT,
   XAVIER_FAN_IN,
-  XAVIER_FAN_OUT
+  XAVIER_FAN_OUT,
+  XAVIER_GLOROT_GAUSSIAN,
+  XAVIER_FAN_IN_GAUSSIAN,
+  XAVIER_FAN_OUT_GAUSSIAN
 };
 
 /**
@@ -192,17 +195,32 @@ public:
     }
     case WeightsInitialisation::XAVIER_GLOROT:
     {
-      XavierInitialisation(array, std::sqrt(2.0 / double(in_size + out_size)), seed);
+      XavierInitialisationUniform(array, std::sqrt(6.0 / double(in_size + out_size)), seed);
       break;
     }
     case WeightsInitialisation::XAVIER_FAN_IN:
     {
-      XavierInitialisation(array, std::sqrt(1.0 / double(in_size)), seed);
+      XavierInitialisationUniform(array, std::sqrt(3.0 / double(in_size)), seed);
       break;
     }
     case WeightsInitialisation::XAVIER_FAN_OUT:
     {
-      XavierInitialisation(array, std::sqrt(1.0 / double(out_size)), seed);
+      XavierInitialisationUniform(array, std::sqrt(3.0 / double(out_size)), seed);
+      break;
+    }
+    case WeightsInitialisation::XAVIER_GLOROT_GAUSSIAN:
+    {
+      XavierInitialisationGaussian(array, std::sqrt(2.0 / double(in_size + out_size)), seed);
+      break;
+    }
+    case WeightsInitialisation::XAVIER_FAN_IN_GAUSSIAN:
+    {
+      XavierInitialisationGaussian(array, std::sqrt(1.0 / double(in_size)), seed);
+      break;
+    }
+    case WeightsInitialisation::XAVIER_FAN_OUT_GAUSSIAN:
+    {
+      XavierInitialisationGaussian(array, std::sqrt(1.0 / double(out_size)), seed);
       break;
     }
     default:
@@ -234,7 +252,12 @@ public:
     }
     case WeightsInitialisation::XAVIER_GLOROT:
     {
-      XavierInitialisation(array, std::sqrt(2.0 / double(data_size)), seed);
+      XavierInitialisationUniform(array, std::sqrt(6.0 / double(data_size)), seed);
+      break;
+    }
+    case WeightsInitialisation::XAVIER_GLOROT_GAUSSIAN:
+    {
+      XavierInitialisationGaussian(array, std::sqrt(2.0 / double(data_size)), seed);
       break;
     }
     default:
@@ -268,10 +291,9 @@ private:
    * using a normal distribution with mean 0 and variance 2 / (input nodes + output nodes)
    * @param weights
    */
-  static void XavierInitialisation(ArrayType &array, double normalising_factor,
-                                   SizeType seed = 123456789)
+  static void XavierInitialisationUniform(ArrayType &array, double normalising_factor,
+                                          SizeType seed = 123456789)
   {
-    // TODO (665) this is a uniform distribution; in principle we should be using a guassian
     // distribution instead we use a unifrom from -std dev -> + std dev
     fetch::random::LaggedFibonacciGenerator<> lfg_(seed);
 
@@ -287,6 +309,16 @@ private:
       *it = typename ArrayType::Type(ran_val);
       ++it;
     }
+  }
+
+  static void XavierInitialisationGaussian(ArrayType &array, double normalising_factor,
+                                           SizeType seed = 123456789)
+  {
+    // TODO (665) implement GAUSSIAN random generator
+    FETCH_UNUSED(array);
+    FETCH_UNUSED(normalising_factor);
+    FETCH_UNUSED(seed);
+    throw std::runtime_error("GAUSSIAN Xavier Initialization no supported yet");
   }
 };
 
