@@ -2039,30 +2039,25 @@ struct MapSerializer<ml::OpWeightsSaveableParams<TensorType>, D>
   using Type       = ml::OpWeightsSaveableParams<TensorType>;
   using DriverType = D;
 
-  static uint8_t const OP_CODE        = 1;
-  static uint8_t const OUTPUT_PRESENT = 2;
-  static uint8_t const OUTPUT         = 3;
+  static uint8_t const OP_CODE    = 1;
+  static uint8_t const BASE_CLASS = 2;
 
-  static uint8_t const REGULARISATION_TYPE = 4;
-  static uint8_t const REGULARISATION_RATE = 5;
+  static uint8_t const REGULARISATION_TYPE = 3;
+  static uint8_t const REGULARISATION_RATE = 4;
 
-  static uint8_t const HAS_GRADIENT          = 6;
-  static uint8_t const GRADIENT_ACCUMULATION = 7;
+  static uint8_t const HAS_GRADIENT          = 5;
+  static uint8_t const GRADIENT_ACCUMULATION = 6;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(7);
+    auto map = map_constructor(6);
+
+    // serialize parent class first
+    auto base_pointer = static_cast<ml::OpPlaceholderSaveableParams<TensorType> const *>(&sp);
+    map.Append(BASE_CLASS, *base_pointer);
+
     map.Append(OP_CODE, sp.op_type);
-    if (sp.output)
-    {
-      map.Append(OUTPUT_PRESENT, true);
-      map.Append(OUTPUT, *(sp.output));
-    }
-    else
-    {
-      map.Append(OUTPUT_PRESENT, false);
-    }
 
     // first set the regulariser type
     map.Append(REGULARISATION_TYPE, static_cast<uint8_t>(sp.regularisation_type));
@@ -2083,15 +2078,10 @@ struct MapSerializer<ml::OpWeightsSaveableParams<TensorType>, D>
   template <typename MapDeserializer>
   static void Deserialize(MapDeserializer &map, Type &sp)
   {
+    auto base_pointer = static_cast<ml::OpPlaceholderSaveableParams<TensorType> *>(&sp);
+    map.ExpectKeyGetValue(BASE_CLASS, *base_pointer);
+
     map.ExpectKeyGetValue(OP_CODE, sp.op_type);
-    bool output_present;
-    map.ExpectKeyGetValue(OUTPUT_PRESENT, output_present);
-    if (output_present)
-    {
-      TensorType output;
-      map.ExpectKeyGetValue(OUTPUT, output);
-      sp.output = std::make_shared<TensorType>(output);
-    }
 
     uint8_t rt;
     map.ExpectKeyGetValue(REGULARISATION_TYPE, rt);

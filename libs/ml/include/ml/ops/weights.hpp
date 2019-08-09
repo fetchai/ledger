@@ -68,9 +68,13 @@ public:
   explicit Weights(SPType const &sp)
     : PlaceHolder<T>(sp)
   {
-    if (sp.output)
+    if (sp.gradient_accumulation)
     {
-      this->SetData(*sp.output);
+      gradient_accumulation_ = sp.gradient_accumulation;
+    }
+    else
+    {
+      gradient_accumulation_ = std::make_shared<TensorType>();
     }
 
     this->SetRegularisation(
@@ -82,24 +86,28 @@ public:
 
   std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
-    SPType tp{};
-    if (this->output_)
+    auto sp   = std::make_shared<SPType>();
+    auto p_sp = PlaceHolder<T>::GetOpSaveableParams();
+
+    auto cast_sp = std::static_pointer_cast<OpPlaceholderSaveableParams<TensorType>>(sp);
+    *cast_sp     = *(std::static_pointer_cast<OpPlaceholderSaveableParams<TensorType>>(p_sp));
+
+    if (gradient_accumulation_)
     {
-      tp.output = std::make_shared<TensorType>(this->output_->Copy());
+      sp->gradient_accumulation = std::make_shared<TensorType>(gradient_accumulation_->Copy());
     }
-    tp.gradient_accumulation = std::make_shared<TensorType>(gradient_accumulation_->Copy());
 
     if (this->regulariser_)
     {
-      tp.regularisation_type = this->regulariser_->reg_type;
+      sp->regularisation_type = this->regulariser_->reg_type;
     }
     else
     {
-      tp.regularisation_type = RegularisationType::NONE;
+      sp->regularisation_type = RegularisationType::NONE;
     }
 
-    tp.regularisation_rate = this->regularisation_rate_;
-    return std::make_shared<SPType>(tp);
+    sp->regularisation_rate = this->regularisation_rate_;
+    return sp;
   }
 
   ArrayPtrType GetShareableWeights()
@@ -306,7 +314,6 @@ template <class TensorType>
 struct OpWeightsSaveableParams : public OpPlaceholderSaveableParams<TensorType>
 {
   fetch::ml::OpType           op_type = OpType::OP_WEIGHTS;
-  std::shared_ptr<TensorType> output;
   std::shared_ptr<TensorType> gradient_accumulation;
   RegularisationType          regularisation_type;
   typename TensorType::Type   regularisation_rate;

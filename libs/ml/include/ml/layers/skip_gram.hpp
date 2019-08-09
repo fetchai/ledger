@@ -17,9 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/layers/fully_connected.hpp"
+#include "ml/core/subgraph.hpp"
 #include "ml/ops/activations/sigmoid.hpp"
 #include "ml/ops/embeddings.hpp"
+#include "ml/ops/flatten.hpp"
 #include "ml/ops/matrix_multiply.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/ops/transpose.hpp"

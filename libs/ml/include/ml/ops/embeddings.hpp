@@ -54,17 +54,19 @@ public:
 
   explicit Embeddings(SPType const &sp)
     : Weights<T>(sp)
-  {
-    this->SetData(*sp.output);
-  }
+  {}
 
   ~Embeddings() override = default;
 
   std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
-    auto tp    = std::make_shared<SPType>();
-    tp->output = std::make_shared<TensorType>(this->output_->Copy());
-    return tp;
+    auto sp   = std::make_shared<SPType>();
+    auto w_sp = Weights<T>::GetOpSaveableParams();
+
+    auto cast_sp = std::static_pointer_cast<OpWeightsSaveableParams<TensorType>>(sp);
+    *cast_sp     = *(std::static_pointer_cast<OpWeightsSaveableParams<TensorType>>(w_sp));
+
+    return sp;
   }
 
   void Forward(VecTensorType const &inputs, TensorType &output) override

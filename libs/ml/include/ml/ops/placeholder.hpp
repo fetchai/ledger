@@ -46,19 +46,9 @@ public:
   {
     if (sp.output)
     {
-      SetData(*(sp.output));
+      output_ = sp.output;
     }
   }
-  //
-  //  explicit PlaceHolder(SaveableParamsInterface const &sp)
-  //    : Ops<T>(sp)
-  //  {
-  //    auto p_sp = static_cast<SPType>(sp);
-  //    if (p_sp.output)
-  //    {
-  //      SetData(*(p_sp.output));
-  //    }
-  //  }
 
   ~PlaceHolder() override = default;
 
@@ -91,11 +81,11 @@ public:
   virtual bool SetData(TensorType const &data)
   {
     bool shape_changed = true;
-    if (this->output_)
+    if (output_)
     {
-      shape_changed = (this->output_->shape() != data.shape());
+      shape_changed = (output_->shape() != data.shape());
     }
-    this->output_ = std::make_shared<TensorType>(data);
+    output_ = std::make_shared<TensorType>(data);
     return shape_changed;
   }
 

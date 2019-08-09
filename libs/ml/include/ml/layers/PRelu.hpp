@@ -66,10 +66,6 @@ public:
     this->SetOutputNode(output);
   }
 
-  explicit PRelu(SPType const &gs)
-    : SubGraph<TensorType>(gs)
-  {}
-
   std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
   {
     // get base class saveable params
