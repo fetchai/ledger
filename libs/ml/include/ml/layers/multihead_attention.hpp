@@ -65,15 +65,16 @@ public:
         this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Key", {});
     std::string value =
         this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Value", {});
-	  std::string mask =
-	      this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Mask", {});
+    std::string mask =
+        this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Mask", {});
 
     // do n_heads time linear transformation
     std::vector<std::string> heads;
     for (SizeType i{0}; i < n_heads_; i++)
     {
-      std::string head_name             = name + "_Head_No_" + std::to_string(static_cast<int>(i));
-      std::string head_attention_output = create_one_attention_head(head_name, query, key, value, mask);
+      std::string head_name = name + "_Head_No_" + std::to_string(static_cast<int>(i));
+      std::string head_attention_output =
+          create_one_attention_head(head_name, query, key, value, mask);
       heads.emplace_back(head_attention_output);
     }
 
@@ -97,7 +98,8 @@ public:
   }
 
   std::string create_one_attention_head(std::string const &head_name, std::string const &query,
-                                        std::string const &key, std::string const &value, std::string const &mask)
+                                        std::string const &key, std::string const &value,
+                                        std::string const &mask)
   {
     // tansform input vectors to attention space
     std::string transformed_query =

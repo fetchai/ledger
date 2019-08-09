@@ -34,19 +34,19 @@ TYPED_TEST_CASE(SelfAttentionEncoder, MyTypes);
 TYPED_TEST(SelfAttentionEncoder, input_output_dimension_test)  // Use the class as a part of a graph
 {
   using SizeType = typename TypeParam::SizeType;
-	using DataType = typename TypeParam::Type;
+  using DataType = typename TypeParam::Type;
 
   fetch::ml::Graph<TypeParam> g;
 
   std::string input = g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Input", {});
-	std::string mask = g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Mask", {});
+  std::string mask  = g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Mask", {});
 
   std::string output = g.template AddNode<fetch::ml::layers::SelfAttentionEncoder<TypeParam>>(
       "ScaledAttentionEncoder", {input, mask}, static_cast<SizeType>(4), static_cast<SizeType>(12),
       static_cast<SizeType>(24));
   TypeParam input_data = TypeParam({12, 25, 4});
-	TypeParam mask_data = TypeParam({25, 25, 4});
-	mask_data.Fill(static_cast<DataType>(1));
+  TypeParam mask_data  = TypeParam({25, 25, 4});
+  mask_data.Fill(static_cast<DataType>(1));
   g.SetInput(input, input_data);
   g.SetInput(mask, mask_data);
 
@@ -60,20 +60,22 @@ TYPED_TEST(SelfAttentionEncoder, input_output_dimension_test)  // Use the class 
 TYPED_TEST(SelfAttentionEncoder, backward_dimension_test)  // Use the class as a subgraph
 {
   using SizeType = typename TypeParam::SizeType;
-	using DataType = typename TypeParam::Type;
+  using DataType = typename TypeParam::Type;
   fetch::ml::layers::SelfAttentionEncoder<TypeParam> encoder(
       static_cast<SizeType>(4), static_cast<SizeType>(12), static_cast<SizeType>(13));
   TypeParam input_data(std::vector<typename TypeParam::SizeType>({12, 20, 5}));
-	TypeParam mask_data = TypeParam({20, 20, 5});
-	mask_data.Fill(static_cast<DataType>(1));
-	
+  TypeParam mask_data = TypeParam({20, 20, 5});
+  mask_data.Fill(static_cast<DataType>(1));
+
   TypeParam output(encoder.ComputeOutputShape({std::make_shared<TypeParam>(input_data)}));
-  encoder.Forward({std::make_shared<TypeParam>(input_data), std::make_shared<TypeParam>(mask_data)}, output);
+  encoder.Forward({std::make_shared<TypeParam>(input_data), std::make_shared<TypeParam>(mask_data)},
+                  output);
 
   TypeParam error_signal(std::vector<typename TypeParam::SizeType>({12, 20, 5}));
 
-  std::vector<TypeParam> backprop_error =
-      encoder.Backward({std::make_shared<TypeParam>(input_data), std::make_shared<TypeParam>(mask_data)}, error_signal);
+  std::vector<TypeParam> backprop_error = encoder.Backward(
+      {std::make_shared<TypeParam>(input_data), std::make_shared<TypeParam>(mask_data)},
+      error_signal);
 
   // check there are proper number of error signals
   ASSERT_EQ(backprop_error.size(), 2);
@@ -82,8 +84,8 @@ TYPED_TEST(SelfAttentionEncoder, backward_dimension_test)  // Use the class as a
   ASSERT_EQ(backprop_error[0].shape()[1], 20);
   ASSERT_EQ(backprop_error[0].shape()[2], 5);
 
-	ASSERT_EQ(backprop_error[1].shape().size(), 3);
-	ASSERT_EQ(backprop_error[1].shape()[0], 20);
-	ASSERT_EQ(backprop_error[1].shape()[1], 20);
-	ASSERT_EQ(backprop_error[1].shape()[2], 5);
+  ASSERT_EQ(backprop_error[1].shape().size(), 3);
+  ASSERT_EQ(backprop_error[1].shape()[0], 20);
+  ASSERT_EQ(backprop_error[1].shape()[1], 20);
+  ASSERT_EQ(backprop_error[1].shape()[2], 5);
 }

@@ -70,7 +70,8 @@ public:
     // all input shapes are (feature_length, model_dim, batch_num)
     std::string input =
         this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Input", {});
-	  std::string mask = this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "Mask", {});
+    std::string mask =
+        this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "Mask", {});
 
     // multihead attention on input time series vector
     std::string multihead_self_attention =
@@ -90,7 +91,7 @@ public:
         residual_connection(name + "_Feedforward_Residual", attention_residual, feedforward);
 
     this->AddInputNode(input);
-	  this->AddInputNode(mask);
+    this->AddInputNode(mask);
     this->SetOutputNode(feedforward_residual);
   }
 

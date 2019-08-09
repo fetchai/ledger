@@ -144,9 +144,9 @@ std::shared_ptr<T> Node<T, O>::Evaluate(bool is_training)
   }
 
   // debug
-//  std::cout << "this->name_: " << this->name_ << std::endl;
-//  std::cout << "cached_output_.View(0).Copy().ToString(): "
-//            << cached_output_.View(0).Copy().ToString() << std::endl;
+  //  std::cout << "this->name_: " << this->name_ << std::endl;
+  //  std::cout << "cached_output_.View(0).Copy().ToString(): "
+  //            << cached_output_.View(0).Copy().ToString() << std::endl;
 
   return std::make_shared<T>(cached_output_);
 }
