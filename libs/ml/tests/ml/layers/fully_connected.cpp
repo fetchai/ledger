@@ -35,14 +35,11 @@ class FullyConnectedSharedWeightTest : public ::testing::Test
 {
 };
 
-using HasIntTypes = ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tensor<float>,
-                                     fetch::math::Tensor<double>,
-                                     fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>,
-                                     fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>>;
-using NoIntTypes  = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
+using NoIntTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
                                     fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>,
                                     fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>>;
-TYPED_TEST_CASE(FullyConnectedTest, HasIntTypes);
+
+TYPED_TEST_CASE(FullyConnectedTest, NoIntTypes);
 TYPED_TEST_CASE(FullyConnectedSharedWeightTest, NoIntTypes);
 
 TYPED_TEST(FullyConnectedTest, set_input_and_evaluate_test)  // Use the class as a subgraph
