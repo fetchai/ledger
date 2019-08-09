@@ -21,8 +21,8 @@
 #include "ml/serializers/ml_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
-#include "gtest/gtest.h"
 #include "core/serializers/main_serializer_definition.hpp"
+#include "gtest/gtest.h"
 
 template <typename T>
 class LeakyReluTest : public ::testing::Test

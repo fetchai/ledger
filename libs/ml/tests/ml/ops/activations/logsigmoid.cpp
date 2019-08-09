@@ -22,8 +22,8 @@
 
 #include "vectorise/fixed_point/fixed_point.hpp"
 
-#include "gtest/gtest.h"
 #include "core/serializers/main_serializer_definition.hpp"
+#include "gtest/gtest.h"
 
 template <typename T>
 class LogSigmoidTest : public ::testing::Test
