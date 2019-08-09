@@ -175,5 +175,5 @@ TYPED_TEST(LogSigmoidTest, saveparams_test)
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values
-  EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{1e-5f}, DataType{1e-5f}));
+  EXPECT_TRUE(new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
 }

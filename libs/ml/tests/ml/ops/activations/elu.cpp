@@ -176,5 +176,5 @@ TYPED_TEST(EluTest, saveparams_test)
   new_op.Forward(VecTensorType({std::make_shared<const TensorType>(data)}), new_prediction);
 
   // test correct values
-  EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{1e-5f}, DataType{1e-5f}));
+  EXPECT_TRUE(new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
 }

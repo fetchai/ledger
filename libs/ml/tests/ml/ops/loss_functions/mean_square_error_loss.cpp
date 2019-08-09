@@ -127,7 +127,6 @@ TYPED_TEST(MeanSquareErrorTest, two_dimensional_backward_test_with_weighting)
 TYPED_TEST(MeanSquareErrorTest, saveparams_test)
 {
   using TensorType = TypeParam;
-  using DataType   = typename TypeParam::Type;
   using SPType     = typename fetch::ml::ops::MeanSquareErrorLoss<TensorType>::SPType;
   using OpType     = typename fetch::ml::ops::MeanSquareErrorLoss<TensorType>;
   TypeParam data1  = TypeParam::FromString("1.1; -2.2; 3.3; -4.4; 5.5; -6.6; 7.7; -8.8");
@@ -169,5 +168,5 @@ TYPED_TEST(MeanSquareErrorTest, saveparams_test)
 
   // test correct values
   EXPECT_NEAR(static_cast<double>(result(0, 0)), static_cast<double>(new_result(0, 0)),
-              static_cast<double>(fetch::math::function_tolerance<DataType>()));
+              static_cast<double>(0));
 }

@@ -357,5 +357,5 @@ TYPED_TEST(CrossEntropyTest, saveparams_test)
 
   // test correct values
   EXPECT_NEAR(static_cast<double>(result(0, 0)), static_cast<double>(new_result(0, 0)),
-              static_cast<double>(fetch::math::function_tolerance<DataType>()));
+              static_cast<double>(0));
 }

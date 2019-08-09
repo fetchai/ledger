@@ -201,6 +201,5 @@ TYPED_TEST(ReluTest, saveparams_test)
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values
-  EXPECT_TRUE(new_prediction.AllClose(prediction, fetch::math::function_tolerance<DataType>(),
-                                      fetch::math::function_tolerance<DataType>()));
+  EXPECT_TRUE(new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
 }
