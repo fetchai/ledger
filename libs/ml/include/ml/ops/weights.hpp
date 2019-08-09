@@ -318,7 +318,7 @@ private:
     FETCH_UNUSED(array);
     FETCH_UNUSED(normalising_factor);
     FETCH_UNUSED(seed);
-    throw std::runtime_error("GAUSSIAN Xavier Initialization no supported yet");
+    throw std::runtime_error("GAUSSIAN Xavier Initialization not supported yet");
   }
 };
 
