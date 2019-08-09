@@ -48,7 +48,7 @@ public:
 
   ~Concatenate() override = default;
 
-  std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
   {
     auto sp_ptr  = std::make_shared<SPType>();
     sp_ptr->axis = axis_;

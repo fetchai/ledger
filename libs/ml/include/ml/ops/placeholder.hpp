@@ -52,7 +52,7 @@ public:
 
   ~PlaceHolder() override = default;
 
-  std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
   {
     SPType tp{};
     if (output_)

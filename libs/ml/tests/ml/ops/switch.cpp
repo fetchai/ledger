@@ -16,13 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/main_serializer_definition.hpp"
 #include "gtest/gtest.h"
 #include "math/base_types.hpp"
 #include "math/tensor.hpp"
 #include "ml/ops/switch.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
-#include "core/serializers/main_serializer_definition.hpp"
 #include "ml/serializers/ml_types.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 
 #include <vector>
 
@@ -187,8 +187,8 @@ TYPED_TEST(SwitchTest, saveparams_back_test_broadcast_mask)
 {
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
-  using OpType        = typename fetch::ml::ops::Switch<TensorType>;
-  using SPType        = typename OpType ::SPType;
+  using OpType     = typename fetch::ml::ops::Switch<TensorType>;
+  using SPType     = typename OpType ::SPType;
 
   TensorType mask = TensorType::FromString("1, 1, 0");
   mask.Reshape({1, 3, 1});
@@ -210,7 +210,7 @@ TYPED_TEST(SwitchTest, saveparams_back_test_broadcast_mask)
       error_signal);
 
   // extract saveparams
-  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
+  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
 
   // downcast to correct type
   auto dsp = std::dynamic_pointer_cast<SPType>(sp);

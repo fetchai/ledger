@@ -48,7 +48,7 @@ public:
 
   ~Transpose() override = default;
 
-  std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
   {
     SPType sp{};
     sp.transpose_vector = transpose_vector_;

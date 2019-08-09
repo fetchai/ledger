@@ -64,7 +64,7 @@ public:
 
   ~Embeddings() override = default;
 
-  std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
   {
     auto sp   = std::make_shared<SPType>();
     auto w_sp = Weights<T>::GetOpSaveableParams();

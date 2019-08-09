@@ -178,7 +178,7 @@ TYPED_TEST(MaskFillTest, saveparams_test)
       prediction);
 
   // extract saveparams
-  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
+  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
 
   // downcast to correct type
   auto dsp = std::static_pointer_cast<SPType>(sp);
@@ -212,8 +212,8 @@ TYPED_TEST(MaskFillTest, saveparams_back_test_broadcast_mask)
 {
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
-  using OpType        = typename fetch::ml::ops::MaskFill<TensorType>;
-  using SPType        = typename OpType ::SPType;
+  using OpType     = typename fetch::ml::ops::MaskFill<TensorType>;
+  using SPType     = typename OpType ::SPType;
 
   TensorType mask = TensorType::FromString("1, 1, 0");
   mask.Reshape({1, 3, 1});
@@ -231,7 +231,7 @@ TYPED_TEST(MaskFillTest, saveparams_back_test_broadcast_mask)
       error_signal);
 
   // extract saveparams
-  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
+  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
 
   // downcast to correct type
   auto dsp = std::dynamic_pointer_cast<SPType>(sp);

@@ -155,7 +155,7 @@ TYPED_TEST(TanHTest, saveparams_test)
   op.Forward(vec_data, prediction);
 
   // extract saveparams
-  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
+  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
 
   // downcast to correct type
   auto dsp = std::static_pointer_cast<SPType>(sp);
@@ -183,9 +183,9 @@ TYPED_TEST(TanHTest, saveparams_test)
 
 TYPED_TEST(TanHTest, saveparams_backward_all_negative_test)
 {
-  using TensorType    = TypeParam;
-  using OpType        = typename fetch::ml::ops::TanH<TensorType>;
-  using SPType        = typename OpType ::SPType;
+  using TensorType = TypeParam;
+  using OpType     = typename fetch::ml::ops::TanH<TensorType>;
+  using SPType     = typename OpType ::SPType;
 
   uint8_t             n = 8;
   TypeParam           data{n};
@@ -203,7 +203,7 @@ TYPED_TEST(TanHTest, saveparams_backward_all_negative_test)
   std::vector<TypeParam> prediction = op.Backward({std::make_shared<const TypeParam>(data)}, error);
 
   // extract saveparams
-  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
+  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
 
   // downcast to correct type
   auto dsp = std::dynamic_pointer_cast<SPType>(sp);

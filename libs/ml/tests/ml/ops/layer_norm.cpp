@@ -185,7 +185,7 @@ TYPED_TEST(LayerNormTest, saveparams_test)
   op.Forward({std::make_shared<TensorType>(data)}, prediction);
 
   // extract saveparams
-  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
+  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
 
   // downcast to correct type
   auto dsp = std::static_pointer_cast<SPType>(sp);
@@ -214,8 +214,8 @@ TYPED_TEST(LayerNormTest, saveparams_test)
 TYPED_TEST(LayerNormTest, saveparams_backward_test_3d)
 {
   using TensorType = TypeParam;
-  using OpType        = typename fetch::ml::ops::LayerNorm<TensorType>;
-  using SPType        = typename OpType ::SPType;
+  using OpType     = typename fetch::ml::ops::LayerNorm<TensorType>;
+  using SPType     = typename OpType ::SPType;
 
   TensorType data = TensorType::FromString(
       "1, 1, 0.5, 2;"
@@ -234,7 +234,7 @@ TYPED_TEST(LayerNormTest, saveparams_backward_test_3d)
   auto prediction = op.Backward({std::make_shared<TensorType>(data)}, error_signal);
 
   // extract saveparams
-  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
+  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
 
   // downcast to correct type
   auto dsp = std::dynamic_pointer_cast<SPType>(sp);

@@ -85,7 +85,7 @@ public:
     return {mask_return_signal, then_return_signal, else_return_signal};
   }
 
-  std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
   {
     SPType sp{};
     return std::make_shared<SPType>(sp);

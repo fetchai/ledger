@@ -51,7 +51,7 @@ public:
 
   ~MaxPool2D() override = default;
 
-  std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
   {
     SPType sp{};
     sp.kernel_size = kernel_size_;

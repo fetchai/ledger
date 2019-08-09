@@ -108,7 +108,7 @@ TYPED_TEST(ConcatenateTest, saveparams_test)
   op.Forward(vec_data, prediction);
 
   // extract saveparams
-  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
+  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
 
   // downcast to correct type
   auto dsp = std::static_pointer_cast<SPType>(sp);
@@ -137,9 +137,9 @@ TYPED_TEST(ConcatenateTest, saveparams_test)
 
 TYPED_TEST(ConcatenateTest, saveparams_backward_test)
 {
-  using TensorType    = TypeParam;
-  using OpType        = typename fetch::ml::ops::Concatenate<TensorType >;
-  using SPType        = typename OpType ::SPType;
+  using TensorType = TypeParam;
+  using OpType     = typename fetch::ml::ops::Concatenate<TensorType>;
+  using SPType     = typename OpType ::SPType;
 
   TypeParam data1(std::vector<fetch::math::SizeType>({8, 8}));
   TypeParam data2(std::vector<fetch::math::SizeType>({8, 8}));
@@ -155,7 +155,7 @@ TYPED_TEST(ConcatenateTest, saveparams_backward_test)
       {std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, error_signal);
 
   // extract saveparams
-  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
+  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
 
   // downcast to correct type
   auto dsp = std::dynamic_pointer_cast<SPType>(sp);
@@ -165,8 +165,8 @@ TYPED_TEST(ConcatenateTest, saveparams_backward_test)
   b << *dsp;
 
   // make another prediction with the original op
-  gradients = op.Backward(
-      {std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, error_signal);
+  gradients = op.Backward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)},
+                          error_signal);
   // deserialize
   b.seek(0);
   auto dsp2 = std::make_shared<SPType>();

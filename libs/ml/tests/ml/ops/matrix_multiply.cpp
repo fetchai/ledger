@@ -142,7 +142,7 @@ TYPED_TEST(MatrixMultiplyTest, saveparams_test)
   op.Forward(vec_data, prediction);
 
   // extract saveparams
-  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
+  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
 
   // downcast to correct type
   auto dsp = std::static_pointer_cast<SPType>(sp);
@@ -171,9 +171,9 @@ TYPED_TEST(MatrixMultiplyTest, saveparams_test)
 
 TYPED_TEST(MatrixMultiplyTest, saveparams_backward_batch_test)
 {
-  using TensorType    = TypeParam;
-  using OpType        = typename fetch::ml::ops::MatrixMultiply<TensorType>;
-  using SPType        = typename OpType ::SPType;
+  using TensorType = TypeParam;
+  using OpType     = typename fetch::ml::ops::MatrixMultiply<TensorType>;
+  using SPType     = typename OpType ::SPType;
   TypeParam a1({3, 4, 2});
   TypeParam b1({4, 3, 2});
   TypeParam error({3, 3, 2});
@@ -185,7 +185,7 @@ TYPED_TEST(MatrixMultiplyTest, saveparams_backward_batch_test)
       op.Backward({std::make_shared<TypeParam>(a1), std::make_shared<TypeParam>(b1)}, error);
 
   // extract saveparams
-  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
+  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
 
   // downcast to correct type
   auto dsp = std::dynamic_pointer_cast<SPType>(sp);
@@ -207,7 +207,7 @@ TYPED_TEST(MatrixMultiplyTest, saveparams_backward_batch_test)
   OpType new_op(*dsp2);
 
   // check that new predictions match the old
-  std::vector<TypeParam>                    new_backpropagated_signals =
+  std::vector<TypeParam> new_backpropagated_signals =
       new_op.Backward({std::make_shared<TypeParam>(a1), std::make_shared<TypeParam>(b1)}, error);
 
   // test correct values
@@ -218,5 +218,4 @@ TYPED_TEST(MatrixMultiplyTest, saveparams_backward_batch_test)
   EXPECT_TRUE(backpropagated_signals.at(1).AllClose(
       new_backpropagated_signals.at(1), fetch::math::function_tolerance<typename TypeParam::Type>(),
       fetch::math::function_tolerance<typename TypeParam::Type>()));
-
 }

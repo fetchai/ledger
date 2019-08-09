@@ -99,7 +99,7 @@ void BuildSubGraph(SubGraphSaveableParams<T> const &sgsp, std::shared_ptr<SubGra
 }
 
 template <typename T, typename OperationType>
-std::shared_ptr<OperationType> BuildLayer(std::shared_ptr<SaveableParamsInterface> op_save_params)
+std::shared_ptr<OperationType> BuildLayer(std::shared_ptr<OpsSaveableParams> op_save_params)
 {
   auto sp  = *(std::dynamic_pointer_cast<typename OperationType::SPType>(op_save_params));
   auto ret = std::make_shared<OperationType>();
@@ -110,7 +110,7 @@ std::shared_ptr<OperationType> BuildLayer(std::shared_ptr<SaveableParamsInterfac
 
 namespace {
 template <class OperationType>
-std::shared_ptr<OperationType> GetOp(std::shared_ptr<SaveableParamsInterface> op_save_params)
+std::shared_ptr<OperationType> GetOp(std::shared_ptr<OpsSaveableParams> op_save_params)
 {
   return std::make_shared<OperationType>(
       *(std::dynamic_pointer_cast<typename OperationType::SPType>(op_save_params)));

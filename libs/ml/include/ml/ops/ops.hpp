@@ -55,13 +55,13 @@ public:
    */
   virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const = 0;
 
-  virtual std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() = 0;
+  virtual std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() = 0;
 
   Ops() = default;
 
-  explicit Ops(SaveableParamsInterface const &sp)
+  explicit Ops(OpsSaveableParams const &sp)
   {
-    FETCH_UNUSED(sp);
+    is_training_ = sp.is_training;
   }
 
   void SetTraining(bool is_training)

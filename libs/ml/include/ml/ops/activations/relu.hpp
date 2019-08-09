@@ -46,7 +46,7 @@ public:
 
   ~Relu() override = default;
 
-  std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
   {
     return std::make_shared<SPType>();
   }

@@ -129,7 +129,7 @@ TYPED_TEST(WeightsTest, saveparams_test)
   op.Forward({}, prediction);
 
   // extract saveparams
-  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
+  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
 
   // downcast to correct type
   auto dsp = std::static_pointer_cast<SPType>(sp);
@@ -160,8 +160,8 @@ TYPED_TEST(WeightsTest, saveparams_gradient_step_test)
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
   using SizeType   = typename TypeParam::SizeType;
-  using OpType        = typename fetch::ml::ops::Weights<TensorType>;
-  using SPType        = typename OpType ::SPType;
+  using OpType     = typename fetch::ml::ops::Weights<TensorType>;
+  using SPType     = typename OpType ::SPType;
 
   TensorType       data(8);
   TensorType       error(8);
@@ -182,7 +182,7 @@ TYPED_TEST(WeightsTest, saveparams_gradient_step_test)
   std::vector<TensorType> error_signal = op.Backward({}, error);
 
   // extract saveparams
-  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
+  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
 
   // downcast to correct type
   auto dsp = std::dynamic_pointer_cast<SPType>(sp);
@@ -220,7 +220,7 @@ TYPED_TEST(WeightsTest, saveparams_gradient_step_test)
   new_op.Forward({}, new_prediction);
 
   // test correct values
-  EXPECT_TRUE(prediction.AllClose(
-      new_prediction, fetch::math::function_tolerance<typename TypeParam::Type>(),
-      fetch::math::function_tolerance<typename TypeParam::Type>()));
+  EXPECT_TRUE(prediction.AllClose(new_prediction,
+                                  fetch::math::function_tolerance<typename TypeParam::Type>(),
+                                  fetch::math::function_tolerance<typename TypeParam::Type>()));
 }

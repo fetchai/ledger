@@ -134,7 +134,7 @@ TYPED_TEST(SerializersTestNoInt, serialize_graph_saveable_params)
     auto gsp2_node = gsp2_node_pair.second;
     auto gsp1_node = gsp1.nodes[gsp2_node_pair.first];
 
-    EXPECT_TRUE(gsp1_node->op_type == gsp2_node->op_type);
+    EXPECT_TRUE(gsp1_node->operation_type == gsp2_node->operation_type);
   }
 
   auto g2 = std::make_shared<GraphType>();
@@ -173,9 +173,6 @@ TYPED_TEST(SerializersTestNoInt, serialize_graph_saveable_params)
 
   EXPECT_FALSE(prediction.AllClose(prediction3, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));
-
-  std::cout << "prediction3.ToString(): " << prediction3.ToString() << std::endl;
-  std::cout << "prediction4.ToString(): " << prediction4.ToString() << std::endl;
 
   EXPECT_TRUE(prediction3.AllClose(prediction4, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));

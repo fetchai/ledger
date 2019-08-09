@@ -46,7 +46,7 @@ public:
 
   ~Multiply() override = default;
 
-  std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
   {
     SPType sp{};
     return std::make_shared<SPType>(sp);

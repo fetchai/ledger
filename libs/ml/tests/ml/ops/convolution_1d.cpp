@@ -317,7 +317,7 @@ TYPED_TEST(Convolution1DTest, saveparams_test)
   op.Forward(vec_data, prediction);
 
   // extract saveparams
-  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
+  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
 
   // downcast to correct type
   auto dsp = std::static_pointer_cast<SPType>(sp);
@@ -349,8 +349,8 @@ TYPED_TEST(Convolution1DTest, saveparams_backward_3x3x2_5x3x3x2)
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
   using SizeType   = typename TypeParam::SizeType;
-  using OpType        = typename fetch::ml::ops::Convolution1D<TensorType>;
-  using SPType        = typename OpType ::SPType;
+  using OpType     = typename fetch::ml::ops::Convolution1D<TensorType>;
+  using SPType     = typename OpType ::SPType;
 
   SizeType const input_channels  = 3;
   SizeType const output_channels = 5;
@@ -405,7 +405,7 @@ TYPED_TEST(Convolution1DTest, saveparams_backward_3x3x2_5x3x3x2)
       {std::make_shared<TensorType>(input), std::make_shared<TensorType>(kernels)}, error);
 
   // extract saveparams
-  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
+  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
 
   // downcast to correct type
   auto dsp = std::dynamic_pointer_cast<SPType>(sp);
@@ -427,7 +427,7 @@ TYPED_TEST(Convolution1DTest, saveparams_backward_3x3x2_5x3x3x2)
   OpType new_op(*dsp2);
 
   // check that new predictions match the old
-  std::vector<TensorType>                   new_prediction = new_op.Backward(
+  std::vector<TensorType> new_prediction = new_op.Backward(
       {std::make_shared<TensorType>(input), std::make_shared<TensorType>(kernels)}, error);
 
   // test correct values
@@ -437,5 +437,4 @@ TYPED_TEST(Convolution1DTest, saveparams_backward_3x3x2_5x3x3x2)
   EXPECT_TRUE(prediction.at(1).AllClose(
       new_prediction.at(1), fetch::math::function_tolerance<typename TypeParam::Type>(),
       fetch::math::function_tolerance<typename TypeParam::Type>()));
-
 }
