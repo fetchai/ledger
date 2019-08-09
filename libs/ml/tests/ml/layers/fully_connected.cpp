@@ -582,33 +582,43 @@ TYPED_TEST(FullyConnectedTest, getStateDict_time_distributed)
 TYPED_TEST(FullyConnectedTest, saveparams_test)
 {
   using DataType = typename TypeParam::Type;
+  using SizeType = typename TypeParam::SizeType;
+  using LayerType = typename fetch::ml::layers::FullyConnected<TypeParam>;
+  using SPType = typename LayerType::SPType;
 
-  TypeParam input({10, 10});
-  input.FillUniformRandom();
+  SizeType data_size = 10;
+  SizeType input_features = 10;
+  SizeType output_features = 20;
 
-  // Create layer
-  fetch::ml::layers::FullyConnected<TypeParam> fc(10, 20);
   std::string                                  input_name  = "FullyConnected_Input";
   std::string                                  output_name = "FullyConnected_MatrixMultiply";
 
+  TypeParam input({data_size, input_features});
+  input.FillUniformRandom();
+
+  TypeParam labels({output_features, data_size});
+  labels.FillUniformRandom();
+
+  // Create layer
+  LayerType layer(input_features, output_features);
+
   // add label node
-  std::string label_name = fc.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("label", {});
+  std::string label_name = layer.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("label", {});
 
   // Add loss function
-  std::string error_output = fc.template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TypeParam>>(
+  std::string error_output = layer.template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TypeParam>>(
       "num_error", {output_name, label_name});
 
   // set input and evaluate
-  fc.SetInput(input_name, input);
+  layer.SetInput(input_name, input);
   TypeParam prediction;
-  prediction = fc.Evaluate(output_name, true);
+  prediction = layer.Evaluate(output_name, true);
 
   // extract saveparams
-  auto sp = fc.GetOpSaveableParams();
+  auto sp = layer.GetOpSaveableParams();
 
   // downcast to correct type
-  auto dsp =
-      std::dynamic_pointer_cast<typename fetch::ml::layers::FullyConnected<TypeParam>::SPType>(sp);
+  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
 
   // serialize
   fetch::serializers::MsgPackSerializer b;
@@ -616,47 +626,46 @@ TYPED_TEST(FullyConnectedTest, saveparams_test)
 
   // deserialize
   b.seek(0);
-  auto dsp2 = std::make_shared<typename fetch::ml::layers::FullyConnected<TypeParam>::SPType>();
+  auto dsp2 = std::make_shared<SPType>();
   b >> *dsp2;
 
   // rebuild
-  auto fc2 =
-      fetch::ml::utilities::BuildLayer<TypeParam, fetch::ml::layers::FullyConnected<TypeParam>>(
-          dsp2);
+  auto layer2 =
+      *(fetch::ml::utilities::BuildLayer<TypeParam, LayerType>(
+          dsp2));
 
   // test equality
-  fc.SetInput(input_name, input);
-  prediction = fc.Evaluate(output_name, true);
-  fc2->SetInput(input_name, input);
-  TypeParam prediction2 = fc2->Evaluate(output_name, true);
+  layer.SetInput(input_name, input);
+  prediction = layer.Evaluate(output_name, true);
+  layer2.SetInput(input_name, input);
+  TypeParam prediction2 = layer2.Evaluate(output_name, true);
 
   ASSERT_TRUE(prediction.AllClose(prediction2, fetch::math::function_tolerance<DataType>(),
                                   fetch::math::function_tolerance<DataType>()));
 
-  TypeParam labels({20, 10});
-  input.FillUniformRandom();
-
   // train g
-  fc.SetInput(label_name, labels);
-  TypeParam loss = fc.Evaluate(error_output);
-  fc.BackPropagateError(error_output);
-
-  fc.Step(DataType{0.1f});
+  layer.SetInput(label_name, labels);
+  TypeParam loss = layer.Evaluate(error_output);
+  layer.BackPropagateError(error_output);
+  layer.Step(DataType{0.1f});
 
   // train g2
-  fc2->SetInput(label_name, labels);
-  TypeParam loss2 = fc2->Evaluate(error_output);
-  fc2->BackPropagateError(error_output);
-  fc2->Step(DataType{0.1f});
+  layer2.SetInput(label_name, labels);
+  TypeParam loss2 = layer2.Evaluate(error_output);
+  layer2.BackPropagateError(error_output);
+  layer2.Step(DataType{0.1f});
 
   EXPECT_TRUE(loss.AllClose(loss2, fetch::math::function_tolerance<DataType>(),
                             fetch::math::function_tolerance<DataType>()));
 
-  fc.SetInput(input_name, input);
-  TypeParam prediction3 = fc.Evaluate(output_name);
+  // new random input
+  input.FillUniformRandom();
 
-  fc2->SetInput(input_name, input);
-  TypeParam prediction4 = fc2->Evaluate(output_name);
+  layer.SetInput(input_name, input);
+  TypeParam prediction3 = layer.Evaluate(output_name);
+
+  layer2.SetInput(input_name, input);
+  TypeParam prediction4 = layer2.Evaluate(output_name);
 
   EXPECT_FALSE(prediction.AllClose(prediction3, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));
