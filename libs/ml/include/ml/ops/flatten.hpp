@@ -43,7 +43,7 @@ public:
   explicit Flatten(SPType const &sp)
     : Ops<T>(sp)
   {
-    input_shape_ = sp->input_shape;
+    input_shape_ = sp.input_shape;
   }
 
   ~Flatten() override = default;

@@ -44,20 +44,20 @@ public:
   explicit MatrixMultiply(SPType const &sp)
     : Ops<T>(sp)
   {
-    error_signal_1_       = sp->error_signal_1;
-    error_signal_2_       = sp->error_signal_2;
-    fwd_input_shape_1_    = sp->fwd_input_shape_1;
-    fwd_input_shape_2_    = sp->fwd_input_shape_2;
-    output_view_tensor_   = sp->output_view_tensor;
-    fwd_in1_view_tensor_  = sp->fwd_in1_view_tensor;
-    fwd_in2_view_tensor_  = sp->fwd_in2_view_tensor;
-    back_input_shape_1_   = sp->back_input_shape_1;
-    back_input_shape_2_   = sp->back_input_shape_2;
-    back_in1_view_tensor_ = sp->back_in1_view_tensor;
-    back_in2_view_tensor_ = sp->back_in2_view_tensor;
-    err_sig_view_tensor_  = sp->err_sig_view_tensor;
-    err1_                 = sp->err1;
-    err2_                 = sp->err2;
+    error_signal_1_       = sp.error_signal_1;
+    error_signal_2_       = sp.error_signal_2;
+    fwd_input_shape_1_    = sp.fwd_input_shape_1;
+    fwd_input_shape_2_    = sp.fwd_input_shape_2;
+    output_view_tensor_   = sp.output_view_tensor;
+    fwd_in1_view_tensor_  = sp.fwd_in1_view_tensor;
+    fwd_in2_view_tensor_  = sp.fwd_in2_view_tensor;
+    back_input_shape_1_   = sp.back_input_shape_1;
+    back_input_shape_2_   = sp.back_input_shape_2;
+    back_in1_view_tensor_ = sp.back_in1_view_tensor;
+    back_in2_view_tensor_ = sp.back_in2_view_tensor;
+    err_sig_view_tensor_  = sp.err_sig_view_tensor;
+    err1_                 = sp.err1;
+    err2_                 = sp.err2;
   }
 
   ~MatrixMultiply() override = default;

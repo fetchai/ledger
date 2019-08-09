@@ -303,7 +303,7 @@ private:
 }  // namespace ops
 
 template <class TensorType>
-struct OpWeightsSaveableParams : public SaveableParamsInterface
+struct OpWeightsSaveableParams : public OpPlaceholderSaveableParams<TensorType>
 {
   fetch::ml::OpType           op_type = OpType::OP_WEIGHTS;
   std::shared_ptr<TensorType> output;
