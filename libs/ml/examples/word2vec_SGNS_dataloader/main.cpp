@@ -168,8 +168,8 @@ struct TrainingParams
   SizeType training_epochs = 1;
   SizeType test_frequency  = 1;
   DataType starting_learning_rate_per_sample =
-      0.025;  // these are the learning rates we have for each sample
-  DataType ending_learning_rate_per_sample = 0.0001;
+      0.001;  // these are the learning rates we have for each sample
+  DataType ending_learning_rate_per_sample = 0.00001;
   DataType starting_learning_rate;  // this is the true learning rate set for the graph training
   DataType ending_learning_rate;
 

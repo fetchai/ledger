@@ -46,9 +46,12 @@ public:
   using VecTensorType = typename SubGraph<T>::VecTensorType;
 
   SkipGram(SizeType in_size, SizeType out, SizeType embedding_size, SizeType vocab_size,
-           std::string const &name = "SkipGram", WeightsInit init_mode = WeightsInit::XAVIER_GLOROT)
+           std::string const &name      = "SkipGram",
+           WeightsInit        init_mode = WeightsInit::XAVIER_FAN_OUT)
     : in_size_(in_size)
     , out_size_(out)
+    , embedding_size_(embedding_size)
+    , vocab_size_(vocab_size)
   {
 
     // define input and context placeholders
@@ -57,14 +60,18 @@ public:
     std::string context =
         this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Context", {});
 
-    ArrayType weights = std::vector<SizeType>({embedding_size, vocab_size});
-    this->Initialise(weights, init_mode);
+    // initialize embeddings
+    ArrayType weights_in({embedding_size, vocab_size});
+    this->Initialise(weights_in, init_mode);
+
+    ArrayType weights_ctx({embedding_size, vocab_size});
+    this->Initialise(weights_ctx, init_mode);
 
     // embed both inputs
     embed_in_ = this->template AddNode<fetch::ml::ops::Embeddings<ArrayType>>(
-        name + "_Embed_Inputs", {input}, weights);
+        name + "_Embed_Inputs", {input}, weights_in);
     std::string embed_ctx = this->template AddNode<fetch::ml::ops::Embeddings<ArrayType>>(
-        name + "_Embed_Context", {context}, weights);
+        name + "_Embed_Context", {context}, weights_ctx);
 
     // dot product input and context embeddings
     std::string transpose_ctx = this->template AddNode<fetch::ml::ops::Transpose<ArrayType>>(
@@ -75,10 +82,6 @@ public:
 
     std::string in_ctx_matmul_flat = this->template AddNode<fetch::ml::ops::Flatten<ArrayType>>(
         name + "_In_Ctx_MatMul_Flat", {in_ctx_matmul});
-
-    //    std::string in_ctx_matmul_flat = this->template
-    //    AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
-    //          name + "_In_Ctx_MatMul_Flat", {in_ctx_matmul}, in_size, out);
 
     std::string output = this->template AddNode<fetch::ml::ops::Sigmoid<ArrayType>>(
         name + "_Sigmoid", {in_ctx_matmul_flat});
@@ -109,10 +112,13 @@ private:
   std::string embed_in_ = "";
   SizeType    in_size_;
   SizeType    out_size_;
+  SizeType    embedding_size_;
+  SizeType    vocab_size_;
 
   void Initialise(ArrayType &weights, WeightsInit init_mode)
   {
-    fetch::ml::ops::Weights<ArrayType>::Initialise(weights, in_size_, out_size_, init_mode);
+    // N.B. the in_size_ is essential 1 for embedding layer
+    fetch::ml::ops::Weights<ArrayType>::Initialise(weights, in_size_, embedding_size_, init_mode);
   }
 };
 
