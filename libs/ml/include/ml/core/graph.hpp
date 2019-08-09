@@ -208,9 +208,6 @@ void Graph<TensorType>::BackPropagateSignal(std::string const &node_name,
 template <typename TensorType>
 void Graph<TensorType>::Step(DataType learning_rate)
 {
-  auto tmp = std::dynamic_pointer_cast<fetch::ml::ops::Weights<TensorType>>(
-      nodes_["FullyConnected_Weights"]->GetOp());
-  FETCH_UNUSED(tmp);
   for (auto &t : trainable_)
   {
     t->Step(learning_rate);
@@ -389,9 +386,8 @@ typename Graph<TensorType>::NodePtrType Graph<TensorType>::GetNode(
 template <typename TensorType>
 void Graph<TensorType>::SetInput(std::string const &node_name, TensorType data)
 {
-  auto tmp = nodes_.at(node_name);
-
-  PlaceholderPtrType placeholder = std::dynamic_pointer_cast<PlaceholderType>(tmp->GetOp());
+  PlaceholderPtrType placeholder =
+      std::dynamic_pointer_cast<PlaceholderType>(nodes_.at(node_name)->GetOp());
 
   if (placeholder)
   {
