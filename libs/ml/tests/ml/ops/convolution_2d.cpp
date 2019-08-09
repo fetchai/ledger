@@ -23,7 +23,7 @@
 #include "ml/ops/convolution_2d.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
-#include <core/serializers/main_serializer_definition.hpp>
+#include "core/serializers/main_serializer_definition.hpp"
 template <typename T>
 class Convolution2DTest : public ::testing::Test
 {

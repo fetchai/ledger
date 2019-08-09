@@ -24,7 +24,7 @@
 #include "vectorise/fixed_point/fixed_point.hpp"
 //#include "core/serializers/main_serializer.hpp"
 #include "gtest/gtest.h"
-#include <core/serializers/main_serializer_definition.hpp>
+#include "core/serializers/main_serializer_definition.hpp"
 
 template <typename T>
 class DropoutTest : public ::testing::Test
