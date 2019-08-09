@@ -60,7 +60,7 @@ public:
     g_.AddNode<FullyConnected<TensorType>>("FC1", {"Input"}, 28u * 28u, 10u);
     g_.AddNode<Relu<TensorType>>("Relu1", {"FC1"});
     g_.AddNode<FullyConnected<TensorType>>("FC2", {"Relu1"}, 10u, 10u);
-    g_.AddNode<Relu<TensorType>>("Relu2", {"FC1"});
+    g_.AddNode<Relu<TensorType>>("Relu2", {"FC2"});
     g_.AddNode<FullyConnected<TensorType>>("FC3", {"Relu2"}, 10u, 10u);
     g_.AddNode<Softmax<TensorType>>("Softmax", {"FC3"});
     g_.AddNode<PlaceHolder<TensorType>>("Label", {});

@@ -112,58 +112,6 @@ struct StateDict
     }
     return *this;
   }
-
-  ////////////////////////////////
-  /// Serialization operations ///
-  ////////////////////////////////
-
-  template <typename S>
-  friend void Serialize(S &serializer, StateDict const &t)
-  {
-    if (t.weights_)
-    {
-      serializer << true;
-      serializer << *(t.weights_.get());
-    }
-    else
-    {
-      serializer << false;
-    }
-
-    SizeType dict_size = t.dict_.size();
-    serializer << dict_size;
-
-    for (auto const &d : t.dict_)
-    {
-      serializer << d.first;
-      Serialize(serializer, d.second);
-    }
-  }
-
-  template <typename S>
-  friend void Deserialize(S &serializer, StateDict &t)
-  {
-    SizeType    dict_size{0};
-    std::string node_name{};
-    StateDict   node_sd;
-    bool        has_weights{};
-
-    serializer >> has_weights;
-    if (has_weights)
-    {
-      TensorType weights;
-      serializer >> weights;
-      t.weights_ = std::make_shared<TensorType>(weights);
-    }
-    serializer >> dict_size;
-
-    for (SizeType i = 0; i < dict_size; i++)
-    {
-      serializer >> node_name;
-      Deserialize(serializer, node_sd);
-      t.dict_.emplace(std::make_pair(node_name, node_sd));
-    }
-  }
 };
 
 }  // namespace ml
