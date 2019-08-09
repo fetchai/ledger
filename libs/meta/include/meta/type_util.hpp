@@ -269,7 +269,8 @@ using InvokeResultT = typename InvokeResult<F, Args...>::type;
  *         char.
  * If all the Conditions are false and there's no Default statement, Case::type is void.
  *
- * @param Clauses... a sequence of bool-valued and arbitrary types, interleaved (the rightmost one needs not to be bool-valued)
+ * @param Clauses... a sequence of bool-valued and arbitrary types, interleaved (the rightmost one
+ * needs not to be bool-valued)
  * @return
  */
 template <class... Clauses>
@@ -290,10 +291,9 @@ using CaseT = typename Case<Clauses...>::type;
  * @return
  */
 template <class Source, class Dest>
-using CopyReferenceKind =
-Case<std::is_lvalue_reference<Source>, std::add_lvalue_reference_t<Dest>,
-	std::is_rvalue_reference<Source>, std::add_rvalue_reference_t<std::decay_t<Dest>>,
-	std::decay_t<Dest>>;
+using CopyReferenceKind = Case<std::is_lvalue_reference<Source>, std::add_lvalue_reference_t<Dest>,
+                               std::is_rvalue_reference<Source>,
+                               std::add_rvalue_reference_t<std::decay_t<Dest>>, std::decay_t<Dest>>;
 
 template <class Source, class Dest>
 using CopyReferenceKindT = typename CopyReferenceKind<Source, Dest>::type;
