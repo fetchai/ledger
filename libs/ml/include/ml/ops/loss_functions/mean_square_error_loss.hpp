@@ -39,16 +39,8 @@ public:
   using SPType        = OpMeanSquareErrorSaveableParams<T>;
 
   explicit MeanSquareErrorLoss(SPType const &sp)
-<<<<<<< HEAD
-    : Ops<T>(sp)
-    , weightings_(sp.weightings)
+    : Ops<T>(sp), weightings_(sp.weightings)
   {}
-=======
-    : Ops<T>(sp)
-  {
-    weightings_ = sp.weightings;
-  }
->>>>>>> ab819f12400ad9a2d957f8614ff3a7847c17137c
 
   explicit MeanSquareErrorLoss(TensorType const &weightings = TensorType())
     : weightings_(weightings)
