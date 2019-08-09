@@ -105,7 +105,7 @@ struct Cons<Car, Pack<Cdr...>> : Constant<Pack<Car, Cdr...>>
 };
 
 /**
- * HasMemberTypeV detects if its argument has member type type.
+ * Detect if its argument has member type type.
  *
  * @param T an arbitrary type
  * @return true iff T is a class type with public member type type of kind *
@@ -130,7 +130,7 @@ static constexpr bool HasMemberTypeV = sizeof(detail_::HasType(std::declval<Arg>
                                        sizeof(detail_::Yes);
 
 /**
- * Extracts its argument's member type type and wraps it back in a struct.
+ * Extract argument's member type type and wrap it back in a struct.
  *
  * @param T an arbitrary type
  * @return struct S such that S::type is T::type if the latter is a public type of kind *; empty
@@ -811,18 +811,18 @@ struct InvokeResult<F, Pack<Args...>>
  * whose preceeding Condition is a true type. If none of the Conditions is true then
  * the number of elements in Clauses should be odd, and its last element is taken as the default
  * statement.
- *     CaseT<
+ *     CaseT<Pack<
  *         std::false_type, int,
  *         SizeConstant<0>, double,
  *         std::true_type, std::string,
- *         char>
+ *         char>>
  *     is
  *         std::string;
  *
- *     CaseT<
+ *     CaseT<Pack<
  *         std::false_type, int,
  *         SizeConstant<0>, double,
- *         char>
+ *         char>>
  *     is
  *         char.
  * If all the Conditions are false and there's no Default statement, Case::type is void.

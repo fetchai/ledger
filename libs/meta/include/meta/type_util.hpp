@@ -27,7 +27,7 @@ namespace type_util {
 
 // Throughout this header all the variadic templates have one peculiar property:
 // if a template parameter is pack::Pack, then the template is applied to its elements
-// rather than the pack itself.
+// rather than to the pack itself.
 // So, for instance, if F is a binary template
 //
 //     template<class, class> class F;
@@ -41,27 +41,51 @@ namespace type_util {
 //     F<F<F<int, char>, std::true_type>, double>
 //
 // char and std::true_type are treated the same way as the two other parameters.
-// Or, say, Casees can be written as
+// Or, say, Cases can be written as
 //
 //     Case<pack::Pack<If1, Then1>, pack::Pack<If2, Then2>, pack::Pack<If3, Then3>>
 //
 // for greater readability.
 
-// TypeConstant<T> is an otherwise empty structure whose sole member is a typedef type = T.
+/**
+ * A simple function that wraps its argument in a structure with a sole member typedef type.
+ *
+ * @param T an arbitrary type
+ * @return structure S such that S::type is T
+ */
 template <class T>
 using TypeConstant = pack::Constant<T>;
 template <class T>
 using TypeConstantT = typename TypeConstant<T>::type;  // technically, an identity mapping
 
 // Two useful partial specializations of std::integral_constant.
+/**
+ * Returns an std::integral_constant of type std::size_t.
+ *
+ * @param i a compile-time size constant
+ * @return std::integral_constant<std::size_t, i>
+ */
 template <std::size_t i>
 using SizeConstant = pack::SizeConstant<i>;
 
+/**
+ * Returns an std::integral_constant of type bool.
+ *
+ * @param b a compile-time boolean constant
+ * @return std::integral_constant<bool, i>
+ */
 template <bool b>
 using BoolConstant = pack::BoolConstant<b>;
 
-// Accumulate<F, Ts...> is a left fold of F over Ts...
-// The pack should be non-empty.
+/**
+ * Left fold of a function over a pack.
+ * Zero value is taken from the pack itself, so the latter should be non-empty.
+ * (Similar to foldl1 in Prelude.PreludeList.)
+ *
+ * @param F an arbitrary class template
+ * @param List... a non-empty pack of arbitrary types T0, T1, ..., Tn
+ * @return F<F< ... <F<T0, T1>, ... >, Tn>
+ */
 template <template <class...> class F, class... List>
 using Accumulate = pack::Accumulate<F, pack::ConcatT<List...>>;
 
@@ -71,72 +95,122 @@ using AccumulateT = typename Accumulate<F, List...>::type;
 template <template <class...> class F, class... List>
 static constexpr auto AccumulateV = Accumulate<F, List...>::value;
 
-// And<A, B> is a lispish binary operator && on types.
-// Its result is a true type if both A and B are.
-// A::value should be defined and convertible to bool.
-// No requirements imposed on B.
+/**
+ * A binary operator && on types.
+ *
+ * @param A a bool-valued type
+ * @param B an arbitrary type
+ * @return B if A is a true type; A otherwise
+ */
 template <class A, class B>
 using And = pack::And<A, B>;
 
 template <class A, class B>
 static constexpr auto AndV = And<A, B>::value;
 
-// Conjunction<List...> is a true type iff every element of List... is.
+/**
+ * A lisp-style operator && accepting an arbitrary amount of arguments an returning the leftmost
+ * false of them, or the very last one if all others are true. Conjunction of an empty pack is a
+ * true type. Warning: ConjunctionT returns a member type type of the leftmost false type, not that
+ * latter itself.
+ *
+ * @param Ts... arbitrary types
+ * @return the leftmost false of Ts..., or the last one, if none
+ */
 template <class... Ts>
 using Conjunction = pack::Conjunction<pack::ConcatT<Ts...>>;
 
 template <class... Ts>
 static constexpr auto ConjunctionV = Conjunction<Ts...>::value;
 
-// All<F, List...> is a true type iff F applied to each element of List... returns a true type.
+/**
+ * Check if every element of a pack satisfies a predicate.
+ *
+ * @param F a class template that evaluates to a bool-valued class on each element of the pack
+ * (until one of them breaks the predicate, at least)
+ * @param Ts... arbitrary types
+ * @return
+ */
 template <template <class...> class F, class... Ts>
 using All = pack::All<F, pack::ConcatT<Ts...>>;
 
 template <template <class...> class F, class... Ts>
 static constexpr auto AllV = All<F, Ts...>::value;
 
-// Or<A, B> is a lispish binary operator || on types.
-// Its result is a true type if either A or B is.
-// A::value should be defined and convertible to bool.
-// No requirements imposed on B.
+/**
+ * A binary operator || on types.
+ *
+ * @param A a bool-valued type
+ * @param B an arbitrary type
+ * @return A if A is a true type; B otherwise
+ */
 template <class A, class B>
 using Or = pack::Or<A, B>;
 
 template <class A, class B>
 static constexpr auto OrV = Or<A, B>::value;
 
-// Disjunction<List...> is a true type iff at least one element of List... is.
+/**
+ * A lisp-style operator || accepting an arbitrary amount of arguments an returning the leftmost
+ * true of them, or the very last one if all others are false. Disjunction of an empty pack is a
+ * false type. Warning: DisjunctionT returns a member type type of the leftmost true type, not that
+ * latter itself.
+ *
+ * @param Ts... arbitrary types
+ * @return the leftmost true of Ts..., or the last one, if none
+ */
 template <class... Ts>
 using Disjunction = pack::Disjunction<pack::ConcatT<Ts...>>;
 
 template <class... Ts>
 static constexpr auto DisjunctionV = Disjunction<Ts...>::value;
 
-// Any<F, List...> is a true type iff F applied to at least one element of List... returns a true
-// type.
+/**
+ * Check if at least one element of a pack satisfies a predicate.
+ *
+ * @param F a class template that evaluates to a bool-valued class on each element of the pack
+ * (until one of them satisfies the predicate, at least)
+ * @param Ts... arbitrary types
+ * @return
+ */
 template <template <class...> class F, class... Ts>
 using Any = pack::Any<F, pack::ConcatT<Ts...>>;
 
 template <template <class...> class F, class... Ts>
 static constexpr auto AnyV = Any<F, Ts...>::value;
 
-// Bind<F, Args...> is an otherwise empty structure whose sole member is a template type such that
-// Bind<F, T...>::template type<U...> is the same as F<T..., U...>.
-// Bind is the only type-containing struct defined in this header that does not have accompanying
-// BindT, current C++ wouldn't allow that.
+/**
+ * Partial function application.
+ * Note that the result should be used as Bind<F, Args>::template type. Consequently, BindT is not
+ * defined.
+ *
+ * @param F an arbitrary class template
+ * @param Prefix... arbitrary types T0, ..., Tn, n is less than F's maximum arity
+ * @return struct S such that S::template type<Args...> is exactly F<T0, ..., Tn, Args...>
+ */
 template <template <class...> class F, class... Prefix>
 using Bind = pack::Bind<F, pack::ConcatT<Prefix...>>;
 
-// IsAnyOf<T, List...> is a true type if T is equal, in the sense of std::is_same, to at least one
-// element of List...
+/**
+ * Check if type is found in a pack.
+ *
+ * @param T an arbitrary type
+ * @param Ts... abitrary types
+ * @return true type iff there's a type among Ts... equal to T, in the sense of std::is_same
+ */
 template <class T, class... Ts>
 using IsAnyOf = pack::IsAnyOf<T, pack::ConcatT<Ts...>>;
 
 template <class T, class... Ts>
 static constexpr auto IsAnyOfV = IsAnyOf<T, Ts...>::value;
 
-// Satisfies<T, Predicates...> is a true type if Predicate<T> is a true type for each of the
-// Predicates.
+/**
+ * Check if a type satisfies every given predicate
+ *
+ * @param T an arbitrary type
+ * @param Predicates... arbitrary class templates returning bool-valued types on T
+ * @return true type iff T satisfies all Predicates...
+ */
 template <class T, template <class...> class... Predicates>
 using Satisfies = Conjunction<Predicates<T>...>;
 
@@ -145,78 +219,154 @@ static constexpr bool SatisfiesV = Satisfies<T, Predicates...>::value;
 
 // IsInvocable and InvokeResult are limited backports of their C++17's namesakes.
 // IsNothrowInvocable can hardly be reasonably portably implemented in C++14.
+/**
+ * Check if a function (here, the real C++ function) can be called with arguments of such types.
+ *
+ * @param F a function type
+ * @param P a Pack<T0...> of argument types
+ * @return true type if f(t0...) is a valid expression, where f is of type F and tn is of type Tn,
+ * for each n
+ */
 template <class F, class... Args>
 using IsInvocable = pack::IsInvocable<F, pack::ConcatT<Args...>>;
 template <class F, class... Args>
 static constexpr auto IsInvocableV = IsInvocable<F, Args...>::value;
 
+/**
+ * Get the result type of an invocation of a function (here, the real C++ function) over arguments
+ * of such types. Warning: IsInvocable<F, P> should be a true type.
+ *
+ * @param F a function type
+ * @param P a Pack<T0...> of argument types
+ * @return struct S such that f(t0...) is of type S::type, where f is of type F and tn is of type
+ * Tn, for each n
+ */
 template <class F, class... Args>
 using InvokeResult = pack::InvokeResult<F, pack::ConcatT<Args...>>;
 template <class F, class... Args>
 using InvokeResultT = typename InvokeResult<F, Args...>::type;
 
-// Case<Clauses...> implements top-down linear switch.
-// Its arguments are split in coupled pairs: Condition, Then-Expression.
-// Its member typedef type is equal to the leftmost Then-Expression
-// whose preceeding Condition is a true type. If none of the Conditions is true then
-// the number of elements in Clauses should be odd, and its last element is taken as the default
-// statement.
-//     CaseT<std::false_type, int, SizeConstant<0>, double, std::true_type, std::string, char> is
-//     std::string; CaseT<std::false_type, int, SizeConstant<0>, double, char> is char.
-// If all the Conditions are false and there's no Default statement, Case::type is void.
+/**
+ * Top-down linear switch.
+ * Arguments are split in coupled pairs: Condition, Then-Expression.
+ * The result has member typedef type equal to the leftmost Then-Expression
+ * whose preceeding Condition is a true type. If none of the Conditions is true then
+ * the number of elements in Clauses should be odd, and its last element is taken as the default
+ * statement.
+ *     CaseT<
+ *         std::false_type, int,
+ *         SizeConstant<0>, double,
+ *         std::true_type, std::string,
+ *         char>
+ *     is
+ *         std::string;
+ *
+ *     CaseT<
+ *         std::false_type, int,
+ *         SizeConstant<0>, double,
+ *         char>
+ *     is
+ *         char.
+ * If all the Conditions are false and there's no Default statement, Case::type is void.
+ *
+ * @param Clauses... a sequence of bool-valued and arbitrary types, interleaved (the rightmost one needs not to be bool-valued)
+ * @return
+ */
 template <class... Clauses>
 using Case = pack::Case<pack::ConcatT<Clauses...>>;
 
 template <class... Clauses>
 using CaseT = typename Case<Clauses...>::type;
 
-// CopyReferenceKind<A, B> provide a member typedef type that is B with ref-qualifier changed to
-// that of A.
+/**
+ * Transfer reference-kind from a source type to the destination type:
+ *
+ *     CopyReferenceKindT<int &, std::string>        is std::string &
+ *     CopyReferenceKindT<int &&, const std::string> is std::string const &&
+ *     CopyReferenceKindT<int, std::string>          is std::string
+ *
+ * @param Source an arbitrary type that specifies reference kind
+ * @param Dest an arbitrary type to be converted into a proper reference type
+ * @return
+ */
 template <class Source, class Dest>
-using CopyReferenceKind = Case<std::is_lvalue_reference<Source>, std::add_lvalue_reference_t<Dest>,
-                               std::is_rvalue_reference<Source>,
-                               std::add_rvalue_reference_t<std::decay_t<Dest>>, std::decay_t<Dest>>;
+using CopyReferenceKind =
+Case<std::is_lvalue_reference<Source>, std::add_lvalue_reference_t<Dest>,
+	std::is_rvalue_reference<Source>, std::add_rvalue_reference_t<std::decay_t<Dest>>,
+	std::decay_t<Dest>>;
 
 template <class Source, class Dest>
 using CopyReferenceKindT = typename CopyReferenceKind<Source, Dest>::type;
 
-// HasMemberTypeV<T> is true if T::type is a public type of kind *, and false otherwise.
+/**
+ * Detect if its argument has member type type.
+ *
+ * @param T an arbitrary type
+ * @return true iff T is a class type with public member type type of kind *
+ */
 template <class Arg>
 static constexpr bool HasMemberTypeV = pack::HasMemberTypeV<Arg>;
 
-// MemberType<T> is an otherwise empty structure whose sole member is a typedef type = T::type.
+/**
+ * Extract argument's member type type and wrap it back in a struct.
+ *
+ * @param T an arbitrary type
+ * @return struct S such that S::type is T::type if the latter is a public type of kind *; empty
+ * struct otherwise
+ */
 template <class Arg>
 using MemberType = pack::MemberType<Arg>;
 
 template <class Arg>
 using MemberTypeT = typename MemberType<Arg>::type;
 
-// Select<Type1, Type2...> provides member typedef type which is the leftmost Typen::type available.
-// It is an error if none of template parameters has member type named type.
+/**
+ * Select the leftmost member type type defined in pack elements.
+ *
+ *     struct A { using type = int; };
+ *
+ *     Select<char, double, A, std::string>
+ *         is int.
+ *
+ * @param Clauses... arbitrary types
+ * @return
+ */
 template <class... Clauses>
 using Select = pack::Select<pack::ConcatT<Clauses...>>;
 
 template <class... Clauses>
 using SelectT = typename Select<Clauses...>::type;
 
-// Head<Pack> evaluates to Pack's first element.
-// It is an error if Head is applied to Nil.
+/**
+ * Get the first element of a pack.
+ *
+ * @param Ts... a (non-empty) pack of arbitrary types
+ * @return the very leftmost of Ts...
+ */
 template <class... Ts>
 using Head = pack::Head<pack::ConcatT<Ts...>>;
 
 template <class... Ts>
 using HeadT = typename Head<Ts...>::type;
 
-// Last<Pack> evaluates to Pack's last element.
-// It is an error if Last is applied to Nil.
+/**
+ * Get pack's rightmost element, symmetric to Head.
+ *
+ * @param Ts... a (non-empty) pack of arbitrary types
+ * @return
+ */
 template <class... Ts>
 using Last = pack::Last<pack::ConcatT<Ts...>>;
 
 template <class... Ts>
 using LastT = typename Last<Ts...>::type;
 
-// HeadArgument provides member typedef type that is equal to the first argument of a template
-// instantiation or a function.
+/**
+ * Get the first argument type of a function type, or a template instantiation.
+ *
+ * @param T either a free/member function type, or a template instantiation
+ * @return
+ */
 template <class T>
 using HeadArgument = pack::Head<pack::ArgsT<T>>;
 
