@@ -109,7 +109,7 @@ public:
 
   virtual ~Node() = default;
 
-  std::shared_ptr<SaveableParamsInterface> GetNodeSaveableParams()
+  std::shared_ptr<SPType> GetNodeSaveableParams()
   {
     auto sp_ptr = std::make_shared<SPType>();
 

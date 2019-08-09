@@ -115,7 +115,7 @@ TYPED_TEST(ExpTest, saveparams_test)
   op.Forward(vec_data, prediction);
 
   // extract saveparams
-  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
+  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
 
   // downcast to correct type
   auto dsp = std::static_pointer_cast<SPType>(sp);
@@ -141,10 +141,11 @@ TYPED_TEST(ExpTest, saveparams_test)
       new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
 }
 
-TYPED_TEST(ExpTest, saveparams_backward_test) {
+TYPED_TEST(ExpTest, saveparams_backward_test)
+{
   using TensorType = TypeParam;
-  using OpType        = typename fetch::ml::ops::Exp<TensorType>;
-  using SPType        = typename OpType::SPType;
+  using OpType     = typename fetch::ml::ops::Exp<TensorType>;
+  using SPType     = typename OpType::SPType;
 
   TensorType data = TensorType::FromString(
       "0, -2, 3,-4, 5,-6, 7,-8;"
@@ -155,11 +156,11 @@ TYPED_TEST(ExpTest, saveparams_backward_test) {
       "5, -5, 6, -6, 7, -7, 8, -8");
 
   fetch::ml::ops::Exp<TensorType> op;
-  std::vector<TensorType> prediction =
+  std::vector<TensorType>         prediction =
       op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // extract saveparams
-  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
+  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
 
   // downcast to correct type
   auto dsp = std::dynamic_pointer_cast<SPType>(sp);

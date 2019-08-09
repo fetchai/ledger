@@ -118,7 +118,7 @@ TYPED_TEST(LeakyReluOpTest, saveparams_test)
   op.Forward(vec_data, prediction);
 
   // extract saveparams
-  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
+  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
 
   // downcast to correct type
   auto dsp = std::static_pointer_cast<SPType>(sp);
@@ -148,8 +148,8 @@ TYPED_TEST(LeakyReluOpTest, saveparams_test)
 TYPED_TEST(LeakyReluOpTest, saveparams_backward_test)
 {
   using TensorType = TypeParam;
-  using OpType        = typename fetch::ml::ops::LeakyReluOp<TensorType>;
-  using SPType        = typename OpType ::SPType;
+  using OpType     = typename fetch::ml::ops::LeakyReluOp<TensorType>;
+  using SPType     = typename OpType ::SPType;
 
   TensorType alpha = TensorType::FromString(R"(
     0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)")
@@ -170,7 +170,7 @@ TYPED_TEST(LeakyReluOpTest, saveparams_backward_test)
       op.Backward({std::make_shared<TypeParam>(data), std::make_shared<TypeParam>(alpha)}, error);
 
   // extract saveparams
-  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
+  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
 
   // downcast to correct type
   auto dsp = std::dynamic_pointer_cast<SPType>(sp);
@@ -180,7 +180,8 @@ TYPED_TEST(LeakyReluOpTest, saveparams_backward_test)
   b << *dsp;
 
   // make another prediction with the original op
-  prediction = op.Backward({std::make_shared<TypeParam>(data), std::make_shared<TypeParam>(alpha)}, error);
+  prediction =
+      op.Backward({std::make_shared<TypeParam>(data), std::make_shared<TypeParam>(alpha)}, error);
 
   // deserialize
   b.seek(0);
@@ -191,8 +192,8 @@ TYPED_TEST(LeakyReluOpTest, saveparams_backward_test)
   OpType new_op(*dsp2);
 
   // check that new predictions match the old
-  std::vector<TensorType>                 new_prediction =
-      new_op.Backward({std::make_shared<TypeParam>(data), std::make_shared<TypeParam>(alpha)}, error);
+  std::vector<TensorType> new_prediction = new_op.Backward(
+      {std::make_shared<TypeParam>(data), std::make_shared<TypeParam>(alpha)}, error);
 
   // test correct values
   EXPECT_TRUE(prediction.at(0).AllClose(

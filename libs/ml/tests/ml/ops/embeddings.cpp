@@ -183,7 +183,7 @@ TYPED_TEST(EmbeddingsTest, saveparams_test)
   op.Forward({std::make_shared<TensorType const>(input)}, prediction);
 
   // extract saveparams
-  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
+  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
 
   // downcast to correct type
   auto dsp = std::static_pointer_cast<SPType>(sp);
@@ -213,8 +213,8 @@ TYPED_TEST(EmbeddingsTest, saveparams_backward)
 {
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
-  using OpType        = typename fetch::ml::ops::Embeddings<TensorType>;
-  using SPType        = typename OpType ::SPType;
+  using OpType     = typename fetch::ml::ops::Embeddings<TensorType>;
+  using SPType     = typename OpType ::SPType;
 
   fetch::ml::ops::Embeddings<TypeParam> op(6, 10);
   TypeParam                             weights(std::vector<uint64_t>({6, 10}));
@@ -243,10 +243,11 @@ TYPED_TEST(EmbeddingsTest, saveparams_backward)
     }
   }
 
-  std::vector<TensorType> prediction =  op.Backward({std::make_shared<TypeParam>(input)}, error_signal);
+  std::vector<TensorType> prediction =
+      op.Backward({std::make_shared<TypeParam>(input)}, error_signal);
 
-    // extract saveparams
-  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
+  // extract saveparams
+  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
 
   // downcast to correct type
   auto dsp = std::dynamic_pointer_cast<SPType>(sp);
@@ -256,7 +257,7 @@ TYPED_TEST(EmbeddingsTest, saveparams_backward)
   b << *dsp;
 
   // make another prediction with the original op
-  prediction =  op.Backward({std::make_shared<TypeParam>(input)}, error_signal);
+  prediction = op.Backward({std::make_shared<TypeParam>(input)}, error_signal);
 
   // deserialize
   b.seek(0);
@@ -267,11 +268,11 @@ TYPED_TEST(EmbeddingsTest, saveparams_backward)
   OpType new_op(*dsp2);
 
   // check that new predictions match the old
-  std::vector<TensorType> new_prediction =  new_op.Backward({std::make_shared<TypeParam>(input)}, error_signal);
+  std::vector<TensorType> new_prediction =
+      new_op.Backward({std::make_shared<TypeParam>(input)}, error_signal);
 
   // test correct values
   EXPECT_TRUE(prediction.at(0).AllClose(
       new_prediction.at(0), fetch::math::function_tolerance<typename TypeParam::Type>(),
       fetch::math::function_tolerance<typename TypeParam::Type>()));
-
 }

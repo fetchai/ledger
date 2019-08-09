@@ -284,7 +284,7 @@ TYPED_TEST(MaxPool2DTest, saveparams_test)
   op.Forward(vec_data, prediction);
 
   // extract saveparams
-  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
+  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
 
   // downcast to correct type
   auto dsp = std::static_pointer_cast<SPType>(sp);
@@ -315,8 +315,8 @@ TYPED_TEST(MaxPool2DTest, saveparams_backward_2_channels_test)
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
   using SizeType   = typename TypeParam::SizeType;
-  using OpType        = typename fetch::ml::ops::MaxPool2D<TensorType>;
-  using SPType        = typename OpType ::SPType;
+  using OpType     = typename fetch::ml::ops::MaxPool2D<TensorType>;
+  using SPType     = typename OpType ::SPType;
 
   SizeType const channels_size = 2;
   SizeType const input_width   = 5;
@@ -355,7 +355,7 @@ TYPED_TEST(MaxPool2DTest, saveparams_backward_2_channels_test)
       op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // extract saveparams
-  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
+  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
 
   // downcast to correct type
   auto dsp = std::dynamic_pointer_cast<SPType>(sp);

@@ -250,7 +250,7 @@ TYPED_TEST(MultiplyTest, saveparams_test)
   op.Forward(vec_data, prediction);
 
   // extract saveparams
-  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
+  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
 
   // downcast to correct type
   auto dsp = std::static_pointer_cast<SPType>(sp);
@@ -280,8 +280,8 @@ TYPED_TEST(MultiplyTest, saveparams_test)
 TYPED_TEST(MultiplyTest, saveparams_backward_test_NB_NB)
 {
   using TensorType = TypeParam;
-  using OpType        = typename fetch::ml::ops::Multiply<TensorType>;
-  using SPType        = typename OpType ::SPType;
+  using OpType     = typename fetch::ml::ops::Multiply<TensorType>;
+  using SPType     = typename OpType ::SPType;
 
   TensorType data_1 = TensorType::FromString(
       "1, -2, 3,-4, 5,-6, 7,-8;"
@@ -300,7 +300,7 @@ TYPED_TEST(MultiplyTest, saveparams_backward_test_NB_NB)
       {std::make_shared<TensorType>(data_1), std::make_shared<TensorType>(data_2)}, error);
 
   // extract saveparams
-  std::shared_ptr<fetch::ml::SaveableParamsInterface> sp = op.GetOpSaveableParams();
+  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
 
   // downcast to correct type
   auto dsp = std::dynamic_pointer_cast<SPType>(sp);
@@ -322,7 +322,7 @@ TYPED_TEST(MultiplyTest, saveparams_backward_test_NB_NB)
   OpType new_op(*dsp2);
 
   // check that new predictions match the old
-  std::vector<TensorType>              new_prediction = new_op.Backward(
+  std::vector<TensorType> new_prediction = new_op.Backward(
       {std::make_shared<TensorType>(data_1), std::make_shared<TensorType>(data_2)}, error);
 
   // test correct values

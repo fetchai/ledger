@@ -51,7 +51,7 @@ public:
 
   ~Elu() override = default;
 
-  std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
   {
     auto sp = std::make_shared<SPType>();
     sp->a   = a_;

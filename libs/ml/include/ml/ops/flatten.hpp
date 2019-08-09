@@ -48,7 +48,7 @@ public:
 
   ~Flatten() override = default;
 
-  std::shared_ptr<SaveableParamsInterface> GetOpSaveableParams() override
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
   {
     auto ret         = std::make_shared<SPType>();
     ret->input_shape = input_shape_;
