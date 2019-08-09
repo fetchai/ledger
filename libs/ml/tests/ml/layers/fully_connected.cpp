@@ -581,17 +581,17 @@ TYPED_TEST(FullyConnectedTest, getStateDict_time_distributed)
 
 TYPED_TEST(FullyConnectedTest, saveparams_test)
 {
-  using DataType = typename TypeParam::Type;
-  using SizeType = typename TypeParam::SizeType;
+  using DataType  = typename TypeParam::Type;
+  using SizeType  = typename TypeParam::SizeType;
   using LayerType = typename fetch::ml::layers::FullyConnected<TypeParam>;
-  using SPType = typename LayerType::SPType;
+  using SPType    = typename LayerType::SPType;
 
-  SizeType data_size = 10;
-  SizeType input_features = 10;
+  SizeType data_size       = 10;
+  SizeType input_features  = 10;
   SizeType output_features = 20;
 
-  std::string                                  input_name  = "FullyConnected_Input";
-  std::string                                  output_name = "FullyConnected_MatrixMultiply";
+  std::string input_name  = "FullyConnected_Input";
+  std::string output_name = "FullyConnected_MatrixMultiply";
 
   TypeParam input({data_size, input_features});
   input.FillUniformRandom();
@@ -603,7 +603,8 @@ TYPED_TEST(FullyConnectedTest, saveparams_test)
   LayerType layer(input_features, output_features);
 
   // add label node
-  std::string label_name = layer.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("label", {});
+  std::string label_name =
+      layer.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("label", {});
 
   // Add loss function
   std::string error_output = layer.template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TypeParam>>(
@@ -630,9 +631,7 @@ TYPED_TEST(FullyConnectedTest, saveparams_test)
   b >> *dsp2;
 
   // rebuild
-  auto layer2 =
-      *(fetch::ml::utilities::BuildLayer<TypeParam, LayerType>(
-          dsp2));
+  auto layer2 = *(fetch::ml::utilities::BuildLayer<TypeParam, LayerType>(dsp2));
 
   // test equality
   layer.SetInput(input_name, input);
