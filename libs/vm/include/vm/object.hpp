@@ -42,12 +42,12 @@ class Address;
 struct String;
 
 template <typename T>
-using IsPrimitive = type_util::IsAnyOf<T, void, bool, int8_t, uint8_t, int16_t, uint16_t,
-                                            int32_t, uint32_t, int64_t, uint64_t, float, double,
-                                            fixed_point::fp32_t, fixed_point::fp64_t>;
+using IsPrimitive =
+    type_util::IsAnyOf<T, void, bool, int8_t, uint8_t, int16_t, uint16_t, int32_t, uint32_t,
+                       int64_t, uint64_t, float, double, fixed_point::fp32_t, fixed_point::fp64_t>;
 
 template <typename T, typename R = void>
-using IfIsPrimitive = typename std::enable_if<IsPrimitive<std::decay_t<T>>::value, R>::type;
+using IfIsPrimitive = std::enable_if_t<IsPrimitive<std::decay_t<T>>::value, R>;
 
 template <typename T>
 using IsObject = std::is_base_of<Object, T>;
@@ -62,7 +62,7 @@ struct IsPtr<Ptr<T>> : std::true_type
 };
 
 template <typename T, typename R = void>
-using IfIsPtr = typename std::enable_if<IsPtr<std::decay_t<T>>::value, R>::type;
+using IfIsPtr = std::enable_if_t<IsPtr<std::decay_t<T>>::value, R>;
 
 template <typename T>
 using IsVariant = std::is_base_of<Variant, T>;
@@ -88,23 +88,26 @@ struct GetManagedType<Ptr<T>>
 };
 
 template <typename T>
-using IsPrimitiveParameter = std::integral_constant<bool, !IsNonconstRef<T>::value && IsPrimitive<typename std::decay_t<T>>::value>;
+using IsPrimitiveParameter =
+    std::integral_constant<bool, !IsNonconstRef<T>::value && IsPrimitive<std::decay_t<T>>::value>;
 
 template <typename T>
-using IsPtrParameter = std::integral_constant<bool, IsConstRef<T>::value && IsPtr<typename std::decay_t<T>::type>::value>;
+using IsPtrParameter =
+    std::integral_constant<bool, IsConstRef<T>::value && IsPtr<std::decay_t<T>>::value>;
 
 template <typename T>
-using IsVariantParameter = std::integral_constant<bool, IsConstRef<T>::value && IsVariant<typename std::decay_t<T>>::value>;
+using IsVariantParameter =
+    std::integral_constant<bool, IsConstRef<T>::value && IsVariant<std::decay_t<T>>::value>;
 
 template <typename T, typename = void>
 struct GetStorageType;
 template <typename T>
-struct GetStorageType<T, typename std::enable_if_t<IsPrimitive<T>::value>>
+struct GetStorageType<T, std::enable_if_t<IsPrimitive<T>::value>>
 {
   using type = T;
 };
 template <typename T>
-struct GetStorageType<T, typename std::enable_if_t<IsPtr<T>::value>>
+struct GetStorageType<T, std::enable_if_t<IsPtr<T>::value>>
 {
   using type = Ptr<Object>;
 };
@@ -209,7 +212,8 @@ public:
     return Ptr(this__);
   }
 
-  constexpr Ptr &operator=(std::nullptr_t /* other */) noexcept(noexcept(std::declval<Ptr>().Reset()))
+  constexpr Ptr &operator=(std::nullptr_t /* other */) noexcept(
+      noexcept(std::declval<Ptr>().Reset()))
   {
     Reset();
     return *this;
@@ -241,7 +245,8 @@ public:
     other.ptr_ = nullptr;
   }
 
-  constexpr Ptr &operator=(Ptr const &other) noexcept(noexcept(std::declval<Ptr>().Release()) && noexcept(std::declval<Ptr>().AddRef()))
+  constexpr Ptr &operator=(Ptr const &other) noexcept(noexcept(std::declval<Ptr>().Release()) &&
+                                                      noexcept(std::declval<Ptr>().AddRef()))
   {
     if (ptr_ != other.ptr_)
     {
@@ -264,7 +269,8 @@ public:
   }
 
   template <typename U>
-  constexpr Ptr &operator=(Ptr<U> const &other) noexcept(noexcept(std::declval<Ptr>().Release()) && noexcept(std::declval<Ptr>().AddRef()))
+  constexpr Ptr &operator=(Ptr<U> const &other) noexcept(noexcept(std::declval<Ptr>().Release()) &&
+                                                         noexcept(std::declval<Ptr>().AddRef()))
   {
     if (ptr_ != other.ptr_)
     {

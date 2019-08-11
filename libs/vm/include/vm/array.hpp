@@ -36,7 +36,7 @@ struct GetElementType
   using type = typename GetStorageType<T>::type;
 };
 template <typename T>
-struct GetElementType<T, typename std::enable_if_t<std::is_same<T, bool>::value>>
+struct GetElementType<T, std::enable_if_t<std::is_same<T, bool>::value>>
 {
   // ElementType must NOT be bool because std::vector<bool> is a partial specialisation
   using type = uint8_t;
