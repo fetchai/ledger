@@ -89,7 +89,7 @@ template <typename T, typename = void>
 struct ParameterTypeGetter;
 template <typename T>
 struct ParameterTypeGetter<
-    T, typename std::enable_if_t<IsPrimitiveParameter<T>::value || IsVariantParameter<T>::value>>
+    T, std::enable_if_t<IsPrimitiveParameter<T>::value || IsVariantParameter<T>::value>>
 {
   static TypeIndex GetTypeIndex()
   {
@@ -97,7 +97,7 @@ struct ParameterTypeGetter<
   }
 };
 template <typename T>
-struct ParameterTypeGetter<T, typename std::enable_if_t<IsPtrParameter<T>::value>>
+struct ParameterTypeGetter<T, std::enable_if_t<IsPtrParameter<T>::value>>
 {
   static TypeIndex GetTypeIndex()
   {
