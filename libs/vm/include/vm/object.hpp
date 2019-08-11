@@ -366,37 +366,37 @@ private:
 };
 
 template <typename L, typename R>
-inline constexpr bool operator==(Ptr<L> const &lhs, Ptr<R> const &rhs) noexcept
+constexpr bool operator==(Ptr<L> const &lhs, Ptr<R> const &rhs) noexcept
 {
   return (lhs.ptr_ == static_cast<L *>(rhs.ptr_));
 }
 
 template <typename L>
-inline constexpr bool operator==(Ptr<L> const &lhs, std::nullptr_t /* rhs */) noexcept
+constexpr bool operator==(Ptr<L> const &lhs, std::nullptr_t /* rhs */) noexcept
 {
   return (lhs.ptr_ == nullptr);
 }
 
 template <typename R>
-inline constexpr bool operator==(std::nullptr_t /* lhs */, Ptr<R> const &rhs) noexcept
+constexpr bool operator==(std::nullptr_t /* lhs */, Ptr<R> const &rhs) noexcept
 {
   return (nullptr == rhs.ptr_);
 }
 
 template <typename L, typename R>
-inline constexpr bool operator!=(Ptr<L> const &lhs, Ptr<R> const &rhs) noexcept
+constexpr bool operator!=(Ptr<L> const &lhs, Ptr<R> const &rhs) noexcept
 {
   return (lhs.ptr_ != static_cast<L *>(rhs.ptr_));
 }
 
 template <typename L>
-inline constexpr bool operator!=(Ptr<L> const &lhs, std::nullptr_t /* rhs */) noexcept
+constexpr bool operator!=(Ptr<L> const &lhs, std::nullptr_t /* rhs */) noexcept
 {
   return (lhs.ptr_ != nullptr);
 }
 
 template <typename R>
-inline constexpr bool operator!=(std::nullptr_t /* lhs */, Ptr<R> const &rhs) noexcept
+constexpr bool operator!=(std::nullptr_t /* lhs */, Ptr<R> const &rhs) noexcept
 {
   return (nullptr != rhs.ptr_);
 }
