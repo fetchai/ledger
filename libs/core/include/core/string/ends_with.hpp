@@ -22,7 +22,7 @@
 namespace fetch {
 namespace core {
 
-bool EndsWith(std::string const &value, std::string const &ending);
+bool EndsWith(std::string const &value, std::string const &suffix);
 
 }  // namespace core
 }  // namespace fetch

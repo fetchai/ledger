@@ -17,18 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include <algorithm>
-#include <cstring>
 #include <string>
 
 namespace fetch {
 namespace string {
 
-inline void ToLower(std::string &text)
-{
-  std::transform(text.begin(), text.end(), text.begin(),
-                 [](char c) -> char { return static_cast<char>(std::tolower(c)); });
-}
+void ToLower(std::string &text);
 
 }  // namespace string
 }  // namespace fetch
