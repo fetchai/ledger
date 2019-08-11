@@ -229,7 +229,7 @@ template <class N>
 static constexpr auto DecV = Dec<N>::value;
 
 /**
- * Returns its argument logically negated.
+ * Logical negation.
  *
  * @param N a class with static constant member value coercible to bool
  * @return
@@ -238,6 +238,28 @@ template <class B>
 using Not = BoolConstant<!B::value>;
 template <class B>
 static constexpr auto NotV = Not<B>::value;
+
+/**
+ * Apply a function to a pack of arguments.
+ *
+ * @param F an arbitrary class template
+ * @param Args an arbitrary Pack<T0...>
+ * @return F<T0...>
+ */
+template <template <class...> class F, class Args>
+struct Apply;
+
+template <template <class...> class F, class Args>
+using ApplyT = typename Apply<F, Args>::type;
+
+template <template <class...> class F, class Args>
+static constexpr auto ApplyV = ApplyT<F, Args>::value;
+
+template <template <class...> class F, class... Args>
+struct Apply<F, Pack<Args...>>
+{
+  using type = F<Args...>;
+};
 
 /**
  * Function composition.

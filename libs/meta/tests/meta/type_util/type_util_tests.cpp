@@ -329,3 +329,11 @@ TEST(TypeUtilTests, SwitchWithDefaultAndVoidReturnType)
 
   ASSERT_HOLDS(v == Values{'H', 42, 3});
 }
+
+TEST(PackTests, Apply)
+{
+  ASSERT_TYPE_EQ(fetch::type_util::ApplyT<std::is_constructible, char,
+                                          fetch::pack::Pack<int, NonConstructible>, double>,
+                 std::is_constructible<char, int, NonConstructible, double>);
+  ASSERT_HOLDS(fetch::type_util::ApplyV<fetch::pack::Not, std::false_type>);
+}

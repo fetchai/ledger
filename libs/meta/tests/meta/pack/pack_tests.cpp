@@ -334,3 +334,10 @@ TEST(PackTests, Args)
   ASSERT_TYPE_EQ(fetch::pack::ArgsT<decltype(&NonConstructible::M)>, InputList);
   ASSERT_TYPE_EQ(fetch::pack::ArgsT<decltype(&NonConstructible::CM)>, InputList);
 }
+
+TEST(PackTests, Apply)
+{
+  ASSERT_TYPE_EQ(fetch::pack::ApplyT<std::is_constructible, InputList>,
+                 std::is_constructible<char, int, NonConstructible, double>);
+  ASSERT_HOLDS(fetch::pack::ApplyV<fetch::pack::Not, fetch::pack::Pack<std::false_type>>);
+}

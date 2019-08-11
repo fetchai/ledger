@@ -78,6 +78,22 @@ template <bool b>
 using BoolConstant = pack::BoolConstant<b>;
 
 /**
+ * Apply a function to a pack of arguments.
+ *
+ * @param F an arbitrary class template
+ * @param Args an arbitrary Pack<T0...>
+ * @return F<T0...>
+ */
+template <template <class...> class F, class... Args>
+using Apply = pack::Apply<F, pack::ConcatT<Args...>>;
+
+template <template <class...> class F, class... Args>
+using ApplyT = typename Apply<F, Args...>::type;
+
+template <template <class...> class F, class... Args>
+static constexpr auto ApplyV = ApplyT<F, Args...>::value;
+
+/**
  * Left fold of a function over a pack.
  * Zero value is taken from the pack itself, so the latter should be non-empty.
  * (Similar to foldl1 in Prelude.PreludeList.)
