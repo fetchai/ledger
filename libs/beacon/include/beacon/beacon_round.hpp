@@ -14,26 +14,28 @@
 namespace fetch {
 namespace beacon {
 
-struct BeaconRoundDetails
+struct Aeon
 {
-  using BeaconManager  = dkg::BeaconManager;
-  using Identity       = crypto::Identity;
-  using ConstByteArray = byte_array::ConstByteArray;
-  using SignatureShare = dkg::BeaconManager::SignedMessage;
+  using Identity = crypto::Identity;
 
-  BeaconManager manager{};
-
-  /// Serializable
-  /// @{
   std::unordered_set<Identity> members{};
   uint64_t                     round_start{0};
   uint64_t                     round_end{0};
-  // TODO: Verification vectors
-  /// @}
+};
+
+struct BeaconRoundDetails
+{
+  using BeaconManager  = dkg::BeaconManager;
+  using ConstByteArray = byte_array::ConstByteArray;
+  using SignatureShare = dkg::BeaconManager::SignedMessage;
+
+  BeaconManager  manager{};
+  SignatureShare member_share;
+
+  Aeon aeon;
 
   std::atomic<bool> ready{false};
-
-  SignatureShare member_share;
+  std::atomic<bool> observe_only{false};
 };
 
 }  // namespace beacon

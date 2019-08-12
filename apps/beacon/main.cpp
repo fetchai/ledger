@@ -81,14 +81,15 @@ struct CabinetNode
 
 int main()
 {
-  constexpr uint16_t cabinet_size       = 32;
-  constexpr uint16_t number_of_cabinets = 1;
+  constexpr uint16_t cabinet_size       = 5;
+  constexpr uint16_t number_of_cabinets = 3;
+  constexpr uint16_t number_of_nodes    = cabinet_size * number_of_cabinets;
 
   // Initialising the BLS library
   crypto::bls::Init();
 
   std::vector<std::unique_ptr<CabinetNode>> committee;
-  for (uint16_t ii = 0; ii < cabinet_size; ++ii)
+  for (uint16_t ii = 0; ii < number_of_nodes; ++ii)
   {
     auto port_number = static_cast<uint16_t>(9000 + ii);
     committee.emplace_back(new CabinetNode{port_number, ii});
@@ -96,9 +97,9 @@ int main()
   std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
   // Connect muddles together (localhost for this example)
-  for (uint32_t ii = 0; ii < cabinet_size; ii++)
+  for (uint32_t ii = 0; ii < number_of_nodes; ii++)
   {
-    for (uint32_t jj = ii + 1; jj < cabinet_size; jj++)
+    for (uint32_t jj = ii + 1; jj < number_of_nodes; jj++)
     {
       committee[ii]->muddle.AddPeer(
           fetch::network::Uri{"tcp://127.0.0.1:" + std::to_string(committee[jj]->muddle_port)});
@@ -107,13 +108,13 @@ int main()
 
   // Waiting until all are connected
   uint32_t kk = 0;
-  while (kk != cabinet_size)
+  while (kk != number_of_nodes)
   {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    for (uint32_t mm = kk; mm < cabinet_size; ++mm)
+    for (uint32_t mm = kk; mm < number_of_nodes; ++mm)
     {
       if (committee[mm]->muddle.AsEndpoint().GetDirectlyConnectedPeers().size() !=
-          (cabinet_size - 1))
+          (number_of_nodes - 1))
       {
         break;
       }
@@ -151,13 +152,14 @@ int main()
   i = 0;
   while (true)
   {
+    auto cabinet = all_cabinets[i % number_of_cabinets];
     for (auto &member : committee)
     {
-      auto cabinet = all_cabinets[i % number_of_cabinets];
-      member->beacon_service.StartNewCabinet(cabinet, static_cast<uint32_t>(cabinet.size() / 2));
+      member->beacon_service.StartNewCabinet(cabinet, static_cast<uint32_t>(cabinet.size() / 2),
+                                             i * 10, (i + 1) * 10);
     }
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(200000));
+    std::this_thread::sleep_for(std::chrono::milliseconds(3000));
     ++i;
   }
 

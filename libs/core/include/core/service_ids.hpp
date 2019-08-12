@@ -52,7 +52,8 @@ static constexpr uint64_t CHANNEL_RPC_BROADCAST = 301;
 static constexpr uint16_t CHANNEL_SECRET_KEY    = 400;
 static constexpr uint16_t CHANNEL_CONTRIBUTIONS = 401;
 
-static constexpr uint16_t CHANNEL_ID_DISTRIBUTION = 450;
+static constexpr uint16_t CHANNEL_ID_DISTRIBUTION      = 450;
+static constexpr uint16_t CHANNEL_ENTROPY_DISTRIBUTION = 451;
 
 // RPC Protocol identifiers
 static constexpr uint64_t RPC_MAIN_CHAIN = 199;

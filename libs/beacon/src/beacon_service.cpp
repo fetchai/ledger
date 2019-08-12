@@ -1,3 +1,5 @@
+#include "beacon/beacon_round.hpp"
+
 #include "beacon/beacon_service.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
@@ -31,6 +33,9 @@ char const *ToString(BeaconService::State state)
   case BeaconService::State::COMITEE_ROTATION:
     text = "Waiting for shares";
     break;
+  case BeaconService::State::OBSERVE_ENTROPY_GENERATION:
+    text = "Observe entropy generation";
+    break;
   }
 
   return text;
@@ -42,15 +47,13 @@ BeaconService::BeaconService(Endpoint &endpoint, CertificatePtr certificate)
   , endpoint_{endpoint}
   , state_machine_{std::make_shared<StateMachine>("BeaconService", State::WAIT_FOR_SETUP_COMPLETION,
                                                   ToString)}
+  , entropy_subscription_(endpoint_.Subscribe(SERVICE_DKG, CHANNEL_ENTROPY_DISTRIBUTION))
   , rpc_client_{"BeaconService", endpoint_, SERVICE_DKG, CHANNEL_RPC}
   , cabinet_creator_{endpoint_, identity_}  // TODO: Make shared
   , cabinet_creator_protocol_{cabinet_creator_}
   , beacon_protocol_{*this}
 
 {
-  // TODO: Make configurable
-  Entropy start_entropy;
-  entropy_queue_.push_back(start_entropy);
 
   // Attaching beacon ready callback handler
   cabinet_creator_.SetBeaconReadyCallback([this](SharedBeacon beacon) {
@@ -63,7 +66,24 @@ BeaconService::BeaconService(Endpoint &endpoint, CertificatePtr certificate)
   rpc_server_->Add(RPC_BEACON_SETUP, &cabinet_creator_protocol_);
   rpc_server_->Add(RPC_BEACON, &beacon_protocol_);
 
-  // BeaconService::State machine:
+  // Subcribing to incoming entropy
+  entropy_subscription_->SetMessageHandler(
+      [this](muddle::Packet::Address const &from, uint16_t, uint16_t, uint16_t,
+             muddle::Packet::Payload const &payload, muddle::Packet::Address transmitter) {
+        FETCH_UNUSED(from);
+        FETCH_UNUSED(transmitter);
+
+        Serializer serialiser{payload};
+
+        Entropy result;
+        serialiser >> result;
+
+        std::lock_guard<std::mutex> lock(mutex_);
+
+        this->incoming_entropy_.emplace(std::move(result));
+      });
+
+  // Pipe 1
   state_machine_->RegisterHandler(State::WAIT_FOR_SETUP_COMPLETION, this,
                                   &BeaconService::OnWaitForSetupCompletionState);
   state_machine_->RegisterHandler(State::PREPARE_ENTROPY_GENERATION, this,
@@ -74,6 +94,9 @@ BeaconService::BeaconService(Endpoint &endpoint, CertificatePtr certificate)
                                   &BeaconService::OnCollectSignaturesState);
   state_machine_->RegisterHandler(State::COMPLETE, this, &BeaconService::OnCompleteState);
   state_machine_->RegisterHandler(State::COMITEE_ROTATION, this, &BeaconService::OnComiteeState);
+
+  state_machine_->RegisterHandler(State::OBSERVE_ENTROPY_GENERATION, this,
+                                  &BeaconService::OnObserveEntropyGeneration);
 }
 
 void BeaconService::StartNewCabinet(CabinetMemberList members, uint32_t threshold,
@@ -81,23 +104,25 @@ void BeaconService::StartNewCabinet(CabinetMemberList members, uint32_t threshol
 {
   std::lock_guard<std::mutex> lock(mutex_);
 
-  // TODO: Separate the details from the managing components
   SharedBeacon beacon = std::make_shared<BeaconRoundDetails>();
 
-  beacon->manager.SetCertificate(certificate_);
-  beacon->manager.Reset(members.size(), threshold);
-  beacon->round_start = round_start;
-  beacon->round_end   = round_end;
-  beacon->members     = std::move(members);
-  assert(beacon != nullptr);
+  if (members.find(identity_) == members.end())
+  {
+    beacon->observe_only = true;
+  }
+  else
+  {
+    beacon->manager.SetCertificate(certificate_);
+    beacon->manager.Reset(members.size(), threshold);
+  }
 
+  beacon->aeon.round_start = round_start;
+  beacon->aeon.round_end   = round_end;
+  beacon->aeon.members     = std::move(members);
+
+  // Even "observe only" details need to pass through the setup phase
+  // to preserve order.
   cabinet_creator_.QueueSetup(beacon);
-}
-
-void BeaconService::SkipRound()
-{
-  std::lock_guard<std::mutex> lock(mutex_);
-  ++next_cabinet_generation_number_;
 }
 
 BeaconService::State BeaconService::OnWaitForSetupCompletionState()
@@ -113,25 +138,71 @@ BeaconService::State BeaconService::OnWaitForSetupCompletionState()
   {
     active_beacon_ = beacon_queue_.front();
     beacon_queue_.pop_front();
-    return State::PREPARE_ENTROPY_GENERATION;
+
+    if (active_beacon_->observe_only)
+    {
+      return State::OBSERVE_ENTROPY_GENERATION;
+    }
+    else
+    {
+      return State::PREPARE_ENTROPY_GENERATION;
+    }
   }
 
+  state_machine_->Delay(std::chrono::milliseconds(500));
   return State::WAIT_FOR_SETUP_COMPLETION;
+}
+
+BeaconService::State BeaconService::OnObserveEntropyGeneration()
+{
+  std::lock_guard<std::mutex> lock(mutex_);
+
+  // Iterating through incoming
+  while (incoming_entropy_.size() > 0)
+  {
+    current_entropy_ = incoming_entropy_.top();
+
+    // Skipping entropy from previous rounds
+    if (next_entropy_.round > current_entropy_.round)
+    {
+      incoming_entropy_.pop();
+      continue;
+    }
+
+    // If the round matches what we expect ...
+    if (next_entropy_.round == current_entropy_.round)
+    {
+      incoming_entropy_.pop();
+
+      // ... the validity is verified
+
+      // TODO: Check seed
+      // TODO: Verify group signature
+
+      // and we complete.
+      return State::COMPLETE;
+    }
+  }
+
+  state_machine_->Delay(std::chrono::milliseconds(500));
+  return State::OBSERVE_ENTROPY_GENERATION;
 }
 
 BeaconService::State BeaconService::OnPrepareEntropyGeneration()
 {
   std::lock_guard<std::mutex> lock(mutex_);
 
-  if (entropy_queue_.empty())
-  {
-    state_machine_->Delay(std::chrono::milliseconds(500));
-    return State::PREPARE_ENTROPY_GENERATION;
-  }
-
+  /*
+    if (next_entropy_.round >= active_beacon_.round_end)
+    {
+      state_machine_->Delay(std::chrono::milliseconds(500));
+      return State::PREPARE_ENTROPY_GENERATION;
+    }
+  */
   // Finding next scheduled entropy request
-  current_entropy_ = entropy_queue_.front();
-  entropy_queue_.pop_front();
+  current_entropy_ = next_entropy_;
+
+  // TODO: Check that commitee is fit to generate this entropy
 
   // Generating signature
   active_beacon_->manager.SetMessage(current_entropy_.seed);
@@ -144,7 +215,7 @@ BeaconService::State BeaconService::OnBroadcastSignatureState()
 {
   std::lock_guard<std::mutex> lock(mutex_);
 
-  for (auto &member : active_beacon_->members)
+  for (auto &member : active_beacon_->aeon.members)
   {
     if (member == identity_)
     {
@@ -171,18 +242,18 @@ void BeaconService::SubmitSignatureShare(uint64_t round, SignatureShare share)
     return;
   }
 
-  if (round == current_entropy_.round)
+  if ((active_beacon_->aeon.round_start <= round) && (round < active_beacon_->aeon.round_end))
   {
-    // TODO: Refactor to AddSignatureShare(share);
-    if (!active_beacon_->manager.AddSignaturePart(share.identity, share.public_key,
-                                                  share.signature))
+    if (round == current_entropy_.round)
     {
-      // TODO: Received invalid signature - deal with it.
-      std::cout << "Signature invalid!!!" << std::endl;
+      // TODO: Refactor to AddSignatureShare(share);
+      if (!active_beacon_->manager.AddSignaturePart(share.identity, share.public_key,
+                                                    share.signature))
+      {
+        // TODO: Received invalid signature - deal with it.
+        std::cout << "Signature invalid!!!" << std::endl;
+      }
     }
-
-    // Storing signature
-    current_entropy_.signatures.push_back(share);
   }
   else if (round > current_entropy_.round)
   {
@@ -203,7 +274,6 @@ SignatureShare BeaconService::RequestSignatureShare(uint64_t round)
 */
 BeaconService::State BeaconService::OnCollectSignaturesState()
 {
-  std::cout << "COLLECTING SIGNATURES" << std::endl;
   std::lock_guard<std::mutex> lock(mutex_);
 
   std::deque<std::pair<uint64_t, SignatureShare>> remaining_shares;
@@ -220,9 +290,6 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
         // TODO: Received invalid signature - deal with it.
         std::cout << "Signature invalid!!!" << std::endl;
       }
-
-      // Storing signature
-      current_entropy_.signatures.push_back(share);
     }
     else if (f.first > current_entropy_.round)
     {
@@ -241,6 +308,15 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
 
   if (active_beacon_->manager.Verify())
   {
+    // Storing the result of current entropy
+    current_entropy_.signature = active_beacon_->manager.GroupSignature();
+    auto sign                  = crypto::bls::ToBinary(current_entropy_.signature);
+    current_entropy_.entropy   = crypto::Hash<crypto::SHA256>(crypto::Hash<crypto::SHA256>(sign));
+
+    Serializer msgser;
+    msgser << current_entropy_;
+    endpoint_.Broadcast(SERVICE_DKG, CHANNEL_ENTROPY_DISTRIBUTION, msgser.data());
+
     return State::COMPLETE;
   }
 
@@ -252,39 +328,37 @@ BeaconService::State BeaconService::OnCompleteState()
 {
   std::lock_guard<std::mutex> lock(mutex_);
 
-  // Storing the result of current entropy
-  current_entropy_.entropy = crypto::Hash<crypto::SHA256>(
-      crypto::Hash<crypto::SHA256>(active_beacon_->manager.GroupSignature()));
+  // Adding new entropy
   ready_entropy_queue_.push_back(current_entropy_);
 
   std::cout << "########### ..~~--=== " << byte_array::ToBase64(current_entropy_.entropy)
             << " ===--~~.. ###########" << std::endl;
 
   // Preparing next
-
-  next_entropy.seed  = current_entropy_.entropy;
-  next_entropy.round = 1 + current_entropy_.round;
-
-  entropy_queue_.push_back(next_entropy);  // TODO: Get rid of queue
+  next_entropy_       = Entropy();
+  next_entropy_.seed  = current_entropy_.entropy;
+  next_entropy_.round = 1 + current_entropy_.round;
 
   return State::COMITEE_ROTATION;
 }
 
 BeaconService::State BeaconService::OnComiteeState()
 {
-  // TODO: Check if commitee needs changing
-  return State::WAIT_FOR_SETUP_COMPLETION;
-}
-
-void BeaconService::ScheduleEntropyGeneration()
-{
-  Entropy next_entropy = entropy_queue_.back();
-  ++next_entropy.number;
-  if (next_entropy.number > 30)
+  std::lock_guard<std::mutex> lock(mutex_);
+  if (next_entropy_.round < active_beacon_->aeon.round_end)
   {
-    next_entropy.number = 0;
-    ++next_entropy.round;
+    if (active_beacon_->observe_only)
+    {
+      return State::OBSERVE_ENTROPY_GENERATION;
+    }
+
+    return State::PREPARE_ENTROPY_GENERATION;
   }
+
+  // Done with the beacon.
+  active_beacon_.reset();
+
+  return State::WAIT_FOR_SETUP_COMPLETION;
 }
 
 std::weak_ptr<core::Runnable> BeaconService::GetMainRunnable()

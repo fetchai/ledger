@@ -85,11 +85,21 @@ BeaconSetupService::State BeaconSetupService::OnIdle()
       assert(beacon_ != nullptr);
 
       beacon_queue_.pop_front();
-      return State::BROADCAST_ID;
+
+      // Observe only does not require any setup
+      if (beacon_->observe_only)
+      {
+        return State::BEACON_READY;
+      }
+      else
+      {
+        // Initiating setup
+        return State::BROADCAST_ID;
+      }
     }
   }
 
-  //    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  state_machine_->Delay(std::chrono::milliseconds(100));
   return State::IDLE;
 }
 
@@ -103,13 +113,10 @@ BeaconSetupService::State BeaconSetupService::OnBroadcastID()
   member.id       = beacon_->manager.id();
   member_details_queue_.push_back(member);
 
-  //    Serializer serializer;
-  //    serializer << member.identity << member.id;
-  // TODO: Sign
-
   Serializer msgser;
   msgser << member;
-  std::cout << "Broadcasting ID" << std::endl;
+
+  // TODO: Require signed connection
   endpoint_.Broadcast(SERVICE_DKG, CHANNEL_ID_DISTRIBUTION, msgser.data());
   return State::WAIT_FOR_IDS;
 }
@@ -123,8 +130,8 @@ BeaconSetupService::State BeaconSetupService::WaitForIDs()
   std::vector<CabinetMemberDetails> remaining;
   for (auto &member : member_details_queue_)
   {
-    auto it = beacon_->members.find(member.identity);
-    if (it == beacon_->members.end())
+    auto it = beacon_->aeon.members.find(member.identity);
+    if (it == beacon_->aeon.members.end())
     {
       remaining.push_back(member);
     }
@@ -136,7 +143,7 @@ BeaconSetupService::State BeaconSetupService::WaitForIDs()
   member_details_queue_ = remaining;
 
   // Checking if we are done
-  if (member_details_.size() < beacon_->members.size())
+  if (member_details_.size() < beacon_->aeon.members.size())
   {
     // TODO: Create strategy for missing identities.
     //      std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -161,7 +168,7 @@ BeaconSetupService::State BeaconSetupService::CreateShares()
   beacon_->manager.GenerateContribution();
 
   // Pre-paring to send
-  for (auto &counter_party : beacon_->members)
+  for (auto &counter_party : beacon_->aeon.members)
   {
     DeliveryDetails details;
     details.was_delivered                  = false;
@@ -173,7 +180,6 @@ BeaconSetupService::State BeaconSetupService::CreateShares()
 
 BeaconSetupService::State BeaconSetupService::SendShares()
 {
-  std::cout << "Sending shares" << std::endl;
   // Getting information common to all counter parties
   {
     std::lock_guard<std::mutex> lock(mutex_);
@@ -187,19 +193,15 @@ BeaconSetupService::State BeaconSetupService::SendShares()
       {
         continue;
       }
-      auto counter_party = delivery_info.first;
-      // TODO Get address
-      auto share = beacon_->manager.GetShare(counter_party);
 
-      // TODO: Add signature
+      auto counter_party = delivery_info.first;
+      auto share         = beacon_->manager.GetShare(counter_party);
 
       details.response =
           rpc_client_.CallSpecificAddress(counter_party.identifier(), RPC_BEACON_SETUP,
                                           SUBMIT_SHARE, from, share, verification_vector);
     }
   }
-
-  //    std::this_thread::sleep_for(std::chrono::milliseconds(300));
 
   // Gettting response
   bool all_delivered = true;
@@ -245,7 +247,6 @@ bool BeaconSetupService::SubmitShare(Identity from, PrivateKey share,
                                      VerificationVector verification_vector)
 {
   std::lock_guard<std::mutex> lock(mutex_);
-  std::cout << " - Recieving share" << std::endl;
   // TODO: Check signature
   // TODO:  member is part of cabinet
 
@@ -263,22 +264,18 @@ BeaconSetupService::State BeaconSetupService::OnWaitForShares()
 {
   {
     std::lock_guard<std::mutex> lock(mutex_);
-    std::cout << " -- > " << submitted_shares_.size() << std::endl;
-    if (submitted_shares_.size() == beacon_->members.size())
+    if (submitted_shares_.size() == beacon_->aeon.members.size())
     {
       return State::GENERATE_KEYS;
     }
   }
 
-  std::cout << "Wait for shares" << std::endl;
-  std::this_thread::sleep_for(std::chrono::milliseconds(10));
-
+  state_machine_->Delay(std::chrono::milliseconds(10));
   return State::WAIT_FOR_SHARES;
 }
 
 BeaconSetupService::State BeaconSetupService::OnGenerateKeys()
 {
-  std::cout << "Generate keys" << std::endl;
   std::lock_guard<std::mutex> lock(mutex_);
 
   // Adding shares
@@ -307,6 +304,11 @@ BeaconSetupService::State BeaconSetupService::OnBeaconReady()
   }
 
   beacon_.reset();
+  member_details_queue_.clear();
+  member_details_.clear();
+  share_delivery_details_.clear();
+  submitted_shares_.clear();
+
   return State::IDLE;
 }
 

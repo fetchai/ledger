@@ -6,16 +6,17 @@
 #include "network/muddle/rpc/server.hpp"
 #include "network/muddle/subscription.hpp"
 
-#include "beacon_protocol.hpp"
-#include "beacon_round.hpp"
-#include "beacon_setup_protocol.hpp"
-#include "beacon_setup_service.hpp"
-#include "cabinet_member_details.hpp"
-#include "entropy.hpp"
+#include "beacon/beacon_protocol.hpp"
+#include "beacon/beacon_round.hpp"
+#include "beacon/beacon_setup_protocol.hpp"
+#include "beacon/beacon_setup_service.hpp"
+#include "beacon/cabinet_member_details.hpp"
+#include "beacon/entropy.hpp"
 
 #include <cstdint>
 #include <deque>
 #include <iostream>
+#include <queue>
 #include <random>
 #include <stdexcept>
 #include <unordered_map>
@@ -34,7 +35,10 @@ public:
     BROADCAST_SIGNATURE,
     COLLECT_SIGNATURES,
     COMPLETE,
-    COMITEE_ROTATION
+    COMITEE_ROTATION,
+
+    OBSERVE_ENTROPY_GENERATION
+
   };
 
   using Identity          = crypto::Identity;
@@ -53,9 +57,11 @@ public:
   using ConstByteArray    = byte_array::ConstByteArray;
   using Server            = fetch::muddle::rpc::Server;
   using ServerPtr         = std::shared_ptr<Server>;
+  using SubscriptionPtr   = muddle::MuddleEndpoint::SubscriptionPtr;
   using StateMachine      = core::StateMachine<State>;
   using StateMachinePtr   = std::shared_ptr<StateMachine>;
   using SignatureShare    = BeaconRoundDetails::SignatureShare;
+  using Serializer        = serializers::MsgPackSerializer;
 
   BeaconService(Endpoint &endpoint, CertificatePtr certificate);
 
@@ -68,6 +74,7 @@ public:
 
   State OnWaitForSetupCompletionState();
   State OnPrepareEntropyGeneration();
+  State OnObserveEntropyGeneration();
 
   State OnBroadcastSignatureState();
   State OnCollectSignaturesState();
@@ -75,7 +82,6 @@ public:
 
   State OnComiteeState();
   void  SubmitSignatureShare(uint64_t round, SignatureShare);
-  void  ScheduleEntropyGeneration();
 
   /// Beacon runnables
   /// @{
@@ -92,14 +98,18 @@ private:
   /// Beacon and entropy control units
   /// @{
   std::deque<SharedBeacon> beacon_queue_;
-  std::deque<Entropy>      entropy_queue_;
+  Entropy                  next_entropy_{};
   std::deque<Entropy>      ready_entropy_queue_;
-  uint64_t                 next_cabinet_generation_number_{0};
-  uint64_t                 next_cabinet_number_{0};
 
   std::shared_ptr<BeaconRoundDetails>             active_beacon_;
   Entropy                                         current_entropy_;
   std::deque<std::pair<uint64_t, SignatureShare>> signature_queue_;
+  /// @}
+
+  /// Observing beacon
+  /// @{
+  SubscriptionPtr              entropy_subscription_;
+  std::priority_queue<Entropy> incoming_entropy_;
   /// @}
 
   ServerPtr           rpc_server_;

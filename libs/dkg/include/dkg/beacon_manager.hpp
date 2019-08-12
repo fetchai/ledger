@@ -143,9 +143,9 @@ public:
   /*
    * @brief returns the signature as a ConstByteArray
    */
-  ConstByteArray GroupSignature() const
+  Signature GroupSignature() const
   {
-    return crypto::bls::ToBinary(group_signature_);
+    return group_signature_;
   }
 
   /// Property methods

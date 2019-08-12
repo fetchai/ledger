@@ -12,7 +12,7 @@
 namespace fetch {
 namespace beacon {
 
-struct CabinetMemberDetails
+struct CabinetMemberDetails  // TODO: rename into CabinetMember
 {
   using BeaconManager = dkg::BeaconManager;
   using Identity      = crypto::Identity;

@@ -7,9 +7,9 @@
 #include "network/muddle/rpc/server.hpp"
 #include "network/muddle/subscription.hpp"
 
-#include "beacon_round.hpp"
-#include "cabinet_member_details.hpp"
-#include "entropy.hpp"
+#include "beacon/beacon_round.hpp"
+#include "beacon/cabinet_member_details.hpp"
+#include "beacon/entropy.hpp"
 
 namespace fetch {
 namespace beacon {
