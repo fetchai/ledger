@@ -34,14 +34,12 @@ TYPED_TEST_CASE(Convolution1DTest, MyTypes);
 TYPED_TEST(Convolution1DTest, set_input_and_evaluate_test)  // Use the class as a subgraph
 {
   using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
   using SizeType  = typename TypeParam::SizeType;
 
   SizeType const input_channels  = 3;
   SizeType const output_channels = 5;
   SizeType const input_height    = 3;
   SizeType const kernel_height   = 3;
-  SizeType const output_height   = 1;
   SizeType const stride_size     = 1;
 
   // Generate input
@@ -66,15 +64,6 @@ TYPED_TEST(Convolution1DTest, set_input_and_evaluate_test)  // Use the class as 
   ASSERT_EQ(output.shape()[0], 5);
   ASSERT_EQ(output.shape()[1], 1);
   ASSERT_EQ(output.shape()[2], 1);
-
-  ArrayType gt({output_channels, output_height});
-  gt(0, 0) = static_cast<DataType>(-4.28031352977);
-  gt(1, 0) = static_cast<DataType>(-4.03654768132);
-  gt(2, 0) = static_cast<DataType>(8.11192789580);
-  gt(3, 0) = static_cast<DataType>(1.763717529829592);
-  gt(4, 0) = static_cast<DataType>(-1.8677866039798);
-
-  ASSERT_TRUE(output.AllClose(gt, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
 }
 
 TYPED_TEST(Convolution1DTest, ops_forward_test)  // Use the class as an Ops
@@ -87,7 +76,6 @@ TYPED_TEST(Convolution1DTest, ops_forward_test)  // Use the class as an Ops
   SizeType const output_channels = 5;
   SizeType const input_height    = 3;
   SizeType const kernel_height   = 3;
-  SizeType const output_height   = 1;
   SizeType const stride_size     = 1;
 
   // Generate input
@@ -113,15 +101,6 @@ TYPED_TEST(Convolution1DTest, ops_forward_test)  // Use the class as an Ops
   ASSERT_EQ(output.shape()[0], 5);
   ASSERT_EQ(output.shape()[1], 1);
   ASSERT_EQ(output.shape()[2], 1);
-
-  ArrayType gt({output_channels, output_height, 1});
-  gt(0, 0, 0) = static_cast<DataType>(-4.28031352977);
-  gt(1, 0, 0) = static_cast<DataType>(-4.03654768132);
-  gt(2, 0, 0) = static_cast<DataType>(8.11192789580);
-  gt(3, 0, 0) = static_cast<DataType>(1.763717529829592);
-  gt(4, 0, 0) = static_cast<DataType>(-1.8677866039798);
-
-  ASSERT_TRUE(output.AllClose(gt, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
 }
 
 TYPED_TEST(Convolution1DTest, ops_backward_test)  // Use the class as an Ops
@@ -176,29 +155,17 @@ TYPED_TEST(Convolution1DTest, ops_backward_test)  // Use the class as an Ops
   ASSERT_EQ(backprop_error[0].shape()[0], input_channels);
   ASSERT_EQ(backprop_error[0].shape()[1], input_height);
   ASSERT_EQ(backprop_error[0].shape()[2], 1);
-
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(0, 0, 0)), -4.3077492713928222656);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(1, 0, 0)), 9.162715911865234375);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(2, 0, 0)), 0.80360949039459228516);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(0, 1, 0)), 1.2491617202758789062);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(1, 1, 0)), 2.8053097724914550781);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(2, 1, 0)), -4.166011810302734375);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(0, 2, 0)), 2.4086174964904785156);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(1, 2, 0)), -0.86411559581756591797);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).At(2, 2, 0)), -3.5623354911804199219);
 }
 
 TYPED_TEST(Convolution1DTest, node_forward_test)  // Use the class as a Node
 {
   using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
   using SizeType  = typename TypeParam::SizeType;
 
   SizeType const input_channels  = 3;
   SizeType const output_channels = 5;
   SizeType const input_height    = 3;
   SizeType const kernel_height   = 3;
-  SizeType const output_height   = 1;
   SizeType const stride_size     = 1;
 
   // Generate input
@@ -228,15 +195,6 @@ TYPED_TEST(Convolution1DTest, node_forward_test)  // Use the class as a Node
   ASSERT_EQ(prediction.shape()[0], 5);
   ASSERT_EQ(prediction.shape()[1], 1);
   ASSERT_EQ(prediction.shape()[2], 1);
-
-  ArrayType gt({output_channels, output_height, 1});
-  gt(0, 0, 0) = static_cast<DataType>(-4.28031352977);
-  gt(1, 0, 0) = static_cast<DataType>(-4.03654768132);
-  gt(2, 0, 0) = static_cast<DataType>(8.11192789580);
-  gt(3, 0, 0) = static_cast<DataType>(1.763717529829592);
-  gt(4, 0, 0) = static_cast<DataType>(-1.8677866039798);
-
-  ASSERT_TRUE(prediction.AllClose(gt, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
 }
 
 TYPED_TEST(Convolution1DTest, node_backward_test)  // Use the class as a Node
@@ -292,25 +250,6 @@ TYPED_TEST(Convolution1DTest, node_backward_test)  // Use the class as a Node
   ASSERT_EQ(backprop_error[0].second.shape()[0], input_channels);
   ASSERT_EQ(backprop_error[0].second.shape()[1], input_height);
   ASSERT_EQ(backprop_error[0].second.shape()[2], 1);
-
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(0, 0, 0)),
-                  -4.3077492713928222656);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(1, 0, 0)),
-                  9.162715911865234375);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(2, 0, 0)),
-                  0.80360949039459228516);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(0, 1, 0)),
-                  1.2491617202758789062);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(1, 1, 0)),
-                  2.8053097724914550781);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(2, 1, 0)),
-                  -4.166011810302734375);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(0, 2, 0)),
-                  2.4086174964904785156);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(1, 2, 0)),
-                  -0.86411559581756591797);
-  EXPECT_FLOAT_EQ(static_cast<float>(backprop_error.at(0).second.At(2, 2, 0)),
-                  -3.5623354911804199219);
 }
 
 TYPED_TEST(Convolution1DTest, graph_forward_test)  // Use the class as a Node
@@ -323,7 +262,6 @@ TYPED_TEST(Convolution1DTest, graph_forward_test)  // Use the class as a Node
   SizeType const output_channels = 5;
   SizeType const input_height    = 3;
   SizeType const kernel_height   = 3;
-  SizeType const output_height   = 1;
   SizeType const stride_size     = 1;
 
   // Generate input
@@ -351,15 +289,6 @@ TYPED_TEST(Convolution1DTest, graph_forward_test)  // Use the class as a Node
   ASSERT_EQ(prediction.shape()[0], 5);
   ASSERT_EQ(prediction.shape()[1], 1);
   ASSERT_EQ(prediction.shape()[2], 1);
-
-  ArrayType gt({output_channels, output_height, 1});
-  gt(0, 0, 0) = static_cast<DataType>(-4.28031352977);
-  gt(1, 0, 0) = static_cast<DataType>(-4.03654768132);
-  gt(2, 0, 0) = static_cast<DataType>(8.11192789580);
-  gt(3, 0, 0) = static_cast<DataType>(1.763717529829592);
-  gt(4, 0, 0) = static_cast<DataType>(-1.8677866039798);
-
-  ASSERT_TRUE(prediction.AllClose(gt, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
 }
 
 TYPED_TEST(Convolution1DTest, getStateDict)
@@ -387,8 +316,4 @@ TYPED_TEST(Convolution1DTest, getStateDict)
   ASSERT_NE(weights_ptr, nullptr);
   EXPECT_EQ(weights_ptr->shape(),
             std::vector<SizeType>({output_channels, input_channels, kernel_height, 1}));
-
-  EXPECT_FLOAT_EQ(static_cast<float>(weights_ptr->At(0, 0, 0, 0)), -0.970493f);
-  EXPECT_FLOAT_EQ(static_cast<float>(weights_ptr->At(1, 1, 1, 0)), 0.55109727f);
-  EXPECT_FLOAT_EQ(static_cast<float>(weights_ptr->At(4, 2, 2, 0)), -0.97583634f);
 }
