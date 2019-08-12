@@ -81,11 +81,11 @@ TYPED_TEST(SelfAttentionEncoder, saveparams_test)
 {
   using DataType = typename TypeParam::Type;
 
-  TypeParam data(std::vector<typename TypeParam::SizeType>({12, 25, 4}));
+  fetch::math::SizeType n_heads   = 2;
+  fetch::math::SizeType model_dim = 6;
+  fetch::math::SizeType ff_dim    = 12;
 
-  fetch::math::SizeType n_heads   = 4;
-  fetch::math::SizeType model_dim = 12;
-  fetch::math::SizeType ff_dim    = 24;
+  TypeParam data(std::vector<typename TypeParam::SizeType>({model_dim, 25, n_heads}));
 
   auto sa_layer = std::make_shared<fetch::ml::layers::SelfAttentionEncoder<TypeParam>>(
       n_heads, model_dim, ff_dim);

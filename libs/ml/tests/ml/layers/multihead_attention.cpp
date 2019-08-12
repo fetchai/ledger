@@ -118,10 +118,10 @@ TYPED_TEST(MultiheadAttention, saveparams_test)
 {
   using DataType = typename TypeParam::Type;
 
-  fetch::math::SizeType n_heads   = 4;
-  fetch::math::SizeType model_dim = 12;
+  fetch::math::SizeType n_heads   = 3;
+  fetch::math::SizeType model_dim = 6;
 
-  TypeParam query_data = TypeParam({12, 25, 4});
+  TypeParam query_data = TypeParam({model_dim, 12, n_heads});
   TypeParam key_data   = query_data;
   TypeParam value_data = query_data;
 

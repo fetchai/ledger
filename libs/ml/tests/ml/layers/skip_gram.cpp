@@ -42,8 +42,8 @@ TYPED_TEST(SkipGramTest, saveparams_test)
 
   fetch::math::SizeType in_size    = 1;
   fetch::math::SizeType out_size   = 1;
-  fetch::math::SizeType embed_size = 100;
-  fetch::math::SizeType vocab_size = 1000;
+  fetch::math::SizeType embed_size = 10;
+  fetch::math::SizeType vocab_size = 100;
 
   auto sg_layer = std::make_shared<fetch::ml::layers::SkipGram<TypeParam>>(in_size, out_size,
                                                                            embed_size, vocab_size);
