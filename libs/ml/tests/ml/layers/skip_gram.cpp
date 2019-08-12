@@ -35,7 +35,7 @@ TYPED_TEST_CASE(SkipGramTest, MyTypes);
 
 TYPED_TEST(SkipGramTest, saveparams_test)
 {
-  using DataType = typename TypeParam::Type;
+  using DataType  = typename TypeParam::Type;
   using SizeType  = typename TypeParam::SizeType;
   using LayerType = typename fetch::ml::layers::SkipGram<TypeParam>;
   using SPType    = typename LayerType::SPType;
@@ -58,7 +58,6 @@ TYPED_TEST(SkipGramTest, saveparams_test)
   TypeParam labels({1, 1});
   labels.FillUniformRandom();
 
-
   // Create layer
   LayerType layer(in_size, out_size, embed_size, vocab_size);
 
@@ -69,7 +68,6 @@ TYPED_TEST(SkipGramTest, saveparams_test)
   // Add loss function
   std::string error_output = layer.template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TypeParam>>(
       "num_error", {output_name, label_name});
-
 
   // set input and ForwardPropagate
   layer.SetInput("SkipGram_Input", input);
@@ -137,5 +135,4 @@ TYPED_TEST(SkipGramTest, saveparams_test)
 
   EXPECT_TRUE(prediction3.AllClose(prediction4, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));
-
 }

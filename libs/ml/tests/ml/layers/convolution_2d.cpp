@@ -522,8 +522,8 @@ TYPED_TEST(Convolution2DTest, getStateDict)
 
 TYPED_TEST(Convolution2DTest, saveparams_test)
 {
-  using DataType = typename TypeParam::Type;
-  using SizeType = typename TypeParam::SizeType;
+  using DataType  = typename TypeParam::Type;
+  using SizeType  = typename TypeParam::SizeType;
   using LayerType = typename fetch::ml::layers::Convolution2D<TypeParam>;
   using SPType    = typename LayerType::SPType;
 
@@ -557,7 +557,7 @@ TYPED_TEST(Convolution2DTest, saveparams_test)
   labels.FillUniformRandom();
 
   // Create layer
-  LayerType layer(output_channels, input_channels, kernel_height,stride_size);
+  LayerType layer(output_channels, input_channels, kernel_height, stride_size);
 
   // add label node
   std::string label_name =

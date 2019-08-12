@@ -186,7 +186,7 @@ TYPED_TEST(LayerNormTest, getStateDict)
 
 TYPED_TEST(LayerNormTest, saveparams_test)
 {
-  using DataType = typename TypeParam::Type;
+  using DataType  = typename TypeParam::Type;
   using LayerType = typename fetch::ml::layers::LayerNorm<TypeParam>;
   using SPType    = typename LayerType::SPType;
 
@@ -194,7 +194,7 @@ TYPED_TEST(LayerNormTest, saveparams_test)
   std::string output_name = "LayerNorm_Beta_Addition";
 
   std::vector<fetch::math::SizeType> data_shape = {3, 2};
-  TypeParam                          input       = TypeParam::FromString(
+  TypeParam                          input      = TypeParam::FromString(
       "1, 2, 3, 0;"
       "2, 3, 2, 1;"
       "3, 6, 4, 13");

@@ -79,7 +79,7 @@ TYPED_TEST(SelfAttentionEncoder, backward_dimension_test)  // Use the class as a
 
 TYPED_TEST(SelfAttentionEncoder, saveparams_test)
 {
-  using DataType = typename TypeParam::Type;
+  using DataType  = typename TypeParam::Type;
   using SizeType  = typename TypeParam::SizeType;
   using LayerType = typename fetch::ml::layers::SelfAttentionEncoder<TypeParam>;
   using SPType    = typename LayerType::SPType;
@@ -115,7 +115,7 @@ TYPED_TEST(SelfAttentionEncoder, saveparams_test)
   TypeParam prediction;
   prediction = layer.ForwardPropagate(output_name, true);
 
-   // extract saveparams
+  // extract saveparams
   auto sp = layer.GetOpSaveableParams();
 
   // downcast to correct type
@@ -171,5 +171,4 @@ TYPED_TEST(SelfAttentionEncoder, saveparams_test)
 
   EXPECT_TRUE(prediction3.AllClose(prediction4, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));
-
 }
