@@ -36,28 +36,51 @@ TYPED_TEST_CASE(SkipGramTest, MyTypes);
 TYPED_TEST(SkipGramTest, saveparams_test)
 {
   using DataType = typename TypeParam::Type;
+  using SizeType  = typename TypeParam::SizeType;
+  using LayerType = typename fetch::ml::layers::SkipGram<TypeParam>;
+  using SPType    = typename LayerType::SPType;
 
-  TypeParam input(std::vector<typename TypeParam::SizeType>({1, 1}));
-  TypeParam context(std::vector<typename TypeParam::SizeType>({1, 1}));
+  SizeType in_size    = 1;
+  SizeType out_size   = 1;
+  SizeType embed_size = 10;
+  SizeType vocab_size = 100;
 
-  fetch::math::SizeType in_size    = 1;
-  fetch::math::SizeType out_size   = 1;
-  fetch::math::SizeType embed_size = 10;
-  fetch::math::SizeType vocab_size = 100;
+  std::string output_name = "SkipGram_Sigmoid";
 
-  auto sg_layer = std::make_shared<fetch::ml::layers::SkipGram<TypeParam>>(in_size, out_size,
-                                                                           embed_size, vocab_size);
+  // create input
 
-  sg_layer->SetInput("SkipGram_Input", input);
-  sg_layer->SetInput("SkipGram_Context", context);
+  TypeParam input({1, 1});
+  TypeParam context({1, 1});
+  input.FillUniformRandom();
+  context.FillUniformRandom();
 
-  TypeParam output = sg_layer->Evaluate("SkipGram_Sigmoid", true);
+  // create labels
+  TypeParam labels({1, 1});
+  labels.FillUniformRandom();
+
+
+  // Create layer
+  LayerType layer(in_size, out_size, embed_size, vocab_size);
+
+  // add label node
+  std::string label_name =
+      layer.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("label", {});
+
+  // Add loss function
+  std::string error_output = layer.template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TypeParam>>(
+      "num_error", {output_name, label_name});
+
+
+  // set input and evaluate
+  layer.SetInput("SkipGram_Input", input);
+  layer.SetInput("SkipGram_Context", context);
+  TypeParam prediction = layer.Evaluate(output_name, true);
 
   // extract saveparams
-  auto sp = sg_layer->GetOpSaveableParams();
+  auto sp = layer.GetOpSaveableParams();
 
   // downcast to correct type
-  auto dsp = std::dynamic_pointer_cast<typename fetch::ml::layers::SkipGram<TypeParam>::SPType>(sp);
+  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
 
   // serialize
   fetch::serializers::MsgPackSerializer b;
@@ -65,17 +88,54 @@ TYPED_TEST(SkipGramTest, saveparams_test)
 
   // deserialize
   b.seek(0);
-  auto dsp2 = std::make_shared<typename fetch::ml::layers::SkipGram<TypeParam>::SPType>();
+  auto dsp2 = std::make_shared<SPType>();
   b >> *dsp2;
 
   // rebuild
-  auto sa2 =
-      fetch::ml::utilities::BuildLayer<TypeParam, fetch::ml::layers::SkipGram<TypeParam>>(dsp2);
+  auto layer2 = *(fetch::ml::utilities::BuildLayer<TypeParam, LayerType>(dsp2));
 
-  sa2->SetInput("SkipGram_Input", input);
-  sa2->SetInput("SkipGram_Context", context);
+  // test equality
+  layer.SetInput("SkipGram_Input", input);
+  layer.SetInput("SkipGram_Context", context);
+  prediction = layer.Evaluate(output_name, true);
+  layer2.SetInput("SkipGram_Input", input);
+  layer2.SetInput("SkipGram_Context", context);
+  TypeParam prediction2 = layer2.Evaluate(output_name, true);
 
-  TypeParam output2 = sa2->Evaluate("SkipGram_Sigmoid", true);
+  ASSERT_TRUE(prediction.AllClose(prediction2, fetch::math::function_tolerance<DataType>(),
+                                  fetch::math::function_tolerance<DataType>()));
 
-  ASSERT_TRUE(output.AllClose(output2, static_cast<DataType>(0), static_cast<DataType>(0)));
+  // train g
+  layer.SetInput(label_name, labels);
+  TypeParam loss = layer.Evaluate(error_output);
+  layer.BackPropagateError(error_output);
+  layer.Step(DataType{0.1f});
+
+  // train g2
+  layer2.SetInput(label_name, labels);
+  TypeParam loss2 = layer2.Evaluate(error_output);
+  layer2.BackPropagateError(error_output);
+  layer2.Step(DataType{0.1f});
+
+  EXPECT_TRUE(loss.AllClose(loss2, fetch::math::function_tolerance<DataType>(),
+                            fetch::math::function_tolerance<DataType>()));
+
+  // new random input
+  input.FillUniformRandom();
+  context.FillUniformRandom();
+
+  layer.SetInput("SkipGram_Input", input);
+  layer.SetInput("SkipGram_Context", context);
+  TypeParam prediction3 = layer.Evaluate(output_name);
+
+  layer2.SetInput("SkipGram_Input", input);
+  layer2.SetInput("SkipGram_Context", context);
+  TypeParam prediction4 = layer2.Evaluate(output_name);
+
+  EXPECT_FALSE(prediction.AllClose(prediction3, fetch::math::function_tolerance<DataType>(),
+                                   fetch::math::function_tolerance<DataType>()));
+
+  EXPECT_TRUE(prediction3.AllClose(prediction4, fetch::math::function_tolerance<DataType>(),
+                                   fetch::math::function_tolerance<DataType>()));
+
 }

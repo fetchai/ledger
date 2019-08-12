@@ -80,27 +80,46 @@ TYPED_TEST(SelfAttentionEncoder, backward_dimension_test)  // Use the class as a
 TYPED_TEST(SelfAttentionEncoder, saveparams_test)
 {
   using DataType = typename TypeParam::Type;
+  using SizeType  = typename TypeParam::SizeType;
+  using LayerType = typename fetch::ml::layers::SelfAttentionEncoder<TypeParam>;
+  using SPType    = typename LayerType::SPType;
 
-  fetch::math::SizeType n_heads   = 2;
-  fetch::math::SizeType model_dim = 6;
-  fetch::math::SizeType ff_dim    = 12;
+  SizeType n_heads   = 2;
+  SizeType model_dim = 6;
+  SizeType ff_dim    = 12;
 
-  TypeParam data(std::vector<typename TypeParam::SizeType>({model_dim, 25, n_heads}));
+  std::string input_name  = "SelfAttentionEncoder_Input";
+  std::string output_name = "SelfAttentionEncoder_Feedforward_Residual_LayerNorm";
 
-  auto sa_layer = std::make_shared<fetch::ml::layers::SelfAttentionEncoder<TypeParam>>(
-      n_heads, model_dim, ff_dim);
+  // create input
+  TypeParam input({model_dim, 25, n_heads});
+  input.FillUniformRandom();
 
-  sa_layer->SetInput("SelfAttentionEncoder_Input", data);
+  // create labels
+  TypeParam labels({model_dim, 25, n_heads});
+  labels.FillUniformRandom();
 
-  TypeParam output =
-      sa_layer->Evaluate("SelfAttentionEncoder_Feedforward_Residual_LayerNorm", true);
+  // Create layer
+  LayerType layer(n_heads, model_dim, ff_dim);
 
-  // extract saveparams
-  auto sp = sa_layer->GetOpSaveableParams();
+  // add label node
+  std::string label_name =
+      layer.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("label", {});
+
+  // Add loss function
+  std::string error_output = layer.template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TypeParam>>(
+      "num_error", {output_name, label_name});
+
+  // set input and evaluate
+  layer.SetInput(input_name, input);
+  TypeParam prediction;
+  prediction = layer.Evaluate(output_name, true);
+
+   // extract saveparams
+  auto sp = layer.GetOpSaveableParams();
 
   // downcast to correct type
-  auto dsp = std::dynamic_pointer_cast<
-      typename fetch::ml::layers::SelfAttentionEncoder<TypeParam>::SPType>(sp);
+  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
 
   // serialize
   fetch::serializers::MsgPackSerializer b;
@@ -108,17 +127,49 @@ TYPED_TEST(SelfAttentionEncoder, saveparams_test)
 
   // deserialize
   b.seek(0);
-  auto dsp2 =
-      std::make_shared<typename fetch::ml::layers::SelfAttentionEncoder<TypeParam>::SPType>();
+  auto dsp2 = std::make_shared<SPType>();
   b >> *dsp2;
 
   // rebuild
-  auto sa2 =
-      fetch::ml::utilities::BuildLayer<TypeParam,
-                                       fetch::ml::layers::SelfAttentionEncoder<TypeParam>>(dsp2);
+  auto layer2 = *(fetch::ml::utilities::BuildLayer<TypeParam, LayerType>(dsp2));
 
-  sa2->SetInput("SelfAttentionEncoder_Input", data);
-  TypeParam output2 = sa2->Evaluate("SelfAttentionEncoder_Feedforward_Residual_LayerNorm", true);
+  // test equality
+  layer.SetInput(input_name, input);
+  prediction = layer.Evaluate(output_name, true);
+  layer2.SetInput(input_name, input);
+  TypeParam prediction2 = layer2.Evaluate(output_name, true);
 
-  ASSERT_TRUE(output.AllClose(output2, static_cast<DataType>(0), static_cast<DataType>(0)));
+  ASSERT_TRUE(prediction.AllClose(prediction2, fetch::math::function_tolerance<DataType>(),
+                                  fetch::math::function_tolerance<DataType>()));
+
+  // train g
+  layer.SetInput(label_name, labels);
+  TypeParam loss = layer.Evaluate(error_output);
+  layer.BackPropagateError(error_output);
+  layer.Step(DataType{0.1f});
+
+  // train g2
+  layer2.SetInput(label_name, labels);
+  TypeParam loss2 = layer2.Evaluate(error_output);
+  layer2.BackPropagateError(error_output);
+  layer2.Step(DataType{0.1f});
+
+  EXPECT_TRUE(loss.AllClose(loss2, fetch::math::function_tolerance<DataType>(),
+                            fetch::math::function_tolerance<DataType>()));
+
+  // new random input
+  input.FillUniformRandom();
+
+  layer.SetInput(input_name, input);
+  TypeParam prediction3 = layer.Evaluate(output_name);
+
+  layer2.SetInput(input_name, input);
+  TypeParam prediction4 = layer2.Evaluate(output_name);
+
+  EXPECT_FALSE(prediction.AllClose(prediction3, fetch::math::function_tolerance<DataType>(),
+                                   fetch::math::function_tolerance<DataType>()));
+
+  EXPECT_TRUE(prediction3.AllClose(prediction4, fetch::math::function_tolerance<DataType>(),
+                                   fetch::math::function_tolerance<DataType>()));
+
 }

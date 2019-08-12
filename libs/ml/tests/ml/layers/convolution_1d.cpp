@@ -475,7 +475,6 @@ TYPED_TEST(Convolution1DTest, saveparams_test)
   // test equality
   layer.SetInput(input_name, input);
   prediction = layer.Evaluate(output_name, true);
-//  prediction = prediction.Copy();
   layer2.SetInput(input_name, input);
   TypeParam prediction2 = layer2.Evaluate(output_name, true);
 

@@ -149,28 +149,46 @@ TYPED_TEST(ScaledDotProductAttention,
 TYPED_TEST(ScaledDotProductAttention, saveparams_test)
 {
   using DataType = typename TypeParam::Type;
+  using SizeType  = typename TypeParam::SizeType;
+  using LayerType = typename fetch::ml::layers::ScaledDotProductAttention<TypeParam>;
+  using SPType    = typename LayerType::SPType;
 
-  fetch::math::SizeType key_dim = 4;
+  std::string output_name = "ScaledDotProductAttention_Value_Weight_MatMul";
 
+  SizeType key_dim = 4;
+
+  // create input
   TypeParam query_data = TypeParam({12, 25, 4});
   TypeParam key_data   = query_data;
   TypeParam value_data = query_data;
 
-  auto mha_layer =
-      std::make_shared<fetch::ml::layers::ScaledDotProductAttention<TypeParam>>(key_dim);
+  // create labels
+  TypeParam labels({12, 25, 4});
+  labels.FillUniformRandom();
 
-  mha_layer->SetInput("ScaledDotProductAttention_Query", query_data);
-  mha_layer->SetInput("ScaledDotProductAttention_Key", key_data);
-  mha_layer->SetInput("ScaledDotProductAttention_Value", value_data);
+  // Create layer
+  LayerType layer(key_dim);
 
-  auto output = mha_layer->Evaluate("ScaledDotProductAttention_Value_Weight_MatMul", true);
+  // add label node
+  std::string label_name =
+      layer.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("label", {});
+
+  // Add loss function
+  std::string error_output = layer.template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TypeParam>>(
+      "num_error", {output_name, label_name});
+
+  // set input and evaluate
+  layer.SetInput("ScaledDotProductAttention_Query", query_data);
+  layer.SetInput("ScaledDotProductAttention_Key", key_data);
+  layer.SetInput("ScaledDotProductAttention_Value", value_data);
+  TypeParam prediction;
+  prediction = layer.Evaluate(output_name, true);
 
   // extract saveparams
-  auto sp = mha_layer->GetOpSaveableParams();
+  auto sp = layer.GetOpSaveableParams();
 
   // downcast to correct type
-  auto dsp = std::dynamic_pointer_cast<
-      typename fetch::ml::layers::ScaledDotProductAttention<TypeParam>::SPType>(sp);
+  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
 
   // serialize
   fetch::serializers::MsgPackSerializer b;
@@ -178,19 +196,57 @@ TYPED_TEST(ScaledDotProductAttention, saveparams_test)
 
   // deserialize
   b.seek(0);
-  auto dsp2 =
-      std::make_shared<typename fetch::ml::layers::ScaledDotProductAttention<TypeParam>::SPType>();
+  auto dsp2 = std::make_shared<SPType>();
   b >> *dsp2;
 
   // rebuild
-  auto sa2 = fetch::ml::utilities::BuildLayer<
-      TypeParam, fetch::ml::layers::ScaledDotProductAttention<TypeParam>>(dsp2);
+  auto layer2 = *(fetch::ml::utilities::BuildLayer<TypeParam, LayerType>(dsp2));
 
-  sa2->SetInput("ScaledDotProductAttention_Query", query_data);
-  sa2->SetInput("ScaledDotProductAttention_Key", key_data);
-  sa2->SetInput("ScaledDotProductAttention_Value", value_data);
+  // test equality
+  layer.SetInput("ScaledDotProductAttention_Query", query_data);
+  layer.SetInput("ScaledDotProductAttention_Key", key_data);
+  layer.SetInput("ScaledDotProductAttention_Value", value_data);
+  prediction = layer.Evaluate(output_name, true);
 
-  TypeParam output2 = sa2->Evaluate("ScaledDotProductAttention_Value_Weight_MatMul", true);
+  layer2.SetInput("ScaledDotProductAttention_Query", query_data);
+  layer2.SetInput("ScaledDotProductAttention_Key", key_data);
+  layer2.SetInput("ScaledDotProductAttention_Value", value_data);
+  TypeParam prediction2 = layer2.Evaluate(output_name, true);
 
-  ASSERT_TRUE(output.AllClose(output2, static_cast<DataType>(0), static_cast<DataType>(0)));
+  ASSERT_TRUE(prediction.AllClose(prediction2, fetch::math::function_tolerance<DataType>(),
+                                  fetch::math::function_tolerance<DataType>()));
+
+  // train g
+  layer.SetInput(label_name, labels);
+  TypeParam loss = layer.Evaluate(error_output);
+  layer.BackPropagateError(error_output);
+  layer.Step(DataType{0.1f});
+
+  // train g2
+  layer2.SetInput(label_name, labels);
+  TypeParam loss2 = layer2.Evaluate(error_output);
+  layer2.BackPropagateError(error_output);
+  layer2.Step(DataType{0.1f});
+
+  EXPECT_TRUE(loss.AllClose(loss2, fetch::math::function_tolerance<DataType>(),
+                            fetch::math::function_tolerance<DataType>()));
+
+  // new random input
+  query_data.FillUniformRandom();
+
+  layer.SetInput("ScaledDotProductAttention_Query", query_data);
+  layer.SetInput("ScaledDotProductAttention_Key", key_data);
+  layer.SetInput("ScaledDotProductAttention_Value", value_data);
+  TypeParam prediction3 = layer.Evaluate(output_name);
+
+  layer2.SetInput("ScaledDotProductAttention_Query", query_data);
+  layer2.SetInput("ScaledDotProductAttention_Key", key_data);
+  layer2.SetInput("ScaledDotProductAttention_Value", value_data);
+  TypeParam prediction4 = layer2.Evaluate(output_name);
+
+  EXPECT_FALSE(prediction.AllClose(prediction3, fetch::math::function_tolerance<DataType>(),
+                                   fetch::math::function_tolerance<DataType>()));
+
+  EXPECT_TRUE(prediction3.AllClose(prediction4, fetch::math::function_tolerance<DataType>(),
+                                   fetch::math::function_tolerance<DataType>()));
 }

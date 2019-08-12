@@ -45,7 +45,7 @@ TYPED_TEST(MultiheadAttention, input_output_dimension_check)  // Use the class a
   g.template AddNode<fetch::ml::layers::MultiheadAttention<TypeParam>>(
       "ScaledDotProductAttention", {query, key, value}, static_cast<SizeType>(4),
       static_cast<SizeType>(12), DataType(0.1));
-  TypeParam query_data = TypeParam({12, 25, 4});
+  TypeParam query_data = TypeParam({12, 25, 4});  // todo - values not initialised?
   TypeParam key_data   = query_data;
   TypeParam value_data = query_data;
   g.SetInput(query, query_data);
@@ -163,4 +163,112 @@ TYPED_TEST(MultiheadAttention, saveparams_test)
   TypeParam output2 = sa2->Evaluate("MultiheadAttention_Final_Transformation", true);
 
   ASSERT_TRUE(output.AllClose(output2, static_cast<DataType>(0), static_cast<DataType>(0)));
+}
+
+TYPED_TEST(MultiheadAttention, saveparams_test2)
+{
+  using DataType  = typename TypeParam::Type;
+  using LayerType = typename fetch::ml::layers::MultiheadAttention<TypeParam>;
+  using SPType    = typename LayerType::SPType;
+
+  fetch::math::SizeType n_heads   = 3;
+  fetch::math::SizeType model_dim = 6;
+
+  std::string output_name = "MultiheadAttention_Final_Transformation";
+
+  // create input data
+  TypeParam query_data = TypeParam({model_dim, 12, n_heads});
+  query_data.FillUniformRandom();
+
+  TypeParam key_data   = query_data;
+  TypeParam value_data = query_data;
+
+  // create labels data
+  TypeParam labels({6, 12, 3});
+  labels.FillUniformRandom();
+
+  // Create layer
+  LayerType layer(n_heads, model_dim);
+
+  // add label node
+  std::string label_name =
+      layer.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("label", {});
+
+  // Add loss function
+  std::string error_output = layer.template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TypeParam>>(
+      "num_error", {output_name, label_name});
+
+  // set input and evaluate
+  layer.SetInput("MultiheadAttention_Query", query_data);
+  layer.SetInput("MultiheadAttention_Key", key_data);
+  layer.SetInput("MultiheadAttention_Value", value_data);
+
+  TypeParam prediction;
+  prediction = layer.Evaluate(output_name, true);
+
+  // extract saveparams
+  auto sp = layer.GetOpSaveableParams();
+
+  // downcast to correct type
+  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
+
+  // serialize
+  fetch::serializers::MsgPackSerializer b;
+  b << *dsp;
+
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<SPType>();
+  b >> *dsp2;
+
+  // rebuild
+  auto layer2 = *(fetch::ml::utilities::BuildLayer<TypeParam, LayerType>(dsp2));
+
+  // test equality
+  layer.SetInput("MultiheadAttention_Query", query_data);
+  layer.SetInput("MultiheadAttention_Key", key_data);
+  layer.SetInput("MultiheadAttention_Value", value_data);
+  prediction = layer.Evaluate(output_name, true);
+
+  layer2.SetInput("MultiheadAttention_Query", query_data);
+  layer2.SetInput("MultiheadAttention_Key", key_data);
+  layer2.SetInput("MultiheadAttention_Value", value_data);
+  TypeParam prediction2 = layer2.Evaluate(output_name, true);
+
+  ASSERT_TRUE(prediction.AllClose(prediction2, fetch::math::function_tolerance<DataType>(),
+                                  fetch::math::function_tolerance<DataType>()));
+
+  // train g
+  layer.SetInput(label_name, labels);
+  TypeParam loss = layer.Evaluate(error_output);
+  layer.BackPropagateError(error_output);
+  layer.Step(DataType{0.1f});
+
+  // train g2
+  layer2.SetInput(label_name, labels);
+  TypeParam loss2 = layer2.Evaluate(error_output);
+  layer2.BackPropagateError(error_output);
+  layer2.Step(DataType{0.1f});
+
+  EXPECT_TRUE(loss.AllClose(loss2, fetch::math::function_tolerance<DataType>(),
+                            fetch::math::function_tolerance<DataType>()));
+
+  // new random input
+  query_data.FillUniformRandom();
+
+  layer.SetInput("MultiheadAttention_Query", query_data);
+  layer.SetInput("MultiheadAttention_Key", key_data);
+  layer.SetInput("MultiheadAttention_Value", value_data);
+  TypeParam prediction3 = layer.Evaluate(output_name);
+
+  layer2.SetInput("MultiheadAttention_Query", query_data);
+  layer2.SetInput("MultiheadAttention_Key", key_data);
+  layer2.SetInput("MultiheadAttention_Value", value_data);
+  TypeParam prediction4 = layer2.Evaluate(output_name);
+
+  EXPECT_FALSE(prediction.AllClose(prediction3, fetch::math::function_tolerance<DataType>(),
+                                   fetch::math::function_tolerance<DataType>()));
+
+  EXPECT_TRUE(prediction3.AllClose(prediction4, fetch::math::function_tolerance<DataType>(),
+                                   fetch::math::function_tolerance<DataType>()));
 }

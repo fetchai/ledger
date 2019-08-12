@@ -47,12 +47,12 @@ TYPED_TEST(FullyConnectedTest, set_input_and_evaluate_test)  // Use the class as
   fetch::ml::layers::FullyConnected<TypeParam> fc(100u, 10u);
   TypeParam input_data(std::vector<typename TypeParam::SizeType>({10, 10, 2}));
   fc.SetInput("FullyConnected_Input", input_data);
-  TypeParam output = fc.Evaluate("FullyConnected_MatrixMultiply", true);
+  TypeParam output = fc.Evaluate("FullyConnected_Add", true);
 
   ASSERT_EQ(output.shape().size(), 2);
   ASSERT_EQ(output.shape()[0], 10);
   ASSERT_EQ(output.shape()[1], 2);
-  // No way to test actual values for now as weights are randomly initialised.
+  // No way to test actual values for now as weights are randomly initialised.  // todo: true?
 }
 
 TYPED_TEST(FullyConnectedTest,
@@ -591,11 +591,13 @@ TYPED_TEST(FullyConnectedTest, saveparams_test)
   SizeType output_features = 20;
 
   std::string input_name  = "FullyConnected_Input";
-  std::string output_name = "FullyConnected_MatrixMultiply";
+  std::string output_name = "FullyConnected_Add";
 
+  // create input
   TypeParam input({data_size, input_features});
   input.FillUniformRandom();
 
+  // create labels
   TypeParam labels({output_features, data_size});
   labels.FillUniformRandom();
 
