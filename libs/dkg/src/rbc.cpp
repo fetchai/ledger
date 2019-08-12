@@ -441,16 +441,16 @@ void RBC::OnRReady(RReady const &msg, uint32_t sender_index)
   }
   FETCH_LOG_TRACE(LOGGING_NAME, "onRReady: Node ", id_, " received msg ", tag, " from node ",
                   sender_index, " with counter ", msg.counter(), " and id ", msg.id());
-  auto msgsCount = ReceivedReady(tag, msg);
-  if (threshold_ > 0 && msgsCount.ready_count == threshold_ + 1 &&
-      msgsCount.echo_count < (current_cabinet_.size() - threshold_))
+  auto msgs_counter = ReceivedReady(tag, msg);
+  if (threshold_ > 0 && msgs_counter.ready_count == threshold_ + 1 &&
+      msgs_counter.echo_count < (current_cabinet_.size() - threshold_))
   {
     RReady      ready_msg{msg.channel(), msg.id(), msg.counter(), msg.hash()};
     RBCEnvelope env{ready_msg};
     Broadcast(env);
     OnRReady(ready_msg, id_);  // self sending.
   }
-  else if (msgsCount.ready_count == 2 * threshold_ + 1)
+  else if (msgs_counter.ready_count == 2 * threshold_ + 1)
   {
     if (!SetDbar(tag, msg))
     {
@@ -474,6 +474,18 @@ void RBC::OnRReady(RReady const &msg, uint32_t sender_index)
       FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, " delivered msg ", tag, " with counter ",
                      msg.counter(), " and id ", msg.id());
       Deliver(broadcasts_[tag].mbar, msg.id());
+      std::lock_guard<std::mutex> lock(mutex_deliver_);
+      delivered_.insert(tag);
+    }
+  }
+  else
+  {
+    if (msgs_counter.ready_count == current_cabinet_.size() - 1 &&
+        delivered_.find(tag) != delivered_.end())
+    {  // all messages arrived let's clean
+      std::lock_guard<std::mutex> lock(mutex_broadcast_);
+      assert(broadcasts_.erase(tag) == 1);
+      assert(parties_[sender_index].flags.erase(tag) == 1);
     }
   }
 }
@@ -551,6 +563,8 @@ void RBC::OnRAnswer(RAnswer const &msg, uint32_t sender_index)
     FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, " delivered msg ", tag, " with counter ",
                    msg.counter(), " and id ", msg.id());
     Deliver(broadcasts_[tag].mbar, msg.id());
+    std::lock_guard<std::mutex> lock(mutex_deliver_);
+    delivered_.insert(tag);
   }
 }
 

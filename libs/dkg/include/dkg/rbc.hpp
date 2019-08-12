@@ -24,6 +24,7 @@
 #include "rbc_envelope.hpp"
 
 #include <bitset>
+#include <unordered_set>
 
 namespace fetch {
 namespace dkg {
@@ -85,11 +86,12 @@ protected:
   uint32_t           id_;  ///< Rank used in DKG (derived from position in current_cabinet_)
   uint8_t            msg_counter_;  ///< Counter for messages we have broadcasted
   std::vector<Party> parties_;      ///< Keeps track of messages from cabinet members
-  std::unordered_map<uint64_t, Broadcast> broadcasts_;  ///< map from tag to broadcasts
+  std::unordered_map<TagType, Broadcast> broadcasts_;  ///< map from tag to broadcasts
+  std::unordered_set<TagType>            delivered_;   ///< Tags of messages delivered
 
-  std::mutex mutex_flags_;      // protects access to Party message flags
-  std::mutex mutex_deliver_;    // protects the delivered message queue
-  std::mutex mutex_broadcast_;  // protects broadcasts_
+  std::mutex mutex_flags_;      ///< Protects access to Party message flags
+  std::mutex mutex_deliver_;    ///< Protects the delivered message queue
+  std::mutex mutex_broadcast_;  ///< Protects broadcasts_
 
   // For broadcast
   static constexpr uint16_t SERVICE_DKG = 5001;
