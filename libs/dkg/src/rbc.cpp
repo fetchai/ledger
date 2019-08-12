@@ -484,8 +484,8 @@ void RBC::OnRReady(RReady const &msg, uint32_t sender_index)
         delivered_.find(tag) != delivered_.end())
     {  // all messages arrived let's clean
       std::lock_guard<std::mutex> lock(mutex_broadcast_);
-      assert(broadcasts_.erase(tag) == 1);
-      assert(parties_[sender_index].flags.erase(tag) == 1);
+      broadcasts_.erase(tag);
+      parties_[sender_index].flags.erase(tag);
     }
   }
 }
