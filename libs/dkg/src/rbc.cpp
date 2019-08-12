@@ -141,8 +141,12 @@ void RBC::Broadcast(RBCEnvelope const &env)
   env_serializer.Reserve(env_counter.size());
   env_serializer << env;
 
-  std::lock_guard<std::mutex> lock{mutex_broadcast_};
-  endpoint_.Broadcast(SERVICE_DKG, CHANNEL_BROADCAST, env_serializer.data());
+  // Broadcast without echo
+  for (const auto &address : current_cabinet_) {
+    if (address != address_) {
+      endpoint_.Send(address, SERVICE_DKG, CHANNEL_BROADCAST, env_serializer.data());
+    }
+  }
 }
 
 /**
