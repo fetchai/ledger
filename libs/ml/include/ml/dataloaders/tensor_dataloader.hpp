@@ -66,10 +66,9 @@ public:
   void     Reset(bool is_test = false) override;
 
 protected:
-  SizeType train_cursor_        = 0;
-  SizeType test_cursor_         = 0;
-  SizeType test_offset_         = 0;
-  float    test_to_train_ratio_ = 0.0;
+  SizeType train_cursor_ = 0;
+  SizeType test_cursor_  = 0;
+  SizeType test_offset_  = 0;
 
   SizeType n_samples_       = 0;  // number of all samples
   SizeType n_test_samples_  = 0;  // number of train samples
@@ -82,6 +81,7 @@ protected:
   SizeVector              one_sample_label_shape_;
   std::vector<SizeVector> data_shapes_;
   std::vector<SizeVector> one_sample_data_shapes_;
+  float                   test_to_train_ratio_ = 0.0;
 
   SizeType batch_label_dim_ = fetch::math::numeric_max<SizeType>();
   SizeType batch_data_dim_  = fetch::math::numeric_max<SizeType>();
@@ -125,9 +125,10 @@ bool TensorDataLoader<LabelType, InputType>::AddData(TensorType const &data,
 
   n_samples_ = data_.shape().at(batch_data_dim_);
 
-  n_train_samples_ = static_cast<SizeType>((1.0 - test_to_train_ratio_) * n_samples_);
-  n_test_samples_  = static_cast<SizeType>((test_to_train_ratio_)*n_samples_);
-  test_offset_     = n_test_samples_;
+  n_test_samples_  = static_cast<SizeType>(test_to_train_ratio_ * static_cast<float>(n_samples_));
+  n_train_samples_ = n_samples_ - n_test_samples_;
+
+  test_offset_ = n_test_samples_;
 
   return true;
 }
