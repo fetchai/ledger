@@ -57,7 +57,7 @@ TYPED_TEST(ScaledDotProductAttention, input_output_dimension_check)  // Use the 
   g.SetInput(key, key_data);
   g.SetInput(value, value_data);
 
-  TypeParam prediction = g.Evaluate("ScaledDotProductAttention", false);
+  TypeParam prediction = g.ForwardPropagate("ScaledDotProductAttention", false);
   ASSERT_EQ(prediction.shape()[0], 3);
   ASSERT_EQ(prediction.shape()[1], 7);
   ASSERT_EQ(prediction.shape()[2], 2);
@@ -87,7 +87,7 @@ TYPED_TEST(ScaledDotProductAttention,
       "1.8496745531, 1.9944926680, 0.3201387782, 0.2406420371; 1.1503254469, 1.0055073320, "
       "0.0751734728, -0.0241974536; 3.6993491062, 3.9889853359, 0.4496530544, 0.6483949073");
   gt.Reshape({3, 2, 2});
-  TypeParam prediction = g.Evaluate("ScaledDotProductAttention", false);
+  TypeParam prediction = g.ForwardPropagate("ScaledDotProductAttention", false);
 
   ASSERT_TRUE(prediction.AllClose(
       gt, static_cast<DataType>(5) * fetch::math::function_tolerance<DataType>()));
@@ -163,7 +163,7 @@ TYPED_TEST(ScaledDotProductAttention, saveparams_test)
   mha_layer->SetInput("ScaledDotProductAttention_Key", key_data);
   mha_layer->SetInput("ScaledDotProductAttention_Value", value_data);
 
-  auto output = mha_layer->Evaluate("ScaledDotProductAttention_Value_Weight_MatMul", true);
+  auto output = mha_layer->ForwardPropagate("ScaledDotProductAttention_Value_Weight_MatMul", true);
 
   // extract saveparams
   auto sp = mha_layer->GetOpSaveableParams();
@@ -190,7 +190,7 @@ TYPED_TEST(ScaledDotProductAttention, saveparams_test)
   sa2->SetInput("ScaledDotProductAttention_Key", key_data);
   sa2->SetInput("ScaledDotProductAttention_Value", value_data);
 
-  TypeParam output2 = sa2->Evaluate("ScaledDotProductAttention_Value_Weight_MatMul", true);
+  TypeParam output2 = sa2->ForwardPropagate("ScaledDotProductAttention_Value_Weight_MatMul", true);
 
   ASSERT_TRUE(output.AllClose(output2, static_cast<DataType>(0), static_cast<DataType>(0)));
 }

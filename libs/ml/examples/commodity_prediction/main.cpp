@@ -239,7 +239,7 @@ DataType get_loss(std::shared_ptr<GraphType> const &g_ptr, std::string const &te
     g_ptr->SetInput(node_names.at(1), input.first);
     g_ptr->SetInput(node_names.front(), input.second.at(0));
 
-    auto loss_tensor = g_ptr->Evaluate(node_names.back(), false);
+    auto loss_tensor = g_ptr->ForwardPropagate(node_names.back(), false);
     loss += *(loss_tensor.begin());
     loss_counter++;
   }
@@ -353,7 +353,7 @@ int main(int argc, char **argv)
       auto input = loader.GetNext();
       g_ptr->SetInput("num_input", input.second.at(0));
 
-      auto slice_output = g_ptr->Evaluate(node_names.at(node_names.size() - 2), false);
+      auto slice_output = g_ptr->ForwardPropagate(node_names.at(node_names.size() - 2), false);
       output.Slice(j).Assign(slice_output);
       test_y.Slice(j).Assign(input.first);
       j++;
@@ -460,7 +460,7 @@ int main(int argc, char **argv)
       auto input = loader.GetNext();
       g_ptr->SetInput("num_input", input.second.at(0));
 
-      auto slice_output = g_ptr->Evaluate(node_names.at(node_names.size() - 2), false);
+      auto slice_output = g_ptr->ForwardPropagate(node_names.at(node_names.size() - 2), false);
       // write slice_output to csv
       if (first)
       {

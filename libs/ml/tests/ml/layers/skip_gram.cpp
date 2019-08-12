@@ -51,7 +51,7 @@ TYPED_TEST(SkipGramTest, saveparams_test)
   sg_layer->SetInput("SkipGram_Input", input);
   sg_layer->SetInput("SkipGram_Context", context);
 
-  TypeParam output = sg_layer->Evaluate("SkipGram_Sigmoid", true);
+  TypeParam output = sg_layer->ForwardPropagate("SkipGram_Sigmoid", true);
 
   // extract saveparams
   auto sp = sg_layer->GetOpSaveableParams();
@@ -75,7 +75,7 @@ TYPED_TEST(SkipGramTest, saveparams_test)
   sa2->SetInput("SkipGram_Input", input);
   sa2->SetInput("SkipGram_Context", context);
 
-  TypeParam output2 = sa2->Evaluate("SkipGram_Sigmoid", true);
+  TypeParam output2 = sa2->ForwardPropagate("SkipGram_Sigmoid", true);
 
   ASSERT_TRUE(output.AllClose(output2, static_cast<DataType>(0), static_cast<DataType>(0)));
 }

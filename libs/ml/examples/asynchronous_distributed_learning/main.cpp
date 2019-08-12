@@ -94,7 +94,7 @@ public:
         g_.SetInput("Label", input.first);
         {
           std::lock_guard<std::mutex> l(m_);
-          TensorType                  loss_tensor = g_.Evaluate("Error");
+          TensorType                  loss_tensor = g_.ForwardPropagate("Error");
           loss += *(loss_tensor.begin());
           g_.BackPropagateError("Error");
         }

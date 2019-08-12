@@ -48,7 +48,7 @@ TYPED_TEST(SelfAttentionEncoder, input_output_dimension_test)  // Use the class 
   TypeParam input_data = TypeParam({12, 25, 4});
   g.SetInput(input, input_data);
 
-  TypeParam prediction = g.Evaluate(output, false);
+  TypeParam prediction = g.ForwardPropagate(output, false);
   ASSERT_EQ(prediction.shape().size(), 3);
   ASSERT_EQ(prediction.shape()[0], 12);
   ASSERT_EQ(prediction.shape()[1], 25);
@@ -93,7 +93,7 @@ TYPED_TEST(SelfAttentionEncoder, saveparams_test)
   sa_layer->SetInput("SelfAttentionEncoder_Input", data);
 
   TypeParam output =
-      sa_layer->Evaluate("SelfAttentionEncoder_Feedforward_Residual_LayerNorm", true);
+      sa_layer->ForwardPropagate("SelfAttentionEncoder_Feedforward_Residual_LayerNorm", true);
 
   // extract saveparams
   auto sp = sa_layer->GetOpSaveableParams();
@@ -118,7 +118,8 @@ TYPED_TEST(SelfAttentionEncoder, saveparams_test)
                                        fetch::ml::layers::SelfAttentionEncoder<TypeParam>>(dsp2);
 
   sa2->SetInput("SelfAttentionEncoder_Input", data);
-  TypeParam output2 = sa2->Evaluate("SelfAttentionEncoder_Feedforward_Residual_LayerNorm", true);
+  TypeParam output2 =
+      sa2->ForwardPropagate("SelfAttentionEncoder_Feedforward_Residual_LayerNorm", true);
 
   ASSERT_TRUE(output.AllClose(output2, static_cast<DataType>(0), static_cast<DataType>(0)));
 }

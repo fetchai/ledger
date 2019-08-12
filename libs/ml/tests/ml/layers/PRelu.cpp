@@ -43,7 +43,7 @@ TYPED_TEST(PReluTest, set_input_and_evaluate_test)  // Use the class as a subgra
   fetch::ml::layers::PRelu<TypeParam> fc(100u);
   TypeParam input_data(std::vector<typename TypeParam::SizeType>({10, 10, 2}));
   fc.SetInput("PRelu_Input", input_data);
-  TypeParam output = fc.Evaluate("PRelu_LeakyReluOp", true);
+  TypeParam output = fc.ForwardPropagate("PRelu_LeakyReluOp", true);
 
   ASSERT_EQ(output.shape().size(), 3);
   ASSERT_EQ(output.shape()[0], 10);
@@ -145,7 +145,7 @@ TYPED_TEST(PReluTest, graph_forward_test)  // Use the class as a Node
   TypeParam data({5, 10, 2});
   g.SetInput("Input", data);
 
-  TypeParam prediction = g.Evaluate("PRelu", true);
+  TypeParam prediction = g.ForwardPropagate("PRelu", true);
   ASSERT_EQ(prediction.shape().size(), 3);
   ASSERT_EQ(prediction.shape()[0], 5);
   ASSERT_EQ(prediction.shape()[1], 10);
@@ -176,7 +176,7 @@ TYPED_TEST(PReluTest, saveparams_test)
 
   prelu_layer->SetInput("PRelu_Input", data);
 
-  TypeParam output = prelu_layer->Evaluate("PRelu_LeakyReluOp", true);
+  TypeParam output = prelu_layer->ForwardPropagate("PRelu_LeakyReluOp", true);
 
   // extract saveparams
   auto sp = prelu_layer->GetOpSaveableParams();
@@ -198,7 +198,7 @@ TYPED_TEST(PReluTest, saveparams_test)
       fetch::ml::utilities::BuildLayer<TypeParam, fetch::ml::layers::PRelu<TypeParam>>(dsp2);
 
   prelu2->SetInput("PRelu_Input", data);
-  TypeParam output2 = prelu2->Evaluate("PRelu_LeakyReluOp", true);
+  TypeParam output2 = prelu2->ForwardPropagate("PRelu_LeakyReluOp", true);
 
   ASSERT_TRUE(output.AllClose(output2, static_cast<DataType>(0), static_cast<DataType>(0)));
 }

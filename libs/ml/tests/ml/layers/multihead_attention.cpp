@@ -52,7 +52,7 @@ TYPED_TEST(MultiheadAttention, input_output_dimension_check)  // Use the class a
   g.SetInput(key, key_data);
   g.SetInput(value, value_data);
 
-  TypeParam prediction = g.Evaluate("ScaledDotProductAttention", false);
+  TypeParam prediction = g.ForwardPropagate("ScaledDotProductAttention", false);
   ASSERT_EQ(prediction.shape().size(), 3);
   ASSERT_EQ(prediction.shape()[0], 12);
   ASSERT_EQ(prediction.shape()[1], 25);
@@ -132,7 +132,7 @@ TYPED_TEST(MultiheadAttention, saveparams_test)
   mha_layer->SetInput("MultiheadAttention_Key", key_data);
   mha_layer->SetInput("MultiheadAttention_Value", value_data);
 
-  auto output = mha_layer->Evaluate("MultiheadAttention_Final_Transformation", true);
+  auto output = mha_layer->ForwardPropagate("MultiheadAttention_Final_Transformation", true);
 
   // extract saveparams
   auto sp = mha_layer->GetOpSaveableParams();
@@ -160,7 +160,7 @@ TYPED_TEST(MultiheadAttention, saveparams_test)
   sa2->SetInput("MultiheadAttention_Key", key_data);
   sa2->SetInput("MultiheadAttention_Value", value_data);
 
-  TypeParam output2 = sa2->Evaluate("MultiheadAttention_Final_Transformation", true);
+  TypeParam output2 = sa2->ForwardPropagate("MultiheadAttention_Final_Transformation", true);
 
   ASSERT_TRUE(output.AllClose(output2, static_cast<DataType>(0), static_cast<DataType>(0)));
 }

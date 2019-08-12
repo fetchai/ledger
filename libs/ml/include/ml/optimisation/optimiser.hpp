@@ -249,7 +249,7 @@ typename T::Type Optimiser<T>::Run(std::vector<TensorType> const &data, TensorTy
     // Set Label
     graph_->SetInput(label_node_name_, batch_labels_);
 
-    auto loss_tensor = graph_->Evaluate(output_node_name_);
+    auto loss_tensor = graph_->ForwardPropagate(output_node_name_);
     loss_ += *(loss_tensor.begin());
     graph_->BackPropagateError(output_node_name_);
 
@@ -350,7 +350,7 @@ typename T::Type Optimiser<T>::RunImplementation(
     // Set Label
     graph_->SetInput(label_node_name_, input.first);
 
-    auto loss_tensor = graph_->Evaluate(output_node_name_);
+    auto loss_tensor = graph_->ForwardPropagate(output_node_name_);
     loss_ += *(loss_tensor.begin());
     graph_->BackPropagateError(output_node_name_);
 

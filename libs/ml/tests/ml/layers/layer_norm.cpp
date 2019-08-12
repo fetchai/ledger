@@ -45,7 +45,7 @@ TYPED_TEST(LayerNormTest, set_input_and_evaluate_test_2D)  // Use the class as a
 
   TypeParam input_data(std::vector<typename TypeParam::SizeType>({100, 10, 2}));
   ln.SetInput("LayerNorm_Input", input_data);
-  TypeParam output = ln.Evaluate("LayerNorm_Beta_Addition", true);
+  TypeParam output = ln.ForwardPropagate("LayerNorm_Beta_Addition", true);
 
   ASSERT_EQ(output.shape().size(), 3);
   ASSERT_EQ(output.shape()[0], 100);
@@ -157,7 +157,7 @@ TYPED_TEST(LayerNormTest, graph_forward_test_exact_value_2D)  // Use the class a
 
   g.SetInput("Input", data);
 
-  TypeParam prediction = g.Evaluate("LayerNorm", true);
+  TypeParam prediction = g.ForwardPropagate("LayerNorm", true);
   // test correct values
   ASSERT_TRUE(
       prediction.AllClose(gt, fetch::math::function_tolerance<DataType>(),
@@ -198,7 +198,7 @@ TYPED_TEST(LayerNormTest, saveparams_test)
   auto mha_layer = std::make_shared<fetch::ml::layers::LayerNorm<TypeParam>>(data_shape);
   mha_layer->SetInput("LayerNorm_Input", data);
 
-  auto output = mha_layer->Evaluate("LayerNorm_Beta_Addition", true);
+  auto output = mha_layer->ForwardPropagate("LayerNorm_Beta_Addition", true);
 
   // extract saveparams
   auto sp = mha_layer->GetOpSaveableParams();
@@ -222,7 +222,7 @@ TYPED_TEST(LayerNormTest, saveparams_test)
 
   sa2->SetInput("LayerNorm_Input", data);
 
-  TypeParam output2 = sa2->Evaluate("LayerNorm_Beta_Addition", true);
+  TypeParam output2 = sa2->ForwardPropagate("LayerNorm_Beta_Addition", true);
 
   ASSERT_TRUE(output.AllClose(output2, static_cast<DataType>(0), static_cast<DataType>(0)));
 }

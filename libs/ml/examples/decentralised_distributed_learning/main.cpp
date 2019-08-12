@@ -87,8 +87,8 @@ public:
         g_.SetInput("Input", input.second.at(0));
         g_.SetInput("Label", input.first);
 
-        TensorType results     = g_.Evaluate("Softmax");
-        TensorType loss_tensor = g_.Evaluate("Error");
+        TensorType results     = g_.ForwardPropagate("Softmax");
+        TensorType loss_tensor = g_.ForwardPropagate("Error");
 
         loss += *(loss_tensor.begin());
         g_.BackPropagateError("Error");

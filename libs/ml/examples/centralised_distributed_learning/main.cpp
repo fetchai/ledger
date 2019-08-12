@@ -83,7 +83,7 @@ public:
         g_.SetInput("Input", input.second.at(0));
         g_.SetInput("Label", input.first);
 
-        TensorType loss_tensor = g_.Evaluate("Error");
+        TensorType loss_tensor = g_.ForwardPropagate("Error");
         loss += *(loss_tensor.begin());
         g_.BackPropagateError("Error");
       }
