@@ -192,7 +192,7 @@ public:
     }
     case WeightsInitialisation::XAVIER_GLOROT:
     {
-      XavierInitialisation(array, std::sqrt(6.0 / double(in_size + out_size)), seed);
+      XavierInitialisation(array, std::sqrt(2.0 / double(in_size + out_size)), seed);
       break;
     }
     case WeightsInitialisation::XAVIER_FAN_IN:
