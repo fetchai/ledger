@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/tcp/client_connection.hpp"
 #include "network/tcp/tcp_server.hpp"
+#include "network/tcp/client_connection.hpp"
 
 #include <chrono>
 #include <exception>
@@ -208,7 +208,8 @@ void TCPServer::Accept(std::shared_ptr<asio::ip::tcp::tcp::acceptor> acceptor)
     }
     else
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Acceptor in TCP server received EC - acceptor will close");
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "Acceptor in TCP server received EC - acceptor will close: " + ec.message());
     }
   };
 

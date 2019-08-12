@@ -1,5 +1,5 @@
-#include "beacon_protocol.hpp"
-#include "beacon_service.hpp"
+#include "beacon/beacon_protocol.hpp"
+#include "beacon/beacon_service.hpp"
 #include "core/service_ids.hpp"
 
 namespace fetch {

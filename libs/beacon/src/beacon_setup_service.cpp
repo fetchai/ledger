@@ -1,4 +1,4 @@
-#include "beacon_setup_service.hpp"
+#include "beacon/beacon_setup_service.hpp"
 #include "network/generics/requesting_queue.hpp"
 
 namespace fetch {

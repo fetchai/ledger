@@ -140,6 +140,14 @@ public:
    */
   bool Verify();
 
+  /*
+   * @brief returns the signature as a ConstByteArray
+   */
+  ConstByteArray GroupSignature() const
+  {
+    return crypto::bls::ToBinary(group_signature_);
+  }
+
   /// Property methods
   /// @{
   ConstByteArray current_message() const
@@ -160,6 +168,11 @@ public:
   Id id()
   {
     return id_;
+  }
+
+  bool can_verify()
+  {
+    return signature_buffer_.size() >= threshold_;
   }
   /// }
 private:
@@ -190,6 +203,7 @@ private:
   SignatureList  signature_buffer_;
   IdList         signer_ids_;
   ConstByteArray current_message_;
+  Signature      group_signature_;
   /// }
 
   /// Details from other members

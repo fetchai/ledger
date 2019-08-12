@@ -15,12 +15,12 @@
 #include "network/muddle/rpc/server.hpp"
 #include "network/muddle/subscription.hpp"
 
-#include "beacon_round.hpp"
-#include "beacon_service.hpp"
-#include "beacon_setup_protocol.hpp"
-#include "beacon_setup_service.hpp"
-#include "cabinet_member_details.hpp"
-#include "entropy.hpp"
+#include "beacon/beacon_round.hpp"
+#include "beacon/beacon_service.hpp"
+#include "beacon/beacon_setup_protocol.hpp"
+#include "beacon/beacon_setup_service.hpp"
+#include "beacon/cabinet_member_details.hpp"
+#include "beacon/entropy.hpp"
 
 #include <cstdint>
 #include <deque>
@@ -81,13 +81,11 @@ struct CabinetNode
 
 int main()
 {
-  constexpr uint16_t cabinet_size       = 8;
+  constexpr uint16_t cabinet_size       = 32;
   constexpr uint16_t number_of_cabinets = 1;
 
   // Initialising the BLS library
   crypto::bls::Init();
-
-  CabinetNode x{8080, 0};
 
   std::vector<std::unique_ptr<CabinetNode>> committee;
   for (uint16_t ii = 0; ii < cabinet_size; ++ii)
@@ -108,7 +106,6 @@ int main()
   }
 
   // Waiting until all are connected
-
   uint32_t kk = 0;
   while (kk != cabinet_size)
   {

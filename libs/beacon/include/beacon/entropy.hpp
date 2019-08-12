@@ -2,6 +2,7 @@
 #include "core/byte_array/const_byte_array.hpp"
 
 #include <cstdint>
+#include <vector>
 
 namespace fetch {
 namespace beacon {
@@ -14,6 +15,8 @@ struct Entropy
   uint64_t       number{0};
   ConstByteArray seed{"genesis"};
   ConstByteArray entropy{};
+
+  std::vector<SignatureShare> signatures;
 };
 
 }  // namespace beacon

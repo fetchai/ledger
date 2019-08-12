@@ -21,14 +21,19 @@ struct BeaconRoundDetails
   using ConstByteArray = byte_array::ConstByteArray;
   using SignatureShare = dkg::BeaconManager::SignedMessage;
 
-  BeaconManager                                manager{};
-  std::unordered_set<Identity>                 members{};
-  uint64_t                                     round{0};
-  std::atomic<bool>                            ready{false};
-  std::unordered_map<Identity, ConstByteArray> address_of_identity{};
+  BeaconManager manager{};
 
-  SignatureShare                               member_share;
-  std::unordered_map<Identity, SignatureShare> all_shares;
+  /// Serializable
+  /// @{
+  std::unordered_set<Identity> members{};
+  uint64_t                     round_start{0};
+  uint64_t                     round_end{0};
+  // TODO: Verification vectors
+  /// @}
+
+  std::atomic<bool> ready{false};
+
+  SignatureShare member_share;
 };
 
 }  // namespace beacon

@@ -159,8 +159,8 @@ bool BeaconManager::AddSignaturePart(BeaconManager::Identity  from,
 
 bool BeaconManager::Verify()
 {
-  auto signature = crypto::bls::RecoverSignature(signature_buffer_, signer_ids_);
-  return crypto::bls::Verify(signature, group_public_key_, current_message_);
+  group_signature_ = crypto::bls::RecoverSignature(signature_buffer_, signer_ids_);
+  return crypto::bls::Verify(group_signature_, group_public_key_, current_message_);
 }
 
 }  // namespace dkg

@@ -62,12 +62,8 @@ public:
   /// Maintainance logic
   /// @{
   /// @brief this function is called when the node is in the cabinet
-  void StartNewCabinet(CabinetMemberList members, uint32_t threshold);
-
-  /// @brief this function is called when the node is not in the next committee.
-  void SkipRound();
-
-  bool SwitchCabinet();
+  void StartNewCabinet(CabinetMemberList members, uint32_t threshold, uint64_t round_start,
+                       uint64_t round_end);
   /// @}
 
   State OnWaitForSetupCompletionState();
@@ -78,7 +74,7 @@ public:
   State OnCompleteState();
 
   State OnComiteeState();
-  void  SubmitSignatureShare(uint64_t, uint64_t, SignatureShare);  // TODO: Add signature
+  void  SubmitSignatureShare(uint64_t round, SignatureShare);
   void  ScheduleEntropyGeneration();
 
   /// Beacon runnables
@@ -90,7 +86,7 @@ private:
   std::mutex      mutex_;
   CertificatePtr  certificate_;
   Identity        identity_;
-  Endpoint &      endpoint_;  ///< The muddle endpoint to communicate on
+  Endpoint &      endpoint_;
   StateMachinePtr state_machine_;
 
   /// Beacon and entropy control units
@@ -101,15 +97,20 @@ private:
   uint64_t                 next_cabinet_generation_number_{0};
   uint64_t                 next_cabinet_number_{0};
 
-  std::shared_ptr<BeaconRoundDetails> active_beacon_;
-  Entropy                             current_entropy_;
+  std::shared_ptr<BeaconRoundDetails>             active_beacon_;
+  Entropy                                         current_entropy_;
+  std::deque<std::pair<uint64_t, SignatureShare>> signature_queue_;
   /// @}
 
-  ServerPtr rpc_server_;
+  ServerPtr           rpc_server_;
+  muddle::rpc::Client rpc_client_;
 
+  /// Distributed Key Generation
+  /// @{
   BeaconSetupService         cabinet_creator_;
   BeaconSetupServiceProtocol cabinet_creator_protocol_;
   BeaconServiceProtocol      beacon_protocol_;
+  /// @}
 };
 
 }  // namespace beacon
