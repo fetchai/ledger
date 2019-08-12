@@ -61,8 +61,8 @@ public:
 
     ArrayType weights_in({embedding_size_, vocab_size_});
     this->Initialise(weights_in, init_mode);
-	  ArrayType weights_ctx({embedding_size_, vocab_size_});
-	  this->Initialise(weights_ctx, init_mode);
+    ArrayType weights_ctx({embedding_size_, vocab_size_});
+    this->Initialise(weights_ctx, init_mode);
 
     // embed both inputs
     embed_in_ = this->template AddNode<fetch::ml::ops::Embeddings<ArrayType>>(
