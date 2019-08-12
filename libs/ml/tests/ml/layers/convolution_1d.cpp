@@ -63,7 +63,7 @@ TYPED_TEST(Convolution1DTest, set_input_and_evaluate_test)  // Use the class as 
   fetch::ml::layers::Convolution1D<TypeParam> conv(output_channels, input_channels, kernel_height,
                                                    stride_size);
   conv.SetInput("Conv1D_Input", input);
-  TypeParam output = conv.Evaluate("Conv1D_Conv1D", true);
+  TypeParam output = conv.ForwardPropagate("Conv1D_Conv1D", true);
 
   // test correct values
   ASSERT_EQ(output.shape().size(), 3);
@@ -359,7 +359,7 @@ TYPED_TEST(Convolution1DTest, graph_forward_test)  // Use the class as a Node
       "Convolution1D", {"Input"}, output_channels, input_channels, kernel_height, stride_size);
   g.SetInput("Input", input);
 
-  TypeParam prediction = g.Evaluate("Convolution1D", true);
+  TypeParam prediction = g.ForwardPropagate("Convolution1D", true);
 
   // test correct values
   ASSERT_EQ(prediction.shape().size(), 3);
@@ -410,10 +410,10 @@ TYPED_TEST(Convolution1DTest, getStateDict)
 
 TYPED_TEST(Convolution1DTest, saveparams_test)
 {
-    using DataType = typename TypeParam::Type;
-  using SizeType = typename TypeParam::SizeType;
+  using DataType  = typename TypeParam::Type;
+  using SizeType  = typename TypeParam::SizeType;
   using LayerType = typename fetch::ml::layers::Convolution1D<TypeParam>;
-  using SPType = typename LayerType::SPType;
+  using SPType    = typename LayerType::SPType;
 
   SizeType const input_channels  = 3;
   SizeType const output_channels = 5;
@@ -421,8 +421,8 @@ TYPED_TEST(Convolution1DTest, saveparams_test)
   SizeType const kernel_height   = 3;
   SizeType const stride_size     = 1;
 
-  std::string                                  input_name  = "Conv1D_Input";
-  std::string                                  output_name = "Conv1D_Conv1D";
+  std::string input_name  = "Conv1D_Input";
+  std::string output_name = "Conv1D_Conv1D";
 
   // Generate input
   TypeParam input(std::vector<typename TypeParam::SizeType>({input_channels, input_height, 1}));
@@ -452,7 +452,7 @@ TYPED_TEST(Convolution1DTest, saveparams_test)
   // set input and evaluate
   layer.SetInput(input_name, input);
   TypeParam prediction;
-  prediction = layer.Evaluate(output_name, true);
+  prediction = layer.ForwardPropagate(output_name, true);
 
   // extract saveparams
   auto sp = layer.GetOpSaveableParams();
@@ -474,22 +474,23 @@ TYPED_TEST(Convolution1DTest, saveparams_test)
 
   // test equality
   layer.SetInput(input_name, input);
-  prediction = layer.Evaluate(output_name, true);
+  prediction = layer.ForwardPropagate(output_name, true);
+
   layer2.SetInput(input_name, input);
-  TypeParam prediction2 = layer2.Evaluate(output_name, true);
+  TypeParam prediction2 = layer2.ForwardPropagate(output_name, true);
 
   ASSERT_TRUE(prediction.AllClose(prediction2, fetch::math::function_tolerance<DataType>(),
                                   fetch::math::function_tolerance<DataType>()));
 
   // train g
   layer.SetInput(label_name, labels);
-  TypeParam loss = layer.Evaluate(error_output);
+  TypeParam loss = layer.ForwardPropagate(error_output);
   layer.BackPropagateError(error_output);
   layer.Step(DataType{0.1f});
 
   // train g2
   layer2.SetInput(label_name, labels);
-  TypeParam loss2 = layer2.Evaluate(error_output);
+  TypeParam loss2 = layer2.ForwardPropagate(error_output);
   layer2.BackPropagateError(error_output);
   layer2.Step(DataType{0.1f});
 
@@ -500,10 +501,10 @@ TYPED_TEST(Convolution1DTest, saveparams_test)
   input.FillUniformRandom();
 
   layer.SetInput(input_name, input);
-  TypeParam prediction3 = layer.Evaluate(output_name);
+  TypeParam prediction3 = layer.ForwardPropagate(output_name);
 
   layer2.SetInput(input_name, input);
-  TypeParam prediction4 = layer2.Evaluate(output_name);
+  TypeParam prediction4 = layer2.ForwardPropagate(output_name);
 
   EXPECT_FALSE(prediction.AllClose(prediction3, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));

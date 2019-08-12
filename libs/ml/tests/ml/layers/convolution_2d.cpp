@@ -71,7 +71,7 @@ TYPED_TEST(Convolution2DTest, set_input_and_evaluate_test)  // Use the class as 
   fetch::ml::layers::Convolution2D<TypeParam> conv(output_channels, input_channels, kernel_height,
                                                    stride_size);
   conv.SetInput("Conv2D_Input", input);
-  TypeParam output = conv.Evaluate("Conv2D_Conv2D", true);
+  TypeParam output = conv.ForwardPropagate("Conv2D_Conv2D", true);
 
   // test correct values
   ASSERT_EQ(output.shape().size(), 4);
@@ -470,7 +470,7 @@ TYPED_TEST(Convolution2DTest, graph_forward_test)  // Use the class as a Node
       "Convolution2D", {"Input"}, output_channels, input_channels, kernel_height, stride_size);
   g.SetInput("Input", input);
 
-  TypeParam prediction = g.Evaluate("Convolution2D", true);
+  TypeParam prediction = g.ForwardPropagate("Convolution2D", true);
 
   // test correct values
   ASSERT_EQ(prediction.shape().size(), 4);
@@ -519,67 +519,6 @@ TYPED_TEST(Convolution2DTest, getStateDict)
   EXPECT_FLOAT_EQ(static_cast<float>(weights_ptr->At(1, 1, 1, 1, 0)), -0.85325855f);
   EXPECT_FLOAT_EQ(static_cast<float>(weights_ptr->At(4, 2, 2, 2, 0)), -0.096136682f);
 }
-
-//TYPED_TEST(Convolution2DTest, saveparams_test)
-//{
-//  using DataType = typename TypeParam::Type;
-//  using SizeType = typename TypeParam::SizeType;
-//
-//  SizeType const input_channels  = 3;
-//  SizeType const output_channels = 5;
-//  SizeType const input_height    = 3;
-//  SizeType const input_width     = 3;
-//  SizeType const kernel_height   = 3;
-//  SizeType const stride_size     = 1;
-//
-//  // Generate input
-//  TypeParam input(
-//      std::vector<typename TypeParam::SizeType>({input_channels, input_height, input_width, 1}));
-//
-//  for (SizeType i_ic{0}; i_ic < input_channels; ++i_ic)
-//  {
-//    for (SizeType i_i{0}; i_i < input_height; ++i_i)
-//    {
-//      for (SizeType j_i{0}; j_i < input_width; ++j_i)
-//      {
-//
-//        input.Set(i_ic, i_i, j_i, 0, static_cast<DataType>(i_i * j_i + 1));
-//      }
-//    }
-//  }
-//
-//  // Evaluate
-//  fetch::ml::layers::Convolution2D<TypeParam> conv(output_channels, input_channels, kernel_height,
-//                                                   stride_size);
-//  conv.SetInput("Conv2D_Input", input);
-//  TypeParam output = conv.Evaluate("Conv2D_Conv2D", true);
-//
-//  // extract saveparams
-//  auto sp = conv.GetOpSaveableParams();
-//
-//  // downcast to correct type
-//  auto dsp =
-//      std::dynamic_pointer_cast<typename fetch::ml::layers::Convolution2D<TypeParam>::SPType>(sp);
-//
-//  // serialize
-//  fetch::serializers::MsgPackSerializer b;
-//  b << *dsp;
-//
-//  // deserialize
-//  b.seek(0);
-//  auto dsp2 = std::make_shared<typename fetch::ml::layers::Convolution2D<TypeParam>::SPType>();
-//  b >> *dsp2;
-//
-//  // rebuild
-//  auto conv2 =
-//      fetch::ml::utilities::BuildLayer<TypeParam, fetch::ml::layers::Convolution2D<TypeParam>>(
-//          dsp2);
-//
-//  conv2->SetInput("Conv2D_Input", input);
-//  TypeParam output2 = conv2->Evaluate("Conv2D_Conv2D", true);
-//
-//  ASSERT_TRUE(output.AllClose(output2, static_cast<DataType>(0), static_cast<DataType>(0)));
-//}
 
 TYPED_TEST(Convolution2DTest, saveparams_test)
 {
@@ -631,7 +570,7 @@ TYPED_TEST(Convolution2DTest, saveparams_test)
   // set input and evaluate
   layer.SetInput(input_name, input);
   TypeParam prediction;
-  prediction = layer.Evaluate(output_name, true);
+  prediction = layer.ForwardPropagate(output_name, true);
 
   // extract saveparams
   auto sp = layer.GetOpSaveableParams();
@@ -682,7 +621,7 @@ TYPED_TEST(Convolution2DTest, saveparams_test)
   TypeParam prediction3 = layer.Evaluate(output_name);
 
   layer2.SetInput(input_name, input);
-  TypeParam prediction4 = layer2.Evaluate(output_name);
+  TypeParam prediction4 = layer2.ForwardPropagate(output_name, true);
 
   EXPECT_FALSE(prediction.AllClose(prediction3, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));

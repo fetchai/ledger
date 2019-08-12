@@ -56,7 +56,9 @@ public:
   virtual ~Graph() = default;
   Graph()          = default;
 
-  TensorType   Evaluate(std::string const &node_name, bool is_training = true);
+  void       Evaluate(std::string const &node_name, TensorType &ret, bool is_training);
+  TensorType ForwardPropagate(std::string const &node_name, bool is_training = true);
+
   void         BackPropagateSignal(std::string const &node_name, TensorType const &error_signal);
   void         BackPropagateError(std::string const &node_name);
   virtual void Step(DataType learning_rate);
@@ -159,14 +161,33 @@ bool Graph<TensorType>::SetRegularisation(std::string node_name, RegPtrType regu
 /**
  * Evaluates the output of a node (calling all necessary forward prop)
  * @param node_name name of node to evaluate for output
- * @return pointer to array containing node output
+ * @return a copy of the output tensor
  */
 template <typename TensorType>
-TensorType Graph<TensorType>::Evaluate(std::string const &node_name, bool is_training)
+TensorType Graph<TensorType>::ForwardPropagate(std::string const &node_name, bool is_training)
 {
   if (nodes_.find(node_name) != nodes_.end())
   {
-    return *(nodes_[node_name]->Evaluate(is_training));
+    return ((*(nodes_[node_name]->Evaluate(is_training))));
+  }
+  else
+  {
+    throw std::runtime_error("Cannot evaluate: node [" + node_name + "] not in graph");
+  }
+}
+
+/**
+ * Evaluates the output of a node (calling all necessary forward prop)
+ * @param node_name name of node to evaluate for output
+ * @return a copy of the output tensor
+ */
+template <typename TensorType>
+void Graph<TensorType>::Evaluate(std::string const &node_name, TensorType &ret, bool is_training)
+{
+  if (nodes_.find(node_name) != nodes_.end())
+  {
+    ret = ((*(nodes_[node_name]->Evaluate(is_training))).Copy());
+    return;
   }
   else
   {

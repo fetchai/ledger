@@ -48,7 +48,7 @@ TYPED_TEST(SelfAttentionEncoder, input_output_dimension_test)  // Use the class 
   TypeParam input_data = TypeParam({12, 25, 4});
   g.SetInput(input, input_data);
 
-  TypeParam prediction = g.Evaluate(output, false);
+  TypeParam prediction = g.ForwardPropagate(output, false);
   ASSERT_EQ(prediction.shape().size(), 3);
   ASSERT_EQ(prediction.shape()[0], 12);
   ASSERT_EQ(prediction.shape()[1], 25);
@@ -110,10 +110,10 @@ TYPED_TEST(SelfAttentionEncoder, saveparams_test)
   std::string error_output = layer.template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TypeParam>>(
       "num_error", {output_name, label_name});
 
-  // set input and evaluate
+  // set input and ForwardPropagate
   layer.SetInput(input_name, input);
   TypeParam prediction;
-  prediction = layer.Evaluate(output_name, true);
+  prediction = layer.ForwardPropagate(output_name, true);
 
    // extract saveparams
   auto sp = layer.GetOpSaveableParams();
@@ -135,22 +135,22 @@ TYPED_TEST(SelfAttentionEncoder, saveparams_test)
 
   // test equality
   layer.SetInput(input_name, input);
-  prediction = layer.Evaluate(output_name, true);
+  prediction = layer.ForwardPropagate(output_name, true);
   layer2.SetInput(input_name, input);
-  TypeParam prediction2 = layer2.Evaluate(output_name, true);
+  TypeParam prediction2 = layer2.ForwardPropagate(output_name, true);
 
   ASSERT_TRUE(prediction.AllClose(prediction2, fetch::math::function_tolerance<DataType>(),
                                   fetch::math::function_tolerance<DataType>()));
 
   // train g
   layer.SetInput(label_name, labels);
-  TypeParam loss = layer.Evaluate(error_output);
+  TypeParam loss = layer.ForwardPropagate(error_output);
   layer.BackPropagateError(error_output);
   layer.Step(DataType{0.1f});
 
   // train g2
   layer2.SetInput(label_name, labels);
-  TypeParam loss2 = layer2.Evaluate(error_output);
+  TypeParam loss2 = layer2.ForwardPropagate(error_output);
   layer2.BackPropagateError(error_output);
   layer2.Step(DataType{0.1f});
 
@@ -161,10 +161,10 @@ TYPED_TEST(SelfAttentionEncoder, saveparams_test)
   input.FillUniformRandom();
 
   layer.SetInput(input_name, input);
-  TypeParam prediction3 = layer.Evaluate(output_name);
+  TypeParam prediction3 = layer.ForwardPropagate(output_name);
 
   layer2.SetInput(input_name, input);
-  TypeParam prediction4 = layer2.Evaluate(output_name);
+  TypeParam prediction4 = layer2.ForwardPropagate(output_name);
 
   EXPECT_FALSE(prediction.AllClose(prediction3, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));
