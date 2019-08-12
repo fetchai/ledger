@@ -56,7 +56,7 @@ public:
   virtual ~Graph() = default;
   Graph()          = default;
 
-  void       Evaluate(std::string const &node_name, TensorType &ret, bool is_training);
+  TensorType Evaluate(std::string const &node_name, bool is_training = true);
   TensorType ForwardPropagate(std::string const &node_name, bool is_training = true);
 
   void         BackPropagateSignal(std::string const &node_name, TensorType const &error_signal);
@@ -182,12 +182,11 @@ TensorType Graph<TensorType>::ForwardPropagate(std::string const &node_name, boo
  * @return a copy of the output tensor
  */
 template <typename TensorType>
-void Graph<TensorType>::Evaluate(std::string const &node_name, TensorType &ret, bool is_training)
+TensorType Graph<TensorType>::Evaluate(std::string const &node_name, bool is_training)
 {
   if (nodes_.find(node_name) != nodes_.end())
   {
-    ret = ((*(nodes_[node_name]->Evaluate(is_training))).Copy());
-    return;
+    return ((*(nodes_[node_name]->Evaluate(is_training))).Copy());
   }
   else
   {
