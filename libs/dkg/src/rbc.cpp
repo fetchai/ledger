@@ -142,8 +142,10 @@ void RBC::Broadcast(RBCEnvelope const &env)
   env_serializer << env;
 
   // Broadcast without echo
-  for (const auto &address : current_cabinet_) {
-    if (address != address_) {
+  for (const auto &address : current_cabinet_)
+  {
+    if (address != address_)
+    {
       endpoint_.Send(address, SERVICE_DKG, CHANNEL_BROADCAST, env_serializer.data());
     }
   }
