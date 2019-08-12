@@ -154,7 +154,9 @@ TYPED_TEST(SliceTest, single_axis_backward_3D_value_test)
   gt.Reshape({3, 2, 2});
 
   fetch::ml::ops::Slice<TypeParam> op(index, axis);
-  std::vector<TypeParam>           backpropagated_signals =
+  // run backward twice to make sure the buffering is working
+  op.Backward({std::make_shared<TypeParam>(a)}, error);
+  std::vector<TypeParam> backpropagated_signals =
       op.Backward({std::make_shared<TypeParam>(a)}, error);
 
   // test correct shapes
