@@ -254,6 +254,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
         std::make_shared<TelemetryHttpModule>(),
         std::make_shared<HealthCheckHttpModule>(chain_, *main_chain_service_, block_coordinator_,
                                                 dkg_)}
+  , connected_peers_gauge_{std::make_unique<telemetry::Gauge<uint64_t>>("connected_peers_gauge", "Directly connected peers of node")}
 {
 
   // print the start up log banner
@@ -486,6 +487,9 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
   // monitor loop
   while (active_)
   {
+
+    connected_peers_gauge_->set(muddle_.AsEndpoint().GetDirectlyConnectedPeers().size());
+
     // wait until we have connected to as many peers as are required for DKG
     if (dkg_ && muddle_.AsEndpoint().GetDirectlyConnectedPeers().size() + 1 == committee_size)
     {
