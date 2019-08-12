@@ -43,7 +43,7 @@ TYPED_TEST(PReluTest, set_input_and_ForwardPropagate_test)  // Use the class as 
   fetch::ml::layers::PRelu<TypeParam> fc(100u);
   TypeParam input_data(std::vector<typename TypeParam::SizeType>({10, 10, 2}));
   fc.SetInput("PRelu_Input", input_data);
-  TypeParam output = fc.ForwardPropagate("PRelu_LeakyReluOp", true);
+  TypeParam output = fc.Evaluate("PRelu_LeakyReluOp", true);
 
   ASSERT_EQ(output.shape().size(), 3);
   ASSERT_EQ(output.shape()[0], 10);
@@ -145,7 +145,7 @@ TYPED_TEST(PReluTest, graph_forward_test)  // Use the class as a Node
   TypeParam data({5, 10, 2});
   g.SetInput("Input", data);
 
-  TypeParam prediction = g.ForwardPropagate("PRelu", true);
+  TypeParam prediction = g.Evaluate("PRelu", true);
   ASSERT_EQ(prediction.shape().size(), 3);
   ASSERT_EQ(prediction.shape()[0], 5);
   ASSERT_EQ(prediction.shape()[1], 10);
@@ -194,7 +194,7 @@ TYPED_TEST(PReluTest, saveparams_test)
   // set input and evaluate
   layer.SetInput(input_name, input);
   TypeParam prediction;
-  prediction = layer.ForwardPropagate(output_name, true);
+  prediction = layer.Evaluate(output_name, true);
 
   // extract saveparams
   auto sp = layer.GetOpSaveableParams();
@@ -216,22 +216,22 @@ TYPED_TEST(PReluTest, saveparams_test)
 
   // test equality
   layer.SetInput(input_name, input);
-  prediction = layer.ForwardPropagate(output_name, true);
+  prediction = layer.Evaluate(output_name, true);
   layer2.SetInput(input_name, input);
-  TypeParam prediction2 = layer2.ForwardPropagate(output_name, true);
+  TypeParam prediction2 = layer2.Evaluate(output_name, true);
 
   ASSERT_TRUE(prediction.AllClose(prediction2, fetch::math::function_tolerance<DataType>(),
                                   fetch::math::function_tolerance<DataType>()));
 
   // train g
   layer.SetInput(label_name, labels);
-  TypeParam loss = layer.ForwardPropagate(error_output);
+  TypeParam loss = layer.Evaluate(error_output);
   layer.BackPropagateError(error_output);
   layer.Step(DataType{0.1f});
 
   // train g2
   layer2.SetInput(label_name, labels);
-  TypeParam loss2 = layer2.ForwardPropagate(error_output);
+  TypeParam loss2 = layer2.Evaluate(error_output);
   layer2.BackPropagateError(error_output);
   layer2.Step(DataType{0.1f});
 
@@ -242,7 +242,7 @@ TYPED_TEST(PReluTest, saveparams_test)
   input.FillUniformRandom();
 
   layer.SetInput(input_name, input);
-  TypeParam prediction3 = layer.ForwardPropagate(output_name);
+  TypeParam prediction3 = layer.Evaluate(output_name);
 
   layer2.SetInput(input_name, input);
   TypeParam prediction4 = layer2.Evaluate(output_name);

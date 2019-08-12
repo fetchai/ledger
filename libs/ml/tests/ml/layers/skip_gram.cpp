@@ -72,7 +72,7 @@ TYPED_TEST(SkipGramTest, saveparams_test)
   // set input and ForwardPropagate
   layer.SetInput("SkipGram_Input", input);
   layer.SetInput("SkipGram_Context", context);
-  TypeParam prediction = layer.ForwardPropagate(output_name, true);
+  TypeParam prediction = layer.Evaluate(output_name, true);
 
   // extract saveparams
   auto sp = layer.GetOpSaveableParams();
@@ -95,23 +95,23 @@ TYPED_TEST(SkipGramTest, saveparams_test)
   // test equality
   layer.SetInput("SkipGram_Input", input);
   layer.SetInput("SkipGram_Context", context);
-  prediction = layer.ForwardPropagate(output_name, true);
+  prediction = layer.Evaluate(output_name, true);
   layer2.SetInput("SkipGram_Input", input);
   layer2.SetInput("SkipGram_Context", context);
-  TypeParam prediction2 = layer2.ForwardPropagate(output_name, true);
+  TypeParam prediction2 = layer2.Evaluate(output_name, true);
 
   ASSERT_TRUE(prediction.AllClose(prediction2, fetch::math::function_tolerance<DataType>(),
                                   fetch::math::function_tolerance<DataType>()));
 
   // train g
   layer.SetInput(label_name, labels);
-  TypeParam loss = layer.ForwardPropagate(error_output);
+  TypeParam loss = layer.Evaluate(error_output);
   layer.BackPropagateError(error_output);
   layer.Step(DataType{0.1f});
 
   // train g2
   layer2.SetInput(label_name, labels);
-  TypeParam loss2 = layer2.ForwardPropagate(error_output);
+  TypeParam loss2 = layer2.Evaluate(error_output);
   layer2.BackPropagateError(error_output);
   layer2.Step(DataType{0.1f});
 
@@ -124,11 +124,11 @@ TYPED_TEST(SkipGramTest, saveparams_test)
 
   layer.SetInput("SkipGram_Input", input);
   layer.SetInput("SkipGram_Context", context);
-  TypeParam prediction3 = layer.ForwardPropagate(output_name);
+  TypeParam prediction3 = layer.Evaluate(output_name);
 
   layer2.SetInput("SkipGram_Input", input);
   layer2.SetInput("SkipGram_Context", context);
-  TypeParam prediction4 = layer2.ForwardPropagate(output_name);
+  TypeParam prediction4 = layer2.Evaluate(output_name);
 
   EXPECT_FALSE(prediction.AllClose(prediction3, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));

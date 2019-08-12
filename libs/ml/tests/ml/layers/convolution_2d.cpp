@@ -71,7 +71,7 @@ TYPED_TEST(Convolution2DTest, set_input_and_evaluate_test)  // Use the class as 
   fetch::ml::layers::Convolution2D<TypeParam> conv(output_channels, input_channels, kernel_height,
                                                    stride_size);
   conv.SetInput("Conv2D_Input", input);
-  TypeParam output = conv.ForwardPropagate("Conv2D_Conv2D", true);
+  TypeParam output = conv.Evaluate("Conv2D_Conv2D", true);
 
   // test correct values
   ASSERT_EQ(output.shape().size(), 4);
@@ -470,7 +470,7 @@ TYPED_TEST(Convolution2DTest, graph_forward_test)  // Use the class as a Node
       "Convolution2D", {"Input"}, output_channels, input_channels, kernel_height, stride_size);
   g.SetInput("Input", input);
 
-  TypeParam prediction = g.ForwardPropagate("Convolution2D", true);
+  TypeParam prediction = g.Evaluate("Convolution2D", true);
 
   // test correct values
   ASSERT_EQ(prediction.shape().size(), 4);
@@ -570,7 +570,7 @@ TYPED_TEST(Convolution2DTest, saveparams_test)
   // set input and evaluate
   layer.SetInput(input_name, input);
   TypeParam prediction;
-  prediction = layer.ForwardPropagate(output_name, true);
+  prediction = layer.Evaluate(output_name, true);
 
   // extract saveparams
   auto sp = layer.GetOpSaveableParams();
@@ -621,7 +621,7 @@ TYPED_TEST(Convolution2DTest, saveparams_test)
   TypeParam prediction3 = layer.Evaluate(output_name);
 
   layer2.SetInput(input_name, input);
-  TypeParam prediction4 = layer2.ForwardPropagate(output_name, true);
+  TypeParam prediction4 = layer2.Evaluate(output_name, true);
 
   EXPECT_FALSE(prediction.AllClose(prediction3, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));

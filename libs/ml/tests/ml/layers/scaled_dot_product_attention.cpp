@@ -57,7 +57,7 @@ TYPED_TEST(ScaledDotProductAttention, input_output_dimension_check)  // Use the 
   g.SetInput(key, key_data);
   g.SetInput(value, value_data);
 
-  TypeParam prediction = g.ForwardPropagate("ScaledDotProductAttention", false);
+  TypeParam prediction = g.Evaluate("ScaledDotProductAttention", false);
   ASSERT_EQ(prediction.shape()[0], 3);
   ASSERT_EQ(prediction.shape()[1], 7);
   ASSERT_EQ(prediction.shape()[2], 2);
@@ -87,7 +87,7 @@ TYPED_TEST(ScaledDotProductAttention,
       "1.8496745531, 1.9944926680, 0.3201387782, 0.2406420371; 1.1503254469, 1.0055073320, "
       "0.0751734728, -0.0241974536; 3.6993491062, 3.9889853359, 0.4496530544, 0.6483949073");
   gt.Reshape({3, 2, 2});
-  TypeParam prediction = g.ForwardPropagate("ScaledDotProductAttention", false);
+  TypeParam prediction = g.Evaluate("ScaledDotProductAttention", false);
 
   ASSERT_TRUE(prediction.AllClose(
       gt, static_cast<DataType>(5) * fetch::math::function_tolerance<DataType>()));
@@ -182,7 +182,7 @@ TYPED_TEST(ScaledDotProductAttention, saveparams_test)
   layer.SetInput("ScaledDotProductAttention_Key", key_data);
   layer.SetInput("ScaledDotProductAttention_Value", value_data);
   TypeParam prediction;
-  prediction = layer.ForwardPropagate(output_name, true);
+  prediction = layer.Evaluate(output_name, true);
 
   // extract saveparams
   auto sp = layer.GetOpSaveableParams();
@@ -206,25 +206,25 @@ TYPED_TEST(ScaledDotProductAttention, saveparams_test)
   layer.SetInput("ScaledDotProductAttention_Query", query_data);
   layer.SetInput("ScaledDotProductAttention_Key", key_data);
   layer.SetInput("ScaledDotProductAttention_Value", value_data);
-  prediction = layer.ForwardPropagate(output_name, true);
+  prediction = layer.Evaluate(output_name, true);
 
   layer2.SetInput("ScaledDotProductAttention_Query", query_data);
   layer2.SetInput("ScaledDotProductAttention_Key", key_data);
   layer2.SetInput("ScaledDotProductAttention_Value", value_data);
-  TypeParam prediction2 = layer2.ForwardPropagate(output_name, true);
+  TypeParam prediction2 = layer2.Evaluate(output_name, true);
 
   ASSERT_TRUE(prediction.AllClose(prediction2, fetch::math::function_tolerance<DataType>(),
                                   fetch::math::function_tolerance<DataType>()));
 
   // train g
   layer.SetInput(label_name, labels);
-  TypeParam loss = layer.ForwardPropagate(error_output);
+  TypeParam loss = layer.Evaluate(error_output);
   layer.BackPropagateError(error_output);
   layer.Step(DataType{0.1f});
 
   // train g2
   layer2.SetInput(label_name, labels);
-  TypeParam loss2 = layer2.ForwardPropagate(error_output);
+  TypeParam loss2 = layer2.Evaluate(error_output);
   layer2.BackPropagateError(error_output);
   layer2.Step(DataType{0.1f});
 
@@ -237,12 +237,12 @@ TYPED_TEST(ScaledDotProductAttention, saveparams_test)
   layer.SetInput("ScaledDotProductAttention_Query", query_data);
   layer.SetInput("ScaledDotProductAttention_Key", key_data);
   layer.SetInput("ScaledDotProductAttention_Value", value_data);
-  TypeParam prediction3 = layer.ForwardPropagate(output_name);
+  TypeParam prediction3 = layer.Evaluate(output_name);
 
   layer2.SetInput("ScaledDotProductAttention_Query", query_data);
   layer2.SetInput("ScaledDotProductAttention_Key", key_data);
   layer2.SetInput("ScaledDotProductAttention_Value", value_data);
-  TypeParam prediction4 = layer2.ForwardPropagate(output_name);
+  TypeParam prediction4 = layer2.Evaluate(output_name);
 
   EXPECT_FALSE(prediction.AllClose(prediction3, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));
