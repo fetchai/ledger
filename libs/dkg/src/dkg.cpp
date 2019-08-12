@@ -391,6 +391,28 @@ void DistributedKeyGeneration::ReceivedReconstructionShares()
 }
 
 /**
+ * Helper function to check basic details of the message to determine if it should be processed
+ *
+ * @param from Muddle address of sender
+ * @param msg_ptr Shared pointer of message
+ * @return Bool of whether the message passes the test or not
+ */
+bool DistributedKeyGeneration::BasicMsgCheck(MuddleAddress const &              from,
+                                             std::shared_ptr<DKGMessage> const &msg_ptr)
+{
+  if (msg_ptr == nullptr)
+  {
+    return false;
+  }
+  else if (cabinet_.find(from) == cabinet_.end())
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_, " received message from unknown sender");
+    return false;
+  }
+  return true;
+}
+
+/**
  * Handler for DKGMessage that has passed through the reliable broadcast
  *
  * @param from Muddle address of sender
@@ -399,24 +421,46 @@ void DistributedKeyGeneration::ReceivedReconstructionShares()
 void DistributedKeyGeneration::OnDkgMessage(MuddleAddress const &       from,
                                             std::shared_ptr<DKGMessage> msg_ptr)
 {
+  if (!BasicMsgCheck(from, msg_ptr))
+  {
+    return;
+  }
   uint32_t senderIndex{CabinetIndex(from)};
   switch (msg_ptr->type())
   {
   case DKGMessage::MessageType::COEFFICIENT:
+  {
     FETCH_LOG_TRACE(LOGGING_NAME, "Node: ", cabinet_index_, " received RBroadcast from node ",
                     senderIndex);
-    OnNewCoefficients(std::dynamic_pointer_cast<CoefficientsMessage>(msg_ptr), from);
+    auto coefficients_ptr = std::dynamic_pointer_cast<CoefficientsMessage>(msg_ptr);
+    if (coefficients_ptr != nullptr)
+    {
+      OnNewCoefficients(*coefficients_ptr, from);
+    }
     break;
+  }
   case DKGMessage::MessageType::SHARE:
+  {
     FETCH_LOG_TRACE(LOGGING_NAME, "Node: ", cabinet_index_, " received REcho from node ",
                     senderIndex);
-    OnExposedShares(std::dynamic_pointer_cast<SharesMessage>(msg_ptr), from);
+    auto share_ptr = std::dynamic_pointer_cast<SharesMessage>(msg_ptr);
+    if (share_ptr != nullptr)
+    {
+      OnExposedShares(*share_ptr, from);
+    }
     break;
+  }
   case DKGMessage::MessageType::COMPLAINT:
+  {
     FETCH_LOG_TRACE(LOGGING_NAME, "Node: ", cabinet_index_, " received RReady from node ",
                     senderIndex);
-    OnComplaints(std::dynamic_pointer_cast<ComplaintsMessage>(msg_ptr), from);
+    auto complaint_ptr = std::dynamic_pointer_cast<ComplaintsMessage>(msg_ptr);
+    if (complaint_ptr != nullptr)
+    {
+      OnComplaints(*complaint_ptr, from);
+    }
     break;
+  }
   default:
     FETCH_LOG_ERROR(LOGGING_NAME, "Node: ", cabinet_index_, " can not process payload from node ",
                     senderIndex);
@@ -429,10 +473,10 @@ void DistributedKeyGeneration::OnDkgMessage(MuddleAddress const &       from,
  * @param shares Pointer of SharesMessage
  * @param from_id Muddle address of sender
  */
-void DistributedKeyGeneration::OnExposedShares(std::shared_ptr<SharesMessage> const &shares,
-                                               MuddleAddress const &                 from_id)
+void DistributedKeyGeneration::OnExposedShares(SharesMessage const &shares,
+                                               MuddleAddress const &from_id)
 {
-  uint64_t phase1{shares->phase()};
+  uint64_t phase1{shares.phase()};
   if (phase1 == static_cast<uint64_t>(State::WAITING_FOR_COMPLAINT_ANSWERS))
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Node: ", cabinet_index_, " received complaint answer from ",
@@ -479,17 +523,17 @@ void DistributedKeyGeneration::OnNewShares(MuddleAddress                        
  * @param msg_ptr Pointer of CoefficientsMessage
  * @param from_id Muddle address of sender
  */
-void DistributedKeyGeneration::OnNewCoefficients(
-    std::shared_ptr<CoefficientsMessage> const &msg_ptr, MuddleAddress const &from_id)
+void DistributedKeyGeneration::OnNewCoefficients(CoefficientsMessage const &msg,
+                                                 MuddleAddress const &      from_id)
 {
   uint32_t from_index{CabinetIndex(from_id)};
-  if (msg_ptr->phase() == static_cast<uint64_t>(State::WAITING_FOR_SHARE))
+  if (msg.phase() == static_cast<uint64_t>(State::WAITING_FOR_SHARE))
   {
     for (uint32_t ii = 0; ii <= threshold_; ++ii)
     {
       if (C_ik[from_index][ii] == zeroG2_)
       {
-        C_ik[from_index][ii].setStr((msg_ptr->coefficients())[ii]);
+        C_ik[from_index][ii].setStr((msg.coefficients())[ii]);
       }
       else
       {
@@ -501,19 +545,13 @@ void DistributedKeyGeneration::OnNewCoefficients(
     ++C_ik_received_;
     ReceivedCoefficientsAndShares();
   }
-  else if (msg_ptr->phase() == static_cast<uint64_t>(State::WAITING_FOR_QUAL_SHARES))
+  else if (msg.phase() == static_cast<uint64_t>(State::WAITING_FOR_QUAL_SHARES))
   {
-    if (qual_.find(from_id) == qual_.end())
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
-                     " received share from non-qual member node ", from_index);
-      return;
-    }
     for (uint32_t ii = 0; ii <= threshold_; ++ii)
     {
       if (A_ik[from_index][ii] == zeroG2_)
       {
-        A_ik[from_index][ii].setStr((msg_ptr->coefficients())[ii]);
+        A_ik[from_index][ii].setStr((msg.coefficients())[ii]);
       }
       else
       {
@@ -533,12 +571,12 @@ void DistributedKeyGeneration::OnNewCoefficients(
  * @param msg_ptr Pointer of ComplaintsMessage
  * @param from_id Muddle address of sender
  */
-void DistributedKeyGeneration::OnComplaints(std::shared_ptr<ComplaintsMessage> const &msg_ptr,
-                                            MuddleAddress const &                     from_id)
+void DistributedKeyGeneration::OnComplaints(ComplaintsMessage const &msg,
+                                            MuddleAddress const &    from_id)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, " received complaints from node ",
                  CabinetIndex(from_id));
-  complaints_manager_.Add(msg_ptr, from_id, CabinetIndex(from_id), address_);
+  complaints_manager_.Add(msg, from_id, CabinetIndex(from_id), address_);
   ReceivedComplaint();
 }
 
@@ -549,8 +587,8 @@ void DistributedKeyGeneration::OnComplaints(std::shared_ptr<ComplaintsMessage> c
  * @param msg_ptr Pointer of SharesMessage containing the sender's shares
  * @param from_id Muddle address of sender
  */
-void DistributedKeyGeneration::OnComplaintsAnswer(std::shared_ptr<SharesMessage> const &answer,
-                                                  MuddleAddress const &                 from_id)
+void DistributedKeyGeneration::OnComplaintsAnswer(SharesMessage const &answer,
+                                                  MuddleAddress const &from_id)
 {
   uint32_t from_index{CabinetIndex(from_id)};
   if (complaints_answer_manager_.Count(from_index))
@@ -572,16 +610,17 @@ void DistributedKeyGeneration::OnComplaintsAnswer(std::shared_ptr<SharesMessage>
  * @param shares_ptr Pointer of SharesMessage
  * @param from_id Muddle address of sender
  */
-void DistributedKeyGeneration::OnQualComplaints(std::shared_ptr<SharesMessage> const &shares_ptr,
-                                                MuddleAddress const &                 from_id)
+void DistributedKeyGeneration::OnQualComplaints(SharesMessage const &shares_msg,
+                                                MuddleAddress const &from_id)
 {
   // Return if the sender not in QUAL
+  // TODO: Remove this
   if (qual_.find(from_id) == qual_.end())
   {
     return;
   }
   uint32_t from_index{CabinetIndex(from_id)};
-  for (auto const &share : shares_ptr->shares())
+  for (auto const &share : shares_msg.shares())
   {
     // Check person who's shares are being exposed is not in QUAL then don't bother with checks
     if (qual_.find(share.first) != qual_.end())
@@ -638,16 +677,17 @@ void DistributedKeyGeneration::OnQualComplaints(std::shared_ptr<SharesMessage> c
  * @param shares_ptr Pointer of SharesMessage
  * @param from_id Muddle address of sender
  */
-void DistributedKeyGeneration::OnReconstructionShares(
-    std::shared_ptr<SharesMessage> const &shares_ptr, MuddleAddress const &from_id)
+void DistributedKeyGeneration::OnReconstructionShares(SharesMessage const &shares_msg,
+                                                      MuddleAddress const &from_id)
 {
   uint32_t from_index{CabinetIndex(from_id)};
   // Return if the sender is in complaints, or not in QUAL
+  // TODO: Remove this
   if (qual_complaints_manager_.ComplaintsFind(from_id) or qual_.find(from_id) == qual_.end())
   {
     return;
   }
-  for (auto const &share : shares_ptr->shares())
+  for (auto const &share : shares_msg.shares())
   {
     if (reconstruction_shares.find(share.first) == reconstruction_shares.end())
     {
@@ -742,18 +782,18 @@ DistributedKeyGeneration::ComputeComplaints()
  * @param from_id Muddle address of sender
  * @param from_index Index of sender in cabinet_
  */
-void DistributedKeyGeneration::CheckComplaintAnswer(std::shared_ptr<SharesMessage> const &answer,
-                                                    MuddleAddress const &                 from_id,
-                                                    uint32_t from_index)
+void DistributedKeyGeneration::CheckComplaintAnswer(SharesMessage const &answer,
+                                                    MuddleAddress const &from_id,
+                                                    uint32_t             from_index)
 {
   // If not enough answers are sent for number of complaints against a node then add a complaint a
   // against it
-  auto diff = complaints_manager_.ComplaintsCount(from_id) - answer->shares().size();
+  auto diff = complaints_manager_.ComplaintsCount(from_id) - answer.shares().size();
   if (diff > 0 && diff <= cabinet_.size())
   {
     complaints_answer_manager_.Add(from_id);
   }
-  for (auto const &share : answer->shares())
+  for (auto const &share : answer.shares())
   {
     uint32_t reporter_index{CabinetIndex(share.first)};
     // Verify shares received

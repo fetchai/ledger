@@ -59,8 +59,8 @@ public:
 
   void ResetCabinet(uint32_t cabinet_size);
   void Count(MuddleAddress const &address);
-  void Add(std::shared_ptr<ComplaintsMessage> const &msg_ptr, MuddleAddress const &from_id,
-           uint32_t from_index, MuddleAddress node_address);
+  void Add(ComplaintsMessage const &msg, MuddleAddress const &from_id, uint32_t from_index,
+           MuddleAddress const &node_address);
   bool IsFinished(std::set<MuddleAddress> const &miners, uint32_t node_index, uint32_t threshold);
   void Clear();
 

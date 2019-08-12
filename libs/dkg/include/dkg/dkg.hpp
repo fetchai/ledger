@@ -137,24 +137,21 @@ protected:
 
   /// @name Handlers for messages
   /// @{
-  void OnNewCoefficients(std::shared_ptr<CoefficientsMessage> const &coefficients,
-                         MuddleAddress const &                       from_id);
-  void OnComplaints(std::shared_ptr<ComplaintsMessage> const &complaint,
-                    MuddleAddress const &                     from_id);
-  void OnExposedShares(std::shared_ptr<SharesMessage> const &shares, MuddleAddress const &from_id);
-  void OnComplaintsAnswer(std::shared_ptr<SharesMessage> const &answer,
-                          MuddleAddress const &                 from_id);
-  void OnQualComplaints(std::shared_ptr<SharesMessage> const &shares, MuddleAddress const &from_id);
-  void OnReconstructionShares(std::shared_ptr<SharesMessage> const &shares,
-                              MuddleAddress const &                 from_id);
+  void OnNewCoefficients(CoefficientsMessage const &coefficients, MuddleAddress const &from_id);
+  void OnComplaints(ComplaintsMessage const &complaint, MuddleAddress const &from_id);
+  void OnExposedShares(SharesMessage const &shares, MuddleAddress const &from_id);
+  void OnComplaintsAnswer(SharesMessage const &answer, MuddleAddress const &from_id);
+  void OnQualComplaints(SharesMessage const &shares, MuddleAddress const &from_id);
+  void OnReconstructionShares(SharesMessage const &shares, MuddleAddress const &from_id);
   /// @}
 
   /// @name Helper methods
   /// @{
-  uint32_t                          CabinetIndex(MuddleAddress const &other_address) const;
+  uint32_t CabinetIndex(MuddleAddress const &other_address) const;
+  bool     BasicMsgCheck(MuddleAddress const &from, std::shared_ptr<DKGMessage> const &msg_ptr);
   std::unordered_set<MuddleAddress> ComputeComplaints();
-  void             CheckComplaintAnswer(std::shared_ptr<SharesMessage> const &answer,
-                                        MuddleAddress const &from_id, uint32_t from_index);
+  void             CheckComplaintAnswer(SharesMessage const &answer, MuddleAddress const &from_id,
+                                        uint32_t from_index);
   bool             BuildQual();
   SharesExposedMap ComputeQualComplaints();
   void             ComputeSecretShare();

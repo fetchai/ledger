@@ -42,9 +42,8 @@ void ComplaintsManager::Count(MuddleAddress const &address)
   ++complaints_counter_[address];
 }
 
-void ComplaintsManager::Add(std::shared_ptr<ComplaintsMessage> const &msg_ptr,
-                            MuddleAddress const &from_id, uint32_t from_index,
-                            MuddleAddress address)
+void ComplaintsManager::Add(ComplaintsMessage const &msg, MuddleAddress const &from_id,
+                            uint32_t from_index, MuddleAddress const &address)
 {
   std::lock_guard<std::mutex> lock{mutex_};
   // Check if we have received a complaints message from this node before and if not log that we
@@ -59,7 +58,7 @@ void ComplaintsManager::Add(std::shared_ptr<ComplaintsMessage> const &msg_ptr,
     return;
   }
 
-  for (auto const &bad_node : msg_ptr->complaints())
+  for (auto const &bad_node : msg.complaints())
   {
     ++complaints_counter_[bad_node];
     // If a node receives complaint against itself then store in complaints from
