@@ -353,21 +353,17 @@ bool Graph<T>::InsertNode(std::string const &node_name, NodePtrType node_ptr)
 template <typename TensorType>
 GraphSaveableParams<TensorType> Graph<TensorType>::GetGraphSaveableParams()
 {
-  // build connections object that describes input node names to each node
-  std::vector<std::pair<std::string, std::vector<std::string>>> connections;
-  for (auto const &cur_node : nodes_)
-  {
-    connections.emplace_back(
-        std::make_pair(cur_node.first, nodes_[cur_node.first]->GetInputNames()));
-  }
-
   GraphSaveableParams<TensorType> gs;
-  gs.connections = connections;
-
-  for (auto const &node : nodes_)
+  for (auto const &npair : nodes_)
   {
-    auto nsp = node.second->GetNodeSaveableParams();
-    (gs.nodes).insert(std::make_pair(node.first, nsp));
+    std::string node_name = npair.first;
+    auto node = npair.second;
+
+    gs.connections.emplace_back(
+        std::make_pair(node_name, node->GetInputNames()));
+
+    auto nsp = node->GetNodeSaveableParams();
+    gs.nodes.insert(std::make_pair(node_name, nsp));
   }
 
   return gs;
