@@ -150,10 +150,16 @@ std::set<QualComplaintsManager::MuddleAddress> QualComplaintsManager::Complaints
   return complaints_;
 }
 
-void QualComplaintsManager::Received(MuddleAddress const &id)
+void QualComplaintsManager::Received(MuddleAddress const &                               id,
+                                     std::unordered_map<CabinetId, ExposedShares> const &complaints)
 {
   std::lock_guard<std::mutex> lock(mutex_);
-  complaints_received_.insert(id);
+  complaints_received_.insert({id, complaints});
+}
+
+const QualComplaintsManager::QualComplaints &QualComplaintsManager::ComplaintsReceived() const
+{
+  return complaints_received_;
 }
 
 std::size_t QualComplaintsManager::ComplaintsSize() const
@@ -172,21 +178,15 @@ bool QualComplaintsManager::IsFinished(std::set<MuddleAddress> const &qual,
                                        MuddleAddress const &          node_id)
 {
   std::lock_guard<std::mutex> lock(mutex_);
-  if (complaints_received_.size() == qual.size() - 1)
+  for (const auto &member : qual)
   {
-    // Add QUAL members which did not send a complaint to complaints (redundant for now but will
-    // be necessary when we do not wait for a message from everyone)
-    for (auto const &iq : qual)
+    if (member != node_id && complaints_received_.find(member) == complaints_received_.end())
     {
-      if (iq != node_id && complaints_received_.find(iq) == complaints_received_.end())
-      {
-        complaints_.insert(iq);
-      }
+      return false;
     }
-    finished_ = true;
-    return true;
   }
-  return false;
+  finished_ = true;
+  return true;
 }
 
 void QualComplaintsManager::Clear()
