@@ -17,16 +17,40 @@
 //
 //------------------------------------------------------------------------------
 
-namespace fetch {
+#include "vm/vm.hpp"
 
+namespace fetch {
 namespace vm {
-class Module;
+
+/**
+ * @tparam Estimator
+ * @tparam Args
+ * @param vm
+ * @param e charge estimator function. Should take the same parameters as the opcode handler, and
+ * return a ChargeAmount
+ * @param args
+ * @return false if executing the opcode would exceed the specified charge limit; true otherwise.
+ */
+template <typename... Args>
+bool EstimateCharge(VM *const vm, ChargeEstimator<Args...> const &e, Args const &... args)
+{
+  if (e)
+  {
+    // compute the estimate for this function invocation
+    auto const charge_estimate = e(args...);
+
+    vm->IncreaseChargeTotal(charge_estimate);
+
+    if (vm->GetChargeTotal() > vm->GetChargeLimit())
+    {
+      vm->RuntimeError("Charge limit exceeded");
+
+      return false;
+    }
+  }
+
+  return true;
 }
 
-namespace vm_modules {
-
-void CreateToString(fetch::vm::Module &module);
-void CreateToBool(fetch::vm::Module &module);
-
-}  // namespace vm_modules
+}  // namespace vm
 }  // namespace fetch

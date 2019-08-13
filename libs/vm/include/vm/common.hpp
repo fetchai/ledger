@@ -218,25 +218,31 @@ template <typename T>
 class Ptr;
 class Object;
 
+using ChargeAmount = uint64_t;
+template <typename... Args>
+using ChargeEstimator = std::function<ChargeAmount(Args const &...)>;
+
 using Handler                   = std::function<void(VM *)>;
 using DefaultConstructorHandler = std::function<Ptr<Object>(VM *, TypeId)>;
 
 struct FunctionInfo
 {
   FunctionInfo()
-  {
-    function_kind = FunctionKind::Unknown;
-  }
-  FunctionInfo(FunctionKind function_kind__, std::string const &unique_id__,
-               Handler const &handler__)
-  {
-    function_kind = function_kind__;
-    unique_id     = unique_id__;
-    handler       = handler__;
-  }
+    : function_kind{FunctionKind::Unknown}
+  {}
+
+  FunctionInfo(FunctionKind function_kind__, std::string unique_id__, Handler handler__,
+               ChargeAmount charge)
+    : function_kind{function_kind__}
+    , unique_id{std::move(unique_id__)}
+    , handler{std::move(handler__)}
+    , static_charge{charge}
+  {}
+
   FunctionKind function_kind;
   std::string  unique_id;
   Handler      handler;
+  ChargeAmount static_charge;
 };
 using FunctionInfoArray = std::vector<FunctionInfo>;
 
