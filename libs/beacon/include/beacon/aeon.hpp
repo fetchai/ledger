@@ -41,7 +41,7 @@ struct Aeon
   uint64_t                     round_end{0};
 };
 
-struct BeaconRoundDetails
+struct AeonExecutionUnit
 {
   using BeaconManager  = dkg::BeaconManager;
   using ConstByteArray = byte_array::ConstByteArray;

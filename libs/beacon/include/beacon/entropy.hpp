@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "beacon/beacon_round.hpp"
+#include "beacon/aeon.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 
 #include <cstdint>
@@ -29,7 +29,7 @@ namespace beacon {
 struct Entropy
 {
   using ConstByteArray = byte_array::ConstByteArray;
-  using SignatureShare = BeaconRoundDetails::SignatureShare;
+  using SignatureShare = AeonExecutionUnit::SignatureShare;
   using GroupSignature = dkg::BeaconManager::Signature;
 
   uint64_t       round{0};

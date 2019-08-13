@@ -24,8 +24,8 @@
 #include "network/muddle/rpc/server.hpp"
 #include "network/muddle/subscription.hpp"
 
+#include "beacon/aeon.hpp"
 #include "beacon/beacon_protocol.hpp"
-#include "beacon/beacon_round.hpp"
 #include "beacon/beacon_setup_protocol.hpp"
 #include "beacon/beacon_setup_service.hpp"
 #include "beacon/cabinet_member_details.hpp"
@@ -46,6 +46,8 @@ namespace beacon {
 class BeaconService
 {
 public:
+  constexpr static char const *LOGGING_NAME = "BeaconService";
+
   enum class State
   {
     WAIT_FOR_SETUP_COMPLETION,
@@ -59,27 +61,27 @@ public:
 
   };
 
-  using Identity          = crypto::Identity;
-  using Prover            = crypto::Prover;
-  using ProverPtr         = std::shared_ptr<Prover>;
-  using Certificate       = crypto::Prover;
-  using CertificatePtr    = std::shared_ptr<Certificate>;
-  using Address           = muddle::Packet::Address;
-  using BeaconManager     = dkg::BeaconManager;
-  using SharedBeacon      = std::shared_ptr<BeaconRoundDetails>;
-  using Endpoint          = muddle::MuddleEndpoint;
-  using Muddle            = muddle::Muddle;
-  using Client            = muddle::rpc::Client;
-  using ClientPtr         = std::shared_ptr<Client>;
-  using CabinetMemberList = std::unordered_set<Identity>;
-  using ConstByteArray    = byte_array::ConstByteArray;
-  using Server            = fetch::muddle::rpc::Server;
-  using ServerPtr         = std::shared_ptr<Server>;
-  using SubscriptionPtr   = muddle::MuddleEndpoint::SubscriptionPtr;
-  using StateMachine      = core::StateMachine<State>;
-  using StateMachinePtr   = std::shared_ptr<StateMachine>;
-  using SignatureShare    = BeaconRoundDetails::SignatureShare;
-  using Serializer        = serializers::MsgPackSerializer;
+  using Identity                = crypto::Identity;
+  using Prover                  = crypto::Prover;
+  using ProverPtr               = std::shared_ptr<Prover>;
+  using Certificate             = crypto::Prover;
+  using CertificatePtr          = std::shared_ptr<Certificate>;
+  using Address                 = muddle::Packet::Address;
+  using BeaconManager           = dkg::BeaconManager;
+  using SharedAeonExecutionUnit = std::shared_ptr<AeonExecutionUnit>;
+  using Endpoint                = muddle::MuddleEndpoint;
+  using Muddle                  = muddle::Muddle;
+  using Client                  = muddle::rpc::Client;
+  using ClientPtr               = std::shared_ptr<Client>;
+  using CabinetMemberList       = std::unordered_set<Identity>;
+  using ConstByteArray          = byte_array::ConstByteArray;
+  using Server                  = fetch::muddle::rpc::Server;
+  using ServerPtr               = std::shared_ptr<Server>;
+  using SubscriptionPtr         = muddle::MuddleEndpoint::SubscriptionPtr;
+  using StateMachine            = core::StateMachine<State>;
+  using StateMachinePtr         = std::shared_ptr<StateMachine>;
+  using SignatureShare          = AeonExecutionUnit::SignatureShare;
+  using Serializer              = serializers::MsgPackSerializer;
 
   BeaconService(Endpoint &endpoint, CertificatePtr certificate);
 
@@ -107,6 +109,30 @@ public:
   std::weak_ptr<core::Runnable> GetSetupRunnable();
   /// @}
 private:
+  bool AddSignature(SignatureShare share)
+  {
+    assert(active_exe_unit_ != nullptr);
+
+    auto ret = active_exe_unit_->manager.AddSignaturePart(share.identity, share.public_key,
+                                                          share.signature);
+    if (ret == BeaconManager::AddResult::INVALID_SIGNATURE)
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Signature invalid.");
+
+      // TODO: Received invalid signature - deal with it.
+
+      return false;
+    }
+    else if (ret == BeaconManager::AddResult::NOT_MEMBER)
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Signature from non-member.");
+
+      // TODO: Received signature from non-member - deal with it.
+      return false;
+    }
+    return true;
+  }
+
   std::mutex      mutex_;
   CertificatePtr  certificate_;
   Identity        identity_;
@@ -115,11 +141,11 @@ private:
 
   /// Beacon and entropy control units
   /// @{
-  std::deque<SharedBeacon> beacon_queue_;
-  Entropy                  next_entropy_{};
-  std::deque<Entropy>      ready_entropy_queue_;
+  std::deque<SharedAeonExecutionUnit> aeon_exe_queue_;
+  Entropy                             next_entropy_{};
+  std::deque<Entropy>                 ready_entropy_queue_;
 
-  std::shared_ptr<BeaconRoundDetails>             active_beacon_;
+  std::shared_ptr<AeonExecutionUnit>              active_exe_unit_;
   Entropy                                         current_entropy_;
   std::deque<std::pair<uint64_t, SignatureShare>> signature_queue_;
   /// @}

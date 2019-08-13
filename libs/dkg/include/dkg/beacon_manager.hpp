@@ -48,6 +48,14 @@ public:
   using Contribution   = crypto::bls::dkg::Contribution;
   using ConstByteArray = fetch::byte_array::ConstByteArray;
 
+  enum class AddResult
+  {
+    SUCCESS,
+    NOT_MEMBER,
+    SIGNATURE_ALREADY_ADDED,
+    INVALID_SIGNATURE
+  };
+
   struct SignedMessage
   {
     Signature signature;
@@ -133,7 +141,7 @@ public:
    * @param public_key is the public key of the peer.
    * @param signature is the signature part.
    */
-  bool AddSignaturePart(Identity from, PublicKey public_key, Signature signature);
+  AddResult AddSignaturePart(Identity from, PublicKey public_key, Signature signature);
 
   /*
    * @brief verifies the group signature.
@@ -200,10 +208,11 @@ private:
 
   /// Message signature management
   /// @{
-  SignatureList  signature_buffer_;
-  IdList         signer_ids_;
-  ConstByteArray current_message_;
-  Signature      group_signature_;
+  std::unordered_set<Identity> already_signed_;
+  SignatureList                signature_buffer_;
+  IdList                       signer_ids_;
+  ConstByteArray               current_message_;
+  Signature                    group_signature_;
   /// }
 
   /// Details from other members

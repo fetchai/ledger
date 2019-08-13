@@ -97,12 +97,12 @@ BeaconSetupService::State BeaconSetupService::OnIdle()
 {
   {
     std::lock_guard<std::mutex> lock(mutex_);
-    if (beacon_queue_.size() > 0)
+    if (aeon_exe_queue_.size() > 0)
     {
-      beacon_ = beacon_queue_.front();
+      beacon_ = aeon_exe_queue_.front();
       assert(beacon_ != nullptr);
 
-      beacon_queue_.pop_front();
+      aeon_exe_queue_.pop_front();
 
       // Observe only does not require any setup
       if (beacon_->observe_only)
@@ -330,11 +330,11 @@ BeaconSetupService::State BeaconSetupService::OnBeaconReady()
   return State::IDLE;
 }
 
-void BeaconSetupService::QueueSetup(SharedBeacon beacon)
+void BeaconSetupService::QueueSetup(SharedAeonExecutionUnit beacon)
 {
   std::lock_guard<std::mutex> lock(mutex_);
   assert(beacon != nullptr);
-  beacon_queue_.push_back(beacon);
+  aeon_exe_queue_.push_back(beacon);
 }
 
 // TODO: ... steps - rbc? ...

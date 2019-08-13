@@ -115,6 +115,7 @@ void BeaconManager::SetMessage(BeaconManager::ConstByteArray next_message)
   current_message_ = next_message;
   signature_buffer_.clear();
   signer_ids_.clear();
+  already_signed_.clear();
 }
 
 BeaconManager::SignedMessage BeaconManager::Sign()
@@ -132,16 +133,21 @@ BeaconManager::SignedMessage BeaconManager::Sign()
   return smsg;
 }
 
-bool BeaconManager::AddSignaturePart(BeaconManager::Identity  from,
-                                     BeaconManager::PublicKey public_key,
-                                     BeaconManager::Signature signature)
+BeaconManager::AddResult BeaconManager::AddSignaturePart(BeaconManager::Identity  from,
+                                                         BeaconManager::PublicKey public_key,
+                                                         BeaconManager::Signature signature)
 {
   auto it = identity_to_index_.find(from);
   assert(it != identity_to_index_.end());
 
   if (it == identity_to_index_.end())
   {
-    throw std::runtime_error("Could not find identity in AddSignaturePart.");
+    return AddResult::NOT_MEMBER;
+  }
+
+  if (already_signed_.find(from) != already_signed_.end())
+  {
+    return AddResult::SIGNATURE_ALREADY_ADDED;
   }
 
   uint64_t n  = it->second;
@@ -149,12 +155,13 @@ bool BeaconManager::AddSignaturePart(BeaconManager::Identity  from,
 
   if (!crypto::bls::Verify(signature, public_key, current_message_))
   {
-    throw std::runtime_error("Received signature is invalid.");
+    return AddResult::INVALID_SIGNATURE;
   }
 
   signer_ids_.push_back(id);
   signature_buffer_.push_back(signature);
-  return true;
+  already_signed_.insert(from);
+  return AddResult::SUCCESS;
 }
 
 bool BeaconManager::Verify()

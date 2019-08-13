@@ -24,7 +24,7 @@
 #include "network/muddle/rpc/server.hpp"
 #include "network/muddle/subscription.hpp"
 
-#include "beacon/beacon_round.hpp"
+#include "beacon/aeon.hpp"
 #include "beacon/cabinet_member_details.hpp"
 #include "beacon/entropy.hpp"
 
@@ -53,22 +53,22 @@ public:
     SUBMIT_SHARE
   };
 
-  using BeaconManager      = dkg::BeaconManager;
-  using Identity           = crypto::Identity;
-  using SharedBeacon       = std::shared_ptr<BeaconRoundDetails>;
-  using CallbackFunction   = std::function<void(SharedBeacon)>;
-  using Endpoint           = muddle::MuddleEndpoint;
-  using Muddle             = muddle::Muddle;
-  using Client             = muddle::rpc::Client;
-  using ClientPtr          = std::shared_ptr<Client>;
-  using StateMachine       = core::StateMachine<State>;
-  using StateMachinePtr    = std::shared_ptr<StateMachine>;
-  using ConstByteArray     = byte_array::ConstByteArray;
-  using SubscriptionPtr    = muddle::MuddleEndpoint::SubscriptionPtr;
-  using Serializer         = serializers::MsgPackSerializer;
-  using Address            = byte_array::ConstByteArray;
-  using PrivateKey         = BeaconManager::PrivateKey;
-  using VerificationVector = BeaconManager::VerificationVector;
+  using BeaconManager           = dkg::BeaconManager;
+  using Identity                = crypto::Identity;
+  using SharedAeonExecutionUnit = std::shared_ptr<AeonExecutionUnit>;
+  using CallbackFunction        = std::function<void(SharedAeonExecutionUnit)>;
+  using Endpoint                = muddle::MuddleEndpoint;
+  using Muddle                  = muddle::Muddle;
+  using Client                  = muddle::rpc::Client;
+  using ClientPtr               = std::shared_ptr<Client>;
+  using StateMachine            = core::StateMachine<State>;
+  using StateMachinePtr         = std::shared_ptr<StateMachine>;
+  using ConstByteArray          = byte_array::ConstByteArray;
+  using SubscriptionPtr         = muddle::MuddleEndpoint::SubscriptionPtr;
+  using Serializer              = serializers::MsgPackSerializer;
+  using Address                 = byte_array::ConstByteArray;
+  using PrivateKey              = BeaconManager::PrivateKey;
+  using VerificationVector      = BeaconManager::VerificationVector;
 
   struct ShareSubmission
   {
@@ -94,7 +94,7 @@ public:
   State OnWaitForShares();
   State OnGenerateKeys();
   State OnBeaconReady();
-  void  QueueSetup(SharedBeacon beacon);
+  void  QueueSetup(SharedAeonExecutionUnit beacon);
 
   // TODO: ... steps - rbc? ...
   // TODO: support for complaints
@@ -110,10 +110,10 @@ private:
   SubscriptionPtr     id_subscription_;
   muddle::rpc::Client rpc_client_;
 
-  std::mutex               mutex_;
-  CallbackFunction         callback_function_;
-  std::deque<SharedBeacon> beacon_queue_;
-  SharedBeacon             beacon_;
+  std::mutex                          mutex_;
+  CallbackFunction                    callback_function_;
+  std::deque<SharedAeonExecutionUnit> aeon_exe_queue_;
+  SharedAeonExecutionUnit             beacon_;
 
   std::shared_ptr<StateMachine>                   state_machine_;
   std::vector<CabinetMemberDetails>               member_details_queue_;
