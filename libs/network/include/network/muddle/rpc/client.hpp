@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
+#include "network/details/thread_pool.hpp"
 #include "network/muddle/muddle_endpoint.hpp"
 #include "network/service/client_interface.hpp"
 #include "network/service/promise.hpp"

@@ -27,7 +27,6 @@
 #include "network/management/abstract_connection.hpp"
 #include "network/service/callable_class_member.hpp"
 #include "network/service/error_codes.hpp"
-#include "network/service/feed_subscription_manager.hpp"
 #include "network/service/types.hpp"
 
 namespace fetch {
@@ -161,93 +160,6 @@ public:
   virtual void ConnectionDropped(connection_handle_type /*connection_handle*/)
   {}
 
-  /* Registers a feed from an implementation.
-   * @feed is the unique feed identifier.
-   * @publisher is a class that subclasses <AbstractPublicationFeed>.
-   *
-   */
-  void RegisterFeed(feed_handler_type const &feed, AbstractPublicationFeed *publisher)
-  {
-    LOG_STACK_TRACE_POINT;
-
-    feeds_.push_back(std::make_shared<FeedSubscriptionManager>(feed, publisher));
-  }
-
-  /* Subscribe client to feed.
-   * @client is the client id.
-   * @feed is the feed identifier.
-   * @id is the subscription id allocated on the client side.
-   *
-   * This function is intended to be used by the service to subscribe
-   * its clients to the feed.
-   */
-  void Subscribe(uint64_t client,  // TODO(issue 21): Standardize client type over the code.
-                 feed_handler_type const &feed, subscription_handler_type const &id)
-  {
-    LOG_STACK_TRACE_POINT;
-
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Making subscription for ", client, " ", feed, " ", id);
-
-    feeds_mutex_.lock();
-    std::size_t i = 0;
-    for (; i < feeds_.size(); ++i)
-    {
-      if (feeds_[i]->feed() == feed)
-      {
-        break;
-      }
-    }
-    if (i == feeds_.size())
-    {
-      TODO_FAIL("make serializable error, feed not found");
-    }
-    auto &f = feeds_[i];
-    feeds_mutex_.unlock();
-
-    f->Subscribe(client, id);
-  }
-
-  /* Unsubscribe client to feed.
-   * @client is the client id.
-   * @feed is the feed identifier.
-   * @id is the subscription id allocated on the client side.
-   *
-   * This function is intended to be used by the service to unsubscribe
-   * its clients to the feed.
-   */
-  void Unsubscribe(uint64_t client,  // TODO(issue 21): Standardize client type over the code.
-                   feed_handler_type const &feed, subscription_handler_type const &id)
-  {
-    LOG_STACK_TRACE_POINT;
-
-    feeds_mutex_.lock();
-    std::size_t i = 0;
-    for (; i < feeds_.size(); ++i)
-    {
-      if (feeds_[i]->feed() == feed)
-      {
-        break;
-      }
-    }
-    if (i == feeds_.size())
-    {
-      TODO_FAIL("make serializable error, feed not found");
-    }
-    auto &f = feeds_[i];
-    feeds_mutex_.unlock();
-
-    f->Unsubscribe(client, id);
-  }
-
-  /* Access memeber to the feeds in the protocol.
-   *
-   * @return a reference to the feeds.
-   */
-  std::vector<std::shared_ptr<FeedSubscriptionManager>> &feeds()
-  {
-    return feeds_;
-  }
-
   void AddMiddleware(middleware_type const &m)
   {
     middleware_.push_back(m);
@@ -272,11 +184,8 @@ public:
   }
 
 private:
-  std::vector<middleware_type> middleware_;
-
-  std::map<function_handler_type, stored_type>          members_;
-  std::vector<std::shared_ptr<FeedSubscriptionManager>> feeds_;
-  fetch::mutex::Mutex                                   feeds_mutex_{__LINE__, __FILE__};
+  std::vector<middleware_type>                 middleware_;
+  std::map<function_handler_type, stored_type> members_;
 };
 }  // namespace service
 }  // namespace fetch

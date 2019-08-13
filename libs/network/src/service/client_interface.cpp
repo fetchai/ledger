@@ -24,8 +24,9 @@ namespace fetch {
 namespace service {
 
 ServiceClientInterface::ServiceClientInterface()
-  : subscription_mutex_(__LINE__, __FILE__)
-  , promises_mutex_(__LINE__, __FILE__)
+  : /*subscription_mutex_(__LINE__, __FILE__)
+  ,*/
+  promises_mutex_(__LINE__, __FILE__)
 {}
 
 Promise ServiceClientInterface::CallWithPackedArguments(protocol_handler_type const &protocol,
@@ -65,69 +66,6 @@ Promise ServiceClientInterface::CallWithPackedArguments(protocol_handler_type co
   return prom;
 }
 
-subscription_handler_type ServiceClientInterface::Subscribe(protocol_handler_type const &protocol,
-                                                            feed_handler_type const &    feed,
-                                                            AbstractCallable *           callback)
-{
-  LOG_STACK_TRACE_POINT;
-  FETCH_LOG_INFO(LOGGING_NAME, "PubSub: SUBSCRIBE ", int(protocol), ":", int(feed));
-
-  subscription_handler_type subid = CreateSubscription(protocol, feed, callback);
-  serializer_type           params;
-
-  serializers::SizeCounter counter;
-  counter << SERVICE_SUBSCRIBE << protocol << feed << subid;
-  params.Reserve(counter.size());
-
-  params << SERVICE_SUBSCRIBE << protocol << feed << subid;
-  DeliverRequest(params.data());
-  return subid;
-}
-
-void ServiceClientInterface::Unsubscribe(subscription_handler_type id)
-{
-  FETCH_LOG_INFO(LOGGING_NAME, "PubSub: Unsub ", int(id));
-  LOG_STACK_TRACE_POINT;
-  Subscription sub;
-  {
-    subscription_mutex_lock_type lock(subscription_mutex_);
-    auto                         subscr = subscriptions_.find(id);
-    if (subscr == subscriptions_.end())
-    {
-      if (std::find(cancelled_subscriptions_.begin(), cancelled_subscriptions_.end(), id) !=
-          cancelled_subscriptions_.end())
-      {
-        FETCH_LOG_ERROR(LOGGING_NAME, "PubSub: Trying to unsubscribe previously cancelled ID ", id);
-      }
-      else
-      {
-        FETCH_LOG_ERROR(LOGGING_NAME, "PubSub: Trying to unsubscribe unknown ID ", id);
-      }
-      return;
-    }
-
-    sub = subscriptions_[id];
-
-    cancelled_subscriptions_.push_back(id);
-    if (cancelled_subscriptions_.size() > 30)
-    {
-      cancelled_subscriptions_.pop_front();
-    }
-    subscriptions_.erase(id);
-  }
-  if (sub.callback)
-  {
-    serializer_type params;
-
-    serializers::SizeCounter counter;
-    counter << SERVICE_UNSUBSCRIBE << sub.protocol << sub.feed << id;
-    params.Reserve(counter.size());
-
-    params << SERVICE_UNSUBSCRIBE << sub.protocol << sub.feed << id;
-    DeliverRequest(params.data());
-  }
-}
-
 void ServiceClientInterface::ProcessRPCResult(network::message_type const &msg,
                                               service::serializer_type &   params)
 {
@@ -154,9 +92,14 @@ bool ServiceClientInterface::ProcessServerMessage(network::message_type const &m
   service_classification_type type;
   params >> type;
 
-  if ((type == SERVICE_RESULT) || (type == 0))
+  if (type == SERVICE_FUNCTION_CALL)
+  {
+    return false;
+  }
+  else if (type == SERVICE_RESULT)
   {
     ProcessRPCResult(msg, params);
+    ;
   }
   else if (type == SERVICE_ERROR)
   {
@@ -172,64 +115,6 @@ bool ServiceClientInterface::ProcessServerMessage(network::message_type const &m
 
     FETCH_LOG_DEBUG(LOGGING_NAME, "Binning promise ", id,
                     " due to finishing delivering the response (error)");
-  }
-  else if (type == SERVICE_FEED)
-  {
-    feed_handler_type         feed;
-    subscription_handler_type sub;
-    params >> feed >> sub;
-
-    FETCH_LOG_INFO(LOGGING_NAME, "PubSub: message ", int(feed), ":", int(sub));
-
-    AbstractCallable *cb = nullptr;
-    {
-      subscription_mutex_lock_type lock(subscription_mutex_);
-      auto                         subscr = subscriptions_.find(sub);
-      if (subscr == subscriptions_.end())
-      {
-        if (std::find(cancelled_subscriptions_.begin(), cancelled_subscriptions_.end(), sub) ==
-            cancelled_subscriptions_.end())
-        {
-          FETCH_LOG_ERROR(LOGGING_NAME,
-                          "PubSub:  We were sent a subscription ID we never allocated: ", int(sub));
-          return false;
-        }
-        else
-        {
-          FETCH_LOG_INFO(LOGGING_NAME, "PubSub: Ignoring message for old subscription.", int(sub));
-          return true;
-        }
-      }
-
-      if ((*subscr).second.feed != feed)
-      {
-        FETCH_LOG_ERROR(LOGGING_NAME,
-                        "PubSub: Subscription's feed ID is different from message feed ID.");
-        return false;
-      }
-
-      cb = (*subscr).second.callback;
-    }
-
-    if (cb)
-    {
-      serializer_type result;
-      try
-      {
-        (*cb)(result, params);
-      }
-      catch (serializers::SerializableException const &e)
-      {
-        e.StackTrace();
-        FETCH_LOG_ERROR(LOGGING_NAME, "PubSub: Serialization error: ", e.what());
-        throw e;
-      }
-    }
-    else
-    {
-      FETCH_LOG_ERROR(LOGGING_NAME, "PubSub: Callback is null for feed ", feed, " in subscription ",
-                      int(sub));
-    }
   }
   else
   {
@@ -287,18 +172,6 @@ void ServiceClientInterface::RemovePromise(PromiseCounter id)
 {
   FETCH_LOCK(promises_mutex_);
   promises_.erase(id);
-}
-
-subscription_handler_type ServiceClientInterface::CreateSubscription(
-    protocol_handler_type const &protocol, feed_handler_type const &feed, AbstractCallable *cb)
-{
-  LOG_STACK_TRACE_POINT;
-
-  subscription_mutex_lock_type lock(subscription_mutex_);
-  subscription_index_counter_++;
-  subscriptions_[subscription_index_counter_] = Subscription(protocol, feed, cb);
-  subscription_mutex_.unlock();
-  return subscription_handler_type(subscription_index_counter_);
 }
 
 }  // namespace service

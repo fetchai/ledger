@@ -82,12 +82,6 @@ protected:
     case SERVICE_FUNCTION_CALL:
       success = HandleRPCCallRequest(client, params, context);
       break;
-    case SERVICE_SUBSCRIBE:
-      success = HandleSubscribeRequest(client, params);
-      break;
-    case SERVICE_UNSUBSCRIBE:
-      success = HandleUnsubscribeRequest(client, params);
-      break;
     default:
       FETCH_LOG_WARN(LOGGING_NAME, "PushProtocolRequest type not recognised ", type);
       break;
@@ -128,61 +122,6 @@ protected:
       LOG_STACK_TRACE_POINT;
       DeliverResponse(client, result.data());
     }
-    return ret;
-  }
-  bool HandleSubscribeRequest(connection_handle_type client, serializer_type params)
-  {
-    LOG_STACK_TRACE_POINT;
-    bool                      ret = true;
-    protocol_handler_type     protocol;
-    feed_handler_type         feed;
-    subscription_handler_type subid;
-
-    try
-    {
-      LOG_STACK_TRACE_POINT;
-      params >> protocol >> feed >> subid;
-      auto &mod = *members_[protocol];
-
-      mod.Subscribe(client, feed, subid);
-    }
-    catch (serializers::SerializableException const &e)
-    {
-      LOG_STACK_TRACE_POINT;
-      FETCH_LOG_ERROR(LOGGING_NAME, "Serialization error (Subscribe): ", e.what());
-      // result = serializer_type();
-      // result << SERVICE_ERROR << id << e;
-      throw e;  // TODO(ed): propagate error other other size
-    }
-    // DeliverResponse(client, result.data());
-    return ret;
-  }
-
-  bool HandleUnsubscribeRequest(connection_handle_type client, serializer_type params)
-  {
-    LOG_STACK_TRACE_POINT;
-    bool                      ret = true;
-    protocol_handler_type     protocol;
-    feed_handler_type         feed;
-    subscription_handler_type subid;
-
-    try
-    {
-      LOG_STACK_TRACE_POINT;
-      params >> protocol >> feed >> subid;
-      auto &mod = *members_[protocol];
-
-      mod.Unsubscribe(client, feed, subid);
-    }
-    catch (serializers::SerializableException const &e)
-    {
-      LOG_STACK_TRACE_POINT;
-      FETCH_LOG_ERROR(LOGGING_NAME, "Serialization error (Unsubscribe): ", e.what());
-      // result = serializer_type();
-      // result << SERVICE_ERROR << id << e;
-      throw e;  // TODO(ed): propagate error other other size
-    }
-    // DeliverResponse(client, result.data());
     return ret;
   }
 
@@ -278,7 +217,6 @@ private:
   }
 
   Protocol *members_[256] = {nullptr};  // TODO(issue 19): Not thread-safe
-  friend class FeedSubscriptionManager;
 };
 }  // namespace service
 }  // namespace fetch
