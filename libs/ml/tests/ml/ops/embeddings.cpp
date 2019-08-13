@@ -69,7 +69,8 @@ TYPED_TEST(EmbeddingsTest, forward)
     }
   }
 
-  e.SetData(weights);
+  e.fetch::ml::ops::template Weights<TypeParam>::SetData(weights);
+
   TypeParam input(std::vector<uint64_t>({2, 1}));
   input.At(0, 0) = typename TypeParam::Type(3);
   input.At(1, 0) = typename TypeParam::Type(5);
@@ -88,7 +89,7 @@ TYPED_TEST(EmbeddingsTest, forward)
       EXPECT_EQ(output.At(j, i, 0), typename TypeParam::Type(gt[(i * 6) + j]));
       if (output.At(j, i, 0) != (typename TypeParam::Type(gt[(i * 6) + j])))
       {
-        std::cerr << "ERROR: " << output.At(j, i) << " "
+        std::cerr << "ERROR: " << output.At(j, i, 0) << " "
                   << typename TypeParam::Type(gt[(i * 6) + j]) << std::endl;
         std::exit(-1);
       }
@@ -111,7 +112,8 @@ TYPED_TEST(EmbeddingsTest, backward)
       weights(j, i) = static_cast<DataType>(i * 10 + j);
     }
   }
-  e.SetData(weights);
+
+  e.fetch::ml::ops::template Weights<TypeParam>::SetData(weights);
 
   TensorType input(std::vector<uint64_t>({2, 1}));
   input.At(0, 0) = DataType{3};
@@ -176,7 +178,8 @@ TYPED_TEST(EmbeddingsTest, saveparams_test)
   input.At(1, 0) = typename TypeParam::Type(5);
 
   OpType op(6, 10);
-  op.SetData(weights);
+
+  op.fetch::ml::ops::template Weights<TypeParam>::SetData(weights);
 
   TensorType prediction(op.ComputeOutputShape({std::make_shared<TensorType const>(weights)}));
 
@@ -225,7 +228,8 @@ TYPED_TEST(EmbeddingsTest, saveparams_backward)
       weights(j, i) = DataType{i * 10 + j};
     }
   }
-  op.SetData(weights);
+
+  op.fetch::ml::ops::template Weights<TypeParam>::SetData(weights);
 
   TensorType input(std::vector<uint64_t>({2, 1}));
   input.At(0, 0) = DataType{3};
