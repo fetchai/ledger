@@ -344,6 +344,7 @@ void DistributedKeyGeneration::ReceivedQualComplaint()
   if (!received_all_qual_complaints_ && (state_ == State::WAITING_FOR_QUAL_COMPLAINTS) &&
       (qual_complaints_manager_.IsFinished(qual_, address_)))
   {
+    CheckQualComplaints();
     received_all_qual_complaints_.store(true);
     size_t size = qual_complaints_manager_.ComplaintsSize();
 
@@ -396,28 +397,6 @@ void DistributedKeyGeneration::ReceivedReconstructionShares()
       qual_complaints_manager_.Clear();
     }
   }
-}
-
-/**
- * Helper function to check basic details of the message to determine if it should be processed
- *
- * @param from Muddle address of sender
- * @param msg_ptr Shared pointer of message
- * @return Bool of whether the message passes the test or not
- */
-bool DistributedKeyGeneration::BasicMsgCheck(MuddleAddress const &              from,
-                                             std::shared_ptr<DKGMessage> const &msg_ptr)
-{
-  if (msg_ptr == nullptr)
-  {
-    return false;
-  }
-  else if (cabinet_.find(from) == cabinet_.end())
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_, " received message from unknown sender");
-    return false;
-  }
-  return true;
 }
 
 /**
@@ -623,60 +602,7 @@ void DistributedKeyGeneration::OnComplaintsAnswer(SharesMessage const &answer,
 void DistributedKeyGeneration::OnQualComplaints(SharesMessage const &shares_msg,
                                                 MuddleAddress const &from_id)
 {
-  // Return if the sender not in QUAL
-  // TODO: Remove this
-  if (qual_.find(from_id) == qual_.end())
-  {
-    return;
-  }
-  uint32_t from_index{CabinetIndex(from_id)};
-  for (auto const &share : shares_msg.shares())
-  {
-    // Check person who's shares are being exposed is not in QUAL then don't bother with checks
-    if (qual_.find(share.first) != qual_.end())
-    {
-      uint32_t victim_index = CabinetIndex(share.first);
-      // verify complaint, i.e. (4) holds (5) not
-      bn::G2 lhs, rhs;
-      bn::Fr s, sprime;
-      lhs.clear();
-      rhs.clear();
-      s.clear();
-      sprime.clear();
-      s.setStr(share.second.first);
-      sprime.setStr(share.second.second);
-      // check equation (4)
-      lhs = ComputeLHS(group_g_, group_h_, s, sprime);
-      rhs = ComputeRHS(from_index, C_ik[victim_index]);
-      if (lhs != rhs)
-      {
-        FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
-                       " received shares failing initial coefficients verification from node ",
-                       from_index, " for node ", victim_index);
-        qual_complaints_manager_.Complaints(from_id);
-      }
-      else
-      {
-        // check equation (5)
-        bn::G2::mul(lhs, group_g_, s);  // G^s
-        rhs = ComputeRHS(from_index, A_ik[victim_index]);
-        if (lhs != rhs)
-        {
-          FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
-                         " received shares failing qual coefficients verification from node ",
-                         from_index, " for node ", victim_index);
-          qual_complaints_manager_.Complaints(share.first);
-        }
-        else
-        {
-          FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
-                         " received incorrect complaint from ", from_index);
-          qual_complaints_manager_.Complaints(from_id);
-        }
-      }
-    }
-  }
-  qual_complaints_manager_.Received(from_id);
+  qual_complaints_manager_.Received(from_id, shares_msg.shares());
   ReceivedQualComplaint();
 }
 
@@ -692,7 +618,7 @@ void DistributedKeyGeneration::OnReconstructionShares(SharesMessage const &share
 {
   uint32_t from_index{CabinetIndex(from_id)};
   // Return if the sender is in complaints, or not in QUAL
-  // TODO: Remove this
+  // TODO(JMW): Could be problematic if qual has not been built yet
   if (qual_complaints_manager_.ComplaintsFind(from_id) or qual_.find(from_id) == qual_.end())
   {
     return;
@@ -912,6 +838,69 @@ DistributedKeyGeneration::SharesExposedMap DistributedKeyGeneration::ComputeQual
 }
 
 /**
+ * Checks the complaints set by qual members
+ */
+void DistributedKeyGeneration::CheckQualComplaints()
+{
+  for (const auto &complaint : qual_complaints_manager_.ComplaintsReceived())
+  {
+    MuddleAddress sender = complaint.first;
+    // Return if the sender not in QUAL
+    if (qual_.find(sender) == qual_.end())
+    {
+      return;
+    }
+    uint32_t from_index{CabinetIndex(sender)};
+    for (auto const &share : complaint.second)
+    {
+      // Check person who's shares are being exposed is not in QUAL then don't bother with checks
+      if (qual_.find(share.first) != qual_.end())
+      {
+        uint32_t victim_index = CabinetIndex(share.first);
+        // verify complaint, i.e. (4) holds (5) not
+        bn::G2 lhs, rhs;
+        bn::Fr s, sprime;
+        lhs.clear();
+        rhs.clear();
+        s.clear();
+        sprime.clear();
+        s.setStr(share.second.first);
+        sprime.setStr(share.second.second);
+        // check equation (4)
+        lhs = ComputeLHS(group_g_, group_h_, s, sprime);
+        rhs = ComputeRHS(from_index, C_ik[victim_index]);
+        if (lhs != rhs)
+        {
+          FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
+                         " received shares failing initial coefficients verification from node ",
+                         from_index, " for node ", victim_index);
+          qual_complaints_manager_.Complaints(sender);
+        }
+        else
+        {
+          // check equation (5)
+          bn::G2::mul(lhs, group_g_, s);  // G^s
+          rhs = ComputeRHS(from_index, A_ik[victim_index]);
+          if (lhs != rhs)
+          {
+            FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
+                           " received shares failing qual coefficients verification from node ",
+                           from_index, " for node ", victim_index);
+            qual_complaints_manager_.Complaints(share.first);
+          }
+          else
+          {
+            FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
+                           " received incorrect complaint from ", from_index);
+            qual_complaints_manager_.Complaints(sender);
+          }
+        }
+      }
+    }
+  }
+}
+
+/**
  * If in qual a member computes individual share of the secret key and further computes and
  * broadcasts qual coefficients
  */
@@ -1011,6 +1000,28 @@ void DistributedKeyGeneration::ComputePublicKeys()
 uint32_t DistributedKeyGeneration::CabinetIndex(MuddleAddress const &other_address) const
 {
   return static_cast<uint32_t>(std::distance(cabinet_.begin(), cabinet_.find(other_address)));
+}
+
+/**
+ * Helper function to check basic details of the message to determine if it should be processed
+ *
+ * @param from Muddle address of sender
+ * @param msg_ptr Shared pointer of message
+ * @return Bool of whether the message passes the test or not
+ */
+bool DistributedKeyGeneration::BasicMsgCheck(MuddleAddress const &              from,
+                                             std::shared_ptr<DKGMessage> const &msg_ptr)
+{
+  if (msg_ptr == nullptr)
+  {
+    return false;
+  }
+  else if (cabinet_.find(from) == cabinet_.end())
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_, " received message from unknown sender");
+    return false;
+  }
+  return true;
 }
 
 /**

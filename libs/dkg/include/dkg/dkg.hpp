@@ -154,6 +154,7 @@ protected:
                                         uint32_t from_index);
   bool             BuildQual();
   SharesExposedMap ComputeQualComplaints();
+  void             CheckQualComplaints();
   void             ComputeSecretShare();
   bool             RunReconstruction();
   void             ComputePublicKeys();
