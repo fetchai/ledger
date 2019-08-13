@@ -16,6 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/const_byte_array.hpp"
+#include "core/byte_array/decoders.hpp"
+#include "core/byte_array/encoders.hpp"
 #include "core/json/document.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "ledger/state_adapter.hpp"
@@ -40,6 +43,9 @@
 
 using DataType  = fetch::vm_modules::math::VMTensor::DataType;
 using ArrayType = fetch::math::Tensor<DataType>;
+
+using fetch::byte_array::FromHex;
+using fetch::byte_array::ToHex;
 
 struct System : public fetch::vm::Object
 {
@@ -71,7 +77,6 @@ fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> read_csv(
   ArrayType weights = fetch::ml::dataloaders::ReadCSV<ArrayType>(filename->str, 0, 0, transpose);
   return vm->CreateNewObject<fetch::vm_modules::math::VMTensor>(weights);
 }
-
 
 fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> read_csv_no_transpose(
     fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &filename)
