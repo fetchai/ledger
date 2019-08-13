@@ -20,6 +20,7 @@
 #include "core/byte_array/byte_array.hpp"
 #include "math/tensor_declaration.hpp"
 #include "meta/type_traits.hpp"
+#include "vectorise/meta/math_type_traits.hpp"
 #include "vectorise/fixed_point/type_traits.hpp"
 
 #include <type_traits>
@@ -28,99 +29,6 @@ namespace fetch {
 namespace math {
 
 namespace meta {
-
-template <bool C, typename ReturnType = void>
-using EnableIf = typename std::enable_if<C, ReturnType>::type;
-
-////////////////////////////////////
-/// REGISTER OF VECTORISED TYPES ///
-////////////////////////////////////
-
-template <typename T>
-struct HasVectorSupport
-{
-  enum
-  {
-    value = 0
-  };
-};
-
-template <>
-struct HasVectorSupport<double>
-{
-  enum
-  {
-    value = 1
-  };
-};
-
-template <>
-struct HasVectorSupport<float>
-{
-  enum
-  {
-    value = 1
-  };
-};
-
-template <typename T, typename R>
-using IfVectorSupportFor = typename std::enable_if<HasVectorSupport<T>::value, R>::type;
-template <typename T, typename R>
-using IfNoVectorSupportFor = typename std::enable_if<!HasVectorSupport<T>::value, R>::type;
-
-////////////////////////////////////////////////
-/// TYPES INDIRECTED FROM META / TYPE_TRAITS ///
-////////////////////////////////////////////////
-
-template <typename DataType, typename ReturnType>
-using IfIsNotImplemented = fetch::meta::IfIsNotImplemented<DataType, ReturnType>;
-
-template <typename DataType>
-using IfIsUnsignedInteger = fetch::meta::IfIsUnsignedInteger<DataType>;
-
-////////////////////////////////////
-/// MATH LIKE SPECIALIZATIONS
-////////////////////////////////////
-
-template <typename A, typename ReturnType>
-struct IsMathImpl
-{
-};
-template <typename ReturnType>
-struct IsMathImpl<double, ReturnType>
-{
-  using Type = ReturnType;
-};
-template <typename ReturnType>
-struct IsMathImpl<float, ReturnType>
-{
-  using Type = ReturnType;
-};
-template <typename ReturnType>
-struct IsMathImpl<int, ReturnType>
-{
-  using Type = ReturnType;
-};
-template <typename ReturnType>
-struct IsMathImpl<fixed_point::fp32_t, ReturnType>
-{
-  using Type = ReturnType;
-};
-template <typename ReturnType>
-struct IsMathImpl<fixed_point::fp64_t, ReturnType>
-{
-  using Type = ReturnType;
-};
-
-template <typename DataType, typename ContainerType /*template<class> class ContainerType*/,
-          typename ReturnType>
-struct IsMathImpl<Tensor<DataType, ContainerType>, ReturnType>
-{
-  using Type = ReturnType;
-};
-
-template <typename DataType, typename ReturnType>
-using IfIsMath = typename IsMathImpl<DataType, ReturnType>::Type;
 
 //////////////////
 /// MATH ARRAY ///

@@ -81,8 +81,12 @@ struct UnrollSet<T, 0>
   FUNCTION (^)
 // clang-format on
 
+struct BaseVectorRegisterType
+{
+};
+
 template <typename T, std::size_t N = sizeof(T)>
-class VectorRegister
+class VectorRegister : public BaseVectorRegisterType
 {
 public:
   using type             = T;
