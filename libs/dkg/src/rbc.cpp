@@ -480,7 +480,7 @@ void RBC::OnRReady(RReady const &msg, uint32_t sender_index)
       FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, " delivered msg ", tag, " with counter ",
                      msg.counter(), " and id ", msg.id());
       std::unique_lock<std::mutex> lock_broadcast(mutex_broadcast_);
-      SerialisedMessage message_to_send = broadcasts_[tag].mbar;
+      SerialisedMessage            message_to_send = broadcasts_[tag].mbar;
       lock_broadcast.unlock();
       Deliver(message_to_send, msg.id());
       std::lock_guard<std::mutex> lock(mutex_deliver_);
@@ -599,8 +599,9 @@ void RBC::Deliver(SerialisedMessage const &msg, uint32_t sender_index)
            old_tag_msg->first == parties_[sender_index].deliver_s)
     {
       assert(!broadcasts_[old_tag_msg->second.tag()].mbar.empty());
-      FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, " delivered msg ", old_tag_msg->second.tag(), " with counter ",
-                     old_tag_msg->second.counter(), " and id ", old_tag_msg->second.id());
+      FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, " delivered msg ", old_tag_msg->second.tag(),
+                     " with counter ", old_tag_msg->second.counter(), " and id ",
+                     old_tag_msg->second.id());
       deliver_msg_callback_(miner_id, broadcasts_[old_tag_msg->second.tag()].mbar);
       ++parties_[sender_index].deliver_s;  // Increase counter
       old_tag_msg = parties_[sender_index].undelivered_msg.erase(old_tag_msg);
