@@ -575,12 +575,12 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
   std::this_thread::sleep_for(std::chrono::seconds(1));
 }
 
-TEST(dkg, small_scale_test)
+TEST(dkg, DISABLED_small_scale_test)
 {
   GenerateTest(4, 1, 4, 4);
 }
 
-TEST(dkg, send_bad_share)
+TEST(dkg, DISABLED_send_bad_share)
 {
   // Node 0 sends bad secret shares to Node 1 which complains against it.
   // Node 0 then broadcasts its real shares as defense and then is allowed into
@@ -588,14 +588,14 @@ TEST(dkg, send_bad_share)
   GenerateTest(4, 1, 4, 4, {{FaultyDkg::Failures::SEND_BAD_SHARE}});
 }
 
-TEST(dkg, bad_coefficients)
+TEST(dkg, DISABLED_bad_coefficients)
 {
   // Node 0 broadcasts bad coefficients which fails verification by everyone.
   // Rejected from qual
   GenerateTest(4, 1, 3, 3, {{FaultyDkg::Failures::BAD_COEFFICIENT}});
 }
 
-TEST(dkg, compute_bad_shares)
+TEST(dkg, DISABLED_compute_bad_shares)
 {
   // Node 0 sends computes bad secret shares to Node 1 which complains against it.
   // Node 0 then broadcasts the shares sent to Node 1 as defense but as they have been
@@ -603,7 +603,7 @@ TEST(dkg, compute_bad_shares)
   GenerateTest(4, 1, 3, 3, {{FaultyDkg::Failures::COMPUTE_BAD_SHARE}});
 }
 
-TEST(dkg, send_empty_complaints_answer)
+TEST(dkg, DISABLED_send_empty_complaints_answer)
 {
   // Node 0 sends computes bad secret shares to Node 1 which complains against it.
   // Node 0 then does not send real shares and instead sends empty complaint answer.
@@ -613,27 +613,27 @@ TEST(dkg, send_empty_complaints_answer)
       {{FaultyDkg::Failures::SEND_BAD_SHARE, FaultyDkg::Failures::SEND_EMPTY_COMPLAINT_ANSWER}});
 }
 
-TEST(dkg, send_multiple_complaints)
+TEST(dkg, DISABLED_send_multiple_complaints)
 {
   // Node 0 sends multiple complaint messages in the first round of complaints
   GenerateTest(4, 1, 4, 4, {{FaultyDkg::Failures::SEND_MULTIPLE_COMPLAINTS}});
 }
 
-TEST(dkg, send_multiple_coefficients)
+TEST(dkg, DISABLED_send_multiple_coefficients)
 {
   // Node 0 sends multiple coefficients. Should trigger warning but everyone
   // should succeed in DKG
   GenerateTest(4, 1, 4, 4, {{FaultyDkg::Failures::SEND_MULTIPLE_COEFFICIENTS}});
 }
 
-TEST(dkg, send_multiple_complaint_answers)
+TEST(dkg, DISABLED_send_multiple_complaint_answers)
 {
   // Node 0 sends multiple complaint answers. Should trigger warning but everyone
   // should succeed in DKG
   GenerateTest(4, 1, 4, 4, {{FaultyDkg::Failures::SEND_MULTIPLE_COMPLAINT_ANSWERS}});
 }
 
-TEST(dkg, qual_below_threshold)
+TEST(dkg, DISABLED_qual_below_threshold)
 {
   // Qual size is below threshold as two many nodes were disqualified so DKG fails for
   // everyone
@@ -641,21 +641,21 @@ TEST(dkg, qual_below_threshold)
                {{FaultyDkg::Failures::BAD_COEFFICIENT}, {FaultyDkg::Failures::BAD_COEFFICIENT}});
 }
 
-TEST(dkg, bad_qual_coefficients)
+TEST(dkg, DISABLED_bad_qual_coefficients)
 {
   // Node 0 computes bad qual coefficients so node 0 is in qual complaints but everyone reconstructs
   // their shares. Everyone else except node 0 succeeds in DKG
   GenerateTest(4, 1, 4, 3, {{FaultyDkg::Failures::BAD_QUAL_COEFFICIENTS}});
 }
 
-TEST(dkg, send_multiple_qual_coefficients)
+TEST(dkg, DISABLED_send_multiple_qual_coefficients)
 {
   // Node 0 sends multiple qual coefficients so node 0.
   // Should trigger warning but everyone should succeed in DKG
   GenerateTest(4, 1, 4, 4, {{FaultyDkg::Failures::SEND_MULTIPLE_QUAL_COEFFICIENTS}});
 }
 
-TEST(dkg, send_fake_qual_complaint)
+TEST(dkg, DISABLED_send_fake_qual_complaint)
 {
   // Node 0 sends multiple qual coefficients. Should trigger warning and node 0's shares will be
   // reconstructed but everyone else should succeed in the DKG. Important test as it means
@@ -663,7 +663,7 @@ TEST(dkg, send_fake_qual_complaint)
   GenerateTest(4, 1, 4, 4, {{FaultyDkg::Failures::SEND_FALSE_QUAL_COMPLAINT}});
 }
 
-TEST(dkg, too_many_bad_qual_coefficients)
+TEST(dkg, DISABLED_too_many_bad_qual_coefficients)
 {
   // Two nodes send bad qual coefficients which means that there are
   // not enough parties not (threshold + 1) parities not in complaints.
@@ -674,7 +674,7 @@ TEST(dkg, too_many_bad_qual_coefficients)
                 {FaultyDkg::Failures::BAD_QUAL_COEFFICIENTS}});
 }
 
-TEST(dkg, send_multiple_reconstruction_shares)
+TEST(dkg, DISABLED_send_multiple_reconstruction_shares)
 {
   // Node sends multiple reconstruction shares which triggers warning but
   // DKG succeeds
@@ -683,7 +683,7 @@ TEST(dkg, send_multiple_reconstruction_shares)
                 {FaultyDkg::Failures::SEND_MULTIPLE_RECONSTRUCTION_SHARES}});
 }
 
-TEST(dkg, withold_reconstruction_shares)
+TEST(dkg, DISABLED_withold_reconstruction_shares)
 {
   // Node 0 sends bad qual coefficients and another in collusion does not broadcast node 0's shares
   // so there are not enough shares to run reconstruction
@@ -692,7 +692,7 @@ TEST(dkg, withold_reconstruction_shares)
                 {FaultyDkg::Failures::WITHOLD_RECONSTRUCTION_SHARES}});
 }
 
-TEST(dkg, successive_dkgs)
+TEST(dkg, DISABLED_successive_dkgs)
 {
   GenerateTest(4, 1, 4, 4, {}, 4);
 }
