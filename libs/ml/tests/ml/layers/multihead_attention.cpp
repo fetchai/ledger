@@ -116,7 +116,6 @@ TYPED_TEST(MultiheadAttention, backward_test)  // Use the class as an Ops
 
 TYPED_TEST(MultiheadAttention, saveparams_test)
 {
-  //  using DataType  = typename TypeParam::Type;
   using LayerType = typename fetch::ml::layers::MultiheadAttention<TypeParam>;
   using SPType    = typename LayerType::SPType;
 
@@ -172,7 +171,10 @@ TYPED_TEST(MultiheadAttention, saveparams_test)
 
   EXPECT_ANY_THROW(*(fetch::ml::utilities::BuildLayer<TypeParam, LayerType>(dsp2)));
 
+  // todo(issue 1475) Once the weight-sharing layers can be rebuilt then this test can be uncommented
+
   //  // rebuild
+  //  using DataType  = typename TypeParam::Type;
   //  auto layer2 = *(fetch::ml::utilities::BuildLayer<TypeParam, LayerType>(dsp2));
   //
   //  // test equality
