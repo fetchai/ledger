@@ -33,6 +33,7 @@
 #include "beacon/entropy.hpp"
 #include "beacon/event_manager.hpp"
 #include "beacon/events.hpp"
+#include "beacon/verification_vector_message.hpp"
 
 #include <cstdint>
 #include <deque>
@@ -60,6 +61,7 @@ public:
     COMPLETE,
     COMITEE_ROTATION,
 
+    WAIT_FOR_VERIFICATION_VECTORS,
     OBSERVE_ENTROPY_GENERATION
   };
 
@@ -120,24 +122,26 @@ protected:
   /// @{
   State OnWaitForSetupCompletionState();
   State OnPrepareEntropyGeneration();
-  State OnObserveEntropyGeneration();
 
   State OnBroadcastSignatureState();
   State OnCollectSignaturesState();
   State OnCompleteState();
 
   State OnComiteeState();
+
+  State OnWaitForVerificationVectors();
+  State OnObserveEntropyGeneration();
   /// @}
 
   /// Protocol endpoints
   /// @{
   void SubmitSignatureShare(uint64_t round, SignatureShare);
   /// @}
+
 private:
   bool AddSignature(SignatureShare share)
   {
     assert(active_exe_unit_ != nullptr);
-
     auto ret = active_exe_unit_->manager.AddSignaturePart(share.identity, share.public_key,
                                                           share.signature);
 
@@ -189,11 +193,13 @@ private:
 
   /// Observing beacon
   /// @{
-  SubscriptionPtr              entropy_subscription_;
-  std::priority_queue<Entropy> incoming_entropy_;
+  SubscriptionPtr                                verification_vec_subscription_{nullptr};
+  std::priority_queue<VerificationVectorMessage> incoming_verification_vectors_{};
+  SubscriptionPtr                                entropy_subscription_{nullptr};
+  std::priority_queue<Entropy>                   incoming_entropy_{};
   /// @}
 
-  ServerPtr           rpc_server_;
+  ServerPtr           rpc_server_{nullptr};
   muddle::rpc::Client rpc_client_;
 
   /// Internal messaging

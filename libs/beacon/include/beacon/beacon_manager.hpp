@@ -73,6 +73,7 @@ public:
       ptr->GenerateKeys();
     }
   }
+
   BeaconManager(BeaconManager const &) = delete;
   BeaconManager &operator=(BeaconManager const &) = delete;
 
@@ -125,6 +126,11 @@ public:
   void CreateKeyPair();
 
   /*
+   * @brief creates the public key from verification vectors.
+   */
+  void CreateGroupPublicKey(std::vector<VerificationVector> const &verification_vectors);
+
+  /*
    * @brief sets the next message to be signed.
    * @param next_message is the message to be signed.
    */
@@ -147,6 +153,11 @@ public:
    * @brief verifies the group signature.
    */
   bool Verify();
+
+  /*
+   * @brief verifies a group signature.
+   */
+  bool Verify(Signature const &);
 
   /*
    * @brief returns the signature as a ConstByteArray
@@ -181,6 +192,11 @@ public:
   bool can_verify()
   {
     return signature_buffer_.size() >= threshold_;
+  }
+
+  std::vector<VerificationVector> verification_vectors()
+  {
+    return verification_vectors_;
   }
   /// }
 private:

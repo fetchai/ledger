@@ -102,12 +102,17 @@ void BeaconManager::CreateKeyPair()
 {
   secret_key_share_ = crypto::bls::dkg::AccumulateContributionShares(received_shares_);
 
-  // TODO(tfr): Can be optimised
+  CreateGroupPublicKey(verification_vectors_);
+  public_key_ = crypto::bls::PublicKeyFromPrivate(secret_key_share_);
+}
 
+void BeaconManager::CreateGroupPublicKey(
+    std::vector<VerificationVector> const &verification_vectors)
+{
+  // TODO(tfr): Can be optimised
   VerificationVector group_vectors =
-      crypto::bls::dkg::AccumulateVerificationVectors(verification_vectors_);
+      crypto::bls::dkg::AccumulateVerificationVectors(verification_vectors);
   group_public_key_ = group_vectors[0];
-  public_key_       = crypto::bls::PublicKeyFromPrivate(secret_key_share_);
 }
 
 void BeaconManager::SetMessage(BeaconManager::ConstByteArray next_message)
@@ -167,7 +172,12 @@ BeaconManager::AddResult BeaconManager::AddSignaturePart(BeaconManager::Identity
 bool BeaconManager::Verify()
 {
   group_signature_ = crypto::bls::RecoverSignature(signature_buffer_, signer_ids_);
-  return crypto::bls::Verify(group_signature_, group_public_key_, current_message_);
+  return Verify(group_signature_);
+}
+
+bool BeaconManager::Verify(Signature const &group_signature)
+{
+  return crypto::bls::Verify(group_signature, group_public_key_, current_message_);
 }
 
 }  // namespace dkg
