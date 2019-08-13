@@ -383,7 +383,7 @@ void GenerateRbcTest(uint32_t cabinet_size, uint32_t expected_completion_size,
       committee[sender_index]->rbc.SendRBroadcast(serialiser.data(), num_messages);
     }
 
-    std::this_thread::sleep_for(std::chrono::seconds(1 * num_messages));
+    std::this_thread::sleep_for(std::chrono::seconds(10 * num_messages));
     uint32_t pp = 0;
     for (uint32_t qq = 0; qq < cabinet_size; ++qq)
     {

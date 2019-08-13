@@ -178,6 +178,7 @@ bool RBC::SetMbar(TagType tag, RMessage const &msg, uint32_t sender_index)
   std::lock_guard<std::mutex> lock(mutex_broadcast_);
   if (broadcasts_[tag].mbar.empty())
   {
+    FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, " received ", broadcasts_.size(), " broadcasts");
     broadcasts_[tag].mbar = msg.message();
     return true;
   }
@@ -571,7 +572,10 @@ void RBC::OnRAnswer(RAnswer const &msg, uint32_t sender_index)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, " delivered msg ", tag, " with counter ",
                    msg.counter(), " and id ", msg.id());
-    Deliver(broadcasts_[tag].mbar, msg.id());
+    std::unique_lock<std::mutex> lock_broadcast(mutex_broadcast_);
+    SerialisedMessage            message_to_send = broadcasts_[tag].mbar;
+    lock_broadcast.unlock();
+    Deliver(message_to_send, msg.id());
     std::lock_guard<std::mutex> lock(mutex_deliver_);
     delivered_.insert(tag);
   }
@@ -598,12 +602,14 @@ void RBC::Deliver(SerialisedMessage const &msg, uint32_t sender_index)
     while (old_tag_msg != parties_[sender_index].undelivered_msg.end() &&
            old_tag_msg->first == parties_[sender_index].deliver_s)
     {
+      FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, "testing msg with tag ", old_tag_msg->second.tag(), " with broadcast size ", broadcasts_.size());
       assert(!broadcasts_[old_tag_msg->second.tag()].mbar.empty());
       FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, " delivered msg ", old_tag_msg->second.tag(),
                      " with counter ", old_tag_msg->second.counter(), " and id ",
                      old_tag_msg->second.id());
       deliver_msg_callback_(miner_id, broadcasts_[old_tag_msg->second.tag()].mbar);
       ++parties_[sender_index].deliver_s;  // Increase counter
+      delivered_.insert(old_tag_msg->second.tag());
       old_tag_msg = parties_[sender_index].undelivered_msg.erase(old_tag_msg);
     }
   }
