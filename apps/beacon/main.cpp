@@ -97,8 +97,8 @@ struct CabinetNode
 
 int main()
 {
-  constexpr uint16_t number_of_nodes    = 36;
-  constexpr uint16_t cabinet_size       = 6;
+  constexpr uint16_t number_of_nodes    = 16;
+  constexpr uint16_t cabinet_size       = 4;
   constexpr uint16_t number_of_cabinets = number_of_nodes / cabinet_size;
 
   // Initialising the BLS library
