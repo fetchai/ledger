@@ -59,14 +59,17 @@ char const *ToString(BeaconService::State state)
   return text;
 }
 
-BeaconService::BeaconService(Endpoint &endpoint, CertificatePtr certificate)
+BeaconService::BeaconService(Endpoint &endpoint, CertificatePtr certificate,
+                             SharedEventManager event_manager, uint64_t blocks_per_round)
   : certificate_{certificate}
   , identity_{certificate->identity()}
   , endpoint_{endpoint}
   , state_machine_{std::make_shared<StateMachine>("BeaconService", State::WAIT_FOR_SETUP_COMPLETION,
                                                   ToString)}
+  , blocks_per_round_{blocks_per_round}
   , entropy_subscription_(endpoint_.Subscribe(SERVICE_DKG, CHANNEL_ENTROPY_DISTRIBUTION))
   , rpc_client_{"BeaconService", endpoint_, SERVICE_DKG, CHANNEL_RPC}
+  , event_manager_{event_manager}
   , cabinet_creator_{endpoint_, identity_}  // TODO: Make shared
   , cabinet_creator_protocol_{cabinet_creator_}
   , beacon_protocol_{*this}
@@ -113,6 +116,7 @@ BeaconService::BeaconService(Endpoint &endpoint, CertificatePtr certificate)
   state_machine_->RegisterHandler(State::COMPLETE, this, &BeaconService::OnCompleteState);
   state_machine_->RegisterHandler(State::COMITEE_ROTATION, this, &BeaconService::OnComiteeState);
 
+  // Pipe 2
   state_machine_->RegisterHandler(State::OBSERVE_ENTROPY_GENERATION, this,
                                   &BeaconService::OnObserveEntropyGeneration);
 }
@@ -236,15 +240,26 @@ BeaconService::State BeaconService::OnPrepareEntropyGeneration()
 {
   std::lock_guard<std::mutex> lock(mutex_);
 
+  // Check that commitee is fit to generate this entropy
+  if (!((active_exe_unit_->aeon.round_start <= next_entropy_.round) &&
+        (next_entropy_.round < active_exe_unit_->aeon.round_end)))
+  {
+    FETCH_LOG_CRITICAL(LOGGING_NAME,
+                       "Wrong committee instated for round - this should not happen.");
+    // TODO: Work out how this should be dealt with
+    active_exe_unit_.reset();
+
+    return State::WAIT_FOR_SETUP_COMPLETION;
+  }
+
   // Finding next scheduled entropy request
   current_entropy_ = next_entropy_;
-
-  // TODO: Check that commitee is fit to generate this entropy
 
   // Generating signature
   active_exe_unit_->manager.SetMessage(current_entropy_.seed);
   active_exe_unit_->member_share = active_exe_unit_->manager.Sign();
 
+  // Ready to broadcast signatures
   return State::BROADCAST_SIGNATURE;
 }
 
@@ -273,12 +288,21 @@ void BeaconService::SubmitSignatureShare(uint64_t round, SignatureShare share)
 {
   std::lock_guard<std::mutex> lock(mutex_);
 
+  // Late messages are ignored
+  if (round < current_entropy_.round)
+  {
+    return;
+  }
+
+  // This is to ensure that the system remains operational even
+  // if no active unit is running
   if (active_exe_unit_ == nullptr)
   {
     signature_queue_.push_back({round, share});
     return;
   }
 
+  // In case the active unit
   if ((active_exe_unit_->aeon.round_start <= round) && (round < active_exe_unit_->aeon.round_end))
   {
     if (round == current_entropy_.round)
@@ -288,6 +312,7 @@ void BeaconService::SubmitSignatureShare(uint64_t round, SignatureShare share)
   }
   else if (round > current_entropy_.round)
   {
+    // Otherwise it is stored to be dealt with at a later point.
     signature_queue_.push_back({round, share});
   }
 }
@@ -296,6 +321,7 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
 {
   std::lock_guard<std::mutex> lock(mutex_);
 
+  // Adding signatures from the queue
   std::deque<std::pair<uint64_t, SignatureShare>> remaining_shares;
   while (!signature_queue_.empty())
   {
@@ -326,6 +352,7 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
     auto sign                  = crypto::bls::ToBinary(current_entropy_.signature);
     current_entropy_.entropy   = crypto::Hash<crypto::SHA256>(crypto::Hash<crypto::SHA256>(sign));
 
+    // Broadcasting the entropy to those listening, but not participating
     Serializer msgser;
     msgser << current_entropy_;
     endpoint_.Broadcast(SERVICE_DKG, CHANNEL_ENTROPY_DISTRIBUTION, msgser.data());
@@ -349,7 +376,6 @@ BeaconService::State BeaconService::OnCompleteState()
 
   std::cout << "########### ..~~--=== " << byte_array::ToBase64(current_entropy_.entropy)
             << " ===--~~.. ###########" << std::endl;
-
   // Preparing next
   next_entropy_       = Entropy();
   next_entropy_.seed  = current_entropy_.entropy;
@@ -370,6 +396,11 @@ BeaconService::State BeaconService::OnComiteeState()
 
     return State::PREPARE_ENTROPY_GENERATION;
   }
+
+  // Dispatching
+  EventCommitteeCompletedWork event;
+  event.aeon = active_exe_unit_->aeon;
+  event_manager_->Dispatch(event);
 
   // Done with the beacon.
   active_exe_unit_.reset();

@@ -37,6 +37,7 @@
 #include "beacon/beacon_setup_service.hpp"
 #include "beacon/cabinet_member_details.hpp"
 #include "beacon/entropy.hpp"
+#include "beacon/event_manager.hpp"
 
 #include <cstdint>
 #include <deque>
@@ -81,14 +82,14 @@ struct CabinetNode
   Muddle                  muddle;
   BeaconService           beacon_service;
 
-  CabinetNode(uint16_t port_number, uint16_t index)
+  CabinetNode(uint16_t port_number, uint16_t index, EventManager::SharedEventManager event_manager)
     : muddle_port{port_number}
     , network_manager{"NetworkManager" + std::to_string(index), 1}
     , reactor{"ReactorName" + std::to_string(index)}
     , muddle_certificate{CreateNewCertificate()}
     , muddle{fetch::muddle::NetworkId{"TestNetwork"}, muddle_certificate, network_manager, true,
              true}
-    , beacon_service{muddle.AsEndpoint(), muddle_certificate}
+    , beacon_service{muddle.AsEndpoint(), muddle_certificate, event_manager}
   {
     network_manager.Start();
     muddle.Start({muddle_port});
@@ -104,11 +105,13 @@ int main()
   // Initialising the BLS library
   crypto::bls::Init();
 
+  EventManager::SharedEventManager event_manager = EventManager::New();
+
   std::vector<std::unique_ptr<CabinetNode>> committee;
   for (uint16_t ii = 0; ii < number_of_nodes; ++ii)
   {
     auto port_number = static_cast<uint16_t>(9000 + ii);
-    committee.emplace_back(new CabinetNode{port_number, ii});
+    committee.emplace_back(new CabinetNode{port_number, ii, event_manager});
   }
   std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
@@ -122,26 +125,7 @@ int main()
     }
   }
 
-  // Waiting until all are connected
-  uint32_t kk = 0;
-  while (kk != number_of_nodes)
-  {
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    for (uint32_t mm = kk; mm < number_of_nodes; ++mm)
-    {
-      if (committee[mm]->muddle.AsEndpoint().GetDirectlyConnectedPeers().size() !=
-          (number_of_nodes - 1))
-      {
-        break;
-      }
-      else
-      {
-        ++kk;
-      }
-    }
-  }
-
-  // Creating two cabinets
+  // Creating n cabinets
   BeaconService::CabinetMemberList all_cabinets[number_of_cabinets];
 
   uint64_t i = 0;
@@ -175,7 +159,17 @@ int main()
                                              i * 10, (i + 1) * 10);
     }
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+    for (uint64_t j = 0; j < 30; ++j)
+    {
+      fetch::beacon::EventCommitteeCompletedWork event;
+      while (event_manager->Poll(event))
+      {
+        std::cout << "COMMITTEE FINSISHED: " << event.aeon.round_start << " > "
+                  << event.aeon.round_end << std::endl;
+      }
+
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
     ++i;
   }
 

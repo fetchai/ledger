@@ -31,6 +31,8 @@
 #include "beacon/beacon_setup_service.hpp"
 #include "beacon/cabinet_member_details.hpp"
 #include "beacon/entropy.hpp"
+#include "beacon/event_manager.hpp"
+#include "beacon/events.hpp"
 
 #include <cstdint>
 #include <deque>
@@ -59,7 +61,6 @@ public:
     COMITEE_ROTATION,
 
     OBSERVE_ENTROPY_GENERATION
-
   };
 
   using Identity                = crypto::Identity;
@@ -84,11 +85,13 @@ public:
   using SignatureShare          = AeonExecutionUnit::SignatureShare;
   using Serializer              = serializers::MsgPackSerializer;
   using Digest                  = ledger::Digest;
+  using SharedEventManager      = EventManager::SharedEventManager;
 
   BeaconService()                      = delete;
   BeaconService(BeaconService const &) = delete;
 
-  BeaconService(Endpoint &endpoint, CertificatePtr certificate);
+  BeaconService(Endpoint &endpoint, CertificatePtr certificate, SharedEventManager event_manager,
+                uint64_t blocks_per_round = 5);
 
   /// @name Entropy Generator
   /// @{
@@ -137,19 +140,26 @@ private:
 
     auto ret = active_exe_unit_->manager.AddSignaturePart(share.identity, share.public_key,
                                                           share.signature);
+
+    // Checking that the signature is valid
     if (ret == BeaconManager::AddResult::INVALID_SIGNATURE)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Signature invalid.");
 
-      // TODO: Received invalid signature - deal with it.
+      EventInvalidSignature event;
+      // TODO: Received invalid signature - fill event details
+      event_manager_->Dispatch(event);
 
       return false;
     }
     else if (ret == BeaconManager::AddResult::NOT_MEMBER)
-    {
+    {  // And that it was sent by a member of the cabinet
       FETCH_LOG_ERROR(LOGGING_NAME, "Signature from non-member.");
 
+      EventSignatureFromNonMember event;
       // TODO: Received signature from non-member - deal with it.
+      event_manager_->Dispatch(event);
+
       return false;
     }
     return true;
@@ -160,7 +170,11 @@ private:
   Identity        identity_;
   Endpoint &      endpoint_;
   StateMachinePtr state_machine_;
-  uint64_t        blocks_per_round_{5};  // TODO: Make configurable
+
+  /// General configuration
+  /// @{
+  uint64_t blocks_per_round_;
+  /// @}
 
   /// Beacon and entropy control units
   /// @{
@@ -181,6 +195,11 @@ private:
 
   ServerPtr           rpc_server_;
   muddle::rpc::Client rpc_client_;
+
+  /// Internal messaging
+  /// @{
+  SharedEventManager event_manager_;
+  /// @}
 
   /// Distributed Key Generation
   /// @{
