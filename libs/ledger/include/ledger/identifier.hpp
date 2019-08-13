@@ -58,7 +58,6 @@ public:
   ConstByteArray        name_space() const;
   ConstByteArray const &full_name() const;
   ConstByteArray        qualifier() const;
-  std::size_t           size() const;
   bool                  empty() const;
 
   Identifier GetParent() const;

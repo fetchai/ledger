@@ -372,11 +372,6 @@ Identifier::ConstByteArray Identifier::qualifier() const
   return identifier;
 }
 
-std::size_t Identifier::size() const
-{
-  return tokens_.size();
-}
-
 bool Identifier::empty() const
 {
   return tokens_.empty();
