@@ -466,5 +466,5 @@ TEST(rbc, wrong_channel)
 TEST(rbc, out_of_order_messages)
 {
   // Node 0 sends a sequence of messages but out of order
-  GenerateRbcTest(4, 0, {{}, {}, {}, {FaultyRbc::Failures::OUT_OF_SEQUENCE_MSGS}}, 3);
+  GenerateRbcTest(4, 3, {{}, {}, {}, {FaultyRbc::Failures::OUT_OF_SEQUENCE_MSGS}}, 3);
 }
