@@ -17,7 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/meta/math_type_traits.hpp"
+#include "vectorise/meta/math_type_traits.hpp"
+#include "vectorise/vectorise.hpp"
+
 #include <cassert>
 
 namespace fetch {
@@ -30,19 +32,33 @@ namespace math {
  * @param datum2
  * @return
  */
+
 template <typename T>
-T Max(T const &datum1, T const &datum2, T &ret)
+inline T Max(T const &a, T const &b)
 {
-  ret = std::max(datum1, datum2);
-  return ret;
+  return Max(a, b);
 }
+
 template <typename T>
-T Max(T const &datum1, T const &datum2)
+fetch::math::meta::IfIsFixedPoint<T, T> Max(T const &a, T const &b)
 {
-  T ret{};
-  ret = Max(datum1, datum2, ret);
-  return ret;
+  return std::max(a.Data(), b.Data());
 }
+
+template <typename T>
+fetch::math::meta::IfIsVectorRegister<T, T> Max(T const &a, T const &b)
+{
+  //ret = a > b ? a : b;
+  return fetch::vectorise::Max(a, b);
+}
+
+template <typename T>
+fetch::math::meta::IfIsNonFixedPointArithmetic<T, T> Max(T const &a, T const &b)
+{
+  return std::max(a, b);
+}
+
+
 
 /**
  * Min function for two values
@@ -52,14 +68,14 @@ T Max(T const &datum1, T const &datum2)
  * @return
  */
 template <typename T>
-inline void Min(T const &datum1, T const &datum2, T &ret)
+inline void Min(T const &a, T const &b, T &ret)
 {
-  ret = std::min(datum1, datum2);
+  ret = std::min(a, b);
 }
 template <typename T>
-inline T Min(T const &datum1, T const &datum2)
+inline T Min(T const &a, T const &b)
 {
-  T ret = std::min(datum1, datum2);
+  T ret = std::min(a, b);
   return ret;
 }
 

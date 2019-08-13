@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "math/comparison.hpp"
+#include "vectorise/math/comparison.hpp"
 
 #include <cassert>
 

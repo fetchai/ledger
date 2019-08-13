@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/base_types.hpp"
-#include "math/comparison.hpp"
+#include "vectorise/math/comparison.hpp"
 #include "math/fundamental_operators.hpp"
 #include "math/linalg/blas/base.hpp"
 #include "math/linalg/blas/gemm_nn_novector.hpp"
