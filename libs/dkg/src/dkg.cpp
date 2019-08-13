@@ -198,6 +198,9 @@ void DistributedKeyGeneration::BroadcastQualCoefficients()
       static_cast<uint8_t>(State::WAITING_FOR_QUAL_SHARES), coefficients, "signature"}});
   complaints_answer_manager_.Clear();
   state_ = State::WAITING_FOR_QUAL_SHARES;
+  std::unique_lock<std::mutex> lock{mutex_};
+  A_ik_received_.insert(address_);
+  lock.unlock();
   ReceivedQualShares();
 }
 
@@ -316,12 +319,17 @@ void DistributedKeyGeneration::ReceivedComplaintsAnswer()
 void DistributedKeyGeneration::ReceivedQualShares()
 {
   std::unique_lock<std::mutex> lock{mutex_};
-  if (!received_all_qual_shares_ && (state_ == State::WAITING_FOR_QUAL_SHARES) &&
-      (A_ik_received_.load() == qual_.size() - 1))
+  if (!received_all_qual_shares_ && (state_ == State::WAITING_FOR_QUAL_SHARES))
   {
-    received_all_qual_shares_.store(true);
-    lock.unlock();
-    BroadcastQualComplaints();
+    std::set<MuddleAddress> diff;
+    std::set_difference(qual_.begin(), qual_.end(), A_ik_received_.begin(), A_ik_received_.end(),
+                        std::inserter(diff, diff.begin()));
+    if (diff.empty())
+    {
+      received_all_qual_shares_.store(true);
+      lock.unlock();
+      BroadcastQualComplaints();
+    }
   }
 }
 
@@ -560,7 +568,9 @@ void DistributedKeyGeneration::OnNewCoefficients(CoefficientsMessage const &msg,
         return;
       }
     }
-    ++A_ik_received_;
+    std::unique_lock<std::mutex> lock{mutex_};
+    A_ik_received_.insert(from_id);
+    lock.unlock();
     ReceivedQualShares();
   }
 }
@@ -1043,9 +1053,9 @@ void DistributedKeyGeneration::ResetCabinet()
 
   shares_received_                = 0;
   C_ik_received_                  = 0;
-  A_ik_received_                  = 0;
   reconstruction_shares_received_ = 0;
 
+  A_ik_received_.clear();
   reconstruction_shares.clear();
 }
 
