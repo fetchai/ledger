@@ -74,7 +74,7 @@ BeaconService::BeaconService(Endpoint &endpoint, CertificatePtr certificate,
   , entropy_subscription_{endpoint_.Subscribe(SERVICE_DKG, CHANNEL_ENTROPY_DISTRIBUTION)}
   , rpc_client_{"BeaconService", endpoint_, SERVICE_DKG, CHANNEL_RPC}
   , event_manager_{event_manager}
-  , cabinet_creator_{endpoint_, identity_}  // TODO: Make shared
+  , cabinet_creator_{endpoint_, identity_}  // TODO(tfr): Make shared
   , cabinet_creator_protocol_{cabinet_creator_}
   , beacon_protocol_{*this}
 
@@ -164,7 +164,7 @@ BeaconService::Status BeaconService::GenerateEntropy(Digest /*block_digest*/, ui
     ready_entropy_queue_.pop_front();
   } while (latest_entropy_.round < round);
 
-  // TODO: Roll support does not exist yet.
+  // TODO(tfr): Roll support does not exist yet.
   if (round < latest_entropy_.round)
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "No support for roll back yet.");
@@ -300,7 +300,7 @@ BeaconService::State BeaconService::OnObserveEntropyGeneration()
       {
         // Creating event for incorrect signature
         EventInvalidSignature event;
-        // TODO: Received invalid signature - fill event details
+        // TODO(tfr): Received invalid signature - fill event details
         event_manager_->Dispatch(event);
 
         continue;
@@ -325,7 +325,7 @@ BeaconService::State BeaconService::OnPrepareEntropyGeneration()
   {
     FETCH_LOG_CRITICAL(LOGGING_NAME,
                        "Wrong committee instated for round - this should not happen.");
-    // TODO: Work out how this should be dealt with
+    // TODO(tfr): Work out how this should be dealt with
     active_exe_unit_.reset();
 
     return State::WAIT_FOR_SETUP_COMPLETION;
@@ -358,7 +358,7 @@ BeaconService::State BeaconService::OnBroadcastSignatureState()
       rpc_client_.CallSpecificAddress(member.identifier(), RPC_BEACON,
                                       BeaconServiceProtocol::SUBMIT_SIGNATURE_SHARE,
                                       current_entropy_.round, active_exe_unit_->member_share);
-      // TODO: Handle events that time out?
+      // TODO(tfr): Handle events that time out?
     }
   }
 
@@ -444,7 +444,7 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
   FETCH_LOG_CRITICAL(
       LOGGING_NAME,
       "Valid signatures have generated an invalid group signature - this should not happen.");
-  // TODO: Work out how this should be dealt with
+  // TODO(tfr): Work out how this should be dealt with
   return State::COMPLETE;
 }
 

@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "beacon/beacon_setup_protocol.hpp"
 #include "beacon/beacon_setup_service.hpp"
+#include "beacon/beacon_setup_protocol.hpp"
 #include "network/generics/requesting_queue.hpp"
 
 namespace fetch {
@@ -92,8 +92,8 @@ BeaconSetupService::BeaconSetupService(Endpoint &endpoint, Identity identity)
         CabinetMemberDetails result;
         serialiser >> result;
 
-        // TODO: Check signature
-        // TODO: Check address
+        // TODO(tfr): Check signature
+        // TODO(tfr): Check address
         std::lock_guard<std::mutex> lock(mutex_);
         this->member_details_queue_.emplace_back(std::move(result));
       });
@@ -145,7 +145,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForDirectConnections()
     {
       all_connected = false;
 
-      // TODO: Request muddle to connect.
+      // TODO(tfr): Request muddle to connect.
     }
   }
 
@@ -173,7 +173,7 @@ BeaconSetupService::State BeaconSetupService::OnBroadcastID()
   Serializer msgser;
   msgser << member;
 
-  // TODO: Require signed connection
+  // TODO(tfr): Require signed connection
   endpoint_.Broadcast(SERVICE_DKG, CHANNEL_ID_DISTRIBUTION, msgser.data());
   return State::WAIT_FOR_IDS;
 }
@@ -202,7 +202,7 @@ BeaconSetupService::State BeaconSetupService::WaitForIDs()
   // Checking if we are done
   if (member_details_.size() < beacon_->aeon.members.size())
   {
-    // TODO: Create strategy for missing identities.
+    // TODO(tfr): Create strategy for missing identities.
     //      std::this_thread::sleep_for(std::chrono::milliseconds(100));
     return State::WAIT_FOR_IDS;
   }
@@ -210,7 +210,7 @@ BeaconSetupService::State BeaconSetupService::WaitForIDs()
   // Setting IDs up for the beacon
   for (auto &member : member_details_)
   {
-    // TODO: Add address
+    // TODO(tfr): Add address
     beacon_->manager.InsertMember(member.first, member.second);
   }
 
@@ -274,7 +274,7 @@ BeaconSetupService::State BeaconSetupService::SendShares()
 
   // Gettting response
   bool all_delivered = true;
-  // TODO: Check that all is delivered
+  // TODO(tfr): Check that all is delivered
 
   if (all_delivered)
   {
@@ -288,8 +288,8 @@ bool BeaconSetupService::SubmitShare(Identity from, PrivateKey share,
                                      VerificationVector verification_vector)
 {
   std::lock_guard<std::mutex> lock(mutex_);
-  // TODO: Check signature
-  // TODO:  member is part of cabinet
+  // TODO(tfr): Check signature
+  // TODO(tfr):  member is part of cabinet
 
   ShareSubmission submission;
   submission.from                = from;
@@ -325,7 +325,7 @@ BeaconSetupService::State BeaconSetupService::OnGenerateKeys()
     auto &s = t.second;
     if (!beacon_->manager.AddShare(s.from, s.share, s.verification_vector))
     {
-      // TODO: Serializable error
+      // TODO(tfr): Serializable error
       throw std::runtime_error("share could not be verified.");
     }
   }
@@ -360,8 +360,8 @@ void BeaconSetupService::QueueSetup(SharedAeonExecutionUnit beacon)
   aeon_exe_queue_.push_back(beacon);
 }
 
-// TODO: ... steps - rbc? ...
-// TODO: support for complaints
+// TODO(tfr): ... steps - rbc? ...
+// TODO(tfr): support for complaints
 
 void BeaconSetupService::SetBeaconReadyCallback(CallbackFunction callback)
 {

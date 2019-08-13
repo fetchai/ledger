@@ -151,7 +151,7 @@ private:
       FETCH_LOG_ERROR(LOGGING_NAME, "Signature invalid.");
 
       EventInvalidSignature event;
-      // TODO: Received invalid signature - fill event details
+      // TODO(tfr): Received invalid signature - fill event details
       event_manager_->Dispatch(event);
 
       return false;
@@ -161,7 +161,7 @@ private:
       FETCH_LOG_ERROR(LOGGING_NAME, "Signature from non-member.");
 
       EventSignatureFromNonMember event;
-      // TODO: Received signature from non-member - deal with it.
+      // TODO(tfr): Received signature from non-member - deal with it.
       event_manager_->Dispatch(event);
 
       return false;

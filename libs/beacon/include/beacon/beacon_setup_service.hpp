@@ -49,7 +49,7 @@ public:
     WAIT_FOR_SHARES,
 
     /*
-        // TODO: Instate qual support
+        // TODO(tfr): Instate qual support
         BROADCAST_COMPLAINTS,
         WAIT_FOR_COMPLAINT_ANSWERS,
 
