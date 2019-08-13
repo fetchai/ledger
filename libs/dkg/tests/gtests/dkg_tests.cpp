@@ -280,6 +280,9 @@ private:
 
     complaints_answer_manager_.Clear();
     state_ = State::WAITING_FOR_QUAL_SHARES;
+    std::unique_lock<std::mutex> lock{mutex_};
+    A_ik_received_.insert(address_);
+    lock.unlock();
     ReceivedQualShares();
   }
 
@@ -616,7 +619,7 @@ TEST(dkg, send_multiple_complaints)
   GenerateTest(4, 1, 4, 4, {{FaultyDkg::Failures::SEND_MULTIPLE_COMPLAINTS}});
 }
 
-TEST(dkg, DISABLED_send_multiple_coefficients)
+TEST(dkg, send_multiple_coefficients)
 {
   // Node 0 sends multiple coefficients. Should trigger warning but everyone
   // should succeed in DKG
