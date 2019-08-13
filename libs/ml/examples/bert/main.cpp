@@ -70,6 +70,8 @@ int main(/*int ac, char **av*/)
   SizeType ff_dims           = 10u;//4u * model_dims;
   SizeType vocab_size        = 3u;//6000u;
   SizeType segment_size      = 2u;
+  
+  ArrayType a = ArrayType::FromString("1e-5, 1e-6;7e-5, 7e-6;");
 
 // big inputs
 //	SizeType n_encoder_layers  = 12u;
@@ -226,7 +228,7 @@ ArrayType create_position_data(SizeType max_seq_len, SizeType batch_size){
 
 ArrayType create_mask_data(SizeType max_seq_len, ArrayType seq_len_per_batch){
 	assert(seq_len_per_batch.shape().size() == 2);
-	assert(fetch::math::Max(seq_len_per_batch) <= max_seq_len);
+	assert(fetch::math::Max(seq_len_per_batch) <= static_cast<DataType>(max_seq_len));
 	SizeType batch_size = seq_len_per_batch.shape(0);
 	ArrayType ret_mask({max_seq_len, max_seq_len, batch_size});
 	for(SizeType b=0; b<batch_size; b++){

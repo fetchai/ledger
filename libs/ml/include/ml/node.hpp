@@ -145,6 +145,12 @@ std::shared_ptr<T> Node<T, O>::Evaluate(bool is_training)
 
 //   debug
 //    std::cout << "****" << this->name_ << std::endl;
+//    std::cout << "shape: ";
+//    for (std::size_t i = 0; i < cached_output_.shape().size(); ++) {
+//       std::cout << cached_output_.shape(i) << ", ";
+//    }
+//    std::cout << std::endl;
+
 //    if(cached_output_.shape().size() == 3u){
 //    	std::cout << "||||first batch" << std::endl;
 //	    std::cout << cached_output_.View(0).Copy().ToString() << std::endl;
