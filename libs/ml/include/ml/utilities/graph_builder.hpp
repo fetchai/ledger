@@ -84,7 +84,8 @@ void BuildGraph(GraphSaveableParams<T> const &sp, std::shared_ptr<Graph<T>> ret)
     // Check if graph has shared weights
     std::string suffix = "_Copy_1";
     if (node_name.size() >= suffix.size() &&
-           node_name.compare(node_name.size() - suffix.size(), suffix.size(), suffix) == 0){
+        node_name.compare(node_name.size() - suffix.size(), suffix.size(), suffix) == 0)
+    {
       throw std::runtime_error("Cannot currently deserialize shared-weights graph");
     }
 

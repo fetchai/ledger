@@ -79,7 +79,7 @@ TYPED_TEST(SelfAttentionEncoder, backward_dimension_test)  // Use the class as a
 
 TYPED_TEST(SelfAttentionEncoder, saveparams_test)
 {
-//  using DataType  = typename TypeParam::Type;
+  //  using DataType  = typename TypeParam::Type;
   using SizeType  = typename TypeParam::SizeType;
   using LayerType = typename fetch::ml::layers::SelfAttentionEncoder<TypeParam>;
   using SPType    = typename LayerType::SPType;
@@ -132,45 +132,45 @@ TYPED_TEST(SelfAttentionEncoder, saveparams_test)
 
   EXPECT_ANY_THROW(*(fetch::ml::utilities::BuildLayer<TypeParam, LayerType>(dsp2)));
 
-//  // rebuild
-//  auto layer2 = *(fetch::ml::utilities::BuildLayer<TypeParam, LayerType>(dsp2));
-//
-//  // test equality
-//  layer.SetInput(input_name, input);
-//  prediction = layer.Evaluate(output_name, true);
-//  layer2.SetInput(input_name, input);
-//  TypeParam prediction2 = layer2.Evaluate(output_name, true);
-//
-//  ASSERT_TRUE(prediction.AllClose(prediction2, fetch::math::function_tolerance<DataType>(),
-//                                  fetch::math::function_tolerance<DataType>()));
-//
-//  // train g
-//  layer.SetInput(label_name, labels);
-//  TypeParam loss = layer.Evaluate(error_output);
-//  layer.BackPropagateError(error_output);
-//  layer.Step(DataType{0.1f});
-//
-//  // train g2
-//  layer2.SetInput(label_name, labels);
-//  TypeParam loss2 = layer2.Evaluate(error_output);
-//  layer2.BackPropagateError(error_output);
-//  layer2.Step(DataType{0.1f});
-//
-//  EXPECT_TRUE(loss.AllClose(loss2, fetch::math::function_tolerance<DataType>(),
-//                            fetch::math::function_tolerance<DataType>()));
-//
-//  // new random input
-//  input.FillUniformRandom();
-//
-//  layer.SetInput(input_name, input);
-//  TypeParam prediction3 = layer.Evaluate(output_name);
-//
-//  layer2.SetInput(input_name, input);
-//  TypeParam prediction4 = layer2.Evaluate(output_name);
-//
-//  EXPECT_FALSE(prediction.AllClose(prediction3, fetch::math::function_tolerance<DataType>(),
-//                                   fetch::math::function_tolerance<DataType>()));
-//
-//  EXPECT_TRUE(prediction3.AllClose(prediction4, fetch::math::function_tolerance<DataType>(),
-//                                   fetch::math::function_tolerance<DataType>()));
+  //  // rebuild
+  //  auto layer2 = *(fetch::ml::utilities::BuildLayer<TypeParam, LayerType>(dsp2));
+  //
+  //  // test equality
+  //  layer.SetInput(input_name, input);
+  //  prediction = layer.Evaluate(output_name, true);
+  //  layer2.SetInput(input_name, input);
+  //  TypeParam prediction2 = layer2.Evaluate(output_name, true);
+  //
+  //  ASSERT_TRUE(prediction.AllClose(prediction2, fetch::math::function_tolerance<DataType>(),
+  //                                  fetch::math::function_tolerance<DataType>()));
+  //
+  //  // train g
+  //  layer.SetInput(label_name, labels);
+  //  TypeParam loss = layer.Evaluate(error_output);
+  //  layer.BackPropagateError(error_output);
+  //  layer.Step(DataType{0.1f});
+  //
+  //  // train g2
+  //  layer2.SetInput(label_name, labels);
+  //  TypeParam loss2 = layer2.Evaluate(error_output);
+  //  layer2.BackPropagateError(error_output);
+  //  layer2.Step(DataType{0.1f});
+  //
+  //  EXPECT_TRUE(loss.AllClose(loss2, fetch::math::function_tolerance<DataType>(),
+  //                            fetch::math::function_tolerance<DataType>()));
+  //
+  //  // new random input
+  //  input.FillUniformRandom();
+  //
+  //  layer.SetInput(input_name, input);
+  //  TypeParam prediction3 = layer.Evaluate(output_name);
+  //
+  //  layer2.SetInput(input_name, input);
+  //  TypeParam prediction4 = layer2.Evaluate(output_name);
+  //
+  //  EXPECT_FALSE(prediction.AllClose(prediction3, fetch::math::function_tolerance<DataType>(),
+  //                                   fetch::math::function_tolerance<DataType>()));
+  //
+  //  EXPECT_TRUE(prediction3.AllClose(prediction4, fetch::math::function_tolerance<DataType>(),
+  //                                   fetch::math::function_tolerance<DataType>()));
 }

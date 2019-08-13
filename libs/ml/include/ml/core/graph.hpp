@@ -357,10 +357,9 @@ GraphSaveableParams<TensorType> Graph<TensorType>::GetGraphSaveableParams()
   for (auto const &npair : nodes_)
   {
     std::string node_name = npair.first;
-    auto node = npair.second;
+    auto        node      = npair.second;
 
-    gs.connections.emplace_back(
-        std::make_pair(node_name, node->GetInputNames()));
+    gs.connections.emplace_back(std::make_pair(node_name, node->GetInputNames()));
 
     auto nsp = node->GetNodeSaveableParams();
     gs.nodes.insert(std::make_pair(node_name, nsp));
