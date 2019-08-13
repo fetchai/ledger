@@ -365,7 +365,7 @@ struct CabinetMember
   std::shared_ptr<muddle::Subscription> shares_subscription;
   RBC                                   rbc;
   FaultyDkg                             dkg;
-  PreDkgSync           pre_sync;
+  PreDkgSync                            pre_sync;
 
   // Set when DKG is finished
   bn::Fr              secret_share;
@@ -450,10 +450,10 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
 {
   RBC::CabinetMembers cabinet;
 
-  std::vector<std::unique_ptr<CabinetMember>> committee;
-  std::set<RBC::MuddleAddress>                expected_qual;
+  std::vector<std::unique_ptr<CabinetMember>>                         committee;
+  std::set<RBC::MuddleAddress>                                        expected_qual;
   std::unordered_map<byte_array::ConstByteArray, fetch::network::Uri> peers_list;
-  std::set<uint32_t>                          qual_index;
+  std::set<uint32_t>                                                  qual_index;
   for (uint16_t ii = 0; ii < cabinet_size; ++ii)
   {
     auto port_number = static_cast<uint16_t>(9000 + ii);
