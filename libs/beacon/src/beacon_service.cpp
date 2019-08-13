@@ -142,12 +142,17 @@ BeaconService::BeaconService(Endpoint &endpoint, CertificatePtr certificate,
 }
 
 BeaconService::Status BeaconService::GenerateEntropy(Digest /*block_digest*/, uint64_t block_number,
-                                                     uint64_t & /*entropy*/)
+                                                     uint64_t &entropy)
 {
   uint64_t round = block_number / blocks_per_round_;
 
+  if (latest_entropy_.round == round)
+  {
+    entropy = latest_entropy_.EntropyAsUint64();
+    return Status::OK;
+  }
+
   // Searches for the next entropy
-  Entropy x;
   do
   {
     if (ready_entropy_queue_.size() == 0)
@@ -155,16 +160,19 @@ BeaconService::Status BeaconService::GenerateEntropy(Digest /*block_digest*/, ui
       return Status::NOT_READY;
     }
 
-    x = ready_entropy_queue_.front();
+    latest_entropy_ = ready_entropy_queue_.front();
     ready_entropy_queue_.pop_front();
-  } while (x.round < round);
+  } while (latest_entropy_.round < round);
 
   // TODO: Roll support does not exist yet.
-  if (round < x.round)
+  if (round < latest_entropy_.round)
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "No support for roll back yet.");
     return Status::FAILED;
   }
+
+  // We found the entropy
+  entropy = latest_entropy_.EntropyAsUint64();
 
   return Status::OK;
 }

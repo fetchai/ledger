@@ -38,6 +38,11 @@ struct Entropy
 
   GroupSignature signature;
 
+  uint64_t EntropyAsUint64() const
+  {
+    return *reinterpret_cast<uint64_t const *>(entropy.pointer());
+  }
+
   bool operator<(Entropy const &other) const
   {
     // Lower rounds come first, hence >

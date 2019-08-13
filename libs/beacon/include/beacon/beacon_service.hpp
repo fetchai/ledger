@@ -183,10 +183,12 @@ private:
   /// Beacon and entropy control units
   /// @{
   std::deque<SharedAeonExecutionUnit> aeon_exe_queue_;
-  Entropy                             next_entropy_{};
-  std::deque<Entropy>                 ready_entropy_queue_;
+
+  std::deque<Entropy> ready_entropy_queue_;
+  Entropy             latest_entropy_;
 
   std::shared_ptr<AeonExecutionUnit>              active_exe_unit_;
+  Entropy                                         next_entropy_{};
   Entropy                                         current_entropy_;
   std::deque<std::pair<uint64_t, SignatureShare>> signature_queue_;
   /// @}
