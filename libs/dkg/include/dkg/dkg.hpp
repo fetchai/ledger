@@ -106,7 +106,7 @@ protected:
   // Counters for types of messages received
   std::atomic<uint32_t> shares_received_{0};
   std::atomic<uint32_t> C_ik_received_{0};
-  std::atomic<uint32_t> A_ik_received_{0};
+  std::set<MuddleAddress> A_ik_received_;
   std::atomic<uint32_t> reconstruction_shares_received_{0};
 
   std::unordered_map<MuddleAddress, std::pair<std::set<uint32_t>, std::vector<bn::Fr>>>
