@@ -34,7 +34,7 @@ namespace vectorise {
 ADD_REGISTER_SIZE(int64_t, 256);
 
 template <>
-class VectorRegister<int64_t, 128>
+class VectorRegister<int64_t, 128> : public BaseVectorRegisterType
 {
 public:
   using type             = int64_t;
@@ -101,7 +101,7 @@ private:
 };
 
 template <>
-class VectorRegister<int64_t, 256>
+class VectorRegister<int64_t, 256> : public BaseVectorRegisterType
 {
 public:
   using type             = int64_t;

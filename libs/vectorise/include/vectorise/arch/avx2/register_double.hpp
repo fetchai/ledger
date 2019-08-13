@@ -34,7 +34,7 @@ namespace vectorise {
 ADD_REGISTER_SIZE(double, 256);
 
 template <>
-class VectorRegister<double, 128>
+class VectorRegister<double, 128> : public BaseVectorRegisterType
 {
 public:
   using type             = double;
@@ -99,7 +99,7 @@ private:
 
 
 template <>
-class VectorRegister<double, 256>
+class VectorRegister<double, 256> : public BaseVectorRegisterType
 {
 public:
   using type             = double;

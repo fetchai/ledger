@@ -35,7 +35,7 @@ namespace vectorise {
 ADD_REGISTER_SIZE(fetch::fixed_point::fp32_t, 256);
 
 template <>
-class VectorRegister<fixed_point::fp32_t, 128>
+class VectorRegister<fixed_point::fp32_t, 128> : public BaseVectorRegisterType
 {
 public:
   using type             = fixed_point::fp32_t;
@@ -100,7 +100,7 @@ private:
 };
 
 template <>
-class VectorRegister<fixed_point::fp32_t, 256>
+class VectorRegister<fixed_point::fp32_t, 256> : public BaseVectorRegisterType
 {
 public:
   using type             = fixed_point::fp32_t;
