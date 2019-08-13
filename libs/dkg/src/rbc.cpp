@@ -479,7 +479,10 @@ void RBC::OnRReady(RReady const &msg, uint32_t sender_index)
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, " delivered msg ", tag, " with counter ",
                      msg.counter(), " and id ", msg.id());
-      Deliver(broadcasts_[tag].mbar, msg.id());
+      std::unique_lock<std::mutex> lock_broadcast(mutex_broadcast_);
+      SerialisedMessage message_to_send = broadcasts_[tag].mbar;
+      lock_broadcast.unlock();
+      Deliver(message_to_send, msg.id());
       std::lock_guard<std::mutex> lock(mutex_deliver_);
       delivered_.insert(tag);
     }
