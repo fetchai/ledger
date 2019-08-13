@@ -131,7 +131,8 @@ TYPED_TEST(SelfAttentionEncoder, saveparams_test)
 
   EXPECT_ANY_THROW(*(fetch::ml::utilities::BuildLayer<TypeParam, LayerType>(dsp2)));
 
-  // todo(issue 1475) Once the weight-sharing layers can be rebuilt then this test can be uncommented
+  // todo(issue 1475) Once the weight-sharing layers can be rebuilt then this test can be
+  // uncommented
 
   //  // rebuild
   //  using DataType  = typename TypeParam::Type;
