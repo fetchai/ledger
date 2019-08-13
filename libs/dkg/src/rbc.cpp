@@ -635,6 +635,7 @@ bool RBC::CheckTag(RBCMessage const &msg)
   if (msg.id() >= current_cabinet_.size())
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Node ", id_, " received message with unknown tag id");
+    return false;
   }
   assert(parties_.size() == current_cabinet_.size());
   uint8_t msg_counter = parties_[msg.id()].deliver_s;
