@@ -53,9 +53,9 @@ TYPED_TEST(SkipGramTest, saveparams_test)
   TypeParam input({1, batch_size});
   TypeParam context({1, batch_size});
   TypeParam labels({1, batch_size});
-  input(0, 0) = static_cast<DataType>(0);
+  input(0, 0)   = static_cast<DataType>(0);
   context(0, 0) = static_cast<DataType>(5);
-  labels(0, 0) = static_cast<DataType>(0);
+  labels(0, 0)  = static_cast<DataType>(0);
 
   // Create layer
   LayerType layer(in_size, out_size, embed_size, vocab_size);
@@ -102,7 +102,7 @@ TYPED_TEST(SkipGramTest, saveparams_test)
 
   // sanity check - serialisation should not affect initial prediction
   ASSERT_TRUE(prediction0.AllClose(prediction, fetch::math::function_tolerance<DataType>(),
-                                  fetch::math::function_tolerance<DataType>()));
+                                   fetch::math::function_tolerance<DataType>()));
 
   layer2.SetInput("SkipGram_Input", input);
   layer2.SetInput("SkipGram_Context", context);
@@ -130,8 +130,8 @@ TYPED_TEST(SkipGramTest, saveparams_test)
   // test that prediction is different after a back prop and step have been completed
   //
 
-  layer.SetInput("SkipGram_Input", input);            // resets node cache
-  layer.SetInput("SkipGram_Context", context);        // resets node cache
+  layer.SetInput("SkipGram_Input", input);      // resets node cache
+  layer.SetInput("SkipGram_Context", context);  // resets node cache
   TypeParam prediction3 = layer.Evaluate(output_name);
 
   EXPECT_FALSE(prediction.AllClose(prediction3, fetch::math::function_tolerance<DataType>(),

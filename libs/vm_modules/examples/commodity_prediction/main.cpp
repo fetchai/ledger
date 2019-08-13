@@ -66,10 +66,17 @@ std::vector<std::string> System::args;
 // read the weights and bias csv files
 
 fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> read_csv(
-    fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &filename, bool transpose = false)
+    fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &filename, bool transpose)
 {
   ArrayType weights = fetch::ml::dataloaders::ReadCSV<ArrayType>(filename->str, 0, 0, transpose);
   return vm->CreateNewObject<fetch::vm_modules::math::VMTensor>(weights);
+}
+
+
+fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> read_csv_no_transpose(
+    fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &filename)
+{
+  return read_csv(vm, filename, false);
 }
 
 std::string ReadFileContents(std::string const &path)
@@ -297,6 +304,7 @@ int main(int argc, char **argv)
   fetch::vm_modules::CreatePrint(*module);
 
   module->CreateFreeFunction("read_csv", &read_csv);
+  module->CreateFreeFunction("read_csv", &read_csv_no_transpose);
 
   RunEtchScript(etch_saver, module);
   RunEtchScript(etch_loader, module);

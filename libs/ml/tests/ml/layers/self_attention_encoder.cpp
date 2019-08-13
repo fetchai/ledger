@@ -79,7 +79,6 @@ TYPED_TEST(SelfAttentionEncoder, backward_dimension_test)  // Use the class as a
 
 TYPED_TEST(SelfAttentionEncoder, saveparams_test)
 {
-  //  using DataType  = typename TypeParam::Type;
   using SizeType  = typename TypeParam::SizeType;
   using LayerType = typename fetch::ml::layers::SelfAttentionEncoder<TypeParam>;
   using SPType    = typename LayerType::SPType;
@@ -132,7 +131,10 @@ TYPED_TEST(SelfAttentionEncoder, saveparams_test)
 
   EXPECT_ANY_THROW(*(fetch::ml::utilities::BuildLayer<TypeParam, LayerType>(dsp2)));
 
+  // todo(issue 1475) Once the weight-sharing layers can be rebuilt then this test can be uncommented
+
   //  // rebuild
+  //  using DataType  = typename TypeParam::Type;
   //  auto layer2 = *(fetch::ml::utilities::BuildLayer<TypeParam, LayerType>(dsp2));
   //
   //  // test equality

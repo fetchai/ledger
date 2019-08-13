@@ -20,12 +20,15 @@
 
 #include "gtest/gtest.h"
 
+#include <sstream>
+
 namespace {
 
 class VMTests : public ::testing::Test
 {
 public:
-  VmTestToolkit toolkit;
+  std::ostringstream output;
+  VmTestToolkit      toolkit{&output};
 };
 
 // Test we can compile and run a fairly inoffensive smart contract
