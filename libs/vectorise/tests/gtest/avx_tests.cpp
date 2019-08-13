@@ -17,9 +17,13 @@
 //------------------------------------------------------------------------------
 
 #include "math/base_types.hpp"
+#include "math/trigonometry.hpp"
 #include "vectorise/vectorise.hpp"
+#include "vectorise/math/comparison.hpp"
 
 #include "gtest/gtest.h"
+
+#include <functional>
 
 using namespace fetch::vectorise;
 
@@ -80,6 +84,7 @@ class VectorRegisterTest : public ::testing::Test
 {
 };
 
+#ifdef __AVX2__
 using MyTypes = ::testing::Types< fetch::vectorise::VectorRegister<float, 128>,
                                   fetch::vectorise::VectorRegister<float, 256>, 
                                   fetch::vectorise::VectorRegister<int32_t, 128>,
@@ -93,42 +98,117 @@ using MyTypes = ::testing::Types< fetch::vectorise::VectorRegister<float, 128>,
                                   fetch::vectorise::VectorRegister<double, 128>,
                                   fetch::vectorise::VectorRegister<double, 256>>;
 
+using MyFPTypes = ::testing::Types<fetch::vectorise::VectorRegister<float, 256>, 
+                                  fetch::vectorise::VectorRegister<fetch::fixed_point::fp32_t, 256>,
+                                  fetch::vectorise::VectorRegister<fetch::fixed_point::fp64_t, 256>,
+                                  fetch::vectorise::VectorRegister<double, 256>>;
+#else
+using MyTypes = ::testing::Types< fetch::vectorise::VectorRegister<float, 32>,
+                                  fetch::vectorise::VectorRegister<int32_t, 32>,
+                                  fetch::vectorise::VectorRegister<int64_t, 64>,
+                                  fetch::vectorise::VectorRegister<fetch::fixed_point::fp32_t, 32>,
+                                  fetch::vectorise::VectorRegister<fetch::fixed_point::fp64_t, 64>,
+                                  fetch::vectorise::VectorRegister<double, 64>>;
+
+using MyFPTypes = ::testing::Types< fetch::vectorise::VectorRegister<float, 32>,
+                                  fetch::vectorise::VectorRegister<fetch::fixed_point::fp32_t, 32>,
+                                  fetch::vectorise::VectorRegister<fetch::fixed_point::fp64_t, 64>,
+                                  fetch::vectorise::VectorRegister<double, 64>>;
+#endif
+
+
 TYPED_TEST_CASE(VectorRegisterTest, MyTypes);
 TYPED_TEST(VectorRegisterTest, basic_tests)
 {
-  std::cout << "TypeParam::E_BLOCK_COUNT   = " << TypeParam::E_BLOCK_COUNT << std::endl;
-  std::cout << "TypeParam::E_REGISTER_SIZE = " << TypeParam::E_REGISTER_SIZE << std::endl;
-  alignas(TypeParam::E_REGISTER_SIZE) typename TypeParam::type  a[TypeParam::E_BLOCK_COUNT], b[TypeParam::E_BLOCK_COUNT],
-                                                              sum[TypeParam::E_BLOCK_COUNT], diff[TypeParam::E_BLOCK_COUNT],
-                                                              prod[TypeParam::E_BLOCK_COUNT], div[TypeParam::E_BLOCK_COUNT];
+  using type = typename TypeParam::type;
+
+  alignas(TypeParam::E_REGISTER_SIZE) type  a[TypeParam::E_BLOCK_COUNT], b[TypeParam::E_BLOCK_COUNT],
+                                            sum[TypeParam::E_BLOCK_COUNT], diff[TypeParam::E_BLOCK_COUNT],
+                                            prod[TypeParam::E_BLOCK_COUNT], div[TypeParam::E_BLOCK_COUNT];
   for (size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
   {
     // We don't want to check overflows right now, so we pick random numbers, but well within the type's limits
-    a[i] = typename TypeParam::type(double(random()) / (double)(RAND_MAX) * (1 << (TypeParam::E_REGISTER_SIZE/2)) );
-    b[i] = typename TypeParam::type(double(random()) / (double)(RAND_MAX) * (1 << (TypeParam::E_REGISTER_SIZE/2)) );
+    a[i] = type(double(random()) / (double)(RAND_MAX) * (1 << (TypeParam::E_REGISTER_SIZE/2)) );
+    b[i] = type(double(random()) / (double)(RAND_MAX) * (1 << (TypeParam::E_REGISTER_SIZE/2)) + 1 );
     sum[i] = a[i] + b[i];
     diff[i] = a[i] - b[i];
     prod[i] = a[i] * b[i];
     div[i] = a[i] / b[i];
-    std::cout << "prod[" << i << "]  = " << prod[i] << std::endl;
-    std::cout << "div[" << i << "]  = " << div[i] << std::endl;
   }
   TypeParam va{a};
   TypeParam vb{b};
-
-  std::cout << "a = " << va << std::endl;
-  std::cout << "b = " << vb << std::endl;
 
   auto vsum = va + vb;
   auto vdiff = va - vb;
   auto vprod = va * vb;
   auto vdiv = va / vb;
-  std::cout << "prod  = " << vprod << std::endl;
-  std::cout << "div  = " << vdiv << std::endl;
 
   TypeParam vtmp1{sum}, vtmp2{diff}, vtmp3{prod}, vtmp4{div};
   EXPECT_TRUE(all_equal_to(vtmp1, vsum));
   EXPECT_TRUE(all_equal_to(vtmp2, vdiff));  
   EXPECT_TRUE(all_equal_to(vtmp3, vprod));
   EXPECT_TRUE(all_equal_to(vtmp4, vdiv));
+
+  type reduce1 = reduce(vsum);
+  type reduce2 = reduce(vdiff);
+  type reduce3 = reduce(vprod);
+  type reduce4 = reduce(vdiv);
+
+  std::cout << "vsum  = " << vsum << std::endl;
+  std::cout << "vdiff = " << vdiff << std::endl;
+  std::cout << "vprod = " << vprod << std::endl;
+  std::cout << "vdiv  = " << vdiv << std::endl;
+  std::cout << "reduce(vsum)  = " << reduce1 << std::endl;
+  std::cout << "reduce(vdiff) = " << reduce2 << std::endl;
+  std::cout << "reduce(vprod) = " << reduce3 << std::endl;
+  std::cout << "reduce(vdiv)  = " << reduce4 << std::endl;
+}
+
+template <typename T>
+class VectorReduceTest : public ::testing::Test
+{
+};
+
+TYPED_TEST_CASE(VectorReduceTest, MyFPTypes);
+TYPED_TEST(VectorReduceTest, reduce_tests)
+{
+  using type = typename TypeParam::type;
+  using array_type  = fetch::memory::SharedArray<type>;
+  using vector_type = typename array_type::VectorRegisterType;
+
+  std::size_t N = 16;
+  alignas(TypeParam::E_REGISTER_SIZE) array_type A(N), B(N);
+
+  for (std::size_t i = 0; i < N; ++i)
+  {
+    A[i] = type(i);
+    B[i] = type(i);
+    std::cout << "A[" << i << "] = " << A[i] << std::endl;
+    std::cout << "B[" << i << "] = " << B[i] << std::endl;
+  }
+
+  type ret;
+  fetch::memory::Range range(2, A.size() -2);
+  ret = A.in_parallel().Reduce(range, [](auto const &a, auto const &b) {
+        return fetch::math::Max(a, b);
+        });
+  std::cout << "Reduce: ret = " << ret << std::endl;
+
+  ret = A.in_parallel().SumReduce([](auto const &a, auto const &b) {
+        return a * b;
+        }, B);
+
+  std::cout << "SumReduce: ret = " << ret << std::endl;
+
+  ret = A.in_parallel().ProductReduce([](auto const &a, auto const &b) {
+        return a * b;
+        }, B);
+
+  std::cout << "ProductReduce: ret = " << ret << std::endl;
+
+  
+  ret = A.in_parallel().GenericReduce(range, std::plus<vector_type>{}, [](auto const &a, auto const &b) {
+        return a * b;
+        }, type(0), B);
+  std::cout << "GenericReduce(range): ret = " << ret << std::endl;
 }
