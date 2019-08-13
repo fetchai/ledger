@@ -602,7 +602,8 @@ void RBC::Deliver(SerialisedMessage const &msg, uint32_t sender_index)
     while (old_tag_msg != parties_[sender_index].undelivered_msg.end() &&
            old_tag_msg->first == parties_[sender_index].deliver_s)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, "testing msg with tag ", old_tag_msg->second.tag(), " with broadcast size ", broadcasts_.size());
+      FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, "testing msg with tag ", old_tag_msg->second.tag(),
+                     " with broadcast size ", broadcasts_.size());
       assert(!broadcasts_[old_tag_msg->second.tag()].mbar.empty());
       FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, " delivered msg ", old_tag_msg->second.tag(),
                      " with counter ", old_tag_msg->second.counter(), " and id ",
