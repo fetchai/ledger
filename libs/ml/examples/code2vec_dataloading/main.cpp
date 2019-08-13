@@ -30,10 +30,10 @@
 #define MAX_CONTEXTS 20
 
 using DataType    = uint64_t;
-using ArrayType   = fetch::math::Tensor<DataType>;
+using TensorType  = fetch::math::Tensor<DataType>;
 using SizeType    = fetch::math::Tensor<DataType>::SizeType;
-using LabelType   = ArrayType;
-using ContextType = ArrayType;
+using LabelType   = TensorType;
+using ContextType = TensorType;
 
 std::string ReadFile(std::string const &path)
 {

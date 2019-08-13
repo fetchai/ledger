@@ -21,7 +21,7 @@
 #include "ml/ops/activations/leaky_relu.hpp"
 #include "ml/ops/activations/logsigmoid.hpp"
 #include "ml/ops/activations/logsoftmax.hpp"
-#include "ml/ops/activations/randomized_relu.hpp"
+#include "ml/ops/activations/randomised_relu.hpp"
 #include "ml/ops/activations/relu.hpp"
 #include "ml/ops/activations/sigmoid.hpp"
 #include "ml/ops/activations/softmax.hpp"
@@ -155,7 +155,7 @@ BENCHMARK_TEMPLATE(BM_LogSoftmaxForward, double, 2048)->Unit(benchmark::kMicrose
 BENCHMARK_TEMPLATE(BM_LogSoftmaxForward, double, 4096)->Unit(benchmark::kMillisecond);
 
 template <class T, int N>
-void BM_RandomizedReluForward(benchmark::State &state)
+void BM_RandomisedReluForward(benchmark::State &state)
 {
   using TensorType = typename fetch::math::Tensor<T>;
   TensorType input({1, N});
@@ -166,7 +166,7 @@ void BM_RandomizedReluForward(benchmark::State &state)
 
   T                                                      lb = T(0.2);
   T                                                      ub = T(0.8);
-  fetch::ml::ops::RandomizedRelu<fetch::math::Tensor<T>> rrm(lb, ub);
+  fetch::ml::ops::RandomisedRelu<fetch::math::Tensor<T>> rrm(lb, ub);
 
   for (auto _ : state)
   {
@@ -174,12 +174,12 @@ void BM_RandomizedReluForward(benchmark::State &state)
   }
 }
 
-BENCHMARK_TEMPLATE(BM_RandomizedReluForward, double, 2)->Unit(benchmark::kNanosecond);
-BENCHMARK_TEMPLATE(BM_RandomizedReluForward, double, 256)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_RandomizedReluForward, double, 512)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_RandomizedReluForward, double, 1024)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_RandomizedReluForward, double, 2048)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_RandomizedReluForward, double, 4096)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_RandomisedReluForward, double, 2)->Unit(benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_RandomisedReluForward, double, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_RandomisedReluForward, double, 512)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_RandomisedReluForward, double, 1024)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_RandomisedReluForward, double, 2048)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_RandomisedReluForward, double, 4096)->Unit(benchmark::kMillisecond);
 
 template <class T, int N>
 void BM_ReluForward(benchmark::State &state)

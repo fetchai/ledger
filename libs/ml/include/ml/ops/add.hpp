@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "ml/ops/ops.hpp"
+#include "ml/saveparams/saveable_params.hpp"
 
 #include <cassert>
 #include <vector>
@@ -27,29 +28,43 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Add : public fetch::ml::Ops<T>
+class Add : public fetch::ml::ops::Ops<T>
 {
 public:
-  using ArrayType     = T;
-  using DataType      = typename ArrayType::Type;
-  using SizeType      = typename ArrayType::SizeType;
+  using TensorType    = T;
+  using DataType      = typename TensorType::Type;
+  using SizeType      = typename TensorType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SPType        = OpAddSaveableParams<T>;
 
-  Add()           = default;
+  Add() = default;
+
+  explicit Add(SPType const &sp)
+    : Ops<T>(sp)
+  {
+    axes_ = sp.axes;
+  }
+
   ~Add() override = default;
+
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
+  {
+    auto ret  = std::make_shared<SPType>();
+    ret->axes = axes_;
+    return ret;
+  }
 
   // for inputs to the add layer, if broadcasting is required, make sure the first input is the one
   // with the complete shape
-
-  void Forward(VecTensorType const &inputs, ArrayType &output) override
+  void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(inputs.size() == 2);
     assert(output.shape() == this->ComputeOutputShape(inputs));
     fetch::math::Add((*inputs.at(0)), (*inputs.at(1)), output);
   }
 
-  std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                  ArrayType const &    error_signal) override
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     assert(inputs.size() == 2);
     assert(inputs.at(0)->shape().size() == inputs.at(1)->shape().size());
@@ -76,6 +91,11 @@ public:
 
   std::vector<SizeType> axes_;
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::OP_ADD;
+  }
+
   static constexpr char const *DESCRIPTOR = "Add";
 
 private:
@@ -89,7 +109,7 @@ private:
     {
       if (inputs.at(0)->shape().at(i) != inputs.at(1)->shape().at(i))
       {
-        if (cnt >= this->axes_.size() || this->axes_.at(cnt) != i)
+        if (cnt >= axes_.size() || axes_.at(cnt) != i)
         {
           axes_changed = true;
           break;
@@ -98,7 +118,7 @@ private:
       }
     }
 
-    if (this->axes_.size() == 0)
+    if (axes_.size() == 0)
     {
       axes_changed = true;
     }
@@ -106,13 +126,13 @@ private:
     // Update axes if necessary
     if (axes_changed)
     {
-      this->axes_.clear();
+      axes_.clear();
       // Get axes
       for (SizeType i{0}; i < inputs.at(0)->shape().size(); i++)
       {
         if (inputs.at(0)->shape().at(i) != inputs.at(1)->shape().at(i))
         {
-          this->axes_.emplace_back(i);
+          axes_.emplace_back(i);
         }
       }
     }

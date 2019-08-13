@@ -41,15 +41,18 @@ template <class T>
 class SelfAttentionEncoder : public SubGraph<T>
 {
 public:
-  using ArrayType     = T;
-  using SizeType      = typename ArrayType::SizeType;
-  using ArrayPtrType  = std::shared_ptr<ArrayType>;
+  using TensorType    = T;
+  using SizeType      = typename TensorType::SizeType;
+  using ArrayPtrType  = std::shared_ptr<TensorType>;
   using DataType      = typename T::Type;
   using VecTensorType = typename SubGraph<T>::VecTensorType;
 
-  using RegType         = fetch::ml::details::RegularisationType;
+  using RegType         = fetch::ml::RegularisationType;
   using WeightsInitType = fetch::ml::ops::WeightsInitialisation;
   using ActivationType  = fetch::ml::details::ActivationType;
+  using SPType          = LayerSelfAttentionEncoderSaveableParams<T>;
+
+  SelfAttentionEncoder() = default;
 
   SelfAttentionEncoder(SizeType n_heads, SizeType model_dim, SizeType ff_dim,
                        DataType residual_dropout    = static_cast<DataType>(0.9),
@@ -69,11 +72,11 @@ public:
 
     // all input shapes are (feature_length, model_dim, batch_num)
     std::string input =
-        this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Input", {});
+        this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Input", {});
 
     // multihead attention on input time series vector
     std::string multihead_self_attention =
-        this->template AddNode<fetch::ml::layers::MultiheadAttention<ArrayType>>(
+        this->template AddNode<fetch::ml::layers::MultiheadAttention<TensorType>>(
             name + "_Multihead_Attention", {input, input, input}, n_heads, model_dim_,
             attention_dropout_);
 
@@ -92,50 +95,48 @@ public:
     this->SetOutputNode(feedforward_residual);
   }
 
-  std::string positionwise_feedforward(std::string name, std::string const &input)
-  {
-    // position wise feedforward with relu acitvation
-    std::string ff_first_layer =
-        this->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
-            name + "_Feedforward_No_1", {input}, static_cast<SizeType>(model_dim_),
-            static_cast<SizeType>(ff_dim_), ActivationType::RELU, RegType::NONE,
-            static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT, true);
-
-    // do dropout
-    std::string ff_first_layer_dropout = this->template AddNode<fetch::ml::ops::Dropout<ArrayType>>(
-        name + "_Dropout", {ff_first_layer}, feedforward_dropout_);
-
-    // position wise feedforward stage 2
-    std::string ff_second_layer =
-        this->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
-            name + "_Feedforward_No_2", {ff_first_layer_dropout}, static_cast<SizeType>(ff_dim_),
-            static_cast<SizeType>(model_dim_), ActivationType::NOTHING, RegType::NONE,
-            static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT, true);
-
-    return ff_second_layer;
-  }
-
-  std::string residual_connection(std::string name, std::string const &prev_layer_input,
-                                  std::string const &prev_layer_output)
-  {
-    // do a dropout of prev output before doing residual connection
-    std::string dropout_output = this->template AddNode<fetch::ml::ops::Dropout<ArrayType>>(
-        name + "_Dropout", {prev_layer_output}, residual_dropout_);
-    std::string residual_addition = this->template AddNode<fetch::ml::ops::Add<ArrayType>>(
-        name + "_Residual_Addition", {prev_layer_input, dropout_output});
-
-    // create sudo shape for layernorm
-    std::vector<SizeType> data_shape({model_dim_, 1});
-    std::string           normalized_residual =
-        this->template AddNode<fetch::ml::layers::LayerNorm<ArrayType>>(
-            name + "_LayerNorm", {residual_addition}, data_shape, static_cast<SizeType>(0));
-
-    return normalized_residual;
-  }
-
-  virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     return inputs.front()->shape();
+  }
+
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
+  {
+    // get all base classes saveable params
+    std::shared_ptr<OpsSaveableParams> sgsp = SubGraph<TensorType>::GetOpSaveableParams();
+
+    auto ret = std::make_shared<SPType>();
+
+    // copy subgraph saveable params over
+    auto sg_ptr1 = std::dynamic_pointer_cast<typename SubGraph<TensorType>::SPType>(sgsp);
+    auto sg_ptr2 = std::dynamic_pointer_cast<typename SubGraph<TensorType>::SPType>(ret);
+    *sg_ptr2     = *sg_ptr1;
+
+    // asign layer specific params
+    ret->n_heads             = n_heads_;
+    ret->model_dim           = model_dim_;
+    ret->ff_dim              = ff_dim_;
+    ret->residual_dropout    = residual_dropout_;
+    ret->attention_dropout   = attention_dropout_;
+    ret->feedforward_dropout = feedforward_dropout_;
+
+    return ret;
+  }
+
+  void SetOpSaveableParams(SPType const &sp)
+  {
+    // assign layer specific params
+    n_heads_             = sp.n_heads;
+    model_dim_           = sp.model_dim;
+    ff_dim_              = sp.ff_dim;
+    residual_dropout_    = sp.residual_dropout;
+    attention_dropout_   = sp.attention_dropout;
+    feedforward_dropout_ = sp.feedforward_dropout;
+  }
+
+  static constexpr OpType OpCode()
+  {
+    return OpType::LAYER_SELF_ATTENTION_ENCODER;
   }
 
   static constexpr char const *DESCRIPTOR = "SelfAttentionEncoder";
@@ -147,6 +148,48 @@ private:
   DataType residual_dropout_;
   DataType attention_dropout_;
   DataType feedforward_dropout_;
+
+  std::string positionwise_feedforward(std::string name, std::string const &input)
+  {
+    // position wise feedforward with relu acitvation
+    std::string ff_first_layer =
+        this->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
+            name + "_Feedforward_No_1", {input}, static_cast<SizeType>(model_dim_),
+            static_cast<SizeType>(ff_dim_), ActivationType::RELU, RegType::NONE,
+            static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT, true);
+
+    // do dropout
+    std::string ff_first_layer_dropout =
+        this->template AddNode<fetch::ml::ops::Dropout<TensorType>>(
+            name + "_Dropout", {ff_first_layer}, feedforward_dropout_);
+
+    // position wise feedforward stage 2
+    std::string ff_second_layer =
+        this->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
+            name + "_Feedforward_No_2", {ff_first_layer_dropout}, static_cast<SizeType>(ff_dim_),
+            static_cast<SizeType>(model_dim_), ActivationType::NOTHING, RegType::NONE,
+            static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT, true);
+
+    return ff_second_layer;
+  }
+
+  std::string residual_connection(std::string name, std::string const &prev_layer_input,
+                                  std::string const &prev_layer_output)
+  {
+    // do a dropout of prev output before doing residual connection
+    std::string dropout_output = this->template AddNode<fetch::ml::ops::Dropout<TensorType>>(
+        name + "_Dropout", {prev_layer_output}, residual_dropout_);
+    std::string residual_addition = this->template AddNode<fetch::ml::ops::Add<TensorType>>(
+        name + "_Residual_Addition", {prev_layer_input, dropout_output});
+
+    // create sudo shape for layernorm
+    std::vector<SizeType> data_shape({model_dim_, 1});
+    std::string           normalized_residual =
+        this->template AddNode<fetch::ml::layers::LayerNorm<TensorType>>(
+            name + "_LayerNorm", {residual_addition}, data_shape, static_cast<SizeType>(0));
+
+    return normalized_residual;
+  }
 };
 
 }  // namespace layers

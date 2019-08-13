@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor.hpp"
-#include "ml/graph.hpp"
+#include "ml/core/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activations/relu.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"

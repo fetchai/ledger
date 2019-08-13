@@ -29,16 +29,22 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Switch : public fetch::ml::Ops<T>
+class Switch : public fetch::ml::ops::Ops<T>
 {
 public:
-  using ArrayType     = T;
-  using DataType      = typename ArrayType::Type;
-  using SizeType      = typename ArrayType::SizeType;
-  using ArrayPtrType  = std::shared_ptr<ArrayType>;
+  using TensorType    = T;
+  using DataType      = typename TensorType::Type;
+  using SizeType      = typename TensorType::SizeType;
+  using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SPType        = OpSwitchSaveableParams<T>;
 
-  Switch()           = default;
+  Switch() = default;
+
+  explicit Switch(SPType const &sp)
+    : Ops<T>(sp)
+  {}
+
   ~Switch() override = default;
 
   /**
@@ -47,7 +53,7 @@ public:
    * array
    * @return
    */
-  void Forward(VecTensorType const &inputs, ArrayType &output) override
+  void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(inputs.size() == 3);
     assert(output.shape() == this->ComputeOutputShape(inputs));
@@ -60,16 +66,16 @@ public:
    * elementwise gradient for second input (the then input) is:
    * error' = mask * error_signal
    */
-  std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                  ArrayType const &    error_signal) override
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     assert(inputs.size() == 3);
     assert(inputs.at(1)->shape() == inputs.at(2)->shape());
     assert(error_signal.size() == inputs.at(1)->size());
 
-    ArrayType then_return_signal(inputs.at(1)->shape());
-    ArrayType else_return_signal(inputs.at(2)->shape());
-    ArrayType mask_return_signal(inputs.at(0)->shape());
+    TensorType then_return_signal(inputs.at(1)->shape());
+    TensorType else_return_signal(inputs.at(2)->shape());
+    TensorType mask_return_signal(inputs.at(0)->shape());
 
     fetch::math::Multiply(*(inputs.front()), error_signal, then_return_signal);
     fetch::math::Subtract(error_signal, then_return_signal, else_return_signal);
@@ -79,9 +85,20 @@ public:
     return {mask_return_signal, then_return_signal, else_return_signal};
   }
 
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
+  {
+    SPType sp{};
+    return std::make_shared<SPType>(sp);
+  }
+
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     return inputs.at(1)->shape();
+  }
+
+  static constexpr OpType OpCode()
+  {
+    return OpType::OP_SWITCH;
   }
 
   static constexpr char const *DESCRIPTOR = "Switch";
