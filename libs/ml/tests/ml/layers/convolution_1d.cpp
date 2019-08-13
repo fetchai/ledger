@@ -452,6 +452,7 @@ TYPED_TEST(Convolution1DTest, saveparams_test)
   // set input and evaluate
   layer.SetInput(input_name, input);
   TypeParam prediction;
+  // make initial prediction to set internal buffers which must be correctly set in serialisation
   prediction = layer.Evaluate(output_name, true);
 
   // extract saveparams

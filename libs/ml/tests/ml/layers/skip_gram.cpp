@@ -42,22 +42,20 @@ TYPED_TEST(SkipGramTest, saveparams_test)
 
   SizeType in_size    = 1;
   SizeType out_size   = 1;
-  SizeType embed_size = 10;
-  SizeType vocab_size = 100;
+  SizeType embed_size = 1;
+  SizeType vocab_size = 10;
+  SizeType batch_size = 1;
 
   std::string output_name = "SkipGram_Sigmoid";
 
   // create input
 
-  TypeParam input({1, 1});
-  TypeParam context({1, 1});
-  input(0, 0) = static_cast<DataType>(1);
-
-  context(0, 0) = static_cast<DataType>(3);
-
-  // create labels
-  TypeParam labels({1, 1});
-  labels(0, 0) = static_cast<DataType>(7);
+  TypeParam input({1, batch_size});
+  TypeParam context({1, batch_size});
+  TypeParam labels({1, batch_size});
+  input(0, 0) = static_cast<DataType>(0);
+  context(0, 0) = static_cast<DataType>(5);
+  labels(0, 0) = static_cast<DataType>(0);
 
   // Create layer
   LayerType layer(in_size, out_size, embed_size, vocab_size);
@@ -73,7 +71,10 @@ TYPED_TEST(SkipGramTest, saveparams_test)
   // set input and ForwardPropagate
   layer.SetInput("SkipGram_Input", input);
   layer.SetInput("SkipGram_Context", context);
-  TypeParam prediction = layer.Evaluate(output_name, true);
+
+  // make initial prediction to set internal buffers which must be correctly set in serialisation
+  TypeParam prediction0 = layer.Evaluate(output_name, true);
+  std::cout << "prediction0.ToString(): " << prediction0.ToString() << std::endl;
 
   // extract saveparams
   auto sp = layer.GetOpSaveableParams();
@@ -96,10 +97,20 @@ TYPED_TEST(SkipGramTest, saveparams_test)
   //
   // test that deserialized model gives the same forward prediction as the original layer
   //
+  layer.SetInput("SkipGram_Input", input);
+  layer.SetInput("SkipGram_Context", context);
+  TypeParam prediction = layer.Evaluate(output_name, true);
+
+  std::cout << "prediction.ToString(): " << prediction.ToString() << std::endl;
+
+  // sanity check - serialisation should not affect initial prediction
+  ASSERT_TRUE(prediction0.AllClose(prediction, fetch::math::function_tolerance<DataType>(),
+                                  fetch::math::function_tolerance<DataType>()));
 
   layer2.SetInput("SkipGram_Input", input);
   layer2.SetInput("SkipGram_Context", context);
   TypeParam prediction2 = layer2.Evaluate(output_name, true);
+  std::cout << "prediction2.ToString(): " << prediction2.ToString() << std::endl;
 
   ASSERT_TRUE(prediction.AllClose(prediction2, fetch::math::function_tolerance<DataType>(),
                                   fetch::math::function_tolerance<DataType>()));
@@ -123,15 +134,10 @@ TYPED_TEST(SkipGramTest, saveparams_test)
   // test that prediction is different after a back prop and step have been completed
   //
 
-  input(0, 0) = static_cast<DataType>(1);  // assign a different word
-  //  input(0, 1) = static_cast<DataType>(1); // assign a different word
-
-  context(0, 0) = static_cast<DataType>(3);  //
-                                             //  context(0, 1) = static_cast<DataType>(4); //
-
-  layer.SetInput("SkipGram_Input", input);
-  layer.SetInput("SkipGram_Context", context);
+  layer.SetInput("SkipGram_Input", input);            // resets node cache
+  layer.SetInput("SkipGram_Context", context);        // resets node cache
   TypeParam prediction3 = layer.Evaluate(output_name);
+  std::cout << "prediction3.ToString(): " << prediction3.ToString() << std::endl;
 
   EXPECT_FALSE(prediction.AllClose(prediction3, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));
@@ -140,20 +146,13 @@ TYPED_TEST(SkipGramTest, saveparams_test)
   // test that the deserialized model gives the same result as the original layer after training
   //
 
-  input(0, 0) = static_cast<DataType>(2);  // assign a different word
-  //  input(0, 1) = static_cast<DataType>(2); // assign a different word
-
-  context(0, 0) = static_cast<DataType>(5);  //
-                                             //  context(0, 1) = static_cast<DataType>(6); //
-
-  layer.SetInput("SkipGram_Input", input);
-  layer.SetInput("SkipGram_Context", context);
-  TypeParam prediction4 = layer.Evaluate(output_name);
-
   layer2.SetInput("SkipGram_Input", input);
   layer2.SetInput("SkipGram_Context", context);
   TypeParam prediction5 = layer2.Evaluate(output_name);
 
-  EXPECT_TRUE(prediction4.AllClose(prediction5, fetch::math::function_tolerance<DataType>(),
+  std::cout << "prediction5.ToString(): " << prediction5.ToString() << std::endl;
+  std::cout << "prediction3.ToString(): " << prediction3.ToString() << std::endl;
+
+  EXPECT_TRUE(prediction3.AllClose(prediction5, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));
 }
