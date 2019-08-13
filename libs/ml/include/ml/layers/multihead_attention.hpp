@@ -109,12 +109,12 @@ public:
             static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT, true);
     std::string transformed_key =
         this->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
-            head_name + "_Query_Transform", {key}, static_cast<SizeType>(model_dim_),
+            head_name + "_Key_Transform", {key}, static_cast<SizeType>(model_dim_),
             static_cast<SizeType>(key_dim_), ActivationType::NOTHING, RegType::NONE,
             static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT, true);
     std::string transformed_value =
         this->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
-            head_name + "_Query_Transform", {value}, static_cast<SizeType>(model_dim_),
+            head_name + "_Value_Transform", {value}, static_cast<SizeType>(model_dim_),
             static_cast<SizeType>(value_dim_), ActivationType::NOTHING, RegType::NONE,
             static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT, true);
     // do the scaled dot product attention
