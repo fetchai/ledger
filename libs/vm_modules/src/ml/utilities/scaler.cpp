@@ -78,7 +78,7 @@ Ptr<VMTensorType> VMScaler::DeNormalise(Ptr<VMTensorType> const &input_tensor)
 void VMScaler::Bind(Module &module)
 {
   module.CreateClassType<VMScaler>("Scaler")
-      .CreateConstructor<>()
+      .CreateConstructor(VMScaler::Constructor)
       .CreateMemberFunction("setScale", &VMScaler::SetScale)
       .CreateMemberFunction("normalise", &VMScaler::Normalise)
       .CreateMemberFunction("deNormalise", &VMScaler::DeNormalise);

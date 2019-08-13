@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "vectorise/uint/uint.hpp"
 #include "vm/module.hpp"
@@ -63,9 +64,10 @@ T UInt256Wrapper::ToPrimitive(VM * /*vm*/, Ptr<UInt256Wrapper> const &a)
 void UInt256Wrapper::Bind(Module &module)
 {
   module.CreateClassType<UInt256Wrapper>("UInt256")
-      .CreateSerializeDefaultConstructor<uint64_t>(static_cast<uint64_t>(0))
-      .CreateConstructor<uint64_t>()
-      .CreateConstructor<Ptr<ByteArrayWrapper>>()
+      .CreateSerializeDefaultConstructor(
+          [](VM *vm, TypeId type_id) { return UInt256Wrapper::Constructor(vm, type_id, 0u); })
+      .CreateConstructor(&UInt256Wrapper::Constructor)
+      .CreateConstructor(&UInt256Wrapper::ConstructorFromBytes)
       .EnableOperator(Operator::Equal)
       .EnableOperator(Operator::NotEqual)
       .EnableOperator(Operator::LessThan)
@@ -102,8 +104,8 @@ UInt256Wrapper::UInt256Wrapper(VM *vm, TypeId type_id, uint64_t data)
   , number_(data)
 {}
 
-Ptr<UInt256Wrapper> UInt256Wrapper::Constructor(VM *vm, TypeId type_id,
-                                                Ptr<ByteArrayWrapper> const &ba)
+Ptr<UInt256Wrapper> UInt256Wrapper::ConstructorFromBytes(VM *vm, TypeId type_id,
+                                                         Ptr<ByteArrayWrapper> const &ba)
 {
   try
   {

@@ -56,10 +56,8 @@ std::string RBC::MsgTypeToString(MsgType msg_type)
  * @param dkg
  */
 RBC::RBC(Endpoint &endpoint, MuddleAddress address, CabinetMembers const &cabinet,
-         std::function<void(MuddleAddress const &, byte_array::ConstByteArray const &)> call_back,
-         uint8_t                                                                        channel)
-  : CHANNEL_BROADCAST{channel}
-  , address_{std::move(address)}
+         std::function<void(MuddleAddress const &, byte_array::ConstByteArray const &)> call_back)
+  : address_{std::move(address)}
   , endpoint_{endpoint}
   , current_cabinet_{cabinet}
   , deliver_msg_callback_{std::move(call_back)}
@@ -141,14 +139,8 @@ void RBC::Broadcast(RBCEnvelope const &env)
   env_serializer.Reserve(env_counter.size());
   env_serializer << env;
 
-  // Broadcast without echo
-  for (const auto &address : current_cabinet_)
-  {
-    if (address != address_)
-    {
-      endpoint_.Send(address, SERVICE_DKG, CHANNEL_BROADCAST, env_serializer.data());
-    }
-  }
+  std::lock_guard<std::mutex> lock{mutex_broadcast_};
+  endpoint_.Broadcast(SERVICE_DKG, CHANNEL_BROADCAST, env_serializer.data());
 }
 
 /**
@@ -239,29 +231,6 @@ struct RBC::MsgCount RBC::ReceivedReady(TagType tag, RHash const &msg)
 }
 
 /**
- * Helper function to check basic details of the message to determine if it should be processed
- *
- * @param from Muddle address of sender
- * @param msg_ptr Shared pointer of message
- * @return Bool of whether the message passes the test or not
- */
-bool RBC::BasicMsgCheck(MuddleAddress const &from, std::shared_ptr<RBCMessage> const &msg_ptr)
-{
-  if (msg_ptr == nullptr)
-  {
-    return false;  // To catch nullptr return in Message() switch statement default
-  }
-  else if (current_cabinet_.find(from) == current_cabinet_.end() or
-           msg_ptr->channel() != CHANNEL_BROADCAST)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Node ", id_,
-                   " received message from unknown sender/wrong channel");
-    return false;
-  }
-  return true;
-}
-
-/**
  * Handler for a new RBCEnvelope message
  *
  * @param from Muddle address of sender
@@ -271,11 +240,13 @@ bool RBC::BasicMsgCheck(MuddleAddress const &from, std::shared_ptr<RBCMessage> c
 void RBC::OnRBC(MuddleAddress const &from, RBCEnvelope const &envelope)
 {
   auto msg_ptr = envelope.Message();
-  if (!BasicMsgCheck(from, msg_ptr))
+  if (msg_ptr == nullptr)
   {
-
-    FETCH_LOG_ERROR(LOGGING_NAME, "Node ", id_,
-                    " received message from unknown sender: ", from.ToBase64());
+    return;  // To catch nullptr return in Message() switch statement default
+  }
+  else if (current_cabinet_.find(from) == current_cabinet_.end())
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Node ", id_, " received message from unknown sender");
     return;
   }
   uint32_t sender_index{CabinetIndex(from)};
@@ -291,8 +262,8 @@ void RBC::OnRBC(MuddleAddress const &from, RBCEnvelope const &envelope)
     }
     else
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Node: ", id_, " can not process payload from node ",
-                     sender_index);
+      FETCH_LOG_ERROR(LOGGING_NAME, "Node: ", id_, " can not process payload from node ",
+                      sender_index);
     }
     break;
   }
@@ -307,8 +278,8 @@ void RBC::OnRBC(MuddleAddress const &from, RBCEnvelope const &envelope)
     }
     else
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Node: ", id_, " can not process payload from node ",
-                     sender_index);
+      FETCH_LOG_ERROR(LOGGING_NAME, "Node: ", id_, " can not process payload from node ",
+                      sender_index);
     }
     break;
   }
@@ -322,8 +293,8 @@ void RBC::OnRBC(MuddleAddress const &from, RBCEnvelope const &envelope)
     }
     else
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Node: ", id_, " can not process payload from node ",
-                     sender_index);
+      FETCH_LOG_ERROR(LOGGING_NAME, "Node: ", id_, " can not process payload from node ",
+                      sender_index);
     }
     break;
   }
@@ -337,8 +308,8 @@ void RBC::OnRBC(MuddleAddress const &from, RBCEnvelope const &envelope)
     }
     else
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Node: ", id_, " can not process payload from node ",
-                     sender_index);
+      FETCH_LOG_ERROR(LOGGING_NAME, "Node: ", id_, " can not process payload from node ",
+                      sender_index);
     }
     break;
   }
@@ -352,14 +323,14 @@ void RBC::OnRBC(MuddleAddress const &from, RBCEnvelope const &envelope)
     }
     else
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Node: ", id_, " can not process payload from node ",
-                     sender_index);
+      FETCH_LOG_ERROR(LOGGING_NAME, "Node: ", id_, " can not process payload from node ",
+                      sender_index);
     }
     break;
   }
   default:
-    FETCH_LOG_WARN(LOGGING_NAME, "Node: ", id_, " can not process payload from node ",
-                   sender_index);
+    FETCH_LOG_ERROR(LOGGING_NAME, "Node: ", id_, " can not process payload from node ",
+                    sender_index);
   }
 }
 
@@ -447,16 +418,16 @@ void RBC::OnRReady(RReady const &msg, uint32_t sender_index)
   }
   FETCH_LOG_TRACE(LOGGING_NAME, "onRReady: Node ", id_, " received msg ", tag, " from node ",
                   sender_index, " with counter ", msg.counter(), " and id ", msg.id());
-  auto msgs_counter = ReceivedReady(tag, msg);
-  if (threshold_ > 0 && msgs_counter.ready_count == threshold_ + 1 &&
-      msgs_counter.echo_count < (current_cabinet_.size() - threshold_))
+  auto msgsCount = ReceivedReady(tag, msg);
+  if (threshold_ > 0 && msgsCount.ready_count == threshold_ + 1 &&
+      msgsCount.echo_count < (current_cabinet_.size() - threshold_))
   {
     RReady      ready_msg{msg.channel(), msg.id(), msg.counter(), msg.hash()};
     RBCEnvelope env{ready_msg};
     Broadcast(env);
     OnRReady(ready_msg, id_);  // self sending.
   }
-  else if (msgs_counter.ready_count == 2 * threshold_ + 1)
+  else if (msgsCount.ready_count == 2 * threshold_ + 1)
   {
     if (!SetDbar(tag, msg))
     {
@@ -475,23 +446,11 @@ void RBC::OnRReady(RReady const &msg, uint32_t sender_index)
         ++im;
       }
     }
-    else if (msg.id() != id_ && CheckTag(msg))
+    else if (CheckTag(msg) && msg.id() != id_)
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, " delivered msg ", tag, " with counter ",
                      msg.counter(), " and id ", msg.id());
       Deliver(broadcasts_[tag].mbar, msg.id());
-      std::lock_guard<std::mutex> lock(mutex_deliver_);
-      delivered_.insert(tag);
-    }
-  }
-  else
-  {
-    if (msgs_counter.ready_count == current_cabinet_.size() - 1 &&
-        delivered_.find(tag) != delivered_.end())
-    {  // all messages arrived let's clean
-      std::lock_guard<std::mutex> lock(mutex_broadcast_);
-      broadcasts_.erase(tag);
-      parties_[sender_index].flags.erase(tag);
     }
   }
 }
@@ -564,13 +523,11 @@ void RBC::OnRAnswer(RAnswer const &msg, uint32_t sender_index)
     return;
   }
 
-  if (msg.id() != id_ && CheckTag(msg))
+  if (CheckTag(msg) && msg.id() != id_)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, " delivered msg ", tag, " with counter ",
                    msg.counter(), " and id ", msg.id());
     Deliver(broadcasts_[tag].mbar, msg.id());
-    std::lock_guard<std::mutex> lock(mutex_deliver_);
-    delivered_.insert(tag);
   }
 }
 
@@ -585,7 +542,6 @@ void RBC::Deliver(SerialisedMessage const &msg, uint32_t sender_index)
   assert(parties_.size() == current_cabinet_.size());
   MuddleAddress miner_id{*std::next(current_cabinet_.begin(), sender_index)};
   deliver_msg_callback_(miner_id, msg);
-  ++parties_[sender_index].deliver_s;  // Increase counter
   // Try to deliver old messages
   std::lock_guard<std::mutex> lock(mutex_deliver_);
   if (!parties_[sender_index].undelivered_msg.empty())
@@ -596,9 +552,7 @@ void RBC::Deliver(SerialisedMessage const &msg, uint32_t sender_index)
            old_tag_msg->second.id() == CHANNEL_BROADCAST &&
            old_tag_msg->second.counter() == parties_[id_].deliver_s)
     {
-      assert(!broadcasts_[old_tag_msg->second.tag()].mbar.empty());
       deliver_msg_callback_(miner_id, broadcasts_[old_tag_msg->second.tag()].mbar);
-      ++parties_[sender_index].deliver_s;  // Increase counter
       old_tag_msg = parties_[sender_index].undelivered_msg.erase(old_tag_msg);
     }
   }
@@ -629,20 +583,20 @@ bool RBC::CheckTag(RBCMessage const &msg)
   std::lock_guard<std::mutex> lock(mutex_deliver_);
   if (msg.id() >= current_cabinet_.size())
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Node ", id_, " received message with unknown tag id");
+    FETCH_LOG_ERROR(LOGGING_NAME, "Node ", id_, " received message with unknown tag id");
   }
   assert(parties_.size() == current_cabinet_.size());
   uint8_t msg_counter = parties_[msg.id()].deliver_s;
   FETCH_LOG_TRACE(LOGGING_NAME, "Node ", id_, " has counter ", msg_counter, " for node ", msg.id());
-  assert(msg.channel() == CHANNEL_BROADCAST);
-  if (msg.counter() == msg_counter)
+  if (msg.channel() == CHANNEL_BROADCAST && msg.counter() == msg_counter)
   {
+    ++parties_[msg.id()].deliver_s;  // Increase counter
     return true;
   }
-  else if (msg.counter() > msg_counter)
+  else if (msg.channel() == CHANNEL_BROADCAST && msg.counter() > msg_counter)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Node ", id_, " has counter ", msg_counter,
-                   " does not match tag counter ", msg.counter(), " for node ", msg.id());
+    FETCH_LOG_TRACE(LOGGING_NAME, "Node ", id_, " has counter ", msg_counter,
+                    " does not match tag counter ", msg.counter(), " for node ", msg.id());
     // Store tag of message for processing later
     if (parties_[msg.id()].undelivered_msg.find(msg.counter()) ==
         parties_[msg.id()].undelivered_msg.end())

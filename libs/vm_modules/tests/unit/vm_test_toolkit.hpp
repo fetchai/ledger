@@ -28,6 +28,7 @@
 
 #include "gmock/gmock.h"
 
+#include <limits>
 #include <memory>
 #include <sstream>
 #include <string>
@@ -38,13 +39,13 @@ using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::FromHex;
 using fetch::vm::VM;
 using fetch::vm::IR;
+using fetch::vm::ChargeAmount;
 using fetch::vm::Executable;
 using fetch::vm::Compiler;
 using fetch::vm::Module;
 using fetch::vm::Variant;
 using fetch::vm_modules::VMFactory;
 
-using VmErrors      = std::vector<std::string>;
 using ExecutablePtr = std::unique_ptr<Executable>;
 using CompilerPtr   = std::unique_ptr<Compiler>;
 using ModulePtr     = std::shared_ptr<Module>;
@@ -60,11 +61,6 @@ public:
     , observer_{std::make_unique<MockIoObserver>()}
     , module_{fetch::vm_modules::VMFactory::GetModule(VMFactory::USE_SMART_CONTRACTS)}
   {}
-
-  ModulePtr module()
-  {
-    return module_;
-  }
 
   bool Compile(char const *text)
   {
@@ -87,7 +83,6 @@ public:
     vm_->SetIOObserver(*observer_);
     vm_->AttachOutputDevice(fetch::vm::VM::STDOUT, *stdout_);
 
-    // generate the IR
     if (!vm_->GenerateExecutable(*ir_, "default_ir", *executable_, errors))
     {
       PrintErrors(errors);
@@ -97,8 +92,10 @@ public:
     return true;
   }
 
-  bool Run(Variant *output = nullptr)
+  bool Run(Variant *    output       = nullptr,
+           ChargeAmount charge_limit = std::numeric_limits<ChargeAmount>::max())
   {
+    vm_->SetChargeLimit(charge_limit);
     std::string error{};
 
     Variant dummy_output{};
@@ -117,7 +114,7 @@ public:
     return true;
   }
 
-  void PrintErrors(VmErrors const &errors)
+  void PrintErrors(VMFactory::Errors const &errors)
   {
     for (auto const &line : errors)
     {
