@@ -74,7 +74,7 @@ int main()
       , network_manager{"NetworkManager" + std::to_string(index), 1}
       , reactor{"ReactorName" + std::to_string(index)}
       , muddle_certificate{CreateNewCertificate()}
-      , muddle{fetch::muddle::NetworkId{"TestNetwork"}, muddle_certificate, network_manager, true, true}
+      , muddle{fetch::muddle::NetworkId{"TestNetwork"}, muddle_certificate, network_manager}
       , dkg_service{muddle.AsEndpoint(), muddle_certificate->identity().identifier()}
       , pre_sync{muddle, 4}
     {

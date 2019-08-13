@@ -22,6 +22,7 @@
 #include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
 #include "dkg/dkg.hpp"
+#include "dkg/pre_dkg_sync.hpp"
 #include "dkg/rbc.hpp"
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/rpc/client.hpp"
@@ -364,6 +365,7 @@ struct CabinetMember
   std::shared_ptr<muddle::Subscription> shares_subscription;
   RBC                                   rbc;
   FaultyDkg                             dkg;
+  PreDkgSync           pre_sync;
 
   // Set when DKG is finished
   bn::Fr              secret_share;
@@ -398,6 +400,7 @@ struct CabinetMember
             SubmitShare(destination, shares);
           },
           failures}
+    , pre_sync{muddle, 4}
   {
     // Set subscription for receiving shares
     shares_subscription->SetMessageHandler([this](ConstByteArray const &from, uint16_t, uint16_t,
@@ -449,6 +452,7 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
 
   std::vector<std::unique_ptr<CabinetMember>> committee;
   std::set<RBC::MuddleAddress>                expected_qual;
+  std::unordered_map<byte_array::ConstByteArray, fetch::network::Uri> peers_list;
   std::set<uint32_t>                          qual_index;
   for (uint16_t ii = 0; ii < cabinet_size; ++ii)
   {
@@ -466,29 +470,31 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
       expected_qual.insert(committee[ii]->muddle.identity().identifier());
       qual_index.insert(ii);
     }
+    peers_list.insert({committee[ii]->muddle_certificate->identity().identifier(),
+                       fetch::network::Uri{"tcp://127.0.0.1:" + std::to_string(port_number)}});
   }
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(500));
-
-  // Connect muddles together (localhost for this example)
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  // Reset cabinet for rbc in pre-dkg sync
   for (uint32_t ii = 0; ii < cabinet_size; ii++)
   {
-    for (uint32_t jj = ii + 1; jj < cabinet_size; jj++)
-    {
-      committee[ii]->muddle.AddPeer(
-          fetch::network::Uri{"tcp://127.0.0.1:" + std::to_string(committee[jj]->muddle_port)});
-    }
+    committee[ii]->pre_sync.ResetCabinet(peers_list);
   }
 
-  // Make sure everyone is connected to everyone else
+  // Wait until everyone else has connected
+  auto pre_sync_start = std::chrono::high_resolution_clock::now();
+  for (uint32_t ii = 0; ii < cabinet_size; ii++)
+  {
+    committee[ii]->pre_sync.Connect();
+  }
+
   uint32_t kk = 0;
-  while (kk != cabinet_size)
+  while (kk < cabinet_size)
   {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     for (uint32_t mm = kk; mm < cabinet_size; ++mm)
     {
-      if (committee[mm]->muddle.AsEndpoint().GetDirectlyConnectedPeers().size() !=
-          (cabinet_size - 1))
+      if (!committee[mm]->pre_sync.ready())
       {
         break;
       }
@@ -498,6 +504,7 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
       }
     }
   }
+  auto pre_sync_end = std::chrono::high_resolution_clock::now();
 
   for (auto &member : committee)
   {
@@ -517,6 +524,7 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
 
     // Start at DKG
     {
+      auto dkg_start = std::chrono::high_resolution_clock::now();
       for (auto &member : committee)
       {
         member->dkg.BroadcastShares();
@@ -539,6 +547,7 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
           }
         }
       }
+      auto dkg_end = std::chrono::high_resolution_clock::now();
 
       std::this_thread::sleep_for(std::chrono::seconds(1));
 
@@ -569,6 +578,8 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
                     committee[start_complete]->public_key_shares[qq]);
         }
       }
+      std::cout << "Pre-sync time: " << std::chrono::duration_cast<std::chrono::seconds>(pre_sync_start - pre_sync_end).count() << std::endl;
+      std::cout << "DKG time: " << std::chrono::duration_cast<std::chrono::seconds>(dkg_start - dkg_end).count() << std::endl;
     }
   }
   std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -694,4 +705,11 @@ TEST(dkg, withold_reconstruction_shares)
 TEST(dkg, successive_dkgs)
 {
   GenerateTest(4, 1, 4, 4, {}, 4);
+}
+
+TEST(dkg, DISABLED_benchmarking)
+{
+  uint32_t committee_size = 30;
+  uint32_t threshold = 16;
+  GenerateTest(committee_size, threshold, committee_size, committee_size, {});
 }
