@@ -275,8 +275,7 @@ struct RbcMember
     : muddle_port{port_number}
     , network_manager{"NetworkManager" + std::to_string(index), 1}
     , muddle_certificate{CreateCertificate()}
-    , muddle{fetch::muddle::NetworkId{"TestNetwork"}, muddle_certificate, network_manager, true,
-             true}
+    , muddle{fetch::muddle::NetworkId{"TestNetwork"}, muddle_certificate, network_manager}
     , rbc{muddle.AsEndpoint(), muddle_certificate->identity().identifier(), cabinet,
           [this](ConstByteArray const &, ConstByteArray const &payload) -> void {
             OnRbcMessage(payload);

@@ -376,8 +376,7 @@ struct CabinetMember
     : muddle_port{port_number}
     , network_manager{"NetworkManager" + std::to_string(index), 1}
     , muddle_certificate{CreateNewCertificate()}
-    , muddle{fetch::muddle::NetworkId{"TestNetwork"}, muddle_certificate, network_manager, true,
-             true}
+    , muddle{fetch::muddle::NetworkId{"TestNetwork"}, muddle_certificate, network_manager}
     , shares_subscription(muddle.AsEndpoint().Subscribe(SERVICE_DKG, CHANNEL_SHARES))
     , rbc{muddle.AsEndpoint(), muddle_certificate->identity().identifier(), current_cabinet,
           [this](ConstByteArray const &address, ConstByteArray const &payload) -> void {
