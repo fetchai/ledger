@@ -117,6 +117,32 @@ BeaconService::BeaconService(Endpoint &endpoint, CertificatePtr certificate)
                                   &BeaconService::OnObserveEntropyGeneration);
 }
 
+BeaconService::Status BeaconService::GenerateEntropy(Digest /*block_digest*/, uint64_t block_number,
+                                                     uint64_t & /*entropy*/)
+{
+  uint64_t round = block_number / blocks_per_round_;
+
+  Entropy x;
+  do
+  {
+    if (ready_entropy_queue_.size() == 0)
+    {
+      return Status::NOT_READY;
+    }
+
+    x = ready_entropy_queue_.front();
+    ready_entropy_queue_.pop_front();
+  } while (x.round < round);
+
+  if (round < x.round)
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "No support for roll back yet.");
+    return Status::FAILED;
+  }
+
+  return Status::OK;
+}
+
 void BeaconService::StartNewCabinet(CabinetMemberList members, uint32_t threshold,
                                     uint64_t round_start, uint64_t round_end)
 {

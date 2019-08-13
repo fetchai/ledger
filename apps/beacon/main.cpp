@@ -25,8 +25,7 @@
 #include "crypto/bls_dkg.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
-#include "dkg/beacon_manager.hpp"
-#include "dkg/dkg_service.hpp"
+
 #include "network/generics/requesting_queue.hpp"
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/rpc/client.hpp"

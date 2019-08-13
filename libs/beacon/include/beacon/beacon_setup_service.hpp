@@ -34,23 +34,31 @@ namespace beacon {
 class BeaconSetupService
 {
 public:
+  static constexpr char const *LOGGING_NAME = "BeaconSetupService";
+
   enum class State
   {
     IDLE = 0,
+    WAIT_FOR_DIRECT_CONNECTIONS,
+
     BROADCAST_ID,
     WAIT_FOR_IDS,
+
     CREATE_SHARES,
     SEND_SHARES,
     WAIT_FOR_SHARES,
+
+    /*
+        // TODO: Instate qual support
+        BROADCAST_COMPLAINTS,
+        WAIT_FOR_COMPLAINT_ANSWERS,
+
+        BROADCAST_QUAL_SHARES,
+        WAIT_FOR_QUAL_COMPLAINTS,
+    */
+
     GENERATE_KEYS,
     BEACON_READY
-    // TODO: Support for complaints and quals
-  };
-
-  // Protocol call numbers
-  enum
-  {
-    SUBMIT_SHARE
   };
 
   using BeaconManager           = dkg::BeaconManager;
@@ -83,23 +91,35 @@ public:
     service::Promise response{nullptr};
   };
 
-  BeaconSetupService(Endpoint &endpoint, Identity identity);
+  BeaconSetupService()                           = delete;
+  BeaconSetupService(BeaconSetupService const &) = delete;
+  BeaconSetupService(BeaconSetupService &&)      = delete;
+  explicit BeaconSetupService(Endpoint &endpoint, Identity identity);
 
+  /// State functions
+  /// @{
   State OnIdle();
+  State OnWaitForDirectConnections();
   State OnBroadcastID();
   State WaitForIDs();
   State CreateShares();
   State SendShares();
-  bool  SubmitShare(Identity from, PrivateKey share, VerificationVector verification_vector);
+
   State OnWaitForShares();
   State OnGenerateKeys();
   State OnBeaconReady();
-  void  QueueSetup(SharedAeonExecutionUnit beacon);
+  /// @}
 
-  // TODO: ... steps - rbc? ...
-  // TODO: support for complaints
+  /// Protocol calls
+  /// @{
+  bool SubmitShare(Identity from, PrivateKey share, VerificationVector verification_vector);
+  /// @}
 
+  /// Setup management
+  /// @{
+  void QueueSetup(SharedAeonExecutionUnit beacon);
   void SetBeaconReadyCallback(CallbackFunction callback);
+  /// @}
 
   std::weak_ptr<core::Runnable> GetWeakRunnable();
 

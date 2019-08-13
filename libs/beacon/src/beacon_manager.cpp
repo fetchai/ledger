@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dkg/beacon_manager.hpp"
+#include "beacon/beacon_manager.hpp"
 
 namespace fetch {
 namespace dkg {

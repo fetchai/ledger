@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "beacon/beacon_setup_service.hpp"
+#include "beacon/beacon_setup_protocol.hpp"
 #include "network/generics/requesting_queue.hpp"
 
 namespace fetch {
@@ -33,6 +34,9 @@ char const *ToString(BeaconSetupService::State state)
     break;
   case BeaconSetupService::State::BROADCAST_ID:
     text = "Broadcasting ID";
+    break;
+  case BeaconSetupService::State::WAIT_FOR_DIRECT_CONNECTIONS:
+    text = "Waiting for direct connections";
     break;
   case BeaconSetupService::State::WAIT_FOR_IDS:
     text = "Wait for IDs";
@@ -66,6 +70,8 @@ BeaconSetupService::BeaconSetupService(Endpoint &endpoint, Identity identity)
 {
 
   state_machine_->RegisterHandler(State::IDLE, this, &BeaconSetupService::OnIdle);
+  state_machine_->RegisterHandler(State::WAIT_FOR_DIRECT_CONNECTIONS, this,
+                                  &BeaconSetupService::OnWaitForDirectConnections);
   state_machine_->RegisterHandler(State::BROADCAST_ID, this, &BeaconSetupService::OnBroadcastID);
   state_machine_->RegisterHandler(State::WAIT_FOR_IDS, this, &BeaconSetupService::WaitForIDs);
   state_machine_->RegisterHandler(State::CREATE_SHARES, this, &BeaconSetupService::CreateShares);
@@ -95,30 +101,63 @@ BeaconSetupService::BeaconSetupService(Endpoint &endpoint, Identity identity)
 
 BeaconSetupService::State BeaconSetupService::OnIdle()
 {
+  std::lock_guard<std::mutex> lock(mutex_);
+  if (aeon_exe_queue_.size() > 0)
   {
-    std::lock_guard<std::mutex> lock(mutex_);
-    if (aeon_exe_queue_.size() > 0)
+    beacon_ = aeon_exe_queue_.front();
+    assert(beacon_ != nullptr);
+
+    aeon_exe_queue_.pop_front();
+
+    // Observe only does not require any setup
+    if (beacon_->observe_only)
     {
-      beacon_ = aeon_exe_queue_.front();
-      assert(beacon_ != nullptr);
-
-      aeon_exe_queue_.pop_front();
-
-      // Observe only does not require any setup
-      if (beacon_->observe_only)
-      {
-        return State::BEACON_READY;
-      }
-      else
-      {
-        // Initiating setup
-        return State::BROADCAST_ID;
-      }
+      return State::BEACON_READY;
+    }
+    else
+    {
+      // Initiating setup
+      return State::WAIT_FOR_DIRECT_CONNECTIONS;
     }
   }
 
   state_machine_->Delay(std::chrono::milliseconds(100));
   return State::IDLE;
+}
+
+BeaconSetupService::State BeaconSetupService::OnWaitForDirectConnections()
+{
+  std::lock_guard<std::mutex> lock(mutex_);
+  auto                        v_peers = endpoint_.GetDirectlyConnectedPeers();
+  std::unordered_set<Address> peers(v_peers.begin(), v_peers.end());
+
+  bool all_connected = true;
+  for (auto &m : beacon_->aeon.members)
+  {
+    // Skipping own address
+    if (m == identity_)
+    {
+      continue;
+    }
+
+    // Checking if other peers are there
+    if (peers.find(m.identifier()) == peers.end())
+    {
+      all_connected = false;
+
+      // TODO: Request muddle to connect.
+    }
+  }
+
+  if (all_connected)
+  {
+    return State::BROADCAST_ID;
+  }
+
+  state_machine_->Delay(std::chrono::milliseconds(200));
+  FETCH_LOG_INFO(LOGGING_NAME, "Waiting for all peers to join before starting setup.");
+
+  return State::WAIT_FOR_DIRECT_CONNECTIONS;
 }
 
 BeaconSetupService::State BeaconSetupService::OnBroadcastID()
@@ -215,43 +254,27 @@ BeaconSetupService::State BeaconSetupService::SendShares()
       auto counter_party = delivery_info.first;
       auto share         = beacon_->manager.GetShare(counter_party);
 
-      details.response =
-          rpc_client_.CallSpecificAddress(counter_party.identifier(), RPC_BEACON_SETUP,
-                                          SUBMIT_SHARE, from, share, verification_vector);
+      if (counter_party == identity_)
+      {
+        ShareSubmission submission;
+        submission.from                = from;
+        submission.share               = std::move(share);
+        submission.verification_vector = verification_vector;
+
+        submitted_shares_[from] = submission;
+      }
+      else
+      {
+        details.response = rpc_client_.CallSpecificAddress(
+            counter_party.identifier(), RPC_BEACON_SETUP, BeaconSetupServiceProtocol::SUBMIT_SHARE,
+            from, share, verification_vector);
+      }
     }
   }
 
   // Gettting response
   bool all_delivered = true;
-  {
-    /*
-    // TODO: Implement
-    uint32_t                    n = 0;
-    std::lock_guard<std::mutex> lock(mutex_);
-    for (auto &delivery_info : share_delivery_details_)
-    {
-      auto &details = delivery_info.second;
-      if (details.was_delivered)
-      {
-        ++n;
-        continue;
-      }
-
-      // TODO: check that response is non-null
-      std::cout << "Waiting for "
-      auto value = details.response->As<bool>();
-      if (value)
-      {
-        ++n;
-        details.was_delivered = true;
-        continue;
-      }
-
-      all_delivered = false;
-    }
-    std::cout << "Delivered " << n << std::endl;
-    */
-  }
+  // TODO: Check that all is delivered
 
   if (all_delivered)
   {

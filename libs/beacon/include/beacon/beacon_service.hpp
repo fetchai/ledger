@@ -19,6 +19,7 @@
 
 #include "core/state_machine.hpp"
 
+#include "ledger/consensus/entropy_generator_interface.hpp"
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
@@ -43,7 +44,7 @@
 namespace fetch {
 namespace beacon {
 
-class BeaconService
+class BeaconService : public ledger::EntropyGeneratorInterface
 {
 public:
   constexpr static char const *LOGGING_NAME = "BeaconService";
@@ -82,8 +83,17 @@ public:
   using StateMachinePtr         = std::shared_ptr<StateMachine>;
   using SignatureShare          = AeonExecutionUnit::SignatureShare;
   using Serializer              = serializers::MsgPackSerializer;
+  using Digest                  = ledger::Digest;
+
+  BeaconService()                      = delete;
+  BeaconService(BeaconService const &) = delete;
 
   BeaconService(Endpoint &endpoint, CertificatePtr certificate);
+
+  /// @name Entropy Generator
+  /// @{
+  Status GenerateEntropy(Digest block_digest, uint64_t block_number, uint64_t &entropy) override;
+  /// @}
 
   /// Maintainance logic
   /// @{
@@ -92,6 +102,19 @@ public:
                        uint64_t round_end);
   /// @}
 
+  /// Beacon runnables
+  /// @{
+  std::weak_ptr<core::Runnable> GetMainRunnable();
+  std::weak_ptr<core::Runnable> GetSetupRunnable();
+  /// @}
+
+  template <typename T>
+  friend class core::StateMachine;
+  friend class BeaconServiceProtocol;
+
+protected:
+  /// State methods
+  /// @{
   State OnWaitForSetupCompletionState();
   State OnPrepareEntropyGeneration();
   State OnObserveEntropyGeneration();
@@ -101,12 +124,11 @@ public:
   State OnCompleteState();
 
   State OnComiteeState();
-  void  SubmitSignatureShare(uint64_t round, SignatureShare);
+  /// @}
 
-  /// Beacon runnables
+  /// Protocol endpoints
   /// @{
-  std::weak_ptr<core::Runnable> GetMainRunnable();
-  std::weak_ptr<core::Runnable> GetSetupRunnable();
+  void SubmitSignatureShare(uint64_t round, SignatureShare);
   /// @}
 private:
   bool AddSignature(SignatureShare share)
@@ -138,6 +160,7 @@ private:
   Identity        identity_;
   Endpoint &      endpoint_;
   StateMachinePtr state_machine_;
+  uint64_t        blocks_per_round_{5};  // TODO: Make configurable
 
   /// Beacon and entropy control units
   /// @{

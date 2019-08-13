@@ -416,10 +416,10 @@ void Generator::HandleWhileStatement(IRBlockNodePtr const &block_node)
   function_->AddInstruction(jf_instruction);
   AddLineNumber(condition_node->line, jf_pc);
 
-  uint16_t const while_block_start_pc = uint16_t(function_->instructions.size());
+  uint16_t const while_round_start_pc = uint16_t(function_->instructions.size());
   if (chain.kind == NodeKind::Or)
   {
-    FinaliseShortCircuitChain(chain, true, while_block_start_pc);
+    FinaliseShortCircuitChain(chain, true, while_round_start_pc);
   }
 
   ScopeEnter();
@@ -570,10 +570,10 @@ void Generator::HandleIfStatement(IRNodePtr const &node)
       jf_pc                = function_->AddInstruction(jf_instruction);
       AddLineNumber(condition_node->line, jf_pc);
 
-      uint16_t const block_start_pc = uint16_t(function_->instructions.size());
+      uint16_t const round_start_pc = uint16_t(function_->instructions.size());
       if (chain.kind == NodeKind::Or)
       {
-        FinaliseShortCircuitChain(chain, true, block_start_pc);
+        FinaliseShortCircuitChain(chain, true, round_start_pc);
       }
 
       ScopeEnter();
@@ -596,13 +596,13 @@ void Generator::HandleIfStatement(IRNodePtr const &node)
       // The "else" block
       //
 
-      uint16_t const else_block_start_pc = uint16_t(function_->instructions.size());
+      uint16_t const else_round_start_pc = uint16_t(function_->instructions.size());
 
       // The previous condition jumps here
-      function_->instructions[jf_pc].index = else_block_start_pc;
+      function_->instructions[jf_pc].index = else_round_start_pc;
       if (chain.kind == NodeKind::And)
       {
-        FinaliseShortCircuitChain(chain, true, else_block_start_pc);
+        FinaliseShortCircuitChain(chain, true, else_round_start_pc);
       }
 
       jf_pc = uint16_t(-1);

@@ -26,6 +26,12 @@ class BeaconSetupService;
 class BeaconSetupServiceProtocol : public service::Protocol
 {
 public:
+  // Protocol call numbers
+  enum
+  {
+    SUBMIT_SHARE
+  };
+
   // Construction / Destruction
   explicit BeaconSetupServiceProtocol(BeaconSetupService &service);
 
