@@ -66,23 +66,27 @@ void Softmax1DImplementation(ArrayType1 const &array, ArrayType2 &ret)
   }
 }
 
+/**
+ * Any-D softmax implementation
+ * @tparam ArrayType
+ * @param array
+ * @param ret
+ * @param axis
+ */
 template <typename ArrayType>
-void Softmax2DImplementation(ArrayType const &array, ArrayType &ret,
+void SoftmaxNDImplementation(ArrayType const &array, ArrayType &ret,
                              typename ArrayType::SizeType axis)
 {
-  assert(ret.size() == array.size());
-  assert(array.shape().size() == 2);
-  assert(ret.shape().size() == 2);
-  assert((axis == 0) || (axis == 1));
+  // Subtract max for numerical stability
+  ArrayType sums = ReduceMax(array, axis);
+  Subtract(array, sums, ret);
 
-  for (std::size_t i = 0; i < array.shape()[axis]; ++i)
-  {
-    auto cur_slice = array.Slice(i, axis).Copy();
-    auto ret_slice = ret.Slice(i, axis).Copy();
-    Softmax1DImplementation(cur_slice, ret_slice);
-    ret.Slice(i, axis).Assign(ret_slice);
-  }
+  // exp(x)/sum(exp(x))
+  Exp(ret, ret);
+  ReduceSum(ret, axis, sums);
+  Divide(ret, sums, ret);
 }
+
 }  // namespace details
 
 template <typename ArrayType>
@@ -95,30 +99,9 @@ void Softmax(ArrayType const &array, ArrayType &ret, typename ArrayType::SizeTyp
     assert(axis == 0);
     details::Softmax1DImplementation(array, ret);
   }
-  else if ((array.shape().size() == 2) && (ret.shape().size() == 2))
-  {
-    details::Softmax2DImplementation(array, ret, axis);
-  }
-  else if ((array.shape().size() == 3) && (ret.shape().size() == 3))
-  {
-    assert(axis == 0 || axis == 1);
-    // TODO (#1320) - Copy()s can be removed when softmax2dimplementation handles IsIterable types
-    auto tmp_ret = ret.View(0).Copy();
-    for (size_t i = 0; i < array.shape()[2]; i++)
-    {
-      details::Softmax2DImplementation(array.View(i).Copy(), tmp_ret, axis);
-      ret.View(i).Assign(tmp_ret);
-    }
-  }
-  else if ((array.shape().size() == 3) && (ret.shape().size() == 3) && (axis == 2))
-  {
-    throw std::runtime_error("softmax on batch dimension is not implemented");
-  }
   else
   {
-    // TODO (#1360) we should have a N dimension implementation for softmax, with which the 2D
-    // implementation should be merged.
-    throw std::runtime_error("softmax for more than 3 Dimensions not yet handled");
+    details::SoftmaxNDImplementation(array, ret, axis);
   }
 }
 
@@ -142,6 +125,29 @@ ArrayType Softmax(ArrayType const &array)
   ArrayType ret{array.shape()};
   Softmax(array, ret, 0);
   return ret;
+}
+
+/**
+ * Softmax implementation for multiple dimensions
+ * @tparam ArrayType
+ * @param array
+ * @param ret
+ * @param axes Vector of SizeType
+ */
+template <typename ArrayType>
+void Softmax(ArrayType const &array, ArrayType &ret, std::vector<SizeType> axes)
+{
+  assert(ret.shape() == array.shape());
+  assert(axes.size() >= 2);
+
+  // Subtract max for numerical stability
+  ArrayType sums = ReduceMax(array, axes);
+  Subtract(array, sums, ret);
+
+  // exp(x)/sum(exp(x))
+  Exp(ret, ret);
+  ReduceSum(ret, axes, sums);
+  Divide(ret, sums, ret);
 }
 
 }  // namespace math

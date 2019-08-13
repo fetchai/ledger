@@ -92,7 +92,10 @@ struct Token
     Or,
     Not,
     Inc,
-    Dec
+    Dec,
+    Persistent,
+    Use,
+    As
   };
   Kind        kind;
   uint32_t    offset;

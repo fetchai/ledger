@@ -92,6 +92,7 @@ private:
 
   void              Tokenise(std::string const &source);
   bool              ParseBlock(BlockNode &node);
+  NodePtr           ParsePersistentStatement();
   BlockNodePtr      ParseFunctionDefinition();
   NodePtr           ParseAnnotations();
   NodePtr           ParseAnnotation();
@@ -99,6 +100,7 @@ private:
   BlockNodePtr      ParseWhileStatement();
   BlockNodePtr      ParseForStatement();
   NodePtr           ParseIfStatement();
+  NodePtr           ParseUseStatement();
   NodePtr           ParseVarStatement();
   NodePtr           ParseReturnStatement();
   NodePtr           ParseBreakStatement();
