@@ -110,7 +110,7 @@ TYPED_TEST(SelfAttentionEncoder, saveparams_test)
   std::string error_output = layer.template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TypeParam>>(
       "num_error", {output_name, label_name});
 
-  // set input and ForwardPropagate
+  // set input and evaluate
   layer.SetInput(input_name, input);
   TypeParam prediction;
   prediction = layer.Evaluate(output_name, true);

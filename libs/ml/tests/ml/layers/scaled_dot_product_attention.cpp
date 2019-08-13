@@ -177,7 +177,7 @@ TYPED_TEST(ScaledDotProductAttention, saveparams_test)
   std::string error_output = layer.template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TypeParam>>(
       "num_error", {output_name, label_name});
 
-  // set input and ForwardPropagate
+  // set input and evaluate
   layer.SetInput("ScaledDotProductAttention_Query", query_data);
   layer.SetInput("ScaledDotProductAttention_Key", key_data);
   layer.SetInput("ScaledDotProductAttention_Value", value_data);

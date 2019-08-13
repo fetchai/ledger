@@ -38,7 +38,7 @@ using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>>;
 TYPED_TEST_CASE(PReluTest, MyTypes);
 
-TYPED_TEST(PReluTest, set_input_and_ForwardPropagate_test)  // Use the class as a subgraph
+TYPED_TEST(PReluTest, set_input_and_evaluate_test)  // Use the class as a subgraph
 {
   fetch::ml::layers::PRelu<TypeParam> fc(100u);
   TypeParam input_data(std::vector<typename TypeParam::SizeType>({10, 10, 2}));
