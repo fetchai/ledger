@@ -220,34 +220,37 @@ void Analyser::CreateInstantiationType(TypeIndex type_index, TypeIndex template_
 
 void Analyser::CreateFreeFunction(std::string const &   name,
                                   TypeIndexArray const &parameter_type_index_array,
-                                  TypeIndex return_type_index, Handler const &handler)
+                                  TypeIndex return_type_index, Handler const &handler,
+                                  ChargeAmount charge)
 {
   CreateFreeFunction(name, GetTypes(parameter_type_index_array), GetType(return_type_index),
-                     handler);
+                     handler, charge);
 }
 
 void Analyser::CreateConstructor(TypeIndex             type_index,
                                  TypeIndexArray const &parameter_type_index_array,
-                                 Handler const &       handler)
+                                 Handler const &handler, ChargeAmount charge)
 {
-  CreateConstructor(GetType(type_index), GetTypes(parameter_type_index_array), handler);
+  CreateConstructor(GetType(type_index), GetTypes(parameter_type_index_array), handler, charge);
 }
 
 void Analyser::CreateStaticMemberFunction(TypeIndex type_index, std::string const &function_name,
                                           TypeIndexArray const &parameter_type_index_array,
-                                          TypeIndex return_type_index, Handler const &handler)
+                                          TypeIndex return_type_index, Handler const &handler,
+                                          ChargeAmount charge)
 {
   CreateStaticMemberFunction(GetType(type_index), function_name,
                              GetTypes(parameter_type_index_array), GetType(return_type_index),
-                             handler);
+                             handler, charge);
 }
 
 void Analyser::CreateMemberFunction(TypeIndex type_index, std::string const &function_name,
                                     TypeIndexArray const &parameter_type_index_array,
-                                    TypeIndex return_type_index, Handler const &handler)
+                                    TypeIndex return_type_index, Handler const &handler,
+                                    ChargeAmount charge)
 {
   CreateMemberFunction(GetType(type_index), function_name, GetTypes(parameter_type_index_array),
-                       GetType(return_type_index), handler);
+                       GetType(return_type_index), handler, charge);
 }
 
 void Analyser::EnableOperator(TypeIndex type_index, Operator op)
@@ -258,10 +261,11 @@ void Analyser::EnableOperator(TypeIndex type_index, Operator op)
 void Analyser::EnableIndexOperator(TypeIndex             type_index,
                                    TypeIndexArray const &input_type_index_array,
                                    TypeIndex output_type_index, Handler const &get_handler,
-                                   Handler const &set_handler)
+                                   Handler const &set_handler, ChargeAmount get_charge,
+                                   ChargeAmount set_charge)
 {
   EnableIndexOperator(GetType(type_index), GetTypes(input_type_index_array),
-                      GetType(output_type_index), get_handler, set_handler);
+                      GetType(output_type_index), get_handler, set_handler, get_charge, set_charge);
 }
 
 bool Analyser::Analyse(BlockNodePtr const &root, std::vector<std::string> &errors)
@@ -2444,7 +2448,8 @@ TypePtr Analyser::InternalCreateInstantiationType(TypeKind type_kind, TypePtr co
 }
 
 void Analyser::CreateFreeFunction(std::string const &name, TypePtrArray const &parameter_types,
-                                  TypePtr const &return_type, Handler const &handler)
+                                  TypePtr const &return_type, Handler const &handler,
+                                  ChargeAmount charge)
 {
   std::string unique_id = BuildUniqueId(nullptr, name, parameter_types, return_type);
   if (function_map_.Find(unique_id))
@@ -2455,12 +2460,12 @@ void Analyser::CreateFreeFunction(std::string const &name, TypePtrArray const &p
   FunctionPtr f = CreateFunction(FunctionKind::FreeFunction, name, unique_id, parameter_types,
                                  VariablePtrArray(), return_type);
   AddFunctionToSymbolTable(symbols_, f);
-  AddFunctionInfo(f, handler);
+  AddFunctionInfo(f, handler, charge);
   function_map_.Add(unique_id, f);
 }
 
 void Analyser::CreateConstructor(TypePtr const &type, TypePtrArray const &parameter_types,
-                                 Handler const &handler)
+                                 Handler const &handler, ChargeAmount charge)
 {
   std::string unique_id = BuildUniqueId(type, CONSTRUCTOR, parameter_types, type);
   if (function_map_.Find(unique_id))
@@ -2471,13 +2476,14 @@ void Analyser::CreateConstructor(TypePtr const &type, TypePtrArray const &parame
   FunctionPtr f = CreateFunction(FunctionKind::Constructor, CONSTRUCTOR, unique_id, parameter_types,
                                  VariablePtrArray(), type);
   AddFunctionToSymbolTable(type->symbols, f);
-  AddFunctionInfo(f, handler);
+  AddFunctionInfo(f, handler, charge);
   function_map_.Add(unique_id, f);
 }
 
 void Analyser::CreateStaticMemberFunction(TypePtr const &type, std::string const &name,
                                           TypePtrArray const &parameter_types,
-                                          TypePtr const &return_type, Handler const &handler)
+                                          TypePtr const &return_type, Handler const &handler,
+                                          ChargeAmount charge)
 {
   std::string unique_id = BuildUniqueId(type, name, parameter_types, return_type);
   if (function_map_.Find(unique_id))
@@ -2488,13 +2494,13 @@ void Analyser::CreateStaticMemberFunction(TypePtr const &type, std::string const
   FunctionPtr f = CreateFunction(FunctionKind::StaticMemberFunction, name, unique_id,
                                  parameter_types, VariablePtrArray(), return_type);
   AddFunctionToSymbolTable(type->symbols, f);
-  AddFunctionInfo(f, handler);
+  AddFunctionInfo(f, handler, charge);
   function_map_.Add(unique_id, f);
 }
 
 void Analyser::CreateMemberFunction(TypePtr const &type, std::string const &name,
                                     TypePtrArray const &parameter_types, TypePtr const &return_type,
-                                    Handler const &handler)
+                                    Handler const &handler, ChargeAmount charge)
 {
   std::string unique_id = BuildUniqueId(type, name, parameter_types, return_type);
   if (function_map_.Find(unique_id))
@@ -2505,7 +2511,7 @@ void Analyser::CreateMemberFunction(TypePtr const &type, std::string const &name
   FunctionPtr f = CreateFunction(FunctionKind::MemberFunction, name, unique_id, parameter_types,
                                  VariablePtrArray(), return_type);
   AddFunctionToSymbolTable(type->symbols, f);
-  AddFunctionInfo(f, handler);
+  AddFunctionInfo(f, handler, charge);
   function_map_.Add(unique_id, f);
 }
 
@@ -2520,7 +2526,8 @@ FunctionPtr Analyser::CreateUserDefinedFreeFunction(std::string const &     name
 
 void Analyser::EnableIndexOperator(TypePtr const &type, TypePtrArray const &input_types,
                                    TypePtr const &output_type, Handler const &get_handler,
-                                   Handler const &set_handler)
+                                   Handler const &set_handler, ChargeAmount get_charge,
+                                   ChargeAmount set_charge)
 {
   std::string g_unique_id = BuildUniqueId(type, GET_INDEXED_VALUE, input_types, output_type);
   if (function_map_.Find(g_unique_id))
@@ -2538,13 +2545,13 @@ void Analyser::EnableIndexOperator(TypePtr const &type, TypePtrArray const &inpu
 
   FunctionPtr gf = CreateFunction(FunctionKind::MemberFunction, GET_INDEXED_VALUE, g_unique_id,
                                   input_types, VariablePtrArray(), output_type);
-  AddFunctionInfo(gf, get_handler);
+  AddFunctionInfo(gf, get_handler, get_charge);
   AddFunctionToSymbolTable(type->symbols, gf);
   function_map_.Add(g_unique_id, gf);
 
   FunctionPtr sf = CreateFunction(FunctionKind::MemberFunction, SET_INDEXED_VALUE, s_unique_id,
                                   s_input_types, VariablePtrArray(), void_type_);
-  AddFunctionInfo(sf, set_handler);
+  AddFunctionInfo(sf, set_handler, set_charge);
   AddFunctionToSymbolTable(type->symbols, sf);
   function_map_.Add(s_unique_id, sf);
 }
@@ -2566,10 +2573,11 @@ void Analyser::AddTypeInfo(TypeInfo const &info, TypeId type_id, TypePtr const &
   type_info_map_[type->name] = id;
 }
 
-void Analyser::AddFunctionInfo(FunctionPtr const &function, Handler const &handler)
+void Analyser::AddFunctionInfo(FunctionPtr const &function, Handler const &handler,
+                               ChargeAmount static_charge)
 {
-  FunctionInfo info(function->function_kind, function->unique_id, handler);
-  function_info_array_.push_back(info);
+  function_info_array_.emplace_back(function->function_kind, function->unique_id, handler,
+                                    static_charge);
 }
 
 std::string Analyser::BuildUniqueId(TypePtr const &type, std::string const &function_name,

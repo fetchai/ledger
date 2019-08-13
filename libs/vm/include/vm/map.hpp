@@ -144,7 +144,7 @@ struct Map : public IMap
     return nullptr;
   }
 
-  virtual TemplateParameter2 GetIndexedValue(TemplateParameter1 const &key) override
+  TemplateParameter2 GetIndexedValue(TemplateParameter1 const &key) override
   {
     TemplateParameter2 *ptr = Get<Key>(key);
     if (ptr)
@@ -174,8 +174,7 @@ struct Map : public IMap
     RuntimeError("map key is null reference");
   }
 
-  virtual void SetIndexedValue(TemplateParameter1 const &key,
-                               TemplateParameter2 const &value) override
+  void SetIndexedValue(TemplateParameter1 const &key, TemplateParameter2 const &value) override
   {
     Store<Key>(key, value);
   }

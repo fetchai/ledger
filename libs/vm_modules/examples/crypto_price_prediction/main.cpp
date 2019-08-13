@@ -49,7 +49,7 @@ struct System : public fetch::vm::Object
   }
 
   static fetch::vm::Ptr<fetch::vm::String> Argv(fetch::vm::VM *vm, fetch::vm::TypeId /*type_id*/,
-                                                int32_t const &a)
+                                                int32_t        a)
   {
     return fetch::vm::Ptr<fetch::vm::String>(
         new fetch::vm::String(vm, System::args[std::size_t(a)]));
@@ -62,12 +62,18 @@ std::vector<std::string> System::args;
 
 // read the weights and bias csv files
 fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> read_csv(
-    fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &filename, bool transpose = false)
+    fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &filename, bool transpose)
 {
   ArrayType tensor = fetch::ml::dataloaders::ReadCSV<ArrayType>(filename->str, 0, 0, transpose);
   tensor.Reshape({1, tensor.shape(0), tensor.shape(1)});
 
   return vm->CreateNewObject<fetch::vm_modules::math::VMTensor>(tensor);
+}
+
+fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> read_csv_no_transpose(
+    fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &filename)
+{
+  return read_csv(vm, filename, false);
 }
 
 // read the weights and bias csv files
@@ -116,6 +122,8 @@ int main(int argc, char **argv)
   fetch::vm_modules::CreatePrint(*module);
 
   module->CreateFreeFunction("read_csv", &read_csv);
+  module->CreateFreeFunction("read_csv", &read_csv_no_transpose);
+
   module->CreateFreeFunction("remove_leading_dimension", &remove_leading_dimension);
 
   // Setting compiler up
