@@ -267,6 +267,16 @@ TYPED_TEST(TensorOperationsTest, slice_and_transpose_test)
   EXPECT_EQ(t3.At(4, 2), TypeParam(29));
 }
 
+TYPED_TEST(TensorOperationsTest, range_index_slices_test)
+{
+	using ArrayType = typename fetch::math::Tensor<TypeParam>;
+	using SizeType = typename ArrayType::SizeType;
+	
+	ArrayType t1({3, 5, 2});
+	auto s1 = t1.Slice(std::make_pair<SizeType, SizeType>(0, 3), 1);
+	assert(s1.Copy().shape() == std::vector<SizeType>({3, 3, 2}));
+}
+
 TYPED_TEST(TensorOperationsTest, multiple_slices_test)
 {
   using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
