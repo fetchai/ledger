@@ -438,7 +438,7 @@ bool Identifier::operator==(Identifier const &other) const
  */
 bool Identifier::operator!=(Identifier const &other) const
 {
-  return (full_ != other.full_);
+  return !operator==(other);
 }
 
 }  // namespace ledger
