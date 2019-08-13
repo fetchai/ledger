@@ -74,7 +74,6 @@ TYPED_TEST(SkipGramTest, saveparams_test)
 
   // make initial prediction to set internal buffers which must be correctly set in serialisation
   TypeParam prediction0 = layer.Evaluate(output_name, true);
-  std::cout << "prediction0.ToString(): " << prediction0.ToString() << std::endl;
 
   // extract saveparams
   auto sp = layer.GetOpSaveableParams();
@@ -101,8 +100,6 @@ TYPED_TEST(SkipGramTest, saveparams_test)
   layer.SetInput("SkipGram_Context", context);
   TypeParam prediction = layer.Evaluate(output_name, true);
 
-  std::cout << "prediction.ToString(): " << prediction.ToString() << std::endl;
-
   // sanity check - serialisation should not affect initial prediction
   ASSERT_TRUE(prediction0.AllClose(prediction, fetch::math::function_tolerance<DataType>(),
                                   fetch::math::function_tolerance<DataType>()));
@@ -110,7 +107,6 @@ TYPED_TEST(SkipGramTest, saveparams_test)
   layer2.SetInput("SkipGram_Input", input);
   layer2.SetInput("SkipGram_Context", context);
   TypeParam prediction2 = layer2.Evaluate(output_name, true);
-  std::cout << "prediction2.ToString(): " << prediction2.ToString() << std::endl;
 
   ASSERT_TRUE(prediction.AllClose(prediction2, fetch::math::function_tolerance<DataType>(),
                                   fetch::math::function_tolerance<DataType>()));
@@ -137,7 +133,6 @@ TYPED_TEST(SkipGramTest, saveparams_test)
   layer.SetInput("SkipGram_Input", input);            // resets node cache
   layer.SetInput("SkipGram_Context", context);        // resets node cache
   TypeParam prediction3 = layer.Evaluate(output_name);
-  std::cout << "prediction3.ToString(): " << prediction3.ToString() << std::endl;
 
   EXPECT_FALSE(prediction.AllClose(prediction3, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));
@@ -149,9 +144,6 @@ TYPED_TEST(SkipGramTest, saveparams_test)
   layer2.SetInput("SkipGram_Input", input);
   layer2.SetInput("SkipGram_Context", context);
   TypeParam prediction5 = layer2.Evaluate(output_name);
-
-  std::cout << "prediction5.ToString(): " << prediction5.ToString() << std::endl;
-  std::cout << "prediction3.ToString(): " << prediction3.ToString() << std::endl;
 
   EXPECT_TRUE(prediction3.AllClose(prediction5, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));

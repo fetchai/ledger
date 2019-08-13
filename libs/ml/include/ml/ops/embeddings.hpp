@@ -44,12 +44,12 @@ public:
   {
     TensorType weights = TensorType(std::vector<SizeType>({dimensions, data_points}));
     fetch::ml::ops::Weights<TensorType>::Initialise(weights, dimensions, data_points);
-    this->SetData(weights);
+    Weights<T>::SetData(weights);
   }
 
   explicit Embeddings(TensorType const &weights)
   {
-    this->SetData(weights);
+    Weights<T>::SetData(weights);
   }
 
   explicit Embeddings(SPType const &sp)
@@ -151,7 +151,8 @@ public:
         trailing_indices1_.at(1) = n;
         auto error_view          = error_signal.View(trailing_indices1_);
         trailing_indices2_.at(0) = static_cast<SizeType>(*e_it);
-        auto gradient_view       = this->gradient_accumulation_->View(trailing_indices2_);
+        updated_rows_.insert(static_cast<SizeType>(*e_it));
+        auto gradient_view = this->gradient_accumulation_->View(trailing_indices2_);
 
         auto error_view_it    = error_view.cbegin();
         auto gradient_view_it = gradient_view.begin();
@@ -166,6 +167,23 @@ public:
     }
 
     return {TensorType(error_signal.shape())};
+  }
+
+  bool SetData(TensorType const &data) override
+  {
+    bool shape_changed = true;
+    if (embeddings_output_)
+    {
+      shape_changed = (embeddings_output_->shape() != data.shape());
+    }
+    embeddings_output_ = std::make_shared<TensorType>(data);
+
+    if (shape_changed)
+    {
+      this->gradient_accumulation_ = std::make_shared<TensorType>(this->output_->shape());
+      return true;
+    }
+    return false;
   }
 
   void Step(typename T::Type learning_rate) override
