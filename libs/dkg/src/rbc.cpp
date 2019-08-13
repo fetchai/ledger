@@ -590,11 +590,10 @@ void RBC::Deliver(SerialisedMessage const &msg, uint32_t sender_index)
   std::lock_guard<std::mutex> lock(mutex_deliver_);
   if (!parties_[sender_index].undelivered_msg.empty())
   {
-    FETCH_LOG_TRACE(LOGGING_NAME, "Node ", id_, " checks old tags for node ", sender_index);
+    FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, " checks old messages for node ", sender_index);
     auto old_tag_msg = parties_[sender_index].undelivered_msg.begin();
     while (old_tag_msg != parties_[sender_index].undelivered_msg.end() &&
-           old_tag_msg->second.id() == CHANNEL_BROADCAST &&
-           old_tag_msg->second.counter() == parties_[id_].deliver_s)
+           old_tag_msg->first == parties_[id_].deliver_s)
     {
       assert(!broadcasts_[old_tag_msg->second.tag()].mbar.empty());
       deliver_msg_callback_(miner_id, broadcasts_[old_tag_msg->second.tag()].mbar);
@@ -643,7 +642,7 @@ bool RBC::CheckTag(RBCMessage const &msg)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Node ", id_, " has counter ", msg_counter,
                    " does not match tag counter ", msg.counter(), " for node ", msg.id());
-    // Store tag of message for processing later
+    // Store counter of message for processing later
     if (parties_[msg.id()].undelivered_msg.find(msg.counter()) ==
         parties_[msg.id()].undelivered_msg.end())
     {
