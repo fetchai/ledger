@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/main_serializer.hpp"
-#include "ml/layers/self_attention_encoder.hpp"
+#include "ml/layers/skip_gram.hpp"
 #include "ml/utilities/graph_builder.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
@@ -51,12 +51,13 @@ TYPED_TEST(SkipGramTest, saveparams_test)
 
   TypeParam input({1, 1});
   TypeParam context({1, 1});
-  input.FillUniformRandom();
-  context.FillUniformRandom();
+  input(0, 0) = static_cast<DataType>(1);
+
+  context(0, 0) = static_cast<DataType>(3);
 
   // create labels
   TypeParam labels({1, 1});
-  labels.FillUniformRandom();
+  labels(0, 0) = static_cast<DataType>(7);
 
   // Create layer
   LayerType layer(in_size, out_size, embed_size, vocab_size);
@@ -92,10 +93,10 @@ TYPED_TEST(SkipGramTest, saveparams_test)
   // rebuild
   auto layer2 = *(fetch::ml::utilities::BuildLayer<TypeParam, LayerType>(dsp2));
 
-  // test equality
-  layer.SetInput("SkipGram_Input", input);
-  layer.SetInput("SkipGram_Context", context);
-  prediction = layer.Evaluate(output_name, true);
+  //
+  // test that deserialized model gives the same forward prediction as the original layer
+  //
+
   layer2.SetInput("SkipGram_Input", input);
   layer2.SetInput("SkipGram_Context", context);
   TypeParam prediction2 = layer2.Evaluate(output_name, true);
@@ -118,21 +119,41 @@ TYPED_TEST(SkipGramTest, saveparams_test)
   EXPECT_TRUE(loss.AllClose(loss2, fetch::math::function_tolerance<DataType>(),
                             fetch::math::function_tolerance<DataType>()));
 
-  // new random input
-  input.FillUniformRandom();
-  context.FillUniformRandom();
+  //
+  // test that prediction is different after a back prop and step have been completed
+  //
+
+  input(0, 0) = static_cast<DataType>(1);  // assign a different word
+  //  input(0, 1) = static_cast<DataType>(1); // assign a different word
+
+  context(0, 0) = static_cast<DataType>(3);  //
+                                             //  context(0, 1) = static_cast<DataType>(4); //
 
   layer.SetInput("SkipGram_Input", input);
   layer.SetInput("SkipGram_Context", context);
   TypeParam prediction3 = layer.Evaluate(output_name);
 
-  layer2.SetInput("SkipGram_Input", input);
-  layer2.SetInput("SkipGram_Context", context);
-  TypeParam prediction4 = layer2.Evaluate(output_name);
-
   EXPECT_FALSE(prediction.AllClose(prediction3, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));
 
-  EXPECT_TRUE(prediction3.AllClose(prediction4, fetch::math::function_tolerance<DataType>(),
+  //
+  // test that the deserialized model gives the same result as the original layer after training
+  //
+
+  input(0, 0) = static_cast<DataType>(2);  // assign a different word
+  //  input(0, 1) = static_cast<DataType>(2); // assign a different word
+
+  context(0, 0) = static_cast<DataType>(5);  //
+                                             //  context(0, 1) = static_cast<DataType>(6); //
+
+  layer.SetInput("SkipGram_Input", input);
+  layer.SetInput("SkipGram_Context", context);
+  TypeParam prediction4 = layer.Evaluate(output_name);
+
+  layer2.SetInput("SkipGram_Input", input);
+  layer2.SetInput("SkipGram_Context", context);
+  TypeParam prediction5 = layer2.Evaluate(output_name);
+
+  EXPECT_TRUE(prediction4.AllClose(prediction5, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));
 }

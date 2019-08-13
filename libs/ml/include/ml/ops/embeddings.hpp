@@ -55,7 +55,13 @@ public:
   explicit Embeddings(SPType const &sp)
     : Weights<T>(sp)
   {
-    embeddings_output_ = sp.embeddings_output;
+    if (sp.embeddings_output)
+    {
+      embeddings_output_ = std::make_shared<TensorType>();
+      embeddings_output_->Resize(sp.embeddings_output->shape());
+      embeddings_output_->Copy(*(sp.embeddings_output));
+    }
+
     updated_rows_ =
         std::set<typename TensorType::SizeType>(sp.updated_rows.begin(), sp.updated_rows.begin());
     trailing_indices1_ = sp.trailing_indices1;
@@ -107,6 +113,7 @@ public:
 
     TensorType transposed_input = inputs.front()->Transpose();
     auto       e_it             = transposed_input.begin();
+
     for (SizeType i{0}; i < inputs.front()->shape().at(0); i++)
     {
       for (SizeType n{0}; n < batch_size; n++)

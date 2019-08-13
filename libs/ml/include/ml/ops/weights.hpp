@@ -70,7 +70,9 @@ public:
   {
     if (sp.gradient_accumulation)
     {
-      gradient_accumulation_ = sp.gradient_accumulation;
+      gradient_accumulation_ = std::make_shared<TensorType>();
+      gradient_accumulation_->Resize(sp.gradient_accumulation->shape());
+      gradient_accumulation_->Copy(*(sp.gradient_accumulation));
     }
 
     this->SetRegularisation(

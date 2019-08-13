@@ -46,7 +46,9 @@ public:
   {
     if (sp.output)
     {
-      output_ = sp.output;
+      output_ = std::make_shared<TensorType>();
+      output_->Resize(sp.output->shape());
+      output_->Copy(*(sp.output));
     }
   }
 

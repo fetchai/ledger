@@ -2667,10 +2667,10 @@ struct MapSerializer<ml::LayerMultiHeadSaveableParams<TensorType>, D>
     map.Append(SUB_GRAPH, *base_pointer);
 
     map.Append(OP_CODE, sp.op_type);
-    map.Append(N_HEADS, sp.n_heads);
-    map.Append(MODEL_DIM, sp.model_dim);
     map.Append(VALUE_DIM, sp.value_dim);
     map.Append(KEY_DIM, sp.key_dim);
+    map.Append(N_HEADS, sp.n_heads);
+    map.Append(MODEL_DIM, sp.model_dim);
     map.Append(DROPOUT, sp.dropout);
   }
 
@@ -2681,10 +2681,10 @@ struct MapSerializer<ml::LayerMultiHeadSaveableParams<TensorType>, D>
     map.ExpectKeyGetValue(SUB_GRAPH, *base_pointer);
 
     map.ExpectKeyGetValue(OP_CODE, sp.op_type);
-    map.ExpectKeyGetValue(N_HEADS, sp.n_heads);
-    map.ExpectKeyGetValue(MODEL_DIM, sp.model_dim);
     map.ExpectKeyGetValue(VALUE_DIM, sp.value_dim);
     map.ExpectKeyGetValue(KEY_DIM, sp.key_dim);
+    map.ExpectKeyGetValue(N_HEADS, sp.n_heads);
+    map.ExpectKeyGetValue(MODEL_DIM, sp.model_dim);
     map.ExpectKeyGetValue(DROPOUT, sp.dropout);
   }
 };
