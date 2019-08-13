@@ -17,28 +17,96 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vectorise/fixed_point/fixed_point.hpp"
+#include "vectorise/math/comparison.hpp"
+
 namespace fetch {
 namespace vectorise {
 
-inline VectorRegister<float, 128> max(VectorRegister<float, 128> const &a,
+using namespace fetch::vectorise;
+
+template <typename T, std::size_t N = sizeof(T)>
+inline VectorRegister<T, N> Max(VectorRegister<T, N> const &a,
+                                VectorRegister<T, N> const &b)
+{
+  return VectorRegister<T, N>(fetch::math::Max(a.data(), b.data()));
+}
+
+inline VectorRegister<int32_t, 128> Max(VectorRegister<int32_t, 128> const &a,
+                                        VectorRegister<int32_t, 128> const &b)
+{
+  return VectorRegister<int32_t, 128>(_mm_max_epi32(a.data(), b.data()));
+}
+
+inline VectorRegister<int32_t, 256> Max(VectorRegister<int32_t, 256> const &a,
+                                        VectorRegister<int32_t, 256> const &b)
+{
+  return VectorRegister<int32_t, 256>(_mm256_max_epi32(a.data(), b.data()));
+}
+
+inline VectorRegister<int64_t, 128> Max(VectorRegister<int64_t, 128> const &a,
+                                        VectorRegister<int64_t, 128> const &b)
+{
+  __m128i mask = (a > b).data();
+  __m128i ret = _mm_blendv_epi8(a.data(), b.data(), mask);
+  return VectorRegister<int64_t, 128>(ret);
+}
+
+inline VectorRegister<int64_t, 256> Max(VectorRegister<int64_t, 256> const &a,
+                                        VectorRegister<int64_t, 256> const &b)
+{
+  __m256i mask = (a > b).data();
+  __m256i ret = _mm256_blendv_epi8(a.data(), b.data(), mask);
+  return VectorRegister<int64_t, 256>(ret);
+}
+
+inline VectorRegister<fixed_point::fp32_t, 128> Max(VectorRegister<fixed_point::fp32_t, 128> const &a,
+                                        			VectorRegister<fixed_point::fp32_t, 128> const &b)
+{
+  VectorRegister<int32_t, 128> max_int32 = Max(VectorRegister<int32_t, 128>(a.data()), VectorRegister<int32_t, 128>(b.data()));
+  return VectorRegister<fixed_point::fp32_t, 128>(max_int32.data());
+}
+
+inline VectorRegister<fixed_point::fp32_t, 256> Max(VectorRegister<fixed_point::fp32_t, 256> const &a,
+                                        			VectorRegister<fixed_point::fp32_t, 256> const &b)
+{
+  VectorRegister<int32_t, 256> max_int32 = Max(VectorRegister<int32_t, 256>(a.data()), VectorRegister<int32_t, 256>(b.data()));
+  return VectorRegister<fixed_point::fp32_t, 256>(max_int32.data());
+}
+
+inline VectorRegister<fixed_point::fp64_t, 128> Max(VectorRegister<fixed_point::fp64_t, 128> const &a,
+                                        			VectorRegister<fixed_point::fp64_t, 128> const &b)
+{
+  VectorRegister<int64_t, 128> max_int64 = Max(VectorRegister<int64_t, 128>(a.data()), VectorRegister<int64_t, 128>(b.data()));
+  return VectorRegister<fixed_point::fp64_t, 128>(max_int64.data());
+}
+
+inline VectorRegister<fixed_point::fp64_t, 256> Max(VectorRegister<fixed_point::fp64_t, 256> const &a,
+                                        			VectorRegister<fixed_point::fp64_t, 256> const &b)
+{
+  VectorRegister<int64_t, 256> max_int64 = Max(VectorRegister<int64_t, 256>(a.data()), VectorRegister<int64_t, 256>(b.data()));
+  return VectorRegister<fixed_point::fp64_t, 256>(max_int64.data());
+}
+
+inline VectorRegister<float, 128> Max(VectorRegister<float, 128> const &a,
                                       VectorRegister<float, 128> const &b)
 {
   return VectorRegister<float, 128>(_mm_max_ps(a.data(), b.data()));
 }
 
-inline VectorRegister<float, 256> max(VectorRegister<float, 256> const &a,
+inline VectorRegister<float, 256> Max(VectorRegister<float, 256> const &a,
                                       VectorRegister<float, 256> const &b)
 {
   return VectorRegister<float, 256>(_mm256_max_ps(a.data(), b.data()));
 }
 
-inline VectorRegister<double, 128> max(VectorRegister<double, 128> const &a,
+inline VectorRegister<double, 128> Max(VectorRegister<double, 128> const &a,
                                        VectorRegister<double, 128> const &b)
 {
   return VectorRegister<double, 128>(_mm_max_pd(a.data(), b.data()));
 }
 
-inline VectorRegister<double, 256> max(VectorRegister<double, 256> const &a,
+inline VectorRegister<double, 256> Max(VectorRegister<double, 256> const &a,
                                        VectorRegister<double, 256> const &b)
 {
   return VectorRegister<double, 256>(_mm256_max_pd(a.data(), b.data()));
