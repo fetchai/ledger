@@ -292,5 +292,154 @@ bool Identifier::IsDirectChildTo(Identifier const &other) const
   return other.IsDirectParentTo(*this);
 }
 
+/**
+ * Gets the current type of the identifier
+ *
+ * @return The current type
+ */
+Identifier::Type Identifier::type() const
+{
+  return type_;
+}
+
+/**
+ * Gets the top level name i.e. in the case of `foo.bar` `bar` would be
+ * returned
+ *
+ * @return the top level name or an empty string if the identifier is empty
+ */
+Identifier::ConstByteArray Identifier::name() const
+{
+  if (tokens_.empty())
+  {
+    return {};
+  }
+  else
+  {
+    return tokens_.back();
+  }
+}
+
+/**
+ * Gets the namespace for the identifier i.e. in the case of `foo.bar.baz`
+ * `foo.bar` would be returned
+ *
+ * @return The namespace for the identifier
+ */
+Identifier::ConstByteArray Identifier::name_space() const
+{
+  if (tokens_.size() >= 2)
+  {
+    return full_.SubArray(0, full_.size() - (tokens_.back().size() + 1));
+  }
+  else
+  {
+    return {};
+  }
+}
+
+/**
+ * Gets the fully qualified resource name
+ *
+ * @return The fully qualified name
+ */
+Identifier::ConstByteArray const &Identifier::full_name() const
+{
+  return full_;
+}
+
+/**
+ * Get the unique qualifier for this identifier
+ *
+ * @return
+ */
+Identifier::ConstByteArray Identifier::qualifier() const
+{
+  ConstByteArray identifier{};
+
+  switch (type_)
+  {
+  case Type::INVALID:
+    break;
+  case Type::NORMAL:
+    identifier = full_name();
+    break;
+  case Type::SMART_CONTRACT:
+    identifier = tokens_[0];
+    break;
+  }
+
+  return identifier;
+}
+
+std::size_t Identifier::size() const
+{
+  return tokens_.size();
+}
+
+bool Identifier::empty() const
+{
+  return tokens_.empty();
+}
+
+/**
+ * Parses an fully qualified name
+ *
+ * @param name The fully qualified name
+ */
+bool Identifier::Parse(ConstByteArray const &name)
+{
+  full_ = name;
+  return Tokenise();
+}
+
+/**
+ * Parse a fully qualified name
+ *
+ * @param name The fully qualified name
+ */
+bool Identifier::Parse(ConstByteArray &&name)
+{
+  full_ = std::move(name);
+  return Tokenise();
+}
+
+/**
+ * Access elements of the name.
+ *
+ * @param index The index to be accessed
+ * @return The element of the name
+ */
+Identifier::ConstByteArray const &Identifier::operator[](std::size_t index) const
+{
+#ifndef NDEBUG
+  return tokens_.at(index);
+#else   // !NDEBUG
+  return tokens_[index];
+#endif  // NDEBUG
+}
+
+/**
+ * Equality operator
+ *
+ * @param other The reference to the other identifier
+ * @return true if both identifiers are the same, otherwise false
+ */
+bool Identifier::operator==(Identifier const &other) const
+{
+  return (full_ == other.full_);
+}
+
+/**
+ * Inequality operator
+ *
+ * @param other The reference to the other identifier
+ * @return true if identifiers are not the same, otherwise false
+ */
+bool Identifier::operator!=(Identifier const &other) const
+{
+  return (full_ != other.full_);
+}
+
 }  // namespace ledger
 }  // namespace fetch
