@@ -198,9 +198,10 @@ void DistributedKeyGeneration::BroadcastQualCoefficients()
       static_cast<uint8_t>(State::WAITING_FOR_QUAL_SHARES), coefficients, "signature"}});
   complaints_answer_manager_.Clear();
   state_ = State::WAITING_FOR_QUAL_SHARES;
-  std::unique_lock<std::mutex> lock{mutex_};
-  A_ik_received_.insert(address_);
-  lock.unlock();
+  {
+    std::unique_lock<std::mutex> lock{mutex_};
+    A_ik_received_.insert(address_);
+  }
   ReceivedQualShares();
 }
 
@@ -547,9 +548,10 @@ void DistributedKeyGeneration::OnNewCoefficients(CoefficientsMessage const &msg,
         return;
       }
     }
-    std::unique_lock<std::mutex> lock{mutex_};
-    A_ik_received_.insert(from_id);
-    lock.unlock();
+    {
+      std::unique_lock<std::mutex> lock{mutex_};
+      A_ik_received_.insert(from_id);
+    }
     ReceivedQualShares();
   }
 }

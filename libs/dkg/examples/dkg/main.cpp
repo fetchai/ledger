@@ -130,7 +130,7 @@ int main()
   }
   assert(cabinet.size() == cabinet_size);
 
-  // Start at RBC for each muddle
+  // Start at DKG for each muddle
   {
     for (auto &member : committee)
     {
@@ -144,8 +144,23 @@ int main()
       member->reactor.Start();
     }
 
-    // Need to increase this depending on number of nodes to complete 3 rounds of DRB
-    std::this_thread::sleep_for(std::chrono::seconds(600));
+    // Sleep until everyone has finished
+    uint32_t qq = 0;
+    while (qq != cabinet_size)
+    {
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      for (uint32_t mm = qq; mm < cabinet_size; ++mm)
+      {
+        if (!committee[mm]->dkg_service.IsSynced())
+        {
+          break;
+        }
+        else
+        {
+          ++qq;
+        }
+      }
+    }
   }
 
   for (auto &member : committee)
