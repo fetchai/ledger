@@ -33,17 +33,14 @@ bn::G2                DistributedKeyGeneration::group_g_;
 bn::G2                DistributedKeyGeneration::group_h_;
 
 DistributedKeyGeneration::DistributedKeyGeneration(
-    MuddleAddress address, CabinetMembers const &cabinet, uint32_t const &threshold,
-    std::function<void(DKGEnvelope const &)> broadcast_function,
+    MuddleAddress address, std::function<void(DKGEnvelope const &)> broadcast_function,
     std::function<void(MuddleAddress const &, std::pair<std::string, std::string> const &)>
         rpc_function)
-  : cabinet_{cabinet}
-  , threshold_{threshold}
-  , address_{std::move(address)}
+  : address_{std::move(address)}
   , broadcast_function_{std::move(broadcast_function)}
   , rpc_function_{std::move(rpc_function)}
-  , dkg_state_gauge_{telemetry::Registry::Instance().CreateGauge<uint8_t>(
-                "dkg_state_gauge", "State the DKG is in")}
+  , dkg_state_gauge_{telemetry::Registry::Instance().CreateGauge<uint8_t>("dkg_state_gauge",
+                                                                          "State the DKG is in")}
 {
   static std::once_flag flag;
 
@@ -79,7 +76,7 @@ void DistributedKeyGeneration::SendBroadcast(DKGEnvelope const &env)
 
 /**
  * Computes and broadcasts a vector of coefficients computed from the randomly initialised
- * coefficients of two polynomials of order threshold_ + 1
+ * coefficients of two polynomials of order polynomial_degree_
  *
  * @param a_i Vector of coefficients for polynomial f
  * @param b_i Vector of coefficients for another polynomial f'
@@ -91,7 +88,7 @@ void DistributedKeyGeneration::SendCoefficients(std::vector<bn::Fr> const &a_i,
   z_i[cabinet_index_] = a_i[0];
 
   std::vector<MsgCoefficient> coefficients;
-  for (size_t k = 0; k <= threshold_; k++)
+  for (size_t k = 0; k <= polynomial_degree_; k++)
   {
     C_ik[cabinet_index_][k] = ComputeLHS(g__a_i[k], group_g_, group_h_, a_i[k], b_i[k]);
     coefficients.push_back(C_ik[cabinet_index_][k].getStr());
@@ -102,7 +99,7 @@ void DistributedKeyGeneration::SendCoefficients(std::vector<bn::Fr> const &a_i,
 
 /**
  * Computes and sends different sets of secret shares (s_ij, sprime_ij) to all cabinet members using
- * the randomly initialised coefficients of f and f', polynomials of order threshold_ + 1
+ * the randomly initialised coefficients of f and f', polynomials of order polynomial_degree_
  *
  * @param a_i Vector of coefficients for polynomial f
  * @param b_i Vector of coefficients for another polynomial f'
@@ -130,8 +127,8 @@ void DistributedKeyGeneration::SendShares(std::vector<bn::Fr> const &a_i,
  */
 void DistributedKeyGeneration::BroadcastShares()
 {
-  std::vector<bn::Fr> a_i(threshold_ + 1, zeroFr_), b_i(threshold_ + 1, zeroFr_);
-  for (size_t k = 0; k <= threshold_; k++)
+  std::vector<bn::Fr> a_i(polynomial_degree_ + 1, zeroFr_), b_i(polynomial_degree_ + 1, zeroFr_);
+  for (size_t k = 0; k <= polynomial_degree_; k++)
   {
     a_i[k].setRand();
     b_i[k].setRand();
@@ -196,7 +193,7 @@ void DistributedKeyGeneration::BroadcastComplaintsAnswer()
 void DistributedKeyGeneration::BroadcastQualCoefficients()
 {
   std::vector<MsgCoefficient> coefficients;
-  for (size_t k = 0; k <= threshold_; k++)
+  for (size_t k = 0; k <= polynomial_degree_; k++)
   {
     A_ik[cabinet_index_][k] = g__a_i[k];
     coefficients.push_back(A_ik[cabinet_index_][k].getStr());
@@ -282,7 +279,7 @@ void DistributedKeyGeneration::ReceivedComplaint()
 {
   std::unique_lock<std::mutex> lock{mutex_};
   if (!received_all_complaints_ && state_ == State::WAITING_FOR_COMPLAINTS &&
-      complaints_manager_.IsFinished(cabinet_, cabinet_index_, static_cast<uint32_t>(threshold_)))
+      complaints_manager_.IsFinished(cabinet_, cabinet_index_, polynomial_degree_))
   {
     // Complaints at this point consist only of parties which have received over threshold number of
     // complaints
@@ -298,7 +295,7 @@ void DistributedKeyGeneration::ReceivedComplaint()
 /**
  * Check whether all complaint answers have been received so that members can build the qualified
  * set (qual) which will take part in the public key generation. If self is in qual and qual is
- * at least of size threshold_ + 1 then we compute our secret share of the private key
+ * at least of size polynomial_degree_ + 1 then we compute our secret share of the private key
  */
 void DistributedKeyGeneration::ReceivedComplaintsAnswer()
 {
@@ -360,7 +357,7 @@ void DistributedKeyGeneration::ReceivedQualComplaint()
     received_all_qual_complaints_.store(true);
     size_t size = qual_complaints_manager_.ComplaintsSize();
 
-    if (size > threshold_)
+    if (size > polynomial_degree_)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Node: ", cabinet_index_, " DKG has failed: complaints size ",
                      size);
@@ -530,7 +527,7 @@ void DistributedKeyGeneration::OnNewCoefficients(CoefficientsMessage const &msg,
   uint32_t from_index{CabinetIndex(from_id)};
   if (msg.phase() == static_cast<uint64_t>(State::WAITING_FOR_SHARE))
   {
-    for (uint32_t ii = 0; ii <= threshold_; ++ii)
+    for (uint32_t ii = 0; ii <= polynomial_degree_; ++ii)
     {
       if (C_ik[from_index][ii] == zeroG2_)
       {
@@ -548,7 +545,7 @@ void DistributedKeyGeneration::OnNewCoefficients(CoefficientsMessage const &msg,
   }
   else if (msg.phase() == static_cast<uint64_t>(State::WAITING_FOR_QUAL_SHARES))
   {
-    for (uint32_t ii = 0; ii <= threshold_; ++ii)
+    for (uint32_t ii = 0; ii <= polynomial_degree_; ++ii)
     {
       if (A_ik[from_index][ii] == zeroG2_)
       {
@@ -786,7 +783,8 @@ void DistributedKeyGeneration::CheckComplaintAnswer(SharesMessage const &answer,
   // 1. Nodes which received over t complaints
   // 2. Complaint answers which were false
 
- * @return True if self is in qual and qual is at least of size threshold_ + 1, false otherwise
+ * @return True if self is in qual and qual is at least of size polynomial_degree_ + 1, false
+ otherwise
  */
 bool DistributedKeyGeneration::BuildQual()
 {
@@ -796,10 +794,10 @@ bool DistributedKeyGeneration::BuildQual()
     FETCH_LOG_WARN(LOGGING_NAME, "Node: ", cabinet_index_, " build QUAL failed as not in QUAL");
     return false;
   }
-  else if (qual_.size() <= threshold_)
+  else if (qual_.size() <= polynomial_degree_)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Node: ", cabinet_index_, " build QUAL failed as size ",
-                   qual_.size(), " less than threshold ", threshold_);
+                   qual_.size(), " less than threshold ", polynomial_degree_);
     return false;
   }
   return true;
@@ -940,12 +938,12 @@ void DistributedKeyGeneration::ComputeSecretShare()
 bool DistributedKeyGeneration::RunReconstruction()
 {
   std::vector<std::vector<bn::Fr>> a_ik;
-  Init(a_ik, static_cast<uint32_t>(cabinet_.size()), static_cast<uint32_t>(threshold_ + 1));
+  Init(a_ik, static_cast<uint32_t>(cabinet_.size()), static_cast<uint32_t>(polynomial_degree_ + 1));
   for (auto const &in : reconstruction_shares)
   {
     std::set<uint32_t>  parties{in.second.first};
     std::vector<bn::Fr> shares{in.second.second};
-    if (parties.size() <= threshold_)
+    if (parties.size() <= polynomial_degree_)
     {
       // Do not have enough good shares to be able to do reconstruction
       FETCH_LOG_WARN(LOGGING_NAME, "Node: ", cabinet_index_, " reconstruction for ",
@@ -964,7 +962,7 @@ bool DistributedKeyGeneration::RunReconstruction()
       shares_f.push_back(shares[index]);
     }
     a_ik[victim_index] = InterpolatePolynom(points, shares_f);
-    for (size_t k = 0; k <= threshold_; k++)
+    for (size_t k = 0; k <= polynomial_degree_; k++)
     {
       bn::G2::mul(A_ik[victim_index][k], group_g_, a_ik[victim_index][k]);
     }
@@ -1043,15 +1041,17 @@ bool DistributedKeyGeneration::BasicMsgCheck(MuddleAddress const &              
 /**
  * Resets cabinet for next round of DKG
  */
-void DistributedKeyGeneration::ResetCabinet()
+void DistributedKeyGeneration::ResetCabinet(CabinetMembers const &cabinet, uint32_t threshold)
 {
-  assert(cabinet_.find(address_) != cabinet_.end());  // We should be in the cabinet
+  assert(cabinet.find(address_) != cabinet.end());  // We should be in the cabinet
+  assert(threshold > 0);
 
   std::lock_guard<std::mutex> lock_{mutex_};
-  state_         = State::INITIAL;
+  cabinet_           = cabinet;
+  polynomial_degree_ = threshold - 1;
+  state_             = State::INITIAL;
   cabinet_index_ = static_cast<uint32_t>(std::distance(cabinet_.begin(), cabinet_.find(address_)));
   auto cabinet_size{static_cast<uint32_t>(cabinet_.size())};
-  auto polynomial_size{static_cast<uint32_t>(threshold_ + 1)};
   secret_share_.clear();
   public_key_.clear();
   qual_.clear();
@@ -1061,10 +1061,10 @@ void DistributedKeyGeneration::ResetCabinet()
   Init(s_ij, cabinet_size, cabinet_size);
   Init(sprime_ij, cabinet_size, cabinet_size);
   Init(z_i, cabinet_size);
-  Init(C_ik, cabinet_size, polynomial_size);
-  Init(A_ik, cabinet_size, polynomial_size);
+  Init(C_ik, cabinet_size, threshold);
+  Init(A_ik, cabinet_size, threshold);
   Init(g__s_ij, cabinet_size, cabinet_size);
-  Init(g__a_i, polynomial_size);
+  Init(g__a_i, threshold);
 
   complaints_manager_.ResetCabinet(cabinet_size);
   complaints_answer_manager_.ResetCabinet(cabinet_size);

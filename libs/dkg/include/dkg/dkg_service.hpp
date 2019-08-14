@@ -184,7 +184,8 @@ public:
         std::distance(current_cabinet_.begin(), current_cabinet_.find(address_)));
     FETCH_LOG_INFO(LOGGING_NAME, "Resetting cabinet. Cabinet size: ", current_cabinet_.size(),
                    " threshold: ", threshold);
-    dkg_.ResetCabinet();
+    assert(threshold > 0);
+    dkg_.ResetCabinet(current_cabinet_, threshold - 1);
     rbc_.ResetCabinet();
   }
   void SendShares(MuddleAddress const &                      destination,

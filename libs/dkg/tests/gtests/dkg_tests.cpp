@@ -76,13 +76,12 @@ public:
     SEND_MULTIPLE_RECONSTRUCTION_SHARES,
     WITHOLD_RECONSTRUCTION_SHARES
   };
-  FaultyDkg(MuddleAddress address, CabinetMembers const &cabinet, uint32_t const &threshold,
-            std::function<void(DKGEnvelope const &)> broadcast_callback,
+  FaultyDkg(MuddleAddress address, std::function<void(DKGEnvelope const &)> broadcast_callback,
             std::function<void(MuddleAddress const &, std::pair<std::string, std::string> const &)>
                                          rpc_callback,
             const std::vector<Failures> &failures = {})
-    : DistributedKeyGeneration{std::move(address), cabinet, threshold,
-                               std::move(broadcast_callback), std::move(rpc_callback)}
+    : DistributedKeyGeneration{std::move(address), std::move(broadcast_callback),
+                               std::move(rpc_callback)}
   {
     for (auto f : failures)
     {
@@ -92,8 +91,8 @@ public:
 
   void BroadcastShares() override
   {
-    std::vector<bn::Fr> a_i(threshold_ + 1, zeroFr_), b_i(threshold_ + 1, zeroFr_);
-    for (size_t k = 0; k <= threshold_; k++)
+    std::vector<bn::Fr> a_i(polynomial_degree_ + 1, zeroFr_), b_i(polynomial_degree_ + 1, zeroFr_);
+    for (size_t k = 0; k <= polynomial_degree_; k++)
     {
       a_i[k].setRand();
       b_i[k].setRand();
@@ -141,7 +140,7 @@ private:
     z_i[cabinet_index_] = a_i[0];
 
     std::vector<std::string> coefficients;
-    for (size_t k = 0; k <= threshold_; k++)
+    for (size_t k = 0; k <= polynomial_degree_; k++)
     {
       coefficients.push_back(C_ik[cabinet_index_][k].getStr());
       C_ik[cabinet_index_][k] = ComputeLHS(g__a_i[k], group_g_, group_h_, a_i[k], b_i[k]);
@@ -255,7 +254,7 @@ private:
     std::vector<std::string> coefficients;
     if (Failure(Failures::BAD_QUAL_COEFFICIENTS))
     {
-      for (size_t k = 0; k <= threshold_; k++)
+      for (size_t k = 0; k <= polynomial_degree_; k++)
       {
         A_ik[cabinet_index_][k] = zeroG2_;
         coefficients.push_back(A_ik[cabinet_index_][k].getStr());
@@ -265,7 +264,7 @@ private:
     }
     else
     {
-      for (size_t k = 0; k <= threshold_; k++)
+      for (size_t k = 0; k <= polynomial_degree_; k++)
       {
         A_ik[cabinet_index_][k] = g__a_i[k];
         coefficients.push_back(A_ik[cabinet_index_][k].getStr());
@@ -388,8 +387,6 @@ struct CabinetMember
             dkg.OnDkgMessage(address, env.Message());
           }}
     , dkg{muddle_certificate->identity().identifier(),
-          current_cabinet,
-          threshold,
           [this](DKGEnvelope const &envelope) -> void {
             DKGSerializer serialiser;
             serialiser << envelope;
@@ -516,7 +513,7 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
   {
     for (auto &member : committee)
     {
-      member->dkg.ResetCabinet();
+      member->dkg.ResetCabinet(cabinet, threshold);
       member->rbc.ResetCabinet();
     }
 
@@ -581,7 +578,7 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
 
 TEST(dkg, DISABLED_small_scale_test)
 {
-  GenerateTest(4, 1, 4, 4);
+  GenerateTest(4, 3, 4, 4);
 }
 
 TEST(dkg, DISABLED_send_bad_share)
@@ -589,14 +586,14 @@ TEST(dkg, DISABLED_send_bad_share)
   // Node 0 sends bad secret shares to Node 1 which complains against it.
   // Node 0 then broadcasts its real shares as defense and then is allowed into
   // qual
-  GenerateTest(4, 1, 4, 4, {{FaultyDkg::Failures::SEND_BAD_SHARE}});
+  GenerateTest(4, 3, 4, 4, {{FaultyDkg::Failures::SEND_BAD_SHARE}});
 }
 
 TEST(dkg, DISABLED_bad_coefficients)
 {
   // Node 0 broadcasts bad coefficients which fails verification by everyone.
   // Rejected from qual
-  GenerateTest(4, 1, 3, 3, {{FaultyDkg::Failures::BAD_COEFFICIENT}});
+  GenerateTest(4, 3, 3, 3, {{FaultyDkg::Failures::BAD_COEFFICIENT}});
 }
 
 TEST(dkg, DISABLED_compute_bad_shares)
@@ -604,7 +601,7 @@ TEST(dkg, DISABLED_compute_bad_shares)
   // Node 0 sends computes bad secret shares to Node 1 which complains against it.
   // Node 0 then broadcasts the shares sent to Node 1 as defense but as they have been
   // computed wrong they are not in qual
-  GenerateTest(4, 1, 3, 3, {{FaultyDkg::Failures::COMPUTE_BAD_SHARE}});
+  GenerateTest(4, 3, 3, 3, {{FaultyDkg::Failures::COMPUTE_BAD_SHARE}});
 }
 
 TEST(dkg, DISABLED_send_empty_complaints_answer)
@@ -613,28 +610,28 @@ TEST(dkg, DISABLED_send_empty_complaints_answer)
   // Node 0 then does not send real shares and instead sends empty complaint answer.
   // Node 0 should be disqualified from qual
   GenerateTest(
-      4, 1, 3, 3,
+      4, 3, 3, 3,
       {{FaultyDkg::Failures::SEND_BAD_SHARE, FaultyDkg::Failures::SEND_EMPTY_COMPLAINT_ANSWER}});
 }
 
 TEST(dkg, DISABLED_send_multiple_complaints)
 {
   // Node 0 sends multiple complaint messages in the first round of complaints
-  GenerateTest(4, 1, 4, 4, {{FaultyDkg::Failures::SEND_MULTIPLE_COMPLAINTS}});
+  GenerateTest(4, 3, 4, 4, {{FaultyDkg::Failures::SEND_MULTIPLE_COMPLAINTS}});
 }
 
 TEST(dkg, DISABLED_send_multiple_coefficients)
 {
   // Node 0 sends multiple coefficients. Should trigger warning but everyone
   // should succeed in DKG
-  GenerateTest(4, 1, 4, 4, {{FaultyDkg::Failures::SEND_MULTIPLE_COEFFICIENTS}});
+  GenerateTest(4, 3, 4, 4, {{FaultyDkg::Failures::SEND_MULTIPLE_COEFFICIENTS}});
 }
 
 TEST(dkg, DISABLED_send_multiple_complaint_answers)
 {
   // Node 0 sends multiple complaint answers. Should trigger warning but everyone
   // should succeed in DKG
-  GenerateTest(4, 1, 4, 4, {{FaultyDkg::Failures::SEND_MULTIPLE_COMPLAINT_ANSWERS}});
+  GenerateTest(4, 3, 4, 4, {{FaultyDkg::Failures::SEND_MULTIPLE_COMPLAINT_ANSWERS}});
 }
 
 TEST(dkg, DISABLED_qual_below_threshold)
@@ -649,14 +646,14 @@ TEST(dkg, DISABLED_bad_qual_coefficients)
 {
   // Node 0 computes bad qual coefficients so node 0 is in qual complaints but everyone reconstructs
   // their shares. Everyone else except node 0 succeeds in DKG
-  GenerateTest(4, 1, 4, 3, {{FaultyDkg::Failures::BAD_QUAL_COEFFICIENTS}});
+  GenerateTest(4, 3, 4, 3, {{FaultyDkg::Failures::BAD_QUAL_COEFFICIENTS}});
 }
 
 TEST(dkg, DISABLED_send_multiple_qual_coefficients)
 {
   // Node 0 sends multiple qual coefficients so node 0.
   // Should trigger warning but everyone should succeed in DKG
-  GenerateTest(4, 1, 4, 4, {{FaultyDkg::Failures::SEND_MULTIPLE_QUAL_COEFFICIENTS}});
+  GenerateTest(4, 3, 4, 4, {{FaultyDkg::Failures::SEND_MULTIPLE_QUAL_COEFFICIENTS}});
 }
 
 TEST(dkg, DISABLED_send_fake_qual_complaint)
@@ -664,7 +661,7 @@ TEST(dkg, DISABLED_send_fake_qual_complaint)
   // Node 0 sends multiple qual coefficients. Should trigger warning and node 0's shares will be
   // reconstructed but everyone else should succeed in the DKG. Important test as it means
   // reconstruction computes the correct thing.
-  GenerateTest(4, 1, 4, 4, {{FaultyDkg::Failures::SEND_FALSE_QUAL_COMPLAINT}});
+  GenerateTest(4, 3, 4, 4, {{FaultyDkg::Failures::SEND_FALSE_QUAL_COMPLAINT}});
 }
 
 TEST(dkg, DISABLED_too_many_bad_qual_coefficients)
@@ -682,7 +679,7 @@ TEST(dkg, DISABLED_send_multiple_reconstruction_shares)
 {
   // Node sends multiple reconstruction shares which triggers warning but
   // DKG succeeds
-  GenerateTest(4, 1, 4, 3,
+  GenerateTest(4, 3, 4, 3,
                {{FaultyDkg::Failures::BAD_QUAL_COEFFICIENTS},
                 {FaultyDkg::Failures::SEND_MULTIPLE_RECONSTRUCTION_SHARES}});
 }
@@ -698,5 +695,5 @@ TEST(dkg, DISABLED_withold_reconstruction_shares)
 
 TEST(dkg, DISABLED_successive_dkgs)
 {
-  GenerateTest(4, 1, 4, 4, {}, 4);
+  GenerateTest(4, 3, 4, 4, {}, 4);
 }

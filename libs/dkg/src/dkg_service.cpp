@@ -98,8 +98,7 @@ DkgService::DkgService(Endpoint &endpoint, ConstByteArray address)
          [this](MuddleAddress const &address, ConstByteArray const &payload) -> void {
            OnRbcDeliver(address, payload);
          }}
-  , dkg_{address_, current_cabinet_, current_threshold_,
-         [this](DKGEnvelope const &envelope) -> void { SendReliableBroadcast(envelope); },
+  , dkg_{address_, [this](DKGEnvelope const &envelope) -> void { SendReliableBroadcast(envelope); },
          [this](MuddleAddress const &destination, std::pair<std::string, std::string> const &shares)
              -> void { SendShares(destination, shares); }}
 {
@@ -413,7 +412,7 @@ State DkgService::OnCollectSignaturesState()
 
   // TODO(HUT): looks like a bug here
   // Step 2. Determine if we have completed any signatures
-  if (!round->HasSignature() && round->GetNumShares() >= current_threshold_ + 1)
+  if (!round->HasSignature() && round->GetNumShares() >= current_threshold_)
   {
     // recover the complete signature
     round->RecoverSignature();
