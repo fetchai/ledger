@@ -34,9 +34,7 @@ public:
 
 TEST_F(SystemTests, no_args)
 {
-  std::shared_ptr<Module> module = toolkit.module();
-
-  System::Bind(*module);
+  System::Bind(toolkit.module());
 
   static char const *TEXT = R"(
     function main()
@@ -52,8 +50,7 @@ TEST_F(SystemTests, no_args)
 
 TEST_F(SystemTests, some_args)
 {
-  std::shared_ptr<Module> module = toolkit.module();
-  int                     argc   = 6;
+  int argc = 6;
 
   char **argv   = new char *[static_cast<ulong>(argc)];
   char   arg0[] = "executable";
@@ -78,7 +75,7 @@ TEST_F(SystemTests, some_args)
   EXPECT_TRUE(pp.GetArg(1) == arg1);
   EXPECT_TRUE(pp.GetArg(2) == arg2);
 
-  System::Bind(*module);
+  System::Bind(toolkit.module());
 
   static char const *TEXT = R"(
     function main()
@@ -93,6 +90,8 @@ TEST_F(SystemTests, some_args)
   ASSERT_TRUE(toolkit.Run());
 
   ASSERT_EQ(stdout.str(), "3\n" + std::string(arg0) + "\n" + arg4 + "\n" + arg5 + "\n");
+
+  delete[] argv;
 }
 
 }  // namespace
