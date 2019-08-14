@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dkg/beacon_manager.hpp"
+#include "beacon/beacon_manager.hpp"
 
 namespace fetch {
 namespace dkg {
@@ -33,9 +33,6 @@ void BeaconManager::Reset(uint64_t cabinet_size, uint32_t threshold)
   received_shares_.resize(cabinet_size);
 
   // Creating member id
-  // TODO(tfr): Make loadable
-  certificate_.reset(new ECDSASigner());
-  certificate_->GenerateKeys();
   auto id = crypto::bls::PrivateKeyByCSPRNG();
   id_.v   = id.v;
 }
@@ -105,12 +102,17 @@ void BeaconManager::CreateKeyPair()
 {
   secret_key_share_ = crypto::bls::dkg::AccumulateContributionShares(received_shares_);
 
-  // TODO(tfr): Can be optimised
+  CreateGroupPublicKey(verification_vectors_);
+  public_key_ = crypto::bls::PublicKeyFromPrivate(secret_key_share_);
+}
 
+void BeaconManager::CreateGroupPublicKey(
+    std::vector<VerificationVector> const &verification_vectors)
+{
+  // TODO(tfr): Can be optimised
   VerificationVector group_vectors =
-      crypto::bls::dkg::AccumulateVerificationVectors(verification_vectors_);
+      crypto::bls::dkg::AccumulateVerificationVectors(verification_vectors);
   group_public_key_ = group_vectors[0];
-  public_key_       = crypto::bls::PublicKeyFromPrivate(secret_key_share_);
 }
 
 void BeaconManager::SetMessage(BeaconManager::ConstByteArray next_message)
@@ -118,6 +120,7 @@ void BeaconManager::SetMessage(BeaconManager::ConstByteArray next_message)
   current_message_ = next_message;
   signature_buffer_.clear();
   signer_ids_.clear();
+  already_signed_.clear();
 }
 
 BeaconManager::SignedMessage BeaconManager::Sign()
@@ -125,6 +128,7 @@ BeaconManager::SignedMessage BeaconManager::Sign()
   SignedMessage smsg;
   smsg.signature  = crypto::bls::Sign(secret_key_share_, current_message_);
   smsg.public_key = public_key_;
+  smsg.identity   = identity();
 
   if (!crypto::bls::Verify(smsg.signature, smsg.public_key, current_message_))
   {
@@ -134,16 +138,21 @@ BeaconManager::SignedMessage BeaconManager::Sign()
   return smsg;
 }
 
-bool BeaconManager::AddSignaturePart(BeaconManager::Identity  from,
-                                     BeaconManager::PublicKey public_key,
-                                     BeaconManager::Signature signature)
+BeaconManager::AddResult BeaconManager::AddSignaturePart(BeaconManager::Identity  from,
+                                                         BeaconManager::PublicKey public_key,
+                                                         BeaconManager::Signature signature)
 {
   auto it = identity_to_index_.find(from);
   assert(it != identity_to_index_.end());
 
   if (it == identity_to_index_.end())
   {
-    throw std::runtime_error("Could not find identity in AddSignaturePart.");
+    return AddResult::NOT_MEMBER;
+  }
+
+  if (already_signed_.find(from) != already_signed_.end())
+  {
+    return AddResult::SIGNATURE_ALREADY_ADDED;
   }
 
   uint64_t n  = it->second;
@@ -151,18 +160,24 @@ bool BeaconManager::AddSignaturePart(BeaconManager::Identity  from,
 
   if (!crypto::bls::Verify(signature, public_key, current_message_))
   {
-    throw std::runtime_error("Received signature is invalid.");
+    return AddResult::INVALID_SIGNATURE;
   }
 
   signer_ids_.push_back(id);
   signature_buffer_.push_back(signature);
-  return true;
+  already_signed_.insert(from);
+  return AddResult::SUCCESS;
 }
 
 bool BeaconManager::Verify()
 {
-  auto signature = crypto::bls::RecoverSignature(signature_buffer_, signer_ids_);
-  return crypto::bls::Verify(signature, group_public_key_, current_message_);
+  group_signature_ = crypto::bls::RecoverSignature(signature_buffer_, signer_ids_);
+  return Verify(group_signature_);
+}
+
+bool BeaconManager::Verify(Signature const &group_signature)
+{
+  return crypto::bls::Verify(group_signature, group_public_key_, current_message_);
 }
 
 }  // namespace dkg

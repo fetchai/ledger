@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "beacon/beacon_manager.hpp"
 #include "crypto/bls_base.hpp"
 #include "crypto/bls_dkg.hpp"
-#include "dkg/beacon_manager.hpp"
 
 #include <cstdint>
 #include <iostream>

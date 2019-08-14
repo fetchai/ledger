@@ -114,6 +114,9 @@ public:
           std::string("Cannot create container type with more than 1 << 32 elements"));
     }
 
+    // Allocating needed mempry
+    serializer_.Allocate(count);
+
     created_ = true;
     return BinaryInterface<Driver>(serializer_, count);
   }
@@ -171,7 +174,8 @@ public:
       break;
     }
     default:
-      throw SerializableException(std::string("incorrect size opcode for binary stream size."));
+      throw SerializableException(
+          std::string("incorrect size opcode for binary stream size: " + std::to_string(opcode)));
     }
 
     size_ = static_cast<uint64_t>(size);
