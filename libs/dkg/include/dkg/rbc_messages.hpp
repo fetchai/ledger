@@ -50,8 +50,7 @@ public:
     R_ECHO,
     R_READY,
     R_REQUEST,
-    R_ANSWER,
-    R_SEND
+    R_ANSWER
   };
 
   // Destruction
