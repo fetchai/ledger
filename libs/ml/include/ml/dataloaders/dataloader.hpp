@@ -172,7 +172,7 @@ typename DataLoader<LabelType, DataType>::ReturnType DataLoader<LabelType, DataT
 namespace serializers {
 
 /**
- * serializer for Elu saveable params
+ * serializer for Dataloader
  * @tparam TensorType
  */
 template <typename LabelType, typename InputType, typename D>

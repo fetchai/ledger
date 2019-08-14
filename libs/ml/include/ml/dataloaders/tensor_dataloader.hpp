@@ -152,7 +152,7 @@ void TensorDataLoader<LabelType, InputType>::Reset()
 namespace serializers {
 
 /**
- * serializer for Elu saveable params
+ * serializer for tensor dataloader
  * @tparam TensorType
  */
 template <typename LabelType, typename InputType, typename D>
