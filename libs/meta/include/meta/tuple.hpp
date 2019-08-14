@@ -26,32 +26,6 @@
 namespace fetch {
 namespace meta {
 
-template <typename T, typename... Ts>
-struct RemoveFirstType;
-template <typename T, typename... Ts>
-struct RemoveFirstType<std::tuple<T, Ts...>>
-{
-  using type = typename std::tuple<Ts...>;
-};
-
-template <typename... Ts>
-struct RemoveLastType;
-template <typename... Ts>
-struct RemoveLastType<std::tuple<Ts...>>
-{
-  template <std::size_t... Is>
-  static std::tuple<std::tuple_element_t<Is, std::tuple<Ts...>>...> f(std::index_sequence<Is...>);
-  using type = decltype(f(std::make_index_sequence<sizeof...(Ts) - 1u>()));
-};
-
-template <typename... Ts>
-struct GetLastType;
-template <typename... Ts>
-struct GetLastType<std::tuple<Ts...>>
-{
-  using type = typename std::tuple_element_t<sizeof...(Ts) - 1u, std::tuple<Ts...>>;
-};
-
 template <std::size_t... Is>
 using IndexSequence = std::index_sequence<Is...>;
 
