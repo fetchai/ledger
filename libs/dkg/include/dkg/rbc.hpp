@@ -88,7 +88,6 @@ protected:
   uint8_t            msg_counter_;  ///< Counter for messages we have broadcasted
   std::vector<Party> parties_;      ///< Keeps track of messages from cabinet members
   std::unordered_map<TagType, Broadcast> broadcasts_;  ///< map from tag to broadcasts
-  std::unordered_set<TagType>            delivered_;   ///< Tags of messages delivered
 
   std::mutex mutex_flags_;      ///< Protects access to Party message flags
   std::mutex mutex_deliver_;    ///< Protects the delivered message queue
