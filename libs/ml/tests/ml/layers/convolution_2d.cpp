@@ -271,8 +271,9 @@ TYPED_TEST(Convolution2DTest, node_forward_test)  // Use the class as a Node
   }
 
   // Evaluate
-  auto placeholder_node =
-      std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::OP_PLACEHOLDER, "Input");
+  auto placeholder_node = std::make_shared<fetch::ml::Node<TypeParam>>(
+      fetch::ml::OpType::OP_PLACEHOLDER, "Input",
+      []() { return std::make_shared<fetch::ml::ops::PlaceHolder<TypeParam>>(); });
   std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder_node->GetOp())
       ->SetData(input);
 
@@ -349,8 +350,9 @@ TYPED_TEST(Convolution2DTest, node_backward_test)  // Use the class as a Node
   }
 
   // Evaluate
-  auto placeholder_node =
-      std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::OP_PLACEHOLDER, "Input");
+  auto placeholder_node = std::make_shared<fetch::ml::Node<TypeParam>>(
+      fetch::ml::OpType::OP_PLACEHOLDER, "Input",
+      []() { return std::make_shared<fetch::ml::ops::PlaceHolder<TypeParam>>(); });
   std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder_node->GetOp())
       ->SetData(input);
 
