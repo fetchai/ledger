@@ -54,13 +54,15 @@ public:
   SelfAttentionEncoder(SizeType n_heads, SizeType model_dim, SizeType ff_dim,
                        DataType residual_dropout    = static_cast<DataType>(0.9),
                        DataType attention_dropout   = static_cast<DataType>(0.9),
-                       DataType feedforward_dropout = static_cast<DataType>(0.9))
+                       DataType feedforward_dropout = static_cast<DataType>(0.9),
+                       DataType epsilon = fetch::math::function_tolerance<DataType>())
     : n_heads_(n_heads)
     , model_dim_(model_dim)
     , ff_dim_(ff_dim)
     , residual_dropout_(residual_dropout)
     , attention_dropout_(attention_dropout)
     , feedforward_dropout_(feedforward_dropout)
+    , epsilon_(epsilon)
   {
     // make sure all heads can be concatenate together to form model_dim
     assert(model_dim_ % n_heads_ == 0);
@@ -131,7 +133,7 @@ public:
     std::vector<SizeType> data_shape({model_dim_, 1});
     std::string           normalized_residual =
         this->template AddNode<fetch::ml::layers::LayerNorm<ArrayType>>(
-            name + "_LayerNorm", {residual_addition}, data_shape, static_cast<SizeType>(0));
+            name + "_LayerNorm", {residual_addition}, data_shape, static_cast<SizeType>(0), epsilon_);
 
     return normalized_residual;
   }
@@ -150,6 +152,7 @@ private:
   DataType residual_dropout_;
   DataType attention_dropout_;
   DataType feedforward_dropout_;
+  DataType epsilon_;
 };
 
 }  // namespace layers

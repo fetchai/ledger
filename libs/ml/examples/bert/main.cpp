@@ -84,7 +84,7 @@ int main(/*int ac, char **av*/)
   //  }
 
   std::cout << "FETCH BERT Demo" << std::endl;
-
+  
   SizeType max_seq_len = 512u;
 //  SizeType model_dims  = 768u;
 
@@ -286,9 +286,13 @@ std::pair<std::vector<std::string>, std::string> load_pretrained_bert_base_uncas
   SizeType ff_dims          = 4u * model_dims;
   SizeType vocab_size       = 30522u;
   SizeType segment_size     = 2u;
-  FETCH_UNUSED(max_seq_len);
-  FETCH_UNUSED(segment_size);
+  DataType epsilon          = static_cast<DataType>(1e-12);
   DataType dropout_keep_prob = static_cast<DataType>(0.9);
+	
+  // for release version
+  FETCH_UNUSED(vocab_size);
+  FETCH_UNUSED(max_seq_len);
+	FETCH_UNUSED(segment_size);
 
   // initiate graph
   std::string segment  = g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Segment", {});
@@ -357,7 +361,7 @@ std::pair<std::vector<std::string>, std::string> load_pretrained_bert_base_uncas
     // create the encoding layer first
     layer_output = g.template AddNode<fetch::ml::layers::SelfAttentionEncoder<ArrayType>>(
         "SelfAttentionEncoder_No_" + std::to_string(i), {layer_output, mask}, n_heads, model_dims,
-        ff_dims, dropout_keep_prob);
+        ff_dims, dropout_keep_prob, epsilon);
 
     // get state dict for this layer
     state_dict = std::dynamic_pointer_cast<GraphType>(g.GetNode(layer_output))->StateDict();
