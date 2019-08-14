@@ -59,8 +59,8 @@ public:
 
   void ResetCabinet(uint32_t cabinet_size);
   void Count(MuddleAddress const &address);
-  void Add(std::shared_ptr<ComplaintsMessage> const &msg_ptr, MuddleAddress const &from_id,
-           uint32_t from_index, MuddleAddress node_address);
+  void Add(ComplaintsMessage const &msg, MuddleAddress const &from_id, uint32_t from_index,
+           MuddleAddress const &node_address);
   bool IsFinished(std::set<MuddleAddress> const &miners, uint32_t node_index, uint32_t threshold);
   void Clear();
 
@@ -76,10 +76,15 @@ public:
 class QualComplaintsManager
 {
   using MuddleAddress = byte_array::ConstByteArray;
+  using CabinetId     = MuddleAddress;
+  using Share         = std::string;
+  using ExposedShares = std::pair<Share, Share>;
+  using QualComplaints =
+      std::unordered_map<MuddleAddress, std::unordered_map<CabinetId, ExposedShares>>;
 
   bool                    finished_{false};
   std::set<MuddleAddress> complaints_;           ///< Cabinet members we complain against
-  std::set<MuddleAddress> complaints_received_;  ///< Set of cabinet members we have received a qual
+  QualComplaints          complaints_received_;  ///< Set of cabinet members we have received a qual
                                                  ///< complaint message from
   mutable std::mutex mutex_;
 
@@ -87,7 +92,9 @@ public:
   QualComplaintsManager() = default;
 
   void                                           Complaints(MuddleAddress const &id);
-  void                                           Received(MuddleAddress const &id);
+  void                                           Received(MuddleAddress const &                               id,
+                                                          std::unordered_map<CabinetId, ExposedShares> const &complaints);
+  const QualComplaints &                         ComplaintsReceived() const;
   std::size_t                                    ComplaintsSize() const;
   bool                                           ComplaintsFind(MuddleAddress const &id) const;
   std::set<QualComplaintsManager::MuddleAddress> Complaints() const;
