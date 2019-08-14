@@ -54,8 +54,7 @@ int main(int argc, char **argv)
   // ensure the program has the correct number of args
   if (2u != pp.arg_size())
   {
-    std::cerr << "Usage: " << pp.GetArg(0) << " [options] <filename> -- [script args]..."
-              << std::endl;
+    std::cerr << "Usage: " << pp.GetArg(0) << " <filename> -- [script args]..." << std::endl;
     return 1;
   }
 

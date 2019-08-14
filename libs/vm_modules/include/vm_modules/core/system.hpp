@@ -30,52 +30,11 @@ public:
   using ArgList     = std::vector<char *>;
   using StringList  = std::vector<std::string>;
 
-  void Parse(int argc, char **argv)
-  {
-    const std::string SEPARATOR{"--"};
+  void Parse(int argc, char **argv);
 
-    ArgList program_args{};
-    ArgList script_args{};
+  ParamParser const &program() const;
 
-    // first parameter is common between both argument set
-    program_args.push_back(argv[0]);
-    script_args.push_back(argv[0]);
-
-    // loop through all the parameters
-    ArgList *current_list = &program_args;
-    for (int i = 1; i < argc; ++i)
-    {
-      if (SEPARATOR == argv[i])
-      {
-        // switch the list
-        current_list = &script_args;
-      }
-      else
-      {
-        // add the string to the list
-        current_list->push_back(argv[i]);
-      }
-    }
-
-    // parse the program arguments
-    program_params_.Parse(static_cast<int>(program_args.size()), program_args.data());
-
-    // copy the script arguments
-    for (auto const *s : script_args)
-    {
-      script_args_.emplace_back(s);
-    }
-  }
-
-  ParamParser const &program() const
-  {
-    return program_params_;
-  }
-
-  StringList const &script() const
-  {
-    return script_args_;
-  }
+  StringList const &script() const;
 
 private:
   ParamParser program_params_{};
@@ -87,32 +46,16 @@ struct System : public fetch::vm::Object
   System()           = delete;
   ~System() override = default;
 
-  static void Bind(fetch::vm::Module &module)
-  {
-    module.CreateClassType<System>("System")
-        .CreateStaticMemberFunction("Argc", &System::Argc)
-        .CreateStaticMemberFunction("Argv", &System::Argv);
-  }
+  static void Bind(fetch::vm::Module &module);
 
-  static int32_t Argc(fetch::vm::VM *, fetch::vm::TypeId)
-  {
-    return static_cast<int32_t>(params.script().size());
-  }
+  static int32_t Argc(fetch::vm::VM *, fetch::vm::TypeId);
 
-  static fetch::vm::Ptr<fetch::vm::String> Argv(fetch::vm::VM *vm, fetch::vm::TypeId, int32_t index)
-  {
-    return {new fetch::vm::String{vm, params.script().at(static_cast<std::size_t>(index))}};
-  }
+  static fetch::vm::Ptr<fetch::vm::String> Argv(fetch::vm::VM *vm, fetch::vm::TypeId,
+                                                int32_t        index);
 
-  static void Parse(int argc, char **argv)
-  {
-    params.Parse(argc, argv);
-  }
+  static void Parse(int argc, char **argv);
 
-  static Parameters::ParamParser const &GetParamParser()
-  {
-    return params.program();
-  }
+  static Parameters::ParamParser const &GetParamParser();
 
 private:
   static Parameters params;
