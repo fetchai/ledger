@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/group_definitions.hpp"
 #include "network/service/protocol.hpp"
 #include "storage/object_store_protocol.hpp"
 #include "storage/transient_object_store.hpp"
@@ -29,6 +30,13 @@ namespace fetch {
 namespace storage {
 
 template <typename T>
+struct ResourceKeyValuePair
+{
+  ResourceID key;
+  T          value;
+};
+
+template <typename T>
 class ObjectStoreProtocol : public fetch::service::Protocol
 {
 public:
@@ -36,24 +44,7 @@ public:
 
   static constexpr char const *LOGGING_NAME = "ObjectStoreProto";
 
-  struct Element
-  {
-    ResourceID key;
-    T          value;
-
-    template <typename S>
-    friend void Serialize(S &s, Element const &e)
-    {
-      s << e.key << e.value;
-    }
-
-    template <typename S>
-    friend void Deserialize(S &s, Element &e)
-    {
-      s >> e.key >> e.value;
-    }
-  };
-
+  using Element     = ResourceKeyValuePair<T>;
   using ElementList = std::vector<Element>;
 
   enum
@@ -146,4 +137,34 @@ private:
 };
 
 }  // namespace storage
+
+namespace serializers {
+
+template <typename T, typename D>
+struct MapSerializer<storage::ResourceKeyValuePair<T>, D>
+{
+public:
+  using Type       = storage::ResourceKeyValuePair<T>;
+  using DriverType = D;
+
+  static uint8_t const KEY   = 1;
+  static uint8_t const VALUE = 2;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &data)
+  {
+    auto map = map_constructor(2);
+    map.Append(KEY, data.key);
+    map.Append(VALUE, data.value);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &data)
+  {
+    map.ExpectKeyGetValue(KEY, data.key);
+    map.ExpectKeyGetValue(VALUE, data.value);
+  }
+};
+
+}  // namespace serializers
 }  // namespace fetch

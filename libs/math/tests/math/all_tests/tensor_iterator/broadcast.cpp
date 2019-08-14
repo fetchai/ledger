@@ -38,7 +38,7 @@ TEST(tensor_iterator, simple_broadcast_test)
 
   Tensor<double> ret;
 
-  ASSERT_TRUE(Broadcast([](double &x, double y) { return x + y; }, a, b, ret));
+  ASSERT_TRUE(Broadcast([](double const &x, double const &y, double &z) { z = x + y; }, a, b, ret));
 
   for (SizeType i = 0; i < ret.shape(0); ++i)
   {
@@ -61,7 +61,7 @@ TEST(Tensor, broadcast_3D_test)
 
   Tensor<double> ret;
 
-  ASSERT_TRUE(Broadcast([](double &x, double y) { return x + y; }, a, b, ret));
+  ASSERT_TRUE(Broadcast([](double const &x, double const &y, double &z) { z = x + y; }, a, b, ret));
 
   for (SizeType i = 0; i < 7; ++i)
   {

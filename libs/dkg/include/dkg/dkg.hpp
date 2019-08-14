@@ -38,13 +38,12 @@ class MuddleEndpoint;
 
 namespace dkg {
 
-class DkgService;
-
 /**
  * //TODO(jmw): DKG protocol
  */
 class DistributedKeyGeneration
 {
+protected:
   using MuddleAddress    = byte_array::ConstByteArray;
   using CabinetMembers   = std::set<MuddleAddress>;
   using Endpoint         = muddle::MuddleEndpoint;
@@ -66,11 +65,13 @@ class DistributedKeyGeneration
   static bn::G2 group_g_;  ///< Generator of group used in DKG
   static bn::G2 group_h_;  ///< Generator of subgroup used in DKG
 
-  CabinetMembers &   cabinet_;        ///< Muddle addresses of cabinet members
-  uint32_t &         threshold_;      ///< Number of cooperating members required to generate keys
-  MuddleAddress      address_;        ///< Our muddle address
-  uint32_t           cabinet_index_;  ///< Index of our address in cabinet_
-  DkgService &       dkg_service_;
+  CabinetMembers const &cabinet_;    ///< Muddle addresses of cabinet members
+  uint32_t const &      threshold_;  ///< Number of cooperating members required to generate keys
+  MuddleAddress         address_;    ///< Our muddle address
+  uint32_t              cabinet_index_;  ///< Index of our address in cabinet_
+  std::function<void(DKGEnvelope const &)> broadcast_function_;
+  std::function<void(MuddleAddress const &, std::pair<std::string, std::string> const &)>
+                     rpc_function_;
   std::atomic<State> state_{State::INITIAL};
   std::mutex         mutex_;
 
@@ -108,19 +109,20 @@ class DistributedKeyGeneration
   std::atomic<uint32_t> A_ik_received_{0};
   std::atomic<uint32_t> reconstruction_shares_received_{0};
 
-  std::unordered_map<MuddleAddress, std::pair<std::vector<uint32_t>, std::vector<bn::Fr>>>
+  std::unordered_map<MuddleAddress, std::pair<std::set<uint32_t>, std::vector<bn::Fr>>>
       reconstruction_shares;  ///< Map from id of node_i in complaints to a pair <parties which
                               ///< exposed shares of node_i, the shares that were exposed>
 
   /// @name Methods to send messages
   /// @{
-  void SendBroadcast(DKGEnvelope const &env);
-  void SendCoefficients(std::vector<bn::Fr> const &a_i, std::vector<bn::Fr> const &b_i);
-  void SendShares(std::vector<bn::Fr> const &a_i, std::vector<bn::Fr> const &b_i);
-  void BroadcastComplaints();
-  void BroadcastComplaintsAnswer();
-  void BroadcastQualComplaints();
-  void BroadcastReconstructionShares();
+  void         SendBroadcast(DKGEnvelope const &env);
+  void         SendCoefficients(std::vector<bn::Fr> const &a_i, std::vector<bn::Fr> const &b_i);
+  void         SendShares(std::vector<bn::Fr> const &a_i, std::vector<bn::Fr> const &b_i);
+  virtual void BroadcastComplaints();
+  virtual void BroadcastComplaintsAnswer();
+  virtual void BroadcastQualCoefficients();
+  virtual void BroadcastQualComplaints();
+  virtual void BroadcastReconstructionShares();
   /// @}
 
   /// @name Methods to check if enough messages have been received to trigger state transition
@@ -161,17 +163,20 @@ class DistributedKeyGeneration
   /// @}
 
 public:
-  DistributedKeyGeneration(MuddleAddress address, CabinetMembers &cabinet, uint32_t &threshold,
-                           DkgService &dkg_service);
+  DistributedKeyGeneration(
+      MuddleAddress address, CabinetMembers const &cabinet, uint32_t const &threshold,
+      std::function<void(DKGEnvelope const &)> broadcast_function,
+      std::function<void(MuddleAddress const &, std::pair<std::string, std::string> const &)>
+          rpc_function);
 
-  void   BroadcastShares();
-  void   OnNewShares(MuddleAddress from_id, std::pair<MsgShare, MsgShare> const &shares);
-  void   OnDkgMessage(MuddleAddress const &from, std::shared_ptr<DKGMessage> msg_ptr);
-  void   ResetCabinet();
-  void   SetDkgOutput(bn::G2 &public_key, bn::Fr &secret_share,
-                      std::vector<bn::G2> &public_key_shares, std::set<MuddleAddress> &qual);
-  bool   finished() const;
-  bn::G2 group() const;
+  virtual void BroadcastShares();
+  void         OnNewShares(MuddleAddress from_id, std::pair<MsgShare, MsgShare> const &shares);
+  void         OnDkgMessage(MuddleAddress const &from, std::shared_ptr<DKGMessage> msg_ptr);
+  void         ResetCabinet();
+  void         SetDkgOutput(bn::G2 &public_key, bn::Fr &secret_share,
+                            std::vector<bn::G2> &public_key_shares, std::set<MuddleAddress> &qual);
+  bool         finished() const;
+  bn::G2       group() const;
 };
 }  // namespace dkg
 }  // namespace fetch

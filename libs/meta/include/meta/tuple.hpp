@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "meta/param_pack.hpp"
+
 #include <cstddef>
 #include <tuple>
 #include <utility>
@@ -49,6 +51,9 @@ struct GetLastType<std::tuple<Ts...>>
 {
   using type = typename std::tuple_element_t<sizeof...(Ts) - 1u, std::tuple<Ts...>>;
 };
+
+template <typename Tuple, template <typename...> class Destination>
+using UnpackTuple = ConveyTypeParameterPack<std::tuple, Tuple, Destination>;
 
 }  // namespace meta
 }  // namespace fetch

@@ -19,9 +19,8 @@
 #include "core/byte_array/decoders.hpp"
 #include "core/json/document.hpp"
 #include "core/logger.hpp"
-#include "core/serializers/byte_array.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
-#include "core/serializers/stl_types.hpp"
+#include "core/serializers/base_types.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "core/string/replace.hpp"
 #include "http/json_response.hpp"
 #include "ledger/chain/json_transaction.hpp"
@@ -383,7 +382,7 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitBulkTx(
   try
   {
     // extract out all the transaction payloads
-    serializers::ByteArrayBuffer buffer{request.body()};
+    serializers::MsgPackSerializer buffer{request.body()};
     buffer >> encoded_txs;
 
     for (auto const &encoded_tx : encoded_txs)

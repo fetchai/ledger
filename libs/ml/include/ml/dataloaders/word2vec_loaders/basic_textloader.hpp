@@ -25,7 +25,6 @@
 #include <algorithm>
 #include <cassert>
 #include <numeric>
-#include <random>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -68,11 +67,11 @@ template <typename T>
 class BasicTextLoader : public TextLoader<T>, public DataLoader<T, T>
 {
 public:
-  using ArrayType = T;
-  using DataType  = typename T::Type;
-  using SizeType  = typename T::SizeType;
+  using TensorType = T;
+  using DataType   = typename T::Type;
+  using SizeType   = typename T::SizeType;
 
-  explicit BasicTextLoader(TextParams<ArrayType> const &p, bool random_mode = false,
+  explicit BasicTextLoader(TextParams<TensorType> const &p, bool random_mode = false,
                            SizeType seed = 123456789);
 
   // overloaded member from dataloader
@@ -87,13 +86,11 @@ public:
 
 protected:
   // params
-  TextParams<ArrayType> p_;
+  TextParams<TensorType> p_;
 
   // random generators
   fetch::random::LaggedFibonacciGenerator<>  lfg_;
   fetch::random::LinearCongruentialGenerator lcg_;
-
-  std::random_device rd_;
 
   // containers for the data and labels
   std::vector<std::vector<SizeType>> data_buffers_;
@@ -248,9 +245,8 @@ void BasicTextLoader<T>::Reset()
   // note that ran_idx_ is of size word_count_ not of size number of valid training pairs
   ran_idx_ = std::vector<SizeType>(this->TextLoader<T>::Size());
   std::iota(ran_idx_.begin(), ran_idx_.end(), 0);
+  fetch::random::Shuffle(lfg_, ran_idx_, ran_idx_);
 
-  std::mt19937 g(rd_());
-  std::shuffle(ran_idx_.begin(), ran_idx_.end(), g);
   assert(ran_idx_.size() == this->word_count_);
 
   // recompute which words should be ignored based on their frequency
@@ -345,7 +341,7 @@ void BasicTextLoader<T>::GetData(typename BasicTextLoader<T>::SizeType idx, std:
 /**
  * The basic text loader isn't useful for training, but implementing a GetLabel method
  * allows us to make it concrete and then run common unit tests
- * @tparam T ArrayType
+ * @tparam T TensorType
  * @param idx word index
  * @return dummy label
  */

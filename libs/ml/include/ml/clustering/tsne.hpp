@@ -45,10 +45,10 @@ template <class T>
 class TSNE
 {
 public:
-  using ArrayType  = T;
-  using DataType   = typename ArrayType::Type;
-  using SizeType   = typename ArrayType::SizeType;
-  using SizeVector = typename ArrayType::SizeVector;
+  using TensorType = T;
+  using DataType   = typename TensorType::Type;
+  using SizeType   = typename TensorType::SizeType;
+  using SizeVector = typename TensorType::SizeVector;
   using RNG        = fetch::random::LaggedFibonacciGenerator<>;
 
   static constexpr char const *DESCRIPTOR = "TSNE";
@@ -65,16 +65,16 @@ public:
     return DataType(1e-12);
   }
 
-  TSNE(ArrayType const &input_matrix, ArrayType const &output_matrix, DataType const &perplexity)
+  TSNE(TensorType const &input_matrix, TensorType const &output_matrix, DataType const &perplexity)
   {
     Init(input_matrix, output_matrix, perplexity);
   }
 
-  TSNE(ArrayType const &input_matrix, SizeType const &output_dimensions, DataType const &perplexity,
-       SizeType const &random_seed)
+  TSNE(TensorType const &input_matrix, SizeType const &output_dimensions,
+       DataType const &perplexity, SizeType const &random_seed)
   {
     assert(input_matrix.shape().size() >= 2);
-    ArrayType output_matrix(
+    TensorType output_matrix(
         {input_matrix.shape().at(input_matrix.shape().size() - 1), output_dimensions});
     rng_.Seed(random_seed);
     RandomInitWeights(output_matrix);
@@ -97,22 +97,22 @@ public:
     assert(output_matrix_.shape().size() == 2);
 
     // i_y is output_matrix value from last iteration
-    ArrayType i_y(output_matrix_.shape());
+    TensorType i_y(output_matrix_.shape());
 
     // Initialise gains with value 1.0
-    ArrayType gains(output_matrix_.shape());
+    TensorType gains(output_matrix_.shape());
     gains.Fill(static_cast<DataType>(1));
 
     // Start optimisation
     for (SizeType iter{0}; iter < max_iters; iter++)
     {
       // Compute output matrix pairwise affinities
-      ArrayType num;
+      TensorType num;
       CalculateSymmetricAffinitiesQ(output_matrix_, output_symmetric_affinities_, num);
 
       // Compute gradient
-      ArrayType gradient = ComputeGradient(output_matrix_, input_symmetric_affinities_,
-                                           output_symmetric_affinities_, num);
+      TensorType gradient = ComputeGradient(output_matrix_, input_symmetric_affinities_,
+                                            output_symmetric_affinities_, num);
 
       // Perform the update
       if (iter >= final_momentum_steps)
@@ -145,8 +145,8 @@ public:
       output_matrix_ = fetch::math::Add(output_matrix_, i_y);
 
       //  Y = Y - np.tile(np.mean(Y, 0), (n, 1))
-      ArrayType y_mean = fetch::math::Divide(fetch::math::ReduceSum(output_matrix_, 0),
-                                             static_cast<DataType>(output_matrix_.shape().at(0)));
+      TensorType y_mean = fetch::math::Divide(fetch::math::ReduceSum(output_matrix_, 0),
+                                              static_cast<DataType>(output_matrix_.shape().at(0)));
 
       output_matrix_ -= y_mean;
 
@@ -164,7 +164,7 @@ public:
     }
   }
 
-  const ArrayType GetOutputMatrix() const
+  const TensorType GetOutputMatrix() const
   {
     return output_matrix_.Transpose();
   }
@@ -173,16 +173,16 @@ private:
   /**
    * i.e. Sets initial values of TSNE and calculate P values
    */
-  void Init(ArrayType const &input_matrix, ArrayType const &output_matrix,
+  void Init(TensorType const &input_matrix, TensorType const &output_matrix,
             DataType const &perplexity)
   {
     // Flatten input
     if (input_matrix.shape().size() != 2)
     {
-      fetch::ml::ops::Flatten<ArrayType> flatten_op;
-      ArrayType                          flat_input(
-          flatten_op.ComputeOutputShape({std::make_shared<ArrayType>(input_matrix)}));
-      flatten_op.Forward({std::make_shared<ArrayType>(input_matrix)}, flat_input);
+      fetch::ml::ops::Flatten<TensorType> flatten_op;
+      TensorType                          flat_input(
+          flatten_op.ComputeOutputShape({std::make_shared<TensorType>(input_matrix)}));
+      flatten_op.Forward({std::make_shared<TensorType>(input_matrix)}, flat_input);
       input_matrix_ = flat_input.Transpose();
     }
     else
@@ -197,7 +197,7 @@ private:
     SizeType input_data_size = input_matrix_.shape().at(0);
 
     // Find Pj|i values for given perplexity value within perplexity_tolerance
-    input_pairwise_affinities_ = ArrayType({input_data_size, input_data_size});
+    input_pairwise_affinities_ = TensorType({input_data_size, input_data_size});
     CalculatePairwiseAffinitiesP(input_matrix_, input_pairwise_affinities_, perplexity,
                                  perplexity_tolerance, max_tries);
 
@@ -216,14 +216,14 @@ private:
 
     // Initialise low dimensional values
     output_matrix_               = output_matrix;
-    output_symmetric_affinities_ = ArrayType(input_pairwise_affinities_.shape());
+    output_symmetric_affinities_ = TensorType(input_pairwise_affinities_.shape());
   }
 
   /**
    * i.e. Fill output_matrix with random values from normal distribution of mean 0.0 and standard
    * deviation 1.0
    */
-  void RandomInitWeights(ArrayType &output_matrix)
+  void RandomInitWeights(TensorType &output_matrix)
   {
     for (auto &val : output_matrix)
     {
@@ -239,7 +239,7 @@ private:
    * @param beta beta = 1/(2*sigma^2)
    * @param k i value excluded from sums from p(i,i)
    */
-  void Hbeta(ArrayType const &d, ArrayType &p, DataType &entropy, DataType const &beta,
+  void Hbeta(TensorType const &d, TensorType &p, DataType &entropy, DataType const &beta,
              SizeType const &k)
   {
     // p = -exp(d * beta)
@@ -265,7 +265,7 @@ private:
    * @param target_perplexity input Target perplexity value
    * @param tolerance input Tolerance of perplexity value
    */
-  void CalculatePairwiseAffinitiesP(ArrayType const &input_matrix, ArrayType &pairwise_affinities,
+  void CalculatePairwiseAffinitiesP(TensorType const &input_matrix, TensorType &pairwise_affinities,
                                     DataType const &target_perplexity, DataType const &tolerance,
                                     SizeType const &max_tries)
   {
@@ -275,17 +275,17 @@ private:
      * Initialise some variables
      */
     // sum_x = sum(square(x), 1)
-    ArrayType sum_x = fetch::math::ReduceSum(fetch::math::Square(input_matrix), 1);
+    TensorType sum_x = fetch::math::ReduceSum(fetch::math::Square(input_matrix), 1);
 
     // d= ((-2 * dot(X, X.T))+sum_x).T+sum_x
-    ArrayType d =
+    TensorType d =
         fetch::math::Multiply(DataType(-2), fetch::math::DotTranspose(input_matrix, input_matrix));
 
     d = (d + sum_x).Transpose() + sum_x;
 
     // beta = 1/(2*sigma^2)
     // Prefill beta array with 1.0
-    ArrayType beta(input_data_size);
+    TensorType beta(input_data_size);
     beta.Fill(static_cast<DataType>(1));
 
     // Calculate entropy value from perplexity
@@ -304,7 +304,7 @@ private:
       DataType beta_max = inf;
 
       // Slice of pairwise affinities
-      ArrayType this_P(input_data_size);
+      TensorType this_P(input_data_size);
 
       DataType current_entropy;
       d.Set(i, i, static_cast<DataType>(0));
@@ -368,23 +368,23 @@ private:
    * @param output_symmetric_affinities output Q values
    * @param num output Precalculated values of Student-t based distribution
    */
-  void CalculateSymmetricAffinitiesQ(ArrayType const &output_matrix,
-                                     ArrayType &output_symmetric_affinities, ArrayType &num)
+  void CalculateSymmetricAffinitiesQ(TensorType const &output_matrix,
+                                     TensorType &output_symmetric_affinities, TensorType &num)
   {
     /*
      * Compute Q pairwise affinities
      */
-    ArrayType output_matrix_T = output_matrix.Transpose();
+    TensorType output_matrix_T = output_matrix.Transpose();
 
     // sum_y = sum(square(y), 1)
-    ArrayType sum_y = fetch::math::ReduceSum(fetch::math::Square(output_matrix), 1);
+    TensorType sum_y = fetch::math::ReduceSum(fetch::math::Square(output_matrix), 1);
 
     // num = -2. * dot(Y, Y.T)
     num = fetch::math::Multiply(DataType(-2),
                                 fetch::math::DotTranspose(output_matrix, output_matrix));
 
     // num = 1 / (1 + (num+sum_y).T+sum_y)
-    ArrayType val((num + sum_y).Transpose());
+    TensorType val((num + sum_y).Transpose());
     num = fetch::math::Divide(static_cast<DataType>(1),
                               fetch::math::Add(static_cast<DataType>(1), (val + sum_y)));
 
@@ -422,17 +422,17 @@ private:
    * @param num Tensor of precalculated values num[i,j]=1+||yi-yj||^2
    * @param ret return value output_matrix shaped tensor of gradient values.
    */
-  ArrayType ComputeGradient(ArrayType const &output_matrix,
-                            ArrayType const &input_symmetric_affinities,
-                            ArrayType const &output_symmetric_affinities, ArrayType const &num)
+  TensorType ComputeGradient(TensorType const &output_matrix,
+                             TensorType const &input_symmetric_affinities,
+                             TensorType const &output_symmetric_affinities, TensorType const &num)
   {
     assert(input_matrix_.shape().at(0) == output_matrix.shape().at(0));
 
-    ArrayType ret(output_matrix.shape());
+    TensorType ret(output_matrix.shape());
 
     for (SizeType i{0}; i < output_matrix.shape().at(0); i++)
     {
-      ArrayType output(output_matrix.shape().at(1));
+      TensorType output(output_matrix.shape().at(1));
       for (SizeType j{0}; j < output_matrix.shape().at(0); j++)
       {
         if (i == j)
@@ -453,7 +453,7 @@ private:
 
         // val*(yi-yj), where val=(Pij-Qij)/(1+||yi-yj||^2)
 
-        ArrayType diff = (output_matrix.Slice(j).Copy()) - (output_matrix.Slice(i).Copy());
+        TensorType diff = (output_matrix.Slice(j).Copy()) - (output_matrix.Slice(i).Copy());
 
         SizeVector shape = diff.shape();
         shape.erase(shape.begin());
@@ -477,7 +477,7 @@ private:
    * @param min limit value to be applied
    * @return
    */
-  void LimitMin(ArrayType &matrix, DataType const &min)
+  void LimitMin(TensorType &matrix, DataType const &min)
   {
     for (auto &val : matrix)
     {
@@ -485,10 +485,10 @@ private:
     }
   }
 
-  ArrayType input_matrix_, output_matrix_;
-  ArrayType input_pairwise_affinities_, input_symmetric_affinities_;
-  ArrayType output_symmetric_affinities_;
-  RNG       rng_;
+  TensorType input_matrix_, output_matrix_;
+  TensorType input_pairwise_affinities_, input_symmetric_affinities_;
+  TensorType output_symmetric_affinities_;
+  RNG        rng_;
 };
 
 }  // namespace ml

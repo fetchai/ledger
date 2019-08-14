@@ -17,10 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/byte_array.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
-#include "core/serializers/stl_types.hpp"
-#include "core/serializers/typed_byte_array_buffer.hpp"
+#include "core/serializers/base_types.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "storage/key_byte_array_store.hpp"
 
 #include <cstddef>
@@ -52,7 +50,7 @@ class ObjectStore
 public:
   using type            = T;
   using self_type       = ObjectStore<T, S>;
-  using serializer_type = serializers::TypedByteArrayBuffer;
+  using serializer_type = serializers::MsgPackSerializer;
 
   class Iterator;
 

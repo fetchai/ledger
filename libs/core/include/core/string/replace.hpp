@@ -17,16 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include <algorithm>
+#include <string>
 
 namespace fetch {
 namespace string {
 
-inline std::string Replace(std::string value, char before, char after)
-{
-  std::replace(value.begin(), value.end(), before, after);
-  return value;
-}
+std::string Replace(std::string value, char before, char after);
 
 }  // namespace string
 }  // namespace fetch

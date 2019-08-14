@@ -21,7 +21,6 @@
 
 namespace fetch {
 namespace dkg {
-namespace rbc {
 
 constexpr char const *LOGGING_NAME = "DKGMessage";
 
@@ -51,7 +50,5 @@ std::shared_ptr<RBCMessage> RBCEnvelope::Message() const
     return nullptr;  // For compiler warnings
   }
 }
-
-}  // namespace rbc
 }  // namespace dkg
 }  // namespace fetch

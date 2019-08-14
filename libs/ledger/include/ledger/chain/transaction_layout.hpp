@@ -19,6 +19,7 @@
 
 #include "core/bitvector.hpp"
 #include "core/byte_array/const_byte_array.hpp"
+#include "core/serializers/group_definitions.hpp"
 #include "ledger/execution_result.hpp"
 
 namespace fetch {
@@ -73,10 +74,8 @@ private:
   ContractExecutionResult exec_result_{};  // Intentionally *NOT* serialised
 
   // Native serializers
-  template <typename T>
-  friend void Serialize(T &s, TransactionLayout const &tx);
-  template <typename T>
-  friend void Deserialize(T &s, TransactionLayout &tx);
+  template <typename T, typename D>
+  friend struct serializers::MapSerializer;
 };
 
 /**
