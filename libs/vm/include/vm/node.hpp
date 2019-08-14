@@ -20,6 +20,9 @@
 #include "vm/common.hpp"
 #include "vm/token.hpp"
 
+#include <memory>
+#include <vector>
+
 namespace fetch {
 namespace vm {
 
@@ -251,7 +254,7 @@ inline FunctionPtr CreateFunction(FunctionKind function_kind, std::string const 
 
 struct FunctionGroup : public Symbol
 {
-  FunctionGroup(std::string const &name)
+  explicit FunctionGroup(std::string const &name)
     : Symbol(SymbolKind::FunctionGroup, name)
   {}
   ~FunctionGroup() override = default;
