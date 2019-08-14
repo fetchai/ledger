@@ -24,6 +24,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <iostream>
 
 namespace fetch {
 namespace memory {
@@ -65,7 +66,7 @@ public:
   enum
   {
     E_TYPE_SIZE     = type_size,
-    E_SIMD_SIZE     = (platform::VectorRegisterSize<Type>::value >> 3),
+    E_SIMD_SIZE     = (vectorise::VectorRegisterSize<Type>::value >> 3),
     E_SIMD_COUNT_IM = E_SIMD_SIZE / type_size,
     E_SIMD_COUNT =
         (E_SIMD_COUNT_IM > 0 ? E_SIMD_COUNT_IM
@@ -79,7 +80,13 @@ public:
   constexpr VectorSlice(PointerType ptr = nullptr, std::size_t n = 0) noexcept
     : pointer_(ptr)
     , size_(n)
-  {}
+  {
+    std::cout << "E_TYPE_SIZE      : " << E_TYPE_SIZE << std::endl;
+    std::cout << "E_SIMD_SIZE      : " << E_SIMD_SIZE << std::endl;
+    std::cout << "E_SIMD_COUNT_IM  : " << E_SIMD_COUNT_IM << std::endl;
+    std::cout << "E_SIMD_COUNT     : " << E_SIMD_COUNT << std::endl;
+    std::cout << "E_LOG_SIMD_COUNT : " << E_LOG_SIMD_COUNT << std::endl;
+  }
 
   ConstParallelDispatcher<Type> in_parallel() const
   {
@@ -134,7 +141,7 @@ public:
 
   constexpr VectorSliceType slice(std::size_t offset, std::size_t length) const noexcept
   {
-    assert(std::size_t(offset / E_SIMD_COUNT) * E_SIMD_COUNT == offset);
+    //assert(std::size_t(offset / E_SIMD_COUNT) * E_SIMD_COUNT == offset);
     assert((length + offset) <= padded_size());
     return VectorSliceType(pointer_ + offset, length);
   }
@@ -197,11 +204,16 @@ public:
 
   constexpr SizeType padded_size() const noexcept
   {
+    std::cout << "size_ = " << size_ << std::endl;
+    std::cout << "E_LOG_SIMD_COUNT = " << E_LOG_SIMD_COUNT << std::endl;
+    std::cout << "size_ >> E_LOG_SIMD_COUNT = " << simd_size() << std::endl;
     std::size_t padded = std::size_t((size_) >> E_LOG_SIMD_COUNT) << E_LOG_SIMD_COUNT;
+    std::cout << "padded = " << padded << std::endl;
     if (padded < size_)
     {
-      padded += E_SIMD_COUNT;
+      padded += E_SIMD_SIZE;
     }
+    std::cout << "padded = " << padded << std::endl;
     return padded;
   }
 
