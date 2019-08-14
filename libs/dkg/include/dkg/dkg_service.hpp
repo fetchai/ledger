@@ -185,7 +185,7 @@ public:
     FETCH_LOG_INFO(LOGGING_NAME, "Resetting cabinet. Cabinet size: ", current_cabinet_.size(),
                    " threshold: ", threshold);
     assert(threshold > 0);
-    dkg_.ResetCabinet(current_cabinet_, threshold - 1);
+    dkg_.ResetCabinet(current_cabinet_, threshold);
     rbc_.ResetCabinet();
   }
   void SendShares(MuddleAddress const &                      destination,
