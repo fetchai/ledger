@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "beacon/beacon_setup_protocol.hpp"
 #include "beacon/beacon_setup_service.hpp"
+#include "beacon/beacon_setup_protocol.hpp"
 #include "network/generics/requesting_queue.hpp"
 
 namespace fetch {
@@ -145,6 +145,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForDirectConnections()
     {
       all_connected = false;
 
+      throw std::runtime_error("doesn't work atm.");
       // TODO(tfr): Request muddle to connect.
     }
   }
