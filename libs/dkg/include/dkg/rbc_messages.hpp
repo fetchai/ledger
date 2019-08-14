@@ -50,11 +50,12 @@ public:
     R_ECHO,
     R_READY,
     R_REQUEST,
-    R_ANSWER
+    R_ANSWER,
+
+    R_INVALID
   };
 
-  explicit RBCMessage(RBCSerializer &serialiser);
-
+  RBCMessage() = default;
   /// @name Getter functions
   /// @{
   /**
@@ -105,6 +106,11 @@ public:
     return payload_;
   }
 
+  bool is_valid() const
+  {
+    return type_ != MessageType::R_INVALID;
+  }
+
   template <typename T, typename D>
   friend struct serializers::MapSerializer;
 
@@ -120,7 +126,7 @@ protected:
   {}
 
 private:
-  MessageType type_;
+  MessageType type_{MessageType::R_INVALID};
   uint16_t
                     channel_;  ///< Channel Id of the broadcast channel (is this safe to truncate to uint8_t?)
   uint32_t          id_;       ///< Unique Id of the node
@@ -135,9 +141,6 @@ public:
   RBCMessageImpl(uint16_t channel = 0, uint32_t id = 0, uint8_t counter = 0,
                  SerialisedMessage msg = "")
     : RBCMessage{TYPE, channel, id, counter, msg}
-  {}
-  explicit RBCMessageImpl(RBCSerializer &serialiser)
-    : RBCMessage(serialiser)
   {}
 };
 
@@ -192,11 +195,6 @@ public:
 }  // namespace serializers
 
 namespace dkg {
-
-inline RBCMessage::RBCMessage(RBCSerializer &serialiser)
-{
-  serialiser >> *this;
-}
 
 inline RBCSerializer RBCMessage::Serialize() const
 {

@@ -21,7 +21,7 @@
 #include "ledger/chain/address.hpp"
 #include "network/muddle/muddle_endpoint.hpp"
 #include "network/muddle/rpc/server.hpp"
-#include "rbc_envelope.hpp"
+#include "rbc_messages.hpp"
 
 #include <bitset>
 #include <unordered_set>
@@ -100,9 +100,9 @@ protected:
                   deliver_msg_callback_;  ///< Callback for messages which have succeeded RBC protocol
   SubscriptionPtr rbc_subscription_;      ///< For receiving messages in the rbc channel
 
-  void         Send(RBCEnvelope const &env, MuddleAddress const &address);
-  virtual void Broadcast(RBCEnvelope const &env);
-  virtual void OnRBC(MuddleAddress const &from, RBCEnvelope const &envelope);
+  void         Send(RBCMessage const &env, MuddleAddress const &address);
+  virtual void Broadcast(RBCMessage const &env);
+  virtual void OnRBC(MuddleAddress const &from, RBCMessage const &message);
   void         OnRBroadcast(RBCMessage const &msg, uint32_t sender_index);
   void         OnREcho(RBCMessage const &msg, uint32_t sender_index);
   void         OnRReady(RBCMessage const &msg, uint32_t sender_index);
@@ -110,13 +110,13 @@ protected:
   void         OnRAnswer(RBCMessage const &msg, uint32_t sender_index);
   void         Deliver(SerialisedMessage const &msg, uint32_t sender_index);
 
-  static std::string MessageTypeToString(MessageType msg_type);
-  uint32_t           CabinetIndex(MuddleAddress const &other_address) const;
-  bool BasicMessageCheck(MuddleAddress const &from, std::shared_ptr<RBCMessage> const &msg_ptr);
-  bool CheckTag(RBCMessage const &msg);
-  bool SetMbar(TagType tag, RMessage const &msg, uint32_t sender_index);
-  bool SetDbar(TagType tag, RHash const &msg);
-  bool ReceivedEcho(TagType tag, RBCMessage const &msg);
+  static std::string  MessageTypeToString(MessageType msg_type);
+  uint32_t            CabinetIndex(MuddleAddress const &other_address) const;
+  bool                BasicMessageCheck(MuddleAddress const &from, RBCMessage const &msg);
+  bool                CheckTag(RBCMessage const &msg);
+  bool                SetMbar(TagType tag, RMessage const &msg, uint32_t sender_index);
+  bool                SetDbar(TagType tag, RHash const &msg);
+  bool                ReceivedEcho(TagType tag, RBCMessage const &msg);
   struct MessageCount ReceivedReady(TagType tag, RHash const &msg);
   bool                SetPartyFlag(uint32_t sender_index, TagType tag, MessageType msg_type);
 };

@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "dkg/rbc_messages.hpp"
 #include "core/serializers/counter.hpp"
 #include "core/serializers/main_serializer.hpp"
-#include "dkg/rbc_envelope.hpp"
 
 #include "gtest/gtest.h"
 
@@ -32,7 +32,8 @@ TEST(rbc_messages, broadcast)
   fetch::serializers::MsgPackSerializer serialiser{broadcast.Serialize()};
 
   fetch::serializers::MsgPackSerializer serialiser1(serialiser.data());
-  RBroadcast                            broadcast1{serialiser1};
+  RBCMessage                            broadcast1;
+  serialiser1 >> broadcast1;
 
   EXPECT_EQ(broadcast1.message(), broadcast.message());
   EXPECT_EQ(broadcast1.tag(), broadcast.tag());
@@ -45,7 +46,8 @@ TEST(rbc_messages, echo)
   fetch::serializers::MsgPackSerializer serialiser{echo.Serialize()};
 
   fetch::serializers::MsgPackSerializer serialiser1(serialiser.data());
-  REcho                                 echo1{serialiser1};
+  RBCMessage                            echo1;
+  serialiser1 >> echo1;
 
   EXPECT_EQ(echo1.hash(), echo.hash());
   EXPECT_EQ(echo1.tag(), echo.tag());
@@ -58,7 +60,8 @@ TEST(rbc_messages, ready)
   fetch::serializers::MsgPackSerializer serialiser{ready.Serialize()};
 
   fetch::serializers::MsgPackSerializer serialiser1(serialiser.data());
-  RReady                                ready1{serialiser1};
+  RBCMessage                            ready1;
+  serialiser1 >> ready1;
 
   EXPECT_EQ(ready1.hash(), ready.hash());
   EXPECT_EQ(ready1.tag(), ready.tag());
@@ -71,7 +74,8 @@ TEST(rbc_messages, request)
   fetch::serializers::MsgPackSerializer serialiser{request.Serialize()};
 
   fetch::serializers::MsgPackSerializer serialiser1(serialiser.data());
-  RRequest                              request1{serialiser1};
+  RBCMessage                            request1;
+  serialiser1 >> request1;
 
   EXPECT_EQ(request1.tag(), request.tag());
 }
@@ -83,33 +87,9 @@ TEST(rbc_messages, answer)
   fetch::serializers::MsgPackSerializer serialiser{answer.Serialize()};
 
   fetch::serializers::MsgPackSerializer serialiser1(serialiser.data());
-  RAnswer                               answer1{serialiser1};
+  RBCMessage                            answer1;
+  serialiser1 >> answer1;
 
   EXPECT_EQ(answer1.message(), answer.message());
   EXPECT_EQ(answer1.tag(), answer.tag());
-}
-
-TEST(rbc_messages, envelope)
-{
-  RAnswer answer{1, 1, 1, "hello"};
-
-  // Put into RBCEnvelope
-  RBCEnvelope env{answer};
-
-  // Serialise the envelope
-  fetch::serializers::SizeCounter env_counter;
-  env_counter << env;
-
-  fetch::serializers::MsgPackSerializer env_serialiser;
-  env_serialiser.Reserve(env_counter.size());
-  env_serialiser << env;
-
-  fetch::serializers::MsgPackSerializer env_serialiser1{env_serialiser.data()};
-  RBCEnvelope                           env1;
-  env_serialiser1 >> env1;
-
-  // Check the message type of envelopes match
-  EXPECT_EQ(env1.Message()->type(), RBCMessage::MessageType::R_ANSWER);
-  EXPECT_EQ(env1.Message()->tag(), answer.tag());
-  EXPECT_EQ(env1.Message()->message(), answer.message());
 }

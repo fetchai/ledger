@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "dkg/rbc.hpp"
 #include "core/logging.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
-#include "dkg/rbc.hpp"
 
 namespace fetch {
 namespace dkg {
@@ -73,11 +73,21 @@ RBC::RBC(Endpoint &endpoint, MuddleAddress address, CabinetMembers const &cabine
     RBCSerializer serialiser(payload);
 
     // Deserialize the RBCEnvelope
-    RBCEnvelope env;
-    serialiser >> env;
+    RBCMessage msg;
+    try
+    {
+      serialiser >> msg;
+    }
+    catch (...)
+    {
+      std::cout << "PANIC! PANIC! PANIC! PANIC! PANIC! PANIC! PANIC! PANIC! PANIC! PANIC! "
+                << std::endl;
+      // Possibly bad payload.
+      return;
+    }
 
     // Dispatch the event
-    OnRBC(from, env);
+    OnRBC(from, msg);
   });
 }
 
@@ -113,17 +123,17 @@ void RBC::ResetCabinet()
  * @param env RBCEnvelope to be serialised and sent
  * @param address Destination muddle address
  */
-void RBC::Send(RBCEnvelope const &env, MuddleAddress const &address)
+void RBC::Send(RBCMessage const &msg, MuddleAddress const &address)
 {
   // Serialise the RBCEnvelope
-  RBCSerializerCounter env_counter;
-  env_counter << env;
+  RBCSerializerCounter msg_counter;
+  msg_counter << msg;
 
-  RBCSerializer env_serializer;
-  env_serializer.Reserve(env_counter.size());
-  env_serializer << env;
+  RBCSerializer msg_serializer;
+  msg_serializer.Reserve(msg_counter.size());
+  msg_serializer << msg;
 
-  endpoint_.Send(address, SERVICE_DKG, CHANNEL_BROADCAST, env_serializer.data());
+  endpoint_.Send(address, SERVICE_DKG, CHANNEL_BROADCAST, msg_serializer.data());
 }
 
 /**
@@ -131,22 +141,22 @@ void RBC::Send(RBCEnvelope const &env, MuddleAddress const &address)
  *
  * @param env RBCEnvelope message to be serialised and broadcast
  */
-void RBC::Broadcast(RBCEnvelope const &env)
+void RBC::Broadcast(RBCMessage const &msg)
 {
   // Serialise the RBCEnvelope
-  RBCSerializerCounter env_counter;
-  env_counter << env;
+  RBCSerializerCounter msg_counter;
+  msg_counter << msg;
 
-  RBCSerializer env_serializer;
-  env_serializer.Reserve(env_counter.size());
-  env_serializer << env;
+  RBCSerializer msg_serializer;
+  msg_serializer.Reserve(msg_counter.size());
+  msg_serializer << msg;
 
   // Broadcast without echo
   for (const auto &address : current_cabinet_)
   {
     if (address != address_)
     {
-      endpoint_.Send(address, SERVICE_DKG, CHANNEL_BROADCAST, env_serializer.data());
+      endpoint_.Send(address, SERVICE_DKG, CHANNEL_BROADCAST, msg_serializer.data());
     }
   }
 }
@@ -159,9 +169,8 @@ void RBC::Broadcast(RBCEnvelope const &env)
  */
 void RBC::SendRBroadcast(SerialisedMessage const &msg)
 {
-  RBroadcast  broadcast_msg{CHANNEL_BROADCAST, id_, ++msg_counter_, msg};
-  RBCEnvelope env{broadcast_msg};
-  Broadcast(env);
+  RBroadcast broadcast_msg{CHANNEL_BROADCAST, id_, ++msg_counter_, msg};
+  Broadcast(broadcast_msg);
   OnRBroadcast(broadcast_msg, id_);  // Self sending
 }
 
@@ -245,14 +254,15 @@ struct RBC::MessageCount RBC::ReceivedReady(TagType tag, RHash const &msg)
  * @param msg_ptr Shared pointer of message
  * @return Bool of whether the message passes the test or not
  */
-bool RBC::BasicMessageCheck(MuddleAddress const &from, std::shared_ptr<RBCMessage> const &msg_ptr)
+bool RBC::BasicMessageCheck(MuddleAddress const &from, RBCMessage const &msg)
 {
-  if (msg_ptr == nullptr)
+  if (!msg.is_valid())
   {
-    return false;  // To catch nullptr return in Message() switch statement default
+    return false;
   }
-  else if (current_cabinet_.find(from) == current_cabinet_.end() or
-           msg_ptr->channel() != CHANNEL_BROADCAST)
+
+  if ((current_cabinet_.find(from) == current_cabinet_.end()) ||
+      (msg.channel() != CHANNEL_BROADCAST))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Node ", id_,
                    " received message from unknown sender/wrong channel");
@@ -268,54 +278,45 @@ bool RBC::BasicMessageCheck(MuddleAddress const &from, std::shared_ptr<RBCMessag
  * @param envelope RBCEnvelope message
  * @param transmitter Muddle address of transmitter
  */
-void RBC::OnRBC(MuddleAddress const &from, RBCEnvelope const &envelope)
+void RBC::OnRBC(MuddleAddress const &from, RBCMessage const &message)
 {
-  auto     msg_ptr = envelope.Message();
   uint32_t sender_index{CabinetIndex(from)};
 
-  if (msg_ptr == nullptr)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Node: ", id_, " can not process payload from node ",
-                   sender_index);
-
-    return;
-  }
-
-  if (!BasicMessageCheck(from, msg_ptr))
+  if (!BasicMessageCheck(from, message))
   {
     return;
   }
 
-  switch (msg_ptr->type())
+  switch (message.type())
   {
   case RBCMessage::MessageType::R_BROADCAST:
   {
     FETCH_LOG_TRACE(LOGGING_NAME, "Node: ", id_, " received RBroadcast from node ", sender_index);
-    OnRBroadcast(*msg_ptr, sender_index);
+    OnRBroadcast(message, sender_index);
     break;
   }
   case RBCMessage::MessageType::R_ECHO:
   {
     FETCH_LOG_TRACE(LOGGING_NAME, "Node: ", id_, " received REcho from node ", sender_index);
-    OnREcho(*msg_ptr, sender_index);
+    OnREcho(message, sender_index);
     break;
   }
   case RBCMessage::MessageType::R_READY:
   {
     FETCH_LOG_TRACE(LOGGING_NAME, "Node: ", id_, " received RReady from node ", sender_index);
-    OnRReady(*msg_ptr, sender_index);
+    OnRReady(message, sender_index);
     break;
   }
   case RBCMessage::MessageType::R_REQUEST:
   {
     FETCH_LOG_TRACE(LOGGING_NAME, "Node: ", id_, " received RRequest from node ", sender_index);
-    OnRRequest(*msg_ptr, sender_index);
+    OnRRequest(message, sender_index);
     break;
   }
   case RBCMessage::MessageType::R_ANSWER:
   {
     FETCH_LOG_TRACE(LOGGING_NAME, "Node: ", id_, " received RAnswer from node ", sender_index);
-    OnRAnswer(*msg_ptr, sender_index);
+    OnRAnswer(message, sender_index);
     break;
   }
   default:
@@ -346,9 +347,9 @@ void RBC::OnRBroadcast(RBCMessage const &msg, uint32_t sender_index)
   {
     if (SetMbar(tag, msg, sender_index))
     {
-      REcho       echo_msg{msg.channel(), msg.id(), msg.counter(), MessageHash(msg.message())};
-      RBCEnvelope env{echo_msg};
-      Broadcast(env);
+      REcho echo_msg{msg.channel(), msg.id(), msg.counter(), MessageHash(msg.message())};
+
+      Broadcast(echo_msg);
       OnREcho(echo_msg, id_);  // self sending.
     }
   }
@@ -381,9 +382,9 @@ void RBC::OnREcho(RBCMessage const &msg, uint32_t sender_index)
                   sender_index, " with counter ", msg.counter(), " and id ", msg.id());
   if (ReceivedEcho(tag, msg))
   {
-    RReady      ready_msg{msg.channel(), msg.id(), msg.counter(), msg.hash()};
-    RBCEnvelope env{ready_msg};
-    Broadcast(env);
+    RReady ready_msg{msg.channel(), msg.id(), msg.counter(), msg.hash()};
+
+    Broadcast(ready_msg);
     OnRReady(ready_msg, id_);  // self sending.
   }
 }
@@ -412,16 +413,15 @@ void RBC::OnRReady(RBCMessage const &msg, uint32_t sender_index)
   if (threshold_ > 0 && msgs_counter.ready_count == threshold_ + 1 &&
       msgs_counter.echo_count < (current_cabinet_.size() - threshold_))
   {
-    RReady      ready_msg{msg.channel(), msg.id(), msg.counter(), msg.hash()};
-    RBCEnvelope env{ready_msg};
-    Broadcast(env);
+    RReady ready_msg{msg.channel(), msg.id(), msg.counter(), msg.hash()};
+    Broadcast(ready_msg);
     OnRReady(ready_msg, id_);  // self sending.
   }
   else if (msgs_counter.ready_count == 2 * threshold_ + 1)
   {
     if (!SetDbar(tag, msg))
     {
-      RBCEnvelope env{RRequest{msg.channel(), msg.id(), msg.counter()}};
+      RRequest send_msg{msg.channel(), msg.id(), msg.counter()};
 
       uint32_t counter{0};
       auto     im = current_cabinet_.begin();
@@ -430,7 +430,7 @@ void RBC::OnRReady(RBCMessage const &msg, uint32_t sender_index)
       {
         if (*im != address_)
         {
-          Send(env, *im);
+          Send(send_msg, *im);
           ++counter;
         }
         ++im;
@@ -458,7 +458,7 @@ void RBC::OnRReady(RBCMessage const &msg, uint32_t sender_index)
       parties_[sender_index].flags.erase(tag);
     }
   }
-}
+}  // namespace dkg
 
 /**
  * Handler for RRequest message. If valid and we have the requested message then send a RAnswer
@@ -481,10 +481,10 @@ void RBC::OnRRequest(RBCMessage const &msg, uint32_t sender_index)
                   sender_index, " with counter ", msg.counter(), " and id ", msg.id());
   if (!broadcasts_[tag].mbar.empty())
   {
-    RBCEnvelope env{RAnswer{msg.channel(), msg.id(), msg.counter(), broadcasts_[tag].mbar}};
+    RAnswer nmsg{msg.channel(), msg.id(), msg.counter(), broadcasts_[tag].mbar};
 
     auto im = std::next(current_cabinet_.begin(), sender_index);
-    Send(env, *im);
+    Send(nmsg, *im);
   }
 }
 
