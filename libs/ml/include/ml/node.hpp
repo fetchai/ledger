@@ -143,21 +143,32 @@ std::shared_ptr<T> Node<T, O>::Evaluate(bool is_training)
     cached_output_status_ = CachedOutputState::VALID_CACHE;
   }
 
-  //   debug
-  //    std::cout << "****" << this->name_ << std::endl;
-  //    std::cout << "shape: ";
-  //    for (std::size_t i = 0; i < cached_output_.shape().size(); ++) {
-  //       std::cout << cached_output_.shape(i) << ", ";
-  //    }
-  //    std::cout << std::endl;
-
-  //    if(cached_output_.shape().size() == 3u){
-  //    	std::cout << "||||first batch" << std::endl;
-  //	    std::cout << cached_output_.View(0).Copy().ToString() << std::endl;
-  //    }else{
-  //	    std::cout << "####original" << std::endl;
-  //    	std::cout << cached_output_.ToString() << std::endl;
-  //    }
+  auto n = this->name_;
+  auto s = cached_output_.shape();
+  auto fv = *cached_output_.cbegin();
+  FETCH_UNUSED(n);
+  FETCH_UNUSED(s);
+  FETCH_UNUSED(fv);
+//  int str_len = 100;
+//  std::cout << "****" << this->name_ << std::endl;
+//  std::cout << "shape: ";
+//  for (std::size_t i = 0; i < cached_output_.shape().size(); i++) {
+//     std::cout << cached_output_.shape(i) << ", ";
+//  }
+//  std::cout << std::endl;
+//
+//  if(cached_output_.shape().size() == 3u){
+//    std::cout << "||||first batch first time step" << std::endl;
+//    auto tmp = cached_output_.View(0).Copy().View(0).Copy().ToString();
+//    tmp.resize(str_len);
+//    std::cout << tmp << std::endl;
+//  }else{
+//    std::cout << "####original" << std::endl;
+//    auto tmp = cached_output_.Copy().ToString();
+//    tmp.resize(str_len);
+//    std::cout << tmp << std::endl;
+//  }
+//  std::cout << std::endl;
 
   return std::make_shared<T>(cached_output_);
 }

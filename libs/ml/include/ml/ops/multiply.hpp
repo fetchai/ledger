@@ -53,7 +53,8 @@ public:
     assert(inputs.size() == 2);
     assert(inputs.at(0)->shape().size() <=
            3);  // we do not support input of more than 3D (including batch dims)
-    assert(inputs.at(0)->size() == inputs.at(1)->size());
+	  assert(inputs.at(0)->shape().size() ==
+	         inputs.at(1)->shape().size());  // check if addition is broadcastable
     assert(output.shape() == inputs.front()->shape());
 
     fetch::math::Multiply((*inputs.at(0)), (*inputs.at(1)), output);

@@ -87,7 +87,7 @@ public:
 
     // do the re-shifting
     std::string shifted_output = this->template AddNode<fetch::ml::ops::Add<ArrayType>>(
-        name + "_Beta_Addition", {normalized_output, beta});
+        name + "_Beta_Addition", {scaled_output, beta});
 
     this->AddInputNode(input);
     this->SetOutputNode(shifted_output);

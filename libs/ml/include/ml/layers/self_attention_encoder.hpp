@@ -97,7 +97,7 @@ public:
 
   std::string positionwise_feedforward(std::string name, std::string const &input)
   {
-    // position wise feedforward with relu acitvation
+    // position wise feedforward with gelu acitvation
     std::string ff_first_layer =
         this->template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
             name + "_Feedforward_No_1", {input}, static_cast<SizeType>(model_dim_),

@@ -49,7 +49,6 @@ using WeightsInitType = fetch::ml::ops::WeightsInitialisation;
 using ActivationType  = fetch::ml::details::ActivationType;
 
 ArrayType create_position_data(SizeType max_seq_len, SizeType batch_size);
-ArrayType create_mask_data(SizeType max_seq_len, ArrayType seq_len_per_batch);
 std::pair<std::vector<ArrayType>, ArrayType> prepare_data_for_simple_cls(SizeType max_seq_len,
                                                                          SizeType batch_size);
 
@@ -111,15 +110,26 @@ int main(/*int ac, char **av*/)
 	std::string error =
 	 g.template AddNode<CrossEntropyLoss<ArrayType>>("Error", {classification_output, label});
 	
+	// ######################################################################################
+	// trivial test for working masking
 	SizeType batch_size = 1u;
 	SizeType seq_len = 9u;
 	
-	ArrayType tokens_data({max_seq_len, batch_size});
+	// setting 0 - seq_len to 1, otherwise 0
+	ArrayType tokens_data0({max_seq_len, batch_size});
 	for(SizeType t=0; t<seq_len; t++){
 		for(SizeType b=0; b<batch_size; b++) {
-			tokens_data.Set(t, b, static_cast<DataType>(1));
+			tokens_data0.Set(t, b, static_cast<DataType>(1));
 		}
 	}
+	// setting 0 - max_seq_len to 1, otherwise 0
+	ArrayType tokens_data1({max_seq_len, batch_size});
+	for(SizeType t=0; t<max_seq_len; t++){
+		for(SizeType b=0; b<batch_size; b++) {
+			tokens_data0.Set(t, b, static_cast<DataType>(1));
+		}
+	}
+	// for identical masking, tokens_data0, tokens_data1 should give identical cls output
 	ArrayType mask_data({max_seq_len, max_seq_len, batch_size});
 	for(SizeType i=0; i<seq_len; i++){
 		for(SizeType t=0; t<seq_len; t++){
@@ -137,42 +147,48 @@ int main(/*int ac, char **av*/)
 	ArrayType segment_data({max_seq_len, batch_size});
 	g.SetInput(segment, segment_data);
 	g.SetInput(position, position_data);
-	g.SetInput(tokens, tokens_data);
+	g.SetInput(tokens, tokens_data0);
 	g.SetInput(mask, mask_data);
+	auto output0 = g.Evaluate(classification_output, false);
 	
-	std::cout << "Starting forward passing" << std::endl;
-	auto cur_time  = std::chrono::high_resolution_clock::now();
-	auto output = g.Evaluate(classification_output, false);
-	auto time_span = std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - cur_time);
-	std::cout << "time span: " << static_cast<double>(time_span.count()) << std::endl;
-	std::cout << "output.ToString(): " << output.ToString() << std::endl;
+	g.SetInput(segment, segment_data);
+	g.SetInput(position, position_data);
+	g.SetInput(tokens, tokens_data1);
+	g.SetInput(mask, mask_data);
+	auto output1 = g.Evaluate(classification_output, false);
 	
-//	// Initialise Optimiser
-//	fetch::ml::optimisers::AdamOptimiser<ArrayType> optimiser(
-//	 std::make_shared<GraphType>(g), {segment, position, tokens, mask}, label,
-//	 error, static_cast<DataType>(1e-3));
-//
-//  auto train_data = prepare_data_for_simple_cls(max_seq_len, 30u);
-//  for (SizeType i = 0; i < 100; i++)
-//  {
-//    DataType loss = optimiser.Run(train_data.first, train_data.second);
-//    std::cout << "loss: " << loss << std::endl;
-//  }
-//
-//  std::cout << "Starting forward passing for manual evaluation" << std::endl;
-//  ArrayType segment_data  = train_data.first[0];
-//  ArrayType position_data = train_data.first[1];
-//  ArrayType tokens_data   = train_data.first[2];
-//  ArrayType mask_data     = train_data.first[3];
-//  g.SetInput(segment, segment_data);
-//  g.SetInput(position, position_data);
-//  g.SetInput(tokens, tokens_data);
-//  g.SetInput(mask, mask_data);
-//  auto output = g.Evaluate(classification_output, false);
-//  std::cout << "model output: " << output.ToString() << std::endl;
-//  std::cout << "label output: " << train_data.second.ToString() << std::endl;
-//
-//  return 0;
+	if(output0 != output1){
+		throw std::runtime_error("masking not working properly");
+	}
+	
+	// ######################################################################################
+	// test for working backprop
+	// Initialise Optimiser
+	fetch::ml::optimisers::AdamOptimiser<ArrayType> optimiser(
+	 std::make_shared<GraphType>(g), {segment, position, tokens, mask}, label,
+	 error, static_cast<DataType>(1e-3));
+
+  auto train_data = prepare_data_for_simple_cls(max_seq_len, 30u);
+  for (SizeType i = 0; i < 100; i++)
+  {
+    optimiser.Run(train_data.first, train_data.second);
+  }
+
+  std::cout << "Starting forward passing for manual evaluation" << std::endl;
+  segment_data  = train_data.first[0];
+  position_data = train_data.first[1];
+  ArrayType tokens_data   = train_data.first[2];
+  mask_data     = train_data.first[3];
+  g.SetInput(segment, segment_data);
+  g.SetInput(position, position_data);
+  g.SetInput(tokens, tokens_data);
+  g.SetInput(mask, mask_data);
+  auto output = g.Evaluate(classification_output, false);
+  if(!output.AllClose(train_data.second, static_cast<DataType>(0), static_cast<DataType>(0.2))){
+	  throw std::runtime_error("back prop not working properly");
+  }
+
+  return 0;
 }
 
 std::pair<std::vector<ArrayType>, ArrayType> prepare_data_for_simple_cls(SizeType max_seq_len,
@@ -235,24 +251,4 @@ ArrayType create_position_data(SizeType max_seq_len, SizeType batch_size)
     }
   }
   return ret_position;
-}
-
-ArrayType create_mask_data(SizeType max_seq_len, ArrayType seq_len_per_batch)
-{
-  assert(seq_len_per_batch.shape().size() == 2);
-  assert(fetch::math::Max(seq_len_per_batch) <= static_cast<DataType>(max_seq_len));
-  SizeType  batch_size = seq_len_per_batch.shape(0);
-  ArrayType ret_mask({max_seq_len, max_seq_len, batch_size});
-  for (SizeType b = 0; b < batch_size; b++)
-  {
-    auto seq_len = static_cast<SizeType>(seq_len_per_batch.At(0, b));
-    for (SizeType i = 0; i < seq_len; i++)
-    {
-      for (SizeType t = 0; t < seq_len; t++)
-      {
-        ret_mask.Set(i, t, b, static_cast<DataType>(1));
-      }
-    }
-  }
-  return ret_mask;
 }
