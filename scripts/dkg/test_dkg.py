@@ -68,7 +68,7 @@ class DKGInstance(Instance):
     def configure_cmd_for_demo(self, node_list, threshold):
         # args shall be : ./exe beacon_address port threshold peer1 priv_key_b64 peer2 priv_key_b64...
         self._cmd = [self._app_path, ]
-        self._cmd.append(self._pub_key_b64)     # beacon address
+        self._cmd.append(node_list[0]._pub_key_b64)     # beacon address
         self._cmd.append(str(self._port_start))  # this port
         self._cmd.append(str(threshold))                # threshold
 
