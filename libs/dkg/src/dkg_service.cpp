@@ -56,6 +56,9 @@ char const *ToString(DkgService::State state)
 
   switch (state)
   {
+  case DkgService::State::PRE_SYNC:
+    text = "Pre Sync";
+    break;
   case DkgService::State::BUILD_AEON_KEYS:
     text = "Build Aeon Keys";
     break;
@@ -94,7 +97,7 @@ DkgService::DkgService(Endpoint &endpoint, ConstByteArray address)
   , rpc_client_{"dkg", endpoint_, SERVICE_DKG, CHANNEL_RPC}
   , state_machine_{std::make_shared<StateMachine>("dkg", State::BUILD_AEON_KEYS, ToString)}
   , shares_subscription(endpoint_.Subscribe(SERVICE_DKG, CHANNEL_SECRET_KEY))
-  , rbc_{endpoint_, address_, current_cabinet_,
+  , rbc_{endpoint_, address_,
          [this](MuddleAddress const &address, ConstByteArray const &payload) -> void {
            OnRbcDeliver(address, payload);
          }}
@@ -102,6 +105,7 @@ DkgService::DkgService(Endpoint &endpoint, ConstByteArray address)
          [this](DKGEnvelope const &envelope) -> void { SendReliableBroadcast(envelope); },
          [this](MuddleAddress const &destination, std::pair<std::string, std::string> const &shares)
              -> void { SendShares(destination, shares); }}
+  , pre_dkg_sync_{endpoint, address_, 68} // TODO(HUT): specify channel correctly
 {
   group_g_.clear();
   group_g_ = dkg_.group();
@@ -125,11 +129,12 @@ DkgService::DkgService(Endpoint &endpoint, ConstByteArray address)
 
   // configure the state handlers
   // clang-format off
-          state_machine_->RegisterHandler(State::BUILD_AEON_KEYS,     this, &DkgService::OnBuildAeonKeysState);
-          state_machine_->RegisterHandler(State::WAIT_FOR_DKG_COMPLETION,  this, &DkgService::OnWaitForDkgCompletionState);
-          state_machine_->RegisterHandler(State::BROADCAST_SIGNATURE, this, &DkgService::OnBroadcastSignatureState);
-          state_machine_->RegisterHandler(State::COLLECT_SIGNATURES,  this, &DkgService::OnCollectSignaturesState);
-          state_machine_->RegisterHandler(State::COMPLETE,            this, &DkgService::OnCompleteState);
+  state_machine_->RegisterHandler(State::PRE_SYNC,     this, &DkgService::OnPreSync);
+  state_machine_->RegisterHandler(State::BUILD_AEON_KEYS,     this, &DkgService::OnBuildAeonKeysState);
+  state_machine_->RegisterHandler(State::WAIT_FOR_DKG_COMPLETION,  this, &DkgService::OnWaitForDkgCompletionState);
+  state_machine_->RegisterHandler(State::BROADCAST_SIGNATURE, this, &DkgService::OnBroadcastSignatureState);
+  state_machine_->RegisterHandler(State::COLLECT_SIGNATURES,  this, &DkgService::OnCollectSignaturesState);
+  state_machine_->RegisterHandler(State::COMPLETE,            this, &DkgService::OnCompleteState);
   // clang-format on
 }
 
@@ -229,6 +234,24 @@ DkgService::Status DkgService::GenerateEntropy(Digest block_digest, uint64_t blo
   }
 
   return status;
+}
+
+/**
+ * State Handler for PRE_SYNC - note the sync shall have been set up before this dkg state machine becomes active
+ *
+ * @return The next state to progress to
+ */
+State DkgService::OnPreSync()
+{
+  if(!pre_dkg_sync_.Ready())
+  {
+    state_machine_->Delay(100ms);
+    return State::PRE_SYNC;
+  }
+  else
+  {
+    return State::BUILD_AEON_KEYS;
+  }
 }
 
 /**
@@ -554,6 +577,49 @@ RoundPtr DkgService::LookupRound(uint64_t round, bool create)
 bool DkgService::IsSynced() const
 {
   return is_synced_;
+}
+
+void DkgService::ResetCabinet(CabinetMembers cabinet, uint32_t threshold)
+{
+  is_synced_ = false;
+
+  // Determine whether we are in the cabinet and so should proceed
+  if (cabinet.find(address_) == cabinet.end())
+  {
+    // Not in cabinet case
+    FETCH_LOG_INFO(LOGGING_NAME, "Node not in cabinet. Quitting DKG");
+    is_synced_ = true;
+    return;
+  }
+
+  FETCH_LOCK(cabinet_lock_);
+
+  assert(cabinet.size() > threshold);
+  // Check threshold meets the requirements for the RBC
+  if (cabinet.size() % 3 == 0)
+  {
+    assert(threshold >= static_cast<uint32_t>(cabinet.size() / 3 - 1));
+  }
+  else
+  {
+    assert(threshold >= static_cast<uint32_t>(cabinet.size() / 3));
+  }
+  current_cabinet_ = std::move(cabinet);
+  if (threshold == std::numeric_limits<uint32_t>::max())
+  {
+    current_threshold_ = static_cast<uint32_t>(current_cabinet_.size() / 2 - 1);
+  }
+  else
+  {
+    current_threshold_ = threshold;
+  }
+  id_ = static_cast<uint32_t>(
+      std::distance(current_cabinet_.begin(), current_cabinet_.find(address_)));
+  FETCH_LOG_INFO(LOGGING_NAME, "Resetting cabinet. Cabinet size: ", current_cabinet_.size(),
+                 " threshold: ", threshold);
+  dkg_.ResetCabinet();
+  rbc_.ResetCabinet(cabinet);
+  pre_dkg_sync_.ResetCabinet(cabinet, threshold);
 }
 
 }  // namespace dkg

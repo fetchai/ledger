@@ -31,6 +31,8 @@
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
 
+#include "dkg/pre_dkg_sync.hpp"
+
 #include <cstddef>
 #include <cstdint>
 #include <deque>
@@ -105,6 +107,7 @@ public:
 
   enum class State
   {
+    PRE_SYNC,
     BUILD_AEON_KEYS,
     WAIT_FOR_DKG_COMPLETION,
     BROADCAST_SIGNATURE,
@@ -120,7 +123,7 @@ public:
   using RBCMessageType = DKGEnvelope;
 
   // Construction / Destruction
-  explicit DkgService(Endpoint &endpoint, ConstByteArray address);
+  DkgService(Endpoint &endpoint, ConstByteArray address);
   DkgService(DkgService const &) = delete;
   DkgService(DkgService &&)      = delete;
   ~DkgService() override         = default;
@@ -145,48 +148,8 @@ public:
     return state_machine_;
   }
 
-  void ResetCabinet(CabinetMembers cabinet,
-                    uint32_t       threshold = std::numeric_limits<uint32_t>::max())
-  {
-    is_synced_ = false;
+  void ResetCabinet(CabinetMembers cabinet, uint32_t threshold = std::numeric_limits<uint32_t>::max());
 
-    // Determine whether we are in the cabinet and so should proceed
-    if (cabinet.find(address_) == cabinet.end())
-    {
-      // Not in cabinet case
-      FETCH_LOG_INFO(LOGGING_NAME, "Node not in cabinet. Quitting DKG");
-      is_synced_ = true;
-      return;
-    }
-
-    FETCH_LOCK(cabinet_lock_);
-
-    assert(cabinet.size() > threshold);
-    // Check threshold meets the requirements for the RBC
-    if (cabinet.size() % 3 == 0)
-    {
-      assert(threshold >= static_cast<uint32_t>(cabinet.size() / 3 - 1));
-    }
-    else
-    {
-      assert(threshold >= static_cast<uint32_t>(cabinet.size() / 3));
-    }
-    current_cabinet_ = std::move(cabinet);
-    if (threshold == std::numeric_limits<uint32_t>::max())
-    {
-      current_threshold_ = static_cast<uint32_t>(current_cabinet_.size() / 2 - 1);
-    }
-    else
-    {
-      current_threshold_ = threshold;
-    }
-    id_ = static_cast<uint32_t>(
-        std::distance(current_cabinet_.begin(), current_cabinet_.find(address_)));
-    FETCH_LOG_INFO(LOGGING_NAME, "Resetting cabinet. Cabinet size: ", current_cabinet_.size(),
-                   " threshold: ", threshold);
-    dkg_.ResetCabinet();
-    rbc_.ResetCabinet();
-  }
   void SendShares(MuddleAddress const &                      destination,
                   std::pair<std::string, std::string> const &shares);
   void SendReliableBroadcast(RBCMessageType const &msg);
@@ -226,6 +189,7 @@ private:
 
   /// @name State Handlers
   /// @{
+  State OnPreSync();
   State OnBuildAeonKeysState();
   State OnWaitForDkgCompletionState();
   State OnBroadcastSignatureState();
@@ -250,6 +214,7 @@ private:
                            shares_subscription;  ///< Subscription for receiving secret shares
   RBC                      rbc_;                 ///< Runs the RBC protocol
   DistributedKeyGeneration dkg_;                 ///< Runs DKG protocol
+  PreDkgSync               pre_dkg_sync_;        ///< Runs pre DKG sync protocol
 
   /// @name State Machine Data
   /// @{

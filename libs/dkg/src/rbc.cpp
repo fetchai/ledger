@@ -55,13 +55,12 @@ std::string RBC::MsgTypeToString(MsgType msg_type)
  * @param threshold Threshold number of Byzantine peers
  * @param dkg
  */
-RBC::RBC(Endpoint &endpoint, MuddleAddress address, CabinetMembers const &cabinet,
+RBC::RBC(Endpoint &endpoint, MuddleAddress address,
          std::function<void(MuddleAddress const &, byte_array::ConstByteArray const &)> call_back,
          uint8_t                                                                        channel)
   : CHANNEL_BROADCAST{channel}
   , address_{std::move(address)}
   , endpoint_{endpoint}
-  , current_cabinet_{cabinet}
   , deliver_msg_callback_{std::move(call_back)}
   , rbc_subscription_(endpoint.Subscribe(SERVICE_DKG, CHANNEL_BROADCAST))
 {
@@ -84,8 +83,13 @@ RBC::RBC(Endpoint &endpoint, MuddleAddress address, CabinetMembers const &cabine
 /**
  * Resets the RBC for a new cabinet
  */
-void RBC::ResetCabinet()
+void RBC::ResetCabinet(CabinetMembers const &cabinet)
 {
+  {
+    std::lock_guard<std::mutex> lock{mutex_current_cabinet_};
+    current_cabinet_ = cabinet;
+  }
+
   assert(!current_cabinet_.empty());
   assert(current_cabinet_.find(address_) != current_cabinet_.end());
 

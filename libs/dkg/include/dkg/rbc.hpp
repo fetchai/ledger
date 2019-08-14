@@ -43,12 +43,12 @@ public:
   using Subscription    = muddle::Subscription;
   using SubscriptionPtr = std::shared_ptr<muddle::Subscription>;
 
-  RBC(Endpoint &endpoint, MuddleAddress address, CabinetMembers const &cabinet,
+  RBC(Endpoint &endpoint, MuddleAddress address,
       std::function<void(MuddleAddress const &, byte_array::ConstByteArray const &)> call_back,
       uint8_t                                                                        channel = 2);
 
   // Operators
-  void ResetCabinet();
+  void ResetCabinet(CabinetMembers const &cabinet);
   void SendRBroadcast(SerialisedMessage const &msg);
 
 protected:
@@ -91,14 +91,15 @@ protected:
   std::mutex mutex_deliver_;    // protects the delivered message queue
   std::mutex mutex_broadcast_;  // protects broadcasts_
 
+  std::mutex mutex_current_cabinet_;
+
   // For broadcast
   static constexpr uint16_t SERVICE_DKG = 5001;
   uint8_t                   CHANNEL_BROADCAST;  ///< Channel for reliable broadcast
 
   MuddleAddress const address_;   ///< Our muddle address
   Endpoint &          endpoint_;  ///< The muddle endpoint to communicate on
-  CabinetMembers const
-      &    current_cabinet_;  ///< The set of muddle addresses of the cabinet (including our own)
+  CabinetMembers      current_cabinet_;  ///< The set of muddle addresses of the cabinet (including our own)
   uint32_t threshold_;  ///< Number of byzantine nodes (this is assumed to take the maximum allowed
                         ///< value satisying threshold_ < current_cabinet_.size()
   std::function<void(MuddleAddress const &, byte_array::ConstByteArray const &)>

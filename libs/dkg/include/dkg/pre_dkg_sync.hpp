@@ -20,6 +20,9 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "dkg/rbc.hpp"
 #include "network/muddle/muddle.hpp"
+/*#include "telemetry/registry.hpp"*/
+#include "telemetry/telemetry.hpp"
+#include "telemetry/gauge.hpp"
 
 #include <unordered_map>
 
@@ -29,32 +32,41 @@ namespace dkg {
 class PreDkgSync
 {
 public:
-  using Muddle         = fetch::muddle::Muddle;
+  using Endpoint       = muddle::MuddleEndpoint;
   using ConstByteArray = byte_array::ConstByteArray;
   using MuddleAddress  = ConstByteArray;
-  using PeersList      = std::unordered_map<MuddleAddress, fetch::network::Uri>;
+  using CabinetMembers = std::set<MuddleAddress>;
 
-  PreDkgSync(Muddle &muddle, uint8_t channel);
-  void ResetCabinet(PeersList const &peers);
-  void Connect();
-  bool ready();
+  PreDkgSync(Endpoint &endpoint, ConstByteArray address, uint8_t channel);
+
+  void ResetCabinet(CabinetMembers const &members, uint32_t threshold);
+  bool Ready();
 
 private:
   using Cabinet = std::set<MuddleAddress>;
 
-  Muddle &                          muddle_;
-  PeersList                         peers_;
-  Cabinet                           cabinet_;
-  RBC                               rbc_;
-  std::mutex                        mutex_;
-  std::unordered_set<MuddleAddress> joined_;
-  uint32_t                          joined_counter_{0};
-  bool                              committee_sent_{false};
-  bool                              ready_{false};
+  Endpoint         &endpoint_;
+  CabinetMembers members_;
+  Cabinet        cabinet_;
+  RBC            rbc_;
+  std::mutex     mutex_;
+  uint32_t       ready_peers_ = 0;
+  bool           self_ready_ = false;
+  uint32_t       threshold_ = std::numeric_limits<uint32_t>::max();
+
+  std::map<MuddleAddress, std::unordered_set<MuddleAddress>> other_peer_connections;
+
+  const uint64_t time_quantisation_s     = 30;
+  const uint64_t grace_period_time_units = 3;
+
+  uint64_t start_time_ = std::numeric_limits<uint64_t>::max();
 
   void OnRbcMessage(MuddleAddress const &from, std::set<MuddleAddress> const &connections);
-  bool CheckConnections(std::set<MuddleAddress> const &connections);
-  void ReceivedDkgReady();
+  bool CheckConnections(MuddleAddress const &from, std::set<MuddleAddress> const &connections);
+  void SetStartTime();
+
+  /*telemetry::CounterPtr         tele_ready_peers_;*/
+  /* telemetry::GaugePtr<uint64_t> sync_time_gauge_;*/
 };
 }  // namespace dkg
 }  // namespace fetch

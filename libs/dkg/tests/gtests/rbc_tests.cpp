@@ -70,11 +70,11 @@ public:
     OUT_OF_SEQUENCE_MSGS,
     WRONG_RANK
   };
-  FaultyRbc(Endpoint &endpoint, MuddleAddress address, CabinetMembers const &cabinet,
+  FaultyRbc(Endpoint &endpoint, MuddleAddress address,
             std::function<void(ConstByteArray const &address, ConstByteArray const &payload)>
                                          broadcast_callback,
             const std::vector<Failures> &failures = {})
-    : RBC{endpoint, std::move(address), cabinet, std::move(broadcast_callback)}
+    : RBC{endpoint, std::move(address), std::move(broadcast_callback)}
   {
     for (auto f : failures)
     {
@@ -277,7 +277,7 @@ struct RbcMember
     , muddle_certificate{CreateCertificate()}
     , muddle{fetch::muddle::NetworkId{"TestNetwork"}, muddle_certificate, network_manager, true,
              true}
-    , rbc{muddle.AsEndpoint(), muddle_certificate->identity().identifier(), cabinet,
+    , rbc{muddle.AsEndpoint(), muddle_certificate->identity().identifier(),
           [this](ConstByteArray const &, ConstByteArray const &payload) -> void {
             OnRbcMessage(payload);
           },
@@ -306,7 +306,7 @@ struct RbcMember
   void ResetCabinet(RBC::CabinetMembers const &new_cabinet)
   {
     cabinet = new_cabinet;
-    rbc.ResetCabinet();
+    rbc.ResetCabinet(cabinet);
   }
 };
 

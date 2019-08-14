@@ -487,27 +487,17 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
   // monitor loop
   while (active_)
   {
-
     connected_peers_gauge_->set(muddle_.AsEndpoint().GetDirectlyConnectedPeers().size());
 
-    // wait until we have connected to as many peers as are required for DKG
-    if (dkg_ && muddle_.AsEndpoint().GetDirectlyConnectedPeers().size() + 1 == committee_size)
+    // Note: the DKG will already have its cabinet reset by this point
+    if (dkg_ && !dkg_attached)
     {
-      // Note: the DKG will already have its cabinet reset by this point
-      if (!dkg_attached)
-      {
-        // Required until we can guarantee the DRB isn't vulnerable to races
-        std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+      // Required until we can guarantee the DRB isn't vulnerable to races
+      std::this_thread::sleep_for(std::chrono::milliseconds(5000));
 
-        FETCH_LOG_INFO(LOGGING_NAME, "Starting DKG");
-        reactor_.Attach(dkg_->GetWeakRunnable());
-        dkg_attached = true;
-      }
-    }
-    else if (dkg_ && !dkg_attached)
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "Waiting to connect for DKG! Peers so far: ",
-                     muddle_.AsEndpoint().GetDirectlyConnectedPeers().size());
+      FETCH_LOG_INFO(LOGGING_NAME, "Starting DKG");
+      reactor_.Attach(dkg_->GetWeakRunnable());
+      dkg_attached = true;
     }
 
     bool beacon_synced = true;

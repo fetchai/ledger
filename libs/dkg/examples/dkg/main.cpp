@@ -57,7 +57,7 @@ ProverPtr CreateNewCertificate()
 
 int main()
 {
-
+  /*
   uint32_t cabinet_size = 3;
 
   struct CabinetMember
@@ -68,7 +68,7 @@ int main()
     ProverPtr            muddle_certificate;
     Muddle               muddle;
     DkgService           dkg_service;
-    PreDkgSync           pre_sync;
+
     CabinetMember(uint16_t port_number, uint16_t index)
       : muddle_port{port_number}
       , network_manager{"NetworkManager" + std::to_string(index), 1}
@@ -77,7 +77,7 @@ int main()
       , muddle{fetch::muddle::NetworkId{"TestNetwork"}, muddle_certificate, network_manager, true,
                true}
       , dkg_service{muddle.AsEndpoint(), muddle_certificate->identity().identifier()}
-      , pre_sync{muddle, 4}
+
     {
       network_manager.Start();
       muddle.Start({muddle_port});
@@ -161,4 +161,5 @@ int main()
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
   return 0;
+  */
 }

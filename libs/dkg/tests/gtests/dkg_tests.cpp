@@ -376,7 +376,7 @@ struct CabinetMember
     , muddle{fetch::muddle::NetworkId{"TestNetwork"}, muddle_certificate, network_manager, true,
              true}
     , shares_subscription(muddle.AsEndpoint().Subscribe(SERVICE_DKG, CHANNEL_SHARES))
-    , rbc{muddle.AsEndpoint(), muddle_certificate->identity().identifier(), current_cabinet,
+    , rbc{muddle.AsEndpoint(), muddle_certificate->identity().identifier(),
           [this](ConstByteArray const &address, ConstByteArray const &payload) -> void {
             DKGEnvelope   env;
             DKGSerializer serializer{payload};
@@ -510,7 +510,7 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
     for (auto &member : committee)
     {
       member->dkg.ResetCabinet();
-      member->rbc.ResetCabinet();
+      member->rbc.ResetCabinet(cabinet);
     }
 
     // Start at DKG

@@ -84,14 +84,11 @@ int main(int argc, char **argv)
 
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-  // Connect and wait until everyone else has connected
-  PreDkgSync sync(*muddle, 4);
-  sync.ResetCabinet(peer_list);
-  sync.Connect();
-  while (!sync.ready())
+  for(auto const &peer : peer_list)
   {
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    muddle->AddPeer(peer.second);
   }
+
   auto index = std::distance(members.begin(), members.find(p2p_key->identity().identifier()));
   FETCH_LOG_INFO(LOGGING_NAME, "Connected to peers - node ", index);
 
