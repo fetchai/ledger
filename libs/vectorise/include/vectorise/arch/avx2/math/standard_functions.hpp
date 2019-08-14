@@ -17,32 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/vectorise.hpp"
-
-#include <cstddef>
-#include <cmath>
-
-namespace fetch {
-namespace vectorise {
-
-template <typename T, std::size_t S>
-VectorRegister<T, S> exp(VectorRegister<T, S> x, T const &precision = 0.00001)
-{
-  VectorRegister<T, S> ret(T(0)), xserie(T(1));
-  VectorRegister<T, S> p(precision);
-  std::size_t          n = 0;
-
-  while (any_less_than(p, abs(xserie)))
-  {
-    ret = ret + xserie;
-    ++n;
-
-    VectorRegister<T, S> vecn((T(n)));
-    xserie = xserie * (x / vecn);
-  }
-
-  return ret;
-}
-
-}  // namespace vectorise
-}  // namespace fetch
+#include "vectorise/arch/avx2/math/abs.hpp"
+#include "vectorise/arch/avx2/math/approx_exp.hpp"
+#include "vectorise/arch/avx2/math/approx_log.hpp"
+#include "vectorise/arch/avx2/math/max.hpp"
+#include "vectorise/arch/avx2/math/min.hpp"
+#include "vectorise/arch/avx2/math/pow.hpp"
+#include "vectorise/arch/avx2/math/sqrt.hpp"

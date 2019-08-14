@@ -17,16 +17,35 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vectorise/vectorise.hpp"
 #ifdef __AVX2__
-
-#include "vectorise/arch/avx2/info.hpp"
-#include "vectorise/arch/avx2/register_double.hpp"
-#include "vectorise/arch/avx2/register_fixed32.hpp"
-#include "vectorise/arch/avx2/register_fixed64.hpp"
-#include "vectorise/arch/avx2/register_float.hpp"
-#include "vectorise/arch/avx2/register_int32.hpp"
-#include "vectorise/arch/avx2/register_int64.hpp"
-
-#undef ADD_REGISTER_SIZE
-
+#include "vectorise/arch/avx2/math/standard_functions.hpp"
 #endif
+
+#include <cstddef>
+#include <cmath>
+
+namespace fetch {
+namespace vectorise {
+
+template <typename T, std::size_t S>
+VectorRegister<T, S> exp(VectorRegister<T, S> x, T const &precision = 0.00001)
+{
+  VectorRegister<T, S> ret(T(0)), xserie(T(1));
+  VectorRegister<T, S> p(precision);
+  std::size_t          n = 0;
+
+  while (any_less_than(p, abs(xserie)))
+  {
+    ret = ret + xserie;
+    ++n;
+
+    VectorRegister<T, S> vecn((T(n)));
+    xserie = xserie * (x / vecn);
+  }
+
+  return ret;
+}
+
+}  // namespace vectorise
+}  // namespace fetch
