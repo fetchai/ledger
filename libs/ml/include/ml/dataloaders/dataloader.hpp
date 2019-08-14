@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/main_serializer.hpp"
 #include "math/base_types.hpp"
 
 #include <cstdint>
@@ -56,43 +57,8 @@ public:
   virtual bool          IsDone() const = 0;
   virtual void          Reset()        = 0;
 
-  template <typename S>
-  friend void Serialize(S &serializer, DataLoader<LabelType, DataType> const &dl)
-  {
-    serializer << dl.random_mode_;
-    serializer << dl.size_not_set_;
-
-    Serialize(serializer, dl.cur_training_pair_.first);
-    for (auto &val : dl.cur_training_pair_.second)
-    {
-      serializer << val;
-    }
-
-    Serialize(serializer, dl.ret_pair_.first);
-    for (auto &val : dl.ret_pair_.second)
-    {
-      serializer << val;
-    }
-  }
-
-  template <typename S>
-  friend void Deserialize(S &serializer, DataLoader<LabelType, DataType> &dl)
-  {
-    serializer >> dl.random_mode_;
-    serializer >> dl.size_not_set_;
-
-    Deserialize(serializer, dl.cur_training_pair_.first);
-    for (auto &val : dl.cur_training_pair_.second)
-    {
-      serializer >> val;
-    }
-
-    Deserialize(serializer, dl.ret_pair_.first);
-    for (auto &val : dl.ret_pair_.second)
-    {
-      serializer >> val;
-    }
-  }
+  template <typename X, typename D>
+  friend struct fetch::serializers::MapSerializer;
 
 protected:
   bool random_mode_ = false;
@@ -202,4 +168,51 @@ typename DataLoader<LabelType, DataType>::ReturnType DataLoader<LabelType, DataT
 
 }  // namespace dataloaders
 }  // namespace ml
+
+namespace serializers {
+
+/**
+ * serializer for Elu saveable params
+ * @tparam TensorType
+ */
+template <typename LabelType, typename InputType, typename D>
+struct MapSerializer<fetch::ml::dataloaders::DataLoader<LabelType, InputType>, D>
+{
+  using Type       = fetch::ml::dataloaders::DataLoader<LabelType, InputType>;
+  using DriverType = D;
+
+  static uint8_t const RANDOM_MODE              = 1;
+  static uint8_t const SIZE_NOT_SET             = 2;
+  static uint8_t const CUR_TRAINING_PAIR_FIRST  = 3;
+  static uint8_t const CUR_TRAINING_PAIR_SECOND = 4;
+  static uint8_t const RET_PAIR_FIRST           = 5;
+  static uint8_t const RET_PAIR_SECOND          = 6;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(6);
+
+    map.Append(RANDOM_MODE, sp.random_mode_);
+    map.Append(SIZE_NOT_SET, sp.size_not_set_);
+    map.Append(CUR_TRAINING_PAIR_FIRST, sp.cur_training_pair_.first);
+    map.Append(CUR_TRAINING_PAIR_SECOND, sp.cur_training_pair_.second);
+    map.Append(RET_PAIR_FIRST, sp.ret_pair_.first);
+    map.Append(RET_PAIR_SECOND, sp.ret_pair_.second);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(RANDOM_MODE, sp.random_mode_);
+    map.ExpectKeyGetValue(SIZE_NOT_SET, sp.size_not_set_);
+    map.ExpectKeyGetValue(CUR_TRAINING_PAIR_FIRST, sp.cur_training_pair_.first);
+    map.ExpectKeyGetValue(CUR_TRAINING_PAIR_SECOND, sp.cur_training_pair_.second);
+    map.ExpectKeyGetValue(RET_PAIR_FIRST, sp.ret_pair_.first);
+    map.ExpectKeyGetValue(RET_PAIR_SECOND, sp.ret_pair_.second);
+  }
+};
+
+}  // namespace serializers
+
 }  // namespace fetch

@@ -16,12 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/byte_array_buffer.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "math/base_types.hpp"
 #include "math/tensor.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
-#include "vectorise/fixed_point/serializers.hpp"
 
 #include "gtest/gtest.h"
 
@@ -56,7 +55,7 @@ TYPED_TEST(TensorDataloaderTest, serialize_tensor_dataloader)
   // add some data
   tdl.AddData(data1_tensor, label_tensor);
 
-  fetch::serializers::ByteArrayBuffer b;
+  fetch::serializers::MsgPackSerializer b;
   b << tdl;
 
   b.seek(0);

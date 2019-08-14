@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/group_definitions.hpp"
 #include "ml/dataloaders/dataloader.hpp"
 
 #include <cassert>
@@ -51,52 +52,8 @@ public:
   bool     IsDone() const override;
   void     Reset() override;
 
-  template <typename S>
-  friend void Serialize(S &serializer, TensorDataLoader<LabelType, InputType> const &dl)
-  {
-    auto d_ptr = static_cast<const DataLoader<LabelType, InputType> *>(&dl);
-    Serialize(serializer, *d_ptr);
-
-    serializer << dl.data_cursor_;
-    serializer << dl.label_cursor_;
-    serializer << dl.n_samples_;
-
-    serializer << dl.data_;
-    serializer << dl.labels_;
-
-    serializer << dl.label_shape_;
-    serializer << dl.one_sample_label_shape_;
-    serializer << dl.data_shapes_;
-    serializer << dl.one_sample_data_shapes_;
-
-    serializer << dl.batch_label_dim_;
-    serializer << dl.batch_data_dim_;
-  }
-
-  template <typename S>
-  friend void Deserialize(S &serializer, TensorDataLoader<LabelType, InputType> &dl)
-  {
-
-    std::shared_ptr<DataLoader<LabelType, InputType>> d_ptr =
-        std::static_pointer_cast<DataLoader<LabelType, InputType>>(
-            std::make_shared<TensorDataLoader<LabelType, InputType>>(dl));
-    Deserialize(serializer, *d_ptr);
-
-    serializer >> dl.data_cursor_;
-    serializer >> dl.label_cursor_;
-    serializer >> dl.n_samples_;
-
-    serializer >> dl.data_;
-    serializer >> dl.labels_;
-
-    serializer >> dl.label_shape_;
-    serializer >> dl.one_sample_label_shape_;
-    serializer >> dl.data_shapes_;
-    serializer >> dl.one_sample_data_shapes_;
-
-    serializer >> dl.batch_label_dim_;
-    serializer >> dl.batch_data_dim_;
-  }
+  template <typename X, typename D>
+  friend struct fetch::serializers::MapSerializer;
 
 protected:
   SizeType data_cursor_  = 0;
@@ -191,4 +148,83 @@ void TensorDataLoader<LabelType, InputType>::Reset()
 
 }  // namespace dataloaders
 }  // namespace ml
+
+namespace serializers {
+
+/**
+ * serializer for Elu saveable params
+ * @tparam TensorType
+ */
+template <typename LabelType, typename InputType, typename D>
+struct MapSerializer<fetch::ml::dataloaders::TensorDataLoader<LabelType, InputType>, D>
+{
+  using Type       = fetch::ml::dataloaders::TensorDataLoader<LabelType, InputType>;
+  using DriverType = D;
+
+  static uint8_t const BASE_DATA_LOADER = 1;
+  static uint8_t const DATA_CURSOR      = 2;
+  static uint8_t const LABEL_CURSOR     = 3;
+  static uint8_t const N_SAMPLES        = 4;
+
+  static uint8_t const DATA   = 5;
+  static uint8_t const LABELS = 6;
+
+  static uint8_t const LABEL_SHAPE            = 7;
+  static uint8_t const ONE_SAMPLE_LABEL_SHAPE = 8;
+  static uint8_t const DATA_SHAPES            = 9;
+  static uint8_t const ONE_SAMPLE_DATA_SHAPES = 10;
+
+  static uint8_t const BATCH_LABEL_DIM = 11;
+  static uint8_t const BATCH_DATA_DIM  = 12;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(12);
+
+    // serialize parent class first
+    auto dl_pointer = static_cast<ml::dataloaders::DataLoader<LabelType, InputType> const *>(&sp);
+    map.Append(BASE_DATA_LOADER, *(dl_pointer));
+
+    map.Append(DATA_CURSOR, sp.data_cursor_);
+    map.Append(LABEL_CURSOR, sp.label_cursor_);
+    map.Append(N_SAMPLES, sp.n_samples_);
+
+    map.Append(DATA, sp.data_);
+    map.Append(LABELS, sp.labels_);
+
+    map.Append(LABEL_SHAPE, sp.label_shape_);
+    map.Append(ONE_SAMPLE_LABEL_SHAPE, sp.one_sample_label_shape_);
+    map.Append(DATA_SHAPES, sp.data_shapes_);
+    map.Append(ONE_SAMPLE_DATA_SHAPES, sp.one_sample_data_shapes_);
+
+    map.Append(BATCH_LABEL_DIM, sp.batch_label_dim_);
+    map.Append(BATCH_DATA_DIM, sp.batch_data_dim_);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    auto dl_pointer = static_cast<ml::dataloaders::DataLoader<LabelType, InputType> *>(&sp);
+    map.ExpectKeyGetValue(BASE_DATA_LOADER, (*dl_pointer));
+
+    map.ExpectKeyGetValue(DATA_CURSOR, sp.data_cursor_);
+    map.ExpectKeyGetValue(LABEL_CURSOR, sp.label_cursor_);
+    map.ExpectKeyGetValue(N_SAMPLES, sp.n_samples_);
+
+    map.ExpectKeyGetValue(DATA, sp.data_);
+    map.ExpectKeyGetValue(LABELS, sp.labels_);
+
+    map.ExpectKeyGetValue(LABEL_SHAPE, sp.label_shape_);
+    map.ExpectKeyGetValue(ONE_SAMPLE_LABEL_SHAPE, sp.one_sample_label_shape_);
+    map.ExpectKeyGetValue(DATA_SHAPES, sp.data_shapes_);
+    map.ExpectKeyGetValue(ONE_SAMPLE_DATA_SHAPES, sp.one_sample_data_shapes_);
+
+    map.ExpectKeyGetValue(BATCH_LABEL_DIM, sp.batch_label_dim_);
+    map.ExpectKeyGetValue(BATCH_DATA_DIM, sp.batch_data_dim_);
+  }
+};
+
+}  // namespace serializers
+
 }  // namespace fetch
