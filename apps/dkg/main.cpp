@@ -73,7 +73,7 @@ int main(int argc, char **argv)
   fetch::network::NetworkManager network_manager{"NetworkManager", 2};
   fetch::core::Reactor           reactor{"ReactorName"};
   auto muddle = std::make_shared<fetch::muddle::Muddle>(fetch::muddle::NetworkId{"TestDKGNetwork"},
-                                                        p2p_key, network_manager, true, true);
+                                                        p2p_key, network_manager);
 
   std::unique_ptr<dkg::DkgService> dkg =
       std::make_unique<dkg::DkgService>(muddle->AsEndpoint(), p2p_key->identity().identifier());
@@ -92,15 +92,14 @@ int main(int argc, char **argv)
   auto index = std::distance(members.begin(), members.find(p2p_key->identity().identifier()));
   FETCH_LOG_INFO(LOGGING_NAME, "Connected to peers - node ", index);
 
-  // Reset cabinet in DKG
-  dkg->ResetCabinet(members, uint32_t(std::stoi(args[2])));
-  FETCH_LOG_INFO(LOGGING_NAME, "Resetting cabinet");
-
   // Machinery to drive the FSM - attach and begin!
   reactor.Attach(dkg->GetWeakRunnable());
   reactor.Start();
 
-  std::this_thread::sleep_for(std::chrono::seconds(300));  // 1 min
+  while (!dkg->IsSynced())
+  {
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
 
   FETCH_LOG_INFO(LOGGING_NAME, "Finished. Quitting");
 

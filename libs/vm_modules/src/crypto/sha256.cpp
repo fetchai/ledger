@@ -31,7 +31,7 @@ namespace vm_modules {
 void SHA256Wrapper::Bind(Module &module)
 {
   module.CreateClassType<SHA256Wrapper>("SHA256")
-      .CreateConstructor<>()
+      .CreateConstructor(&SHA256Wrapper::Constructor)
       .CreateMemberFunction("update", &SHA256Wrapper::UpdateUInt256)
       .CreateMemberFunction("update", &SHA256Wrapper::UpdateString)
       .CreateMemberFunction("update", &SHA256Wrapper::UpdateBuffer)

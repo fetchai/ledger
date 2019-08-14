@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/graph.hpp"
+#include "ml/core/graph.hpp"
 #include "vm/object.hpp"
 #include "vm_modules/math/type.hpp"
 

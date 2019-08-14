@@ -32,24 +32,39 @@ template <class T>
 class MeanSquareErrorLoss : public Ops<T>
 {
 public:
-  using ArrayType     = T;
-  using DataType      = typename ArrayType::Type;
-  using SizeType      = typename ArrayType::SizeType;
+  using TensorType    = T;
+  using DataType      = typename TensorType::Type;
+  using SizeType      = typename TensorType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SPType        = OpMeanSquareErrorSaveableParams<T>;
 
-  explicit MeanSquareErrorLoss(ArrayType const &weightings = ArrayType())
+  explicit MeanSquareErrorLoss(SPType const &sp)
+    : Ops<T>(sp)
+    , weightings_(sp.weightings)
+  {}
+
+  explicit MeanSquareErrorLoss(TensorType const &weightings = TensorType())
     : weightings_(weightings)
   {}
+
   ~MeanSquareErrorLoss() override = default;
 
-  void Forward(VecTensorType const &inputs, ArrayType &output) override
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
+  {
+    auto ret = std::make_shared<SPType>();
+
+    ret->weightings = weightings_;
+    return ret;
+  }
+
+  void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(inputs.size() == 2);
     assert(inputs.at(0)->shape() == inputs.at(1)->shape());
 
     if (weightings_.size() == static_cast<SizeType>(0))
     {
-      output(0, 0) = fetch::math::MeanSquareError((*inputs.at(0)), (*inputs.at(1)));
+      *(output.begin()) = fetch::math::MeanSquareError(*(inputs.at(0)), *(inputs.at(1)));
     }
     // rescale according to weights
     else
@@ -135,15 +150,15 @@ public:
    * layer the calling function is required to set this to a tensor of size 1 and value 1
    * @return
    */
-  std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                  ArrayType const &    error_signal) override
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     FETCH_UNUSED(error_signal);
 
     assert(inputs.size() == 2);
     assert(inputs.at(0)->shape() == inputs.at(1)->shape());
 
-    ArrayType return_signal(inputs.front()->shape());
+    TensorType return_signal(inputs.front()->shape());
 
     SizeType data_size = inputs.at(0)->shape(inputs.at(0)->shape().size() - 1);
     auto     count     = static_cast<DataType>(data_size);
@@ -230,10 +245,14 @@ public:
     return {1, 1};
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::OP_MEAN_SQUARE_ERROR_LOSS;
+  }
   static constexpr char const *DESCRIPTOR = "MeanSquareErrorLoss";
 
 private:
-  ArrayType weightings_;
+  TensorType weightings_;
 };
 
 }  // namespace ops

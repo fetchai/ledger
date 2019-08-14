@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/graph.hpp"
+#include "ml/core/graph.hpp"
 #include "ml/ops/loss_functions/types.hpp"
 #include "ml/optimisation/optimiser.hpp"
 #include "ml/optimisation/types.hpp"

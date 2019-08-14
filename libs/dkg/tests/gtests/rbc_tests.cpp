@@ -275,8 +275,7 @@ struct RbcMember
     : muddle_port{port_number}
     , network_manager{"NetworkManager" + std::to_string(index), 1}
     , muddle_certificate{CreateCertificate()}
-    , muddle{fetch::muddle::NetworkId{"TestNetwork"}, muddle_certificate, network_manager, true,
-             true}
+    , muddle{fetch::muddle::NetworkId{"TestNetwork"}, muddle_certificate, network_manager}
     , rbc{muddle.AsEndpoint(), muddle_certificate->identity().identifier(),
           [this](ConstByteArray const &, ConstByteArray const &payload) -> void {
             OnRbcMessage(payload);
@@ -466,5 +465,5 @@ TEST(rbc, wrong_channel)
 TEST(rbc, out_of_order_messages)
 {
   // Node 0 sends a sequence of messages but out of order
-  GenerateRbcTest(4, 0, {{}, {}, {}, {FaultyRbc::Failures::OUT_OF_SEQUENCE_MSGS}}, 3);
+  GenerateRbcTest(4, 3, {{}, {}, {}, {FaultyRbc::Failures::OUT_OF_SEQUENCE_MSGS}}, 3);
 }

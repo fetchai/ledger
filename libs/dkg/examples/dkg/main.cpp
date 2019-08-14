@@ -57,7 +57,8 @@ ProverPtr CreateNewCertificate()
 
 int main()
 {
-  uint32_t cabinet_size = 3;
+  uint32_t cabinet_size = 30;
+  uint32_t threshold{16};
 
   struct CabinetMember
   {
@@ -73,8 +74,7 @@ int main()
       , network_manager{"NetworkManager" + std::to_string(index), 1}
       , reactor{"ReactorName" + std::to_string(index)}
       , muddle_certificate{CreateNewCertificate()}
-      , muddle{fetch::muddle::NetworkId{"TestNetwork"}, muddle_certificate, network_manager, true,
-               true}
+      , muddle{fetch::muddle::NetworkId{"TestNetwork"}, muddle_certificate, network_manager}
       , dkg_service{muddle.AsEndpoint(), muddle_certificate->identity().identifier()}
 
     {
@@ -121,10 +121,8 @@ int main()
   }
   assert(cabinet.size() == cabinet_size);
 
-  // Start at RBC for each muddle
+  // Start at DKG for each muddle
   {
-    uint32_t threshold{2};
-
     for (auto &member : committee)
     {
       member->dkg_service.ResetCabinet(cabinet, threshold);

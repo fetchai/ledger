@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/graph.hpp"
+#include "ml/core/graph.hpp"
 #include "ml/layers/convolution_1d.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
@@ -55,7 +55,7 @@ void VMGraph::SetInput(VMPtrString const &name, Ptr<VMTensorType> const &input)
 
 Ptr<VMTensorType> VMGraph::Evaluate(VMPtrString const &name)
 {
-  MathTensorType    t   = graph_.Evaluate(name->str);
+  MathTensorType    t   = graph_.ForwardPropagate(name->str);
   Ptr<VMTensorType> ret = this->vm_->CreateNewObject<math::VMTensor>(t.shape());
   (*ret).Copy(t);
   return ret;
@@ -137,7 +137,7 @@ Ptr<VMStateDict> VMGraph::StateDict()
 void VMGraph::Bind(Module &module)
 {
   module.CreateClassType<VMGraph>("Graph")
-      .CreateConstructor<>()
+      .CreateConstructor(&VMGraph::Constructor)
       .CreateMemberFunction("setInput", &VMGraph::SetInput)
       .CreateMemberFunction("evaluate", &VMGraph::Evaluate)
       .CreateMemberFunction("backPropagate", &VMGraph::BackPropagateError)

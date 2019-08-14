@@ -42,10 +42,10 @@ fetch::math::meta::IfIsMath<T, T> Sqrt(VM *, T const &a)
 
 void BindSqrt(Module &module)
 {
-  module.CreateFreeFunction<float_t>("sqrt", &Sqrt<float_t>);
-  module.CreateFreeFunction<double_t>("sqrt", &Sqrt<double_t>);
-  module.CreateFreeFunction<fixed_point::fp32_t>("sqrt", &Sqrt<fixed_point::fp32_t>);
-  module.CreateFreeFunction<fixed_point::fp64_t>("sqrt", &Sqrt<fixed_point::fp64_t>);
+  module.CreateFreeFunction("sqrt", &Sqrt<float_t>);
+  module.CreateFreeFunction("sqrt", &Sqrt<double_t>);
+  module.CreateFreeFunction("sqrt", &Sqrt<fixed_point::fp32_t>);
+  module.CreateFreeFunction("sqrt", &Sqrt<fixed_point::fp64_t>);
 }
 
 }  // namespace math

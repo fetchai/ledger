@@ -29,23 +29,35 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Maximum : public fetch::ml::Ops<T>
+class Maximum : public fetch::ml::ops::Ops<T>
 {
 public:
-  using ArrayType     = T;
-  using SizeType      = typename ArrayType::SizeType;
-  using ArrayPtrType  = std::shared_ptr<ArrayType>;
+  using TensorType    = T;
+  using SizeType      = typename TensorType::SizeType;
+  using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SPType        = OpMaximumSaveableParams<T>;
 
-  Maximum()           = default;
+  Maximum() = default;
+
+  explicit Maximum(SPType const &sp)
+    : Ops<T>(sp)
+  {}
+
   ~Maximum() override = default;
+
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
+  {
+    SPType sp{};
+    return std::make_shared<SPType>(sp);
+  }
 
   /**
    * elementwise maximum
    * @param inputs  left & right inputs to get maximum
    * @return
    */
-  void Forward(VecTensorType const &inputs, ArrayType &output) override
+  void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(inputs.size() == 2);
     assert(inputs.at(0)->size() == inputs.at(1)->size());
@@ -59,15 +71,15 @@ public:
    * f'(input0)=if(input0>input1)=error_signal
    * f'(input1)=if(input0<=input1)=error_signal
    */
-  std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                  ArrayType const &    error_signal) override
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     assert(inputs.size() == 2);
     assert(inputs.at(0)->size() == inputs.at(1)->size());
     assert(error_signal.size() == inputs.at(1)->size());
 
-    ArrayType return_signal_1(inputs.at(0)->shape());
-    ArrayType return_signal_2(inputs.at(1)->shape());
+    TensorType return_signal_1(inputs.at(0)->shape());
+    TensorType return_signal_2(inputs.at(1)->shape());
 
     auto a_it   = inputs.at(0)->cbegin();
     auto b_it   = inputs.at(1)->cbegin();
@@ -100,6 +112,10 @@ public:
     return inputs.front()->shape();
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::OP_MAXIMUM;
+  }
   static constexpr char const *DESCRIPTOR = "Maximum";
 };
 
