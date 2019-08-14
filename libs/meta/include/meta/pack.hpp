@@ -23,20 +23,17 @@
 
 // Simple composability rules.
 // 1. Evaluation is done in a lazy-like manner: the result of a computation is encapsulated in a
-// type
-//    with member typedef type/static constexpr constant value, as appropriate.
+//    type with member typedef type/static constexpr constant value, as appropriate.
 // 2. Consequently, all template parameters are types only, value constants being recorded in
-// std::integral_constant.
+//    std::integral_constant.
 //    Moreover, every returned value (not a type) is wrapped in a type with static member value,
 //    and parameter functions, like F in Transform or Filter, are expected to act this way.
 //    This can greatly facilitate the composition of templates actually.
 // 3. For convenience, typedefs with names ending in -T and static constexpr constants with names
-// ending in -V
-//    are provided, following the same _t/_v pattern observed in STL.
+//    ending in -V are provided, following the same _t/_v pattern observed in STL.
 //    These typedefs are used extensively to realize lazy evaluation results as needed.
 // 4. List paradigm: all variadic evaluations in this chapter are done on Pack variadic template
-// only;
-//    this header's users only need to wrap actual parameter packs in that former and pass the
+//    only; this header's users only need to wrap actual parameter packs in that former and pass the
 //    results as arguments here.
 // 5. Idiomatically, this header follows C++ name conventions where possible; thus mapping function
 //    is called Transform rather than Map, and Accumulate is used in place of Fold.
@@ -47,6 +44,7 @@
 // true in boolean context.
 // 'Size-valued' and 'bool-valued' denote a type that has a public static constexpr member value
 // coercible to type std::size_t or bool, respectively.
+// 'Wrapped T' stands for a struct with public member typedef type = T.
 
 namespace fetch {
 namespace pack {
@@ -57,18 +55,112 @@ namespace pack {
  * @param T an arbitrary type
  * @return structure S such that S::type is T
  */
-// The default declaration accepts an arbitrary pack, so Constant can be tail-called with arbitrary
+// The default declaration accepts an arbitrary pack, so Type can be tail-called with arbitrary
 // arg packs (known to be non-empty though).
 template <class...>
-struct Constant;
+struct Type;
+
 template <class T>
-using ConstantT = typename Constant<T>::type;  // technically, an identity mapping
+using TypeT = typename Type<T>::type;  // technically, an identity mapping
 
 template <class T, class... Ts>
-struct Constant<T, Ts...>
+struct Type<T, Ts...>
 {
   using type = T;
 };
+
+// Two useful partial specializations of std::integral_constant.
+/**
+ * Returns an std::integral_constant of type std::size_t.
+ *
+ * @param i a compile-time size constant
+ * @return std::integral_constant<std::size_t, i>
+ */
+template <std::size_t i>
+using SizeConstant = std::integral_constant<std::size_t, i>;
+
+template <std::size_t i>
+static constexpr auto SizeConstantV = SizeConstant<i>::value;  // technically, an identity mapping
+
+/**
+ * Returns an std::integral_constant of type bool.
+ *
+ * @param b a compile-time boolean constant
+ * @return std::integral_constant<bool, i>
+ */
+template <bool b>
+using BoolConstant = std::integral_constant<bool, b>;
+
+template <bool b>
+static constexpr auto BoolConstantV = BoolConstant<b>::value;  // technically, an identity mapping
+
+// Elementary unary operations on them, just in case
+/**
+ * Returns its argument plus one.
+ *
+ * @param N a class with static constant member value coercible to std::size_t
+ * @return
+ */
+template <class N>
+using Inc = std::integral_constant<std::decay_t<decltype(N::value)>, N::value + 1>;
+
+template <class N>
+static constexpr auto IncV = Inc<N>::value;
+
+/**
+ * Returns its argument minus one.
+ *
+ * @param N a class with static constant member value coercible to std::size_t
+ * @return
+ */
+template <class N>
+using Dec = std::integral_constant<std::decay_t<decltype(N::value)>, N::value - 1>;
+
+template <class N>
+static constexpr auto DecV = Dec<N>::value;
+
+/**
+ * Logical negation.
+ *
+ * @param N a class with static constant member value coercible to bool
+ * @return
+ */
+template <class B>
+using Not = BoolConstant<!B::value>;
+
+template <class B>
+static constexpr auto NotV = Not<B>::value;
+
+/**
+ * Asserted evaluations.
+ * Several templates of this library end up in tail calls to other templates.
+ * When unchecked, these tail calls can result in undefined instantiations (for invalid arguments)
+ * but error messages are likely to appear cryptic in such cases, as the original template is
+ * to be found in a rather incomprehensible "when instantiating an instantiation to be instantiated"
+ * somewhere much much below. When<Condition, Impl> can be used in the most top-level call for
+ * very simple guarded checks. Assert<condition, Impl> is an internal convenience function.
+ */
+/**
+ * @param condition a constexpr value of type bool
+ * @param T an arbitrary type
+ * @return wrapped T when condition is true
+ */
+template<bool condition, class T> struct Assert;
+
+template<bool condition, class T> using AssertT = typename Assert<condition, T>::type;
+
+template<class T> struct Assert<true, T>: Type<T> {};
+
+/**
+ * @param Condition an arbitrary bool-valued type
+ * @param T an arbitrary type
+ * @return wrapped T when Condition is a true type
+ */
+template <class...> struct When;
+
+template<class... Args> using WhenT = typename When<Args...>::type;
+
+template<class Cond, class T> struct When<Cond, T>: Assert<Cond::value, T> {};
 
 // The fundamental typelist definition.
 template <class... Ts>
@@ -90,7 +182,7 @@ using Singleton = Pack<T>;
  * Basic list construction.
  *
  * @param Car an arbitrary type
- * @param Cdr a Pack
+ * @param Cdr an arbitrary Pack
  * @return Cdr with Car prepended
  */
 template <class Car, class Cdr>
@@ -100,7 +192,7 @@ template <class Car, class Cdr>
 using ConsT = typename Cons<Car, Cdr>::type;
 
 template <class Car, class... Cdr>
-struct Cons<Car, Pack<Cdr...>> : Constant<Pack<Car, Cdr...>>
+struct Cons<Car, Pack<Cdr...>> : Type<Pack<Car, Cdr...>>
 {
 };
 
@@ -108,26 +200,24 @@ struct Cons<Car, Pack<Cdr...>> : Constant<Pack<Car, Cdr...>>
  * Detect if its argument has member type type.
  *
  * @param T an arbitrary type
- * @return true iff T is a class type with public member type type of kind *
+ * @return a true type iff T is a class type with public member type type of kind *
  */
 namespace detail_ {
 
-struct Yes
-{
-  char a, b;
-};
+struct Yes {};
+struct No {};
 
 template <class Arg>
 constexpr decltype((std::declval<std::add_pointer_t<typename std::decay_t<Arg>::type>>(), Yes{}))
 HasType(Arg &&) noexcept;
 
-constexpr char HasType(...) noexcept;
+constexpr No HasType(...) noexcept;
 
 }  // namespace detail_
 
-template <class Arg>
-static constexpr bool HasMemberTypeV = sizeof(detail_::HasType(std::declval<Arg>())) ==
-                                       sizeof(detail_::Yes);
+template <class Arg> using HasMemberType = std::is_same<decltype(detail_::HasType(std::declval<Arg>())), detail_::Yes>;
+
+template<class Arg> static constexpr auto HasMemberTypeV = HasMemberType<Arg>::value;
 
 /**
  * Extract argument's member type type and wrap it back in a struct.
@@ -137,10 +227,10 @@ static constexpr bool HasMemberTypeV = sizeof(detail_::HasType(std::declval<Arg>
  * struct otherwise
  */
 template <class Arg, bool = HasMemberTypeV<Arg>>
-struct MemberType
+struct MemberType: Type<typename Arg::type>
 {
-  using type = typename Arg::type;
 };
+
 template <class Arg, bool b = HasMemberTypeV<Arg>>
 using MemberTypeT = typename MemberType<Arg, b>::type;
 
@@ -157,13 +247,20 @@ struct MemberType<Arg, false>
  * @return
  */
 template <class T>
-using Flat = std::conditional<HasMemberTypeV<T>, T, Constant<T>>;
+using Flat = std::conditional<HasMemberTypeV<T>, T, Type<T>>;
+
 template <class T>
 using FlatT = typename Flat<T>::type;
 
 /**
  * Leaves exactly one level of member type nesting.
- *     struct A { using type = struct { using type = struct { using type = int; }; }; };
+ *     struct A {
+ *         using type = struct {
+ *             using type = struct {
+ *                 using type = int;
+ *             };
+ *         };
+ *     };
  *     Flatten<A>::type is int.
  *
  * @param T an arbitrary type
@@ -171,9 +268,10 @@ using FlatT = typename Flat<T>::type;
  * type
  */
 template <class T, bool = HasMemberTypeV<T>>
-struct Flatten : Constant<T>
+struct Flatten : Type<T>
 {
 };
+
 template <class T, bool HasIt = HasMemberTypeV<T>>
 using FlattenT = typename Flatten<T, HasIt>::type;
 
@@ -181,63 +279,6 @@ template <class T>
 struct Flatten<T, true> : Flatten<typename T::type>
 {
 };
-
-// Two useful partial specializations of std::integral_constant.
-/**
- * Returns an std::integral_constant of type std::size_t.
- *
- * @param i a compile-time size constant
- * @return std::integral_constant<std::size_t, i>
- */
-template <std::size_t i>
-using SizeConstant = std::integral_constant<std::size_t, i>;
-template <std::size_t i>
-static constexpr auto SizeConstantV = SizeConstant<i>::value;  // technically, an identity mapping
-
-/**
- * Returns an std::integral_constant of type bool.
- *
- * @param b a compile-time boolean constant
- * @return std::integral_constant<bool, i>
- */
-template <bool b>
-using BoolConstant = std::integral_constant<bool, b>;
-template <bool b>
-static constexpr auto BoolConstantV = BoolConstant<b>::value;  // technically, an identity mapping
-
-// Elementary unary operations on them, just in case
-/**
- * Returns its argument plus one.
- *
- * @param N a class with static constant member value coercible to std::size_t
- * @return
- */
-template <class N>
-using Inc = SizeConstant<N::value + 1>;
-template <class N>
-static constexpr auto IncV = Inc<N>::value;
-
-/**
- * Returns its argument minus one.
- *
- * @param N a class with static constant member value coercible to std::size_t
- * @return
- */
-template <class N>
-using Dec = SizeConstant<N::value - 1>;
-template <class N>
-static constexpr auto DecV = Dec<N>::value;
-
-/**
- * Logical negation.
- *
- * @param N a class with static constant member value coercible to bool
- * @return
- */
-template <class B>
-using Not = BoolConstant<!B::value>;
-template <class B>
-static constexpr auto NotV = Not<B>::value;
 
 /**
  * Apply a function to a pack of arguments.
@@ -256,14 +297,11 @@ template <template <class...> class F, class Args>
 static constexpr auto ApplyV = ApplyT<F, Args>::value;
 
 template <template <class...> class F, class... Args>
-struct Apply<F, Pack<Args...>>
-{
-  using type = F<Args...>;
-};
+struct Apply<F, Pack<Args...>>: Type<F<Args...>> {};
 
 /**
  * Function composition.
- * The first argument serves as a root in AST, all the other ones are its branches.
+ * The first argument serves as a root in AST, all the rest args are its branches.
  * Note that the result should be used as Compose<F, Gs...>::template type. Consequently, ComposeT
  * is not defined.
  *
@@ -292,7 +330,7 @@ template <class P>
 using HeadT = typename Head<P>::type;
 
 template <class Car, class... Cdr>
-struct Head<Pack<Car, Cdr...>> : Constant<Car>
+struct Head<Pack<Car, Cdr...>> : Type<Car>
 {
 };
 
@@ -309,7 +347,7 @@ template <class P>
 using TailT = typename Tail<P>::type;
 
 template <class Car, class... Cdr>
-struct Tail<Pack<Car, Cdr...>> : Constant<Pack<Cdr...>>
+struct Tail<Pack<Car, Cdr...>> : Type<Pack<Cdr...>>
 {
 };
 
@@ -320,8 +358,8 @@ struct Tail<Pack<Car, Cdr...>> : Constant<Pack<Cdr...>>
  * (Where 'function' denotes a template class with type-only parameters,
  * and a 'first-class object' is merely a C++ type.)
  *
- * @param F a class template
- * @param P a Pack
+ * @param F an arbitrary class template
+ * @param P an arbitrary Pack
  * @return
  */
 template <template <class...> class F, class P>
@@ -331,7 +369,7 @@ template <template <class...> class F, class P>
 using TransformT = typename Transform<F, P>::type;
 
 template <template <class...> class F, class... Ts>
-struct Transform<F, Pack<Ts...>> : Constant<Pack<F<Ts>...>>
+struct Transform<F, Pack<Ts...>> : Type<Pack<F<Ts>...>>
 {
 };
 
@@ -340,7 +378,7 @@ struct Transform<F, Pack<Ts...>> : Constant<Pack<F<Ts>...>>
  *
  * @param F a template class such that its instantiations have static constant value coercible to
  * bool
- * @param P a Pack
+ * @param P an arbitrary Pack
  * @return Pack comprised of all elements Tn of P such that F<Pn> is a true type for each n
  */
 template <template <class...> class F, class P>
@@ -357,14 +395,14 @@ struct Filter<F, Pack<Car, Cdr...>>
 };
 
 template <template <class...> class F>
-struct Filter<F, Nil> : Constant<Nil>
+struct Filter<F, Nil> : Type<Nil>
 {
 };
 
 /**
  * Empty list predicate.
  *
- * @param P a Pack
+ * @param P an arbitrary Pack
  * @return true type iff P is empty
  */
 template <class P>
@@ -377,7 +415,7 @@ static constexpr auto EmptyV = Empty<P>::value;
  * List length.
  * Note that when defined as parameter packs, lists are always finite.
  *
- * @param P a Pack
+ * @param P an arbitrary Pack
  * @return number of elements in P
  */
 template <class P>
@@ -394,9 +432,10 @@ struct TupleSize<Pack<Ts...>> : SizeConstant<sizeof...(Ts)>
 // Simple sublists: take and drop.
 /**
  * Retrieve first N elements of P.
+ * If N is greater than the size of P, the result is P itself.
  *
  * @param N a size-valued class
- * @param P a Pack
+ * @param P an arbitrary Pack
  * @return
  */
 template <class N, class P>
@@ -413,27 +452,28 @@ struct Take : Cons<HeadT<P>, TakeT<Dec<N>, TailT<P>>>
 
 // take _ nil == nil
 template <class N>
-struct Take<N, Nil> : Constant<Nil>
+struct Take<N, Nil> : Type<Nil>
 {
 };
 
 // take 0 _ == nil as well
 template <class P>
-struct Take<SizeConstant<0>, P> : Constant<Nil>
+struct Take<SizeConstant<0>, P> : Type<Nil>
 {
 };
 
 // take 0 nil == nil, to disambiguate between the two above
 template <>
-struct Take<SizeConstant<0>, Nil> : Constant<Nil>
+struct Take<SizeConstant<0>, Nil> : Type<Nil>
 {
 };
 
 /**
  * Skip first N elements of P.
+ * If N is greater than the size of P, the result is empty.
  *
  * @param N a size-valued class
- * @param P a Pack
+ * @param P an arbitrary Pack
  * @return
  */
 template <class N, class P>
@@ -451,19 +491,19 @@ struct Drop : Drop<Dec<N>, TailT<P>>
 
 // drop _ nil == nil
 template <class N>
-struct Drop<N, Nil> : Constant<Nil>
+struct Drop<N, Nil> : Type<Nil>
 {
 };
 
 // drop 0 l == l
 template <class P>
-struct Drop<SizeConstant<0>, P> : Constant<P>
+struct Drop<SizeConstant<0>, P> : Type<P>
 {
 };
 
 // drop 0 nil == nil, to disambiguate between the two above
 template <>
-struct Drop<SizeConstant<0>, Nil> : Constant<Nil>
+struct Drop<SizeConstant<0>, Nil> : Type<Nil>
 {
 };
 
@@ -472,7 +512,7 @@ struct Drop<SizeConstant<0>, Nil> : Constant<Nil>
  * Left half of a Pack.
  * If argument's size is odd, left half is one element shorter than the right one.
  *
- * @param P a Pack
+ * @param P an arbitrary Pack
  * @return
  */
 template <class P>
@@ -485,7 +525,7 @@ using LeftHalfT = typename LeftHalf<P>::type;
  * Right half of a Pack.
  * If argument's size is odd, left half is one element shorter than the right one.
  *
- * @param P a Pack
+ * @param P an arbitrary Pack
  * @return
  */
 template <class P>
@@ -498,30 +538,25 @@ using RightHalfT = typename RightHalf<P>::type;
  * List element by index.
  *
  * @param Index a size-valued class
- * @param P a Pack
+ * @param P an arbitrary Pack
  * @return P's element at Index
  */
 template <class Index, class P>
-struct TupleElement : TupleElement<SizeConstant<Index::value>, P>
+struct TupleElement : AssertT<(TupleSizeV<P> > Index::value), TupleElement<SizeConstant<Index::value>, P>>
 {
 };
 
 template <class Index, class P>
 using TupleElementT = typename TupleElement<Index, P>::type;
 
-// Implemented by dividing index by two.
-// This way compiler only has to instantiate logarithmic amount of templates per a pack element.
-// Say, for a 1000000th pack element naive linear search would require one million instantions,
-// while binary split would only need 20 or so.
-// This is basically a simple case of dynamic programming on types.
 template <std::size_t i, class P>
 struct TupleElement<SizeConstant<i>, P>
-  : TupleElement<SizeConstant<i / 2>, DropT<SizeConstant<i - i / 2>, P>>
+  : TupleElement<SizeConstant<0>, DropT<SizeConstant<i>, P>>
 {
 };
 
 template <class T, class... Ts>
-struct TupleElement<SizeConstant<0>, Pack<T, Ts...>> : Constant<T>
+struct TupleElement<SizeConstant<0>, Pack<T, Ts...>> : Type<T>
 {
 };
 
@@ -583,8 +618,8 @@ namespace pack {
 
 /**
  * Left fold of a function over a pack.
- * Zero value is taken from the pack itself, so the latter should be non-empty.
- * (Similar to foldl1 in Prelude.PreludeList.)
+ * Zero value is the leftmost element of the pack, so the latter should be non-empty.
+ * (Similar to foldl1 of Prelude.PreludeList.)
  *
  * @param F an arbitrary class template
  * @param P a (non-empty) Pack<T0, T1..., Tn>
@@ -597,7 +632,7 @@ template <template <class...> class F, class Pack>
 using AccumulateT = typename Accumulate<F, Pack>::type;
 
 template <template <class...> class F, class Pack>
-static constexpr auto AccumulateV = Accumulate<F, Pack>::value;
+static constexpr auto AccumulateV = AccumulateT<F, Pack>::value;
 
 template <template <class...> class F, class Car, class Cadr, class... Cddr>
 struct Accumulate<F, Pack<Car, Cadr, Cddr...>> : Accumulate<F, Pack<F<Car, Cadr>, Cddr...>>
@@ -605,7 +640,33 @@ struct Accumulate<F, Pack<Car, Cadr, Cddr...>> : Accumulate<F, Pack<F<Car, Cadr>
 };
 
 template <template <class...> class F, class Last>
-struct Accumulate<F, Pack<Last>> : Constant<Last>
+struct Accumulate<F, Pack<Last>> : Type<Last>
+{
+};
+
+/**
+ * Right fold of a function over a pack.
+ * Zero value is the rightmost element of the pack, so the latter should be non-empty.
+ * (Similar to foldr1 of Prelude.PreludeList.)
+ *
+ * @param F an arbitrary class template
+ * @param P a (non-empty) Pack<T0, T1..., Tn>
+ * @return F<T0, F< ... <F<Tn-1, Tn>> ... >>
+ */
+template <template <class...> class F, class Pack>
+struct ReverseAccumulate;
+
+template <template <class...> class F, class Pack>
+using ReverseAccumulateT = typename ReverseAccumulate<F, Pack>::type;
+
+template <template <class...> class F, class Pack>
+static constexpr auto ReverseAccumulateV = ReverseAccumulateT<F, Pack>::value;
+
+template <template <class...> class F, class Car, class Cadr, class... Cddr>
+struct ReverseAccumulate<F, Pack<Car, Cadr, Cddr...>> : Type<F<Car, ReverseAccumulateT<F, Pack<Cadr, Cddr...>>>> {};
+
+template <template <class...> class F, class Last>
+struct ReverseAccumulate<F, Pack<Last>> : Type<Last>
 {
 };
 
@@ -641,12 +702,12 @@ struct Concat<Pack<Ts...>, Packs...> : Concat<Pack<Ts...>, ConcatT<Packs...>>
 };
 
 template <class... LeftTs, class... RightTs>
-struct Concat<Pack<LeftTs...>, Pack<RightTs...>> : Constant<Pack<LeftTs..., RightTs...>>
+struct Concat<Pack<LeftTs...>, Pack<RightTs...>> : Type<Pack<LeftTs..., RightTs...>>
 {
 };
 
 template <>
-struct Concat<> : Constant<Nil>
+struct Concat<> : Type<Nil>
 {
 };
 
@@ -683,33 +744,32 @@ template <class A, class B>
 static constexpr auto AndV = And<A, B>::value;
 
 /**
- * A lisp-style operator && accepting an arbitrary amount of arguments an returning the leftmost
- * false of them, or the very last one if all others are true. Conjunction of an empty pack is a
- * true type. Warning: ConjunctionT returns a member type type of the leftmost false type, not that
- * latter itself.
+ * A lisp-style operator && accepting an arbitrary amount of arguments and returning
+ * the very last one of them if all others are true, or the leftmost false of them.
+ * Conjunction of an empty pack is a true type.
  *
- * @param P a Pack
- * @return the leftmost false element of P, or the last one, if none
+ * @param P an arbitrary Pack
+ * @return the leftmost false element of P, or the last element, if none
  */
 template <class P>
-using Conjunction = AccumulateT<And, ConsT<std::true_type, P>>;
+using Conjunction = Accumulate<And, ConsT<std::true_type, P>>;
 
 template <class P>
 using ConjunctionT = typename Conjunction<P>::type;
 
 template <class P>
-static constexpr auto ConjunctionV = Conjunction<P>::value;
+static constexpr auto ConjunctionV = ConjunctionT<P>::value;
 
 /**
  * Check if every element of a pack satisfies a predicate.
  *
  * @param F a class template that evaluates to a bool-valued class on each element of the pack
  * (until one of them breaks the predicate, at least)
- * @param P a Pack
+ * @param P an arbitrary Pack
  * @return
  */
 template <template <class...> class F, class P>
-using All = Conjunction<TransformT<F, P>>;
+using All = ConjunctionT<TransformT<F, P>>;
 
 template <template <class...> class F, class P>
 static constexpr auto AllV = All<F, P>::value;
@@ -733,7 +793,7 @@ static constexpr auto OrV = Or<A, B>::value;
  * false type. Warning: DisjunctionT returns a member type type of the leftmost true type, not that
  * latter itself.
  *
- * @param P a Pack
+ * @param P an arbitrary Pack
  * @return the leftmost true element of P, or the last one, if none
  */
 template <class Pack>
@@ -750,7 +810,7 @@ static constexpr auto DisjunctionV = Disjunction<Pack>::value;
  *
  * @param F a class template that evaluates to a bool-valued class on each element of the pack
  * (until one of them satisfies the predicate, at least)
- * @param P a Pack
+ * @param P an arbitrary Pack
  * @return
  */
 template <template <class...> class F, class Pack>
@@ -763,7 +823,7 @@ static constexpr auto AnyV = Any<F, Pack>::value;
  * Check if type is found in a pack.
  *
  * @param T an arbitrary type
- * @param P a Pack
+ * @param P an arbitrary Pack
  * @return true type iff there's an element in P equal to T, in the sense of std::is_same
  */
 template <class T, class P>
@@ -779,6 +839,7 @@ namespace detail_ {
 
 template <class F, class... Args>
 constexpr decltype((std::declval<F>()(std::declval<Args>()...), Yes{})) Invocable(
+
     F &&, Args &&...) noexcept;
 constexpr char Invocable(...) noexcept;
 
@@ -800,8 +861,7 @@ static constexpr auto IsInvocableV = IsInvocable<F, P>::value;
 
 template <class F, class... Args>
 struct IsInvocable<F, Pack<Args...>>
-  : BoolConstant<sizeof(detail_::Invocable(std::declval<F>(), std::declval<Args>()...)) ==
-                 sizeof(detail_::Yes)>
+  : std::is_same<decltype(detail_::Invocable(std::declval<F>(), std::declval<Args>()...)), detail_::Yes>
 {
 };
 
@@ -822,7 +882,7 @@ using InvokeResultT = typename InvokeResult<F, P>::type;
 
 template <class F, class... Args>
 struct InvokeResult<F, Pack<Args...>>
-  : Constant<decltype(std::declval<F>()(std::declval<Args>()...))>
+  : Type<decltype(std::declval<F>()(std::declval<Args>()...))>
 {
 };
 
@@ -864,7 +924,7 @@ struct Case<Pack<If, Then, Else...>> : std::conditional<bool(If::value), Then, C
 };
 
 template <class Default>
-struct Case<Pack<Default>> : Constant<Default>
+struct Case<Pack<Default>> : Type<Default>
 {
 };
 
@@ -882,7 +942,7 @@ struct Case<Nil>
  *     Select<char, double, A, std::string>
  *         is int.
  *
- * @param Clauses a Pack
+ * @param Clauses an arbitrary Pack
  * @return
  */
 template <class Clauses>
@@ -941,17 +1001,17 @@ struct UniqueMerge
 };
 
 template <class Left>
-struct UniqueMerge<Left, Nil> : Constant<Left>
+struct UniqueMerge<Left, Nil> : Type<Left>
 {
 };
 
 template <class Right>
-struct UniqueMerge<Nil, Right> : Constant<Right>
+struct UniqueMerge<Nil, Right> : Type<Right>
 {
 };
 
 template <>
-struct UniqueMerge<Nil, Nil> : Constant<Nil>
+struct UniqueMerge<Nil, Nil> : Type<Nil>
 {
 };
 
@@ -972,12 +1032,12 @@ struct UniqueSort : UniqueMerge<UniqueSortT<LeftHalfT<P>>, UniqueSortT<RightHalf
 };
 
 template <class T>
-struct UniqueSort<Pack<T>> : Constant<Pack<T>>
+struct UniqueSort<Pack<T>> : Type<Pack<T>>
 {
 };
 
 template <>
-struct UniqueSort<Nil> : Constant<Nil>
+struct UniqueSort<Nil> : Type<Nil>
 {
 };
 
@@ -1016,7 +1076,7 @@ struct IsUniquelySorted<Nil> : std::true_type
  *
  * Original taken from A. Alexandrescu's Modern C++ Design, and converted into this library wording.
  *
- * @param P a Pack
+ * @param P an arbitrary Pack
  * @return
  */
 template <class P>
@@ -1038,7 +1098,7 @@ struct MakeUnique<Pack<Car, Car, Cddr...>> : MakeUnique<Pack<Car, Cddr...>>
 };
 
 template <>
-struct MakeUnique<Nil> : Constant<Nil>
+struct MakeUnique<Nil> : Type<Nil>
 {
 };
 
@@ -1057,42 +1117,42 @@ template <class T>
 using ArgsT = typename Args<T>::type;
 
 template <template <class...> class Ctor, class... As>
-struct Args<Ctor<As...>> : Constant<Pack<As...>>
+struct Args<Ctor<As...>> : Type<Pack<As...>>
 {
 };
 
 template <class R, class... As>
-struct Args<R (*)(As...)> : Constant<Pack<As...>>
+struct Args<R (*)(As...)> : Type<Pack<As...>>
 {
 };
 
 template <class R, class C, class... As>
-struct Args<R (C::*)(As...)> : Constant<Pack<As...>>
+struct Args<R (C::*)(As...)> : Type<Pack<As...>>
 {
 };
 
 template <class R, class C, class... As>
-struct Args<R (C::*)(As...) const> : Constant<Pack<As...>>
+struct Args<R (C::*)(As...) const> : Type<Pack<As...>>
 {
 };
 
 template <class R, class C, class... As>
-struct Args<R (C::*)(As...) &> : Constant<Pack<As...>>
+struct Args<R (C::*)(As...) &> : Type<Pack<As...>>
 {
 };
 
 template <class R, class C, class... As>
-struct Args<R (C::*)(As...) const &> : Constant<Pack<As...>>
+struct Args<R (C::*)(As...) const &> : Type<Pack<As...>>
 {
 };
 
 template <class R, class C, class... As>
-struct Args<R (C::*)(As...) &&> : Constant<Pack<As...>>
+struct Args<R (C::*)(As...) &&> : Type<Pack<As...>>
 {
 };
 
 template <class R, class C, class... As>
-struct Args<R (C::*)(As...) const &&> : Constant<Pack<As...>>
+struct Args<R (C::*)(As...) const &&> : Type<Pack<As...>>
 {
 };
 

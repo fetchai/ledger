@@ -54,9 +54,9 @@ namespace type_util {
  * @return structure S such that S::type is T
  */
 template <class T>
-using TypeConstant = pack::Constant<T>;
+using Type = pack::Type<T>;
 template <class T>
-using TypeConstantT = typename TypeConstant<T>::type;  // technically, an identity mapping
+using TypeT = typename Type<T>::type;  // technically, an identity mapping
 
 // Two useful partial specializations of std::integral_constant.
 /**
@@ -95,7 +95,7 @@ static constexpr auto ApplyV = ApplyT<F, Args...>::value;
 
 /**
  * Left fold of a function over a pack.
- * Zero value is taken from the pack itself, so the latter should be non-empty.
+ * Zero value is the leftmost element of the pack, so the latter should be non-empty.
  * (Similar to foldl1 in Prelude.PreludeList.)
  *
  * @param F an arbitrary class template
@@ -109,7 +109,25 @@ template <template <class...> class F, class... List>
 using AccumulateT = typename Accumulate<F, List...>::type;
 
 template <template <class...> class F, class... List>
-static constexpr auto AccumulateV = Accumulate<F, List...>::value;
+static constexpr auto AccumulateV = AccumulateT<F, List...>::value;
+
+/**
+ * Right fold of a function over a pack.
+ * Zero value is the rightmost element of the pack, so the latter should be non-empty.
+ * (Similar to foldr1 of Prelude.PreludeList.)
+ *
+ * @param F an arbitrary class template
+ * @param List... a non-empty pack of arbitrary types T0, T1, ..., Tn
+ * @return F<T0, F< ... <F<Tn-1, Tn>> ... >>
+ */
+template <template <class...> class F, class... List>
+using ReverseAccumulate = pack::ReverseAccumulate<F, pack::ConcatT<List...>>;
+
+template <template <class...> class F, class... List>
+using ReverseAccumulateT = typename ReverseAccumulate<F, List...>::type;
+
+template <template <class...> class F, class... List>
+static constexpr auto ReverseAccumulateV = ReverseAccumulateT<F, List...>::value;
 
 /**
  * A binary operator && on types.
@@ -137,7 +155,10 @@ template <class... Ts>
 using Conjunction = pack::Conjunction<pack::ConcatT<Ts...>>;
 
 template <class... Ts>
-static constexpr auto ConjunctionV = Conjunction<Ts...>::value;
+using ConjunctionT = typename Conjunction<Ts...>::type;
+
+template <class... Ts>
+static constexpr auto ConjunctionV = ConjunctionT<Ts...>::value;
 
 /**
  * Check if every element of a pack satisfies a predicate.
@@ -179,7 +200,10 @@ template <class... Ts>
 using Disjunction = pack::Disjunction<pack::ConcatT<Ts...>>;
 
 template <class... Ts>
-static constexpr auto DisjunctionV = Disjunction<Ts...>::value;
+using DisjunctionT = typename Disjunction<Ts...>::type;
+
+template <class... Ts>
+static constexpr auto DisjunctionV = DisjunctionT<Ts...>::value;
 
 /**
  * Check if at least one element of a pack satisfies a predicate.
@@ -230,8 +254,10 @@ static constexpr auto IsAnyOfV = IsAnyOf<T, Ts...>::value;
 template <class T, template <class...> class... Predicates>
 using Satisfies = Conjunction<Predicates<T>...>;
 
+template<class T, template <class...> class... Predicates> using SatisfiesT = typename Satisfies<T, Predicates...>::type;
+
 template <class T, template <class...> class... Predicates>
-static constexpr bool SatisfiesV = Satisfies<T, Predicates...>::value;
+static constexpr bool SatisfiesV = SatisfiesT<T, Predicates...>::value;
 
 // IsInvocable and InvokeResult are limited backports of their C++17's namesakes.
 // IsNothrowInvocable can hardly be reasonably portably implemented in C++14.
@@ -245,6 +271,7 @@ static constexpr bool SatisfiesV = Satisfies<T, Predicates...>::value;
  */
 template <class F, class... Args>
 using IsInvocable = pack::IsInvocable<F, pack::ConcatT<Args...>>;
+
 template <class F, class... Args>
 static constexpr auto IsInvocableV = IsInvocable<F, Args...>::value;
 

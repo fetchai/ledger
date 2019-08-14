@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "meta/pack.hpp"
+#include "meta/switch.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm/object.hpp"
 

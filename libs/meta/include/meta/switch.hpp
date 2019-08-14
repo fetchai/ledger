@@ -297,13 +297,13 @@ using Switch = detail_::Switch<pack::UniqueSortT<pack::ConcatT<Ids...>>>;
 // This one may prove useful, so that we could convert a single integral_sequence
 // (or a similar template instantiation) into a pack of singleton integer_sequences,
 // to be used as case alternatives for a Switch.
-template <class Sequence>
+template <class Ctor, class Sequence>
 struct LiftIntegerSequence;
 template <class Sequence>
 using LiftIntegerSequenceT = typename LiftIntegerSequence<Sequence>::type;
 template <template <class Id, Id...> class Ctor, class Id, Id... ids>
 struct LiftIntegerSequence<Ctor<Id, ids...>>
-  : TypeConstant<pack::Pack<std::integer_sequence<Id, ids>...>>
+  : Type<pack::Pack<std::integer_sequence<Id, ids>...>>
 {
 };
 

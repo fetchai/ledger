@@ -38,8 +38,8 @@
 
 TEST(TypeUtilTests, Constants)
 {
-  ASSERT_TYPE_EQ(fetch::type_util::TypeConstant<int>::type, int);
-  ASSERT_TYPE_EQ(fetch::type_util::TypeConstantT<int>, int);
+  ASSERT_TYPE_EQ(fetch::type_util::Type<int>::type, int);
+  ASSERT_TYPE_EQ(fetch::type_util::TypeT<int>, int);
 }
 
 TEST(TypeUtilTests, MemberTypes)
@@ -94,6 +94,10 @@ TEST(TypeUtilTests, ScalarFunctionals)
   ASSERT_TYPE_EQ(
       fetch::type_util::AccumulateT<fetch::pack::Pack, char, int, NonConstructible, double>,
       fetch::pack::Pack<fetch::pack::Pack<fetch::pack::Pack<char, int>, NonConstructible>, double>);
+
+  ASSERT_TYPE_EQ(
+      fetch::type_util::ReverseAccumulateT<fetch::pack::Pack, char, int, NonConstructible, double>,
+      fetch::pack::Pack<char, fetch::pack::Pack<int, fetch::pack::Pack<NonConstructible, double>>>);
 
   ASSERT_UNTRUE(fetch::type_util::AndV<std::false_type, std::false_type>);
   ASSERT_UNTRUE(fetch::type_util::AndV<std::true_type, std::false_type>);

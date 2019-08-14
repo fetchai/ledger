@@ -36,8 +36,8 @@
 
 TEST(PackTests, Constants)
 {
-  ASSERT_TYPE_EQ(fetch::pack::Constant<int>::type, int);
-  ASSERT_TYPE_EQ(fetch::pack::ConstantT<int>, int);
+  ASSERT_TYPE_EQ(fetch::pack::Type<int>::type, int);
+  ASSERT_TYPE_EQ(fetch::pack::TypeT<int>, int);
 
   using S                  = fetch::pack::SizeConstant<42>;
   static constexpr auto SV = fetch::pack::SizeConstantV<42>;
@@ -204,6 +204,10 @@ TEST(PackTests, ScalarFunctionals)
   ASSERT_TYPE_EQ(
       fetch::pack::AccumulateT<fetch::pack::Pack, InputList>,
       fetch::pack::Pack<fetch::pack::Pack<fetch::pack::Pack<char, int>, NonConstructible>, double>);
+
+  ASSERT_TYPE_EQ(
+      fetch::pack::ReverseAccumulateT<fetch::pack::Pack, InputList>,
+      fetch::pack::Pack<char, fetch::pack::Pack<int, fetch::pack::Pack<NonConstructible, double>>>);
 
   ASSERT_UNTRUE(fetch::pack::AndV<std::false_type, std::false_type>);
   ASSERT_UNTRUE(fetch::pack::AndV<std::true_type, std::false_type>);
