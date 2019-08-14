@@ -11,3 +11,5 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 setup_compiler()
 
 setup_library(fetch-meta)
+
+add_test_target()

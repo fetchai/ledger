@@ -31,16 +31,17 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class RandomizedRelu : public fetch::ml::Ops<T>
+class RandomisedRelu : public fetch::ml::ops::Ops<T>
 {
 public:
-  using ArrayType     = T;
-  using DataType      = typename ArrayType::Type;
-  using SizeType      = typename ArrayType::SizeType;
+  using TensorType    = T;
+  using DataType      = typename TensorType::Type;
+  using SizeType      = typename TensorType::SizeType;
   using RNG           = fetch::random::LaggedFibonacciGenerator<>;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SPType        = OpRandomisedReluSaveableParams<TensorType>;
 
-  RandomizedRelu(DataType const lower_bound, DataType const upper_bound,
+  RandomisedRelu(DataType const lower_bound, DataType const upper_bound,
                  SizeType const &random_seed = 25102015)
     : lower_bound_(lower_bound)
     , upper_bound_(upper_bound)
@@ -49,9 +50,34 @@ public:
     rng_.Seed(random_seed);
     UpdateRandomValue();
   }
-  ~RandomizedRelu() override = default;
 
-  void Forward(VecTensorType const &inputs, ArrayType &output) override
+  explicit RandomisedRelu(SPType const &sp)
+    : Ops<T>(sp)
+  {
+    lower_bound_ = sp.lower_bound;
+    upper_bound_ = sp.upper_bound;
+    bounds_mean_ = ((upper_bound_ + lower_bound_) / DataType(2));
+    rng_.Seed(sp.random_seed);
+    rng_.SetBuffer(sp.buffer);
+    rng_.SetIndex(sp.index);
+    random_value_ = sp.random_value;
+  }
+
+  ~RandomisedRelu() override = default;
+
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
+  {
+    auto sp          = std::make_shared<SPType>();
+    sp->lower_bound  = lower_bound_;
+    sp->upper_bound  = upper_bound_;
+    sp->random_seed  = rng_.Seed();
+    sp->buffer       = rng_.GetBuffer();
+    sp->index        = rng_.GetIndex();
+    sp->random_value = random_value_;
+    return sp;
+  }
+
+  void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(inputs.size() == 1);
     assert(output.shape() == this->ComputeOutputShape(inputs));
@@ -65,15 +91,15 @@ public:
     fetch::math::LeakyRelu((*inputs.front()), alpha, output);
   }
 
-  std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                  ArrayType const &    error_signal) override
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     assert(inputs.size() == 1);
     assert(inputs.front()->shape() == error_signal.shape());
-    DataType  zero{0};
-    DataType  one{1};
-    ArrayType ret{error_signal.shape()};
-    ArrayType t{inputs.front()->shape()};
+    DataType   zero{0};
+    DataType   one{1};
+    TensorType ret{error_signal.shape()};
+    TensorType t{inputs.front()->shape()};
 
     DataType alpha = this->is_training_ ? random_value_ : bounds_mean_;
 
@@ -109,7 +135,11 @@ public:
     return inputs.front()->shape();
   }
 
-  static constexpr char const *DESCRIPTOR = "RandomizedRelu";
+  static constexpr OpType OpCode()
+  {
+    return OpType::OP_RANDOMISED_RELU;
+  }
+  static constexpr char const *DESCRIPTOR = "RandomisedRelu";
 
 private:
   void UpdateRandomValue()

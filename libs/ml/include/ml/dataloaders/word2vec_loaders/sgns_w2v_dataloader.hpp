@@ -99,7 +99,7 @@ private:
  * @tparam T
  * @param window_size the size of the context window (one side only)
  * @param negative_samples the number of total samples (all but one being negat
- * SkipGramTextParams<ArrayType> sp = SetParams<ArrayType>();ive)
+ * SkipGramTextParams<TensorType> sp = SetParams<TensorType>();ive)
  * @param mode
  */
 template <typename T>

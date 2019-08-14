@@ -221,7 +221,7 @@ template <typename TensorType>
 bool DNNClassifier<TensorType>::Predict(TensorType &input, TensorType &output)
 {
   this->graph_ptr_->SetInput(input_, input);
-  output = this->graph_ptr_->Evaluate(output_);
+  output = this->graph_ptr_->ForwardPropagate(output_);
 
   return true;
 }

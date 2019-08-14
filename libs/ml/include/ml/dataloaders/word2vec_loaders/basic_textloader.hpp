@@ -67,11 +67,11 @@ template <typename T>
 class BasicTextLoader : public TextLoader<T>, public DataLoader<T, T>
 {
 public:
-  using ArrayType = T;
-  using DataType  = typename T::Type;
-  using SizeType  = typename T::SizeType;
+  using TensorType = T;
+  using DataType   = typename T::Type;
+  using SizeType   = typename T::SizeType;
 
-  explicit BasicTextLoader(TextParams<ArrayType> const &p, bool random_mode = false,
+  explicit BasicTextLoader(TextParams<TensorType> const &p, bool random_mode = false,
                            SizeType seed = 123456789);
 
   // overloaded member from dataloader
@@ -86,7 +86,7 @@ public:
 
 protected:
   // params
-  TextParams<ArrayType> p_;
+  TextParams<TensorType> p_;
 
   // random generators
   fetch::random::LaggedFibonacciGenerator<>  lfg_;
@@ -345,7 +345,7 @@ void BasicTextLoader<T>::GetData(typename BasicTextLoader<T>::SizeType idx, std:
 /**
  * The basic text loader isn't useful for training, but implementing a GetLabel method
  * allows us to make it concrete and then run common unit tests
- * @tparam T ArrayType
+ * @tparam T TensorType
  * @param idx word index
  * @return dummy label
  */

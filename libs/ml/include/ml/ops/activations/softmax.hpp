@@ -30,13 +30,14 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Softmax : public fetch::ml::Ops<T>
+class Softmax : public fetch::ml::ops::Ops<T>
 {
 public:
-  using ArrayType     = T;
-  using DataType      = typename ArrayType::Type;
-  using SizeType      = typename ArrayType::SizeType;
+  using TensorType    = T;
+  using DataType      = typename TensorType::Type;
+  using SizeType      = typename TensorType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SPType        = OpSoftmaxSaveableParams<T>;
 
   explicit Softmax(SizeType axis = 0)
     : axis_(axis)
@@ -46,9 +47,24 @@ public:
     : axes_(axes)
   {}
 
+  explicit Softmax(SPType const &sp)
+    : Ops<T>(sp)
+  {
+    axis_ = sp.axis;
+    axes_ = sp.axes;
+  }
+
   ~Softmax() override = default;
 
-  void Forward(VecTensorType const &inputs, ArrayType &output) override
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
+  {
+    auto sp_ptr  = std::make_shared<SPType>();
+    sp_ptr->axis = axis_;
+    sp_ptr->axes = axes_;
+    return sp_ptr;
+  }
+
+  void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(output.shape() == ComputeOutputShape(inputs));
     assert(inputs.size() == 1);
@@ -63,14 +79,14 @@ public:
     }
   }
 
-  std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                  ArrayType const &    error_signal) override
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     assert(inputs.size() == 1);
     assert(inputs.front()->shape() == error_signal.shape());
 
-    ArrayType return_signal = error_signal.Copy();
-    ArrayType t(error_signal.shape());
+    TensorType return_signal = error_signal.Copy();
+    TensorType t(error_signal.shape());
     this->Forward(inputs, t);
 
     fetch::math::Multiply(return_signal, t, return_signal);
@@ -78,7 +94,7 @@ public:
     // 1D softmax with 1 batch dimension
     if (inputs.front()->shape().size() == 1)
     {
-      typename ArrayType::Type sum = return_signal.Sum();
+      typename TensorType::Type sum = return_signal.Sum();
       fetch::math::Multiply(t, sum, t);
     }
     // N-D softmax
@@ -86,12 +102,12 @@ public:
     {
       if (axes_.size() == 0)
       {
-        ArrayType sum = ReduceSum(return_signal, axis_);
+        TensorType sum = ReduceSum(return_signal, axis_);
         fetch::math::Multiply(t, sum, t);
       }
       else
       {
-        ArrayType sum = ReduceSum(return_signal, axes_);
+        TensorType sum = ReduceSum(return_signal, axes_);
         fetch::math::Multiply(t, sum, t);
       }
     }
@@ -106,6 +122,10 @@ public:
     return inputs.front()->shape();
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::OP_SOFTMAX;
+  }
   static constexpr char const *DESCRIPTOR = "Softmax";
 
 private:

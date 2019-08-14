@@ -36,7 +36,7 @@ template <typename T, int F, int N, int B>
 void BM_MatrixMultiply_Forward(benchmark::State &state)
 {
   using TensorType    = typename fetch::math::Tensor<T>;
-  using VecTensorType = typename fetch::ml::Ops<TensorType>::VecTensorType;
+  using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
 
   fetch::math::Tensor<T> input_1({F, N, B});
   fetch::math::Tensor<T> input_2({F, N, B});
@@ -104,7 +104,7 @@ template <class T, int F, int N, int B>
 void BM_MatrixMultiply_Backward(benchmark::State &state)
 {
   using TensorType    = typename fetch::math::Tensor<T>;
-  using VecTensorType = typename fetch::ml::Ops<TensorType>::VecTensorType;
+  using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
 
   fetch::math::Tensor<T> input_1({F, N, B});
   fetch::math::Tensor<T> input_2({F, N, B});
@@ -171,7 +171,7 @@ template <class T, int N>
 void BM_SqrtForward(benchmark::State &state)
 {
   using TensorType    = typename fetch::math::Tensor<T>;
-  using VecTensorType = typename fetch::ml::Ops<TensorType>::VecTensorType;
+  using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
 
   fetch::math::Tensor<T> input({1, N});
   fetch::math::Tensor<T> output({1, N});
@@ -222,7 +222,7 @@ template <class T, int N>
 void BM_SqrtBackward(benchmark::State &state)
 {
   using TensorType    = typename fetch::math::Tensor<T>;
-  using VecTensorType = typename fetch::ml::Ops<TensorType>::VecTensorType;
+  using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
 
   fetch::math::Tensor<T> input({1, N});
   fetch::math::Tensor<T> error_signal({1, N});
@@ -279,7 +279,7 @@ template <class T, int N>
 void BM_LogForward(benchmark::State &state)
 {
   using TensorType    = typename fetch::math::Tensor<T>;
-  using VecTensorType = typename fetch::ml::Ops<TensorType>::VecTensorType;
+  using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
 
   fetch::math::Tensor<T> input({1, N});
   fetch::math::Tensor<T> output({1, N});
@@ -330,7 +330,7 @@ template <class T, int N>
 void BM_LogBackward(benchmark::State &state)
 {
   using TensorType    = typename fetch::math::Tensor<T>;
-  using VecTensorType = typename fetch::ml::Ops<TensorType>::VecTensorType;
+  using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
 
   fetch::math::Tensor<T> input({1, N});
   fetch::math::Tensor<T> error_signal({1, N});
@@ -381,7 +381,7 @@ template <class T, int N>
 void BM_ExpForward(benchmark::State &state)
 {
   using TensorType    = typename fetch::math::Tensor<T>;
-  using VecTensorType = typename fetch::ml::Ops<TensorType>::VecTensorType;
+  using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
 
   fetch::math::Tensor<T> input({1, N});
   fetch::math::Tensor<T> output({1, N});
@@ -432,7 +432,7 @@ template <class T, int N>
 void BM_ExpBackward(benchmark::State &state)
 {
   using TensorType    = typename fetch::math::Tensor<T>;
-  using VecTensorType = typename fetch::ml::Ops<TensorType>::VecTensorType;
+  using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
 
   fetch::math::Tensor<T> input({1, N});
   fetch::math::Tensor<T> error_signal({1, N});
@@ -483,7 +483,7 @@ template <class T, int N>
 void BM_DivideForward(benchmark::State &state)
 {
   using TensorType    = typename fetch::math::Tensor<T>;
-  using VecTensorType = typename fetch::ml::Ops<TensorType>::VecTensorType;
+  using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
 
   fetch::math::Tensor<T> input_1({1, N});
   fetch::math::Tensor<T> input_2({1, N});
@@ -547,7 +547,7 @@ template <class T, int N>
 void BM_DivideBackward(benchmark::State &state)
 {
   using TensorType    = typename fetch::math::Tensor<T>;
-  using VecTensorType = typename fetch::ml::Ops<TensorType>::VecTensorType;
+  using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
 
   fetch::math::Tensor<T> input_1({1, N});
   fetch::math::Tensor<T> input_2({1, N});
@@ -611,7 +611,7 @@ template <class T, int N>
 void BM_MultiplyForward(benchmark::State &state)
 {
   using TensorType    = typename fetch::math::Tensor<T>;
-  using VecTensorType = typename fetch::ml::Ops<TensorType>::VecTensorType;
+  using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
 
   fetch::math::Tensor<T> input_1({1, N});
   fetch::math::Tensor<T> input_2({1, N});
@@ -675,7 +675,7 @@ template <class T, int N>
 void BM_MultiplyBackward(benchmark::State &state)
 {
   using TensorType    = typename fetch::math::Tensor<T>;
-  using VecTensorType = typename fetch::ml::Ops<TensorType>::VecTensorType;
+  using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
 
   fetch::math::Tensor<T> input_1({1, N});
   fetch::math::Tensor<T> input_2({1, N});
@@ -741,7 +741,7 @@ template <class T, int N>
 void BM_AddForward(benchmark::State &state)
 {
   using TensorType    = typename fetch::math::Tensor<T>;
-  using VecTensorType = typename fetch::ml::Ops<TensorType>::VecTensorType;
+  using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
 
   fetch::math::Tensor<T> input_1({1, N});
   fetch::math::Tensor<T> input_2({1, N});
@@ -795,7 +795,7 @@ template <class T, int N>
 void BM_AddBackward(benchmark::State &state)
 {
   using TensorType    = typename fetch::math::Tensor<T>;
-  using VecTensorType = typename fetch::ml::Ops<TensorType>::VecTensorType;
+  using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
 
   fetch::math::Tensor<T> input_1({1, N});
   fetch::math::Tensor<T> input_2({1, N});
@@ -849,7 +849,7 @@ template <class T, int N>
 void BM_SubtractForward(benchmark::State &state)
 {
   using TensorType    = typename fetch::math::Tensor<T>;
-  using VecTensorType = typename fetch::ml::Ops<TensorType>::VecTensorType;
+  using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
 
   fetch::math::Tensor<T> input_1({1, N});
   fetch::math::Tensor<T> input_2({1, N});
@@ -913,7 +913,7 @@ template <class T, int N>
 void BM_SubtractBackward(benchmark::State &state)
 {
   using TensorType    = typename fetch::math::Tensor<T>;
-  using VecTensorType = typename fetch::ml::Ops<TensorType>::VecTensorType;
+  using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
 
   fetch::math::Tensor<T> input_1({1, N});
   fetch::math::Tensor<T> input_2({1, N});
