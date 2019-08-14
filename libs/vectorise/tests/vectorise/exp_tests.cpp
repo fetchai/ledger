@@ -16,9 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/math/exp.hpp"
 #include "vectorise/memory/array.hpp"
 #include "vectorise/memory/shared_array.hpp"
+#include "vectorise/math/standard_functions.hpp"
+#include "vectorise/vectorise.hpp"
 
 #include "gtest/gtest.h"
 
