@@ -71,7 +71,7 @@ static constexpr meta::IfIsFixedPoint<T, T> numeric_lowest()
 }
 
 template <typename T>
-fetch::meta::IfIsFixedPoint<T, T> static function_tolerance()
+meta::IfIsFixedPoint<T, T> static function_tolerance()
 {
   return T::TOLERANCE;
 }
