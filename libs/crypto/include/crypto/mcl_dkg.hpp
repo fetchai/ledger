@@ -24,6 +24,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <iomanip>
+#include <set>
 #include <sstream>
 #include <unordered_map>
 
@@ -42,7 +43,7 @@ void   UpdateRHS(uint32_t rank, bn::G2 &rhsG, std::vector<bn::G2> const &input);
 bn::G2 ComputeRHS(uint32_t rank, std::vector<bn::G2> const &input);
 void   ComputeShares(bn::Fr &s_i, bn::Fr &sprime_i, std::vector<bn::Fr> const &a_i,
                      std::vector<bn::Fr> const &b_i, uint32_t rank);
-bn::Fr ComputeZi(std::vector<uint32_t> const &parties, std::vector<bn::Fr> const &shares);
+bn::Fr ComputeZi(std::set<uint32_t> const &parties, std::vector<bn::Fr> const &shares);
 std::vector<bn::Fr> InterpolatePolynom(std::vector<bn::Fr> const &a, std::vector<bn::Fr> const &b);
 bn::G1              SignShare(byte_array::ConstByteArray const &message, bn::Fr const &x_i);
 bool   VerifySign(bn::G2 const &y, byte_array::ConstByteArray const &message, bn::G1 const &sign,

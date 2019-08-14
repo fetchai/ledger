@@ -24,7 +24,6 @@ namespace utilities {
 template <typename TensorType>
 class Scaler
 {
-
 public:
   Scaler()          = default;
   virtual ~Scaler() = default;

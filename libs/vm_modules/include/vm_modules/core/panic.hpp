@@ -25,7 +25,7 @@ class Module;
 
 namespace vm_modules {
 
-void CreatePanic(vm::Module &module);
+void CreatePanic(fetch::vm::Module &module);
 
 }  // namespace vm_modules
 }  // namespace fetch

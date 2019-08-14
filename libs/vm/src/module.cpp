@@ -17,9 +17,15 @@
 //------------------------------------------------------------------------------
 
 #include "vectorise/fixed_point/fixed_point.hpp"
+#include "vm/address.hpp"
+#include "vm/array.hpp"
 #include "vm/common.hpp"
+#include "vm/map.hpp"
+#include "vm/matrix.hpp"
 #include "vm/module.hpp"
 #include "vm/sharded_state.hpp"
+#include "vm/state.hpp"
+#include "vm/string.hpp"
 #include "vm/variant.hpp"
 #include "vm/vm.hpp"
 
@@ -190,14 +196,15 @@ Module::Module()
   CreateFreeFunction("toFixed64", &toFixed64);
 
   GetClassInterface<IMatrix>()
-      .CreateConstructor<int32_t, int32_t>()
-      .EnableIndexOperator<AnyInteger, AnyInteger, TemplateParameter1>()
+      .CreateConstructor(&IMatrix::Constructor)
+      .EnableIndexOperator(&IMatrix::GetIndexedValue, &IMatrix::SetIndexedValue)
       .CreateInstantiationType<Matrix<double>>()
       .CreateInstantiationType<Matrix<float>>();
 
   GetClassInterface<IArray>()
-      .CreateConstructor<int32_t>()
-      .CreateSerializeDefaultConstructor<int32_t>(static_cast<int32_t>(0))
+      .CreateConstructor(&IArray::Constructor)
+      .CreateSerializeDefaultConstructor(
+          [](VM *vm, TypeId type_id) { return IArray::Constructor(vm, type_id, 0u); })
       .CreateMemberFunction("append", &IArray::Append)
       .CreateMemberFunction("count", &IArray::Count)
       .CreateMemberFunction("erase", &IArray::Erase)
@@ -207,7 +214,7 @@ Module::Module()
       .CreateMemberFunction("popFront", &IArray::PopFrontOne)
       .CreateMemberFunction("popFront", &IArray::PopFrontMany)
       .CreateMemberFunction("reverse", &IArray::Reverse)
-      .EnableIndexOperator<AnyInteger, TemplateParameter1>()
+      .EnableIndexOperator(&IArray::GetIndexedValue, &IArray::SetIndexedValue)
       .CreateInstantiationType<Array<bool>>()
       .CreateInstantiationType<Array<int8_t>>()
       .CreateInstantiationType<Array<uint8_t>>()
@@ -225,7 +232,7 @@ Module::Module()
       .CreateInstantiationType<Array<Ptr<Address>>>();
 
   GetClassInterface<String>()
-      .CreateSerializeDefaultConstructor<>()
+      .CreateSerializeDefaultConstructor([](VM *vm, TypeId) { return new String(vm, ""); })
       .CreateMemberFunction("find", &String::Find)
       .CreateMemberFunction("length", &String::Length)
       .CreateMemberFunction("reverse", &String::Reverse)
@@ -234,51 +241,37 @@ Module::Module()
       .CreateMemberFunction("trim", &String::Trim);
 
   GetClassInterface<IMap>()
-      .CreateConstructor<>()
+      .CreateConstructor(&IMap::Constructor)
       .CreateMemberFunction("count", &IMap::Count)
-      .EnableIndexOperator<TemplateParameter1, TemplateParameter2>();
+      .EnableIndexOperator(&IMap::GetIndexedValue, &IMap::SetIndexedValue);
 
   GetClassInterface<Address>()
-      .CreateSerializeDefaultConstructor<>()
-      .CreateConstructor<Ptr<String>>()
+      .CreateSerializeDefaultConstructor(&Address::Constructor)
+      .CreateConstructor(&Address::ConstructorFromString)
       .CreateMemberFunction("signedTx", &Address::HasSignedTx);
 
+  CreateFreeFunction("toString", &Address::ToString);
+
   GetClassInterface<IState>()
-      .CreateConstructor<Ptr<String>>()
-      .CreateConstructor<Ptr<Address>>()
-      .CreateMemberFunction("get", static_cast<TemplateParameter1 (IState::*)()>(&IState::Get))
-      .CreateMemberFunction(
-          "get",
-          static_cast<TemplateParameter1 (IState::*)(TemplateParameter1 const &)>(&IState::Get))
+      .CreateConstructor(&IState::ConstructorFromString)
+      .CreateConstructor(&IState::ConstructorFromAddress)
+      .CreateMemberFunction("get", &IState::Get)
+      .CreateMemberFunction("get", &IState::GetWithDefault)
       .CreateMemberFunction("set", &IState::Set)
       .CreateMemberFunction("existed", &IState::Existed);
 
   GetClassInterface<IShardedState>()
-      .CreateConstructor<Ptr<String>>()
-      .CreateConstructor<Ptr<Address>>()
+      .CreateConstructor(&IShardedState::ConstructorFromString)
+      .CreateConstructor(&IShardedState::ConstructorFromAddress)
       // TODO (issue 1172): This will be enabled once the issue is resolved
       //.EnableIndexOperator<Ptr<String>, TemplateParameter1>()
       //.EnableIndexOperator<Ptr<Address>, TemplateParameter1>();
-      .CreateMemberFunction("get",
-                            static_cast<TemplateParameter1 (IShardedState::*)(Ptr<String> const &)>(
-                                &IShardedState::Get))
-      .CreateMemberFunction(
-          "get", static_cast<TemplateParameter1 (IShardedState::*)(Ptr<Address> const &)>(
-                     &IShardedState::Get))
-      .CreateMemberFunction(
-          "get", static_cast<TemplateParameter1 (IShardedState::*)(
-                     Ptr<String> const &, TemplateParameter1 const &)>(&IShardedState::Get))
-      .CreateMemberFunction(
-          "get", static_cast<TemplateParameter1 (IShardedState::*)(
-                     Ptr<Address> const &, TemplateParameter1 const &)>(&IShardedState::Get))
-      .CreateMemberFunction(
-          "set",
-          static_cast<void (IShardedState::*)(Ptr<String> const &, TemplateParameter1 const &)>(
-              &IShardedState::Set))
-      .CreateMemberFunction(
-          "set",
-          static_cast<void (IShardedState::*)(Ptr<Address> const &, TemplateParameter1 const &)>(
-              &IShardedState::Set));
+      .CreateMemberFunction("get", &IShardedState::GetFromString)
+      .CreateMemberFunction("get", &IShardedState::GetFromAddress)
+      .CreateMemberFunction("get", &IShardedState::GetFromStringWithDefault)
+      .CreateMemberFunction("get", &IShardedState::GetFromAddressWithDefault)
+      .CreateMemberFunction("set", &IShardedState::SetFromString)
+      .CreateMemberFunction("set", &IShardedState::SetFromAddress);
 }
 
 }  // namespace vm

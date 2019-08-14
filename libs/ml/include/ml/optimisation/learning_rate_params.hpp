@@ -20,14 +20,15 @@
 #include "math/base_types.hpp"
 #include "math/statistics/mean.hpp"
 #include "ml/dataloaders/dataloader.hpp"
-#include "ml/graph.hpp"
+//#include "ml/core/graph.hpp"
+
+#include "core/serializers/main_serializer.hpp"
 
 #include <chrono>
 
 namespace fetch {
 namespace ml {
 namespace optimisers {
-}
 /**
  * Training annealing config
  * @tparam T
@@ -36,7 +37,7 @@ template <typename T>
 struct LearningRateParam
 {
   using DataType = T;
-  enum class LearningRateDecay
+  enum class LearningRateDecay : uint8_t
   {
     EXPONENTIAL,
     LINEAR,
@@ -47,47 +48,54 @@ struct LearningRateParam
   DataType          ending_learning_rate   = static_cast<DataType>(0.0001);
   DataType          linear_decay_rate      = static_cast<DataType>(0.0000000000001);
   DataType          exponential_decay_rate = static_cast<DataType>(0.999);
+};
+}  // namespace optimisers
+}  // namespace ml
 
-  template <typename S>
-  friend void Serialize(S &serializer, LearningRateParam<T> const &lp)
+namespace serializers {
+/**
+ * serializer for conv1d saveable params
+ * @tparam TensorType
+ */
+template <typename T, typename D>
+struct MapSerializer<ml::optimisers::LearningRateParam<T>, D>
+{
+  using Type       = ml::optimisers::LearningRateParam<T>;
+  using DriverType = D;
+
+  static uint8_t const LEARNING_RATE_DECAY_MODE = 1;
+  static uint8_t const STARTING_LEARNING_RATE   = 2;
+  static uint8_t const ENDING_LEARNING_RATE     = 3;
+  static uint8_t const LINEAR_DECAY_RATE        = 4;
+  static uint8_t const EXPONENTIAL_DECAY_RATE   = 5;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    serializer << lp.mode;
-    serializer << lp.starting_learning_rate;
-    serializer << lp.ending_learning_rate;
-    serializer << lp.linear_decay_rate;
-    serializer << lp.exponential_decay_rate;
+    auto map = map_constructor(5);
+
+    map.Append(LEARNING_RATE_DECAY_MODE, static_cast<uint8_t>(sp.mode));
+
+    map.Append(STARTING_LEARNING_RATE, sp.starting_learning_rate);
+    map.Append(ENDING_LEARNING_RATE, sp.ending_learning_rate);
+    map.Append(LINEAR_DECAY_RATE, sp.linear_decay_rate);
+    map.Append(EXPONENTIAL_DECAY_RATE, sp.exponential_decay_rate);
   }
 
-  template <typename S>
-  friend void Deserialize(S &serializer, LearningRateParam<T> &lp)
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
   {
+    uint8_t lrdm;
+    map.ExpectKeyGetValue(LEARNING_RATE_DECAY_MODE, lrdm);
+    sp.mode =
+        static_cast<typename fetch::ml::optimisers::LearningRateParam<T>::LearningRateDecay>(lrdm);
 
-    serializer >> mode;
-    serializer >> starting_learning_rate;
-    serializer >> ending_learning_rate;
-    serializer >> linear_decay_rate;
-    serializer >> exponential_decay_rate;
-
-    //    LearningRateDecay mode;
-    //    DataType          starting_learning_rate;
-    //    DataType          ending_learning_rate;
-    //    DataType          linear_decay_rate;
-    //    DataType          exponential_decay_rate;
-    //
-    //    serializer >> mode;
-    //    serializer >> starting_learning_rate;
-    //    serializer >> ending_learning_rate;
-    //    serializer >> linear_decay_rate;
-    //    serializer >> exponential_decay_rate;
-    //
-    //    lp.mode = mode;
-    //    lp.starting_learning_rate = starting_learning_rate;
-    //    lp.ending_learning_rate = ending_learning_rate;
-    //    lp.linear_decay_rate = linear_decay_rate;
-    //    lp.exponential_decay_rate = exponential_decay_rate;
+    map.ExpectKeyGetValue(STARTING_LEARNING_RATE, sp.starting_learning_rate);
+    map.ExpectKeyGetValue(ENDING_LEARNING_RATE, sp.ending_learning_rate);
+    map.ExpectKeyGetValue(LINEAR_DECAY_RATE, sp.linear_decay_rate);
+    map.ExpectKeyGetValue(EXPONENTIAL_DECAY_RATE, sp.exponential_decay_rate);
   }
 };
+}  // namespace serializers
 
-}  // namespace ml
-}  // namespace fetch
 }  // namespace fetch

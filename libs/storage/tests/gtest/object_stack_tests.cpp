@@ -51,21 +51,39 @@ struct TestSerDeser
   }
 };
 
-template <typename T>
-void Serialize(T &serializer, TestSerDeser const &b)
+namespace fetch {
+namespace serializers {
+template <typename D>
+struct ArraySerializer<TestSerDeser, D>
 {
-  serializer << b.first;
-  serializer << b.second;
-  serializer << b.third;
-}
+public:
+  using Type       = TestSerDeser;
+  using DriverType = D;
 
-template <typename T>
-void Deserialize(T &serializer, TestSerDeser &b)
-{
-  serializer >> b.first;
-  serializer >> b.second;
-  serializer >> b.third;
-}
+  template <typename Constructor>
+  static void Serialize(Constructor &array_constructor, Type const &b)
+  {
+    auto array = array_constructor(3);
+    array.Append(b.first);
+    array.Append(b.second);
+    array.Append(b.third);
+  }
+
+  template <typename ArrayDeserializer>
+  static void Deserialize(ArrayDeserializer &array, Type &b)
+  {
+    if (array.size() != 3)
+    {
+      throw SerializableException(std::string("expected 3 elements."));
+    }
+
+    array.GetNextValue(b.first);
+    array.GetNextValue(b.second);
+    array.GetNextValue(b.third);
+  }
+};
+}  // namespace serializers
+}  // namespace fetch
 
 void CheckIdentical(ObjectStack<TestSerDeser> &      test_stack,
                     std::vector<TestSerDeser> const &ref_stack)

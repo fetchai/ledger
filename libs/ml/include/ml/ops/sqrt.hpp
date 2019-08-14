@@ -27,23 +27,35 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Sqrt : public fetch::ml::Ops<T>
+class Sqrt : public fetch::ml::ops::Ops<T>
 {
 public:
-  using ArrayType     = T;
-  using DataType      = typename ArrayType::Type;
-  using SizeType      = typename ArrayType::SizeType;
+  using TensorType    = T;
+  using DataType      = typename TensorType::Type;
+  using SizeType      = typename TensorType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SPType        = OpSQRTSaveableParams<T>;
 
-  Sqrt()           = default;
+  Sqrt() = default;
+
+  explicit Sqrt(SPType const &sp)
+    : Ops<T>(sp)
+  {}
+
   ~Sqrt() override = default;
+
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
+  {
+    SPType sp{};
+    return std::make_shared<SPType>(sp);
+  }
 
   /**
    * elementwise square root
    * @param inputs vector containing one tensor which is the input tensor to Sqrt
    * @return
    */
-  void Forward(VecTensorType const &inputs, ArrayType &output) override
+  void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(inputs.size() == 1);
     assert(output.shape() == this->ComputeOutputShape(inputs));
@@ -55,13 +67,13 @@ public:
    * elementwise square root gradient is:
    * f'(input0)= 0.5 * (input0 ^ -0.5) * error_signal
    */
-  std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                  ArrayType const &    error_signal) override
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     assert(inputs.size() == 1);
     assert(error_signal.shape() == this->ComputeOutputShape(inputs));
 
-    ArrayType ret_error_signal(inputs.at(0)->shape());
+    TensorType ret_error_signal(inputs.at(0)->shape());
 
     fetch::math::Sqrt((*inputs.at(0)), ret_error_signal);
     fetch::math::Divide(static_cast<DataType>(0.5), ret_error_signal, ret_error_signal);
@@ -75,6 +87,10 @@ public:
     return inputs.front()->shape();
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::OP_SQRT;
+  }
   static constexpr char const *DESCRIPTOR = "Sqrt";
 };
 

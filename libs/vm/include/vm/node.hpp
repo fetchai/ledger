@@ -20,6 +20,9 @@
 #include "vm/common.hpp"
 #include "vm/token.hpp"
 
+#include <memory>
+#include <vector>
+
 namespace fetch {
 namespace vm {
 
@@ -187,6 +190,7 @@ struct Variable : public Symbol
     : Symbol(SymbolKind::Variable, name)
   {
     variable_kind = variable_kind__;
+    referenced    = false;
   }
   ~Variable() override = default;
 
@@ -196,6 +200,7 @@ struct Variable : public Symbol
   }
   VariableKind variable_kind;
   TypePtr      type;
+  bool         referenced;
 };
 using VariablePtr      = std::shared_ptr<Variable>;
 using VariablePtrArray = std::vector<VariablePtr>;
@@ -249,7 +254,7 @@ inline FunctionPtr CreateFunction(FunctionKind function_kind, std::string const 
 
 struct FunctionGroup : public Symbol
 {
-  FunctionGroup(std::string const &name)
+  explicit FunctionGroup(std::string const &name)
     : Symbol(SymbolKind::FunctionGroup, name)
   {}
   ~FunctionGroup() override = default;

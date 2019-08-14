@@ -35,15 +35,27 @@ template <class T>
 class CrossEntropyLoss : public Ops<T>
 {
 public:
-  using ArrayType     = T;
-  using DataType      = typename ArrayType::Type;
-  using SizeType      = typename ArrayType::SizeType;
+  using TensorType    = T;
+  using DataType      = typename TensorType::Type;
+  using SizeType      = typename TensorType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SPType        = OpCrossEntropyLossSaveableParams<TensorType>;
 
-  CrossEntropyLoss()           = default;
+  CrossEntropyLoss() = default;
+
+  explicit CrossEntropyLoss(SPType const &sp)
+    : Ops<T>(sp)
+  {}
+
   ~CrossEntropyLoss() override = default;
 
-  void Forward(VecTensorType const &inputs, ArrayType &output) override
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
+  {
+    auto sp = std::make_shared<SPType>();
+    return sp;
+  }
+
+  void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(inputs.size() == 2);
     assert(inputs.at(0)->size() == inputs.at(1)->size());
@@ -51,8 +63,8 @@ public:
     output(0, 0) = fetch::math::CrossEntropyLoss((*inputs.at(0)), (*inputs.at(1)));
   }
 
-  std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                  ArrayType const &    error_signal) override
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     FETCH_UNUSED(error_signal);
 
@@ -60,7 +72,7 @@ public:
     assert(inputs.at(0)->size() == inputs.at(1)->size());
     assert(inputs.at(0)->shape().size() == 2);
 
-    ArrayType ret({inputs.at(0)->shape()});
+    TensorType ret({inputs.at(0)->shape()});
     if (inputs.at(0)->shape().at(0) == 1)  // not one-hot
     {
       // (Sigmoid(x)-y)*x
@@ -94,7 +106,7 @@ public:
     }
     else if (inputs.at(0)->shape().size())  // one-hot
     {
-      fetch::math::Softmax((*inputs.at(0)), ret, 1);
+      fetch::math::Softmax((*inputs.at(0)), ret, 0);
 
       auto b_it = inputs.at(1)->cbegin();
       auto r_it = ret.begin();
@@ -115,6 +127,10 @@ public:
     return {1, 1};
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::OP_CROSS_ENTROPY_LOSS;
+  }
   static constexpr char const *DESCRIPTOR = "CrossEntropyLoss";
 };
 

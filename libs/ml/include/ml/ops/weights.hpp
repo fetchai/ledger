@@ -19,6 +19,7 @@
 
 #include "core/random/lfg.hpp"
 #include "ml/ops/placeholder.hpp"
+#include "ml/regularisers/regularisation.hpp"
 #include "ml/regularisers/regulariser.hpp"
 #include "ml/state_dict.hpp"
 
@@ -39,64 +40,81 @@ namespace ops {
  */
 enum class WeightsInitialisation
 {
+  ONES,
   ZEROS,
   XAVIER_GLOROT,
   XAVIER_FAN_IN,
   XAVIER_FAN_OUT
 };
 
-/**
- * Provide an interface for any trainable ops
- * @tparam T passes tensors to graph during update step
- */
-template <class T>
-class Trainable
-{
-public:
-  using ArrayType    = T;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
-  using DataType     = typename ArrayType::Type;
-  using RegPtrType   = std::shared_ptr<fetch::ml::regularisers::Regulariser<T>>;
-
-  virtual void                           Step(typename T::Type learning_rate)        = 0;
-  virtual struct fetch::ml::StateDict<T> StateDict() const                           = 0;
-  virtual void             LoadStateDict(struct fetch::ml::StateDict<T> const &dict) = 0;
-  virtual ArrayType const &get_weights() const                                       = 0;
-  virtual ArrayType const &get_gradients() const                                     = 0;
-  virtual void             ResetGradients()                                          = 0;
-  virtual void             ApplyGradient(ArrayType const &grad)                      = 0;
-  virtual void             ApplyRegularisation()                                     = 0;
-
-  void SetRegularisation(RegPtrType regulariser, DataType regularisation_rate = DataType{0.0})
-  {
-    this->regulariser_         = regulariser;
-    this->regularisation_rate_ = regularisation_rate;
-  }
-
-protected:
-  RegPtrType regulariser_;
-  DataType   regularisation_rate_ = static_cast<DataType>(0);
-};
-
 template <class T>
 class Weights : public fetch::ml::ops::PlaceHolder<T>, public Trainable<T>
 {
 public:
-  using ArrayType     = T;
-  using SizeType      = typename ArrayType::SizeType;
-  using DataType      = typename ArrayType::Type;
-  using ArrayPtrType  = std::shared_ptr<ArrayType>;
-  using VecTensorType = typename PlaceHolder<T>::VecTensorType;
+  using TensorType     = T;
+  using SizeType       = typename TensorType::SizeType;
+  using DataType       = typename TensorType::Type;
+  using ArrayPtrType   = std::shared_ptr<TensorType>;
+  using VecTensorType  = typename PlaceHolder<T>::VecTensorType;
+  using SPType         = OpWeightsSaveableParams<TensorType>;
+  using WeightsPtrType = typename std::shared_ptr<Weights<TensorType>>;
 
 protected:
   ArrayPtrType gradient_accumulation_;
 
 public:
-  Weights()           = default;
+  Weights() = default;
+
+  explicit Weights(SPType const &sp)
+    : PlaceHolder<T>(sp)
+  {
+    if (sp.gradient_accumulation)
+    {
+      gradient_accumulation_ = std::make_shared<TensorType>();
+      gradient_accumulation_->Resize(sp.gradient_accumulation->shape());
+      gradient_accumulation_->Copy(*(sp.gradient_accumulation));
+    }
+
+    this->SetRegularisation(
+        fetch::ml::details::CreateRegulariser<TensorType>(sp.regularisation_type),
+        sp.regularisation_rate);
+  }
+
   ~Weights() override = default;
 
-  std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                  ArrayType const &    error_signal) override
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
+  {
+    auto sp   = std::make_shared<SPType>();
+    auto p_sp = PlaceHolder<T>::GetOpSaveableParams();
+
+    auto cast_sp = std::static_pointer_cast<OpPlaceholderSaveableParams<TensorType>>(sp);
+    *cast_sp     = *(std::static_pointer_cast<OpPlaceholderSaveableParams<TensorType>>(p_sp));
+
+    if (gradient_accumulation_)
+    {
+      sp->gradient_accumulation = std::make_shared<TensorType>(gradient_accumulation_->Copy());
+    }
+
+    if (this->regulariser_)
+    {
+      sp->regularisation_type = this->regulariser_->reg_type;
+    }
+    else
+    {
+      sp->regularisation_type = RegularisationType::NONE;
+    }
+
+    sp->regularisation_rate = this->regularisation_rate_;
+    return sp;
+  }
+
+  ArrayPtrType GetShareableWeights()
+  {
+    return this->output_;
+  }
+
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     FETCH_UNUSED(inputs);
     assert(inputs.empty());
@@ -104,11 +122,12 @@ public:
     return {};
   }
 
-  bool SetData(ArrayType const &data) override
+  bool SetData(TensorType const &data) override
   {
-    if (PlaceHolder<T>::SetData(data))  // if input_size_changed
+    bool shape_changed = PlaceHolder<T>::SetData(data);
+    if (shape_changed)
     {
-      gradient_accumulation_ = std::make_shared<ArrayType>(this->output_->shape());
+      gradient_accumulation_ = std::make_shared<TensorType>(this->output_->shape());
       return true;
     }
     return false;
@@ -121,7 +140,7 @@ public:
     ResetGradients();
   }
 
-  void ApplyGradient(ArrayType const &grad) override
+  void ApplyGradient(TensorType const &grad) override
   {
     this->output_->InlineAdd(grad);
     ResetGradients();
@@ -169,7 +188,7 @@ public:
    * interface to call standard weights initialisation routines. defaults to xavier
    * @param mode  An enum indicating which type of initialisation to perform
    */
-  static void Initialise(ArrayType &array, std::uint64_t in_size, std::uint64_t out_size,
+  static void Initialise(TensorType &array, std::uint64_t in_size, std::uint64_t out_size,
                          WeightsInitialisation mode = WeightsInitialisation::XAVIER_GLOROT,
                          SizeType              seed = 123456789)
   {
@@ -179,7 +198,7 @@ public:
     {
       for (std::uint64_t j = 0; j < array.data().size(); ++j)
       {
-        array.data()[j] = typename ArrayType::Type(0);
+        array.data()[j] = typename TensorType::Type(0);
       }
       break;
     }
@@ -205,10 +224,41 @@ public:
   }
 
   /**
+   * interface to call standard weights initialisation routines. defaults to xavier.
+   * Fan in and fan out xavier not permitted with input and output sizes not known independently
+   * @param mode  An enum indicating which type of initialisation to perform
+   */
+  static void Initialise(TensorType &array, std::uint64_t data_size,
+                         WeightsInitialisation mode = WeightsInitialisation::XAVIER_GLOROT,
+                         SizeType              seed = 123456789)
+  {
+    switch (mode)
+    {
+    case WeightsInitialisation::ONES:
+    {
+      array.Fill(static_cast<typename TensorType::Type>(1));
+      break;
+    }
+    case WeightsInitialisation::ZEROS:
+    {
+      array.Fill(static_cast<typename TensorType::Type>(0));
+      break;
+    }
+    case WeightsInitialisation::XAVIER_GLOROT:
+    {
+      XavierInitialisation(array, std::sqrt(2.0 / double(data_size)), seed);
+      break;
+    }
+    default:
+      std::cerr << "unrecognised weights initialisation" << std::endl;
+      throw;
+    }
+  }
+  /**
    * exports the weight values Array
    * @return const reference to internal values Array
    */
-  ArrayType const &get_weights() const override
+  TensorType const &get_weights() const override
   {
     return *this->output_;
   }
@@ -217,11 +267,15 @@ public:
    * exports the weight gradients Array
    * @return const reference to internal accumulated gradient Array
    */
-  ArrayType const &get_gradients() const override
+  TensorType const &get_gradients() const override
   {
     return *this->gradient_accumulation_;
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::OP_WEIGHTS;
+  }
   static constexpr char const *DESCRIPTOR = "Weights";
 
 private:
@@ -230,7 +284,7 @@ private:
    * using a normal distribution with mean 0 and variance 2 / (input nodes + output nodes)
    * @param weights
    */
-  static void XavierInitialisation(ArrayType &array, double normalising_factor,
+  static void XavierInitialisation(TensorType &array, double normalising_factor,
                                    SizeType seed = 123456789)
   {
     // TODO (665) this is a uniform distribution; in principle we should be using a guassian
@@ -246,12 +300,22 @@ private:
       ran_val *= 2.0;                 // random value in range -1 <-> +1
       ran_val *= normalising_factor;  // random value in range -sigma <-> +sigma
 
-      *it = typename ArrayType::Type(ran_val);
+      *it = typename TensorType::Type(ran_val);
       ++it;
     }
   }
 };
 
 }  // namespace ops
+
+template <class TensorType>
+struct OpWeightsSaveableParams : public OpPlaceholderSaveableParams<TensorType>
+{
+  fetch::ml::OpType           op_type = OpType::OP_WEIGHTS;
+  std::shared_ptr<TensorType> gradient_accumulation;
+  RegularisationType          regularisation_type;
+  typename TensorType::Type   regularisation_rate;
+};
+
 }  // namespace ml
 }  // namespace fetch

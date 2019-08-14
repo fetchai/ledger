@@ -38,7 +38,7 @@ Promise ServiceClientInterface::CallWithPackedArguments(protocol_handler_type co
   Promise         prom = MakePromise();
   serializer_type params;
 
-  serializers::SizeCounter<serializer_type> counter;
+  serializers::SizeCounter counter;
   counter << SERVICE_FUNCTION_CALL << prom->id();
   PackCallWithPackedArguments(counter, protocol, function, args);
 
@@ -75,7 +75,7 @@ subscription_handler_type ServiceClientInterface::Subscribe(protocol_handler_typ
   subscription_handler_type subid = CreateSubscription(protocol, feed, callback);
   serializer_type           params;
 
-  serializers::SizeCounter<serializer_type> counter;
+  serializers::SizeCounter counter;
   counter << SERVICE_SUBSCRIBE << protocol << feed << subid;
   params.Reserve(counter.size());
 
@@ -119,7 +119,7 @@ void ServiceClientInterface::Unsubscribe(subscription_handler_type id)
   {
     serializer_type params;
 
-    serializers::SizeCounter<serializer_type> counter;
+    serializers::SizeCounter counter;
     counter << SERVICE_UNSUBSCRIBE << sub.protocol << sub.feed << id;
     params.Reserve(counter.size());
 

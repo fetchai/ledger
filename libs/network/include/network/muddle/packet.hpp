@@ -19,7 +19,7 @@
 
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "crypto/prover.hpp"
 #include "crypto/verifier.hpp"
 
@@ -71,7 +71,8 @@ namespace muddle {
 class Packet
 {
 public:
-  static constexpr std::size_t ADDRESS_SIZE = 64;
+  static constexpr std::size_t ADDRESS_SIZE   = 64;
+  static constexpr std::size_t SIGNATURE_SIZE = 64;
 
   using RawAddress = std::array<uint8_t, ADDRESS_SIZE>;
   using Address    = byte_array::ConstByteArray;
@@ -133,6 +134,7 @@ public:
   Address const &   GetSender() const;
   Payload const &   GetPayload() const noexcept;
   Stamp const &     GetStamp() const noexcept;
+  std::size_t       GetPacketSize() const;
 
   // Setters
   void SetDirect(bool set = true) noexcept;
@@ -146,6 +148,10 @@ public:
   void SetTarget(RawAddress const &address);
   void SetTarget(Address const &address);
   void SetPayload(Payload const &payload);
+
+  // Binary
+  static bool ToBuffer(Packet const &packet, void *buffer, std::size_t length);
+  static bool FromBuffer(Packet &packet, void const *buffer, std::size_t length);
 
   void Sign(crypto::Prover &prover);
   bool Verify() const;
@@ -162,11 +168,8 @@ private:
   void         SetStamped(bool set = true) noexcept;
   BinaryHeader StaticHeader() const noexcept;
 
-  template <typename T>
-  friend void Serialize(T &serializer, Packet const &b);
-
-  template <typename T>
-  friend void Deserialize(T &serializer, Packet &b);
+  template <typename V, typename D>
+  friend struct serializers::MapSerializer;
 };
 
 inline Packet::Packet(Address const &source_address, uint32_t network_id)
@@ -366,10 +369,11 @@ inline void Packet::Sign(crypto::Prover &prover)
   SetStamped();
 
   auto const signature =
-      prover.Sign((serializers::ByteArrayBuffer() << StaticHeader() << payload_).data());
+      prover.Sign((serializers::MsgPackSerializer() << StaticHeader() << payload_).data());
 
   if (!signature.empty())
   {
+    assert(signature.size() == SIGNATURE_SIZE);
     stamp_ = signature;
   }
   else
@@ -385,28 +389,21 @@ inline bool Packet::Verify() const
     return false;  // null signature is not genuine in non-trusted networks
   }
   auto retVal = crypto::Verify(
-      GetSender(), (serializers::ByteArrayBuffer() << StaticHeader() << payload_).data(), stamp_);
+      GetSender(), (serializers::MsgPackSerializer() << StaticHeader() << payload_).data(), stamp_);
   return retVal;
 }
 
-template <typename T>
-void Serialize(T &serializer, Packet const &packet)
+inline std::size_t Packet::GetPacketSize() const
 {
-  serializer << *reinterpret_cast<Packet::BinaryHeader const *>(&packet.header_) << packet.payload_;
-  if (packet.header_.stamped)
-  {
-    serializer << packet.stamp_;
-  }
-}
+  std::size_t size{sizeof(RoutingHeader)};
 
-template <typename T>
-void Deserialize(T &serializer, Packet &packet)
-{
-  serializer >> *reinterpret_cast<Packet::BinaryHeader *>(&packet.header_) >> packet.payload_;
-  if (packet.header_.stamped)
+  size += payload_.size();
+  if (IsStamped())
   {
-    serializer >> packet.stamp_;
+    size += stamp_.size();
   }
+
+  return size;
 }
 
 }  // namespace muddle
