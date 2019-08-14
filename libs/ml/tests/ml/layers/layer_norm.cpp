@@ -88,7 +88,7 @@ TYPED_TEST(LayerNormTest, node_forward_test)  // Use the class as a Node
 {
   TypeParam data(std::vector<typename TypeParam::SizeType>({5, 10, 2}));
   auto      placeholder =
-      std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::OP_PLACEHOLDER, "Input");
+      std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::OP_PLACEHOLDER, "Input", [](){return std::make_shared<fetch::ml::ops::PlaceHolder<TypeParam>>();});
   std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder->GetOp())
       ->SetData(data);
 
@@ -110,7 +110,7 @@ TYPED_TEST(LayerNormTest, node_backward_test)  // Use the class as a Node
 {
   TypeParam data({5, 10, 2});
   auto      placeholder =
-      std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::OP_PLACEHOLDER, "Input");
+      std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::OP_PLACEHOLDER, "Input", [](){return std::make_shared<fetch::ml::ops::PlaceHolder<TypeParam>>();});
   std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder->GetOp())
       ->SetData(data);
 

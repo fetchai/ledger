@@ -90,10 +90,8 @@ TYPED_TEST(PReluTest, ops_backward_test)  // Use the class as an Ops
 TYPED_TEST(PReluTest, node_forward_test)  // Use the class as a Node
 {
   TypeParam data(std::vector<typename TypeParam::SizeType>({5, 10, 2}));
-  auto      placeholder_node =
-      std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::OP_PLACEHOLDER, "Input");
-  auto placeholder_op_ptr =
-      std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder_node->GetOp());
+  auto placeholder_node = std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::OP_PLACEHOLDER, "Input", [](){return std::make_shared<fetch::ml::ops::PlaceHolder<TypeParam>>();});
+  auto placeholder_op_ptr = std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder_node->GetOp());
   placeholder_op_ptr->SetData(data);
 
   fetch::math::SizeType in_size = 50u;
@@ -113,7 +111,7 @@ TYPED_TEST(PReluTest, node_backward_test)  // Use the class as a Node
 {
   TypeParam data({5, 10, 2});
   auto      placeholder_node =
-      std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::OP_PLACEHOLDER, "Input");
+      std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::OP_PLACEHOLDER, "Input", [](){return std::make_shared<fetch::ml::ops::PlaceHolder<TypeParam>>();});
   auto placeholder_op_ptr =
       std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder_node->GetOp());
   placeholder_op_ptr->SetData(data);
