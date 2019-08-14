@@ -570,10 +570,10 @@ void Generator::HandleIfStatement(IRNodePtr const &node)
       jf_pc                = function_->AddInstruction(jf_instruction);
       AddLineNumber(condition_node->line, jf_pc);
 
-      uint16_t const round_start_pc = uint16_t(function_->instructions.size());
+      uint16_t const block_start_pc = uint16_t(function_->instructions.size());
       if (chain.kind == NodeKind::Or)
       {
-        FinaliseShortCircuitChain(chain, true, round_start_pc);
+        FinaliseShortCircuitChain(chain, true, block_start_pc);
       }
 
       ScopeEnter();
