@@ -84,6 +84,11 @@ public:
 
   static void Bind(fetch::vm::Module &module);
 
+//  bool SerializeTo(serializers::MsgPackSerializer &buffer) override;
+//
+//  bool DeserializeFrom(serializers::MsgPackSerializer &buffer) override;
+//
+//private:
   GraphType graph_;
 };
 

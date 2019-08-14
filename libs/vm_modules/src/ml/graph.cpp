@@ -22,6 +22,7 @@
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
+#include "ml/saveparams/saveable_params.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/math/tensor.hpp"
 #include "vm_modules/ml/graph.hpp"
@@ -152,6 +153,20 @@ void VMGraph::Bind(Module &module)
       .CreateMemberFunction("addMeanSquareErrorLoss", &VMGraph::AddMeanSquareErrorLoss)
       .CreateMemberFunction("loadStateDict", &VMGraph::LoadStateDict)
       .CreateMemberFunction("stateDict", &VMGraph::StateDict);
+}
+
+bool VMGraph::SerializeTo(serializers::MsgPackSerializer &buffer)
+{
+  buffer << graph_.GetGraphSaveableParams();
+  return true;
+}
+
+bool VMGraph::DeserializeFrom(serializers::MsgPackSerializer &buffer)
+{
+  fetch::ml::GraphSaveableParams<fetch::math::Tensor<fetch::vm_modules::math::DataType>> gsp;
+  buffer >> gsp;
+  graph_.SetGraphSaveableParams(gsp);
+  return true;
 }
 
 }  // namespace ml
