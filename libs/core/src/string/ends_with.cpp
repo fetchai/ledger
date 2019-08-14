@@ -18,21 +18,16 @@
 
 #include "core/string/ends_with.hpp"
 
+#include <algorithm>
 #include <string>
 
 namespace fetch {
 namespace core {
 
-bool EndsWith(std::string const &value, std::string const &ending)
+bool EndsWith(std::string const &value, std::string const &suffix)
 {
-  bool success{false};
-
-  if (value.size() >= ending.size())
-  {
-    success = (value.substr(value.size() - ending.size()) == ending);
-  }
-
-  return success;
+  return value.size() >= suffix.size() &&
+         std::equal(suffix.rbegin(), suffix.rend(), value.rbegin());
 }
 
 }  // namespace core

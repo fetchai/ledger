@@ -19,9 +19,9 @@
 #include "math/metrics/mean_absolute_error.hpp"
 #include "math/normalize_array.hpp"
 #include "math/tensor.hpp"
+#include "ml/core/graph.hpp"
 #include "ml/dataloaders/ReadCSV.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
-#include "ml/graph.hpp"
 #include "ml/layers/convolution_1d.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
@@ -186,7 +186,7 @@ int main(int ac, char **av)
     optimiser.Run(loader, tp.batch_size);
 
     g->SetInput(input_name, test_data);
-    auto prediction = g->Evaluate(output_name, false);
+    auto prediction = g->ForwardPropagate(output_name, false);
     prediction.Reshape({prediction.shape().at(1), prediction.shape().at(2)});
 
     if (tp.normalise)

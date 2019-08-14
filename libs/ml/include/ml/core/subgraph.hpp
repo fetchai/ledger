@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/graph.hpp"
+#include "ml/core/graph.hpp"
 
 #include <cassert>
 #include <memory>
@@ -34,17 +34,33 @@ namespace ml {
  * @tparam T  the tensor/array type
  */
 template <class T>
-class SubGraph : public Graph<T>, public Ops<T>
+class SubGraph : public Graph<T>, public ops::Ops<T>
 {
 public:
-  using ArrayType     = T;
-  using VecTensorType = std::vector<std::shared_ptr<ArrayType const>>;
+  using TensorType    = T;
+  using VecTensorType = std::vector<std::shared_ptr<TensorType const>>;
+  using SPType        = SubGraphSaveableParams<TensorType>;
 
-  virtual void                   Forward(VecTensorType const &inputs, ArrayType &output);
-  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                          ArrayType const &    error_signal);
+  void                    Forward(VecTensorType const &inputs, TensorType &output) override;
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override;
 
-protected:
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
+  {
+    auto gsp = this->GetGraphSaveableParams();
+
+    auto sp    = std::make_shared<SPType>();
+    auto g_ptr = std::dynamic_pointer_cast<GraphSaveableParams<TensorType>>(sp);
+    *g_ptr     = gsp;
+
+    sp->input_node_names = input_node_names_;
+    sp->output_node_name = output_node_name_;
+
+    return sp;
+  }
+
+  static constexpr char const *DESCRIPTOR = "SubGraph";
+
   void AddInputNode(std::string const &node_name);
   void SetOutputNode(std::string const &node_name);
 
@@ -52,8 +68,8 @@ protected:
   SubGraph() = default;
 
 private:
-  std::vector<std::string>          input_nodes_;
-  std::shared_ptr<NodeInterface<T>> output_node_;
+  std::vector<std::string> input_node_names_;
+  std::string              output_node_name_;
 };
 
 /**
@@ -64,31 +80,31 @@ private:
  * @return
  */
 template <typename T>
-void SubGraph<T>::Forward(VecTensorType const &inputs, ArrayType &output)
+void SubGraph<T>::Forward(VecTensorType const &inputs, TensorType &output)
 {
-  assert(inputs.size() == this->input_nodes_.size());
+  assert(inputs.size() == this->input_node_names_.size());
   for (uint64_t i(0); i < inputs.size(); ++i)
   {
-    this->SetInput(input_nodes_[i], *(inputs.at(i)));
+    this->SetInput(input_node_names_[i], *(inputs.at(i)));
   }
-  output = *(output_node_->Evaluate(this->is_training_));
+  output = *(this->nodes_[output_node_name_]->Evaluate(this->is_training_));
 }
 
 template <typename T>
-std::vector<T> SubGraph<T>::Backward(VecTensorType const &inputs, ArrayType const &error_signal)
+std::vector<T> SubGraph<T>::Backward(VecTensorType const &inputs, TensorType const &error_signal)
 {
-  assert(inputs.size() == this->input_nodes_.size());
+  assert(inputs.size() == this->input_node_names_.size());
   FETCH_UNUSED(inputs);
 
-  std::vector<std::pair<NodeInterface<T> *, ArrayType>> non_back_prop_err_signal =
-      this->output_node_->BackPropagateSignal(error_signal);
-  std::vector<ArrayType> back_prop_err_signal;
+  std::vector<std::pair<Node<T> *, TensorType>> non_back_prop_err_signal =
+      this->nodes_[output_node_name_]->BackPropagateSignal(error_signal);
+  std::vector<TensorType> back_prop_err_signal;
 
   // aggregate the error to each input, if there are more than one error signal for one input
-  for (size_t i = 0; i < input_nodes_.size(); i++)
+  for (std::size_t i = 0; i < input_node_names_.size(); i++)
   {
-    bool                              is_first = true;
-    std::shared_ptr<NodeInterface<T>> node     = this->nodes_[input_nodes_[i]];
+    std::shared_ptr<Node<T>> node     = this->nodes_[input_node_names_[i]];
+    bool                     is_first = true;
     for (auto const &grad : non_back_prop_err_signal)
     {
       if (grad.first == node.get())
@@ -114,13 +130,13 @@ std::vector<T> SubGraph<T>::Backward(VecTensorType const &inputs, ArrayType cons
 template <typename T>
 void SubGraph<T>::AddInputNode(std::string const &node_name)
 {
-  input_nodes_.push_back(node_name);
+  input_node_names_.push_back(node_name);
 }
 
 template <typename T>
 void SubGraph<T>::SetOutputNode(std::string const &node_name)
 {
-  output_node_ = this->nodes_[node_name];
+  output_node_name_ = node_name;
 }
 
 }  // namespace ml

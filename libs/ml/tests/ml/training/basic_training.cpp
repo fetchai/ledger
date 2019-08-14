@@ -26,37 +26,37 @@
 
 #include "gtest/gtest.h"
 
-template <typename ArrayType>
-ArrayType GenerateXorData()
+template <typename TensorType>
+TensorType GenerateXorData()
 {
-  ArrayType data{{2, 4}};
-  data.Fill(typename ArrayType::Type(0));
-  data.Set(1, 1, typename ArrayType::Type(1));
-  data.Set(0, 2, typename ArrayType::Type(1));
-  data.Set(0, 3, typename ArrayType::Type(1));
-  data.Set(1, 3, typename ArrayType::Type(1));
+  TensorType data{{2, 4}};
+  data.Fill(typename TensorType::Type(0));
+  data.Set(1, 1, typename TensorType::Type(1));
+  data.Set(0, 2, typename TensorType::Type(1));
+  data.Set(0, 3, typename TensorType::Type(1));
+  data.Set(1, 3, typename TensorType::Type(1));
 
   return data;
 }
 
-template <typename ArrayType>
-ArrayType GenerateXorGt(typename ArrayType::SizeType dims)
+template <typename TensorType>
+TensorType GenerateXorGt(typename TensorType::SizeType dims)
 {
   assert((dims == 1) || (dims == 2));
 
-  ArrayType gt{{dims, 4}};
-  gt.Fill(typename ArrayType::Type(0));
+  TensorType gt{{dims, 4}};
+  gt.Fill(typename TensorType::Type(0));
   if (dims == 1)
   {
-    gt.Set(1, typename ArrayType::Type(1));
-    gt.Set(2, typename ArrayType::Type(1));
+    gt.Set(1, typename TensorType::Type(1));
+    gt.Set(2, typename TensorType::Type(1));
   }
   else
   {
-    gt.Set(0, 0, typename ArrayType::Type(1));
-    gt.Set(1, 1, typename ArrayType::Type(1));
-    gt.Set(1, 2, typename ArrayType::Type(1));
-    gt.Set(0, 3, typename ArrayType::Type(1));
+    gt.Set(0, 0, typename TensorType::Type(1));
+    gt.Set(1, 1, typename TensorType::Type(1));
+    gt.Set(1, 2, typename TensorType::Type(1));
+    gt.Set(0, 3, typename TensorType::Type(1));
   }
 
   return gt;
@@ -118,12 +118,12 @@ void PlusOneTest()
     cur_gt.At(0, 0) = gt.At(step, 0);
     g.SetInput(label_name, cur_gt);
 
-    auto error_tensor = g.Evaluate(error_name);
+    auto error_tensor = g.ForwardPropagate(error_name);
     loss += error_tensor(0, 0);
     g.BackPropagateError(error_name);
   }
 
-  for (auto &w : g.get_trainables())
+  for (auto &w : g.GetTrainables())
   {
     TypeParam grad = w->get_gradients();
     fetch::math::Multiply(grad, DataType{-alpha}, grad);
@@ -147,7 +147,7 @@ void PlusOneTest()
       cur_gt.At(0, 0) = gt.At(step, 0);
       g.SetInput(label_name, cur_gt);
 
-      auto error_tensor = g.Evaluate(error_name);
+      auto error_tensor = g.ForwardPropagate(error_name);
       loss += error_tensor(0, 0);
       g.BackPropagateError(error_name);
     }
@@ -156,7 +156,7 @@ void PlusOneTest()
     EXPECT_GE(current_loss, loss);
     current_loss = loss;
 
-    for (auto &w : g.get_trainables())
+    for (auto &w : g.GetTrainables())
     {
       TypeParam grad = w->get_gradients();
       fetch::math::Multiply(grad, DataType{-alpha}, grad);
@@ -229,12 +229,12 @@ void CategoricalPlusOneTest(bool add_softmax = false)
     auto cur_gt = gt.View(step).Copy();
     g.SetInput(label_name, cur_gt);
 
-    auto error_tensor = g.Evaluate(error_name);
+    auto error_tensor = g.ForwardPropagate(error_name);
     loss += error_tensor(0, 0);
     g.BackPropagateError(error_name);
   }
 
-  for (auto &w : g.get_trainables())
+  for (auto &w : g.GetTrainables())
   {
     TypeParam grad = w->get_gradients();
     fetch::math::Multiply(grad, DataType{-alpha}, grad);
@@ -258,7 +258,7 @@ void CategoricalPlusOneTest(bool add_softmax = false)
       auto cur_gt = gt.View(step).Copy();
       g.SetInput(label_name, cur_gt);
 
-      auto error_tensor = g.Evaluate(error_name);
+      auto error_tensor = g.ForwardPropagate(error_name);
       loss += error_tensor(0, 0);
       g.BackPropagateError(error_name);
     }
@@ -267,7 +267,7 @@ void CategoricalPlusOneTest(bool add_softmax = false)
     EXPECT_GE(current_loss, loss);
     current_loss = loss;
 
-    for (auto &w : g.get_trainables())
+    for (auto &w : g.GetTrainables())
     {
       TypeParam grad = w->get_gradients();
       fetch::math::Multiply(grad, DataType{-alpha}, grad);
@@ -331,12 +331,12 @@ void CategoricalXorTest(bool add_softmax = false)
     cur_gt = gt.View(step).Copy();
     g.SetInput(label_name, cur_gt);
 
-    auto error_tensor = g.Evaluate(error_name);
+    auto error_tensor = g.ForwardPropagate(error_name);
     loss += error_tensor(0, 0);
     g.BackPropagateError(error_name);
   }
 
-  for (auto &w : g.get_trainables())
+  for (auto &w : g.GetTrainables())
   {
     TypeParam grad = w->get_gradients();
     fetch::math::Multiply(grad, DataType{-alpha}, grad);
@@ -358,7 +358,7 @@ void CategoricalXorTest(bool add_softmax = false)
       cur_input = data.View(step).Copy();
       g.SetInput(input_name, cur_input);
       cur_gt            = gt.View(step).Copy();
-      auto error_tensor = g.Evaluate(error_name);
+      auto error_tensor = g.ForwardPropagate(error_name);
       loss += error_tensor(0, 0);
       g.BackPropagateError(error_name);
     }
@@ -366,7 +366,7 @@ void CategoricalXorTest(bool add_softmax = false)
     EXPECT_GE(current_loss, loss);
     current_loss = loss;
 
-    for (auto &w : g.get_trainables())
+    for (auto &w : g.GetTrainables())
     {
       TypeParam grad = w->get_gradients();
       fetch::math::Multiply(grad, DataType{-alpha}, grad);
