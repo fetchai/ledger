@@ -17,11 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/fixed_point/fixed_point.hpp"
-#include "vm/module.hpp"
-
-#include <cstdint>
-
 namespace fetch {
 
 namespace vm {

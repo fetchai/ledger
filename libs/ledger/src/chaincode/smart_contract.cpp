@@ -117,7 +117,8 @@ SmartContract::SmartContract(std::string const &source)
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Constructing contract: 0x", contract_digest().ToHex());
 
-  module_->CreateFreeFunction("getBlockNumber", [this](vm::VM *) { return block_index_; });
+  module_->CreateFreeFunction("getBlockNumber",
+                              [this](vm::VM *) -> BlockIndex { return block_index_; });
 
   // create and compile the executable
   auto errors = vm_modules::VMFactory::Compile(module_, source_, *executable_);
@@ -174,7 +175,6 @@ SmartContract::SmartContract(std::string const &source)
       FETCH_LOG_DEBUG(LOGGING_NAME, "Invalid function decorator found");
       throw SmartContractException(SmartContractException::Category::COMPILATION,
                                    {"Invalid decorator found in contract"});
-      break;
     }
   }
 }
@@ -441,6 +441,11 @@ Contract::Result SmartContract::InvokeAction(std::string const &name, Transactio
 
   // Get clean VM instance
   auto vm = std::make_unique<vm::VM>(module_.get());
+
+  // TODO(WK) inject charge limit
+  // vm->SetChargeLimit(123);
+  // vm->UpdateCharges({});
+
   vm->SetIOObserver(state());
 
   // lookup the function / entry point which will be executed
@@ -510,6 +515,11 @@ Contract::Result SmartContract::InvokeInit(Address const &owner)
 {
   // Get clean VM instance
   auto vm = std::make_unique<vm::VM>(module_.get());
+
+  // TODO(WK) inject charge limit
+  // vm->SetChargeLimit(123);
+  // vm->UpdateCharges({});
+
   vm->SetIOObserver(state());
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Running SC init function: ", init_fn_name_);

@@ -72,7 +72,8 @@ protected:
     std::unordered_map<TagType, std::bitset<sizeof(MessageType) * 8>>
             flags;          ///< Marks for each message tag what messages have been received
     uint8_t deliver_s = 1;  ///< Counter for messages delivered - initialised to 1
-    std::map<uint8_t, RBCMessage const &> undelivered_msg;  ///< Undelivered messages indexed by tag
+    std::map<uint8_t, TagType>
+        undelivered_msg;  ///< Undelivered message tags indexed by sequence counter
   };
 
   uint32_t           id_;  ///< Rank used in DKG (derived from position in current_cabinet_)

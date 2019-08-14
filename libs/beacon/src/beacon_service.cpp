@@ -182,27 +182,27 @@ void BeaconService::StartNewCabinet(CabinetMemberList members, uint32_t threshol
 {
   std::lock_guard<std::mutex> lock(mutex_);
 
-  SharedAeonExecutionUnit execution_unit = std::make_shared<AeonExecutionUnit>();
+  SharedAeonExecutionUnit beacon = std::make_shared<AeonExecutionUnit>();
 
   // Determines if we are observing or actively participating
   if (members.find(identity_) == members.end())
   {
-    execution_unit->observe_only = true;
+    beacon->observe_only = true;
   }
   else
   {
-    execution_unit->manager.SetCertificate(certificate_);
-    execution_unit->manager.Reset(members.size(), threshold);
+    beacon->manager.SetCertificate(certificate_);
+    beacon->manager.Reset(members.size(), threshold);
   }
 
   // Setting the aeon details
-  execution_unit->aeon.round_start = round_start;
-  execution_unit->aeon.round_end   = round_end;
-  execution_unit->aeon.members     = std::move(members);
+  beacon->aeon.round_start = round_start;
+  beacon->aeon.round_end   = round_end;
+  beacon->aeon.members     = std::move(members);
 
   // Even "observe only" details need to pass through the setup phase
   // to preserve order.
-  cabinet_creator_.QueueSetup(execution_unit);
+  cabinet_creator_.QueueSetup(beacon);
 }
 
 BeaconService::State BeaconService::OnWaitForSetupCompletionState()

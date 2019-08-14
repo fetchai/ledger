@@ -145,7 +145,6 @@ BeaconSetupService::State BeaconSetupService::OnWaitForDirectConnections()
     {
       all_connected = false;
 
-      throw std::runtime_error("doesn't work atm.");
       // TODO(tfr): Request muddle to connect.
     }
   }

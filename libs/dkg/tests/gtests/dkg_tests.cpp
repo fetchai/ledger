@@ -22,6 +22,7 @@
 #include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
 #include "dkg/dkg.hpp"
+#include "dkg/pre_dkg_sync.hpp"
 #include "dkg/rbc.hpp"
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/rpc/client.hpp"
@@ -281,6 +282,9 @@ private:
 
     complaints_answer_manager_.Clear();
     state_ = State::WAITING_FOR_QUAL_SHARES;
+    std::unique_lock<std::mutex> lock{mutex_};
+    A_ik_received_.insert(address_);
+    lock.unlock();
     ReceivedQualShares();
   }
 
@@ -362,6 +366,7 @@ struct CabinetMember
   std::shared_ptr<muddle::Subscription> shares_subscription;
   RBC                                   rbc;
   FaultyDkg                             dkg;
+  PreDkgSync                            pre_sync;
 
   // Set when DKG is finished
   bn::Fr              secret_share;
@@ -374,8 +379,7 @@ struct CabinetMember
     : muddle_port{port_number}
     , network_manager{"NetworkManager" + std::to_string(index), 1}
     , muddle_certificate{CreateNewCertificate()}
-    , muddle{fetch::muddle::NetworkId{"TestNetwork"}, muddle_certificate, network_manager, true,
-             true}
+    , muddle{fetch::muddle::NetworkId{"TestNetwork"}, muddle_certificate, network_manager}
     , shares_subscription(muddle.AsEndpoint().Subscribe(SERVICE_DKG, CHANNEL_SHARES))
     , rbc{muddle.AsEndpoint(), muddle_certificate->identity().identifier(), current_cabinet,
           [this](ConstByteArray const &address, ConstByteArray const &payload) -> void {
@@ -397,6 +401,7 @@ struct CabinetMember
             SubmitShare(destination, shares);
           },
           failures}
+    , pre_sync{muddle, 4}
   {
     // Set subscription for receiving shares
     shares_subscription->SetMessageHandler([this](ConstByteArray const &from, uint16_t, uint16_t,
@@ -446,9 +451,10 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
 {
   RBC::CabinetMembers cabinet;
 
-  std::vector<std::unique_ptr<CabinetMember>> committee;
-  std::set<RBC::MuddleAddress>                expected_qual;
-  std::set<uint32_t>                          qual_index;
+  std::vector<std::unique_ptr<CabinetMember>>                         committee;
+  std::set<RBC::MuddleAddress>                                        expected_qual;
+  std::unordered_map<byte_array::ConstByteArray, fetch::network::Uri> peers_list;
+  std::set<uint32_t>                                                  qual_index;
   for (uint16_t ii = 0; ii < cabinet_size; ++ii)
   {
     auto port_number = static_cast<uint16_t>(9000 + ii);
@@ -465,29 +471,30 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
       expected_qual.insert(committee[ii]->muddle.identity().identifier());
       qual_index.insert(ii);
     }
+    peers_list.insert({committee[ii]->muddle_certificate->identity().identifier(),
+                       fetch::network::Uri{"tcp://127.0.0.1:" + std::to_string(port_number)}});
   }
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(500));
-
-  // Connect muddles together (localhost for this example)
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  // Reset cabinet for rbc in pre-dkg sync
   for (uint32_t ii = 0; ii < cabinet_size; ii++)
   {
-    for (uint32_t jj = ii + 1; jj < cabinet_size; jj++)
-    {
-      committee[ii]->muddle.AddPeer(
-          fetch::network::Uri{"tcp://127.0.0.1:" + std::to_string(committee[jj]->muddle_port)});
-    }
+    committee[ii]->pre_sync.ResetCabinet(peers_list);
   }
 
-  // Make sure everyone is connected to everyone else
+  // Wait until everyone else has connected
+  for (uint32_t ii = 0; ii < cabinet_size; ii++)
+  {
+    committee[ii]->pre_sync.Connect();
+  }
+
   uint32_t kk = 0;
-  while (kk != cabinet_size)
+  while (kk < cabinet_size)
   {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     for (uint32_t mm = kk; mm < cabinet_size; ++mm)
     {
-      if (committee[mm]->muddle.AsEndpoint().GetDirectlyConnectedPeers().size() !=
-          (cabinet_size - 1))
+      if (!committee[mm]->pre_sync.ready())
       {
         break;
       }

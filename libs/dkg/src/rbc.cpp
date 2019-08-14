@@ -273,9 +273,6 @@ void RBC::OnRBC(MuddleAddress const &from, RBCEnvelope const &envelope)
   auto msg_ptr = envelope.Message();
   if (!BasicMessageCheck(from, msg_ptr))
   {
-
-    FETCH_LOG_ERROR(LOGGING_NAME, "Node ", id_,
-                    " received message from unknown sender: ", from.ToBase64());
     return;
   }
   uint32_t sender_index{CabinetIndex(from)};
@@ -465,7 +462,7 @@ void RBC::OnRReady(RReady const &msg, uint32_t sender_index)
       uint32_t counter{0};
       auto     im = current_cabinet_.begin();
       assert(2 * threshold_ + 1 <= current_cabinet_.size());
-      while (counter < 2 * threshold_ + 1)
+      while (counter < 2 * threshold_ + 1 && im != current_cabinet_.end())
       {
         if (*im != address_)
         {
@@ -479,7 +476,10 @@ void RBC::OnRReady(RReady const &msg, uint32_t sender_index)
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, " delivered msg ", tag, " with counter ",
                      msg.counter(), " and id ", msg.id());
-      Deliver(broadcasts_[tag].mbar, msg.id());
+      std::unique_lock<std::mutex> lock_broadcast(mutex_broadcast_);
+      SerialisedMessage            message_to_send = broadcasts_[tag].mbar;
+      lock_broadcast.unlock();
+      Deliver(message_to_send, msg.id());
       std::lock_guard<std::mutex> lock(mutex_deliver_);
       delivered_.insert(tag);
     }
@@ -568,7 +568,10 @@ void RBC::OnRAnswer(RAnswer const &msg, uint32_t sender_index)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, " delivered msg ", tag, " with counter ",
                    msg.counter(), " and id ", msg.id());
-    Deliver(broadcasts_[tag].mbar, msg.id());
+    std::unique_lock<std::mutex> lock_broadcast(mutex_broadcast_);
+    SerialisedMessage            message_to_send = broadcasts_[tag].mbar;
+    lock_broadcast.unlock();
+    Deliver(message_to_send, msg.id());
     std::lock_guard<std::mutex> lock(mutex_deliver_);
     delivered_.insert(tag);
   }
@@ -590,15 +593,19 @@ void RBC::Deliver(SerialisedMessage const &msg, uint32_t sender_index)
   std::lock_guard<std::mutex> lock(mutex_deliver_);
   if (!parties_[sender_index].undelivered_msg.empty())
   {
-    FETCH_LOG_TRACE(LOGGING_NAME, "Node ", id_, " checks old tags for node ", sender_index);
+    FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, " checks old messages for node ", sender_index);
     auto old_tag_msg = parties_[sender_index].undelivered_msg.begin();
     while (old_tag_msg != parties_[sender_index].undelivered_msg.end() &&
-           old_tag_msg->second.id() == CHANNEL_BROADCAST &&
-           old_tag_msg->second.counter() == parties_[id_].deliver_s)
+           old_tag_msg->first == parties_[sender_index].deliver_s)
     {
-      assert(!broadcasts_[old_tag_msg->second.tag()].mbar.empty());
-      deliver_msg_callback_(miner_id, broadcasts_[old_tag_msg->second.tag()].mbar);
+      TagType old_tag = old_tag_msg->second;
+      FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, "testing msg with tag ", old_tag);
+      assert(!broadcasts_[old_tag].mbar.empty());
+      FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, " delivered msg ", old_tag, " with counter ",
+                     old_tag_msg->first, " and id ", sender_index);
+      deliver_msg_callback_(miner_id, broadcasts_[old_tag].mbar);
       ++parties_[sender_index].deliver_s;  // Increase counter
+      delivered_.insert(old_tag);
       old_tag_msg = parties_[sender_index].undelivered_msg.erase(old_tag_msg);
     }
   }
@@ -630,6 +637,7 @@ bool RBC::CheckTag(RBCMessage const &msg)
   if (msg.id() >= current_cabinet_.size())
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Node ", id_, " received message with unknown tag id");
+    return false;
   }
   assert(parties_.size() == current_cabinet_.size());
   uint8_t msg_counter = parties_[msg.id()].deliver_s;
@@ -643,11 +651,11 @@ bool RBC::CheckTag(RBCMessage const &msg)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Node ", id_, " has counter ", msg_counter,
                    " does not match tag counter ", msg.counter(), " for node ", msg.id());
-    // Store tag of message for processing later
+    // Store counter of message for processing later
     if (parties_[msg.id()].undelivered_msg.find(msg.counter()) ==
         parties_[msg.id()].undelivered_msg.end())
     {
-      parties_[msg.id()].undelivered_msg.insert({msg.counter(), msg});
+      parties_[msg.id()].undelivered_msg.insert({msg.counter(), msg.tag()});
     }
   }
   return false;

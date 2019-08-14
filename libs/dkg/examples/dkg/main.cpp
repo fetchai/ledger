@@ -57,8 +57,8 @@ ProverPtr CreateNewCertificate()
 
 int main()
 {
-  uint32_t cabinet_size = 10;
-  uint32_t threshold{8};
+  uint32_t cabinet_size = 30;
+  uint32_t threshold{16};
 
   struct CabinetMember
   {
@@ -74,8 +74,7 @@ int main()
       , network_manager{"NetworkManager" + std::to_string(index), 1}
       , reactor{"ReactorName" + std::to_string(index)}
       , muddle_certificate{CreateNewCertificate()}
-      , muddle{fetch::muddle::NetworkId{"TestNetwork"}, muddle_certificate, network_manager, true,
-               true}
+      , muddle{fetch::muddle::NetworkId{"TestNetwork"}, muddle_certificate, network_manager}
       , dkg_service{muddle.AsEndpoint(), muddle_certificate->identity().identifier()}
       , pre_sync{muddle, 4}
     {
@@ -131,9 +130,8 @@ int main()
   }
   assert(cabinet.size() == cabinet_size);
 
-  // Start at RBC for each muddle
+  // Start at DKG for each muddle
   {
-
     for (auto &member : committee)
     {
       member->dkg_service.ResetCabinet(cabinet, threshold);
@@ -146,8 +144,23 @@ int main()
       member->reactor.Start();
     }
 
-    // Need to increase this depending on number of nodes to complete 3 rounds of DRB
-    std::this_thread::sleep_for(std::chrono::seconds(25));
+    // Sleep until everyone has finished
+    uint32_t qq = 0;
+    while (qq != cabinet_size)
+    {
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      for (uint32_t mm = qq; mm < cabinet_size; ++mm)
+      {
+        if (!committee[mm]->dkg_service.IsSynced())
+        {
+          break;
+        }
+        else
+        {
+          ++qq;
+        }
+      }
+    }
   }
 
   for (auto &member : committee)
