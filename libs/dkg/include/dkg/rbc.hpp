@@ -38,6 +38,11 @@ namespace dkg {
  */
 class RBC
 {
+protected:
+  struct MessageCount;
+  struct BroadcastMessage;
+  struct Party;
+
 public:
   using Endpoint        = muddle::MuddleEndpoint;
   using ConstByteArray  = byte_array::ConstByteArray;
@@ -50,6 +55,9 @@ public:
   using MessageHash     = byte_array::ByteArray;
   using CallbackFunction =
       std::function<void(MuddleAddress const &, byte_array::ConstByteArray const &)>;
+  using MessageStatMap = std::unordered_map<MessageHash, MessageCount>;
+  using FlagType       = std::bitset<sizeof(MessageType) * 8>;
+  using PartyList      = std::vector<Party>;
 
   RBC(Endpoint &endpoint, MuddleAddress address, CallbackFunction call_back,
       uint16_t channel = CHANNEL_BROADCAST);
@@ -59,13 +67,13 @@ public:
   void SendRBroadcast(SerialisedMessage const &msg);
 
 protected:
+  /// Structs used for the message tracking
+  /// @{
   struct MessageCount
   {
     uint64_t echo_count{0};
     uint64_t ready_count{0};  ///< Count of RReady and RRecho messages
   };
-  using MessageStatMap = std::unordered_map<MessageHash, MessageCount>;
-  using FlagType       = std::bitset<sizeof(MessageType) * 8>;
 
   struct BroadcastMessage
   {
@@ -82,7 +90,7 @@ protected:
     std::map<uint8_t, TagType>
         undelivered_msg;  ///< Undelivered message tags indexed by sequence counter
   };
-  using PartyList = std::vector<Party>;
+  /// @}
 
   /// Sending messages
   /// @{

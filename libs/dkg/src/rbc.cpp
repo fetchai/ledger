@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dkg/rbc.hpp"
 #include "core/logging.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
+#include "dkg/rbc.hpp"
 
 namespace fetch {
 namespace dkg {
