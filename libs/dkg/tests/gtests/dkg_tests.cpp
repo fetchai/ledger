@@ -22,7 +22,6 @@
 #include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
 #include "dkg/dkg.hpp"
-#include "dkg/pre_dkg_sync.hpp"
 #include "dkg/rbc.hpp"
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/rpc/client.hpp"
@@ -365,7 +364,6 @@ struct CabinetMember
   std::shared_ptr<muddle::Subscription> shares_subscription;
   RBC                                   rbc;
   FaultyDkg                             dkg;
-  PreDkgSync                            pre_sync;
 
   // Set when DKG is finished
   bn::Fr              secret_share;
@@ -400,7 +398,6 @@ struct CabinetMember
             SubmitShare(destination, shares);
           },
           failures}
-    , pre_sync{muddle, 4}
   {
     // Set subscription for receiving shares
     shares_subscription->SetMessageHandler([this](ConstByteArray const &from, uint16_t, uint16_t,
@@ -478,28 +475,12 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
   // Reset cabinet for rbc in pre-dkg sync
   for (uint32_t ii = 0; ii < cabinet_size; ii++)
   {
-    committee[ii]->pre_sync.ResetCabinet(peers_list);
-  }
-
-  // Wait until everyone else has connected
-  for (uint32_t ii = 0; ii < cabinet_size; ii++)
-  {
-    committee[ii]->pre_sync.Connect();
-  }
-
-  uint32_t kk = 0;
-  while (kk < cabinet_size)
-  {
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    for (uint32_t mm = kk; mm < cabinet_size; ++mm)
+    // Add all peers except yourself
+    for (auto it = peers_list.begin(); it != peers_list.end(); ++it)
     {
-      if (!committee[mm]->pre_sync.ready())
+      if (it->first != member->muddle_certificate->identity().identifier())
       {
-        break;
-      }
-      else
-      {
-        ++kk;
+        committee[ii]->muddle.AddPeer(it->second);
       }
     }
   }
