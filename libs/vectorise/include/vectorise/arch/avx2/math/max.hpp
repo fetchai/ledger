@@ -18,19 +18,11 @@
 //------------------------------------------------------------------------------
 
 #include "vectorise/fixed_point/fixed_point.hpp"
-#include "vectorise/math/comparison.hpp"
 
 namespace fetch {
 namespace vectorise {
 
 using namespace fetch::vectorise;
-
-template <typename T, std::size_t N = sizeof(T)>
-inline VectorRegister<T, N> Max(VectorRegister<T, N> const &a,
-                                VectorRegister<T, N> const &b)
-{
-  return VectorRegister<T, N>(fetch::math::Max(a.data(), b.data()));
-}
 
 inline VectorRegister<int32_t, 128> Max(VectorRegister<int32_t, 128> const &a,
                                         VectorRegister<int32_t, 128> const &b)
