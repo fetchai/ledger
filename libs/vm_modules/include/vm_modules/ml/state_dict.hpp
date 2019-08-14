@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/main_serializer.hpp"
+#include "ml/serializers/ml_types.hpp"
 #include "ml/state_dict.hpp"
 #include "vm/object.hpp"
 #include "vm_modules/math/type.hpp"
@@ -48,6 +50,10 @@ public:
                   fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &weights);
 
   static void Bind(fetch::vm::Module &module);
+
+  bool SerializeTo(serializers::MsgPackSerializer &buffer) override;
+
+  bool DeserializeFrom(serializers::MsgPackSerializer &buffer) override;
 
   fetch::ml::StateDict<fetch::math::Tensor<DataType>> state_dict_;
 };

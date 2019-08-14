@@ -66,7 +66,7 @@ public:
   static std::shared_ptr<fetch::vm::Module> GetModule(uint64_t enabled);
 
   /**
-   * Compile a source file, producing  an executable
+   * Compile a source file, producing an executable
    *
    * @param: module The module which the user might have added various bindings/classes to etc.
    * @param: source The raw source to compile

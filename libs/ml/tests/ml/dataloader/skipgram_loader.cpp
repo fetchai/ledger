@@ -28,8 +28,8 @@
 using namespace fetch::ml;
 using namespace fetch::ml::dataloaders;
 
-using SizeType  = fetch::math::SizeType;
-using ArrayType = fetch::math::Tensor<double>;
+using SizeType   = fetch::math::SizeType;
+using TensorType = fetch::math::Tensor<double>;
 
 struct TrainingParams
 {
@@ -82,7 +82,7 @@ TYPED_TEST(SkipGramDataloaderTest, loader_test)
     {
       loader.Reset();
     }
-    std::vector<ArrayType> left_and_right = loader.GetNext().second;
+    std::vector<TensorType> left_and_right = loader.GetNext().second;
     std::string input = loader.WordFromIndex(static_cast<SizeType>(left_and_right.at(0).At(0, 0)));
     std::string context =
         loader.WordFromIndex(static_cast<SizeType>(left_and_right.at(1).At(0, 0)));

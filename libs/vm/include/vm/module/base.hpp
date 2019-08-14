@@ -19,6 +19,8 @@
 
 #include "vm/vm.hpp"
 
+#include <typeinfo>
+
 namespace fetch {
 namespace vm {
 
@@ -112,8 +114,7 @@ struct UnrollTypes<T, Ts...>
   // Invoked on non-final type
   static void Unroll(TypeIndexArray &array)
   {
-    TypeIndex const type_index = TypeGetter<T>::GetTypeIndex();
-    array.push_back(type_index);
+    array.emplace_back(TypeGetter<T>::GetTypeIndex());
     UnrollTypes<Ts...>::Unroll(array);
   }
 };
@@ -123,8 +124,7 @@ struct UnrollTypes<T>
   // Invoked on final type
   static void Unroll(TypeIndexArray &array)
   {
-    TypeIndex const type_index = TypeGetter<T>::GetTypeIndex();
-    array.push_back(type_index);
+    array.emplace_back(TypeGetter<T>::GetTypeIndex());
   }
 };
 template <>
@@ -154,8 +154,7 @@ struct UnrollParameterTypes<T, Ts...>
   // Invoked on non-final type
   static void Unroll(TypeIndexArray &array)
   {
-    TypeIndex const type_index = ParameterTypeGetter<T>::GetTypeIndex();
-    array.push_back(type_index);
+    array.emplace_back(ParameterTypeGetter<T>::GetTypeIndex());
     UnrollParameterTypes<Ts...>::Unroll(array);
   }
 };
@@ -165,8 +164,7 @@ struct UnrollParameterTypes<T>
   // Invoked on final type
   static void Unroll(TypeIndexArray &array)
   {
-    TypeIndex const type_index = ParameterTypeGetter<T>::GetTypeIndex();
-    array.push_back(type_index);
+    array.emplace_back(ParameterTypeGetter<T>::GetTypeIndex());
   }
 };
 template <>

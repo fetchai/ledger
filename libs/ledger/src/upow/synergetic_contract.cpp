@@ -24,6 +24,7 @@
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
 #include "ledger/upow/synergetic_contract.hpp"
 #include "vectorise/uint/uint.hpp"
+#include "vm/array.hpp"
 #include "vm/compiler.hpp"
 #include "vm/vm.hpp"
 #include "vm_modules/core/structured_data.hpp"
@@ -124,7 +125,8 @@ VmStructuredData CreateProblemData(vm::VM *vm, ConstByteArray const &problem_dat
     json::JSONDocument doc{problem_data};
 
     // create the structured data
-    data = StructuredData::Constructor(vm, vm->GetTypeId<VmStructuredData>(), doc.root());
+    data =
+        StructuredData::ConstructorFromVariant(vm, vm->GetTypeId<VmStructuredData>(), doc.root());
   }
   catch (std::exception const &ex)
   {
