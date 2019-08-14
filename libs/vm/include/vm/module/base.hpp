@@ -19,7 +19,9 @@
 
 #include "vm/vm.hpp"
 
+#include <type_traits>
 #include <typeinfo>
+#include <utility>
 
 namespace fetch {
 namespace vm {
@@ -118,15 +120,6 @@ struct UnrollTypes<T, Ts...>
     UnrollTypes<Ts...>::Unroll(array);
   }
 };
-template <typename T>
-struct UnrollTypes<T>
-{
-  // Invoked on final type
-  static void Unroll(TypeIndexArray &array)
-  {
-    array.emplace_back(TypeGetter<T>::GetTypeIndex());
-  }
-};
 template <>
 struct UnrollTypes<>
 {
@@ -158,15 +151,6 @@ struct UnrollParameterTypes<T, Ts...>
     UnrollParameterTypes<Ts...>::Unroll(array);
   }
 };
-template <typename T>
-struct UnrollParameterTypes<T>
-{
-  // Invoked on final type
-  static void Unroll(TypeIndexArray &array)
-  {
-    array.emplace_back(ParameterTypeGetter<T>::GetTypeIndex());
-  }
-};
 template <>
 struct UnrollParameterTypes<>
 {
@@ -175,16 +159,8 @@ struct UnrollParameterTypes<>
   {}
 };
 
-template <typename... Ts>
-struct UnrollTupleParameterTypes;
-template <typename... Ts>
-struct UnrollTupleParameterTypes<std::tuple<Ts...>>
-{
-  static void Unroll(TypeIndexArray &array)
-  {
-    UnrollParameterTypes<Ts...>::Unroll(array);
-  }
-};
+template <typename Tuple>
+using UnrollTupleParameterTypes = meta::UnpackTuple<Tuple, UnrollParameterTypes>;
 
 template <typename T, typename = void>
 struct MakeParameterType;
