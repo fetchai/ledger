@@ -19,6 +19,7 @@
 #include "core/macros.hpp"
 #include "core/reactor.hpp"
 #include "dkg/dkg_service.hpp"
+#include "dkg/pre_dkg_sync.hpp"
 #include "network/management/network_manager.hpp"
 #include "network/muddle/muddle.hpp"
 
@@ -30,6 +31,7 @@
 
 using namespace fetch;
 using namespace fetch::crypto;
+using namespace fetch::dkg;
 
 int main(int argc, char **argv)
 {
@@ -51,19 +53,20 @@ int main(int argc, char **argv)
   }
 
   // Parse command line args
-  std::vector<std::string> args;
-  std::vector<std::string> peer_ip_addresses;
-  for (int i = 1; i < argc; ++i)
+  std::vector<std::string>                                            args;
+  std::unordered_map<byte_array::ConstByteArray, fetch::network::Uri> peer_list;
+  dkg::DkgService::CabinetMembers members{p2p_key->identity().identifier()};
+  for (int i = 1; i < 4; ++i)
   {
     args.emplace_back(std::string{argv[i]});
-
-    if (i >= 4)
-    {
-      if (!(i & 0x1))
-      {
-        peer_ip_addresses.push_back(args.back());
-      }
-    }
+  }
+  peer_list.insert(
+      {p2p_key->identity().identifier(), fetch::network::Uri{"tcp://127.0.0.1:" + args[1]}});
+  for (int i = 4; i < argc - 1; i += 2)
+  {
+    byte_array::ConstByteArray address{argv[i + 1]};
+    peer_list.insert({FromBase64(address), fetch::network::Uri{argv[i]}});
+    members.insert(FromBase64(address));
   }
 
   // Muddle setup/gubbins
@@ -72,7 +75,7 @@ int main(int argc, char **argv)
   auto muddle = std::make_shared<fetch::muddle::Muddle>(fetch::muddle::NetworkId{"TestDKGNetwork"},
                                                         p2p_key, network_manager, true, true);
 
-  std::shared_ptr<dkg::DkgService> dkg =
+  std::unique_ptr<dkg::DkgService> dkg =
       std::make_unique<dkg::DkgService>(muddle->AsEndpoint(), p2p_key->identity().identifier());
 
   // Start networking etc.
@@ -81,41 +84,26 @@ int main(int argc, char **argv)
 
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-  for (auto const &i : peer_ip_addresses)
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "Telling muddle to connect to peer: ", i);
-    muddle->AddPeer(fetch::network::Uri{i});
-  }
-
-  // Important! Block until there are peers - dkg not resistant to this case
-  while (muddle->AsEndpoint().GetDirectlyConnectedPeers().size() != peer_ip_addresses.size())
+  // Connect and wait until everyone else has connected
+  PreDkgSync sync(*muddle, 4);
+  sync.ResetCabinet(peer_list);
+  sync.Connect();
+  while (!sync.ready())
   {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
-
-  FETCH_LOG_INFO(LOGGING_NAME,
-                 "Connected peers: ", muddle->AsEndpoint().GetDirectlyConnectedPeers().size());
-  FETCH_LOG_INFO(LOGGING_NAME, "expected connected peers: ", peer_ip_addresses.size());
-
-  // Create cabinet
-  dkg::DkgService::CabinetMembers members{p2p_key->identity().identifier()};
-  for (auto const &address : muddle->AsEndpoint().GetDirectlyConnectedPeers())
-  {
-    members.insert(address);
-  }
-  assert(members.size() == peer_ip_addresses.size() + 1);
   auto index = std::distance(members.begin(), members.find(p2p_key->identity().identifier()));
-  FETCH_LOG_INFO(LOGGING_NAME, "Node ", index, " resetting cabinet");
+  FETCH_LOG_INFO(LOGGING_NAME, "Connected to peers - node ", index);
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(5000));
-
+  // Reset cabinet in DKG
   dkg->ResetCabinet(members, uint32_t(std::stoi(args[2])));
+  FETCH_LOG_INFO(LOGGING_NAME, "Resetting cabinet");
 
   // Machinery to drive the FSM - attach and begin!
   reactor.Attach(dkg->GetWeakRunnable());
   reactor.Start();
 
-  std::this_thread::sleep_for(std::chrono::seconds(1000));  // 1 min
+  std::this_thread::sleep_for(std::chrono::seconds(300));  // 1 min
 
   FETCH_LOG_INFO(LOGGING_NAME, "Finished. Quitting");
 

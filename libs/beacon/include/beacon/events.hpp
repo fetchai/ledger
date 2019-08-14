@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,17 +17,21 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dkg/dkg_rpc_protocol.hpp"
-#include "dkg/dkg_service.hpp"
-
 namespace fetch {
-namespace dkg {
+namespace beacon {
 
-DkgRpcProtocol::DkgRpcProtocol(DkgService &service)
-  : service_{service}
+struct EventCommitteeCompletedWork
 {
-  Expose(SUBMIT_SIGNATURE, &service_, &DkgService::SubmitSignatureShare);
-}
+  Aeon aeon;
+};
 
-}  // namespace dkg
+struct EventInvalidSignature
+{
+};
+
+struct EventSignatureFromNonMember
+{
+};
+
+}  // namespace beacon
 }  // namespace fetch

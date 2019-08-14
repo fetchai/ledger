@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,17 +17,34 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dkg/dkg_rpc_protocol.hpp"
-#include "dkg/dkg_service.hpp"
+#include "core/service_ids.hpp"
+#include "network/service/protocol.hpp"
 
 namespace fetch {
-namespace dkg {
+namespace beacon {
+class BeaconService;
 
-DkgRpcProtocol::DkgRpcProtocol(DkgService &service)
-  : service_{service}
+class BeaconServiceProtocol : public service::Protocol
 {
-  Expose(SUBMIT_SIGNATURE, &service_, &DkgService::SubmitSignatureShare);
-}
+public:
+  enum
+  {
+    SUBMIT_SIGNATURE_SHARE = 1
+  };
 
-}  // namespace dkg
+  // Construction / Destruction
+  explicit BeaconServiceProtocol(BeaconService &service);
+
+  BeaconServiceProtocol(BeaconServiceProtocol const &) = delete;
+  BeaconServiceProtocol(BeaconServiceProtocol &&)      = delete;
+  ~BeaconServiceProtocol() override                    = default;
+
+  // Operators
+  BeaconServiceProtocol &operator=(BeaconServiceProtocol const &) = delete;
+  BeaconServiceProtocol &operator=(BeaconServiceProtocol &&) = delete;
+
+private:
+  BeaconService &service_;
+};
+}  // namespace beacon
 }  // namespace fetch

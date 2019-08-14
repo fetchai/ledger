@@ -24,6 +24,7 @@
 #include "rbc_envelope.hpp"
 
 #include <bitset>
+#include <unordered_set>
 
 namespace fetch {
 namespace dkg {
@@ -44,7 +45,8 @@ public:
   using SubscriptionPtr = std::shared_ptr<muddle::Subscription>;
 
   RBC(Endpoint &endpoint, MuddleAddress address, CabinetMembers const &cabinet,
-      std::function<void(MuddleAddress const &, byte_array::ConstByteArray const &)> call_back);
+      std::function<void(MuddleAddress const &, byte_array::ConstByteArray const &)> call_back,
+      uint8_t                                                                        channel = 2);
 
   // Operators
   void ResetCabinet();
@@ -84,15 +86,16 @@ protected:
   uint32_t           id_;  ///< Rank used in DKG (derived from position in current_cabinet_)
   uint8_t            msg_counter_;  ///< Counter for messages we have broadcasted
   std::vector<Party> parties_;      ///< Keeps track of messages from cabinet members
-  std::unordered_map<uint64_t, Broadcast> broadcasts_;  ///< map from tag to broadcasts
+  std::unordered_map<TagType, Broadcast> broadcasts_;  ///< map from tag to broadcasts
+  std::unordered_set<TagType>            delivered_;   ///< Tags of messages delivered
 
-  std::mutex mutex_flags_;      // protects access to Party message flags
-  std::mutex mutex_deliver_;    // protects the delivered message queue
-  std::mutex mutex_broadcast_;  // protects broadcasts_
+  std::mutex mutex_flags_;      ///< Protects access to Party message flags
+  std::mutex mutex_deliver_;    ///< Protects the delivered message queue
+  std::mutex mutex_broadcast_;  ///< Protects broadcasts_
 
   // For broadcast
-  static constexpr uint16_t SERVICE_DKG       = 5001;
-  static constexpr uint8_t  CHANNEL_BROADCAST = 2;  ///< Channel for reliable broadcast
+  static constexpr uint16_t SERVICE_DKG = 5001;
+  uint8_t                   CHANNEL_BROADCAST;  ///< Channel for reliable broadcast
 
   MuddleAddress const address_;   ///< Our muddle address
   Endpoint &          endpoint_;  ///< The muddle endpoint to communicate on
@@ -116,12 +119,13 @@ protected:
 
   static std::string MsgTypeToString(MsgType msg_type);
   uint32_t           CabinetIndex(MuddleAddress const &other_address) const;
-  bool               CheckTag(RBCMessage const &msg);
-  bool               SetMbar(TagType tag, RMessage const &msg, uint32_t sender_index);
-  bool               SetDbar(TagType tag, RHash const &msg);
-  bool               ReceivedEcho(TagType tag, REcho const &msg);
-  struct MsgCount    ReceivedReady(TagType tag, RHash const &msg);
-  bool               SetPartyFlag(uint32_t sender_index, TagType tag, MsgType msg_type);
+  bool BasicMsgCheck(MuddleAddress const &from, std::shared_ptr<RBCMessage> const &msg_ptr);
+  bool CheckTag(RBCMessage const &msg);
+  bool SetMbar(TagType tag, RMessage const &msg, uint32_t sender_index);
+  bool SetDbar(TagType tag, RHash const &msg);
+  bool ReceivedEcho(TagType tag, REcho const &msg);
+  struct MsgCount ReceivedReady(TagType tag, RHash const &msg);
+  bool            SetPartyFlag(uint32_t sender_index, TagType tag, MsgType msg_type);
 };
 
 TruncatedHash MessageHash(SerialisedMessage const &msg);

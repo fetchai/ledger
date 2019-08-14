@@ -16,17 +16,18 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dkg/dkg_rpc_protocol.hpp"
-#include "dkg/dkg_service.hpp"
+#include "beacon/beacon_setup_protocol.hpp"
+#include "beacon/beacon_setup_service.hpp"
+#include "core/service_ids.hpp"
 
 namespace fetch {
-namespace dkg {
+namespace beacon {
 
-DkgRpcProtocol::DkgRpcProtocol(DkgService &service)
-  : service_{service}
+BeaconSetupServiceProtocol::BeaconSetupServiceProtocol(BeaconSetupService &service)
+  : service_(service)
 {
-  Expose(SUBMIT_SIGNATURE, &service_, &DkgService::SubmitSignatureShare);
+  this->Expose(SUBMIT_SHARE, &service_, &BeaconSetupService::SubmitShare);
 }
 
-}  // namespace dkg
+}  // namespace beacon
 }  // namespace fetch
