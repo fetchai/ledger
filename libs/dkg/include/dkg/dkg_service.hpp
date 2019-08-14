@@ -174,7 +174,7 @@ public:
     current_cabinet_ = std::move(cabinet);
     if (threshold == std::numeric_limits<uint32_t>::max())
     {
-      current_threshold_ = static_cast<uint32_t>(current_cabinet_.size() / 2 - 1);
+      current_threshold_ = static_cast<uint32_t>(current_cabinet_.size() / 2 + 1);
     }
     else
     {
