@@ -113,8 +113,8 @@ private:
 
   void SendBadAnswer(RBCEnvelope const &env)
   {
-    auto        answer_ptr = std::dynamic_pointer_cast<RAnswer>(env.Message());
-    std::string new_msg    = "Goodbye";
+    auto                                  answer_ptr = env.Message();
+    std::string                           new_msg    = "Goodbye";
     fetch::serializers::MsgPackSerializer serialiser;
     serialiser << new_msg;
     RAnswer     new_answer{CHANNEL_BROADCAST, answer_ptr->id(), answer_ptr->counter(),
@@ -134,8 +134,8 @@ private:
   void SendUnrequestedAnswer(RBCEnvelope const &env)
   {
     assert(env.Message()->type() == RBCMessage::MessageType::R_ECHO);
-    auto        echo_ptr = std::dynamic_pointer_cast<REcho>(env.Message());
-    std::string new_msg  = "Hello";
+    auto                                  echo_ptr = env.Message();
+    std::string                           new_msg  = "Hello";
     fetch::serializers::MsgPackSerializer serialiser;
     serialiser << new_msg;
     RAnswer new_answer{CHANNEL_BROADCAST, echo_ptr->id(), echo_ptr->counter(), serialiser.data()};
@@ -199,7 +199,7 @@ private:
     {
     case RBCMessage::MessageType::R_BROADCAST:
     {
-      auto broadcast_ptr = std::dynamic_pointer_cast<RBroadcast>(msg_ptr);
+      auto broadcast_ptr = msg_ptr;
       if (broadcast_ptr != nullptr)
       {
         auto payload = broadcast_ptr->message();
@@ -222,7 +222,7 @@ private:
     }
     case RBCMessage::MessageType::R_ECHO:
     {
-      auto echo_ptr = std::dynamic_pointer_cast<REcho>(msg_ptr);
+      auto echo_ptr = msg_ptr;
       if (echo_ptr != nullptr)
       {
         OnREcho(*echo_ptr, sender_index);
@@ -231,7 +231,7 @@ private:
     }
     case RBCMessage::MessageType::R_READY:
     {
-      auto ready_ptr = std::dynamic_pointer_cast<RReady>(msg_ptr);
+      auto ready_ptr = msg_ptr;
       if (ready_ptr != nullptr)
       {
         OnRReady(*ready_ptr, sender_index);
@@ -240,7 +240,7 @@ private:
     }
     case RBCMessage::MessageType::R_REQUEST:
     {
-      auto request_ptr = std::dynamic_pointer_cast<RRequest>(msg_ptr);
+      auto request_ptr = msg_ptr;
       if (request_ptr != nullptr)
       {
         OnRRequest(*request_ptr, sender_index);
@@ -249,7 +249,7 @@ private:
     }
     case RBCMessage::MessageType::R_ANSWER:
     {
-      auto answer_ptr = std::dynamic_pointer_cast<RAnswer>(msg_ptr);
+      auto answer_ptr = msg_ptr;
       if (answer_ptr != nullptr)
       {
         OnRAnswer(*answer_ptr, sender_index);

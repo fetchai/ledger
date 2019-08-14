@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "dkg/rbc.hpp"
 #include "core/logging.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
-#include "dkg/rbc.hpp"
 
 namespace fetch {
 namespace dkg {
@@ -214,7 +214,7 @@ bool RBC::SetDbar(TagType tag, RHash const &msg)
  * @param msg Reference to REcho message
  * @return Bool for whether we have reached the message count for REcho messages
  */
-bool RBC::ReceivedEcho(TagType tag, REcho const &msg)
+bool RBC::ReceivedEcho(TagType tag, RBCMessage const &msg)
 {
   std::lock_guard<std::mutex> lock(mutex_broadcast_);
   auto &                      msg_count = broadcasts_[tag].msgs_count[msg.hash()];
@@ -270,88 +270,52 @@ bool RBC::BasicMessageCheck(MuddleAddress const &from, std::shared_ptr<RBCMessag
  */
 void RBC::OnRBC(MuddleAddress const &from, RBCEnvelope const &envelope)
 {
-  auto msg_ptr = envelope.Message();
+  auto     msg_ptr = envelope.Message();
+  uint32_t sender_index{CabinetIndex(from)};
+
+  if (msg_ptr == nullptr)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Node: ", id_, " can not process payload from node ",
+                   sender_index);
+
+    return;
+  }
+
   if (!BasicMessageCheck(from, msg_ptr))
   {
     return;
   }
-  uint32_t sender_index{CabinetIndex(from)};
+
   switch (msg_ptr->type())
   {
   case RBCMessage::MessageType::R_BROADCAST:
   {
     FETCH_LOG_TRACE(LOGGING_NAME, "Node: ", id_, " received RBroadcast from node ", sender_index);
-    auto broadcast_ptr = std::dynamic_pointer_cast<RBroadcast>(msg_ptr);
-    if (broadcast_ptr != nullptr)
-    {
-      OnRBroadcast(*broadcast_ptr, sender_index);
-    }
-    else
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Node: ", id_, " can not process payload from node ",
-                     sender_index);
-    }
+    OnRBroadcast(*msg_ptr, sender_index);
     break;
   }
   case RBCMessage::MessageType::R_ECHO:
   {
-
     FETCH_LOG_TRACE(LOGGING_NAME, "Node: ", id_, " received REcho from node ", sender_index);
-    auto echo_ptr = std::dynamic_pointer_cast<REcho>(msg_ptr);
-    if (echo_ptr != nullptr)
-    {
-      OnREcho(*echo_ptr, sender_index);
-    }
-    else
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Node: ", id_, " can not process payload from node ",
-                     sender_index);
-    }
+    OnREcho(*msg_ptr, sender_index);
     break;
   }
   case RBCMessage::MessageType::R_READY:
   {
     FETCH_LOG_TRACE(LOGGING_NAME, "Node: ", id_, " received RReady from node ", sender_index);
-    auto ready_ptr = std::dynamic_pointer_cast<RReady>(msg_ptr);
-    if (ready_ptr != nullptr)
-    {
-      OnRReady(*ready_ptr, sender_index);
-    }
-    else
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Node: ", id_, " can not process payload from node ",
-                     sender_index);
-    }
+    OnRReady(*msg_ptr, sender_index);
     break;
   }
   case RBCMessage::MessageType::R_REQUEST:
   {
     FETCH_LOG_TRACE(LOGGING_NAME, "Node: ", id_, " received RRequest from node ", sender_index);
-    auto request_ptr = std::dynamic_pointer_cast<RRequest>(msg_ptr);
-    if (request_ptr != nullptr)
-    {
-      OnRRequest(*request_ptr, sender_index);
-    }
-    else
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Node: ", id_, " can not process payload from node ",
-                     sender_index);
-    }
+    OnRRequest(*msg_ptr, sender_index);
     break;
   }
   case RBCMessage::MessageType::R_ANSWER:
   {
     FETCH_LOG_TRACE(LOGGING_NAME, "Node: ", id_, " received RAnswer from node ", sender_index);
-    auto answer_ptr = std::dynamic_pointer_cast<RAnswer>(msg_ptr);
-    if (answer_ptr != nullptr)
-    {
-      OnRAnswer(*answer_ptr, sender_index);
-    }
-    else
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Node: ", id_, " can not process payload from node ",
-                     sender_index);
-    }
+    OnRAnswer(*msg_ptr, sender_index);
     break;
   }
   default:
@@ -366,7 +330,7 @@ void RBC::OnRBC(MuddleAddress const &from, RBCEnvelope const &envelope)
  * @param msg Reference to RBroadcast message
  * @param sender_index Index of sender in current_cabinet_
  */
-void RBC::OnRBroadcast(RBroadcast const &msg, uint32_t sender_index)
+void RBC::OnRBroadcast(RBCMessage const &msg, uint32_t sender_index)
 {
   TagType tag = msg.tag();
   if (!SetPartyFlag(sender_index, tag, MessageType::R_SEND))
@@ -403,7 +367,7 @@ void RBC::OnRBroadcast(RBroadcast const &msg, uint32_t sender_index)
  * @param msg Reference to REcho message
  * @param sender_index Index of sender in current_cabinet_
  */
-void RBC::OnREcho(REcho const &msg, uint32_t sender_index)
+void RBC::OnREcho(RBCMessage const &msg, uint32_t sender_index)
 {
   TagType tag = msg.tag();
   if (!SetPartyFlag(sender_index, tag, MessageType::R_ECHO))
@@ -432,7 +396,7 @@ void RBC::OnREcho(REcho const &msg, uint32_t sender_index)
  * @param msg Reference to RReady message
  * @param sender_index Index of sender in current_cabinet_
  */
-void RBC::OnRReady(RReady const &msg, uint32_t sender_index)
+void RBC::OnRReady(RBCMessage const &msg, uint32_t sender_index)
 {
   TagType tag = msg.tag();
   if (!SetPartyFlag(sender_index, tag, MessageType::R_READY))
@@ -503,7 +467,7 @@ void RBC::OnRReady(RReady const &msg, uint32_t sender_index)
  * @param msg Reference to RRequest message
  * @param sender_index Index of sender in current_cabinet_
  */
-void RBC::OnRRequest(RRequest const &msg, uint32_t sender_index)
+void RBC::OnRRequest(RBCMessage const &msg, uint32_t sender_index)
 {
   TagType tag = msg.tag();
   if (!SetPartyFlag(sender_index, tag, MessageType::R_REQUEST))
@@ -530,7 +494,7 @@ void RBC::OnRRequest(RRequest const &msg, uint32_t sender_index)
  * @param msg Reference to RAnswer message
  * @param sender_index Index of sender in current_cabinet_
  */
-void RBC::OnRAnswer(RAnswer const &msg, uint32_t sender_index)
+void RBC::OnRAnswer(RBCMessage const &msg, uint32_t sender_index)
 {
   TagType tag = msg.tag();
   if (!SetPartyFlag(sender_index, tag, MessageType::R_ANSWER))

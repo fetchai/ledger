@@ -111,5 +111,5 @@ TEST(rbc_messages, envelope)
   // Check the message type of envelopes match
   EXPECT_EQ(env1.Message()->type(), RBCMessage::MessageType::R_ANSWER);
   EXPECT_EQ(env1.Message()->tag(), answer.tag());
-  EXPECT_EQ(std::dynamic_pointer_cast<RAnswer>(env1.Message())->message(), answer.message());
+  EXPECT_EQ(env1.Message()->message(), answer.message());
 }

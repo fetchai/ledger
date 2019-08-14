@@ -103,11 +103,11 @@ protected:
   void         Send(RBCEnvelope const &env, MuddleAddress const &address);
   virtual void Broadcast(RBCEnvelope const &env);
   virtual void OnRBC(MuddleAddress const &from, RBCEnvelope const &envelope);
-  void         OnRBroadcast(RBroadcast const &msg, uint32_t sender_index);
-  void         OnREcho(REcho const &msg, uint32_t sender_index);
-  void         OnRReady(RReady const &msg, uint32_t sender_index);
-  void         OnRRequest(RRequest const &msg, uint32_t sender_index);
-  void         OnRAnswer(RAnswer const &msg, uint32_t sender_index);
+  void         OnRBroadcast(RBCMessage const &msg, uint32_t sender_index);
+  void         OnREcho(RBCMessage const &msg, uint32_t sender_index);
+  void         OnRReady(RBCMessage const &msg, uint32_t sender_index);
+  void         OnRRequest(RBCMessage const &msg, uint32_t sender_index);
+  void         OnRAnswer(RBCMessage const &msg, uint32_t sender_index);
   void         Deliver(SerialisedMessage const &msg, uint32_t sender_index);
 
   static std::string MessageTypeToString(MessageType msg_type);
@@ -116,7 +116,7 @@ protected:
   bool CheckTag(RBCMessage const &msg);
   bool SetMbar(TagType tag, RMessage const &msg, uint32_t sender_index);
   bool SetDbar(TagType tag, RHash const &msg);
-  bool ReceivedEcho(TagType tag, REcho const &msg);
+  bool ReceivedEcho(TagType tag, RBCMessage const &msg);
   struct MessageCount ReceivedReady(TagType tag, RHash const &msg);
   bool                SetPartyFlag(uint32_t sender_index, TagType tag, MessageType msg_type);
 };

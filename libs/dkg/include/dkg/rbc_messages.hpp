@@ -54,20 +54,7 @@ public:
     R_SEND
   };
 
-  // Destruction
-  RBCMessage() = default;
-  RBCMessage(uint16_t channel, uint32_t id, uint8_t counter, SerialisedMessage msg = "")
-    : channel_{channel}
-    , id_{id}
-    , counter_{counter}
-    , payload_(std::move(msg))
-  {}
-  explicit RBCMessage(RBCSerializer &serialiser)
-  {
-    serialiser >> channel_ >> id_ >> counter_ >> payload_;
-  }
-
-  virtual ~RBCMessage() = default;
+  explicit RBCMessage(RBCSerializer &serialiser);
 
   /// @name Getter functions
   /// @{
@@ -102,16 +89,13 @@ public:
   }
   /// @}
 
-  RBCSerializer Serialize() const
+  RBCSerializer Serialize() const;
+
+  MessageType type() const
   {
-    RBCSerializer serialiser;
-    serialiser << channel_ << id_ << counter_ << payload_;
-    return serialiser;
+    return type_;
   }
 
-  virtual MessageType type() const = 0;
-
-protected:
   SerialisedMessage const &message() const
   {
     return payload_;
@@ -122,7 +106,22 @@ protected:
     return payload_;
   }
 
+  template <typename T, typename D>
+  friend struct serializers::MapSerializer;
+
+protected:
+  // Destruction
+  RBCMessage(MessageType type, uint16_t channel = 0, uint32_t id = 0, uint8_t counter = 0,
+             SerialisedMessage msg = "")
+    : type_{type}
+    , channel_{channel}
+    , id_{id}
+    , counter_{counter}
+    , payload_(std::move(msg))
+  {}
+
 private:
+  MessageType type_;
   uint16_t
                     channel_;  ///< Channel Id of the broadcast channel (is this safe to truncate to uint8_t?)
   uint32_t          id_;       ///< Unique Id of the node
@@ -130,54 +129,82 @@ private:
   SerialisedMessage payload_;  ///< Serialised message to be sent using RBC
 };
 
-class RMessage : public RBCMessage
+template <RBCMessage::MessageType TYPE>
+class RBCMessageImpl final : public RBCMessage
 {
 public:
-  using RBCMessage::RBCMessage;
-  virtual ~RMessage() = default;
-  using RBCMessage::message;
+  RBCMessageImpl(uint16_t channel = 0, uint32_t id = 0, uint8_t counter = 0,
+                 SerialisedMessage msg = "")
+    : RBCMessage{TYPE, channel, id, counter, msg}
+  {}
+  explicit RBCMessageImpl(RBCSerializer &serialiser)
+    : RBCMessage(serialiser)
+  {}
 };
 
-template <RBCMessage::MessageType TYPE>
-class RMessageImpl final : public RMessage
+using RMessage   = RBCMessage;
+using RHash      = RBCMessage;
+using RBroadcast = RBCMessageImpl<RBCMessage::MessageType::R_BROADCAST>;
+using RRequest   = RBCMessageImpl<RBCMessage::MessageType::R_REQUEST>;
+using RAnswer    = RBCMessageImpl<RBCMessage::MessageType::R_ANSWER>;
+using REcho      = RBCMessageImpl<RBCMessage::MessageType::R_ECHO>;
+using RReady     = RBCMessageImpl<RBCMessage::MessageType::R_READY>;
+
+}  // namespace dkg
+
+namespace serializers {
+template <typename D>
+struct MapSerializer<dkg::RBCMessage, D>
 {
 public:
-  using RMessage::RMessage;
-  virtual ~RMessageImpl() = default;
+  using Type       = dkg::RBCMessage;
+  using DriverType = D;
 
-  MessageType type() const override
+  static uint8_t const TYPE    = 1;
+  static uint8_t const CHANNEL = 2;
+  static uint8_t const ADDRESS = 3;
+  static uint8_t const COUNTER = 4;
+  static uint8_t const PAYLOAD = 5;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &msg)
   {
-    return TYPE;
+    auto map = map_constructor(5);
+    map.Append(TYPE, static_cast<uint8_t>(msg.type_));
+    map.Append(CHANNEL, msg.channel_);
+    map.Append(ADDRESS, msg.id_);  // TODO: Remove and deduce from network connection
+    map.Append(COUNTER, msg.counter_);
+    map.Append(PAYLOAD, msg.payload_);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &msg)
+  {
+    uint8_t type;
+    map.ExpectKeyGetValue(TYPE, type);
+    map.ExpectKeyGetValue(CHANNEL, msg.channel_);
+    map.ExpectKeyGetValue(ADDRESS, msg.id_);  // TODO: Remove and deduce from network connection
+    map.ExpectKeyGetValue(COUNTER, msg.counter_);
+    map.ExpectKeyGetValue(PAYLOAD, msg.payload_);
+
+    msg.type_ = static_cast<Type::MessageType>(type);
   }
 };
+}  // namespace serializers
 
-class RHash : public RBCMessage
+namespace dkg {
+
+inline RBCMessage::RBCMessage(RBCSerializer &serialiser)
 {
-public:
-  // Destruction
-  using RBCMessage::hash;
-  using RBCMessage::RBCMessage;
-  virtual ~RHash() = default;
-};
+  serialiser >> *this;
+}
 
-template <RBCMessage::MessageType TYPE>
-class RHashImpl final : public RHash
+inline RBCSerializer RBCMessage::Serialize() const
 {
-public:
-  using RHash::RHash;
-  virtual ~RHashImpl() = default;
-
-  MessageType type() const override
-  {
-    return TYPE;
-  }
-};
-
-using RBroadcast = RMessageImpl<RBCMessage::MessageType::R_BROADCAST>;
-using RRequest   = RMessageImpl<RBCMessage::MessageType::R_REQUEST>;
-using RAnswer    = RMessageImpl<RBCMessage::MessageType::R_ANSWER>;
-using REcho      = RHashImpl<RBCMessage::MessageType::R_ECHO>;
-using RReady     = RHashImpl<RBCMessage::MessageType::R_READY>;
+  RBCSerializer serialiser;
+  serialiser << *this;
+  return serialiser;
+}
 
 }  // namespace dkg
 }  // namespace fetch
