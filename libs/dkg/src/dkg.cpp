@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "dkg/dkg.hpp"
+#include "telemetry/registry.hpp"
 
 #include <mutex>
 
@@ -41,6 +42,8 @@ DistributedKeyGeneration::DistributedKeyGeneration(
   , address_{std::move(address)}
   , broadcast_function_{std::move(broadcast_function)}
   , rpc_function_{std::move(rpc_function)}
+  , dkg_state_gauge_{telemetry::Registry::Instance().CreateGauge<uint8_t>(
+                "dkg_state_gauge", "State the DKG is in")}
 {
   static std::once_flag flag;
 
@@ -61,6 +64,7 @@ DistributedKeyGeneration::DistributedKeyGeneration(
     bn::mapToG2(group_g_, g);
     bn::mapToG2(group_h_, h);
   });
+  dkg_state_gauge_->set(static_cast<uint8_t>(state_.load()));
 }
 
 /**
@@ -136,6 +140,7 @@ void DistributedKeyGeneration::BroadcastShares()
   SendShares(a_i, b_i);
   FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, " broadcasts coefficients ");
   state_.store(State::WAITING_FOR_SHARE);
+  dkg_state_gauge_->set(static_cast<uint8_t>(state_.load()));
   ReceivedCoefficientsAndShares();
 }
 
@@ -156,6 +161,7 @@ void DistributedKeyGeneration::BroadcastComplaints()
                  complaints_local.size());
   SendBroadcast(DKGEnvelope{ComplaintsMessage{complaints_local, "signature"}});
   state_ = State::WAITING_FOR_COMPLAINTS;
+  dkg_state_gauge_->set(static_cast<uint8_t>(state_.load()));
   ReceivedComplaint();
 }
 
@@ -180,6 +186,7 @@ void DistributedKeyGeneration::BroadcastComplaintsAnswer()
       DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAITING_FOR_COMPLAINT_ANSWERS),
                                 complaints_answer, "signature"}});
   state_ = State::WAITING_FOR_COMPLAINT_ANSWERS;
+  dkg_state_gauge_->set(static_cast<uint8_t>(state_.load()));
   ReceivedComplaintsAnswer();
 }
 
@@ -198,6 +205,7 @@ void DistributedKeyGeneration::BroadcastQualCoefficients()
       static_cast<uint8_t>(State::WAITING_FOR_QUAL_SHARES), coefficients, "signature"}});
   complaints_answer_manager_.Clear();
   state_ = State::WAITING_FOR_QUAL_SHARES;
+  dkg_state_gauge_->set(static_cast<uint8_t>(state_.load()));
   {
     std::unique_lock<std::mutex> lock{mutex_};
     A_ik_received_.insert(address_);
@@ -215,6 +223,7 @@ void DistributedKeyGeneration::BroadcastQualComplaints()
   SendBroadcast(DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAITING_FOR_QUAL_COMPLAINTS),
                                           ComputeQualComplaints(), "signature"}});
   state_ = State::WAITING_FOR_QUAL_COMPLAINTS;
+  dkg_state_gauge_->set(static_cast<uint8_t>(state_.load()));
   ReceivedQualComplaint();
 }
 
@@ -242,6 +251,7 @@ void DistributedKeyGeneration::BroadcastReconstructionShares()
       DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAITING_FOR_RECONSTRUCTION_SHARES),
                                 complaint_shares, "signature"}});
   state_ = State::WAITING_FOR_RECONSTRUCTION_SHARES;
+  dkg_state_gauge_->set(static_cast<uint8_t>(state_.load()));
   ReceivedReconstructionShares();
 }
 
@@ -306,7 +316,8 @@ void DistributedKeyGeneration::ReceivedComplaintsAnswer()
     }
     else
     {
-      finished_ = true;
+      state_ = State::FINAL;
+      dkg_state_gauge_->set(static_cast<uint8_t>(state_.load()));
       // TODO(jmw): procedure failed for this node
     }
     complaints_manager_.Clear();
@@ -353,7 +364,8 @@ void DistributedKeyGeneration::ReceivedQualComplaint()
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Node: ", cabinet_index_, " DKG has failed: complaints size ",
                      size);
-      finished_ = true;
+      state_ = State::FINAL;
+      dkg_state_gauge_->set(static_cast<uint8_t>(state_.load()));
       lock.unlock();
       return;
     }
@@ -390,7 +402,8 @@ void DistributedKeyGeneration::ReceivedReconstructionShares()
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Node: ", cabinet_index_,
                      " DKG failed due to reconstruction failure");
-      finished_ = true;
+      state_ = State::FINAL;
+      dkg_state_gauge_->set(static_cast<uint8_t>(state_.load()));
     }
     else
     {
@@ -990,7 +1003,8 @@ void DistributedKeyGeneration::ComputePublicKeys()
       UpdateRHS(jt, public_key_shares_[jt], A_ik[it]);
     }
   }
-  finished_ = true;
+  state_ = State::FINAL;
+  dkg_state_gauge_->set(static_cast<uint8_t>(state_.load()));
 }
 
 /**
@@ -1034,7 +1048,6 @@ void DistributedKeyGeneration::ResetCabinet()
   assert(cabinet_.find(address_) != cabinet_.end());  // We should be in the cabinet
 
   std::lock_guard<std::mutex> lock_{mutex_};
-  finished_      = false;
   state_         = State::INITIAL;
   cabinet_index_ = static_cast<uint32_t>(std::distance(cabinet_.begin(), cabinet_.find(address_)));
   auto cabinet_size{static_cast<uint32_t>(cabinet_.size())};
@@ -1096,7 +1109,7 @@ void DistributedKeyGeneration::SetDkgOutput(bn::G2 &public_key, bn::Fr &secret_s
  */
 bool DistributedKeyGeneration::finished() const
 {
-  return finished_.load();
+  return (state_.load() == State::FINAL);
 }
 
 /**
