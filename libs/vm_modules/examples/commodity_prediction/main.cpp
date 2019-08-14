@@ -271,9 +271,8 @@ int main(int argc, char **argv)
   // ensure the program has the correct number of args
   if (3u != pp.arg_size())
   {
-    std::cerr << "Usage: " << pp.GetArg(0) <<
-              " <etch_saver_filename> <etch_loader_filename> -- [script args...]"
-              << std::endl;
+    std::cerr << "Usage: " << pp.GetArg(0)
+              << " <etch_saver_filename> <etch_loader_filename> -- [script args...]" << std::endl;
     return 1;
   }
 

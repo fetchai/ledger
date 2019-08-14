@@ -76,13 +76,12 @@ int main(int argc, char **argv)
   // ensure the program has the correct number of args
   if (2u != pp.arg_size())
   {
-    std::cerr << "Usage: " << pp.GetArg(0) << " <etch_filename> -- [script args]..."
-              << std::endl;
+    std::cerr << "Usage: " << pp.GetArg(0) << " <etch_filename> -- [script args]..." << std::endl;
     return 1;
   }
 
   // Reading file
-  std::string etch_filename  = pp.GetArg(1);
+  std::string   etch_filename = pp.GetArg(1);
   std::ifstream file(etch_filename, std::ios::binary);
   if (file.fail())
   {

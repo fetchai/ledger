@@ -30,23 +30,28 @@
 #include <utility>
 #include <vector>
 
+using System = fetch::vm_modules::System;
+
 int main(int argc, char **argv)
 {
   // parse the command line parameters
-  fetch::vm_modules::System::Parse(argc, argv);
+  System::Parse(argc, argv);
+
+  fetch::commandline::ParamsParser const &pp = System::GetParamParser();
 
   // ensure the program has the correct number of args
-  if (2u != fetch::vm_modules::System::GetParamParser().arg_size())
+  if (2u != pp.arg_size())
   {
-    std::cerr << "Usage: " << argv[0] << " [options] <filename> -- [script args]..." << std::endl;
+    std::cerr << "Usage: " << pp.GetArg(0) << " [options] <filename> -- [script args]..."
+              << std::endl;
     return 1;
   }
 
   // Reading file
-  std::ifstream file(argv[1], std::ios::binary);
+  std::ifstream file(pp.GetArg(1), std::ios::binary);
   if (file.fail())
   {
-    throw std::runtime_error("Cannot open file " + std::string(argv[1]));
+    throw std::runtime_error("Cannot open file " + std::string(pp.GetArg(1)));
   }
   std::ostringstream ss;
   ss << file.rdbuf();
