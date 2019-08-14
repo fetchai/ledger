@@ -137,6 +137,8 @@ public:
   Status GenerateEntropy(Digest block_digest, uint64_t block_number, uint64_t &entropy) override;
   /// @}
 
+  bool IsSynced() const;
+
   /// @name Helper Methods
   /// @{
   std::weak_ptr<core::Runnable> GetWeakRunnable()
@@ -147,7 +149,19 @@ public:
   void ResetCabinet(CabinetMembers cabinet,
                     uint32_t       threshold = std::numeric_limits<uint32_t>::max())
   {
+    is_synced_ = false;
+
+    // Determine whether we are in the cabinet and so should proceed
+    if (cabinet.find(address_) == cabinet.end())
+    {
+      // Not in cabinet case
+      FETCH_LOG_INFO(LOGGING_NAME, "Node not in cabinet. Quitting DKG");
+      is_synced_ = true;
+      return;
+    }
+
     FETCH_LOCK(cabinet_lock_);
+
     assert(cabinet.size() > threshold);
     // Check threshold meets the requirements for the RBC
     if (cabinet.size() % 3 == 0)
@@ -261,6 +275,7 @@ private:
   std::atomic<uint64_t> current_round_{0};             ///< The current round being generated
   RoundMap              rounds_{};                     ///< The map of round data
                                                        /// @}
+  std::atomic<bool> is_synced_{false};
 };
 
 }  // namespace dkg
