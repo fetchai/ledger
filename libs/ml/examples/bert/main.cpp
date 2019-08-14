@@ -97,12 +97,7 @@ int main(/*int ac, char **av*/)
   std::string label = g.template AddNode<PlaceHolder<ArrayType>>("Label", {});
   std::string error =
       g.template AddNode<CrossEntropyLoss<ArrayType>>("Error", {classification_output, label});
-
-  // Initialise Optimiser
-  fetch::ml::optimisers::AdamOptimiser<ArrayType> optimiser(
-      std::make_shared<GraphType>(g), {segment, position, tokens, mask}, label,
-      error, static_cast<DataType>(1e-3));
-
+  
   SizeType batch_size = 1u;
   SizeType seq_len = 100u;
 
