@@ -179,9 +179,6 @@ class TestInstance():
     def start_node(self, index):
         print('Starting Node {}...'.format(index))
 
-        # Useful for seeing the exact command
-        #print(" ".join(str(x) for x in self._nodes[index]._cmd))
-
         self._nodes[index].start()
         print('Starting Node {}...complete'.format(index))
 
