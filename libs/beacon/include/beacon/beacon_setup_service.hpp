@@ -94,7 +94,7 @@ public:
   BeaconSetupService()                           = delete;
   BeaconSetupService(BeaconSetupService const &) = delete;
   BeaconSetupService(BeaconSetupService &&)      = delete;
-  explicit BeaconSetupService(Endpoint &endpoint, Identity identity);
+  BeaconSetupService(Endpoint &endpoint, Identity identity);
 
   /// State functions
   /// @{
