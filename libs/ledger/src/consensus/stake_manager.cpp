@@ -70,11 +70,15 @@ bool StakeManager::ShouldGenerateBlock(Block const &previous, Address const &add
   FETCH_LOG_INFO(LOGGING_NAME, "Should generate block? Prev: ", previous.body.block_number);
 
   auto const committee = GetCommittee(previous);
+
+  FETCH_LOG_INFO(LOGGING_NAME, "AAA");
+
   if (!committee || committee->empty())
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Unable to determine committee for block generation");
     return false;
   }
+  FETCH_LOG_INFO(LOGGING_NAME, "BBB");
 
   // At this point the miner will decide if they should produce a block. The first miner in the
   // committee will wait until block_interval after the block at the HEAD of the chain, the second
@@ -103,12 +107,20 @@ bool StakeManager::ShouldGenerateBlock(Block const &previous, Address const &add
     return true;
   }
 
+  FETCH_LOG_INFO(LOGGING_NAME, "CCC");
+
   return false;
 }
 
 StakeManager::CommitteePtr StakeManager::GetCommittee(Block const &previous)
 {
   assert(static_cast<bool>(current_));
+
+  if(previous.body.block_number == 0)
+  {
+  }
+
+  FETCH_LOG_INFO(LOGGING_NAME, "looking up entropy");
 
   // generate the entropy for the previous block
   uint64_t entropy{0};
@@ -118,6 +130,8 @@ StakeManager::CommitteePtr StakeManager::GetCommittee(Block const &previous)
                    " (entropy not ready)");
     return {};
   }
+
+  FETCH_LOG_INFO(LOGGING_NAME, "looked up entropy");
 
   // lookup the snapshot associated
   auto snapshot = LookupStakeSnapshot(previous.body.block_number);
@@ -214,16 +228,33 @@ bool StakeManager::LookupEntropy(Block const &previous, uint64_t &entropy)
 
   // Step 1. Lookup the entropy
   auto const it = entropy_cache_.find(previous.body.block_number);
+
+  FETCH_LOG_INFO(LOGGING_NAME, "got here");
+
   if (entropy_cache_.end() != it)
   {
+    FETCH_LOG_INFO(LOGGING_NAME, "got here2");
     entropy = it->second;
     success = true;
   }
   else
   {
+    FETCH_LOG_INFO(LOGGING_NAME, "got here3");
+
+    if(!entropy_)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Entropy not set!");
+    }
+    else
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "is here :)");
+    }
+
     // generate the entropy for the previous block
     auto const status =
         entropy_->GenerateEntropy(previous.body.hash, previous.body.block_number, entropy);
+
+    FETCH_LOG_INFO(LOGGING_NAME, "got here4");
 
     if (EntropyGeneratorInterface::Status::OK == status)
     {

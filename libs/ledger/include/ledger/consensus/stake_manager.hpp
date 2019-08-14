@@ -21,6 +21,8 @@
 #include "ledger/consensus/stake_manager_interface.hpp"
 #include "ledger/consensus/stake_update_queue.hpp"
 
+#include "crypto/identity.hpp"
+
 #include <vector>
 
 namespace fetch {
@@ -65,9 +67,17 @@ public:
   void Reset(StakeSnapshot const &snapshot, std::size_t committee_size);
   void Reset(StakeSnapshot &&snapshot, std::size_t committee_size);
 
+
   // Operators
   StakeManager &operator=(StakeManager const &) = delete;
   StakeManager &operator=(StakeManager &&) = delete;
+
+  std::map<ledger::Address, crypto::Identity> lookup_;
+
+  std::map<ledger::Address, crypto::Identity> &GetLookup()
+  {
+    return lookup_;
+  }
 
 private:
   static constexpr std::size_t HISTORY_LENGTH = 100;

@@ -19,6 +19,7 @@
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/serializers/main_serializer.hpp"
+#include "crypto/identity.hpp"
 
 #include <array>
 #include <cstddef>

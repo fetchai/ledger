@@ -27,6 +27,8 @@
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/consensus/stake_manager_interface.hpp"
+#include "ledger/consensus/stake_manager.hpp"
+#include "ledger/consensus/stake_snapshot.hpp"
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/execution_manager_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
@@ -92,10 +94,11 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr
                                    BlockSinkInterface &      block_sink,
                                    core::FeatureFlags const &features, ProverPtr const &prover,
                                    std::size_t num_lanes, std::size_t num_slices,
-                                   std::size_t block_difficulty)
+                                   std::size_t block_difficulty, BeaconServicePtr beacon)
   : chain_{chain}
   , dag_{std::move(dag)}
   , stake_{std::move(stake)}
+  , beacon_{beacon}
   , execution_manager_{execution_manager}
   , storage_unit_{storage_unit}
   , block_packer_{packer}
@@ -200,6 +203,9 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr
                      " (previous: ", ToString(previous), ")");
     }
   });
+
+  // Initialising the BLS library
+  crypto::bls::Init();
 
   // TODO(private issue 792): this shouldn't be here, but if it is, it locks the whole system on
   // startup. RecoverFromStartup();
@@ -1074,17 +1080,82 @@ BlockCoordinator::State BlockCoordinator::OnReset()
 {
   reset_state_count_->increment();
 
+  FETCH_LOG_INFO(LOGGING_NAME, "Reset condition");
+
   // trigger stake updates at the end of the block lifecycle
-  if (stake_)
+  if (stake_ && beacon_)
   {
+    Block const *block = nullptr;
+
     if (next_block_)
     {
-      stake_->UpdateCurrentBlock(*next_block_);
+      block = &(*next_block_);
+      //stake_->UpdateCurrentBlock(*next_block_);
     }
     else if (current_block_)
     {
-      stake_->UpdateCurrentBlock(*current_block_);
+      block = &(*current_block_);
+      //stake_->UpdateCurrentBlock(*current_block_);
     }
+    else
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Unable to find a previously executed block when updating staking!");
+    }
+
+    FETCH_LOG_INFO(LOGGING_NAME, "PEREERER ", block->body.block_number);
+
+    if(block)
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "it happeedn");
+
+      auto const block_number = block->body.block_number;
+
+
+
+      FETCH_LOG_INFO(LOGGING_NAME, "Updated stake (?)");
+
+      if((block_number % aeon_period_) == 0)
+      {
+        FETCH_LOG_INFO(LOGGING_NAME, "AEON happen: ", block_number);
+        FETCH_LOG_INFO(LOGGING_NAME, "block: ", block);
+
+        std::unordered_set<fetch::crypto::Identity> cabinet_member_list;
+
+        auto &stake_ref = *stake_;
+
+        stake_ref.GetCurrentStakeSnapshot()->IterateOver([&cabinet_member_list, &stake_ref](Address const &address, uint64_t /*stake*/) {
+          FETCH_LOG_INFO(LOGGING_NAME, "Adding staker: ", address.address().ToBase64());
+
+          auto &lookup_address_to_identity = stake_ref.GetLookup();
+
+          cabinet_member_list.insert(lookup_address_to_identity.at(address));
+        });
+
+        // Finally update stake
+        if(block_number != 0) // TODO(HUT): chat to ed
+        {
+          stake_->UpdateCurrentBlock(*block);
+        }
+
+        FETCH_LOG_INFO(LOGGING_NAME, "C");
+
+        uint32_t threshold = uint32_t((cabinet_member_list.size() / 2)+1);
+
+        FETCH_LOG_INFO(LOGGING_NAME, "Block: ", block_number, " creating new aeon. Periodicity: ", aeon_period_, " threshold: ", threshold, " cabinet size: ", cabinet_member_list.size());
+
+        static bool did_genesis_already = false;
+
+        if(block_number != 0 || !did_genesis_already)
+        {
+          beacon_->StartNewCabinet(cabinet_member_list, threshold, block_number+1, block_number+aeon_period_);
+          did_genesis_already = true;
+        }
+      }
+    }
+  }
+  else
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "NOT ACTIVEK\n, ", stake_, " arasdf: ", beacon_);
   }
 
   current_block_.reset();

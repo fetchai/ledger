@@ -44,6 +44,13 @@
 #include "network/p2pservice/p2ptrust_bayrank.hpp"
 #include "open_api_http_module.hpp"
 
+#include "beacon/beacon_service.hpp"
+#include "beacon/beacon_setup_protocol.hpp"
+#include "beacon/beacon_setup_service.hpp"
+#include "beacon/cabinet_member_details.hpp"
+#include "beacon/entropy.hpp"
+#include "beacon/event_manager.hpp"
+
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
@@ -94,7 +101,7 @@ public:
     std::string    stakefile_location{""};
     bool           proof_of_stake{false};
     NetworkMode    network_mode{NetworkMode::PUBLIC_NETWORK};
-    ConstByteArray beacon_address{};
+    ConstByteArray beacon_address{}; // TODO(HUT): delete this surely
     FeatureFlags   features{};
 
     uint32_t num_lanes() const
@@ -145,7 +152,9 @@ private:
   using NaiveSynergeticMiner   = ledger::NaiveSynergeticMiner;
   using StakeManagerPtr        = std::shared_ptr<ledger::StakeManager>;
   using EntropyPtr             = std::unique_ptr<ledger::EntropyGeneratorInterface>;
-  using DkgServicePtr          = std::shared_ptr<dkg::DkgService>;
+
+  using DkgServicePtr = std::shared_ptr<dkg::DkgService>;
+  using BeaconServicePtr = std::shared_ptr<fetch::beacon::BeaconService>;
 
   using ShardConfigs  = ledger::ShardConfigs;
   using TxStatusCache = ledger::TransactionStatusCache;
@@ -187,9 +196,10 @@ private:
 
   /// @name Staking
   /// @{
-  DkgServicePtr   dkg_;      ///< The DKG system
-  EntropyPtr      entropy_;  ///< The entropy system
-  StakeManagerPtr stake_;    ///< The stake system
+  /* DkgServicePtr   dkg_;      ///< The DKG system */
+  /* EntropyPtr      entropy_;  ///< The entropy system */
+  BeaconServicePtr beacon_;
+  StakeManagerPtr  stake_;    ///< The stake system
   /// @}
 
   /// @name Block Processing

@@ -20,7 +20,6 @@
 #include "core/json/document.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
-#include "dkg/dkg_service.hpp"
 #include "ledger/chain/address.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/block_coordinator.hpp"
@@ -193,15 +192,11 @@ void GenesisFileCreator::LoadFile(std::string const &name)
       if (stake_manager_)
       {
         LoadStake(doc["stake"]);
+        LoadStake2(doc["beacon"]);
       }
       else
       {
         FETCH_LOG_WARN(LOGGING_NAME, "No stake manager provided when loading from stake file!");
-      }
-
-      if (dkg_)
-      {
-        LoadDKG(doc["beacon"]);
       }
     }
   }
@@ -358,17 +353,10 @@ void GenesisFileCreator::LoadStake(Variant const &object)
   }
 }
 
-void GenesisFileCreator::LoadDKG(variant::Variant const &object)
+void GenesisFileCreator::LoadStake2(variant::Variant const &object)
 {
-  if (dkg_)
+  if (stake_manager_)
   {
-    uint32_t threshold{1};
-
-    if (!variant::Extract(object, "threshold", threshold))
-    {
-      return;
-    }
-
     if (!object.Has("cabinet"))
     {
       return;
@@ -380,7 +368,8 @@ void GenesisFileCreator::LoadDKG(variant::Variant const &object)
       return;
     }
 
-    dkg::DkgService::CabinetMembers members{};
+    std::set<ConstByteArray> members{};
+
     for (std::size_t i = 0, end = stake_array.size(); i < end; ++i)
     {
       auto const &element = stake_array[i];
@@ -393,8 +382,22 @@ void GenesisFileCreator::LoadDKG(variant::Variant const &object)
       members.insert(byte_array::FromBase64(element.As<ConstByteArray>()));
     }
 
+//    FETCH_LOG_INFO(LOGGING_NAME, "thing thing thing");
+//
+//    for(auto const &member : members)
+//    {
+//      FETCH_LOG_INFO(LOGGING_NAME, "raw: ", member.ToBase64());
+//      //FETCH_LOG_INFO(LOGGING_NAME, "identity: ", crypto::Identity(member));
+//      FETCH_LOG_INFO(LOGGING_NAME, "address: ", ledger::Address(crypto::Identity(member)).address().ToBase64());
+//    }
+
+    for(auto const &member : members)
+    {
+      stake_manager_->GetLookup()[ledger::Address(crypto::Identity(member))] = crypto::Identity(member);
+    }
+
     // reset the cabinet
-    dkg_->ResetCabinet(std::move(members), threshold);
+    //dkg_->ResetCabinet(std::move(members), threshold);
   }
 }
 

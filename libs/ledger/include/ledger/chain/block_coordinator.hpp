@@ -32,6 +32,13 @@
 #include "moment/deadline_timer.hpp"
 #include "telemetry/telemetry.hpp"
 
+#include "beacon/beacon_service.hpp"
+#include "beacon/beacon_setup_protocol.hpp"
+#include "beacon/beacon_setup_service.hpp"
+#include "beacon/cabinet_member_details.hpp"
+#include "beacon/entropy.hpp"
+#include "beacon/event_manager.hpp"
+
 #include <atomic>
 #include <chrono>
 #include <cstddef>
@@ -61,6 +68,7 @@ class MainChain;
 class StorageUnitInterface;
 class BlockSinkInterface;
 class StakeManagerInterface;
+class StakeManager;
 
 /**
  * The Block Coordinator is in charge of executing all the blocks that come into the system. It will
@@ -150,7 +158,8 @@ public:
   using ConstByteArray  = byte_array::ConstByteArray;
   using DAGPtr          = std::shared_ptr<ledger::DAGInterface>;
   using ProverPtr       = std::shared_ptr<crypto::Prover>;
-  using StakeManagerPtr = std::shared_ptr<StakeManagerInterface>;
+  using StakeManagerPtr = std::shared_ptr<StakeManager>;
+  using BeaconServicePtr = std::shared_ptr<fetch::beacon::BeaconService>;
 
   enum class State
   {
@@ -188,7 +197,7 @@ public:
                    ExecutionManagerInterface &execution_manager, StorageUnitInterface &storage_unit,
                    BlockPackerInterface &packer, BlockSinkInterface &block_sink,
                    core::FeatureFlags const &features, ProverPtr const &prover,
-                   std::size_t num_lanes, std::size_t num_slices, std::size_t block_difficulty);
+                   std::size_t num_lanes, std::size_t num_slices, std::size_t block_difficulty, BeaconServicePtr beacon);
   BlockCoordinator(BlockCoordinator const &) = delete;
   BlockCoordinator(BlockCoordinator &&)      = delete;
   ~BlockCoordinator()                        = default;
@@ -306,6 +315,7 @@ private:
   MainChain &                chain_;              ///< Ref to system chain
   DAGPtr                     dag_;                ///< Ref to DAG
   StakeManagerPtr            stake_;              ///< Ref to Stake manager
+  BeaconServicePtr           beacon_;             ///< Ref to beacon
   ExecutionManagerInterface &execution_manager_;  ///< Ref to system execution manager
   StorageUnitInterface &     storage_unit_;       ///< Ref to the storage unit
   BlockPackerInterface &     block_packer_;       ///< Ref to the block packer
@@ -343,6 +353,7 @@ private:
       "bc:deadline"};              ///< Time to wait before asking peers for any missing txs
   bool have_asked_for_missing_txs_;  ///< true if a request for missing Txs has been issued for the
                                      ///< current block
+  uint64_t aeon_period_ = 50;
   /// @}
 
   /// @name Synergetic Contracts

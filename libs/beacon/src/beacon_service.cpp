@@ -144,17 +144,22 @@ BeaconService::BeaconService(Endpoint &endpoint, CertificatePtr certificate,
 BeaconService::Status BeaconService::GenerateEntropy(Digest /*block_digest*/, uint64_t block_number,
                                                      uint64_t &entropy)
 {
+  FETCH_LOG_INFO(LOGGING_NAME, "Generating entropy");
+
   uint64_t round = block_number / blocks_per_round_;
 
-  if (latest_entropy_.round == round)
+  if (latest_entropy_.round == round && latest_entropy_)
   {
     entropy = latest_entropy_.EntropyAsUint64();
     return Status::OK;
   }
 
+  FETCH_LOG_INFO(LOGGING_NAME, "hereaa");
+
   // Searches for the next entropy
   do
   {
+  FETCH_LOG_INFO(LOGGING_NAME, "hereab");
     if (ready_entropy_queue_.size() == 0)
     {
       return Status::NOT_READY;
@@ -164,6 +169,8 @@ BeaconService::Status BeaconService::GenerateEntropy(Digest /*block_digest*/, ui
     ready_entropy_queue_.pop_front();
   } while (latest_entropy_.round < round);
 
+  FETCH_LOG_INFO(LOGGING_NAME, "hereac");
+
   // TODO(tfr): Roll support does not exist yet.
   if (round < latest_entropy_.round)
   {
@@ -171,7 +178,10 @@ BeaconService::Status BeaconService::GenerateEntropy(Digest /*block_digest*/, ui
     return Status::FAILED;
   }
 
+  FETCH_LOG_INFO(LOGGING_NAME, "heread");
+
   // We found the entropy
+  assert(latest_entropy_);
   entropy = latest_entropy_.EntropyAsUint64();
 
   return Status::OK;
@@ -180,6 +190,7 @@ BeaconService::Status BeaconService::GenerateEntropy(Digest /*block_digest*/, ui
 void BeaconService::StartNewCabinet(CabinetMemberList members, uint32_t threshold,
                                     uint64_t round_start, uint64_t round_end)
 {
+  FETCH_LOG_INFO(LOGGING_NAME, "Starting new cabinet from ", round_start, " to ", round_end);
   std::lock_guard<std::mutex> lock(mutex_);
 
   SharedAeonExecutionUnit beacon = std::make_shared<AeonExecutionUnit>();
@@ -188,6 +199,7 @@ void BeaconService::StartNewCabinet(CabinetMemberList members, uint32_t threshol
   if (members.find(identity_) == members.end())
   {
     beacon->observe_only = true;
+    FETCH_LOG_INFO(LOGGING_NAME, "Beacon in observe only mode. Members:", members.size());
   }
   else
   {
