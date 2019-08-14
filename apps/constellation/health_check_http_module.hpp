@@ -30,10 +30,12 @@ public:
   using MainChainRpcService = ledger::MainChainRpcService;
 
   HealthCheckHttpModule(MainChain const &chain, MainChainRpcService const &chain_service,
-                        BlockCoordinator const &block_coordinator)
+                        BlockCoordinator const &         block_coordinator,
+                        std::shared_ptr<dkg::DkgService> dkg)
     : chain_{chain}
     , chain_service_{chain_service}
     , block_coordinator_{block_coordinator}
+    , dkg_{dkg}
   {
     Get("/api/health/alive", "Endpoint to check if the server is alive.",
         [](http::ViewParameters const &, http::HTTPRequest const &) {
@@ -49,14 +51,17 @@ public:
           bool const chain_execution_complete =
               block_coordinator_.GetLastExecutedBlock() == chain_.GetHeaviestBlockHash();
 
+          bool const dkg_synced = dkg_ ? dkg_->IsSynced() : true;
+
           variant::Variant response            = variant::Variant::Object();
+          response["dkg_synced"]               = dkg_synced;
           response["chain_synced"]             = chain_synced;
           response["chain_executed_finished"]  = chain_executed_finished;
           response["chain_execution_complete"] = chain_execution_complete;
 
           // determine the status code for the response
           http::Status status{http::Status::CLIENT_ERROR_PRECONDITION_FAILED};
-          if (chain_synced && chain_executed_finished && chain_execution_complete)
+          if (chain_synced && dkg_synced && chain_executed_finished && chain_execution_complete)
           {
             status = http::Status::SUCCESS_OK;
           }
@@ -66,9 +71,10 @@ public:
   }
 
 private:
-  MainChain const &          chain_;
-  MainChainRpcService const &chain_service_;
-  BlockCoordinator const &   block_coordinator_;
+  MainChain const &                chain_;
+  MainChainRpcService const &      chain_service_;
+  BlockCoordinator const &         block_coordinator_;
+  std::shared_ptr<dkg::DkgService> dkg_;
 };
 
 }  // namespace fetch
