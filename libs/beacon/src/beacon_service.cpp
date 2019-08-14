@@ -73,7 +73,7 @@ BeaconService::BeaconService(Endpoint &endpoint, CertificatePtr certificate,
   , verification_vec_subscription_{endpoint_.Subscribe(SERVICE_DKG, CHANNEL_VERIFICATION_VECTORS)}
   , entropy_subscription_{endpoint_.Subscribe(SERVICE_DKG, CHANNEL_ENTROPY_DISTRIBUTION)}
   , rpc_client_{"BeaconService", endpoint_, SERVICE_DKG, CHANNEL_RPC}
-  , event_manager_{event_manager}
+  , event_manager_{std::move(event_manager)}
   , cabinet_creator_{endpoint_, identity_}  // TODO(tfr): Make shared
   , cabinet_creator_protocol_{cabinet_creator_}
   , beacon_protocol_{*this}
