@@ -185,7 +185,7 @@ public:
     FETCH_LOG_INFO(LOGGING_NAME, "Resetting cabinet. Cabinet size: ", current_cabinet_.size(),
                    " threshold: ", threshold);
     dkg_.ResetCabinet();
-    rbc_.ResetCabinet();
+    rbc_.ResetCabinet(cabinet);
   }
   void SendShares(MuddleAddress const &                      destination,
                   std::pair<std::string, std::string> const &shares);

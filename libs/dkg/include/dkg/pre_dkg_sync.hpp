@@ -34,7 +34,7 @@ public:
   using MuddleAddress  = ConstByteArray;
   using PeersList      = std::unordered_map<MuddleAddress, fetch::network::Uri>;
 
-  PreDkgSync(Muddle &muddle, uint8_t channel);
+  PreDkgSync(Muddle &muddle, uint16_t channel);
   void ResetCabinet(PeersList const &peers);
   void Connect();
   bool ready();

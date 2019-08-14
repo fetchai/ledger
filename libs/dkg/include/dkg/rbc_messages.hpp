@@ -26,7 +26,7 @@
 namespace fetch {
 namespace dkg {
 
-using TruncatedHash        = byte_array::ByteArray;
+using MessageHash          = byte_array::ByteArray;
 using TagType              = uint64_t;
 using SerialisedMessage    = byte_array::ConstByteArray;
 using RBCSerializer        = fetch::serializers::MsgPackSerializer;
@@ -73,9 +73,9 @@ public:
     return (msg_tag | uint64_t(counter_));
   }
 
-  uint8_t channel() const
+  uint16_t channel() const
   {
-    return static_cast<uint8_t>(channel_);
+    return static_cast<uint16_t>(channel_);
   }
 
   uint8_t counter() const
@@ -101,7 +101,7 @@ public:
     return payload_;
   }
 
-  TruncatedHash hash() const
+  MessageHash hash() const
   {
     return payload_;
   }
@@ -126,9 +126,8 @@ protected:
   {}
 
 private:
-  MessageType type_{MessageType::R_INVALID};
-  uint16_t
-                    channel_;  ///< Channel Id of the broadcast channel (is this safe to truncate to uint8_t?)
+  MessageType       type_{MessageType::R_INVALID};
+  uint16_t          channel_;  ///< Channel Id of the broadcast channel
   uint32_t          id_;       ///< Unique Id of the node
   uint8_t           counter_;  ///< Counter for messages sent on RBC
   SerialisedMessage payload_;  ///< Serialised message to be sent using RBC

@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "dkg/dkg_service.hpp"
 #include "core/logging.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "core/service_ids.hpp"
 #include "crypto/sha256.hpp"
-#include "dkg/dkg_service.hpp"
 #include "network/muddle/muddle_endpoint.hpp"
 #include "network/muddle/packet.hpp"
 #include "network/muddle/subscription.hpp"
@@ -94,7 +94,7 @@ DkgService::DkgService(Endpoint &endpoint, ConstByteArray address)
   , rpc_client_{"dkg", endpoint_, SERVICE_DKG, CHANNEL_RPC}
   , state_machine_{std::make_shared<StateMachine>("dkg", State::BUILD_AEON_KEYS, ToString)}
   , shares_subscription(endpoint_.Subscribe(SERVICE_DKG, CHANNEL_SECRET_KEY))
-  , rbc_{endpoint_, address_, current_cabinet_,
+  , rbc_{endpoint_, address_,
          [this](MuddleAddress const &address, ConstByteArray const &payload) -> void {
            OnRbcDeliver(address, payload);
          }}
