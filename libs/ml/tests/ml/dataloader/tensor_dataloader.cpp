@@ -27,9 +27,6 @@
 using namespace fetch::ml;
 using namespace fetch::ml::dataloaders;
 
-using SizeType  = fetch::math::SizeType;
-using ArrayType = fetch::math::Tensor<double>;
-
 template <typename T>
 class TensorDataloaderTest : public ::testing::Test
 {

@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/main_serializer.hpp"
+#include "core/serializers/group_definitions.hpp"
 #include "math/base_types.hpp"
 
 #include <cstdint>
