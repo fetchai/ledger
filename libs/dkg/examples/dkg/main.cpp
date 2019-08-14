@@ -57,7 +57,6 @@ ProverPtr CreateNewCertificate()
 
 int main()
 {
-  /*
   uint32_t cabinet_size = 3;
 
   struct CabinetMember
@@ -95,31 +94,16 @@ int main()
   }
 
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
-  // Reset cabinet for rbc in pre-dkg sync
-  for (uint32_t ii = 0; ii < cabinet_size; ii++)
-  {
-    committee[ii]->pre_sync.ResetCabinet(peers_list);
-  }
 
-  // Wait until everyone else has connected
-  for (uint32_t ii = 0; ii < cabinet_size; ii++)
+  // For each member
+  for(auto const &member : committee)
   {
-    committee[ii]->pre_sync.Connect();
-  }
-
-  uint32_t kk = 0;
-  while (kk != cabinet_size)
-  {
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    for (uint32_t mm = kk; mm < cabinet_size; ++mm)
+    // Add all peers except yourself
+    for (auto it = peers_list.begin(); it != peers_list.end(); ++it)
     {
-      if (!committee[mm]->pre_sync.ready())
+      if(it->first != member->muddle_certificate->identity().identifier())
       {
-        break;
-      }
-      else
-      {
-        ++kk;
+        member->muddle.AddPeer(it->second);
       }
     }
   }
@@ -161,5 +145,4 @@ int main()
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
   return 0;
-  */
 }

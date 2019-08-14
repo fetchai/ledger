@@ -618,8 +618,8 @@ void DkgService::ResetCabinet(CabinetMembers cabinet, uint32_t threshold)
   FETCH_LOG_INFO(LOGGING_NAME, "Resetting cabinet. Cabinet size: ", current_cabinet_.size(),
                  " threshold: ", threshold);
   dkg_.ResetCabinet();
-  rbc_.ResetCabinet(cabinet);
-  pre_dkg_sync_.ResetCabinet(cabinet, threshold);
+  rbc_.ResetCabinet(current_cabinet_);
+  pre_dkg_sync_.ResetCabinet(current_cabinet_, threshold);
 }
 
 }  // namespace dkg
