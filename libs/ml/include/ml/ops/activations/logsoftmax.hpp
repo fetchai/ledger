@@ -31,20 +31,35 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class LogSoftmax : public fetch::ml::Ops<T>
+class LogSoftmax : public fetch::ml::ops::Ops<T>
 {
 public:
-  using ArrayType     = T;
-  using DataType      = typename ArrayType::Type;
-  using SizeType      = typename ArrayType::SizeType;
+  using TensorType    = T;
+  using DataType      = typename TensorType::Type;
+  using SizeType      = typename TensorType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SPType        = OpLogSoftmaxSaveableParams<T>;
 
   explicit LogSoftmax(SizeType axis = 1)
     : axis_(axis)
   {}
+
+  explicit LogSoftmax(SPType const &sp)
+    : Ops<T>(sp)
+  {
+    axis_ = sp.axis;
+  }
+
   ~LogSoftmax() override = default;
 
-  void Forward(VecTensorType const &inputs, ArrayType &output) override
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
+  {
+    auto sp_ptr  = std::make_shared<SPType>();
+    sp_ptr->axis = axis_;
+    return sp_ptr;
+  }
+
+  void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(output.shape() == ComputeOutputShape(inputs));
     assert(inputs.size() == 1);
@@ -52,14 +67,14 @@ public:
     fetch::math::Log(output, output);
   }
 
-  std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                  ArrayType const &    error_signal) override
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     assert(inputs.size() == 1);
     assert(inputs.front()->shape() == error_signal.shape());
 
-    ArrayType return_signal = error_signal.Copy();
-    ArrayType t(error_signal.shape());
+    TensorType return_signal = error_signal.Copy();
+    TensorType t(error_signal.shape());
     fetch::math::Softmax((*inputs.front()), t, axis_);
 
     // return_signal.InlineMultiply(t);
@@ -67,7 +82,7 @@ public:
     // N-D softmax with 1 batch dimension
     if (inputs.front()->shape().size() > 1)
     {
-      ArrayType sum = ReduceSum(return_signal, axis_);
+      TensorType sum = ReduceSum(return_signal, axis_);
       t.InlineMultiply(sum);
     }
 
@@ -80,6 +95,10 @@ public:
     return inputs.front()->shape();
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::OP_LOGSOFTMAX;
+  }
   static constexpr char const *DESCRIPTOR = "LogSoftmax";
 
 private:
