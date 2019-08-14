@@ -73,7 +73,7 @@ int main(int argc, char **argv)
   fetch::network::NetworkManager network_manager{"NetworkManager", 2};
   fetch::core::Reactor           reactor{"ReactorName"};
   auto muddle = std::make_shared<fetch::muddle::Muddle>(fetch::muddle::NetworkId{"TestDKGNetwork"},
-                                                        p2p_key, network_manager, true, true);
+                                                        p2p_key, network_manager);
 
   std::unique_ptr<dkg::DkgService> dkg =
       std::make_unique<dkg::DkgService>(muddle->AsEndpoint(), p2p_key->identity().identifier());
