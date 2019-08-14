@@ -192,6 +192,52 @@ int StringConsumer(byte_array::ConstByteArray const &str, uint64_t &pos)
   return STRING;
 }
 
+template <int STRING>
+int StringConsumer(byte_array::ConstByteArray const &str, uint64_t &pos, char quoteChar)
+{
+  if (str[pos] != quoteChar)
+  {
+    return -1;
+  }
+  ++pos;
+  if (pos >= str.size())
+  {
+    return -1;
+  }
+
+  while ((pos < str.size()) && (str[pos] != quoteChar))
+  {
+     pos += 1 + (str[pos] == '\\');
+     if(pos<str.size() - 2 && quoteChar=='\'' && str[pos]=='\'' && str[pos+1]=='\'') {
+        pos+=2;
+     }
+  }
+
+  if (pos >= str.size())
+  {
+    return -1;
+  }
+  ++pos;
+  return STRING;
+}
+
+template <int STRING>
+int LineConsumer(byte_array::ConstByteArray const &str, uint64_t &pos)
+{
+  while ((pos < str.size()) && (str[pos] != '\r') && (str[pos] != '\n'))
+  {
+    ++pos;
+  }
+
+  if (pos >= str.size())
+  {
+    return -1;
+  }
+
+  return STRING;
+}
+
+
 template <int TOKEN>
 int Token(byte_array::ConstByteArray const &str, uint64_t &pos)
 {
