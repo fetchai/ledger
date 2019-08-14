@@ -99,7 +99,8 @@ protected:
 
   MuddleAddress const address_;   ///< Our muddle address
   Endpoint &          endpoint_;  ///< The muddle endpoint to communicate on
-  CabinetMembers      current_cabinet_;  ///< The set of muddle addresses of the cabinet (including our own)
+  CabinetMembers
+           current_cabinet_;  ///< The set of muddle addresses of the cabinet (including our own)
   uint32_t threshold_;  ///< Number of byzantine nodes (this is assumed to take the maximum allowed
                         ///< value satisying threshold_ < current_cabinet_.size()
   std::function<void(MuddleAddress const &, byte_array::ConstByteArray const &)>

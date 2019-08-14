@@ -148,7 +148,8 @@ public:
     return state_machine_;
   }
 
-  void ResetCabinet(CabinetMembers cabinet, uint32_t threshold = std::numeric_limits<uint32_t>::max());
+  void ResetCabinet(CabinetMembers cabinet,
+                    uint32_t       threshold = std::numeric_limits<uint32_t>::max());
 
   void SendShares(MuddleAddress const &                      destination,
                   std::pair<std::string, std::string> const &shares);

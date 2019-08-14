@@ -241,20 +241,21 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   , tx_processor_{dag_, *storage_, block_packer_, tx_status_cache_, cfg_.processor_threads}
   , http_open_api_module_{std::make_shared<OpenAPIHttpModule>()}
   , http_{http_network_manager_}
-  , http_modules_{
-        http_open_api_module_,
-        std::make_shared<p2p::P2PHttpInterface>(
-            cfg_.log2_num_lanes, chain_, muddle_, p2p_, trust_, block_packer_,
-            p2p::P2PHttpInterface::WeakStateMachines{main_chain_service_->GetWeakStateMachine(),
-                                                     block_coordinator_.GetWeakStateMachine()}),
-        std::make_shared<ledger::TxStatusHttpInterface>(tx_status_cache_),
-        std::make_shared<ledger::TxQueryHttpInterface>(*storage_),
-        std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_),
-        std::make_shared<LoggingHttpModule>(),
-        std::make_shared<TelemetryHttpModule>(),
-        std::make_shared<HealthCheckHttpModule>(chain_, *main_chain_service_, block_coordinator_,
-                                                dkg_)}
-  , connected_peers_gauge_{telemetry::Registry::Instance().CreateGauge<uint64_t>("connected_peers_number", "Directly connected peers of node")}
+  , http_modules_{http_open_api_module_,
+                  std::make_shared<p2p::P2PHttpInterface>(
+                      cfg_.log2_num_lanes, chain_, muddle_, p2p_, trust_, block_packer_,
+                      p2p::P2PHttpInterface::WeakStateMachines{
+                          main_chain_service_->GetWeakStateMachine(),
+                          block_coordinator_.GetWeakStateMachine()}),
+                  std::make_shared<ledger::TxStatusHttpInterface>(tx_status_cache_),
+                  std::make_shared<ledger::TxQueryHttpInterface>(*storage_),
+                  std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_),
+                  std::make_shared<LoggingHttpModule>(),
+                  std::make_shared<TelemetryHttpModule>(),
+                  std::make_shared<HealthCheckHttpModule>(chain_, *main_chain_service_,
+                                                          block_coordinator_, dkg_)}
+  , connected_peers_gauge_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        "connected_peers_number", "Directly connected peers of node")}
 {
 
   // print the start up log banner

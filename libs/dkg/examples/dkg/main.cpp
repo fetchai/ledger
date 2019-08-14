@@ -94,7 +94,7 @@ int main()
   }
 
   // Set the time for pre dkg sync lower for testing
-  for(auto const &member : committee)
+  for (auto const &member : committee)
   {
     member->dkg_service.SetMaxTimePeriodForSetup(4);
   }
@@ -102,12 +102,12 @@ int main()
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
   // For each member
-  for(auto const &member : committee)
+  for (auto const &member : committee)
   {
     // Add all peers except yourself
     for (auto it = peers_list.begin(); it != peers_list.end(); ++it)
     {
-      if(it->first != member->muddle_certificate->identity().identifier())
+      if (it->first != member->muddle_certificate->identity().identifier())
       {
         member->muddle.AddPeer(it->second);
       }
@@ -137,7 +137,7 @@ int main()
       member->reactor.Start();
     }
 
-    while(!committee[0]->dkg_service.IsSynced())
+    while (!committee[0]->dkg_service.IsSynced())
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }

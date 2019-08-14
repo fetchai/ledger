@@ -33,7 +33,6 @@ PreDkgSync::PreDkgSync(Endpoint &endpoint, ConstByteArray address, uint8_t chann
   : endpoint_{endpoint}
   , rbc_{endpoint_, address,
          [this](MuddleAddress const &address, ConstByteArray const &payload) -> void {
-
            std::set<MuddleAddress>               connections;
            fetch::serializers::MsgPackSerializer serializer{payload};
            serializer >> connections;
@@ -42,9 +41,10 @@ PreDkgSync::PreDkgSync(Endpoint &endpoint, ConstByteArray address, uint8_t chann
          },
          channel}
   , sync_time_gauge_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
-      "sync_time_gague", "Time the DKG should start")}
+        "sync_time_gague", "Time the DKG should start")}
   , tele_ready_peers_{telemetry::Registry::Instance().CreateCounter(
-      "ready_peers_total", "The total number of ready peers (pre dkg sync)")} // note, counters must end in '_total'.
+        "ready_peers_total", "The total number of ready peers (pre dkg sync)")}
+// note, counters must end in '_total'.
 {}
 
 void PreDkgSync::OnRbcMessage(MuddleAddress const &from, std::set<MuddleAddress> const &connections)
@@ -62,15 +62,16 @@ void PreDkgSync::OnRbcMessage(MuddleAddress const &from, std::set<MuddleAddress>
   // Check peer's connections are valid
   if (!CheckConnections(from, connections))
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Message from ", from, " discarded - provided incorrect connections!");
+    FETCH_LOG_WARN(LOGGING_NAME, "Message from ", from,
+                   " discarded - provided incorrect connections!");
   }
 
   // If these conditions are good, add the info to the map
   {
-    std::unique_lock<std::mutex> lock(mutex_);
+    std::unique_lock<std::mutex>       lock(mutex_);
     std::unordered_set<MuddleAddress> &peer_connections = other_peer_connections[from];
 
-    for(auto const &connection : connections)
+    for (auto const &connection : connections)
     {
       peer_connections.insert(connection);
     }
@@ -87,30 +88,37 @@ void PreDkgSync::SetStartTime()
   // Check if this meets the minimum requirements to set a point to start.
   // Start time is as soon as there are enough ready peers, plus N time units
   std::unique_lock<std::mutex> lock(mutex_);
-  if(start_time_ == std::numeric_limits<uint64_t>::max() && ready_peers_ >= threshold_)
+  if (start_time_ == std::numeric_limits<uint64_t>::max() && ready_peers_ >= threshold_)
   {
     uint64_t current_time = static_cast<uint64_t>(std::time(nullptr));
-    start_time_ = (((current_time / time_quantisation_s) + grace_period_time_units) * time_quantisation_s);
+    start_time_ =
+        (((current_time / time_quantisation_s) + grace_period_time_units) * time_quantisation_s);
     sync_time_gauge_->set(start_time_);
     assert(start_time_ > current_time);
 
-    FETCH_LOG_INFO(LOGGING_NAME, "The conditions for starting DKG are met. Start: ", start_time_, " time until: ", start_time_ - current_time);
+    FETCH_LOG_INFO(LOGGING_NAME, "The conditions for starting DKG are met. Start: ", start_time_,
+                   " time until: ", start_time_ - current_time);
   }
 }
 
-bool PreDkgSync::CheckConnections(MuddleAddress const &from, std::set<MuddleAddress> const &connections)
+bool PreDkgSync::CheckConnections(MuddleAddress const &          from,
+                                  std::set<MuddleAddress> const &connections)
 {
   std::lock_guard<std::mutex> lock(mutex_);
 
-  if(connections.size() + 1 < threshold_)
+  if (connections.size() + 1 < threshold_)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Peer indicated it is ready but with less connections than the threshold. Connections: ", connections.size() + 1);
+    FETCH_LOG_WARN(
+        LOGGING_NAME,
+        "Peer indicated it is ready but with less connections than the threshold. Connections: ",
+        connections.size() + 1);
     return false;
   }
 
-  if(connections.find(from) != connections.end())
+  if (connections.find(from) != connections.end())
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Peer provided a connection list with itself as a member which is invalid");
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "Peer provided a connection list with itself as a member which is invalid");
     return false;
   }
 
@@ -128,7 +136,7 @@ bool PreDkgSync::CheckConnections(MuddleAddress const &from, std::set<MuddleAddr
 void PreDkgSync::ResetCabinet(CabinetMembers const &members, uint32_t threshold)
 {
   std::lock_guard<std::mutex> lock(mutex_);
-  members_ = members;
+  members_   = members;
   threshold_ = threshold;
   rbc_.ResetCabinet(members);
 }
@@ -136,7 +144,7 @@ void PreDkgSync::ResetCabinet(CabinetMembers const &members, uint32_t threshold)
 bool PreDkgSync::Ready()
 {
   // if we meet the conditions for syncing for the first time
-  if(!self_ready_ && endpoint_.GetDirectlyConnectedPeers().size() + 1 >= threshold_)
+  if (!self_ready_ && endpoint_.GetDirectlyConnectedPeers().size() + 1 >= threshold_)
   {
     self_ready_ = true;
 

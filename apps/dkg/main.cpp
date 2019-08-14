@@ -84,7 +84,7 @@ int main(int argc, char **argv)
 
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-  for(auto const &peer : peer_list)
+  for (auto const &peer : peer_list)
   {
     muddle->AddPeer(peer.second);
   }

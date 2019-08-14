@@ -105,7 +105,7 @@ DkgService::DkgService(Endpoint &endpoint, ConstByteArray address)
          [this](DKGEnvelope const &envelope) -> void { SendReliableBroadcast(envelope); },
          [this](MuddleAddress const &destination, std::pair<std::string, std::string> const &shares)
              -> void { SendShares(destination, shares); }}
-  , pre_dkg_sync_{endpoint, address_, 68} // TODO(HUT): specify channel correctly
+  , pre_dkg_sync_{endpoint, address_, 68}  // TODO(HUT): specify channel correctly
 {
   group_g_.clear();
   group_g_ = dkg_.group();
@@ -237,13 +237,14 @@ DkgService::Status DkgService::GenerateEntropy(Digest block_digest, uint64_t blo
 }
 
 /**
- * State Handler for PRE_SYNC - note the sync shall have been set up before this dkg state machine becomes active
+ * State Handler for PRE_SYNC - note the sync shall have been set up before this dkg state machine
+ * becomes active
  *
  * @return The next state to progress to
  */
 State DkgService::OnPreSync()
 {
-  if(!pre_dkg_sync_.Ready())
+  if (!pre_dkg_sync_.Ready())
   {
     state_machine_->Delay(100ms);
     return State::PRE_SYNC;

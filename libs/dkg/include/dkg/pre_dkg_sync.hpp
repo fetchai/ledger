@@ -20,9 +20,9 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "dkg/rbc.hpp"
 #include "network/muddle/muddle.hpp"
-#include "telemetry/telemetry.hpp"
-#include "telemetry/gauge.hpp"
 #include "telemetry/counter.hpp"
+#include "telemetry/gauge.hpp"
+#include "telemetry/telemetry.hpp"
 
 #include <unordered_map>
 
@@ -47,18 +47,18 @@ public:
 private:
   using Cabinet = std::set<MuddleAddress>;
 
-  Endpoint         &endpoint_;
+  Endpoint &     endpoint_;
   CabinetMembers members_;
   Cabinet        cabinet_;
   RBC            rbc_;
   std::mutex     mutex_;
   uint32_t       ready_peers_ = 0;
-  bool           self_ready_ = false;
-  uint32_t       threshold_ = std::numeric_limits<uint32_t>::max();
+  bool           self_ready_  = false;
+  uint32_t       threshold_   = std::numeric_limits<uint32_t>::max();
 
   std::map<MuddleAddress, std::unordered_set<MuddleAddress>> other_peer_connections;
 
-  uint64_t time_quantisation_s     = 30;
+  uint64_t       time_quantisation_s     = 30;
   const uint64_t grace_period_time_units = 3;
 
   uint64_t start_time_ = std::numeric_limits<uint64_t>::max();
