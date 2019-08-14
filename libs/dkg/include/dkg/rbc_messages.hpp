@@ -54,6 +54,18 @@ public:
   };
 
   // Destruction
+  RBCMessage() = default;
+  RBCMessage(uint16_t channel, uint32_t id, uint8_t counter, SerialisedMessage msg = "")
+    : channel_{channel}
+    , id_{id}
+    , counter_{counter}
+    , payload_(std::move(msg))
+  {}
+  explicit RBCMessage(RBCSerializer &serialiser)
+  {
+    serialiser >> channel_ >> id_ >> counter_ >> payload_;
+  }
+
   virtual ~RBCMessage() = default;
 
   /// @name Getter functions
@@ -73,11 +85,6 @@ public:
     return (msg_tag | uint64_t(counter_));
   }
 
-  RBCMessage::MessageType type() const
-  {
-    return type_;
-  }
-
   uint8_t channel() const
   {
     return static_cast<uint8_t>(channel_);
@@ -94,163 +101,82 @@ public:
   }
   /// @}
 
-  virtual RBCSerializer Serialize() const = 0;
+  RBCSerializer Serialize() const
+  {
+    RBCSerializer serialiser;
+    serialiser << channel_ << id_ << counter_ << payload_;
+    return serialiser;
+  }
+
+  virtual MessageType type() const = 0;
 
 protected:
-  const MessageType type_;  ///< Type of the message
-  uint16_t
-           channel_;  ///< Channel Id of the broadcast channel (is this safe to truncate to uint8_t?)
-  uint32_t id_;       ///< Unique Id of the node
-  uint8_t  counter_;  ///< Counter for messages sent on RBC
+  SerialisedMessage const &message() const
+  {
+    return payload_;
+  }
 
-  explicit RBCMessage(MessageType type)
-    : type_{type}
-  {}
-  RBCMessage(uint16_t channel, uint32_t id, uint8_t counter, MessageType type)
-    : type_{type}
-    , channel_{channel}
-    , id_{id}
-    , counter_{counter}
-  {}
+  TruncatedHash hash() const
+  {
+    return payload_;
+  }
+
+private:
+  uint16_t
+                    channel_;  ///< Channel Id of the broadcast channel (is this safe to truncate to uint8_t?)
+  uint32_t          id_;       ///< Unique Id of the node
+  uint8_t           counter_;  ///< Counter for messages sent on RBC
+  SerialisedMessage payload_;  ///< Serialised message to be sent using RBC
 };
 
 class RMessage : public RBCMessage
 {
 public:
-  // Destruction
+  using RBCMessage::RBCMessage;
   virtual ~RMessage() = default;
+  using RBCMessage::message;
+};
 
-  RBCSerializer Serialize() const override
+template <RBCMessage::MessageType TYPE>
+class RMessageImpl final : public RMessage
+{
+public:
+  using RMessage::RMessage;
+  virtual ~RMessageImpl() = default;
+
+  MessageType type() const override
   {
-    RBCSerializer serialiser;
-    serialiser << channel_ << id_ << counter_ << message_;
-    return serialiser;
+    return TYPE;
   }
-
-  const SerialisedMessage &message() const
-  {
-    return message_;
-  }
-
-protected:
-  SerialisedMessage message_;  ///< Serialised message to be sent using RBC
-
-  explicit RMessage(MessageType type)
-    : RBCMessage{type}
-  {}
-  RMessage(uint16_t channel, uint32_t id, uint8_t counter, SerialisedMessage msg, MessageType type)
-    : RBCMessage{channel, id, counter, type}
-    , message_{std::move(msg)}
-  {}
 };
 
 class RHash : public RBCMessage
 {
 public:
   // Destruction
+  using RBCMessage::hash;
+  using RBCMessage::RBCMessage;
   virtual ~RHash() = default;
-
-  RBCSerializer Serialize() const override
-  {
-    RBCSerializer serialiser;
-    serialiser << channel_ << id_ << counter_ << hash_;
-    return serialiser;
-  }
-
-  const TruncatedHash &hash() const
-  {
-    return hash_;
-  }
-
-protected:
-  TruncatedHash hash_;  ///< Truncated hash of serialised message
-
-  // Construction
-  explicit RHash(MessageType type)
-    : RBCMessage{type}
-  {}
-  RHash(uint16_t channel, uint32_t id, uint8_t counter, TruncatedHash msg_hash, MessageType type)
-    : RBCMessage{channel, id, counter, type}
-    , hash_{std::move(msg_hash)}
-  {}
 };
 
-class RBroadcast : public RMessage
+template <RBCMessage::MessageType TYPE>
+class RHashImpl final : public RHash
 {
 public:
-  RBroadcast(uint16_t channel, uint32_t id, uint8_t counter, SerialisedMessage msg)
-    : RMessage{channel, id, counter, std::move(msg), MessageType::RBROADCAST}
-  {}
-  explicit RBroadcast(RBCSerializer &serialiser)
-    : RMessage{MessageType::RBROADCAST}
-  {
-    serialiser >> channel_ >> id_ >> counter_ >> message_;
-  }
-  ~RBroadcast() override = default;
-};
+  using RHash::RHash;
+  virtual ~RHashImpl() = default;
 
-class REcho : public RHash
-{
-public:
-  REcho(uint16_t channel, uint32_t id, uint8_t counter, TruncatedHash msg_hash)
-    : RHash{channel, id, counter, std::move(msg_hash), MessageType::RECHO}
-  {}
-  explicit REcho(RBCSerializer &serialiser)
-    : RHash{MessageType::RECHO}
+  MessageType type() const override
   {
-    serialiser >> channel_ >> id_ >> counter_ >> hash_;
-  }
-  ~REcho() override = default;
-};
-
-class RReady : public RHash
-{
-public:
-  // Construction/Destruction
-  RReady(uint16_t channel, uint32_t id, uint8_t counter, TruncatedHash msg_hash)
-    : RHash{channel, id, counter, std::move(msg_hash), MessageType::RREADY}
-  {}
-  explicit RReady(RBCSerializer &serialiser)
-    : RHash{MessageType::RREADY}
-  {
-    serialiser >> channel_ >> id_ >> counter_ >> hash_;
-  }
-  ~RReady() override = default;
-};
-
-class RRequest : public RBCMessage
-{
-public:
-  RRequest(uint16_t channel, uint32_t id, uint8_t counter)
-    : RBCMessage{channel, id, counter, MessageType::RREQUEST}
-  {}
-  explicit RRequest(RBCSerializer &serialiser)
-    : RBCMessage{MessageType::RREQUEST}
-  {
-    serialiser >> channel_ >> id_ >> counter_;
-  }
-  ~RRequest() override = default;
-
-  RBCSerializer Serialize() const override
-  {
-    RBCSerializer serialiser;
-    serialiser << channel_ << id_ << counter_;
-    return serialiser;
+    return TYPE;
   }
 };
 
-class RAnswer : public RMessage
-{
-public:
-  RAnswer(uint16_t channel, uint32_t id, uint8_t counter, SerialisedMessage msg)
-    : RMessage{channel, id, counter, std::move(msg), MessageType::RANSWER}
-  {}
-  explicit RAnswer(RBCSerializer &serialiser)
-    : RMessage{MessageType::RANSWER}
-  {
-    serialiser >> channel_ >> id_ >> counter_ >> message_;
-  }
-  ~RAnswer() override = default;
-};
+using RBroadcast = RMessageImpl<RBCMessage::MessageType::RBROADCAST>;
+using RRequest   = RMessageImpl<RBCMessage::MessageType::RREQUEST>;
+using RAnswer    = RMessageImpl<RBCMessage::MessageType::RANSWER>;
+using REcho      = RHashImpl<RBCMessage::MessageType::RECHO>;
+using RReady     = RHashImpl<RBCMessage::MessageType::RREADY>;
+
 }  // namespace dkg
 }  // namespace fetch
