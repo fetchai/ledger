@@ -205,9 +205,7 @@ struct MapSerializer<fetch::ml::dataloaders::DataLoader<LabelType, InputType>, D
   template <typename MapDeserializer>
   static void Deserialize(MapDeserializer &map, Type &sp)
   {
-    bool tmp;
-    map.ExpectKeyGetValue(RANDOM_MODE, tmp);
-    sp.random_mode_ = tmp;
+    map.ExpectKeyGetValue(RANDOM_MODE, sp.random_mode_);
     map.ExpectKeyGetValue(SIZE_NOT_SET, sp.size_not_set_);
     map.ExpectKeyGetValue(CUR_TRAINING_PAIR_FIRST, sp.cur_training_pair_.first);
     map.ExpectKeyGetValue(CUR_TRAINING_PAIR_SECOND, sp.cur_training_pair_.second);
