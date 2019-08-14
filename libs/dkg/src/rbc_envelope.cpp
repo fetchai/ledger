@@ -34,15 +34,15 @@ std::shared_ptr<RBCMessage> RBCEnvelope::Message() const
   RBCSerializer serialiser{payload_};
   switch (type_)
   {
-  case MessageType::RBROADCAST:
+  case MessageType::R_BROADCAST:
     return std::make_shared<RBroadcast>(serialiser);
-  case MessageType::RECHO:
+  case MessageType::R_ECHO:
     return std::make_shared<REcho>(serialiser);
-  case MessageType::RREADY:
+  case MessageType::R_READY:
     return std::make_shared<RReady>(serialiser);
-  case MessageType::RREQUEST:
+  case MessageType::R_REQUEST:
     return std::make_shared<RRequest>(serialiser);
-  case MessageType::RANSWER:
+  case MessageType::R_ANSWER:
     return std::make_shared<RAnswer>(serialiser);
   default:
     FETCH_LOG_ERROR(LOGGING_NAME, "Can not process payload");

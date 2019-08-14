@@ -26,19 +26,19 @@ namespace dkg {
 
 constexpr char const *LOGGING_NAME = "RBC";
 
-std::string RBC::MsgTypeToString(MsgType msg_type)
+std::string RBC::MessageTypeToString(MessageType msg_type)
 {
   switch (msg_type)
   {
-  case MsgType::R_SEND:
-    return "r_send";
-  case MsgType::R_ECHO:
+  case MessageType::R_BROADCAST:
+    return "r_broadcast";
+  case MessageType::R_ECHO:
     return "r_echo";
-  case MsgType::R_READY:
+  case MessageType::R_READY:
     return "r_ready";
-  case MsgType::R_REQUEST:
+  case MessageType::R_REQUEST:
     return "r_request";
-  case MsgType::R_ANSWER:
+  case MessageType::R_ANSWER:
     return "r_answer";
   default:
     assert(false);
@@ -227,14 +227,14 @@ bool RBC::ReceivedEcho(TagType tag, REcho const &msg)
  * Increments counter for RReady messages
  * @param tag Unique tag of a message sent via RBC
  * @param msg Reference to RReady message
- * @return MsgCount for tag in broadcasts_
+ * @return MessageCount for tag in broadcasts_
  */
-struct RBC::MsgCount RBC::ReceivedReady(TagType tag, RHash const &msg)
+struct RBC::MessageCount RBC::ReceivedReady(TagType tag, RHash const &msg)
 {
   std::lock_guard<std::mutex> lock(mutex_broadcast_);
   auto &                      msg_count = broadcasts_[tag].msgs_count[msg.hash()];
   msg_count.ready_count++;
-  MsgCount res = msg_count;
+  MessageCount res = msg_count;
   return res;
 }
 
@@ -245,7 +245,7 @@ struct RBC::MsgCount RBC::ReceivedReady(TagType tag, RHash const &msg)
  * @param msg_ptr Shared pointer of message
  * @return Bool of whether the message passes the test or not
  */
-bool RBC::BasicMsgCheck(MuddleAddress const &from, std::shared_ptr<RBCMessage> const &msg_ptr)
+bool RBC::BasicMessageCheck(MuddleAddress const &from, std::shared_ptr<RBCMessage> const &msg_ptr)
 {
   if (msg_ptr == nullptr)
   {
@@ -271,14 +271,14 @@ bool RBC::BasicMsgCheck(MuddleAddress const &from, std::shared_ptr<RBCMessage> c
 void RBC::OnRBC(MuddleAddress const &from, RBCEnvelope const &envelope)
 {
   auto msg_ptr = envelope.Message();
-  if (!BasicMsgCheck(from, msg_ptr))
+  if (!BasicMessageCheck(from, msg_ptr))
   {
     return;
   }
   uint32_t sender_index{CabinetIndex(from)};
   switch (msg_ptr->type())
   {
-  case RBCMessage::MessageType::RBROADCAST:
+  case RBCMessage::MessageType::R_BROADCAST:
   {
     FETCH_LOG_TRACE(LOGGING_NAME, "Node: ", id_, " received RBroadcast from node ", sender_index);
     auto broadcast_ptr = std::dynamic_pointer_cast<RBroadcast>(msg_ptr);
@@ -293,7 +293,7 @@ void RBC::OnRBC(MuddleAddress const &from, RBCEnvelope const &envelope)
     }
     break;
   }
-  case RBCMessage::MessageType::RECHO:
+  case RBCMessage::MessageType::R_ECHO:
   {
 
     FETCH_LOG_TRACE(LOGGING_NAME, "Node: ", id_, " received REcho from node ", sender_index);
@@ -309,7 +309,7 @@ void RBC::OnRBC(MuddleAddress const &from, RBCEnvelope const &envelope)
     }
     break;
   }
-  case RBCMessage::MessageType::RREADY:
+  case RBCMessage::MessageType::R_READY:
   {
     FETCH_LOG_TRACE(LOGGING_NAME, "Node: ", id_, " received RReady from node ", sender_index);
     auto ready_ptr = std::dynamic_pointer_cast<RReady>(msg_ptr);
@@ -324,7 +324,7 @@ void RBC::OnRBC(MuddleAddress const &from, RBCEnvelope const &envelope)
     }
     break;
   }
-  case RBCMessage::MessageType::RREQUEST:
+  case RBCMessage::MessageType::R_REQUEST:
   {
     FETCH_LOG_TRACE(LOGGING_NAME, "Node: ", id_, " received RRequest from node ", sender_index);
     auto request_ptr = std::dynamic_pointer_cast<RRequest>(msg_ptr);
@@ -339,7 +339,7 @@ void RBC::OnRBC(MuddleAddress const &from, RBCEnvelope const &envelope)
     }
     break;
   }
-  case RBCMessage::MessageType::RANSWER:
+  case RBCMessage::MessageType::R_ANSWER:
   {
     FETCH_LOG_TRACE(LOGGING_NAME, "Node: ", id_, " received RAnswer from node ", sender_index);
     auto answer_ptr = std::dynamic_pointer_cast<RAnswer>(msg_ptr);
@@ -369,7 +369,7 @@ void RBC::OnRBC(MuddleAddress const &from, RBCEnvelope const &envelope)
 void RBC::OnRBroadcast(RBroadcast const &msg, uint32_t sender_index)
 {
   TagType tag = msg.tag();
-  if (!SetPartyFlag(sender_index, tag, MsgType::R_SEND))
+  if (!SetPartyFlag(sender_index, tag, MessageType::R_BROADCAST))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "onRBroadcast: Node ", id_, " received repeated msg ", tag,
                    " from node ", sender_index, " with counter ", msg.counter(), " and id ",
@@ -406,7 +406,7 @@ void RBC::OnRBroadcast(RBroadcast const &msg, uint32_t sender_index)
 void RBC::OnREcho(REcho const &msg, uint32_t sender_index)
 {
   TagType tag = msg.tag();
-  if (!SetPartyFlag(sender_index, tag, MsgType::R_ECHO))
+  if (!SetPartyFlag(sender_index, tag, MessageType::R_ECHO))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "onREcho: Node ", id_, " received repeated msg ", tag,
                    " from node ", sender_index, " with counter ", msg.counter(), " and id ",
@@ -435,7 +435,7 @@ void RBC::OnREcho(REcho const &msg, uint32_t sender_index)
 void RBC::OnRReady(RReady const &msg, uint32_t sender_index)
 {
   TagType tag = msg.tag();
-  if (!SetPartyFlag(sender_index, tag, MsgType::R_READY))
+  if (!SetPartyFlag(sender_index, tag, MessageType::R_READY))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "onRReady: Node ", id_, " received repeated msg ", tag,
                    " from node ", sender_index, " with counter ", msg.counter(), " and id ",
@@ -506,7 +506,7 @@ void RBC::OnRReady(RReady const &msg, uint32_t sender_index)
 void RBC::OnRRequest(RRequest const &msg, uint32_t sender_index)
 {
   TagType tag = msg.tag();
-  if (!SetPartyFlag(sender_index, tag, MsgType::R_REQUEST))
+  if (!SetPartyFlag(sender_index, tag, MessageType::R_REQUEST))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "onRRequest: Node ", id_, " received repeated msg ", tag,
                    " from node ", sender_index, " with counter ", msg.counter(), " and id ",
@@ -533,7 +533,7 @@ void RBC::OnRRequest(RRequest const &msg, uint32_t sender_index)
 void RBC::OnRAnswer(RAnswer const &msg, uint32_t sender_index)
 {
   TagType tag = msg.tag();
-  if (!SetPartyFlag(sender_index, tag, MsgType::R_ANSWER))
+  if (!SetPartyFlag(sender_index, tag, MessageType::R_ANSWER))
   {
     return;
   }
@@ -670,7 +670,7 @@ bool RBC::CheckTag(RBCMessage const &msg)
  * @param m Message type of new RBCMessage received
  * @return Bool for whether the message flag for this message type has been set
  */
-bool RBC::SetPartyFlag(uint32_t sender_index, TagType tag, MsgType msg_type)
+bool RBC::SetPartyFlag(uint32_t sender_index, TagType tag, MessageType msg_type)
 {
   std::lock_guard<std::mutex> lock(mutex_flags_);
   assert(parties_.size() == current_cabinet_.size());
