@@ -18,84 +18,131 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
+#include "http/authentication_level.hpp"
 #include "http/method.hpp"
 #include "http/request.hpp"
 #include "http/response.hpp"
+#include "http/validators.hpp"
 #include "http/view_parameters.hpp"
 
 #include <vector>
 namespace fetch {
 namespace http {
 
+bool NormalAccessAuthentication(HTTPRequest const &req);
+
+struct HTTPParameter
+{
+  byte_array::ConstByteArray name;
+  std::string                description;
+  validators::Validator      validator;
+};
+
 class HTTPModule
 {
 public:
-  HTTPModule()                      = default;
+  enum Interface : uint8_t
+  {
+    JSON = 1,
+    YAML = 2
+  };
+
+  HTTPModule() = default;
+
   HTTPModule(HTTPModule const &rhs) = delete;
   HTTPModule(HTTPModule &&rhs)      = delete;
   HTTPModule &operator=(HTTPModule const &rhs) = delete;
   HTTPModule &operator=(HTTPModule &&rhs) = delete;
 
-  using view_type = std::function<HTTPResponse(ViewParameters, HTTPRequest)>;
+  using ViewType      = std::function<HTTPResponse(ViewParameters, HTTPRequest)>;
+  using Authenticator = std::function<bool(HTTPRequest)>;
 
   struct UnmountedView
   {
-    Method                method;
-    byte_array::ByteArray route;
-    view_type             view;
+    byte_array::ConstByteArray description;
+    Method                     method;
+    byte_array::ByteArray      route;
+    std::vector<HTTPParameter> parameters;
+    ViewType                   view;
+    Authenticator              authenticator;
   };
 
-  void Post(byte_array::ByteArray const &path, view_type const &view)
-  {
-    LOG_STACK_TRACE_POINT;
+  /// Post methods
+  /// @{
+  void Post(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
+            std::vector<HTTPParameter> const &parameters, ViewType const &view);
 
-    AddView(Method::POST, path, view);
-  }
+  void Post(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
+            ViewType const &view);
+  void Post(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
+            std::vector<HTTPParameter> const &parameters, Authenticator const &auth,
+            ViewType const &view);
+  void Post(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
+            Authenticator const &auth, ViewType const &view);
+  /// @}
 
-  void Get(byte_array::ByteArray const &path, view_type const &view)
-  {
-    LOG_STACK_TRACE_POINT;
+  /// Get methods
+  /// @{
+  void Get(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
+           std::vector<HTTPParameter> const &parameters, ViewType const &view);
+  void Get(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
+           ViewType const &view);
+  void Get(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
+           std::vector<HTTPParameter> const &parameters, Authenticator const &auth,
+           ViewType const &view);
+  void Get(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
+           Authenticator const &auth, ViewType const &view);
+  /// @}
 
-    AddView(Method::GET, path, view);
-  }
+  /// Put methods
+  /// @{
+  void Put(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
+           std::vector<HTTPParameter> const &parameters, ViewType const &view);
+  void Put(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
+           ViewType const &view);
+  void Put(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
+           std::vector<HTTPParameter> const &parameters, Authenticator const &auth,
+           ViewType const &view);
+  void Put(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
+           Authenticator const &auth, ViewType const &view);
+  /// @}
 
-  void Put(byte_array::ByteArray const &path, view_type const &view)
-  {
-    LOG_STACK_TRACE_POINT;
+  /// Patch methods
+  /// @{
+  void Patch(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
+             std::vector<HTTPParameter> const &parameters, ViewType const &view);
+  void Patch(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
+             ViewType const &view);
+  void Patch(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
+             std::vector<HTTPParameter> const &parameters, Authenticator const &auth,
+             ViewType const &view);
+  void Patch(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
+             Authenticator const &auth, ViewType const &view);
+  /// @}
 
-    AddView(Method::PUT, path, view);
-  }
+  /// Delete methods
+  /// @{
+  void Delete(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
+              std::vector<HTTPParameter> const &parameters, ViewType const &view);
+  void Delete(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
+              ViewType const &view);
+  void Delete(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
+              Authenticator const &auth, std::vector<HTTPParameter> const &parameters,
+              ViewType const &view);
+  void Delete(byte_array::ByteArray const &path, byte_array::ByteArray const &description,
+              Authenticator const &auth, ViewType const &view);
+  /// @}
 
-  void Patch(byte_array::ByteArray const &path, view_type const &view)
-  {
-    LOG_STACK_TRACE_POINT;
-
-    AddView(Method::PATCH, path, view);
-  }
-
-  void Delete(byte_array::ByteArray const &path, view_type const &view)
-  {
-    LOG_STACK_TRACE_POINT;
-
-    AddView(Method::DELETE, path, view);
-  }
-
-  void AddView(Method method, byte_array::ByteArray const &path, view_type const &view)
-  {
-    LOG_STACK_TRACE_POINT;
-
-    views_.push_back({method, path, view});
-  }
-
-  std::vector<UnmountedView> const &views() const
-  {
-    LOG_STACK_TRACE_POINT;
-
-    return views_;
-  }
+  void                              AddView(Method method, byte_array::ByteArray const &path,
+                                            byte_array::ByteArray const &     description,
+                                            std::vector<HTTPParameter> const &parameters, ViewType const &view,
+                                            Authenticator const &auth = NormalAccessAuthentication);
+  std::vector<UnmountedView> const &views() const;
 
 private:
   std::vector<UnmountedView> views_;
+  fetch::variant::Variant    interface_description_;
+  std::string                name_;
 };
 }  // namespace http
 }  // namespace fetch

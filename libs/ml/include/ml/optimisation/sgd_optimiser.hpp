@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/graph.hpp"
+#include "ml/core/graph.hpp"
 #include "optimiser.hpp"
 
 namespace fetch {
@@ -26,20 +26,20 @@ namespace optimisers {
 
 /**
  * Stochastic Gradient Descent optimiser
- * @tparam T ArrayType
+ * @tparam T TensorType
  * @tparam C CriterionType
  */
 template <class T>
 class SGDOptimiser : public Optimiser<T>
 {
 public:
-  using ArrayType = T;
-  using DataType  = typename ArrayType::Type;
-  using SizeType  = typename ArrayType::SizeType;
+  using TensorType = T;
+  using DataType   = typename TensorType::Type;
+  using SizeType   = typename TensorType::SizeType;
 
   SGDOptimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> const &input_node_names,
                std::string const &label_node_name, std::string const &output_node_name,
-               DataType const &learning_rate = DataType{0.001f});
+               DataType const &learning_rate = static_cast<DataType>(0.001f));
 
   SGDOptimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> const &input_node_names,
                std::string const &label_node_name, std::string const &output_node_name,

@@ -55,12 +55,12 @@ public:
   bool     TransferTokens(Transaction const &tx, Address const &to, uint64_t amount);
 
   // transaction handlers
-  Status CreateWealth(Transaction const &tx, BlockIndex);
-  Status Deed(Transaction const &tx, BlockIndex);
-  Status Transfer(Transaction const &tx, BlockIndex);
-  Status AddStake(Transaction const &tx, BlockIndex);
-  Status DeStake(Transaction const &tx, BlockIndex);
-  Status CollectStake(Transaction const &tx, BlockIndex);
+  Result CreateWealth(Transaction const &tx, BlockIndex);
+  Result Deed(Transaction const &tx, BlockIndex);
+  Result Transfer(Transaction const &tx, BlockIndex);
+  Result AddStake(Transaction const &tx, BlockIndex);
+  Result DeStake(Transaction const &tx, BlockIndex);
+  Result CollectStake(Transaction const &tx, BlockIndex);
 
   // queries
   Status Balance(Query const &query, Query &response);

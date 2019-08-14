@@ -21,14 +21,12 @@
 #include "ledger/chain/address.hpp"
 #include "network/muddle/muddle_endpoint.hpp"
 #include "network/muddle/rpc/server.hpp"
-#include "rbc_envelop.hpp"
+#include "rbc_envelope.hpp"
 
 #include <bitset>
 
 namespace fetch {
 namespace dkg {
-class DkgService;
-namespace rbc {
 
 /**
  * Reliable broadcast channel (RBC) is a protocol which ensures all honest
@@ -45,15 +43,14 @@ public:
   using Subscription    = muddle::Subscription;
   using SubscriptionPtr = std::shared_ptr<muddle::Subscription>;
 
-  // Constructor
-  explicit RBC(Endpoint &endpoint, MuddleAddress address, CabinetMembers const &cabinet,
-               std::size_t &threshold, DkgService &dkg_service);
+  RBC(Endpoint &endpoint, MuddleAddress address, CabinetMembers const &cabinet,
+      std::function<void(MuddleAddress const &, byte_array::ConstByteArray const &)> call_back);
 
   // Operators
   void ResetCabinet();
-  void SendRBroadcast(const SerialisedMessage &msg);
+  void SendRBroadcast(SerialisedMessage const &msg);
 
-private:
+protected:
   enum class MsgType : uint8_t
   {
     R_SEND,
@@ -65,11 +62,7 @@ private:
 
   struct MsgCount
   {
-    size_t echo_count, ready_count;  ///< Count of RReady and RRecho messages
-    MsgCount()
-      : echo_count{0}
-      , ready_count{0}
-    {}
+    uint64_t echo_count, ready_count;  ///< Count of RReady and RRecho messages
   };
 
   struct Broadcast
@@ -83,22 +76,19 @@ private:
   struct Party
   {
     std::unordered_map<TagType, std::bitset<sizeof(MsgType) * 8>>
-                                    flags;  ///< Marks for each message tag what messages have been received
-    uint8_t                         deliver_s;        ///< Counter for messages delivered
-    std::map<uint8_t, RBCMessage &> undelivered_msg;  ///< Undelivered messages indexed by tag
-    Party()
-    {
-      deliver_s = 1;  // initialize sequence counter by 1
-    }
+            flags;          ///< Marks for each message tag what messages have been received
+    uint8_t deliver_s = 1;  ///< Counter for messages delivered - initialised to 1
+    std::map<uint8_t, RBCMessage const &> undelivered_msg;  ///< Undelivered messages indexed by tag
   };
 
   uint32_t           id_;  ///< Rank used in DKG (derived from position in current_cabinet_)
   uint8_t            msg_counter_;  ///< Counter for messages we have broadcasted
   std::vector<Party> parties_;      ///< Keeps track of messages from cabinet members
   std::unordered_map<uint64_t, Broadcast> broadcasts_;  ///< map from tag to broadcasts
-  std::mutex                              mutex_flags_;
-  std::mutex                              mutex_deliver_;
-  std::mutex                              mutex_broadcast_;
+
+  std::mutex mutex_flags_;      // protects access to Party message flags
+  std::mutex mutex_deliver_;    // protects the delivered message queue
+  std::mutex mutex_broadcast_;  // protects broadcasts_
 
   // For broadcast
   static constexpr uint16_t SERVICE_DKG       = 5001;
@@ -107,30 +97,33 @@ private:
   MuddleAddress const address_;   ///< Our muddle address
   Endpoint &          endpoint_;  ///< The muddle endpoint to communicate on
   CabinetMembers const
-      &current_cabinet_;       ///< The set of muddle addresses of the cabinet (including our own)
-  std::size_t &   threshold_;  ///< Number of byzantine nodes
-  DkgService &    dkg_service_;
-  SubscriptionPtr rbc_subscription_;  ///< For receiving messages in the rbc channel
+      &    current_cabinet_;  ///< The set of muddle addresses of the cabinet (including our own)
+  uint32_t threshold_;  ///< Number of byzantine nodes (this is assumed to take the maximum allowed
+                        ///< value satisying threshold_ < current_cabinet_.size()
+  std::function<void(MuddleAddress const &, byte_array::ConstByteArray const &)>
+                  deliver_msg_callback_;  ///< Callback for messages which have succeeded RBC protocol
+  SubscriptionPtr rbc_subscription_;      ///< For receiving messages in the rbc channel
 
-  void Send(const RBCEnvelop &env, const MuddleAddress &address);
-  void Broadcast(const RBCEnvelop &env);
-  void OnRBC(MuddleAddress const &from, RBCEnvelop const &envelop);
-  void OnRBroadcast(std::shared_ptr<RBroadcast> msg_ptr, uint32_t sender_index);
-  void OnREcho(std::shared_ptr<REcho> msg_ptr, uint32_t sender_index);
-  void OnRReady(std::shared_ptr<RReady> msg_ptr, uint32_t sender_index);
-  void OnRRequest(std::shared_ptr<RRequest> msg_ptr, uint32_t sender_index);
-  void OnRAnswer(std::shared_ptr<RAnswer> msg_ptr, uint32_t sender_index);
-  void Deliver(const SerialisedMessage &msg, uint32_t sender_index);
+  void         Send(RBCEnvelope const &env, MuddleAddress const &address);
+  virtual void Broadcast(RBCEnvelope const &env);
+  virtual void OnRBC(MuddleAddress const &from, RBCEnvelope const &envelope);
+  void         OnRBroadcast(RBroadcast const &msg, uint32_t sender_index);
+  void         OnREcho(REcho const &msg, uint32_t sender_index);
+  void         OnRReady(RReady const &msg, uint32_t sender_index);
+  void         OnRRequest(RRequest const &msg, uint32_t sender_index);
+  void         OnRAnswer(RAnswer const &msg, uint32_t sender_index);
+  void         Deliver(SerialisedMessage const &msg, uint32_t sender_index);
 
   static std::string MsgTypeToString(MsgType msg_type);
-  uint32_t           CabinetIndex(const MuddleAddress &other_address) const;
-  bool               CheckTag(RBCMessage &msg);
-  bool               SetMbar(TagType tag, std::shared_ptr<RMessage> msg_ptr, uint32_t sender_index);
-  bool               SetDbar(TagType tag, std::shared_ptr<RHash> msg_ptr);
-  bool               ReceivedEcho(TagType tag, std::shared_ptr<REcho> msg_ptr);
-  struct MsgCount    ReceivedReady(TagType tag, std::shared_ptr<RHash> msg_ptr);
+  uint32_t           CabinetIndex(MuddleAddress const &other_address) const;
+  bool               CheckTag(RBCMessage const &msg);
+  bool               SetMbar(TagType tag, RMessage const &msg, uint32_t sender_index);
+  bool               SetDbar(TagType tag, RHash const &msg);
+  bool               ReceivedEcho(TagType tag, REcho const &msg);
+  struct MsgCount    ReceivedReady(TagType tag, RHash const &msg);
   bool               SetPartyFlag(uint32_t sender_index, TagType tag, MsgType msg_type);
 };
-}  // namespace rbc
+
+TruncatedHash MessageHash(SerialisedMessage const &msg);
 }  // namespace dkg
 }  // namespace fetch

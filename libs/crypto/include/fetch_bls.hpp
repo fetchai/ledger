@@ -27,6 +27,7 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wconversion"
 #pragma clang diagnostic ignored "-Wpedantic"
+#pragma clang diagnostic ignored "-Wmacro-redefined"
 #endif
 
 #include <bls/bls.hpp>

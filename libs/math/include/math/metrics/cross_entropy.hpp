@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/fundamental_operators.hpp"   // divide
-#include "math/matrix_operations.hpp"       //
-#include "math/standard_functions/log.hpp"  // log
+#include "math/fundamental_operators.hpp"
+#include "math/matrix_operations.hpp"
+#include "math/standard_functions/log.hpp"
 
 #include <cassert>
 #include <stdexcept>
@@ -49,7 +49,7 @@ typename ArrayType::Type CrossEntropyLoss(ArrayType const &x, ArrayType const &y
   auto n_examples = x.shape().at(1);
   auto n_dims     = x.shape().at(0);
 
-  DataType ret = static_cast<DataType>(0);
+  auto ret = static_cast<DataType>(0);
 
   // if not a one-hot, must be binary logistic regression cost
   if (n_dims == 1)

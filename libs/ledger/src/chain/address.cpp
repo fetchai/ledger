@@ -16,14 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/address.hpp"
-
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/identity.hpp"
 #include "crypto/sha256.hpp"
+#include "ledger/chain/address.hpp"
 
 #include <cstddef>
 #include <stdexcept>

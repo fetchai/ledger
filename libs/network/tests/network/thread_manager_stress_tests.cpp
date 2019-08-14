@@ -56,8 +56,6 @@ void TestCase1()
     tmanager.Post([]() { std::cout << "This thread prints stuff" << std::endl; });
     tmanager.Stop();
   }
-
-  SUCCEED() << "Success." << std::endl;
 }
 
 template <std::size_t N = 1>
@@ -109,7 +107,6 @@ void TestCase3()
       std::cout << std::endl;
     }
   }
-  SUCCEED() << "Success." << std::endl;
 }
 
 template <std::size_t N = 1>
@@ -123,15 +120,13 @@ void TestCase4()
     tmanager.Start();
     tmanager.Post([&tmanager]() { tmanager.Stop(); });
   }
-  SUCCEED() << "Success." << std::endl;
 }
 
 TEST(thread_manager_stress_test, basic_test)
 {
-
   TestCase1<1>();
   TestCase3<1>();
-  // TestCase4<1>(); // fails
+  // TestCase4<1>(); // fails as thread pool cannot be stopped by thread it owns
 
   TestCase1<10>();
   TestCase3<10>();

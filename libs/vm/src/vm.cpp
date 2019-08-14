@@ -19,6 +19,8 @@
 #include "vm/module.hpp"
 #include "vm/vm.hpp"
 
+#include <algorithm>
+#include <cassert>
 #include <cstddef>
 #include <cstdint>
 
@@ -172,7 +174,7 @@ VM::VM(Module *module)
   {
     auto        opcode = static_cast<uint16_t>(Opcodes::NumReserved + i);
     auto const &info   = function_info_array[i];
-    AddOpcodeInfo(opcode, info.unique_id, info.handler);
+    AddOpcodeInfo(opcode, info.unique_id, info.handler, info.static_charge);
     opcode_map_[info.unique_id] = opcode;
   }
 
@@ -216,18 +218,34 @@ bool VM::Execute(std::string &error, Variant &output)
 
   do
   {
-    instruction_pc_  = pc_;
-    instruction_     = &function_->instructions[pc_++];
-    OpcodeInfo &info = opcode_info_array_[instruction_->opcode];
-    if (info.handler)
-    {
-      info.handler(this);
-    }
-    else
+    instruction_pc_ = pc_;
+    instruction_    = &function_->instructions[pc_++];
+
+    current_op_ = &opcode_info_array_[instruction_->opcode];
+
+    assert(instruction_->opcode < opcode_info_array_.size());
+
+    if (!current_op_->handler)
     {
       RuntimeError("unknown opcode");
       break;
     }
+
+    assert(static_cast<bool>(current_op_->handler));
+
+    // update the charge total
+    charge_total_ += current_op_->static_charge;
+
+    // check for charge limit being reached
+    if (charge_limit_ && (charge_total_ >= charge_limit_))
+    {
+      RuntimeError("Charge limit exceeded");
+      break;
+    }
+
+    // execute the handler for the op code
+    current_op_->handler(this);
+
   } while (!stop_);
 
   bool const ok = !HasError();
@@ -285,6 +303,43 @@ void VM::Destruct(uint16_t scope_number)
     Variant &variable = GetVariable(info.variable_index);
     variable.Reset();
     --live_object_sp_;
+  }
+}
+
+ChargeAmount VM::GetChargeTotal() const
+{
+  return charge_total_;
+}
+
+void VM::IncreaseChargeTotal(ChargeAmount const amount)
+{
+  charge_total_ += amount;
+}
+
+ChargeAmount VM::GetChargeLimit() const
+{
+  return charge_limit_;
+}
+
+void VM::SetChargeLimit(ChargeAmount limit)
+{
+  charge_limit_ = limit;
+}
+
+void VM::UpdateCharges(std::unordered_map<std::string, ChargeAmount> const &opcode_charges)
+{
+  for (auto const &entry : opcode_charges)
+  {
+    auto const &unique_id = entry.first;
+
+    auto opcode_to_update =
+        std::find_if(opcode_info_array_.begin(), opcode_info_array_.end(),
+                     [&unique_id](OpcodeInfo &info) { return info.name == unique_id; });
+
+    if (opcode_to_update != opcode_info_array_.end())
+    {
+      opcode_to_update->static_charge = entry.second;
+    }
   }
 }
 

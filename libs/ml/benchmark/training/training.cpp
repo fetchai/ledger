@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor.hpp"
-#include "ml/graph.hpp"
+#include "ml/core/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activations/relu.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
@@ -70,7 +70,7 @@ void BM_Setup_And_Train(benchmark::State &state)
     std::string error_name = g->template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TensorType>>(
         "", {output_name, label_name});
 
-    // Initialize Optimiser
+    // Initialise Optimiser
     fetch::ml::optimisers::SGDOptimiser<TensorType> optimiser(g, {input_name}, label_name,
                                                               error_name, learning_rate);
 

@@ -18,61 +18,125 @@
 //------------------------------------------------------------------------------
 
 #include "ml/ops/ops.hpp"
+#include "ml/saveparams/saveable_params.hpp"
+
+#include <cassert>
+#include <vector>
 
 namespace fetch {
 namespace ml {
 namespace ops {
 
 template <class T>
-class Add : public fetch::ml::Ops<T>
+class Add : public fetch::ml::ops::Ops<T>
 {
 public:
-  using ArrayType     = T;
-  using DataType      = typename ArrayType::Type;
-  using SizeType      = typename ArrayType::SizeType;
+  using TensorType    = T;
+  using DataType      = typename TensorType::Type;
+  using SizeType      = typename TensorType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SPType        = OpAddSaveableParams<T>;
 
-  Add()          = default;
-  virtual ~Add() = default;
+  Add() = default;
 
-  void Forward(VecTensorType const &inputs, ArrayType &output)
+  explicit Add(SPType const &sp)
+    : Ops<T>(sp)
+  {
+    axes_ = sp.axes;
+  }
+
+  ~Add() override = default;
+
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
+  {
+    auto ret  = std::make_shared<SPType>();
+    ret->axes = axes_;
+    return ret;
+  }
+
+  // for inputs to the add layer, if broadcasting is required, make sure the first input is the one
+  // with the complete shape
+  void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(inputs.size() == 2);
     assert(output.shape() == this->ComputeOutputShape(inputs));
-    fetch::math::Add(inputs.at(0).get(), inputs.at(1).get(), output);
+    fetch::math::Add((*inputs.at(0)), (*inputs.at(1)), output);
   }
 
-  std::vector<ArrayType> Backward(VecTensorType const &inputs, ArrayType const &error_signal)
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     assert(inputs.size() == 2);
-    assert(inputs.at(0).get().shape().size() == inputs.at(1).get().shape().size());
-    assert(inputs.at(0).get().shape() == error_signal.shape());
+    assert(inputs.at(0)->shape().size() == inputs.at(1)->shape().size());
+    assert(inputs.at(0)->shape() == error_signal.shape());
     assert(error_signal.shape() == ComputeOutputShape(inputs));
 
-    // Test if input is broadcastable by batch dimension
-    assert(inputs.at(1).get().shape().at(inputs.at(1).get().shape().size() - 1) == 1);
-    for (SizeType i{0}; i < inputs.at(0).get().shape().size() - 1; i++)
+    if (inputs.at(0)->shape() == inputs.at(1)->shape())
     {
-      assert(inputs.at(0).get().shape().at(i) == inputs.at(1).get().shape().at(i));
-    }
-
-    if (inputs.at(0).get().shape() == inputs.at(1).get().shape())
-    {
+      // Non-broadcast Add
       return {error_signal, error_signal};
     }
     else
     {
-      SizeType batch_dimension = inputs.at(0).get().shape().size() - 1;
-      return {error_signal, fetch::math::ReduceSum(error_signal, batch_dimension)};
+      // Broadcast Add
+      UpdateAxes(inputs);
+      return {error_signal, fetch::math::ReduceSum(error_signal, axes_)};
     }
   }
 
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    return inputs.at(0).get().shape();
+    return inputs.at(0)->shape();
+  }
+
+  std::vector<SizeType> axes_;
+
+  static constexpr OpType OpCode()
+  {
+    return OpType::OP_ADD;
   }
 
   static constexpr char const *DESCRIPTOR = "Add";
+
+private:
+  void UpdateAxes(VecTensorType const &inputs)
+  {
+    bool axes_changed = false;
+
+    // Check if axes were changed
+    SizeType cnt = 0;
+    for (SizeType i{0}; i < inputs.at(0)->shape().size(); i++)
+    {
+      if (inputs.at(0)->shape().at(i) != inputs.at(1)->shape().at(i))
+      {
+        if (cnt >= axes_.size() || axes_.at(cnt) != i)
+        {
+          axes_changed = true;
+          break;
+        }
+        cnt++;
+      }
+    }
+
+    if (axes_.size() == 0)
+    {
+      axes_changed = true;
+    }
+
+    // Update axes if necessary
+    if (axes_changed)
+    {
+      axes_.clear();
+      // Get axes
+      for (SizeType i{0}; i < inputs.at(0)->shape().size(); i++)
+      {
+        if (inputs.at(0)->shape().at(i) != inputs.at(1)->shape().at(i))
+        {
+          axes_.emplace_back(i);
+        }
+      }
+    }
+  }
 };
 
 }  // namespace ops

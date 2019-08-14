@@ -78,27 +78,23 @@ template <typename ArrayType>
 void LeakyRelu(ArrayType const &t, ArrayType const &a, ArrayType &ret)
 {
   using DataType = typename ArrayType::Type;
-  using SizeType = typename ArrayType::SizeType;
 
   // Test if input is broadcastable by batch dimension
   assert(t.shape().size() == ret.shape().size());
   assert(a.shape().at(a.shape().size() - 1) == 1);
 
-  SizeType t_batch_dimension   = t.shape().size() - 1;
-  SizeType a_batch_dimension   = a.shape().size() - 1;
-  SizeType ret_batch_dimension = ret.shape().size() - 1;
-  SizeType batch_size          = t.shape().at(t_batch_dimension);
+  SizeType batch_size = t.shape().at(t.shape().size() - 1);
 
   for (SizeType i{0}; i < batch_size; i++)
   {
-    // Slice along batch dimension
-    auto t_slice   = t.Slice(i, t_batch_dimension);
-    auto a_slice   = a.Slice(0, a_batch_dimension);
-    auto ret_slice = ret.Slice(i, ret_batch_dimension);
+    // View along batch dimension
+    auto t_view   = t.View(i);
+    auto a_view   = a.View(0);
+    auto ret_view = ret.View(i);
 
-    auto it  = t_slice.begin();
-    auto rit = ret_slice.begin();
-    auto ait = a_slice.begin();
+    auto it  = t_view.begin();
+    auto rit = ret_view.begin();
+    auto ait = a_view.begin();
 
     while (it.is_valid())
     {

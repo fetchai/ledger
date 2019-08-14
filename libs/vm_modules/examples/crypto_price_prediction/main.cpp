@@ -21,28 +21,39 @@
 #include "vm/module.hpp"
 #include "vm_modules/core/print.hpp"
 #include "vm_modules/core/system.hpp"
+#include "vm_modules/math/math.hpp"
+#include "vm_modules/math/tensor.hpp"
 #include "vm_modules/ml/ml.hpp"
 
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <sstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
-using DataType  = typename fetch::vm_modules::math::VMTensor::DataType;
+using DataType  = fetch::vm_modules::math::VMTensor::DataType;
 using ArrayType = fetch::math::Tensor<DataType>;
 using System    = fetch::vm_modules::System;
 
 // read the weights and bias csv files
 fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> read_csv(
-    fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &filename, bool transpose = false)
+    fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &filename, bool transpose)
 {
   ArrayType tensor = fetch::ml::dataloaders::ReadCSV<ArrayType>(filename->str, 0, 0, transpose);
   tensor.Reshape({1, tensor.shape(0), tensor.shape(1)});
 
   return vm->CreateNewObject<fetch::vm_modules::math::VMTensor>(tensor);
+}
+
+fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> read_csv_no_transpose(
+    fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &filename)
+{
+  return read_csv(vm, filename, false);
 }
 
 // read the weights and bias csv files
@@ -65,16 +76,17 @@ int main(int argc, char **argv)
   // ensure the program has the correct number of args
   if (2u != pp.arg_size())
   {
-    std::cerr << "Usage: " << pp.GetArg(0) << " [options] <filename> -- [script args]..."
+    std::cerr << "Usage: " << pp.GetArg(0) << " <etch_filename> -- [script args]..."
               << std::endl;
     return 1;
   }
 
   // Reading file
-  std::ifstream file(argv[1], std::ios::binary);
+  std::string etch_filename  = pp.GetArg(1);
+  std::ifstream file(etch_filename, std::ios::binary);
   if (file.fail())
   {
-    throw std::runtime_error("Cannot open file " + std::string(argv[1]));
+    throw std::runtime_error("Cannot open file " + etch_filename);
   }
   std::ostringstream ss;
   ss << file.rdbuf();
@@ -85,11 +97,14 @@ int main(int argc, char **argv)
 
   fetch::vm_modules::System::Bind(*module);
 
+  fetch::vm_modules::math::BindMath(*module);
   fetch::vm_modules::ml::BindML(*module);
 
   fetch::vm_modules::CreatePrint(*module);
 
   module->CreateFreeFunction("read_csv", &read_csv);
+  module->CreateFreeFunction("read_csv", &read_csv_no_transpose);
+
   module->CreateFreeFunction("remove_leading_dimension", &remove_leading_dimension);
 
   // Setting compiler up

@@ -27,7 +27,12 @@
 #include "storage/document_store_protocol.hpp"
 #include "version/cli_header.hpp"
 
+#include <cstddef>
+#include <cstdint>
 #include <iostream>
+#include <memory>
+#include <string>
+#include <vector>
 
 using namespace fetch;
 using namespace fetch::service;

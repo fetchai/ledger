@@ -26,23 +26,23 @@
 #include <string>
 #include <vector>
 
-template <typename ArrayType>
-void NormVector(ArrayType &vector)
+template <typename TensorType>
+void NormVector(TensorType &vector)
 {
-  typename ArrayType::Type l2 = 0;
+  typename TensorType::Type l2 = 0;
   for (auto &val : vector)
   {
     l2 += (val * val);
   }
-  l2 = static_cast<typename ArrayType::Type>(sqrt(l2));
+  l2 = static_cast<typename TensorType::Type>(sqrt(l2));
   for (auto &val : vector)
   {
     val /= l2;
   }
 }
 
-template <typename ArrayType, typename DataLoaderType, typename SizeType>
-void EvalAnalogy(DataLoaderType const &data_loader, ArrayType const &embeds, SizeType const top_k,
+template <typename TensorType, typename DataLoaderType, typename SizeType>
+void EvalAnalogy(DataLoaderType const &data_loader, TensorType const &embeds, SizeType const top_k,
                  std::vector<std::string> const &test_words)
 {
   assert(test_words.size() == 3);
@@ -68,9 +68,9 @@ void EvalAnalogy(DataLoaderType const &data_loader, ArrayType const &embeds, Siz
     throw std::runtime_error("word3 not found");
   }
 
-  auto word_vector_1 = embeddings.Slice(word1_idx, 1).Copy();
-  auto word_vector_2 = embeddings.Slice(word2_idx, 1).Copy();
-  auto word_vector_3 = embeddings.Slice(word3_idx, 1).Copy();
+  auto word_vector_1 = embeddings.View(word1_idx).Copy();
+  auto word_vector_2 = embeddings.View(word2_idx).Copy();
+  auto word_vector_3 = embeddings.View(word3_idx).Copy();
 
   // normalise the test target vectors
   NormVector(word_vector_1);

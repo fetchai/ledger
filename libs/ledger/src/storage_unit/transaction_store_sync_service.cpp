@@ -177,8 +177,8 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingObjec
   }
   else
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ",
-                   "Expected tx size: ", max_object_count_);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ",
+                    "Expected tx size: ", max_object_count_);
 
     root_size_ = platform::Log2Ceil(((max_object_count_ / (PULL_LIMIT / 2)) + 1)) + 1;
 
@@ -363,7 +363,7 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingObjec
 
   if (synced_tx)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Lane ", cfg_.lane_id, " Pulled ", synced_tx, " txs");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Lane ", cfg_.lane_id, " Pulled ", synced_tx, " txs");
   }
 
   if (counts.pending > 0)

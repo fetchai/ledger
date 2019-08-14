@@ -19,8 +19,12 @@
 
 #include "math/standard_functions/pow.hpp"
 #include "math/standard_functions/sqrt.hpp"
-#include "ml/graph.hpp"
+#include "ml/core/graph.hpp"
 #include "ml/optimisation/optimiser.hpp"
+
+#include <memory>
+#include <string>
+#include <vector>
 
 namespace fetch {
 namespace ml {
@@ -28,36 +32,38 @@ namespace optimisers {
 
 /**
  * Adaptive Momentum optimiser
- * @tparam T ArrayType
+ * @tparam T TensorType
  * @tparam C CriterionType
  */
 template <class T>
 class AdamOptimiser : public Optimiser<T>
 {
 public:
-  using ArrayType = T;
-  using DataType  = typename ArrayType::Type;
-  using SizeType  = typename ArrayType::SizeType;
+  using TensorType = T;
+  using DataType   = typename TensorType::Type;
+  using SizeType   = typename TensorType::SizeType;
 
   AdamOptimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> const &input_node_names,
                 std::string const &label_node_name, std::string const &output_node_name,
-                DataType const &learning_rate = DataType{0.001f},
-                DataType const &beta1 = DataType{0.9f}, DataType const &beta2 = DataType{0.999f},
-                DataType const &epsilon = DataType{1e-4f});
+                DataType const &learning_rate = static_cast<DataType>(0.001f),
+                DataType const &beta1         = static_cast<DataType>(0.9f),
+                DataType const &beta2         = static_cast<DataType>(0.999f),
+                DataType const &epsilon       = static_cast<DataType>(1e-4f));
 
   AdamOptimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> const &input_node_names,
                 std::string const &label_node_name, std::string const &output_node_name,
                 fetch::ml::optimisers::LearningRateParam<DataType> const &learning_rate_param,
-                DataType const &beta1 = DataType{0.9f}, DataType const &beta2 = DataType{0.999f},
-                DataType const &epsilon = DataType{1e-4f});
+                DataType const &beta1   = static_cast<DataType>(0.9f),
+                DataType const &beta2   = static_cast<DataType>(0.999f),
+                DataType const &epsilon = static_cast<DataType>(1e-4f));
 
-  virtual ~AdamOptimiser() = default;
+  ~AdamOptimiser() override = default;
 
 private:
-  std::vector<ArrayType> cache_;
-  std::vector<ArrayType> momentum_;
-  std::vector<ArrayType> mt_;
-  std::vector<ArrayType> vt_;
+  std::vector<TensorType> cache_;
+  std::vector<TensorType> momentum_;
+  std::vector<TensorType> mt_;
+  std::vector<TensorType> vt_;
 
   DataType beta1_;
   DataType beta2_;
@@ -76,10 +82,10 @@ void AdamOptimiser<T>::Init()
 {
   for (auto &train : this->graph_trainables_)
   {
-    this->cache_.emplace_back(ArrayType(train->get_weights().shape()));
-    this->momentum_.emplace_back(ArrayType(train->get_weights().shape()));
-    this->mt_.emplace_back(ArrayType(train->get_weights().shape()));
-    this->vt_.emplace_back(ArrayType(train->get_weights().shape()));
+    this->cache_.emplace_back(TensorType(train->get_weights().shape()));
+    this->momentum_.emplace_back(TensorType(train->get_weights().shape()));
+    this->mt_.emplace_back(TensorType(train->get_weights().shape()));
+    this->vt_.emplace_back(TensorType(train->get_weights().shape()));
   }
   ResetCache();
 }
@@ -151,7 +157,6 @@ void AdamOptimiser<T>::ApplyGradients(SizeType batch_size)
     fetch::math::Divide((*trainable_it)->get_gradients(), static_cast<DataType>(batch_size),
                         *vt_it);
     fetch::math::Square(*vt_it, *vt_it);
-
     fetch::math::Multiply(*vt_it, (one_ - beta2_t_), *vt_it);
     fetch::math::Multiply(*momentum_it, beta2_t_, *momentum_it);
     fetch::math::Add(*momentum_it, *vt_it, *momentum_it);

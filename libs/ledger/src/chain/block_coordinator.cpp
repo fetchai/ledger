@@ -18,6 +18,7 @@
 
 #include "core/byte_array/encoders.hpp"
 #include "core/feature_flags.hpp"
+#include "core/macros.hpp"
 #include "core/threading.hpp"
 #include "ledger/block_packer_interface.hpp"
 #include "ledger/block_sink_interface.hpp"
@@ -57,7 +58,7 @@ using DAGPtr               = std::shared_ptr<ledger::DAGInterface>;
 
 // Constants
 const std::chrono::milliseconds TX_SYNC_NOTIFY_INTERVAL{1000};
-const std::chrono::milliseconds EXEC_NOTIFY_INTERVAL{500};
+const std::chrono::milliseconds EXEC_NOTIFY_INTERVAL{5000};
 const std::chrono::seconds      NOTIFY_INTERVAL{10};
 const std::chrono::seconds      WAIT_BEFORE_ASKING_FOR_MISSING_TX_INTERVAL{30};
 const std::chrono::seconds      WAIT_FOR_TX_TIMEOUT_INTERVAL{30};
@@ -89,7 +90,6 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr
                                    ExecutionManagerInterface &execution_manager,
                                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
                                    BlockSinkInterface &      block_sink,
-                                   TransactionStatusCache &  status_cache,
                                    core::FeatureFlags const &features, ProverPtr const &prover,
                                    std::size_t num_lanes, std::size_t num_slices,
                                    std::size_t block_difficulty)
@@ -100,7 +100,6 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr
   , storage_unit_{storage_unit}
   , block_packer_{packer}
   , block_sink_{block_sink}
-  , status_cache_{status_cache}
   , periodic_print_{NOTIFY_INTERVAL}
   , miner_{std::make_shared<consensus::DummyMiner>()}
   , last_executed_block_{GENESIS_DIGEST}
@@ -162,6 +161,12 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr
   , reset_state_count_{telemetry::Registry::Instance().CreateCounter(
         "ledger_block_coordinator_reset_state_total",
         "The total number of times in the reset state")}
+  , executed_block_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_executed_block_total", "The total number of executed blocks")}
+  , mined_block_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_mined_block_total", "The total number of mined blocks")}
+  , executed_tx_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_executed_tx_total", "The total number of executed transactions")}
 {
   // configure the state machine
   // clang-format off
@@ -381,7 +386,8 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
                                   common_parent->body.block_number))
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Ancestor block's state hash cannot be retrieved for block: 0x",
-                      current_hash.ToHex(), " number: ", common_parent->body.block_number);
+                      current_hash.ToHex(), " number: ", common_parent->body.block_number,
+                      " merkle hash: ", common_parent->body.merkle_hash.ToHex());
 
       // this is a bad situation so the easiest solution is to revert back to genesis
       execution_manager_.SetLastProcessedBlock(GENESIS_DIGEST);
@@ -518,7 +524,7 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
   auto fail{[this](char const *reason) {
     FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: ", reason, " (",
                    ToBase64(current_block_->body.hash), ')');
-    (void)reason;
+    FETCH_UNUSED(reason);
     chain_.RemoveBlock(current_block_->body.hash);
     return State::RESET;
   }};
@@ -836,7 +842,10 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
     BlockPtr previous_block = chain_.GetBlock(current_block_->body.previous_hash);
     if (previous_block)
     {
-      revert_successful = dag_->RevertToEpoch(previous_block->body.block_number);
+      if (dag_)
+      {
+        revert_successful = dag_->RevertToEpoch(previous_block->body.block_number);
+      }
 
       // signal the storage engine to make these changes
       if (storage_unit_.RevertToHash(previous_block->body.merkle_hash,
@@ -864,9 +873,6 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
   }
   else
   {
-    // mark all the transactions as been executed
-    UpdateTxStatus(*current_block_);
-
     // Commit this state
     storage_unit_.Commit(current_block_->body.block_number);
 
@@ -878,6 +884,10 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
 
     // signal the last block that has been executed
     last_executed_block_.Set(current_block_->body.hash);
+
+    // update the telemetry
+    executed_block_count_->increment();
+    executed_tx_count_->add(current_block_->GetTransactionCount());
   }
 
   return State::RESET;
@@ -987,7 +997,7 @@ BlockCoordinator::State BlockCoordinator::OnWaitForNewBlockExecution()
   case ExecutionStatus::RUNNING:
     if (exec_wait_periodic_.Poll())
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Waiting for new block execution (following: ",
+      FETCH_LOG_INFO(LOGGING_NAME, "Waiting for new block execution (following: ",
                      next_block_->body.previous_hash.ToBase64(), ")");
     }
 
@@ -1037,12 +1047,13 @@ BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
     // ensure that the main chain is aware of the block
     if (BlockStatus::ADDED == chain_.AddBlock(*next_block_))
     {
+      // update the telemetry
+      mined_block_count_->increment();
+      executed_block_count_->increment();
+
       FETCH_LOG_INFO(LOGGING_NAME, "Broadcasting new block: 0x", next_block_->body.hash.ToHex(),
                      " txs: ", next_block_->GetTransactionCount(),
                      " number: ", next_block_->body.block_number);
-
-      // mark this blocks transactions as being executed
-      UpdateTxStatus(*next_block_);
 
       // signal the last block that has been executed
       last_executed_block_.Set(next_block_->body.hash);
@@ -1178,17 +1189,6 @@ BlockCoordinator::ExecutionStatus BlockCoordinator::QueryExecutorStatus()
 void BlockCoordinator::UpdateNextBlockTime()
 {
   next_block_time_ = Clock::now() + block_period_;
-}
-
-void BlockCoordinator::UpdateTxStatus(Block const &block)
-{
-  for (auto const &slice : block.body.slices)
-  {
-    for (auto const &tx : slice)
-    {
-      status_cache_.Update(tx.digest(), TransactionStatus::EXECUTED);
-    }
-  }
 }
 
 char const *BlockCoordinator::ToString(State state)

@@ -19,53 +19,87 @@
 
 #include "core/assert.hpp"
 #include "ml/ops/ops.hpp"
+#include "ml/saveparams/saveable_params.hpp"
+
+#include <cassert>
+#include <memory>
+#include <vector>
 
 namespace fetch {
 namespace ml {
 namespace ops {
 
 template <class T>
-class PlaceHolder : public fetch::ml::Ops<T>
+class PlaceHolder : public fetch::ml::ops::Ops<T>
 {
 public:
-  using ArrayType     = T;
-  using SizeType      = typename ArrayType::SizeType;
-  using ArrayPtrType  = std::shared_ptr<ArrayType>;
+  using TensorType    = T;
+  using SizeType      = typename TensorType::SizeType;
+  using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SPType        = OpPlaceholderSaveableParams<TensorType>;
 
   PlaceHolder() = default;
 
-  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
+  explicit PlaceHolder(SPType const &sp)
+    : Ops<T>(sp)
+  {
+    if (sp.output)
+    {
+      output_ = std::make_shared<TensorType>();
+      output_->Resize(sp.output->shape());
+      output_->Copy(*(sp.output));
+    }
+  }
+
+  ~PlaceHolder() override = default;
+
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
+  {
+    SPType tp{};
+    if (output_)
+    {
+      tp.output = std::make_shared<TensorType>(output_->Copy());
+    }
+    return std::make_shared<SPType>(tp);
+  }
+
+  void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     FETCH_UNUSED(inputs);
     assert(inputs.empty());
-    assert(this->output_);
-    output = *(this->output_);
+    assert(output_);
+    output = *(output_);
   }
 
-  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                          ArrayType const &    error_signal)
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     FETCH_UNUSED(inputs);
     assert(inputs.empty());
     return {error_signal};
   }
 
-  virtual bool SetData(ArrayType const &data)
+  virtual bool SetData(TensorType const &data)
   {
-    std::vector<SizeType> old_shape;
-    if (this->output_)
+    bool shape_changed = true;
+    if (output_)
     {
-      old_shape = this->output_->shape();
+      shape_changed = (output_->shape() != data.shape());
     }
-    this->output_ = std::make_shared<ArrayType>(data);
-    return old_shape != this->output_->shape();
+    output_ = std::make_shared<TensorType>(data);
+    return shape_changed;
   }
 
-  virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     FETCH_UNUSED(inputs);
-    return this->output_->shape();
+    return output_->shape();
+  }
+
+  static constexpr OpType OpCode()
+  {
+    return OpType::OP_PLACEHOLDER;
   }
 
   static constexpr char const *DESCRIPTOR = "PlaceHolder";

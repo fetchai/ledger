@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/fundamental_operators.hpp"    // add, subtract etc.
-#include "math/standard_functions/pow.hpp"   // square
-#include "math/standard_functions/sqrt.hpp"  // sqrt
+#include "math/fundamental_operators.hpp"
+#include "math/standard_functions/pow.hpp"
+#include "math/standard_functions/sqrt.hpp"
 
 namespace fetch {
 namespace math {

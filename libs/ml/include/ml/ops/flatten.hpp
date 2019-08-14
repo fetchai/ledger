@@ -20,76 +20,86 @@
 #include "math/matrix_operations.hpp"
 #include "ml/ops/ops.hpp"
 
+#include <cassert>
+#include <memory>
+#include <vector>
+
 namespace fetch {
 namespace ml {
 namespace ops {
 
 template <class T>
-class Flatten : public fetch::ml::Ops<T>
+class Flatten : public fetch::ml::ops::Ops<T>
 {
 public:
-  using ArrayType     = T;
-  using SizeType      = typename ArrayType::SizeType;
-  using ArrayPtrType  = std::shared_ptr<ArrayType>;
+  using TensorType    = T;
+  using SizeType      = typename TensorType::SizeType;
+  using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SPType        = OpFlattenSaveableParams<T>;
 
-  Flatten()          = default;
-  virtual ~Flatten() = default;
+  Flatten() = default;
 
-  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
+  explicit Flatten(SPType const &sp)
+    : Ops<T>(sp)
+  {
+    input_shape_ = sp.input_shape;
+  }
+
+  ~Flatten() override = default;
+
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
+  {
+    auto ret         = std::make_shared<SPType>();
+    ret->input_shape = input_shape_;
+    return ret;
+  }
+
+  void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(inputs.size() == 1);
     assert(output.shape() == ComputeOutputShape(inputs));
-    input_shape_ = inputs.front().get().shape();
+    input_shape_ = inputs.front()->shape();
 
-    FlattenImpl(inputs.front().get(), output);
+    assert(output.shape().at(output.shape().size() - 1) ==
+           inputs.front()->shape().at(inputs.front()->shape().size() - 1));
+    output.Assign(inputs.front()->View());
   }
 
-  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                          ArrayType const &    error_signal)
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     FETCH_UNUSED(inputs);
     assert(inputs.size() == 1);
-    ArrayType ret(input_shape_);
-    FlattenImpl(error_signal, ret);
+    TensorType ret(input_shape_);
+
+    assert(ret.shape().at(ret.shape().size() - 1) ==
+           error_signal.shape().at(error_signal.shape().size() - 1));
+    ret.Assign(error_signal.View());
 
     return {ret};
   }
 
-  virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    SizeType batch_size =
-        inputs.at(0).get().shape().at(inputs.at(0).get().shape().size() - SizeType{1});
-    SizeType data_size = 1;
-    for (SizeType i{0}; i < inputs.at(0).get().shape().size() - SizeType{1}; i++)
+    SizeType batch_size = inputs.at(0)->shape().at(inputs.at(0)->shape().size() - SizeType{1});
+    SizeType data_size  = 1;
+    for (SizeType i{0}; i < inputs.at(0)->shape().size() - SizeType{1}; i++)
     {
-      data_size *= inputs.at(0).get().shape().at(i);
+      data_size *= inputs.at(0)->shape().at(i);
     }
 
     return {data_size, batch_size};
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::OP_FLATTEN;
+  }
   static constexpr char const *DESCRIPTOR = "Flatten";
 
 private:
-  std::vector<std::uint64_t> input_shape_;
-
-  void FlattenImpl(ArrayType const &A, ArrayType &ret)
-  {
-    // Test if batch dimensions are equal
-    assert(ret.shape().at(ret.shape().size() - 1) == A.shape().at(A.shape().size() - 1));
-
-    SizeType input_batch_dimension  = A.shape().size() - 1;
-    SizeType output_batch_dimension = ret.shape().size() - 1;
-    SizeType batch_size             = ret.shape().at(output_batch_dimension);
-
-    for (SizeType i{0}; i < batch_size; i++)
-    {
-      auto input_slice  = A.Slice(i, input_batch_dimension);
-      auto output_slice = ret.Slice(i, output_batch_dimension);
-      output_slice.Assign(input_slice);
-    }
-  }
+  std::vector<SizeType> input_shape_;
 };
 
 }  // namespace ops

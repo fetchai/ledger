@@ -19,7 +19,11 @@
 
 #include "core/assert.hpp"
 #include "ml/ops/weights.hpp"
+
+#include <cassert>
+#include <memory>
 #include <set>
+#include <vector>
 
 namespace fetch {
 namespace ml {
@@ -29,39 +33,72 @@ template <class T>
 class Embeddings : public fetch::ml::ops::Weights<T>
 {
 public:
-  using ArrayType     = T;
-  using DataType      = typename ArrayType::Type;
-  using ArrayPtrType  = std::shared_ptr<ArrayType>;
-  using SizeType      = typename ArrayType::SizeType;
+  using TensorType    = T;
+  using DataType      = typename TensorType::Type;
+  using ArrayPtrType  = std::shared_ptr<TensorType>;
+  using SizeType      = typename TensorType::SizeType;
   using VecTensorType = typename Weights<T>::VecTensorType;
+  using SPType        = OpEmbeddingsSaveableParams<TensorType>;
 
   Embeddings(SizeType dimensions, SizeType data_points)
   {
-    ArrayType weights = ArrayType(std::vector<SizeType>({dimensions, data_points}));
-    fetch::ml::ops::Weights<ArrayType>::Initialise(weights, dimensions, data_points);
-    this->SetData(weights);
+    TensorType weights = TensorType(std::vector<SizeType>({dimensions, data_points}));
+    fetch::ml::ops::Weights<TensorType>::Initialise(weights, dimensions, data_points);
+    Weights<T>::SetData(weights);
   }
 
-  Embeddings(ArrayType &weights)
+  explicit Embeddings(TensorType const &weights)
   {
-    this->SetData(weights);
+    Weights<T>::SetData(weights);
   }
 
-  virtual ~Embeddings() = default;
+  explicit Embeddings(SPType const &sp)
+    : Weights<T>(sp)
+  {
+    if (sp.embeddings_output)
+    {
+      embeddings_output_ = std::make_shared<TensorType>();
+      embeddings_output_->Resize(sp.embeddings_output->shape());
+      embeddings_output_->Copy(*(sp.embeddings_output));
+    }
 
-  virtual void Forward(VecTensorType const &inputs, ArrayType &output) override
+    updated_rows_ =
+        std::set<typename TensorType::SizeType>(sp.updated_rows.begin(), sp.updated_rows.begin());
+    trailing_indices1_ = sp.trailing_indices1;
+    trailing_indices2_ = sp.trailing_indices2;
+  }
+
+  ~Embeddings() override = default;
+
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
+  {
+    auto sp   = std::make_shared<SPType>();
+    auto w_sp = Weights<T>::GetOpSaveableParams();
+
+    auto cast_sp = std::static_pointer_cast<OpWeightsSaveableParams<TensorType>>(sp);
+    *cast_sp     = *(std::static_pointer_cast<OpWeightsSaveableParams<TensorType>>(w_sp));
+
+    sp->embeddings_output = embeddings_output_;
+    std::copy(updated_rows_.begin(), updated_rows_.end(), std::back_inserter(sp->updated_rows));
+    sp->trailing_indices1 = trailing_indices1_;
+    sp->trailing_indices2 = trailing_indices2_;
+
+    return sp;
+  }
+
+  void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(this->output_);
     assert(inputs.size() == 1);
-    assert(inputs.front().get().shape().size() == 2);
+    assert(inputs.front()->shape().size() == 2);
 
-    SizeType batch_size = inputs.front().get().shape().at(1);
+    SizeType batch_size = inputs.front()->shape().at(1);
 
     // test embeddings_output_ not null ptr
     if (!this->embeddings_output_)
     {
-      this->embeddings_output_ = std::make_shared<ArrayType>(std::vector<SizeType>(
-          {this->output_->shape().at(0), inputs.front().get().shape(0), batch_size}));
+      this->embeddings_output_ = std::make_shared<TensorType>(std::vector<SizeType>(
+          {this->output_->shape().at(0), inputs.front()->shape(0), batch_size}));
     }
     // test embeddings_output_ batch size has changed
     else if (this->embeddings_output_->shape().at(2) != batch_size)
@@ -71,22 +108,23 @@ public:
     }
 
     assert(this->embeddings_output_->shape().at(0) == this->output_->shape().at(0));
-    assert(this->embeddings_output_->shape().at(1) == inputs.front().get().shape().at(0));
+    assert(this->embeddings_output_->shape().at(1) == inputs.front()->shape().at(0));
     assert(this->embeddings_output_->shape().at(2) == batch_size);
 
-    ArrayType transposed_input = inputs.front().get().Transpose();
-    auto      e_it             = transposed_input.begin();
-    for (SizeType i{0}; i < inputs.front().get().shape().at(0); i++)
+    TensorType transposed_input = inputs.front()->Transpose();
+    auto       e_it             = transposed_input.begin();
+
+    for (SizeType i{0}; i < inputs.front()->shape().at(0); i++)
     {
       for (SizeType n{0}; n < batch_size; n++)
       {
-        trailing_indices1.at(0) = i;
-        trailing_indices1.at(1) = n;
-        auto embedding_slice    = this->embeddings_output_->View(trailing_indices1);
-        trailing_indices2.at(0) = static_cast<SizeType>(*e_it);
-        auto output_slice       = this->output_->View(trailing_indices2);
+        trailing_indices1_.at(0) = i;
+        trailing_indices1_.at(1) = n;
+        auto embedding_view      = this->embeddings_output_->View(trailing_indices1_);
+        trailing_indices2_.at(0) = static_cast<SizeType>(*e_it);
+        auto output_view         = this->output_->View(trailing_indices2_);
 
-        embedding_slice.Assign(output_slice);
+        embedding_view.Assign(output_view);
         ++e_it;
       }
     }
@@ -94,52 +132,70 @@ public:
     output = *this->embeddings_output_;
   }
 
-  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                          ArrayType const &    error_signal) override
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     assert(inputs.size() == 1);
-    assert(inputs.front().get().shape().size() == 2);
+    assert(inputs.front()->shape().size() == 2);
 
-    SizeType batch_size = inputs.front().get().shape(1);
+    SizeType batch_size = inputs.front()->shape(1);
 
-    ArrayType transposed_input = inputs.front().get().Transpose();
-    auto      e_it             = transposed_input.begin();
-    for (SizeType i{0}; i < inputs.front().get().shape().at(0); i++)
+    TensorType transposed_input = inputs.front()->Transpose();
+    auto       e_it             = transposed_input.begin();
+    for (SizeType i{0}; i < inputs.front()->shape().at(0); i++)
     {
       for (SizeType n{0}; n < batch_size; n++)
       {
 
-        trailing_indices1.at(0) = i;
-        trailing_indices1.at(1) = n;
-        auto error_slice        = error_signal.View(trailing_indices1);
-        trailing_indices2.at(0) = static_cast<SizeType>(*e_it);
-        auto gradient_slice     = this->gradient_accumulation_->View(trailing_indices2);
+        trailing_indices1_.at(0) = i;
+        trailing_indices1_.at(1) = n;
+        auto error_view          = error_signal.View(trailing_indices1_);
+        trailing_indices2_.at(0) = static_cast<SizeType>(*e_it);
+        updated_rows_.insert(static_cast<SizeType>(*e_it));
+        auto gradient_view = this->gradient_accumulation_->View(trailing_indices2_);
 
-        auto error_slice_it    = error_slice.cbegin();
-        auto gradient_slice_it = gradient_slice.begin();
-        while (error_slice_it.is_valid())
+        auto error_view_it    = error_view.cbegin();
+        auto gradient_view_it = gradient_view.begin();
+        while (error_view_it.is_valid())
         {
-          *gradient_slice_it += *error_slice_it;
-          ++error_slice_it;
-          ++gradient_slice_it;
+          *gradient_view_it += *error_view_it;
+          ++error_view_it;
+          ++gradient_view_it;
         }
         ++e_it;
       }
     }
 
-    return {ArrayType(error_signal.shape())};
+    return {TensorType(error_signal.shape())};
   }
 
-  virtual void Step(typename T::Type learning_rate) override
+  bool SetData(TensorType const &data) override
+  {
+    bool shape_changed = true;
+    if (embeddings_output_)
+    {
+      shape_changed = (embeddings_output_->shape() != data.shape());
+    }
+    embeddings_output_ = std::make_shared<TensorType>(data);
+
+    if (shape_changed)
+    {
+      this->gradient_accumulation_ = std::make_shared<TensorType>(this->output_->shape());
+      return true;
+    }
+    return false;
+  }
+
+  void Step(typename T::Type learning_rate) override
   {
     for (auto const &r : updated_rows_)
     {
-      // get the relevant slice from gradients and embeddings
-      auto grad_slice = this->gradient_accumulation_->Slice(r, 1);
-      auto out_slice  = this->output_->Slice(r, 1);
+      // get the relevant view from gradients and embeddings
+      auto grad_view = this->gradient_accumulation_->View(r);
+      auto out_view  = this->output_->View(r);
 
-      auto out_it  = out_slice.begin();
-      auto grad_it = grad_slice.begin();
+      auto out_it  = out_view.begin();
+      auto grad_it = grad_view.begin();
 
       while (out_it.is_valid())
       {
@@ -154,16 +210,22 @@ public:
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    std::vector<SizeType> output_shape = {
-        this->output_->shape().at(0), inputs.front().get().shape(0), inputs.front().get().shape(1)};
+    std::vector<SizeType> output_shape = {this->output_->shape().at(0), inputs.front()->shape(0),
+                                          inputs.front()->shape(1)};
     return output_shape;
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::OP_EMBEDDINGS;
+  }
+  static constexpr char const *DESCRIPTOR = "Embedding";
+
 private:
-  ArrayPtrType                           embeddings_output_;
-  std::set<typename ArrayType::SizeType> updated_rows_;
-  std::vector<SizeType>                  trailing_indices1 = {0, 0};
-  std::vector<SizeType>                  trailing_indices2 = {0};
+  ArrayPtrType                            embeddings_output_;
+  std::set<typename TensorType::SizeType> updated_rows_;
+  std::vector<SizeType>                   trailing_indices1_ = {0, 0};
+  std::vector<SizeType>                   trailing_indices2_ = {0};
 };
 
 }  // namespace ops

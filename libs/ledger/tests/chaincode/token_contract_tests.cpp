@@ -19,7 +19,7 @@
 #include "contract_test.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/json/document.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "ledger/chain/transaction_builder.hpp"
 #include "ledger/chaincode/deed.hpp"
 #include "ledger/chaincode/token_contract.hpp"
@@ -152,7 +152,7 @@ protected:
 
     // dispatch the transaction
     auto const status = SendAction(sealed_tx.Build());
-    return (Contract::Status::OK == status);
+    return (Contract::Status::OK == status.status);
   }
 
   bool CreateWealth(Entity const &entity, uint64_t amount)
@@ -182,7 +182,7 @@ protected:
     // send the action to the contract
     auto const status = SendAction(tx);
 
-    return (Contract::Status::OK == status);
+    return (Contract::Status::OK == status.status);
   }
 
   bool Transfer(Address const &from, Address const &to,
@@ -217,7 +217,7 @@ protected:
     }
 
     auto const status = SendAction(sealed_tx.Build());
-    return (Contract::Status::OK == status);
+    return (Contract::Status::OK == status.status);
   }
 
   bool GetBalance(Address const &address, uint64_t &balance)

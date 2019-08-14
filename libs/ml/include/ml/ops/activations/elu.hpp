@@ -30,37 +30,52 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Elu : public fetch::ml::Ops<T>
+class Elu : public fetch::ml::ops::Ops<T>
 {
 public:
-  using ArrayType     = T;
-  using DataType      = typename ArrayType::Type;
-  using SizeType      = typename ArrayType::SizeType;
+  using TensorType    = T;
+  using DataType      = typename TensorType::Type;
+  using SizeType      = typename TensorType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SPType        = OpEluSaveableParams<TensorType>;
 
   explicit Elu(DataType a)
     : a_(a)
   {}
 
-  virtual ~Elu() = default;
-
-  void Forward(VecTensorType const &inputs, ArrayType &output)
+  explicit Elu(SPType const &sp)
+    : Ops<T>(sp)
   {
-    assert(inputs.size() == 1);
-    fetch::math::Elu(inputs.front().get(), a_, output);
+    a_ = sp.a;
   }
 
-  std::vector<ArrayType> Backward(VecTensorType const &inputs, ArrayType const &error_signal)
+  ~Elu() override = default;
+
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
+  {
+    auto sp = std::make_shared<SPType>();
+    sp->a   = a_;
+    return sp;
+  }
+
+  void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(inputs.size() == 1);
-    assert(inputs.front().get().shape() == error_signal.shape());
-    ArrayType ret{error_signal.shape()};
+    fetch::math::Elu((*inputs.front()), a_, output);
+  }
+
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
+  {
+    assert(inputs.size() == 1);
+    assert(inputs.front()->shape() == error_signal.shape());
+    TensorType ret{error_signal.shape()};
 
     DataType zero{0};
     DataType one{1};
 
     // gradient of elu function is a*e^x where x<0; and 1.0 where x>=0
-    auto it  = inputs.front().get().cbegin();
+    auto it  = inputs.front()->cbegin();
     auto rit = ret.begin();
     while (it.is_valid())
     {
@@ -85,11 +100,15 @@ public:
     return {ret};
   }
 
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    return inputs.front().get().shape();
+    return inputs.front()->shape();
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::OP_ELU;
+  }
   static constexpr char const *DESCRIPTOR = "Elu";
 
 private:

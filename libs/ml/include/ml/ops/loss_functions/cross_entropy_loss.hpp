@@ -17,15 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include <cassert>
-#include <memory>
-#include <vector>
-
 #include "math/activation_functions/sigmoid.hpp"
 #include "math/activation_functions/softmax.hpp"
 #include "math/fundamental_operators.hpp"
 #include "math/metrics/cross_entropy.hpp"
 #include "ml/ops/ops.hpp"
+
+#include <cassert>
+#include <memory>
+#include <vector>
 
 namespace fetch {
 namespace ml {
@@ -35,37 +35,49 @@ template <class T>
 class CrossEntropyLoss : public Ops<T>
 {
 public:
-  using ArrayType     = T;
-  using DataType      = typename ArrayType::Type;
-  using SizeType      = typename ArrayType::SizeType;
+  using TensorType    = T;
+  using DataType      = typename TensorType::Type;
+  using SizeType      = typename TensorType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SPType        = OpCrossEntropyLossSaveableParams<TensorType>;
 
-  CrossEntropyLoss()          = default;
-  virtual ~CrossEntropyLoss() = default;
+  CrossEntropyLoss() = default;
 
-  void Forward(VecTensorType const &inputs, ArrayType &output) override
+  explicit CrossEntropyLoss(SPType const &sp)
+    : Ops<T>(sp)
+  {}
+
+  ~CrossEntropyLoss() override = default;
+
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
   {
-    assert(inputs.size() == 2);
-    assert(inputs.at(0).get().size() == inputs.at(1).get().size());
-
-    output(0, 0) = fetch::math::CrossEntropyLoss(inputs.at(0).get(), inputs.at(1).get());
+    auto sp = std::make_shared<SPType>();
+    return sp;
   }
 
-  std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                  ArrayType const &    error_signal) override
+  void Forward(VecTensorType const &inputs, TensorType &output) override
+  {
+    assert(inputs.size() == 2);
+    assert(inputs.at(0)->size() == inputs.at(1)->size());
+
+    output(0, 0) = fetch::math::CrossEntropyLoss((*inputs.at(0)), (*inputs.at(1)));
+  }
+
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     FETCH_UNUSED(error_signal);
 
     assert(inputs.size() == 2);
-    assert(inputs.at(0).get().size() == inputs.at(1).get().size());
-    assert(inputs.at(0).get().shape().size() == 2);
+    assert(inputs.at(0)->size() == inputs.at(1)->size());
+    assert(inputs.at(0)->shape().size() == 2);
 
-    ArrayType ret({inputs.at(0).get().shape()});
-    if (inputs.at(0).get().shape().at(0) == 1)  // not one-hot
+    TensorType ret({inputs.at(0)->shape()});
+    if (inputs.at(0)->shape().at(0) == 1)  // not one-hot
     {
       // (Sigmoid(x)-y)*x
-      auto     a_it = inputs.at(0).get().cbegin();
-      auto     b_it = inputs.at(1).get().cbegin();
+      auto     a_it = inputs.at(0)->cbegin();
+      auto     b_it = inputs.at(1)->cbegin();
       auto     r_it = ret.begin();
       DataType zero{0};
       DataType one{1};
@@ -92,11 +104,11 @@ public:
         ++r_it;
       }
     }
-    else if (inputs.at(0).get().shape().size())  // one-hot
+    else if (inputs.at(0)->shape().size())  // one-hot
     {
-      fetch::math::Softmax(inputs.at(0).get(), ret, 1);
+      fetch::math::Softmax((*inputs.at(0)), ret, 0);
 
-      auto b_it = inputs.at(1).get().cbegin();
+      auto b_it = inputs.at(1)->cbegin();
       auto r_it = ret.begin();
       while (b_it.is_valid())
       {
@@ -115,6 +127,10 @@ public:
     return {1, 1};
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::OP_CROSS_ENTROPY_LOSS;
+  }
   static constexpr char const *DESCRIPTOR = "CrossEntropyLoss";
 };
 

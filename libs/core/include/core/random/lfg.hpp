@@ -18,8 +18,10 @@
 //------------------------------------------------------------------------------
 
 #include "lcg.hpp"
+
 #include <cstdint>
 #include <limits>
+#include <vector>
 
 namespace fetch {
 namespace random {
@@ -86,6 +88,33 @@ public:
   static constexpr RandomType max() noexcept
   {
     return static_cast<RandomType>(std::numeric_limits<RandomType>::max());
+  }
+
+  /**
+   * required for serialising lfg
+   * @return
+   */
+  std::vector<RandomType> GetBuffer()
+  {
+    return std::vector<RandomType>(std::begin(buffer_), std::end(buffer_));
+  }
+
+  void SetBuffer(std::vector<RandomType> const &buffer)
+  {
+    for (uint64_t i = 0; i < Q; ++i)
+    {
+      buffer_[i] = buffer[i];
+    }
+  }
+
+  uint64_t GetIndex()
+  {
+    return index_;
+  }
+
+  void SetIndex(uint64_t index)
+  {
+    index_ = index;
   }
 
 private:
