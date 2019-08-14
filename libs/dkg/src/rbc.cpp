@@ -273,9 +273,6 @@ void RBC::OnRBC(MuddleAddress const &from, RBCEnvelope const &envelope)
   auto msg_ptr = envelope.Message();
   if (!BasicMsgCheck(from, msg_ptr))
   {
-
-    FETCH_LOG_ERROR(LOGGING_NAME, "Node ", id_,
-                    " received message from unknown sender: ", from.ToBase64());
     return;
   }
   uint32_t sender_index{CabinetIndex(from)};
