@@ -30,8 +30,8 @@ std::string RBC::MessageTypeToString(MessageType msg_type)
 {
   switch (msg_type)
   {
-  case MessageType::R_SEND:
-    return "r_send";
+  case MessageType::R_BROADCAST:
+    return "r_broadcast";
   case MessageType::R_ECHO:
     return "r_echo";
   case MessageType::R_READY:
@@ -333,7 +333,7 @@ void RBC::OnRBC(MuddleAddress const &from, RBCEnvelope const &envelope)
 void RBC::OnRBroadcast(RBCMessage const &msg, uint32_t sender_index)
 {
   TagType tag = msg.tag();
-  if (!SetPartyFlag(sender_index, tag, MessageType::R_SEND))
+  if (!SetPartyFlag(sender_index, tag, MessageType::R_BROADCAST))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "onRBroadcast: Node ", id_, " received repeated msg ", tag,
                    " from node ", sender_index, " with counter ", msg.counter(), " and id ",
