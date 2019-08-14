@@ -18,6 +18,7 @@
 
 #include "math/base_types.hpp"
 #include "math/trigonometry.hpp"
+#include "vectorise/math/standard_functions.hpp"
 #include "vectorise/vectorise.hpp"
 #include "vectorise/math/comparison.hpp"
 
@@ -190,7 +191,7 @@ TYPED_TEST(VectorReduceTest, reduce_tests)
   type ret;
   fetch::memory::Range range(2, A.size() -2);
   ret = A.in_parallel().Reduce(range, [](auto const &a, auto const &b) {
-        return fetch::math::Max(a, b);
+        return fetch::vectorise::Max(a, b);
         });
   std::cout << "Reduce: ret = " << ret << std::endl;
 
