@@ -80,7 +80,6 @@ RBC::RBC(Endpoint &endpoint, MuddleAddress address, CabinetMembers const &cabine
     }
     catch (...)
     {
-                << std::endl;
       // Possibly bad payload.
       return;
     }
