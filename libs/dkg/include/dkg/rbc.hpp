@@ -56,15 +56,16 @@ public:
 protected:
   struct MessageCount
   {
-    uint64_t echo_count, ready_count;  ///< Count of RReady and RRecho messages
+    uint64_t echo_count{0};
+    uint64_t ready_count{0};  ///< Count of RReady and RRecho messages
   };
 
   struct Broadcast
   {
-    SerialisedMessage mbar;  ///< Original message broadcasted
-    TruncatedHash     dbar;  ///< Hash of message
+    SerialisedMessage original_message{};  ///< Original message broadcasted
+    TruncatedHash     message_hash{};      ///< Hash of message
     std::unordered_map<TruncatedHash, MessageCount>
-        msgs_count;  ///< Count of RBCMessages received for a given hash
+        msgs_count{};  ///< Count of RBCMessages received for a given hash
   };
 
   struct Party
