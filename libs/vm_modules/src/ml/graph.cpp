@@ -155,6 +155,11 @@ void VMGraph::Bind(Module &module)
       .CreateMemberFunction("stateDict", &VMGraph::StateDict);
 }
 
+VMGraph::GraphType &VMGraph::GetGraph()
+{
+  return graph_;
+}
+
 bool VMGraph::SerializeTo(serializers::MsgPackSerializer &buffer)
 {
   buffer << graph_.GetGraphSaveableParams();

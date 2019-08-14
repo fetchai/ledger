@@ -133,6 +133,22 @@ bool VMDataLoader::IsDone()
   return loader_->IsDone();
 }
 
+VMDataLoader::DataLoaderType &VMDataLoader::GetDataLoader()
+{
+  return loader_;
+}
+
+bool VMDataLoader::SerializeTo(serializers::MsgPackSerializer &buffer)
+{
+  buffer << *loader_;
+  return true;
+}
+
+bool VMDataLoader::DeserializeFrom(serializers::MsgPackSerializer &buffer)
+{
+  buffer >> *loader_;
+  return true;
+}
 }  // namespace ml
 }  // namespace vm_modules
 }  // namespace fetch

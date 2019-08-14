@@ -16,13 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-//#include "math/standard_functions/abs.hpp"
-//#include "math/standard_functions/exp.hpp"
-//#include "math/standard_functions/log.hpp"
-//#include "math/standard_functions/pow.hpp"
 #include "vm_modules/math/tensor.hpp"
 #include "vm_modules/math/type.hpp"
 #include "vm_modules/ml/graph.hpp"
+#include "vm_modules/ml/training_pair.hpp"
 #include "vm_test_toolkit.hpp"
 
 #include "gmock/gmock.h"
@@ -30,10 +27,10 @@
 #include <sstream>
 
 using namespace fetch::vm;
-
+using ::testing::Between;
 namespace {
 
-//using ::testing::Between;
+// using ::testing::Between;
 
 using DataType = fetch::vm_modules::math::DataType;
 
@@ -44,24 +41,110 @@ public:
   VmTestToolkit     toolkit{&stdout};
 };
 
-TEST_F(MLTests, graph_test)
+TEST_F(MLTests, dataloader_serialisation_test)
 {
-  static char const *TEXT = R"(
-    function main() : Int32
-      return abs(-1);
+  static char const *dataloader_serialise_src = R"(
+    function main() : TrainingPair
+
+      var tensor_shape = Array<UInt64>(2);
+      tensor_shape[0] = 2u64;
+      tensor_shape[1] = 10u64;
+      var x = Tensor(tensor_shape);
+      x.fill(7.0fp64);
+
+      var dataloader = DataLoader();
+      dataloader.addData("tensor", data_tensor, label_tensor);
+
+      var state = State<DataLoader>("dataloader");
+      state.set(dataloader);
+
+      return dataloader.GetNext();
+
     endfunction
   )";
 
-  ASSERT_TRUE(toolkit.Compile(TEXT));
+  std::string const state_name{"graph"};
+  Variant           first_res;
+  ASSERT_TRUE(toolkit.Compile(dataloader_serialise_src));
+
+  EXPECT_CALL(toolkit.observer(), Write(state_name, _, _));
+  ASSERT_TRUE(toolkit.Run(&first_res));
+
+  static char const *dataloader_deserialise_src = R"(
+    function main() : TrainingPair
+      var state = State<DataLoader>("dataloader");
+      DataLoader dataloader = state.get();
+      return  dataloader.GetNext();
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(dataloader_deserialise_src));
 
   Variant res;
+  EXPECT_CALL(toolkit.observer(), Exists(state_name));
+  EXPECT_CALL(toolkit.observer(), Read(state_name, _, _)).Times(Between(1, 2));
   ASSERT_TRUE(toolkit.Run(&res));
-  auto const result = res.Get<int>();
 
-  int gt = -1;
-  fetch::math::Abs(gt, gt);
+  auto const initial_training_pair = first_res.Get<Ptr<fetch::vm_modules::ml::VMTrainingPair>>();
+  auto const training_pair         = res.Get<Ptr<fetch::vm_modules::ml::VMTrainingPair>>();
 
-  ASSERT_EQ(result, gt);
+  //  EXPECT_TRUE(initial_training_pair.first().AllClose(loss->GetTensor()));
 }
 
+TEST_F(MLTests, graph_serialisation_test)
+{
+  static char const *dataloader_serialise_src = R"(
+    function main() : Tensor
+
+      var tensor_shape = Array<UInt64>(2);
+      tensor_shape[0] = 2u64;
+      tensor_shape[1] = 10u64;
+      var x = Tensor(tensor_shape);
+      x.fill(7.0fp64);
+
+      var dataloader = DataLoader();
+      dataloader.addData("tensor", data_tensor, label_tensor);
+
+      var graph = Graph();
+      graph.addPlaceholder("Input");
+      graph.addPlaceholder("Label");
+      graph.addRelu("Output", "Input");
+      graph.addMeanSquareErrorLoss("Error", "Output", "Label");
+
+      var state = State<Graph>("graph");
+      state.set(graph);
+
+      return graph.Evaluate("Error");
+
+    endfunction
+  )";
+
+  std::string const state_name{"graph"};
+  Variant           first_res;
+  ASSERT_TRUE(toolkit.Compile(dataloader_serialise_src));
+
+  EXPECT_CALL(toolkit.observer(), Write(state_name, _, _));
+  ASSERT_TRUE(toolkit.Run(&first_res));
+
+  static char const *dataloader_deserialise_src = R"(
+    function main() : Tensor
+      var state = State<Graph>("graph");
+      Graph graph = state.get();
+      return  graph.Evaluate("Error");
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(dataloader_deserialise_src));
+
+  Variant res;
+  EXPECT_CALL(toolkit.observer(), Exists(state_name));
+  EXPECT_CALL(toolkit.observer(), Read(state_name, _, _)).Times(Between(1, 2));
+  ASSERT_TRUE(toolkit.Run(&res));
+
+  auto const initial_loss = first_res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  auto const loss         = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+
+  EXPECT_TRUE(initial_loss->GetTensor().AllClose(loss->GetTensor()));
 }
+
+}  // namespace

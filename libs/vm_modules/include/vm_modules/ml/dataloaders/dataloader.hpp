@@ -42,6 +42,9 @@ class VMDataLoader : public fetch::vm::Object
 {
 public:
   using DataType = fetch::vm_modules::math::DataType;
+  using DataLoaderType =
+      std::shared_ptr<fetch::ml::dataloaders::DataLoader<fetch::math::Tensor<DataType>,
+                                                         fetch::math::Tensor<DataType>>>;
 
   VMDataLoader(fetch::vm::VM *vm, fetch::vm::TypeId type_id);
 
@@ -101,9 +104,14 @@ public:
 
   bool IsDone();
 
-  std::shared_ptr<fetch::ml::dataloaders::DataLoader<fetch::math::Tensor<DataType>,
-                                                     fetch::math::Tensor<DataType>>>
-      loader_;
+  DataLoaderType &GetDataLoader();
+
+  bool SerializeTo(serializers::MsgPackSerializer &buffer) override;
+
+  bool DeserializeFrom(serializers::MsgPackSerializer &buffer) override;
+
+private:
+  DataLoaderType loader_;
 };
 
 }  // namespace ml
