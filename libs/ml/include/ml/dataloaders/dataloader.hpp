@@ -37,6 +37,7 @@ public:
   using SizeVector = fetch::math::SizeVector;
   using ReturnType = std::pair<LabelType, std::vector<DataType>>;
 
+  DataLoader() = default;
   /**
    * Dataloaders are required to provide label and DataType shapes to the parent Dataloader
    * @param random_mode
@@ -204,7 +205,9 @@ struct MapSerializer<fetch::ml::dataloaders::DataLoader<LabelType, InputType>, D
   template <typename MapDeserializer>
   static void Deserialize(MapDeserializer &map, Type &sp)
   {
-    map.ExpectKeyGetValue(RANDOM_MODE, sp.random_mode_);
+    bool tmp;
+    map.ExpectKeyGetValue(RANDOM_MODE, tmp);
+    sp.random_mode_ = tmp;
     map.ExpectKeyGetValue(SIZE_NOT_SET, sp.size_not_set_);
     map.ExpectKeyGetValue(CUR_TRAINING_PAIR_FIRST, sp.cur_training_pair_.first);
     map.ExpectKeyGetValue(CUR_TRAINING_PAIR_SECOND, sp.cur_training_pair_.second);

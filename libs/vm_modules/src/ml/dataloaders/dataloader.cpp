@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/main_serializer.hpp"
 #include "math/tensor.hpp"
 #include "ml/dataloaders/commodity_dataloader.hpp"
 #include "ml/dataloaders/dataloader.hpp"
@@ -61,6 +62,8 @@ void VMDataLoader::Bind(Module &module)
 {
   module.CreateClassType<VMDataLoader>("DataLoader")
       .CreateConstructor(&VMDataLoader::Constructor)
+      .CreateSerializeDefaultConstructor(
+          [](VM *vm, TypeId type_id) { return new VMDataLoader(vm, type_id); })
       .CreateMemberFunction("addData", &VMDataLoader::AddDataByFiles)
       .CreateMemberFunction("addData", &VMDataLoader::AddDataByData)
       .CreateMemberFunction("getNext", &VMDataLoader::GetNext)
@@ -73,10 +76,12 @@ void VMDataLoader::AddDataByFiles(Ptr<String> const &mode, Ptr<String> const &xf
   if (mode->str == "commodity")
   {
     AddCommodityData(xfilename, yfilename);
+    mode_ = DataLoaderMode::COMMODITY;
   }
   else if (mode->str == "mnist")
   {
     AddMnistData(xfilename, yfilename);
+    mode_ = DataLoaderMode::MNIST;
   }
   else
   {
@@ -90,6 +95,7 @@ void VMDataLoader::AddDataByData(Ptr<String> const &mode, Ptr<VMTensorType> cons
   if (mode->str == "tensor")
   {
     AddTensorData(data, labels);
+    mode_ = DataLoaderMode::TENSOR;
   }
   else
   {
@@ -140,15 +146,19 @@ VMDataLoader::DataLoaderType &VMDataLoader::GetDataLoader()
 
 bool VMDataLoader::SerializeTo(serializers::MsgPackSerializer &buffer)
 {
-  buffer << *loader_;
+  buffer << *this;
   return true;
 }
 
 bool VMDataLoader::DeserializeFrom(serializers::MsgPackSerializer &buffer)
 {
-  buffer >> *loader_;
+  buffer.seek(0);
+  auto dl = std::make_shared<fetch::vm_modules::ml::VMDataLoader>(this->vm_, this->type_id_);
+  buffer >> *dl;
+  *this = *dl;
   return true;
 }
+
 }  // namespace ml
 }  // namespace vm_modules
 }  // namespace fetch

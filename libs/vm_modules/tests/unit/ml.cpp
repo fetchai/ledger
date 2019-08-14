@@ -18,6 +18,7 @@
 
 #include "vm_modules/math/tensor.hpp"
 #include "vm_modules/math/type.hpp"
+#include "vm_modules/ml/dataloaders/dataloader.hpp"
 #include "vm_modules/ml/graph.hpp"
 #include "vm_modules/ml/training_pair.hpp"
 #include "vm_test_toolkit.hpp"
@@ -49,8 +50,10 @@ TEST_F(MLTests, dataloader_serialisation_test)
       var tensor_shape = Array<UInt64>(2);
       tensor_shape[0] = 2u64;
       tensor_shape[1] = 10u64;
-      var x = Tensor(tensor_shape);
-      x.fill(7.0fp64);
+      var data_tensor = Tensor(tensor_shape);
+      var label_tensor = Tensor(tensor_shape);
+      data_tensor.fill(7.0fp64);
+      label_tensor.fill(7.0fp64);
 
       var dataloader = DataLoader();
       dataloader.addData("tensor", data_tensor, label_tensor);
@@ -58,12 +61,13 @@ TEST_F(MLTests, dataloader_serialisation_test)
       var state = State<DataLoader>("dataloader");
       state.set(dataloader);
 
-      return dataloader.GetNext();
+      var tp = dataloader.getNext();
+      return tp;
 
     endfunction
   )";
 
-  std::string const state_name{"graph"};
+  std::string const state_name{"dataloader"};
   Variant           first_res;
   ASSERT_TRUE(toolkit.Compile(dataloader_serialise_src));
 
@@ -71,12 +75,13 @@ TEST_F(MLTests, dataloader_serialisation_test)
   ASSERT_TRUE(toolkit.Run(&first_res));
 
   static char const *dataloader_deserialise_src = R"(
-    function main() : TrainingPair
-      var state = State<DataLoader>("dataloader");
-      DataLoader dataloader = state.get();
-      return  dataloader.GetNext();
-    endfunction
-  )";
+      function main() : TrainingPair
+        var state = State<DataLoader>("dataloader");
+        var dataloader = state.get();
+        var tp = dataloader.getNext();
+        return tp;
+      endfunction
+    )";
 
   ASSERT_TRUE(toolkit.Compile(dataloader_deserialise_src));
 
@@ -88,22 +93,28 @@ TEST_F(MLTests, dataloader_serialisation_test)
   auto const initial_training_pair = first_res.Get<Ptr<fetch::vm_modules::ml::VMTrainingPair>>();
   auto const training_pair         = res.Get<Ptr<fetch::vm_modules::ml::VMTrainingPair>>();
 
-  //  EXPECT_TRUE(initial_training_pair.first().AllClose(loss->GetTensor()));
+  auto data1 = initial_training_pair->data()->GetTensor();
+  auto data2 = training_pair->data()->GetTensor();
+
+  auto label1 = initial_training_pair->label()->GetTensor();
+  auto label2 = training_pair->label()->GetTensor();
+
+  EXPECT_TRUE(data1.AllClose(data2, static_cast<DataType>(0), static_cast<DataType>(0)));
+  EXPECT_TRUE(label1.AllClose(label2, static_cast<DataType>(0), static_cast<DataType>(0)));
 }
 
 TEST_F(MLTests, graph_serialisation_test)
 {
-  static char const *dataloader_serialise_src = R"(
+  static char const *graph_serialise_src = R"(
     function main() : Tensor
 
       var tensor_shape = Array<UInt64>(2);
       tensor_shape[0] = 2u64;
       tensor_shape[1] = 10u64;
-      var x = Tensor(tensor_shape);
-      x.fill(7.0fp64);
-
-      var dataloader = DataLoader();
-      dataloader.addData("tensor", data_tensor, label_tensor);
+      var data_tensor = Tensor(tensor_shape);
+      var label_tensor = Tensor(tensor_shape);
+      data_tensor.fill(7.0fp64);
+      label_tensor.fill(7.0fp64);
 
       var graph = Graph();
       graph.addPlaceholder("Input");
@@ -111,30 +122,34 @@ TEST_F(MLTests, graph_serialisation_test)
       graph.addRelu("Output", "Input");
       graph.addMeanSquareErrorLoss("Error", "Output", "Label");
 
+      graph.setInput("Input", data_tensor);
+      graph.setInput("Label", label_tensor);
+
       var state = State<Graph>("graph");
       state.set(graph);
 
-      return graph.Evaluate("Error");
+      return graph.evaluate("Error");
 
     endfunction
   )";
 
   std::string const state_name{"graph"};
   Variant           first_res;
-  ASSERT_TRUE(toolkit.Compile(dataloader_serialise_src));
+  ASSERT_TRUE(toolkit.Compile(graph_serialise_src));
 
   EXPECT_CALL(toolkit.observer(), Write(state_name, _, _));
   ASSERT_TRUE(toolkit.Run(&first_res));
 
-  static char const *dataloader_deserialise_src = R"(
+  static char const *graph_deserialise_src = R"(
     function main() : Tensor
       var state = State<Graph>("graph");
-      Graph graph = state.get();
-      return  graph.Evaluate("Error");
+      var graph = state.get();
+      var loss = graph.evaluate("Error");
+      return loss;
     endfunction
   )";
 
-  ASSERT_TRUE(toolkit.Compile(dataloader_deserialise_src));
+  ASSERT_TRUE(toolkit.Compile(graph_deserialise_src));
 
   Variant res;
   EXPECT_CALL(toolkit.observer(), Exists(state_name));
