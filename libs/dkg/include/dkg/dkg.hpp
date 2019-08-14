@@ -47,8 +47,8 @@ protected:
   using MuddleAddress    = byte_array::ConstByteArray;
   using CabinetMembers   = std::set<MuddleAddress>;
   using Endpoint         = muddle::MuddleEndpoint;
-  using MsgShare         = std::string;
-  using SharesExposedMap = std::unordered_map<MuddleAddress, std::pair<MsgShare, MsgShare>>;
+  using MessageShare     = std::string;
+  using SharesExposedMap = std::unordered_map<MuddleAddress, std::pair<MessageShare, MessageShare>>;
 
   enum class State : uint8_t
   {
@@ -170,13 +170,13 @@ public:
           rpc_function);
 
   virtual void BroadcastShares();
-  void         OnNewShares(MuddleAddress from_id, std::pair<MsgShare, MsgShare> const &shares);
-  void         OnDkgMessage(MuddleAddress const &from, std::shared_ptr<DKGMessage> msg_ptr);
-  void         ResetCabinet();
-  void         SetDkgOutput(bn::G2 &public_key, bn::Fr &secret_share,
-                            std::vector<bn::G2> &public_key_shares, std::set<MuddleAddress> &qual);
-  bool         finished() const;
-  bn::G2       group() const;
+  void   OnNewShares(MuddleAddress from_id, std::pair<MessageShare, MessageShare> const &shares);
+  void   OnDkgMessage(MuddleAddress const &from, std::shared_ptr<DKGMessage> msg_ptr);
+  void   ResetCabinet();
+  void   SetDkgOutput(bn::G2 &public_key, bn::Fr &secret_share,
+                      std::vector<bn::G2> &public_key_shares, std::set<MuddleAddress> &qual);
+  bool   finished() const;
+  bn::G2 group() const;
 };
 }  // namespace dkg
 }  // namespace fetch

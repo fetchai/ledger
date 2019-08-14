@@ -43,6 +43,7 @@ public:
   using CabinetMembers  = std::set<MuddleAddress>;
   using Subscription    = muddle::Subscription;
   using SubscriptionPtr = std::shared_ptr<muddle::Subscription>;
+  using MessageType     = RBCMessage::MessageType;
 
   RBC(Endpoint &endpoint, MuddleAddress address, CabinetMembers const &cabinet,
       std::function<void(MuddleAddress const &, byte_array::ConstByteArray const &)> call_back,
@@ -53,16 +54,7 @@ public:
   void SendRBroadcast(SerialisedMessage const &msg);
 
 protected:
-  enum class MsgType : uint8_t
-  {
-    R_SEND,
-    R_ECHO,
-    R_READY,
-    R_REQUEST,
-    R_ANSWER
-  };
-
-  struct MsgCount
+  struct MessageCount
   {
     uint64_t echo_count, ready_count;  ///< Count of RReady and RRecho messages
   };
@@ -71,13 +63,13 @@ protected:
   {
     SerialisedMessage mbar;  ///< Original message broadcasted
     TruncatedHash     dbar;  ///< Hash of message
-    std::unordered_map<TruncatedHash, MsgCount>
+    std::unordered_map<TruncatedHash, MessageCount>
         msgs_count;  ///< Count of RBCMessages received for a given hash
   };
 
   struct Party
   {
-    std::unordered_map<TagType, std::bitset<sizeof(MsgType) * 8>>
+    std::unordered_map<TagType, std::bitset<sizeof(MessageType) * 8>>
             flags;          ///< Marks for each message tag what messages have been received
     uint8_t deliver_s = 1;  ///< Counter for messages delivered - initialised to 1
     std::map<uint8_t, RBCMessage const &> undelivered_msg;  ///< Undelivered messages indexed by tag
@@ -117,15 +109,15 @@ protected:
   void         OnRAnswer(RAnswer const &msg, uint32_t sender_index);
   void         Deliver(SerialisedMessage const &msg, uint32_t sender_index);
 
-  static std::string MsgTypeToString(MsgType msg_type);
+  static std::string MessageTypeToString(MessageType msg_type);
   uint32_t           CabinetIndex(MuddleAddress const &other_address) const;
-  bool BasicMsgCheck(MuddleAddress const &from, std::shared_ptr<RBCMessage> const &msg_ptr);
+  bool BasicMessageCheck(MuddleAddress const &from, std::shared_ptr<RBCMessage> const &msg_ptr);
   bool CheckTag(RBCMessage const &msg);
   bool SetMbar(TagType tag, RMessage const &msg, uint32_t sender_index);
   bool SetDbar(TagType tag, RHash const &msg);
   bool ReceivedEcho(TagType tag, REcho const &msg);
-  struct MsgCount ReceivedReady(TagType tag, RHash const &msg);
-  bool            SetPartyFlag(uint32_t sender_index, TagType tag, MsgType msg_type);
+  struct MessageCount ReceivedReady(TagType tag, RHash const &msg);
+  bool                SetPartyFlag(uint32_t sender_index, TagType tag, MessageType msg_type);
 };
 
 TruncatedHash MessageHash(SerialisedMessage const &msg);

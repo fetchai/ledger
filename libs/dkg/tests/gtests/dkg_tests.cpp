@@ -164,14 +164,15 @@ private:
         {
           bn::Fr trivial_share;
           trivial_share.clear();
-          std::pair<MsgShare, MsgShare> shares{trivial_share.getStr(), trivial_share.getStr()};
+          std::pair<MessageShare, MessageShare> shares{trivial_share.getStr(),
+                                                       trivial_share.getStr()};
           rpc_function_(cab_i, shares);
           sent_bad = true;
         }
         else
         {
-          std::pair<MsgShare, MsgShare> shares{s_ij[cabinet_index_][j].getStr(),
-                                               sprime_ij[cabinet_index_][j].getStr()};
+          std::pair<MessageShare, MessageShare> shares{s_ij[cabinet_index_][j].getStr(),
+                                                       sprime_ij[cabinet_index_][j].getStr()};
           rpc_function_(cab_i, shares);
         }
       }
@@ -190,16 +191,16 @@ private:
         // Compute one pair of trivial shares
         if (!bad_share)
         {
-          std::pair<MsgShare, MsgShare> shares{s_ij[cabinet_index_][j].getStr(),
-                                               sprime_ij[cabinet_index_][j].getStr()};
+          std::pair<MessageShare, MessageShare> shares{s_ij[cabinet_index_][j].getStr(),
+                                                       sprime_ij[cabinet_index_][j].getStr()};
           rpc_function_(cab_i, shares);
           bad_share = true;
         }
         else
         {
           ComputeShares(s_ij[cabinet_index_][j], sprime_ij[cabinet_index_][j], a_i, b_i, j);
-          std::pair<MsgShare, MsgShare> shares{s_ij[cabinet_index_][j].getStr(),
-                                               sprime_ij[cabinet_index_][j].getStr()};
+          std::pair<MessageShare, MessageShare> shares{s_ij[cabinet_index_][j].getStr(),
+                                                       sprime_ij[cabinet_index_][j].getStr()};
           rpc_function_(cab_i, shares);
         }
       }
@@ -225,7 +226,7 @@ private:
 
   void BroadcastComplaintsAnswer() override
   {
-    std::unordered_map<MuddleAddress, std::pair<MsgShare, MsgShare>> complaints_answer;
+    std::unordered_map<MuddleAddress, std::pair<MessageShare, MessageShare>> complaints_answer;
     if (!Failure(Failures::SEND_EMPTY_COMPLAINT_ANSWER))
     {
       for (auto const &reporter : complaints_manager_.ComplaintsFrom())
@@ -316,7 +317,7 @@ private:
 
   void BroadcastReconstructionShares() override
   {
-    std::unordered_map<MuddleAddress, std::pair<MsgShare, MsgShare>> complaint_shares;
+    std::unordered_map<MuddleAddress, std::pair<MessageShare, MessageShare>> complaint_shares;
     if (Failure(Failures::WITHOLD_RECONSTRUCTION_SHARES))
     {
       SendBroadcast(

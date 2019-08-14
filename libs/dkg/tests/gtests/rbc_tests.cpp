@@ -133,7 +133,7 @@ private:
 
   void SendUnrequestedAnswer(RBCEnvelope const &env)
   {
-    assert(env.Message()->type() == RBCMessage::MessageType::RECHO);
+    assert(env.Message()->type() == RBCMessage::MessageType::R_ECHO);
     auto        echo_ptr = std::dynamic_pointer_cast<REcho>(env.Message());
     std::string new_msg  = "Hello";
     fetch::serializers::MsgPackSerializer serialiser;
@@ -161,9 +161,11 @@ private:
     env_serializer.Reserve(env_counter.size());
     env_serializer << env;
 
-    if ((Failure(Failures::NO_ECHO) && env.Message()->type() == RBCMessage::MessageType::RECHO) or
-        (Failure(Failures::NO_READY) && env.Message()->type() == RBCMessage::MessageType::RREADY) or
-        (Failure(Failures::NO_ANSWER) && env.Message()->type() == RBCMessage::MessageType::RANSWER))
+    if ((Failure(Failures::NO_ECHO) && env.Message()->type() == RBCMessage::MessageType::R_ECHO) or
+        (Failure(Failures::NO_READY) &&
+         env.Message()->type() == RBCMessage::MessageType::R_READY) or
+        (Failure(Failures::NO_ANSWER) &&
+         env.Message()->type() == RBCMessage::MessageType::R_ANSWER))
     {
       return;
     }
@@ -172,13 +174,13 @@ private:
       endpoint_.Broadcast(SERVICE_DKG, CHANNEL_BROADCAST, env_serializer.data());
     }
     else if (Failure(Failures::BAD_ANSWER) &&
-             env.Message()->type() == RBCMessage::MessageType::RANSWER)
+             env.Message()->type() == RBCMessage::MessageType::R_ANSWER)
     {
       SendBadAnswer(env);
       return;
     }
     else if (Failure(Failures::UNREQUESTED_ANSWER) &&
-             env.Message()->type() == RBCMessage::MessageType::RECHO)
+             env.Message()->type() == RBCMessage::MessageType::R_ECHO)
     {
       SendUnrequestedAnswer(env);
     }
@@ -188,14 +190,14 @@ private:
   void OnRBC(MuddleAddress const &from, RBCEnvelope const &envelope) override
   {
     auto msg_ptr = envelope.Message();
-    if (!BasicMsgCheck(from, msg_ptr))
+    if (!BasicMessageCheck(from, msg_ptr))
     {
       return;
     }
     uint32_t sender_index{CabinetIndex(from)};
     switch (msg_ptr->type())
     {
-    case RBCMessage::MessageType::RBROADCAST:
+    case RBCMessage::MessageType::R_BROADCAST:
     {
       auto broadcast_ptr = std::dynamic_pointer_cast<RBroadcast>(msg_ptr);
       if (broadcast_ptr != nullptr)
@@ -218,7 +220,7 @@ private:
       }
       break;
     }
-    case RBCMessage::MessageType::RECHO:
+    case RBCMessage::MessageType::R_ECHO:
     {
       auto echo_ptr = std::dynamic_pointer_cast<REcho>(msg_ptr);
       if (echo_ptr != nullptr)
@@ -227,7 +229,7 @@ private:
       }
       break;
     }
-    case RBCMessage::MessageType::RREADY:
+    case RBCMessage::MessageType::R_READY:
     {
       auto ready_ptr = std::dynamic_pointer_cast<RReady>(msg_ptr);
       if (ready_ptr != nullptr)
@@ -236,7 +238,7 @@ private:
       }
       break;
     }
-    case RBCMessage::MessageType::RREQUEST:
+    case RBCMessage::MessageType::R_REQUEST:
     {
       auto request_ptr = std::dynamic_pointer_cast<RRequest>(msg_ptr);
       if (request_ptr != nullptr)
@@ -245,7 +247,7 @@ private:
       }
       break;
     }
-    case RBCMessage::MessageType::RANSWER:
+    case RBCMessage::MessageType::R_ANSWER:
     {
       auto answer_ptr = std::dynamic_pointer_cast<RAnswer>(msg_ptr);
       if (answer_ptr != nullptr)

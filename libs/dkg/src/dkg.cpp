@@ -23,7 +23,7 @@
 namespace fetch {
 namespace dkg {
 
-using MsgCoefficient = std::string;
+using MessageCoefficient = std::string;
 
 constexpr char const *LOGGING_NAME = "DKG";
 bn::G2                DistributedKeyGeneration::zeroG2_;
@@ -86,7 +86,7 @@ void DistributedKeyGeneration::SendCoefficients(std::vector<bn::Fr> const &a_i,
   // Let z_i = f(0)
   z_i[cabinet_index_] = a_i[0];
 
-  std::vector<MsgCoefficient> coefficients;
+  std::vector<MessageCoefficient> coefficients;
   for (size_t k = 0; k <= threshold_; k++)
   {
     C_ik[cabinet_index_][k] = ComputeLHS(g__a_i[k], group_g_, group_h_, a_i[k], b_i[k]);
@@ -112,8 +112,8 @@ void DistributedKeyGeneration::SendShares(std::vector<bn::Fr> const &a_i,
     ComputeShares(s_ij[cabinet_index_][j], sprime_ij[cabinet_index_][j], a_i, b_i, j);
     if (j != cabinet_index_)
     {
-      std::pair<MsgShare, MsgShare> shares{s_ij[cabinet_index_][j].getStr(),
-                                           sprime_ij[cabinet_index_][j].getStr()};
+      std::pair<MessageShare, MessageShare> shares{s_ij[cabinet_index_][j].getStr(),
+                                                   sprime_ij[cabinet_index_][j].getStr()};
       rpc_function_(cab_i, shares);
     }
     ++j;
@@ -167,7 +167,7 @@ void DistributedKeyGeneration::BroadcastComplaints()
  */
 void DistributedKeyGeneration::BroadcastComplaintsAnswer()
 {
-  std::unordered_map<MuddleAddress, std::pair<MsgShare, MsgShare>> complaints_answer;
+  std::unordered_map<MuddleAddress, std::pair<MessageShare, MessageShare>> complaints_answer;
   for (auto const &reporter : complaints_manager_.ComplaintsFrom())
   {
     uint32_t from_index{CabinetIndex(reporter)};
@@ -188,7 +188,7 @@ void DistributedKeyGeneration::BroadcastComplaintsAnswer()
  */
 void DistributedKeyGeneration::BroadcastQualCoefficients()
 {
-  std::vector<MsgCoefficient> coefficients;
+  std::vector<MessageCoefficient> coefficients;
   for (size_t k = 0; k <= threshold_; k++)
   {
     A_ik[cabinet_index_][k] = g__a_i[k];
@@ -222,7 +222,7 @@ void DistributedKeyGeneration::BroadcastQualComplaints()
 
 void DistributedKeyGeneration::BroadcastReconstructionShares()
 {
-  std::unordered_map<MuddleAddress, std::pair<MsgShare, MsgShare>> complaint_shares;
+  std::unordered_map<MuddleAddress, std::pair<MessageShare, MessageShare>> complaint_shares;
   for (auto const &in : qual_complaints_manager_.Complaints())
   {
     assert(qual_.find(in) != qual_.end());
@@ -460,8 +460,8 @@ void DistributedKeyGeneration::OnExposedShares(std::shared_ptr<SharesMessage> co
  * @param from Muddle address of sender
  * @param shares Pair of secret shares
  */
-void DistributedKeyGeneration::OnNewShares(MuddleAddress                        from,
-                                           std::pair<MsgShare, MsgShare> const &shares)
+void DistributedKeyGeneration::OnNewShares(MuddleAddress                                from,
+                                           std::pair<MessageShare, MessageShare> const &shares)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, " received shares from node  ",
                  CabinetIndex(from));

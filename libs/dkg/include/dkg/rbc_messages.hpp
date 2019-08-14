@@ -46,11 +46,12 @@ class RBCMessage
 public:
   enum class MessageType : uint8_t
   {
-    RBROADCAST,
-    RECHO,
-    RREADY,
-    RREQUEST,
-    RANSWER
+    R_BROADCAST,
+    R_ECHO,
+    R_READY,
+    R_REQUEST,
+    R_ANSWER,
+    R_SEND
   };
 
   // Destruction
@@ -172,11 +173,11 @@ public:
   }
 };
 
-using RBroadcast = RMessageImpl<RBCMessage::MessageType::RBROADCAST>;
-using RRequest   = RMessageImpl<RBCMessage::MessageType::RREQUEST>;
-using RAnswer    = RMessageImpl<RBCMessage::MessageType::RANSWER>;
-using REcho      = RHashImpl<RBCMessage::MessageType::RECHO>;
-using RReady     = RHashImpl<RBCMessage::MessageType::RREADY>;
+using RBroadcast = RMessageImpl<RBCMessage::MessageType::R_BROADCAST>;
+using RRequest   = RMessageImpl<RBCMessage::MessageType::R_REQUEST>;
+using RAnswer    = RMessageImpl<RBCMessage::MessageType::R_ANSWER>;
+using REcho      = RHashImpl<RBCMessage::MessageType::R_ECHO>;
+using RReady     = RHashImpl<RBCMessage::MessageType::R_READY>;
 
 }  // namespace dkg
 }  // namespace fetch
