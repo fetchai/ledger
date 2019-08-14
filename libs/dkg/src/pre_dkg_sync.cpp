@@ -18,6 +18,8 @@
 
 #include "dkg/pre_dkg_sync.hpp"
 
+#include "telemetry/registry.hpp"
+
 #include <cstddef>
 #include <cstdint>
 #include <ctime>
@@ -39,10 +41,10 @@ PreDkgSync::PreDkgSync(Endpoint &endpoint, ConstByteArray address, uint8_t chann
            OnRbcMessage(address, connections);
          },
          channel}
-  //, sync_time_gauge_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
-  //    "sync_time_gague", "Time the DKG should start")}
-  //, tele_ready_peers_{telemetry::Registry::Instance().CreateCounter(
-  //    "ready_peers_total", "The total number of ready peers (pre dkg sync)")} // note, counters must end in '_total'.
+  , sync_time_gauge_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+      "sync_time_gague", "Time the DKG should start")}
+  , tele_ready_peers_{telemetry::Registry::Instance().CreateCounter(
+      "ready_peers_total", "The total number of ready peers (pre dkg sync)")} // note, counters must end in '_total'.
 {}
 
 void PreDkgSync::OnRbcMessage(MuddleAddress const &from, std::set<MuddleAddress> const &connections)
@@ -74,7 +76,7 @@ void PreDkgSync::OnRbcMessage(MuddleAddress const &from, std::set<MuddleAddress>
     }
 
     ready_peers_++;
-    //tele_ready_peers_->add(1);
+    tele_ready_peers_->add(1);
   }
 
   SetStartTime();
@@ -89,8 +91,10 @@ void PreDkgSync::SetStartTime()
   {
     uint64_t current_time = static_cast<uint64_t>(std::time(nullptr));
     start_time_ = (((current_time / time_quantisation_s) + grace_period_time_units) * time_quantisation_s);
-    //sync_time_gauge_->set(start_time_);
+    sync_time_gauge_->set(start_time_);
     assert(start_time_ > current_time);
+
+    FETCH_LOG_INFO(LOGGING_NAME, "The conditions for starting DKG are met. Start: ", start_time_, " time until: ", start_time_ - current_time);
   }
 }
 
@@ -136,9 +140,11 @@ bool PreDkgSync::Ready()
   {
     self_ready_ = true;
 
+    FETCH_LOG_INFO(LOGGING_NAME, "*** Node is ready ***");
+
     // Send ready message to other members
     fetch::serializers::MsgPackSerializer serializer;
-    serializer << bool(true);
+    serializer << endpoint_.GetDirectlyConnectedPeers();
     rbc_.SendRBroadcast(serializer.data());
     SetStartTime();
   }
@@ -148,5 +154,11 @@ bool PreDkgSync::Ready()
   std::lock_guard<std::mutex> lock(mutex_);
   return start_time_ <= current_time;
 }
+
+void PreDkgSync::SetTimeQuantisation(uint64_t time)
+{
+  time_quantisation_s = time;
+}
+
 }  // namespace dkg
 }  // namespace fetch

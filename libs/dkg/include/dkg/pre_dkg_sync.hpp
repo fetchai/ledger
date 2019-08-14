@@ -20,9 +20,9 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "dkg/rbc.hpp"
 #include "network/muddle/muddle.hpp"
-/*#include "telemetry/registry.hpp"*/
 #include "telemetry/telemetry.hpp"
 #include "telemetry/gauge.hpp"
+#include "telemetry/counter.hpp"
 
 #include <unordered_map>
 
@@ -42,6 +42,8 @@ public:
   void ResetCabinet(CabinetMembers const &members, uint32_t threshold);
   bool Ready();
 
+  void SetTimeQuantisation(uint64_t time);
+
 private:
   using Cabinet = std::set<MuddleAddress>;
 
@@ -56,7 +58,7 @@ private:
 
   std::map<MuddleAddress, std::unordered_set<MuddleAddress>> other_peer_connections;
 
-  const uint64_t time_quantisation_s     = 30;
+  uint64_t time_quantisation_s     = 30;
   const uint64_t grace_period_time_units = 3;
 
   uint64_t start_time_ = std::numeric_limits<uint64_t>::max();
@@ -65,8 +67,8 @@ private:
   bool CheckConnections(MuddleAddress const &from, std::set<MuddleAddress> const &connections);
   void SetStartTime();
 
-  /*telemetry::CounterPtr         tele_ready_peers_;*/
-  /* telemetry::GaugePtr<uint64_t> sync_time_gauge_;*/
+  telemetry::GaugePtr<uint64_t> sync_time_gauge_;
+  telemetry::CounterPtr         tele_ready_peers_;
 };
 }  // namespace dkg
 }  // namespace fetch

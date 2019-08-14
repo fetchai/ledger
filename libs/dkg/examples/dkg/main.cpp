@@ -93,6 +93,12 @@ int main()
                        fetch::network::Uri{"tcp://127.0.0.1:" + std::to_string(port_number)}});
   }
 
+  // Set the time for pre dkg sync lower for testing
+  for(auto const &member : committee)
+  {
+    member->dkg_service.SetMaxTimePeriodForSetup(4);
+  }
+
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
   // For each member
@@ -131,8 +137,10 @@ int main()
       member->reactor.Start();
     }
 
-    // Need to increase this depending on number of nodes to complete 3 rounds of DRB
-    std::this_thread::sleep_for(std::chrono::seconds(25));
+    while(!committee[0]->dkg_service.IsSynced())
+    {
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
   }
 
   for (auto &member : committee)

@@ -95,7 +95,7 @@ DkgService::DkgService(Endpoint &endpoint, ConstByteArray address)
   , endpoint_{endpoint}
   , rpc_server_{endpoint_, SERVICE_DKG, CHANNEL_RPC}
   , rpc_client_{"dkg", endpoint_, SERVICE_DKG, CHANNEL_RPC}
-  , state_machine_{std::make_shared<StateMachine>("dkg", State::BUILD_AEON_KEYS, ToString)}
+  , state_machine_{std::make_shared<StateMachine>("dkg", State::PRE_SYNC, ToString)}
   , shares_subscription(endpoint_.Subscribe(SERVICE_DKG, CHANNEL_SECRET_KEY))
   , rbc_{endpoint_, address_,
          [this](MuddleAddress const &address, ConstByteArray const &payload) -> void {
@@ -250,6 +250,7 @@ State DkgService::OnPreSync()
   }
   else
   {
+    FETCH_LOG_INFO(LOGGING_NAME, "Waited for pre dkg sync - continuing");
     return State::BUILD_AEON_KEYS;
   }
 }
@@ -620,6 +621,11 @@ void DkgService::ResetCabinet(CabinetMembers cabinet, uint32_t threshold)
   dkg_.ResetCabinet();
   rbc_.ResetCabinet(current_cabinet_);
   pre_dkg_sync_.ResetCabinet(current_cabinet_, threshold);
+}
+
+void DkgService::SetMaxTimePeriodForSetup(uint64_t time)
+{
+  pre_dkg_sync_.SetTimeQuantisation(time);
 }
 
 }  // namespace dkg

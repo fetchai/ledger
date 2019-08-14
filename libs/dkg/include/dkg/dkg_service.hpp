@@ -153,6 +153,8 @@ public:
   void SendShares(MuddleAddress const &                      destination,
                   std::pair<std::string, std::string> const &shares);
   void SendReliableBroadcast(RBCMessageType const &msg);
+
+  void SetMaxTimePeriodForSetup(uint64_t time);
   /// @}
 
   // Operators
