@@ -21,4 +21,5 @@ target_link_libraries(fetch-beacon
                              fetch-network
                              fetch-ledger)
 
-# add_test_target()
+add_test_target()
+# add_subdirectory(examples/)

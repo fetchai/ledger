@@ -126,7 +126,7 @@ private:
     new_rmsg_serializer.Reserve(new_rmsg_counter.size());
     new_rmsg_serializer << static_cast<RBCMessage>(new_rmsg);
 
-    endpoint().Broadcast(SERVICE_DKG, CHANNEL_RBC_BROADCAST, new_rmsg_serializer.data());
+    endpoint().Broadcast(SERVICE_RBC, CHANNEL_RBC_BROADCAST, new_rmsg_serializer.data());
   }
 
   void SendUnrequestedAnswer(RBCMessage const &msg)
@@ -144,7 +144,7 @@ private:
     new_rmsg_serializer.Reserve(new_rmsg_counter.size());
     new_rmsg_serializer << static_cast<RBCMessage>(new_rmsg);
 
-    endpoint().Broadcast(SERVICE_DKG, CHANNEL_RBC_BROADCAST, new_rmsg_serializer.data());
+    endpoint().Broadcast(SERVICE_RBC, CHANNEL_RBC_BROADCAST, new_rmsg_serializer.data());
   }
 
   void InternalBroadcast(RBCMessage const &msg) override
@@ -165,7 +165,7 @@ private:
     }
     else if (Failure(Failures::DOUBLE_SEND))
     {
-      endpoint().Broadcast(SERVICE_DKG, CHANNEL_RBC_BROADCAST, msg_serializer.data());
+      endpoint().Broadcast(SERVICE_RBC, CHANNEL_RBC_BROADCAST, msg_serializer.data());
     }
     else if (Failure(Failures::BAD_ANSWER) && msg.type() == RBCMessageType::R_ANSWER)
     {
@@ -176,7 +176,7 @@ private:
     {
       SendUnrequestedAnswer(msg);
     }
-    endpoint().Broadcast(SERVICE_DKG, CHANNEL_RBC_BROADCAST, msg_serializer.data());
+    endpoint().Broadcast(SERVICE_RBC, CHANNEL_RBC_BROADCAST, msg_serializer.data());
   }
 
   void OnRBC(MuddleAddress const &from, RBCMessage const &msg) override
