@@ -51,7 +51,7 @@ static constexpr uint64_t CHANNEL_RPC_BROADCAST = 301;
 // DKG Service Channels
 static constexpr uint16_t CHANNEL_SECRET_KEY    = 400;
 static constexpr uint16_t CHANNEL_CONTRIBUTIONS = 401;
-static constexpr uint16_t CHANNEL_BROADCAST     = 402;
+static constexpr uint16_t CHANNEL_RBC_BROADCAST = 402;
 
 static constexpr uint16_t CHANNEL_ID_DISTRIBUTION      = 450;
 static constexpr uint16_t CHANNEL_ENTROPY_DISTRIBUTION = 451;

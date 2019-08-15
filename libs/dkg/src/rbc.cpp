@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "dkg/rbc.hpp"
 #include "core/logging.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
-#include "dkg/rbc.hpp"
 
 namespace fetch {
 namespace dkg {
@@ -124,7 +124,7 @@ bool RBC::ResetCabinet(CabinetMembers const &cabinet)
  *
  * @param msg Serialised message to be broadcast
  */
-void RBC::SendRBroadcast(SerialisedMessage const &msg)
+void RBC::Broadcast(SerialisedMessage const &msg)
 {
   MessageBroadcast broadcast_msg;
 
@@ -134,7 +134,7 @@ void RBC::SendRBroadcast(SerialisedMessage const &msg)
 
     broadcast_msg = RBCMessage::New<RBroadcast>(channel_, static_cast<IdType>(id_),
                                                 static_cast<CounterType>(++msg_counter_), msg);
-    Broadcast(*broadcast_msg);
+    InternalBroadcast(*broadcast_msg);
   }
 
   // Sending message to self
@@ -164,7 +164,7 @@ void RBC::Send(RBCMessage const &msg, MuddleAddress const &address)
  *
  * @param env RBCEnvelope message to be serialised and broadcast
  */
-void RBC::Broadcast(RBCMessage const &msg)
+void RBC::InternalBroadcast(RBCMessage const &msg)
 {
   // Serialise the RBCEnvelope
   RBCSerializerCounter msg_counter;
@@ -310,7 +310,7 @@ void RBC::OnRBroadcast(MessageBroadcast const &msg, uint32_t sender_index)
 
       MessageEcho echo_msg = RBCMessage::New<REcho>(msg->channel(), msg->id(), msg->counter(),
                                                     crypto::Hash<HashFunction>(msg->message()));
-      Broadcast(*echo_msg);
+      InternalBroadcast(*echo_msg);
       OnREchoLockFree(echo_msg, id_);
     }
   }
@@ -360,7 +360,7 @@ void RBC::OnREchoLockFree(MessageEcho const &msg, uint32_t sender_index)
     MessageReady ready_msg =
         RBCMessage::New<RReady>(msg->channel(), msg->id(), msg->counter(), msg->hash());
 
-    Broadcast(*ready_msg);
+    InternalBroadcast(*ready_msg);
     OnRReadyLockFree(ready_msg, id_);
   }
 }
@@ -407,7 +407,7 @@ void RBC::OnRReadyLockFree(MessageReady const &msg, uint32_t sender_index)
     MessageReady ready_msg =
         RBCMessage::New<RReady>(msg->channel(), msg->id(), msg->counter(), msg->hash());
 
-    Broadcast(*ready_msg);
+    InternalBroadcast(*ready_msg);
     OnRReadyLockFree(ready_msg, id_);
   }
   else if (msgs_counter.ready_count == 2 * threshold_ + 1)

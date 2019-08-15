@@ -394,7 +394,7 @@ struct CabinetMember
           [this](DKGEnvelope const &envelope) -> void {
             DKGSerializer serialiser;
             serialiser << envelope;
-            rbc.SendRBroadcast(serialiser.data());
+            rbc.Broadcast(serialiser.data());
           },
           [this](ConstByteArray const &                     destination,
                  std::pair<std::string, std::string> const &shares) -> void {

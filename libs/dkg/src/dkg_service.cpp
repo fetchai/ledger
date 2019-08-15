@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "dkg/dkg_service.hpp"
 #include "core/logging.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "core/service_ids.hpp"
 #include "crypto/sha256.hpp"
-#include "dkg/dkg_service.hpp"
 #include "network/muddle/muddle_endpoint.hpp"
 #include "network/muddle/packet.hpp"
 #include "network/muddle/subscription.hpp"
@@ -180,7 +180,7 @@ void DkgService::SendReliableBroadcast(RBCMessageType const &msg)
 {
   DKGSerializer serialiser;
   serialiser << msg;
-  rbc_.SendRBroadcast(serialiser.data());
+  rbc_.Broadcast(serialiser.data());
 }
 
 /**

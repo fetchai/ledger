@@ -63,11 +63,13 @@ public:
   using CounterType    = uint8_t;
 
   RBC(Endpoint &endpoint, MuddleAddress address, CallbackFunction call_back,
-      uint16_t channel = CHANNEL_BROADCAST);
+      uint16_t channel = CHANNEL_RBC_BROADCAST);
 
-  // Operators
+  /// RBC Operation
+  /// @{
   bool ResetCabinet(CabinetMembers const &cabinet);
-  void SendRBroadcast(SerialisedMessage const &msg);
+  void Broadcast(SerialisedMessage const &msg);
+  /// @}
 
 protected:
   /// Structs used for the message tracking
@@ -113,7 +115,7 @@ protected:
   /// Message communication - not thread safe.
   /// @{
   void         Send(RBCMessage const &env, MuddleAddress const &address);
-  virtual void Broadcast(RBCMessage const &env);
+  virtual void InternalBroadcast(RBCMessage const &env);
   void         Deliver(SerialisedMessage const &msg, uint32_t sender_index);
 
   Endpoint &endpoint()
@@ -161,7 +163,7 @@ protected:
 private:
   /// Variable Declarations
   /// @{
-  uint16_t channel_{CHANNEL_BROADCAST};
+  uint16_t channel_{CHANNEL_RBC_BROADCAST};
 
   std::atomic<uint32_t> id_{0};  ///< Rank used in RBC (derived from position in current_cabinet_)
   std::atomic<uint8_t>  msg_counter_{0};  ///< Counter for messages we have broadcasted

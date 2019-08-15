@@ -83,10 +83,10 @@ public:
     ResetCabinet(cabinet);
   }
 
-  void SendRBroadcast(SerialisedMessage const &msg, uint8_t num_messages)
+  void Broadcast(SerialisedMessage const &msg, uint8_t num_messages)
   {
     uint32_t sender_index = this->id();
-    uint16_t channel      = CHANNEL_BROADCAST;
+    uint16_t channel      = CHANNEL_RBC_BROADCAST;
     auto     counter      = static_cast<uint8_t>(this->message_counter() + 1);
     if (Failure(Failures::WRONG_CHANNEL))
     {
@@ -99,7 +99,7 @@ public:
     }
     MessageBroadcast broadcast_msg =
         RBCMessage::New<RBroadcast>(channel, sender_index, counter, msg);
-    Broadcast(*broadcast_msg);
+    InternalBroadcast(*broadcast_msg);
 
     increase_message_counter();
     OnRBroadcast(broadcast_msg, this->id());  // Self sending
@@ -118,7 +118,7 @@ private:
     std::string                           new_msg = "Goodbye";
     fetch::serializers::MsgPackSerializer serialiser;
     serialiser << new_msg;
-    RAnswer new_rmsg{CHANNEL_BROADCAST, msg.id(), msg.counter(), serialiser.data()};
+    RAnswer new_rmsg{CHANNEL_RBC_BROADCAST, msg.id(), msg.counter(), serialiser.data()};
 
     RBCSerializerCounter new_rmsg_counter;
     new_rmsg_counter << static_cast<RBCMessage>(new_rmsg);
@@ -127,7 +127,7 @@ private:
     new_rmsg_serializer.Reserve(new_rmsg_counter.size());
     new_rmsg_serializer << static_cast<RBCMessage>(new_rmsg);
 
-    endpoint().Broadcast(SERVICE_DKG, CHANNEL_BROADCAST, new_rmsg_serializer.data());
+    endpoint().Broadcast(SERVICE_DKG, CHANNEL_RBC_BROADCAST, new_rmsg_serializer.data());
   }
 
   void SendUnrequestedAnswer(RBCMessage const &msg)
@@ -136,7 +136,7 @@ private:
     std::string                           new_msg = "Hello";
     fetch::serializers::MsgPackSerializer serialiser;
     serialiser << new_msg;
-    RAnswer new_rmsg{CHANNEL_BROADCAST, msg.id(), msg.counter(), serialiser.data()};
+    RAnswer new_rmsg{CHANNEL_RBC_BROADCAST, msg.id(), msg.counter(), serialiser.data()};
 
     RBCSerializerCounter new_rmsg_counter;
     new_rmsg_counter << static_cast<RBCMessage>(new_rmsg);
@@ -145,10 +145,10 @@ private:
     new_rmsg_serializer.Reserve(new_rmsg_counter.size());
     new_rmsg_serializer << static_cast<RBCMessage>(new_rmsg);
 
-    endpoint().Broadcast(SERVICE_DKG, CHANNEL_BROADCAST, new_rmsg_serializer.data());
+    endpoint().Broadcast(SERVICE_DKG, CHANNEL_RBC_BROADCAST, new_rmsg_serializer.data());
   }
 
-  void Broadcast(RBCMessage const &msg) override
+  void InternalBroadcast(RBCMessage const &msg) override
   {
     // Serialise the RBCEnvelope
     RBCSerializerCounter msg_counter;
@@ -166,7 +166,7 @@ private:
     }
     else if (Failure(Failures::DOUBLE_SEND))
     {
-      endpoint().Broadcast(SERVICE_DKG, CHANNEL_BROADCAST, msg_serializer.data());
+      endpoint().Broadcast(SERVICE_DKG, CHANNEL_RBC_BROADCAST, msg_serializer.data());
     }
     else if (Failure(Failures::BAD_ANSWER) && msg.type() == RBCMessageType::R_ANSWER)
     {
@@ -177,7 +177,7 @@ private:
     {
       SendUnrequestedAnswer(msg);
     }
-    endpoint().Broadcast(SERVICE_DKG, CHANNEL_BROADCAST, msg_serializer.data());
+    endpoint().Broadcast(SERVICE_DKG, CHANNEL_RBC_BROADCAST, msg_serializer.data());
   }
 
   void OnRBC(MuddleAddress const &from, RBCMessage const &msg) override
@@ -213,7 +213,7 @@ private:
       }
 
       MessageBroadcast new_broadcast =
-          RBCMessage::New<RBroadcast>(CHANNEL_BROADCAST, index, msg.counter(), payload);
+          RBCMessage::New<RBroadcast>(CHANNEL_RBC_BROADCAST, index, msg.counter(), payload);
 
       OnRBroadcast(new_broadcast, sender_index);
 
@@ -365,7 +365,7 @@ void GenerateRbcTest(uint32_t cabinet_size, uint32_t expected_completion_size,
     uint32_t sender_index = cabinet_size - 1;
     for (auto ii = 0; ii < num_messages; ++ii)
     {
-      committee[sender_index]->rbc.SendRBroadcast(serialiser.data(), num_messages);
+      committee[sender_index]->rbc.Broadcast(serialiser.data(), num_messages);
     }
 
     std::this_thread::sleep_for(std::chrono::seconds(1 * num_messages));
