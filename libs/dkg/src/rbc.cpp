@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "dkg/rbc.hpp"
 #include "core/logging.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
-#include "dkg/rbc.hpp"
 
 namespace fetch {
 namespace dkg {
@@ -237,31 +237,31 @@ void RBC::OnRBC(MuddleAddress const &from, RBCMessage const &message)
 
   switch (message.type())
   {
-  case RBCMessage::MessageType::R_BROADCAST:
+  case RBCMessageType::R_BROADCAST:
   {
     FETCH_LOG_TRACE(LOGGING_NAME, "Node: ", id_, " received RBroadcast from node ", sender_index);
     OnRBroadcast(message, sender_index);
     break;
   }
-  case RBCMessage::MessageType::R_ECHO:
+  case RBCMessageType::R_ECHO:
   {
     FETCH_LOG_TRACE(LOGGING_NAME, "Node: ", id_, " received REcho from node ", sender_index);
     OnREcho(message, sender_index);
     break;
   }
-  case RBCMessage::MessageType::R_READY:
+  case RBCMessageType::R_READY:
   {
     FETCH_LOG_TRACE(LOGGING_NAME, "Node: ", id_, " received RReady from node ", sender_index);
     OnRReady(message, sender_index);
     break;
   }
-  case RBCMessage::MessageType::R_REQUEST:
+  case RBCMessageType::R_REQUEST:
   {
     FETCH_LOG_TRACE(LOGGING_NAME, "Node: ", id_, " received RRequest from node ", sender_index);
     OnRRequest(message, sender_index);
     break;
   }
-  case RBCMessage::MessageType::R_ANSWER:
+  case RBCMessageType::R_ANSWER:
   {
     FETCH_LOG_TRACE(LOGGING_NAME, "Node: ", id_, " received RAnswer from node ", sender_index);
     OnRAnswer(message, sender_index);

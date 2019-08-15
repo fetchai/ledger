@@ -51,7 +51,7 @@ public:
   using CabinetMembers  = std::set<MuddleAddress>;
   using Subscription    = muddle::Subscription;
   using SubscriptionPtr = std::shared_ptr<muddle::Subscription>;
-  using MessageType     = RBCMessage::MessageType;
+  using MessageType     = RBCMessageType;
   using HashFunction    = crypto::SHA256;
   using MessageHash     = byte_array::ByteArray;
   using CallbackFunction =

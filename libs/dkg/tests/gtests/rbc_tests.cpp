@@ -131,7 +131,7 @@ private:
 
   void SendUnrequestedAnswer(RBCMessage const &msg)
   {
-    assert(msg.type() == RBCMessage::MessageType::R_ECHO);
+    assert(msg.type() == RBCMessageType::R_ECHO);
     std::string                           new_msg = "Hello";
     fetch::serializers::MsgPackSerializer serialiser;
     serialiser << new_msg;
@@ -157,9 +157,9 @@ private:
     msg_serializer.Reserve(msg_counter.size());
     msg_serializer << msg;
 
-    if ((Failure(Failures::NO_ECHO) && msg.type() == RBCMessage::MessageType::R_ECHO) ||
-        (Failure(Failures::NO_READY) && msg.type() == RBCMessage::MessageType::R_READY) ||
-        (Failure(Failures::NO_ANSWER) && msg.type() == RBCMessage::MessageType::R_ANSWER))
+    if ((Failure(Failures::NO_ECHO) && msg.type() == RBCMessageType::R_ECHO) ||
+        (Failure(Failures::NO_READY) && msg.type() == RBCMessageType::R_READY) ||
+        (Failure(Failures::NO_ANSWER) && msg.type() == RBCMessageType::R_ANSWER))
     {
       return;
     }
@@ -167,12 +167,12 @@ private:
     {
       endpoint().Broadcast(SERVICE_DKG, CHANNEL_BROADCAST, msg_serializer.data());
     }
-    else if (Failure(Failures::BAD_ANSWER) && msg.type() == RBCMessage::MessageType::R_ANSWER)
+    else if (Failure(Failures::BAD_ANSWER) && msg.type() == RBCMessageType::R_ANSWER)
     {
       SendBadAnswer(msg);
       return;
     }
-    else if (Failure(Failures::UNREQUESTED_ANSWER) && msg.type() == RBCMessage::MessageType::R_ECHO)
+    else if (Failure(Failures::UNREQUESTED_ANSWER) && msg.type() == RBCMessageType::R_ECHO)
     {
       SendUnrequestedAnswer(msg);
     }
@@ -194,7 +194,7 @@ private:
 
     switch (msg.type())
     {
-    case RBCMessage::MessageType::R_BROADCAST:
+    case RBCMessageType::R_BROADCAST:
     {
 
       auto payload = msg.message();
@@ -215,22 +215,22 @@ private:
 
       break;
     }
-    case RBCMessage::MessageType::R_ECHO:
+    case RBCMessageType::R_ECHO:
     {
       OnREcho(msg, sender_index);
       break;
     }
-    case RBCMessage::MessageType::R_READY:
+    case RBCMessageType::R_READY:
     {
       OnRReady(msg, sender_index);
       break;
     }
-    case RBCMessage::MessageType::R_REQUEST:
+    case RBCMessageType::R_REQUEST:
     {
       OnRRequest(msg, sender_index);
       break;
     }
-    case RBCMessage::MessageType::R_ANSWER:
+    case RBCMessageType::R_ANSWER:
     {
       OnRAnswer(msg, sender_index);
       break;

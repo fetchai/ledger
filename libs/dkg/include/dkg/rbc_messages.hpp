@@ -22,6 +22,7 @@
 #include "core/serializers/main_serializer.hpp"
 
 #include <cstdint>
+#include <memory>
 
 namespace fetch {
 namespace dkg {
@@ -41,99 +42,102 @@ using RBCSerializerCounter = fetch::serializers::SizeCounter;
  * RBroadcast message RAnswer - reply to RRequest message
  */
 
+enum class RBCMessageType : uint8_t
+{
+  R_BROADCAST,
+  R_ECHO,
+  R_READY,
+  R_REQUEST,
+  R_ANSWER
+};
+
+template <RBCMessageType TYPE>
+class RBCMessageImpl;
+
 class RBCMessage
 {
 public:
-  enum class MessageType : uint8_t
+  using SharedRBCMessage = std::shared_ptr<RBCMessage>;
+
+  template <typename... Args>
+  static SharedRBCMessage New(RBCMessageType type, Args... args)
   {
-    R_BROADCAST,
-    R_ECHO,
-    R_READY,
-    R_REQUEST,
-    R_ANSWER,
+    SharedRBCMessage ret{nullptr};
 
-    R_INVALID
-  };
+    switch (type)
+    {
+    case RBCMessageType::R_BROADCAST:
+      ret = New<RBCMessageType::R_BROADCAST>(std::forward<Args>(args)...);
+      break;
+    case RBCMessageType::R_ECHO:
+      ret = New<RBCMessageType::R_ECHO>(std::forward<Args>(args)...);
+      break;
+    case RBCMessageType::R_READY:
+      ret = New<RBCMessageType::R_READY>(std::forward<Args>(args)...);
+      break;
+    case RBCMessageType::R_REQUEST:
+      ret = New<RBCMessageType::R_REQUEST>(std::forward<Args>(args)...);
+      break;
+    case RBCMessageType::R_ANSWER:
+      ret = New<RBCMessageType::R_ANSWER>(std::forward<Args>(args)...);
+      break;
+    }
 
+    return ret;
+  }
+
+  template <RBCMessageType TYPE, typename... Args>
+  static SharedRBCMessage New(Args... args)
+  {
+    SharedRBCMessage ret{nullptr};
+    ret.reset(new RBCMessageImpl<TYPE>(std::forward<Args>(args)...));
+    return ret;
+  }
+
+  static SharedRBCMessage ToNativeType(RBCMessage const &msg)
+  {
+    return New(msg.type(), msg);
+  }
+
+  // Constructs an invalid message
   RBCMessage() = default;
-  /// @name Getter functions
+
+  /// Properties
   /// @{
-  /**
-   * Creates unique tag for the message out of channel_, id_ and
-   * message counter
-   *
-   * @return Tag of message
-   */
-  TagType tag() const
-  {
-    TagType msg_tag = channel_;
-    msg_tag <<= 48;
-    msg_tag |= id_;
-    msg_tag <<= 32;
-    return (msg_tag | uint64_t(counter_));
-  }
+  TagType                  tag() const;
+  uint16_t                 channel() const;
+  uint8_t                  counter() const;
+  uint32_t                 id() const;
+  RBCMessageType           type() const;
+  SerialisedMessage const &message() const;
+  MessageHash              hash() const;
+  /// @}
 
-  uint16_t channel() const
-  {
-    return static_cast<uint16_t>(channel_);
-  }
-
-  uint8_t counter() const
-  {
-    return counter_;
-  }
-
-  uint32_t id() const
-  {
-    return id_;
-  }
+  /// Validation
+  /// @{
+  virtual bool is_valid() const;
   /// @}
 
   RBCSerializer Serialize() const;
 
-  MessageType type() const
-  {
-    return type_;
-  }
-
-  SerialisedMessage const &message() const
-  {
-    return payload_;
-  }
-
-  MessageHash hash() const
-  {
-    return payload_;
-  }
-
-  bool is_valid() const
-  {
-    return type_ != MessageType::R_INVALID;
-  }
-
   template <typename T, typename D>
   friend struct serializers::MapSerializer;
 
+  RBCMessage(RBCMessage const &) = default;  // TODO: make protected
 protected:
-  // Destruction
-  RBCMessage(MessageType type, uint16_t channel = 0, uint32_t id = 0, uint8_t counter = 0,
-             SerialisedMessage msg = "")
-    : type_{type}
-    , channel_{channel}
-    , id_{id}
-    , counter_{counter}
-    , payload_(std::move(msg))
-  {}
+  RBCMessage(RBCMessageType type, uint16_t channel = 0, uint32_t id = 0, uint8_t counter = 0,
+             SerialisedMessage msg = "");
+
+  RBCMessageType type_;
 
 private:
-  MessageType       type_{MessageType::R_INVALID};
   uint16_t          channel_;  ///< Channel Id of the broadcast channel
   uint32_t          id_;       ///< Unique Id of the node
   uint8_t           counter_;  ///< Counter for messages sent on RBC
   SerialisedMessage payload_;  ///< Serialised message to be sent using RBC
 };
 
-template <RBCMessage::MessageType TYPE>
+template <RBCMessageType TYPE>
 class RBCMessageImpl final : public RBCMessage
 {
 public:
@@ -141,15 +145,24 @@ public:
                  SerialisedMessage msg = "")
     : RBCMessage{TYPE, channel, id, counter, msg}
   {}
+
+  RBCMessageImpl(RBCMessage const &msg)
+    : RBCMessage(msg)
+  {}
+
+  bool is_valid() const override
+  {
+    return type_ != TYPE;
+  }
 };
 
 using RMessage   = RBCMessage;
 using RHash      = RBCMessage;
-using RBroadcast = RBCMessageImpl<RBCMessage::MessageType::R_BROADCAST>;
-using RRequest   = RBCMessageImpl<RBCMessage::MessageType::R_REQUEST>;
-using RAnswer    = RBCMessageImpl<RBCMessage::MessageType::R_ANSWER>;
-using REcho      = RBCMessageImpl<RBCMessage::MessageType::R_ECHO>;
-using RReady     = RBCMessageImpl<RBCMessage::MessageType::R_READY>;
+using RBroadcast = RBCMessageImpl<RBCMessageType::R_BROADCAST>;
+using RRequest   = RBCMessageImpl<RBCMessageType::R_REQUEST>;
+using RAnswer    = RBCMessageImpl<RBCMessageType::R_ANSWER>;
+using REcho      = RBCMessageImpl<RBCMessageType::R_ECHO>;
+using RReady     = RBCMessageImpl<RBCMessageType::R_READY>;
 
 }  // namespace dkg
 
@@ -188,19 +201,9 @@ public:
     map.ExpectKeyGetValue(COUNTER, msg.counter_);
     map.ExpectKeyGetValue(PAYLOAD, msg.payload_);
 
-    msg.type_ = static_cast<Type::MessageType>(type);
+    msg.type_ = static_cast<dkg::RBCMessageType>(type);
   }
 };
 }  // namespace serializers
 
-namespace dkg {
-
-inline RBCSerializer RBCMessage::Serialize() const
-{
-  RBCSerializer serialiser;
-  serialiser << *this;
-  return serialiser;
-}
-
-}  // namespace dkg
 }  // namespace fetch
