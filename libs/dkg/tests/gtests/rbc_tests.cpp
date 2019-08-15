@@ -85,22 +85,22 @@ public:
 
   void SendRBroadcast(SerialisedMessage const &msg, uint8_t num_messages)
   {
-    uint32_t sender_index = id_;
+    uint32_t sender_index = this->id();
     uint16_t channel      = CHANNEL_BROADCAST;
-    auto     counter      = static_cast<uint8_t>(msg_counter_ + 1);
+    auto     counter      = static_cast<uint8_t>(this->message_counter() + 1);
     if (Failure(Failures::WRONG_CHANNEL))
     {
       ++channel;
     }
     else if (Failure(Failures::OUT_OF_SEQUENCE_MSGS))
     {
-      assert(num_messages >= msg_counter_);
-      counter = static_cast<uint8_t>(num_messages - msg_counter_);
+      assert(num_messages >= this->message_counter());
+      counter = static_cast<uint8_t>(num_messages - this->message_counter());
     }
     RBroadcast broadcast_msg{channel, sender_index, counter, msg};
-    Broadcast(broadcast_msg);
+    BroadcastLockFree(broadcast_msg);
     ++msg_counter_;
-    OnRBroadcast(broadcast_msg, id_);  // Self sending
+    OnRBroadcast(broadcast_msg, this->id());  // Self sending
   }
 
 private:
@@ -146,7 +146,7 @@ private:
     endpoint_.Broadcast(SERVICE_DKG, CHANNEL_BROADCAST, new_rmsg_serializer.data());
   }
 
-  void Broadcast(RBCMessage const &msg) override
+  void BroadcastLockFree(RBCMessage const &msg) override
   {
     // Serialise the RBCEnvelope
     RBCSerializerCounter msg_counter;
@@ -180,11 +180,17 @@ private:
 
   void OnRBC(MuddleAddress const &from, RBCMessage const &msg) override
   {
-    if (!BasicMessageCheck(from, msg))
+    uint32_t sender_index;
     {
-      return;
+      FETCH_LOCK(lock_);
+      if (!BasicMessageCheck(from, msg))
+      {
+        return;
+      }
+
+      sender_index = CabinetIndex(from);
     }
-    uint32_t sender_index{CabinetIndex(from)};
+
     switch (msg.type())
     {
     case RBCMessage::MessageType::R_BROADCAST:

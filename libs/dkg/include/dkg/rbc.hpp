@@ -25,6 +25,7 @@
 #include "network/muddle/rpc/server.hpp"
 #include "rbc_messages.hpp"
 
+#include <atomic>
 #include <bitset>
 #include <unordered_set>
 
@@ -92,23 +93,36 @@ protected:
   };
   /// @}
 
-  /// Sending messages
-  /// @{
-  void         Send(RBCMessage const &env, MuddleAddress const &address);
-  virtual void Broadcast(RBCMessage const &env);
-  /// @}
-
   /// Events
   /// @{
   virtual void OnRBC(MuddleAddress const &from, RBCMessage const &message);
   void         OnRBroadcast(RBCMessage const &msg, uint32_t sender_index);
   void         OnREcho(RBCMessage const &msg, uint32_t sender_index);
+  void         OnREchoLockFree(RBCMessage const &msg, uint32_t sender_index);
   void         OnRReady(RBCMessage const &msg, uint32_t sender_index);
+  void         OnRReadyLockFree(RBCMessage const &msg, uint32_t sender_index);
   void         OnRRequest(RBCMessage const &msg, uint32_t sender_index);
   void         OnRAnswer(RBCMessage const &msg, uint32_t sender_index);
-  void         Deliver(SerialisedMessage const &msg, uint32_t sender_index);
   /// @}
 
+  /// Message communication
+  /// @{
+  void         SendLockFree(RBCMessage const &env, MuddleAddress const &address);
+  virtual void BroadcastLockFree(RBCMessage const &env);
+  void         DeliverLockFree(SerialisedMessage const &msg, uint32_t sender_index);
+  /// @}
+
+  uint32_t id() const
+  {
+    return id_;
+  }
+
+  uint8_t message_counter() const
+  {
+    return msg_counter_;
+  }
+
+  // TODO: instate private:
   /// Helper functions
   /// @{
   uint32_t            CabinetIndex(MuddleAddress const &other_address) const;
@@ -123,16 +137,23 @@ protected:
 
   /// Variable Declarations
   /// @{
-  uint16_t  channel_{CHANNEL_BROADCAST};
-  uint32_t  id_;           ///< Rank used in DKG (derived from position in current_cabinet_)
-  uint8_t   msg_counter_;  ///< Counter for messages we have broadcasted
-  PartyList parties_;      ///< Keeps track of messages from cabinet members
+  uint16_t channel_{CHANNEL_BROADCAST};
+
+  std::atomic<uint32_t> id_{0};  ///< Rank used in DKG (derived from position in current_cabinet_)
+  std::atomic<uint8_t>  msg_counter_{0};  ///< Counter for messages we have broadcasted
+  PartyList             parties_;         ///< Keeps track of messages from cabinet members
   std::unordered_map<TagType, BroadcastMessage> broadcasts_;  ///< map from tag to broadcasts
   std::unordered_set<TagType>                   delivered_;   ///< Tags of messages delivered
 
-  std::mutex mutex_flags_;      ///< Protects access to Party message flags
-  std::mutex mutex_deliver_;    ///< Protects the delivered message queue
-  std::mutex mutex_broadcast_;  ///< Protects broadcasts_
+  /// Mutex setup that allows easy debugging of deadlocks
+  /// @{
+#ifndef NDEBUG
+  mutable std::mutex                   mutex_;
+  mutable std::unique_lock<std::mutex> lock_{mutex_, std::defer_lock};
+#else
+  mutable std::mutex lock_;
+#endif
+  /// @}
 
   // For broadcast
   MuddleAddress const address_;            ///< Our muddle address

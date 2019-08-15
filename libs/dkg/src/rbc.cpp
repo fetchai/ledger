@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "dkg/rbc.hpp"
 #include "core/logging.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
-#include "dkg/rbc.hpp"
 
 namespace fetch {
 namespace dkg {
@@ -70,7 +70,8 @@ RBC::RBC(Endpoint &endpoint, MuddleAddress address, CallbackFunction call_back, 
  */
 bool RBC::ResetCabinet(CabinetMembers const &cabinet)
 {
-  std::lock_guard<std::mutex> lock{mutex_broadcast_};
+  assert(!lock_.owns_lock());
+  FETCH_LOCK(lock_);
 
   // Empty cabinets cannot be instated.
   if (cabinet.empty())
@@ -78,6 +79,7 @@ bool RBC::ResetCabinet(CabinetMembers const &cabinet)
     return false;
   }
 
+  // Copying cabinet members
   current_cabinet_ = cabinet;
 
   // Set threshold depending on size of committee
@@ -114,11 +116,33 @@ bool RBC::ResetCabinet(CabinetMembers const &cabinet)
 }
 
 /**
+ * Places a serialised message to be broadcast via RBC into an RBCEnvelope and broadcasts
+ * the envelope
+ *
+ * @param msg Serialised message to be broadcast
+ */
+void RBC::SendRBroadcast(SerialisedMessage const &msg)
+{
+  RBroadcast broadcast_msg;
+
+  {  // Creating broadcast message and broadcasting
+    assert(!lock_.owns_lock());
+    FETCH_LOCK(lock_);
+
+    broadcast_msg = RBroadcast(channel_, id_, ++msg_counter_, msg);
+    BroadcastLockFree(broadcast_msg);
+  }
+
+  // Sending message to self
+  OnRBroadcast(broadcast_msg, id_);
+}
+
+/**
  * Sends an RBCEnvelope to a particular address
  * @param env RBCEnvelope to be serialised and sent
  * @param address Destination muddle address
  */
-void RBC::Send(RBCMessage const &msg, MuddleAddress const &address)
+void RBC::SendLockFree(RBCMessage const &msg, MuddleAddress const &address)
 {
   // Serialise the RBCEnvelope
   RBCSerializerCounter msg_counter;
@@ -136,7 +160,7 @@ void RBC::Send(RBCMessage const &msg, MuddleAddress const &address)
  *
  * @param env RBCEnvelope message to be serialised and broadcast
  */
-void RBC::Broadcast(RBCMessage const &msg)
+void RBC::BroadcastLockFree(RBCMessage const &msg)
 {
   // Serialise the RBCEnvelope
   RBCSerializerCounter msg_counter;
@@ -147,6 +171,7 @@ void RBC::Broadcast(RBCMessage const &msg)
   msg_serializer << msg;
 
   // Broadcast without echo
+  assert(lock_.owns_lock());
   for (const auto &address : current_cabinet_)
   {
     if (address != address_)
@@ -157,64 +182,6 @@ void RBC::Broadcast(RBCMessage const &msg)
 }
 
 /**
- * Places a serialised message to be broadcast via RBC into an RBCEnvelope and broadcasts
- * the envelope
- *
- * @param msg Serialised message to be broadcast
- */
-void RBC::SendRBroadcast(SerialisedMessage const &msg)
-{
-  RBroadcast broadcast_msg{channel_, id_, ++msg_counter_, msg};
-  Broadcast(broadcast_msg);
-  OnRBroadcast(broadcast_msg, id_);  // Self sending
-}
-
-/**
- * Sets the message for a particular tag in broadcasts_
- *
- * @param tag Unique tag of a message sent via RBC
- * @param msg Reference of the RMessage message (RBCMessage containing a message_)
- * @param sender_index Index of the sender in current_cabinet_
- * @return Bool for whether the value is set
- */
-bool RBC::SetMbar(TagType tag, RMessage const &msg, uint32_t sender_index)
-{
-  std::lock_guard<std::mutex> lock(mutex_broadcast_);
-  if (broadcasts_[tag].original_message.empty())
-  {
-    broadcasts_[tag].original_message = msg.message();
-    return true;
-  }
-  if (broadcasts_[tag].original_message != msg.message())
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Node ", id_, " received bad r-send message from ", sender_index);
-  }
-  return false;
-}
-
-/**
- * Sets the message hash for a particular tag in broadcasts_
- *
- * @param tag Unique tag of a message sent via RBC
- * @param msg Reference of the RHash (RBCMesssage containing a hash_)
- * @return Bool for whether the hash contained in RHash equals the MessageHash of message stored in
- * original_message for this tag
- */
-bool RBC::SetDbar(TagType tag, RHash const &msg)
-{
-  std::lock_guard<std::mutex> lock(mutex_broadcast_);
-  broadcasts_[tag].message_hash = msg.hash();
-
-  MessageHash msg_hash;
-
-  if (!broadcasts_[tag].original_message.empty())
-  {
-    msg_hash = crypto::Hash<HashFunction>(broadcasts_[tag].original_message);
-  }
-  return msg_hash == msg.hash();
-}
-
-/**
  * Increments counter for REcho messages
  * @param tag Unique tag of a message sent via RBC
  * @param msg Reference to REcho message
@@ -222,8 +189,9 @@ bool RBC::SetDbar(TagType tag, RHash const &msg)
  */
 bool RBC::ReceivedEcho(TagType tag, RBCMessage const &msg)
 {
-  std::lock_guard<std::mutex> lock(mutex_broadcast_);
-  auto &                      msg_count = broadcasts_[tag].msgs_count[msg.hash()];
+  assert(lock_.owns_lock());
+
+  auto &msg_count = broadcasts_[tag].msgs_count[msg.hash()];
   msg_count.echo_count++;
   return (msg_count.echo_count == current_cabinet_.size() - threshold_ &&
           msg_count.ready_count <= threshold_);
@@ -237,35 +205,12 @@ bool RBC::ReceivedEcho(TagType tag, RBCMessage const &msg)
  */
 struct RBC::MessageCount RBC::ReceivedReady(TagType tag, RHash const &msg)
 {
-  std::lock_guard<std::mutex> lock(mutex_broadcast_);
-  auto &                      msg_count = broadcasts_[tag].msgs_count[msg.hash()];
+  assert(lock_.owns_lock());
+
+  auto &msg_count = broadcasts_[tag].msgs_count[msg.hash()];
   msg_count.ready_count++;
   MessageCount res = msg_count;
   return res;
-}
-
-/**
- * Helper function to check basic details of the message to determine if it should be processed
- *
- * @param from Muddle address of sender
- * @param msg_ptr Shared pointer of message
- * @return Bool of whether the message passes the test or not
- */
-bool RBC::BasicMessageCheck(MuddleAddress const &from, RBCMessage const &msg)
-{
-  if (!msg.is_valid())
-  {
-    return false;
-  }
-
-  if ((current_cabinet_.find(from) == current_cabinet_.end()) || (msg.channel() != channel_))
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Node ", id_,
-                   " received message from unknown sender/wrong channel");
-    return false;
-  }
-
-  return true;
 }
 
 /**
@@ -277,11 +222,17 @@ bool RBC::BasicMessageCheck(MuddleAddress const &from, RBCMessage const &msg)
  */
 void RBC::OnRBC(MuddleAddress const &from, RBCMessage const &message)
 {
-  uint32_t sender_index{CabinetIndex(from)};
+  assert(!lock_.owns_lock());
+  uint32_t sender_index;
 
-  if (!BasicMessageCheck(from, message))
   {
-    return;
+    FETCH_LOCK(lock_);
+    sender_index = CabinetIndex(from);
+
+    if (!BasicMessageCheck(from, message))
+    {
+      return;
+    }
   }
 
   switch (message.type())
@@ -330,7 +281,11 @@ void RBC::OnRBC(MuddleAddress const &from, RBCMessage const &message)
  */
 void RBC::OnRBroadcast(RBCMessage const &msg, uint32_t sender_index)
 {
+  assert(!lock_.owns_lock());
+  FETCH_LOCK(lock_);
+
   TagType tag = msg.tag();
+
   if (!SetPartyFlag(sender_index, tag, MessageType::R_BROADCAST))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "onRBroadcast: Node ", id_, " received repeated msg ", tag,
@@ -338,17 +293,19 @@ void RBC::OnRBroadcast(RBCMessage const &msg, uint32_t sender_index)
                    msg.id());
     return;
   }
+
   FETCH_LOG_INFO(LOGGING_NAME, "onRBroadcast: Node ", id_, " received msg ", tag, " from node ",
                  sender_index, " with counter ", msg.counter(), " and id ", msg.id());
   if (sender_index == msg.id())
   {
     if (SetMbar(tag, msg, sender_index))
     {
+
       REcho echo_msg{msg.channel(), msg.id(), msg.counter(),
                      crypto::Hash<HashFunction>(msg.message())};
 
-      Broadcast(echo_msg);
-      OnREcho(echo_msg, id_);  // self sending.
+      BroadcastLockFree(echo_msg);
+      OnREchoLockFree(echo_msg, id_);
     }
   }
   else
@@ -368,6 +325,16 @@ void RBC::OnRBroadcast(RBCMessage const &msg, uint32_t sender_index)
  */
 void RBC::OnREcho(RBCMessage const &msg, uint32_t sender_index)
 {
+  assert(!lock_.owns_lock());
+  FETCH_LOCK(lock_);
+
+  OnREchoLockFree(msg, sender_index);
+}
+
+void RBC::OnREchoLockFree(RBCMessage const &msg, uint32_t sender_index)
+{
+  assert(lock_.owns_lock());
+
   TagType tag = msg.tag();
   if (!SetPartyFlag(sender_index, tag, MessageType::R_ECHO))
   {
@@ -376,14 +343,15 @@ void RBC::OnREcho(RBCMessage const &msg, uint32_t sender_index)
                    msg.id());
     return;
   }
+
   FETCH_LOG_TRACE(LOGGING_NAME, "onREcho: Node ", id_, " received msg ", tag, " from node ",
                   sender_index, " with counter ", msg.counter(), " and id ", msg.id());
   if (ReceivedEcho(tag, msg))
   {
     RReady ready_msg{msg.channel(), msg.id(), msg.counter(), msg.hash()};
 
-    Broadcast(ready_msg);
-    OnRReady(ready_msg, id_);  // self sending.
+    BroadcastLockFree(ready_msg);
+    OnRReadyLockFree(ready_msg, id_);
   }
 }
 
@@ -397,7 +365,18 @@ void RBC::OnREcho(RBCMessage const &msg, uint32_t sender_index)
  */
 void RBC::OnRReady(RBCMessage const &msg, uint32_t sender_index)
 {
+  assert(!lock_.owns_lock());
+  FETCH_LOCK(lock_);
+
+  OnRReadyLockFree(msg, sender_index);
+}
+
+void RBC::OnRReadyLockFree(RBCMessage const &msg, uint32_t sender_index)
+{
+  assert(lock_.owns_lock());
+
   TagType tag = msg.tag();
+
   if (!SetPartyFlag(sender_index, tag, MessageType::R_READY))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "onRReady: Node ", id_, " received repeated msg ", tag,
@@ -405,15 +384,18 @@ void RBC::OnRReady(RBCMessage const &msg, uint32_t sender_index)
                    msg.id());
     return;
   }
+
   FETCH_LOG_TRACE(LOGGING_NAME, "onRReady: Node ", id_, " received msg ", tag, " from node ",
                   sender_index, " with counter ", msg.counter(), " and id ", msg.id());
   auto msgs_counter = ReceivedReady(tag, msg);
+
   if (threshold_ > 0 && msgs_counter.ready_count == threshold_ + 1 &&
       msgs_counter.echo_count < (current_cabinet_.size() - threshold_))
   {
     RReady ready_msg{msg.channel(), msg.id(), msg.counter(), msg.hash()};
-    Broadcast(ready_msg);
-    OnRReady(ready_msg, id_);  // self sending.
+
+    BroadcastLockFree(ready_msg);
+    OnRReadyLockFree(ready_msg, id_);
   }
   else if (msgs_counter.ready_count == 2 * threshold_ + 1)
   {
@@ -424,11 +406,12 @@ void RBC::OnRReady(RBCMessage const &msg, uint32_t sender_index)
       uint32_t counter{0};
       auto     im = current_cabinet_.begin();
       assert(2 * threshold_ + 1 <= current_cabinet_.size());
+
       while (counter < 2 * threshold_ + 1 && im != current_cabinet_.end())
       {
         if (*im != address_)
         {
-          Send(send_msg, *im);
+          SendLockFree(send_msg, *im);
           ++counter;
         }
         ++im;
@@ -438,11 +421,11 @@ void RBC::OnRReady(RBCMessage const &msg, uint32_t sender_index)
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, " delivered msg ", tag, " with counter ",
                      msg.counter(), " and id ", msg.id());
-      std::unique_lock<std::mutex> lock_broadcast(mutex_broadcast_);
-      SerialisedMessage            message_to_send = broadcasts_[tag].original_message;
-      lock_broadcast.unlock();
-      Deliver(message_to_send, msg.id());
-      std::lock_guard<std::mutex> lock(mutex_deliver_);
+
+      SerialisedMessage message_to_send = broadcasts_[tag].original_message;
+
+      DeliverLockFree(message_to_send, msg.id());
+
       delivered_.insert(tag);
     }
   }
@@ -451,7 +434,7 @@ void RBC::OnRReady(RBCMessage const &msg, uint32_t sender_index)
     if (msgs_counter.ready_count == current_cabinet_.size() - 1 &&
         delivered_.find(tag) != delivered_.end())
     {  // all messages arrived let's clean
-      std::lock_guard<std::mutex> lock(mutex_broadcast_);
+
       broadcasts_.erase(tag);
       parties_[sender_index].flags.erase(tag);
     }
@@ -467,6 +450,9 @@ void RBC::OnRReady(RBCMessage const &msg, uint32_t sender_index)
  */
 void RBC::OnRRequest(RBCMessage const &msg, uint32_t sender_index)
 {
+  assert(!lock_.owns_lock());
+  FETCH_LOCK(lock_);
+
   TagType tag = msg.tag();
   if (!SetPartyFlag(sender_index, tag, MessageType::R_REQUEST))
   {
@@ -482,7 +468,7 @@ void RBC::OnRRequest(RBCMessage const &msg, uint32_t sender_index)
     RAnswer nmsg{msg.channel(), msg.id(), msg.counter(), broadcasts_[tag].original_message};
 
     auto im = std::next(current_cabinet_.begin(), sender_index);
-    Send(nmsg, *im);
+    SendLockFree(nmsg, *im);
   }
 }
 
@@ -494,6 +480,9 @@ void RBC::OnRRequest(RBCMessage const &msg, uint32_t sender_index)
  */
 void RBC::OnRAnswer(RBCMessage const &msg, uint32_t sender_index)
 {
+  assert(!lock_.owns_lock());
+  FETCH_LOCK(lock_);
+
   TagType tag = msg.tag();
   if (!SetPartyFlag(sender_index, tag, MessageType::R_ANSWER))
   {
@@ -531,11 +520,11 @@ void RBC::OnRAnswer(RBCMessage const &msg, uint32_t sender_index)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, " delivered msg ", tag, " with counter ",
                    msg.counter(), " and id ", msg.id());
-    std::unique_lock<std::mutex> lock_broadcast(mutex_broadcast_);
-    SerialisedMessage            message_to_send = broadcasts_[tag].original_message;
-    lock_broadcast.unlock();
-    Deliver(message_to_send, msg.id());
-    std::lock_guard<std::mutex> lock(mutex_deliver_);
+
+    SerialisedMessage message_to_send = broadcasts_[tag].original_message;
+
+    DeliverLockFree(message_to_send, msg.id());
+
     delivered_.insert(tag);
   }
 }
@@ -546,18 +535,22 @@ void RBC::OnRAnswer(RBCMessage const &msg, uint32_t sender_index)
  * @param msg Serialised message which has been reliably broadcasted
  * @param sender_index Index of sender in current_cabinet_
  */
-void RBC::Deliver(SerialisedMessage const &msg, uint32_t sender_index)
+void RBC::DeliverLockFree(SerialisedMessage const &msg, uint32_t sender_index)
 {
+  assert(lock_.owns_lock());
+
   assert(parties_.size() == current_cabinet_.size());
+
   MuddleAddress miner_id{*std::next(current_cabinet_.begin(), sender_index)};
   deliver_msg_callback_(miner_id, msg);
   ++parties_[sender_index].deliver_s;  // Increase counter
+
   // Try to deliver old messages
-  std::lock_guard<std::mutex> lock(mutex_deliver_);
   if (!parties_[sender_index].undelivered_msg.empty())
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, " checks old messages for node ", sender_index);
     auto old_tag_msg = parties_[sender_index].undelivered_msg.begin();
+
     while (old_tag_msg != parties_[sender_index].undelivered_msg.end() &&
            old_tag_msg->first == parties_[sender_index].deliver_s)
     {
@@ -575,6 +568,79 @@ void RBC::Deliver(SerialisedMessage const &msg, uint32_t sender_index)
 }
 
 /**
+ * Helper function to check basic details of the message to determine if it should be processed
+ *
+ * @param from Muddle address of sender
+ * @param msg_ptr Shared pointer of message
+ * @return Bool of whether the message passes the test or not
+ */
+bool RBC::BasicMessageCheck(MuddleAddress const &from, RBCMessage const &msg)
+{
+  assert(lock_.owns_lock());
+
+  if (!msg.is_valid())
+  {
+    return false;
+  }
+
+  if ((current_cabinet_.find(from) == current_cabinet_.end()) || (msg.channel() != channel_))
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Node ", id_,
+                   " received message from unknown sender/wrong channel");
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * Sets the message for a particular tag in broadcasts_
+ *
+ * @param tag Unique tag of a message sent via RBC
+ * @param msg Reference of the RMessage message (RBCMessage containing a message_)
+ * @param sender_index Index of the sender in current_cabinet_
+ * @return Bool for whether the value is set
+ */
+bool RBC::SetMbar(TagType tag, RMessage const &msg, uint32_t sender_index)
+{
+  assert(lock_.owns_lock());
+
+  if (broadcasts_[tag].original_message.empty())
+  {
+    broadcasts_[tag].original_message = msg.message();
+    return true;
+  }
+
+  if (broadcasts_[tag].original_message != msg.message())
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Node ", id_, " received bad r-send message from ", sender_index);
+  }
+  return false;
+}
+
+/**
+ * Sets the message hash for a particular tag in broadcasts_
+ *
+ * @param tag Unique tag of a message sent via RBC
+ * @param msg Reference of the RHash (RBCMesssage containing a hash_)
+ * @return Bool for whether the hash contained in RHash equals the MessageHash of message stored in
+ * original_message for this tag
+ */
+bool RBC::SetDbar(TagType tag, RHash const &msg)
+{
+  assert(lock_.owns_lock());
+  broadcasts_[tag].message_hash = msg.hash();
+
+  MessageHash msg_hash;
+
+  if (!broadcasts_[tag].original_message.empty())
+  {
+    msg_hash = crypto::Hash<HashFunction>(broadcasts_[tag].original_message);
+  }
+  return msg_hash == msg.hash();
+}
+
+/**
  * Computes index of an address in current_cabinet_
  *
  * @param other_address Muddle address of cabinet member
@@ -582,6 +648,8 @@ void RBC::Deliver(SerialisedMessage const &msg, uint32_t sender_index)
  */
 uint32_t RBC::CabinetIndex(MuddleAddress const &other_address) const
 {
+  assert(lock_.owns_lock());
+
   auto iter = current_cabinet_.find(other_address);
   assert(iter != current_cabinet_.end());
   return static_cast<uint32_t>(std::distance(current_cabinet_.begin(), iter));
@@ -596,14 +664,17 @@ uint32_t RBC::CabinetIndex(MuddleAddress const &other_address) const
  */
 bool RBC::CheckTag(RBCMessage const &msg)
 {
-  std::lock_guard<std::mutex> lock(mutex_deliver_);
+  assert(lock_.owns_lock());
+
   if (msg.id() >= current_cabinet_.size())
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Node ", id_, " received message with unknown tag id");
     return false;
   }
   assert(parties_.size() == current_cabinet_.size());
+
   uint8_t msg_counter = parties_[msg.id()].deliver_s;
+
   FETCH_LOG_TRACE(LOGGING_NAME, "Node ", id_, " has counter ", msg_counter, " for node ", msg.id());
   assert(msg.channel() == channel_);
   if (msg.counter() == msg_counter)
@@ -635,8 +706,9 @@ bool RBC::CheckTag(RBCMessage const &msg)
  */
 bool RBC::SetPartyFlag(uint32_t sender_index, TagType tag, MessageType msg_type)
 {
-  std::lock_guard<std::mutex> lock(mutex_flags_);
+  assert(lock_.owns_lock());
   assert(parties_.size() == current_cabinet_.size());
+
   auto &iter  = parties_[sender_index].flags[tag];
   auto  index = static_cast<uint32_t>(msg_type);
   if (iter[index])
