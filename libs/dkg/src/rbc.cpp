@@ -25,27 +25,6 @@ namespace fetch {
 namespace dkg {
 
 constexpr char const *LOGGING_NAME = "RBC";
-
-std::string RBC::MessageTypeToString(MessageType msg_type)
-{
-  switch (msg_type)
-  {
-  case MessageType::R_BROADCAST:
-    return "r_broadcast";
-  case MessageType::R_ECHO:
-    return "r_echo";
-  case MessageType::R_READY:
-    return "r_ready";
-  case MessageType::R_REQUEST:
-    return "r_request";
-  case MessageType::R_ANSWER:
-    return "r_answer";
-  default:
-    assert(false);
-    return "";
-  }
-}
-
 /**
  * Creates instance of RBC
  *
@@ -55,15 +34,12 @@ std::string RBC::MessageTypeToString(MessageType msg_type)
  * @param threshold Threshold number of Byzantine peers
  * @param dkg
  */
-RBC::RBC(Endpoint &endpoint, MuddleAddress address, CabinetMembers const &cabinet,
-         std::function<void(MuddleAddress const &, byte_array::ConstByteArray const &)> call_back,
-         uint8_t                                                                        channel)
-  : CHANNEL_BROADCAST{channel}
+RBC::RBC(Endpoint &endpoint, MuddleAddress address, CallbackFunction call_back, uint16_t channel)
+  : channel_{channel}
   , address_{std::move(address)}
   , endpoint_{endpoint}
-  , current_cabinet_{cabinet}
   , deliver_msg_callback_{std::move(call_back)}
-  , rbc_subscription_(endpoint.Subscribe(SERVICE_DKG, CHANNEL_BROADCAST))
+  , rbc_subscription_(endpoint.Subscribe(SERVICE_DKG, channel_))
 {
 
   // Set subscription for rbc
@@ -80,7 +56,7 @@ RBC::RBC(Endpoint &endpoint, MuddleAddress address, CabinetMembers const &cabine
     }
     catch (...)
     {
-      // Possibly bad payload.
+      // Deserialization failed - bad payload.
       return;
     }
 
@@ -92,10 +68,17 @@ RBC::RBC(Endpoint &endpoint, MuddleAddress address, CabinetMembers const &cabine
 /**
  * Resets the RBC for a new cabinet
  */
-void RBC::ResetCabinet()
+bool RBC::ResetCabinet(CabinetMembers const &cabinet)
 {
-  assert(!current_cabinet_.empty());
-  assert(current_cabinet_.find(address_) != current_cabinet_.end());
+  std::lock_guard<std::mutex> lock{mutex_broadcast_};
+
+  // Empty cabinets cannot be instated.
+  if (cabinet.empty())
+  {
+    return false;
+  }
+
+  current_cabinet_ = cabinet;
 
   // Set threshold depending on size of committee
   if (current_cabinet_.size() % 3 == 0)
@@ -106,14 +89,28 @@ void RBC::ResetCabinet()
   {
     threshold_ = static_cast<uint32_t>(current_cabinet_.size() / 3);
   }
+
   assert(current_cabinet_.size() > 3 * threshold_);
-  std::lock_guard<std::mutex> lock{mutex_broadcast_};
-  id_ = static_cast<uint32_t>(
-      std::distance(current_cabinet_.begin(), current_cabinet_.find(address_)));
+
+  auto iterator = current_cabinet_.find(address_);
+
+  // Cannot determine id_ if not present in the
+  // current cabinet.
+  if (iterator == current_cabinet_.end())
+  {
+    return false;
+  }
+
+  // Finding own id.
+  id_ = static_cast<uint32_t>(std::distance(current_cabinet_.begin(), iterator));
+
+  // Reseting the state of the RBC
   parties_.clear();
   parties_.resize(current_cabinet_.size());
   broadcasts_.clear();
   msg_counter_ = 0;
+
+  return true;
 }
 
 /**
@@ -131,7 +128,7 @@ void RBC::Send(RBCMessage const &msg, MuddleAddress const &address)
   msg_serializer.Reserve(msg_counter.size());
   msg_serializer << msg;
 
-  endpoint_.Send(address, SERVICE_DKG, CHANNEL_BROADCAST, msg_serializer.data());
+  endpoint_.Send(address, SERVICE_DKG, channel_, msg_serializer.data());
 }
 
 /**
@@ -154,7 +151,7 @@ void RBC::Broadcast(RBCMessage const &msg)
   {
     if (address != address_)
     {
-      endpoint_.Send(address, SERVICE_DKG, CHANNEL_BROADCAST, msg_serializer.data());
+      endpoint_.Send(address, SERVICE_DKG, channel_, msg_serializer.data());
     }
   }
 }
@@ -167,7 +164,7 @@ void RBC::Broadcast(RBCMessage const &msg)
  */
 void RBC::SendRBroadcast(SerialisedMessage const &msg)
 {
-  RBroadcast broadcast_msg{CHANNEL_BROADCAST, id_, ++msg_counter_, msg};
+  RBroadcast broadcast_msg{channel_, id_, ++msg_counter_, msg};
   Broadcast(broadcast_msg);
   OnRBroadcast(broadcast_msg, id_);  // Self sending
 }
@@ -207,10 +204,12 @@ bool RBC::SetDbar(TagType tag, RHash const &msg)
 {
   std::lock_guard<std::mutex> lock(mutex_broadcast_);
   broadcasts_[tag].message_hash = msg.hash();
-  TruncatedHash msg_hash;
+
+  MessageHash msg_hash;
+
   if (!broadcasts_[tag].original_message.empty())
   {
-    msg_hash = MessageHash(broadcasts_[tag].original_message);
+    msg_hash = crypto::Hash<HashFunction>(broadcasts_[tag].original_message);
   }
   return msg_hash == msg.hash();
 }
@@ -259,13 +258,13 @@ bool RBC::BasicMessageCheck(MuddleAddress const &from, RBCMessage const &msg)
     return false;
   }
 
-  if ((current_cabinet_.find(from) == current_cabinet_.end()) ||
-      (msg.channel() != CHANNEL_BROADCAST))
+  if ((current_cabinet_.find(from) == current_cabinet_.end()) || (msg.channel() != channel_))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Node ", id_,
                    " received message from unknown sender/wrong channel");
     return false;
   }
+
   return true;
 }
 
@@ -345,7 +344,8 @@ void RBC::OnRBroadcast(RBCMessage const &msg, uint32_t sender_index)
   {
     if (SetMbar(tag, msg, sender_index))
     {
-      REcho echo_msg{msg.channel(), msg.id(), msg.counter(), MessageHash(msg.message())};
+      REcho echo_msg{msg.channel(), msg.id(), msg.counter(),
+                     crypto::Hash<HashFunction>(msg.message())};
 
       Broadcast(echo_msg);
       OnREcho(echo_msg, id_);  // self sending.
@@ -505,7 +505,8 @@ void RBC::OnRAnswer(RBCMessage const &msg, uint32_t sender_index)
     return;
   }
   // Check the hash of the message
-  TruncatedHash msg_hash{MessageHash(msg.message())};
+  MessageHash msg_hash{crypto::Hash<HashFunction>(msg.message())};
+
   if (msg_hash == broadcasts_[tag].message_hash)
   {
     if (broadcasts_[tag].original_message.empty())
@@ -604,7 +605,7 @@ bool RBC::CheckTag(RBCMessage const &msg)
   assert(parties_.size() == current_cabinet_.size());
   uint8_t msg_counter = parties_[msg.id()].deliver_s;
   FETCH_LOG_TRACE(LOGGING_NAME, "Node ", id_, " has counter ", msg_counter, " for node ", msg.id());
-  assert(msg.channel() == CHANNEL_BROADCAST);
+  assert(msg.channel() == channel_);
   if (msg.counter() == msg_counter)
   {
     return true;
@@ -646,15 +647,6 @@ bool RBC::SetPartyFlag(uint32_t sender_index, TagType tag, MessageType msg_type)
   }
   iter.set(index);
   return true;
-}
-
-/**
- * Helper function to compute truncation of message hash to 8 bytes. Truncation from left side.
- */
-TruncatedHash MessageHash(SerialisedMessage const &msg)
-{
-  byte_array::ByteArray msg_hash_256{crypto::Hash<crypto::SHA256>(msg)};
-  return msg_hash_256.SubArray(24);
 }
 
 }  // namespace dkg

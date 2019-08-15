@@ -74,18 +74,19 @@ public:
             std::function<void(ConstByteArray const &address, ConstByteArray const &payload)>
                                          broadcast_callback,
             const std::vector<Failures> &failures = {})
-    : RBC{endpoint, std::move(address), cabinet, std::move(broadcast_callback)}
+    : RBC{endpoint, std::move(address), std::move(broadcast_callback)}
   {
     for (auto f : failures)
     {
       failures_flags_.set(static_cast<uint32_t>(f));
     }
+    ResetCabinet(cabinet);
   }
 
   void SendRBroadcast(SerialisedMessage const &msg, uint8_t num_messages)
   {
     uint32_t sender_index = id_;
-    uint8_t  channel      = CHANNEL_BROADCAST;
+    uint16_t channel      = CHANNEL_BROADCAST;
     auto     counter      = static_cast<uint8_t>(msg_counter_ + 1);
     if (Failure(Failures::WRONG_CHANNEL))
     {
@@ -278,7 +279,7 @@ struct RbcMember
   void ResetCabinet(RBC::CabinetMembers const &new_cabinet)
   {
     cabinet = new_cabinet;
-    rbc.ResetCabinet();
+    rbc.ResetCabinet(cabinet);
   }
 };
 
