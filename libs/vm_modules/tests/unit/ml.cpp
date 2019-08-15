@@ -29,9 +29,8 @@
 
 using namespace fetch::vm;
 using ::testing::Between;
-namespace {
 
-// using ::testing::Between;
+namespace {
 
 using DataType = fetch::vm_modules::math::DataType;
 
