@@ -263,6 +263,11 @@ public:
     return *this->output_;
   }
 
+  void set_weights(TensorType &new_value) override
+  {
+    this->output_->Assign(new_value);
+  }
+
   /**
    * exports the weight gradients Array
    * @return const reference to internal accumulated gradient Array

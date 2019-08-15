@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/random.hpp"
+#include "math/matrix_operations.hpp"
 #include "math/statistics/mean.hpp"
 #include "math/tensor.hpp"
 #include "ml/core/graph.hpp"
@@ -47,24 +48,27 @@
 // Remember to disable debug using | grep -v INFO
 #define NUMBER_OF_CLIENTS 10
 #define NUMBER_OF_PEERS 3
-#define NUMBER_OF_ITERATIONS 20
+#define NUMBER_OF_ITERATIONS 500
 #define BATCH_SIZE 32
-#define NUMBER_OF_BATCHES 10
+//#define NUMBER_OF_BATCHES 3
+#define SYNCHRONIZATION_INTERVAL 10
 #define MERGE_RATIO .5f
-#define LEARNING_RATE .01f
+#define LEARNING_RATE .001f
+#define VALIDATION_SET_RATIO 0.03f
 
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
 
-using DataType   = float;
-using TensorType = fetch::math::Tensor<DataType>;
-using SizeType   = fetch::math::SizeType;
+using DataType         = float;
+using TensorType       = fetch::math::Tensor<DataType>;
+using TensorVectorType = std::vector<TensorType>;
+using SizeType         = fetch::math::SizeType;
 
 class TrainingClient
 {
 public:
   TrainingClient(std::string const &images, std::string const &labels)
-    : dataloader_(images, labels, true)
+    : dataloader_(images, labels, true,VALIDATION_SET_RATIO)
   {
     g_.AddNode<PlaceHolder<TensorType>>("Input", {});
     g_.AddNode<FullyConnected<TensorType>>("FC1", {"Input"}, 28u * 28u, 10u);
@@ -77,42 +81,72 @@ public:
     g_.AddNode<CrossEntropyLoss<TensorType>>("Error", {"Softmax", "Label"});
   }
 
-  void Train(unsigned int numberOfBatches)
+  void Train(unsigned int batch_size)
   {
     float                                          loss = 0;
     CrossEntropyLoss<TensorType>                   criterion;
     std::pair<TensorType, std::vector<TensorType>> input;
-    for (unsigned int i(0); i < numberOfBatches; ++i)
+
+    loss = 0;
+    for (unsigned int j(0); j < batch_size; ++j)
     {
-      loss = 0;
-      for (unsigned int j(0); j < BATCH_SIZE; ++j)
+      // Random sampling ensures that for relatively few training steps the proportion of shared
+      // training data is low
+      input = dataloader_.GetNext();
+      g_.SetInput("Input", input.second.at(0));
+      g_.SetInput("Label", input.first);
       {
-        // Random sampling ensures that for relatively few training steps the proportion of shared
-        // training data is low
-        input = dataloader_.GetNext();
-        g_.SetInput("Input", input.second.at(0));
-        g_.SetInput("Label", input.first);
-        {
-          std::lock_guard<std::mutex> l(m_);
-          TensorType                  loss_tensor = g_.ForwardPropagate("Error");
-          loss += *(loss_tensor.begin());
-          g_.BackPropagateError("Error");
-        }
-      }
-      losses_values_.push_back(loss);
-      {
-        // Updating the weights
         std::lock_guard<std::mutex> l(m_);
-        g_.Step(LEARNING_RATE);
+        TensorType                  loss_tensor = g_.ForwardPropagate("Error");
+        loss += *(loss_tensor.begin());
+        g_.BackPropagateError("Error");
       }
     }
-    UpdateWeights();
+
+    Validate(loss);
+
+    losses_values_.push_back(loss / static_cast<DataType>(batch_size));
+
+
+
+
+    UpdateGradients();
   }
 
-  fetch::ml::StateDict<fetch::math::Tensor<float>> GetStateDict() const
+    void Validate(DataType &validation_loss)
+    {
+      if (!dataloader_.IsValidable())
+      {
+        throw std::runtime_error("No validation set");
+      }
+
+      SizeType val_set_size = dataloader_.Size(true);
+
+      dataloader_.Reset(true);
+      bool is_done_set;
+      auto validation_pair = dataloader_.PrepareBatch(val_set_size, is_done_set, true);
+
+      g_.SetInput("Input", validation_pair.second.at(0));
+      g_.SetInput("Label", validation_pair.first);
+      validation_loss = *(g_.Evaluate("Error").begin());
+
+      // Normalize loss to batch size
+      // validation_loss= ((validation_loss*static_cast<DataType>(this->estimator_config_.subset_size))
+      // / static_cast<DataType>(val_set_size));
+
+    }
+
+
+  TensorVectorType GetGradients() const
   {
     std::lock_guard<std::mutex> l(const_cast<std::mutex &>(m_));
-    return g_.StateDict();
+    return g_.GetGradients();
+  }
+
+  TensorVectorType GetWeights() const
+  {
+    std::lock_guard<std::mutex> l(const_cast<std::mutex &>(m_));
+    return g_.get_weights();
   }
 
   void AddPeers(std::vector<std::shared_ptr<TrainingClient>> const &clients)
@@ -127,22 +161,49 @@ public:
     fetch::random::Shuffle(gen_, peers_, peers_);
   }
 
-  void UpdateWeights()
+  void UpdateGradients()
   {
-    std::list<fetch::ml::StateDict<TensorType>> stateDicts;
+    // Load own gradient
+    TensorVectorType current_gradient = g_.GetGradients();
+
+    // SGD
+    for (SizeType j{0}; j < current_gradient.size(); j++)
+    {
+      fetch::math::Multiply(current_gradient.at(j), -LEARNING_RATE, current_gradient.at(j));
+    }
+
+    // Load gradients from peers
     for (unsigned int i(0); i < NUMBER_OF_PEERS; ++i)
     {
-      // Collect the stateDicts from randomly selected peers
-      stateDicts.push_back(peers_[i]->GetStateDict());
+      peers_[i]->ApplyGradient(current_gradient);
     }
-    fetch::ml::StateDict<TensorType> averageStateDict =
-        fetch::ml::StateDict<TensorType>::MergeList(stateDicts);
+
+    // Apply gradients
     {
       std::lock_guard<std::mutex> l(m_);
-      g_.LoadStateDict(g_.StateDict().Merge(averageStateDict, MERGE_RATIO));
+      g_.ApplyGradients(current_gradient);
     }
+
     // Shuffle the peers list to get new contact for next update
     fetch::random::Shuffle(gen_, peers_, peers_);
+  }
+
+  void ApplyGradient(TensorVectorType gradient)
+  {
+
+    // Add gradient tu queue??
+
+    // Apply gradients
+    {
+      std::lock_guard<std::mutex> l(m_);
+      g_.ApplyGradients(gradient);
+    }
+  }
+
+  void SetWeights(TensorVectorType &new_weights)
+  {
+    std::lock_guard<std::mutex> l(const_cast<std::mutex &>(m_));
+    g_.set_weights(new_weights);
   }
 
   std::vector<float> const &GetLossesValues() const
@@ -194,14 +255,37 @@ int main(int ac, char **av)
     clients[i]->AddPeers(clients);
   }
 
+  /*
+   TensorVectorType weights=clients[0]->GetWeights();
+  // Make sure that all clients has same model
+  for (unsigned int i(1); i < NUMBER_OF_CLIENTS; ++i)
+  {
+    std::cout<<weights.at(0).ToString()<<std::endl;
+    clients[i]->SetWeights(weights);
+  }
+   */
+
+  TensorVectorType weights=clients[0]->GetWeights();
+
   for (unsigned int it(0); it < NUMBER_OF_ITERATIONS; ++it)
   {
+
+
+if(it%SYNCHRONIZATION_INTERVAL==0)
+{
+    for (unsigned int i(1); i < NUMBER_OF_CLIENTS; ++i)
+    {
+      clients[i]->SetWeights(weights);
+    }
+}
+
+
     std::cout << "================= ITERATION : " << it << " =================" << std::endl;
     std::list<std::thread> threads;
     for (auto &c : clients)
     {
       // Start each client to train on NUMBER_OF_BATCHES * BATCH_SIZE examples
-      threads.emplace_back([&c] { c->Train(NUMBER_OF_BATCHES); });
+      threads.emplace_back([&c] { c->Train(BATCH_SIZE); });
     }
     for (auto &t : threads)
     {

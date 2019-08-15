@@ -84,6 +84,7 @@ public:
   virtual void LoadStateDict(struct fetch::ml::StateDict<T> const &dict);
 
   std::vector<TensorType> get_weights() const;
+  void                    set_weights(std::vector<TensorType> &new_weights);
   std::vector<TensorType> GetGradients() const;
   void                    ApplyGradients(std::vector<TensorType> &grad);
 
@@ -472,6 +473,17 @@ std::vector<TensorType> Graph<TensorType>::get_weights() const
     ret.emplace_back(t->get_weights());
   }
   return std::move(ret);
+}
+
+template <typename TensorType>
+void Graph<TensorType>::set_weights(std::vector<TensorType> &new_weights)
+{
+  SizeType index = 0;
+  for (auto const &t : trainable_)
+  {
+    t->set_weights(new_weights.at(index));
+    index++;
+  }
 }
 
 /**
