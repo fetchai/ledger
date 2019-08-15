@@ -22,6 +22,7 @@
 #include "ml/core/graph.hpp"
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/optimisation/learning_rate_params.hpp"
+#include "ml/utilities/graph_builder.hpp"
 
 #include <chrono>
 
@@ -69,6 +70,9 @@ public:
   SizeType UpdateBatchSize(SizeType const &batch_size, SizeType const &data_size,
                            SizeType const &subset_size = SIZE_NOT_SET);
 
+  template <typename X, typename D>
+  friend struct serializers::MapSerializer;
+
 protected:
   std::shared_ptr<Graph<T>> graph_;
   std::vector<std::string>  input_node_names_ = {};
@@ -104,112 +108,6 @@ private:
   DataType RunImplementation(fetch::ml::dataloaders::DataLoader<TensorType, TensorType> &loader,
                              SizeType batch_size  = SIZE_NOT_SET,
                              SizeType subset_size = SIZE_NOT_SET);
-
-public:
-  /// serialisation ///
-
-  template <typename S>
-  friend void Serialize(S &serializer, Optimiser<T> const &o)
-  {
-    o.graph_.Serialize(serializer, o.graph_);
-
-    for (auto &val : o.input_node_names_)
-    {
-      serializer << val;
-    }
-
-    serializer << o.label_node_name_;
-    serializer << o.output_node_name_;
-    serializer << o.learning_rate_;
-
-    for (auto &val : o.graph_trainables_)
-    {
-      val->Serialize(serializer, val);
-    }
-    for (auto &val : o.gradients_)
-    {
-      val.Serialize(serializer, val);
-    }
-    serializer << o.epoch_;
-
-    serializer << o.loss_;
-    serializer << o.loss_sum_;
-    serializer << o.step_;
-    serializer << o.cumulative_step_;
-    o.input_.first.Serialize(serializer, o.input_.first);
-    for (auto &val : o.input_.second)
-    {
-      o.input_.second.Serialize(serializer, o.input_.second);
-    }
-    o.cur_label_.Serialize(serializer, o.cur_label_);
-    o.pred_label_.Serialize(serializer, o.pred_label_);
-    o.pred_label_.Serialize(serializer, o.pred_label_);
-
-    serializer << o.cur_time_;
-    serializer << o.start_time_;
-    serializer << o.time_span_;
-    serializer << o.stat_string_;
-
-    for (auto &val : o.batch_data_)
-    {
-      o.batch_data_.Serialize(serializer, val);
-    }
-    o.batch_labels_.Serialize(serializer, o.batch_labels_);
-
-    o.learning_rate_param_.Serialize(serializer, o.learning_rate_param_);
-  }
-
-  template <typename S>
-  friend void Deserialize(S &serializer, Optimiser<T> &o)
-  {
-
-    o.graph_.Deserialize(serializer, o.graph_);
-
-    for (auto &val : o.input_node_names_)
-    {
-      serializer >> val;
-    }
-
-    serializer >> o.label_node_name_;
-    serializer >> o.output_node_name_;
-    serializer >> o.learning_rate_;
-
-    for (auto &val : o.graph_trainables_)
-    {
-      val->Deserialize(serializer, val);
-    }
-    for (auto &val : o.gradients_)
-    {
-      val.Deserialize(serializer, val);
-    }
-    serializer >> o.epoch_;
-
-    serializer >> o.loss_;
-    serializer >> o.loss_sum_;
-    serializer >> o.step_;
-    serializer >> o.cumulative_step_;
-    o.input_.first.Deserialize(serializer, o.input_.first);
-    for (auto &val : o.input_.second)
-    {
-      o.input_.second.Deserialize(serializer, o.input_.second);
-    }
-    o.cur_label_.Deserialize(serializer, o.cur_label_);
-    o.pred_label_.Deserialize(serializer, o.pred_label_);
-    o.pred_label_.Deserialize(serializer, o.pred_label_);
-
-    serializer >> o.cur_time_;
-    serializer >> o.start_time_;
-    serializer >> o.time_span_;
-    serializer >> o.stat_string_;
-
-    for (auto &val : o.batch_data_)
-    {
-      o.batch_data_.Deserialize(serializer, val);
-    }
-    o.batch_labels_.Deserialize(serializer, o.batch_labels_);
-
-    o.learning_rate_param_.Deserialize(serializer, o.learning_rate_param_);
-  }
 };
 
 template <class T>
@@ -593,36 +491,36 @@ struct MapSerializer<ml::optimisers::Optimiser<TensorType>, D>
   using DriverType = D;
 
   // public member variables
-  static uint8_t const GRAPH            = 1;
-  static uint8_t const INPUT_NODE_NAMES = 2;
-  static uint8_t const LABEL_NODE_NAME  = 3;
-  static uint8_t const OUTPUT_NODE_NAME = 4;
-  static uint8_t const LEARNING_RATE    = 5;
-  static uint8_t const GRAPH_TRAINABLES = 6;
-  static uint8_t const GRADIENTS        = 7;
-  static uint8_t const EPOCH            = 8;
+  static uint8_t const GRAPH               = 1;
+  static uint8_t const INPUT_NODE_NAMES    = 2;
+  static uint8_t const LABEL_NODE_NAME     = 3;
+  static uint8_t const OUTPUT_NODE_NAME    = 4;
+  static uint8_t const LEARNING_RATE       = 5;
+  static uint8_t const LEARNING_RATE_PARAM = 6;
+
+  static uint8_t const GRADIENTS = 7;
+  static uint8_t const EPOCH     = 8;
 
   // private member variables
-  static uint8_t const LOSS                = 9;
-  static uint8_t const LOSS_SUM            = 10;
-  static uint8_t const STEP                = 11;
-  static uint8_t const CUMULATIVE_STEP     = 12;
-  static uint8_t const INPUT_FIRST         = 13;
-  static uint8_t const INPUT_SECOND        = 14;
-  static uint8_t const CUR_LABEL           = 15;
-  static uint8_t const PRED_LABEL          = 16;
-  static uint8_t const CUR_TIME            = 17;
-  static uint8_t const START_TIME          = 18;
-  static uint8_t const TIME_SPAN           = 19;
-  static uint8_t const STAT_STRING         = 20;
-  static uint8_t const BATCH_DATA          = 21;
-  static uint8_t const BATCH_LABELS        = 22;
-  static uint8_t const LEARNING_RATE_PARAM = 23;
+  static uint8_t const LOSS            = 9;
+  static uint8_t const LOSS_SUM        = 10;
+  static uint8_t const STEP            = 11;
+  static uint8_t const CUMULATIVE_STEP = 12;
+  static uint8_t const INPUT_FIRST     = 13;
+  static uint8_t const INPUT_SECOND    = 14;
+  static uint8_t const CUR_LABEL       = 15;
+  static uint8_t const PRED_LABEL      = 16;
+  static uint8_t const CUR_TIME        = 17;
+  static uint8_t const START_TIME      = 18;
+  static uint8_t const TIME_SPAN       = 19;
+  static uint8_t const STAT_STRING     = 20;
+  static uint8_t const BATCH_DATA      = 21;
+  static uint8_t const BATCH_LABELS    = 22;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(23);
+    auto map = map_constructor(22);
 
     // serialize the graph first
     map.Append(GRAPH, sp.graph_->GetGraphSaveableParams());
@@ -631,18 +529,20 @@ struct MapSerializer<ml::optimisers::Optimiser<TensorType>, D>
     map.Append(LABEL_NODE_NAME, sp.label_node_name_);
     map.Append(OUTPUT_NODE_NAME, sp.output_node_name_);
     map.Append(LEARNING_RATE, sp.learning_rate_);
+    map.Append(LEARNING_RATE_PARAM, sp.learning_rate_param_);
 
-    // serialise the trainables
-    std::vector<fetch::ml::ops::Trainable<TensorType>> graph_trainables;
-    for (auto const & trainable : sp.graph_trainables_)
-    {
-      graph_trainables.emplace_back(*trainable);
-    }
-    map.Append(GRAPH_TRAINABLES, graph_trainables);
+    // don't store trainables - just recover them from the graph afterwards
+    //    // serialise the trainables
+    //    std::vector<fetch::ml::ops::Trainable<TensorType>> graph_trainables;
+    //    for (auto const & trainable : sp.graph_trainables_)
+    //    {
+    //      graph_trainables.emplace_back(*trainable);
+    //    }
+    //    map.Append(GRAPH_TRAINABLES, graph_trainables);
 
     map.Append(GRADIENTS, sp.gradients_);
     map.Append(EPOCH, sp.epoch_);
-    map.Append(LOSS, sp.loss);
+    map.Append(LOSS, sp.loss_);
     map.Append(LOSS_SUM, sp.loss_sum_);
     map.Append(STEP, sp.step_);
     map.Append(CUMULATIVE_STEP, sp.cumulative_step_);
@@ -654,33 +554,69 @@ struct MapSerializer<ml::optimisers::Optimiser<TensorType>, D>
     map.Append(PRED_LABEL, sp.pred_label_);
 
     // TODO - fix chrono
-    map.Append(CUR_TIME, sp.cur_time_);
-    map.Append(START_TIME, sp.start_time_);
-    map.Append(TIME_SPAN, sp.time_span_);
-//    std::chrono::high_resolution_clock::time_point cur_time_;
-//    std::chrono::high_resolution_clock::time_point start_time_;
-//    std::chrono::duration<double>                  time_span_;
-
+    //    map.Append(CUR_TIME, sp.cur_time_);
+    //    map.Append(START_TIME, sp.start_time_);
+    //    map.Append(TIME_SPAN, sp.time_span_);
+    //    std::chrono::high_resolution_clock::time_point cur_time_;
+    //    std::chrono::high_resolution_clock::time_point start_time_;
+    //    std::chrono::duration<double>                  time_span_;
 
     map.Append(STAT_STRING, sp.stat_string_);
     map.Append(BATCH_DATA, sp.batch_data_);
     map.Append(BATCH_LABELS, sp.batch_labels_);
-    map.Append(LEARNING_RATE_PARAM, sp.learning_rate_param_);
-
   }
 
   template <typename MapDeserializer>
   static void Deserialize(MapDeserializer &map, Type &sp)
   {
-    //    uint8_t lrdm;
-    //    map.ExpectKeyGetValue(LEARNING_RATE_DECAY_MODE, lrdm);
-    //    sp.mode = static_cast<typename
-    //    fetch::ml::optimisers::LearningRateParam<TensorType>::LearningRateDecay>(lrdm);
-    //
-    //    map.ExpectKeyGetValue(STARTING_LEARNING_RATE, sp.starting_learning_rate);
-    //    map.ExpectKeyGetValue(ENDING_LEARNING_RATE, sp.ending_learning_rate);
-    //    map.ExpectKeyGetValue(LINEAR_DECAY_RATE, sp.linear_decay_rate);
-    //    map.ExpectKeyGetValue(EXPONENTIAL_DECAY_RATE, sp.exponential_decay_rate);
+    // deserialize the graph first
+    fetch::ml::GraphSaveableParams<TensorType> gsp;
+    map.ExpectKeyGetValue(GRAPH, gsp);
+    auto graph_ptr = std::make_shared<fetch::ml::Graph<TensorType>>();
+    ml::utilities::BuildGraph(gsp, graph_ptr);
+    sp.graph_ = graph_ptr;
+
+    map.ExpectKeyGetValue(INPUT_NODE_NAMES, sp.input_node_names_);
+    map.ExpectKeyGetValue(LABEL_NODE_NAME, sp.label_node_name_);
+    map.ExpectKeyGetValue(OUTPUT_NODE_NAME, sp.output_node_name_);
+    map.ExpectKeyGetValue(LEARNING_RATE, sp.learning_rate_);
+    map.ExpectKeyGetValue(LEARNING_RATE_PARAM, sp.learning_rate_param_);
+
+    ml::optimisers::Optimiser<TensorType>(sp.graph_ptr, sp.input_node_names_, sp.label_node_name_,
+                                          sp.output_node_name_, sp.learning_rate_);
+
+    //    // serialise the trainables
+    //    std::vector<fetch::ml::ops::Trainable<TensorType>> graph_trainables;
+    //    for (auto const & trainable : sp.graph_trainables_)
+    //    {
+    //      graph_trainables.emplace_back(*trainable);
+    //    }
+    //    map.ExpectKeyGetValue(GRAPH_TRAINABLES, graph_trainables);
+
+    map.ExpectKeyGetValue(GRADIENTS, sp.gradients_);
+    map.ExpectKeyGetValue(EPOCH, sp.epoch_);
+    map.ExpectKeyGetValue(LOSS, sp.loss_);
+    map.ExpectKeyGetValue(LOSS_SUM, sp.loss_sum_);
+    map.ExpectKeyGetValue(STEP, sp.step_);
+    map.ExpectKeyGetValue(CUMULATIVE_STEP, sp.cumulative_step_);
+
+    map.ExpectKeyGetValue(INPUT_FIRST, sp.input_.first);
+    map.ExpectKeyGetValue(INPUT_SECOND, sp.input_.second);
+
+    map.ExpectKeyGetValue(CUR_LABEL, sp.cur_label_);
+    map.ExpectKeyGetValue(PRED_LABEL, sp.pred_label_);
+
+    // TODO - fix chrono
+    //    map.ExpectKeyGetValue(CUR_TIME, sp.cur_time_);
+    //    map.ExpectKeyGetValue(START_TIME, sp.start_time_);
+    //    map.ExpectKeyGetValue(TIME_SPAN, sp.time_span_);
+    //    std::chrono::high_resolution_clock::time_point cur_time_;
+    //    std::chrono::high_resolution_clock::time_point start_time_;
+    //    std::chrono::duration<double>                  time_span_;
+
+    map.ExpectKeyGetValue(STAT_STRING, sp.stat_string_);
+    map.ExpectKeyGetValue(BATCH_DATA, sp.batch_data_);
+    map.ExpectKeyGetValue(BATCH_LABELS, sp.batch_labels_);
   }
 };
 }  // namespace serializers

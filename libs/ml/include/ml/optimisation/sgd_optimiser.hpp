@@ -47,26 +47,8 @@ public:
 
   ~SGDOptimiser() override = default;
 
-  template <typename S>
-  friend void Serialize(S &serializer, SGDOptimiser<T> const &t)
-  {
-
-    // serialize parent class first
-    auto base_pointer = std::make_shared<Optimiser<T>>(t);
-    base_pointer.Serialize(serializer, *base_pointer);
-
-    // sgd optimiser has no member variables to serialise
-  }
-
-  template <typename S>
-  friend void Deserialize(S &serializer, SGDOptimiser<T> &t)
-  {
-
-    auto base_pointer = std::make_shared<Optimiser<T>>(t);
-    base_pointer.Deserialize(serializer, *base_pointer);
-
-    // sgd optimiser has no member variables to deserialise
-  }
+  template <typename X, typename D>
+  friend struct serializers::MapSerializer;
 
 private:
   void ApplyGradients(SizeType batch_size) override;
@@ -124,4 +106,36 @@ void SGDOptimiser<T>::ApplyGradients(SizeType batch_size)
 
 }  // namespace optimisers
 }  // namespace ml
+
+namespace serializers {
+/**
+ * serializer for conv1d saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::optimisers::SGDOptimiser<TensorType>, D>
+{
+  using Type                          = ml::optimisers::SGDOptimiser<TensorType>;
+  using DriverType                    = D;
+  static uint8_t const BASE_OPTIMISER = 1;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(1);
+
+    // serialize the optimiser parent class
+    auto base_pointer = static_cast<ml::optimisers::Optimiser<TensorType> const *>(&sp);
+    map.Append(BASE_OPTIMISER, *base_pointer);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    auto base_pointer = static_cast<ml::optimisers::Optimiser<TensorType> *>(&sp);
+    map.ExpectKeyGetValue(BASE_OPTIMISER, *base_pointer);
+  }
+};
+}  // namespace serializers
+
 }  // namespace fetch

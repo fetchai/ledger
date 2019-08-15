@@ -42,6 +42,10 @@ using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 TYPED_TEST_CASE(OptimisersTest, MyTypes);
 
+//////////////////////////
+/// reusable functions ///
+//////////////////////////
+
 template <typename TypeParam>
 std::shared_ptr<fetch::ml::Graph<TypeParam>> PrepareTestGraph(
     typename TypeParam::SizeType input_size, typename TypeParam::SizeType output_size,
@@ -118,6 +122,10 @@ void PrepareTestDataAndLabels2D(TypeParam &data, TypeParam &gt)
   gt.Set(0, 2, DataType(10));
   gt.Set(1, 2, DataType(11));
 }
+
+/////////////////
+/// SGD TESTS ///
+/////////////////
 
 TYPED_TEST(OptimisersTest, sgd_optimiser_training)
 {
@@ -210,6 +218,49 @@ TYPED_TEST(OptimisersTest, sgd_optimiser_training_2D)
               static_cast<double>(fetch::math::function_tolerance<DataType>()) *
                   static_cast<double>(data.size()));
 }
+
+TYPED_TEST(OptimisersTest, sgd_optimiser_serialisation)
+{
+  using DataType = typename TypeParam::Type;
+
+  DataType learning_rate = DataType{0.06f};
+
+  // Prepare model
+  std::string                                  input_name;
+  std::string                                  label_name;
+  std::string                                  output_name;
+  std::shared_ptr<fetch::ml::Graph<TypeParam>> g =
+      PrepareTestGraph<TypeParam>(4, 2, input_name, label_name, output_name);
+
+  // Prepare data and labels
+  TypeParam data;
+  TypeParam gt;
+  PrepareTestDataAndLabels2D(data, gt);
+
+  // Initialise Optimiser
+  fetch::ml::optimisers::SGDOptimiser<TypeParam> optimiser(g, {input_name}, label_name, output_name,
+                                                           learning_rate);
+
+  // serialise the optimiser
+  fetch::serializers::MsgPackSerializer b;
+  b << optimiser;
+
+  // deserialis the optimiser
+  b.seek(0);
+  auto optimiser_2 = std::make_shared<fetch::ml::optimisers::SGDOptimiser<TypeParam>>();
+  b >> *optimiser_2;
+
+  // Do 2 optimiser steps
+  DataType loss   = optimiser.Run({data}, gt);
+  DataType loss_2 = optimiser_2->Run({data}, gt);
+
+  // Test loss
+  EXPECT_EQ(static_cast<DataType>(loss), static_cast<DataType>(loss_2));
+}
+
+//////////////////////
+/// MOMENTUM TESTS ///
+//////////////////////
 
 TYPED_TEST(OptimisersTest, momentum_optimiser_training)
 {
