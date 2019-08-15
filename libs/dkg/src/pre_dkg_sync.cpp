@@ -68,10 +68,10 @@ void PreDkgSync::OnRbcMessage(MuddleAddress const &from, std::set<MuddleAddress>
 
   // If these conditions are good, add the info to the map
   {
-    std::unique_lock<std::mutex>       lock(mutex_);
+    std::unique_lock<std::mutex> lock(mutex_);
 
     // Check items can only be added once
-    if(other_peer_connections.find(from) != other_peer_connections.end())
+    if (other_peer_connections.find(from) != other_peer_connections.end())
     {
       return;
     }

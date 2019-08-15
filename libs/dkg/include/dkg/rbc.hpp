@@ -59,9 +59,9 @@ public:
   // Operators
   void ResetCabinet(CabinetMembers const &cabinet);
 =======
-  using MessageType     = RBCMessage::MessageType;
-  using HashFunction    = crypto::SHA256;
-  using MessageHash     = byte_array::ByteArray;
+  using MessageType  = RBCMessage::MessageType;
+  using HashFunction = crypto::SHA256;
+  using MessageHash  = byte_array::ByteArray;
   using CallbackFunction =
       std::function<void(MuddleAddress const &, byte_array::ConstByteArray const &)>;
   using MessageStatMap = std::unordered_map<MessageHash, MessageCount>;
@@ -72,7 +72,7 @@ public:
       uint16_t channel = CHANNEL_BROADCAST);
 
   // Operators
-  bool ResetCabinet(CabinetMembers const &cabinet);
+  bool                ResetCabinet(CabinetMembers const &cabinet);
 >>>>>>> feature/consensus_integration
   void SendRBroadcast(SerialisedMessage const &msg);
 
