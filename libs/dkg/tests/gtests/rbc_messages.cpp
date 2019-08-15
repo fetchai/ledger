@@ -16,14 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include "dkg/rbc_messages.hpp"
 #include "core/serializers/counter.hpp"
 #include "core/serializers/main_serializer.hpp"
-#include "dkg/rbc_messages.hpp"
 
 #include "gtest/gtest.h"
 
 using namespace fetch;
-using namespace fetch::dkg;
+using namespace fetch::network;
 
 TEST(rbc_messages, broadcast)
 {

@@ -22,7 +22,7 @@
 #include "crypto/sha256.hpp"
 
 namespace fetch {
-namespace dkg {
+namespace network {
 
 constexpr char const *LOGGING_NAME = "RBC";
 /**
@@ -39,7 +39,7 @@ RBC::RBC(Endpoint &endpoint, MuddleAddress address, CallbackFunction call_back, 
   , address_{std::move(address)}
   , endpoint_{endpoint}
   , deliver_msg_callback_{std::move(call_back)}
-  , rbc_subscription_(endpoint.Subscribe(SERVICE_DKG, channel_))
+  , rbc_subscription_(endpoint.Subscribe(SERVICE_RBC, channel_))
 {
 
   // Set subscription for rbc
@@ -59,12 +59,19 @@ RBC::RBC(Endpoint &endpoint, MuddleAddress address, CallbackFunction call_back, 
       FETCH_LOG_ERROR(LOGGING_NAME, "Node ", id_,
                       " caught an exception while deserializing RBC message. ");
 
-      // Deserialization failed - bad payload.
       return;
     }
 
     // Dispatch the event
-    OnRBC(from, msg);
+    try
+    {
+      OnRBC(from, msg);
+    }
+    catch (...)
+    {
+      FETCH_LOG_CRITICAL(LOGGING_NAME, "Node ", id_,
+                         ": critical failure in RBC, possibly due to malformed message.");
+    }
   });
 }
 
@@ -156,7 +163,7 @@ void RBC::Send(RBCMessage const &msg, MuddleAddress const &address)
   msg_serializer.Reserve(msg_counter.size());
   msg_serializer << msg;
 
-  endpoint_.Send(address, SERVICE_DKG, channel_, msg_serializer.data());
+  endpoint_.Send(address, SERVICE_RBC, channel_, msg_serializer.data());
 }
 
 /**
@@ -180,7 +187,7 @@ void RBC::InternalBroadcast(RBCMessage const &msg)
   {
     if (address != address_)
     {
-      endpoint_.Send(address, SERVICE_DKG, channel_, msg_serializer.data());
+      endpoint_.Send(address, SERVICE_RBC, channel_, msg_serializer.data());
     }
   }
 }
@@ -453,7 +460,7 @@ void RBC::OnRReadyLockFree(MessageReady const &msg, uint32_t sender_index)
       parties_[sender_index].flags.erase(tag);
     }
   }
-}  // namespace dkg
+}
 
 /**
  * Handler for RRequest message. If valid and we have the requested message then send a RAnswer
@@ -749,5 +756,5 @@ bool RBC::SetPartyFlag(uint32_t sender_index, TagType tag, MessageType msg_type)
   return true;
 }
 
-}  // namespace dkg
+}  // namespace network
 }  // namespace fetch

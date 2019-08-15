@@ -26,7 +26,7 @@
 #include <memory>
 
 namespace fetch {
-namespace dkg {
+namespace network {
 
 using HashDigest           = byte_array::ByteArray;
 using TagType              = uint64_t;
@@ -201,14 +201,14 @@ public:
   }
 };
 
-}  // namespace dkg
+}  // namespace network
 
 namespace serializers {
 template <typename D>
-struct MapSerializer<dkg::RBCMessage, D>
+struct MapSerializer<network::RBCMessage, D>
 {
 public:
-  using Type       = dkg::RBCMessage;
+  using Type       = network::RBCMessage;
   using DriverType = D;
 
   static uint8_t const TYPE    = 1;
@@ -238,7 +238,7 @@ public:
     map.ExpectKeyGetValue(COUNTER, msg.counter_);
     map.ExpectKeyGetValue(PAYLOAD, msg.payload_);
 
-    msg.type_ = static_cast<dkg::RBCMessageType>(type);
+    msg.type_ = static_cast<network::RBCMessageType>(type);
   }
 };
 }  // namespace serializers

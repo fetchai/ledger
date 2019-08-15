@@ -45,7 +45,7 @@ private:
   Muddle &                          muddle_;
   PeersList                         peers_;
   Cabinet                           cabinet_;
-  RBC                               rbc_;
+  network::RBC                      rbc_;
   std::mutex                        mutex_;
   std::unordered_set<MuddleAddress> joined_;
   uint32_t                          joined_counter_{0};

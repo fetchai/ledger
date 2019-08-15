@@ -30,7 +30,7 @@
 #include <unordered_set>
 
 namespace fetch {
-namespace dkg {
+namespace network {
 
 /**
  * Reliable broadcast channel (RBC) is a protocol which ensures all honest
@@ -185,5 +185,5 @@ private:
   /// @}
 };
 
-}  // namespace dkg
+}  // namespace network
 }  // namespace fetch

@@ -16,15 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
+#include "dkg/rbc_messages.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/serializers/base_types.hpp"
 #include "core/serializers/main_serializer.hpp"
-#include "dkg/rbc_messages.hpp"
 
 #include <cstdint>
 
 namespace fetch {
-namespace dkg {
+namespace network {
 
 /// @name Getter functions
 /// @{
@@ -96,5 +96,5 @@ RBCMessage::RBCMessage(RBCMessageType type, uint16_t channel, uint32_t id, uint8
   , payload_(std::move(msg))
 {}
 
-}  // namespace dkg
+}  // namespace network
 }  // namespace fetch
