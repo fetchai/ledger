@@ -85,7 +85,7 @@ int main()
 
   std::vector<std::unique_ptr<CabinetMember>>                         committee;
   std::unordered_map<byte_array::ConstByteArray, fetch::network::Uri> peers_list;
-  RBC::CabinetMembers cabinet;
+  RBC::CabinetMembers                                                 cabinet;
   for (uint16_t ii = 0; ii < cabinet_size; ++ii)
   {
     auto port_number = static_cast<uint16_t>(9000 + ii);
