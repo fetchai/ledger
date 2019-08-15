@@ -22,7 +22,6 @@
 #include "network/details/thread_pool.hpp"
 
 #include <algorithm>
-#include <cassert>
 #include <chrono>
 #include <exception>
 #include <memory>
@@ -134,13 +133,13 @@ void ThreadPoolImplementation::Start()
   static constexpr std::size_t MAX_START_LOOPS     = 30;
   static constexpr std::size_t START_LOOP_INTERVAL = 100;
 
-  assert(!shutdown_);
+  detailed_assert(!shutdown_);
 
   // start all the threads
   {
     FETCH_LOCK(threads_mutex_);
 
-    assert(threads_.empty());
+    detailed_assert(threads_.empty());
 
     for (std::size_t thread_idx = 0; thread_idx < max_threads_; ++thread_idx)
     {

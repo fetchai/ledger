@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/assert.hpp"
 #include "core/logger.hpp"
 #include "core/reactor.hpp"
 #include "core/runnable.hpp"
 #include "core/threading.hpp"
 
-#include <cassert>
 #include <chrono>
 #include <deque>
 #include <memory>
@@ -86,7 +86,7 @@ void Reactor::Stop()
 
 void Reactor::StartWorker()
 {
-  assert(!worker_);
+  detailed_assert(!worker_);
 
   // signal the reactor is running
   running_ = true;
