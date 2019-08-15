@@ -17,11 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include <functional>
-#include <map>
-#include <memory>
-#include <vector>
-
 #include "core/assert.hpp"
 #include "core/mutex.hpp"
 #include "network/management/abstract_connection.hpp"
@@ -29,6 +24,11 @@
 #include "network/service/error_codes.hpp"
 #include "network/service/feed_subscription_manager.hpp"
 #include "network/service/types.hpp"
+
+#include <functional>
+#include <map>
+#include <memory>
+#include <vector>
 
 namespace fetch {
 namespace service {

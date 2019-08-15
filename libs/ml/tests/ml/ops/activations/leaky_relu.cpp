@@ -24,6 +24,8 @@
 #include "core/serializers/main_serializer_definition.hpp"
 #include "gtest/gtest.h"
 
+#include <memory>
+
 template <typename T>
 class LeakyReluTest : public ::testing::Test
 {
