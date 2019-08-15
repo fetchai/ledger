@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dkg/rbc_messages.hpp"
+#include "network/muddle/rbc_messages.hpp"
 #include "core/serializers/counter.hpp"
 #include "core/serializers/main_serializer.hpp"
 

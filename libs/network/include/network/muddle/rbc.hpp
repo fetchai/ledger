@@ -20,10 +20,8 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/service_ids.hpp"
 #include "crypto/sha256.hpp"
-#include "ledger/chain/address.hpp"
 #include "network/muddle/muddle_endpoint.hpp"
-#include "network/muddle/rpc/server.hpp"
-#include "rbc_messages.hpp"
+#include "network/muddle/rbc_messages.hpp"
 
 #include <atomic>
 #include <bitset>
