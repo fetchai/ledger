@@ -258,7 +258,7 @@ TYPED_TEST(OptimisersTest, sgd_optimiser_serialisation)
   b >> *optimiser_2;
 
   // Do 2 optimiser steps
-  loss   = optimiser.Run({data}, gt);
+  loss            = optimiser.Run({data}, gt);
   DataType loss_2 = optimiser_2->Run({data}, gt);
 
   // Test loss

@@ -498,7 +498,7 @@ struct MapSerializer<ml::optimisers::Optimiser<TensorType>, D>
   static uint8_t const OUTPUT_NODE_NAME    = 4;
   static uint8_t const LEARNING_RATE       = 5;
   static uint8_t const LEARNING_RATE_PARAM = 6;
-  static uint8_t const EPOCH     = 7;
+  static uint8_t const EPOCH               = 7;
 
   // private member variables
   static uint8_t const LOSS            = 8;
