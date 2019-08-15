@@ -114,12 +114,12 @@ public:
   {
     if (is_test)
     {
-     if (this->random_mode_)
-     {
-       GetAtIndex(test_offset_ + ((SizeType)rand() % test_size_), buffer_);
-       return buffer_;
-     }
-     else
+      if (this->random_mode_)
+      {
+        GetAtIndex(test_offset_ + ((SizeType)rand() % test_size_), buffer_);
+        return buffer_;
+      }
+      else
       {
         GetAtIndex(static_cast<SizeType>(test_offset_ + (test_cursor_++)), buffer_);
         return buffer_;

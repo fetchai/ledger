@@ -331,7 +331,7 @@ typename T::Type Optimiser<T>::RunImplementation(
   bool is_done_set = loader.IsDone();
 
   std::pair<TensorType, std::vector<TensorType>> input;
-  SizeType                                     i{0};
+  SizeType                                       i{0};
 
   // - check not completed more steps than user specified subset_size
   // - is_done_set checks if loader.IsDone inside PrepareBatch

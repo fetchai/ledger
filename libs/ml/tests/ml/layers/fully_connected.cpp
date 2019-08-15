@@ -26,6 +26,8 @@
 
 #include "gtest/gtest.h"
 
+#include <memory>
+
 template <typename T>
 class FullyConnectedTest : public ::testing::Test
 {
@@ -472,7 +474,9 @@ TYPED_TEST(FullyConnectedTest, node_forward_test)  // Use the class as a Node
   TypeParam data(std::vector<typename TypeParam::SizeType>({5, 10, 2}));
 
   std::shared_ptr<fetch::ml::Node<TypeParam>> placeholder =
-      std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::OP_PLACEHOLDER, "Input");
+      std::make_shared<fetch::ml::Node<TypeParam>>(
+          fetch::ml::OpType::OP_PLACEHOLDER, "Input",
+          []() { return std::make_shared<fetch::ml::ops::PlaceHolder<TypeParam>>(); });
   std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder->GetOp())
       ->SetData(data);
 
@@ -495,7 +499,9 @@ TYPED_TEST(FullyConnectedTest, node_backward_test)  // Use the class as a Node
 {
   TypeParam                                   data({5, 10, 2});
   std::shared_ptr<fetch::ml::Node<TypeParam>> placeholder =
-      std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::OP_PLACEHOLDER, "Input");
+      std::make_shared<fetch::ml::Node<TypeParam>>(
+          fetch::ml::OpType::OP_PLACEHOLDER, "Input",
+          []() { return std::make_shared<fetch::ml::ops::PlaceHolder<TypeParam>>(); });
   std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder->GetOp())
       ->SetData(data);
 

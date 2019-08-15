@@ -24,6 +24,8 @@
 #include <algorithm>
 #include <cassert>
 #include <set>
+#include <sstream>
+#include <string>
 
 namespace fetch {
 namespace settings {
@@ -149,6 +151,11 @@ void SettingCollection::UpdateFromEnv(char const *prefix, detail::EnvironmentInt
       iss >> *setting;
     }
   }
+}
+
+SettingCollection::Settings const &SettingCollection::settings() const
+{
+  return settings_;
 }
 
 }  // namespace settings
