@@ -85,22 +85,23 @@ public:
 
   void SendRBroadcast(SerialisedMessage const &msg, uint8_t num_messages)
   {
-    uint32_t sender_index = id_;
+    uint32_t sender_index = this->id();
     uint16_t channel      = CHANNEL_BROADCAST;
-    auto     counter      = static_cast<uint8_t>(msg_counter_ + 1);
+    auto     counter      = static_cast<uint8_t>(this->message_counter() + 1);
     if (Failure(Failures::WRONG_CHANNEL))
     {
       ++channel;
     }
     else if (Failure(Failures::OUT_OF_SEQUENCE_MSGS))
     {
-      assert(num_messages >= msg_counter_);
-      counter = static_cast<uint8_t>(num_messages - msg_counter_);
+      assert(num_messages >= this->message_counter());
+      counter = static_cast<uint8_t>(num_messages - this->message_counter());
     }
     RBroadcast broadcast_msg{channel, sender_index, counter, msg};
     Broadcast(broadcast_msg);
-    ++msg_counter_;
-    OnRBroadcast(broadcast_msg, id_);  // Self sending
+
+    increase_message_counter();
+    OnRBroadcast(broadcast_msg, this->id());  // Self sending
   }
 
 private:
@@ -125,7 +126,7 @@ private:
     new_rmsg_serializer.Reserve(new_rmsg_counter.size());
     new_rmsg_serializer << static_cast<RBCMessage>(new_rmsg);
 
-    endpoint_.Broadcast(SERVICE_DKG, CHANNEL_BROADCAST, new_rmsg_serializer.data());
+    endpoint().Broadcast(SERVICE_DKG, CHANNEL_BROADCAST, new_rmsg_serializer.data());
   }
 
   void SendUnrequestedAnswer(RBCMessage const &msg)
@@ -143,7 +144,7 @@ private:
     new_rmsg_serializer.Reserve(new_rmsg_counter.size());
     new_rmsg_serializer << static_cast<RBCMessage>(new_rmsg);
 
-    endpoint_.Broadcast(SERVICE_DKG, CHANNEL_BROADCAST, new_rmsg_serializer.data());
+    endpoint().Broadcast(SERVICE_DKG, CHANNEL_BROADCAST, new_rmsg_serializer.data());
   }
 
   void Broadcast(RBCMessage const &msg) override
@@ -164,7 +165,7 @@ private:
     }
     else if (Failure(Failures::DOUBLE_SEND))
     {
-      endpoint_.Broadcast(SERVICE_DKG, CHANNEL_BROADCAST, msg_serializer.data());
+      endpoint().Broadcast(SERVICE_DKG, CHANNEL_BROADCAST, msg_serializer.data());
     }
     else if (Failure(Failures::BAD_ANSWER) && msg.type() == RBCMessage::MessageType::R_ANSWER)
     {
@@ -175,16 +176,22 @@ private:
     {
       SendUnrequestedAnswer(msg);
     }
-    endpoint_.Broadcast(SERVICE_DKG, CHANNEL_BROADCAST, msg_serializer.data());
+    endpoint().Broadcast(SERVICE_DKG, CHANNEL_BROADCAST, msg_serializer.data());
   }
 
   void OnRBC(MuddleAddress const &from, RBCMessage const &msg) override
   {
-    if (!BasicMessageCheck(from, msg))
+    uint32_t sender_index;
     {
-      return;
+      FETCH_LOCK(lock_);
+      if (!BasicMessageCheck(from, msg))
+      {
+        return;
+      }
+
+      sender_index = CabinetIndex(from);
     }
-    uint32_t sender_index{CabinetIndex(from)};
+
     switch (msg.type())
     {
     case RBCMessage::MessageType::R_BROADCAST:
@@ -201,7 +208,7 @@ private:
       }
       else if (Failure(Failures::WRONG_RANK))
       {
-        index = static_cast<uint32_t>((msg.id() + 1) % current_cabinet_.size());
+        index = static_cast<uint32_t>((msg.id() + 1) % current_cabinet().size());
       }
       RBroadcast new_broadcast{CHANNEL_BROADCAST, index, msg.counter(), payload};
       OnRBroadcast(new_broadcast, sender_index);
