@@ -542,14 +542,6 @@ struct MapSerializer<ml::optimisers::Optimiser<TensorType>, D>
     map.Append(CUR_LABEL, sp.cur_label_);
     map.Append(PRED_LABEL, sp.pred_label_);
 
-    // TODO - fix chrono
-    //    map.Append(CUR_TIME, sp.cur_time_);
-    //    map.Append(START_TIME, sp.start_time_);
-    //    map.Append(TIME_SPAN, sp.time_span_);
-    //    std::chrono::high_resolution_clock::time_point cur_time_;
-    //    std::chrono::high_resolution_clock::time_point start_time_;
-    //    std::chrono::duration<double>                  time_span_;
-
     map.Append(STAT_STRING, sp.stat_string_);
     map.Append(BATCH_DATA, sp.batch_data_);
     map.Append(BATCH_LABELS, sp.batch_labels_);
@@ -585,14 +577,6 @@ struct MapSerializer<ml::optimisers::Optimiser<TensorType>, D>
 
     map.ExpectKeyGetValue(CUR_LABEL, sp.cur_label_);
     map.ExpectKeyGetValue(PRED_LABEL, sp.pred_label_);
-
-    // TODO - fix chrono
-    //    map.ExpectKeyGetValue(CUR_TIME, sp.cur_time_);
-    //    map.ExpectKeyGetValue(START_TIME, sp.start_time_);
-    //    map.ExpectKeyGetValue(TIME_SPAN, sp.time_span_);
-    //    std::chrono::high_resolution_clock::time_point cur_time_;
-    //    std::chrono::high_resolution_clock::time_point start_time_;
-    //    std::chrono::duration<double>                  time_span_;
 
     map.ExpectKeyGetValue(STAT_STRING, sp.stat_string_);
     map.ExpectKeyGetValue(BATCH_DATA, sp.batch_data_);
