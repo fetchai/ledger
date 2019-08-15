@@ -23,9 +23,9 @@ char const *LOGGING_NAME = "Pre-Dkg Sync";
 namespace fetch {
 namespace dkg {
 
-PreDkgSync::PreDkgSync(Muddle &muddle, uint8_t channel)
+PreDkgSync::PreDkgSync(Muddle &muddle, uint16_t channel)
   : muddle_{muddle}
-  , rbc_{muddle_.AsEndpoint(), muddle_.identity().identifier(), cabinet_,
+  , rbc_{muddle_.AsEndpoint(), muddle_.identity().identifier(),
          [this](MuddleAddress const &address, ConstByteArray const &payload) -> void {
            std::set<MuddleAddress>               connections;
            fetch::serializers::MsgPackSerializer serializer{payload};
@@ -91,12 +91,13 @@ void PreDkgSync::ResetCabinet(PeersList const &peers)
 {
   peers_ = peers;
 
+  cabinet_.clear();  // TODO(tfr): Check with Jenny.
   for (auto const &peer : peers_)
   {
     cabinet_.insert(peer.first);
   }
   assert(cabinet_.size() == peers_.size());
-  rbc_.ResetCabinet();
+  rbc_.ResetCabinet(cabinet_);
 }
 
 void PreDkgSync::Connect()
