@@ -109,18 +109,6 @@ TYPED_TEST(ScaledDotProductAttention,
   using DataType = typename TypeParam::Type;
   using SizeType = typename TypeParam::SizeType;
 
-  float a = fetch::math::numeric_max<float>();
-  std::cout << "numeric_max: " << a << std::endl;
-  std::cout << "a + 100000: " << a + float(1e38) << std::endl;
-
-  int b = fetch::math::numeric_max<int>();
-  std::cout << "numeric_max: " << b << std::endl;
-  std::cout << "a + 100000: " << b + 100000 << std::endl;
-
-  double c = fetch::math::numeric_max<double>();
-  std::cout << "numeric_max: " << c << std::endl;
-  std::cout << "a + 100000: " << c + 100000 << std::endl;
-
   fetch::ml::layers::ScaledDotProductAttention<TypeParam> att(static_cast<SizeType>(3),
                                                               DataType(1));
 
@@ -237,6 +225,11 @@ TYPED_TEST(ScaledDotProductAttention,
   mask_data_one.Reshape({3, 1, 2});
   TypeParam mask_data({3, 3, 2});
 
+  for (SizeType i{0}; i < mask_data.shape(1); i++)
+  {
+    mask_data.Slice(i, 1).Assign(mask_data_one);
+  }
+
   TypeParam error_signal =
       TypeParam::FromString("1, 1, 0, -1.5, 0, 0; 1, 3, 0, 4, 0, 0; 1, 2.5, 0, 0, 0, 0");
   error_signal.Reshape({3, 3, 2});
@@ -299,13 +292,14 @@ TYPED_TEST(ScaledDotProductAttention, saveparams_test)
   TypeParam query_data = TypeParam({12, 25, 4});
   TypeParam key_data   = query_data;
   TypeParam value_data = query_data;
-
+  TypeParam mask_data  = TypeParam({25, 25, 4});
+  mask_data.Fill(static_cast<DataType>(1));
   // create labels
   TypeParam labels({12, 25, 4});
   labels.FillUniformRandom();
 
   // Create layer
-  LayerType layer(key_dim);
+  LayerType layer(key_dim, static_cast<DataType>(1));
 
   // add label node
   std::string label_name =
@@ -314,13 +308,6 @@ TYPED_TEST(ScaledDotProductAttention, saveparams_test)
   // Add loss function
   std::string error_output = layer.template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TypeParam>>(
       "num_error", {output_name, label_name});
-
-  // set input and evaluate
-  layer.SetInput("ScaledDotProductAttention_Query", query_data);
-  layer.SetInput("ScaledDotProductAttention_Key", key_data);
-  layer.SetInput("ScaledDotProductAttention_Value", value_data);
-  TypeParam prediction;
-  prediction = layer.Evaluate(output_name, true);
 
   // extract saveparams
   auto sp = layer.GetOpSaveableParams();
@@ -344,11 +331,13 @@ TYPED_TEST(ScaledDotProductAttention, saveparams_test)
   layer.SetInput("ScaledDotProductAttention_Query", query_data);
   layer.SetInput("ScaledDotProductAttention_Key", key_data);
   layer.SetInput("ScaledDotProductAttention_Value", value_data);
-  prediction = layer.Evaluate(output_name, true);
+  layer.SetInput("ScaledDotProductAttention_Mask", mask_data);
+  TypeParam prediction = layer.Evaluate(output_name, true);
 
   layer2.SetInput("ScaledDotProductAttention_Query", query_data);
   layer2.SetInput("ScaledDotProductAttention_Key", key_data);
   layer2.SetInput("ScaledDotProductAttention_Value", value_data);
+  layer2.SetInput("ScaledDotProductAttention_Mask", mask_data);
   TypeParam prediction2 = layer2.Evaluate(output_name, true);
 
   ASSERT_TRUE(prediction.AllClose(prediction2, fetch::math::function_tolerance<DataType>(),
@@ -375,11 +364,13 @@ TYPED_TEST(ScaledDotProductAttention, saveparams_test)
   layer.SetInput("ScaledDotProductAttention_Query", query_data);
   layer.SetInput("ScaledDotProductAttention_Key", key_data);
   layer.SetInput("ScaledDotProductAttention_Value", value_data);
+  layer.SetInput("ScaledDotProductAttention_Mask", mask_data);
   TypeParam prediction3 = layer.Evaluate(output_name);
 
   layer2.SetInput("ScaledDotProductAttention_Query", query_data);
   layer2.SetInput("ScaledDotProductAttention_Key", key_data);
   layer2.SetInput("ScaledDotProductAttention_Value", value_data);
+  layer2.SetInput("ScaledDotProductAttention_Mask", mask_data);
   TypeParam prediction4 = layer2.Evaluate(output_name);
 
   EXPECT_FALSE(prediction.AllClose(prediction3, fetch::math::function_tolerance<DataType>(),

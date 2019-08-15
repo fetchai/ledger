@@ -126,6 +126,7 @@ TYPED_TEST(MultiheadAttention, saveparams_test)
 {
   using LayerType = typename fetch::ml::layers::MultiheadAttention<TypeParam>;
   using SPType    = typename LayerType::SPType;
+  using DataType  = typename TypeParam::Type;
 
   fetch::math::SizeType n_heads   = 3;
   fetch::math::SizeType model_dim = 6;
@@ -133,11 +134,14 @@ TYPED_TEST(MultiheadAttention, saveparams_test)
   std::string output_name = "MultiheadAttention_Final_Transformation";
 
   // create input data
-  TypeParam query_data = TypeParam({model_dim, 12, n_heads});
+  TypeParam query_data = TypeParam({6, 12, 3});
   query_data.FillUniformRandom();
 
   TypeParam key_data   = query_data.Copy();
   TypeParam value_data = query_data.Copy();
+
+  TypeParam mask_data = TypeParam({12, 12, 3});
+  mask_data.Fill(static_cast<DataType>(1));
 
   // create labels data
   TypeParam labels({6, 12, 3});
@@ -158,6 +162,7 @@ TYPED_TEST(MultiheadAttention, saveparams_test)
   layer.SetInput("MultiheadAttention_Query", query_data);
   layer.SetInput("MultiheadAttention_Key", key_data);
   layer.SetInput("MultiheadAttention_Value", value_data);
+  layer.SetInput("MultiheadAttention_Mask", mask_data);
 
   TypeParam prediction;
   prediction = layer.Evaluate(output_name, true);

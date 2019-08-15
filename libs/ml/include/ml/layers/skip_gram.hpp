@@ -105,11 +105,11 @@ public:
     *sg_ptr2     = *sg_ptr1;
 
     // assign layer specific params
-    ret->in_size  = in_size_;
-    ret->out_size = out_size_;
-    ret->embed_in = embed_in_;
-	  ret->vocab_size = vocab_size_;
-	  ret->embedding_size = embedding_size_;
+    ret->in_size        = in_size_;
+    ret->out_size       = out_size_;
+    ret->embed_in       = embed_in_;
+    ret->vocab_size     = vocab_size_;
+    ret->embedding_size = embedding_size_;
 
     return ret;
   }
@@ -117,10 +117,10 @@ public:
   void SetOpSaveableParams(SPType const &sp)
   {
     // assign layer specific params
-    in_size_  = sp.in_size;
-    out_size_ = sp.out_size;
-    embed_in_ = sp.embed_in;
-    vocab_size_ = sp.vocab_size;
+    in_size_        = sp.in_size;
+    out_size_       = sp.out_size;
+    embed_in_       = sp.embed_in;
+    vocab_size_     = sp.vocab_size;
     embedding_size_ = sp.embedding_size;
   }
 

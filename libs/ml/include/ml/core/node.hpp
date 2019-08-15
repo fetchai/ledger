@@ -207,6 +207,22 @@ std::shared_ptr<T> Node<T>::Evaluate(bool is_training)
     cached_output_status_ = CachedOutputState::VALID_CACHE;
   }
 
+  //    std::cout << "****" << this->name_ << std::endl;
+  //    std::cout << "shape: ";
+  //    for (std::size_t i = 0; i < cached_output_.shape().size(); i++) {
+  //       std::cout << cached_output_.shape(i) << ", ";
+  //    }
+  //    std::cout << std::endl;
+  //
+  //    if(cached_output_.shape().size() == 3u){
+  //    	std::cout << "||||first batch" << std::endl;
+  //	    std::cout << cached_output_.View(0).Copy().ToString() << std::endl;
+  //    }else{
+  //	    std::cout << "####original" << std::endl;
+  //    	std::cout << cached_output_.ToString() << std::endl;
+  //    }
+  //
+
   return std::make_shared<T>(cached_output_);
 }
 

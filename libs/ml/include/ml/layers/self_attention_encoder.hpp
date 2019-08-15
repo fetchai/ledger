@@ -58,7 +58,7 @@ public:
                        DataType residual_dropout    = static_cast<DataType>(0.9),
                        DataType attention_dropout   = static_cast<DataType>(0.9),
                        DataType feedforward_dropout = static_cast<DataType>(0.9),
-                       DataType epsilon = fetch::math::function_tolerance<DataType>())
+                       DataType epsilon             = fetch::math::function_tolerance<DataType>())
     : n_heads_(n_heads)
     , model_dim_(model_dim)
     , ff_dim_(ff_dim)
@@ -76,7 +76,7 @@ public:
     std::string input =
         this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Input", {});
     std::string mask =
-        this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "Mask", {});
+        this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Mask", {});
 
     // multihead attention on input time series vector
     std::string multihead_self_attention =
@@ -155,7 +155,7 @@ private:
   DataType residual_dropout_;
   DataType attention_dropout_;
   DataType feedforward_dropout_;
-	DataType epsilon_;
+  DataType epsilon_;
 
   std::string positionwise_feedforward(std::string name, std::string const &input)
   {
@@ -194,7 +194,8 @@ private:
     std::vector<SizeType> data_shape({model_dim_, 1});
     std::string           normalized_residual =
         this->template AddNode<fetch::ml::layers::LayerNorm<TensorType>>(
-            name + "_LayerNorm", {residual_addition}, data_shape, static_cast<SizeType>(0), epsilon_);
+            name + "_LayerNorm", {residual_addition}, data_shape, static_cast<SizeType>(0),
+            epsilon_);
 
     return normalized_residual;
   }

@@ -99,11 +99,11 @@ public:
   {
     return inputs.at(1)->shape();
   }
-	
-	static constexpr OpType OpCode()
-	{
-		return OpType::OP_MASK_FILL;
-	}
+
+  static constexpr OpType OpCode()
+  {
+    return OpType::OP_MASK_FILL;
+  }
 
   static constexpr char const *DESCRIPTOR = "MaskFill";
 

@@ -30,12 +30,12 @@ template <class T>
 class Slice : public Ops<T>
 {
 public:
-	using TensorType    = T;
+  using TensorType     = T;
   using SizeType       = typename TensorType::SizeType;
   using ArrayPtrType   = std::shared_ptr<TensorType>;
   using VecTensorType  = typename Ops<T>::VecTensorType;
   using ConstSliceType = typename TensorType::ConstSliceType;
-	using SPType        = OpSliceSaveableParams<T>;
+  using SPType         = OpSliceSaveableParams<T>;
 
   explicit Slice(std::vector<SizeType> indices, std::vector<SizeType> axes)
   {
@@ -47,28 +47,28 @@ public:
     index_ = index;
     axis_  = axis;
   }
-	explicit Slice(SPType const &sp)
-	 : Ops<T>(sp)
-	{
-		indices_ = sp.indices;
-		axes_    = sp.axes;
-		index_ = sp.index;
-		axis_  = sp.axis;
-	}
-	
-	~Slice() override = default;
-	
-	std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
-	{
-		auto sp = std::make_shared<SPType>();
-		
-		sp->indices             = indices_;
-		sp->axes                = axes_;
-		sp->index          = index_;
-		sp->axis = axis_;
-		
-		return sp;
-	}
+  explicit Slice(SPType const &sp)
+    : Ops<T>(sp)
+  {
+    indices_ = sp.indices;
+    axes_    = sp.axes;
+    index_   = sp.index;
+    axis_    = sp.axis;
+  }
+
+  ~Slice() override = default;
+
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
+  {
+    auto sp = std::make_shared<SPType>();
+
+    sp->indices = indices_;
+    sp->axes    = axes_;
+    sp->index   = index_;
+    sp->axis    = axis_;
+
+    return sp;
+  }
 
   void Forward(VecTensorType const &inputs, TensorType &output) override
   {
@@ -86,7 +86,7 @@ public:
   }
 
   std::vector<TensorType> Backward(VecTensorType const &inputs,
-                                  TensorType const &    error_signal) override
+                                   TensorType const &   error_signal) override
   {
     FETCH_UNUSED(inputs);
     assert(inputs.size() == 1);
@@ -135,17 +135,17 @@ public:
     return output_shape;
   }
 
-  std::vector<SizeType>        axes_;
-  std::vector<SizeType>        indices_;
-  SizeType                     axis_;
-  SizeType                     index_;
-  TensorType                   ret_error_signal_;
-	
-	static constexpr OpType OpCode()
-	{
-		return OpType::OP_SLICE;
-	}
-  
+  std::vector<SizeType> axes_;
+  std::vector<SizeType> indices_;
+  SizeType              axis_;
+  SizeType              index_;
+  TensorType            ret_error_signal_;
+
+  static constexpr OpType OpCode()
+  {
+    return OpType::OP_SLICE;
+  }
+
   static constexpr char const *DESCRIPTOR = "Slice";
 };
 

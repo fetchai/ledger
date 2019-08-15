@@ -52,6 +52,7 @@ public:
   ScaledDotProductAttention() = default;
   ScaledDotProductAttention(SizeType dk, DataType dropout = static_cast<DataType>(0.9))
     : key_dim_(dk)
+    , dropout_(dropout)
   {
     std::string name = DESCRIPTOR;
 
@@ -91,12 +92,12 @@ public:
 
     // softmax
     std::string attention_weight = this->template AddNode<fetch::ml::ops::Softmax<TensorType>>(
-        name + "_Softmax", {scaled_kq_matmul}, static_cast<SizeType>(0));
+        name + "_Softmax", {masked_scaled_kq_matmul}, static_cast<SizeType>(0));
 
     // dropout
     std::string dropout_attention_weight =
         this->template AddNode<fetch::ml::ops::Dropout<TensorType>>(name + "_Dropout",
-                                                                    {attention_weight}, dropout);
+                                                                    {attention_weight}, dropout_);
     // attention vectors
     std::string weight_value_matmul =
         this->template AddNode<fetch::ml::ops::MatrixMultiply<TensorType>>(
@@ -124,6 +125,7 @@ public:
 
     // asign layer specific params
     ret->key_dim = key_dim_;
+    ret->dropout = dropout_;
     return ret;
   }
 
@@ -131,6 +133,7 @@ public:
   {
     // assign layer specific params
     key_dim_ = sp.key_dim;
+    dropout_ = sp.dropout;
   }
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
@@ -147,6 +150,7 @@ public:
 
 private:
   SizeType key_dim_;
+  DataType dropout_;
 };
 
 }  // namespace layers
