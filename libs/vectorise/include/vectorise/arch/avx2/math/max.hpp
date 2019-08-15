@@ -22,8 +22,6 @@
 namespace fetch {
 namespace vectorise {
 
-using namespace fetch::vectorise;
-
 inline VectorRegister<int32_t, 128> Max(VectorRegister<int32_t, 128> const &a,
                                         VectorRegister<int32_t, 128> const &b)
 {
