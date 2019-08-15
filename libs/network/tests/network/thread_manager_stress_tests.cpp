@@ -56,8 +56,6 @@ void TestCase1()
     tmanager.Post([]() { std::this_thread::sleep_for(std::chrono::milliseconds(100)); });
     tmanager.Stop();
   }
-
-  SUCCEED() << "Success." << std::endl;
 }
 
 template <std::size_t N = 1>
@@ -96,7 +94,6 @@ void TestCase3()
       tmanager.Stop();
     }
   }
-  SUCCEED() << "Success." << std::endl;
 }
 
 template <std::size_t N = 1>
