@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "vectorise/info.hpp"
+#include "vectorise/meta/math_type_traits.hpp"
 
 #include <cmath>
 #include <cstddef>
@@ -25,6 +26,7 @@
 #include <ostream>
 
 namespace fetch {
+
 namespace vectorise {
 
 template <typename T>
@@ -81,11 +83,7 @@ struct UnrollSet<T, 0>
   FUNCTION (^)
 // clang-format on
 
-struct BaseVectorRegisterType
-{
-};
-
-template <typename T, std::size_t N = sizeof(T)>
+template <typename T, std::size_t N = 8 * sizeof(T)>
 class VectorRegister : public BaseVectorRegisterType
 {
 public:
@@ -144,63 +142,63 @@ private:
   type data_;
 };
 
-template <typename T, std::size_t N = sizeof(T)>
+template <typename T, std::size_t N = 8 * sizeof(T)>
 inline std::ostream &operator<<(std::ostream &s, VectorRegister<T, N> const &n)
 {
   s << n.data();
   return s;
 }
 
-template <typename T, std::size_t N = sizeof(T)>
+template <typename T, std::size_t N = 8 * sizeof(T)>
 inline VectorRegister<T, N> abs(VectorRegister<T, N> const &x)
 {
   return VectorRegister<T, N>(std::abs(x.data()));
 }
 
-template <typename T, std::size_t N = sizeof(T)>
+template <typename T, std::size_t N = 8 * sizeof(T)>
 inline VectorRegister<T, N> approx_log(VectorRegister<T, N> const &x)
 {
   return VectorRegister<T, N>(std::log(x.data()));
 }
 
-template <typename T, std::size_t N = sizeof(T)>
+template <typename T, std::size_t N = 8 * sizeof(T)>
 inline VectorRegister<T, N> approx_exp(VectorRegister<T, N> const &x)
 {
   return VectorRegister<T, N>(std::exp(x.data()));
 }
 
-template <typename T, std::size_t N = sizeof(T)>
+template <typename T, std::size_t N = 8 * sizeof(T)>
 inline VectorRegister<T, N> shift_elements_right(VectorRegister<T, N> const &x)
 {
   return VectorRegister<T, N>(x.data());
 }
 
-template <typename T, std::size_t N = sizeof(T)>
+template <typename T, std::size_t N = 8 * sizeof(T)>
 inline VectorRegister<T, N> shift_elements_left(VectorRegister<T, N> const &x)
 {
   return VectorRegister<T, N>(x.data());
 }
 
-template <typename T, std::size_t N = sizeof(T)>
+template <typename T, std::size_t N = 8 * sizeof(T)>
 inline T first_element(VectorRegister<T, N> const &x)
 {
   return x.data();
 }
 
-template <typename T, std::size_t N = sizeof(T)>
+template <typename T, std::size_t N = 8 * sizeof(T)>
 inline T reduce(VectorRegister<T, N> const &x)
 {
   return x.data();
 }
 
-template <typename T, std::size_t N = sizeof(T)>
+template <typename T, std::size_t N = 8 * sizeof(T)>
 inline bool all_less_than(VectorRegister<T, N> const &x,
                           VectorRegister<T, N> const &y)
 {
   return x.data() < y.data();
 }
 
-template <typename T, std::size_t N = sizeof(T)>
+template <typename T, std::size_t N = 8 * sizeof(T)>
 inline bool any_less_than(VectorRegister<T, N> const &x,
                           VectorRegister<T, N> const &y)
 {
@@ -208,14 +206,14 @@ inline bool any_less_than(VectorRegister<T, N> const &x,
 }
 
 
-template <typename T, std::size_t N = sizeof(T)>
+template <typename T, std::size_t N = 8 * sizeof(T)>
 inline bool all_equal_to(VectorRegister<T, N> const &x,
                          VectorRegister<T, N> const &y)
 {
 return x.data() == y.data();
 }
 
-template <typename T, std::size_t N = sizeof(T)>
+template <typename T, std::size_t N = 8 * sizeof(T)>
 inline bool any_equal_to(VectorRegister<T, N> const &x,
                          VectorRegister<T, N> const &y)
 {
