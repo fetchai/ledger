@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dkg/rbc.hpp"
 #include "core/logging.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
+#include "dkg/rbc.hpp"
 
 namespace fetch {
 namespace dkg {
@@ -130,7 +130,7 @@ void RBC::SendRBroadcast(SerialisedMessage const &msg)
     FETCH_LOCK(lock_);
 
     broadcast_msg = RBroadcast(channel_, id_, ++msg_counter_, msg);
-    BroadcastLockFree(broadcast_msg);
+    Broadcast(broadcast_msg);
   }
 
   // Sending message to self
@@ -142,7 +142,7 @@ void RBC::SendRBroadcast(SerialisedMessage const &msg)
  * @param env RBCEnvelope to be serialised and sent
  * @param address Destination muddle address
  */
-void RBC::SendLockFree(RBCMessage const &msg, MuddleAddress const &address)
+void RBC::Send(RBCMessage const &msg, MuddleAddress const &address)
 {
   // Serialise the RBCEnvelope
   RBCSerializerCounter msg_counter;
@@ -160,7 +160,7 @@ void RBC::SendLockFree(RBCMessage const &msg, MuddleAddress const &address)
  *
  * @param env RBCEnvelope message to be serialised and broadcast
  */
-void RBC::BroadcastLockFree(RBCMessage const &msg)
+void RBC::Broadcast(RBCMessage const &msg)
 {
   // Serialise the RBCEnvelope
   RBCSerializerCounter msg_counter;
@@ -304,7 +304,7 @@ void RBC::OnRBroadcast(RBCMessage const &msg, uint32_t sender_index)
       REcho echo_msg{msg.channel(), msg.id(), msg.counter(),
                      crypto::Hash<HashFunction>(msg.message())};
 
-      BroadcastLockFree(echo_msg);
+      Broadcast(echo_msg);
       OnREchoLockFree(echo_msg, id_);
     }
   }
@@ -350,7 +350,7 @@ void RBC::OnREchoLockFree(RBCMessage const &msg, uint32_t sender_index)
   {
     RReady ready_msg{msg.channel(), msg.id(), msg.counter(), msg.hash()};
 
-    BroadcastLockFree(ready_msg);
+    Broadcast(ready_msg);
     OnRReadyLockFree(ready_msg, id_);
   }
 }
@@ -394,7 +394,7 @@ void RBC::OnRReadyLockFree(RBCMessage const &msg, uint32_t sender_index)
   {
     RReady ready_msg{msg.channel(), msg.id(), msg.counter(), msg.hash()};
 
-    BroadcastLockFree(ready_msg);
+    Broadcast(ready_msg);
     OnRReadyLockFree(ready_msg, id_);
   }
   else if (msgs_counter.ready_count == 2 * threshold_ + 1)
@@ -411,7 +411,7 @@ void RBC::OnRReadyLockFree(RBCMessage const &msg, uint32_t sender_index)
       {
         if (*im != address_)
         {
-          SendLockFree(send_msg, *im);
+          Send(send_msg, *im);
           ++counter;
         }
         ++im;
@@ -424,7 +424,7 @@ void RBC::OnRReadyLockFree(RBCMessage const &msg, uint32_t sender_index)
 
       SerialisedMessage message_to_send = broadcasts_[tag].original_message;
 
-      DeliverLockFree(message_to_send, msg.id());
+      Deliver(message_to_send, msg.id());
 
       delivered_.insert(tag);
     }
@@ -468,7 +468,7 @@ void RBC::OnRRequest(RBCMessage const &msg, uint32_t sender_index)
     RAnswer nmsg{msg.channel(), msg.id(), msg.counter(), broadcasts_[tag].original_message};
 
     auto im = std::next(current_cabinet_.begin(), sender_index);
-    SendLockFree(nmsg, *im);
+    Send(nmsg, *im);
   }
 }
 
@@ -523,7 +523,7 @@ void RBC::OnRAnswer(RBCMessage const &msg, uint32_t sender_index)
 
     SerialisedMessage message_to_send = broadcasts_[tag].original_message;
 
-    DeliverLockFree(message_to_send, msg.id());
+    Deliver(message_to_send, msg.id());
 
     delivered_.insert(tag);
   }
@@ -535,7 +535,7 @@ void RBC::OnRAnswer(RBCMessage const &msg, uint32_t sender_index)
  * @param msg Serialised message which has been reliably broadcasted
  * @param sender_index Index of sender in current_cabinet_
  */
-void RBC::DeliverLockFree(SerialisedMessage const &msg, uint32_t sender_index)
+void RBC::Deliver(SerialisedMessage const &msg, uint32_t sender_index)
 {
   assert(lock_.owns_lock());
 

@@ -98,8 +98,9 @@ public:
       counter = static_cast<uint8_t>(num_messages - this->message_counter());
     }
     RBroadcast broadcast_msg{channel, sender_index, counter, msg};
-    BroadcastLockFree(broadcast_msg);
-    ++msg_counter_;
+    Broadcast(broadcast_msg);
+
+    increase_message_counter();
     OnRBroadcast(broadcast_msg, this->id());  // Self sending
   }
 
@@ -125,7 +126,7 @@ private:
     new_rmsg_serializer.Reserve(new_rmsg_counter.size());
     new_rmsg_serializer << static_cast<RBCMessage>(new_rmsg);
 
-    endpoint_.Broadcast(SERVICE_DKG, CHANNEL_BROADCAST, new_rmsg_serializer.data());
+    endpoint().Broadcast(SERVICE_DKG, CHANNEL_BROADCAST, new_rmsg_serializer.data());
   }
 
   void SendUnrequestedAnswer(RBCMessage const &msg)
@@ -143,10 +144,10 @@ private:
     new_rmsg_serializer.Reserve(new_rmsg_counter.size());
     new_rmsg_serializer << static_cast<RBCMessage>(new_rmsg);
 
-    endpoint_.Broadcast(SERVICE_DKG, CHANNEL_BROADCAST, new_rmsg_serializer.data());
+    endpoint().Broadcast(SERVICE_DKG, CHANNEL_BROADCAST, new_rmsg_serializer.data());
   }
 
-  void BroadcastLockFree(RBCMessage const &msg) override
+  void Broadcast(RBCMessage const &msg) override
   {
     // Serialise the RBCEnvelope
     RBCSerializerCounter msg_counter;
@@ -164,7 +165,7 @@ private:
     }
     else if (Failure(Failures::DOUBLE_SEND))
     {
-      endpoint_.Broadcast(SERVICE_DKG, CHANNEL_BROADCAST, msg_serializer.data());
+      endpoint().Broadcast(SERVICE_DKG, CHANNEL_BROADCAST, msg_serializer.data());
     }
     else if (Failure(Failures::BAD_ANSWER) && msg.type() == RBCMessage::MessageType::R_ANSWER)
     {
@@ -175,7 +176,7 @@ private:
     {
       SendUnrequestedAnswer(msg);
     }
-    endpoint_.Broadcast(SERVICE_DKG, CHANNEL_BROADCAST, msg_serializer.data());
+    endpoint().Broadcast(SERVICE_DKG, CHANNEL_BROADCAST, msg_serializer.data());
   }
 
   void OnRBC(MuddleAddress const &from, RBCMessage const &msg) override
@@ -207,7 +208,7 @@ private:
       }
       else if (Failure(Failures::WRONG_RANK))
       {
-        index = static_cast<uint32_t>((msg.id() + 1) % current_cabinet_.size());
+        index = static_cast<uint32_t>((msg.id() + 1) % current_cabinet().size());
       }
       RBroadcast new_broadcast{CHANNEL_BROADCAST, index, msg.counter(), payload};
       OnRBroadcast(new_broadcast, sender_index);

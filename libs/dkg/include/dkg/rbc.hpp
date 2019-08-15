@@ -95,21 +95,29 @@ protected:
 
   /// Events
   /// @{
+  // Thread safe
   virtual void OnRBC(MuddleAddress const &from, RBCMessage const &message);
   void         OnRBroadcast(RBCMessage const &msg, uint32_t sender_index);
   void         OnREcho(RBCMessage const &msg, uint32_t sender_index);
-  void         OnREchoLockFree(RBCMessage const &msg, uint32_t sender_index);
   void         OnRReady(RBCMessage const &msg, uint32_t sender_index);
-  void         OnRReadyLockFree(RBCMessage const &msg, uint32_t sender_index);
   void         OnRRequest(RBCMessage const &msg, uint32_t sender_index);
   void         OnRAnswer(RBCMessage const &msg, uint32_t sender_index);
+
+  // Unsafe
+  void OnREchoLockFree(RBCMessage const &msg, uint32_t sender_index);
+  void OnRReadyLockFree(RBCMessage const &msg, uint32_t sender_index);
   /// @}
 
-  /// Message communication
+  /// Message communication - not thread safe.
   /// @{
-  void         SendLockFree(RBCMessage const &env, MuddleAddress const &address);
-  virtual void BroadcastLockFree(RBCMessage const &env);
-  void         DeliverLockFree(SerialisedMessage const &msg, uint32_t sender_index);
+  void         Send(RBCMessage const &env, MuddleAddress const &address);
+  virtual void Broadcast(RBCMessage const &env);
+  void         Deliver(SerialisedMessage const &msg, uint32_t sender_index);
+
+  Endpoint &endpoint()
+  {
+    return endpoint_;
+  }
   /// @}
 
   uint32_t id() const
@@ -122,8 +130,17 @@ protected:
     return msg_counter_;
   }
 
-  // TODO: instate private:
-  /// Helper functions
+  void increase_message_counter()
+  {
+    ++msg_counter_;
+  }
+
+  CabinetMembers current_cabinet()
+  {
+    return current_cabinet_;
+  }
+
+  /// Helper functions - not thread safe.
   /// @{
   uint32_t            CabinetIndex(MuddleAddress const &other_address) const;
   bool                BasicMessageCheck(MuddleAddress const &from, RBCMessage const &msg);
@@ -135,16 +152,6 @@ protected:
   bool                SetPartyFlag(uint32_t sender_index, TagType tag, MessageType msg_type);
   /// @}
 
-  /// Variable Declarations
-  /// @{
-  uint16_t channel_{CHANNEL_BROADCAST};
-
-  std::atomic<uint32_t> id_{0};  ///< Rank used in DKG (derived from position in current_cabinet_)
-  std::atomic<uint8_t>  msg_counter_{0};  ///< Counter for messages we have broadcasted
-  PartyList             parties_;         ///< Keeps track of messages from cabinet members
-  std::unordered_map<TagType, BroadcastMessage> broadcasts_;  ///< map from tag to broadcasts
-  std::unordered_set<TagType>                   delivered_;   ///< Tags of messages delivered
-
   /// Mutex setup that allows easy debugging of deadlocks
   /// @{
 #ifndef NDEBUG
@@ -154,6 +161,16 @@ protected:
   mutable std::mutex lock_;
 #endif
   /// @}
+private:
+  /// Variable Declarations
+  /// @{
+  uint16_t channel_{CHANNEL_BROADCAST};
+
+  std::atomic<uint32_t> id_{0};  ///< Rank used in RBC (derived from position in current_cabinet_)
+  std::atomic<uint8_t>  msg_counter_{0};  ///< Counter for messages we have broadcasted
+  PartyList             parties_;         ///< Keeps track of messages from cabinet members
+  std::unordered_map<TagType, BroadcastMessage> broadcasts_;  ///< map from tag to broadcasts
+  std::unordered_set<TagType>                   delivered_;   ///< Tags of messages delivered
 
   // For broadcast
   MuddleAddress const address_;            ///< Our muddle address
@@ -166,7 +183,6 @@ protected:
   CallbackFunction deliver_msg_callback_;  ///< Callback for messages which have succeeded
                                            ///< RBC protocol
   SubscriptionPtr rbc_subscription_;       ///< For receiving messages in the rbc channel
-
   /// @}
 };
 
