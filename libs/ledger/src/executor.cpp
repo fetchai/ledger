@@ -371,8 +371,8 @@ bool Executor::ExecuteTransactionContract(Result &result)
           std::max<uint64_t>(allowed_shards_.PopCount(), 1) * base_charge;
 
       FETCH_LOG_DEBUG(LOGGING_NAME, "Calculated charge for 0x", current_tx_->digest().ToHex(), ": ",
-                     scaled_charge, " (base: ", base_charge, " storage: ", storage_charge,
-                     " compute: ", compute_charge, " shards: ", allowed_shards_.PopCount(), ")");
+                      scaled_charge, " (base: ", base_charge, " storage: ", storage_charge,
+                      " compute: ", compute_charge, " shards: ", allowed_shards_.PopCount(), ")");
 
       // create wealth transactions are always free
       if (!IsCreateWealth(*current_tx_))
