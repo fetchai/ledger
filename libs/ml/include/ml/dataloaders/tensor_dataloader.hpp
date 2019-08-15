@@ -40,6 +40,7 @@ class TensorDataLoader : public DataLoader<LabelType, InputType>
   using IteratorType = typename TensorType::IteratorType;
 
 public:
+  TensorDataLoader() = default;
   TensorDataLoader(SizeVector const &label_shape, std::vector<SizeVector> const &data_shapes,
                    bool random_mode = false);
 
