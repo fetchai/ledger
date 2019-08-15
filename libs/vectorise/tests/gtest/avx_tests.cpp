@@ -20,7 +20,6 @@
 #include "math/trigonometry.hpp"
 #include "vectorise/math/standard_functions.hpp"
 #include "vectorise/vectorise.hpp"
-#include "vectorise/math/comparison.hpp"
 
 #include "gtest/gtest.h"
 
@@ -155,6 +154,8 @@ TYPED_TEST(VectorRegisterTest, basic_tests)
   type reduce3 = reduce(vprod);
   type reduce4 = reduce(vdiv);
 
+  std::cout << "va  = " << va << std::endl;
+  std::cout << "vb  = " << vb << std::endl;
   std::cout << "vsum  = " << vsum << std::endl;
   std::cout << "vdiff = " << vdiff << std::endl;
   std::cout << "vprod = " << vprod << std::endl;
@@ -163,6 +164,9 @@ TYPED_TEST(VectorRegisterTest, basic_tests)
   std::cout << "reduce(vdiff) = " << reduce2 << std::endl;
   std::cout << "reduce(vprod) = " << reduce3 << std::endl;
   std::cout << "reduce(vdiv)  = " << reduce4 << std::endl;
+
+  TypeParam vmax = Max(va, vb);
+  std::cout << "vmax  = " << vmax << std::endl;
 }
 
 template <typename T>
