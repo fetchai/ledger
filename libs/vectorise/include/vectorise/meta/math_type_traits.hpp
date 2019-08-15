@@ -23,12 +23,16 @@
 #include <type_traits>
 
 namespace fetch {
+
+namespace vectorise {
+struct BaseVectorRegisterType
+{
+};
+}  // namespace vectorise
+
 namespace math {
 
 namespace meta {
-
-template <bool C, typename ReturnType = void>
-using EnableIf = typename std::enable_if<C, ReturnType>::type;
 
 ////////////////////////////////////
 /// REGISTER OF VECTORISED TYPES ///
@@ -66,10 +70,6 @@ using IfVectorSupportFor = typename std::enable_if<HasVectorSupport<T>::value, R
 template <typename T, typename R>
 using IfNoVectorSupportFor = typename std::enable_if<!HasVectorSupport<T>::value, R>::type;
 
-namespace vectorise {
-struct BaseVectorRegisterType;
-}  // namespace vectorise
-
 template <typename T>
 static constexpr bool IsVectorRegister = std::is_base_of<vectorise::BaseVectorRegisterType, T>::value;
 
@@ -77,10 +77,10 @@ template <typename T>
 static constexpr bool IsNotVectorRegister = !IsVectorRegister<T>;
 
 template <typename T, typename R = void>
-using IfIsVectorRegister = EnableIf<IsVectorRegister<T>, R>;
+using IfIsVectorRegister = fetch::meta::EnableIf<IsVectorRegister<T>, R>;
 
 template <typename T, typename R = void>
-using IfIsNotVectorRegister = EnableIf<IsNotVectorRegister<T>, R>;
+using IfIsNotVectorRegister = fetch::meta::EnableIf<IsNotVectorRegister<T>, R>;
 
 ////////////////////////////////////////////////
 /// TYPES INDIRECTED FROM META / TYPE_TRAITS ///
