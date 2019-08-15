@@ -425,9 +425,7 @@ void RBC::OnRReadyLockFree(RBCMessage const &msg, uint32_t sender_index)
       FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, " delivered msg ", tag, " with counter ",
                      std::to_string(msg.counter()), " and id ", msg.id());
 
-      SerialisedMessage message_to_send = broadcasts_[tag].original_message;
-
-      Deliver(message_to_send, msg.id());
+      Deliver(broadcasts_[tag].original_message, msg.id());
     }
   }
 }  // namespace dkg
@@ -512,11 +510,7 @@ void RBC::OnRAnswer(RBCMessage const &msg, uint32_t sender_index)
     FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, " delivered msg ", tag, " with counter ",
                    std::to_string(msg.counter()), " and id ", msg.id());
 
-    SerialisedMessage message_to_send = broadcasts_[tag].original_message;
-
-    Deliver(message_to_send, msg.id());
-
-    delivered_.insert(tag);
+    Deliver(broadcasts_[tag].original_message, msg.id());
   }
 }
 
@@ -566,7 +560,7 @@ void RBC::Deliver(SerialisedMessage const &msg, uint32_t sender_index)
  */
 bool RBC::BasicMessageCheck(MuddleAddress const &from, RBCMessage const &msg)
 {
-  assert(lock_.owns_lock());
+  //assert(lock_.owns_lock());
 
   if (!msg.is_valid())
   {
