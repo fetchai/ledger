@@ -102,7 +102,7 @@ public:
   static const uint8_t INSTANCE_NUMBER = 2;
 
   template <typename T>
-  static inline void Serialize(T &map_constructor, Type const &x)
+  static void Serialize(T &map_constructor, Type const &x)
   {
     auto map = map_constructor(2);
     map.Append(SERVICE_TYPE, static_cast<uint16_t>(x.service_type));
@@ -110,7 +110,7 @@ public:
   }
 
   template <typename T>
-  static inline void Deserialize(T &map, Type &x)
+  static void Deserialize(T &map, Type &x)
   {
     byte_array::ConstByteArray uri;
     uint8_t                    key;

@@ -81,8 +81,6 @@ public:
   using ThreadPoolPtr = std::shared_ptr<ThreadPoolImplementation>;
   using WorkItem      = std::function<void()>;
 
-  static ThreadPoolPtr Create(std::size_t threads, std::string const &name);
-
   explicit ThreadPoolImplementation(std::size_t threads, std::string name);
   ThreadPoolImplementation(ThreadPoolImplementation const &) = delete;
   ThreadPoolImplementation(ThreadPoolImplementation &&)      = delete;
@@ -129,7 +127,7 @@ private:
   bool Poll();
   bool ExecuteWorkload(WorkItem const &workload);
 
-  std::size_t const max_threads_ = 1;  ///< Config: Max number of threads
+  std::size_t const max_threads_;  ///< Config: Max number of threads
 
   Protected<ThreadPool> threads_;  ///< Container of threads
 
@@ -150,10 +148,7 @@ private:
 
 using ThreadPool = typename std::shared_ptr<details::ThreadPoolImplementation>;
 
-inline ThreadPool MakeThreadPool(std::size_t threads = 1, std::string const &name = "")
-{
-  return details::ThreadPoolImplementation::Create(threads, name);
-}
+ThreadPool MakeThreadPool(std::size_t threads, std::string const &name);
 
 }  // namespace network
 }  // namespace fetch

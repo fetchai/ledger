@@ -21,6 +21,8 @@
 #include "crypto/fnv.hpp"
 #include "ledger/chain/address.hpp"
 
+#include <cstdint>
+
 namespace fetch {
 namespace ledger {
 

@@ -22,6 +22,10 @@
 #include "core/serializers/type_register.hpp"
 #include "network/service/types.hpp"
 
+#include <cstdint>
+#include <string>
+#include <type_traits>
+
 namespace fetch {
 namespace service {
 
