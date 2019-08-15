@@ -287,6 +287,7 @@ private:
 template <typename Key, template <typename, typename> class Container = Map>
 inline Ptr<IMap> inner(TypeId value_type_id, VM *vm, TypeId type_id)
 {
+  return ApplyFunctor<ScalarTypes, DefaultObjectCase>(
   switch (value_type_id)
   {
   case TypeIds::Bool:

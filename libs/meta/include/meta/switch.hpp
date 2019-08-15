@@ -57,7 +57,7 @@ namespace type_util {
 //
 //    where
 //
-//       - selector is a numeric value, less than- and equal-comparable against each of the Cases;
+//       - selector is a value, less than- and equal-comparable against each of the Case::values;
 //       - f is a templated function that can be invoked on arg views instantiated by each of the
 //           Cases (a lambda with auto args, for instance);
 //       - args... are the viewed args themselves.
@@ -111,10 +111,12 @@ template <class Impl, class T>
 struct LessThan<type_util::DefaultCase<Impl>, T> : std::true_type
 {
 };
+
 template <class T, class Impl>
 struct LessThan<T, type_util::DefaultCase<Impl>> : std::false_type
 {
 };
+
 template <class Impl1, class Impl2>
 struct LessThan<type_util::DefaultCase<Impl1>, type_util::DefaultCase<Impl2>> : std::true_type
 {
@@ -137,7 +139,7 @@ class ReturnZero
 
   template <class T>
   using IsNothrowConstructible =
-      type_util::Or<std::is_same<T, void>, std::is_nothrow_constructible<T>>;
+      type_util::Or<std::is_void<T>, std::is_nothrow_constructible<T>>;
 
 public:
   template <class F, class... Args>
@@ -178,7 +180,6 @@ struct SwitchNode
   template <class Id, class F, class... Args>
   static constexpr decltype(auto) Invoke(Id selector, F &&f, Args &&... args)
   {
-    //
     if (selector >= Right::LowerBound())
     {
       return Right::Invoke(selector, std::forward<F>(f), std::forward<Args>(args)...);
@@ -187,7 +188,7 @@ struct SwitchNode
   }
 };
 
-// Internal switch implementation prepends ReturnZero as a DefaultCase to cases pack.
+// Internal switch implementation uses ReturnZero as a default default case, in no other specified.
 template <class Ids>
 struct Switch : Switch<pack::ConcatT<DefaultCase<ReturnZero<pack::HeadT<Ids>>>, Ids>>
 {
@@ -228,8 +229,7 @@ class LinearSwitch
 public:
   /**
    * Manifests the lowest id this subtree can handle (the least case label).
-   * This simply passes control to Left::LowerBound(); consecutive calls finally
-   * lead to the lowest id of the whole Switch parameter pack.
+   * Ids are assumed to be sorted in ascending order, thus LowerBound is simply the leftmost id.
    *
    * @return
    */
@@ -297,13 +297,15 @@ using Switch = detail_::Switch<pack::UniqueSortT<pack::ConcatT<Ids...>>>;
 // This one may prove useful, so that we could convert a single integral_sequence
 // (or a similar template instantiation) into a pack of singleton integer_sequences,
 // to be used as case alternatives for a Switch.
-template <class Ctor, class Sequence>
+template <class Sequence, template<typename Sequence::value_type> Ctor>
 struct LiftIntegerSequence;
-template <class Sequence>
+
+template <class Sequence, template<typename Sequence::value_type> Ctor>
 using LiftIntegerSequenceT = typename LiftIntegerSequence<Sequence>::type;
-template <template <class Id, Id...> class Ctor, class Id, Id... ids>
-struct LiftIntegerSequence<Ctor<Id, ids...>>
-  : Type<pack::Pack<std::integer_sequence<Id, ids>...>>
+
+template <template <class Id, Id...> class IntegerSequence, class Id, Id... ids, template<typename IntegerSequence<Id, ids...>::value_type> Ctor>
+struct LiftIntegerSequence<IntegerSequence<Id, ids...>, Ctor>
+  : Type<pack::Pack<Ctor<ids>...>>
 {
 };
 

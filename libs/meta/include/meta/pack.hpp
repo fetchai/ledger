@@ -839,9 +839,8 @@ namespace detail_ {
 
 template <class F, class... Args>
 constexpr decltype((std::declval<F>()(std::declval<Args>()...), Yes{})) Invocable(
-
     F &&, Args &&...) noexcept;
-constexpr char Invocable(...) noexcept;
+constexpr No Invocable(...) noexcept;
 
 }  // namespace detail_
 
