@@ -45,6 +45,7 @@ public:
   using DataType   = typename TensorType::Type;
   using SizeType   = typename TensorType::SizeType;
 
+  Optimiser() = default;
   Optimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> input_node_names,
             std::string label_node_name, std::string output_node_name,
             DataType const &learning_rate = DataType(0.001));
@@ -497,30 +498,28 @@ struct MapSerializer<ml::optimisers::Optimiser<TensorType>, D>
   static uint8_t const OUTPUT_NODE_NAME    = 4;
   static uint8_t const LEARNING_RATE       = 5;
   static uint8_t const LEARNING_RATE_PARAM = 6;
-
-  static uint8_t const GRADIENTS = 7;
-  static uint8_t const EPOCH     = 8;
+  static uint8_t const EPOCH     = 7;
 
   // private member variables
-  static uint8_t const LOSS            = 9;
-  static uint8_t const LOSS_SUM        = 10;
-  static uint8_t const STEP            = 11;
-  static uint8_t const CUMULATIVE_STEP = 12;
-  static uint8_t const INPUT_FIRST     = 13;
-  static uint8_t const INPUT_SECOND    = 14;
-  static uint8_t const CUR_LABEL       = 15;
-  static uint8_t const PRED_LABEL      = 16;
-  static uint8_t const CUR_TIME        = 17;
-  static uint8_t const START_TIME      = 18;
-  static uint8_t const TIME_SPAN       = 19;
-  static uint8_t const STAT_STRING     = 20;
-  static uint8_t const BATCH_DATA      = 21;
-  static uint8_t const BATCH_LABELS    = 22;
+  static uint8_t const LOSS            = 8;
+  static uint8_t const LOSS_SUM        = 9;
+  static uint8_t const STEP            = 10;
+  static uint8_t const CUMULATIVE_STEP = 11;
+  static uint8_t const INPUT_FIRST     = 12;
+  static uint8_t const INPUT_SECOND    = 13;
+  static uint8_t const CUR_LABEL       = 14;
+  static uint8_t const PRED_LABEL      = 15;
+  static uint8_t const CUR_TIME        = 16;
+  static uint8_t const START_TIME      = 17;
+  static uint8_t const TIME_SPAN       = 18;
+  static uint8_t const STAT_STRING     = 19;
+  static uint8_t const BATCH_DATA      = 20;
+  static uint8_t const BATCH_LABELS    = 21;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(22);
+    auto map = map_constructor(21);
 
     // serialize the graph first
     map.Append(GRAPH, sp.graph_->GetGraphSaveableParams());
@@ -531,16 +530,6 @@ struct MapSerializer<ml::optimisers::Optimiser<TensorType>, D>
     map.Append(LEARNING_RATE, sp.learning_rate_);
     map.Append(LEARNING_RATE_PARAM, sp.learning_rate_param_);
 
-    // don't store trainables - just recover them from the graph afterwards
-    //    // serialise the trainables
-    //    std::vector<fetch::ml::ops::Trainable<TensorType>> graph_trainables;
-    //    for (auto const & trainable : sp.graph_trainables_)
-    //    {
-    //      graph_trainables.emplace_back(*trainable);
-    //    }
-    //    map.Append(GRAPH_TRAINABLES, graph_trainables);
-
-    map.Append(GRADIENTS, sp.gradients_);
     map.Append(EPOCH, sp.epoch_);
     map.Append(LOSS, sp.loss_);
     map.Append(LOSS_SUM, sp.loss_sum_);
@@ -582,18 +571,9 @@ struct MapSerializer<ml::optimisers::Optimiser<TensorType>, D>
     map.ExpectKeyGetValue(LEARNING_RATE, sp.learning_rate_);
     map.ExpectKeyGetValue(LEARNING_RATE_PARAM, sp.learning_rate_param_);
 
-    ml::optimisers::Optimiser<TensorType>(sp.graph_ptr, sp.input_node_names_, sp.label_node_name_,
-                                          sp.output_node_name_, sp.learning_rate_);
+    // recover gradients and gradient trainables from graph
+    sp.Init();
 
-    //    // serialise the trainables
-    //    std::vector<fetch::ml::ops::Trainable<TensorType>> graph_trainables;
-    //    for (auto const & trainable : sp.graph_trainables_)
-    //    {
-    //      graph_trainables.emplace_back(*trainable);
-    //    }
-    //    map.ExpectKeyGetValue(GRAPH_TRAINABLES, graph_trainables);
-
-    map.ExpectKeyGetValue(GRADIENTS, sp.gradients_);
     map.ExpectKeyGetValue(EPOCH, sp.epoch_);
     map.ExpectKeyGetValue(LOSS, sp.loss_);
     map.ExpectKeyGetValue(LOSS_SUM, sp.loss_sum_);

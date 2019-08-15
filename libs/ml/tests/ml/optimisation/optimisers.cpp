@@ -19,17 +19,20 @@
 #include "math/tensor.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
-#include "ml/layers/scaled_dot_product_attention.hpp"
+//#include "ml/layers/scaled_dot_product_attention.hpp"
 #include "ml/ops/activations/relu.hpp"
 #include "ml/ops/loss_functions.hpp"
-#include "ml/ops/multiply.hpp"
+//#include "ml/ops/multiply.hpp"
 #include "ml/ops/placeholder.hpp"
-#include "ml/ops/subtract.hpp"
+//#include "ml/ops/subtract.hpp"
 #include "ml/optimisation/adagrad_optimiser.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "ml/optimisation/momentum_optimiser.hpp"
 #include "ml/optimisation/rmsprop_optimiser.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
+
+#include "ml/saveparams/saveable_params.hpp"
+#include "ml/serializers/ml_types.hpp"
 
 #include "gtest/gtest.h"
 
@@ -241,6 +244,10 @@ TYPED_TEST(OptimisersTest, sgd_optimiser_serialisation)
   fetch::ml::optimisers::SGDOptimiser<TypeParam> optimiser(g, {input_name}, label_name, output_name,
                                                            learning_rate);
 
+  // Do 2 optimiser steps
+  optimiser.Run({data}, gt);
+  DataType loss = optimiser.Run({data}, gt);
+
   // serialise the optimiser
   fetch::serializers::MsgPackSerializer b;
   b << optimiser;
@@ -251,7 +258,7 @@ TYPED_TEST(OptimisersTest, sgd_optimiser_serialisation)
   b >> *optimiser_2;
 
   // Do 2 optimiser steps
-  DataType loss   = optimiser.Run({data}, gt);
+  loss   = optimiser.Run({data}, gt);
   DataType loss_2 = optimiser_2->Run({data}, gt);
 
   // Test loss
