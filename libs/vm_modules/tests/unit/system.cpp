@@ -52,7 +52,7 @@ TEST_F(SystemTests, some_args)
 {
   int argc = 6;
 
-  char **argv   = new char *[static_cast<ulong>(argc)];
+  char **argv   = new char *[static_cast<unsigned long>(argc)];
   char   arg0[] = "executable";
   char   arg1[] = "scriptname";
   char   arg2[] = "etch_arg1";
