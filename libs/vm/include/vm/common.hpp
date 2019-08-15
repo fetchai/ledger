@@ -19,7 +19,6 @@
 
 #include "meta/type_util.hpp"
 
-#include <assert.h>
 #include <cmath>
 #include <cstdint>
 #include <functional>

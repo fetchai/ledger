@@ -20,6 +20,7 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/serializers/main_serializer.hpp"
+#include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 
 #include <set>
@@ -108,12 +109,8 @@ inline void DAGEpoch::Finalise()
   serializers::MsgPackSerializer buf;
   buf << *this;
 
-  HasherType hasher;
-  hasher.Reset();
-  hasher.Update(buf.data());
-  this->hash = hasher.Final();
+  this->hash = crypto::Hash<HasherType>(buf.data());
 }
 
 }  // namespace ledger
-
 }  // namespace fetch

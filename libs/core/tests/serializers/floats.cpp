@@ -29,25 +29,26 @@
 using namespace fetch::byte_array;
 
 namespace fetch {
-
 namespace serializers {
+
+namespace {
 
 TEST(MsgPacker, floats)
 {
-  // Setup
   MsgPackSerializer stream;
   double            value;
 
   value  = static_cast<double>(2.34);
   stream = MsgPackSerializer();
   stream << value;
-  std::cout << ToHex(stream.data()) << std::endl;
   EXPECT_EQ(FromHex("cb4002b851eb851eb8"), stream.data());
   stream.seek(0);
   value = 0;
   stream >> value;
   EXPECT_EQ(value, 2.34);
 }
+
+}  // namespace
 
 }  // namespace serializers
 }  // namespace fetch
