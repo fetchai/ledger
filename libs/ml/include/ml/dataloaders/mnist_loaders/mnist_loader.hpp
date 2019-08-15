@@ -64,7 +64,7 @@ public:
 
     test_size_   = static_cast<std::uint32_t>(test_to_train_ratio * static_cast<float>(size_));
     train_size_  = size_ - test_size_;
-    test_offset_ = test_size_;
+    test_offset_ = train_size_;
 
     assert(record_length == FIGURE_SIZE);
 
@@ -78,7 +78,7 @@ public:
     // MNIST files store the size as uint32_t but Dataloader interface require uint64_t
     if (is_test)
     {
-      return static_cast<SizeType>(size_);
+      return static_cast<SizeType>(test_size_);
     }
     else
     {
@@ -114,12 +114,12 @@ public:
   {
     if (is_test)
     {
-      if (this->random_mode_)
-      {
-        GetAtIndex(test_offset_ + ((SizeType)rand() % test_size_), buffer_);
-        return buffer_;
-      }
-      else
+     if (this->random_mode_)
+     {
+       GetAtIndex(test_offset_ + ((SizeType)rand() % test_size_), buffer_);
+       return buffer_;
+     }
+     else
       {
         GetAtIndex(static_cast<SizeType>(test_offset_ + (test_cursor_++)), buffer_);
         return buffer_;
