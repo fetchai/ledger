@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "vectorise/memory/shared_array.hpp"
+#include "vectorise/math/standard_functions.hpp"
 
 #include "benchmark/benchmark.h"
 
