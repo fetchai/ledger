@@ -80,12 +80,13 @@ public:
     {
       failures_flags_.set(static_cast<uint32_t>(f));
     }
+    ResetCabinet(cabinet);
   }
 
   void SendRBroadcast(SerialisedMessage const &msg, uint8_t num_messages)
   {
     uint32_t sender_index = id_;
-    uint8_t  channel      = CHANNEL_BROADCAST;
+    uint16_t channel      = CHANNEL_BROADCAST;
     auto     counter      = static_cast<uint8_t>(msg_counter_ + 1);
     if (Failure(Failures::WRONG_CHANNEL))
     {
@@ -96,9 +97,8 @@ public:
       assert(num_messages >= msg_counter_);
       counter = static_cast<uint8_t>(num_messages - msg_counter_);
     }
-    RBroadcast  broadcast_msg{channel, sender_index, counter, msg};
-    RBCEnvelope env{broadcast_msg};
-    Broadcast(env);
+    RBroadcast broadcast_msg{channel, sender_index, counter, msg};
+    Broadcast(broadcast_msg);
     ++msg_counter_;
     OnRBroadcast(broadcast_msg, id_);  // Self sending
   }
@@ -111,147 +111,121 @@ private:
     return failures_flags_[static_cast<uint8_t>(f)];
   }
 
-  void SendBadAnswer(RBCEnvelope const &env)
+  void SendBadAnswer(RBCMessage const &msg)
   {
-    auto        answer_ptr = std::dynamic_pointer_cast<RAnswer>(env.Message());
-    std::string new_msg    = "Goodbye";
+    std::string                           new_msg = "Goodbye";
     fetch::serializers::MsgPackSerializer serialiser;
     serialiser << new_msg;
-    RAnswer     new_answer{CHANNEL_BROADCAST, answer_ptr->id(), answer_ptr->counter(),
-                       serialiser.data()};
-    RBCEnvelope new_env{new_answer};
+    RAnswer new_rmsg{CHANNEL_BROADCAST, msg.id(), msg.counter(), serialiser.data()};
 
-    RBCSerializerCounter new_env_counter;
-    new_env_counter << new_env;
+    RBCSerializerCounter new_rmsg_counter;
+    new_rmsg_counter << static_cast<RBCMessage>(new_rmsg);
 
-    RBCSerializer new_env_serializer;
-    new_env_serializer.Reserve(new_env_counter.size());
-    new_env_serializer << new_env;
+    RBCSerializer new_rmsg_serializer;
+    new_rmsg_serializer.Reserve(new_rmsg_counter.size());
+    new_rmsg_serializer << static_cast<RBCMessage>(new_rmsg);
 
-    endpoint_.Broadcast(SERVICE_DKG, CHANNEL_BROADCAST, new_env_serializer.data());
+    endpoint_.Broadcast(SERVICE_DKG, CHANNEL_BROADCAST, new_rmsg_serializer.data());
   }
 
-  void SendUnrequestedAnswer(RBCEnvelope const &env)
+  void SendUnrequestedAnswer(RBCMessage const &msg)
   {
-    assert(env.Message()->type() == RBCMessage::MessageType::RECHO);
-    auto        echo_ptr = std::dynamic_pointer_cast<REcho>(env.Message());
-    std::string new_msg  = "Hello";
+    assert(msg.type() == RBCMessage::MessageType::R_ECHO);
+    std::string                           new_msg = "Hello";
     fetch::serializers::MsgPackSerializer serialiser;
     serialiser << new_msg;
-    RAnswer new_answer{CHANNEL_BROADCAST, echo_ptr->id(), echo_ptr->counter(), serialiser.data()};
-    RBCEnvelope new_env{new_answer};
+    RAnswer new_rmsg{CHANNEL_BROADCAST, msg.id(), msg.counter(), serialiser.data()};
 
-    RBCSerializerCounter new_env_counter;
-    new_env_counter << new_env;
+    RBCSerializerCounter new_rmsg_counter;
+    new_rmsg_counter << static_cast<RBCMessage>(new_rmsg);
 
-    RBCSerializer new_env_serializer;
-    new_env_serializer.Reserve(new_env_counter.size());
-    new_env_serializer << new_env;
+    RBCSerializer new_rmsg_serializer;
+    new_rmsg_serializer.Reserve(new_rmsg_counter.size());
+    new_rmsg_serializer << static_cast<RBCMessage>(new_rmsg);
 
-    endpoint_.Broadcast(SERVICE_DKG, CHANNEL_BROADCAST, new_env_serializer.data());
+    endpoint_.Broadcast(SERVICE_DKG, CHANNEL_BROADCAST, new_rmsg_serializer.data());
   }
 
-  void Broadcast(RBCEnvelope const &env) override
+  void Broadcast(RBCMessage const &msg) override
   {
     // Serialise the RBCEnvelope
-    RBCSerializerCounter env_counter;
-    env_counter << env;
+    RBCSerializerCounter msg_counter;
+    msg_counter << msg;
 
-    RBCSerializer env_serializer;
-    env_serializer.Reserve(env_counter.size());
-    env_serializer << env;
+    RBCSerializer msg_serializer;
+    msg_serializer.Reserve(msg_counter.size());
+    msg_serializer << msg;
 
-    if ((Failure(Failures::NO_ECHO) && env.Message()->type() == RBCMessage::MessageType::RECHO) or
-        (Failure(Failures::NO_READY) && env.Message()->type() == RBCMessage::MessageType::RREADY) or
-        (Failure(Failures::NO_ANSWER) && env.Message()->type() == RBCMessage::MessageType::RANSWER))
+    if ((Failure(Failures::NO_ECHO) && msg.type() == RBCMessage::MessageType::R_ECHO) ||
+        (Failure(Failures::NO_READY) && msg.type() == RBCMessage::MessageType::R_READY) ||
+        (Failure(Failures::NO_ANSWER) && msg.type() == RBCMessage::MessageType::R_ANSWER))
     {
       return;
     }
     else if (Failure(Failures::DOUBLE_SEND))
     {
-      endpoint_.Broadcast(SERVICE_DKG, CHANNEL_BROADCAST, env_serializer.data());
+      endpoint_.Broadcast(SERVICE_DKG, CHANNEL_BROADCAST, msg_serializer.data());
     }
-    else if (Failure(Failures::BAD_ANSWER) &&
-             env.Message()->type() == RBCMessage::MessageType::RANSWER)
+    else if (Failure(Failures::BAD_ANSWER) && msg.type() == RBCMessage::MessageType::R_ANSWER)
     {
-      SendBadAnswer(env);
+      SendBadAnswer(msg);
       return;
     }
-    else if (Failure(Failures::UNREQUESTED_ANSWER) &&
-             env.Message()->type() == RBCMessage::MessageType::RECHO)
+    else if (Failure(Failures::UNREQUESTED_ANSWER) && msg.type() == RBCMessage::MessageType::R_ECHO)
     {
-      SendUnrequestedAnswer(env);
+      SendUnrequestedAnswer(msg);
     }
-    endpoint_.Broadcast(SERVICE_DKG, CHANNEL_BROADCAST, env_serializer.data());
+    endpoint_.Broadcast(SERVICE_DKG, CHANNEL_BROADCAST, msg_serializer.data());
   }
 
-  void OnRBC(MuddleAddress const &from, RBCEnvelope const &envelope) override
+  void OnRBC(MuddleAddress const &from, RBCMessage const &msg) override
   {
-    auto msg_ptr = envelope.Message();
-    if (!BasicMsgCheck(from, msg_ptr))
+    if (!BasicMessageCheck(from, msg))
     {
       return;
     }
     uint32_t sender_index{CabinetIndex(from)};
-    switch (msg_ptr->type())
+    switch (msg.type())
     {
-    case RBCMessage::MessageType::RBROADCAST:
+    case RBCMessage::MessageType::R_BROADCAST:
     {
-      auto broadcast_ptr = std::dynamic_pointer_cast<RBroadcast>(msg_ptr);
-      if (broadcast_ptr != nullptr)
+
+      auto payload = msg.message();
+      auto index   = msg.id();
+      if (Failure(Failures::BAD_MESSAGE))
       {
-        auto payload = broadcast_ptr->message();
-        auto index   = broadcast_ptr->id();
-        if (Failure(Failures::BAD_MESSAGE))
-        {
-          std::string                           new_msg = "Goodbye";
-          fetch::serializers::MsgPackSerializer serialiser;
-          serialiser << new_msg;
-          payload = serialiser.data();
-        }
-        else if (Failure(Failures::WRONG_RANK))
-        {
-          index = static_cast<uint32_t>((broadcast_ptr->id() + 1) % current_cabinet_.size());
-        }
-        RBroadcast new_broadcast{CHANNEL_BROADCAST, index, broadcast_ptr->counter(), payload};
-        OnRBroadcast(new_broadcast, sender_index);
+        std::string                           new_msg = "Goodbye";
+        fetch::serializers::MsgPackSerializer serialiser;
+        serialiser << new_msg;
+        payload = serialiser.data();
       }
+      else if (Failure(Failures::WRONG_RANK))
+      {
+        index = static_cast<uint32_t>((msg.id() + 1) % current_cabinet_.size());
+      }
+      RBroadcast new_broadcast{CHANNEL_BROADCAST, index, msg.counter(), payload};
+      OnRBroadcast(new_broadcast, sender_index);
+
       break;
     }
-    case RBCMessage::MessageType::RECHO:
+    case RBCMessage::MessageType::R_ECHO:
     {
-      auto echo_ptr = std::dynamic_pointer_cast<REcho>(msg_ptr);
-      if (echo_ptr != nullptr)
-      {
-        OnREcho(*echo_ptr, sender_index);
-      }
+      OnREcho(msg, sender_index);
       break;
     }
-    case RBCMessage::MessageType::RREADY:
+    case RBCMessage::MessageType::R_READY:
     {
-      auto ready_ptr = std::dynamic_pointer_cast<RReady>(msg_ptr);
-      if (ready_ptr != nullptr)
-      {
-        OnRReady(*ready_ptr, sender_index);
-      }
+      OnRReady(msg, sender_index);
       break;
     }
-    case RBCMessage::MessageType::RREQUEST:
+    case RBCMessage::MessageType::R_REQUEST:
     {
-      auto request_ptr = std::dynamic_pointer_cast<RRequest>(msg_ptr);
-      if (request_ptr != nullptr)
-      {
-        OnRRequest(*request_ptr, sender_index);
-      }
+      OnRRequest(msg, sender_index);
       break;
     }
-    case RBCMessage::MessageType::RANSWER:
+    case RBCMessage::MessageType::R_ANSWER:
     {
-      auto answer_ptr = std::dynamic_pointer_cast<RAnswer>(msg_ptr);
-      if (answer_ptr != nullptr)
-      {
-        OnRAnswer(*answer_ptr, sender_index);
-      }
+      OnRAnswer(msg, sender_index);
       break;
     }
     default:
