@@ -1147,7 +1147,7 @@ BlockCoordinator::State BlockCoordinator::OnReset()
 
         if(block_number != 0 || !did_genesis_already)
         {
-          beacon_->StartNewCabinet(cabinet_member_list, threshold, block_number+1, block_number+aeon_period_);
+          beacon_->StartNewCabinet(cabinet_member_list, threshold, block_number, block_number+aeon_period_);
           did_genesis_already = true;
         }
       }

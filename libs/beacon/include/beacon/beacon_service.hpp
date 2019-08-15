@@ -93,7 +93,7 @@ public:
   BeaconService(BeaconService const &) = delete;
 
   BeaconService(Endpoint &endpoint, CertificatePtr certificate, SharedEventManager event_manager,
-                uint64_t blocks_per_round = 50);
+                uint64_t blocks_per_round = 1);
 
   /// @name Entropy Generator
   /// @{

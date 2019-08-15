@@ -353,7 +353,7 @@ private:
       "bc:deadline"};              ///< Time to wait before asking peers for any missing txs
   bool have_asked_for_missing_txs_;  ///< true if a request for missing Txs has been issued for the
                                      ///< current block
-  uint64_t aeon_period_ = 50;
+  uint64_t aeon_period_ = 10;
   /// @}
 
   /// @name Synergetic Contracts
