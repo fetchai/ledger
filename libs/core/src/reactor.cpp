@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/assert.hpp"
 #include "core/logger.hpp"
 #include "core/reactor.hpp"
 #include "core/runnable.hpp"
@@ -85,11 +86,7 @@ void Reactor::Stop()
 
 void Reactor::StartWorker()
 {
-  if (worker_)
-  {
-    FETCH_LOG_ERROR(LOGGING_NAME, "Worker already started, logic start up error");
-    throw std::runtime_error("Worker already started");
-  }
+  detailed_assert(!worker_);
 
   // signal the reactor is running
   running_ = true;

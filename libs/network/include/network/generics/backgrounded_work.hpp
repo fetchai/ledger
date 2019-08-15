@@ -24,7 +24,7 @@ namespace network {
 
 /**
  * This represents a number of promise-like tasks which can be polled
- * to see if they have finished and if so, f they succeeded, timed out
+ * to see if they have finished and if so, if they succeeded, timed out
  * or failed. This could be done in a bg thread or by a foreground
  * polling process.
  *

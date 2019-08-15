@@ -46,7 +46,7 @@ public:
     new_shape_ = sp.new_shape;
   }
 
-  ~Reshape() = default;
+  ~Reshape() override = default;
 
   std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
   {

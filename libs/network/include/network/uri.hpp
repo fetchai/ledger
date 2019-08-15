@@ -157,14 +157,14 @@ public:
   static const uint8_t URI = 1;
 
   template <typename T>
-  static inline void Serialize(T &map_constructor, Type const &x)
+  static void Serialize(T &map_constructor, Type const &x)
   {
     auto map = map_constructor(1);
     map.Append(URI, x.uri_);
   }
 
   template <typename T>
-  static inline void Deserialize(T &map, Type &x)
+  static void Deserialize(T &map, Type &x)
   {
     byte_array::ConstByteArray uri;
     uint8_t                    key;
@@ -178,7 +178,6 @@ public:
 };
 
 }  // namespace serializers
-
 }  // namespace fetch
 
 template <>
