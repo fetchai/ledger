@@ -97,8 +97,9 @@ public:
       assert(num_messages >= this->message_counter());
       counter = static_cast<uint8_t>(num_messages - this->message_counter());
     }
-    RBroadcast broadcast_msg{channel, sender_index, counter, msg};
-    Broadcast(broadcast_msg);
+    MessageBroadcast broadcast_msg =
+        RBCMessage::New<RBroadcast>(channel, sender_index, counter, msg);
+    Broadcast(*broadcast_msg);
 
     increase_message_counter();
     OnRBroadcast(broadcast_msg, this->id());  // Self sending
@@ -210,29 +211,32 @@ private:
       {
         index = static_cast<uint32_t>((msg.id() + 1) % current_cabinet().size());
       }
-      RBroadcast new_broadcast{CHANNEL_BROADCAST, index, msg.counter(), payload};
+
+      MessageBroadcast new_broadcast =
+          RBCMessage::New<RBroadcast>(CHANNEL_BROADCAST, index, msg.counter(), payload);
+
       OnRBroadcast(new_broadcast, sender_index);
 
       break;
     }
     case RBCMessageType::R_ECHO:
     {
-      OnREcho(msg, sender_index);
+      OnREcho(RBCMessage::New<REcho>(msg), sender_index);
       break;
     }
     case RBCMessageType::R_READY:
     {
-      OnRReady(msg, sender_index);
+      OnRReady(RBCMessage::New<RReady>(msg), sender_index);
       break;
     }
     case RBCMessageType::R_REQUEST:
     {
-      OnRRequest(msg, sender_index);
+      OnRRequest(RBCMessage::New<RRequest>(msg), sender_index);
       break;
     }
     case RBCMessageType::R_ANSWER:
     {
-      OnRAnswer(msg, sender_index);
+      OnRAnswer(RBCMessage::New<RAnswer>(msg), sender_index);
       break;
     }
     default:

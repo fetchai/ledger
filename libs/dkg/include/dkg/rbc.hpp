@@ -59,6 +59,8 @@ public:
   using MessageStatMap = std::unordered_map<MessageHash, MessageCount>;
   using FlagType       = std::bitset<sizeof(MessageType) * 8>;
   using PartyList      = std::vector<Party>;
+  using IdType         = uint32_t;
+  using CounterType    = uint8_t;
 
   RBC(Endpoint &endpoint, MuddleAddress address, CallbackFunction call_back,
       uint16_t channel = CHANNEL_BROADCAST);
@@ -97,15 +99,15 @@ protected:
   /// @{
   // Thread safe
   virtual void OnRBC(MuddleAddress const &from, RBCMessage const &message);
-  void         OnRBroadcast(RBCMessage const &msg, uint32_t sender_index);
-  void         OnREcho(RBCMessage const &msg, uint32_t sender_index);
-  void         OnRReady(RBCMessage const &msg, uint32_t sender_index);
-  void         OnRRequest(RBCMessage const &msg, uint32_t sender_index);
-  void         OnRAnswer(RBCMessage const &msg, uint32_t sender_index);
+  void         OnRBroadcast(MessageBroadcast const &msg, uint32_t sender_index);
+  void         OnREcho(MessageEcho const &msg, uint32_t sender_index);
+  void         OnRReady(MessageReady const &msg, uint32_t sender_index);
+  void         OnRRequest(MessageRequest const &msg, uint32_t sender_index);
+  void         OnRAnswer(MessageAnswer const &msg, uint32_t sender_index);
 
   // Unsafe
-  void OnREchoLockFree(RBCMessage const &msg, uint32_t sender_index);
-  void OnRReadyLockFree(RBCMessage const &msg, uint32_t sender_index);
+  void OnREchoLockFree(MessageEcho const &msg, uint32_t sender_index);
+  void OnRReadyLockFree(MessageReady const &msg, uint32_t sender_index);
   /// @}
 
   /// Message communication - not thread safe.
@@ -145,10 +147,10 @@ protected:
   uint32_t            CabinetIndex(MuddleAddress const &other_address) const;
   bool                BasicMessageCheck(MuddleAddress const &from, RBCMessage const &msg);
   bool                CheckTag(RBCMessage const &msg);
-  bool                SetMbar(TagType tag, RMessage const &msg, uint32_t sender_index);
-  bool                SetDbar(TagType tag, RHash const &msg);
-  bool                ReceivedEcho(TagType tag, RBCMessage const &msg);
-  struct MessageCount ReceivedReady(TagType tag, RHash const &msg);
+  bool                SetMbar(TagType tag, MessageContents const &msg, uint32_t sender_index);
+  bool                SetDbar(TagType tag, MessageXHash const &msg);
+  bool                ReceivedEcho(TagType tag, MessageEcho const &msg);
+  struct MessageCount ReceivedReady(TagType tag, MessageXHash const &msg);
   bool                SetPartyFlag(uint32_t sender_index, TagType tag, MessageType msg_type);
   /// @}
 

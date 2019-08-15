@@ -44,15 +44,32 @@ using RBCSerializerCounter = fetch::serializers::SizeCounter;
 
 enum class RBCMessageType : uint8_t
 {
-  R_BROADCAST,
+  R_BROADCAST = 1,
   R_ECHO,
   R_READY,
   R_REQUEST,
   R_ANSWER
 };
 
-template <RBCMessageType TYPE>
+template <RBCMessageType TYPE, typename Parent>
 class RBCMessageImpl;
+class RHash;
+class RMessage;
+
+using RBroadcast = RBCMessageImpl<RBCMessageType::R_BROADCAST, RMessage>;
+using RRequest   = RBCMessageImpl<RBCMessageType::R_REQUEST, RMessage>;
+using RAnswer    = RBCMessageImpl<RBCMessageType::R_ANSWER, RMessage>;
+using REcho      = RBCMessageImpl<RBCMessageType::R_ECHO, RHash>;
+using RReady     = RBCMessageImpl<RBCMessageType::R_READY, RHash>;
+
+using MessageContents = std::shared_ptr<RMessage>;
+using MessageXHash    = std::shared_ptr<RHash>;
+
+using MessageBroadcast = std::shared_ptr<RBroadcast>;
+using MessageRequest   = std::shared_ptr<RRequest>;
+using MessageAnswer    = std::shared_ptr<RAnswer>;
+using MessageEcho      = std::shared_ptr<REcho>;
+using MessageReady     = std::shared_ptr<RReady>;
 
 class RBCMessage
 {
@@ -64,39 +81,44 @@ public:
   {
     SharedRBCMessage ret{nullptr};
 
+    NewType([&ret](auto value) { ret = value; }, type, std::forward<Args>(args)...);
+
+    return ret;
+  }
+
+  template <typename T, typename... Args>
+  static std::shared_ptr<T> New(Args... args)
+  {
+    std::shared_ptr<T> ret{nullptr};
+    ret.reset(new T(std::forward<Args>(args)...));
+    return ret;
+  }
+
+  template <typename F, typename... Args>
+  static bool NewType(F f, RBCMessageType type, Args... args)
+  {
     switch (type)
     {
     case RBCMessageType::R_BROADCAST:
-      ret = New<RBCMessageType::R_BROADCAST>(std::forward<Args>(args)...);
+      f(New<RBroadcast>(std::forward<Args>(args)...));
       break;
     case RBCMessageType::R_ECHO:
-      ret = New<RBCMessageType::R_ECHO>(std::forward<Args>(args)...);
+      f(New<REcho>(std::forward<Args>(args)...));
       break;
     case RBCMessageType::R_READY:
-      ret = New<RBCMessageType::R_READY>(std::forward<Args>(args)...);
+      f(New<RReady>(std::forward<Args>(args)...));
       break;
     case RBCMessageType::R_REQUEST:
-      ret = New<RBCMessageType::R_REQUEST>(std::forward<Args>(args)...);
+      f(New<RRequest>(std::forward<Args>(args)...));
       break;
     case RBCMessageType::R_ANSWER:
-      ret = New<RBCMessageType::R_ANSWER>(std::forward<Args>(args)...);
+      f(New<RAnswer>(std::forward<Args>(args)...));
       break;
+    default:
+      return false;
     }
 
-    return ret;
-  }
-
-  template <RBCMessageType TYPE, typename... Args>
-  static SharedRBCMessage New(Args... args)
-  {
-    SharedRBCMessage ret{nullptr};
-    ret.reset(new RBCMessageImpl<TYPE>(std::forward<Args>(args)...));
-    return ret;
-  }
-
-  static SharedRBCMessage ToNativeType(RBCMessage const &msg)
-  {
-    return New(msg.type(), msg);
+    return true;
   }
 
   // Constructs an invalid message
@@ -104,13 +126,11 @@ public:
 
   /// Properties
   /// @{
-  TagType                  tag() const;
-  uint16_t                 channel() const;
-  uint8_t                  counter() const;
-  uint32_t                 id() const;
-  RBCMessageType           type() const;
-  SerialisedMessage const &message() const;
-  MessageHash              hash() const;
+  TagType        tag() const;
+  uint16_t       channel() const;
+  uint8_t        counter() const;
+  uint32_t       id() const;
+  RBCMessageType type() const;
   /// @}
 
   /// Validation
@@ -124,45 +144,61 @@ public:
   friend struct serializers::MapSerializer;
 
   RBCMessage(RBCMessage const &) = default;  // TODO: make protected
+
+  /// @{ // TODO: Mkae protected
+  SerialisedMessage const &message() const;
+  MessageHash              hash() const;
+  /// @}
 protected:
   RBCMessage(RBCMessageType type, uint16_t channel = 0, uint32_t id = 0, uint8_t counter = 0,
              SerialisedMessage msg = "");
 
-  RBCMessageType type_;
-
 private:
+  RBCMessageType    type_;
   uint16_t          channel_;  ///< Channel Id of the broadcast channel
   uint32_t          id_;       ///< Unique Id of the node
   uint8_t           counter_;  ///< Counter for messages sent on RBC
   SerialisedMessage payload_;  ///< Serialised message to be sent using RBC
 };
 
-template <RBCMessageType TYPE>
-class RBCMessageImpl final : public RBCMessage
+class RHash : public RBCMessage
+{
+public:
+  RHash(RBCMessage const &msg)
+    : RBCMessage(msg)
+  {}
+  using RBCMessage::hash;
+  using RBCMessage::RBCMessage;
+};
+
+class RMessage : public RBCMessage
+{
+public:
+  RMessage(RBCMessage const &msg)
+    : RBCMessage(msg)
+  {}
+  using RBCMessage::message;
+  using RBCMessage::RBCMessage;
+};
+
+template <RBCMessageType TYPE, typename Parent>
+class RBCMessageImpl final : public Parent
 {
 public:
   RBCMessageImpl(uint16_t channel = 0, uint32_t id = 0, uint8_t counter = 0,
                  SerialisedMessage msg = "")
-    : RBCMessage{TYPE, channel, id, counter, msg}
+    : Parent{TYPE, channel, id, counter, msg}
   {}
 
   RBCMessageImpl(RBCMessage const &msg)
-    : RBCMessage(msg)
+    : Parent(msg)
   {}
 
   bool is_valid() const override
   {
-    return type_ != TYPE;
+    return this->type() == TYPE;
   }
 };
-
-using RMessage   = RBCMessage;
-using RHash      = RBCMessage;
-using RBroadcast = RBCMessageImpl<RBCMessageType::R_BROADCAST>;
-using RRequest   = RBCMessageImpl<RBCMessageType::R_REQUEST>;
-using RAnswer    = RBCMessageImpl<RBCMessageType::R_ANSWER>;
-using REcho      = RBCMessageImpl<RBCMessageType::R_ECHO>;
-using RReady     = RBCMessageImpl<RBCMessageType::R_READY>;
 
 }  // namespace dkg
 
