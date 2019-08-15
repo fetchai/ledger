@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "dkg/rbc.hpp"
 #include "core/logging.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
-#include "dkg/rbc.hpp"
 
 namespace fetch {
 namespace dkg {
@@ -561,7 +561,12 @@ void RBC::Deliver(SerialisedMessage const &msg, uint32_t sender_index)
   assert(parties_.size() == current_cabinet_.size());
 
   MuddleAddress miner_id{*std::next(current_cabinet_.begin(), sender_index)};
+
+  // Unlock and lock here to allow the callback funtion to use the RBC
+  lock_.unlock();
   deliver_msg_callback_(miner_id, msg);
+  lock_.lock();
+
   ++parties_[sender_index].deliver_s;  // Increase counter
 
   // Try to deliver old messages
@@ -578,7 +583,12 @@ void RBC::Deliver(SerialisedMessage const &msg, uint32_t sender_index)
       assert(!broadcasts_[old_tag].original_message.empty());
       FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, " delivered msg ", old_tag, " with counter ",
                      old_tag_msg->first, " and id ", sender_index);
+
+      // Unlock and lock here to allow the callback funtion to use the RBC
+      lock_.unlock();
       deliver_msg_callback_(miner_id, broadcasts_[old_tag].original_message);
+      lock_.lock();
+
       ++parties_[sender_index].deliver_s;  // Increase counter
       delivered_.insert(old_tag);
       old_tag_msg = parties_[sender_index].undelivered_msg.erase(old_tag_msg);

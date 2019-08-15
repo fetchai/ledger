@@ -156,12 +156,7 @@ protected:
 
   /// Mutex setup that allows easy debugging of deadlocks
   /// @{
-#ifndef NDEBUG
-  mutable std::mutex                   mutex_;
-  mutable std::unique_lock<std::mutex> lock_{mutex_, std::defer_lock};
-#else
-  mutable std::mutex lock_;
-#endif
+  mutable mutex::Mutex lock_{__LINE__, __FILE__};
   /// @}
 private:
   /// Variable Declarations
