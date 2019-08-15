@@ -27,10 +27,10 @@ class Parameters
 {
 public:
   using ParamParser = fetch::commandline::ParamsParser;
-  using ArgList     = std::vector<char *>;
+  using ArgList     = std::vector<const char *>;
   using StringList  = std::vector<std::string>;
 
-  void Parse(int argc, char **argv);
+  void Parse(int argc, const char *const argv[]);
 
   ParamParser const &program() const;
 
@@ -53,7 +53,7 @@ struct System : public fetch::vm::Object
   static fetch::vm::Ptr<fetch::vm::String> Argv(fetch::vm::VM *vm, fetch::vm::TypeId,
                                                 int32_t        index);
 
-  static void Parse(int argc, char **argv);
+  static void Parse(int argc, const char *const *argv);
 
   static Parameters::ParamParser const &GetParamParser();
 

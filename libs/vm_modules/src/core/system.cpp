@@ -38,7 +38,7 @@ fetch::vm::Ptr<fetch::vm::String> fetch::vm_modules::System::Argv(fetch::vm::VM 
   return {new fetch::vm::String{vm, params.script().at(static_cast<std::size_t>(index))}};
 }
 
-void fetch::vm_modules::System::Parse(int argc, char **argv)
+void fetch::vm_modules::System::Parse(int argc, const char *const *argv)
 {
   params.Parse(argc, argv);
 }
@@ -48,7 +48,7 @@ const fetch::vm_modules::Parameters::ParamParser &fetch::vm_modules::System::Get
   return params.program();
 }
 
-void fetch::vm_modules::Parameters::Parse(int argc, char **argv)
+void fetch::vm_modules::Parameters::Parse(int argc, const char *const argv[])
 {
   const std::string SEPARATOR{"--"};
 
