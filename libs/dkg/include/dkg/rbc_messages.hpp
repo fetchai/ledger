@@ -28,7 +28,7 @@
 namespace fetch {
 namespace dkg {
 
-using MessageHash          = byte_array::ByteArray;
+using HashDigest           = byte_array::ByteArray;
 using TagType              = uint64_t;
 using SerialisedMessage    = byte_array::ConstByteArray;
 using RBCSerializer        = fetch::serializers::MsgPackSerializer;
@@ -64,7 +64,7 @@ using REcho      = RBCMessageImpl<RBCMessageType::R_ECHO, RHash>;
 using RReady     = RBCMessageImpl<RBCMessageType::R_READY, RHash>;
 
 using MessageContents = std::shared_ptr<RMessage>;
-using MessageXHash    = std::shared_ptr<RHash>;
+using MessageHash     = std::shared_ptr<RHash>;
 
 using MessageBroadcast = std::shared_ptr<RBroadcast>;
 using MessageRequest   = std::shared_ptr<RRequest>;
@@ -148,7 +148,7 @@ public:
 
   /// @{ // TODO: Mkae protected
   SerialisedMessage const &message() const;
-  MessageHash              hash() const;
+  HashDigest               hash() const;
   /// @}
 protected:
   RBCMessage(RBCMessageType type, uint16_t channel = 0, uint32_t id = 0, uint8_t counter = 0,

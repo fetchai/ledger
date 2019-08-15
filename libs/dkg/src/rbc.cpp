@@ -207,7 +207,7 @@ bool RBC::ReceivedEcho(TagType tag, MessageEcho const &msg)
  * @param msg Reference to RReady message
  * @return MessageCount for tag in broadcasts_
  */
-struct RBC::MessageCount RBC::ReceivedReady(TagType tag, MessageXHash const &msg)
+struct RBC::MessageCount RBC::ReceivedReady(TagType tag, MessageHash const &msg)
 {
   assert(lock_.owns_lock());
 
@@ -513,7 +513,7 @@ void RBC::OnRAnswer(MessageAnswer const &msg, uint32_t sender_index)
     return;
   }
   // Check the hash of the message
-  MessageHash msg_hash{crypto::Hash<HashFunction>(msg->message())};
+  HashDigest msg_hash{crypto::Hash<HashFunction>(msg->message())};
 
   if (msg_hash == broadcasts_[tag].message_hash)
   {
@@ -649,17 +649,17 @@ bool RBC::SetMbar(TagType tag, MessageContents const &msg, uint32_t sender_index
  *
  * @param tag Unique tag of a message sent via RBC
  * @param msg Reference of the RHash (RBCMesssage containing a hash_)
- * @return Bool for whether the hash contained in RHash equals the MessageHash of message stored in
+ * @return Bool for whether the hash contained in RHash equals the HashDigest of message stored in
  * original_message for this tag
  */
-bool RBC::SetDbar(TagType tag, MessageXHash const &msg)
+bool RBC::SetDbar(TagType tag, MessageHash const &msg)
 {
   assert(lock_.owns_lock());
   broadcasts_[tag].message_hash = msg->hash();
   assert(msg != nullptr);
   assert(msg->is_valid());
 
-  MessageHash msg_hash;
+  HashDigest msg_hash;
 
   if (!broadcasts_[tag].original_message.empty())
   {

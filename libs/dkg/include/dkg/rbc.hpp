@@ -53,10 +53,10 @@ public:
   using SubscriptionPtr = std::shared_ptr<muddle::Subscription>;
   using MessageType     = RBCMessageType;
   using HashFunction    = crypto::SHA256;
-  using MessageHash     = byte_array::ByteArray;
+  using HashDigest      = byte_array::ByteArray;
   using CallbackFunction =
       std::function<void(MuddleAddress const &, byte_array::ConstByteArray const &)>;
-  using MessageStatMap = std::unordered_map<MessageHash, MessageCount>;
+  using MessageStatMap = std::unordered_map<HashDigest, MessageCount>;
   using FlagType       = std::bitset<sizeof(MessageType) * 8>;
   using PartyList      = std::vector<Party>;
   using IdType         = uint32_t;
@@ -81,7 +81,7 @@ protected:
   struct BroadcastMessage
   {
     SerialisedMessage original_message{};  ///< Original message broadcasted
-    MessageHash       message_hash{};      ///< Hash of message
+    HashDigest        message_hash{};      ///< Hash of message
     MessageStatMap    msgs_count{};        ///< Count of RBCMessages received for a given hash
   };
 
@@ -148,9 +148,9 @@ protected:
   bool                BasicMessageCheck(MuddleAddress const &from, RBCMessage const &msg);
   bool                CheckTag(RBCMessage const &msg);
   bool                SetMbar(TagType tag, MessageContents const &msg, uint32_t sender_index);
-  bool                SetDbar(TagType tag, MessageXHash const &msg);
+  bool                SetDbar(TagType tag, MessageHash const &msg);
   bool                ReceivedEcho(TagType tag, MessageEcho const &msg);
-  struct MessageCount ReceivedReady(TagType tag, MessageXHash const &msg);
+  struct MessageCount ReceivedReady(TagType tag, MessageHash const &msg);
   bool                SetPartyFlag(uint32_t sender_index, TagType tag, MessageType msg_type);
   /// @}
 
