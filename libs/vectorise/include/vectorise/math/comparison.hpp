@@ -18,47 +18,11 @@
 //------------------------------------------------------------------------------
 
 #include "vectorise/meta/math_type_traits.hpp"
-#include "vectorise/vectorise.hpp"
 
 #include <cassert>
 
 namespace fetch {
 namespace math {
-
-/**
- * Max function for two values
- * @tparam T
- * @param datum1
- * @param datum2
- * @return
- */
-
-template <typename T>
-inline T Max(T const &a, T const &b)
-{
-  return Max(a, b);
-}
-
-template <typename T>
-fetch::math::meta::IfIsFixedPoint<T, T> Max(T const &a, T const &b)
-{
-  return std::max(a.Data(), b.Data());
-}
-
-template <typename T>
-fetch::math::meta::IfIsVectorRegister<T, T> Max(T const &a, T const &b)
-{
-  //ret = a > b ? a : b;
-  return fetch::vectorise::Max(a, b);
-}
-
-template <typename T>
-fetch::math::meta::IfIsNonFixedPointArithmetic<T, T> Max(T const &a, T const &b)
-{
-  return std::max(a, b);
-}
-
-
 
 /**
  * Min function for two values

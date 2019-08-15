@@ -21,6 +21,8 @@
 #ifdef __AVX2__
 #include "vectorise/arch/avx2/math/standard_functions.hpp"
 #endif
+#include "vectorise/math/max.hpp"
+
 
 #include <cstddef>
 #include <cmath>
