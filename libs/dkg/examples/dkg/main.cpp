@@ -135,9 +135,23 @@ int main()
       member->reactor.Start();
     }
 
-    while (!committee[0]->dkg_service.IsSynced())
+    while(true)
     {
+      bool everyone_synced = true;
+
+      for(auto const &member : committee)
+      {
+        if(!member->dkg_service.IsSynced())
+        {
+          everyone_synced = false;
+        }
+      }
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+      if(everyone_synced)
+      {
+        break;
+      }
     }
   }
 

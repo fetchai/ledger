@@ -49,7 +49,6 @@ private:
 
   Endpoint &     endpoint_;
   CabinetMembers members_;
-  Cabinet        cabinet_;
   RBC            rbc_;
   std::mutex     mutex_;
   uint32_t       ready_peers_ = 0;
