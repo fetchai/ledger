@@ -56,6 +56,18 @@ void VMStateDict::SetWeights(Ptr<String> const &nodename, Ptr<math::VMTensor> co
   *weights_tensor     = weights->GetTensor();
 }
 
+bool VMStateDict::SerializeTo(fetch::vm::MsgPackSerializer &buffer)
+{
+  buffer << state_dict_;
+  return true;
+}
+
+bool VMStateDict::DeserializeFrom(serializers::MsgPackSerializer &buffer)
+{
+  buffer >> state_dict_;
+  return true;
+}
+
 void VMStateDict::Bind(Module &module)
 {
   module.CreateClassType<VMStateDict>("StateDict")

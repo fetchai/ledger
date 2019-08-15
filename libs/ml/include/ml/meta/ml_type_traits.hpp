@@ -23,8 +23,72 @@
 namespace fetch {
 namespace ml {
 
+enum class OpType : uint16_t
+{
+  NONE,
+  GRAPH,
+  SUBGRAPH,
+  OP_ABS,
+  OP_ADD,
+  OP_CONCATENATE,
+  OP_CONVOLUTION_1D,
+  OP_CONVOLUTION_2D,
+  OP_CROSS_ENTROPY_LOSS,
+  OP_DIVIDE,
+  OP_DROPOUT,
+  OP_ELU,
+  OP_EMBEDDINGS,
+  OP_EXP,
+  OP_FLATTEN,
+  OP_GELU,
+  OP_LAYER_NORM,
+  OP_LEAKY_RELU,
+  OP_LEAKY_RELU_OP,
+  OP_LOG,
+  OP_LOGSIGMOID,
+  OP_LOGSOFTMAX,
+  OP_MASK_FILL,
+  OP_MATRIX_MULTIPLY,
+  OP_MAX_POOL_1D,
+  OP_MAX_POOL_2D,
+  OP_MEAN_SQUARE_ERROR_LOSS,
+  OP_MAXIMUM,
+  OP_MULTIPLY,
+  OP_PLACEHOLDER,
+  OP_PRELU,
+  OP_RANDOMISED_RELU,
+  OP_RELU,
+  OP_RESHAPE,
+  OP_SIGMOID,
+  OP_SOFTMAX,
+  OP_SOFTMAX_CROSS_ENTROPY_LOSS,
+  OP_SQRT,
+  OP_SUBTRACT,
+  OP_SWITCH,
+  OP_TANH,
+  OP_TRANSPOSE,
+  OP_WEIGHTS,
+  OP_SLICE,
+  LAYER_CONVOLUTION_1D,
+  LAYER_CONVOLUTION_2D,
+  LAYER_FULLY_CONNECTED,
+  LAYER_LAYER_NORM,
+  LAYER_MULTI_HEAD_ATTENTION,
+  LAYER_PRELU,
+  LAYER_SCALED_DOT_PRODUCT_ATTENTION,
+  LAYER_SELF_ATTENTION_ENCODER,
+  LAYER_SKIP_GRAM
+};
+
+/////////////////////////////
+///  FORWARD DECLARATIONS ///
+/////////////////////////////
+
 template <typename T>
 class Graph;
+
+template <typename T>
+class Node;
 
 namespace layers {
 template <typename T>
@@ -34,9 +98,14 @@ class FullyConnected;
 namespace ops {
 template <typename T>
 class Trainable;
+
 }  // namespace ops
 
 namespace meta {
+
+//////////////////////////////////////////////////////////
+///  GRAPH & TRAINABLE / NOT-TRAINABLE NOT TYPE SFINAE ///
+//////////////////////////////////////////////////////////
 
 template <typename T, typename OperationType>
 constexpr bool IsTrainable = std::is_base_of<fetch::ml::ops::Trainable<T>, OperationType>::value;
@@ -76,6 +145,9 @@ using IfIsNotShareable = fetch::meta::EnableIf<IsNotShareable<T, OperationType>,
 
 template <typename T, typename OperationType, typename R = void>
 using IfIsNotTrainable = fetch::meta::EnableIf<IsNotTrainable<T, OperationType>, R>;
+
+template <typename T, typename OperationType, typename R = void>
+using IfIsNotGraph = fetch::meta::EnableIf<IsNotGraph<T, OperationType>, R>;
 
 template <typename T, typename OperationType, typename R = void>
 using IfIsNotGraphOrTrainable = fetch::meta::EnableIf<IsNotGraphOrTrainable<T, OperationType>, R>;

@@ -35,15 +35,27 @@ template <class T>
 class SoftmaxCrossEntropyLoss : public Ops<T>
 {
 public:
-  using ArrayType     = T;
-  using DataType      = typename ArrayType::Type;
-  using SizeType      = typename ArrayType::SizeType;
+  using TensorType    = T;
+  using DataType      = typename TensorType::Type;
+  using SizeType      = typename TensorType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SPType        = OpSoftmaxCrossEntropySaveableParams<T>;
 
-  SoftmaxCrossEntropyLoss()           = default;
+  SoftmaxCrossEntropyLoss() = default;
+
+  explicit SoftmaxCrossEntropyLoss(SPType const &sp)
+    : Ops<T>(sp)
+  {}
+
   ~SoftmaxCrossEntropyLoss() override = default;
 
-  void Forward(VecTensorType const &inputs, ArrayType &output) override
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
+  {
+    SPType sp{};
+    return std::make_shared<SPType>(sp);
+  }
+
+  void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     // third term may be present for specifying n_classes
     assert(inputs.size() == 2);
@@ -58,15 +70,15 @@ public:
         fetch::math::CrossEntropyLoss(fetch::math::Softmax((*inputs.at(0))), (*inputs.at(1)));
   }
 
-  std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                  ArrayType const &    error_signal) override
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     FETCH_UNUSED(error_signal);
 
     assert(inputs.size() == 2);
     assert(inputs.at(0)->size() == inputs.at(1)->size());
 
-    ArrayType ret({inputs.at(0)->shape()});
+    TensorType ret({inputs.at(0)->shape()});
     fetch::math::Softmax((*inputs.at(0)), ret, 0);
     fetch::math::Subtract(ret, (*inputs.at(1)), ret);
 
@@ -79,6 +91,10 @@ public:
     return {1, 1};
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::OP_SOFTMAX_CROSS_ENTROPY_LOSS;
+  }
   static constexpr char const *DESCRIPTOR = "SoftmaxCrossEntropyLoss";
 };
 

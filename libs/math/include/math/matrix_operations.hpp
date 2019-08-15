@@ -1074,7 +1074,10 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> Dot(ArrayType const &A, ArrayT
     throw std::runtime_error("expected A width to equal and B height.");
   }
 
-  ret.Resize({aview.height(), bview.width()});
+  if (ret.shape() != std::vector<SizeType>({aview.height(), bview.width()}))
+  {
+    ret.Resize({aview.height(), bview.width()});
+  }
 
   using Type = typename ArrayType::Type;
   using namespace linalg;
@@ -1121,7 +1124,10 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> DotTranspose(ArrayType const &
     throw std::runtime_error("expected A and B to have same width.");
   }
 
-  ret.Resize({aview.height(), bview.height()});
+  if (ret.shape() != std::vector<SizeType>({aview.height(), bview.width()}))
+  {
+    ret.Resize({aview.height(), bview.height()});
+  }
 
   using Type = typename ArrayType::Type;
   using namespace linalg;
@@ -1169,7 +1175,10 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> TransposeDot(ArrayType const &
     throw std::runtime_error("expected A and B to have same height.");
   }
 
-  ret.Resize({aview.width(), bview.width()});
+  if (ret.shape() != std::vector<SizeType>({aview.height(), bview.width()}))
+  {
+    ret.Resize({aview.width(), bview.width()});
+  }
 
   using Type = typename ArrayType::Type;
   using namespace linalg;

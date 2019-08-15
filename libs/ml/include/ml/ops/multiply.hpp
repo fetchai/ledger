@@ -29,32 +29,44 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Multiply : public fetch::ml::Ops<T>
+class Multiply : public fetch::ml::ops::Ops<T>
 {
 public:
-  using ArrayType     = T;
-  using SizeType      = typename ArrayType::SizeType;
-  using ArrayPtrType  = std::shared_ptr<ArrayType>;
+  using TensorType    = T;
+  using SizeType      = typename TensorType::SizeType;
+  using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SPType        = OpMultiplySaveableParams<T>;
 
-  Multiply()           = default;
+  Multiply() = default;
+
+  explicit Multiply(SPType const &sp)
+    : Ops<T>(sp)
+  {}
+
   ~Multiply() override = default;
 
-  // for inputs to the multiply layer, if broadcasting is required, make sure the first input is the
-  // one with the complete shape
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
+  {
+    SPType sp{};
+    return std::make_shared<SPType>(sp);
+  }
 
   /**
    * elementwise multiplication
+   * for inputs to the multiply layer, if broadcasting is required, make sure the first input is the
+   * one with the complete shape
+   *
    * @param inputs  left & right inputs to multiply
    * @return
    */
-  void Forward(VecTensorType const &inputs, ArrayType &output) override
+  void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(inputs.size() == 2);
     assert(inputs.at(0)->shape().size() <=
            3);  // we do not support input of more than 3D (including batch dims)
-	  assert(inputs.at(0)->shape().size() ==
-	         inputs.at(1)->shape().size());  // check if addition is broadcastable
+    assert(inputs.at(0)->shape().size() ==
+           inputs.at(1)->shape().size());  // check if addition is broadcastable
     assert(output.shape() == inputs.front()->shape());
 
     fetch::math::Multiply((*inputs.at(0)), (*inputs.at(1)), output);
@@ -65,8 +77,8 @@ public:
    * f'(input0)=input1*error_signal
    * f'(input1)=input0*error_signal
    */
-  std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                  ArrayType const &    error_signal) override
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     assert(inputs.size() == 2);
     assert(inputs.at(0)->shape().size() <=
@@ -75,8 +87,8 @@ public:
            inputs.at(1)->shape().size());  // check if addition is broadcastable
     assert(error_signal.shape() == inputs.front()->shape());
 
-    ArrayType error_signal_1(error_signal.shape());
-    ArrayType error_signal_2(error_signal.shape());
+    TensorType error_signal_1(error_signal.shape());
+    TensorType error_signal_2(error_signal.shape());
     fetch::math::Multiply(error_signal, (*inputs.at(1)), error_signal_1);
     fetch::math::Multiply(error_signal, (*inputs.at(0)), error_signal_2);
 
@@ -87,7 +99,7 @@ public:
     else if (inputs.at(1)->size() == 1)
     {
       // if second input is a scalar
-      auto second_error_signal = ArrayType(inputs.at(1)->shape());
+      auto second_error_signal = TensorType(inputs.at(1)->shape());
       fetch::math::Sum(error_signal_2, *second_error_signal.begin());
       return {error_signal_1, second_error_signal};
     }
@@ -106,7 +118,7 @@ public:
         // We only support backward broadcast through shape (N, 1, 1)
         assert(inputs.at(1)->shape(1) == 1);
 
-        ArrayType error_sum({inputs.at(1)->shape(0), 1});
+        TensorType error_sum({inputs.at(1)->shape(0), 1});
         for (SizeType batch = 0; batch < error_signal.shape(batch_dimension); batch++)
         {
           error_sum += fetch::math::ReduceSum(error_signal_2.View(batch).Copy(), SizeType(1));
@@ -122,6 +134,10 @@ public:
     return inputs.front()->shape();
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::OP_MULTIPLY;
+  }
   static constexpr char const *DESCRIPTOR = "Multiply";
 };
 

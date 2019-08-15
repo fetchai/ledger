@@ -27,8 +27,9 @@ namespace vm {
 class IMatrix : public Object
 {
 public:
-  IMatrix()          = delete;
-  virtual ~IMatrix() = default;
+  IMatrix()           = delete;
+  ~IMatrix() override = default;
+
   static Ptr<IMatrix> Constructor(VM *vm, TypeId type_id, int32_t num_rows, int32_t num_columns);
   virtual TemplateParameter1 GetIndexedValue(AnyInteger const &row, AnyInteger const &column) = 0;
   virtual void               SetIndexedValue(AnyInteger const &row, AnyInteger const &column,
@@ -43,8 +44,8 @@ protected:
 template <typename T>
 struct Matrix : public IMatrix
 {
-  Matrix()          = delete;
-  virtual ~Matrix() = default;
+  Matrix()           = delete;
+  ~Matrix() override = default;
 
   Matrix(VM *vm, TypeId type_id, TypeId element_type_id__, std::size_t num_rows,
          std::size_t num_columns)
@@ -60,7 +61,7 @@ struct Matrix : public IMatrix
     return Ptr<Matrix>(new Matrix(vm, type_id, element_type_id, num_rows, num_columns));
   }
 
-  virtual void Negate(Ptr<Object> &object) override
+  void Negate(Ptr<Object> &object) override
   {
     bool const        matrix_is_modifiable = object.RefCount() == 1;
     Ptr<Matrix>       operand              = object;
@@ -78,7 +79,7 @@ struct Matrix : public IMatrix
     object = std::move(m);
   }
 
-  virtual void Add(Ptr<Object> &lhso, Ptr<Object> &rhso) override
+  void Add(Ptr<Object> &lhso, Ptr<Object> &rhso) override
   {
     bool const        lhs_matrix_is_modifiable = lhso.RefCount() == 1;
     bool const        rhs_matrix_is_modifiable = rhso.RefCount() == 1;
@@ -109,7 +110,7 @@ struct Matrix : public IMatrix
     lhso = std::move(m);
   }
 
-  virtual void RightAdd(Variant &objectv, Variant &rhsv) override
+  void RightAdd(Variant &objectv, Variant &rhsv) override
   {
     bool const        lhs_matrix_is_modifiable = objectv.object.RefCount() == 1;
     Ptr<Matrix>       lhs                      = objectv.object;
@@ -126,7 +127,7 @@ struct Matrix : public IMatrix
     objectv.Assign(std::move(m), objectv.type_id);
   }
 
-  virtual void InplaceAdd(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override
+  void InplaceAdd(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override
   {
     Ptr<Matrix>       lhs         = lhso;
     Ptr<Matrix>       rhs         = rhso;
@@ -142,14 +143,14 @@ struct Matrix : public IMatrix
     lhs->matrix.InlineAdd(rhs->matrix);
   }
 
-  virtual void InplaceRightAdd(Ptr<Object> const &lhso, Variant const &rhsv) override
+  void InplaceRightAdd(Ptr<Object> const &lhso, Variant const &rhsv) override
   {
     Ptr<Matrix> lhs = lhso;
     T           rhs = rhsv.primitive.Get<T>();
     lhs->matrix.InlineAdd(rhs);
   }
 
-  virtual void Subtract(Ptr<Object> &lhso, Ptr<Object> &rhso) override
+  void Subtract(Ptr<Object> &lhso, Ptr<Object> &rhso) override
   {
     bool const        lhs_matrix_is_modifiable = lhso.RefCount() == 1;
     bool const        rhs_matrix_is_modifiable = rhso.RefCount() == 1;
@@ -180,7 +181,7 @@ struct Matrix : public IMatrix
     lhso = std::move(m);
   }
 
-  virtual void RightSubtract(Variant &objectv, Variant &rhsv) override
+  void RightSubtract(Variant &objectv, Variant &rhsv) override
   {
     bool const        lhs_matrix_is_modifiable = objectv.object.RefCount() == 1;
     Ptr<Matrix>       lhs                      = objectv.object;
@@ -197,7 +198,7 @@ struct Matrix : public IMatrix
     objectv.Assign(std::move(m), objectv.type_id);
   }
 
-  virtual void InplaceSubtract(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override
+  void InplaceSubtract(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override
   {
     Ptr<Matrix>       lhs         = lhso;
     Ptr<Matrix>       rhs         = rhso;
@@ -213,14 +214,14 @@ struct Matrix : public IMatrix
     lhs->matrix.InlineSubtract(rhs->matrix);
   }
 
-  virtual void InplaceRightSubtract(Ptr<Object> const &lhso, Variant const &rhsv) override
+  void InplaceRightSubtract(Ptr<Object> const &lhso, Variant const &rhsv) override
   {
     Ptr<Matrix> lhs = lhso;
     T           rhs = rhsv.primitive.Get<T>();
     lhs->matrix.InlineSubtract(rhs);
   }
 
-  virtual void Multiply(Ptr<Object> &lhso, Ptr<Object> &rhso) override
+  void Multiply(Ptr<Object> &lhso, Ptr<Object> &rhso) override
   {
     Ptr<Matrix>       lhs         = lhso;
     Ptr<Matrix>       rhs         = rhso;
@@ -239,7 +240,7 @@ struct Matrix : public IMatrix
     lhso = std::move(m);
   }
 
-  virtual void LeftMultiply(Variant &lhsv, Variant &objectv) override
+  void LeftMultiply(Variant &lhsv, Variant &objectv) override
   {
     bool const        rhs_matrix_is_modifiable = objectv.object.RefCount() == 1;
     T                 lhs                      = lhsv.primitive.Get<T>();
@@ -257,7 +258,7 @@ struct Matrix : public IMatrix
     lhsv.Assign(std::move(m), objectv.type_id);
   }
 
-  virtual void RightMultiply(Variant &objectv, Variant &rhsv) override
+  void RightMultiply(Variant &objectv, Variant &rhsv) override
   {
     bool const        lhs_matrix_is_modifiable = objectv.object.RefCount() == 1;
     Ptr<Matrix>       lhs                      = objectv.object;
@@ -274,14 +275,14 @@ struct Matrix : public IMatrix
     objectv.Assign(std::move(m), objectv.type_id);
   }
 
-  virtual void InplaceRightMultiply(Ptr<Object> const &lhso, Variant const &rhsv) override
+  void InplaceRightMultiply(Ptr<Object> const &lhso, Variant const &rhsv) override
   {
     Ptr<Matrix> lhs = lhso;
     T           rhs = rhsv.primitive.Get<T>();
     lhs->matrix.InlineMultiply(rhs);
   }
 
-  virtual void RightDivide(Variant &objectv, Variant &rhsv) override
+  void RightDivide(Variant &objectv, Variant &rhsv) override
   {
     bool const  lhs_matrix_is_modifiable = objectv.object.RefCount() == 1;
     Ptr<Matrix> lhs                      = objectv.object;
@@ -303,7 +304,7 @@ struct Matrix : public IMatrix
     objectv.Assign(std::move(m), objectv.type_id);
   }
 
-  virtual void InplaceRightDivide(Ptr<Object> const &lhso, Variant const &rhsv) override
+  void InplaceRightDivide(Ptr<Object> const &lhso, Variant const &rhsv) override
   {
     Ptr<Matrix> lhs = lhso;
     T           rhs = rhsv.primitive.Get<T>();
@@ -339,8 +340,7 @@ struct Matrix : public IMatrix
     return &matrix.At(c, r);
   }
 
-  virtual TemplateParameter1 GetIndexedValue(AnyInteger const &row,
-                                             AnyInteger const &column) override
+  TemplateParameter1 GetIndexedValue(AnyInteger const &row, AnyInteger const &column) override
   {
     T *ptr = Find(row, column);
     if (ptr)
@@ -351,8 +351,8 @@ struct Matrix : public IMatrix
     return TemplateParameter1();
   }
 
-  virtual void SetIndexedValue(AnyInteger const &row, AnyInteger const &column,
-                               TemplateParameter1 const &value) override
+  void SetIndexedValue(AnyInteger const &row, AnyInteger const &column,
+                       TemplateParameter1 const &value) override
   {
     T *ptr = Find(row, column);
     if (ptr)

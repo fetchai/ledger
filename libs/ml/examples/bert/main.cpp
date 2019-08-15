@@ -84,9 +84,9 @@ int main(/*int ac, char **av*/)
   //  }
 
   std::cout << "FETCH BERT Demo" << std::endl;
-  
+
   SizeType max_seq_len = 512u;
-//  SizeType model_dims  = 768u;
+  //  SizeType model_dims  = 768u;
 
   GraphType   g;
   auto        ret          = load_pretrained_bert_base_uncased_model(g);
@@ -96,24 +96,24 @@ int main(/*int ac, char **av*/)
   std::string mask         = ret.first[3];
   std::string layer_output = ret.second;
 
-//  // Add linear classification layer
-//  std::string cls_token_output = g.template AddNode<fetch::ml::ops::Slice<ArrayType>>(
-//      "ClsTokenOutput", {layer_output}, 0u, 1u);
-//  std::string classification_output =
-//      g.template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
-//          "ClassificationOutput", {cls_token_output}, model_dims, 1u, ActivationType::SIGMOID,
-//          RegType::NONE, static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT, false);
-//  // Set up error signal
-//  std::string label = g.template AddNode<PlaceHolder<ArrayType>>("Label", {});
-//  std::string error =
-//      g.template AddNode<CrossEntropyLoss<ArrayType>>("Error", {classification_output, label});
+  //  // Add linear classification layer
+  //  std::string cls_token_output = g.template AddNode<fetch::ml::ops::Slice<ArrayType>>(
+  //      "ClsTokenOutput", {layer_output}, 0u, 1u);
+  //  std::string classification_output =
+  //      g.template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
+  //          "ClassificationOutput", {cls_token_output}, model_dims, 1u, ActivationType::SIGMOID,
+  //          RegType::NONE, static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT, false);
+  //  // Set up error signal
+  //  std::string label = g.template AddNode<PlaceHolder<ArrayType>>("Label", {});
+  //  std::string error =
+  //      g.template AddNode<CrossEntropyLoss<ArrayType>>("Error", {classification_output, label});
 
   SizeType batch_size = 1u;
   SizeType seq_len    = 512u;
 
   ArrayType tokens_data({max_seq_len, batch_size});
   tokens_data.Fill(static_cast<DataType>(1));
-  
+
   ArrayType mask_data({max_seq_len, max_seq_len, batch_size});
   for (SizeType i = 0; i < seq_len; i++)
   {
@@ -279,20 +279,20 @@ std::pair<std::vector<std::string>, std::string> load_pretrained_bert_base_uncas
   std::string file_path =
       "/home/xiaodong/Projects/Fetch "
       "scripts/bert_conversion/bert-base-uncased/bert-base-uncased-txt/";
-  SizeType n_encoder_layers = 12u;
-  SizeType max_seq_len      = 512u;
-  SizeType model_dims       = 768u;
-  SizeType n_heads          = 12u;
-  SizeType ff_dims          = 4u * model_dims;
-  SizeType vocab_size       = 30522u;
-  SizeType segment_size     = 2u;
-  DataType epsilon          = static_cast<DataType>(1e-12);
+  SizeType n_encoder_layers  = 12u;
+  SizeType max_seq_len       = 512u;
+  SizeType model_dims        = 768u;
+  SizeType n_heads           = 12u;
+  SizeType ff_dims           = 4u * model_dims;
+  SizeType vocab_size        = 30522u;
+  SizeType segment_size      = 2u;
+  DataType epsilon           = static_cast<DataType>(1e-12);
   DataType dropout_keep_prob = static_cast<DataType>(0.9);
-	
+
   // for release version
   FETCH_UNUSED(vocab_size);
   FETCH_UNUSED(max_seq_len);
-	FETCH_UNUSED(segment_size);
+  FETCH_UNUSED(segment_size);
 
   // initiate graph
   std::string segment  = g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Segment", {});
@@ -319,7 +319,8 @@ std::pair<std::vector<std::string>, std::string> load_pretrained_bert_base_uncas
   assert(position_embedding_weights.shape() == SizeVector({model_dims, max_seq_len}));
 
   // load token embeddings
-  ArrayType token_embedding_weights = get_weight_from_file(file_path + "bert_embeddings_word_embeddings_weight");
+  ArrayType token_embedding_weights =
+      get_weight_from_file(file_path + "bert_embeddings_word_embeddings_weight");
   token_embedding_weights = token_embedding_weights.Transpose();
   assert(token_embedding_weights.shape() == SizeVector({model_dims, vocab_size}));
 
@@ -329,7 +330,7 @@ std::pair<std::vector<std::string>, std::string> load_pretrained_bert_base_uncas
   std::string position_embedding = g.template AddNode<fetch::ml::ops::Embeddings<ArrayType>>(
       "Position_Embedding", {position}, position_embedding_weights);
   std::string token_embedding = g.template AddNode<fetch::ml::ops::Embeddings<ArrayType>>(
-  	 "Token_Embedding", {tokens}, token_embedding_weights);
+      "Token_Embedding", {tokens}, token_embedding_weights);
 
   // summing these embeddings up
   std::string seg_pos_sum_embed = g.template AddNode<fetch::ml::ops::Add<ArrayType>>(

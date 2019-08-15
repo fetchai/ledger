@@ -17,6 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "ml/layers/multihead_attention.hpp"
+#include "ml/serializers/ml_types.hpp"
+#include "ml/utilities/graph_builder.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
@@ -44,7 +46,7 @@ TYPED_TEST(MultiheadAttention, input_output_dimension_check)  // Use the class a
   g.template AddNode<fetch::ml::layers::MultiheadAttention<TypeParam>>(
       "MultiheadAttention", {query, key, value, mask}, static_cast<SizeType>(4),
       static_cast<SizeType>(12), DataType(0.1));
-  TypeParam query_data = TypeParam({12, 25, 4});
+  TypeParam query_data = TypeParam({12, 25, 4});  // todo - values not initialised?
   TypeParam key_data   = query_data;
   TypeParam value_data = query_data;
   TypeParam mask_data  = TypeParam({25, 25, 4});
@@ -118,4 +120,64 @@ TYPED_TEST(MultiheadAttention, backward_test)  // Use the class as an Ops
   ASSERT_EQ(backprop_error[0].shape()[0], 12);
   ASSERT_EQ(backprop_error[0].shape()[1], 20);
   ASSERT_EQ(backprop_error[0].shape()[2], 5);
+}
+
+TYPED_TEST(MultiheadAttention, saveparams_test)
+{
+  using LayerType = typename fetch::ml::layers::MultiheadAttention<TypeParam>;
+  using SPType    = typename LayerType::SPType;
+
+  fetch::math::SizeType n_heads   = 3;
+  fetch::math::SizeType model_dim = 6;
+
+  std::string output_name = "MultiheadAttention_Final_Transformation";
+
+  // create input data
+  TypeParam query_data = TypeParam({model_dim, 12, n_heads});
+  query_data.FillUniformRandom();
+
+  TypeParam key_data   = query_data.Copy();
+  TypeParam value_data = query_data.Copy();
+
+  // create labels data
+  TypeParam labels({6, 12, 3});
+  labels.FillUniformRandom();
+
+  // Create layer
+  LayerType layer(n_heads, model_dim);
+
+  // add label node
+  std::string label_name =
+      layer.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("label", {});
+
+  // Add loss function
+  std::string error_output = layer.template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TypeParam>>(
+      "num_error", {output_name, label_name});
+
+  // set input and evaluate
+  layer.SetInput("MultiheadAttention_Query", query_data);
+  layer.SetInput("MultiheadAttention_Key", key_data);
+  layer.SetInput("MultiheadAttention_Value", value_data);
+
+  TypeParam prediction;
+  prediction = layer.Evaluate(output_name, true);
+
+  // extract saveparams
+  auto sp = layer.GetOpSaveableParams();
+
+  // downcast to correct type
+  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
+
+  // serialize
+  fetch::serializers::MsgPackSerializer b;
+  b << *dsp;
+
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<SPType>();
+  b >> *dsp2;
+
+  EXPECT_ANY_THROW(*(fetch::ml::utilities::BuildLayer<TypeParam, LayerType>(dsp2)));
+
+  // todo(issue 1475) Fix BuildLayer for weight-sharing
 }
