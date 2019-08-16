@@ -25,6 +25,9 @@
 
 #include "gtest/gtest.h"
 
+#include <memory>
+#include <vector>
+
 template <typename T>
 class ConcatenateTest : public ::testing::Test
 {

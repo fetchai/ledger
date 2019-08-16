@@ -25,14 +25,17 @@
 
 #include "gtest/gtest.h"
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
-using namespace fetch::ledger;
-using namespace fetch::byte_array;
 
 namespace fetch {
-
 namespace serializers {
+
+namespace {
+
+using namespace fetch::ledger;
+using namespace fetch::byte_array;
 
 TEST(LedgerSerializers, address)
 {
@@ -50,6 +53,8 @@ TEST(LedgerSerializers, address)
   stream >> b;
   EXPECT_EQ(a, b);
 }
+
+}  // namespace
 
 }  // namespace serializers
 }  // namespace fetch

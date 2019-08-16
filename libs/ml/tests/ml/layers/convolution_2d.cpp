@@ -27,6 +27,8 @@
 #include "gtest/gtest.h"
 #include "ml/serializers/ml_types.hpp"
 
+#include <memory>
+
 template <typename T>
 class Convolution2DTest : public ::testing::Test
 {
