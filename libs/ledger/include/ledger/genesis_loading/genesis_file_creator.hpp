@@ -57,7 +57,7 @@ private:
 
 inline GenesisFileCreator::GenesisFileCreator(BlockCoordinator &    block_coordinator,
                                               StorageUnitInterface &storage_unit,
-                                              StakeManager *stake_manager)
+                                              StakeManager *        stake_manager)
   : block_coordinator_{block_coordinator}
   , storage_unit_{storage_unit}
   , stake_manager_{stake_manager}

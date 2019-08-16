@@ -154,12 +154,9 @@ BeaconService::Status BeaconService::GenerateEntropy(Digest /*block_digest*/, ui
     return Status::OK;
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "hereaa");
-
   // Searches for the next entropy
   do
   {
-  FETCH_LOG_INFO(LOGGING_NAME, "hereab");
     if (ready_entropy_queue_.size() == 0)
     {
       return Status::NOT_READY;
@@ -169,16 +166,12 @@ BeaconService::Status BeaconService::GenerateEntropy(Digest /*block_digest*/, ui
     ready_entropy_queue_.pop_front();
   } while (latest_entropy_.round < round);
 
-  FETCH_LOG_INFO(LOGGING_NAME, "hereac");
-
   // TODO(tfr): Roll support does not exist yet.
   if (round < latest_entropy_.round)
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "No support for roll back yet.");
     return Status::FAILED;
   }
-
-  FETCH_LOG_INFO(LOGGING_NAME, "heread");
 
   // We found the entropy
   assert(latest_entropy_);
@@ -199,7 +192,7 @@ void BeaconService::StartNewCabinet(CabinetMemberList members, uint32_t threshol
   if (members.find(identity_) == members.end())
   {
     beacon->observe_only = true;
-    FETCH_LOG_INFO(LOGGING_NAME, "Beacon in observe only mode. Members:", members.size());
+    FETCH_LOG_INFO(LOGGING_NAME, "Beacon in observe only mode. Members: ", members.size());
   }
   else
   {

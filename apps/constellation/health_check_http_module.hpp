@@ -30,7 +30,7 @@ public:
   using MainChainRpcService = ledger::MainChainRpcService;
 
   HealthCheckHttpModule(MainChain const &chain, MainChainRpcService const &chain_service,
-                        BlockCoordinator const &         block_coordinator)
+                        BlockCoordinator const &block_coordinator)
     : chain_{chain}
     , chain_service_{chain_service}
     , block_coordinator_{block_coordinator}
@@ -49,7 +49,6 @@ public:
           bool const chain_execution_complete =
               block_coordinator_.GetLastExecutedBlock() == chain_.GetHeaviestBlockHash();
 
-
           variant::Variant response            = variant::Variant::Object();
           response["chain_synced"]             = chain_synced;
           response["chain_executed_finished"]  = chain_executed_finished;
@@ -67,9 +66,9 @@ public:
   }
 
 private:
-  MainChain const &                chain_;
-  MainChainRpcService const &      chain_service_;
-  BlockCoordinator const &         block_coordinator_;
+  MainChain const &          chain_;
+  MainChainRpcService const &chain_service_;
+  BlockCoordinator const &   block_coordinator_;
 };
 
 }  // namespace fetch

@@ -44,7 +44,7 @@ StakeSnapshot::CommitteePtr StakeSnapshot::BuildCommittee(uint64_t entropy, std:
 
   CommitteePtr committee = std::make_shared<Committee>();
   committee->reserve(count);
-  auto stake_index = stake_index_; // Since build committee is const
+  auto stake_index = stake_index_;  // Since build committee is const
 
   if (count >= identity_index_.size())
   {
@@ -59,9 +59,8 @@ StakeSnapshot::CommitteePtr StakeSnapshot::BuildCommittee(uint64_t entropy, std:
     DRNG        rng(entropy);
 
     // ensure the stake list is reset to a deterministic state
-    std::sort(stake_index.begin(), stake_index.end(), [](RecordPtr const &a, RecordPtr const &b) {
-      return a->identity < b->identity;
-    });
+    std::sort(stake_index.begin(), stake_index.end(),
+              [](RecordPtr const &a, RecordPtr const &b) { return a->identity < b->identity; });
 
     for (std::size_t i = 0; i < count; ++i)
     {

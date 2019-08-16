@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/threading/synchronised_state.hpp"
-#include "ledger/consensus/stake_update_interface.hpp"
 #include "crypto/identity.hpp"
+#include "ledger/consensus/stake_update_interface.hpp"
 
 #include <map>
 #include <memory>
@@ -35,7 +35,7 @@ class StakeUpdateQueue : public StakeUpdateInterface
 {
 public:
   using StakeSnapshotPtr = std::shared_ptr<StakeSnapshot>;
-  using Identity = crypto::Identity;
+  using Identity         = crypto::Identity;
 
   // Construction / Destruction
   StakeUpdateQueue()                         = default;
@@ -45,7 +45,8 @@ public:
 
   /// @name Stake Update Interface
   /// @{
-  void AddStakeUpdate(BlockIndex block_index, crypto::Identity const &identity, StakeAmount stake) override;
+  void AddStakeUpdate(BlockIndex block_index, crypto::Identity const &identity,
+                      StakeAmount stake) override;
   /// @}
 
   bool ApplyUpdates(BlockIndex block_index, StakeSnapshotPtr const &reference,

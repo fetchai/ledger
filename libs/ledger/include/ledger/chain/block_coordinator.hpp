@@ -155,10 +155,10 @@ class BlockCoordinator
 public:
   static constexpr char const *LOGGING_NAME = "BlockCoordinator";
 
-  using ConstByteArray  = byte_array::ConstByteArray;
-  using DAGPtr          = std::shared_ptr<ledger::DAGInterface>;
-  using ProverPtr       = std::shared_ptr<crypto::Prover>;
-  using StakeManagerPtr = std::shared_ptr<StakeManager>;
+  using ConstByteArray   = byte_array::ConstByteArray;
+  using DAGPtr           = std::shared_ptr<ledger::DAGInterface>;
+  using ProverPtr        = std::shared_ptr<crypto::Prover>;
+  using StakeManagerPtr  = std::shared_ptr<StakeManager>;
   using BeaconServicePtr = std::shared_ptr<fetch::beacon::BeaconService>;
 
   enum class State
@@ -197,7 +197,8 @@ public:
                    ExecutionManagerInterface &execution_manager, StorageUnitInterface &storage_unit,
                    BlockPackerInterface &packer, BlockSinkInterface &block_sink,
                    core::FeatureFlags const &features, ProverPtr const &prover,
-                   std::size_t num_lanes, std::size_t num_slices, std::size_t block_difficulty, BeaconServicePtr beacon);
+                   std::size_t num_lanes, std::size_t num_slices, std::size_t block_difficulty,
+                   BeaconServicePtr beacon);
   BlockCoordinator(BlockCoordinator const &) = delete;
   BlockCoordinator(BlockCoordinator &&)      = delete;
   ~BlockCoordinator()                        = default;

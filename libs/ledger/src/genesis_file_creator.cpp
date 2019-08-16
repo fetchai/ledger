@@ -19,8 +19,8 @@
 #include "core/byte_array/decoders.hpp"
 #include "core/json/document.hpp"
 #include "crypto/hash.hpp"
-#include "crypto/sha256.hpp"
 #include "crypto/identity.hpp"
+#include "crypto/sha256.hpp"
 #include "ledger/chain/address.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/block_coordinator.hpp"
@@ -32,7 +32,6 @@
 #include "storage/resource_mapper.hpp"
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
-#include "core/byte_array/decoders.hpp"
 
 #include <cstddef>
 #include <fstream>
@@ -244,7 +243,9 @@ void GenesisFileCreator::LoadStake(Variant const &object)
         auto identity = crypto::Identity(FromBase64(identity_raw));
         auto address  = Address(identity);
 
-        FETCH_LOG_INFO(LOGGING_NAME, "Restoring stake. Identity: ", identity.identifier().ToBase64(), " (address): ", address.address().ToBase64(), " amount: ", amount);
+        FETCH_LOG_INFO(LOGGING_NAME,
+                       "Restoring stake. Identity: ", identity.identifier().ToBase64(),
+                       " (address): ", address.address().ToBase64(), " amount: ", amount);
 
         snapshot->UpdateStake(identity, amount);
       }

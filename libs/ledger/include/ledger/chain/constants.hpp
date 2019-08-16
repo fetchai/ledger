@@ -24,7 +24,8 @@
 namespace fetch {
 namespace ledger {
 
-constexpr uint64_t FINALITY_PERIOD = 10;
+constexpr uint64_t FINALITY_PERIOD    = 10;
+constexpr uint64_t MAX_COMMITTEE_SIZE = 10;
 
 extern Digest GENESIS_DIGEST;
 extern Digest GENESIS_MERKLE_ROOT;

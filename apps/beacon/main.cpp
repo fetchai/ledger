@@ -154,18 +154,20 @@ int main()
 
   while (true)
   {
-    if((block_number % aeon_length) == 0)
+    if ((block_number % aeon_length) == 0)
     {
       auto cabinet = all_cabinets[block_number % number_of_cabinets];
       for (auto &member : committee)
       {
-        member->beacon_service.StartNewCabinet(cabinet, static_cast<uint32_t>(cabinet.size() / 2), block_number, block_number + aeon_length);
+        member->beacon_service.StartNewCabinet(cabinet, static_cast<uint32_t>(cabinet.size() / 2),
+                                               block_number, block_number + aeon_length);
       }
     }
 
     uint64_t entropy;
 
-    while(committee[block_number % committee.size()]->beacon_service.GenerateEntropy("", block_number, entropy) != fetch::ledger::EntropyGeneratorInterface::Status::OK)
+    while (committee[block_number % committee.size()]->beacon_service.GenerateEntropy(
+               "", block_number, entropy) != fetch::ledger::EntropyGeneratorInterface::Status::OK)
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }

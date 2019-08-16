@@ -24,10 +24,11 @@
 #include "ledger/block_sink_interface.hpp"
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
+#include "ledger/chain/constants.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/transaction.hpp"
-#include "ledger/consensus/stake_manager_interface.hpp"
 #include "ledger/consensus/stake_manager.hpp"
+#include "ledger/consensus/stake_manager_interface.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/execution_manager_interface.hpp"
@@ -1088,61 +1089,55 @@ BlockCoordinator::State BlockCoordinator::OnReset()
     Block const *block = nullptr;
 
     // TODO(HUT): use anonymous lambda here
-
     if (next_block_)
     {
       block = &(*next_block_);
-      //stake_->UpdateCurrentBlock(*next_block_);
     }
     else if (current_block_)
     {
       block = &(*current_block_);
-      //stake_->UpdateCurrentBlock(*current_block_);
     }
     else
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Unable to find a previously executed block when updating staking!");
+      FETCH_LOG_ERROR(LOGGING_NAME,
+                      "Unable to find a previously executed block when updating staking!");
     }
 
-    FETCH_LOG_INFO(LOGGING_NAME, "PEREERER ", block->body.block_number);
-
-    if(block)
+    if (block)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "it happeedn");
-
       auto const block_number = block->body.block_number;
 
-      FETCH_LOG_INFO(LOGGING_NAME, "Updated stake (?)");
-
-      if((block_number % aeon_period_) == 0)
+      if ((block_number % aeon_period_) == 0)
       {
-        // TODO(HUT): build and test subset of committee
         std::unordered_set<fetch::crypto::Identity> cabinet_member_list;
-        auto snapshot = (*stake_).GetCurrentStakeSnapshot();
-        auto const current_stakers = snapshot->BuildCommittee(0, /*std::numeric_limits<std::size_t>::max()*/ 99999);
+        auto                                        snapshot = (*stake_).GetCurrentStakeSnapshot();
+        auto const current_stakers = snapshot->BuildCommittee(0, MAX_COMMITTEE_SIZE);
 
         // TODO(HUT): switch to vector for stake manager stuff
-        for(auto const &staker : *current_stakers)
+        for (auto const &staker : *current_stakers)
         {
           FETCH_LOG_INFO(LOGGING_NAME, "Adding staker: ", staker.identifier().ToBase64());
           cabinet_member_list.insert(staker);
         }
 
-        uint32_t threshold = uint32_t((cabinet_member_list.size() / 2)+1);
+        uint32_t threshold = uint32_t((cabinet_member_list.size() / 2) + 1);
 
-        FETCH_LOG_INFO(LOGGING_NAME, "Block: ", block_number, " creating new aeon. Periodicity: ", aeon_period_, " threshold: ", threshold, " cabinet size: ", cabinet_member_list.size());
+        FETCH_LOG_INFO(LOGGING_NAME, "Block: ", block_number,
+                       " creating new aeon. Periodicity: ", aeon_period_, " threshold: ", threshold,
+                       " cabinet size: ", cabinet_member_list.size());
 
         // Disallow multiple invocations
         static bool did_genesis_already = false;
 
-        if(block_number != 0 || !did_genesis_already)
+        if (block_number != 0 || !did_genesis_already)
         {
-          beacon_->StartNewCabinet(cabinet_member_list, threshold, block_number, block_number+aeon_period_);
+          beacon_->StartNewCabinet(cabinet_member_list, threshold, block_number,
+                                   block_number + aeon_period_);
           did_genesis_already = true;
         }
 
         // Finally update stake
-        if(block_number != 0) // TODO(HUT): chat to ed (?)
+        if (block_number != 0)  // TODO(HUT): chat to ed (?)
         {
           stake_->UpdateCurrentBlock(*block);
         }

@@ -103,7 +103,7 @@ public:
 
   /// @name Proof of Stake
   /// @{
-  settings::Setting<bool>        proof_of_stake;
+  settings::Setting<bool> proof_of_stake;
   /// @}
 
   // Operators

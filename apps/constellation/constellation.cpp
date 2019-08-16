@@ -18,7 +18,6 @@
 
 #include "constellation.hpp"
 #include "core/bloom_filter.hpp"
-#include "dkg/dkg_service.hpp"
 #include "health_check_http_module.hpp"
 #include "http/middleware/allow_origin.hpp"
 #include "http/middleware/telemetry.hpp"
@@ -71,7 +70,6 @@ namespace {
 using LaneIndex        = fetch::ledger::LaneIdentity::lane_type;
 using StakeManagerPtr  = std::shared_ptr<ledger::StakeManager>;
 using EntropyPtr       = std::unique_ptr<ledger::EntropyGeneratorInterface>;
-using DkgServicePtr    = std::unique_ptr<dkg::DkgService>;
 using ConstByteArray   = byte_array::ConstByteArray;
 using BeaconServicePtr = std::shared_ptr<fetch::beacon::BeaconService>;
 
@@ -152,11 +150,6 @@ ledger::ShardConfigs GenerateShardsConfig(uint32_t num_lanes, uint16_t start_por
   return configs;
 }
 
-//EntropyPtr CreateEntropy()
-//{
-//  return std::make_unique<ledger::NaiveEntropyGenerator>();
-//}
-
 StakeManagerPtr CreateStakeManager(Constellation::Config const &      cfg,
                                    ledger::EntropyGeneratorInterface &entropy)
 {
@@ -170,10 +163,10 @@ StakeManagerPtr CreateStakeManager(Constellation::Config const &      cfg,
   return mgr;
 }
 
-BeaconServicePtr CreateBeaconService(Constellation::Config const &cfg, /*ConstByteArray address,*/
-                               MuddleEndpoint &endpoint, Constellation::CertificatePtr certificate)
+BeaconServicePtr CreateBeaconService(Constellation::Config const &cfg, MuddleEndpoint &endpoint,
+                                     Constellation::CertificatePtr certificate)
 {
-  BeaconServicePtr beacon{};
+  BeaconServicePtr                         beacon{};
   beacon::EventManager::SharedEventManager event_manager = beacon::EventManager::New();
 
   if (cfg.proof_of_stake)
@@ -220,8 +213,6 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
                                                  cfg_.log2_num_lanes))
   , lane_control_(internal_muddle_.AsEndpoint(), shard_cfgs_, cfg_.log2_num_lanes)
   , dag_{GenerateDAG(cfg_.features.IsEnabled("synergetic"), "dag_db_", true, certificate)}
-  //, dkg_{CreateDkgService(cfg_, certificate->identity().identifier(), muddle_.AsEndpoint())}
-  //, entropy_{CreateEntropy()}
   , beacon_{CreateBeaconService(cfg_, muddle_.AsEndpoint(), certificate)}
   , stake_{CreateStakeManager(cfg_, *beacon_)}
   , execution_manager_{std::make_shared<ExecutionManager>(
@@ -238,7 +229,8 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
                        *storage_,       block_packer_,
                        *this,           cfg_.features,
                        certificate,     cfg_.num_lanes(),
-                       cfg_.num_slices, cfg_.block_difficulty, beacon_}
+                       cfg_.num_slices, cfg_.block_difficulty,
+                       beacon_}
   , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_,
                                                               cfg_.network_mode)}
   , tx_processor_{dag_, *storage_, block_packer_, tx_status_cache_, cfg_.processor_threads}
@@ -282,7 +274,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   }
 
   // Attach beacon runnables
-  if(beacon_)
+  if (beacon_)
   {
     reactor_.Attach(beacon_->GetMainRunnable());
     reactor_.Attach(beacon_->GetSetupRunnable());
@@ -304,10 +296,9 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
     http_.AddModule(*module);
   }
 
-  // If we are using the DKG service we need to update the default entropy engine for PoS
+  // If we are using POS, the beacon provides entropy
   if (beacon_)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Attaching entropy to beacon\n\n");
     stake_->UpdateEntropy(*beacon_);
   }
 }
@@ -496,8 +487,7 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
   while (active_)
   {
     // determine the status of the main chain server
-    bool const is_in_sync =
-        main_chain_service_->IsSynced() && block_coordinator_.IsSynced();
+    bool const is_in_sync = main_chain_service_->IsSynced() && block_coordinator_.IsSynced();
 
     // control from the top level block production based on the chain sync state
     block_coordinator_.EnableMining(is_in_sync);

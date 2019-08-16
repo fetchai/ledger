@@ -47,3 +47,28 @@ fetch::ledger::Address GenerateRandomAddress(RNG &&rng)
 
   return Address{raw_address};
 }
+
+/**
+ * Generate a random identity based on a specified RNG
+ *
+ * @tparam RNG The RNG type
+ * @param rng The reference to the RNG to be used
+ * @return The generated identity
+ */
+template <typename RNG>
+fetch::crypto::Identity GenerateRandomIdentity(RNG &&rng)
+{
+  using Identity = fetch::crypto::Identity;
+
+  static constexpr std::size_t IDENTITY_BYTES = 32;
+
+  fetch::byte_array::ByteArray array{};
+  array.Resize(IDENTITY_BYTES);
+
+  for (std::size_t i = 0; i < IDENTITY_BYTES; ++i)
+  {
+    array[i] = uint8_t(rng());
+  }
+
+  return Identity{array};
+}

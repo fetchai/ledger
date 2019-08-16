@@ -68,7 +68,6 @@ public:
   void Reset(StakeSnapshot const &snapshot, std::size_t committee_size);
   void Reset(StakeSnapshot &&snapshot, std::size_t committee_size);
 
-
   // Operators
   StakeManager &operator=(StakeManager const &) = delete;
   StakeManager &operator=(StakeManager &&) = delete;

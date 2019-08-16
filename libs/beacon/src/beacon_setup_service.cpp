@@ -133,8 +133,8 @@ BeaconSetupService::State BeaconSetupService::OnWaitForDirectConnections()
   auto                        v_peers = endpoint_.GetDirectlyConnectedPeers();
   std::unordered_set<Address> peers(v_peers.begin(), v_peers.end());
 
-  bool all_connected = true;
-  uint16_t connected = 0;
+  bool     all_connected = true;
+  uint16_t connected     = 0;
 
   for (auto &m : beacon_->aeon.members)
   {
@@ -164,7 +164,9 @@ BeaconSetupService::State BeaconSetupService::OnWaitForDirectConnections()
   }
 
   state_machine_->Delay(std::chrono::milliseconds(200));
-  FETCH_LOG_INFO(LOGGING_NAME, "Waiting for all peers to join before starting setup. Connected: ", connected, " expect: ", beacon_->aeon.members.size()-1);
+  FETCH_LOG_INFO(LOGGING_NAME,
+                 "Waiting for all peers to join before starting setup. Connected: ", connected,
+                 " expect: ", beacon_->aeon.members.size() - 1);
 
   return State::WAIT_FOR_DIRECT_CONNECTIONS;
 }

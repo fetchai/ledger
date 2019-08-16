@@ -85,7 +85,9 @@ bool StakeManager::ShouldGenerateBlock(Block const &previous, Address const &add
 
   for (std::size_t i = 0; i < (*committee).size(); ++i)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Saw committee member: ", Address((*committee)[i]).address().ToBase64(), "we are: ", address.address().ToBase64());
+    FETCH_LOG_INFO(LOGGING_NAME,
+                   "Saw committee member: ", Address((*committee)[i]).address().ToBase64(),
+                   "we are: ", address.address().ToBase64());
 
     if (Address((*committee)[i]) == address)
     {
@@ -103,18 +105,12 @@ bool StakeManager::ShouldGenerateBlock(Block const &previous, Address const &add
     return true;
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "CCC");
-
   return false;
 }
 
 StakeManager::CommitteePtr StakeManager::GetCommittee(Block const &previous)
 {
   assert(static_cast<bool>(current_));
-
-  if(previous.body.block_number == 0)
-  {
-  }
 
   // generate the entropy for the previous block
   uint64_t entropy{0};
@@ -228,7 +224,7 @@ bool StakeManager::LookupEntropy(Block const &previous, uint64_t &entropy)
   }
   else
   {
-    if(!entropy_)
+    if (!entropy_)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Entropy not set!");
     }
@@ -266,7 +262,7 @@ bool StakeManager::LookupEntropy(Block const &previous, uint64_t &entropy)
   return success;
 }
 
-bool StakeManager::ValidMinerForBlock(Block const &previous, Address const &/*address*/)
+bool StakeManager::ValidMinerForBlock(Block const &previous, Address const &address)
 {
   auto const committee = GetCommittee(previous);
 
@@ -276,7 +272,10 @@ bool StakeManager::ValidMinerForBlock(Block const &previous, Address const &/*ad
     return false;
   }
 
-  return /*std::find((*committee).begin(), (*committee).end(), address) != (*committee).end()*/ true; // TODO(HUT): fix.
+  return std::find_if((*committee).begin(), (*committee).end(),
+                      [&address](Identity const &identity) {
+                        return address == Address(identity);
+                      }) != (*committee).end();
 }
 
 }  // namespace ledger
