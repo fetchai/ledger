@@ -19,6 +19,7 @@
 
 #include "math/fundamental_operators.hpp"
 #include "math/matrix_operations.hpp"
+#include "vectorise/math/max.hpp"
 #include "math/trigonometry.hpp"
 #include "ml/ops/ops.hpp"
 
@@ -47,7 +48,7 @@ public:
     for (auto &val : output)
     {
       // Minimum value of tanh is restricted to -1+epsilon
-      fetch::math::Max(val, fetch::math::Add(DataType(-1), epsilon_), val);
+      val = fetch::vectorise::Max(val, fetch::math::Add(DataType(-1), epsilon_));
       // Maximum value of tanh is restricted to 1-epsilon
       fetch::math::Min(val, fetch::math::Subtract(static_cast<DataType>(1), epsilon_), val);
     }
