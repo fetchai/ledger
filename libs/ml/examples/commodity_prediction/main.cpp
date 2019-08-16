@@ -231,7 +231,7 @@ DataType get_loss(std::shared_ptr<GraphType> const &g_ptr, std::string const &te
   DataType                                                            loss_counter = 0;
   fetch::ml::dataloaders::CommodityDataLoader<TensorType, TensorType> loader;
 
-  auto data = fetch::ml::dataloaders::ReadCSV<TensorType>(test_x_file);
+  auto data  = fetch::ml::dataloaders::ReadCSV<TensorType>(test_x_file);
   auto label = fetch::ml::dataloaders::ReadCSV<TensorType>(test_y_file);
   loader.AddData(data, label);
 
@@ -342,7 +342,7 @@ int main(int argc, char **argv)
     std::string test_x_file = filename_root + "x_test.csv";
     std::string test_y_file = filename_root + "y_pred_test.csv";
     fetch::ml::dataloaders::CommodityDataLoader<TensorType, TensorType> loader;
-    auto data = fetch::ml::dataloaders::ReadCSV<TensorType>(test_x_file);
+    auto data  = fetch::ml::dataloaders::ReadCSV<TensorType>(test_x_file);
     auto label = fetch::ml::dataloaders::ReadCSV<TensorType>(test_y_file);
     loader.AddData(data, label);
 
@@ -406,7 +406,7 @@ int main(int argc, char **argv)
       std::string valid_y_file = filename_root + std::to_string(j) + "_y_val.csv";
 
       loader.Reset();
-      auto data = fetch::ml::dataloaders::ReadCSV<TensorType>(train_x_file);
+      auto data  = fetch::ml::dataloaders::ReadCSV<TensorType>(train_x_file);
       auto label = fetch::ml::dataloaders::ReadCSV<TensorType>(train_y_file);
       loader.AddData(data, label);
 
@@ -451,7 +451,7 @@ int main(int argc, char **argv)
     std::string test_y_file = filename_root + "y_pred_test.csv";
 
     loader.Reset();
-    auto data = fetch::ml::dataloaders::ReadCSV<TensorType>(test_x_file);
+    auto data  = fetch::ml::dataloaders::ReadCSV<TensorType>(test_x_file);
     auto label = fetch::ml::dataloaders::ReadCSV<TensorType>(test_y_file);
     loader.AddData(data, label);
 

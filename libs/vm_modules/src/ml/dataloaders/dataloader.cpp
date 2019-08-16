@@ -138,12 +138,16 @@ void VMDataLoader::AddDataByData(Ptr<VMTensorType> const &data, Ptr<VMTensorType
 
 void VMDataLoader::AddCommodityData(Ptr<String> const &xfilename, Ptr<String> const &yfilename)
 {
-  std::static_pointer_cast<CommodityLoaderType>(loader_)->AddData(xfilename->str, yfilename->str);
+  auto data  = fetch::ml::dataloaders::ReadCSV<MathTensorType>(xfilename->str);
+  auto label = fetch::ml::dataloaders::ReadCSV<MathTensorType>(yfilename->str);
+
+  std::static_pointer_cast<CommodityLoaderType>(loader_)->AddData(data, label);
 }
 
 void VMDataLoader::AddMnistData(Ptr<String> const &xfilename, Ptr<String> const &yfilename)
 {
-  std::static_pointer_cast<MnistLoaderType>(loader_)->AddData(xfilename->str, yfilename->str);
+  std::static_pointer_cast<MnistLoaderType>(loader_)->SetupWithDataFiles(xfilename->str,
+                                                                         yfilename->str);
 }
 
 void VMDataLoader::AddTensorData(Ptr<VMTensorType> const &data, Ptr<VMTensorType> const &labels)

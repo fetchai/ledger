@@ -64,9 +64,6 @@ public:
     , cursor_(0)
   {
     SetupWithDataFiles(images_file, labels_file);
-    // Prepare return buffer
-    buffer_.second.push_back(InputType({FIGURE_WIDTH, FIGURE_HEIGHT, 1u}));
-    buffer_.first = LabelType({LABEL_SIZE, 1u});
   }
 
   SizeType Size() const override
@@ -167,6 +164,11 @@ public:
     data_   = ReadMnistImages(images_file, size_, record_length);
     labels_ = read_mnist_labels(labels_file, size_);
     assert(record_length == FIGURE_SIZE);
+
+    // Prepare return buffer
+    buffer_.first = LabelType({LABEL_SIZE, 1u});
+    buffer_.second.clear();
+    buffer_.second.push_back(InputType({FIGURE_WIDTH, FIGURE_HEIGHT, 1u}));
   }
 
   static unsigned char **ReadMnistImages(std::string full_path, std::uint32_t &number_of_images,

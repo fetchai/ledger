@@ -54,7 +54,8 @@ public:
   bool       IsDone() const override;
   void       Reset() override;
 
-  bool AddData(InputType const & data, LabelType const & label) override;
+  bool AddData(InputType const &data, LabelType const &label) override;
+
 private:
   bool      random_mode_ = false;
   InputType data_;    // n_data, features
@@ -81,9 +82,10 @@ private:
  * @return
  */
 template <typename LabelType, typename InputType>
-bool CommodityDataLoader<LabelType, InputType>::AddData(InputType const & data, LabelType const & label)
+bool CommodityDataLoader<LabelType, InputType>::AddData(InputType const &data,
+                                                        LabelType const &label)
 {
-  data_ = data;
+  data_   = data;
   labels_ = label;
   assert(data_.shape().at(1) == labels_.shape().at(1));
   size_ = data.shape().at(1);
