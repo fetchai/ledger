@@ -30,22 +30,21 @@
 namespace fetch {
 namespace yaml {
 
-
 class YamlDocument
 {
 public:
   enum Type
   {
-    KEYWORD_TRUE  = 0,
-    KEYWORD_FALSE = 1,
-    KEYWORD_NULL  = 2,
-    KEYWORD_CONTENT = 3,
-    KEYWORD_INF   = 4,
-    KEYWORD_NEG_INF = 5,
-    KEYWORD_NAN   = 6,
-    STRING        = 7,
+    KEYWORD_TRUE     = 0,
+    KEYWORD_FALSE    = 1,
+    KEYWORD_NULL     = 2,
+    KEYWORD_CONTENT  = 3,
+    KEYWORD_INF      = 4,
+    KEYWORD_NEG_INF  = 5,
+    KEYWORD_NAN      = 6,
+    STRING           = 7,
     STRING_MULTILINE = 8,
-    COMMENT       = 9,
+    COMMENT          = 9,
 
     // TODO(private issue #566): There should be defined more integer and floating point
     // types here, however they will be relevant only when used with document
@@ -60,17 +59,16 @@ public:
     OPEN_ARRAY   = 16,
     CLOSE_ARRAY  = 17,
 
-    NEW_ENTRY    = 18,
+    NEW_ENTRY           = 18,
     NEW_MULTILINE_ENTRY = 19,
 
-    KEY          = 20,
+    KEY = 20,
 
-    ALIAS        = 21,
+    ALIAS           = 21,
     ALIAS_REFERENCE = 22,
-    TAG          = 23,
-    KEYWORD_TAG  = 24
+    TAG             = 23,
+    KEYWORD_TAG     = 24
   };
-
 
   using ByteArray      = byte_array::ByteArray;
   using ConstByteArray = byte_array::ConstByteArray;
@@ -131,14 +129,14 @@ public:
     return variant_.Has(key);
   }
 
-  private:
+private:
   constexpr static char const *LOGGING_NAME = "YamlDocument";
 
   struct YamlObject
   {
-      Variant* data = nullptr;
-      uint ident    = 0;
-      uint line     = 0;
+    Variant *data  = nullptr;
+    uint     ident = 0;
+    uint     line  = 0;
   };
 
   struct YamlToken
@@ -154,16 +152,17 @@ public:
   static void ExtractPrimitive(Variant &variant, YamlToken const &token,
                                ConstByteArray const &document);
 
-  static YamlObject* FindInStack(std::vector<YamlObject> &stack, uint ident)
+  static YamlObject *FindInStack(std::vector<YamlObject> &stack, uint ident)
   {
-      while(!stack.empty()) {
-          if(stack.back().ident > ident)
-              stack.pop_back();
-          else
-              return &stack.back();
-      }
+    while (!stack.empty())
+    {
+      if (stack.back().ident > ident)
+        stack.pop_back();
+      else
+        return &stack.back();
+    }
 
-      return nullptr;
+    return nullptr;
   }
 
   std::vector<uint16_t>    counters_{};
@@ -174,8 +173,5 @@ public:
   std::vector<char>        brace_stack_{};
 };
 
-
-
-
-}
-}
+}  // namespace yaml
+}  // namespace fetch

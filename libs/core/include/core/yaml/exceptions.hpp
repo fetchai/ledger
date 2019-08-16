@@ -64,5 +64,5 @@ public:
 private:
   std::string error_;
 };
-}  // namespace json
+}  // namespace yaml
 }  // namespace fetch

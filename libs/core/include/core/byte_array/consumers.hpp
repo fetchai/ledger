@@ -207,10 +207,11 @@ int StringConsumer(byte_array::ConstByteArray const &str, uint64_t &pos, char qu
 
   while ((pos < str.size()) && (str[pos] != quoteChar))
   {
-     pos += 1 + (str[pos] == '\\');
-     if(pos<str.size() - 2 && quoteChar=='\'' && str[pos]=='\'' && str[pos+1]=='\'') {
-        pos+=2;
-     }
+    pos += 1 + (str[pos] == '\\');
+    if (pos < str.size() - 2 && quoteChar == '\'' && str[pos] == '\'' && str[pos + 1] == '\'')
+    {
+      pos += 2;
+    }
   }
 
   if (pos >= str.size())
@@ -236,7 +237,6 @@ int LineConsumer(byte_array::ConstByteArray const &str, uint64_t &pos)
 
   return STRING;
 }
-
 
 template <int TOKEN>
 int Token(byte_array::ConstByteArray const &str, uint64_t &pos)

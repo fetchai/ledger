@@ -22,15 +22,16 @@
 
 #include <cstddef>
 #include <iostream>
+#include <math.h>
 #include <sstream>
 #include <string>
-#include <math.h>
 
 using fetch::yaml::YamlDocument;
 using fetch::variant::Variant;
-using string=std::string;
+using string = std::string;
 
-TEST(YamlTests, SimpleMappingTest) {
+TEST(YamlTests, SimpleMappingTest)
+{
   char const *text = "one: two\nthree: four";
 
   YamlDocument doc;
@@ -49,8 +50,8 @@ TEST(YamlTests, SimpleMappingTest) {
   EXPECT_EQ(three.As<string>(), "four");
 }
 
-
-TEST(YamlTests, MultiLevelMappingTest) {
+TEST(YamlTests, MultiLevelMappingTest)
+{
   char const *text = R"(- key: level1
   child:
     - key: level2
@@ -63,7 +64,7 @@ TEST(YamlTests, MultiLevelMappingTest) {
   auto const &root = doc.root();
   EXPECT_TRUE(root.IsArray());
   EXPECT_EQ(root.size(), 1);
-  
+
   auto const &l0item = root[0];
   EXPECT_TRUE(l0item.IsObject());
   EXPECT_EQ(l0item.size(), 2);
@@ -73,7 +74,7 @@ TEST(YamlTests, MultiLevelMappingTest) {
 
   auto const &l1key = l0item["key"];
   EXPECT_EQ(l1key.As<string>(), "level1");
-  
+
   auto const &l1child = l0item["child"];
   EXPECT_TRUE(l1child.IsArray());
   EXPECT_EQ(l1child.size(), 1);
@@ -101,7 +102,8 @@ TEST(YamlTests, MultiLevelMappingTest) {
   EXPECT_EQ(l3key.As<string>(), "level3");
 }
 
-TEST(YamlTests, Example2_2Test) { // Example 2.2
+TEST(YamlTests, Example2_2Test)
+{  // Example 2.2
   char const *text = R"(hr:   65   # Home runs
 avg: 0.278   # Batting average
 rbi: 147     # Runs Batted In)";
@@ -122,7 +124,8 @@ rbi: 147     # Runs Batted In)";
   EXPECT_EQ(rbi.As<int>(), 147);
 }
 
-TEST(YamlTests, Example2_3Test) { // Example 2.3
+TEST(YamlTests, Example2_3Test)
+{  // Example 2.3
   char const *text = R"(american:
   - Boston Red Sox
   - Detroit Tigers
@@ -140,7 +143,7 @@ national:
   EXPECT_EQ(root.size(), 2);
   EXPECT_TRUE(root.Has("american"));
   EXPECT_TRUE(root.Has("national"));
-  
+
   auto const &american = root["american"];
   EXPECT_TRUE(american.IsArray());
   EXPECT_EQ(american.size(), 3);
@@ -150,7 +153,8 @@ national:
   EXPECT_EQ(national.size(), 3);
 }
 
-TEST(YamlTests, Example2_4Test) { // Example 2.4
+TEST(YamlTests, Example2_4Test)
+{  // Example 2.4
   char const *text = R"(-
   name: Mark McGwire
   hr:   65
@@ -172,7 +176,7 @@ TEST(YamlTests, Example2_4Test) { // Example 2.4
   EXPECT_EQ(obj0.size(), 3);
   EXPECT_TRUE(obj0.Has("name"));
   EXPECT_TRUE(obj0.Has("hr"));
-  EXPECT_TRUE(obj0.Has("avg"));  
+  EXPECT_TRUE(obj0.Has("avg"));
   auto const &name0 = obj0["name"];
   EXPECT_EQ(name0.As<string>(), "Mark McGwire");
   auto const &hr0 = obj0["hr"];
@@ -183,7 +187,7 @@ TEST(YamlTests, Example2_4Test) { // Example 2.4
   EXPECT_EQ(obj1.size(), 3);
   EXPECT_TRUE(obj1.Has("name"));
   EXPECT_TRUE(obj1.Has("hr"));
-  EXPECT_TRUE(obj1.Has("avg"));  
+  EXPECT_TRUE(obj1.Has("avg"));
 
   auto const &name1 = obj1["name"];
   EXPECT_EQ(name1.As<string>(), "Sammy Sosa");
@@ -191,7 +195,8 @@ TEST(YamlTests, Example2_4Test) { // Example 2.4
   EXPECT_EQ(hr1.As<int>(), 63);
 }
 
-TEST(YamlTests, Example2_6Test) { // Example 2.6. Mapping of Mappings
+TEST(YamlTests, Example2_6Test)
+{  // Example 2.6. Mapping of Mappings
   char const *text = R"(Mark McGwire: {hr: 65, avg: 0.278}
 Sammy Sosa: {
     hr: 63,
@@ -211,7 +216,7 @@ Sammy Sosa: {
   EXPECT_TRUE(obj0.IsObject());
   EXPECT_EQ(obj0.size(), 2);
   EXPECT_TRUE(obj0.Has("hr"));
-  EXPECT_TRUE(obj0.Has("avg"));  
+  EXPECT_TRUE(obj0.Has("avg"));
   auto const &hr0 = obj0["hr"];
   EXPECT_EQ(hr0.As<int>(), 65);
 
@@ -219,12 +224,13 @@ Sammy Sosa: {
   EXPECT_TRUE(obj1.IsObject());
   EXPECT_EQ(obj1.size(), 2);
   EXPECT_TRUE(obj1.Has("hr"));
-  EXPECT_TRUE(obj1.Has("avg"));  
+  EXPECT_TRUE(obj1.Has("avg"));
   auto const &hr1 = obj1["hr"];
   EXPECT_EQ(hr1.As<int>(), 63);
 }
 
-TEST(YamlTests, Example2_9Test) { // Example 2.9  Single Document with Two Comments
+TEST(YamlTests, Example2_9Test)
+{  // Example 2.9  Single Document with Two Comments
   char const *text = R"(---
 hr: # 1998 hr ranking
   - Mark McGwire
@@ -252,7 +258,8 @@ rbi:
   EXPECT_EQ(obj1.size(), 2);
 }
 
-TEST(YamlTests, Example2_10Test) { //Example 2.10.  Node for “Sammy Sosa” appears twice in this document
+TEST(YamlTests, Example2_10Test)
+{  // Example 2.10.  Node for “Sammy Sosa” appears twice in this document
   char const *text = R"(---
 hr:
   - Mark McGwire
@@ -284,7 +291,8 @@ rbi:
   EXPECT_EQ(name1.As<string>(), "Sammy Sosa");
 }
 
-TEST(YamlTests, Example2_12Test) { // Example 2.12 Compact Nested Mapping
+TEST(YamlTests, Example2_12Test)
+{  // Example 2.12 Compact Nested Mapping
   char const *text = R"(# Products purchased
 - item    : Super Hoop
   quantity: 1
@@ -326,7 +334,8 @@ TEST(YamlTests, Example2_12Test) { // Example 2.12 Compact Nested Mapping
   EXPECT_EQ(quantity2.As<int>(), 1);
 }
 
-TEST(YamlTests, Example2_16Test) { // Example 2.16.  Indentation determines scope
+TEST(YamlTests, Example2_16Test)
+{  // Example 2.16.  Indentation determines scope
   char const *text = R"(name: Mark McGwire
 accomplishment: >
   Mark set a major league
@@ -355,13 +364,15 @@ stats: |
   EXPECT_EQ(stats.As<string>(), "65 Home Runs\n0.278 Batting Average");
 }
 
-TEST(YamlTests, Example2_17Test) { // Example 2.17. Quoted Scalars
-  char const *text = "unicode: Sosa did fine.\\u263A\r\n"
-                 "control: \\b1998\\t1999\\t2000\\n\r\n"
-                 "hex esc: \\x0d\\x0a is \\r\\n\r\n"
-                 "single: '\"Howdy!\" he cried.'\r\n"
-                 "quoted: ' # Not a ''comment''.'\r\n"
-                 "tie-fighter: '|\\-*-/|'";
+TEST(YamlTests, Example2_17Test)
+{  // Example 2.17. Quoted Scalars
+  char const *text =
+      "unicode: Sosa did fine.\\u263A\r\n"
+      "control: \\b1998\\t1999\\t2000\\n\r\n"
+      "hex esc: \\x0d\\x0a is \\r\\n\r\n"
+      "single: '\"Howdy!\" he cried.'\r\n"
+      "quoted: ' # Not a ''comment''.'\r\n"
+      "tie-fighter: '|\\-*-/|'";
 
   YamlDocument doc;
   ASSERT_NO_THROW(doc.Parse(text));
@@ -390,7 +401,8 @@ TEST(YamlTests, Example2_17Test) { // Example 2.17. Quoted Scalars
   EXPECT_EQ(tie.As<string>(), "|\\-*-/|");
 }
 
-TEST(YamlTests, Example2_18Test) { // Example 2.18. Multi-line Flow Scalars
+TEST(YamlTests, Example2_18Test)
+{  // Example 2.18. Multi-line Flow Scalars
   char const *text = R"(plain:
   This unquoted scalar
   spans many lines.
@@ -414,7 +426,8 @@ quoted: "So does this
   EXPECT_EQ(quoted.As<string>(), "So does this quoted scalar.");
 }
 
-TEST(YamlTests, Example2_19Test) { // Example 2.19. Integers
+TEST(YamlTests, Example2_19Test)
+{  // Example 2.19. Integers
   char const *text = R"(canonical: 12345
 decimal: +12345
 octal: 0o14
@@ -441,7 +454,8 @@ hexadecimal: 0xC)";
   EXPECT_EQ(hexadecimal.As<int>(), 12);
 }
 
-TEST(YamlTests, Example2_20Test) { // Example 2.20. Floating Point
+TEST(YamlTests, Example2_20Test)
+{  // Example 2.20. Floating Point
   char const *text = R"(canonical: 1.23015e+3
 exponential: 12.3015e+02
 fixed: 1230.15
@@ -463,16 +477,17 @@ not a number: .NaN)";
   auto const &canonical = root["canonical"];
   EXPECT_DOUBLE_EQ(1230.15, canonical.As<double>());
   auto const &exponential = root["exponential"];
-  EXPECT_DOUBLE_EQ(1230.15, exponential.As<double>());  
+  EXPECT_DOUBLE_EQ(1230.15, exponential.As<double>());
   auto const &fixed = root["fixed"];
   EXPECT_DOUBLE_EQ(1230.15, fixed.As<double>());
   auto const &inf = root["negative infinity"];
   EXPECT_TRUE(isinf(inf.As<double>()));
   auto const &nan = root["not a number"];
-  EXPECT_TRUE(isnan(nan.As<double>()));  
+  EXPECT_TRUE(isnan(nan.As<double>()));
 }
 
-TEST(YamlTests, Example2_21Test) { // Example 2.21. Miscellaneous
+TEST(YamlTests, Example2_21Test)
+{  // Example 2.21. Miscellaneous
   char const *text = R"(null:
 booleans: [ true, false ]
 string: '012345')";
@@ -499,7 +514,8 @@ string: '012345')";
   EXPECT_EQ(str.As<string>(), "012345");
 }
 
-TEST(YamlTests, Example2_22Test) { // Example 2.22. Timestamps
+TEST(YamlTests, Example2_22Test)
+{  // Example 2.22. Timestamps
   char const *text = R"(canonical: 2001-12-15T02:59:43.1Z
 iso8601: 2001-12-14t21:59:43.10-05:00
 spaced: 2001-12-14 21:59:43.10 -5
@@ -526,7 +542,8 @@ date: 2002-12-14)";
   EXPECT_EQ(date.As<string>(), "2002-12-14");
 }
 
-TEST(YamlTests, Example2_23Test) { // Example 2.23. Various Explicit Tags
+TEST(YamlTests, Example2_23Test)
+{  // Example 2.23. Various Explicit Tags
   char const *text = R"(---
 not-date: !!str 2002-04-28
 
@@ -554,12 +571,16 @@ application specific tag: !something |
   auto const &notdate = root["not-date"];
   EXPECT_EQ(notdate.As<string>(), "2002-04-28");
   auto const &picture = root["picture"];
-  EXPECT_EQ(picture.As<string>(), "R0lGODlhDAAMAIQAAP//9/X\n17unp5WZmZgAAAOfn515eXv\nPz7Y6OjuDg4J+fn5OTk6enp\n56enmleECcgggoBADs=");
+  EXPECT_EQ(picture.As<string>(),
+            "R0lGODlhDAAMAIQAAP//9/"
+            "X\n17unp5WZmZgAAAOfn515eXv\nPz7Y6OjuDg4J+fn5OTk6enp\n56enmleECcgggoBADs=");
   auto const &spectag = root["application specific tag"];
-  EXPECT_EQ(spectag.As<string>(), "The semantics of the tag\nabove may be different for\ndifferent documents.");
+  EXPECT_EQ(spectag.As<string>(),
+            "The semantics of the tag\nabove may be different for\ndifferent documents.");
 }
 
-TEST(YamlTests, Example2_24Test) { // Example 2.24. Global Tags
+TEST(YamlTests, Example2_24Test)
+{  // Example 2.24. Global Tags
   char const *text = R"(
 --- !shape
   # Use the ! handle for presenting
@@ -583,8 +604,8 @@ TEST(YamlTests, Example2_24Test) { // Example 2.24. Global Tags
   EXPECT_EQ(root.size(), 3);
 
   auto const &circle = root[0];
-  auto const &line = root[1];
-  auto const &label = root[2];
+  auto const &line   = root[1];
+  auto const &label  = root[2];
 
   EXPECT_TRUE(circle.IsObject());
   EXPECT_TRUE(line.IsObject());
@@ -658,10 +679,9 @@ comments:
   EXPECT_TRUE(billToAddr.Has("postal"));
   EXPECT_EQ(billToAddr["lines"].As<string>(), R"(458 Walkman Dr.
 Suite #292
-)");  
+)");
   EXPECT_EQ(billToAddr["city"].As<string>(), "Royal Oak");
   EXPECT_EQ(billToAddr["state"].As<string>(), "MI");
-  
-  //auto const &shipTo = doc["ship-to"];
 
+  // auto const &shipTo = doc["ship-to"];
 }

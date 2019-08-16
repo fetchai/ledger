@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -26,58 +27,67 @@ struct TestCase
   bool        expect_throw;
 };
 
-static const TestCase
-    TEST_CASES
-        [] =
-            {
-// ====================================================================
-// Easy parsing
-// ====================================================================
-            	// basic one-line sequences
-				{R"([one, two,three])", true, "[\"one\", \"two\", \"three\"]", false},
-				{R"([true, false])", true, "[true, false]", false},
-				{R"([1, 2, 3])", true, "[1, 2, 3]", false},
-                {R"(one: two)", true, "{\"one\": \"two\"}", false},
-                // numeric data types
-// ====================================================================
-// Problems
-// ====================================================================				
-				// sequence in mapping
-				{R"(sequence: [one, two])", true, "{\"sequence\": [\"one\", \"two\"]}", false},
-				{R"(sequence:
+static const TestCase TEST_CASES[] = {
+    // ====================================================================
+    // Easy parsing
+    // ====================================================================
+    // basic one-line sequences
+    {R"([one, two,three])", true, "[\"one\", \"two\", \"three\"]", false},
+    {R"([true, false])", true, "[true, false]", false},
+    {R"([1, 2, 3])", true, "[1, 2, 3]", false},
+    {R"(one: two)", true, "{\"one\": \"two\"}", false},
+    // numeric data types
+    // ====================================================================
+    // Problems
+    // ====================================================================
+    // sequence in mapping
+    {R"(sequence: [one, two])", true, "{\"sequence\": [\"one\", \"two\"]}", false},
+    {R"(sequence:
 - one
-- two)", true, "{\"sequence\": [\"one\", \"two\"]}", false},
-        // multiline compact sequence
-                {R"(- key: value
-- key: another value)", true, "[{\"key\": \"value\"}, {\"key\": \"another value\"}]", false}, // Check for compact mappings in multiline sequence
-                {R"(one, two)", false, "", true}, // invalid single-line sequence
-                {R"(sequence: one, two)", false, "", true}, // invalid single-line sequence as a value
-// ====================================================================
-// Spec examples
-// ====================================================================
-                {R"(- Mark McGwire
+- two)",
+     true, "{\"sequence\": [\"one\", \"two\"]}", false},
+    // multiline compact sequence
+    {R"(- key: value
+- key: another value)",
+     true, "[{\"key\": \"value\"}, {\"key\": \"another value\"}]",
+     false},                                     // Check for compact mappings in multiline sequence
+    {R"(one, two)", false, "", true},            // invalid single-line sequence
+    {R"(sequence: one, two)", false, "", true},  // invalid single-line sequence as a value
+    // ====================================================================
+    // Spec examples
+    // ====================================================================
+    {R"(- Mark McGwire
 - Sammy Sosa
-- Ken Griffey)", true, "[\"Mark McGwire\", \"Sammy Sosa\", \"Ken Griffey\"]", false}, // Example 2.1
-                {R"(- [name        , hr, avg  ]
+- Ken Griffey)",
+     true, "[\"Mark McGwire\", \"Sammy Sosa\", \"Ken Griffey\"]", false},  // Example 2.1
+    {R"(- [name        , hr, avg  ]
 - [Mark McGwire, 65, 0.278]
-- [Sammy Sosa  , 63, 0.288])", true, "[[\"name\", \"hr\", \"avg\"], [\"Mark McGwire\", 65, 0.278], [\"Sammy Sosa\", 63, 0.288]]", false}, // Example 2.5
-                {R"(# ASCII Art
+- [Sammy Sosa  , 63, 0.288])",
+     true,
+     "[[\"name\", \"hr\", \"avg\"], [\"Mark McGwire\", 65, 0.278], [\"Sammy Sosa\", 63, 0.288]]",
+     false},  // Example 2.5
+    {R"(# ASCII Art
 --- |
   \//||\/||
-  // ||  ||__)", true, "\"\\\\//||\\\\/||\n// ||  ||__\"", false}, // Example 2.13.  In literals, newlines are preserved
-                {R"(--- >
+  // ||  ||__)",
+     true, "\"\\\\//||\\\\/||\n// ||  ||__\"",
+     false},  // Example 2.13.  In literals, newlines are preserved
+    {R"(--- >
   Mark McGwire's
   year was crippled
-  by a knee injury.)", true, "\"Mark McGwire's year was crippled by a knee injury.\"", false}, // Example 2.14.  In the folded scalars, newlines become spaces
-                {R"(# Ordered maps are represented as
+  by a knee injury.)",
+     true, "\"Mark McGwire's year was crippled by a knee injury.\"",
+     false},  // Example 2.14.  In the folded scalars, newlines become spaces
+    {R"(# Ordered maps are represented as
 # A sequence of mappings, with
 # each mapping having one key
 --- !!omap
 - Mark McGwire: 65
 - Sammy Sosa: 63
-- Ken Griffy: 58)", true, "[{\"Mark McGwire\": 65}, {\"Sammy Sosa\": 63}, {\"Ken Griffy\": 58}]", false}, // Example 2.26. Ordered Mappings
-                {R"(commercial-at: @text)", false, "", true}, // 5.10. Invalid use of reserved indicators
-                {R"(grave-accent: `text)", false, "", true}, // 5.10. Invalid use of reserved indicators
+- Ken Griffy: 58)",
+     true, "[{\"Mark McGwire\": 65}, {\"Sammy Sosa\": 63}, {\"Ken Griffy\": 58}]",
+     false},                                       // Example 2.26. Ordered Mappings
+    {R"(commercial-at: @text)", false, "", true},  // 5.10. Invalid use of reserved indicators
+    {R"(grave-accent: `text)", false, "", true},   // 5.10. Invalid use of reserved indicators
 
-
-            };
+};
