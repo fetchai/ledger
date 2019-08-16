@@ -22,8 +22,6 @@
 #include "math/statistics/mean.hpp"
 #include "ml/dataloaders/dataloader.hpp"
 
-#include <chrono>
-
 namespace fetch {
 namespace ml {
 namespace optimisers {
