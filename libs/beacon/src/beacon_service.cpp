@@ -455,8 +455,6 @@ BeaconService::State BeaconService::OnCompleteState()
   // Adding new entropy
   ready_entropy_queue_.push_back(current_entropy_);
 
-  std::cout << "########### ..~~--=== " << byte_array::ToBase64(current_entropy_.entropy)
-            << " ===--~~.. ###########" << std::endl;
   // Preparing next
   next_entropy_       = Entropy();
   next_entropy_.seed  = current_entropy_.entropy;

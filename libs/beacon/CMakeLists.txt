@@ -21,4 +21,6 @@ target_link_libraries(fetch-beacon
                              fetch-network
                              fetch-ledger)
 
-# add_test_target()
+
+# Test targets
+add_test_target()
