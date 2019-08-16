@@ -50,7 +50,7 @@ struct LearningRateParam
 
 namespace serializers {
 /**
- * serializer for conv1d saveable params
+ * serializer for Learning Rate Params
  * @tparam TensorType
  */
 template <typename T, typename D>

@@ -110,7 +110,7 @@ void SGDOptimiser<T>::ApplyGradients(SizeType batch_size)
 
 namespace serializers {
 /**
- * serializer for conv1d saveable params
+ * serializer for SGDOptimiser
  * @tparam TensorType
  */
 template <typename TensorType, typename D>

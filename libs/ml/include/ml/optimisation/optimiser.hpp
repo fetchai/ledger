@@ -482,7 +482,7 @@ void Optimiser<T>::ResetGradients()
 
 namespace serializers {
 /**
- * serializer for conv1d saveable params
+ * serializer for Optimiser
  * @tparam TensorType
  */
 template <typename TensorType, typename D>
