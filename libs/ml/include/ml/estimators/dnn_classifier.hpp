@@ -210,10 +210,6 @@ bool DNNClassifier<TensorType>::Validate(DataType &validation_loss)
   this->graph_ptr_->SetInput(input_, validation_pair.second.at(0));
   validation_loss = *(this->graph_ptr_->Evaluate(error_).begin());
 
-  // Normalize loss to batch size
-  // validation_loss= ((validation_loss*static_cast<DataType>(this->estimator_config_.subset_size))
-  // / static_cast<DataType>(val_set_size));
-
   return true;
 }
 

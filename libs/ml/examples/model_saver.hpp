@@ -20,6 +20,10 @@
 #include "core/serializers/main_serializer.hpp"
 #include "ml/serializers/ml_types.hpp"
 
+#include <fstream>
+#include <iostream>
+#include <string>
+
 namespace fetch {
 namespace ml {
 namespace examples {

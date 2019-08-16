@@ -20,6 +20,7 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/serializers/group_definitions.hpp"
 #include "core/serializers/main_serializer.hpp"
+
 #include <vector>
 
 namespace fetch {
@@ -126,7 +127,7 @@ public:
   static constexpr uint8_t ROOT       = 2;
 
   template <typename Constructor>
-  static inline void Serialize(Constructor &map_constructor, Type const &data)
+  static void Serialize(Constructor &map_constructor, Type const &data)
   {
     auto map = map_constructor(2);
     map.Append(LEAF_NODES, data.leaf_nodes_);
@@ -134,7 +135,7 @@ public:
   }
 
   template <typename MapDeserializer>
-  static inline void Deserialize(MapDeserializer &map, Type &data)
+  static void Deserialize(MapDeserializer &map, Type &data)
   {
     map.ExpectKeyGetValue(LEAF_NODES, data.leaf_nodes_);
     map.ExpectKeyGetValue(ROOT, data.root_);

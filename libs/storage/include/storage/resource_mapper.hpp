@@ -193,13 +193,13 @@ public:
   using DriverType = D;
 
   template <typename Serializer>
-  static inline void Serialize(Serializer &s, Type const &b)
+  static void Serialize(Serializer &s, Type const &b)
   {
     s << b.id_;
   }
 
   template <typename Serializer>
-  static inline void Deserialize(Serializer &s, Type &b)
+  static void Deserialize(Serializer &s, Type &b)
   {
     s >> b.id_;
   }

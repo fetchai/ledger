@@ -26,6 +26,9 @@
 #include "telemetry/histogram.hpp"
 #include "telemetry/registry.hpp"
 
+#include <chrono>
+#include <cstdint>
+
 namespace fetch {
 namespace muddle {
 namespace {

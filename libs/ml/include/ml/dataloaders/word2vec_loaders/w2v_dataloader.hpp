@@ -19,6 +19,7 @@
 
 #include "core/random/lcg.hpp"
 #include "math/tensor.hpp"
+#include "meta/type_traits.hpp"
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/dataloaders/word2vec_loaders/unigram_table.hpp"
 #include "ml/dataloaders/word2vec_loaders/vocab.hpp"
@@ -37,8 +38,9 @@ template <typename T>
 class W2VLoader : public DataLoader<fetch::math::Tensor<T>, fetch::math::Tensor<T>>
 {
 public:
-  // The intended T is the typename for the data input to the neural network, which should be a
-  // float or double or fix-point type.
+  static_assert(meta::IsFloat<T> || meta::IsFixedPoint<T>,
+                "The intended T is the typename for the data input to the neural network, which "
+                "should be a float or double or fixed-point type.");
   static constexpr T WindowContextUnused = -1;
 
   using LabelType = fetch::math::Tensor<T>;
@@ -50,19 +52,19 @@ public:
 
   W2VLoader(SizeType window_size, SizeType negative_samples, bool mode);
 
-  bool       IsDone(bool is_test = false) const override;
-  void       Reset(bool is_test = false) override;
+  bool       IsDone(bool is_validation = false) const override;
+  void       Reset(bool is_validation = false) override;
   void       RemoveInfrequent(SizeType min);
   void       InitUnigramTable();
   void       GetNext(ReturnType &t);
-  ReturnType GetNext(bool is_test = false) override;
+  ReturnType GetNext(bool is_validation = false) override;
 
   bool BuildVocab(std::string const &s);
   void SaveVocab(std::string const &filename);
   void LoadVocab(std::string const &filename);
 
   /// accessors and helper functions ///
-  SizeType         Size(bool is_test = false) const override;
+  SizeType         Size(bool is_validation = false) const override;
   SizeType         vocab_size() const;
   VocabType const &vocab() const;
   std::string      WordFromIndex(SizeType index) const;
@@ -112,9 +114,9 @@ W2VLoader<T>::W2VLoader(SizeType window_size, SizeType negative_samples, bool mo
  * @return
  */
 template <typename T>
-math::SizeType W2VLoader<T>::Size(bool is_test) const
+math::SizeType W2VLoader<T>::Size(bool is_validation) const
 {
-  if (is_test)
+  if (is_validation)
   {
     throw std::runtime_error("Validation set splitting not implemented yet");
   }
@@ -137,9 +139,9 @@ math::SizeType W2VLoader<T>::Size(bool is_test) const
  * @return
  */
 template <typename T>
-bool W2VLoader<T>::IsDone(bool is_test) const
+bool W2VLoader<T>::IsDone(bool is_validation) const
 {
-  if (is_test)
+  if (is_validation)
   {
     throw std::runtime_error("Validation set splitting not implemented yet");
   }
@@ -163,9 +165,9 @@ bool W2VLoader<T>::IsDone(bool is_test) const
  * @tparam T
  */
 template <typename T>
-void W2VLoader<T>::Reset(bool is_test)
+void W2VLoader<T>::Reset(bool is_validation)
 {
-  if (is_test)
+  if (is_validation)
   {
     throw std::runtime_error("Validation set splitting not implemented yet");
   }
@@ -286,9 +288,9 @@ void W2VLoader<T>::GetNext(ReturnType &ret)
 }
 
 template <typename T>
-typename W2VLoader<T>::ReturnType W2VLoader<T>::GetNext(bool is_test)
+typename W2VLoader<T>::ReturnType W2VLoader<T>::GetNext(bool is_validation)
 {
-  if (is_test)
+  if (is_validation)
   {
     throw std::runtime_error("Validation set splitting not implemented yet");
   }

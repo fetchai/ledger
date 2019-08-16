@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/group_definitions.hpp"
 #include "math/base_types.hpp"
 
 #include <cstdint>
@@ -36,6 +37,7 @@ public:
   using SizeVector = fetch::math::SizeVector;
   using ReturnType = std::pair<LabelType, std::vector<DataType>>;
 
+  DataLoader() = default;
   /**
    * Dataloaders are required to provide label and DataType shapes to the parent Dataloader
    * @param random_mode
@@ -45,21 +47,25 @@ public:
   explicit DataLoader(bool random_mode)
     : random_mode_(random_mode)
   {}
+
   virtual ~DataLoader() = default;
 
-  virtual ReturnType GetNext(bool is_test = false) = 0;
+  virtual ReturnType GetNext(bool is_validation = false) = 0;
 
   virtual ReturnType PrepareBatch(fetch::math::SizeType subset_size, bool &is_done_set,
-                                  bool is_test = false);
+                                  bool is_validation = false);
 
   virtual inline bool IsValidable()
   {
     return (Size(true) != 0);
   }
 
-  virtual std::uint64_t Size(bool is_test = false) const   = 0;
-  virtual bool          IsDone(bool is_test = false) const = 0;
-  virtual void          Reset(bool is_test = false)        = 0;
+  virtual std::uint64_t Size(bool is_validation = false) const   = 0;
+  virtual bool          IsDone(bool is_validation = false) const = 0;
+  virtual void          Reset(bool is_validation = false)        = 0;
+
+  template <typename X, typename D>
+  friend struct fetch::serializers::MapSerializer;
 
 protected:
   bool random_mode_ = false;
@@ -67,9 +73,9 @@ protected:
 private:
   bool       size_not_set_ = true;
   ReturnType cur_training_pair_;
+  ReturnType ret_pair_;
 
   void SetDataSize(std::pair<LabelType, std::vector<DataType>> &ret_pair);
-  std::pair<LabelType, std::vector<DataType>> ret_pair_;
 };
 
 /**
@@ -102,12 +108,12 @@ void DataLoader<LabelType, DataType>::SetDataSize(
  */
 template <typename LabelType, typename DataType>
 typename DataLoader<LabelType, DataType>::ReturnType DataLoader<LabelType, DataType>::PrepareBatch(
-    fetch::math::SizeType batch_size, bool &is_done_set, bool is_test)
+    fetch::math::SizeType batch_size, bool &is_done_set, bool is_validation)
 {
   if (size_not_set_)
   {
     // first ever call to PrepareBatch requires a dummy GetNext to identify tensor shapes
-    cur_training_pair_ = GetNext(is_test);
+    cur_training_pair_ = GetNext(is_validation);
     Reset();
 
     this->SetDataSize(cur_training_pair_);
@@ -140,14 +146,14 @@ typename DataLoader<LabelType, DataType>::ReturnType DataLoader<LabelType, DataT
   while (data_idx < batch_size)
   {
     // check if end of data
-    if (IsDone(is_test))
+    if (IsDone(is_validation))
     {
       is_done_set = true;
-      Reset(is_test);
+      Reset(is_validation);
     }
 
     // get next datum & label
-    cur_training_pair_ = GetNext(is_test);
+    cur_training_pair_ = GetNext(is_validation);
 
     // Fill label view
     auto label_view = ret_pair_.first.View(data_idx);
@@ -169,4 +175,51 @@ typename DataLoader<LabelType, DataType>::ReturnType DataLoader<LabelType, DataT
 
 }  // namespace dataloaders
 }  // namespace ml
+
+namespace serializers {
+
+/**
+ * serializer for Dataloader
+ * @tparam TensorType
+ */
+template <typename LabelType, typename InputType, typename D>
+struct MapSerializer<fetch::ml::dataloaders::DataLoader<LabelType, InputType>, D>
+{
+  using Type       = fetch::ml::dataloaders::DataLoader<LabelType, InputType>;
+  using DriverType = D;
+
+  static uint8_t const RANDOM_MODE              = 1;
+  static uint8_t const SIZE_NOT_SET             = 2;
+  static uint8_t const CUR_TRAINING_PAIR_FIRST  = 3;
+  static uint8_t const CUR_TRAINING_PAIR_SECOND = 4;
+  static uint8_t const RET_PAIR_FIRST           = 5;
+  static uint8_t const RET_PAIR_SECOND          = 6;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(6);
+
+    map.Append(RANDOM_MODE, sp.random_mode_);
+    map.Append(SIZE_NOT_SET, sp.size_not_set_);
+    map.Append(CUR_TRAINING_PAIR_FIRST, sp.cur_training_pair_.first);
+    map.Append(CUR_TRAINING_PAIR_SECOND, sp.cur_training_pair_.second);
+    map.Append(RET_PAIR_FIRST, sp.ret_pair_.first);
+    map.Append(RET_PAIR_SECOND, sp.ret_pair_.second);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(RANDOM_MODE, sp.random_mode_);
+    map.ExpectKeyGetValue(SIZE_NOT_SET, sp.size_not_set_);
+    map.ExpectKeyGetValue(CUR_TRAINING_PAIR_FIRST, sp.cur_training_pair_.first);
+    map.ExpectKeyGetValue(CUR_TRAINING_PAIR_SECOND, sp.cur_training_pair_.second);
+    map.ExpectKeyGetValue(RET_PAIR_FIRST, sp.ret_pair_.first);
+    map.ExpectKeyGetValue(RET_PAIR_SECOND, sp.ret_pair_.second);
+  }
+};
+
+}  // namespace serializers
+
 }  // namespace fetch

@@ -20,7 +20,6 @@
 #include <algorithm>
 #include <cassert>
 #include <iterator>
-#include <meta/type_traits.hpp>
 #include <stdexcept>
 
 namespace fetch {
