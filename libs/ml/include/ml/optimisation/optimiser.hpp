@@ -128,12 +128,10 @@ private:
 template <class T>
 void Optimiser<T>::Init()
 {
-  std::vector<std::shared_ptr<fetch::ml::Node<TensorType>>> trainable_nodes = graph_->GetTrainables();
-  for (auto &train : trainable_nodes)
+  graph_trainables_ = graph_->GetTrainables();
+  for (auto &train : graph_trainables_)
   {
-    auto tmp = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(train->GetOp());
-    graph_trainables_.emplace_back(tmp);
-    gradients_.emplace_back(TensorType(tmp->get_weights().shape()));
+    gradients_.emplace_back(TensorType(train->get_weights().shape()));
   }
 }
 

@@ -84,7 +84,7 @@ public:
   std::vector<TensorType> GetGradients() const;
   void                    ApplyGradients(std::vector<TensorType> &grad);
 
-  std::vector<NodePtrType> GetTrainables();
+  std::vector<std::shared_ptr<ops::Trainable<TensorType>>> GetTrainables();
 
   void                            ResetGradients();
   GraphSaveableParams<TensorType> GetGraphSaveableParams();
@@ -670,10 +670,16 @@ bool Graph<TensorType>::UpdateVariableName(std::string const &name, std::string 
  * @return ret is vector containing pointers to all trainables
  */
 template <typename TensorType>
-std::vector<typename std::shared_ptr<fetch::ml::Node<TensorType>>>
+std::vector<typename std::shared_ptr<ops::Trainable<TensorType>>>
 Graph<TensorType>::GetTrainables()
 {
-  return trainable_nodes_;
+  std::vector<std::shared_ptr<ops::Trainable<TensorType>>> ret;
+  for (auto &t : trainable_nodes_)
+  {
+    auto tmp = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
+    ret.emplace_back(tmp);
+  }
+  return ret;
 }
 
 }  // namespace ml
