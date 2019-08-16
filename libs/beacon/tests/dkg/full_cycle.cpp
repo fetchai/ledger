@@ -180,7 +180,7 @@ void RunHonestComitteeRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
 
   // Ready
   i = 0;
-  while (i < total_renewals + 1)
+  while (i < static_cast<uint64_t>(total_renewals + 1))
   {
     auto cabinet = all_cabinets[i % number_of_cabinets];
 
