@@ -75,10 +75,11 @@ public:
                            SizeType seed = 123456789);
 
   // overloaded member from dataloader
-  std::pair<T, std::vector<T>> GetNext(bool is_validation = false) override;
-  SizeType                     Size(bool is_validation = false) const override;
-  bool                         IsDone(bool is_validation = false) const override;
-  void                         Reset(bool is_validation = false) override;
+  std::pair<T, std::vector<T>> GetNext() override;
+  SizeType                     Size() const override;
+  bool                         IsDone() const override;
+  void                         Reset() override;
+  inline bool                  IsValidable() const override;
 
   virtual std::pair<T, std::vector<T>> GetAtIndex(SizeType idx);
   SizeType                             GetDiscardCount();
@@ -126,7 +127,7 @@ private:
  */
 template <typename T>
 BasicTextLoader<T>::BasicTextLoader(TextParams<T> const &p, bool random_mode, SizeType seed)
-  : DataLoader<T, T>(random_mode)
+  : DataLoader<T, T>(random_mode, DataLoaderMode::TRAIN)
   , p_(p)
   , lfg_(seed)
   , lcg_(seed)
@@ -161,9 +162,9 @@ BasicTextLoader<T>::BasicTextLoader(TextParams<T> const &p, bool random_mode, Si
  * @return  returns a pair of Array and Label
  */
 template <typename T>
-std::pair<T, std::vector<T>> BasicTextLoader<T>::GetNext(bool is_validation)
+std::pair<T, std::vector<T>> BasicTextLoader<T>::GetNext()
 {
-  if (is_validation)
+  if (this->mode_ == DataLoaderMode::VALIDATE)
   {
     throw std::runtime_error("Validation set splitting not implemented yet");
   }
@@ -195,9 +196,9 @@ std::pair<T, std::vector<T>> BasicTextLoader<T>::GetNext(bool is_validation)
  * @return
  */
 template <typename T>
-typename BasicTextLoader<T>::SizeType BasicTextLoader<T>::Size(bool is_validation) const
+typename BasicTextLoader<T>::SizeType BasicTextLoader<T>::Size() const
 {
-  if (is_validation)
+  if (this->mode_ == DataLoaderMode::VALIDATE)
   {
     throw std::runtime_error("Validation set splitting not implemented yet");
   }
@@ -229,9 +230,9 @@ typename BasicTextLoader<T>::SizeType BasicTextLoader<T>::Size(bool is_validatio
  * @return
  */
 template <typename T>
-bool BasicTextLoader<T>::IsDone(bool is_validation) const
+bool BasicTextLoader<T>::IsDone() const
 {
-  if (is_validation)
+  if (this->mode_ == DataLoaderMode::VALIDATE)
   {
     throw std::runtime_error("Validation set splitting not implemented yet");
   }
@@ -252,9 +253,9 @@ bool BasicTextLoader<T>::IsDone(bool is_validation) const
  * resets the cursor for iterating through multiple epochs
  */
 template <typename T>
-void BasicTextLoader<T>::Reset(bool is_validation)
+void BasicTextLoader<T>::Reset()
 {
-  if (is_validation)
+  if (this->mode_ == DataLoaderMode::VALIDATE)
   {
     throw std::runtime_error("Validation set splitting not implemented yet");
   }
@@ -274,6 +275,13 @@ void BasicTextLoader<T>::Reset(bool is_validation)
 
   // assign the cursors to their first valid position
   GetNextValidIndices();
+}
+
+template <typename T>
+inline bool BasicTextLoader<T>::IsValidable() const
+{
+  // Validation set splitting not implemented yet
+  return false;
 }
 
 /**

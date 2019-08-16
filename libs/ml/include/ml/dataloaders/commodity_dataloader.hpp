@@ -44,15 +44,16 @@ public:
   using SizeType   = math::SizeType;
 
   explicit CommodityDataLoader(bool random_mode = false)
-    : DataLoader<LabelType, InputType>(random_mode)
+    : DataLoader<LabelType, InputType>(random_mode, DataLoaderMode::TRAIN)
   {}
 
   ~CommodityDataLoader() override = default;
 
-  ReturnType GetNext(bool is_validation = false) override;
-  SizeType   Size(bool is_validation = false) const override;
-  bool       IsDone(bool is_validation = false) const override;
-  void       Reset(bool is_validation = false) override;
+  ReturnType  GetNext() override;
+  SizeType    Size() const override;
+  bool        IsDone() const override;
+  void        Reset() override;
+  inline bool IsValidable() const override;
 
   void AddData(std::string const &xfilename, std::string const &yfilename);
 
@@ -98,11 +99,11 @@ void CommodityDataLoader<LabelType, InputType>::AddData(std::string const &xfile
  */
 template <typename LabelType, typename InputType>
 typename CommodityDataLoader<LabelType, InputType>::ReturnType
-CommodityDataLoader<LabelType, InputType>::GetNext(bool is_validation)
+CommodityDataLoader<LabelType, InputType>::GetNext()
 {
   if (this->random_mode_)
   {
-    GetAtIndex(static_cast<SizeType>(decltype(rand)::generator()) % Size(is_validation));
+    GetAtIndex(static_cast<SizeType>(decltype(rand)::generator()) % Size());
     return buffer_;
   }
   else
@@ -118,9 +119,9 @@ CommodityDataLoader<LabelType, InputType>::GetNext(bool is_validation)
  */
 template <typename LabelType, typename InputType>
 typename CommodityDataLoader<LabelType, InputType>::SizeType
-CommodityDataLoader<LabelType, InputType>::Size(bool is_validation) const
+CommodityDataLoader<LabelType, InputType>::Size() const
 {
-  if (is_validation)
+  if (this->mode_ == DataLoaderMode::VALIDATE)
   {
     throw std::runtime_error("Validation set splitting not implemented yet");
   }
@@ -129,9 +130,9 @@ CommodityDataLoader<LabelType, InputType>::Size(bool is_validation) const
 }
 
 template <typename LabelType, typename InputType>
-bool CommodityDataLoader<LabelType, InputType>::IsDone(bool is_validation) const
+bool CommodityDataLoader<LabelType, InputType>::IsDone() const
 {
-  if (is_validation)
+  if (this->mode_ == DataLoaderMode::VALIDATE)
   {
     throw std::runtime_error("Validation set splitting not implemented yet");
   }
@@ -143,14 +144,21 @@ bool CommodityDataLoader<LabelType, InputType>::IsDone(bool is_validation) const
  * Resets the cursor to 0
  */
 template <typename LabelType, typename InputType>
-void CommodityDataLoader<LabelType, InputType>::Reset(bool is_validation)
+void CommodityDataLoader<LabelType, InputType>::Reset()
 {
-  if (is_validation)
+  if (this->mode_ == DataLoaderMode::VALIDATE)
   {
     throw std::runtime_error("Validation set splitting not implemented yet");
   }
 
   cursor_ = 0;
+}
+
+template <typename LabelType, typename InputType>
+inline bool CommodityDataLoader<LabelType, InputType>::IsValidable() const
+{
+  // Validation set splitting not implemented yet
+  return false;
 }
 
 /**

@@ -63,12 +63,9 @@ TYPED_TEST(TensorDataloaderTest, serialize_tensor_dataloader)
                                                                        0.5);
   b >> tdl_2;
 
-  EXPECT_EQ(tdl.Size(false), tdl_2.Size(false));
-  EXPECT_EQ(tdl.Size(true), tdl_2.Size(true));
-  EXPECT_EQ(tdl.IsDone(false), tdl_2.IsDone(false));
-  EXPECT_EQ(tdl.IsDone(true), tdl_2.IsDone(true));
-  EXPECT_EQ(tdl.GetNext(false), tdl_2.GetNext(false));
-  EXPECT_EQ(tdl.GetNext(true), tdl_2.GetNext(true));
+  EXPECT_EQ(tdl.Size(), tdl_2.Size());
+  EXPECT_EQ(tdl.IsDone(), tdl_2.IsDone());
+  EXPECT_EQ(tdl.GetNext(), tdl_2.GetNext());
 
   // add some new data
   label_tensor = TypeParam::UniformRandom(4);
@@ -77,10 +74,7 @@ TYPED_TEST(TensorDataloaderTest, serialize_tensor_dataloader)
   data1_tensor.Reshape({2, 3, 4});
   EXPECT_EQ(tdl.AddData(data1_tensor, label_tensor), tdl_2.AddData(data1_tensor, label_tensor));
 
-  EXPECT_EQ(tdl.Size(false), tdl_2.Size(false));
-  EXPECT_EQ(tdl.Size(true), tdl_2.Size(true));
-  EXPECT_EQ(tdl.IsDone(false), tdl_2.IsDone(false));
-  EXPECT_EQ(tdl.IsDone(true), tdl_2.IsDone(true));
-  EXPECT_EQ(tdl.GetNext(false), tdl_2.GetNext(false));
-  EXPECT_EQ(tdl.GetNext(true), tdl_2.GetNext(true));
+  EXPECT_EQ(tdl.Size(), tdl_2.Size());
+  EXPECT_EQ(tdl.IsDone(), tdl_2.IsDone());
+  EXPECT_EQ(tdl.GetNext(), tdl_2.GetNext());
 }

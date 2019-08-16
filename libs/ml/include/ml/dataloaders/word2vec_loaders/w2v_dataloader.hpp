@@ -50,21 +50,23 @@ public:
   using VocabType  = Vocab;
   using ReturnType = std::pair<LabelType, std::vector<DataType>>;
 
-  W2VLoader(SizeType window_size, SizeType negative_samples, bool mode);
+  W2VLoader(SizeType window_size, SizeType negative_samples,
+            DataLoaderMode mode = DataLoaderMode::TRAIN);
 
-  bool       IsDone(bool is_validation = false) const override;
-  void       Reset(bool is_validation = false) override;
-  void       RemoveInfrequent(SizeType min);
-  void       InitUnigramTable();
-  void       GetNext(ReturnType &t);
-  ReturnType GetNext(bool is_validation = false) override;
+  bool        IsDone() const override;
+  void        Reset() override;
+  inline bool IsValidable() const override;
+  void        RemoveInfrequent(SizeType min);
+  void        InitUnigramTable();
+  void        GetNext(ReturnType &t);
+  ReturnType  GetNext() override;
 
   bool BuildVocab(std::string const &s);
   void SaveVocab(std::string const &filename);
   void LoadVocab(std::string const &filename);
 
   /// accessors and helper functions ///
-  SizeType         Size(bool is_validation = false) const override;
+  SizeType         Size() const override;
   SizeType         vocab_size() const;
   VocabType const &vocab() const;
   std::string      WordFromIndex(SizeType index) const;
@@ -80,7 +82,7 @@ private:
   std::vector<std::vector<SizeType>>         data_;
   fetch::random::LinearCongruentialGenerator rng_;
   UnigramTable                               unigram_table_;
-  bool                                       mode_;
+  DataLoaderMode                             mode_;
 
   fetch::math::Tensor<T> target_;  // reusable target tensor
   fetch::math::Tensor<T> label_;   // reusable label tensor
@@ -97,13 +99,12 @@ private:
  * @param mode
  */
 template <typename T>
-W2VLoader<T>::W2VLoader(SizeType window_size, SizeType negative_samples, bool mode)
-  : DataLoader<LabelType, DataType>(false)  // no random mode specified
+W2VLoader<T>::W2VLoader(SizeType window_size, SizeType negative_samples, DataLoaderMode mode)
+  : DataLoader<LabelType, DataType>(false, mode)  // no random mode specified
   , current_sentence_(0)
   , current_word_(0)
   , window_size_(window_size)
   , negative_samples_(negative_samples)
-  , mode_(mode)
   , target_({window_size_ * 2, 1})
   , label_({negative_samples_, 1})
 {}
@@ -114,9 +115,9 @@ W2VLoader<T>::W2VLoader(SizeType window_size, SizeType negative_samples, bool mo
  * @return
  */
 template <typename T>
-math::SizeType W2VLoader<T>::Size(bool is_validation) const
+math::SizeType W2VLoader<T>::Size() const
 {
-  if (is_validation)
+  if (this->mode_ == DataLoaderMode::VALIDATE)
   {
     throw std::runtime_error("Validation set splitting not implemented yet");
   }
@@ -139,9 +140,9 @@ math::SizeType W2VLoader<T>::Size(bool is_validation) const
  * @return
  */
 template <typename T>
-bool W2VLoader<T>::IsDone(bool is_validation) const
+bool W2VLoader<T>::IsDone() const
 {
-  if (is_validation)
+  if (this->mode_ == DataLoaderMode::VALIDATE)
   {
     throw std::runtime_error("Validation set splitting not implemented yet");
   }
@@ -165,9 +166,9 @@ bool W2VLoader<T>::IsDone(bool is_validation) const
  * @tparam T
  */
 template <typename T>
-void W2VLoader<T>::Reset(bool is_validation)
+void W2VLoader<T>::Reset()
 {
-  if (is_validation)
+  if (this->mode_ == DataLoaderMode::VALIDATE)
   {
     throw std::runtime_error("Validation set splitting not implemented yet");
   }
@@ -176,6 +177,13 @@ void W2VLoader<T>::Reset(bool is_validation)
   current_word_     = 0;
   rng_.Seed(1337);
   unigram_table_.Reset();
+}
+
+template <typename T>
+inline bool W2VLoader<T>::IsValidable() const
+{
+  // Validation set splitting not implemented yet
+  return false;
 }
 
 /**
@@ -288,9 +296,9 @@ void W2VLoader<T>::GetNext(ReturnType &ret)
 }
 
 template <typename T>
-typename W2VLoader<T>::ReturnType W2VLoader<T>::GetNext(bool is_validation)
+typename W2VLoader<T>::ReturnType W2VLoader<T>::GetNext()
 {
-  if (is_validation)
+  if (this->mode_ == DataLoaderMode::VALIDATE)
   {
     throw std::runtime_error("Validation set splitting not implemented yet");
   }
