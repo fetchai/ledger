@@ -19,7 +19,6 @@
 #include "math/tensor.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/dataloaders/code2vec_context_loaders/context_loader.hpp"
-//#include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activations/softmax.hpp"
 #include "ml/ops/concatenate.hpp"
 #include "ml/ops/embeddings.hpp"
