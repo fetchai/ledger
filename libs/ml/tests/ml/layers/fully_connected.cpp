@@ -628,11 +628,9 @@ TYPED_TEST(FullyConnectedTest, training_should_change_output)
 
   TypeParam prediction3 = layer.Evaluate(output_name);
 
-
   EXPECT_FALSE(prediction.AllClose(prediction3, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));
 }
-
 
 TYPED_TEST(FullyConnectedTest, saveparams_test)
 {

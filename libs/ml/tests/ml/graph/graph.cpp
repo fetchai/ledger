@@ -143,15 +143,14 @@ TYPED_TEST(GraphTest, applying_regularisation_per_trainable)
   // Create a graph with a single weights node
   fetch::ml::Graph<TensorType> g;
 
-  std::string weights =
-      g.template AddNode<fetch::ml::ops::Weights<TensorType>>("Weights", {});
+  std::string weights = g.template AddNode<fetch::ml::ops::Weights<TensorType>>("Weights", {});
 
   g.SetInput(weights, data);
 
   // Apply regularisation
   g.SetRegularisation(weights, regulariser, regularisation_rate);
   auto node_ptr = g.GetNode(weights);
-  auto op_ptr =  std::dynamic_pointer_cast<fetch::ml::ops::Weights<TensorType>>(node_ptr->GetOp());
+  auto op_ptr   = std::dynamic_pointer_cast<fetch::ml::ops::Weights<TensorType>>(node_ptr->GetOp());
   op_ptr->ApplyRegularisation();
 
   // Evaluate weights
@@ -160,7 +159,7 @@ TYPED_TEST(GraphTest, applying_regularisation_per_trainable)
 
   // Test actual values
   ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>(),
-                              fetch::math::function_tolerance<DataType>()));
+                                  fetch::math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(GraphTest, applying_regularisation_all_trainables)
@@ -179,15 +178,14 @@ TYPED_TEST(GraphTest, applying_regularisation_all_trainables)
   // Create a graph with a single weights node
   fetch::ml::Graph<TensorType> g;
 
-  std::string weights =
-      g.template AddNode<fetch::ml::ops::Weights<TensorType>>("Weights", {});
+  std::string weights = g.template AddNode<fetch::ml::ops::Weights<TensorType>>("Weights", {});
 
   g.SetInput(weights, data);
 
   // Apply regularisation to all trainables
   g.SetRegularisation(regulariser, regularisation_rate);
   auto node_ptr = g.GetNode(weights);
-  auto op_ptr =  std::dynamic_pointer_cast<fetch::ml::ops::Weights<TensorType>>(node_ptr->GetOp());
+  auto op_ptr   = std::dynamic_pointer_cast<fetch::ml::ops::Weights<TensorType>>(node_ptr->GetOp());
   op_ptr->ApplyRegularisation();
 
   // Evaluate weights
@@ -196,7 +194,7 @@ TYPED_TEST(GraphTest, applying_regularisation_all_trainables)
 
   // Test actual values
   ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>(),
-                              fetch::math::function_tolerance<DataType>()));
+                                  fetch::math::function_tolerance<DataType>()));
 }
 
 TYPED_TEST(GraphTest,

@@ -84,8 +84,7 @@ public:
 
   std::shared_ptr<SPType> GetNodeSaveableParams() const;
 
-  void SetNodeSaveableParams(
-      NodeSaveableParams<T> const &nsp, std::shared_ptr<ops::Ops<T>> op_ptr);
+  void SetNodeSaveableParams(NodeSaveableParams<T> const &nsp, std::shared_ptr<ops::Ops<T>> op_ptr);
 
   ///////////////////////////////////
   /// FORWARD/BACKWARD OPERATIONS ///
@@ -314,15 +313,14 @@ void Node<T>::ResetCache(bool input_size_changed)
  * @param op_ptr
  */
 template <typename TensorType>
-void Node<TensorType>::SetNodeSaveableParams(
-    NodeSaveableParams<TensorType> const &nsp, std::shared_ptr<ops::Ops<TensorType>> op_ptr)
+void Node<TensorType>::SetNodeSaveableParams(NodeSaveableParams<TensorType> const &nsp,
+                                             std::shared_ptr<ops::Ops<TensorType>> op_ptr)
 {
   name_                 = nsp.name;
   cached_output_        = nsp.cached_output;
   cached_output_status_ = static_cast<CachedOutputState>(nsp.cached_output_status);
   operation_type_       = nsp.operation_type;
   op_ptr_               = op_ptr;
-
 }
 
 }  // namespace ml

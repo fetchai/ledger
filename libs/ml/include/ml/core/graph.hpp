@@ -41,14 +41,14 @@ template <class T>
 class Graph
 {
 public:
-  using TensorType         = T;
-  using ArrayPtrType       = std::shared_ptr<TensorType>;
-  using SizeType           = typename TensorType::SizeType;
-  using DataType           = typename TensorType::Type;
-  using NodePtrType        = typename std::shared_ptr<fetch::ml::Node<TensorType>>;
-  using PlaceholderType    = typename fetch::ml::ops::PlaceHolder<TensorType>;
-  using RegPtrType         = std::shared_ptr<fetch::ml::regularisers::Regulariser<T>>;
-  using SPType             = GraphSaveableParams<TensorType>;
+  using TensorType      = T;
+  using ArrayPtrType    = std::shared_ptr<TensorType>;
+  using SizeType        = typename TensorType::SizeType;
+  using DataType        = typename TensorType::Type;
+  using NodePtrType     = typename std::shared_ptr<fetch::ml::Node<TensorType>>;
+  using PlaceholderType = typename fetch::ml::ops::PlaceHolder<TensorType>;
+  using RegPtrType      = std::shared_ptr<fetch::ml::regularisers::Regulariser<T>>;
+  using SPType          = GraphSaveableParams<TensorType>;
 
   virtual ~Graph() = default;
   Graph()          = default;
@@ -114,7 +114,7 @@ private:
 protected:
   std::unordered_map<std::string, NodePtrType> nodes_;
   std::unordered_map<std::string, SizeType>    trainable_lookup_;
-  std::vector<NodePtrType>                trainable_nodes_;
+  std::vector<NodePtrType>                     trainable_nodes_;
 };
 
 /**
@@ -146,8 +146,8 @@ bool Graph<TensorType>::SetRegularisation(std::string node_name, RegPtrType regu
 {
   if (trainable_lookup_.find(node_name) != trainable_lookup_.end())
   {
-    NodePtrType t = trainable_nodes_[trainable_lookup_[node_name]];
-    auto tmp = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
+    NodePtrType t   = trainable_nodes_[trainable_lookup_[node_name]];
+    auto        tmp = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
     tmp->SetRegularisation(regulariser, regularisation_rate);
 
     return true;
@@ -228,7 +228,7 @@ void Graph<TensorType>::BackPropagateSignal(std::string const &node_name,
 {
   if (nodes_.find(node_name) != nodes_.end())
   {
-  nodes_[node_name]->BackPropagateSignal(error_signal);
+    nodes_[node_name]->BackPropagateSignal(error_signal);
   }
   else
   {
@@ -420,8 +420,7 @@ typename Graph<TensorType>::NodePtrType Graph<TensorType>::GetNode(
 template <typename TensorType>
 void Graph<TensorType>::SetInput(std::string const &node_name, TensorType data)
 {
-  auto placeholder =
-      std::dynamic_pointer_cast<PlaceholderType>(nodes_.at(node_name)->GetOp());
+  auto placeholder = std::dynamic_pointer_cast<PlaceholderType>(nodes_.at(node_name)->GetOp());
 
   if (placeholder)
   {
@@ -458,7 +457,8 @@ struct fetch::ml::StateDict<TensorType> Graph<TensorType>::StateDict() const
   struct fetch::ml::StateDict<TensorType> d;
   for (auto const &t : trainable_lookup_)
   {
-    auto tmp = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(trainable_nodes_.at(t.second)->GetOp());
+    auto tmp = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(
+        trainable_nodes_.at(t.second)->GetOp());
     d.dict_.emplace(t.first, tmp->StateDict());
   }
   return d;
@@ -474,7 +474,8 @@ void Graph<TensorType>::LoadStateDict(struct fetch::ml::StateDict<TensorType> co
   assert(!dict.weights_);
   for (auto const &t : trainable_lookup_)
   {
-    auto tmp = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(trainable_nodes_.at(t.second)->GetOp());
+    auto tmp = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(
+        trainable_nodes_.at(t.second)->GetOp());
     tmp->LoadStateDict(dict.dict_.at(t.first));
   }
 }
@@ -670,8 +671,7 @@ bool Graph<TensorType>::UpdateVariableName(std::string const &name, std::string 
  * @return ret is vector containing pointers to all trainables
  */
 template <typename TensorType>
-std::vector<typename std::shared_ptr<ops::Trainable<TensorType>>>
-Graph<TensorType>::GetTrainables()
+std::vector<typename std::shared_ptr<ops::Trainable<TensorType>>> Graph<TensorType>::GetTrainables()
 {
   std::vector<std::shared_ptr<ops::Trainable<TensorType>>> ret;
   for (auto &t : trainable_nodes_)
