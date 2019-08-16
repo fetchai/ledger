@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/decoders.hpp"
 #include "core/yaml/document.hpp"
+#include "core/byte_array/decoders.hpp"
 #include "core/yaml/exceptions.hpp"
 
 #include <cassert>
@@ -704,7 +704,7 @@ void YamlDocument::Parse(ConstByteArray const &document)
     }
     else if (token.type == CLOSE_ARRAY)
     {
-      assert(variant_stack.back()->data->IsArray());
+      assert(variant_stack.back().data->IsArray());
       variant_stack.pop_back();
 
       YamlObject *next = (variant_stack.empty()) ? nullptr : &variant_stack.back();
