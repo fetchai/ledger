@@ -84,14 +84,14 @@ TEST_F(MLTests, serialise_empty_commodity_dataloader_test)
     endfunction
   )";
 
-  std::string const state_name{"dataloader"};
+  std::string const state_name{"commodity"};
   ASSERT_TRUE(toolkit.Compile(dataloader_serialise_src));
   EXPECT_CALL(toolkit.observer(), Write(state_name, _, _));
   ASSERT_TRUE(toolkit.Run());
 
   static char const *dataloader_deserialise_src = R"(
       function main()
-        var state = State<DataLoader>("mnist");
+        var state = State<DataLoader>("commodity");
         var dataloader = state.get();
       endfunction
     )";
@@ -109,20 +109,20 @@ TEST_F(MLTests, serialise_empty_mnist_dataloader_test)
     function main()
 
       var dataloader = DataLoader("tensor");
-      var state = State<DataLoader>("dataloader");
+      var state = State<DataLoader>("mnist");
       state.set(dataloader);
 
     endfunction
   )";
 
-  std::string const state_name{"dataloader"};
+  std::string const state_name{"mnist"};
   ASSERT_TRUE(toolkit.Compile(dataloader_serialise_src));
   EXPECT_CALL(toolkit.observer(), Write(state_name, _, _));
   ASSERT_TRUE(toolkit.Run());
 
   static char const *dataloader_deserialise_src = R"(
       function main()
-        var state = State<DataLoader>("dataloader");
+        var state = State<DataLoader>("mnist");
         var dataloader = state.get();
       endfunction
     )";
