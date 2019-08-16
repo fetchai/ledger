@@ -36,12 +36,12 @@ class GraphW2VLoader : public DataLoader<fetch::math::Tensor<T>, fetch::math::Te
 public:
   const T BufferPositionUnused = static_cast<T>(fetch::math::numeric_max<SizeType>());
 
+  using InputType  = fetch::math::Tensor<T>;
   using LabelType = fetch::math::Tensor<T>;
-  using DataType  = fetch::math::Tensor<T>;
 
   using SizeType   = fetch::math::SizeType;
   using VocabType  = Vocab;
-  using ReturnType = std::pair<LabelType, std::vector<DataType>>;
+  using ReturnType = std::pair<LabelType, std::vector<InputType>>;
 
   GraphW2VLoader(SizeType window_size, SizeType negative_samples, T freq_thresh,
                  SizeType max_word_count, bool mode, SizeType seed = 1337);
@@ -51,6 +51,7 @@ public:
   void       RemoveInfrequent(SizeType min);
   void       InitUnigramTable(SizeType size = 1e8);
   ReturnType GetNext() override;
+  bool       AddData(InputType const & input, LabelType const & label) override;
 
   void BuildVocab(std::vector<std::string> const &sents, SizeType min_count = 0);
   void SaveVocab(std::string const &filename);
@@ -83,7 +84,7 @@ private:
   SizeType                                  reset_count_ = 0;
 
   // temporary sample and labels for buffering samples
-  DataType                      input_words_, output_words_, labels_;
+  InputType                      input_words_, output_words_, labels_;
   fetch::math::Tensor<SizeType> output_words_buffer_;
   SizeType                      buffer_pos_ = 0;
   ReturnType                    cur_sample_;
@@ -105,7 +106,7 @@ private:
 template <typename T>
 GraphW2VLoader<T>::GraphW2VLoader(SizeType window_size, SizeType negative_samples, T freq_thresh,
                                   SizeType max_word_count, bool mode, SizeType seed)
-  : DataLoader<LabelType, DataType>(false)  // no random mode specified
+  : DataLoader<LabelType, InputType>(false)  // no random mode specified
   , current_sentence_(0)
   , current_word_(0)
   , window_size_(window_size)
@@ -116,15 +117,15 @@ GraphW2VLoader<T>::GraphW2VLoader(SizeType window_size, SizeType negative_sample
   , lfg_(seed)
 {
   // setup temporary buffers for training purpose
-  input_words_  = DataType({negative_samples * window_size_ * 2 + window_size_ * 2});
-  output_words_ = DataType({negative_samples * window_size_ * 2 + window_size_ * 2});
+  input_words_  = InputType({negative_samples * window_size_ * 2 + window_size_ * 2});
+  output_words_ = InputType({negative_samples * window_size_ * 2 + window_size_ * 2});
   output_words_buffer_ =
       fetch::math::Tensor<SizeType>({negative_samples * window_size_ * 2 + window_size_ * 2});
-  labels_ = DataType({negative_samples * window_size_ * 2 + window_size_ * 2 +
+  labels_ = InputType({negative_samples * window_size_ * 2 + window_size_ * 2 +
                       1});  // the extra 1 is for testing if label has ran out
   labels_.Fill(BufferPositionUnused);
-  cur_sample_.first  = DataType({1, 1});
-  cur_sample_.second = {DataType({1, 1}), DataType({1, 1})};
+  cur_sample_.first  = InputType({1, 1});
+  cur_sample_.second = {InputType({1, 1}), InputType({1, 1})};
 }
 
 /**
@@ -456,6 +457,14 @@ typename GraphW2VLoader<T>::ReturnType GraphW2VLoader<T>::GetNext()
   cur_sample_.second.at(1).At(0, 0) = output_word;
 
   return cur_sample_;
+}
+
+template <typename T>
+bool GraphW2VLoader<T>::AddData(InputType const & input, LabelType const & label)
+{
+  FETCH_UNUSED(input);
+  FETCH_UNUSED(label);
+  throw std::runtime_error("AddData not implemneted for word 2 vec dataloader");
 }
 
 /**

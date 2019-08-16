@@ -37,7 +37,6 @@ template <typename T>
 class W2VLoader : public DataLoader<fetch::math::Tensor<T>, fetch::math::Tensor<T>>
 {
 
-
 public:
   // The intended T is the typename for the data input to the neural network, which should be a
   // float or double or fix-point type.
@@ -59,7 +58,7 @@ public:
   void       GetNext(ReturnType &t);
   ReturnType GetNext() override;
 
-  bool       AddData(InputType const& input, LabelType const & label) override;
+  bool AddData(InputType const &input, LabelType const &label) override;
 
   bool BuildVocab(std::string const &s);
   void SaveVocab(std::string const &filename);
@@ -283,7 +282,7 @@ typename W2VLoader<T>::ReturnType W2VLoader<T>::GetNext()
 }
 
 template <typename T>
-bool W2VLoader<T>::AddData(InputType const& input, LabelType const & label)
+bool W2VLoader<T>::AddData(InputType const &input, LabelType const &label)
 {
   FETCH_UNUSED(input);
   FETCH_UNUSED(label);
