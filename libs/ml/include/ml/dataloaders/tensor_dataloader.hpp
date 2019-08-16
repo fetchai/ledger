@@ -61,9 +61,9 @@ protected:
   SizeType validation_cursor_ = 0;
   SizeType validation_offset_ = 0;
 
-  SizeType n_samples_       = 0;  // number of all samples
-  SizeType n_test_samples_  = 0;  // number of train samples
-  SizeType n_train_samples_ = 0;  // number of test samples
+  SizeType n_samples_            = 0;  // number of all samples
+  SizeType n_validation_samples_ = 0;  // number of train samples
+  SizeType n_train_samples_      = 0;  // number of validation samples
 
   TensorType data_;
   TensorType labels_;
@@ -136,9 +136,9 @@ bool TensorDataLoader<LabelType, InputType>::AddData(TensorType const &data,
 
   n_samples_ = data_.shape().at(batch_data_dim_);
 
-  n_test_samples_ =
+  n_validation_samples_ =
       static_cast<SizeType>(validation_to_train_ratio_ * static_cast<float>(n_samples_));
-  n_train_samples_ = n_samples_ - n_test_samples_;
+  n_train_samples_ = n_samples_ - n_validation_samples_;
 
   validation_offset_ = n_train_samples_;
 
@@ -151,7 +151,7 @@ TensorDataLoader<LabelType, InputType>::Size(bool is_validation) const
 {
   if (is_validation)
   {
-    return n_test_samples_;
+    return n_validation_samples_;
   }
   else
   {
@@ -173,7 +173,7 @@ bool TensorDataLoader<LabelType, InputType>::IsDone(bool is_validation) const
   }
   else
   {
-    return (validation_cursor_ >= validation_offset_ + n_test_samples_);
+    return (validation_cursor_ >= validation_offset_ + n_validation_samples_);
   }
 }
 
