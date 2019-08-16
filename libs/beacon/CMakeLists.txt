@@ -20,5 +20,3 @@ target_link_libraries(fetch-beacon
                              fetch-crypto
                              fetch-network
                              fetch-ledger)
-
-# add_test_target()

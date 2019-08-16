@@ -20,17 +20,15 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/service_ids.hpp"
 #include "crypto/sha256.hpp"
-#include "ledger/chain/address.hpp"
 #include "network/muddle/muddle_endpoint.hpp"
-#include "network/muddle/rpc/server.hpp"
-#include "rbc_messages.hpp"
+#include "network/muddle/rbc_messages.hpp"
 
 #include <atomic>
 #include <bitset>
 #include <unordered_set>
 
 namespace fetch {
-namespace dkg {
+namespace network {
 
 /**
  * Reliable broadcast channel (RBC) is a protocol which ensures all honest
@@ -51,21 +49,25 @@ public:
   using CabinetMembers  = std::set<MuddleAddress>;
   using Subscription    = muddle::Subscription;
   using SubscriptionPtr = std::shared_ptr<muddle::Subscription>;
-  using MessageType     = RBCMessage::MessageType;
+  using MessageType     = RBCMessageType;
   using HashFunction    = crypto::SHA256;
-  using MessageHash     = byte_array::ByteArray;
+  using HashDigest      = byte_array::ByteArray;
   using CallbackFunction =
       std::function<void(MuddleAddress const &, byte_array::ConstByteArray const &)>;
-  using MessageStatMap = std::unordered_map<MessageHash, MessageCount>;
+  using MessageStatMap = std::unordered_map<HashDigest, MessageCount>;
   using FlagType       = std::bitset<sizeof(MessageType) * 8>;
   using PartyList      = std::vector<Party>;
+  using IdType         = uint32_t;
+  using CounterType    = uint8_t;
 
   RBC(Endpoint &endpoint, MuddleAddress address, CallbackFunction call_back,
-      uint16_t channel = CHANNEL_BROADCAST);
+      uint16_t channel = CHANNEL_RBC_BROADCAST);
 
-  // Operators
+  /// RBC Operation
+  /// @{
   bool ResetCabinet(CabinetMembers const &cabinet);
-  void SendRBroadcast(SerialisedMessage const &msg);
+  void Broadcast(SerialisedMessage const &msg);
+  /// @}
 
 protected:
   /// Structs used for the message tracking
@@ -79,7 +81,7 @@ protected:
   struct BroadcastMessage
   {
     SerialisedMessage original_message{};  ///< Original message broadcasted
-    MessageHash       message_hash{};      ///< Hash of message
+    HashDigest        message_hash{};      ///< Hash of message
     MessageStatMap    msgs_count{};        ///< Count of RBCMessages received for a given hash
   };
 
@@ -97,21 +99,21 @@ protected:
   /// @{
   // Thread safe
   virtual void OnRBC(MuddleAddress const &from, RBCMessage const &message);
-  void         OnRBroadcast(RBCMessage const &msg, uint32_t sender_index);
-  void         OnREcho(RBCMessage const &msg, uint32_t sender_index);
-  void         OnRReady(RBCMessage const &msg, uint32_t sender_index);
-  void         OnRRequest(RBCMessage const &msg, uint32_t sender_index);
-  void         OnRAnswer(RBCMessage const &msg, uint32_t sender_index);
+  void         OnRBroadcast(MessageBroadcast const &msg, uint32_t sender_index);
+  void         OnREcho(MessageEcho const &msg, uint32_t sender_index);
+  void         OnRReady(MessageReady const &msg, uint32_t sender_index);
+  void         OnRRequest(MessageRequest const &msg, uint32_t sender_index);
+  void         OnRAnswer(MessageAnswer const &msg, uint32_t sender_index);
 
   // Unsafe
-  void OnREchoLockFree(RBCMessage const &msg, uint32_t sender_index);
-  void OnRReadyLockFree(RBCMessage const &msg, uint32_t sender_index);
+  void OnREchoLockFree(MessageEcho const &msg, uint32_t sender_index);
+  void OnRReadyLockFree(MessageReady const &msg, uint32_t sender_index);
   /// @}
 
   /// Message communication - not thread safe.
   /// @{
   void         Send(RBCMessage const &env, MuddleAddress const &address);
-  virtual void Broadcast(RBCMessage const &env);
+  virtual void InternalBroadcast(RBCMessage const &env);
   void         Deliver(SerialisedMessage const &msg, uint32_t sender_index);
 
   Endpoint &endpoint()
@@ -145,26 +147,21 @@ protected:
   uint32_t            CabinetIndex(MuddleAddress const &other_address) const;
   bool                BasicMessageCheck(MuddleAddress const &from, RBCMessage const &msg);
   bool                CheckTag(RBCMessage const &msg);
-  bool                SetMbar(TagType tag, RMessage const &msg, uint32_t sender_index);
-  bool                SetDbar(TagType tag, RHash const &msg);
-  bool                ReceivedEcho(TagType tag, RBCMessage const &msg);
-  struct MessageCount ReceivedReady(TagType tag, RHash const &msg);
+  bool                SetMbar(TagType tag, MessageContents const &msg, uint32_t sender_index);
+  bool                SetDbar(TagType tag, MessageHash const &msg);
+  bool                ReceivedEcho(TagType tag, MessageEcho const &msg);
+  struct MessageCount ReceivedReady(TagType tag, MessageHash const &msg);
   bool                SetPartyFlag(uint32_t sender_index, TagType tag, MessageType msg_type);
   /// @}
 
   /// Mutex setup that allows easy debugging of deadlocks
   /// @{
-#ifndef NDEBUG
-  mutable std::mutex                   mutex_;
-  mutable std::unique_lock<std::mutex> lock_{mutex_, std::defer_lock};
-#else
-  mutable std::mutex lock_;
-#endif
+  mutable mutex::Mutex lock_{__LINE__, __FILE__};
   /// @}
 private:
   /// Variable Declarations
   /// @{
-  uint16_t channel_{CHANNEL_BROADCAST};
+  uint16_t channel_{CHANNEL_RBC_BROADCAST};
 
   std::atomic<uint32_t> id_{0};  ///< Rank used in RBC (derived from position in current_cabinet_)
   std::atomic<uint8_t>  msg_counter_{0};  ///< Counter for messages we have broadcasted
@@ -186,5 +183,5 @@ private:
   /// @}
 };
 
-}  // namespace dkg
+}  // namespace network
 }  // namespace fetch

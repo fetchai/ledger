@@ -23,8 +23,8 @@
 #include "crypto/prover.hpp"
 #include "dkg/dkg.hpp"
 #include "dkg/pre_dkg_sync.hpp"
-#include "dkg/rbc.hpp"
 #include "network/muddle/muddle.hpp"
+#include "network/muddle/rbc.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
 
@@ -394,7 +394,7 @@ struct CabinetMember
           [this](DKGEnvelope const &envelope) -> void {
             DKGSerializer serialiser;
             serialiser << envelope;
-            rbc.SendRBroadcast(serialiser.data());
+            rbc.Broadcast(serialiser.data());
           },
           [this](ConstByteArray const &                     destination,
                  std::pair<std::string, std::string> const &shares) -> void {

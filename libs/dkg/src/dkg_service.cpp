@@ -180,7 +180,7 @@ void DkgService::SendReliableBroadcast(RBCMessageType const &msg)
 {
   DKGSerializer serialiser;
   serialiser << msg;
-  rbc_.SendRBroadcast(serialiser.data());
+  rbc_.Broadcast(serialiser.data());
 }
 
 /**

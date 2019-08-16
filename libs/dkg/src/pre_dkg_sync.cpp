@@ -124,7 +124,7 @@ void PreDkgSync::Connect()
   // Send ready message with list of connected peers
   fetch::serializers::MsgPackSerializer serializer;
   serializer << cabinet_;
-  rbc_.SendRBroadcast(serializer.data());
+  rbc_.Broadcast(serializer.data());
   committee_sent_ = true;
   ReceivedDkgReady();
 }

@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
-#include "dkg/rbc.hpp"
 #include "network/muddle/muddle.hpp"
+#include "network/muddle/rbc.hpp"
 
 #include <unordered_map>
 
@@ -45,7 +45,7 @@ private:
   Muddle &                          muddle_;
   PeersList                         peers_;
   Cabinet                           cabinet_;
-  RBC                               rbc_;
+  network::RBC                      rbc_;
   std::mutex                        mutex_;
   std::unordered_set<MuddleAddress> joined_;
   uint32_t                          joined_counter_{0};
