@@ -164,11 +164,6 @@ bool TensorDataLoader<LabelType, InputType>::IsDone(bool is_validation) const
 {
   if (is_validation)
   {
-    throw std::runtime_error("Validation set splitting not implemented yet");
-  }
-
-  if (is_validation)
-  {
     return (train_cursor_ >= n_train_samples_);
   }
   else
@@ -211,22 +206,24 @@ struct MapSerializer<fetch::ml::dataloaders::TensorDataLoader<LabelType, InputTy
   static uint8_t const VALIDATION_OFFSET         = 4;
   static uint8_t const VALIDATION_TO_TRAIN_RATIO = 5;
   static uint8_t const N_SAMPLES                 = 6;
+  static uint8_t const N_TRAIN_SAMPLES           = 7;
+  static uint8_t const N_VALIDATION_SAMPLES      = 8;
 
-  static uint8_t const DATA   = 7;
-  static uint8_t const LABELS = 8;
+  static uint8_t const DATA   = 9;
+  static uint8_t const LABELS = 10;
 
-  static uint8_t const LABEL_SHAPE            = 9;
-  static uint8_t const ONE_SAMPLE_LABEL_SHAPE = 10;
-  static uint8_t const DATA_SHAPES            = 11;
-  static uint8_t const ONE_SAMPLE_DATA_SHAPES = 12;
+  static uint8_t const LABEL_SHAPE            = 11;
+  static uint8_t const ONE_SAMPLE_LABEL_SHAPE = 12;
+  static uint8_t const DATA_SHAPES            = 13;
+  static uint8_t const ONE_SAMPLE_DATA_SHAPES = 14;
 
-  static uint8_t const BATCH_LABEL_DIM = 13;
-  static uint8_t const BATCH_DATA_DIM  = 14;
+  static uint8_t const BATCH_LABEL_DIM = 15;
+  static uint8_t const BATCH_DATA_DIM  = 16;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(14);
+    auto map = map_constructor(16);
 
     // serialize parent class first
     auto dl_pointer = static_cast<ml::dataloaders::DataLoader<LabelType, InputType> const *>(&sp);
@@ -237,6 +234,8 @@ struct MapSerializer<fetch::ml::dataloaders::TensorDataLoader<LabelType, InputTy
     map.Append(VALIDATION_OFFSET, sp.validation_offset_);
     map.Append(VALIDATION_TO_TRAIN_RATIO, sp.validation_to_train_ratio_);
     map.Append(N_SAMPLES, sp.n_samples_);
+    map.Append(N_TRAIN_SAMPLES, sp.n_train_samples_);
+    map.Append(N_VALIDATION_SAMPLES, sp.n_validation_samples_);
 
     map.Append(DATA, sp.data_);
     map.Append(LABELS, sp.labels_);
@@ -261,6 +260,8 @@ struct MapSerializer<fetch::ml::dataloaders::TensorDataLoader<LabelType, InputTy
     map.ExpectKeyGetValue(VALIDATION_OFFSET, sp.validation_offset_);
     map.ExpectKeyGetValue(VALIDATION_TO_TRAIN_RATIO, sp.validation_to_train_ratio_);
     map.ExpectKeyGetValue(N_SAMPLES, sp.n_samples_);
+    map.ExpectKeyGetValue(N_TRAIN_SAMPLES, sp.n_train_samples_);
+    map.ExpectKeyGetValue(N_VALIDATION_SAMPLES, sp.n_validation_samples_);
 
     map.ExpectKeyGetValue(DATA, sp.data_);
     map.ExpectKeyGetValue(LABELS, sp.labels_);

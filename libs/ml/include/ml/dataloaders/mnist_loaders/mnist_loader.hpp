@@ -44,7 +44,7 @@ private:
   std::uint32_t                  validation_cursor_;
   std::uint32_t                  train_size_;
   std::uint32_t                  validation_size_;
-  std::uint32_t                  size_;
+  std::uint32_t                  total_size_;
   std::uint32_t                  validation_offset_;
   static constexpr std::uint32_t FIGURE_WIDTH  = 28;
   static constexpr std::uint32_t FIGURE_HEIGHT = 28;
@@ -59,12 +59,12 @@ public:
     , validation_cursor_(0)
   {
     std::uint32_t record_length(0);
-    data_   = read_mnist_images(images_file, size_, record_length);
-    labels_ = read_mnist_labels(labelsFile, size_);
+    data_   = read_mnist_images(images_file, total_size_, record_length);
+    labels_ = read_mnist_labels(labelsFile, total_size_);
 
     validation_size_ =
-        static_cast<std::uint32_t>(validation_to_train_ratio * static_cast<float>(size_));
-    train_size_        = size_ - validation_size_;
+        static_cast<std::uint32_t>(validation_to_train_ratio * static_cast<float>(total_size_));
+    train_size_        = total_size_ - validation_size_;
     validation_offset_ = train_size_;
 
     assert(record_length == FIGURE_SIZE);
@@ -91,7 +91,7 @@ public:
   {
     if (is_validation)
     {
-      return validation_offset_ + validation_cursor_ >= size_;
+      return validation_offset_ + validation_cursor_ >= total_size_;
     }
     else
     {
