@@ -41,11 +41,11 @@ public:
 
 private:
   std::uint32_t                  train_cursor_;
-  std::uint32_t                  test_cursor_;
+  std::uint32_t                  validation_cursor_;
   std::uint32_t                  train_size_;
-  std::uint32_t                  test_size_;
+  std::uint32_t                  validation_size_;
   std::uint32_t                  size_;
-  std::uint32_t                  test_offset_;
+  std::uint32_t                  validation_offset_;
   static constexpr std::uint32_t FIGURE_WIDTH  = 28;
   static constexpr std::uint32_t FIGURE_HEIGHT = 28;
   static constexpr std::uint32_t FIGURE_SIZE   = 28 * 28;
@@ -56,15 +56,16 @@ public:
               bool random_mode = false, float validation_to_train_ratio = 0.0)
     : DataLoader<LabelType, T>(random_mode)
     , train_cursor_(0)
-    , test_cursor_(0)
+    , validation_cursor_(0)
   {
     std::uint32_t record_length(0);
     data_   = read_mnist_images(images_file, size_, record_length);
     labels_ = read_mnist_labels(labelsFile, size_);
 
-    test_size_  = static_cast<std::uint32_t>(validation_to_train_ratio * static_cast<float>(size_));
-    train_size_ = size_ - test_size_;
-    test_offset_ = train_size_;
+    validation_size_ =
+        static_cast<std::uint32_t>(validation_to_train_ratio * static_cast<float>(size_));
+    train_size_        = size_ - validation_size_;
+    validation_offset_ = train_size_;
 
     assert(record_length == FIGURE_SIZE);
 
@@ -78,7 +79,7 @@ public:
     // MNIST files store the size as uint32_t but Dataloader interface require uint64_t
     if (is_validation)
     {
-      return static_cast<SizeType>(test_size_);
+      return static_cast<SizeType>(validation_size_);
     }
     else
     {
@@ -90,7 +91,7 @@ public:
   {
     if (is_validation)
     {
-      return test_offset_ + test_cursor_ >= size_;
+      return validation_offset_ + validation_cursor_ >= size_;
     }
     else
     {
@@ -102,7 +103,7 @@ public:
   {
     if (is_validation)
     {
-      test_cursor_ = 0;
+      validation_cursor_ = 0;
     }
     else
     {
@@ -116,12 +117,12 @@ public:
     {
       if (this->random_mode_)
       {
-        GetAtIndex(test_offset_ + ((SizeType)rand() % test_size_), buffer_);
+        GetAtIndex(validation_offset_ + ((SizeType)rand() % validation_size_), buffer_);
         return buffer_;
       }
       else
       {
-        GetAtIndex(static_cast<SizeType>(test_offset_ + (test_cursor_++)), buffer_);
+        GetAtIndex(static_cast<SizeType>(validation_offset_ + (validation_cursor_++)), buffer_);
         return buffer_;
       }
     }
@@ -171,7 +172,8 @@ public:
       {
         if (is_validation)
         {
-          *it = static_cast<DataType>(data_[test_offset_ + test_cursor_][i]) / DataType{256};
+          *it = static_cast<DataType>(data_[validation_offset_ + validation_cursor_][i]) /
+                DataType{256};
         }
         else
         {
@@ -184,10 +186,10 @@ public:
 
       if (is_validation)
       {
-        ret_labels(labels_[test_offset_ + test_cursor_], index) =
+        ret_labels(labels_[validation_offset_ + validation_cursor_], index) =
             static_cast<typename LabelType::Type>(1);
 
-        ++test_cursor_;
+        ++validation_cursor_;
       }
       else
       {

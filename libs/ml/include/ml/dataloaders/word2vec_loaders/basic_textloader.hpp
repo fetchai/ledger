@@ -75,10 +75,10 @@ public:
                            SizeType seed = 123456789);
 
   // overloaded member from dataloader
-  std::pair<T, std::vector<T>> GetNext(bool is_test = false) override;
-  SizeType                     Size(bool is_test = false) const override;
-  bool                         IsDone(bool is_test = false) const override;
-  void                         Reset(bool is_test = false) override;
+  std::pair<T, std::vector<T>> GetNext(bool is_validation = false) override;
+  SizeType                     Size(bool is_validation = false) const override;
+  bool                         IsDone(bool is_validation = false) const override;
+  void                         Reset(bool is_validation = false) override;
 
   virtual std::pair<T, std::vector<T>> GetAtIndex(SizeType idx);
   SizeType                             GetDiscardCount();
@@ -161,9 +161,9 @@ BasicTextLoader<T>::BasicTextLoader(TextParams<T> const &p, bool random_mode, Si
  * @return  returns a pair of Array and Label
  */
 template <typename T>
-std::pair<T, std::vector<T>> BasicTextLoader<T>::GetNext(bool is_test)
+std::pair<T, std::vector<T>> BasicTextLoader<T>::GetNext(bool is_validation)
 {
-  (void)is_test;
+  (void)is_validation;
   if (this->random_mode_)
   {
     GetNextValidIndices();
@@ -191,9 +191,9 @@ std::pair<T, std::vector<T>> BasicTextLoader<T>::GetNext(bool is_test)
  * @return
  */
 template <typename T>
-typename BasicTextLoader<T>::SizeType BasicTextLoader<T>::Size(bool is_test) const
+typename BasicTextLoader<T>::SizeType BasicTextLoader<T>::Size(bool is_validation) const
 {
-  (void)is_test;
+  (void)is_validation;
   SizeType size(0);
   // for each sentence
   for (auto const &s : this->data_)
@@ -221,9 +221,9 @@ typename BasicTextLoader<T>::SizeType BasicTextLoader<T>::Size(bool is_test) con
  * @return
  */
 template <typename T>
-bool BasicTextLoader<T>::IsDone(bool is_test) const
+bool BasicTextLoader<T>::IsDone(bool is_validation) const
 {
-  (void)is_test;
+  (void)is_validation;
   // check if no more valid positions until cursor reaches end
   if (p_.full_window)
   {
@@ -240,9 +240,9 @@ bool BasicTextLoader<T>::IsDone(bool is_test) const
  * resets the cursor for iterating through multiple epochs
  */
 template <typename T>
-void BasicTextLoader<T>::Reset(bool is_test)
+void BasicTextLoader<T>::Reset(bool is_validation)
 {
-  (void)is_test;
+  (void)is_validation;
   cursor_ = 0;
 
   // generate a new random sequence for random sampling

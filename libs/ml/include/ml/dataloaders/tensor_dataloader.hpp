@@ -57,9 +57,9 @@ public:
   friend struct fetch::serializers::MapSerializer;
 
 protected:
-  SizeType train_cursor_ = 0;
-  SizeType test_cursor_  = 0;
-  SizeType test_offset_  = 0;
+  SizeType train_cursor_      = 0;
+  SizeType validation_cursor_ = 0;
+  SizeType validation_offset_ = 0;
 
   SizeType n_samples_       = 0;  // number of all samples
   SizeType n_test_samples_  = 0;  // number of train samples
@@ -109,9 +109,9 @@ TensorDataLoader<LabelType, InputType>::GetNext(bool is_validation)
 
   if (is_validation)
   {
-    ReturnType ret(labels_.View(test_cursor_).Copy(one_sample_label_shape_),
-                   {data_.View(test_cursor_).Copy(one_sample_data_shapes_.at(0))});
-    test_cursor_++;
+    ReturnType ret(labels_.View(validation_cursor_).Copy(one_sample_label_shape_),
+                   {data_.View(validation_cursor_).Copy(one_sample_data_shapes_.at(0))});
+    validation_cursor_++;
     return ret;
   }
   else
@@ -140,7 +140,7 @@ bool TensorDataLoader<LabelType, InputType>::AddData(TensorType const &data,
       static_cast<SizeType>(validation_to_train_ratio_ * static_cast<float>(n_samples_));
   n_train_samples_ = n_samples_ - n_test_samples_;
 
-  test_offset_ = n_train_samples_;
+  validation_offset_ = n_train_samples_;
 
   return true;
 }
@@ -173,7 +173,7 @@ bool TensorDataLoader<LabelType, InputType>::IsDone(bool is_validation) const
   }
   else
   {
-    return (test_cursor_ >= test_offset_ + n_test_samples_);
+    return (validation_cursor_ >= validation_offset_ + n_test_samples_);
   }
 }
 
@@ -182,7 +182,7 @@ void TensorDataLoader<LabelType, InputType>::Reset(bool is_validation)
 {
   if (is_validation)
   {
-    test_cursor_ = 0;
+    validation_cursor_ = 0;
   }
   else
   {
@@ -206,9 +206,9 @@ struct MapSerializer<fetch::ml::dataloaders::TensorDataLoader<LabelType, InputTy
   using DriverType = D;
 
   static uint8_t const BASE_DATA_LOADER          = 1;
-  static uint8_t const TEST_CURSOR               = 2;
+  static uint8_t const VALIDATION_CURSOR         = 2;
   static uint8_t const TRAIN_CURSOR              = 3;
-  static uint8_t const TEST_OFFSET               = 4;
+  static uint8_t const VALIDATION_OFFSET         = 4;
   static uint8_t const VALIDATION_TO_TRAIN_RATIO = 5;
   static uint8_t const N_SAMPLES                 = 6;
 
@@ -232,9 +232,9 @@ struct MapSerializer<fetch::ml::dataloaders::TensorDataLoader<LabelType, InputTy
     auto dl_pointer = static_cast<ml::dataloaders::DataLoader<LabelType, InputType> const *>(&sp);
     map.Append(BASE_DATA_LOADER, *(dl_pointer));
 
-    map.Append(TEST_CURSOR, sp.test_cursor_);
+    map.Append(VALIDATION_CURSOR, sp.validation_cursor_);
     map.Append(TRAIN_CURSOR, sp.train_cursor_);
-    map.Append(TEST_OFFSET, sp.test_offset_);
+    map.Append(VALIDATION_OFFSET, sp.validation_offset_);
     map.Append(VALIDATION_TO_TRAIN_RATIO, sp.validation_to_train_ratio_);
     map.Append(N_SAMPLES, sp.n_samples_);
 
@@ -256,9 +256,9 @@ struct MapSerializer<fetch::ml::dataloaders::TensorDataLoader<LabelType, InputTy
     auto dl_pointer = static_cast<ml::dataloaders::DataLoader<LabelType, InputType> *>(&sp);
     map.ExpectKeyGetValue(BASE_DATA_LOADER, (*dl_pointer));
 
-    map.ExpectKeyGetValue(TEST_CURSOR, sp.test_cursor_);
+    map.ExpectKeyGetValue(VALIDATION_CURSOR, sp.validation_cursor_);
     map.ExpectKeyGetValue(TRAIN_CURSOR, sp.train_cursor_);
-    map.ExpectKeyGetValue(TEST_OFFSET, sp.test_offset_);
+    map.ExpectKeyGetValue(VALIDATION_OFFSET, sp.validation_offset_);
     map.ExpectKeyGetValue(VALIDATION_TO_TRAIN_RATIO, sp.validation_to_train_ratio_);
     map.ExpectKeyGetValue(N_SAMPLES, sp.n_samples_);
 
