@@ -50,16 +50,17 @@ int main(int ac, char **av)
   estimator_config.learning_rate_param.starting_learning_rate = static_cast<DataType>(0.001);
   estimator_config.learning_rate_param.exponential_decay_rate = static_cast<DataType>(0.99);
   estimator_config.batch_size                                 = 64;  // minibatch training size
-  estimator_config.subset_size    = 1000;  // only train on the first 1000 samples
-  estimator_config.early_stopping = true;  // stop early if no improvement
+  estimator_config.subset_size    = 1000;   // only train on the first 1000 samples
+  estimator_config.early_stopping = false;  // stop early if no improvement
   estimator_config.patience       = 30;
   estimator_config.opt            = OptimiserType::ADAM;
   estimator_config.print_stats    = true;
 
   // setup dataloader
-  auto       data_loader_ptr = std::make_shared<DataLoaderType>(av[1], av[2]);
-  TensorType test_label      = (data_loader_ptr->GetNext()).first;
-  TensorType test_input      = (data_loader_ptr->GetNext()).second.at(0);
+  auto       data_loader_ptr = std::make_shared<DataLoaderType>(av[1], av[2], false, 0.2);
+  auto       test_data       = data_loader_ptr->GetNext(true);
+  TensorType test_label      = test_data.first;
+  TensorType test_input      = test_data.second.at(0);
   TensorType prediction;
   DataType   loss;
 
@@ -72,7 +73,7 @@ int main(int ac, char **av)
   std::cout << "prediction.ToString(): " << prediction.ToString() << std::endl;
 
   // training loop - early stopping will prevent long training time
-  estimator.Train(1000000, loss);
+  estimator.Train(10, loss);
 
   // run estimator in testing mode
   estimator.Predict(test_input, prediction);

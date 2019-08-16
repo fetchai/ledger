@@ -139,7 +139,7 @@ bool TensorDataLoader<LabelType, InputType>::AddData(TensorType const &data,
   n_test_samples_  = static_cast<SizeType>(test_to_train_ratio_ * static_cast<float>(n_samples_));
   n_train_samples_ = n_samples_ - n_test_samples_;
 
-  test_offset_ = n_test_samples_;
+  test_offset_ = n_train_samples_;
 
   return true;
 }
@@ -204,33 +204,37 @@ struct MapSerializer<fetch::ml::dataloaders::TensorDataLoader<LabelType, InputTy
   using Type       = fetch::ml::dataloaders::TensorDataLoader<LabelType, InputType>;
   using DriverType = D;
 
-  static uint8_t const BASE_DATA_LOADER = 1;
-  static uint8_t const DATA_CURSOR      = 2;
-  static uint8_t const LABEL_CURSOR     = 3;
-  static uint8_t const N_SAMPLES        = 4;
+  static uint8_t const BASE_DATA_LOADER    = 1;
+  static uint8_t const TEST_CURSOR         = 2;
+  static uint8_t const TRAIN_CURSOR        = 3;
+  static uint8_t const TEST_OFFSET         = 4;
+  static uint8_t const TEST_TO_TRAIN_RATIO = 5;
+  static uint8_t const N_SAMPLES           = 6;
 
-  static uint8_t const DATA   = 5;
-  static uint8_t const LABELS = 6;
+  static uint8_t const DATA   = 7;
+  static uint8_t const LABELS = 8;
 
-  static uint8_t const LABEL_SHAPE            = 7;
-  static uint8_t const ONE_SAMPLE_LABEL_SHAPE = 8;
-  static uint8_t const DATA_SHAPES            = 9;
-  static uint8_t const ONE_SAMPLE_DATA_SHAPES = 10;
+  static uint8_t const LABEL_SHAPE            = 9;
+  static uint8_t const ONE_SAMPLE_LABEL_SHAPE = 10;
+  static uint8_t const DATA_SHAPES            = 11;
+  static uint8_t const ONE_SAMPLE_DATA_SHAPES = 12;
 
-  static uint8_t const BATCH_LABEL_DIM = 11;
-  static uint8_t const BATCH_DATA_DIM  = 12;
+  static uint8_t const BATCH_LABEL_DIM = 13;
+  static uint8_t const BATCH_DATA_DIM  = 14;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(12);
+    auto map = map_constructor(14);
 
-    // serialize parent class first
+    // serialize parent class firstgit st
     auto dl_pointer = static_cast<ml::dataloaders::DataLoader<LabelType, InputType> const *>(&sp);
     map.Append(BASE_DATA_LOADER, *(dl_pointer));
 
-    map.Append(DATA_CURSOR, sp.data_cursor_);
-    map.Append(LABEL_CURSOR, sp.label_cursor_);
+    map.Append(TEST_CURSOR, sp.test_cursor_);
+    map.Append(TRAIN_CURSOR, sp.train_cursor_);
+    map.Append(TEST_OFFSET, sp.test_offset_);
+    map.Append(TEST_TO_TRAIN_RATIO, sp.test_to_train_ratio_);
     map.Append(N_SAMPLES, sp.n_samples_);
 
     map.Append(DATA, sp.data_);
@@ -251,8 +255,10 @@ struct MapSerializer<fetch::ml::dataloaders::TensorDataLoader<LabelType, InputTy
     auto dl_pointer = static_cast<ml::dataloaders::DataLoader<LabelType, InputType> *>(&sp);
     map.ExpectKeyGetValue(BASE_DATA_LOADER, (*dl_pointer));
 
-    map.ExpectKeyGetValue(DATA_CURSOR, sp.data_cursor_);
-    map.ExpectKeyGetValue(LABEL_CURSOR, sp.label_cursor_);
+    map.ExpectKeyGetValue(TEST_CURSOR, sp.test_cursor_);
+    map.ExpectKeyGetValue(TRAIN_CURSOR, sp.train_cursor_);
+    map.ExpectKeyGetValue(TEST_OFFSET, sp.test_offset_);
+    map.ExpectKeyGetValue(TEST_TO_TRAIN_RATIO, sp.test_to_train_ratio_);
     map.ExpectKeyGetValue(N_SAMPLES, sp.n_samples_);
 
     map.ExpectKeyGetValue(DATA, sp.data_);
