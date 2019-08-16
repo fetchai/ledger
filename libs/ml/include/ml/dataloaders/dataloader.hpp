@@ -29,17 +29,17 @@ namespace fetch {
 namespace ml {
 namespace dataloaders {
 
-template <typename LabelType, typename DataType>
+template <typename LabelType, typename InputType>
 class DataLoader
 {
 public:
   using SizeType   = fetch::math::SizeType;
   using SizeVector = fetch::math::SizeVector;
-  using ReturnType = std::pair<LabelType, std::vector<DataType>>;
+  using ReturnType = std::pair<LabelType, std::vector<InputType>>;
 
   DataLoader() = default;
   /**
-   * Dataloaders are required to provide label and DataType shapes to the parent Dataloader
+   * Dataloaders are required to provide label and InputType shapes to the parent Dataloader
    * @param random_mode
    * @param label_shape
    * @param data_shapes
@@ -52,6 +52,7 @@ public:
 
   virtual ReturnType GetNext() = 0;
 
+  virtual bool       AddData(InputType const &data, LabelType const &label) = 0;
   virtual ReturnType PrepareBatch(fetch::math::SizeType subset_size, bool &is_done_set);
 
   virtual std::uint64_t Size() const   = 0;
@@ -69,18 +70,18 @@ private:
   ReturnType cur_training_pair_;
   ReturnType ret_pair_;
 
-  void SetDataSize(std::pair<LabelType, std::vector<DataType>> &ret_pair);
+  void SetDataSize(std::pair<LabelType, std::vector<InputType>> &ret_pair);
 };
 
 /**
  * This method sets the shapes of the data and labels, as well as the return pair.
  * @tparam LabelType
- * @tparam DataType
+ * @tparam InputType
  * @param ret_pair
  */
-template <typename LabelType, typename DataType>
-void DataLoader<LabelType, DataType>::SetDataSize(
-    std::pair<LabelType, std::vector<DataType>> &ret_pair)
+template <typename LabelType, typename InputType>
+void DataLoader<LabelType, InputType>::SetDataSize(
+    std::pair<LabelType, std::vector<InputType>> &ret_pair)
 {
   ret_pair_.first = ret_pair.first.Copy();
 
@@ -96,13 +97,13 @@ void DataLoader<LabelType, DataType>::SetDataSize(
  * Size of each tensor is [data,subset_size], where data can have any dimensions and trailing
  * dimension is subset_size
  * @tparam LabelType
- * @tparam DataType
+ * @tparam InputType
  * @param batch_size i.e. batch size of returned Tensors
  * @return pair of label tensor and vector of data tensors with specified batch size
  */
-template <typename LabelType, typename DataType>
-typename DataLoader<LabelType, DataType>::ReturnType DataLoader<LabelType, DataType>::PrepareBatch(
-    fetch::math::SizeType batch_size, bool &is_done_set)
+template <typename LabelType, typename InputType>
+typename DataLoader<LabelType, InputType>::ReturnType
+DataLoader<LabelType, InputType>::PrepareBatch(fetch::math::SizeType batch_size, bool &is_done_set)
 {
   if (size_not_set_)
   {

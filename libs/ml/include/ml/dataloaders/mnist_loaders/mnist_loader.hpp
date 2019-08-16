@@ -31,13 +31,13 @@ namespace fetch {
 namespace ml {
 namespace dataloaders {
 
-template <typename LabelType, typename T>
-class MNISTLoader : public DataLoader<LabelType, T>
+template <typename LabelType, typename InputType>
+class MNISTLoader : public DataLoader<LabelType, InputType>
 {
 public:
-  using SizeType   = typename T::SizeType;
-  using DataType   = typename T::Type;
-  using ReturnType = std::pair<LabelType, std::vector<T>>;
+  using SizeType   = typename InputType::SizeType;
+  using DataType   = typename InputType::Type;
+  using ReturnType = std::pair<LabelType, std::vector<InputType>>;
 
 private:
   std::uint32_t                  cursor_;
@@ -48,38 +48,43 @@ private:
   static constexpr std::uint32_t LABEL_SIZE    = 10;
 
 public:
-  MNISTLoader(std::string const &images_file, std::string const &labelsFile,
-              bool random_mode = false)
-    : DataLoader<LabelType, T>(random_mode)
+  MNISTLoader(bool random_mode = false)
+    : DataLoader<LabelType, InputType>(random_mode)
     , cursor_(0)
   {
-    std::uint32_t record_length(0);
-    data_   = read_mnist_images(images_file, size_, record_length);
-    labels_ = read_mnist_labels(labelsFile, size_);
-    assert(record_length == FIGURE_SIZE);
-
     // Prepare return buffer
-    buffer_.second.push_back(T({FIGURE_WIDTH, FIGURE_HEIGHT, 1u}));
+    buffer_.second.push_back(InputType({FIGURE_WIDTH, FIGURE_HEIGHT, 1u}));
     buffer_.first = LabelType({LABEL_SIZE, 1u});
   }
 
-  virtual SizeType Size() const override
+  MNISTLoader(std::string const &images_file, std::string const &labels_file,
+              bool random_mode = false)
+    : DataLoader<LabelType, InputType>(random_mode)
+    , cursor_(0)
+  {
+    SetupWithDataFiles(images_file, labels_file);
+    // Prepare return buffer
+    buffer_.second.push_back(InputType({FIGURE_WIDTH, FIGURE_HEIGHT, 1u}));
+    buffer_.first = LabelType({LABEL_SIZE, 1u});
+  }
+
+  SizeType Size() const override
   {
     // MNIST files store the size as uint32_t but Dataloader interface require uint64_t
     return static_cast<SizeType>(size_);
   }
 
-  virtual bool IsDone() const override
+  bool IsDone() const override
   {
     return cursor_ >= size_;
   }
 
-  virtual void Reset() override
+  void Reset() override
   {
     cursor_ = 0;
   }
 
-  virtual ReturnType GetNext() override
+  ReturnType GetNext() override
   {
     if (this->random_mode_)
     {
@@ -93,14 +98,31 @@ public:
     }
   }
 
-  void Display(T const &data) const
+  /**
+   * directly sets the data and labels variables
+   * This function must be implemented to override from Dataloader, but we
+   * may prefer to use SetupWithDataFiles helper function
+   * @param data
+   * @param label
+   * @return
+   */
+  bool AddData(InputType const &data, LabelType const &label) override
+  {
+    FETCH_UNUSED(data);
+    FETCH_UNUSED(label);
+    throw std::runtime_error(
+        "AddData not implemented for MNist example - please use Constructor or SetupWithDataFiles "
+        "methods");
+  }
+
+  void Display(InputType const &data) const
   {
     for (SizeType i{0}; i < FIGURE_WIDTH; ++i)
     {
       for (SizeType j{0}; j < FIGURE_HEIGHT; ++j)
       {
 
-        std::cout << (data.At(j, i, 0) > typename T::Type(0.5) ? char(219) : ' ');
+        std::cout << (data.At(j, i, 0) > typename InputType::Type(0.5) ? char(219) : ' ');
       }
       std::cout << "\n";
     }
@@ -109,10 +131,10 @@ public:
 
   ReturnType PrepareBatch(SizeType subset_size, bool &is_done_set) override
   {
-    T ret_labels({LABEL_SIZE, subset_size});
+    InputType ret_labels({LABEL_SIZE, subset_size});
 
-    std::vector<T> ret_images;
-    ret_images.push_back(T({FIGURE_WIDTH, FIGURE_HEIGHT, subset_size}));
+    std::vector<InputType> ret_images;
+    ret_images.push_back(InputType({FIGURE_WIDTH, FIGURE_HEIGHT, subset_size}));
 
     for (fetch::math::SizeType index{0}; index < subset_size; ++index)
     {
@@ -138,28 +160,16 @@ public:
     return std::make_pair(ret_labels, ret_images);
   }
 
-private:
-  using uchar = unsigned char;
-
-  void GetAtIndex(SizeType index, ReturnType &ret)
+  void SetupWithDataFiles(std::string const &images_file, std::string const &labels_file)
   {
-    SizeType i{0};
-    auto     it = buffer_.second.at(0).begin();
-    while (it.is_valid())
-    {
-      *it = static_cast<DataType>(data_[index][i]) / DataType{256};
-      i++;
-      ++it;
-    }
-
-    buffer_.first.Fill(DataType{0});
-    buffer_.first(labels_[index], 0) = static_cast<DataType>(1.0);
-
-    ret = buffer_;
+    std::uint32_t record_length(0);
+    data_   = ReadMnistImages(images_file, size_, record_length);
+    labels_ = read_mnist_labels(labels_file, size_);
+    assert(record_length == FIGURE_SIZE);
   }
 
-  uchar **read_mnist_images(std::string full_path, std::uint32_t &number_of_images,
-                            unsigned int &image_size)
+  static unsigned char **ReadMnistImages(std::string full_path, std::uint32_t &number_of_images,
+                                         unsigned int &image_size)
   {
     auto reverseInt = [](std::uint32_t i) -> std::uint32_t {
       unsigned char c1, c2, c3, c4;
@@ -205,7 +215,7 @@ private:
     }
   }
 
-  uchar *read_mnist_labels(std::string full_path, std::uint32_t &number_of_labels)
+  static unsigned char *read_mnist_labels(std::string full_path, std::uint32_t &number_of_labels)
   {
     auto reverseInt = [](std::uint32_t i) {
       unsigned char c1, c2, c3, c4;
@@ -243,6 +253,26 @@ private:
     {
       throw std::runtime_error("Unable to open file `" + full_path + "`!");
     }
+  }
+
+private:
+  using uchar = unsigned char;
+
+  void GetAtIndex(SizeType index, ReturnType &ret)
+  {
+    SizeType i{0};
+    auto     it = buffer_.second.at(0).begin();
+    while (it.is_valid())
+    {
+      *it = static_cast<DataType>(data_[index][i]) / DataType{256};
+      i++;
+      ++it;
+    }
+
+    buffer_.first.Fill(DataType{0});
+    buffer_.first(labels_[index], 0) = static_cast<DataType>(1.0);
+
+    ret = buffer_;
   }
 
 private:

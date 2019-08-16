@@ -46,8 +46,9 @@ public:
 
   ~TensorDataLoader() override = default;
 
-  ReturnType   GetNext() override;
-  virtual bool AddData(TensorType const &data, TensorType const &labels);
+  ReturnType GetNext() override;
+
+  bool AddData(InputType const &data, LabelType const &label) override;
 
   SizeType Size() const override;
   bool     IsDone() const override;
@@ -110,8 +111,7 @@ TensorDataLoader<LabelType, InputType>::GetNext()
 }
 
 template <typename LabelType, typename InputType>
-bool TensorDataLoader<LabelType, InputType>::AddData(TensorType const &data,
-                                                     TensorType const &labels)
+bool TensorDataLoader<LabelType, InputType>::AddData(InputType const &data, LabelType const &labels)
 {
 
   data_         = data.Copy();
