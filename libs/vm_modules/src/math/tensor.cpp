@@ -61,7 +61,7 @@ void VMTensor::Bind(Module &module)
   module.CreateClassType<VMTensor>("Tensor")
       .CreateConstructor(&VMTensor::Constructor)
       .CreateSerializeDefaultConstructor(
-          [](VM *vm, TypeId type_id) { return new VMTensor(vm, type_id); })
+          [](VM *vm, TypeId type_id) -> Ptr<VMTensor> { return new VMTensor(vm, type_id); })
       .CreateMemberFunction("at", &VMTensor::AtOne)
       .CreateMemberFunction("at", &VMTensor::AtTwo)
       .CreateMemberFunction("at", &VMTensor::AtThree)

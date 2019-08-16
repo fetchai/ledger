@@ -40,10 +40,12 @@ struct IsResult<void>
 template <typename T>
 struct StackGetter
 {
-  static T Get(VM *vm, int sp_offset)
+  using DecayedT = std::decay_t<T>;
+
+  static DecayedT Get(VM *vm, int sp_offset)
   {
     Variant &v = vm->stack_[vm->sp_ - sp_offset];
-    return v.Move<T>();
+    return v.Move<DecayedT>();
   }
 };
 

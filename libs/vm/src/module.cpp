@@ -232,7 +232,8 @@ Module::Module()
       .CreateInstantiationType<Array<Ptr<Address>>>();
 
   GetClassInterface<String>()
-      .CreateSerializeDefaultConstructor([](VM *vm, TypeId) { return new String(vm, ""); })
+      .CreateSerializeDefaultConstructor(
+          [](VM *vm, TypeId) -> Ptr<String> { return new String(vm, ""); })
       .CreateMemberFunction("find", &String::Find)
       .CreateMemberFunction("length", &String::Length)
       .CreateMemberFunction("reverse", &String::Reverse)

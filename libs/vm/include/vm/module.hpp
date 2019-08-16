@@ -114,19 +114,19 @@ public:
     }
 
     template <typename ReturnType, typename... Args>
-    ClassInterface &CreateStaticMemberFunction(std::string const &function_name,
+    ClassInterface &CreateStaticMemberFunction(std::string const &name,
                                                ReturnType (*f)(VM *, TypeId, Args...),
                                                ChargeAmount static_charge = 1)
     {
-      return InternalCreateStaticMemberFunction(function_name, f, static_charge, {});
+      return InternalCreateStaticMemberFunction(name, f, static_charge, {});
     }
 
     template <typename Estimator, typename ReturnType, typename... Args>
-    ClassInterface &CreateStaticMemberFunction(std::string const &function_name,
+    ClassInterface &CreateStaticMemberFunction(std::string const &name,
                                                ReturnType (*f)(VM *, TypeId, Args...),
                                                Estimator const &estimator)
     {
-      return InternalCreateStaticMemberFunction(function_name, f, 0, {estimator});
+      return InternalCreateStaticMemberFunction(name, f, 0, {estimator});
     }
 
     template <typename ReturnType, typename... Args>
@@ -240,7 +240,7 @@ public:
     }
 
     template <typename ReturnType, typename... Args>
-    ClassInterface &InternalCreateStaticMemberFunction(std::string const &function_name,
+    ClassInterface &InternalCreateStaticMemberFunction(std::string const &name,
                                                        ReturnType (*f)(VM *, TypeId, Args...),
                                                        ChargeAmount static_charge,
                                                        ChargeEstimator<Args...> const &estimator)
@@ -255,12 +255,11 @@ public:
                                    estimator);
       };
 
-      auto compiler_setup_function = [type_index__, function_name, parameter_type_index_array,
+      auto compiler_setup_function = [type_index__, name, parameter_type_index_array,
                                       return_type_index, handler,
                                       static_charge](Compiler *compiler) {
-        compiler->CreateStaticMemberFunction(type_index__, function_name,
-                                             parameter_type_index_array, return_type_index, handler,
-                                             static_charge);
+        compiler->CreateStaticMemberFunction(type_index__, name, parameter_type_index_array,
+                                             return_type_index, handler, static_charge);
       };
       module_->AddCompilerSetupFunction(compiler_setup_function);
 
@@ -318,8 +317,7 @@ public:
     }
 
     template <typename ReturnType, typename MemberFunction, typename... Args>
-    ClassInterface &InternalCreateMemberFunction(std::string const &             function_name,
-                                                 MemberFunction const &          f,
+    ClassInterface &InternalCreateMemberFunction(std::string const &name, MemberFunction const &f,
                                                  ChargeAmount                    static_charge,
                                                  ChargeEstimator<Args...> const &estimator)
     {
@@ -332,10 +330,10 @@ public:
         InvokeMemberFunction(vm, vm->instruction_->type_id, f, estimator);
       };
 
-      auto compiler_setup_function = [type_index__, function_name, parameter_type_index_array,
+      auto compiler_setup_function = [type_index__, name, parameter_type_index_array,
                                       return_type_index, handler,
                                       static_charge](Compiler *compiler) {
-        compiler->CreateMemberFunction(type_index__, function_name, parameter_type_index_array,
+        compiler->CreateMemberFunction(type_index__, name, parameter_type_index_array,
                                        return_type_index, handler, static_charge);
       };
       module_->AddCompilerSetupFunction(compiler_setup_function);
