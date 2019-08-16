@@ -228,7 +228,7 @@ struct MapSerializer<fetch::ml::dataloaders::TensorDataLoader<LabelType, InputTy
   {
     auto map = map_constructor(14);
 
-    // serialize parent class firstgit st
+    // serialize parent class first
     auto dl_pointer = static_cast<ml::dataloaders::DataLoader<LabelType, InputType> const *>(&sp);
     map.Append(BASE_DATA_LOADER, *(dl_pointer));
 

@@ -163,7 +163,11 @@ BasicTextLoader<T>::BasicTextLoader(TextParams<T> const &p, bool random_mode, Si
 template <typename T>
 std::pair<T, std::vector<T>> BasicTextLoader<T>::GetNext(bool is_validation)
 {
-  (void)is_validation;
+  if (is_validation)
+  {
+    throw std::runtime_error("Validation set splitting not implemented yet");
+  }
+
   if (this->random_mode_)
   {
     GetNextValidIndices();
@@ -193,7 +197,11 @@ std::pair<T, std::vector<T>> BasicTextLoader<T>::GetNext(bool is_validation)
 template <typename T>
 typename BasicTextLoader<T>::SizeType BasicTextLoader<T>::Size(bool is_validation) const
 {
-  (void)is_validation;
+  if (is_validation)
+  {
+    throw std::runtime_error("Validation set splitting not implemented yet");
+  }
+
   SizeType size(0);
   // for each sentence
   for (auto const &s : this->data_)
@@ -223,7 +231,11 @@ typename BasicTextLoader<T>::SizeType BasicTextLoader<T>::Size(bool is_validatio
 template <typename T>
 bool BasicTextLoader<T>::IsDone(bool is_validation) const
 {
-  (void)is_validation;
+  if (is_validation)
+  {
+    throw std::runtime_error("Validation set splitting not implemented yet");
+  }
+
   // check if no more valid positions until cursor reaches end
   if (p_.full_window)
   {
@@ -242,7 +254,11 @@ bool BasicTextLoader<T>::IsDone(bool is_validation) const
 template <typename T>
 void BasicTextLoader<T>::Reset(bool is_validation)
 {
-  (void)is_validation;
+  if (is_validation)
+  {
+    throw std::runtime_error("Validation set splitting not implemented yet");
+  }
+
   cursor_ = 0;
 
   // generate a new random sequence for random sampling
