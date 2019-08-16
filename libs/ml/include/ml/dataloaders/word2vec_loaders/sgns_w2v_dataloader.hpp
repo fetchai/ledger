@@ -36,7 +36,7 @@ class GraphW2VLoader : public DataLoader<fetch::math::Tensor<T>, fetch::math::Te
 public:
   const T BufferPositionUnused = static_cast<T>(fetch::math::numeric_max<SizeType>());
 
-  using InputType  = fetch::math::Tensor<T>;
+  using InputType = fetch::math::Tensor<T>;
   using LabelType = fetch::math::Tensor<T>;
 
   using SizeType   = fetch::math::SizeType;
@@ -51,7 +51,7 @@ public:
   void       RemoveInfrequent(SizeType min);
   void       InitUnigramTable(SizeType size = 1e8);
   ReturnType GetNext() override;
-  bool       AddData(InputType const & input, LabelType const & label) override;
+  bool       AddData(InputType const &input, LabelType const &label) override;
 
   void BuildVocab(std::vector<std::string> const &sents, SizeType min_count = 0);
   void SaveVocab(std::string const &filename);
@@ -84,7 +84,7 @@ private:
   SizeType                                  reset_count_ = 0;
 
   // temporary sample and labels for buffering samples
-  InputType                      input_words_, output_words_, labels_;
+  InputType                     input_words_, output_words_, labels_;
   fetch::math::Tensor<SizeType> output_words_buffer_;
   SizeType                      buffer_pos_ = 0;
   ReturnType                    cur_sample_;
@@ -122,7 +122,7 @@ GraphW2VLoader<T>::GraphW2VLoader(SizeType window_size, SizeType negative_sample
   output_words_buffer_ =
       fetch::math::Tensor<SizeType>({negative_samples * window_size_ * 2 + window_size_ * 2});
   labels_ = InputType({negative_samples * window_size_ * 2 + window_size_ * 2 +
-                      1});  // the extra 1 is for testing if label has ran out
+                       1});  // the extra 1 is for testing if label has ran out
   labels_.Fill(BufferPositionUnused);
   cur_sample_.first  = InputType({1, 1});
   cur_sample_.second = {InputType({1, 1}), InputType({1, 1})};
@@ -460,7 +460,7 @@ typename GraphW2VLoader<T>::ReturnType GraphW2VLoader<T>::GetNext()
 }
 
 template <typename T>
-bool GraphW2VLoader<T>::AddData(InputType const & input, LabelType const & label)
+bool GraphW2VLoader<T>::AddData(InputType const &input, LabelType const &label)
 {
   FETCH_UNUSED(input);
   FETCH_UNUSED(label);

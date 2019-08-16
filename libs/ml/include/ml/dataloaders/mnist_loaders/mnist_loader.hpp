@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/macros.hpp"
 #include "math/base_types.hpp"
 #include "math/meta/math_type_traits.hpp"
 #include "ml/dataloaders/dataloader.hpp"
