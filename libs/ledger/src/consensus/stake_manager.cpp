@@ -71,14 +71,11 @@ bool StakeManager::ShouldGenerateBlock(Block const &previous, Address const &add
 
   auto const committee = GetCommittee(previous);
 
-  FETCH_LOG_INFO(LOGGING_NAME, "AAA");
-
   if (!committee || committee->empty())
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Unable to determine committee for block generation");
     return false;
   }
-  FETCH_LOG_INFO(LOGGING_NAME, "BBB");
 
   // At this point the miner will decide if they should produce a block. The first miner in the
   // committee will wait until block_interval after the block at the HEAD of the chain, the second
@@ -88,10 +85,9 @@ bool StakeManager::ShouldGenerateBlock(Block const &previous, Address const &add
 
   for (std::size_t i = 0; i < (*committee).size(); ++i)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Saw committee member: ", (*committee)[i].address().ToBase64(),
-                   "we are: ", address.address().ToBase64());
+    FETCH_LOG_INFO(LOGGING_NAME, "Saw committee member: ", Address((*committee)[i]).address().ToBase64(), "we are: ", address.address().ToBase64());
 
-    if ((*committee)[i] == address)
+    if (Address((*committee)[i]) == address)
     {
       in_committee = true;
       break;
@@ -120,8 +116,6 @@ StakeManager::CommitteePtr StakeManager::GetCommittee(Block const &previous)
   {
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "looking up entropy");
-
   // generate the entropy for the previous block
   uint64_t entropy{0};
   if (!LookupEntropy(previous, entropy))
@@ -130,8 +124,6 @@ StakeManager::CommitteePtr StakeManager::GetCommittee(Block const &previous)
                    " (entropy not ready)");
     return {};
   }
-
-  FETCH_LOG_INFO(LOGGING_NAME, "looked up entropy");
 
   // lookup the snapshot associated
   auto snapshot = LookupStakeSnapshot(previous.body.block_number);
@@ -160,7 +152,7 @@ std::size_t StakeManager::GetBlockGenerationWeight(Block const &previous, Addres
   // TODO(EJF): Depending on the committee sizes this would need to be improved
   for (auto const &member : *committee)
   {
-    if (address == member)
+    if (address == Address(member))
     {
       break;
     }
@@ -229,32 +221,21 @@ bool StakeManager::LookupEntropy(Block const &previous, uint64_t &entropy)
   // Step 1. Lookup the entropy
   auto const it = entropy_cache_.find(previous.body.block_number);
 
-  FETCH_LOG_INFO(LOGGING_NAME, "got here");
-
   if (entropy_cache_.end() != it)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "got here2");
     entropy = it->second;
     success = true;
   }
   else
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "got here3");
-
     if(!entropy_)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Entropy not set!");
-    }
-    else
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "is here :)");
     }
 
     // generate the entropy for the previous block
     auto const status =
         entropy_->GenerateEntropy(previous.body.hash, previous.body.block_number, entropy);
-
-    FETCH_LOG_INFO(LOGGING_NAME, "got here4");
 
     if (EntropyGeneratorInterface::Status::OK == status)
     {
@@ -285,7 +266,7 @@ bool StakeManager::LookupEntropy(Block const &previous, uint64_t &entropy)
   return success;
 }
 
-bool StakeManager::ValidMinerForBlock(Block const &previous, Address const &address)
+bool StakeManager::ValidMinerForBlock(Block const &previous, Address const &/*address*/)
 {
   auto const committee = GetCommittee(previous);
 
@@ -295,7 +276,7 @@ bool StakeManager::ValidMinerForBlock(Block const &previous, Address const &addr
     return false;
   }
 
-  return std::find((*committee).begin(), (*committee).end(), address) != (*committee).end();
+  return /*std::find((*committee).begin(), (*committee).end(), address) != (*committee).end()*/ true; // TODO(HUT): fix.
 }
 
 }  // namespace ledger

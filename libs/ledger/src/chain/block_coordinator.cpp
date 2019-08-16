@@ -1087,6 +1087,8 @@ BlockCoordinator::State BlockCoordinator::OnReset()
   {
     Block const *block = nullptr;
 
+    // TODO(HUT): use anonymous lambda here
+
     if (next_block_)
     {
       block = &(*next_block_);
@@ -1110,39 +1112,27 @@ BlockCoordinator::State BlockCoordinator::OnReset()
 
       auto const block_number = block->body.block_number;
 
-
-
       FETCH_LOG_INFO(LOGGING_NAME, "Updated stake (?)");
 
       if((block_number % aeon_period_) == 0)
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "AEON happen: ", block_number);
-        FETCH_LOG_INFO(LOGGING_NAME, "block: ", block);
-
+        // TODO(HUT): build and test subset of committee
         std::unordered_set<fetch::crypto::Identity> cabinet_member_list;
+        auto snapshot = (*stake_).GetCurrentStakeSnapshot();
+        auto const current_stakers = snapshot->BuildCommittee(0, /*std::numeric_limits<std::size_t>::max()*/ 99999);
 
-        auto &stake_ref = *stake_;
-
-        stake_ref.GetCurrentStakeSnapshot()->IterateOver([&cabinet_member_list, &stake_ref](Address const &address, uint64_t /*stake*/) {
-          FETCH_LOG_INFO(LOGGING_NAME, "Adding staker: ", address.address().ToBase64());
-
-          auto &lookup_address_to_identity = stake_ref.GetLookup();
-
-          cabinet_member_list.insert(lookup_address_to_identity.at(address));
-        });
-
-        // Finally update stake
-        if(block_number != 0) // TODO(HUT): chat to ed
+        // TODO(HUT): switch to vector for stake manager stuff
+        for(auto const &staker : *current_stakers)
         {
-          stake_->UpdateCurrentBlock(*block);
+          FETCH_LOG_INFO(LOGGING_NAME, "Adding staker: ", staker.identifier().ToBase64());
+          cabinet_member_list.insert(staker);
         }
-
-        FETCH_LOG_INFO(LOGGING_NAME, "C");
 
         uint32_t threshold = uint32_t((cabinet_member_list.size() / 2)+1);
 
         FETCH_LOG_INFO(LOGGING_NAME, "Block: ", block_number, " creating new aeon. Periodicity: ", aeon_period_, " threshold: ", threshold, " cabinet size: ", cabinet_member_list.size());
 
+        // Disallow multiple invocations
         static bool did_genesis_already = false;
 
         if(block_number != 0 || !did_genesis_already)
@@ -1150,12 +1140,14 @@ BlockCoordinator::State BlockCoordinator::OnReset()
           beacon_->StartNewCabinet(cabinet_member_list, threshold, block_number, block_number+aeon_period_);
           did_genesis_already = true;
         }
+
+        // Finally update stake
+        if(block_number != 0) // TODO(HUT): chat to ed (?)
+        {
+          stake_->UpdateCurrentBlock(*block);
+        }
       }
     }
-  }
-  else
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "NOT ACTIVEK\n, ", stake_, " arasdf: ", beacon_);
   }
 
   current_block_.reset();

@@ -40,7 +40,6 @@ public:
   GenesisFileCreator(GenesisFileCreator &&)      = delete;
   ~GenesisFileCreator()                          = default;
 
-  void CreateFile(std::string const &name);
   void LoadFile(std::string const &name);
 
   // Operators
@@ -48,11 +47,8 @@ public:
   GenesisFileCreator &operator=(GenesisFileCreator &&) = delete;
 
 private:
-  void DumpState(variant::Variant &object);
-  void DumpStake(variant::Variant &object);
   void LoadState(variant::Variant const &object);
   void LoadStake(variant::Variant const &object);
-  void LoadStake2(variant::Variant const &object);
 
   BlockCoordinator &    block_coordinator_;
   StorageUnitInterface &storage_unit_;

@@ -26,62 +26,66 @@
 namespace fetch {
 namespace ledger {
 
-using AddressSet = std::unordered_set<Address>;
-using DRNG       = random::LinearCongruentialGenerator;
+using Identity    = crypto::Identity;
+using IdentitySet = std::unordered_set<Identity>;
+using DRNG        = random::LinearCongruentialGenerator;
 
 /**
- * Given the source of entropy, generate a selection of stakes addresses based on proportional
+ * Given the source of entropy, generate a selection of stakes identities based on proportional
  * probability against stakes.
  *
  * @param entropy The seed source of entropy
  * @param count The size of the selection
- * @return The selection of addresses
+ * @return The selection of identities
  */
-StakeSnapshot::CommitteePtr StakeSnapshot::BuildCommittee(uint64_t entropy, std::size_t count)
+StakeSnapshot::CommitteePtr StakeSnapshot::BuildCommittee(uint64_t entropy, std::size_t count) const
 {
+  FETCH_LOG_INFO(LOGGING_NAME, "Building committee from pool of: ", stake_index_.size());
+
   CommitteePtr committee = std::make_shared<Committee>();
   committee->reserve(count);
+  auto stake_index = stake_index_; // Since build committee is const
 
-  if (count >= address_index_.size())
+  if (count >= identity_index_.size())
   {
-    for (auto const &record : stake_index_)
+    for (auto const &record : stake_index)
     {
-      committee->emplace_back(record->address);
+      committee->emplace_back(record->identity);
     }
   }
   else
   {
-    AddressSet chosen_addresses;
-    DRNG       rng(entropy);
+    IdentitySet chosen_identities;
+    DRNG        rng(entropy);
 
     // ensure the stake list is reset to a deterministic state
-    std::sort(stake_index_.begin(), stake_index_.end(), [](RecordPtr const &a, RecordPtr const &b) {
-      return a->address.address() < b->address.address();
+    std::sort(stake_index.begin(), stake_index.end(), [](RecordPtr const &a, RecordPtr const &b) {
+      return a->identity < b->identity;
     });
 
     for (std::size_t i = 0; i < count; ++i)
     {
       // shuffle the array
-      std::shuffle(stake_index_.begin(), stake_index_.end(), rng);
+      std::shuffle(stake_index.begin(), stake_index.end(), rng);
 
       // make the selection
       uint64_t selection = rng() % total_stake_;
 
       std::size_t index{0};
-      for (auto const &record : stake_index_)
+      for (auto const &record : stake_index)
       {
         if (record->stake >= selection)
         {
           // TODO(issue 1247): This ensures in the case of a collision, the next item in the list is
           //                   picked. However, there is an edge case here when this selection is at
-          //                   the  end of the stake_index_ array. In this case the output will
+          //                   the  end of the stake_index array. In this case the output will
           //                   contain fewer items.
           selection = 0;
 
-          if (chosen_addresses.find(record->address) == chosen_addresses.end())
+          if (chosen_identities.find(record->identity) == chosen_identities.end())
           {
-            committee->emplace_back(record->address);
-            chosen_addresses.emplace(record->address);
+            committee->emplace_back(record->identity);
+            chosen_identities.emplace(record->identity);
 
             // exit from the search loop
             break;
@@ -101,17 +105,17 @@ StakeSnapshot::CommitteePtr StakeSnapshot::BuildCommittee(uint64_t entropy, std:
 }
 
 /**
- * Lookup stake for a given address
+ * Lookup stake for a given identity
  *
- * @param address The address to be queried
+ * @param identity The identity to be queried
  * @return The stake amount
  */
-uint64_t StakeSnapshot::LookupStake(Address const &address) const
+uint64_t StakeSnapshot::LookupStake(Identity const &identity) const
 {
   uint64_t stake{0};
 
-  auto const it = address_index_.find(address);
-  if (it != address_index_.end())
+  auto const it = identity_index_.find(identity);
+  if (it != identity_index_.end())
   {
     stake = it->second->stake;
   }
@@ -120,23 +124,23 @@ uint64_t StakeSnapshot::LookupStake(Address const &address) const
 }
 
 /**
- * Update the stake for a specified address
+ * Update the stake for a specified identity
  *
- * To delete someones stake simply set the stake to zero
+ * To delete someone's stake simply set the stake to zero
  *
- * @param address The address to be updates
+ * @param identity The identity to be updates
  * @param stake The new absolute value of stake
  */
-void StakeSnapshot::UpdateStake(Address const &address, uint64_t stake)
+void StakeSnapshot::UpdateStake(Identity const &identity, uint64_t stake)
 {
-  auto it = address_index_.find(address);
-  if (it == address_index_.end())
+  auto it = identity_index_.find(identity);
+  if (it == identity_index_.end())
   {
     // new stake
-    auto record = std::make_shared<Record>(Record{address, stake});
+    auto record = std::make_shared<Record>(Record{identity, stake});
 
     // update all the indexes
-    address_index_[address] = record;
+    identity_index_[identity] = record;
     stake_index_.emplace_back(std::move(record));
     total_stake_ += stake;
   }
@@ -156,13 +160,13 @@ void StakeSnapshot::UpdateStake(Address const &address, uint64_t stake)
       // update the total stake
       total_stake_ -= it->second->stake;
 
-      // remove the from address index
-      address_index_.erase(it);
+      // remove the from identity index
+      identity_index_.erase(it);
 
       // remove from the stake index
       auto const last = std::remove_if(
           stake_index_.begin(), stake_index_.end(),
-          [&address](RecordPtr const &record) { return address == record->address; });
+          [&identity](RecordPtr const &record) { return identity == record->identity; });
       stake_index_.erase(last, stake_index_.end());
     }
     else

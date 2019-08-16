@@ -394,7 +394,7 @@ bool Executor::ExecuteTransactionContract(Result &result)
           FETCH_LOG_INFO(LOGGING_NAME, "Applying stake update from: ", update.from,
                          " for: ", update.address.display(), " amount: ", update.amount);
 
-          stake_updates_->AddStakeUpdate(update.from, update.address, update.amount);
+          /* stake_updates_->AddStakeUpdate(update.from, update.address, update.amount); */ //TODO(HUT): fix
         }
       }
 

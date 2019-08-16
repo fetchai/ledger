@@ -20,6 +20,7 @@
 #include "core/json/document.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
+#include "crypto/identity.hpp"
 #include "ledger/chain/address.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/block_coordinator.hpp"
@@ -31,6 +32,7 @@
 #include "storage/resource_mapper.hpp"
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
+#include "core/byte_array/decoders.hpp"
 
 #include <cstddef>
 #include <fstream>
@@ -49,26 +51,7 @@ using fetch::byte_array::ConstByteArray;
 using fetch::json::JSONDocument;
 
 constexpr char const *LOGGING_NAME = "GenesisFile";
-constexpr int         VERSION      = 1;
-
-/**
- * Dump the contents of the variant as JSON to the target file
- *
- * @param data The variant to dump
- * @param file_path The file path to be created/updated
- */
-void DumpToFile(Variant const &data, std::string const &file_path)
-{
-  // format the data
-  std::ostringstream stream;
-  stream << data;
-
-  // close the
-  std::ofstream genesis_file{};
-  genesis_file.open(file_path);
-  genesis_file << stream.str();
-  genesis_file.close();
-}
+constexpr int         VERSION      = 2;
 
 /**
  * Load the entire file into a buffer
@@ -143,32 +126,6 @@ bool LoadFromFile(JSONDocument &document, std::string const &file_path)
 }  // namespace
 
 /**
- * Create a 'state file' with the specified name
- *
- * @param name The output file path to be populated
- */
-void GenesisFileCreator::CreateFile(std::string const &name)
-{
-  FETCH_LOG_INFO(LOGGING_NAME, "Getting keys from state database");
-
-  Variant payload    = Variant::Object();
-  payload["version"] = VERSION;
-
-  Variant &state = payload["state"] = Variant::Object();
-  Variant &stake = payload["stake"] = Variant::Object();
-
-  DumpState(state);
-
-  if (stake_manager_)
-  {
-    DumpStake(stake);
-  }
-
-  // dump the keys
-  DumpToFile(payload, name);
-}
-
-/**
  * Load a 'state file' with a given name
  *
  * @param name THe path to the file to be loaded
@@ -192,69 +149,16 @@ void GenesisFileCreator::LoadFile(std::string const &name)
       if (stake_manager_)
       {
         LoadStake(doc["stake"]);
-        LoadStake2(doc["beacon"]);
       }
       else
       {
         FETCH_LOG_WARN(LOGGING_NAME, "No stake manager provided when loading from stake file!");
       }
     }
-  }
-}
-
-/**
- * Generate a Variant object containing the state summary of the system
- *
- * @param object The object to be populated
- */
-void GenesisFileCreator::DumpState(variant::Variant &object)
-{
-  // Get all of the keys from the state database
-  std::vector<ResourceID> keys = storage_unit_.KeyDump();
-
-  FETCH_LOG_INFO(LOGGING_NAME, "Got: ", keys.size(), " keys.");
-
-  for (auto const &key : keys)
-  {
-    auto corresponding_object_document = storage_unit_.Get(ResourceAddress(key));
-
-    if (corresponding_object_document.failed)
+    else
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to get a valid key value pair from the state database");
+      FETCH_LOG_CRITICAL(LOGGING_NAME, "Incorrect stake file version!");
     }
-
-    auto key_as_b64   = key.id().ToBase64();
-    auto value_as_b64 = corresponding_object_document.document.ToBase64();
-
-    object[key_as_b64] = value_as_b64;
-  }
-}
-
-/**
- * Dump the stake information to the section of the file
- *
- * @param object The output object to be populated
- */
-void GenesisFileCreator::DumpStake(Variant &object)
-{
-  object = Variant::Object();
-
-  if (stake_manager_)
-  {
-    // get the current stake snapshot
-    auto const snapshot = stake_manager_->GetCurrentStakeSnapshot();
-
-    object["committeeSize"] = stake_manager_->committee_size();
-
-    Variant &stake_array = object["stakes"] = Variant::Array(snapshot->size());
-
-    std::size_t idx{0};
-    snapshot->IterateOver([&idx, &stake_array](Address const &address, uint64_t stake) {
-      Variant &entry = stake_array[idx] = Variant::Object();
-
-      entry["address"] = address.display();
-      entry["amount"]  = stake;
-    });
   }
 }
 
@@ -312,12 +216,12 @@ void GenesisFileCreator::LoadStake(Variant const &object)
       return;
     }
 
-    if (!object.Has("stakes"))
+    if (!object.Has("stakers"))
     {
       return;
     }
 
-    Variant const &stake_array = object["stakes"];
+    Variant const &stake_array = object["stakers"];
     if (!stake_array.IsArray())
     {
       return;
@@ -325,23 +229,24 @@ void GenesisFileCreator::LoadStake(Variant const &object)
 
     auto snapshot = std::make_shared<StakeSnapshot>();
 
-    // iterate over all of the
-    Address address;
+    // iterate over all of the Identity + stake amount mappings
     for (std::size_t i = 0, end = stake_array.size(); i < end; ++i)
     {
-      ConstByteArray display_address{};
+      ConstByteArray identity_raw{};
       uint64_t       amount{0};
 
-      if (variant::Extract(stake_array[i], "address", display_address) &&
+      if (variant::Extract(stake_array[i], "identity", identity_raw) &&
           variant::Extract(stake_array[i], "amount", amount))
       {
-        if (Address::Parse(display_address, address))
-        {
-          FETCH_LOG_INFO(LOGGING_NAME, "Restoring stake. Address: ", display_address,
-                         " amount: ", amount);
 
-          snapshot->UpdateStake(address, amount);
-        }
+        FETCH_LOG_INFO(LOGGING_NAME, "Found identity raw!, ", identity_raw);
+
+        auto identity = crypto::Identity(FromBase64(identity_raw));
+        auto address  = Address(identity);
+
+        FETCH_LOG_INFO(LOGGING_NAME, "Restoring stake. Identity: ", identity.identifier().ToBase64(), " (address): ", address.address().ToBase64(), " amount: ", amount);
+
+        snapshot->UpdateStake(identity, amount);
       }
     }
 
@@ -350,54 +255,6 @@ void GenesisFileCreator::LoadStake(Variant const &object)
   else
   {
     FETCH_LOG_WARN(LOGGING_NAME, "No stake manager!");
-  }
-}
-
-void GenesisFileCreator::LoadStake2(variant::Variant const &object)
-{
-  if (stake_manager_)
-  {
-    if (!object.Has("cabinet"))
-    {
-      return;
-    }
-
-    Variant const &stake_array = object["cabinet"];
-    if (!stake_array.IsArray())
-    {
-      return;
-    }
-
-    std::set<ConstByteArray> members{};
-
-    for (std::size_t i = 0, end = stake_array.size(); i < end; ++i)
-    {
-      auto const &element = stake_array[i];
-
-      if (!element.IsString())
-      {
-        return;
-      }
-
-      members.insert(byte_array::FromBase64(element.As<ConstByteArray>()));
-    }
-
-//    FETCH_LOG_INFO(LOGGING_NAME, "thing thing thing");
-//
-//    for(auto const &member : members)
-//    {
-//      FETCH_LOG_INFO(LOGGING_NAME, "raw: ", member.ToBase64());
-//      //FETCH_LOG_INFO(LOGGING_NAME, "identity: ", crypto::Identity(member));
-//      FETCH_LOG_INFO(LOGGING_NAME, "address: ", ledger::Address(crypto::Identity(member)).address().ToBase64());
-//    }
-
-    for(auto const &member : members)
-    {
-      stake_manager_->GetLookup()[ledger::Address(crypto::Identity(member))] = crypto::Identity(member);
-    }
-
-    // reset the cabinet
-    //dkg_->ResetCabinet(std::move(members), threshold);
   }
 }
 

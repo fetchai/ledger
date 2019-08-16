@@ -34,7 +34,8 @@ class EntropyGeneratorInterface;
 class StakeManager final : public StakeManagerInterface
 {
 public:
-  using Committee    = std::vector<Address>;
+  using Identity     = crypto::Identity;
+  using Committee    = std::vector<Identity>;
   using CommitteePtr = std::shared_ptr<Committee const>;
 
   // Construction / Destruction
@@ -71,13 +72,6 @@ public:
   // Operators
   StakeManager &operator=(StakeManager const &) = delete;
   StakeManager &operator=(StakeManager &&) = delete;
-
-  std::map<ledger::Address, crypto::Identity> lookup_;
-
-  std::map<ledger::Address, crypto::Identity> &GetLookup()
-  {
-    return lookup_;
-  }
 
 private:
   static constexpr std::size_t HISTORY_LENGTH = 100;

@@ -149,28 +149,30 @@ int main()
   }
 
   // Ready
-  i = 0;
+  uint64_t block_number = 0;
+  uint64_t aeon_length  = 10;
+
   while (true)
   {
-    auto cabinet = all_cabinets[i % number_of_cabinets];
-    for (auto &member : committee)
+    if((block_number % aeon_length) == 0)
     {
-      member->beacon_service.StartNewCabinet(cabinet, static_cast<uint32_t>(cabinet.size() / 2),
-                                             i * 10, (i + 1) * 10);
+      auto cabinet = all_cabinets[block_number % number_of_cabinets];
+      for (auto &member : committee)
+      {
+        member->beacon_service.StartNewCabinet(cabinet, static_cast<uint32_t>(cabinet.size() / 2), block_number, block_number + aeon_length);
+      }
     }
 
-    for (uint64_t j = 0; j < 30; ++j)
-    {
-      fetch::beacon::EventCommitteeCompletedWork event;
-      while (event_manager->Poll(event))
-      {
-        std::cout << "COMMITTEE FINSISHED: " << event.aeon.round_start << " > "
-                  << event.aeon.round_end << std::endl;
-      }
+    uint64_t entropy;
 
+    while(committee[block_number % committee.size()]->beacon_service.GenerateEntropy("", block_number, entropy) != fetch::ledger::EntropyGeneratorInterface::Status::OK)
+    {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
-    ++i;
+
+    FETCH_LOG_INFO("default", "Found entropy for block: ", block_number, " as ", entropy);
+
+    ++block_number;
   }
 
   return 0;
