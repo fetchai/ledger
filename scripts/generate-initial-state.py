@@ -93,7 +93,7 @@ def main():
 
         # update the stake list
         stakes.append({
-            'address': token_address,
+            'identity': address,
             'amount': individual_stake,
         })
 
@@ -107,14 +107,10 @@ def main():
 
     # form the snapshot data
     snapshot = {
-        'version': 1,
+        'version': 2,
         'stake': {
             'committeeSize': len(cabinet),
-            'stakes': stakes,
-        },
-        'beacon': {
-            'cabinet': cabinet,
-            'threshold': threshold,
+            'stakers': stakes,
         },
         'state': state,
     }
