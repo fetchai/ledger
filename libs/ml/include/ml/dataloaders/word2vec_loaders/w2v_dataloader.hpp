@@ -19,6 +19,7 @@
 
 #include "core/random/lcg.hpp"
 #include "math/tensor.hpp"
+#include "meta/type_traits.hpp"
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/dataloaders/word2vec_loaders/unigram_table.hpp"
 #include "ml/dataloaders/word2vec_loaders/vocab.hpp"
@@ -38,8 +39,9 @@ class W2VLoader : public DataLoader<fetch::math::Tensor<T>, fetch::math::Tensor<
 {
 
 public:
-  // The intended T is the typename for the data input to the neural network, which should be a
-  // float or double or fix-point type.
+  static_assert(meta::IsFloat<T> || meta::IsFixedPoint<T>,
+                "The intended T is the typename for the data input to the neural network, which "
+                "should be a float or double or fixed-point type.");
   static constexpr T WindowContextUnused = -1;
 
   using InputType = fetch::math::Tensor<T>;
