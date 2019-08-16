@@ -127,6 +127,78 @@ TYPED_TEST(GraphTest, multi_nodes_have_same_name)
   ASSERT_EQ(fc_3, "FC1_Copy_2");
 }
 
+TYPED_TEST(GraphTest, applying_regularisation_per_trainable)
+{
+  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
+  using RegType    = fetch::ml::regularisers::L1Regulariser<TensorType>;
+
+  // Initialise values
+  auto regularisation_rate = static_cast<DataType>(0.1f);
+  auto regulariser         = std::make_shared<RegType>();
+
+  TensorType data = TensorType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
+  TensorType gt   = TensorType::FromString("0.9, -1.9, 2.9, -3.9, 4.9, -5.9, 6.9, -7.9");
+
+  // Create a graph with a single weights node
+  fetch::ml::Graph<TensorType> g;
+
+  std::string weights =
+      g.template AddNode<fetch::ml::ops::Weights<TensorType>>("Weights", {});
+
+  g.SetInput(weights, data);
+
+  // Apply regularisation
+  g.SetRegularisation(weights, regulariser, regularisation_rate);
+  auto node_ptr = g.GetNode(weights);
+  auto op_ptr =  std::dynamic_pointer_cast<fetch::ml::ops::Weights<TensorType>>(node_ptr->GetOp());
+  op_ptr->ApplyRegularisation();
+
+  // Evaluate weights
+  TensorType prediction(op_ptr->ComputeOutputShape({}));
+  op_ptr->Forward({}, prediction);
+
+  // Test actual values
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                              fetch::math::function_tolerance<DataType>()));
+}
+
+TYPED_TEST(GraphTest, applying_regularisation_all_trainables)
+{
+  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
+  using RegType    = fetch::ml::regularisers::L1Regulariser<TensorType>;
+
+  // Initialise values
+  auto regularisation_rate = static_cast<DataType>(0.1f);
+  auto regulariser         = std::make_shared<RegType>();
+
+  TensorType data = TensorType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
+  TensorType gt   = TensorType::FromString("0.9, -1.9, 2.9, -3.9, 4.9, -5.9, 6.9, -7.9");
+
+  // Create a graph with a single weights node
+  fetch::ml::Graph<TensorType> g;
+
+  std::string weights =
+      g.template AddNode<fetch::ml::ops::Weights<TensorType>>("Weights", {});
+
+  g.SetInput(weights, data);
+
+  // Apply regularisation to all trainables
+  g.SetRegularisation(regulariser, regularisation_rate);
+  auto node_ptr = g.GetNode(weights);
+  auto op_ptr =  std::dynamic_pointer_cast<fetch::ml::ops::Weights<TensorType>>(node_ptr->GetOp());
+  op_ptr->ApplyRegularisation();
+
+  // Evaluate weights
+  TensorType prediction(op_ptr->ComputeOutputShape({}));
+  op_ptr->Forward({}, prediction);
+
+  // Test actual values
+  ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                              fetch::math::function_tolerance<DataType>()));
+}
+
 TYPED_TEST(GraphTest,
            diamond_graph_forward)  // Evaluate graph output=(input1*input2)-(input1^2)
 {
