@@ -74,7 +74,7 @@ public:
   SizeType Size() const override;
   bool     IsDone() const override;
   void     Reset() override;
-  bool     AddData(InputType const & data, LabelType const & label) override;
+  bool     AddData(InputType const &data, LabelType const &label) override;
   void     AddDataAsString(std::string const &text);
   void     createIdxUMaps();
 
@@ -121,7 +121,7 @@ private:
 };
 
 template <typename LabelType, typename InputType>
-bool C2VLoader<LabelType, InputType>::AddData(InputType const & data, LabelType const & label)
+bool C2VLoader<LabelType, InputType>::AddData(InputType const &data, LabelType const &label)
 {
   FETCH_UNUSED(data);
   FETCH_UNUSED(label);
@@ -175,7 +175,7 @@ void C2VLoader<LabelType, InputType>::AddDataAsString(std::string const &c2v_inp
       std::pair<SizeType, std::tuple<SizeType, SizeType, SizeType>> input_data_pair(
           function_name_idx, std::make_tuple(source_word_idx, path_idx, target_word_idx));
 
-      this->data.push_back(input_data_pair);
+      data_.push_back(input_data_pair);
     }
   }
 }
@@ -244,8 +244,7 @@ C2VLoader<LabelType, InputType>::GetNext()
 
             source_word_tensor(i, 0) =
                 static_cast<Type>(std::get<0>(data_[context_positions[i]].second));
-            path_tensor(i, 0) =
-                static_cast<Type>(std::get<1>(data_[context_positions[i]].second));
+            path_tensor(i, 0) = static_cast<Type>(std::get<1>(data_[context_positions[i]].second));
             target_word_tensor(i, 0) =
                 static_cast<Type>(std::get<2>(data_[context_positions[i]].second));
           }
@@ -262,8 +261,7 @@ C2VLoader<LabelType, InputType>::GetNext()
           {
             source_word_tensor(i, 0) =
                 static_cast<Type>(std::get<0>(data_[context_positions[i]].second));
-            path_tensor(i, 0) =
-                static_cast<Type>(std::get<1>(data_[context_positions[i]].second));
+            path_tensor(i, 0) = static_cast<Type>(std::get<1>(data_[context_positions[i]].second));
             target_word_tensor(i, 0) =
                 static_cast<Type>(std::get<2>(data_[context_positions[i]].second));
           }
@@ -347,7 +345,7 @@ void C2VLoader<LabelType, InputType>::addValueToCounter(
  */
 template <typename LabelType, typename InputType>
 std::vector<std::string> C2VLoader<LabelType, InputType>::splitStringByChar(std::stringstream input,
-                                                                           char const *      sep)
+                                                                            char const *      sep)
 {
   std::vector<std::string> splitted_string;
   std::string              segment;
@@ -469,13 +467,15 @@ C2VLoader<LabelType, InputType>::function_name_counter()
 }
 
 template <typename LabelType, typename InputType>
-typename C2VLoader<LabelType, InputType>::umap_str_int C2VLoader<LabelType, InputType>::path_counter()
+typename C2VLoader<LabelType, InputType>::umap_str_int
+C2VLoader<LabelType, InputType>::path_counter()
 {
   return this->path_counter_;
 }
 
 template <typename LabelType, typename InputType>
-typename C2VLoader<LabelType, InputType>::umap_str_int C2VLoader<LabelType, InputType>::word_counter()
+typename C2VLoader<LabelType, InputType>::umap_str_int
+C2VLoader<LabelType, InputType>::word_counter()
 {
   return this->word_counter_;
 }
