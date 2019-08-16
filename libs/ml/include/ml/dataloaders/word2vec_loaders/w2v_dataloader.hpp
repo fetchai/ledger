@@ -36,17 +36,19 @@ namespace dataloaders {
 template <typename T>
 class W2VLoader : public DataLoader<fetch::math::Tensor<T>, fetch::math::Tensor<T>>
 {
+
+
 public:
   // The intended T is the typename for the data input to the neural network, which should be a
   // float or double or fix-point type.
   static constexpr T WindowContextUnused = -1;
 
+  using InputType = fetch::math::Tensor<T>;
   using LabelType = fetch::math::Tensor<T>;
-  using DataType  = fetch::math::Tensor<T>;
 
   using SizeType   = fetch::math::SizeType;
   using VocabType  = Vocab;
-  using ReturnType = std::pair<LabelType, std::vector<DataType>>;
+  using ReturnType = std::pair<LabelType, std::vector<InputType>>;
 
   W2VLoader(SizeType window_size, SizeType negative_samples, bool mode);
 
@@ -56,6 +58,8 @@ public:
   void       InitUnigramTable();
   void       GetNext(ReturnType &t);
   ReturnType GetNext() override;
+
+  bool       AddData(InputType const& input, LabelType const & label) override;
 
   bool BuildVocab(std::string const &s);
   void SaveVocab(std::string const &filename);
@@ -96,7 +100,7 @@ private:
  */
 template <typename T>
 W2VLoader<T>::W2VLoader(SizeType window_size, SizeType negative_samples, bool mode)
-  : DataLoader<LabelType, DataType>(false)  // no random mode specified
+  : DataLoader<LabelType, InputType>(false)  // no random mode specified
   , current_sentence_(0)
   , current_word_(0)
   , window_size_(window_size)
@@ -276,6 +280,14 @@ typename W2VLoader<T>::ReturnType W2VLoader<T>::GetNext()
   ReturnType p(label_, {target_});
   GetNext(p);
   return p;
+}
+
+template <typename T>
+bool W2VLoader<T>::AddData(InputType const& input, LabelType const & label)
+{
+  FETCH_UNUSED(input);
+  FETCH_UNUSED(label);
+  throw std::runtime_error("Add Data not used for W2V loader");
 }
 
 /**
