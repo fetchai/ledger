@@ -53,7 +53,7 @@ private:
 
 public:
   MNISTLoader(std::string const &images_file, std::string const &labelsFile,
-              bool random_mode = false, float test_to_train_ratio = 0.0)
+              bool random_mode = false, float validation_to_train_ratio = 0.0)
     : DataLoader<LabelType, T>(random_mode)
     , train_cursor_(0)
     , test_cursor_(0)
@@ -62,8 +62,8 @@ public:
     data_   = read_mnist_images(images_file, size_, record_length);
     labels_ = read_mnist_labels(labelsFile, size_);
 
-    test_size_   = static_cast<std::uint32_t>(test_to_train_ratio * static_cast<float>(size_));
-    train_size_  = size_ - test_size_;
+    test_size_  = static_cast<std::uint32_t>(validation_to_train_ratio * static_cast<float>(size_));
+    train_size_ = size_ - test_size_;
     test_offset_ = train_size_;
 
     assert(record_length == FIGURE_SIZE);
@@ -73,10 +73,10 @@ public:
     buffer_.first = LabelType({LABEL_SIZE, 1u});
   }
 
-  virtual SizeType Size(bool is_test = false) const override
+  virtual SizeType Size(bool is_validation = false) const override
   {
     // MNIST files store the size as uint32_t but Dataloader interface require uint64_t
-    if (is_test)
+    if (is_validation)
     {
       return static_cast<SizeType>(test_size_);
     }
@@ -86,9 +86,9 @@ public:
     }
   }
 
-  virtual bool IsDone(bool is_test = false) const override
+  virtual bool IsDone(bool is_validation = false) const override
   {
-    if (is_test)
+    if (is_validation)
     {
       return test_offset_ + test_cursor_ >= size_;
     }
@@ -98,9 +98,9 @@ public:
     }
   }
 
-  virtual void Reset(bool is_test = false) override
+  virtual void Reset(bool is_validation = false) override
   {
-    if (is_test)
+    if (is_validation)
     {
       test_cursor_ = 0;
     }
@@ -110,9 +110,9 @@ public:
     }
   }
 
-  virtual ReturnType GetNext(bool is_test = false) override
+  virtual ReturnType GetNext(bool is_validation = false) override
   {
-    if (is_test)
+    if (is_validation)
     {
       if (this->random_mode_)
       {
@@ -154,7 +154,8 @@ public:
     std::cout << std::endl;
   }
 
-  ReturnType PrepareBatch(SizeType subset_size, bool &is_done_set, bool is_test = false) override
+  ReturnType PrepareBatch(SizeType subset_size, bool &is_done_set,
+                          bool is_validation = false) override
   {
     T ret_labels({LABEL_SIZE, subset_size});
 
@@ -168,7 +169,7 @@ public:
       auto     it = ret_images.at(0).View(index).begin();
       while (it.is_valid())
       {
-        if (is_test)
+        if (is_validation)
         {
           *it = static_cast<DataType>(data_[test_offset_ + test_cursor_][i]) / DataType{256};
         }
@@ -181,7 +182,7 @@ public:
         ++it;
       }
 
-      if (is_test)
+      if (is_validation)
       {
         ret_labels(labels_[test_offset_ + test_cursor_], index) =
             static_cast<typename LabelType::Type>(1);
@@ -195,10 +196,10 @@ public:
         ++train_cursor_;
       }
 
-      if (IsDone(is_test))
+      if (IsDone(is_validation))
       {
         is_done_set = true;
-        Reset(is_test);
+        Reset(is_validation);
       }
     }
 

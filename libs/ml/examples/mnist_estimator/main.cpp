@@ -50,8 +50,8 @@ int main(int ac, char **av)
   estimator_config.learning_rate_param.starting_learning_rate = static_cast<DataType>(0.001);
   estimator_config.learning_rate_param.exponential_decay_rate = static_cast<DataType>(0.99);
   estimator_config.batch_size                                 = 64;  // minibatch training size
-  estimator_config.subset_size    = 1000;   // only train on the first 1000 samples
-  estimator_config.early_stopping = false;  // stop early if no improvement
+  estimator_config.subset_size    = 1000;  // only train on the first 1000 samples
+  estimator_config.early_stopping = true;  // stop early if no improvement
   estimator_config.patience       = 30;
   estimator_config.opt            = OptimiserType::ADAM;
   estimator_config.print_stats    = true;
@@ -73,7 +73,7 @@ int main(int ac, char **av)
   std::cout << "prediction.ToString(): " << prediction.ToString() << std::endl;
 
   // training loop - early stopping will prevent long training time
-  estimator.Train(10, loss);
+  estimator.Train(1000000, loss);
 
   // run estimator in testing mode
   estimator.Predict(test_input, prediction);

@@ -69,11 +69,11 @@ public:
     , max_contexts_(max_contexts_){};
 
   ContextLabelPair        GetNextContext();
-  ContextTensorsLabelPair GetNext(bool is_test = false) override;
+  ContextTensorsLabelPair GetNext(bool is_validation = false) override;
 
-  SizeType Size(bool is_test = false) const override;
-  bool     IsDone(bool is_test = false) const override;
-  void     Reset(bool is_test = false) override;
+  SizeType Size(bool is_validation = false) const override;
+  bool     IsDone(bool is_validation = false) const override;
+  void     Reset(bool is_validation = false) override;
   void     AddData(std::string const &text);
   void     createIdxUMaps();
 
@@ -192,7 +192,7 @@ C2VLoader<LabelType, DataType>::GetNextContext()
  */
 template <typename LabelType, typename DataType>
 typename C2VLoader<LabelType, DataType>::ContextTensorsLabelPair
-C2VLoader<LabelType, DataType>::GetNext(bool is_test)
+C2VLoader<LabelType, DataType>::GetNext(bool is_validation)
 {
   if (this->random_mode_)
   {
@@ -208,14 +208,14 @@ C2VLoader<LabelType, DataType>::GetNext(bool is_test)
     {
       auto             current_context_position = this->iterator_position_get_next_context_;
       ContextLabelPair input                    = this->GetNextContext();
-      if ((iteration_start || (input.first == old_function_index)) && !this->IsDone(is_test))
+      if ((iteration_start || (input.first == old_function_index)) && !this->IsDone(is_validation))
       {
         old_function_index = input.first;
         context_positions.push_back(current_context_position);
       }
       else
       {
-        if (!this->IsDone(is_test))
+        if (!this->IsDone(is_validation))
         {
           this->iterator_position_get_next_context_--;
         }
@@ -281,9 +281,9 @@ C2VLoader<LabelType, DataType>::GetNext(bool is_test)
  * @return std::uint64_t
  */
 template <typename LabelType, typename DataType>
-typename DataType::SizeType C2VLoader<LabelType, DataType>::Size(bool is_test) const
+typename DataType::SizeType C2VLoader<LabelType, DataType>::Size(bool is_validation) const
 {
-  if (is_test)
+  if (is_validation)
   {
     throw std::runtime_error("Validation set splitting not implemented yet");
   }
@@ -298,9 +298,9 @@ typename DataType::SizeType C2VLoader<LabelType, DataType>::Size(bool is_test) c
  * @return false
  */
 template <typename LabelType, typename DataType>
-bool C2VLoader<LabelType, DataType>::IsDone(bool is_test) const
+bool C2VLoader<LabelType, DataType>::IsDone(bool is_validation) const
 {
-  if (is_test)
+  if (is_validation)
   {
     throw std::runtime_error("Validation set splitting not implemented yet");
   }
@@ -313,9 +313,9 @@ bool C2VLoader<LabelType, DataType>::IsDone(bool is_test) const
  *
  */
 template <typename LabelType, typename DataType>
-void C2VLoader<LabelType, DataType>::Reset(bool is_test)
+void C2VLoader<LabelType, DataType>::Reset(bool is_validation)
 {
-  if (is_test)
+  if (is_validation)
   {
     throw std::runtime_error("Validation set splitting not implemented yet");
   }

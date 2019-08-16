@@ -46,11 +46,11 @@ public:
   GraphW2VLoader(SizeType window_size, SizeType negative_samples, T freq_thresh,
                  SizeType max_word_count, bool mode, SizeType seed = 1337);
 
-  bool       IsDone(bool is_test = false) const override;
-  void       Reset(bool is_test = false) override;
+  bool       IsDone(bool is_validation = false) const override;
+  void       Reset(bool is_validation = false) override;
   void       RemoveInfrequent(SizeType min);
   void       InitUnigramTable(SizeType size = 1e8);
-  ReturnType GetNext(bool is_test = false) override;
+  ReturnType GetNext(bool is_validation = false) override;
 
   void BuildVocab(std::vector<std::string> const &sents, SizeType min_count = 0);
   void SaveVocab(std::string const &filename);
@@ -60,7 +60,7 @@ public:
   bool WordKnown(std::string const &word) const;
 
   /// accessors and helper functions ///
-  SizeType         Size(bool is_test = false) const override;
+  SizeType         Size(bool is_validation = false) const override;
   SizeType         vocab_size() const;
   VocabType const &vocab() const;
   std::string      WordFromIndex(SizeType index) const;
@@ -162,9 +162,9 @@ T GraphW2VLoader<T>::EstimatedSampleNumber()
  * @return
  */
 template <typename T>
-math::SizeType GraphW2VLoader<T>::Size(bool is_test) const
+math::SizeType GraphW2VLoader<T>::Size(bool is_validation) const
 {
-  if (is_test)
+  if (is_validation)
   {
     throw std::runtime_error("Validation set splitting not implemented yet");
   }
@@ -196,9 +196,9 @@ void GraphW2VLoader<T>::Update()
  * @return
  */
 template <typename T>
-bool GraphW2VLoader<T>::IsDone(bool is_test) const
+bool GraphW2VLoader<T>::IsDone(bool is_validation) const
 {
-  if (is_test)
+  if (is_validation)
   {
     throw std::runtime_error("Validation set splitting not implemented yet");
   }
@@ -225,9 +225,9 @@ bool GraphW2VLoader<T>::IsDone(bool is_test) const
  * @tparam T
  */
 template <typename T>
-void GraphW2VLoader<T>::Reset(bool is_test)
+void GraphW2VLoader<T>::Reset(bool is_validation)
 {
-  if (is_test)
+  if (is_validation)
   {
     throw std::runtime_error("Validation set splitting not implemented yet");
   }
@@ -447,9 +447,9 @@ void GraphW2VLoader<T>::BufferNextSamples()
  * @return
  */
 template <typename T>
-typename GraphW2VLoader<T>::ReturnType GraphW2VLoader<T>::GetNext(bool is_test)
+typename GraphW2VLoader<T>::ReturnType GraphW2VLoader<T>::GetNext(bool is_validation)
 {
-  if (is_test)
+  if (is_validation)
   {
     throw std::runtime_error("Validation set splitting not implemented yet");
   }
