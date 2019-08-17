@@ -86,8 +86,7 @@ macro (setup_compiler)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
   endif (FETCH_WARNINGS_AS_ERRORS)
 
-  # prefer PIC
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+  set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
   if (FETCH_ENABLE_COVERAGE)
     if (_is_clang_compiler)
