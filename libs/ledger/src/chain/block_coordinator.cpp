@@ -99,7 +99,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr
   : chain_{chain}
   , dag_{std::move(dag)}
   , stake_{std::move(stake)}
-  , beacon_{beacon}
+  , beacon_{std::move(beacon)}
   , execution_manager_{execution_manager}
   , storage_unit_{storage_unit}
   , block_packer_{packer}

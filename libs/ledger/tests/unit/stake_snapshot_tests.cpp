@@ -30,7 +30,6 @@
 namespace {
 
 using fetch::ledger::StakeSnapshot;
-using fetch::ledger::Address;
 using fetch::crypto::Identity;
 
 using RNG              = fetch::random::LinearCongruentialGenerator;
