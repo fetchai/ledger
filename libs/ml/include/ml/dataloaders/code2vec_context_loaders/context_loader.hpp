@@ -89,9 +89,10 @@ public:
   umap_str_int function_name_counter();
   umap_str_int path_counter();
   umap_str_int word_counter();
-  std::vector<std::pair<SizeType, std::tuple<SizeType, SizeType, SizeType>>> data_;
 
 private:
+  std::vector<std::pair<SizeType, std::tuple<SizeType, SizeType, SizeType>>> data_;
+
   SizeType iterator_position_get_next_context_{fetch::math::numeric_max<SizeType>()};
   SizeType iterator_position_get_next_{fetch::math::numeric_max<SizeType>()};
   SizeType current_function_index_{fetch::math::numeric_max<SizeType>()};
