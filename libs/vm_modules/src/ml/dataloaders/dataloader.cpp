@@ -77,10 +77,6 @@ VMDataLoader::VMDataLoader(VM *vm, TypeId type_id, fetch::vm::Ptr<fetch::vm::Str
   }
 }
 
-// Ptr<VMDataLoader> VMDataLoader::Constructor(VM *vm, TypeId type_id)
-//{
-//  return new VMDataLoader(vm, type_id);
-//}
 fetch::vm::Ptr<VMDataLoader> VMDataLoader::Constructor(
     fetch::vm::VM *vm, fetch::vm::TypeId type_id, fetch::vm::Ptr<fetch::vm::String> const &mode)
 {
