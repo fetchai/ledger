@@ -264,12 +264,11 @@ private:
   void GetAtIndex(SizeType index, ReturnType &ret)
   {
     SizeType i{0};
-    auto     it = buffer_.second.at(0).begin();
-    while (it.is_valid())
+
+    for (auto val : buffer_.second.at(0))
     {
-      *it = static_cast<DataType>(data_[index][i]) / DataType{256};
+      val = static_cast<DataType>(data_[index][i]) / DataType{256};
       i++;
-      ++it;
     }
 
     buffer_.first.Fill(DataType{0});
