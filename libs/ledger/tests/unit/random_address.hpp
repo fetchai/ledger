@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/address.hpp"
 #include "crypto/identity.hpp"
+#include "ledger/chain/address.hpp"
 
 #include <type_traits>
 
