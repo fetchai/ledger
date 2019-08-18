@@ -375,11 +375,11 @@ inline Ptr<IArray> IArray::Construct(VM *vm, TypeId type_id, Args &&... args)
   TypeInfo const &type_info       = vm->GetTypeInfo(type_id);
   TypeId const    element_type_id = type_info.parameter_type_ids[0];
   return ApplyFunctor<ScalarTypes, DefaultObjectCase>(
-	  element_type_id,
-	  [vm, type_id, element_type_id, &args...](auto cs) {
-		  using Case = typename decltype(cs)::type;
-		  return Ptr<IArray>(new Array<typename Case::storage_type>(vm, type_id, element_type_id, std::forward<Args>(args)...));
-	  });
+      element_type_id, [vm, type_id, element_type_id, &args...](auto cs) {
+        using Case = typename decltype(cs)::type;
+        return Ptr<IArray>(new Array<typename Case::storage_type>(vm, type_id, element_type_id,
+                                                                  std::forward<Args>(args)...));
+      });
 }
 
 inline Ptr<IArray> IArray::Constructor(VM *vm, TypeId type_id, int32_t size)

@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "meta/pack.hpp"
-#include "meta/type_util.hpp"
 #include "meta/switch.hpp"
+#include "meta/type_util.hpp"
 #include "meta/value_util.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm/object.hpp"
@@ -532,242 +532,416 @@ struct AnyFloatingPoint : public Variant
   using Variant::Variant;
 };
 
-template<TypeId id> struct IdToType;
+template <TypeId id>
+struct IdToType;
 
-template<TypeId id, typename T, typename U = T> struct VariantValue: std::integral_constant<TypeId, id> {
-	using std::integral_constant<TypeId, id>::value;
-	using type = T;
-	using storage_type = U;
-};
-
-template<> struct IdToType<TypeIds::Unknown>: VariantValue<TypeIds::Unknown, Unknown> {
-	template<class Var> static constexpr void Reference(Var &&) noexcept {}
-};
-
-template<> struct IdToType<TypeIds::Null>: VariantValue<TypeIds::Null, std::nullptr_t> {
-	template<class Var> static constexpr void Reference(Var &&) noexcept {}
-};
-
-template<> struct IdToType<TypeIds::Void>: VariantValue<TypeIds::Void, void> {
-	template<class Var> static constexpr void Reference(Var &&) noexcept {}
-};
-
-template<> struct IdToType<TypeIds::Bool>: VariantValue<TypeIds::Bool, bool, uint8_t> {
-	template<class Var> static constexpr auto &Reference(Var &v) noexcept {
-		return v.primitive.ui8;
-	}
-};
-
-template<> struct IdToType<TypeIds::Int8>: VariantValue<TypeIds::Int8, int8_t> {
-	template<class Var> static constexpr auto &Reference(Var &v) noexcept {
-		return v.primitive.i8;
-	}
-};
-
-template<> struct IdToType<TypeIds::UInt8>: VariantValue<TypeIds::UInt8, uint8_t> {
-	template<class Var> static constexpr auto &Reference(Var &v) noexcept {
-		return v.primitive.ui8;
-	}
-};
-
-template<> struct IdToType<TypeIds::Int16>: VariantValue<TypeIds::Int16, int16_t> {
-	template<class Var> static constexpr auto &Reference(Var &v) noexcept {
-		return v.primitive.i16;
-	}
-};
-
-template<> struct IdToType<TypeIds::UInt16>: VariantValue<TypeIds::UInt16, uint16_t> {
-	template<class Var> static constexpr auto &Reference(Var &v) noexcept {
-		return v.primitive.ui16;
-	}
-};
-
-template<> struct IdToType<TypeIds::Int32>: VariantValue<TypeIds::Int32, int32_t> {
-	template<class Var> static constexpr auto &Reference(Var &v) noexcept {
-		return v.primitive.i32;
-	}
-};
-
-template<> struct IdToType<TypeIds::UInt32>: VariantValue<TypeIds::UInt32, uint32_t> {
-	template<class Var> static constexpr auto &Reference(Var &v) noexcept {
-		return v.primitive.ui32;
-	}
-};
-
-template<> struct IdToType<TypeIds::Int64>: VariantValue<TypeIds::Int64, int64_t> {
-	template<class Var> static constexpr auto &Reference(Var &v) noexcept {
-		return v.primitive.i64;
-	}
-};
-
-template<> struct IdToType<TypeIds::UInt64>: VariantValue<TypeIds::UInt64, uint64_t> {
-	template<class Var> static constexpr auto &Reference(Var &v) noexcept {
-		return v.primitive.ui64;
-	}
-};
-
-template<> struct IdToType<TypeIds::Float32>: VariantValue<TypeIds::Float32, float> {
-	template<class Var> static constexpr auto &Reference(Var &v) noexcept {
-		return v.primitive.f32;
-	}
-};
-
-template<> struct IdToType<TypeIds::Float64>: VariantValue<TypeIds::Float64, double> {
-	template<class Var> static constexpr auto &Reference(Var &v) noexcept {
-		return v.primitive.f64;
-	}
-};
-
-template<> struct IdToType<TypeIds::Fixed32>: VariantValue<TypeIds::Fixed32, fixed_point::fp32_t> {
-	static fixed_point::fp32_t &Reference(Variant &v) noexcept {
-		return *reinterpret_cast<fixed_point::fp32_t *>(&v);
-	}
-	static fixed_point::fp32_t const &Reference(Variant const &v) noexcept {
-		return *reinterpret_cast<fixed_point::fp32_t const *>(&v);
-	}
-};
-
-template<> struct IdToType<TypeIds::Fixed64>: VariantValue<TypeIds::Fixed64, fixed_point::fp64_t> {
-	static fixed_point::fp64_t &Reference(Variant &v) noexcept {
-		return *reinterpret_cast<fixed_point::fp64_t *>(&v);
-	}
-	static fixed_point::fp64_t const &Reference(Variant const &v) noexcept {
-		return *reinterpret_cast<fixed_point::fp64_t const *>(&v);
-	}
-};
-
-template<> struct IdToType<TypeIds::String>: VariantValue<TypeIds::String, Ptr<String>> {
-	template<class Var> static constexpr auto &Reference(Var &v) noexcept {
-		return v.object;
-	}
-};
-
-template<> struct IdToType<TypeIds::Address>: VariantValue<TypeIds::Address, Ptr<Address>> {
-	template<class Var> static constexpr auto &Reference(Var &v) noexcept {
-		return v.object;
-	}
-};
-
-template<class IdToType, bool = IsPrimitive<typename IdToType::type>::value> class VariantView
-  : public IdToType // parent defines value, type, storage_type and Reference(Variant &)
+template <TypeId id, typename T, typename U = T>
+struct VariantValue : std::integral_constant<TypeId, id>
 {
-	Variant *v_ = nullptr;
-	Variant const *cv_ = nullptr;
-
-	constexpr VariantView(Variant &v) noexcept: v_(&v) {}
-	constexpr VariantView(Variant const &cv) noexcept: cv_(&cv) {}
-	using IdToType::Reference;
-public:
-	using typename IdToType::type;
-	using typename IdToType::storage_type;
-	using IdToType::value;
-
-	constexpr auto Get() const noexcept { return v_->Get<type>(); }
-
-	constexpr void Set(type val) noexcept { v_->Assign(val, value); }
-
-	constexpr auto &Ref() const noexcept { return Reference(*v_); }
-	constexpr auto const &CRef() const noexcept { return cv_? Reference(*cv_) : Reference(const_cast<Variant const &>(*v_)); }
-
-	constexpr operator Variant &() noexcept { return *v_; }
-	constexpr operator Variant const &() noexcept { return cv_? *cv_ : *v_; }
-
-	template<class F, class... Args> static constexpr decltype(auto) Invoke(F &&f, Args &&...args) {
-		return value_util::Invoke(std::forward<F>(f), VariantView(std::forward<Args>(args))...);
-	}
+  using std::integral_constant<TypeId, id>::value;
+  using type         = T;
+  using storage_type = U;
 };
 
-template<class IdToType> class VariantView<IdToType, false>
-  : public IdToType // parent defines value, type, storage_type and Ref()
+template <>
+struct IdToType<TypeIds::Unknown> : VariantValue<TypeIds::Unknown, Unknown>
 {
-	Variant *v_ = nullptr;
-	Variant const *cv_ = nullptr;
-
-	constexpr VariantView(Variant &v) noexcept: v_(&v) {}
-	constexpr VariantView(Variant const &cv) noexcept: cv_(&cv) {}
-	using IdToType::Reference;
-public:
-	using typename IdToType::type;
-	using typename IdToType::storage_type;
-	using IdToType::value;
-
-	constexpr auto Get() const noexcept { return v_->Get<type>(); }
-
-	constexpr void Set(type val) noexcept { v_->Assign(std::move(val), value); }
-
-	constexpr auto &Ref() const noexcept { return Reference(*v_); }
-	constexpr auto const &CRef() const noexcept { return cv_? Reference(*cv_) : Reference(const_cast<Variant const &>(*v_)); }
-
-	constexpr operator Variant &() noexcept { return *v_; }
-	constexpr operator Variant const &() noexcept { return cv_? *cv_ : *v_; }
-
-	template<class F, class... Args> static constexpr decltype(auto) Invoke(F &&f, Args &&...args) {
-		return value_util::Invoke(std::forward<F>(f), VariantView(std::forward<Args>(args))...);
-	}
+  template <class Var>
+  static constexpr void Reference(Var &&) noexcept
+  {}
 };
 
-template<> class VariantView<IdToType<TypeIds::Null>, false>
-  : public IdToType<TypeIds::Null> // parent defines value, type and storage_type
+template <>
+struct IdToType<TypeIds::Null> : VariantValue<TypeIds::Null, std::nullptr_t>
 {
-	Variant *v_ = nullptr;
-	Variant const *cv_ = nullptr;
-
-	constexpr VariantView(Variant &v) noexcept: v_(&v) {}
-	constexpr VariantView(Variant const &cv) noexcept: cv_(&cv) {}
-public:
-	using typename IdToType::type;
-	using typename IdToType::storage_type;
-	using IdToType::value;
-
-	constexpr auto Get() const noexcept { return nullptr; }
-
-	constexpr void Set(type) noexcept {}
-
-	constexpr operator Variant &() noexcept { return *v_; }
-	constexpr operator Variant const &() noexcept { return cv_? *cv_ : *v_; }
-
-	template<class F, class... Args> static constexpr decltype(auto) Invoke(F &&f, Args &&...args) {
-		return value_util::Invoke(std::forward<F>(f), VariantView(std::forward<Args>(args))...);
-	}
+  template <class Var>
+  static constexpr void Reference(Var &&) noexcept
+  {}
 };
 
-class DefaultVariantView: public VariantValue<TypeIds::NumReserved, Ptr<Object>>
+template <>
+struct IdToType<TypeIds::Void> : VariantValue<TypeIds::Void, void>
 {
-	Variant *v_ = nullptr;
-	Variant const *cv_ = nullptr;
-
-	constexpr DefaultVariantView(Variant &v) noexcept: v_(&v) {}
-	constexpr DefaultVariantView(Variant const &v) noexcept: cv_(&v) {}
-public:
-	using VariantValue<TypeIds::NumReserved, Ptr<Object>>::type;
-	using VariantValue<TypeIds::NumReserved, Ptr<Object>>::storage_type;
-	using VariantValue<TypeIds::NumReserved, Ptr<Object>>::value;
-
-	auto Get() const noexcept { return v_? v_->Get<type>() : cv_->Get<type>(); }
-
-	void Set(type val) noexcept { v_->Assign(std::move(val), value); }
-
-	constexpr auto &Ref() const noexcept { return v_->object; }
-	constexpr auto const &CRef() const noexcept { return cv_? cv_->object : v_->object; }
-
-	constexpr operator Variant &() noexcept { return *v_; }
-	constexpr operator Variant const &() noexcept { return cv_? *cv_ : *v_; }
-
-	template<class F, class... Args> static constexpr decltype(auto) Invoke(F &&f, Args &&...args) {
-		return value_util::Invoke(std::forward<F>(f), DefaultVariantView(std::forward<Args>(args))...);
-	}
+  template <class Var>
+  static constexpr void Reference(Var &&) noexcept
+  {}
 };
 
-template<TypeId id> using TypeIdCase = VariantView<IdToType<id>>;
+template <>
+struct IdToType<TypeIds::Bool> : VariantValue<TypeIds::Bool, bool, uint8_t>
+{
+  template <class Var>
+  static constexpr auto &Reference(Var &v) noexcept
+  {
+    return v.primitive.ui8;
+  }
+};
 
-template<TypeId... ids> using TypeIdCases = pack::Pack<TypeIdCase<ids>...>;
+template <>
+struct IdToType<TypeIds::Int8> : VariantValue<TypeIds::Int8, int8_t>
+{
+  template <class Var>
+  static constexpr auto &Reference(Var &v) noexcept
+  {
+    return v.primitive.i8;
+  }
+};
+
+template <>
+struct IdToType<TypeIds::UInt8> : VariantValue<TypeIds::UInt8, uint8_t>
+{
+  template <class Var>
+  static constexpr auto &Reference(Var &v) noexcept
+  {
+    return v.primitive.ui8;
+  }
+};
+
+template <>
+struct IdToType<TypeIds::Int16> : VariantValue<TypeIds::Int16, int16_t>
+{
+  template <class Var>
+  static constexpr auto &Reference(Var &v) noexcept
+  {
+    return v.primitive.i16;
+  }
+};
+
+template <>
+struct IdToType<TypeIds::UInt16> : VariantValue<TypeIds::UInt16, uint16_t>
+{
+  template <class Var>
+  static constexpr auto &Reference(Var &v) noexcept
+  {
+    return v.primitive.ui16;
+  }
+};
+
+template <>
+struct IdToType<TypeIds::Int32> : VariantValue<TypeIds::Int32, int32_t>
+{
+  template <class Var>
+  static constexpr auto &Reference(Var &v) noexcept
+  {
+    return v.primitive.i32;
+  }
+};
+
+template <>
+struct IdToType<TypeIds::UInt32> : VariantValue<TypeIds::UInt32, uint32_t>
+{
+  template <class Var>
+  static constexpr auto &Reference(Var &v) noexcept
+  {
+    return v.primitive.ui32;
+  }
+};
+
+template <>
+struct IdToType<TypeIds::Int64> : VariantValue<TypeIds::Int64, int64_t>
+{
+  template <class Var>
+  static constexpr auto &Reference(Var &v) noexcept
+  {
+    return v.primitive.i64;
+  }
+};
+
+template <>
+struct IdToType<TypeIds::UInt64> : VariantValue<TypeIds::UInt64, uint64_t>
+{
+  template <class Var>
+  static constexpr auto &Reference(Var &v) noexcept
+  {
+    return v.primitive.ui64;
+  }
+};
+
+template <>
+struct IdToType<TypeIds::Float32> : VariantValue<TypeIds::Float32, float>
+{
+  template <class Var>
+  static constexpr auto &Reference(Var &v) noexcept
+  {
+    return v.primitive.f32;
+  }
+};
+
+template <>
+struct IdToType<TypeIds::Float64> : VariantValue<TypeIds::Float64, double>
+{
+  template <class Var>
+  static constexpr auto &Reference(Var &v) noexcept
+  {
+    return v.primitive.f64;
+  }
+};
+
+template <>
+struct IdToType<TypeIds::Fixed32> : VariantValue<TypeIds::Fixed32, fixed_point::fp32_t>
+{
+  static fixed_point::fp32_t &Reference(Variant &v) noexcept
+  {
+    return *reinterpret_cast<fixed_point::fp32_t *>(&v);
+  }
+  static fixed_point::fp32_t const &Reference(Variant const &v) noexcept
+  {
+    return *reinterpret_cast<fixed_point::fp32_t const *>(&v);
+  }
+};
+
+template <>
+struct IdToType<TypeIds::Fixed64> : VariantValue<TypeIds::Fixed64, fixed_point::fp64_t>
+{
+  static fixed_point::fp64_t &Reference(Variant &v) noexcept
+  {
+    return *reinterpret_cast<fixed_point::fp64_t *>(&v);
+  }
+  static fixed_point::fp64_t const &Reference(Variant const &v) noexcept
+  {
+    return *reinterpret_cast<fixed_point::fp64_t const *>(&v);
+  }
+};
+
+template <>
+struct IdToType<TypeIds::String> : VariantValue<TypeIds::String, Ptr<String>>
+{
+  template <class Var>
+  static constexpr auto &Reference(Var &v) noexcept
+  {
+    return v.object;
+  }
+};
+
+template <>
+struct IdToType<TypeIds::Address> : VariantValue<TypeIds::Address, Ptr<Address>>
+{
+  template <class Var>
+  static constexpr auto &Reference(Var &v) noexcept
+  {
+    return v.object;
+  }
+};
+
+template <class IdToType, bool = IsPrimitive<typename IdToType::type>::value>
+class VariantView
+  : public IdToType  // parent defines value, type, storage_type and Reference(Variant &)
+{
+  Variant *      v_  = nullptr;
+  Variant const *cv_ = nullptr;
+
+  constexpr VariantView(Variant &v) noexcept
+    : v_(&v)
+  {}
+  constexpr VariantView(Variant const &cv) noexcept
+    : cv_(&cv)
+  {}
+  using IdToType::Reference;
+
+public:
+  using typename IdToType::type;
+  using typename IdToType::storage_type;
+  using IdToType::value;
+
+  constexpr auto Get() const noexcept
+  {
+    return v_->Get<type>();
+  }
+
+  constexpr void Set(type val) noexcept
+  {
+    v_->Assign(val, value);
+  }
+
+  constexpr auto &Ref() const noexcept
+  {
+    return Reference(*v_);
+  }
+  constexpr auto const &CRef() const noexcept
+  {
+    return cv_ ? Reference(*cv_) : Reference(const_cast<Variant const &>(*v_));
+  }
+
+  constexpr operator Variant &() noexcept
+  {
+    return *v_;
+  }
+  constexpr operator Variant const &() noexcept
+  {
+    return cv_ ? *cv_ : *v_;
+  }
+
+  template <class F, class... Args>
+  static constexpr decltype(auto) Invoke(F &&f, Args &&... args)
+  {
+    return value_util::Invoke(std::forward<F>(f), VariantView(std::forward<Args>(args))...);
+  }
+};
+
+template <class IdToType>
+class VariantView<IdToType, false>
+  : public IdToType  // parent defines value, type, storage_type and Ref()
+{
+  Variant *      v_  = nullptr;
+  Variant const *cv_ = nullptr;
+
+  constexpr VariantView(Variant &v) noexcept
+    : v_(&v)
+  {}
+  constexpr VariantView(Variant const &cv) noexcept
+    : cv_(&cv)
+  {}
+  using IdToType::Reference;
+
+public:
+  using typename IdToType::type;
+  using typename IdToType::storage_type;
+  using IdToType::value;
+
+  constexpr auto Get() const noexcept
+  {
+    return v_->Get<type>();
+  }
+
+  constexpr void Set(type val) noexcept
+  {
+    v_->Assign(std::move(val), value);
+  }
+
+  constexpr auto &Ref() const noexcept
+  {
+    return Reference(*v_);
+  }
+  constexpr auto const &CRef() const noexcept
+  {
+    return cv_ ? Reference(*cv_) : Reference(const_cast<Variant const &>(*v_));
+  }
+
+  constexpr operator Variant &() noexcept
+  {
+    return *v_;
+  }
+  constexpr operator Variant const &() noexcept
+  {
+    return cv_ ? *cv_ : *v_;
+  }
+
+  template <class F, class... Args>
+  static constexpr decltype(auto) Invoke(F &&f, Args &&... args)
+  {
+    return value_util::Invoke(std::forward<F>(f), VariantView(std::forward<Args>(args))...);
+  }
+};
+
+template <>
+class VariantView<IdToType<TypeIds::Null>, false>
+  : public IdToType<TypeIds::Null>  // parent defines value, type and storage_type
+{
+  Variant *      v_  = nullptr;
+  Variant const *cv_ = nullptr;
+
+  constexpr VariantView(Variant &v) noexcept
+    : v_(&v)
+  {}
+  constexpr VariantView(Variant const &cv) noexcept
+    : cv_(&cv)
+  {}
+
+public:
+  using typename IdToType::type;
+  using typename IdToType::storage_type;
+  using IdToType::value;
+
+  constexpr auto Get() const noexcept
+  {
+    return nullptr;
+  }
+
+  constexpr void Set(type) noexcept
+  {}
+
+  constexpr operator Variant &() noexcept
+  {
+    return *v_;
+  }
+  constexpr operator Variant const &() noexcept
+  {
+    return cv_ ? *cv_ : *v_;
+  }
+
+  template <class F, class... Args>
+  static constexpr decltype(auto) Invoke(F &&f, Args &&... args)
+  {
+    return value_util::Invoke(std::forward<F>(f), VariantView(std::forward<Args>(args))...);
+  }
+};
+
+class DefaultVariantView : public VariantValue<TypeIds::NumReserved, Ptr<Object>>
+{
+  Variant *      v_  = nullptr;
+  Variant const *cv_ = nullptr;
+
+  constexpr DefaultVariantView(Variant &v) noexcept
+    : v_(&v)
+  {}
+  constexpr DefaultVariantView(Variant const &v) noexcept
+    : cv_(&v)
+  {}
+
+public:
+  using VariantValue<TypeIds::NumReserved, Ptr<Object>>::type;
+  using VariantValue<TypeIds::NumReserved, Ptr<Object>>::storage_type;
+  using VariantValue<TypeIds::NumReserved, Ptr<Object>>::value;
+
+  auto Get() const noexcept
+  {
+    return v_ ? v_->Get<type>() : cv_->Get<type>();
+  }
+
+  void Set(type val) noexcept
+  {
+    v_->Assign(std::move(val), value);
+  }
+
+  constexpr auto &Ref() const noexcept
+  {
+    return v_->object;
+  }
+  constexpr auto const &CRef() const noexcept
+  {
+    return cv_ ? cv_->object : v_->object;
+  }
+
+  constexpr operator Variant &() noexcept
+  {
+    return *v_;
+  }
+  constexpr operator Variant const &() noexcept
+  {
+    return cv_ ? *cv_ : *v_;
+  }
+
+  template <class F, class... Args>
+  static constexpr decltype(auto) Invoke(F &&f, Args &&... args)
+  {
+    return value_util::Invoke(std::forward<F>(f), DefaultVariantView(std::forward<Args>(args))...);
+  }
+};
+
+template <TypeId id>
+using TypeIdCase = VariantView<IdToType<id>>;
+
+template <TypeId... ids>
+using TypeIdCases = pack::Pack<TypeIdCase<ids>...>;
 
 using DefaultObjectCase = type_util::DefaultCase<DefaultVariantView>;
 
-using UnsignedIntegerTypes = TypeIdCases<TypeIds::UInt8, TypeIds::UInt16, TypeIds::UInt32, TypeIds::UInt64>;
-using SignedIntegerTypes = TypeIdCases<TypeIds::Int8, TypeIds::Int16, TypeIds::Int32, TypeIds::Int64>;
+using UnsignedIntegerTypes =
+    TypeIdCases<TypeIds::UInt8, TypeIds::UInt16, TypeIds::UInt32, TypeIds::UInt64>;
+using SignedIntegerTypes =
+    TypeIdCases<TypeIds::Int8, TypeIds::Int16, TypeIds::Int32, TypeIds::Int64>;
 using FloatingPointTypes = TypeIdCases<TypeIds::Float32, TypeIds::Float64>;
-using FixedPointTypes = TypeIdCases<TypeIds::Fixed32, TypeIds::Fixed64>;
+using FixedPointTypes    = TypeIdCases<TypeIds::Fixed32, TypeIds::Fixed64>;
 
 using IntegralTypes = pack::ConcatT<UnsignedIntegerTypes, SignedIntegerTypes>;
 
@@ -779,18 +953,40 @@ using BuiltinTypes = pack::ConcatT<ScalarTypes, TypeIdCases<TypeIds::String, Typ
 
 using NonInstantiatableTypes = TypeIdCases<TypeIds::Null, TypeIds::Void>;
 
-template<class... Cases, class F, class... Variants> constexpr auto ApplyFunctor(TypeId type_id, F &&f, Variants &&...variants)
+template <class... Cases, class F, class... Variants>
+constexpr auto ApplyFunctor(TypeId type_id, F &&f, Variants &&... variants)
 {
-	return type_util::Switch<Cases...>::Invoke(type_id, std::forward<F>(f), std::forward<Variants>(variants)...);
+  return type_util::Switch<Cases...>::Invoke(type_id, std::forward<F>(f),
+                                             std::forward<Variants>(variants)...);
 }
 
-template<class F, class... Variants> constexpr auto ApplyIntegralFunctor(TypeId type_id, F &&f, Variants &&...variants) { return ApplyFunctor<IntegralTypes>(type_id, std::forward<F>(f), std::forward<Variants>(variants)...); }
+template <class F, class... Variants>
+constexpr auto ApplyIntegralFunctor(TypeId type_id, F &&f, Variants &&... variants)
+{
+  return ApplyFunctor<IntegralTypes>(type_id, std::forward<F>(f),
+                                     std::forward<Variants>(variants)...);
+}
 
-template<class F, class... Variants> constexpr auto ApplyNumericFunctor(TypeId type_id, F &&f, Variants &&...variants) { return ApplyFunctor<NumericTypes>(type_id, std::forward<F>(f), std::forward<Variants>(variants)...); }
+template <class F, class... Variants>
+constexpr auto ApplyNumericFunctor(TypeId type_id, F &&f, Variants &&... variants)
+{
+  return ApplyFunctor<NumericTypes>(type_id, std::forward<F>(f),
+                                    std::forward<Variants>(variants)...);
+}
 
-template<class F, class... Variants> constexpr auto ApplyScalarFunctor(TypeId type_id, F &&f, Variants &&...variants) { return ApplyFunctor<ScalarTypes>(type_id, std::forward<F>(f), std::forward<Variants>(variants)...); }
+template <class F, class... Variants>
+constexpr auto ApplyScalarFunctor(TypeId type_id, F &&f, Variants &&... variants)
+{
+  return ApplyFunctor<ScalarTypes>(type_id, std::forward<F>(f),
+                                   std::forward<Variants>(variants)...);
+}
 
-template<class F, class... Variants> constexpr auto ApplyBuiltinFunctor(TypeId type_id, F &&f, Variants &&...variants) { return ApplyFunctor<BuiltinTypes>(type_id, std::forward<F>(f), std::forward<Variants>(variants)...); }
+template <class F, class... Variants>
+constexpr auto ApplyBuiltinFunctor(TypeId type_id, F &&f, Variants &&... variants)
+{
+  return ApplyFunctor<BuiltinTypes>(type_id, std::forward<F>(f),
+                                    std::forward<Variants>(variants)...);
+}
 
 }  // namespace vm
 }  // namespace fetch

@@ -164,10 +164,6 @@ TEST(TypeUtilTests, ScalarUtils)
                  void);
   ASSERT_TYPE_EQ(fetch::type_util::InvokeResultT<decltype(&g), char, int, NonConstructible>, int);
 
-  ASSERT_TYPE_EQ(
-      fetch::type_util::LiftIntegerSequenceT<std::index_sequence<0, 3, 42>>,
-      fetch::pack::Pack<std::index_sequence<0>, std::index_sequence<3>, std::index_sequence<42>>);
-
   ASSERT_TYPE_EQ(fetch::type_util::CopyReferenceKindT<int, char>, char);
   ASSERT_TYPE_EQ(fetch::type_util::CopyReferenceKindT<int &, char>, char &);
   ASSERT_TYPE_EQ(fetch::type_util::CopyReferenceKindT<int &&, char>, char &&);

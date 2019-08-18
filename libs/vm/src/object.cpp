@@ -52,14 +52,13 @@ TypeInfo const &Object::GetTypeInfo(TypeId type_id)
 
 bool Object::GetNonNegativeInteger(Variant const &v, std::size_t &index)
 {
-  return ApplyIntegralFunctor(
-	  v.type_id,
-	  [&index](auto &&i) {
-		  auto ret_val = i.Get();
-		  index = std::size_t(ret_val);
-		  return ret_val >= 0;
-	  },
-	  v);
+  return ApplyIntegralFunctor(v.type_id,
+                              [&index](auto &&i) {
+                                auto ret_val = i.Get();
+                                index        = std::size_t(ret_val);
+                                return ret_val >= 0;
+                              },
+                              v);
 }
 
 std::size_t Object::GetHashCode()

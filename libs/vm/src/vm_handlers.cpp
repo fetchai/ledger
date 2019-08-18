@@ -255,33 +255,32 @@ void VM::Handler__ForRangeIterate()
   ForRangeLoop &loop     = range_loop_stack_[range_loop_sp_];
   Variant &     variable = GetVariable(loop.variable_index);
   bool          finished = true;
-  Variant loop_current(loop.current, variable.type_id);
-  Variant loop_target(loop.target, variable.type_id);
+  Variant       loop_current(loop.current, variable.type_id);
+  Variant       loop_target(loop.target, variable.type_id);
 
   if (instruction_->data == 2)
   {
-    ApplyIntegralFunctor(
-	    variable.type_id,
-	    [&finished](auto &&v, auto &&current, auto const &target) {
-		    v.Ref() = current.Ref()++;
-		    finished = v.Get() >= target.Get();
-	    },
-	    variable, loop_current, loop_target);
+    ApplyIntegralFunctor(variable.type_id,
+                         [&finished](auto &&v, auto &&current, auto const &target) {
+                           v.Ref()  = current.Ref()++;
+                           finished = v.Get() >= target.Get();
+                         },
+                         variable, loop_current, loop_target);
   }
   else
   {
     Variant loop_delta(loop.delta, variable.type_id);
     ApplyIntegralFunctor(
-	    variable.type_id,
-	    [&finished](auto &&v, auto &&current, auto const &target, auto const &delta) {
-		    using type = typename std::decay_t<decltype(current)>::type;
+        variable.type_id,
+        [&finished](auto &&v, auto &&current, auto const &target, auto const &delta) {
+          using type = typename std::decay_t<decltype(current)>::type;
 
-		    v.Ref() = current.Get();
-		    // TODO(bipll): this statement needs to be made UB-free
-		    current.Ref() = type(current.Get() + delta.Get());
-		    finished = v.Get() >= target.Get();
-	    },
-	    variable, loop_current, loop_target, loop_delta);
+          v.Ref() = current.Get();
+          // TODO(bipll): this statement needs to be made UB-free
+          current.Ref() = type(current.Get() + delta.Get());
+          finished      = v.Get() >= target.Get();
+        },
+        variable, loop_current, loop_target, loop_delta);
   }
   loop.current = loop_current.primitive;
 

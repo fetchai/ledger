@@ -287,22 +287,19 @@ private:
 template <typename Key, template <typename, typename> class Container = Map>
 inline Ptr<IMap> inner(TypeId value_type_id, VM *vm, TypeId type_id)
 {
-  return ApplyFunctor<ScalarTypes, DefaultObjectCase>(
-	  value_type_id,
-	  [vm, type_id](auto cs) {
-		  using Case = typename decltype(cs)::type;
-		  return Ptr<IMap>(new Container<Key, typename Case::storage_type>(vm, type_id));
-	  });
+  return ApplyFunctor<ScalarTypes, DefaultObjectCase>(value_type_id, [vm, type_id](auto cs) {
+    using Case = typename decltype(cs)::type;
+    return Ptr<IMap>(new Container<Key, typename Case::storage_type>(vm, type_id));
+  });
 }
 
 inline Ptr<IMap> outer(TypeId key_type_id, TypeId value_type_id, VM *vm, TypeId type_id)
 {
   return ApplyFunctor<ScalarTypes, DefaultObjectCase>(
-	  key_type_id,
-	  [value_type_id, vm, type_id](auto cs) {
-		  using Case = typename decltype(cs)::type;
-		  return inner<typename Case::storage_type>(value_type_id, vm, type_id);
-	  });
+      key_type_id, [value_type_id, vm, type_id](auto cs) {
+        using Case = typename decltype(cs)::type;
+        return inner<typename Case::storage_type>(value_type_id, vm, type_id);
+      });
 }
 
 inline Ptr<IMap> IMap::Constructor(VM *vm, TypeId type_id)

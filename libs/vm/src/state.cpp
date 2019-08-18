@@ -320,11 +320,10 @@ Ptr<IState> IState::ConstructIntrinsic(VM *vm, TypeId type_id, TypeId template_p
                                        Ptr<String> const &name)
 {
   return ApplyFunctor<BuiltinTypes, DefaultObjectCase>(
-	  template_param_type_id,
-	  [vm, type_id, template_param_type_id, &name](auto cs)->Ptr<IState> {
-		  using Case = typename decltype(cs)::type;
-		  return new State<typename Case::type>(vm, type_id, template_param_type_id, name);
-	  });
+      template_param_type_id, [vm, type_id, template_param_type_id, &name](auto cs) -> Ptr<IState> {
+        using Case = typename decltype(cs)::type;
+        return new State<typename Case::type>(vm, type_id, template_param_type_id, name);
+      });
 }
 
 }  // namespace vm

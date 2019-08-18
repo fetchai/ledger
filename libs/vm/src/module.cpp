@@ -34,14 +34,9 @@ template <typename To>
 To Cast(Variant const &from)
 {
   // Check if its a primitive
-  assert(ApplyScalarFunctor(from.type_id, []{ return true; }));
+  assert(ApplyScalarFunctor(from.type_id, [] { return true; }));
 
-  return ApplyScalarFunctor(
-	  from.type_id,
-	  [](auto &&v) {
-		  return static_cast<To>(v.CRef());
-	  },
-	  from);
+  return ApplyScalarFunctor(from.type_id, [](auto &&v) { return static_cast<To>(v.CRef()); }, from);
 }
 
 int8_t toInt8(VM * /* vm */, AnyPrimitive const &from)

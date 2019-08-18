@@ -1854,12 +1854,8 @@ bool Generator::ConstantComparator::operator()(Variant const &lhs, Variant const
   {
     return false;
   }
-  return ApplyNumericFunctor(
-	  lhs.type_id,
-	  [](auto &&l, auto &&r) {
-		  return l.Get() < r.Get();
-	  },
-	  lhs, rhs);
+  return ApplyNumericFunctor(lhs.type_id, [](auto &&l, auto &&r) { return l.Get() < r.Get(); }, lhs,
+                             rhs);
 }
 
 }  // namespace vm

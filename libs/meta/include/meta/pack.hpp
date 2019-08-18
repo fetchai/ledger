@@ -145,22 +145,32 @@ static constexpr auto NotV = Not<B>::value;
  * @param T an arbitrary type
  * @return wrapped T when condition is true
  */
-template<bool condition, class T> struct Assert;
+template <bool condition, class T>
+struct Assert;
 
-template<bool condition, class T> using AssertT = typename Assert<condition, T>::type;
+template <bool condition, class T>
+using AssertT = typename Assert<condition, T>::type;
 
-template<class T> struct Assert<true, T>: Type<T> {};
+template <class T>
+struct Assert<true, T> : Type<T>
+{
+};
 
 /**
  * @param Condition an arbitrary bool-valued type
  * @param T an arbitrary type
  * @return wrapped T when Condition is a true type
  */
-template <class...> struct When;
+template <class...>
+struct When;
 
-template<class... Args> using WhenT = typename When<Args...>::type;
+template <class... Args>
+using WhenT = typename When<Args...>::type;
 
-template<class Cond, class T> struct When<Cond, T>: Assert<Cond::value, T> {};
+template <class Cond, class T>
+struct When<Cond, T> : Assert<Cond::value, T>
+{
+};
 
 // The fundamental typelist definition.
 template <class... Ts>
@@ -204,8 +214,12 @@ struct Cons<Car, Pack<Cdr...>> : Type<Pack<Car, Cdr...>>
  */
 namespace detail_ {
 
-struct Yes {};
-struct No {};
+struct Yes
+{
+};
+struct No
+{
+};
 
 template <class Arg>
 constexpr decltype((std::declval<std::add_pointer_t<typename std::decay_t<Arg>::type>>(), Yes{}))
@@ -215,9 +229,11 @@ constexpr No HasType(...) noexcept;
 
 }  // namespace detail_
 
-template <class Arg> using HasMemberType = std::is_same<decltype(detail_::HasType(std::declval<Arg>())), detail_::Yes>;
+template <class Arg>
+using HasMemberType = std::is_same<decltype(detail_::HasType(std::declval<Arg>())), detail_::Yes>;
 
-template<class Arg> static constexpr auto HasMemberTypeV = HasMemberType<Arg>::value;
+template <class Arg>
+static constexpr auto HasMemberTypeV = HasMemberType<Arg>::value;
 
 /**
  * Extract argument's member type type and wrap it back in a struct.
@@ -227,7 +243,7 @@ template<class Arg> static constexpr auto HasMemberTypeV = HasMemberType<Arg>::v
  * struct otherwise
  */
 template <class Arg, bool = HasMemberTypeV<Arg>>
-struct MemberType: Type<typename Arg::type>
+struct MemberType : Type<typename Arg::type>
 {
 };
 
@@ -297,7 +313,9 @@ template <template <class...> class F, class Args>
 static constexpr auto ApplyV = ApplyT<F, Args>::value;
 
 template <template <class...> class F, class... Args>
-struct Apply<F, Pack<Args...>>: Type<F<Args...>> {};
+struct Apply<F, Pack<Args...>> : Type<F<Args...>>
+{
+};
 
 /**
  * Function composition.
@@ -542,7 +560,8 @@ using RightHalfT = typename RightHalf<P>::type;
  * @return P's element at Index
  */
 template <class Index, class P>
-struct TupleElement : AssertT<(TupleSizeV<P> > Index::value), TupleElement<SizeConstant<Index::value>, P>>
+struct TupleElement
+  : AssertT<(TupleSizeV<P>> Index::value), TupleElement<SizeConstant<Index::value>, P>>
 {
 };
 
@@ -550,8 +569,7 @@ template <class Index, class P>
 using TupleElementT = typename TupleElement<Index, P>::type;
 
 template <std::size_t i, class P>
-struct TupleElement<SizeConstant<i>, P>
-  : TupleElement<SizeConstant<0>, DropT<SizeConstant<i>, P>>
+struct TupleElement<SizeConstant<i>, P> : TupleElement<SizeConstant<0>, DropT<SizeConstant<i>, P>>
 {
 };
 
@@ -663,7 +681,10 @@ template <template <class...> class F, class Pack>
 static constexpr auto ReverseAccumulateV = ReverseAccumulateT<F, Pack>::value;
 
 template <template <class...> class F, class Car, class Cadr, class... Cddr>
-struct ReverseAccumulate<F, Pack<Car, Cadr, Cddr...>> : Type<F<Car, ReverseAccumulateT<F, Pack<Cadr, Cddr...>>>> {};
+struct ReverseAccumulate<F, Pack<Car, Cadr, Cddr...>>
+  : Type<F<Car, ReverseAccumulateT<F, Pack<Cadr, Cddr...>>>>
+{
+};
 
 template <template <class...> class F, class Last>
 struct ReverseAccumulate<F, Pack<Last>> : Type<Last>
@@ -860,7 +881,8 @@ static constexpr auto IsInvocableV = IsInvocable<F, P>::value;
 
 template <class F, class... Args>
 struct IsInvocable<F, Pack<Args...>>
-  : std::is_same<decltype(detail_::Invocable(std::declval<F>(), std::declval<Args>()...)), detail_::Yes>
+  : std::is_same<decltype(detail_::Invocable(std::declval<F>(), std::declval<Args>()...)),
+                 detail_::Yes>
 {
 };
 
@@ -880,8 +902,7 @@ template <class F, class P>
 using InvokeResultT = typename InvokeResult<F, P>::type;
 
 template <class F, class... Args>
-struct InvokeResult<F, Pack<Args...>>
-  : Type<decltype(std::declval<F>()(std::declval<Args>()...))>
+struct InvokeResult<F, Pack<Args...>> : Type<decltype(std::declval<F>()(std::declval<Args>()...))>
 {
 };
 

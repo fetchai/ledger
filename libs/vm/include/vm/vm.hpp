@@ -1012,60 +1012,41 @@ private:
   template <typename Op>
   void ExecutePrimitiveRelationalOp(TypeId type_id, Variant &lhsv, Variant &rhsv)
   {
-    ApplyScalarFunctor(
-	    type_id,
-	    [](auto &&left, auto &&right) {
-		    Op::Apply(left, left.Get(), right.Get());
-	    },
-	    lhsv, rhsv);
+    ApplyScalarFunctor(type_id,
+                       [](auto &&left, auto &&right) { Op::Apply(left, left.Get(), right.Get()); },
+                       lhsv, rhsv);
   }
 
   template <typename Op>
   void ExecuteIntegralOp(TypeId type_id, Variant &lhsv, Variant &rhsv)
   {
-    ApplyIntegralFunctor(
-	    type_id, 
-	    [this](auto &&l, auto &&r) {
-		    Op::Apply(this, l.Ref(), r.Ref());
-	    },
-	    lhsv, rhsv);
+    ApplyIntegralFunctor(type_id, [this](auto &&l, auto &&r) { Op::Apply(this, l.Ref(), r.Ref()); },
+                         lhsv, rhsv);
   }
 
   template <typename Op>
   void ExecuteNumericOp(TypeId type_id, Variant &lhsv, Variant &rhsv)
   {
-	  ApplyNumericFunctor(
-		  type_id,
-		  [this](auto &&l, auto &&r) {
-			  Op::Apply(this, l.Ref(), r.Ref());
-		  },
-		  lhsv, rhsv);
+    ApplyNumericFunctor(type_id, [this](auto &&l, auto &&r) { Op::Apply(this, l.Ref(), r.Ref()); },
+                        lhsv, rhsv);
   }
 
   template <typename Op>
   void ExecuteIntegralInplaceOp(TypeId type_id, void *lhs, Variant &rhsv)
   {
-	  Variant lhsv(*static_cast<Primitive *>(lhs), type_id);
-	  ApplyIntegralFunctor(
-		  type_id,
-		  [this](auto &&l, auto &&r) {
-			  Op::Apply(this, l.Ref(), r.Ref());
-		  },
-		  lhsv, rhsv);
-	  *static_cast<Primitive *>(lhs) = lhsv.primitive;
+    Variant lhsv(*static_cast<Primitive *>(lhs), type_id);
+    ApplyIntegralFunctor(type_id, [this](auto &&l, auto &&r) { Op::Apply(this, l.Ref(), r.Ref()); },
+                         lhsv, rhsv);
+    *static_cast<Primitive *>(lhs) = lhsv.primitive;
   }
 
   template <typename Op>
   void ExecuteNumericInplaceOp(TypeId type_id, void *lhs, Variant &rhsv)
   {
-	  Variant lhsv(*static_cast<Primitive *>(lhs), type_id);
-	  ApplyNumericFunctor(
-		  type_id,
-		  [this](auto &&l, auto &&r) {
-			  Op::Apply(this, l.Ref(), r.Ref());
-		  },
-		  lhsv, rhsv);
-	  *static_cast<Primitive *>(lhs) = lhsv.primitive;
+    Variant lhsv(*static_cast<Primitive *>(lhs), type_id);
+    ApplyNumericFunctor(type_id, [this](auto &&l, auto &&r) { Op::Apply(this, l.Ref(), r.Ref()); },
+                        lhsv, rhsv);
+    *static_cast<Primitive *>(lhs) = lhsv.primitive;
   }
 
   template <typename Op>

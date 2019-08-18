@@ -254,7 +254,8 @@ static constexpr auto IsAnyOfV = IsAnyOf<T, Ts...>::value;
 template <class T, template <class...> class... Predicates>
 using Satisfies = Conjunction<Predicates<T>...>;
 
-template<class T, template <class...> class... Predicates> using SatisfiesT = typename Satisfies<T, Predicates...>::type;
+template <class T, template <class...> class... Predicates>
+using SatisfiesT = typename Satisfies<T, Predicates...>::type;
 
 template <class T, template <class...> class... Predicates>
 static constexpr bool SatisfiesV = SatisfiesT<T, Predicates...>::value;
