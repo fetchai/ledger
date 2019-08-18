@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "vectorise/uint/uint.hpp"
 #include "vm/module.hpp"

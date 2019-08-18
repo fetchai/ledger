@@ -16,11 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/block.hpp"
-
 #include "core/serializers/main_serializer.hpp"
 #include "crypto/merkle_tree.hpp"
 #include "crypto/sha256.hpp"
+#include "ledger/chain/block.hpp"
 #include "ledger/chain/constants.hpp"
 
 #include <cstddef>
@@ -29,6 +28,10 @@
 
 namespace fetch {
 namespace ledger {
+
+Block::Block()
+  : first_seen_timestamp{static_cast<uint64_t>(std::time(nullptr))}
+{}
 
 /**
  * Get the number of transactions present in the block

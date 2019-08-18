@@ -57,7 +57,7 @@ protected:
   void SetUp() override
   {
     mock_ = std::make_unique<Mock>();
-    pool_ = MakeThreadPool(GetParam());
+    pool_ = MakeThreadPool(GetParam(), "test_thread_pool_name");
     pool_->Start();
   }
 

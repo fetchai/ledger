@@ -55,19 +55,6 @@ namespace ledger {
 namespace {
 
 /**
- * Compute the digest for the contract source
- *
- * @param source Reference to the contract source
- * @return The calculated digest of the source
- */
-ConstByteArray GenerateDigest(std::string const &source)
-{
-  fetch::crypto::SHA256 hash;
-  hash.Update(source);
-  return hash.Final();
-}
-
-/**
  * Validate any addresses in the params list against the TX given
  *
  * @param: tx the transaction triggering the smart contract
@@ -105,7 +92,7 @@ void ValidateAddressesInParams(Transaction const &tx, vm::ParameterPack const &p
  */
 SmartContract::SmartContract(std::string const &source)
   : source_{source}
-  , digest_{GenerateDigest(source)}
+  , digest_{fetch::crypto::Hash<fetch::crypto::SHA256>(ConstByteArray(source))}
   , executable_{std::make_shared<Executable>()}
   , module_{VMFactory::GetModule(VMFactory::USE_SMART_CONTRACTS)}
 {
@@ -117,7 +104,8 @@ SmartContract::SmartContract(std::string const &source)
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Constructing contract: 0x", contract_digest().ToHex());
 
-  module_->CreateFreeFunction("getBlockNumber", [this](vm::VM *) { return block_index_; });
+  module_->CreateFreeFunction("getBlockNumber",
+                              [this](vm::VM *) -> BlockIndex { return block_index_; });
 
   // create and compile the executable
   auto errors = vm_modules::VMFactory::Compile(module_, source_, *executable_);
@@ -174,7 +162,6 @@ SmartContract::SmartContract(std::string const &source)
       FETCH_LOG_DEBUG(LOGGING_NAME, "Invalid function decorator found");
       throw SmartContractException(SmartContractException::Category::COMPILATION,
                                    {"Invalid decorator found in contract"});
-      break;
     }
   }
 }
@@ -441,6 +428,11 @@ Contract::Result SmartContract::InvokeAction(std::string const &name, Transactio
 
   // Get clean VM instance
   auto vm = std::make_unique<vm::VM>(module_.get());
+
+  // TODO(WK) inject charge limit
+  // vm->SetChargeLimit(123);
+  // vm->UpdateCharges({});
+
   vm->SetIOObserver(state());
 
   // lookup the function / entry point which will be executed
@@ -510,6 +502,11 @@ Contract::Result SmartContract::InvokeInit(Address const &owner)
 {
   // Get clean VM instance
   auto vm = std::make_unique<vm::VM>(module_.get());
+
+  // TODO(WK) inject charge limit
+  // vm->SetChargeLimit(123);
+  // vm->UpdateCharges({});
+
   vm->SetIOObserver(state());
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Running SC init function: ", init_fn_name_);

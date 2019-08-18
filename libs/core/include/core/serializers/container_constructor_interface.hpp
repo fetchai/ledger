@@ -20,6 +20,7 @@
 namespace fetch {
 namespace serializers {
 namespace interfaces {
+
 template <typename Driver, typename I, uint8_t CF, uint8_t C16, uint8_t C32>
 class ContainerConstructorInterface
 {
@@ -33,7 +34,7 @@ public:
     CODE32     = C32
   };
 
-  ContainerConstructorInterface(Driver &serializer)
+  explicit ContainerConstructorInterface(Driver &serializer)
     : serializer_{serializer}
   {}
 
@@ -52,25 +53,25 @@ public:
       serializer_.Allocate(sizeof(opcode));
       serializer_.WriteBytes(&opcode, sizeof(opcode));
     }
-    else if (count < (1 << 16))
+    else if (count < (1u << 16u))
     {
       opcode = static_cast<uint8_t>(CODE16);
       serializer_.Allocate(sizeof(opcode));
       serializer_.WriteBytes(&opcode, sizeof(opcode));
 
-      uint16_t size = static_cast<uint16_t>(count);
-      size          = platform::ToBigEndian(size);
+      auto size = static_cast<uint16_t>(count);
+      size      = platform::ToBigEndian(size);
       serializer_.Allocate(sizeof(size));
       serializer_.WriteBytes(reinterpret_cast<uint8_t *>(&size), sizeof(size));
     }
-    else if (count < (1ull << 32))
+    else if (count < (1ull << 32u))
     {
       opcode = static_cast<uint8_t>(CODE32);
       serializer_.Allocate(sizeof(opcode));
       serializer_.WriteBytes(&opcode, sizeof(opcode));
 
-      uint32_t size = static_cast<uint32_t>(count);
-      size          = platform::ToBigEndian(size);
+      auto size = static_cast<uint32_t>(count);
+      size      = platform::ToBigEndian(size);
       serializer_.Allocate(sizeof(size));
       serializer_.WriteBytes(reinterpret_cast<uint8_t *>(&size), sizeof(size));
     }

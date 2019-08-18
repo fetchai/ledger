@@ -19,16 +19,19 @@
 
 #include "core/serializers/base_types.hpp"
 
+#include <cstdint>
+
 namespace fetch {
 namespace serializers {
 namespace interfaces {
+
 template <typename Driver>
 class MapInterface
 {
 public:
   MapInterface(Driver &serializer, uint64_t size)
     : serializer_{serializer}
-    , size_{std::move(size)}
+    , size_{size}
   {}
 
   template <typename V>

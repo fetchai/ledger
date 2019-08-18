@@ -31,25 +31,48 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Dropout : public fetch::ml::Ops<T>
+class Dropout : public fetch::ml::ops::Ops<T>
 {
 public:
-  using ArrayType     = T;
-  using DataType      = typename ArrayType::Type;
-  using SizeType      = typename ArrayType::SizeType;
+  using TensorType    = T;
+  using DataType      = typename TensorType::Type;
+  using SizeType      = typename TensorType::SizeType;
   using RNG           = fetch::random::LaggedFibonacciGenerator<>;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SPType        = OpDropoutSaveableParams<TensorType>;
 
   explicit Dropout(DataType const probability, SizeType const &random_seed = 25102015)
     : probability_(probability)
   {
     assert(probability >= 0.0 && probability <= 1.0);
     rng_.Seed(random_seed);
-    drop_values_ = ArrayType{0};
+    drop_values_ = TensorType{0};
   }
+
+  explicit Dropout(SPType const &sp)
+    : Ops<T>(sp)
+  {
+    probability_ = sp.probability;
+    drop_values_ = sp.drop_values;
+    rng_.Seed(sp.random_seed);
+    rng_.SetBuffer(sp.buffer);
+    rng_.SetIndex(sp.index);
+  }
+
   ~Dropout() override = default;
 
-  void Forward(VecTensorType const &inputs, ArrayType &output) override
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
+  {
+    SPType sp{};
+    sp.probability = probability_;
+    sp.drop_values = drop_values_;
+    sp.random_seed = rng_.Seed();
+    sp.buffer      = rng_.GetBuffer();
+    sp.index       = rng_.GetIndex();
+    return std::make_shared<SPType>(sp);
+  }
+
+  void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(inputs.size() == 1);
     assert(output.shape() == this->ComputeOutputShape(inputs));
@@ -62,7 +85,7 @@ public:
     {
       if (drop_values_.shape() != output.shape())
       {
-        drop_values_ = ArrayType(output.shape());
+        drop_values_ = TensorType(output.shape());
       }
 
       auto out_it = output.begin();
@@ -87,8 +110,8 @@ public:
     }
   }
 
-  std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                  ArrayType const &    error_signal) override
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     FETCH_UNUSED(inputs);
     assert(inputs.size() == 1);
@@ -96,7 +119,7 @@ public:
     assert(drop_values_.shape() == inputs.front()->shape());
     assert(this->is_training_);
 
-    ArrayType return_signal{error_signal.shape()};
+    TensorType return_signal{error_signal.shape()};
 
     // gradient of dropout is 1.0/keep_prob for enabled neurons and 0.0 for disabled
     // multiply by error_signal (chain rule)
@@ -111,12 +134,16 @@ public:
     return inputs.front()->shape();
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::OP_DROPOUT;
+  }
   static constexpr char const *DESCRIPTOR = "Dropout";
 
 private:
-  ArrayType drop_values_;
-  DataType  probability_;
-  RNG       rng_;
+  TensorType drop_values_;
+  DataType   probability_;
+  RNG        rng_;
 };
 
 }  // namespace ops

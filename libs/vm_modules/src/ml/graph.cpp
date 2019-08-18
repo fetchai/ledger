@@ -16,12 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/graph.hpp"
+#include "ml/core/graph.hpp"
 #include "ml/layers/convolution_1d.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
+#include "ml/saveparams/saveable_params.hpp"
+#include "ml/utilities/graph_builder.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/math/tensor.hpp"
 #include "vm_modules/ml/graph.hpp"
@@ -55,7 +57,7 @@ void VMGraph::SetInput(VMPtrString const &name, Ptr<VMTensorType> const &input)
 
 Ptr<VMTensorType> VMGraph::Evaluate(VMPtrString const &name)
 {
-  MathTensorType    t   = graph_.Evaluate(name->str);
+  MathTensorType    t   = graph_.ForwardPropagate(name->str);
   Ptr<VMTensorType> ret = this->vm_->CreateNewObject<math::VMTensor>(t.shape());
   (*ret).Copy(t);
   return ret;
@@ -138,6 +140,8 @@ void VMGraph::Bind(Module &module)
 {
   module.CreateClassType<VMGraph>("Graph")
       .CreateConstructor(&VMGraph::Constructor)
+      .CreateSerializeDefaultConstructor(
+          [](VM *vm, TypeId type_id) { return new VMGraph(vm, type_id); })
       .CreateMemberFunction("setInput", &VMGraph::SetInput)
       .CreateMemberFunction("evaluate", &VMGraph::Evaluate)
       .CreateMemberFunction("backPropagate", &VMGraph::BackPropagateError)
@@ -152,6 +156,32 @@ void VMGraph::Bind(Module &module)
       .CreateMemberFunction("addMeanSquareErrorLoss", &VMGraph::AddMeanSquareErrorLoss)
       .CreateMemberFunction("loadStateDict", &VMGraph::LoadStateDict)
       .CreateMemberFunction("stateDict", &VMGraph::StateDict);
+}
+
+VMGraph::GraphType &VMGraph::GetGraph()
+{
+  return graph_;
+}
+
+bool VMGraph::SerializeTo(serializers::MsgPackSerializer &buffer)
+{
+  buffer << graph_.GetGraphSaveableParams();
+  return true;
+}
+
+bool VMGraph::DeserializeFrom(serializers::MsgPackSerializer &buffer)
+{
+  fetch::ml::GraphSaveableParams<fetch::math::Tensor<fetch::vm_modules::math::DataType>> gsp;
+  buffer >> gsp;
+
+  auto vm_graph  = std::make_shared<fetch::vm_modules::ml::VMGraph>(this->vm_, this->type_id_);
+  auto graph_ptr = std::make_shared<fetch::ml::Graph<MathTensorType>>(vm_graph->GetGraph());
+  fetch::ml::utilities::BuildGraph<MathTensorType>(gsp, graph_ptr);
+
+  vm_graph->GetGraph() = *graph_ptr;
+  *this                = *vm_graph;
+
+  return true;
 }
 
 }  // namespace ml

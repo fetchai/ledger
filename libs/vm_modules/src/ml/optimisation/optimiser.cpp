@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/graph.hpp"
+#include "ml/core/graph.hpp"
 #include "ml/optimisation/adagrad_optimiser.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "ml/optimisation/momentum_optimiser.hpp"
@@ -108,7 +108,7 @@ Ptr<VMOptimiser> VMOptimiser::Constructor(VM *vm, TypeId type_id, Ptr<String> co
                                           Ptr<String> const & label_node_name,
                                           Ptr<String> const & output_node_names)
 {
-  return new VMOptimiser(vm, type_id, mode->str, graph->graph_, {input_node_names->str},
+  return new VMOptimiser(vm, type_id, mode->str, graph->GetGraph(), {input_node_names->str},
                          label_node_name->str, output_node_names->str);
 }
 
@@ -122,13 +122,13 @@ VMOptimiser::DataType VMOptimiser::RunData(Ptr<fetch::vm_modules::math::VMTensor
 VMOptimiser::DataType VMOptimiser::RunLoader(Ptr<VMDataLoader> const &loader, uint64_t batch_size,
                                              uint64_t subset_size)
 {
-  return optimiser_->Run(*(loader->loader_), batch_size, subset_size);
+  return optimiser_->Run(*(loader->GetDataLoader()), batch_size, subset_size);
 }
 
 VMOptimiser::DataType VMOptimiser::RunLoaderNoSubset(Ptr<VMDataLoader> const &loader,
                                                      uint64_t                 batch_size)
 {
-  return optimiser_->Run(*(loader->loader_), batch_size);
+  return optimiser_->Run(*(loader->GetDataLoader()), batch_size);
 }
 
 }  // namespace ml

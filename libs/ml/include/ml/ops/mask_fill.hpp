@@ -29,19 +29,34 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class MaskFill : public fetch::ml::Ops<T>
+class MaskFill : public Ops<T>
 {
 public:
-  using ArrayType     = T;
-  using DataType      = typename ArrayType::Type;
-  using SizeType      = typename ArrayType::SizeType;
-  using ArrayPtrType  = std::shared_ptr<ArrayType>;
+  using TensorType    = T;
+  using DataType      = typename TensorType::Type;
+  using SizeType      = typename TensorType::SizeType;
+  using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SPType        = OpMaskFillSaveableParams<TensorType>;
 
   MaskFill(DataType fill_value)
     : fill_value_(fill_value)
   {}
+
+  MaskFill(SPType const &sp)
+    : Ops<T>(sp)
+  {
+    fill_value_ = sp.fill_value;
+  }
+
   ~MaskFill() override = default;
+
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
+  {
+    auto sp        = std::make_shared<SPType>();
+    sp->fill_value = fill_value_;
+    return sp;
+  }
 
   /**
    * based on boolean condition mask, decide if we need to fill the element with fill_value.
@@ -49,13 +64,13 @@ public:
    * array
    * @return
    */
-  void Forward(VecTensorType const &inputs, ArrayType &output) override
+  void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(inputs.size() == 2);
     assert(output.shape() == this->ComputeOutputShape(inputs));
 
     fetch::math::Multiply(*(inputs.at(0)), *(inputs.at(1)), output);
-    ArrayType inv_mask = fetch::math::Subtract(static_cast<DataType>(1), *(inputs.at(0)));
+    TensorType inv_mask = fetch::math::Subtract(static_cast<DataType>(1), *(inputs.at(0)));
     fetch::math::Multiply(inv_mask, fill_value_, inv_mask);
     fetch::math::Add(output, inv_mask, output);
   }
@@ -64,14 +79,14 @@ public:
    * elementwise gradient for second input (the then input) is:
    * error' = mask * error_signal
    */
-  std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                  ArrayType const &    error_signal) override
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     assert(inputs.size() == 2);
     assert(error_signal.size() == inputs.at(1)->size());
 
-    ArrayType return_signal(inputs.at(1)->shape());
-    ArrayType mask_return_signal(inputs.at(0)->shape());
+    TensorType return_signal(inputs.at(1)->shape());
+    TensorType mask_return_signal(inputs.at(0)->shape());
 
     fetch::math::Multiply(*(inputs.front()), error_signal, return_signal);
 

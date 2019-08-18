@@ -30,6 +30,7 @@
 #include <cstdint>
 #include <functional>
 #include <iostream>
+#include <limits>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -481,23 +482,34 @@ public:
     return constructor(this, type_id);
   }
 
+  struct OpcodeInfo
+  {
+    OpcodeInfo() = default;
+
+    OpcodeInfo(std::string name__, Handler handler__, ChargeAmount charge)
+      : name(std::move(name__))
+      , handler(std::move(handler__))
+      , static_charge{charge}
+    {}
+
+    std::string  name;
+    Handler      handler;
+    ChargeAmount static_charge;
+  };
+
+  ChargeAmount GetChargeTotal() const;
+  void         IncreaseChargeTotal(ChargeAmount const amount);
+  ChargeAmount GetChargeLimit() const;
+  void         SetChargeLimit(ChargeAmount limit);
+
+  void UpdateCharges(std::unordered_map<std::string, ChargeAmount> const &);
+
 private:
   static const int FRAME_STACK_SIZE = 50;
   static const int STACK_SIZE       = 5000;
   static const int MAX_LIVE_OBJECTS = 200;
   static const int MAX_RANGE_LOOPS  = 50;
 
-  struct OpcodeInfo
-  {
-    OpcodeInfo() = default;
-    OpcodeInfo(std::string name__, Handler handler__)
-      : name(std::move(name__))
-      , handler(std::move(handler__))
-    {}
-
-    std::string name;
-    Handler     handler;
-  };
   using OpcodeInfoArray = std::vector<OpcodeInfo>;
   using OpcodeMap       = std::unordered_map<std::string, uint16_t>;
 
@@ -531,15 +543,17 @@ private:
   friend struct TypeGetter;
   template <typename T, typename S>
   friend struct ParameterTypeGetter;
-  template <typename ReturnType, typename FreeFunction, typename... Ts>
+  template <typename Estimator, typename ReturnType, typename FreeFunction, typename... Ts>
   friend struct FreeFunctionInvokerHelper;
-  template <typename Type, typename ReturnType, typename MemberFunction, typename... Ts>
+  template <typename Estimator, typename Type, typename ReturnType, typename MemberFunction,
+            typename... Ts>
   friend struct MemberFunctionInvokerHelper;
-  template <typename Type, typename ReturnType, typename Constructor, typename... Ts>
+  template <typename Estimator, typename Type, typename ReturnType, typename Constructor,
+            typename... Ts>
   friend struct ConstructorInvokerHelper;
-  template <typename ReturnType, typename StaticMemberFunction, typename... Ts>
+  template <typename Estimator, typename ReturnType, typename StaticMemberFunction, typename... Ts>
   friend struct StaticMemberFunctionInvokerHelper;
-  template <typename ReturnType, typename Functor, typename... Ts>
+  template <typename Estimator, typename ReturnType, typename Functor, typename... Ts>
   friend struct FunctorInvokerHelper;
 
   TypeInfoArray                  type_info_array_;
@@ -570,10 +584,18 @@ private:
   OutputDeviceMap                output_devices_;
   InputDeviceMap                 input_devices_;
   DeserializeConstructorMap      deserialization_constructors_;
+  OpcodeInfo *                   current_op_{nullptr};
 
-  void AddOpcodeInfo(uint16_t opcode, std::string const &name, Handler const &handler)
+  /// @name Charges
+  /// @{
+  ChargeAmount charge_limit_{std::numeric_limits<ChargeAmount>::max()};
+  ChargeAmount charge_total_{0};
+  /// @}
+
+  void AddOpcodeInfo(uint16_t opcode, std::string const &name, Handler const &handler,
+                     ChargeAmount static_charge = 1)
   {
-    opcode_info_array_[opcode] = OpcodeInfo(name, handler);
+    opcode_info_array_[opcode] = OpcodeInfo(name, handler, static_charge);
   }
 
   bool Execute(std::string &error, Variant &output);
