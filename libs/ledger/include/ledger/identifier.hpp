@@ -37,7 +37,6 @@ class Identifier
 public:
   enum class Type
   {
-    INVALID,
     NORMAL,
     SMART_CONTRACT
   };
@@ -63,7 +62,6 @@ public:
   Identifier GetParent() const;
 
   // Parsing
-  bool Parse(ConstByteArray const &name);
   bool Parse(ConstByteArray &&name);
 
   // Comparison
@@ -82,12 +80,10 @@ public:
 private:
   Identifier(Tokens const &tokens, std::size_t count);
 
-  static char const SEPARATOR;
-
-  bool Tokenise();
+  bool Tokenise(ConstByteArray &&full_name);
   void UpdateType();
 
-  Type           type_{Type::INVALID};
+  Type           type_;
   ConstByteArray full_{};    ///< The fully qualified name
   Tokens         tokens_{};  ///< The individual elements of the name
 };

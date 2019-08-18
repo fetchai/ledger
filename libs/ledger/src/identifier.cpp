@@ -92,9 +92,9 @@ bool IsIdentity(ConstByteArray const &value)
   return IsBase58<48, 50>(value);
 }
 
-}  // namespace
+constexpr char SEPARATOR = '.';
 
-char const Identifier::SEPARATOR{'.'};
+}  // namespace
 
 /**
  * Construct an identifier from a fully qualified name
@@ -102,9 +102,8 @@ char const Identifier::SEPARATOR{'.'};
  * @param identifier The fully qualified name to parse
  */
 Identifier::Identifier(ConstByteArray identifier)
-  : full_{std::move(identifier)}
 {
-  if (!Tokenise())
+  if (!Tokenise(std::move(identifier)))
   {
     throw std::runtime_error("Unable to parse identifier");
   }
@@ -117,33 +116,32 @@ Identifier::Identifier(ConstByteArray identifier)
  */
 Identifier::Identifier(Tokens const &tokens, std::size_t count)
 {
-  if (count <= tokens.size())
+  assert(count <= tokens.size());
+
+  ByteArray full;
+
+  for (std::size_t i = 0; i < count; ++i)
   {
-    ByteArray full;
+    // select the current token
+    auto const &current_token = tokens[i];
 
-    for (std::size_t i = 0; i < count; ++i)
-    {
-      // select the current token
-      auto const &current_token = tokens[i];
-
-      // add the token to the list
-      tokens_.push_back(current_token);
-
-      // regenerate the full name
-      if (i)
-      {
-        full.Append(".");
-      }
-
-      full.Append(current_token);
-    }
+    // add the token to the list
+    tokens_.push_back(current_token);
 
     // regenerate the full name
-    full_ = std::move(full);
+    if (i)
+    {
+      full.Append(".");
+    }
 
-    // update the type
-    UpdateType();
+    full.Append(current_token);
   }
+
+  // regenerate the full name
+  full_ = std::move(full);
+
+  // update the type
+  UpdateType();
 }
 
 /**
@@ -160,22 +158,22 @@ Identifier Identifier::GetParent() const
 /**
  * Internal: Break up the fully qualified name into tokens
  */
-bool Identifier::Tokenise()
+bool Identifier::Tokenise(ConstByteArray &&full_name)
 {
   // ensure the tokens storage is empty
-  tokens_.clear();
+  Tokens tokens;
 
   std::size_t offset = 0;
   for (;;)
   {
     // find the next instance of the separator
-    std::size_t const index = full_.Find(SEPARATOR, offset);
+    std::size_t const index = full_name.Find(SEPARATOR, offset);
 
     // determine if this is the last token
     bool const last_token = (ConstByteArray::NPOS == index);
 
     // calculate the size of the element
-    std::size_t const size = (last_token) ? (full_.size() - offset) : (index - offset);
+    std::size_t const size = (last_token) ? (full_name.size() - offset) : (index - offset);
 
     // empty tokens are invalid
     if (size == 0)
@@ -185,7 +183,7 @@ bool Identifier::Tokenise()
     }
 
     // add the new token to the array
-    tokens_.push_back(full_.SubArray(offset, size));
+    tokens.push_back(full_name.SubArray(offset, size));
 
     if (last_token)
     {
@@ -196,7 +194,8 @@ bool Identifier::Tokenise()
     offset = index + 1;
   }
 
-  // update the type
+  full_   = std::move(full_name);
+  tokens_ = std::move(tokens);
   UpdateType();
 
   return true;
@@ -359,8 +358,6 @@ Identifier::ConstByteArray Identifier::qualifier() const
 
   switch (type_)
   {
-  case Type::INVALID:
-    break;
   case Type::NORMAL:
     identifier = full_name();
     break;
@@ -378,25 +375,13 @@ bool Identifier::empty() const
 }
 
 /**
- * Parses an fully qualified name
- *
- * @param name The fully qualified name
- */
-bool Identifier::Parse(ConstByteArray const &name)
-{
-  full_ = name;
-  return Tokenise();
-}
-
-/**
  * Parse a fully qualified name
  *
  * @param name The fully qualified name
  */
 bool Identifier::Parse(ConstByteArray &&name)
 {
-  full_ = std::move(name);
-  return Tokenise();
+  return Tokenise(std::move(name));
 }
 
 /**
