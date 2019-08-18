@@ -85,7 +85,7 @@ bool StakeManager::ShouldGenerateBlock(Block const &previous, Address const &add
 
   for (std::size_t i = 0; i < (*committee).size(); ++i)
   {
-    FETCH_LOG_INFO(LOGGING_NAME,
+    FETCH_LOG_DEBUG(LOGGING_NAME,
                    "Saw committee member: ", Address((*committee)[i]).address().ToBase64(),
                    "we are: ", address.address().ToBase64());
 

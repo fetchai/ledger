@@ -553,8 +553,6 @@ def get_nodes_private_key(test_instance, index):
 
     private_key = open(key_path, "rb").read(32)
 
-    #import ipdb; ipdb.set_trace(context=20)
-
     return private_key
 
 
@@ -571,9 +569,6 @@ def destake(parameters, test_instance):
 
         # create the entity from the node's private key
         entity = Entity(get_nodes_private_key(test_instance, node_index))
-        #entity = Entity()
-
-        #api.sync(api.tokens.wealth(entity, 999))
 
         current_stake = api.tokens.stake(entity)
 

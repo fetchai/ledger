@@ -39,6 +39,13 @@
 #include "telemetry/counter.hpp"
 #include "telemetry/registry.hpp"
 
+#include "beacon/beacon_service.hpp"
+#include "beacon/beacon_setup_protocol.hpp"
+#include "beacon/beacon_setup_service.hpp"
+#include "beacon/cabinet_member_details.hpp"
+#include "beacon/entropy.hpp"
+#include "beacon/event_manager.hpp"
+
 #include <cassert>
 #include <chrono>
 #include <cstddef>
@@ -1088,7 +1095,6 @@ BlockCoordinator::State BlockCoordinator::OnReset()
   {
     Block const *block = nullptr;
 
-    // TODO(HUT): use anonymous lambda here
     if (next_block_)
     {
       block = &(*next_block_);
@@ -1113,10 +1119,10 @@ BlockCoordinator::State BlockCoordinator::OnReset()
         auto                                        snapshot = (*stake_).GetCurrentStakeSnapshot();
         auto const current_stakers = snapshot->BuildCommittee(0, MAX_COMMITTEE_SIZE);
 
-        // TODO(HUT): switch to vector for stake manager stuff
+        // TODO(HUT): switch to set for stake manager
         for (auto const &staker : *current_stakers)
         {
-          FETCH_LOG_INFO(LOGGING_NAME, "Adding staker: ", staker.identifier().ToBase64());
+          FETCH_LOG_DEBUG(LOGGING_NAME, "Adding staker: ", staker.identifier().ToBase64());
           cabinet_member_list.insert(staker);
         }
 
@@ -1137,7 +1143,7 @@ BlockCoordinator::State BlockCoordinator::OnReset()
         }
 
         // Finally update stake
-        if (block_number != 0)  // TODO(HUT): chat to ed (?)
+        if (block_number != 0)
         {
           stake_->UpdateCurrentBlock(*block);
         }

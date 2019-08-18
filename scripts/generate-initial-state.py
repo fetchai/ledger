@@ -114,7 +114,7 @@ def main():
             'committeeSize': len(cabinet),
             'stakers': stakes,
         },
-        'state': state,
+        'accounts': state,
     }
 
     # dump the file

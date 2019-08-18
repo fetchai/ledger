@@ -32,13 +32,6 @@
 #include "moment/deadline_timer.hpp"
 #include "telemetry/telemetry.hpp"
 
-#include "beacon/beacon_service.hpp"
-#include "beacon/beacon_setup_protocol.hpp"
-#include "beacon/beacon_setup_service.hpp"
-#include "beacon/cabinet_member_details.hpp"
-#include "beacon/entropy.hpp"
-#include "beacon/event_manager.hpp"
-
 #include <atomic>
 #include <chrono>
 #include <cstddef>
@@ -48,8 +41,13 @@
 #include <vector>
 
 namespace fetch {
+
 namespace core {
 class FeatureFlags;
+}
+
+namespace beacon {
+class BeaconService;
 }
 
 namespace crypto {

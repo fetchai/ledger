@@ -109,8 +109,6 @@ BeaconSetupService::State BeaconSetupService::OnIdle()
 
     aeon_exe_queue_.pop_front();
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Processing new exec unit from queue");
-
     // Observe only does not require any setup
     if (beacon_->observe_only)
     {
@@ -368,8 +366,6 @@ void BeaconSetupService::QueueSetup(SharedAeonExecutionUnit beacon)
 {
   std::lock_guard<std::mutex> lock(mutex_);
   assert(beacon != nullptr);
-
-  FETCH_LOG_INFO(LOGGING_NAME, "Pushing new exec unit");
 
   aeon_exe_queue_.push_back(beacon);
 }

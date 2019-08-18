@@ -44,13 +44,6 @@
 #include "network/p2pservice/p2ptrust_bayrank.hpp"
 #include "open_api_http_module.hpp"
 
-#include "beacon/beacon_service.hpp"
-#include "beacon/beacon_setup_protocol.hpp"
-#include "beacon/beacon_setup_service.hpp"
-#include "beacon/cabinet_member_details.hpp"
-#include "beacon/entropy.hpp"
-#include "beacon/event_manager.hpp"
-
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
@@ -60,8 +53,8 @@
 #include <vector>
 
 namespace fetch {
-namespace dkg {
-class DkgService;
+namespace beacon {
+class BeaconService;
 }
 
 /**
@@ -151,7 +144,6 @@ private:
   using StakeManagerPtr        = std::shared_ptr<ledger::StakeManager>;
   using EntropyPtr             = std::unique_ptr<ledger::EntropyGeneratorInterface>;
 
-  using DkgServicePtr    = std::shared_ptr<dkg::DkgService>;
   using BeaconServicePtr = std::shared_ptr<fetch::beacon::BeaconService>;
 
   using ShardConfigs  = ledger::ShardConfigs;
@@ -194,8 +186,6 @@ private:
 
   /// @name Staking
   /// @{
-  /* DkgServicePtr   dkg_;      ///< The DKG system */
-  /* EntropyPtr      entropy_;  ///< The entropy system */
   BeaconServicePtr beacon_;
   StakeManagerPtr  stake_;  ///< The stake system
   /// @}

@@ -144,7 +144,7 @@ void GenesisFileCreator::LoadFile(std::string const &name)
 
     if (is_correct_version)
     {
-      LoadState(doc["state"]);
+      LoadState(doc["accounts"]);
 
       if (stake_manager_)
       {
@@ -175,8 +175,6 @@ void GenesisFileCreator::LoadState(Variant const &object)
   // Expecting an array of record entries
   if (!object.IsArray())
   {
-    FETCH_LOG_ERROR(LOGGING_NAME, "EC1");
-    exit(1);
     return;
   }
 
@@ -215,8 +213,7 @@ void GenesisFileCreator::LoadState(Variant const &object)
     }
     else
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "EC2");
-      exit(1);
+      return;
     }
   }
 

@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chain/address.hpp"
+#include "crypto/identity.hpp"
 
 #include <type_traits>
 
@@ -58,8 +59,6 @@ fetch::ledger::Address GenerateRandomAddress(RNG &&rng)
 template <typename RNG>
 fetch::crypto::Identity GenerateRandomIdentity(RNG &&rng)
 {
-  using Identity = fetch::crypto::Identity;
-
   static constexpr std::size_t IDENTITY_BYTES = 32;
 
   fetch::byte_array::ByteArray array{};
@@ -70,5 +69,5 @@ fetch::crypto::Identity GenerateRandomIdentity(RNG &&rng)
     array[i] = uint8_t(rng());
   }
 
-  return Identity{array};
+  return fetch::crypto::Identity{array};
 }

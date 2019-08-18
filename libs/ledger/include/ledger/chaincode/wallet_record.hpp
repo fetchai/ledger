@@ -183,7 +183,6 @@ namespace serializers {
 template <typename D>
 struct ArraySerializer<ledger::WalletRecord, D>
 {
-  static constexpr char const *LOGGING_NAME = "ArraySerializer";
 
 public:
   // TODO(issue 1426): Change this serializer to map
@@ -193,8 +192,6 @@ public:
   template <typename Constructor>
   static void Serialize(Constructor &array_constructor, Type const &b)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Serializing WR");
-
     auto array = array_constructor(b.deed ? 4 : 3);
     array.Append(b.balance);
     if (b.deed)
@@ -209,8 +206,6 @@ public:
   template <typename ArrayDeserializer>
   static void Deserialize(ArrayDeserializer &array, Type &b)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Deserializing WR");
-
     array.GetNextValue(b.balance);
     if (array.size() == 4)
     {

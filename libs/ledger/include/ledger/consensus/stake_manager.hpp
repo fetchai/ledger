@@ -21,11 +21,14 @@
 #include "ledger/consensus/stake_manager_interface.hpp"
 #include "ledger/consensus/stake_update_queue.hpp"
 
-#include "crypto/identity.hpp"
-
 #include <vector>
 
 namespace fetch {
+
+namespace crypto {
+class Identity;
+}
+
 namespace ledger {
 
 class StakeSnapshot;
