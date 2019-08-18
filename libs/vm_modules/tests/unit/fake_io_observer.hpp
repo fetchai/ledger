@@ -52,8 +52,3 @@ private:
   DeniedKeys    denied_keys_{};
   UnderlyingMap data_{};
 };
-
-inline bool FakeIoObserver::IsPermittedKey(std::string const &key) const
-{
-  return denied_keys_.find(key) == denied_keys_.end();
-}
