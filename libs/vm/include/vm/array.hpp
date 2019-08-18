@@ -36,7 +36,7 @@ struct GetElementType
   using type = typename GetStorageType<T>::type;
 };
 template <typename T>
-struct GetElementType<T, typename std::enable_if_t<std::is_same<T, bool>::value>>
+struct GetElementType<T, std::enable_if_t<std::is_same<T, bool>::value>>
 {
   // ElementType must NOT be bool because std::vector<bool> is a partial specialisation
   using type = uint8_t;
@@ -301,8 +301,8 @@ private:
   }
 
   template <typename G>
-  typename std::enable_if<IsPrimitive<G>::value, bool>::type ApplySerialize(
-      MsgPackSerializer &buffer, std::vector<G> const &data)
+  std::enable_if_t<IsPrimitive<G>::value, bool> ApplySerialize(MsgPackSerializer &   buffer,
+                                                               std::vector<G> const &data)
   {
     buffer << GetUniqueId() << static_cast<uint64_t>(elements.size());
     for (G const &v : data)
@@ -347,8 +347,8 @@ private:
   }
 
   template <typename G>
-  typename std::enable_if<IsPrimitive<G>::value, bool>::type ApplyDeserialize(
-      MsgPackSerializer &buffer, std::vector<G> &data)
+  std::enable_if_t<IsPrimitive<G>::value, bool> ApplyDeserialize(MsgPackSerializer &buffer,
+                                                                 std::vector<G> &   data)
   {
     uint64_t    size;
     std::string uid;

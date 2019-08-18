@@ -24,7 +24,7 @@ namespace fetch {
 namespace http {
 namespace middleware {
 
-inline typename HTTPServer::ResponseMiddleware AllowOrigin(std::string const &val)
+inline HTTPServer::ResponseMiddleware AllowOrigin(std::string const &val)
 {
   return [val](fetch::http::HTTPResponse &res, fetch::http::HTTPRequest const &req) {
     FETCH_UNUSED(req);

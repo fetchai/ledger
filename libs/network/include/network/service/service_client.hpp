@@ -38,7 +38,7 @@
 namespace fetch {
 namespace service {
 
-// template <typename T>
+// template <typename  T>
 class ServiceClient : public ServiceClientInterface, public ServiceServerInterface
 {
 public:

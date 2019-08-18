@@ -110,7 +110,7 @@ template <typename T>
 constexpr bool IsAny8BitInteger = std::is_same<T, int8_t>::value || std::is_same<T, uint8_t>::value;
 
 template <typename T>
-using Decay = typename std::decay<T>::type;
+using Decay = std::decay_t<T>;
 
 template <bool C, typename R = void>
 using EnableIf = std::enable_if_t<C, R>;
@@ -145,7 +145,7 @@ using IfIsUnsignedInteger = EnableIf<IsUnsignedInteger<T>, R>;
 template <typename T, typename R = void>
 using IfIsSignedInteger = EnableIf<IsSignedInteger<T>, R>;
 
-// template <typename T, std::size_t I, std::size_t F, typename R = void>
+// template <typename  T, std::size_t I, std::size_t F, typename  R = void>
 // using IfIsFixedPoint = EnableIf<IsFixedPoint<T, I, F>, R>;
 template <typename T, typename R = void>
 using IfIsFixedPoint = EnableIf<IsFixedPoint<T>, R>;

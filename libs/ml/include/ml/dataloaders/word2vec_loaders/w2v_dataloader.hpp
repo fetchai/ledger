@@ -39,7 +39,7 @@ class W2VLoader : public DataLoader<fetch::math::Tensor<T>, fetch::math::Tensor<
 {
 public:
   static_assert(meta::IsFloat<T> || meta::IsFixedPoint<T>,
-                "The intended T is the typename for the data input to the neural network, which "
+                "The intended T is the typename  for the data input to the neural network, which "
                 "should be a float or double or fixed-point type.");
   static constexpr T WindowContextUnused = -1;
 

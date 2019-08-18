@@ -183,8 +183,7 @@ TYPED_TEST(GraphTest,
 
 TYPED_TEST(GraphTest, diamond_graph_backward)  // output=(input1*input2)-(input1^2)
 {
-  using DataType = typename TypeParam::Type;
-  //  using SizeType  = typename TypeParam::SizeType;
+  using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
 
   // Generate input
