@@ -61,6 +61,21 @@ namespace type_util {
 //       - f is a templated function that can be invoked on arg views instantiated by each of the
 //           Cases (a lambda with auto args, for instance);
 //       - args... are the viewed args themselves.
+//    
+//    args... can be empty; it is up to particular combination of case label type and f to handle
+//    this case.
+//
+//    As a special case, when no arguments are present past f, a special dummy argument is passed to
+//    the appropriate Case::Invoke, of an empty struct type with member ::type equal to the Case
+//    itself:
+//
+//       Variant x;
+//       MySwitch::Invoke(
+//         my_type_id,
+//         [&x](auto cs){
+//           using Case = typename decltype(cs)::type;
+//           return Variant(x, Case::value); // the returned variant has type Id my_type_id
+//         });
 //
 // EXAMPLE
 //
@@ -190,15 +205,25 @@ struct SwitchNode
 
 // Internal switch implementation uses ReturnZero as a default default case, in no other specified.
 template <class Ids>
-struct Switch : Switch<pack::ConcatT<DefaultCase<ReturnZero<pack::HeadT<Ids>>>, Ids>>
+struct Switch : Switch<pack::ConsT<DefaultCase<ReturnZero<pack::HeadT<Ids>>>, Ids>>
 {
 };
 
 // When pack is large (> 4 ids), it is split in two (almost) equal branches.
 // (The left branch can be one id less than the right one, with the odd amount of cases.)
 template <class Default, class Ids>
-using BinarySwitch = SwitchNode<Switch<pack::ConsT<Default, pack::LeftHalfT<Ids>>>,
-                                Switch<pack::ConsT<Default, pack::RightHalfT<Ids>>>>;
+using BinarySwitch = SwitchNode<Switch<pack::ConsT<DefaultCase<Default>, pack::LeftHalfT<Ids>>>,
+                                Switch<pack::ConsT<DefaultCase<Default>, pack::RightHalfT<Ids>>>>;
+
+template<class CurrentId, class F, class... Args> constexpr decltype(auto) InvokeBranch(F &&f, Args &&...args)
+{
+	return CurrentId::Invoke(std::forward<F>(f), std::forward<Args>(args)...);
+}
+
+template<class CurrentId, class F> constexpr decltype(auto) InvokeBranch(F &&f)
+{
+	return value_util::Invoke(std::forward<F>(f), Type<CurrentId>());
+}
 
 // LinearSwitch performs a simple linear lookup. It is used with small amount of cases.
 // For instance Switch<Case1, ..., Case6> would be implemented as
@@ -222,8 +247,9 @@ class LinearSwitch
   template <class Id, class F, class... Args>
   static constexpr decltype(auto) Match(pack::Nil, Id, F &&f, Args &&... args)
   {
-    return Default::Invoke(std::forward<F>(f), std::forward<Args>(args)...);
+	  return InvokeBranch<Default>(std::forward<F>(f), std::forward<Args>(args)...);
   }
+
   using Leftmost = HeadT<Ids>;
 
 public:
@@ -273,7 +299,7 @@ constexpr decltype(auto) LinearSwitch<Default, Ids>::Match(RemainingIds, Id sele
   using CurrentId = pack::HeadT<RemainingIds>;
   if (selector == CurrentId::value)
   {
-    return CurrentId::Invoke(std::forward<F>(f), std::forward<Args>(args)...);
+	  return InvokeBranch<CurrentId>(std::forward<F>(f), std::forward<Args>(args)...);
   }
   return Match(pack::TailT<RemainingIds>{}, selector, std::forward<F>(f),
                std::forward<Args>(args)...);
@@ -297,13 +323,13 @@ using Switch = detail_::Switch<pack::UniqueSortT<pack::ConcatT<Ids...>>>;
 // This one may prove useful, so that we could convert a single integral_sequence
 // (or a similar template instantiation) into a pack of singleton integer_sequences,
 // to be used as case alternatives for a Switch.
-template <class Sequence, template<typename Sequence::value_type> Ctor>
+template <class Sequence, template<typename Sequence::value_type> class Ctor>
 struct LiftIntegerSequence;
 
-template <class Sequence, template<typename Sequence::value_type> Ctor>
-using LiftIntegerSequenceT = typename LiftIntegerSequence<Sequence>::type;
+template <class Sequence, template<typename Sequence::value_type> class Ctor>
+using LiftIntegerSequenceT = typename LiftIntegerSequence<Sequence, Ctor>::type;
 
-template <template <class Id, Id...> class IntegerSequence, class Id, Id... ids, template<typename IntegerSequence<Id, ids...>::value_type> Ctor>
+template <template <class Id, Id...> class IntegerSequence, class Id, Id... ids, template<typename IntegerSequence<Id, ids...>::value_type> class Ctor>
 struct LiftIntegerSequence<IntegerSequence<Id, ids...>, Ctor>
   : Type<pack::Pack<Ctor<ids>...>>
 {

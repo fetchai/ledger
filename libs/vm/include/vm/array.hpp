@@ -374,67 +374,12 @@ inline Ptr<IArray> IArray::Construct(VM *vm, TypeId type_id, Args &&... args)
 {
   TypeInfo const &type_info       = vm->GetTypeInfo(type_id);
   TypeId const    element_type_id = type_info.parameter_type_ids[0];
-  switch (element_type_id)
-  {
-  case TypeIds::Bool:
-  {
-    return new Array<uint8_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
-  }
-  case TypeIds::Int8:
-  {
-    return new Array<int8_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
-  }
-  case TypeIds::UInt8:
-  {
-    return new Array<uint8_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
-  }
-  case TypeIds::Int16:
-  {
-    return new Array<int16_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
-  }
-  case TypeIds::UInt16:
-  {
-    return new Array<uint16_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
-  }
-  case TypeIds::Int32:
-  {
-    return new Array<int32_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
-  }
-  case TypeIds::UInt32:
-  {
-    return new Array<uint32_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
-  }
-  case TypeIds::Int64:
-  {
-    return new Array<int64_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
-  }
-  case TypeIds::UInt64:
-  {
-    return new Array<uint64_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
-  }
-  case TypeIds::Float32:
-  {
-    return new Array<float>(vm, type_id, element_type_id, std::forward<Args>(args)...);
-  }
-  case TypeIds::Float64:
-  {
-    return new Array<double>(vm, type_id, element_type_id, std::forward<Args>(args)...);
-  }
-  case TypeIds::Fixed32:
-  {
-    return new Array<fixed_point::fp32_t>(vm, type_id, element_type_id,
-                                          std::forward<Args>(args)...);
-  }
-  case TypeIds::Fixed64:
-  {
-    return new Array<fixed_point::fp64_t>(vm, type_id, element_type_id,
-                                          std::forward<Args>(args)...);
-  }
-  default:
-  {
-    return new Array<Ptr<Object>>(vm, type_id, element_type_id, std::forward<Args>(args)...);
-  }
-  }  // switch
+  return ApplyFunctor<ScalarTypes, DefaultObjectCase>(
+	  element_type_id,
+	  [vm, type_id, element_type_id, &args...](auto cs) {
+		  using Case = typename decltype(cs)::type;
+		  return Ptr<IArray>(new Array<typename Case::storage_type>(vm, type_id, element_type_id, std::forward<Args>(args)...));
+	  });
 }
 
 inline Ptr<IArray> IArray::Constructor(VM *vm, TypeId type_id, int32_t size)

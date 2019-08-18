@@ -292,33 +292,6 @@ Ptr<IState> Construct(VM *vm, TypeId state_type_id, Args &&... args)
   return IState::ConstructIntrinsic(vm, state_type_id, value_type_id, std::forward<Args>(args)...);
 }
 
-template <typename T, typename R = void>
-constexpr bool IsMetatype =
-    !((!std::is_void<T>::value && IsPrimitive<T>::value) || IsPtr<T>::value);
-
-template <typename T, typename = void>
-struct StateFactory;
-
-template <typename T>
-struct StateFactory<T, std::enable_if_t<!IsMetatype<T>>>
-{
-  template <typename... Args>
-  Ptr<IState> operator()(Args &&... args)
-  {
-    return new State<T>{std::forward<Args>(args)...};
-  }
-};
-
-template <typename T>
-struct StateFactory<T, std::enable_if_t<IsMetatype<T>>>
-{
-  template <typename... Args>
-  Ptr<IState> operator()(Args &&...)
-  {
-    return {};
-  }
-};
-
 }  // namespace
 
 Ptr<IState> IState::ConstructorFromString(VM *vm, TypeId type_id, Ptr<String> const &name)
@@ -346,8 +319,12 @@ Ptr<IState> IState::ConstructorFromAddress(VM *vm, TypeId type_id, Ptr<Address> 
 Ptr<IState> IState::ConstructIntrinsic(VM *vm, TypeId type_id, TypeId template_param_type_id,
                                        Ptr<String> const &name)
 {
-  return TypeIdAsCanonicalType<StateFactory>(template_param_type_id, vm, type_id,
-                                             template_param_type_id, name);
+  return ApplyFunctor<BuiltinTypes, DefaultObjectCase>(
+	  template_param_type_id,
+	  [vm, type_id, template_param_type_id, &name](auto cs)->Ptr<IState> {
+		  using Case = typename decltype(cs)::type;
+		  return new State<typename Case::type>(vm, type_id, template_param_type_id, name);
+	  });
 }
 
 }  // namespace vm

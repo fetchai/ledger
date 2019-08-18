@@ -622,7 +622,7 @@ private:
   struct PrimitiveEqual
   {
     template <typename T>
-    static void Apply(Variant &lhsv, T &lhs, T &rhs)
+    static void Apply(Variant &lhsv, T lhs, T rhs)
     {
       lhsv.Assign(math::IsEqual(lhs, rhs), TypeIds::Bool);
     }
@@ -631,7 +631,7 @@ private:
   struct PrimitiveNotEqual
   {
     template <typename T>
-    static void Apply(Variant &lhsv, T &lhs, T &rhs)
+    static void Apply(Variant &lhsv, T lhs, T rhs)
     {
       lhsv.Assign(math::IsNotEqual(lhs, rhs), TypeIds::Bool);
     }
@@ -666,7 +666,7 @@ private:
   struct PrimitiveLessThan
   {
     template <typename T>
-    static void Apply(Variant &lhsv, T &lhs, T &rhs)
+    static void Apply(Variant &lhsv, T lhs, T rhs)
     {
       lhsv.Assign(math::IsLessThan(lhs, rhs), TypeIds::Bool);
     }
@@ -683,7 +683,7 @@ private:
   struct PrimitiveLessThanOrEqual
   {
     template <typename T>
-    static void Apply(Variant &lhsv, T &lhs, T &rhs)
+    static void Apply(Variant &lhsv, T lhs, T rhs)
     {
       lhsv.Assign(math::IsLessThanOrEqual(lhs, rhs), TypeIds::Bool);
     }
@@ -700,7 +700,7 @@ private:
   struct PrimitiveGreaterThan
   {
     template <typename T>
-    static void Apply(Variant &lhsv, T &lhs, T &rhs)
+    static void Apply(Variant &lhsv, T lhs, T rhs)
     {
       lhsv.Assign(math::IsGreaterThan(lhs, rhs), TypeIds::Bool);
     }
@@ -717,7 +717,7 @@ private:
   struct PrimitiveGreaterThanOrEqual
   {
     template <typename T>
-    static void Apply(Variant &lhsv, T &lhs, T &rhs)
+    static void Apply(Variant &lhsv, T lhs, T rhs)
     {
       lhsv.Assign(math::IsGreaterThanOrEqual(lhs, rhs), TypeIds::Bool);
     }
@@ -1012,338 +1012,60 @@ private:
   template <typename Op>
   void ExecutePrimitiveRelationalOp(TypeId type_id, Variant &lhsv, Variant &rhsv)
   {
-    switch (type_id)
-    {
-    case TypeIds::Bool:
-    {
-      Op::Apply(lhsv, lhsv.primitive.ui8, rhsv.primitive.ui8);
-      break;
-    }
-    case TypeIds::Int8:
-    {
-      Op::Apply(lhsv, lhsv.primitive.i8, rhsv.primitive.i8);
-      break;
-    }
-    case TypeIds::UInt8:
-    {
-      Op::Apply(lhsv, lhsv.primitive.ui8, rhsv.primitive.ui8);
-      break;
-    }
-    case TypeIds::Int16:
-    {
-      Op::Apply(lhsv, lhsv.primitive.i16, rhsv.primitive.i16);
-      break;
-    }
-    case TypeIds::UInt16:
-    {
-      Op::Apply(lhsv, lhsv.primitive.ui16, rhsv.primitive.ui16);
-      break;
-    }
-    case TypeIds::Int32:
-    {
-      Op::Apply(lhsv, lhsv.primitive.i32, rhsv.primitive.i32);
-      break;
-    }
-    case TypeIds::UInt32:
-    {
-      Op::Apply(lhsv, lhsv.primitive.ui32, rhsv.primitive.ui32);
-      break;
-    }
-    case TypeIds::Int64:
-    {
-      Op::Apply(lhsv, lhsv.primitive.i64, rhsv.primitive.i64);
-      break;
-    }
-    case TypeIds::UInt64:
-    {
-      Op::Apply(lhsv, lhsv.primitive.ui64, rhsv.primitive.ui64);
-      break;
-    }
-    case TypeIds::Float32:
-    {
-      Op::Apply(lhsv, lhsv.primitive.f32, rhsv.primitive.f32);
-      break;
-    }
-    case TypeIds::Float64:
-    {
-      Op::Apply(lhsv, lhsv.primitive.f64, rhsv.primitive.f64);
-      break;
-    }
-    case TypeIds::Fixed32:
-    {
-      fixed_point::fp32_t lhsv_fp32 = fixed_point::fp32_t::FromBase(lhsv.primitive.i32);
-      fixed_point::fp32_t rhsv_fp32 = fixed_point::fp32_t::FromBase(rhsv.primitive.i32);
-      Op::Apply(lhsv, lhsv_fp32, rhsv_fp32);
-      break;
-    }
-    case TypeIds::Fixed64:
-    {
-      fixed_point::fp64_t lhsv_fp64 = fixed_point::fp64_t::FromBase(lhsv.primitive.i64);
-      fixed_point::fp64_t rhsv_fp64 = fixed_point::fp64_t::FromBase(rhsv.primitive.i64);
-      Op::Apply(lhsv, lhsv_fp64, rhsv_fp64);
-      break;
-    }
-    default:
-    {
-      break;
-    }
-    }  // switch
+    ApplyScalarFunctor(
+	    type_id,
+	    [](auto &&left, auto &&right) {
+		    Op::Apply(left, left.Get(), right.Get());
+	    },
+	    lhsv, rhsv);
   }
 
   template <typename Op>
   void ExecuteIntegralOp(TypeId type_id, Variant &lhsv, Variant &rhsv)
   {
-    switch (type_id)
-    {
-    case TypeIds::Int8:
-    {
-      Op::Apply(this, lhsv.primitive.i8, rhsv.primitive.i8);
-      break;
-    }
-    case TypeIds::UInt8:
-    {
-      Op::Apply(this, lhsv.primitive.ui8, rhsv.primitive.ui8);
-      break;
-    }
-    case TypeIds::Int16:
-    {
-      Op::Apply(this, lhsv.primitive.i16, rhsv.primitive.i16);
-      break;
-    }
-    case TypeIds::UInt16:
-    {
-      Op::Apply(this, lhsv.primitive.ui16, rhsv.primitive.ui16);
-      break;
-    }
-    case TypeIds::Int32:
-    {
-      Op::Apply(this, lhsv.primitive.i32, rhsv.primitive.i32);
-      break;
-    }
-    case TypeIds::UInt32:
-    {
-      Op::Apply(this, lhsv.primitive.ui32, rhsv.primitive.ui32);
-      break;
-    }
-    case TypeIds::Int64:
-    {
-      Op::Apply(this, lhsv.primitive.i64, rhsv.primitive.i64);
-      break;
-    }
-    case TypeIds::UInt64:
-    {
-      Op::Apply(this, lhsv.primitive.ui64, rhsv.primitive.ui64);
-      break;
-    }
-    default:
-    {
-      break;
-    }
-    }  // switch
+    ApplyIntegralFunctor(
+	    type_id, 
+	    [this](auto &&l, auto &&r) {
+		    Op::Apply(this, l.Ref(), r.Ref());
+	    },
+	    lhsv, rhsv);
   }
 
   template <typename Op>
   void ExecuteNumericOp(TypeId type_id, Variant &lhsv, Variant &rhsv)
   {
-    switch (type_id)
-    {
-    case TypeIds::Int8:
-    {
-      Op::Apply(this, lhsv.primitive.i8, rhsv.primitive.i8);
-      break;
-    }
-    case TypeIds::UInt8:
-    {
-      Op::Apply(this, lhsv.primitive.ui8, rhsv.primitive.ui8);
-      break;
-    }
-    case TypeIds::Int16:
-    {
-      Op::Apply(this, lhsv.primitive.i16, rhsv.primitive.i16);
-      break;
-    }
-    case TypeIds::UInt16:
-    {
-      Op::Apply(this, lhsv.primitive.ui16, rhsv.primitive.ui16);
-      break;
-    }
-    case TypeIds::Int32:
-    {
-      Op::Apply(this, lhsv.primitive.i32, rhsv.primitive.i32);
-      break;
-    }
-    case TypeIds::UInt32:
-    {
-      Op::Apply(this, lhsv.primitive.ui32, rhsv.primitive.ui32);
-      break;
-    }
-    case TypeIds::Int64:
-    {
-      Op::Apply(this, lhsv.primitive.i64, rhsv.primitive.i64);
-      break;
-    }
-    case TypeIds::UInt64:
-    {
-      Op::Apply(this, lhsv.primitive.ui64, rhsv.primitive.ui64);
-      break;
-    }
-    case TypeIds::Float32:
-    {
-      Op::Apply(this, lhsv.primitive.f32, rhsv.primitive.f32);
-      break;
-    }
-    case TypeIds::Float64:
-    {
-      Op::Apply(this, lhsv.primitive.f64, rhsv.primitive.f64);
-      break;
-    }
-    case TypeIds::Fixed32:
-    {
-      fixed_point::fp32_t *lhsv_fp32 = reinterpret_cast<fixed_point::fp32_t *>(&lhsv);
-      fixed_point::fp32_t  rhsv_fp32 = fixed_point::fp32_t::FromBase(rhsv.primitive.i32);
-      Op::Apply(this, *lhsv_fp32, rhsv_fp32);
-      break;
-    }
-    case TypeIds::Fixed64:
-    {
-      fixed_point::fp64_t *lhsv_fp64 = reinterpret_cast<fixed_point::fp64_t *>(&lhsv);
-      fixed_point::fp64_t  rhsv_fp64 = fixed_point::fp64_t::FromBase(rhsv.primitive.i64);
-      Op::Apply(this, *lhsv_fp64, rhsv_fp64);
-      break;
-    }
-    default:
-    {
-      break;
-    }
-    }  // switch
+	  ApplyNumericFunctor(
+		  type_id,
+		  [this](auto &&l, auto &&r) {
+			  Op::Apply(this, l.Ref(), r.Ref());
+		  },
+		  lhsv, rhsv);
   }
 
   template <typename Op>
   void ExecuteIntegralInplaceOp(TypeId type_id, void *lhs, Variant &rhsv)
   {
-    switch (type_id)
-    {
-    case TypeIds::Int8:
-    {
-      Op::Apply(this, *static_cast<int8_t *>(lhs), rhsv.primitive.i8);
-      break;
-    }
-    case TypeIds::UInt8:
-    {
-      Op::Apply(this, *static_cast<uint8_t *>(lhs), rhsv.primitive.ui8);
-      break;
-    }
-    case TypeIds::Int16:
-    {
-      Op::Apply(this, *static_cast<int16_t *>(lhs), rhsv.primitive.i16);
-      break;
-    }
-    case TypeIds::UInt16:
-    {
-      Op::Apply(this, *static_cast<uint16_t *>(lhs), rhsv.primitive.ui16);
-      break;
-    }
-    case TypeIds::Int32:
-    {
-      Op::Apply(this, *static_cast<int32_t *>(lhs), rhsv.primitive.i32);
-      break;
-    }
-    case TypeIds::UInt32:
-    {
-      Op::Apply(this, *static_cast<uint32_t *>(lhs), rhsv.primitive.ui32);
-      break;
-    }
-    case TypeIds::Int64:
-    {
-      Op::Apply(this, *static_cast<int64_t *>(lhs), rhsv.primitive.i64);
-      break;
-    }
-    case TypeIds::UInt64:
-    {
-      Op::Apply(this, *static_cast<uint64_t *>(lhs), rhsv.primitive.ui64);
-      break;
-    }
-    default:
-    {
-      break;
-    }
-    }  // switch
+	  Variant lhsv(*static_cast<Primitive *>(lhs), type_id);
+	  ApplyIntegralFunctor(
+		  type_id,
+		  [this](auto &&l, auto &&r) {
+			  Op::Apply(this, l.Ref(), r.Ref());
+		  },
+		  lhsv, rhsv);
+	  *static_cast<Primitive *>(lhs) = lhsv.primitive;
   }
 
   template <typename Op>
   void ExecuteNumericInplaceOp(TypeId type_id, void *lhs, Variant &rhsv)
   {
-    switch (type_id)
-    {
-    case TypeIds::Int8:
-    {
-      Op::Apply(this, *static_cast<int8_t *>(lhs), rhsv.primitive.i8);
-      break;
-    }
-    case TypeIds::UInt8:
-    {
-      Op::Apply(this, *static_cast<uint8_t *>(lhs), rhsv.primitive.ui8);
-      break;
-    }
-    case TypeIds::Int16:
-    {
-      Op::Apply(this, *static_cast<int16_t *>(lhs), rhsv.primitive.i16);
-      break;
-    }
-    case TypeIds::UInt16:
-    {
-      Op::Apply(this, *static_cast<uint16_t *>(lhs), rhsv.primitive.ui16);
-      break;
-    }
-    case TypeIds::Int32:
-    {
-      Op::Apply(this, *static_cast<int32_t *>(lhs), rhsv.primitive.i32);
-      break;
-    }
-    case TypeIds::UInt32:
-    {
-      Op::Apply(this, *static_cast<uint32_t *>(lhs), rhsv.primitive.ui32);
-      break;
-    }
-    case TypeIds::Int64:
-    {
-      Op::Apply(this, *static_cast<int64_t *>(lhs), rhsv.primitive.i64);
-      break;
-    }
-    case TypeIds::UInt64:
-    {
-      Op::Apply(this, *static_cast<uint64_t *>(lhs), rhsv.primitive.ui64);
-      break;
-    }
-    case TypeIds::Float32:
-    {
-      Op::Apply(this, *static_cast<float *>(lhs), rhsv.primitive.f32);
-      break;
-    }
-    case TypeIds::Float64:
-    {
-      Op::Apply(this, *static_cast<double *>(lhs), rhsv.primitive.f64);
-      break;
-    }
-    case TypeIds::Fixed32:
-    {
-      fixed_point::fp32_t *lhs_fp32  = reinterpret_cast<fixed_point::fp32_t *>(lhs);
-      fixed_point::fp32_t  rhsv_fp32 = fixed_point::fp32_t::FromBase(rhsv.primitive.i32);
-      Op::Apply(this, *lhs_fp32, rhsv_fp32);
-      break;
-    }
-    case TypeIds::Fixed64:
-    {
-      fixed_point::fp64_t *lhs_fp64  = reinterpret_cast<fixed_point::fp64_t *>(lhs);
-      fixed_point::fp64_t  rhsv_fp64 = fixed_point::fp64_t::FromBase(rhsv.primitive.i64);
-      Op::Apply(this, *lhs_fp64, rhsv_fp64);
-      break;
-    }
-    default:
-    {
-      break;
-    }
-    }  // switch
+	  Variant lhsv(*static_cast<Primitive *>(lhs), type_id);
+	  ApplyNumericFunctor(
+		  type_id,
+		  [this](auto &&l, auto &&r) {
+			  Op::Apply(this, l.Ref(), r.Ref());
+		  },
+		  lhsv, rhsv);
+	  *static_cast<Primitive *>(lhs) = lhsv.primitive;
   }
 
   template <typename Op>

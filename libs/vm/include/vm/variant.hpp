@@ -18,7 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "meta/pack.hpp"
+#include "meta/type_util.hpp"
 #include "meta/switch.hpp"
+#include "meta/value_util.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm/object.hpp"
 
@@ -530,124 +532,237 @@ struct AnyFloatingPoint : public Variant
   using Variant::Variant;
 };
 
-template<TypeId id> struct IdToTypeMap;
+template<TypeId id> struct IdToType;
 
-template<TypeId id> using IdToTypeMapT = typename IdToTypeMap<id>::type
-
-template<> struct IdToTypeMap<TypeIds::Null>: type_util::Type<std::nullptr_t> {};
-
-template<> struct IdToTypeMap<TypeIds::Void>: type_util::Type<void> {};
-
-template<> struct IdToTypeMap<TypeIds::Bool>: type_util::Type<bool> {};
-
-template<> struct IdToTypeMap<TypeIds::Int8>: type_util::Type<int8_t> {};
-
-template<> struct IdToTypeMap<TypeIds::UInt8>: type_util::Type<uint8_t> {};
-
-template<> struct IdToTypeMap<TypeIds::Int16>: type_util::Type<int16_t> {};
-
-template<> struct IdToTypeMap<TypeIds::UInt16>: type_util::Type<uint16_t> {};
-
-template<> struct IdToTypeMap<TypeIds::Int32>: type_util::Type<int32_t> {};
-
-template<> struct IdToTypeMap<TypeIds::UInt32>: type_util::Type<uint32_t> {};
-
-template<> struct IdToTypeMap<TypeIds::Int64>: type_util::Type<int64_t> {};
-
-template<> struct IdToTypeMap<TypeIds::UInt64>: type_util::Type<uint64_t> {};
-
-template<> struct IdToTypeMap<TypeIds::Float32>: type_util::Type<float> {};
-
-template<> struct IdToTypeMap<TypeIds::Float64>: type_util::Type<double> {};
-
-template<> struct IdToTypeMap<TypeIds::Fixed32>: type_util::Type<fixed_point::fp32_t> {};
-
-template<> struct IdToTypeMap<TypeIds::Fixed64>: type_util::Type<fixed_point::fp64_t> {};
-
-template<> struct IdToTypeMap<TypeIds::String>: type_util::Type<Ptr<String>> {};
-
-template<> struct IdToTypeMap<TypeIds::Address>: type_util::Type<Ptr<Address>> {};
-
-template<class T> struct TypeToIdMap;
-
-template<class T> static constexpr auto TypeToIdMapV = TypeToIdMap<T>::value;
-
-template<> struct TypeToIdMap<std::nullptr_t>: std::integral_constant<TypeId, TypeIds::Null> {};
-
-template<> struct TypeToIdMap<void>: std::integral_constant<TypeId, TypeIds::Void> {};
-
-template<> struct TypeToIdMap<bool>: std::integral_constant<TypeId, TypeIds::Bool> {};
-
-template<> struct TypeToIdMap<int8_t>: std::integral_constant<TypeId, TypeIds::Int8> {};
-
-template<> struct TypeToIdMap<uint8_t>: std::integral_constant<TypeId, TypeIds::UInt8> {};
-
-template<> struct TypeToIdMap<int16_t>: std::integral_constant<TypeId, TypeIds::Int16> {};
-
-template<> struct TypeToIdMap<uint16_t>: std::integral_constant<TypeId, TypeIds::UInt16> {};
-
-template<> struct TypeToIdMap<int32_t>: std::integral_constant<TypeId, TypeIds::Int32> {};
-
-template<> struct TypeToIdMap<uint32_t>: std::integral_constant<TypeId, TypeIds::UInt32> {};
-
-template<> struct TypeToIdMap<int64_t>: std::integral_constant<TypeId, TypeIds::Int64> {};
-
-template<> struct TypeToIdMap<uint64_t>: std::integral_constant<TypeId, TypeIds::UInt64> {};
-
-template<> struct TypeToIdMap<float>: std::integral_constant<TypeId, TypeIds::Float32> {};
-
-template<> struct TypeToIdMap<double>: std::integral_constant<TypeId, TypeIds::Float64> {};
-
-template<> struct TypeToIdMap<fixed_point::fp32_t>: std::integral_constant<TypeId, TypeIds::Fixed32> {};
-
-template<> struct TypeToIdMap<fixed_point::fp64_t>: std::integral_constant<TypeId, TypeIds::Fixed64> {};
-
-template<> struct TypeToIdMap<Ptr<String>>: std::integral_constant<TypeId, TypeIds::String> {};
-
-template<> struct TypeToIdMap<Ptr<Address>>: std::integral_constant<TypeId, TypeIds::Address> {};
-
-template<class T, bool = IsPrimitive<T>::value> class VariantView
-  : public std::integral_constant<TypeId, TypeToIdMapV<T>>
-{
-	Variant *v_;
-
-	constexpr VariantView(Variant &v) noexcept: v_(&v) {}
-public:
+template<TypeId id, typename T, typename U = T> struct VariantValue: std::integral_constant<TypeId, id> {
+	using std::integral_constant<TypeId, id>::value;
 	using type = T;
+	using storage_type = U;
+};
 
-	constexpr auto Get() const noexcept { return v_->Get<type>(); }
+template<> struct IdToType<TypeIds::Unknown>: VariantValue<TypeIds::Unknown, Unknown> {
+	template<class Var> static constexpr void Reference(Var &&) noexcept {}
+};
 
-	constexpr void Set(type val) noexcept { return v_->Set(val); }
+template<> struct IdToType<TypeIds::Null>: VariantValue<TypeIds::Null, std::nullptr_t> {
+	template<class Var> static constexpr void Reference(Var &&) noexcept {}
+};
 
-	template<class F, class... Args> static constexpr Invoke(F &&f, Args &&...args) {
-		return type_util::Invoke(std::forward<F>(f), VariantView(std::forward<Args>(args))...);
+template<> struct IdToType<TypeIds::Void>: VariantValue<TypeIds::Void, void> {
+	template<class Var> static constexpr void Reference(Var &&) noexcept {}
+};
+
+template<> struct IdToType<TypeIds::Bool>: VariantValue<TypeIds::Bool, bool, uint8_t> {
+	template<class Var> static constexpr auto &Reference(Var &v) noexcept {
+		return v.primitive.ui8;
 	}
 };
 
-template<class T> constexpr void VariantView<T, false>::Set(type val) noexcept { v_->Set(std::move(val)); }
+template<> struct IdToType<TypeIds::Int8>: VariantValue<TypeIds::Int8, int8_t> {
+	template<class Var> static constexpr auto &Reference(Var &v) noexcept {
+		return v.primitive.i8;
+	}
+};
 
-template<> class VariantView<Ptr<Object>, false>
+template<> struct IdToType<TypeIds::UInt8>: VariantValue<TypeIds::UInt8, uint8_t> {
+	template<class Var> static constexpr auto &Reference(Var &v) noexcept {
+		return v.primitive.ui8;
+	}
+};
+
+template<> struct IdToType<TypeIds::Int16>: VariantValue<TypeIds::Int16, int16_t> {
+	template<class Var> static constexpr auto &Reference(Var &v) noexcept {
+		return v.primitive.i16;
+	}
+};
+
+template<> struct IdToType<TypeIds::UInt16>: VariantValue<TypeIds::UInt16, uint16_t> {
+	template<class Var> static constexpr auto &Reference(Var &v) noexcept {
+		return v.primitive.ui16;
+	}
+};
+
+template<> struct IdToType<TypeIds::Int32>: VariantValue<TypeIds::Int32, int32_t> {
+	template<class Var> static constexpr auto &Reference(Var &v) noexcept {
+		return v.primitive.i32;
+	}
+};
+
+template<> struct IdToType<TypeIds::UInt32>: VariantValue<TypeIds::UInt32, uint32_t> {
+	template<class Var> static constexpr auto &Reference(Var &v) noexcept {
+		return v.primitive.ui32;
+	}
+};
+
+template<> struct IdToType<TypeIds::Int64>: VariantValue<TypeIds::Int64, int64_t> {
+	template<class Var> static constexpr auto &Reference(Var &v) noexcept {
+		return v.primitive.i64;
+	}
+};
+
+template<> struct IdToType<TypeIds::UInt64>: VariantValue<TypeIds::UInt64, uint64_t> {
+	template<class Var> static constexpr auto &Reference(Var &v) noexcept {
+		return v.primitive.ui64;
+	}
+};
+
+template<> struct IdToType<TypeIds::Float32>: VariantValue<TypeIds::Float32, float> {
+	template<class Var> static constexpr auto &Reference(Var &v) noexcept {
+		return v.primitive.f32;
+	}
+};
+
+template<> struct IdToType<TypeIds::Float64>: VariantValue<TypeIds::Float64, double> {
+	template<class Var> static constexpr auto &Reference(Var &v) noexcept {
+		return v.primitive.f64;
+	}
+};
+
+template<> struct IdToType<TypeIds::Fixed32>: VariantValue<TypeIds::Fixed32, fixed_point::fp32_t> {
+	static fixed_point::fp32_t &Reference(Variant &v) noexcept {
+		return *reinterpret_cast<fixed_point::fp32_t *>(&v);
+	}
+	static fixed_point::fp32_t const &Reference(Variant const &v) noexcept {
+		return *reinterpret_cast<fixed_point::fp32_t const *>(&v);
+	}
+};
+
+template<> struct IdToType<TypeIds::Fixed64>: VariantValue<TypeIds::Fixed64, fixed_point::fp64_t> {
+	static fixed_point::fp64_t &Reference(Variant &v) noexcept {
+		return *reinterpret_cast<fixed_point::fp64_t *>(&v);
+	}
+	static fixed_point::fp64_t const &Reference(Variant const &v) noexcept {
+		return *reinterpret_cast<fixed_point::fp64_t const *>(&v);
+	}
+};
+
+template<> struct IdToType<TypeIds::String>: VariantValue<TypeIds::String, Ptr<String>> {
+	template<class Var> static constexpr auto &Reference(Var &v) noexcept {
+		return v.object;
+	}
+};
+
+template<> struct IdToType<TypeIds::Address>: VariantValue<TypeIds::Address, Ptr<Address>> {
+	template<class Var> static constexpr auto &Reference(Var &v) noexcept {
+		return v.object;
+	}
+};
+
+template<class IdToType, bool = IsPrimitive<typename IdToType::type>::value> class VariantView
+  : public IdToType // parent defines value, type, storage_type and Reference(Variant &)
 {
-	Variant *v_;
+	Variant *v_ = nullptr;
+	Variant const *cv_ = nullptr;
 
 	constexpr VariantView(Variant &v) noexcept: v_(&v) {}
+	constexpr VariantView(Variant const &cv) noexcept: cv_(&cv) {}
+	using IdToType::Reference;
 public:
-	using type = Ptr<Object>;
+	using typename IdToType::type;
+	using typename IdToType::storage_type;
+	using IdToType::value;
 
 	constexpr auto Get() const noexcept { return v_->Get<type>(); }
 
-	constexpr void Set(type val) noexcept { return v_->Set(std::move<val>); }
+	constexpr void Set(type val) noexcept { v_->Assign(val, value); }
 
-	template<class F, class... Args> static constexpr Invoke(F &&f, Args &&...args) {
-		return type_util::Invoke(std::forward<F>(f), VariantView(std::forward<Args>(args))...);
+	constexpr auto &Ref() const noexcept { return Reference(*v_); }
+	constexpr auto const &CRef() const noexcept { return cv_? Reference(*cv_) : Reference(const_cast<Variant const &>(*v_)); }
+
+	constexpr operator Variant &() noexcept { return *v_; }
+	constexpr operator Variant const &() noexcept { return cv_? *cv_ : *v_; }
+
+	template<class F, class... Args> static constexpr decltype(auto) Invoke(F &&f, Args &&...args) {
+		return value_util::Invoke(std::forward<F>(f), VariantView(std::forward<Args>(args))...);
 	}
 };
 
-template<TypeId id> using TypeIdCase = VariantView<IdToTypeMapT<id>>;
+template<class IdToType> class VariantView<IdToType, false>
+  : public IdToType // parent defines value, type, storage_type and Ref()
+{
+	Variant *v_ = nullptr;
+	Variant const *cv_ = nullptr;
 
-template<TypeId... ids> using TypeIdCases = type_util::LiftIntegerSequenceT<std::integer_sequence<TypeId, ids...>, TypeIdCase>;
+	constexpr VariantView(Variant &v) noexcept: v_(&v) {}
+	constexpr VariantView(Variant const &cv) noexcept: cv_(&cv) {}
+	using IdToType::Reference;
+public:
+	using typename IdToType::type;
+	using typename IdToType::storage_type;
+	using IdToType::value;
 
-using DefaultObjectCase = VariantView<Ptr<Object>>;
+	constexpr auto Get() const noexcept { return v_->Get<type>(); }
+
+	constexpr void Set(type val) noexcept { v_->Assign(std::move(val), value); }
+
+	constexpr auto &Ref() const noexcept { return Reference(*v_); }
+	constexpr auto const &CRef() const noexcept { return cv_? Reference(*cv_) : Reference(const_cast<Variant const &>(*v_)); }
+
+	constexpr operator Variant &() noexcept { return *v_; }
+	constexpr operator Variant const &() noexcept { return cv_? *cv_ : *v_; }
+
+	template<class F, class... Args> static constexpr decltype(auto) Invoke(F &&f, Args &&...args) {
+		return value_util::Invoke(std::forward<F>(f), VariantView(std::forward<Args>(args))...);
+	}
+};
+
+template<> class VariantView<IdToType<TypeIds::Null>, false>
+  : public IdToType<TypeIds::Null> // parent defines value, type and storage_type
+{
+	Variant *v_ = nullptr;
+	Variant const *cv_ = nullptr;
+
+	constexpr VariantView(Variant &v) noexcept: v_(&v) {}
+	constexpr VariantView(Variant const &cv) noexcept: cv_(&cv) {}
+public:
+	using typename IdToType::type;
+	using typename IdToType::storage_type;
+	using IdToType::value;
+
+	constexpr auto Get() const noexcept { return nullptr; }
+
+	constexpr void Set(type) noexcept {}
+
+	constexpr operator Variant &() noexcept { return *v_; }
+	constexpr operator Variant const &() noexcept { return cv_? *cv_ : *v_; }
+
+	template<class F, class... Args> static constexpr decltype(auto) Invoke(F &&f, Args &&...args) {
+		return value_util::Invoke(std::forward<F>(f), VariantView(std::forward<Args>(args))...);
+	}
+};
+
+class DefaultVariantView: public VariantValue<TypeIds::NumReserved, Ptr<Object>>
+{
+	Variant *v_ = nullptr;
+	Variant const *cv_ = nullptr;
+
+	constexpr DefaultVariantView(Variant &v) noexcept: v_(&v) {}
+	constexpr DefaultVariantView(Variant const &v) noexcept: cv_(&v) {}
+public:
+	using VariantValue<TypeIds::NumReserved, Ptr<Object>>::type;
+	using VariantValue<TypeIds::NumReserved, Ptr<Object>>::storage_type;
+	using VariantValue<TypeIds::NumReserved, Ptr<Object>>::value;
+
+	auto Get() const noexcept { return v_? v_->Get<type>() : cv_->Get<type>(); }
+
+	void Set(type val) noexcept { v_->Assign(std::move(val), value); }
+
+	constexpr auto &Ref() const noexcept { return v_->object; }
+	constexpr auto const &CRef() const noexcept { return cv_? cv_->object : v_->object; }
+
+	constexpr operator Variant &() noexcept { return *v_; }
+	constexpr operator Variant const &() noexcept { return cv_? *cv_ : *v_; }
+
+	template<class F, class... Args> static constexpr decltype(auto) Invoke(F &&f, Args &&...args) {
+		return value_util::Invoke(std::forward<F>(f), DefaultVariantView(std::forward<Args>(args))...);
+	}
+};
+
+template<TypeId id> using TypeIdCase = VariantView<IdToType<id>>;
+
+template<TypeId... ids> using TypeIdCases = pack::Pack<TypeIdCase<ids>...>;
+
+using DefaultObjectCase = type_util::DefaultCase<DefaultVariantView>;
 
 using UnsignedIntegerTypes = TypeIdCases<TypeIds::UInt8, TypeIds::UInt16, TypeIds::UInt32, TypeIds::UInt64>;
 using SignedIntegerTypes = TypeIdCases<TypeIds::Int8, TypeIds::Int16, TypeIds::Int32, TypeIds::Int64>;

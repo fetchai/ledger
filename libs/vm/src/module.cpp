@@ -33,83 +33,15 @@ namespace {
 template <typename To>
 To Cast(Variant const &from)
 {
-  To to;
-  switch (from.type_id)
-  {
-  case TypeIds::Bool:
-  {
-    to = static_cast<To>(from.primitive.ui8);
-    break;
-  }
-  case TypeIds::Int8:
-  {
-    to = static_cast<To>(from.primitive.i8);
-    break;
-  }
-  case TypeIds::UInt8:
-  {
-    to = static_cast<To>(from.primitive.ui8);
-    break;
-  }
-  case TypeIds::Int16:
-  {
-    to = static_cast<To>(from.primitive.i16);
-    break;
-  }
-  case TypeIds::UInt16:
-  {
-    to = static_cast<To>(from.primitive.ui16);
-    break;
-  }
-  case TypeIds::Int32:
-  {
-    to = static_cast<To>(from.primitive.i32);
-    break;
-  }
-  case TypeIds::UInt32:
-  {
-    to = static_cast<To>(from.primitive.ui32);
-    break;
-  }
-  case TypeIds::Int64:
-  {
-    to = static_cast<To>(from.primitive.i64);
-    break;
-  }
-  case TypeIds::UInt64:
-  {
-    to = static_cast<To>(from.primitive.ui64);
-    break;
-  }
-  case TypeIds::Float32:
-  {
-    to = static_cast<To>(from.primitive.f32);
-    break;
-  }
-  case TypeIds::Float64:
-  {
-    to = static_cast<To>(from.primitive.f64);
-    break;
-  }
-  case TypeIds::Fixed32:
-  {
-    to = static_cast<To>(fixed_point::fp32_t::FromBase(from.primitive.i32));
-    break;
-  }
-  case TypeIds::Fixed64:
-  {
-    to = static_cast<To>(fixed_point::fp64_t::FromBase(from.primitive.i64));
-    break;
-  }
-  default:
-  {
-    to = 0;
-    // Not a primitive
-    assert(false);
-    break;
-  }
-  }  // switch
-  return to;
+  // Check if its a primitive
+  assert(ApplyScalarFunctor(from.type_id, []{ return true; }));
+
+  return ApplyScalarFunctor(
+	  from.type_id,
+	  [](auto &&v) {
+		  return static_cast<To>(v.CRef());
+	  },
+	  from);
 }
 
 int8_t toInt8(VM * /* vm */, AnyPrimitive const &from)

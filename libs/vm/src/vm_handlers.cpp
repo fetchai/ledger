@@ -255,131 +255,36 @@ void VM::Handler__ForRangeIterate()
   ForRangeLoop &loop     = range_loop_stack_[range_loop_sp_];
   Variant &     variable = GetVariable(loop.variable_index);
   bool          finished = true;
+  Variant loop_current(loop.current, variable.type_id);
+  Variant loop_target(loop.target, variable.type_id);
+
   if (instruction_->data == 2)
   {
-    switch (variable.type_id)
-    {
-    case TypeIds::Int8:
-    {
-      variable.primitive.i8 = loop.current.i8++;
-      finished              = variable.primitive.i8 >= loop.target.i8;
-      break;
-    }
-    case TypeIds::UInt8:
-    {
-      variable.primitive.ui8 = loop.current.ui8++;
-      finished               = variable.primitive.ui8 >= loop.target.ui8;
-      break;
-    }
-    case TypeIds::Int16:
-    {
-      variable.primitive.i16 = loop.current.i16++;
-      finished               = variable.primitive.i16 >= loop.target.i16;
-      break;
-    }
-    case TypeIds::UInt16:
-    {
-      variable.primitive.ui16 = loop.current.ui16++;
-      finished                = variable.primitive.ui16 >= loop.target.ui16;
-      break;
-    }
-    case TypeIds::Int32:
-    {
-      variable.primitive.i32 = loop.current.i32++;
-      finished               = variable.primitive.i32 >= loop.target.i32;
-      break;
-    }
-    case TypeIds::UInt32:
-    {
-      variable.primitive.ui32 = loop.current.ui32++;
-      finished                = variable.primitive.ui32 >= loop.target.ui32;
-      break;
-    }
-    case TypeIds::Int64:
-    {
-      variable.primitive.i64 = loop.current.i64++;
-      finished               = variable.primitive.i64 >= loop.target.i64;
-      break;
-    }
-    case TypeIds::UInt64:
-    {
-      variable.primitive.ui64 = loop.current.ui64++;
-      finished                = variable.primitive.ui64 >= loop.target.ui64;
-      break;
-    }
-    default:
-    {
-      break;
-    }
-    }  // switch
+    ApplyIntegralFunctor(
+	    variable.type_id,
+	    [&finished](auto &&v, auto &&current, auto const &target) {
+		    v.Ref() = current.Ref()++;
+		    finished = v.Get() >= target.Get();
+	    },
+	    variable, loop_current, loop_target);
   }
   else
   {
-    switch (variable.type_id)
-    {
-    case TypeIds::Int8:
-    {
-      variable.primitive.i8 = loop.current.i8;
-      loop.current.i8       = int8_t(loop.current.i8 + loop.delta.i8);
-      finished              = variable.primitive.i8 >= loop.target.i8;
-      break;
-    }
-    case TypeIds::UInt8:
-    {
-      variable.primitive.ui8 = loop.current.ui8;
-      loop.current.ui8       = uint8_t(loop.current.ui8 + loop.delta.ui8);
-      finished               = variable.primitive.ui8 >= loop.target.ui8;
-      break;
-    }
-    case TypeIds::Int16:
-    {
-      variable.primitive.i16 = loop.current.i16;
-      loop.current.i16       = int16_t(loop.current.i16 + loop.delta.i16);
-      finished               = variable.primitive.i16 >= loop.target.i16;
-      break;
-    }
-    case TypeIds::UInt16:
-    {
-      variable.primitive.ui16 = loop.current.ui16;
-      loop.current.ui16       = uint16_t(loop.current.ui16 + loop.delta.ui16);
-      finished                = variable.primitive.ui16 >= loop.target.ui16;
+    Variant loop_delta(loop.delta, variable.type_id);
+    ApplyIntegralFunctor(
+	    variable.type_id,
+	    [&finished](auto &&v, auto &&current, auto const &target, auto const &delta) {
+		    using type = typename std::decay_t<decltype(current)>::type;
 
-      break;
-    }
-    case TypeIds::Int32:
-    {
-      variable.primitive.i32 = loop.current.i32;
-      loop.current.i32 += loop.delta.i32;
-      finished = variable.primitive.i32 >= loop.target.i32;
-      break;
-    }
-    case TypeIds::UInt32:
-    {
-      variable.primitive.ui32 = loop.current.ui32;
-      loop.current.ui32 += loop.delta.ui32;
-      finished = variable.primitive.ui32 >= loop.target.ui32;
-      break;
-    }
-    case TypeIds::Int64:
-    {
-      variable.primitive.i64 = loop.current.i64;
-      loop.current.i64 += loop.delta.i64;
-      finished = variable.primitive.i64 >= loop.target.i64;
-      break;
-    }
-    case TypeIds::UInt64:
-    {
-      variable.primitive.ui64 = loop.current.ui64;
-      loop.current.ui64 += loop.delta.ui64;
-      finished = variable.primitive.ui64 >= loop.target.ui64;
-      break;
-    }
-    default:
-    {
-      break;
-    }
-    }  // switch
+		    v.Ref() = current.Get();
+		    // TODO(bipll): this statement needs to be made UB-free
+		    current.Ref() = type(current.Get() + delta.Get());
+		    finished = v.Get() >= target.Get();
+	    },
+	    variable, loop_current, loop_target, loop_delta);
   }
+  loop.current = loop_current.primitive;
+
   if (finished)
   {
     pc_ = instruction_->index;

@@ -52,60 +52,14 @@ TypeInfo const &Object::GetTypeInfo(TypeId type_id)
 
 bool Object::GetNonNegativeInteger(Variant const &v, std::size_t &index)
 {
-  bool ok = true;
-  switch (v.type_id)
-  {
-  case TypeIds::Int8:
-  {
-    index = std::size_t(v.primitive.i8);
-    ok    = v.primitive.i8 >= 0;
-    break;
-  }
-  case TypeIds::UInt8:
-  {
-    index = std::size_t(v.primitive.ui8);
-    break;
-  }
-  case TypeIds::Int16:
-  {
-    index = std::size_t(v.primitive.i16);
-    ok    = v.primitive.i16 >= 0;
-    break;
-  }
-  case TypeIds::UInt16:
-  {
-    index = std::size_t(v.primitive.ui16);
-    break;
-  }
-  case TypeIds::Int32:
-  {
-    index = std::size_t(v.primitive.i32);
-    ok    = v.primitive.i32 >= 0;
-    break;
-  }
-  case TypeIds::UInt32:
-  {
-    index = std::size_t(v.primitive.ui32);
-    break;
-  }
-  case TypeIds::Int64:
-  {
-    index = std::size_t(v.primitive.i64);
-    ok    = v.primitive.i64 >= 0;
-    break;
-  }
-  case TypeIds::UInt64:
-  {
-    index = std::size_t(v.primitive.ui64);
-    break;
-  }
-  default:
-  {
-    ok = false;
-    break;
-  }
-  }  // switch
-  return ok;
+  return ApplyIntegralFunctor(
+	  v.type_id,
+	  [&index](auto &&i) {
+		  auto ret_val = i.Get();
+		  index = std::size_t(ret_val);
+		  return ret_val >= 0;
+	  },
+	  v);
 }
 
 std::size_t Object::GetHashCode()
