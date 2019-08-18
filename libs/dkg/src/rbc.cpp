@@ -21,6 +21,11 @@
 #include "crypto/sha256.hpp"
 #include "dkg/rbc.hpp"
 
+#include <cassert>
+#include <functional>
+#include <string>
+#include <utility>
+
 namespace fetch {
 namespace dkg {
 

@@ -19,6 +19,9 @@
 #include "core/logging.hpp"
 #include "dkg/rbc_envelope.hpp"
 
+#include <cassert>
+#include <memory>
+
 namespace fetch {
 namespace dkg {
 

@@ -21,6 +21,7 @@
 #include "core/byte_array/encoders.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_serializer.hpp"
+
 namespace fetch {
 namespace serializers {
 
@@ -32,7 +33,7 @@ public:
   using DriverType = D;
 
   template <typename Serializer>
-  static inline void Serialize(Serializer &s, Type const &tx)
+  static void Serialize(Serializer &s, Type const &tx)
   {
     ledger::TransactionSerializer serializer{};
     serializer << tx;
@@ -40,7 +41,7 @@ public:
   }
 
   template <typename Serializer>
-  static inline void Deserialize(Serializer &s, Type &tx)
+  static void Deserialize(Serializer &s, Type &tx)
   {
     // extract the data from the stream
     byte_array::ConstByteArray data;

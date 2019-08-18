@@ -19,22 +19,14 @@
 
 #include "ml/regularisers/l1_regulariser.hpp"
 #include "ml/regularisers/l2_regulariser.hpp"
+#include "ml/regularisers/reg_types.hpp"
 #include "ml/regularisers/regulariser.hpp"
-#include "regularisation.hpp"
-
 #include <memory>
 #include <stdexcept>
 
 namespace fetch {
 namespace ml {
 namespace details {
-
-enum class RegularisationType
-{
-  NONE,
-  L1,
-  L2,
-};
 
 template <class T>
 std::shared_ptr<fetch::ml::regularisers::Regulariser<T>> CreateRegulariser(RegularisationType type)
@@ -62,6 +54,7 @@ std::shared_ptr<fetch::ml::regularisers::Regulariser<T>> CreateRegulariser(Regul
   }
   return ret;
 }
+
 }  // namespace details
 }  // namespace ml
 }  // namespace fetch

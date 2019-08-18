@@ -19,7 +19,8 @@
 
 #include "core/byte_array/byte_array.hpp"
 #include "core/serializers/group_definitions.hpp"
-#include <bls/bls.h>
+
+#include "bls/bls.h"
 
 #include <cstddef>
 #include <cstdint>

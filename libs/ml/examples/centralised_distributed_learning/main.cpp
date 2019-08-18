@@ -18,8 +18,8 @@
 
 #include "math/statistics/mean.hpp"
 #include "math/tensor.hpp"
+#include "ml/core/graph.hpp"
 #include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
-#include "ml/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
@@ -47,8 +47,8 @@
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
 
-using DataType  = float;
-using ArrayType = fetch::math::Tensor<DataType>;
+using DataType   = float;
+using TensorType = fetch::math::Tensor<DataType>;
 
 class TrainingClient
 {
@@ -56,22 +56,22 @@ public:
   TrainingClient(std::string const &images, std::string const &labels)
     : dataloader_(images, labels, true)
   {
-    g_.AddNode<PlaceHolder<ArrayType>>("Input", {});
-    g_.AddNode<FullyConnected<ArrayType>>("FC1", {"Input"}, 28u * 28u, 10u);
-    g_.AddNode<Relu<ArrayType>>("Relu1", {"FC1"});
-    g_.AddNode<FullyConnected<ArrayType>>("FC2", {"Relu1"}, 10u, 10u);
-    g_.AddNode<Relu<ArrayType>>("Relu2", {"FC1"});
-    g_.AddNode<FullyConnected<ArrayType>>("FC3", {"Relu2"}, 10u, 10u);
-    g_.AddNode<Softmax<ArrayType>>("Softmax", {"FC3"});
-    g_.AddNode<PlaceHolder<ArrayType>>("Label", {});
-    g_.AddNode<CrossEntropyLoss<ArrayType>>("Error", {"Softmax", "Label"});
+    g_.AddNode<PlaceHolder<TensorType>>("Input", {});
+    g_.AddNode<FullyConnected<TensorType>>("FC1", {"Input"}, 28u * 28u, 10u);
+    g_.AddNode<Relu<TensorType>>("Relu1", {"FC1"});
+    g_.AddNode<FullyConnected<TensorType>>("FC2", {"Relu1"}, 10u, 10u);
+    g_.AddNode<Relu<TensorType>>("Relu2", {"FC2"});
+    g_.AddNode<FullyConnected<TensorType>>("FC3", {"Relu2"}, 10u, 10u);
+    g_.AddNode<Softmax<TensorType>>("Softmax", {"FC3"});
+    g_.AddNode<PlaceHolder<TensorType>>("Label", {});
+    g_.AddNode<CrossEntropyLoss<TensorType>>("Error", {"Softmax", "Label"});
   }
 
   void Train(unsigned int number_of_batches)
   {
-    float                                        loss = 0;
-    CrossEntropyLoss<ArrayType>                  criterion;
-    std::pair<ArrayType, std::vector<ArrayType>> input;
+    float                                          loss = 0;
+    CrossEntropyLoss<TensorType>                   criterion;
+    std::pair<TensorType, std::vector<TensorType>> input;
     for (unsigned int i(0); i < number_of_batches; ++i)
     {
       loss = 0;
@@ -83,16 +83,16 @@ public:
         g_.SetInput("Input", input.second.at(0));
         g_.SetInput("Label", input.first);
 
-        ArrayType loss_tensor = g_.Evaluate("Error");
+        TensorType loss_tensor = g_.ForwardPropagate("Error");
         loss += *(loss_tensor.begin());
         g_.BackPropagateError("Error");
       }
       losses_values_.push_back(loss);
 
       // Updating the weights
-      for (auto &w : g_.get_trainables())
+      for (auto &w : g_.GetTrainables())
       {
-        ArrayType grad = w->get_gradients();
+        TensorType grad = w->get_gradients();
         fetch::math::Multiply(grad, DataType{-LEARNING_RATE}, grad);
         w->ApplyGradient(grad);
       }
@@ -116,9 +116,9 @@ public:
 
 private:
   // Client own graph
-  fetch::ml::Graph<ArrayType> g_;
+  fetch::ml::Graph<TensorType> g_;
   // Client own dataloader
-  fetch::ml::dataloaders::MNISTLoader<ArrayType, ArrayType> dataloader_;
+  fetch::ml::dataloaders::MNISTLoader<TensorType, TensorType> dataloader_;
   // Loss history
   std::vector<float> losses_values_;
 };
@@ -154,15 +154,15 @@ int main(int ac, char **av)
       // Wait for everyone to be done
       t.join();
     }
-    std::list<fetch::ml::StateDict<ArrayType>> stateDicts;
+    std::list<fetch::ml::StateDict<TensorType>> stateDicts;
     for (auto &c : clients)
     {
       // Collect all the stateDicts
       stateDicts.push_back(c.GetStateDict());
     }
     // Average them together
-    fetch::ml::StateDict<ArrayType> averageStateDict =
-        fetch::ml::StateDict<ArrayType>::MergeList(stateDicts);
+    fetch::ml::StateDict<TensorType> averageStateDict =
+        fetch::ml::StateDict<TensorType>::MergeList(stateDicts);
     for (auto &c : clients)
     {
       // Load newly averaged weight into each client

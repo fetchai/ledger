@@ -37,7 +37,7 @@ public:
   static const uint8_t KEY_EXPLANATION = 2;
 
   template <typename T>
-  static inline void Serialize(T &map_constructor, Type const &s)
+  static void Serialize(T &map_constructor, Type const &s)
   {
     error::error_type code = s.error_code();
 
@@ -47,7 +47,7 @@ public:
   }
 
   template <typename T>
-  static inline void Deserialize(T &map, Type &s)
+  static void Deserialize(T &map, Type &s)
   {
     error::error_type     code;
     byte_array::ByteArray buffer;

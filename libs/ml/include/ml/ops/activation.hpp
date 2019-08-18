@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/graph.hpp"
+#include "ml/core/graph.hpp"
 #include "ml/ops/activations/dropout.hpp"
 #include "ml/ops/activations/gelu.hpp"
 #include "ml/ops/activations/leaky_relu.hpp"

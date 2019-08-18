@@ -17,9 +17,15 @@
 //------------------------------------------------------------------------------
 
 #include "vectorise/fixed_point/fixed_point.hpp"
+#include "vm/address.hpp"
+#include "vm/array.hpp"
 #include "vm/common.hpp"
+#include "vm/map.hpp"
+#include "vm/matrix.hpp"
 #include "vm/module.hpp"
 #include "vm/sharded_state.hpp"
+#include "vm/state.hpp"
+#include "vm/string.hpp"
 #include "vm/variant.hpp"
 #include "vm/vm.hpp"
 
