@@ -145,7 +145,7 @@ using IfIsUnsignedInteger = EnableIf<IsUnsignedInteger<T>, R>;
 template <typename T, typename R = void>
 using IfIsSignedInteger = EnableIf<IsSignedInteger<T>, R>;
 
-// template <typename  T, std::size_t I, std::size_t F, typename  R = void>
+// template <typename T, std::size_t I, std::size_t F, typename R = void>
 // using IfIsFixedPoint = EnableIf<IsFixedPoint<T, I, F>, R>;
 template <typename T, typename R = void>
 using IfIsFixedPoint = EnableIf<IsFixedPoint<T>, R>;

@@ -28,7 +28,7 @@ namespace detail {
 template <typename T>
 using FunctionPtr = void (*)(T *);
 
-// template <typename  T>
+// template <typename T>
 // struct SessionPrimitive;
 //
 // template <>

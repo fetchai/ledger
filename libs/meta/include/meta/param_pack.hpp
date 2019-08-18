@@ -56,7 +56,7 @@ struct ConveyTypeParameterPackImpl
  *   template <typename ... Ts>
  *   struct NeedsParamPackToWork {...}
  *
- *   template <typename  ArbitraryStdTuple>
+ *   template <typename ArbitraryStdTuple>
  *   void doStuffWithTuples(ArbitraryStdTuple&&)
  *   {
  *     // uses the same param pack that was used to make the tuple
