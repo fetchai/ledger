@@ -1107,7 +1107,7 @@ BlockCoordinator::State BlockCoordinator::OnReset()
     {
       auto const block_number = block->body.block_number;
 
-      if ((block_number % aeon_period_) == 0)
+      if ((block_number % AEON_PERIOD) == 0)
       {
         std::unordered_set<fetch::crypto::Identity> cabinet_member_list;
         auto                                        snapshot = (*stake_).GetCurrentStakeSnapshot();
@@ -1123,7 +1123,7 @@ BlockCoordinator::State BlockCoordinator::OnReset()
         uint32_t threshold = uint32_t((cabinet_member_list.size() / 2) + 1);
 
         FETCH_LOG_INFO(LOGGING_NAME, "Block: ", block_number,
-                       " creating new aeon. Periodicity: ", aeon_period_, " threshold: ", threshold,
+                       " creating new aeon. Periodicity: ", AEON_PERIOD, " threshold: ", threshold,
                        " cabinet size: ", cabinet_member_list.size());
 
         // Disallow multiple invocations
@@ -1132,7 +1132,7 @@ BlockCoordinator::State BlockCoordinator::OnReset()
         if (block_number != 0 || !did_genesis_already)
         {
           beacon_->StartNewCabinet(cabinet_member_list, threshold, block_number,
-                                   block_number + aeon_period_);
+                                   block_number + AEON_PERIOD);
           did_genesis_already = true;
         }
 

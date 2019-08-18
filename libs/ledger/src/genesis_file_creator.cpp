@@ -25,6 +25,7 @@
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chain/constants.hpp"
+#include "ledger/chaincode/wallet_record.hpp"
 #include "ledger/consensus/stake_manager.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
 #include "ledger/genesis_loading/genesis_file_creator.hpp"
@@ -171,18 +172,53 @@ void GenesisFileCreator::LoadState(Variant const &object)
   // Reset storage unit
   storage_unit_.Reset();
 
-  // Set our state
-  object.IterateObject([this](ConstByteArray const &key, Variant const &value) {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "key ", key);
-    FETCH_LOG_DEBUG(LOGGING_NAME, "value ", value);
+  // Expecting an array of record entries
+  if (!object.IsArray())
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "EC1");
+    exit(1);
+    return;
+  }
 
-    ResourceAddress key_raw(ResourceID(FromBase64(key)));
-    ConstByteArray  value_raw(byte_array::FromBase64(value.As<ConstByteArray>()));
+  // iterate over all of the Identity + stake amount mappings
+  for (std::size_t i = 0, end = object.size(); i < end; ++i)
+  {
+    ConstByteArray key{};
+    uint64_t       balance{0};
+    uint64_t       stake{0};
 
-    storage_unit_.Set(key_raw, value_raw);
+    if (variant::Extract(object[i], "key", key) &&
+        variant::Extract(object[i], "balance", balance) &&
+        variant::Extract(object[i], "stake", stake))
+    {
+      ledger::WalletRecord record;
 
-    return true;
-  });
+      record.balance = balance;
+      record.stake   = stake;
+
+      ResourceAddress key_raw(ResourceID(FromBase64(key)));
+
+      FETCH_LOG_INFO(LOGGING_NAME, "Initial state entry: ", key, " balance: ", balance,
+                     " stake: ", stake);
+
+      {
+        // serialize the record to the buffer
+        serializers::MsgPackSerializer buffer;
+        buffer << record;
+
+        // lookup reference to the underlying buffer
+        auto const &data = buffer.data();
+
+        // store the buffer
+        storage_unit_.Set(key_raw, data);
+      }
+    }
+    else
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "EC2");
+      exit(1);
+    }
+  }
 
   // Commit this state
   auto merkle_commit_hash = storage_unit_.Commit(0);

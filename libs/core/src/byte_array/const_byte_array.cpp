@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
+#include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 
 namespace fetch {
@@ -30,6 +31,16 @@ ConstByteArray ConstByteArray::ToBase64() const
 ConstByteArray ConstByteArray::ToHex() const
 {
   return ::fetch::byte_array::ToHex(*this);
+}
+
+ConstByteArray ConstByteArray::FromBase64() const
+{
+  return ::fetch::byte_array::FromBase64(*this);
+}
+
+ConstByteArray ConstByteArray::FromHex() const
+{
+  return ::fetch::byte_array::FromHex(*this);
 }
 
 }  // namespace byte_array

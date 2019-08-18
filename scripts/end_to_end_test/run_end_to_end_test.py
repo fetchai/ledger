@@ -118,6 +118,9 @@ class TestInstance():
         # To avoid possible collisions, prepend output files with the date
         self._random_identifer = '{0:%Y_%m_%d_%H_%M_%S}'.format(
             datetime.datetime.now())
+
+        self._random_identifer = "default"
+
         self._workspace = os.path.join(
             build_directory, 'end_to_end_test_{}'.format(
                 self._random_identifer))
@@ -299,7 +302,7 @@ class TestInstance():
 
         if(self._pos_mode):
             output("POS mode. sleep extra time.")
-            time.sleep(10)
+            time.sleep(2)
 
     def stop(self):
         if self._nodes:
@@ -540,6 +543,55 @@ def verify_txs(parameters, test_instance):
         output("Verified balances for node: {}".format(node_index))
 
 
+def get_nodes_private_key(test_instance, index):
+    # Path to config files (should already be generated)
+    expected_ouptut_dir = os.path.abspath(
+        os.path.dirname(test_instance._yaml_file)+"/input_files")
+
+    key_path = expected_ouptut_dir+"/{}.key".format(index)
+    verify_file(key_path)
+
+    private_key = open(key_path, "rb").read(32)
+
+    #import ipdb; ipdb.set_trace(context=20)
+
+    return private_key
+
+
+def destake(parameters, test_instance):
+
+    nodes = parameters["nodes"]
+
+    for node_index in nodes:
+        node_host = "localhost"
+        node_port = test_instance._nodes[node_index]._port_start
+
+        # create the API objects we use to interface with the nodes
+        api = LedgerApi(node_host, node_port)
+
+        # create the entity from the node's private key
+        entity = Entity(get_nodes_private_key(test_instance, node_index))
+        #entity = Entity()
+
+        #api.sync(api.tokens.wealth(entity, 999))
+
+        current_stake = api.tokens.stake(entity)
+
+        output(f'Destaking node {node_index}. Current stake: ', current_stake)
+        output(
+            f'Destaking node {node_index}. Current balance: ', api.tokens.balance(entity))
+
+        api.sync(api.tokens.add_stake(entity, 1, 500))
+        api.sync(api.tokens.de_stake(entity, current_stake, 500))
+        api.sync(api.tokens.collect_stake(entity, 500))
+
+        output(f'Destaked node {node_index}. Current stake: ', current_stake)
+        output(
+            f'Destaked node {node_index}. Current balance: ', api.tokens.balance(entity))
+        output(f'Destaked node {node_index}. Current cooldown stake: ',
+               api.tokens.stake_cooldown(entity))
+
+
 def restart_nodes(parameters, test_instance):
 
     nodes = parameters["nodes"]
@@ -590,6 +642,8 @@ def run_steps(test_yaml, test_instance):
             run_python_test(parameters, test_instance)
         elif command == 'restart_nodes':
             restart_nodes(parameters, test_instance)
+        elif command == 'destake':
+            destake(parameters, test_instance)
         else:
             output(
                 "Found unknown command when running steps: '{}'".format(

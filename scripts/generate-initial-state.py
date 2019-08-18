@@ -59,8 +59,7 @@ def generate_token_address(muddle_address):
 
 def create_record(address, balance, stake):
     resource_id = calc_resource_id('fetch.token.state.' + address)
-    resource_value = base64.b64encode(
-        struct.pack('<QQBQ', balance, stake, 0, 0)).decode()
+    resource_value = {"balance": balance, "stake": stake}
     return resource_id, resource_value
 
 
@@ -84,7 +83,7 @@ def main():
     individual_stake = (min(args.stake_percentage, 100)
                         * individual_balance) // 100
     stakes = []
-    state = {}
+    state = []
     cabinet = []
 
     # build up the configuration for all the stakers
@@ -100,7 +99,10 @@ def main():
         # update the initial state
         key, value = create_record(
             token_address, individual_balance, individual_stake)
-        state[key] = value
+        state.append({
+            "key": key,
+            **value
+        })
 
         # update the random beacon config
         cabinet.append(address)
@@ -117,7 +119,7 @@ def main():
 
     # dump the file
     with open(args.output, 'w') as output_file:
-        json.dump(snapshot, output_file)
+        json.dump(snapshot, output_file, indent=4, sort_keys=True)
 
 
 if __name__ == '__main__':
