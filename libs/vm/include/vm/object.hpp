@@ -436,37 +436,37 @@ private:
 };
 
 template <typename L, typename R>
-inline bool operator==(Ptr<L> const &lhs, Ptr<R> const &rhs)
+bool operator==(Ptr<L> const &lhs, Ptr<R> const &rhs)
 {
   return (lhs.ptr_ == static_cast<L *>(rhs.ptr_));
 }
 
 template <typename L>
-inline bool operator==(Ptr<L> const &lhs, std::nullptr_t /* rhs */)
+bool operator==(Ptr<L> const &lhs, std::nullptr_t /* rhs */)
 {
   return (lhs.ptr_ == nullptr);
 }
 
 template <typename R>
-inline bool operator==(std::nullptr_t /* lhs */, Ptr<R> const &rhs)
+bool operator==(std::nullptr_t /* lhs */, Ptr<R> const &rhs)
 {
   return (nullptr == rhs.ptr_);
 }
 
 template <typename L, typename R>
-inline bool operator!=(Ptr<L> const &lhs, Ptr<R> const &rhs)
+bool operator!=(Ptr<L> const &lhs, Ptr<R> const &rhs)
 {
   return (lhs.ptr_ != static_cast<L *>(rhs.ptr_));
 }
 
 template <typename L>
-inline bool operator!=(Ptr<L> const &lhs, std::nullptr_t /* rhs */)
+bool operator!=(Ptr<L> const &lhs, std::nullptr_t /* rhs */)
 {
   return (lhs.ptr_ != nullptr);
 }
 
 template <typename R>
-inline bool operator!=(std::nullptr_t /* lhs */, Ptr<R> const &rhs)
+bool operator!=(std::nullptr_t /* lhs */, Ptr<R> const &rhs)
 {
   return (nullptr != rhs.ptr_);
 }
@@ -474,7 +474,7 @@ inline bool operator!=(std::nullptr_t /* lhs */, Ptr<R> const &rhs)
 class Unknown;
 
 template <template <typename T, typename... Args> class Functor, typename... Args>
-inline auto TypeIdAsCanonicalType(TypeId const type_id, Args &&... args)
+auto TypeIdAsCanonicalType(TypeId const type_id, Args &&... args)
 {
   switch (type_id)
   {
