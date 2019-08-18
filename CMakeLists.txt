@@ -90,6 +90,8 @@ if (FETCH_ENABLE_CCACHE)
   endif (CCACHE_FOUND)
 endif (FETCH_ENABLE_CCACHE)
 
+conditionally_enable_lto()
+
 # ------------------------------------------------------------------------------
 # System / Vendor Targets
 # ------------------------------------------------------------------------------
