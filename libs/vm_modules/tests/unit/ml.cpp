@@ -161,4 +161,70 @@ TEST_F(MLTests, graph_serialisation_test)
   EXPECT_TRUE(initial_loss->GetTensor().AllClose(loss->GetTensor()));
 }
 
+TEST_F(MLTests, sgd_optimiser_serialisation_test)
+{
+  static char const *optimiser_serialise_src = R"(
+    function main() : Tensor
+
+      var tensor_shape = Array<UInt64>(2);
+      tensor_shape[0] = 2u64;
+      tensor_shape[1] = 10u64;
+      var data_tensor = Tensor(tensor_shape);
+      var label_tensor = Tensor(tensor_shape);
+      data_tensor.fill(7.0fp64);
+      label_tensor.fill(7.0fp64);
+
+      var dataloader = DataLoader();
+      dataloader.addData("tensor", data_tensor, label_tensor);
+
+      var graph = Graph();
+      graph.addPlaceholder("Input");
+      graph.addPlaceholder("Label");
+      graph.addFullyConnected("Output", "Input", 20, 1);
+      graph.addMeanSquareErrorLoss("Error", "Output", "Label");
+
+      var batch_size = 8u64;
+
+      // test optimiser runs
+      var optimiser = Optimiser("sgd", graph, "Input", "Label", "Error");
+
+      // serialise the optimiser
+      var state = State<Optimiser>("optimiser");
+      state.set(optimiser);
+//
+//      var loss = optimiser.run(dataloader, batch_size);
+//      return graph.evaluate("Error");
+
+    endfunction
+  )";
+
+  std::string const state_name{"optimiser"};
+  Variant           first_res;
+  ASSERT_TRUE(toolkit.Compile(optimiser_serialise_src));
+
+  EXPECT_CALL(toolkit.observer(), Write(state_name, _, _));
+  ASSERT_TRUE(toolkit.Run(&first_res));
+//
+//  static char const *optimiser_deserialise_src = R"(
+//    function main() : Tensor
+//      var state = State<Graph>("graph");
+//      var graph = state.get();
+//      var loss = graph.evaluate("Error");
+//      return loss;
+//    endfunction
+//  )";
+//
+//  ASSERT_TRUE(toolkit.Compile(graph_deserialise_src));
+//
+//  Variant res;
+//  EXPECT_CALL(toolkit.observer(), Exists(state_name));
+//  EXPECT_CALL(toolkit.observer(), Read(state_name, _, _)).Times(Between(1, 2));
+//  ASSERT_TRUE(toolkit.Run(&res));
+//
+//  auto const initial_loss = first_res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+//  auto const loss         = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+//
+//  EXPECT_TRUE(initial_loss->GetTensor().AllClose(loss->GetTensor()));
+}
+
 }  // namespace

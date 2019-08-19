@@ -42,16 +42,6 @@ namespace fetch {
 namespace vm_modules {
 namespace ml {
 
-using ArrayType = fetch::math::Tensor<VMOptimiser::DataType>;
-using GraphType = fetch::ml::Graph<ArrayType>;
-
-using OptimiserType         = fetch::ml::optimisers::Optimiser<ArrayType>;
-using AdagradOptimiserType  = fetch::ml::optimisers::AdaGradOptimiser<ArrayType>;
-using AdamOptimiserType     = fetch::ml::optimisers::AdamOptimiser<ArrayType>;
-using MomentumOptimiserType = fetch::ml::optimisers::MomentumOptimiser<ArrayType>;
-using RmspropOptimiserType  = fetch::ml::optimisers::RMSPropOptimiser<ArrayType>;
-using SgdOptimiserType      = fetch::ml::optimisers::SGDOptimiser<ArrayType>;
-
 VMOptimiser::VMOptimiser(VM *vm, TypeId type_id, std::string const &mode, GraphType const &graph,
                          std::vector<std::string> const &input_node_names,
                          std::string const &label_node_name, std::string const &output_node_name)
@@ -59,30 +49,35 @@ VMOptimiser::VMOptimiser(VM *vm, TypeId type_id, std::string const &mode, GraphT
 {
   if (mode == "adagrad")
   {
+    mode_ = OptimiserMode::ADAGRAD;
     AdagradOptimiserType optimiser(std::make_shared<GraphType>(graph), input_node_names,
                                    label_node_name, output_node_name);
     optimiser_ = std::make_shared<AdagradOptimiserType>(optimiser);
   }
   else if (mode == "adam")
   {
+    mode_ = OptimiserMode::ADAM;
     AdamOptimiserType optimiser(std::make_shared<GraphType>(graph), input_node_names,
                                 label_node_name, output_node_name);
     optimiser_ = std::make_shared<AdamOptimiserType>(optimiser);
   }
   else if (mode == "momentum")
   {
+    mode_ = OptimiserMode::MOMENTUM;
     MomentumOptimiserType optimiser(std::make_shared<GraphType>(graph), input_node_names,
                                     label_node_name, output_node_name);
     optimiser_ = std::make_shared<MomentumOptimiserType>(optimiser);
   }
   else if (mode == "rmsprop")
   {
+    mode_ = OptimiserMode::RMSPROP;
     RmspropOptimiserType optimiser(std::make_shared<GraphType>(graph), input_node_names,
                                    label_node_name, output_node_name);
     optimiser_ = std::make_shared<RmspropOptimiserType>(optimiser);
   }
   else if (mode == "sgd")
   {
+    mode_ = OptimiserMode::SGD;
     SgdOptimiserType optimiser(std::make_shared<GraphType>(graph), input_node_names,
                                label_node_name, output_node_name);
     optimiser_ = std::make_shared<SgdOptimiserType>(optimiser);
@@ -129,6 +124,21 @@ VMOptimiser::DataType VMOptimiser::RunLoaderNoSubset(Ptr<VMDataLoader> const &lo
                                                      uint64_t                 batch_size)
 {
   return optimiser_->Run(*(loader->GetDataLoader()), batch_size);
+}
+
+bool VMDataLoader::SerializeTo(serializers::MsgPackSerializer &buffer)
+{
+  buffer << *this;
+  return true;
+}
+
+bool VMDataLoader::DeserializeFrom(serializers::MsgPackSerializer &buffer)
+{
+  buffer.seek(0);
+  auto opt = std::make_shared<fetch::vm_modules::ml::VMOptimiser>(this->vm_, this->type_id_);
+  buffer >> *opt;
+  *this = *opt;
+  return true;
 }
 
 }  // namespace ml
