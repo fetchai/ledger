@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,27 +16,26 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/generator.hpp"
+#include "core/byte_array/const_byte_array.hpp"
+#include "ledger/identifier.hpp"
+#include "miner/resource_mapper.hpp"
+#include "storage/resource_mapper.hpp"
+
+#include <cstdint>
+#include <string>
 
 namespace fetch {
-namespace vm {
+namespace miner {
 
-enum class FunctionDecoratorKind
+uint32_t MapResourceToLane(byte_array::ConstByteArray const &resource,
+                           byte_array::ConstByteArray const &contract, uint32_t log2_num_lanes)
 {
-  NORMAL,   ///< Normal (undecorated) function
-  ACTION,   ///< A Transaction handler
-  QUERY,    ///< A Query handler
-  ON_INIT,  ///< A function to be called on smart contract construction
-  INVALID,  ///< The function has an invalid decorator
-};
+  ledger::Identifier identifier(contract);
 
-/**
- * Determine the type of the VM function
- *
- * @param fn The reference to function entry
- * @return The type of the function
- */
-FunctionDecoratorKind DetermineKind(vm::Executable::Function const &fn);
+  return storage::ResourceAddress{
+      byte_array::ByteArray{}.Append(identifier.name_space(), ".state.", resource)}
+      .lane(log2_num_lanes);
+}
 
-}  // namespace vm
+}  // namespace miner
 }  // namespace fetch
