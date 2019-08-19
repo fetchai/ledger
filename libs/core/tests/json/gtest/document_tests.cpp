@@ -24,6 +24,7 @@
 #include <sstream>
 
 using fetch::json::JSONDocument;
+using fetch::variant::Variant;
 
 TEST(JsonTests, SimpleParseTest)
 {

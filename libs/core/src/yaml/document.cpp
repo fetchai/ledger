@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/decoders.hpp"
 #include "core/yaml/document.hpp"
+#include "core/byte_array/decoders.hpp"
 #include "core/yaml/exceptions.hpp"
 
 #include <cassert>
@@ -673,7 +673,9 @@ void YamlDocument::Parse(ConstByteArray const &document)
       if (current == nullptr)
       {
         if (token.type == NEW_ENTRY)
+        {
           throw YamlParseException("Invalid parser state");
+        }
         else
         {
           if (variant_stack.empty())
@@ -1143,7 +1145,9 @@ void YamlDocument::Tokenise(ConstByteArray const &document)
           {
             --pos;
             if (ident == 0)
+            {
               --line;
+            }
             break;
           }
 
@@ -1209,10 +1213,12 @@ void YamlDocument::Tokenise(ConstByteArray const &document)
           if (words16[0] == 0x2B65 || words16[0] == 0x2D65)
           {  // e+,e-
             tokens_.back().second = ++pos;
-            // todo: check it's not repeated
+            // TODO(issue 1525): check it's not repeated
           }
           else if (c < '0' || c > '9')
+          {
             tokens_.back().type = STRING;
+          }
         }
       }
       else
