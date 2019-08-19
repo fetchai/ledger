@@ -48,8 +48,8 @@ public:
   LayerNorm() = default;
 
   explicit LayerNorm(std::vector<SizeType> const &data_shape,
-                     SizeType                     axis    = static_cast<SizeType>(0),
-                     DataType                     epsilon = fetch::math::numeric_lowest<DataType>())
+                     SizeType                     axis = static_cast<SizeType>(0),
+                     DataType epsilon = fetch::math::function_tolerance<DataType>())
     : data_shape_(data_shape)
     , axis_(axis)
     , epsilon_(epsilon)

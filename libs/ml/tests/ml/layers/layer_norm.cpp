@@ -272,7 +272,8 @@ TYPED_TEST(LayerNormTest, saveparams_test)
   layer2.SetInput(input_name, input);
   TypeParam prediction4 = layer2.Evaluate(output_name);
 
-  EXPECT_FALSE(prediction == prediction3);
+  EXPECT_FALSE(prediction.AllClose(prediction3, fetch::math::function_tolerance<DataType>(),
+                                   fetch::math::function_tolerance<DataType>()));
 
   EXPECT_TRUE(prediction3.AllClose(prediction4, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));
