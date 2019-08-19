@@ -20,6 +20,7 @@
 #include "ml/dataloaders/ReadCSV.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/core/print.hpp"
+#include "vm_modules/core/system.hpp"
 #include "vm_modules/math/math.hpp"
 #include "vm_modules/math/tensor.hpp"
 #include "vm_modules/ml/ml.hpp"
@@ -37,28 +38,7 @@
 
 using DataType  = fetch::vm_modules::math::VMTensor::DataType;
 using ArrayType = fetch::math::Tensor<DataType>;
-
-struct System : public fetch::vm::Object
-{
-  System()           = delete;
-  ~System() override = default;
-
-  static int32_t Argc(fetch::vm::VM * /*vm*/, fetch::vm::TypeId /*type_id*/)
-  {
-    return int32_t(System::args.size());
-  }
-
-  static fetch::vm::Ptr<fetch::vm::String> Argv(fetch::vm::VM *vm, fetch::vm::TypeId /*type_id*/,
-                                                int32_t        a)
-  {
-    return fetch::vm::Ptr<fetch::vm::String>(
-        new fetch::vm::String(vm, System::args[std::size_t(a)]));
-  }
-
-  static std::vector<std::string> args;
-};
-
-std::vector<std::string> System::args;
+using System    = fetch::vm_modules::System;
 
 // read the weights and bias csv files
 fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> read_csv(
@@ -88,22 +68,24 @@ fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> remove_leading_dimension(
 
 int main(int argc, char **argv)
 {
-  if (argc < 5)
-  {
-    std::cerr << "usage ./" << argv[0] << " [filename]" << std::endl;
-    std::exit(-9);
-  }
+  // parse the command line parameters
+  System::Parse(argc, argv);
 
-  for (int i = 2; i < argc; ++i)
+  fetch::commandline::ParamsParser const &pp = System::GetParamsParser();
+
+  // ensure the program has the correct number of args
+  if (2u != pp.arg_size())
   {
-    System::args.emplace_back(std::string(argv[i]));
+    std::cerr << "Usage: " << pp.GetArg(0) << " <etch_filename> -- [script args]..." << std::endl;
+    return 1;
   }
 
   // Reading file
-  std::ifstream file(argv[1], std::ios::binary);
+  std::string   etch_filename = pp.GetArg(1);
+  std::ifstream file(etch_filename, std::ios::binary);
   if (file.fail())
   {
-    throw std::runtime_error("Cannot open file " + std::string(argv[1]));
+    throw std::runtime_error("Cannot open file " + etch_filename);
   }
   std::ostringstream ss;
   ss << file.rdbuf();
@@ -112,9 +94,7 @@ int main(int argc, char **argv)
 
   auto module = std::make_shared<fetch::vm::Module>();
 
-  module->CreateClassType<System>("System")
-      .CreateStaticMemberFunction("Argc", &System::Argc)
-      .CreateStaticMemberFunction("Argv", &System::Argv);
+  fetch::vm_modules::System::Bind(*module);
 
   fetch::vm_modules::math::BindMath(*module);
   fetch::vm_modules::ml::BindML(*module);

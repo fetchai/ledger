@@ -37,7 +37,7 @@ public:
   ParamsParser(ParamsParser &&)      = delete;
   ~ParamsParser()                    = default;
 
-  void Parse(int argc, char **argv);
+  void Parse(int argc, const char *const argv[]);
 
   template <typename T>
   T GetArg(std::size_t i, T const &default_value) const;
@@ -64,7 +64,6 @@ public:
 private:
   std::map<std::string, std::string> params_{};
   std::vector<std::string>           args_{};
-  std::size_t                        arg_count_{0};
 };
 
 template <typename T>
