@@ -1034,9 +1034,9 @@ private:
   template <typename Op>
   void ExecutePrimitiveRelationalOp(TypeId type_id, Variant &lhsv, Variant &rhsv)
   {
-    ApplyScalarFunctor(type_id,
-                       [](auto &&left, auto &&right) { Op::Apply(left, left.Get(), right.Get()); },
-                       lhsv, rhsv);
+    ApplyPrimitiveFunctor(
+        type_id, [](auto &&left, auto &&right) { Op::Apply(left, left.Get(), right.Get()); }, lhsv,
+        rhsv);
   }
 
   template <typename Op>
