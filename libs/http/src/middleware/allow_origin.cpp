@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,27 +16,25 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/generator.hpp"
+#include "core/macros.hpp"
+#include "http/middleware/allow_origin.hpp"
+#include "http/server.hpp"
+
+#include <string>
 
 namespace fetch {
-namespace vm {
+namespace http {
+namespace middleware {
 
-enum class FunctionDecoratorKind
+HTTPServer::ResponseMiddleware AllowOrigin(std::string const &val)
 {
-  NORMAL,   ///< Normal (undecorated) function
-  ACTION,   ///< A Transaction handler
-  QUERY,    ///< A Query handler
-  ON_INIT,  ///< A function to be called on smart contract construction
-  INVALID,  ///< The function has an invalid decorator
-};
+  return [val](fetch::http::HTTPResponse &res, fetch::http::HTTPRequest const &req) {
+    FETCH_UNUSED(req);
 
-/**
- * Determine the type of the VM function
- *
- * @param fn The reference to function entry
- * @return The type of the function
- */
-FunctionDecoratorKind DetermineKind(vm::Executable::Function const &fn);
+    res.AddHeader("Access-Control-Allow-Origin", val);
+  };
+}
 
-}  // namespace vm
+}  // namespace middleware
+}  // namespace http
 }  // namespace fetch

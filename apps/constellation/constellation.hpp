@@ -110,6 +110,10 @@ public:
   ~Constellation() override = default;
 
   void Run(UriList const &initial_peers, core::WeakRunnable bootstrap_monitor);
+
+  /**
+   * Signal that constellation should attempt to shutdown gracefully
+   */
   void SignalStop();
 
   void DumpOpenAPI(std::ostream &stream);
@@ -218,13 +222,5 @@ private:
   HttpModules http_modules_;          ///< The set of modules currently configured
   /// @}
 };
-
-/**
- * Signal that constellation should attempt to shutdown gracefully
- */
-inline void Constellation::SignalStop()
-{
-  active_ = false;
-}
 
 }  // namespace fetch
