@@ -70,6 +70,7 @@ bool StakeManager::ShouldGenerateBlock(Block const &previous, Address const &add
   FETCH_LOG_INFO(LOGGING_NAME, "Should generate block? Prev: ", previous.body.block_number);
 
   auto const committee = GetCommittee(previous);
+
   if (!committee || committee->empty())
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Unable to determine committee for block generation");
@@ -84,10 +85,11 @@ bool StakeManager::ShouldGenerateBlock(Block const &previous, Address const &add
 
   for (std::size_t i = 0; i < (*committee).size(); ++i)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Saw committee member: ", (*committee)[i].address().ToBase64(),
-                   "we are: ", address.address().ToBase64());
+    FETCH_LOG_DEBUG(LOGGING_NAME,
+                    "Saw committee member: ", Address((*committee)[i]).address().ToBase64(),
+                    "we are: ", address.address().ToBase64());
 
-    if ((*committee)[i] == address)
+    if (Address((*committee)[i]) == address)
     {
       in_committee = true;
       break;
@@ -146,7 +148,7 @@ std::size_t StakeManager::GetBlockGenerationWeight(Block const &previous, Addres
   // TODO(EJF): Depending on the committee sizes this would need to be improved
   for (auto const &member : *committee)
   {
-    if (address == member)
+    if (address == Address(member))
     {
       break;
     }
@@ -214,6 +216,7 @@ bool StakeManager::LookupEntropy(Block const &previous, uint64_t &entropy)
 
   // Step 1. Lookup the entropy
   auto const it = entropy_cache_.find(previous.body.block_number);
+
   if (entropy_cache_.end() != it)
   {
     entropy = it->second;
@@ -221,6 +224,11 @@ bool StakeManager::LookupEntropy(Block const &previous, uint64_t &entropy)
   }
   else
   {
+    if (!entropy_)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Entropy not set!");
+    }
+
     // generate the entropy for the previous block
     auto const status =
         entropy_->GenerateEntropy(previous.body.hash, previous.body.block_number, entropy);
@@ -264,7 +272,10 @@ bool StakeManager::ValidMinerForBlock(Block const &previous, Address const &addr
     return false;
   }
 
-  return std::find((*committee).begin(), (*committee).end(), address) != (*committee).end();
+  return std::find_if((*committee).begin(), (*committee).end(),
+                      [&address](Identity const &identity) {
+                        return address == Address(identity);
+                      }) != (*committee).end();
 }
 
 }  // namespace ledger

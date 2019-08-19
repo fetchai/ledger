@@ -48,6 +48,8 @@ public:
 
   Block();
 
+  bool operator==(Block const &rhs) const;
+
   struct Body
   {
     Digest   hash;               ///< The hash of the block

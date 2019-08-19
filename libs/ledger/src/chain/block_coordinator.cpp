@@ -24,9 +24,12 @@
 #include "ledger/block_sink_interface.hpp"
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
+#include "ledger/chain/constants.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/transaction.hpp"
+#include "ledger/consensus/stake_manager.hpp"
 #include "ledger/consensus/stake_manager_interface.hpp"
+#include "ledger/consensus/stake_snapshot.hpp"
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/execution_manager_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
@@ -35,6 +38,13 @@
 #include "ledger/upow/synergetic_executor.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/registry.hpp"
+
+#include "beacon/beacon_service.hpp"
+#include "beacon/beacon_setup_protocol.hpp"
+#include "beacon/beacon_setup_service.hpp"
+#include "beacon/cabinet_member_details.hpp"
+#include "beacon/entropy.hpp"
+#include "beacon/event_manager.hpp"
 
 #include <cassert>
 #include <chrono>
@@ -92,10 +102,11 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr
                                    BlockSinkInterface &      block_sink,
                                    core::FeatureFlags const &features, ProverPtr const &prover,
                                    std::size_t num_lanes, std::size_t num_slices,
-                                   std::size_t block_difficulty)
+                                   std::size_t block_difficulty, BeaconServicePtr beacon)
   : chain_{chain}
   , dag_{std::move(dag)}
   , stake_{std::move(stake)}
+  , beacon_{std::move(beacon)}
   , execution_manager_{execution_manager}
   , storage_unit_{storage_unit}
   , block_packer_{packer}
@@ -200,6 +211,9 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr
                      " (previous: ", ToString(previous), ")");
     }
   });
+
+  // Initialising the BLS library
+  crypto::bls::Init();
 
   // TODO(private issue 792): this shouldn't be here, but if it is, it locks the whole system on
   // startup. RecoverFromStartup();
@@ -1074,16 +1088,67 @@ BlockCoordinator::State BlockCoordinator::OnReset()
 {
   reset_state_count_->increment();
 
+  FETCH_LOG_INFO(LOGGING_NAME, "Reset condition");
+
   // trigger stake updates at the end of the block lifecycle
-  if (stake_)
+  if (stake_ && beacon_)
   {
+    Block const *block = nullptr;
+
     if (next_block_)
     {
-      stake_->UpdateCurrentBlock(*next_block_);
+      block = next_block_.get();
     }
     else if (current_block_)
     {
-      stake_->UpdateCurrentBlock(*current_block_);
+      block = current_block_.get();
+    }
+    else
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME,
+                      "Unable to find a previously executed block when updating staking!");
+    }
+
+    // If we are on the head of the main chain, and it is a 'committee triggering' block
+    if (block && (*chain_.GetHeaviestBlock() == *block))
+    {
+      auto const block_number = block->body.block_number;
+
+      if ((block_number % AEON_PERIOD) == 0)
+      {
+        std::unordered_set<fetch::crypto::Identity> cabinet_member_list;
+        auto                                        snapshot = (*stake_).GetCurrentStakeSnapshot();
+        auto const current_stakers = snapshot->BuildCommittee(0, MAX_COMMITTEE_SIZE);
+
+        // TODO(HUT): switch to set for stake manager
+        for (auto const &staker : *current_stakers)
+        {
+          FETCH_LOG_DEBUG(LOGGING_NAME, "Adding staker: ", staker.identifier().ToBase64());
+          cabinet_member_list.insert(staker);
+        }
+
+        uint32_t threshold = uint32_t((cabinet_member_list.size() / 2) + 1);
+
+        FETCH_LOG_INFO(LOGGING_NAME, "Block: ", block_number,
+                       " creating new aeon. Periodicity: ", AEON_PERIOD, " threshold: ", threshold,
+                       " cabinet size: ", cabinet_member_list.size());
+
+        // Disallow multiple invocations
+        static bool did_genesis_already = false;
+
+        if (block_number != 0 || !did_genesis_already)
+        {
+          beacon_->StartNewCabinet(cabinet_member_list, threshold, block_number,
+                                   block_number + AEON_PERIOD);
+          did_genesis_already = true;
+        }
+
+        // Finally update stake
+        if (block_number != 0)
+        {
+          stake_->UpdateCurrentBlock(*block);
+        }
+      }
     }
   }
 

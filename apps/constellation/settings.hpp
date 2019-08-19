@@ -92,7 +92,6 @@ public:
 
   /// @name State File
   /// @{
-  settings::Setting<bool>        dump_state;
   settings::Setting<bool>        load_state;
   settings::Setting<std::string> stakefile_location;
   /// @}
@@ -104,8 +103,7 @@ public:
 
   /// @name Proof of Stake
   /// @{
-  settings::Setting<bool>        proof_of_stake;
-  settings::Setting<std::string> beacon_address;
+  settings::Setting<bool> proof_of_stake;
   /// @}
 
   // Operators

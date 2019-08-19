@@ -34,13 +34,18 @@ struct Entropy
 
   uint64_t       round{0};
   ConstByteArray seed{"genesis"};
-  ConstByteArray entropy{};
+  ConstByteArray entropy{"====DEFAULT====="};
 
   GroupSignature signature;
 
   uint64_t EntropyAsUint64() const
   {
     return *reinterpret_cast<uint64_t const *>(entropy.pointer());
+  }
+
+  operator bool() const
+  {
+    return !entropy.empty();
   }
 
   bool operator<(Entropy const &other) const

@@ -131,7 +131,9 @@ BeaconSetupService::State BeaconSetupService::OnWaitForDirectConnections()
   auto                        v_peers = endpoint_.GetDirectlyConnectedPeers();
   std::unordered_set<Address> peers(v_peers.begin(), v_peers.end());
 
-  bool all_connected = true;
+  bool     all_connected = true;
+  uint16_t connected     = 0;
+
   for (auto &m : beacon_->aeon.members)
   {
     // Skipping own address
@@ -147,15 +149,22 @@ BeaconSetupService::State BeaconSetupService::OnWaitForDirectConnections()
 
       // TODO(tfr): Request muddle to connect.
     }
+    else
+    {
+      connected++;
+    }
   }
 
   if (all_connected)
   {
+    FETCH_LOG_INFO(LOGGING_NAME, "All peers connected. Proceeding.");
     return State::BROADCAST_ID;
   }
 
   state_machine_->Delay(std::chrono::milliseconds(200));
-  FETCH_LOG_INFO(LOGGING_NAME, "Waiting for all peers to join before starting setup.");
+  FETCH_LOG_INFO(LOGGING_NAME,
+                 "Waiting for all peers to join before starting setup. Connected: ", connected,
+                 " expect: ", beacon_->aeon.members.size() - 1);
 
   return State::WAIT_FOR_DIRECT_CONNECTIONS;
 }
@@ -357,6 +366,7 @@ void BeaconSetupService::QueueSetup(SharedAeonExecutionUnit beacon)
 {
   std::lock_guard<std::mutex> lock(mutex_);
   assert(beacon != nullptr);
+
   aeon_exe_queue_.push_back(beacon);
 }
 
