@@ -391,6 +391,24 @@ TYPED_TEST(TensorOperationsTest, multiple_const_slices_separated_test)
   EXPECT_EQ(t2t.At(2, 0, 0), TypeParam(27));
 }
 
+TYPED_TEST(TensorOperationsTest, broadcastable_assignment_test)
+{
+
+  using ArrayType = fetch::math::Tensor<TypeParam>;
+  using SizeType  = typename ArrayType::SizeType;
+
+  ArrayType small_data = ArrayType::FromString("1, 2; 2, 1;2, 4");
+  small_data.Reshape({3, 1, 2});
+  ArrayType big_data({3, 3, 2});
+  ArrayType slice_big_data({3, 3, 2});
+  for (SizeType i = 0; i < 3u; i++)
+  {
+    slice_big_data.Slice(i, 1).Assign(small_data);
+  }
+  big_data.Assign(small_data);
+  ASSERT_TRUE(big_data == slice_big_data);
+}
+
 TYPED_TEST(TensorOperationsTest, multiple_slices_assign_test)
 {
   using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
