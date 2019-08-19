@@ -83,7 +83,7 @@ inline bool ShapeFromBroadcast(SizeVector const &a, SizeVector const &b, SizeVec
 }
 
 template <class IteratorType>
-inline bool UpgradeIteratorFromBroadcast(SizeVector const &a, IteratorType &iterator)
+bool UpgradeIteratorFromBroadcast(SizeVector const &a, IteratorType &iterator)
 {
   assert(iterator.counter() == 0);   // Only upgrade untouched iterators.
   iterator.counter_ = uint64_t(-1);  // Invalidating the iterator
@@ -123,7 +123,7 @@ inline bool UpgradeIteratorFromBroadcast(SizeVector const &a, IteratorType &iter
 }
 
 template <typename F, typename T, typename C>
-inline bool Broadcast(F function, const Tensor<T, C> &a, const Tensor<T, C> &b, Tensor<T, C> &ret)
+bool Broadcast(F function, const Tensor<T, C> &a, const Tensor<T, C> &b, Tensor<T, C> &ret)
 {
   SizeVector ret_shape;
 

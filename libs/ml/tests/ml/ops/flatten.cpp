@@ -117,7 +117,7 @@ TYPED_TEST(FlattenTest, saveparams_test)
   using DataType      = typename TypeParam::Type;
   using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
   using SPType        = typename fetch::ml::ops::Flatten<TensorType>::SPType;
-  using OpType        = typename fetch::ml::ops::Flatten<TensorType>;
+  using OpType        = fetch::ml::ops::Flatten<TensorType>;
 
   using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
@@ -180,8 +180,8 @@ TYPED_TEST(FlattenTest, saveparams_backward_test)
   using SizeType   = typename TypeParam::SizeType;
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
-  using OpType     = typename fetch::ml::ops::Flatten<TensorType>;
-  using SPType     = typename OpType ::SPType;
+  using OpType     = fetch::ml::ops::Flatten<TensorType>;
+  using SPType     = typename OpType::SPType;
 
   SizeType height  = 5;
   SizeType width   = 6;

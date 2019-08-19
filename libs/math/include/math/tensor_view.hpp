@@ -67,17 +67,17 @@ public:
   /////////////////
 
   template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, Type>::type operator()(S i, S j) const;
+  std::enable_if_t<std::is_integral<S>::value, Type> operator()(S i, S j) const;
   template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, Type>::type &operator()(S i, S j);
+  std::enable_if_t<std::is_integral<S>::value, Type> &operator()(S i, S j);
   template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, Type>::type operator()(S i) const;
+  std::enable_if_t<std::is_integral<S>::value, Type> operator()(S i) const;
   template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, Type>::type &operator()(S i);
+  std::enable_if_t<std::is_integral<S>::value, Type> &operator()(S i);
   template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, Type>::type operator[](S i) const;
+  std::enable_if_t<std::is_integral<S>::value, Type> operator[](S i) const;
   template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, Type>::type &operator[](S i);
+  std::enable_if_t<std::is_integral<S>::value, Type> &operator[](S i);
 
   /////////////
   /// SIZES ///
@@ -227,43 +227,42 @@ Tensor<T, C> TensorView<T, C>::Copy(SizeVector const &tensor_shape) const
 
 template <typename T, typename C>
 template <typename S>
-typename std::enable_if<std::is_integral<S>::value, T>::type TensorView<T, C>::operator()(S i,
-                                                                                          S j) const
+std::enable_if_t<std::is_integral<S>::value, T> TensorView<T, C>::operator()(S i, S j) const
 {
   return data_[static_cast<SizeType>(i) + static_cast<SizeType>(j) * padded_height_];
 }
 
 template <typename T, typename C>
 template <typename S>
-typename std::enable_if<std::is_integral<S>::value, T>::type &TensorView<T, C>::operator()(S i, S j)
+std::enable_if_t<std::is_integral<S>::value, T> &TensorView<T, C>::operator()(S i, S j)
 {
   return data_[static_cast<SizeType>(i) + static_cast<SizeType>(j) * padded_height_];
 }
 
 template <typename T, typename C>
 template <typename S>
-typename std::enable_if<std::is_integral<S>::value, T>::type TensorView<T, C>::operator()(S i) const
+std::enable_if_t<std::is_integral<S>::value, T> TensorView<T, C>::operator()(S i) const
 {
   return data_[std::move(i)];
 }
 
 template <typename T, typename C>
 template <typename S>
-typename std::enable_if<std::is_integral<S>::value, T>::type &TensorView<T, C>::operator()(S i)
+std::enable_if_t<std::is_integral<S>::value, T> &TensorView<T, C>::operator()(S i)
 {
   return data_[std::move(i)];
 }
 
 template <typename T, typename C>
 template <typename S>
-typename std::enable_if<std::is_integral<S>::value, T>::type TensorView<T, C>::operator[](S i) const
+std::enable_if_t<std::is_integral<S>::value, T> TensorView<T, C>::operator[](S i) const
 {
   return data_[std::move(i)];
 }
 
 template <typename T, typename C>
 template <typename S>
-typename std::enable_if<std::is_integral<S>::value, T>::type &TensorView<T, C>::operator[](S i)
+std::enable_if_t<std::is_integral<S>::value, T> &TensorView<T, C>::operator[](S i)
 {
   return data_[std::move(i)];
 }

@@ -140,8 +140,7 @@ public:
   }
 
   template <typename S>
-  constexpr typename std::enable_if<std::is_integral<S>::value, T>::type &operator[](
-      S const &n) noexcept
+  constexpr std::enable_if_t<std::is_integral<S>::value, T> &operator[](S const &n) noexcept
   {
     assert(pointer_ != nullptr);
     assert(std::size_t(n) < padded_size());
@@ -149,35 +148,34 @@ public:
   }
 
   template <typename S>
-  constexpr typename std::enable_if<std::is_integral<S>::value, T>::type const &operator[](
-      S const &n) const noexcept
-  {
-    assert(pointer_ != nullptr);
-
-    assert(std::size_t(n) < padded_size());
-    return pointer_[n];
-  }
-
-  template <typename S>
-  constexpr typename std::enable_if<std::is_integral<S>::value, T>::type &At(S const &n) noexcept
-  {
-    assert(pointer_ != nullptr);
-    assert(n < padded_size());
-    return pointer_[n];
-  }
-
-  template <typename S>
-  constexpr typename std::enable_if<std::is_integral<S>::value, T>::type const &At(S const &n) const
+  constexpr std::enable_if_t<std::is_integral<S>::value, T> const &operator[](S const &n) const
       noexcept
   {
     assert(pointer_ != nullptr);
+
+    assert(std::size_t(n) < padded_size());
+    return pointer_[n];
+  }
+
+  template <typename S>
+  constexpr std::enable_if_t<std::is_integral<S>::value, T> &At(S const &n) noexcept
+  {
+    assert(pointer_ != nullptr);
     assert(n < padded_size());
     return pointer_[n];
   }
 
   template <typename S>
-  constexpr typename std::enable_if<std::is_integral<S>::value, T>::type const &Set(
-      S const &n, T const &v) noexcept
+  constexpr std::enable_if_t<std::is_integral<S>::value, T> const &At(S const &n) const noexcept
+  {
+    assert(pointer_ != nullptr);
+    assert(n < padded_size());
+    return pointer_[n];
+  }
+
+  template <typename S>
+  constexpr std::enable_if_t<std::is_integral<S>::value, T> const &Set(S const &n,
+                                                                       T const &v) noexcept
   {
     assert(pointer_ != nullptr);
     assert(n < padded_size());

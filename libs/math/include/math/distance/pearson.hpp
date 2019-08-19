@@ -27,7 +27,7 @@ namespace math {
 namespace distance {
 
 template <typename ArrayType>
-inline typename ArrayType::Type Pearson(ArrayType const &a, ArrayType const &b)
+typename ArrayType::Type Pearson(ArrayType const &a, ArrayType const &b)
 {
   using Type = typename ArrayType::Type;
   return Type(1) - fetch::math::correlation::Pearson(a, b);

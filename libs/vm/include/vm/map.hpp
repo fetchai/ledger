@@ -284,7 +284,7 @@ private:
 };
 
 template <typename Key, template <typename, typename> class Container = Map>
-inline Ptr<IMap> inner(TypeId value_type_id, VM *vm, TypeId type_id)
+Ptr<IMap> inner(TypeId value_type_id, VM *vm, TypeId type_id)
 {
   switch (value_type_id)
   {
