@@ -358,6 +358,8 @@ Identifier::ConstByteArray Identifier::qualifier() const
 
   switch (type_)
   {
+  case Type::INVALID:
+    break;
   case Type::NORMAL:
     identifier = full_name();
     break;
