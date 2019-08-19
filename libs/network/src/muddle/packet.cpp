@@ -19,7 +19,7 @@
 #include "core/byte_array/byte_array.hpp"
 #include "network/muddle/packet.hpp"
 
-#include <cstring>  // memcpy
+#include <cstring>
 
 namespace fetch {
 namespace muddle {

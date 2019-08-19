@@ -281,7 +281,7 @@ TYPED_TEST(MultiplyTest, saveparams_backward_test_NB_NB)
 {
   using TensorType = TypeParam;
   using OpType     = typename fetch::ml::ops::Multiply<TensorType>;
-  using SPType     = typename OpType ::SPType;
+  using SPType     = typename OpType::SPType;
 
   TensorType data_1 = TensorType::FromString(
       "1, -2, 3,-4, 5,-6, 7,-8;"

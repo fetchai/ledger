@@ -20,6 +20,8 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/serializers/group_definitions.hpp"
 
+#include <cstdint>
+
 namespace fetch {
 namespace storage {
 

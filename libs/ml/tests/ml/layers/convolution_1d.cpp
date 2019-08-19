@@ -26,6 +26,8 @@
 
 #include "vectorise/fixed_point/fixed_point.hpp"
 
+#include <memory>
+
 template <typename T>
 class Convolution1DTest : public ::testing::Test
 {
@@ -414,7 +416,7 @@ TYPED_TEST(Convolution1DTest, saveparams_test)
 {
   using DataType  = typename TypeParam::Type;
   using SizeType  = typename TypeParam::SizeType;
-  using LayerType = typename fetch::ml::layers::Convolution1D<TypeParam>;
+  using LayerType = fetch::ml::layers::Convolution1D<TypeParam>;
   using SPType    = typename LayerType::SPType;
 
   SizeType const input_channels  = 3;

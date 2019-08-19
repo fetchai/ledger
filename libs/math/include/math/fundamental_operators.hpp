@@ -332,7 +332,7 @@ meta::IfIsMathArray<ArrayType, void> Add(ArrayType const &array1, ArrayType cons
   }
   else
   {
-    if (!(Broadcast([](const typename ArrayType::Type &x, const typename ArrayType::Type &y,
+    if (!(Broadcast([](typename ArrayType::Type const &x, typename ArrayType::Type const &y,
                        typename ArrayType::Type &z) { z = x + y; },
                     array1, array2, ret)))
     {
@@ -424,7 +424,7 @@ meta::IfIsMathArray<ArrayType, void> Subtract(ArrayType const &array1, ArrayType
   }
   else
   {
-    if (!(Broadcast([](const typename ArrayType::Type &x, const typename ArrayType::Type &y,
+    if (!(Broadcast([](typename ArrayType::Type const &x, typename ArrayType::Type const &y,
                        typename ArrayType::Type &z) { z = x - y; },
                     array1, array2, ret)))
     {
@@ -454,7 +454,7 @@ template <typename ArrayType>
   {
     ArrayType a = obj1.Copy();
     ArrayType b = obj2.Copy();
-    if (!(Broadcast([](const typename ArrayType::Type &x, const typename ArrayType::Type &y,
+    if (!(Broadcast([](typename ArrayType::Type const &x, typename ArrayType::Type const &y,
                        typename ArrayType::Type &z) { z = x * y; },
                     a, b, ret)))
     {
@@ -505,7 +505,7 @@ void Divide(ArrayType const &array1, ArrayType const &array2, ArrayType &ret)
   }
   else
   {
-    if (!(Broadcast([](const typename ArrayType::Type &x, const typename ArrayType::Type &y,
+    if (!(Broadcast([](typename ArrayType::Type const &x, typename ArrayType::Type const &y,
                        typename ArrayType::Type &z) { z = x / y; },
                     array1, array2, ret)))
     {

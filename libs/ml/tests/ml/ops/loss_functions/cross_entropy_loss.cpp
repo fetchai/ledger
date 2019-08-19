@@ -17,11 +17,15 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/main_serializer_definition.hpp"
-#include "gtest/gtest.h"
 #include "math/tensor.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+
+#include "gtest/gtest.h"
+
+#include <memory>
+
 template <typename T>
 class CrossEntropyTest : public ::testing::Test
 {
@@ -286,7 +290,7 @@ TYPED_TEST(CrossEntropyTest, saveparams_test)
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
   using SPType     = typename fetch::ml::ops::CrossEntropyLoss<TensorType>::SPType;
-  using OpType     = typename fetch::ml::ops::CrossEntropyLoss<TensorType>;
+  using OpType     = fetch::ml::ops::CrossEntropyLoss<TensorType>;
 
   std::uint64_t n_classes     = 4;
   std::uint64_t n_data_points = 8;
@@ -365,7 +369,7 @@ TYPED_TEST(CrossEntropyTest, saveparams_one_dimensional_backward_test)
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
   using SPType     = typename fetch::ml::ops::CrossEntropyLoss<TensorType>::SPType;
-  using OpType     = typename fetch::ml::ops::CrossEntropyLoss<TensorType>;
+  using OpType     = fetch::ml::ops::CrossEntropyLoss<TensorType>;
 
   std::uint64_t n_classes     = 4;
   std::uint64_t n_data_points = 8;

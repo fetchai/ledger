@@ -26,6 +26,8 @@
 
 #include "gtest/gtest.h"
 
+#include <memory>
+
 template <typename T>
 class FullyConnectedTest : public ::testing::Test
 {
@@ -145,8 +147,8 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test)
   using TensorType      = TypeParam;
   using DataType        = typename TensorType::Type;
   using SizeType        = typename TensorType::SizeType;
-  using GraphType       = typename fetch::ml::Graph<TensorType>;
-  using FCType          = typename fetch::ml::layers::FullyConnected<TensorType>;
+  using GraphType       = fetch::ml::Graph<TensorType>;
+  using FCType          = fetch::ml::layers::FullyConnected<TensorType>;
   using RegType         = fetch::ml::RegularisationType;
   using WeightsInitType = fetch::ml::ops::WeightsInitialisation;
   using ActivationType  = fetch::ml::details::ActivationType;
@@ -302,8 +304,8 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test_time_distributed)
   using TensorType      = TypeParam;
   using DataType        = typename TensorType::Type;
   using SizeType        = typename TensorType::SizeType;
-  using GraphType       = typename fetch::ml::Graph<TensorType>;
-  using FCType          = typename fetch::ml::layers::FullyConnected<TensorType>;
+  using GraphType       = fetch::ml::Graph<TensorType>;
+  using FCType          = fetch::ml::layers::FullyConnected<TensorType>;
   using RegType         = fetch::ml::RegularisationType;
   using WeightsInitType = fetch::ml::ops::WeightsInitialisation;
   using ActivationType  = fetch::ml::details::ActivationType;
@@ -636,7 +638,7 @@ TYPED_TEST(FullyConnectedTest, saveparams_test)
 {
   using DataType  = typename TypeParam::Type;
   using SizeType  = typename TypeParam::SizeType;
-  using LayerType = typename fetch::ml::layers::FullyConnected<TypeParam>;
+  using LayerType = fetch::ml::layers::FullyConnected<TypeParam>;
   using SPType    = typename LayerType::SPType;
 
   SizeType data_size       = 10;
