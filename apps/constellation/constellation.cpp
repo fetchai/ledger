@@ -585,4 +585,9 @@ void Constellation::OnBlock(ledger::Block const &block)
   main_chain_service_->BroadcastBlock(block);
 }
 
+void Constellation::SignalStop()
+{
+  active_ = false;
+}
+
 }  // namespace fetch

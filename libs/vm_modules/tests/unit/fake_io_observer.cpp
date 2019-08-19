@@ -83,3 +83,8 @@ void FakeIoObserver::SetDenied(std::string const &key)
 {
   denied_keys_.insert(key);
 }
+
+bool FakeIoObserver::IsPermittedKey(std::string const &key) const
+{
+  return denied_keys_.find(key) == denied_keys_.end();
+}
