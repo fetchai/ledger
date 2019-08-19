@@ -282,7 +282,7 @@ void BuildNodeAndInsertTrainables(NodeSaveableParams<T> const &nsp, std::string 
   case ops::MaskFill<T>::OpCode():
   {
     op_ptr = GetOp<ops::MaskFill<T>>(nsp.op_save_params);
-    node->template SetNodeSaveableParams(nsp, op_ptr);
+    node->SetNodeSaveableParams(nsp, op_ptr);
     g->template AddTrainable<ops::MaskFill<T>>(name, node);
     break;
   }
@@ -352,7 +352,7 @@ void BuildNodeAndInsertTrainables(NodeSaveableParams<T> const &nsp, std::string 
   case ops::Slice<T>::OpCode():
   {
     op_ptr = GetOp<ops::Slice<T>>(nsp.op_save_params);
-    node->template SetNodeSaveableParams(nsp, op_ptr);
+    node->SetNodeSaveableParams(nsp, op_ptr);
     g->template AddTrainable<ops::Slice<T>>(name, node);
     break;
   }
