@@ -80,7 +80,7 @@ bool GenerateContractName(Transaction const &tx, Identifier &identifier)
   // if there is a contract present simply parse the name
   if (!contract_name.empty())
   {
-    if (!identifier.Parse(contract_name))
+    if (!identifier.Parse(std::move(contract_name)))
     {
       return false;
     }
