@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor.hpp"
-#include "ml/graph.hpp"
+#include "ml/core/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/layers/normalisation/layer_norm.hpp"
 #include "ml/layers/self_attention_encoder.hpp"
@@ -44,7 +44,7 @@ using GraphType     = typename fetch::ml::Graph<ArrayType>;
 using StateDictType = typename fetch::ml::StateDict<ArrayType>;
 using OptimiserType = typename fetch::ml::optimisers::AdamOptimiser<ArrayType>;
 
-using RegType         = fetch::ml::details::RegularisationType;
+using RegType         = fetch::ml::RegularisationType;
 using WeightsInitType = fetch::ml::ops::WeightsInitialisation;
 using ActivationType  = fetch::ml::details::ActivationType;
 
@@ -109,7 +109,7 @@ int main(/*int ac, char **av*/)
   //      g.template AddNode<CrossEntropyLoss<ArrayType>>("Error", {classification_output, label});
 
   SizeType batch_size = 1u;
-  SizeType seq_len    = 512u;
+  SizeType seq_len    = 256u;
 
   ArrayType tokens_data({max_seq_len, batch_size});
   tokens_data.Fill(static_cast<DataType>(1));
@@ -146,26 +146,6 @@ int main(/*int ac, char **av*/)
       std::chrono::high_resolution_clock::now() - cur_time);
   std::cout << "time span: " << static_cast<double>(time_span.count()) << std::endl;
   std::cout << "first token: \n" << output.View(0).Copy().View(0).Copy().ToString() << std::endl;
-
-  //  auto train_data = prepare_data_for_simple_cls(max_seq_len, 30u);
-  //  for (SizeType i = 0; i < 100; i++)
-  //  {
-  //    DataType loss = optimiser.Run(train_data.first, train_data.second);
-  //    std::cout << "loss: " << loss << std::endl;
-  //  }
-  //
-  //  std::cout << "Starting forward passing for manual evaluation" << std::endl;
-  //  ArrayType segment_data  = train_data.first[0];
-  //  ArrayType position_data = train_data.first[1];
-  //  ArrayType tokens_data   = train_data.first[2];
-  //  ArrayType mask_data     = train_data.first[3];
-  //  g.SetInput(segment, segment_data);
-  //  g.SetInput(position, position_data);
-  //  g.SetInput(tokens, tokens_data);
-  //  g.SetInput(mask, mask_data);
-  //  auto output = g.Evaluate(classification_output, false);
-  //  std::cout << "model output: " << output.ToString() << std::endl;
-  //  std::cout << "label output: " << train_data.second.ToString() << std::endl;
 
   return 0;
 }
@@ -343,8 +323,8 @@ std::pair<std::vector<std::string>, std::string> load_pretrained_bert_base_uncas
 
   // create layernorm layer and get statedict
   std::string norm_embed = g.template AddNode<fetch::ml::layers::LayerNorm<ArrayType>>(
-      "norm_embed", {sum_embed}, SizeVector({model_dims, 1}));
-  state_dict = std::dynamic_pointer_cast<GraphType>(g.GetNode(norm_embed))->StateDict();
+      "norm_embed", {sum_embed}, SizeVector({model_dims, 1}), static_cast<SizeType>(0), epsilon);
+  state_dict = std::dynamic_pointer_cast<GraphType>(g.GetNode(norm_embed)->GetOp())->StateDict();
 
   // load embedding layernorm gamma beta weights
   put_weight_in_layernorm(state_dict, model_dims, file_path + "bert_embeddings_LayerNorm_gamma",
@@ -365,7 +345,8 @@ std::pair<std::vector<std::string>, std::string> load_pretrained_bert_base_uncas
         ff_dims, dropout_keep_prob, epsilon);
 
     // get state dict for this layer
-    state_dict = std::dynamic_pointer_cast<GraphType>(g.GetNode(layer_output))->StateDict();
+    state_dict =
+        std::dynamic_pointer_cast<GraphType>(g.GetNode(layer_output)->GetOp())->StateDict();
 
     // get file path prefix
     std::string file_prefix = file_path + "bert_encoder_layer_" + std::to_string(i) + "_";

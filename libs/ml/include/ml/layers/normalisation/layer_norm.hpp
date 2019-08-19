@@ -83,7 +83,7 @@ public:
 
     // do the normalization
     std::string normalized_output = this->template AddNode<fetch::ml::ops::LayerNorm<TensorType>>(
-        name + "_LayerNorm", {input}, axis_);
+        name + "_LayerNorm", {input}, axis_, epsilon_);
 
     // do the rescaling
     std::string scaled_output = this->template AddNode<fetch::ml::ops::Multiply<TensorType>>(
