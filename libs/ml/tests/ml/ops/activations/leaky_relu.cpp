@@ -181,7 +181,7 @@ TYPED_TEST(LeakyReluTest, saveparams_backward_3d_tensor_test)
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
   using SizeType   = typename TypeParam::SizeType;
-  using OpType     = typename fetch::ml::ops::LeakyRelu<TensorType>;
+  using OpType     = fetch::ml::ops::LeakyRelu<TensorType>;
   using SPType     = typename OpType::SPType;
 
   TensorType          data({2, 2, 2});

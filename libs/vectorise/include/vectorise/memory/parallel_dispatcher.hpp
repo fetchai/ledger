@@ -119,8 +119,8 @@ public:
   }
 
   template <typename F, typename V>
-  typename std::enable_if<!std::is_same<F, TrivialRange>::value, type>::type SumReduce(
-      F &&vector_reduce, V const &a)
+  std::enable_if_t<!std::is_same<F, TrivialRange>::value, type> SumReduce(F &&     vector_reduce,
+                                                                          V const &a)
   {
     VectorRegisterIteratorType self_iter(this->pointer(), this->size());
     VectorRegisterIteratorType a_iter(a.pointer(), a.size());
@@ -787,21 +787,21 @@ public:
   }
 
   template <class C, typename... Args>
-  typename std::enable_if<std::is_same<decltype(&C::operator()),
-                                       typename details::MatrixApplyClassMember<C, type, void>::
-                                           template Unroll<Args...>::signature_type>::value,
-                          void>::type
+  std::enable_if_t<std::is_same<decltype(&C::operator()),
+                                typename details::MatrixApplyClassMember<C, type, void>::
+                                    template Unroll<Args...>::signature_type>::value,
+                   void>
   Apply(C const &cls, Args &&... args)
   {
     return Apply(cls, &C::operator(), std::forward<Args>(args)...);
   }
 
   template <class C, typename... Args>
-  typename std::enable_if<
+  std::enable_if_t<
       std::is_same<decltype(&C::operator()),
                    typename details::MatrixApplyClassMember<C, VectorRegisterType, void>::
                        template Unroll<Args...>::signature_type>::value,
-      void>::type
+      void>
   Apply(C const &cls, Args &&... args)
   {
     return Apply(cls, &C::operator(), std::forward<Args>(args)...);
