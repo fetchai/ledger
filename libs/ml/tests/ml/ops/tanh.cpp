@@ -185,7 +185,7 @@ TYPED_TEST(TanHTest, saveparams_backward_all_negative_test)
 {
   using TensorType = TypeParam;
   using OpType     = typename fetch::ml::ops::TanH<TensorType>;
-  using SPType     = typename OpType ::SPType;
+  using SPType     = typename OpType::SPType;
 
   uint8_t             n = 8;
   TypeParam           data{n};

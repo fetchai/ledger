@@ -188,8 +188,8 @@ inline void GaugeToStream(Gauge<uint8_t> const &gauge, OutputStream &stream)
  * @param stream The stream to be populated
  */
 template <typename V>
-typename std::enable_if<std::is_integral<V>::value>::type GaugeToStream(Gauge<V> const &gauge,
-                                                                        OutputStream &  stream)
+std::enable_if_t<std::is_integral<V>::value> GaugeToStream(Gauge<V> const &gauge,
+                                                           OutputStream &  stream)
 {
   stream << gauge.get() << '\n';
 }
@@ -201,8 +201,8 @@ typename std::enable_if<std::is_integral<V>::value>::type GaugeToStream(Gauge<V>
  * @param stream The stream to be populated
  */
 template <typename V>
-typename std::enable_if<std::is_floating_point<V>::value>::type GaugeToStream(Gauge<V> const &gauge,
-                                                                              OutputStream &stream)
+std::enable_if_t<std::is_floating_point<V>::value> GaugeToStream(Gauge<V> const &gauge,
+                                                                 OutputStream &  stream)
 {
   stream << std::scientific << gauge.get() << '\n';
 }

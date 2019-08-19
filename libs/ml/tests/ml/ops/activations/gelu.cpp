@@ -130,7 +130,7 @@ TYPED_TEST(GeluTest, saveparams_test)
 TYPED_TEST(GeluTest, saveparams_backward_3d_test)
 {
   using TensorType = TypeParam;
-  using OpType     = typename fetch::ml::ops::Gelu<TensorType>;
+  using OpType     = fetch::ml::ops::Gelu<TensorType>;
   using SPType     = typename fetch::ml::ops::Gelu<TensorType>::SPType;
 
   TensorType data = TensorType::FromString("-1.1, -0.4, -0.5, -0.2, 0, 0.2, 1.6, 1.7, 2");

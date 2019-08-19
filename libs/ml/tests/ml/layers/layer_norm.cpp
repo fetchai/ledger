@@ -189,7 +189,7 @@ TYPED_TEST(LayerNormTest, getStateDict)
 TYPED_TEST(LayerNormTest, saveparams_test)
 {
   using DataType  = typename TypeParam::Type;
-  using LayerType = typename fetch::ml::layers::LayerNorm<TypeParam>;
+  using LayerType = fetch::ml::layers::LayerNorm<TypeParam>;
   using SPType    = typename LayerType::SPType;
 
   std::string input_name  = "LayerNorm_Input";
