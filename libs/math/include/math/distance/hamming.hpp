@@ -24,7 +24,7 @@ namespace math {
 namespace distance {
 
 template <typename ArrayType>
-inline typename ArrayType::Type Hamming(ArrayType const &a, ArrayType const &b)
+typename ArrayType::Type Hamming(ArrayType const &a, ArrayType const &b)
 {
   detailed_assert(a.size() == b.size());
   using Type     = typename ArrayType::Type;

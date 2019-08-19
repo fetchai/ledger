@@ -370,7 +370,7 @@ private:
 };
 
 template <typename... Args>
-inline Ptr<IArray> IArray::Construct(VM *vm, TypeId type_id, Args &&... args)
+Ptr<IArray> IArray::Construct(VM *vm, TypeId type_id, Args &&... args)
 {
   TypeInfo const &type_info       = vm->GetTypeInfo(type_id);
   TypeId const    element_type_id = type_info.parameter_type_ids[0];

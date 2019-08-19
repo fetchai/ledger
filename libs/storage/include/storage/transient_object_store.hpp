@@ -136,7 +136,7 @@ private:
  * @tparam O The type of the object being stored
  */
 template <typename O>
-inline TransientObjectStore<O>::TransientObjectStore(uint32_t log2_num_lanes)
+TransientObjectStore<O>::TransientObjectStore(uint32_t log2_num_lanes)
   : log2_num_lanes_(log2_num_lanes)
   , rids(batch_size_)
   , state_machine_{
