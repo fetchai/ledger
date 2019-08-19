@@ -75,7 +75,7 @@ public:
 
     // do n_heads time linear transformation
     std::vector<std::string> heads;
-    for (SizeType i{0}; i < n_heads_; i++)
+    for (SizeType i = 0; i < n_heads_; i++)
     {
       std::string head_name = name + "_Head_No_" + std::to_string(static_cast<int>(i));
       std::string head_attention_output =
