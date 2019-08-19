@@ -56,21 +56,6 @@ private:
   byte_array::ConstByteArray header_;
 };
 
-inline byte_array::ConstByteArray const &ProofOfWork::header() const
-{
-  return header_;
-}
-
-inline vectorise::UInt<256> const &ProofOfWork::digest() const
-{
-  return digest_;
-}
-
-inline vectorise::UInt<256> const &ProofOfWork::target() const
-{
-  return target_;
-}
-
 }  // namespace consensus
 }  // namespace ledger
 

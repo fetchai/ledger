@@ -50,11 +50,37 @@ Counter::Counter(std::string name, std::string description, Labels labels)
  * @param stream The stream to be updated
  * @param mode The mode to be used when generating the stream
  */
-
 void Counter::ToStream(OutputStream &stream) const
 {
   WriteHeader(stream, "counter");
   WriteValuePrefix(stream) << counter_ << '\n';
+}
+
+uint64_t Counter::count() const
+{
+  return counter_;
+}
+
+void Counter::increment()
+{
+  ++counter_;
+}
+
+void Counter::add(uint64_t value)
+{
+  counter_ += value;
+}
+
+Counter &Counter::operator++()
+{
+  ++counter_;
+  return *this;
+}
+
+Counter &Counter::operator+=(uint64_t value)
+{
+  counter_ += value;
+  return *this;
 }
 
 }  // namespace telemetry
