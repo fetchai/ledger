@@ -52,12 +52,12 @@ T Max(T const &datum1, T const &datum2)
  * @return
  */
 template <typename T>
-inline void Min(T const &datum1, T const &datum2, T &ret)
+void Min(T const &datum1, T const &datum2, T &ret)
 {
   ret = std::min(datum1, datum2);
 }
 template <typename T>
-inline T Min(T const &datum1, T const &datum2)
+T Min(T const &datum1, T const &datum2)
 {
   T ret = std::min(datum1, datum2);
   return ret;

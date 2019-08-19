@@ -30,7 +30,7 @@ namespace math {
 namespace meta {
 
 template <bool C, typename ReturnType = void>
-using EnableIf = typename std::enable_if<C, ReturnType>::type;
+using EnableIf = std::enable_if_t<C, ReturnType>;
 
 ////////////////////////////////////
 /// REGISTER OF VECTORISED TYPES ///
@@ -64,9 +64,9 @@ struct HasVectorSupport<float>
 };
 
 template <typename T, typename R>
-using IfVectorSupportFor = typename std::enable_if<HasVectorSupport<T>::value, R>::type;
+using IfVectorSupportFor = std::enable_if_t<HasVectorSupport<T>::value, R>;
 template <typename T, typename R>
-using IfNoVectorSupportFor = typename std::enable_if<!HasVectorSupport<T>::value, R>::type;
+using IfNoVectorSupportFor = std::enable_if_t<!HasVectorSupport<T>::value, R>;
 
 ////////////////////////////////////////////////
 /// TYPES INDIRECTED FROM META / TYPE_TRAITS ///

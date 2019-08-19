@@ -137,7 +137,7 @@ TYPED_TEST(LogSoftmaxTest, saveparams_test)
   using TensorType    = TypeParam;
   using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
   using SPType        = typename fetch::ml::ops::LogSoftmax<TensorType>::SPType;
-  using OpType        = typename fetch::ml::ops::LogSoftmax<TensorType>;
+  using OpType        = fetch::ml::ops::LogSoftmax<TensorType>;
 
   TensorType data = TensorType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
   TensorType gt   = TensorType::FromString(
@@ -181,8 +181,8 @@ TYPED_TEST(LogSoftmaxTest, saveparams_backward_3d_tensor_axis_0_test)
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
   using SizeType   = typename TypeParam::SizeType;
-  using OpType     = typename fetch::ml::ops::LogSoftmax<TensorType>;
-  using SPType     = typename OpType ::SPType;
+  using OpType     = fetch::ml::ops::LogSoftmax<TensorType>;
+  using SPType     = typename OpType::SPType;
 
   TensorType          data({3, 3, 1});
   TensorType          error({3, 3, 1});

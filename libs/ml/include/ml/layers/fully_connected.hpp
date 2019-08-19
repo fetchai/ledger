@@ -49,11 +49,11 @@ public:
   using VecTensorType = typename SubGraph<T>::VecTensorType;
   using SPType        = LayerFullyConnectedSaveableParams<TensorType>;
 
-  using OpPtrType      = typename std::shared_ptr<fetch::ml::ops::Ops<TensorType>>;
-  using GraphType      = typename fetch::ml::Graph<TensorType>;
-  using GraphPtrType   = typename std::shared_ptr<GraphType>;
-  using WeightsType    = typename fetch::ml::ops::Weights<TensorType>;
-  using WeightsPtrType = typename std::shared_ptr<WeightsType>;
+  using OpPtrType      = std::shared_ptr<fetch::ml::ops::Ops<TensorType>>;
+  using GraphType      = fetch::ml::Graph<TensorType>;
+  using GraphPtrType   = std::shared_ptr<GraphType>;
+  using WeightsType    = fetch::ml::ops::Weights<TensorType>;
+  using WeightsPtrType = std::shared_ptr<WeightsType>;
 
   FullyConnected() = default;
 

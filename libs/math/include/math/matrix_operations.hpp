@@ -48,7 +48,7 @@ namespace details_vectorisation {
  * @return
  */
 template <typename ArrayType>
-inline void Min(ArrayType const &array, typename ArrayType::Type &ret)
+void Min(ArrayType const &array, typename ArrayType::Type &ret)
 {
   using VectorRegisterType = typename ArrayType::VectorRegisterType;
 

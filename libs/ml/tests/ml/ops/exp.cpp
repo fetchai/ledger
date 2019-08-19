@@ -95,7 +95,7 @@ TYPED_TEST(ExpTest, saveparams_test)
   using DataType      = typename TypeParam::Type;
   using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
   using SPType        = typename fetch::ml::ops::Exp<TensorType>::SPType;
-  using OpType        = typename fetch::ml::ops::Exp<TensorType>;
+  using OpType        = fetch::ml::ops::Exp<TensorType>;
 
   TensorType data = TensorType::FromString(
       " 0, -2, 3,-4, 5,-6, 7,-8;"
@@ -144,7 +144,7 @@ TYPED_TEST(ExpTest, saveparams_test)
 TYPED_TEST(ExpTest, saveparams_backward_test)
 {
   using TensorType = TypeParam;
-  using OpType     = typename fetch::ml::ops::Exp<TensorType>;
+  using OpType     = fetch::ml::ops::Exp<TensorType>;
   using SPType     = typename OpType::SPType;
 
   TensorType data = TensorType::FromString(
