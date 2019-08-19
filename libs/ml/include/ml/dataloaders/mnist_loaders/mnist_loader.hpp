@@ -77,37 +77,49 @@ public:
   virtual SizeType Size() const override
   {
     // MNIST files store the size as uint32_t but Dataloader interface require uint64_t
-    if (this->mode_ == DataLoaderMode::VALIDATE)
+    if (this->mode_ == DataLoaderMode::TRAIN)
+    {
+      return static_cast<SizeType>(train_size_);
+    }
+    else if (this->mode_ == DataLoaderMode::VALIDATE)
     {
       return static_cast<SizeType>(validation_size_);
     }
     else
     {
-      return static_cast<SizeType>(train_size_);
+      throw std::runtime_error("Other modes than TRAIN and VALIDATE not supported.");
     }
   }
 
   virtual bool IsDone() const override
   {
-    if (this->mode_ == DataLoaderMode::VALIDATE)
+    if (this->mode_ == DataLoaderMode::TRAIN)
+    {
+      return train_cursor_ >= train_size_;
+    }
+    else if (this->mode_ == DataLoaderMode::VALIDATE)
     {
       return validation_offset_ + validation_cursor_ >= total_size_;
     }
     else
     {
-      return train_cursor_ >= train_size_;
+      throw std::runtime_error("Other modes than TRAIN and VALIDATE not supported.");
     }
   }
 
   virtual void Reset() override
   {
-    if (this->mode_ == DataLoaderMode::VALIDATE)
+    if (this->mode_ == DataLoaderMode::TRAIN)
+    {
+      train_cursor_ = 0;
+    }
+    else if (this->mode_ == DataLoaderMode::VALIDATE)
     {
       validation_cursor_ = 0;
     }
     else
     {
-      train_cursor_ = 0;
+      throw std::runtime_error("Other modes than TRAIN and VALIDATE not supported.");
     }
   }
 
