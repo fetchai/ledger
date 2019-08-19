@@ -41,7 +41,7 @@ TEST(beacon, beacon_dkg_test)
 
   // Beacon parameters
   std::unordered_map<Identity, std::shared_ptr<BeaconManager>> nodes;
-  auto cabinet_size = static_cast<uint64_t>(32);  // TODO: parameterise tests over these two
+  auto cabinet_size = static_cast<uint64_t>(32);
   auto threshold    = static_cast<uint32_t>(cabinet_size >> 1);
 
   // Creating nodes
