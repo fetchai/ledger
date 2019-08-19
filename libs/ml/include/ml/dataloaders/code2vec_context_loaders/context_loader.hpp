@@ -50,10 +50,10 @@ public:
   using TensorType              = InputType;
   using Type                    = typename TensorType::Type;
   using SizeType                = typename TensorType::SizeType;
-  using ContextTuple            = typename std::tuple<SizeType, SizeType, SizeType>;
-  using ContextVector           = typename std::vector<TensorType>;
-  using ContextLabelPair        = typename std::pair<SizeType, ContextTuple>;
-  using ContextTensorsLabelPair = typename std::pair<LabelType, ContextVector>;
+  using ContextTuple            = std::tuple<SizeType, SizeType, SizeType>;
+  using ContextVector           = std::vector<TensorType>;
+  using ContextLabelPair        = std::pair<SizeType, ContextTuple>;
+  using ContextTensorsLabelPair = std::pair<LabelType, ContextVector>;
 
   using WordIdxType   = std::vector<std::vector<SizeType>>;
   using VocabType     = std::unordered_map<std::string, SizeType>;

@@ -287,7 +287,7 @@ TransactionBuilder &TransactionBuilder::TargetChainCode(byte_array::ConstByteArr
  */
 TransactionBuilder &TransactionBuilder::TargetSynergetic(Address const &digest)
 {
-  partial_transaction_->contract_mode_    = Transaction::ContractMode ::SYNERGETIC;
+  partial_transaction_->contract_mode_    = Transaction::ContractMode::SYNERGETIC;
   partial_transaction_->contract_digest_  = digest;
   partial_transaction_->contract_address_ = Address{};
   partial_transaction_->chain_code_       = byte_array::ConstByteArray{};

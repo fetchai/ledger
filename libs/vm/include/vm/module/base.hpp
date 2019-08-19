@@ -58,7 +58,7 @@ struct StackSetter
 template <typename T, typename = void>
 struct TypeGetter;
 template <typename T>
-struct TypeGetter<T, typename std::enable_if_t<IsPrimitive<T>::value || IsVariant<T>::value>>
+struct TypeGetter<T, std::enable_if_t<IsPrimitive<T>::value || IsVariant<T>::value>>
 {
   static TypeIndex GetTypeIndex()
   {
@@ -66,7 +66,7 @@ struct TypeGetter<T, typename std::enable_if_t<IsPrimitive<T>::value || IsVarian
   }
 };
 template <typename T>
-struct TypeGetter<T, typename std::enable_if_t<IsPtr<T>::value>>
+struct TypeGetter<T, std::enable_if_t<IsPtr<T>::value>>
 {
   static TypeIndex GetTypeIndex()
   {
@@ -76,7 +76,7 @@ struct TypeGetter<T, typename std::enable_if_t<IsPtr<T>::value>>
 };
 
 template <typename T>
-struct TypeGetter<T, typename std::enable_if_t<IsAddress<T>::value>>
+struct TypeGetter<T, std::enable_if_t<IsAddress<T>::value>>
 {
   static TypeIndex GetTypeIndex()
   {
@@ -89,7 +89,7 @@ template <typename T, typename = void>
 struct ParameterTypeGetter;
 template <typename T>
 struct ParameterTypeGetter<
-    T, typename std::enable_if_t<IsPrimitiveParameter<T>::value || IsVariantParameter<T>::value>>
+    T, std::enable_if_t<IsPrimitiveParameter<T>::value || IsVariantParameter<T>::value>>
 {
   static TypeIndex GetTypeIndex()
   {
@@ -97,7 +97,7 @@ struct ParameterTypeGetter<
   }
 };
 template <typename T>
-struct ParameterTypeGetter<T, typename std::enable_if_t<IsPtrParameter<T>::value>>
+struct ParameterTypeGetter<T, std::enable_if_t<IsPtrParameter<T>::value>>
 {
   static TypeIndex GetTypeIndex()
   {
@@ -189,17 +189,17 @@ struct UnrollTupleParameterTypes<std::tuple<Ts...>>
 template <typename T, typename = void>
 struct MakeParameterType;
 template <typename T>
-struct MakeParameterType<T, typename std::enable_if_t<fetch::vm::IsPrimitive<T>::value>>
+struct MakeParameterType<T, std::enable_if_t<fetch::vm::IsPrimitive<T>::value>>
 {
   using type = T;
 };
 template <typename T>
-struct MakeParameterType<T, typename std::enable_if_t<fetch::vm::IsVariant<T>::value>>
+struct MakeParameterType<T, std::enable_if_t<fetch::vm::IsVariant<T>::value>>
 {
   using type = T const &;
 };
 template <typename T>
-struct MakeParameterType<T, typename std::enable_if_t<fetch::vm::IsPtr<T>::value>>
+struct MakeParameterType<T, std::enable_if_t<fetch::vm::IsPtr<T>::value>>
 {
   using type = T const &;
 };

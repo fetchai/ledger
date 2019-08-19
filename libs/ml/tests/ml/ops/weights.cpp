@@ -161,7 +161,7 @@ TYPED_TEST(WeightsTest, saveparams_gradient_step_test)
   using DataType   = typename TypeParam::Type;
   using SizeType   = typename TypeParam::SizeType;
   using OpType     = typename fetch::ml::ops::Weights<TensorType>;
-  using SPType     = typename OpType ::SPType;
+  using SPType     = typename OpType::SPType;
 
   TensorType       data(8);
   TensorType       error(8);

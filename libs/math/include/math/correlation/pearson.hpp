@@ -30,7 +30,7 @@ namespace math {
 namespace correlation {
 
 template <typename ArrayType>
-inline typename ArrayType::Type Pearson(ArrayType const &a, ArrayType const &b)
+typename ArrayType::Type Pearson(ArrayType const &a, ArrayType const &b)
 {
   assert(a.size() == b.size());
   using Type     = typename ArrayType::Type;
