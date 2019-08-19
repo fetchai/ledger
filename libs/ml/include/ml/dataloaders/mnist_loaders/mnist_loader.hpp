@@ -251,7 +251,7 @@ private:
   {
     SizeType i{0};
 
-    for (auto & val : buffer_.second.at(0))
+    for (auto &val : buffer_.second.at(0))
     {
       val = static_cast<DataType>(data_[index][i]) / DataType{256};
       i++;
