@@ -18,6 +18,9 @@
 
 #include "dkg/dkg_complaints_manager.hpp"
 
+#include <cstdint>
+#include <mutex>
+
 namespace fetch {
 namespace dkg {
 

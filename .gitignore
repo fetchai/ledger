@@ -1,6 +1,8 @@
 # Build Output
 /*build*/
 *.pyc
+*.key
+info.txt
 *.db
 CMakeCache.txt
 

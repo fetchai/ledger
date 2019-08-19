@@ -18,8 +18,8 @@
 
 #include "math/statistics/mean.hpp"
 #include "math/tensor.hpp"
+#include "ml/core/graph.hpp"
 #include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
-#include "ml/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
@@ -52,8 +52,8 @@ using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
 
 using DataType       = float;
-using ArrayType      = fetch::math::Tensor<DataType>;
-using ConstSliceType = typename ArrayType::ConstSliceType;
+using TensorType     = fetch::math::Tensor<DataType>;
+using ConstSliceType = typename TensorType::ConstSliceType;
 
 class TrainingClient
 {
@@ -61,22 +61,22 @@ public:
   TrainingClient(std::string const &images, std::string const &labels)
     : dataloader_(images, labels, true)
   {
-    g_.AddNode<PlaceHolder<ArrayType>>("Input", {});
-    g_.AddNode<FullyConnected<ArrayType>>("FC1", {"Input"}, 28u * 28u, 10u);
-    g_.AddNode<Relu<ArrayType>>("Relu1", {"FC1"});
-    g_.AddNode<FullyConnected<ArrayType>>("FC2", {"Relu1"}, 10u, 10u);
-    g_.AddNode<Relu<ArrayType>>("Relu2", {"FC1"});
-    g_.AddNode<FullyConnected<ArrayType>>("FC3", {"Relu2"}, 10u, 10u);
-    g_.AddNode<Softmax<ArrayType>>("Softmax", {"FC3"});
-    g_.AddNode<PlaceHolder<ArrayType>>("Label", {});
-    g_.AddNode<CrossEntropyLoss<ArrayType>>("Error", {"Softmax", "Label"});
+    g_.AddNode<PlaceHolder<TensorType>>("Input", {});
+    g_.AddNode<FullyConnected<TensorType>>("FC1", {"Input"}, 28u * 28u, 10u);
+    g_.AddNode<Relu<TensorType>>("Relu1", {"FC1"});
+    g_.AddNode<FullyConnected<TensorType>>("FC2", {"Relu1"}, 10u, 10u);
+    g_.AddNode<Relu<TensorType>>("Relu2", {"FC1"});
+    g_.AddNode<FullyConnected<TensorType>>("FC3", {"Relu2"}, 10u, 10u);
+    g_.AddNode<Softmax<TensorType>>("Softmax", {"FC3"});
+    g_.AddNode<PlaceHolder<TensorType>>("Label", {});
+    g_.AddNode<CrossEntropyLoss<TensorType>>("Error", {"Softmax", "Label"});
   }
 
   void Train(unsigned int numberOfBatches)
   {
-    float                                        loss = 0;
-    CrossEntropyLoss<ArrayType>                  criterion;
-    std::pair<ArrayType, std::vector<ArrayType>> input;
+    float                                          loss = 0;
+    CrossEntropyLoss<TensorType>                   criterion;
+    std::pair<TensorType, std::vector<TensorType>> input;
     for (unsigned int i(0); i < numberOfBatches; ++i)
     {
       loss = 0;
@@ -87,8 +87,8 @@ public:
         g_.SetInput("Input", input.second.at(0));
         g_.SetInput("Label", input.first);
 
-        ArrayType results     = g_.Evaluate("Softmax");
-        ArrayType loss_tensor = g_.Evaluate("Error");
+        TensorType results     = g_.ForwardPropagate("Softmax");
+        TensorType loss_tensor = g_.ForwardPropagate("Error");
 
         loss += *(loss_tensor.begin());
         g_.BackPropagateError("Error");
@@ -115,14 +115,14 @@ public:
 
   void UpdateWeights()
   {
-    std::list<fetch::ml::StateDict<ArrayType>> stateDicts;
+    std::list<fetch::ml::StateDict<TensorType>> stateDicts;
     for (auto &c : peers_)
     {
       // Collect all the stateDicts from peers
       stateDicts.push_back(c->GetStateDict());
     }
-    fetch::ml::StateDict<ArrayType> averageStateDict =
-        fetch::ml::StateDict<ArrayType>::MergeList(stateDicts);
+    fetch::ml::StateDict<TensorType> averageStateDict =
+        fetch::ml::StateDict<TensorType>::MergeList(stateDicts);
     g_.LoadStateDict(g_.StateDict().Merge(averageStateDict, MERGE_RATIO));
     // Clear the peers after update, we'll get a new set for next one
     peers_.clear();
@@ -135,9 +135,9 @@ public:
 
 private:
   // Client own graph
-  fetch::ml::Graph<ArrayType> g_;
+  fetch::ml::Graph<TensorType> g_;
   // Client own dataloader
-  fetch::ml::dataloaders::MNISTLoader<ArrayType, ArrayType> dataloader_;
+  fetch::ml::dataloaders::MNISTLoader<TensorType, TensorType> dataloader_;
   // Loss history
   std::vector<float> losses_values_;
   // Connection to other nodes

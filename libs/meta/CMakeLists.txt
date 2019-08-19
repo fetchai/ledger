@@ -1,7 +1,7 @@
 #
 # F E T C H   M E T A   L I B R A R Y
 #
-cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
 project(fetch-meta)
 
 # CMake Configuration
@@ -11,3 +11,5 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 setup_compiler()
 
 setup_library(fetch-meta)
+
+add_test_target()

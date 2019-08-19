@@ -31,9 +31,9 @@
 using namespace fetch::math;
 using namespace fetch::ml;
 
-using DataType  = double;
-using ArrayType = Tensor<DataType>;
-using SizeType  = typename ArrayType::SizeType;
+using DataType   = double;
+using TensorType = Tensor<DataType>;
+using SizeType   = typename TensorType::SizeType;
 
 /**
  * i.e. Fill tensor matrix with DataType values from file at path
@@ -87,9 +87,9 @@ int main(int ac, char **av)
   }
 
   std::cout << "Loading input data. " << std::endl;
-  fetch::ml::dataloaders::MNISTLoader<ArrayType, ArrayType> data_loader(av[1], av[2]);
-  bool                                                      is_done = data_loader.IsDone();
-  std::pair<ArrayType, std::vector<ArrayType>>              input =
+  fetch::ml::dataloaders::MNISTLoader<TensorType, TensorType> data_loader(av[1], av[2]);
+  bool                                                        is_done = data_loader.IsDone();
+  std::pair<TensorType, std::vector<TensorType>>              input =
       data_loader.PrepareBatch(SUBSET_SIZE, is_done);
 
   // Initialise TSNE

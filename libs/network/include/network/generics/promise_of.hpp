@@ -101,7 +101,7 @@ private:
  * @param promise The promise value
  */
 template <typename TYPE>
-inline PromiseOf<TYPE>::PromiseOf(Promise promise)
+PromiseOf<TYPE>::PromiseOf(Promise promise)
   : promise_(std::move(promise))
 {}
 
@@ -112,7 +112,7 @@ inline PromiseOf<TYPE>::PromiseOf(Promise promise)
  * @return Return the value from the promise, or throw an exception if not possible
  */
 template <typename TYPE>
-inline TYPE PromiseOf<TYPE>::Get() const
+TYPE PromiseOf<TYPE>::Get() const
 {
   return promise_->As<TYPE>();
 }
@@ -124,7 +124,7 @@ inline TYPE PromiseOf<TYPE>::Get() const
  * @return true if the promise has been fulfilled, otherwise false
  */
 template <typename TYPE>
-inline PromiseOf<TYPE>::operator bool() const
+PromiseOf<TYPE>::operator bool() const
 {
   return promise_ && promise_->IsSuccessful();
 }
@@ -138,7 +138,7 @@ inline PromiseOf<TYPE>::operator bool() const
  * @return true if the promise has been fulfilled (given the constraints), otherwise false
  */
 template <typename TYPE>
-inline bool PromiseOf<TYPE>::Wait(uint32_t timeout_ms, bool throw_exception) const
+bool PromiseOf<TYPE>::Wait(uint32_t timeout_ms, bool throw_exception) const
 {
   promise_->Wait(timeout_ms, throw_exception);
   return promise_->IsSuccessful();

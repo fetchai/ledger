@@ -26,7 +26,7 @@ namespace math {
 namespace distance {
 
 template <typename ArrayType>
-inline typename ArrayType::Type Chebyshev(ArrayType const &a, ArrayType const &b)
+typename ArrayType::Type Chebyshev(ArrayType const &a, ArrayType const &b)
 {
   assert(a.size() == b.size());
 

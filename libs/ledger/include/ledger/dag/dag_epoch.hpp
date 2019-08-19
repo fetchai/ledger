@@ -20,6 +20,7 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/serializers/main_serializer.hpp"
+#include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 
 #include <set>
@@ -30,7 +31,6 @@ namespace ledger {
 struct DAGEpoch
 {
   using ConstByteArray = byte_array::ConstByteArray;
-  using HasherType     = crypto::SHA256;
 
   uint64_t block_number;
 
@@ -46,11 +46,7 @@ struct DAGEpoch
   // map of dag node hash to dag node
   std::set<ConstByteArray> all_nodes;
 
-  bool Contains(ConstByteArray const &digest) const
-  {
-    return all_nodes.find(digest) != all_nodes.end();
-  }
-
+  bool Contains(ConstByteArray const &digest) const;
   void Finalise();
 };
 
@@ -98,22 +94,4 @@ public:
 };
 
 }  // namespace serializers
-
-namespace ledger {
-
-inline void DAGEpoch::Finalise()
-{
-  // strictly speaking this is a bit of a weird hash because it will also contain all the weird
-  // serialisation metadata
-  serializers::MsgPackSerializer buf;
-  buf << *this;
-
-  HasherType hasher;
-  hasher.Reset();
-  hasher.Update(buf.data());
-  this->hash = hasher.Final();
-}
-
-}  // namespace ledger
-
 }  // namespace fetch

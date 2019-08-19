@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/main_serializer.hpp"
 #include "vm/object.hpp"
 #include "vm_modules/math/type.hpp"
 
@@ -25,10 +26,15 @@
 namespace fetch {
 
 namespace ml {
+
 namespace dataloaders {
 template <typename LabelType, typename DataType>
 class DataLoader;
-}
+
+template <typename LabelType, typename DataType>
+class TensorDataLoader;
+}  // namespace dataloaders
+
 }  // namespace ml
 namespace vm_modules {
 namespace math {
@@ -42,6 +48,17 @@ class VMDataLoader : public fetch::vm::Object
 {
 public:
   using DataType = fetch::vm_modules::math::DataType;
+  using DataLoaderType =
+      std::shared_ptr<fetch::ml::dataloaders::DataLoader<fetch::math::Tensor<DataType>,
+                                                         fetch::math::Tensor<DataType>>>;
+
+  enum class DataLoaderMode : uint8_t
+  {
+    NONE,
+    TENSOR,
+    MNIST,
+    COMMODITY
+  };
 
   VMDataLoader(fetch::vm::VM *vm, fetch::vm::TypeId type_id);
 
@@ -101,11 +118,108 @@ public:
 
   bool IsDone();
 
-  std::shared_ptr<fetch::ml::dataloaders::DataLoader<fetch::math::Tensor<DataType>,
-                                                     fetch::math::Tensor<DataType>>>
-      loader_;
+  DataLoaderType &GetDataLoader();
+
+  bool SerializeTo(serializers::MsgPackSerializer &buffer) override;
+
+  bool DeserializeFrom(serializers::MsgPackSerializer &buffer) override;
+
+  template <typename X, typename D>
+  friend struct serializers::MapSerializer;
+
+private:
+  DataLoaderType loader_;
+  DataLoaderMode mode_ = DataLoaderMode::NONE;
 };
 
 }  // namespace ml
 }  // namespace vm_modules
+
+namespace serializers {
+
+/**
+ * serializer for tensor dataloader
+ * @tparam TensorType
+ */
+template <typename D>
+struct MapSerializer<fetch::vm_modules::ml::VMDataLoader, D>
+{
+  using Type       = fetch::vm_modules::ml::VMDataLoader;
+  using DriverType = D;
+
+  static uint8_t const MODE   = 1;
+  static uint8_t const LOADER = 2;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(2);
+
+    map.Append(MODE, static_cast<uint8_t>(sp.mode_));
+
+    switch (sp.mode_)
+    {
+    case vm_modules::ml::VMDataLoader::DataLoaderMode::COMMODITY:
+    {
+      throw std::runtime_error("commodity dataloader serialization not yet implemented");
+    }
+    case vm_modules::ml::VMDataLoader::DataLoaderMode::MNIST:
+    {
+      throw std::runtime_error("mnist dataloader serialization not yet implemented");
+    }
+    case vm_modules::ml::VMDataLoader::DataLoaderMode::TENSOR:
+    {
+      auto tdl_ptr = std::static_pointer_cast<fetch::ml::dataloaders::TensorDataLoader<
+          fetch::math::Tensor<vm_modules::math::DataType>,
+          fetch::math::Tensor<vm_modules::math::DataType>>>(sp.loader_);
+      map.Append(LOADER, *tdl_ptr);
+      break;
+    }
+    default:
+    {
+      throw std::runtime_error("unknown dataloader type");
+    }
+    }
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    uint8_t mode;
+    map.ExpectKeyGetValue(MODE, mode);
+    sp.mode_ = static_cast<vm_modules::ml::VMDataLoader::DataLoaderMode>(mode);
+
+    switch (sp.mode_)
+    {
+    case vm_modules::ml::VMDataLoader::DataLoaderMode::COMMODITY:
+    {
+      throw std::runtime_error("commodity dataloader deserialization not yet implemented");
+    }
+    case vm_modules::ml::VMDataLoader::DataLoaderMode::MNIST:
+    {
+      throw std::runtime_error("mnist dataloader deserialization not yet implemented");
+    }
+    case vm_modules::ml::VMDataLoader::DataLoaderMode::TENSOR:
+    {
+      auto tdl_ptr = std::make_shared<fetch::ml::dataloaders::TensorDataLoader<
+          fetch::math::Tensor<vm_modules::math::DataType>,
+          fetch::math::Tensor<vm_modules::math::DataType>>>();
+      map.ExpectKeyGetValue(LOADER, *tdl_ptr);
+
+      sp.loader_ = std::static_pointer_cast<
+          fetch::ml::dataloaders::DataLoader<fetch::math::Tensor<vm_modules::math::DataType>,
+                                             fetch::math::Tensor<vm_modules::math::DataType>>>(
+          tdl_ptr);
+
+      break;
+    }
+    default:
+    {
+      throw std::runtime_error("unknown dataloader type");
+    }
+    }
+  }
+};
+
+}  // namespace serializers
 }  // namespace fetch

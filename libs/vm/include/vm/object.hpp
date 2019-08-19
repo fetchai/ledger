@@ -404,7 +404,7 @@ constexpr bool operator!=(std::nullptr_t /* lhs */, Ptr<R> const &rhs) noexcept
 class Unknown;
 
 template <template <typename T, typename... Args> class Functor, typename... Args>
-inline auto TypeIdAsCanonicalType(TypeId const type_id, Args &&... args)
+auto TypeIdAsCanonicalType(TypeId const type_id, Args &&... args)
 {
   switch (type_id)
   {
