@@ -59,7 +59,7 @@ fetch::ledger::Address GenerateRandomAddress(RNG &&rng)
 template <typename RNG>
 fetch::crypto::Identity GenerateRandomIdentity(RNG &&rng)
 {
-  static constexpr std::size_t IDENTITY_BYTES = 32;
+  static constexpr std::size_t IDENTITY_BYTES = 64;
 
   fetch::byte_array::ByteArray array{};
   array.Resize(IDENTITY_BYTES);
