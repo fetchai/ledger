@@ -26,7 +26,7 @@
 using namespace fetch::math::combinatorics;
 
 using DataType  = double;
-using ArrayType = typename fetch::math::Tensor<DataType>;
+using ArrayType = fetch::math::Tensor<DataType>;
 using SizeType  = std::uint64_t;
 
 template <typename T>

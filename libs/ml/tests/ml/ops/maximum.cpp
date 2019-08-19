@@ -163,7 +163,7 @@ TYPED_TEST(MaximumTest, saveparams_backward_test)
 {
   using TensorType = TypeParam;
   using OpType     = typename fetch::ml::ops::Maximum<TensorType>;
-  using SPType     = typename OpType ::SPType;
+  using SPType     = typename OpType::SPType;
 
   TensorType data_1 = TensorType::FromString(
       "1, -2, 3,-4, 5,-6, 7,-8;"

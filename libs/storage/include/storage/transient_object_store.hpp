@@ -506,8 +506,8 @@ bool TransientObjectStore<O>::GetFromCache(ResourceID const &rid, O &object)
 template <typename O>
 void TransientObjectStore<O>::SetInCache(ResourceID const &rid, O const &object)
 {
-  typename Cache ::iterator it;
-  bool                      inserted{false};
+  typename Cache::iterator it;
+  bool                     inserted{false};
 
   // attempt to insert the element into the map
   std::tie(it, inserted) = cache_.emplace(rid, object);

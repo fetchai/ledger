@@ -32,7 +32,7 @@ namespace service {
 namespace details {
 
 template <typename T>
-using base_type = typename std::remove_cv<typename std::remove_reference<T>::type>::type;
+using base_type = std::remove_cv_t<std::remove_reference_t<T>>;
 
 template <typename R, typename F, typename... Args>
 struct ArgsToString
