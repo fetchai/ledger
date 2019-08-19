@@ -40,7 +40,7 @@ template <typename To>
 To Cast(Variant const &from)
 {
   // Check if it's a primitive
-  assert(ApplyPrimitiveFunctor(from.type_id, [] { return true; }));
+  assert(ApplyPrimitiveFunctor(from.type_id, [](auto) { return true; }));
 
   return ApplyPrimitiveFunctor(from.type_id, [](auto &&v) { return static_cast<To>(v.CRef()); },
                                from);
