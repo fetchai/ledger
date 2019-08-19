@@ -206,26 +206,6 @@ std::shared_ptr<T> Node<T>::Evaluate(bool is_training)
     op_ptr_->Forward(inputs, cached_output_);
     cached_output_status_ = CachedOutputState::VALID_CACHE;
   }
-  //
-  //  unsigned int string_size = 100;
-  //  std::cout << "****" << this->name_ << std::endl;
-  //  std::cout << "shape: ";
-  //  for (std::size_t i = 0; i < cached_output_.shape().size(); i++) {
-  //     std::cout << cached_output_.shape(i) << ", ";
-  //  }
-  //  std::cout << std::endl;
-  //
-  //  if(cached_output_.shape().size() == 3u){
-  //    std::cout << "||||first batch" << std::endl;
-  //    std::string ret = cached_output_.View(0).Copy().ToString();
-  //    ret.resize(string_size);
-  //    std::cout << ret << std::endl;
-  //  }else{
-  //    std::cout << "####original" << std::endl;
-  //	  std::string ret = cached_output_.ToString();
-  //	  ret.resize(string_size);
-  //    std::cout << ret << std::endl;
-  //  }
 
   return std::make_shared<T>(cached_output_);
 }
