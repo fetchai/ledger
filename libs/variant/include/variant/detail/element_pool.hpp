@@ -134,7 +134,7 @@ void ElementPool<T>::Release(T *element)
  * @return true if the pool is empty, otherwise false
  */
 template <typename T>
-inline bool ElementPool<T>::empty() const
+bool ElementPool<T>::empty() const
 {
   return pool_.empty();
 }

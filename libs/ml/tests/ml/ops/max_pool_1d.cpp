@@ -321,7 +321,7 @@ TYPED_TEST(MaxPool1DTest, saveparams_backward_test_2_channels)
   using TensorType = TypeParam;
   using SizeType   = typename TypeParam::SizeType;
   using OpType     = typename fetch::ml::ops::MaxPool1D<TensorType>;
-  using SPType     = typename OpType ::SPType;
+  using SPType     = typename OpType::SPType;
 
   TensorType          data({2, 5, 2});
   TensorType          error({2, 2, 2});

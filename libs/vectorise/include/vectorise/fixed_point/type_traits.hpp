@@ -53,10 +53,10 @@ constexpr bool IsNonFixedPointUnsignedArithmetic =
     std::is_arithmetic<DataType>::value && !(std::is_signed<DataType>::value);
 
 template <typename DataType, typename ReturnType>
-using IfIsFixedPoint = typename std::enable_if<IsFixedPoint<DataType>, ReturnType>::type;
+using IfIsFixedPoint = std::enable_if_t<IsFixedPoint<DataType>, ReturnType>;
 
 template <typename DataType, typename ReturnType>
-using IfIsNotFixedPoint = typename std::enable_if<IsNotFixedPoint<DataType>, ReturnType>::type;
+using IfIsNotFixedPoint = std::enable_if_t<IsNotFixedPoint<DataType>, ReturnType>;
 
 template <typename DataType, typename ReturnType>
 using IfIsArithmetic = fetch::meta::EnableIf<IsArithmetic<DataType>, ReturnType>;
