@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/decoders.hpp"
 #include "core/yaml/document.hpp"
+#include "core/byte_array/decoders.hpp"
 #include "core/yaml/exceptions.hpp"
 
 #include <cassert>
@@ -90,9 +90,11 @@ void YamlDocument::ExtractPrimitive(Variant &variant, YamlToken const &token,
     while (pos <= token.second)
     {
       prev_pos = pos;
-      while (pos <= token.second && *(document.char_pointer() + pos) != 0x0A &&
-             *(document.char_pointer() + pos) != 0x0D && *(document.char_pointer() + pos) != '\\')
+      while ((pos <= token.second) && (document[pos] != 0x0A) && (document[pos] != 0x0D) &&
+             (document[pos] != '\\'))
+      {
         ++pos;
+      }
 
       if (array.empty())
       {
@@ -107,20 +109,27 @@ void YamlDocument::ExtractPrimitive(Variant &variant, YamlToken const &token,
 
       if (c == 0x0A || c == 0x0D)
       {
-        while (pos <= token.second && (*(document.char_pointer() + pos) == 0x0D ||
-                                       *(document.char_pointer() + pos) == 0x0A))
+        while ((pos <= token.second) && ((document[pos] == 0x0D) || (document[pos] == 0x0A)))
+        {
           ++pos;
+        }
 
         if (pos < token.second)
         {
           if (token.type == STRING_MULTILINE)
+          {
             array = array + "\n";
+          }
           else
+          {
             array = array + " ";
+          }
         }
 
-        while (pos <= token.second && *(document.char_pointer() + pos) == 0x20)
+        while (pos <= token.second && (document[pos] == 0x20))
+        {
           ++pos;
+        }
 
         --pos;
       }
@@ -186,7 +195,9 @@ void YamlDocument::ExtractPrimitive(Variant &variant, YamlToken const &token,
 
   case NUMBER_HEX:
     if ((token.second - token.first) < 2)
+    {
       throw YamlParseException("Invalid hex number length!");
+    }
 
     str     = document.char_pointer() + token.first + 2;
     variant = std::strtoll(str, nullptr, 16);
@@ -201,7 +212,9 @@ void YamlDocument::ExtractPrimitive(Variant &variant, YamlToken const &token,
 
   case NUMBER_OCT:
     if ((token.second - token.first) < 2)
+    {
       throw YamlParseException("Invalid oct number length!");
+    }
 
     str     = document.char_pointer() + token.first + 2;
     variant = std::strtoll(str, nullptr, 8);
@@ -386,7 +399,7 @@ void YamlDocument::Parse(ConstByteArray const &document)
     else if (token.type == COMMENT)
     {
       // skipping comment
-      // TODO: probably, add it somewhere
+      // TODO(issue 1522): probably, add it somewhere
     }
     else if (token.type == OPEN_OBJECT)
     {
@@ -488,7 +501,7 @@ void YamlDocument::Parse(ConstByteArray const &document)
           }
           else if (context->data->IsObject())
           {
-            // TODO: check value mode
+            // TODO(issue 1523): check value mode
             Variant &next_element = (*context->data)[key];
             next_element          = Variant::Object();
 
@@ -669,7 +682,7 @@ void YamlDocument::Parse(ConstByteArray const &document)
             variant_stack.push_back({&variant_, token.ident, token.line});
           }
           else
-          {  // TODO: either a bug, or need to get previous object and add value
+          {  // TODO(issue 1524): either a bug, or need to get previous object and add value
             throw YamlParseException("Invalid parser state");
             // Variant next = Variant::Array(0);
             // variant_stack.push_back({&next, token.ident, token.line});
@@ -856,14 +869,6 @@ void YamlDocument::Tokenise(ConstByteArray const &document)
         ++ident;
         ++element_counter;
         continue;
-
-        /*                case 0x6C6C756E:  // null
-                            ++objects_;     // TODO(issue 35): Move
-                            tokens_.push_back({pos, pos + 4, KEYWORD_NULL, ident, line});
-                            pos += 4;
-                            ident += 4;
-                            ++element_counter;
-                            continue;*/
       }
     }
 
