@@ -188,5 +188,15 @@ void HttpClient::ReadExactly(asio::streambuf &buffer, std::size_t length, std::e
   asio::read(socket_, buffer, asio::transfer_exactly(length), ec);
 }
 
+std::string const &HttpClient::host() const
+{
+  return host_;
+}
+
+uint16_t HttpClient::port() const
+{
+  return port_;
+}
+
 }  // namespace http
 }  // namespace fetch

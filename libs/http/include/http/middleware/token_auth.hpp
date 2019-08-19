@@ -21,6 +21,9 @@
 #include "http/authentication_level.hpp"
 #include "http/server.hpp"
 
+#include <cstdint>
+#include <utility>
+
 namespace fetch {
 namespace http {
 namespace middleware {
@@ -30,8 +33,9 @@ class TokenAuthenticationInterface
 public:
   using ConstByteArray = byte_array::ConstByteArray;
 
-  TokenAuthenticationInterface()                              = default;
-  virtual ~TokenAuthenticationInterface()                     = default;
+  TokenAuthenticationInterface()          = default;
+  virtual ~TokenAuthenticationInterface() = default;
+
   virtual uint32_t ValidateToken(ConstByteArray const &token) = 0;
 
   void operator()(HTTPRequest &req);
@@ -40,11 +44,8 @@ public:
 class SimpleTokenAuthentication : public TokenAuthenticationInterface
 {
 public:
-  SimpleTokenAuthentication(ConstByteArray token,
-                            uint32_t authentication_level = AuthenticationLevel::TOKEN_PRESENT)
-    : token_{std::move(token)}
-    , authentication_level_{authentication_level}
-  {}
+  explicit SimpleTokenAuthentication(
+      ConstByteArray token, uint32_t authentication_level = AuthenticationLevel::TOKEN_PRESENT);
 
   uint32_t ValidateToken(ConstByteArray const &token) override;
 

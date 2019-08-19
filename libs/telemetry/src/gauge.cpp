@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,27 +16,39 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/generator.hpp"
+#include "core/string/ends_with.hpp"
+#include "telemetry/gauge.hpp"
+#include "telemetry/measurement.hpp"
+
+#include <iomanip>
+#include <iostream>
+#include <mutex>
+#include <type_traits>
 
 namespace fetch {
-namespace vm {
-
-enum class FunctionDecoratorKind
-{
-  NORMAL,   ///< Normal (undecorated) function
-  ACTION,   ///< A Transaction handler
-  QUERY,    ///< A Query handler
-  ON_INIT,  ///< A function to be called on smart contract construction
-  INVALID,  ///< The function has an invalid decorator
-};
+namespace telemetry {
 
 /**
- * Determine the type of the VM function
+ * Internal: int8_t specific value formatter
  *
- * @param fn The reference to function entry
- * @return The type of the function
+ * @param gauge The reference to the current gauge
+ * @param stream The stream to be populated
  */
-FunctionDecoratorKind DetermineKind(vm::Executable::Function const &fn);
+void GaugeToStream(Gauge<int8_t> const &gauge, OutputStream &stream)
+{
+  stream << static_cast<int32_t>(gauge.get()) << '\n';
+}
 
-}  // namespace vm
+/**
+ * Internal: uint8_t specific value formatter
+ *
+ * @param gauge The reference to the current gauge
+ * @param stream The stream to be populated
+ */
+void GaugeToStream(Gauge<uint8_t> const &gauge, OutputStream &stream)
+{
+  stream << static_cast<uint32_t>(gauge.get()) << '\n';
+}
+
+}  // namespace telemetry
 }  // namespace fetch
