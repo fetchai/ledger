@@ -173,26 +173,34 @@ macro (setup_compiler)
 endmacro (setup_compiler)
 
 function (conditionally_enable_lto)
-  include(CheckIPOSupported)
-  check_ipo_supported(RESULT
-                      result
-                      OUTPUT
-                      output)
-  if (result)
+  if (FETCH_ENABLE_LTO)
 
-    fetch_info("[LTO] Link-time optimisation is supported")
+    include(CheckIPOSupported)
+    check_ipo_supported(RESULT
+                        result
+                        OUTPUT
+                        output)
 
-    if (CMAKE_BUILD_TYPE STREQUAL Debug)
-      fetch_info("[LTO] Debug build: link-time optimisation disabled")
-      set(CMAKE_INTERPROCEDURAL_OPTIMIZATION FALSE)
+    if (result)
+
+      fetch_info("[LTO] Link-time optimisation is supported")
+
+      if (CMAKE_BUILD_TYPE STREQUAL Debug)
+        fetch_info("[LTO] Debug build: link-time optimisation disabled")
+        set(CMAKE_INTERPROCEDURAL_OPTIMIZATION FALSE)
+      else ()
+        fetch_info("[LTO] Link-time optimisation enabled")
+        set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+      endif ()
+
     else ()
-      fetch_info("[LTO] Link-time optimisation enabled")
-      set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+
+      message(
+        FATAL_ERROR
+          "[LTO] CMake does not support link-time optimisation for this compiler. To proceed, explicitly disable the FETCH_ENABLE_LTO option"
+        )
+
     endif ()
-
-  else ()
-
-    fetch_warning("[LTO] Link-time optimisation is not supported")
 
   endif ()
 endfunction ()

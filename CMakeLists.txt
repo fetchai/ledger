@@ -22,6 +22,7 @@ option(FETCH_ENABLE_COVERAGE            "Enable coverage generation"            
 option(FETCH_ENABLE_METRICS             "Enable the collection of metrics"      OFF)
 option(FETCH_DISABLE_COLOUR_LOG         "Disable the colour logging"            OFF)
 option(FETCH_STATIC_LINK                "Enable static linking"                 OFF)
+option(FETCH_ENABLE_LTO                 "Enable link-time optimisation"         ON)
 # cmake-format: on
 
 # custom string options
