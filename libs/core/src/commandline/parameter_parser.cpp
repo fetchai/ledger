@@ -103,5 +103,20 @@ std::string ParamsParser::GetParam(std::string const &key, std::string const &de
   return params_.find(key)->second;
 }
 
+std::size_t ParamsParser::arg_size() const
+{
+  return args_.size();
+}
+
+std::size_t ParamsParser::param_size() const
+{
+  return params_.size();
+}
+
+std::map<std::string, std::string> const &ParamsParser::params() const
+{
+  return params_;
+}
+
 }  // namespace commandline
 }  // namespace fetch

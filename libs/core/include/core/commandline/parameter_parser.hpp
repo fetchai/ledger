@@ -108,20 +108,5 @@ T ParamsParser::GetParam(std::string const &key, T const &default_value) const
   return ret;
 }
 
-inline std::size_t ParamsParser::arg_size() const
-{
-  return args_.size();
-}
-
-inline std::size_t ParamsParser::param_size() const
-{
-  return params_.size();
-}
-
-inline std::map<std::string, std::string> const &ParamsParser::params() const
-{
-  return params_;
-}
-
 }  // namespace commandline
 }  // namespace fetch

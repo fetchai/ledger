@@ -76,20 +76,12 @@ public:
   using PrivateKey = openssl::ECDSAPrivateKey<>;
   using Signature  = openssl::ECDSASignature<>;
 
-  ECDSASigner()
-    : private_key_{PrivateKey{}}
-  {}
-
-  explicit ECDSASigner(ConstByteArray const &private_key)
-    : private_key_{private_key}
+  template <typename... Args>
+  explicit ECDSASigner(Args &&... args)
+    : private_key_{std::forward<Args>(args)...}
   {}
 
   void Load(ConstByteArray const &private_key) override
-  {
-    SetPrivateKey(private_key);
-  }
-
-  void SetPrivateKey(ConstByteArray const &private_key)
   {
     private_key_.Set(PrivateKey{private_key});
   }
@@ -132,9 +124,7 @@ public:
   }
 
 private:
-  using ThreadSafePrivateKey = SynchronisedState<PrivateKey>;
-
-  ThreadSafePrivateKey private_key_;
+  SynchronisedState<PrivateKey> private_key_;
 };
 
 }  // namespace crypto

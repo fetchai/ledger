@@ -298,9 +298,7 @@ private:
     Identifier client;            ///< The identifier of the locking client
   };
 
-  using SyncLockStatus = SynchronisedState<LockStatus>;
-
-  SyncLockStatus lock_status_;
+  SynchronisedState<LockStatus> lock_status_;
 
   telemetry::CounterPtr   get_count_;
   telemetry::CounterPtr   get_create_count_;

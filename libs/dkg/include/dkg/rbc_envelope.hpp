@@ -20,6 +20,9 @@
 #include "dkg/rbc_messages.hpp"
 #include "network/muddle/packet.hpp"
 
+#include <cstdint>
+#include <memory>
+
 namespace fetch {
 namespace dkg {
 

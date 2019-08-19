@@ -90,14 +90,13 @@ public:
   }
 
 private:
-  using RpcClientPtr   = std::shared_ptr<Client>;
-  using AddressSet     = std::unordered_set<Muddle::Address>;
-  using SyncAddressSet = fetch::SynchronisedState<AddressSet>;
+  using RpcClientPtr = std::shared_ptr<Client>;
+  using AddressSet   = std::unordered_set<Muddle::Address>;
 
   MuddlePtr    muddle_;
   RpcClientPtr client_{
       std::make_shared<Client>("RRPClient", muddle_->AsEndpoint(), SERVICE_TEST, CHANNEL_RPC)};
-  SyncAddressSet node_set_{};
+  fetch::SynchronisedState<AddressSet> node_set_{};
 };
 
 // Next we make a protocol for the implementation

@@ -26,6 +26,8 @@
 
 #include "vectorise/fixed_point/fixed_point.hpp"
 
+#include <memory>
+
 template <typename T>
 class Convolution1DTest : public ::testing::Test
 {
