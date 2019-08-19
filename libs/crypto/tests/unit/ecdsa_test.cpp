@@ -46,7 +46,7 @@ ConstByteArray const ECDSASignerVerifierTest::TEST_DATA{
 TEST_F(ECDSASignerVerifierTest, test_sign_verify_cycle_with_predfined_private_key)
 {
   ECDSASigner signer;
-  signer.SetPrivateKey(EXAMPLE_PRIVATE_KEY);
+  signer.Load(EXAMPLE_PRIVATE_KEY);
 
   auto const signature = signer.Sign(TEST_DATA);
   ASSERT_FALSE(signature.empty());

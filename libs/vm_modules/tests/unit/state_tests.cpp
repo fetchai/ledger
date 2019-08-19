@@ -16,6 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vm/address.hpp"
+#include "vm/array.hpp"
+#include "vm/map.hpp"
 #include "vm_test_toolkit.hpp"
 
 #include "gmock/gmock.h"

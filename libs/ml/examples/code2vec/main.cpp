@@ -17,8 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor.hpp"
+#include "ml/core/graph.hpp"
 #include "ml/dataloaders/code2vec_context_loaders/context_loader.hpp"
-#include "ml/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activations/softmax.hpp"
 #include "ml/ops/concatenate.hpp"
@@ -44,18 +44,18 @@
 #include <vector>
 
 using DataType   = double;
-using ArrayType  = fetch::math::Tensor<DataType>;
+using TensorType = fetch::math::Tensor<DataType>;
 using SizeType   = fetch::math::Tensor<DataType>::SizeType;
 using SizeVector = fetch::math::SizeVector;
 
-using Weights        = fetch::ml::ops::Weights<ArrayType>;
-using Embeddings     = fetch::ml::ops::Embeddings<ArrayType>;
-using Transpose      = fetch::ml::ops::Transpose<ArrayType>;
-using MatrixMultiply = fetch::ml::ops::MatrixMultiply<ArrayType>;
-using Reshape        = fetch::ml::ops::Reshape<ArrayType>;
+using Weights        = fetch::ml::ops::Weights<TensorType>;
+using Embeddings     = fetch::ml::ops::Embeddings<TensorType>;
+using Transpose      = fetch::ml::ops::Transpose<TensorType>;
+using MatrixMultiply = fetch::ml::ops::MatrixMultiply<TensorType>;
+using Reshape        = fetch::ml::ops::Reshape<TensorType>;
 
-using ContextVector           = typename std::vector<ArrayType>;
-using ContextTensorsLabelPair = typename std::pair<ArrayType, ContextVector>;
+using ContextVector           = typename std::vector<TensorType>;
+using ContextTensorsLabelPair = typename std::pair<TensorType, ContextVector>;
 
 #define EMBEDDING_SIZE 64u
 #define BATCHSIZE 12u
@@ -77,7 +77,7 @@ int main(int ac, char **av)
     return 1;
   }
 
-  fetch::ml::dataloaders::C2VLoader<ArrayType, ArrayType> cloader(20);
+  fetch::ml::dataloaders::C2VLoader<TensorType, TensorType> cloader(20);
 
   for (int i(1); i < ac; ++i)
   {
@@ -94,44 +94,45 @@ int main(int ac, char **av)
   uint64_t vocab_size_words{cloader.word_counter().size() + 1};
 
   // Defining the graph
-  std::shared_ptr<fetch::ml::Graph<ArrayType>> g(std::make_shared<fetch::ml::Graph<ArrayType>>());
+  std::shared_ptr<fetch::ml::Graph<TensorType>> g(std::make_shared<fetch::ml::Graph<TensorType>>());
 
   // Setting up the attention vector
   // Dimension: (EMBEDDING_SIZE, BATCH_SIZE)
   std::string attention_vector = g->AddNode<Weights>("AttentionVector", {});
-  ArrayType   attention_vector_data(SizeVector({EMBEDDING_SIZE, SizeType{1}}));
+  TensorType  attention_vector_data(SizeVector({EMBEDDING_SIZE, SizeType{1}}));
   Weights::Initialise(attention_vector_data, EMBEDDING_SIZE, SizeType{1});
   g->SetInput(attention_vector, attention_vector_data);
 
   // Setting up the weights of FC1
   // Dimension: (EMBEDDING_SIZE, 3*EMBEDDING_SIZE)
   std::string fc1_weights = g->AddNode<Weights>("FullyConnectedWeights", {});
-  ArrayType   fc1_weights_data(SizeVector({EMBEDDING_SIZE, 3 * EMBEDDING_SIZE}));
+  TensorType  fc1_weights_data(SizeVector({EMBEDDING_SIZE, 3 * EMBEDDING_SIZE}));
   Weights::Initialise(fc1_weights_data, EMBEDDING_SIZE, 3 * EMBEDDING_SIZE);
   g->SetInput(fc1_weights, fc1_weights_data);
 
   // Setting up the embedding matrix for the function names
   // Dimension: (VOCAB_SIZE_FUNCTION_NAMES, EMBEDDING_SIZE)
   std::string function_name_embedding = g->AddNode<Weights>("EmbeddingFunctionNames", {});
-  ArrayType function_name_embedding_matrix(SizeVector({vocab_size_function_names, EMBEDDING_SIZE}));
+  TensorType  function_name_embedding_matrix(
+      SizeVector({vocab_size_function_names, EMBEDDING_SIZE}));
   Weights::Initialise(function_name_embedding_matrix, vocab_size_function_names, EMBEDDING_SIZE);
   g->SetInput(function_name_embedding, function_name_embedding_matrix);
 
   // Setting up shared embedding matrix for words
   // Dimension: (VOCAB_SIZE_WORDS, EMBEDDING_SIZE)
   std::string shared_embedding = g->AddNode<Weights>("SharedEmbedding", {});
-  ArrayType   shared_embedding_tensor(SizeVector({EMBEDDING_SIZE, vocab_size_words}));
+  TensorType  shared_embedding_tensor(SizeVector({EMBEDDING_SIZE, vocab_size_words}));
   Weights::Initialise(shared_embedding_tensor, EMBEDDING_SIZE, vocab_size_words);
   g->SetInput(shared_embedding, shared_embedding_tensor);
 
   // Defining the input nodes
 
   // Inputs have dimensions (N_CONTEXTS, BATCH_SIZE)
-  std::string input_paths = g->AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("InputPaths", {});
+  std::string input_paths = g->AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("InputPaths", {});
   std::string input_source_words =
-      g->AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("InputSourceWords", {});
+      g->AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("InputSourceWords", {});
   std::string input_target_words =
-      g->AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("InputTargetWords", {});
+      g->AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("InputTargetWords", {});
 
   // Retrieving the rows of the embedding tensors according to the input
 
@@ -154,7 +155,7 @@ int main(int ac, char **av)
   // Dimension: (N_CONTEXTS, 3*EMBEDDING_SIZE, BATCH_SIZE) = Concatenate ((N_CONTEXTS,
   // EMBEDDING_SIZE, BATCH_SIZE), (N_CONTEXTS, EMBEDDING_SIZE, BATCH_SIZE), (N_CONTEXTS,
   // EMBEDDING_SIZE, BATCH_SIZE))
-  std::string context_vectors = g->AddNode<fetch::ml::ops::Concatenate<ArrayType>>(
+  std::string context_vectors = g->AddNode<fetch::ml::ops::Concatenate<TensorType>>(
       "ContextVectors", {embedding_source_words, embeddings_paths, embedding_target_words},
       SizeType(0));
 
@@ -166,7 +167,7 @@ int main(int ac, char **av)
   // (Elementwise) TanH Layer
   // Dimensions: (EMBEDDING_SIZE, N_CONTEXTS, BATCH_SIZE)
   std::string combined_context_vector =
-      g->AddNode<fetch::ml::ops::TanH<ArrayType>>("CombinedContextVector", {fc1});
+      g->AddNode<fetch::ml::ops::TanH<TensorType>>("CombinedContextVector", {fc1});
 
   // Transposition
   // Dimensions: (N_CONTEXTS, EMBEDDING_SIZE, BATCH_SIZE) = Transpose((EMBEDDING_SIZE, N_CONTEXTS,
@@ -188,7 +189,7 @@ int main(int ac, char **av)
 
   // (Softmax) normalisation
   // Dimensions: (N_CONTEXTS, BATCH_SIZE)
-  std::string attention_weight = g->AddNode<fetch::ml::ops::Softmax<ArrayType>>(
+  std::string attention_weight = g->AddNode<fetch::ml::ops::Softmax<TensorType>>(
       "AttentionWeight", {scalar_product_contexts_with_attention_reshaped}, SizeType{0u});
 
   // Reshaping
@@ -216,16 +217,16 @@ int main(int ac, char **av)
 
   // (Softmax) Normalisation of the prediction
   // Dimensions:  (vocab_size_functions, BATCH_SIZE)
-  std::string result = g->AddNode<fetch::ml::ops::Softmax<ArrayType>>(
+  std::string result = g->AddNode<fetch::ml::ops::Softmax<TensorType>>(
       "PredictionSoftMax", {prediction_softmax_kernel}, SizeType{0u});
 
-  std::string label = g->AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Label", {});
+  std::string label = g->AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Label", {});
 
   std::string error =
-      g->AddNode<fetch::ml::ops::CrossEntropyLoss<ArrayType>>("Error", {result, label});
+      g->AddNode<fetch::ml::ops::CrossEntropyLoss<TensorType>>("Error", {result, label});
 
   // Initialise Optimiser
-  fetch::ml::optimisers::AdamOptimiser<ArrayType> optimiser(
+  fetch::ml::optimisers::AdamOptimiser<TensorType> optimiser(
       g, {input_source_words, input_paths, input_target_words}, label, error, LEARNING_RATE);
 
   // Training loop

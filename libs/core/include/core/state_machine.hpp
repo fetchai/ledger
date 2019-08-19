@@ -47,13 +47,13 @@ namespace core {
 template <typename State>
 class StateMachine : public StateMachineInterface, public Runnable
 {
-public:
   static_assert(std::is_enum<State>::value, "");
 
   using Callback            = std::function<State(State /*current*/, State /*previous*/)>;
   using StateChangeCallback = std::function<void(State /*current*/, State /*previous*/)>;
   using StateMapper         = std::function<char const *(State)>;
 
+public:
   // Construction / Destruction
   explicit StateMachine(std::string name, State initial, StateMapper mapper = StateMapper{});
   StateMachine(StateMachine const &)     = delete;

@@ -39,9 +39,9 @@ TypeParam RunTest(typename TypeParam::SizeType n_output_feature_size,
                   typename TypeParam::SizeType n_data_size)
 {
 
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
-  using SizeType  = typename TypeParam::SizeType;
+  using DataType   = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using SizeType   = typename TypeParam::SizeType;
 
   SizeType RANDOM_SEED{123456};
   DataType LEARNING_RATE{500};  // (seems very high!)
@@ -55,7 +55,7 @@ TypeParam RunTest(typename TypeParam::SizeType n_output_feature_size,
   SizeType FINAL_MOMENTUM_STEPS{20};
   SizeType P_LATER_CORRECTION_ITERATION{10};
 
-  ArrayType A({N_INPUT_FEATURE_SIZE, N_DATA_SIZE});
+  TensorType A({N_INPUT_FEATURE_SIZE, N_DATA_SIZE});
 
   // Generate easily separable clusters of data
   for (SizeType i = 0; i < 25; ++i)
@@ -83,7 +83,7 @@ TypeParam RunTest(typename TypeParam::SizeType n_output_feature_size,
     A(2, i) = static_cast<DataType>(i) + static_cast<DataType>(50);
   }
 
-  fetch::ml::TSNE<ArrayType> tsn(A, N_OUTPUT_FEATURE_SIZE, PERPLEXITY, RANDOM_SEED);
+  fetch::ml::TSNE<TensorType> tsn(A, N_OUTPUT_FEATURE_SIZE, PERPLEXITY, RANDOM_SEED);
 
   tsn.Optimise(LEARNING_RATE, MAX_ITERATIONS, INITIAL_MOMENTUM, FINAL_MOMENTUM,
                FINAL_MOMENTUM_STEPS, P_LATER_CORRECTION_ITERATION);

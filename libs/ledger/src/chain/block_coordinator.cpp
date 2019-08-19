@@ -1280,5 +1280,10 @@ void BlockCoordinator::Reset()
   chain_.Reset();
 }
 
+void BlockCoordinator::EnableMining(bool enable)
+{
+  mining_enabled_ = enable;
+}
+
 }  // namespace ledger
 }  // namespace fetch

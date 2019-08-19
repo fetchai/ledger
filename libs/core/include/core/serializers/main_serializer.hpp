@@ -21,20 +21,18 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/logger.hpp"
-#include "core/serializers/counter.hpp"
-#include "core/serializers/exception.hpp"
-#include "core/serializers/group_definitions.hpp"
-#include "vectorise/platform.hpp"
-
-#include "core/serializers/main_serializer_definition.hpp"
-
 #include "core/serializers/array_interface.hpp"
 #include "core/serializers/binary_interface.hpp"
 #include "core/serializers/container_constructor_interface.hpp"
+#include "core/serializers/counter.hpp"
+#include "core/serializers/exception.hpp"
+#include "core/serializers/group_definitions.hpp"
+#include "core/serializers/main_serializer_definition.hpp"
 #include "core/serializers/map_interface.hpp"
 #include "vectorise/platform.hpp"
 
-#include "core/serializers/counter.hpp"
+#include <stdexcept>
+#include <string>
 #include <type_traits>
 
 namespace fetch {
@@ -43,7 +41,7 @@ namespace serializers {
 template <typename WriteType, typename InitialType>
 void MsgPackSerializer::WritePrimitive(InitialType const &val)
 {
-  WriteType w = static_cast<WriteType>(val);
+  auto w = static_cast<WriteType>(val);
   WriteBytes(reinterpret_cast<uint8_t const *>(&w), sizeof(w));
 }
 

@@ -16,12 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/main_serializer_definition.hpp"
+#include "math/base_types.hpp"
 #include "math/tensor.hpp"
 #include "ml/ops/maximum.hpp"
+#include "ml/serializers/ml_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
-
 #include <vector>
 
 template <typename T>
@@ -37,26 +39,26 @@ TYPED_TEST_CASE(MaximumTest, MyTypes);
 
 TYPED_TEST(MaximumTest, forward_test)
 {
-  using ArrayType = TypeParam;
-  using DataType  = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
 
-  ArrayType data_1 = ArrayType::FromString(
+  TensorType data_1 = TensorType::FromString(
       "1, -2, 3,-4, 5,-6, 7,-8;"
       "1,  2, 3, 4, 5, 6, 7, 8");
 
-  ArrayType data_2 = ArrayType::FromString(
+  TensorType data_2 = TensorType::FromString(
       "8, -7, 6,-5, 4,-3, 2,-1;"
       "-8,  7,-6, 5,-4, 3,-2, 1");
 
-  ArrayType gt = ArrayType::FromString(
+  TensorType gt = TensorType::FromString(
       "8,	-2, 6, -4, 5, -3, 7, -1;"
       "1,  7, 3,  5, 5,  6, 7,  8");
 
-  fetch::ml::ops::Maximum<ArrayType> op;
+  fetch::ml::ops::Maximum<TensorType> op;
 
   TypeParam prediction(op.ComputeOutputShape(
-      {std::make_shared<ArrayType>(data_1), std::make_shared<ArrayType>(data_2)}));
-  op.Forward({std::make_shared<ArrayType>(data_1), std::make_shared<ArrayType>(data_2)},
+      {std::make_shared<TensorType>(data_1), std::make_shared<TensorType>(data_2)}));
+  op.Forward({std::make_shared<TensorType>(data_1), std::make_shared<TensorType>(data_2)},
              prediction);
 
   // test correct values
@@ -66,36 +68,150 @@ TYPED_TEST(MaximumTest, forward_test)
 
 TYPED_TEST(MaximumTest, backward_test)
 {
-  using ArrayType = TypeParam;
-  using DataType  = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
 
-  ArrayType data_1 = ArrayType::FromString(
+  TensorType data_1 = TensorType::FromString(
       "1, -2, 3,-4, 5,-6, 7,-8;"
       "1,  2, 3, 4, 5, 6, 7, 8");
 
-  ArrayType data_2 = ArrayType::FromString(
+  TensorType data_2 = TensorType::FromString(
       "8, -7, 6,-5, 4,-3, 2,-1;"
       "-8,  7,-6, 5,-4, 3,-2, 1");
 
-  ArrayType gt_1 = ArrayType::FromString(
+  TensorType gt_1 = TensorType::FromString(
       "0, -1, 0, -2, 3, 0, 4, 0;"
       "5, 0, 6, 0, 7, -7, 8, -8");
 
-  ArrayType gt_2 = ArrayType::FromString(
+  TensorType gt_2 = TensorType::FromString(
       "1, 0, 2, 0, 0, -3, 0, -4;"
       "0, -5, 0, -6, 0, 0, 0, 0");
 
-  ArrayType error = ArrayType::FromString(
+  TensorType error = TensorType::FromString(
       "1, -1, 2, -2, 3, -3, 4, -4;"
       "5, -5, 6, -6, 7, -7, 8, -8");
 
-  fetch::ml::ops::Maximum<ArrayType> op;
-  std::vector<ArrayType>             prediction = op.Backward(
-      {std::make_shared<ArrayType>(data_1), std::make_shared<ArrayType>(data_2)}, error);
+  fetch::ml::ops::Maximum<TensorType> op;
+  std::vector<TensorType>             prediction = op.Backward(
+      {std::make_shared<TensorType>(data_1), std::make_shared<TensorType>(data_2)}, error);
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt_1, fetch::math::function_tolerance<DataType>(),
                                      fetch::math::function_tolerance<DataType>()));
   ASSERT_TRUE(prediction[1].AllClose(gt_2, fetch::math::function_tolerance<DataType>(),
                                      fetch::math::function_tolerance<DataType>()));
+}
+
+TYPED_TEST(MaximumTest, saveparams_test)
+{
+  using TensorType    = TypeParam;
+  using DataType      = typename TypeParam::Type;
+  using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
+  using SPType        = typename fetch::ml::ops::Maximum<TensorType>::SPType;
+  using OpType        = typename fetch::ml::ops::Maximum<TensorType>;
+
+  TensorType data_1 = TensorType::FromString(
+      "1, -2, 3,-4, 5,-6, 7,-8;"
+      "1,  2, 3, 4, 5, 6, 7, 8");
+
+  TensorType data_2 = TensorType::FromString(
+      "8, -7, 6,-5, 4,-3, 2,-1;"
+      "-8,  7,-6, 5,-4, 3,-2, 1");
+
+  TensorType gt = TensorType::FromString(
+      "8,	-2, 6, -4, 5, -3, 7, -1;"
+      "1,  7, 3,  5, 5,  6, 7,  8");
+
+  OpType op;
+
+  TensorType    prediction(op.ComputeOutputShape(
+      {std::make_shared<const TensorType>(data_1), std::make_shared<const TensorType>(data_2)}));
+  VecTensorType vec_data(
+      {std::make_shared<const TensorType>(data_1), std::make_shared<const TensorType>(data_2)});
+
+  op.Forward(vec_data, prediction);
+
+  // extract saveparams
+  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
+
+  // downcast to correct type
+  auto dsp = std::static_pointer_cast<SPType>(sp);
+
+  // serialize
+  fetch::serializers::MsgPackSerializer b;
+  b << *dsp;
+
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<SPType>();
+  b >> *dsp2;
+
+  // rebuild node
+  OpType new_op(*dsp2);
+
+  // check that new predictions match the old
+  TensorType new_prediction(op.ComputeOutputShape(
+      {std::make_shared<const TensorType>(data_1), std::make_shared<const TensorType>(data_2)}));
+  new_op.Forward(vec_data, new_prediction);
+
+  // test correct values
+  EXPECT_TRUE(
+      new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
+}
+
+TYPED_TEST(MaximumTest, saveparams_backward_test)
+{
+  using TensorType = TypeParam;
+  using OpType     = typename fetch::ml::ops::Maximum<TensorType>;
+  using SPType     = typename OpType::SPType;
+
+  TensorType data_1 = TensorType::FromString(
+      "1, -2, 3,-4, 5,-6, 7,-8;"
+      "1,  2, 3, 4, 5, 6, 7, 8");
+
+  TensorType data_2 = TensorType::FromString(
+      "8, -7, 6,-5, 4,-3, 2,-1;"
+      "-8,  7,-6, 5,-4, 3,-2, 1");
+
+  TensorType error = TensorType::FromString(
+      "1, -1, 2, -2, 3, -3, 4, -4;"
+      "5, -5, 6, -6, 7, -7, 8, -8");
+
+  fetch::ml::ops::Maximum<TensorType> op;
+  std::vector<TensorType>             prediction = op.Backward(
+      {std::make_shared<TensorType>(data_1), std::make_shared<TensorType>(data_2)}, error);
+
+  // extract saveparams
+  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
+
+  // downcast to correct type
+  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
+
+  // serialize
+  fetch::serializers::MsgPackSerializer b;
+  b << *dsp;
+
+  // make another prediction with the original op
+  prediction = op.Backward(
+      {std::make_shared<TensorType>(data_1), std::make_shared<TensorType>(data_2)}, error);
+
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<SPType>();
+  b >> *dsp2;
+
+  // rebuild node
+  OpType new_op(*dsp2);
+
+  // check that new predictions match the old
+  std::vector<TensorType> new_prediction = new_op.Backward(
+      {std::make_shared<TensorType>(data_1), std::make_shared<TensorType>(data_2)}, error);
+
+  // test correct values
+  EXPECT_TRUE(prediction.at(0).AllClose(
+      new_prediction.at(0), fetch::math::function_tolerance<typename TypeParam::Type>(),
+      fetch::math::function_tolerance<typename TypeParam::Type>()));
+  EXPECT_TRUE(prediction.at(1).AllClose(
+      new_prediction.at(1), fetch::math::function_tolerance<typename TypeParam::Type>(),
+      fetch::math::function_tolerance<typename TypeParam::Type>()));
 }

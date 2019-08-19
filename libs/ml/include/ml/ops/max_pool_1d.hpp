@@ -31,17 +31,34 @@ template <class T>
 class MaxPool1D : public Ops<T>
 {
 public:
-  using ArrayType     = T;
-  using SizeType      = typename ArrayType::SizeType;
-  using DataType      = typename ArrayType::Type;
-  using ArrayPtrType  = std::shared_ptr<ArrayType>;
+  using TensorType    = T;
+  using SizeType      = typename TensorType::SizeType;
+  using DataType      = typename TensorType::Type;
+  using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SPType        = OpMaxPool1DSaveableParams<T>;
 
   MaxPool1D(SizeType const kernel_size, SizeType const stride_size)
     : kernel_size_{kernel_size}
     , stride_size_{stride_size}
   {}
+
+  explicit MaxPool1D(SPType const &sp)
+    : Ops<T>(sp)
+  {
+    kernel_size_ = sp.kernel_size;
+    stride_size_ = sp.stride_size;
+  }
+
   ~MaxPool1D() override = default;
+
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
+  {
+    SPType sp{};
+    sp.kernel_size = kernel_size_;
+    sp.stride_size = stride_size_;
+    return std::make_shared<SPType>(sp);
+  }
 
   /**
    * Applies 1D max pooling of kernel_size_ for each channel described here:
@@ -51,7 +68,7 @@ public:
    * @param output tensor of size [input_channels=output_channels x number_of_stride_sized_steps]
    * @return: output tensor parameter
    */
-  void Forward(VecTensorType const &inputs, ArrayType &output) override
+  void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(inputs.size() == 1);
     // Input must be a 3D tensor [C x W x N]
@@ -102,13 +119,13 @@ public:
    * @return: output vector of tensors with back propagated error signal
    * output[0]=input_error[inputs[0].shape]
    */
-  std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                  ArrayType const &    error_signal) override
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     assert(inputs.size() == 1);
     assert(error_signal.shape() == ComputeOutputShape(inputs));
 
-    ArrayType return_signal{inputs.at(0)->shape()};
+    TensorType return_signal{inputs.at(0)->shape()};
 
     auto output_shape = error_signal.shape();
 
@@ -163,6 +180,10 @@ public:
     return output_shape;
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::OP_MAX_POOL_1D;
+  }
   static constexpr char const *DESCRIPTOR = "MaxPool1D";
 
 private:

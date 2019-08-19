@@ -34,9 +34,9 @@ template <typename T>
 class TextLoader
 {
 public:
-  using ArrayType = T;
-  using DataType  = typename T::Type;
-  using SizeType  = typename T::SizeType;
+  using TensorType = T;
+  using DataType   = typename T::Type;
+  using SizeType   = typename T::SizeType;
 
   using WordIdxType   = std::vector<std::vector<SizeType>>;
   using VocabType     = std::unordered_map<std::string, SizeType>;

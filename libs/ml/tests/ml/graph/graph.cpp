@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor.hpp"
-#include "ml/graph.hpp"
+#include "ml/core/graph.hpp"
 #include "ml/layers/convolution_1d.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activations/relu.hpp"
@@ -40,16 +40,16 @@ TYPED_TEST_CASE(GraphTest, MyTypes);
 
 TYPED_TEST(GraphTest, node_placeholder)
 {
-  using ArrayType = TypeParam;
+  using TensorType = TypeParam;
 
-  fetch::ml::Graph<ArrayType> g;
-  g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
+  fetch::ml::Graph<TensorType> g;
+  g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
 
-  ArrayType data = ArrayType::FromString(R"(1, 2, 3, 4, 5, 6, 7, 8)");
-  ArrayType gt   = ArrayType::FromString(R"(1, 2, 3, 4, 5, 6, 7, 8)");
+  TensorType data = TensorType::FromString(R"(1, 2, 3, 4, 5, 6, 7, 8)");
+  TensorType gt   = TensorType::FromString(R"(1, 2, 3, 4, 5, 6, 7, 8)");
 
   g.SetInput("Input", data);
-  ArrayType prediction = g.Evaluate("Input");
+  TensorType prediction = g.ForwardPropagate("Input");
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt));
@@ -57,18 +57,19 @@ TYPED_TEST(GraphTest, node_placeholder)
 
 TYPED_TEST(GraphTest, node_relu)
 {
-  using ArrayType = TypeParam;
+  using TensorType = TypeParam;
 
-  fetch::ml::Graph<ArrayType> g;
-  g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
-  g.template AddNode<fetch::ml::ops::Relu<ArrayType>>("Relu", {"Input"});
+  fetch::ml::Graph<TensorType> g;
+  g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
+  g.template AddNode<fetch::ml::ops::Relu<TensorType>>("Relu", {"Input"});
 
-  ArrayType data =
-      ArrayType::FromString(R"(0, -1, 2, -3, 4, -5, 6, -7, 8, -9, 10, -11, 12, -13, 14, -15, 16)");
-  ArrayType gt = ArrayType::FromString(R"(0, 0, 2, 0, 4, 0, 6, 0, 8, 0, 10, 0, 12, 0, 14, 0, 16)");
+  TensorType data =
+      TensorType::FromString(R"(0, -1, 2, -3, 4, -5, 6, -7, 8, -9, 10, -11, 12, -13, 14, -15, 16)");
+  TensorType gt =
+      TensorType::FromString(R"(0, 0, 2, 0, 4, 0, 6, 0, 8, 0, 10, 0, 12, 0, 14, 0, 16)");
 
   g.SetInput("Input", data);
-  ArrayType prediction = g.Evaluate("Relu");
+  TensorType prediction = g.ForwardPropagate("Relu");
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt));
@@ -76,10 +77,10 @@ TYPED_TEST(GraphTest, node_relu)
 
 TYPED_TEST(GraphTest, get_state_dict)
 {
-  using ArrayType = TypeParam;
+  using TensorType = TypeParam;
 
-  fetch::ml::Graph<ArrayType>     g;
-  fetch::ml::StateDict<ArrayType> sd = g.StateDict();
+  fetch::ml::Graph<TensorType>     g;
+  fetch::ml::StateDict<TensorType> sd = g.StateDict();
 
   EXPECT_EQ(sd.weights_, nullptr);
   EXPECT_TRUE(sd.dict_.empty());
@@ -87,38 +88,38 @@ TYPED_TEST(GraphTest, get_state_dict)
 
 TYPED_TEST(GraphTest, no_such_node_test)  // Use the class as a Node
 {
-  using ArrayType = TypeParam;
-  using SizeType  = typename TypeParam::SizeType;
+  using TensorType = TypeParam;
+  using SizeType   = typename TypeParam::SizeType;
 
-  fetch::ml::Graph<ArrayType> g;
+  fetch::ml::Graph<TensorType> g;
 
-  g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
-  g.template AddNode<fetch::ml::layers::Convolution1D<ArrayType>>("Convolution1D", {"Input"}, 3u,
-                                                                  3u, 3u, 3u);
+  g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
+  g.template AddNode<fetch::ml::layers::Convolution1D<TensorType>>("Convolution1D", {"Input"}, 3u,
+                                                                   3u, 3u, 3u);
 
-  ArrayType data(std::vector<SizeType>({5, 10}));
+  TensorType data(std::vector<SizeType>({5, 10}));
   g.SetInput("Input", data);
 
-  ASSERT_ANY_THROW(g.Evaluate("FullyConnected"));
+  ASSERT_ANY_THROW(g.ForwardPropagate("FullyConnected"));
 }
 
 TYPED_TEST(GraphTest, multi_nodes_have_same_name)
 {
-  using ArrayType = TypeParam;
-  using DataType  = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
 
-  fetch::ml::Graph<ArrayType> g;
+  fetch::ml::Graph<TensorType> g;
 
-  std::string input = g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Input", {});
-  std::string fc_1  = g.template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
+  std::string input = g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
+  std::string fc_1  = g.template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
       "FC1", {input}, 10u, 10u, fetch::ml::details::ActivationType::NOTHING,
-      fetch::ml::details::RegularisationType::NONE, static_cast<DataType>(0));
-  std::string fc_2 = g.template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
+      fetch::ml::RegularisationType::NONE, static_cast<DataType>(0));
+  std::string fc_2 = g.template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
       "FC1", {fc_1}, 10u, 10u, fetch::ml::details::ActivationType::NOTHING,
-      fetch::ml::details::RegularisationType::NONE, static_cast<DataType>(0));
-  std::string fc_3 = g.template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
+      fetch::ml::RegularisationType::NONE, static_cast<DataType>(0));
+  std::string fc_3 = g.template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
       "FC1", {fc_2}, 10u, 10u, fetch::ml::details::ActivationType::NOTHING,
-      fetch::ml::details::RegularisationType::NONE, static_cast<DataType>(0));
+      fetch::ml::RegularisationType::NONE, static_cast<DataType>(0));
 
   // check the naming is correct
   ASSERT_EQ(fc_1, "FC1");
@@ -129,37 +130,37 @@ TYPED_TEST(GraphTest, multi_nodes_have_same_name)
 TYPED_TEST(GraphTest,
            diamond_graph_forward)  // Evaluate graph output=(input1*input2)-(input1^2)
 {
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
+  using DataType   = typename TypeParam::Type;
+  using TensorType = TypeParam;
 
   // Generate input
-  ArrayType data1 = ArrayType::FromString(R"(-1,0,1,2,3,4)");
-  ArrayType data2 = ArrayType::FromString(R"(-20,-10, 0, 10, 20, 30)");
-  ArrayType gt    = ArrayType::FromString(R"(19, -0, -1, 16, 51, 104)");
+  TensorType data1 = TensorType::FromString(R"(-1,0,1,2,3,4)");
+  TensorType data2 = TensorType::FromString(R"(-20,-10, 0, 10, 20, 30)");
+  TensorType gt    = TensorType::FromString(R"(19, -0, -1, 16, 51, 104)");
 
   // Create graph
   std::string                 name = "Diamond";
   fetch::ml::Graph<TypeParam> g;
 
   std::string input_name1 =
-      g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Input1", {});
+      g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Input1", {});
 
   std::string input_name2 =
-      g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Input2", {});
+      g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Input2", {});
 
-  std::string op1_name = g.template AddNode<fetch::ml::ops::Multiply<ArrayType>>(
+  std::string op1_name = g.template AddNode<fetch::ml::ops::Multiply<TensorType>>(
       name + "_Op1", {input_name1, input_name1});
-  std::string op2_name = g.template AddNode<fetch::ml::ops::Multiply<ArrayType>>(
+  std::string op2_name = g.template AddNode<fetch::ml::ops::Multiply<TensorType>>(
       name + "_Op2", {input_name1, input_name2});
 
   std::string output_name =
-      g.template AddNode<fetch::ml::ops::Subtract<ArrayType>>(name + "_Op3", {op2_name, op1_name});
+      g.template AddNode<fetch::ml::ops::Subtract<TensorType>>(name + "_Op3", {op2_name, op1_name});
 
   // Evaluate
 
   g.SetInput(input_name1, data1);
   g.SetInput(input_name2, data2);
-  TypeParam output = g.Evaluate("Diamond_Op3");
+  TypeParam output = g.ForwardPropagate("Diamond_Op3");
 
   // Test correct values
   ASSERT_EQ(output.shape(), data1.shape());
@@ -167,12 +168,12 @@ TYPED_TEST(GraphTest,
                               fetch::math::function_tolerance<DataType>()));
 
   // Change data2
-  data2 = ArrayType::FromString(R"(-2, -1, 0, 1, 2, 3)");
-  gt    = ArrayType::FromString(R"(1, -0, -1, -2, -3, -4)");
+  data2 = TensorType::FromString(R"(-2, -1, 0, 1, 2, 3)");
+  gt    = TensorType::FromString(R"(1, -0, -1, -2, -3, -4)");
   g.SetInput(input_name2, data2);
 
   // Recompute graph
-  output = g.Evaluate("Diamond_Op3");
+  output = g.ForwardPropagate("Diamond_Op3");
 
   // Test correct values
   ASSERT_EQ(output.shape(), data1.shape());
@@ -182,39 +183,38 @@ TYPED_TEST(GraphTest,
 
 TYPED_TEST(GraphTest, diamond_graph_backward)  // output=(input1*input2)-(input1^2)
 {
-  using DataType = typename TypeParam::Type;
-  //  using SizeType  = typename TypeParam::SizeType;
-  using ArrayType = TypeParam;
+  using DataType   = typename TypeParam::Type;
+  using TensorType = TypeParam;
 
   // Generate input
-  ArrayType data1        = ArrayType::FromString(R"(-1,0,1,2,3,4)");
-  ArrayType data2        = ArrayType::FromString(R"(-20,-10, 0, 10, 20, 30)");
-  ArrayType error_signal = ArrayType::FromString(R"(-1,0,1,2,3,4)");
-  ArrayType grad1        = ArrayType::FromString(R"(1,  0,  1,  4,  9, 16)");
-  ArrayType grad2        = ArrayType::FromString(R"(18, 0, -2, 12, 42, 88)");
+  TensorType data1        = TensorType::FromString(R"(-1,0,1,2,3,4)");
+  TensorType data2        = TensorType::FromString(R"(-20,-10, 0, 10, 20, 30)");
+  TensorType error_signal = TensorType::FromString(R"(-1,0,1,2,3,4)");
+  TensorType grad1        = TensorType::FromString(R"(1,  0,  1,  4,  9, 16)");
+  TensorType grad2        = TensorType::FromString(R"(18, 0, -2, 12, 42, 88)");
 
   // Create graph
   std::string                 name = "Diamond";
   fetch::ml::Graph<TypeParam> g;
 
   std::string input_name1 =
-      g.template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Input1", {});
+      g.template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Input1", {});
 
   std::string input_name2 =
-      g.template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Input2", {});
+      g.template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Input2", {});
 
-  std::string op1_name = g.template AddNode<fetch::ml::ops::Multiply<ArrayType>>(
+  std::string op1_name = g.template AddNode<fetch::ml::ops::Multiply<TensorType>>(
       name + "_Op1", {input_name1, input_name1});
-  std::string op2_name = g.template AddNode<fetch::ml::ops::Multiply<ArrayType>>(
+  std::string op2_name = g.template AddNode<fetch::ml::ops::Multiply<TensorType>>(
       name + "_Op2", {input_name1, input_name2});
 
   std::string output_name =
-      g.template AddNode<fetch::ml::ops::Subtract<ArrayType>>(name + "_Op3", {op2_name, op1_name});
+      g.template AddNode<fetch::ml::ops::Subtract<TensorType>>(name + "_Op3", {op2_name, op1_name});
 
   // Forward
   g.SetInput(input_name1, data1);
   g.SetInput(input_name2, data2);
-  TypeParam output = g.Evaluate(output_name);
+  TypeParam output = g.ForwardPropagate(output_name);
 
   // Calculate Gradient
   g.BackPropagateSignal(output_name, error_signal);
@@ -236,12 +236,12 @@ TYPED_TEST(GraphTest, diamond_graph_backward)  // output=(input1*input2)-(input1
                                   fetch::math::function_tolerance<DataType>()));
 
   // Change data2
-  data2                       = ArrayType::FromString(R"(-2, -1, 0, 1, 2, 3)");
-  error_signal                = ArrayType::FromString(R"(-0.1,0,0.1,0.2,0.3,0.4)");
-  ArrayType weights1_expected = ArrayType::FromString(R"(-1,-1,1,5,11,19)");
-  ArrayType weights2_expected = ArrayType::FromString(R"(17, 0, -1, 14, 45, 92)");
-  grad1                       = ArrayType::FromString(R"(-1.7,0,-0.1,2.8,13.5,36.8)");
-  grad2                       = ArrayType::FromString(R"(3.5, 0, 0.3, -4.6, -23.7, -66)");
+  data2                        = TensorType::FromString(R"(-2, -1, 0, 1, 2, 3)");
+  error_signal                 = TensorType::FromString(R"(-0.1,0,0.1,0.2,0.3,0.4)");
+  TensorType weights1_expected = TensorType::FromString(R"(-1,-1,1,5,11,19)");
+  TensorType weights2_expected = TensorType::FromString(R"(17, 0, -1, 14, 45, 92)");
+  grad1                        = TensorType::FromString(R"(-1.7,0,-0.1,2.8,13.5,36.8)");
+  grad2                        = TensorType::FromString(R"(3.5, 0, 0.3, -4.6, -23.7, -66)");
 
   g.SetInput(input_name2, data2);
 
@@ -249,7 +249,7 @@ TYPED_TEST(GraphTest, diamond_graph_backward)  // output=(input1*input2)-(input1
   g.ApplyGradients(gradients);
 
   // Recompute graph
-  output = g.Evaluate("Diamond_Op3");
+  output = g.ForwardPropagate("Diamond_Op3");
 
   // Calculate Gradient
   g.BackPropagateSignal(output_name, error_signal);
@@ -273,29 +273,29 @@ TYPED_TEST(GraphTest, diamond_graph_backward)  // output=(input1*input2)-(input1
 
 TYPED_TEST(GraphTest, diamond_graph_getStateDict)
 {
-  using ArrayType = TypeParam;
+  using TensorType = TypeParam;
 
   // Generate input
-  ArrayType data1 = ArrayType::FromString(R"(-1,0,1,2,3,4)");
-  ArrayType data2 = ArrayType::FromString(R"(-20,-10, 0, 10, 20, 30)");
+  TensorType data1 = TensorType::FromString(R"(-1,0,1,2,3,4)");
+  TensorType data2 = TensorType::FromString(R"(-20,-10, 0, 10, 20, 30)");
 
   // Create graph
   std::string                 name = "Diamond";
   fetch::ml::Graph<TypeParam> g;
 
   std::string input_name1 =
-      g.template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Weight1", {});
+      g.template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Weight1", {});
 
   std::string input_name2 =
-      g.template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Weight2", {});
+      g.template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Weight2", {});
 
-  std::string op1_name = g.template AddNode<fetch::ml::ops::Multiply<ArrayType>>(
+  std::string op1_name = g.template AddNode<fetch::ml::ops::Multiply<TensorType>>(
       name + "_Op1", {input_name1, input_name1});
-  std::string op2_name = g.template AddNode<fetch::ml::ops::Multiply<ArrayType>>(
+  std::string op2_name = g.template AddNode<fetch::ml::ops::Multiply<TensorType>>(
       name + "_Op2", {input_name1, input_name2});
 
   std::string output_name =
-      g.template AddNode<fetch::ml::ops::Subtract<ArrayType>>(name + "_Op3", {op2_name, op1_name});
+      g.template AddNode<fetch::ml::ops::Subtract<TensorType>>(name + "_Op3", {op2_name, op1_name});
 
   g.SetInput(input_name1, data1);
   g.SetInput(input_name2, data2);

@@ -16,12 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/base_types.hpp"
+
+#include "core/serializers/main_serializer_definition.hpp"
+#include "gtest/gtest.h"
 #include "math/tensor.hpp"
 #include "ml/ops/sqrt.hpp"
+#include "ml/serializers/ml_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
-
-#include "gtest/gtest.h"
-
 #include <cmath>
 #include <cstdint>
 #include <vector>
@@ -57,16 +59,16 @@ TYPED_TEST_CASE(SqrtBothTest, BothTypes);
 
 TYPED_TEST(SqrtBothTest, forward_all_positive_test)
 {
-  using ArrayType = TypeParam;
-  using DataType  = typename ArrayType::Type;
+  using TensorType = TypeParam;
+  using DataType   = typename TensorType::Type;
 
-  ArrayType data = ArrayType::FromString("0, 1, 2, 4, 10, 100");
-  ArrayType gt   = ArrayType::FromString("0, 1, 1.41421356, 2, 3.1622776, 10");
+  TensorType data = TensorType::FromString("0, 1, 2, 4, 10, 100");
+  TensorType gt   = TensorType::FromString("0, 1, 1.41421356, 2, 3.1622776, 10");
 
   fetch::ml::ops::Sqrt<TypeParam> op;
 
-  TypeParam prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
-  op.Forward({std::make_shared<const ArrayType>(data)}, prediction);
+  TypeParam prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>(),
                                   fetch::math::function_tolerance<DataType>()));
@@ -74,17 +76,18 @@ TYPED_TEST(SqrtBothTest, forward_all_positive_test)
 
 TYPED_TEST(SqrtBothTest, backward_all_positive_test)
 {
-  using ArrayType = TypeParam;
-  using DataType  = typename ArrayType::Type;
+  using TensorType = TypeParam;
+  using DataType   = typename TensorType::Type;
 
-  ArrayType data  = ArrayType::FromString("1,   2,         4,   10,       100");
-  ArrayType error = ArrayType::FromString("1,   1,         1,    2,         0");
+  TensorType data  = TensorType::FromString("1,   2,         4,   10,       100");
+  TensorType error = TensorType::FromString("1,   1,         1,    2,         0");
   // 0.5 / sqrt(data) * error = gt
-  ArrayType gt = ArrayType::FromString("0.5, 0.3535533, 0.25, 0.3162277, 0");
+  TensorType gt = TensorType::FromString("0.5, 0.3535533, 0.25, 0.3162277, 0");
 
   fetch::ml::ops::Sqrt<TypeParam> op;
 
-  std::vector<ArrayType> prediction = op.Backward({std::make_shared<const ArrayType>(data)}, error);
+  std::vector<TensorType> prediction =
+      op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   ASSERT_TRUE(prediction.at(0).AllClose(gt, fetch::math::function_tolerance<DataType>(),
                                         fetch::math::function_tolerance<DataType>()));
@@ -93,14 +96,14 @@ TYPED_TEST(SqrtBothTest, backward_all_positive_test)
 // TODO(1195): fixed point and floating point tests should be unified.
 TYPED_TEST(SqrtFloatTest, forward_all_negative_test)
 {
-  using ArrayType = TypeParam;
+  using TensorType = TypeParam;
 
-  ArrayType data = ArrayType::FromString("-1, -2, -4, -10, -100");
+  TensorType data = TensorType::FromString("-1, -2, -4, -10, -100");
 
   fetch::ml::ops::Sqrt<TypeParam> op;
 
-  TypeParam pred(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
-  op.Forward({std::make_shared<const ArrayType>(data)}, pred);
+  TypeParam pred(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  op.Forward({std::make_shared<const TensorType>(data)}, pred);
 
   // gives NaN because sqrt of a negative number is undefined
   for (auto p_it : pred)
@@ -111,32 +114,32 @@ TYPED_TEST(SqrtFloatTest, forward_all_negative_test)
 
 TYPED_TEST(SqrtFixedTest, forward_all_negative_test)
 {
-  using ArrayType = TypeParam;
+  using TensorType = TypeParam;
 
-  ArrayType data = ArrayType::FromString("-1, -2, -4, -10, -100");
+  TensorType data = TensorType::FromString("-1, -2, -4, -10, -100");
 
   fetch::ml::ops::Sqrt<TypeParam> op;
 
-  TypeParam pred(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
-  op.Forward({std::make_shared<const ArrayType>(data)}, pred);
+  TypeParam pred(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  op.Forward({std::make_shared<const TensorType>(data)}, pred);
 
   // gives NaN because sqrt of a negative number is undefined
   for (auto p_it : pred)
   {
-    EXPECT_TRUE(ArrayType::Type::IsNaN(p_it));
+    EXPECT_TRUE(TensorType::Type::IsNaN(p_it));
   }
 }
 
 TYPED_TEST(SqrtFloatTest, backward_all_negative_test)
 {
-  using ArrayType = TypeParam;
+  using TensorType = TypeParam;
 
-  ArrayType data  = ArrayType::FromString("-1, -2, -4, -10, -100");
-  ArrayType error = ArrayType::FromString("1,   1,  1,   2,    0");
+  TensorType data  = TensorType::FromString("-1, -2, -4, -10, -100");
+  TensorType error = TensorType::FromString("1,   1,  1,   2,    0");
 
   fetch::ml::ops::Sqrt<TypeParam> op;
 
-  std::vector<ArrayType> pred = op.Backward({std::make_shared<const ArrayType>(data)}, error);
+  std::vector<TensorType> pred = op.Backward({std::make_shared<const TensorType>(data)}, error);
   // gives NaN because sqrt of a negative number is undefined
   for (auto p_it : pred.at(0))
   {
@@ -146,31 +149,31 @@ TYPED_TEST(SqrtFloatTest, backward_all_negative_test)
 
 TYPED_TEST(SqrtFixedTest, backward_all_negative_test)
 {
-  using ArrayType = TypeParam;
+  using TensorType = TypeParam;
 
-  ArrayType data  = ArrayType::FromString("-1, -2, -4, -10, -100");
-  ArrayType error = ArrayType::FromString("1,   1,  1,   2,    0");
+  TensorType data  = TensorType::FromString("-1, -2, -4, -10, -100");
+  TensorType error = TensorType::FromString("1,   1,  1,   2,    0");
 
   fetch::ml::ops::Sqrt<TypeParam> op;
 
-  std::vector<ArrayType> pred = op.Backward({std::make_shared<const ArrayType>(data)}, error);
+  std::vector<TensorType> pred = op.Backward({std::make_shared<const TensorType>(data)}, error);
   // gives NaN because sqrt of a negative number is undefined
   for (auto p_it : pred.at(0))
   {
-    EXPECT_TRUE(ArrayType::Type::IsNaN(p_it));
+    EXPECT_TRUE(TensorType::Type::IsNaN(p_it));
   }
 }
 
 TYPED_TEST(SqrtFloatTest, backward_zero_test)
 {
-  using ArrayType = TypeParam;
+  using TensorType = TypeParam;
 
-  ArrayType data  = ArrayType::FromString("0,  0,    0,    0,       -0");
-  ArrayType error = ArrayType::FromString("1,100,   -1,    2,        1");
+  TensorType data  = TensorType::FromString("0,  0,    0,    0,       -0");
+  TensorType error = TensorType::FromString("1,100,   -1,    2,        1");
 
   fetch::ml::ops::Sqrt<TypeParam> op;
 
-  std::vector<ArrayType> pred = op.Backward({std::make_shared<const ArrayType>(data)}, error);
+  std::vector<TensorType> pred = op.Backward({std::make_shared<const TensorType>(data)}, error);
   // gives NaN because of division by zero
   for (auto p_it : pred.at(0))
   {
@@ -180,17 +183,108 @@ TYPED_TEST(SqrtFloatTest, backward_zero_test)
 
 TYPED_TEST(SqrtFixedTest, backward_zero_test)
 {
-  using ArrayType = TypeParam;
+  using TensorType = TypeParam;
 
-  ArrayType data  = ArrayType::FromString("0,  0,    0,    0,        0");
-  ArrayType error = ArrayType::FromString("1,  1,    1,    2,        0");
+  TensorType data  = TensorType::FromString("0,  0,    0,    0,        0");
+  TensorType error = TensorType::FromString("1,  1,    1,    2,        0");
 
   fetch::ml::ops::Sqrt<TypeParam> op;
 
-  std::vector<ArrayType> pred = op.Backward({std::make_shared<const ArrayType>(data)}, error);
+  std::vector<TensorType> pred = op.Backward({std::make_shared<const TensorType>(data)}, error);
   // gives NaN because of division by zero
   for (auto p_it : pred.at(0))
   {
-    EXPECT_TRUE(ArrayType::Type::IsNaN(p_it));
+    EXPECT_TRUE(TensorType::Type::IsNaN(p_it));
   }
+}
+
+TYPED_TEST(SqrtBothTest, saveparams_test)
+{
+  using TensorType    = TypeParam;
+  using DataType      = typename TypeParam::Type;
+  using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
+  using SPType        = typename fetch::ml::ops::Sqrt<TensorType>::SPType;
+  using OpType        = typename fetch::ml::ops::Sqrt<TensorType>;
+
+  TensorType data = TensorType::FromString("0, 1, 2, 4, 10, 100");
+  TensorType gt   = TensorType::FromString("0, 1, 1.41421356, 2, 3.1622776, 10");
+
+  OpType op;
+
+  TensorType    prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  VecTensorType vec_data({std::make_shared<const TensorType>(data)});
+
+  op.Forward(vec_data, prediction);
+
+  // extract saveparams
+  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
+
+  // downcast to correct type
+  auto dsp = std::static_pointer_cast<SPType>(sp);
+
+  // serialize
+  fetch::serializers::MsgPackSerializer b;
+  b << *dsp;
+
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<SPType>();
+  b >> *dsp2;
+
+  // rebuild node
+  OpType new_op(*dsp2);
+
+  // check that new predictions match the old
+  TensorType new_prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  new_op.Forward(vec_data, new_prediction);
+
+  // test correct values
+  EXPECT_TRUE(
+      new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
+}
+
+TYPED_TEST(SqrtBothTest, saveparams_backward_all_positive_test)
+{
+  using TensorType = TypeParam;
+  using OpType     = typename fetch::ml::ops::Sqrt<TensorType>;
+  using SPType     = typename OpType::SPType;
+
+  TensorType data  = TensorType::FromString("1,   2,         4,   10,       100");
+  TensorType error = TensorType::FromString("1,   1,         1,    2,         0");
+
+  fetch::ml::ops::Sqrt<TypeParam> op;
+
+  // run op once to make sure caches etc. have been filled. Otherwise the test might be trivial!
+  std::vector<TensorType> prediction =
+      op.Backward({std::make_shared<const TensorType>(data)}, error);
+
+  // extract saveparams
+  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
+
+  // downcast to correct type
+  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
+
+  // serialize
+  fetch::serializers::MsgPackSerializer b;
+  b << *dsp;
+
+  // make another prediction with the original op
+  prediction = op.Backward({std::make_shared<const TensorType>(data)}, error);
+
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<SPType>();
+  b >> *dsp2;
+
+  // rebuild node
+  OpType new_op(*dsp2);
+
+  // check that new predictions match the old
+  std::vector<TensorType> new_prediction =
+      new_op.Backward({std::make_shared<const TensorType>(data)}, error);
+
+  // test correct values
+  EXPECT_TRUE(prediction.at(0).AllClose(
+      new_prediction.at(0), fetch::math::function_tolerance<typename TypeParam::Type>(),
+      fetch::math::function_tolerance<typename TypeParam::Type>()));
 }
