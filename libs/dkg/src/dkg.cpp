@@ -39,8 +39,8 @@ DistributedKeyGeneration::DistributedKeyGeneration(
   : address_{std::move(address)}
   , broadcast_function_{std::move(broadcast_function)}
   , rpc_function_{std::move(rpc_function)}
-  , dkg_state_gauge_{telemetry::Registry::Instance().CreateGauge<uint8_t>("dkg_state_gauge",
-                                                                          "State the DKG is in")}
+  , dkg_state_gauge_{telemetry::Registry::Instance().CreateGauge<uint8_t>(
+        "ledger_dkg_state_gauge", "State the DKG is in as integer in [0, 7]")}
 {
   static std::once_flag flag;
 
