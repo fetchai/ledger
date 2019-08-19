@@ -632,5 +632,10 @@ void StorageUnitClient::Reset()
   permanent_state_merkle_stack_.New(MERKLE_FILENAME_DOC, MERKLE_FILENAME_INDEX);
 }
 
+uint32_t StorageUnitClient::num_lanes() const
+{
+  return 1u << log2_num_lanes_;
+}
+
 }  // namespace ledger
 }  // namespace fetch

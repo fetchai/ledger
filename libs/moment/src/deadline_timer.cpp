@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,27 +16,28 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/generator.hpp"
+#include "moment/clocks.hpp"
+#include "moment/deadline_timer.hpp"
+
+#include <chrono>
+#include <cstdint>
 
 namespace fetch {
-namespace vm {
+namespace moment {
 
-enum class FunctionDecoratorKind
+DeadlineTimer::DeadlineTimer(char const *clock)
+  : clock_{GetClock(clock, ClockType::STEADY)}
+{}
+
+void DeadlineTimer::Restart(uint64_t period_ms)
 {
-  NORMAL,   ///< Normal (undecorated) function
-  ACTION,   ///< A Transaction handler
-  QUERY,    ///< A Query handler
-  ON_INIT,  ///< A function to be called on smart contract construction
-  INVALID,  ///< The function has an invalid decorator
-};
+  Restart(std::chrono::milliseconds{period_ms});
+}
 
-/**
- * Determine the type of the VM function
- *
- * @param fn The reference to function entry
- * @return The type of the function
- */
-FunctionDecoratorKind DetermineKind(vm::Executable::Function const &fn);
+bool DeadlineTimer::HasExpired() const
+{
+  return deadline_ <= clock_->Now();
+}
 
-}  // namespace vm
+}  // namespace moment
 }  // namespace fetch
