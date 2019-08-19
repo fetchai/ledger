@@ -75,6 +75,9 @@ int main(int argc, char **argv)
   // Get clean VM instance
   auto vm = std::make_unique<vm::VM>(module.get());
 
+  // attach std::cout for printing
+  vm->AttachOutputDevice(fetch::vm::VM::STDOUT, std::cout);
+
   // Execute our fn
   if (!vm->Execute(executable, "main", error, output))
   {
