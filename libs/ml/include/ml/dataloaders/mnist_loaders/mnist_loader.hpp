@@ -141,7 +141,7 @@ public:
     }
   }
 
-  virtual inline bool IsValidable() const
+  inline bool IsValidable() const override
   {
     return validation_size_ > 0;
   }
