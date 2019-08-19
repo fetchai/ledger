@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,27 +16,32 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/generator.hpp"
+#include "core/byte_array/byte_array.hpp"
+#include "core/byte_array/const_byte_array.hpp"
+#include "core/serializers/main_serializer.hpp"
+#include "crypto/hash.hpp"
+#include "crypto/sha256.hpp"
+#include "ledger/dag/dag_epoch.hpp"
+
+#include <set>
 
 namespace fetch {
-namespace vm {
+namespace ledger {
 
-enum class FunctionDecoratorKind
+bool DAGEpoch::Contains(ConstByteArray const &digest) const
 {
-  NORMAL,   ///< Normal (undecorated) function
-  ACTION,   ///< A Transaction handler
-  QUERY,    ///< A Query handler
-  ON_INIT,  ///< A function to be called on smart contract construction
-  INVALID,  ///< The function has an invalid decorator
-};
+  return all_nodes.find(digest) != all_nodes.end();
+}
 
-/**
- * Determine the type of the VM function
- *
- * @param fn The reference to function entry
- * @return The type of the function
- */
-FunctionDecoratorKind DetermineKind(vm::Executable::Function const &fn);
+void DAGEpoch::Finalise()
+{
+  // strictly speaking this is a bit of a weird hash because it will also contain all the weird
+  // serialisation metadata
+  serializers::MsgPackSerializer buf;
+  buf << *this;
 
-}  // namespace vm
+  this->hash = crypto::Hash<crypto::SHA256>(buf.data());
+}
+
+}  // namespace ledger
 }  // namespace fetch

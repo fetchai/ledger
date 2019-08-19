@@ -86,8 +86,7 @@ macro (setup_compiler)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
   endif (FETCH_WARNINGS_AS_ERRORS)
 
-  # prefer PIC
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+  set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
   if (FETCH_ENABLE_COVERAGE)
     if (_is_clang_compiler)
@@ -172,6 +171,39 @@ macro (setup_compiler)
   endif ()
 
 endmacro (setup_compiler)
+
+function (conditionally_enable_lto)
+  if (FETCH_ENABLE_LTO)
+
+    include(CheckIPOSupported)
+    check_ipo_supported(RESULT
+                        result
+                        OUTPUT
+                        output)
+
+    if (result)
+
+      fetch_info("[LTO] Link-time optimisation is supported")
+
+      if (CMAKE_BUILD_TYPE STREQUAL Debug)
+        fetch_info("[LTO] Debug build: link-time optimisation disabled")
+        set(CMAKE_INTERPROCEDURAL_OPTIMIZATION FALSE)
+      else ()
+        fetch_info("[LTO] Link-time optimisation enabled")
+        set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+      endif ()
+
+    else ()
+
+      message(
+        FATAL_ERROR
+          "[LTO] CMake does not support link-time optimisation for this compiler. To proceed, explicitly disable the FETCH_ENABLE_LTO option"
+        )
+
+    endif ()
+
+  endif ()
+endfunction ()
 
 function (configure_vendor_targets)
 

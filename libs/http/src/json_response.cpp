@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,27 +16,30 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/generator.hpp"
+#include "http/json_response.hpp"
+#include "http/mime_types.hpp"
+#include "http/response.hpp"
+#include "http/status.hpp"
+#include "variant/variant.hpp"
+
+#include <sstream>
 
 namespace fetch {
-namespace vm {
+namespace http {
 
-enum class FunctionDecoratorKind
+http::HTTPResponse CreateJsonResponse(byte_array::ConstByteArray const &body, Status status)
 {
-  NORMAL,   ///< Normal (undecorated) function
-  ACTION,   ///< A Transaction handler
-  QUERY,    ///< A Query handler
-  ON_INIT,  ///< A function to be called on smart contract construction
-  INVALID,  ///< The function has an invalid decorator
-};
+  static auto const jsonMimeType = mime_types::GetMimeTypeFromExtension(".json");
+  return http::HTTPResponse(body, jsonMimeType, status);
+}
 
-/**
- * Determine the type of the VM function
- *
- * @param fn The reference to function entry
- * @return The type of the function
- */
-FunctionDecoratorKind DetermineKind(vm::Executable::Function const &fn);
+http::HTTPResponse CreateJsonResponse(variant::Variant const &doc, Status status)
+{
+  static auto const jsonMimeType = mime_types::GetMimeTypeFromExtension(".json");
+  std::stringstream body;
+  body << doc;
+  return http::HTTPResponse(body.str(), jsonMimeType, status);
+}
 
-}  // namespace vm
+}  // namespace http
 }  // namespace fetch
