@@ -20,9 +20,12 @@
 
 #include <cassert>
 #include <ostream>
+#include <string>
+#include <utility>
 
 namespace fetch {
 namespace telemetry {
+
 namespace {
 
 struct LabelRefs
@@ -121,6 +124,27 @@ OutputStream &Measurement::WriteValuePrefix(OutputStream &stream, std::string co
 {
   stream << name() << '_' << suffix << LabelRefs{labels_, extra};
   return stream;
+}
+
+Measurement::Measurement(std::string name, std::string description, Labels labels)
+  : name_{std::move(name)}
+  , description_{std::move(description)}
+  , labels_{std::move(labels)}
+{}
+
+std::string const &Measurement::name() const
+{
+  return name_;
+}
+
+std::string const &Measurement::description() const
+{
+  return description_;
+}
+
+Measurement::Labels const &Measurement::labels() const
+{
+  return labels_;
 }
 
 }  // namespace telemetry
