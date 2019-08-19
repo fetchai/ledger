@@ -113,20 +113,6 @@ public:
         "methods");
   }
 
-  void Display(InputType const &data) const
-  {
-    for (SizeType i{0}; i < FIGURE_WIDTH; ++i)
-    {
-      for (SizeType j{0}; j < FIGURE_HEIGHT; ++j)
-      {
-
-        std::cout << (data.At(j, i, 0) > typename InputType::Type(0.5) ? char(219) : ' ');
-      }
-      std::cout << "\n";
-    }
-    std::cout << std::endl;
-  }
-
   ReturnType PrepareBatch(SizeType subset_size, bool &is_done_set) override
   {
     InputType ret_labels({LABEL_SIZE, subset_size});
@@ -265,7 +251,7 @@ private:
   {
     SizeType i{0};
 
-    for (auto val : buffer_.second.at(0))
+    for (auto & val : buffer_.second.at(0))
     {
       val = static_cast<DataType>(data_[index][i]) / DataType{256};
       i++;
