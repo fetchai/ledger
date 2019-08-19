@@ -19,10 +19,10 @@
 #include "core/logging.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
-#include "dkg/rbc.hpp"
+#include "network/muddle/rbc.hpp"
 
 namespace fetch {
-namespace dkg {
+namespace network {
 
 constexpr char const *LOGGING_NAME = "RBC";
 /**
@@ -39,7 +39,7 @@ RBC::RBC(Endpoint &endpoint, MuddleAddress address, CallbackFunction call_back, 
   , address_{std::move(address)}
   , endpoint_{endpoint}
   , deliver_msg_callback_{std::move(call_back)}
-  , rbc_subscription_(endpoint.Subscribe(SERVICE_DKG, channel_))
+  , rbc_subscription_(endpoint.Subscribe(SERVICE_RBC, channel_))
 {
 
   // Set subscription for rbc
@@ -56,12 +56,22 @@ RBC::RBC(Endpoint &endpoint, MuddleAddress address, CallbackFunction call_back, 
     }
     catch (...)
     {
-      // Deserialization failed - bad payload.
+      FETCH_LOG_ERROR(LOGGING_NAME, "Node ", id_,
+                      " caught an exception while deserializing RBC message. ");
+
       return;
     }
 
     // Dispatch the event
-    OnRBC(from, msg);
+    try
+    {
+      OnRBC(from, msg);
+    }
+    catch (...)
+    {
+      FETCH_LOG_CRITICAL(LOGGING_NAME, "Node ", id_,
+                         ": critical failure in RBC, possibly due to malformed message.");
+    }
   });
 }
 
@@ -121,16 +131,17 @@ bool RBC::ResetCabinet(CabinetMembers const &cabinet)
  *
  * @param msg Serialised message to be broadcast
  */
-void RBC::SendRBroadcast(SerialisedMessage const &msg)
+void RBC::Broadcast(SerialisedMessage const &msg)
 {
-  RBroadcast broadcast_msg;
+  MessageBroadcast broadcast_msg;
 
   {  // Creating broadcast message and broadcasting
     assert(!lock_.owns_lock());
     FETCH_LOCK(lock_);
 
-    broadcast_msg = RBroadcast(channel_, id_, ++msg_counter_, msg);
-    Broadcast(broadcast_msg);
+    broadcast_msg = RBCMessage::New<RBroadcast>(channel_, static_cast<IdType>(id_),
+                                                static_cast<CounterType>(++msg_counter_), msg);
+    InternalBroadcast(*broadcast_msg);
   }
 
   // Sending message to self
@@ -152,7 +163,7 @@ void RBC::Send(RBCMessage const &msg, MuddleAddress const &address)
   msg_serializer.Reserve(msg_counter.size());
   msg_serializer << msg;
 
-  endpoint_.Send(address, SERVICE_DKG, channel_, msg_serializer.data());
+  endpoint_.Send(address, SERVICE_RBC, channel_, msg_serializer.data());
 }
 
 /**
@@ -160,7 +171,7 @@ void RBC::Send(RBCMessage const &msg, MuddleAddress const &address)
  *
  * @param env RBCEnvelope message to be serialised and broadcast
  */
-void RBC::Broadcast(RBCMessage const &msg)
+void RBC::InternalBroadcast(RBCMessage const &msg)
 {
   // Serialise the RBCEnvelope
   RBCSerializerCounter msg_counter;
@@ -176,7 +187,7 @@ void RBC::Broadcast(RBCMessage const &msg)
   {
     if (address != address_)
     {
-      endpoint_.Send(address, SERVICE_DKG, channel_, msg_serializer.data());
+      endpoint_.Send(address, SERVICE_RBC, channel_, msg_serializer.data());
     }
   }
 }
@@ -187,11 +198,11 @@ void RBC::Broadcast(RBCMessage const &msg)
  * @param msg Reference to REcho message
  * @return Bool for whether we have reached the message count for REcho messages
  */
-bool RBC::ReceivedEcho(TagType tag, RBCMessage const &msg)
+bool RBC::ReceivedEcho(TagType tag, MessageEcho const &msg)
 {
   assert(lock_.owns_lock());
 
-  auto &msg_count = broadcasts_[tag].msgs_count[msg.hash()];
+  auto &msg_count = broadcasts_[tag].msgs_count[msg->hash()];
   msg_count.echo_count++;
   return (msg_count.echo_count == current_cabinet_.size() - threshold_ &&
           msg_count.ready_count <= threshold_);
@@ -203,11 +214,11 @@ bool RBC::ReceivedEcho(TagType tag, RBCMessage const &msg)
  * @param msg Reference to RReady message
  * @return MessageCount for tag in broadcasts_
  */
-struct RBC::MessageCount RBC::ReceivedReady(TagType tag, RHash const &msg)
+struct RBC::MessageCount RBC::ReceivedReady(TagType tag, MessageHash const &msg)
 {
   assert(lock_.owns_lock());
 
-  auto &msg_count = broadcasts_[tag].msgs_count[msg.hash()];
+  auto &msg_count = broadcasts_[tag].msgs_count[msg->hash()];
   msg_count.ready_count++;
   MessageCount res = msg_count;
   return res;
@@ -223,6 +234,7 @@ struct RBC::MessageCount RBC::ReceivedReady(TagType tag, RHash const &msg)
 void RBC::OnRBC(MuddleAddress const &from, RBCMessage const &message)
 {
   assert(!lock_.owns_lock());
+
   uint32_t sender_index;
 
   {
@@ -237,34 +249,34 @@ void RBC::OnRBC(MuddleAddress const &from, RBCMessage const &message)
 
   switch (message.type())
   {
-  case RBCMessage::MessageType::R_BROADCAST:
+  case RBCMessageType::R_BROADCAST:
   {
     FETCH_LOG_TRACE(LOGGING_NAME, "Node: ", id_, " received RBroadcast from node ", sender_index);
-    OnRBroadcast(message, sender_index);
+    OnRBroadcast(RBCMessage::New<RBroadcast>(message), sender_index);
     break;
   }
-  case RBCMessage::MessageType::R_ECHO:
+  case RBCMessageType::R_ECHO:
   {
     FETCH_LOG_TRACE(LOGGING_NAME, "Node: ", id_, " received REcho from node ", sender_index);
-    OnREcho(message, sender_index);
+    OnREcho(RBCMessage::New<REcho>(message), sender_index);
     break;
   }
-  case RBCMessage::MessageType::R_READY:
+  case RBCMessageType::R_READY:
   {
     FETCH_LOG_TRACE(LOGGING_NAME, "Node: ", id_, " received RReady from node ", sender_index);
-    OnRReady(message, sender_index);
+    OnRReady(RBCMessage::New<RReady>(message), sender_index);
     break;
   }
-  case RBCMessage::MessageType::R_REQUEST:
+  case RBCMessageType::R_REQUEST:
   {
     FETCH_LOG_TRACE(LOGGING_NAME, "Node: ", id_, " received RRequest from node ", sender_index);
-    OnRRequest(message, sender_index);
+    OnRRequest(RBCMessage::New<RRequest>(message), sender_index);
     break;
   }
-  case RBCMessage::MessageType::R_ANSWER:
+  case RBCMessageType::R_ANSWER:
   {
     FETCH_LOG_TRACE(LOGGING_NAME, "Node: ", id_, " received RAnswer from node ", sender_index);
-    OnRAnswer(message, sender_index);
+    OnRAnswer(RBCMessage::New<RAnswer>(message), sender_index);
     break;
   }
   default:
@@ -279,12 +291,14 @@ void RBC::OnRBC(MuddleAddress const &from, RBCMessage const &message)
  * @param msg Reference to RBroadcast message
  * @param sender_index Index of sender in current_cabinet_
  */
-void RBC::OnRBroadcast(RBCMessage const &msg, uint32_t sender_index)
+void RBC::OnRBroadcast(MessageBroadcast const &msg, uint32_t sender_index)
 {
   assert(!lock_.owns_lock());
   FETCH_LOCK(lock_);
-
-  TagType tag = msg.tag();
+  assert(msg != nullptr);
+  assert(msg->type() == MessageType::R_BROADCAST);
+  assert(msg->is_valid());
+  TagType tag = msg->tag();
 
   if (!SetPartyFlag(sender_index, tag, MessageType::R_BROADCAST))
   {
@@ -302,10 +316,9 @@ void RBC::OnRBroadcast(RBCMessage const &msg, uint32_t sender_index)
     if (SetMbar(tag, msg, sender_index))
     {
 
-      REcho echo_msg{msg.channel(), msg.id(), msg.counter(),
-                     crypto::Hash<HashFunction>(msg.message())};
-
-      Broadcast(echo_msg);
+      MessageEcho echo_msg = RBCMessage::New<REcho>(msg->channel(), msg->id(), msg->counter(),
+                                                    crypto::Hash<HashFunction>(msg->message()));
+      InternalBroadcast(*echo_msg);
       OnREchoLockFree(echo_msg, id_);
     }
   }
@@ -313,7 +326,7 @@ void RBC::OnRBroadcast(RBCMessage const &msg, uint32_t sender_index)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "onRBroadcast: Node ", id_,
                    " received wrong r-send msg from node ", sender_index, " for msg ", tag,
-                   " with id ", msg.id());
+                   " with id ", msg->id());
   }
 }
 
@@ -324,19 +337,22 @@ void RBC::OnRBroadcast(RBCMessage const &msg, uint32_t sender_index)
  * @param msg Reference to REcho message
  * @param sender_index Index of sender in current_cabinet_
  */
-void RBC::OnREcho(RBCMessage const &msg, uint32_t sender_index)
+void RBC::OnREcho(MessageEcho const &msg, uint32_t sender_index)
 {
   assert(!lock_.owns_lock());
   FETCH_LOCK(lock_);
+  assert(msg != nullptr);
+  assert(msg->is_valid());
 
   OnREchoLockFree(msg, sender_index);
 }
 
-void RBC::OnREchoLockFree(RBCMessage const &msg, uint32_t sender_index)
+void RBC::OnREchoLockFree(MessageEcho const &msg, uint32_t sender_index)
 {
   assert(lock_.owns_lock());
-
-  TagType tag = msg.tag();
+  assert(msg != nullptr);
+  assert(msg->is_valid());
+  TagType tag = msg->tag();
   if (!SetPartyFlag(sender_index, tag, MessageType::R_ECHO))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "onREcho: Node ", id_, " received repeated msg ", tag,
@@ -350,9 +366,10 @@ void RBC::OnREchoLockFree(RBCMessage const &msg, uint32_t sender_index)
                   msg.id());
   if (ReceivedEcho(tag, msg))
   {
-    RReady ready_msg{msg.channel(), msg.id(), msg.counter(), msg.hash()};
+    MessageReady ready_msg =
+        RBCMessage::New<RReady>(msg->channel(), msg->id(), msg->counter(), msg->hash());
 
-    Broadcast(ready_msg);
+    InternalBroadcast(*ready_msg);
     OnRReadyLockFree(ready_msg, id_);
   }
 }
@@ -365,7 +382,7 @@ void RBC::OnREchoLockFree(RBCMessage const &msg, uint32_t sender_index)
  * @param msg Reference to RReady message
  * @param sender_index Index of sender in current_cabinet_
  */
-void RBC::OnRReady(RBCMessage const &msg, uint32_t sender_index)
+void RBC::OnRReady(MessageReady const &msg, uint32_t sender_index)
 {
   assert(!lock_.owns_lock());
   FETCH_LOCK(lock_);
@@ -373,11 +390,13 @@ void RBC::OnRReady(RBCMessage const &msg, uint32_t sender_index)
   OnRReadyLockFree(msg, sender_index);
 }
 
-void RBC::OnRReadyLockFree(RBCMessage const &msg, uint32_t sender_index)
+void RBC::OnRReadyLockFree(MessageReady const &msg, uint32_t sender_index)
 {
   assert(lock_.owns_lock());
+  assert(msg != nullptr);
+  assert(msg->is_valid());
 
-  TagType tag = msg.tag();
+  TagType tag = msg->tag();
 
   if (!SetPartyFlag(sender_index, tag, MessageType::R_READY))
   {
@@ -395,16 +414,18 @@ void RBC::OnRReadyLockFree(RBCMessage const &msg, uint32_t sender_index)
   if (threshold_ > 0 && msgs_counter.ready_count == threshold_ + 1 &&
       msgs_counter.echo_count < (current_cabinet_.size() - threshold_))
   {
-    RReady ready_msg{msg.channel(), msg.id(), msg.counter(), msg.hash()};
+    MessageReady ready_msg =
+        RBCMessage::New<RReady>(msg->channel(), msg->id(), msg->counter(), msg->hash());
 
-    Broadcast(ready_msg);
+    InternalBroadcast(*ready_msg);
     OnRReadyLockFree(ready_msg, id_);
   }
   else if (msgs_counter.ready_count == 2 * threshold_ + 1)
   {
     if (!SetDbar(tag, msg))
     {
-      RRequest send_msg{msg.channel(), msg.id(), msg.counter()};
+      MessageRequest send_msg =
+          RBCMessage::New<RRequest>(msg->channel(), msg->id(), msg->counter());
 
       uint32_t counter{0};
       auto     im = current_cabinet_.begin();
@@ -414,13 +435,13 @@ void RBC::OnRReadyLockFree(RBCMessage const &msg, uint32_t sender_index)
       {
         if (*im != address_)
         {
-          Send(send_msg, *im);
+          Send(*send_msg, *im);
           ++counter;
         }
         ++im;
       }
     }
-    else if (msg.id() != id_ && CheckTag(msg))
+    else if (msg->id() != id_ && CheckTag(*msg))
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, " delivered msg ", tag, " with counter ",
                      std::to_string(msg.counter()), " and id ", msg.id());
@@ -428,7 +449,7 @@ void RBC::OnRReadyLockFree(RBCMessage const &msg, uint32_t sender_index)
       Deliver(broadcasts_[tag].original_message, msg.id());
     }
   }
-}  // namespace dkg
+}
 
 /**
  * Handler for RRequest message. If valid and we have the requested message then send a RAnswer
@@ -437,12 +458,14 @@ void RBC::OnRReadyLockFree(RBCMessage const &msg, uint32_t sender_index)
  * @param msg Reference to RRequest message
  * @param sender_index Index of sender in current_cabinet_
  */
-void RBC::OnRRequest(RBCMessage const &msg, uint32_t sender_index)
+void RBC::OnRRequest(MessageRequest const &msg, uint32_t sender_index)
 {
   assert(!lock_.owns_lock());
   FETCH_LOCK(lock_);
+  assert(msg != nullptr);
+  assert(msg->is_valid());
 
-  TagType tag = msg.tag();
+  TagType tag = msg->tag();
   if (!SetPartyFlag(sender_index, tag, MessageType::R_REQUEST))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "onRRequest: Node ", id_, " received repeated msg ", tag,
@@ -451,13 +474,14 @@ void RBC::OnRRequest(RBCMessage const &msg, uint32_t sender_index)
     return;
   }
   FETCH_LOG_TRACE(LOGGING_NAME, "onRRequest: Node ", id_, " received msg ", tag, " from node ",
-                  sender_index, " with counter ", msg.counter(), " and id ", msg.id());
+                  sender_index, " with counter ", msg->counter(), " and id ", msg->id());
   if (!broadcasts_[tag].original_message.empty())
   {
-    RAnswer nmsg{msg.channel(), msg.id(), msg.counter(), broadcasts_[tag].original_message};
+    MessageAnswer nmsg = RBCMessage::New<RAnswer>(msg->channel(), msg->id(), msg->counter(),
+                                                  broadcasts_[tag].original_message);
 
     auto im = std::next(current_cabinet_.begin(), sender_index);
-    Send(nmsg, *im);
+    Send(*nmsg, *im);
   }
 }
 
@@ -467,12 +491,14 @@ void RBC::OnRRequest(RBCMessage const &msg, uint32_t sender_index)
  * @param msg Reference to RAnswer message
  * @param sender_index Index of sender in current_cabinet_
  */
-void RBC::OnRAnswer(RBCMessage const &msg, uint32_t sender_index)
+void RBC::OnRAnswer(MessageAnswer const &msg, uint32_t sender_index)
 {
   assert(!lock_.owns_lock());
   FETCH_LOCK(lock_);
+  assert(msg != nullptr);
+  assert(msg->is_valid());
 
-  TagType tag = msg.tag();
+  TagType tag = msg->tag();
   if (!SetPartyFlag(sender_index, tag, MessageType::R_ANSWER))
   {
     return;
@@ -483,18 +509,18 @@ void RBC::OnRAnswer(RBCMessage const &msg, uint32_t sender_index)
     return;
   }
   // Check the hash of the message
-  MessageHash msg_hash{crypto::Hash<HashFunction>(msg.message())};
+  HashDigest msg_hash{crypto::Hash<HashFunction>(msg->message())};
 
   if (msg_hash == broadcasts_[tag].message_hash)
   {
     if (broadcasts_[tag].original_message.empty())
     {
-      broadcasts_[tag].original_message = msg.message();
+      broadcasts_[tag].original_message = msg->message();
     }
     else
     {
       // TODO(jmw): Double check this part of protocol
-      broadcasts_[tag].original_message = msg.message();
+      broadcasts_[tag].original_message = msg->message();
     }
   }
   else
@@ -505,7 +531,7 @@ void RBC::OnRAnswer(RBCMessage const &msg, uint32_t sender_index)
     return;
   }
 
-  if (msg.id() != id_ && CheckTag(msg))
+  if (msg->id() != id_ && CheckTag(*msg))
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, " delivered msg ", tag, " with counter ",
                    std::to_string(msg.counter()), " and id ", msg.id());
@@ -527,7 +553,12 @@ void RBC::Deliver(SerialisedMessage const &msg, uint32_t sender_index)
   assert(parties_.size() == current_cabinet_.size());
 
   MuddleAddress miner_id{*std::next(current_cabinet_.begin(), sender_index)};
+
+  // Unlock and lock here to allow the callback funtion to use the RBC
+  lock_.unlock();
   deliver_msg_callback_(miner_id, msg);
+  lock_.lock();
+
   ++parties_[sender_index].deliver_s;  // Increase counter
 
   // Try to deliver old messages
@@ -544,7 +575,12 @@ void RBC::Deliver(SerialisedMessage const &msg, uint32_t sender_index)
       assert(!broadcasts_[old_tag].original_message.empty());
       FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, " delivered msg ", old_tag, " with counter ",
                      old_tag_msg->first, " and id ", sender_index);
+
+      // Unlock and lock here to allow the callback funtion to use the RBC
+      lock_.unlock();
       deliver_msg_callback_(miner_id, broadcasts_[old_tag].original_message);
+      lock_.lock();
+
       ++parties_[sender_index].deliver_s;  // Increase counter
       old_tag_msg = parties_[sender_index].undelivered_msg.erase(old_tag_msg);
     }
@@ -561,11 +597,6 @@ void RBC::Deliver(SerialisedMessage const &msg, uint32_t sender_index)
 bool RBC::BasicMessageCheck(MuddleAddress const &from, RBCMessage const &msg)
 {
   //assert(lock_.owns_lock());
-
-  if (!msg.is_valid())
-  {
-    return false;
-  }
 
   if ((current_cabinet_.find(from) == current_cabinet_.end()) || (msg.channel() != channel_))
   {
@@ -585,17 +616,19 @@ bool RBC::BasicMessageCheck(MuddleAddress const &from, RBCMessage const &msg)
  * @param sender_index Index of the sender in current_cabinet_
  * @return Bool for whether the value is set
  */
-bool RBC::SetMbar(TagType tag, RMessage const &msg, uint32_t sender_index)
+bool RBC::SetMbar(TagType tag, MessageContents const &msg, uint32_t sender_index)
 {
   assert(lock_.owns_lock());
+  assert(msg != nullptr);
+  assert(msg->is_valid());
 
   if (broadcasts_[tag].original_message.empty())
   {
-    broadcasts_[tag].original_message = msg.message();
+    broadcasts_[tag].original_message = msg->message();
     return true;
   }
 
-  if (broadcasts_[tag].original_message != msg.message())
+  if (broadcasts_[tag].original_message != msg->message())
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Node ", id_, " received bad r-send message from ", sender_index);
   }
@@ -607,21 +640,23 @@ bool RBC::SetMbar(TagType tag, RMessage const &msg, uint32_t sender_index)
  *
  * @param tag Unique tag of a message sent via RBC
  * @param msg Reference of the RHash (RBCMesssage containing a hash_)
- * @return Bool for whether the hash contained in RHash equals the MessageHash of message stored in
+ * @return Bool for whether the hash contained in RHash equals the HashDigest of message stored in
  * original_message for this tag
  */
-bool RBC::SetDbar(TagType tag, RHash const &msg)
+bool RBC::SetDbar(TagType tag, MessageHash const &msg)
 {
   assert(lock_.owns_lock());
-  broadcasts_[tag].message_hash = msg.hash();
+  broadcasts_[tag].message_hash = msg->hash();
+  assert(msg != nullptr);
+  assert(msg->is_valid());
 
-  MessageHash msg_hash;
+  HashDigest msg_hash;
 
   if (!broadcasts_[tag].original_message.empty())
   {
     msg_hash = crypto::Hash<HashFunction>(broadcasts_[tag].original_message);
   }
-  return msg_hash == msg.hash();
+  return msg_hash == msg->hash();
 }
 
 /**
@@ -706,5 +741,5 @@ bool RBC::SetPartyFlag(uint32_t sender_index, TagType tag, MessageType msg_type)
   return true;
 }
 
-}  // namespace dkg
+}  // namespace network
 }  // namespace fetch

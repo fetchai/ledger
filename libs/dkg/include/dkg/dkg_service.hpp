@@ -24,10 +24,10 @@
 #include "core/state_machine.hpp"
 #include "dkg/dkg.hpp"
 #include "dkg/dkg_rpc_protocol.hpp"
-#include "dkg/rbc.hpp"
 #include "dkg/round.hpp"
 #include "ledger/chain/address.hpp"
 #include "ledger/consensus/entropy_generator_interface.hpp"
+#include "network/muddle/rbc.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
 
@@ -250,7 +250,7 @@ private:
   StateMachinePtr      state_machine_;  ///< The service state machine
   std::shared_ptr<muddle::Subscription>
                            shares_subscription;  ///< Subscription for receiving secret shares
-  RBC                      rbc_;                 ///< Runs the RBC protocol
+  network::RBC             rbc_;                 ///< Runs the RBC protocol
   DistributedKeyGeneration dkg_;                 ///< Runs DKG protocol
 
   /// @name State Machine Data
