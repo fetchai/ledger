@@ -26,14 +26,14 @@ namespace math {
 namespace distance {
 
 template <typename ArrayType>
-inline typename ArrayType::Type Jaccard(ArrayType const &a, ArrayType const &b)
+typename ArrayType::Type Jaccard(ArrayType const &a, ArrayType const &b)
 {
   using Type = typename ArrayType::Type;
   return Type(1) - correlation::Jaccard(a, b);
 }
 
 template <typename ArrayType>
-inline typename ArrayType::Type GeneralisedJaccard(ArrayType const &a, ArrayType const &b)
+typename ArrayType::Type GeneralisedJaccard(ArrayType const &a, ArrayType const &b)
 {
   using Type = typename ArrayType::Type;
   return Type(1) - correlation::GeneralisedJaccard(a, b);

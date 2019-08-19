@@ -53,7 +53,7 @@ struct IsPrimitive<
 };
 
 template <typename T, typename R = void>
-using IfIsPrimitive = typename std::enable_if<IsPrimitive<std::decay_t<T>>::value, R>::type;
+using IfIsPrimitive = std::enable_if_t<IsPrimitive<std::decay_t<T>>::value, R>;
 
 template <typename T, typename = void>
 struct IsObject : std::false_type
@@ -74,7 +74,7 @@ struct IsPtr<Ptr<T>> : std::true_type
 };
 
 template <typename T, typename R = void>
-using IfIsPtr = typename std::enable_if<IsPtr<std::decay_t<T>>::value, R>::type;
+using IfIsPtr = std::enable_if_t<IsPtr<std::decay_t<T>>::value, R>;
 
 template <typename T, typename = void>
 struct IsVariant : std::false_type
@@ -109,8 +109,7 @@ struct IsNonconstRef : std::false_type
 {
 };
 template <typename T>
-struct IsNonconstRef<
-    T, typename std::enable_if_t<std::is_same<T, typename std::decay<T>::type &>::value>>
+struct IsNonconstRef<T, typename std::enable_if_t<std::is_same<T, std::decay_t<T> &>::value>>
   : std::true_type
 {
 };
@@ -120,8 +119,7 @@ struct IsConstRef : std::false_type
 {
 };
 template <typename T>
-struct IsConstRef<
-    T, typename std::enable_if_t<std::is_same<T, typename std::decay<T>::type const &>::value>>
+struct IsConstRef<T, typename std::enable_if_t<std::is_same<T, std::decay_t<T> const &>::value>>
   : std::true_type
 {
 };
@@ -140,8 +138,8 @@ struct IsPrimitiveParameter : std::false_type
 };
 template <typename T>
 struct IsPrimitiveParameter<
-    T, typename std::enable_if_t<!IsNonconstRef<T>::value &&
-                                 IsPrimitive<typename std::decay<T>::type>::value>> : std::true_type
+    T, typename std::enable_if_t<!IsNonconstRef<T>::value && IsPrimitive<std::decay_t<T>>::value>>
+  : std::true_type
 {
 };
 
@@ -150,8 +148,8 @@ struct IsPtrParameter : std::false_type
 {
 };
 template <typename T>
-struct IsPtrParameter<T, typename std::enable_if_t<IsConstRef<T>::value &&
-                                                   IsPtr<typename std::decay<T>::type>::value>>
+struct IsPtrParameter<
+    T, typename std::enable_if_t<IsConstRef<T>::value && IsPtr<std::decay_t<T>>::value>>
   : std::true_type
 {
 };
@@ -161,9 +159,8 @@ struct IsVariantParameter : std::false_type
 {
 };
 template <typename T>
-struct IsVariantParameter<T,
-                          typename std::enable_if_t<IsConstRef<T>::value &&
-                                                    IsVariant<typename std::decay<T>::type>::value>>
+struct IsVariantParameter<
+    T, typename std::enable_if_t<IsConstRef<T>::value && IsVariant<std::decay_t<T>>::value>>
   : std::true_type
 {
 };
@@ -436,37 +433,37 @@ private:
 };
 
 template <typename L, typename R>
-inline bool operator==(Ptr<L> const &lhs, Ptr<R> const &rhs)
+bool operator==(Ptr<L> const &lhs, Ptr<R> const &rhs)
 {
   return (lhs.ptr_ == static_cast<L *>(rhs.ptr_));
 }
 
 template <typename L>
-inline bool operator==(Ptr<L> const &lhs, std::nullptr_t /* rhs */)
+bool operator==(Ptr<L> const &lhs, std::nullptr_t /* rhs */)
 {
   return (lhs.ptr_ == nullptr);
 }
 
 template <typename R>
-inline bool operator==(std::nullptr_t /* lhs */, Ptr<R> const &rhs)
+bool operator==(std::nullptr_t /* lhs */, Ptr<R> const &rhs)
 {
   return (nullptr == rhs.ptr_);
 }
 
 template <typename L, typename R>
-inline bool operator!=(Ptr<L> const &lhs, Ptr<R> const &rhs)
+bool operator!=(Ptr<L> const &lhs, Ptr<R> const &rhs)
 {
   return (lhs.ptr_ != static_cast<L *>(rhs.ptr_));
 }
 
 template <typename L>
-inline bool operator!=(Ptr<L> const &lhs, std::nullptr_t /* rhs */)
+bool operator!=(Ptr<L> const &lhs, std::nullptr_t /* rhs */)
 {
   return (lhs.ptr_ != nullptr);
 }
 
 template <typename R>
-inline bool operator!=(std::nullptr_t /* lhs */, Ptr<R> const &rhs)
+bool operator!=(std::nullptr_t /* lhs */, Ptr<R> const &rhs)
 {
   return (nullptr != rhs.ptr_);
 }
@@ -474,7 +471,7 @@ inline bool operator!=(std::nullptr_t /* lhs */, Ptr<R> const &rhs)
 class Unknown;
 
 template <template <typename T, typename... Args> class Functor, typename... Args>
-inline auto TypeIdAsCanonicalType(TypeId const type_id, Args &&... args)
+auto TypeIdAsCanonicalType(TypeId const type_id, Args &&... args)
 {
   switch (type_id)
   {

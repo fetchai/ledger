@@ -51,7 +51,7 @@ private:
 };
 
 template <typename R, typename P>
-inline void DeadlineTimer::Restart(std::chrono::duration<R, P> const &period)
+void DeadlineTimer::Restart(std::chrono::duration<R, P> const &period)
 {
   deadline_ = clock_->Now() + period;
 }

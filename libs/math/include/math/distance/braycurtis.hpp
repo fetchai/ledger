@@ -27,7 +27,7 @@ namespace math {
 namespace distance {
 
 template <typename ArrayType>
-inline typename ArrayType::Type Braycurtis(ArrayType const &a, ArrayType const &b)
+typename ArrayType::Type Braycurtis(ArrayType const &a, ArrayType const &b)
 {
   detailed_assert(a.size() == b.size());
   using DataType = typename ArrayType::Type;

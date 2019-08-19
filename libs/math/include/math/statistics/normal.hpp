@@ -36,7 +36,7 @@ constexpr T pi()
  * Probability density of normal distribution with mu and std.
  */
 template <typename T>
-inline T pdf(T const &m, T const &s, T const &x)
+T pdf(T const &m, T const &s, T const &x)
 {
   return std::exp(-(x - m) * (x - m) / (2. * s * s)) / (s * sqrt(2. * helper::pi<T>()));
 }
@@ -45,7 +45,7 @@ inline T pdf(T const &m, T const &s, T const &x)
  * Cumulative distribution function of normal distribution.
  */
 template <typename T>
-inline T cdf(T const &m, T const &s, T const &x)
+T cdf(T const &m, T const &s, T const &x)
 {
   return 0.5 * std::erfc(-(x - m) / (s * sqrt(2.)));
 }
@@ -55,7 +55,7 @@ inline T cdf(T const &m, T const &s, T const &x)
  * It is a good approximation in [-0.9,0.9].
  */
 template <typename T>
-inline T erf_inv(T const &x)
+T erf_inv(T const &x)
 {
   return (std::sqrt(helper::pi<T>()) / 2.) * x *
          (1 - 4397 * helper::pi<T>() * std::pow(x, 2) / 17352. +
@@ -65,13 +65,13 @@ inline T erf_inv(T const &x)
 }
 
 template <typename T>
-inline T erfc_inv(T const &z)
+T erfc_inv(T const &z)
 {
   return erf_inv(1 - z);
 }
 
 template <typename T>
-inline T quantile(T const &m, T const &s, T const &p)
+T quantile(T const &m, T const &s, T const &p)
 {
   return m - s * std::sqrt(2) * erfc_inv(2 * p);
 }
@@ -85,7 +85,7 @@ template <typename T>
 class Gaussian
 {
 public:
-  Gaussian(){};
+  Gaussian() = default;
   Gaussian(T pi, T tau)
     : pi_(pi)
     , tau_(tau)

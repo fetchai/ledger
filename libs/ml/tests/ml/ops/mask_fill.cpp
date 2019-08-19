@@ -213,7 +213,7 @@ TYPED_TEST(MaskFillTest, saveparams_back_test_broadcast_mask)
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
   using OpType     = typename fetch::ml::ops::MaskFill<TensorType>;
-  using SPType     = typename OpType ::SPType;
+  using SPType     = typename OpType::SPType;
 
   TensorType mask = TensorType::FromString("1, 1, 0");
   mask.Reshape({1, 3, 1});
