@@ -30,7 +30,7 @@ using namespace fetch::ml::dataloaders;
 
 TEST(C2vLoaderTest, loader_test)
 {
-  using TensorType  = typename fetch::math::Tensor<fetch::math::SizeType>;
+  using TensorType  = fetch::math::Tensor<fetch::math::SizeType>;
   using SizeType    = fetch::math::SizeType;
   using LabelType   = TensorType;
   using ContextType = TensorType;
@@ -74,8 +74,7 @@ TEST(C2vLoaderTest, loader_test)
   EXPECT_EQ(loader.umap_idx_to_functionname()[6], "");
   EXPECT_EQ(loader.umap_idx_to_functionname()[7], "");
 
-  typename C2VLoader<LabelType, ContextType>::ContextTensorsLabelPair training_pair =
-      loader.GetNext();
+  C2VLoader<LabelType, ContextType>::ContextTensorsLabelPair training_pair = loader.GetNext();
 
   EXPECT_EQ(training_pair.second.at(0).size(), max_contexts);
   EXPECT_EQ(training_pair.second.at(1).size(), max_contexts);

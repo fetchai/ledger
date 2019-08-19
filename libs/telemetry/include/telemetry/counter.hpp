@@ -56,32 +56,5 @@ private:
   std::atomic<uint64_t> counter_{0};
 };
 
-inline uint64_t Counter::count() const
-{
-  return counter_;
-}
-
-inline void Counter::increment()
-{
-  ++counter_;
-}
-
-inline void Counter::add(uint64_t value)
-{
-  counter_ += value;
-}
-
-inline Counter &Counter::operator++()
-{
-  ++counter_;
-  return *this;
-}
-
-inline Counter &Counter::operator+=(uint64_t value)
-{
-  counter_ += value;
-  return *this;
-}
-
 }  // namespace telemetry
 }  // namespace fetch

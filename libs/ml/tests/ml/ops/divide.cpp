@@ -110,7 +110,7 @@ TYPED_TEST(DivideTest, saveparams_test)
   using DataType      = typename TypeParam::Type;
   using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
   using SPType        = typename fetch::ml::ops::Divide<TensorType>::SPType;
-  using OpType        = typename fetch::ml::ops::Divide<TensorType>;
+  using OpType        = fetch::ml::ops::Divide<TensorType>;
 
   TensorType data_1 = TensorType::FromString(
       "1, -2, 3,-4, 5,-6, 7,-8;"
@@ -164,8 +164,8 @@ TYPED_TEST(DivideTest, saveparams_test)
 TYPED_TEST(DivideTest, saveparams_backward_test)
 {
   using TensorType = TypeParam;
-  using OpType     = typename fetch::ml::ops::Divide<TensorType>;
-  using SPType     = typename OpType ::SPType;
+  using OpType     = fetch::ml::ops::Divide<TensorType>;
+  using SPType     = typename OpType::SPType;
 
   TensorType data_1 = TensorType::FromString(
       "1, -2, 3,-4, 5,-6, 7,-8;"

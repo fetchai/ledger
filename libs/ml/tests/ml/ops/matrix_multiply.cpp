@@ -176,7 +176,7 @@ TYPED_TEST(MatrixMultiplyTest, saveparams_backward_batch_test)
 {
   using TensorType = TypeParam;
   using OpType     = typename fetch::ml::ops::MatrixMultiply<TensorType>;
-  using SPType     = typename OpType ::SPType;
+  using SPType     = typename OpType::SPType;
   TypeParam a1({3, 4, 2});
   TypeParam b1({4, 3, 2});
   TypeParam error({3, 3, 2});

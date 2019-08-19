@@ -284,7 +284,7 @@ private:
 };
 
 template <typename Key, template <typename, typename> class Container = Map>
-inline Ptr<IMap> inner(TypeId value_type_id, VM *vm, TypeId type_id)
+Ptr<IMap> inner(TypeId value_type_id, VM *vm, TypeId type_id)
 {
   return ApplyFunctor<PrimitiveTypes, DefaultObjectCase>(value_type_id, [vm, type_id](auto cs) {
     using Case = typename decltype(cs)::type;

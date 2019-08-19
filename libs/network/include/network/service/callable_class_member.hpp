@@ -105,7 +105,8 @@ struct UnrollArguments
     static void Unroll(serializer_type &result, class_type &cls, member_function_pointer &m,
                        serializer_type &s, used_args &... used)
     {
-      typename std::decay<T>::type l;
+      std::decay_t<T> l;
+
       s >> l;
       UnrollArguments<class_type, member_function_pointer, return_type, used_args..., T>::
           template LoopOver<CountArguments<remaining_args...>::value, remaining_args...>::Unroll(
@@ -122,7 +123,7 @@ struct UnrollArguments
     static void Unroll(serializer_type &result, class_type &cls, member_function_pointer &m,
                        serializer_type &s, used_args &... used)
     {
-      typename std::decay<T>::type l;
+      std::decay_t<T> l;
 
       s >> l;
       Invoke<class_type, member_function_pointer, return_type, used_args..., T>::MemberFunction(
@@ -166,7 +167,7 @@ struct UnrollPointers
                                  " TODO: Make custom " + "exception");
       }
 
-      typename std::decay<T>::type *ptr = (typename std::decay<T>::type *)arg.pointer;
+      std::decay_t<T> *ptr = (std::decay_t<T> *)arg.pointer;
       UnrollPointers<COUNTER - 1, class_type, member_function_pointer, return_type, used_args...,
                      T>::template LoopOver<remaining_args...>::Unroll(result, cls, m,
                                                                       additional_args, s, used...,
