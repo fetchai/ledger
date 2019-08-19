@@ -127,10 +127,5 @@ private:
   /// @}
 };
 
-inline uint32_t StorageUnitClient::num_lanes() const
-{
-  return 1u << log2_num_lanes_;
-}
-
 }  // namespace ledger
 }  // namespace fetch
