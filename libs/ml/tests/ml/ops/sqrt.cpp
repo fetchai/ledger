@@ -247,7 +247,7 @@ TYPED_TEST(SqrtBothTest, saveparams_backward_all_positive_test)
 {
   using TensorType = TypeParam;
   using OpType     = typename fetch::ml::ops::Sqrt<TensorType>;
-  using SPType     = typename OpType ::SPType;
+  using SPType     = typename OpType::SPType;
 
   TensorType data  = TensorType::FromString("1,   2,         4,   10,       100");
   TensorType error = TensorType::FromString("1,   1,         1,    2,         0");

@@ -45,11 +45,11 @@ public:
   using ArrayPtrType       = std::shared_ptr<TensorType>;
   using SizeType           = typename TensorType::SizeType;
   using DataType           = typename TensorType::Type;
-  using NodePtrType        = typename std::shared_ptr<fetch::ml::Node<TensorType>>;
-  using TrainablePtrType   = typename std::shared_ptr<fetch::ml::ops::Trainable<TensorType>>;
-  using GraphPtrType       = typename std::shared_ptr<fetch::ml::Graph<TensorType>>;
-  using PlaceholderType    = typename fetch::ml::ops::PlaceHolder<TensorType>;
-  using PlaceholderPtrType = typename std::shared_ptr<fetch::ml::ops::PlaceHolder<TensorType>>;
+  using NodePtrType        = std::shared_ptr<fetch::ml::Node<TensorType>>;
+  using TrainablePtrType   = std::shared_ptr<fetch::ml::ops::Trainable<TensorType>>;
+  using GraphPtrType       = std::shared_ptr<fetch::ml::Graph<TensorType>>;
+  using PlaceholderType    = fetch::ml::ops::PlaceHolder<TensorType>;
+  using PlaceholderPtrType = std::shared_ptr<fetch::ml::ops::PlaceHolder<TensorType>>;
   using RegPtrType         = std::shared_ptr<fetch::ml::regularisers::Regulariser<T>>;
   using SPType             = GraphSaveableParams<TensorType>;
 

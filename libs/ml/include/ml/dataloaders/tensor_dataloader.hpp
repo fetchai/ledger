@@ -46,12 +46,13 @@ public:
 
   ~TensorDataLoader() override = default;
 
-  ReturnType   GetNext(bool is_validation = false) override;
+  ReturnType   GetNext() override;
   virtual bool AddData(TensorType const &data, TensorType const &labels);
 
-  SizeType Size(bool is_validation = false) const override;
-  bool     IsDone(bool is_validation = false) const override;
-  void     Reset(bool is_validation = false) override;
+  SizeType    Size() const override;
+  bool        IsDone() const override;
+  void        Reset() override;
+  inline bool IsValidable() const override;
 
   template <typename X, typename D>
   friend struct fetch::serializers::MapSerializer;
@@ -83,7 +84,7 @@ TensorDataLoader<LabelType, InputType>::TensorDataLoader(SizeVector const &     
                                                          std::vector<SizeVector> const &data_shapes,
                                                          bool                           random_mode,
                                                          float validation_to_train_ratio)
-  : DataLoader<LabelType, TensorType>(random_mode)
+  : DataLoader<LabelType, TensorType>(random_mode, DataLoaderMode::TRAIN)
   , label_shape_(label_shape)
   , data_shapes_(data_shapes)
   , validation_to_train_ratio_(validation_to_train_ratio)
@@ -100,14 +101,14 @@ TensorDataLoader<LabelType, InputType>::TensorDataLoader(SizeVector const &     
 
 template <typename LabelType, typename InputType>
 typename TensorDataLoader<LabelType, InputType>::ReturnType
-TensorDataLoader<LabelType, InputType>::GetNext(bool is_validation)
+TensorDataLoader<LabelType, InputType>::GetNext()
 {
   if (this->random_mode_)
   {
     throw std::runtime_error("random mode not implemented for tensor dataloader");
   }
 
-  if (is_validation)
+  if (this->mode_ == DataLoaderMode::VALIDATE)
   {
     ReturnType ret(labels_.View(validation_cursor_).Copy(one_sample_label_shape_),
                    {data_.View(validation_cursor_).Copy(one_sample_data_shapes_.at(0))});
@@ -147,9 +148,9 @@ bool TensorDataLoader<LabelType, InputType>::AddData(TensorType const &data,
 
 template <typename LabelType, typename InputType>
 typename TensorDataLoader<LabelType, InputType>::SizeType
-TensorDataLoader<LabelType, InputType>::Size(bool is_validation) const
+TensorDataLoader<LabelType, InputType>::Size() const
 {
-  if (is_validation)
+  if (this->mode_ == DataLoaderMode::VALIDATE)
   {
     return n_validation_samples_;
   }
@@ -160,9 +161,9 @@ TensorDataLoader<LabelType, InputType>::Size(bool is_validation) const
 }
 
 template <typename LabelType, typename InputType>
-bool TensorDataLoader<LabelType, InputType>::IsDone(bool is_validation) const
+bool TensorDataLoader<LabelType, InputType>::IsDone() const
 {
-  if (is_validation)
+  if (this->mode_ == DataLoaderMode::VALIDATE)
   {
     return (train_cursor_ >= n_train_samples_);
   }
@@ -173,9 +174,9 @@ bool TensorDataLoader<LabelType, InputType>::IsDone(bool is_validation) const
 }
 
 template <typename LabelType, typename InputType>
-void TensorDataLoader<LabelType, InputType>::Reset(bool is_validation)
+void TensorDataLoader<LabelType, InputType>::Reset()
 {
-  if (is_validation)
+  if (this->mode_ == DataLoaderMode::VALIDATE)
   {
     validation_cursor_ = 0;
   }
@@ -183,6 +184,12 @@ void TensorDataLoader<LabelType, InputType>::Reset(bool is_validation)
   {
     train_cursor_ = 0;
   }
+}
+
+template <typename LabelType, typename InputType>
+inline bool TensorDataLoader<LabelType, InputType>::IsValidable() const
+{
+  return n_validation_samples_ > 0;
 }
 
 }  // namespace dataloaders

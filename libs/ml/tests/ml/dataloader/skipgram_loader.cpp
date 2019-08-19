@@ -33,12 +33,12 @@ using TensorType = fetch::math::Tensor<double>;
 
 struct TrainingParams
 {
-  SizeType max_word_count       = 9;     // maximum number to be trained
-  SizeType negative_sample_size = 0;     // number of negative sample per word-context pair
-  SizeType window_size          = 1;     // window size for context sampling
-  bool     train_mode           = true;  // reserve for future compatibility with CBOW
-  double   freq_thresh          = 1;     // frequency threshold for subsampling
-  SizeType min_count            = 0;     // infrequent word removal threshold
+  SizeType       max_word_count       = 9;  // maximum number to be trained
+  SizeType       negative_sample_size = 0;  // number of negative sample per word-context pair
+  SizeType       window_size          = 1;  // window size for context sampling
+  DataLoaderMode train_mode  = DataLoaderMode::TRAIN;  // reserve for future compatibility with CBOW
+  double         freq_thresh = 1;                      // frequency threshold for subsampling
+  SizeType       min_count   = 0;                      // infrequent word removal threshold
 } tp;
 
 template <typename T>

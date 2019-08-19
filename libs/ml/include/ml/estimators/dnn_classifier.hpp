@@ -140,6 +140,8 @@ bool DNNClassifier<TensorType>::Train(SizeType n_steps)
 template <typename TensorType>
 bool DNNClassifier<TensorType>::Train(SizeType n_steps, DataType &loss)
 {
+  data_loader_ptr_->SetMode(dataloaders::DataLoaderMode::TRAIN);
+
   loss = DataType{0};
   DataType min_loss, val_loss = fetch::math::numeric_max<DataType>();
   SizeType patience_count{0};
@@ -200,11 +202,13 @@ bool DNNClassifier<TensorType>::Validate(DataType &validation_loss)
     throw std::runtime_error("No validation set");
   }
 
-  SizeType val_set_size = data_loader_ptr_->Size(true);
+  data_loader_ptr_->SetMode(dataloaders::DataLoaderMode::VALIDATE);
 
-  data_loader_ptr_->Reset(true);
+  SizeType val_set_size = data_loader_ptr_->Size();
+
+  data_loader_ptr_->Reset();
   bool is_done_set;
-  auto validation_pair = data_loader_ptr_->PrepareBatch(val_set_size, is_done_set, true);
+  auto validation_pair = data_loader_ptr_->PrepareBatch(val_set_size, is_done_set);
 
   this->graph_ptr_->SetInput(label_, validation_pair.first);
   this->graph_ptr_->SetInput(input_, validation_pair.second.at(0));

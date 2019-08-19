@@ -29,6 +29,14 @@ namespace fetch {
 namespace ml {
 namespace dataloaders {
 
+enum class DataLoaderMode
+{
+  TRAIN,
+  VALIDATE,
+  TEST,
+  INVALID
+};
+
 template <typename LabelType, typename DataType>
 class DataLoader
 {
@@ -44,31 +52,29 @@ public:
    * @param label_shape
    * @param data_shapes
    */
-  explicit DataLoader(bool random_mode)
+  explicit DataLoader(bool random_mode, DataLoaderMode mode)
     : random_mode_(random_mode)
+    , mode_(mode)
   {}
 
   virtual ~DataLoader() = default;
 
-  virtual ReturnType GetNext(bool is_validation = false) = 0;
+  virtual ReturnType GetNext() = 0;
 
-  virtual ReturnType PrepareBatch(fetch::math::SizeType subset_size, bool &is_done_set,
-                                  bool is_validation = false);
+  virtual ReturnType PrepareBatch(fetch::math::SizeType subset_size, bool &is_done_set);
 
-  virtual inline bool IsValidable()
-  {
-    return (Size(true) != 0);
-  }
-
-  virtual std::uint64_t Size(bool is_validation = false) const   = 0;
-  virtual bool          IsDone(bool is_validation = false) const = 0;
-  virtual void          Reset(bool is_validation = false)        = 0;
+  virtual std::uint64_t Size() const        = 0;
+  virtual bool          IsDone() const      = 0;
+  virtual void          Reset()             = 0;
+  virtual bool          IsValidable() const = 0;
+  void                  SetMode(DataLoaderMode new_mode);
 
   template <typename X, typename D>
   friend struct fetch::serializers::MapSerializer;
 
 protected:
-  bool random_mode_ = false;
+  bool           random_mode_ = false;
+  DataLoaderMode mode_        = DataLoaderMode::INVALID;
 
 private:
   bool       size_not_set_ = true;
@@ -108,12 +114,12 @@ void DataLoader<LabelType, DataType>::SetDataSize(
  */
 template <typename LabelType, typename DataType>
 typename DataLoader<LabelType, DataType>::ReturnType DataLoader<LabelType, DataType>::PrepareBatch(
-    fetch::math::SizeType batch_size, bool &is_done_set, bool is_validation)
+    fetch::math::SizeType batch_size, bool &is_done_set)
 {
   if (size_not_set_)
   {
     // first ever call to PrepareBatch requires a dummy GetNext to identify tensor shapes
-    cur_training_pair_ = GetNext(is_validation);
+    cur_training_pair_ = GetNext();
     Reset();
 
     this->SetDataSize(cur_training_pair_);
@@ -146,14 +152,14 @@ typename DataLoader<LabelType, DataType>::ReturnType DataLoader<LabelType, DataT
   while (data_idx < batch_size)
   {
     // check if end of data
-    if (IsDone(is_validation))
+    if (IsDone())
     {
       is_done_set = true;
-      Reset(is_validation);
+      Reset();
     }
 
     // get next datum & label
-    cur_training_pair_ = GetNext(is_validation);
+    cur_training_pair_ = GetNext();
 
     // Fill label view
     auto label_view = ret_pair_.first.View(data_idx);
@@ -171,6 +177,12 @@ typename DataLoader<LabelType, DataType>::ReturnType DataLoader<LabelType, DataT
     ++data_idx;
   }
   return ret_pair_;
+}
+
+template <typename LabelType, typename DataType>
+void DataLoader<LabelType, DataType>::SetMode(DataLoaderMode new_mode)
+{
+  mode_ = new_mode;
 }
 
 }  // namespace dataloaders

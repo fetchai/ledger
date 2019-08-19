@@ -44,13 +44,14 @@ public:
   using ReturnType = std::pair<LabelType, std::vector<DataType>>;
 
   GraphW2VLoader(SizeType window_size, SizeType negative_samples, T freq_thresh,
-                 SizeType max_word_count, bool mode, SizeType seed = 1337);
+                 SizeType max_word_count, DataLoaderMode mode, SizeType seed = 1337);
 
-  bool       IsDone(bool is_validation = false) const override;
-  void       Reset(bool is_validation = false) override;
-  void       RemoveInfrequent(SizeType min);
-  void       InitUnigramTable(SizeType size = 1e8);
-  ReturnType GetNext(bool is_validation = false) override;
+  bool        IsDone() const override;
+  void        Reset() override;
+  inline bool IsValidable() const override;
+  void        RemoveInfrequent(SizeType min);
+  void        InitUnigramTable(SizeType size = 1e8);
+  ReturnType  GetNext() override;
 
   void BuildVocab(std::vector<std::string> const &sents, SizeType min_count = 0);
   void SaveVocab(std::string const &filename);
@@ -60,7 +61,7 @@ public:
   bool WordKnown(std::string const &word) const;
 
   /// accessors and helper functions ///
-  SizeType         Size(bool is_validation = false) const override;
+  SizeType         Size() const override;
   SizeType         vocab_size() const;
   VocabType const &vocab() const;
   std::string      WordFromIndex(SizeType index) const;
@@ -77,7 +78,6 @@ private:
   std::vector<std::vector<SizeType>>        data_;
   UnigramTable                              unigram_table_;
   SizeType                                  max_word_count_;
-  bool                                      mode_;
   fetch::random::LaggedFibonacciGenerator<> lfg_;
   SizeType                                  size_        = 0;
   SizeType                                  reset_count_ = 0;
@@ -104,15 +104,14 @@ private:
  */
 template <typename T>
 GraphW2VLoader<T>::GraphW2VLoader(SizeType window_size, SizeType negative_samples, T freq_thresh,
-                                  SizeType max_word_count, bool mode, SizeType seed)
-  : DataLoader<LabelType, DataType>(false)  // no random mode specified
+                                  SizeType max_word_count, DataLoaderMode mode, SizeType seed)
+  : DataLoader<LabelType, DataType>(false, mode)  // no random mode specified
   , current_sentence_(0)
   , current_word_(0)
   , window_size_(window_size)
   , negative_samples_(negative_samples)
   , freq_thresh_(freq_thresh)
   , max_word_count_(max_word_count)
-  , mode_(mode)
   , lfg_(seed)
 {
   // setup temporary buffers for training purpose
@@ -162,9 +161,9 @@ T GraphW2VLoader<T>::EstimatedSampleNumber()
  * @return
  */
 template <typename T>
-math::SizeType GraphW2VLoader<T>::Size(bool is_validation) const
+math::SizeType GraphW2VLoader<T>::Size() const
 {
-  if (is_validation)
+  if (this->mode_ == DataLoaderMode::VALIDATE)
   {
     throw std::runtime_error("Validation set splitting not implemented yet");
   }
@@ -196,9 +195,9 @@ void GraphW2VLoader<T>::Update()
  * @return
  */
 template <typename T>
-bool GraphW2VLoader<T>::IsDone(bool is_validation) const
+bool GraphW2VLoader<T>::IsDone() const
 {
-  if (is_validation)
+  if (this->mode_ == DataLoaderMode::VALIDATE)
   {
     throw std::runtime_error("Validation set splitting not implemented yet");
   }
@@ -225,9 +224,9 @@ bool GraphW2VLoader<T>::IsDone(bool is_validation) const
  * @tparam T
  */
 template <typename T>
-void GraphW2VLoader<T>::Reset(bool is_validation)
+void GraphW2VLoader<T>::Reset()
 {
-  if (is_validation)
+  if (this->mode_ == DataLoaderMode::VALIDATE)
   {
     throw std::runtime_error("Validation set splitting not implemented yet");
   }
@@ -238,6 +237,13 @@ void GraphW2VLoader<T>::Reset(bool is_validation)
   labels_.Fill(BufferPositionUnused);
   buffer_pos_ = 0;
   reset_count_++;
+}
+
+template <typename T>
+inline bool GraphW2VLoader<T>::IsValidable() const
+{
+  // Validation set splitting not implemented yet
+  return false;
 }
 
 /**
@@ -447,9 +453,9 @@ void GraphW2VLoader<T>::BufferNextSamples()
  * @return
  */
 template <typename T>
-typename GraphW2VLoader<T>::ReturnType GraphW2VLoader<T>::GetNext(bool is_validation)
+typename GraphW2VLoader<T>::ReturnType GraphW2VLoader<T>::GetNext()
 {
-  if (is_validation)
+  if (this->mode_ == DataLoaderMode::VALIDATE)
   {
     throw std::runtime_error("Validation set splitting not implemented yet");
   }
