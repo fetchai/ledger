@@ -45,15 +45,24 @@ Uri::Uri(ConstByteArray const &uri)
   }
 }
 
+bool Uri::Parse(char const *uri)
+{
+  return Parse(std::string{uri});
+}
+
 bool Uri::Parse(ConstByteArray const &uri)
 {
-  if (uri.size() == 0)
+  return Parse(static_cast<std::string>(uri));
+}
+
+bool Uri::Parse(std::string const &data)
+{
+  bool success = false;
+
+  if (data.empty())
   {
     return false;
   }
-  bool success = false;
-
-  std::string const data = static_cast<std::string>(uri);
 
   std::smatch matches;
   std::regex_match(data, matches, URI_FORMAT);
@@ -79,10 +88,32 @@ bool Uri::Parse(ConstByteArray const &uri)
   // only update the URI if value
   if (success)
   {
-    uri_ = uri;
+    uri_ = data;
   }
 
   return success;
+}
+
+bool Uri::IsTcpPeer() const
+{
+  return scheme_ == Scheme::Tcp;
+}
+
+bool Uri::IsMuddleAddress() const
+{
+  return scheme_ == Scheme::Muddle;
+}
+
+Peer const & Uri::GetTcpPeer() const
+{
+  assert(scheme_ == Scheme::Tcp);
+  return tcp_;
+}
+
+byte_array::ConstByteArray const &Uri::GetMuddleAddress() const
+{
+  assert(scheme_ == Scheme::Muddle);
+  return authority_;
 }
 
 bool Uri::IsUri(const std::string &possible_uri)

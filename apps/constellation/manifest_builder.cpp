@@ -21,8 +21,7 @@
 #include "core/byte_array/decoders.hpp"
 #include "core/filesystem/read_file_contents.hpp"
 #include "manifest_builder.hpp"
-#include "network/p2pservice/manifest.hpp"
-#include "network/p2pservice/p2p_service_defs.hpp"
+#include "ledger/shards/manifest.hpp"
 #include "network/peer.hpp"
 #include "settings.hpp"
 
@@ -34,10 +33,10 @@ namespace {
 
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::FromBase64;
-using fetch::network::Manifest;
+using fetch::ledger::Manifest;
+using fetch::ledger::ManifestEntry;
+using fetch::ledger::ServiceIdentifier;
 using fetch::network::Peer;
-using fetch::network::ServiceIdentifier;
-using fetch::network::ServiceType;
 using fetch::network::Uri;
 
 /**
@@ -53,21 +52,23 @@ void GenerateDefaultManifest(std::string const &external_address, uint16_t port,
 {
   Peer peer;
 
+  FETCH_LOG_CRITICAL("GenManifest", "External Address: '", external_address, "'");
+
   // register the HTTP service
   peer.Update(external_address, port + HTTP_PORT_OFFSET);
-  manifest.AddService(ServiceIdentifier{ServiceType::HTTP}, Manifest::Entry{Uri{peer}});
+  manifest.AddService(ServiceIdentifier{ServiceIdentifier::Type::HTTP}, ManifestEntry{peer});
 
   // register the P2P service
   peer.Update(external_address, static_cast<uint16_t>(port + P2P_PORT_OFFSET));
-  manifest.AddService(ServiceIdentifier{ServiceType::CORE}, Manifest::Entry{Uri{peer}});
+  manifest.AddService(ServiceIdentifier{ServiceIdentifier::Type::CORE}, ManifestEntry{peer});
 
   // register all of the lanes (storage shards)
   for (uint32_t i = 0; i < num_lanes; ++i)
   {
     peer.Update(external_address, static_cast<uint16_t>(port + STORAGE_PORT_OFFSET + (2 * i)));
 
-    manifest.AddService(ServiceIdentifier{ServiceType::LANE, static_cast<uint16_t>(i)},
-                        Manifest::Entry{Uri{peer}});
+    manifest.AddService(ServiceIdentifier{ServiceIdentifier::Type::LANE, static_cast<uint16_t>(i)},
+                        ManifestEntry{peer});
   }
 }
 
@@ -83,7 +84,7 @@ bool LoadManifestFromFile(char const *filename, Manifest &manifest)
   ConstByteArray buffer = core::ReadContentsOfFile(filename);
 
   // check to see if the read failed
-  if (buffer.size() == 0)
+  if (buffer.empty())
   {
     return false;
   }
@@ -119,7 +120,7 @@ bool LoadManifestFromEnvironment(Manifest &manifest)
  * @param manifest The output manifest to be populated
  * @return true is successful, otherwise false
  */
-bool BuildManifest(Settings const &settings, network::Manifest &manifest)
+bool BuildManifest(Settings const &settings, ledger::Manifest &manifest)
 {
   bool success{false};
 

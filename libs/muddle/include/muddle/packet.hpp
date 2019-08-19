@@ -88,8 +88,8 @@ public:
     uint32_t exchange  : 1;   ///< Flag to signal that this is an exchange packet
     uint32_t stamped   : 1;   ///< Flag to signal that the packet is signed by sender
     uint32_t ttl       : 8;   ///< The time to live counter
-    uint32_t service   : 16;  ///< The service number (helpful for RPC compatibility)
-    uint32_t proto     : 16;  ///< The protocol number (helpful for RPC compatibility)
+    uint32_t service   : 16;  ///< The service number
+    uint32_t channel   : 16;  ///< The channel number
     uint32_t msg_num   : 16;  ///< Incremented message counter for detecting duplicate packets
     uint32_t network   : 32;  ///< The originating network id
     // clang-format on
@@ -125,7 +125,7 @@ public:
   bool              IsStamped() const noexcept;
   uint8_t           GetTTL() const noexcept;
   uint16_t          GetService() const noexcept;
-  uint16_t          GetProtocol() const noexcept;
+  uint16_t          GetChannel() const noexcept;
   uint16_t          GetMessageNum() const noexcept;
   uint32_t          GetNetworkId() const noexcept;
   RawAddress const &GetTargetRaw() const noexcept;
@@ -141,8 +141,8 @@ public:
   void SetBroadcast(bool set = true) noexcept;
   void SetExchange(bool set = true) noexcept;
   void SetTTL(uint8_t ttl) noexcept;
-  void SetService(uint16_t service_num) noexcept;
-  void SetProtocol(uint16_t protocol_num) noexcept;
+  void SetService(uint16_t service) noexcept;
+  void SetChannel(uint16_t channel) noexcept;
   void SetMessageNum(uint16_t message_num) noexcept;
   void SetNetworkId(uint32_t network_id) noexcept;
   void SetTarget(RawAddress const &address);
@@ -222,9 +222,9 @@ inline uint16_t Packet::GetService() const noexcept
   return static_cast<uint16_t>(header_.service);
 }
 
-inline uint16_t Packet::GetProtocol() const noexcept
+inline uint16_t Packet::GetChannel() const noexcept
 {
-  return static_cast<uint16_t>(header_.proto);
+  return static_cast<uint16_t>(header_.channel);
 }
 
 inline uint16_t Packet::GetMessageNum() const noexcept
@@ -315,9 +315,9 @@ inline void Packet::SetService(uint16_t service_num) noexcept
   SetStamped(false);
 }
 
-inline void Packet::SetProtocol(uint16_t protocol_num) noexcept
+inline void Packet::SetChannel(uint16_t protocol_num) noexcept
 {
-  header_.proto = protocol_num;
+  header_.channel = protocol_num;
   SetStamped(false);
 }
 

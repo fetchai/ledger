@@ -21,6 +21,8 @@ add_executable(constellation
                manifest_builder.cpp
                manifest_builder.hpp
                open_api_http_module.cpp
+               muddle_status_http_module.cpp
+               muddle_status_http_module.hpp
                open_api_http_module.hpp
                settings.cpp
                settings.hpp

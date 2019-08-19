@@ -64,7 +64,7 @@ static char const *FETCH_MAYBE_UNUSED ToString(fetch::ledger::tx_sync::State sta
 namespace fetch {
 namespace ledger {
 
-TransactionStoreSyncService::TransactionStoreSyncService(Config const &cfg, MuddlePtr muddle,
+TransactionStoreSyncService::TransactionStoreSyncService(Config const &cfg, MuddleEndpoint &muddle,
                                                          ObjectStorePtr    store,
                                                          TxFinderProtocol *tx_finder_protocol,
                                                          TrimCacheCallback trim_cache_callback)
@@ -73,9 +73,9 @@ TransactionStoreSyncService::TransactionStoreSyncService(Config const &cfg, Mudd
                                                                State::INITIAL)}
   , tx_finder_protocol_(tx_finder_protocol)
   , cfg_{cfg}
-  , muddle_(std::move(muddle))
+  , muddle_(muddle)
   , client_(std::make_shared<Client>("R:TxSync-L" + std::to_string(cfg_.lane_id),
-                                     muddle_->AsEndpoint(), SERVICE_LANE, CHANNEL_RPC))
+                                     muddle, SERVICE_LANE, CHANNEL_RPC))
   , store_(std::move(store))
   , verifier_(*this, cfg_.verification_threads, "TxV-L" + std::to_string(cfg_.lane_id))
 {
@@ -103,17 +103,13 @@ TransactionStoreSyncService::TransactionStoreSyncService(Config const &cfg, Mudd
 
 TransactionStoreSyncService::~TransactionStoreSyncService()
 {
-  FETCH_LOG_WARN(LOGGING_NAME, "Lane ", cfg_.lane_id, ": teardown sync service");
-  muddle_->Shutdown();
   client_ = nullptr;
-  muddle_ = nullptr;
   store_  = nullptr;
-  FETCH_LOG_WARN(LOGGING_NAME, "Lane ", cfg_.lane_id, ": sync service done!");
 }
 
 TransactionStoreSyncService::State TransactionStoreSyncService::OnInitial()
 {
-  if (muddle_->AsEndpoint().GetDirectlyConnectedPeers().empty())
+  if (muddle_.GetDirectlyConnectedPeers().empty())
   {
     return State::INITIAL;
   }
@@ -123,7 +119,7 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnInitial()
 
 TransactionStoreSyncService::State TransactionStoreSyncService::OnQueryObjectCounts()
 {
-  for (auto const &connection : muddle_->AsEndpoint().GetDirectlyConnectedPeers())
+  for (auto const &connection : muddle_.GetDirectlyConnectedPeers())
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Query objects from: muddle://", connection.ToBase64());
 
@@ -203,7 +199,7 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnQuerySubtree()
   assert(!roots_to_sync_.empty());
 
   // sanity check that this is not the case
-  for (auto const &connection : muddle_->AsEndpoint().GetDirectlyConnectedPeers())
+  for (auto const &connection : muddle_.GetDirectlyConnectedPeers())
   {
     // if there are no further roots to sync then we need to exit
     if (roots_to_sync_.empty())
@@ -316,7 +312,7 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnQueryObjects()
     rids.push_back(rid);
   }
 
-  for (auto const &connection : muddle_->AsEndpoint().GetDirectlyConnectedPeers())
+  for (auto const &connection : muddle_.GetDirectlyConnectedPeers())
   {
     if (!rids.empty())
     {

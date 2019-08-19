@@ -16,11 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "muddle.hpp"
+#include "router.hpp"
+
 #include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
 #include "network/management/network_manager.hpp"
-#include "muddle/muddle.hpp"
-#include "muddle/router.hpp"
 
 #include "gtest/gtest.h"
 
@@ -135,12 +136,12 @@ TEST_F(RouterTests, CheckExchange)
   static constexpr uint16_t CHANNEL = 2;
 
   auto  nodeA     = CreateMuddle();
-  auto &endpointA = nodeA->AsEndpoint();
-  nodeA->Start({8000});
+  auto &endpointA = nodeA->GetEndpoint();
+  nodeA->Start({},{8000});
 
   auto  nodeB     = CreateMuddle();
-  auto &endpointB = nodeB->AsEndpoint();
-  nodeB->Start({8001}, {Uri{"tcp://127.0.0.1:8000"}});
+  auto &endpointB = nodeB->GetEndpoint();
+  nodeB->Start({"tcp://127.0.0.1:8000"}, {8001});
 
   // define the message queues
   MessageQueue messagesA;
@@ -176,21 +177,21 @@ TEST_F(RouterTests, CheckExchange)
     ASSERT_EQ(messages.size(), 3);
 
     // check the contents of the messages
-    EXPECT_EQ(messages[0].from, nodeA->identity().identifier());
+    EXPECT_EQ(messages[0].from, nodeA->GetAddress());
     EXPECT_EQ(messages[0].service, SERVICE);
     EXPECT_EQ(messages[0].channel, CHANNEL);
     EXPECT_EQ(messages[0].counter, 1);
     EXPECT_EQ(messages[0].payload, "Node A Message 1");
 
     // check the contents of the messages
-    EXPECT_EQ(messages[1].from, nodeA->identity().identifier());
+    EXPECT_EQ(messages[1].from, nodeA->GetAddress());
     EXPECT_EQ(messages[1].service, SERVICE);
     EXPECT_EQ(messages[1].channel, CHANNEL);
     EXPECT_EQ(messages[1].counter, 2);
     EXPECT_EQ(messages[1].payload, "Node A Message 2");
 
     // check the contents of the messages
-    EXPECT_EQ(messages[2].from, nodeA->identity().identifier());
+    EXPECT_EQ(messages[2].from, nodeA->GetAddress());
     EXPECT_EQ(messages[2].service, SERVICE);
     EXPECT_EQ(messages[2].channel, CHANNEL);
     EXPECT_EQ(messages[2].counter, 3);

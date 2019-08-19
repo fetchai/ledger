@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 namespace fetch {
-namespace network {
+namespace ledger {
 
 class Manifest;
 
@@ -26,6 +26,6 @@ class Manifest;
 
 class Settings;
 
-bool BuildManifest(Settings const &settings, network::Manifest &manifest);
+bool BuildManifest(Settings const &settings, ledger::Manifest &manifest);
 
 }  // namespace fetch

@@ -25,8 +25,7 @@
 #include "metrics/metrics.hpp"
 #include "network/details/thread_pool.hpp"
 #include "network/generics/milli_timer.hpp"
-#include "network/management/connection_register.hpp"
-#include "muddle/muddle.hpp"
+#include "muddle/address.hpp"
 #include "network/service/call_context.hpp"
 #include "network/service/promise.hpp"
 #include "network/service/protocol.hpp"
@@ -79,7 +78,7 @@ private:
   {
     using Clock      = std::chrono::system_clock;
     using Timepoint  = Clock::time_point;
-    using AddressSet = std::unordered_set<muddle::Muddle::Address>;
+    using AddressSet = std::unordered_set<muddle::Address>;
 
     explicit CachedObject(Transaction value)
       : data(std::move(value))

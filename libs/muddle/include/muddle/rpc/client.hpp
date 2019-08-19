@@ -19,6 +19,7 @@
 
 #include "core/mutex.hpp"
 #include "muddle/muddle_endpoint.hpp"
+#include "muddle/address.hpp"
 #include "network/service/client_interface.hpp"
 #include "network/service/promise.hpp"
 #include "network/service/types.hpp"
@@ -36,12 +37,10 @@ namespace rpc {
 class Client : protected service::ServiceClientInterface
 {
 public:
-  using Address       = MuddleEndpoint::Address;
   using ProtocolId    = service::protocol_handler_type;
   using FunctionId    = service::function_handler_type;
   using Serializer    = service::serializer_type;
   using Promise       = service::Promise;
-  using ThreadPool    = network::ThreadPool;
   using Handler       = std::function<void(Promise)>;
   using SharedHandler = std::shared_ptr<Handler>;
   using WeakHandler   = std::weak_ptr<Handler>;
@@ -52,19 +51,45 @@ public:
   Client(std::string name, MuddleEndpoint &endpoint, uint16_t service, uint16_t channel);
   Client(Client const &) = delete;
   Client(Client &&)      = delete;
-  ~Client() override;
+  ~Client() override = default;
 
   template <typename... Args>
   Promise CallSpecificAddress(Address const &address, ProtocolId const &protocol,
                               FunctionId const &function, Args &&... args)
   {
-    FETCH_LOCK(call_mutex_);
-    LOG_STACK_TRACE_POINT;
-    // update the target address
-    address_ = address;
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Service Client Calling ", protocol, ":", function);
 
-    // execute the call
-    return Call(network_id_.value(), protocol, function, std::forward<Args>(args)...);
+    // create and register the promise to this callback
+    Promise prom = service::MakePromise(protocol, function);
+    AddPromise(prom);
+
+    // determine the required serial size
+    serializers::SizeCounter counter;
+    counter << service::SERVICE_FUNCTION_CALL << prom->id();
+    service::PackCall(counter, protocol, function, args...);
+
+    // pack the mesage into a buffer
+    service::serializer_type params;
+    params.Reserve(counter.size());
+    params << service::SERVICE_FUNCTION_CALL << prom->id();
+    service::PackCall(params, protocol, function, std::forward<Args>(args)...);
+
+    FETCH_LOG_TRACE(LOGGING_NAME, "Registering promise ", prom->id(), " with ", protocol, ':',
+                    function, " (call) ", &promises_);
+
+    if (!DeliverRequest(address, params.data()))
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Call to ", protocol, ":", function, " prom=", prom->id(),
+                     " failed!");
+
+      prom->Fail(serializers::SerializableException(
+          service::error::COULD_NOT_DELIVER,
+          byte_array::ConstByteArray("Could not deliver request in " __FILE__)));
+
+      RemovePromise(prom->id());
+    }
+
+    return prom;
   }
 
   // Operators
@@ -72,34 +97,24 @@ public:
   Client &operator=(Client &&) = delete;
 
 protected:
-  bool DeliverRequest(network::message_type const &data) override;
+  bool DeliverRequest(muddle::Address const &address, network::message_type const &data);
 
 private:
-  using Flag         = std::atomic<bool>;
-  using Mutex        = fetch::mutex::Mutex;
-  using PromiseQueue = std::list<MuddleEndpoint::Response>;
+  using Flag            = std::atomic<bool>;
+  using Mutex           = fetch::mutex::Mutex;
+  using PromiseQueue    = std::list<MuddleEndpoint::Response>;
+  using SubscriptionPtr = MuddleEndpoint::SubscriptionPtr;
+
+  void OnMessage(Packet const &packet, Address const &last_hop);
 
   static std::size_t const NUM_THREADS = 1;
 
   std::string const name_;
   MuddleEndpoint &  endpoint_;
-  Address           address_;
+  SubscriptionPtr   subscription_;
   NetworkId const   network_id_;
   uint16_t const    service_;
   uint16_t const    channel_;
-
-  SharedHandler handler_;
-
-  std::mutex call_mutex_;  // priority 1
-
-  PromiseQueue            promise_queue_;
-  std::mutex              promise_queue_lock_;  // priority 2
-  std::condition_variable promise_queue_cv_;
-
-  std::thread background_thread_;
-  Flag        running_{false};
-
-  void BackgroundWorker();
 };
 
 }  // namespace rpc

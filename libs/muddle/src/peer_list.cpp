@@ -16,9 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "peer_list.hpp"
+#include "router.hpp"
+
 #include "core/logger.hpp"
-#include "muddle/peer_list.hpp"
-#include "muddle/router.hpp"
 
 #include <algorithm>
 #include <cstddef>
@@ -30,14 +31,10 @@ static constexpr std::size_t MAX_LOG2_BACKOFF = 11;  // 2048
 namespace fetch {
 namespace muddle {
 
-/**
- * Create the peer connection list
- *
- * @param router The reference to the router
- */
-PeerConnectionList::PeerConnectionList(Router &router)
-  : router_(router)
-{}
+void PeerConnectionList::SetStatusCallback(StatusCallback callback)
+{
+  status_callback_ = std::move(callback);
+}
 
 bool PeerConnectionList::AddPersistentPeer(Uri const &peer)
 {
@@ -149,6 +146,27 @@ void PeerConnectionList::Debug(std::string const &prefix) const
                  "PeerConnectionList: --------------------------------------");
 }
 
+PeerConnectionList::PeerSet PeerConnectionList::GetPersistentPeers() const
+{
+  FETCH_LOCK(lock_);
+  return persistent_peers_;
+}
+
+bool PeerConnectionList::GetMetadataForPeer(Uri const &peer, PeerMetadata &metadata) const
+{
+  bool success{false};
+
+  FETCH_LOCK(lock_);
+  auto it = peer_metadata_.find(peer);
+  if (it != peer_metadata_.end())
+  {
+    metadata = it->second;
+    success  = true;
+  }
+
+  return success;
+}
+
 PeerConnectionList::ConnectionState PeerConnectionList::GetStateForPeer(Uri const &peer) const
 {
   FETCH_LOCK(lock_);
@@ -193,12 +211,12 @@ void PeerConnectionList::OnConnectionEstablished(Uri const &peer)
   }
 
   // send an identity message
-  if (connection_handle)
+  if (connection_handle && status_callback_)
   {
-    router_.AddConnection(connection_handle);
+    status_callback_(peer, connection_handle, ConnectionState::CONNECTED);
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Connection to ", peer.uri(), " established");
+  FETCH_LOG_INFO(LOGGING_NAME, "Connection to ", peer.uri(), " established (conn: ", connection_handle, ")");
 }
 
 void PeerConnectionList::RemoveConnection(Uri const &peer)
@@ -250,6 +268,14 @@ void PeerConnectionList::Disconnect(Uri const &peer)
   }
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Connection to ", peer.uri(), " shut down");
+}
+
+void PeerConnectionList::DisconnectAll()
+{
+  FETCH_LOCK(lock_);
+
+  peer_connections_.clear();
+  persistent_peers_.clear();
 }
 
 bool PeerConnectionList::ReadyForRetry(const PeerMetadata &metadata) const

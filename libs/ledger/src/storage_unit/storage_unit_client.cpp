@@ -41,7 +41,7 @@ namespace fetch {
 namespace ledger {
 namespace {
 
-using AddressList = std::vector<MuddleEndpoint::Address>;
+using AddressList = std::vector<muddle::Address>;
 
 AddressList GenerateAddressList(ShardConfigs const &shards)
 {

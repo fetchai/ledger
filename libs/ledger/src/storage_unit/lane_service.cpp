@@ -21,14 +21,12 @@
 #include "ledger/chain/transaction_rpc_serializers.hpp"
 #include "ledger/storage_unit/lane_controller.hpp"
 #include "ledger/storage_unit/lane_controller_protocol.hpp"
-#include "ledger/storage_unit/lane_identity.hpp"
-#include "ledger/storage_unit/lane_identity_protocol.hpp"
 #include "ledger/storage_unit/lane_service.hpp"
 #include "ledger/storage_unit/transaction_finder_protocol.hpp"
 #include "ledger/storage_unit/transaction_store_sync_protocol.hpp"
 #include "ledger/storage_unit/transaction_store_sync_service.hpp"
 #include "meta/log2.hpp"
-#include "muddle/muddle.hpp"
+#include "muddle/muddle_endpoint.hpp"
 #include "muddle/rpc/server.hpp"
 #include "storage/document_store_protocol.hpp"
 #include "storage/new_revertible_document_store.hpp"
@@ -63,22 +61,18 @@ LaneService::LaneService(NetworkManager nm, ShardConfig config, bool sign_packet
   , cfg_{std::move(config)}
 {
   // External Muddle network and RPC server
+  // TODO(EJF): !!! Must be set
+  std::string external_hostname{};
+
   external_muddle_ =
-      std::make_shared<Muddle>(cfg_.external_network_id, cfg_.external_identity, nm, sign_packets);
+      muddle::CreateMuddle(cfg_.external_network_id, cfg_.external_identity, nm, external_hostname);
   external_rpc_server_ =
-      std::make_shared<Server>(external_muddle_->AsEndpoint(), SERVICE_LANE, CHANNEL_RPC);
+      std::make_shared<Server>(external_muddle_->GetEndpoint(), SERVICE_LANE, CHANNEL_RPC);
 
   // Internal muddle network
-  internal_muddle_ = std::make_shared<Muddle>(cfg_.internal_network_id, cfg_.internal_identity, nm);
+  internal_muddle_ = muddle::CreateMuddle(cfg_.internal_network_id, cfg_.internal_identity, nm, external_hostname);
   internal_rpc_server_ =
-      std::make_shared<Server>(internal_muddle_->AsEndpoint(), SERVICE_LANE_CTRL, CHANNEL_RPC);
-
-  // Lane Identity + Protocol
-  lane_identity_ = std::make_shared<LaneIdentity>(nm, external_muddle_->identity());
-  lane_identity_->SetLaneNumber(cfg_.lane_id);
-  lane_identity_->SetTotalLanes(cfg_.num_lanes);
-  lane_identity_protocol_ = std::make_shared<LaneIdentityProtocol>(*lane_identity_);
-  external_rpc_server_->Add(RPC_IDENTITY, lane_identity_protocol_.get());
+      std::make_shared<Server>(internal_muddle_->GetEndpoint(), SERVICE_LANE_CTRL, CHANNEL_RPC);
 
   reactor_.Attach(tx_store_->GetWeakRunnable());
 
@@ -97,8 +91,8 @@ LaneService::LaneService(NetworkManager nm, ShardConfig config, bool sign_packet
   internal_rpc_server_->Add(RPC_TX_STORE, tx_store_protocol_.get());
 
   // Controller
-  controller_          = std::make_shared<LaneController>(lane_identity_, external_muddle_);
-  controller_protocol_ = std::make_shared<LaneControllerProtocol>(controller_.get());
+  controller_          = std::make_shared<LaneController>(*external_muddle_);
+  controller_protocol_ = std::make_shared<LaneControllerProtocol>(*controller_);
   internal_rpc_server_->Add(RPC_CONTROLLER, controller_protocol_.get());
 
   tx_finder_protocol_ = std::make_unique<TxFinderProtocol>();
@@ -115,7 +109,7 @@ LaneService::LaneService(NetworkManager nm, ShardConfig config, bool sign_packet
   sync_cfg.fetch_object_wait_duration = cfg_.sync_service_fetch_period;
 
   tx_sync_service_ = std::make_shared<TransactionStoreSyncService>(
-      sync_cfg, external_muddle_, tx_store_, tx_finder_protocol_.get(),
+      sync_cfg, external_muddle_->GetEndpoint(), tx_store_, tx_finder_protocol_.get(),
       [this]() { tx_sync_protocol_->TrimCache(); });
 
   tx_store_->SetCallback([this](Transaction const &tx) { tx_sync_protocol_->OnNewTx(tx); });
@@ -152,26 +146,16 @@ LaneService::~LaneService()
 
   workthread_ = nullptr;
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Lane ", cfg_.lane_id, " Teardown.");
+  FETCH_LOG_TRACE(LOGGING_NAME, "Lane ", cfg_.lane_id, " Teardown.");
 
-  external_muddle_->Shutdown();
-  internal_muddle_->Shutdown();
+  external_muddle_->Stop();
+  internal_muddle_->Stop();
   tx_sync_service_.reset();
-
-  lane_identity_protocol_.reset();
-  lane_identity_.reset();
-
-  // TODO(issue 24): Remove protocol
   state_db_protocol_.reset();
   state_db_.reset();
-
-  // TODO(issue 24): Remove protocol
   tx_store_protocol_.reset();
   tx_store_.reset();
-
   tx_sync_protocol_.reset();
-
-  // TODO(issue 24): Remove protocol
   controller_protocol_.reset();
   controller_.reset();
 }
@@ -185,8 +169,8 @@ void LaneService::Start()
                  " Service on tcp://127.0.0.1:", cfg_.internal_port,
                  " ID: ", ToBase64(cfg_.internal_identity->identity().identifier()));
 
-  external_muddle_->Start({cfg_.external_port});
-  internal_muddle_->Start({cfg_.internal_port});
+  external_muddle_->Start({}, {cfg_.external_port});
+  internal_muddle_->Start({}, {cfg_.internal_port});
 
   tx_sync_service_->Start();
 
@@ -199,7 +183,6 @@ void LaneService::Start()
 
 void LaneService::Stop()
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Lane ", cfg_.lane_id, " Stopping.");
   tx_sync_service_->Stop();
   workthread_ = nullptr;
 

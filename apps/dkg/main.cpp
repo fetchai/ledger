@@ -21,7 +21,7 @@
 #include "dkg/dkg_service.hpp"
 #include "dkg/pre_dkg_sync.hpp"
 #include "network/management/network_manager.hpp"
-#include "muddle/muddle.hpp"
+#include "muddle/muddle_interface.hpp"
 
 // TODO(WK) Extract to library: .cpp file include == ++ungood
 #include "../../apps/constellation/key_generator.cpp"
@@ -72,20 +72,19 @@ int main(int argc, char **argv)
   // Muddle setup/gubbins
   fetch::network::NetworkManager network_manager{"NetworkManager", 2};
   fetch::core::Reactor           reactor{"ReactorName"};
-  auto muddle = std::make_shared<fetch::muddle::Muddle>(fetch::muddle::NetworkId{"TestDKGNetwork"},
-                                                        p2p_key, network_manager, true, true);
+  auto muddle = muddle::CreateMuddle("Test", p2p_key, network_manager, "127.0.0.1");
 
   std::unique_ptr<dkg::DkgService> dkg =
-      std::make_unique<dkg::DkgService>(muddle->AsEndpoint(), p2p_key->identity().identifier());
+      std::make_unique<dkg::DkgService>(muddle->GetEndpoint(), p2p_key->identity().identifier());
 
   // Start networking etc.
   network_manager.Start();
-  muddle->Start({uint16_t(std::stoi(args[1]))});
+  muddle->Start({}, {uint16_t(std::stoi(args[1]))});
 
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
   // Connect and wait until everyone else has connected
-  PreDkgSync sync(*muddle, 4);
+  PreDkgSync sync(muddle->GetEndpoint(), 4);
   sync.ResetCabinet(peer_list);
   sync.Connect();
   while (!sync.ready())

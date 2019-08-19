@@ -21,7 +21,7 @@
 #include "ledger/dag/dag_sync_protocol.hpp"
 #include "ledger/dag/dag_sync_service.hpp"
 #include "ledger/shard_config.hpp"
-#include "muddle/muddle.hpp"
+#include "muddle/muddle_endpoint.hpp"
 #include "muddle/rpc/server.hpp"
 
 #include <memory>
@@ -42,7 +42,6 @@ public:
 
   using Subscription    = muddle::Subscription;
   using SubscriptionPtr = std::shared_ptr<Subscription>;
-  using Muddle          = muddle::Muddle;
   using NetworkManager  = network::NetworkManager;
   using MuddleEndpoint  = muddle::MuddleEndpoint;
   using DAGPtr          = std::shared_ptr<ledger::DAGInterface>;

@@ -38,9 +38,13 @@ public:
   using Handle          = uint64_t;
   using MessageCallback = std::function<void(
       Address const & /*from*/, uint16_t /*service*/, uint16_t /*channel*/, uint16_t /*counter*/,
-      Packet::Payload const & /*payload*/, Address const & /*transmitter*/
+      Payload const & /*payload*/, Address const & /*last hop*/
       )>;
-  using Mutex           = std::mutex;
+  using LowLevelCallback =
+      std::function<void(Packet const & /*packet*/, Address const & /*last hop*/)>;
+  using BasicMessageCallback =
+      std::function<void(Address const & /*address*/, Payload const & /*payload*/)>;
+  using Mutex = std::mutex;
 
   static constexpr char const *LOGGING_NAME = "Subscription";
 
@@ -50,64 +54,43 @@ public:
   Subscription(Subscription &&)      = delete;
   ~Subscription();
 
+  void SetMessageHandler(MessageCallback cb);
+  void SetMessageHandler(BasicMessageCallback cb);
+  void SetMessageHandler(LowLevelCallback cb);
+
+  template <typename Class>
+  void SetMessageHandler(Class *instance, void (Class::*member_function)(Address const &, Packet::Payload const &));
+
+  template <typename Class>
+  void SetMessageHandler(Class *instance, void (Class::*member_function)(Packet const &, Address const &));
+
+  void Dispatch(Packet const &packet, Address const &last_hop) const;
+
   // Operators
   Subscription &operator=(Subscription const &) = delete;
   Subscription &operator=(Subscription &&) = delete;
 
-  void SetMessageHandler(MessageCallback const &cb);
-  void Dispatch(Address const &from, uint16_t service, uint16_t channel, uint16_t counter,
-                Payload const &payload, Address const &transmitter) const;
-
 private:
-  mutable Mutex   callback_lock_;
-  MessageCallback callback_;
+  mutable Mutex    callback_lock_;
+  LowLevelCallback callback_;
 };
 
-/**
- * Destruct the subsciption object
- */
-inline Subscription::~Subscription()
+template <typename Class>
+void Subscription::SetMessageHandler(Class *instance, void (Class::*member_function)(Address const &, Packet::Payload const &))
 {
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Destructing subscription");
-
-  // this is needed to ensure that no curious object
-  SetMessageHandler(MessageCallback{});
+  SetMessageHandler([instance, member_function](Address const &address, Packet::Payload const &payload){
+    (instance->*member_function)(address, payload);
+  });
 }
 
-/**
- * Sets the message handler
- *
- * @param cb  The callback method
- */
-inline void Subscription::SetMessageHandler(MessageCallback const &cb)
+template <typename Class>
+void Subscription::SetMessageHandler(Class *instance, void (Class::*member_function)(Packet const &, Address const &))
 {
-  FETCH_LOCK(callback_lock_);
-  callback_ = cb;
+  SetMessageHandler([instance, member_function](Packet const &pkt, Address const &last_hop){
+    (instance->*member_function)(pkt, last_hop);
+  });
 }
 
-/**
- * Dispatch the message to the subscription
- *
- * @param service The service identifier
- * @param channel The channel identifier
- * @param payload The payload of the message
- */
-inline void Subscription::Dispatch(Address const &address, uint16_t service, uint16_t channel,
-                                   uint16_t counter, Payload const &payload,
-                                   Address const &transmitter) const
-{
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Dispatching subscription");
-
-  FETCH_LOCK(callback_lock_);
-  if (callback_)
-  {
-    callback_(address, service, channel, counter, payload, transmitter);
-  }
-  else
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Dropping message because no message handler has been set");
-  }
-}
 
 }  // namespace muddle
 }  // namespace fetch

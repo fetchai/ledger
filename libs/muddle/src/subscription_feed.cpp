@@ -16,9 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "subscription_feed.hpp"
+
 #include "core/mutex.hpp"
 #include "muddle/subscription.hpp"
-#include "muddle/subscription_feed.hpp"
 
 #include <cstdint>
 #include <memory>
@@ -53,9 +54,7 @@ SubscriptionFeed::SubscriptionPtr SubscriptionFeed::Subscribe()
  * @param payload The payload of the message
  * @return true if one or more successful dispatches were made, otherwise false
  */
-bool SubscriptionFeed::Dispatch(Address const &address, uint16_t service, uint16_t channel,
-                                uint16_t counter, Payload const &payload,
-                                Address const &transmitter)
+bool SubscriptionFeed::Dispatch(Packet const &packet, Address const &last_hop)
 {
   FETCH_LOCK(feed_lock_);
 
@@ -70,7 +69,7 @@ bool SubscriptionFeed::Dispatch(Address const &address, uint16_t service, uint16
     if (subscription)
     {
       // dispatch the message to the handler
-      subscription->Dispatch(address, service, channel, counter, payload, transmitter);
+      subscription->Dispatch(packet, last_hop);
 
       success = true;
       ++it;

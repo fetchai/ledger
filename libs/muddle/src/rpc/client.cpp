@@ -37,160 +37,55 @@ namespace rpc {
 Client::Client(std::string name, MuddleEndpoint &endpoint, uint16_t service, uint16_t channel)
   : name_(std::move(name))
   , endpoint_(endpoint)
+  , subscription_(endpoint_.Subscribe(service, channel))
   , network_id_(endpoint.network_id())
   , service_(service)
   , channel_(channel)
 {
-  LOG_STACK_TRACE_POINT;
-  handler_ = std::make_shared<Handler>([this](Promise promise) {
-    LOG_STACK_TRACE_POINT;
-
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Handling an inner promise ", promise->id());
-    try
-    {
-      ProcessServerMessage(promise->value());
-    }
-    catch (std::exception const &ex)
-    {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Client::ProcessServerMessage EX ", ex.what());
-    }
-  });
-
-  // start the background thread processs
-  running_           = true;
-  background_thread_ = std::thread{&Client::BackgroundWorker, this};
+  // set the message handler
+  subscription_->SetMessageHandler(this, &Client::OnMessage);
 }
 
-Client::~Client()
+bool Client::DeliverRequest(muddle::Address const &address, network::message_type const &data)
 {
-  LOG_STACK_TRACE_POINT;
-  FETCH_LOG_WARN(LOGGING_NAME, "Client teardown...");
-  // clear that handler
-  handler_.reset();
+  FETCH_LOG_TRACE(LOGGING_NAME, "Client::DeliverRequest to: ", address.ToBase64(), " mdl ", &endpoint_, " msg: ", data.ToHex());
 
-  FETCH_LOG_WARN(LOGGING_NAME, "Handler reset, stopping threadpool");
-  running_ = false;
-  promise_queue_cv_.notify_all();
-  background_thread_.join();
-  background_thread_ = std::thread{};
-  FETCH_LOG_WARN(LOGGING_NAME, "Threadpool stopped, client destructor end");
-}
-
-bool Client::DeliverRequest(network::message_type const &data)
-{
-  LOG_STACK_TRACE_POINT;
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Please send this packet to the server  ", service_, ",", channel_);
-
-  unsigned long long int ident = 0;
+  bool success{false};
 
   try
   {
-    // signal to the networking that an exchange is requested
-    auto promise = endpoint_.Exchange(address_, service_, channel_, data);
-    ident        = promise.id();
-
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Sent this packet to the server  ", service_, ",", channel_,
-                    "@prom=", promise.id(), " response size=", data.size());
-
-    // establish the correct course of action when
-    WeakHandler handler = handler_;
-    promise.WithHandlers()
-        .Then([handler, promise]() {
-          LOG_STACK_TRACE_POINT;
-
-          FETCH_LOG_DEBUG(LOGGING_NAME, "Got the response to our question...",
-                          "@prom=", promise.id());
-          auto callback = handler.lock();
-          if (callback)
-          {
-            (*callback)(promise.GetInnerPromise());
-          }
-        })
-        .Catch([promise]() {
-          LOG_STACK_TRACE_POINT;
-
-          // TODO(EJF): This is actually a bug since the RPC promise implementation doesn't have a
-          // callback process
-          FETCH_LOG_DEBUG(LOGGING_NAME, "Exchange promise failed", "@prom=", promise.id());
-        });
-
-    // Add this new wrapping promise to the execution queue
-    {
-      std::unique_lock<std::mutex> lk(promise_queue_lock_);
-      promise_queue_.emplace_back(std::move(promise));
-      promise_queue_cv_.notify_one();
-    }
-
-    return true;
+    endpoint_.Send(address, service_, channel_, data, MuddleEndpoint::OPTION_EXCHANGE);
+    success = true;
   }
   catch (std::exception const &e)
   {
-    FETCH_LOG_ERROR(LOGGING_NAME, "Erk! Exception in endpoint_.Exchange ", "@prom=", ident, " ",
-                    e.what());
+    FETCH_LOG_ERROR(LOGGING_NAME, "Error sending RPC message: ", e.what());
     throw e;
   }
+
+  return success;
 }
 
-void Client::BackgroundWorker()
+void Client::OnMessage(Packet const &packet, Address const &last_hop)
 {
-  LOG_STACK_TRACE_POINT;
-  using PromiseState = service::PromiseState;
+  FETCH_UNUSED(last_hop);
 
-  SetThreadName(name_);
-
-  std::list<MuddleEndpoint::Response> pending_promises;
-
-  std::size_t consecutive_idle_loops{0};
-  while (running_)
+  // since this channel is shared between both the client and the server. We need to make sure that
+  // we are only processing the messages that are relevant to us.
+  if (packet.IsExchange())
   {
-    bool was_idle{true};
+    return;
+  }
 
-    // attempt to extract and promises from the queue
-    {
-      std::unique_lock<std::mutex> lk(promise_queue_lock_);
-      if (!promise_queue_.empty())
-      {
-        pending_promises.splice(pending_promises.end(), promise_queue_);
-        was_idle = false;
-      }
-    }
+  FETCH_LOG_TRACE(LOGGING_NAME, "Client::OnMessage from: ", packet.GetSender().ToBase64(), " mdl ", &endpoint_, " msg: ", packet.GetPayload().ToHex(), " ctx: ", this);
 
-    // evaluate the promises in the queue
-    auto it = pending_promises.begin();
-    while (it != pending_promises.end())
-    {
-      // evaluate the state of the current promise
-      PromiseState const state = it->GetState();
-
-      if (service::PromiseState::WAITING != state)
-      {
-        // erase the promise from the queue
-        it       = pending_promises.erase(it);
-        was_idle = false;
-      }
-      else
-      {
-        // advance to the next iterator
-        ++it;
-      }
-    }
-
-    if (pending_promises.empty())
-    {
-      std::unique_lock<std::mutex> lk(promise_queue_lock_);
-      promise_queue_cv_.wait(lk);
-
-      was_idle = false;
-    }
-
-    // update the idle loop counter
-    consecutive_idle_loops = (was_idle) ? consecutive_idle_loops + 1 : 0;
-
-    // if we are in sustained a period of idleness then we should sleep the thread
-    if (consecutive_idle_loops >= 3)
-    {
-      std::this_thread::sleep_for(std::chrono::milliseconds{100});
-    }
+  try
+  {
+    ProcessServerMessage(packet.GetPayload());
+  }
+  catch (std::exception const &ex)
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Error processing server message: ", ex.what());
   }
 }
 

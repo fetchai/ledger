@@ -16,10 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "dispatcher.hpp"
+
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/time/to_seconds.hpp"
-#include "muddle/dispatcher.hpp"
 #include "muddle/network_id.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/gauge.hpp"
@@ -120,7 +121,7 @@ bool Dispatcher::Dispatch(PacketPtr packet)
   {
     FETCH_LOCK(promises_lock_);
     uint64_t const id =
-        Combine(packet->GetService(), packet->GetProtocol(), packet->GetMessageNum());
+        Combine(packet->GetService(), packet->GetChannel(), packet->GetMessageNum());
 
     auto it = promises_.find(id);
     if (it != promises_.end())

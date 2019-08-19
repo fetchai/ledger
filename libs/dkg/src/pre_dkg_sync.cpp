@@ -23,9 +23,9 @@ char const *LOGGING_NAME = "Pre-Dkg Sync";
 namespace fetch {
 namespace dkg {
 
-PreDkgSync::PreDkgSync(Muddle &muddle, uint8_t channel)
+PreDkgSync::PreDkgSync(muddle::MuddleEndpoint &muddle, uint8_t channel)
   : muddle_{muddle}
-  , rbc_{muddle_.AsEndpoint(), muddle_.identity().identifier(), cabinet_,
+  , rbc_{muddle_, muddle_.GetLocalAddress(), cabinet_,
          [this](MuddleAddress const &address, ConstByteArray const &payload) -> void {
            std::set<MuddleAddress>               connections;
            fetch::serializers::MsgPackSerializer serializer{payload};
@@ -103,11 +103,14 @@ void PreDkgSync::Connect()
 {
   for (auto const &peer : peers_)
   {
-    auto connections = muddle_.AsEndpoint().GetDirectlyConnectedPeers();
-    if (peer.first != muddle_.identity().identifier() &&
+    auto connections = muddle_.GetDirectlyConnectedPeers();
+    if (peer.first != muddle_.GetLocalAddress() &&
         std::find(connections.begin(), connections.end(), peer.first) == connections.end())
     {
+      // TODO(EJF): This pre sync needs a little bit of work
+#if 0
       muddle_.AddPeer(peer.second);
+#endif
     }
     else
     {
@@ -115,7 +118,7 @@ void PreDkgSync::Connect()
     }
   }
 
-  while (muddle_.AsEndpoint().GetDirectlyConnectedPeers().size() != peers_.size() - 1)
+  while (muddle_.GetDirectlyConnectedPeers().size() != peers_.size() - 1)
   {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }

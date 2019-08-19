@@ -21,6 +21,7 @@
 #include "muddle/network_id.hpp"
 #include "muddle/packet.hpp"
 #include "muddle/subscription.hpp"
+#include "muddle/address.hpp"
 
 #include <vector>
 
@@ -34,15 +35,23 @@ namespace muddle {
 class MuddleEndpoint
 {
 public:
-  using Address         = Packet::Address;
   using Payload         = Packet::Payload;
   using Response        = network::PromiseOf<Payload>;
   using SubscriptionPtr = std::shared_ptr<Subscription>;
   using AddressList     = std::vector<Packet::Address>;
+  using Options         = uint64_t;
+
+  /// @name Message Options
+  /// @{
+  static constexpr Options OPTION_DEFAULT  = 0;
+  static constexpr Options OPTION_EXCHANGE = 1ull;
+  /// @}
 
   // Construction / Destruction
   MuddleEndpoint()          = default;
   virtual ~MuddleEndpoint() = default;
+
+  virtual Address const &GetLocalAddress() const = 0;
 
   /**
    * Send an message to a target address
@@ -55,6 +64,9 @@ public:
   virtual void Send(Address const &address, uint16_t service, uint16_t channel,
                     Payload const &message) = 0;
 
+  virtual void Send(Address const &address, uint16_t service, uint16_t channel,
+                    Payload const &message, Options options) = 0;
+
   /**
    * Send a message to a target address
    *
@@ -66,6 +78,9 @@ public:
    */
   virtual void Send(Address const &address, uint16_t service, uint16_t channel,
                     uint16_t message_num, Payload const &payload) = 0;
+
+  virtual void Send(Address const &address, uint16_t service, uint16_t channel,
+                    uint16_t message_num, Payload const &payload, Options options) = 0;
 
   /**
    * Broadcast a message to all peers in the network

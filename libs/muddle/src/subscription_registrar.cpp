@@ -16,10 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "subscription_registrar.hpp"
+
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/logger.hpp"
 #include "core/mutex.hpp"
-#include "muddle/subscription_registrar.hpp"
 
 #include <cstdint>
 #include <string>
@@ -106,7 +107,7 @@ bool SubscriptionRegistrar::Dispatch(PacketPtr packet, Address transmitter)
 {
   bool success = false;
 
-  Index const  index = Combine(packet->GetService(), packet->GetProtocol());
+  Index const  index = Combine(packet->GetService(), packet->GetChannel());
   AddressIndex address_index{index, packet->GetTarget()};
 
   {
@@ -115,9 +116,7 @@ bool SubscriptionRegistrar::Dispatch(PacketPtr packet, Address transmitter)
     if (it != dispatch_map_.end())
     {
       // dispatch the packet to the subscription feed
-      success =
-          it->second.Dispatch(packet->GetSender(), packet->GetService(), packet->GetProtocol(),
-                              packet->GetMessageNum(), packet->GetPayload(), transmitter);
+      success = it->second.Dispatch(*packet, transmitter);
 
       if (!success)
       {
@@ -132,9 +131,7 @@ bool SubscriptionRegistrar::Dispatch(PacketPtr packet, Address transmitter)
     if (it != address_dispatch_map_.end())
     {
       // dispatch the packet to the subscription feed
-      success =
-          it->second.Dispatch(packet->GetSender(), packet->GetService(), packet->GetProtocol(),
-                              packet->GetMessageNum(), packet->GetPayload(), transmitter);
+      success = it->second.Dispatch(*packet, transmitter);
 
       if (!success)
       {

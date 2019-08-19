@@ -16,11 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "muddle.hpp"
+
 #include "core/byte_array/decoders.hpp"
 #include "core/macros.hpp"
 #include "crypto/ecdsa.hpp"
 #include "network/management/network_manager.hpp"
-#include "muddle/muddle.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
 #include "network/peer.hpp"
@@ -98,8 +99,8 @@ protected:
     managerA_->Start();
     managerB_->Start();
 
-    networkA_->Start({8000});
-    networkB_->Start({9000}, {Uri{"tcp://127.0.0.1:8000"}});
+    networkA_->Start({}, {8000});
+    networkB_->Start({"tcp://127.0.0.1:8000"}, {9000});
 
     sleep_for(seconds{1});
   }
@@ -218,8 +219,8 @@ protected:
 
 TEST_F(MuddleStressTests, ContinuousBiDirectionalTraffic)
 {
-  std::thread nodeA([this]() { ClientServer(networkA_->AsEndpoint(), NETWORK_B_PUBLIC_KEY); });
-  std::thread nodeB([this]() { ClientServer(networkB_->AsEndpoint(), NETWORK_A_PUBLIC_KEY); });
+  std::thread nodeA([this]() { ClientServer(networkA_->GetEndpoint(), NETWORK_B_PUBLIC_KEY); });
+  std::thread nodeB([this]() { ClientServer(networkB_->GetEndpoint(), NETWORK_A_PUBLIC_KEY); });
 
   nodeB.join();
   nodeA.join();
@@ -228,9 +229,9 @@ TEST_F(MuddleStressTests, ContinuousBiDirectionalTraffic)
 TEST_F(MuddleStressTests, ContinuousBiDirectionalExchanges)
 {
   std::thread nodeA(
-      [this]() { ClientServerExchange(networkA_->AsEndpoint(), NETWORK_B_PUBLIC_KEY); });
+      [this]() { ClientServerExchange(networkA_->GetEndpoint(), NETWORK_B_PUBLIC_KEY); });
   std::thread nodeB(
-      [this]() { ClientServerExchange(networkB_->AsEndpoint(), NETWORK_A_PUBLIC_KEY); });
+      [this]() { ClientServerExchange(networkB_->GetEndpoint(), NETWORK_A_PUBLIC_KEY); });
 
   nodeB.join();
   nodeA.join();

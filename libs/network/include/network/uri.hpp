@@ -55,7 +55,9 @@ public:
   Uri(Uri &&) noexcept = default;
   ~Uri()               = default;
 
+  bool Parse(char const *uri);
   bool Parse(ConstByteArray const &uri);
+  bool Parse(std::string const &uri);
 
   /// @name Basic Accessors
   /// @{
@@ -66,8 +68,22 @@ public:
 
   /// @name Type based Accessors
   /// @{
-  Peer const &          AsPeer() const;
-  ConstByteArray const &AsIdentity() const;
+  bool IsTcpPeer() const;
+  bool IsMuddleAddress() const;
+
+  Peer const & GetTcpPeer() const;
+  ConstByteArray const &GetMuddleAddress() const;
+
+  // TODO(EJF): Deprecate the following two:
+  Peer const &          AsPeer() const
+  {
+    return GetTcpPeer();
+  }
+
+  ConstByteArray const &AsIdentity() const
+  {
+    return GetMuddleAddress();
+  }
   /// @}
 
   // Operators
@@ -80,6 +96,8 @@ public:
 
   template <typename T, typename D>
   friend struct serializers::MapSerializer;
+
+  // scheduled for demolistion
 
   static Uri  FromIdentity(ConstByteArray const &identity);
   static bool IsUri(const std::string &possible_uri);
@@ -108,18 +126,6 @@ inline Uri::Scheme Uri::scheme() const
 
 inline Uri::ConstByteArray const &Uri::authority() const
 {
-  return authority_;
-}
-
-inline Peer const &Uri::AsPeer() const
-{
-  assert(scheme_ == Scheme::Tcp);
-  return tcp_;
-}
-
-inline Uri::ConstByteArray const &Uri::AsIdentity() const
-{
-  assert(scheme_ == Scheme::Muddle);
   return authority_;
 }
 
@@ -167,8 +173,7 @@ public:
   static inline void Deserialize(T &map, Type &x)
   {
     byte_array::ConstByteArray uri;
-    uint8_t                    key;
-    map.GetNextKeyPair(key, uri);  // TODO(tfr): check
+    map.ExpectKeyGetValue(URI, uri);
 
     if (!x.Parse(uri))
     {

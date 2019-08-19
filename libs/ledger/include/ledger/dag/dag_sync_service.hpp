@@ -25,7 +25,7 @@
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/transaction_verifier.hpp"
 #include "network/generics/requesting_queue.hpp"
-#include "muddle/muddle.hpp"
+#include "muddle/muddle_endpoint.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
 #include "muddle/subscription.hpp"
@@ -58,7 +58,6 @@ class DAGSyncService
 public:
   static constexpr char const *LOGGING_NAME = "DAGSyncService";
 
-  using Muddle         = muddle::Muddle;
   using MuddleEndpoint = muddle::MuddleEndpoint;
   using TransactionPtr = std::shared_ptr<Transaction>;
 

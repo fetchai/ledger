@@ -16,11 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "subscription_registrar.hpp"
+
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "muddle/subscription.hpp"
-#include "muddle/subscription_registrar.hpp"
 #include "network/uri.hpp"
 
 #include "gmock/gmock.h"
@@ -52,7 +53,7 @@ protected:
     auto packet = std::make_shared<Packet>();
 
     packet->SetService(service);
-    packet->SetProtocol(channel);
+    packet->SetChannel(channel);
 
     if (address.size() > 0)
     {

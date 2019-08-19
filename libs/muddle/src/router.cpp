@@ -16,16 +16,18 @@
 //
 //------------------------------------------------------------------------------
 
+#include "routing_message.hpp"
+#include "dispatcher.hpp"
+#include "muddle_register.hpp"
+#include "router.hpp"
+
 #include "core/byte_array/encoders.hpp"
 #include "core/logger.hpp"
 #include "core/serializers/base_types.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "core/service_ids.hpp"
 #include "crypto/fnv.hpp"
-#include "muddle/dispatcher.hpp"
-#include "muddle/muddle_register.hpp"
 #include "muddle/packet.hpp"
-#include "muddle/router.hpp"
 
 #include <algorithm>
 #include <array>
@@ -64,7 +66,7 @@ std::size_t GenerateEchoId(Packet const &packet)
   hash.Reset();
 
   auto const service = packet.GetService();
-  auto const channel = packet.GetProtocol();
+  auto const channel = packet.GetChannel();
   auto const counter = packet.GetMessageNum();
 
   hash.Update(packet.GetSenderRaw().data(), packet.GetSenderRaw().size());
@@ -120,23 +122,43 @@ ConstByteArray ToConstByteArray(Packet::RawAddress const &addr)
   return std::move(buffer);
 }
 
-/**
- * Generate a direct packet
- *
- * @param from The address of the sender
- * @param service The service identifier
- * @param channel The channel identifier
- * @return The packet
- */
-Router::PacketPtr FormatDirect(Packet::Address const &from, NetworkId const &network,
-                               uint16_t service, uint16_t channel)
+template <typename T>
+ConstByteArray EncodePayload(T const &msg)
 {
-  auto packet = std::make_shared<Packet>(from, network.value());
-  packet->SetService(service);
-  packet->SetProtocol(channel);
-  packet->SetDirect(true);
+  ConstByteArray payload{};
+  try
+  {
+    serializers::MsgPackSerializer serializer;
+    serializer << msg;
 
-  return packet;
+    payload = serializer.data();
+  }
+  catch (std::exception const &ex)
+  {
+    FETCH_LOG_ERROR(Router::LOGGING_NAME, "Unable to encode payload: ", ex.what());
+  }
+
+  return payload;
+}
+
+template <typename T>
+bool ExtractPayload(ConstByteArray const &payload, T &msg)
+{
+  bool success{false};
+
+  try
+  {
+    serializers::MsgPackSerializer serializer{payload};
+    serializer >> msg;
+
+    success = true;
+  }
+  catch (std::exception const &ex)
+  {
+    FETCH_LOG_ERROR(Router::LOGGING_NAME, "Unable to extract payload: ", ex.what());
+  }
+
+  return success;
 }
 
 /**
@@ -156,7 +178,7 @@ Router::PacketPtr FormatPacket(Packet::Address const &from, NetworkId const &net
 {
   auto packet = std::make_shared<Packet>(from, network.value());
   packet->SetService(service);
-  packet->SetProtocol(channel);
+  packet->SetChannel(channel);
   packet->SetMessageNum(counter);
   packet->SetTTL(ttl);
   packet->SetPayload(payload);
@@ -171,9 +193,9 @@ std::string DescribePacket(Packet const &packet)
 
   oss << "To: " << ToBase64(packet.GetTarget()) << " From: " << ToBase64(packet.GetSender())
       << " Route: " << NetworkId{packet.GetNetworkId()}.ToString() << ':' << packet.GetService()
-      << ':' << packet.GetProtocol() << ':' << packet.GetMessageNum()
-      << " Type: " << (packet.IsDirect() ? 'D' : 'R') << (packet.IsBroadcast() ? 'B' : 'T')
-      << (packet.IsExchange() ? 'X' : 'F') << " TTL: " << static_cast<std::size_t>(packet.GetTTL());
+      << ':' << packet.GetChannel() << ':' << packet.GetMessageNum()
+      << " Type: " << (packet.IsDirect() ? 'D' : 'R') << (packet.IsBroadcast() ? 'B' : 'U')
+      << (packet.IsExchange() ? 'X' : 'N') << " TTL: " << static_cast<std::size_t>(packet.GetTTL());
 
   return oss.str();
 }
@@ -217,13 +239,13 @@ Packet::Address Router::ConvertAddress(Packet::RawAddress const &address)
  * @param address The address of the current node
  * @param reg The connection register
  */
-Router::Router(NetworkId network_id, Address address, MuddleRegister const &reg,
+Router::Router(NetworkId network_id, Address address, MuddleRegister &reg,
                Dispatcher &dispatcher, Prover *prover, bool sign_broadcasts)
   : address_(std::move(address))
   , address_raw_(ConvertAddress(address_))
   , register_(reg)
   , dispatcher_(dispatcher)
-  , network_id_(std::move(network_id))
+  , network_id_(network_id)
   , prover_(prover)
   , sign_broadcasts_(prover && sign_broadcasts)
   , dispatch_thread_pool_(network::MakeThreadPool(NUMBER_OF_ROUTER_THREADS, "Router"))
@@ -279,7 +301,7 @@ Router::PacketPtr const &Router::Sign(PacketPtr const &p) const
 void Router::Route(Handle handle, PacketPtr packet)
 {
   LOG_STACK_TRACE_POINT;
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Routing packet: ", DescribePacket(*packet));
+  FETCH_LOG_TRACE(LOGGING_NAME, "RX: (conn: ", handle, ") ", DescribePacket(*packet));
 
   // discard all foreign packets
   if (packet->GetNetworkId() != network_id_.value())
@@ -316,32 +338,9 @@ void Router::Route(Handle handle, PacketPtr packet)
   }
 }
 
-/**
- * tells the router that it should add a connection. In practise this means that it should
- * begin identity exchange with the node and update the routing table accordingly.
- *
- * Before calling this function, the handle must be registered with the connection register. If
- * it isn't then the router will be unable to lookup the pointer to the `AbstractConnection` and
- * will not send the message.
- *
- * @param handle The handle to the connection
- */
-void Router::AddConnection(Handle handle)
+Address const &Router::GetLocalAddress() const
 {
-  LOG_STACK_TRACE_POINT;
-  // create and format the packet
-  auto packet = FormatDirect(address_, network_id_, SERVICE_MUDDLE, CHANNEL_ROUTING);
-  packet->SetExchange(true);  // signal that this is the request half of a direct message
-  Sign(packet);
-
-  // send it
-  SendToConnection(handle, packet);
-}
-
-void Router::RemoveConnection(Handle /*handle*/)
-{
-  // TODO(EJF): Need to tear down handle routes etc. Also in more complicated scenario implement
-  //            alternative routing
+  return address_;
 }
 
 /**
@@ -355,17 +354,18 @@ void Router::RemoveConnection(Handle /*handle*/)
 void Router::Send(Address const &address, uint16_t service, uint16_t channel,
                   Payload const &message)
 {
-  LOG_STACK_TRACE_POINT;
   // get the next counter for this message
   uint16_t const counter = dispatcher_.GetNextCounter();
 
-  // format the packet
-  auto packet =
-      FormatPacket(address_, network_id_, service, channel, counter, DEFAULT_TTL, message);
-  packet->SetTarget(address);
-  Sign(packet);
+  Send(address, service, channel, counter, message, OPTION_DEFAULT);
+}
 
-  RoutePacket(packet, false);
+void Router::Send(Address const &address, uint16_t service, uint16_t channel, Payload const &message,
+          Options options)
+{
+  uint16_t const counter = dispatcher_.GetNextCounter();
+
+  Send(address, service, channel, counter, message, options);
 }
 
 /**
@@ -380,11 +380,22 @@ void Router::Send(Address const &address, uint16_t service, uint16_t channel,
 void Router::Send(Address const &address, uint16_t service, uint16_t channel, uint16_t message_num,
                   Payload const &payload)
 {
-  LOG_STACK_TRACE_POINT;
+  Send(address, service, channel, message_num, payload, OPTION_DEFAULT);
+}
+
+void Router::Send(Address const &address, uint16_t service, uint16_t channel, uint16_t message_num,
+          Payload const &payload, Options options)
+{
   // format the packet
   auto packet =
       FormatPacket(address_, network_id_, service, channel, message_num, DEFAULT_TTL, payload);
   packet->SetTarget(address);
+
+  if (options & OPTION_EXCHANGE)
+  {
+    packet->SetExchange(true);
+  }
+
   Sign(packet);
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Exchange Response: ", ToBase64(address), " (", service, '-',
@@ -423,54 +434,6 @@ Router::RoutingTable Router::GetRoutingTable() const
 {
   FETCH_LOCK(routing_table_lock_);
   return routing_table_;
-}
-
-/**
- * Lookup a routing
- *
- * @return The address corresponding to a handle in the table.
- */
-bool Router::HandleToDirectAddress(const Router::Handle &handle, Router::Address &address) const
-{
-  FETCH_LOCK(routing_table_lock_);
-  auto address_it = direct_address_map_.find(handle);
-  if (address_it != direct_address_map_.end())
-  {
-    address = address_it->second;
-    return true;
-  }
-  return false;
-}
-
-/**
- * Helper function which prints out the content of the routing table and the direct_addres_map
- * @param prefix The prefix which will be used in the logging.
- */
-void Router::Debug(std::string const &prefix) const
-{
-  FETCH_LOCK(routing_table_lock_);
-  FETCH_LOG_WARN(LOGGING_NAME, prefix,
-                 "direct_address_map_: --------------------------------------");
-  for (auto const &routing : direct_address_map_)
-  {
-    auto output = ToBase64(routing.second);
-    FETCH_LOG_WARN(LOGGING_NAME, prefix, static_cast<std::string>(output),
-                   " -> handle=", std::to_string(routing.first), " direct=by definition");
-  }
-  FETCH_LOG_WARN(LOGGING_NAME, prefix,
-                 "direct_address_map_: --------------------------------------");
-
-  FETCH_LOG_WARN(LOGGING_NAME, prefix, "routing_table_: --------------------------------------");
-  for (auto const &routing : routing_table_)
-  {
-    ByteArray output(routing.first.size());
-    std::copy(routing.first.begin(), routing.first.end(), output.pointer());
-    FETCH_LOG_WARN(LOGGING_NAME, prefix, static_cast<std::string>(ToBase64(output)),
-                   " -> handle=", std::to_string(routing.second.handle),
-                   " direct=", routing.second.direct);
-  }
-  FETCH_LOG_WARN(LOGGING_NAME, prefix, "routing_table_: --------------------------------------");
-  registrar_.Debug(prefix);
 }
 
 /**
@@ -544,51 +507,7 @@ MuddleEndpoint::SubscriptionPtr Router::Subscribe(Address const &address, uint16
 
 MuddleEndpoint::AddressList Router::GetDirectlyConnectedPeers() const
 {
-  AddressList addresses{};
-
-  FETCH_LOCK(routing_table_lock_);
-  for (auto const &entry : routing_table_)
-  {
-    if (entry.second.direct)
-    {
-      // lookup the connection
-      auto connection = register_.LookupConnection(entry.second.handle).lock();
-
-      if (connection && connection->is_alive())
-      {
-        addresses.emplace_back(ConvertAddress(entry.first));
-      }
-    }
-  }
-
-  return addresses;
-}
-
-/**
- * Checks if there is an active connection with the given address.
- *
- * @param target The address of the peer we want to check
- * @return true if there is an active connection
- */
-bool Router::IsConnected(Address const &target) const
-{
-  LOG_STACK_TRACE_POINT;
-  FETCH_LOCK(routing_table_lock_);
-
-  auto raw_address = ConvertAddress(target);
-  auto iter        = routing_table_.find(raw_address);
-  bool connected   = false;
-
-  if (iter != routing_table_.end())
-  {
-    auto conn = register_.LookupConnection(iter->second.handle).lock();
-    if (conn)
-    {
-      connected = conn->is_alive();
-    }
-  }
-
-  return connected;
+  return register_.GetCurrentConnectionAddresses();
 }
 
 /**
@@ -600,19 +519,22 @@ bool Router::IsConnected(Address const &target) const
  * @param handle The handle to the connection
  * @param address The address associated with that handle
  * @param direct Signal that this connection is a direct connection
- * @return true if an update was performed, otherwise false
+ * @return The status corresponding to the update
  */
-bool Router::AssociateHandleWithAddress(Handle handle, Packet::RawAddress const &address,
-                                        bool direct)
+Router::UpdateStatus Router::AssociateHandleWithAddress(Handle                    handle,
+                                                        Packet::RawAddress const &address,
+                                                        bool                      direct)
 {
   LOG_STACK_TRACE_POINT;
-  bool update_complete = false;
+  UpdateStatus status{UpdateStatus::NO_CHANGE};
 
   // At the moment these updates (and by extension the routing logic) works on a first
   // come first served basis. This is not reliable longer term and will need tweaking
 
   // sanity check
   assert(handle);
+
+  bool display{false};
 
   // never allow the current node address to be added to the routing table
   if (address != address_raw_)
@@ -625,11 +547,22 @@ bool Router::AssociateHandleWithAddress(Handle handle, Packet::RawAddress const 
     bool const is_empty = (routing_data.handle == 0);
 
     // an update is only valid when the connection is direct.
-    bool const is_different = (routing_data.handle != handle) || (routing_data.direct != direct);
-    bool const is_update    = (routing_data.handle && direct && is_different);
+    bool const is_connection_update = (routing_data.handle != handle);
+    bool const is_duplicate_direct  = direct && routing_data.direct && is_connection_update;
+    bool const is_upgrade           = (!is_empty) && (!routing_data.direct) && direct;
+    bool const is_downgrade         = (!is_empty) && routing_data.direct && !direct;
+    bool const is_different         = (is_connection_update && !is_duplicate_direct && !is_downgrade) || is_upgrade;
+    bool const is_update            = (routing_data.handle && is_different);
 
     // update the routing table if required
-    if (is_empty || is_update)
+    if (is_duplicate_direct)
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Duplicate direct (detected)");
+
+      // we do not overwrite the routing table for additional direct connections
+      status = UpdateStatus::DUPLICATE_DIRECT;
+    }
+    else if (is_empty || is_update)
     {
       // replacing an existing entry
       Handle prev_handle = routing_data.handle;
@@ -638,50 +571,23 @@ bool Router::AssociateHandleWithAddress(Handle handle, Packet::RawAddress const 
       routing_data.handle = handle;
       routing_data.direct = direct;
 
-      // remove association of the previous handle with the address (if required)
-      if (prev_handle)
-      {
-        routing_table_handles_[prev_handle].erase(address);
-      }
-
-      // associate the new handle with the address
-      routing_table_handles_[handle].insert(address);
-
       // signal an update was made to the table
-      update_complete = true;
+      status  = UpdateStatus::UPDATED;
+      display = is_empty || is_upgrade;
 
-      if (direct)
-      {
-        direct_address_map_[handle] = ToConstByteArray(address);
-        if (prev_handle)
-        {
-          direct_address_map_.erase(prev_handle);
-        }
-      }
+      FETCH_LOG_TRACE(LOGGING_NAME, is_connection_update, "-", is_duplicate_direct, "-", is_upgrade, "-", is_different, "-", is_update);
+      FETCH_LOG_TRACE(LOGGING_NAME, "Handle was: ", prev_handle, " now: ", handle, " direct: ", direct, "-", routing_data.direct);
+      FETCH_LOG_VARIABLE(prev_handle);
     }
   }
 
-  if (update_complete)
+  if (display)
   {
-    char const *route_type = (direct) ? "direct" : "normal";
-
-    FETCH_LOG_INFO(LOGGING_NAME, "Adding ", route_type,
+    FETCH_LOG_INFO(LOGGING_NAME, "Adding ", ((direct) ? "direct" : "normal"),
                    " route for: ", ToBase64(ToConstByteArray(address)));
   }
 
-  return update_complete;
-}
-
-/**
- * Internal: Looks up the specified connection handle from a given address
- *
- * @param address The address to lookup the handle for.
- * @return The target handle for the connection, or zero on failure.
- */
-Router::Handle Router::LookupHandleFromAddress(Packet::Address const &address) const
-{
-  auto raddr = ConvertAddress(address);
-  return LookupHandle(raddr);
+  return status;
 }
 
 /**
@@ -742,54 +648,6 @@ Router::Handle Router::LookupRandomHandle(Packet::RawAddress const & /*address*/
 }
 
 /**
- * Kills active connection by closing the socket and removing the peer from the data structures.
- * @param handle The connection handle we want to remove
- * @param peer The address of the peer
- */
-void Router::KillConnection(Handle handle, Address const &peer)
-{
-  LOG_STACK_TRACE_POINT;
-  auto conn = register_.LookupConnection(handle).lock();
-  if (conn)
-  {
-    FETCH_LOCK(routing_table_lock_);
-    conn->Close();
-    routing_table_.erase(ConvertAddress(peer));
-    direct_address_map_.erase(handle);
-  }
-  else
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "No connection object available to KillConnection(", handle, ")");
-  }
-}
-
-/**
- * Kills active connection by closing the socket and removing the peer from the data structures.
- * @param handle The connection handle we want to remove
- */
-void Router::KillConnection(Handle handle)
-{
-  LOG_STACK_TRACE_POINT;
-  Address address;
-  {
-    FETCH_LOCK(routing_table_lock_);
-    auto it = direct_address_map_.find(handle);
-    if (it != direct_address_map_.end())
-    {
-      address = it->second;
-    }
-  }
-  if (address.size() > 0)
-  {
-    KillConnection(handle, address);
-  }
-  else
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Address not found for handle ", handle);
-  }
-}
-
-/**
  * Internal: Takes a given packet and sends it to the connection specified by the handle
  *
  * @param handle The handle to the network connection
@@ -811,7 +669,7 @@ void Router::SendToConnection(Handle handle, PacketPtr packet)
       // notify the dispatcher about the message so that it can associate the connection handle
       // with any pending promises. This is required to ensure clean handling of promises which
       // fail due to connection loss.
-      dispatcher_.NotifyMessage(handle, packet->GetService(), packet->GetProtocol(),
+      dispatcher_.NotifyMessage(handle, packet->GetService(), packet->GetChannel(),
                                 packet->GetMessageNum());
     }
 
@@ -820,7 +678,7 @@ void Router::SendToConnection(Handle handle, PacketPtr packet)
     buffer.Resize(packet->GetPacketSize());
     if (Packet::ToBuffer(*packet, buffer.pointer(), buffer.size()))
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Sending out: ", DescribePacket(*packet));
+      FETCH_LOG_TRACE(LOGGING_NAME, "TX: (conn: ", handle, ") ", DescribePacket(*packet));
 
       // dispatch to the connection object
       conn->Send(buffer);
@@ -845,6 +703,10 @@ void Router::SendToConnection(Handle handle, PacketPtr packet)
 void Router::RoutePacket(PacketPtr packet, bool external)
 {
   LOG_STACK_TRACE_POINT;
+
+  // black list support
+
+
   /// Step 1. Determine if we should drop this packet (for whatever reason)
   if (external)
   {
@@ -881,6 +743,8 @@ void Router::RoutePacket(PacketPtr packet, bool external)
     buffer.Resize(packet->GetPacketSize());
     if (Packet::ToBuffer(*packet, buffer.pointer(), buffer.size()))
     {
+      FETCH_LOG_DEBUG(LOGGING_NAME, "BX:           ", DescribePacket(*packet));
+
       // broadcast the data across the network
       register_.Broadcast(buffer);
     }
@@ -919,32 +783,12 @@ void Router::RoutePacket(PacketPtr packet, bool external)
  */
 void Router::DispatchDirect(Handle handle, PacketPtr packet)
 {
-  LOG_STACK_TRACE_POINT;
   FETCH_LOG_DEBUG(LOGGING_NAME, "==> Direct message sent to router");
 
-  if (SERVICE_MUDDLE == packet->GetService())
+  // dispatch to the direct message handler if needed
+  if (direct_message_handler_)
   {
-    if (CHANNEL_ROUTING == packet->GetProtocol())
-    {
-      if (blacklist_.Contains(packet->GetSenderRaw()))
-      {
-        // this is where we prevent incoming connections.
-        FETCH_LOG_WARN(LOGGING_NAME, "Blacklisting:", ToBase64(packet->GetSender()),
-                       "  killing handle=", handle);
-        KillConnection(handle);
-        return;
-      }
-
-      // make the association with
-      AssociateHandleWithAddress(handle, packet->GetSenderRaw(), true);
-
-      // send back a direct response if that is required
-      if (packet->IsExchange())
-      {
-        SendToConnection(
-            handle, Sign(FormatDirect(address_, network_id_, SERVICE_MUDDLE, CHANNEL_ROUTING)));
-      }
-    }
+    direct_message_handler_(handle, packet);
   }
 }
 
@@ -955,7 +799,6 @@ void Router::DispatchDirect(Handle handle, PacketPtr packet)
  */
 void Router::DispatchPacket(PacketPtr packet, Address transmitter)
 {
-  LOG_STACK_TRACE_POINT;
   dispatch_thread_pool_->Post([this, packet, transmitter]() {
     bool const isPossibleExchangeResponse = !packet->IsExchange();
 
@@ -975,7 +818,7 @@ void Router::DispatchPacket(PacketPtr packet, Address transmitter)
 
     FETCH_LOG_WARN(LOGGING_NAME,
                    "Unable to locate handler for routed message. Net: ", packet->GetNetworkId(),
-                   " Service: ", packet->GetService(), " Channel: ", packet->GetProtocol());
+                   " Service: ", packet->GetService(), " Channel: ", packet->GetChannel());
   });
 }
 
@@ -1056,34 +899,6 @@ void Router::Whitelist(Address const &target)
 bool Router::IsBlacklisted(Address const &target) const
 {
   return blacklist_.Contains(target);
-}
-
-void Router::DropPeer(Address const &peer)
-{
-  LOG_STACK_TRACE_POINT;
-  FETCH_LOG_WARN(LOGGING_NAME, "Dropping peer from router: ", ToBase64(peer));
-  Handle h = LookupHandle(ConvertAddress(peer));
-  if (h)
-  {
-    KillConnection(h, peer);
-  }
-  else
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Not dropping ", ToBase64(peer), " -- not connected");
-  }
-}
-
-void Router::DropHandle(Router::Handle handle, Address const &peer)
-{
-  if (handle)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Dropping peer from router: ", ToBase64(peer));
-    KillConnection(handle, peer);
-  }
-  else
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "DropHandle got invalid handle: ", handle);
-  }
 }
 
 }  // namespace muddle

@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "telemetry/telemetry.hpp"
+#include "telemetry/measurement.hpp"
 
 #include <algorithm>
 #include <initializer_list>

@@ -45,7 +45,7 @@ protected:
   {
     PacketPtr packet = std::make_shared<Packet>(address, 0);
     packet->SetService(service);
-    packet->SetProtocol(channel);
+    packet->SetChannel(channel);
     packet->SetMessageNum(counter);
     packet->SetPayload(payload);
 
@@ -93,7 +93,7 @@ TEST_F(PacketTests, CheckInvalidation)
   EXPECT_TRUE(packet_->IsStamped());
   EXPECT_TRUE(packet_->Verify());
 
-  packet_->SetProtocol(42);
+  packet_->SetChannel(42);
   EXPECT_FALSE(packet_->IsStamped());
   EXPECT_FALSE(packet_->Verify());
   packet_->Sign(*prover_);

@@ -19,7 +19,8 @@
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "dkg/rbc.hpp"
-#include "muddle/muddle.hpp"
+#include "muddle/muddle_endpoint.hpp"
+#include "network/uri.hpp"
 
 #include <unordered_map>
 
@@ -29,12 +30,11 @@ namespace dkg {
 class PreDkgSync
 {
 public:
-  using Muddle         = fetch::muddle::Muddle;
   using ConstByteArray = byte_array::ConstByteArray;
   using MuddleAddress  = ConstByteArray;
   using PeersList      = std::unordered_map<MuddleAddress, fetch::network::Uri>;
 
-  PreDkgSync(Muddle &muddle, uint8_t channel);
+  PreDkgSync(muddle::MuddleEndpoint &muddle, uint8_t channel);
   void ResetCabinet(PeersList const &peers);
   void Connect();
   bool ready();
@@ -42,7 +42,7 @@ public:
 private:
   using Cabinet = std::set<MuddleAddress>;
 
-  Muddle &                          muddle_;
+  muddle::MuddleEndpoint &          muddle_;
   PeersList                         peers_;
   Cabinet                           cabinet_;
   RBC                               rbc_;

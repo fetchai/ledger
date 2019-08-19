@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "muddle/dispatcher.hpp"
+#include "dispatcher.hpp"
 #include "muddle/network_id.hpp"
 
 #include "gmock/gmock.h"
@@ -45,7 +45,7 @@ protected:
   {
     PacketPtr packet = std::make_shared<Packet>();
     packet->SetService(service);
-    packet->SetProtocol(channel);
+    packet->SetChannel(channel);
     packet->SetMessageNum(counter);
 
     return packet;
