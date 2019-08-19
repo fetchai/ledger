@@ -164,10 +164,9 @@ public:
 
   Type operator()(SizeType const &index) const;
   template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, Type>::type &operator[](S const &i);
+  std::enable_if_t<std::is_integral<S>::value, Type> &operator[](S const &i);
   template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, Type>::type const &operator[](
-      S const &i) const;
+  std::enable_if_t<std::is_integral<S>::value, Type> const &operator[](S const &i) const;
 
   Tensor &operator=(ConstSliceType const &slice);
   Tensor &operator=(TensorSlice const &slice);
@@ -1120,8 +1119,8 @@ typename Tensor<T, C>::Type Tensor<T, C>::operator()(SizeType const &index) cons
  */
 template <typename T, typename C>
 template <typename S>
-typename std::enable_if<std::is_integral<S>::value, typename Tensor<T, C>::Type>::type
-    &Tensor<T, C>::operator[](S const &n)
+std::enable_if_t<std::is_integral<S>::value, typename Tensor<T, C>::Type> &Tensor<T, C>::operator[](
+    S const &n)
 {
   assert(static_cast<SizeType>(n) < size());
   if (shape_.size() == 1)
@@ -1149,7 +1148,7 @@ typename std::enable_if<std::is_integral<S>::value, typename Tensor<T, C>::Type>
  */
 template <typename T, typename C>
 template <typename S>
-typename std::enable_if<std::is_integral<S>::value, typename Tensor<T, C>::Type>::type const
+std::enable_if_t<std::is_integral<S>::value, typename Tensor<T, C>::Type> const
     &Tensor<T, C>::operator[](S const &i) const
 {
   return data_[i];

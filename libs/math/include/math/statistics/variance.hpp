@@ -27,7 +27,7 @@ namespace math {
 namespace statistics {
 
 template <typename A>
-inline typename A::Type Variance(A const &a)
+typename A::Type Variance(A const &a)
 {
   using DataType = typename A::Type;
 

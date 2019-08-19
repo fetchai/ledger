@@ -27,7 +27,7 @@ namespace math {
 namespace statistics {
 
 template <typename A>
-inline typename A::Type GeometricMean(A const &a)
+typename A::Type GeometricMean(A const &a)
 {
   using DataType = typename A::Type;
 

@@ -162,7 +162,7 @@ TYPED_TEST(EmbeddingsTest, saveparams_test)
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
   using SPType     = typename fetch::ml::ops::Embeddings<TensorType>::SPType;
-  using OpType     = typename fetch::ml::ops::Embeddings<TensorType>;
+  using OpType     = fetch::ml::ops::Embeddings<TensorType>;
 
   TypeParam weights(std::vector<uint64_t>({6, 10}));
 
@@ -216,8 +216,8 @@ TYPED_TEST(EmbeddingsTest, saveparams_backward)
 {
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
-  using OpType     = typename fetch::ml::ops::Embeddings<TensorType>;
-  using SPType     = typename OpType ::SPType;
+  using OpType     = fetch::ml::ops::Embeddings<TensorType>;
+  using SPType     = typename OpType::SPType;
 
   fetch::ml::ops::Embeddings<TypeParam> op(6, 10);
   TypeParam                             weights(std::vector<uint64_t>({6, 10}));
