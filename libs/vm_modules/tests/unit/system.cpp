@@ -36,11 +36,21 @@ public:
 
 TEST_F(SystemTests, no_args)
 {
+  std::vector<std::string>  args = {"executable", "scriptname"};
+  std::vector<const char *> argv;
+  for (auto const &s : args)
+  {
+    argv.push_back(s.c_str());
+  }
+
+  // parse the command line parameters
+  System::Parse(static_cast<int>(argv.size()), argv.data());
+
   System::Bind(toolkit.module());
 
   static char const *TEXT = R"(
     function main()
-      print(System.Argc());
+      printLn(System.Argc());
         for(i in 0:System.Argc())
           printLn(System.Argv(i));
         endfor
@@ -50,7 +60,7 @@ TEST_F(SystemTests, no_args)
   ASSERT_TRUE(toolkit.Compile(TEXT));
   ASSERT_TRUE(toolkit.Run());
 
-  ASSERT_EQ(stdout.str(), "0");
+  ASSERT_EQ(stdout.str(), "1\n" + args.at(0) + "\n");
 }
 
 TEST_F(SystemTests, some_args)
