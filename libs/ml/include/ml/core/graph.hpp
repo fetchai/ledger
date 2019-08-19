@@ -41,17 +41,15 @@ template <class T>
 class Graph
 {
 public:
-  using TensorType         = T;
-  using ArrayPtrType       = std::shared_ptr<TensorType>;
-  using SizeType           = typename TensorType::SizeType;
-  using DataType           = typename TensorType::Type;
-  using NodePtrType        = std::shared_ptr<fetch::ml::Node<TensorType>>;
-  using TrainablePtrType   = std::shared_ptr<fetch::ml::ops::Trainable<TensorType>>;
-  using GraphPtrType       = std::shared_ptr<fetch::ml::Graph<TensorType>>;
-  using PlaceholderType    = fetch::ml::ops::PlaceHolder<TensorType>;
-  using PlaceholderPtrType = std::shared_ptr<fetch::ml::ops::PlaceHolder<TensorType>>;
-  using RegPtrType         = std::shared_ptr<fetch::ml::regularisers::Regulariser<T>>;
-  using SPType             = GraphSaveableParams<TensorType>;
+  using TensorType       = T;
+  using ArrayPtrType     = std::shared_ptr<TensorType>;
+  using SizeType         = typename TensorType::SizeType;
+  using DataType         = typename TensorType::Type;
+  using NodePtrType      = typename std::shared_ptr<fetch::ml::Node<TensorType>>;
+  using TrainablePtrType = typename std::shared_ptr<fetch::ml::ops::Trainable<TensorType>>;
+  using PlaceholderType  = typename fetch::ml::ops::PlaceHolder<TensorType>;
+  using RegPtrType       = std::shared_ptr<fetch::ml::regularisers::Regulariser<T>>;
+  using SPType           = GraphSaveableParams<TensorType>;
 
   virtual ~Graph() = default;
   Graph()          = default;
@@ -96,15 +94,15 @@ public:
 
   template <class OperationType>
   meta::IfIsTrainable<TensorType, OperationType, void> AddTrainable(
-      std::string const &name, std::shared_ptr<Node<TensorType>> op);
+      std::string const &name, std::shared_ptr<Node<TensorType>> node_ptr);
 
   template <class OperationType>
   meta::IfIsGraph<TensorType, OperationType, void> AddTrainable(
-      std::string const &name, std::shared_ptr<Node<TensorType>> op);
+      std::string const &name, std::shared_ptr<Node<TensorType>> node_ptr);
 
   template <class OperationType>
   meta::IfIsNotGraphOrTrainable<TensorType, OperationType, void> AddTrainable(
-      std::string const &name, std::shared_ptr<Node<TensorType>> op);
+      std::string const &name, std::shared_ptr<Node<TensorType>> node_ptr);
 
 private:
   void ApplyRegularisation();
@@ -117,7 +115,7 @@ private:
 protected:
   std::unordered_map<std::string, NodePtrType> nodes_;
   std::unordered_map<std::string, SizeType>    trainable_lookup_;
-  std::vector<TrainablePtrType>                trainable_;
+  std::vector<NodePtrType>                     trainable_nodes_;
 };
 
 /**
@@ -129,9 +127,10 @@ protected:
 template <typename TensorType>
 void Graph<TensorType>::SetRegularisation(RegPtrType regulariser, DataType regularisation_rate)
 {
-  for (auto &t : trainable_)
+  for (auto &t : trainable_nodes_)
   {
-    t->SetRegularisation(regulariser, regularisation_rate);
+    auto tmp = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
+    tmp->SetRegularisation(regulariser, regularisation_rate);
   }
 }
 
@@ -146,16 +145,11 @@ template <typename TensorType>
 bool Graph<TensorType>::SetRegularisation(std::string node_name, RegPtrType regulariser,
                                           DataType regularisation_rate)
 {
-  if (nodes_[node_name])
-  {
-    trainable_[node_name]->SetRegularisation(regulariser, regularisation_rate);
-    return true;
-  }
-  else
-  {
-    // Trainable doesn't exist
-    return false;
-  }
+  NodePtrType t             = trainable_nodes_.at(trainable_lookup_.at(node_name));
+  auto        trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
+  trainable_ptr->SetRegularisation(regulariser, regularisation_rate);
+
+  return true;
 }
 
 /**
@@ -203,7 +197,14 @@ template <typename TensorType>
 void Graph<TensorType>::BackPropagateError(std::string const &node_name)
 {
   TensorType error_signal;
-  nodes_[node_name]->BackPropagateSignal(error_signal);
+  if (nodes_.find(node_name) != nodes_.end())
+  {
+    nodes_[node_name]->BackPropagateSignal(error_signal);
+  }
+  else
+  {
+    throw std::runtime_error("Cannot backpropagate: node [" + node_name + "] not in graph");
+  }
 
   // Applies regularisation to all trainables based on their configuration
   ApplyRegularisation();
@@ -218,7 +219,14 @@ template <typename TensorType>
 void Graph<TensorType>::BackPropagateSignal(std::string const &node_name,
                                             TensorType const & error_signal)
 {
-  nodes_[node_name]->BackPropagateSignal(error_signal);
+  if (nodes_.find(node_name) != nodes_.end())
+  {
+    nodes_[node_name]->BackPropagateSignal(error_signal);
+  }
+  else
+  {
+    throw std::runtime_error("Cannot backpropagate signal: node [" + node_name + "] not in graph");
+  }
 }
 
 /**
@@ -228,18 +236,22 @@ void Graph<TensorType>::BackPropagateSignal(std::string const &node_name,
 template <typename TensorType>
 void Graph<TensorType>::Step(DataType learning_rate)
 {
-  for (auto &t : trainable_)
+  for (auto &t : trainable_nodes_)
   {
-    t->Step(learning_rate);
+    auto trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
+    trainable_ptr->Step(learning_rate);
+    ResetGraphCache(t, false);
   }
 }
 
 template <typename TensorType>
 void Graph<TensorType>::ApplyRegularisation()
 {
-  for (auto &t : trainable_)
+  for (auto &t : trainable_nodes_)
   {
-    t->ApplyRegularisation();
+    auto trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
+    trainable_ptr->ApplyRegularisation();
+    ResetGraphCache(t, false);  // ApplyRegularisation changes the weights so the cache is invalid
   }
 }
 
@@ -260,7 +272,7 @@ meta::IfIsShareable<TensorType, OperationType, std::string> Graph<TensorType>::A
   std::string updated_name;
   bool        is_duplicate = UpdateVariableName<OperationType>(node_name, updated_name);
 
-  std::shared_ptr<fetch::ml::Node<TensorType>> node_ptr;
+  NodePtrType node_ptr;
   if (!is_duplicate)
   {
     // Instantiate the node based on params
@@ -308,7 +320,7 @@ meta::IfIsNotShareable<TensorType, OperationType, std::string> Graph<TensorType>
   std::string updated_name;
   UpdateVariableName<OperationType>(node_name, updated_name);
 
-  std::shared_ptr<fetch::ml::Node<TensorType>> node_ptr;
+  NodePtrType node_ptr;
   // Instantiate the node based on params
   node_ptr = std::make_shared<Node<TensorType>>(
       OperationType::OpCode(), updated_name,
@@ -401,8 +413,7 @@ typename Graph<TensorType>::NodePtrType Graph<TensorType>::GetNode(
 template <typename TensorType>
 void Graph<TensorType>::SetInput(std::string const &node_name, TensorType data)
 {
-  PlaceholderPtrType placeholder =
-      std::dynamic_pointer_cast<PlaceholderType>(nodes_.at(node_name)->GetOp());
+  auto placeholder = std::dynamic_pointer_cast<PlaceholderType>(nodes_.at(node_name)->GetOp());
 
   if (placeholder)
   {
@@ -439,7 +450,9 @@ struct fetch::ml::StateDict<TensorType> Graph<TensorType>::StateDict() const
   struct fetch::ml::StateDict<TensorType> d;
   for (auto const &t : trainable_lookup_)
   {
-    d.dict_.emplace(t.first, trainable_.at(t.second)->StateDict());
+    auto trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(
+        trainable_nodes_.at(t.second)->GetOp());
+    d.dict_.emplace(t.first, trainable_ptr->StateDict());
   }
   return d;
 }
@@ -454,7 +467,9 @@ void Graph<TensorType>::LoadStateDict(struct fetch::ml::StateDict<TensorType> co
   assert(!dict.weights_);
   for (auto const &t : trainable_lookup_)
   {
-    trainable_.at(t.second)->LoadStateDict(dict.dict_.at(t.first));
+    auto trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(
+        trainable_nodes_.at(t.second)->GetOp());
+    trainable_ptr->LoadStateDict(dict.dict_.at(t.first));
   }
 }
 
@@ -467,9 +482,10 @@ std::vector<TensorType> Graph<TensorType>::get_weights() const
 {
   std::vector<TensorType> ret;
 
-  for (auto const &t : trainable_)
+  for (auto const &t : trainable_nodes_)
   {
-    ret.emplace_back(t->get_weights());
+    auto trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
+    ret.emplace_back(trainable_ptr->get_weights());
   }
   return std::move(ret);
 }
@@ -484,9 +500,10 @@ std::vector<TensorType> Graph<TensorType>::GetGradients() const
 {
   std::vector<TensorType> ret;
 
-  for (auto const &t : trainable_)
+  for (auto const &t : trainable_nodes_)
   {
-    ret.emplace_back(t->get_gradients());
+    auto trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
+    ret.emplace_back(trainable_ptr->get_gradients());
   }
   return std::move(ret);
 }
@@ -497,9 +514,10 @@ std::vector<TensorType> Graph<TensorType>::GetGradients() const
 template <typename TensorType>
 void Graph<TensorType>::ResetGradients()
 {
-  for (auto const &t : trainable_)
+  for (auto const &t : trainable_nodes_)
   {
-    t->ResetGradients();
+    auto trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
+    trainable_ptr->ResetGradients();
   }
 }
 
@@ -511,9 +529,11 @@ template <typename TensorType>
 void Graph<TensorType>::ApplyGradients(std::vector<TensorType> &grad)
 {
   auto grad_it = grad.begin();
-  for (auto const &t : trainable_)
+  for (auto const &t : trainable_nodes_)
   {
-    t->ApplyGradient(*grad_it);
+    auto trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
+    trainable_ptr->ApplyGradient(*grad_it);
+    ResetGraphCache(t, false);
     ++grad_it;
   }
 }
@@ -554,8 +574,8 @@ meta::IfIsTrainable<TensorType, OperationType, void> Graph<TensorType>::AddTrain
   auto op_ptr = node_ptr->GetOp();
 
   // it must be safe to cast this op down to a weight
-  trainable_.emplace_back(std::dynamic_pointer_cast<ops::Weights<TensorType>>(op_ptr));
-  trainable_lookup_[name] = trainable_.size() - 1;
+  trainable_nodes_.emplace_back(node_ptr);
+  trainable_lookup_[name] = trainable_nodes_.size() - 1;
 }
 
 /**
@@ -579,8 +599,8 @@ meta::IfIsGraph<TensorType, OperationType, void> Graph<TensorType>::AddTrainable
     std::string resolved_name;
     UpdateVariableName<OperationType>(node_name, resolved_name);
 
-    trainable_.emplace_back(concrete_op_ptr->trainable_.at(trainable.second));
-    trainable_lookup_[resolved_name] = trainable_.size() - 1;
+    trainable_nodes_.emplace_back(concrete_op_ptr->trainable_nodes_.at(trainable.second));
+    trainable_lookup_[resolved_name] = trainable_nodes_.size() - 1;
   }
 }
 
@@ -595,10 +615,10 @@ meta::IfIsGraph<TensorType, OperationType, void> Graph<TensorType>::AddTrainable
 template <typename TensorType>
 template <class OperationType>
 meta::IfIsNotGraphOrTrainable<TensorType, OperationType, void> Graph<TensorType>::AddTrainable(
-    std::string const &name, std::shared_ptr<Node<TensorType>> op)
+    std::string const &name, std::shared_ptr<Node<TensorType>> node_ptr)
 {
   FETCH_UNUSED(name);
-  FETCH_UNUSED(op);
+  FETCH_UNUSED(node_ptr);
 }
 
 /**
@@ -644,10 +664,15 @@ bool Graph<TensorType>::UpdateVariableName(std::string const &name, std::string 
  * @return ret is vector containing pointers to all trainables
  */
 template <typename TensorType>
-std::vector<typename std::shared_ptr<fetch::ml::ops::Trainable<TensorType>>>
-Graph<TensorType>::GetTrainables()
+std::vector<typename Graph<TensorType>::TrainablePtrType> Graph<TensorType>::GetTrainables()
 {
-  return trainable_;
+  std::vector<TrainablePtrType> ret;
+  for (auto &t : trainable_nodes_)
+  {
+    auto trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
+    ret.emplace_back(trainable_ptr);
+  }
+  return ret;
 }
 
 }  // namespace ml
