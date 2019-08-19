@@ -21,10 +21,11 @@
 namespace fetch {
 namespace commandline {
 
-void ParamsParser::Parse(int argc, char **argv)
+void ParamsParser::Parse(int argc, const char *const argv[])
 {
-  arg_count_        = static_cast<std::size_t>(argc);
-  std::size_t sargs = std::size_t(argc);
+  auto sargs = std::size_t(argc);
+  params_.clear();
+  args_.clear();
 
   for (std::size_t i = 0; i < sargs; ++i)
   {
