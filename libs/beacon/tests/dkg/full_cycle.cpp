@@ -125,7 +125,7 @@ void RunHonestComitteeRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
                               uint16_t numbers_per_aeon = 10, double threshold = 0.5)
 {
   std::cout << "- Setup" << std::endl;
-  uint16_t number_of_nodes = number_of_cabinets * cabinet_size;
+  uint16_t number_of_nodes = static_cast<uint16_t>(number_of_cabinets * cabinet_size);
   // Initialising the BLS library
   crypto::bls::Init();
 
@@ -189,9 +189,9 @@ void RunHonestComitteeRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
       std::cout << "- Scheduling round " << i << std::endl;
       for (auto &member : committee)
       {
-        member->beacon_service.StartNewCabinet(cabinet,
-                                               static_cast<uint32_t>(cabinet.size() * threshold),
-                                               i * numbers_per_aeon, (i + 1) * numbers_per_aeon);
+        member->beacon_service.StartNewCabinet(
+            cabinet, static_cast<uint32_t>(static_cast<double>(cabinet.size()) * threshold),
+            i * numbers_per_aeon, (i + 1) * numbers_per_aeon);
       }
     }
 
@@ -239,5 +239,5 @@ TEST(beacon, full_cycle)
 {
   SetGlobalLogLevel(LogLevel::CRITICAL);
   // TODO(tfr): Heuristically fails atm. RunHonestComitteeRenewal(100, 4, 4, 4, 10, 0.5);
-  RunHonestComitteeRenewal(400, 4, 4, 4, 10, 0.5);
+  RunHonestComitteeRenewal(400, 4, 2, 2, 10, 0.5);
 }
