@@ -258,7 +258,7 @@ TYPED_TEST(RandomisedReluTest, saveparams_backward_3d_tensor_test)
   using TensorType = TypeParam;
   using SizeType   = typename TypeParam::SizeType;
   using OpType     = typename fetch::ml::ops::RandomisedRelu<TensorType>;
-  using SPType     = typename OpType ::SPType;
+  using SPType     = typename OpType::SPType;
 
   TensorType          data({2, 2, 2});
   TensorType          error({2, 2, 2});

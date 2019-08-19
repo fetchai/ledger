@@ -316,7 +316,7 @@ TYPED_TEST(MaxPool2DTest, saveparams_backward_2_channels_test)
   using TensorType = TypeParam;
   using SizeType   = typename TypeParam::SizeType;
   using OpType     = typename fetch::ml::ops::MaxPool2D<TensorType>;
-  using SPType     = typename OpType ::SPType;
+  using SPType     = typename OpType::SPType;
 
   SizeType const channels_size = 2;
   SizeType const input_width   = 5;

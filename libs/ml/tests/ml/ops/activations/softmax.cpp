@@ -403,7 +403,7 @@ TYPED_TEST(SoftmaxTest, saveparams_backward_3d_tensor_axes_0_2_test)
   using TensorType = TypeParam;
   using SizeType   = typename TypeParam::SizeType;
   using OpType     = typename fetch::ml::ops::Softmax<TensorType>;
-  using SPType     = typename OpType ::SPType;
+  using SPType     = typename OpType::SPType;
 
   TensorType          data({2, 2, 2});
   TensorType          error({2, 2, 2});

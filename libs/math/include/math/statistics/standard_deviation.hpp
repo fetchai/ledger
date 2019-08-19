@@ -27,7 +27,7 @@ namespace math {
 namespace statistics {
 
 template <typename A>
-inline typename A::Type StandardDeviation(A const &a)
+typename A::Type StandardDeviation(A const &a)
 {
   using type = typename A::Type;
 
