@@ -102,11 +102,5 @@ private:
   /// @}
 };
 
-inline uint16_t Dispatcher::GetNextCounter()
-{
-  FETCH_LOCK(counter_lock_);
-  return counter_++;
-}
-
 }  // namespace muddle
 }  // namespace fetch

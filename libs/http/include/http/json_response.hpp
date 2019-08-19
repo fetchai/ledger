@@ -17,30 +17,25 @@
 //
 //------------------------------------------------------------------------------
 
-#include "http/mime_types.hpp"
 #include "http/response.hpp"
-#include "variant/variant.hpp"
-
-#include <sstream>
+#include "http/status.hpp"
 
 namespace fetch {
+
+namespace byte_array {
+class ConstByteArray;
+}
+namespace variant {
+class Variant;
+}
+
 namespace http {
 
-inline http::HTTPResponse CreateJsonResponse(byte_array::ConstByteArray const &body,
-                                             Status status = Status::SUCCESS_OK)
-{
-  static auto const jsonMimeType = mime_types::GetMimeTypeFromExtension(".json");
-  return http::HTTPResponse(body, jsonMimeType, status);
-}
+http::HTTPResponse CreateJsonResponse(byte_array::ConstByteArray const &body,
+                                      Status status = Status::SUCCESS_OK);
 
-inline http::HTTPResponse CreateJsonResponse(variant::Variant const &doc,
-                                             Status                  status = Status::SUCCESS_OK)
-{
-  static auto const jsonMimeType = mime_types::GetMimeTypeFromExtension(".json");
-  std::stringstream body;
-  body << doc;
-  return http::HTTPResponse(body.str(), jsonMimeType, status);
-}
+http::HTTPResponse CreateJsonResponse(variant::Variant const &doc,
+                                      Status                  status = Status::SUCCESS_OK);
 
 }  // namespace http
 }  // namespace fetch

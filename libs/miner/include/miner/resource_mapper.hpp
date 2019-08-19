@@ -17,26 +17,16 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/const_byte_array.hpp"
-#include "ledger/identifier.hpp"
-#include "storage/resource_mapper.hpp"
-
 #include <cstdint>
-#include <string>
 
 namespace fetch {
+namespace byte_array {
+class ConstByteArray;
+}
 namespace miner {
 
-inline uint32_t MapResourceToLane(byte_array::ConstByteArray const &resource,
-                                  byte_array::ConstByteArray const &contract,
-                                  uint32_t                          log2_num_lanes)
-{
-  ledger::Identifier identifier(contract);
-
-  return storage::ResourceAddress{
-      byte_array::ByteArray{}.Append(identifier.name_space(), ".state.", resource)}
-      .lane(log2_num_lanes);
-}
+uint32_t MapResourceToLane(byte_array::ConstByteArray const &resource,
+                           byte_array::ConstByteArray const &contract, uint32_t log2_num_lanes);
 
 }  // namespace miner
 }  // namespace fetch
