@@ -152,7 +152,7 @@ TYPED_TEST(TransposeTest, saveparams_backward_batch_test)
 {
   using TensorType = TypeParam;
   using OpType     = typename fetch::ml::ops::Transpose<TensorType>;
-  using SPType     = typename OpType ::SPType;
+  using SPType     = typename OpType::SPType;
   TypeParam a({4, 5, 2});
   TypeParam error({5, 4, 2});
 

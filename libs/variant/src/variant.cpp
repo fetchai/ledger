@@ -251,5 +251,325 @@ std::ostream &operator<<(std::ostream &stream, Variant const &variant)
   return stream;
 }
 
+Variant::Type Variant::type() const
+{
+  return type_;
+}
+
+bool Variant::IsUndefined() const
+{
+  return type() == Type::UNDEFINED;
+}
+
+bool Variant::IsInteger() const
+{
+  return type() == Type::INTEGER;
+}
+
+bool Variant::IsFloatingPoint() const
+{
+  return type() == Type::FLOATING_POINT;
+}
+
+bool Variant::IsFixedPoint() const
+{
+  return type() == Type::FIXED_POINT;
+}
+
+bool Variant::IsBoolean() const
+{
+  return type() == Type::BOOLEAN;
+}
+
+bool Variant::IsString() const
+{
+  return type() == Type::STRING;
+}
+
+bool Variant::IsNull() const
+{
+  return type() == Type::NULL_VALUE;
+}
+
+bool Variant::IsArray() const
+{
+  return type() == Type::ARRAY;
+}
+
+bool Variant::IsObject() const
+{
+  return type() == Type::OBJECT;
+}
+
+/**
+ * Creates and returns a Null variant
+ *
+ * @return A null variant
+ */
+Variant Variant::Null()
+{
+  Variant v;
+  v.type_ = Type::NULL_VALUE;
+  return v;
+}
+
+/**
+ * Creates and returns a undefined variant
+ *
+ * @return An undefined variant
+ */
+Variant Variant::Undefined()
+{
+  return {};
+}
+
+/**
+ * Creates and returns an array of specified size containing undefined elements
+ *
+ * @param elements The size of the array variant
+ * @return The generated array
+ */
+Variant Variant::Array(std::size_t elements)
+{
+  Variant v;
+  v.type_ = Type::ARRAY;
+  v.ResizeArray(elements);
+
+  return v;
+}
+
+/**
+ * Creates and returns an empty object variant
+ *
+ * @return The generated object
+ */
+Variant Variant::Object()
+{
+  Variant v;
+  v.type_ = Type::OBJECT;
+
+  return v;
+}
+
+/**
+ * (Deep) copy construct a variant from another variant
+ *
+ * @param other The other variant to copy from
+ */
+Variant::Variant(Variant const &other)
+  : Variant()
+{
+  *this = other;
+}
+
+/**
+ * Raw String constructor
+ *
+ * @param value The raw string value to be set
+ */
+Variant::Variant(char const *value)
+  : Variant()
+{
+  type_   = Type::STRING;
+  string_ = value;
+}
+
+/**
+ * Raw string assignment operator
+ *
+ * @param value The value to be assigned
+ * @return Reference to the current object
+ */
+Variant &Variant::operator=(char const *value)
+{
+  type_   = Type::STRING;
+  string_ = ConstByteArray{value};
+
+  return *this;
+}
+
+/**
+ * Array index access operator
+ *
+ * @param index The index in the array to lookup
+ * @return The reference to the variant stored at that index
+ * @throws std::runtime_error if the variant doesn't exist
+ */
+Variant &Variant::operator[](std::size_t index)
+{
+  if (type() != Type::ARRAY)
+  {
+    throw std::runtime_error("Unable to access index of non-array variant");
+  }
+
+  return array_.at(index);
+}
+
+/**
+ * Array index access operator
+ *
+ * @param index The index in the array to lookup
+ * @return The reference to the variant stored at that index
+ * @throws std::runtime_error if the variant doesn't exist
+ */
+Variant const &Variant::operator[](std::size_t index) const
+{
+  if (type() != Type::ARRAY)
+  {
+    throw std::runtime_error("Unable to access index of non-array variant");
+  }
+
+  return array_.at(index);
+}
+
+/**
+ * Object access operator
+ *
+ * Creates or retrieves the currently stored value given a specified key
+ *
+ * @param key The key to lookup
+ * @return The reference to the created or existing variant
+ */
+Variant &Variant::operator[](ConstByteArray const &key)
+{
+  if (type_ != Type::OBJECT)
+  {
+    throw std::runtime_error("Unable to access keys of non-object variant");
+  }
+
+  auto it = object_.find(key);
+  if (it != object_.end())
+  {
+    return *(it->second);
+  }
+
+  // allocate an element
+  auto variant = std::make_unique<Variant>();
+
+  // update the map
+  object_.emplace(key, std::move(variant));
+
+  // return the variant
+  return *object_[key];
+}
+
+/**
+ * Read only Object access operator
+ *
+ * @param key The key to lookup
+ * @return The reference to the existing variant
+ * @throws std::runtime_error when the variant is not an object and std::out_of_range when the key
+ * is not present
+ */
+Variant const &Variant::operator[](ConstByteArray const &key) const
+{
+  if (type_ != Type::OBJECT)
+  {
+    throw std::runtime_error("Unable to access keys of non-object variant");
+  }
+
+  auto it = object_.find(key);
+  if (it == object_.end())
+  {
+    throw std::out_of_range("Key not present in object");
+  }
+
+  return *(it->second);
+}
+
+/**
+ * Checks to see if a specified key is present in the object
+ *
+ * @param key The key to lookup
+ * @return true if the key exists, otherwise false
+ * @throws std::runtime_error if the variant is not an object
+ */
+bool Variant::Has(ConstByteArray const &key) const
+{
+  if (type_ != Type::OBJECT)
+  {
+    throw std::runtime_error("Unable to access keys of non-object variant");
+  }
+
+  return object_.find(key) != object_.end();
+}
+
+/**
+ * Calculates the size of the variant object.
+ *
+ * The size of the variant means different things depending on the type of the variant object:
+ *
+ * string - The length of the string
+ * object - The number of keys present in the object
+ * array - The number of elements in the array
+ * otherwise - 0
+ *
+ * @return The calculated length
+ */
+std::size_t Variant::size() const
+{
+  std::size_t length{0};
+
+  switch (type_)
+  {
+  case Type::UNDEFINED:
+  case Type::INTEGER:
+  case Type::FLOATING_POINT:
+  case Type::FIXED_POINT:
+  case Type::BOOLEAN:
+  case Type::NULL_VALUE:
+    break;
+
+  case Type::STRING:
+    length = string_.size();
+    break;
+
+  case Type::ARRAY:
+    length = array_.size();
+    break;
+
+  case Type::OBJECT:
+    length = object_.size();
+    break;
+  }
+
+  return length;
+}
+
+/**
+ * Update the size of the array to match the new given length
+ *
+ * When increasing the size of the array new elements are added to the end of the array and are
+ * default initialised (i.e. they are "undefined")
+ *
+ * When removing elements from the array these two are also removed starting from the end of the
+ * array
+ *
+ * @param length The new length of the array
+ * @throws std::runtime_error if the variant it not an array
+ */
+void Variant::ResizeArray(std::size_t length)
+{
+  // ensure the at the element is of the correct type
+  if (type_ != Type::ARRAY)
+  {
+    throw std::runtime_error("Unable to resize non-array type");
+  }
+
+  // increase the array size
+  array_.resize(length);
+}
+
+/**
+ * Check inequality between two elements
+ *
+ * @param other The other variant to check against
+ * @return true if not equal, otherwise false
+ */
+bool Variant::operator!=(Variant const &other) const
+{
+  return !(*this == other);
+}
+
 }  // namespace variant
 }  // namespace fetch

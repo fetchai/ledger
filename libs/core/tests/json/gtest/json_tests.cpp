@@ -18,7 +18,6 @@
 
 #include "core/json/document.hpp"
 #include "core/json/exceptions.hpp"
-#include "json_long_strings.hpp"
 
 #include "gtest/gtest.h"
 
@@ -44,6 +43,17 @@ std::ostream &operator<<(std::ostream &os, TestCase const &test_case)
 
   return os;
 }
+
+std::string const n_structure_open_array_object = []() {
+  std::ostringstream out;
+
+  for (std::size_t i = 0; i < 215000; ++i)
+  {
+    out << "[{\"\":";
+  }
+
+  return out.str();
+}();
 
 static const TestCase
     TEST_CASES
