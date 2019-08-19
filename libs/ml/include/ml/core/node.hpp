@@ -207,9 +207,6 @@ std::shared_ptr<T> Node<T>::Evaluate(bool is_training)
     cached_output_status_ = CachedOutputState::VALID_CACHE;
   }
 
-  std::cout << name_ << std::endl;
-  std::cout << cached_output_.View(0).Copy().ToString() << std::endl << std::endl;
-
   return std::make_shared<T>(cached_output_);
 }
 
