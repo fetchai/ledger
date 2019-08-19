@@ -379,7 +379,7 @@ bool Identifier::empty() const
  *
  * @param name The fully qualified name
  */
-bool Identifier::Parse(ConstByteArray &&name)
+bool Identifier::Parse(ConstByteArray name)
 {
   return Tokenise(std::move(name));
 }

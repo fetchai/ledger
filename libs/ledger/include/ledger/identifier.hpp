@@ -37,6 +37,7 @@ class Identifier
 public:
   enum class Type
   {
+    INVALID,
     NORMAL,
     SMART_CONTRACT
   };
@@ -62,7 +63,7 @@ public:
   Identifier GetParent() const;
 
   // Parsing
-  bool Parse(ConstByteArray &&name);
+  bool Parse(ConstByteArray name);
 
   // Comparison
   bool IsParentTo(Identifier const &other) const;
@@ -83,7 +84,7 @@ private:
   bool Tokenise(ConstByteArray &&full_name);
   void UpdateType();
 
-  Type           type_;
+  Type           type_{Type::INVALID};
   ConstByteArray full_{};    ///< The fully qualified name
   Tokens         tokens_{};  ///< The individual elements of the name
 };
