@@ -64,7 +64,6 @@ public:
 private:
   std::map<std::string, std::string> params_{};
   std::vector<std::string>           args_{};
-  std::size_t                        arg_count_{0};
 };
 
 template <typename T>

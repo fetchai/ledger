@@ -26,19 +26,19 @@ namespace vm_modules {
 class Parameters
 {
 public:
-  using ParamParser = fetch::commandline::ParamsParser;
-  using ArgList     = std::vector<const char *>;
-  using StringList  = std::vector<std::string>;
+  using ParamsParser = fetch::commandline::ParamsParser;
+  using ArgList      = std::vector<const char *>;
+  using StringList   = std::vector<std::string>;
 
   void Parse(int argc, const char *const argv[]);
 
-  ParamParser const &program() const;
+  ParamsParser const &program() const;
 
   StringList const &script() const;
 
 private:
-  ParamParser program_params_{};
-  StringList  script_args_{};
+  ParamsParser program_params_;
+  StringList   script_args_;
 };
 
 struct System : public fetch::vm::Object
@@ -55,7 +55,7 @@ struct System : public fetch::vm::Object
 
   static void Parse(int argc, const char *const *argv);
 
-  static Parameters::ParamParser const &GetParamParser();
+  static Parameters::ParamsParser const &GetParamsParser();
 
 private:
   static Parameters params;

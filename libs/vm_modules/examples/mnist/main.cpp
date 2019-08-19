@@ -37,7 +37,7 @@ int main(int argc, char **argv)
   // parse the command line parameters
   System::Parse(argc, argv);
 
-  fetch::commandline::ParamsParser const &pp = System::GetParamParser();
+  fetch::commandline::ParamsParser const &pp = System::GetParamsParser();
 
   // ensure the program has the correct number of args
   if (2u != pp.arg_size())

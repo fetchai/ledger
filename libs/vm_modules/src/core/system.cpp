@@ -43,13 +43,15 @@ void fetch::vm_modules::System::Parse(int argc, const char *const *argv)
   params.Parse(argc, argv);
 }
 
-const fetch::vm_modules::Parameters::ParamParser &fetch::vm_modules::System::GetParamParser()
+const fetch::vm_modules::Parameters::ParamsParser &fetch::vm_modules::System::GetParamsParser()
 {
   return params.program();
 }
 
 void fetch::vm_modules::Parameters::Parse(int argc, const char *const argv[])
 {
+  script_args_.clear();
+
   const std::string SEPARATOR{"--"};
 
   ArgList program_args{};
@@ -85,7 +87,7 @@ void fetch::vm_modules::Parameters::Parse(int argc, const char *const argv[])
   }
 }
 
-const fetch::vm_modules::Parameters::ParamParser &fetch::vm_modules::Parameters::program() const
+const fetch::vm_modules::Parameters::ParamsParser &fetch::vm_modules::Parameters::program() const
 {
   return program_params_;
 }
