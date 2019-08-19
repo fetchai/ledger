@@ -150,8 +150,4 @@ TYPED_TEST(SelfAttentionEncoder, saveparams_test)
   b.seek(0);
   auto dsp2 = std::make_shared<SPType>();
   b >> *dsp2;
-
-  EXPECT_ANY_THROW(*(fetch::ml::utilities::BuildLayer<TypeParam, LayerType>(dsp2)));
-
-  // todo(issue 1475) Fix BuildLayer for weight-sharing
 }
