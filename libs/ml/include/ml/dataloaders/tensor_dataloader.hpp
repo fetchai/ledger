@@ -163,26 +163,34 @@ TensorDataLoader<LabelType, InputType>::Size() const
 template <typename LabelType, typename InputType>
 bool TensorDataLoader<LabelType, InputType>::IsDone() const
 {
-  if (this->mode_ == DataLoaderMode::VALIDATE)
+  if (this->mode_ == DataLoaderMode::TRAIN)
   {
     return (train_cursor_ >= n_train_samples_);
   }
+  else if (this->mode_ == DataLoaderMode::VALIDATE)
+  {
+    return (validation_cursor_ >= n_validation_samples_);
+  }
   else
   {
-    return (validation_cursor_ >= validation_offset_ + n_validation_samples_);
+    throw std::runtime_error("Other modes than TRAIN and VALIDATE not supported.");
   }
 }
 
 template <typename LabelType, typename InputType>
 void TensorDataLoader<LabelType, InputType>::Reset()
 {
-  if (this->mode_ == DataLoaderMode::VALIDATE)
+  if (this->mode_ == DataLoaderMode::TRAIN)
+  {
+    train_cursor_ = 0;
+  }
+  else if (this->mode_ == DataLoaderMode::VALIDATE)
   {
     validation_cursor_ = 0;
   }
   else
   {
-    train_cursor_ = 0;
+    throw std::runtime_error("Other modes than TRAIN and VALIDATE not supported.");
   }
 }
 
