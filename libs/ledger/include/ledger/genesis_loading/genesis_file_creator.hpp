@@ -64,14 +64,5 @@ private:
   dkg::DkgService *     dkg_{nullptr};
 };
 
-inline GenesisFileCreator::GenesisFileCreator(BlockCoordinator &    block_coordinator,
-                                              StorageUnitInterface &storage_unit,
-                                              StakeManager *stake_manager, dkg::DkgService *dkg)
-  : block_coordinator_{block_coordinator}
-  , storage_unit_{storage_unit}
-  , stake_manager_{stake_manager}
-  , dkg_{dkg}
-{}
-
 }  // namespace ledger
 }  // namespace fetch
