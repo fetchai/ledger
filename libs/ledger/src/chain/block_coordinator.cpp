@@ -1097,11 +1097,11 @@ BlockCoordinator::State BlockCoordinator::OnReset()
 
     if (next_block_)
     {
-      block = &(*next_block_);
+      block = next_block_.get();
     }
     else if (current_block_)
     {
-      block = &(*current_block_);
+      block = current_block_.get();
     }
     else
     {
@@ -1109,7 +1109,8 @@ BlockCoordinator::State BlockCoordinator::OnReset()
                       "Unable to find a previously executed block when updating staking!");
     }
 
-    if (block)
+    // If we are on the head of the main chain, and it is a 'committee triggering' block
+    if (block && (*chain_.GetHeaviestBlock() == *block))
     {
       auto const block_number = block->body.block_number;
 
