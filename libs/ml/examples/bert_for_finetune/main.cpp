@@ -27,6 +27,11 @@
 #include "ml/ops/slice.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 
+#include "core/serializers/base_types.hpp"
+#include "core/serializers/main_serializer.hpp"
+#include "ml/serializers/ml_types.hpp"
+#include "ml/utilities/graph_builder.hpp"
+
 #include <chrono>
 #include <fstream>
 #include <iostream>
@@ -36,28 +41,42 @@ using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
 
 using DataType   = float;
-using ArrayType  = fetch::math::Tensor<DataType>;
-using SizeType   = typename ArrayType::SizeType;
-using SizeVector = typename ArrayType::SizeVector;
+using TensorType = fetch::math::Tensor<DataType>;
+using SizeType   = typename TensorType::SizeType;
+using SizeVector = typename TensorType::SizeVector;
 
-using GraphType     = typename fetch::ml::Graph<ArrayType>;
-using StateDictType = typename fetch::ml::StateDict<ArrayType>;
-using OptimiserType = typename fetch::ml::optimisers::AdamOptimiser<ArrayType>;
+using GraphType     = typename fetch::ml::Graph<TensorType>;
+using StateDictType = typename fetch::ml::StateDict<TensorType>;
+using OptimiserType = typename fetch::ml::optimisers::AdamOptimiser<TensorType>;
 
 using RegType         = fetch::ml::RegularisationType;
 using WeightsInitType = fetch::ml::ops::WeightsInitialisation;
 using ActivationType  = fetch::ml::details::ActivationType;
 
-ArrayType create_position_data(SizeType max_seq_len, SizeType batch_size);
-ArrayType create_mask_data(SizeType max_seq_len, ArrayType seq_len_per_batch);
-std::pair<std::vector<ArrayType>, ArrayType>     prepare_data_for_simple_cls(SizeType max_seq_len,
-                                                                             SizeType batch_size);
-std::pair<std::vector<std::string>, std::string> load_pretrained_bert_base_uncased_model(
-    GraphType &g);
-ArrayType get_weight_from_file(std::string file_name);
-void      put_weight_in_layernorm(StateDictType &state_dict, std::string gamma_file_name,
-                                  std::string beta_file_name, std::string gamma_weight_name,
-                                  std::string beta_weight_name);
+struct BERTConfig
+{
+  // the default config is for bert base uncased pretrained model
+  SizeType n_encoder_layers  = 12u;
+  SizeType max_seq_len       = 512u;
+  SizeType model_dims        = 768u;
+  SizeType n_heads           = 12u;
+  SizeType ff_dims           = 3072u;
+  SizeType vocab_size        = 30522u;
+  SizeType segment_size      = 2u;
+  DataType epsilon           = static_cast<DataType>(1e-12);
+  DataType dropout_keep_prob = static_cast<DataType>(0.9);
+};
+
+// data creation
+TensorType create_position_data(SizeType max_seq_len, SizeType batch_size);
+TensorType create_mask_data(SizeType max_seq_len, TensorType seq_len_per_batch);
+std::pair<std::vector<TensorType>, TensorType> prepare_data_for_simple_cls(SizeType max_seq_len,
+                                                                           SizeType batch_size);
+// load weights functionalities
+TensorType get_weight_from_file(std::string file_name);
+void       put_weight_in_layernorm(StateDictType &state_dict, std::string gamma_file_name,
+                                   std::string beta_file_name, std::string gamma_weight_name,
+                                   std::string beta_weight_name);
 void put_weight_in_fully_connected(StateDictType &state_dict, SizeType in_size, SizeType out_size,
                                    std::string weights_file_name, std::string bias_file_name,
                                    std::string weights_name, std::string bias_name);
@@ -71,6 +90,11 @@ void put_weight_in_attention_heads(StateDictType &state_dict, SizeType n_heads, 
                                    std::string query_bias_name, std::string key_weights_name,
                                    std::string key_bias_name, std::string value_weights_name,
                                    std::string value_bias_name, std::string mattn_prefix);
+// bert model creation functions
+std::pair<std::vector<std::string>, std::string> load_pretrained_bert_model(
+    std::string const &file_path, BERTConfig const &config, GraphType &g);
+std::pair<std::vector<std::string>, std::string> make_bert_model(BERTConfig const &config,
+                                                                 GraphType &       g);
 
 int main(/*int ac, char **av*/)
 {
@@ -85,11 +109,32 @@ int main(/*int ac, char **av*/)
 
   std::cout << "FETCH BERT Demo" << std::endl;
 
-  SizeType max_seq_len = 512u;
-  //  SizeType model_dims  = 768u;
+  SizeType    max_seq_len = 512u;
+  std::string file_path =
+      "/home/xiaodong/Projects/Fetch "
+      "scripts/bert_conversion/bert-base-uncased/bert-base-uncased-txt/";
+  BERTConfig config;
 
-  GraphType   g;
-  auto        ret          = load_pretrained_bert_base_uncased_model(g);
+  GraphType g_original;
+  auto      ret = load_pretrained_bert_model(file_path, config, g_original);
+
+  //	fetch::ml::GraphSaveableParams<TensorType> gsp1 = g_original.GetGraphSaveableParams();
+  //	std::cout << "got savable params" << std::endl;
+  //	fetch::serializers::MsgPackSerializer     ser;
+  //	ser << gsp1;
+  //	std::cout << "finish serializing" << std::endl;
+  //
+  //
+  //	fetch::ml::GraphSaveableParams<TensorType> gsp2;
+  //
+  //	ser >> gsp2;
+  //	std::cout << "finish deserializing" << std::endl;
+  //
+  //	GraphType   g;
+  //	fetch::ml::utilities::BuildGraph<TensorType>(gsp2, std::make_shared<GraphType>(g));
+  //	std::cout << "finish graph building" << std::endl;
+  auto g = g_original;
+
   std::string segment      = ret.first[0];
   std::string position     = ret.first[1];
   std::string tokens       = ret.first[2];
@@ -97,24 +142,24 @@ int main(/*int ac, char **av*/)
   std::string layer_output = ret.second;
 
   //  // Add linear classification layer
-  //  std::string cls_token_output = g.template AddNode<fetch::ml::ops::Slice<ArrayType>>(
+  //  std::string cls_token_output = g.template AddNode<fetch::ml::ops::Slice<TensorType>>(
   //      "ClsTokenOutput", {layer_output}, 0u, 1u);
   //  std::string classification_output =
-  //      g.template AddNode<fetch::ml::layers::FullyConnected<ArrayType>>(
+  //      g.template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
   //          "ClassificationOutput", {cls_token_output}, model_dims, 1u, ActivationType::SIGMOID,
   //          RegType::NONE, static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT, false);
   //  // Set up error signal
-  //  std::string label = g.template AddNode<PlaceHolder<ArrayType>>("Label", {});
+  //  std::string label = g.template AddNode<PlaceHolder<TensorType>>("Label", {});
   //  std::string error =
-  //      g.template AddNode<CrossEntropyLoss<ArrayType>>("Error", {classification_output, label});
+  //      g.template AddNode<CrossEntropyLoss<TensorType>>("Error", {classification_output, label});
 
   SizeType batch_size = 1u;
   SizeType seq_len    = 256u;
 
-  ArrayType tokens_data({max_seq_len, batch_size});
+  TensorType tokens_data({max_seq_len, batch_size});
   tokens_data.Fill(static_cast<DataType>(1));
 
-  ArrayType mask_data({max_seq_len, max_seq_len, batch_size});
+  TensorType mask_data({max_seq_len, max_seq_len, batch_size});
   for (SizeType i = 0; i < seq_len; i++)
   {
     for (SizeType t = 0; t < seq_len; t++)
@@ -125,7 +170,7 @@ int main(/*int ac, char **av*/)
       }
     }
   }
-  ArrayType position_data({max_seq_len, batch_size});
+  TensorType position_data({max_seq_len, batch_size});
   for (SizeType i = 0; i < seq_len; i++)
   {
     for (SizeType b = 0; b < batch_size; b++)
@@ -133,7 +178,7 @@ int main(/*int ac, char **av*/)
       position_data.Set(i, b, static_cast<DataType>(i));
     }
   }
-  ArrayType segment_data({max_seq_len, batch_size});
+  TensorType segment_data({max_seq_len, batch_size});
   g.SetInput(segment, segment_data);
   g.SetInput(position, position_data);
   g.SetInput(tokens, tokens_data);
@@ -155,10 +200,10 @@ int main(/*int ac, char **av*/)
   //  }
   //
   //  std::cout << "Starting forward passing for manual evaluation" << std::endl;
-  //  ArrayType segment_data  = train_data.first[0];
-  //  ArrayType position_data = train_data.first[1];
-  //  ArrayType tokens_data   = train_data.first[2];
-  //  ArrayType mask_data     = train_data.first[3];
+  //  TensorType segment_data  = train_data.first[0];
+  //  TensorType position_data = train_data.first[1];
+  //  TensorType tokens_data   = train_data.first[2];
+  //  TensorType mask_data     = train_data.first[3];
   //  g.SetInput(segment, segment_data);
   //  g.SetInput(position, position_data);
   //  g.SetInput(tokens, tokens_data);
@@ -170,7 +215,7 @@ int main(/*int ac, char **av*/)
   return 0;
 }
 
-ArrayType get_weight_from_file(std::string file_name)
+TensorType get_weight_from_file(std::string file_name)
 {
   std::ifstream weight_file(file_name);
   assert(weight_file.is_open());
@@ -179,7 +224,7 @@ ArrayType get_weight_from_file(std::string file_name)
   getline(weight_file, weight_str);
   weight_file.close();
 
-  return ArrayType::FromString(weight_str);
+  return TensorType::FromString(weight_str);
 }
 
 void put_weight_in_layernorm(StateDictType &state_dict, SizeType model_dims,
@@ -187,8 +232,8 @@ void put_weight_in_layernorm(StateDictType &state_dict, SizeType model_dims,
                              std::string gamma_weight_name, std::string beta_weight_name)
 {
   // load embedding layernorm gamma beta weights
-  ArrayType layernorm_gamma = get_weight_from_file(gamma_file_name);
-  ArrayType layernorm_beta  = get_weight_from_file(beta_file_name);
+  TensorType layernorm_gamma = get_weight_from_file(gamma_file_name);
+  TensorType layernorm_beta  = get_weight_from_file(beta_file_name);
   assert(layernorm_beta.size() == model_dims);
   assert(layernorm_gamma.size() == model_dims);
   layernorm_beta.Reshape({model_dims, 1, 1});
@@ -204,8 +249,8 @@ void put_weight_in_fully_connected(StateDictType &state_dict, SizeType in_size, 
                                    std::string weights_name, std::string bias_name)
 {
   // load embedding layernorm gamma beta weights
-  ArrayType weights = get_weight_from_file(weights_file_name);
-  ArrayType bias    = get_weight_from_file(bias_file_name);
+  TensorType weights = get_weight_from_file(weights_file_name);
+  TensorType bias    = get_weight_from_file(bias_file_name);
   FETCH_UNUSED(in_size);
   assert(weights.shape() == SizeVector({out_size, in_size}));
   assert(bias.size() == out_size);
@@ -228,14 +273,14 @@ void put_weight_in_attention_heads(StateDictType &state_dict, SizeType n_heads, 
                                    std::string value_bias_name, std::string mattn_prefix)
 {
   // get weight arrays from file
-  ArrayType query_weights = get_weight_from_file(query_weights_file_name);
-  ArrayType query_bias    = get_weight_from_file(query_bias_file_name);
+  TensorType query_weights = get_weight_from_file(query_weights_file_name);
+  TensorType query_bias    = get_weight_from_file(query_bias_file_name);
   query_bias.Reshape({model_dims, 1, 1});
-  ArrayType key_weights = get_weight_from_file(key_weights_file_name);
-  ArrayType key_bias    = get_weight_from_file(key_bias_file_name);
+  TensorType key_weights = get_weight_from_file(key_weights_file_name);
+  TensorType key_bias    = get_weight_from_file(key_bias_file_name);
   key_bias.Reshape({model_dims, 1, 1});
-  ArrayType value_weights = get_weight_from_file(value_weights_file_name);
-  ArrayType value_bias    = get_weight_from_file(value_bias_file_name);
+  TensorType value_weights = get_weight_from_file(value_weights_file_name);
+  TensorType value_bias    = get_weight_from_file(value_bias_file_name);
   value_bias.Reshape({model_dims, 1, 1});
 
   // put weights into each head
@@ -250,12 +295,12 @@ void put_weight_in_attention_heads(StateDictType &state_dict, SizeType n_heads, 
     std::string this_attn_prefix = mattn_prefix + "_" + std::to_string(i) + "_";
 
     // slice the weights
-    ArrayType sliced_query_weights = query_weights.Slice(start_end_slice, 0u).Copy();
-    ArrayType sliced_query_bias    = query_bias.Slice(start_end_slice, 0u).Copy();
-    ArrayType sliced_key_weights   = key_weights.Slice(start_end_slice, 0u).Copy();
-    ArrayType sliced_key_bias      = key_bias.Slice(start_end_slice, 0u).Copy();
-    ArrayType sliced_value_weights = value_weights.Slice(start_end_slice, 0u).Copy();
-    ArrayType sliced_value_bias    = value_bias.Slice(start_end_slice, 0u).Copy();
+    TensorType sliced_query_weights = query_weights.Slice(start_end_slice, 0u).Copy();
+    TensorType sliced_query_bias    = query_bias.Slice(start_end_slice, 0u).Copy();
+    TensorType sliced_key_weights   = key_weights.Slice(start_end_slice, 0u).Copy();
+    TensorType sliced_key_bias      = key_bias.Slice(start_end_slice, 0u).Copy();
+    TensorType sliced_value_weights = value_weights.Slice(start_end_slice, 0u).Copy();
+    TensorType sliced_value_bias    = value_bias.Slice(start_end_slice, 0u).Copy();
     assert(sliced_value_weights.shape() == SizeVector({attn_head_size, model_dims}));
     assert(sliced_value_bias.shape() == SizeVector({attn_head_size, 1, 1}));
     assert(sliced_query_weights.shape() == SizeVector({attn_head_size, model_dims}));
@@ -273,21 +318,18 @@ void put_weight_in_attention_heads(StateDictType &state_dict, SizeType n_heads, 
   }
 }
 
-std::pair<std::vector<std::string>, std::string> load_pretrained_bert_base_uncased_model(
-    GraphType &g)
+std::pair<std::vector<std::string>, std::string> make_bert_model(BERTConfig const &config,
+                                                                 GraphType &       g)
 {
-  std::string file_path =
-      "/home/xiaodong/Projects/Fetch "
-      "scripts/bert_conversion/bert-base-uncased/bert-base-uncased-txt/";
-  SizeType n_encoder_layers  = 12u;
-  SizeType max_seq_len       = 512u;
-  SizeType model_dims        = 768u;
-  SizeType n_heads           = 12u;
-  SizeType ff_dims           = 4u * model_dims;
-  SizeType vocab_size        = 30522u;
-  SizeType segment_size      = 2u;
-  DataType epsilon           = static_cast<DataType>(1e-12);
-  DataType dropout_keep_prob = static_cast<DataType>(0.9);
+  SizeType n_encoder_layers  = config.n_encoder_layers;
+  SizeType max_seq_len       = config.max_seq_len;
+  SizeType model_dims        = config.model_dims;
+  SizeType n_heads           = config.n_heads;
+  SizeType ff_dims           = config.ff_dims;
+  SizeType vocab_size        = config.vocab_size;
+  SizeType segment_size      = config.segment_size;
+  DataType epsilon           = config.epsilon;
+  DataType dropout_keep_prob = config.dropout_keep_prob;
 
   // for release version
   FETCH_UNUSED(vocab_size);
@@ -295,10 +337,70 @@ std::pair<std::vector<std::string>, std::string> load_pretrained_bert_base_uncas
   FETCH_UNUSED(segment_size);
 
   // initiate graph
-  std::string segment  = g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Segment", {});
-  std::string position = g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Position", {});
-  std::string tokens   = g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Tokens", {});
-  std::string mask     = g.template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>("Mask", {});
+  std::string segment = g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Segment", {});
+  std::string position =
+      g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Position", {});
+  std::string tokens = g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Tokens", {});
+  std::string mask   = g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Mask", {});
+
+  // prepare reuseable container
+  StateDictType state_dict;
+
+  // create embedding layer
+  std::string segment_embedding = g.template AddNode<fetch::ml::ops::Embeddings<TensorType>>(
+      "Segment_Embedding", {segment}, model_dims, segment_size);
+  std::string position_embedding = g.template AddNode<fetch::ml::ops::Embeddings<TensorType>>(
+      "Position_Embedding", {position}, model_dims, max_seq_len);
+  std::string token_embedding = g.template AddNode<fetch::ml::ops::Embeddings<TensorType>>(
+      "Token_Embedding", {tokens}, model_dims, vocab_size);
+
+  // summing these embeddings up
+  std::string seg_pos_sum_embed = g.template AddNode<fetch::ml::ops::Add<TensorType>>(
+      "seg_pos_add", {segment_embedding, position_embedding});
+  std::string sum_embed = g.template AddNode<fetch::ml::ops::Add<TensorType>>(
+      "all_input_add", {token_embedding, seg_pos_sum_embed});
+
+  // create layernorm layer and get statedict
+  std::string norm_embed = g.template AddNode<fetch::ml::layers::LayerNorm<TensorType>>(
+      "norm_embed", {sum_embed}, SizeVector({model_dims, 1}), 0u, epsilon);
+
+  // add layers as well as weights
+  std::string layer_output = norm_embed;
+  for (SizeType i = 0u; i < n_encoder_layers; i++)
+  {
+    // create the encoding layer first
+    layer_output = g.template AddNode<fetch::ml::layers::SelfAttentionEncoder<TensorType>>(
+        "SelfAttentionEncoder_No_" + std::to_string(i), {layer_output, mask}, n_heads, model_dims,
+        ff_dims, dropout_keep_prob, epsilon);
+  }
+
+  return std::make_pair(std::vector<std::string>({segment, position, tokens, mask}), layer_output);
+}
+
+std::pair<std::vector<std::string>, std::string> load_pretrained_bert_model(
+    std::string const &file_path, BERTConfig const &config, GraphType &g)
+{
+  SizeType n_encoder_layers  = config.n_encoder_layers;
+  SizeType max_seq_len       = config.max_seq_len;
+  SizeType model_dims        = config.model_dims;
+  SizeType n_heads           = config.n_heads;
+  SizeType ff_dims           = config.ff_dims;
+  SizeType vocab_size        = config.vocab_size;
+  SizeType segment_size      = config.segment_size;
+  DataType epsilon           = config.epsilon;
+  DataType dropout_keep_prob = config.dropout_keep_prob;
+
+  // for release version
+  FETCH_UNUSED(vocab_size);
+  FETCH_UNUSED(max_seq_len);
+  FETCH_UNUSED(segment_size);
+
+  // initiate graph
+  std::string segment = g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Segment", {});
+  std::string position =
+      g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Position", {});
+  std::string tokens = g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Tokens", {});
+  std::string mask   = g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Mask", {});
 
   // prepare reuseable container
   StateDictType state_dict;
@@ -307,42 +409,42 @@ std::pair<std::vector<std::string>, std::string> load_pretrained_bert_base_uncas
   // ###################################################################################################################
 
   // load segment embeddings
-  ArrayType segment_embedding_weights =
+  TensorType segment_embedding_weights =
       get_weight_from_file(file_path + "bert_embeddings_token_type_embeddings_weight");
   segment_embedding_weights = segment_embedding_weights.Transpose();
   assert(segment_embedding_weights.shape() == SizeVector({model_dims, segment_size}));
 
   // load position embeddings
-  ArrayType position_embedding_weights =
+  TensorType position_embedding_weights =
       get_weight_from_file(file_path + "bert_embeddings_position_embeddings_weight");
   position_embedding_weights = position_embedding_weights.Transpose();
   assert(position_embedding_weights.shape() == SizeVector({model_dims, max_seq_len}));
 
   // load token embeddings
-  ArrayType token_embedding_weights =
+  TensorType token_embedding_weights =
       get_weight_from_file(file_path + "bert_embeddings_word_embeddings_weight");
   token_embedding_weights = token_embedding_weights.Transpose();
   assert(token_embedding_weights.shape() == SizeVector({model_dims, vocab_size}));
 
   // use these weights to init embedding layers
-  std::string segment_embedding = g.template AddNode<fetch::ml::ops::Embeddings<ArrayType>>(
+  std::string segment_embedding = g.template AddNode<fetch::ml::ops::Embeddings<TensorType>>(
       "Segment_Embedding", {segment}, segment_embedding_weights);
-  std::string position_embedding = g.template AddNode<fetch::ml::ops::Embeddings<ArrayType>>(
+  std::string position_embedding = g.template AddNode<fetch::ml::ops::Embeddings<TensorType>>(
       "Position_Embedding", {position}, position_embedding_weights);
-  std::string token_embedding = g.template AddNode<fetch::ml::ops::Embeddings<ArrayType>>(
+  std::string token_embedding = g.template AddNode<fetch::ml::ops::Embeddings<TensorType>>(
       "Token_Embedding", {tokens}, token_embedding_weights);
 
   // summing these embeddings up
-  std::string seg_pos_sum_embed = g.template AddNode<fetch::ml::ops::Add<ArrayType>>(
+  std::string seg_pos_sum_embed = g.template AddNode<fetch::ml::ops::Add<TensorType>>(
       "seg_pos_add", {segment_embedding, position_embedding});
-  std::string sum_embed = g.template AddNode<fetch::ml::ops::Add<ArrayType>>(
+  std::string sum_embed = g.template AddNode<fetch::ml::ops::Add<TensorType>>(
       "all_input_add", {token_embedding, seg_pos_sum_embed});
 
   // load weights to layernorm after embedding
   // ###############################################################################################################
 
   // create layernorm layer and get statedict
-  std::string norm_embed = g.template AddNode<fetch::ml::layers::LayerNorm<ArrayType>>(
+  std::string norm_embed = g.template AddNode<fetch::ml::layers::LayerNorm<TensorType>>(
       "norm_embed", {sum_embed}, SizeVector({model_dims, 1}), 0u, epsilon);
   state_dict = std::dynamic_pointer_cast<GraphType>(g.GetNode(norm_embed)->GetOp())->StateDict();
 
@@ -360,7 +462,7 @@ std::pair<std::vector<std::string>, std::string> load_pretrained_bert_base_uncas
   for (SizeType i = 0u; i < n_encoder_layers; i++)
   {
     // create the encoding layer first
-    layer_output = g.template AddNode<fetch::ml::layers::SelfAttentionEncoder<ArrayType>>(
+    layer_output = g.template AddNode<fetch::ml::layers::SelfAttentionEncoder<TensorType>>(
         "SelfAttentionEncoder_No_" + std::to_string(i), {layer_output, mask}, n_heads, model_dims,
         ff_dims, dropout_keep_prob, epsilon);
 
@@ -419,14 +521,14 @@ std::pair<std::vector<std::string>, std::string> load_pretrained_bert_base_uncas
   return std::make_pair(std::vector<std::string>({segment, position, tokens, mask}), layer_output);
 }
 
-std::pair<std::vector<ArrayType>, ArrayType> prepare_data_for_simple_cls(SizeType max_seq_len,
-                                                                         SizeType batch_size)
+std::pair<std::vector<TensorType>, TensorType> prepare_data_for_simple_cls(SizeType max_seq_len,
+                                                                           SizeType batch_size)
 {
-  ArrayType segment_data({max_seq_len, batch_size});
-  ArrayType position_data = create_position_data(max_seq_len, batch_size);
-  ArrayType token_data({max_seq_len, batch_size});
-  ArrayType mask_data({max_seq_len, max_seq_len, batch_size});
-  ArrayType labels({1u, batch_size});
+  TensorType segment_data({max_seq_len, batch_size});
+  TensorType position_data = create_position_data(max_seq_len, batch_size);
+  TensorType token_data({max_seq_len, batch_size});
+  TensorType mask_data({max_seq_len, max_seq_len, batch_size});
+  TensorType labels({1u, batch_size});
   mask_data.Fill(static_cast<DataType>(1));
 
   for (SizeType i = 0; i < batch_size; i++)
@@ -465,12 +567,12 @@ std::pair<std::vector<ArrayType>, ArrayType> prepare_data_for_simple_cls(SizeTyp
   }
 
   return std::make_pair(
-      std::vector<ArrayType>({segment_data, position_data, token_data, mask_data}), labels);
+      std::vector<TensorType>({segment_data, position_data, token_data, mask_data}), labels);
 }
 
-ArrayType create_position_data(SizeType max_seq_len, SizeType batch_size)
+TensorType create_position_data(SizeType max_seq_len, SizeType batch_size)
 {
-  ArrayType ret_position({max_seq_len, batch_size});
+  TensorType ret_position({max_seq_len, batch_size});
   for (SizeType i = 0; i < max_seq_len; i++)
   {
     for (SizeType b = 0; b < batch_size; b++)
@@ -481,12 +583,12 @@ ArrayType create_position_data(SizeType max_seq_len, SizeType batch_size)
   return ret_position;
 }
 
-ArrayType create_mask_data(SizeType max_seq_len, ArrayType seq_len_per_batch)
+TensorType create_mask_data(SizeType max_seq_len, TensorType seq_len_per_batch)
 {
   assert(seq_len_per_batch.shape().size() == 2);
   assert(fetch::math::Max(seq_len_per_batch) <= static_cast<DataType>(max_seq_len));
-  SizeType  batch_size = seq_len_per_batch.shape(0);
-  ArrayType ret_mask({max_seq_len, max_seq_len, batch_size});
+  SizeType   batch_size = seq_len_per_batch.shape(0);
+  TensorType ret_mask({max_seq_len, max_seq_len, batch_size});
   for (SizeType b = 0; b < batch_size; b++)
   {
     auto seq_len = static_cast<SizeType>(seq_len_per_batch.At(0, b));
