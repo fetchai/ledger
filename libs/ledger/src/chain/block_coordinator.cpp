@@ -34,9 +34,9 @@
 #include "ledger/upow/synergetic_execution_manager.hpp"
 #include "ledger/upow/synergetic_executor.hpp"
 #include "telemetry/counter.hpp"
+#include "telemetry/gauge.hpp"
 #include "telemetry/histogram.hpp"
 #include "telemetry/registry.hpp"
-#include "telemetry/gauge.hpp"
 
 #include <cassert>
 #include <chrono>

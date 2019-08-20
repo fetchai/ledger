@@ -42,8 +42,8 @@
 #include "network/p2pservice/manifest.hpp"
 #include "network/p2pservice/p2p_service.hpp"
 #include "network/p2pservice/p2ptrust_bayrank.hpp"
-#include "telemetry/telemetry.hpp"
 #include "open_api_http_module.hpp"
+#include "telemetry/telemetry.hpp"
 
 #include <atomic>
 #include <cstddef>
