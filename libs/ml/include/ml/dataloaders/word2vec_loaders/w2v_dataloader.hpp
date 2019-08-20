@@ -89,6 +89,7 @@ private:
 
   std::vector<SizeType>    StringsToIndices(std::vector<std::string> const &strings);
   std::vector<std::string> PreprocessString(std::string const &s);
+  void                     UpdateCursor() override;
 };
 
 /**
@@ -449,6 +450,15 @@ std::vector<std::string> W2VLoader<T>::PreprocessString(std::string const &s)
     words.push_back(word);
   }
   return words;
+}
+
+template <typename T>
+void W2VLoader<T>::UpdateCursor()
+{
+  if (this->mode_ != DataLoaderMode::TRAIN)
+  {
+    throw std::runtime_error("Other mode than training not supported yet.");
+  }
 }
 
 }  // namespace dataloaders

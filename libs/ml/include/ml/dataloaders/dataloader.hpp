@@ -34,7 +34,6 @@ enum class DataLoaderMode
   TRAIN,
   VALIDATE,
   TEST,
-  INVALID
 };
 
 template <typename LabelType, typename DataType>
@@ -63,18 +62,24 @@ public:
 
   virtual ReturnType PrepareBatch(fetch::math::SizeType subset_size, bool &is_done_set);
 
-  virtual std::uint64_t Size() const        = 0;
-  virtual bool          IsDone() const      = 0;
-  virtual void          Reset()             = 0;
-  virtual bool          IsValidable() const = 0;
-  void                  SetMode(DataLoaderMode new_mode);
+  virtual SizeType Size() const        = 0;
+  virtual bool     IsDone() const      = 0;
+  virtual void     Reset()             = 0;
+  virtual bool     IsValidable() const = 0;
+  void             SetMode(DataLoaderMode new_mode);
 
   template <typename X, typename D>
   friend struct fetch::serializers::MapSerializer;
 
 protected:
+  virtual void              UpdateCursor() = 0;
+  std::shared_ptr<SizeType> current_cursor_;
+  SizeType                  current_min_;
+  SizeType                  current_max_;
+  SizeType                  current_size_;
+
   bool           random_mode_ = false;
-  DataLoaderMode mode_        = DataLoaderMode::INVALID;
+  DataLoaderMode mode_        = DataLoaderMode::TRAIN;
 
 private:
   bool       size_not_set_ = true;
@@ -183,6 +188,7 @@ template <typename LabelType, typename DataType>
 void DataLoader<LabelType, DataType>::SetMode(DataLoaderMode new_mode)
 {
   mode_ = new_mode;
+  UpdateCursor();
 }
 
 }  // namespace dataloaders

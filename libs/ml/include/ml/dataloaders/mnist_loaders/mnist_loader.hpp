@@ -40,8 +40,8 @@ public:
   using ReturnType = std::pair<LabelType, std::vector<T>>;
 
 private:
-  std::uint32_t                  train_cursor_;
-  std::uint32_t                  validation_cursor_;
+  std::shared_ptr<SizeType>      train_cursor_;
+  std::shared_ptr<SizeType>      validation_cursor_;
   std::uint32_t                  train_size_;
   std::uint32_t                  validation_size_;
   std::uint32_t                  total_size_;
@@ -55,8 +55,6 @@ public:
   MNISTLoader(std::string const &images_file, std::string const &labelsFile,
               bool random_mode = false, float validation_to_train_ratio = 0.0)
     : DataLoader<LabelType, T>(random_mode, DataLoaderMode::TRAIN)
-    , train_cursor_(0)
-    , validation_cursor_(0)
   {
     std::uint32_t record_length(0);
     data_   = read_mnist_images(images_file, total_size_, record_length);
@@ -72,84 +70,40 @@ public:
     // Prepare return buffer
     buffer_.second.push_back(T({FIGURE_WIDTH, FIGURE_HEIGHT, 1u}));
     buffer_.first = LabelType({LABEL_SIZE, 1u});
+
+    train_cursor_      = std::make_shared<SizeType>(0);
+    validation_cursor_ = std::make_shared<SizeType>(validation_offset_);
+
+    UpdateCursor();
   }
 
   virtual SizeType Size() const override
   {
     // MNIST files store the size as uint32_t but Dataloader interface require uint64_t
-    if (this->mode_ == DataLoaderMode::TRAIN)
-    {
-      return static_cast<SizeType>(train_size_);
-    }
-    else if (this->mode_ == DataLoaderMode::VALIDATE)
-    {
-      return static_cast<SizeType>(validation_size_);
-    }
-    else
-    {
-      throw std::runtime_error("Other modes than TRAIN and VALIDATE not supported.");
-    }
+    return this->current_size_;
   }
 
   virtual bool IsDone() const override
   {
-    if (this->mode_ == DataLoaderMode::TRAIN)
-    {
-      return train_cursor_ >= train_size_;
-    }
-    else if (this->mode_ == DataLoaderMode::VALIDATE)
-    {
-      return validation_offset_ + validation_cursor_ >= total_size_;
-    }
-    else
-    {
-      throw std::runtime_error("Other modes than TRAIN and VALIDATE not supported.");
-    }
+    return *(this->current_cursor_) >= this->current_max_;
   }
 
   virtual void Reset() override
   {
-    if (this->mode_ == DataLoaderMode::TRAIN)
-    {
-      train_cursor_ = 0;
-    }
-    else if (this->mode_ == DataLoaderMode::VALIDATE)
-    {
-      validation_cursor_ = 0;
-    }
-    else
-    {
-      throw std::runtime_error("Other modes than TRAIN and VALIDATE not supported.");
-    }
+    *(this->current_cursor_) = this->current_min_;
   }
 
   virtual ReturnType GetNext() override
   {
-    if (this->mode_ == DataLoaderMode::VALIDATE)
+    if (this->random_mode_)
     {
-      if (this->random_mode_)
-      {
-        GetAtIndex(validation_offset_ + ((SizeType)rand() % validation_size_), buffer_);
-        return buffer_;
-      }
-      else
-      {
-        GetAtIndex(static_cast<SizeType>(validation_offset_ + (validation_cursor_++)), buffer_);
-        return buffer_;
-      }
+      GetAtIndex(this->current_min_ + (SizeType)rand() % this->current_size_, buffer_);
+      return buffer_;
     }
     else
     {
-      if (this->random_mode_)
-      {
-        GetAtIndex((SizeType)rand() % train_size_, buffer_);
-        return buffer_;
-      }
-      else
-      {
-        GetAtIndex(static_cast<SizeType>(train_cursor_++), buffer_);
-        return buffer_;
-      }
+      GetAtIndex((*(this->current_cursor_))++, buffer_);
+      return buffer_;
     }
   }
 
@@ -186,33 +140,14 @@ public:
       auto     it = ret_images.at(0).View(index).begin();
       while (it.is_valid())
       {
-        if (this->mode_ == DataLoaderMode::VALIDATE)
-        {
-          *it = static_cast<DataType>(data_[validation_offset_ + validation_cursor_][i]) /
-                DataType{256};
-        }
-        else
-        {
-          *it = static_cast<DataType>(data_[train_cursor_][i]) / DataType{256};
-        }
-
+        *it = static_cast<DataType>(data_[*this->current_cursor_][i]) / DataType{256};
         i++;
         ++it;
       }
 
-      if (this->mode_ == DataLoaderMode::VALIDATE)
-      {
-        ret_labels(labels_[validation_offset_ + validation_cursor_], index) =
-            static_cast<typename LabelType::Type>(1);
+      ret_labels(labels_[*this->current_cursor_], index) = static_cast<typename LabelType::Type>(1);
 
-        ++validation_cursor_;
-      }
-      else
-      {
-        ret_labels(labels_[train_cursor_], index) = static_cast<typename LabelType::Type>(1);
-
-        ++train_cursor_;
-      }
+      (*this->current_cursor_)++;
 
       if (IsDone())
       {
@@ -226,6 +161,28 @@ public:
 
 private:
   using uchar = unsigned char;
+
+  void UpdateCursor() override
+  {
+    if (this->mode_ == DataLoaderMode::TRAIN)
+    {
+      this->current_cursor_ = train_cursor_;
+      this->current_min_    = 0;
+      this->current_max_    = validation_offset_;
+      this->current_size_   = train_size_;
+    }
+    else if (this->mode_ == DataLoaderMode::VALIDATE)
+    {
+      this->current_cursor_ = validation_cursor_;
+      this->current_min_    = validation_offset_;
+      this->current_max_    = total_size_;
+      this->current_size_   = validation_size_;
+    }
+    else
+    {
+      throw std::runtime_error("Other modes than TRAIN and VALIDATE not supported.");
+    }
+  }
 
   void GetAtIndex(SizeType index, ReturnType &ret)
   {

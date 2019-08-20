@@ -111,6 +111,8 @@ protected:
 
   SizeType GetWordOffsetFromWordIdx(SizeType word_idx) const;
 
+  void UpdateCursor() override;
+
 private:
   bool cursor_set_     = false;  // whether cursor currently set to a valid position
   bool ran_cursor_set_ = false;  // whether random cursor currently set to a valid position
@@ -560,6 +562,15 @@ bool BasicTextLoader<T>::DiscardExample(SizeType word_frequency)
   double f = lfg_.AsDouble();
 
   return !(f < prob_thresh);
+}
+
+template <typename T>
+void BasicTextLoader<T>::UpdateCursor()
+{
+  if (this->mode_ != DataLoaderMode::TRAIN)
+  {
+    throw std::runtime_error("Other mode than training not supported yet.");
+  }
 }
 
 }  // namespace dataloaders

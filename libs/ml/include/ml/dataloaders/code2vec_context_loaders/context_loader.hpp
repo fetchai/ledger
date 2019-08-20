@@ -110,6 +110,8 @@ private:
   umap_int_str idx_to_path_;
   umap_int_str idx_to_word_;
 
+  void UpdateCursor() override;
+
   static void createIdxUMapsFromCounter(umap_str_int &counter, umap_str_int &name_to_idx,
                                         umap_int_str &idx_to_name);
 
@@ -493,6 +495,15 @@ template <typename LabelType, typename DataType>
 typename C2VLoader<LabelType, DataType>::umap_str_int C2VLoader<LabelType, DataType>::word_counter()
 {
   return this->word_counter_;
+}
+
+template <typename LabelType, typename DataType>
+void C2VLoader<LabelType, DataType>::UpdateCursor()
+{
+  if (this->mode_ != DataLoaderMode::TRAIN)
+  {
+    throw std::runtime_error("Other mode than training not supported yet.");
+  }
 }
 
 }  // namespace dataloaders

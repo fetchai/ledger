@@ -77,6 +77,8 @@ protected:
 
   SizeType batch_label_dim_ = fetch::math::numeric_max<SizeType>();
   SizeType batch_data_dim_  = fetch::math::numeric_max<SizeType>();
+
+  void UpdateCursor() override;
 };
 
 template <typename LabelType, typename InputType>
@@ -198,6 +200,15 @@ template <typename LabelType, typename InputType>
 inline bool TensorDataLoader<LabelType, InputType>::IsValidable() const
 {
   return n_validation_samples_ > 0;
+}
+
+template <typename LabelType, typename InputType>
+void TensorDataLoader<LabelType, InputType>::UpdateCursor()
+{
+  if (this->mode_ != DataLoaderMode::TRAIN)
+  {
+    throw std::runtime_error("Other mode than training not supported yet.");
+  }
 }
 
 }  // namespace dataloaders

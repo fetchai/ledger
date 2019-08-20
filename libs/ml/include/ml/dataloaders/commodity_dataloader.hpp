@@ -71,6 +71,7 @@ private:
   random::Random rand;
 
   void GetAtIndex(SizeType index);
+  void UpdateCursor() override;
 };
 
 /**
@@ -170,6 +171,15 @@ void CommodityDataLoader<LabelType, InputType>::GetAtIndex(CommodityDataLoader::
 {
   buffer_.first  = labels_.View(index).Copy();
   buffer_.second = std::vector<InputType>({data_.View(index).Copy()});
+}
+
+template <typename LabelType, typename InputType>
+void CommodityDataLoader<LabelType, InputType>::UpdateCursor()
+{
+  if (this->mode_ != DataLoaderMode::TRAIN)
+  {
+    throw std::runtime_error("Other mode than training not supported yet.");
+  }
 }
 
 }  // namespace dataloaders

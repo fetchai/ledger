@@ -92,6 +92,7 @@ private:
   std::vector<std::string> PreprocessString(std::string const &s, SizeType length_limit);
   void                     BufferNextSamples();
   void                     Update();
+  void                     UpdateCursor();
 };
 
 /**
@@ -662,6 +663,15 @@ std::vector<std::string> GraphW2VLoader<T>::PreprocessString(std::string const &
     word_count++;
   }
   return words;
+}
+
+template <typename T>
+void GraphW2VLoader<T>::UpdateCursor()
+{
+  if (this->mode_ != DataLoaderMode::TRAIN)
+  {
+    throw std::runtime_error("Other mode than training not supported yet.");
+  }
 }
 
 }  // namespace dataloaders
