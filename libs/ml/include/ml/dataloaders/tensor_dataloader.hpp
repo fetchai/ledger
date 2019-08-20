@@ -58,9 +58,9 @@ public:
   friend struct fetch::serializers::MapSerializer;
 
 protected:
-  SizeType train_cursor_      = 0;
-  SizeType validation_cursor_ = 0;
-  SizeType validation_offset_ = 0;
+  std::shared_ptr<SizeType> train_cursor_;
+  std::shared_ptr<SizeType> validation_cursor_;
+  SizeType                  validation_offset_ = 0;
 
   SizeType n_samples_            = 0;  // number of all samples
   SizeType n_validation_samples_ = 0;  // number of train samples
@@ -99,35 +99,31 @@ TensorDataLoader<LabelType, InputType>::TensorDataLoader(SizeVector const &     
     one_sample_data_shapes_.emplace_back(data_shapes.at(i));
     one_sample_data_shapes_.at(i).at(one_sample_data_shapes_.at(i).size() - 1) = 1;
   }
+
+  train_cursor_      = std::make_shared<SizeType>(0);
+  validation_cursor_ = std::make_shared<SizeType>(validation_offset_);
+
+  UpdateCursor();
 }
 
 template <typename LabelType, typename InputType>
 typename TensorDataLoader<LabelType, InputType>::ReturnType
 TensorDataLoader<LabelType, InputType>::GetNext()
 {
-  if (this->mode_ == DataLoaderMode::VALIDATE)
-  {
-    ReturnType ret(labels_.View(validation_cursor_).Copy(one_sample_label_shape_),
-                   {data_.View(validation_cursor_).Copy(one_sample_data_shapes_.at(0))});
-    validation_cursor_++;
-    return ret;
-  }
-  else
-  {
-    ReturnType ret(labels_.View(train_cursor_).Copy(one_sample_label_shape_),
-                   {data_.View(train_cursor_).Copy(one_sample_data_shapes_.at(0))});
-    train_cursor_++;
-    return ret;
-  }
+
+  ReturnType ret(labels_.View(*this->current_cursor_).Copy(one_sample_label_shape_),
+                 {data_.View(*this->current_cursor_).Copy(one_sample_data_shapes_.at(0))});
+  (*this->current_cursor_)++;
+  return ret;
 }
 
 template <typename LabelType, typename InputType>
 bool TensorDataLoader<LabelType, InputType>::AddData(TensorType const &data,
                                                      TensorType const &labels)
 {
-  data_         = data.Copy();
-  labels_       = labels.Copy();
-  train_cursor_ = 0;
+  data_          = data.Copy();
+  labels_        = labels.Copy();
+  *train_cursor_ = 0;
 
   batch_label_dim_ = labels_.shape().size() - 1;
   batch_data_dim_  = data_.shape().size() - 1;
@@ -138,7 +134,8 @@ bool TensorDataLoader<LabelType, InputType>::AddData(TensorType const &data,
       static_cast<SizeType>(validation_to_train_ratio_ * static_cast<float>(n_samples_));
   n_train_samples_ = n_samples_ - n_validation_samples_;
 
-  validation_offset_ = n_train_samples_;
+  validation_offset_  = n_train_samples_;
+  *validation_cursor_ = validation_offset_;
 
   return true;
 }
@@ -147,48 +144,19 @@ template <typename LabelType, typename InputType>
 typename TensorDataLoader<LabelType, InputType>::SizeType
 TensorDataLoader<LabelType, InputType>::Size() const
 {
-  if (this->mode_ == DataLoaderMode::VALIDATE)
-  {
-    return n_validation_samples_;
-  }
-  else
-  {
-    return n_train_samples_;
-  }
+  return this->current_size_;
 }
 
 template <typename LabelType, typename InputType>
 bool TensorDataLoader<LabelType, InputType>::IsDone() const
 {
-  if (this->mode_ == DataLoaderMode::TRAIN)
-  {
-    return (train_cursor_ >= n_train_samples_);
-  }
-  else if (this->mode_ == DataLoaderMode::VALIDATE)
-  {
-    return (validation_cursor_ >= n_validation_samples_);
-  }
-  else
-  {
-    throw std::runtime_error("Other modes than TRAIN and VALIDATE not supported.");
-  }
+  return *(this->current_cursor_) >= this->current_max_;
 }
 
 template <typename LabelType, typename InputType>
 void TensorDataLoader<LabelType, InputType>::Reset()
 {
-  if (this->mode_ == DataLoaderMode::TRAIN)
-  {
-    train_cursor_ = 0;
-  }
-  else if (this->mode_ == DataLoaderMode::VALIDATE)
-  {
-    validation_cursor_ = 0;
-  }
-  else
-  {
-    throw std::runtime_error("Other modes than TRAIN and VALIDATE not supported.");
-  }
+  *(this->current_cursor_) = this->current_min_;
 }
 
 template <typename LabelType, typename InputType>
@@ -200,9 +168,23 @@ inline bool TensorDataLoader<LabelType, InputType>::IsValidable() const
 template <typename LabelType, typename InputType>
 void TensorDataLoader<LabelType, InputType>::UpdateCursor()
 {
-  if (this->mode_ != DataLoaderMode::TRAIN)
+  if (this->mode_ == DataLoaderMode::TRAIN)
   {
-    throw std::runtime_error("Other mode than training not supported yet.");
+    this->current_cursor_ = train_cursor_;
+    this->current_min_    = 0;
+    this->current_max_    = validation_offset_;
+    this->current_size_   = n_train_samples_;
+  }
+  else if (this->mode_ == DataLoaderMode::VALIDATE)
+  {
+    this->current_cursor_ = validation_cursor_;
+    this->current_min_    = validation_offset_;
+    this->current_max_    = n_samples_;
+    this->current_size_   = n_validation_samples_;
+  }
+  else
+  {
+    throw std::runtime_error("Other modes than TRAIN and VALIDATE not supported.");
   }
 }
 
@@ -250,8 +232,8 @@ struct MapSerializer<fetch::ml::dataloaders::TensorDataLoader<LabelType, InputTy
     auto dl_pointer = static_cast<ml::dataloaders::DataLoader<LabelType, InputType> const *>(&sp);
     map.Append(BASE_DATA_LOADER, *(dl_pointer));
 
-    map.Append(VALIDATION_CURSOR, sp.validation_cursor_);
-    map.Append(TRAIN_CURSOR, sp.train_cursor_);
+    map.Append(VALIDATION_CURSOR, *sp.validation_cursor_);
+    map.Append(TRAIN_CURSOR, *sp.train_cursor_);
     map.Append(VALIDATION_OFFSET, sp.validation_offset_);
     map.Append(VALIDATION_TO_TRAIN_RATIO, sp.validation_to_train_ratio_);
     map.Append(N_SAMPLES, sp.n_samples_);
@@ -276,8 +258,8 @@ struct MapSerializer<fetch::ml::dataloaders::TensorDataLoader<LabelType, InputTy
     auto dl_pointer = static_cast<ml::dataloaders::DataLoader<LabelType, InputType> *>(&sp);
     map.ExpectKeyGetValue(BASE_DATA_LOADER, (*dl_pointer));
 
-    map.ExpectKeyGetValue(VALIDATION_CURSOR, sp.validation_cursor_);
-    map.ExpectKeyGetValue(TRAIN_CURSOR, sp.train_cursor_);
+    map.ExpectKeyGetValue(VALIDATION_CURSOR, *sp.validation_cursor_);
+    map.ExpectKeyGetValue(TRAIN_CURSOR, *sp.train_cursor_);
     map.ExpectKeyGetValue(VALIDATION_OFFSET, sp.validation_offset_);
     map.ExpectKeyGetValue(VALIDATION_TO_TRAIN_RATIO, sp.validation_to_train_ratio_);
     map.ExpectKeyGetValue(N_SAMPLES, sp.n_samples_);
