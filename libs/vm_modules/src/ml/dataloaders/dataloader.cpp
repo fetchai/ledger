@@ -51,11 +51,34 @@ using TensorLoaderType =
 
 VMDataLoader::VMDataLoader(VM *vm, TypeId type_id)
   : Object(vm, type_id)
-{}
-
-Ptr<VMDataLoader> VMDataLoader::Constructor(VM *vm, TypeId type_id)
 {
-  return new VMDataLoader(vm, type_id);
+  mode_ = DataLoaderMode::NONE;
+}
+
+VMDataLoader::VMDataLoader(VM *vm, TypeId type_id, Ptr<String> const &mode)
+  : Object(vm, type_id)
+{
+  if (mode->str == "commodity")
+  {
+    mode_ = DataLoaderMode::COMMODITY;
+  }
+  else if (mode->str == "mnist")
+  {
+    mode_ = DataLoaderMode::MNIST;
+  }
+  else if (mode->str == "tensor")
+  {
+    mode_ = DataLoaderMode::TENSOR;
+  }
+  else
+  {
+    throw std::runtime_error("invalid dataloader mode");
+  }
+}
+
+Ptr<VMDataLoader> VMDataLoader::Constructor(VM *vm, TypeId type_id, Ptr<String> const &mode)
+{
+  return new VMDataLoader(vm, type_id, mode);
 }
 
 void VMDataLoader::Bind(Module &module)
@@ -70,36 +93,40 @@ void VMDataLoader::Bind(Module &module)
       .CreateMemberFunction("isDone", &VMDataLoader::IsDone);
 }
 
-void VMDataLoader::AddDataByFiles(Ptr<String> const &mode, Ptr<String> const &xfilename,
-                                  Ptr<String> const &yfilename)
+void VMDataLoader::AddDataByFiles(Ptr<String> const &xfilename, Ptr<String> const &yfilename)
 {
-  if (mode->str == "commodity")
+  switch (mode_)
+  {
+  case DataLoaderMode::COMMODITY:
   {
     AddCommodityData(xfilename, yfilename);
-    mode_ = DataLoaderMode::COMMODITY;
+    break;
   }
-  else if (mode->str == "mnist")
+  case DataLoaderMode::MNIST:
   {
     AddMnistData(xfilename, yfilename);
-    mode_ = DataLoaderMode::MNIST;
+    break;
   }
-  else
+  default:
   {
-    throw std::runtime_error("mode not valid for xfilename, yfilename input to addData");
+    throw std::runtime_error("invalid dataloader mode for xfilename, yfilename input to addData");
+  }
   }
 }
 
-void VMDataLoader::AddDataByData(Ptr<String> const &mode, Ptr<VMTensorType> const &data,
-                                 Ptr<VMTensorType> const &labels)
+void VMDataLoader::AddDataByData(Ptr<VMTensorType> const &data, Ptr<VMTensorType> const &labels)
 {
-  if (mode->str == "tensor")
+  switch (mode_)
+  {
+  case DataLoaderMode::TENSOR:
   {
     AddTensorData(data, labels);
-    mode_ = DataLoaderMode::TENSOR;
+    break;
   }
-  else
+  default:
   {
-    throw std::runtime_error("mode not valid for xfilename, yfilename input to addData");
+    throw std::runtime_error("invalid dataloader mode for tensor add data");
+  }
   }
 }
 
