@@ -20,6 +20,7 @@
 #include "core/service_ids.hpp"
 #include "core/state_machine.hpp"
 #include "network/muddle/muddle.hpp"
+#include "network/muddle/rbc.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
 #include "network/muddle/subscription.hpp"
@@ -61,22 +62,24 @@ public:
     BEACON_READY
   };
 
-  using BeaconManager           = dkg::BeaconManager;
-  using Identity                = crypto::Identity;
-  using SharedAeonExecutionUnit = std::shared_ptr<AeonExecutionUnit>;
-  using CallbackFunction        = std::function<void(SharedAeonExecutionUnit)>;
-  using Endpoint                = muddle::MuddleEndpoint;
-  using Muddle                  = muddle::Muddle;
-  using Client                  = muddle::rpc::Client;
-  using ClientPtr               = std::shared_ptr<Client>;
-  using StateMachine            = core::StateMachine<State>;
-  using StateMachinePtr         = std::shared_ptr<StateMachine>;
-  using ConstByteArray          = byte_array::ConstByteArray;
-  using SubscriptionPtr         = muddle::MuddleEndpoint::SubscriptionPtr;
-  using Serializer              = serializers::MsgPackSerializer;
-  using Address                 = byte_array::ConstByteArray;
-  using PrivateKey              = BeaconManager::PrivateKey;
-  using VerificationVector      = BeaconManager::VerificationVector;
+  using BeaconManager            = dkg::BeaconManager;
+  using Identity                 = crypto::Identity;
+  using SharedAeonExecutionUnit  = std::shared_ptr<AeonExecutionUnit>;
+  using CallbackFunction         = std::function<void(SharedAeonExecutionUnit)>;
+  using Endpoint                 = muddle::MuddleEndpoint;
+  using Muddle                   = muddle::Muddle;
+  using Client                   = muddle::rpc::Client;
+  using ClientPtr                = std::shared_ptr<Client>;
+  using StateMachine             = core::StateMachine<State>;
+  using StateMachinePtr          = std::shared_ptr<StateMachine>;
+  using ConstByteArray           = byte_array::ConstByteArray;
+  using SubscriptionPtr          = muddle::MuddleEndpoint::SubscriptionPtr;
+  using Serializer               = serializers::MsgPackSerializer;
+  using Address                  = byte_array::ConstByteArray;
+  using PrivateKey               = BeaconManager::PrivateKey;
+  using VerificationVector       = BeaconManager::VerificationVector;
+  using ReliableBroadcastProt    = network::RBC;
+  using ReliableBroadcastProtPtr = std::shared_ptr<ReliableBroadcastProt>;
 
   struct ShareSubmission
   {
@@ -124,11 +127,12 @@ public:
   std::weak_ptr<core::Runnable> GetWeakRunnable();
 
 private:
-  Identity            identity_;
-  Endpoint &          endpoint_;
-  SubscriptionPtr     share_subscription_;
-  SubscriptionPtr     id_subscription_;
-  muddle::rpc::Client rpc_client_;
+  Identity                 identity_;
+  Endpoint &               endpoint_;
+  SubscriptionPtr          share_subscription_;
+  SubscriptionPtr          id_subscription_;
+  muddle::rpc::Client      rpc_client_;
+  ReliableBroadcastProtPtr broadcast_protocol_;
 
   std::mutex                          mutex_;
   CallbackFunction                    callback_function_;

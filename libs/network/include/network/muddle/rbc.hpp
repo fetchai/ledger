@@ -63,6 +63,8 @@ public:
   RBC(Endpoint &endpoint, MuddleAddress address, CallbackFunction call_back,
       uint16_t channel = CHANNEL_RBC_BROADCAST);
 
+  virtual ~RBC() = default;
+
   /// RBC Operation
   /// @{
   bool ResetCabinet(CabinetMembers const &cabinet);

@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "beacon/beacon_setup_protocol.hpp"
 #include "beacon/beacon_setup_service.hpp"
+#include "beacon/beacon_setup_protocol.hpp"
 #include "network/generics/requesting_queue.hpp"
 
 namespace fetch {
@@ -81,6 +81,14 @@ BeaconSetupService::BeaconSetupService(Endpoint &endpoint, Identity identity)
   state_machine_->RegisterHandler(State::GENERATE_KEYS, this, &BeaconSetupService::OnGenerateKeys);
   state_machine_->RegisterHandler(State::BEACON_READY, this, &BeaconSetupService::OnBeaconReady);
 
+  broadcast_protocol_.reset(new ReliableBroadcastProt(
+      endpoint_, identity_.identifier(),
+      [](network::RBC::MuddleAddress const & /*address*/, ConstByteArray const &
+         /*payload*/) -> void {
+        // TODO: send
+      },
+      CHANNEL_VERIFICATION_VECTORS));
+
   id_subscription_->SetMessageHandler(
       [this](muddle::Packet::Address const &from, uint16_t, uint16_t, uint16_t,
              muddle::Packet::Payload const &payload, muddle::Packet::Address transmitter) {
@@ -116,6 +124,15 @@ BeaconSetupService::State BeaconSetupService::OnIdle()
     }
     else
     {
+      // Creating broadcast protocol
+      // TODO: Need support to identify malicious activity
+      std::set<ConstByteArray> cabinet;
+      for (auto &x : beacon_->aeon.members)
+      {
+        cabinet.insert(x.identifier());
+      }
+      broadcast_protocol_->ResetCabinet(cabinet);
+
       // Initiating setup
       return State::WAIT_FOR_DIRECT_CONNECTIONS;
     }
@@ -251,6 +268,11 @@ BeaconSetupService::State BeaconSetupService::SendShares()
     std::lock_guard<std::mutex> lock(mutex_);
     auto                        verification_vector = beacon_->manager.GetVerificationVector();
     auto                        from                = beacon_->manager.identity();
+
+    // Broaccasting verification vector
+    Serializer serialiser;
+    serialiser << verification_vector;
+    broadcast_protocol_->Broadcast(serialiser.data());
 
     for (auto &delivery_info : share_delivery_details_)
     {
