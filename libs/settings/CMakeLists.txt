@@ -1,7 +1,7 @@
 #
 # F E T C H   S E T T I N G S   L I B R A R Y
 #
-cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
 project(fetch-settings)
 
 # CMake Configuration
