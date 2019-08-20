@@ -98,8 +98,8 @@ public:
                           VectorRegisterIteratorType * /*iters*/)
   {}
 
-  template <std::size_t S>
-  type Reduce(vector_kernel_signature_type<S> &&kernel, vector_reduce_signature_type<S> &&hkernel)
+  template <class F1, class F2>
+  type Reduce(F1 const &&kernel, F2 const &&hkernel)
   {
     VectorRegisterType         a, b(type(0));
     VectorRegisterIteratorType iter(this->pointer(), this->size());
@@ -115,8 +115,8 @@ public:
     return hkernel(b);
   }
 
-  template <std::size_t S, class OP>
-  type GenericReduce(Range const &range, OP &&op, type const c, vector_kernel_signature_type<S> &&kernel, vector_reduce_signature_type<S> &&hkernel)
+  template <class OP, class F1, class F2>
+  type GenericReduce(Range const &range, type const c, OP &&op, F1 const &&kernel, F2 const &&hkernel)
   {
     int SFL      = int(range.SIMDFromLower<VectorRegisterType::E_BLOCK_COUNT>());
     int SF       = int(range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>());
@@ -184,20 +184,20 @@ public:
     return ret;
   }
 
-  template <std::size_t S>
-  type SumReduce(Range const &range, vector_kernel_signature_type<S> &&kernel, vector_reduce_signature_type<S> &&hkernel)
+  template <class F1, class F2>
+  type SumReduce(Range const &range, F1 const &&kernel, F2 const &&hkernel)
   {
-    return GenericReduce(range, std::plus<VectorRegisterType>{}, type(0), kernel, hkernel);
+    return GenericReduce(range, type(0), std::plus<VectorRegisterType>{}, kernel, hkernel);
   }
 
-  template <std::size_t S>
-  type ProductReduce(Range const &range, vector_kernel_signature_type<S> &&kernel, vector_reduce_signature_type<S> &&hkernel)
+  template <class F1, class F2>
+  type ProductReduce(Range const &range, F1 const &&kernel, F2 const &&hkernel)
   {
-    return GenericReduce(range, std::multiplies<VectorRegisterType>{}, type(1), kernel, hkernel);
+    return GenericReduce(range, type(1), std::multiplies<VectorRegisterType>{}, kernel, hkernel);
   }
 
-  template <std::size_t S, class OP, typename... Args>
-  type GenericReduce(Range const &range, OP const &&op, type const c, vector_kernel_signature_type<S> &&kernel, vector_reduce_signature_type<S> &&hkernel, Args &&... args)
+  template <class F1, class F2, class OP, typename... Args>
+  type GenericReduce(Range const &range, type const c, OP const &&op, F1 const &&kernel, F2 const &&hkernel, Args &&... args)
   {
     int SFL      = int(range.SIMDFromLower<VectorRegisterType::E_BLOCK_COUNT>());
     int SF       = int(range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>());
@@ -283,14 +283,14 @@ public:
     return ret;
   }
 
-  template <std::size_t S, typename... Args>
-  type SumReduce(Range const &range, vector_kernel_signature_type<S> &&kernel, vector_reduce_signature_type<S> &&hkernel, Args &&... args)
+  template <class F1, class F2, typename... Args>
+  type SumReduce(Range const &range, F1 const &&kernel, F2 const &&hkernel, Args &&... args)
   {
-    return GenericReduce(range, std::plus<VectorRegisterType>{}, type(0), kernel, hkernel, std::forward<Args>(args)...);
+    return GenericReduce(range, type(0), std::plus<VectorRegisterType>{}, kernel, hkernel, std::forward<Args>(args)...);
   }
 
-  template <std::size_t S>
-  type Reduce(Range const &range, vector_kernel_signature_type<S> &&kernel, vector_reduce_signature_type<S> &&hkernel)
+  template <class F1, class F2>
+  type Reduce(Range const &range, F1 const &&kernel, F2 const &&hkernel)
   {
     int SFL = int(range.SIMDFromLower<VectorRegisterType::E_BLOCK_COUNT>());
     int SF = int(range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>());
@@ -362,8 +362,9 @@ public:
     return b.data();
   }
 
-  template <std::size_t S, class OP, typename... Args>
-  type GenericReduce(OP &&op, type const c, vector_kernel_signature_type<S> &&kernel, vector_reduce_signature_type<S> &&hkernel, Args &&... args)
+  template <class F1, class F2, class OP, typename... Args>
+  fetch::meta::EnableIfNotSame<F1, Range, type>
+  GenericReduce(type const c, OP &&op, F1 const &&kernel, F2 const &&hkernel, Args &&... args)
   {
     VectorRegisterType         regs[sizeof...(args)];
     VectorRegisterIteratorType iters[sizeof...(args)];
@@ -390,16 +391,18 @@ public:
     return hkernel(vc);
   }
 
-  template <std::size_t S, typename... Args>
-  type SumReduce(vector_kernel_signature_type<S> &&kernel, vector_reduce_signature_type<S> &&hkernel, Args &&... args)
+  template <class F1, class F2, typename... Args>
+  fetch::meta::EnableIfNotSame<F1, Range, type>
+  SumReduce(F1 const &&kernel, F2 const &&hkernel, Args &&... args)
   {
-    return GenericReduce(std::plus<VectorRegisterType>{}, type(0), kernel, hkernel, std::forward<Args>(args)...);
+    return GenericReduce(type(0), std::plus<VectorRegisterType>{}, kernel, hkernel, std::forward<Args>(args)...);
   }
 
-  template <std::size_t S, typename... Args>
-  type ProductReduce(vector_kernel_signature_type<S> &&kernel, vector_reduce_signature_type<S> &&hkernel, Args &&... args)
+  template <class F1, class F2, typename... Args>
+  fetch::meta::EnableIfNotSame<F1, Range, type>
+  ProductReduce(F1 const &&kernel, F2 const &&hkernel, Args &&... args)
   {
-    return GenericReduce(std::multiplies<VectorRegisterType>{}, type(1), kernel, hkernel, std::forward<Args>(args)...);
+    return GenericReduce(type(1), std::multiplies<VectorRegisterType>{}, kernel, hkernel, std::forward<Args>(args)...);
   }
 
   type Reduce(type (*register_reduction)(type const &, type const &)) const
