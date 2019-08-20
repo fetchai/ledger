@@ -97,7 +97,8 @@ public:
   {
     if (this->random_mode_)
     {
-      GetAtIndex(this->current_min_ + (SizeType)rand() % this->current_size_, buffer_);
+      GetAtIndex(this->current_min_ + (static_cast<SizeType>(rand()) % this->current_size_),
+                 buffer_);
       return buffer_;
     }
     else
@@ -147,7 +148,15 @@ public:
 
       ret_labels(labels_[*this->current_cursor_], index) = static_cast<typename LabelType::Type>(1);
 
-      (*this->current_cursor_)++;
+      if (this->random_mode_)
+      {
+        *this->current_cursor_ =
+            this->current_min_ + (static_cast<SizeType>(rand()) % this->current_size_);
+      }
+      else
+      {
+        (*this->current_cursor_)++;
+      }
 
       if (IsDone())
       {
