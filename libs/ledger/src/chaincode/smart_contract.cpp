@@ -33,6 +33,7 @@
 #include "vm/address.hpp"
 #include "vm/function_decorators.hpp"
 #include "vm/module.hpp"
+#include "vm/variant.hpp"
 #include "vm_modules/vm_factory.hpp"
 
 #include <algorithm>
@@ -333,50 +334,22 @@ template <typename T>
 void AddToParameterPack(vm::VM *vm, vm::ParameterPack &params, vm::TypeId expected_type,
                         T const &variant)
 {
-  switch (expected_type)
+  if (vm::ApplyFunctor<vm::TypeIds::Bool, vm::IntegralTypes>(expected_type, [&](auto cs) {
+        using Case = decltype(cs);
+        AddToParameterPack<typename Case::type>(params, variant);
+        return true;  // to signal that expected_type's been handled
+      }))
   {
-  case vm::TypeIds::Bool:
-    AddToParameterPack<bool>(params, variant);
-    break;
+    return;
+  }
 
-  case vm::TypeIds::Int8:
-    AddToParameterPack<int8_t>(params, variant);
-    break;
-
-  case vm::TypeIds::UInt8:
-    AddToParameterPack<uint8_t>(params, variant);
-    break;
-
-  case vm::TypeIds::Int16:
-    AddToParameterPack<int16_t>(params, variant);
-    break;
-
-  case vm::TypeIds::UInt16:
-    AddToParameterPack<uint16_t>(params, variant);
-    break;
-
-  case vm::TypeIds::Int32:
-    AddToParameterPack<int32_t>(params, variant);
-    break;
-
-  case vm::TypeIds::UInt32:
-    AddToParameterPack<uint32_t>(params, variant);
-    break;
-
-  case vm::TypeIds::Int64:
-    AddToParameterPack<int64_t>(params, variant);
-    break;
-
-  case vm::TypeIds::UInt64:
-    AddToParameterPack<uint64_t>(params, variant);
-    break;
-
-  // TODO(issue 1256): Whole this case section can be dropped once the issue is resolved
-  case vm::TypeIds::Address:
+  if (expected_type == vm::TypeIds::Address)
+  {
+    // TODO(issue 1256): Whole this case section can be dropped once the issue is resolved
     AddAddressToParameterPack(vm, params, variant);
-    break;
-
-  default:
+  }
+  else
+  {
     AddStructuredDataObjectToParameterPack(vm, expected_type, params, variant);
   }
 }
@@ -631,83 +604,54 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
   }
 
   // extract the result from the contract output
-  switch (output.type_id)
+
+  if (!vm::ApplyPrimitiveFunctor(output.type_id,
+                                 [&](auto &&v) {
+                                   response["result"] = v.Get();
+                                   return true;  // to signal that output's type has been handled
+                                 },
+                                 output))
   {
-  case vm::TypeIds::Null:
-    response["result"] = variant::Variant::Null();
-    break;
-  case vm::TypeIds::Bool:
-    response["result"] = output.Get<bool>();
-    break;
-  case vm::TypeIds::Int8:
-    response["result"] = output.Get<int8_t>();
-    break;
-  case vm::TypeIds::UInt8:
-    response["result"] = output.Get<uint8_t>();
-    break;
-  case vm::TypeIds::Int16:
-    response["result"] = output.Get<int16_t>();
-    break;
-  case vm::TypeIds::UInt16:
-    response["result"] = output.Get<uint16_t>();
-    break;
-  case vm::TypeIds::Int32:
-    response["result"] = output.Get<int32_t>();
-    break;
-  case vm::TypeIds::UInt32:
-    response["result"] = output.Get<uint32_t>();
-    break;
-  case vm::TypeIds::Int64:
-    response["result"] = output.Get<int64_t>();
-    break;
-  case vm::TypeIds::UInt64:
-    response["result"] = output.Get<uint64_t>();
-    break;
-  case vm::TypeIds::Float32:
-    response["result"] = output.Get<float>();
-    break;
-  case vm::TypeIds::Float64:
-    response["result"] = output.Get<double>();
-    break;
-  case vm::TypeIds::Fixed32:
-    response["result"] = output.Get<fixed_point::fp32_t>();
-    break;
-  case vm::TypeIds::Fixed64:
-    response["result"] = output.Get<fixed_point::fp64_t>();
-    break;
-  case vm::TypeIds::String:
-    response["result"] = output.Get<vm::Ptr<vm::String>>()->str;
-    break;
-  default:
-    if (output.IsPrimitive())
+    // output's type is none of the primitive types
+    switch (output.type_id)
     {
-      // TODO(tfr): add error - all types not covered
+    case vm::TypeIds::Null:
       response["result"] = variant::Variant::Null();
-      FETCH_LOG_WARN(LOGGING_NAME, "Could not serialise result - possibly Void return-type");
-      return Status::OK;
-    }
-    else
-    {
-      variant::Variant var;
-      if (output.object == nullptr)
+      break;
+    case vm::TypeIds::String:
+      response["result"] = output.Get<vm::Ptr<vm::String>>()->str;
+      break;
+    default:
+      if (output.IsPrimitive())
       {
-        var = variant::Variant::Null();
+        // TODO(tfr): add error - all types not covered
+        response["result"] = variant::Variant::Null();
+        FETCH_LOG_WARN(LOGGING_NAME, "Could not serialise result - possibly Void return-type");
+        return Status::OK;
       }
       else
       {
-        if (!output.object->ToJSON(var))
+        variant::Variant var;
+        if (output.object == nullptr)
         {
-          response["status"] = "failed";
-          response["result"] = "Failed to serialise object to JSON variant";
-          FETCH_LOG_WARN(LOGGING_NAME, "Failed to serialise object to JSON variant for " +
-                                           output.object->GetUniqueId());
-          return Status::FAILED;
+          var = variant::Variant::Null();
         }
+        else
+        {
+          if (!output.object->ToJSON(var))
+          {
+            response["status"] = "failed";
+            response["result"] = "Failed to serialise object to JSON variant";
+            FETCH_LOG_WARN(LOGGING_NAME, "Failed to serialise object to JSON variant for " +
+                                             output.object->GetUniqueId());
+            return Status::FAILED;
+          }
+        }
+        response["result"] = var;
       }
-      response["result"] = var;
-    }
 
-    break;
+      break;
+    }
   }
 
   // update the status response to be successful
