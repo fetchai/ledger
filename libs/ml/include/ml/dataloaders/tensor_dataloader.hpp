@@ -137,6 +137,8 @@ bool TensorDataLoader<LabelType, InputType>::AddData(TensorType const &data,
   validation_offset_  = n_train_samples_;
   *validation_cursor_ = validation_offset_;
 
+  UpdateCursor();
+
   return true;
 }
 
