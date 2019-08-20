@@ -44,7 +44,7 @@ public:
   using ReturnType = std::pair<LabelType, std::vector<DataType>>;
 
   GraphW2VLoader(SizeType window_size, SizeType negative_samples, T freq_thresh,
-                 SizeType max_word_count, DataLoaderMode mode, SizeType seed = 1337);
+                 SizeType max_word_count, SizeType seed = 1337);
 
   bool        IsDone() const override;
   void        Reset() override;
@@ -101,12 +101,11 @@ private:
  * @param window_size the size of the context window (one side only)
  * @param negative_samples the number of total samples (all but one being negat
  * SkipGramTextParams<TensorType> sp = SetParams<TensorType>();ive)
- * @param mode
  */
 template <typename T>
 GraphW2VLoader<T>::GraphW2VLoader(SizeType window_size, SizeType negative_samples, T freq_thresh,
-                                  SizeType max_word_count, DataLoaderMode mode, SizeType seed)
-  : DataLoader<LabelType, DataType>(false, mode)  // no random mode specified
+                                  SizeType max_word_count, SizeType seed)
+  : DataLoader<LabelType, DataType>(false)  // no random mode specified
   , current_sentence_(0)
   , current_word_(0)
   , window_size_(window_size)

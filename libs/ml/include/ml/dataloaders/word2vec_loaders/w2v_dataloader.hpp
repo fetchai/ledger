@@ -50,8 +50,7 @@ public:
   using VocabType  = Vocab;
   using ReturnType = std::pair<LabelType, std::vector<DataType>>;
 
-  W2VLoader(SizeType window_size, SizeType negative_samples,
-            DataLoaderMode mode = DataLoaderMode::TRAIN);
+  W2VLoader(SizeType window_size, SizeType negative_samples);
 
   bool        IsDone() const override;
   void        Reset() override;
@@ -100,8 +99,8 @@ private:
  * @param mode
  */
 template <typename T>
-W2VLoader<T>::W2VLoader(SizeType window_size, SizeType negative_samples, DataLoaderMode mode)
-  : DataLoader<LabelType, DataType>(false, mode)  // no random mode specified
+W2VLoader<T>::W2VLoader(SizeType window_size, SizeType negative_samples)
+  : DataLoader<LabelType, DataType>(false)  // no random mode specified
   , current_sentence_(0)
   , current_word_(0)
   , window_size_(window_size)
@@ -195,7 +194,7 @@ inline bool W2VLoader<T>::IsValidable() const
 template <typename T>
 void W2VLoader<T>::RemoveInfrequent(SizeType min)
 {
-  W2VLoader new_loader(window_size_, negative_samples_, mode_);
+  W2VLoader                                            new_loader(window_size_, negative_samples_);
   std::map<SizeType, std::pair<std::string, SizeType>> reverse_vocab;
   for (auto const &kvp : vocab_.data)
   {

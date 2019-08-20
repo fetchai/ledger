@@ -62,7 +62,7 @@ public:
   using umap_int_str  = std::unordered_map<SizeType, std::string>;
 
   C2VLoader(SizeType max_contexts_, bool random_mode = false)
-    : DataLoader<LabelType, DataType>(random_mode, DataLoaderMode::TRAIN)
+    : DataLoader<LabelType, DataType>(random_mode)
     , iterator_position_get_next_context_(0)
     , iterator_position_get_next_(0)
     , current_function_index_(0)

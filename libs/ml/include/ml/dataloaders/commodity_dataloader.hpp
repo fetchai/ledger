@@ -44,7 +44,7 @@ public:
   using SizeType   = math::SizeType;
 
   explicit CommodityDataLoader(bool random_mode = false)
-    : DataLoader<LabelType, InputType>(random_mode, DataLoaderMode::TRAIN)
+    : DataLoader<LabelType, InputType>(random_mode)
   {}
 
   ~CommodityDataLoader() override = default;

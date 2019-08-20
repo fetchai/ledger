@@ -129,7 +129,7 @@ private:
  */
 template <typename T>
 BasicTextLoader<T>::BasicTextLoader(TextParams<T> const &p, bool random_mode, SizeType seed)
-  : DataLoader<T, T>(random_mode, DataLoaderMode::TRAIN)
+  : DataLoader<T, T>(random_mode)
   , p_(p)
   , lfg_(seed)
   , lcg_(seed)

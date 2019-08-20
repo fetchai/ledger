@@ -54,7 +54,7 @@ private:
 public:
   MNISTLoader(std::string const &images_file, std::string const &labelsFile,
               bool random_mode = false, float validation_to_train_ratio = 0.0)
-    : DataLoader<LabelType, T>(random_mode, DataLoaderMode::TRAIN)
+    : DataLoader<LabelType, T>(random_mode)
   {
     std::uint32_t record_length(0);
     data_   = read_mnist_images(images_file, total_size_, record_length);

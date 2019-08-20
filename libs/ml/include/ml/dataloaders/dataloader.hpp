@@ -51,9 +51,8 @@ public:
    * @param label_shape
    * @param data_shapes
    */
-  explicit DataLoader(bool random_mode, DataLoaderMode mode)
+  explicit DataLoader(bool random_mode)
     : random_mode_(random_mode)
-    , mode_(mode)
   {}
 
   virtual ~DataLoader() = default;

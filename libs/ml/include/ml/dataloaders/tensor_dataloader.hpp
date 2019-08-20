@@ -86,7 +86,7 @@ TensorDataLoader<LabelType, InputType>::TensorDataLoader(SizeVector const &     
                                                          std::vector<SizeVector> const &data_shapes,
                                                          bool                           random_mode,
                                                          float validation_to_train_ratio)
-  : DataLoader<LabelType, TensorType>(random_mode, DataLoaderMode::TRAIN)
+  : DataLoader<LabelType, TensorType>(random_mode)
   , label_shape_(label_shape)
   , data_shapes_(data_shapes)
   , validation_to_train_ratio_(validation_to_train_ratio)
