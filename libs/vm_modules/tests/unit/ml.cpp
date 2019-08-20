@@ -219,7 +219,7 @@ TEST_F(MLTests, sgd_optimiser_serialisation_test)
   EXPECT_CALL(toolkit.observer(), Write(state_name, _, _));
   ASSERT_TRUE(toolkit.Run(&first_res));
   auto const loss1 = first_res.Get<fetch::fixed_point::fp64_t>();
-  
+
   std::cout << "loss1: " << loss1 << std::endl;
 
   static char const *optimiser_deserialise_src = R"(
