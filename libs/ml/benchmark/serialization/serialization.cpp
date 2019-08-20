@@ -107,9 +107,8 @@ void BM_Setup_And_Deserialize(benchmark::State &state)
   }
 }
 
-BENCHMARK_TEMPLATE(BM_Setup_And_Deserialize, float, 500, 100, 1)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Setup_And_Deserialize, float, 500, 400, 1)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Setup_And_Deserialize, float, 500, 800, 1)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Setup_And_Deserialize, float, 500, 800, 2)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Setup_And_Deserialize, float, 100, 100, 1)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Setup_And_Deserialize, float, 200, 200, 1)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Setup_And_Deserialize, float, 400, 400, 1)->Unit(benchmark::kMillisecond);
 
 BENCHMARK_MAIN();
