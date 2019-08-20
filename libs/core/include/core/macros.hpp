@@ -19,6 +19,14 @@
 
 #define FETCH_UNUSED(x) (void)(x)
 
+template <typename>
+struct Unused
+{
+  constexpr static void noop()
+  {}
+};
+#define FETCH_UNUSED_ALIAS(x) (void)Unused<x>::noop()
+
 #define FETCH_MAYBE_UNUSED __attribute__((used))
 
 #if defined(__clang__)
