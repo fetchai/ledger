@@ -262,7 +262,8 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
                   std::make_shared<HealthCheckHttpModule>(chain_, *main_chain_service_,
                                                           block_coordinator_)}
   , uptime_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_uptime", "The number of intervals that ledger instance has been alive for")}
+        "ledger_uptime_ticks_total",
+        "The number of intervals that ledger instance has been alive for")}
 {
 
   // print the start up log banner
