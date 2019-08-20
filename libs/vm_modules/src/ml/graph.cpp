@@ -141,7 +141,7 @@ void VMGraph::Bind(Module &module)
   module.CreateClassType<VMGraph>("Graph")
       .CreateConstructor(&VMGraph::Constructor)
       .CreateSerializeDefaultConstructor(
-          [](VM *vm, TypeId type_id) { return new VMGraph(vm, type_id); })
+          [](VM *vm, TypeId type_id) -> Ptr<VMGraph> { return new VMGraph(vm, type_id); })
       .CreateMemberFunction("setInput", &VMGraph::SetInput)
       .CreateMemberFunction("evaluate", &VMGraph::Evaluate)
       .CreateMemberFunction("backPropagate", &VMGraph::BackPropagateError)

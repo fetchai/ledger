@@ -19,29 +19,22 @@
 
 #include "vm/vm.hpp"
 
+#include <type_traits>
 #include <typeinfo>
+#include <utility>
 
 namespace fetch {
 namespace vm {
 
 template <typename T>
-struct IsResult
-{
-  static const int value = 1;
-};
-template <>
-struct IsResult<void>
-{
-  static const int value = 0;
-};
-
-template <typename T>
 struct StackGetter
 {
-  static T Get(VM *vm, int sp_offset)
+  using DecayedT = std::decay_t<T>;
+
+  static DecayedT Get(VM *vm, int sp_offset)
   {
     Variant &v = vm->stack_[vm->sp_ - sp_offset];
-    return v.Move<T>();
+    return v.Move<DecayedT>();
   }
 };
 
@@ -118,15 +111,6 @@ struct UnrollTypes<T, Ts...>
     UnrollTypes<Ts...>::Unroll(array);
   }
 };
-template <typename T>
-struct UnrollTypes<T>
-{
-  // Invoked on final type
-  static void Unroll(TypeIndexArray &array)
-  {
-    array.emplace_back(TypeGetter<T>::GetTypeIndex());
-  }
-};
 template <>
 struct UnrollTypes<>
 {
@@ -158,15 +142,6 @@ struct UnrollParameterTypes<T, Ts...>
     UnrollParameterTypes<Ts...>::Unroll(array);
   }
 };
-template <typename T>
-struct UnrollParameterTypes<T>
-{
-  // Invoked on final type
-  static void Unroll(TypeIndexArray &array)
-  {
-    array.emplace_back(ParameterTypeGetter<T>::GetTypeIndex());
-  }
-};
 template <>
 struct UnrollParameterTypes<>
 {
@@ -175,16 +150,8 @@ struct UnrollParameterTypes<>
   {}
 };
 
-template <typename... Ts>
-struct UnrollTupleParameterTypes;
-template <typename... Ts>
-struct UnrollTupleParameterTypes<std::tuple<Ts...>>
-{
-  static void Unroll(TypeIndexArray &array)
-  {
-    UnrollParameterTypes<Ts...>::Unroll(array);
-  }
-};
+template <typename Tuple>
+using UnrollTupleParameterTypes = meta::UnpackTuple<Tuple, UnrollParameterTypes>;
 
 template <typename T, typename = void>
 struct MakeParameterType;
@@ -202,45 +169,6 @@ template <typename T>
 struct MakeParameterType<T, std::enable_if_t<fetch::vm::IsPtr<T>::value>>
 {
   using type = T const &;
-};
-
-template <typename Type, typename OutputType, typename... InputTypes>
-struct IndexedValueGetter;
-template <typename Type, typename OutputType, typename... InputTypes>
-struct IndexedValueGetter<Type, std::tuple<InputTypes...>, OutputType>
-{
-  using type = OutputType (Type::*)(typename fetch::vm::MakeParameterType<InputTypes>::type...);
-};
-
-template <typename Type, typename OutputType, typename... InputTypes>
-struct IndexedValueSetter;
-template <typename Type, typename OutputType, typename... InputTypes>
-struct IndexedValueSetter<Type, std::tuple<InputTypes...>, OutputType>
-{
-  using type = void (Type::*)(typename fetch::vm::MakeParameterType<InputTypes>::type...,
-                              typename fetch::vm::MakeParameterType<OutputType>::type);
-};
-
-template <typename F>
-struct FunctorTraits;
-template <typename F>
-struct FunctorTraits : FunctorTraits<decltype(&std::remove_reference_t<F>::operator())>
-{
-};
-template <typename ReturnType, typename Class_, typename... Args>
-struct FunctorTraits<ReturnType (Class_::*)(Args...) const>
-{
-  using class_type      = Class_;
-  using return_type     = ReturnType;
-  using args_tuple_type = std::tuple<Args...>;
-};
-// Support mutable lambdas
-template <typename ReturnType, typename Class_, typename... Args>
-struct FunctorTraits<ReturnType (Class_::*)(Args...)>
-{
-  using class_type      = Class_;
-  using return_type     = ReturnType;
-  using args_tuple_type = std::tuple<Args...>;
 };
 
 }  // namespace vm
