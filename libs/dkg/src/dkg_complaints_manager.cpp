@@ -72,7 +72,7 @@ void ComplaintsManager::Add(ComplaintsMessage const &msg, MuddleAddress const &f
 }
 
 bool ComplaintsManager::IsFinished(std::set<MuddleAddress> const &miners, uint32_t node_index,
-                                   uint32_t threshold)
+                                   uint32_t polynomial_degree)
 {
   std::lock_guard<std::mutex> lock{mutex_};
   if (complaints_received_counter_ == cabinet_size_ - 1)
@@ -91,7 +91,7 @@ bool ComplaintsManager::IsFinished(std::set<MuddleAddress> const &miners, uint32
     // All miners who have received over t complaints are also disqualified
     for (auto const &node_complaints : complaints_counter_)
     {
-      if (node_complaints.second > threshold)
+      if (node_complaints.second > polynomial_degree)
       {
         complaints_.insert(node_complaints.first);
       }
