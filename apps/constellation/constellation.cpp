@@ -40,6 +40,8 @@
 #include "network/uri.hpp"
 #include "open_api_http_module.hpp"
 #include "telemetry_http_module.hpp"
+#include "telemetry/counter.hpp"
+#include "telemetry/registry.hpp"
 
 #include <chrono>
 #include <cstddef>
@@ -258,6 +260,8 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
         std::make_shared<LoggingHttpModule>(),
         std::make_shared<TelemetryHttpModule>(),
         std::make_shared<HealthCheckHttpModule>(chain_, *main_chain_service_, block_coordinator_)}
+  , uptime_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_uptime", "The number of intervals that ledger instance has been alive for")}
 {
 
   // print the start up log banner
@@ -504,6 +508,9 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
 
       FETCH_LOG_INFO(LOGGING_NAME, "Startup complete");
     }
+
+    // update the uptime counter
+    uptime_->increment();
   }
 
   //---------------------------------------------------------------
