@@ -42,7 +42,8 @@ class TensorDataLoader : public DataLoader<LabelType, InputType>
 public:
   TensorDataLoader() = default;
   TensorDataLoader(SizeVector const &label_shape, std::vector<SizeVector> const &data_shapes,
-                   bool random_mode = false, float VALIDATION_TO_TRAIN_RATIO = 0.0);
+                   bool random_mode = false, float test_to_train_ratio = 0.0,
+                   float validation_to_train_ratio = 0.0);
 
   ~TensorDataLoader() override = default;
 
@@ -59,10 +60,14 @@ public:
 
 protected:
   std::shared_ptr<SizeType> train_cursor_      = std::make_shared<SizeType>(0);
+  std::shared_ptr<SizeType> test_cursor_       = std::make_shared<SizeType>(0);
   std::shared_ptr<SizeType> validation_cursor_ = std::make_shared<SizeType>(0);
-  SizeType                  validation_offset_ = 0;
+
+  SizeType test_offset_       = 0;
+  SizeType validation_offset_ = 0;
 
   SizeType n_samples_            = 0;  // number of all samples
+  SizeType n_test_samples_       = 0;  // number of train samples
   SizeType n_validation_samples_ = 0;  // number of train samples
   SizeType n_train_samples_      = 0;  // number of validation samples
 
@@ -73,6 +78,7 @@ protected:
   SizeVector              one_sample_label_shape_;
   std::vector<SizeVector> data_shapes_;
   std::vector<SizeVector> one_sample_data_shapes_;
+  float                   test_to_train_ratio_       = 0.0;
   float                   validation_to_train_ratio_ = 0.0;
 
   SizeType batch_label_dim_ = fetch::math::numeric_max<SizeType>();
@@ -85,10 +91,12 @@ template <typename LabelType, typename InputType>
 TensorDataLoader<LabelType, InputType>::TensorDataLoader(SizeVector const &             label_shape,
                                                          std::vector<SizeVector> const &data_shapes,
                                                          bool                           random_mode,
+                                                         float test_to_train_ratio,
                                                          float validation_to_train_ratio)
   : DataLoader<LabelType, TensorType>(random_mode)
   , label_shape_(label_shape)
   , data_shapes_(data_shapes)
+  , test_to_train_ratio_(test_to_train_ratio)
   , validation_to_train_ratio_(validation_to_train_ratio)
 {
   one_sample_label_shape_                                        = label_shape;
@@ -99,9 +107,6 @@ TensorDataLoader<LabelType, InputType>::TensorDataLoader(SizeVector const &     
     one_sample_data_shapes_.emplace_back(data_shapes.at(i));
     one_sample_data_shapes_.at(i).at(one_sample_data_shapes_.at(i).size() - 1) = 1;
   }
-
-  *train_cursor_      = 0;
-  *validation_cursor_ = validation_offset_;
 
   UpdateCursor();
 }
@@ -130,11 +135,19 @@ bool TensorDataLoader<LabelType, InputType>::AddData(TensorType const &data,
 
   n_samples_ = data_.shape().at(batch_data_dim_);
 
-  n_validation_samples_ =
-      static_cast<SizeType>(validation_to_train_ratio_ * static_cast<float>(n_samples_));
-  n_train_samples_ = n_samples_ - n_validation_samples_;
+  float test_percentage       = 1.0f - test_to_train_ratio_ - validation_to_train_ratio_;
+  float validation_percentage = test_percentage + test_to_train_ratio_;
 
-  validation_offset_  = n_train_samples_;
+  test_offset_ = static_cast<std::uint32_t>(test_percentage * static_cast<float>(n_train_samples_));
+  validation_offset_ =
+      static_cast<std::uint32_t>(validation_percentage * static_cast<float>(n_train_samples_));
+
+  n_validation_samples_ = n_samples_ - validation_offset_;
+  n_test_samples_       = validation_offset_ - test_offset_;
+  n_train_samples_      = n_samples_ - test_offset_;
+
+  *train_cursor_      = 0;
+  *test_cursor_       = test_offset_;
   *validation_cursor_ = validation_offset_;
 
   UpdateCursor();
@@ -174,11 +187,26 @@ void TensorDataLoader<LabelType, InputType>::UpdateCursor()
   {
     this->current_cursor_ = train_cursor_;
     this->current_min_    = 0;
-    this->current_max_    = validation_offset_;
+    this->current_max_    = test_offset_;
     this->current_size_   = n_train_samples_;
+  }
+  else if (this->mode_ == DataLoaderMode::TEST)
+  {
+    if (test_to_train_ratio_ == 0)
+    {
+      throw std::runtime_error("Dataloader has no test set.");
+    }
+    this->current_cursor_ = test_cursor_;
+    this->current_min_    = test_offset_;
+    this->current_max_    = validation_offset_;
+    this->current_size_   = n_test_samples_;
   }
   else if (this->mode_ == DataLoaderMode::VALIDATE)
   {
+    if (validation_to_train_ratio_ == 0)
+    {
+      throw std::runtime_error("Dataloader has no validation set.");
+    }
     this->current_cursor_ = validation_cursor_;
     this->current_min_    = validation_offset_;
     this->current_max_    = n_samples_;
@@ -186,7 +214,7 @@ void TensorDataLoader<LabelType, InputType>::UpdateCursor()
   }
   else
   {
-    throw std::runtime_error("Other modes than TRAIN and VALIDATE not supported.");
+    throw std::runtime_error("Unsupported dataloader mode.");
   }
 }
 
@@ -206,40 +234,50 @@ struct MapSerializer<fetch::ml::dataloaders::TensorDataLoader<LabelType, InputTy
   using DriverType = D;
 
   static uint8_t const BASE_DATA_LOADER          = 1;
-  static uint8_t const VALIDATION_CURSOR         = 2;
-  static uint8_t const TRAIN_CURSOR              = 3;
-  static uint8_t const VALIDATION_OFFSET         = 4;
-  static uint8_t const VALIDATION_TO_TRAIN_RATIO = 5;
-  static uint8_t const N_SAMPLES                 = 6;
-  static uint8_t const N_TRAIN_SAMPLES           = 7;
-  static uint8_t const N_VALIDATION_SAMPLES      = 8;
+  static uint8_t const TRAIN_CURSOR              = 2;
+  static uint8_t const TEST_CURSOR               = 3;
+  static uint8_t const VALIDATION_CURSOR         = 4;
+  static uint8_t const TEST_OFFSET               = 5;
+  static uint8_t const VALIDATION_OFFSET         = 6;
+  static uint8_t const TEST_TO_TRAIN_RATIO       = 7;
+  static uint8_t const VALIDATION_TO_TRAIN_RATIO = 8;
+  static uint8_t const N_SAMPLES                 = 9;
+  static uint8_t const N_TRAIN_SAMPLES           = 10;
+  static uint8_t const N_TEST_SAMPLES            = 11;
+  static uint8_t const N_VALIDATION_SAMPLES      = 12;
+  static uint8_t const DATA                      = 13;
+  static uint8_t const LABELS                    = 14;
 
-  static uint8_t const DATA   = 9;
-  static uint8_t const LABELS = 10;
+  static uint8_t const LABEL_SHAPE            = 15;
+  static uint8_t const ONE_SAMPLE_LABEL_SHAPE = 16;
+  static uint8_t const DATA_SHAPES            = 17;
+  static uint8_t const ONE_SAMPLE_DATA_SHAPES = 18;
 
-  static uint8_t const LABEL_SHAPE            = 11;
-  static uint8_t const ONE_SAMPLE_LABEL_SHAPE = 12;
-  static uint8_t const DATA_SHAPES            = 13;
-  static uint8_t const ONE_SAMPLE_DATA_SHAPES = 14;
-
-  static uint8_t const BATCH_LABEL_DIM = 15;
-  static uint8_t const BATCH_DATA_DIM  = 16;
+  static uint8_t const BATCH_LABEL_DIM = 19;
+  static uint8_t const BATCH_DATA_DIM  = 20;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(16);
+    auto map = map_constructor(20);
 
     // serialize parent class first
     auto dl_pointer = static_cast<ml::dataloaders::DataLoader<LabelType, InputType> const *>(&sp);
     map.Append(BASE_DATA_LOADER, *(dl_pointer));
 
-    map.Append(VALIDATION_CURSOR, *sp.validation_cursor_);
     map.Append(TRAIN_CURSOR, *sp.train_cursor_);
+    map.Append(TEST_CURSOR, *sp.test_cursor_);
+    map.Append(VALIDATION_CURSOR, *sp.validation_cursor_);
+
+    map.Append(TEST_OFFSET, sp.test_offset_);
     map.Append(VALIDATION_OFFSET, sp.validation_offset_);
+
+    map.Append(TEST_TO_TRAIN_RATIO, sp.test_to_train_ratio_);
     map.Append(VALIDATION_TO_TRAIN_RATIO, sp.validation_to_train_ratio_);
+
     map.Append(N_SAMPLES, sp.n_samples_);
     map.Append(N_TRAIN_SAMPLES, sp.n_train_samples_);
+    map.Append(N_TEST_SAMPLES, sp.n_test_samples_);
     map.Append(N_VALIDATION_SAMPLES, sp.n_validation_samples_);
 
     map.Append(DATA, sp.data_);
@@ -260,12 +298,19 @@ struct MapSerializer<fetch::ml::dataloaders::TensorDataLoader<LabelType, InputTy
     auto dl_pointer = static_cast<ml::dataloaders::DataLoader<LabelType, InputType> *>(&sp);
     map.ExpectKeyGetValue(BASE_DATA_LOADER, (*dl_pointer));
 
-    map.ExpectKeyGetValue(VALIDATION_CURSOR, *sp.validation_cursor_);
     map.ExpectKeyGetValue(TRAIN_CURSOR, *sp.train_cursor_);
+    map.ExpectKeyGetValue(TEST_CURSOR, *sp.test_cursor_);
+    map.ExpectKeyGetValue(VALIDATION_CURSOR, *sp.validation_cursor_);
+
+    map.ExpectKeyGetValue(TEST_OFFSET, sp.test_offset_);
     map.ExpectKeyGetValue(VALIDATION_OFFSET, sp.validation_offset_);
+
+    map.ExpectKeyGetValue(TEST_TO_TRAIN_RATIO, sp.test_to_train_ratio_);
     map.ExpectKeyGetValue(VALIDATION_TO_TRAIN_RATIO, sp.validation_to_train_ratio_);
+
     map.ExpectKeyGetValue(N_SAMPLES, sp.n_samples_);
     map.ExpectKeyGetValue(N_TRAIN_SAMPLES, sp.n_train_samples_);
+    map.ExpectKeyGetValue(N_TEST_SAMPLES, sp.n_test_samples_);
     map.ExpectKeyGetValue(N_VALIDATION_SAMPLES, sp.n_validation_samples_);
 
     map.ExpectKeyGetValue(DATA, sp.data_);

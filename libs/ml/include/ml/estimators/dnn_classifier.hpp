@@ -202,7 +202,7 @@ bool DNNClassifier<TensorType>::Validate(DataType &validation_loss)
     throw std::runtime_error("No validation set");
   }
 
-  data_loader_ptr_->SetMode(dataloaders::DataLoaderMode::VALIDATE);
+  data_loader_ptr_->SetMode(dataloaders::DataLoaderMode::TEST);
 
   SizeType val_set_size = data_loader_ptr_->Size();
 

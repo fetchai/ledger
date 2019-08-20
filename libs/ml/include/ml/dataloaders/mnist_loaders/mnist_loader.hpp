@@ -40,12 +40,18 @@ public:
   using ReturnType = std::pair<LabelType, std::vector<T>>;
 
 private:
-  std::shared_ptr<SizeType>      train_cursor_      = std::make_shared<SizeType>(0);
-  std::shared_ptr<SizeType>      validation_cursor_ = std::make_shared<SizeType>(0);
-  std::uint32_t                  train_size_;
-  std::uint32_t                  validation_size_;
-  std::uint32_t                  total_size_;
-  std::uint32_t                  validation_offset_;
+  std::shared_ptr<SizeType> train_cursor_      = std::make_shared<SizeType>(0);
+  std::shared_ptr<SizeType> test_cursor_       = std::make_shared<SizeType>(0);
+  std::shared_ptr<SizeType> validation_cursor_ = std::make_shared<SizeType>(0);
+
+  std::uint32_t train_size_;
+  std::uint32_t test_size_;
+  std::uint32_t validation_size_;
+
+  std::uint32_t total_size_;
+  std::uint32_t test_offset_;
+  std::uint32_t validation_offset_;
+
   static constexpr std::uint32_t FIGURE_WIDTH  = 28;
   static constexpr std::uint32_t FIGURE_HEIGHT = 28;
   static constexpr std::uint32_t FIGURE_SIZE   = 28 * 28;
@@ -53,19 +59,25 @@ private:
 
 public:
   MNISTLoader(std::string const &images_file, std::string const &labelsFile,
-              bool random_mode = false, float validation_to_train_ratio = 0.0)
+              bool random_mode = false, float test_to_train_ratio = 0.0,
+              float validation_to_train_ratio = 0.0)
     : DataLoader<LabelType, T>(random_mode)
   {
     std::uint32_t record_length(0);
     data_   = read_mnist_images(images_file, total_size_, record_length);
     labels_ = read_mnist_labels(labelsFile, total_size_);
 
-    validation_size_ =
-        static_cast<std::uint32_t>(validation_to_train_ratio * static_cast<float>(total_size_));
-    train_size_        = total_size_ - validation_size_;
-    validation_offset_ = train_size_;
-
+    float test_percentage       = 1.0f - test_to_train_ratio - validation_to_train_ratio;
+    float validation_percentage = test_percentage + test_to_train_ratio;
     assert(record_length == FIGURE_SIZE);
+
+    test_offset_ = static_cast<std::uint32_t>(test_percentage * static_cast<float>(total_size_));
+    validation_offset_ =
+        static_cast<std::uint32_t>(validation_percentage * static_cast<float>(total_size_));
+
+    validation_size_ = total_size_ - validation_offset_;
+    test_size_       = validation_offset_ - test_offset_;
+    train_size_      = total_size_ - test_offset_;
 
     // Prepare return buffer
     buffer_.second.push_back(T({FIGURE_WIDTH, FIGURE_HEIGHT, 1u}));
@@ -73,6 +85,7 @@ public:
 
     *train_cursor_      = 0;
     *validation_cursor_ = validation_offset_;
+    *test_cursor_       = test_offset_;
 
     UpdateCursor();
   }
@@ -110,7 +123,7 @@ public:
 
   inline bool IsValidable() const override
   {
-    return validation_size_ > 0;
+    return test_size_ > 0;
   }
 
   void Display(T const &data) const
@@ -177,8 +190,15 @@ private:
     {
       this->current_cursor_ = train_cursor_;
       this->current_min_    = 0;
-      this->current_max_    = validation_offset_;
+      this->current_max_    = test_offset_;
       this->current_size_   = train_size_;
+    }
+    else if (this->mode_ == DataLoaderMode::TEST)
+    {
+      this->current_cursor_ = test_cursor_;
+      this->current_min_    = test_offset_;
+      this->current_max_    = validation_offset_;
+      this->current_size_   = test_size_;
     }
     else if (this->mode_ == DataLoaderMode::VALIDATE)
     {
@@ -189,7 +209,12 @@ private:
     }
     else
     {
-      throw std::runtime_error("Other modes than TRAIN and VALIDATE not supported.");
+      throw std::runtime_error("Unsupported dataloader mode.");
+    }
+
+    if (this->current_min_ == this->current_max_)
+    {
+      throw std::runtime_error("Dataloader has no set for selected mode.");
     }
   }
 
