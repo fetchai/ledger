@@ -139,8 +139,11 @@ void Blas<S, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
       memory::Range range(std::size_t(0), std::size_t(int(a.height())));
       temp = slice_a_j.in_parallel().SumReduce(
           range,
-          [](VectorRegisterType const &vr_a_j, VectorRegisterType const &vr_fv_x) {
+          [](auto const &vr_a_j, auto const &vr_fv_x) -> auto {
             return vr_a_j * vr_fv_x;
+          },
+          [](VectorRegisterType const &vr_a_j) -> Type {
+            return reduce(vr_a_j);
           },
           slice_fv_x);
       y[jy] = y[jy] + alpha * temp;
