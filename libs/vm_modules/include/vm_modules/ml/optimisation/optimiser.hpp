@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/dataloaders/tensor_dataloader.hpp"
 #include "vm/object.hpp"
 #include "vm_modules/math/type.hpp"
 
@@ -35,9 +36,26 @@ namespace ml {
 template <class T>
 class Graph;
 namespace optimisers {
+
 template <class T>
 class Optimiser;
-}
+
+template <class T>
+class AdaGradOptimiser;
+
+template <class T>
+class AdamOptimiser;
+
+template <class T>
+class MomentumOptimiser;
+
+template <class T>
+class RMSPropOptimiser;
+
+template <class T>
+class SGDOptimiser;
+
+}  // namespace optimisers
 }  // namespace ml
 namespace vm {
 class Module;
@@ -49,10 +67,9 @@ namespace ml {
 class VMOptimiser : public fetch::vm::Object
 {
 public:
-
-  using DataType = fetch::vm_modules::math::DataType;
+  using DataType   = fetch::vm_modules::math::DataType;
   using TensorType = fetch::math::Tensor<VMOptimiser::DataType>;
-  using GraphType = fetch::ml::Graph<TensorType>;
+  using GraphType  = fetch::ml::Graph<TensorType>;
 
   using OptimiserType         = fetch::ml::optimisers::Optimiser<TensorType>;
   using AdagradOptimiserType  = fetch::ml::optimisers::AdaGradOptimiser<TensorType>;
@@ -71,31 +88,30 @@ public:
     SGD
   };
 
+  VMOptimiser(fetch::vm::VM *vm, fetch::vm::TypeId type_id);
 
   VMOptimiser(fetch::vm::VM *vm, fetch::vm::TypeId type_id, std::string const &mode,
               fetch::ml::Graph<fetch::math::Tensor<DataType>> const &graph,
-              std::vector<std::string> const &input_node_names, std::string const &label_node_name,
-              std::string const &output_node_name);
+              vm::Ptr<VMDataLoader> const &loader, std::vector<std::string> const &input_node_names,
+              std::string const &label_node_name, std::string const &output_node_name);
 
   static void Bind(vm::Module &module);
 
   static fetch::vm::Ptr<VMOptimiser> Constructor(
       fetch::vm::VM *vm, fetch::vm::TypeId type_id, fetch::vm::Ptr<fetch::vm::String> const &mode,
-      fetch::vm::Ptr<fetch::vm_modules::ml::VMGraph> const &graph,
-      fetch::vm::Ptr<fetch::vm::String> const &             input_node_names,
-      fetch::vm::Ptr<fetch::vm::String> const &             label_node_name,
-      fetch::vm::Ptr<fetch::vm::String> const &             output_node_names);
+      fetch::vm::Ptr<fetch::vm_modules::ml::VMGraph> const &     graph,
+      fetch::vm::Ptr<fetch::vm_modules::ml::VMDataLoader> const &loader,
+      fetch::vm::Ptr<fetch::vm::String> const &                  input_node_names,
+      fetch::vm::Ptr<fetch::vm::String> const &                  label_node_name,
+      fetch::vm::Ptr<fetch::vm::String> const &                  output_node_names);
 
   DataType RunData(fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &data,
                    fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &labels,
                    uint64_t                                                 batch_size);
 
-  DataType RunLoader(fetch::vm::Ptr<fetch::vm_modules::ml::VMDataLoader> const &loader,
-                     uint64_t batch_size, uint64_t subset_size);
+  DataType RunLoader(uint64_t batch_size, uint64_t subset_size);
 
-  DataType RunLoaderNoSubset(fetch::vm::Ptr<fetch::vm_modules::ml::VMDataLoader> const &loader,
-                             uint64_t                                                   batch_size);
-
+  DataType RunLoaderNoSubset(uint64_t batch_size);
 
   bool SerializeTo(serializers::MsgPackSerializer &buffer) override;
 
@@ -106,12 +122,12 @@ public:
 
 private:
   std::shared_ptr<fetch::ml::optimisers::Optimiser<fetch::math::Tensor<DataType>>> optimiser_;
-  OptimiserMode mode_;
+  std::shared_ptr<fetch::ml::dataloaders::DataLoader<TensorType, TensorType>>      loader_;
+  OptimiserMode                                                                    mode_;
 };
 
 }  // namespace ml
 }  // namespace vm_modules
-
 
 namespace serializers {
 
@@ -122,43 +138,65 @@ namespace serializers {
 template <typename D>
 struct MapSerializer<fetch::vm_modules::ml::VMOptimiser, D>
 {
-  using Type       = fetch::vm_modules::ml::VMOptimiser;
+  using Type             = fetch::vm_modules::ml::VMOptimiser;
+  using OptimiserType    = fetch::vm_modules::ml::VMOptimiser::OptimiserType;
+  using SgdOptimiserType = fetch::vm_modules::ml::VMOptimiser::SgdOptimiserType;
+  using DataLoaderType =
+      fetch::ml::dataloaders::DataLoader<vm_modules::ml::VMOptimiser::TensorType,
+                                         vm_modules::ml::VMOptimiser::TensorType>;
+  using TensorDataLoaderType =
+      fetch::ml::dataloaders::TensorDataLoader<vm_modules::ml::VMOptimiser::TensorType,
+                                               vm_modules::ml::VMOptimiser::TensorType>;
   using DriverType = D;
 
-  static uint8_t const MODE      = 1;
-  static uint8_t const OPTIMISER = 2;
+  static uint8_t const MODE       = 1;
+  static uint8_t const HAS_LOADER = 2;
+  static uint8_t const LOADER     = 3;
+  static uint8_t const OPTIMISER  = 4;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(2);
+    auto map = map_constructor(4);
 
     map.Append(MODE, static_cast<uint8_t>(sp.mode_));
 
+    // optimiser only handles tensor dataloaders for serialisation at the moment
+    if (sp.loader_)
+    {
+      map.Append(HAS_LOADER, true);
+      map.Append(LOADER, *(std::static_pointer_cast<TensorDataLoaderType>(sp.loader_)));
+    }
+    else
+    {
+      map.Append(HAS_LOADER, false);
+    }
+
     switch (sp.mode_)
     {
-      case vm_modules::ml::VMOptimiser::OptimiserMode::ADAGRAD:
-      {
-        throw std::runtime_error("serialisation not yet implemented for adagrad optimiser");
-      }
-      case vm_modules::ml::VMOptimiser::OptimiserMode::ADAM:
-      {
-        throw std::runtime_error("serialisation not yet implemented for adam optimiser");
-      }
-      case vm_modules::ml::VMOptimiser::OptimiserMode::MOMENTUM:
-      {
-        throw std::runtime_error("serialisation not yet implemented for momentum optimiser");
-      }
-      case vm_modules::ml::VMOptimiser::OptimiserMode::RMSPROP:
-      {
-        throw std::runtime_error("serialisation not yet implemented for rmsprop optimiser");
-      }
-      case vm_modules::ml::VMOptimiser::OptimiserMode::SGD:
-      {
-        auto tdl_ptr = std::static_pointer_cast<fetch::vm_modules::ml::VMOptimiser::SgdOptimiserType>(sp.optimiser_);
-        map.Append(OPTIMISER, *tdl_ptr);
-        break;
-      }
+    case vm_modules::ml::VMOptimiser::OptimiserMode::ADAGRAD:
+    {
+      throw std::runtime_error("serialisation not yet implemented for adagrad optimiser");
+    }
+    case vm_modules::ml::VMOptimiser::OptimiserMode::ADAM:
+    {
+      throw std::runtime_error("serialisation not yet implemented for adam optimiser");
+    }
+    case vm_modules::ml::VMOptimiser::OptimiserMode::MOMENTUM:
+    {
+      throw std::runtime_error("serialisation not yet implemented for momentum optimiser");
+    }
+    case vm_modules::ml::VMOptimiser::OptimiserMode::RMSPROP:
+    {
+      throw std::runtime_error("serialisation not yet implemented for rmsprop optimiser");
+    }
+    case vm_modules::ml::VMOptimiser::OptimiserMode::SGD:
+    {
+      auto opt_ptr = std::static_pointer_cast<fetch::vm_modules::ml::VMOptimiser::SgdOptimiserType>(
+          sp.optimiser_);
+      map.Append(OPTIMISER, *opt_ptr);
+      break;
+    }
     default:
     {
       throw std::runtime_error("unknown dataloader type");
@@ -173,123 +211,48 @@ struct MapSerializer<fetch::vm_modules::ml::VMOptimiser, D>
     map.ExpectKeyGetValue(MODE, mode);
     sp.mode_ = static_cast<vm_modules::ml::VMOptimiser::OptimiserMode>(mode);
 
-    switch (sp.mode_)
+    bool has_loader;
+    map.ExpectKeyGetValue(HAS_LOADER, has_loader);
+    if (has_loader)
     {
-      case vm_modules::ml::VMOptimiser::OptimiserMode::ADAGRAD:
-      {
-        throw std::runtime_error("serialisation not yet implemented for adagrad optimiser");
-      }
-      case vm_modules::ml::VMOptimiser::OptimiserMode::ADAM:
-      {
-        throw std::runtime_error("serialisation not yet implemented for adam optimiser");
-      }
-      case vm_modules::ml::VMOptimiser::OptimiserMode::MOMENTUM:
-      {
-        throw std::runtime_error("serialisation not yet implemented for momentum optimiser");
-      }
-      case vm_modules::ml::VMOptimiser::OptimiserMode::RMSPROP:
-      {
-        throw std::runtime_error("serialisation not yet implemented for rmsprop optimiser");
-      }
-      case vm_modules::ml::VMOptimiser::OptimiserMode::SGD:
-      {
-        optimiser
-        throw std::runtime_error("serialisation not yet implemented for sgd optimiser");
-      }
-      default:
-      {
-        throw std::runtime_error("optimiser mode not recognised");
-      }
+      auto tdl_ptr = std::make_shared<TensorDataLoaderType>();
+      map.ExpectKeyGetValue(LOADER, *(tdl_ptr));
+      sp.loader_ = std::static_pointer_cast<DataLoaderType>(tdl_ptr);
     }
 
     switch (sp.mode_)
     {
-    case vm_modules::ml::VMOptimiser::DataLoaderMode::COMMODITY:
+    case vm_modules::ml::VMOptimiser::OptimiserMode::ADAGRAD:
     {
-      throw std::runtime_error("commodity dataloader deserialization not yet implemented");
+      throw std::runtime_error("deserialisation not yet implemented for adagrad optimiser");
     }
-    case vm_modules::ml::VMOptimiser::DataLoaderMode::MNIST:
+    case vm_modules::ml::VMOptimiser::OptimiserMode::ADAM:
     {
-      throw std::runtime_error("mnist dataloader deserialization not yet implemented");
+      throw std::runtime_error("deserialisation not yet implemented for adam optimiser");
     }
-    case vm_modules::ml::VMOptimiser::DataLoaderMode::TENSOR:
+    case vm_modules::ml::VMOptimiser::OptimiserMode::MOMENTUM:
     {
-      auto tdl_ptr = std::make_shared<fetch::ml::dataloaders::TensorDataLoader<
-          fetch::math::Tensor<vm_modules::math::DataType>,
-          fetch::math::Tensor<vm_modules::math::DataType>>>();
-      map.ExpectKeyGetValue(LOADER, *tdl_ptr);
-
-      sp.loader_ = std::static_pointer_cast<
-          fetch::ml::dataloaders::DataLoader<fetch::math::Tensor<vm_modules::math::DataType>,
-                                             fetch::math::Tensor<vm_modules::math::DataType>>>(
-          tdl_ptr);
-
+      throw std::runtime_error("deserialisation not yet implemented for momentum optimiser");
+    }
+    case vm_modules::ml::VMOptimiser::OptimiserMode::RMSPROP:
+    {
+      throw std::runtime_error("deserialisation not yet implemented for rmsprop optimiser");
+    }
+    case vm_modules::ml::VMOptimiser::OptimiserMode::SGD:
+    {
+      auto opt_ptr = std::make_shared<SgdOptimiserType>();
+      map.ExpectKeyGetValue(OPTIMISER, *opt_ptr);
+      sp.optimiser_ = std::static_pointer_cast<OptimiserType>(opt_ptr);
       break;
     }
     default:
     {
-      throw std::runtime_error("unknown dataloader type");
+      throw std::runtime_error("optimiser mode not recognised");
     }
     }
   }
 };
 
 }  // namespace serializers
-
-
-
-
-
-bool VMGraph::SerializeTo(serializers::MsgPackSerializer &buffer)
-{
-  switch mode_
-  {
-    case OptimiserMode::ADAGRAD:
-    {
-      throw std::runtime_error("serialisation not yet implemented for adagrad optimiser");
-    }
-    case OptimiserMode::ADAM:
-    {
-      throw std::runtime_error("serialisation not yet implemented for adam optimiser");
-    }
-    case OptimiserMode::MOMENTUM:
-    {
-      throw std::runtime_error("serialisation not yet implemented for momentum optimiser");
-    }
-    case OptimiserMode::RMSPROP:
-    {
-      throw std::runtime_error("serialisation not yet implemented for rmsprop optimiser");
-    }
-    case OptimiserMode::SGD:
-    {
-      optimiser
-      throw std::runtime_error("serialisation not yet implemented for sgd optimiser");
-    }
-    default:
-    {
-      throw std::runtime_error("optimiser mode not recognised");
-    }
-  }
-
-  buffer << optimiser_;
-  return true;
-}
-
-//bool VMGraph::DeserializeFrom(serializers::MsgPackSerializer &buffer)
-//{
-//  fetch::ml::GraphSaveableParams<fetch::math::Tensor<fetch::vm_modules::math::DataType>> gsp;
-//  buffer >> gsp;
-//
-//  auto vm_graph  = std::make_shared<fetch::vm_modules::ml::VMGraph>(this->vm_, this->type_id_);
-//  auto graph_ptr = std::make_shared<fetch::ml::Graph<MathTensorType>>(vm_graph->GetGraph());
-//  fetch::ml::utilities::BuildGraph<MathTensorType>(gsp, graph_ptr);
-//
-//  vm_graph->GetGraph() = *graph_ptr;
-//  *this                = *vm_graph;
-//
-//  return true;
-//}
-
-
 
 }  // namespace fetch
