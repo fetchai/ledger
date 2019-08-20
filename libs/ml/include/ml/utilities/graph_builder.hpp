@@ -50,6 +50,7 @@
 #include "ml/ops/flatten.hpp"
 #include "ml/ops/log.hpp"
 #include "ml/ops/loss_functions.hpp"
+#include "ml/ops/mask_fill.hpp"
 #include "ml/ops/matrix_multiply.hpp"
 #include "ml/ops/max_pool_1d.hpp"
 #include "ml/ops/max_pool_2d.hpp"
@@ -57,6 +58,7 @@
 #include "ml/ops/multiply.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/ops/reshape.hpp"
+#include "ml/ops/slice.hpp"
 #include "ml/ops/sqrt.hpp"
 #include "ml/ops/subtract.hpp"
 #include "ml/ops/switch.hpp"
@@ -277,6 +279,13 @@ void BuildNodeAndInsertTrainables(NodeSaveableParams<T> const &nsp, std::string 
     g->template AddTrainable<ops::MeanSquareErrorLoss<T>>(name, node);
     break;
   }
+  case ops::MaskFill<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::MaskFill<T>>(nsp.op_save_params);
+    node->SetNodeSaveableParams(nsp, op_ptr);
+    g->template AddTrainable<ops::MaskFill<T>>(name, node);
+    break;
+  }
   case ops::MaxPool1D<T>::OpCode():
   {
     op_ptr = GetOp<ops::MaxPool1D<T>>(nsp.op_save_params);
@@ -338,6 +347,13 @@ void BuildNodeAndInsertTrainables(NodeSaveableParams<T> const &nsp, std::string 
     op_ptr = GetOp<ops::Sigmoid<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
     g->template AddTrainable<ops::Sigmoid<T>>(name, node);
+    break;
+  }
+  case ops::Slice<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::Slice<T>>(nsp.op_save_params);
+    node->SetNodeSaveableParams(nsp, op_ptr);
+    g->template AddTrainable<ops::Slice<T>>(name, node);
     break;
   }
   case ops::Softmax<T>::OpCode():
