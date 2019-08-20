@@ -213,7 +213,7 @@ TYPED_TEST(MaskFillTest, saveparams_back_test_broadcast_mask)
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
   using OpType     = typename fetch::ml::ops::MaskFill<TensorType>;
-  using SPType     = typename OpType ::SPType;
+  using SPType     = typename OpType::SPType;
 
   TensorType mask = TensorType::FromString("1, 1, 0");
   mask.Reshape({1, 3, 1});
@@ -259,11 +259,7 @@ TYPED_TEST(MaskFillTest, saveparams_back_test_broadcast_mask)
       error_signal);
 
   // test correct values
-  EXPECT_TRUE(prediction.at(0).AllClose(
-      new_prediction.at(0), fetch::math::function_tolerance<typename TypeParam::Type>(),
-      fetch::math::function_tolerance<typename TypeParam::Type>()));
+  EXPECT_TRUE(prediction.at(0) == new_prediction.at(0));
 
-  EXPECT_TRUE(prediction.at(1).AllClose(
-      new_prediction.at(1), fetch::math::function_tolerance<typename TypeParam::Type>(),
-      fetch::math::function_tolerance<typename TypeParam::Type>()));
+  EXPECT_TRUE(prediction.at(1) == new_prediction.at(1));
 }

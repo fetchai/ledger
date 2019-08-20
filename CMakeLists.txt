@@ -1,7 +1,7 @@
 #
 # F E T C H   L E D G E R   P R O J E C T
 #
-cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
 project(fetch)
 
 # ------------------------------------------------------------------------------
@@ -22,6 +22,7 @@ option(FETCH_ENABLE_COVERAGE            "Enable coverage generation"            
 option(FETCH_ENABLE_METRICS             "Enable the collection of metrics"      OFF)
 option(FETCH_DISABLE_COLOUR_LOG         "Disable the colour logging"            OFF)
 option(FETCH_STATIC_LINK                "Enable static linking"                 OFF)
+option(FETCH_ENABLE_LTO                 "Enable link-time optimisation"         ON)
 # cmake-format: on
 
 # custom string options
@@ -89,6 +90,8 @@ if (FETCH_ENABLE_CCACHE)
       )
   endif (CCACHE_FOUND)
 endif (FETCH_ENABLE_CCACHE)
+
+conditionally_enable_lto()
 
 # ------------------------------------------------------------------------------
 # System / Vendor Targets

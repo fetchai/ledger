@@ -164,10 +164,9 @@ public:
 
   Type operator()(SizeType const &index) const;
   template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, Type>::type &operator[](S const &i);
+  std::enable_if_t<std::is_integral<S>::value, Type> &operator[](S const &i);
   template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, Type>::type const &operator[](
-      S const &i) const;
+  std::enable_if_t<std::is_integral<S>::value, Type> const &operator[](S const &i) const;
 
   Tensor &operator=(ConstSliceType const &slice);
   Tensor &operator=(TensorSlice const &slice);
@@ -289,9 +288,11 @@ public:
 
   ConstSliceType Slice() const;
   ConstSliceType Slice(SizeType index, SizeType axis = 0) const;
+  ConstSliceType Slice(std::pair<SizeType, SizeType> start_end_index, SizeType axis = 0) const;
   ConstSliceType Slice(SizeVector index, SizeVector axes) const;
   TensorSlice    Slice();
   TensorSlice    Slice(SizeType index, SizeType axis = 0);
+  TensorSlice    Slice(std::pair<SizeType, SizeType> start_end_index, SizeType axis = 0);
   TensorSlice    Slice(SizeVector index, SizeVector axes);
 
   /////////////
@@ -694,7 +695,10 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
     switch (c[i])
     {
     case ';':
-      ++n;
+      if (i < c.size() - 1)
+      {
+        ++n;
+      }
       ++i;
       break;
     case ',':
@@ -1000,14 +1004,29 @@ void Tensor<T, C>::Assign(TensorSlice const &other)
 template <typename T, typename C>
 void Tensor<T, C>::Assign(Tensor const &other)
 {
-  auto it1 = begin();
-  auto it2 = other.begin();
-  assert(it1.size() == it2.size());
-  while (it1.is_valid())
+  if (this->size() == other.size())
   {
-    *it1 = *it2;
-    ++it1;
-    ++it2;
+    auto it1 = begin();
+    auto it2 = other.begin();
+
+    while (it1.is_valid())
+    {
+      *it1 = *it2;
+      ++it1;
+      ++it2;
+    }
+  }
+  else
+  {
+    if (!(Broadcast(
+            [](const T &x, const T &y, T &z) {
+              FETCH_UNUSED(x);
+              z = y;
+            },
+            *this, other, *this)))
+    {
+      throw std::runtime_error("arrays not broadcastable for assignment!");
+    }
   }
 }
 
@@ -1115,8 +1134,8 @@ typename Tensor<T, C>::Type Tensor<T, C>::operator()(SizeType const &index) cons
  */
 template <typename T, typename C>
 template <typename S>
-typename std::enable_if<std::is_integral<S>::value, typename Tensor<T, C>::Type>::type
-    &Tensor<T, C>::operator[](S const &n)
+std::enable_if_t<std::is_integral<S>::value, typename Tensor<T, C>::Type> &Tensor<T, C>::operator[](
+    S const &n)
 {
   assert(static_cast<SizeType>(n) < size());
   if (shape_.size() == 1)
@@ -1144,7 +1163,7 @@ typename std::enable_if<std::is_integral<S>::value, typename Tensor<T, C>::Type>
  */
 template <typename T, typename C>
 template <typename S>
-typename std::enable_if<std::is_integral<S>::value, typename Tensor<T, C>::Type>::type const
+std::enable_if_t<std::is_integral<S>::value, typename Tensor<T, C>::Type> const
     &Tensor<T, C>::operator[](S const &i) const
 {
   return data_[i];
@@ -2147,6 +2166,36 @@ typename Tensor<T, C>::ConstSliceType Tensor<T, C>::Slice(SizeType index, SizeTy
 }
 
 /**
+ * Returns a Slice Range that is not permitted to alter the original tensor
+ * @tparam T
+ * @tparam C
+ * @param index
+ * @param axis
+ * @return
+ */
+template <typename T, typename C>
+typename Tensor<T, C>::ConstSliceType Tensor<T, C>::Slice(
+    std::pair<SizeType, SizeType> start_end_index, SizeType axis) const
+{
+  std::vector<SizeVector> range;
+
+  for (SizeType j = 0; j < shape().size(); ++j)
+  {
+    if (axis == j)
+    {
+      assert(start_end_index.first < start_end_index.second);
+      range.push_back({start_end_index.first, start_end_index.second, 1});
+    }
+    else
+    {
+      range.push_back({0, shape().at(j), 1});
+    }
+  }
+
+  return ConstSliceType(*this, range, axis);
+}
+
+/**
  * Returns a Slice along multiple dimensions that is not permitted to alter the original tensor
  * @tparam T
  * @tparam C
@@ -2206,6 +2255,36 @@ typename Tensor<T, C>::TensorSlice Tensor<T, C>::Slice(SizeType index, SizeType 
     if (axis == j)
     {
       range.push_back({index, index + 1, 1});
+    }
+    else
+    {
+      range.push_back({0, shape().at(j), 1});
+    }
+  }
+
+  return TensorSlice(*this, range, axis);
+}
+
+/**
+ * Returns a Slice Range of the tensor
+ * @tparam T
+ * @tparam C
+ * @param index
+ * @param axis
+ * @return
+ */
+template <typename T, typename C>
+typename Tensor<T, C>::TensorSlice Tensor<T, C>::Slice(
+    std::pair<SizeType, SizeType> start_end_index, SizeType axis)
+{
+  std::vector<SizeVector> range;
+
+  for (SizeType j = 0; j < shape().size(); ++j)
+  {
+    if (axis == j)
+    {
+      assert(start_end_index.first < start_end_index.second);
+      range.push_back({start_end_index.first, start_end_index.second, 1});
     }
     else
     {

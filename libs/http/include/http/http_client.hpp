@@ -80,15 +80,5 @@ private:
   Socket      socket_{io_service_};
 };
 
-inline std::string const &HttpClient::host() const
-{
-  return host_;
-}
-
-inline uint16_t HttpClient::port() const
-{
-  return port_;
-}
-
 }  // namespace http
 }  // namespace fetch

@@ -189,7 +189,7 @@ TYPED_TEST(LayerNormTest, getStateDict)
 TYPED_TEST(LayerNormTest, saveparams_test)
 {
   using DataType  = typename TypeParam::Type;
-  using LayerType = typename fetch::ml::layers::LayerNorm<TypeParam>;
+  using LayerType = fetch::ml::layers::LayerNorm<TypeParam>;
   using SPType    = typename LayerType::SPType;
 
   std::string input_name  = "LayerNorm_Input";
@@ -272,8 +272,7 @@ TYPED_TEST(LayerNormTest, saveparams_test)
   layer2.SetInput(input_name, input);
   TypeParam prediction4 = layer2.Evaluate(output_name);
 
-  EXPECT_FALSE(prediction.AllClose(prediction3, fetch::math::function_tolerance<DataType>(),
-                                   fetch::math::function_tolerance<DataType>()));
+  EXPECT_FALSE(prediction == prediction3);
 
   EXPECT_TRUE(prediction3.AllClose(prediction4, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));
