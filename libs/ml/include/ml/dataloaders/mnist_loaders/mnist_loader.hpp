@@ -40,8 +40,8 @@ public:
   using ReturnType = std::pair<LabelType, std::vector<T>>;
 
 private:
-  std::shared_ptr<SizeType>      train_cursor_;
-  std::shared_ptr<SizeType>      validation_cursor_;
+  std::shared_ptr<SizeType>      train_cursor_      = std::make_shared<SizeType>(0);
+  std::shared_ptr<SizeType>      validation_cursor_ = std::make_shared<SizeType>(0);
   std::uint32_t                  train_size_;
   std::uint32_t                  validation_size_;
   std::uint32_t                  total_size_;
@@ -71,8 +71,8 @@ public:
     buffer_.second.push_back(T({FIGURE_WIDTH, FIGURE_HEIGHT, 1u}));
     buffer_.first = LabelType({LABEL_SIZE, 1u});
 
-    train_cursor_      = std::make_shared<SizeType>(0);
-    validation_cursor_ = std::make_shared<SizeType>(validation_offset_);
+    *train_cursor_      = 0;
+    *validation_cursor_ = validation_offset_;
 
     UpdateCursor();
   }

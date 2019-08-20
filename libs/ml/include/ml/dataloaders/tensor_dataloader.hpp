@@ -58,8 +58,8 @@ public:
   friend struct fetch::serializers::MapSerializer;
 
 protected:
-  std::shared_ptr<SizeType> train_cursor_;
-  std::shared_ptr<SizeType> validation_cursor_;
+  std::shared_ptr<SizeType> train_cursor_      = std::make_shared<SizeType>(0);
+  std::shared_ptr<SizeType> validation_cursor_ = std::make_shared<SizeType>(0);
   SizeType                  validation_offset_ = 0;
 
   SizeType n_samples_            = 0;  // number of all samples
@@ -100,8 +100,8 @@ TensorDataLoader<LabelType, InputType>::TensorDataLoader(SizeVector const &     
     one_sample_data_shapes_.at(i).at(one_sample_data_shapes_.at(i).size() - 1) = 1;
   }
 
-  train_cursor_      = std::make_shared<SizeType>(0);
-  validation_cursor_ = std::make_shared<SizeType>(validation_offset_);
+  *train_cursor_      = 0;
+  *validation_cursor_ = validation_offset_;
 
   UpdateCursor();
 }
@@ -276,6 +276,7 @@ struct MapSerializer<fetch::ml::dataloaders::TensorDataLoader<LabelType, InputTy
 
     map.ExpectKeyGetValue(BATCH_LABEL_DIM, sp.batch_label_dim_);
     map.ExpectKeyGetValue(BATCH_DATA_DIM, sp.batch_data_dim_);
+    sp.UpdateCursor();
   }
 };
 
