@@ -116,13 +116,6 @@ byte_array::ConstByteArray const &Uri::GetMuddleAddress() const
   return authority_;
 }
 
-bool Uri::IsUri(const std::string &possible_uri)
-{
-  std::smatch matches;
-  std::regex_match(possible_uri, matches, URI_FORMAT);
-  return (matches.size() == 3);
-}
-
 std::string Uri::ToString() const
 {
   switch (scheme_)

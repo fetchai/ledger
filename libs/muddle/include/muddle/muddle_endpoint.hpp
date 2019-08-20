@@ -17,11 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/generics/promise_of.hpp"
+#include "muddle/address.hpp"
 #include "muddle/network_id.hpp"
 #include "muddle/packet.hpp"
 #include "muddle/subscription.hpp"
-#include "muddle/address.hpp"
+#include "network/generics/promise_of.hpp"
 
 #include <vector>
 
@@ -51,10 +51,15 @@ public:
   MuddleEndpoint()          = default;
   virtual ~MuddleEndpoint() = default;
 
+  /**
+   * Get the local address of the endpoint
+   *
+   * @return The node address
+   */
   virtual Address const &GetLocalAddress() const = 0;
 
   /**
-   * Send an message to a target address
+   * Send a message to a target address
    *
    * @param address The address (public key) of the target machine
    * @param service The service identifier
@@ -64,6 +69,15 @@ public:
   virtual void Send(Address const &address, uint16_t service, uint16_t channel,
                     Payload const &message) = 0;
 
+  /**
+   * Send a message to a target address
+   *
+   * @param address The address (public key) of the target machine
+   * @param service The service identifier
+   * @param channel The channel identifier
+   * @param message The message payload to be sent
+   * @param options The options to be applied when sending the message
+   */
   virtual void Send(Address const &address, uint16_t service, uint16_t channel,
                     Payload const &message, Options options) = 0;
 
@@ -79,6 +93,16 @@ public:
   virtual void Send(Address const &address, uint16_t service, uint16_t channel,
                     uint16_t message_num, Payload const &payload) = 0;
 
+  /**
+   * Send a message to a target address
+   *
+   * @param address The address (public key) of the target machine
+   * @param service The service identifier
+   * @param channel The channel identifier
+   * @param message_num The message number of the request
+   * @param payload The message payload to be sent
+   * @param options The options to be applied when sending the message
+   */
   virtual void Send(Address const &address, uint16_t service, uint16_t channel,
                     uint16_t message_num, Payload const &payload, Options options) = 0;
 

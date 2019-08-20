@@ -120,31 +120,18 @@ public:
   /// @}
 
   PeerSet GetPersistentPeers() const;
-
   bool GetMetadataForPeer(Uri const &peer, PeerMetadata &metadata) const;
-
   ConnectionState GetStateForPeer(Uri const &peer) const;
-
   PeerList GetPeersToConnectTo() const;
-
   PeerMap GetCurrentPeers() const;
-
-  UriMap GetUriMap() const;
-  Handle UriToHandle(const Uri &uri) const;
-
-  void Debug(std::string const &prefix) const;
 
   // Operators
   PeerConnectionList &operator=(PeerConnectionList const &) = delete;
   PeerConnectionList &operator=(PeerConnectionList &&) = delete;
 
 private:
-
-
-
-  using Mutex   = mutex::Mutex;
-  using Lock    = std::lock_guard<Mutex>;
-
+  using Mutex       = mutex::Mutex;
+  using Lock        = std::lock_guard<Mutex>;
   using MetadataMap = std::unordered_map<Uri, PeerMetadata>;
 
   StatusCallback status_callback_;

@@ -73,7 +73,7 @@ public:
 
   // TODO(issue 7): Make config JSON
   // Construction / Destruction
-  explicit LaneService(NetworkManager nm, ShardConfig config, bool sign_packets, Mode mode);
+  explicit LaneService(NetworkManager const &nm, ShardConfig config, Mode mode);
   LaneService(LaneService const &) = delete;
   LaneService(LaneService &&)      = delete;
   ~LaneService();

@@ -32,12 +32,11 @@ namespace muddle {
 static constexpr std::size_t MINIMUM_PEERS = 3;
 static constexpr char const *LOGGING_NAME  = "PeerSelector";
 
-PeerSelector::PeerSelector(Duration const &interval, core::Reactor &reactor, MuddleRegister const &reg, PeerConnectionList &connections, MuddleEndpoint &endpoint, DirectMessageService &dm)
+PeerSelector::PeerSelector(Duration const &interval, core::Reactor &reactor, MuddleRegister const &reg, PeerConnectionList &connections, MuddleEndpoint &endpoint)
   : core::PeriodicRunnable(interval)
   , reactor_{reactor}
   , connections_{connections}
   , register_{reg}
-  , direct_messenger_{dm}
   , endpoint_{endpoint}
   , rpc_client_{"PeerSelect", endpoint_, SERVICE_MUDDLE, CHANNEL_RPC}
 {

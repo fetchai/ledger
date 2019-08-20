@@ -274,7 +274,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   // print the start up log banner
   FETCH_LOG_INFO(LOGGING_NAME, "Constellation :: ", cfg_.num_lanes(), "x", cfg_.num_slices, "x",
                  cfg_.num_executors);
-  FETCH_LOG_INFO(LOGGING_NAME, "              :: ", Address{muddle_->GetIdentity()}.display());
+  FETCH_LOG_INFO(LOGGING_NAME, "              :: ", Address{muddle_->GetAddress()}.display());
   FETCH_LOG_INFO(LOGGING_NAME, "              :: ", muddle_->GetAddress().ToBase64());
   FETCH_LOG_INFO(LOGGING_NAME, "");
 
@@ -299,7 +299,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   reactor_.Attach(shard_management_);
 
   // configure all the lane services
-  lane_services_.Setup(network_manager_, shard_cfgs_, !config.disable_signing);
+  lane_services_.Setup(network_manager_, shard_cfgs_);
 
   // configure the middleware of the http server
   http_.AddMiddleware(http::middleware::AllowOrigin("*"));

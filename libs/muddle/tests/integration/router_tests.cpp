@@ -38,7 +38,7 @@ using Uri               = fetch::network::Uri;
 using Muddle            = fetch::muddle::Muddle;
 using Payload           = fetch::muddle::Packet::Payload;
 using Address           = Muddle::Address;
-using MuddlePtr         = std::unique_ptr<Muddle>;
+using MuddlePtr         = std::shared_ptr<Muddle>;
 using Certificate       = fetch::crypto::Prover;
 using CertificatePtr    = std::unique_ptr<Certificate>;
 
@@ -124,7 +124,7 @@ protected:
     auto identity = std::make_unique<fetch::crypto::ECDSASigner>();
     identity->GenerateKeys();
 
-    return std::make_unique<Muddle>(NetworkId{"Test"}, std::move(identity), *network_manager_);
+    return std::make_shared<Muddle>(NetworkId{"Test"}, std::move(identity), *network_manager_);
   }
 
   NetworkManagerPtr network_manager_;

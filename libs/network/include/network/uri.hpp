@@ -73,17 +73,6 @@ public:
 
   Peer const & GetTcpPeer() const;
   ConstByteArray const &GetMuddleAddress() const;
-
-  // TODO(EJF): Deprecate the following two:
-  Peer const &          AsPeer() const
-  {
-    return GetTcpPeer();
-  }
-
-  ConstByteArray const &AsIdentity() const
-  {
-    return GetMuddleAddress();
-  }
   /// @}
 
   // Operators
@@ -96,13 +85,6 @@ public:
 
   template <typename T, typename D>
   friend struct serializers::MapSerializer;
-
-  // scheduled for demolistion
-
-  static Uri  FromIdentity(ConstByteArray const &identity);
-  static bool IsUri(const std::string &possible_uri);
-
-  bool IsDirectlyConnectable() const;
 
   friend std::ostream &operator<<(std::ostream &stream, Uri const &uri);
   friend std::istream &operator>>(std::istream &stream, Uri &uri);
@@ -137,16 +119,6 @@ inline bool Uri::operator==(Uri const &other) const
 inline bool Uri::operator!=(Uri const &other) const
 {
   return !(*this == other);
-}
-
-inline bool Uri::IsDirectlyConnectable() const
-{
-  return scheme_ != Uri::Scheme::Muddle && scheme_ != Uri::Scheme::Unknown;
-}
-
-inline Uri Uri::FromIdentity(ConstByteArray const &identity)
-{
-  return Uri{"muddle://" + byte_array::ToBase64(identity)};
 }
 
 }  // namespace network

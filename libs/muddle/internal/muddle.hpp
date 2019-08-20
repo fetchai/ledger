@@ -157,7 +157,6 @@ public:
   /// @{
   NetworkId const &GetNetwork() const override;
   Address const &GetAddress() const override;
-  crypto::Identity const &GetIdentity() const override;
   Ports GetListeningPorts() const override;
   Addresses GetDirectlyConnectedPeers() const override;
   Addresses GetIncomingConnectedPeers() const override;
@@ -214,7 +213,6 @@ private:
 
   CertificatePtr const certificate_;      ///< The private and public keys for the node identity
   std::string const    external_address_;
-  Identity const       identity_;         ///< Cached version of the identity (public key)
   Address const        node_address_;
   NetworkManager       network_manager_;  ///< The network manager
   Dispatcher           dispatcher_;       ///< Waiting promise store

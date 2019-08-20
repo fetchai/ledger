@@ -74,7 +74,7 @@ public:
 
   // Construction / Destruction
   PeerSelector(Duration const &interval, core::Reactor &reactor, MuddleRegister const &reg,
-               PeerConnectionList &connections, MuddleEndpoint &endpoint, DirectMessageService &dm);
+               PeerConnectionList &connections, MuddleEndpoint &endpoint);
   PeerSelector(PeerSelector const &) = delete;
   PeerSelector(PeerSelector &&) = delete;
   ~PeerSelector() override = default;
@@ -102,7 +102,6 @@ private:
   core::Reactor &       reactor_;
   PeerConnectionList &  connections_;
   MuddleRegister const &register_;
-  DirectMessageService &direct_messenger_;
   MuddleEndpoint &      endpoint_;
   rpc::Client           rpc_client_;
 

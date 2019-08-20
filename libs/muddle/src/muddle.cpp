@@ -55,19 +55,18 @@ Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager 
                bool sign_packets, bool sign_broadcasts, std::string const &external_address)
   : certificate_(std::move(certificate))
   , external_address_(external_address)
-  , identity_(certificate_->identity())
-  , node_address_(identity_.identifier())
+  , node_address_(certificate_->identity().identifier())
   , network_manager_(nm)
   , dispatcher_(network_id, certificate_->identity().identifier())
   , register_(std::make_shared<MuddleRegister>())
-  , router_(network_id, identity_.identifier(), *register_, dispatcher_,
+  , router_(network_id, node_address_, *register_, dispatcher_,
             sign_packets ? certificate_.get() : nullptr, sign_packets && sign_broadcasts)
   , clients_()
   , network_id_(network_id)
   , reactor_{"muddle"}
   , maintenance_periodic_(std::make_shared<core::PeriodicFunctor>(std::chrono::milliseconds{MAINTENANCE_INTERVAL_MS}, this, &Muddle::RunPeriodicMaintenance))
   , direct_message_service_(node_address_, router_, *register_, clients_)
-  , peer_selector_(std::make_shared<PeerSelector>(std::chrono::milliseconds{PEER_SELECTION_INTERVAL_MS}, reactor_, *register_, clients_, router_, direct_message_service_))
+  , peer_selector_(std::make_shared<PeerSelector>(std::chrono::milliseconds{PEER_SELECTION_INTERVAL_MS}, reactor_, *register_, clients_, router_))
   , rpc_server_(router_, SERVICE_MUDDLE, CHANNEL_RPC)
 {
   // register the status update
@@ -180,11 +179,6 @@ NetworkId const &Muddle::GetNetwork() const
 Address const &Muddle::GetAddress() const
 {
   return node_address_;
-}
-
-crypto::Identity const &Muddle::GetIdentity() const
-{
-  return identity_;
 }
 
 /**
@@ -556,7 +550,7 @@ void Muddle::CreateTcpClient(Uri const &peer)
     }
   });
 
-  auto const &tcp_peer = peer.AsPeer();
+  auto const &tcp_peer = peer.GetTcpPeer();
 
   client.Connect(tcp_peer.address(), tcp_peer.port());
 }

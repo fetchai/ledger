@@ -80,7 +80,7 @@ protected:
   using NetworkManager    = fetch::network::NetworkManager;
   using NetworkManagerPtr = std::unique_ptr<NetworkManager>;
   using Muddle            = fetch::muddle::Muddle;
-  using MuddlePtr         = std::unique_ptr<Muddle>;
+  using MuddlePtr         = std::shared_ptr<Muddle>;
   using MuddleEndpoint    = fetch::muddle::MuddleEndpoint;
   using CertificatePtr    = Muddle::CertificatePtr;
   using Peer              = fetch::network::Peer;
@@ -105,11 +105,11 @@ protected:
   void SetUp() override
   {
     managerA_ = std::make_unique<NetworkManager>("NetMgrA", 1);
-    networkA_ = std::make_unique<Muddle>(NetworkId{"Test"}, LoadIdentity(NETWORK_A_PRIVATE_KEY),
+    networkA_ = std::make_shared<Muddle>(NetworkId{"Test"}, LoadIdentity(NETWORK_A_PRIVATE_KEY),
                                          *managerA_);
 
     managerB_ = std::make_unique<NetworkManager>("NetMgrB", 1);
-    networkB_ = std::make_unique<Muddle>(NetworkId{"Test"}, LoadIdentity(NETWORK_B_PRIVATE_KEY),
+    networkB_ = std::make_shared<Muddle>(NetworkId{"Test"}, LoadIdentity(NETWORK_B_PRIVATE_KEY),
                                          *managerB_);
 
     managerA_->Start();

@@ -106,9 +106,6 @@ public:
    */
   virtual Address const &GetAddress() const = 0;
 
-  // deprecate
-  virtual crypto::Identity const &GetIdentity() const = 0;
-
   /**
    * Get the set of ports that the server is currently listening on
    *
