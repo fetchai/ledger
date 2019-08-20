@@ -190,6 +190,7 @@ TEST_F(MLTests, sgd_optimiser_serialisation_test)
       state.set(optimiser);
 
       ////////////
+      // TODO (1533) - this is necessary due to a bug
       // now make a totally new optimiser, graph and dataloader with identical properties
       // this is necessary because the optimiser data is not written at state.set time
       // therefore the internal states of the optimser after calling run will be saved
