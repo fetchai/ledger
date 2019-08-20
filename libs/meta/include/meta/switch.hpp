@@ -65,18 +65,6 @@ namespace type_util {
 //    args... can be empty; it is up to particular combination of case label type and f to handle
 //    this case.
 //
-//    As a special case, when no arguments are present past f, a special dummy argument is passed to
-//    the appropriate Case::Invoke, of an empty struct type with member ::type equal to the Case
-//    itself:
-//
-//       Variant x;
-//       MySwitch::Invoke(
-//         my_type_id,
-//         [&x](auto cs){
-//           using Case = typename decltype(cs)::type;
-//           return Variant(x, Case::value); // the returned variant has type Id my_type_id
-//         });
-//
 // EXAMPLE
 //
 //    using namespace fetch::vm;
@@ -217,12 +205,6 @@ template <class CurrentId, class F, class... Args>
 constexpr decltype(auto) InvokeBranch(F &&f, Args &&... args)
 {
   return CurrentId::Invoke(std::forward<F>(f), std::forward<Args>(args)...);
-}
-
-template <class CurrentId, class F>
-constexpr decltype(auto) InvokeBranch(F &&f)
-{
-  return value_util::Invoke(std::forward<F>(f), Type<CurrentId>());
 }
 
 // LinearSwitch performs a simple linear lookup. It is used with small amount of cases.

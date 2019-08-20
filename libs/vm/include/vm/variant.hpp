@@ -835,12 +835,26 @@ public:
    * Invoked by type_util::Switch when a selector type id matches IdToType::value.
    *
    * @param f templated function to be invoked of viewed arguments
+   * @return
    * @param args... variants
    */
   template <class F, class... Args>
   static constexpr decltype(auto) Invoke(F &&f, Args &&... args)
   {
     return value_util::Invoke(std::forward<F>(f), VariantView(std::forward<Args>(args))...);
+  }
+
+  /**
+   * A special overload to deliver particular type id to the callable when no variants processed.
+   *
+   * @param f templated unary function
+   * @return
+   */
+  template <class F>
+  static constexpr decltype(auto) Invoke(F &&f)
+  {
+    // IdToType provides members type, storage_type and value
+    return value_util::Invoke(std::forward<F>(f), IdToType{});
   }
 };
 
@@ -872,6 +886,12 @@ public:
   static constexpr decltype(auto) Invoke(F &&f, Args &&... args)
   {
     return value_util::Invoke(std::forward<F>(f), VariantView(std::forward<Args>(args))...);
+  }
+
+  template <class F>
+  static constexpr decltype(auto) Invoke(F &&f)
+  {
+    return value_util::Invoke(std::forward<F>(f), IdToType{});
   }
 };
 
@@ -933,6 +953,12 @@ public:
   static constexpr decltype(auto) Invoke(F &&f, Args &&... args)
   {
     return value_util::Invoke(std::forward<F>(f), VariantView(std::forward<Args>(args))...);
+  }
+
+  template <class F>
+  static constexpr decltype(auto) Invoke(F &&f)
+  {
+    return value_util::Invoke(std::forward<F>(f), IdToType<TypeIds::Null>{});
   }
 };
 
@@ -1008,6 +1034,13 @@ public:
   static constexpr decltype(auto) Invoke(F &&f, Args &&... args)
   {
     return value_util::Invoke(std::forward<F>(f), DefaultVariantView(std::forward<Args>(args))...);
+  }
+
+  template <class F>
+  static constexpr decltype(auto) Invoke(F &&f)
+  {
+    return value_util::Invoke(std::forward<F>(f),
+                              VariantValue<TypeIds::NumReserved, Ptr<Object>>{});
   }
 };
 
