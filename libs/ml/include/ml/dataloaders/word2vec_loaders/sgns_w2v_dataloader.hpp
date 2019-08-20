@@ -163,11 +163,6 @@ T GraphW2VLoader<T>::EstimatedSampleNumber()
 template <typename T>
 math::SizeType GraphW2VLoader<T>::Size() const
 {
-  if (this->mode_ == DataLoaderMode::VALIDATE)
-  {
-    throw std::runtime_error("Validation set splitting not implemented yet");
-  }
-
   return size_;
 }
 
@@ -197,11 +192,6 @@ void GraphW2VLoader<T>::Update()
 template <typename T>
 bool GraphW2VLoader<T>::IsDone() const
 {
-  if (this->mode_ == DataLoaderMode::VALIDATE)
-  {
-    throw std::runtime_error("Validation set splitting not implemented yet");
-  }
-
   if (current_sentence_ < data_.size() - 1)
   {
     return false;
@@ -226,11 +216,6 @@ bool GraphW2VLoader<T>::IsDone() const
 template <typename T>
 void GraphW2VLoader<T>::Reset()
 {
-  if (this->mode_ == DataLoaderMode::VALIDATE)
-  {
-    throw std::runtime_error("Validation set splitting not implemented yet");
-  }
-
   current_sentence_ = 0;
   current_word_     = 0;
   unigram_table_.Reset();
@@ -455,11 +440,6 @@ void GraphW2VLoader<T>::BufferNextSamples()
 template <typename T>
 typename GraphW2VLoader<T>::ReturnType GraphW2VLoader<T>::GetNext()
 {
-  if (this->mode_ == DataLoaderMode::VALIDATE)
-  {
-    throw std::runtime_error("Validation set splitting not implemented yet");
-  }
-
   T input_word, output_word;
 
   T label = labels_.At(buffer_pos_);  // check if we have drained the buffer, either no more valid

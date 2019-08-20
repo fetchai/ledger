@@ -105,11 +105,6 @@ template <typename LabelType, typename InputType>
 typename TensorDataLoader<LabelType, InputType>::ReturnType
 TensorDataLoader<LabelType, InputType>::GetNext()
 {
-  if (this->random_mode_)
-  {
-    throw std::runtime_error("random mode not implemented for tensor dataloader");
-  }
-
   if (this->mode_ == DataLoaderMode::VALIDATE)
   {
     ReturnType ret(labels_.View(validation_cursor_).Copy(one_sample_label_shape_),

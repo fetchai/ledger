@@ -287,11 +287,6 @@ C2VLoader<LabelType, DataType>::GetNext()
 template <typename LabelType, typename DataType>
 typename DataType::SizeType C2VLoader<LabelType, DataType>::Size() const
 {
-  if (this->mode_ == DataLoaderMode::VALIDATE)
-  {
-    throw std::runtime_error("Validation set splitting not implemented yet");
-  }
-
   return this->data.size();
 }
 
@@ -304,11 +299,6 @@ typename DataType::SizeType C2VLoader<LabelType, DataType>::Size() const
 template <typename LabelType, typename DataType>
 bool C2VLoader<LabelType, DataType>::IsDone() const
 {
-  if (this->mode_ == DataLoaderMode::VALIDATE)
-  {
-    throw std::runtime_error("Validation set splitting not implemented yet");
-  }
-
   return ((this->data).size() == (this->iterator_position_get_next_context_));
 }
 
@@ -319,11 +309,6 @@ bool C2VLoader<LabelType, DataType>::IsDone() const
 template <typename LabelType, typename DataType>
 void C2VLoader<LabelType, DataType>::Reset()
 {
-  if (this->mode_ == DataLoaderMode::VALIDATE)
-  {
-    throw std::runtime_error("Validation set splitting not implemented yet");
-  }
-
   this->iterator_position_get_next_context_ = SizeType{0};
 }
 
