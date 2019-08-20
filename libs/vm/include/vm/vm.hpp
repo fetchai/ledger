@@ -592,7 +592,7 @@ private:
   /// @}
 
   void AddOpcodeInfo(uint16_t opcode, std::string name, Handler handler,
-		     ChargeAmount static_charge = 1)
+                     ChargeAmount static_charge = 1)
   {
     opcode_info_array_[opcode] = OpcodeInfo(std::move(name), std::move(handler), static_chargs);
   }
