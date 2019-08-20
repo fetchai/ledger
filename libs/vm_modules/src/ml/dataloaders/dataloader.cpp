@@ -139,7 +139,7 @@ bool VMDataLoader::IsDone()
   return loader_->IsDone();
 }
 
-VMDataLoader::DataLoaderType &VMDataLoader::GetDataLoader()
+VMDataLoader::DataLoaderPtrType &VMDataLoader::GetDataLoader()
 {
   return loader_;
 }
