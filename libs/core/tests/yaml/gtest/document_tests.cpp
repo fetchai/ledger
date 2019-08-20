@@ -27,7 +27,6 @@
 #include <string>
 
 using fetch::yaml::YamlDocument;
-using fetch::variant::Variant;
 using string = std::string;
 
 TEST(YamlTests, SimpleMappingTest)
