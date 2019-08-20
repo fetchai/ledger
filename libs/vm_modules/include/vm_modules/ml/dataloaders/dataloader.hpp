@@ -18,24 +18,14 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/main_serializer.hpp"
+#include "ml/dataloaders/dataloader.hpp"
+#include "ml/dataloaders/tensor_dataloader.hpp"
 #include "vm/object.hpp"
 #include "vm_modules/math/type.hpp"
 
 #include <memory>
 
 namespace fetch {
-
-namespace ml {
-
-namespace dataloaders {
-template <typename LabelType, typename DataType>
-class DataLoader;
-
-template <typename LabelType, typename DataType>
-class TensorDataLoader;
-}  // namespace dataloaders
-
-}  // namespace ml
 namespace vm_modules {
 namespace math {
 class VMTensor;
@@ -47,10 +37,10 @@ class VMTrainingPair;
 class VMDataLoader : public fetch::vm::Object
 {
 public:
-  using DataType = fetch::vm_modules::math::DataType;
-  using DataLoaderType =
-      std::shared_ptr<fetch::ml::dataloaders::DataLoader<fetch::math::Tensor<DataType>,
-                                                         fetch::math::Tensor<DataType>>>;
+  using DataType          = fetch::vm_modules::math::DataType;
+  using TensorType        = fetch::math::Tensor<DataType>;
+  using DataLoaderType    = fetch::ml::dataloaders::DataLoader<TensorType, TensorType>;
+  using DataLoaderPtrType = std::shared_ptr<DataLoaderType>;
 
   enum class DataLoaderMode : uint8_t
   {
@@ -118,7 +108,7 @@ public:
 
   bool IsDone();
 
-  DataLoaderType &GetDataLoader();
+  DataLoaderPtrType &GetDataLoader();
 
   bool SerializeTo(serializers::MsgPackSerializer &buffer) override;
 
@@ -128,8 +118,8 @@ public:
   friend struct serializers::MapSerializer;
 
 private:
-  DataLoaderType loader_;
-  DataLoaderMode mode_ = DataLoaderMode::NONE;
+  DataLoaderPtrType loader_;
+  DataLoaderMode    mode_ = DataLoaderMode::NONE;
 };
 
 }  // namespace ml
