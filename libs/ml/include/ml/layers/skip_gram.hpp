@@ -53,6 +53,8 @@ public:
            std::string const &name = "SkipGram", WeightsInit init_mode = WeightsInit::XAVIER_GLOROT)
     : in_size_(in_size)
     , out_size_(out)
+    , vocab_size_(vocab_size)
+    , embedding_size_(embedding_size)
   {
 
     // define input and context placeholders
@@ -61,14 +63,16 @@ public:
     std::string context =
         this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Context", {});
 
-    TensorType weights = std::vector<SizeType>({embedding_size, vocab_size});
-    this->Initialise(weights, init_mode);
+    TensorType weights_in({embedding_size_, vocab_size_});
+    this->Initialise(weights_in, init_mode);
+    TensorType weights_ctx({embedding_size_, vocab_size_});
+    this->Initialise(weights_ctx, init_mode);
 
     // embed both inputs
     embed_in_ = this->template AddNode<fetch::ml::ops::Embeddings<TensorType>>(
-        name + "_Embed_Inputs", {input}, weights);
+        name + "_Embed_Inputs", {input}, weights_in);
     std::string embed_ctx = this->template AddNode<fetch::ml::ops::Embeddings<TensorType>>(
-        name + "_Embed_Context", {context}, weights);
+        name + "_Embed_Context", {context}, weights_ctx);
 
     // dot product input and context embeddings
     std::string transpose_ctx = this->template AddNode<fetch::ml::ops::Transpose<TensorType>>(
@@ -101,9 +105,11 @@ public:
     *sg_ptr2     = *sg_ptr1;
 
     // assign layer specific params
-    ret->in_size  = in_size_;
-    ret->out_size = out_size_;
-    ret->embed_in = embed_in_;
+    ret->in_size        = in_size_;
+    ret->out_size       = out_size_;
+    ret->embed_in       = embed_in_;
+    ret->vocab_size     = vocab_size_;
+    ret->embedding_size = embedding_size_;
 
     return ret;
   }
@@ -111,9 +117,11 @@ public:
   void SetOpSaveableParams(SPType const &sp)
   {
     // assign layer specific params
-    in_size_  = sp.in_size;
-    out_size_ = sp.out_size;
-    embed_in_ = sp.embed_in;
+    in_size_        = sp.in_size;
+    out_size_       = sp.out_size;
+    embed_in_       = sp.embed_in;
+    vocab_size_     = sp.vocab_size;
+    embedding_size_ = sp.embedding_size;
   }
 
   std::shared_ptr<ops::Embeddings<TensorType>> GetEmbeddings(
@@ -143,10 +151,12 @@ private:
   std::string embed_in_ = "";
   SizeType    in_size_;
   SizeType    out_size_;
+  SizeType    vocab_size_;
+  SizeType    embedding_size_;
 
   void Initialise(TensorType &weights, WeightsInit init_mode)
   {
-    fetch::ml::ops::Weights<TensorType>::Initialise(weights, in_size_, out_size_, init_mode);
+    fetch::ml::ops::Weights<TensorType>::Initialise(weights, in_size_, embedding_size_, init_mode);
   }
 };
 
