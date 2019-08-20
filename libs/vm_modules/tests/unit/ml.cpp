@@ -203,37 +203,38 @@ TEST_F(MLTests, sgd_optimiser_serialisation_test)
   ASSERT_TRUE(toolkit.Run(&first_res));
 
   static char const *optimiser_deserialise_src = R"(
-      function main()
+      function main() : Fixed64
         var state = State<Optimiser>("optimiser");
         var optimiser = state.get();
         var batch_size = 8u64;
-//        var loss = optimiser.run(batch_size);
-//        return loss;
+        var loss = optimiser.run(batch_size);
+        return loss;
       endfunction
     )";
 
   ASSERT_TRUE(toolkit.Compile(optimiser_deserialise_src));
-//
-//  Variant res;
+
+  Variant res;
 //  EXPECT_CALL(toolkit.observer(), Exists(state_name));
 //  EXPECT_CALL(toolkit.observer(), Read(state_name, _, _)).Times(::testing::Between(1, 2));
-//  ASSERT_TRUE(toolkit.Run(&res));
-//
-//  auto const initial_training_pair = first_res.Get<Ptr<fetch::vm_modules::ml::VMTrainingPair>>();
-//  auto const training_pair         = res.Get<Ptr<fetch::vm_modules::ml::VMTrainingPair>>();
-//
-//  auto data1 = initial_training_pair->data()->GetTensor();
-//  auto data2 = training_pair->data()->GetTensor();
-//
-//  auto label1 = initial_training_pair->label()->GetTensor();
-//  auto label2 = training_pair->label()->GetTensor();
-//
-//  EXPECT_TRUE(data1.AllClose(data2, static_cast<DataType>(0), static_cast<DataType>(0)));
-//  EXPECT_TRUE(label1.AllClose(label2, static_cast<DataType>(0), static_cast<DataType>(0)));
+  ASSERT_TRUE(toolkit.Run(&res));
+  //
+  //  auto const initial_training_pair =
+  //  first_res.Get<Ptr<fetch::vm_modules::ml::VMTrainingPair>>(); auto const training_pair =
+  //  res.Get<Ptr<fetch::vm_modules::ml::VMTrainingPair>>();
+  //
+  //  auto data1 = initial_training_pair->data()->GetTensor();
+  //  auto data2 = training_pair->data()->GetTensor();
+  //
+  //  auto label1 = initial_training_pair->label()->GetTensor();
+  //  auto label2 = training_pair->label()->GetTensor();
+  //
+  //  EXPECT_TRUE(data1.AllClose(data2, static_cast<DataType>(0), static_cast<DataType>(0)));
+  //  EXPECT_TRUE(label1.AllClose(label2, static_cast<DataType>(0), static_cast<DataType>(0)));
 }
 
 //
-//TEST_F(MLTests, sgd_optimiser_serialisation_test)
+// TEST_F(MLTests, sgd_optimiser_serialisation_test)
 //{
 
 //  static char const *optimiser_serialise_src = R"(
