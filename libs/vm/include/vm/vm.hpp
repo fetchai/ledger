@@ -481,15 +481,6 @@ public:
     return constructor(this, type_id);
   }
 
-<<<<<<< HEAD
-private:
-  static constexpr int FRAME_STACK_SIZE = 50;
-  static constexpr int STACK_SIZE       = 5000;
-  static constexpr int MAX_LIVE_OBJECTS = 200;
-  static constexpr int MAX_RANGE_LOOPS  = 50;
-
-=======
->>>>>>> master
   struct OpcodeInfo
   {
     OpcodeInfo() = default;
@@ -600,16 +591,10 @@ private:
   ChargeAmount charge_total_{0};
   /// @}
 
-<<<<<<< HEAD
-  void AddOpcodeInfo(uint16_t opcode, std::string name, Handler handler)
+  void AddOpcodeInfo(uint16_t opcode, std::string name, Handler handler,
+		     ChargeAmount static_charge = 1)
   {
-    opcode_info_array_[opcode] = OpcodeInfo(std::move(name), std::move(handler));
-=======
-  void AddOpcodeInfo(uint16_t opcode, std::string const &name, Handler const &handler,
-                     ChargeAmount static_charge = 1)
-  {
-    opcode_info_array_[opcode] = OpcodeInfo(name, handler, static_charge);
->>>>>>> master
+    opcode_info_array_[opcode] = OpcodeInfo(std::move(name), std::move(handler), static_chargs);
   }
 
   bool Execute(std::string &error, Variant &output);
