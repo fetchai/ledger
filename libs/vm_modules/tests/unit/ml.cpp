@@ -251,8 +251,6 @@ TEST_F(MLTests, sgd_optimiser_serialisation_test)
   ASSERT_TRUE(toolkit.Run(&first_res));
   auto const loss1 = first_res.Get<fetch::fixed_point::fp64_t>();
 
-  std::cout << "loss1: " << loss1 << std::endl;
-
   static char const *optimiser_deserialise_src = R"(
       function main() : Fixed64
         var state = State<Optimiser>("optimiser");
@@ -271,7 +269,6 @@ TEST_F(MLTests, sgd_optimiser_serialisation_test)
 
   auto const loss2 = second_res.Get<fetch::fixed_point::fp64_t>();
 
-  std::cout << "loss2: " << loss2 << std::endl;
   EXPECT_TRUE(loss1 == loss2);
 }
 
@@ -310,7 +307,35 @@ TEST_F(MLTests, serialisation_several_components_test)
       endfunction
     )";
 
+  std::string const graph_name{"graph"};
+  std::string const dl_name{"dataloader"};
+  std::string const opt_name{"optimiser"};
+
   ASSERT_TRUE(toolkit.Compile(several_serialise_src));
+  EXPECT_CALL(toolkit.observer(), Write(graph_name, _, _));
+  EXPECT_CALL(toolkit.observer(), Write(dl_name, _, _));
+  EXPECT_CALL(toolkit.observer(), Write(opt_name, _, _));
+  ASSERT_TRUE(toolkit.Run());
+
+  static char const *several_deserialise_src = R"(
+      function main()
+        var graph_state = State<Graph>("graph");
+        var dataloader_state = State<DataLoader>("dataloader");
+        var optimiser_state = State<Optimiser>("optimiser");
+
+        var graph = graph_state.get();
+        var dataloader = dataloader_state.get();
+        var optimiser = optimiser_state.get();
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(several_deserialise_src));
+  EXPECT_CALL(toolkit.observer(), Exists(graph_name));
+  EXPECT_CALL(toolkit.observer(), Exists(dl_name));
+  EXPECT_CALL(toolkit.observer(), Exists(opt_name));
+  EXPECT_CALL(toolkit.observer(), Read(graph_name, _, _)).Times(::testing::Between(1, 2));
+  EXPECT_CALL(toolkit.observer(), Read(dl_name, _, _)).Times(::testing::Between(1, 2));
+  EXPECT_CALL(toolkit.observer(), Read(opt_name, _, _)).Times(::testing::Between(1, 2));
   ASSERT_TRUE(toolkit.Run());
 }
 
