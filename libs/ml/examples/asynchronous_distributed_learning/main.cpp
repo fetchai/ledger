@@ -67,7 +67,7 @@ class TrainingClient
 {
 public:
   TrainingClient(std::string const &images, std::string const &labels)
-    : dataloader_(images, labels, true,VALIDATION_SET_RATIO)
+    : dataloader_(images, labels, true, VALIDATION_SET_RATIO)
   {
     g_.AddNode<PlaceHolder<TensorType>>("Input", {});
     g_.AddNode<FullyConnected<TensorType>>("FC1", {"Input"}, 28u * 28u, 10u);
@@ -82,6 +82,8 @@ public:
 
   void Train(unsigned int batch_size)
   {
+    dataloader_.SetMode(fetch::ml::dataloaders::DataLoaderMode::TRAIN);
+
     float                                          loss = 0;
     CrossEntropyLoss<TensorType>                   criterion;
     std::pair<TensorType, std::vector<TensorType>> input;
@@ -106,35 +108,27 @@ public:
 
     losses_values_.push_back(loss / static_cast<DataType>(batch_size));
 
-
-
-
     UpdateGradients();
   }
 
-    void Validate(DataType &validation_loss)
+  void Validate(DataType &validation_loss)
+  {
+    if (!dataloader_.IsValidable())
     {
-      if (!dataloader_.IsValidable())
-      {
-        throw std::runtime_error("No validation set");
-      }
-
-      SizeType val_set_size = dataloader_.Size(true);
-
-      dataloader_.Reset(true);
-      bool is_done_set;
-      auto validation_pair = dataloader_.PrepareBatch(val_set_size, is_done_set, true);
-
-      g_.SetInput("Input", validation_pair.second.at(0));
-      g_.SetInput("Label", validation_pair.first);
-      validation_loss = *(g_.Evaluate("Error").begin());
-
-      // Normalize loss to batch size
-      // validation_loss= ((validation_loss*static_cast<DataType>(this->estimator_config_.subset_size))
-      // / static_cast<DataType>(val_set_size));
-
+      throw std::runtime_error("No validation set");
     }
 
+    dataloader_.SetMode(fetch::ml::dataloaders::DataLoaderMode::VALIDATE);
+    SizeType val_set_size = dataloader_.Size();
+
+    dataloader_.Reset();
+    bool is_done_set;
+    auto validation_pair = dataloader_.PrepareBatch(val_set_size, is_done_set);
+
+    g_.SetInput("Input", validation_pair.second.at(0));
+    g_.SetInput("Label", validation_pair.first);
+    validation_loss = *(g_.Evaluate("Error").begin());
+  }
 
   TensorVectorType GetGradients() const
   {
@@ -264,20 +258,18 @@ int main(int ac, char **av)
   }
    */
 
-  TensorVectorType weights=clients[0]->GetWeights();
+  TensorVectorType weights = clients[0]->GetWeights();
 
   for (unsigned int it(0); it < NUMBER_OF_ITERATIONS; ++it)
   {
 
-
-if(it%SYNCHRONIZATION_INTERVAL==0)
-{
-    for (unsigned int i(1); i < NUMBER_OF_CLIENTS; ++i)
+    if (it % SYNCHRONIZATION_INTERVAL == 0)
     {
-      clients[i]->SetWeights(weights);
+      for (unsigned int i(1); i < NUMBER_OF_CLIENTS; ++i)
+      {
+        clients[i]->SetWeights(weights);
+      }
     }
-}
-
 
     std::cout << "================= ITERATION : " << it << " =================" << std::endl;
     std::list<std::thread> threads;
