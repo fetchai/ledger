@@ -86,6 +86,7 @@ int main(int argc, char **argv)
   // Connect and wait until everyone else has connected
   PreDkgSync sync(muddle->GetEndpoint(), 4);
   sync.ResetCabinet(peer_list);
+  dkg->ResetCabinet(members, uint32_t(std::stoi(args[2])));
   sync.Connect();
   while (!sync.ready())
   {
@@ -94,15 +95,14 @@ int main(int argc, char **argv)
   auto index = std::distance(members.begin(), members.find(p2p_key->identity().identifier()));
   FETCH_LOG_INFO(LOGGING_NAME, "Connected to peers - node ", index);
 
-  // Reset cabinet in DKG
-  dkg->ResetCabinet(members, uint32_t(std::stoi(args[2])));
-  FETCH_LOG_INFO(LOGGING_NAME, "Resetting cabinet");
-
   // Machinery to drive the FSM - attach and begin!
   reactor.Attach(dkg->GetWeakRunnable());
   reactor.Start();
 
-  std::this_thread::sleep_for(std::chrono::seconds(300));  // 1 min
+  while (!dkg->IsSynced())
+  {
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
 
   FETCH_LOG_INFO(LOGGING_NAME, "Finished. Quitting");
 

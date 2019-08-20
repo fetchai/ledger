@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vm/module.hpp"
 #include "vm_modules/core/byte_array_wrapper.hpp"
 #include "vm_modules/core/panic.hpp"
 #include "vm_modules/core/print.hpp"

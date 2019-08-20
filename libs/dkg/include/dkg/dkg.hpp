@@ -47,8 +47,8 @@ protected:
   using MuddleAddress    = byte_array::ConstByteArray;
   using CabinetMembers   = std::set<MuddleAddress>;
   using Endpoint         = muddle::MuddleEndpoint;
-  using MsgShare         = std::string;
-  using SharesExposedMap = std::unordered_map<MuddleAddress, std::pair<MsgShare, MsgShare>>;
+  using MessageShare     = std::string;
+  using SharesExposedMap = std::unordered_map<MuddleAddress, std::pair<MessageShare, MessageShare>>;
 
   enum class State : uint8_t
   {
@@ -104,10 +104,10 @@ protected:
   std::atomic<bool>       received_all_reconstruction_shares_{false};
 
   // Counters for types of messages received
-  std::atomic<uint32_t> shares_received_{0};
-  std::atomic<uint32_t> C_ik_received_{0};
-  std::atomic<uint32_t> A_ik_received_{0};
-  std::atomic<uint32_t> reconstruction_shares_received_{0};
+  std::atomic<uint32_t>   shares_received_{0};
+  std::atomic<uint32_t>   C_ik_received_{0};
+  std::set<MuddleAddress> A_ik_received_;
+  std::atomic<uint32_t>   reconstruction_shares_received_{0};
 
   std::unordered_map<MuddleAddress, std::pair<std::set<uint32_t>, std::vector<bn::Fr>>>
       reconstruction_shares;  ///< Map from id of node_i in complaints to a pair <parties which
@@ -137,26 +137,24 @@ protected:
 
   /// @name Handlers for messages
   /// @{
-  void OnNewCoefficients(std::shared_ptr<CoefficientsMessage> const &coefficients,
-                         MuddleAddress const &                       from_id);
-  void OnComplaints(std::shared_ptr<ComplaintsMessage> const &complaint,
-                    MuddleAddress const &                     from_id);
-  void OnExposedShares(std::shared_ptr<SharesMessage> const &shares, MuddleAddress const &from_id);
-  void OnComplaintsAnswer(std::shared_ptr<SharesMessage> const &answer,
-                          MuddleAddress const &                 from_id);
-  void OnQualComplaints(std::shared_ptr<SharesMessage> const &shares, MuddleAddress const &from_id);
-  void OnReconstructionShares(std::shared_ptr<SharesMessage> const &shares,
-                              MuddleAddress const &                 from_id);
+  void OnNewCoefficients(CoefficientsMessage const &coefficients, MuddleAddress const &from_id);
+  void OnComplaints(ComplaintsMessage const &complaint, MuddleAddress const &from_id);
+  void OnExposedShares(SharesMessage const &shares, MuddleAddress const &from_id);
+  void OnComplaintsAnswer(SharesMessage const &answer, MuddleAddress const &from_id);
+  void OnQualComplaints(SharesMessage const &shares, MuddleAddress const &from_id);
+  void OnReconstructionShares(SharesMessage const &shares, MuddleAddress const &from_id);
   /// @}
 
   /// @name Helper methods
   /// @{
-  uint32_t                          CabinetIndex(MuddleAddress const &other_address) const;
+  uint32_t CabinetIndex(MuddleAddress const &other_address) const;
+  bool     BasicMsgCheck(MuddleAddress const &from, std::shared_ptr<DKGMessage> const &msg_ptr);
   std::unordered_set<MuddleAddress> ComputeComplaints();
-  void             CheckComplaintAnswer(std::shared_ptr<SharesMessage> const &answer,
-                                        MuddleAddress const &from_id, uint32_t from_index);
+  void             CheckComplaintAnswer(SharesMessage const &answer, MuddleAddress const &from_id,
+                                        uint32_t from_index);
   bool             BuildQual();
   SharesExposedMap ComputeQualComplaints();
+  void             CheckQualComplaints();
   void             ComputeSecretShare();
   bool             RunReconstruction();
   void             ComputePublicKeys();
@@ -170,13 +168,13 @@ public:
           rpc_function);
 
   virtual void BroadcastShares();
-  void         OnNewShares(MuddleAddress from_id, std::pair<MsgShare, MsgShare> const &shares);
-  void         OnDkgMessage(MuddleAddress const &from, std::shared_ptr<DKGMessage> msg_ptr);
-  void         ResetCabinet();
-  void         SetDkgOutput(bn::G2 &public_key, bn::Fr &secret_share,
-                            std::vector<bn::G2> &public_key_shares, std::set<MuddleAddress> &qual);
-  bool         finished() const;
-  bn::G2       group() const;
+  void   OnNewShares(MuddleAddress from_id, std::pair<MessageShare, MessageShare> const &shares);
+  void   OnDkgMessage(MuddleAddress const &from, std::shared_ptr<DKGMessage> msg_ptr);
+  void   ResetCabinet();
+  void   SetDkgOutput(bn::G2 &public_key, bn::Fr &secret_share,
+                      std::vector<bn::G2> &public_key_shares, std::set<MuddleAddress> &qual);
+  bool   finished() const;
+  bn::G2 group() const;
 };
 }  // namespace dkg
 }  // namespace fetch

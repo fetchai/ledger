@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/graph.hpp"
+#include "ml/core/graph.hpp"
 #include "ml/optimisation/adagrad_optimiser.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "ml/optimisation/momentum_optimiser.hpp"
@@ -95,19 +95,18 @@ VMOptimiser::VMOptimiser(VM *vm, TypeId type_id, std::string const &mode, GraphT
 
 void VMOptimiser::Bind(Module &module)
 {
-  module.CreateClassType<fetch::vm_modules::ml::VMOptimiser>("Optimiser")
-      .CreateConstructor<Ptr<String>, Ptr<fetch::vm_modules::ml::VMGraph>, Ptr<String>, Ptr<String>,
-                         Ptr<String>>()
-      .CreateMemberFunction("run", &fetch::vm_modules::ml::VMOptimiser::RunData)
-      .CreateMemberFunction("run", &fetch::vm_modules::ml::VMOptimiser::RunLoader)
-      .CreateMemberFunction("run", &fetch::vm_modules::ml::VMOptimiser::RunLoaderNoSubset);
+  module.CreateClassType<VMOptimiser>("Optimiser")
+      .CreateConstructor(&VMOptimiser::Constructor)
+      .CreateMemberFunction("run", &VMOptimiser::RunData)
+      .CreateMemberFunction("run", &VMOptimiser::RunLoader)
+      .CreateMemberFunction("run", &VMOptimiser::RunLoaderNoSubset);
 }
 
 Ptr<VMOptimiser> VMOptimiser::Constructor(VM *vm, TypeId type_id, Ptr<String> const &mode,
-                                          Ptr<fetch::vm_modules::ml::VMGraph> const &graph,
-                                          Ptr<String> const &input_node_names,
-                                          Ptr<String> const &label_node_name,
-                                          Ptr<String> const &output_node_names)
+                                          Ptr<VMGraph> const &graph,
+                                          Ptr<String> const & input_node_names,
+                                          Ptr<String> const & label_node_name,
+                                          Ptr<String> const & output_node_names)
 {
   return new VMOptimiser(vm, type_id, mode->str, graph->graph_, {input_node_names->str},
                          label_node_name->str, output_node_names->str);
@@ -120,14 +119,14 @@ VMOptimiser::DataType VMOptimiser::RunData(Ptr<fetch::vm_modules::math::VMTensor
   return optimiser_->Run({(data->GetTensor())}, labels->GetTensor(), batch_size);
 }
 
-VMOptimiser::DataType VMOptimiser::RunLoader(Ptr<fetch::vm_modules::ml::VMDataLoader> const &loader,
-                                             uint64_t batch_size, uint64_t subset_size)
+VMOptimiser::DataType VMOptimiser::RunLoader(Ptr<VMDataLoader> const &loader, uint64_t batch_size,
+                                             uint64_t subset_size)
 {
   return optimiser_->Run(*(loader->loader_), batch_size, subset_size);
 }
 
-VMOptimiser::DataType VMOptimiser::RunLoaderNoSubset(
-    Ptr<fetch::vm_modules::ml::VMDataLoader> const &loader, uint64_t batch_size)
+VMOptimiser::DataType VMOptimiser::RunLoaderNoSubset(Ptr<VMDataLoader> const &loader,
+                                                     uint64_t                 batch_size)
 {
   return optimiser_->Run(*(loader->loader_), batch_size);
 }

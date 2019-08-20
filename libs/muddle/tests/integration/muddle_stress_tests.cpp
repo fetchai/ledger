@@ -217,7 +217,7 @@ protected:
   MuddlePtr         networkB_;
 };
 
-TEST_F(MuddleStressTests, ContinuousBiDirectionalTraffic)
+TEST_F(MuddleStressTests, DISABLED_ContinuousBiDirectionalTraffic)
 {
   std::thread nodeA([this]() { ClientServer(networkA_->GetEndpoint(), NETWORK_B_PUBLIC_KEY); });
   std::thread nodeB([this]() { ClientServer(networkB_->GetEndpoint(), NETWORK_A_PUBLIC_KEY); });
@@ -226,7 +226,7 @@ TEST_F(MuddleStressTests, ContinuousBiDirectionalTraffic)
   nodeA.join();
 }
 
-TEST_F(MuddleStressTests, ContinuousBiDirectionalExchanges)
+TEST_F(MuddleStressTests, DISABLED_ContinuousBiDirectionalExchanges)
 {
   std::thread nodeA(
       [this]() { ClientServerExchange(networkA_->GetEndpoint(), NETWORK_B_PUBLIC_KEY); });

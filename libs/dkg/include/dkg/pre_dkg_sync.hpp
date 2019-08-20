@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
-#include "dkg/rbc.hpp"
 #include "muddle/muddle_endpoint.hpp"
+#include "muddle/rbc.hpp"
 #include "network/uri.hpp"
 
 #include <unordered_map>
@@ -34,7 +34,7 @@ public:
   using MuddleAddress  = ConstByteArray;
   using PeersList      = std::unordered_map<MuddleAddress, fetch::network::Uri>;
 
-  PreDkgSync(muddle::MuddleEndpoint &muddle, uint8_t channel);
+  PreDkgSync(muddle::MuddleEndpoint &muddle, uint16_t channel);
   void ResetCabinet(PeersList const &peers);
   void Connect();
   bool ready();
@@ -45,7 +45,7 @@ private:
   muddle::MuddleEndpoint &          muddle_;
   PeersList                         peers_;
   Cabinet                           cabinet_;
-  RBC                               rbc_;
+  muddle::RBC                       rbc_;
   std::mutex                        mutex_;
   std::unordered_set<MuddleAddress> joined_;
   uint32_t                          joined_counter_{0};

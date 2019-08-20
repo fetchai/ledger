@@ -24,6 +24,11 @@
 #include <vector>
 
 namespace fetch {
+
+namespace crypto {
+class Identity;
+}
+
 namespace ledger {
 
 class StakeSnapshot;
@@ -32,7 +37,8 @@ class EntropyGeneratorInterface;
 class StakeManager final : public StakeManagerInterface
 {
 public:
-  using Committee    = std::vector<Address>;
+  using Identity     = crypto::Identity;
+  using Committee    = std::vector<Identity>;
   using CommitteePtr = std::shared_ptr<Committee const>;
 
   // Construction / Destruction

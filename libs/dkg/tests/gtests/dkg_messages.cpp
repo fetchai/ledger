@@ -71,24 +71,24 @@ TEST(dkg_messages, shares)
 TEST(dkg_messages, complaints)
 {
   std::unordered_set<DKGMessage::CabinetId> complaints;
-  ComplaintsMessage                         complaintMsg{complaints, "signature"};
+  ComplaintsMessage                         complaintMessage{complaints, "signature"};
 
-  fetch::serializers::MsgPackSerializer serialiser{complaintMsg.Serialize()};
+  fetch::serializers::MsgPackSerializer serialiser{complaintMessage.Serialize()};
 
   fetch::serializers::MsgPackSerializer serialiser1(serialiser.data());
-  ComplaintsMessage                     complaintMsg1{serialiser1};
+  ComplaintsMessage                     complaintMessage1{serialiser1};
 
-  EXPECT_EQ(complaintMsg1.complaints(), complaintMsg.complaints());
-  EXPECT_EQ(complaintMsg1.signature(), complaintMsg.signature());
+  EXPECT_EQ(complaintMessage1.complaints(), complaintMessage.complaints());
+  EXPECT_EQ(complaintMessage1.signature(), complaintMessage.signature());
 }
 
 TEST(dkg_messages, envelope)
 {
   std::unordered_set<DKGMessage::CabinetId> complaints;
-  ComplaintsMessage                         complaintMsg{complaints, "signature"};
+  ComplaintsMessage                         complaintMessage{complaints, "signature"};
 
   // Put into DKGEnvelope
-  DKGEnvelope env{complaintMsg};
+  DKGEnvelope env{complaintMessage};
 
   // Serialise the envelope
   fetch::serializers::SizeCounter env_counter;
@@ -104,7 +104,7 @@ TEST(dkg_messages, envelope)
 
   // Check the message type of envelopes match
   EXPECT_EQ(env1.Message()->type(), DKGMessage::MessageType::COMPLAINT);
-  EXPECT_EQ(env1.Message()->signature(), complaintMsg.signature());
+  EXPECT_EQ(env1.Message()->signature(), complaintMessage.signature());
   EXPECT_EQ(std::dynamic_pointer_cast<ComplaintsMessage>(env1.Message())->complaints(),
-            complaintMsg.complaints());
+            complaintMessage.complaints());
 }

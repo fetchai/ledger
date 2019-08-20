@@ -22,8 +22,9 @@
 #include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
 #include "dkg/dkg.hpp"
-#include "dkg/rbc.hpp"
+#include "dkg/pre_dkg_sync.hpp"
 #include "muddle/muddle_interface.hpp"
+#include "muddle/rbc.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
 
@@ -164,14 +165,15 @@ private:
         {
           bn::Fr trivial_share;
           trivial_share.clear();
-          std::pair<MsgShare, MsgShare> shares{trivial_share.getStr(), trivial_share.getStr()};
+          std::pair<MessageShare, MessageShare> shares{trivial_share.getStr(),
+                                                       trivial_share.getStr()};
           rpc_function_(cab_i, shares);
           sent_bad = true;
         }
         else
         {
-          std::pair<MsgShare, MsgShare> shares{s_ij[cabinet_index_][j].getStr(),
-                                               sprime_ij[cabinet_index_][j].getStr()};
+          std::pair<MessageShare, MessageShare> shares{s_ij[cabinet_index_][j].getStr(),
+                                                       sprime_ij[cabinet_index_][j].getStr()};
           rpc_function_(cab_i, shares);
         }
       }
@@ -190,16 +192,16 @@ private:
         // Compute one pair of trivial shares
         if (!bad_share)
         {
-          std::pair<MsgShare, MsgShare> shares{s_ij[cabinet_index_][j].getStr(),
-                                               sprime_ij[cabinet_index_][j].getStr()};
+          std::pair<MessageShare, MessageShare> shares{s_ij[cabinet_index_][j].getStr(),
+                                                       sprime_ij[cabinet_index_][j].getStr()};
           rpc_function_(cab_i, shares);
           bad_share = true;
         }
         else
         {
           ComputeShares(s_ij[cabinet_index_][j], sprime_ij[cabinet_index_][j], a_i, b_i, j);
-          std::pair<MsgShare, MsgShare> shares{s_ij[cabinet_index_][j].getStr(),
-                                               sprime_ij[cabinet_index_][j].getStr()};
+          std::pair<MessageShare, MessageShare> shares{s_ij[cabinet_index_][j].getStr(),
+                                                       sprime_ij[cabinet_index_][j].getStr()};
           rpc_function_(cab_i, shares);
         }
       }
@@ -225,7 +227,7 @@ private:
 
   void BroadcastComplaintsAnswer() override
   {
-    std::unordered_map<MuddleAddress, std::pair<MsgShare, MsgShare>> complaints_answer;
+    std::unordered_map<MuddleAddress, std::pair<MessageShare, MessageShare>> complaints_answer;
     if (!Failure(Failures::SEND_EMPTY_COMPLAINT_ANSWER))
     {
       for (auto const &reporter : complaints_manager_.ComplaintsFrom())
@@ -280,6 +282,9 @@ private:
 
     complaints_answer_manager_.Clear();
     state_ = State::WAITING_FOR_QUAL_SHARES;
+    std::unique_lock<std::mutex> lock{mutex_};
+    A_ik_received_.insert(address_);
+    lock.unlock();
     ReceivedQualShares();
   }
 
@@ -316,7 +321,7 @@ private:
 
   void BroadcastReconstructionShares() override
   {
-    std::unordered_map<MuddleAddress, std::pair<MsgShare, MsgShare>> complaint_shares;
+    std::unordered_map<MuddleAddress, std::pair<MessageShare, MessageShare>> complaint_shares;
     if (Failure(Failures::WITHOLD_RECONSTRUCTION_SHARES))
     {
       SendBroadcast(
@@ -361,6 +366,7 @@ struct CabinetMember
   std::shared_ptr<muddle::Subscription> shares_subscription;
   RBC                                   rbc;
   FaultyDkg                             dkg;
+  PreDkgSync                            pre_sync;
 
   // Set when DKG is finished
   bn::Fr              secret_share;
@@ -375,7 +381,7 @@ struct CabinetMember
     , muddle_certificate{CreateNewCertificate()}
     , muddle{CreateMuddle("Test", muddle_certificate, network_manager, "127.0.0.1")}
     , shares_subscription(muddle->GetEndpoint().Subscribe(SERVICE_DKG, CHANNEL_SHARES))
-    , rbc{muddle->GetEndpoint(), muddle_certificate->identity().identifier(), current_cabinet,
+    , rbc{muddle->GetEndpoint(), muddle_certificate->identity().identifier(),
           [this](ConstByteArray const &address, ConstByteArray const &payload) -> void {
             DKGEnvelope   env;
             DKGSerializer serializer{payload};
@@ -388,13 +394,14 @@ struct CabinetMember
           [this](DKGEnvelope const &envelope) -> void {
             DKGSerializer serialiser;
             serialiser << envelope;
-            rbc.SendRBroadcast(serialiser.data());
+            rbc.Broadcast(serialiser.data());
           },
           [this](ConstByteArray const &                     destination,
                  std::pair<std::string, std::string> const &shares) -> void {
             SubmitShare(destination, shares);
           },
           failures}
+    , pre_sync{muddle->GetEndpoint(), 4}
   {
     // Set subscription for receiving shares
     shares_subscription->SetMessageHandler([this](ConstByteArray const &from, uint16_t, uint16_t,
@@ -408,6 +415,8 @@ struct CabinetMember
       // Dispatch the event
       dkg.OnNewShares(from, shares);
     });
+
+    rbc.ResetCabinet(current_cabinet);
 
     network_manager.Start();
     muddle->Start({}, {muddle_port});
@@ -443,9 +452,10 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
 {
   RBC::CabinetMembers cabinet;
 
-  std::vector<std::unique_ptr<CabinetMember>> committee;
-  std::set<RBC::MuddleAddress>                expected_qual;
-  std::set<uint32_t>                          qual_index;
+  std::vector<std::unique_ptr<CabinetMember>>                         committee;
+  std::set<RBC::MuddleAddress>                                        expected_qual;
+  std::unordered_map<byte_array::ConstByteArray, fetch::network::Uri> peers_list;
+  std::set<uint32_t>                                                  qual_index;
   for (uint16_t ii = 0; ii < cabinet_size; ++ii)
   {
     auto port_number = static_cast<uint16_t>(9000 + ii);
@@ -462,31 +472,30 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
       expected_qual.insert(committee[ii]->muddle->GetAddress());
       qual_index.insert(ii);
     }
+    peers_list.insert({committee[ii]->muddle_certificate->identity().identifier(),
+                       fetch::network::Uri{"tcp://127.0.0.1:" + std::to_string(port_number)}});
   }
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(500));
-
-#if 0
-  // Connect muddles together (localhost for this example)
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  // Reset cabinet for rbc in pre-dkg sync
   for (uint32_t ii = 0; ii < cabinet_size; ii++)
   {
-    for (uint32_t jj = ii + 1; jj < cabinet_size; jj++)
-    {
-      committee[ii]->muddle.AddPeer(
-          fetch::network::Uri{"tcp://127.0.0.1:" + std::to_string(committee[jj]->muddle_port)});
-    }
+    committee[ii]->pre_sync.ResetCabinet(peers_list);
   }
-#endif
 
-  // Make sure everyone is connected to everyone else
+  // Wait until everyone else has connected
+  for (uint32_t ii = 0; ii < cabinet_size; ii++)
+  {
+    committee[ii]->pre_sync.Connect();
+  }
+
   uint32_t kk = 0;
-  while (kk != cabinet_size)
+  while (kk < cabinet_size)
   {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     for (uint32_t mm = kk; mm < cabinet_size; ++mm)
     {
-      if (committee[mm]->muddle->GetEndpoint().GetDirectlyConnectedPeers().size() !=
-          (cabinet_size - 1))
+      if (!committee[mm]->pre_sync.ready())
       {
         break;
       }
@@ -510,7 +519,7 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
     for (auto &member : committee)
     {
       member->dkg.ResetCabinet();
-      member->rbc.ResetCabinet();
+      member->rbc.ResetCabinet(cabinet);
     }
 
     // Start at DKG

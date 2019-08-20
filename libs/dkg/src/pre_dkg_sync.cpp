@@ -23,9 +23,9 @@ char const *LOGGING_NAME = "Pre-Dkg Sync";
 namespace fetch {
 namespace dkg {
 
-PreDkgSync::PreDkgSync(muddle::MuddleEndpoint &muddle, uint8_t channel)
+PreDkgSync::PreDkgSync(muddle::MuddleEndpoint &muddle, uint16_t channel)
   : muddle_{muddle}
-  , rbc_{muddle_, muddle_.GetLocalAddress(), cabinet_,
+  , rbc_{muddle_, muddle_.GetLocalAddress(),
          [this](MuddleAddress const &address, ConstByteArray const &payload) -> void {
            std::set<MuddleAddress>               connections;
            fetch::serializers::MsgPackSerializer serializer{payload};
@@ -91,12 +91,13 @@ void PreDkgSync::ResetCabinet(PeersList const &peers)
 {
   peers_ = peers;
 
+  cabinet_.clear();  // TODO(tfr): Check with Jenny.
   for (auto const &peer : peers_)
   {
     cabinet_.insert(peer.first);
   }
   assert(cabinet_.size() == peers_.size());
-  rbc_.ResetCabinet();
+  rbc_.ResetCabinet(cabinet_);
 }
 
 void PreDkgSync::Connect()
@@ -126,7 +127,7 @@ void PreDkgSync::Connect()
   // Send ready message with list of connected peers
   fetch::serializers::MsgPackSerializer serializer;
   serializer << cabinet_;
-  rbc_.SendRBroadcast(serializer.data());
+  rbc_.Broadcast(serializer.data());
   committee_sent_ = true;
   ReceivedDkgReady();
 }

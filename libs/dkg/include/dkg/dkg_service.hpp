@@ -24,10 +24,10 @@
 #include "core/state_machine.hpp"
 #include "dkg/dkg.hpp"
 #include "dkg/dkg_rpc_protocol.hpp"
-#include "dkg/rbc.hpp"
 #include "dkg/round.hpp"
 #include "ledger/chain/address.hpp"
 #include "ledger/consensus/entropy_generator_interface.hpp"
+#include "muddle/rbc.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
 
@@ -171,21 +171,21 @@ public:
     {
       assert(threshold >= static_cast<uint32_t>(cabinet.size() / 3));
     }
-    current_cabinet_ = std::move(cabinet);
     if (threshold == std::numeric_limits<uint32_t>::max())
     {
-      current_threshold_ = static_cast<uint32_t>(current_cabinet_.size() / 2 - 1);
+      current_threshold_ = static_cast<uint32_t>(cabinet.size() / 2 + 1);
     }
     else
     {
       current_threshold_ = threshold;
     }
+    FETCH_LOG_INFO(LOGGING_NAME, "Resetting cabinet. Cabinet size: ", cabinet.size(),
+                   " threshold: ", threshold);
+    rbc_.ResetCabinet(cabinet);
+    current_cabinet_ = std::move(cabinet);
+    dkg_.ResetCabinet();
     id_ = static_cast<uint32_t>(
         std::distance(current_cabinet_.begin(), current_cabinet_.find(address_)));
-    FETCH_LOG_INFO(LOGGING_NAME, "Resetting cabinet. Cabinet size: ", current_cabinet_.size(),
-                   " threshold: ", threshold);
-    dkg_.ResetCabinet();
-    rbc_.ResetCabinet();
   }
   void SendShares(MuddleAddress const &                      destination,
                   std::pair<std::string, std::string> const &shares);
@@ -248,7 +248,7 @@ private:
   StateMachinePtr      state_machine_;  ///< The service state machine
   std::shared_ptr<muddle::Subscription>
                            shares_subscription;  ///< Subscription for receiving secret shares
-  RBC                      rbc_;                 ///< Runs the RBC protocol
+  muddle::RBC             rbc_;                 ///< Runs the RBC protocol
   DistributedKeyGeneration dkg_;                 ///< Runs DKG protocol
 
   /// @name State Machine Data

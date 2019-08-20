@@ -18,7 +18,6 @@
 
 #include "constellation.hpp"
 #include "core/bloom_filter.hpp"
-#include "dkg/dkg_service.hpp"
 #include "health_check_http_module.hpp"
 #include "http/middleware/allow_origin.hpp"
 #include "http/middleware/telemetry.hpp"
@@ -41,6 +40,13 @@
 #include "open_api_http_module.hpp"
 #include "telemetry_http_module.hpp"
 #include "muddle_status_http_module.hpp"
+
+#include "beacon/beacon_service.hpp"
+#include "beacon/beacon_setup_protocol.hpp"
+#include "beacon/beacon_setup_service.hpp"
+#include "beacon/cabinet_member_details.hpp"
+#include "beacon/entropy.hpp"
+#include "beacon/event_manager.hpp"
 
 #include <chrono>
 #include <cstddef>
@@ -68,11 +74,11 @@ using ExecutorPtr = std::shared_ptr<Executor>;
 namespace fetch {
 namespace {
 
-using LaneIndex       = uint32_t;
-using StakeManagerPtr = std::shared_ptr<ledger::StakeManager>;
-using EntropyPtr      = std::unique_ptr<ledger::EntropyGeneratorInterface>;
-using DkgServicePtr   = std::unique_ptr<dkg::DkgService>;
-using ConstByteArray  = byte_array::ConstByteArray;
+using LaneIndex        = uint32_t;
+using StakeManagerPtr  = std::shared_ptr<ledger::StakeManager>;
+using EntropyPtr       = std::unique_ptr<ledger::EntropyGeneratorInterface>;
+using ConstByteArray   = byte_array::ConstByteArray;
+using BeaconServicePtr = std::shared_ptr<fetch::beacon::BeaconService>;
 
 static const std::size_t HTTP_THREADS{4};
 static char const *      SNAPSHOT_FILENAME = "snapshot.json";
@@ -165,11 +171,6 @@ ledger::ShardConfigs GenerateShardsConfig(Constellation::Config &config, uint16_
   return configs;
 }
 
-EntropyPtr CreateEntropy()
-{
-  return std::make_unique<ledger::NaiveEntropyGenerator>();
-}
-
 StakeManagerPtr CreateStakeManager(Constellation::Config const &      cfg,
                                    ledger::EntropyGeneratorInterface &entropy)
 {
@@ -183,17 +184,18 @@ StakeManagerPtr CreateStakeManager(Constellation::Config const &      cfg,
   return mgr;
 }
 
-DkgServicePtr CreateDkgService(Constellation::Config const &cfg, ConstByteArray address,
-                               MuddleEndpoint &endpoint)
+BeaconServicePtr CreateBeaconService(Constellation::Config const &cfg, MuddleEndpoint &endpoint,
+                                     Constellation::CertificatePtr certificate)
 {
-  DkgServicePtr dkg{};
+  BeaconServicePtr                         beacon{};
+  beacon::EventManager::SharedEventManager event_manager = beacon::EventManager::New();
 
   if (cfg.proof_of_stake)
   {
-    dkg = std::make_unique<dkg::DkgService>(endpoint, address);
+    beacon = std::make_unique<fetch::beacon::BeaconService>(endpoint, certificate, event_manager);
   }
 
-  return dkg;
+  return beacon;
 }
 
 }  // namespace
@@ -232,9 +234,8 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
     shard_management_(std::make_shared<ShardManagementService>(cfg_.manifest, lane_control_,
                                                                *muddle_, cfg_.log2_num_lanes))
   , dag_{GenerateDAG(cfg_.features.IsEnabled("synergetic"), "dag_db_", true, certificate)}
-  , dkg_{CreateDkgService(cfg_, certificate->identity().identifier(), muddle_->GetEndpoint())}
-  , entropy_{CreateEntropy()}
-  , stake_{CreateStakeManager(cfg_, *entropy_)}
+  , beacon_{CreateBeaconService(cfg_, muddle_->GetEndpoint(), certificate)}
+  , stake_{CreateStakeManager(cfg_, *beacon_)}
   , execution_manager_{std::make_shared<ExecutionManager>(
         cfg_.num_executors, cfg_.log2_num_lanes, storage_,
         [this] {
@@ -249,7 +250,8 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
                        *storage_,       block_packer_,
                        *this,           cfg_.features,
                        certificate,     cfg_.num_lanes(),
-                       cfg_.num_slices, cfg_.block_difficulty}
+                       cfg_.num_slices, cfg_.block_difficulty,
+                       beacon_}
   , main_chain_service_{std::make_shared<MainChainRpcService>(muddle_->GetEndpoint(), chain_, trust_,
                                                               cfg_.network_mode)}
   , tx_processor_{dag_, *storage_, block_packer_, tx_status_cache_, cfg_.processor_threads}
@@ -267,8 +269,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
         std::make_shared<LoggingHttpModule>(),
         std::make_shared<TelemetryHttpModule>(),
         std::make_shared<MuddleStatusModule>(),
-        std::make_shared<HealthCheckHttpModule>(chain_, *main_chain_service_, block_coordinator_,
-                                                dkg_)}
+        std::make_shared<HealthCheckHttpModule>(chain_, *main_chain_service_, block_coordinator_)}
 {
 
   // print the start up log banner
@@ -294,6 +295,13 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
     synergetic_miner_ = std::move(syn_miner);
   }
 
+  // Attach beacon runnables
+  if (beacon_)
+  {
+    reactor_.Attach(beacon_->GetMainRunnable());
+    reactor_.Attach(beacon_->GetSetupRunnable());
+  }
+
   // attach the services to the reactor
   reactor_.Attach(main_chain_service_->GetWeakRunnable());
   reactor_.Attach(shard_management_);
@@ -311,10 +319,10 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
     http_.AddModule(*module);
   }
 
-  // If we are using the DKG service we need to update the default entropy engine for PoS
-  if (dkg_)
+  // If we are using POS, the beacon provides entropy
+  if (beacon_)
   {
-    stake_->UpdateEntropy(*dkg_);
+    stake_->UpdateEntropy(*beacon_);
   }
 }
 
@@ -438,7 +446,7 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
     FETCH_LOG_INFO(LOGGING_NAME,
                    "Loading from genesis save file. Location: ", cfg_.stakefile_location);
 
-    GenesisFileCreator creator(block_coordinator_, *storage_, stake_.get(), dkg_.get());
+    GenesisFileCreator creator(block_coordinator_, *storage_, stake_.get());
 
     if (cfg_.stakefile_location.empty())
     {
@@ -473,7 +481,6 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
   // Step 2. Main monitor loop
   //---------------------------------------------------------------
   bool start_up_in_progress{true};
-  bool dkg_attached{false};
 
   std::size_t committee_size = 0;
 
@@ -496,38 +503,8 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
   // monitor loop
   while (active_)
   {
-    std::size_t num_direct_connections = muddle_->GetNumDirectlyConnectedPeers();
-
-    // wait until we have connected to as many peers as are required for DKG
-    if (dkg_ && ((num_direct_connections + 1) == committee_size))
-    {
-      // Note: the DKG will already have its cabinet reset by this point
-      if (!dkg_attached)
-      {
-        // Required until we can guarantee the DRB isn't vulnerable to races
-        std::this_thread::sleep_for(std::chrono::milliseconds(5000));
-
-        FETCH_LOG_INFO(LOGGING_NAME, "Starting DKG");
-        reactor_.Attach(dkg_->GetWeakRunnable());
-        dkg_attached = true;
-      }
-    }
-    else if (dkg_ && !dkg_attached)
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "Waiting to connect for DKG. Peers so far: ",
-                     num_direct_connections);
-    }
-
-    bool beacon_synced = true;
-
-    if (dkg_)
-    {
-      beacon_synced = dkg_->IsSynced();
-    }
-
     // determine the status of the main chain server
-    bool const is_in_sync =
-        main_chain_service_->IsSynced() && block_coordinator_.IsSynced() && beacon_synced;
+    bool const is_in_sync = main_chain_service_->IsSynced() && block_coordinator_.IsSynced();
 
     // control from the top level block production based on the chain sync state
     block_coordinator_.EnableMining(is_in_sync);
@@ -564,14 +541,6 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
   //---------------------------------------------------------------
 
   FETCH_LOG_INFO(LOGGING_NAME, "Shutting down...");
-
-  if (cfg_.dump_state_file)
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "Creating genesis save file.");
-
-    GenesisFileCreator creator(block_coordinator_, *storage_, stake_.get(), dkg_.get());
-    creator.CreateFile(SNAPSHOT_FILENAME);
-  }
 
   http_.Stop();
   tx_processor_.Stop();

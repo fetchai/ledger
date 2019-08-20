@@ -30,10 +30,10 @@ using namespace fetch::ml::dataloaders;
 
 TEST(C2vLoaderTest, loader_test)
 {
-  using ArrayType   = typename fetch::math::Tensor<fetch::math::SizeType>;
+  using TensorType  = typename fetch::math::Tensor<fetch::math::SizeType>;
   using SizeType    = fetch::math::SizeType;
-  using LabelType   = ArrayType;
-  using ContextType = ArrayType;
+  using LabelType   = TensorType;
+  using ContextType = TensorType;
 
   std::string training_data =
       "get|timestamp override,-726273290,long override,-733851942,METHOD_NAME "

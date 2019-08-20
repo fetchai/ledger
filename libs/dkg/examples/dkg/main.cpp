@@ -57,8 +57,8 @@ ProverPtr CreateNewCertificate()
 
 int main()
 {
-
-  uint32_t cabinet_size = 3;
+  uint32_t cabinet_size = 30;
+  uint32_t threshold{16};
 
   struct CabinetMember
   {
@@ -85,12 +85,14 @@ int main()
 
   std::vector<std::unique_ptr<CabinetMember>>                         committee;
   std::unordered_map<byte_array::ConstByteArray, fetch::network::Uri> peers_list;
+  RBC::CabinetMembers                                                 cabinet;
   for (uint16_t ii = 0; ii < cabinet_size; ++ii)
   {
     auto port_number = static_cast<uint16_t>(9000 + ii);
     committee.emplace_back(new CabinetMember{port_number, ii});
     peers_list.insert({committee[ii]->muddle_certificate->identity().identifier(),
                        fetch::network::Uri{"tcp://127.0.0.1:" + std::to_string(port_number)}});
+    cabinet.insert(committee[ii]->muddle_certificate->identity().identifier());
   }
 
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -98,6 +100,7 @@ int main()
   for (uint32_t ii = 0; ii < cabinet_size; ii++)
   {
     committee[ii]->pre_sync.ResetCabinet(peers_list);
+    committee[ii]->dkg_service.ResetCabinet(cabinet, threshold);
   }
 
   // Wait until everyone else has connected
@@ -123,20 +126,10 @@ int main()
     }
   }
 
-  RBC::CabinetMembers cabinet;
-  for (auto &member : committee)
+  // Start at DKG for each muddle
   {
-    cabinet.insert(member->muddle_certificate->identity().identifier());
-  }
-  assert(cabinet.size() == cabinet_size);
-
-  // Start at RBC for each muddle
-  {
-    uint32_t threshold{2};
-
     for (auto &member : committee)
     {
-      member->dkg_service.ResetCabinet(cabinet, threshold);
       member->reactor.Attach(member->dkg_service.GetWeakRunnable());
     }
 
@@ -146,8 +139,23 @@ int main()
       member->reactor.Start();
     }
 
-    // Need to increase this depending on number of nodes to complete 3 rounds of DRB
-    std::this_thread::sleep_for(std::chrono::seconds(25));
+    // Sleep until everyone has finished
+    uint32_t qq = 0;
+    while (qq != cabinet_size)
+    {
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      for (uint32_t mm = qq; mm < cabinet_size; ++mm)
+      {
+        if (!committee[mm]->dkg_service.IsSynced())
+        {
+          break;
+        }
+        else
+        {
+          ++qq;
+        }
+      }
+    }
   }
 
   for (auto &member : committee)
