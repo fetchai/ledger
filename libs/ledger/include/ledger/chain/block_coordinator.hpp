@@ -387,10 +387,5 @@ void BlockCoordinator::SetBlockPeriod(std::chrono::duration<R, P> const &period)
   mining_ = true;
 }
 
-inline void BlockCoordinator::EnableMining(bool enable)
-{
-  mining_enabled_ = enable;
-}
-
 }  // namespace ledger
 }  // namespace fetch

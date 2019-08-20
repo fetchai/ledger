@@ -47,13 +47,13 @@ template <typename LabelType, typename DataType>
 class C2VLoader : public DataLoader<LabelType, DataType>
 {
 public:
-  using ArrayType               = DataType;
-  using Type                    = typename ArrayType::Type;
-  using SizeType                = typename ArrayType::SizeType;
-  using ContextTuple            = typename std::tuple<SizeType, SizeType, SizeType>;
-  using ContextVector           = typename std::vector<ArrayType>;
-  using ContextLabelPair        = typename std::pair<SizeType, ContextTuple>;
-  using ContextTensorsLabelPair = typename std::pair<LabelType, ContextVector>;
+  using TensorType              = DataType;
+  using Type                    = typename TensorType::Type;
+  using SizeType                = typename TensorType::SizeType;
+  using ContextTuple            = std::tuple<SizeType, SizeType, SizeType>;
+  using ContextVector           = std::vector<TensorType>;
+  using ContextLabelPair        = std::pair<SizeType, ContextTuple>;
+  using ContextTensorsLabelPair = std::pair<LabelType, ContextVector>;
 
   using WordIdxType   = std::vector<std::vector<SizeType>>;
   using VocabType     = std::unordered_map<std::string, SizeType>;
@@ -188,7 +188,7 @@ C2VLoader<LabelType, DataType>::GetNextContext()
 /**
  * @brief Gets the next pair of feature (vector of 3 tensors) and target
  *
- * @return std::pair<std::vector<ArrayType>, LabelType>;
+ * @return std::pair<std::vector<TensorType>, LabelType>;
  */
 template <typename LabelType, typename DataType>
 typename C2VLoader<LabelType, DataType>::ContextTensorsLabelPair
@@ -224,9 +224,9 @@ C2VLoader<LabelType, DataType>::GetNext()
           context_positions.push_back(current_context_position);
         }
 
-        ArrayType source_word_tensor({this->max_contexts_, 1});
-        ArrayType path_tensor({this->max_contexts_, 1});
-        ArrayType target_word_tensor({this->max_contexts_, 1});
+        TensorType source_word_tensor({this->max_contexts_, 1});
+        TensorType path_tensor({this->max_contexts_, 1});
+        TensorType target_word_tensor({this->max_contexts_, 1});
 
         if (context_positions.size() <= this->max_contexts_)
         {
@@ -261,7 +261,7 @@ C2VLoader<LabelType, DataType>::GetNext()
         }
         ContextVector context_tensor_tuple = {source_word_tensor, path_tensor, target_word_tensor};
 
-        ArrayType y_true_vec({function_name_counter().size() + 1, 1});
+        TensorType y_true_vec({function_name_counter().size() + 1, 1});
         y_true_vec.Fill(Type{0});
         // Preparing the y_true vector (one-hot-encoded)
         y_true_vec.Set(old_function_index, Type{0}, Type{1});

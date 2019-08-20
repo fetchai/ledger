@@ -22,6 +22,8 @@
 #include "meta/type_traits.hpp"
 #include "vectorise/platform.hpp"
 
+#include <stdexcept>
+
 namespace fetch {
 namespace ledger {
 namespace detail {

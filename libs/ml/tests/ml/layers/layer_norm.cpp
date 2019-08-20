@@ -18,7 +18,13 @@
 
 #include "math/fundamental_operators.hpp"
 #include "math/tensor.hpp"
+
 #include "ml/layers/normalisation/layer_norm.hpp"
+#include "ml/meta/ml_type_traits.hpp"
+
+#include "ml/serializers/ml_types.hpp"
+#include "ml/utilities/graph_builder.hpp"
+
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
@@ -36,6 +42,7 @@ TYPED_TEST_CASE(LayerNormTest, MyTypes);
 TYPED_TEST(LayerNormTest, set_input_and_evaluate_test_2D)  // Use the class as a subgraph
 {
   fetch::ml::layers::LayerNorm<TypeParam> ln({100u, 10u});
+
   TypeParam input_data(std::vector<typename TypeParam::SizeType>({100, 10, 2}));
   ln.SetInput("LayerNorm_Input", input_data);
   TypeParam output = ln.Evaluate("LayerNorm_Beta_Addition", true);
@@ -80,12 +87,16 @@ TYPED_TEST(LayerNormTest, ops_backward_test)  // Use the class as an Ops
 TYPED_TEST(LayerNormTest, node_forward_test)  // Use the class as a Node
 {
   TypeParam data(std::vector<typename TypeParam::SizeType>({5, 10, 2}));
-  std::shared_ptr<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>> placeholder =
-      std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>>("Input");
-  placeholder->SetData(data);
+  auto      placeholder = std::make_shared<fetch::ml::Node<TypeParam>>(
+      fetch::ml::OpType::OP_PLACEHOLDER, "Input",
+      []() { return std::make_shared<fetch::ml::ops::PlaceHolder<TypeParam>>(); });
+  std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder->GetOp())
+      ->SetData(data);
 
-  fetch::ml::Node<TypeParam, fetch::ml::layers::LayerNorm<TypeParam>> ln(
-      "LayerNorm", std::vector<typename TypeParam::SizeType>({5, 10}));
+  fetch::ml::Node<TypeParam> ln(fetch::ml::OpType::LAYER_LAYER_NORM, "LayerNorm", []() {
+    return std::make_shared<fetch::ml::layers::LayerNorm<TypeParam>>(
+        std::vector<fetch::math::SizeType>({5, 10}));
+  });
   ln.AddInput(placeholder);
 
   TypeParam prediction = *ln.Evaluate(true);
@@ -99,12 +110,16 @@ TYPED_TEST(LayerNormTest, node_forward_test)  // Use the class as a Node
 TYPED_TEST(LayerNormTest, node_backward_test)  // Use the class as a Node
 {
   TypeParam data({5, 10, 2});
-  std::shared_ptr<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>> placeholder =
-      std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>>("Input");
-  placeholder->SetData(data);
+  auto      placeholder = std::make_shared<fetch::ml::Node<TypeParam>>(
+      fetch::ml::OpType::OP_PLACEHOLDER, "Input",
+      []() { return std::make_shared<fetch::ml::ops::PlaceHolder<TypeParam>>(); });
+  std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder->GetOp())
+      ->SetData(data);
 
-  fetch::ml::Node<TypeParam, fetch::ml::layers::LayerNorm<TypeParam>> ln(
-      "LayerNorm", std::vector<typename TypeParam::SizeType>({5, 10}));
+  fetch::ml::Node<TypeParam> ln(fetch::ml::OpType::LAYER_LAYER_NORM, "LayerNorm", []() {
+    return std::make_shared<fetch::ml::layers::LayerNorm<TypeParam>>(
+        std::vector<fetch::math::SizeType>({5, 10}));
+  });
   ln.AddInput(placeholder);
 
   TypeParam prediction = *ln.Evaluate(true);
@@ -121,8 +136,8 @@ TYPED_TEST(LayerNormTest, node_backward_test)  // Use the class as a Node
 
 TYPED_TEST(LayerNormTest, graph_forward_test_exact_value_2D)  // Use the class as a Node
 {
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
+  using DataType   = typename TypeParam::Type;
+  using TensorType = TypeParam;
 
   fetch::ml::Graph<TypeParam> g;
 
@@ -130,13 +145,13 @@ TYPED_TEST(LayerNormTest, graph_forward_test_exact_value_2D)  // Use the class a
   g.template AddNode<fetch::ml::layers::LayerNorm<TypeParam>>(
       "LayerNorm", {"Input"}, std::vector<typename TypeParam::SizeType>({3, 2}));
 
-  ArrayType data = ArrayType::FromString(
+  TensorType data = TensorType::FromString(
       "1, 2, 3, 0;"
       "2, 3, 2, 1;"
       "3, 6, 4, 13");
   data.Reshape({3, 2, 2});
 
-  ArrayType gt = ArrayType::FromString(
+  TensorType gt = TensorType::FromString(
       "-1.22474487, -0.98058068, 0, -0.79006571;"
       "0, -0.39223227, -1.22474487,  -0.62076591;"
       "1.22474487,  1.37281295, 1.22474487, 1.41083162");
@@ -169,4 +184,97 @@ TYPED_TEST(LayerNormTest, getStateDict)
   ASSERT_NE(sd.dict_["LayerNorm_Beta"].weights_, nullptr);
   EXPECT_EQ(sd.dict_["LayerNorm_Beta"].weights_->shape(),
             std::vector<typename TypeParam::SizeType>({50, 1, 1}));
+}
+
+TYPED_TEST(LayerNormTest, saveparams_test)
+{
+  using DataType  = typename TypeParam::Type;
+  using LayerType = fetch::ml::layers::LayerNorm<TypeParam>;
+  using SPType    = typename LayerType::SPType;
+
+  std::string input_name  = "LayerNorm_Input";
+  std::string output_name = "LayerNorm_Beta_Addition";
+
+  std::vector<fetch::math::SizeType> data_shape = {3, 2};
+  TypeParam                          input      = TypeParam::FromString(
+      "1, 2, 3, 0;"
+      "2, 3, 2, 1;"
+      "3, 6, 4, 13");
+  input.Reshape({3, 2, 2});
+
+  TypeParam labels({3, 2, 2});
+  labels.FillUniformRandom();
+
+  // Create layer
+  LayerType layer(data_shape);
+
+  // add label node
+  std::string label_name =
+      layer.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("label", {});
+
+  // Add loss function
+  std::string error_output = layer.template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TypeParam>>(
+      "num_error", {output_name, label_name});
+
+  // set input and evaluate
+  layer.SetInput(input_name, input);
+  TypeParam prediction;
+  prediction = layer.Evaluate(output_name, true);
+
+  // extract saveparams
+  auto sp = layer.GetOpSaveableParams();
+
+  // downcast to correct type
+  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
+
+  // serialize
+  fetch::serializers::MsgPackSerializer b;
+  b << *dsp;
+
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<SPType>();
+  b >> *dsp2;
+
+  // rebuild
+  auto layer2 = *(fetch::ml::utilities::BuildLayer<TypeParam, LayerType>(dsp2));
+
+  // test equality
+  layer.SetInput(input_name, input);
+  prediction = layer.Evaluate(output_name, true);
+  layer2.SetInput(input_name, input);
+  TypeParam prediction2 = layer2.Evaluate(output_name, true);
+
+  ASSERT_TRUE(prediction.AllClose(prediction2, fetch::math::function_tolerance<DataType>(),
+                                  fetch::math::function_tolerance<DataType>()));
+
+  // train g
+  layer.SetInput(label_name, labels);
+  TypeParam loss = layer.Evaluate(error_output);
+  layer.BackPropagateError(error_output);
+  layer.Step(DataType{0.1f});
+
+  // train g2
+  layer2.SetInput(label_name, labels);
+  TypeParam loss2 = layer2.Evaluate(error_output);
+  layer2.BackPropagateError(error_output);
+  layer2.Step(DataType{0.1f});
+
+  EXPECT_TRUE(loss.AllClose(loss2, fetch::math::function_tolerance<DataType>(),
+                            fetch::math::function_tolerance<DataType>()));
+
+  // new random input
+  input.FillUniformRandom();
+
+  layer.SetInput(input_name, input);
+  TypeParam prediction3 = layer.Evaluate(output_name);
+
+  layer2.SetInput(input_name, input);
+  TypeParam prediction4 = layer2.Evaluate(output_name);
+
+  EXPECT_FALSE(prediction.AllClose(prediction3, fetch::math::function_tolerance<DataType>(),
+                                   fetch::math::function_tolerance<DataType>()));
+
+  EXPECT_TRUE(prediction3.AllClose(prediction4, fetch::math::function_tolerance<DataType>(),
+                                   fetch::math::function_tolerance<DataType>()));
 }

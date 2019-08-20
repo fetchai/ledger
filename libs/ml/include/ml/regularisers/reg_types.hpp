@@ -17,34 +17,48 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/group_definitions.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
-
-#include <cstdint>
-
 namespace fetch {
+namespace ml {
+
+enum class RegularisationType : uint8_t
+{
+  NONE,
+  L1,
+  L2,
+};
+}
+
 namespace serializers {
 
-template <std::uint16_t I, std::uint16_t F, typename D>
-struct ForwardSerializer<fixed_point::FixedPoint<I, F>, D>
+/**
+ * serializer for OpType
+ * @tparam TensorType
+ */
+template <typename D>
+struct MapSerializer<ml::RegularisationType, D>
 {
-  using Type       = fixed_point::FixedPoint<I, F>;
+  using Type       = ml::RegularisationType;
   using DriverType = D;
 
-  template <typename Interface>
-  static void Serialize(Interface &interface, Type const &n)
+  static uint8_t const REG_TYPE = 1;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &body)
   {
-    interface << n.Data();
+    auto    map      = map_constructor(1);
+    uint8_t reg_type = static_cast<uint8_t>(body);
+    map.Append(REG_TYPE, reg_type);
   }
 
-  template <typename Interface>
-  static void Deserialize(Interface &interface, Type &n)
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &body)
   {
-    typename fixed_point::FixedPoint<I, F>::Type data;
-    interface >> data;
-    n = fixed_point::FixedPoint<I, F>::FromBase(data);
+    uint8_t reg_type = 0;
+    map.ExpectKeyGetValue(REG_TYPE, reg_type);
+    body = static_cast<ml::RegularisationType>(reg_type);
   }
 };
 
 }  // namespace serializers
+
 }  // namespace fetch

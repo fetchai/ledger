@@ -27,20 +27,35 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Transpose : public fetch::ml::Ops<T>
+class Transpose : public fetch::ml::ops::Ops<T>
 {
 public:
-  using ArrayType     = T;
-  using SizeType      = typename ArrayType::SizeType;
-  using ArrayPtrType  = std::shared_ptr<ArrayType>;
+  using TensorType    = T;
+  using SizeType      = typename TensorType::SizeType;
+  using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SPType        = OpTransposeSaveableParams<T>;
 
   explicit Transpose(std::vector<SizeType> transpose_vector = {1, 0, 2})
     : transpose_vector_(transpose_vector)
   {}
+
+  explicit Transpose(SPType const &sp)
+    : Ops<T>(sp)
+  {
+    transpose_vector_ = sp.transpose_vector;
+  }
+
   ~Transpose() override = default;
 
-  void Forward(VecTensorType const &inputs, ArrayType &output) override
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
+  {
+    SPType sp{};
+    sp.transpose_vector = transpose_vector_;
+    return std::make_shared<SPType>(sp);
+  }
+
+  void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(inputs.size() == 1);
     assert(output.shape() == this->ComputeOutputShape(inputs));
@@ -55,8 +70,8 @@ public:
     }
   }
 
-  std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                  ArrayType const &    error_signal) override
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     FETCH_UNUSED(inputs);
     assert(inputs.size() == 1);
@@ -95,7 +110,12 @@ public:
     }
   }
 
-  std::vector<SizeType>        transpose_vector_;
+  std::vector<SizeType> transpose_vector_;
+
+  static constexpr OpType OpCode()
+  {
+    return OpType::OP_TRANSPOSE;
+  }
   static constexpr char const *DESCRIPTOR = "Transpose";
 };
 

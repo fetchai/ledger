@@ -16,11 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/main_serializer_definition.hpp"
 #include "math/tensor.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
+#include "ml/serializers/ml_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
+
+#include <memory>
 
 template <typename T>
 class CrossEntropyTest : public ::testing::Test
@@ -279,4 +283,174 @@ TYPED_TEST(CrossEntropyTest, non_one_hot_dimensional_backward_test)
                           error_signal)
                   .at(0)
                   .AllClose(gt, typename TypeParam::Type(1e-5), typename TypeParam::Type(1e-5)));
+}
+
+TYPED_TEST(CrossEntropyTest, saveparams_test)
+{
+  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
+  using SPType     = typename fetch::ml::ops::CrossEntropyLoss<TensorType>::SPType;
+  using OpType     = fetch::ml::ops::CrossEntropyLoss<TensorType>;
+
+  std::uint64_t n_classes     = 4;
+  std::uint64_t n_data_points = 8;
+
+  TypeParam data1(std::vector<std::uint64_t>{n_classes, n_data_points});
+  TypeParam data2(std::vector<std::uint64_t>{n_classes, n_data_points});
+
+  // set gt data
+  std::vector<std::uint64_t> gt_data = {1, 2, 3, 0, 3, 1, 0, 2};
+  for (std::uint64_t i = 0; i < n_data_points; ++i)
+  {
+    for (std::uint64_t j = 0; j < n_classes; ++j)
+    {
+      if (gt_data[i] == j)
+      {
+        data2.Set(j, i, DataType(1));
+      }
+      else
+      {
+        data2.Set(j, i, DataType(0));
+      }
+    }
+  }
+
+  // set softmax probabilities
+  std::vector<double> logits{0.1, 0.8, 0.05, 0.05, 0.2, 0.5, 0.2, 0.1, 0.05, 0.05, 0.8,
+                             0.1, 0.5, 0.1,  0.1,  0.3, 0.2, 0.3, 0.1, 0.4,  0.1,  0.7,
+                             0.1, 0.1, 0.7,  0.1,  0.1, 0.1, 0.1, 0.1, 0.5,  0.3};
+
+  std::uint64_t counter{0};
+  for (std::uint64_t i{0}; i < n_data_points; ++i)
+  {
+    for (std::uint64_t j{0}; j < n_classes; ++j)
+    {
+      data1.Set(j, i, DataType(logits[counter]));
+      ++counter;
+    }
+  }
+
+  OpType    op;
+  TypeParam result({1, 1});
+  op.Forward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, result);
+
+  // extract saveparams
+  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
+
+  // downcast to correct type
+  auto dsp = std::static_pointer_cast<SPType>(sp);
+
+  // serialize
+  fetch::serializers::MsgPackSerializer b;
+  b << *dsp;
+
+  // make another prediction with the original graph
+  op.Forward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, result);
+
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<SPType>();
+  b >> *dsp2;
+
+  // rebuild node
+  OpType new_op(*dsp2);
+
+  // check that new predictions match the old
+  TypeParam new_result({1, 1});
+  op.Forward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, new_result);
+
+  // test correct values
+  EXPECT_NEAR(static_cast<double>(result(0, 0)), static_cast<double>(new_result(0, 0)),
+              static_cast<double>(0));
+}
+
+TYPED_TEST(CrossEntropyTest, saveparams_one_dimensional_backward_test)
+{
+  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
+  using SPType     = typename fetch::ml::ops::CrossEntropyLoss<TensorType>::SPType;
+  using OpType     = fetch::ml::ops::CrossEntropyLoss<TensorType>;
+
+  std::uint64_t n_classes     = 4;
+  std::uint64_t n_data_points = 8;
+
+  TypeParam data1(std::vector<std::uint64_t>{n_classes, n_data_points});
+  TypeParam data2(std::vector<std::uint64_t>{n_classes, n_data_points});
+  TypeParam gt(std::vector<std::uint64_t>{n_classes, n_data_points});
+
+  // set gt data
+  std::vector<double> gt_data{-0., -0.244132, -0., -0.,       -0., -0.315196, -0.,       -0., -0.,
+                              -0., -0.244132, -0., -0.315937, -0., -0.,       -0.,       -0., -0.,
+                              -0., -0.346439, -0., -0.264643, -0., -0.,       -0.264643, -0., -0.,
+                              -0., -0.,       -0., -0.315937, -0.};
+
+  std::uint64_t counter{0};
+  for (std::uint64_t i = 0; i < n_data_points; ++i)
+  {
+    for (std::uint64_t j = 0; j < n_classes; ++j)
+    {
+      gt.Set(j, i, typename TypeParam::Type(gt_data[counter]));
+      ++counter;
+    }
+  }
+
+  std::vector<double> unscaled_vals{0.1, 0.8, 0.05, 0.05, 0.2, 0.5, 0.2, 0.1, 0.05, 0.05, 0.8,
+                                    0.1, 0.5, 0.1,  0.1,  0.3, 0.2, 0.3, 0.1, 0.4,  0.1,  0.7,
+                                    0.1, 0.1, 0.7,  0.1,  0.1, 0.1, 0.1, 0.1, 0.5,  0.3};
+  std::vector<double> target{0.0, 0.1, 0.00, 0.00, 0.0, 0.1, 0.0, 0.0, 0.0, 0.0, 0.1,
+                             0.0, 0.1, 0.0,  0.0,  0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.1,
+                             0.0, 0.0, 0.1,  0.0,  0.0, 0.0, 0.0, 0.0, 0.1, 0.0};
+
+  counter = 0;
+  for (std::uint64_t i = 0; i < n_data_points; ++i)
+  {
+    for (std::uint64_t j = 0; j < n_classes; ++j)
+    {
+      data1.Set(j, i, typename TypeParam::Type(unscaled_vals[counter]));
+      data2.Set(j, i, typename TypeParam::Type(target[counter]));
+      ++counter;
+    }
+  }
+
+  TypeParam error_signal({1, 1});
+  error_signal(0, 0) = DataType{1};
+
+  fetch::ml::ops::CrossEntropyLoss<TypeParam> op;
+
+  // run op once to make sure caches etc. have been filled. Otherwise the test might be trivial!
+  std::vector<TypeParam> gradients = op.Backward(
+      {std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, error_signal);
+
+  // extract saveparams
+  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
+
+  // downcast to correct type
+  auto dsp = std::static_pointer_cast<SPType>(sp);
+
+  // serialize
+  fetch::serializers::MsgPackSerializer b;
+  b << *dsp;
+
+  // make another prediction with the original op
+  gradients = op.Backward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)},
+                          error_signal);
+
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<SPType>();
+  b >> *dsp2;
+
+  // rebuild node
+  OpType new_op(*dsp2);
+
+  // check that new predictions match the old
+  std::vector<TypeParam> new_gradients = new_op.Backward(
+      {std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, error_signal);
+
+  // test correct values
+  EXPECT_TRUE(
+      gradients.at(0).AllClose(new_gradients.at(0),
+                               fetch::math::function_tolerance<typename TypeParam::Type>() * 4,
+                               fetch::math::function_tolerance<typename TypeParam::Type>()) *
+      4);
 }

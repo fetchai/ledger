@@ -19,7 +19,7 @@
 
 #include "math/standard_functions/pow.hpp"
 #include "math/standard_functions/sqrt.hpp"
-#include "ml/graph.hpp"
+#include "ml/core/graph.hpp"
 #include "ml/optimisation/optimiser.hpp"
 
 #include <memory>
@@ -32,16 +32,16 @@ namespace optimisers {
 
 /**
  * Adaptive Momentum optimiser
- * @tparam T ArrayType
+ * @tparam T TensorType
  * @tparam C CriterionType
  */
 template <class T>
 class AdamOptimiser : public Optimiser<T>
 {
 public:
-  using ArrayType = T;
-  using DataType  = typename ArrayType::Type;
-  using SizeType  = typename ArrayType::SizeType;
+  using TensorType = T;
+  using DataType   = typename TensorType::Type;
+  using SizeType   = typename TensorType::SizeType;
 
   AdamOptimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> const &input_node_names,
                 std::string const &label_node_name, std::string const &output_node_name,
@@ -60,10 +60,10 @@ public:
   ~AdamOptimiser() override = default;
 
 private:
-  std::vector<ArrayType> cache_;
-  std::vector<ArrayType> momentum_;
-  std::vector<ArrayType> mt_;
-  std::vector<ArrayType> vt_;
+  std::vector<TensorType> cache_;
+  std::vector<TensorType> momentum_;
+  std::vector<TensorType> mt_;
+  std::vector<TensorType> vt_;
 
   DataType beta1_;
   DataType beta2_;
@@ -82,10 +82,10 @@ void AdamOptimiser<T>::Init()
 {
   for (auto &train : this->graph_trainables_)
   {
-    this->cache_.emplace_back(ArrayType(train->get_weights().shape()));
-    this->momentum_.emplace_back(ArrayType(train->get_weights().shape()));
-    this->mt_.emplace_back(ArrayType(train->get_weights().shape()));
-    this->vt_.emplace_back(ArrayType(train->get_weights().shape()));
+    this->cache_.emplace_back(TensorType(train->get_weights().shape()));
+    this->momentum_.emplace_back(TensorType(train->get_weights().shape()));
+    this->mt_.emplace_back(TensorType(train->get_weights().shape()));
+    this->vt_.emplace_back(TensorType(train->get_weights().shape()));
   }
   ResetCache();
 }

@@ -26,6 +26,9 @@
 #include "telemetry/histogram.hpp"
 #include "telemetry/registry.hpp"
 
+#include <chrono>
+#include <cstdint>
+
 namespace fetch {
 namespace muddle {
 namespace {
@@ -285,6 +288,12 @@ void Dispatcher::FailAllPendingPromises()
     promise_it->second.promise->Fail();
     promise_it = promises_.erase(promise_it);
   }
+}
+
+uint16_t Dispatcher::GetNextCounter()
+{
+  FETCH_LOCK(counter_lock_);
+  return counter_++;
 }
 
 }  // namespace muddle

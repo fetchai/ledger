@@ -66,6 +66,21 @@ void ProofOfWork::SetHeader(byte_array::ByteArray header)
   assert(header_ == header);
 }
 
+byte_array::ConstByteArray const &ProofOfWork::header() const
+{
+  return header_;
+}
+
+vectorise::UInt<256> const &ProofOfWork::digest() const
+{
+  return digest_;
+}
+
+vectorise::UInt<256> const &ProofOfWork::target() const
+{
+  return target_;
+}
+
 }  // namespace consensus
 }  // namespace ledger
 }  // namespace fetch
