@@ -999,14 +999,29 @@ void Tensor<T, C>::Assign(TensorSlice const &other)
 template <typename T, typename C>
 void Tensor<T, C>::Assign(Tensor const &other)
 {
-  auto it1 = begin();
-  auto it2 = other.begin();
-  assert(it1.size() == it2.size());
-  while (it1.is_valid())
+  if (this->size() == other.size())
   {
-    *it1 = *it2;
-    ++it1;
-    ++it2;
+    auto it1 = begin();
+    auto it2 = other.begin();
+
+    while (it1.is_valid())
+    {
+      *it1 = *it2;
+      ++it1;
+      ++it2;
+    }
+  }
+  else
+  {
+    if (!(Broadcast(
+            [](const T &x, const T &y, T &z) {
+              FETCH_UNUSED(x);
+              z = y;
+            },
+            *this, other, *this)))
+    {
+      throw std::runtime_error("arrays not broadcastable for assignment!");
+    }
   }
 }
 
