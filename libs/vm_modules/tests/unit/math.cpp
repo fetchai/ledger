@@ -230,7 +230,6 @@ TEST_F(MathTests, tensor_set_and_at_two_test)
       y.setAt(1u64,0u64,x.at(1u64,0u64));
       y.setAt(1u64,1u64,x.at(1u64,1u64));
 
-
      return y;
     endfunction
   )";
