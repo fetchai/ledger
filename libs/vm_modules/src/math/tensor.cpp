@@ -61,11 +61,15 @@ void VMTensor::Bind(Module &module)
   module.CreateClassType<VMTensor>("Tensor")
       .CreateConstructor(&VMTensor::Constructor)
       .CreateSerializeDefaultConstructor(
-          [](VM *vm, TypeId type_id) { return new VMTensor(vm, type_id); })
+          [](VM *vm, TypeId type_id) -> Ptr<VMTensor> { return new VMTensor(vm, type_id); })
       .CreateMemberFunction("at", &VMTensor::AtOne)
       .CreateMemberFunction("at", &VMTensor::AtTwo)
       .CreateMemberFunction("at", &VMTensor::AtThree)
-      .CreateMemberFunction("setAt", &VMTensor::SetAt)
+      .CreateMemberFunction("at", &VMTensor::AtFour)
+      .CreateMemberFunction("setAt", &VMTensor::SetAtOne)
+      .CreateMemberFunction("setAt", &VMTensor::SetAtTwo)
+      .CreateMemberFunction("setAt", &VMTensor::SetAtThree)
+      .CreateMemberFunction("setAt", &VMTensor::SetAtFour)
       .CreateMemberFunction("fill", &VMTensor::Fill)
       .CreateMemberFunction("fillRandom", &VMTensor::FillRandom)
       .CreateMemberFunction("reshape", &VMTensor::Reshape)
@@ -102,9 +106,29 @@ DataType VMTensor::AtThree(uint64_t idx1, uint64_t idx2, uint64_t idx3) const
   return tensor_.At(idx1, idx2, idx3);
 }
 
-void VMTensor::SetAt(uint64_t index, DataType value)
+DataType VMTensor::AtFour(uint64_t idx1, uint64_t idx2, uint64_t idx3, uint64_t idx4) const
 {
-  tensor_.At(index) = value;
+  return tensor_.At(idx1, idx2, idx3, idx4);
+}
+
+void VMTensor::SetAtOne(uint64_t idx1, DataType value)
+{
+  tensor_.At(idx1) = value;
+}
+
+void VMTensor::SetAtTwo(uint64_t idx1, uint64_t idx2, DataType value)
+{
+  tensor_.At(idx1, idx2) = value;
+}
+
+void VMTensor::SetAtThree(uint64_t idx1, uint64_t idx2, uint64_t idx3, DataType value)
+{
+  tensor_.At(idx1, idx2, idx3) = value;
+}
+
+void VMTensor::SetAtFour(uint64_t idx1, uint64_t idx2, uint64_t idx3, uint64_t idx4, DataType value)
+{
+  tensor_.At(idx1, idx2, idx3, idx4) = value;
 }
 
 void VMTensor::Copy(ArrayType const &other)
