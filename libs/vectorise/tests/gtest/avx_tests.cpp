@@ -183,18 +183,27 @@ TYPED_TEST(VectorReduceTest, reduce_tests)
   using array_type  = fetch::memory::SharedArray<type>;
   using vector_type = typename array_type::VectorRegisterType;
 
-  std::size_t N = 16;
+  std::size_t N = 60;
   alignas(TypeParam::E_REGISTER_SIZE) array_type A(N), B(N);
 
   for (std::size_t i = 0; i < N; ++i)
   {
-    A[i] = type(i);
-    B[i] = type(i);
+    A[i] = type((i+1)*4);
+    B[i] = type((i+1)*(i+1));
     std::cout << "A[" << i << "] = " << A[i] << std::endl;
     std::cout << "B[" << i << "] = " << B[i] << std::endl;
   }
 
   type ret;
+  ret = A.in_parallel().Reduce(
+        [](auto const &a, auto const &b) {
+          return fetch::vectorise::Max(a, b);
+        }, 
+        [](vector_type const &a) {
+          return fetch::vectorise::Max(a);
+        });
+  std::cout << "Reduce: Max = " << ret << std::endl;
+
   fetch::memory::Range range(2, A.size() -2);
   ret = A.in_parallel().Reduce(range,
         [](auto const &a, auto const &b) {
@@ -203,7 +212,25 @@ TYPED_TEST(VectorReduceTest, reduce_tests)
         [](vector_type const &a) {
           return fetch::vectorise::Max(a);
         });
-  std::cout << "Reduce: ret = " << ret << std::endl;
+  std::cout << "Reduce (range: 2, N-2): Max = " << ret << std::endl;
+
+  ret = A.in_parallel().Reduce(
+        [](auto const &a, auto const &b) {
+          return fetch::vectorise::Min(a, b);
+        }, 
+        [](vector_type const &a) {
+          return fetch::vectorise::Min(a);
+        }, type(N*N));
+  std::cout << "Reduce: Min = " << ret << std::endl;
+
+  ret = A.in_parallel().Reduce(range,
+        [](auto const &a, auto const &b) {
+          return fetch::vectorise::Min(a, b);
+        }, 
+        [](vector_type const &a) {
+          return fetch::vectorise::Min(a);
+        }, type(N*N));
+  std::cout << "Reduce (range: 2, N-2): Min = " << ret << std::endl;
 
   // ret = A.in_parallel().SumReduce([](auto const &a, auto const &b) {
   //         return a + b;

@@ -20,6 +20,5 @@
 #include "vectorise/arch/avx2/math/abs.hpp"
 #include "vectorise/arch/avx2/math/approx_exp.hpp"
 #include "vectorise/arch/avx2/math/approx_log.hpp"
-#include "vectorise/arch/avx2/math/min.hpp"
 #include "vectorise/arch/avx2/math/pow.hpp"
 #include "vectorise/arch/avx2/math/sqrt.hpp"

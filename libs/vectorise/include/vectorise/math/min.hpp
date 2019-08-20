@@ -19,7 +19,7 @@
 
 #include "vectorise/vectorise.hpp"
 #ifdef __AVX2__
-#include "vectorise/arch/avx2/math/max.hpp"
+#include "vectorise/arch/avx2/math/min.hpp"
 #endif
 
 #include <cstddef>
@@ -29,40 +29,39 @@ namespace fetch {
 namespace vectorise {
 
 template <typename T>
-inline fetch::math::meta::IfIsNonFixedPointArithmetic<T, T> Max(T const &a, T const &b)
+inline fetch::math::meta::IfIsNonFixedPointArithmetic<T, T> Min(T const &a, T const &b)
 {
-  return T(std::max(a, b));
+  return T(std::min(a, b));
 }
 
 template <typename T>
-inline fetch::math::meta::IfIsFixedPoint<T, T> Max(T const &a, T const &b)
+inline fetch::math::meta::IfIsFixedPoint<T, T> Min(T const &a, T const &b)
 {
-  return T::FromBase(std::max(a.Data(), b.Data()));
+  return T::FromBase(std::min(a.Data(), b.Data()));
 }
 
 template <typename T>
-inline VectorRegister<T, 8 * sizeof(T)> Max(VectorRegister<T, 8 * sizeof(T)> const &a,
+inline VectorRegister<T, 8 * sizeof(T)> Min(VectorRegister<T, 8 * sizeof(T)> const &a,
                                 VectorRegister<T, 8 * sizeof(T)> const &b)
 {
-  return VectorRegister<T, 8 * sizeof(T)>(fetch::vectorise::Max(a.data(), b.data()));
+  return VectorRegister<T, 8 * sizeof(T)>(fetch::vectorise::Min(a.data(), b.data()));
 }
 
 template <typename T, std::size_t N>
-inline T Max(VectorRegister<T, N> const &a)
+inline T Min(VectorRegister<T, N> const &a)
 {
-  
   constexpr std::size_t size = N/(8 * sizeof(T));
   alignas(VectorRegister<T, N>::E_REGISTER_SIZE) T A[size];
   a.Store(A);
   std::cout << "a = " << a << std::endl;
   std::cout << "N = " << N << std::endl;
-  T max{A[0]};
+  T min{A[0]};
   for (std::size_t i=1; i < size; i++) {
     std::cout << "A[" << i << "] = " << A[i] << std::endl;
-    max = Max(A[i], max);
-    std::cout << "max = " << max << std::endl;
+    min = Min(A[i], min);
+    std::cout << "min = " << min << std::endl;
   }
-  return max;
+  return min;
 }
 
 }  // namespace vectorise

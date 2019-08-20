@@ -22,6 +22,7 @@
 #include "vectorise/arch/avx2/math/standard_functions.hpp"
 #endif
 #include "vectorise/math/max.hpp"
+#include "vectorise/math/min.hpp"
 
 
 #include <cstddef>

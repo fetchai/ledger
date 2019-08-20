@@ -98,31 +98,16 @@ public:
                           VectorRegisterIteratorType * /*iters*/)
   {}
 
-  template <class F1, class F2>
-  type Reduce(F1 const &&kernel, F2 const &&hkernel)
-  {
-    VectorRegisterType         a, b(type(0));
-    VectorRegisterIteratorType iter(this->pointer(), this->size());
-
-    std::size_t N = this->size();
-
-    for (std::size_t i = 0; i < N; i += VectorRegisterType::E_BLOCK_COUNT)
-    {
-      iter.Next(a);
-      b = kernel(a, b);
-    }
-
-    return hkernel(b);
-  }
-
   template <class OP, class F1, class F2>
-  type GenericRangedReduce(Range const &range, type const c, OP &&op, F1 const &&kernel, F2 const &&hkernel)
+  inline type GenericRangedReduce(Range const &range, type const c, OP &&op, F1 const &&kernel, F2 const &&hkernel)
   {
     int SFL      = int(range.SIMDFromLower<VectorRegisterType::E_BLOCK_COUNT>());
     int SF       = int(range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>());
     int ST       = int(range.SIMDToLower<VectorRegisterType::E_BLOCK_COUNT>());
     int STU      = int(range.SIMDToUpper<VectorRegisterType::E_BLOCK_COUNT>());
     int SIMDSize = STU - SFL;
+
+    std::cout << "range: (" << range.from() << ", " << range.to() << std::endl;
 
     type ret = 0;
     std::cout << "Vector iterator:" << std::endl;
@@ -197,7 +182,7 @@ public:
   }
 
   template <class F1, class F2, class OP, typename... Args>
-  type GenericRangedReduceMultiple(Range const &range, type const c, OP const &&op, F1 &&kernel, F2 &&hkernel, Args &&... args)
+  inline type GenericRangedReduceMultiple(Range const &range, type const c, OP const &&op, F1 &&kernel, F2 &&hkernel, Args &&... args)
   {
     int SFL      = int(range.SIMDFromLower<VectorRegisterType::E_BLOCK_COUNT>());
     int SF       = int(range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>());
@@ -290,17 +275,20 @@ public:
   }
 
   template <class F1, class F2>
-  type Reduce(Range const &range, F1 const &&kernel, F2 const &&hkernel)
+  inline type Reduce(Range const &range, F1 &&kernel, F2 &&hkernel, type const initial_value = type(0))
   {
     int SFL = int(range.SIMDFromLower<VectorRegisterType::E_BLOCK_COUNT>());
     int SF = int(range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>());
     int ST = int(range.SIMDToLower<VectorRegisterType::E_BLOCK_COUNT>());
     int STU      = int(range.SIMDToUpper<VectorRegisterType::E_BLOCK_COUNT>());
-    int SIMDSize = STU - SFL;
 
-    VectorRegisterType         va, vb(type(0));
-    VectorRegisterIteratorType iter(this->pointer() + SFL, std::size_t(SIMDSize));
-    ScalarRegisterType b;
+    std::cout << "range: (" << std::dec << range.from() << ", " << range.to() << ")" << std::endl;
+
+    VectorRegisterType         va, vb(initial_value);
+    VectorRegisterIteratorType iter(this->pointer() + SFL, range.to());
+    ScalarRegisterType b(initial_value);
+
+    std::cout << "initial vb = " << vb << std::endl;
 
     if (SFL != SF)
     {
@@ -346,10 +334,13 @@ public:
       std::cout << "ST: " << ST << std::endl;
 
       std::cout << "Scalar iterator:" << std::endl;
-      ScalarRegisterIteratorType scalar_iter(iter, std::size_t(SF)/sizeof(type));
-      ScalarRegisterType a, b;
+      ScalarRegisterIteratorType scalar_iter(iter, 0);
+      ScalarRegisterType a;
 
-      while (static_cast<void*>(scalar_iter.pointer()) < static_cast<void*>(iter.end()))
+      std::cout << "ptr: " << scalar_iter.pointer() << std::endl;
+      std::cout << "end: " << scalar_iter.end() << std::endl;
+
+      while (static_cast<void*>(scalar_iter.pointer()) < static_cast<void*>(scalar_iter.end()))
       {
         scalar_iter.Next(a);
         std::cout << "self = " << a << std::endl;
@@ -359,11 +350,19 @@ public:
       }
     }
 
+    std::cout << "final b = " << b << std::endl;
     return b.data();
   }
 
+  template <class F1, class F2>
+  type Reduce(F1 &&kernel, F2 &&hkernel, type const initial_value = type(0))
+  {
+    Range range(0, this->size());
+    return Reduce(range, kernel, hkernel, initial_value);
+  }
+
   template <class F1, class F2, class OP, typename... Args>
-  type GenericReduce(type const c, OP &&op, F1 const &&kernel, F2 const &&hkernel, Args &&... args)
+  inline type GenericReduce(type const c, OP &&op, F1 const &&kernel, F2 const &&hkernel, Args &&... args)
   {
     VectorRegisterType         regs[sizeof...(args)];
     VectorRegisterIteratorType iters[sizeof...(args)];
