@@ -116,7 +116,7 @@ public:
   }
 
   template <class OP, class F1, class F2>
-  type GenericReduce(Range const &range, type const c, OP &&op, F1 const &&kernel, F2 const &&hkernel)
+  type GenericRangedReduce(Range const &range, type const c, OP &&op, F1 const &&kernel, F2 const &&hkernel)
   {
     int SFL      = int(range.SIMDFromLower<VectorRegisterType::E_BLOCK_COUNT>());
     int SF       = int(range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>());
@@ -187,17 +187,17 @@ public:
   template <class F1, class F2>
   type SumReduce(Range const &range, F1 const &&kernel, F2 const &&hkernel)
   {
-    return GenericReduce(range, type(0), std::plus<VectorRegisterType>{}, kernel, hkernel);
+    return GenericRangedReduce(range, type(0), std::plus<VectorRegisterType>{}, kernel, hkernel);
   }
 
   template <class F1, class F2>
   type ProductReduce(Range const &range, F1 const &&kernel, F2 const &&hkernel)
   {
-    return GenericReduce(range, type(1), std::multiplies<VectorRegisterType>{}, kernel, hkernel);
+    return GenericRangedReduce(range, type(1), std::multiplies<VectorRegisterType>{}, kernel, hkernel);
   }
 
   template <class F1, class F2, class OP, typename... Args>
-  type GenericReduce(Range const &range, type const c, OP const &&op, F1 const &&kernel, F2 const &&hkernel, Args &&... args)
+  type GenericRangedReduceMultiple(Range const &range, type const c, OP const &&op, F1 &&kernel, F2 &&hkernel, Args &&... args)
   {
     int SFL      = int(range.SIMDFromLower<VectorRegisterType::E_BLOCK_COUNT>());
     int SF       = int(range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>());
@@ -284,9 +284,9 @@ public:
   }
 
   template <class F1, class F2, typename... Args>
-  type SumReduce(Range const &range, F1 const &&kernel, F2 const &&hkernel, Args &&... args)
+  type SumReduce(Range const &range, F1 &&kernel, F2 &&hkernel, Args &&... args)
   {
-    return GenericReduce(range, type(0), std::plus<VectorRegisterType>{}, kernel, hkernel, std::forward<Args>(args)...);
+    return GenericRangedReduceMultiple(range, type(0), std::plus<VectorRegisterType>{}, kernel, hkernel, std::forward<Args>(args)...);
   }
 
   template <class F1, class F2>
@@ -363,8 +363,7 @@ public:
   }
 
   template <class F1, class F2, class OP, typename... Args>
-  fetch::meta::EnableIfNotSame<F1, Range, type>
-  GenericReduce(type const c, OP &&op, F1 const &&kernel, F2 const &&hkernel, Args &&... args)
+  type GenericReduce(type const c, OP &&op, F1 const &&kernel, F2 const &&hkernel, Args &&... args)
   {
     VectorRegisterType         regs[sizeof...(args)];
     VectorRegisterIteratorType iters[sizeof...(args)];
@@ -392,15 +391,13 @@ public:
   }
 
   template <class F1, class F2, typename... Args>
-  fetch::meta::EnableIfNotSame<F1, Range, type>
-  SumReduce(F1 const &&kernel, F2 const &&hkernel, Args &&... args)
+  type SumReduce(F1 const &&kernel, F2 const &&hkernel, Args &&... args)
   {
     return GenericReduce(type(0), std::plus<VectorRegisterType>{}, kernel, hkernel, std::forward<Args>(args)...);
   }
 
   template <class F1, class F2, typename... Args>
-  fetch::meta::EnableIfNotSame<F1, Range, type>
-  ProductReduce(F1 const &&kernel, F2 const &&hkernel, Args &&... args)
+  type ProductReduce(F1 const &&kernel, F2 const &&hkernel, Args &&... args)
   {
     return GenericReduce(type(1), std::multiplies<VectorRegisterType>{}, kernel, hkernel, std::forward<Args>(args)...);
   }
