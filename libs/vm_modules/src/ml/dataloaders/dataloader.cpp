@@ -63,7 +63,7 @@ void VMDataLoader::Bind(Module &module)
   module.CreateClassType<VMDataLoader>("DataLoader")
       .CreateConstructor(&VMDataLoader::Constructor)
       .CreateSerializeDefaultConstructor(
-          [](VM *vm, TypeId type_id) { return new VMDataLoader(vm, type_id); })
+          [](VM *vm, TypeId type_id) -> Ptr<VMDataLoader> { return new VMDataLoader(vm, type_id); })
       .CreateMemberFunction("addData", &VMDataLoader::AddDataByFiles)
       .CreateMemberFunction("addData", &VMDataLoader::AddDataByData)
       .CreateMemberFunction("getNext", &VMDataLoader::GetNext)
@@ -139,7 +139,7 @@ bool VMDataLoader::IsDone()
   return loader_->IsDone();
 }
 
-VMDataLoader::DataLoaderType &VMDataLoader::GetDataLoader()
+VMDataLoader::DataLoaderPtrType &VMDataLoader::GetDataLoader()
 {
   return loader_;
 }

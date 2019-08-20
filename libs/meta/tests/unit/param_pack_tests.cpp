@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "meta/param_pack.hpp"
+#include "same.hpp"
 
 #include "gmock/gmock.h"
 
@@ -25,12 +26,12 @@
 #include <tuple>
 #include <type_traits>
 
-using namespace ::testing;
-
 namespace fetch {
 namespace meta {
 
 namespace {
+
+using namespace ::testing;
 
 template <typename... Args>
 struct From
@@ -46,23 +47,35 @@ class ParamPackTests : public Test
 {
 };
 
-TEST_F(ParamPackTests, ConveyTypeParameterPack_test)
+TEST_F(ParamPackTests, ConveyTypeParameterPack_count)
 {
   using Empty = ConveyTypeParameterPack<From, From<>, To>;
   static_assert(Empty::count == 0, "");
 
   using NonEmpty = ConveyTypeParameterPack<From, From<int, std::string>, To>;
   static_assert(NonEmpty::count == 2, "");
+}
 
-  using IntermediateType1 = ConveyTypeParameterPack<From, From<int, std::string>, To>;
-  using TupleType1        = ConveyTypeParameterPack<To, IntermediateType1, std::tuple>;
-  static_assert(std::is_same<TupleType1, std::tuple<int, std::string>>::value, "");
+TEST_F(ParamPackTests, ConveyTypeParameterPack_test_unqualified_types)
+{
+  using SourceType        = From<int, std::string>;
+  using ExpectedFinalType = std::tuple<int, std::string>;
 
-  using IntermediateType2 =
-      ConveyTypeParameterPack<From, From<int &&, char *, std::string const &>, To>;
-  using TupleType2 = ConveyTypeParameterPack<To, IntermediateType2, std::tuple>;
-  static_assert(std::is_same<TupleType2, std::tuple<int &&, char *, std::string const &>>::value,
-                "");
+  using IntermediateType = ConveyTypeParameterPack<From, SourceType, To>;
+  using ActualFinalType  = ConveyTypeParameterPack<To, IntermediateType, std::tuple>;
+
+  static_assert(Same<ActualFinalType, ExpectedFinalType>, "");
+}
+
+TEST_F(ParamPackTests, ConveyTypeParameterPack_test_qualified_types)
+{
+  using SourceType        = From<int &&, char *, std::string const &>;
+  using ExpectedFinalType = std::tuple<int &&, char *, std::string const &>;
+
+  using IntermediateType = ConveyTypeParameterPack<From, SourceType, To>;
+  using ActualFinalType  = ConveyTypeParameterPack<To, IntermediateType, std::tuple>;
+
+  static_assert(Same<ActualFinalType, ExpectedFinalType>, "");
 }
 
 }  // namespace
