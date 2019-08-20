@@ -132,7 +132,7 @@ private:
 namespace serializers {
 
 /**
- * serializer for tensor dataloader
+ * serializer for VMOptimiser
  * @tparam TensorType
  */
 template <typename D>
