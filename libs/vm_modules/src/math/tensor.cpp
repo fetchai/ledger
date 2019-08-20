@@ -65,7 +65,11 @@ void VMTensor::Bind(Module &module)
       .CreateMemberFunction("at", &VMTensor::AtOne)
       .CreateMemberFunction("at", &VMTensor::AtTwo)
       .CreateMemberFunction("at", &VMTensor::AtThree)
-      .CreateMemberFunction("setAt", &VMTensor::SetAt)
+          .CreateMemberFunction("at", &VMTensor::AtFour)
+      .CreateMemberFunction("setAt", &VMTensor::SetAtOne)
+          .CreateMemberFunction("setAt", &VMTensor::SetAtTwo)
+          .CreateMemberFunction("setAt", &VMTensor::SetAtThree)
+          .CreateMemberFunction("setAt", &VMTensor::SetAtFour)
       .CreateMemberFunction("fill", &VMTensor::Fill)
       .CreateMemberFunction("fillRandom", &VMTensor::FillRandom)
       .CreateMemberFunction("reshape", &VMTensor::Reshape)
@@ -102,12 +106,32 @@ DataType VMTensor::AtThree(uint64_t idx1, uint64_t idx2, uint64_t idx3) const
   return tensor_.At(idx1, idx2, idx3);
 }
 
-void VMTensor::SetAt(uint64_t index, DataType value)
+        DataType VMTensor::AtFour(uint64_t idx1, uint64_t idx2, uint64_t idx3, uint64_t idx4) const
+        {
+          return tensor_.At(idx1, idx2, idx3, idx4);
+        }
+
+void VMTensor::SetAtOne(uint64_t idx1, DataType value)
 {
-  tensor_.At(index) = value;
+  tensor_.At(idx1) = value;
 }
 
-void VMTensor::Copy(ArrayType const &other)
+        void VMTensor::SetAtTwo(uint64_t idx1, uint64_t idx2, DataType value)
+        {
+          tensor_.At(idx1, idx2) = value;
+        }
+
+        void VMTensor::SetAtThree(uint64_t idx1, uint64_t idx2, uint64_t idx3, DataType value)
+        {
+          tensor_.At(idx1, idx2, idx3) = value;
+        }
+
+        void VMTensor::SetAtFour(uint64_t idx1, uint64_t idx2, uint64_t idx3, uint64_t idx4, DataType value)
+        {
+          tensor_.At(idx1, idx2, idx3, idx4) = value;
+        }
+
+        void VMTensor::Copy(ArrayType const &other)
 {
   tensor_.Copy(other);
 }

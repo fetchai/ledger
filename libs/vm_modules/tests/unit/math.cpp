@@ -184,4 +184,51 @@ TEST_F(MathTests, tensor_state_test)
   EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
 }
 
+    TEST_F(MathTests, tensor_set_and_at_one_test)
+    {
+      static char const *tensor_serialiase_src = R"(
+    function main()
+      var tensor_shape = Array<UInt64>(1);
+      tensor_shape[0] = 2u64;
+
+      var x = Tensor(tensor_shape);
+      x.fill(2.0fp64);
+
+      x.setAt(0u64,1.0fp64);
+      x.setAt(1u64,3.0fp64);
+
+      var state = State<Tensor>("tensor");
+      state.set(x);
+    endfunction
+  )";
+
+      std::string const state_name{"tensor"};
+
+      ASSERT_TRUE(toolkit.Compile(tensor_serialiase_src));
+
+      EXPECT_CALL(toolkit.observer(), Write(state_name, _, _));
+      ASSERT_TRUE(toolkit.Run());
+
+      static char const *tensor_deserialiase_src = R"(
+    function main() : Tensor
+      var state = State<Tensor>("tensor");
+      return state.get();
+    endfunction
+  )";
+
+      ASSERT_TRUE(toolkit.Compile(tensor_deserialiase_src));
+
+      Variant res;
+      EXPECT_CALL(toolkit.observer(), Exists(state_name));
+      EXPECT_CALL(toolkit.observer(), Read(state_name, _, _)).Times(Between(1, 2));
+      ASSERT_TRUE(toolkit.Run(&res));
+
+      auto const                    tensor = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+      fetch::math::Tensor<DataType> gt({2});
+      gt.At(0)=1.0;
+      gt.At(1)=3.0;
+
+      EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
+    }
+
 }  // namespace
