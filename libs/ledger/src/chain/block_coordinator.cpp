@@ -35,6 +35,7 @@
 #include "ledger/upow/synergetic_execution_manager.hpp"
 #include "ledger/upow/synergetic_executor.hpp"
 #include "telemetry/counter.hpp"
+#include "telemetry/gauge.hpp"
 #include "telemetry/histogram.hpp"
 #include "telemetry/registry.hpp"
 
@@ -178,6 +179,9 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr
   , tx_sync_times_{telemetry::Registry::Instance().CreateHistogram(
         {0.001, 0.01, 0.1, 1, 10, 100}, "ledger_block_coordinator_tx_sync_times",
         "The histogram of the time it takes to sync transactions")}
+  , current_block_num_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        "ledger_latest_block_num",
+        "The lastest block number that has been executed by the block coordinator")}
 {
   // configure the state machine
   // clang-format off
@@ -285,6 +289,9 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
     state_machine_->Delay(std::chrono::milliseconds{500});
     return State::RESET;
   }
+
+  // update the current block telemetry
+  current_block_num_->set(current_block_->body.block_number);
 
   // determine if extra debug is wanted or needed
   bool const extra_debug = syncing_periodic_.Poll();
