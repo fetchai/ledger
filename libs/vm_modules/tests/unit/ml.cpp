@@ -44,11 +44,9 @@ TEST_F(MLTests, trivial_tensor_dataloader_serialisation_test)
 {
   static char const *dataloader_serialise_src = R"(
     function main()
-
       var dataloader = DataLoader("tensor");
       var state = State<DataLoader>("dataloader");
       state.set(dataloader);
-
     endfunction
   )";
 
@@ -67,6 +65,34 @@ TEST_F(MLTests, trivial_tensor_dataloader_serialisation_test)
   ASSERT_TRUE(toolkit.Compile(dataloader_deserialise_src));
   EXPECT_CALL(toolkit.observer(), Exists(state_name));
   EXPECT_CALL(toolkit.observer(), Read(state_name, _, _)).Times(::testing::Between(1, 2));
+  ASSERT_TRUE(toolkit.Run());
+}
+
+TEST_F(MLTests, trivial_persistent_tensor_dataloader_serialisation_test)
+{
+  static char const *dataloader_serialise_src = R"(
+    persistent dataloader_state : DataLoader;
+    function main()
+      use dataloader_state;
+      var dataloader = dataloader_state.get(DataLoader("tensor"));
+      dataloader_state.set(dataloader);
+    endfunction
+  )";
+
+  std::string const state_name{"dataloader_state"};
+  ASSERT_TRUE(toolkit.Compile(dataloader_serialise_src));
+  ASSERT_TRUE(toolkit.Run());
+
+  static char const *dataloader_deserialise_src = R"(
+      persistent dataloader_state : DataLoader;
+      function main()
+        use dataloader_state;
+        var dataloader = dataloader_state.get();
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(dataloader_deserialise_src));
+  EXPECT_CALL(toolkit.observer(), Exists(state_name));
   ASSERT_TRUE(toolkit.Run());
 }
 
