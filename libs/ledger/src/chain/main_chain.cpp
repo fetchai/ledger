@@ -1111,7 +1111,7 @@ bool MainChain::UpdateTips(IntBlockPtr const &block)
  */
 BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose_blocks)
 {
-  assert(block->body.previous_hash.size() > 0);
+  assert(!block->body.previous_hash.empty());
 
   MilliTimer myTimer("MainChain::InsertBlock", 500);
 

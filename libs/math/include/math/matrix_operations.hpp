@@ -48,7 +48,7 @@ namespace details_vectorisation {
  * @return
  */
 template <typename ArrayType>
-inline void Min(ArrayType const &array, typename ArrayType::Type &ret)
+void Min(ArrayType const &array, typename ArrayType::Type &ret)
 {
   using VectorRegisterType = typename ArrayType::VectorRegisterType;
 
@@ -119,24 +119,18 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Switch(ArrayType const &mask, ArrayType const &then_array,
                                             ArrayType const &else_array, ArrayType &ret)
 {
-  assert(mask.size() == then_array.size());
-  assert(mask.size() == else_array.size());
-  assert(ret.size() == mask.size());
+  using DataType = typename ArrayType::Type;
 
-  auto mask_it = mask.cbegin();
-  auto then_it = then_array.cbegin();
-  auto else_it = else_array.cbegin();
-  auto rit     = ret.begin();
+  assert(else_array.size() == then_array.size());
+  assert(ret.size() == then_array.size());
 
-  while (rit.is_valid())
-  {
-    assert((*mask_it == 1) || (*mask_it == 0));
-    *rit = (*mask_it > 0) ? *then_it : *else_it;
-    ++mask_it;
-    ++then_it;
-    ++else_it;
-    ++rit;
-  }
+  ArrayType inverse_mask = mask.Copy();
+  Subtract(static_cast<DataType>(1), mask, inverse_mask);
+
+  ArrayType intermediate = ret.Copy();
+  Multiply(then_array, mask, ret);
+  Multiply(else_array, inverse_mask, intermediate);
+  Add(ret, intermediate, ret);
 }
 
 /**
@@ -1080,7 +1074,10 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> Dot(ArrayType const &A, ArrayT
     throw std::runtime_error("expected A width to equal and B height.");
   }
 
-  ret.Resize({aview.height(), bview.width()});
+  if (ret.shape() != std::vector<SizeType>({aview.height(), bview.width()}))
+  {
+    ret.Resize({aview.height(), bview.width()});
+  }
 
   using Type = typename ArrayType::Type;
   using namespace linalg;
@@ -1127,7 +1124,10 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> DotTranspose(ArrayType const &
     throw std::runtime_error("expected A and B to have same width.");
   }
 
-  ret.Resize({aview.height(), bview.height()});
+  if (ret.shape() != std::vector<SizeType>({aview.height(), bview.width()}))
+  {
+    ret.Resize({aview.height(), bview.height()});
+  }
 
   using Type = typename ArrayType::Type;
   using namespace linalg;
@@ -1175,7 +1175,10 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> TransposeDot(ArrayType const &
     throw std::runtime_error("expected A and B to have same height.");
   }
 
-  ret.Resize({aview.width(), bview.width()});
+  if (ret.shape() != std::vector<SizeType>({aview.height(), bview.width()}))
+  {
+    ret.Resize({aview.width(), bview.width()});
+  }
 
   using Type = typename ArrayType::Type;
   using namespace linalg;

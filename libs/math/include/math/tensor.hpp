@@ -164,10 +164,9 @@ public:
 
   Type operator()(SizeType const &index) const;
   template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, Type>::type &operator[](S const &i);
+  std::enable_if_t<std::is_integral<S>::value, Type> &operator[](S const &i);
   template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, Type>::type const &operator[](
-      S const &i) const;
+  std::enable_if_t<std::is_integral<S>::value, Type> const &operator[](S const &i) const;
 
   Tensor &operator=(ConstSliceType const &slice);
   Tensor &operator=(TensorSlice const &slice);
@@ -1000,14 +999,29 @@ void Tensor<T, C>::Assign(TensorSlice const &other)
 template <typename T, typename C>
 void Tensor<T, C>::Assign(Tensor const &other)
 {
-  auto it1 = begin();
-  auto it2 = other.begin();
-  assert(it1.size() == it2.size());
-  while (it1.is_valid())
+  if (this->size() == other.size())
   {
-    *it1 = *it2;
-    ++it1;
-    ++it2;
+    auto it1 = begin();
+    auto it2 = other.begin();
+
+    while (it1.is_valid())
+    {
+      *it1 = *it2;
+      ++it1;
+      ++it2;
+    }
+  }
+  else
+  {
+    if (!(Broadcast(
+            [](const T &x, const T &y, T &z) {
+              FETCH_UNUSED(x);
+              z = y;
+            },
+            *this, other, *this)))
+    {
+      throw std::runtime_error("arrays not broadcastable for assignment!");
+    }
   }
 }
 
@@ -1115,8 +1129,8 @@ typename Tensor<T, C>::Type Tensor<T, C>::operator()(SizeType const &index) cons
  */
 template <typename T, typename C>
 template <typename S>
-typename std::enable_if<std::is_integral<S>::value, typename Tensor<T, C>::Type>::type
-    &Tensor<T, C>::operator[](S const &n)
+std::enable_if_t<std::is_integral<S>::value, typename Tensor<T, C>::Type> &Tensor<T, C>::operator[](
+    S const &n)
 {
   assert(static_cast<SizeType>(n) < size());
   if (shape_.size() == 1)
@@ -1144,7 +1158,7 @@ typename std::enable_if<std::is_integral<S>::value, typename Tensor<T, C>::Type>
  */
 template <typename T, typename C>
 template <typename S>
-typename std::enable_if<std::is_integral<S>::value, typename Tensor<T, C>::Type>::type const
+std::enable_if_t<std::is_integral<S>::value, typename Tensor<T, C>::Type> const
     &Tensor<T, C>::operator[](S const &i) const
 {
   return data_[i];

@@ -24,6 +24,7 @@
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
 #include "ledger/upow/synergetic_contract.hpp"
 #include "vectorise/uint/uint.hpp"
+#include "vm/array.hpp"
 #include "vm/compiler.hpp"
 #include "vm/vm.hpp"
 #include "vm_modules/core/structured_data.hpp"

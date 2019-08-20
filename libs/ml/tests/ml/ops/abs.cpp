@@ -19,10 +19,13 @@
 #include "math/base_types.hpp"
 #include "math/tensor.hpp"
 #include "ml/ops/abs.hpp"
+
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
 
+#include "core/serializers/main_serializer.hpp"
+#include "ml/serializers/ml_types.hpp"
 #include <vector>
 
 template <typename T>
@@ -38,21 +41,21 @@ TYPED_TEST_CASE(AbsTest, MyTypes);
 
 TYPED_TEST(AbsTest, forward_test)
 {
-  using ArrayType = TypeParam;
-  using DataType  = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
 
-  ArrayType data = ArrayType::FromString(
+  TensorType data = TensorType::FromString(
       "1, -2, 3,-4, 5,-6, 7,-8;"
       "1,  2, 3, 4, 5, 6, 7, 8");
 
-  ArrayType gt = ArrayType::FromString(
+  TensorType gt = TensorType::FromString(
       "1, 2, 3, 4, 5, 6, 7, 8;"
       "1, 2, 3, 4, 5, 6, 7, 8");
 
-  fetch::ml::ops::Abs<ArrayType> op;
+  fetch::ml::ops::Abs<TensorType> op;
 
-  TypeParam prediction(op.ComputeOutputShape({std::make_shared<const ArrayType>(data)}));
-  op.Forward({std::make_shared<const ArrayType>(data)}, prediction);
+  TypeParam prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>(),
@@ -61,25 +64,127 @@ TYPED_TEST(AbsTest, forward_test)
 
 TYPED_TEST(AbsTest, backward_test)
 {
-  using ArrayType = TypeParam;
-  using DataType  = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
 
-  ArrayType data = ArrayType::FromString(
+  TensorType data = TensorType::FromString(
       "1, -2, 3,-4, 5,-6, 7,-8;"
       "1,  2, 3, 4, 5, 6, 7, 8");
 
-  ArrayType gt = ArrayType::FromString(
+  TensorType gt = TensorType::FromString(
       "1, 1, 2, 2, 3, 3, 4, 4;"
       "5, -5, 6, -6, 7, -7, 8, -8");
 
-  ArrayType error = ArrayType::FromString(
+  TensorType error = TensorType::FromString(
       "1, -1, 2, -2, 3, -3, 4, -4;"
       "5, -5, 6, -6, 7, -7, 8, -8");
 
-  fetch::ml::ops::Abs<ArrayType> op;
-  std::vector<ArrayType> prediction = op.Backward({std::make_shared<const ArrayType>(data)}, error);
+  fetch::ml::ops::Abs<TensorType> op;
+  std::vector<TensorType>         prediction =
+      op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt, fetch::math::function_tolerance<DataType>(),
                                      fetch::math::function_tolerance<DataType>()));
+}
+
+TYPED_TEST(AbsTest, saveparams_test)
+{
+  using TensorType    = TypeParam;
+  using DataType      = typename TypeParam::Type;
+  using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
+  using SPType        = typename fetch::ml::ops::Abs<TensorType>::SPType;
+  using OpType        = fetch::ml::ops::Abs<TensorType>;
+
+  TensorType data = TensorType::FromString(
+      "1, -2, 3,-4, 5,-6, 7,-8;"
+      "1,  2, 3, 4, 5, 6, 7, 8");
+
+  TensorType gt = TensorType::FromString(
+      "1, 2, 3, 4, 5, 6, 7, 8;"
+      "1, 2, 3, 4, 5, 6, 7, 8");
+
+  OpType op;
+
+  TensorType    prediction(op.ComputeOutputShape({std::make_shared<TensorType const>(data)}));
+  VecTensorType vec_data({std::make_shared<const TensorType>(data)});
+
+  op.Forward(vec_data, prediction);
+
+  // extract saveparams
+  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
+
+  // downcast to correct type
+  auto dsp = std::static_pointer_cast<SPType>(sp);
+
+  // serialize
+  fetch::serializers::MsgPackSerializer b;
+  b << *dsp;
+
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<SPType>();
+  b >> *dsp2;
+
+  // rebuild node
+  OpType new_op(*dsp2);
+
+  // check that new predictions match the old
+  TensorType new_prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  new_op.Forward(vec_data, new_prediction);
+
+  // test correct values
+  EXPECT_TRUE(
+      new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
+}
+
+TYPED_TEST(AbsTest, saveparams_backward_test)
+{
+  using TensorType = TypeParam;
+  using OpType     = fetch::ml::ops::Abs<TensorType>;
+  using SPType     = typename OpType::SPType;
+
+  TensorType data = TensorType::FromString(
+      "1, -2, 3,-4, 5,-6, 7,-8;"
+      "1,  2, 3, 4, 5, 6, 7, 8");
+
+  TensorType error = TensorType::FromString(
+      "1, -1, 2, -2, 3, -3, 4, -4;"
+      "5, -5, 6, -6, 7, -7, 8, -8");
+
+  fetch::ml::ops::Abs<TensorType> op;
+
+  // run op once to make sure caches etc. have been filled. Otherwise the test might be trivial!
+  std::vector<TensorType> prediction =
+      op.Backward({std::make_shared<const TensorType>(data)}, error);
+
+  // extract saveparams
+  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
+
+  // downcast to correct type
+  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
+
+  // serialize
+  fetch::serializers::MsgPackSerializer b;
+  b << *dsp;
+
+  // make another prediction with the original op
+  prediction = op.Backward({std::make_shared<const TensorType>(data)}, error);
+
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<SPType>();
+  b >> *dsp2;
+
+  // rebuild node
+  OpType new_op(*dsp2);
+
+  // check that new predictions match the old
+  std::vector<TensorType> new_prediction =
+      new_op.Backward({std::make_shared<const TensorType>(data)}, error);
+
+  // test correct values
+  EXPECT_TRUE(prediction.at(0).AllClose(
+      new_prediction.at(0), fetch::math::function_tolerance<typename TypeParam::Type>(),
+      fetch::math::function_tolerance<typename TypeParam::Type>()));
 }

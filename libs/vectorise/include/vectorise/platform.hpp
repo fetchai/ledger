@@ -346,7 +346,7 @@ inline uint64_t CountTrailingZeroes64(uint64_t x)
  * @return
  */
 template <typename T>
-constexpr inline int32_t HighestSetBit(T n_input)
+constexpr int32_t HighestSetBit(T n_input)
 {
   auto const n = static_cast<uint64_t>(n_input);
 
@@ -396,7 +396,7 @@ inline bool IsLog2(uint64_t value)
 }
 
 template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
-inline T DivideCeil(T x, T y)
+T DivideCeil(T x, T y)
 {
   T ret = x / y;
 

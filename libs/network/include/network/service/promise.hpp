@@ -47,13 +47,8 @@ class PromiseImplementation
   friend PromiseBuilder;
 
 public:
-  PromiseImplementation(uint64_t pro, uint64_t func)
-  {
-    this->protocol_ = pro;
-    this->function_ = func;
-  }
-
   PromiseImplementation() = default;
+  PromiseImplementation(uint64_t pro, uint64_t func);
 
   using Counter               = uint64_t;
   using ConstByteArray        = byte_array::ConstByteArray;
@@ -74,85 +69,25 @@ public:
     TIMEDOUT
   };
 
-#if 0
-  static char const *ToString(State state)
-  {
-    switch (state)
-    {
-    case State::WAITING:
-      return "Waiting";
-    case State::SUCCESS:
-      return "Success";
-    case State::FAILED:
-      return "Failed";
-    case State::TIMEDOUT:
-      return "Timeout";
-    default:
-      return "Unknown";
-    }
-  }
-#endif
-
-  ConstByteArray const &value() const
-  {
-    return value_;
-  }
-  Counter id() const
-  {
-    return id_;
-  }
-  uint64_t protocol() const
-  {
-    return protocol_;
-  }
-  uint64_t function() const
-  {
-    return function_;
-  }
-  State state() const
-  {
-    return state_;
-  }
-  SerializableException const &exception() const
-  {
-    return (*exception_);
-  }
+  ConstByteArray const &       value() const;
+  Counter                      id() const;
+  uint64_t                     protocol() const;
+  uint64_t                     function() const;
+  State                        state() const;
+  SerializableException const &exception() const;
 
   /// @name State Access
   /// @{
-  bool IsWaiting() const
-  {
-    return (State::WAITING == state_);
-  }
-  bool IsSuccessful() const
-  {
-    return (State::SUCCESS == state_);
-  }
-  bool IsFailed() const
-  {
-    return (State::FAILED == state_);
-  }
+  bool IsWaiting() const;
+  bool IsSuccessful() const;
+  bool IsFailed() const;
   /// @}
 private:
   /// @name Callback Handlers
   /// @{
-  void SetSuccessCallback(Callback const &cb)
-  {
-    FETCH_LOCK(callback_lock_);
-    callback_success_ = cb;
-  }
-
-  void SetFailureCallback(Callback const &cb)
-  {
-    FETCH_LOCK(callback_lock_);
-    callback_failure_ = cb;
-  }
-
-  void SetCompletionCallback(Callback const &cb)
-  {
-    FETCH_LOCK(callback_lock_);
-    callback_completion_ = cb;
-  }
+  void SetSuccessCallback(Callback const &cb);
+  void SetFailureCallback(Callback const &cb);
+  void SetCompletionCallback(Callback const &cb);
   /// @}
 
   uint64_t protocol_ = uint64_t(-1);
@@ -163,51 +98,20 @@ public:
 
   /// @name Promise Results
   /// @{
-  void Fulfill(ConstByteArray const &value)
-  {
-    LOG_STACK_TRACE_POINT;
-
-    value_ = value;
-
-    UpdateState(State::SUCCESS);
-  }
-
-  void Fail(SerializableException const &exception)
-  {
-    LOG_STACK_TRACE_POINT;
-
-    exception_ = std::make_unique<SerializableException>(exception);
-
-    UpdateState(State::FAILED);
-  }
-
-  void Fail()
-  {
-    UpdateState(State::FAILED);
-  }
+  void Fulfill(ConstByteArray const &value);
+  void Fail(SerializableException const &exception);
+  void Fail();
   /// @}
 
-  std::string &name()
-  {
-    return name_;
-  }
-  const std::string &name() const
-  {
-    return name_;
-  }
+  std::string &      name();
+  const std::string &name() const;
 
-  State GetState() const
-  {
-    return state_;
-  }
+  State GetState() const;
 
   /// @name Waits
   /// @{
   bool Wait(uint32_t timeout_ms = FOREVER, bool throw_exception = true) const;
-  bool Wait(bool throw_exception) const
-  {
-    return Wait(FOREVER, throw_exception);
-  }
+  bool Wait(bool throw_exception) const;
   /// @}
 
   /// @name Result Access
@@ -278,41 +182,13 @@ class PromiseBuilder
 public:
   using Callback = PromiseImplementation::Callback;
 
-  explicit PromiseBuilder(PromiseImplementation &promise)
-    : promise_(promise)
-  {}
+  explicit PromiseBuilder(PromiseImplementation &promise);
 
-  ~PromiseBuilder()
-  {
-    promise_.SetSuccessCallback(callback_success_);
-    promise_.SetFailureCallback(callback_failure_);
-    promise_.SetCompletionCallback(callback_complete_);
+  ~PromiseBuilder();
 
-    // in the rare (probably failure case) when the promise has been resolved during before the
-    // responses have been set
-    if (!promise_.IsWaiting())
-    {
-      promise_.DispatchCallbacks();
-    }
-  }
-
-  PromiseBuilder &Then(Callback const &cb)
-  {
-    callback_success_ = cb;
-    return *this;
-  }
-
-  PromiseBuilder &Catch(Callback const &cb)
-  {
-    callback_failure_ = cb;
-    return *this;
-  }
-
-  PromiseBuilder &Finally(Callback const &cb)
-  {
-    callback_complete_ = cb;
-    return *this;
-  }
+  PromiseBuilder &Then(Callback const &cb);
+  PromiseBuilder &Catch(Callback const &cb);
+  PromiseBuilder &Finally(Callback const &cb);
 
 private:
   PromiseImplementation &promise_;
@@ -329,15 +205,8 @@ using PromiseState   = details::PromiseImplementation::State;
 using Promise        = std::shared_ptr<details::PromiseImplementation>;
 using PromiseStates  = std::array<PromiseState, 4>;
 
-inline Promise MakePromise()
-{
-  return std::make_shared<details::PromiseImplementation>();
-}
-
-inline Promise MakePromise(uint64_t pro, uint64_t func)
-{
-  return std::make_shared<details::PromiseImplementation>(pro, func);
-}
+Promise MakePromise();
+Promise MakePromise(uint64_t pro, uint64_t func);
 
 char const *         ToString(PromiseState state);
 const PromiseStates &GetAllPromiseStates();
