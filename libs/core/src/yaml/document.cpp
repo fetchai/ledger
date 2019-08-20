@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/decoders.hpp"
 #include "core/yaml/document.hpp"
+#include "core/byte_array/decoders.hpp"
 #include "core/yaml/exceptions.hpp"
 
 #include <cassert>
@@ -90,8 +90,9 @@ void YamlDocument::ExtractPrimitive(Variant &variant, YamlToken const &token,
     while (pos <= token.second)
     {
       prev_pos = pos;
-      while ((pos <= token.second) && (document[pos] != 0x0A) && (document[pos] != 0x0D) &&
-             (document[pos] != '\\'))
+      // TODO(issue 1530): There is potentially a bug here -- double check logic
+      while ((pos < document.size()) && (pos <= token.second) && (document[pos] != 0x0A) &&
+             (document[pos] != 0x0D) && (document[pos] != '\\'))
       {
         ++pos;
       }
