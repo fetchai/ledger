@@ -92,7 +92,7 @@ private:
   std::vector<std::string> PreprocessString(std::string const &s, SizeType length_limit);
   void                     BufferNextSamples();
   void                     Update();
-  void                     UpdateCursor();
+  void                     UpdateCursor() override;
 };
 
 /**
