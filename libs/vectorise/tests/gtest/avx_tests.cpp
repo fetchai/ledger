@@ -167,6 +167,8 @@ TYPED_TEST(VectorRegisterTest, basic_tests)
 
   TypeParam vmax = Max(va, vb);
   std::cout << "vmax  = " << vmax << std::endl;
+  type max = Max(vmax);
+  std::cout << "max  = " << max << std::endl;
 }
 
 template <typename T>
@@ -194,26 +196,37 @@ TYPED_TEST(VectorReduceTest, reduce_tests)
 
   type ret;
   fetch::memory::Range range(2, A.size() -2);
-  ret = A.in_parallel().Reduce(range, [](auto const &a, auto const &b) {
-        return fetch::vectorise::Max(a, b);
+  ret = A.in_parallel().Reduce(range,
+        [](auto const &a, auto const &b) {
+          return fetch::vectorise::Max(a, b);
+        }, 
+        [](vector_type const &a) {
+          return fetch::vectorise::Max(a);
         });
   std::cout << "Reduce: ret = " << ret << std::endl;
 
-  ret = A.in_parallel().SumReduce([](auto const &a, auto const &b) {
-        return a * b;
-        }, B);
+  // ret = A.in_parallel().SumReduce([](auto const &a, auto const &b) {
+  //         return a + b;
+  //       }, 
+  //       [](vector_type const &a) {
+  //         return reduce(a);
+  //       }, B);
 
-  std::cout << "SumReduce: ret = " << ret << std::endl;
+  // std::cout << "SumReduce: ret = " << ret << std::endl;
 
-  ret = A.in_parallel().ProductReduce([](auto const &a, auto const &b) {
-        return a * b;
-        }, B);
+  // ret = A.in_parallel().ProductReduce([](auto const &a, auto const &b) {
+  //       return a * b;
+  //       }, B);
 
-  std::cout << "ProductReduce: ret = " << ret << std::endl;
+  // std::cout << "ProductReduce: ret = " << ret << std::endl;
 
   
-  ret = A.in_parallel().GenericReduce(range, std::plus<vector_type>{}, [](auto const &a, auto const &b) {
-        return a * b;
-        }, type(0), B);
-  std::cout << "GenericReduce(range): ret = " << ret << std::endl;
+  // ret = A.in_parallel().GenericReduce(range, std::plus<vector_type>{}, [](auto const &a, auto const &b) {
+  //       return a * b;
+  //       },
+  //       [](vector_type const &vr_a_i) {
+  //           return reduce(vr_a_i);
+  //       },
+  //       type(0), B);
+  // std::cout << "GenericReduce(range): ret = " << ret << std::endl;
 }
