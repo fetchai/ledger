@@ -99,6 +99,8 @@ void VMOptimiser::Bind(Module &module)
 {
   module.CreateClassType<VMOptimiser>("Optimiser")
       .CreateConstructor(&VMOptimiser::Constructor)
+      .CreateSerializeDefaultConstructor(
+          [](VM *vm, TypeId type_id) { return new VMOptimiser(vm, type_id); })
       .CreateMemberFunction("run", &VMOptimiser::RunData)
       .CreateMemberFunction("run", &VMOptimiser::RunLoader)
       .CreateMemberFunction("run", &VMOptimiser::RunLoaderNoSubset);

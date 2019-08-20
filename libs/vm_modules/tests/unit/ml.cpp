@@ -189,7 +189,25 @@ TEST_F(MLTests, sgd_optimiser_serialisation_test)
       var state = State<Optimiser>("optimiser");
       state.set(optimiser);
 
-      var loss = optimiser.run(batch_size);
+      ////////////
+      // now make a totally new optimiser, graph and dataloader with identical properties
+      // this is necessary because the optimiser data is not written at state.set time
+      // therefore the internal states of the optimser after calling run will be saved
+      // to the state
+      ////////////
+
+      var graph2 = Graph();
+      graph2.addPlaceholder("Input");
+      graph2.addPlaceholder("Label");
+      graph2.addFullyConnected("FC1", "Input", 2, 2);
+      graph2.addRelu("Output", "FC1");
+      graph2.addMeanSquareErrorLoss("Error", "Output", "Label");
+
+      var dataloader2 = DataLoader();
+      dataloader2.addData("tensor", data_tensor, label_tensor);
+
+      var optimiser2 = Optimiser("sgd", graph2, dataloader2, "Input", "Label", "Error");
+      var loss = optimiser2.run(batch_size);
       return loss;
 
     endfunction
@@ -198,9 +216,11 @@ TEST_F(MLTests, sgd_optimiser_serialisation_test)
   std::string const state_name{"optimiser"};
   Variant           first_res;
   ASSERT_TRUE(toolkit.Compile(optimiser_serialise_src));
-
   EXPECT_CALL(toolkit.observer(), Write(state_name, _, _));
   ASSERT_TRUE(toolkit.Run(&first_res));
+  auto const loss1 = first_res.Get<fetch::fixed_point::fp64_t>();
+  
+  std::cout << "loss1: " << loss1 << std::endl;
 
   static char const *optimiser_deserialise_src = R"(
       function main() : Fixed64
@@ -212,74 +232,16 @@ TEST_F(MLTests, sgd_optimiser_serialisation_test)
       endfunction
     )";
 
+  Variant second_res;
   ASSERT_TRUE(toolkit.Compile(optimiser_deserialise_src));
+  EXPECT_CALL(toolkit.observer(), Exists(state_name));
+  EXPECT_CALL(toolkit.observer(), Read(state_name, _, _)).Times(::testing::Between(1, 2));
+  ASSERT_TRUE(toolkit.Run(&second_res));
 
-  Variant res;
-//  EXPECT_CALL(toolkit.observer(), Exists(state_name));
-//  EXPECT_CALL(toolkit.observer(), Read(state_name, _, _)).Times(::testing::Between(1, 2));
-  ASSERT_TRUE(toolkit.Run(&res));
-  //
-  //  auto const initial_training_pair =
-  //  first_res.Get<Ptr<fetch::vm_modules::ml::VMTrainingPair>>(); auto const training_pair =
-  //  res.Get<Ptr<fetch::vm_modules::ml::VMTrainingPair>>();
-  //
-  //  auto data1 = initial_training_pair->data()->GetTensor();
-  //  auto data2 = training_pair->data()->GetTensor();
-  //
-  //  auto label1 = initial_training_pair->label()->GetTensor();
-  //  auto label2 = training_pair->label()->GetTensor();
-  //
-  //  EXPECT_TRUE(data1.AllClose(data2, static_cast<DataType>(0), static_cast<DataType>(0)));
-  //  EXPECT_TRUE(label1.AllClose(label2, static_cast<DataType>(0), static_cast<DataType>(0)));
+  auto const loss2 = second_res.Get<fetch::fixed_point::fp64_t>();
+
+  std::cout << "loss2: " << loss2 << std::endl;
+  EXPECT_TRUE(loss1 == loss2);
 }
-
-//
-// TEST_F(MLTests, sgd_optimiser_serialisation_test)
-//{
-
-//  static char const *optimiser_serialise_src = R"(
-//    function main() : Fixed64
-//
-//
-//
-//
-//    endfunction
-//  )";
-//
-//  std::string const state_name{"dataloader"};
-//  Variant           res_1;
-//  ASSERT_TRUE(toolkit.Compile(optimiser_serialise_src));
-//
-//  EXPECT_CALL(toolkit.observer(), Write(state_name, _, _));
-//  ASSERT_TRUE(toolkit.Run(&res_1));
-//
-//
-//
-//
-//
-////
-////  static char const *optimiser_deserialise_src = R"(
-////    function main()
-////      var state = State<Optimiser>("optimiser");
-////      var opt = state.get();
-//////      var batch_size = 8u64;
-//////      var loss = optimiser.run(batch_size);
-//////      return loss;
-////    endfunction
-////  )";
-////
-////  ASSERT_TRUE(toolkit.Compile(optimiser_deserialise_src));
-//
-////  Variant res_2;
-////  EXPECT_CALL(toolkit.observer(), Exists(state_name));
-////  EXPECT_CALL(toolkit.observer(), Read(state_name, _, _)).Times(::testing::Between(1, 2));
-////  ASSERT_TRUE(toolkit.Run(&res_2));
-//  ASSERT_TRUE(toolkit.Run());
-//
-//  //  auto const initial_loss = first_res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
-//  //  auto const loss         = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
-//  //
-//  //  EXPECT_TRUE(initial_loss->GetTensor().AllClose(loss->GetTensor()));
-//}
 
 }  // namespace
