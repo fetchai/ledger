@@ -71,13 +71,12 @@ public:
   ContextLabelPair        GetNextContext();
   ContextTensorsLabelPair GetNext() override;
 
-  SizeType    Size() const override;
-  bool        IsDone() const override;
-  void        Reset() override;
-  bool        AddData(InputType const &data, LabelType const &label) override;
-  inline bool IsValidable() const override;
-  void        SetTestRatio(float new_test_ratio) override;
-  void        SetValidationRatio(float new_validation_ratio) override;
+  SizeType Size() const override;
+  bool     IsDone() const override;
+  void     Reset() override;
+  bool     AddData(InputType const &data, LabelType const &label) override;
+  void     SetTestRatio(float new_test_ratio) override;
+  void     SetValidationRatio(float new_validation_ratio) override;
 
   void AddDataAsString(std::string const &text);
   void createIdxUMaps();
@@ -320,13 +319,6 @@ template <typename LabelType, typename InputType>
 void C2VLoader<LabelType, InputType>::Reset()
 {
   this->iterator_position_get_next_context_ = SizeType{0};
-}
-
-template <typename LabelType, typename DataType>
-inline bool C2VLoader<LabelType, DataType>::IsValidable() const
-{
-  // Validation set splitting not implemented yet
-  return false;
 }
 
 template <typename LabelType, typename DataType>

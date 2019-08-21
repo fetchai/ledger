@@ -156,10 +156,7 @@ bool DNNClassifier<TensorType>::Train(SizeType n_steps, DataType &loss)
   SizeType step{1};
   while ((!stop_early) && (step < n_steps))
   {
-    if (data_loader_ptr_->IsValidable())
-    {
-      Validate(val_loss);
-    }
+    Validate(val_loss);
 
     if (this->estimator_config_.print_stats)
     {
@@ -197,11 +194,6 @@ bool DNNClassifier<TensorType>::Train(SizeType n_steps, DataType &loss)
 template <typename TensorType>
 bool DNNClassifier<TensorType>::Validate(DataType &validation_loss)
 {
-  if (!data_loader_ptr_->IsValidable())
-  {
-    throw std::runtime_error("No validation set");
-  }
-
   data_loader_ptr_->SetMode(dataloaders::DataLoaderMode::TEST);
 
   SizeType val_set_size = data_loader_ptr_->Size();

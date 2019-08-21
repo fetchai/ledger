@@ -53,9 +53,8 @@ public:
   ReturnType GetNext() override;
   bool       AddData(InputType const &input, LabelType const &label) override;
 
-  void        SetTestRatio(float new_test_ratio) override;
-  void        SetValidationRatio(float new_validation_ratio) override;
-  inline bool IsValidable() const override;
+  void SetTestRatio(float new_test_ratio) override;
+  void SetValidationRatio(float new_validation_ratio) override;
 
   void BuildVocab(std::vector<std::string> const &sents, SizeType min_count = 0);
   void SaveVocab(std::string const &filename);
@@ -226,13 +225,6 @@ void GraphW2VLoader<T>::Reset()
   labels_.Fill(BufferPositionUnused);
   buffer_pos_ = 0;
   reset_count_++;
-}
-
-template <typename T>
-inline bool GraphW2VLoader<T>::IsValidable() const
-{
-  // Validation set splitting not implemented yet
-  return false;
 }
 
 template <typename T>

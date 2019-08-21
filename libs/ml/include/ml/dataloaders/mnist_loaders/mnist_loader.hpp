@@ -110,11 +110,6 @@ public:
     }
   }
 
-  inline bool IsValidable() const override
-  {
-    return test_size_ > 0;
-  }
-
   void SetTestRatio(float new_test_ratio) override
   {
     test_to_train_ratio_ = new_test_ratio;

@@ -49,10 +49,9 @@ public:
 
   bool AddData(InputType const &data, LabelType const &label) override;
 
-  SizeType    Size() const override;
-  bool        IsDone() const override;
-  void        Reset() override;
-  inline bool IsValidable() const override;
+  SizeType Size() const override;
+  bool     IsDone() const override;
+  void     Reset() override;
 
   void SetTestRatio(float new_test_ratio) override;
   void SetValidationRatio(float new_validation_ratio) override;
@@ -147,12 +146,6 @@ template <typename LabelType, typename InputType>
 void TensorDataLoader<LabelType, InputType>::Reset()
 {
   *(this->current_cursor_) = this->current_min_;
-}
-
-template <typename LabelType, typename InputType>
-inline bool TensorDataLoader<LabelType, InputType>::IsValidable() const
-{
-  return n_validation_samples_ > 0;
 }
 
 template <typename LabelType, typename InputType>

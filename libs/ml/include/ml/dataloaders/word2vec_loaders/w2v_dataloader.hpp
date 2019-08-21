@@ -53,11 +53,10 @@ public:
 
   W2VLoader(SizeType window_size, SizeType negative_samples);
 
-  bool        IsDone() const override;
-  void        Reset() override;
-  inline bool IsValidable() const override;
-  void        SetTestRatio(float new_test_ratio) override;
-  void        SetValidationRatio(float new_validation_ratio) override;
+  bool IsDone() const override;
+  void Reset() override;
+  void SetTestRatio(float new_test_ratio) override;
+  void SetValidationRatio(float new_validation_ratio) override;
 
   void       RemoveInfrequent(SizeType min);
   void       InitUnigramTable();
@@ -168,13 +167,6 @@ void W2VLoader<T>::Reset()
   current_word_     = 0;
   rng_.Seed(1337);
   unigram_table_.Reset();
-}
-
-template <typename T>
-inline bool W2VLoader<T>::IsValidable() const
-{
-  // Validation set splitting not implemented yet
-  return false;
 }
 
 template <typename T>

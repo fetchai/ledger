@@ -49,11 +49,10 @@ public:
 
   ~CommodityDataLoader() override = default;
 
-  ReturnType  GetNext() override;
-  SizeType    Size() const override;
-  bool        IsDone() const override;
-  void        Reset() override;
-  inline bool IsValidable() const override;
+  ReturnType GetNext() override;
+  SizeType   Size() const override;
+  bool       IsDone() const override;
+  void       Reset() override;
 
   virtual void SetTestRatio(float new_test_ratio) override;
   virtual void SetValidationRatio(float new_validation_ratio) override;
@@ -144,13 +143,6 @@ template <typename LabelType, typename InputType>
 void CommodityDataLoader<LabelType, InputType>::Reset()
 {
   cursor_ = 0;
-}
-
-template <typename LabelType, typename InputType>
-inline bool CommodityDataLoader<LabelType, InputType>::IsValidable() const
-{
-  // Validation set splitting not implemented yet
-  return false;
 }
 
 template <typename LabelType, typename InputType>

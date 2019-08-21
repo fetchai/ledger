@@ -63,7 +63,6 @@ public:
   virtual SizeType Size() const                                   = 0;
   virtual bool     IsDone() const                                 = 0;
   virtual void     Reset()                                        = 0;
-  virtual bool     IsValidable() const                            = 0;
   virtual void     SetTestRatio(float new_test_ratio)             = 0;
   virtual void     SetValidationRatio(float new_validation_ratio) = 0;
   void             SetMode(DataLoaderMode new_mode);
