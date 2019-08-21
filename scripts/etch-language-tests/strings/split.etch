@@ -1,4 +1,4 @@
-function main()
+function ascii()
 
     var text = 'xxx --yyy --zzz';
     var output = text.split(' --');
@@ -6,5 +6,26 @@ function main()
     assert(output[0] == "xxx");
     assert(output[1] == "yyy");
     assert(output[2] == "zzz");
+
+endfunction
+
+
+function utf8()
+
+    var myString : String = '他身旁放着一支磨尖的花岗岩长矛备用。︼。脚边卧着一头犬族猛兽。︼。脚它发出的喘hōu声表明它虽已。︼。入睡却睡不安稳';
+    var output = myString.split('。︼。');
+
+    assert(output[0] == "他身旁放着一支磨尖的花岗岩长矛备用");
+    assert(output[1] == "脚边卧着一头犬族猛兽");
+    assert(output[2] == "脚它发出的喘hōu声表明它虽已");
+    assert(output[3] == "入睡却睡不安稳");
+
+endfunction
+
+
+function main()
+
+   ascii();
+   utf8();
 
 endfunction
