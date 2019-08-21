@@ -172,13 +172,13 @@ public:
   template <class F1, class F2>
   type SumReduce(Range const &range, F1 const &&kernel, F2 &&hkernel)
   {
-    return GenericRangedReduce(range, type(0), std::plus<VectorRegisterType>{}, kernel, hkernel);
+    return GenericRangedReduce(range, type(0), std::plus<VectorRegisterType>{}, std::move(kernel), hkernel);
   }
 
   template <class F1, class F2>
   type ProductReduce(Range const &range, F1 const &&kernel, F2 &&hkernel)
   {
-    return GenericRangedReduce(range, type(1), std::multiplies<VectorRegisterType>{}, kernel, hkernel);
+    return GenericRangedReduce(range, type(1), std::multiplies<VectorRegisterType>{}, std::move(kernel), hkernel);
   }
 
   template <class F1, class F2, class OP, typename... Args>
@@ -272,20 +272,20 @@ public:
   type SumReduce(F1 const &&kernel, F2 &&hkernel, Args &&... args)
   {
     Range range(0, this->size());
-    return GenericRangedReduceMultiple(range, type(0), std::plus<VectorRegisterType>{}, std::forward(kernel), hkernel, std::forward<Args>(args)...);
+    return GenericRangedReduceMultiple(range, type(0), std::plus<VectorRegisterType>{}, std::move(kernel), hkernel, std::forward<Args>(args)...);
   }
 
   template <class F1, class F2, typename... Args>
   type ProductReduce(F1 const &&kernel, F2 &&hkernel, Args &&... args)
   {
     Range range(0, this->size());
-    return GenericRangedReduceMultiple(range, type(1), std::multiplies<VectorRegisterType>{}, std::forward(kernel), hkernel, std::forward<Args>(args)...);
+    return GenericRangedReduceMultiple(range, type(1), std::multiplies<VectorRegisterType>{}, std::move(kernel), hkernel, std::forward<Args>(args)...);
   }
 
   template <class F1, class F2, typename... Args>
   type SumReduce(Range const &range, F1 const &&kernel, F2 &&hkernel, Args &&... args)
   {
-    return GenericRangedReduceMultiple(range, type(0), std::plus<VectorRegisterType>{}, kernel, hkernel, std::forward<Args>(args)...);
+    return GenericRangedReduceMultiple(range, type(0), std::plus<VectorRegisterType>{}, std::move(kernel), hkernel, std::forward<Args>(args)...);
   }
 
   template <class F1, class F2>
@@ -372,7 +372,7 @@ public:
   type Reduce(F1 const &&kernel, F2 &&hkernel, type const initial_value = type(0))
   {
     Range range(0, this->size());
-    return Reduce(range, kernel, hkernel, initial_value);
+    return Reduce(range, std::move(kernel), hkernel, initial_value);
   }
 
   type Reduce(type (*register_reduction)(type const &, type const &)) const

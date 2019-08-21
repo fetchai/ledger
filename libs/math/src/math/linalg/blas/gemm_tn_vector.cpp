@@ -90,7 +90,7 @@ void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
       memory::Range range(std::size_t(0), std::size_t(a.height()));
       temp = slice_a_i.in_parallel().SumReduce(
           range,
-          [](auto const &vr_a_i, auto const &vr_b_j) -> auto {
+          [](auto const &vr_a_i, auto const &vr_b_j) {
             return vr_a_i * vr_b_j;
           },
           [](VectorRegisterType const &vr_a_i) -> Type {
