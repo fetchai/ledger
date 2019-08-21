@@ -115,25 +115,8 @@ int main(/*int ac, char **av*/)
       "scripts/bert_conversion/bert-base-uncased/bert-base-uncased-txt/";
   BERTConfig config;
 
-  GraphType g_original;
-  auto      ret = load_pretrained_bert_model(file_path, config, g_original);
-
-  //	fetch::ml::GraphSaveableParams<TensorType> gsp1 = g_original.GetGraphSaveableParams();
-  //	std::cout << "got savable params" << std::endl;
-  //	fetch::serializers::MsgPackSerializer     ser;
-  //	ser << gsp1;
-  //	std::cout << "finish serializing" << std::endl;
-  //
-  //
-  //	fetch::ml::GraphSaveableParams<TensorType> gsp2;
-  //
-  //	ser >> gsp2;
-  //	std::cout << "finish deserializing" << std::endl;
-  //
-  //	GraphType   g;
-  //	fetch::ml::utilities::BuildGraph<TensorType>(gsp2, std::make_shared<GraphType>(g));
-  //	std::cout << "finish graph building" << std::endl;
-  auto g = g_original;
+  GraphType g;
+  auto      ret = load_pretrained_bert_model(file_path, config, g);
 
   std::string segment      = ret.first[0];
   std::string position     = ret.first[1];
