@@ -126,13 +126,28 @@ bool WriteHelper(std::string const &name, Ptr<Object> const &val, VM *vm)
     return false;
   }
 
-  if (!val->SerializeTo(buffer))
+  fetch::serializers::SizeCounter counter;
+  if (val->SerializeTo(counter))
   {
-    if (!vm->HasError())
+    if (!val->SerializeTo(buffer, counter.size()))
     {
-      vm->RuntimeError("Serialisation of object failed.");
+      if (!vm->HasError())
+      {
+        vm->RuntimeError("Serialisation of object failed.");
+      }
+      return false;
     }
-    return false;
+  }
+  else
+  {
+    if (!val->SerializeTo(buffer))
+    {
+      if (!vm->HasError())
+      {
+        vm->RuntimeError("Serialisation of object failed.");
+      }
+      return false;
+    }
   }
 
   auto const result =

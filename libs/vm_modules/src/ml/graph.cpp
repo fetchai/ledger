@@ -163,8 +163,15 @@ VMGraph::GraphType &VMGraph::GetGraph()
   return graph_;
 }
 
-bool VMGraph::SerializeTo(serializers::MsgPackSerializer &buffer)
+bool VMGraph::SerializeTo(serializers::SizeCounter &counter)
 {
+  counter << graph_.GetGraphSaveableParams();
+  return true;
+}
+
+bool VMGraph::SerializeTo(serializers::MsgPackSerializer &buffer, std::size_t size)
+{
+  buffer.Reserve(size);
   buffer << graph_.GetGraphSaveableParams();
   return true;
 }

@@ -86,7 +86,9 @@ public:
 
   GraphType &GetGraph();
 
-  bool SerializeTo(serializers::MsgPackSerializer &buffer) override;
+  bool SerializeTo(serializers::SizeCounter &counter) override;
+
+  bool SerializeTo(serializers::MsgPackSerializer &buffer, std::size_t size) override;
 
   bool DeserializeFrom(serializers::MsgPackSerializer &buffer) override;
 

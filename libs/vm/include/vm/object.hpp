@@ -219,7 +219,9 @@ public:
   virtual void        InplaceDivide(Ptr<Object> const &lhso, Ptr<Object> const &rhso);
   virtual void        InplaceRightDivide(Ptr<Object> const &lhso, Variant const &rhsv);
 
+  virtual bool SerializeTo(fetch::serializers::SizeCounter &counter);
   virtual bool SerializeTo(MsgPackSerializer &buffer);
+  virtual bool SerializeTo(MsgPackSerializer &buffer, std::size_t size);
   virtual bool DeserializeFrom(MsgPackSerializer &buffer);
 
   virtual bool ToJSON(JSONVariant &variant);
