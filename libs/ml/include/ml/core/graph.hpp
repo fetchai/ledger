@@ -50,6 +50,7 @@ public:
   using PlaceholderType  = typename fetch::ml::ops::PlaceHolder<TensorType>;
   using RegPtrType       = std::shared_ptr<fetch::ml::regularisers::Regulariser<T>>;
   using SPType           = GraphSaveableParams<TensorType>;
+  using OpPtrType      = std::shared_ptr<fetch::ml::ops::Ops<TensorType>>;
 
   virtual ~Graph() = default;
   Graph()          = default;
@@ -90,6 +91,40 @@ public:
   void                            ResetGradients();
   GraphSaveableParams<TensorType> GetGraphSaveableParams();
   void                            SetGraphSaveableParams(GraphSaveableParams<TensorType> const &sp);
+
+  std::shared_ptr<Graph<TensorType>> MakeSharedCopyOfMyself(){  // todo: maybe this is unnecessary
+    auto copyshare = std::make_shared<Graph<TensorType>>();
+    InsertSharedCopyOfMyself(copyshare);
+    return copyshare;
+  }
+
+  void InsertSharedCopyOfMyself(std::shared_ptr<Graph<TensorType>> output_ptr) {
+    if (output_ptr.get() == this) {  // need to check this!
+      throw std::runtime_error("This needs to be called with a separate ptr.");
+    }
+
+    std::shared_ptr<Graph<TensorType>> copyshare = output_ptr;
+
+    // copy all the nodes, sharing the weights using MakeSharedCopyOfMyself
+    for (auto const & n : nodes_){
+      std::string node_name = n.first;
+      std::shared_ptr<Node<TensorType>> n_ptr = n.second;
+      OpPtrType op_ptr = n_ptr->GetOp();
+
+      OpPtrType op_copyshare = op_ptr->MakeSharedCopyOfMyself(op_ptr);
+
+      copyshare->nodes_[node_name] = std::make_shared<Node<TensorType>>(*n_ptr, node_name, op_copyshare);
+      // todo: how do I copy trainable_nodes_ and trainable_lookup_?
+    }
+
+    for (auto const & n : this->nodes_){
+      std::string node_name = n.first;
+      std::shared_ptr<Node<TensorType>> n_ptr = n.second;
+
+      copyshare->LinkNodesInGraph(node_name, this->nodes_[node_name]->GetInputNames());
+    }
+  }
+
   static constexpr char const *   DESCRIPTOR = "Graph";
 
   template <class OperationType>
@@ -282,12 +317,12 @@ meta::IfIsShareable<TensorType, OperationType, std::string> Graph<TensorType>::A
   }
   else
   {  // if shared weight is specified by duplicate naming
-    // Instantiate the node based on pointer to shared target node
     NodePtrType target_node = GetNode(node_name);
-    node_ptr                = std::make_shared<Node<TensorType>>(
-        OperationType::OpCode(), updated_name, [target_node, params...]() {
-          return std::make_shared<OperationType>(target_node->GetOp(), params...);
-        });
+
+    auto op_copyshare = target_node->GetOp()->MakeSharedCopyOfMyself(target_node->GetOp());
+
+    node_ptr = std::make_shared<Node<TensorType>>(
+        OperationType::OpCode(), updated_name, op_copyshare);
   }
 
   // put node in look up table
@@ -296,8 +331,10 @@ meta::IfIsShareable<TensorType, OperationType, std::string> Graph<TensorType>::A
   // assign inputs and outputs to the new node
   LinkNodesInGraph(updated_name, inputs);
 
-  // add to map of trainable ops if necessary
-  AddTrainable<OperationType>(updated_name, node_ptr);
+  if (!is_duplicate) {
+//     add to map of trainable ops if necessary
+    AddTrainable<OperationType>(updated_name, node_ptr);
+  }
 
   // return unique node name (may not be identical to node_name)
   return updated_name;

@@ -40,6 +40,7 @@ public:
   using TensorType    = T;
   using VecTensorType = std::vector<std::shared_ptr<TensorType const>>;
   using SPType        = SubGraphSaveableParams<TensorType>;
+  using OpPtrType      = std::shared_ptr<fetch::ml::ops::Ops<TensorType>>;
 
   void                    Forward(VecTensorType const &inputs, TensorType &output) override;
   std::vector<TensorType> Backward(VecTensorType const &inputs,
@@ -57,6 +58,26 @@ public:
     sp->output_node_name = output_node_name_;
 
     return sp;
+  }
+
+  virtual void InsertSharedCopyOfMyself(std::shared_ptr<fetch::ml::ops::Ops<TensorType>> output_ptr){
+    if (output_ptr.get() == this){  // need to check this!
+      throw std::runtime_error("This needs to be called with a separate ptr.");
+    }
+    auto copyshare = std::dynamic_pointer_cast<SubGraph<TensorType >>(output_ptr);
+    assert (copyshare);
+
+    copyshare->input_node_names_ = input_node_names_;
+    copyshare->output_node_name_ = output_node_name_;
+
+    Graph<TensorType>::InsertSharedCopyOfMyself(copyshare);
+  }
+
+  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopyOfMyself(
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override {
+      FETCH_UNUSED(me);
+
+      throw std::runtime_error("SubGraph cannot make a shared copy of itself because it is pure virtual.");
   }
 
   static constexpr char const *DESCRIPTOR = "SubGraph";

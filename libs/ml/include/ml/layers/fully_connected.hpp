@@ -58,36 +58,6 @@ public:
   FullyConnected() = default;
 
   /**
-   * This initializer allows weight sharing to another fully connected layer through node interface
-   * pointer.
-   * @param target_node_ptr
-   * @param in
-   * @param out
-   * @param activation_type
-   * @param regulariser
-   * @param regularisation_rate
-   * @param init_mode
-   */
-  FullyConnected(OpPtrType target_node_ptr, SizeType in, SizeType out,
-                 details::ActivationType       activation_type = details::ActivationType::NOTHING,
-                 fetch::ml::RegularisationType regulariser = fetch::ml::RegularisationType::NONE,
-                 DataType                      regularisation_rate = static_cast<DataType>(0),
-                 WeightsInit init_mode = WeightsInit::XAVIER_GLOROT, bool time_distributed = false)
-    : in_size_(in)
-    , out_size_(out)
-    , time_distributed_(time_distributed)
-  {
-    // since the weight is shared, we do not need to initialize the weight matrices.
-    FETCH_UNUSED(init_mode);
-
-    // setup overall architecture of the layer
-    SetupArchitecture(activation_type, regulariser, regularisation_rate);
-
-    // share weight with target_node
-    ShareWeights(target_node_ptr);
-  }
-
-  /**
    * Normal fully connected layer constructor
    * @param in
    * @param out
@@ -135,41 +105,30 @@ public:
     this->SetInput(name + "_Bias", bias_data);
   }
 
-  void ShareWeights(OpPtrType target_op_ptr)
-  {
-    // get correct name for the layer
-    std::string name = GetName();
+  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopyOfMyself(
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override {
 
-    // Get ptr to each weights layer
-    GraphPtrType   target_graph_ptr        = std::dynamic_pointer_cast<GraphType>(target_op_ptr);
-    OpPtrType      target_weights_node_ptr = target_graph_ptr->GetNode(name + "_Weights")->GetOp();
-    WeightsPtrType target_weights_ptr =
-        std::dynamic_pointer_cast<WeightsType>(target_weights_node_ptr);
-    OpPtrType      target_bias_node_ptr = target_graph_ptr->GetNode(name + "_Bias")->GetOp();
-    WeightsPtrType target_bias_ptr  = std::dynamic_pointer_cast<WeightsType>(target_bias_node_ptr);
-    OpPtrType      weights_node_ptr = this->GetNode(name + "_Weights")->GetOp();
-    WeightsPtrType weights_ptr      = std::dynamic_pointer_cast<WeightsType>(weights_node_ptr);
-    OpPtrType      bias_node_ptr    = this->GetNode(name + "_Bias")->GetOp();
-    WeightsPtrType bias_ptr         = std::dynamic_pointer_cast<WeightsType>(bias_node_ptr);
+    assert (me.get() == this);  // used for compatability
 
-    // check if the shared weight is compatible with input shape
-    auto w_s = target_weights_ptr->get_weights().shape();
-    auto b_s = target_bias_ptr->get_weights().shape();
-    ASSERT((w_s[0] == out_size_) && (w_s[1] == in_size_) && (b_s[0] == out_size_));
-    if (time_distributed_)
-    {
-      assert(b_s.size() == 3);
-    }
-    else
-    {
-      assert(b_s.size() == 2);
+    auto copyshare = std::make_shared<FullyConnected<TensorType>>();
+    InsertSharedCopyOfMyself(copyshare);
+
+    return copyshare;
+  }
+
+  void InsertSharedCopyOfMyself(std::shared_ptr<fetch::ml::ops::Ops<TensorType>> output_ptr) override {
+    if (output_ptr.get() == this) {  // need to check this!
+      throw std::runtime_error("This needs to be called with a separate ptr.");
     }
 
-    // Share weights and parameter among these weights layers
-    auto shared_weights = *(target_weights_ptr->GetShareableWeights());
-    auto shared_bias    = *(target_bias_ptr->GetShareableWeights());
-    this->SetInput(name + "_Weights", shared_weights);
-    this->SetInput(name + "_Bias", shared_bias);
+    auto copyshare = std::dynamic_pointer_cast<FullyConnected<TensorType >>(output_ptr);
+    assert (copyshare);
+
+    copyshare->time_distributed_ = time_distributed_;
+    copyshare->in_size_          = in_size_;
+    copyshare->out_size_         = out_size_;
+
+    SubGraph<TensorType>::InsertSharedCopyOfMyself(copyshare);
   }
 
   void SetupArchitecture(

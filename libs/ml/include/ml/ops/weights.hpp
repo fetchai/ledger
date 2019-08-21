@@ -108,6 +108,12 @@ public:
     return sp;
   }
 
+  std::shared_ptr<Ops<TensorType>> MakeSharedCopyOfMyself(std::shared_ptr<Ops<TensorType>> me) override
+  {
+    // This is a copy of the implementation in Ops - overrides implementation in Placeholder
+    return me;
+  }
+
   ArrayPtrType GetShareableWeights()
   {
     return this->output_;

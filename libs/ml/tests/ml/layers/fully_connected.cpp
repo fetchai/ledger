@@ -219,7 +219,14 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test)
 
   for (size_t i = 0; i < 4; i++)
   {
-    ASSERT_EQ(g_shared_weights_before[i], g_not_shared_weights_before[i]);
+    EXPECT_EQ(g_shared_weights_before[i], g_not_shared_weights_before[i]);
+  }
+
+  // check the all weights are initialized to be the same
+  for (size_t i = 0; i < 2; i++)
+  {
+    EXPECT_TRUE(g_shared_weights_before[i] == g_shared_weights_before[i + 2]);
+    EXPECT_TRUE(g_not_shared_weights_before[i] == g_not_shared_weights_before[i + 2]);
   }
 
   // start training
@@ -230,6 +237,15 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test)
   {
     data.Set(i, 0, static_cast<DataType>(i));
   }
+
+  g_not_shared->SetInput(g_not_shared_input, data.Copy());
+  g_shared->SetInput(g_shared_input, data.Copy());
+
+  TensorType pred_not_shared = g_not_shared->Evaluate(g_not_shared_output);
+  TensorType pred_shared = g_shared->Evaluate(g_shared_output);
+
+  EXPECT_TRUE(pred_shared.AllClose(pred_not_shared, fetch::math::function_tolerance<DataType>(),
+      fetch::math::function_tolerance<DataType>()));
 
   // SGD is chosen to be the optimizer to reflect the gradient throw change in weights after 1
   // iteration of training. Run 1 iteration of SGD to train on g shared
@@ -265,23 +281,17 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test)
   g_not_shared_weights_after.emplace_back(
       g_not_shared_statedict_after.dict_["FC5_FullyConnected_Bias"].weights_->Copy());
 
-  // check the all weights are initialized to be the same
-  for (size_t i = 0; i < 2; i++)
-  {
-    ASSERT_TRUE(g_shared_weights_before[i] == g_shared_weights_before[i + 2]);
-    ASSERT_TRUE(g_not_shared_weights_before[i] == g_not_shared_weights_before[i + 2]);
-  }
 
   // check the weights are equal after training for shared weights
   for (size_t i = 0; i < 2; i++)
   {
-    ASSERT_TRUE(g_shared_weights_after[i] == g_shared_weights_after[i + 2]);
+    EXPECT_TRUE(g_shared_weights_after[i] == g_shared_weights_after[i + 2]);
   }
 
   // check the weights are different after training for not shared weights
   for (size_t i = 0; i < 2; i++)
   {
-    ASSERT_FALSE(g_not_shared_weights_after[i] == g_not_shared_weights_after[i + 2]);
+    EXPECT_FALSE(g_not_shared_weights_after[i] == g_not_shared_weights_after[i + 2]);
   }
 
   // check the gradient of the shared weight matrices are the sum of individual weight matrice
@@ -293,7 +303,7 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test)
         g_not_shared_weights_after[i] + g_not_shared_weights_after[i + 2] -
         g_not_shared_weights_before[i] - g_not_shared_weights_before[i + 2];
 
-    ASSERT_TRUE(shared_gradient.AllClose(
+    EXPECT_TRUE(shared_gradient.AllClose(
         not_shared_gradient,
         static_cast<DataType>(100) * fetch::math::function_tolerance<DataType>()));
   }
@@ -357,11 +367,11 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test_time_distributed)
   g_shared_weights_before.emplace_back(
       g_shared_statedict_before.dict_["FC1_TimeDistributed_FullyConnected_Bias"].weights_->Copy());
   g_shared_weights_before.emplace_back(
-      g_shared_statedict_before.dict_["FC1_Copy_1_TimeDistributed_FullyConnected_Weights"]
+      g_shared_statedict_before.dict_["FC1_TimeDistributed_FullyConnected_Weights"]
           .weights_->Copy());
   g_shared_weights_before.emplace_back(
-      g_shared_statedict_before.dict_["FC1_Copy_1_TimeDistributed_FullyConnected_Bias"]
-          .weights_->Copy());
+      g_shared_statedict_before.dict_["FC1_TimeDistributed_FullyConnected_Bias"].weights_->Copy());
+  // Todo: rethink this test
 
   auto                    g_not_shared_statedict_before = g_not_shared->StateDict();
   std::vector<TensorType> g_not_shared_weights_before;
@@ -395,6 +405,15 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test_time_distributed)
   }
   data.Reshape({10, 2, 1});
 
+  g_not_shared->SetInput(g_not_shared_input, data.Copy());
+  g_shared->SetInput(g_shared_input, data.Copy());
+
+  TensorType pred_not_shared = g_not_shared->Evaluate(g_not_shared_output);
+  TensorType pred_shared = g_shared->Evaluate(g_shared_output);
+
+  EXPECT_TRUE(pred_shared.AllClose(pred_not_shared, fetch::math::function_tolerance<DataType>(),
+      fetch::math::function_tolerance<DataType>()));
+
   // SGD is chosen to be the optimizer to reflect the gradient throw change in weights after 1
   // iteration of training. Run 1 iteration of SGD to train on g shared
   auto                                            lr = static_cast<DataType>(0.01);
@@ -415,11 +434,10 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test_time_distributed)
   g_shared_weights_after.emplace_back(
       g_shared_statedict_after.dict_["FC1_TimeDistributed_FullyConnected_Bias"].weights_->Copy());
   g_shared_weights_after.emplace_back(
-      g_shared_statedict_after.dict_["FC1_Copy_1_TimeDistributed_FullyConnected_Weights"]
+      g_shared_statedict_after.dict_["FC1_TimeDistributed_FullyConnected_Weights"]
           .weights_->Copy());
   g_shared_weights_after.emplace_back(
-      g_shared_statedict_after.dict_["FC1_Copy_1_TimeDistributed_FullyConnected_Bias"]
-          .weights_->Copy());
+      g_shared_statedict_after.dict_["FC1_TimeDistributed_FullyConnected_Bias"].weights_->Copy());
 
   auto                    g_not_shared_statedict_after = g_not_shared->StateDict();
   std::vector<TensorType> g_not_shared_weights_after;
@@ -463,6 +481,10 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test_time_distributed)
     TensorType not_shared_gradient =
         g_not_shared_weights_after[i] + g_not_shared_weights_after[i + 2] -
         g_not_shared_weights_before[i] - g_not_shared_weights_before[i + 2];
+
+//    std::cout << "shared_gradient.ToString(): " << shared_gradient.ToString() << std::endl;
+//    std::cout << "not_shared_gradient.ToString(): " << not_shared_gradient.ToString() << std::endl;
+
     ASSERT_TRUE(shared_gradient.AllClose(
         not_shared_gradient,
         static_cast<DataType>(100) * fetch::math::function_tolerance<DataType>()));

@@ -64,6 +64,19 @@ public:
     return std::make_shared<SPType>(tp);
   }
 
+  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopyOfMyself(
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override {
+    assert (me.get() == this);
+
+    auto copyshare = std::make_shared<PlaceHolder<TensorType>>();
+
+    if (this->output_) {
+      copyshare->output_ = std::make_shared<TensorType>(this->output_->shape());
+    }
+
+    return copyshare;
+  }
+
   void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     FETCH_UNUSED(inputs);
