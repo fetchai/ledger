@@ -1,26 +1,23 @@
 function main()
 
-    var data_shape = Array<UInt64>(2);
-    data_shape[0] = 2u64;
-    data_shape[1] = 4u64;
+  var tensor_shape = Array<UInt64>(2);
+  tensor_shape[0] = 2u64;
+  tensor_shape[1] = 10u64;
+  var data_tensor = Tensor(tensor_shape);
+  var label_tensor = Tensor(tensor_shape);
+  data_tensor.fill(7.0fp64);
+  label_tensor.fill(7.0fp64);
 
-    var label_shape = Array<UInt64>(2);
-    label_shape[0] = 2u64;
-    label_shape[1] = 4u64;
+  var graph = Graph();
+  graph.addPlaceholder("Input");
+  graph.addPlaceholder("Label");
+  graph.addRelu("Output", "Input");
+  graph.addMeanSquareErrorLoss("Error", "Output", "Label");
 
-    var data_tensor = Tensor(data_shape);
-    var label_tensor = Tensor(label_shape);
+  graph.setInput("Input", data_tensor);
+  graph.setInput("Label", label_tensor);
 
-    var dataloader = DataLoader();
-    dataloader.addData("tensor", data_tensor, label_tensor);
-
-    var graph = Graph();
-    graph.addPlaceholder("Input");
-    graph.addPlaceholder("Label");
-    graph.addRelu("Output", "Input");
-    graph.addMeanSquareErrorLoss("Error", "Output", "Label");
-
-    var state = State<Graph>("graph");
-    state.set(graph);
+  var state = State<Graph>("graph");
+  state.set(graph);
 
 endfunction

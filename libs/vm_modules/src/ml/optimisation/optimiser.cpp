@@ -100,7 +100,7 @@ void VMOptimiser::Bind(Module &module)
   module.CreateClassType<VMOptimiser>("Optimiser")
       .CreateConstructor(&VMOptimiser::Constructor)
       .CreateSerializeDefaultConstructor(
-          [](VM *vm, TypeId type_id) { return new VMOptimiser(vm, type_id); })
+          [](VM *vm, TypeId type_id) -> Ptr<VMOptimiser> { return new VMOptimiser(vm, type_id); })
       .CreateMemberFunction("run", &VMOptimiser::RunData)
       .CreateMemberFunction("run", &VMOptimiser::RunLoader)
       .CreateMemberFunction("run", &VMOptimiser::RunLoaderNoSubset);
@@ -143,7 +143,7 @@ bool VMOptimiser::SerializeTo(serializers::MsgPackSerializer &buffer)
 bool VMOptimiser::DeserializeFrom(serializers::MsgPackSerializer &buffer)
 {
   buffer.seek(0);
-  auto opt = std::make_shared<fetch::vm_modules::ml::VMOptimiser>(this->vm_, this->type_id_);
+  auto opt = std::make_shared<VMOptimiser>(this->vm_, this->type_id_);
   buffer >> *opt;
   *this = *opt;
   return true;

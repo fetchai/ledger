@@ -17,14 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "free_function_invoke.hpp"
+#include <type_traits>
 
 namespace fetch {
-namespace vm {
+namespace meta {
 
-template <int sp_offset, typename ReturnType, typename Callable, typename ArgsTuple>
-using VmStaticMemberFunctionInvoker =
-    VmFreeFunctionInvoker<sp_offset, ReturnType, Callable, ArgsTuple>;
+template <typename T1, typename T2>
+constexpr bool Same = std::is_same<T1, T2>::value;
 
-}  // namespace vm
+}  // namespace meta
 }  // namespace fetch
