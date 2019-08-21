@@ -54,6 +54,7 @@ EstimatorType SetupEstimator(fetch::ml::estimator::EstimatorConfig<DataType> &es
   std::vector<SizeVector> data_shape  = {{data.shape().at(0), 1}};
   auto data_loader_ptr                = std::make_shared<DataLoaderType>(label_shape, data_shape);
   data_loader_ptr->AddData(data, gt);
+  data_loader_ptr->SetTestRatio(0.1f);
 
   // run estimator in training mode
   return EstimatorType(estimator_config, data_loader_ptr, {3, 100, 100, 3});
