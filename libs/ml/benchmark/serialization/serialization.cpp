@@ -35,8 +35,8 @@
 
 using SizeType = fetch::math::SizeType;
 template <typename T>
-void create_graph(std::shared_ptr<fetch::ml::Graph<typename fetch::math::Tensor<T>>> g,
-                  SizeType input_size, SizeType output_size, SizeType n_layers)
+void CreateGraph(std::shared_ptr<fetch::ml::Graph<typename fetch::math::Tensor<T>>> g,
+                 SizeType input_size, SizeType output_size, SizeType n_layers)
 {
   using DataType   = T;
   using TensorType = fetch::math::Tensor<DataType>;
@@ -46,7 +46,7 @@ void create_graph(std::shared_ptr<fetch::ml::Graph<typename fetch::math::Tensor<
   for (int i = 0; i < static_cast<int>(n_layers); i++)
   {
     std::string h_1 = g->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
-        "FC_" + std::to_string(i), {input_name}, input_size, output_size);
+        "FC_1_No_" + std::to_string(i), {input_name}, input_size, output_size);
   }
 }
 
@@ -62,13 +62,14 @@ void BM_Setup_And_Serialize(benchmark::State &state)
 
   // make a graph
   auto g = std::make_shared<fetch::ml::Graph<TensorType>>();
-  create_graph<T>(g, input_size, output_size, n_layers);
+  CreateGraph<T>(g, input_size, output_size, n_layers);
 
   fetch::ml::GraphSaveableParams<TensorType> gsp1 = g->GetGraphSaveableParams();
 
+  fetch::serializers::MsgPackSerializer b;
+
   for (auto _ : state)
   {
-    fetch::serializers::MsgPackSerializer b;
     b << gsp1;
   }
 }
@@ -80,6 +81,38 @@ BENCHMARK_TEMPLATE(BM_Setup_And_Serialize, float, 100, 100, 2)->Unit(benchmark::
 BENCHMARK_TEMPLATE(BM_Setup_And_Serialize, float, 100, 100, 4)->Unit(benchmark::kMillisecond);
 BENCHMARK_TEMPLATE(BM_Setup_And_Serialize, float, 100, 100, 8)->Unit(benchmark::kMillisecond);
 
+BENCHMARK_TEMPLATE(BM_Setup_And_Serialize, double, 100, 50, 1)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Setup_And_Serialize, double, 100, 100, 1)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Setup_And_Serialize, double, 100, 200, 1)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Setup_And_Serialize, double, 100, 100, 2)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Setup_And_Serialize, double, 100, 100, 4)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Setup_And_Serialize, double, 100, 100, 8)->Unit(benchmark::kMillisecond);
+
+BENCHMARK_TEMPLATE(BM_Setup_And_Serialize, fetch::fixed_point::fp32_t, 100, 50, 1)
+    ->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Setup_And_Serialize, fetch::fixed_point::fp32_t, 100, 100, 1)
+    ->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Setup_And_Serialize, fetch::fixed_point::fp32_t, 100, 200, 1)
+    ->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Setup_And_Serialize, fetch::fixed_point::fp32_t, 100, 100, 2)
+    ->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Setup_And_Serialize, fetch::fixed_point::fp32_t, 100, 100, 4)
+    ->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Setup_And_Serialize, fetch::fixed_point::fp32_t, 100, 100, 8)
+    ->Unit(benchmark::kMillisecond);
+
+BENCHMARK_TEMPLATE(BM_Setup_And_Serialize, fetch::fixed_point::fp64_t, 100, 50, 1)
+    ->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Setup_And_Serialize, fetch::fixed_point::fp64_t, 100, 100, 1)
+    ->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Setup_And_Serialize, fetch::fixed_point::fp64_t, 100, 200, 1)
+    ->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Setup_And_Serialize, fetch::fixed_point::fp64_t, 100, 100, 2)
+    ->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Setup_And_Serialize, fetch::fixed_point::fp64_t, 100, 100, 4)
+    ->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Setup_And_Serialize, fetch::fixed_point::fp64_t, 100, 100, 8)
+    ->Unit(benchmark::kMillisecond);
 template <typename T, fetch::math::SizeType I, fetch::math::SizeType O, fetch::math::SizeType L>
 void BM_Setup_And_Deserialize(benchmark::State &state)
 {
@@ -92,23 +125,35 @@ void BM_Setup_And_Deserialize(benchmark::State &state)
 
   // make a graph
   auto g = std::make_shared<fetch::ml::Graph<TensorType>>();
-  create_graph<T>(g, input_size, output_size, n_layers);
+  CreateGraph<T>(g, input_size, output_size, n_layers);
 
   fetch::ml::GraphSaveableParams<TensorType> gsp1 = g->GetGraphSaveableParams();
   fetch::serializers::MsgPackSerializer      b;
   b << gsp1;
   b.seek(0);
 
+  fetch::ml::GraphSaveableParams<TensorType> gsp2;
+
   for (auto _ : state)
   {
-    fetch::ml::GraphSaveableParams<TensorType> gsp2;
-    b >> gsp2;
+    benchmark::DoNotOptimize(b >> gsp2);
     b.seek(0);
   }
 }
 
 BENCHMARK_TEMPLATE(BM_Setup_And_Deserialize, float, 100, 100, 1)->Unit(benchmark::kMillisecond);
 BENCHMARK_TEMPLATE(BM_Setup_And_Deserialize, float, 200, 200, 1)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_Setup_And_Deserialize, float, 400, 400, 1)->Unit(benchmark::kMillisecond);
 
+BENCHMARK_TEMPLATE(BM_Setup_And_Deserialize, double, 100, 100, 1)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Setup_And_Deserialize, double, 200, 200, 1)->Unit(benchmark::kMillisecond);
+
+BENCHMARK_TEMPLATE(BM_Setup_And_Deserialize, fetch::fixed_point::fp32_t, 100, 100, 1)
+    ->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Setup_And_Deserialize, fetch::fixed_point::fp32_t, 200, 200, 1)
+    ->Unit(benchmark::kMillisecond);
+
+BENCHMARK_TEMPLATE(BM_Setup_And_Deserialize, fetch::fixed_point::fp64_t, 100, 100, 1)
+    ->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Setup_And_Deserialize, fetch::fixed_point::fp64_t, 200, 200, 1)
+    ->Unit(benchmark::kMillisecond);
 BENCHMARK_MAIN();
