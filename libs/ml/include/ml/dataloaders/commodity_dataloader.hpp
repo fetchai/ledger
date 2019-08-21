@@ -55,6 +55,9 @@ public:
   void        Reset() override;
   inline bool IsValidable() const override;
 
+  virtual void SetTestRatio(float new_test_ratio) override;
+  virtual void SetValidationRatio(float new_validation_ratio) override;
+
   bool AddData(InputType const &data, LabelType const &label) override;
 
 private:
@@ -148,6 +151,20 @@ inline bool CommodityDataLoader<LabelType, InputType>::IsValidable() const
 {
   // Validation set splitting not implemented yet
   return false;
+}
+
+template <typename LabelType, typename InputType>
+void CommodityDataLoader<LabelType, InputType>::SetTestRatio(float new_test_ratio)
+{
+  FETCH_UNUSED(new_test_ratio);
+  throw std::runtime_error("Test set splitting is not supported for this dataloader.");
+}
+
+template <typename LabelType, typename InputType>
+void CommodityDataLoader<LabelType, InputType>::SetValidationRatio(float new_validation_ratio)
+{
+  FETCH_UNUSED(new_validation_ratio);
+  throw std::runtime_error("Validation set splitting is not supported for this dataloader.");
 }
 
 /**

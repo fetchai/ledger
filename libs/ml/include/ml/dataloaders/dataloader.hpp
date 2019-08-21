@@ -62,11 +62,14 @@ public:
   virtual bool       AddData(InputType const &data, LabelType const &label) = 0;
   virtual ReturnType PrepareBatch(fetch::math::SizeType subset_size, bool &is_done_set);
 
-  virtual SizeType Size() const        = 0;
-  virtual bool     IsDone() const      = 0;
-  virtual void     Reset()             = 0;
-  virtual bool     IsValidable() const = 0;
+  virtual SizeType Size() const                                   = 0;
+  virtual bool     IsDone() const                                 = 0;
+  virtual void     Reset()                                        = 0;
+  virtual bool     IsValidable() const                            = 0;
+  virtual void     SetTestRatio(float new_test_ratio)             = 0;
+  virtual void     SetValidationRatio(float new_validation_ratio) = 0;
   void             SetMode(DataLoaderMode new_mode);
+  void             SetRandomMode(bool random_mode_state);
 
   template <typename X, typename D>
   friend struct fetch::serializers::MapSerializer;
@@ -189,6 +192,12 @@ void DataLoader<LabelType, DataType>::SetMode(DataLoaderMode new_mode)
 {
   mode_ = new_mode;
   UpdateCursor();
+}
+
+template <typename LabelType, typename DataType>
+void DataLoader<LabelType, DataType>::SetRandomMode(bool random_mode_state)
+{
+  random_mode_ = random_mode_state;
 }
 
 }  // namespace dataloaders

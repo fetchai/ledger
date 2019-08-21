@@ -46,12 +46,15 @@ public:
   GraphW2VLoader(SizeType window_size, SizeType negative_samples, T freq_thresh,
                  SizeType max_word_count, SizeType seed = 1337);
 
-  bool        IsDone() const override;
-  void        Reset() override;
-  void        RemoveInfrequent(SizeType min);
-  void        InitUnigramTable(SizeType size = 1e8);
-  ReturnType  GetNext() override;
-  bool        AddData(InputType const &input, LabelType const &label) override;
+  bool       IsDone() const override;
+  void       Reset() override;
+  void       RemoveInfrequent(SizeType min);
+  void       InitUnigramTable(SizeType size = 1e8);
+  ReturnType GetNext() override;
+  bool       AddData(InputType const &input, LabelType const &label) override;
+
+  void        SetTestRatio(float new_test_ratio) override;
+  void        SetValidationRatio(float new_validation_ratio) override;
   inline bool IsValidable() const override;
 
   void BuildVocab(std::vector<std::string> const &sents, SizeType min_count = 0);
@@ -230,6 +233,20 @@ inline bool GraphW2VLoader<T>::IsValidable() const
 {
   // Validation set splitting not implemented yet
   return false;
+}
+
+template <typename T>
+void GraphW2VLoader<T>::SetTestRatio(float new_test_ratio)
+{
+  FETCH_UNUSED(new_test_ratio);
+  throw std::runtime_error("Test set splitting is not supported for this dataloader.");
+}
+
+template <typename T>
+void GraphW2VLoader<T>::SetValidationRatio(float new_validation_ratio)
+{
+  FETCH_UNUSED(new_validation_ratio);
+  throw std::runtime_error("Validation set splitting is not supported for this dataloader.");
 }
 
 /**

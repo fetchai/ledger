@@ -42,8 +42,7 @@ class TensorDataLoader : public DataLoader<LabelType, InputType>
 public:
   TensorDataLoader() = default;
   TensorDataLoader(SizeVector const &label_shape, std::vector<SizeVector> const &data_shapes,
-                   bool random_mode = false, float test_to_train_ratio = 0.0,
-                   float validation_to_train_ratio = 0.0);
+                   bool random_mode = false);
 
   ~TensorDataLoader() override = default;
 
@@ -55,6 +54,9 @@ public:
   bool        IsDone() const override;
   void        Reset() override;
   inline bool IsValidable() const override;
+
+  void SetTestRatio(float new_test_ratio) override;
+  void SetValidationRatio(float new_validation_ratio) override;
 
   template <typename X, typename D>
   friend struct fetch::serializers::MapSerializer;
@@ -85,20 +87,17 @@ protected:
   SizeType batch_label_dim_ = fetch::math::numeric_max<SizeType>();
   SizeType batch_data_dim_  = fetch::math::numeric_max<SizeType>();
 
+  void UpdateRanges();
   void UpdateCursor() override;
 };
 
 template <typename LabelType, typename InputType>
 TensorDataLoader<LabelType, InputType>::TensorDataLoader(SizeVector const &             label_shape,
                                                          std::vector<SizeVector> const &data_shapes,
-                                                         bool                           random_mode,
-                                                         float test_to_train_ratio,
-                                                         float validation_to_train_ratio)
+                                                         bool                           random_mode)
   : DataLoader<LabelType, TensorType>(random_mode)
   , label_shape_(label_shape)
   , data_shapes_(data_shapes)
-  , test_to_train_ratio_(test_to_train_ratio)
-  , validation_to_train_ratio_(validation_to_train_ratio)
 {
   UpdateCursor();
 }
@@ -128,22 +127,7 @@ bool TensorDataLoader<LabelType, InputType>::AddData(InputType const &data, Labe
 
   n_samples_ = data_.shape().at(data_.shape().size() - 1);
 
-  float test_percentage       = 1.0f - test_to_train_ratio_ - validation_to_train_ratio_;
-  float validation_percentage = test_percentage + test_to_train_ratio_;
-
-  test_offset_ = static_cast<std::uint32_t>(test_percentage * static_cast<float>(n_samples_));
-  validation_offset_ =
-      static_cast<std::uint32_t>(validation_percentage * static_cast<float>(n_samples_));
-
-  n_validation_samples_ = n_samples_ - validation_offset_;
-  n_test_samples_       = validation_offset_ - test_offset_;
-  n_train_samples_      = test_offset_;
-
-  *train_cursor_      = 0;
-  *test_cursor_       = test_offset_;
-  *validation_cursor_ = validation_offset_;
-
-  UpdateCursor();
+  UpdateRanges();
 
   return true;
 }
@@ -171,6 +155,41 @@ template <typename LabelType, typename InputType>
 inline bool TensorDataLoader<LabelType, InputType>::IsValidable() const
 {
   return n_validation_samples_ > 0;
+}
+
+template <typename LabelType, typename InputType>
+void TensorDataLoader<LabelType, InputType>::SetTestRatio(float new_test_ratio)
+{
+  test_to_train_ratio_ = new_test_ratio;
+  UpdateRanges();
+}
+
+template <typename LabelType, typename InputType>
+void TensorDataLoader<LabelType, InputType>::SetValidationRatio(float new_validation_ratio)
+{
+  validation_to_train_ratio_ = new_validation_ratio;
+  UpdateRanges();
+}
+
+template <typename LabelType, typename InputType>
+void TensorDataLoader<LabelType, InputType>::UpdateRanges()
+{
+  float test_percentage       = 1.0f - test_to_train_ratio_ - validation_to_train_ratio_;
+  float validation_percentage = test_percentage + test_to_train_ratio_;
+
+  test_offset_ = static_cast<std::uint32_t>(test_percentage * static_cast<float>(n_samples_));
+  validation_offset_ =
+      static_cast<std::uint32_t>(validation_percentage * static_cast<float>(n_samples_));
+
+  n_validation_samples_ = n_samples_ - validation_offset_;
+  n_test_samples_       = validation_offset_ - test_offset_;
+  n_train_samples_      = test_offset_;
+
+  *train_cursor_      = 0;
+  *test_cursor_       = test_offset_;
+  *validation_cursor_ = validation_offset_;
+
+  UpdateCursor();
 }
 
 template <typename LabelType, typename InputType>

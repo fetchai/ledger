@@ -62,11 +62,8 @@ private:
   static constexpr std::uint32_t LABEL_SIZE    = 10;
 
 public:
-  MNISTLoader(bool random_mode = false, float test_to_train_ratio = 0.0,
-              float validation_to_train_ratio = 0.0)
+  MNISTLoader(bool random_mode = false)
     : DataLoader<LabelType, InputType>(random_mode)
-    , test_to_train_ratio_(test_to_train_ratio)
-    , validation_to_train_ratio_(validation_to_train_ratio)
   {
     // Prepare return buffer
     buffer_.second.push_back(InputType({FIGURE_WIDTH, FIGURE_HEIGHT, 1u}));
@@ -76,11 +73,8 @@ public:
   }
 
   MNISTLoader(std::string const &images_file, std::string const &labels_file,
-              bool random_mode = false, float test_to_train_ratio = 0.0,
-              float validation_to_train_ratio = 0.0)
+              bool random_mode = false)
     : DataLoader<LabelType, InputType>(random_mode)
-    , test_to_train_ratio_(test_to_train_ratio)
-    , validation_to_train_ratio_(validation_to_train_ratio)
   {
     SetupWithDataFiles(images_file, labels_file);
     UpdateRanges();
@@ -120,6 +114,18 @@ public:
   inline bool IsValidable() const override
   {
     return test_size_ > 0;
+  }
+
+  void SetTestRatio(float new_test_ratio) override
+  {
+    test_to_train_ratio_ = new_test_ratio;
+    UpdateRanges();
+  }
+
+  void SetValidationRatio(float new_validation_ratio) override
+  {
+    validation_to_train_ratio_ = new_validation_ratio;
+    UpdateRanges();
   }
 
   /**

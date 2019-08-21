@@ -57,10 +57,12 @@ int main(int ac, char **av)
   estimator_config.print_stats    = true;
 
   // setup dataloader
-  auto       data_loader_ptr = std::make_shared<DataLoaderType>(av[1], av[2], false, 0.2);
-  auto       test_data       = data_loader_ptr->GetNext();
-  TensorType test_label      = test_data.first;
-  TensorType test_input      = test_data.second.at(0);
+  auto data_loader_ptr = std::make_shared<DataLoaderType>(av[1], av[2], false);
+  data_loader_ptr->SetTestRatio(0.2f);
+
+  auto       test_data  = data_loader_ptr->GetNext();
+  TensorType test_label = test_data.first;
+  TensorType test_input = test_data.second.at(0);
   TensorType prediction;
   DataType   loss;
 

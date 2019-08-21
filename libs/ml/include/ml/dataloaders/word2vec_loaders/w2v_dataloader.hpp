@@ -56,10 +56,13 @@ public:
   bool        IsDone() const override;
   void        Reset() override;
   inline bool IsValidable() const override;
-  void        RemoveInfrequent(SizeType min);
-  void        InitUnigramTable();
-  void        GetNext(ReturnType &t);
-  ReturnType  GetNext() override;
+  void        SetTestRatio(float new_test_ratio) override;
+  void        SetValidationRatio(float new_validation_ratio) override;
+
+  void       RemoveInfrequent(SizeType min);
+  void       InitUnigramTable();
+  void       GetNext(ReturnType &t);
+  ReturnType GetNext() override;
 
   bool AddData(InputType const &input, LabelType const &label) override;
 
@@ -172,6 +175,20 @@ inline bool W2VLoader<T>::IsValidable() const
 {
   // Validation set splitting not implemented yet
   return false;
+}
+
+template <typename T>
+void W2VLoader<T>::SetTestRatio(float new_test_ratio)
+{
+  FETCH_UNUSED(new_test_ratio);
+  throw std::runtime_error("Test set splitting is not supported for this dataloader.");
+}
+
+template <typename T>
+void W2VLoader<T>::SetValidationRatio(float new_validation_ratio)
+{
+  FETCH_UNUSED(new_validation_ratio);
+  throw std::runtime_error("Validation set splitting is not supported for this dataloader.");
 }
 
 /**
