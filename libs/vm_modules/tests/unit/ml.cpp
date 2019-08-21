@@ -28,7 +28,6 @@
 #include <sstream>
 
 using namespace fetch::vm;
-using ::testing::Between;
 
 namespace {
 
@@ -41,7 +40,100 @@ public:
   VmTestToolkit     toolkit{&stdout};
 };
 
-TEST_F(MLTests, dataloader_serialisation_test)
+TEST_F(MLTests, serialise_empty_tensor_dataloader_test)
+{
+  static char const *dataloader_serialise_src = R"(
+    function main()
+
+      var dataloader = DataLoader("tensor");
+      var state = State<DataLoader>("dataloader");
+      state.set(dataloader);
+
+    endfunction
+  )";
+
+  std::string const state_name{"dataloader"};
+  ASSERT_TRUE(toolkit.Compile(dataloader_serialise_src));
+  EXPECT_CALL(toolkit.observer(), Write(state_name, _, _));
+  ASSERT_TRUE(toolkit.Run());
+
+  static char const *dataloader_deserialise_src = R"(
+      function main()
+        var state = State<DataLoader>("dataloader");
+        var dataloader = state.get();
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(dataloader_deserialise_src));
+
+  EXPECT_CALL(toolkit.observer(), Exists(state_name));
+  EXPECT_CALL(toolkit.observer(), Read(state_name, _, _)).Times(testing::Between(1, 2));
+  ASSERT_TRUE(toolkit.Run());
+}
+
+TEST_F(MLTests, serialise_empty_commodity_dataloader_test)
+{
+  static char const *dataloader_serialise_src = R"(
+    function main()
+
+      var dataloader = DataLoader("tensor");
+      var state = State<DataLoader>("commodity");
+      state.set(dataloader);
+
+    endfunction
+  )";
+
+  std::string const state_name{"commodity"};
+  ASSERT_TRUE(toolkit.Compile(dataloader_serialise_src));
+  EXPECT_CALL(toolkit.observer(), Write(state_name, _, _));
+  ASSERT_TRUE(toolkit.Run());
+
+  static char const *dataloader_deserialise_src = R"(
+      function main()
+        var state = State<DataLoader>("commodity");
+        var dataloader = state.get();
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(dataloader_deserialise_src));
+
+  EXPECT_CALL(toolkit.observer(), Exists(state_name));
+  EXPECT_CALL(toolkit.observer(), Read(state_name, _, _)).Times(testing::Between(1, 2));
+  ASSERT_TRUE(toolkit.Run());
+}
+
+TEST_F(MLTests, serialise_empty_mnist_dataloader_test)
+{
+  static char const *dataloader_serialise_src = R"(
+    function main()
+
+      var dataloader = DataLoader("tensor");
+      var state = State<DataLoader>("mnist");
+      state.set(dataloader);
+
+    endfunction
+  )";
+
+  std::string const state_name{"mnist"};
+  ASSERT_TRUE(toolkit.Compile(dataloader_serialise_src));
+  EXPECT_CALL(toolkit.observer(), Write(state_name, _, _));
+  ASSERT_TRUE(toolkit.Run());
+
+  static char const *dataloader_deserialise_src = R"(
+      function main()
+        var state = State<DataLoader>("mnist");
+        var dataloader = state.get();
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(dataloader_deserialise_src));
+
+  EXPECT_CALL(toolkit.observer(), Exists(state_name));
+  EXPECT_CALL(toolkit.observer(), Read(state_name, _, _)).Times(testing::Between(1, 2));
+  ASSERT_TRUE(toolkit.Run());
+}
+
+TEST_F(MLTests, tensor_dataloader_with_data_serialisation_test)
 {
   static char const *dataloader_serialise_src = R"(
     function main() : TrainingPair
@@ -54,8 +146,8 @@ TEST_F(MLTests, dataloader_serialisation_test)
       data_tensor.fill(7.0fp64);
       label_tensor.fill(7.0fp64);
 
-      var dataloader = DataLoader();
-      dataloader.addData("tensor", data_tensor, label_tensor);
+      var dataloader = DataLoader("tensor");
+      dataloader.addData(data_tensor, label_tensor);
 
       var state = State<DataLoader>("dataloader");
       state.set(dataloader);
@@ -86,7 +178,7 @@ TEST_F(MLTests, dataloader_serialisation_test)
 
   Variant res;
   EXPECT_CALL(toolkit.observer(), Exists(state_name));
-  EXPECT_CALL(toolkit.observer(), Read(state_name, _, _)).Times(Between(1, 2));
+  EXPECT_CALL(toolkit.observer(), Read(state_name, _, _)).Times(::testing::Between(1, 2));
   ASSERT_TRUE(toolkit.Run(&res));
 
   auto const initial_training_pair = first_res.Get<Ptr<fetch::vm_modules::ml::VMTrainingPair>>();
@@ -152,13 +244,98 @@ TEST_F(MLTests, graph_serialisation_test)
 
   Variant res;
   EXPECT_CALL(toolkit.observer(), Exists(state_name));
-  EXPECT_CALL(toolkit.observer(), Read(state_name, _, _)).Times(Between(1, 2));
+  EXPECT_CALL(toolkit.observer(), Read(state_name, _, _)).Times(::testing::Between(1, 2));
   ASSERT_TRUE(toolkit.Run(&res));
 
   auto const initial_loss = first_res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
   auto const loss         = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
 
   EXPECT_TRUE(initial_loss->GetTensor().AllClose(loss->GetTensor()));
+}
+
+TEST_F(MLTests, sgd_optimiser_serialisation_test)
+{
+  static char const *optimiser_serialise_src = R"(
+    function main() : Fixed64
+
+      var tensor_shape = Array<UInt64>(2);
+      tensor_shape[0] = 2u64;
+      tensor_shape[1] = 10u64;
+      var data_tensor = Tensor(tensor_shape);
+      var label_tensor = Tensor(tensor_shape);
+      data_tensor.fill(7.0fp64);
+      label_tensor.fill(7.0fp64);
+
+      var graph = Graph();
+      graph.addPlaceholder("Input");
+      graph.addPlaceholder("Label");
+      graph.addFullyConnected("FC1", "Input", 2, 2);
+      graph.addRelu("Output", "FC1");
+      graph.addMeanSquareErrorLoss("Error", "Output", "Label");
+
+      var dataloader = DataLoader("tensor");
+      dataloader.addData(data_tensor, label_tensor);
+
+      var batch_size = 8u64;
+      var optimiser = Optimiser("sgd", graph, dataloader, "Input", "Label", "Error");
+
+      var state = State<Optimiser>("optimiser");
+      state.set(optimiser);
+
+      ////////////
+      // TODO (1533) - this is necessary due to a bug
+      // now make a totally new optimiser, graph and dataloader with identical properties
+      // this is necessary because the optimiser data is not written at state.set time
+      // therefore the internal states of the optimser after calling run will be saved
+      // to the state
+      ////////////
+
+      var graph2 = Graph();
+      graph2.addPlaceholder("Input");
+      graph2.addPlaceholder("Label");
+      graph2.addFullyConnected("FC1", "Input", 2, 2);
+      graph2.addRelu("Output", "FC1");
+      graph2.addMeanSquareErrorLoss("Error", "Output", "Label");
+
+      var dataloader2 = DataLoader("tensor");
+      dataloader2.addData(data_tensor, label_tensor);
+
+      var optimiser2 = Optimiser("sgd", graph2, dataloader2, "Input", "Label", "Error");
+      var loss = optimiser2.run(batch_size);
+      return loss;
+
+    endfunction
+  )";
+
+  std::string const state_name{"optimiser"};
+  Variant           first_res;
+  ASSERT_TRUE(toolkit.Compile(optimiser_serialise_src));
+  EXPECT_CALL(toolkit.observer(), Write(state_name, _, _));
+  ASSERT_TRUE(toolkit.Run(&first_res));
+  auto const loss1 = first_res.Get<fetch::fixed_point::fp64_t>();
+
+  std::cout << "loss1: " << loss1 << std::endl;
+
+  static char const *optimiser_deserialise_src = R"(
+      function main() : Fixed64
+        var state = State<Optimiser>("optimiser");
+        var optimiser = state.get();
+        var batch_size = 8u64;
+        var loss = optimiser.run(batch_size);
+        return loss;
+      endfunction
+    )";
+
+  Variant second_res;
+  ASSERT_TRUE(toolkit.Compile(optimiser_deserialise_src));
+  EXPECT_CALL(toolkit.observer(), Exists(state_name));
+  EXPECT_CALL(toolkit.observer(), Read(state_name, _, _)).Times(::testing::Between(1, 2));
+  ASSERT_TRUE(toolkit.Run(&second_res));
+
+  auto const loss2 = second_res.Get<fetch::fixed_point::fp64_t>();
+
+  std::cout << "loss2: " << loss2 << std::endl;
+  EXPECT_TRUE(loss1 == loss2);
 }
 
 }  // namespace

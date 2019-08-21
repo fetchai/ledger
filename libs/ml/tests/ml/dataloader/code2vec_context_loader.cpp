@@ -59,7 +59,7 @@ TEST(C2vLoaderTest, loader_test)
 
   C2VLoader<LabelType, ContextType> loader(max_contexts);
 
-  loader.AddData(training_data);
+  loader.AddDataAsString(training_data);
 
   EXPECT_EQ(loader.function_name_counter().size(), 5);
   EXPECT_EQ(loader.path_counter().size(), 37);

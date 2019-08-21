@@ -258,7 +258,7 @@ function (configure_vendor_targets)
   # MCL TODO: Work out how to get this to work with the already found version of OpenSSL
   set(USE_GMP OFF CACHE BOOL "use gmp" FORCE)
   set(USE_OPENSSL OFF CACHE BOOL "use openssl" FORCE)
-  set(ONLY_LIB OFF CACHE BOOL "use openssl" FORCE)
+  set(ONLY_LIB ON CACHE BOOL "only lib" FORCE)
   add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/mcl)
   target_include_directories(mcl_st INTERFACE ${FETCH_ROOT_VENDOR_DIR}/mcl/include)
   target_compile_definitions(mcl_st
