@@ -53,8 +53,8 @@ private:
   std::uint32_t test_offset_;
   std::uint32_t validation_offset_;
 
-    float test_to_train_ratio_=0.0f;
-    float validation_to_train_ratio_=0.0f;
+  float test_to_train_ratio_       = 0.0f;
+  float validation_to_train_ratio_ = 0.0f;
 
   static constexpr std::uint32_t FIGURE_WIDTH  = 28;
   static constexpr std::uint32_t FIGURE_HEIGHT = 28;
@@ -62,32 +62,29 @@ private:
   static constexpr std::uint32_t LABEL_SIZE    = 10;
 
 public:
-
-
-    MNISTLoader(bool random_mode = false, float test_to_train_ratio = 0.0,
-                float validation_to_train_ratio = 0.0)
+  MNISTLoader(bool random_mode = false, float test_to_train_ratio = 0.0,
+              float validation_to_train_ratio = 0.0)
     : DataLoader<LabelType, InputType>(random_mode)
-            , test_to_train_ratio_(test_to_train_ratio)
-            ,validation_to_train_ratio_(validation_to_train_ratio)
-    {
-      // Prepare return buffer
-      buffer_.second.push_back(InputType({FIGURE_WIDTH, FIGURE_HEIGHT, 1u}));
-      buffer_.first = LabelType({LABEL_SIZE, 1u});
+    , test_to_train_ratio_(test_to_train_ratio)
+    , validation_to_train_ratio_(validation_to_train_ratio)
+  {
+    // Prepare return buffer
+    buffer_.second.push_back(InputType({FIGURE_WIDTH, FIGURE_HEIGHT, 1u}));
+    buffer_.first = LabelType({LABEL_SIZE, 1u});
 
-        UpdateRanges();
-    }
+    UpdateRanges();
+  }
 
-    MNISTLoader(std::string const &images_file, std::string const &labels_file,
-            bool random_mode = false, float test_to_train_ratio = 0.0,
-                float validation_to_train_ratio = 0.0)
+  MNISTLoader(std::string const &images_file, std::string const &labels_file,
+              bool random_mode = false, float test_to_train_ratio = 0.0,
+              float validation_to_train_ratio = 0.0)
     : DataLoader<LabelType, InputType>(random_mode)
-            , test_to_train_ratio_(test_to_train_ratio)
-            ,validation_to_train_ratio_(validation_to_train_ratio)
-    {
-      SetupWithDataFiles(images_file, labels_file);
-        UpdateRanges();
-    }
-
+    , test_to_train_ratio_(test_to_train_ratio)
+    , validation_to_train_ratio_(validation_to_train_ratio)
+  {
+    SetupWithDataFiles(images_file, labels_file);
+    UpdateRanges();
+  }
 
   SizeType Size() const override
   {
@@ -182,8 +179,6 @@ public:
 
     return std::make_pair(ret_labels, ret_images);
   }
-
-
 
   void SetupWithDataFiles(std::string const &images_file, std::string const &labels_file)
   {
@@ -288,61 +283,61 @@ public:
 private:
   using uchar = unsigned char;
 
-    void UpdateCursor() override
-            {
-                    if (this->mode_ == DataLoaderMode::TRAIN)
-                    {
-                      this->current_cursor_ = train_cursor_;
-                      this->current_min_    = 0;
-                      this->current_max_    = test_offset_;
-                      this->current_size_   = train_size_;
-                    }
-                    else if (this->mode_ == DataLoaderMode::TEST)
-                    {
-                      this->current_cursor_ = test_cursor_;
-                      this->current_min_    = test_offset_;
-                      this->current_max_    = validation_offset_;
-                      this->current_size_   = test_size_;
-                    }
-                    else if (this->mode_ == DataLoaderMode::VALIDATE)
-                    {
-                      this->current_cursor_ = validation_cursor_;
-                      this->current_min_    = validation_offset_;
-                      this->current_max_    = total_size_;
-                      this->current_size_   = validation_size_;
-                    }
-                    else
-                    {
-                      throw std::runtime_error("Unsupported dataloader mode.");
-                    }
+  void UpdateCursor() override
+  {
+    if (this->mode_ == DataLoaderMode::TRAIN)
+    {
+      this->current_cursor_ = train_cursor_;
+      this->current_min_    = 0;
+      this->current_max_    = test_offset_;
+      this->current_size_   = train_size_;
+    }
+    else if (this->mode_ == DataLoaderMode::TEST)
+    {
+      this->current_cursor_ = test_cursor_;
+      this->current_min_    = test_offset_;
+      this->current_max_    = validation_offset_;
+      this->current_size_   = test_size_;
+    }
+    else if (this->mode_ == DataLoaderMode::VALIDATE)
+    {
+      this->current_cursor_ = validation_cursor_;
+      this->current_min_    = validation_offset_;
+      this->current_max_    = total_size_;
+      this->current_size_   = validation_size_;
+    }
+    else
+    {
+      throw std::runtime_error("Unsupported dataloader mode.");
+    }
 
-                    if (this->current_min_ == this->current_max_)
-                    {
-                      throw std::runtime_error("Dataloader has no set for selected mode.");
-                    }
-            }
+    if (this->current_min_ == this->current_max_)
+    {
+      throw std::runtime_error("Dataloader has no set for selected mode.");
+    }
+  }
 
-            void UpdateRanges()
-            {
-              float test_percentage       = 1.0f - test_to_train_ratio_ - validation_to_train_ratio_;
-              float validation_percentage = test_percentage + test_to_train_ratio_;
+  void UpdateRanges()
+  {
+    float test_percentage       = 1.0f - test_to_train_ratio_ - validation_to_train_ratio_;
+    float validation_percentage = test_percentage + test_to_train_ratio_;
 
-              test_offset_ = static_cast<std::uint32_t>(test_percentage * static_cast<float>(total_size_));
-              validation_offset_ =
-                      static_cast<std::uint32_t>(validation_percentage * static_cast<float>(total_size_));
+    test_offset_ = static_cast<std::uint32_t>(test_percentage * static_cast<float>(total_size_));
+    validation_offset_ =
+        static_cast<std::uint32_t>(validation_percentage * static_cast<float>(total_size_));
 
-              validation_size_ = total_size_ - validation_offset_;
-              test_size_       = validation_offset_ - test_offset_;
-              train_size_      = total_size_ - test_offset_;
+    validation_size_ = total_size_ - validation_offset_;
+    test_size_       = validation_offset_ - test_offset_;
+    train_size_      = total_size_ - test_offset_;
 
-              *train_cursor_      = 0;
-              *validation_cursor_ = validation_offset_;
-              *test_cursor_       = test_offset_;
+    *train_cursor_      = 0;
+    *validation_cursor_ = validation_offset_;
+    *test_cursor_       = test_offset_;
 
-              UpdateCursor();
-            }
+    UpdateCursor();
+  }
 
-    void GetAtIndex(SizeType index, ReturnType &ret)
+  void GetAtIndex(SizeType index, ReturnType &ret)
   {
     SizeType i{0};
 

@@ -100,8 +100,7 @@ TensorDataLoader<LabelType, InputType>::TensorDataLoader(SizeVector const &     
   , test_to_train_ratio_(test_to_train_ratio)
   , validation_to_train_ratio_(validation_to_train_ratio)
 {
-    UpdateCursor();
-
+  UpdateCursor();
 }
 
 template <typename LabelType, typename InputType>
@@ -124,21 +123,21 @@ bool TensorDataLoader<LabelType, InputType>::AddData(InputType const &data, Labe
   one_sample_data_shapes_.emplace_back(data.shape());
   one_sample_data_shapes_.at(0).at(one_sample_data_shapes_.at(0).size() - 1) = 1;
 
-  data_         = data.Copy();
-  labels_       = labels.Copy();
+  data_   = data.Copy();
+  labels_ = labels.Copy();
 
   n_samples_ = data_.shape().at(data_.shape().size() - 1);
 
   float test_percentage       = 1.0f - test_to_train_ratio_ - validation_to_train_ratio_;
   float validation_percentage = test_percentage + test_to_train_ratio_;
 
-  test_offset_ = static_cast<std::uint32_t>(test_percentage * static_cast<float>(n_train_samples_));
+  test_offset_ = static_cast<std::uint32_t>(test_percentage * static_cast<float>(n_samples_));
   validation_offset_ =
-      static_cast<std::uint32_t>(validation_percentage * static_cast<float>(n_train_samples_));
+      static_cast<std::uint32_t>(validation_percentage * static_cast<float>(n_samples_));
 
   n_validation_samples_ = n_samples_ - validation_offset_;
   n_test_samples_       = validation_offset_ - test_offset_;
-  n_train_samples_      = n_samples_ - test_offset_;
+  n_train_samples_      = test_offset_;
 
   *train_cursor_      = 0;
   *test_cursor_       = test_offset_;

@@ -62,11 +62,11 @@ public:
   virtual bool       AddData(InputType const &data, LabelType const &label) = 0;
   virtual ReturnType PrepareBatch(fetch::math::SizeType subset_size, bool &is_done_set);
 
-  virtual SizeType Size() const   = 0;
-  virtual bool     IsDone() const = 0;
-  virtual void     Reset()        = 0;
-    virtual bool     IsValidable() const = 0;
-    void             SetMode(DataLoaderMode new_mode);
+  virtual SizeType Size() const        = 0;
+  virtual bool     IsDone() const      = 0;
+  virtual void     Reset()             = 0;
+  virtual bool     IsValidable() const = 0;
+  void             SetMode(DataLoaderMode new_mode);
 
   template <typename X, typename D>
   friend struct fetch::serializers::MapSerializer;

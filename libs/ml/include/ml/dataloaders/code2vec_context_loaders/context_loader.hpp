@@ -71,13 +71,13 @@ public:
   ContextLabelPair        GetNextContext();
   ContextTensorsLabelPair GetNext() override;
 
-  SizeType Size() const override;
-  bool     IsDone() const override;
-  void     Reset() override;
-  bool     AddData(InputType const &data, LabelType const &label) override;
+  SizeType    Size() const override;
+  bool        IsDone() const override;
+  void        Reset() override;
+  bool        AddData(InputType const &data, LabelType const &label) override;
   inline bool IsValidable() const override;
-  void     AddDataAsString(std::string const &text);
-  void     createIdxUMaps();
+  void        AddDataAsString(std::string const &text);
+  void        createIdxUMaps();
 
   umap_int_str umap_idx_to_functionname();
   umap_int_str umap_idx_to_path();

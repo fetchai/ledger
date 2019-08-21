@@ -46,14 +46,13 @@ public:
   GraphW2VLoader(SizeType window_size, SizeType negative_samples, T freq_thresh,
                  SizeType max_word_count, SizeType seed = 1337);
 
-  bool       IsDone() const override;
-  void       Reset() override;
-  void       RemoveInfrequent(SizeType min);
-  void       InitUnigramTable(SizeType size = 1e8);
-  ReturnType GetNext() override;
-  bool       AddData(InputType const &input, LabelType const &label) override;
-    inline bool IsValidable() const override;
-
+  bool        IsDone() const override;
+  void        Reset() override;
+  void        RemoveInfrequent(SizeType min);
+  void        InitUnigramTable(SizeType size = 1e8);
+  ReturnType  GetNext() override;
+  bool        AddData(InputType const &input, LabelType const &label) override;
+  inline bool IsValidable() const override;
 
   void BuildVocab(std::vector<std::string> const &sents, SizeType min_count = 0);
   void SaveVocab(std::string const &filename);
