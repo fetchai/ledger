@@ -189,8 +189,8 @@ TYPED_TEST(VectorReduceTest, reduce_tests)
 
   for (std::size_t i = 0; i < N; ++i)
   {
-    A[i] = type((i-N/2)*4);
-    B[i] = type((i-N/2)*(i-N/2));
+    A[i] = type((i+1)*4);
+    B[i] = type((i+1)*(i+1));
     std::cout << "A[" << i << "] = " << A[i] << std::endl;
     std::cout << "B[" << i << "] = " << B[i] << std::endl;
     sum += A[i] + B[i];
