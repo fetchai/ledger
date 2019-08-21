@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "beacon/beacon_setup_service.hpp"
 #include "beacon/beacon_setup_protocol.hpp"
+#include "beacon/beacon_setup_service.hpp"
 #include "network/generics/requesting_queue.hpp"
 
 namespace fetch {
@@ -43,6 +43,9 @@ char const *ToString(BeaconSetupService::State state)
     break;
   case BeaconSetupService::State::CREATE_SHARES:
     text = "Creating shares";
+    break;
+  case BeaconSetupService::State::WAIT_FOR_VERIFICATION_VECTORS:
+    text = "Waiting for verfication vectors";
     break;
   case BeaconSetupService::State::SEND_SHARES:
     text = "Sending shares";
@@ -75,20 +78,29 @@ BeaconSetupService::BeaconSetupService(Endpoint &endpoint, Identity identity)
   state_machine_->RegisterHandler(State::BROADCAST_ID, this, &BeaconSetupService::OnBroadcastID);
   state_machine_->RegisterHandler(State::WAIT_FOR_IDS, this, &BeaconSetupService::WaitForIDs);
   state_machine_->RegisterHandler(State::CREATE_SHARES, this, &BeaconSetupService::CreateShares);
+  state_machine_->RegisterHandler(State::WAIT_FOR_VERIFICATION_VECTORS, this,
+                                  &BeaconSetupService::WaitForVerificationVectors);
+
   state_machine_->RegisterHandler(State::SEND_SHARES, this, &BeaconSetupService::SendShares);
   state_machine_->RegisterHandler(State::WAIT_FOR_SHARES, this,
                                   &BeaconSetupService::OnWaitForShares);
   state_machine_->RegisterHandler(State::GENERATE_KEYS, this, &BeaconSetupService::OnGenerateKeys);
   state_machine_->RegisterHandler(State::BEACON_READY, this, &BeaconSetupService::OnBeaconReady);
 
+  // Setting the RBC protocol up for verification vectors
   broadcast_protocol_.reset(new ReliableBroadcastProt(
       endpoint_, identity_.identifier(),
-      [](network::RBC::MuddleAddress const & /*address*/, ConstByteArray const &
-         /*payload*/) -> void {
-        // TODO: send
+      [this](network::RBC::MuddleAddress const &address, ConstByteArray const &payload) -> void {
+        VerificationVector verification_vector;
+        Serializer         serialiser{payload};
+        serialiser >> verification_vector;
+
+        std::lock_guard<std::mutex> lock(mutex_);
+        member_verification_vector_[address] = verification_vector;
       },
       CHANNEL_VERIFICATION_VECTORS));
 
+  // Setting the ID subscription handler up
   id_subscription_->SetMessageHandler(
       [this](muddle::Packet::Address const &from, uint16_t, uint16_t, uint16_t,
              muddle::Packet::Payload const &payload, muddle::Packet::Address transmitter) {
@@ -258,6 +270,28 @@ BeaconSetupService::State BeaconSetupService::CreateShares()
     share_delivery_details_[counter_party] = details;
   }
 
+  // Broadcasting verification shares
+  auto       verification_vector = beacon_->manager.GetVerificationVector();
+  Serializer serialiser;
+  serialiser << verification_vector;
+  broadcast_protocol_->Broadcast(serialiser.data());
+  member_verification_vector_[identity_.identifier()] = verification_vector;
+
+  return State::WAIT_FOR_VERIFICATION_VECTORS;
+}
+
+BeaconSetupService::State BeaconSetupService::WaitForVerificationVectors()
+{
+  std::lock_guard<std::mutex> lock(mutex_);
+  if (member_verification_vector_.size() != beacon_->aeon.members.size())
+  {
+    FETCH_LOG_INFO(LOGGING_NAME,
+                   "Waiting for verification vectors: ", member_verification_vector_.size(),
+                   " expect: ", beacon_->aeon.members.size());
+    state_machine_->Delay(std::chrono::milliseconds(100));
+    return State::WAIT_FOR_VERIFICATION_VECTORS;
+  }
+
   return State::SEND_SHARES;
 }
 
@@ -268,11 +302,6 @@ BeaconSetupService::State BeaconSetupService::SendShares()
     std::lock_guard<std::mutex> lock(mutex_);
     auto                        verification_vector = beacon_->manager.GetVerificationVector();
     auto                        from                = beacon_->manager.identity();
-
-    // Broaccasting verification vector
-    Serializer serialiser;
-    serialiser << verification_vector;
-    broadcast_protocol_->Broadcast(serialiser.data());
 
     for (auto &delivery_info : share_delivery_details_)
     {
@@ -288,17 +317,16 @@ BeaconSetupService::State BeaconSetupService::SendShares()
       if (counter_party == identity_)
       {
         ShareSubmission submission;
-        submission.from                = from;
-        submission.share               = std::move(share);
-        submission.verification_vector = verification_vector;
+        submission.from  = from;
+        submission.share = std::move(share);
 
         submitted_shares_[from] = submission;
       }
       else
       {
-        details.response = rpc_client_.CallSpecificAddress(
-            counter_party.identifier(), RPC_BEACON_SETUP, BeaconSetupServiceProtocol::SUBMIT_SHARE,
-            from, share, verification_vector);
+        details.response =
+            rpc_client_.CallSpecificAddress(counter_party.identifier(), RPC_BEACON_SETUP,
+                                            BeaconSetupServiceProtocol::SUBMIT_SHARE, from, share);
       }
     }
   }
@@ -315,17 +343,15 @@ BeaconSetupService::State BeaconSetupService::SendShares()
   return State::SEND_SHARES;
 }
 
-bool BeaconSetupService::SubmitShare(Identity from, PrivateKey share,
-                                     VerificationVector verification_vector)
+bool BeaconSetupService::SubmitShare(Identity from, PrivateKey share)
 {
   std::lock_guard<std::mutex> lock(mutex_);
   // TODO(tfr): Check signature
   // TODO(tfr):  member is part of cabinet
 
   ShareSubmission submission;
-  submission.from                = from;
-  submission.share               = std::move(share);
-  submission.verification_vector = std::move(verification_vector);
+  submission.from  = from;
+  submission.share = std::move(share);
 
   submitted_shares_[from] = submission;
 
@@ -354,7 +380,9 @@ BeaconSetupService::State BeaconSetupService::OnGenerateKeys()
   for (auto &t : submitted_shares_)
   {
     auto &s = t.second;
-    if (!beacon_->manager.AddShare(s.from, s.share, s.verification_vector))
+    // TODO: Test that it exists just to be on the sure to be sure
+    auto vv = member_verification_vector_[s.from.identifier()];
+    if (!beacon_->manager.AddShare(s.from, s.share, vv))
     {
       // TODO(tfr): Serializable error
       throw std::runtime_error("share could not be verified.");
@@ -380,6 +408,7 @@ BeaconSetupService::State BeaconSetupService::OnBeaconReady()
   member_details_.clear();
   share_delivery_details_.clear();
   submitted_shares_.clear();
+  member_verification_vector_.clear();
 
   return State::IDLE;
 }

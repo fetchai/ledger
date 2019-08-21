@@ -44,8 +44,8 @@ public:
 
     BROADCAST_ID,
     WAIT_FOR_IDS,
-
     CREATE_SHARES,
+    WAIT_FOR_VERIFICATION_VECTORS,
     SEND_SHARES,
     WAIT_FOR_SHARES,
 
@@ -83,9 +83,8 @@ public:
 
   struct ShareSubmission
   {
-    Identity           from{};
-    PrivateKey         share{};
-    VerificationVector verification_vector{};
+    Identity   from{};
+    PrivateKey share{};
   };
 
   struct DeliveryDetails
@@ -106,6 +105,7 @@ public:
   State OnBroadcastID();
   State WaitForIDs();
   State CreateShares();
+  State WaitForVerificationVectors();
   State SendShares();
 
   State OnWaitForShares();
@@ -115,7 +115,7 @@ public:
 
   /// Protocol calls
   /// @{
-  bool SubmitShare(Identity from, PrivateKey share, VerificationVector verification_vector);
+  bool SubmitShare(Identity from, PrivateKey share);
   /// @}
 
   /// Setup management
@@ -142,6 +142,7 @@ private:
   std::shared_ptr<StateMachine>                   state_machine_;
   std::vector<CabinetMemberDetails>               member_details_queue_;
   std::unordered_map<Identity, BeaconManager::Id> member_details_;
+  std::unordered_map<Address, VerificationVector> member_verification_vector_;
 
   std::unordered_map<Identity, DeliveryDetails> share_delivery_details_;
   std::unordered_map<Identity, ShareSubmission> submitted_shares_;

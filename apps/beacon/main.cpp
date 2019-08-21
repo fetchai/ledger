@@ -174,7 +174,10 @@ int main()
     }
 
     FETCH_LOG_INFO("default", "Found entropy for block: ", block_number, " as ", entropy);
-
+    if (block_number > 10)
+    {
+      exit(-1);
+    }
     ++block_number;
   }
 
