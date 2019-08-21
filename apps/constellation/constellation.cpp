@@ -275,7 +275,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   // print the start up log banner
   FETCH_LOG_INFO(LOGGING_NAME, "Constellation :: ", cfg_.num_lanes(), "x", cfg_.num_slices, "x",
                  cfg_.num_executors);
-  FETCH_LOG_INFO(LOGGING_NAME, "              :: ", Address{muddle_->GetAddress()}.display());
+  FETCH_LOG_INFO(LOGGING_NAME, "              :: ", Address::FromMuddleAddress(muddle_->GetAddress()).display());
   FETCH_LOG_INFO(LOGGING_NAME, "              :: ", muddle_->GetAddress().ToBase64());
   FETCH_LOG_INFO(LOGGING_NAME, "");
 
