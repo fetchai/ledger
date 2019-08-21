@@ -43,8 +43,8 @@ public:
   using ReturnType = std::pair<LabelType, std::vector<InputType>>;
   using SizeType   = math::SizeType;
 
-  explicit CommodityDataLoader(bool random_mode = false)
-    : DataLoader<LabelType, InputType>(random_mode)
+  explicit CommodityDataLoader()
+    : DataLoader<LabelType, InputType>()
   {}
 
   ~CommodityDataLoader() override = default;

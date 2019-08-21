@@ -59,7 +59,7 @@ TYPED_TEST(TensorDataloaderTest, serialize_tensor_dataloader)
 
   // initialise a new tensor dataloader with the wrong shape parameters
   // these will get updated by deserialisation
-  fetch::ml::dataloaders::TensorDataLoader<TypeParam, TypeParam> tdl_2({1, 1}, {{1, 1}}, false);
+  fetch::ml::dataloaders::TensorDataLoader<TypeParam, TypeParam> tdl_2({1, 1}, {{1, 1}});
   tdl_2.SetTestRatio(0.5);
 
   b >> tdl_2;

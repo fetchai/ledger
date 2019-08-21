@@ -109,7 +109,7 @@ private:
 template <typename T>
 GraphW2VLoader<T>::GraphW2VLoader(SizeType window_size, SizeType negative_samples, T freq_thresh,
                                   SizeType max_word_count, SizeType seed)
-  : DataLoader<LabelType, InputType>(false)  // no random mode specified
+  : DataLoader<LabelType, InputType>()  // no random mode specified
   , current_sentence_(0)
   , current_word_(0)
   , window_size_(window_size)

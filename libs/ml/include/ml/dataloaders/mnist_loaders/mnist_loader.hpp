@@ -72,9 +72,8 @@ public:
     UpdateRanges();
   }
 
-  MNISTLoader(std::string const &images_file, std::string const &labels_file,
-              bool random_mode = false)
-    : DataLoader<LabelType, InputType>(random_mode)
+  MNISTLoader(std::string const &images_file, std::string const &labels_file)
+    : DataLoader<LabelType, InputType>()
   {
     SetupWithDataFiles(images_file, labels_file);
     UpdateRanges();

@@ -41,8 +41,7 @@ class TensorDataLoader : public DataLoader<LabelType, InputType>
 
 public:
   TensorDataLoader() = default;
-  TensorDataLoader(SizeVector const &label_shape, std::vector<SizeVector> const &data_shapes,
-                   bool random_mode = false);
+  TensorDataLoader(SizeVector const &label_shape, std::vector<SizeVector> const &data_shapes);
 
   ~TensorDataLoader() override = default;
 
@@ -93,9 +92,8 @@ protected:
 
 template <typename LabelType, typename InputType>
 TensorDataLoader<LabelType, InputType>::TensorDataLoader(SizeVector const &             label_shape,
-                                                         std::vector<SizeVector> const &data_shapes,
-                                                         bool                           random_mode)
-  : DataLoader<LabelType, TensorType>(random_mode)
+                                                         std::vector<SizeVector> const &data_shapes)
+  : DataLoader<LabelType, TensorType>()
   , label_shape_(label_shape)
   , data_shapes_(data_shapes)
 {

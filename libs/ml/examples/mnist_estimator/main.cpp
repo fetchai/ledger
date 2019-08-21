@@ -57,7 +57,7 @@ int main(int ac, char **av)
   estimator_config.print_stats    = true;
 
   // setup dataloader
-  auto data_loader_ptr = std::make_shared<DataLoaderType>(av[1], av[2], false);
+  auto data_loader_ptr = std::make_shared<DataLoaderType>(av[1], av[2]);
   data_loader_ptr->SetTestRatio(0.2f);
 
   auto       test_data  = data_loader_ptr->GetNext();
