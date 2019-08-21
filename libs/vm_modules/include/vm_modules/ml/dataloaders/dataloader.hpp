@@ -51,7 +51,6 @@ public:
   };
 
   VMDataLoader(fetch::vm::VM *vm, fetch::vm::TypeId type_id);
-
   VMDataLoader(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
                fetch::vm::Ptr<fetch::vm::String> const &mode);
 

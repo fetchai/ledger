@@ -46,8 +46,9 @@ public:
 
   ~TensorDataLoader() override = default;
 
-  ReturnType   GetNext() override;
-  virtual bool AddData(TensorType const &data, TensorType const &labels);
+  ReturnType GetNext() override;
+
+  bool AddData(InputType const &data, LabelType const &label) override;
 
   SizeType Size() const override;
   bool     IsDone() const override;
@@ -80,16 +81,7 @@ TensorDataLoader<LabelType, InputType>::TensorDataLoader(SizeVector const &     
   : DataLoader<LabelType, TensorType>(random_mode)
   , label_shape_(label_shape)
   , data_shapes_(data_shapes)
-{
-  one_sample_label_shape_                                        = label_shape;
-  one_sample_label_shape_.at(one_sample_label_shape_.size() - 1) = 1;
-
-  for (std::size_t i = 0; i < data_shapes.size(); ++i)
-  {
-    one_sample_data_shapes_.emplace_back(data_shapes.at(i));
-    one_sample_data_shapes_.at(i).at(one_sample_data_shapes_.at(i).size() - 1) = 1;
-  }
-}
+{}
 
 template <typename LabelType, typename InputType>
 typename TensorDataLoader<LabelType, InputType>::ReturnType
@@ -110,9 +102,13 @@ TensorDataLoader<LabelType, InputType>::GetNext()
 }
 
 template <typename LabelType, typename InputType>
-bool TensorDataLoader<LabelType, InputType>::AddData(TensorType const &data,
-                                                     TensorType const &labels)
+bool TensorDataLoader<LabelType, InputType>::AddData(InputType const &data, LabelType const &labels)
 {
+  one_sample_label_shape_                                        = labels.shape();
+  one_sample_label_shape_.at(one_sample_label_shape_.size() - 1) = 1;
+
+  one_sample_data_shapes_.emplace_back(data.shape());
+  one_sample_data_shapes_.at(0).at(one_sample_data_shapes_.at(0).size() - 1) = 1;
 
   data_         = data.Copy();
   labels_       = labels.Copy();
