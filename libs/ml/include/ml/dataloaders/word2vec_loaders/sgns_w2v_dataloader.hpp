@@ -667,7 +667,7 @@ void GraphW2VLoader<T>::UpdateCursor()
 {
   if (this->mode_ != DataLoaderMode::TRAIN)
   {
-    throw std::runtime_error("Other mode than training not supported yet.");
+    throw std::runtime_error("Other mode than training not supported.");
   }
 }
 

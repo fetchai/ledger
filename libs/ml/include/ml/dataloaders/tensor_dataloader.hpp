@@ -186,15 +186,16 @@ void TensorDataLoader<LabelType, InputType>::UpdateRanges()
 template <typename LabelType, typename InputType>
 void TensorDataLoader<LabelType, InputType>::UpdateCursor()
 {
-  if (this->mode_ == DataLoaderMode::TRAIN)
+  switch (this->mode_)
   {
+  case DataLoaderMode::TRAIN:
     this->current_cursor_ = train_cursor_;
     this->current_min_    = 0;
     this->current_max_    = test_offset_;
     this->current_size_   = n_train_samples_;
-  }
-  else if (this->mode_ == DataLoaderMode::TEST)
-  {
+    break;
+
+  case DataLoaderMode::TEST:
     if (test_to_train_ratio_ == 0)
     {
       throw std::runtime_error("Dataloader has no test set.");
@@ -203,9 +204,9 @@ void TensorDataLoader<LabelType, InputType>::UpdateCursor()
     this->current_min_    = test_offset_;
     this->current_max_    = validation_offset_;
     this->current_size_   = n_test_samples_;
-  }
-  else if (this->mode_ == DataLoaderMode::VALIDATE)
-  {
+    break;
+
+  case DataLoaderMode::VALIDATE:
     if (validation_to_train_ratio_ == 0)
     {
       throw std::runtime_error("Dataloader has no validation set.");
@@ -214,9 +215,9 @@ void TensorDataLoader<LabelType, InputType>::UpdateCursor()
     this->current_min_    = validation_offset_;
     this->current_max_    = n_samples_;
     this->current_size_   = n_validation_samples_;
-  }
-  else
-  {
+    break;
+
+  default:
     throw std::runtime_error("Unsupported dataloader mode.");
   }
 }

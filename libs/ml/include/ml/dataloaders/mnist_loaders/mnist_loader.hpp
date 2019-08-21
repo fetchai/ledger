@@ -90,6 +90,9 @@ public:
     return *(this->current_cursor_) >= this->current_max_;
   }
 
+  /**
+   * Resets current cursor to beginning
+   */
   void Reset() override
   {
     *(this->current_cursor_) = this->current_min_;
@@ -184,7 +187,7 @@ public:
   {
     std::uint32_t record_length(0);
     data_   = ReadMnistImages(images_file, total_size_, record_length);
-    labels_ = read_mnist_labels(labels_file, total_size_);
+    labels_ = ReadMNistLabels(labels_file, total_size_);
     assert(record_length == FIGURE_SIZE);
 
     // Prepare return buffer
@@ -240,7 +243,7 @@ public:
     }
   }
 
-  static unsigned char *read_mnist_labels(std::string full_path, std::uint32_t &number_of_labels)
+  static unsigned char *ReadMNistLabels(std::string full_path, std::uint32_t &number_of_labels)
   {
     auto reverseInt = [](std::uint32_t i) {
       unsigned char c1, c2, c3, c4;
