@@ -50,7 +50,7 @@ public:
       // Minimum value of tanh is restricted to -1+epsilon
       val = fetch::vectorise::Max(val, fetch::math::Add(DataType(-1), epsilon_));
       // Maximum value of tanh is restricted to 1-epsilon
-      fetch::math::Min(val, fetch::math::Subtract(static_cast<DataType>(1), epsilon_), val);
+      val = fetch::vectorise::Min(val, fetch::math::Subtract(static_cast<DataType>(1), epsilon_));
     }
   }
 
