@@ -47,8 +47,9 @@ public:
 
   ~TensorDataLoader() override = default;
 
-  ReturnType   GetNext() override;
-  virtual bool AddData(TensorType const &data, TensorType const &labels);
+  ReturnType GetNext() override;
+
+  bool AddData(InputType const &data, LabelType const &label) override;
 
   SizeType    Size() const override;
   bool        IsDone() const override;
@@ -99,16 +100,8 @@ TensorDataLoader<LabelType, InputType>::TensorDataLoader(SizeVector const &     
   , test_to_train_ratio_(test_to_train_ratio)
   , validation_to_train_ratio_(validation_to_train_ratio)
 {
-  one_sample_label_shape_                                        = label_shape;
-  one_sample_label_shape_.at(one_sample_label_shape_.size() - 1) = 1;
+    UpdateCursor();
 
-  for (std::size_t i = 0; i < data_shapes.size(); ++i)
-  {
-    one_sample_data_shapes_.emplace_back(data_shapes.at(i));
-    one_sample_data_shapes_.at(i).at(one_sample_data_shapes_.at(i).size() - 1) = 1;
-  }
-
-  UpdateCursor();
 }
 
 template <typename LabelType, typename InputType>
@@ -123,17 +116,18 @@ TensorDataLoader<LabelType, InputType>::GetNext()
 }
 
 template <typename LabelType, typename InputType>
-bool TensorDataLoader<LabelType, InputType>::AddData(TensorType const &data,
-                                                     TensorType const &labels)
+bool TensorDataLoader<LabelType, InputType>::AddData(InputType const &data, LabelType const &labels)
 {
-  data_          = data.Copy();
-  labels_        = labels.Copy();
-  *train_cursor_ = 0;
+  one_sample_label_shape_                                        = labels.shape();
+  one_sample_label_shape_.at(one_sample_label_shape_.size() - 1) = 1;
 
-  batch_label_dim_ = labels_.shape().size() - 1;
-  batch_data_dim_  = data_.shape().size() - 1;
+  one_sample_data_shapes_.emplace_back(data.shape());
+  one_sample_data_shapes_.at(0).at(one_sample_data_shapes_.at(0).size() - 1) = 1;
 
-  n_samples_ = data_.shape().at(batch_data_dim_);
+  data_         = data.Copy();
+  labels_       = labels.Copy();
+
+  n_samples_ = data_.shape().at(data_.shape().size() - 1);
 
   float test_percentage       = 1.0f - test_to_train_ratio_ - validation_to_train_ratio_;
   float validation_percentage = test_percentage + test_to_train_ratio_;

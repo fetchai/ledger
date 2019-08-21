@@ -51,8 +51,12 @@ public:
   };
 
   VMDataLoader(fetch::vm::VM *vm, fetch::vm::TypeId type_id);
+  VMDataLoader(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
+               fetch::vm::Ptr<fetch::vm::String> const &mode);
 
-  static fetch::vm::Ptr<VMDataLoader> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id);
+  //  static fetch::vm::Ptr<VMDataLoader> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id);
+  static fetch::vm::Ptr<VMDataLoader> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
+                                                  fetch::vm::Ptr<fetch::vm::String> const &mode);
 
   static void Bind(fetch::vm::Module &module);
 
@@ -62,8 +66,7 @@ public:
    * @param xfilename
    * @param yfilename
    */
-  void AddDataByFiles(fetch::vm::Ptr<fetch::vm::String> const &mode,
-                      fetch::vm::Ptr<fetch::vm::String> const &xfilename,
+  void AddDataByFiles(fetch::vm::Ptr<fetch::vm::String> const &xfilename,
                       fetch::vm::Ptr<fetch::vm::String> const &yfilename);
 
   /**
@@ -72,8 +75,7 @@ public:
    * @param data
    * @param labels
    */
-  void AddDataByData(fetch::vm::Ptr<fetch::vm::String> const &                mode,
-                     fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &data,
+  void AddDataByData(fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &data,
                      fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &labels);
 
   /**

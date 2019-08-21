@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "meta/callable/apply.hpp"
 #include "vm/vm.hpp"
 
 namespace fetch {
@@ -31,13 +32,13 @@ namespace vm {
  * @param args
  * @return false if executing the opcode would exceed the specified charge limit; true otherwise.
  */
-template <typename... Args>
-bool EstimateCharge(VM *const vm, ChargeEstimator<Args...> const &e, Args const &... args)
+template <typename ArgsTuple, typename... Args>
+bool EstimateCharge(VM *const vm, ChargeEstimator<Args...> &&e, ArgsTuple const &args)
 {
   if (e)
   {
     // compute the estimate for this function invocation
-    auto const charge_estimate = e(args...);
+    auto const charge_estimate = meta::Apply(std::move(e), args);
 
     vm->IncreaseChargeTotal(charge_estimate);
 

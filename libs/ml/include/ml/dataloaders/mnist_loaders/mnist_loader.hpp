@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/macros.hpp"
 #include "math/base_types.hpp"
 #include "math/meta/math_type_traits.hpp"
 #include "ml/dataloaders/dataloader.hpp"
@@ -31,13 +32,13 @@ namespace fetch {
 namespace ml {
 namespace dataloaders {
 
-template <typename LabelType, typename T>
-class MNISTLoader : public DataLoader<LabelType, T>
+template <typename LabelType, typename InputType>
+class MNISTLoader : public DataLoader<LabelType, InputType>
 {
 public:
-  using SizeType   = typename T::SizeType;
-  using DataType   = typename T::Type;
-  using ReturnType = std::pair<LabelType, std::vector<T>>;
+  using SizeType   = typename InputType::SizeType;
+  using DataType   = typename InputType::Type;
+  using ReturnType = std::pair<LabelType, std::vector<InputType>>;
 
 private:
   std::shared_ptr<SizeType> train_cursor_      = std::make_shared<SizeType>(0);
@@ -52,61 +53,59 @@ private:
   std::uint32_t test_offset_;
   std::uint32_t validation_offset_;
 
+    float test_to_train_ratio_=0.0f;
+    float validation_to_train_ratio_=0.0f;
+
   static constexpr std::uint32_t FIGURE_WIDTH  = 28;
   static constexpr std::uint32_t FIGURE_HEIGHT = 28;
   static constexpr std::uint32_t FIGURE_SIZE   = 28 * 28;
   static constexpr std::uint32_t LABEL_SIZE    = 10;
 
 public:
-  MNISTLoader(std::string const &images_file, std::string const &labelsFile,
-              bool random_mode = false, float test_to_train_ratio = 0.0,
-              float validation_to_train_ratio = 0.0)
-    : DataLoader<LabelType, T>(random_mode)
-  {
-    std::uint32_t record_length(0);
-    data_   = read_mnist_images(images_file, total_size_, record_length);
-    labels_ = read_mnist_labels(labelsFile, total_size_);
 
-    float test_percentage       = 1.0f - test_to_train_ratio - validation_to_train_ratio;
-    float validation_percentage = test_percentage + test_to_train_ratio;
-    assert(record_length == FIGURE_SIZE);
 
-    test_offset_ = static_cast<std::uint32_t>(test_percentage * static_cast<float>(total_size_));
-    validation_offset_ =
-        static_cast<std::uint32_t>(validation_percentage * static_cast<float>(total_size_));
+    MNISTLoader(bool random_mode = false, float test_to_train_ratio = 0.0,
+                float validation_to_train_ratio = 0.0)
+    : DataLoader<LabelType, InputType>(random_mode)
+            , test_to_train_ratio_(test_to_train_ratio)
+            ,validation_to_train_ratio_(validation_to_train_ratio)
+    {
+      // Prepare return buffer
+      buffer_.second.push_back(InputType({FIGURE_WIDTH, FIGURE_HEIGHT, 1u}));
+      buffer_.first = LabelType({LABEL_SIZE, 1u});
 
-    validation_size_ = total_size_ - validation_offset_;
-    test_size_       = validation_offset_ - test_offset_;
-    train_size_      = total_size_ - test_offset_;
+        UpdateRanges();
+    }
 
-    // Prepare return buffer
-    buffer_.second.push_back(T({FIGURE_WIDTH, FIGURE_HEIGHT, 1u}));
-    buffer_.first = LabelType({LABEL_SIZE, 1u});
+    MNISTLoader(std::string const &images_file, std::string const &labels_file,
+            bool random_mode = false, float test_to_train_ratio = 0.0,
+                float validation_to_train_ratio = 0.0)
+    : DataLoader<LabelType, InputType>(random_mode)
+            , test_to_train_ratio_(test_to_train_ratio)
+            ,validation_to_train_ratio_(validation_to_train_ratio)
+    {
+      SetupWithDataFiles(images_file, labels_file);
+        UpdateRanges();
+    }
 
-    *train_cursor_      = 0;
-    *validation_cursor_ = validation_offset_;
-    *test_cursor_       = test_offset_;
 
-    UpdateCursor();
-  }
-
-  virtual SizeType Size() const override
+  SizeType Size() const override
   {
     // MNIST files store the size as uint32_t but Dataloader interface require uint64_t
     return this->current_size_;
   }
 
-  virtual bool IsDone() const override
+  bool IsDone() const override
   {
     return *(this->current_cursor_) >= this->current_max_;
   }
 
-  virtual void Reset() override
+  void Reset() override
   {
     *(this->current_cursor_) = this->current_min_;
   }
 
-  virtual ReturnType GetNext() override
+  ReturnType GetNext() override
   {
     if (this->random_mode_)
     {
@@ -126,26 +125,29 @@ public:
     return test_size_ > 0;
   }
 
-  void Display(T const &data) const
+  /**
+   * directly sets the data and labels variables
+   * This function must be implemented to override from Dataloader, but we
+   * may prefer to use SetupWithDataFiles helper function
+   * @param data
+   * @param label
+   * @return
+   */
+  bool AddData(InputType const &data, LabelType const &label) override
   {
-    for (SizeType i{0}; i < FIGURE_WIDTH; ++i)
-    {
-      for (SizeType j{0}; j < FIGURE_HEIGHT; ++j)
-      {
-
-        std::cout << (data.At(j, i, 0) > typename T::Type(0.5) ? char(219) : ' ');
-      }
-      std::cout << "\n";
-    }
-    std::cout << std::endl;
+    FETCH_UNUSED(data);
+    FETCH_UNUSED(label);
+    throw std::runtime_error(
+        "AddData not implemented for MNist example - please use Constructor or SetupWithDataFiles "
+        "methods");
   }
 
   ReturnType PrepareBatch(SizeType subset_size, bool &is_done_set) override
   {
-    T ret_labels({LABEL_SIZE, subset_size});
+    InputType ret_labels({LABEL_SIZE, subset_size});
 
-    std::vector<T> ret_images;
-    ret_images.push_back(T({FIGURE_WIDTH, FIGURE_HEIGHT, subset_size}));
+    std::vector<InputType> ret_images;
+    ret_images.push_back(InputType({FIGURE_WIDTH, FIGURE_HEIGHT, subset_size}));
 
     for (fetch::math::SizeType index{0}; index < subset_size; ++index)
     {
@@ -181,62 +183,23 @@ public:
     return std::make_pair(ret_labels, ret_images);
   }
 
-private:
-  using uchar = unsigned char;
 
-  void UpdateCursor() override
+
+  void SetupWithDataFiles(std::string const &images_file, std::string const &labels_file)
   {
-    if (this->mode_ == DataLoaderMode::TRAIN)
-    {
-      this->current_cursor_ = train_cursor_;
-      this->current_min_    = 0;
-      this->current_max_    = test_offset_;
-      this->current_size_   = train_size_;
-    }
-    else if (this->mode_ == DataLoaderMode::TEST)
-    {
-      this->current_cursor_ = test_cursor_;
-      this->current_min_    = test_offset_;
-      this->current_max_    = validation_offset_;
-      this->current_size_   = test_size_;
-    }
-    else if (this->mode_ == DataLoaderMode::VALIDATE)
-    {
-      this->current_cursor_ = validation_cursor_;
-      this->current_min_    = validation_offset_;
-      this->current_max_    = total_size_;
-      this->current_size_   = validation_size_;
-    }
-    else
-    {
-      throw std::runtime_error("Unsupported dataloader mode.");
-    }
+    std::uint32_t record_length(0);
+    data_   = ReadMnistImages(images_file, total_size_, record_length);
+    labels_ = read_mnist_labels(labels_file, total_size_);
+    assert(record_length == FIGURE_SIZE);
 
-    if (this->current_min_ == this->current_max_)
-    {
-      throw std::runtime_error("Dataloader has no set for selected mode.");
-    }
+    // Prepare return buffer
+    buffer_.first = LabelType({LABEL_SIZE, 1u});
+    buffer_.second.clear();
+    buffer_.second.push_back(InputType({FIGURE_WIDTH, FIGURE_HEIGHT, 1u}));
   }
 
-  void GetAtIndex(SizeType index, ReturnType &ret)
-  {
-    SizeType i{0};
-    auto     it = buffer_.second.at(0).begin();
-    while (it.is_valid())
-    {
-      *it = static_cast<DataType>(data_[index][i]) / DataType{256};
-      i++;
-      ++it;
-    }
-
-    buffer_.first.Fill(DataType{0});
-    buffer_.first(labels_[index], 0) = static_cast<DataType>(1.0);
-
-    ret = buffer_;
-  }
-
-  uchar **read_mnist_images(std::string full_path, std::uint32_t &number_of_images,
-                            unsigned int &image_size)
+  static unsigned char **ReadMnistImages(std::string full_path, std::uint32_t &number_of_images,
+                                         unsigned int &image_size)
   {
     auto reverseInt = [](std::uint32_t i) -> std::uint32_t {
       unsigned char c1, c2, c3, c4;
@@ -282,7 +245,7 @@ private:
     }
   }
 
-  uchar *read_mnist_labels(std::string full_path, std::uint32_t &number_of_labels)
+  static unsigned char *read_mnist_labels(std::string full_path, std::uint32_t &number_of_labels)
   {
     auto reverseInt = [](std::uint32_t i) {
       unsigned char c1, c2, c3, c4;
@@ -320,6 +283,79 @@ private:
     {
       throw std::runtime_error("Unable to open file `" + full_path + "`!");
     }
+  }
+
+private:
+  using uchar = unsigned char;
+
+    void UpdateCursor() override
+            {
+                    if (this->mode_ == DataLoaderMode::TRAIN)
+                    {
+                      this->current_cursor_ = train_cursor_;
+                      this->current_min_    = 0;
+                      this->current_max_    = test_offset_;
+                      this->current_size_   = train_size_;
+                    }
+                    else if (this->mode_ == DataLoaderMode::TEST)
+                    {
+                      this->current_cursor_ = test_cursor_;
+                      this->current_min_    = test_offset_;
+                      this->current_max_    = validation_offset_;
+                      this->current_size_   = test_size_;
+                    }
+                    else if (this->mode_ == DataLoaderMode::VALIDATE)
+                    {
+                      this->current_cursor_ = validation_cursor_;
+                      this->current_min_    = validation_offset_;
+                      this->current_max_    = total_size_;
+                      this->current_size_   = validation_size_;
+                    }
+                    else
+                    {
+                      throw std::runtime_error("Unsupported dataloader mode.");
+                    }
+
+                    if (this->current_min_ == this->current_max_)
+                    {
+                      throw std::runtime_error("Dataloader has no set for selected mode.");
+                    }
+            }
+
+            void UpdateRanges()
+            {
+              float test_percentage       = 1.0f - test_to_train_ratio_ - validation_to_train_ratio_;
+              float validation_percentage = test_percentage + test_to_train_ratio_;
+
+              test_offset_ = static_cast<std::uint32_t>(test_percentage * static_cast<float>(total_size_));
+              validation_offset_ =
+                      static_cast<std::uint32_t>(validation_percentage * static_cast<float>(total_size_));
+
+              validation_size_ = total_size_ - validation_offset_;
+              test_size_       = validation_offset_ - test_offset_;
+              train_size_      = total_size_ - test_offset_;
+
+              *train_cursor_      = 0;
+              *validation_cursor_ = validation_offset_;
+              *test_cursor_       = test_offset_;
+
+              UpdateCursor();
+            }
+
+    void GetAtIndex(SizeType index, ReturnType &ret)
+  {
+    SizeType i{0};
+
+    for (auto &val : buffer_.second.at(0))
+    {
+      val = static_cast<DataType>(data_[index][i]) / DataType{256};
+      i++;
+    }
+
+    buffer_.first.Fill(DataType{0});
+    buffer_.first(labels_[index], 0) = static_cast<DataType>(1.0);
+
+    ret = buffer_;
   }
 
 private:
