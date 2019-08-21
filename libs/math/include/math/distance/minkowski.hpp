@@ -39,7 +39,7 @@ inline meta::IfIsMathArray<ArrayType, typename ArrayType::Type> Minkowski(
   auto     b_it = b.begin();
   for (auto &val : a)
   {
-    sum += Pow(fetch::vectorise::Max(val, *b_it) - Min(val, *b_it), n);
+    sum += Pow(fetch::vectorise::Max(val, *b_it) - fetch::vectorise::Min(val, *b_it), n);
     ++b_it;
   }
   return Pow(sum, DataType{1} / DataType{n});

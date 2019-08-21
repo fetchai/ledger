@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/math/comparison.hpp"
 #include "math/fundamental_operators.hpp"
 #include "math/standard_functions/exp.hpp"
 
