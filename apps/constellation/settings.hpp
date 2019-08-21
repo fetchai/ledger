@@ -36,13 +36,21 @@ class Settings : private settings::SettingCollection
 public:
   using PeerList = std::vector<network::Uri>;
 
+  enum class UpdateStatus
+  {
+    SUCCESS,
+    FAILED,
+    HELP,
+  };
+
   // Construction / Destruction
   Settings();
   Settings(Settings const &) = delete;
   Settings(Settings &&)      = delete;
   ~Settings()                = default;
 
-  bool Update(int argc, char **argv);
+  UpdateStatus Update(int argc, char **argv);
+  void         Help(std::ostream &stream) const;
 
   /// @name High Level Network Settings
   /// @{

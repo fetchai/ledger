@@ -45,7 +45,7 @@ public:
   Settings const &settings() const;
 
   void Add(SettingBase &setting);
-  void UpdateFromArgs(int argc, char **argv);
+  bool UpdateFromArgs(int argc, char **argv);
   void UpdateFromEnv(char const *                        prefix,
                      detail::EnvironmentInterface const &env = detail::Environment{});
 

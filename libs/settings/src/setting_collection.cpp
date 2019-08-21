@@ -92,17 +92,23 @@ void SettingCollection::Add(SettingBase &setting)
  * @param argc
  * @param argv
  */
-void SettingCollection::UpdateFromArgs(int argc, char **argv)
+bool SettingCollection::UpdateFromArgs(int argc, char **argv)
 {
   ParamsParser parser;
   parser.Parse(argc, argv);
   std::set<std::string> settings_changed;
 
+  std::string cmd_value{};
+
+  if (parser.LookupParam("h", cmd_value) || parser.LookupParam("help", cmd_value))
+  {
+    return false;
+  }
+
   for (auto *setting : settings_)
   {
     assert(setting);
 
-    std::string cmd_value{};
     if (parser.LookupParam(setting->name(), cmd_value))
     {
       // update the setting
@@ -136,6 +142,8 @@ void SettingCollection::UpdateFromArgs(int argc, char **argv)
 
     FETCH_LOG_INFO(LOGGING_NAME, oss.str());
   }
+
+  return true;
 }
 
 void SettingCollection::UpdateFromEnv(char const *prefix, detail::EnvironmentInterface const &env)

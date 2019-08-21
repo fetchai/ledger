@@ -85,11 +85,15 @@ Settings::Settings()
  * @param argc The number of command line arguments
  * @param argv The array of command line arguments
  */
-bool Settings::Update(int argc, char **argv)
+Settings::UpdateStatus Settings::Update(int argc, char **argv)
 {
   UpdateFromEnv("CONSTELLATION_");
-  UpdateFromArgs(argc, argv);
-  return Validate();
+  if (!UpdateFromArgs(argc, argv))
+  {
+    return UpdateStatus::HELP;
+  }
+
+  return Validate() ? UpdateStatus::SUCCESS : UpdateStatus::FAILED;
 }
 
 /**
@@ -128,6 +132,33 @@ std::ostream &operator<<(std::ostream &stream, Settings const &settings)
   }
 
   return stream;
+}
+
+void Settings::Help(std::ostream &stream) const
+{
+  // First pass determine the max settings length
+  std::size_t setting_name_length{0};
+  for (auto const *setting : settings())
+  {
+    setting_name_length = std::max(setting_name_length, setting->name().size());
+  }
+
+  // Send pass display the settings
+  for (auto const *setting : settings())
+  {
+    auto const &      name    = setting->name();
+    std::size_t const padding = setting_name_length - name.size();
+
+    // write name + padding
+    stream << "  " << name;
+    for (std::size_t i = 0; i < padding; ++i)
+    {
+      stream << ' ';
+    }
+    stream << ": ";
+
+    stream << setting->description() << std::endl;
+  }
 }
 
 /**

@@ -201,12 +201,21 @@ int main(int argc, char **argv)
     fetch::metrics::Metrics::Instance().ConfigureFileHandler("metrics.csv");
 #endif  // FETCH_ENABLE_METRICS
 
-    Settings settings{};
-    if (!settings.Update(argc, argv))
+    Settings   settings{};
+    auto const update_status{settings.Update(argc, argv)};
+
+    switch (update_status)
     {
+    case Settings::UpdateStatus::FAILED:
       FETCH_LOG_WARN(LOGGING_NAME, "Invalid configuration");
-    }
-    else
+      settings.Help(std::cout);
+      break;
+
+    case Settings::UpdateStatus::HELP:
+      settings.Help(std::cout);
+      break;
+
+    case Settings::UpdateStatus::SUCCESS:
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Input Configuration:\n", settings);
 
@@ -240,6 +249,7 @@ int main(int argc, char **argv)
       constellation->Run(initial_peers, ExtractRunnable(bootstrap));
 
       exit_code = EXIT_SUCCESS;
+    }
     }
   }
   catch (std::exception const &ex)
