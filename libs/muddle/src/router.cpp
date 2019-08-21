@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "routing_message.hpp"
 #include "dispatcher.hpp"
 #include "muddle_register.hpp"
 #include "router.hpp"
+#include "routing_message.hpp"
 
 #include "core/byte_array/encoders.hpp"
 #include "core/logger.hpp"
@@ -239,8 +239,8 @@ Packet::Address Router::ConvertAddress(Packet::RawAddress const &address)
  * @param address The address of the current node
  * @param reg The connection register
  */
-Router::Router(NetworkId network_id, Address address, MuddleRegister &reg,
-               Dispatcher &dispatcher, Prover *prover, bool sign_broadcasts)
+Router::Router(NetworkId network_id, Address address, MuddleRegister &reg, Dispatcher &dispatcher,
+               Prover *prover, bool sign_broadcasts)
   : address_(std::move(address))
   , address_raw_(ConvertAddress(address_))
   , register_(reg)
@@ -360,8 +360,8 @@ void Router::Send(Address const &address, uint16_t service, uint16_t channel,
   Send(address, service, channel, counter, message, OPTION_DEFAULT);
 }
 
-void Router::Send(Address const &address, uint16_t service, uint16_t channel, Payload const &message,
-          Options options)
+void Router::Send(Address const &address, uint16_t service, uint16_t channel,
+                  Payload const &message, Options options)
 {
   uint16_t const counter = dispatcher_.GetNextCounter();
 
@@ -384,7 +384,7 @@ void Router::Send(Address const &address, uint16_t service, uint16_t channel, ui
 }
 
 void Router::Send(Address const &address, uint16_t service, uint16_t channel, uint16_t message_num,
-          Payload const &payload, Options options)
+                  Payload const &payload, Options options)
 {
   // format the packet
   auto packet =
@@ -551,8 +551,9 @@ Router::UpdateStatus Router::AssociateHandleWithAddress(Handle                  
     bool const is_duplicate_direct  = direct && routing_data.direct && is_connection_update;
     bool const is_upgrade           = (!is_empty) && (!routing_data.direct) && direct;
     bool const is_downgrade         = (!is_empty) && routing_data.direct && !direct;
-    bool const is_different         = (is_connection_update && !is_duplicate_direct && !is_downgrade) || is_upgrade;
-    bool const is_update            = (routing_data.handle && is_different);
+    bool const is_different =
+        (is_connection_update && !is_duplicate_direct && !is_downgrade) || is_upgrade;
+    bool const is_update = (routing_data.handle && is_different);
 
     // update the routing table if required
     if (is_duplicate_direct)
@@ -575,8 +576,10 @@ Router::UpdateStatus Router::AssociateHandleWithAddress(Handle                  
       status  = UpdateStatus::UPDATED;
       display = is_empty || is_upgrade;
 
-      FETCH_LOG_TRACE(LOGGING_NAME, is_connection_update, "-", is_duplicate_direct, "-", is_upgrade, "-", is_different, "-", is_update);
-      FETCH_LOG_TRACE(LOGGING_NAME, "Handle was: ", prev_handle, " now: ", handle, " direct: ", direct, "-", routing_data.direct);
+      FETCH_LOG_TRACE(LOGGING_NAME, is_connection_update, "-", is_duplicate_direct, "-", is_upgrade,
+                      "-", is_different, "-", is_update);
+      FETCH_LOG_TRACE(LOGGING_NAME, "Handle was: ", prev_handle, " now: ", handle,
+                      " direct: ", direct, "-", routing_data.direct);
       FETCH_LOG_VARIABLE(prev_handle);
     }
   }
@@ -705,7 +708,6 @@ void Router::RoutePacket(PacketPtr packet, bool external)
   LOG_STACK_TRACE_POINT;
 
   // black list support
-
 
   /// Step 1. Determine if we should drop this packet (for whatever reason)
   if (external)

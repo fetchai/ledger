@@ -20,8 +20,8 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/filesystem/read_file_contents.hpp"
-#include "manifest_builder.hpp"
 #include "ledger/shards/manifest.hpp"
+#include "manifest_builder.hpp"
 #include "network/peer.hpp"
 #include "settings.hpp"
 

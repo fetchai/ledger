@@ -26,7 +26,7 @@ fetch::mutex::Mutex AbstractConnection::global_handle_mutex_(__LINE__, __FILE__)
 
 // Construction / Destruction
 AbstractConnection::AbstractConnection()
-    : handle_(AbstractConnection::next_handle())
+  : handle_(AbstractConnection::next_handle())
 {}
 
 // Interface

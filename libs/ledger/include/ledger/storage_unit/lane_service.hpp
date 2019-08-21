@@ -19,9 +19,9 @@
 
 #include "core/reactor.hpp"
 #include "ledger/shard_config.hpp"
+#include "muddle/muddle_interface.hpp"
 #include "network/generics/backgrounded_work.hpp"
 #include "network/generics/has_worker_thread.hpp"
-#include "muddle/muddle_interface.hpp"
 #include "storage/object_store_protocol.hpp"
 #include "storage/transient_object_store.hpp"
 

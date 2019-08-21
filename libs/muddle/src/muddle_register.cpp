@@ -133,12 +133,13 @@ bool MuddleRegister::IsEmpty() const
       assert(false);
     }
   }
-#endif // !NDEBUG
+#endif  // !NDEBUG
 
   return handle_index_.empty();
 }
 
-MuddleRegister::UpdateStatus MuddleRegister::UpdateAddress(ConnectionHandle handle, Address const &address)
+MuddleRegister::UpdateStatus MuddleRegister::UpdateAddress(ConnectionHandle handle,
+                                                           Address const &  address)
 {
   UpdateStatus status{UpdateStatus::HANDLE_NOT_FOUND};
 
@@ -148,7 +149,7 @@ MuddleRegister::UpdateStatus MuddleRegister::UpdateAddress(ConnectionHandle hand
   if (it != handle_index_.end())
   {
     // capture the entry and update the internal field
-    auto entry = it->second;
+    auto entry     = it->second;
     entry->address = address.Copy();
 
     // determine if this a duplicate address
@@ -222,7 +223,6 @@ std::unordered_set<Address> MuddleRegister::GetIncomingAddressSet() const
   }
 
   return addresses;
-
 }
 
 std::unordered_set<Address> MuddleRegister::GetOutgoingAddressSet() const
@@ -241,7 +241,6 @@ std::unordered_set<Address> MuddleRegister::GetOutgoingAddressSet() const
 
   return addresses;
 }
-
 
 MuddleRegister::HandleIndex MuddleRegister::GetHandleIndex() const
 {
@@ -320,7 +319,8 @@ void MuddleRegister::Leave(ConnectionHandle handle)
       ++removal_count;
     }
 
-    FETCH_LOG_WARN(LOGGING_NAME, "Removing ", removal_count, " address entries for handle: ", handle);
+    FETCH_LOG_WARN(LOGGING_NAME, "Removing ", removal_count,
+                   " address entries for handle: ", handle);
 
     handle_index_.erase(it);
   }

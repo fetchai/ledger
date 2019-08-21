@@ -22,20 +22,19 @@
 #include "core/mutex.hpp"
 #include "core/periodic_runnable.hpp"
 #include "crypto/fnv.hpp"
-#include "network/peer.hpp"
-#include "network/uri.hpp"
 #include "muddle/address.hpp"
 #include "muddle/rpc/client.hpp"
+#include "network/peer.hpp"
+#include "network/uri.hpp"
 
+#include <chrono>
 #include <unordered_map>
 #include <unordered_set>
-#include <chrono>
 
 namespace fetch {
 namespace core {
 
 class Reactor;
-
 }
 namespace muddle {
 
@@ -58,16 +57,18 @@ public:
     bool          unreachable{false};
     Timepoint     last_attempt{Clock::now()};  // replace with connection attempts
 
-    explicit PeerMetadata(network::Peer addr) : peer{std::move(addr)} {}
+    explicit PeerMetadata(network::Peer addr)
+      : peer{std::move(addr)}
+    {}
   };
 
   using PeerData = std::vector<PeerMetadata>;
 
   struct Metadata
   {
-    PeerData     peer_data{};
-    std::size_t  peer_index{0}; // The current peer being evaluated
-    Timepoint    last_updated{Clock::now()};
+    PeerData    peer_data{};
+    std::size_t peer_index{0};  // The current peer being evaluated
+    Timepoint   last_updated{Clock::now()};
   };
 
   using PeersInfo = std::unordered_map<Address, Metadata>;
@@ -76,12 +77,12 @@ public:
   PeerSelector(Duration const &interval, core::Reactor &reactor, MuddleRegister const &reg,
                PeerConnectionList &connections, MuddleEndpoint &endpoint);
   PeerSelector(PeerSelector const &) = delete;
-  PeerSelector(PeerSelector &&) = delete;
-  ~PeerSelector() override = default;
+  PeerSelector(PeerSelector &&)      = delete;
+  ~PeerSelector() override           = default;
 
-  void AddDesiredPeer(Address const &address);
-  void AddDesiredPeer(Address const &address, network::Peer const &hint);
-  void RemoveDesiredPeer(Address const &address);
+  void      AddDesiredPeer(Address const &address);
+  void      AddDesiredPeer(Address const &address, network::Peer const &hint);
+  void      RemoveDesiredPeer(Address const &address);
   Addresses GetDesiredPeers() const;
   Addresses GetPendingRequests() const;
   PeersInfo GetPeerCache() const;
@@ -94,9 +95,9 @@ private:
   using Mutex           = mutex::Mutex;
   using PendingPromised = std::unordered_map<Address, std::shared_ptr<PromiseTask>>;
 
-  void Periodically() override;
-  void ResolveAddresses(Addresses const &addresses);
-  void OnResolvedAddress(Address const &address, service::Promise const &promise);
+  void   Periodically() override;
+  void   ResolveAddresses(Addresses const &addresses);
+  void   OnResolvedAddress(Address const &address, service::Promise const &promise);
   UriSet GenerateUriSet(Addresses const &addresses);
 
   core::Reactor &       reactor_;
@@ -111,5 +112,5 @@ private:
   PeersInfo       peers_info_;
 };
 
-} // namespace muddle
-} // namespace fetch
+}  // namespace muddle
+}  // namespace fetch

@@ -37,7 +37,7 @@ public:
 
   static constexpr char const *LOGGING_NAME = "ServiceServerInterface";
 
-  ServiceServerInterface() = default;
+  ServiceServerInterface()          = default;
   virtual ~ServiceServerInterface() = default;
 
   void Add(protocol_handler_type const &name,
@@ -126,7 +126,8 @@ protected:
   }
 
 private:
-  void ExecuteCall(serializer_type &result, serializer_type params, CallContext const &context = CallContext())
+  void ExecuteCall(serializer_type &result, serializer_type params,
+                   CallContext const &context = CallContext())
   {
     LOG_STACK_TRACE_POINT;
 
@@ -137,8 +138,10 @@ private:
     auto protocol_pointer = members_[protocol_number];
     if (protocol_pointer == nullptr)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "ServerInterface::ExecuteCall: Could not find protocol ", protocol_number, ":", function_number);
-      throw serializers::SerializableException(error::PROTOCOL_NOT_FOUND, "Could not find protocol");
+      FETCH_LOG_WARN(LOGGING_NAME, "ServerInterface::ExecuteCall: Could not find protocol ",
+                     protocol_number, ":", function_number);
+      throw serializers::SerializableException(error::PROTOCOL_NOT_FOUND,
+                                               "Could not find protocol");
     }
 
     auto function = (*protocol_pointer)[function_number];
@@ -168,8 +171,8 @@ private:
     }
     catch (serializers::SerializableException const &e)
     {
-      std::string new_explanation = e.explanation() + std::string(" (Function signature: ") +
-                                    function->signature() + ")";
+      std::string new_explanation =
+          e.explanation() + std::string(" (Function signature: ") + function->signature() + ")";
 
       FETCH_LOG_INFO(LOGGING_NAME, "EXCEPTION:", e.error_code(), new_explanation);
 

@@ -16,15 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "peer_selector.hpp"
-#include "discovery_service.hpp"
 #include "direct_message_service.hpp"
-#include "peer_list.hpp"
+#include "discovery_service.hpp"
 #include "muddle_register.hpp"
+#include "peer_list.hpp"
+#include "peer_selector.hpp"
 
+#include "core/containers/set_difference.hpp"
 #include "core/reactor.hpp"
 #include "core/service_ids.hpp"
-#include "core/containers/set_difference.hpp"
 
 namespace fetch {
 namespace muddle {
@@ -32,15 +32,16 @@ namespace muddle {
 static constexpr std::size_t MINIMUM_PEERS = 3;
 static constexpr char const *LOGGING_NAME  = "PeerSelector";
 
-PeerSelector::PeerSelector(Duration const &interval, core::Reactor &reactor, MuddleRegister const &reg, PeerConnectionList &connections, MuddleEndpoint &endpoint)
+PeerSelector::PeerSelector(Duration const &interval, core::Reactor &reactor,
+                           MuddleRegister const &reg, PeerConnectionList &connections,
+                           MuddleEndpoint &endpoint)
   : core::PeriodicRunnable(interval)
   , reactor_{reactor}
   , connections_{connections}
   , register_{reg}
   , endpoint_{endpoint}
   , rpc_client_{"PeerSelect", endpoint_, SERVICE_MUDDLE, CHANNEL_RPC}
-{
-}
+{}
 
 void PeerSelector::AddDesiredPeer(Address const &address)
 {
@@ -56,9 +57,10 @@ void PeerSelector::AddDesiredPeer(Address const &address, network::Peer const &h
   auto &info = peers_info_[address];
 
   // try and find the hint in the peer list
-  bool const hint_not_present = std::find_if(info.peer_data.begin(), info.peer_data.end(), [&hint](PeerMetadata const &metadata) {
-    return metadata.peer == hint;
-  }) == info.peer_data.end();
+  bool const hint_not_present = std::find_if(info.peer_data.begin(), info.peer_data.end(),
+                                             [&hint](PeerMetadata const &metadata) {
+                                               return metadata.peer == hint;
+                                             }) == info.peer_data.end();
 
   if (hint_not_present)
   {
@@ -163,10 +165,9 @@ void PeerSelector::ResolveAddresses(Addresses const &addresses)
                                                    DiscoveryService::CONNECTION_INFORMATION);
 
     // wrap the promise is a task
-    auto task = std::make_shared<PromiseTask>(std::move(promise),
-                                              [this, address](service::Promise const &promise) {
-                                                OnResolvedAddress(address, promise);
-                                              });
+    auto task = std::make_shared<PromiseTask>(
+        std::move(promise),
+        [this, address](service::Promise const &promise) { OnResolvedAddress(address, promise); });
 
     // add the task to the reactor
     reactor_.Attach(task);
@@ -198,7 +199,8 @@ void PeerSelector::OnResolvedAddress(Address const &address, service::Promise co
   }
   else
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Unable to resolve address for: ", address.ToBase64(), " code: ", int(promise->state()));
+    FETCH_LOG_WARN(LOGGING_NAME, "Unable to resolve address for: ", address.ToBase64(),
+                   " code: ", int(promise->state()));
   }
 
   // remove the entry from the pending list
@@ -242,10 +244,11 @@ PeerSelector::UriSet PeerSelector::GenerateUriSet(Addresses const &addresses)
 
         if (!current_peer.unreachable)
         {
-          FETCH_LOG_TRACE(LOGGING_NAME, "Mapped ", address.ToBase64(), " to ", current_uri.ToString());
+          FETCH_LOG_TRACE(LOGGING_NAME, "Mapped ", address.ToBase64(), " to ",
+                          current_uri.ToString());
 
           uris.emplace(std::move(current_uri));
-          break; // ensure we do not populate multiple entries for a single address
+          break;  // ensure we do not populate multiple entries for a single address
         }
       }
     }
@@ -254,5 +257,5 @@ PeerSelector::UriSet PeerSelector::GenerateUriSet(Addresses const &addresses)
   return uris;
 }
 
-} // namespace muddle
-} // namespace fetch
+}  // namespace muddle
+}  // namespace fetch

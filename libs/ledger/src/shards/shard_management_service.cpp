@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/service_ids.hpp"
-#include "core/logging.hpp"
 #include "core/containers/set_difference.hpp"
+#include "core/logging.hpp"
+#include "core/service_ids.hpp"
 #include "crypto/identity.hpp"
-#include "ledger/shards/shard_management_service.hpp"
 #include "ledger/shards/shard_management_interface.hpp"
+#include "ledger/shards/shard_management_service.hpp"
 #include "muddle/muddle_interface.hpp"
 
 using namespace std::chrono_literals;
@@ -38,9 +38,10 @@ auto const STALE_THRESHOLD   = 15min;
 
 constexpr char const *LOGGING_NAME = "ShardMgmt";
 
-} // namespace
+}  // namespace
 
-ShardManagementService::ShardManagementService(Manifest manifest, ShardManagementInterface &shards, MuddleInterface &muddle, uint32_t log2_num_lanes)
+ShardManagementService::ShardManagementService(Manifest manifest, ShardManagementInterface &shards,
+                                               MuddleInterface &muddle, uint32_t log2_num_lanes)
   : core::PeriodicRunnable(1s)
   , shards_{shards}
   , muddle_{muddle}
@@ -151,8 +152,8 @@ void ShardManagementService::UpdateShards(Addresses const &addresses)
         auto &shard_cfg = shard_address_cfg[static_cast<std::size_t>(shard)];
 
         // attempt to locate the corresponding entry in the manifest
-        auto shard_it = manifest.FindService(
-            ServiceIdentifier{ServiceIdentifier::Type::LANE, shard});
+        auto shard_it =
+            manifest.FindService(ServiceIdentifier{ServiceIdentifier::Type::LANE, shard});
 
         if ((shard_it != manifest.end()) && !shard_it->second.address().empty())
         {
@@ -205,5 +206,5 @@ void ShardManagementService::RefreshCache()
   RequestUpdates(updates);
 }
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

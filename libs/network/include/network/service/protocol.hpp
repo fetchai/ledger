@@ -153,7 +153,7 @@ public:
   }
 
 private:
-  std::map<function_handler_type, stored_type>          members_;
+  std::map<function_handler_type, stored_type> members_;
 };
 }  // namespace service
 }  // namespace fetch

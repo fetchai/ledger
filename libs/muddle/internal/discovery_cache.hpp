@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/uri.hpp"
 #include "muddle/address.hpp"
+#include "network/uri.hpp"
 
 #include <chrono>
 #include <unordered_map>
@@ -32,10 +32,10 @@ public:
   using Uris = std::vector<network::Uri>;
 
   // Construction / Destruction
-  DiscoveryCache() = default;
+  DiscoveryCache()                       = default;
   DiscoveryCache(DiscoveryCache const &) = delete;
-  DiscoveryCache(DiscoveryCache &&) = delete;
-  ~DiscoveryCache() = default;
+  DiscoveryCache(DiscoveryCache &&)      = delete;
+  ~DiscoveryCache()                      = default;
 
   // Operators
   DiscoveryCache &operator=(DiscoveryCache const &) = delete;
@@ -47,13 +47,14 @@ private:
 
   struct Entry
   {
-    Uris uris;
+    Uris      uris;
     Timepoint timestamp{Clock::now()};
 
-    explicit Entry(Uris u) : uris{std::move(u)} {}
+    explicit Entry(Uris u)
+      : uris{std::move(u)}
+    {}
   };
-
 };
 
-} // namespace muddle
-} // namespace fetch
+}  // namespace muddle
+}  // namespace fetch

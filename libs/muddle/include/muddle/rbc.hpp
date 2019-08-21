@@ -183,5 +183,5 @@ private:
   /// @}
 };
 
-}  // namespace network
+}  // namespace muddle
 }  // namespace fetch

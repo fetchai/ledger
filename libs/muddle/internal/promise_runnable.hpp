@@ -30,11 +30,12 @@ public:
 
   // Construction / Destruction
   template <typename Class>
-  PromiseTask(service::Promise promise, Class *instance, void (Class::*member_function)(service::Promise const &));
+  PromiseTask(service::Promise promise, Class *instance,
+              void (Class::*member_function)(service::Promise const &));
   PromiseTask(service::Promise promise, Callback callback);
   PromiseTask(PromiseTask const &) = delete;
-  PromiseTask(PromiseTask &&) = delete;
-  ~PromiseTask() override = default;
+  PromiseTask(PromiseTask &&)      = delete;
+  ~PromiseTask() override          = default;
 
   /// @name Runnable
   /// @{
@@ -49,17 +50,18 @@ public:
   PromiseTask &operator=(PromiseTask &&) = delete;
 
 private:
-
   service::Promise promise_;
   Callback         callback_;
   bool             complete_{false};
 };
 
 template <typename Class>
-PromiseTask::PromiseTask(service::Promise promise, Class *instance, void (Class::*member_function)(service::Promise const &))
-  : PromiseTask(std::move(promise), [instance, member_function](service::Promise const &p) { (instance->*member_function)(p); })
-{
-}
+PromiseTask::PromiseTask(service::Promise promise, Class *instance,
+                         void (Class::*member_function)(service::Promise const &))
+  : PromiseTask(std::move(promise), [instance, member_function](service::Promise const &p) {
+    (instance->*member_function)(p);
+  })
+{}
 
-} // namespace muddle
-} // namespace fetch
+}  // namespace muddle
+}  // namespace fetch

@@ -36,5 +36,5 @@ DiscoveryService::Peers DiscoveryService::GetConnectionInformation()
   return possible_peers_.Get();
 }
 
-} // namespace muddle
-} // namespace fetch
+}  // namespace muddle
+}  // namespace fetch

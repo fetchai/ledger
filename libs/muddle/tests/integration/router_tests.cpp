@@ -137,7 +137,7 @@ TEST_F(RouterTests, CheckExchange)
 
   auto  nodeA     = CreateMuddle();
   auto &endpointA = nodeA->GetEndpoint();
-  nodeA->Start({},{8000});
+  nodeA->Start({}, {8000});
 
   auto  nodeB     = CreateMuddle();
   auto &endpointB = nodeB->GetEndpoint();

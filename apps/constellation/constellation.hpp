@@ -32,13 +32,13 @@
 #include "ledger/genesis_loading/genesis_file_creator.hpp"
 #include "ledger/protocols/dag_service.hpp"
 #include "ledger/protocols/main_chain_rpc_service.hpp"
+#include "ledger/shards/manifest.hpp"
+#include "ledger/shards/shard_management_service.hpp"
 #include "ledger/storage_unit/lane_remote_control.hpp"
 #include "ledger/storage_unit/storage_unit_bundled_service.hpp"
 #include "ledger/storage_unit/storage_unit_client.hpp"
 #include "ledger/transaction_processor.hpp"
 #include "ledger/transaction_status_cache.hpp"
-#include "ledger/shards/manifest.hpp"
-#include "ledger/shards/shard_management_service.hpp"
 #include "miner/basic_miner.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "network/p2pservice/p2ptrust_bayrank.hpp"
@@ -63,13 +63,13 @@ class BeaconService;
 class Constellation : public ledger::BlockSinkInterface
 {
 public:
-  using CertificatePtr   = std::shared_ptr<crypto::Prover>;
-  using UriList          = std::vector<network::Uri>;
-  using Manifest         = ledger::Manifest;
-  using NetworkMode      = ledger::MainChainRpcService::Mode;
-  using FeatureFlags     = core::FeatureFlags;
-  using ConstByteArray   = byte_array::ConstByteArray;
-  using Certificates     = std::vector<CertificatePtr>;
+  using CertificatePtr = std::shared_ptr<crypto::Prover>;
+  using UriList        = std::vector<network::Uri>;
+  using Manifest       = ledger::Manifest;
+  using NetworkMode    = ledger::MainChainRpcService::Mode;
+  using FeatureFlags   = core::FeatureFlags;
+  using ConstByteArray = byte_array::ConstByteArray;
+  using Certificates   = std::vector<CertificatePtr>;
 
   static constexpr uint32_t DEFAULT_BLOCK_DIFFICULTY = 6;
 
@@ -144,7 +144,7 @@ private:
   using StakeManagerPtr        = std::shared_ptr<ledger::StakeManager>;
   using EntropyPtr             = std::unique_ptr<ledger::EntropyGeneratorInterface>;
 
-  using BeaconServicePtr = std::shared_ptr<fetch::beacon::BeaconService>;
+  using BeaconServicePtr       = std::shared_ptr<fetch::beacon::BeaconService>;
   using ShardManagementService = ledger::ShardManagementService;
   using ShardMgmtServicePtr    = std::shared_ptr<ShardManagementService>;
   using ShardConfigs           = ledger::ShardConfigs;
@@ -163,21 +163,21 @@ private:
 
   /// @name Network Orchestration
   /// @{
-  core::Reactor    reactor_;
-  NetworkManager   network_manager_;       ///< Top level network coordinator
-  NetworkManager   http_network_manager_;  ///< A separate net. coordinator for the http service(s)
-  MuddlePtr        muddle_;                ///< The muddle networking service
-  CertificatePtr   internal_identity_;
-  MuddlePtr        internal_muddle_;  ///< The muddle networking service
-  TrustSystem      trust_;            ///< The trust subsystem
+  core::Reactor  reactor_;
+  NetworkManager network_manager_;       ///< Top level network coordinator
+  NetworkManager http_network_manager_;  ///< A separate net. coordinator for the http service(s)
+  MuddlePtr      muddle_;                ///< The muddle networking service
+  CertificatePtr internal_identity_;
+  MuddlePtr      internal_muddle_;  ///< The muddle networking service
+  TrustSystem    trust_;            ///< The trust subsystem
   /// @}
 
   /// @name Transaction and State Database shards
   /// @{
-  TxStatusCachePtr tx_status_cache_;        ///< Cache of transaction status
-  LaneServices         lane_services_;  ///< The lane services
-  StorageUnitClientPtr storage_;        ///< The storage client to the lane services
-  LaneRemoteControl    lane_control_;   ///< The lane control client for the lane services
+  TxStatusCachePtr     tx_status_cache_;  ///< Cache of transaction status
+  LaneServices         lane_services_;    ///< The lane services
+  StorageUnitClientPtr storage_;          ///< The storage client to the lane services
+  LaneRemoteControl    lane_control_;     ///< The lane control client for the lane services
   ShardMgmtServicePtr  shard_management_;
 
   DAGPtr             dag_;

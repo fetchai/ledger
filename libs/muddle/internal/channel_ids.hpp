@@ -24,5 +24,5 @@ namespace muddle {
 
 static constexpr uint16_t CHANNEL_DISCOVERY = 10;
 
-} // namespace muddle
-} // namespace fetch
+}  // namespace muddle
+}  // namespace fetch

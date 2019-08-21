@@ -18,12 +18,12 @@
 //------------------------------------------------------------------------------
 
 #include "core/periodic_runnable.hpp"
-#include "muddle/address.hpp"
 #include "ledger/shards/manifest.hpp"
 #include "ledger/shards/shard_management_protocol.hpp"
+#include "muddle/address.hpp"
 #include "muddle/muddle_interface.hpp"
-#include "muddle/rpc/server.hpp"
 #include "muddle/rpc/client.hpp"
+#include "muddle/rpc/server.hpp"
 
 #include <chrono>
 
@@ -32,7 +32,7 @@ namespace muddle {
 
 class MuddleInterface;
 
-} // namespace muddle
+}  // namespace muddle
 namespace ledger {
 
 class ShardManagementInterface;
@@ -45,10 +45,11 @@ public:
   using Addresses       = MuddleInterface::Addresses;
 
   // Construction / Destruction
-  ShardManagementService(Manifest manifest, ShardManagementInterface &shards, MuddleInterface &muddle, uint32_t log2_num_lanes);
+  ShardManagementService(Manifest manifest, ShardManagementInterface &shards,
+                         MuddleInterface &muddle, uint32_t log2_num_lanes);
   ShardManagementService(ShardManagementService const &) = delete;
-  ShardManagementService(ShardManagementService &&) = delete;
-  ~ShardManagementService() override = default;
+  ShardManagementService(ShardManagementService &&)      = delete;
+  ~ShardManagementService() override                     = default;
 
   // External Operations
   Manifest RequestManifest();
@@ -95,8 +96,7 @@ private:
   ManifestCache   manifest_cache_;
   PendingPromises pending_requests_;
   /// @}
-
 };
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

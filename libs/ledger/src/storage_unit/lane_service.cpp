@@ -70,7 +70,8 @@ LaneService::LaneService(NetworkManager const &nm, ShardConfig config, Mode mode
       std::make_shared<Server>(external_muddle_->GetEndpoint(), SERVICE_LANE, CHANNEL_RPC);
 
   // Internal muddle network
-  internal_muddle_ = muddle::CreateMuddle(cfg_.internal_network_id, cfg_.internal_identity, nm, external_hostname);
+  internal_muddle_ =
+      muddle::CreateMuddle(cfg_.internal_network_id, cfg_.internal_identity, nm, external_hostname);
   internal_rpc_server_ =
       std::make_shared<Server>(internal_muddle_->GetEndpoint(), SERVICE_LANE_CTRL, CHANNEL_RPC);
 

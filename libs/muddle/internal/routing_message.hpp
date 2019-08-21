@@ -40,7 +40,7 @@ struct RoutingMessage
   Type type{Type::PING};
 };
 
-} // namespace muddle
+}  // namespace muddle
 
 namespace serializers {
 
@@ -79,5 +79,5 @@ public:
   }
 };
 
-} // namespace serializers
-} // namespace fetch
+}  // namespace serializers
+}  // namespace fetch

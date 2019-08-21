@@ -26,11 +26,11 @@
 #include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
 
-#include "network/generics/requesting_queue.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
 #include "muddle/subscription.hpp"
+#include "network/generics/requesting_queue.hpp"
 
 #include "beacon/beacon_service.hpp"
 #include "beacon/beacon_setup_protocol.hpp"

@@ -27,7 +27,6 @@ class ShardManagementService;
 class ShardManagementProtocol : public service::Protocol
 {
 public:
-
   enum
   {
     REQUEST_MANIFEST,
@@ -37,5 +36,5 @@ public:
   ~ShardManagementProtocol() override = default;
 };
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

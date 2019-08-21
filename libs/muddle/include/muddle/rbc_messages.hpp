@@ -201,7 +201,7 @@ public:
   }
 };
 
-}  // namespace network
+}  // namespace muddle
 
 namespace serializers {
 template <typename D>

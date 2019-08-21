@@ -36,7 +36,8 @@ std::unordered_set<K> operator-(std::unordered_set<K> const &lhs, std::unordered
 }
 
 template <typename K, typename V, typename H>
-std::unordered_set<K, H> operator-(std::unordered_set<K, H> const &lhs, std::unordered_map<K,V,H> const &rhs)
+std::unordered_set<K, H> operator-(std::unordered_set<K, H> const &   lhs,
+                                   std::unordered_map<K, V, H> const &rhs)
 {
   std::unordered_set<K> result;
 

@@ -20,8 +20,8 @@
 #include "core/threading/synchronised_state.hpp"
 #include "muddle/address.hpp"
 #include "muddle/muddle_endpoint.hpp"
-#include "network/service/protocol.hpp"
 #include "network/peer.hpp"
+#include "network/service/protocol.hpp"
 
 #include <vector>
 
@@ -54,7 +54,7 @@ public:
 
 private:
   using SubscriptionPtr = MuddleEndpoint::SubscriptionPtr;
-  using SyncPeers = SynchronisedState<Peers>;
+  using SyncPeers       = SynchronisedState<Peers>;
 
   Peers GetConnectionInformation();
 

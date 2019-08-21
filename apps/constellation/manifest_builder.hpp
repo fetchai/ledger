@@ -22,7 +22,7 @@ namespace ledger {
 
 class Manifest;
 
-}  // namespace network
+}  // namespace ledger
 
 class Settings;
 

@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/peer.hpp"
 #include "ledger/shards/manifest_entry.hpp"
+#include "network/peer.hpp"
 
 namespace fetch {
 namespace ledger {
@@ -35,28 +35,25 @@ uint16_t ExtractLocalPort(network::Uri const &uri)
   return local_port;
 }
 
-} // namespace
+}  // namespace
 
 ManifestEntry::ManifestEntry(network::Peer const &peer)
   : ManifestEntry(network::Uri{peer})
-{
-}
+{}
 
 ManifestEntry::ManifestEntry(network::Uri const &uri)
   : ManifestEntry(uri, ExtractLocalPort(uri))
-{
-}
+{}
 
 ManifestEntry::ManifestEntry(network::Uri const &uri, uint16_t local_port)
   : uri_{uri}
   , local_port_{local_port}
-{
-}
+{}
 
 void ManifestEntry::UpdateAddress(muddle::Address address)
 {
   address_ = std::move(address);
 }
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

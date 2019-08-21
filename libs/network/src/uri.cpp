@@ -104,7 +104,7 @@ bool Uri::IsMuddleAddress() const
   return scheme_ == Scheme::Muddle;
 }
 
-Peer const & Uri::GetTcpPeer() const
+Peer const &Uri::GetTcpPeer() const
 {
   assert(scheme_ == Scheme::Tcp);
   return tcp_;

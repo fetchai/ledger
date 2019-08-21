@@ -756,5 +756,5 @@ bool RBC::SetPartyFlag(uint32_t sender_index, TagType tag, MessageType msg_type)
   return true;
 }
 
-}  // namespace network
+}  // namespace muddle
 }  // namespace fetch

@@ -50,5 +50,5 @@ MuddleRegistry::MuddleMap MuddleRegistry::GetMap() const
   return map_;
 }
 
-} // namespace muddle
-} // namespace fetch
+}  // namespace muddle
+}  // namespace fetch

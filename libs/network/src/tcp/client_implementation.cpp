@@ -21,7 +21,8 @@
 namespace fetch {
 namespace network {
 
-TCPClientImplementation::TCPClientImplementation(network_manager_type const &network_manager) noexcept
+TCPClientImplementation::TCPClientImplementation(
+    network_manager_type const &network_manager) noexcept
   : networkManager_(network_manager)
 {}
 
@@ -40,7 +41,8 @@ void TCPClientImplementation::Connect(byte_array::ConstByteArray const &host, ui
   Connect(host, byte_array::ConstByteArray(std::to_string(port)));
 }
 
-void TCPClientImplementation::Connect(byte_array::ConstByteArray const &host, byte_array::ConstByteArray const &port)
+void TCPClientImplementation::Connect(byte_array::ConstByteArray const &host,
+                                      byte_array::ConstByteArray const &port)
 {
   LOG_STACK_TRACE_POINT;
   self_type self = shared_from_this();
@@ -279,8 +281,7 @@ void TCPClientImplementation::ReadBody(byte_array::ByteArray const &header) noex
     SetHeader(dummy, 0);
     dummy.Resize(16);
 
-    FETCH_LOG_ERROR(LOGGING_NAME,
-                    "Magic incorrect during network read:\ngot:      ", ToHex(header),
+    FETCH_LOG_ERROR(LOGGING_NAME, "Magic incorrect during network read:\ngot:      ", ToHex(header),
                     "\nExpected: ", ToHex(byte_array::ByteArray(dummy)));
     return;
   }
@@ -418,5 +419,5 @@ void TCPClientImplementation::WriteNext(shared_self_type selfLock)
   }
 }
 
-} // namespace network
-} // namespace fetch
+}  // namespace network
+}  // namespace fetch

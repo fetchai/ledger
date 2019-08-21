@@ -27,5 +27,5 @@ ShardManagementProtocol::ShardManagementProtocol(ShardManagementService &service
   Expose(REQUEST_MANIFEST, &service, &ShardManagementService::RequestManifest);
 }
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

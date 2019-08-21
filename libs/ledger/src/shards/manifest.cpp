@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/shards/manifest.hpp"
 #include "core/json/document.hpp"
 #include "core/json/exceptions.hpp"
 #include "core/logging.hpp"
+#include "ledger/shards/manifest.hpp"
 #include "variant/variant_utils.hpp"
 
 namespace fetch {

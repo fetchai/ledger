@@ -104,9 +104,9 @@ private:
       include_transactions = true;
     }
 
-    Variant response     = Variant::Object();
-    response["chain"]    = GenerateBlockList(include_transactions, chain_length);
-    response["block"]    = fetch::byte_array::ToBase64(chain_.GetHeaviestBlockHash());
+    Variant response  = Variant::Object();
+    response["chain"] = GenerateBlockList(include_transactions, chain_length);
+    response["block"] = fetch::byte_array::ToBase64(chain_.GetHeaviestBlockHash());
 
     return http::CreateJsonResponse(response);
   }

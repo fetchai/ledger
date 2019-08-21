@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/containers/set_difference.hpp"
 #include "ledger/storage_unit/lane_controller.hpp"
 #include "muddle/muddle_interface.hpp"
-#include "core/containers/set_difference.hpp"
 
 namespace fetch {
 namespace ledger {

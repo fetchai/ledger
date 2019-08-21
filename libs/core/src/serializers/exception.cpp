@@ -29,8 +29,7 @@ namespace serializers {
 
 SerializableException::SerializableException()
   : SerializableException(error::TYPE_ERROR, "Unknown")
-{
-}
+{}
 
 SerializableException::SerializableException(std::string explanation)
   : error_code_(error::TYPE_ERROR)
@@ -43,13 +42,11 @@ SerializableException::SerializableException(std::string explanation)
 
 SerializableException::SerializableException(byte_array::ConstByteArray const &explanation)
   : SerializableException(error::TYPE_ERROR, std::string(explanation))
-{
-}
+{}
 
 SerializableException::SerializableException(error::error_type error_code, char const *explanation)
   : SerializableException(error_code, std::string{explanation})
-{
-}
+{}
 
 SerializableException::SerializableException(error::error_type error_code, std::string explanation)
   : error_code_(error_code)
@@ -63,8 +60,7 @@ SerializableException::SerializableException(error::error_type error_code, std::
 SerializableException::SerializableException(error::error_type                 error_code,
                                              byte_array::ConstByteArray const &explanation)
   : SerializableException(error_code, std::string{explanation})
-{
-}
+{}
 
 SerializableException::~SerializableException()
 {

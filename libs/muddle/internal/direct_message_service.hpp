@@ -38,10 +38,11 @@ public:
   using PacketPtr = std::shared_ptr<Packet>;
 
   // Construction / Destruction
-  DirectMessageService(Address const &address, Router &router, MuddleRegister& reg, PeerConnectionList &peers);
+  DirectMessageService(Address const &address, Router &router, MuddleRegister &reg,
+                       PeerConnectionList &peers);
   DirectMessageService(DirectMessageService const &) = delete;
-  DirectMessageService(DirectMessageService &&) = delete;
-  ~DirectMessageService() = default;
+  DirectMessageService(DirectMessageService &&)      = delete;
+  ~DirectMessageService()                            = default;
 
   void InitiateConnection(Handle handle);
   void RequestDisconnect(Handle handle);
@@ -71,7 +72,7 @@ private:
     Phase  phase{Phase::INITIAL};
   };
 
-  using Mutex               = mutex::Mutex;
+  using Mutex        = mutex::Mutex;
   using Reservations = std::unordered_map<Address, Handle>;
 
   template <typename T>
@@ -83,7 +84,8 @@ private:
   void OnRoutingPong(Handle handle, PacketPtr const &packet, RoutingMessage const &msg);
   void OnRoutingRequest(Handle handle, PacketPtr const &packet, RoutingMessage const &msg);
   void OnRoutingAccepted(Handle handle, PacketPtr const &packet, RoutingMessage const &msg);
-  void OnRoutingDisconnectRequest(Handle handle, PacketPtr const &packet, RoutingMessage const &msg);
+  void OnRoutingDisconnectRequest(Handle handle, PacketPtr const &packet,
+                                  RoutingMessage const &msg);
 
   enum class UpdateStatus
   {
@@ -100,12 +102,12 @@ private:
 
   Address const       address_;
   Router &            router_;
-  MuddleRegister&     register_;
+  MuddleRegister &    register_;
   PeerConnectionList &peers_;
 
-  Mutex               lock_{__LINE__, __FILE__};
-  Reservations   reservations_;
+  Mutex        lock_{__LINE__, __FILE__};
+  Reservations reservations_;
 };
 
-} // namespace muddle
-} // namespace fetch
+}  // namespace muddle
+}  // namespace fetch

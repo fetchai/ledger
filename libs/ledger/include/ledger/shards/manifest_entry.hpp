@@ -19,8 +19,8 @@
 
 #include "core/serializers/group_definitions.hpp"
 #include "ledger/shards/service_identifier.hpp"
-#include "network/uri.hpp"
 #include "muddle/address.hpp"
+#include "network/uri.hpp"
 
 namespace fetch {
 namespace ledger {
@@ -28,19 +28,18 @@ namespace ledger {
 class ManifestEntry
 {
 public:
-
   // Construction / Destruction
   ManifestEntry() = default;
   explicit ManifestEntry(network::Peer const &peer);
   explicit ManifestEntry(network::Uri const &uri);
   ManifestEntry(network::Uri const &uri, uint16_t local_port);
   ManifestEntry(ManifestEntry const &) = default;
-  ManifestEntry(ManifestEntry &&) = default;
-  ~ManifestEntry() = default;
+  ManifestEntry(ManifestEntry &&)      = default;
+  ~ManifestEntry()                     = default;
 
   muddle::Address const &address() const;
-  network::Uri const &uri() const;
-  uint16_t local_port() const;
+  network::Uri const &   uri() const;
+  uint16_t               local_port() const;
 
   void UpdateAddress(muddle::Address address);
 
@@ -50,8 +49,8 @@ public:
 
 private:
   muddle::Address address_{};
-  network::Uri uri_{};
-  uint16_t     local_port_{0};
+  network::Uri    uri_{};
+  uint16_t        local_port_{0};
 
   template <typename T, typename D>
   friend struct serializers::MapSerializer;
@@ -72,7 +71,7 @@ inline uint16_t ManifestEntry::local_port() const
   return local_port_;
 }
 
-} // namespace ledger
+}  // namespace ledger
 
 namespace serializers {
 
@@ -105,5 +104,5 @@ public:
   }
 };
 
-} // namespace serializers
-} // namespace fetch
+}  // namespace serializers
+}  // namespace fetch

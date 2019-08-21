@@ -22,11 +22,11 @@
 
 #include "core/mutex.hpp"
 #include "crypto/prover.hpp"
-#include "network/details/thread_pool.hpp"
-#include "network/management/abstract_connection.hpp"
 #include "muddle/muddle_endpoint.hpp"
 #include "muddle/network_id.hpp"
 #include "muddle/packet.hpp"
+#include "network/details/thread_pool.hpp"
+#include "network/management/abstract_connection.hpp"
 
 #include <chrono>
 #include <cstddef>
@@ -49,14 +49,14 @@ class MuddleRegister;
 class Router : public MuddleEndpoint
 {
 public:
-  using Address             = Packet::Address;  // == a crypto::Identity.identifier_
-  using PacketPtr           = std::shared_ptr<Packet>;
-  using Payload             = Packet::Payload;
-  using ConnectionPtr       = std::weak_ptr<network::AbstractConnection>;
-  using Handle              = network::AbstractConnection::connection_handle_type;
-  using ThreadPool          = network::ThreadPool;
-  using HandleDirectAddrMap = std::unordered_map<Handle, Address>;
-  using Prover              = crypto::Prover;
+  using Address              = Packet::Address;  // == a crypto::Identity.identifier_
+  using PacketPtr            = std::shared_ptr<Packet>;
+  using Payload              = Packet::Payload;
+  using ConnectionPtr        = std::weak_ptr<network::AbstractConnection>;
+  using Handle               = network::AbstractConnection::connection_handle_type;
+  using ThreadPool           = network::ThreadPool;
+  using HandleDirectAddrMap  = std::unordered_map<Handle, Address>;
+  using Prover               = crypto::Prover;
   using DirectMessageHandler = std::function<void(Handle, PacketPtr)>;
 
   struct RoutingData
@@ -138,13 +138,13 @@ public:
   Router &operator=(Router &&) = delete;
 
 private:
-  using HandleMap            = std::unordered_map<Handle, std::unordered_set<Packet::RawAddress>>;
-  using Mutex                = mutex::Mutex;
-  using Clock                = std::chrono::steady_clock;
-  using Timepoint            = Clock::time_point;
-  using EchoCache            = std::unordered_map<std::size_t, Timepoint>;
-  using RawAddress           = Packet::RawAddress;
-  using BlackList            = fetch::muddle::Blacklist;
+  using HandleMap  = std::unordered_map<Handle, std::unordered_set<Packet::RawAddress>>;
+  using Mutex      = mutex::Mutex;
+  using Clock      = std::chrono::steady_clock;
+  using Timepoint  = Clock::time_point;
+  using EchoCache  = std::unordered_map<std::size_t, Timepoint>;
+  using RawAddress = Packet::RawAddress;
+  using BlackList  = fetch::muddle::Blacklist;
 
   enum class UpdateStatus
   {
@@ -155,7 +155,8 @@ private:
 
   static constexpr std::size_t NUMBER_OF_ROUTER_THREADS = 1;
 
-  UpdateStatus AssociateHandleWithAddress(Handle handle, Packet::RawAddress const &address, bool direct);
+  UpdateStatus AssociateHandleWithAddress(Handle handle, Packet::RawAddress const &address,
+                                          bool direct);
 
   Handle LookupRandomHandle(Packet::RawAddress const &address) const;
 

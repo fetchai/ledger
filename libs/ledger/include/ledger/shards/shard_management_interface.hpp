@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/uri.hpp"
 #include "muddle/address.hpp"
+#include "network/uri.hpp"
 
 #include <cstdint>
 #include <unordered_map>
@@ -43,5 +43,5 @@ public:
   /// @}
 };
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

@@ -42,7 +42,7 @@ using fetch::byte_array::ConstByteArray;
 namespace fetch {
 namespace muddle {
 
-static auto const        CLEANUP_INTERVAL        = std::chrono::seconds{10};
+static auto const        CLEANUP_INTERVAL           = std::chrono::seconds{10};
 static std::size_t const MAINTENANCE_INTERVAL_MS    = 2500;
 static std::size_t const PEER_SELECTION_INTERVAL_MS = 3000;
 
@@ -64,20 +64,24 @@ Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager 
   , clients_()
   , network_id_(network_id)
   , reactor_{"muddle"}
-  , maintenance_periodic_(std::make_shared<core::PeriodicFunctor>(std::chrono::milliseconds{MAINTENANCE_INTERVAL_MS}, this, &Muddle::RunPeriodicMaintenance))
+  , maintenance_periodic_(std::make_shared<core::PeriodicFunctor>(
+        std::chrono::milliseconds{MAINTENANCE_INTERVAL_MS}, this, &Muddle::RunPeriodicMaintenance))
   , direct_message_service_(node_address_, router_, *register_, clients_)
-  , peer_selector_(std::make_shared<PeerSelector>(std::chrono::milliseconds{PEER_SELECTION_INTERVAL_MS}, reactor_, *register_, clients_, router_))
+  , peer_selector_(
+        std::make_shared<PeerSelector>(std::chrono::milliseconds{PEER_SELECTION_INTERVAL_MS},
+                                       reactor_, *register_, clients_, router_))
   , rpc_server_(router_, SERVICE_MUDDLE, CHANNEL_RPC)
 {
   // register the status update
-  clients_.SetStatusCallback([this](Uri const &peer, Handle handle, PeerConnectionList::ConnectionState state) {
-    FETCH_UNUSED(peer);
+  clients_.SetStatusCallback(
+      [this](Uri const &peer, Handle handle, PeerConnectionList::ConnectionState state) {
+        FETCH_UNUSED(peer);
 
-    if (state == PeerConnectionList::ConnectionState::CONNECTED)
-    {
-      direct_message_service_.InitiateConnection(handle);
-    }
-  });
+        if (state == PeerConnectionList::ConnectionState::CONNECTED)
+        {
+          direct_message_service_.InitiateConnection(handle);
+        }
+      });
 
   rpc_server_.Add(RPC_MUDDLE_DISCOVERY, &discovery_service_);
 
@@ -425,7 +429,6 @@ void Muddle::RunPeriodicMaintenance()
     }
     discovery_service_.UpdatePeers(std::move(external_addresses));
 
-
     // connect to all the required peers
     for (Uri const &peer : clients_.GetPeersToConnectTo())
     {
@@ -502,7 +505,8 @@ void Muddle::CreateTcpClient(Uri const &peer)
   assert(strong_conn);
   auto conn_handle = strong_conn->handle();
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Creating connection to ", peer.ToString(), " (conn: ", conn_handle, ")");
+  FETCH_LOG_INFO(LOGGING_NAME, "Creating connection to ", peer.ToString(), " (conn: ", conn_handle,
+                 ")");
 
   ConnectionRegPtr reg = std::static_pointer_cast<network::AbstractConnectionRegister>(register_);
 

@@ -53,7 +53,7 @@ public:
   HTTPModule(HTTPModule &&rhs)      = delete;
   HTTPModule &operator=(HTTPModule const &rhs) = delete;
   HTTPModule &operator=(HTTPModule &&rhs) = delete;
-  virtual ~HTTPModule() = default;
+  virtual ~HTTPModule()                   = default;
 
   using ViewType      = std::function<HTTPResponse(ViewParameters, HTTPRequest)>;
   using Authenticator = std::function<bool(HTTPRequest)>;

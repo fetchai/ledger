@@ -71,7 +71,7 @@ public:
   bool IsTcpPeer() const;
   bool IsMuddleAddress() const;
 
-  Peer const & GetTcpPeer() const;
+  Peer const &          GetTcpPeer() const;
   ConstByteArray const &GetMuddleAddress() const;
   /// @}
 

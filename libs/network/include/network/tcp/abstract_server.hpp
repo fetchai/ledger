@@ -29,13 +29,13 @@ public:
   using connection_handle_type = typename AbstractConnection::connection_handle_type;
 
   // Construction / Destruction
-  AbstractNetworkServer() = default;
+  AbstractNetworkServer()          = default;
   virtual ~AbstractNetworkServer() = default;
 
   /// @name Abstract Network Server Interface
   /// @{
-  virtual uint16_t GetListeningPort() const = 0;
-  virtual void PushRequest(connection_handle_type client, message_type const &msg) = 0;
+  virtual uint16_t GetListeningPort() const                                            = 0;
+  virtual void     PushRequest(connection_handle_type client, message_type const &msg) = 0;
   /// @}
 };
 

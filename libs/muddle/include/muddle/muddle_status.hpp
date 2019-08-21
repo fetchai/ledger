@@ -22,10 +22,10 @@ namespace variant {
 
 class Variant;
 
-} // namespace variant
+}  // namespace variant
 namespace muddle {
 
 variant::Variant GetStatusSummary();
 
-} // namespace muddle
-} // namespace fetch
+}  // namespace muddle
+}  // namespace fetch

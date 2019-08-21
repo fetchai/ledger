@@ -96,5 +96,5 @@ RBCMessage::RBCMessage(RBCMessageType type, uint16_t channel, uint32_t id, uint8
   , payload_(std::move(msg))
 {}
 
-}  // namespace network
+}  // namespace muddle
 }  // namespace fetch

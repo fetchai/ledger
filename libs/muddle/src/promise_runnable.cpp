@@ -26,8 +26,7 @@ static constexpr char const *LOGGING_NAME = "PromiseTask";
 PromiseTask::PromiseTask(service::Promise promise, Callback callback)
   : promise_{std::move(promise)}
   , callback_{std::move(callback)}
-{
-}
+{}
 
 bool PromiseTask::IsReadyToExecute() const
 {
@@ -57,6 +56,5 @@ bool PromiseTask::IsComplete() const
   return complete_ || (!promise_);
 }
 
-
-} // namespace muddle
-} // namespace fetch
+}  // namespace muddle
+}  // namespace fetch

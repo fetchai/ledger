@@ -48,9 +48,9 @@ public:
   using ConnectionPtr = std::shared_ptr<network::AbstractConnection>;
   using Handle        = network::AbstractConnection::connection_handle_type;
   using PeerMap       = std::unordered_map<Uri, ConnectionPtr>;
-  using PeerSet = std::unordered_set<Uri>;
-  using Clock     = std::chrono::steady_clock;
-  using Timepoint = Clock::time_point;
+  using PeerSet       = std::unordered_set<Uri>;
+  using Clock         = std::chrono::steady_clock;
+  using Timepoint     = Clock::time_point;
 
   enum class ConnectionState
   {
@@ -90,7 +90,7 @@ public:
   static constexpr char const *LOGGING_NAME = "PeerConnList";
 
   // Construction / Destruction
-  PeerConnectionList() = default;
+  PeerConnectionList()                           = default;
   PeerConnectionList(PeerConnectionList const &) = delete;
   PeerConnectionList(PeerConnectionList &&)      = delete;
   ~PeerConnectionList()                          = default;
@@ -119,11 +119,11 @@ public:
   void DisconnectAll();
   /// @}
 
-  PeerSet GetPersistentPeers() const;
-  bool GetMetadataForPeer(Uri const &peer, PeerMetadata &metadata) const;
+  PeerSet         GetPersistentPeers() const;
+  bool            GetMetadataForPeer(Uri const &peer, PeerMetadata &metadata) const;
   ConnectionState GetStateForPeer(Uri const &peer) const;
-  PeerList GetPeersToConnectTo() const;
-  PeerMap GetCurrentPeers() const;
+  PeerList        GetPeersToConnectTo() const;
+  PeerMap         GetCurrentPeers() const;
 
   // Operators
   PeerConnectionList &operator=(PeerConnectionList const &) = delete;

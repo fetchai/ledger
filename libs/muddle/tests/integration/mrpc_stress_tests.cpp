@@ -20,9 +20,9 @@
 
 #include "core/byte_array/decoders.hpp"
 #include "crypto/ecdsa.hpp"
-#include "network/management/network_manager.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
+#include "network/management/network_manager.hpp"
 #include "network/peer.hpp"
 #include "network/service/protocol.hpp"
 

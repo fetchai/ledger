@@ -46,7 +46,7 @@ public:
   SerializableException(error::error_type error_code, std::string explanation);
   SerializableException(error::error_type                 error_code,
                         byte_array::ConstByteArray const &explanation);
-  SerializableException(SerializableException const &) = default;
+  SerializableException(SerializableException const &)     = default;
   SerializableException(SerializableException &&) noexcept = default;
   ~SerializableException() override;
   /// @}
@@ -58,8 +58,8 @@ public:
   void StackTrace() const;
 
   // Assignment Operators
-  SerializableException& operator=(SerializableException const &) = default;
-  SerializableException& operator=(SerializableException &&) noexcept = default;
+  SerializableException &operator=(SerializableException const &) = default;
+  SerializableException &operator=(SerializableException &&) noexcept = default;
 
 private:
   uint64_t    error_code_;

@@ -24,5 +24,5 @@ namespace muddle {
 
 using Address = byte_array::ConstByteArray;
 
-} // namespace muddle
-} // namespace fetch
+}  // namespace muddle
+}  // namespace fetch

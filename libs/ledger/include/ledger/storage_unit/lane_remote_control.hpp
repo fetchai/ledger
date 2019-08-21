@@ -19,8 +19,8 @@
 
 #include "core/mutex.hpp"
 #include "ledger/shard_config.hpp"
-#include "muddle/rpc/client.hpp"
 #include "ledger/shards/shard_management_interface.hpp"
+#include "muddle/rpc/client.hpp"
 
 #include <cstdint>
 #include <unordered_set>
@@ -47,7 +47,6 @@ public:
   LaneRemoteControl &operator=(LaneRemoteControl &&other) = delete;
 
 protected:
-
   /// @name Shard Management
   /// @{
   void UseThesePeers(LaneIndex lane, AddressMap const &addresses) override;

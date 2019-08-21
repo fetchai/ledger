@@ -32,14 +32,14 @@
 #include "ledger/tx_query_http_interface.hpp"
 #include "ledger/tx_status_http_interface.hpp"
 #include "logging_http_module.hpp"
-#include "network/generics/atomic_inflight_counter.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
+#include "muddle_status_http_module.hpp"
+#include "network/generics/atomic_inflight_counter.hpp"
 #include "network/p2pservice/p2p_http_interface.hpp"
 #include "network/uri.hpp"
 #include "open_api_http_module.hpp"
 #include "telemetry_http_module.hpp"
-#include "muddle_status_http_module.hpp"
 
 #include "beacon/beacon_service.hpp"
 #include "beacon/beacon_setup_protocol.hpp"
@@ -100,7 +100,8 @@ std::size_t CalcNetworkManagerThreads(std::size_t num_lanes)
   return (num_lanes * THREADS_PER_LANE) + OTHER_THREADS;
 }
 
-uint16_t LookupLocalPort(Manifest const &manifest, ServiceIdentifier::Type service, int32_t instance = -1)
+uint16_t LookupLocalPort(Manifest const &manifest, ServiceIdentifier::Type service,
+                         int32_t instance = -1)
 {
   ServiceIdentifier const identifier{service, instance};
 
@@ -222,16 +223,18 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   , reactor_{"Reactor"}
   , network_manager_{"NetMgr", CalcNetworkManagerThreads(cfg_.num_lanes())}
   , http_network_manager_{"Http", HTTP_THREADS}
-  , muddle_{muddle::CreateMuddle("IHUB", certificate, network_manager_, "127.0.0.1")} // external address missing
+  , muddle_{muddle::CreateMuddle("IHUB", certificate, network_manager_, "127.0.0.1")}
+  // external address missing
   , internal_identity_{std::make_shared<crypto::ECDSASigner>()}
-  , internal_muddle_{muddle::CreateMuddle("ISRD", internal_identity_, network_manager_, "127.0.0.1")}
+  , internal_muddle_{muddle::CreateMuddle("ISRD", internal_identity_, network_manager_,
+                                          "127.0.0.1")}
   , trust_{}
   , tx_status_cache_(TxStatusCache::factory())
   , lane_services_()
   , storage_(std::make_shared<StorageUnitClient>(internal_muddle_->GetEndpoint(), shard_cfgs_,
                                                  cfg_.log2_num_lanes))
-  , lane_control_(internal_muddle_->GetEndpoint(), shard_cfgs_, cfg_.log2_num_lanes),
-    shard_management_(std::make_shared<ShardManagementService>(cfg_.manifest, lane_control_,
+  , lane_control_(internal_muddle_->GetEndpoint(), shard_cfgs_, cfg_.log2_num_lanes)
+  , shard_management_(std::make_shared<ShardManagementService>(cfg_.manifest, lane_control_,
                                                                *muddle_, cfg_.log2_num_lanes))
   , dag_{GenerateDAG(cfg_.features.IsEnabled("synergetic"), "dag_db_", true, certificate)}
   , beacon_{CreateBeaconService(cfg_, muddle_->GetEndpoint(), certificate)}
@@ -252,17 +255,17 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
                        certificate,     cfg_.num_lanes(),
                        cfg_.num_slices, cfg_.block_difficulty,
                        beacon_}
-  , main_chain_service_{std::make_shared<MainChainRpcService>(muddle_->GetEndpoint(), chain_, trust_,
-                                                              cfg_.network_mode)}
+  , main_chain_service_{std::make_shared<MainChainRpcService>(muddle_->GetEndpoint(), chain_,
+                                                              trust_, cfg_.network_mode)}
   , tx_processor_{dag_, *storage_, block_packer_, tx_status_cache_, cfg_.processor_threads}
   , http_open_api_module_{std::make_shared<OpenAPIHttpModule>()}
   , http_{http_network_manager_}
   , http_modules_{
         http_open_api_module_,
-        std::make_shared<p2p::P2PHttpInterface>(cfg_.log2_num_lanes, chain_, block_packer_,
-                                                p2p::P2PHttpInterface::WeakStateMachines{
-                                                    main_chain_service_->GetWeakStateMachine(),
-                                                    block_coordinator_.GetWeakStateMachine()}),
+        std::make_shared<p2p::P2PHttpInterface>(
+            cfg_.log2_num_lanes, chain_, block_packer_,
+            p2p::P2PHttpInterface::WeakStateMachines{main_chain_service_->GetWeakStateMachine(),
+                                                     block_coordinator_.GetWeakStateMachine()}),
         std::make_shared<ledger::TxStatusHttpInterface>(tx_status_cache_),
         std::make_shared<ledger::TxQueryHttpInterface>(*storage_),
         std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_),
@@ -275,7 +278,8 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   // print the start up log banner
   FETCH_LOG_INFO(LOGGING_NAME, "Constellation :: ", cfg_.num_lanes(), "x", cfg_.num_slices, "x",
                  cfg_.num_executors);
-  FETCH_LOG_INFO(LOGGING_NAME, "              :: ", Address::FromMuddleAddress(muddle_->GetAddress()).display());
+  FETCH_LOG_INFO(LOGGING_NAME,
+                 "              :: ", Address::FromMuddleAddress(muddle_->GetAddress()).display());
   FETCH_LOG_INFO(LOGGING_NAME, "              :: ", muddle_->GetAddress().ToBase64());
   FETCH_LOG_INFO(LOGGING_NAME, "");
 

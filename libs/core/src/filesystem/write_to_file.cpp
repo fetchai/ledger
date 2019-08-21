@@ -25,7 +25,7 @@ namespace core {
 
 bool WriteToFile(char const *filename, byte_array::ConstByteArray const &data)
 {
-  bool success{false};
+  bool          success{false};
   std::ofstream stream{filename, std::ios::out | std::ios::binary};
   if (stream.is_open())
   {
@@ -37,5 +37,5 @@ bool WriteToFile(char const *filename, byte_array::ConstByteArray const &data)
   return success;
 }
 
-} // namespace core
-} // namespace fetch
+}  // namespace core
+}  // namespace fetch

@@ -23,11 +23,11 @@
 #include "core/macros.hpp"
 #include "core/threading/synchronised_state.hpp"
 #include "crypto/ecdsa.hpp"
+#include "http/module.hpp"
+#include "http/server.hpp"
 #include "muddle/muddle_endpoint.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "network/management/network_manager.hpp"
-#include "http/module.hpp"
-#include "http/server.hpp"
 #include "telemetry/registry.hpp"
 
 #include <algorithm>
@@ -161,21 +161,19 @@ class MetricsModule : public http::HTTPModule
 public:
   MetricsModule()
   {
-    Get("/metrics", "Metrics feed.",
-        [](http::ViewParameters const &, http::HTTPRequest const &) {
-          static auto const TXT_MIME_TYPE = http::mime_types::GetMimeTypeFromExtension(".txt");
+    Get("/metrics", "Metrics feed.", [](http::ViewParameters const &, http::HTTPRequest const &) {
+      static auto const TXT_MIME_TYPE = http::mime_types::GetMimeTypeFromExtension(".txt");
 
-          // collect up the generated metrics for the system
-          std::ostringstream stream;
-          fetch::telemetry::Registry::Instance().Collect(stream);
+      // collect up the generated metrics for the system
+      std::ostringstream stream;
+      fetch::telemetry::Registry::Instance().Collect(stream);
 
-          return http::HTTPResponse(stream.str(), TXT_MIME_TYPE);
-        });
+      return http::HTTPResponse(stream.str(), TXT_MIME_TYPE);
+    });
   }
 };
 
 static const uint16_t INVALID_PORT = std::numeric_limits<uint16_t>::max();
-
 
 }  // namespace
 
@@ -191,8 +189,8 @@ int main(int argc, char **argv)
   nm.Start();
 
   // define the optional http interface
-  HttpServerPtr http{};
-  HttpModulePtr metrics{};
+  HttpServerPtr  http{};
+  HttpModulePtr  metrics{};
   uint16_t const http_port = parser.GetParam("http", INVALID_PORT);
   if (INVALID_PORT != http_port)
   {

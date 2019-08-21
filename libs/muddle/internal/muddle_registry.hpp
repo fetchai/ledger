@@ -36,7 +36,7 @@ public:
 
   static MuddleRegistry &Instance();
 
-  MuddleRegistry() = default;
+  MuddleRegistry()  = default;
   ~MuddleRegistry() = default;
 
   void Register(WeakMuddlePtr muddle);
@@ -45,12 +45,11 @@ public:
   MuddleMap GetMap() const;
 
 private:
-
   using Mutex = mutex::Mutex;
 
   mutable Mutex lock_{__LINE__, __FILE__};
   MuddleMap     map_;
 };
 
-} // namespace muddle
-} // namespace fetch
+}  // namespace muddle
+}  // namespace fetch

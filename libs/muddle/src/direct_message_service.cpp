@@ -17,10 +17,10 @@
 //------------------------------------------------------------------------------
 
 #include "direct_message_service.hpp"
-#include "routing_message.hpp"
+#include "muddle_register.hpp"
 #include "peer_list.hpp"
 #include "router.hpp"
-#include "muddle_register.hpp"
+#include "routing_message.hpp"
 
 #include "core/service_ids.hpp"
 
@@ -81,7 +81,8 @@ bool ExtractPayload(ConstByteArray const &payload, T &msg)
  */
 template <typename T>
 Router::PacketPtr FormatDirect(Packet::Address const &from, NetworkId const &network,
-                               uint16_t service, uint16_t channel, T const &msg, bool exchange = false)
+                               uint16_t service, uint16_t channel, T const &msg,
+                               bool exchange = false)
 {
   auto packet = std::make_shared<Packet>(from, network.value());
   packet->SetService(service);
@@ -93,17 +94,17 @@ Router::PacketPtr FormatDirect(Packet::Address const &from, NetworkId const &net
   return packet;
 }
 
-} // namespace
+}  // namespace
 
-DirectMessageService::DirectMessageService(Address const &address, Router &router, MuddleRegister& reg, PeerConnectionList &peers)
+DirectMessageService::DirectMessageService(Address const &address, Router &router,
+                                           MuddleRegister &reg, PeerConnectionList &peers)
   : address_{address}
   , router_{router}
   , register_{reg}
   , peers_{peers}
 {
-  router_.SetDirectHandler([this](Handle handle, PacketPtr packet) {
-    OnDirectMessage(handle, packet);
-  });
+  router_.SetDirectHandler(
+      [this](Handle handle, PacketPtr packet) { OnDirectMessage(handle, packet); });
 }
 
 void DirectMessageService::InitiateConnection(Handle handle)
@@ -162,7 +163,8 @@ void DirectMessageService::OnDirectMessage(Handle handle, PacketPtr const &packe
   }
 }
 
-void DirectMessageService::OnRoutingMessage(Handle handle, PacketPtr const &packet, RoutingMessage const &msg)
+void DirectMessageService::OnRoutingMessage(Handle handle, PacketPtr const &packet,
+                                            RoutingMessage const &msg)
 {
   switch (msg.type)
   {
@@ -186,7 +188,8 @@ void DirectMessageService::OnRoutingMessage(Handle handle, PacketPtr const &pack
   }
 }
 
-void DirectMessageService::OnRoutingPing(Handle handle, PacketPtr const &packet, RoutingMessage const &msg)
+void DirectMessageService::OnRoutingPing(Handle handle, PacketPtr const &packet,
+                                         RoutingMessage const &msg)
 {
   FETCH_LOG_TRACE(LOGGING_NAME, "OnRoutingPing (conn: ", handle, ")");
   FETCH_UNUSED(packet);
@@ -197,18 +200,18 @@ void DirectMessageService::OnRoutingPing(Handle handle, PacketPtr const &packet,
 
   // keep a record of this identity in the connection data
 
-
   // send the response to the server
   SendMessageToConnection(handle, response);
 }
 
-void DirectMessageService::OnRoutingPong(Handle handle, PacketPtr const &packet, RoutingMessage const &msg)
+void DirectMessageService::OnRoutingPong(Handle handle, PacketPtr const &packet,
+                                         RoutingMessage const &msg)
 {
   FETCH_LOG_TRACE(LOGGING_NAME, "OnRoutingPong (conn: ", handle, ")");
   FETCH_UNUSED(msg);
 
   // determine if we have not routed to this connection yet
-  Handle previous_handle{0};
+  Handle     previous_handle{0};
   auto const status = UpdateReservation(packet->GetSender(), handle, &previous_handle);
   if (UpdateStatus::ADDED == status)
   {
@@ -247,13 +250,15 @@ void DirectMessageService::OnRoutingPong(Handle handle, PacketPtr const &packet,
   }
   else
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Pong Reserve failed for conn: ", handle, " status: ", ToString(status));
+    FETCH_LOG_INFO(LOGGING_NAME, "Pong Reserve failed for conn: ", handle,
+                   " status: ", ToString(status));
   }
 
   FETCH_LOG_TRACE(LOGGING_NAME, "OnRoutingPong (conn: ", handle, ") complete");
 }
 
-void DirectMessageService::OnRoutingRequest(Handle handle, PacketPtr const &packet, RoutingMessage const &msg)
+void DirectMessageService::OnRoutingRequest(Handle handle, PacketPtr const &packet,
+                                            RoutingMessage const &msg)
 {
   FETCH_UNUSED(msg);
   FETCH_LOG_TRACE(LOGGING_NAME, "OnRoutingRequest (conn: ", handle, ")");
@@ -261,7 +266,7 @@ void DirectMessageService::OnRoutingRequest(Handle handle, PacketPtr const &pack
   RoutingMessage response{};
   response.type = RoutingMessage::Type::DISCONNECT_REQUEST;
 
-  Handle previous_handle{0};
+  Handle     previous_handle{0};
   auto const status = UpdateReservation(packet->GetSender(), handle, &previous_handle);
 
   FETCH_LOG_INFO(LOGGING_NAME, "Req. Reserve for conn: ", handle, " status: ", ToString(status));
@@ -290,7 +295,8 @@ void DirectMessageService::OnRoutingRequest(Handle handle, PacketPtr const &pack
   SendMessageToConnection(handle, response, true);
 }
 
-void DirectMessageService::OnRoutingAccepted(Handle handle, PacketPtr const &packet, RoutingMessage const &msg)
+void DirectMessageService::OnRoutingAccepted(Handle handle, PacketPtr const &packet,
+                                             RoutingMessage const &msg)
 {
   FETCH_UNUSED(msg);
   FETCH_LOG_TRACE(LOGGING_NAME, "OnRoutingAccepted (conn: ", handle, ")");
@@ -310,13 +316,14 @@ void DirectMessageService::OnRoutingAccepted(Handle handle, PacketPtr const &pac
   }
 }
 
-void DirectMessageService::OnRoutingDisconnectRequest(Handle handle, PacketPtr const &packet, RoutingMessage const &msg)
+void DirectMessageService::OnRoutingDisconnectRequest(Handle handle, PacketPtr const &packet,
+                                                      RoutingMessage const &msg)
 {
   FETCH_UNUSED(msg);
   FETCH_UNUSED(packet);
   FETCH_LOG_TRACE(LOGGING_NAME, "OnRoutingDisconnectRequest (conn: ", handle, ")");
 
-  auto const conn = register_.LookupConnection(handle).lock();
+  auto const conn        = register_.LookupConnection(handle).lock();
   bool const is_outgoing = conn && conn->Type() == network::AbstractConnection::TYPE_OUTGOING;
 
   // if this is not an outgoing connection then we need to signal that the other side disconnects
@@ -325,7 +332,7 @@ void DirectMessageService::OnRoutingDisconnectRequest(Handle handle, PacketPtr c
   {
     // remove this persistent peer connection
     peers_.RemovePersistentPeer(handle);
-    peers_.RemoveConnection(handle); // TODO(EJF): There should not be this duplication
+    peers_.RemoveConnection(handle);  // TODO(EJF): There should not be this duplication
 
     FETCH_LOG_INFO(LOGGING_NAME, "Removing the connection: ", handle);
   }
@@ -337,7 +344,6 @@ void DirectMessageService::OnRoutingDisconnectRequest(Handle handle, PacketPtr c
     // this should be conditional on the connection orientation
     SendMessageToConnection(handle, response);
   }
-
 }
 
 char const *DirectMessageService::ToString(UpdateStatus status)
@@ -396,7 +402,8 @@ DirectMessageService::UpdateStatus DirectMessageService::UpdateReservation(Addre
         // we have a duplicate entry. This means that the two nodes are trying to connect to each
         // other. In this case define the rule that the connection with the lowest address continues
         // the connection
-        bool const should_replace = ((address_ < address) && is_outgoing) || ((address_ > address) && !is_outgoing);
+        bool const should_replace =
+            ((address_ < address) && is_outgoing) || ((address_ > address) && !is_outgoing);
 
         if (should_replace)
         {
@@ -415,6 +422,5 @@ DirectMessageService::UpdateStatus DirectMessageService::UpdateReservation(Addre
   return status;
 }
 
-} // namespace muddle
-} // namespace fetch
-
+}  // namespace muddle
+}  // namespace fetch

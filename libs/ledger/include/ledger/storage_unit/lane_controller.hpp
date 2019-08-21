@@ -27,7 +27,7 @@ namespace muddle {
 
 class MuddleInterface;
 
-} // namespace muddle
+}  // namespace muddle
 namespace ledger {
 
 class LaneController
@@ -55,7 +55,6 @@ public:
   LaneController &operator=(LaneController &&) = delete;
 
 private:
-
   muddle::MuddleInterface &muddle_;
 };
 

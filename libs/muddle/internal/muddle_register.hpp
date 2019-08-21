@@ -19,8 +19,8 @@
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/mutex.hpp"
-#include "network/management/abstract_connection_register.hpp"
 #include "muddle/address.hpp"
+#include "network/management/abstract_connection_register.hpp"
 #include "telemetry/telemetry.hpp"
 
 #include <functional>
@@ -74,7 +74,7 @@ public:
   static constexpr char const *LOGGING_NAME = "MuddleReg";
 
   // Construction / Destruction
-  MuddleRegister() = default;
+  MuddleRegister()                       = default;
   MuddleRegister(MuddleRegister const &) = delete;
   MuddleRegister(MuddleRegister &&)      = delete;
   ~MuddleRegister() override             = default;
@@ -87,22 +87,21 @@ public:
   WeakConnectionPtr LookupConnection(ConnectionHandle handle) const;
   WeakConnectionPtr LookupConnection(Address const &address) const;
 
-  void DisconnectAll();
-  bool IsEmpty() const;
+  void         DisconnectAll();
+  bool         IsEmpty() const;
   UpdateStatus UpdateAddress(ConnectionHandle handle, Address const &address);
-  bool HasAddress(Address const &address) const;
+  bool         HasAddress(Address const &address) const;
 
-  std::vector<Address> GetCurrentConnectionAddresses() const;
+  std::vector<Address>        GetCurrentConnectionAddresses() const;
   std::unordered_set<Address> GetCurrentAddressSet() const;
   std::unordered_set<Address> GetIncomingAddressSet() const;
   std::unordered_set<Address> GetOutgoingAddressSet() const;
 
   // Raw Access
-  HandleIndex GetHandleIndex() const;
+  HandleIndex  GetHandleIndex() const;
   AddressIndex GetAddressIndex() const;
 
 protected:
-
   /// @name Connection Event Handlers
   /// @{
   void Enter(WeakConnectionPtr const &ptr) override;

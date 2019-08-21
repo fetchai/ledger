@@ -24,5 +24,5 @@ namespace core {
 
 bool WriteToFile(char const *filename, byte_array::ConstByteArray const &data);
 
-} // namespace core
-} // namespace fetch
+}  // namespace core
+}  // namespace fetch

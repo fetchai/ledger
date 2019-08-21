@@ -20,21 +20,21 @@
 #include "muddle/address.hpp"
 #include "network/uri.hpp"
 
-#include <vector>
-#include <string>
 #include <cstdint>
 #include <memory>
-#include <unordered_set>
+#include <string>
 #include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
 namespace fetch {
 namespace crypto {
-  class Prover;
-  class Identity;
-}
+class Prover;
+class Identity;
+}  // namespace crypto
 
 namespace network {
-  class NetworkManager;
+class NetworkManager;
 }
 
 namespace muddle {
@@ -59,7 +59,7 @@ public:
   using AddressHints  = std::unordered_map<Address, network::Uri>;
 
   // Construction / Destruction
-  MuddleInterface() = default;
+  MuddleInterface()          = default;
   virtual ~MuddleInterface() = default;
 
   /// @name Muddle Setup
@@ -134,7 +134,6 @@ public:
    */
   virtual Addresses GetOutgoingConnectedPeers() const = 0;
 
-
   /**
    * Get the number of peers that are directly connected to this node
    *
@@ -148,7 +147,7 @@ public:
    * @param address The address to check
    * @return true if directly connected, otherwise false
    */
-  virtual bool IsDirectlyConnected(Address const &address) const= 0;
+  virtual bool IsDirectlyConnected(Address const &address) const = 0;
 
   /// @}
 
@@ -234,10 +233,14 @@ using MuddlePtr = std::shared_ptr<MuddleInterface>;
 using ProverPtr = std::shared_ptr<crypto::Prover>;
 
 // creation
-MuddlePtr CreateMuddle(NetworkId const &network, ProverPtr certificate, network::NetworkManager const &nm, std::string const &external_address);
-MuddlePtr CreateMuddle(char const network[4], ProverPtr certificate, network::NetworkManager const &nm, std::string const &external_address);
-MuddlePtr CreateMuddle(NetworkId const &network, network::NetworkManager const &nm, std::string const &external_address);
-MuddlePtr CreateMuddle(char const network[4], network::NetworkManager const &nm, std::string const &external_address);
+MuddlePtr CreateMuddle(NetworkId const &network, ProverPtr certificate,
+                       network::NetworkManager const &nm, std::string const &external_address);
+MuddlePtr CreateMuddle(char const network[4], ProverPtr certificate,
+                       network::NetworkManager const &nm, std::string const &external_address);
+MuddlePtr CreateMuddle(NetworkId const &network, network::NetworkManager const &nm,
+                       std::string const &external_address);
+MuddlePtr CreateMuddle(char const network[4], network::NetworkManager const &nm,
+                       std::string const &external_address);
 
-} // namespace muddle
-} // namespace fetch
+}  // namespace muddle
+}  // namespace fetch

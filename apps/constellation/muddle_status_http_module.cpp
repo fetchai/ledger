@@ -31,4 +31,4 @@ MuddleStatusModule::MuddleStatusModule()
       });
 }
 
-} // namespace fetch
+}  // namespace fetch

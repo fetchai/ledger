@@ -24,11 +24,11 @@
 #include "ledger/dag/dag.hpp"
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/transaction_verifier.hpp"
-#include "network/generics/requesting_queue.hpp"
 #include "muddle/muddle_endpoint.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
 #include "muddle/subscription.hpp"
+#include "network/generics/requesting_queue.hpp"
 
 #include <cstddef>
 #include <cstdint>

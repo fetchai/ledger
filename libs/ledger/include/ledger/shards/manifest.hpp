@@ -17,11 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/shards/manifest_entry.hpp"
 #include "core/byte_array/const_byte_array.hpp"
+#include "ledger/shards/manifest_entry.hpp"
 
-#include <unordered_map>
 #include <cstddef>
+#include <unordered_map>
 
 namespace fetch {
 namespace variant {
@@ -38,10 +38,10 @@ public:
   using ConstByteArray = byte_array::ConstByteArray;
 
   // Construction / Destruction
-  Manifest() = default;
+  Manifest()                 = default;
   Manifest(Manifest const &) = default;
-  Manifest(Manifest &&) = default;
-  ~Manifest() = default;
+  Manifest(Manifest &&)      = default;
+  ~Manifest()                = default;
 
   // Basic Iteration
   std::size_t    size() const;
@@ -52,7 +52,7 @@ public:
   const_iterator cbegin() const;
   const_iterator cend() const;
 
-  iterator FindService(ServiceIdentifier const &service);
+  iterator       FindService(ServiceIdentifier const &service);
   const_iterator FindService(ServiceIdentifier const &service) const;
 
   void AddService(ServiceIdentifier const &id, ManifestEntry const &entry);
@@ -101,7 +101,6 @@ public:
     map.ExpectKeyGetValue(SERVICE_MAP, x.service_map_);
   }
 };
-
 
 }  // namespace serializers
 

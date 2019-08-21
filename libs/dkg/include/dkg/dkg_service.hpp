@@ -248,7 +248,7 @@ private:
   StateMachinePtr      state_machine_;  ///< The service state machine
   std::shared_ptr<muddle::Subscription>
                            shares_subscription;  ///< Subscription for receiving secret shares
-  muddle::RBC             rbc_;                 ///< Runs the RBC protocol
+  muddle::RBC              rbc_;                 ///< Runs the RBC protocol
   DistributedKeyGeneration dkg_;                 ///< Runs DKG protocol
 
   /// @name State Machine Data

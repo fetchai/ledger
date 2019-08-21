@@ -34,11 +34,11 @@ public:
 
   // Construction / Destruction
   template <typename R, typename P>
-  explicit PeriodicRunnable(std::chrono::duration<R,P> const &period);
+  explicit PeriodicRunnable(std::chrono::duration<R, P> const &period);
   explicit PeriodicRunnable(Duration const &period);
   PeriodicRunnable(PeriodicRunnable const &) = delete;
-  PeriodicRunnable(PeriodicRunnable &&) = delete;
-  ~PeriodicRunnable() override = default;
+  PeriodicRunnable(PeriodicRunnable &&)      = delete;
+  ~PeriodicRunnable() override               = default;
 
   /// @name Runnable Interface
   /// @{
@@ -56,16 +56,14 @@ public:
   PeriodicRunnable &operator=(PeriodicRunnable &&) = delete;
 
 private:
-
   Timepoint last_executed_;
   Duration  interval_;
 };
 
 template <typename R, typename P>
-PeriodicRunnable::PeriodicRunnable(std::chrono::duration<R,P> const &period)
+PeriodicRunnable::PeriodicRunnable(std::chrono::duration<R, P> const &period)
   : PeriodicRunnable(std::chrono::duration_cast<Duration>(period))
-{
-}
+{}
 
-} // namespace core
-} // namespace fetch
+}  // namespace core
+}  // namespace fetch

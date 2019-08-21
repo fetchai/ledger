@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
-#include "muddle/muddle_endpoint.hpp"
 #include "muddle/address.hpp"
+#include "muddle/muddle_endpoint.hpp"
 #include "network/service/client_interface.hpp"
 #include "network/service/promise.hpp"
 #include "network/service/types.hpp"
@@ -51,7 +51,7 @@ public:
   Client(std::string name, MuddleEndpoint &endpoint, uint16_t service, uint16_t channel);
   Client(Client const &) = delete;
   Client(Client &&)      = delete;
-  ~Client() override = default;
+  ~Client() override     = default;
 
   template <typename... Args>
   Promise CallSpecificAddress(Address const &address, ProtocolId const &protocol,

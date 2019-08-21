@@ -59,10 +59,12 @@ public:
   void SetMessageHandler(LowLevelCallback cb);
 
   template <typename Class>
-  void SetMessageHandler(Class *instance, void (Class::*member_function)(Address const &, Packet::Payload const &));
+  void SetMessageHandler(Class *instance,
+                         void (Class::*member_function)(Address const &, Packet::Payload const &));
 
   template <typename Class>
-  void SetMessageHandler(Class *instance, void (Class::*member_function)(Packet const &, Address const &));
+  void SetMessageHandler(Class *instance,
+                         void (Class::*member_function)(Packet const &, Address const &));
 
   void Dispatch(Packet const &packet, Address const &last_hop) const;
 
@@ -76,21 +78,25 @@ private:
 };
 
 template <typename Class>
-void Subscription::SetMessageHandler(Class *instance, void (Class::*member_function)(Address const &, Packet::Payload const &))
+void Subscription::SetMessageHandler(Class *instance,
+                                     void (Class::*member_function)(Address const &,
+                                                                    Packet::Payload const &))
 {
-  SetMessageHandler([instance, member_function](Address const &address, Packet::Payload const &payload){
-    (instance->*member_function)(address, payload);
-  });
+  SetMessageHandler(
+      [instance, member_function](Address const &address, Packet::Payload const &payload) {
+        (instance->*member_function)(address, payload);
+      });
 }
 
 template <typename Class>
-void Subscription::SetMessageHandler(Class *instance, void (Class::*member_function)(Packet const &, Address const &))
+void Subscription::SetMessageHandler(Class *instance,
+                                     void (Class::*member_function)(Packet const &,
+                                                                    Address const &))
 {
-  SetMessageHandler([instance, member_function](Packet const &pkt, Address const &last_hop){
+  SetMessageHandler([instance, member_function](Packet const &pkt, Address const &last_hop) {
     (instance->*member_function)(pkt, last_hop);
   });
 }
-
 
 }  // namespace muddle
 }  // namespace fetch

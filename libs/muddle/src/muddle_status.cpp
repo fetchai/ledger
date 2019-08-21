@@ -17,13 +17,13 @@
 //------------------------------------------------------------------------------
 
 #include "muddle.hpp"
-#include "muddle_registry.hpp"
 #include "muddle_register.hpp"
+#include "muddle_registry.hpp"
 #include "peer_list.hpp"
 #include "peer_selector.hpp"
 
-#include "variant/variant.hpp"
 #include "muddle/muddle_status.hpp"
+#include "variant/variant.hpp"
 
 namespace fetch {
 namespace muddle {
@@ -55,14 +55,15 @@ void BuildPeerInfo(PeerSelector const &peer_selector, variant::Variant &output)
 
     output_peer["currentIndex"] = entry.second.peer_index;
 
-    auto &address_list = output_peer["addresses"] = variant::Variant::Array(entry.second.peer_data.size());
+    auto &address_list = output_peer["addresses"] =
+        variant::Variant::Array(entry.second.peer_data.size());
 
     std::size_t address_idx{0};
     for (auto const &address_entry : entry.second.peer_data)
     {
       auto &addr_entry = address_list[address_idx] = variant::Variant::Object();
 
-      addr_entry["address"] = address_entry.peer.ToString();
+      addr_entry["address"]     = address_entry.peer.ToString();
       addr_entry["unreachable"] = address_entry.unreachable;
 
       ++address_idx;
@@ -105,8 +106,8 @@ void BuildConnectionList(MuddleRegister const &reg, variant::Variant &output)
     auto const &connection_info = *element.second;
     auto &      entry = output[idx] = variant::Variant::Object();
 
-    entry["handle"] = connection_info.handle;
-    entry["address"] = connection_info.address.ToBase64();
+    entry["handle"]   = connection_info.handle;
+    entry["address"]  = connection_info.address.ToBase64();
     entry["outgoing"] = connection_info.outgoing;
 
     ++idx;
@@ -115,7 +116,7 @@ void BuildConnectionList(MuddleRegister const &reg, variant::Variant &output)
 
 void BuildMuddleStatus(Muddle const &muddle, variant::Variant &output)
 {
-  output = variant::Variant::Object();
+  output            = variant::Variant::Object();
   output["network"] = muddle.GetNetwork().ToString();
 
   BuildConnectionList(muddle.connection_register(), output["connections"]);
@@ -123,7 +124,7 @@ void BuildMuddleStatus(Muddle const &muddle, variant::Variant &output)
   BuildPeerSelection(muddle.peer_selector(), output["peerSelection"]);
 }
 
-} // namespace
+}  // namespace
 
 variant::Variant GetStatusSummary()
 {
@@ -143,5 +144,5 @@ variant::Variant GetStatusSummary()
   return output;
 }
 
-} // namespace muddle
-} // namespace fetch
+}  // namespace muddle
+}  // namespace fetch

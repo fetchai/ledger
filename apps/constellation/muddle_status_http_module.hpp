@@ -24,9 +24,8 @@ namespace fetch {
 class MuddleStatusModule : public http::HTTPModule
 {
 public:
-
   MuddleStatusModule();
   ~MuddleStatusModule() override = default;
 };
 
-} // namespace fetch
+}  // namespace fetch

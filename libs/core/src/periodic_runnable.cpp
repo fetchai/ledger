@@ -24,8 +24,7 @@ namespace core {
 PeriodicRunnable::PeriodicRunnable(Duration const &period)
   : last_executed_{Clock::now()}
   , interval_{period}
-{
-}
+{}
 
 bool PeriodicRunnable::IsReadyToExecute() const
 {
@@ -40,5 +39,5 @@ void PeriodicRunnable::Execute()
   last_executed_ = Clock::now();
 }
 
-} // namespace core
-} // namespace fetch
+}  // namespace core
+}  // namespace fetch

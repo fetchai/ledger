@@ -48,12 +48,12 @@ public:
   std::string ToString() const;
 
   // Operators
-  bool operator==(ServiceIdentifier const &other) const;
+  bool               operator==(ServiceIdentifier const &other) const;
   ServiceIdentifier &operator=(ServiceIdentifier const &) = default;
 
 private:
-  Type     type_{Type::INVALID};
-  int32_t  instance_{-1};
+  Type    type_{Type::INVALID};
+  int32_t instance_{-1};
 
   template <typename T, typename D>
   friend struct serializers::MapSerializer;
@@ -71,7 +71,7 @@ inline int32_t ServiceIdentifier::instance() const
 
 char const *ToString(ServiceIdentifier::Type type);
 
-} // namespace ledger
+}  // namespace ledger
 
 namespace serializers {
 
@@ -105,8 +105,8 @@ public:
   }
 };
 
-} // namespace serialisers
-} // namespace fetch
+}  // namespace serializers
+}  // namespace fetch
 
 namespace std {
 
@@ -121,11 +121,11 @@ struct hash<fetch::ledger::ServiceIdentifier>
 
     // manipulate the result into two 32fields one for the type and one for the instance number
     auto raw = reinterpret_cast<uint32_t *>(&result);
-    raw[0] = static_cast<uint32_t>(id.type());
-    raw[1] = static_cast<uint32_t>(id.instance());
+    raw[0]   = static_cast<uint32_t>(id.type());
+    raw[1]   = static_cast<uint32_t>(id.instance());
 
     return result;
   }
 };
 
-} // namespace std
+}  // namespace std

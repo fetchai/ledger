@@ -20,8 +20,8 @@
 #include "core/serializers/counter.hpp"
 #include "core/serializers/serializable_exception.hpp"
 #include "core/threading/synchronised_state.hpp"
-#include "network/message.hpp"
 #include "muddle/muddle_endpoint.hpp"
+#include "network/message.hpp"
 #include "network/service/callable_class_member.hpp"
 #include "network/service/error_codes.hpp"
 #include "network/service/message_types.hpp"
@@ -47,14 +47,14 @@ public:
   static constexpr char const *LOGGING_NAME = "ServiceClientInterface";
 
   // Construction / Destruction
-  ServiceClientInterface() = default;
+  ServiceClientInterface()          = default;
   virtual ~ServiceClientInterface() = default;
 
 protected:
-  using CallId             = uint64_t;
-  using CallIdPromiseMap   = std::unordered_map<CallId, Promise>;
-  using Mutex              = fetch::mutex::Mutex;
-  using PromiseMap = std::unordered_map<PromiseCounter, Promise>;
+  using CallId           = uint64_t;
+  using CallIdPromiseMap = std::unordered_map<CallId, Promise>;
+  using Mutex            = fetch::mutex::Mutex;
+  using PromiseMap       = std::unordered_map<PromiseCounter, Promise>;
 
   bool ProcessServerMessage(network::message_type const &msg);
   void ProcessRPCResult(network::message_type const &msg, service::serializer_type &params);

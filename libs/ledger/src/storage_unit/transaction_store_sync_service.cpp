@@ -74,8 +74,8 @@ TransactionStoreSyncService::TransactionStoreSyncService(Config const &cfg, Mudd
   , tx_finder_protocol_(tx_finder_protocol)
   , cfg_{cfg}
   , muddle_(muddle)
-  , client_(std::make_shared<Client>("R:TxSync-L" + std::to_string(cfg_.lane_id),
-                                     muddle, SERVICE_LANE, CHANNEL_RPC))
+  , client_(std::make_shared<Client>("R:TxSync-L" + std::to_string(cfg_.lane_id), muddle,
+                                     SERVICE_LANE, CHANNEL_RPC))
   , store_(std::move(store))
   , verifier_(*this, cfg_.verification_threads, "TxV-L" + std::to_string(cfg_.lane_id))
 {

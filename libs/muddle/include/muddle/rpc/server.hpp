@@ -36,19 +36,19 @@ namespace rpc {
 class Server : public service::ServiceServerInterface
 {
 public:
-  using ProtocolId       = service::protocol_handler_type;
-  using Protocol         = service::Protocol;
-  using SubscriptionPtr  = MuddleEndpoint::SubscriptionPtr;
-  using SubscriptionMap  = std::unordered_map<ProtocolId, SubscriptionPtr>;
-  using Mutex            = mutex::Mutex;
+  using ProtocolId      = service::protocol_handler_type;
+  using Protocol        = service::Protocol;
+  using SubscriptionPtr = MuddleEndpoint::SubscriptionPtr;
+  using SubscriptionMap = std::unordered_map<ProtocolId, SubscriptionPtr>;
+  using Mutex           = mutex::Mutex;
 
   static constexpr char const *LOGGING_NAME = "MuddleRpcServer";
 
   // Construction / Destruction
   Server(MuddleEndpoint &endpoint, uint16_t service, uint16_t channel);
   Server(Server const &) = delete;
-  Server(Server &&) = delete;
-  ~Server() override = default;
+  Server(Server &&)      = delete;
+  ~Server() override     = default;
 
   // Operators
   Server &operator=(Server const &) = delete;

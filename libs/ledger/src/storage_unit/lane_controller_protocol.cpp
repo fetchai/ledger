@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/storage_unit/lane_controller_protocol.hpp"
 #include "ledger/storage_unit/lane_controller.hpp"
+#include "ledger/storage_unit/lane_controller_protocol.hpp"
 
 namespace fetch {
 namespace ledger {
@@ -27,5 +27,5 @@ LaneControllerProtocol::LaneControllerProtocol(LaneController &ctrl)
   this->Expose(USE_THESE_PEERS, &ctrl, &LaneController::UseThesePeers);
 }
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

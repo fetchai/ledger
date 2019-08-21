@@ -56,7 +56,6 @@ public:
   // Interface
   virtual ~AbstractConnection();
 
-
   virtual void     Send(message_type const &) = 0;
   virtual uint16_t Type() const               = 0;
   virtual void     Close()                    = 0;
@@ -64,10 +63,10 @@ public:
   virtual bool     is_alive() const           = 0;
 
   // Common to allx
-  std::string Address() const;
-  uint16_t port() const;
+  std::string            Address() const;
+  uint16_t               port() const;
   connection_handle_type handle() const noexcept;
-  void SetConnectionManager(weak_register_type const &reg);
+  void                   SetConnectionManager(weak_register_type const &reg);
 
   weak_ptr_type connection_pointer();
 

@@ -51,7 +51,7 @@ public:
   SubscriptionFeed &operator=(SubscriptionFeed &&) = delete;
 
   SubscriptionPtr Subscribe();
-  bool Dispatch(Packet const &packet, Address const &last_hop);
+  bool            Dispatch(Packet const &packet, Address const &last_hop);
 
 private:
   using Mutex               = std::mutex;

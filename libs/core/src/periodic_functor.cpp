@@ -24,8 +24,7 @@ namespace core {
 PeriodicFunctor::PeriodicFunctor(Duration const &interval, Callback callback)
   : PeriodicRunnable(interval)
   , callback_{std::move(callback)}
-{
-}
+{}
 
 void PeriodicFunctor::Periodically()
 {
@@ -35,5 +34,5 @@ void PeriodicFunctor::Periodically()
   }
 }
 
-} // namespace core
-} // namespace fetch
+}  // namespace core
+}  // namespace fetch
