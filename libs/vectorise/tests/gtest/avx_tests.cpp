@@ -185,14 +185,21 @@ TYPED_TEST(VectorReduceTest, reduce_tests)
 
   std::size_t N = 60;
   alignas(TypeParam::E_REGISTER_SIZE) array_type A(N), B(N);
+  type sum{0}, max_a{type(0)}, min_a{type(N)};
 
   for (std::size_t i = 0; i < N; ++i)
   {
-    A[i] = type((i+1)*4);
-    B[i] = type((i+1)*(i+1));
+    A[i] = type((i-N/2)*4);
+    B[i] = type((i-N/2)*(i-N/2));
     std::cout << "A[" << i << "] = " << A[i] << std::endl;
     std::cout << "B[" << i << "] = " << B[i] << std::endl;
+    sum += A[i] + B[i];
+    max_a = fetch::vectorise::Max(A[i], max_a);
+    min_a = fetch::vectorise::Min(A[i], min_a);
   }
+  std::cout << "Sum = " << sum << std::endl;
+  std::cout << "Max = " << max_a << std::endl;
+  std::cout << "Min = " << min_a << std::endl;
 
   type ret;
   ret = A.in_parallel().Reduce(

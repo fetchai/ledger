@@ -99,25 +99,20 @@ public:
   {}
 
   template <class OP, class F1, class F2>
-  inline type GenericRangedReduce(Range const &range, type const c, OP &&op, F1 const &&kernel, F2 &&hkernel)
+  inline type GenericRangedOpReduce(Range const &range, type const initial_value, OP &&op, F1 const &&kernel, F2 &&hkernel)
   {
     int SFL      = int(range.SIMDFromLower<VectorRegisterType::E_BLOCK_COUNT>());
     int SF       = int(range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>());
     int ST       = int(range.SIMDToLower<VectorRegisterType::E_BLOCK_COUNT>());
     int STU      = int(range.SIMDToUpper<VectorRegisterType::E_BLOCK_COUNT>());
-    int SIMDSize = STU - SFL;
 
     std::cout << "range: (" << range.from() << ", " << range.to() << std::endl;
 
-    type ret = 0;
+    type ret{initial_value};
     std::cout << "Vector iterator:" << std::endl;
-    VectorRegisterIteratorType self_iter(this->pointer(), std::size_t(SIMDSize));
-    VectorRegisterType         vc(c), tmp, self;
-
-    std::cout << "Scalar iterator:" << std::endl;
-    ScalarRegisterIteratorType scalar_self_iter(this->pointer(), std::size_t(SIMDSize));
-
-    ScalarRegisterType b;
+    VectorRegisterType         va, vc(initial_value);
+    VectorRegisterIteratorType iter(this->pointer() + SFL, range.to());
+    ScalarRegisterType b(initial_value);
 
     if (SFL != SF)
     {
@@ -125,44 +120,52 @@ public:
       std::cout << "SF: " << SF << std::endl;
 
       std::cout << "Scalar iterator:" << std::endl;
-      ScalarRegisterIteratorType scalar_iter(self_iter, std::size_t(SF)/sizeof(type));
-      ScalarRegisterType scalar_self, scalar_tmp;
+      ScalarRegisterIteratorType scalar_iter(iter, std::size_t(SF)/sizeof(type));
+      ScalarRegisterType a, tmp;
 
-      self_iter.Next(self);
+      iter.Next(va);
 
-      while (static_cast<void*>(scalar_iter.pointer()) < static_cast<void*>(self_iter.pointer()))
+      while (static_cast<void*>(scalar_iter.pointer()) < static_cast<void*>(iter.pointer()))
       {
-        scalar_iter.Next(scalar_self);
-        std::cout << "self = " << scalar_self << std::endl;
-        std::cout << "b = " << b << std::endl;
-        scalar_tmp = kernel(scalar_self);
-        std::cout << "scalar_tmp = " << scalar_tmp << std::endl;
-        b = op(b, scalar_tmp);
-        std::cout << "b = " << b << std::endl;
+        scalar_iter.Next(a);
+        std::cout << "self = " << a << std::endl;
+        std::cout << "tmp = " << tmp << std::endl;
+        tmp = kernel(a);
+        ret = op(ret, tmp.data());
+        std::cout << "tmp = " << tmp << std::endl;
       }
-      vc = VectorRegisterType(b.data());
     }
 
     for (int i = SF; i < ST; i += VectorRegisterType::E_BLOCK_COUNT)
     {
-      self_iter.Next(self);
-      tmp = kernel(self);
+      VectorRegisterType tmp;
+      iter.Next(va);
+      tmp = kernel(va);
       vc  = op(vc, tmp);
     }
 
     ret += hkernel(vc);
 
-    // Taking care of the tail
     if (STU != ST)
     {
-      self_iter.Next(self);
-      tmp = kernel(self);
+      std::cout << "STU: " << STU << std::endl;
+      std::cout << "ST: " << ST << std::endl;
 
-      int Q = (int(range.to()) - ST - 1);
-      for (int i = 0; i <= Q; ++i)
+      std::cout << "Scalar iterator:" << std::endl;
+      ScalarRegisterIteratorType scalar_iter(iter, 0);
+      ScalarRegisterType a, tmp;
+
+      std::cout << "ptr: " << scalar_iter.pointer() << std::endl;
+      std::cout << "end: " << scalar_iter.end() << std::endl;
+
+      while (static_cast<void*>(scalar_iter.pointer()) < static_cast<void*>(iter.end()))
       {
-        ret += first_element(tmp);
-        tmp = shift_elements_right(tmp);
+        scalar_iter.Next(a);
+        std::cout << "self = " << a << std::endl;
+        std::cout << "tmp = " << tmp << std::endl;
+        tmp = kernel(a);
+        ret = op(ret, tmp.data());
+        std::cout << "tmp = " << tmp << std::endl;
       }
     }
 
@@ -173,19 +176,19 @@ public:
   type SumReduce(F1 const &&kernel, F2 &&hkernel)
   {
     Range range(0, this->size());
-    return GenericRangedReduce(range, type(0), std::plus<void>{}, std::move(kernel), hkernel);
+    return GenericRangedOpReduce(range, type(0), std::plus<void>{}, std::move(kernel), hkernel);
   }
 
   template <class F1, class F2>
   type SumReduce(Range const &range, F1 const &&kernel, F2 &&hkernel)
   {
-    return GenericRangedReduce(range, type(0), std::plus<void>{}, std::move(kernel), hkernel);
+    return GenericRangedOpReduce(range, type(0), std::plus<void>{}, std::move(kernel), hkernel);
   }
 
   template <class F1, class F2>
   type ProductReduce(Range const &range, F1 const &&kernel, F2 &&hkernel)
   {
-    return GenericRangedReduce(range, type(1), std::multiplies<void>{}, std::move(kernel), hkernel);
+    return GenericRangedOpReduce(range, type(1), std::multiplies<void>{}, std::move(kernel), hkernel);
   }
 
   template <class F1, class F2, class OP,typename... Args>
@@ -306,11 +309,11 @@ public:
 
     std::cout << "range: (" << std::dec << range.from() << ", " << range.to() << ")" << std::endl;
 
-    VectorRegisterType         va, vb(initial_value);
+    VectorRegisterType         va, vc(initial_value);
     VectorRegisterIteratorType iter(this->pointer() + SFL, range.to());
-    ScalarRegisterType b(initial_value);
+    ScalarRegisterType c(initial_value);
 
-    std::cout << "initial vb = " << vb << std::endl;
+    std::cout << "initial vc = " << vc << std::endl;
 
     if (SFL != SF)
     {
@@ -327,28 +330,28 @@ public:
       {
         scalar_iter.Next(a);
         std::cout << "self = " << a << std::endl;
-        std::cout << "b = " << b << std::endl;
-        b = kernel(a, b);
-        std::cout << "b = " << b << std::endl;
+        std::cout << "c = " << c << std::endl;
+        c = kernel(a, c);
+        std::cout << "c = " << c << std::endl;
       }
-      vb = VectorRegisterType(b.data());
+      vc = VectorRegisterType(c.data());
     }
 
-    std::cout << "vb = " << vb << std::endl;
+    std::cout << "vc = " << vc << std::endl;
     std::cout << "Vector iterator:" << std::endl;
     for (int i = SF; i < ST; i += VectorRegisterType::E_BLOCK_COUNT)
     {
       iter.Next(va);
       std::cout << "va = " << va << std::endl;
-      std::cout << "vb = " << vb << std::endl;
-      vb = kernel(va, vb);
-      std::cout << "vb = " << vb << std::endl;
+      std::cout << "vc = " << vc << std::endl;
+      vc = kernel(va, vc);
+      std::cout << "vc = " << vc << std::endl;
     }
 
-    std::cout << "vb = " << vb << std::endl;
-    std::cout << "b = " << b << std::endl;
-    b.data() = hkernel(vb);
-    std::cout << "b = " << b << std::endl;
+    std::cout << "vc = " << vc << std::endl;
+    std::cout << "c = " << c << std::endl;
+    c.data() = hkernel(vc);
+    std::cout << "c = " << c << std::endl;
 
     if (STU != ST)
     {
@@ -366,14 +369,14 @@ public:
       {
         scalar_iter.Next(a);
         std::cout << "self = " << a << std::endl;
-        std::cout << "b = " << b << std::endl;
-        b = kernel(a, b);
-        std::cout << "b = " << b << std::endl;
+        std::cout << "c = " << c << std::endl;
+        c = kernel(a, c);
+        std::cout << "c = " << c << std::endl;
       }
     }
 
-    std::cout << "final b = " << b << std::endl;
-    return b.data();
+    std::cout << "final c = " << c << std::endl;
+    return c.data();
   }
 
   template <class F1, class F2>
