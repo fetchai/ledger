@@ -555,15 +555,17 @@ TEST_F(StringTests, utf8_split_returns_an_array_of_string_segments_with_the_sepa
 {
   static char const *TEXT = R"(
     function main()
-      var text = '他身旁放着一支磨尖的花岗岩长矛备用，脚边卧着一头犬族猛兽，它发出的喘hōu声表明它虽已入睡却睡不安稳。';
-      var output = text.split('，');
+      var text : String = '他身旁放着一支磨尖的花岗岩长矛备用。︼。脚边卧着一头犬族猛兽。︼。脚它发出的喘hōu声表明它虽已。︼。入睡却睡不安稳';
+      var output = text.split('。︼。');
 
       print(output[0]);
       print(' | ');
       print(output[1]);
       print(' | ');
       print(output[2]);
-    endfunction
+      print(' | ');
+      print(output[3]);
+     endfunction
   )";
 
   ASSERT_TRUE(toolkit.Compile(TEXT));
@@ -571,7 +573,7 @@ TEST_F(StringTests, utf8_split_returns_an_array_of_string_segments_with_the_sepa
 
   ASSERT_EQ(stdout.str(),
             "他身旁放着一支磨尖的花岗岩长矛备用 | 脚边卧着一头犬族猛兽 | "
-            "它发出的喘hōu声表明它虽已入睡却睡不安稳。");
+            "脚它发出的喘hōu声表明它虽已 | 入睡却睡不安稳");
 }
 
 TEST_F(StringTests, utf8_find_returns_zero_based_index_of_first_occurrence_of_substring_in_string)
