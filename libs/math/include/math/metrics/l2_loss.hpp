@@ -39,8 +39,10 @@ meta::IfIsMathNonFixedPointArray<ArrayType, typename ArrayType::Type> L2Loss(Arr
   using VectorRegisterType = typename ArrayType::VectorRegisterType;
   using Type               = typename ArrayType::Type;
 
-  Type l2loss = a.in_parallel().SumReduce(memory::Range(0, a.size()),
-                                          [](VectorRegisterType const &x) { return x * x; });
+  Type l2loss = a.in_parallel().SumReduce(
+    [](auto const &x) { return x * x; },
+    [](VectorRegisterType const &x) -> Type { return reduce(x); }
+  );
   l2loss /= 2;
   return l2loss;
 }

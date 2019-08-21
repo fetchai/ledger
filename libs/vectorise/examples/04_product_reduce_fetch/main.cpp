@@ -18,17 +18,21 @@
 
 #include "vectorise/memory/shared_array.hpp"
 
-using array_type  = fetch::memory::SharedArray<float>;
+using type        = double;
+using array_type  = fetch::memory::SharedArray<type>;
 using vector_type = typename array_type::VectorRegisterType;
 
-float InnerProduct(array_type const &A, array_type const &B)
+type InnerProduct(array_type const &A, array_type const &B)
 {
-  float ret = 0;
+  type ret = 0;
 
   ret = A.in_parallel().SumReduce(
-      [](vector_type const &a, vector_type const &b) {
-        vector_type d = a - b;
+      [](auto const &a, auto const &b) {
+        auto d = a - b;
         return d * d;
+      },
+      [](vector_type const &a) -> type {
+        return reduce(a);
       },
       B);
 
