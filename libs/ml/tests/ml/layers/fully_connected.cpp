@@ -28,6 +28,92 @@
 
 #include <memory>
 
+template <typename GraphType, typename TensorType, typename DataType>
+std::shared_ptr<GraphType> BuildGraph(bool shared = false, bool time_distributed = false)
+{
+  using FCType          = fetch::ml::layers::FullyConnected<TensorType>;
+  using WeightsInitType = fetch::ml::ops::WeightsInitialisation;
+  using ActivationType  = fetch::ml::details::ActivationType;
+  using RegType         = fetch::ml::RegularisationType;
+  using PlaceHolderType = fetch::ml::ops::PlaceHolder<TensorType>;
+  using MSEType         = fetch::ml::ops::MeanSquareErrorLoss<TensorType>;
+
+  auto g = std::make_shared<GraphType>();
+
+  std::string input = g->template AddNode<PlaceHolderType>("Input", {});
+
+  std::string intermediate = g->template AddNode<FCType>(
+      "FC1", {input}, 10u, 10u, ActivationType::NOTHING, RegType::NONE, static_cast<DataType>(0),
+      WeightsInitType::XAVIER_GLOROT, time_distributed);
+  std::string layer_name = "FC2";
+  if (shared)
+  {
+    layer_name = "FC1";
+  }
+  std::string output = g->template AddNode<FCType>(
+      layer_name, {intermediate}, 10u, 10u, ActivationType::NOTHING, RegType::NONE,
+      static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT, time_distributed);
+
+  std::string label = g->template AddNode<PlaceHolderType>("Label", {});
+  std::string error = g->template AddNode<MSEType>("Error", {output, label});
+
+  return g;
+}
+
+template <typename TensorType, typename GraphType>
+std::vector<TensorType> GetWeights(GraphType g, bool shared = false, bool time_distributed = false)
+{
+  auto                    state_dict = g->StateDict();
+  std::vector<TensorType> weights;
+
+  // check the naming is as expected
+  if (time_distributed)
+  {
+    weights.emplace_back(
+        state_dict.dict_["FC1_TimeDistributed_FullyConnected_Weights"].weights_->Copy());
+    weights.emplace_back(
+        state_dict.dict_["FC1_TimeDistributed_FullyConnected_Bias"].weights_->Copy());
+  }
+  else
+  {
+    weights.emplace_back(state_dict.dict_["FC1_FullyConnected_Weights"].weights_->Copy());
+    weights.emplace_back(state_dict.dict_["FC1_FullyConnected_Bias"].weights_->Copy());
+  }
+
+  if (time_distributed)
+  {
+    if (shared)
+    {
+      weights.emplace_back(
+          state_dict.dict_["FC1_TimeDistributed_FullyConnected_Weights"].weights_->Copy());
+      weights.emplace_back(
+          state_dict.dict_["FC1_TimeDistributed_FullyConnected_Bias"].weights_->Copy());
+    }
+    else
+    {
+      weights.emplace_back(
+          state_dict.dict_["FC2_TimeDistributed_FullyConnected_Weights"].weights_->Copy());
+      weights.emplace_back(
+          state_dict.dict_["FC2_TimeDistributed_FullyConnected_Bias"].weights_->Copy());
+    }
+  }
+  else
+  {
+    if (shared)
+    {
+      weights.emplace_back(state_dict.dict_["FC1_FullyConnected_Weights"].weights_->Copy());
+      weights.emplace_back(state_dict.dict_["FC1_FullyConnected_Bias"].weights_->Copy());
+    }
+    else
+    {
+      weights.emplace_back(state_dict.dict_["FC2_FullyConnected_Weights"].weights_->Copy());
+      weights.emplace_back(state_dict.dict_["FC2_FullyConnected_Bias"].weights_->Copy());
+    }
+  }
+
+  return weights;
+}
+
 template <typename T>
 class FullyConnectedTest : public ::testing::Test
 {
@@ -144,78 +230,21 @@ TYPED_TEST(FullyConnectedTest, ops_backward_test_time_distributed)  // Use the c
 
 TYPED_TEST(FullyConnectedTest, share_weight_backward_test)
 {
-  using TensorType      = TypeParam;
-  using DataType        = typename TensorType::Type;
-  using SizeType        = typename TensorType::SizeType;
-  using GraphType       = fetch::ml::Graph<TensorType>;
-  using FCType          = fetch::ml::layers::FullyConnected<TensorType>;
-  using RegType         = fetch::ml::RegularisationType;
-  using WeightsInitType = fetch::ml::ops::WeightsInitialisation;
-  using ActivationType  = fetch::ml::details::ActivationType;
-
-  std::string descriptor = FCType::DESCRIPTOR;
+  using TensorType   = TypeParam;
+  using DataType     = typename TensorType::Type;
+  using SizeType     = typename TensorType::SizeType;
+  using GraphType    = fetch::ml::Graph<TensorType>;
+  using GraphPtrType = std::shared_ptr<GraphType>;
 
   // create an auto encoder of two dense layers, both share same weights
-  auto g_shared = std::make_shared<GraphType>();
-
-  std::string g_shared_input =
-      g_shared->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
-  std::string g_shared_intermediate = g_shared->template AddNode<FCType>(
-      "FC1", {g_shared_input}, 10u, 10u, ActivationType::NOTHING, RegType::NONE,
-      static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT);
-  std::string g_shared_output = g_shared->template AddNode<FCType>(
-      "FC1", {g_shared_intermediate}, 10u, 10u, ActivationType::NOTHING, RegType::NONE,
-      static_cast<DataType>(0));
-  std::string g_shared_label =
-      g_shared->template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Label", {});
-  std::string g_shared_error =
-      g_shared->template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TypeParam>>(
-          "Error", {g_shared_output, g_shared_label});
+  auto g_shared = BuildGraph<GraphType, TensorType, DataType>(true);
 
   // create an auto encoder of two dense layers, both have different weights
-  auto g_not_shared = std::make_shared<GraphType>();
-
-  std::string g_not_shared_input =
-      g_not_shared->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
-  std::string g_not_shared_intermediate = g_not_shared->template AddNode<FCType>(
-      "FC4", {g_not_shared_input}, 10u, 10u, ActivationType::NOTHING, RegType::NONE,
-      static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT);
-  std::string g_not_shared_output = g_not_shared->template AddNode<FCType>(
-      "FC5", {g_not_shared_intermediate}, 10u, 10u, fetch::ml::details::ActivationType::NOTHING,
-      RegType::NONE, static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT);
-  std::string g_not_shared_label =
-      g_not_shared->template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Label", {});
-  std::string g_not_shared_error =
-      g_not_shared->template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TypeParam>>(
-          "Error", {g_not_shared_output, g_not_shared_label});
+  auto g_not_shared = BuildGraph<GraphType, TensorType, DataType>();
 
   // check that all weights are equal and create compare list
-  auto                    g_shared_statedict_before = g_shared->StateDict();
-  std::vector<TensorType> g_shared_weights_before;
-
-  // check the naming is as expected
-  g_shared_weights_before.emplace_back(
-      g_shared_statedict_before.dict_["FC1_FullyConnected_Weights"].weights_->Copy());
-  g_shared_weights_before.emplace_back(
-      g_shared_statedict_before.dict_["FC1_FullyConnected_Bias"].weights_->Copy());
-
-  g_shared_weights_before.emplace_back(
-      g_shared_statedict_before.dict_["FC1_FullyConnected_Weights"].weights_->Copy());
-  g_shared_weights_before.emplace_back(
-      g_shared_statedict_before.dict_["FC1_FullyConnected_Bias"].weights_->Copy());
-
-  auto                    g_not_shared_statedict_before = g_not_shared->StateDict();
-  std::vector<TensorType> g_not_shared_weights_before;
-
-  // check the naming is as expected
-  g_not_shared_weights_before.emplace_back(
-      g_not_shared_statedict_before.dict_["FC4_FullyConnected_Weights"].weights_->Copy());
-  g_not_shared_weights_before.emplace_back(
-      g_not_shared_statedict_before.dict_["FC4_FullyConnected_Bias"].weights_->Copy());
-  g_not_shared_weights_before.emplace_back(
-      g_not_shared_statedict_before.dict_["FC5_FullyConnected_Weights"].weights_->Copy());
-  g_not_shared_weights_before.emplace_back(
-      g_not_shared_statedict_before.dict_["FC5_FullyConnected_Bias"].weights_->Copy());
+  auto g_shared_weights_before     = GetWeights<TensorType, GraphPtrType>(g_shared, true);
+  auto g_not_shared_weights_before = GetWeights<TensorType, GraphPtrType>(g_not_shared, false);
 
   for (size_t i = 0; i < 4; i++)
   {
@@ -238,49 +267,29 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test)
     data.Set(i, 0, static_cast<DataType>(i));
   }
 
-  g_not_shared->SetInput(g_not_shared_input, data.Copy());
-  g_shared->SetInput(g_shared_input, data.Copy());
+  g_not_shared->SetInput("Input", data.Copy());
+  g_shared->SetInput("Input", data.Copy());
 
-  TensorType pred_not_shared = g_not_shared->Evaluate(g_not_shared_output);
-  TensorType pred_shared = g_shared->Evaluate(g_shared_output);
+  TensorType pred_not_shared = g_not_shared->Evaluate("FC2");
+  TensorType pred_shared     = g_shared->Evaluate("FC1_Copy_1");
 
   EXPECT_TRUE(pred_shared.AllClose(pred_not_shared, fetch::math::function_tolerance<DataType>(),
-      fetch::math::function_tolerance<DataType>()));
+                                   fetch::math::function_tolerance<DataType>()));
 
   // SGD is chosen to be the optimizer to reflect the gradient throw change in weights after 1
   // iteration of training. Run 1 iteration of SGD to train on g shared
   auto                                            lr = static_cast<DataType>(1);
-  fetch::ml::optimisers::SGDOptimiser<TensorType> g_shared_optimiser(
-      g_shared, {g_shared_input}, g_shared_label, g_shared_error, lr);
+  fetch::ml::optimisers::SGDOptimiser<TensorType> g_shared_optimiser(g_shared, {"Input"}, "Label",
+                                                                     "Error", lr);
   g_shared_optimiser.Run({data}, data, 1);
   // Run 1 iteration of SGD to train on g not shared
-  fetch::ml::optimisers::SGDOptimiser<TensorType> g_not_shared_optimiser(
-      g_not_shared, {g_not_shared_input}, g_not_shared_label, g_not_shared_error, lr);
+  fetch::ml::optimisers::SGDOptimiser<TensorType> g_not_shared_optimiser(g_not_shared, {"Input"},
+                                                                         "Label", "Error", lr);
   g_not_shared_optimiser.Run({data}, data, 1);
 
   // check that all weights are equal
-  auto                    g_shared_statedict_after = g_shared->StateDict();
-  std::vector<TensorType> g_shared_weights_after;
-  g_shared_weights_after.emplace_back(
-      g_shared_statedict_after.dict_["FC1_FullyConnected_Weights"].weights_->Copy());
-  g_shared_weights_after.emplace_back(
-      g_shared_statedict_after.dict_["FC1_FullyConnected_Bias"].weights_->Copy());
-  g_shared_weights_after.emplace_back(
-      g_shared_statedict_after.dict_["FC1_FullyConnected_Weights"].weights_->Copy());
-  g_shared_weights_after.emplace_back(
-      g_shared_statedict_after.dict_["FC1_FullyConnected_Bias"].weights_->Copy());
-
-  auto                    g_not_shared_statedict_after = g_not_shared->StateDict();
-  std::vector<TensorType> g_not_shared_weights_after;
-  g_not_shared_weights_after.emplace_back(
-      g_not_shared_statedict_after.dict_["FC4_FullyConnected_Weights"].weights_->Copy());
-  g_not_shared_weights_after.emplace_back(
-      g_not_shared_statedict_after.dict_["FC4_FullyConnected_Bias"].weights_->Copy());
-  g_not_shared_weights_after.emplace_back(
-      g_not_shared_statedict_after.dict_["FC5_FullyConnected_Weights"].weights_->Copy());
-  g_not_shared_weights_after.emplace_back(
-      g_not_shared_statedict_after.dict_["FC5_FullyConnected_Bias"].weights_->Copy());
-
+  auto g_shared_weights_after     = GetWeights<TensorType, GraphPtrType>(g_shared, true);
+  auto g_not_shared_weights_after = GetWeights<TensorType, GraphPtrType>(g_not_shared, false);
 
   // check the weights are equal after training for shared weights
   for (size_t i = 0; i < 2; i++)
@@ -311,84 +320,25 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test)
 
 TYPED_TEST(FullyConnectedTest, share_weight_backward_test_time_distributed)
 {
-  using TensorType      = TypeParam;
-  using DataType        = typename TensorType::Type;
-  using SizeType        = typename TensorType::SizeType;
-  using GraphType       = fetch::ml::Graph<TensorType>;
-  using FCType          = fetch::ml::layers::FullyConnected<TensorType>;
-  using RegType         = fetch::ml::RegularisationType;
-  using WeightsInitType = fetch::ml::ops::WeightsInitialisation;
-  using ActivationType  = fetch::ml::details::ActivationType;
+  using TensorType   = TypeParam;
+  using DataType     = typename TensorType::Type;
+  using SizeType     = typename TensorType::SizeType;
+  using GraphType    = fetch::ml::Graph<TensorType>;
+  using GraphPtrType = std::shared_ptr<GraphType>;
+  using FCType       = fetch::ml::layers::FullyConnected<TensorType>;
 
   std::string descriptor = FCType::DESCRIPTOR;
 
   // create an auto encoder of two dense layers, both share same weights
-  auto g_shared = std::make_shared<GraphType>();
-
-  std::string g_shared_input =
-      g_shared->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
-  std::string g_shared_intermediate = g_shared->template AddNode<FCType>(
-      "FC1", {g_shared_input}, 10u, 10u, ActivationType::NOTHING, RegType::NONE,
-      static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT, true);
-  std::string g_shared_output = g_shared->template AddNode<FCType>(
-      "FC1", {g_shared_intermediate}, 10u, 10u, ActivationType::NOTHING, RegType::NONE,
-      static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT, true);
-  std::string g_shared_label =
-      g_shared->template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Label", {});
-  std::string g_shared_error =
-      g_shared->template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TypeParam>>(
-          "Error", {g_shared_output, g_shared_label});
+  auto g_shared = BuildGraph<GraphType, TensorType, DataType>(true, true);
 
   // create an auto encoder of two dense layers, both have different weights
-  auto g_not_shared = std::make_shared<GraphType>();
-
-  std::string g_not_shared_input =
-      g_not_shared->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
-  std::string g_not_shared_intermediate = g_not_shared->template AddNode<FCType>(
-      "FC4", {g_not_shared_input}, 10u, 10u, ActivationType::NOTHING, RegType::NONE,
-      static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT, true);
-  std::string g_not_shared_output = g_not_shared->template AddNode<FCType>(
-      "FC5", {g_not_shared_intermediate}, 10u, 10u, fetch::ml::details::ActivationType::NOTHING,
-      RegType::NONE, static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT, true);
-  std::string g_not_shared_label =
-      g_not_shared->template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("Label", {});
-  std::string g_not_shared_error =
-      g_not_shared->template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TypeParam>>(
-          "Error", {g_not_shared_output, g_not_shared_label});
+  auto g_not_shared = BuildGraph<GraphType, TensorType, DataType>(false, true);
 
   // check that all weights are equal and create compare list
-  auto                    g_shared_statedict_before = g_shared->StateDict();
-  std::vector<TensorType> g_shared_weights_before;
-
-  // check the naming is as expected
-  g_shared_weights_before.emplace_back(
-      g_shared_statedict_before.dict_["FC1_TimeDistributed_FullyConnected_Weights"]
-          .weights_->Copy());
-  g_shared_weights_before.emplace_back(
-      g_shared_statedict_before.dict_["FC1_TimeDistributed_FullyConnected_Bias"].weights_->Copy());
-  g_shared_weights_before.emplace_back(
-      g_shared_statedict_before.dict_["FC1_TimeDistributed_FullyConnected_Weights"]
-          .weights_->Copy());
-  g_shared_weights_before.emplace_back(
-      g_shared_statedict_before.dict_["FC1_TimeDistributed_FullyConnected_Bias"].weights_->Copy());
-  // Todo: rethink this test
-
-  auto                    g_not_shared_statedict_before = g_not_shared->StateDict();
-  std::vector<TensorType> g_not_shared_weights_before;
-
-  // check the naming is as expected
-  g_not_shared_weights_before.emplace_back(
-      g_not_shared_statedict_before.dict_["FC4_TimeDistributed_FullyConnected_Weights"]
-          .weights_->Copy());
-  g_not_shared_weights_before.emplace_back(
-      g_not_shared_statedict_before.dict_["FC4_TimeDistributed_FullyConnected_Bias"]
-          .weights_->Copy());
-  g_not_shared_weights_before.emplace_back(
-      g_not_shared_statedict_before.dict_["FC5_TimeDistributed_FullyConnected_Weights"]
-          .weights_->Copy());
-  g_not_shared_weights_before.emplace_back(
-      g_not_shared_statedict_before.dict_["FC5_TimeDistributed_FullyConnected_Bias"]
-          .weights_->Copy());
+  auto g_shared_weights_before = GetWeights<TensorType, GraphPtrType>(g_shared, true, true);
+  auto g_not_shared_weights_before =
+      GetWeights<TensorType, GraphPtrType>(g_not_shared, false, true);
 
   for (size_t i = 0; i < 4; i++)
   {
@@ -405,54 +355,29 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test_time_distributed)
   }
   data.Reshape({10, 2, 1});
 
-  g_not_shared->SetInput(g_not_shared_input, data.Copy());
-  g_shared->SetInput(g_shared_input, data.Copy());
+  g_not_shared->SetInput("Input", data.Copy());
+  g_shared->SetInput("Input", data.Copy());
 
-  TensorType pred_not_shared = g_not_shared->Evaluate(g_not_shared_output);
-  TensorType pred_shared = g_shared->Evaluate(g_shared_output);
+  TensorType pred_not_shared = g_not_shared->Evaluate("FC2");
+  TensorType pred_shared     = g_shared->Evaluate("FC1_Copy_1");
 
   EXPECT_TRUE(pred_shared.AllClose(pred_not_shared, fetch::math::function_tolerance<DataType>(),
-      fetch::math::function_tolerance<DataType>()));
+                                   fetch::math::function_tolerance<DataType>()));
 
   // SGD is chosen to be the optimizer to reflect the gradient throw change in weights after 1
   // iteration of training. Run 1 iteration of SGD to train on g shared
   auto                                            lr = static_cast<DataType>(0.01);
-  fetch::ml::optimisers::SGDOptimiser<TensorType> g_shared_optimiser(
-      g_shared, {g_shared_input}, g_shared_label, g_shared_error, lr);
+  fetch::ml::optimisers::SGDOptimiser<TensorType> g_shared_optimiser(g_shared, {"Input"}, "Label",
+                                                                     "Error", lr);
   g_shared_optimiser.Run({data}, data, 1);
   // Run 1 iteration of SGD to train on g not shared
-  fetch::ml::optimisers::SGDOptimiser<TensorType> g_not_shared_optimiser(
-      g_not_shared, {g_not_shared_input}, g_not_shared_label, g_not_shared_error, lr);
+  fetch::ml::optimisers::SGDOptimiser<TensorType> g_not_shared_optimiser(g_not_shared, {"Input"},
+                                                                         "Label", "Error", lr);
   g_not_shared_optimiser.Run({data}, data, 1);
 
   // check that all weights are equal
-  auto                    g_shared_statedict_after = g_shared->StateDict();
-  std::vector<TensorType> g_shared_weights_after;
-  g_shared_weights_after.emplace_back(
-      g_shared_statedict_after.dict_["FC1_TimeDistributed_FullyConnected_Weights"]
-          .weights_->Copy());
-  g_shared_weights_after.emplace_back(
-      g_shared_statedict_after.dict_["FC1_TimeDistributed_FullyConnected_Bias"].weights_->Copy());
-  g_shared_weights_after.emplace_back(
-      g_shared_statedict_after.dict_["FC1_TimeDistributed_FullyConnected_Weights"]
-          .weights_->Copy());
-  g_shared_weights_after.emplace_back(
-      g_shared_statedict_after.dict_["FC1_TimeDistributed_FullyConnected_Bias"].weights_->Copy());
-
-  auto                    g_not_shared_statedict_after = g_not_shared->StateDict();
-  std::vector<TensorType> g_not_shared_weights_after;
-  g_not_shared_weights_after.emplace_back(
-      g_not_shared_statedict_after.dict_["FC4_TimeDistributed_FullyConnected_Weights"]
-          .weights_->Copy());
-  g_not_shared_weights_after.emplace_back(
-      g_not_shared_statedict_after.dict_["FC4_TimeDistributed_FullyConnected_Bias"]
-          .weights_->Copy());
-  g_not_shared_weights_after.emplace_back(
-      g_not_shared_statedict_after.dict_["FC5_TimeDistributed_FullyConnected_Weights"]
-          .weights_->Copy());
-  g_not_shared_weights_after.emplace_back(
-      g_not_shared_statedict_after.dict_["FC5_TimeDistributed_FullyConnected_Bias"]
-          .weights_->Copy());
+  auto g_shared_weights_after     = GetWeights<TensorType, GraphPtrType>(g_shared, true, true);
+  auto g_not_shared_weights_after = GetWeights<TensorType, GraphPtrType>(g_not_shared, false, true);
 
   // check the all weights are initialized to be the same
   for (size_t i = 0; i < 2; i++)
@@ -482,8 +407,9 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test_time_distributed)
         g_not_shared_weights_after[i] + g_not_shared_weights_after[i + 2] -
         g_not_shared_weights_before[i] - g_not_shared_weights_before[i + 2];
 
-//    std::cout << "shared_gradient.ToString(): " << shared_gradient.ToString() << std::endl;
-//    std::cout << "not_shared_gradient.ToString(): " << not_shared_gradient.ToString() << std::endl;
+    //    std::cout << "shared_gradient.ToString(): " << shared_gradient.ToString() << std::endl;
+    //    std::cout << "not_shared_gradient.ToString(): " << not_shared_gradient.ToString() <<
+    //    std::endl;
 
     ASSERT_TRUE(shared_gradient.AllClose(
         not_shared_gradient,

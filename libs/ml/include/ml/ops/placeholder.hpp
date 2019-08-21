@@ -64,13 +64,22 @@ public:
     return std::make_shared<SPType>(tp);
   }
 
-  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopyOfMyself(
-      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override {
-    assert (me.get() == this);
+  /**
+   * For placeholders should not be shared, therefore a layer sharing its elements
+   * with another node should use a new (unshared) placeholder op
+   * @param me
+   * @return
+   */
+  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
+  {
+    FETCH_UNUSED(me);
+    assert(me.get() == this);
 
     auto copyshare = std::make_shared<PlaceHolder<TensorType>>();
 
-    if (this->output_) {
+    if (this->output_)
+    {
       copyshare->output_ = std::make_shared<TensorType>(this->output_->shape());
     }
 

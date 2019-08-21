@@ -79,7 +79,7 @@ public:
     , op_ptr_(op_ptr)
   {}
 
-  Node(Node & old_node, std::string name, std::shared_ptr<ops::Ops<TensorType>> op_ptr)
+  Node(Node &old_node, std::string name, std::shared_ptr<ops::Ops<TensorType>> op_ptr)
     : name_(std::move(name))
     , cached_output_status_(CachedOutputState::CHANGED_SIZE)
     , operation_type_(old_node.get_op_type())
@@ -313,7 +313,8 @@ std::vector<typename Node<T>::NodePtrType> const &Node<T>::GetOutputs() const
 template <typename T>
 void Node<T>::ResetCache(bool input_size_changed)
 {
-  if (cached_output_status_ != CachedOutputState::CHANGED_SIZE) {
+  if (cached_output_status_ != CachedOutputState::CHANGED_SIZE)
+  {
     cached_output_status_ =
         input_size_changed ? CachedOutputState::CHANGED_SIZE : CachedOutputState::CHANGED_CONTENT;
   }

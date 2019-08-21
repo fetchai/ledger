@@ -64,11 +64,12 @@ public:
     is_training_ = sp.is_training;
   }
 
-  virtual std::shared_ptr<Ops<TensorType>> MakeSharedCopyOfMyself(std::shared_ptr<Ops<TensorType>> me)
+  virtual std::shared_ptr<Ops<TensorType>> MakeSharedCopy(std::shared_ptr<Ops<TensorType>> me)
   {
     // The "me" argument might seem to be redundant - why not just return "this"?
-    // But in a class derived from this one "this" will be of type Op, but "me" will be of the derived type.
-    assert (me.get() == this);
+    // But in a class derived from this one "this" will be of type Op, but "me" will be of the
+    // derived type.
+    assert(me.get() == this);
 
     return me;
   }
