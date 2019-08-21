@@ -232,14 +232,13 @@ TYPED_TEST(VectorReduceTest, reduce_tests)
         }, type(N*N));
   std::cout << "Reduce (range: 2, N-2): Min = " << ret << std::endl;
 
-  // ret = A.in_parallel().SumReduce([](auto const &a, auto const &b) {
-  //         return a + b;
-  //       }, 
-  //       [](vector_type const &a) {
-  //         return reduce(a);
-  //       }, B);
-
-  // std::cout << "SumReduce: ret = " << ret << std::endl;
+  ret = A.in_parallel().SumReduce([](auto const &a, auto const &b) {
+          return a + b;
+        }, 
+        [](vector_type const &a) {
+          return reduce(a);
+        }, B);
+  std::cout << "SumReduce: ret = " << ret << std::endl;
 
   // ret = A.in_parallel().ProductReduce([](auto const &a, auto const &b) {
   //       return a * b;
