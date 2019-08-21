@@ -25,7 +25,7 @@
 #include <cstdlib>
 #include <iostream>
 
-using type        = fetch::fixed_point::fp32_t;//float;
+using type        = fetch::fixed_point::fp64_t;
 using array_type  = fetch::memory::SharedArray<type>;
 using vector_type = typename array_type::VectorRegisterType;
 
@@ -33,9 +33,10 @@ type Reduction(array_type const &A)
 {
   type ret{0};
 
-  FETCH_ASM_LABEL("Loop start");
-  ret = A.in_parallel().Reduce([](vector_type const &a, vector_type const &b) { return a + b; });
-  FETCH_ASM_LABEL("Loop end");
+  ret = A.in_parallel().Reduce(
+    [](auto const &a, auto const &b) { return a + b; },
+    [](vector_type const &a) { return reduce(a); },
+    );
 
   return ret;
 }
