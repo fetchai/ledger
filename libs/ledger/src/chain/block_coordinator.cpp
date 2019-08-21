@@ -184,7 +184,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr
         "The lastest block number that has been executed by the block coordinator")}
   , next_block_num_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
         "ledger_next_block_num",
-        "The next block number that has been executed by the block coordinator")}
+        "The number of the next block which is scheduled to be executed by the block coordinator")}
 {
   // configure the state machine
   // clang-format off
