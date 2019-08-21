@@ -28,6 +28,7 @@
 #include "ledger/fetch_msgpack.hpp"
 #include "ledger/state_adapter.hpp"
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
+#include "meta/slots.hpp"
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
 #include "vm/address.hpp"
@@ -334,6 +335,26 @@ template <typename T>
 void AddToParameterPack(vm::VM *vm, vm::ParameterPack &params, vm::TypeId expected_type,
                         T const &variant)
 {
+  vm::ApplyFunctor<vm::TypeIds::Bool, vm::IntegralTypes, vm::TypeIds::Address, DefaultObjectCase>(
+	  expected_type,
+	  value_util::Slots(
+		  vm::Slot<vm::TypeIds::Bool, vm::IntegralTypes>([&](auto cs) {
+			  using Case = decltype(cs);
+			  AddToParameterPack<typename Case::type>(params, variant);
+			  return true;  // to signal that expected_type's been handled
+		  }),
+		  vm::Slot<vm::TypeIds::Address>([&](auto) {
+			  AddAddressToParameterPack(vm, params, variant);
+		  }),
+		  vm::DefaultSlot([&](auto) {
+			  AddStructuredDataObjectToParameterPack(vm, expected_type, params, variant);
+		  })));
+  /*
+	  [&](auto cs) {
+        using Case = decltype(cs);
+        AddToParameterPack<typename Case::type>(params, variant);
+        return true;  // to signal that expected_type's been handled
+      }))
   if (vm::ApplyFunctor<vm::TypeIds::Bool, vm::IntegralTypes>(expected_type, [&](auto cs) {
         using Case = decltype(cs);
         AddToParameterPack<typename Case::type>(params, variant);
@@ -352,6 +373,7 @@ void AddToParameterPack(vm::VM *vm, vm::ParameterPack &params, vm::TypeId expect
   {
     AddStructuredDataObjectToParameterPack(vm, expected_type, params, variant);
   }
+  */
 }
 
 /**
@@ -605,10 +627,69 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
 
   // extract the result from the contract output
 
+  auto ret_val = vm::ApplyFunctor<vm::PrimitiveTypes, vm::TypeIds::Null, vm::TypeIds::String, vm::DefaultObjectCase>(
+	  output.type_id,
+	  value_util::Slots(
+		  vm::PrimitiveSlot(
+			  [&](auto &&v) {
+				  response["result"] = v.Get();
+				  return Status::OK;
+			  }),
+		  vm::Slot<vm::TypeIds::Null>(
+			  [&](auto &&) {
+				  response["result"] = variant::Variant::Null();
+				  return Status::OK;
+			  }),
+		  vm::Slot<vm::TypeIds::String>(
+			  [&](auto &&v) {
+				  response["result"] = v.Get()->str;
+				  return Status::OK;
+			  }),
+		  vm::DefaultSlot(
+			  [&](auto &&v) {
+				  vm::Variant const &output{v};
+				  if (output.IsPrimitive())
+				  {
+					  // TODO(tfr): add error - all types not covered
+					  response["result"] = variant::Variant::Null();
+					  FETCH_LOG_WARN(LOGGING_NAME, "Could not serialise result - possibly Void return-type");
+				  }
+				  else
+				  {
+					  variant::Variant var;
+					  if (output.object == nullptr)
+					  {
+						  var = variant::Variant::Null();
+					  }
+					  else
+					  {
+						  if (!output.object->ToJSON(var))
+						  {
+							  response["status"] = "failed";
+							  response["result"] = "Failed to serialise object to JSON variant";
+							  FETCH_LOG_WARN(LOGGING_NAME, "Failed to serialise object to JSON variant for " +
+									 output.object->GetUniqueId());
+							  return Status::FAILED;
+						  }
+					  }
+					  response["result"] = var;
+				  }
+				  return Status::OK;
+			  })),
+	  output);
+  if (ret_val == Status::OK)
+  {
+	  response["status"] = "success";
+  }
+  return ret_val;
+
+
+
+  /*
   if (!vm::ApplyPrimitiveFunctor(output.type_id,
                                  [&](auto &&v) {
                                    response["result"] = v.Get();
-                                   return true;  // to signal that output's type has been handled
+                                   return true;  // to indicate that output's type has been handled
                                  },
                                  output))
   {
@@ -658,6 +739,7 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
   response["status"] = "success";
 
   return Status::OK;
+  */
 }
 
 }  // namespace ledger

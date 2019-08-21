@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "meta/pack.hpp"
+#include "meta/slots.hpp"
 #include "meta/switch.hpp"
 #include "meta/type_util.hpp"
 #include "meta/value_util.hpp"
@@ -1104,6 +1105,30 @@ constexpr auto ApplyBuiltinFunctor(TypeId type_id, F &&f, Variants &&... variant
 {
   return ApplyFunctor<BuiltinTypes>(type_id, std::forward<F>(f),
                                     std::forward<Variants>(variants)...);
+}
+
+template<TypeId... type_ids, class F> constexpr auto Slot(F &&f) {
+	return value_util::Slot<VariantView<type_ids>...>(std::forward<F>(f));
+}
+
+template<TypeId... type_ids, class F> constexpr auto DefaultSlot(F &&f) {
+	return value_util::Slot<VariantView<type_ids>..., DefaultObjectCase>(std::forward<F>(f));
+}
+
+template<class F> constexpr auto IntegralSlot(F &&f) {
+	return value_util::Slot<IntegralTypes>(std::forward<F>(f));
+}
+
+template<class F> constexpr auto NumericSlot(F &&f) {
+	return value_util::Slot<NumericTypes>(std::forward<F>(f));
+}
+
+template<class F> constexpr auto PrimitiveSlot(F &&f) {
+	return value_util::Slot<PrimitiveTypes>(std::forward<F>(f));
+}
+
+template<class F> constexpr auto BuiltinSlot(F &&f) {
+	return value_util::Slot<BuiltinTypes>(std::forward<F>(f));
 }
 
 }  // namespace vm

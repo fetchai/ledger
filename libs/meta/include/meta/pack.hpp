@@ -110,7 +110,7 @@ static constexpr auto IncV = Inc<N>::value;
 /**
  * Returns its argument minus one.
  *
- * @param N a class with static constant member value coercible to std::size_t
+ * @param N a class with static constant member value of numeric type
  * @return
  */
 template <class N>
@@ -118,6 +118,17 @@ using Dec = std::integral_constant<std::decay_t<decltype(N::value)>, N::value - 
 
 template <class N>
 static constexpr auto DecV = Dec<N>::value;
+
+/**
+ * Return its argument divided by two, rounded towards zero.
+ *
+ * @param N a class with static constant member value of numeric type
+ * @return
+ */
+template<class N> using Shr1 = std::integral_constant<std::decay_t<decltype(N::value)>, N::value / 2>;
+
+template <class N>
+static constexpr auto Shr1V = Shr1<N>::value;
 
 /**
  * Logical negation.
@@ -731,6 +742,27 @@ template <>
 struct Concat<> : Type<Nil>
 {
 };
+
+/**
+ * List of a given length with all elements the same.
+ *
+ * @param N a size-valued type
+ * @param T an arbitrary type
+ * @return a Pack of size N::value, all its elements equal to T
+ */
+namespace detail_ {
+
+template<std::size_t n, class T> struct Repeat: Concat<typename Repeat<n / 2, T>::type, typename Repeat<n - n / 2, T>::type> {};
+
+template<class T> struct Repeat<1, T>: Type<Pack<T>> {};
+
+template<class T> struct Repeat<0, T>: Type<Nil> {};
+
+}
+
+template<class N, class T> struct Repeat: detail_::Repeat<std::size_t(N::value), T> {};
+
+template<class N, class T> using RepeatT = typename Repeat<N, T>::type;
 
 /**
  * Partial function application.
