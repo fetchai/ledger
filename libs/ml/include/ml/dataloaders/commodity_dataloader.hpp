@@ -44,7 +44,7 @@ public:
   using SizeType   = math::SizeType;
 
   explicit CommodityDataLoader(bool random_mode = false)
-    : DataLoader<LabelType, InputType>(random_mode, DataLoaderMode::TRAIN)
+    : DataLoader<LabelType, InputType>(random_mode)
   {}
 
   ~CommodityDataLoader() override = default;
@@ -55,12 +55,12 @@ public:
   void        Reset() override;
   inline bool IsValidable() const override;
 
-  void AddData(std::string const &xfilename, std::string const &yfilename);
+  bool AddData(InputType const &data, LabelType const &label) override;
 
 private:
   bool      random_mode_ = false;
   InputType data_;    // n_data, features
-  InputType labels_;  // n_data, features
+  LabelType labels_;  // n_data, features
 
   SizeType   rows_to_skip_ = 1;
   SizeType   cols_to_skip_ = 1;
@@ -71,24 +71,28 @@ private:
   random::Random rand;
 
   void GetAtIndex(SizeType index);
+  void UpdateCursor() override;
 };
 
 /**
- * Adds X and Y data to the dataloader.
- * By default this skips the first row amd columns as these are assumed to be indices.
- * @param xfilename Name of the csv file with inputs
- * @param yfilename name of the csv file with labels
+ * Adds input data and labels of commodity data.
+ * By default this skips the first row and column as these are assumed to be indices
+ * @tparam LabelType
+ * @tparam InputType
+ * @param data
+ * @param label
+ * @return
  */
 template <typename LabelType, typename InputType>
-void CommodityDataLoader<LabelType, InputType>::AddData(std::string const &xfilename,
-                                                        std::string const &yfilename)
+bool CommodityDataLoader<LabelType, InputType>::AddData(InputType const &data,
+                                                        LabelType const &label)
 {
-  data_   = ReadCSV<InputType>(xfilename, cols_to_skip_, rows_to_skip_, true);
-  labels_ = ReadCSV<InputType>(yfilename, cols_to_skip_, rows_to_skip_, true);
+  data_   = data;
+  labels_ = label;
+  assert(data_.shape().at(1) == labels_.shape().at(1));
+  size_ = data.shape().at(1);
 
-  assert(data_.shape()[1] == labels_.shape()[1]);
-  // save the number of datapoints
-  size_ = data_.shape()[1];
+  return true;
 }
 
 /**
@@ -121,22 +125,12 @@ template <typename LabelType, typename InputType>
 typename CommodityDataLoader<LabelType, InputType>::SizeType
 CommodityDataLoader<LabelType, InputType>::Size() const
 {
-  if (this->mode_ == DataLoaderMode::VALIDATE)
-  {
-    throw std::runtime_error("Validation set splitting not implemented yet");
-  }
-
   return static_cast<SizeType>(size_);
 }
 
 template <typename LabelType, typename InputType>
 bool CommodityDataLoader<LabelType, InputType>::IsDone() const
 {
-  if (this->mode_ == DataLoaderMode::VALIDATE)
-  {
-    throw std::runtime_error("Validation set splitting not implemented yet");
-  }
-
   return cursor_ >= size_;
 }
 
@@ -146,11 +140,6 @@ bool CommodityDataLoader<LabelType, InputType>::IsDone() const
 template <typename LabelType, typename InputType>
 void CommodityDataLoader<LabelType, InputType>::Reset()
 {
-  if (this->mode_ == DataLoaderMode::VALIDATE)
-  {
-    throw std::runtime_error("Validation set splitting not implemented yet");
-  }
-
   cursor_ = 0;
 }
 
@@ -170,6 +159,15 @@ void CommodityDataLoader<LabelType, InputType>::GetAtIndex(CommodityDataLoader::
 {
   buffer_.first  = labels_.View(index).Copy();
   buffer_.second = std::vector<InputType>({data_.View(index).Copy()});
+}
+
+template <typename LabelType, typename InputType>
+void CommodityDataLoader<LabelType, InputType>::UpdateCursor()
+{
+  if (this->mode_ != DataLoaderMode::TRAIN)
+  {
+    throw std::runtime_error("Other mode than training not supported yet.");
+  }
 }
 
 }  // namespace dataloaders

@@ -18,24 +18,14 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/main_serializer.hpp"
+#include "ml/dataloaders/dataloader.hpp"
+#include "ml/dataloaders/tensor_dataloader.hpp"
 #include "vm/object.hpp"
 #include "vm_modules/math/type.hpp"
 
 #include <memory>
 
 namespace fetch {
-
-namespace ml {
-
-namespace dataloaders {
-template <typename LabelType, typename DataType>
-class DataLoader;
-
-template <typename LabelType, typename DataType>
-class TensorDataLoader;
-}  // namespace dataloaders
-
-}  // namespace ml
 namespace vm_modules {
 namespace math {
 class VMTensor;
@@ -47,10 +37,10 @@ class VMTrainingPair;
 class VMDataLoader : public fetch::vm::Object
 {
 public:
-  using DataType = fetch::vm_modules::math::DataType;
-  using DataLoaderType =
-      std::shared_ptr<fetch::ml::dataloaders::DataLoader<fetch::math::Tensor<DataType>,
-                                                         fetch::math::Tensor<DataType>>>;
+  using DataType          = fetch::vm_modules::math::DataType;
+  using TensorType        = fetch::math::Tensor<DataType>;
+  using DataLoaderType    = fetch::ml::dataloaders::DataLoader<TensorType, TensorType>;
+  using DataLoaderPtrType = std::shared_ptr<DataLoaderType>;
 
   enum class DataLoaderMode : uint8_t
   {
@@ -61,8 +51,12 @@ public:
   };
 
   VMDataLoader(fetch::vm::VM *vm, fetch::vm::TypeId type_id);
+  VMDataLoader(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
+               fetch::vm::Ptr<fetch::vm::String> const &mode);
 
-  static fetch::vm::Ptr<VMDataLoader> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id);
+  //  static fetch::vm::Ptr<VMDataLoader> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id);
+  static fetch::vm::Ptr<VMDataLoader> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
+                                                  fetch::vm::Ptr<fetch::vm::String> const &mode);
 
   static void Bind(fetch::vm::Module &module);
 
@@ -72,8 +66,7 @@ public:
    * @param xfilename
    * @param yfilename
    */
-  void AddDataByFiles(fetch::vm::Ptr<fetch::vm::String> const &mode,
-                      fetch::vm::Ptr<fetch::vm::String> const &xfilename,
+  void AddDataByFiles(fetch::vm::Ptr<fetch::vm::String> const &xfilename,
                       fetch::vm::Ptr<fetch::vm::String> const &yfilename);
 
   /**
@@ -82,8 +75,7 @@ public:
    * @param data
    * @param labels
    */
-  void AddDataByData(fetch::vm::Ptr<fetch::vm::String> const &                mode,
-                     fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &data,
+  void AddDataByData(fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &data,
                      fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &labels);
 
   /**
@@ -118,7 +110,7 @@ public:
 
   bool IsDone();
 
-  DataLoaderType &GetDataLoader();
+  DataLoaderPtrType &GetDataLoader();
 
   bool SerializeTo(serializers::MsgPackSerializer &buffer) override;
 
@@ -128,8 +120,8 @@ public:
   friend struct serializers::MapSerializer;
 
 private:
-  DataLoaderType loader_;
-  DataLoaderMode mode_ = DataLoaderMode::NONE;
+  DataLoaderPtrType loader_;
+  DataLoaderMode    mode_ = DataLoaderMode::NONE;
 };
 
 }  // namespace ml
