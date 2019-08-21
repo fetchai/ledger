@@ -231,17 +231,41 @@ void CommodityDataLoader<LabelType, InputType>::UpdateRanges()
   float test_percentage       = 1.0f - test_to_train_ratio_ - validation_to_train_ratio_;
   float validation_percentage = test_percentage + test_to_train_ratio_;
 
-  test_offset_ = static_cast<std::uint32_t>(test_percentage * static_cast<float>(total_size_));
-  validation_offset_ =
-      static_cast<std::uint32_t>(validation_percentage * static_cast<float>(total_size_));
+  // Define where test set starts
+  test_offset_ = static_cast<std::uint32_t>(test_percentage * static_cast<float>(size_));
 
-  validation_size_ = total_size_ - validation_offset_;
+  if (test_offset_ == static_cast<SizeType>(0))
+  {
+    test_offset_ = static_cast<SizeType>(1);
+  }
+
+  // Define where validation set starts
+  validation_offset_ =
+      static_cast<std::uint32_t>(validation_percentage * static_cast<float>(size_));
+
+  if (validation_offset_ <= test_offset_)
+  {
+    validation_offset_ = test_offset_ + 1;
+  }
+
+  // boundary check and fix
+  if (validation_offset_ > size_)
+  {
+    validation_offset_ = size_;
+  }
+
+  if (test_offset_ > size_)
+  {
+    test_offset_ = size_;
+  }
+
+  validation_size_ = size_ - validation_offset_;
   test_size_       = validation_offset_ - test_offset_;
-  train_size_      = total_size_ - test_offset_;
+  train_size_      = test_offset_;
 
   *train_cursor_      = 0;
-  *validation_cursor_ = validation_offset_;
   *test_cursor_       = test_offset_;
+  *validation_cursor_ = validation_offset_;
 
   UpdateCursor();
 }

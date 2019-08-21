@@ -79,3 +79,28 @@ TYPED_TEST(TensorDataloaderTest, serialize_tensor_dataloader)
   EXPECT_EQ(tdl.IsDone(), tdl_2.IsDone());
   EXPECT_EQ(tdl.GetNext(), tdl_2.GetNext());
 }
+
+TYPED_TEST(TensorDataloaderTest, test_validation_splitting_dataloader_test)
+{
+  TypeParam label_tensor = TypeParam::UniformRandom(4);
+  TypeParam data1_tensor = TypeParam::UniformRandom(24);
+  label_tensor.Reshape({1, 1});
+  data1_tensor.Reshape({2, 3, 1});
+
+  // generate a plausible tensor data loader
+  auto tdl = fetch::ml::dataloaders::TensorDataLoader<TypeParam, TypeParam>(label_tensor.shape(),
+                                                                            {data1_tensor.shape()});
+  tdl.SetTestRatio(0.1f);
+  tdl.SetValidationRatio(0.1f);
+
+  // add some data
+  tdl.AddData(data1_tensor, label_tensor);
+
+  EXPECT_EQ(tdl.Size(), 1);
+
+  tdl.SetMode(DataLoaderMode::TEST);
+  EXPECT_EQ(tdl.Size(), 0);
+
+  tdl.SetMode(DataLoaderMode::VALIDATE);
+  EXPECT_EQ(tdl.Size(), 0);
+}
