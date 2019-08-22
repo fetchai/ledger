@@ -225,9 +225,9 @@ void BasicBloomFilter::Add(fetch::byte_array::ConstByteArray const &element)
 bool BasicBloomFilter::ReportFalsePositives(std::size_t count)
 {
   false_positive_count_ += count;
-  if (positive_count_ > MEANINGFUL_STATS_THRESHOLD)
+  if (positive_count_ > MEANINGFUL_STATS_THRESHOLD && false_positive_count_ > 0)
   {
-    return static_cast<std::size_t>(positive_count_ / false_positive_count_) >
+    return static_cast<std::size_t>(positive_count_ / false_positive_count_) <
            INVERSE_TARGET_FALSE_POSITIVE_RATE;
   }
 
