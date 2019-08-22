@@ -182,6 +182,9 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr
   , current_block_num_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
         "ledger_latest_block_num",
         "The lastest block number that has been executed by the block coordinator")}
+  , next_block_num_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        "ledger_next_block_num",
+        "The number of the next block which is scheduled to be executed by the block coordinator")}
 {
   // configure the state machine
   // clang-format off
@@ -382,6 +385,9 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
     auto     block_path_it = blocks_to_common_ancestor_.crbegin();
     BlockPtr common_parent = *block_path_it++;
     BlockPtr next_block    = *block_path_it++;
+
+    // update the telemetry
+    next_block_num_->set(next_block->body.block_number);
 
     if (extra_debug)
     {
