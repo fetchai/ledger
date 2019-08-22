@@ -22,6 +22,7 @@
 #include "ledger/consensus/stake_manager.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
 
+#include <random>
 #include <algorithm>
 #include <cstddef>
 #include <iterator>
@@ -128,18 +129,25 @@ bool StakeManager::ShouldGenerateBlock(Block const &previous, Address const &add
   uint32_t time_to_wait = block_interval_ms_;
   bool     in_committee = false;
 
+  bool found = false;
+
   for (std::size_t i = 0; i < (*committee).size(); ++i)
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME,
-                    "Saw committee member: ", Address((*committee)[i]).address().ToBase64(),
+    FETCH_LOG_INFO(LOGGING_NAME,
+                    "Block: ", previous.body.block_number,
+                    " Saw committee member: ", Address((*committee)[i]).address().ToBase64(),
                     "we are: ", address.address().ToBase64());
 
     if (Address((*committee)[i]) == address)
     {
       in_committee = true;
-      break;
+      found = true;
     }
-    time_to_wait += block_interval_ms_;
+
+    if(!found)
+    {
+      time_to_wait += block_interval_ms_;
+    }
   }
 
   uint64_t time_now_ms           = static_cast<uint64_t>(std::time(nullptr)) * 1000;
@@ -169,6 +177,8 @@ StakeManager::CommitteePtr StakeManager::GetCommittee(Block const &previous)
                    last_snapshot);
   }
 
+  FETCH_LOG_INFO(LOGGING_NAME, "Periodicity: ", snapshot_validity_periodicity_);
+
   // If the last committee was the valid committee, return this. Otherwise, deterministically
   // shuffle the committee using the random beacon
   if (last_snapshot == previous.body.block_number)
@@ -183,6 +193,8 @@ StakeManager::CommitteePtr StakeManager::GetCommittee(Block const &previous)
     Committee committee_copy = *committee_ptr;
 
     DeterministicShuffle(committee_copy, previous.body.random_beacon);
+
+    FETCH_LOG_INFO(LOGGING_NAME, "Rasdfasdf*****");
 
     return std::make_shared<Committee>(committee_copy);
   }

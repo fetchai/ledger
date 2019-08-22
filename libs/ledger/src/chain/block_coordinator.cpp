@@ -624,6 +624,12 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
         }
       }
 
+      if (current_block_->body.random_beacon != random_beacon)
+      {
+        FETCH_LOG_INFO(LOGGING_NAME, "Saw incorrect random beacon from: ", current_block_->body.miner.address().ToBase64() ,".Block number: ", current_block_->body.block_number, " expected: ", random_beacon, " got: ", current_block_->body.random_beacon);
+        return fail("Block has incorrect random beacon ");
+      }
+
       if (!stake_->ValidMinerForBlock(*previous, current_block_->body.miner))
       {
         return fail("Block signed by miner deemed invalid by the staking mechanism");
@@ -1200,7 +1206,8 @@ BlockCoordinator::State BlockCoordinator::OnReset()
           cabinet_member_list.insert(staker);
         }
 
-        uint32_t threshold = uint32_t((cabinet_member_list.size() / 2) + 1);
+        //uint32_t threshold = uint32_t((cabinet_member_list.size() / 2) + 1);
+        uint32_t threshold = uint32_t(cabinet_member_list.size());
 
         FETCH_LOG_INFO(LOGGING_NAME, "Block: ", block_number,
                        " creating new aeon. Periodicity: ", aeon_period_, " threshold: ", threshold,
@@ -1212,7 +1219,7 @@ BlockCoordinator::State BlockCoordinator::OnReset()
         if (block_number != 0 || !did_genesis_already)
         {
           beacon_->StartNewCabinet(cabinet_member_list, threshold, block_number,
-                                   block_number + aeon_period_);
+                                   block_number + aeon_period_ + 1);
           did_genesis_already = true;
         }
       }

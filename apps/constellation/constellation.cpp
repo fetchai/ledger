@@ -163,7 +163,7 @@ StakeManagerPtr CreateStakeManager(Constellation::Config const &cfg)
 
   if (cfg.proof_of_stake)
   {
-    mgr = std::make_shared<ledger::StakeManager>(cfg.max_committee_size, cfg.block_interval_ms);
+    mgr = std::make_shared<ledger::StakeManager>(cfg.max_committee_size, cfg.block_interval_ms, cfg.aeon_period);
   }
 
   return mgr;

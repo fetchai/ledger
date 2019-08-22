@@ -111,11 +111,12 @@ public:
   static uint8_t const SLICES         = 7;
   static uint8_t const DAG_EPOCH      = 8;
   static uint8_t const TIMESTAMP      = 9;
+  static uint8_t const RANDOM_BEACON  = 10;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &body)
   {
-    auto map = map_constructor(9);
+    auto map = map_constructor(10);
     map.Append(HASH, body.hash);
     map.Append(PREVIOUS_HASH, body.previous_hash);
     map.Append(MERKLE_HASH, body.merkle_hash);
@@ -125,6 +126,7 @@ public:
     map.Append(SLICES, body.slices);
     map.Append(DAG_EPOCH, body.dag_epoch);
     map.Append(TIMESTAMP, body.timestamp);
+    map.Append(RANDOM_BEACON, body.random_beacon);
   }
 
   template <typename MapDeserializer>
@@ -139,6 +141,7 @@ public:
     map.ExpectKeyGetValue(SLICES, body.slices);
     map.ExpectKeyGetValue(DAG_EPOCH, body.dag_epoch);
     map.ExpectKeyGetValue(TIMESTAMP, body.timestamp);
+    map.ExpectKeyGetValue(RANDOM_BEACON, body.random_beacon);
   }
 };
 
