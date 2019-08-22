@@ -42,6 +42,8 @@ using StakeManagerPtr = std::unique_ptr<StakeManager>;
 using EntropyPtr      = std::unique_ptr<NaiveEntropyGenerator>;
 using RoundStats      = std::unordered_map<Identity, std::size_t>;
 
+constexpr uint64_t MAX_COMMITTEE_SIZE = 1;
+
 constexpr char const *LOGGING_NAME = "StakeMgrTests";
 
 bool IndexOf(std::vector<Identity> const &identities, Identity const &target, std::size_t &index)
@@ -83,7 +85,7 @@ protected:
   {
     rng_.Seed(2048);
     entropy_       = std::make_unique<NaiveEntropyGenerator>();
-    stake_manager_ = std::make_unique<StakeManager>(*entropy_);
+    stake_manager_ = std::make_unique<StakeManager>(MAX_COMMITTEE_SIZE);
   }
 
   void TearDown() override
@@ -106,7 +108,7 @@ protected:
     {
       // validate the committee vs the generation weight
       auto const committee = stake_manager_->GetCommittee(block);
-      ASSERT_TRUE(static_cast<bool>(committee));
+      ASSERT_TRUE(static_cast<bool>(committee)); // fails
       ASSERT_EQ(committee->size(), committee_size);
 
       // update the statistics
@@ -122,6 +124,7 @@ protected:
       block.body.previous_hash = block.body.hash;
       block.body.hash          = GenerateRandomAddress(rng_).address();
       block.body.block_number += 1;
+      block.body.random_beacon += 1;
 
       stake_manager_->UpdateCurrentBlock(block);
     }
@@ -134,8 +137,6 @@ protected:
 
 TEST_F(StakeManagerTests, CheckBasicStakeChangeScenarios)
 {
-  static constexpr std::size_t COMMITTEE_SIZE = 1;
-
   std::vector<Identity> identities = {
       GenerateRandomIdentity(rng_),
       GenerateRandomIdentity(rng_),
@@ -150,21 +151,21 @@ TEST_F(StakeManagerTests, CheckBasicStakeChangeScenarios)
   }
 
   // configure the stake manager
-  stake_manager_->Reset(initial, COMMITTEE_SIZE);
+  stake_manager_->Reset(initial);
 
   // create the starting blocks (note block contains an address, not an identity)
   Block block;
   block.body.hash         = GenerateRandomAddress(rng_).address();
-  block.body.block_number = 1;
+  block.body.block_number = 0;
 
   // simulate a number of rounds
   RoundStats stats{};
-  SimulateRounds(identities, block, 100, COMMITTEE_SIZE, stats);
+  SimulateRounds(identities, block, 100, MAX_COMMITTEE_SIZE, stats);
 
   for (auto const &identity : identities)
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Identity: ", identity.identifier().ToBase64(),
-                    " rounds: ", stats.at(address));
+    FETCH_LOG_INFO(LOGGING_NAME, "Identity: ", identity.identifier().ToBase64(),
+                    " rounds: ", stats.at(identity));
 
     EXPECT_GT(stats.at(identity), 0);
   }
@@ -174,7 +175,7 @@ TEST_F(StakeManagerTests, CheckBasicStakeChangeScenarios)
   stake_manager_->update_queue().AddStakeUpdate(150, identities.back(), 500);
 
   stats.clear();
-  SimulateRounds(identities, block, 100, COMMITTEE_SIZE, stats);
+  SimulateRounds(identities, block, 100, MAX_COMMITTEE_SIZE, stats);
 
   for (auto const &identity : identities)
   {
@@ -188,7 +189,7 @@ TEST_F(StakeManagerTests, CheckBasicStakeChangeScenarios)
   }
 
   stats.clear();
-  SimulateRounds(identities, block, 100, COMMITTEE_SIZE, stats);
+  SimulateRounds(identities, block, 100, MAX_COMMITTEE_SIZE, stats);
 
   for (auto const &identity : identities)
   {
@@ -196,7 +197,7 @@ TEST_F(StakeManagerTests, CheckBasicStakeChangeScenarios)
   }
 
   stats.clear();
-  SimulateRounds(identities, block, 100, COMMITTEE_SIZE, stats);
+  SimulateRounds(identities, block, 100, MAX_COMMITTEE_SIZE, stats);
 
   std::size_t idx{0};
   for (auto const &identity : identities)

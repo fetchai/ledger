@@ -102,7 +102,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr
                                    BlockSinkInterface &      block_sink,
                                    core::FeatureFlags const &features, ProverPtr const &prover,
                                    std::size_t num_lanes, std::size_t num_slices,
-                                   std::size_t block_difficulty, BeaconServicePtr beacon)
+                                   std::size_t block_difficulty, BeaconServicePtr beacon, /*uint64_t max_committee_size,*/ uint64_t aeon_period)
   : chain_{chain}
   , dag_{std::move(dag)}
   , stake_{std::move(stake)}
@@ -124,6 +124,8 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr
   , exec_wait_periodic_{EXEC_NOTIFY_INTERVAL}
   , syncing_periodic_{NOTIFY_INTERVAL}
   , synergetic_exec_mgr_{CreateSynergeticExecutor(features, dag, storage_unit_)}
+  /*, max_committee_size_{max_committee_size}*/
+  , aeon_period_{aeon_period}
   , reload_state_count_{telemetry::Registry::Instance().CreateCounter(
         "ledger_block_coordinator_reload_state_total",
         "The total number of times in the reload state")}
@@ -205,11 +207,12 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr
   // clang-format on
 
   state_machine_->OnStateChange([this](State current, State previous) {
-    if (periodic_print_.Poll())
-    {
+    FETCH_UNUSED(this);
+    //if (periodic_print_.Poll())
+    //{
       FETCH_LOG_INFO(LOGGING_NAME, "Current state: ", ToString(current),
                      " (previous: ", ToString(previous), ")");
-    }
+    //}
   });
 
   // Initialising the BLS library
@@ -473,17 +476,37 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
   {
     return State::RESET;
   }
+  // TODO(HUT): this clock interferes with the timings in the stake manager
   else if (mining_ && mining_enabled_ && (Clock::now() >= next_block_time_))
   {
+    // Number of block we want to generate
+    uint64_t const block_number  = current_block_->body.block_number + 1;
+    uint64_t random_beacon = 0;
+
     // POS: Additional check, are we able to mine?
     if (stake_)
     {
-      if (!stake_->ShouldGenerateBlock(*current_block_, mining_address_))
+      bool should_generate = true;
+
+      // Try to get entropy for the block we are generating - is allowed to fail if we request too early
+      if(EntropyGeneratorInterface::Status::OK != beacon_->GenerateEntropy(current_block_->body.hash, current_block_->body.block_number, random_beacon))
+      {
+        should_generate = false;
+      }
+
+      // Note here the previous block's entropy determines miner selection
+      if (should_generate && !stake_->ShouldGenerateBlock(*current_block_, mining_address_) )
+      {
+        should_generate = false;
+      }
+
+      if(!should_generate)
       {
         // delay the invocation of this state machine
         state_machine_->Delay(std::chrono::milliseconds{100});
 
         // TODO(issue 1245): Refactor this stage, getting a little complicated
+        // TODO(HUT): reset here instead! 
         return State::SYNCHRONISED;
       }
     }
@@ -491,8 +514,9 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
     // create a new block
     next_block_                     = std::make_unique<Block>();
     next_block_->body.previous_hash = current_block_->body.hash;
-    next_block_->body.block_number  = current_block_->body.block_number + 1;
+    next_block_->body.block_number  = block_number;
     next_block_->body.miner         = mining_address_;
+    next_block_->body.random_beacon = random_beacon;
 
     if (stake_)
     {
@@ -556,15 +580,46 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
     // Check that the weight as given by the proof is correct
     if (stake_)
     {
+      // Attempt to ascertain the beacon value within the block
+      uint64_t random_beacon = 0;
+
+      // Try to get entropy for the block we are generating - it must eventually resolve to OK or FAILED
+      for(uint16_t i = 0;;)
+      {
+        auto result = beacon_->GenerateEntropy(current_block_->body.hash, current_block_->body.block_number, random_beacon);
+
+        if(result == EntropyGeneratorInterface::Status::OK)
+        {
+          break;
+        }
+
+        if(result == EntropyGeneratorInterface::Status::NOT_READY)
+        {
+          FETCH_LOG_INFO(LOGGING_NAME, "Waiting for entropy for block: ", current_block_->body.block_number);
+        }
+
+        if(result == EntropyGeneratorInterface::Status::FAILED || (result == EntropyGeneratorInterface::Status::OK && random_beacon != current_block_->body.random_beacon))
+        {
+          return fail("Failed to verify entropy during block validation. Discarding block.");
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+
+        if(i++ == 5)
+        {
+          return fail("Timed out waiting for entropy for block");
+        }
+      }
+
       if (!stake_->ValidMinerForBlock(*previous, current_block_->body.miner))
       {
         return fail("Block signed by miner deemed invalid by the staking mechanism");
       }
 
       if (current_block_->weight !=
-          stake_->GetBlockGenerationWeight(*previous, current_block_->body.miner))
+          stake_->GetBlockGenerationWeight(*previous, current_block_->body.miner) && current_block_->weight != 0)
       {
-        return fail("Incorrect stake weight found for block");
+        return fail("Incorrect stake weight found for block.");
       }
     }
 
@@ -1090,37 +1145,42 @@ BlockCoordinator::State BlockCoordinator::OnReset()
 
   FETCH_LOG_INFO(LOGGING_NAME, "Reset condition");
 
-  // trigger stake updates at the end of the block lifecycle
-  if (stake_ && beacon_)
+  Block const *block = nullptr;
+
+  if (next_block_)
   {
-    Block const *block = nullptr;
+    block = next_block_.get();
+  }
+  else if (current_block_)
+  {
+    block = current_block_.get();
+  }
+  else
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME,
+                    "Unable to find a previously executed block!");
+  }
 
-    if (next_block_)
-    {
-      block = next_block_.get();
-    }
-    else if (current_block_)
-    {
-      block = current_block_.get();
-    }
-    else
-    {
-      FETCH_LOG_ERROR(LOGGING_NAME,
-                      "Unable to find a previously executed block when updating staking!");
-    }
+  // trigger stake updates at the end of the block lifecycle
+  if(stake_ && block)
+  {
+    stake_->UpdateCurrentBlock(*block);
+  }
 
+  if (beacon_)
+  {
     // If we are on the head of the main chain, and it is a 'committee triggering' block
-    if (block && (*chain_.GetHeaviestBlock() == *block))
+    // and we are in sync.
+    // TODO(HUT): this needs very carefully looking at!
+    if (block && (*chain_.GetHeaviestBlock() == *block) /*&& syncronised_*/)
     {
       auto const block_number = block->body.block_number;
 
-      if ((block_number % AEON_PERIOD) == 0)
+      if ((block_number % aeon_period_) == 0)
       {
-        std::unordered_set<fetch::crypto::Identity> cabinet_member_list;
-        auto                                        snapshot = (*stake_).GetCurrentStakeSnapshot();
-        auto const current_stakers = snapshot->BuildCommittee(0, MAX_COMMITTEE_SIZE);
+        beacon::BeaconService::CabinetMemberList cabinet_member_list;
+        auto const current_stakers = stake_->GetCommittee(*block);
 
-        // TODO(HUT): switch to set for stake manager
         for (auto const &staker : *current_stakers)
         {
           FETCH_LOG_DEBUG(LOGGING_NAME, "Adding staker: ", staker.identifier().ToBase64());
@@ -1130,23 +1190,17 @@ BlockCoordinator::State BlockCoordinator::OnReset()
         uint32_t threshold = uint32_t((cabinet_member_list.size() / 2) + 1);
 
         FETCH_LOG_INFO(LOGGING_NAME, "Block: ", block_number,
-                       " creating new aeon. Periodicity: ", AEON_PERIOD, " threshold: ", threshold,
+                       " creating new aeon. Periodicity: ", aeon_period_, " threshold: ", threshold,
                        " cabinet size: ", cabinet_member_list.size());
 
-        // Disallow multiple invocations
+        // Disallow multiple invocations of cabinet generation
         static bool did_genesis_already = false;
 
         if (block_number != 0 || !did_genesis_already)
         {
           beacon_->StartNewCabinet(cabinet_member_list, threshold, block_number,
-                                   block_number + AEON_PERIOD);
+                                   block_number + aeon_period_);
           did_genesis_already = true;
-        }
-
-        // Finally update stake
-        if (block_number != 0)
-        {
-          stake_->UpdateCurrentBlock(*block);
         }
       }
     }

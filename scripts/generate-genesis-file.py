@@ -29,7 +29,7 @@ def parse_commandline():
     parser.add_argument('-s', '--stake-percentage', nargs='?', type=int,
                         default=1, help='The percentage of tokens to be staked')
     parser.add_argument(
-        '-o', '--output', default='snapshot.json', help='Path to generated file')
+        '-o', '--output', default='genesis_file.json', help='Path to generated file')
     parser.add_argument('-t', '--threshold', type=int,
                         help='The required threshold')
     return parser.parse_args()
@@ -107,8 +107,8 @@ def main():
         # update the random beacon config
         cabinet.append(address)
 
-    # form the snapshot data
-    snapshot = {
+    # form the genesis data
+    genesis_file = {
         'version': 2,
         'stake': {
             'committeeSize': len(cabinet),
@@ -119,7 +119,7 @@ def main():
 
     # dump the file
     with open(args.output, 'w') as output_file:
-        json.dump(snapshot, output_file, indent=4, sort_keys=True)
+        json.dump(genesis_file, output_file, indent=4, sort_keys=True)
 
 
 if __name__ == '__main__':

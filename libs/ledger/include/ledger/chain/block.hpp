@@ -61,6 +61,7 @@ public:
     Slices   slices;             ///< The slice lists
     DAGEpoch dag_epoch;          ///< DAG epoch containing information on new dag_nodes
     uint64_t timestamp{0u};      ///< The number of seconds elapsed since the Unix epoch
+    uint64_t random_beacon{0u};  ///< Entropy that determines miner priority for the next block
   };
 
   /// @name Block Contents
