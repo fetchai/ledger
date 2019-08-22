@@ -189,6 +189,11 @@ void DataLoader<LabelType, DataType>::SetMode(DataLoaderMode new_mode)
 {
   mode_ = new_mode;
   UpdateCursor();
+
+  if (this->current_min_ == this->current_max_)
+  {
+    throw std::runtime_error("Dataloader has no set for selected mode.");
+  }
 }
 
 template <typename LabelType, typename DataType>
