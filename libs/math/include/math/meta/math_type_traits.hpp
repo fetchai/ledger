@@ -72,9 +72,6 @@ using IfNoVectorSupportFor = std::enable_if_t<!HasVectorSupport<T>::value, R>;
 /// TYPES INDIRECTED FROM META / TYPE_TRAITS ///
 ////////////////////////////////////////////////
 
-template <typename DataType, typename ReturnType>
-using IfIsNotImplemented = fetch::meta::IfIsNotImplemented<DataType, ReturnType>;
-
 template <typename DataType>
 using IfIsUnsignedInteger = fetch::meta::IfIsUnsignedInteger<DataType>;
 

@@ -21,8 +21,9 @@
 
 #include "gtest/gtest.h"
 
+#include <cstddef>
 #include <cstdint>
-#include <memory>
+#include <sstream>
 #include <string>
 #include <vector>
 

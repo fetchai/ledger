@@ -69,7 +69,7 @@ public:
     assert(output.shape() == ComputeOutputShape(inputs));
     assert(inputs.size() == 1);
 
-    if (axes_.size() == 0)
+    if (axes_.empty())
     {
       fetch::math::Softmax((*inputs.at(0)), output, axis_);
     }

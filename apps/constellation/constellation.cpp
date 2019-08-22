@@ -70,6 +70,8 @@ using ExecutorPtr = std::shared_ptr<Executor>;
 namespace fetch {
 namespace {
 
+constexpr char const *LOGGING_NAME = "constellation";
+
 using LaneIndex       = fetch::ledger::LaneIdentity::lane_type;
 using StakeManagerPtr = std::shared_ptr<ledger::StakeManager>;
 using EntropyPtr      = std::unique_ptr<ledger::EntropyGeneratorInterface>;
@@ -143,10 +145,10 @@ ledger::ShardConfigs GenerateShardsConfig(uint32_t num_lanes, uint16_t start_por
     auto const ext_identity = cfg.external_identity->identity().identifier();
     auto const int_identity = cfg.internal_identity->identity().identifier();
 
-    FETCH_LOG_INFO(Constellation::LOGGING_NAME, "Shard ", i + 1);
-    FETCH_LOG_INFO(Constellation::LOGGING_NAME, " - Internal ", ToBase64(int_identity), " - ",
+    FETCH_LOG_INFO(LOGGING_NAME, "Shard ", i + 1);
+    FETCH_LOG_INFO(LOGGING_NAME, " - Internal ", ToBase64(int_identity), " - ",
                    cfg.internal_network_id.ToString(), " - tcp://0.0.0.0:", cfg.internal_port);
-    FETCH_LOG_INFO(Constellation::LOGGING_NAME, " - External ", ToBase64(ext_identity), " - ",
+    FETCH_LOG_INFO(LOGGING_NAME, " - External ", ToBase64(ext_identity), " - ",
                    cfg.external_network_id.ToString(), " - tcp://0.0.0.0:", cfg.external_port);
   }
 

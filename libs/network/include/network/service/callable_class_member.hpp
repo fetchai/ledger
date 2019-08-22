@@ -167,7 +167,7 @@ struct UnrollPointers
                                  " TODO: Make custom " + "exception");
       }
 
-      std::decay_t<T> *ptr = (std::decay_t<T> *)arg.pointer;
+      auto ptr = static_cast<std::decay_t<T> *>(arg.pointer);
       UnrollPointers<COUNTER - 1, class_type, member_function_pointer, return_type, used_args...,
                      T>::template LoopOver<remaining_args...>::Unroll(result, cls, m,
                                                                       additional_args, s, used...,

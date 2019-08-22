@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/string/ends_with.hpp"
+
 #include <cstring>
 #include <dirent.h>
 #include <fstream>
@@ -26,21 +28,6 @@
 namespace fetch {
 namespace ml {
 namespace examples {
-
-/**
- * helper function for identifying file extensions
- * @param value the string to test
- * @param ending the extension to check for (e.g. .txt)
- * @return boolean indicating whether string ends with extension specified
- */
-inline bool ends_with(std::string const &value, std::string const &ending)
-{
-  if (ending.size() > value.size())
-  {
-    return false;
-  }
-  return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
-}
 
 // TODO - also handle a string that specifies one text file only
 /**
@@ -59,7 +46,7 @@ std::vector<std::string> GetAllTextFiles(std::string const &dir_name, std::strin
     while ((ent = readdir(d)) != nullptr)
     {
       p1 = ent->d_name;
-      if (ends_with(p1, fileext))
+      if (fetch::core::EndsWith(p1, fileext))
       {
         ret.emplace_back(ent->d_name);
       }
@@ -74,13 +61,13 @@ std::vector<std::string> GetAllTextFiles(std::string const &dir_name, std::strin
  * @param training_data
  * @param full_training_text
  */
-std::string GetTextString(std::string const &training_data)
+inline std::string GetTextString(std::string const &training_data)
 {
   std::string              ret        = "";
   std::vector<std::string> file_names = GetAllTextFiles(training_data);
 
   // no files at that location - assume the string is the training data directly
-  if (file_names.size() == 0)
+  if (file_names.empty())
   {
     ret = training_data;
   }
@@ -88,9 +75,9 @@ std::string GetTextString(std::string const &training_data)
   // found the file at the location
   else
   {
-    for (std::uint64_t j = 0; j < file_names.size(); ++j)
+    for (auto const &file_name : file_names)
     {
-      std::string   cur_file = training_data + file_names.at(j);
+      std::string   cur_file = training_data + file_name;
       std::ifstream t(cur_file);
 
       std::string cur_text((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());

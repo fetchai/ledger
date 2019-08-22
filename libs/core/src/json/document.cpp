@@ -28,6 +28,10 @@
 namespace fetch {
 namespace json {
 
+namespace {
+constexpr char const *LOGGING_NAME = "JSONDocument";
+}
+
 /**
  * Extract a primitive value from a JSONToken
  *

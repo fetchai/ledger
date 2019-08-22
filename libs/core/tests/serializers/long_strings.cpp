@@ -34,7 +34,6 @@ namespace serializers {
 
 TEST(MsgPacker, long_strings)
 {
-  // Setup
   MsgPackSerializer stream;
   ByteArray         value;
   ByteArray         value2;

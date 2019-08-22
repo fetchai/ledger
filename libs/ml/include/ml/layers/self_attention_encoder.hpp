@@ -23,13 +23,13 @@
 #include "ml/layers/normalisation/layer_norm.hpp"
 #include "ml/ops/activations/dropout.hpp"
 #include "ml/ops/add.hpp"
+#include "ml/ops/concatenate.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "multihead_attention.hpp"
 
 #include <cmath>
 #include <cstdint>
 #include <memory>
-#include <ml/ops/concatenate.hpp>
 #include <random>
 #include <string>
 

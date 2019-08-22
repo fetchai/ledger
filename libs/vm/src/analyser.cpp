@@ -25,10 +25,13 @@
 #include "vm/state.hpp"
 #include "vm/string.hpp"
 
+#include <cassert>
 #include <cstddef>
 #include <cstdint>
 #include <ostream>
+#include <stdexcept>
 #include <string>
+#include <typeinfo>
 
 namespace fetch {
 namespace vm {

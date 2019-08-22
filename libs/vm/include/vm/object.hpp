@@ -60,7 +60,7 @@ struct IsObject : std::false_type
 {
 };
 template <typename T>
-struct IsObject<T, typename std::enable_if_t<std::is_base_of<Object, T>::value>> : std::true_type
+struct IsObject<T, std::enable_if_t<std::is_base_of<Object, T>::value>> : std::true_type
 {
 };
 
@@ -81,7 +81,7 @@ struct IsVariant : std::false_type
 {
 };
 template <typename T>
-struct IsVariant<T, typename std::enable_if_t<std::is_base_of<Variant, T>::value>> : std::true_type
+struct IsVariant<T, std::enable_if_t<std::is_base_of<Variant, T>::value>> : std::true_type
 {
 };
 
@@ -90,7 +90,7 @@ struct IsAddress : std::false_type
 {
 };
 template <typename T>
-struct IsAddress<T, typename std::enable_if_t<std::is_base_of<Address, T>::value>> : std::true_type
+struct IsAddress<T, std::enable_if_t<std::is_base_of<Address, T>::value>> : std::true_type
 {
 };
 
@@ -109,7 +109,7 @@ struct IsNonconstRef : std::false_type
 {
 };
 template <typename T>
-struct IsNonconstRef<T, typename std::enable_if_t<std::is_same<T, std::decay_t<T> &>::value>>
+struct IsNonconstRef<T, std::enable_if_t<std::is_same<T, std::decay_t<T> &>::value>>
   : std::true_type
 {
 };
@@ -119,18 +119,22 @@ struct IsConstRef : std::false_type
 {
 };
 template <typename T>
-struct IsConstRef<T, typename std::enable_if_t<std::is_same<T, std::decay_t<T> const &>::value>>
+struct IsConstRef<T, std::enable_if_t<std::is_same<T, std::decay_t<T> const &>::value>>
   : std::true_type
 {
 };
 
+namespace internal {
 template <typename T>
-struct GetManagedType;
+struct GetManagedTypeImpl;
 template <typename T>
-struct GetManagedType<Ptr<T>>
+struct GetManagedTypeImpl<Ptr<T>>
 {
   using type = T;
 };
+}  // namespace internal
+template <typename T>
+using GetManagedType = typename internal::GetManagedTypeImpl<T>::type;
 
 template <typename T, typename = void>
 struct IsPrimitiveParameter : std::false_type
@@ -138,7 +142,7 @@ struct IsPrimitiveParameter : std::false_type
 };
 template <typename T>
 struct IsPrimitiveParameter<
-    T, typename std::enable_if_t<!IsNonconstRef<T>::value && IsPrimitive<std::decay_t<T>>::value>>
+    T, std::enable_if_t<!IsNonconstRef<T>::value && IsPrimitive<std::decay_t<T>>::value>>
   : std::true_type
 {
 };
@@ -148,8 +152,7 @@ struct IsPtrParameter : std::false_type
 {
 };
 template <typename T>
-struct IsPtrParameter<
-    T, typename std::enable_if_t<IsConstRef<T>::value && IsPtr<std::decay_t<T>>::value>>
+struct IsPtrParameter<T, std::enable_if_t<IsConstRef<T>::value && IsPtr<std::decay_t<T>>::value>>
   : std::true_type
 {
 };
@@ -160,20 +163,19 @@ struct IsVariantParameter : std::false_type
 };
 template <typename T>
 struct IsVariantParameter<
-    T, typename std::enable_if_t<IsConstRef<T>::value && IsVariant<std::decay_t<T>>::value>>
-  : std::true_type
+    T, std::enable_if_t<IsConstRef<T>::value && IsVariant<std::decay_t<T>>::value>> : std::true_type
 {
 };
 
 template <typename T, typename = void>
 struct GetStorageType;
 template <typename T>
-struct GetStorageType<T, typename std::enable_if_t<IsPrimitive<T>::value>>
+struct GetStorageType<T, std::enable_if_t<IsPrimitive<T>::value>>
 {
   using type = T;
 };
 template <typename T>
-struct GetStorageType<T, typename std::enable_if_t<IsPtr<T>::value>>
+struct GetStorageType<T, std::enable_if_t<IsPtr<T>::value>>
 {
   using type = Ptr<Object>;
 };

@@ -16,13 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/base_types.hpp"
-
 #include "core/serializers/main_serializer_definition.hpp"
-#include "gtest/gtest.h"
+#include "math/base_types.hpp"
 #include "math/tensor.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/serializers/ml_types.hpp"
+
+#include "gtest/gtest.h"
+
 template <typename T>
 class PlaceholderTest : public ::testing::Test
 {

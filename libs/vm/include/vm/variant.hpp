@@ -42,79 +42,79 @@ union Primitive
   }
 
   template <typename T>
-  typename std::enable_if_t<std::is_same<T, bool>::value, T> Get() const
+  std::enable_if_t<std::is_same<T, bool>::value, T> Get() const
   {
     return bool(ui8);
   }
 
   template <typename T>
-  typename std::enable_if_t<std::is_same<T, int8_t>::value, T> Get() const
+  std::enable_if_t<std::is_same<T, int8_t>::value, T> Get() const
   {
     return i8;
   }
 
   template <typename T>
-  typename std::enable_if_t<std::is_same<T, uint8_t>::value, T> Get() const
+  std::enable_if_t<std::is_same<T, uint8_t>::value, T> Get() const
   {
     return ui8;
   }
 
   template <typename T>
-  typename std::enable_if_t<std::is_same<T, int16_t>::value, T> Get() const
+  std::enable_if_t<std::is_same<T, int16_t>::value, T> Get() const
   {
     return i16;
   }
 
   template <typename T>
-  typename std::enable_if_t<std::is_same<T, uint16_t>::value, T> Get() const
+  std::enable_if_t<std::is_same<T, uint16_t>::value, T> Get() const
   {
     return ui16;
   }
 
   template <typename T>
-  typename std::enable_if_t<std::is_same<T, int32_t>::value, T> Get() const
+  std::enable_if_t<std::is_same<T, int32_t>::value, T> Get() const
   {
     return i32;
   }
 
   template <typename T>
-  typename std::enable_if_t<std::is_same<T, uint32_t>::value, T> Get() const
+  std::enable_if_t<std::is_same<T, uint32_t>::value, T> Get() const
   {
     return ui32;
   }
 
   template <typename T>
-  typename std::enable_if_t<std::is_same<T, int64_t>::value, T> Get() const
+  std::enable_if_t<std::is_same<T, int64_t>::value, T> Get() const
   {
     return i64;
   }
 
   template <typename T>
-  typename std::enable_if_t<std::is_same<T, uint64_t>::value, T> Get() const
+  std::enable_if_t<std::is_same<T, uint64_t>::value, T> Get() const
   {
     return ui64;
   }
 
   template <typename T>
-  typename std::enable_if_t<std::is_same<T, float>::value, T> Get() const
+  std::enable_if_t<std::is_same<T, float>::value, T> Get() const
   {
     return f32;
   }
 
   template <typename T>
-  typename std::enable_if_t<std::is_same<T, double>::value, T> Get() const
+  std::enable_if_t<std::is_same<T, double>::value, T> Get() const
   {
     return f64;
   }
 
   template <typename T>
-  typename std::enable_if_t<std::is_same<T, fixed_point::fp32_t>::value, T> Get() const
+  std::enable_if_t<std::is_same<T, fixed_point::fp32_t>::value, T> Get() const
   {
     return fixed_point::fp32_t::FromBase(i32);
   }
 
   template <typename T>
-  typename std::enable_if_t<std::is_same<T, fixed_point::fp64_t>::value, T> Get() const
+  std::enable_if_t<std::is_same<T, fixed_point::fp64_t>::value, T> Get() const
   {
     return fixed_point::fp64_t::FromBase(i64);
   }
@@ -209,19 +209,19 @@ struct Variant
     Construct(std::move(other));
   }
 
-  template <typename T, typename std::enable_if_t<IsPrimitive<T>::value> * = nullptr>
+  template <typename T, std::enable_if_t<IsPrimitive<T>::value> * = nullptr>
   Variant(T other, TypeId other_type_id)
   {
     Construct(other, other_type_id);
   }
 
-  template <typename T, typename std::enable_if_t<IsPtr<T>::value> * = nullptr>
+  template <typename T, std::enable_if_t<IsPtr<T>::value> * = nullptr>
   Variant(T const &other, TypeId other_type_id)
   {
     Construct(other, other_type_id);
   }
 
-  template <typename T, typename std::enable_if_t<IsPtr<T>::value> * = nullptr>
+  template <typename T, std::enable_if_t<IsPtr<T>::value> * = nullptr>
   Variant(T &&other, TypeId other_type_id)
   {
     Construct(std::forward<T>(other), other_type_id);
@@ -264,21 +264,21 @@ struct Variant
     other.type_id = TypeIds::Unknown;
   }
 
-  template <typename T, typename std::enable_if_t<IsPrimitive<T>::value> * = nullptr>
+  template <typename T, std::enable_if_t<IsPrimitive<T>::value> * = nullptr>
   void Construct(T other, TypeId other_type_id)
   {
     primitive.Set(other);
     type_id = other_type_id;
   }
 
-  template <typename T, typename std::enable_if_t<IsPtr<T>::value> * = nullptr>
+  template <typename T, std::enable_if_t<IsPtr<T>::value> * = nullptr>
   void Construct(T const &other, TypeId other_type_id)
   {
     new (&object) Ptr<Object>(other);
     type_id = other_type_id;
   }
 
-  template <typename T, typename std::enable_if_t<IsPtr<T>::value> * = nullptr>
+  template <typename T, std::enable_if_t<IsPtr<T>::value> * = nullptr>
   void Construct(T &&other, TypeId other_type_id)
   {
     new (&object) Ptr<Object>(std::forward<T>(other));
@@ -368,7 +368,7 @@ struct Variant
     return *this;
   }
 
-  template <typename T, typename std::enable_if_t<IsPrimitive<T>::value> * = nullptr>
+  template <typename T, std::enable_if_t<IsPrimitive<T>::value> * = nullptr>
   void Assign(T other, TypeId other_type_id)
   {
     if (IsPrimitive() == false)
@@ -379,7 +379,7 @@ struct Variant
     type_id = other_type_id;
   }
 
-  template <typename T, typename std::enable_if_t<IsPtr<T>::value> * = nullptr>
+  template <typename T, std::enable_if_t<IsPtr<T>::value> * = nullptr>
   void Assign(T const &other, TypeId other_type_id)
   {
     if (IsPrimitive())
@@ -393,7 +393,7 @@ struct Variant
     }
   }
 
-  template <typename T, typename std::enable_if_t<IsPtr<T>::value> * = nullptr>
+  template <typename T, std::enable_if_t<IsPtr<T>::value> * = nullptr>
   void Assign(T &&other, TypeId other_type_id)
   {
     if (IsPrimitive())
@@ -407,32 +407,32 @@ struct Variant
     }
   }
 
-  template <typename T, typename std::enable_if_t<IsVariant<T>::value> * = nullptr>
+  template <typename T, std::enable_if_t<IsVariant<T>::value> * = nullptr>
   void Assign(T const &other, TypeId /* other_type_id */)
   {
     operator=(other);
   }
 
-  template <typename T, typename std::enable_if_t<IsVariant<T>::value> * = nullptr>
+  template <typename T, std::enable_if_t<IsVariant<T>::value> * = nullptr>
   void Assign(T &&other, TypeId /* other_type_id */)
   {
     operator=(std::forward<T>(other));
   }
 
   template <typename T>
-  typename std::enable_if_t<IsPrimitive<T>::value, T> Get() const
+  std::enable_if_t<IsPrimitive<T>::value, T> Get() const
   {
     return primitive.Get<T>();
   }
 
   template <typename T>
-  typename std::enable_if_t<IsPtr<T>::value, T> Get() const
+  std::enable_if_t<IsPtr<T>::value, T> Get() const
   {
     return object;
   }
 
   template <typename T>
-  typename std::enable_if_t<IsVariant<T>::value, T> Get() const
+  std::enable_if_t<IsVariant<T>::value, T> Get() const
   {
     T variant;
     variant.type_id = type_id;
@@ -448,21 +448,21 @@ struct Variant
   }
 
   template <typename T>
-  typename std::enable_if_t<IsPrimitive<T>::value, T> Move()
+  std::enable_if_t<IsPrimitive<T>::value, T> Move()
   {
     type_id = TypeIds::Unknown;
     return primitive.Get<T>();
   }
 
   template <typename T>
-  typename std::enable_if_t<IsPtr<T>::value, T> Move()
+  std::enable_if_t<IsPtr<T>::value, T> Move()
   {
     type_id = TypeIds::Unknown;
     return std::move(object);
   }
 
   template <typename T>
-  typename std::enable_if_t<IsVariant<T>::value, T> Move()
+  std::enable_if_t<IsVariant<T>::value, T> Move()
   {
     T variant;
     variant.type_id = type_id;

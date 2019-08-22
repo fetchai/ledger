@@ -76,7 +76,6 @@ public:
   /// @name State Machine Interface
   /// @{
   char const *GetName() const override;
-  uint64_t    GetStateCode() const override;
   char const *GetStateName() const override;
   /// @}
 
@@ -238,18 +237,6 @@ template <typename S>
 char const *StateMachine<S>::GetName() const
 {
   return name_.c_str();
-}
-
-/**
- * Get the current value of the enum state type for the current state
- *
- * @tparam S The state enum type
- * @return The numeric value associated with the state
- */
-template <typename S>
-uint64_t StateMachine<S>::GetStateCode() const
-{
-  return static_cast<uint64_t>(state());
 }
 
 /**

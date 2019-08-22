@@ -17,14 +17,13 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/main_serializer.hpp"
-#include "gtest/gtest.h"
 #include "math/tensor.hpp"
-
 #include "ml/layers/convolution_1d.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"
-
 #include "vectorise/fixed_point/fixed_point.hpp"
+
+#include "gtest/gtest.h"
 
 #include <memory>
 

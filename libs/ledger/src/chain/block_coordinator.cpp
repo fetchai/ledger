@@ -611,7 +611,7 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
 
     // All work is identified on the latest DAG segment and prepared in a queue
     auto const result = synergetic_exec_mgr_->PrepareWorkQueue(*current_block_, *previous_block);
-    if (SynExecStatus ::SUCCESS != result)
+    if (SynExecStatus::SUCCESS != result)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Block certifies work that possibly is malicious (",
                      ToBase64(current_block_->body.hash), ")");

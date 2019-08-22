@@ -63,7 +63,7 @@ struct TypeGetter<T, std::enable_if_t<IsPtr<T>::value>>
 {
   static TypeIndex GetTypeIndex()
   {
-    using ManagedType = typename GetManagedType<T>::type;
+    using ManagedType = GetManagedType<T>;
     return TypeIndex(typeid(ManagedType));
   }
 };
@@ -73,7 +73,7 @@ struct TypeGetter<T, std::enable_if_t<IsAddress<T>::value>>
 {
   static TypeIndex GetTypeIndex()
   {
-    using ManagedType = typename GetManagedType<Ptr<T>>::type;
+    using ManagedType = GetManagedType<Ptr<T>>;
     return TypeIndex(typeid(ManagedType));
   }
 };
@@ -94,7 +94,7 @@ struct ParameterTypeGetter<T, std::enable_if_t<IsPtrParameter<T>::value>>
 {
   static TypeIndex GetTypeIndex()
   {
-    using ManagedType = typename GetManagedType<std::decay_t<T>>::type;
+    using ManagedType = GetManagedType<std::decay_t<T>>;
     return TypeIndex(typeid(ManagedType));
   }
 };
