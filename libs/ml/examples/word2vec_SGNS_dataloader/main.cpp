@@ -160,7 +160,6 @@ struct TrainingParams
   SizeType max_word_count = fetch::math::numeric_max<SizeType>();  // maximum number to be trained
   SizeType negative_sample_size = 5;     // number of negative sample per word-context pair
   SizeType window_size          = 5;     // window size for context sampling
-  bool     train_mode           = true;  // reserve for future compatibility with CBOW
   DataType freq_thresh          = 1e-3;  // frequency threshold for subsampling
   SizeType min_count            = 5;     // infrequent word removal threshold
 
@@ -209,7 +208,7 @@ int main(int argc, char **argv)
   std::cout << "Setting up training data...: " << std::endl;
 
   GraphW2VLoader<DataType> data_loader(tp.window_size, tp.negative_sample_size, tp.freq_thresh,
-                                       tp.max_word_count, tp.train_mode);
+                                       tp.max_word_count);
   // set up dataloader
   /// DATA LOADING ///
   data_loader.BuildVocab({ReadFile(train_file)}, tp.min_count);
