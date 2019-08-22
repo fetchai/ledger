@@ -328,4 +328,35 @@ TEST_F(MathTests, tensor_set_and_at_four_test)
   EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
 }
 
+TEST_F(MathTests, tensor_set_from_string)
+{
+  static char const *tensor_from_string_src = R"(
+    function main() : Tensor
+      var tensor_shape = Array<UInt64>(3);
+      tensor_shape[0] = 4u64;
+      tensor_shape[1] = 1u64;
+      tensor_shape[2] = 1u64;
+
+      var x = Tensor(tensor_shape);
+      x.fill(2.0fp64);
+
+      var string_vals = "1.0, 1.0, 1.0, 1.0";
+      x.fromString(string_vals);
+
+      return x;
+
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(tensor_from_string_src));
+  Variant res;
+  ASSERT_TRUE(toolkit.Run(&res));
+
+  auto const                    tensor = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  fetch::math::Tensor<DataType> gt({4, 1, 1});
+  gt.Fill(static_cast<DataType>(1.0));
+
+  EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
+}
+
 }  // namespace
