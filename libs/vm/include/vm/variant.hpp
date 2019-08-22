@@ -823,11 +823,11 @@ public:
     return cv_ ? Reference(*cv_) : Reference(const_cast<Variant const &>(*v_));
   }
 
-  constexpr operator Variant &() noexcept
+  constexpr Variant &Var() noexcept
   {
     return *v_;
   }
-  constexpr operator Variant const &() noexcept
+  constexpr Variant const &CVar() const noexcept
   {
     return cv_ ? *cv_ : *v_;
   }
@@ -875,8 +875,8 @@ public:
   using Parent::Get;
   using Parent::Ref;
   using Parent::CRef;
-  using Parent::operator Variant &;
-  using Parent::operator Variant const &;
+  using Parent::Var;
+  using Parent::CVar;
 
   constexpr void Set(type val) noexcept
   {
@@ -935,11 +935,11 @@ public:
   constexpr void Set(std::nullptr_t) noexcept
   {}
 
-  constexpr operator Variant &() noexcept
+  constexpr Variant &Var() noexcept
   {
     return *v_;
   }
-  constexpr operator Variant const &() noexcept
+  constexpr Variant const &CVar() const noexcept
   {
     return cv_ ? *cv_ : *v_;
   }
@@ -1016,11 +1016,11 @@ public:
     return cv_ ? cv_->object : v_->object;
   }
 
-  constexpr operator Variant &() noexcept
+  constexpr Variant &Var() noexcept
   {
     return *v_;
   }
-  constexpr operator Variant const &() noexcept
+  constexpr Variant const &CVar() const noexcept
   {
     return cv_ ? *cv_ : *v_;
   }
@@ -1108,11 +1108,11 @@ constexpr auto ApplyBuiltinFunctor(TypeId type_id, F &&f, Variants &&... variant
 }
 
 template<TypeId... type_ids, class F> constexpr auto Slot(F &&f) {
-	return value_util::Slot<VariantView<type_ids>...>(std::forward<F>(f));
+	return value_util::Slot<TypeIdCases<type_ids...>>(std::forward<F>(f));
 }
 
 template<TypeId... type_ids, class F> constexpr auto DefaultSlot(F &&f) {
-	return value_util::Slot<VariantView<type_ids>..., DefaultObjectCase>(std::forward<F>(f));
+	return value_util::Slot<TypeIdCases<type_ids...>, DefaultObjectCase>(std::forward<F>(f));
 }
 
 template<class F> constexpr auto IntegralSlot(F &&f) {

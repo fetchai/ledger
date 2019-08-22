@@ -335,7 +335,7 @@ template <typename T>
 void AddToParameterPack(vm::VM *vm, vm::ParameterPack &params, vm::TypeId expected_type,
                         T const &variant)
 {
-  vm::ApplyFunctor<vm::TypeIds::Bool, vm::IntegralTypes, vm::TypeIds::Address, DefaultObjectCase>(
+  vm::ApplyFunctor<vm::IntegralTypes, vm::TypeIdCases<vm::TypeIds::Bool, vm::TypeIds::Address>, vm::DefaultObjectCase>(
 	  expected_type,
 	  value_util::Slots(
 		  vm::Slot<vm::TypeIds::Bool, vm::IntegralTypes>([&](auto cs) {
@@ -627,7 +627,7 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
 
   // extract the result from the contract output
 
-  auto ret_val = vm::ApplyFunctor<vm::PrimitiveTypes, vm::TypeIds::Null, vm::TypeIds::String, vm::DefaultObjectCase>(
+  auto ret_val = vm::ApplyFunctor<vm::PrimitiveTypes, vm::TypeIdCases<vm::TypeIds::Null, vm::TypeIds::String>, vm::DefaultObjectCase>(
 	  output.type_id,
 	  value_util::Slots(
 		  vm::PrimitiveSlot(
@@ -647,7 +647,7 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
 			  }),
 		  vm::DefaultSlot(
 			  [&](auto &&v) {
-				  vm::Variant const &output{v};
+				  auto const &output = v.CVar();
 				  if (output.IsPrimitive())
 				  {
 					  // TODO(tfr): add error - all types not covered
