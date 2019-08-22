@@ -520,7 +520,8 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
     next_block_->body.miner         = mining_address_;
     next_block_->body.random_beacon = random_beacon;
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Minting new block! Number: ", block_number, " beacon: ", random_beacon);
+    FETCH_LOG_INFO(LOGGING_NAME, "Minting new block! Number: ", block_number,
+                   " beacon: ", random_beacon);
 
     if (stake_)
     {
@@ -568,7 +569,7 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
                    ToBase64(current_block_->body.hash), ')');
     FETCH_UNUSED(reason);
 
-    if(definetly_bad)
+    if (definetly_bad)
     {
       chain_.RemoveBlock(current_block_->body.hash);
     }
@@ -595,7 +596,8 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
       // FAILED
       for (uint16_t i = 0;;)
       {
-        auto result = beacon_->GenerateEntropy(current_block_->body.hash, current_block_->body.block_number, random_beacon);
+        auto result = beacon_->GenerateEntropy(current_block_->body.hash,
+                                               current_block_->body.block_number, random_beacon);
 
         if (result == EntropyGeneratorInterface::Status::OK)
         {
@@ -626,7 +628,10 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
 
       if (current_block_->body.random_beacon != random_beacon)
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "Saw incorrect random beacon from: ", current_block_->body.miner.address().ToBase64() ,".Block number: ", current_block_->body.block_number, " expected: ", random_beacon, " got: ", current_block_->body.random_beacon);
+        FETCH_LOG_INFO(LOGGING_NAME, "Saw incorrect random beacon from: ",
+                       current_block_->body.miner.address().ToBase64(),
+                       ".Block number: ", current_block_->body.block_number,
+                       " expected: ", random_beacon, " got: ", current_block_->body.random_beacon);
         return fail("Block has incorrect random beacon ");
       }
 
@@ -1206,7 +1211,7 @@ BlockCoordinator::State BlockCoordinator::OnReset()
           cabinet_member_list.insert(staker);
         }
 
-        //uint32_t threshold = uint32_t((cabinet_member_list.size() / 2) + 1);
+        // uint32_t threshold = uint32_t((cabinet_member_list.size() / 2) + 1);
         uint32_t threshold = uint32_t(cabinet_member_list.size());
 
         FETCH_LOG_INFO(LOGGING_NAME, "Block: ", block_number,

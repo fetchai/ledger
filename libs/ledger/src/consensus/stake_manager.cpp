@@ -22,10 +22,10 @@
 #include "ledger/consensus/stake_manager.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
 
-#include <random>
 #include <algorithm>
 #include <cstddef>
 #include <iterator>
+#include <random>
 
 namespace fetch {
 namespace ledger {
@@ -133,18 +133,17 @@ bool StakeManager::ShouldGenerateBlock(Block const &previous, Address const &add
 
   for (std::size_t i = 0; i < (*committee).size(); ++i)
   {
-    FETCH_LOG_INFO(LOGGING_NAME,
-                    "Block: ", previous.body.block_number,
-                    " Saw committee member: ", Address((*committee)[i]).address().ToBase64(),
-                    "we are: ", address.address().ToBase64());
+    FETCH_LOG_INFO(LOGGING_NAME, "Block: ", previous.body.block_number,
+                   " Saw committee member: ", Address((*committee)[i]).address().ToBase64(),
+                   "we are: ", address.address().ToBase64());
 
     if (Address((*committee)[i]) == address)
     {
       in_committee = true;
-      found = true;
+      found        = true;
     }
 
-    if(!found)
+    if (!found)
     {
       time_to_wait += block_interval_ms_;
     }
