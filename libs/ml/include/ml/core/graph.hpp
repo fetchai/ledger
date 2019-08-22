@@ -488,7 +488,7 @@ std::vector<TensorType> Graph<TensorType>::get_weights() const
     auto trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
     ret.emplace_back(trainable_ptr->get_weights());
   }
-  g return std::move(ret);
+  return std::move(ret);
 }
 
 template <typename TensorType>

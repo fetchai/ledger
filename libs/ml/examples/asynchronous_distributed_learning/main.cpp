@@ -245,16 +245,6 @@ int main(int ac, char **av)
     clients[i]->AddPeers(clients);
   }
 
-  /*
-   TensorVectorType weights=clients[0]->GetWeights();
-  // Make sure that all clients has same model
-  for (unsigned int i(1); i < NUMBER_OF_CLIENTS; ++i)
-  {
-    std::cout<<weights.at(0).ToString()<<std::endl;
-    clients[i]->SetWeights(weights);
-  }
-   */
-
   TensorVectorType weights = clients[0]->GetWeights();
 
   for (unsigned int it(0); it < NUMBER_OF_ITERATIONS; ++it)
