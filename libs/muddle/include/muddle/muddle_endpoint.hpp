@@ -56,7 +56,7 @@ public:
    *
    * @return The node address
    */
-  virtual Address const &GetLocalAddress() const = 0;
+  virtual Address const &GetAddress() const = 0;
 
   /**
    * Send a message to a target address

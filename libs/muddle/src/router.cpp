@@ -338,7 +338,7 @@ void Router::Route(Handle handle, PacketPtr packet)
   }
 }
 
-Address const &Router::GetLocalAddress() const
+Address const &Router::GetAddress() const
 {
   return address_;
 }

@@ -93,7 +93,7 @@ public:
 
   /// @name Endpoint Methods (Publicly visible)
   /// @{
-  Address const &GetLocalAddress() const override;
+  Address const &GetAddress() const override;
 
   void Send(Address const &address, uint16_t service, uint16_t channel,
             Payload const &message) override;
