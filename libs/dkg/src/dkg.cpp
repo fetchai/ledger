@@ -279,7 +279,7 @@ void DistributedKeyGeneration::ReceivedComplaint()
 {
   std::unique_lock<std::mutex> lock{mutex_};
   if (!received_all_complaints_ && state_ == State::WAITING_FOR_COMPLAINTS &&
-      complaints_manager_.IsFinished(cabinet_, cabinet_index_, polynomial_degree_))
+      complaints_manager_.IsFinished(polynomial_degree_))
   {
     // Complaints at this point consist only of parties which have received over threshold number of
     // complaints
@@ -301,7 +301,7 @@ void DistributedKeyGeneration::ReceivedComplaintsAnswer()
 {
   std::unique_lock<std::mutex> lock{mutex_};
   if (!received_all_complaints_answer_ && state_ == State::WAITING_FOR_COMPLAINT_ANSWERS &&
-      complaints_answer_manager_.IsFinished(cabinet_, cabinet_index_))
+      complaints_answer_manager_.IsFinished())
   {
     received_all_complaints_answer_.store(true);
     lock.unlock();
@@ -577,7 +577,7 @@ void DistributedKeyGeneration::OnComplaints(ComplaintsMessage const &msg,
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, " received complaints from node ",
                  CabinetIndex(from_id));
-  complaints_manager_.Add(msg, from_id, CabinetIndex(from_id), address_);
+  complaints_manager_.Add(msg, from_id, address_);
   ReceivedComplaint();
 }
 
@@ -592,7 +592,7 @@ void DistributedKeyGeneration::OnComplaintsAnswer(SharesMessage const &answer,
                                                   MuddleAddress const &from_id)
 {
   uint32_t from_index{CabinetIndex(from_id)};
-  if (complaints_answer_manager_.Count(from_index))
+  if (complaints_answer_manager_.Count(from_id))
   {
     CheckComplaintAnswer(answer, from_id, from_index);
     ReceivedComplaintsAnswer();
