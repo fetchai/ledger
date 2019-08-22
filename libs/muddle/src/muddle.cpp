@@ -36,12 +36,14 @@
 #include <exception>
 #include <sstream>
 
+using namespace std::chrono_literals;
+
 namespace fetch {
 namespace muddle {
 
 static auto const        CLEANUP_INTERVAL           = std::chrono::seconds{10};
 static std::size_t const MAINTENANCE_INTERVAL_MS    = 2500;
-static std::size_t const PEER_SELECTION_INTERVAL_MS = 3000;
+static std::size_t const PEER_SELECTION_INTERVAL_MS = 500;
 
 /**
  * Constructs the muddle node instances
@@ -89,6 +91,9 @@ Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager 
 Muddle::~Muddle()
 {
   MuddleRegistry::Instance().Unregister(node_address_);
+
+  // ensure the instance has stopped
+  Stop();
 }
 
 /**
@@ -142,14 +147,40 @@ void Muddle::Stop()
   reactor_.Stop();
   router_.Stop();
 
+  // close all existing connections
+  register_->DisconnectAll();
+
   // client shutdown loop
   clients_.DisconnectAll();
 
   // tear down all the servers
-  servers_.clear();
+  {
+    FETCH_LOCK(servers_lock_);
+    servers_.clear();
+  }
 
-  // close all existing connections
-  register_->DisconnectAll();
+  // wait for all the connections to close
+  Timepoint const deadline = Clock::now() + 10s;
+  for (;;)
+  {
+    // close all existing connections
+    register_->DisconnectAll();
+
+    auto const now = Clock::now();
+
+    if (now > deadline)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to wait for all connections to leave");
+      break;
+    }
+
+    if (GetNumDirectlyConnectedPeers() == 0)
+    {
+      break;
+    }
+
+    std::this_thread::sleep_for(100ms);
+  }
 }
 
 /**
@@ -270,7 +301,10 @@ Muddle::Addresses Muddle::GetRequestedPeers() const
  */
 void Muddle::ConnectTo(Address const &address)
 {
-  peer_selector_->AddDesiredPeer(address);
+  if (node_address_ != address)
+  {
+    peer_selector_->AddDesiredPeer(address);
+  }
 }
 
 /**
@@ -288,13 +322,16 @@ void Muddle::ConnectTo(Addresses const &addresses)
 
 void Muddle::ConnectTo(Address const &address, network::Uri const &uri_hint)
 {
-  if (uri_hint.IsTcpPeer())
+  if (node_address_ != address)
   {
-    peer_selector_->AddDesiredPeer(address, uri_hint.GetTcpPeer());
-  }
-  else
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Incompatible hint uri type: ", uri_hint.ToString());
+    if (uri_hint.IsTcpPeer())
+    {
+      peer_selector_->AddDesiredPeer(address, uri_hint.GetTcpPeer());
+    }
+    else
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Incompatible hint uri type: ", uri_hint.ToString());
+    }
   }
 }
 

@@ -102,14 +102,14 @@ void PreDkgSync::ResetCabinet(PeersList const &peers)
 
 void PreDkgSync::Connect()
 {
-  for (auto const &address : cabinet_)
+  for (auto const &peer : peers_)
   {
-    muddle_.ConnectTo(address);
+    muddle_.ConnectTo(peer.first, peer.second);
   }
 
   while (muddle_.GetDirectlyConnectedPeers().size() != peers_.size() - 1)
   {
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
   }
 
   // Send ready message with list of connected peers
