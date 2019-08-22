@@ -92,7 +92,13 @@ public:
 
     if (mutex_.try_lock())
     {
-      is_due = Clock::now() >= (last_run_ + interval_);
+      try
+      {
+        is_due = Clock::now() >= (last_run_ + interval_);
+      }
+      catch (...)
+      {
+      }
 
       mutex_.unlock();
     }
