@@ -303,13 +303,14 @@ void RBC::OnRBroadcast(MessageBroadcast const &msg, uint32_t sender_index)
   if (!SetPartyFlag(sender_index, tag, MessageType::R_BROADCAST))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "onRBroadcast: Node ", id_, " received repeated msg ", tag,
-                   " from node ", sender_index, " with counter ", msg->counter(), " and id ",
-                   msg->id());
+                   " from node ", sender_index, " with counter ", std::to_string(msg->counter()),
+                   " and id ", msg->id());
     return;
   }
 
   FETCH_LOG_INFO(LOGGING_NAME, "onRBroadcast: Node ", id_, " received msg ", tag, " from node ",
-                 sender_index, " with counter ", msg->counter(), " and id ", msg->id());
+                 sender_index, " with counter ", std::to_string(msg->counter()), " and id ",
+                 msg->id());
   if (sender_index == msg->id())
   {
     if (SetMbar(tag, msg, sender_index))
@@ -355,13 +356,14 @@ void RBC::OnREchoLockFree(MessageEcho const &msg, uint32_t sender_index)
   if (!SetPartyFlag(sender_index, tag, MessageType::R_ECHO))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "onREcho: Node ", id_, " received repeated msg ", tag,
-                   " from node ", sender_index, " with counter ", msg->counter(), " and id ",
-                   msg->id());
+                   " from node ", sender_index, " with counter ", std::to_string(msg->counter()),
+                   " and id ", msg->id());
     return;
   }
 
   FETCH_LOG_TRACE(LOGGING_NAME, "onREcho: Node ", id_, " received msg ", tag, " from node ",
-                  sender_index, " with counter ", msg->counter(), " and id ", msg->id());
+                  sender_index, " with counter ", std::to_string(msg->counter()), " and id ",
+                  msg->id());
   if (ReceivedEcho(tag, msg))
   {
     MessageReady ready_msg =
@@ -399,14 +401,15 @@ void RBC::OnRReadyLockFree(MessageReady const &msg, uint32_t sender_index)
   if (!SetPartyFlag(sender_index, tag, MessageType::R_READY))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "onRReady: Node ", id_, " received repeated msg ", tag,
-                   " from node ", sender_index, " with counter ", msg->counter(), " and id ",
-                   msg->id());
+                   " from node ", sender_index, " with counter ", std::to_string(msg->counter()),
+                   " and id ", msg->id());
     return;
   }
 
-  FETCH_LOG_TRACE(LOGGING_NAME, "onRReady: Node ", id_, " received msg ", tag, " from node ",
-                  sender_index, " with counter ", msg->counter(), " and id ", msg->id());
   auto msgs_counter = ReceivedReady(tag, msg);
+  FETCH_LOG_INFO(LOGGING_NAME, "onRReady: Node ", id_, " received msg ", tag, " from node ",
+                 sender_index, " with counter ", std::to_string(msg->counter()), ", id ", msg->id(),
+                 " and ready count ", msgs_counter.ready_count);
 
   if (threshold_ > 0 && msgs_counter.ready_count == threshold_ + 1 &&
       msgs_counter.echo_count < (current_cabinet_.size() - threshold_))
@@ -441,23 +444,9 @@ void RBC::OnRReadyLockFree(MessageReady const &msg, uint32_t sender_index)
     else if (msg->id() != id_ && CheckTag(*msg))
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, " delivered msg ", tag, " with counter ",
-                     msg->counter(), " and id ", msg->id());
+                     std::to_string(msg->counter()), " and id ", msg->id());
 
-      SerialisedMessage message_to_send = broadcasts_[tag].original_message;
-
-      Deliver(message_to_send, msg->id());
-
-      delivered_.insert(tag);
-    }
-  }
-  else
-  {
-    if (msgs_counter.ready_count == current_cabinet_.size() - 1 &&
-        delivered_.find(tag) != delivered_.end())
-    {  // all messages arrived let's clean
-
-      broadcasts_.erase(tag);
-      parties_[sender_index].flags.erase(tag);
+      Deliver(broadcasts_[tag].original_message, msg->id());
     }
   }
 }
@@ -480,8 +469,8 @@ void RBC::OnRRequest(MessageRequest const &msg, uint32_t sender_index)
   if (!SetPartyFlag(sender_index, tag, MessageType::R_REQUEST))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "onRRequest: Node ", id_, " received repeated msg ", tag,
-                   " from node ", sender_index, " with counter ", msg->counter(), " and id ",
-                   msg->id());
+                   " from node ", sender_index, " with counter ", std::to_string(msg->counter()),
+                   " and id ", msg->id());
     return;
   }
   FETCH_LOG_TRACE(LOGGING_NAME, "onRRequest: Node ", id_, " received msg ", tag, " from node ",
@@ -545,13 +534,9 @@ void RBC::OnRAnswer(MessageAnswer const &msg, uint32_t sender_index)
   if (msg->id() != id_ && CheckTag(*msg))
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, " delivered msg ", tag, " with counter ",
-                   msg->counter(), " and id ", msg->id());
+                   std::to_string(msg->counter()), " and id ", msg->id());
 
-    SerialisedMessage message_to_send = broadcasts_[tag].original_message;
-
-    Deliver(message_to_send, msg->id());
-
-    delivered_.insert(tag);
+    Deliver(broadcasts_[tag].original_message, msg->id());
   }
 }
 
@@ -597,7 +582,6 @@ void RBC::Deliver(SerialisedMessage const &msg, uint32_t sender_index)
       lock_.lock();
 
       ++parties_[sender_index].deliver_s;  // Increase counter
-      delivered_.insert(old_tag);
       old_tag_msg = parties_[sender_index].undelivered_msg.erase(old_tag_msg);
     }
   }
@@ -612,7 +596,7 @@ void RBC::Deliver(SerialisedMessage const &msg, uint32_t sender_index)
  */
 bool RBC::BasicMessageCheck(MuddleAddress const &from, RBCMessage const &msg)
 {
-  assert(lock_.owns_lock());
+  // assert(lock_.owns_lock());
 
   if ((current_cabinet_.find(from) == current_cabinet_.end()) || (msg.channel() != channel_))
   {
@@ -719,7 +703,8 @@ bool RBC::CheckTag(RBCMessage const &msg)
   else if (msg.counter() > msg_counter)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Node ", id_, " has counter ", msg_counter,
-                   " does not match tag counter ", msg.counter(), " for node ", msg.id());
+                   " does not match tag counter ", std::to_string(msg.counter()), " for node ",
+                   msg.id());
     // Store counter of message for processing later
     if (parties_[msg.id()].undelivered_msg.find(msg.counter()) ==
         parties_[msg.id()].undelivered_msg.end())

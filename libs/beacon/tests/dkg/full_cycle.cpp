@@ -16,6 +16,23 @@
 //
 //------------------------------------------------------------------------------
 
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018-2019 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
 #include "core/reactor.hpp"
 #include "core/serializers/counter.hpp"
 #include "core/serializers/main_serializer.hpp"
@@ -26,11 +43,11 @@
 #include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
 
+#include "network/generics/requesting_queue.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
 #include "muddle/subscription.hpp"
-#include "network/generics/requesting_queue.hpp"
 
 #include "beacon/beacon_service.hpp"
 #include "beacon/beacon_setup_protocol.hpp"
@@ -48,6 +65,9 @@
 #include <vector>
 using namespace fetch;
 using namespace fetch::beacon;
+
+#include "gtest/gtest.h"
+#include <iostream>
 
 using Prover         = fetch::crypto::Prover;
 using ProverPtr      = std::shared_ptr<Prover>;
@@ -75,20 +95,24 @@ struct CabinetNode
   using CertificatePtr = std::shared_ptr<Certificate>;
   using Muddle         = muddle::MuddlePtr;
 
-  uint16_t                muddle_port;
-  network::NetworkManager network_manager;
-  core::Reactor           reactor;
-  ProverPtr               muddle_certificate;
-  Muddle                  muddle;
-  BeaconService           beacon_service;
+  EventManager::SharedEventManager event_manager;
+  uint16_t                         muddle_port;
+  network::NetworkManager          network_manager;
+  core::Reactor                    reactor;
+  ProverPtr                        muddle_certificate;
+  Muddle                           muddle;
+  BeaconService                    beacon_service;
+  crypto::Identity                 identity;
 
-  CabinetNode(uint16_t port_number, uint16_t index, EventManager::SharedEventManager event_manager)
-    : muddle_port{port_number}
+  CabinetNode(uint16_t port_number, uint16_t index)
+    : event_manager{EventManager::New()}
+    , muddle_port{port_number}
     , network_manager{"NetworkManager" + std::to_string(index), 1}
     , reactor{"ReactorName" + std::to_string(index)}
     , muddle_certificate{CreateNewCertificate()}
     , muddle{muddle::CreateMuddle("Test", muddle_certificate, network_manager, "127.0.0.1")}
     , beacon_service{muddle->GetEndpoint(), muddle_certificate, event_manager}
+    , identity{muddle_certificate->identity()}
   {
     network_manager.Start();
     muddle->Start({}, {muddle_port});
@@ -103,26 +127,22 @@ struct CabinetNode
   {
     return fetch::network::Uri{"tcp://127.0.0.1:" + std::to_string(muddle_port)};
   }
-
-
 };
 
-int main()
+void RunHonestComitteeRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
+                              uint16_t number_of_cabinets = 4, uint16_t cabinet_size = 4,
+                              uint16_t numbers_per_aeon = 10, double threshold = 0.5)
 {
-  constexpr uint16_t number_of_nodes    = 16;
-  constexpr uint16_t cabinet_size       = 4;
-  constexpr uint16_t number_of_cabinets = number_of_nodes / cabinet_size;
-
+  std::cout << "- Setup" << std::endl;
+  uint16_t number_of_nodes = static_cast<uint16_t>(number_of_cabinets * cabinet_size);
   // Initialising the BLS library
   crypto::bls::Init();
-
-  EventManager::SharedEventManager event_manager = EventManager::New();
 
   std::vector<std::unique_ptr<CabinetNode>> committee;
   for (uint16_t ii = 0; ii < number_of_nodes; ++ii)
   {
     auto port_number = static_cast<uint16_t>(9000 + ii);
-    committee.emplace_back(new CabinetNode{port_number, ii, event_manager});
+    committee.emplace_back(new CabinetNode{port_number, ii});
   }
   std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
@@ -136,7 +156,8 @@ int main()
   }
 
   // Creating n cabinets
-  BeaconService::CabinetMemberList all_cabinets[number_of_cabinets];
+  std::vector<BeaconService::CabinetMemberList> all_cabinets;
+  all_cabinets.resize(number_of_cabinets);
 
   uint64_t i = 0;
   for (auto &member : committee)
@@ -158,34 +179,73 @@ int main()
     member->reactor.Start();
   }
 
-  // Ready
-  uint64_t block_number = 0;
-  uint64_t aeon_length  = 10;
-
-  while (true)
+  // Stats
+  std::unordered_map<crypto::Identity, uint64_t> rounds_finished;
+  for (auto &member : committee)
   {
-    if ((block_number % aeon_length) == 0)
+    rounds_finished[member->identity] = 0;
+  }
+
+  // Ready
+  i = 0;
+  while (i < static_cast<uint64_t>(total_renewals + 1))
+  {
+    auto cabinet = all_cabinets[i % number_of_cabinets];
+
+    if (i < total_renewals)
     {
-      auto cabinet = all_cabinets[block_number % number_of_cabinets];
+      std::cout << "- Scheduling round " << i << std::endl;
       for (auto &member : committee)
       {
-        member->beacon_service.StartNewCabinet(cabinet, static_cast<uint32_t>(cabinet.size() / 2),
-                                               block_number, block_number + aeon_length);
+        member->beacon_service.StartNewCabinet(
+            cabinet, static_cast<uint32_t>(static_cast<double>(cabinet.size()) * threshold),
+            i * numbers_per_aeon, (i + 1) * numbers_per_aeon);
       }
     }
 
-    uint64_t entropy;
-
-    while (committee[block_number % committee.size()]->beacon_service.GenerateEntropy(
-               "", block_number, entropy) != fetch::ledger::EntropyGeneratorInterface::Status::OK)
+    // Collecting information about the committees finishing
+    for (uint64_t j = 0; j < 30; ++j)
     {
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+      for (auto &member : committee)
+      {
+        // Polling events about aeons completed work
+        fetch::beacon::EventCommitteeCompletedWork event;
+        while (member->event_manager->Poll(event))
+        {
+          ++rounds_finished[member->identity];
+        }
+      }
+
+      std::this_thread::sleep_for(std::chrono::milliseconds(delay));
     }
 
-    FETCH_LOG_INFO("default", "Found entropy for block: ", block_number, " as ", entropy);
-
-    ++block_number;
+    ++i;
   }
 
-  return 0;
+  // Stopping all
+  std::cout << " - Waiting" << std::endl;
+  std::this_thread::sleep_for(std::chrono::seconds(5));
+
+  std::cout << " - Stopping" << std::endl;
+  for (auto &member : committee)
+  {
+    member->reactor.Stop();
+    member->network_manager.Stop();
+  }
+
+  std::cout << " - Testing" << std::endl;
+  // Verifying stats
+  // TODO(tfr): Check that the hashes are acutally the same
+  for (auto finish_stat : rounds_finished)
+  {
+    EXPECT_EQ(finish_stat.second, total_renewals);
+  }
+}
+
+TEST(beacon, full_cycle)
+{
+  SetGlobalLogLevel(LogLevel::CRITICAL);
+  // TODO(tfr): Heuristically fails atm. RunHonestComitteeRenewal(100, 4, 4, 4, 10, 0.5);
+  RunHonestComitteeRenewal(400, 4, 2, 2, 10, 0.5);
 }

@@ -171,6 +171,7 @@ public:
     {
       assert(threshold >= static_cast<uint32_t>(cabinet.size() / 3));
     }
+
     if (threshold == std::numeric_limits<uint32_t>::max())
     {
       current_threshold_ = static_cast<uint32_t>(cabinet.size() / 2 + 1);
@@ -179,12 +180,13 @@ public:
     {
       current_threshold_ = threshold;
     }
+
     FETCH_LOG_INFO(LOGGING_NAME, "Resetting cabinet. Cabinet size: ", cabinet.size(),
-                   " threshold: ", threshold);
+                   " threshold: ", current_threshold_);
     rbc_.ResetCabinet(cabinet);
+    dkg_.ResetCabinet(cabinet, threshold);
     current_cabinet_ = std::move(cabinet);
-    dkg_.ResetCabinet();
-    id_ = static_cast<uint32_t>(
+    id_              = static_cast<uint32_t>(
         std::distance(current_cabinet_.begin(), current_cabinet_.find(address_)));
   }
   void SendShares(MuddleAddress const &                      destination,

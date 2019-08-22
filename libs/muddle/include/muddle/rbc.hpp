@@ -167,7 +167,6 @@ private:
   std::atomic<uint8_t>  msg_counter_{0};  ///< Counter for messages we have broadcasted
   PartyList             parties_;         ///< Keeps track of messages from cabinet members
   std::unordered_map<TagType, BroadcastMessage> broadcasts_;  ///< map from tag to broadcasts
-  std::unordered_set<TagType>                   delivered_;   ///< Tags of messages delivered
 
   // For broadcast
   MuddleAddress const address_;            ///< Our muddle address

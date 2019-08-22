@@ -84,7 +84,7 @@ int main(int argc, char **argv)
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
   // Connect and wait until everyone else has connected
-  PreDkgSync sync(muddle->GetEndpoint(), 4);
+  PreDkgSync sync(*muddle, 4);
   sync.ResetCabinet(peer_list);
   dkg->ResetCabinet(members, uint32_t(std::stoi(args[2])));
   sync.Connect();

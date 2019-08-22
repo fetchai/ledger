@@ -76,7 +76,7 @@ int main()
       , muddle_certificate{CreateNewCertificate()}
       , muddle{CreateMuddle("Test", muddle_certificate, network_manager, "127.0.0.1")}
       , dkg_service{muddle->GetEndpoint(), muddle_certificate->identity().identifier()}
-      , pre_sync{muddle->GetEndpoint(), 4}
+      , pre_sync{*muddle, 4}
     {
       network_manager.Start();
       muddle->Start({}, {muddle_port});
