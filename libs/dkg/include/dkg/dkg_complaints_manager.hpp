@@ -46,7 +46,8 @@ class ComplaintsManager
                           complaints_counter_;  ///< Counter for number complaints received by a cabinet member
   std::set<MuddleAddress> complaints_from_;  ///< Set of members who complaints against self
   std::set<MuddleAddress> complaints_;       ///< Set of members who we are complaining against
-  std::set<MuddleAddress> complaints_received_;    ///< Set of members whom we have received a complaint message from
+  std::set<MuddleAddress>
+       complaints_received_;  ///< Set of members whom we have received a complaint message from
   bool finished_{
       false};  ///< Bool denoting whether we have collected complaint messages from everyone
   mutable std::mutex mutex_;
