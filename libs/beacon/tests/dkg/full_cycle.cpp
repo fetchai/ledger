@@ -204,7 +204,7 @@ void RunHonestComitteeRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
     }
 
     // Collecting information about the committees finishing
-    for (uint64_t j = 0; j < 30; ++j)
+    for (uint64_t j = 0; j < 60; ++j)
     {
 
       for (auto &member : committee)
