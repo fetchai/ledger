@@ -48,7 +48,6 @@ public:
   using Address    = muddle::Packet::Address;
   using Cache      = std::unordered_map<Address, CacheEntry>;
   using Mutex      = mutex::Mutex;
-  using Lock       = std::unique_lock<Mutex>;
   using AddressSet = std::unordered_set<Address>;
 
   // Construction / Destruction

@@ -29,7 +29,6 @@ class Blacklist
   using Address    = Packet::Address;  // == a crypto::Identity.identifier_
   using RawAddress = Packet::RawAddress;
   using Mutex      = fetch::mutex::Mutex;
-  using Lock       = std::unique_lock<Mutex>;
   using Contents   = std::set<Address>;
 
 public:

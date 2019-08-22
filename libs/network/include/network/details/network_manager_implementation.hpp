@@ -38,7 +38,6 @@ class NetworkManagerImplementation
   : public std::enable_shared_from_this<NetworkManagerImplementation>
 {
   using Mutex = fetch::mutex::Mutex;
-  using Lock  = std::unique_lock<Mutex>;
 
 public:
   static constexpr char const *LOGGING_NAME = "NetworkManagerImpl";

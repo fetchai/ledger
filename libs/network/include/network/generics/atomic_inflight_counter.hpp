@@ -50,7 +50,7 @@ public:
   {
     Counter &counter = GetCounter();
 
-    Lock lock(counter.mutex);
+    FETCH_LOCK(counter.mutex);
     ++counter.total;
   }
   ~AtomicInFlightCounter() = default;
@@ -59,7 +59,7 @@ public:
   {
     auto &counter = GetCounter();
 
-    Lock lock(counter.mutex);
+    FETCH_LOCK(counter.mutex);
     ++counter.complete;
     counter.cv.notify_all();
   }
