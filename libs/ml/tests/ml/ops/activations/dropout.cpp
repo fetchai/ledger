@@ -26,6 +26,8 @@
 #include "core/serializers/main_serializer_definition.hpp"
 #include "gtest/gtest.h"
 
+#include <memory>
+
 template <typename T>
 class DropoutTest : public ::testing::Test
 {
@@ -194,12 +196,12 @@ TYPED_TEST(DropoutTest, saveparams_test)
   using DataType      = typename TypeParam::Type;
   using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
   using SPType        = typename fetch::ml::ops::Dropout<TensorType>::SPType;
-  using OpType        = typename fetch::ml::ops::Dropout<TensorType>;
+  using OpType        = fetch::ml::ops::Dropout<TensorType>;
 
-  TensorType                     data = TensorType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
-  TensorType                     gt   = TensorType::FromString("0, -2, 0,  0, 5, -6, 7, -8");
-  DataType                       prob{0.5};
-  typename TensorType ::SizeType random_seed = 12345;
+  TensorType                    data = TensorType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
+  TensorType                    gt   = TensorType::FromString("0, -2, 0,  0, 5, -6, 7, -8");
+  DataType                      prob{0.5};
+  typename TensorType::SizeType random_seed = 12345;
 
   fetch::math::Multiply(gt, DataType{1} / prob, gt);
 
@@ -246,8 +248,8 @@ TYPED_TEST(DropoutTest, saveparams_backward_3d_tensor_test)
   using TensorType    = TypeParam;
   using SizeType      = typename TypeParam::SizeType;
   using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
-  using OpType        = typename fetch::ml::ops::Dropout<TensorType>;
-  using SPType        = typename OpType ::SPType;
+  using OpType        = fetch::ml::ops::Dropout<TensorType>;
+  using SPType        = typename OpType::SPType;
   DataType prob{0.5};
 
   TensorType          data({2, 2, 2});

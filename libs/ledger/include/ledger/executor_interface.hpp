@@ -62,13 +62,13 @@ public:
   using DriverType = D;
 
   template <typename Serializer>
-  static inline void Serialize(Serializer &s, Type const &status)
+  static void Serialize(Serializer &s, Type const &status)
   {
     s << static_cast<int32_t>(status);
   }
 
   template <typename Serializer>
-  static inline void Deserialize(Serializer &s, Type &status)
+  static void Deserialize(Serializer &s, Type &status)
   {
     int32_t raw_status{0};
     s >> raw_status;

@@ -17,12 +17,15 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/main_serializer_definition.hpp"
-#include "gtest/gtest.h"
 #include "math/base_types.hpp"
 #include "math/tensor.hpp"
 #include "ml/ops/activations/sigmoid.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+
+#include "gtest/gtest.h"
+
+#include <memory>
 
 template <typename T>
 class SigmoidTest : public ::testing::Test
@@ -186,7 +189,7 @@ TYPED_TEST(SigmoidTest, saveparams_backward_3d_tensor_test)
   using TensorType = TypeParam;
   using SizeType   = typename TypeParam::SizeType;
   using OpType     = typename fetch::ml::ops::Sigmoid<TensorType>;
-  using SPType     = typename OpType ::SPType;
+  using SPType     = typename OpType::SPType;
 
   TensorType          data({2, 2, 2});
   TensorType          error({2, 2, 2});

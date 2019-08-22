@@ -39,6 +39,8 @@
 #include "network/p2pservice/p2p_http_interface.hpp"
 #include "network/uri.hpp"
 #include "open_api_http_module.hpp"
+#include "telemetry/counter.hpp"
+#include "telemetry/registry.hpp"
 #include "telemetry_http_module.hpp"
 
 #include <chrono>
@@ -156,13 +158,14 @@ EntropyPtr CreateEntropy()
   return std::make_unique<ledger::NaiveEntropyGenerator>();
 }
 
-StakeManagerPtr CreateStakeManager(bool enabled, ledger::EntropyGeneratorInterface &entropy)
+StakeManagerPtr CreateStakeManager(Constellation::Config const &      cfg,
+                                   ledger::EntropyGeneratorInterface &entropy)
 {
   StakeManagerPtr mgr{};
 
-  if (enabled)
+  if (cfg.proof_of_stake)
   {
-    mgr = std::make_shared<ledger::StakeManager>(entropy);
+    mgr = std::make_shared<ledger::StakeManager>(entropy, cfg.block_interval_ms);
   }
 
   return mgr;
@@ -219,7 +222,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   , dag_{GenerateDAG(cfg_.features.IsEnabled("synergetic"), "dag_db_", true, certificate)}
   , dkg_{CreateDkgService(cfg_, certificate->identity().identifier(), muddle_.AsEndpoint())}
   , entropy_{CreateEntropy()}
-  , stake_{CreateStakeManager(cfg_.proof_of_stake, *entropy_)}
+  , stake_{CreateStakeManager(cfg_, *entropy_)}
   , execution_manager_{std::make_shared<ExecutionManager>(
         cfg_.num_executors, cfg_.log2_num_lanes, storage_,
         [this] {
@@ -240,18 +243,22 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   , tx_processor_{dag_, *storage_, block_packer_, tx_status_cache_, cfg_.processor_threads}
   , http_open_api_module_{std::make_shared<OpenAPIHttpModule>()}
   , http_{http_network_manager_}
-  , http_modules_{
-        http_open_api_module_,
-        std::make_shared<p2p::P2PHttpInterface>(
-            cfg_.log2_num_lanes, chain_, muddle_, p2p_, trust_, block_packer_,
-            p2p::P2PHttpInterface::WeakStateMachines{main_chain_service_->GetWeakStateMachine(),
-                                                     block_coordinator_.GetWeakStateMachine()}),
-        std::make_shared<ledger::TxStatusHttpInterface>(tx_status_cache_),
-        std::make_shared<ledger::TxQueryHttpInterface>(*storage_),
-        std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_),
-        std::make_shared<LoggingHttpModule>(),
-        std::make_shared<TelemetryHttpModule>(),
-        std::make_shared<HealthCheckHttpModule>(chain_, *main_chain_service_, block_coordinator_)}
+  , http_modules_{http_open_api_module_,
+                  std::make_shared<p2p::P2PHttpInterface>(
+                      cfg_.log2_num_lanes, chain_, muddle_, p2p_, trust_, block_packer_,
+                      p2p::P2PHttpInterface::WeakStateMachines{
+                          main_chain_service_->GetWeakStateMachine(),
+                          block_coordinator_.GetWeakStateMachine()}),
+                  std::make_shared<ledger::TxStatusHttpInterface>(tx_status_cache_),
+                  std::make_shared<ledger::TxQueryHttpInterface>(*storage_),
+                  std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_),
+                  std::make_shared<LoggingHttpModule>(),
+                  std::make_shared<TelemetryHttpModule>(),
+                  std::make_shared<HealthCheckHttpModule>(chain_, *main_chain_service_,
+                                                          block_coordinator_, dkg_)}
+  , uptime_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_uptime_ticks_total",
+        "The number of intervals that ledger instance has been alive for")}
 {
 
   // print the start up log banner
@@ -415,13 +422,14 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
   }
 
   // BEFORE the block coordinator starts its state set up special genesis
-  if (cfg_.load_state_file)
+  if (cfg_.proof_of_stake || cfg_.load_state_file)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Loading from genesis save file.");
+    FETCH_LOG_INFO(LOGGING_NAME,
+                   "Loading from genesis save file. Location: ", cfg_.stakefile_location);
 
     GenesisFileCreator creator(block_coordinator_, *storage_, stake_.get(), dkg_.get());
 
-    if (cfg_.stakefile_location != "")
+    if (cfg_.stakefile_location.empty())
     {
       creator.LoadFile(SNAPSHOT_FILENAME);
     }
@@ -462,21 +470,57 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
   bool start_up_in_progress{true};
   bool dkg_attached{false};
 
+  std::size_t committee_size = 0;
+
+  if (stake_)
+  {
+    auto current = stake_->GetCurrentStakeSnapshot();
+
+    if (!current)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "No current stake snapshot found!");
+    }
+    else
+    {
+      committee_size = current->size();
+    }
+
+    FETCH_LOG_INFO(LOGGING_NAME, "Committee size: ", committee_size);
+  }
+
   // monitor loop
   while (active_)
   {
-    // wait for at least one connected peer
-    if (!muddle_.AsEndpoint().GetDirectlyConnectedPeers().empty())
+    // wait until we have connected to as many peers as are required for DKG
+    if (dkg_ && muddle_.AsEndpoint().GetDirectlyConnectedPeers().size() + 1 == committee_size)
     {
-      if (dkg_ && !dkg_attached)
+      // Note: the DKG will already have its cabinet reset by this point
+      if (!dkg_attached)
       {
+        // Required until we can guarantee the DRB isn't vulnerable to races
+        std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+
+        FETCH_LOG_INFO(LOGGING_NAME, "Starting DKG");
         reactor_.Attach(dkg_->GetWeakRunnable());
         dkg_attached = true;
       }
     }
+    else if (dkg_ && !dkg_attached)
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Waiting to connect for DKG. Peers so far: ",
+                     muddle_.AsEndpoint().GetDirectlyConnectedPeers().size());
+    }
+
+    bool beacon_synced = true;
+
+    if (dkg_)
+    {
+      beacon_synced = dkg_->IsSynced();
+    }
 
     // determine the status of the main chain server
-    bool const is_in_sync = main_chain_service_->IsSynced() && block_coordinator_.IsSynced();
+    bool const is_in_sync =
+        main_chain_service_->IsSynced() && block_coordinator_.IsSynced() && beacon_synced;
 
     // control from the top level block production based on the chain sync state
     block_coordinator_.EnableMining(is_in_sync);
@@ -506,6 +550,9 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
 
       FETCH_LOG_INFO(LOGGING_NAME, "Startup complete");
     }
+
+    // update the uptime counter
+    uptime_->increment();
   }
 
   //---------------------------------------------------------------
@@ -544,6 +591,11 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
 void Constellation::OnBlock(ledger::Block const &block)
 {
   main_chain_service_->BroadcastBlock(block);
+}
+
+void Constellation::SignalStop()
+{
+  active_ = false;
 }
 
 }  // namespace fetch

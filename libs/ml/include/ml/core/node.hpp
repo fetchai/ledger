@@ -57,8 +57,11 @@ public:
   using VecTensorType = typename fetch::ml::ops::Ops<T>::VecTensorType;
   using SPType        = fetch::ml::NodeSaveableParams<T>;
 
-  Node() = default;
+  ///////////////////////////////////
+  /// CONSRTUCTORS / DESCTRUCTORS ///
+  ///////////////////////////////////
 
+  Node() = default;
   Node(OpType const &operation_type, std::string name,
        std::function<std::shared_ptr<ops::Ops<TensorType>>()> const &constructor)
     : name_(std::move(name))
@@ -67,68 +70,25 @@ public:
   {
     op_ptr_ = constructor();
   }
-
   Node(OpType const &operation_type, std::string name, std::shared_ptr<ops::Ops<TensorType>> op_ptr)
     : name_(std::move(name))
     , cached_output_status_(CachedOutputState::CHANGED_SIZE)
     , operation_type_(operation_type)
     , op_ptr_(op_ptr)
   {}
-
-  /**
-   * This is a convenience constructor for returning a Node with a specified operation type that
-   * uses default parameters.
-   * Note that this constructor cannot invoke layers since this would cause circular dependencies.
-   */
-  Node(OpType const &operation_type, std::string name)
-    : name_(std::move(name))
-    , cached_output_status_(CachedOutputState::CHANGED_SIZE)
-    , operation_type_(operation_type)
-  {
-    switch (operation_type)
-    {
-    case ops::Abs<TensorType>::OpCode():
-      op_ptr_ = std::make_shared<fetch::ml::ops::Abs<TensorType>>();
-      break;
-    case ops::LayerNorm<TensorType>::OpCode():
-      op_ptr_ = std::make_shared<fetch::ml::ops::LayerNorm<TensorType>>();
-      break;
-    case ops::LeakyReluOp<TensorType>::OpCode():
-      op_ptr_ = std::make_shared<fetch::ml::ops::LeakyReluOp<TensorType>>();
-      break;
-    case ops::PlaceHolder<TensorType>::OpCode():
-      op_ptr_ = std::make_shared<fetch::ml::ops::PlaceHolder<TensorType>>();
-      break;
-    case ops::Weights<TensorType>::OpCode():
-      op_ptr_ = std::make_shared<fetch::ml::ops::Weights<TensorType>>();
-      break;
-    default:
-      throw std::runtime_error("unknown node type");
-    }
-  }
-
   virtual ~Node() = default;
 
-  std::shared_ptr<SPType> GetNodeSaveableParams()
-  {
-    auto sp_ptr = std::make_shared<SPType>();
+  ///////////////////////
+  /// SAVEABLE PARAMS ///
+  ///////////////////////
 
-    sp_ptr->name                 = name_;
-    sp_ptr->cached_output        = cached_output_;
-    sp_ptr->cached_output_status = static_cast<uint8_t>(cached_output_status_);
-    sp_ptr->operation_type       = operation_type_;
-    sp_ptr->op_save_params       = op_ptr_->GetOpSaveableParams();
+  std::shared_ptr<SPType> GetNodeSaveableParams() const;
 
-    return sp_ptr;
-  }
+  void SetNodeSaveableParams(NodeSaveableParams<T> const &nsp, std::shared_ptr<ops::Ops<T>> op_ptr);
 
-  template <class OperationType>
-  meta::IfIsNotTrainable<TensorType, OperationType, void> SetNodeSaveableParams(
-      NodeSaveableParams<T> const &nsp, std::shared_ptr<ops::Ops<T>> op_ptr);
-
-  template <typename OperationType>
-  meta::IfIsTrainable<TensorType, OperationType, void> SetNodeSaveableParams(
-      NodeSaveableParams<T> const &nsp, std::shared_ptr<ops::Ops<T>> op_ptr);
+  ///////////////////////////////////
+  /// FORWARD/BACKWARD OPERATIONS ///
+  ///////////////////////////////////
 
   VecTensorType                                 GatherInputs() const;
   std::shared_ptr<T>                            Evaluate(bool is_training);
@@ -169,10 +129,26 @@ private:
   OpType            operation_type_;
 
   std::shared_ptr<ops::Ops<T>> op_ptr_;
-
-  void SetNodeSaveParamsImplementation(NodeSaveableParams<T> const &nsp,
-                                       std::shared_ptr<ops::Ops<T>> op_ptr);
 };
+
+/**
+ * Constructs and returns a NodeSaveableParams object allowing serialisation
+ * @tparam T
+ * @return
+ */
+template <typename T>
+std::shared_ptr<typename Node<T>::SPType> Node<T>::GetNodeSaveableParams() const
+{
+  auto sp_ptr = std::make_shared<SPType>();
+
+  sp_ptr->name                 = name_;
+  sp_ptr->cached_output        = cached_output_;
+  sp_ptr->cached_output_status = static_cast<uint8_t>(cached_output_status_);
+  sp_ptr->operation_type       = operation_type_;
+  sp_ptr->op_save_params       = op_ptr_->GetOpSaveableParams();
+
+  return sp_ptr;
+}
 
 /**
  * returns a vector of all nodes which provide input to this node
@@ -330,48 +306,15 @@ void Node<T>::ResetCache(bool input_size_changed)
 }
 
 /**
- * For non-trainable nodes this just calls the default implementation
+ * Sets the saveable params back to the node
  * @tparam TensorType
  * @tparam OperationType
  * @param nsp
  * @param op_ptr
- * @return
  */
 template <typename TensorType>
-template <class OperationType>
-meta::IfIsNotTrainable<TensorType, OperationType, void> Node<TensorType>::SetNodeSaveableParams(
-    NodeSaveableParams<TensorType> const &nsp, std::shared_ptr<ops::Ops<TensorType>> op_ptr)
-{
-  SetNodeSaveParamsImplementation(nsp, op_ptr);
-}
-
-/**
- * For trainable nodes it is necessary to re-link the op output and the node cached output
- * @tparam TensorType
- * @tparam OperationType
- * @param nsp
- * @param op_ptr
- * @return
- */
-template <typename TensorType>
-template <typename OperationType>
-meta::IfIsTrainable<TensorType, OperationType, void> Node<TensorType>::SetNodeSaveableParams(
-    NodeSaveableParams<TensorType> const &nsp, std::shared_ptr<ops::Ops<TensorType>> op_ptr)
-{
-  SetNodeSaveParamsImplementation(nsp, op_ptr);
-
-  auto trainable_ptr = std::static_pointer_cast<OperationType>(op_ptr_);
-  trainable_ptr->SetData(cached_output_);
-}
-
-/**
- * the shared implementation for setting node saveable parameters - general to all nodes
- * @param nsp
- * @param op_ptr
- */
-template <typename T>
-void Node<T>::SetNodeSaveParamsImplementation(NodeSaveableParams<T> const &nsp,
-                                              std::shared_ptr<ops::Ops<T>> op_ptr)
+void Node<TensorType>::SetNodeSaveableParams(NodeSaveableParams<TensorType> const &nsp,
+                                             std::shared_ptr<ops::Ops<TensorType>> op_ptr)
 {
   name_                 = nsp.name;
   cached_output_        = nsp.cached_output;

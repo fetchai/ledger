@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logging.hpp"
 #include "http/authentication_level.hpp"
 #include "http/middleware/token_auth.hpp"
 
-#include <memory>
+#include <cstdint>
+#include <utility>
 
 namespace fetch {
 namespace http {
@@ -47,6 +47,12 @@ void TokenAuthenticationInterface::operator()(HTTPRequest &req)
     }
   }
 }
+
+SimpleTokenAuthentication::SimpleTokenAuthentication(ConstByteArray token,
+                                                     uint32_t       authentication_level)
+  : token_{std::move(token)}
+  , authentication_level_{authentication_level}
+{}
 
 uint32_t SimpleTokenAuthentication::ValidateToken(byte_array::ConstByteArray const &token)
 {

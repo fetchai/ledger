@@ -19,7 +19,6 @@
 
 #include "settings/detail/environment_wrapper.hpp"
 
-#include <functional>
 #include <vector>
 
 namespace fetch {
@@ -38,6 +37,11 @@ public:
 
   using Settings = std::vector<SettingBase *>;
 
+  /**
+   * Get the current array of settings
+   *
+   * @return The array of settings
+   */
   Settings const &settings() const;
 
   void Add(SettingBase &setting);
@@ -48,16 +52,6 @@ public:
 private:
   Settings settings_;
 };
-
-/**
- * Get the current array of settings
- *
- * @return The array of settings
- */
-inline SettingCollection::Settings const &SettingCollection::settings() const
-{
-  return settings_;
-}
 
 }  // namespace settings
 }  // namespace fetch

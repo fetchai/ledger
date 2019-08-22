@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,34 +16,26 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/group_definitions.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
+#include "core/byte_array/const_byte_array.hpp"
+#include "ledger/identifier.hpp"
+#include "miner/resource_mapper.hpp"
+#include "storage/resource_mapper.hpp"
 
 #include <cstdint>
+#include <string>
 
 namespace fetch {
-namespace serializers {
+namespace miner {
 
-template <std::uint16_t I, std::uint16_t F, typename D>
-struct ForwardSerializer<fixed_point::FixedPoint<I, F>, D>
+uint32_t MapResourceToLane(byte_array::ConstByteArray const &resource,
+                           byte_array::ConstByteArray const &contract, uint32_t log2_num_lanes)
 {
-  using Type       = fixed_point::FixedPoint<I, F>;
-  using DriverType = D;
+  ledger::Identifier identifier(contract);
 
-  template <typename Interface>
-  static void Serialize(Interface &interface, Type const &n)
-  {
-    interface << n.Data();
-  }
+  return storage::ResourceAddress{
+      byte_array::ByteArray{}.Append(identifier.name_space(), ".state.", resource)}
+      .lane(log2_num_lanes);
+}
 
-  template <typename Interface>
-  static void Deserialize(Interface &interface, Type &n)
-  {
-    typename fixed_point::FixedPoint<I, F>::Type data;
-    interface >> data;
-    n = fixed_point::FixedPoint<I, F>::FromBase(data);
-  }
-};
-
-}  // namespace serializers
+}  // namespace miner
 }  // namespace fetch

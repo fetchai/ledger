@@ -24,7 +24,6 @@
 #include "core/serializers/counter.hpp"
 #include "core/serializers/exception.hpp"
 #include "core/serializers/group_definitions.hpp"
-
 #include "vectorise/platform.hpp"
 
 #include <type_traits>
@@ -64,11 +63,11 @@ public:
 
   void Resize(uint64_t const &      size,
               ResizeParadigm const &resize_paradigm     = ResizeParadigm::RELATIVE,
-              bool const            zero_reserved_space = true);
+              bool                  zero_reserved_space = true);
 
   void Reserve(uint64_t const &      size,
                ResizeParadigm const &resize_paradigm     = ResizeParadigm::RELATIVE,
-               bool const            zero_reserved_space = true);
+               bool                  zero_reserved_space = true);
   void WriteBytes(uint8_t const *arr, uint64_t const &size);
 
   void WriteByte(uint8_t const &val);

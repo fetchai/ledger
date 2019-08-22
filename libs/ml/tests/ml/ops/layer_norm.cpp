@@ -163,7 +163,7 @@ TYPED_TEST(LayerNormTest, saveparams_test)
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
   using SPType     = typename fetch::ml::ops::LayerNorm<TensorType>::SPType;
-  using OpType     = typename fetch::ml::ops::LayerNorm<TensorType>;
+  using OpType     = fetch::ml::ops::LayerNorm<TensorType>;
 
   TensorType data = TensorType::FromString(
       "1, 2, 3, 0;"
@@ -214,8 +214,8 @@ TYPED_TEST(LayerNormTest, saveparams_test)
 TYPED_TEST(LayerNormTest, saveparams_backward_test_3d)
 {
   using TensorType = TypeParam;
-  using OpType     = typename fetch::ml::ops::LayerNorm<TensorType>;
-  using SPType     = typename OpType ::SPType;
+  using OpType     = fetch::ml::ops::LayerNorm<TensorType>;
+  using SPType     = typename OpType::SPType;
 
   TensorType data = TensorType::FromString(
       "1, 1, 0.5, 2;"

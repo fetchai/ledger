@@ -267,6 +267,16 @@ TYPED_TEST(TensorOperationsTest, slice_and_transpose_test)
   EXPECT_EQ(t3.At(4, 2), TypeParam(29));
 }
 
+TYPED_TEST(TensorOperationsTest, range_index_slices_test)
+{
+  using ArrayType = typename fetch::math::Tensor<TypeParam>;
+  using SizeType  = typename ArrayType::SizeType;
+
+  ArrayType t1({3, 5, 2});
+  auto      s1 = t1.Slice(std::make_pair<SizeType, SizeType>(0, 3), 1);
+  assert(s1.Copy().shape() == std::vector<SizeType>({3, 3, 2}));
+}
+
 TYPED_TEST(TensorOperationsTest, multiple_slices_test)
 {
   using SizeType = typename fetch::math::Tensor<TypeParam>::SizeType;
@@ -389,6 +399,24 @@ TYPED_TEST(TensorOperationsTest, multiple_const_slices_separated_test)
   EXPECT_EQ(t2t.At(0, 0, 0), TypeParam(17));
   EXPECT_EQ(t2t.At(1, 0, 0), TypeParam(22));
   EXPECT_EQ(t2t.At(2, 0, 0), TypeParam(27));
+}
+
+TYPED_TEST(TensorOperationsTest, broadcastable_assignment_test)
+{
+
+  using ArrayType = fetch::math::Tensor<TypeParam>;
+  using SizeType  = typename ArrayType::SizeType;
+
+  ArrayType small_data = ArrayType::FromString("1, 2; 2, 1;2, 4");
+  small_data.Reshape({3, 1, 2});
+  ArrayType big_data({3, 3, 2});
+  ArrayType slice_big_data({3, 3, 2});
+  for (SizeType i = 0; i < 3u; i++)
+  {
+    slice_big_data.Slice(i, 1).Assign(small_data);
+  }
+  big_data.Assign(small_data);
+  ASSERT_TRUE(big_data == slice_big_data);
 }
 
 TYPED_TEST(TensorOperationsTest, multiple_slices_assign_test)

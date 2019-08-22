@@ -16,8 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-// after
-// http://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring
 #include "core/string/trim.hpp"
 
 #include <algorithm>
@@ -29,13 +27,13 @@ namespace string {
 
 void TrimFromRight(std::string &s)
 {
-  s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int c) { return !std::isspace(c); }));
+  s.erase(std::find_if(s.rbegin(), s.rend(), [](int c) { return !std::isspace(c); }).base(),
+          s.end());
 }
 
 void TrimFromLeft(std::string &s)
 {
-  s.erase(std::find_if(s.rbegin(), s.rend(), [](int c) { return !std::isspace(c); }).base(),
-          s.end());
+  s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int c) { return !std::isspace(c); }));
 }
 
 void Trim(std::string &s)
