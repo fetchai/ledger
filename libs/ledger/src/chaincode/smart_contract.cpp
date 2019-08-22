@@ -30,6 +30,7 @@
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
+#include "vm/string.hpp"
 #include "vm/address.hpp"
 #include "vm/function_decorators.hpp"
 #include "vm/module.hpp"
@@ -249,6 +250,32 @@ void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, msgpack::obj
   }
 }
 
+
+/**
+ * Extract a string from a msgpack::object
+ *
+ * @param vm The instance to the VM
+ * @param pack The reference to the parameter pack to be populated
+ * @param obj The object to extract as string
+ */
+// TODO(issue 1256): Whole this function can be dropped once issue the is resolved
+void AddStringToParameterPack(vm::VM *vm, vm::ParameterPack &pack, msgpack::object const &obj)
+{
+  bool valid{false};
+
+  if (msgpack::type::STR == obj.type)
+  {
+    vm::Ptr<vm::String> string = new vm::String(vm, {obj.via.str.ptr, obj.via.str.size});
+    pack.Add(std::move(string));
+    valid = true;
+  }
+
+  if (!valid)
+  {
+    throw std::runtime_error("Invalid address formart");
+  }
+}
+
 /**
  * Extract an address from a JSON object
  *
@@ -273,6 +300,25 @@ void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, variant::Var
 
   // add it to the parameter list
   pack.Add(vm_address);
+}
+/**
+ * Extract a string from a JSON object
+ *
+ * @param vm The pointer to the VM
+ * @param pack The parameter pack to be populated
+ * @param obj The variant to extract as string
+ */
+// TODO(issue 1256): Whole this function can be dropped once the issue is resolved
+void AddStringToParameterPack(vm::VM *vm, vm::ParameterPack &pack, variant::Variant const &obj)
+{
+  if (!obj.IsString())
+  {
+    throw std::runtime_error("Unable to parse string");
+  }
+
+  // create the instance of the address
+  vm::Ptr<vm::String> vm_string = new vm::String(vm, obj.As<std::string>());
+  pack.Add(std::move(vm_string));
 }
 
 /**
@@ -375,6 +421,11 @@ void AddToParameterPack(vm::VM *vm, vm::ParameterPack &params, vm::TypeId expect
   case vm::TypeIds::Address:
     AddAddressToParameterPack(vm, params, variant);
     break;
+
+  case vm::TypeIds::String:
+    AddStringToParameterPack(vm, params, variant);
+    break;
+
 
   default:
     AddStructuredDataObjectToParameterPack(vm, expected_type, params, variant);
