@@ -39,6 +39,7 @@ public:
   using SizeType      = typename TensorType::SizeType;
   using VecTensorType = typename Weights<T>::VecTensorType;
   using SPType        = OpEmbeddingsSaveableParams<TensorType>;
+  using MyType        = Embeddings<TensorType>;
 
   Embeddings(SizeType dimensions, SizeType data_points)
   {
@@ -55,13 +56,6 @@ public:
   explicit Embeddings(SPType const &sp)
     : Weights<T>(sp)
   {
-    if (sp.embeddings_output)
-    {
-      embeddings_output_ = std::make_shared<TensorType>();
-      embeddings_output_->Resize(sp.embeddings_output->shape());
-      embeddings_output_->Copy(*(sp.embeddings_output));
-    }
-
     updated_rows_ =
         std::set<typename TensorType::SizeType>(sp.updated_rows.begin(), sp.updated_rows.begin());
     trailing_indices1_ = sp.trailing_indices1;
@@ -78,7 +72,6 @@ public:
     auto cast_sp = std::static_pointer_cast<OpWeightsSaveableParams<TensorType>>(sp);
     *cast_sp     = *(std::static_pointer_cast<OpWeightsSaveableParams<TensorType>>(w_sp));
 
-    sp->embeddings_output = embeddings_output_;
     std::copy(updated_rows_.begin(), updated_rows_.end(), std::back_inserter(sp->updated_rows));
     sp->trailing_indices1 = trailing_indices1_;
     sp->trailing_indices2 = trailing_indices2_;
@@ -94,22 +87,9 @@ public:
 
     SizeType batch_size = inputs.front()->shape().at(1);
 
-    // test embeddings_output_ not null ptr
-    if (!this->embeddings_output_)
-    {
-      this->embeddings_output_ = std::make_shared<TensorType>(std::vector<SizeType>(
-          {this->output_->shape().at(0), inputs.front()->shape(0), batch_size}));
-    }
-    // test embeddings_output_ batch size has changed
-    else if (this->embeddings_output_->shape().at(2) != batch_size)
-    {
-      this->embeddings_output_->Reshape({this->embeddings_output_->shape().at(0),
-                                         this->embeddings_output_->shape().at(1), batch_size});
-    }
-
-    assert(this->embeddings_output_->shape().at(0) == this->output_->shape().at(0));
-    assert(this->embeddings_output_->shape().at(1) == inputs.front()->shape().at(0));
-    assert(this->embeddings_output_->shape().at(2) == batch_size);
+    assert(output.shape().at(0) == this->output_->shape().at(0));
+    assert(output.shape().at(1) == inputs.front()->shape().at(0));
+    assert(output.shape().at(2) == batch_size);
 
     TensorType transposed_input = inputs.front()->Transpose();
     auto       e_it             = transposed_input.begin();
@@ -120,7 +100,7 @@ public:
       {
         trailing_indices1_.at(0) = i;
         trailing_indices1_.at(1) = n;
-        auto embedding_view      = this->embeddings_output_->View(trailing_indices1_);
+        auto embedding_view      = output.View(trailing_indices1_);
         trailing_indices2_.at(0) = static_cast<SizeType>(*e_it);
         auto output_view         = this->output_->View(trailing_indices2_);
 
@@ -128,8 +108,6 @@ public:
         ++e_it;
       }
     }
-
-    output = *this->embeddings_output_;
   }
 
   std::vector<TensorType> Backward(VecTensorType const &inputs,
@@ -169,23 +147,6 @@ public:
     return {TensorType(error_signal.shape())};
   }
 
-  bool SetData(TensorType const &data) override
-  {
-    bool shape_changed = true;
-    if (embeddings_output_)
-    {
-      shape_changed = (embeddings_output_->shape() != data.shape());
-    }
-    embeddings_output_ = std::make_shared<TensorType>(data);
-
-    if (shape_changed)
-    {
-      this->gradient_accumulation_ = std::make_shared<TensorType>(this->output_->shape());
-      return true;
-    }
-    return false;
-  }
-
   void Step(typename T::Type learning_rate) override
   {
     for (auto const &r : updated_rows_)
@@ -210,8 +171,9 @@ public:
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    std::vector<SizeType> output_shape = {this->output_->shape().at(0), inputs.front()->shape(0),
-                                          inputs.front()->shape(1)};
+    std::vector<SizeType> output_shape = {this->output_->shape().at(0),
+                                          inputs.front()->shape().at(0),
+                                          inputs.front()->shape().at(1)};
     return output_shape;
   }
 
@@ -222,7 +184,6 @@ public:
   static constexpr char const *DESCRIPTOR = "Embedding";
 
 private:
-  ArrayPtrType                            embeddings_output_;
   std::set<typename TensorType::SizeType> updated_rows_;
   std::vector<SizeType>                   trailing_indices1_ = {0, 0};
   std::vector<SizeType>                   trailing_indices2_ = {0};
