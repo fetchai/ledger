@@ -38,7 +38,7 @@ void LogTimout(NAME const &name, ID const &id)
 }  // namespace
 
 PromiseImplementation::Counter PromiseImplementation::counter_{0};
-PromiseImplementation::Mutex   PromiseImplementation::counter_lock_{__LINE__, __FILE__};
+Mutex                          PromiseImplementation::counter_lock_{__LINE__, __FILE__};
 
 PromiseBuilder PromiseImplementation::WithHandlers()
 {
@@ -96,7 +96,7 @@ void PromiseImplementation::UpdateState(State state)
   bool dispatch = false;
 
   {
-    std::unique_lock<std::mutex> lock(notify_lock_);
+    FETCH_LOCK(notify_lock_);
     if (state_ == State::WAITING)
     {
       state_   = state;

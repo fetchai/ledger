@@ -52,7 +52,6 @@ class AbstractPublicationFeed;
 class FeedSubscriptionManager
 {
 public:
-  using mutex_type             = fetch::mutex::Mutex;
   using service_type           = fetch::service::ServiceServerInterface;
   using connection_handle_type = uint64_t;
   using publishing_workload_type =
@@ -169,7 +168,7 @@ private:
   };
 
   std::vector<ClientSubscription> subscribers_;
-  fetch::mutex::Mutex             subscribe_mutex_;
+  Mutex                           subscribe_mutex_;
   feed_handler_type               feed_;
 
   fetch::service::AbstractPublicationFeed *publisher_ = nullptr;

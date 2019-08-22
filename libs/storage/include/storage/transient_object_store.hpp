@@ -96,7 +96,6 @@ private:
     Flushing
   };
 
-  using Mutex           = fetch::mutex::Mutex;
   using StateMachinePtr = std::shared_ptr<core::StateMachine<Phase>>;
   using Queue           = fetch::core::MPMCQueue<ResourceID, 1 << 15>;
   using RecentQueue     = fetch::core::MPMCQueue<ledger::TransactionLayout, 1 << 15>;

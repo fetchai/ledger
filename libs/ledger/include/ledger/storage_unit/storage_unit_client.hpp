@@ -102,7 +102,6 @@ private:
   using AddressList          = std::vector<MuddleEndpoint::Address>;
   using MerkleTree           = crypto::MerkleTree;
   using PermanentMerkleStack = fetch::storage::ObjectStack<crypto::MerkleTree>;
-  using Mutex                = fetch::mutex::Mutex;
 
   static constexpr char const *MERKLE_FILENAME_DOC   = "merkle_stack.db";
   static constexpr char const *MERKLE_FILENAME_INDEX = "merkle_stack_index.db";

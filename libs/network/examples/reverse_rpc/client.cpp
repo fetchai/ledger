@@ -39,7 +39,7 @@ using fetch::muddle::NetworkId;
 using fetch::network::NetworkManager;
 using fetch::network::Uri;
 using fetch::service::Protocol;
-using fetch::mutex::Mutex;
+using fetch::Mutex;
 using fetch::commandline::ParamsParser;
 using std::chrono::milliseconds;
 using std::this_thread::sleep_for;

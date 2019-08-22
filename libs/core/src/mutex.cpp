@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/abstract_mutex.hpp"
 #include "core/logger.hpp"
 #include "core/macros.hpp"
 #include "core/mutex.hpp"
@@ -32,19 +31,14 @@
 #include <utility>
 
 namespace fetch {
-namespace mutex {
-
-ProductionMutex::ProductionMutex(int, std::string const &)
-{}
 
 namespace {
 constexpr std::size_t DEFAULT_TIMEOUT_MS = 3000;
 }
 
-/**
- * The debug mutex acts like a normal mutex but also contains several other checks. This code is
- * intended to be only used in software development.
- */
+ProductionMutex::ProductionMutex(int, std::string const &)
+{}
+
 DebugMutex::MutexTimeout::MutexTimeout(std::string filename, int const &line)
   : filename_(std::move(filename))
   , line_(line)
@@ -85,7 +79,7 @@ DebugMutex::MutexTimeout::~MutexTimeout()
 void DebugMutex::MutexTimeout::Eval()
 {
   LOG_STACK_TRACE_POINT;
-  FETCH_LOG_ERROR(LOGGING_NAME, "The system will terminate, mutex timed out: ", filename_, " ",
+  FETCH_LOG_ERROR("DebugMutex", "The system will terminate, mutex timed out: ", filename_, " ",
                   line_);
 
   // Send a sigint to ourselves since we have a handler for this
@@ -93,8 +87,7 @@ void DebugMutex::MutexTimeout::Eval()
 }
 
 DebugMutex::DebugMutex(int line, std::string file)
-  : AbstractMutex()
-  , line_(line)
+  : line_(line)
   , file_(std::move(file))
 {}
 
@@ -156,5 +149,4 @@ std::thread::id DebugMutex::thread_id() const
   return thread_id_;
 }
 
-}  // namespace mutex
 }  // namespace fetch

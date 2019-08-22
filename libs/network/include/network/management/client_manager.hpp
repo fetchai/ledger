@@ -140,7 +140,7 @@ public:
 private:
   AbstractNetworkServer &                           server_;
   std::map<connection_handle_type, connection_type> clients_;
-  fetch::mutex::Mutex                               clients_mutex_;
+  Mutex                                             clients_mutex_;
 };
 }  // namespace network
 }  // namespace fetch

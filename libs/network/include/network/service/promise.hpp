@@ -148,7 +148,6 @@ public:
   /// @}
 
 private:
-  using Mutex       = mutex::Mutex;
   using AtomicState = std::atomic<State>;
   using Condition   = std::condition_variable;
 

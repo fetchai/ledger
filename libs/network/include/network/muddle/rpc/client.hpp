@@ -76,7 +76,6 @@ protected:
 
 private:
   using Flag         = std::atomic<bool>;
-  using Mutex        = fetch::mutex::Mutex;
   using PromiseQueue = std::list<MuddleEndpoint::Response>;
 
   static std::size_t const NUM_THREADS = 1;

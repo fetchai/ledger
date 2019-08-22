@@ -320,7 +320,7 @@ public:
     return TopContextImpl();
   }
 
-  void RegisterLock(fetch::mutex::AbstractMutex *ptr)
+  void RegisterLock(fetch::DebugMutex *ptr)
   {
     FETCH_LOCK(mutex_);
     if (log_)
@@ -329,8 +329,8 @@ public:
     }
   }
 
-  void RegisterUnlock(fetch::mutex::AbstractMutex *ptr, double spent_time,
-                      const std::string &filename, int line)
+  void RegisterUnlock(fetch::DebugMutex *ptr, double spent_time, const std::string &filename,
+                      int line)
   {
     FETCH_LOCK(mutex_);
     if (log_)
@@ -445,8 +445,8 @@ private:
     std::string filename;
   };
 
-  std::unordered_set<fetch::mutex::AbstractMutex *> active_locks_;
-  std::unordered_map<std::string, TimingDetails>    mutex_timings_;
+  std::unordered_set<fetch::DebugMutex *>        active_locks_;
+  std::unordered_map<std::string, TimingDetails> mutex_timings_;
 
   std::unordered_map<std::string, TimingDetails> timings_;
 

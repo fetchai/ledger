@@ -17,26 +17,21 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/abstract_mutex.hpp"
 #include "core/macros.hpp"
 
 #include <atomic>
-#include <csignal>
-#include <map>
+#include <chrono>
 #include <memory>
 #include <mutex>
-#include <sstream>
 #include <string>
 #include <thread>
-#include <utility>
 
 namespace fetch {
-namespace mutex {
 
 /**
  * The production mutex is wrapper for the default system mutex.
  */
-class ProductionMutex : public AbstractMutex
+class ProductionMutex : public std::mutex
 {
 public:
   ProductionMutex(int, std::string const &);
@@ -46,13 +41,11 @@ public:
  * The debug mutex acts like a normal mutex but also contains several other checks. This code is
  * intended to be only used in software development.
  */
-class DebugMutex : public AbstractMutex
+class DebugMutex : public std::mutex
 {
   using Clock     = std::chrono::high_resolution_clock;
   using Timepoint = Clock::time_point;
   using Duration  = Clock::duration;
-
-  static constexpr char const *LOGGING_NAME = "DebugMutex";
 
   class MutexTimeout
   {
@@ -87,9 +80,9 @@ public:
 
   std::string filename() const;
 
-  std::string AsString() override;
+  std::string AsString();
 
-  std::thread::id thread_id() const override;
+  std::thread::id thread_id() const;
 
 private:
   std::mutex lock_mutex_;
@@ -113,5 +106,4 @@ using Mutex = ProductionMutex;
 #define FETCH_LOCK(lockable) \
   std::lock_guard<decltype(lockable)> FETCH_JOIN(mutex_locked_on_line, __LINE__)(lockable)
 
-}  // namespace mutex
 }  // namespace fetch

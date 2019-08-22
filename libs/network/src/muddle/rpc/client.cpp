@@ -116,7 +116,7 @@ bool Client::DeliverRequest(network::message_type const &data)
 
     // Add this new wrapping promise to the execution queue
     {
-      std::unique_lock<std::mutex> lk(promise_queue_lock_);
+      FETCH_LOCK(promise_queue_lock_);
       promise_queue_.emplace_back(std::move(promise));
       promise_queue_cv_.notify_one();
     }
@@ -147,7 +147,7 @@ void Client::BackgroundWorker()
 
     // attempt to extract and promises from the queue
     {
-      std::unique_lock<std::mutex> lk(promise_queue_lock_);
+      FETCH_LOCK(promise_queue_lock_);
       if (!promise_queue_.empty())
       {
         pending_promises.splice(pending_promises.end(), promise_queue_);

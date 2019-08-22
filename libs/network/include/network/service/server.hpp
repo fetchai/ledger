@@ -206,10 +206,10 @@ private:
 
   network_manager_type network_manager_;
 
-  std::deque<PendingMessage>  messages_;
-  mutable fetch::mutex::Mutex message_mutex_{__LINE__, __FILE__};
+  std::deque<PendingMessage> messages_;
+  mutable Mutex              message_mutex_{__LINE__, __FILE__};
 
-  mutable fetch::mutex::Mutex                 client_rpcs_mutex_{__LINE__, __FILE__};
+  mutable Mutex                               client_rpcs_mutex_{__LINE__, __FILE__};
   std::map<handle_type, ClientRPCInterface *> client_rpcs_;
 };
 }  // namespace service

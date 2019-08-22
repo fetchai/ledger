@@ -253,7 +253,7 @@ private:
 
   network_manager_type              network_manager_;
   std::deque<network::message_type> messages_;
-  mutable fetch::mutex::Mutex       message_mutex_;
+  mutable Mutex                     message_mutex_;
 
   std::atomic<bool>        tearing_down_{false};
   std::atomic<std::size_t> active_count_{0};

@@ -47,7 +47,6 @@ public:
   using Manifest   = network::Manifest;
   using Address    = muddle::Packet::Address;
   using Cache      = std::unordered_map<Address, CacheEntry>;
-  using Mutex      = mutex::Mutex;
   using AddressSet = std::unordered_set<Address>;
 
   // Construction / Destruction
