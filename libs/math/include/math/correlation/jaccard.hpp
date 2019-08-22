@@ -27,7 +27,7 @@ namespace math {
 namespace correlation {
 
 template <typename ArrayType>
-inline typename ArrayType::Type Jaccard(ArrayType const &a, ArrayType const &b)
+typename ArrayType::Type Jaccard(ArrayType const &a, ArrayType const &b)
 {
   assert(a.size() == b.size());
   using DataType = typename ArrayType::Type;
@@ -47,7 +47,7 @@ inline typename ArrayType::Type Jaccard(ArrayType const &a, ArrayType const &b)
 }
 
 template <typename ArrayType>
-inline typename ArrayType::Type GeneralisedJaccard(ArrayType const &a, ArrayType const &b)
+typename ArrayType::Type GeneralisedJaccard(ArrayType const &a, ArrayType const &b)
 {
   assert(a.size() == b.size());
   using DataType = typename ArrayType::Type;

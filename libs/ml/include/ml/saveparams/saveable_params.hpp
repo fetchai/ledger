@@ -275,7 +275,7 @@ struct LayerFullyConnectedSaveableParams : SubGraphSaveableParams<TensorType>
 };
 
 /**
- * Saveable parameters for LeakyRelu op
+ * Saveable parameters for LayerNorm op
  * @tparam TensorType
  */
 template <class TensorType>
@@ -291,6 +291,23 @@ struct OpLayerNormSaveableParams : public OpsSaveableParams
   TensorType prev_input;
   TensorType cached_inv_sqrt_var;
   TensorType cached_output;
+};
+
+/**
+ * Saveable parameters for Slice op
+ * @tparam TensorType
+ */
+template <class TensorType>
+struct OpSliceSaveableParams : public OpsSaveableParams
+{
+  using SizeType = typename TensorType::SizeType;
+
+  std::vector<SizeType> axes;
+  std::vector<SizeType> indices;
+  SizeType              axis;
+  SizeType              index;
+
+  fetch::ml::OpType op_type = OpType::OP_SLICE;
 };
 
 /**
@@ -441,7 +458,7 @@ struct OpMultiplySaveableParams : public OpsSaveableParams
 };
 
 /**
- * Saveable parameters for LeakyRelu op
+ * Saveable parameters for LayerNorm op
  * @tparam TensorType
  */
 template <class TensorType>
@@ -540,6 +557,7 @@ struct LayerScaledDotProductAttentionSaveableParams : SubGraphSaveableParams<Ten
 
   fetch::ml::OpType op_type = OpType::LAYER_SCALED_DOT_PRODUCT_ATTENTION;
   SizeType          key_dim = fetch::math::numeric_max<SizeType>();
+  DataType          dropout = fetch::math::numeric_max<DataType>();
 };
 
 /**
@@ -559,6 +577,7 @@ struct LayerSelfAttentionEncoderSaveableParams : SubGraphSaveableParams<TensorTy
   DataType          residual_dropout    = fetch::math::numeric_max<DataType>();
   DataType          attention_dropout   = fetch::math::numeric_max<DataType>();
   DataType          feedforward_dropout = fetch::math::numeric_max<DataType>();
+  DataType          epsilon             = fetch::math::function_tolerance<DataType>();
 };
 
 /**
@@ -579,11 +598,13 @@ struct OpSigmoidSaveableParams : public OpsSaveableParams
 template <class TensorType>
 struct LayerSkipGramSaveableParams : SubGraphSaveableParams<TensorType>
 {
-  using SizeType             = typename TensorType::SizeType;
-  fetch::ml::OpType op_type  = OpType::LAYER_SKIP_GRAM;
-  std::string       embed_in = "";
-  SizeType          in_size  = fetch::math::numeric_max<SizeType>();
-  SizeType          out_size = fetch::math::numeric_max<SizeType>();
+  using SizeType                   = typename TensorType::SizeType;
+  fetch::ml::OpType op_type        = OpType::LAYER_SKIP_GRAM;
+  std::string       embed_in       = "";
+  SizeType          in_size        = fetch::math::numeric_max<SizeType>();
+  SizeType          out_size       = fetch::math::numeric_max<SizeType>();
+  SizeType          vocab_size     = fetch::math::numeric_max<SizeType>();
+  SizeType          embedding_size = fetch::math::numeric_max<SizeType>();
 };
 
 template <class TensorType>

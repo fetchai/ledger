@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/group_definitions.hpp"
 #include "math/base_types.hpp"
 
 #include <cstdint>
@@ -28,16 +29,17 @@ namespace fetch {
 namespace ml {
 namespace dataloaders {
 
-template <typename LabelType, typename DataType>
+template <typename LabelType, typename InputType>
 class DataLoader
 {
 public:
   using SizeType   = fetch::math::SizeType;
   using SizeVector = fetch::math::SizeVector;
-  using ReturnType = std::pair<LabelType, std::vector<DataType>>;
+  using ReturnType = std::pair<LabelType, std::vector<InputType>>;
 
+  DataLoader() = default;
   /**
-   * Dataloaders are required to provide label and DataType shapes to the parent Dataloader
+   * Dataloaders are required to provide label and InputType shapes to the parent Dataloader
    * @param random_mode
    * @param label_shape
    * @param data_shapes
@@ -45,15 +47,20 @@ public:
   explicit DataLoader(bool random_mode)
     : random_mode_(random_mode)
   {}
+
   virtual ~DataLoader() = default;
 
   virtual ReturnType GetNext() = 0;
 
+  virtual bool       AddData(InputType const &data, LabelType const &label) = 0;
   virtual ReturnType PrepareBatch(fetch::math::SizeType subset_size, bool &is_done_set);
 
-  virtual std::uint64_t Size() const   = 0;
-  virtual bool          IsDone() const = 0;
-  virtual void          Reset()        = 0;
+  virtual SizeType Size() const   = 0;
+  virtual bool     IsDone() const = 0;
+  virtual void     Reset()        = 0;
+
+  template <typename X, typename D>
+  friend struct fetch::serializers::MapSerializer;
 
 protected:
   bool random_mode_ = false;
@@ -61,20 +68,20 @@ protected:
 private:
   bool       size_not_set_ = true;
   ReturnType cur_training_pair_;
+  ReturnType ret_pair_;
 
-  void SetDataSize(std::pair<LabelType, std::vector<DataType>> &ret_pair);
-  std::pair<LabelType, std::vector<DataType>> ret_pair_;
+  void SetDataSize(std::pair<LabelType, std::vector<InputType>> &ret_pair);
 };
 
 /**
  * This method sets the shapes of the data and labels, as well as the return pair.
  * @tparam LabelType
- * @tparam DataType
+ * @tparam InputType
  * @param ret_pair
  */
-template <typename LabelType, typename DataType>
-void DataLoader<LabelType, DataType>::SetDataSize(
-    std::pair<LabelType, std::vector<DataType>> &ret_pair)
+template <typename LabelType, typename InputType>
+void DataLoader<LabelType, InputType>::SetDataSize(
+    std::pair<LabelType, std::vector<InputType>> &ret_pair)
 {
   ret_pair_.first = ret_pair.first.Copy();
 
@@ -90,13 +97,13 @@ void DataLoader<LabelType, DataType>::SetDataSize(
  * Size of each tensor is [data,subset_size], where data can have any dimensions and trailing
  * dimension is subset_size
  * @tparam LabelType
- * @tparam DataType
+ * @tparam InputType
  * @param batch_size i.e. batch size of returned Tensors
  * @return pair of label tensor and vector of data tensors with specified batch size
  */
-template <typename LabelType, typename DataType>
-typename DataLoader<LabelType, DataType>::ReturnType DataLoader<LabelType, DataType>::PrepareBatch(
-    fetch::math::SizeType batch_size, bool &is_done_set)
+template <typename LabelType, typename InputType>
+typename DataLoader<LabelType, InputType>::ReturnType
+DataLoader<LabelType, InputType>::PrepareBatch(fetch::math::SizeType batch_size, bool &is_done_set)
 {
   if (size_not_set_)
   {
@@ -163,4 +170,51 @@ typename DataLoader<LabelType, DataType>::ReturnType DataLoader<LabelType, DataT
 
 }  // namespace dataloaders
 }  // namespace ml
+
+namespace serializers {
+
+/**
+ * serializer for Dataloader
+ * @tparam TensorType
+ */
+template <typename LabelType, typename InputType, typename D>
+struct MapSerializer<fetch::ml::dataloaders::DataLoader<LabelType, InputType>, D>
+{
+  using Type       = fetch::ml::dataloaders::DataLoader<LabelType, InputType>;
+  using DriverType = D;
+
+  static uint8_t const RANDOM_MODE              = 1;
+  static uint8_t const SIZE_NOT_SET             = 2;
+  static uint8_t const CUR_TRAINING_PAIR_FIRST  = 3;
+  static uint8_t const CUR_TRAINING_PAIR_SECOND = 4;
+  static uint8_t const RET_PAIR_FIRST           = 5;
+  static uint8_t const RET_PAIR_SECOND          = 6;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(6);
+
+    map.Append(RANDOM_MODE, sp.random_mode_);
+    map.Append(SIZE_NOT_SET, sp.size_not_set_);
+    map.Append(CUR_TRAINING_PAIR_FIRST, sp.cur_training_pair_.first);
+    map.Append(CUR_TRAINING_PAIR_SECOND, sp.cur_training_pair_.second);
+    map.Append(RET_PAIR_FIRST, sp.ret_pair_.first);
+    map.Append(RET_PAIR_SECOND, sp.ret_pair_.second);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(RANDOM_MODE, sp.random_mode_);
+    map.ExpectKeyGetValue(SIZE_NOT_SET, sp.size_not_set_);
+    map.ExpectKeyGetValue(CUR_TRAINING_PAIR_FIRST, sp.cur_training_pair_.first);
+    map.ExpectKeyGetValue(CUR_TRAINING_PAIR_SECOND, sp.cur_training_pair_.second);
+    map.ExpectKeyGetValue(RET_PAIR_FIRST, sp.ret_pair_.first);
+    map.ExpectKeyGetValue(RET_PAIR_SECOND, sp.ret_pair_.second);
+  }
+};
+
+}  // namespace serializers
+
 }  // namespace fetch

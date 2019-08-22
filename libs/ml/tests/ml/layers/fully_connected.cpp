@@ -26,6 +26,8 @@
 
 #include "gtest/gtest.h"
 
+#include <memory>
+
 template <typename T>
 class FullyConnectedTest : public ::testing::Test
 {
@@ -145,8 +147,8 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test)
   using TensorType      = TypeParam;
   using DataType        = typename TensorType::Type;
   using SizeType        = typename TensorType::SizeType;
-  using GraphType       = typename fetch::ml::Graph<TensorType>;
-  using FCType          = typename fetch::ml::layers::FullyConnected<TensorType>;
+  using GraphType       = fetch::ml::Graph<TensorType>;
+  using FCType          = fetch::ml::layers::FullyConnected<TensorType>;
   using RegType         = fetch::ml::RegularisationType;
   using WeightsInitType = fetch::ml::ops::WeightsInitialisation;
   using ActivationType  = fetch::ml::details::ActivationType;
@@ -302,8 +304,8 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test_time_distributed)
   using TensorType      = TypeParam;
   using DataType        = typename TensorType::Type;
   using SizeType        = typename TensorType::SizeType;
-  using GraphType       = typename fetch::ml::Graph<TensorType>;
-  using FCType          = typename fetch::ml::layers::FullyConnected<TensorType>;
+  using GraphType       = fetch::ml::Graph<TensorType>;
+  using FCType          = fetch::ml::layers::FullyConnected<TensorType>;
   using RegType         = fetch::ml::RegularisationType;
   using WeightsInitType = fetch::ml::ops::WeightsInitialisation;
   using ActivationType  = fetch::ml::details::ActivationType;
@@ -472,7 +474,9 @@ TYPED_TEST(FullyConnectedTest, node_forward_test)  // Use the class as a Node
   TypeParam data(std::vector<typename TypeParam::SizeType>({5, 10, 2}));
 
   std::shared_ptr<fetch::ml::Node<TypeParam>> placeholder =
-      std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::OP_PLACEHOLDER, "Input");
+      std::make_shared<fetch::ml::Node<TypeParam>>(
+          fetch::ml::OpType::OP_PLACEHOLDER, "Input",
+          []() { return std::make_shared<fetch::ml::ops::PlaceHolder<TypeParam>>(); });
   std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder->GetOp())
       ->SetData(data);
 
@@ -495,7 +499,9 @@ TYPED_TEST(FullyConnectedTest, node_backward_test)  // Use the class as a Node
 {
   TypeParam                                   data({5, 10, 2});
   std::shared_ptr<fetch::ml::Node<TypeParam>> placeholder =
-      std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::OP_PLACEHOLDER, "Input");
+      std::make_shared<fetch::ml::Node<TypeParam>>(
+          fetch::ml::OpType::OP_PLACEHOLDER, "Input",
+          []() { return std::make_shared<fetch::ml::ops::PlaceHolder<TypeParam>>(); });
   std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder->GetOp())
       ->SetData(data);
 
@@ -579,11 +585,60 @@ TYPED_TEST(FullyConnectedTest, getStateDict_time_distributed)
             std::vector<typename TypeParam::SizeType>({10, 1, 1}));
 }
 
-TYPED_TEST(FullyConnectedTest, saveparams_test)
+TYPED_TEST(FullyConnectedTest, training_should_change_output)
 {
   using DataType  = typename TypeParam::Type;
   using SizeType  = typename TypeParam::SizeType;
   using LayerType = typename fetch::ml::layers::FullyConnected<TypeParam>;
+
+  SizeType data_size       = 10;
+  SizeType input_features  = 10;
+  SizeType output_features = 20;
+
+  std::string input_name  = "FullyConnected_Input";
+  std::string output_name = "FullyConnected_Add";
+
+  // create input
+  TypeParam input({data_size, input_features});
+  input.FillUniformRandom();
+
+  // create labels
+  TypeParam labels({output_features, data_size});
+  labels.FillUniformRandom();
+
+  // Create layer
+  LayerType layer(input_features, output_features);
+
+  // add label node
+  std::string label_name =
+      layer.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("label", {});
+
+  // Add loss function
+  std::string error_output = layer.template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TypeParam>>(
+      "num_error", {output_name, label_name});
+
+  // set input and evaluate
+  layer.SetInput(input_name, input);
+  TypeParam prediction;
+  prediction = layer.Evaluate(output_name, true);
+
+  // train g
+  layer.SetInput(label_name, labels);
+  TypeParam loss = layer.Evaluate(error_output);
+  layer.BackPropagateError(error_output);
+  layer.Step(DataType{0.1f});
+
+  TypeParam prediction3 = layer.Evaluate(output_name);
+
+  EXPECT_FALSE(prediction.AllClose(prediction3, fetch::math::function_tolerance<DataType>(),
+                                   fetch::math::function_tolerance<DataType>()));
+}
+
+TYPED_TEST(FullyConnectedTest, saveparams_test)
+{
+  using DataType  = typename TypeParam::Type;
+  using SizeType  = typename TypeParam::SizeType;
+  using LayerType = fetch::ml::layers::FullyConnected<TypeParam>;
   using SPType    = typename LayerType::SPType;
 
   SizeType data_size       = 10;

@@ -89,7 +89,7 @@ inline bool ShapeFromSqueeze(SizeVector const &a, SizeVector &b, SizeSet const &
  * @param axis is the axes to squeeze.
  */
 template <typename T, typename C>
-inline void Squeeze(Tensor<T, C> &arr, SizeType const &axis = SizeType(-1))
+void Squeeze(Tensor<T, C> &arr, SizeType const &axis = SizeType(-1))
 {
   SizeVector newshape;
   ShapeFromSqueeze(arr.shape(), newshape, axis);
@@ -109,9 +109,10 @@ void Squeeze(Tensor<T, C> &arr, SizeSet const &axes)
 }
 
 namespace reduce_details {
+
 template <typename F, typename T, typename C>
-inline void Reduce(F fnc, ConstTensorSliceIterator<T, C> &it_a, TensorSliceIterator<T, C> &it_b,
-                   SizeType const &N)
+void Reduce(F fnc, ConstTensorSliceIterator<T, C> &it_a, TensorSliceIterator<T, C> &it_b,
+            SizeType const &N)
 {
   while (bool(it_a) && bool(it_b))
   {
@@ -136,7 +137,7 @@ inline void Reduce(F fnc, ConstTensorSliceIterator<T, C> &it_a, TensorSliceItera
  * @param axis are the axis along which the reduction happens.
  */
 template <typename F, typename T, typename C>
-inline void Reduce(F fnc, Tensor<T, C> const &input, Tensor<T, C> &output, SizeType const &axis = 0)
+void Reduce(F fnc, Tensor<T, C> const &input, Tensor<T, C> &output, SizeType const &axis = 0)
 {
   SizeType N;
 
@@ -174,7 +175,7 @@ inline void Reduce(F fnc, Tensor<T, C> const &input, Tensor<T, C> &output, SizeT
  * @param axes are the axes along which the reduction happens.
  */
 template <typename F, typename T, typename C>
-inline void Reduce(F fnc, Tensor<T, C> const &input, Tensor<T, C> &output, SizeVector const &axes)
+void Reduce(F fnc, Tensor<T, C> const &input, Tensor<T, C> &output, SizeVector const &axes)
 {
   SizeType N;
 

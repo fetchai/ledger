@@ -25,7 +25,6 @@
 #include "core/serializers/array_interface.hpp"
 #include "core/serializers/binary_interface.hpp"
 #include "core/serializers/container_constructor_interface.hpp"
-
 #include "core/serializers/exception.hpp"
 #include "core/serializers/group_definitions.hpp"
 #include "core/serializers/map_interface.hpp"
@@ -33,6 +32,8 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <exception>
+#include <stdexcept>
 #include <type_traits>
 
 namespace fetch {

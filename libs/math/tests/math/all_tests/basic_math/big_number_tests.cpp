@@ -20,7 +20,6 @@
 #include "vectorise/uint/uint.hpp"
 
 #include "gmock/gmock.h"
-#include "gtest/gtest.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -51,6 +50,7 @@ TEST(big_number_gtest, elementary_left_shift)
   UInt<512> n2(UINT_MAX);
   n2 <<= 63;
 }
+
 TEST(big_number_gtest, incrementer_tests)
 {
   // testing incrementer for a few thousand increments close to the edges of the 64-bit container

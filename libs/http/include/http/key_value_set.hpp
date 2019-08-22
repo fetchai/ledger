@@ -65,8 +65,7 @@ public:
   }
 
   template <typename T>
-  typename std::enable_if<std::is_integral<T>::value, void>::type Add(byte_array_type const &name,
-                                                                      T const &              n)
+  std::enable_if_t<std::is_integral<T>::value, void> Add(byte_array_type const &name, T const &n)
   {
     LOG_STACK_TRACE_POINT;
     // TODO(issue 35): Can be improved.

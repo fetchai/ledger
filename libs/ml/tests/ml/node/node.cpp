@@ -37,7 +37,9 @@ TYPED_TEST_CASE(NodeTest, MyTypes);
 
 TYPED_TEST(NodeTest, node_placeholder)
 {
-  fetch::ml::Node<TypeParam> placeholder(fetch::ml::OpType::OP_PLACEHOLDER, "PlaceHolder");
+  fetch::ml::Node<TypeParam> placeholder(fetch::ml::OpType::OP_PLACEHOLDER, "PlaceHolder", []() {
+    return std::make_shared<fetch::ml::ops::PlaceHolder<TypeParam>>();
+  });
   TypeParam                  data(std::vector<std::uint64_t>({5, 5}));
   std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder.GetOp())
       ->SetData(data);
@@ -53,8 +55,9 @@ TYPED_TEST(NodeTest, node_placeholder)
 
 TYPED_TEST(NodeTest, node_relu)
 {
-  auto placeholder = std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::OP_PLACEHOLDER,
-                                                                  "PlaceHolder");
+  auto placeholder = std::make_shared<fetch::ml::Node<TypeParam>>(
+      fetch::ml::OpType::OP_PLACEHOLDER, "PlaceHolder",
+      []() { return std::make_shared<fetch::ml::ops::PlaceHolder<TypeParam>>(); });
   auto placeholder_ptr =
       std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder->GetOp());
 

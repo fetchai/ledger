@@ -37,18 +37,6 @@ using std::chrono::milliseconds;
 using std::this_thread::sleep_for;
 
 /**
- * Create a thread pool instance with a specified number
- *
- * @param threads The maximum number of threads
- * @return
- */
-ThreadPoolImplementation::ThreadPoolPtr ThreadPoolImplementation::Create(std::size_t        threads,
-                                                                         std::string const &name)
-{
-  return std::make_shared<ThreadPoolImplementation>(threads, name);
-}
-
-/**
  * Construct the thread pool implementation
  *
  * @param threads The maximum number of threads
@@ -145,20 +133,13 @@ void ThreadPoolImplementation::Start()
   static constexpr std::size_t MAX_START_LOOPS     = 30;
   static constexpr std::size_t START_LOOP_INTERVAL = 100;
 
-  if (shutdown_)
-  {
-    FETCH_LOG_ERROR(LOGGING_NAME, "Thread pool may not be restarted after it has been shutdown");
-    return;
-  }
+  detailed_assert(!shutdown_);
 
   // start all the threads
   {
     FETCH_LOCK(threads_mutex_);
 
-    if (!threads_.empty())
-    {
-      throw std::runtime_error("Attempting to start the thread pool multiple times");
-    }
+    detailed_assert(threads_.empty());
 
     for (std::size_t thread_idx = 0; thread_idx < max_threads_; ++thread_idx)
     {
@@ -389,5 +370,11 @@ bool ThreadPoolImplementation::ExecuteWorkload(WorkItem const &workload)
 }
 
 }  // namespace details
+
+ThreadPool MakeThreadPool(std::size_t threads, std::string const &name)
+{
+  return std::make_shared<details::ThreadPoolImplementation>(threads, name);
+}
+
 }  // namespace network
 }  // namespace fetch
