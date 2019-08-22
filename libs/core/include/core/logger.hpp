@@ -18,8 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/logging.hpp"  // temporary
-
-#include "core/abstract_mutex.hpp"
+#include "core/mutex.hpp"
 
 #include <execinfo.h>
 
@@ -47,7 +46,7 @@ class ReadableThread
 public:
   static int GetThreadID(std::thread::id const &thread)
   {
-    std::lock_guard<std::mutex> lock(mutex_);
+    FETCH_LOCK(mutex_);
 
     if (thread_number_.find(thread) == thread_number_.end())
     {
@@ -280,7 +279,7 @@ public:
 
   ~LogWrapper()
   {
-    std::lock_guard<std::mutex> lock(mutex_);
+    FETCH_LOCK(mutex_);
     DisableLogger();
   }
 
@@ -294,7 +293,7 @@ public:
 
   void Debug(std::vector<std::string> const &items)
   {
-    std::lock_guard<std::mutex> lock(mutex_);
+    FETCH_LOCK(mutex_);
     if (log_)
     {
       log_->StartEntry(DefaultLogger::Level::DEBUG, nullptr, TopContextImpl());
@@ -307,8 +306,8 @@ public:
 
   void SetContext(shared_context_type ctx)
   {
-    std::thread::id             id = std::this_thread::get_id();
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::thread::id id = std::this_thread::get_id();
+    FETCH_LOCK(mutex_);
     if (log_)
     {
       context_[id] = std::move(ctx);
@@ -317,13 +316,13 @@ public:
 
   shared_context_type TopContext()
   {
-    std::lock_guard<std::mutex> lock(mutex_);
+    FETCH_LOCK(mutex_);
     return TopContextImpl();
   }
 
   void RegisterLock(fetch::mutex::AbstractMutex *ptr)
   {
-    std::lock_guard<std::mutex> lock(mutex_);
+    FETCH_LOCK(mutex_);
     if (log_)
     {
       active_locks_.insert(ptr);
@@ -333,7 +332,7 @@ public:
   void RegisterUnlock(fetch::mutex::AbstractMutex *ptr, double spent_time,
                       const std::string &filename, int line)
   {
-    std::lock_guard<std::mutex> lock(mutex_);
+    FETCH_LOCK(mutex_);
     if (log_)
     {
       std::stringstream ss;
@@ -411,8 +410,8 @@ public:
 
   void UpdateContextTime(shared_context_type ctx, double spent_time)
   {
-    std::lock_guard<std::mutex> lock(timing_mutex_);
-    std::stringstream           ss;
+    FETCH_LOCK(timing_mutex_);
+    std::stringstream ss;
     ss << ctx->context() << ", " << ctx->filename() << " " << ctx->line();
     std::string s = ss.str();
     if (timings_.find(s) == timings_.end())
@@ -433,66 +432,6 @@ public:
     }
 
     ++t.calls;
-  }
-
-  void PrintTimings(std::size_t max = 50) const
-  {
-    std::lock_guard<std::mutex> lock(timing_mutex_);
-    std::lock_guard<std::mutex> lock2(mutex_);
-    std::vector<TimingDetails>  all_timings;
-    for (auto &t : timings_)
-    {
-      all_timings.push_back(t.second);
-    }
-    // [](TimingDetails const &a, TimingDetails const &b) { return (a.total /
-    // a.calls) > (b.total / b.calls); }
-    std::sort(all_timings.begin(), all_timings.end(),
-              [](TimingDetails const &a, TimingDetails const &b) { return (a.peak) > (b.peak); });
-    std::size_t N = std::min(max, all_timings.size());
-
-    std::cout << "Profile for monitored function calls:\n";
-    for (std::size_t i = 0; i < N; ++i)
-    {
-      std::cout << std::setw(3) << i << std::setw(20)
-                << double(all_timings[i].total) / double(all_timings[i].calls) << " ";
-      std::cout << std::setw(20) << all_timings[i].peak << " ";
-      std::cout << std::setw(20) << all_timings[i].calls << " ";
-      std::cout << std::setw(20) << all_timings[i].total << " ";
-      std::cout << all_timings[i].context << " " << all_timings[i].filename << " "
-                << all_timings[i].line << '\n';
-    }
-    std::cout << '\n';
-  }
-
-  void PrintMutexTimings(std::size_t max = 50) const
-  {
-    std::lock_guard<std::mutex> lock2(mutex_);
-    std::lock_guard<std::mutex> lock(timing_mutex_);
-
-    std::vector<TimingDetails> all_timings;
-    for (auto &t : mutex_timings_)
-    {
-      all_timings.push_back(t.second);
-    }
-
-    std::sort(all_timings.begin(), all_timings.end(),
-              [](TimingDetails const &a, TimingDetails const &b) {
-                return (double(a.total) / double(a.calls)) > (double(b.total) / double(b.calls));
-              });
-    std::size_t N = std::min(max, all_timings.size());
-
-    std::cout << "Mutex timings:\n";
-    for (std::size_t i = 0; i < N; ++i)
-    {
-      std::cout << std::setw(3) << i << std::setw(20)
-                << double(all_timings[i].total) / double(all_timings[i].calls) << " ";
-      std::cout << std::setw(20) << all_timings[i].peak << " ";
-      std::cout << std::setw(20) << all_timings[i].calls << " ";
-      std::cout << std::setw(20) << all_timings[i].total << " ";
-      std::cout << all_timings[i].context << " " << all_timings[i].filename << " "
-                << all_timings[i].line << '\n';
-    }
-    std::cout << '\n';
   }
 
 private:
@@ -516,7 +455,7 @@ private:
   template <typename... Args>
   void Log(DefaultLogger::Level level, char const *name, Args &&... args)
   {
-    std::lock_guard<std::mutex> lock(mutex_);
+    FETCH_LOCK(mutex_);
     if (log_)
     {
       log_->StartEntry(level, name, TopContextImpl());

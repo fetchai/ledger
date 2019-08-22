@@ -53,7 +53,6 @@ class FeedSubscriptionManager
 {
 public:
   using mutex_type             = fetch::mutex::Mutex;
-  using lock_type              = std::lock_guard<fetch::mutex::Mutex>;
   using service_type           = fetch::service::ServiceServerInterface;
   using connection_handle_type = uint64_t;
   using publishing_workload_type =
@@ -111,7 +110,7 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    std::lock_guard<fetch::mutex::Mutex> lock(subscribe_mutex_);
+    FETCH_LOCK(subscribe_mutex_);
     subscribers_.push_back({client, id});
   }
 
@@ -126,8 +125,9 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    std::vector<std::size_t>             ids;
-    std::lock_guard<fetch::mutex::Mutex> lock(subscribe_mutex_);
+    std::vector<std::size_t> ids;
+    FETCH_LOCK(subscribe_mutex_);
+
     for (std::size_t i = 0; i < subscribers_.size(); ++i)
     {
       if ((subscribers_[i].client == client) && (subscribers_[i].id == id))

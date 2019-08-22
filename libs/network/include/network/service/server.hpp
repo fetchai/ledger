@@ -100,7 +100,7 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    std::lock_guard<fetch::mutex::Mutex> lock(client_rpcs_mutex_);
+    FETCH_LOCK(client_rpcs_mutex_);
 
     for (auto &c : client_rpcs_)
     {
@@ -110,7 +110,7 @@ public:
 
   ClientRPCInterface &ServiceInterfaceOf(handle_type const &i)
   {
-    std::lock_guard<fetch::mutex::Mutex> lock(client_rpcs_mutex_);
+    FETCH_LOCK(client_rpcs_mutex_);
 
     if (client_rpcs_.find(i) == client_rpcs_.end())
     {
@@ -133,7 +133,7 @@ private:
   {
     LOG_STACK_TRACE_POINT;
 
-    std::lock_guard<fetch::mutex::Mutex> lock(message_mutex_);
+    FETCH_LOCK(message_mutex_);
     FETCH_LOG_DEBUG(LOGGING_NAME, "RPC call from ", client);
     PendingMessage pm = {client, msg};
     messages_.push_back(pm);
@@ -148,7 +148,7 @@ private:
 
     bool has_messages = false;
     {
-      std::lock_guard<fetch::mutex::Mutex> lock(message_mutex_);
+      FETCH_LOCK(message_mutex_);
       has_messages = (!messages_.empty());
     }
 
@@ -158,7 +158,7 @@ private:
 
       PendingMessage pm;
       {
-        std::lock_guard<fetch::mutex::Mutex> lock(message_mutex_);
+        FETCH_LOCK(message_mutex_);
 
         FETCH_LOG_DEBUG(LOGGING_NAME, "Server side backlog: ", messages_.size());
         has_messages = (!messages_.empty());
@@ -181,7 +181,7 @@ private:
             FETCH_LOG_INFO(LOGGING_NAME, "PushProtocolRequest returned FALSE!");
 
             {
-              std::lock_guard<fetch::mutex::Mutex> lock(client_rpcs_mutex_);
+              FETCH_LOCK(client_rpcs_mutex_);
               if (client_rpcs_.find(pm.client) != client_rpcs_.end())
               {
                 auto &c   = client_rpcs_[pm.client];

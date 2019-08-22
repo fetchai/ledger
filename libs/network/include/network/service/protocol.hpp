@@ -188,8 +188,8 @@ public:
 
     FETCH_LOG_DEBUG(LOGGING_NAME, "Making subscription for ", client, " ", feed, " ", id);
 
-    std::lock_guard<fetch::mutex::Mutex> lock(feeds_mutex_);
-    std::size_t                          i = 0;
+    FETCH_LOCK(feeds_mutex_);
+    std::size_t i = 0;
     for (; i < feeds_.size(); ++i)
     {
       if (feeds_[i]->feed() == feed)
@@ -218,7 +218,7 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    std::lock_guard<fetch::mutex::Mutex> lock(feeds_mutex_);
+    FETCH_LOCK(feeds_mutex_);
 
     std::size_t i = 0;
     for (; i < feeds_.size(); ++i)

@@ -81,7 +81,7 @@ public:
 
     bool write_in_progress = false;
     {
-      std::lock_guard<fetch::mutex::Mutex> lock(write_mutex_);
+      FETCH_LOCK(write_mutex_);
       write_in_progress = !write_queue_.empty();
       write_queue_.push_back(response);
     }
@@ -212,8 +212,8 @@ public:
     buffer_ptr_type buffer_ptr =
         std::make_shared<asio::streambuf>(std::numeric_limits<std::size_t>::max());
     {
-      std::lock_guard<fetch::mutex::Mutex> lock(write_mutex_);
-      HTTPResponse                         res = write_queue_.front();
+      FETCH_LOCK(write_mutex_);
+      HTTPResponse res = write_queue_.front();
       write_queue_.pop_front();
       res.ToStream(*buffer_ptr);
     }
@@ -224,7 +224,7 @@ public:
       {
         bool write_more = false;
         {
-          std::lock_guard<fetch::mutex::Mutex> lock(write_mutex_);
+          FETCH_LOCK(write_mutex_);
           write_more = !write_queue_.empty();
         }
 
