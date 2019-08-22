@@ -55,7 +55,7 @@ public:
     connection_handle_type handle = client->handle();
     FETCH_LOG_DEBUG(LOGGING_NAME, "Client ", handle, " is joining");
 
-    std::lock_guard<fetch::mutex::Mutex> lock(clients_mutex_);
+    FETCH_LOCK(clients_mutex_);
     clients_[handle] = client;
     return handle;
   }
@@ -64,7 +64,7 @@ public:
   void Leave(connection_handle_type handle)
   {
     LOG_STACK_TRACE_POINT;
-    std::lock_guard<fetch::mutex::Mutex> lock(clients_mutex_);
+    FETCH_LOCK(clients_mutex_);
 
     auto client{clients_.find(handle)};
     if (client != clients_.end())
@@ -129,7 +129,7 @@ public:
   std::string GetAddress(connection_handle_type client)
   {
     LOG_STACK_TRACE_POINT;
-    std::lock_guard<fetch::mutex::Mutex> lock(clients_mutex_);
+    FETCH_LOCK(clients_mutex_);
     if (clients_.find(client) != clients_.end())
     {
       return clients_[client]->Address();
