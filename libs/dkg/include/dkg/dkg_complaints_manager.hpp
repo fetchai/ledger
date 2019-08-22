@@ -58,7 +58,7 @@ public:
   void Count(MuddleAddress const &address);
   void Add(ComplaintsMessage const &msg, MuddleAddress const &from_id,
            MuddleAddress const &node_address);
-  bool IsFinished(std::set<MuddleAddress> const &miners, uint32_t node_index, uint32_t threshold);
+  bool IsFinished(uint32_t threshold);
   void Clear();
 
   std::set<MuddleAddress> ComplaintsFrom() const;
@@ -120,7 +120,7 @@ public:
   void                    ResetCabinet(uint32_t cabinet_size);
   void                    Add(MuddleAddress const &miner);
   bool                    Count(MuddleAddress const &from);
-  bool                    IsFinished(std::set<MuddleAddress> const &miners, uint32_t index);
+  bool                    IsFinished();
   std::set<MuddleAddress> BuildQual(std::set<MuddleAddress> const &miners);
   void                    Clear();
 };

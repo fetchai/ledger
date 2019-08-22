@@ -67,8 +67,7 @@ void ComplaintsManager::Add(ComplaintsMessage const &msg, MuddleAddress const &f
   }
 }
 
-bool ComplaintsManager::IsFinished(std::set<MuddleAddress> const &miners, uint32_t node_index,
-                                   uint32_t polynomial_degree)
+bool ComplaintsManager::IsFinished(uint32_t polynomial_degree)
 {
   std::lock_guard<std::mutex> lock{mutex_};
   if (complaints_received_.size() == cabinet_size_ - 1)
@@ -225,7 +224,7 @@ bool ComplaintsAnswerManager::Count(MuddleAddress const &from)
   }
 }
 
-bool ComplaintsAnswerManager::IsFinished(std::set<MuddleAddress> const &cabinet, uint32_t index)
+bool ComplaintsAnswerManager::IsFinished()
 {
   std::lock_guard<std::mutex> lock{mutex_};
   if (complaint_answers_received_.size() == cabinet_size_ - 1)
