@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/reactor.hpp"
 #include "core/serializers/counter.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "core/service_ids.hpp"
@@ -74,6 +75,14 @@ public:
     }
   }
 
+private:
+  std::bitset<static_cast<uint8_t>(Failures::WITHOLD_RECONSTRUCTION_SHARES) + 1> failures_flags_;
+
+  bool Failure(Failures f) const
+  {
+    return failures_flags_[static_cast<uint8_t>(f)];
+  }
+
   void BroadcastShares() override
   {
     if (Failure(Failures::SEND_BAD_SHARE))
@@ -108,16 +117,6 @@ public:
                                             manager_.GetCoefficients(), "signature"}});
       }
     }
-    state_.store(State::WAITING_FOR_SHARE);
-    ReceivedCoefficientsAndShares();
-  }
-
-private:
-  std::bitset<static_cast<uint8_t>(Failures::WITHOLD_RECONSTRUCTION_SHARES) + 1> failures_flags_;
-
-  bool Failure(Failures f) const
-  {
-    return failures_flags_[static_cast<uint8_t>(f)];
   }
 
   void SendBadCoefficients()
@@ -172,8 +171,6 @@ private:
     {
       SendBroadcast(DKGEnvelope{ComplaintsMessage{complaints_local, "signature"}});
     }
-    state_ = State::WAITING_FOR_COMPLAINTS;
-    ReceivedComplaint();
   }
 
   void BroadcastComplaintsAnswer() override
@@ -195,8 +192,6 @@ private:
           DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAITING_FOR_COMPLAINT_ANSWERS),
                                     complaints_answer, "signature"}});
     }
-    state_ = State::WAITING_FOR_COMPLAINT_ANSWERS;
-    ReceivedComplaintsAnswer();
   }
 
   void BroadcastQualCoefficients() override
@@ -227,13 +222,11 @@ private:
     }
 
     complaints_answer_manager_.Clear();
-    state_ = State::WAITING_FOR_QUAL_SHARES;
     {
       std::unique_lock<std::mutex> lock{mutex_};
       A_ik_received_.insert(address_);
       lock.unlock();
     }
-    ReceivedQualShares();
   }
 
   void BroadcastQualComplaints() override
@@ -261,8 +254,6 @@ private:
           DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAITING_FOR_QUAL_COMPLAINTS),
                                     manager_.ComputeQualComplaints(qual_), "signature"}});
     }
-    state_ = State::WAITING_FOR_QUAL_COMPLAINTS;
-    ReceivedQualComplaint();
   }
 
   void BroadcastReconstructionShares() override
@@ -293,8 +284,6 @@ private:
                           complaint_shares, "signature"}});
       }
     }
-    state_ = State::WAITING_FOR_RECONSTRUCTION_SHARES;
-    ReceivedReconstructionShares();
   }
 };
 
@@ -304,6 +293,7 @@ struct DkgMember
 
   uint16_t                              muddle_port;
   NetworkManager                        network_manager;
+  fetch::core::Reactor                  reactor;
   ProverPtr                             muddle_certificate;
   Muddle                                muddle;
   std::shared_ptr<muddle::Subscription> shares_subscription;
@@ -319,6 +309,7 @@ struct DkgMember
   DkgMember(uint16_t port_number, uint16_t index)
     : muddle_port{port_number}
     , network_manager{"NetworkManager" + std::to_string(index), 1}
+    , reactor{"ReactorName" + std::to_string(index)}
     , muddle_certificate{CreateNewCertificate()}
     , muddle{fetch::muddle::NetworkId{"TestNetwork"}, muddle_certificate, network_manager}
     , shares_subscription(muddle.AsEndpoint().Subscribe(SERVICE_DKG, CHANNEL_SHARES))
@@ -350,6 +341,7 @@ struct DkgMember
 
   virtual ~DkgMember()
   {
+    reactor.Stop();
     muddle.Stop();
     muddle.Shutdown();
     network_manager.Stop();
@@ -371,8 +363,8 @@ struct DkgMember
   virtual void OnNewShares(ConstByteArray const &                     from,
                            std::pair<std::string, std::string> const &shares)                   = 0;
   virtual void DkgResetCabinet(std::set<ConstByteArray> const &cabinet, uint32_t threshold)     = 0;
-  virtual void BroadcastShares()                                                                = 0;
-  virtual bool DkgFinished()                                                                    = 0;
+  virtual std::weak_ptr<core::Runnable> GetWeakRunnable()                                       = 0;
+  virtual bool                          DkgFinished()                                           = 0;
 
   static ProverPtr CreateNewCertificate()
   {
@@ -426,9 +418,9 @@ struct FaultyDkgMember : DkgMember
   {
     dkg.ResetCabinet(cabinet, threshold);
   }
-  void BroadcastShares() override
+  std::weak_ptr<core::Runnable> GetWeakRunnable() override
   {
-    dkg.BroadcastShares();
+    return dkg.GetWeakRunnable();
   }
   bool DkgFinished() override
   {
@@ -473,9 +465,9 @@ struct HonestDkgMember : DkgMember
   {
     dkg.ResetCabinet(cabinet, threshold);
   }
-  void BroadcastShares() override
+  std::weak_ptr<core::Runnable> GetWeakRunnable() override
   {
-    dkg.BroadcastShares();
+    return dkg.GetWeakRunnable();
   }
   bool DkgFinished() override
   {
@@ -485,8 +477,7 @@ struct HonestDkgMember : DkgMember
 
 void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
                   uint32_t expected_completion_size,
-                  const std::vector<std::vector<FaultyDkgSetupService::Failures>> &failures = {},
-                  uint32_t num_dkg_rounds                                                   = 1)
+                  const std::vector<std::vector<FaultyDkgSetupService::Failures>> &failures = {})
 {
   RBC::CabinetMembers                                                 cabinet;
   std::vector<std::unique_ptr<DkgMember>>                             committee;
@@ -546,67 +537,64 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
     }
   }
 
-  for (uint32_t round_i = 0; round_i < num_dkg_rounds; ++round_i)
+  // Start at DKG
   {
-    // Start at DKG
+    for (auto &member : committee)
     {
-      for (auto &member : committee)
-      {
-        member->BroadcastShares();
-      }
+      member->reactor.Attach(member->GetWeakRunnable());
+    }
 
-      // Loop until everyone is finished with DKG
-      uint32_t pp = 0;
-      while (pp < cabinet_size)
+    for (auto &member : committee)
+    {
+      member->reactor.Start();
+    }
+
+    // Loop until everyone is finished with DKG
+    uint32_t pp = 0;
+    while (pp < cabinet_size)
+    {
+      std::this_thread::sleep_for(std::chrono::seconds(5));
+      for (auto qq = pp; qq < cabinet_size; ++qq)
       {
-        std::this_thread::sleep_for(std::chrono::seconds(5));
-        for (auto qq = pp; qq < cabinet_size; ++qq)
+        if (!committee[qq]->DkgFinished())
         {
-          if (!committee[qq]->DkgFinished())
-          {
-            break;
-          }
-          else
-          {
-            ++pp;
-          }
+          break;
         }
-      }
-
-      std::this_thread::sleep_for(std::chrono::seconds(1));
-
-      // Set DKG outputs
-      for (auto &member : committee)
-      {
-        member->SetOutput();
-      }
-
-      // Check everyone in qual agrees on qual
-      uint32_t start_qual = cabinet_size - qual_size;
-      for (uint32_t nn = start_qual + 1; nn < cabinet_size; ++nn)
-      {
-        EXPECT_EQ(committee[start_qual]->qual_set, expected_qual);
-      }
-
-      // Check DKG is working correctly for everyone who completes the DKG successfully
-      uint32_t start_complete = cabinet_size - expected_completion_size;
-      for (uint32_t nn = start_complete + 1; nn < cabinet_size; ++nn)
-      {
-        EXPECT_EQ(committee[start_complete]->public_key, committee[nn]->public_key);
-        EXPECT_EQ(committee[start_complete]->public_key_shares, committee[nn]->public_key_shares);
-        EXPECT_NE(committee[start_complete]->public_key_shares[start_complete],
-                  committee[nn]->public_key_shares[nn]);
-        for (uint32_t qq = nn + 1; qq < cabinet_size; ++qq)
+        else
         {
-          EXPECT_NE(committee[start_complete]->public_key_shares[nn],
-                    committee[start_complete]->public_key_shares[qq]);
+          ++pp;
         }
       }
     }
+
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    // Set DKG outputs
     for (auto &member : committee)
     {
-      member->rbc.ResetCabinet(cabinet);
-      member->DkgResetCabinet(cabinet, threshold);
+      member->SetOutput();
+    }
+
+    // Check everyone in qual agrees on qual
+    uint32_t start_qual = cabinet_size - qual_size;
+    for (uint32_t nn = start_qual + 1; nn < cabinet_size; ++nn)
+    {
+      EXPECT_EQ(committee[start_qual]->qual_set, expected_qual);
+    }
+
+    // Check DKG is working correctly for everyone who completes the DKG successfully
+    uint32_t start_complete = cabinet_size - expected_completion_size;
+    for (uint32_t nn = start_complete + 1; nn < cabinet_size; ++nn)
+    {
+      EXPECT_EQ(committee[start_complete]->public_key, committee[nn]->public_key);
+      EXPECT_EQ(committee[start_complete]->public_key_shares, committee[nn]->public_key_shares);
+      EXPECT_NE(committee[start_complete]->public_key_shares[start_complete],
+                committee[nn]->public_key_shares[nn]);
+      for (uint32_t qq = nn + 1; qq < cabinet_size; ++qq)
+      {
+        EXPECT_NE(committee[start_complete]->public_key_shares[nn],
+                  committee[start_complete]->public_key_shares[qq]);
+      }
     }
   }
 }
@@ -721,9 +709,4 @@ TEST(dkg_setup, withold_reconstruction_shares)
   GenerateTest(4, 2, 4, 0,
                {{FaultyDkgSetupService::Failures::BAD_QUAL_COEFFICIENTS},
                 {FaultyDkgSetupService::Failures::WITHOLD_RECONSTRUCTION_SHARES}});
-}
-
-TEST(dkg_setup, successive_dkgs)
-{
-  GenerateTest(4, 3, 4, 4, {}, 4);
 }
