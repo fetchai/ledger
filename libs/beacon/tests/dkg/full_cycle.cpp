@@ -213,6 +213,7 @@ void RunHonestComitteeRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
         fetch::beacon::EventCommitteeCompletedWork event;
         while (member->event_manager->Poll(event))
         {
+          FETCH_LOG_WARN("BeaconTests", "Round complete");
           ++rounds_finished[member->identity];
         }
       }
@@ -245,7 +246,7 @@ void RunHonestComitteeRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
 
 TEST(beacon, full_cycle)
 {
-  SetGlobalLogLevel(LogLevel::CRITICAL);
+//  SetGlobalLogLevel(LogLevel::CRITICAL);
   // TODO(tfr): Heuristically fails atm. RunHonestComitteeRenewal(100, 4, 4, 4, 10, 0.5);
   RunHonestComitteeRenewal(800, 4, 2, 2, 10, 0.5);
 }

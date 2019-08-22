@@ -471,7 +471,7 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
     cabinet.insert(committee[ii]->muddle_certificate->identity().identifier());
   }
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
   // Reset cabinet for rbc in pre-dkg sync
   for (uint32_t ii = 0; ii < cabinet_size; ii++)
   {
@@ -489,11 +489,12 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
   uint32_t kk = 0;
   while (kk < cabinet_size)
   {
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     for (uint32_t mm = kk; mm < cabinet_size; ++mm)
     {
       if (!committee[mm]->pre_sync.ready())
       {
+        FETCH_LOG_WARN("DkgTests", "Waiting for pre-sync");
         break;
       }
       else
@@ -522,6 +523,7 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
         {
           if (!committee[qq]->dkg.finished())
           {
+            FETCH_LOG_WARN("DkgTests", "Waiting for to finish");
             break;
           }
           else
