@@ -33,7 +33,7 @@ public:
   using ExposedShare     = std::pair<MuddleAddress, std::pair<Share, Share>>;
   using SharesExposedMap = std::unordered_map<MuddleAddress, std::pair<Share, Share>>;
 
-  explicit DkgManager(MuddleAddress const &address);
+  explicit DkgManager(MuddleAddress address);
 
   void                     GenerateCoefficients();
   std::vector<Coefficient> GetCoefficients();

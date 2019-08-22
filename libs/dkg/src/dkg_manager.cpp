@@ -28,8 +28,8 @@ bn::G2 DkgManager::group_h_;
 
 constexpr char const *LOGGING_NAME = "DKG";
 
-DkgManager::DkgManager(MuddleAddress const &address)
-  : address_{address}
+DkgManager::DkgManager(MuddleAddress address)
+  : address_{std::move(address)}
 {
   static std::once_flag flag;
 

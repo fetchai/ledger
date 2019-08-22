@@ -399,7 +399,7 @@ struct FaultyDkgMember : DkgMember
           failures}
   {}
 
-  ~FaultyDkgMember() = default;
+  ~FaultyDkgMember() override = default;
 
   void SetOutput() override
   {
@@ -446,7 +446,7 @@ struct HonestDkgMember : DkgMember
           }}
   {}
 
-  ~HonestDkgMember() = default;
+  ~HonestDkgMember() override = default;
 
   void SetOutput() override
   {
