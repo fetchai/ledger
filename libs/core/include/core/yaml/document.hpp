@@ -148,22 +148,10 @@ private:
     uint     line   = 0;
   };
 
-  void        Tokenise(ConstByteArray const &document);
-  static void ExtractPrimitive(Variant &variant, YamlToken const &token,
-                               ConstByteArray const &document);
-
-  static YamlObject *FindInStack(std::vector<YamlObject> &stack, uint ident)
-  {
-    while (!stack.empty())
-    {
-      if (stack.back().ident > ident)
-        stack.pop_back();
-      else
-        return &stack.back();
-    }
-
-    return nullptr;
-  }
+  void               Tokenise(ConstByteArray const &document);
+  static void        ExtractPrimitive(Variant &variant, YamlToken const &token,
+                                      ConstByteArray const &document);
+  static YamlObject *FindInStack(std::vector<YamlObject> &stack, uint ident);
 
   std::vector<uint16_t>    counters_{};
   std::vector<YamlToken *> object_stack_{};

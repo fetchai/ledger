@@ -251,6 +251,19 @@ void YamlDocument::ExtractPrimitive(Variant &variant, YamlToken const &token,
   }
 }
 
+YamlDocument::YamlObject *YamlDocument::FindInStack(std::vector<YamlObject> &stack, uint ident)
+{
+  while (!stack.empty())
+  {
+    if (stack.back().ident > ident)
+      stack.pop_back();
+    else
+      return &stack.back();
+  }
+
+  return nullptr;
+}
+
 /**
  * Parse a Yaml document
  *
