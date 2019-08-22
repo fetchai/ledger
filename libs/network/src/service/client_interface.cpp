@@ -91,7 +91,7 @@ void ServiceClientInterface::Unsubscribe(subscription_handler_type id)
   Subscription sub;
   {
     FETCH_LOCK(subscription_mutex_);
-    auto                         subscr = subscriptions_.find(id);
+    auto subscr = subscriptions_.find(id);
     if (subscr == subscriptions_.end())
     {
       if (std::find(cancelled_subscriptions_.begin(), cancelled_subscriptions_.end(), id) !=
@@ -184,7 +184,7 @@ bool ServiceClientInterface::ProcessServerMessage(network::message_type const &m
     AbstractCallable *cb = nullptr;
     {
       FETCH_LOCK(subscription_mutex_);
-      auto                         subscr = subscriptions_.find(sub);
+      auto subscr = subscriptions_.find(sub);
       if (subscr == subscriptions_.end())
       {
         if (std::find(cancelled_subscriptions_.begin(), cancelled_subscriptions_.end(), sub) ==
