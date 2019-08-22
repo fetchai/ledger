@@ -71,6 +71,8 @@ public:
   SizeType UpdateBatchSize(SizeType const &batch_size, SizeType const &data_size,
                            SizeType const &subset_size = SIZE_NOT_SET);
 
+  std::shared_ptr<Graph<T>> GetGraph();
+
   template <typename X, typename D>
   friend struct serializers::MapSerializer;
 
@@ -434,6 +436,7 @@ void Optimiser<T>::UpdateLearningRate()
   }
   }
 }
+
 /**
  * helper method for setting or updating batch size in case of invalid parameter combinations.
  * For example, batch_size cannot be larger than data_size or subset_size.
@@ -479,6 +482,12 @@ template <typename T>
 void Optimiser<T>::ResetGradients()
 {
   this->graph_->ResetGradients();
+}
+
+template <typename T>
+std::shared_ptr<Graph<T>> Optimiser<T>::GetGraph()
+{
+  return graph_;
 }
 
 }  // namespace optimisers
