@@ -59,8 +59,7 @@ def generate_token_address(muddle_address):
 
 def create_record(address, balance, stake):
     resource_id = calc_resource_id('fetch.token.state.' + address)
-    resource_value = base64.b64encode(
-        struct.pack('<QQBQ', balance, stake, 0, 0)).decode()
+    resource_value = {"balance": balance, "stake": stake}
     return resource_id, resource_value
 
 
@@ -72,8 +71,8 @@ def main():
         total = len(args.addresses)
         threshold = min(total, max(1, int(DEFAULT_THRESHOLD * total)))
         print('Calculated threshold:', threshold)
-    elif args.threshold > len(args):
-        print('Threshold can\'t me more that the number of stakers')
+    elif args.threshold > len(args.addresses):
+        print('Threshold can\'t be more that the number of stakers')
     elif args.threshold < 0:
         print('Threshold must be larger than 0')
     else:
@@ -84,7 +83,7 @@ def main():
     individual_stake = (min(args.stake_percentage, 100)
                         * individual_balance) // 100
     stakes = []
-    state = {}
+    state = []
     cabinet = []
 
     # build up the configuration for all the stakers
@@ -93,35 +92,34 @@ def main():
 
         # update the stake list
         stakes.append({
-            'address': token_address,
+            'identity': address,
             'amount': individual_stake,
         })
 
         # update the initial state
         key, value = create_record(
             token_address, individual_balance, individual_stake)
-        state[key] = value
+        state.append({
+            "key": key,
+            **value
+        })
 
         # update the random beacon config
         cabinet.append(address)
 
     # form the snapshot data
     snapshot = {
-        'version': 1,
+        'version': 2,
         'stake': {
-            'committeeSize': 1,  # sort of needed at the moment
-            'stakes': stakes,
+            'committeeSize': len(cabinet),
+            'stakers': stakes,
         },
-        'beacon': {
-            'cabinet': cabinet,
-            'threshold': threshold,
-        },
-        'state': state,
+        'accounts': state,
     }
 
     # dump the file
     with open(args.output, 'w') as output_file:
-        json.dump(snapshot, output_file)
+        json.dump(snapshot, output_file, indent=4, sort_keys=True)
 
 
 if __name__ == '__main__':

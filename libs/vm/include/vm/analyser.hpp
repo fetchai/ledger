@@ -52,24 +52,27 @@ public:
                                TypeIndexArray const &parameter_type_index_array);
 
   void CreateFreeFunction(std::string const &name, TypeIndexArray const &parameter_type_index_array,
-                          TypeIndex return_type_index, Handler const &handler);
+                          TypeIndex return_type_index, Handler const &handler, ChargeAmount charge);
 
   void CreateConstructor(TypeIndex type_index, TypeIndexArray const &parameter_type_index_array,
-                         Handler const &handler);
+                         Handler const &handler, ChargeAmount charge);
 
   void CreateStaticMemberFunction(TypeIndex type_index, std::string const &function_name,
                                   TypeIndexArray const &parameter_type_index_array,
-                                  TypeIndex return_type_index, Handler const &handler);
+                                  TypeIndex return_type_index, Handler const &handler,
+                                  ChargeAmount charge);
 
   void CreateMemberFunction(TypeIndex type_index, std::string const &function_name,
                             TypeIndexArray const &parameter_type_index_array,
-                            TypeIndex return_type_index, Handler const &handler);
+                            TypeIndex return_type_index, Handler const &handler,
+                            ChargeAmount charge);
 
   void EnableOperator(TypeIndex type_index, Operator op);
 
   void EnableIndexOperator(TypeIndex type_index, TypeIndexArray const &input_type_index_array,
                            TypeIndex output_type_index, Handler const &get_handler,
-                           Handler const &set_handler);
+                           Handler const &set_handler, ChargeAmount get_charge,
+                           ChargeAmount set_charge);
 
   bool Analyse(BlockNodePtr const &root, std::vector<std::string> &errors);
 
@@ -145,6 +148,28 @@ private:
     std::unordered_map<std::string, FunctionPtr> map;
   };
 
+  struct StateDefinitions
+  {
+    void Add(std::string const &name, TypePtr const &type)
+    {
+      map[name] = type;
+    }
+    TypePtr Find(std::string const &name)
+    {
+      auto it = map.find(name);
+      if (it != map.end())
+      {
+        return it->second;
+      }
+      return nullptr;
+    }
+    void Clear()
+    {
+      map.clear();
+    }
+    std::unordered_map<std::string, TypePtr> map;
+  };
+
   OperatorMap       operator_map_;
   TypeMap           type_map_;
   StringSet         type_set_;
@@ -187,12 +212,17 @@ private:
   BlockNodePtr             root_;
   BlockNodePtrArray        blocks_;
   BlockNodePtrArray        loops_;
+  FunctionPtr              state_constructor_;
+  FunctionPtr              sharded_state_constructor_;
+  StateDefinitions         state_definitions_;
   FunctionPtr              function_;
+  NodePtr                  use_any_node_;
   std::vector<std::string> errors_;
 
   void        AddError(uint16_t line, std::string const &message);
   void        BuildBlock(BlockNodePtr const &block_node);
   void        BuildFile(BlockNodePtr const &file_node);
+  void        BuildPersistentStatement(NodePtr const &node);
   void        BuildFunctionDefinition(BlockNodePtr const &parent_block_node,
                                       BlockNodePtr const &function_definition_node);
   void        BuildWhileStatement(BlockNodePtr const &while_statement_node);
@@ -204,6 +234,8 @@ private:
   void        AnnotateWhileStatement(BlockNodePtr const &while_statement_node);
   void        AnnotateForStatement(BlockNodePtr const &for_statement_node);
   void        AnnotateIfStatement(NodePtr const &if_statement_node);
+  void        AnnotateUseStatement(BlockNodePtr const &parent_block_node, NodePtr const &node);
+  void        AnnotateUseAnyStatement(BlockNodePtr const &parent_block_node, NodePtr const &node);
   void        AnnotateVarStatement(BlockNodePtr const &parent_block_node,
                                    NodePtr const &     var_statement_node);
   void        AnnotateReturnStatement(NodePtr const &return_statement_node);
@@ -261,26 +293,27 @@ private:
   TypePtr     InternalCreateInstantiationType(TypeKind type_kind, TypePtr const &template_type,
                                               TypePtrArray const &parameter_types);
   void        CreateFreeFunction(std::string const &name, TypePtrArray const &parameter_types,
-                                 TypePtr const &return_type, Handler const &handler);
+                                 TypePtr const &return_type, Handler const &handler, ChargeAmount charge);
   void        CreateConstructor(TypePtr const &type, TypePtrArray const &parameter_types,
-                                Handler const &handler);
+                                Handler const &handler, ChargeAmount charge);
 
   void        CreateStaticMemberFunction(TypePtr const &type, std::string const &name,
                                          TypePtrArray const &parameter_types, TypePtr const &return_type,
-                                         Handler const &handler);
+                                         Handler const &handler, ChargeAmount charge);
   void        CreateMemberFunction(TypePtr const &type, std::string const &name,
                                    TypePtrArray const &parameter_types, TypePtr const &return_type,
-                                   Handler const &handler);
+                                   Handler const &handler, ChargeAmount charge);
   FunctionPtr CreateUserDefinedFreeFunction(std::string const &     name,
                                             TypePtrArray const &    parameter_types,
                                             VariablePtrArray const &parameter_variables,
                                             TypePtr const &         return_type);
   void        EnableIndexOperator(TypePtr const &type, TypePtrArray const &input_types,
                                   TypePtr const &output_type, Handler const &get_handler,
-                                  Handler const &set_handler);
+                                  Handler const &set_handler, ChargeAmount get_charge,
+                                  ChargeAmount set_charge);
   void        AddTypeInfo(TypeInfo const &info, TypeId type_id, TypePtr const &type);
-  void        AddFunctionInfo(FunctionPtr const &function, Handler const &handler);
-
+  void        AddFunctionInfo(FunctionPtr const &function, Handler const &handler,
+                              ChargeAmount static_charge);
   std::string BuildUniqueId(TypePtr const &type, std::string const &function_name,
                             TypePtrArray const &parameter_types, TypePtr const &return_type);
   void        AddFunctionToSymbolTable(SymbolTablePtr const &symbols, FunctionPtr const &function);

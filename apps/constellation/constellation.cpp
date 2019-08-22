@@ -18,7 +18,6 @@
 
 #include "constellation.hpp"
 #include "core/bloom_filter.hpp"
-#include "dkg/dkg_service.hpp"
 #include "health_check_http_module.hpp"
 #include "http/middleware/allow_origin.hpp"
 #include "http/middleware/telemetry.hpp"
@@ -38,7 +37,15 @@
 #include "network/muddle/rpc/server.hpp"
 #include "network/p2pservice/p2p_http_interface.hpp"
 #include "network/uri.hpp"
+#include "open_api_http_module.hpp"
 #include "telemetry_http_module.hpp"
+
+#include "beacon/beacon_service.hpp"
+#include "beacon/beacon_setup_protocol.hpp"
+#include "beacon/beacon_setup_service.hpp"
+#include "beacon/cabinet_member_details.hpp"
+#include "beacon/entropy.hpp"
+#include "beacon/event_manager.hpp"
 
 #include <chrono>
 #include <cstddef>
@@ -67,11 +74,11 @@ using ExecutorPtr = std::shared_ptr<Executor>;
 namespace fetch {
 namespace {
 
-using LaneIndex       = fetch::ledger::LaneIdentity::lane_type;
-using StakeManagerPtr = std::shared_ptr<ledger::StakeManager>;
-using EntropyPtr      = std::unique_ptr<ledger::EntropyGeneratorInterface>;
-using DkgServicePtr   = std::unique_ptr<dkg::DkgService>;
-using ConstByteArray  = byte_array::ConstByteArray;
+using LaneIndex        = fetch::ledger::LaneIdentity::lane_type;
+using StakeManagerPtr  = std::shared_ptr<ledger::StakeManager>;
+using EntropyPtr       = std::unique_ptr<ledger::EntropyGeneratorInterface>;
+using ConstByteArray   = byte_array::ConstByteArray;
+using BeaconServicePtr = std::shared_ptr<fetch::beacon::BeaconService>;
 
 static const std::size_t HTTP_THREADS{4};
 static char const *      SNAPSHOT_FILENAME = "snapshot.json";
@@ -150,34 +157,31 @@ ledger::ShardConfigs GenerateShardsConfig(uint32_t num_lanes, uint16_t start_por
   return configs;
 }
 
-EntropyPtr CreateEntropy()
-{
-  return std::make_unique<ledger::NaiveEntropyGenerator>();
-}
-
-StakeManagerPtr CreateStakeManager(bool enabled, ledger::EntropyGeneratorInterface &entropy)
+StakeManagerPtr CreateStakeManager(Constellation::Config const &      cfg,
+                                   ledger::EntropyGeneratorInterface &entropy)
 {
   StakeManagerPtr mgr{};
 
-  if (enabled)
+  if (cfg.proof_of_stake)
   {
-    mgr = std::make_shared<ledger::StakeManager>(entropy);
+    mgr = std::make_shared<ledger::StakeManager>(entropy, cfg.block_interval_ms);
   }
 
   return mgr;
 }
 
-DkgServicePtr CreateDkgService(Constellation::Config const &cfg, ConstByteArray address,
-                               MuddleEndpoint &endpoint)
+BeaconServicePtr CreateBeaconService(Constellation::Config const &cfg, MuddleEndpoint &endpoint,
+                                     Constellation::CertificatePtr certificate)
 {
-  DkgServicePtr dkg{};
+  BeaconServicePtr                         beacon{};
+  beacon::EventManager::SharedEventManager event_manager = beacon::EventManager::New();
 
   if (cfg.proof_of_stake)
   {
-    dkg = std::make_unique<dkg::DkgService>(endpoint, address);
+    beacon = std::make_unique<fetch::beacon::BeaconService>(endpoint, certificate, event_manager);
   }
 
-  return dkg;
+  return beacon;
 }
 
 }  // namespace
@@ -216,35 +220,31 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
                                                  cfg_.log2_num_lanes))
   , lane_control_(internal_muddle_.AsEndpoint(), shard_cfgs_, cfg_.log2_num_lanes)
   , dag_{GenerateDAG(cfg_.features.IsEnabled("synergetic"), "dag_db_", true, certificate)}
-  , dkg_{CreateDkgService(cfg_, certificate->identity().identifier(), muddle_.AsEndpoint())}
-  , entropy_{CreateEntropy()}
-  , stake_{CreateStakeManager(cfg_.proof_of_stake, *entropy_)}
+  , beacon_{CreateBeaconService(cfg_, muddle_.AsEndpoint(), certificate)}
+  , stake_{CreateStakeManager(cfg_, *beacon_)}
   , execution_manager_{std::make_shared<ExecutionManager>(
         cfg_.num_executors, cfg_.log2_num_lanes, storage_,
         [this] {
           return std::make_shared<Executor>(storage_, stake_ ? &stake_->update_queue() : nullptr);
-        })}
+        },
+        tx_status_cache_)}
   , chain_{cfg_.features.IsEnabled(FeatureFlags::MAIN_CHAIN_BLOOM_FILTER),
            ledger::MainChain::Mode::LOAD_PERSISTENT_DB}
   , block_packer_{cfg_.log2_num_lanes}
-  , block_coordinator_{chain_,
-                       dag_,
-                       stake_,
-                       *execution_manager_,
-                       *storage_,
-                       block_packer_,
-                       *this,
-                       tx_status_cache_,
-                       cfg_.features,
-                       certificate,
-                       cfg_.num_lanes(),
-                       cfg_.num_slices,
-                       cfg_.block_difficulty}
+  , block_coordinator_{chain_,          dag_,
+                       stake_,          *execution_manager_,
+                       *storage_,       block_packer_,
+                       *this,           cfg_.features,
+                       certificate,     cfg_.num_lanes(),
+                       cfg_.num_slices, cfg_.block_difficulty,
+                       beacon_}
   , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_,
                                                               cfg_.network_mode)}
   , tx_processor_{dag_, *storage_, block_packer_, tx_status_cache_, cfg_.processor_threads}
+  , http_open_api_module_{std::make_shared<OpenAPIHttpModule>()}
   , http_{http_network_manager_}
   , http_modules_{
+        http_open_api_module_,
         std::make_shared<p2p::P2PHttpInterface>(
             cfg_.log2_num_lanes, chain_, muddle_, p2p_, trust_, block_packer_,
             p2p::P2PHttpInterface::WeakStateMachines{main_chain_service_->GetWeakStateMachine(),
@@ -280,6 +280,13 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
     synergetic_miner_ = std::move(syn_miner);
   }
 
+  // Attach beacon runnables
+  if (beacon_)
+  {
+    reactor_.Attach(beacon_->GetMainRunnable());
+    reactor_.Attach(beacon_->GetSetupRunnable());
+  }
+
   // attach the services to the reactor
   reactor_.Attach(main_chain_service_->GetWeakRunnable());
 
@@ -296,10 +303,40 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
     http_.AddModule(*module);
   }
 
-  // If we are using the DKG service we need to update the default entropy engine for PoS
-  if (dkg_)
+  // If we are using POS, the beacon provides entropy
+  if (beacon_)
   {
-    stake_->UpdateEntropy(*dkg_);
+    stake_->UpdateEntropy(*beacon_);
+  }
+}
+
+/**
+ * Writes OpenAPI information about the HTTP REST interface to a stream.
+ *
+ * @param stream is stream to which the API is dumped to.
+ */
+void Constellation::DumpOpenAPI(std::ostream &stream)
+{
+  stream << "paths:" << std::endl;
+  byte_array::ConstByteArray last_path{};
+  for (auto const &view : http_.views())
+  {
+    std::string method = ToString(view.method);
+    std::transform(method.begin(), method.end(), method.begin(),
+                   [](unsigned char c) { return std::tolower(c); });
+
+    if (last_path != view.route.path())
+    {
+      stream << "  " << view.route.path() << ":" << std::endl;
+    }
+
+    last_path = view.route.path();
+    stream << "    " << method << ":" << std::endl;
+    stream << "      description: "
+           << "\"" << view.description << "\"" << std::endl;
+    stream << "      parameters: "
+           << "[" << std::endl;
+    stream << "      ] " << std::endl;
   }
 }
 
@@ -323,6 +360,7 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
   /// NETWORKING INFRASTRUCTURE
 
   // start all the services
+  http_open_api_module_->Reset(&http_);
   network_manager_.Start();
   http_network_manager_.Start();
   muddle_.Start({p2p_port_});
@@ -387,12 +425,21 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
   }
 
   // BEFORE the block coordinator starts its state set up special genesis
-  if (cfg_.load_state_file)
+  if (cfg_.proof_of_stake || cfg_.load_state_file)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Loading from genesis save file.");
+    FETCH_LOG_INFO(LOGGING_NAME,
+                   "Loading from genesis save file. Location: ", cfg_.stakefile_location);
 
-    GenesisFileCreator creator(block_coordinator_, *storage_, stake_.get(), dkg_.get());
-    creator.LoadFile(SNAPSHOT_FILENAME);
+    GenesisFileCreator creator(block_coordinator_, *storage_, stake_.get());
+
+    if (cfg_.stakefile_location.empty())
+    {
+      creator.LoadFile(SNAPSHOT_FILENAME);
+    }
+    else
+    {
+      creator.LoadFile(cfg_.stakefile_location);
+    }
 
     FETCH_LOG_INFO(LOGGING_NAME, "Loaded from genesis save file.");
   }
@@ -424,21 +471,28 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
   // Step 2. Main monitor loop
   //---------------------------------------------------------------
   bool start_up_in_progress{true};
-  bool dkg_attached{false};
+
+  std::size_t committee_size = 0;
+
+  if (stake_)
+  {
+    auto current = stake_->GetCurrentStakeSnapshot();
+
+    if (!current)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "No current stake snapshot found!");
+    }
+    else
+    {
+      committee_size = current->size();
+    }
+
+    FETCH_LOG_INFO(LOGGING_NAME, "Committee size: ", committee_size);
+  }
 
   // monitor loop
   while (active_)
   {
-    // wait for at least one connected peer
-    if (!muddle_.AsEndpoint().GetDirectlyConnectedPeers().empty())
-    {
-      if (dkg_ && !dkg_attached)
-      {
-        reactor_.Attach(dkg_->GetWeakRunnable());
-        dkg_attached = true;
-      }
-    }
-
     // determine the status of the main chain server
     bool const is_in_sync = main_chain_service_->IsSynced() && block_coordinator_.IsSynced();
 
@@ -478,14 +532,6 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
 
   FETCH_LOG_INFO(LOGGING_NAME, "Shutting down...");
 
-  if (cfg_.dump_state_file)
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "Creating genesis save file.");
-
-    GenesisFileCreator creator(block_coordinator_, *storage_, stake_.get(), dkg_.get());
-    creator.CreateFile(SNAPSHOT_FILENAME);
-  }
-
   http_.Stop();
   p2p_.Stop();
 
@@ -499,6 +545,8 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
   muddle_.Stop();
   http_network_manager_.Stop();
   network_manager_.Stop();
+
+  http_open_api_module_->Reset(nullptr);
 
   FETCH_LOG_INFO(LOGGING_NAME, "Shutting down...complete");
 }

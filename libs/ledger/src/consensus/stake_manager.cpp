@@ -45,8 +45,9 @@ std::size_t SafeDecrement(std::size_t value, std::size_t decrement)
 
 }  // namespace
 
-StakeManager::StakeManager(EntropyGeneratorInterface &entropy)
+StakeManager::StakeManager(EntropyGeneratorInterface &entropy, uint32_t block_interval_ms)
   : entropy_{&entropy}
+  , block_interval_ms_{block_interval_ms}
 {}
 
 void StakeManager::UpdateCurrentBlock(Block const &current)
@@ -66,21 +67,45 @@ void StakeManager::UpdateCurrentBlock(Block const &current)
 
 bool StakeManager::ShouldGenerateBlock(Block const &previous, Address const &address)
 {
-  bool generate{false};
+  FETCH_LOG_INFO(LOGGING_NAME, "Should generate block? Prev: ", previous.body.block_number);
 
   auto const committee = GetCommittee(previous);
+
   if (!committee || committee->empty())
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Unable to determine committee for block generation");
-  }
-  else
-  {
-    // TODO(EJF): A reporting back mechanism will need to be added in order to handle the cases
-    //            where blocks are not generated in a given time interval
-    generate = (*committee)[0] == address;
+    return false;
   }
 
-  return generate;
+  // At this point the miner will decide if they should produce a block. The first miner in the
+  // committee will wait until block_interval after the block at the HEAD of the chain, the second
+  // miner 2*block_interval and so on.
+  uint32_t time_to_wait = block_interval_ms_;
+  bool     in_committee = false;
+
+  for (std::size_t i = 0; i < (*committee).size(); ++i)
+  {
+    FETCH_LOG_DEBUG(LOGGING_NAME,
+                    "Saw committee member: ", Address((*committee)[i]).address().ToBase64(),
+                    "we are: ", address.address().ToBase64());
+
+    if (Address((*committee)[i]) == address)
+    {
+      in_committee = true;
+      break;
+    }
+    time_to_wait += block_interval_ms_;
+  }
+
+  uint64_t time_now_ms           = static_cast<uint64_t>(std::time(nullptr)) * 1000;
+  uint64_t desired_time_for_next = (previous.first_seen_timestamp * 1000) + time_to_wait;
+
+  if (in_committee && desired_time_for_next <= time_now_ms)
+  {
+    return true;
+  }
+
+  return false;
 }
 
 StakeManager::CommitteePtr StakeManager::GetCommittee(Block const &previous)
@@ -123,7 +148,7 @@ std::size_t StakeManager::GetBlockGenerationWeight(Block const &previous, Addres
   // TODO(EJF): Depending on the committee sizes this would need to be improved
   for (auto const &member : *committee)
   {
-    if (address == member)
+    if (address == Address(member))
     {
       break;
     }
@@ -131,6 +156,7 @@ std::size_t StakeManager::GetBlockGenerationWeight(Block const &previous, Addres
     weight = SafeDecrement(weight, 1);
   }
 
+  // Note: weight must always be non zero (indicates failure/not in committee)
   return weight;
 }
 
@@ -190,6 +216,7 @@ bool StakeManager::LookupEntropy(Block const &previous, uint64_t &entropy)
 
   // Step 1. Lookup the entropy
   auto const it = entropy_cache_.find(previous.body.block_number);
+
   if (entropy_cache_.end() != it)
   {
     entropy = it->second;
@@ -197,6 +224,11 @@ bool StakeManager::LookupEntropy(Block const &previous, uint64_t &entropy)
   }
   else
   {
+    if (!entropy_)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Entropy not set!");
+    }
+
     // generate the entropy for the previous block
     auto const status =
         entropy_->GenerateEntropy(previous.body.hash, previous.body.block_number, entropy);
@@ -240,7 +272,10 @@ bool StakeManager::ValidMinerForBlock(Block const &previous, Address const &addr
     return false;
   }
 
-  return std::find((*committee).begin(), (*committee).end(), address) != (*committee).end();
+  return std::find_if((*committee).begin(), (*committee).end(),
+                      [&address](Identity const &identity) {
+                        return address == Address(identity);
+                      }) != (*committee).end();
 }
 
 }  // namespace ledger

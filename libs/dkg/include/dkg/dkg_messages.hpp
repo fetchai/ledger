@@ -18,14 +18,18 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/serializers/byte_array.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "network/muddle/rpc/client.hpp"
+
+#include "core/serializers/base_types.hpp"
+#include "core/serializers/group_definitions.hpp"
+#include "core/serializers/main_serializer.hpp"
+#include <string>
 
 namespace fetch {
 namespace dkg {
 
-using DKGSerializer = fetch::serializers::ByteArrayBuffer;
+using DKGSerializer = fetch::serializers::MsgPackSerializer;
 
 /**
  * Different messages using in distributed key generation (DKG) protocol.
@@ -37,11 +41,11 @@ using DKGSerializer = fetch::serializers::ByteArrayBuffer;
 class DKGMessage
 {
 public:
-  using MsgSignature  = byte_array::ConstByteArray;
-  using MuddleAddress = byte_array::ConstByteArray;
-  using Coefficient   = std::string;
-  using Share         = std::string;
-  using CabinetId     = MuddleAddress;
+  using MessageSignature = byte_array::ConstByteArray;
+  using MuddleAddress    = byte_array::ConstByteArray;
+  using Coefficient      = std::string;
+  using Share            = std::string;
+  using CabinetId        = MuddleAddress;
 
   enum class MessageType : uint8_t
   {
@@ -58,7 +62,7 @@ public:
   {
     return type_;
   }
-  MsgSignature signature() const
+  MessageSignature signature() const
   {
     return signature_;
   }
@@ -68,12 +72,12 @@ public:
 
 protected:
   const MessageType type_;       ///< Type of message of the three listed above
-  MsgSignature      signature_;  ///< ECDSA signature of message
+  MessageSignature  signature_;  ///< ECDSA signature of message
 
   explicit DKGMessage(MessageType type)
     : type_{type}
   {}
-  DKGMessage(MessageType type, MsgSignature sig)
+  DKGMessage(MessageType type, MessageSignature sig)
     : type_{type}
     , signature_{std::move(sig)}
   {}
@@ -90,7 +94,7 @@ public:
   {
     serialiser >> phase_ >> coefficients_ >> signature_;
   }
-  CoefficientsMessage(uint8_t phase, std::vector<Coefficient> coeff, MsgSignature sig)
+  CoefficientsMessage(uint8_t phase, std::vector<Coefficient> coeff, MessageSignature sig)
     : DKGMessage{MessageType::COEFFICIENT, std::move(sig)}
     , phase_{phase}
     , coefficients_{std::move(coeff)}
@@ -129,7 +133,7 @@ public:
     serialiser >> phase_ >> shares_ >> signature_;
   }
   SharesMessage(uint8_t phase, std::unordered_map<CabinetId, std::pair<Share, Share>> shares,
-                MsgSignature sig)
+                MessageSignature sig)
     : DKGMessage{MessageType::SHARE, std::move(sig)}
     , phase_{phase}
     , shares_{std::move(shares)}
@@ -167,7 +171,7 @@ public:
   {
     serialiser >> complaints_ >> signature_;
   }
-  ComplaintsMessage(std::unordered_set<CabinetId> complaints, MsgSignature sig)
+  ComplaintsMessage(std::unordered_set<CabinetId> complaints, MessageSignature sig)
     : DKGMessage{MessageType::COMPLAINT, std::move(sig)}
     , complaints_{std::move(complaints)}
   {}
@@ -189,51 +193,59 @@ public:
   ///@}
 };
 
-class DKGEnvelop
+class DKGEnvelope
 {
   using MessageType = DKGMessage::MessageType;
   using Payload     = byte_array::ConstByteArray;
 
 public:
-  DKGEnvelop() = default;
-  explicit DKGEnvelop(DKGMessage const &msg)
+  DKGEnvelope() = default;
+  explicit DKGEnvelope(DKGMessage const &msg)
     : type_{msg.type()}
     , serialisedMessage_{msg.Serialize().data()}
   {}
 
-  template <typename T>
-  void Serialize(T &serialiser) const
-  {
-    serialiser << static_cast<uint8_t>(type_) << serialisedMessage_;
-  }
-
-  template <typename T>
-  void Deserialize(T &serialiser)
-  {
-    uint8_t val;
-    serialiser >> val;
-    type_ = static_cast<MessageType>(val);
-    serialiser >> serialisedMessage_;
-  }
-
   std::shared_ptr<DKGMessage> Message() const;
+
+  template <typename T, typename D>
+  friend struct serializers::MapSerializer;
 
 private:
   MessageType type_;               ///< Type of message contained in the envelope
   Payload     serialisedMessage_;  ///< Serialised message
 };
 
-template <typename T>
-inline void Serialize(T &serializer, DKGEnvelop const &env)
-{
-  env.Serialize(serializer);
-}
-
-template <typename T>
-inline void Deserialize(T &serializer, DKGEnvelop &env)
-{
-  env.Deserialize(serializer);
-}
-
 }  // namespace dkg
+
+namespace serializers {
+template <typename D>
+struct MapSerializer<dkg::DKGEnvelope, D>
+{
+public:
+  using Type       = dkg::DKGEnvelope;
+  using DriverType = D;
+
+  static uint8_t const TYPE    = 1;
+  static uint8_t const MESSAGE = 2;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &env)
+  {
+    auto map = map_constructor(2);
+    map.Append(TYPE, static_cast<uint8_t>(env.type_));
+    map.Append(MESSAGE, env.serialisedMessage_);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &env)
+  {
+    uint8_t type;
+    map.ExpectKeyGetValue(TYPE, type);
+    map.ExpectKeyGetValue(MESSAGE, env.serialisedMessage_);
+    env.type_ = static_cast<dkg::DKGEnvelope::MessageType>(type);
+  }
+};
+
+}  // namespace serializers
+
 }  // namespace fetch

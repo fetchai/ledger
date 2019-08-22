@@ -170,7 +170,8 @@ IRVariablePtr IR::CloneVariable(IRVariablePtr const &variable)
     return clone_variable;
   }
   IRTypePtr clone_type = CloneType(variable->type);
-  clone_variable       = CreateIRVariable(variable->variable_kind, variable->name, clone_type);
+  clone_variable =
+      CreateIRVariable(variable->variable_kind, variable->name, clone_type, variable->referenced);
   variable_map_.AddPair(variable, clone_variable);
   AddVariable(clone_variable);
   return clone_variable;

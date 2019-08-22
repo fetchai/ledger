@@ -17,20 +17,25 @@
 //------------------------------------------------------------------------------
 
 #include "core/reactor.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/counter.hpp"
-#include "dkg/dkg_service.hpp"
-
+#include "core/serializers/main_serializer.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
+#include "dkg/dkg_service.hpp"
+#include "dkg/pre_dkg_sync.hpp"
 #include "network/muddle/muddle.hpp"
-#include <iostream>
 
+#include <chrono>
+#include <cstdint>
+#include <memory>
+#include <thread>
+#include <vector>
+
+using namespace fetch;
 using namespace fetch::network;
 using namespace fetch::crypto;
 using namespace fetch::muddle;
 using namespace fetch::dkg;
-using namespace fetch::dkg::rbc;
 
 using Prover         = fetch::crypto::Prover;
 using ProverPtr      = std::shared_ptr<Prover>;
@@ -52,8 +57,8 @@ ProverPtr CreateNewCertificate()
 
 int main()
 {
-
-  uint32_t cabinet_size = 4;
+  uint32_t cabinet_size = 30;
+  uint32_t threshold{16};
 
   struct CabinetMember
   {
@@ -63,37 +68,45 @@ int main()
     ProverPtr            muddle_certificate;
     Muddle               muddle;
     DkgService           dkg_service;
+    PreDkgSync           pre_sync;
     CabinetMember(uint16_t port_number, uint16_t index)
       : muddle_port{port_number}
       , network_manager{"NetworkManager" + std::to_string(index), 1}
       , reactor{"ReactorName" + std::to_string(index)}
       , muddle_certificate{CreateNewCertificate()}
-      , muddle{fetch::muddle::NetworkId{"TestNetwork"}, muddle_certificate, network_manager, true,
-               true}
+      , muddle{fetch::muddle::NetworkId{"TestNetwork"}, muddle_certificate, network_manager}
       , dkg_service{muddle.AsEndpoint(), muddle_certificate->identity().identifier()}
+      , pre_sync{muddle, 4}
     {
       network_manager.Start();
       muddle.Start({muddle_port});
     }
   };
 
-  std::vector<std::unique_ptr<CabinetMember>> committee;
+  std::vector<std::unique_ptr<CabinetMember>>                         committee;
+  std::unordered_map<byte_array::ConstByteArray, fetch::network::Uri> peers_list;
+  RBC::CabinetMembers                                                 cabinet;
   for (uint16_t ii = 0; ii < cabinet_size; ++ii)
   {
     auto port_number = static_cast<uint16_t>(9000 + ii);
     committee.emplace_back(new CabinetMember{port_number, ii});
+    peers_list.insert({committee[ii]->muddle_certificate->identity().identifier(),
+                       fetch::network::Uri{"tcp://127.0.0.1:" + std::to_string(port_number)}});
+    cabinet.insert(committee[ii]->muddle_certificate->identity().identifier());
   }
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(500));
-
-  // Connect muddles together (localhost for this example)
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  // Reset cabinet for rbc in pre-dkg sync
   for (uint32_t ii = 0; ii < cabinet_size; ii++)
   {
-    for (uint32_t jj = ii + 1; jj < cabinet_size; jj++)
-    {
-      committee[ii]->muddle.AddPeer(
-          fetch::network::Uri{"tcp://127.0.0.1:" + std::to_string(committee[jj]->muddle_port)});
-    }
+    committee[ii]->pre_sync.ResetCabinet(peers_list);
+    committee[ii]->dkg_service.ResetCabinet(cabinet, threshold);
+  }
+
+  // Wait until everyone else has connected
+  for (uint32_t ii = 0; ii < cabinet_size; ii++)
+  {
+    committee[ii]->pre_sync.Connect();
   }
 
   uint32_t kk = 0;
@@ -102,8 +115,7 @@ int main()
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     for (uint32_t mm = kk; mm < cabinet_size; ++mm)
     {
-      if (committee[mm]->muddle.AsEndpoint().GetDirectlyConnectedPeers().size() !=
-          (cabinet_size - 1))
+      if (!committee[mm]->pre_sync.ready())
       {
         break;
       }
@@ -114,20 +126,10 @@ int main()
     }
   }
 
-  RBC::CabinetMembers cabinet;
-  for (auto &member : committee)
+  // Start at DKG for each muddle
   {
-    cabinet.insert(member->muddle_certificate->identity().identifier());
-  }
-  assert(cabinet.size() == cabinet_size);
-
-  // Start at RBC for each muddle
-  {
-    uint32_t threshold{1};
-
     for (auto &member : committee)
     {
-      member->dkg_service.ResetCabinet(cabinet, threshold);
       member->reactor.Attach(member->dkg_service.GetWeakRunnable());
     }
 
@@ -137,14 +139,31 @@ int main()
       member->reactor.Start();
     }
 
-    // Need to increase this depending on number of nodes to complete 3 rounds of DRB
-    std::this_thread::sleep_for(std::chrono::seconds(25));
+    // Sleep until everyone has finished
+    uint32_t qq = 0;
+    while (qq != cabinet_size)
+    {
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      for (uint32_t mm = qq; mm < cabinet_size; ++mm)
+      {
+        if (!committee[mm]->dkg_service.IsSynced())
+        {
+          break;
+        }
+        else
+        {
+          ++qq;
+        }
+      }
+    }
   }
 
   for (auto &member : committee)
   {
     member->reactor.Stop();
     member->muddle.Stop();
+    member->muddle.Shutdown();
+    member->network_manager.Stop();
   }
   std::this_thread::sleep_for(std::chrono::seconds(1));
 

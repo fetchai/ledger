@@ -16,11 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
-#include "ml/layers/convolution_1d.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
-
+#include "core/serializers/main_serializer.hpp"
 #include "gtest/gtest.h"
+#include "math/tensor.hpp"
+
+#include "ml/layers/convolution_1d.hpp"
+#include "ml/serializers/ml_types.hpp"
+#include "ml/utilities/graph_builder.hpp"
+
+#include "vectorise/fixed_point/fixed_point.hpp"
 
 template <typename T>
 class Convolution1DTest : public ::testing::Test
@@ -33,9 +37,9 @@ TYPED_TEST_CASE(Convolution1DTest, MyTypes);
 
 TYPED_TEST(Convolution1DTest, set_input_and_evaluate_test)  // Use the class as a subgraph
 {
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
-  using SizeType  = typename TypeParam::SizeType;
+  using DataType   = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using SizeType   = typename TypeParam::SizeType;
 
   SizeType const input_channels  = 3;
   SizeType const output_channels = 5;
@@ -67,7 +71,7 @@ TYPED_TEST(Convolution1DTest, set_input_and_evaluate_test)  // Use the class as 
   ASSERT_EQ(output.shape()[1], 1);
   ASSERT_EQ(output.shape()[2], 1);
 
-  ArrayType gt({output_channels, output_height});
+  TensorType gt({output_channels, output_height});
   gt(0, 0) = static_cast<DataType>(-4.28031352977);
   gt(1, 0) = static_cast<DataType>(-4.03654768132);
   gt(2, 0) = static_cast<DataType>(8.11192789580);
@@ -79,9 +83,9 @@ TYPED_TEST(Convolution1DTest, set_input_and_evaluate_test)  // Use the class as 
 
 TYPED_TEST(Convolution1DTest, ops_forward_test)  // Use the class as an Ops
 {
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
-  using SizeType  = typename TypeParam::SizeType;
+  using DataType   = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using SizeType   = typename TypeParam::SizeType;
 
   SizeType const input_channels  = 3;
   SizeType const output_channels = 5;
@@ -91,7 +95,7 @@ TYPED_TEST(Convolution1DTest, ops_forward_test)  // Use the class as an Ops
   SizeType const stride_size     = 1;
 
   // Generate input
-  ArrayType input(std::vector<typename TypeParam::SizeType>({input_channels, input_height, 1}));
+  TensorType input(std::vector<typename TypeParam::SizeType>({input_channels, input_height, 1}));
 
   for (SizeType i_ic{0}; i_ic < input_channels; ++i_ic)
   {
@@ -105,8 +109,8 @@ TYPED_TEST(Convolution1DTest, ops_forward_test)  // Use the class as an Ops
   fetch::ml::layers::Convolution1D<TypeParam> conv(output_channels, input_channels, kernel_height,
                                                    stride_size);
 
-  ArrayType output(conv.ComputeOutputShape({input}));
-  conv.Forward({input}, output);
+  TensorType output(conv.ComputeOutputShape({std::make_shared<TypeParam>(input)}));
+  conv.Forward({std::make_shared<TypeParam>(input)}, output);
 
   // test correct values
   ASSERT_EQ(output.shape().size(), 3);
@@ -114,7 +118,7 @@ TYPED_TEST(Convolution1DTest, ops_forward_test)  // Use the class as an Ops
   ASSERT_EQ(output.shape()[1], 1);
   ASSERT_EQ(output.shape()[2], 1);
 
-  ArrayType gt({output_channels, output_height, 1});
+  TensorType gt({output_channels, output_height, 1});
   gt(0, 0, 0) = static_cast<DataType>(-4.28031352977);
   gt(1, 0, 0) = static_cast<DataType>(-4.03654768132);
   gt(2, 0, 0) = static_cast<DataType>(8.11192789580);
@@ -126,9 +130,9 @@ TYPED_TEST(Convolution1DTest, ops_forward_test)  // Use the class as an Ops
 
 TYPED_TEST(Convolution1DTest, ops_backward_test)  // Use the class as an Ops
 {
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
-  using SizeType  = typename TypeParam::SizeType;
+  using DataType   = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using SizeType   = typename TypeParam::SizeType;
 
   SizeType const input_channels  = 3;
   SizeType const output_channels = 5;
@@ -138,7 +142,7 @@ TYPED_TEST(Convolution1DTest, ops_backward_test)  // Use the class as an Ops
   SizeType const stride_size     = 1;
 
   // Generate input
-  ArrayType input(std::vector<typename TypeParam::SizeType>({input_channels, input_height, 1}));
+  TensorType input(std::vector<typename TypeParam::SizeType>({input_channels, input_height, 1}));
 
   for (SizeType i_ic{0}; i_ic < input_channels; ++i_ic)
   {
@@ -149,7 +153,7 @@ TYPED_TEST(Convolution1DTest, ops_backward_test)  // Use the class as an Ops
   }
 
   // Generate error
-  ArrayType error_signal(
+  TensorType error_signal(
       std::vector<typename TypeParam::SizeType>({output_channels, output_height, 1}));
 
   for (SizeType i_oc{0}; i_oc < output_channels; ++i_oc)
@@ -164,10 +168,11 @@ TYPED_TEST(Convolution1DTest, ops_backward_test)  // Use the class as an Ops
   fetch::ml::layers::Convolution1D<TypeParam> conv(output_channels, input_channels, kernel_height,
                                                    stride_size);
 
-  ArrayType output(conv.ComputeOutputShape({input}));
-  conv.Forward({input}, output);
+  TensorType output(conv.ComputeOutputShape({std::make_shared<TypeParam>(input)}));
+  conv.Forward({std::make_shared<TypeParam>(input)}, output);
 
-  std::vector<TypeParam> backprop_error = conv.Backward({input}, error_signal);
+  std::vector<TypeParam> backprop_error =
+      conv.Backward({std::make_shared<TypeParam>(input)}, error_signal);
 
   // test correct values
   ASSERT_EQ(backprop_error.size(), 1);
@@ -189,9 +194,9 @@ TYPED_TEST(Convolution1DTest, ops_backward_test)  // Use the class as an Ops
 
 TYPED_TEST(Convolution1DTest, node_forward_test)  // Use the class as a Node
 {
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
-  using SizeType  = typename TypeParam::SizeType;
+  using DataType   = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using SizeType   = typename TypeParam::SizeType;
 
   SizeType const input_channels  = 3;
   SizeType const output_channels = 5;
@@ -212,15 +217,20 @@ TYPED_TEST(Convolution1DTest, node_forward_test)  // Use the class as a Node
   }
 
   // Evaluate
-  std::shared_ptr<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>> placeholder =
-      std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>>("Input");
-  placeholder->SetData(input);
+  auto placeholder_node =
+      std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::OP_PLACEHOLDER, "Input");
+  std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder_node->GetOp())
+      ->SetData(input);
 
-  fetch::ml::Node<TypeParam, fetch::ml::layers::Convolution1D<TypeParam>> conv(
-      "Convolution1D", output_channels, input_channels, kernel_height, stride_size);
-  conv.AddInput(placeholder);
+  auto conv = fetch::ml::Node<TypeParam>(
+      fetch::ml::OpType::LAYER_CONVOLUTION_1D, "Convolution2D",
+      [output_channels, input_channels, kernel_height, stride_size]() {
+        return std::make_shared<fetch::ml::layers::Convolution1D<TypeParam>>(
+            output_channels, input_channels, kernel_height, stride_size);
+      });
+  conv.AddInput(placeholder_node);
 
-  TypeParam prediction = conv.Evaluate(true);
+  TypeParam prediction = *conv.Evaluate(true);
 
   // test correct values
   ASSERT_EQ(prediction.shape().size(), 3);
@@ -228,7 +238,7 @@ TYPED_TEST(Convolution1DTest, node_forward_test)  // Use the class as a Node
   ASSERT_EQ(prediction.shape()[1], 1);
   ASSERT_EQ(prediction.shape()[2], 1);
 
-  ArrayType gt({output_channels, output_height, 1});
+  TensorType gt({output_channels, output_height, 1});
   gt(0, 0, 0) = static_cast<DataType>(-4.28031352977);
   gt(1, 0, 0) = static_cast<DataType>(-4.03654768132);
   gt(2, 0, 0) = static_cast<DataType>(8.11192789580);
@@ -240,9 +250,9 @@ TYPED_TEST(Convolution1DTest, node_forward_test)  // Use the class as a Node
 
 TYPED_TEST(Convolution1DTest, node_backward_test)  // Use the class as a Node
 {
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
-  using SizeType  = typename TypeParam::SizeType;
+  using DataType   = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using SizeType   = typename TypeParam::SizeType;
 
   SizeType const input_channels  = 3;
   SizeType const output_channels = 5;
@@ -252,7 +262,7 @@ TYPED_TEST(Convolution1DTest, node_backward_test)  // Use the class as a Node
   SizeType const stride_size     = 1;
 
   // Generate input
-  ArrayType input(std::vector<typename TypeParam::SizeType>({input_channels, input_height, 1}));
+  TensorType input(std::vector<typename TypeParam::SizeType>({input_channels, input_height, 1}));
 
   for (SizeType i_ic{0}; i_ic < input_channels; ++i_ic)
   {
@@ -263,7 +273,7 @@ TYPED_TEST(Convolution1DTest, node_backward_test)  // Use the class as a Node
   }
 
   // Generate error
-  ArrayType error_signal(
+  TensorType error_signal(
       std::vector<typename TypeParam::SizeType>({output_channels, output_height, 1}));
 
   for (SizeType i_oc{0}; i_oc < output_channels; ++i_oc)
@@ -275,14 +285,20 @@ TYPED_TEST(Convolution1DTest, node_backward_test)  // Use the class as a Node
   }
 
   // Evaluate
-  std::shared_ptr<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>> placeholder =
-      std::make_shared<fetch::ml::Node<TypeParam, fetch::ml::ops::PlaceHolder<TypeParam>>>("Input");
-  placeholder->SetData(input);
+  auto placeholder_node =
+      std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::OP_PLACEHOLDER, "Input");
+  std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder_node->GetOp())
+      ->SetData(input);
 
-  fetch::ml::Node<TypeParam, fetch::ml::layers::Convolution1D<TypeParam>> conv(
-      "Convolution1D", output_channels, input_channels, kernel_height, stride_size);
-  conv.AddInput(placeholder);
-  TypeParam prediction     = conv.Evaluate(true);
+  auto conv = fetch::ml::Node<TypeParam>(
+      fetch::ml::OpType::LAYER_CONVOLUTION_1D, "Convolution2D",
+      [output_channels, input_channels, kernel_height, stride_size]() {
+        return std::make_shared<fetch::ml::layers::Convolution1D<TypeParam>>(
+            output_channels, input_channels, kernel_height, stride_size);
+      });
+  conv.AddInput(placeholder_node);
+
+  TypeParam prediction     = *conv.Evaluate(true);
   auto      backprop_error = conv.BackPropagateSignal(error_signal);
 
   // test correct values
@@ -314,9 +330,9 @@ TYPED_TEST(Convolution1DTest, node_backward_test)  // Use the class as a Node
 
 TYPED_TEST(Convolution1DTest, graph_forward_test)  // Use the class as a Node
 {
-  using DataType  = typename TypeParam::Type;
-  using ArrayType = TypeParam;
-  using SizeType  = typename TypeParam::SizeType;
+  using DataType   = typename TypeParam::Type;
+  using TensorType = TypeParam;
+  using SizeType   = typename TypeParam::SizeType;
 
   SizeType const input_channels  = 3;
   SizeType const output_channels = 5;
@@ -326,7 +342,7 @@ TYPED_TEST(Convolution1DTest, graph_forward_test)  // Use the class as a Node
   SizeType const stride_size     = 1;
 
   // Generate input
-  ArrayType input(std::vector<typename TypeParam::SizeType>({input_channels, input_height, 1}));
+  TensorType input(std::vector<typename TypeParam::SizeType>({input_channels, input_height, 1}));
 
   for (SizeType i_ic{0}; i_ic < input_channels; ++i_ic)
   {
@@ -351,7 +367,7 @@ TYPED_TEST(Convolution1DTest, graph_forward_test)  // Use the class as a Node
   ASSERT_EQ(prediction.shape()[1], 1);
   ASSERT_EQ(prediction.shape()[2], 1);
 
-  ArrayType gt({output_channels, output_height, 1});
+  TensorType gt({output_channels, output_height, 1});
   gt(0, 0, 0) = static_cast<DataType>(-4.28031352977);
   gt(1, 0, 0) = static_cast<DataType>(-4.03654768132);
   gt(2, 0, 0) = static_cast<DataType>(8.11192789580);
@@ -363,19 +379,19 @@ TYPED_TEST(Convolution1DTest, graph_forward_test)  // Use the class as a Node
 
 TYPED_TEST(Convolution1DTest, getStateDict)
 {
-  using ArrayType = TypeParam;
-  using SizeType  = typename TypeParam::SizeType;
+  using TensorType = TypeParam;
+  using SizeType   = typename TypeParam::SizeType;
 
   SizeType const input_channels  = 3;
   SizeType const output_channels = 5;
   SizeType const kernel_height   = 3;
   SizeType const stride_size     = 1;
 
-  // Initialize weights
-  fetch::ml::layers::Convolution1D<ArrayType> conv(
+  // Initialise weights
+  fetch::ml::layers::Convolution1D<TensorType> conv(
       output_channels, input_channels, kernel_height, stride_size,
       fetch::ml::details::ActivationType::NOTHING, "ConvTest");
-  fetch::ml::StateDict<ArrayType> sd = conv.StateDict();
+  fetch::ml::StateDict<TensorType> sd = conv.StateDict();
 
   // Get weights
   EXPECT_EQ(sd.weights_, nullptr);
@@ -390,4 +406,110 @@ TYPED_TEST(Convolution1DTest, getStateDict)
   EXPECT_FLOAT_EQ(static_cast<float>(weights_ptr->At(0, 0, 0, 0)), -0.970493f);
   EXPECT_FLOAT_EQ(static_cast<float>(weights_ptr->At(1, 1, 1, 0)), 0.55109727f);
   EXPECT_FLOAT_EQ(static_cast<float>(weights_ptr->At(4, 2, 2, 0)), -0.97583634f);
+}
+
+TYPED_TEST(Convolution1DTest, saveparams_test)
+{
+  using DataType  = typename TypeParam::Type;
+  using SizeType  = typename TypeParam::SizeType;
+  using LayerType = typename fetch::ml::layers::Convolution1D<TypeParam>;
+  using SPType    = typename LayerType::SPType;
+
+  SizeType const input_channels  = 3;
+  SizeType const output_channels = 5;
+  SizeType const input_height    = 3;
+  SizeType const kernel_height   = 3;
+  SizeType const stride_size     = 1;
+
+  std::string input_name  = "Conv1D_Input";
+  std::string output_name = "Conv1D_Conv1D";
+
+  // Generate input
+  TypeParam input(std::vector<typename TypeParam::SizeType>({input_channels, input_height, 1}));
+
+  for (SizeType i_ic{0}; i_ic < input_channels; ++i_ic)
+  {
+    for (SizeType i_i{0}; i_i < input_height; ++i_i)
+    {
+      input(i_ic, i_i, 0) = static_cast<DataType>(i_i + 1);
+    }
+  }
+
+  TypeParam labels({output_channels, 1, 1});
+  labels.FillUniformRandom();
+
+  // Create layer
+  LayerType layer(output_channels, input_channels, kernel_height, stride_size);
+
+  // add label node
+  std::string label_name =
+      layer.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("label", {});
+
+  // Add loss function
+  std::string error_output = layer.template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TypeParam>>(
+      "num_error", {output_name, label_name});
+
+  // set input and evaluate
+  layer.SetInput(input_name, input);
+  TypeParam prediction;
+  // make initial prediction to set internal buffers which must be correctly set in serialisation
+  prediction = layer.Evaluate(output_name, true);
+
+  // extract saveparams
+  auto sp = layer.GetOpSaveableParams();
+
+  // downcast to correct type
+  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
+
+  // serialize
+  fetch::serializers::MsgPackSerializer b;
+  b << *dsp;
+
+  // deserialize
+  b.seek(0);
+  auto dsp2 = std::make_shared<SPType>();
+  b >> *dsp2;
+
+  // rebuild
+  auto layer2 = *(fetch::ml::utilities::BuildLayer<TypeParam, LayerType>(dsp2));
+
+  // test equality
+  layer.SetInput(input_name, input);
+  prediction = layer.Evaluate(output_name, true);
+
+  layer2.SetInput(input_name, input);
+  TypeParam prediction2 = layer2.Evaluate(output_name, true);
+
+  ASSERT_TRUE(prediction.AllClose(prediction2, fetch::math::function_tolerance<DataType>(),
+                                  fetch::math::function_tolerance<DataType>()));
+
+  // train g
+  layer.SetInput(label_name, labels);
+  TypeParam loss = layer.Evaluate(error_output);
+  layer.BackPropagateError(error_output);
+  layer.Step(DataType{0.1f});
+
+  // train g2
+  layer2.SetInput(label_name, labels);
+  TypeParam loss2 = layer2.Evaluate(error_output);
+  layer2.BackPropagateError(error_output);
+  layer2.Step(DataType{0.1f});
+
+  EXPECT_TRUE(loss.AllClose(loss2, fetch::math::function_tolerance<DataType>(),
+                            fetch::math::function_tolerance<DataType>()));
+
+  // new random input
+  input.FillUniformRandom();
+
+  layer.SetInput(input_name, input);
+  TypeParam prediction3 = layer.Evaluate(output_name);
+
+  layer2.SetInput(input_name, input);
+  TypeParam prediction4 = layer2.Evaluate(output_name);
+
+  EXPECT_FALSE(prediction.AllClose(prediction3, fetch::math::function_tolerance<DataType>(),
+                                   fetch::math::function_tolerance<DataType>()));
+
+  EXPECT_TRUE(prediction3.AllClose(prediction4, fetch::math::function_tolerance<DataType>(),
+                                   fetch::math::function_tolerance<DataType>()));
 }

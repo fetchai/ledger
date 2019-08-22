@@ -19,6 +19,12 @@
 
 #include "dkg/dkg_messages.hpp"
 
+#include <atomic>
+#include <mutex>
+#include <set>
+#include <unordered_map>
+#include <vector>
+
 namespace fetch {
 namespace dkg {
 
@@ -40,12 +46,11 @@ class ComplaintsManager
                           complaints_counter_;  ///< Counter for number complaints received by a cabinet member
   std::set<MuddleAddress> complaints_from_;  ///< Set of members who complaints against self
   std::set<MuddleAddress> complaints_;       ///< Set of members who we are complaining against
-  std::atomic<uint32_t>   complaints_received_counter_{
-      0};                                ///< Counter for number of complaint messages received
-  std::vector<bool> complaints_received_;  ///< Vector which marks the true/false for whether we
-                                           ///< have received a complaint message
-                                           ///<  from each cabinet member by their index
-  std::atomic<bool> finished_{
+  uint32_t complaints_received_counter_{0};  ///< Counter for number of complaint messages received
+  std::vector<bool> complaints_received_;    ///< Vector which marks the true/false for whether we
+                                             ///< have received a complaint message
+                                             ///<  from each cabinet member by their index
+  bool finished_{
       false};  ///< Bool denoting whether we have collected complaint messages from everyone
   mutable std::mutex mutex_;
 
@@ -54,13 +59,14 @@ public:
 
   void ResetCabinet(uint32_t cabinet_size);
   void Count(MuddleAddress const &address);
-  void Add(std::shared_ptr<ComplaintsMessage> const &msg_ptr, MuddleAddress const &from_id,
-           uint32_t from_index, MuddleAddress node_address);
+  void Add(ComplaintsMessage const &msg, MuddleAddress const &from_id, uint32_t from_index,
+           MuddleAddress const &node_address);
   bool IsFinished(std::set<MuddleAddress> const &miners, uint32_t node_index, uint32_t threshold);
   void Clear();
 
   std::set<MuddleAddress> ComplaintsFrom() const;
   std::set<MuddleAddress> Complaints() const;
+  uint32_t                ComplaintsCount(MuddleAddress const &address);
 };
 
 /**
@@ -70,21 +76,31 @@ public:
 class QualComplaintsManager
 {
   using MuddleAddress = byte_array::ConstByteArray;
+  using CabinetId     = MuddleAddress;
+  using Share         = std::string;
+  using ExposedShares = std::pair<Share, Share>;
+  using QualComplaints =
+      std::unordered_map<MuddleAddress, std::unordered_map<CabinetId, ExposedShares>>;
 
+  bool                    finished_{false};
   std::set<MuddleAddress> complaints_;           ///< Cabinet members we complain against
-  std::set<MuddleAddress> complaints_received_;  ///< Set of cabinet members we have received a qual
+  QualComplaints          complaints_received_;  ///< Set of cabinet members we have received a qual
                                                  ///< complaint message from
   mutable std::mutex mutex_;
 
 public:
   QualComplaintsManager() = default;
 
-  void        Complaints(MuddleAddress const &id);
-  void        Received(MuddleAddress const &id);
-  std::size_t ComplaintsSize() const;
-  bool        ComplaintsFind(MuddleAddress const &id) const;
-  bool        IsFinished(std::set<MuddleAddress> const &qual, MuddleAddress const &node_id);
-  void        Clear();
+  void                                           Complaints(MuddleAddress const &id);
+  void                                           Received(MuddleAddress const &                               id,
+                                                          std::unordered_map<CabinetId, ExposedShares> const &complaints);
+  const QualComplaints &                         ComplaintsReceived() const;
+  std::size_t                                    ComplaintsSize() const;
+  bool                                           ComplaintsFind(MuddleAddress const &id) const;
+  std::set<QualComplaintsManager::MuddleAddress> Complaints() const;
+  bool IsFinished(std::set<MuddleAddress> const &qual, MuddleAddress const &node_id);
+  void Clear();
+  void Reset();
 };
 
 /**
@@ -97,8 +113,8 @@ class ComplaintsAnswerManager
   uint32_t                cabinet_size_;
   std::set<MuddleAddress> complaints_;
   std::vector<bool>       complaint_answers_received_;
-  std::atomic<uint32_t>   complaint_answers_received_counter_{0};
-  std::atomic<bool>       finished_{false};
+  uint32_t                complaint_answers_received_counter_{0};
+  bool                    finished_{false};
   std::mutex              mutex_;
 
 public:
@@ -107,7 +123,7 @@ public:
   void                    Init(std::set<MuddleAddress> const &complaints);
   void                    ResetCabinet(uint32_t cabinet_size);
   void                    Add(MuddleAddress const &miner);
-  void                    Count(uint32_t from_index);
+  bool                    Count(uint32_t from_index);
   bool                    IsFinished(std::set<MuddleAddress> const &miners, uint32_t index);
   std::set<MuddleAddress> BuildQual(std::set<MuddleAddress> const &miners);
   void                    Clear();

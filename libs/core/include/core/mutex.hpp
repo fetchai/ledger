@@ -40,7 +40,31 @@ class ProductionMutex : public AbstractMutex
 {
 public:
   ProductionMutex(int, std::string const &)
+    : owner_{std::this_thread::get_id()}
+    , locked_{false}
   {}
+
+  void lock()
+  {
+    std::mutex::lock();
+    locked_ = true;
+    owner_  = std::this_thread::get_id();
+  }
+  void unlock()
+  {
+    locked_ = false;
+    owner_  = std::thread::id();
+    std::mutex::unlock();
+  }
+
+  bool owns_lock() const
+  {
+    return static_cast<bool>(locked_) && (owner_ == std::this_thread::get_id());
+  }
+
+private:
+  std::atomic<std::thread::id> owner_;
+  std::atomic<bool>            locked_;
 };
 
 /**
@@ -54,11 +78,6 @@ class DebugMutex : public AbstractMutex
   using Duration  = Clock::duration;
 
   static constexpr char const *LOGGING_NAME = "DebugMutex";
-
-  struct LockInfo
-  {
-    bool locked = true;
-  };
 
   class MutexTimeout
   {
@@ -140,8 +159,8 @@ public:
     lock_mutex_.unlock();
 
     std::mutex::lock();
-
-    timeout_ = std::make_unique<MutexTimeout>(file_, line_);
+    thread_locked_ = true;
+    timeout_       = std::make_unique<MutexTimeout>(file_, line_);
     fetch::logger.RegisterLock(this);
     thread_id_ = std::this_thread::get_id();
   }
@@ -161,6 +180,7 @@ public:
     timeout_.reset(nullptr);
     fetch::logger.RegisterUnlock(this, total_time, file_, line_);
 
+    thread_locked_ = false;
     std::mutex::unlock();
   }
 
@@ -187,20 +207,26 @@ public:
     return thread_id_;
   }
 
+  bool owns_lock() const
+  {
+    return static_cast<bool>(thread_locked_) && (thread_id_ == std::this_thread::get_id());
+  }
+
 private:
   std::mutex lock_mutex_;
   Timepoint locked_ FETCH_GUARDED_BY(lock_mutex_);  ///< The time when the mutex was locked
-  std::thread::id   thread_id_;                     ///< The last thread to lock the mutex
+  std::atomic<bool> thread_locked_;
+  std::atomic<std::thread::id> thread_id_;  ///< The last thread to lock the mutex
 
   int                           line_ = 0;   ///< The line number of the mutex
   std::string                   file_ = "";  ///< The filename of the mutex
   std::unique_ptr<MutexTimeout> timeout_;    ///< The timeout monitor for this mutex
 };
 
-#ifdef NDEBUG
-using Mutex = ProductionMutex;
-#else
+#if defined(FETCH_DEBUG_MUTEX) && !(defined(NDEBUG))
 using Mutex = DebugMutex;
+#else
+using Mutex = ProductionMutex;
 #endif
 
 #define FETCH_JOIN_IMPL(x, y) x##y

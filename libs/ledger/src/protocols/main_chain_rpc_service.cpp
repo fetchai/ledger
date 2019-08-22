@@ -18,8 +18,8 @@
 
 #include "core/byte_array/encoders.hpp"
 #include "core/logger.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
 #include "core/serializers/counter.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "core/service_ids.hpp"
 #include "crypto/fetch_identity.hpp"
 #include "ledger/chain/block_coordinator.hpp"
@@ -43,8 +43,8 @@ namespace {
 using fetch::muddle::Packet;
 using fetch::byte_array::ToBase64;
 
-using BlockSerializer        = fetch::serializers::ByteArrayBuffer;
-using BlockSerializerCounter = fetch::serializers::SizeCounter<BlockSerializer>;
+using BlockSerializer        = fetch::serializers::MsgPackSerializer;
+using BlockSerializerCounter = fetch::serializers::SizeCounter;
 using PromiseState           = fetch::service::PromiseState;
 using State                  = MainChainRpcService::State;
 using Mode                   = MainChainRpcService::Mode;

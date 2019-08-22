@@ -16,12 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "random_address.hpp"
-
 #include "core/containers/is_in.hpp"
 #include "core/random/lcg.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
 #include "ledger/consensus/stake_update_queue.hpp"
+#include "random_address.hpp"
 
 #include "gtest/gtest.h"
 
@@ -46,24 +45,19 @@ protected:
     stake_update_queue_ = std::make_unique<StakeUpdateQueue>();
   }
 
-  void TearDown() override
-  {
-    stake_update_queue_.reset();
-  }
-
   StakeUpdateQueuePtr stake_update_queue_;
   RNG                 rng_;
 };
 
 TEST_F(StakeUpdateQueueTests, SimpleCheck)
 {
-  auto const address1 = GenerateRandomAddress(rng_);
-  auto const address2 = GenerateRandomAddress(rng_);
-  auto const address3 = GenerateRandomAddress(rng_);
+  auto const identity1 = GenerateRandomIdentity(rng_);
+  auto const identity2 = GenerateRandomIdentity(rng_);
+  auto const identity3 = GenerateRandomIdentity(rng_);
 
-  stake_update_queue_->AddStakeUpdate(10, address1, 500);
-  stake_update_queue_->AddStakeUpdate(11, address2, 500);
-  stake_update_queue_->AddStakeUpdate(12, address3, 500);
+  stake_update_queue_->AddStakeUpdate(10, identity1, 500);
+  stake_update_queue_->AddStakeUpdate(11, identity2, 500);
+  stake_update_queue_->AddStakeUpdate(12, identity3, 500);
   EXPECT_EQ(3, stake_update_queue_->size());
 
   // check to make sure the update map has been set correctly
@@ -74,16 +68,16 @@ TEST_F(StakeUpdateQueueTests, SimpleCheck)
     EXPECT_TRUE(IsIn(map, 11u));
     EXPECT_TRUE(IsIn(map, 12u));
 
-    EXPECT_TRUE(IsIn(map.at(10), address1));
+    EXPECT_TRUE(IsIn(map.at(10), identity1));
     EXPECT_EQ(1, map.at(10).size());
-    EXPECT_TRUE(IsIn(map.at(11), address2));
+    EXPECT_TRUE(IsIn(map.at(11), identity2));
     EXPECT_EQ(1, map.at(11).size());
-    EXPECT_TRUE(IsIn(map.at(12), address3));
+    EXPECT_TRUE(IsIn(map.at(12), identity3));
     EXPECT_EQ(1, map.at(12).size());
 
-    EXPECT_EQ(500, map.at(10).at(address1));
-    EXPECT_EQ(500, map.at(11).at(address2));
-    EXPECT_EQ(500, map.at(12).at(address3));
+    EXPECT_EQ(500, map.at(10).at(identity1));
+    EXPECT_EQ(500, map.at(11).at(identity2));
+    EXPECT_EQ(500, map.at(12).at(identity3));
   });
 
   StakeSnapshotPtr current_snapshot = std::make_shared<StakeSnapshot>();

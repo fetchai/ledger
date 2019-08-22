@@ -24,10 +24,10 @@
 #include "core/state_machine.hpp"
 #include "dkg/dkg.hpp"
 #include "dkg/dkg_rpc_protocol.hpp"
-#include "dkg/rbc.hpp"
 #include "dkg/round.hpp"
 #include "ledger/chain/address.hpp"
 #include "ledger/consensus/entropy_generator_interface.hpp"
+#include "network/muddle/rbc.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
 
@@ -117,7 +117,7 @@ public:
   using ConstByteArray = byte_array::ConstByteArray;
   using MuddleAddress  = ConstByteArray;
   using CabinetMembers = std::set<MuddleAddress>;
-  using RBCMessageType = DKGEnvelop;
+  using RBCMessageType = DKGEnvelope;
 
   // Construction / Destruction
   explicit DkgService(Endpoint &endpoint, ConstByteArray address);
@@ -128,7 +128,6 @@ public:
   /// @name External Events
   /// @{
   void SubmitSignatureShare(uint64_t round, uint32_t const &id, std::string const &signature);
-  void SubmitShare(MuddleAddress const &address, std::pair<std::string, std::string> const &shares);
   void OnRbcDeliver(MuddleAddress const &from, byte_array::ConstByteArray const &payload);
   /// @}
 
@@ -137,6 +136,8 @@ public:
   Status GenerateEntropy(Digest block_digest, uint64_t block_number, uint64_t &entropy) override;
   /// @}
 
+  bool IsSynced() const;
+
   /// @name Helper Methods
   /// @{
   std::weak_ptr<core::Runnable> GetWeakRunnable()
@@ -144,18 +145,49 @@ public:
     return state_machine_;
   }
 
-  void ResetCabinet(CabinetMembers cabinet, uint32_t threshold)
+  void ResetCabinet(CabinetMembers cabinet,
+                    uint32_t       threshold = std::numeric_limits<uint32_t>::max())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Resetting cabinet. Cabinet size: ", cabinet.size(),
-                   " threshold: ", threshold);
+    is_synced_ = false;
+
+    // Determine whether we are in the cabinet and so should proceed
+    if (cabinet.find(address_) == cabinet.end())
+    {
+      // Not in cabinet case
+      FETCH_LOG_INFO(LOGGING_NAME, "Node not in cabinet. Quitting DKG");
+      is_synced_ = true;
+      return;
+    }
+
     FETCH_LOCK(cabinet_lock_);
-    assert(cabinet.size() > 3 * threshold);  // To meet the requirements for the RBC
-    current_cabinet_   = std::move(cabinet);
-    current_threshold_ = threshold;
-    id_                = static_cast<uint32_t>(
+
+    assert(cabinet.size() > threshold);
+    // Check threshold meets the requirements for the RBC
+    if (cabinet.size() % 3 == 0)
+    {
+      assert(threshold >= static_cast<uint32_t>(cabinet.size() / 3 - 1));
+    }
+    else
+    {
+      assert(threshold >= static_cast<uint32_t>(cabinet.size() / 3));
+    }
+
+    if (threshold == std::numeric_limits<uint32_t>::max())
+    {
+      current_threshold_ = static_cast<uint32_t>(cabinet.size() / 2 + 1);
+    }
+    else
+    {
+      current_threshold_ = threshold;
+    }
+
+    FETCH_LOG_INFO(LOGGING_NAME, "Resetting cabinet. Cabinet size: ", cabinet.size(),
+                   " threshold: ", current_threshold_);
+    rbc_.ResetCabinet(cabinet);
+    dkg_.ResetCabinet(cabinet, threshold);
+    current_cabinet_ = std::move(cabinet);
+    id_              = static_cast<uint32_t>(
         std::distance(current_cabinet_.begin(), current_cabinet_.find(address_)));
-    dkg_.ResetCabinet();
-    rbc_.ResetCabinet();
   }
   void SendShares(MuddleAddress const &                      destination,
                   std::pair<std::string, std::string> const &shares);
@@ -209,15 +241,17 @@ private:
   RoundPtr LookupRound(uint64_t round, bool create = false);
   /// @}
 
-  ConstByteArray const     address_;        ///< Our muddle address
-  uint32_t                 id_;             ///< Our DKG ID (derived from index in current_cabinet_)
-  Endpoint &               endpoint_;       ///< The muddle endpoint to communicate on
-  muddle::rpc::Server      rpc_server_;     ///< The services' RPC server
-  muddle::rpc::Client      rpc_client_;     ///< The services' RPC client
-  RpcProtocolPtr           rpc_proto_;      ///< The services RPC protocol
-  StateMachinePtr          state_machine_;  ///< The service state machine
-  rbc::RBC                 rbc_;            ///< Runs the RBC protocol
-  DistributedKeyGeneration dkg_;            ///< Runs DKG protocol
+  ConstByteArray const address_;        ///< Our muddle address
+  uint32_t             id_;             ///< Our DKG ID (derived from index in current_cabinet_)
+  Endpoint &           endpoint_;       ///< The muddle endpoint to communicate on
+  muddle::rpc::Server  rpc_server_;     ///< The services' RPC server
+  muddle::rpc::Client  rpc_client_;     ///< The services' RPC client
+  RpcProtocolPtr       rpc_proto_;      ///< The services RPC protocol
+  StateMachinePtr      state_machine_;  ///< The service state machine
+  std::shared_ptr<muddle::Subscription>
+                           shares_subscription;  ///< Subscription for receiving secret shares
+  network::RBC             rbc_;                 ///< Runs the RBC protocol
+  DistributedKeyGeneration dkg_;                 ///< Runs DKG protocol
 
   /// @name State Machine Data
   /// @{
@@ -244,7 +278,9 @@ private:
   std::atomic<uint64_t> current_round_{0};             ///< The current round being generated
   RoundMap              rounds_{};                     ///< The map of round data
                                                        /// @}
+  std::atomic<bool> is_synced_{false};
 };
 
 }  // namespace dkg
+
 }  // namespace fetch

@@ -19,8 +19,12 @@
 
 #include "core/mutex.hpp"
 
-#include <algorithm>
-#include <string>
+#include <atomic>
+#include <chrono>
+#include <functional>
+#include <memory>
+#include <mutex>
+#include <vector>
 
 namespace fetch {
 namespace network {

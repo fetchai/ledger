@@ -18,26 +18,45 @@
 
 function build_graph(graph : Graph)
 
-var conv1D_1_filters        = 8;
+var conv1D_1_filters        = 16;
 var conv1D_1_input_channels = 1;
-var conv1D_1_kernel_size    = 20;
+var conv1D_1_kernel_size    = 96;
 var conv1D_1_stride         = 3;
 
-var keep_prob = 0.5f;
+var keep_prob_1 = 0.9fp64;
 
-var conv1D_2_filters        = 1;
+var conv1D_2_filters        = 8;
 var conv1D_2_input_channels = conv1D_1_filters;
-var conv1D_2_kernel_size    = 16;
-var conv1D_2_stride         = 4;
+var conv1D_2_kernel_size    = 48;
+var conv1D_2_stride         = 2;
 
-graph.AddPlaceholder("Input");
-graph.AddPlaceholder("Label");
+
+var keep_prob_2 = 0.9fp64;
+
+var conv1D_3_filters        = 1;
+var conv1D_3_input_channels = conv1D_2_filters;
+var conv1D_3_kernel_size    = 47;
+var conv1D_3_stride         = 1;
+
+
+graph.addPlaceholder("Input");
+graph.addPlaceholder("Label");
+
 graph.addConv1D("hidden_conv1D_1", "Input", conv1D_1_filters, conv1D_1_input_channels,
                 conv1D_1_kernel_size, conv1D_1_stride);
-graph.AddRelu("relu", "hidden_conv1D_1");
-graph.AddDropout("dropout_1", "relu", keep_prob);
-graph.addConv1D("Output", "dropout_1", conv1D_2_filters, conv1D_2_input_channels,
+graph.addRelu("relu_1", "hidden_conv1D_1");
+
+graph.addDropout("dropout_1", "relu_1", keep_prob_1);
+
+graph.addConv1D("hidden_conv1D_2", "dropout_1", conv1D_2_filters, conv1D_2_input_channels,
                         conv1D_2_kernel_size, conv1D_2_stride);
+graph.addRelu("relu_2", "hidden_conv1D_2");
+
+graph.addDropout("dropout_2", "relu_2", keep_prob_2);
+
+graph.addConv1D("Output", "dropout_2", conv1D_3_filters, conv1D_3_input_channels,
+                        conv1D_3_kernel_size, conv1D_3_stride);
+
 
 endfunction
 
@@ -47,38 +66,48 @@ if (System.Argc() != 4) print("Usage: VM SCRIPT_FILE PATH/TO/TRAIN_DATA.CSV /PAT
     return;
 endif
 
-var input_data = read_csv(System.Argv(0), true);
-var input_labels = read_csv(System.Argv(1), true);
-var test_data = read_csv(System.Argv(2), true);
-var test_labels = read_csv(System.Argv(3), true);
+// LOAD THE DATA
+var orig_train_data = read_csv(System.Argv(0), true);
+var orig_train_labels = read_csv(System.Argv(1), true);
+var orig_test_data = read_csv(System.Argv(2), true);
+var orig_test_labels = read_csv(System.Argv(3), true);
 
-// set up graph
+// NORMALISE ALL DATA TO THE MAX RANGE OF THE TRAINING DATA
+var scaler = Scaler();
+scaler.setScale(orig_train_data, "min_max");
+var train_data = scaler.normalise(orig_train_data);
+var train_labels = scaler.normalise(orig_train_labels);
+var test_data = scaler.normalise(orig_test_data);
+var test_labels = scaler.normalise(orig_test_labels);
+
+var data_loader = DataLoader();
+data_loader.addData("tensor", train_data, train_labels);
+
+// SET UP GRAPH
 var graph = Graph();
 build_graph(graph);
-
-// add loss to graph
 graph.addMeanSquareErrorLoss("Error", "Output", "Label");
 
-// Set up the optimiser
-var optimiser = AdamOptimiser(graph, "Input", "Label", "Error");
+// SET UP THE OPTIMISER
+var optimiser = Optimiser("sgd", graph, "Input", "Label", "Error");
 
-// Begin training
+// BEGIN TRAINING
 printLn("begin training...");
 var training_iterations = 10;
 var batch_size = 8u64;
 for(i in 0:training_iterations)
-    var loss = optimiser.Run(input_data, input_labels, batch_size);
+    var loss = optimiser.run(data_loader, batch_size);
     print("Current Loss: ");
     printLn(loss);
 endfor
 
 // Begin testing
 printLn("test prediction...");
-graph.SetInput("Input", test_data);
-var pred = graph.Evaluate("Output");
-
+graph.setInput("Input", test_data);
+var pred = graph.evaluate("Output");
 pred = remove_leading_dimension(pred);
+pred = scaler.deNormalise(pred);
 
-printLn(pred.ToString());
+printLn(pred.toString());
 
 endfunction

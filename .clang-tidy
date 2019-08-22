@@ -1,6 +1,17 @@
-Checks: '-*,bugprone-*,modernize-use-using,modernize-make-shared,modernize-make-unique,modernize-pass-by-value,readability-identifier-naming,google-readability-todo,readability-braces-around-statements,-bugprone-macro-parentheses,misc-unused-alias-decls,misc-unused-parameters,misc-unused-using-decls'
-
-#misc-unused-alias-decls,misc-unused-parameters,misc-unused-using-decls
+Checks: "-*,\
+bugprone-*,\
+modernize-use-override,\
+modernize-use-using,\
+modernize-make-shared,\
+modernize-make-unique,\
+modernize-pass-by-value,\
+readability-identifier-naming,\
+google-readability-todo,\
+readability-braces-around-statements,\
+-bugprone-macro-parentheses,\
+misc-unused-alias-decls,\
+misc-unused-parameters,\
+misc-unused-using-decls"
 
 FormatStyle: file
 

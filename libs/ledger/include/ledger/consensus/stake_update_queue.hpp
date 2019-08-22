@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/threading/synchronised_state.hpp"
-#include "ledger/chain/address.hpp"
+#include "crypto/identity.hpp"
 #include "ledger/consensus/stake_update_interface.hpp"
 
 #include <map>
@@ -35,6 +35,7 @@ class StakeUpdateQueue : public StakeUpdateInterface
 {
 public:
   using StakeSnapshotPtr = std::shared_ptr<StakeSnapshot>;
+  using Identity         = crypto::Identity;
 
   // Construction / Destruction
   StakeUpdateQueue()                         = default;
@@ -44,7 +45,8 @@ public:
 
   /// @name Stake Update Interface
   /// @{
-  void AddStakeUpdate(BlockIndex block_index, Address const &address, StakeAmount stake) override;
+  void AddStakeUpdate(BlockIndex block_index, crypto::Identity const &identity,
+                      StakeAmount stake) override;
   /// @}
 
   bool ApplyUpdates(BlockIndex block_index, StakeSnapshotPtr const &reference,
@@ -63,7 +65,7 @@ public:
   StakeUpdateQueue &operator=(StakeUpdateQueue &&) = delete;
 
 private:
-  using StakeMap     = std::unordered_map<Address, StakeAmount>;
+  using StakeMap     = std::unordered_map<Identity, StakeAmount>;
   using BlockUpdates = std::map<BlockIndex, StakeMap>;
   using SyncUpdates  = SynchronisedState<BlockUpdates>;
 
@@ -88,13 +90,13 @@ inline std::size_t StakeUpdateQueue::size() const
  * Adds / Updates the change of stake to be applied at a given block index
  *
  * @param block_index The block index at which to apply the update
- * @param address The address of the stake holder
+ * @param identity The identity of the stake holder
  * @param stake The amount of tokens to be staked
  */
-inline void StakeUpdateQueue::AddStakeUpdate(BlockIndex block_index, Address const &address,
+inline void StakeUpdateQueue::AddStakeUpdate(BlockIndex block_index, Identity const &identity,
                                              StakeAmount stake)
 {
-  updates_.Apply([&](BlockUpdates &updates) { updates[block_index][address] = stake; });
+  updates_.Apply([&](BlockUpdates &updates) { updates[block_index][identity] = stake; });
 }
 
 /**

@@ -31,65 +31,77 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class LeakyReluOp : public fetch::ml::Ops<T>
+class LeakyReluOp : public fetch::ml::ops::Ops<T>
 {
 public:
-  using ArrayType     = T;
-  using DataType      = typename ArrayType::Type;
-  using SizeType      = typename ArrayType::SizeType;
-  using ArrayPtrType  = std::shared_ptr<ArrayType>;
+  using TensorType    = T;
+  using DataType      = typename TensorType::Type;
+  using SizeType      = typename TensorType::SizeType;
+  using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SPType        = OpLeakyReluOpSaveableParams<T>;
 
-  LeakyReluOp()           = default;
+  LeakyReluOp() = default;
+
+  explicit LeakyReluOp(SPType const &sp)
+    : Ops<T>(sp)
+  {}
+
   ~LeakyReluOp() override = default;
 
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
+  {
+    auto sp = std::make_shared<SPType>();
+    return sp;
+  }
+
   // LeakyRelu(x,alpha)=max(0,x)+alpha*min(0,x)
-  void Forward(VecTensorType const &inputs, ArrayType &output) override
+  void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(inputs.size() == 2);
-    assert(inputs.at(0).get().shape() == output.shape());
-    assert(inputs.at(1).get().shape().at(inputs.at(1).get().shape().size() - 1) == 1);
+    assert(inputs.at(0)->shape() == output.shape());
+    assert(inputs.at(1)->shape().at(inputs.at(1)->shape().size() - 1) == 1);
 
-    fetch::math::LeakyRelu(inputs.at(0).get(), inputs.at(1).get(), output);
+    fetch::math::LeakyRelu((*inputs.at(0)), (*inputs.at(1)), output);
   }
 
   // Gradient of input.at(0)=x is:
   //    x>=0 f'(x)=1, x<0 f'(x)=alpha
   // Gradient of input.at(1)=alpha is:
   //    f'(alpha)=-Relu(-x)=min(0,x); x>=0 f'(alpha)=0, x<0 f'(alpha)=x
-  std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                  ArrayType const &    error_signal) override
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     assert(inputs.size() == 2);
-    assert(inputs.at(0).get().size() == error_signal.size());
+    assert(inputs.at(0)->size() == error_signal.size());
 
     // Test if batch dimension for alpha is 1
-    assert(inputs.at(1).get().shape().at(inputs.at(1).get().shape().size() - 1) == 1);
+    assert(inputs.at(1)->shape().at(inputs.at(1)->shape().size() - 1) == 1);
 
-    ArrayType return_signal_1{inputs.at(0).get().shape()};
+    TensorType return_signal_1{inputs.at(0)->shape()};
 
     SizeType a_size{1};
-    for (SizeType i{0}; i < inputs.at(0).get().shape().size() - 1; i++)
+    for (SizeType i{0}; i < inputs.at(0)->shape().size() - 1; i++)
     {
-      a_size *= inputs.at(0).get().shape().at(i);
+      a_size *= inputs.at(0)->shape().at(i);
     }
-    ArrayType return_signal_2({a_size, 1});
+    TensorType return_signal_2({a_size, 1});
 
-    SizeType t_batch_dimension = inputs.at(0).get().shape().size() - 1;
-    SizeType batch_size        = inputs.at(0).get().shape().at(t_batch_dimension);
+    SizeType t_batch_dimension = inputs.at(0)->shape().size() - 1;
+    SizeType batch_size        = inputs.at(0)->shape().at(t_batch_dimension);
 
     for (SizeType i{0}; i < batch_size; i++)
     {
 
       // View along batch dimension
-      auto input1_view = inputs.at(0).get().View(i);
+      auto input1_view = inputs.at(0)->View(i);
       auto rs1_view    = return_signal_1.View(i);
       auto error_view  = error_signal.View(i);
 
       auto rs1_it    = rs1_view.begin();
       auto rs2_it    = return_signal_2.begin();
       auto input1_it = input1_view.begin();
-      auto input2_it = inputs.at(1).get().begin();
+      auto input2_it = inputs.at(1)->begin();
       auto error_it  = error_view.begin();
 
       while (input1_it.is_valid())
@@ -116,9 +128,13 @@ public:
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    return inputs.front().get().shape();
+    return inputs.front()->shape();
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::OP_LEAKY_RELU_OP;
+  }
   static constexpr char const *DESCRIPTOR = "LeakyReluOp";
 };
 

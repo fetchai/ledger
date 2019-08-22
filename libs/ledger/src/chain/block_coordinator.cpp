@@ -18,14 +18,18 @@
 
 #include "core/byte_array/encoders.hpp"
 #include "core/feature_flags.hpp"
+#include "core/macros.hpp"
 #include "core/threading.hpp"
 #include "ledger/block_packer_interface.hpp"
 #include "ledger/block_sink_interface.hpp"
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
+#include "ledger/chain/constants.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/transaction.hpp"
+#include "ledger/consensus/stake_manager.hpp"
 #include "ledger/consensus/stake_manager_interface.hpp"
+#include "ledger/consensus/stake_snapshot.hpp"
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/execution_manager_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
@@ -34,6 +38,13 @@
 #include "ledger/upow/synergetic_executor.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/registry.hpp"
+
+#include "beacon/beacon_service.hpp"
+#include "beacon/beacon_setup_protocol.hpp"
+#include "beacon/beacon_setup_service.hpp"
+#include "beacon/cabinet_member_details.hpp"
+#include "beacon/entropy.hpp"
+#include "beacon/event_manager.hpp"
 
 #include <cassert>
 #include <chrono>
@@ -57,7 +68,7 @@ using DAGPtr               = std::shared_ptr<ledger::DAGInterface>;
 
 // Constants
 const std::chrono::milliseconds TX_SYNC_NOTIFY_INTERVAL{1000};
-const std::chrono::milliseconds EXEC_NOTIFY_INTERVAL{500};
+const std::chrono::milliseconds EXEC_NOTIFY_INTERVAL{5000};
 const std::chrono::seconds      NOTIFY_INTERVAL{10};
 const std::chrono::seconds      WAIT_BEFORE_ASKING_FOR_MISSING_TX_INTERVAL{30};
 const std::chrono::seconds      WAIT_FOR_TX_TIMEOUT_INTERVAL{30};
@@ -89,18 +100,17 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr
                                    ExecutionManagerInterface &execution_manager,
                                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
                                    BlockSinkInterface &      block_sink,
-                                   TransactionStatusCache &  status_cache,
                                    core::FeatureFlags const &features, ProverPtr const &prover,
                                    std::size_t num_lanes, std::size_t num_slices,
-                                   std::size_t block_difficulty)
+                                   std::size_t block_difficulty, BeaconServicePtr beacon)
   : chain_{chain}
   , dag_{std::move(dag)}
   , stake_{std::move(stake)}
+  , beacon_{std::move(beacon)}
   , execution_manager_{execution_manager}
   , storage_unit_{storage_unit}
   , block_packer_{packer}
   , block_sink_{block_sink}
-  , status_cache_{status_cache}
   , periodic_print_{NOTIFY_INTERVAL}
   , miner_{std::make_shared<consensus::DummyMiner>()}
   , last_executed_block_{GENESIS_DIGEST}
@@ -162,6 +172,12 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr
   , reset_state_count_{telemetry::Registry::Instance().CreateCounter(
         "ledger_block_coordinator_reset_state_total",
         "The total number of times in the reset state")}
+  , executed_block_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_executed_block_total", "The total number of executed blocks")}
+  , mined_block_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_mined_block_total", "The total number of mined blocks")}
+  , executed_tx_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_executed_tx_total", "The total number of executed transactions")}
 {
   // configure the state machine
   // clang-format off
@@ -195,6 +211,9 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr
                      " (previous: ", ToString(previous), ")");
     }
   });
+
+  // Initialising the BLS library
+  crypto::bls::Init();
 
   // TODO(private issue 792): this shouldn't be here, but if it is, it locks the whole system on
   // startup. RecoverFromStartup();
@@ -381,7 +400,8 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
                                   common_parent->body.block_number))
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Ancestor block's state hash cannot be retrieved for block: 0x",
-                      current_hash.ToHex(), " number: ", common_parent->body.block_number);
+                      current_hash.ToHex(), " number: ", common_parent->body.block_number,
+                      " merkle hash: ", common_parent->body.merkle_hash.ToHex());
 
       // this is a bad situation so the easiest solution is to revert back to genesis
       execution_manager_.SetLastProcessedBlock(GENESIS_DIGEST);
@@ -518,7 +538,7 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
   auto fail{[this](char const *reason) {
     FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: ", reason, " (",
                    ToBase64(current_block_->body.hash), ')');
-    (void)reason;
+    FETCH_UNUSED(reason);
     chain_.RemoveBlock(current_block_->body.hash);
     return State::RESET;
   }};
@@ -836,7 +856,10 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
     BlockPtr previous_block = chain_.GetBlock(current_block_->body.previous_hash);
     if (previous_block)
     {
-      revert_successful = dag_->RevertToEpoch(previous_block->body.block_number);
+      if (dag_)
+      {
+        revert_successful = dag_->RevertToEpoch(previous_block->body.block_number);
+      }
 
       // signal the storage engine to make these changes
       if (storage_unit_.RevertToHash(previous_block->body.merkle_hash,
@@ -864,9 +887,6 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
   }
   else
   {
-    // mark all the transactions as been executed
-    UpdateTxStatus(*current_block_);
-
     // Commit this state
     storage_unit_.Commit(current_block_->body.block_number);
 
@@ -878,6 +898,10 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
 
     // signal the last block that has been executed
     last_executed_block_.Set(current_block_->body.hash);
+
+    // update the telemetry
+    executed_block_count_->increment();
+    executed_tx_count_->add(current_block_->GetTransactionCount());
   }
 
   return State::RESET;
@@ -987,7 +1011,7 @@ BlockCoordinator::State BlockCoordinator::OnWaitForNewBlockExecution()
   case ExecutionStatus::RUNNING:
     if (exec_wait_periodic_.Poll())
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Waiting for new block execution (following: ",
+      FETCH_LOG_INFO(LOGGING_NAME, "Waiting for new block execution (following: ",
                      next_block_->body.previous_hash.ToBase64(), ")");
     }
 
@@ -1037,12 +1061,13 @@ BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
     // ensure that the main chain is aware of the block
     if (BlockStatus::ADDED == chain_.AddBlock(*next_block_))
     {
+      // update the telemetry
+      mined_block_count_->increment();
+      executed_block_count_->increment();
+
       FETCH_LOG_INFO(LOGGING_NAME, "Broadcasting new block: 0x", next_block_->body.hash.ToHex(),
                      " txs: ", next_block_->GetTransactionCount(),
                      " number: ", next_block_->body.block_number);
-
-      // mark this blocks transactions as being executed
-      UpdateTxStatus(*next_block_);
 
       // signal the last block that has been executed
       last_executed_block_.Set(next_block_->body.hash);
@@ -1063,16 +1088,67 @@ BlockCoordinator::State BlockCoordinator::OnReset()
 {
   reset_state_count_->increment();
 
+  FETCH_LOG_INFO(LOGGING_NAME, "Reset condition");
+
   // trigger stake updates at the end of the block lifecycle
-  if (stake_)
+  if (stake_ && beacon_)
   {
+    Block const *block = nullptr;
+
     if (next_block_)
     {
-      stake_->UpdateCurrentBlock(*next_block_);
+      block = next_block_.get();
     }
     else if (current_block_)
     {
-      stake_->UpdateCurrentBlock(*current_block_);
+      block = current_block_.get();
+    }
+    else
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME,
+                      "Unable to find a previously executed block when updating staking!");
+    }
+
+    // If we are on the head of the main chain, and it is a 'committee triggering' block
+    if (block && (*chain_.GetHeaviestBlock() == *block))
+    {
+      auto const block_number = block->body.block_number;
+
+      if ((block_number % AEON_PERIOD) == 0)
+      {
+        std::unordered_set<fetch::crypto::Identity> cabinet_member_list;
+        auto                                        snapshot = (*stake_).GetCurrentStakeSnapshot();
+        auto const current_stakers = snapshot->BuildCommittee(0, MAX_COMMITTEE_SIZE);
+
+        // TODO(HUT): switch to set for stake manager
+        for (auto const &staker : *current_stakers)
+        {
+          FETCH_LOG_DEBUG(LOGGING_NAME, "Adding staker: ", staker.identifier().ToBase64());
+          cabinet_member_list.insert(staker);
+        }
+
+        uint32_t threshold = uint32_t((cabinet_member_list.size() / 2) + 1);
+
+        FETCH_LOG_INFO(LOGGING_NAME, "Block: ", block_number,
+                       " creating new aeon. Periodicity: ", AEON_PERIOD, " threshold: ", threshold,
+                       " cabinet size: ", cabinet_member_list.size());
+
+        // Disallow multiple invocations
+        static bool did_genesis_already = false;
+
+        if (block_number != 0 || !did_genesis_already)
+        {
+          beacon_->StartNewCabinet(cabinet_member_list, threshold, block_number,
+                                   block_number + AEON_PERIOD);
+          did_genesis_already = true;
+        }
+
+        // Finally update stake
+        if (block_number != 0)
+        {
+          stake_->UpdateCurrentBlock(*block);
+        }
+      }
     }
   }
 
@@ -1178,17 +1254,6 @@ BlockCoordinator::ExecutionStatus BlockCoordinator::QueryExecutorStatus()
 void BlockCoordinator::UpdateNextBlockTime()
 {
   next_block_time_ = Clock::now() + block_period_;
-}
-
-void BlockCoordinator::UpdateTxStatus(Block const &block)
-{
-  for (auto const &slice : block.body.slices)
-  {
-    for (auto const &tx : slice)
-    {
-      status_cache_.Update(tx.digest(), TransactionStatus::EXECUTED);
-    }
-  }
 }
 
 char const *BlockCoordinator::ToString(State state)

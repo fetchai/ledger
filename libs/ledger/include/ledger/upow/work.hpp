@@ -72,10 +72,8 @@ private:
   UInt256          nonce_{};
   WorkScore        score_{std::numeric_limits<WorkScore>::max()};
 
-  template <typename T>
-  friend void Serialize(T &serializer, Work const &work);
-  template <typename T>
-  friend void Deserialize(T &serializer, Work &work);
+  template <typename T, typename S>
+  friend struct serializers::MapSerializer;
 };
 
 inline Work::Work(Digest digest, crypto::Identity miner)
@@ -139,19 +137,36 @@ inline Work::UInt256 Work::CreateHashedNonce() const
   return UInt256{hasher.Final()};
 }
 
-template <typename T>
-void Serialize(T &serializer, Work const &work)
-{
-  serializer << work.nonce_ << work.score_;
-}
-
-template <typename T>
-void Deserialize(T &serializer, Work &work)
-{
-  serializer >> work.nonce_ >> work.score_;
-}
-
 using WorkPtr = std::shared_ptr<Work>;
 
 }  // namespace ledger
+
+namespace serializers {
+template <typename D>
+struct MapSerializer<ledger::Work, D>
+{
+public:
+  using Type       = ledger::Work;
+  using DriverType = D;
+
+  static uint8_t const NONCE = 1;
+  static uint8_t const SCORE = 2;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &work)
+  {
+    auto map = map_constructor(2);
+    map.Append(NONCE, work.nonce_);
+    map.Append(SCORE, work.score_);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &work)
+  {
+    map.ExpectKeyGetValue(NONCE, work.nonce_);
+    map.ExpectKeyGetValue(SCORE, work.score_);
+  }
+};
+}  // namespace serializers
+
 }  // namespace fetch

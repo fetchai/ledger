@@ -20,6 +20,7 @@
 #include "metrics/metrics.hpp"
 
 #include <memory>
+#include <string>
 #include <utility>
 
 namespace fetch {
@@ -33,7 +34,8 @@ Metrics &Metrics::Instance()
 
 void Metrics::ConfigureFileHandler(std::string filename)
 {
-  std::unique_ptr<MetricHandler> new_handler(new MetricFileHandler(std::move(filename)));
+  std::unique_ptr<MetricHandler> new_handler =
+      std::make_unique<MetricFileHandler>(std::move(filename));
 
   handler_.store(new_handler.get());
   handler_object_ = std::move(new_handler);

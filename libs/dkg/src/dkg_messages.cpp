@@ -26,11 +26,11 @@ constexpr char const *LOGGING_NAME = "DKGMessage";
 
 /**
  * Getter funcion for the serialised message contained inside the
- * DKGEnvelop
+ * DKGEnvelope
  *
  * @return Shared pointer to deserialised message
  */
-std::shared_ptr<DKGMessage> DKGEnvelop::Message() const
+std::shared_ptr<DKGMessage> DKGEnvelope::Message() const
 {
   DKGSerializer serialiser{serialisedMessage_};
   switch (type_)
@@ -42,7 +42,7 @@ std::shared_ptr<DKGMessage> DKGEnvelop::Message() const
   case MessageType::COMPLAINT:
     return std::make_shared<ComplaintsMessage>(serialiser);
   default:
-    FETCH_LOG_ERROR(LOGGING_NAME, "Can not process payload");
+    FETCH_LOG_ERROR(LOGGING_NAME, "Cannot process payload");
     assert(false);
     return nullptr;  // For compiler warnings
   }

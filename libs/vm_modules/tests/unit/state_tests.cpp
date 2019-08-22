@@ -16,6 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vm/address.hpp"
+#include "vm/array.hpp"
+#include "vm/map.hpp"
 #include "vm_test_toolkit.hpp"
 
 #include "gmock/gmock.h"
@@ -296,7 +299,7 @@ TEST_F(StateTests, test_serialisation_of_complex_type_2)
   )";
 
   EXPECT_CALL(toolkit.observer(), Exists(state_name));
-  EXPECT_CALL(toolkit.observer(), Read(state_name, _, _)).Times(2);
+  EXPECT_CALL(toolkit.observer(), Read(state_name, _, _)).Times(1);
 
   ASSERT_TRUE(toolkit.Compile(deser_src));
 

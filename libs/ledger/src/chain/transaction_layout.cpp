@@ -16,10 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/transaction_layout.hpp"
-
 #include "ledger/chain/transaction.hpp"
+#include "ledger/chain/transaction_layout.hpp"
 #include "storage/resource_mapper.hpp"
+
+#include <utility>
 
 namespace fetch {
 namespace ledger {

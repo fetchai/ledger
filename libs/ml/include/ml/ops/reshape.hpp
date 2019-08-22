@@ -28,44 +28,60 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class Reshape : public fetch::ml::Ops<T>
+class Reshape : public fetch::ml::ops::Ops<T>
 {
 public:
-  using ArrayType     = T;
-  using SizeType      = typename ArrayType::SizeType;
+  using TensorType    = T;
+  using SizeType      = typename TensorType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SPType        = OpReshapeSaveableParams<T>;
 
   explicit Reshape(std::vector<SizeType> new_shape)
     : new_shape_(new_shape)
   {}
+
+  explicit Reshape(SPType const &sp)
+    : Ops<T>(sp)
+  {
+    new_shape_ = sp.new_shape;
+  }
+
   ~Reshape() = default;
 
-  void Forward(VecTensorType const &inputs, ArrayType &output)
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
+  {
+    SPType sp{};
+    sp.new_shape = new_shape_;
+    return std::make_shared<SPType>(sp);
+  }
+
+  void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(inputs.size() == 1);
     assert(output.shape() == ComputeOutputShape(inputs));
-    assert(inputs.front().get().size() == output.size());
+    assert(inputs.front()->size() == output.size());
 
-    output.Assign(inputs.front().get());
+    output.Assign((*inputs.front()));
   }
 
-  std::vector<ArrayType> Backward(VecTensorType const &inputs, ArrayType const &error_signal)
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     assert(inputs.size() == 1);
-    ArrayType ret(inputs.front().get().shape());
+    TensorType ret(inputs.front()->shape());
     ret.Assign(error_signal);
     return {ret};
   }
 
   // Output shape
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     std::vector<SizeType> output_size;
     for (SizeType i{0}; i < new_shape_.size(); i++)
     {
-      if (new_shape_.at(i) < inputs.front().get().shape().size())
+      if (new_shape_.at(i) < inputs.front()->shape().size())
       {
-        output_size.push_back(inputs.front().get().shape().at(new_shape_.at(i)));
+        output_size.push_back(inputs.front()->shape().at(new_shape_.at(i)));
       }
       else
       {
@@ -76,6 +92,10 @@ public:
     return output_size;
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::OP_RESHAPE;
+  }
   static constexpr char const *DESCRIPTOR = "Reshape";
 
 private:

@@ -161,6 +161,8 @@ public:
          bool sign_packets = false, bool sign_broadcasts = false);
   Muddle(Muddle const &) = delete;
   Muddle(Muddle &&)      = delete;
+
+  /// Control functionality
   /// @{
   void Start(PortList const &ports, UriList const &initial_peer_list = UriList{});
   void Stop();
@@ -195,9 +197,11 @@ public:
     return router_.IsConnected(target);
   }
 
-  // Operators
+  /// Operators
+  /// @{
   Muddle &operator=(Muddle const &) = delete;
   Muddle &operator=(Muddle &&) = delete;
+  /// @}
 
   void Debug(std::string const &prefix)
   {

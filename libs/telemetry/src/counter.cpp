@@ -19,7 +19,10 @@
 #include "core/string/ends_with.hpp"
 #include "telemetry/counter.hpp"
 
-#include <iostream>
+#include <ostream>
+#include <stdexcept>
+#include <string>
+#include <utility>
 
 namespace fetch {
 namespace telemetry {
@@ -48,9 +51,9 @@ Counter::Counter(std::string name, std::string description, Labels labels)
  * @param mode The mode to be used when generating the stream
  */
 
-void Counter::ToStream(std::ostream &stream, StreamMode mode) const
+void Counter::ToStream(OutputStream &stream) const
 {
-  WriteHeader(stream, "counter", mode);
+  WriteHeader(stream, "counter");
   WriteValuePrefix(stream) << counter_ << '\n';
 }
 

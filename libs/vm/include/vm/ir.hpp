@@ -82,11 +82,13 @@ inline IRTypePtr CreateIRType(TypeKind type_kind, std::string const &name,
 
 struct IRVariable
 {
-  IRVariable(VariableKind variable_kind__, std::string const &name__, IRTypePtr const &type__)
+  IRVariable(VariableKind variable_kind__, std::string const &name__, IRTypePtr const &type__,
+             bool referenced__)
   {
     variable_kind = variable_kind__;
     name          = name__;
     type          = type__;
+    referenced    = referenced__;
     index         = 0;
   }
   virtual ~IRVariable() = default;
@@ -97,15 +99,16 @@ struct IRVariable
   VariableKind variable_kind;
   std::string  name;
   IRTypePtr    type;
+  bool         referenced;
   uint16_t     index;
 };
 using IRVariablePtr      = std::shared_ptr<IRVariable>;
 using IRVariablePtrArray = std::vector<IRVariablePtr>;
 
 inline IRVariablePtr CreateIRVariable(VariableKind variable_kind, std::string const &name,
-                                      IRTypePtr const &type)
+                                      IRTypePtr const &type, bool referenced)
 {
-  return std::make_shared<IRVariable>(IRVariable(variable_kind, name, type));
+  return std::make_shared<IRVariable>(IRVariable(variable_kind, name, type, referenced));
 }
 
 struct IRFunction
@@ -207,8 +210,9 @@ struct IRBlockNode : public IRNode
               IRNodePtrArray const &children)
     : IRNode(NodeCategory::Block, node_kind, text, line, children)
   {}
-  virtual ~IRBlockNode() = default;
-  virtual void Reset() override
+  ~IRBlockNode() override = default;
+
+  void Reset() override
   {
     IRNode::Reset();
     for (auto &child : block_children)
@@ -237,8 +241,9 @@ struct IRExpressionNode : public IRNode
   {
     expression_kind = ExpressionKind::Unknown;
   }
-  virtual ~IRExpressionNode() = default;
-  virtual void Reset() override
+  ~IRExpressionNode() override = default;
+
+  void Reset() override
   {
     IRNode::Reset();
     type     = nullptr;

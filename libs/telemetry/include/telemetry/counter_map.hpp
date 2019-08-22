@@ -40,7 +40,7 @@ public:
   void Increment(Labels const &keys);
   /// @}
 
-  void ToStream(std::ostream &stream, StreamMode mode) const override;
+  void ToStream(OutputStream &stream) const override;
 
   // Operators
   CounterMap &operator=(CounterMap const &) = delete;

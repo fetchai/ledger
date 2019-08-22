@@ -41,8 +41,13 @@
 #include <vector>
 
 namespace fetch {
+
 namespace core {
 class FeatureFlags;
+}
+
+namespace beacon {
+class BeaconService;
 }
 
 namespace crypto {
@@ -61,6 +66,7 @@ class MainChain;
 class StorageUnitInterface;
 class BlockSinkInterface;
 class StakeManagerInterface;
+class StakeManager;
 
 /**
  * The Block Coordinator is in charge of executing all the blocks that come into the system. It will
@@ -71,7 +77,7 @@ class StakeManagerInterface;
  *
  * - Catching up on a new block
  * - Mining / generating a new block
- * - Waiting in and idle / syncronised state
+ * - Waiting in and idle / synchronised state
  *
  *                                  ┌──────────────────┐
  *                                  │   Synchronise    │
@@ -147,10 +153,11 @@ class BlockCoordinator
 public:
   static constexpr char const *LOGGING_NAME = "BlockCoordinator";
 
-  using ConstByteArray  = byte_array::ConstByteArray;
-  using DAGPtr          = std::shared_ptr<ledger::DAGInterface>;
-  using ProverPtr       = std::shared_ptr<crypto::Prover>;
-  using StakeManagerPtr = std::shared_ptr<StakeManagerInterface>;
+  using ConstByteArray   = byte_array::ConstByteArray;
+  using DAGPtr           = std::shared_ptr<ledger::DAGInterface>;
+  using ProverPtr        = std::shared_ptr<crypto::Prover>;
+  using StakeManagerPtr  = std::shared_ptr<StakeManager>;
+  using BeaconServicePtr = std::shared_ptr<fetch::beacon::BeaconService>;
 
   enum class State
   {
@@ -187,9 +194,9 @@ public:
   BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr stake_mgr,
                    ExecutionManagerInterface &execution_manager, StorageUnitInterface &storage_unit,
                    BlockPackerInterface &packer, BlockSinkInterface &block_sink,
-                   TransactionStatusCache &status_cache, core::FeatureFlags const &features,
-                   ProverPtr const &prover, std::size_t num_lanes, std::size_t num_slices,
-                   std::size_t block_difficulty);
+                   core::FeatureFlags const &features, ProverPtr const &prover,
+                   std::size_t num_lanes, std::size_t num_slices, std::size_t block_difficulty,
+                   BeaconServicePtr beacon);
   BlockCoordinator(BlockCoordinator const &) = delete;
   BlockCoordinator(BlockCoordinator &&)      = delete;
   ~BlockCoordinator()                        = default;
@@ -299,7 +306,6 @@ private:
   bool            ScheduleBlock(Block const &block);
   ExecutionStatus QueryExecutorStatus();
   void            UpdateNextBlockTime();
-  void            UpdateTxStatus(Block const &block);
 
   static char const *ToString(ExecutionStatus state);
 
@@ -308,11 +314,11 @@ private:
   MainChain &                chain_;              ///< Ref to system chain
   DAGPtr                     dag_;                ///< Ref to DAG
   StakeManagerPtr            stake_;              ///< Ref to Stake manager
+  BeaconServicePtr           beacon_;             ///< Ref to beacon
   ExecutionManagerInterface &execution_manager_;  ///< Ref to system execution manager
   StorageUnitInterface &     storage_unit_;       ///< Ref to the storage unit
   BlockPackerInterface &     block_packer_;       ///< Ref to the block packer
   BlockSinkInterface &       block_sink_;         ///< Ref to the output sink interface
-  TransactionStatusCache &   status_cache_;       ///< Ref to the tx status cache
   PeriodicAction             periodic_print_;
   MinerPtr                   miner_;
   MainChain::Blocks blocks_to_common_ancestor_;  ///< Partial vector of blocks from main chain HEAD
@@ -371,6 +377,9 @@ private:
   telemetry::CounterPtr proof_search_state_count_;
   telemetry::CounterPtr transmit_state_count_;
   telemetry::CounterPtr reset_state_count_;
+  telemetry::CounterPtr executed_block_count_;
+  telemetry::CounterPtr mined_block_count_;
+  telemetry::CounterPtr executed_tx_count_;
   /// @}
 };
 

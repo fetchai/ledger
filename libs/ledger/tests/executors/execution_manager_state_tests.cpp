@@ -19,6 +19,7 @@
 #include "block_configs.hpp"
 #include "core/logger.hpp"
 #include "ledger/execution_manager.hpp"
+#include "ledger/transaction_status_cache.hpp"
 #include "mock_executor.hpp"
 #include "mock_storage_unit.hpp"
 #include "test_block.hpp"
@@ -32,19 +33,21 @@
 #include <thread>
 #include <vector>
 
+namespace {
+
+using namespace fetch::ledger;
+
 class ExecutionManagerStateTests : public ::testing::TestWithParam<BlockConfig>
 {
 public:
   using FakeExecutorPtr     = std::shared_ptr<FakeExecutor>;
   using FakeExecutorList    = std::vector<FakeExecutorPtr>;
-  using ExecutionManager    = fetch::ledger::ExecutionManager;
   using ExecutorFactory     = ExecutionManager::ExecutorFactory;
   using ExecutionManagerPtr = std::shared_ptr<ExecutionManager>;
   using MockStorageUnitPtr  = std::shared_ptr<MockStorageUnit>;
   using Clock               = std::chrono::high_resolution_clock;
   using ScheduleStatus      = ExecutionManager::ScheduleStatus;
   using State               = ExecutionManager::State;
-  using Digest              = fetch::ledger::Digest;
 
 protected:
   void SetUp() override
@@ -56,7 +59,8 @@ protected:
 
     // create the manager
     manager_ = std::make_shared<ExecutionManager>(config.executors, 0, mock_storage_,
-                                                  [this]() { return CreateExecutor(); });
+                                                  [this]() { return CreateExecutor(); },
+                                                  TransactionStatusCache::factory());
   }
 
   FakeExecutorPtr CreateExecutor()
@@ -134,99 +138,71 @@ protected:
   FakeExecutorList    executors_;
 };
 
-std::ostream &operator<<(std::ostream &s, ExecutionManagerStateTests::ScheduleStatus status)
-{
-  using fetch::ledger::ExecutionManager;
-
-  switch (status)
-  {
-  case ExecutionManager::ScheduleStatus::SCHEDULED:
-    s << "Status::SCHEDULED";
-    break;
-  case ExecutionManager::ScheduleStatus::NOT_STARTED:
-    s << "Status::ScheduleStatus";
-    break;
-  case ExecutionManager::ScheduleStatus::ALREADY_RUNNING:
-    s << "Status::ALREADY_RUNNING";
-    break;
-  case ExecutionManager::ScheduleStatus::NO_PARENT_BLOCK:
-    s << "Status::NO_PARENT_BLOCK";
-    break;
-  case ExecutionManager::ScheduleStatus::UNABLE_TO_PLAN:
-    s << "Status::UNABLE_TO_PLAN";
-    break;
-  default:
-    s << "Status::UNKNOWN";
-    break;
-  }
-
-  return s;
-}
-
 // TODO(private issue 633): Reinstate this test
-#if 0
-TEST_P(ExecutionManagerStateTests, DISABLED_CheckStateRollBack)
-{
-  BlockConfig const &config = GetParam();
-  AttachState();  // so that we can see state updates
-
-  // generate a series of blocks in the pattern:
-  //
-  //                    ┌──────────┐
-  //                 ┌─▶│ Block 2  │
-  //   ┌──────────┐  │  └──────────┘
-  //   │ Block 1  │──┤
-  //   └──────────┘  │  ┌──────────┐
-  //                 └─▶│ Block 3  │
-  //                    └──────────┘
-  //
-  auto block1 = TestBlock::Generate(config.log2_lanes, config.slices, __LINE__);
-  auto block2 = TestBlock::Generate(config.log2_lanes, config.slices, __LINE__, block1.block.hash);
-  auto block3 = TestBlock::Generate(config.log2_lanes, config.slices, __LINE__, block1.block.hash);
-
-  // start the execution manager
-  manager_->Start();
-
-  {
-    EXPECT_CALL(*mock_storage_, Set(_, _)).Times(block1.num_transactions);
-
-    ExecuteBlock(block1);
-  }
-
-  {
-    EXPECT_CALL(*mock_storage_, Set(_, _)).Times(block2.num_transactions);
-
-    ExecuteBlock(block2);
-  }
-
-  auto const previous_hash = mock_storage_->GetFake().Hash();
-
-  {
-    EXPECT_CALL(*mock_storage_, Hash()).Times(1);
-    EXPECT_CALL(*mock_storage_, Commit(_)).Times(1);
-    EXPECT_CALL(*mock_storage_, Set(_, _)).Times(block3.num_transactions);
-    EXPECT_CALL(*mock_storage_, Revert(_)).Times(1);
-
-    ExecuteBlock(block3);
-  }
-
-  {
-    EXPECT_CALL(*mock_storage_, Hash()).Times(0);
-    EXPECT_CALL(*mock_storage_, Set(_, _)).Times(0);
-    EXPECT_CALL(*mock_storage_, Commit(_)).Times(0);
-    EXPECT_CALL(*mock_storage_, Revert(_)).Times(1);
-
-    ExecuteBlock(block2, ScheduleStatus::RESTORED);
-  }
-
-  auto const reapply_hash = mock_storage_->GetFake().Hash();
-
-  EXPECT_EQ(previous_hash, reapply_hash);
-
-  // stop the ex
-  manager_->Stop();
-}
-#endif
+// TEST_P(ExecutionManagerStateTests, DISABLED_CheckStateRollBack)
+//{
+//  BlockConfig const &config = GetParam();
+//  AttachState();  // so that we can see state updates
+//
+//  // generate a series of blocks in the pattern:
+//  //
+//  //                    ┌──────────┐
+//  //                 ┌─▶│ Block 2  │
+//  //   ┌──────────┐  │  └──────────┘
+//  //   │ Block 1  │──┤
+//  //   └──────────┘  │  ┌──────────┐
+//  //                 └─▶│ Block 3  │
+//  //                    └──────────┘
+//  //
+//  auto block1 = TestBlock::Generate(config.log2_lanes, config.slices, __LINE__);
+//  auto block2 = TestBlock::Generate(config.log2_lanes, config.slices, __LINE__,
+//  block1.block.hash); auto block3 = TestBlock::Generate(config.log2_lanes, config.slices,
+//  __LINE__, block1.block.hash);
+//
+//  // start the execution manager
+//  manager_->Start();
+//
+//  {
+//    EXPECT_CALL(*mock_storage_, Set(_, _)).Times(block1.num_transactions);
+//
+//    ExecuteBlock(block1);
+//  }
+//
+//  {
+//    EXPECT_CALL(*mock_storage_, Set(_, _)).Times(block2.num_transactions);
+//
+//    ExecuteBlock(block2);
+//  }
+//
+//  auto const previous_hash = mock_storage_->GetFake().Hash();
+//
+//  {
+//    EXPECT_CALL(*mock_storage_, Hash()).Times(1);
+//    EXPECT_CALL(*mock_storage_, Commit(_)).Times(1);
+//    EXPECT_CALL(*mock_storage_, Set(_, _)).Times(block3.num_transactions);
+//    EXPECT_CALL(*mock_storage_, Revert(_)).Times(1);
+//
+//    ExecuteBlock(block3);
+//  }
+//
+//  {
+//    EXPECT_CALL(*mock_storage_, Hash()).Times(0);
+//    EXPECT_CALL(*mock_storage_, Set(_, _)).Times(0);
+//    EXPECT_CALL(*mock_storage_, Commit(_)).Times(0);
+//    EXPECT_CALL(*mock_storage_, Revert(_)).Times(1);
+//
+//    ExecuteBlock(block2, ScheduleStatus::RESTORED);
+//  }
+//
+//  auto const reapply_hash = mock_storage_->GetFake().Hash();
+//
+//  EXPECT_EQ(previous_hash, reapply_hash);
+//
+//  // stop the ex
+//  manager_->Stop();
+//}
 
 INSTANTIATE_TEST_CASE_P(Param, ExecutionManagerStateTests,
                         ::testing::ValuesIn(BlockConfig::REDUCED_SET), );
+
+}  // namespace

@@ -38,13 +38,20 @@ public:
   LogRegistry(LogRegistry &&)      = delete;
   ~LogRegistry()                   = default;
 
-  void        Log(LogLevel level, char const *name, std::string &&message);
-  void        SetLevel(char const *name, LogLevel level);
+  void Log(LogLevel level, char const *name, std::string &&message);
+  void SetLevel(char const *name, LogLevel level);
+  void SetGlobalLevel(LogLevel level);
+
   LogLevelMap GetLogLevelMap();
 
   // Operators
   LogRegistry &operator=(LogRegistry const &) = delete;
   LogRegistry &operator=(LogRegistry &&) = delete;
+
+  LogLevel global_level() const
+  {
+    return global_level_;
+  }
 
 private:
   using Logger     = spdlog::logger;
@@ -57,6 +64,7 @@ private:
 
   Mutex    lock_;
   Registry registry_;
+  LogLevel global_level_{LogLevel::TRACE};
 
   // Telemetry
   CounterPtr log_messages_{telemetry::Registry::Instance().CreateCounter(
@@ -148,6 +156,11 @@ LogRegistry::LogRegistry()
 
 void LogRegistry::Log(LogLevel level, char const *name, std::string &&message)
 {
+  if (level < global_level_)
+  {
+    return;
+  }
+
   {
     FETCH_LOCK(lock_);
     GetLogger(name).log(ConvertFromLevel(level), message);
@@ -187,6 +200,11 @@ void LogRegistry::SetLevel(char const *name, LogLevel level)
   {
     it->second->set_level(ConvertFromLevel(level));
   }
+}
+
+void LogRegistry::SetGlobalLevel(LogLevel level)
+{
+  global_level_ = level;
 }
 
 LogLevelMap LogRegistry::GetLogLevelMap()
@@ -229,6 +247,11 @@ LogRegistry::Logger &LogRegistry::GetLogger(char const *name)
 void SetLogLevel(char const *name, LogLevel level)
 {
   registry_.SetLevel(name, level);
+}
+
+void SetGlobalLogLevel(LogLevel level)
+{
+  registry_.SetGlobalLevel(level);
 }
 
 void Log(LogLevel level, char const *name, std::string &&message)
