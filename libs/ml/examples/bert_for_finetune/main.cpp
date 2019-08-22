@@ -124,6 +124,7 @@ int main(/*int ac, char **av*/)
 	fetch::serializers::SizeCounter counter;
 	fetch::serializers::MsgPackSerializer b;
 	counter << gsp1;
+	std::cout << "finish counting" << std::endl;
 	b.Reserve(counter.size());
 	b << gsp1;
 	std::cout << "finish serializing" << std::endl;
