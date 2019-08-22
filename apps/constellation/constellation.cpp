@@ -60,7 +60,6 @@ using fetch::byte_array::ToBase64;
 using fetch::ledger::Executor;
 using fetch::ledger::Manifest;
 using fetch::ledger::ServiceIdentifier;
-using fetch::network::Uri;
 using fetch::network::AtomicInFlightCounter;
 using fetch::network::AtomicCounterName;
 using fetch::ledger::Address;
