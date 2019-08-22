@@ -140,7 +140,7 @@ bn::Fr ComputeZi(std::set<uint32_t> const &parties, std::vector<bn::Fr> const &s
         bn::Fr::mul(lhsF, lhsF, tmpF);
       }
     }
-    bn::Fr::neg(lhsF, lhsF);
+    bn::Fr::inv(lhsF, lhsF);
 
     bn::Fr::mul(rhsF, rhsF, lhsF);
     bn::Fr::mul(tmpF, rhsF, shares[jt]);  // use the provided shares (interpolation points)

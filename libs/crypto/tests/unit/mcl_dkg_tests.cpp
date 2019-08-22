@@ -198,3 +198,51 @@ TEST(MclDkgTests, ComputeLhsNonTrivialSubgroup)
 
   EXPECT_EQ(coefficients, coefficients_test);
 }
+
+TEST(MclDkgTests, ComputeZi)
+{
+    mcl::bn::initPairing();
+
+    // Construct polynomial of degree 2
+    uint32_t            degree = 2;
+    std::vector<bn::Fr> vec_a;
+    Init(vec_a, degree + 1);
+
+    for (std::size_t ii = 0; ii <= degree; ++ii)
+    {
+        vec_a[ii].setRand();
+    }
+
+    std::vector<bn::G2> coefficients;
+    Init(coefficients, degree + 1);
+
+    bn::G2 group_g, group_h;
+    group_g.clear();
+    group_h.clear();
+    const bn::Fp2 g("1380305877306098957770911920312855400078250832364663138573638818396353623780",
+                    "14633108267626422569982187812838828838622813723380760182609272619611213638781");
+    const bn::Fp2 h("6798148801244076840612542066317482178930767218436703568023723199603978874964",
+                    "12726557692714943631796519264243881146330337674186001442981874079441363994424");
+    bn::mapToG2(group_g, g);
+    bn::mapToG2(group_h, h);
+
+    //Compute values of polynomial evaluated at degree + 1 points
+    uint32_t cabinet_size = 5;
+    std::set<uint32_t> member_set {0,1,2};
+    assert(member_set.size() >= degree + 1);
+    std::vector<bn::Fr> values;
+    values.resize(cabinet_size);
+    for (auto index : member_set)
+    {
+        bn::Fr pow, tmpF, s_i;
+        s_i      = vec_a[0];
+        for (uint32_t k = 1; k < vec_a.size(); k++) {
+            bn::Fr::pow(pow, index + 1, k);  // adjust index in computation
+            bn::Fr::mul(tmpF, pow, vec_a[k]);  // j^k * a_i[k]
+            bn::Fr::add(s_i, s_i, tmpF);
+        }
+        values[index] = s_i;
+    }
+
+    EXPECT_EQ(vec_a[0], ComputeZi(member_set, values));
+}
