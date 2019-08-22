@@ -236,7 +236,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
                        *this,           cfg_.features,
                        certificate,     cfg_.num_lanes(),
                        cfg_.num_slices, cfg_.block_difficulty,
-                       beacon_, cfg_.aeon_period}
+                       beacon_,         cfg_.aeon_period}
   , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_,
                                                               cfg_.network_mode)}
   , tx_processor_{dag_, *storage_, block_packer_, tx_status_cache_, cfg_.processor_threads}

@@ -40,7 +40,7 @@ static const uint32_t DEFAULT_STAKE_DELAY_PERIOD = 5;
 static const uint32_t DEFAULT_AEON_PERIOD        = 10;
 static const uint32_t DEFAULT_MAX_PEERS          = 3;
 static const uint32_t DEFAULT_TRANSIENT_PEERS    = 1;
-static const uint32_t NUM_SYSTEM_THREADS         =
+static const uint32_t NUM_SYSTEM_THREADS =
     static_cast<uint32_t>(std::thread::hardware_concurrency());
 
 }  // namespace

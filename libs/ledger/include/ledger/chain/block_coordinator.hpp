@@ -196,7 +196,8 @@ public:
                    BlockPackerInterface &packer, BlockSinkInterface &block_sink,
                    core::FeatureFlags const &features, ProverPtr const &prover,
                    std::size_t num_lanes, std::size_t num_slices, std::size_t block_difficulty,
-                   BeaconServicePtr beacon, /*uint64_t max_committee_size = 0,*/ uint64_t aeon_period = 0);
+                   BeaconServicePtr                              beacon,
+                   /*uint64_t max_committee_size = 0,*/ uint64_t aeon_period = 0);
   BlockCoordinator(BlockCoordinator const &) = delete;
   BlockCoordinator(BlockCoordinator &&)      = delete;
   ~BlockCoordinator()                        = default;
@@ -360,9 +361,10 @@ private:
   /// }
 
   /// @name Variables relating to POS consensus
-  /* uint64_t        max_committee_size_{0};               ///< System upper bound on the maximum committee size */
-  uint64_t        aeon_period_{0};                      ///< Periodicity of committee renewal
-  Flag            syncronised_{false};                  ///< Flag to signal if this node is synchronised, or catching up
+  /* uint64_t        max_committee_size_{0};               ///< System upper bound on the maximum
+   * committee size */
+  uint64_t aeon_period_{0};      ///< Periodicity of committee renewal
+  Flag     syncronised_{false};  ///< Flag to signal if this node is synchronised, or catching up
   /// @}
 
   /// @name Telemetry

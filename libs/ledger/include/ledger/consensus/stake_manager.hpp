@@ -35,10 +35,11 @@ class StakeSnapshot;
 class EntropyGeneratorInterface;
 
 /**
- * The stake manager manages and verifies who the stakers are on a block by block basis (stake snapshot). This is a separate
- * class to the wallet record and so does not necessarily get written to the state database.
+ * The stake manager manages and verifies who the stakers are on a block by block basis (stake
+ * snapshot). This is a separate class to the wallet record and so does not necessarily get written
+ * to the state database.
  *
- * During normal operation, transactions that execute staking or destaking events will be 
+ * During normal operation, transactions that execute staking or destaking events will be
  * collected after block execution and sent to the StakeManager. These go into a queue
  * aimed at enforcing a cool down and spin-up period for stakers.
  *
@@ -55,17 +56,18 @@ public:
   using CommitteePtr = std::shared_ptr<Committee const>;
 
   // Construction / Destruction
-  StakeManager(uint64_t committee_size, uint32_t block_interval_ms = 1000, uint64_t snapshot_validity_periodicity = 1);
+  StakeManager(uint64_t committee_size, uint32_t block_interval_ms = 1000,
+               uint64_t snapshot_validity_periodicity = 1);
   StakeManager(StakeManager const &) = delete;
   StakeManager(StakeManager &&)      = delete;
   ~StakeManager() override           = default;
 
   /// @name Stake Manager Interface
   /// @{
-  void        UpdateCurrentBlock(Block const &current) override;
-  uint64_t    GetBlockGenerationWeight(Block const &previous, Address const &address) override;
-  bool        ShouldGenerateBlock(Block const &previous, Address const &address) override;
-  bool        ValidMinerForBlock(Block const &previous, Address const &address) override;
+  void     UpdateCurrentBlock(Block const &current) override;
+  uint64_t GetBlockGenerationWeight(Block const &previous, Address const &address) override;
+  bool     ShouldGenerateBlock(Block const &previous, Address const &address) override;
+  bool     ValidMinerForBlock(Block const &previous, Address const &address) override;
   /// @}
 
   uint32_t BlockInterval();
@@ -76,7 +78,7 @@ public:
   // Accessors for the executor
   StakeUpdateQueue &      update_queue();
   StakeUpdateQueue const &update_queue() const;
-  uint64_t               committee_size() const;
+  uint64_t                committee_size() const;
 
   std::shared_ptr<StakeSnapshot const> GetCurrentStakeSnapshot() const;
 
@@ -90,10 +92,10 @@ public:
 private:
   static constexpr std::size_t HISTORY_LENGTH = 1000;
 
-  using BlockIndex           = uint64_t;
-  using StakeSnapshotPtr     = std::shared_ptr<StakeSnapshot>;
-  using StakeHistory         = std::map<BlockIndex, StakeSnapshotPtr>;
-  using CommitteeHistory     = std::map<BlockIndex, CommitteePtr>;
+  using BlockIndex       = uint64_t;
+  using StakeSnapshotPtr = std::shared_ptr<StakeSnapshot>;
+  using StakeHistory     = std::map<BlockIndex, StakeSnapshotPtr>;
+  using CommitteeHistory = std::map<BlockIndex, CommitteePtr>;
   /* using EntropyCache     = std::map<BlockIndex, uint64_t>; */
 
   StakeSnapshotPtr LookupStakeSnapshot(BlockIndex block);
@@ -101,17 +103,17 @@ private:
   /* bool             LookupEntropy(Block const &block, uint64_t &entropy); */
 
   // Config & Components
-  uint64_t                   committee_size_{0};       ///< The "static" size of the committee
-  uint64_t                   snapshot_validity_periodicity_{1}; ///< The period to use when building committees
+  uint64_t committee_size_{0};                 ///< The "static" size of the committee
+  uint64_t snapshot_validity_periodicity_{1};  ///< The period to use when building committees
 
   /* EntropyGeneratorInterface *entropy_{nullptr};     ///< The reference to entropy module */
-  StakeUpdateQueue           update_queue_;            ///< The update queue of events
-  StakeHistory               stake_history_{};               ///< Cache of historical snapshots
-  CommitteeHistory           committee_history_{};               ///< Cache of historical committees
-  StakeSnapshotPtr           current_{};               ///< Most recent snapshot
-  BlockIndex                 current_block_index_{0};  ///< Block index of most recent snapshot
+  StakeUpdateQueue update_queue_;            ///< The update queue of events
+  StakeHistory     stake_history_{};         ///< Cache of historical snapshots
+  CommitteeHistory committee_history_{};     ///< Cache of historical committees
+  StakeSnapshotPtr current_{};               ///< Most recent snapshot
+  BlockIndex       current_block_index_{0};  ///< Block index of most recent snapshot
   /* EntropyCache               entropy_cache_{}; */
-  uint32_t                   block_interval_ms_{std::numeric_limits<uint32_t>::max()};
+  uint32_t block_interval_ms_{std::numeric_limits<uint32_t>::max()};
 };
 
 inline uint64_t StakeManager::committee_size() const

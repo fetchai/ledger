@@ -102,7 +102,8 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr
                                    BlockSinkInterface &      block_sink,
                                    core::FeatureFlags const &features, ProverPtr const &prover,
                                    std::size_t num_lanes, std::size_t num_slices,
-                                   std::size_t block_difficulty, BeaconServicePtr beacon, /*uint64_t max_committee_size,*/ uint64_t aeon_period)
+                                   std::size_t block_difficulty, BeaconServicePtr beacon,
+                                   /*uint64_t max_committee_size,*/ uint64_t aeon_period)
   : chain_{chain}
   , dag_{std::move(dag)}
   , stake_{std::move(stake)}
@@ -208,10 +209,10 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr
 
   state_machine_->OnStateChange([this](State current, State previous) {
     FETCH_UNUSED(this);
-    //if (periodic_print_.Poll())
+    // if (periodic_print_.Poll())
     //{
-      FETCH_LOG_INFO(LOGGING_NAME, "Current state: ", ToString(current),
-                     " (previous: ", ToString(previous), ")");
+    FETCH_LOG_INFO(LOGGING_NAME, "Current state: ", ToString(current),
+                   " (previous: ", ToString(previous), ")");
     //}
   });
 
@@ -481,32 +482,35 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
   {
     // Number of block we want to generate
     uint64_t const block_number  = current_block_->body.block_number + 1;
-    uint64_t random_beacon = 0;
+    uint64_t       random_beacon = 0;
 
     // POS: Additional check, are we able to mine?
     if (stake_)
     {
       bool should_generate = true;
 
-      // Try to get entropy for the block we are generating - is allowed to fail if we request too early
-      if(EntropyGeneratorInterface::Status::OK != beacon_->GenerateEntropy(current_block_->body.hash, current_block_->body.block_number, random_beacon))
+      // Try to get entropy for the block we are generating - is allowed to fail if we request too
+      // early
+      if (EntropyGeneratorInterface::Status::OK !=
+          beacon_->GenerateEntropy(current_block_->body.hash, current_block_->body.block_number,
+                                   random_beacon))
       {
         should_generate = false;
       }
 
       // Note here the previous block's entropy determines miner selection
-      if (should_generate && !stake_->ShouldGenerateBlock(*current_block_, mining_address_) )
+      if (should_generate && !stake_->ShouldGenerateBlock(*current_block_, mining_address_))
       {
         should_generate = false;
       }
 
-      if(!should_generate)
+      if (!should_generate)
       {
         // delay the invocation of this state machine
         state_machine_->Delay(std::chrono::milliseconds{100});
 
         // TODO(issue 1245): Refactor this stage, getting a little complicated
-        // TODO(HUT): reset here instead! 
+        // TODO(HUT): reset here instead!
         return State::SYNCHRONISED;
       }
     }
@@ -583,29 +587,34 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
       // Attempt to ascertain the beacon value within the block
       uint64_t random_beacon = 0;
 
-      // Try to get entropy for the block we are generating - it must eventually resolve to OK or FAILED
-      for(uint16_t i = 0;;)
+      // Try to get entropy for the block we are generating - it must eventually resolve to OK or
+      // FAILED
+      for (uint16_t i = 0;;)
       {
-        auto result = beacon_->GenerateEntropy(current_block_->body.hash, current_block_->body.block_number, random_beacon);
+        auto result = beacon_->GenerateEntropy(current_block_->body.hash,
+                                               current_block_->body.block_number, random_beacon);
 
-        if(result == EntropyGeneratorInterface::Status::OK)
+        if (result == EntropyGeneratorInterface::Status::OK)
         {
           break;
         }
 
-        if(result == EntropyGeneratorInterface::Status::NOT_READY)
+        if (result == EntropyGeneratorInterface::Status::NOT_READY)
         {
-          FETCH_LOG_INFO(LOGGING_NAME, "Waiting for entropy for block: ", current_block_->body.block_number);
+          FETCH_LOG_INFO(LOGGING_NAME,
+                         "Waiting for entropy for block: ", current_block_->body.block_number);
         }
 
-        if(result == EntropyGeneratorInterface::Status::FAILED || (result == EntropyGeneratorInterface::Status::OK && random_beacon != current_block_->body.random_beacon))
+        if (result == EntropyGeneratorInterface::Status::FAILED ||
+            (result == EntropyGeneratorInterface::Status::OK &&
+             random_beacon != current_block_->body.random_beacon))
         {
           return fail("Failed to verify entropy during block validation. Discarding block.");
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
-        if(i++ == 5)
+        if (i++ == 5)
         {
           return fail("Timed out waiting for entropy for block");
         }
@@ -617,7 +626,8 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
       }
 
       if (current_block_->weight !=
-          stake_->GetBlockGenerationWeight(*previous, current_block_->body.miner) && current_block_->weight != 0)
+              stake_->GetBlockGenerationWeight(*previous, current_block_->body.miner) &&
+          current_block_->weight != 0)
       {
         return fail("Incorrect stake weight found for block.");
       }
@@ -1157,12 +1167,11 @@ BlockCoordinator::State BlockCoordinator::OnReset()
   }
   else
   {
-    FETCH_LOG_ERROR(LOGGING_NAME,
-                    "Unable to find a previously executed block!");
+    FETCH_LOG_ERROR(LOGGING_NAME, "Unable to find a previously executed block!");
   }
 
   // trigger stake updates at the end of the block lifecycle
-  if(stake_ && block)
+  if (stake_ && block)
   {
     stake_->UpdateCurrentBlock(*block);
   }
@@ -1179,7 +1188,7 @@ BlockCoordinator::State BlockCoordinator::OnReset()
       if ((block_number % aeon_period_) == 0)
       {
         beacon::BeaconService::CabinetMemberList cabinet_member_list;
-        auto const current_stakers = stake_->GetCommittee(*block);
+        auto const                               current_stakers = stake_->GetCommittee(*block);
 
         for (auto const &staker : *current_stakers)
         {

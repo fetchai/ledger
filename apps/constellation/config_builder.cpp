@@ -59,26 +59,26 @@ Constellation::Config BuildConstellationConfig(Settings const &settings)
   Constellation::Config cfg;
 
   BuildManifest(settings, cfg.manifest);
-  cfg.log2_num_lanes           = platform::ToLog2(settings.num_lanes.value());
-  cfg.num_slices               = settings.num_slices.value();
-  cfg.num_executors            = settings.num_executors.value();
-  cfg.db_prefix                = settings.db_prefix.value();
-  cfg.processor_threads        = settings.num_processor_threads.value();
-  cfg.verification_threads     = settings.num_verifier_threads.value();
-  cfg.max_peers                = settings.max_peers.value();
-  cfg.transient_peers          = settings.transient_peers.value();
-  cfg.block_interval_ms        = settings.block_interval.value();
-  cfg.aeon_period              = settings.aeon_period.value();
-  cfg.max_committee_size       = settings.max_committee_size.value();
-  cfg.stake_delay_period       = settings.stake_delay_period.value();
-  cfg.peers_update_cycle_ms    = settings.peer_update_interval.value();
-  cfg.disable_signing          = settings.disable_signing.value();
-  cfg.sign_broadcasts          = false;
-  cfg.load_genesis_file        = settings.load_genesis_file.value();
-  cfg.genesis_file_location    = settings.genesis_file_location.value();
-  cfg.proof_of_stake           = settings.proof_of_stake.value();
-  cfg.network_mode             = GetNetworkMode(settings);
-  cfg.features                 = settings.experimental_features.value();
+  cfg.log2_num_lanes        = platform::ToLog2(settings.num_lanes.value());
+  cfg.num_slices            = settings.num_slices.value();
+  cfg.num_executors         = settings.num_executors.value();
+  cfg.db_prefix             = settings.db_prefix.value();
+  cfg.processor_threads     = settings.num_processor_threads.value();
+  cfg.verification_threads  = settings.num_verifier_threads.value();
+  cfg.max_peers             = settings.max_peers.value();
+  cfg.transient_peers       = settings.transient_peers.value();
+  cfg.block_interval_ms     = settings.block_interval.value();
+  cfg.aeon_period           = settings.aeon_period.value();
+  cfg.max_committee_size    = settings.max_committee_size.value();
+  cfg.stake_delay_period    = settings.stake_delay_period.value();
+  cfg.peers_update_cycle_ms = settings.peer_update_interval.value();
+  cfg.disable_signing       = settings.disable_signing.value();
+  cfg.sign_broadcasts       = false;
+  cfg.load_genesis_file     = settings.load_genesis_file.value();
+  cfg.genesis_file_location = settings.genesis_file_location.value();
+  cfg.proof_of_stake        = settings.proof_of_stake.value();
+  cfg.network_mode          = GetNetworkMode(settings);
+  cfg.features              = settings.experimental_features.value();
 
   return cfg;
 }

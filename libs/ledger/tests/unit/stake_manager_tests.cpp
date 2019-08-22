@@ -108,7 +108,7 @@ protected:
     {
       // validate the committee vs the generation weight
       auto const committee = stake_manager_->GetCommittee(block);
-      ASSERT_TRUE(static_cast<bool>(committee)); // fails
+      ASSERT_TRUE(static_cast<bool>(committee));  // fails
       ASSERT_EQ(committee->size(), committee_size);
 
       // update the statistics
@@ -165,7 +165,7 @@ TEST_F(StakeManagerTests, CheckBasicStakeChangeScenarios)
   for (auto const &identity : identities)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Identity: ", identity.identifier().ToBase64(),
-                    " rounds: ", stats.at(identity));
+                   " rounds: ", stats.at(identity));
 
     EXPECT_GT(stats.at(identity), 0);
   }

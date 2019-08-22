@@ -92,7 +92,7 @@ public:
 
   /// @name State File
   /// @{
-  settings::Setting<bool> load_genesis_file;
+  settings::Setting<bool>        load_genesis_file;
   settings::Setting<std::string> genesis_file_location;
   /// @}
 
@@ -103,7 +103,7 @@ public:
 
   /// @name Proof of Stake
   /// @{
-  settings::Setting<bool> proof_of_stake;
+  settings::Setting<bool>     proof_of_stake;
   settings::Setting<uint64_t> max_committee_size;
   settings::Setting<uint64_t> stake_delay_period;
   settings::Setting<uint64_t> aeon_period;

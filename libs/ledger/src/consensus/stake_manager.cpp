@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/random/lcg.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/consensus/entropy_generator_interface.hpp"
 #include "ledger/consensus/stake_manager.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
-#include "core/random/lcg.hpp"
 
 #include <algorithm>
 #include <cstddef>
@@ -31,7 +31,7 @@ namespace ledger {
 namespace {
 
 constexpr char const *LOGGING_NAME = "StakeMgr";
-using DRNG        = random::LinearCongruentialGenerator;
+using DRNG                         = random::LinearCongruentialGenerator;
 
 std::size_t SafeDecrement(std::size_t value, std::size_t decrement)
 {
@@ -65,13 +65,14 @@ void TrimToSize(T &container, uint64_t max_allowed)
 template <typename T>
 void DeterministicShuffle(T &container, uint64_t random_beacon)
 {
-  DRNG        rng(random_beacon);
+  DRNG rng(random_beacon);
   std::shuffle(container.begin(), container.end(), rng);
 }
 
 }  // namespace
 
-StakeManager::StakeManager(uint64_t committee_size, uint32_t block_interval_ms, uint64_t snapshot_validity_periodicity)
+StakeManager::StakeManager(uint64_t committee_size, uint32_t block_interval_ms,
+                           uint64_t snapshot_validity_periodicity)
   : committee_size_{committee_size}
   , snapshot_validity_periodicity_{snapshot_validity_periodicity}
   , block_interval_ms_{block_interval_ms}
@@ -98,10 +99,11 @@ void StakeManager::UpdateCurrentBlock(Block const &current)
   }
 
   // If this would create a new committee save this snapshot
-  if(current.body.block_number % snapshot_validity_periodicity_ == 0)
+  if (current.body.block_number % snapshot_validity_periodicity_ == 0)
   {
     auto snapshot = LookupStakeSnapshot(current.body.block_number);
-    committee_history_[current.body.block_number] = snapshot->BuildCommittee(current.body.random_beacon, committee_size_);
+    committee_history_[current.body.block_number] =
+        snapshot->BuildCommittee(current.body.random_beacon, committee_size_);
   }
 
   TrimToSize(stake_history_, HISTORY_LENGTH);
@@ -154,17 +156,21 @@ bool StakeManager::ShouldGenerateBlock(Block const &previous, Address const &add
 StakeManager::CommitteePtr StakeManager::GetCommittee(Block const &previous)
 {
   // Calculate the last relevant snapshot
-  uint64_t const last_snapshot = previous.body.block_number - (previous.body.block_number % snapshot_validity_periodicity_);
+  uint64_t const last_snapshot =
+      previous.body.block_number - (previous.body.block_number % snapshot_validity_periodicity_);
 
   // Invalid to request a committee too far ahead in time
   assert(committee_history_.find(last_snapshot) != committee_history_.end());
 
   if (committee_history_.find(last_snapshot) == committee_history_.end())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "No committee history found for block: ", previous.body.block_number, " AKA ", last_snapshot);
+    FETCH_LOG_INFO(LOGGING_NAME,
+                   "No committee history found for block: ", previous.body.block_number, " AKA ",
+                   last_snapshot);
   }
 
-  // If the last committee was the valid committee, return this. Otherwise, deterministically shuffle the committee
+  // If the last committee was the valid committee, return this. Otherwise, deterministically
+  // shuffle the committee
   if (last_snapshot == previous.body.block_number)
   {
     return committee_history_.at(last_snapshot);
@@ -172,7 +178,7 @@ StakeManager::CommitteePtr StakeManager::GetCommittee(Block const &previous)
   else
   {
     // TODO(HUT): clean this
-    CommitteePtr committee_ptr                   = committee_history_[last_snapshot];
+    CommitteePtr               committee_ptr     = committee_history_[last_snapshot];
     std::shared_ptr<Committee> committee_ptr_ret = std::make_shared<Committee>();
 
     assert(!committee_ptr->empty());
@@ -241,7 +247,6 @@ void StakeManager::ResetInternal(StakeSnapshotPtr &&snapshot)
   current_             = std::move(snapshot);
   current_block_index_ = 0;
 }
-
 
 StakeManager::StakeSnapshotPtr StakeManager::LookupStakeSnapshot(BlockIndex block)
 {
