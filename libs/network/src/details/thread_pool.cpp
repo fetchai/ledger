@@ -326,7 +326,7 @@ bool ThreadPoolImplementation::Poll()
   // trigger any required idle work (if it is time to do so)
   if (idle_work_.IsDue())
   {
-    count += idle_work_.Visit([this](WorkItem const &item) { ExecuteWorkload(item); });
+    count += idle_work_.Visit([this](WorkItem const &item) noexcept { ExecuteWorkload(item); });
   }
 
   // update the global counter

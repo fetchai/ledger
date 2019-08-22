@@ -47,9 +47,8 @@ public:
   CounterMap &operator=(CounterMap &&) = delete;
 
 private:
-  using Mutex     = std::mutex;
-  using LockGuard = std::lock_guard<Mutex>;
-  using Counters  = std::unordered_map<Labels, CounterPtr>;
+  using Mutex    = std::mutex;
+  using Counters = std::unordered_map<Labels, CounterPtr>;
 
   CounterPtr LookupCounter(Labels const &keys);
 

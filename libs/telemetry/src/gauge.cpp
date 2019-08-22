@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/mutex.hpp"
 #include "core/string/ends_with.hpp"
 #include "telemetry/gauge.hpp"
 #include "telemetry/measurement.hpp"

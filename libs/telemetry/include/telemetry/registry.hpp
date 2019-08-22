@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/mutex.hpp"
 #include "telemetry/telemetry.hpp"
 
 #include <algorithm>
@@ -82,7 +83,6 @@ private:
   using MeasurementPtr = std::shared_ptr<Measurement>;
   using Measurements   = std::vector<MeasurementPtr>;
   using Mutex          = std::mutex;
-  using LockGuard      = std::lock_guard<std::mutex>;
 
   // Construction / Destruction
   Registry()  = default;
@@ -115,7 +115,7 @@ Registry::GaugePtr<T> Registry::CreateGauge(std::string name, std::string descri
 
     // add the gauge to the register
     {
-      LockGuard guard(lock_);
+      FETCH_LOCK(lock_);
       measurements_.push_back(gauge);
     }
   }
@@ -137,7 +137,7 @@ std::shared_ptr<T> Registry::LookupMeasurement(std::string const &name) const
 
   auto const matcher = [&name](MeasurementPtr const &m) { return (m->name() == name); };
 
-  LockGuard guard{lock_};
+  FETCH_LOCK(lock_);
 
   // attempt to find the first metric matching the name with the type
   for (auto start = measurements_.begin(), end = measurements_.end(); start != end;)
