@@ -140,7 +140,7 @@ bn::Fr ComputeZi(std::set<uint32_t> const &parties, std::vector<bn::Fr> const &s
         bn::Fr::mul(lhsF, lhsF, tmpF);
       }
     }
-    bn::Fr::neg(lhsF, lhsF);
+    bn::Fr::inv(lhsF, lhsF);
 
     bn::Fr::mul(rhsF, rhsF, lhsF);
     bn::Fr::mul(tmpF, rhsF, shares[jt]);  // use the provided shares (interpolation points)
@@ -180,7 +180,7 @@ std::vector<bn::Fr> InterpolatePolynom(std::vector<bn::Fr> const &a, std::vector
       bn::Fr::mul(t2, t2, a[k]);
       bn::Fr::add(t2, t2, res[static_cast<size_t>(i)]);
     }
-    bn::Fr::neg(t1, t1);
+    bn::Fr::inv(t1, t1);
 
     bn::Fr::sub(t2, b[k], t2);
     bn::Fr::mul(t1, t1, t2);
