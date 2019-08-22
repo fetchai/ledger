@@ -170,26 +170,21 @@ StakeManager::CommitteePtr StakeManager::GetCommittee(Block const &previous)
   }
 
   // If the last committee was the valid committee, return this. Otherwise, deterministically
-  // shuffle the committee
+  // shuffle the committee using the random beacon
   if (last_snapshot == previous.body.block_number)
   {
     return committee_history_.at(last_snapshot);
   }
   else
   {
-    // TODO(HUT): clean this
-    CommitteePtr               committee_ptr     = committee_history_[last_snapshot];
-    std::shared_ptr<Committee> committee_ptr_ret = std::make_shared<Committee>();
-
+    CommitteePtr committee_ptr = committee_history_[last_snapshot];
     assert(!committee_ptr->empty());
 
     Committee committee_copy = *committee_ptr;
 
     DeterministicShuffle(committee_copy, previous.body.random_beacon);
 
-    *committee_ptr_ret = committee_copy;
-
-    return committee_ptr_ret;
+    return std::make_shared<Committee>(committee_copy);
   }
 }
 

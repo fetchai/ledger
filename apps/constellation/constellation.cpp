@@ -81,7 +81,7 @@ using ConstByteArray   = byte_array::ConstByteArray;
 using BeaconServicePtr = std::shared_ptr<fetch::beacon::BeaconService>;
 
 static const std::size_t HTTP_THREADS{4};
-static char const *      SNAPSHOT_FILENAME = "genesis_file.json";
+static char const *      GENESIS_FILENAME = "genesis_file.json";
 
 bool WaitForLaneServersToStart()
 {
@@ -431,7 +431,7 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
 
     if (cfg_.genesis_file_location.empty())
     {
-      creator.LoadFile(SNAPSHOT_FILENAME);
+      creator.LoadFile(GENESIS_FILENAME);
     }
     else
     {

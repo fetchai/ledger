@@ -103,7 +103,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr
                                    core::FeatureFlags const &features, ProverPtr const &prover,
                                    std::size_t num_lanes, std::size_t num_slices,
                                    std::size_t block_difficulty, BeaconServicePtr beacon,
-                                   /*uint64_t max_committee_size,*/ uint64_t aeon_period)
+                                   uint64_t aeon_period)
   : chain_{chain}
   , dag_{std::move(dag)}
   , stake_{std::move(stake)}
@@ -209,11 +209,11 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr
 
   state_machine_->OnStateChange([this](State current, State previous) {
     FETCH_UNUSED(this);
-    // if (periodic_print_.Poll())
-    //{
-    FETCH_LOG_INFO(LOGGING_NAME, "Current state: ", ToString(current),
-                   " (previous: ", ToString(previous), ")");
-    //}
+    if (periodic_print_.Poll())
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Current state: ", ToString(current),
+                     " (previous: ", ToString(previous), ")");
+    }
   });
 
   // Initialising the BLS library
