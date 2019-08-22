@@ -36,6 +36,7 @@ struct EstimatorConfig
   using CostFunctionType = fetch::ml::ops::CostFunctionType;
 
   bool     early_stopping = false;
+  bool     test           = false;
   SizeType patience       = 10;
   DataType min_delta      = DataType(0.0);
 
@@ -73,7 +74,7 @@ public:
 
   virtual bool Train(SizeType n_steps)                        = 0;
   virtual bool Train(SizeType n_steps, DataType &loss)        = 0;
-  virtual bool Validate()                                     = 0;
+  virtual bool Test(DataType &test_loss)                      = 0;
   virtual bool Predict(TensorType &input, TensorType &output) = 0;
 
 protected:
