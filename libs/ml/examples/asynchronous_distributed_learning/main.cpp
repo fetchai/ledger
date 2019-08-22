@@ -67,8 +67,10 @@ class TrainingClient
 {
 public:
   TrainingClient(std::string const &images, std::string const &labels)
-    : dataloader_(images, labels, true, VALIDATION_SET_RATIO)
+    : dataloader_(images, labels)
   {
+    dataloader_.SetTestRatio(VALIDATION_SET_RATIO);
+    dataloader_.SetRandomMode(true);
     g_.AddNode<PlaceHolder<TensorType>>("Input", {});
     g_.AddNode<FullyConnected<TensorType>>("FC1", {"Input"}, 28u * 28u, 10u);
     g_.AddNode<Relu<TensorType>>("Relu1", {"FC1"});
@@ -113,12 +115,7 @@ public:
 
   void Validate(DataType &validation_loss)
   {
-    if (!dataloader_.IsValidable())
-    {
-      throw std::runtime_error("No validation set");
-    }
-
-    dataloader_.SetMode(fetch::ml::dataloaders::DataLoaderMode::VALIDATE);
+    dataloader_.SetMode(fetch::ml::dataloaders::DataLoaderMode::TEST);
     SizeType val_set_size = dataloader_.Size();
 
     dataloader_.Reset();

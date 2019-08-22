@@ -495,9 +495,10 @@ template <typename TensorType>
 void Graph<TensorType>::set_weights(std::vector<TensorType> &new_weights)
 {
   SizeType index = 0;
-  for (auto const &t : trainable_)
+  for (auto &t : trainable_nodes_)
   {
-    t->set_weights(new_weights.at(index));
+    auto trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
+    trainable_ptr->set_weights(new_weights.at(index));
     index++;
   }
 }

@@ -53,13 +53,15 @@ public:
 
   W2VLoader(SizeType window_size, SizeType negative_samples);
 
-  bool        IsDone() const override;
-  void        Reset() override;
-  inline bool IsValidable() const override;
-  void        RemoveInfrequent(SizeType min);
-  void        InitUnigramTable();
-  void        GetNext(ReturnType &t);
-  ReturnType  GetNext() override;
+  bool IsDone() const override;
+  void Reset() override;
+  void SetTestRatio(float new_test_ratio) override;
+  void SetValidationRatio(float new_validation_ratio) override;
+
+  void       RemoveInfrequent(SizeType min);
+  void       InitUnigramTable();
+  void       GetNext(ReturnType &t);
+  ReturnType GetNext() override;
 
   bool AddData(InputType const &input, LabelType const &label) override;
 
@@ -103,7 +105,7 @@ private:
  */
 template <typename T>
 W2VLoader<T>::W2VLoader(SizeType window_size, SizeType negative_samples)
-  : DataLoader<LabelType, InputType>(false)  // no random mode specified
+  : DataLoader<LabelType, InputType>()
   , current_sentence_(0)
   , current_word_(0)
   , window_size_(window_size)
@@ -168,10 +170,17 @@ void W2VLoader<T>::Reset()
 }
 
 template <typename T>
-inline bool W2VLoader<T>::IsValidable() const
+void W2VLoader<T>::SetTestRatio(float new_test_ratio)
 {
-  // Validation set splitting not implemented yet
-  return false;
+  FETCH_UNUSED(new_test_ratio);
+  throw std::runtime_error("Test set splitting is not supported for this dataloader.");
+}
+
+template <typename T>
+void W2VLoader<T>::SetValidationRatio(float new_validation_ratio)
+{
+  FETCH_UNUSED(new_validation_ratio);
+  throw std::runtime_error("Validation set splitting is not supported for this dataloader.");
 }
 
 /**
@@ -447,7 +456,7 @@ void W2VLoader<T>::UpdateCursor()
 {
   if (this->mode_ != DataLoaderMode::TRAIN)
   {
-    throw std::runtime_error("Other mode than training not supported yet.");
+    throw std::runtime_error("Other mode than training not supported.");
   }
 }
 

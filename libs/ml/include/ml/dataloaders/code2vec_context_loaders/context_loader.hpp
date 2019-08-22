@@ -61,8 +61,8 @@ public:
   using umap_str_int  = std::unordered_map<std::string, SizeType>;
   using umap_int_str  = std::unordered_map<SizeType, std::string>;
 
-  C2VLoader(SizeType max_contexts_, bool random_mode = false)
-    : DataLoader<LabelType, InputType>(random_mode)
+  C2VLoader(SizeType max_contexts_)
+    : DataLoader<LabelType, InputType>()
     , iterator_position_get_next_context_(0)
     , iterator_position_get_next_(0)
     , current_function_index_(0)
@@ -71,13 +71,15 @@ public:
   ContextLabelPair        GetNextContext();
   ContextTensorsLabelPair GetNext() override;
 
-  SizeType    Size() const override;
-  bool        IsDone() const override;
-  void        Reset() override;
-  bool        AddData(InputType const &data, LabelType const &label) override;
-  inline bool IsValidable() const override;
-  void        AddDataAsString(std::string const &text);
-  void        createIdxUMaps();
+  SizeType Size() const override;
+  bool     IsDone() const override;
+  void     Reset() override;
+  bool     AddData(InputType const &data, LabelType const &label) override;
+  void     SetTestRatio(float new_test_ratio) override;
+  void     SetValidationRatio(float new_validation_ratio) override;
+
+  void AddDataAsString(std::string const &text);
+  void createIdxUMaps();
 
   umap_int_str umap_idx_to_functionname();
   umap_int_str umap_idx_to_path();
@@ -320,10 +322,17 @@ void C2VLoader<LabelType, InputType>::Reset()
 }
 
 template <typename LabelType, typename DataType>
-inline bool C2VLoader<LabelType, DataType>::IsValidable() const
+void C2VLoader<LabelType, DataType>::SetTestRatio(float new_test_ratio)
 {
-  // Validation set splitting not implemented yet
-  return false;
+  FETCH_UNUSED(new_test_ratio);
+  throw std::runtime_error("Test set splitting is not supported for this dataloader.");
+}
+
+template <typename LabelType, typename DataType>
+void C2VLoader<LabelType, DataType>::SetValidationRatio(float new_validation_ratio)
+{
+  FETCH_UNUSED(new_validation_ratio);
+  throw std::runtime_error("Validation set splitting is not supported for this dataloader.");
 }
 
 /**

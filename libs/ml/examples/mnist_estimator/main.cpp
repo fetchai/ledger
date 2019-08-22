@@ -57,28 +57,24 @@ int main(int ac, char **av)
   estimator_config.print_stats    = true;
 
   // setup dataloader
-  auto       data_loader_ptr = std::make_shared<DataLoaderType>(av[1], av[2], false, 0.2);
-  auto       test_data       = data_loader_ptr->GetNext();
-  TensorType test_label      = test_data.first;
-  TensorType test_input      = test_data.second.at(0);
-  TensorType prediction;
-  DataType   loss;
+  auto data_loader_ptr = std::make_shared<DataLoaderType>(av[1], av[2]);
+
+  // Allocate test set of size 20% of MNIST
+  data_loader_ptr->SetTestRatio(0.2f);
+
+  DataType loss;
 
   // run estimator in training mode
   EstimatorType estimator(estimator_config, data_loader_ptr, {784, 100, 20, 10});
 
-  // initial prediction (before trained)
-  estimator.Predict(test_input, prediction);
-  std::cout << "test_label.ToString(): " << test_label.ToString() << std::endl;
-  std::cout << "prediction.ToString(): " << prediction.ToString() << std::endl;
-
   // training loop - early stopping will prevent long training time
   estimator.Train(1000000, loss);
 
-  // run estimator in testing mode
-  estimator.Predict(test_input, prediction);
-  std::cout << "test_label.ToString(): " << test_label.ToString() << std::endl;
-  std::cout << "prediction.ToString(): " << prediction.ToString() << std::endl;
+  // Run estimator on a test set
+  DataType test_loss;
+  estimator.Test(test_loss);
+
+  std::cout << "The training has finished, validation loss: " << test_loss << std::endl;
 
   return 0;
 }

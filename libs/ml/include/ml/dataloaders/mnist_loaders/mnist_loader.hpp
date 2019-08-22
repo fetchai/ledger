@@ -62,11 +62,8 @@ private:
   static constexpr std::uint32_t LABEL_SIZE    = 10;
 
 public:
-  MNISTLoader(bool random_mode = false, float test_to_train_ratio = 0.0,
-              float validation_to_train_ratio = 0.0)
+  MNISTLoader(bool random_mode = false)
     : DataLoader<LabelType, InputType>(random_mode)
-    , test_to_train_ratio_(test_to_train_ratio)
-    , validation_to_train_ratio_(validation_to_train_ratio)
   {
     // Prepare return buffer
     buffer_.second.push_back(InputType({FIGURE_WIDTH, FIGURE_HEIGHT, 1u}));
@@ -75,12 +72,8 @@ public:
     UpdateRanges();
   }
 
-  MNISTLoader(std::string const &images_file, std::string const &labels_file,
-              bool random_mode = false, float test_to_train_ratio = 0.0,
-              float validation_to_train_ratio = 0.0)
-    : DataLoader<LabelType, InputType>(random_mode)
-    , test_to_train_ratio_(test_to_train_ratio)
-    , validation_to_train_ratio_(validation_to_train_ratio)
+  MNISTLoader(std::string const &images_file, std::string const &labels_file)
+    : DataLoader<LabelType, InputType>()
   {
     SetupWithDataFiles(images_file, labels_file);
     UpdateRanges();
@@ -97,6 +90,9 @@ public:
     return *(this->current_cursor_) >= this->current_max_;
   }
 
+  /**
+   * Resets current cursor to beginning
+   */
   void Reset() override
   {
     *(this->current_cursor_) = this->current_min_;
@@ -117,9 +113,16 @@ public:
     }
   }
 
-  inline bool IsValidable() const override
+  void SetTestRatio(float new_test_ratio) override
   {
-    return test_size_ > 0;
+    test_to_train_ratio_ = new_test_ratio;
+    UpdateRanges();
+  }
+
+  void SetValidationRatio(float new_validation_ratio) override
+  {
+    validation_to_train_ratio_ = new_validation_ratio;
+    UpdateRanges();
   }
 
   /**
@@ -184,7 +187,7 @@ public:
   {
     std::uint32_t record_length(0);
     data_   = ReadMnistImages(images_file, total_size_, record_length);
-    labels_ = read_mnist_labels(labels_file, total_size_);
+    labels_ = ReadMNistLabels(labels_file, total_size_);
     assert(record_length == FIGURE_SIZE);
 
     // Prepare return buffer
@@ -240,7 +243,7 @@ public:
     }
   }
 
-  static unsigned char *read_mnist_labels(std::string full_path, std::uint32_t &number_of_labels)
+  static unsigned char *ReadMNistLabels(std::string full_path, std::uint32_t &number_of_labels)
   {
     auto reverseInt = [](std::uint32_t i) {
       unsigned char c1, c2, c3, c4;
@@ -310,11 +313,6 @@ private:
     {
       throw std::runtime_error("Unsupported dataloader mode.");
     }
-
-    if (this->current_min_ == this->current_max_)
-    {
-      throw std::runtime_error("Dataloader has no data for selected mode.");
-    }
   }
 
   void UpdateRanges()
@@ -322,17 +320,41 @@ private:
     float test_percentage       = 1.0f - test_to_train_ratio_ - validation_to_train_ratio_;
     float validation_percentage = test_percentage + test_to_train_ratio_;
 
+    // Define where test set starts
     test_offset_ = static_cast<std::uint32_t>(test_percentage * static_cast<float>(total_size_));
+
+    if (test_offset_ == static_cast<SizeType>(0))
+    {
+      test_offset_ = static_cast<SizeType>(1);
+    }
+
+    // Define where validation set starts
     validation_offset_ =
         static_cast<std::uint32_t>(validation_percentage * static_cast<float>(total_size_));
 
+    if (validation_offset_ <= test_offset_)
+    {
+      validation_offset_ = test_offset_ + 1;
+    }
+
+    // boundary check and fix
+    if (validation_offset_ > total_size_)
+    {
+      validation_offset_ = total_size_;
+    }
+
+    if (test_offset_ > total_size_)
+    {
+      test_offset_ = total_size_;
+    }
+
     validation_size_ = total_size_ - validation_offset_;
     test_size_       = validation_offset_ - test_offset_;
-    train_size_      = total_size_ - test_offset_;
+    train_size_      = test_offset_;
 
     *train_cursor_      = 0;
-    *validation_cursor_ = validation_offset_;
     *test_cursor_       = test_offset_;
+    *validation_cursor_ = validation_offset_;
 
     UpdateCursor();
   }
