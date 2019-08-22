@@ -1291,12 +1291,12 @@ struct MapSerializer<ml::OpEmbeddingsSaveableParams<TensorType>, D>
 
     if (sp.embeddings_output)
     {
-    	map.Append(HAS_EMBED_OUT, true);
-	    map.Append(EMBED_OUTPUT, *sp.embeddings_output);
+      map.Append(HAS_EMBED_OUT, true);
+      map.Append(EMBED_OUTPUT, *sp.embeddings_output);
     }
     else
     {
-    	map.Append(HAS_EMBED_OUT, false);
+      map.Append(HAS_EMBED_OUT, false);
     }
     map.Append(UPDATED_ROWS, sp.updated_rows);
     map.Append(TRAILING_IND_1, sp.trailing_indices1);
@@ -1315,9 +1315,9 @@ struct MapSerializer<ml::OpEmbeddingsSaveableParams<TensorType>, D>
     map.ExpectKeyGetValue(HAS_EMBED_OUT, has_embed_out);
     if (has_embed_out)
     {
-	    TensorType e_out;
-	    map.ExpectKeyGetValue(EMBED_OUTPUT, e_out);
-	    sp.embeddings_output = std::make_shared<TensorType>(e_out);
+      TensorType e_out;
+      map.ExpectKeyGetValue(EMBED_OUTPUT, e_out);
+      sp.embeddings_output = std::make_shared<TensorType>(e_out);
     }
 
     map.ExpectKeyGetValue(UPDATED_ROWS, sp.updated_rows);

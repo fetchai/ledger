@@ -117,17 +117,17 @@ int main(/*int ac, char **av*/)
 
   GraphType g;
   auto      ret = load_pretrained_bert_model(file_path, config, g);
-	
-	fetch::ml::GraphSaveableParams<TensorType> gsp1 = g.GetGraphSaveableParams();
-	std::cout << "got saveable params" << std::endl;
-	
-	fetch::serializers::SizeCounter counter;
-	fetch::serializers::MsgPackSerializer b;
-	counter << gsp1;
-	std::cout << "finish counting" << std::endl;
-	b.Reserve(counter.size());
-	b << gsp1;
-	std::cout << "finish serializing" << std::endl;
+
+  fetch::ml::GraphSaveableParams<TensorType> gsp1 = g.GetGraphSaveableParams();
+  std::cout << "got saveable params" << std::endl;
+
+  fetch::serializers::SizeCounter       counter;
+  fetch::serializers::MsgPackSerializer b;
+  counter << gsp1;
+  std::cout << "finish counting" << std::endl;
+  b.Reserve(counter.size());
+  b << gsp1;
+  std::cout << "finish serializing" << std::endl;
 
   std::string segment      = ret.first[0];
   std::string position     = ret.first[1];
