@@ -73,7 +73,7 @@ TensorType create_mask_data(SizeType max_seq_len, TensorType seq_len_per_batch);
 std::pair<std::vector<TensorType>, TensorType> prepare_data_for_simple_cls(SizeType max_seq_len,
                                                                            SizeType batch_size);
 // load weights functionalities
-TensorType get_weight_from_file(std::string file_name);
+TensorType get_tensor_from_file(std::string file_name);
 void       put_weight_in_layernorm(StateDictType &state_dict, std::string gamma_file_name,
                                    std::string beta_file_name, std::string gamma_weight_name,
                                    std::string beta_weight_name);
@@ -95,96 +95,90 @@ std::pair<std::vector<std::string>, std::string> load_pretrained_bert_model(
     std::string const &file_path, BERTConfig const &config, GraphType &g);
 std::pair<std::vector<std::string>, std::string> make_bert_model(BERTConfig const &config,
                                                                  GraphType &       g);
+std::vector<TensorType> get_imdb_finetune_data(std::string const &file_path);
+std::vector<TensorType> prepare_tenor_for_bert(TensorType const &data, SizeType max_seq_len);
 
-int main(/*int ac, char **av*/)
+void run_pseudo_forward_pass(BERTConfig const &config, GraphType g,
+                             std::pair<std::vector<std::string>, std::string> interface,
+                             SizeType batch_size, bool verbose = false);
+
+int main(int ac, char **av)
 {
-  //
-  //  if (ac < 3)
-  //  {
-  //    std::cout << "Usage : " << av[0]
-  //              << " PATH/TO/train-images-idx3-ubyte PATH/TO/train-labels-idx1-ubyte" <<
-  //              std::endl;
-  //    return 1;
-  //  }
+  if (ac == 1)
+  {
+    std::cout << "A argument is required" << std::endl;
+    return 1;
+  }
+  if (std::string(av[1]) == "pseudo pass")
+  {
+    // if a pseudo pass is required, only run a pseudo pass on a base uncased bert model with random
+    // weights and show the time
+    BERTConfig config;
 
-  std::cout << "FETCH BERT Demo" << std::endl;
+    GraphType g;
+    auto      ret = make_bert_model(config, g);
+    run_pseudo_forward_pass(config, g, ret, static_cast<SizeType>(2), false);
+    return 0;
+  }
+  if (std::string(av[1]) == "pretrain pass")
+  {
+    // if only the pretrain model file path is presented, we only do a psuedo pass on the pretrained
+    // uncased base bert model
+    std::string file_path = av[2];
+    std::cout << "Pretrained BERT from folder: " << file_path << std::endl;
 
-  SizeType    max_seq_len = 512u;
-  std::string file_path =
-      "/home/xiaodong/Projects/Fetch "
-      "scripts/bert_conversion/bert-base-uncased/bert-base-uncased-txt/";
+    // load pretrained bert model
+    BERTConfig config;
+    GraphType  g;
+    std::cout << "start loading pretrained bert model" << std::endl;
+    auto ret = load_pretrained_bert_model(file_path, config, g);
+    run_pseudo_forward_pass(config, g, ret, static_cast<SizeType>(1), true);
+    return 0;
+  }
+  if (std::string(av[1]) != "finetune")
+  {
+    std::cout
+        << "unknow first argument, available arguments are: pseudo pass, pretrain pass or finetune"
+        << std::endl;
+    return 1;
+  }
+
+  std::string file_path = av[1];
+  std::string IMDB_path = av[2];
+  std::cout << "Pretrained BERT from folder: " << file_path << std::endl;
+  std::cout << "IMDB review data: " << IMDB_path << std::endl;
+
+  std::cout << "Starting FETCH BERT Demo" << std::endl;
+
   BERTConfig config;
 
+  // prepare IMDB data
+
+  // load pretrained bert model
   GraphType g;
   auto      ret = load_pretrained_bert_model(file_path, config, g);
 
-  fetch::ml::GraphSaveableParams<TensorType> gsp1 = g.GetGraphSaveableParams();
-  std::cout << "got saveable params" << std::endl;
+  run_pseudo_forward_pass(config, g, ret, static_cast<SizeType>(1));
 
-  fetch::serializers::SizeCounter       counter;
-  fetch::serializers::MsgPackSerializer b;
-  counter << gsp1;
-  std::cout << "finish counting" << std::endl;
-  b.Reserve(counter.size());
-  b << gsp1;
-  std::cout << "finish serializing" << std::endl;
-
-  std::string segment      = ret.first[0];
-  std::string position     = ret.first[1];
-  std::string tokens       = ret.first[2];
-  std::string mask         = ret.first[3];
-  std::string layer_output = ret.second;
-
+  //  std::string segment      = ret.first[0];
+  //  std::string position     = ret.first[1];
+  //  std::string tokens       = ret.first[2];
+  //  std::string mask         = ret.first[3];
+  //  std::string layer_output = ret.second;
+  //
   //  // Add linear classification layer
   //  std::string cls_token_output = g.template AddNode<fetch::ml::ops::Slice<TensorType>>(
   //      "ClsTokenOutput", {layer_output}, 0u, 1u);
   //  std::string classification_output =
   //      g.template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
-  //          "ClassificationOutput", {cls_token_output}, model_dims, 1u, ActivationType::SIGMOID,
-  //          RegType::NONE, static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT, false);
+  //          "ClassificationOutput", {cls_token_output}, config.model_dims, 1u,
+  //          ActivationType::SIGMOID, RegType::NONE, static_cast<DataType>(0),
+  //          WeightsInitType::XAVIER_GLOROT, false);
+  //
   //  // Set up error signal
   //  std::string label = g.template AddNode<PlaceHolder<TensorType>>("Label", {});
   //  std::string error =
   //      g.template AddNode<CrossEntropyLoss<TensorType>>("Error", {classification_output, label});
-
-  SizeType batch_size = 1u;
-  SizeType seq_len    = 256u;
-
-  TensorType tokens_data({max_seq_len, batch_size});
-  tokens_data.Fill(static_cast<DataType>(1));
-
-  TensorType mask_data({max_seq_len, max_seq_len, batch_size});
-  for (SizeType i = 0; i < seq_len; i++)
-  {
-    for (SizeType t = 0; t < seq_len; t++)
-    {
-      for (SizeType b = 0; b < batch_size; b++)
-      {
-        mask_data.Set(i, t, b, static_cast<DataType>(1));
-      }
-    }
-  }
-  TensorType position_data({max_seq_len, batch_size});
-  for (SizeType i = 0; i < seq_len; i++)
-  {
-    for (SizeType b = 0; b < batch_size; b++)
-    {
-      position_data.Set(i, b, static_cast<DataType>(i));
-    }
-  }
-  TensorType segment_data({max_seq_len, batch_size});
-  g.SetInput(segment, segment_data);
-  g.SetInput(position, position_data);
-  g.SetInput(tokens, tokens_data);
-  g.SetInput(mask, mask_data);
-
-  std::cout << "Starting forward passing" << std::endl;
-  auto cur_time  = std::chrono::high_resolution_clock::now();
-  auto output    = g.Evaluate(layer_output, false);
-  auto time_span = std::chrono::duration_cast<std::chrono::duration<double>>(
-      std::chrono::high_resolution_clock::now() - cur_time);
-  std::cout << "time span: " << static_cast<double>(time_span.count()) << std::endl;
-  std::cout << "first token: \n" << output.View(0).Copy().View(0).Copy().ToString() << std::endl;
 
   //  auto train_data = prepare_data_for_simple_cls(max_seq_len, 30u);
   //  for (SizeType i = 0; i < 100; i++)
@@ -206,10 +200,70 @@ int main(/*int ac, char **av*/)
   //  std::cout << "model output: " << output.ToString() << std::endl;
   //  std::cout << "label output: " << train_data.second.ToString() << std::endl;
 
+  //  fetch::ml::GraphSaveableParams<TensorType> gsp1 = g.GetGraphSaveableParams();
+  //  std::cout << "got saveable params" << std::endl;
+  //
+  //  fetch::serializers::SizeCounter       counter;
+  //  fetch::serializers::MsgPackSerializer b;
+  //  counter << gsp1;
+  //  std::cout << "finish counting" << std::endl;
+  //  b.Reserve(counter.size());
+  //  b << gsp1;
+  //  std::cout << "finish serializing" << std::endl;
+
   return 0;
 }
 
-TensorType get_weight_from_file(std::string file_name)
+std::vector<TensorType> get_imdb_finetune_data(std::string const &file_path)
+{
+  TensorType train_pos = get_tensor_from_file(file_path + "train_pos");
+  TensorType train_neg = get_tensor_from_file(file_path + "train_neg");
+  TensorType test_pos  = get_tensor_from_file(file_path + "test_pos");
+  TensorType test_neg  = get_tensor_from_file(file_path + "test_neg");
+  return {train_pos, train_neg, test_pos, test_neg};
+}
+
+std::vector<TensorType> prepare_tenor_for_bert(TensorType const &data, SizeType max_seq_len)
+{
+  // check that data shape is proper for bert input
+  if (data.shape().size() != 2 || data.shape(0) != max_seq_len)
+  {
+    std::runtime_error("Incorrect data shape for bert");
+  }
+
+  // build segment, mask and pos data for each sentence in the data
+  SizeType batch_size = data.shape(1);
+
+  // segment data and position data need no adjustment, they are universal for all input during
+  // finetuning
+  TensorType segment_data({max_seq_len, batch_size});
+  TensorType position_data({max_seq_len, batch_size});
+  for (SizeType i = 0; i < max_seq_len; i++)
+  {
+    for (SizeType b = 0; b < batch_size; b++)
+    {
+      position_data.Set(i, b, static_cast<DataType>(i));
+    }
+  }
+
+  // mask data is the only one that is dependent on token data
+  TensorType mask_data({max_seq_len, 1, batch_size});
+  for (SizeType b = 0; b < batch_size; b++)
+  {
+    for (SizeType i = 0; i < max_seq_len; i++)
+    {
+      // stop filling 1 to mask if current position is 0 for token
+      if (data.At(i, b) == static_cast<DataType>(0))
+      {
+        continue;
+      }
+      mask_data.Set(i, 0, b, static_cast<DataType>(1));
+    }
+  }
+  return {segment_data, position_data, data, mask_data};
+}
+
+TensorType get_tensor_from_file(std::string file_name)
 {
   std::ifstream weight_file(file_name);
   assert(weight_file.is_open());
@@ -226,8 +280,8 @@ void put_weight_in_layernorm(StateDictType &state_dict, SizeType model_dims,
                              std::string gamma_weight_name, std::string beta_weight_name)
 {
   // load embedding layernorm gamma beta weights
-  TensorType layernorm_gamma = get_weight_from_file(gamma_file_name);
-  TensorType layernorm_beta  = get_weight_from_file(beta_file_name);
+  TensorType layernorm_gamma = get_tensor_from_file(gamma_file_name);
+  TensorType layernorm_beta  = get_tensor_from_file(beta_file_name);
   assert(layernorm_beta.size() == model_dims);
   assert(layernorm_gamma.size() == model_dims);
   layernorm_beta.Reshape({model_dims, 1, 1});
@@ -243,8 +297,8 @@ void put_weight_in_fully_connected(StateDictType &state_dict, SizeType in_size, 
                                    std::string weights_name, std::string bias_name)
 {
   // load embedding layernorm gamma beta weights
-  TensorType weights = get_weight_from_file(weights_file_name);
-  TensorType bias    = get_weight_from_file(bias_file_name);
+  TensorType weights = get_tensor_from_file(weights_file_name);
+  TensorType bias    = get_tensor_from_file(bias_file_name);
   FETCH_UNUSED(in_size);
   assert(weights.shape() == SizeVector({out_size, in_size}));
   assert(bias.size() == out_size);
@@ -267,14 +321,14 @@ void put_weight_in_attention_heads(StateDictType &state_dict, SizeType n_heads, 
                                    std::string value_bias_name, std::string mattn_prefix)
 {
   // get weight arrays from file
-  TensorType query_weights = get_weight_from_file(query_weights_file_name);
-  TensorType query_bias    = get_weight_from_file(query_bias_file_name);
+  TensorType query_weights = get_tensor_from_file(query_weights_file_name);
+  TensorType query_bias    = get_tensor_from_file(query_bias_file_name);
   query_bias.Reshape({model_dims, 1, 1});
-  TensorType key_weights = get_weight_from_file(key_weights_file_name);
-  TensorType key_bias    = get_weight_from_file(key_bias_file_name);
+  TensorType key_weights = get_tensor_from_file(key_weights_file_name);
+  TensorType key_bias    = get_tensor_from_file(key_bias_file_name);
   key_bias.Reshape({model_dims, 1, 1});
-  TensorType value_weights = get_weight_from_file(value_weights_file_name);
-  TensorType value_bias    = get_weight_from_file(value_bias_file_name);
+  TensorType value_weights = get_tensor_from_file(value_weights_file_name);
+  TensorType value_bias    = get_tensor_from_file(value_bias_file_name);
   value_bias.Reshape({model_dims, 1, 1});
 
   // put weights into each head
@@ -404,19 +458,19 @@ std::pair<std::vector<std::string>, std::string> load_pretrained_bert_model(
 
   // load segment embeddings
   TensorType segment_embedding_weights =
-      get_weight_from_file(file_path + "bert_embeddings_token_type_embeddings_weight");
+      get_tensor_from_file(file_path + "bert_embeddings_token_type_embeddings_weight");
   segment_embedding_weights = segment_embedding_weights.Transpose();
   assert(segment_embedding_weights.shape() == SizeVector({model_dims, segment_size}));
 
   // load position embeddings
   TensorType position_embedding_weights =
-      get_weight_from_file(file_path + "bert_embeddings_position_embeddings_weight");
+      get_tensor_from_file(file_path + "bert_embeddings_position_embeddings_weight");
   position_embedding_weights = position_embedding_weights.Transpose();
   assert(position_embedding_weights.shape() == SizeVector({model_dims, max_seq_len}));
 
   // load token embeddings
   TensorType token_embedding_weights =
-      get_weight_from_file(file_path + "bert_embeddings_word_embeddings_weight");
+      get_tensor_from_file(file_path + "bert_embeddings_word_embeddings_weight");
   token_embedding_weights = token_embedding_weights.Transpose();
   assert(token_embedding_weights.shape() == SizeVector({model_dims, vocab_size}));
 
@@ -577,22 +631,55 @@ TensorType create_position_data(SizeType max_seq_len, SizeType batch_size)
   return ret_position;
 }
 
-TensorType create_mask_data(SizeType max_seq_len, TensorType seq_len_per_batch)
+void run_pseudo_forward_pass(BERTConfig const &config, GraphType g,
+                             std::pair<std::vector<std::string>, std::string> interface,
+                             SizeType batch_size, bool verbose)
 {
-  assert(seq_len_per_batch.shape().size() == 2);
-  assert(fetch::math::Max(seq_len_per_batch) <= static_cast<DataType>(max_seq_len));
-  SizeType   batch_size = seq_len_per_batch.shape(0);
-  TensorType ret_mask({max_seq_len, max_seq_len, batch_size});
-  for (SizeType b = 0; b < batch_size; b++)
+  std::string segment      = interface.first[0];
+  std::string position     = interface.first[1];
+  std::string tokens       = interface.first[2];
+  std::string mask         = interface.first[3];
+  std::string layer_output = interface.second;
+
+  SizeType max_seq_len = config.max_seq_len;
+  SizeType seq_len     = 512u;
+
+  TensorType tokens_data({max_seq_len, batch_size});
+  tokens_data.Fill(static_cast<DataType>(1));
+
+  TensorType mask_data({max_seq_len, 1, batch_size});
+  for (SizeType i = 0; i < seq_len; i++)
   {
-    auto seq_len = static_cast<SizeType>(seq_len_per_batch.At(0, b));
-    for (SizeType i = 0; i < seq_len; i++)
+    for (SizeType b = 0; b < batch_size; b++)
     {
-      for (SizeType t = 0; t < seq_len; t++)
-      {
-        ret_mask.Set(i, t, b, static_cast<DataType>(1));
-      }
+      mask_data.Set(i, 0, b, static_cast<DataType>(1));
     }
   }
-  return ret_mask;
+  TensorType position_data({max_seq_len, batch_size});
+  for (SizeType i = 0; i < seq_len; i++)
+  {
+    for (SizeType b = 0; b < batch_size; b++)
+    {
+      position_data.Set(i, b, static_cast<DataType>(i));
+    }
+  }
+  TensorType segment_data({max_seq_len, batch_size});
+  g.SetInput(segment, segment_data);
+  g.SetInput(position, position_data);
+  g.SetInput(tokens, tokens_data);
+  g.SetInput(mask, mask_data);
+
+  std::cout << "Starting forward passing on " << batch_size << " batches." << std::endl;
+  auto cur_time  = std::chrono::high_resolution_clock::now();
+  auto output    = g.Evaluate(layer_output, false);
+  auto time_span = std::chrono::duration_cast<std::chrono::duration<double>>(
+      std::chrono::high_resolution_clock::now() - cur_time);
+  std::cout << "time span: " << static_cast<double>(time_span.count()) << std::endl;
+  std::cout << "time span per batch: "
+            << static_cast<double>(time_span.count()) / static_cast<double>(batch_size)
+            << std::endl;
+  if (verbose)
+  {
+    std::cout << "first token: \n" << output.View(0).Copy().View(0).Copy().ToString() << std::endl;
+  }
 }
