@@ -56,9 +56,7 @@ public:
   virtual ~ServiceClientInterface() = default;
 
   template <typename... arguments>
-
   Promise Call(uint32_t /*network_id*/, protocol_handler_type const &protocol,
-
                function_handler_type const &function, arguments &&... args)
   {
     LOG_STACK_TRACE_POINT;

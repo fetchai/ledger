@@ -144,6 +144,8 @@ public:
   {
     std::size_t num_processed = 0;
 
+    static_assert(noexcept(visitor(std::declval<WorkItem>())),
+                  "To ensure mutex release, callback must be noexcept");
     if (mutex_.try_lock())
     {
       for (auto const &work : store_)

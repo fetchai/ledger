@@ -135,9 +135,10 @@ public:
   void lock()
   {
     LOG_STACK_TRACE_POINT;
-    lock_mutex_.lock();
-    locked_ = Clock::now();
-    lock_mutex_.unlock();
+    {
+      std::lock_guard<std::mutex> lock(lock_mutex_);
+      locked_ = Clock::now();
+    }
 
     std::mutex::lock();
 
@@ -150,13 +151,14 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    lock_mutex_.lock();
-    Timepoint const end_time   = Clock::now();
-    Duration const  delta_time = end_time - locked_;
-    double          total_time = static_cast<double>(
-        std::chrono::duration_cast<std::chrono::milliseconds>(delta_time).count());
-
-    lock_mutex_.unlock();
+    double total_time = 0;
+    {
+      std::lock_guard<std::mutex> lock(lock_mutex_);
+      Timepoint const             end_time   = Clock::now();
+      Duration const              delta_time = end_time - locked_;
+      total_time                             = static_cast<double>(
+          std::chrono::duration_cast<std::chrono::milliseconds>(delta_time).count());
+    }
 
     timeout_.reset(nullptr);
     fetch::logger.RegisterUnlock(this, total_time, file_, line_);

@@ -297,7 +297,7 @@ subscription_handler_type ServiceClientInterface::CreateSubscription(
   subscription_mutex_lock_type lock(subscription_mutex_);
   subscription_index_counter_++;
   subscriptions_[subscription_index_counter_] = Subscription(protocol, feed, cb);
-  subscription_mutex_.unlock();
+
   return subscription_handler_type(subscription_index_counter_);
 }
 

@@ -188,8 +188,8 @@ public:
 
     FETCH_LOG_DEBUG(LOGGING_NAME, "Making subscription for ", client, " ", feed, " ", id);
 
-    feeds_mutex_.lock();
-    std::size_t i = 0;
+    std::lock_guard<fetch::mutex::Mutex> lock(feeds_mutex_);
+    std::size_t                          i = 0;
     for (; i < feeds_.size(); ++i)
     {
       if (feeds_[i]->feed() == feed)
@@ -201,10 +201,8 @@ public:
     {
       TODO_FAIL("make serializable error, feed not found");
     }
-    auto &f = feeds_[i];
-    feeds_mutex_.unlock();
 
-    f->Subscribe(client, id);
+    feeds_[i]->Subscribe(client, id);
   }
 
   /* Unsubscribe client to feed.
@@ -220,7 +218,8 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    feeds_mutex_.lock();
+    std::lock_guard<fetch::mutex::Mutex> lock(feeds_mutex_);
+
     std::size_t i = 0;
     for (; i < feeds_.size(); ++i)
     {
@@ -233,10 +232,7 @@ public:
     {
       TODO_FAIL("make serializable error, feed not found");
     }
-    auto &f = feeds_[i];
-    feeds_mutex_.unlock();
-
-    f->Unsubscribe(client, id);
+    feeds_[i]->Unsubscribe(client, id);
   }
 
   /* Access memeber to the feeds in the protocol.
@@ -272,8 +268,7 @@ public:
   }
 
 private:
-  std::vector<middleware_type> middleware_;
-
+  std::vector<middleware_type>                          middleware_;
   std::map<function_handler_type, stored_type>          members_;
   std::vector<std::shared_ptr<FeedSubscriptionManager>> feeds_;
   fetch::mutex::Mutex                                   feeds_mutex_{__LINE__, __FILE__};

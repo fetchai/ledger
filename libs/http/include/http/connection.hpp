@@ -79,10 +79,12 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    write_mutex_.lock();
-    bool write_in_progress = !write_queue_.empty();
-    write_queue_.push_back(response);
-    write_mutex_.unlock();
+    bool write_in_progress = false;
+    {
+      std::lock_guard<fetch::mutex::Mutex> lock(write_mutex_);
+      write_in_progress = !write_queue_.empty();
+      write_queue_.push_back(response);
+    }
 
     if (!write_in_progress)
     {
@@ -209,19 +211,23 @@ public:
 
     buffer_ptr_type buffer_ptr =
         std::make_shared<asio::streambuf>(std::numeric_limits<std::size_t>::max());
-    write_mutex_.lock();
-    HTTPResponse res = write_queue_.front();
-    write_queue_.pop_front();
-    write_mutex_.unlock();
+    {
+      std::lock_guard<fetch::mutex::Mutex> lock(write_mutex_);
+      HTTPResponse                         res = write_queue_.front();
+      write_queue_.pop_front();
+      res.ToStream(*buffer_ptr);
+    }
 
-    res.ToStream(*buffer_ptr);
     auto self = shared_from_this();
     auto cb   = [this, self, buffer_ptr](std::error_code ec, std::size_t) {
       if (!ec)
       {
-        write_mutex_.lock();
-        bool write_more = !write_queue_.empty();
-        write_mutex_.unlock();
+        bool write_more = false;
+        {
+          std::lock_guard<fetch::mutex::Mutex> lock(write_mutex_);
+          write_more = !write_queue_.empty();
+        }
+
         if (is_open_ && write_more)
         {
           Write();

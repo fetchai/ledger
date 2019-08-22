@@ -47,16 +47,14 @@ class ReadableThread
 public:
   static int GetThreadID(std::thread::id const &thread)
   {
-    mutex_.lock();
+    std::lock_guard<std::mutex> lock(mutex_);
 
     if (thread_number_.find(thread) == thread_number_.end())
     {
       thread_number_.emplace(thread, int(++thread_count_));
     }
-    int thread_number = thread_number_[thread];
-    mutex_.unlock();
 
-    return thread_number;
+    return thread_number_[thread];
   }
 
 private:

@@ -100,14 +100,12 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    client_rpcs_mutex_.lock();
+    std::lock_guard<fetch::mutex::Mutex> lock(client_rpcs_mutex_);
 
     for (auto &c : client_rpcs_)
     {
       delete c.second;
     }
-
-    client_rpcs_mutex_.unlock();
   }
 
   ClientRPCInterface &ServiceInterfaceOf(handle_type const &i)
@@ -148,25 +146,28 @@ private:
   {
     LOG_STACK_TRACE_POINT;
 
-    message_mutex_.lock();
-    bool has_messages = (!messages_.empty());
-    message_mutex_.unlock();
+    bool has_messages = false;
+    {
+      std::lock_guard<fetch::mutex::Mutex> lock(message_mutex_);
+      has_messages = (!messages_.empty());
+    }
 
     while (has_messages)
     {
       FETCH_LOG_DEBUG(LOGGING_NAME, "MESSAGES!!!!");
-      message_mutex_.lock();
 
       PendingMessage pm;
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Server side backlog: ", messages_.size());
-      has_messages = (!messages_.empty());
-      if (has_messages)
-      {  // To ensure we can make a worker pool in the future
-        pm = messages_.front();
-        messages_.pop_front();
-      };
+      {
+        std::lock_guard<fetch::mutex::Mutex> lock(message_mutex_);
 
-      message_mutex_.unlock();
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Server side backlog: ", messages_.size());
+        has_messages = (!messages_.empty());
+        if (has_messages)
+        {  // To ensure we can make a worker pool in the future
+          pm = messages_.front();
+          messages_.pop_front();
+        }
+      }
 
       if (has_messages)
       {
@@ -179,13 +180,14 @@ private:
 
             FETCH_LOG_INFO(LOGGING_NAME, "PushProtocolRequest returned FALSE!");
 
-            client_rpcs_mutex_.lock();
-            if (client_rpcs_.find(pm.client) != client_rpcs_.end())
             {
-              auto &c   = client_rpcs_[pm.client];
-              processed = c->ProcessMessage(pm.message);
+              std::lock_guard<fetch::mutex::Mutex> lock(client_rpcs_mutex_);
+              if (client_rpcs_.find(pm.client) != client_rpcs_.end())
+              {
+                auto &c   = client_rpcs_[pm.client];
+                processed = c->ProcessMessage(pm.message);
+              }
             }
-            client_rpcs_mutex_.unlock();
 
             if (!processed)
             {

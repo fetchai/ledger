@@ -111,9 +111,8 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    subscribe_mutex_.lock();
+    std::lock_guard<fetch::mutex::Mutex> lock(subscribe_mutex_);
     subscribers_.push_back({client, id});
-    subscribe_mutex_.unlock();
   }
 
   /* Unsubscribe client to feed.
@@ -127,8 +126,8 @@ public:
   {
     LOG_STACK_TRACE_POINT;
 
-    subscribe_mutex_.lock();
-    std::vector<std::size_t> ids;
+    std::vector<std::size_t>             ids;
+    std::lock_guard<fetch::mutex::Mutex> lock(subscribe_mutex_);
     for (std::size_t i = 0; i < subscribers_.size(); ++i)
     {
       if ((subscribers_[i].client == client) && (subscribers_[i].id == id))
@@ -142,7 +141,6 @@ public:
     {
       subscribers_.erase(std::next(subscribers_.begin(), int64_t(i)));
     }
-    subscribe_mutex_.unlock();
   }
 
   /* Returns the feed type.
