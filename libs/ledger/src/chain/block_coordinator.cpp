@@ -125,7 +125,6 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr
   , exec_wait_periodic_{EXEC_NOTIFY_INTERVAL}
   , syncing_periodic_{NOTIFY_INTERVAL}
   , synergetic_exec_mgr_{CreateSynergeticExecutor(features, dag, storage_unit_)}
-  /*, max_committee_size_{max_committee_size}*/
   , aeon_period_{aeon_period}
   , reload_state_count_{telemetry::Registry::Instance().CreateCounter(
         "ledger_block_coordinator_reload_state_total",
@@ -478,7 +477,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
     return State::RESET;
   }
   // TODO(HUT): this clock interferes with the timings in the stake manager
-  else if (mining_ && mining_enabled_ && (Clock::now() >= next_block_time_))
+  else if (mining_ && mining_enabled_ && ((Clock::now() >= next_block_time_) || stake_))
   {
     // Number of block we want to generate
     uint64_t const block_number  = current_block_->body.block_number + 1;
@@ -492,8 +491,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
       // Try to get entropy for the block we are generating - is allowed to fail if we request too
       // early
       if (EntropyGeneratorInterface::Status::OK !=
-          beacon_->GenerateEntropy(current_block_->body.hash, current_block_->body.block_number,
-                                   random_beacon))
+          beacon_->GenerateEntropy(current_block_->body.hash, block_number, random_beacon))
       {
         should_generate = false;
       }
@@ -521,6 +519,8 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
     next_block_->body.block_number  = block_number;
     next_block_->body.miner         = mining_address_;
     next_block_->body.random_beacon = random_beacon;
+
+    FETCH_LOG_INFO(LOGGING_NAME, "Minting new block! Number: ", block_number, " beacon: ", random_beacon);
 
     if (stake_)
     {
@@ -563,11 +563,15 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
 
   bool const is_genesis = current_block_->body.previous_hash == GENESIS_DIGEST;
 
-  auto fail{[this](char const *reason) {
+  auto fail{[this](char const *reason, bool definetly_bad = true) {
     FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: ", reason, " (",
                    ToBase64(current_block_->body.hash), ')');
     FETCH_UNUSED(reason);
-    chain_.RemoveBlock(current_block_->body.hash);
+
+    if(definetly_bad)
+    {
+      chain_.RemoveBlock(current_block_->body.hash);
+    }
     return State::RESET;
   }};
 
@@ -591,8 +595,7 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
       // FAILED
       for (uint16_t i = 0;;)
       {
-        auto result = beacon_->GenerateEntropy(current_block_->body.hash,
-                                               current_block_->body.block_number, random_beacon);
+        auto result = beacon_->GenerateEntropy(current_block_->body.hash, current_block_->body.block_number, random_beacon);
 
         if (result == EntropyGeneratorInterface::Status::OK)
         {
@@ -616,7 +619,8 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
 
         if (i++ == 5)
         {
-          return fail("Timed out waiting for entropy for block");
+          state_machine_->Delay(std::chrono::milliseconds{100});
+          return fail("Timed out waiting for entropy when validating block", false);
         }
       }
 
