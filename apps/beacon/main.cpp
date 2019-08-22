@@ -103,8 +103,6 @@ struct CabinetNode
   {
     return fetch::network::Uri{"tcp://127.0.0.1:" + std::to_string(muddle_port)};
   }
-
-
 };
 
 int main()

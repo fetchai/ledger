@@ -165,7 +165,6 @@ ledger::ShardConfigs GenerateShardsConfig(Constellation::Config &config, uint16_
     FETCH_LOG_INFO(Constellation::LOGGING_NAME, " - External ", ToBase64(ext_identity), " - ",
                    cfg.external_network_id.ToString(), " - tcp://0.0.0.0:", cfg.external_port);
 
-
     // update the manifest with the generated identity
     it->second.UpdateAddress(ext_identity);
   }
@@ -224,11 +223,13 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   , reactor_{"Reactor"}
   , network_manager_{"NetMgr", CalcNetworkManagerThreads(cfg_.num_lanes())}
   , http_network_manager_{"Http", HTTP_THREADS}
-  , muddle_{muddle::CreateMuddle("IHUB", certificate, network_manager_, cfg_.manifest.FindExternalAddress(ServiceIdentifier::Type::CORE))}
+  , muddle_{muddle::CreateMuddle("IHUB", certificate, network_manager_,
+                                 cfg_.manifest.FindExternalAddress(ServiceIdentifier::Type::CORE))}
   // external address missing
   , internal_identity_{std::make_shared<crypto::ECDSASigner>()}
-  , internal_muddle_{muddle::CreateMuddle("ISRD", internal_identity_, network_manager_,
-                                          cfg_.manifest.FindExternalAddress(ServiceIdentifier::Type::CORE))}
+  , internal_muddle_{muddle::CreateMuddle(
+        "ISRD", internal_identity_, network_manager_,
+        cfg_.manifest.FindExternalAddress(ServiceIdentifier::Type::CORE))}
   , trust_{}
   , tx_status_cache_(TxStatusCache::factory())
   , lane_services_()

@@ -21,8 +21,8 @@
 #include "muddle/network_id.hpp"
 
 #include <chrono>
-#include <vector>
 #include <string>
+#include <vector>
 
 namespace fetch {
 namespace ledger {

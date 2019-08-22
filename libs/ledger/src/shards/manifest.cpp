@@ -91,7 +91,8 @@ std::string Manifest::FindExternalAddress(ServiceIdentifier::Type type, int32_t 
   auto it = FindService(ServiceIdentifier{type, index});
   if (it == end())
   {
-    throw std::runtime_error(std::string{"Unable to lookup external address for "} + ToString(type));
+    throw std::runtime_error(std::string{"Unable to lookup external address for "} +
+                             ToString(type));
   }
 
   return it->second.uri().GetTcpPeer().address();
