@@ -256,9 +256,13 @@ YamlDocument::YamlObject *YamlDocument::FindInStack(std::vector<YamlObject> &sta
   while (!stack.empty())
   {
     if (stack.back().ident > ident)
+    {
       stack.pop_back();
+    }
     else
+    {
       return &stack.back();
+    }
   }
 
   return nullptr;
