@@ -137,7 +137,7 @@ BeaconSetupService::State BeaconSetupService::OnIdle()
     else
     {
       // Creating broadcast protocol
-      // TODO: Need support to identify malicious activity
+      // TODO(tfr): Need support to identify malicious activity
       std::set<ConstByteArray> cabinet;
       for (auto &x : beacon_->aeon.members)
       {
@@ -380,7 +380,7 @@ BeaconSetupService::State BeaconSetupService::OnGenerateKeys()
   for (auto &t : submitted_shares_)
   {
     auto &s = t.second;
-    // TODO: Test that it exists just to be on the sure to be sure
+    // TODO(tfr): Test that it exists just to be on the sure to be sure
     auto vv = member_verification_vector_[s.from.identifier()];
     if (!beacon_->manager.AddShare(s.from, s.share, vv))
     {
