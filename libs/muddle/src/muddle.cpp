@@ -36,9 +36,6 @@
 #include <exception>
 #include <sstream>
 
-using fetch::byte_array::ByteArray;
-using fetch::byte_array::ConstByteArray;
-
 namespace fetch {
 namespace muddle {
 
@@ -52,9 +49,9 @@ static std::size_t const PEER_SELECTION_INTERVAL_MS = 3000;
  * @param certificate The certificate/identity of this node
  */
 Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager const &nm,
-               bool sign_packets, bool sign_broadcasts, std::string const &external_address)
+               bool sign_packets, bool sign_broadcasts, std::string external_address)
   : certificate_(std::move(certificate))
-  , external_address_(external_address)
+  , external_address_(std::move(external_address))
   , node_address_(certificate_->identity().identifier())
   , network_manager_(nm)
   , dispatcher_(network_id, certificate_->identity().identifier())
@@ -422,7 +419,9 @@ void Muddle::RunPeriodicMaintenance()
     {
       // ignore pending ports
       if (port == 0)
+      {
         continue;
+      }
 
       external_addresses.emplace_back(network::Peer(external_address_, port));
       FETCH_LOG_TRACE(LOGGING_NAME, "Discovery: ", external_addresses.back().ToString());

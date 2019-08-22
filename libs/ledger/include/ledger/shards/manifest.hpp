@@ -58,6 +58,8 @@ public:
   void AddService(ServiceIdentifier const &id, ManifestEntry const &entry);
   void AddService(ServiceIdentifier const &id, ManifestEntry &&entry);
 
+  std::string FindExternalAddress(ServiceIdentifier::Type type, int32_t index = -1) const;
+
   bool Parse(ConstByteArray const &text);
 
   // Operators

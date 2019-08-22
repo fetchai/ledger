@@ -32,7 +32,7 @@ public:
   ManifestEntry() = default;
   explicit ManifestEntry(network::Peer const &peer);
   explicit ManifestEntry(network::Uri const &uri);
-  ManifestEntry(network::Uri const &uri, uint16_t local_port);
+  ManifestEntry(network::Uri uri, uint16_t local_port);
   ManifestEntry(ManifestEntry const &) = default;
   ManifestEntry(ManifestEntry &&)      = default;
   ~ManifestEntry()                     = default;

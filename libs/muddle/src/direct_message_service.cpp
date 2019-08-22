@@ -96,9 +96,9 @@ Router::PacketPtr FormatDirect(Packet::Address const &from, NetworkId const &net
 
 }  // namespace
 
-DirectMessageService::DirectMessageService(Address const &address, Router &router,
+DirectMessageService::DirectMessageService(Address address, Router &router,
                                            MuddleRegister &reg, PeerConnectionList &peers)
-  : address_{address}
+  : address_{std::move(address)}
   , router_{router}
   , register_{reg}
   , peers_{peers}

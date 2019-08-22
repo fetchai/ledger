@@ -38,7 +38,7 @@ public:
   using PacketPtr = std::shared_ptr<Packet>;
 
   // Construction / Destruction
-  DirectMessageService(Address const &address, Router &router, MuddleRegister &reg,
+  DirectMessageService(Address address, Router &router, MuddleRegister &reg,
                        PeerConnectionList &peers);
   DirectMessageService(DirectMessageService const &) = delete;
   DirectMessageService(DirectMessageService &&)      = delete;

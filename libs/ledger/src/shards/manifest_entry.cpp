@@ -45,8 +45,8 @@ ManifestEntry::ManifestEntry(network::Uri const &uri)
   : ManifestEntry(uri, ExtractLocalPort(uri))
 {}
 
-ManifestEntry::ManifestEntry(network::Uri const &uri, uint16_t local_port)
-  : uri_{uri}
+ManifestEntry::ManifestEntry(network::Uri uri, uint16_t local_port)
+  : uri_{std::move(uri)}
   , local_port_{local_port}
 {}
 

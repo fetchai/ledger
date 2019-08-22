@@ -25,8 +25,6 @@
 #include <stdexcept>
 #include <string>
 
-using fetch::muddle::MuddleEndpoint;
-
 namespace fetch {
 namespace ledger {
 namespace {

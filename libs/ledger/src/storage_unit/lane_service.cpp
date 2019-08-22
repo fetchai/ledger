@@ -60,18 +60,14 @@ LaneService::LaneService(NetworkManager const &nm, ShardConfig config, Mode mode
   , reactor_("LaneServiceReactor")
   , cfg_{std::move(config)}
 {
-  // External Muddle network and RPC server
-  // TODO(EJF): !!! Must be set
-  std::string external_hostname{};
-
   external_muddle_ =
-      muddle::CreateMuddle(cfg_.external_network_id, cfg_.external_identity, nm, external_hostname);
+      muddle::CreateMuddle(cfg_.external_network_id, cfg_.external_identity, nm, cfg_.external_name);
   external_rpc_server_ =
       std::make_shared<Server>(external_muddle_->GetEndpoint(), SERVICE_LANE, CHANNEL_RPC);
 
   // Internal muddle network
   internal_muddle_ =
-      muddle::CreateMuddle(cfg_.internal_network_id, cfg_.internal_identity, nm, external_hostname);
+      muddle::CreateMuddle(cfg_.internal_network_id, cfg_.internal_identity, nm, cfg_.internal_name);
   internal_rpc_server_ =
       std::make_shared<Server>(internal_muddle_->GetEndpoint(), SERVICE_LANE_CTRL, CHANNEL_RPC);
 

@@ -63,8 +63,6 @@ using fetch::ledger::ServiceIdentifier;
 using fetch::network::Uri;
 using fetch::network::AtomicInFlightCounter;
 using fetch::network::AtomicCounterName;
-using fetch::network::Uri;
-using fetch::network::Peer;
 using fetch::ledger::Address;
 using fetch::ledger::GenesisFileCreator;
 using fetch::muddle::MuddleEndpoint;
@@ -133,15 +131,27 @@ ledger::ShardConfigs GenerateShardsConfig(Constellation::Config &config, uint16_
 
   for (uint32_t i = 0; i < config.num_lanes(); ++i)
   {
+    // lookup the service in the provided manifest
+    auto it = config.manifest.FindService(
+        ServiceIdentifier{ServiceIdentifier::Type::LANE, static_cast<int32_t>(i)});
+
+    if (it == config.manifest.end())
+    {
+      FETCH_LOG_ERROR(Constellation::LOGGING_NAME, "Unable to update manifest for lane ", i);
+      throw std::runtime_error("Invalid manifest provided");
+    }
+
     auto &cfg = configs[i];
 
     cfg.lane_id           = i;
     cfg.num_lanes         = config.num_lanes();
     cfg.storage_path      = storage_path;
+    cfg.external_name     = it->second.uri().GetTcpPeer().address();
     cfg.external_identity = std::make_shared<crypto::ECDSASigner>();
     cfg.external_port     = start_port++;
     cfg.external_network_id =
         muddle::NetworkId{(static_cast<uint32_t>(i) & 0xFFFFFFu) | (uint32_t{'L'} << 24u)};
+    cfg.internal_name       = it->second.uri().GetTcpPeer().address();
     cfg.internal_identity   = std::make_shared<crypto::ECDSASigner>();
     cfg.internal_port       = start_port++;
     cfg.internal_network_id = muddle::NetworkId{"ISRD"};
@@ -155,18 +165,9 @@ ledger::ShardConfigs GenerateShardsConfig(Constellation::Config &config, uint16_
     FETCH_LOG_INFO(Constellation::LOGGING_NAME, " - External ", ToBase64(ext_identity), " - ",
                    cfg.external_network_id.ToString(), " - tcp://0.0.0.0:", cfg.external_port);
 
-    // update the manifest with the generated address
-    auto it = config.manifest.FindService(
-        ServiceIdentifier{ServiceIdentifier::Type::LANE, static_cast<int32_t>(i)});
 
-    if (it == config.manifest.end())
-    {
-      FETCH_LOG_ERROR(Constellation::LOGGING_NAME, "Unable to update manifest for lane ", i);
-    }
-    else
-    {
-      it->second.UpdateAddress(cfg.external_identity->identity().identifier());
-    }
+    // update the manifest with the generated identity
+    it->second.UpdateAddress(ext_identity);
   }
 
   return configs;
@@ -223,11 +224,11 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   , reactor_{"Reactor"}
   , network_manager_{"NetMgr", CalcNetworkManagerThreads(cfg_.num_lanes())}
   , http_network_manager_{"Http", HTTP_THREADS}
-  , muddle_{muddle::CreateMuddle("IHUB", certificate, network_manager_, "127.0.0.1")}
+  , muddle_{muddle::CreateMuddle("IHUB", certificate, network_manager_, cfg_.manifest.FindExternalAddress(ServiceIdentifier::Type::CORE))}
   // external address missing
   , internal_identity_{std::make_shared<crypto::ECDSASigner>()}
   , internal_muddle_{muddle::CreateMuddle("ISRD", internal_identity_, network_manager_,
-                                          "127.0.0.1")}
+                                          cfg_.manifest.FindExternalAddress(ServiceIdentifier::Type::CORE))}
   , trust_{}
   , tx_status_cache_(TxStatusCache::factory())
   , lane_services_()

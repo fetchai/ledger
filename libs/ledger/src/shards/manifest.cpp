@@ -22,6 +22,8 @@
 #include "ledger/shards/manifest.hpp"
 #include "variant/variant_utils.hpp"
 
+#include <stdexcept>
+
 namespace fetch {
 namespace ledger {
 namespace {
@@ -82,6 +84,17 @@ void Manifest::AddService(ServiceIdentifier const &id, ManifestEntry const &entr
 void Manifest::AddService(ServiceIdentifier const &id, ManifestEntry &&entry)
 {
   service_map_.emplace(id, std::move(entry));
+}
+
+std::string Manifest::FindExternalAddress(ServiceIdentifier::Type type, int32_t index) const
+{
+  auto it = FindService(ServiceIdentifier{type, index});
+  if (it == end())
+  {
+    throw std::runtime_error(std::string{"Unable to lookup external address for "} + ToString(type));
+  }
+
+  return it->second.uri().GetTcpPeer().address();
 }
 
 bool Manifest::Parse(ConstByteArray const &text)

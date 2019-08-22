@@ -33,7 +33,6 @@
 
 using fetch::storage::ResourceID;
 using fetch::storage::RevertibleDocumentStoreProtocol;
-using fetch::muddle::MuddleEndpoint;
 using fetch::service::Promise;
 using fetch::byte_array::ToBase64;
 

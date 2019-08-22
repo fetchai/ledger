@@ -27,8 +27,6 @@
 namespace fetch {
 namespace muddle {
 
-using telemetry::Registry;
-
 MuddleRegister::Entry::Entry(WeakConnectionPtr c)
   : connection{std::move(c)}
 {

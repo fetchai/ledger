@@ -37,7 +37,6 @@ using fetch::ledger::Manifest;
 using fetch::ledger::ManifestEntry;
 using fetch::ledger::ServiceIdentifier;
 using fetch::network::Peer;
-using fetch::network::Uri;
 
 /**
  * Generate a default simple manifest for all the services provided
