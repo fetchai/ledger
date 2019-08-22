@@ -80,8 +80,6 @@ public:
 
   std::string filename() const;
 
-  std::string AsString();
-
   std::thread::id thread_id() const;
 
 private:

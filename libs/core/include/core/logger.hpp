@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "core/logging.hpp"  // temporary
-#include "core/mutex.hpp"
 
 #include <execinfo.h>
 
@@ -39,28 +38,10 @@
 #include <vector>
 
 namespace fetch {
+
+class DebugMutex;
+
 namespace log {
-
-class ReadableThread
-{
-public:
-  static int GetThreadID(std::thread::id const &thread)
-  {
-    FETCH_LOCK(mutex_);
-
-    if (thread_number_.find(thread) == thread_number_.end())
-    {
-      thread_number_.emplace(thread, int(++thread_count_));
-    }
-
-    return thread_number_[thread];
-  }
-
-private:
-  static std::map<std::thread::id, int> thread_number_;
-  static int                            thread_count_;
-  static std::mutex                     mutex_;
-};
 
 class ContextDetails
 {
@@ -189,66 +170,7 @@ public:
     HIGHLIGHT = 4
   };
 
-  virtual void StartEntry(Level level, char const *name, shared_context_type ctx)
-  {
-#ifndef FETCH_DISABLE_COUT_LOGGING
-    using Clock     = std::chrono::system_clock;
-    using Timepoint = Clock::time_point;
-    using Duration  = Clock::duration;
-
-    char const *level_name = "UNKNWN";
-    switch (level)
-    {
-    case Level::INFO:
-      level_name = "INFO  ";
-      break;
-    case Level::WARNING:
-      level_name = "WARN  ";
-      break;
-    case Level::ERROR:
-      level_name = "ERROR ";
-      break;
-    case Level::DEBUG:
-      level_name = "DEBUG ";
-      break;
-    case Level::HIGHLIGHT:
-      level_name = "HLIGHT";
-      break;
-    }
-
-    int const       thread_number = ReadableThread::GetThreadID(std::this_thread::get_id());
-    Timepoint const now           = Clock::now();
-    Duration const  duration      = now.time_since_epoch();
-
-    auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() % 1000;
-
-    // format and generate the time
-    std::time_t now_c = std::chrono::system_clock::to_time_t(now);
-    std::cout << "[ " << std::put_time(std::localtime(&now_c), "%F %T") << "." << std::setw(3)
-              << millis;
-
-    // thread information
-    std::cout << ", #" << std::setw(2) << thread_number << ' ' << level_name;
-
-    // determine which of the two logging formats we should use
-    bool use_name = name != nullptr;
-    if (use_name && ctx->instance())
-    {
-      // in the case where we actually context information we should use this variant
-      use_name = false;
-    }
-
-    if (use_name)
-    {
-      std::cout << ": " << std::setw(35) << name << " ] ";
-    }
-    else
-    {
-      std::cout << ": " << std::setw(15) << ctx->instance() << std::setw(20) << ctx->context(18)
-                << " ] ";
-    }
-#endif
-  }
+  virtual void StartEntry(Level level, char const *name, shared_context_type ctx);
 
   template <typename T>
   void Append(T &&v)
@@ -273,166 +195,29 @@ class LogWrapper
 public:
   using shared_context_type = std::shared_ptr<ContextDetails>;
 
-  LogWrapper()
-    : log_{std::make_unique<DefaultLogger>()}
-  {}
+  LogWrapper();
 
-  ~LogWrapper()
-  {
-    FETCH_LOCK(mutex_);
-    DisableLogger();
-  }
+  ~LogWrapper();
 
-  void DisableLogger()
-  {
-    if (log_)
-    {
-      log_.reset();
-    }
-  }
+  void DisableLogger();
 
-  void Debug(std::vector<std::string> const &items)
-  {
-    FETCH_LOCK(mutex_);
-    if (log_)
-    {
-      log_->StartEntry(DefaultLogger::Level::DEBUG, nullptr, TopContextImpl());
-      for (auto &item : items)
-      {
-        log_->Append(item);
-      }
-    }
-  }
+  void Debug(std::vector<std::string> const &items);
 
-  void SetContext(shared_context_type ctx)
-  {
-    std::thread::id id = std::this_thread::get_id();
-    FETCH_LOCK(mutex_);
-    if (log_)
-    {
-      context_[id] = std::move(ctx);
-    }
-  }
+  void SetContext(shared_context_type ctx);
 
-  shared_context_type TopContext()
-  {
-    FETCH_LOCK(mutex_);
-    return TopContextImpl();
-  }
+  shared_context_type TopContext();
 
-  void RegisterLock(fetch::DebugMutex *ptr)
-  {
-    FETCH_LOCK(mutex_);
-    if (log_)
-    {
-      active_locks_.insert(ptr);
-    }
-  }
+  void RegisterLock(fetch::DebugMutex *ptr);
 
   void RegisterUnlock(fetch::DebugMutex *ptr, double spent_time, const std::string &filename,
-                      int line)
-  {
-    FETCH_LOCK(mutex_);
-    if (log_)
-    {
-      std::stringstream ss;
-      ss << filename << line;
-      std::string s = ss.str();
-      if (mutex_timings_.find(s) == mutex_timings_.end())
-      {
-        TimingDetails t;
-        t.line     = line;
-        t.context  = "Mutex";
-        t.filename = filename;
-
-        mutex_timings_[s] = t;
-      }
-
-      auto &t = mutex_timings_[s];
-      t.total += spent_time;
-      if (t.peak < spent_time)
-      {
-        t.peak = spent_time;
-      }
-
-      ++t.calls;
-
-      auto it = active_locks_.find(ptr);
-      if (it != active_locks_.end())
-      {
-        active_locks_.erase(it);
-      }
-    }
-  }
+                      int line);
 
   void StackTrace(shared_context_type ctx, uint32_t max = uint32_t(-1), bool show_locks = true,
-                  std::string const &trace_name = "Stack trace") const
-  {
+                  std::string const &trace_name = "Stack trace") const;
 
-    if (!ctx)
-    {
-      std::cerr << "Stack trace context invalid" << std::endl;
-      return;
-    }
+  void StackTrace(uint32_t max = uint32_t(-1), bool show_locks = true);
 
-    std::cout << trace_name << " for #" << ReadableThread::GetThreadID(ctx->thread_id()) << '\n';
-    PrintTrace(ctx, max);
-
-    if (show_locks)
-    {
-      std::vector<std::thread::id> locked_threads;
-
-      std::cout << "\nActive locks:\n";
-      for (auto &l : active_locks_)
-      {
-        std::cout << "  - " << l->AsString() << '\n';
-        locked_threads.push_back(l->thread_id());
-      }
-      for (auto &id : locked_threads)
-      {
-        std::cout << "\nAdditionally trace for #" << ReadableThread::GetThreadID(id) << '\n';
-        auto id_context{context_.find(id)};
-        if (id_context != context_.cend())
-        {
-          PrintTrace(id_context->second);
-          std::cout << '\n';
-        }
-      }
-      std::cout << '\n';
-    }
-  }
-
-  void StackTrace(uint32_t max = uint32_t(-1), bool show_locks = true)
-  {
-    shared_context_type ctx = TopContextImpl();
-    StackTrace(ctx, max, show_locks);
-  }
-
-  void UpdateContextTime(shared_context_type ctx, double spent_time)
-  {
-    FETCH_LOCK(timing_mutex_);
-    std::stringstream ss;
-    ss << ctx->context() << ", " << ctx->filename() << " " << ctx->line();
-    std::string s = ss.str();
-    if (timings_.find(s) == timings_.end())
-    {
-      TimingDetails t;
-      t.line     = ctx->line();
-      t.context  = ctx->context();
-      t.filename = ctx->filename();
-
-      timings_[s] = t;
-    }
-
-    auto &t = timings_[s];
-    t.total += spent_time;
-    if (t.peak < spent_time)
-    {
-      t.peak = spent_time;
-    }
-
-    ++t.calls;
-  }
+  void UpdateContextTime(shared_context_type ctx, double spent_time);
 
 private:
   struct TimingDetails
@@ -452,84 +237,14 @@ private:
 
   mutable std::mutex timing_mutex_;
 
-  template <typename... Args>
-  void Log(DefaultLogger::Level level, char const *name, Args &&... args)
-  {
-    FETCH_LOCK(mutex_);
-    if (log_)
-    {
-      log_->StartEntry(level, name, TopContextImpl());
-      Unroll<Args...>::Append(this, std::forward<Args>(args)...);
-    }
-  }
+  shared_context_type TopContextImpl();
 
-  shared_context_type TopContextImpl()
-  {
-    std::thread::id id = std::this_thread::get_id();
-
-    auto it = context_.find(id);
-    if (it != context_.end())
-    {
-      return it->second;
-    }
-    else
-    {
-      shared_context_type ret{std::make_shared<ContextDetails>()};
-      context_.emplace(id, ret);
-      return ret;
-    }
-  }
-
-  template <typename T, typename... Args>
-  struct Unroll
-  {
-    static void Append(LogWrapper *cls, T &&v, Args &&... args)
-    {
-      cls->log_->Append(std::forward<T>(v));
-      Unroll<Args...>::Append(cls, std::forward<Args>(args)...);
-    }
-  };
-
-  template <typename T>
-  struct Unroll<T>
-  {
-    static void Append(LogWrapper *cls, T &&v)
-    {
-      cls->log_->Append(std::forward<T>(v));
-    }
-  };
-
-  void PrintTrace(shared_context_type ctx, uint32_t max = uint32_t(-1)) const
-  {
-    std::size_t i = 0;
-    while (ctx)
-    {
-      std::cout << std::setw(3) << i << ": In thread #"
-                << ReadableThread::GetThreadID(ctx->thread_id()) << ": ";
-      std::cout << ctx->context() << " " << ctx->filename() << ", ";
-      std::cout << ctx->line() << std::endl;
-
-      if (ctx->derived_from())
-      {
-        std::cout << "*";
-        ctx = ctx->derived_from();
-      }
-      else
-      {
-        ctx = ctx->parent();
-      }
-      ++i;
-      if (i >= max)
-      {
-        break;
-      }
-    }
-  }
-
+  void PrintTrace(shared_context_type ctx, uint32_t max = uint32_t(-1)) const;
   std::unique_ptr<DefaultLogger>                           log_;
   mutable std::mutex                                       mutex_;
   std::unordered_map<std::thread::id, shared_context_type> context_;
 };
+
 }  // namespace details
 }  // namespace log
 

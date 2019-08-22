@@ -136,14 +136,6 @@ std::string DebugMutex::filename() const
   return file_;
 }
 
-std::string DebugMutex::AsString()
-{
-  std::stringstream ss;
-  ss << "Locked by thread #" << fetch::log::ReadableThread::GetThreadID(thread_id_) << " in "
-     << filename() << " on " << line();
-  return ss.str();
-}
-
 std::thread::id DebugMutex::thread_id() const
 {
   return thread_id_;
