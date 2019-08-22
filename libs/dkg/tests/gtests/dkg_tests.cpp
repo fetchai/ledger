@@ -44,20 +44,6 @@ using CertificatePtr = std::shared_ptr<Certificate>;
 using Address        = fetch::muddle::Packet::Address;
 using ConstByteArray = fetch::byte_array::ConstByteArray;
 
-ProverPtr CreateNewCertificate()
-{
-  using Signer    = fetch::crypto::ECDSASigner;
-  using SignerPtr = std::shared_ptr<Signer>;
-
-  SignerPtr certificate = std::make_shared<Signer>();
-
-  certificate->GenerateKeys();
-
-  return certificate;
-}
-
-uint16_t CHANNEL_SHARES = 3;
-
 class FaultyDkg : public DistributedKeyGeneration
 {
 public:
@@ -358,6 +344,8 @@ private:
 
 struct CabinetMember
 {
+  const static uint16_t CHANNEL_SHARES = 3;
+
   uint16_t                              muddle_port;
   NetworkManager                        network_manager;
   ProverPtr                             muddle_certificate;
@@ -438,6 +426,18 @@ struct CabinetMember
   void SetOutput()
   {
     dkg.SetDkgOutput(public_key, secret_share, public_key_shares, qual_set);
+  }
+
+  static ProverPtr CreateNewCertificate()
+  {
+    using Signer    = fetch::crypto::ECDSASigner;
+    using SignerPtr = std::shared_ptr<Signer>;
+
+    SignerPtr certificate = std::make_shared<Signer>();
+
+    certificate->GenerateKeys();
+
+    return certificate;
   }
 };
 
