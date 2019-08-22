@@ -97,10 +97,6 @@ TYPED_TEST(TensorDataloaderTest, test_validation_splitting_dataloader_test)
   tdl.AddData(data1_tensor, label_tensor);
 
   EXPECT_EQ(tdl.Size(), 1);
-
-  tdl.SetMode(DataLoaderMode::TEST);
-  EXPECT_EQ(tdl.Size(), 0);
-
-  tdl.SetMode(DataLoaderMode::VALIDATE);
-  EXPECT_EQ(tdl.Size(), 0);
+  EXPECT_THROW(tdl.SetMode(DataLoaderMode::TEST), std::runtime_error);
+  EXPECT_THROW(tdl.SetMode(DataLoaderMode::VALIDATE), std::runtime_error);
 }
