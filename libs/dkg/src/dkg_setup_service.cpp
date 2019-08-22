@@ -107,9 +107,8 @@ void DkgSetupService::BroadcastComplaintsAnswer()
   std::unordered_map<MuddleAddress, std::pair<MessageShare, MessageShare>> complaints_answer;
   for (auto const &reporter : complaints_manager_.ComplaintsFrom())
   {
-    uint32_t from_index{CabinetIndex(reporter)};
     FETCH_LOG_INFO(LOGGING_NAME, "Node ", manager_.cabinet_index(), " received complaints from ",
-                   from_index);
+                   manager_.cabinet_index(reporter));
     complaints_answer.insert({reporter, manager_.GetOwnShares(reporter)});
   }
   SendBroadcast(
@@ -202,8 +201,7 @@ void DkgSetupService::ReceivedComplaint()
 {
   std::unique_lock<std::mutex> lock{mutex_};
   if (!received_all_complaints_ && state_ == State::WAITING_FOR_COMPLAINTS &&
-      complaints_manager_.IsFinished(cabinet_, manager_.cabinet_index(),
-                                     manager_.polynomial_degree()))
+      complaints_manager_.IsFinished(manager_.polynomial_degree()))
   {
     // Complaints at this point consist only of parties which have received over threshold number of
     // complaints
@@ -225,7 +223,7 @@ void DkgSetupService::ReceivedComplaintsAnswer()
 {
   std::unique_lock<std::mutex> lock{mutex_};
   if (!received_all_complaints_answer_ && state_ == State::WAITING_FOR_COMPLAINT_ANSWERS &&
-      complaints_answer_manager_.IsFinished(cabinet_, manager_.cabinet_index()))
+      complaints_answer_manager_.IsFinished())
   {
     received_all_complaints_answer_.store(true);
     lock.unlock();
@@ -345,7 +343,6 @@ void DkgSetupService::OnDkgMessage(MuddleAddress const &from, std::shared_ptr<DK
   {
     return;
   }
-  uint32_t senderIndex{CabinetIndex(from)};
   switch (msg_ptr->type())
   {
   case DKGMessage::MessageType::COEFFICIENT:
@@ -377,7 +374,7 @@ void DkgSetupService::OnDkgMessage(MuddleAddress const &from, std::shared_ptr<DK
   }
   default:
     FETCH_LOG_ERROR(LOGGING_NAME, "Node: ", manager_.cabinet_index(),
-                    " can not process payload from node ", senderIndex);
+                    " can not process payload from node ", manager_.cabinet_index(from));
   }
 }
 
@@ -389,23 +386,24 @@ void DkgSetupService::OnDkgMessage(MuddleAddress const &from, std::shared_ptr<DK
  */
 void DkgSetupService::OnExposedShares(SharesMessage const &shares, MuddleAddress const &from_id)
 {
-  uint64_t phase1{shares.phase()};
+  uint64_t phase1 = shares.phase();
+  uint32_t from_index = manager_.cabinet_index(from_id);
   if (phase1 == static_cast<uint64_t>(State::WAITING_FOR_COMPLAINT_ANSWERS))
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Node: ", manager_.cabinet_index(),
-                   " received complaint answer from ", CabinetIndex(from_id));
+                   " received complaint answer from ", from_index);
     OnComplaintsAnswer(shares, from_id);
   }
   else if (phase1 == static_cast<uint64_t>(State::WAITING_FOR_QUAL_COMPLAINTS))
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Node: ", manager_.cabinet_index(),
-                   " received QUAL complaint from ", CabinetIndex(from_id));
+                   " received QUAL complaint from ", from_index);
     OnQualComplaints(shares, from_id);
   }
   else if (phase1 == static_cast<uint64_t>(State::WAITING_FOR_RECONSTRUCTION_SHARES))
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Node: ", manager_.cabinet_index(),
-                   " received reconstruction share from ", CabinetIndex(from_id));
+                   " received reconstruction share from ", from_index);
     OnReconstructionShares(shares, from_id);
   }
 }
@@ -464,8 +462,8 @@ void DkgSetupService::OnNewCoefficients(CoefficientsMessage const &msg,
 void DkgSetupService::OnComplaints(ComplaintsMessage const &msg, MuddleAddress const &from_id)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Node ", manager_.cabinet_index(), " received complaints from node ",
-                 CabinetIndex(from_id));
-  complaints_manager_.Add(msg, from_id, CabinetIndex(from_id), address_);
+                 manager_.cabinet_index(from_id));
+  complaints_manager_.Add(msg, from_id, address_);
   ReceivedComplaint();
 }
 
@@ -478,8 +476,7 @@ void DkgSetupService::OnComplaints(ComplaintsMessage const &msg, MuddleAddress c
  */
 void DkgSetupService::OnComplaintsAnswer(SharesMessage const &answer, MuddleAddress const &from_id)
 {
-  uint32_t from_index{CabinetIndex(from_id)};
-  if (complaints_answer_manager_.Count(from_index))
+  if (complaints_answer_manager_.Count(from_id))
   {
     CheckComplaintAnswer(answer, from_id);
     ReceivedComplaintsAnswer();
@@ -487,7 +484,7 @@ void DkgSetupService::OnComplaintsAnswer(SharesMessage const &answer, MuddleAddr
   else
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Node ", manager_.cabinet_index(),
-                   " received multiple complaint answer from node ", from_index);
+                   " received multiple complaint answer from node ", manager_.cabinet_index(from_id));
   }
 }
 
@@ -610,17 +607,6 @@ void DkgSetupService::CheckQualComplaints()
       }
     }
   }
-}
-
-/**
- * Helper function for getting index of cabinet memebers
- *
- * @param other_address Muddle address of member
- * @return Index of member in cabinet_
- */
-uint32_t DkgSetupService::CabinetIndex(MuddleAddress const &other_address) const
-{
-  return static_cast<uint32_t>(std::distance(cabinet_.begin(), cabinet_.find(other_address)));
 }
 
 /**

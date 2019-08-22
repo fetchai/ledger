@@ -125,7 +125,6 @@ protected:
 
   /// @name Helper methods
   /// @{
-  uint32_t CabinetIndex(MuddleAddress const &other_address) const;
   bool     BasicMsgCheck(MuddleAddress const &from, std::shared_ptr<DKGMessage> const &msg_ptr);
   void     CheckComplaintAnswer(SharesMessage const &answer, MuddleAddress const &from_id);
   bool     BuildQual();
