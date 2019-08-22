@@ -177,8 +177,8 @@ bool Manifest::ExtractSection(Variant const &obj, ServiceIdentifier const &servi
   // ensure things are as we expect
   if (obj.IsObject())
   {
-    ConstByteArray uri_str;
-    uint16_t       port;
+    ConstByteArray uri_str{};
+    uint16_t       port{0};
 
     bool const has_uri  = variant::Extract(obj, "uri", uri_str);
     bool const has_port = variant::Extract(obj, "port", port);
