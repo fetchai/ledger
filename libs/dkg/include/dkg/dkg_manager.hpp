@@ -68,6 +68,11 @@ public:
   {
     return cabinet_index_;
   }
+  uint32_t cabinet_index(MuddleAddress const &address) const
+  {
+    assert(identity_to_index_.find(address) != identity_to_index_.end());
+    return identity_to_index_.at(address);
+  }
 
 private:
   static bn::G2 zeroG2_;   ///< Zero for public key type
