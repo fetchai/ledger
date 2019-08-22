@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/state_machine.hpp"
 #include "dkg/dkg_complaints_manager.hpp"
 #include "dkg/dkg_manager.hpp"
 #include "dkg/dkg_messages.hpp"
@@ -45,12 +46,8 @@ namespace dkg {
  */
 class DkgSetupService
 {
-protected:
-  using MuddleAddress    = byte_array::ConstByteArray;
-  using CabinetMembers   = std::set<MuddleAddress>;
-  using Endpoint         = muddle::MuddleEndpoint;
-  using MessageShare     = std::string;
-  using SharesExposedMap = std::unordered_map<MuddleAddress, std::pair<MessageShare, MessageShare>>;
+public:
+  static constexpr char const *LOGGING_NAME = "DkgSetupService";
 
   enum class State : uint8_t
   {
@@ -64,6 +61,43 @@ protected:
     FINAL
   };
 
+  using StateMachine       = core::StateMachine<State>;
+  using StateMachinePtr    = std::shared_ptr<StateMachine>;
+  using MuddleAddress      = byte_array::ConstByteArray;
+  using CabinetMembers     = std::set<MuddleAddress>;
+  using Endpoint           = muddle::MuddleEndpoint;
+  using MessageCoefficient = std::string;
+  using MessageShare       = std::string;
+  using SharesExposedMap = std::unordered_map<MuddleAddress, std::pair<MessageShare, MessageShare>>;
+
+  DkgSetupService(
+      MuddleAddress address, std::function<void(DKGEnvelope const &)> broadcast_function,
+      std::function<void(MuddleAddress const &, std::pair<std::string, std::string> const &)>
+          rpc_function);
+
+  /// State functions
+  /// @{
+  State OnInitial();
+  State OnWaitForShares();
+  State OnWaitForComplaints();
+  State OnWaitForComplaintAnswers();
+  State OnWaitForQualShares();
+  State OnWaitForQualComplaints();
+  State OnWaitForReconstructionShares();
+  State OnFinal();
+  /// @}
+
+  std::weak_ptr<core::Runnable> GetWeakRunnable();
+
+  void OnNewShares(MuddleAddress from_id, std::pair<MessageShare, MessageShare> const &shares);
+  void OnDkgMessage(MuddleAddress const &from, std::shared_ptr<DKGMessage> msg_ptr);
+
+  void ResetCabinet(CabinetMembers const &cabinet, uint32_t threshold);
+  bool finished() const;
+  void SetDkgOutput(bn::G2 &public_key, bn::Fr &secret_share,
+                    std::vector<bn::G2> &public_key_shares, std::set<MuddleAddress> &qual);
+
+protected:
   CabinetMembers                           cabinet_;  ///< Muddle addresses of cabinet members
   MuddleAddress                            address_;  ///< Our muddle address
   std::function<void(DKGEnvelope const &)> broadcast_function_;
@@ -77,12 +111,6 @@ protected:
   ComplaintsManager       complaints_manager_;
   ComplaintsAnswerManager complaints_answer_manager_;
   QualComplaintsManager   qual_complaints_manager_;
-  std::atomic<bool>       received_all_coef_and_shares_{false};
-  std::atomic<bool>       received_all_complaints_{false};
-  std::atomic<bool>       received_all_complaints_answer_{false};
-  std::atomic<bool>       received_all_qual_shares_{false};
-  std::atomic<bool>       received_all_qual_complaints_{false};
-  std::atomic<bool>       received_all_reconstruction_shares_{false};
 
   // Counters for types of messages received
   std::atomic<uint32_t>   shares_received_{0};
@@ -90,27 +118,19 @@ protected:
   std::set<MuddleAddress> A_ik_received_;
   std::atomic<uint32_t>   reconstruction_shares_received_{0};
 
-  std::set<MuddleAddress> qual_;  ///< Set of cabinet members who completed DKG
-  DkgManager              manager_;
+  std::shared_ptr<StateMachine> state_machine_;
+  std::set<MuddleAddress>       qual_;  ///< Set of cabinet members who completed DKG
+  DkgManager                    manager_;
 
   /// @name Methods to send messages
   /// @{
   void         SendBroadcast(DKGEnvelope const &env);
+  virtual void BroadcastShares();
   virtual void BroadcastComplaints();
   virtual void BroadcastComplaintsAnswer();
   virtual void BroadcastQualCoefficients();
   virtual void BroadcastQualComplaints();
   virtual void BroadcastReconstructionShares();
-  /// @}
-
-  /// @name Methods to check if enough messages have been received to trigger state transition
-  /// @{
-  void ReceivedCoefficientsAndShares();
-  void ReceivedComplaint();
-  void ReceivedComplaintsAnswer();
-  void ReceivedQualShares();
-  void ReceivedQualComplaint();
-  void ReceivedReconstructionShares();
   /// @}
 
   /// @name Handlers for messages
@@ -125,25 +145,11 @@ protected:
 
   /// @name Helper methods
   /// @{
-  bool     BasicMsgCheck(MuddleAddress const &from, std::shared_ptr<DKGMessage> const &msg_ptr);
-  void     CheckComplaintAnswer(SharesMessage const &answer, MuddleAddress const &from_id);
-  bool     BuildQual();
-  void     CheckQualComplaints();
+  bool BasicMsgCheck(MuddleAddress const &from, std::shared_ptr<DKGMessage> const &msg_ptr);
+  void CheckComplaintAnswer(SharesMessage const &answer, MuddleAddress const &from_id);
+  bool BuildQual();
+  void CheckQualComplaints();
   /// @}
-
-public:
-  DkgSetupService(
-      MuddleAddress address, std::function<void(DKGEnvelope const &)> broadcast_function,
-      std::function<void(MuddleAddress const &, std::pair<std::string, std::string> const &)>
-          rpc_function);
-
-  virtual void BroadcastShares();
-  void OnNewShares(MuddleAddress from_id, std::pair<MessageShare, MessageShare> const &shares);
-  void OnDkgMessage(MuddleAddress const &from, std::shared_ptr<DKGMessage> msg_ptr);
-  void ResetCabinet(CabinetMembers const &cabinet, uint32_t threshold);
-  bool finished() const;
-  void SetDkgOutput(bn::G2 &public_key, bn::Fr &secret_share,
-                    std::vector<bn::G2> &public_key_shares, std::set<MuddleAddress> &qual);
 };
 }  // namespace dkg
 }  // namespace fetch
