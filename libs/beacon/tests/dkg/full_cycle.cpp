@@ -247,5 +247,5 @@ TEST(beacon, full_cycle)
 {
   SetGlobalLogLevel(LogLevel::CRITICAL);
   // TODO(tfr): Heuristically fails atm. RunHonestComitteeRenewal(100, 4, 4, 4, 10, 0.5);
-  RunHonestComitteeRenewal(400, 4, 2, 2, 10, 0.5);
+  RunHonestComitteeRenewal(800, 4, 2, 2, 10, 0.5);
 }
