@@ -61,8 +61,8 @@ public:
   using umap_str_int  = std::unordered_map<std::string, SizeType>;
   using umap_int_str  = std::unordered_map<SizeType, std::string>;
 
-  C2VLoader(SizeType max_contexts_, bool random_mode = false)
-    : DataLoader<LabelType, InputType>(random_mode)
+  C2VLoader(SizeType max_contexts_)
+    : DataLoader<LabelType, InputType>()
     , iterator_position_get_next_context_(0)
     , iterator_position_get_next_(0)
     , current_function_index_(0)
@@ -75,8 +75,11 @@ public:
   bool     IsDone() const override;
   void     Reset() override;
   bool     AddData(InputType const &data, LabelType const &label) override;
-  void     AddDataAsString(std::string const &text);
-  void     createIdxUMaps();
+  void     SetTestRatio(float new_test_ratio) override;
+  void     SetValidationRatio(float new_validation_ratio) override;
+
+  void AddDataAsString(std::string const &text);
+  void createIdxUMaps();
 
   umap_int_str umap_idx_to_functionname();
   umap_int_str umap_idx_to_path();
@@ -109,6 +112,8 @@ private:
   umap_int_str idx_to_function_name_;
   umap_int_str idx_to_path_;
   umap_int_str idx_to_word_;
+
+  void UpdateCursor() override;
 
   static void createIdxUMapsFromCounter(umap_str_int &counter, umap_str_int &name_to_idx,
                                         umap_int_str &idx_to_name);
@@ -316,6 +321,20 @@ void C2VLoader<LabelType, InputType>::Reset()
   this->iterator_position_get_next_context_ = SizeType{0};
 }
 
+template <typename LabelType, typename DataType>
+void C2VLoader<LabelType, DataType>::SetTestRatio(float new_test_ratio)
+{
+  FETCH_UNUSED(new_test_ratio);
+  throw std::runtime_error("Test set splitting is not supported for this dataloader.");
+}
+
+template <typename LabelType, typename DataType>
+void C2VLoader<LabelType, DataType>::SetValidationRatio(float new_validation_ratio)
+{
+  FETCH_UNUSED(new_validation_ratio);
+  throw std::runtime_error("Validation set splitting is not supported for this dataloader.");
+}
+
 /**
  * @brief Add value to the unordered map for counting strings. If the provided string exists, the
  * counter is set +1, otherwise its set to 1
@@ -479,6 +498,15 @@ typename C2VLoader<LabelType, InputType>::umap_str_int
 C2VLoader<LabelType, InputType>::word_counter()
 {
   return this->word_counter_;
+}
+
+template <typename LabelType, typename DataType>
+void C2VLoader<LabelType, DataType>::UpdateCursor()
+{
+  if (this->mode_ != DataLoaderMode::TRAIN)
+  {
+    throw std::runtime_error("Other mode than training not supported yet.");
+  }
 }
 
 }  // namespace dataloaders
