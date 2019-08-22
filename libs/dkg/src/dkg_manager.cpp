@@ -488,32 +488,6 @@ bool DkgManager::RunReconstruction()
     {
       // Do not run reconstruction for myself
       FETCH_LOG_WARN(LOGGING_NAME, "Node: ", cabinet_index_, " polynomial being reconstructed.");
-      // compute $z_i$ using Lagrange interpolation (without corrupted parties)
-      assert(cabinet_index_ == victim_index);
-      assert(z_i[cabinet_index_] != zeroFr_);
-      bn::Fr zprime_i;
-      zprime_i.clear();
-      zprime_i = ComputeZi(parties, shares);
-      // assert(z_i[cabinet_index_] == zprime_i);
-      std::vector<bn::Fr> points, shares_f;
-      for (const auto &index : parties)
-      {
-        FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, " run reconstruction for node ",
-                       victim_index, " with shares from node ", index);
-        points.push_back(index + 1);  // adjust index in computation
-        shares_f.push_back(shares[index]);
-      }
-      std::vector<std::vector<bn::G2>> Aprime_ik;
-      Init(Aprime_ik, cabinet_size_, polynomial_degree_ + 1);
-      a_ik[victim_index] = InterpolatePolynom(points, shares_f);
-      assert(z_i[cabinet_index_] == a_ik[victim_index][0]);
-      assert(zprime_i == a_ik[victim_index][0]);
-      for (size_t k = 0; k <= polynomial_degree_; k++)
-      {
-        bn::G2::mul(Aprime_ik[victim_index][k], group_g_, a_ik[victim_index][k]);
-        assert(A_ik[victim_index][k] == Aprime_ik[victim_index][k]);
-      }
-
       continue;
     }
     // compute $z_i$ using Lagrange interpolation (without corrupted parties)
