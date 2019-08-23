@@ -1282,7 +1282,7 @@ struct MapSerializer<ml::OpEmbeddingsSaveableParams<TensorType>, D>
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(6);
+    auto map = map_constructor(7);
     map.Append(OP_CODE, sp.op_type);
 
     // serialize parent class

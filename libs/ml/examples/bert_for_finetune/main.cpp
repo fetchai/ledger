@@ -103,6 +103,8 @@ void run_pseudo_forward_pass(std::vector<std::string> input_nodes, std::string o
                              BERTConfig const &config, GraphType g,
                              SizeType batch_size, bool verbose = false);
 
+void evaluate_graph(GraphType &g, std::vector<std::string> input_nodes, std::string output_node, std::vector<TensorType> input_data, TensorType output_data);
+
 int main(int ac, char **av)
 {
   if (ac == 1)
@@ -153,12 +155,12 @@ int main(int ac, char **av)
   }
 
 	// setup params for training
-	SizeType train_size = 16;
-	SizeType test_size = 10;
+	SizeType train_size = 1000;
+	SizeType test_size = 100;
 	SizeType batch_size = 4;
-	SizeType epochs = 1;
+	SizeType epochs = 2;
 	SizeType layer_no = 12;
-	DataType lr = static_cast<DataType>(1e-4);
+	DataType lr = static_cast<DataType>(5e-5);
 	// load data into memory
   std::string file_path = av[2];
   std::string IMDB_path = av[3];
@@ -225,6 +227,15 @@ int main(int ac, char **av)
       g.template AddNode<CrossEntropyLoss<TensorType>>("Error", {classification_output, label});
 	std::cout << "finish creating cls model based on pretrain model" << std::endl;
 	
+	// output training stats
+	std::cout << "output layer no: " << layer_no << std::endl;
+	std::cout << "train_size: " << 2 * train_size << std::endl;
+	std::cout << "batch_size: " << batch_size << std::endl;
+	std::cout << "epochs: " << epochs << std::endl;
+	std::cout << "lr: " << lr << std::endl;
+
+	evaluate_graph(g, ret.first, classification_output, final_test_data, test_labels);
+
   // create optimizer
 	std::cout << "START TRAINING" << std::endl;
 	OptimiserType optimiser(std::make_shared<GraphType>(g), {segment, position, tokens, mask}, label, error, lr);
@@ -233,36 +244,61 @@ int main(int ac, char **av)
     DataType loss = optimiser.Run(final_train_data, train_labels, batch_size);
     std::cout << "loss: " << loss << std::endl;
   }
-  FETCH_UNUSED(batch_size);
-  FETCH_UNUSED(epochs);
 
-  std::cout << "Starting forward passing for manual evaluation" << std::endl;
-  TensorType segment_data  = final_test_data[0];
-  TensorType position_data = final_test_data[1];
-  TensorType tokens_data   = final_test_data[2];
-  TensorType mask_data     = final_test_data[3];
-  g.SetInput(segment, segment_data);
-  g.SetInput(position, position_data);
-  g.SetInput(tokens, tokens_data);
-  g.SetInput(mask, mask_data);
-  auto output = g.Evaluate(classification_output, false);
-  DataType val_loss = fetch::math::CrossEntropyLoss<TensorType>(output, test_labels);
-  std::cout << "model output: " << output.ToString() << std::endl;
-  std::cout << "label output: " << test_labels.ToString() << std::endl;
-  std::cout << "val loss: " << val_loss << std::endl;
+  evaluate_graph(g, ret.first, classification_output, final_test_data, test_labels);
 
-  //  fetch::ml::GraphSaveableParams<TensorType> gsp1 = g.GetGraphSaveableParams();
-  //  std::cout << "got saveable params" << std::endl;
-  //
-  //  fetch::serializers::SizeCounter       counter;
-  //  fetch::serializers::MsgPackSerializer b;
-  //  counter << gsp1;
-  //  std::cout << "finish counting" << std::endl;
-  //  b.Reserve(counter.size());
-  //  b << gsp1;
-  //  std::cout << "finish serializing" << std::endl;
+  // start serializing
+//  fetch::ml::GraphSaveableParams<TensorType> gsp1 = g.GetGraphSaveableParams();
+//  std::cout << "got saveable params" << std::endl;
+//
+//  fetch::serializers::SizeCounter       counter;
+//  fetch::serializers::MsgPackSerializer b;
+//  counter << gsp1;
+//  std::cout << "finish counting" << std::endl;
+//  b.Reserve(counter.size());
+//  b << gsp1;
+//  std::cout << "finish serializing" << std::endl;
+
+//	std::ofstream myFile ("/home/xiaodong/Projects/Fetch scripts/bert_finetune/serialized_model.bin", std::ios::out | std::ios::binary);
+//	uint8_t * out;
+//	b.WriteBytes(out, b.size());
+//	myFile.write((char *)out, sizeof(out));
+//	std::cout << sizeof(out) << std::endl;
+//	myFile.close();
+//	std::cout << "finish writing to file" << std::endl;
+//
+//	std::ifstream savedFile ("/home/xiaodong/Projects/Fetch scripts/bert_finetune/serialized_model.bin", std::ios::in | std::ios::binary);
+//	char * buffer;
+//	savedFile.read(buffer, sizeof(out));
+//	savedFile.close();
+//	fetch::serializers::MsgPackSerializer b2;
+//	b2.ReadBytes((uint8_t *)buffer, sizeof(buffer));
+//	std::cout << "finish reading from file" << std::endl;
+//
+//  // start deserializing
+//  b2.seek(0);
+//  fetch::ml::GraphSaveableParams<TensorType> gsp2;
+//  b2 >> gsp2;
+//	std::cout << "finish deserializing" << std::endl;
+//	auto g2 = std::make_shared<GraphType>();
+//	fetch::ml::utilities::BuildGraph<TensorType>(gsp2, g2);
+//	std::cout << "finish rebuilding graph" << std::endl;
+//
+//	evaluate_graph(*g2, ret.first, classification_output, final_test_data, test_labels);
 
   return 0;
+}
+
+void evaluate_graph(GraphType &g, std::vector<std::string> input_nodes, std::string output_node, std::vector<TensorType> input_data, TensorType output_data){
+	std::cout << "Starting forward passing for manual evaluation on: " << output_data.shape(1) << std::endl;
+	for (SizeType i=0; i< static_cast<SizeType>(4); i++){
+		g.SetInput(input_nodes[i], input_data[i]);
+	}
+	auto model_output = g.Evaluate(output_node, false);
+	DataType val_loss = fetch::math::CrossEntropyLoss<TensorType>(model_output, output_data);
+	std::cout << "model output: " << model_output.ToString() << std::endl;
+	std::cout << "label output: " << output_data.ToString() << std::endl;
+	std::cout << "val loss: " << val_loss << std::endl;
 }
 
 std::vector<TensorType> load_imdb_finetune_data(std::string const &file_path)
