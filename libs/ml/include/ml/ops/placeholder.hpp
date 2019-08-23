@@ -38,7 +38,7 @@ public:
   using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpPlaceholderSaveableParams<TensorType>;
-  using MyType        = PlaceHolder<TensorType >;
+  using MyType        = PlaceHolder<TensorType>;
 
   PlaceHolder() = default;
 

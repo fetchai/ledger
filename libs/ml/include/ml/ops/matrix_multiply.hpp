@@ -38,7 +38,7 @@ public:
   using SizeVector    = typename TensorType::SizeVector;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpMatrixMultiplySaveableParams<T>;
-  using MyType        = MatrixMultiply<TensorType >;
+  using MyType        = MatrixMultiply<TensorType>;
 
   MatrixMultiply() = default;
 
@@ -86,7 +86,8 @@ public:
   }
 
   /**
-   * This op should not be shared because it uses cacheing, therefore MakeSharedCopy returns a new op
+   * This op should not be shared because it uses cacheing, therefore MakeSharedCopy returns a new
+   * op
    * @param me
    * @return
    */

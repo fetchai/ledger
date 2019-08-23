@@ -365,13 +365,13 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test_time_distributed)
   EXPECT_TRUE(pred_shared.AllClose(pred_not_shared, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));
 
-//   SGD is chosen to be the optimizer to reflect the gradient throw change in weights after 1
-//   iteration of training. Run 1 iteration of SGD to train on g shared
+  //   SGD is chosen to be the optimizer to reflect the gradient throw change in weights after 1
+  //   iteration of training. Run 1 iteration of SGD to train on g shared
   auto                                            lr = static_cast<DataType>(0.01);
   fetch::ml::optimisers::SGDOptimiser<TensorType> g_shared_optimiser(g_shared, {"Input"}, "Label",
                                                                      "Error", lr);
   DataType shared_loss = g_shared_optimiser.Run({data}, data, 1);
-//   Run 1 iteration of SGD to train on g not shared
+  //   Run 1 iteration of SGD to train on g not shared
   fetch::ml::optimisers::SGDOptimiser<TensorType> g_not_shared_optimiser(g_not_shared, {"Input"},
                                                                          "Label", "Error", lr);
   DataType not_shared_loss = g_not_shared_optimiser.Run({data}, data, 1);

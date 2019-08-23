@@ -78,9 +78,9 @@ public:
     assert(me.get() == this);
 
     auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
-    copyshare->prev_input_ = TensorType(prev_input_.shape());
+    copyshare->prev_input_          = TensorType(prev_input_.shape());
     copyshare->cached_inv_sqrt_var_ = TensorType(cached_inv_sqrt_var_.shape());
-    copyshare->cached_output_ = TensorType(cached_output_.shape());
+    copyshare->cached_output_       = TensorType(cached_output_.shape());
 
     return copyshare;
   }

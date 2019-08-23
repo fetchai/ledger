@@ -55,7 +55,6 @@ struct NodeSaveableParams
   std::shared_ptr<OpsSaveableParams> op_save_params;
 
   NodeSaveableParams() = default;
-
 };
 
 template <class TensorType>
@@ -629,7 +628,7 @@ struct OpSubtractSaveableParams : public OpsSaveableParams
 template <class TensorType>
 struct OpSwitchSaveableParams : public OpsSaveableParams
 {
-  fetch::ml::OpType           op_type = OpType::OP_SWITCH;
+  fetch::ml::OpType op_type = OpType::OP_SWITCH;
 };
 
 /**

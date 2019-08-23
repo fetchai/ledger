@@ -38,7 +38,7 @@ public:
   using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpAbsSaveableParams<T>;
-  using MyType = Abs<TensorType >;
+  using MyType        = Abs<TensorType>;
 
   Abs() = default;
 

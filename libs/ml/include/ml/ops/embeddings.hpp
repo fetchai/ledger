@@ -171,9 +171,8 @@ public:
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    std::vector<SizeType> output_shape = {this->output_->shape().at(0),
-                                          inputs.front()->shape().at(0),
-                                          inputs.front()->shape().at(1)};
+    std::vector<SizeType> output_shape = {
+        this->output_->shape().at(0), inputs.front()->shape().at(0), inputs.front()->shape().at(1)};
     return output_shape;
   }
 

@@ -37,7 +37,6 @@ public:
   using SPType        = OpConcatenateSaveableParams<T>;
   using MyType        = Concatenate<TensorType>;
 
-
   explicit Concatenate(SizeType axis)
     : axis_(axis)
   {}

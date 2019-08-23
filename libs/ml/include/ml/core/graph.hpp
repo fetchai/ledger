@@ -677,8 +677,9 @@ std::vector<typename Graph<TensorType>::TrainablePtrType> Graph<TensorType>::Get
   return ret;
 }
 
-template<class T>
-void Graph<T>::InsertSharedCopy(std::shared_ptr<Graph<TensorType>> output_ptr) {
+template <class T>
+void Graph<T>::InsertSharedCopy(std::shared_ptr<Graph<TensorType>> output_ptr)
+{
   if (output_ptr.get() == this)
   {
     throw std::runtime_error("This needs to be called with a separate ptr.");
@@ -701,17 +702,21 @@ void Graph<T>::InsertSharedCopy(std::shared_ptr<Graph<TensorType>> output_ptr) {
         std::make_shared<Node<TensorType>>(*n_ptr, node_name, op_copyshare);
 
     // add node_ptr to trainable lookup etc. if required
-    auto is_trainable = std::dynamic_pointer_cast<fetch::ml::ops::Trainable<TensorType>>(op_copyshare);
+    auto is_trainable =
+        std::dynamic_pointer_cast<fetch::ml::ops::Trainable<TensorType>>(op_copyshare);
     auto is_graph = std::dynamic_pointer_cast<Graph<TensorType>>(op_copyshare);
-    if (is_trainable){
+    if (is_trainable)
+    {
       copyshare->trainable_nodes_.emplace_back(n_ptr);
       copyshare->trainable_lookup_[node_name] = copyshare->trainable_nodes_.size() - 1;
     }
-    else if (is_graph){
+    else if (is_graph)
+    {
       for (auto &trainable : is_graph->trainable_lookup_)
       {
         std::string subnode_name(node_name + "_" + trainable.first);
-        assert(copyshare->trainable_lookup_.find(subnode_name) == copyshare->trainable_lookup_.end());
+        assert(copyshare->trainable_lookup_.find(subnode_name) ==
+               copyshare->trainable_lookup_.end());
         copyshare->trainable_nodes_.emplace_back(is_graph->trainable_nodes_.at(trainable.second));
         copyshare->trainable_lookup_[subnode_name] = copyshare->trainable_nodes_.size() - 1;
       }
