@@ -29,27 +29,31 @@ namespace serializers {
 
 SerializableException::SerializableException()
   : error_code_(error::TYPE_ERROR)
-  , explanation_("unknown"){}
+  , explanation_("unknown")
+{}
 
-  SerializableException::SerializableException(std::string explanation)
+SerializableException::SerializableException(std::string explanation)
   : error_code_(error::TYPE_ERROR)
-  , explanation_(std::move(explanation)){}
+  , explanation_(std::move(explanation))
+{}
 
-  SerializableException::SerializableException(byte_array::ConstByteArray const &explanation)
+SerializableException::SerializableException(byte_array::ConstByteArray const &explanation)
   : error_code_(error::TYPE_ERROR)
-  , explanation_(std::string(explanation)){}
+  , explanation_(std::string(explanation))
+{}
 
-  SerializableException::SerializableException(error::error_type error_code,
-                                               std::string       explanation)
+SerializableException::SerializableException(error::error_type error_code, std::string explanation)
   : error_code_(error_code)
-  , explanation_(std::move(explanation)){}
+  , explanation_(std::move(explanation))
+{}
 
-  SerializableException::SerializableException(error::error_type                 error_code,
-                                               byte_array::ConstByteArray const &explanation)
+SerializableException::SerializableException(error::error_type                 error_code,
+                                             byte_array::ConstByteArray const &explanation)
   : error_code_(error_code)
-  , explanation_(std::string(explanation)){}
+  , explanation_(std::string(explanation))
+{}
 
-  SerializableException::~SerializableException()
+SerializableException::~SerializableException()
 {}
 
 char const *SerializableException::what() const noexcept
@@ -68,8 +72,7 @@ std::string SerializableException::explanation() const
 }
 
 void SerializableException::StackTrace() const
-{
-}
+{}
 
 }  // namespace serializers
 }  // namespace fetch
