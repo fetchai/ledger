@@ -243,19 +243,6 @@ private:
   }
 };
 
-class HonestRbc : public RBC
-{
-public:
-  HonestRbc(Endpoint &endpoint, MuddleAddress address,
-            std::function<void(ConstByteArray const &address, ConstByteArray const &payload)>
-                                                    broadcast_callback,
-            const std::vector<FaultyRbc::Failures> &failure = {})
-    : RBC{endpoint, std::move(address), std::move(broadcast_callback)}
-  {
-    assert(failure.empty());
-  }
-};
-
 class RbcMember
 {
 
