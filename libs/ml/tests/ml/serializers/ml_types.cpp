@@ -119,11 +119,11 @@ TYPED_TEST(SerializersTestNoInt, serialize_graph_saveable_params)
 
   fetch::ml::GraphSaveableParams<TypeParam>      gsp1 = g->GetGraphSaveableParams();
   fetch::serializers::LargeObjectSerializeHelper b;
-  b.Serialiaze(gsp1);
+  b.Serialize(gsp1);
 
   auto gsp2 = std::make_shared<fetch::ml::GraphSaveableParams<TypeParam>>();
 
-  b.Deserialiaze(*gsp2);
+  b.Deserialize(*gsp2);
   EXPECT_EQ(gsp1.connections, gsp2->connections);
 
   for (auto const &gsp2_node_pair : gsp2->nodes)
