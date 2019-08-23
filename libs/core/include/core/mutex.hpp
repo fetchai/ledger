@@ -19,21 +19,15 @@
 
 #include "core/macros.hpp"
 
-#include <atomic>
-#include <chrono>
 #include <mutex>
 #include <string>
-#include <thread>
 
 namespace fetch {
 
-/**
- * The production mutex is wrapper for the default system mutex.
- */
-class ProductionMutex : public std::mutex
+class Mutex
 {
 public:
-  ProductionMutex(int, std::string const &);
+  Mutex(int, std::string const &);
 
   void lock();
 
@@ -42,68 +36,6 @@ public:
 private:
   std::mutex mutex_;
 };
-
-/**
- * The debug mutex acts like a normal mutex but also contains several other checks. This code is
- * intended to be only used in software development.
- */
-class DebugMutex
-{
-  using Clock     = std::chrono::high_resolution_clock;
-  using Timepoint = Clock::time_point;
-  using Duration  = Clock::duration;
-
-  class MutexTimeout
-  {
-  public:
-    MutexTimeout(std::string filename, int const &line);
-
-    ~MutexTimeout();
-
-    void Eval();
-
-  private:
-    std::string       filename_;
-    int               line_;
-    std::thread       thread_;
-    Timepoint         created_ = Clock::now();
-    std::atomic<bool> running_{true};
-  };
-
-public:
-  DebugMutex(int line, std::string file);
-
-  // TODO(ejf) No longer required?
-  DebugMutex() = delete;
-
-  DebugMutex &operator=(DebugMutex const &other) = delete;
-
-  void lock();
-
-  void unlock();
-
-  int line() const;
-
-  std::string filename() const;
-
-  std::thread::id thread_id() const;
-
-private:
-  std::mutex mutex_;
-  std::mutex lock_mutex_;
-  Timepoint locked_ FETCH_GUARDED_BY(lock_mutex_);  ///< The time when the mutex was locked
-  std::thread::id   thread_id_;                     ///< The last thread to lock the mutex
-
-  int                           line_ = 0;   ///< The line number of the mutex
-  std::string                   file_ = "";  ///< The filename of the mutex
-  std::unique_ptr<MutexTimeout> timeout_;    ///< The timeout monitor for this mutex
-};
-
-#if defined(FETCH_DEBUG_MUTEX) && !(defined(NDEBUG))
-using Mutex = DebugMutex;
-#else
-using Mutex = ProductionMutex;
-#endif
 
 #define FETCH_JOIN_IMPL(x, y) x##y
 #define FETCH_JOIN(x, y) FETCH_JOIN_IMPL(x, y)
