@@ -335,45 +335,22 @@ template <typename T>
 void AddToParameterPack(vm::VM *vm, vm::ParameterPack &params, vm::TypeId expected_type,
                         T const &variant)
 {
-  vm::ApplyFunctor<vm::IntegralTypes, vm::TypeIdCases<vm::TypeIds::Bool, vm::TypeIds::Address>, vm::DefaultObjectCase>(
-	  expected_type,
-	  value_util::Slots(
-		  vm::Slot<vm::TypeIds::Bool, vm::IntegralTypes>([&](auto cs) {
-			  using Case = decltype(cs);
-			  AddToParameterPack<typename Case::type>(params, variant);
-			  return true;  // to signal that expected_type's been handled
-		  }),
-		  vm::Slot<vm::TypeIds::Address>([&](auto) {
-			  AddAddressToParameterPack(vm, params, variant);
-		  }),
-		  vm::DefaultSlot([&](auto) {
-			  AddStructuredDataObjectToParameterPack(vm, expected_type, params, variant);
-		  })));
-  /*
-	  [&](auto cs) {
-        using Case = decltype(cs);
-        AddToParameterPack<typename Case::type>(params, variant);
-        return true;  // to signal that expected_type's been handled
-      }))
-  if (vm::ApplyFunctor<vm::TypeIds::Bool, vm::IntegralTypes>(expected_type, [&](auto cs) {
-        using Case = decltype(cs);
-        AddToParameterPack<typename Case::type>(params, variant);
-        return true;  // to signal that expected_type's been handled
-      }))
-  {
-    return;
-  }
-
-  if (expected_type == vm::TypeIds::Address)
-  {
-    // TODO(issue 1256): Whole this case section can be dropped once the issue is resolved
-    AddAddressToParameterPack(vm, params, variant);
-  }
-  else
-  {
-    AddStructuredDataObjectToParameterPack(vm, expected_type, params, variant);
-  }
-  */
+  vm::ApplyFunctor<vm::IntegralTypes, vm::TypeIdCases<vm::TypeIds::Bool, vm::TypeIds::Address>,
+                   vm::DefaultObjectCase>(
+      expected_type,
+      value_util::Slots(
+          vm::NullarySlot<vm::TypeIds::Bool, vm::TypeIds::Int8, vm::TypeIds::UInt8,
+                          vm::TypeIds::Int16, vm::TypeIds::UInt16, vm::TypeIds::Int32,
+                          vm::TypeIds::UInt32, vm::TypeIds::Int64, vm::TypeIds::UInt64>(
+              [&](auto cs) {
+                using Case = decltype(cs);
+                AddToParameterPack<typename Case::type>(params, variant);
+              }),
+          vm::NullarySlot<vm::TypeIds::Address>(
+              [&](auto) { AddAddressToParameterPack(vm, params, variant); }),
+          vm::DefaultNullarySlot([&](auto) {
+            AddStructuredDataObjectToParameterPack(vm, expected_type, params, variant);
+          })));
 }
 
 /**
@@ -627,119 +604,61 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
 
   // extract the result from the contract output
 
-  auto ret_val = vm::ApplyFunctor<vm::PrimitiveTypes, vm::TypeIdCases<vm::TypeIds::Null, vm::TypeIds::String>, vm::DefaultObjectCase>(
-	  output.type_id,
-	  value_util::Slots(
-		  vm::PrimitiveSlot(
-			  [&](auto &&v) {
-				  response["result"] = v.Get();
-				  return Status::OK;
-			  }),
-		  vm::Slot<vm::TypeIds::Null>(
-			  [&](auto &&) {
-				  response["result"] = variant::Variant::Null();
-				  return Status::OK;
-			  }),
-		  vm::Slot<vm::TypeIds::String>(
-			  [&](auto &&v) {
-				  response["result"] = v.Get()->str;
-				  return Status::OK;
-			  }),
-		  vm::DefaultSlot(
-			  [&](auto &&v) {
-				  auto const &output = v.CVar();
-				  if (output.IsPrimitive())
-				  {
-					  // TODO(tfr): add error - all types not covered
-					  response["result"] = variant::Variant::Null();
-					  FETCH_LOG_WARN(LOGGING_NAME, "Could not serialise result - possibly Void return-type");
-				  }
-				  else
-				  {
-					  variant::Variant var;
-					  if (output.object == nullptr)
-					  {
-						  var = variant::Variant::Null();
-					  }
-					  else
-					  {
-						  if (!output.object->ToJSON(var))
-						  {
-							  response["status"] = "failed";
-							  response["result"] = "Failed to serialise object to JSON variant";
-							  FETCH_LOG_WARN(LOGGING_NAME, "Failed to serialise object to JSON variant for " +
-									 output.object->GetUniqueId());
-							  return Status::FAILED;
-						  }
-					  }
-					  response["result"] = var;
-				  }
-				  return Status::OK;
-			  })),
-	  output);
+  auto ret_val =
+      vm::ApplyFunctor<vm::PrimitiveTypes, vm::TypeIdCases<vm::TypeIds::Null, vm::TypeIds::String>,
+                       vm::DefaultObjectCase>(
+          output.type_id,
+          value_util::Slots(
+              vm::PrimitiveSlot([&](auto &&v) {
+                response["result"] = v.Get();
+                return Status::OK;
+              }),
+              vm::TypeIdSlot<vm::TypeIds::Null>([&](auto &&) {
+                response["result"] = variant::Variant::Null();
+                return Status::OK;
+              }),
+              vm::TypeIdSlot<vm::TypeIds::String>([&](auto &&v) {
+                response["result"] = v.Get()->str;
+                return Status::OK;
+              }),
+              vm::DefaultSlot([&](auto &&v) {
+                vm::Variant const &output = v.CVar();
+                if (output.IsPrimitive())
+                {
+                  // TODO(tfr): add error - all types not covered
+                  response["result"] = variant::Variant::Null();
+                  FETCH_LOG_WARN(LOGGING_NAME,
+                                 "Could not serialise result - possibly Void return-type");
+                }
+                else
+                {
+                  variant::Variant var;
+                  if (output.object == nullptr)
+                  {
+                    var = variant::Variant::Null();
+                  }
+                  else
+                  {
+                    if (!output.object->ToJSON(var))
+                    {
+                      response["status"] = "failed";
+                      response["result"] = "Failed to serialise object to JSON variant";
+                      FETCH_LOG_WARN(LOGGING_NAME,
+                                     "Failed to serialise object to JSON variant for " +
+                                         output.object->GetUniqueId());
+                      return Status::FAILED;
+                    }
+                  }
+                  response["result"] = var;
+                }
+                return Status::OK;
+              })),
+          output);
   if (ret_val == Status::OK)
   {
-	  response["status"] = "success";
+    response["status"] = "success";
   }
   return ret_val;
-
-
-
-  /*
-  if (!vm::ApplyPrimitiveFunctor(output.type_id,
-                                 [&](auto &&v) {
-                                   response["result"] = v.Get();
-                                   return true;  // to indicate that output's type has been handled
-                                 },
-                                 output))
-  {
-    // output's type is none of the primitive types
-    switch (output.type_id)
-    {
-    case vm::TypeIds::Null:
-      response["result"] = variant::Variant::Null();
-      break;
-    case vm::TypeIds::String:
-      response["result"] = output.Get<vm::Ptr<vm::String>>()->str;
-      break;
-    default:
-      if (output.IsPrimitive())
-      {
-        // TODO(tfr): add error - all types not covered
-        response["result"] = variant::Variant::Null();
-        FETCH_LOG_WARN(LOGGING_NAME, "Could not serialise result - possibly Void return-type");
-        return Status::OK;
-      }
-      else
-      {
-        variant::Variant var;
-        if (output.object == nullptr)
-        {
-          var = variant::Variant::Null();
-        }
-        else
-        {
-          if (!output.object->ToJSON(var))
-          {
-            response["status"] = "failed";
-            response["result"] = "Failed to serialise object to JSON variant";
-            FETCH_LOG_WARN(LOGGING_NAME, "Failed to serialise object to JSON variant for " +
-                                             output.object->GetUniqueId());
-            return Status::FAILED;
-          }
-        }
-        response["result"] = var;
-      }
-
-      break;
-    }
-  }
-
-  // update the status response to be successful
-  response["status"] = "success";
-
-  return Status::OK;
-  */
 }
 
 }  // namespace ledger

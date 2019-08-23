@@ -1107,28 +1107,86 @@ constexpr auto ApplyBuiltinFunctor(TypeId type_id, F &&f, Variants &&... variant
                                     std::forward<Variants>(variants)...);
 }
 
-template<TypeId... type_ids, class F> constexpr auto Slot(F &&f) {
-	return value_util::Slot<TypeIdCases<type_ids...>>(std::forward<F>(f));
+template <TypeId... type_ids, class F>
+constexpr auto TypeIdSlot(F &&f)
+{
+  return value_util::Slot<TypeIdCases<type_ids...>>(std::forward<F>(f));
 }
 
-template<TypeId... type_ids, class F> constexpr auto DefaultSlot(F &&f) {
-	return value_util::Slot<TypeIdCases<type_ids...>, DefaultObjectCase>(std::forward<F>(f));
+template <TypeId... type_ids, class F>
+constexpr auto DefaultSlot(F &&f)
+{
+  return value_util::Slot<TypeIdCases<type_ids...>, DefaultVariantView>(std::forward<F>(f));
 }
 
-template<class F> constexpr auto IntegralSlot(F &&f) {
-	return value_util::Slot<IntegralTypes>(std::forward<F>(f));
+template <class F>
+constexpr auto IntegralSlot(F &&f)
+{
+  return value_util::Slot<IntegralTypes>(std::forward<F>(f));
 }
 
-template<class F> constexpr auto NumericSlot(F &&f) {
-	return value_util::Slot<NumericTypes>(std::forward<F>(f));
+template <class F>
+constexpr auto NumericSlot(F &&f)
+{
+  return value_util::Slot<NumericTypes>(std::forward<F>(f));
 }
 
-template<class F> constexpr auto PrimitiveSlot(F &&f) {
-	return value_util::Slot<PrimitiveTypes>(std::forward<F>(f));
+template <class F>
+constexpr auto PrimitiveSlot(F &&f)
+{
+  return value_util::Slot<PrimitiveTypes>(std::forward<F>(f));
 }
 
-template<class F> constexpr auto BuiltinSlot(F &&f) {
-	return value_util::Slot<BuiltinTypes>(std::forward<F>(f));
+template <class F>
+constexpr auto BuiltinSlot(F &&f)
+{
+  return value_util::Slot<BuiltinTypes>(std::forward<F>(f));
+}
+
+template <TypeId... type_ids, class F>
+constexpr auto NullarySlot(F &&f)
+{
+  return value_util::Slot<IdToType<type_ids>...>(std::forward<F>(f));
+}
+
+template <TypeId... type_ids, class F>
+constexpr auto DefaultNullarySlot(F &&f)
+{
+  return value_util::Slot<IdToType<type_ids>..., VariantValue<TypeIds::NumReserved, Ptr<Object>>>(
+      std::forward<F>(f));
+}
+
+template <class F>
+constexpr auto IntegralNullarySlot(F &&f)
+{
+  return NullarySlot<TypeIds::Int8, TypeIds::UInt8, TypeIds::Int16, TypeIds::UInt16, TypeIds::Int32,
+                     TypeIds::UInt32, TypeIds::Int64, TypeIds::UInt64>(std::forward<F>(f));
+}
+
+template <class F>
+constexpr auto NumericNullarySlot(F &&f)
+{
+  return NullarySlot<TypeIds::Int8, TypeIds::UInt8, TypeIds::Int16, TypeIds::UInt16, TypeIds::Int32,
+                     TypeIds::UInt32, TypeIds::Int64, TypeIds::UInt64, TypeIds::Float32,
+                     TypeIds::Float64, TypeIds::Fixed32, TypeIds::Fixed64>(std::forward<F>(f));
+}
+
+template <class F>
+constexpr auto PrimitiveNullarySlot(F &&f)
+{
+  return NullarySlot<TypeIds::Bool, TypeIds::Int8, TypeIds::UInt8, TypeIds::Int16, TypeIds::UInt16,
+                     TypeIds::Int32, TypeIds::UInt32, TypeIds::Int64, TypeIds::UInt64,
+                     TypeIds::Float32, TypeIds::Float64, TypeIds::Fixed32, TypeIds::Fixed64>(
+      std::forward<F>(f));
+}
+
+template <class F>
+constexpr auto BuiltinNullarySlot(F &&f)
+{
+  return NullarySlot<TypeIds::Bool, TypeIds::Int8, TypeIds::UInt8, TypeIds::Int16, TypeIds::UInt16,
+                     TypeIds::Int32, TypeIds::UInt32, TypeIds::Int64, TypeIds::UInt64,
+                     TypeIds::Float32, TypeIds::Float64, TypeIds::Fixed32, TypeIds::Fixed64,
+                     TypeIds::String, TypeIds::Address>(std::forward<F>(f));
 }
 
 }  // namespace vm

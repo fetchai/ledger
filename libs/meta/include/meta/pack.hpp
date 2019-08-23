@@ -125,7 +125,8 @@ static constexpr auto DecV = Dec<N>::value;
  * @param N a class with static constant member value of numeric type
  * @return
  */
-template<class N> using Shr1 = std::integral_constant<std::decay_t<decltype(N::value)>, N::value / 2>;
+template <class N>
+using Shr1 = std::integral_constant<std::decay_t<decltype(N::value)>, N::value / 2>;
 
 template <class N>
 static constexpr auto Shr1V = Shr1<N>::value;
@@ -752,17 +753,30 @@ struct Concat<> : Type<Nil>
  */
 namespace detail_ {
 
-template<std::size_t n, class T> struct Repeat: Concat<typename Repeat<n / 2, T>::type, typename Repeat<n - n / 2, T>::type> {};
+template <std::size_t n, class T>
+struct Repeat : Concat<typename Repeat<n / 2, T>::type, typename Repeat<n - n / 2, T>::type>
+{
+};
 
-template<class T> struct Repeat<1, T>: Type<Pack<T>> {};
+template <class T>
+struct Repeat<1, T> : Type<Pack<T>>
+{
+};
 
-template<class T> struct Repeat<0, T>: Type<Nil> {};
+template <class T>
+struct Repeat<0, T> : Type<Nil>
+{
+};
 
-}
+}  // namespace detail_
 
-template<class N, class T> struct Repeat: detail_::Repeat<std::size_t(N::value), T> {};
+template <class N, class T>
+struct Repeat : detail_::Repeat<std::size_t(N::value), T>
+{
+};
 
-template<class N, class T> using RepeatT = typename Repeat<N, T>::type;
+template <class N, class T>
+using RepeatT = typename Repeat<N, T>::type;
 
 /**
  * Partial function application.

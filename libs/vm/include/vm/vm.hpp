@@ -1027,8 +1027,8 @@ private:
   void ExecutePrimitiveRelationalOp(TypeId type_id, Variant &lhsv, Variant &rhsv)
   {
     ApplyPrimitiveFunctor(
-        type_id, [](auto &&left, auto &&right) { Op::Apply(left.Var(), left.Get(), right.Get()); }, lhsv,
-        rhsv);
+        type_id, [](auto &&left, auto &&right) { Op::Apply(left.Var(), left.Get(), right.Get()); },
+        lhsv, rhsv);
   }
 
   template <typename Op>
