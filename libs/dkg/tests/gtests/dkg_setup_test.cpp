@@ -631,24 +631,15 @@ TEST(dkg_setup, send_empty_complaints_answer)
                  FaultyDkgSetupService::Failures::SEND_EMPTY_COMPLAINT_ANSWER}});
 }
 
-TEST(dkg_setup, send_multiple_complaints)
+TEST(dkg_setup, send_multiple_messages)
 {
-  // Node 0 sends multiple complaint messages in the first round of complaints
-  GenerateTest(4, 3, 4, 4, {{FaultyDkgSetupService::Failures::SEND_MULTIPLE_COMPLAINTS}});
-}
-
-TEST(dkg_setup, send_multiple_coefficients)
-{
-  // Node 0 sends multiple coefficients. Should trigger warning but everyone
-  // should succeed in DKG
-  GenerateTest(4, 3, 4, 4, {{FaultyDkgSetupService::Failures::SEND_MULTIPLE_COEFFICIENTS}});
-}
-
-TEST(dkg_setup, send_multiple_complaint_answers)
-{
-  // Node 0 sends multiple complaint answers. Should trigger warning but everyone
-  // should succeed in DKG
-  GenerateTest(4, 3, 4, 4, {{FaultyDkgSetupService::Failures::SEND_MULTIPLE_COMPLAINT_ANSWERS}});
+  // Node 0 sends multiple coefficients, complaint, complaint answers and qual coefficient messages.
+  // Everyone should succeed in DKG
+  GenerateTest(4, 3, 4, 4,
+               {{FaultyDkgSetupService::Failures::SEND_MULTIPLE_COEFFICIENTS,
+                 FaultyDkgSetupService::Failures::SEND_MULTIPLE_COMPLAINTS,
+                 FaultyDkgSetupService::Failures::SEND_MULTIPLE_COMPLAINT_ANSWERS,
+                 FaultyDkgSetupService::Failures::SEND_MULTIPLE_QUAL_COEFFICIENTS}});
 }
 
 TEST(dkg_setup, qual_below_threshold)
@@ -663,13 +654,6 @@ TEST(dkg_setup, bad_qual_coefficients)
   // Node 0 computes bad qual coefficients so node 0 is in qual complaints but everyone reconstructs
   // their shares. Everyone else except node 0 succeeds in DKG
   GenerateTest(4, 3, 4, 3, {{FaultyDkgSetupService::Failures::BAD_QUAL_COEFFICIENTS}});
-}
-
-TEST(dkg_setup, send_multiple_qual_coefficients)
-{
-  // Node 0 sends multiple qual coefficients so node 0.
-  // Should trigger warning but everyone should succeed in DKG
-  GenerateTest(4, 3, 4, 4, {{FaultyDkgSetupService::Failures::SEND_MULTIPLE_QUAL_COEFFICIENTS}});
 }
 
 TEST(dkg_setup, send_fake_qual_complaint)
