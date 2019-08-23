@@ -116,9 +116,9 @@ private:
 
 protected:
   void InsertSharedCopy(std::shared_ptr<Graph<TensorType>> output_ptr);
-  std::unordered_map<std::string, NodePtrType> nodes_;
-  std::unordered_map<std::string, SizeType>    trainable_lookup_;
-  std::vector<NodePtrType>                     trainable_nodes_;
+  std::unordered_map<std::string, NodePtrType>              nodes_;
+  std::unordered_map<std::string, SizeType>                 trainable_lookup_;
+  std::vector<NodePtrType>                                  trainable_nodes_;
 };
 
 /**
@@ -243,7 +243,11 @@ void Graph<TensorType>::Step(DataType learning_rate)
   {
     auto trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
     trainable_ptr->Step(learning_rate);
-    ResetGraphCache(t, false);
+  }
+
+  for (auto const &t : nodes_)
+  {
+    ResetGraphCache(t.second, false);
   }
 }
 
@@ -254,7 +258,11 @@ void Graph<TensorType>::ApplyRegularisation()
   {
     auto trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
     trainable_ptr->ApplyRegularisation();
-    ResetGraphCache(t, false);  // ApplyRegularisation changes the weights so the cache is invalid
+  }
+
+  for (auto const &t : nodes_)
+  {
+    ResetGraphCache(t.second, false);
   }
 }
 
@@ -539,8 +547,12 @@ void Graph<TensorType>::ApplyGradients(std::vector<TensorType> &grad)
   {
     auto trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
     trainable_ptr->ApplyGradient(*grad_it);
-    ResetGraphCache(t, false);
     ++grad_it;
+  }
+
+  for (auto const &t : nodes_)
+  {
+    ResetGraphCache(t.second, false);
   }
 }
 
