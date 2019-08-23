@@ -11,3 +11,4 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 setup_compiler()
 
 fetch_add_slow_test(fetch-dkg-tests fetch-dkg gtests)
+set_tests_properties(fetch-dkg-tests PROPERTIES TIMEOUT 500)
