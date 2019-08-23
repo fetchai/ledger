@@ -30,6 +30,7 @@
 #include "core/serializers/base_types.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "ml/serializers/ml_types.hpp"
+#include "math/metrics/cross_entropy.hpp"
 #include "ml/utilities/graph_builder.hpp"
 
 #include <chrono>
@@ -73,7 +74,7 @@ TensorType create_mask_data(SizeType max_seq_len, TensorType seq_len_per_batch);
 std::pair<std::vector<TensorType>, TensorType> prepare_data_for_simple_cls(SizeType max_seq_len,
                                                                            SizeType batch_size);
 // load weights functionalities
-TensorType get_tensor_from_file(std::string file_name);
+TensorType load_tensor_from_file(std::string file_name);
 void       put_weight_in_layernorm(StateDictType &state_dict, std::string gamma_file_name,
                                    std::string beta_file_name, std::string gamma_weight_name,
                                    std::string beta_weight_name);
@@ -95,8 +96,8 @@ std::pair<std::vector<std::string>, std::string> load_pretrained_bert_model(
     std::string const &file_path, BERTConfig const &config, GraphType &g);
 std::pair<std::vector<std::string>, std::string> make_bert_model(BERTConfig const &config,
                                                                  GraphType &       g);
-std::vector<TensorType> get_imdb_finetune_data(std::string const &file_path);
-std::vector<TensorType> prepare_tenor_for_bert(TensorType const &data, SizeType max_seq_len);
+std::vector<TensorType> load_imdb_finetune_data(std::string const &file_path);
+std::vector<TensorType> prepare_tensor_for_bert(TensorType const &data, BERTConfig const &config);
 
 void run_pseudo_forward_pass(BERTConfig const &config, GraphType g,
                              std::pair<std::vector<std::string>, std::string> interface,
@@ -143,8 +144,15 @@ int main(int ac, char **av)
     return 1;
   }
 
-  std::string file_path = av[1];
-  std::string IMDB_path = av[2];
+	// setup params for training
+	SizeType train_size = 2;
+	SizeType test_size = 10;
+	SizeType batch_size = 4;
+	SizeType epochs = 1;
+	
+	// load data into memory
+  std::string file_path = av[2];
+  std::string IMDB_path = av[3];
   std::cout << "Pretrained BERT from folder: " << file_path << std::endl;
   std::cout << "IMDB review data: " << IMDB_path << std::endl;
 
@@ -153,52 +161,84 @@ int main(int ac, char **av)
   BERTConfig config;
 
   // prepare IMDB data
-
+  auto train_data = load_imdb_finetune_data(IMDB_path);
+	std::cout << "finish loading imdb from disk, start preprocessing" << std::endl;
+  std::vector<TensorType> labels;
+  TensorType label_train_pos({static_cast<SizeType>(1), train_data[0].shape(1)});
+  label_train_pos.Fill(static_cast<SizeType>(1));
+	TensorType label_train_neg({static_cast<SizeType>(1), train_data[1].shape(1)});
+	TensorType label_test_pos({static_cast<SizeType>(1), train_data[2].shape(1)});
+	label_test_pos.Fill(static_cast<SizeType>(1));
+	TensorType label_test_neg({static_cast<SizeType>(1), train_data[3].shape(1)});
+	
+	// get part of the training data out
+	TensorType sliced_train_data_pos = train_data[0].Slice(std::make_pair(static_cast<SizeType>(0), train_size), static_cast<SizeType>(1)).Copy();
+	TensorType sliced_train_data_neg = train_data[1].Slice(std::make_pair(static_cast<SizeType>(0), train_size), static_cast<SizeType>(1)).Copy();
+	TensorType train_data_concate = TensorType::Concat({sliced_train_data_pos, sliced_train_data_neg}, static_cast<SizeType>(1));
+	auto final_train_data = prepare_tensor_for_bert(train_data_concate, config);
+	TensorType train_labels({static_cast<SizeType>(1), static_cast<SizeType>(2) * train_size});
+	for(SizeType i=0; i<train_size; i++){
+		train_labels.Set(static_cast<SizeType>(0), i, static_cast<DataType>(1));
+	}
+	TensorType sliced_test_data_pos = train_data[2].Slice(std::make_pair(static_cast<SizeType>(0), test_size), static_cast<SizeType>(1)).Copy();
+	TensorType sliced_test_data_neg = train_data[3].Slice(std::make_pair(static_cast<SizeType>(0), test_size), static_cast<SizeType>(1)).Copy();
+	TensorType test_data_concate = TensorType::Concat({sliced_test_data_pos, sliced_test_data_neg}, static_cast<SizeType>(1));
+	auto final_test_data = prepare_tensor_for_bert(test_data_concate, config);
+	TensorType test_labels({static_cast<SizeType>(1), static_cast<SizeType>(2) * test_size});
+	for(SizeType i=0; i<test_size; i++){
+		train_labels.Set(static_cast<SizeType>(0), i, static_cast<DataType>(1));
+	}
+	std::cout << "finish preparing train test data" << std::endl;
+	
   // load pretrained bert model
   GraphType g;
   auto      ret = load_pretrained_bert_model(file_path, config, g);
+	std::cout << "finish loading pretraining model" << std::endl;
+	
+  std::string segment      = ret.first[0];
+  std::string position     = ret.first[1];
+  std::string tokens       = ret.first[2];
+  std::string mask         = ret.first[3];
+  std::string layer_output = ret.second;
 
-  run_pseudo_forward_pass(config, g, ret, static_cast<SizeType>(1));
+  // Add linear classification layer
+  std::string cls_token_output = g.template AddNode<fetch::ml::ops::Slice<TensorType>>(
+      "ClsTokenOutput", {layer_output}, 0u, 1u);
+  std::string classification_output =
+      g.template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
+          "ClassificationOutput", {cls_token_output}, config.model_dims, 1u,
+          ActivationType::SIGMOID, RegType::NONE, static_cast<DataType>(0),
+          WeightsInitType::XAVIER_GLOROT, false);
 
-  //  std::string segment      = ret.first[0];
-  //  std::string position     = ret.first[1];
-  //  std::string tokens       = ret.first[2];
-  //  std::string mask         = ret.first[3];
-  //  std::string layer_output = ret.second;
-  //
-  //  // Add linear classification layer
-  //  std::string cls_token_output = g.template AddNode<fetch::ml::ops::Slice<TensorType>>(
-  //      "ClsTokenOutput", {layer_output}, 0u, 1u);
-  //  std::string classification_output =
-  //      g.template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
-  //          "ClassificationOutput", {cls_token_output}, config.model_dims, 1u,
-  //          ActivationType::SIGMOID, RegType::NONE, static_cast<DataType>(0),
-  //          WeightsInitType::XAVIER_GLOROT, false);
-  //
-  //  // Set up error signal
-  //  std::string label = g.template AddNode<PlaceHolder<TensorType>>("Label", {});
-  //  std::string error =
-  //      g.template AddNode<CrossEntropyLoss<TensorType>>("Error", {classification_output, label});
+  // Set up error signal
+  std::string label = g.template AddNode<PlaceHolder<TensorType>>("Label", {});
+  std::string error =
+      g.template AddNode<CrossEntropyLoss<TensorType>>("Error", {classification_output, label});
+	std::cout << "finish creating cls model based on pretrain model" << std::endl;
+	
+  // create optimizer
+	std::cout << "START TRAINING" << std::endl;
+	OptimiserType optimiser(std::make_shared<GraphType>(g), {segment, position, tokens, mask}, label, error, static_cast<DataType>(1e-4));
+  for (SizeType i = 0; i < epochs; i++)
+  {
+    DataType loss = optimiser.Run(final_train_data, train_labels, batch_size);
+    std::cout << "loss: " << loss << std::endl;
+  }
 
-  //  auto train_data = prepare_data_for_simple_cls(max_seq_len, 30u);
-  //  for (SizeType i = 0; i < 100; i++)
-  //  {
-  //    DataType loss = optimiser.Run(train_data.first, train_data.second);
-  //    std::cout << "loss: " << loss << std::endl;
-  //  }
-  //
-  //  std::cout << "Starting forward passing for manual evaluation" << std::endl;
-  //  TensorType segment_data  = train_data.first[0];
-  //  TensorType position_data = train_data.first[1];
-  //  TensorType tokens_data   = train_data.first[2];
-  //  TensorType mask_data     = train_data.first[3];
-  //  g.SetInput(segment, segment_data);
-  //  g.SetInput(position, position_data);
-  //  g.SetInput(tokens, tokens_data);
-  //  g.SetInput(mask, mask_data);
-  //  auto output = g.Evaluate(classification_output, false);
-  //  std::cout << "model output: " << output.ToString() << std::endl;
-  //  std::cout << "label output: " << train_data.second.ToString() << std::endl;
+  std::cout << "Starting forward passing for manual evaluation" << std::endl;
+  TensorType segment_data  = final_test_data[0];
+  TensorType position_data = final_test_data[1];
+  TensorType tokens_data   = final_test_data[2];
+  TensorType mask_data     = final_test_data[3];
+  g.SetInput(segment, segment_data);
+  g.SetInput(position, position_data);
+  g.SetInput(tokens, tokens_data);
+  g.SetInput(mask, mask_data);
+  auto output = g.Evaluate(classification_output, false);
+  DataType val_loss = fetch::math::CrossEntropyLoss<TensorType>(output, test_labels);
+  std::cout << "model output: " << output.ToString() << std::endl;
+  std::cout << "label output: " << test_labels.ToString() << std::endl;
+  std::cout << "val loss: " << val_loss << std::endl;
 
   //  fetch::ml::GraphSaveableParams<TensorType> gsp1 = g.GetGraphSaveableParams();
   //  std::cout << "got saveable params" << std::endl;
@@ -214,17 +254,18 @@ int main(int ac, char **av)
   return 0;
 }
 
-std::vector<TensorType> get_imdb_finetune_data(std::string const &file_path)
+std::vector<TensorType> load_imdb_finetune_data(std::string const &file_path)
 {
-  TensorType train_pos = get_tensor_from_file(file_path + "train_pos");
-  TensorType train_neg = get_tensor_from_file(file_path + "train_neg");
-  TensorType test_pos  = get_tensor_from_file(file_path + "test_pos");
-  TensorType test_neg  = get_tensor_from_file(file_path + "test_neg");
+  TensorType train_pos = load_tensor_from_file(file_path + "train_pos");
+  TensorType train_neg = load_tensor_from_file(file_path + "train_neg");
+  TensorType test_pos  = load_tensor_from_file(file_path + "test_pos");
+  TensorType test_neg  = load_tensor_from_file(file_path + "test_neg");
   return {train_pos, train_neg, test_pos, test_neg};
 }
 
-std::vector<TensorType> prepare_tenor_for_bert(TensorType const &data, SizeType max_seq_len)
+std::vector<TensorType> prepare_tensor_for_bert(TensorType const &data, BERTConfig const &config)
 {
+	SizeType max_seq_len = config.max_seq_len;
   // check that data shape is proper for bert input
   if (data.shape().size() != 2 || data.shape(0) != max_seq_len)
   {
@@ -263,7 +304,7 @@ std::vector<TensorType> prepare_tenor_for_bert(TensorType const &data, SizeType 
   return {segment_data, position_data, data, mask_data};
 }
 
-TensorType get_tensor_from_file(std::string file_name)
+TensorType load_tensor_from_file(std::string file_name)
 {
   std::ifstream weight_file(file_name);
   assert(weight_file.is_open());
@@ -280,8 +321,8 @@ void put_weight_in_layernorm(StateDictType &state_dict, SizeType model_dims,
                              std::string gamma_weight_name, std::string beta_weight_name)
 {
   // load embedding layernorm gamma beta weights
-  TensorType layernorm_gamma = get_tensor_from_file(gamma_file_name);
-  TensorType layernorm_beta  = get_tensor_from_file(beta_file_name);
+  TensorType layernorm_gamma = load_tensor_from_file(gamma_file_name);
+  TensorType layernorm_beta  = load_tensor_from_file(beta_file_name);
   assert(layernorm_beta.size() == model_dims);
   assert(layernorm_gamma.size() == model_dims);
   layernorm_beta.Reshape({model_dims, 1, 1});
@@ -297,8 +338,8 @@ void put_weight_in_fully_connected(StateDictType &state_dict, SizeType in_size, 
                                    std::string weights_name, std::string bias_name)
 {
   // load embedding layernorm gamma beta weights
-  TensorType weights = get_tensor_from_file(weights_file_name);
-  TensorType bias    = get_tensor_from_file(bias_file_name);
+  TensorType weights = load_tensor_from_file(weights_file_name);
+  TensorType bias    = load_tensor_from_file(bias_file_name);
   FETCH_UNUSED(in_size);
   assert(weights.shape() == SizeVector({out_size, in_size}));
   assert(bias.size() == out_size);
@@ -321,14 +362,14 @@ void put_weight_in_attention_heads(StateDictType &state_dict, SizeType n_heads, 
                                    std::string value_bias_name, std::string mattn_prefix)
 {
   // get weight arrays from file
-  TensorType query_weights = get_tensor_from_file(query_weights_file_name);
-  TensorType query_bias    = get_tensor_from_file(query_bias_file_name);
+  TensorType query_weights = load_tensor_from_file(query_weights_file_name);
+  TensorType query_bias    = load_tensor_from_file(query_bias_file_name);
   query_bias.Reshape({model_dims, 1, 1});
-  TensorType key_weights = get_tensor_from_file(key_weights_file_name);
-  TensorType key_bias    = get_tensor_from_file(key_bias_file_name);
+  TensorType key_weights = load_tensor_from_file(key_weights_file_name);
+  TensorType key_bias    = load_tensor_from_file(key_bias_file_name);
   key_bias.Reshape({model_dims, 1, 1});
-  TensorType value_weights = get_tensor_from_file(value_weights_file_name);
-  TensorType value_bias    = get_tensor_from_file(value_bias_file_name);
+  TensorType value_weights = load_tensor_from_file(value_weights_file_name);
+  TensorType value_bias    = load_tensor_from_file(value_bias_file_name);
   value_bias.Reshape({model_dims, 1, 1});
 
   // put weights into each head
@@ -458,19 +499,19 @@ std::pair<std::vector<std::string>, std::string> load_pretrained_bert_model(
 
   // load segment embeddings
   TensorType segment_embedding_weights =
-      get_tensor_from_file(file_path + "bert_embeddings_token_type_embeddings_weight");
+   load_tensor_from_file(file_path + "bert_embeddings_token_type_embeddings_weight");
   segment_embedding_weights = segment_embedding_weights.Transpose();
   assert(segment_embedding_weights.shape() == SizeVector({model_dims, segment_size}));
 
   // load position embeddings
   TensorType position_embedding_weights =
-      get_tensor_from_file(file_path + "bert_embeddings_position_embeddings_weight");
+   load_tensor_from_file(file_path + "bert_embeddings_position_embeddings_weight");
   position_embedding_weights = position_embedding_weights.Transpose();
   assert(position_embedding_weights.shape() == SizeVector({model_dims, max_seq_len}));
 
   // load token embeddings
   TensorType token_embedding_weights =
-      get_tensor_from_file(file_path + "bert_embeddings_word_embeddings_weight");
+   load_tensor_from_file(file_path + "bert_embeddings_word_embeddings_weight");
   token_embedding_weights = token_embedding_weights.Transpose();
   assert(token_embedding_weights.shape() == SizeVector({model_dims, vocab_size}));
 
