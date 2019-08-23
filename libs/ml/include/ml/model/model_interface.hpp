@@ -175,7 +175,7 @@ bool ModelInterface<TensorType>::Predict(TensorType &input, TensorType &output)
 {
   if (!SetOptimiser())
   {
-    throw std::runtime_error("failed to set up  optimiser");
+    throw std::runtime_error("failed to set up optimiser");
   }
 
   this->graph_ptr_->SetInput(input_, input);
