@@ -18,21 +18,21 @@
 
 #include "math/tensor.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
-#include "ml/estimators/dnn_classifier.hpp"
+#include "ml/model/dnn_classifier.hpp"
 
 #include "gtest/gtest.h"
 
 using SizeVector = fetch::math::SizeVector;
 
 template <typename T>
-class EstimatorsTest : public ::testing::Test
+class ModelsTest : public ::testing::Test
 {
 };
 
 using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 
-TYPED_TEST_CASE(EstimatorsTest, MyTypes);
+TYPED_TEST_CASE(ModelsTest, MyTypes);
 
 template <typename TypeParam>
 void PrepareTestDataAndLabels1D(TypeParam &train_data, TypeParam &train_label,
@@ -44,9 +44,10 @@ void PrepareTestDataAndLabels1D(TypeParam &train_data, TypeParam &train_label,
   test_label  = TypeParam::FromString("0; 0; 1");
 }
 
-template <typename TypeParam, typename DataType, typename EstimatorType>
-EstimatorType SetupEstimator(fetch::ml::estimator::EstimatorConfig<DataType> &estimator_config,
-                             TypeParam &data, TypeParam &gt)
+template <typename TypeParam, typename DataType, typename ModelType>
+ModelType SetupModel(fetch::ml::optimisers::OptimiserType     optimiser_type,
+                     fetch::ml::model::ModelConfig<DataType> &model_config, TypeParam &data,
+                     TypeParam &gt)
 {
   // setup dataloader
   using DataLoaderType = fetch::ml::dataloaders::TensorDataLoader<TypeParam, TypeParam>;
@@ -55,32 +56,31 @@ EstimatorType SetupEstimator(fetch::ml::estimator::EstimatorConfig<DataType> &es
   auto data_loader_ptr                = std::make_shared<DataLoaderType>(label_shape, data_shape);
   data_loader_ptr->AddData(data, gt);
 
-  // run estimator in training mode
-  return EstimatorType(estimator_config, data_loader_ptr, {3, 100, 100, 3});
+  // run model in training mode
+  return ModelType(data_loader_ptr, optimiser_type, model_config, {3, 100, 100, 3});
 }
 
 template <typename TypeParam>
 bool RunTest(fetch::ml::optimisers::OptimiserType optimiser_type)
 {
-  using DataType      = typename TypeParam::Type;
-  using EstimatorType = fetch::ml::estimator::DNNClassifier<TypeParam>;
+  using DataType  = typename TypeParam::Type;
+  using ModelType = fetch::ml::model::DNNClassifier<TypeParam>;
 
   fetch::math::SizeType n_training_steps = 10;
 
-  fetch::ml::estimator::EstimatorConfig<DataType> estimator_config;
-  estimator_config.learning_rate_param.mode =
+  fetch::ml::model::ModelConfig<DataType> model_config;
+  model_config.learning_rate_param.mode =
       fetch::ml::optimisers::LearningRateParam<DataType>::LearningRateDecay::EXPONENTIAL;
-  estimator_config.learning_rate_param.starting_learning_rate = static_cast<DataType>(0.1);
-  estimator_config.learning_rate_param.exponential_decay_rate = static_cast<DataType>(0.99);
-  estimator_config.opt                                        = optimiser_type;
+  model_config.learning_rate_param.starting_learning_rate = static_cast<DataType>(0.1);
+  model_config.learning_rate_param.exponential_decay_rate = static_cast<DataType>(0.99);
 
   // set up data
   TypeParam train_data, train_labels, test_datum, test_label;
   PrepareTestDataAndLabels1D<TypeParam>(train_data, train_labels, test_datum, test_label);
 
-  // set up estimator
-  EstimatorType estimator = SetupEstimator<TypeParam, DataType, EstimatorType>(
-      estimator_config, train_data, train_labels);
+  // set up model
+  ModelType model = SetupModel<TypeParam, DataType, ModelType>(optimiser_type, model_config,
+                                                               train_data, train_labels);
 
   // test loss decreases
   fetch::math::SizeType count{0};
@@ -88,18 +88,18 @@ bool RunTest(fetch::ml::optimisers::OptimiserType optimiser_type)
   {
     DataType loss{0};
     DataType later_loss{0};
-    EXPECT_TRUE(estimator.Train(1, loss));
-    EXPECT_TRUE(estimator.Train(1, later_loss));
+    EXPECT_TRUE(model.Train(1, loss));
+    EXPECT_TRUE(model.Train(1, later_loss));
     count++;
   }
 
-  EXPECT_TRUE(estimator.Train(100));
+  EXPECT_TRUE(model.Train(100));
 
   // test prediction performance
   TypeParam pred({3, 1});
 
-  estimator.Train(100);
-  bool success = estimator.Predict(test_datum, pred);
+  model.Train(100);
+  bool success = model.Predict(test_datum, pred);
 
   EXPECT_TRUE(success);
   EXPECT_TRUE(pred.AllClose(test_label, static_cast<DataType>(1e-5), static_cast<DataType>(1e-5)));
@@ -107,23 +107,23 @@ bool RunTest(fetch::ml::optimisers::OptimiserType optimiser_type)
   return true;
 }
 
-TYPED_TEST(EstimatorsTest, adagrad_dnnclasifier)
+TYPED_TEST(ModelsTest, adagrad_dnnclasifier)
 {
   ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::optimisers::OptimiserType::ADAGRAD));
 }
-TYPED_TEST(EstimatorsTest, adam_dnnclasifier)
+TYPED_TEST(ModelsTest, adam_dnnclasifier)
 {
   ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::optimisers::OptimiserType::ADAM));
 }
-TYPED_TEST(EstimatorsTest, momentum_dnnclasifier)
+TYPED_TEST(ModelsTest, momentum_dnnclasifier)
 {
   ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::optimisers::OptimiserType::MOMENTUM));
 }
-TYPED_TEST(EstimatorsTest, rmsprop_dnnclasifier)
+TYPED_TEST(ModelsTest, rmsprop_dnnclasifier)
 {
   ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::optimisers::OptimiserType::RMSPROP));
 }
-TYPED_TEST(EstimatorsTest, sgd_dnnclasifier)
+TYPED_TEST(ModelsTest, sgd_dnnclasifier)
 {
   ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::optimisers::OptimiserType::SGD));
 }
