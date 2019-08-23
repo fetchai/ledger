@@ -138,9 +138,7 @@ LaneService::LaneService(NetworkManager const &nm, ShardConfig config, Mode mode
 }
 
 LaneService::~LaneService()
-{
-
-}
+{}
 
 void LaneService::Start()
 {
