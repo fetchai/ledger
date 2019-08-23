@@ -298,7 +298,7 @@ struct DkgMember
   Muddle                                muddle;
   std::shared_ptr<muddle::Subscription> shares_subscription;
   RBC                                   rbc;
-  PreDkgSync                            pre_sync;
+  // PreDkgSync                            pre_sync;
 
   // Set when DKG is finished
   bn::Fr              secret_share;
@@ -320,7 +320,6 @@ struct DkgMember
             serializer >> env;
             OnDkgMessage(address, env.Message());
           }}
-    , pre_sync{muddle, 4}
   {
     // Set subscription for receiving shares
     shares_subscription->SetMessageHandler([this](ConstByteArray const &from, uint16_t, uint16_t,
@@ -509,7 +508,6 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
   // Reset cabinet for rbc in pre-dkg sync
   for (uint32_t ii = 0; ii < cabinet_size; ii++)
   {
-    committee[ii]->pre_sync.ResetCabinet(peers_list);
     committee[ii]->rbc.ResetCabinet(cabinet);
     committee[ii]->DkgResetCabinet(cabinet, threshold);
   }
@@ -517,7 +515,11 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
   // Wait until everyone else has connected
   for (uint32_t ii = 0; ii < cabinet_size; ii++)
   {
-    committee[ii]->pre_sync.Connect();
+    for (uint32_t jj = ii + 1; jj < cabinet_size; jj++)
+    {
+      committee[ii]->muddle.AddPeer(
+          peers_list[committee[jj]->muddle_certificate->identity().identifier()]);
+    }
   }
 
   uint32_t kk = 0;
@@ -526,7 +528,7 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     for (uint32_t mm = kk; mm < cabinet_size; ++mm)
     {
-      if (!committee[mm]->pre_sync.ready())
+      if (committee[mm]->muddle.AsEndpoint().GetDirectlyConnectedPeers().size() != cabinet_size - 1)
       {
         break;
       }
@@ -566,8 +568,6 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
         }
       }
     }
-
-    std::this_thread::sleep_for(std::chrono::seconds(1));
 
     // Set DKG outputs
     for (auto &member : committee)
