@@ -225,39 +225,4 @@ bool ModelInterface<TensorType>::SetOptimiser()
 
 }  // namespace model
 }  // namespace ml
-
-//
-// namespace serializers {
-//
-// TODO - serialise graph, dataloader, optimiser ....
-///**
-// * serializer for OpType
-// * @tparam TensorType
-// */
-// template <typename TensorType, typename D>
-// struct MapSerializer<ml::model::ModelInterface<TensorType>, D>
-//{
-//  using Type       = ml::model::ModelInterface<TensorType>;
-//  using DriverType = D;
-//
-//  static uint8_t const OP_CODE     = 1;
-//  static uint8_t const IS_TRAINING = 2;
-//
-//  template <typename Constructor>
-//  static void Serialize(Constructor &map_constructor, Type const &osp)
-//  {
-//    auto map = map_constructor(2);
-//    map.Append(OP_CODE, osp.op_type);
-//    map.Append(IS_TRAINING, osp.is_training);
-//  }
-//
-//  template <typename MapDeserializer>
-//  static void Deserialize(MapDeserializer &map, Type &osp)
-//  {
-//    map.ExpectKeyGetValue(OP_CODE, osp.op_type);
-//    map.ExpectKeyGetValue(IS_TRAINING, osp.is_training);
-//  }
-//};
-//} // serializers
-
 }  // namespace fetch
