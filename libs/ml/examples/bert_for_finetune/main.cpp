@@ -92,15 +92,15 @@ void put_weight_in_attention_heads(StateDictType &state_dict, SizeType n_heads, 
                                    std::string key_bias_name, std::string value_weights_name,
                                    std::string value_bias_name, std::string mattn_prefix);
 // bert model creation functions
-std::pair<std::vector<std::string>, std::string> load_pretrained_bert_model(
+std::pair<std::vector<std::string>, std::vector<std::string>> load_pretrained_bert_model(
     std::string const &file_path, BERTConfig const &config, GraphType &g);
-std::pair<std::vector<std::string>, std::string> make_bert_model(BERTConfig const &config,
+std::pair<std::vector<std::string>, std::vector<std::string>> make_bert_model(BERTConfig const &config,
                                                                  GraphType &       g);
 std::vector<TensorType> load_imdb_finetune_data(std::string const &file_path);
 std::vector<TensorType> prepare_tensor_for_bert(TensorType const &data, BERTConfig const &config);
 
-void run_pseudo_forward_pass(BERTConfig const &config, GraphType g,
-                             std::pair<std::vector<std::string>, std::string> interface,
+void run_pseudo_forward_pass(std::vector<std::string> input_nodes, std::string output_node,
+                             BERTConfig const &config, GraphType g,
                              SizeType batch_size, bool verbose = false);
 
 int main(int ac, char **av)
@@ -118,7 +118,11 @@ int main(int ac, char **av)
 
     GraphType g;
     auto      ret = make_bert_model(config, g);
-    run_pseudo_forward_pass(config, g, ret, static_cast<SizeType>(2), false);
+    SizeType batch_size = 1;
+    for(int i=0; i<500; i++){
+	    run_pseudo_forward_pass(ret.first, ret.second[11], config, g, batch_size, false);
+    }
+    
     return 0;
   }
   if (std::string(av[1]) == "pretrain pass")
@@ -133,7 +137,7 @@ int main(int ac, char **av)
     GraphType  g;
     std::cout << "start loading pretrained bert model" << std::endl;
     auto ret = load_pretrained_bert_model(file_path, config, g);
-    run_pseudo_forward_pass(config, g, ret, static_cast<SizeType>(1), true);
+    run_pseudo_forward_pass(ret.first, ret.second[11], config, g, static_cast<SizeType>(1), true);
     return 0;
   }
   if (std::string(av[1]) != "finetune")
@@ -145,9 +149,9 @@ int main(int ac, char **av)
   }
 
 	// setup params for training
-	SizeType train_size = 2;
+	SizeType train_size = 100;
 	SizeType test_size = 10;
-	SizeType batch_size = 4;
+	SizeType batch_size = 1;
 	SizeType epochs = 1;
 	
 	// load data into memory
@@ -199,7 +203,7 @@ int main(int ac, char **av)
   std::string position     = ret.first[1];
   std::string tokens       = ret.first[2];
   std::string mask         = ret.first[3];
-  std::string layer_output = ret.second;
+  std::string layer_output = ret.second[11];
 
   // Add linear classification layer
   std::string cls_token_output = g.template AddNode<fetch::ml::ops::Slice<TensorType>>(
@@ -407,7 +411,7 @@ void put_weight_in_attention_heads(StateDictType &state_dict, SizeType n_heads, 
   }
 }
 
-std::pair<std::vector<std::string>, std::string> make_bert_model(BERTConfig const &config,
+std::pair<std::vector<std::string>, std::vector<std::string>> make_bert_model(BERTConfig const &config,
                                                                  GraphType &       g)
 {
   SizeType n_encoder_layers  = config.n_encoder_layers;
@@ -455,18 +459,21 @@ std::pair<std::vector<std::string>, std::string> make_bert_model(BERTConfig cons
 
   // add layers as well as weights
   std::string layer_output = norm_embed;
+  std::vector<std::string> encoder_outputs;
   for (SizeType i = 0u; i < n_encoder_layers; i++)
   {
     // create the encoding layer first
     layer_output = g.template AddNode<fetch::ml::layers::SelfAttentionEncoder<TensorType>>(
         "SelfAttentionEncoder_No_" + std::to_string(i), {layer_output, mask}, n_heads, model_dims,
         ff_dims, dropout_keep_prob, epsilon);
+	  // store layer output names
+	  encoder_outputs.emplace_back(layer_output);
   }
 
-  return std::make_pair(std::vector<std::string>({segment, position, tokens, mask}), layer_output);
+  return std::make_pair(std::vector<std::string>({segment, position, tokens, mask}), encoder_outputs);
 }
 
-std::pair<std::vector<std::string>, std::string> load_pretrained_bert_model(
+std::pair<std::vector<std::string>, std::vector<std::string>> load_pretrained_bert_model(
     std::string const &file_path, BERTConfig const &config, GraphType &g)
 {
   SizeType n_encoder_layers  = config.n_encoder_layers;
@@ -547,6 +554,7 @@ std::pair<std::vector<std::string>, std::string> load_pretrained_bert_model(
 
   // add layers as well as weights
   std::string layer_output = norm_embed;
+  std::vector<std::string> encoder_outputs;
   FETCH_UNUSED(n_encoder_layers);
   for (SizeType i = 0u; i < n_encoder_layers; i++)
   {
@@ -554,6 +562,9 @@ std::pair<std::vector<std::string>, std::string> load_pretrained_bert_model(
     layer_output = g.template AddNode<fetch::ml::layers::SelfAttentionEncoder<TensorType>>(
         "SelfAttentionEncoder_No_" + std::to_string(i), {layer_output, mask}, n_heads, model_dims,
         ff_dims, dropout_keep_prob, epsilon);
+    
+    // store layer output
+	  encoder_outputs.emplace_back(layer_output);
 
     // get state dict for this layer
     state_dict =
@@ -607,7 +618,7 @@ std::pair<std::vector<std::string>, std::string> load_pretrained_bert_model(
         "SelfAttentionEncoder_Multihead_Attention_MultiheadAttention_Head_No");
   }
 
-  return std::make_pair(std::vector<std::string>({segment, position, tokens, mask}), layer_output);
+  return std::make_pair(std::vector<std::string>({segment, position, tokens, mask}), encoder_outputs);
 }
 
 std::pair<std::vector<TensorType>, TensorType> prepare_data_for_simple_cls(SizeType max_seq_len,
@@ -672,15 +683,15 @@ TensorType create_position_data(SizeType max_seq_len, SizeType batch_size)
   return ret_position;
 }
 
-void run_pseudo_forward_pass(BERTConfig const &config, GraphType g,
-                             std::pair<std::vector<std::string>, std::string> interface,
+void run_pseudo_forward_pass(std::vector<std::string> input_nodes, std::string output_node,
+                             BERTConfig const &config, GraphType g,
                              SizeType batch_size, bool verbose)
 {
-  std::string segment      = interface.first[0];
-  std::string position     = interface.first[1];
-  std::string tokens       = interface.first[2];
-  std::string mask         = interface.first[3];
-  std::string layer_output = interface.second;
+  std::string segment      = input_nodes[0];
+  std::string position     = input_nodes[1];
+  std::string tokens       = input_nodes[2];
+  std::string mask         = input_nodes[3];
+  std::string layer_output = output_node;
 
   SizeType max_seq_len = config.max_seq_len;
   SizeType seq_len     = 512u;
