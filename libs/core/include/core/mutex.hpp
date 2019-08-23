@@ -21,7 +21,6 @@
 
 #include <atomic>
 #include <chrono>
-#include <memory>
 #include <mutex>
 #include <string>
 #include <thread>
@@ -35,13 +34,20 @@ class ProductionMutex : public std::mutex
 {
 public:
   ProductionMutex(int, std::string const &);
+
+  void lock();
+
+  void unlock();
+
+private:
+  std::mutex mutex_;
 };
 
 /**
  * The debug mutex acts like a normal mutex but also contains several other checks. This code is
  * intended to be only used in software development.
  */
-class DebugMutex : public std::mutex
+class DebugMutex
 {
   using Clock     = std::chrono::high_resolution_clock;
   using Timepoint = Clock::time_point;
@@ -83,6 +89,7 @@ public:
   std::thread::id thread_id() const;
 
 private:
+  std::mutex mutex_;
   std::mutex lock_mutex_;
   Timepoint locked_ FETCH_GUARDED_BY(lock_mutex_);  ///< The time when the mutex was locked
   std::thread::id   thread_id_;                     ///< The last thread to lock the mutex

@@ -21,21 +21,14 @@
 
 #include <execinfo.h>
 
-#include <algorithm>
 #include <chrono>
 #include <cstdint>
-#include <ctime>
-#include <iomanip>
-#include <iostream>
-#include <map>
 #include <memory>
 #include <mutex>
 #include <string>
 #include <thread>
 #include <unordered_map>
 #include <unordered_set>
-#include <utility>
-#include <vector>
 
 namespace fetch {
 
@@ -43,84 +36,7 @@ class DebugMutex;
 
 namespace log {
 
-class ContextDetails
-{
-public:
-  using shared_type = std::shared_ptr<ContextDetails>;
-
-  explicit ContextDetails(void *instance = nullptr)
-    : instance_(instance)
-  {}
-
-  ContextDetails(shared_type ctx, shared_type parent, std::string context,
-                 std::string filename = std::string(), int line = 0, void *instance = nullptr)
-    : context_(std::move(context))
-    , filename_(std::move(filename))
-    , line_(line)
-    , parent_(std::move(parent))
-    , derived_from_(std::move(ctx))
-    , instance_(instance)
-  {}
-
-  ContextDetails(shared_type parent, std::string context, std::string filename = std::string(),
-                 int line = 0, void *instance = nullptr)
-    : context_(std::move(context))
-    , filename_(std::move(filename))
-    , line_(line)
-    , parent_(std::move(parent))
-    , instance_(instance)
-  {}
-
-  ~ContextDetails() = default;
-
-  shared_type parent()
-  {
-    return parent_;
-  }
-
-  shared_type derived_from()
-  {
-    return derived_from_;
-  }
-
-  std::string context(std::size_t n = std::size_t(-1)) const
-  {
-    if (context_.size() > n)
-    {
-      return context_.substr(0, n);
-    }
-    return context_;
-  }
-
-  std::string filename() const
-  {
-    return filename_;
-  }
-
-  int line() const
-  {
-    return line_;
-  }
-
-  std::thread::id thread_id() const
-  {
-    return id_;
-  }
-
-  void *instance() const
-  {
-    return instance_;
-  }
-
-private:
-  std::string           context_ = "(root)";
-  std::string           filename_;
-  int                   line_ = 0;
-  shared_type           parent_;
-  shared_type           derived_from_;
-  std::thread::id const id_       = std::this_thread::get_id();
-  void *                instance_ = nullptr;
-};
+class ContextDetails;
 
 class Context
 {
@@ -133,19 +49,13 @@ public:
   explicit Context(std::string const &context, std::string const &filename = "", int line = 0,
                    void *instance = nullptr);
 
-  Context(Context const &context)
-    : details_{context.details_}
-    , primary_{false}
-  {}
+  Context(Context const &context);
 
   Context const &operator=(Context const &context) = delete;
 
   ~Context();
 
-  shared_type details() const
-  {
-    return details_;
-  }
+  shared_type details() const;
 
 private:
   shared_type                                    details_;
@@ -158,8 +68,8 @@ class DefaultLogger
 public:
   using shared_context_type = std::shared_ptr<ContextDetails>;
 
-  DefaultLogger()          = default;
-  virtual ~DefaultLogger() = default;
+  DefaultLogger()  = default;
+  ~DefaultLogger() = default;
 
   enum class Level
   {
@@ -170,7 +80,7 @@ public:
     HIGHLIGHT = 4
   };
 
-  virtual void StartEntry(Level level, char const *name, shared_context_type ctx);
+  void StartEntry(Level level, char const *name, shared_context_type ctx);
 };
 
 namespace details {
@@ -213,6 +123,10 @@ private:
     std::string filename;
   };
 
+  shared_context_type TopContextImpl();
+
+  void PrintTrace(shared_context_type ctx, uint32_t max = uint32_t(-1)) const;
+
   std::unordered_set<fetch::DebugMutex *>        active_locks_;
   std::unordered_map<std::string, TimingDetails> mutex_timings_;
 
@@ -220,9 +134,6 @@ private:
 
   mutable std::mutex timing_mutex_;
 
-  shared_context_type TopContextImpl();
-
-  void PrintTrace(shared_context_type ctx, uint32_t max = uint32_t(-1)) const;
   std::unique_ptr<DefaultLogger>                           log_;
   mutable std::mutex                                       mutex_;
   std::unordered_map<std::thread::id, shared_context_type> context_;

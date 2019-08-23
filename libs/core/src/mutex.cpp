@@ -29,6 +29,7 @@
 #include <string>
 #include <thread>
 #include <utility>
+#include <vector>
 
 namespace fetch {
 
@@ -38,6 +39,16 @@ constexpr std::size_t DEFAULT_TIMEOUT_MS = 3000;
 
 ProductionMutex::ProductionMutex(int, std::string const &)
 {}
+
+void ProductionMutex::lock()
+{
+  mutex_.lock();
+}
+
+void ProductionMutex::unlock()
+{
+  mutex_.unlock();
+}
 
 DebugMutex::MutexTimeout::MutexTimeout(std::string filename, int const &line)
   : filename_(std::move(filename))
@@ -99,7 +110,7 @@ void DebugMutex::lock()
     locked_ = Clock::now();
   }
 
-  std::mutex::lock();
+  mutex_.lock();
 
   timeout_ = std::make_unique<MutexTimeout>(file_, line_);
   fetch::logger.RegisterLock(this);
@@ -123,7 +134,7 @@ void DebugMutex::unlock()
   timeout_.reset(nullptr);
   fetch::logger.RegisterUnlock(this, total_time, file_, line_);
 
-  std::mutex::unlock();
+  mutex_.unlock();
 }
 
 int DebugMutex::line() const
