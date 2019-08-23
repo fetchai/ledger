@@ -23,6 +23,7 @@
 
 #include <functional>
 #include <vector>
+
 namespace fetch {
 namespace service {
 
@@ -127,12 +128,12 @@ public:
     else
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Could not find publisher for ", feed);
-      fetch::logger.StackTrace(2, false);
     }
   }
 
 private:
   std::vector<function_type> publisher_;
 };
+
 }  // namespace service
 }  // namespace fetch
