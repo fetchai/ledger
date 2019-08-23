@@ -171,21 +171,6 @@ public:
   };
 
   virtual void StartEntry(Level level, char const *name, shared_context_type ctx);
-
-  template <typename T>
-  void Append(T &&v)
-  {
-#ifndef FETCH_DISABLE_COUT_LOGGING
-    std::cout << std::forward<T>(v);
-#endif
-  }
-
-  virtual void Append(std::string const &s)
-  {
-#ifndef FETCH_DISABLE_COUT_LOGGING
-    std::cout << s;
-#endif
-  }
 };
 
 namespace details {
@@ -200,8 +185,6 @@ public:
   ~LogWrapper();
 
   void DisableLogger();
-
-  void Debug(std::vector<std::string> const &items);
 
   void SetContext(shared_context_type ctx);
 

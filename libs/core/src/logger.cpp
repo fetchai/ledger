@@ -81,19 +81,6 @@ void LogWrapper::DisableLogger()
   }
 }
 
-void LogWrapper::Debug(std::vector<std::string> const &items)
-{
-  FETCH_LOCK(mutex_);
-  if (log_)
-  {
-    log_->StartEntry(DefaultLogger::Level::DEBUG, nullptr, TopContextImpl());
-    for (auto &item : items)
-    {
-      log_->Append(item);
-    }
-  }
-}
-
 void LogWrapper::SetContext(shared_context_type ctx)
 {
   std::thread::id id = std::this_thread::get_id();
