@@ -63,8 +63,13 @@
 #include <stdexcept>
 #include <unordered_map>
 #include <vector>
+
 using namespace fetch;
 using namespace fetch::beacon;
+using namespace std::chrono_literals;
+
+using std::this_thread::sleep_for;
+using std::chrono::milliseconds;
 
 #include "gtest/gtest.h"
 #include <iostream>
@@ -141,10 +146,11 @@ void RunHonestComitteeRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
   std::vector<std::unique_ptr<CabinetNode>> committee;
   for (uint16_t ii = 0; ii < number_of_nodes; ++ii)
   {
-    auto port_number = static_cast<uint16_t>(9000 + ii);
+    auto port_number = static_cast<uint16_t>(10000 + ii);
     committee.emplace_back(new CabinetNode{port_number, ii});
+
   }
-  std::this_thread::sleep_for(std::chrono::milliseconds(500));
+  sleep_for(500ms);
 
   // Connect muddles together (localhost for this example)
   for (uint32_t ii = 0; ii < number_of_nodes; ii++)
@@ -152,6 +158,33 @@ void RunHonestComitteeRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
     for (uint32_t jj = ii + 1; jj < number_of_nodes; jj++)
     {
       committee[ii]->muddle->ConnectTo(committee[jj]->GetMuddleAddress(), committee[jj]->GetHint());
+    }
+  }
+
+  // wait for all the nodes to completely connect
+  std::unordered_set<uint32_t> pending_nodes;
+  for (uint32_t ii = 0; ii < number_of_nodes; ++ii)
+  {
+    pending_nodes.emplace(ii);
+  }
+
+  const uint32_t EXPECTED_NUM_NODES = (number_of_cabinets * cabinet_size) - 1u;
+  while (!pending_nodes.empty())
+  {
+    sleep_for(100ms);
+
+    for (auto it = pending_nodes.begin(); it != pending_nodes.end();)
+    {
+      auto &muddle = *(committee[*it]->muddle);
+
+      if (EXPECTED_NUM_NODES <= muddle.GetNumDirectlyConnectedPeers())
+      {
+        it = pending_nodes.erase(it);
+      }
+      else
+      {
+        ++it;
+      }
     }
   }
 
@@ -204,29 +237,23 @@ void RunHonestComitteeRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
     }
 
     // Collecting information about the committees finishing
-    for (uint64_t j = 0; j < 120; ++j)
+    for (uint64_t j = 0; j < 10; ++j)
     {
-
       for (auto &member : committee)
       {
         // Polling events about aeons completed work
         fetch::beacon::EventCommitteeCompletedWork event;
         while (member->event_manager->Poll(event))
         {
-          FETCH_LOG_WARN("BeaconTests", "Round complete");
           ++rounds_finished[member->identity];
         }
       }
 
-      std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+      sleep_for(milliseconds{delay});
     }
 
     ++i;
   }
-
-  // Stopping all
-  std::cout << " - Waiting" << std::endl;
-  std::this_thread::sleep_for(std::chrono::seconds(5));
 
   std::cout << " - Stopping" << std::endl;
   for (auto &member : committee)
@@ -248,5 +275,5 @@ TEST(beacon, full_cycle)
 {
   //  SetGlobalLogLevel(LogLevel::CRITICAL);
   // TODO(tfr): Heuristically fails atm. RunHonestComitteeRenewal(100, 4, 4, 4, 10, 0.5);
-  RunHonestComitteeRenewal(1000, 4, 2, 2, 10, 0.5);
+  RunHonestComitteeRenewal(100, 4, 2, 2, 10, 0.5);
 }
