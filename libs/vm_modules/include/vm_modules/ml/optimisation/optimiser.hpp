@@ -113,6 +113,10 @@ public:
 
   DataType RunLoaderNoSubset(uint64_t batch_size);
 
+  void SetGraph(vm::Ptr<VMGraph> const &graph);
+
+  void SetDataloader(vm::Ptr<VMDataLoader> const &loader);
+
   bool SerializeTo(serializers::MsgPackSerializer &buffer) override;
 
   bool DeserializeFrom(serializers::MsgPackSerializer &buffer) override;

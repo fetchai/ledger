@@ -93,8 +93,8 @@ public:
         g_.SetInput("Input", input.second.at(0));
         g_.SetInput("Label", input.first);
         {
-          std::lock_guard<std::mutex> l(m_);
-          TensorType                  loss_tensor = g_.ForwardPropagate("Error");
+          FETCH_LOCK(m_);
+          TensorType loss_tensor = g_.ForwardPropagate("Error");
           loss += *(loss_tensor.begin());
           g_.BackPropagateError("Error");
         }
@@ -102,7 +102,7 @@ public:
       losses_values_.push_back(loss);
       {
         // Updating the weights
-        std::lock_guard<std::mutex> l(m_);
+        FETCH_LOCK(m_);
         g_.Step(LEARNING_RATE);
       }
     }
@@ -111,7 +111,7 @@ public:
 
   fetch::ml::StateDict<fetch::math::Tensor<float>> GetStateDict() const
   {
-    std::lock_guard<std::mutex> l(const_cast<std::mutex &>(m_));
+    FETCH_LOCK(m_);
     return g_.StateDict();
   }
 
@@ -138,7 +138,7 @@ public:
     fetch::ml::StateDict<TensorType> averageStateDict =
         fetch::ml::StateDict<TensorType>::MergeList(stateDicts);
     {
-      std::lock_guard<std::mutex> l(m_);
+      FETCH_LOCK(m_);
       g_.LoadStateDict(g_.StateDict().Merge(averageStateDict, MERGE_RATIO));
     }
     // Shuffle the peers list to get new contact for next update
@@ -164,7 +164,7 @@ private:
   std::vector<std::shared_ptr<TrainingClient>> peers_;
 
   // Mutex to protect weight access
-  std::mutex m_;
+  mutable std::mutex m_;
 
   // random number generator for shuffling peers
   fetch::random::LaggedFibonacciGenerator<> gen_;

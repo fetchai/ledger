@@ -100,7 +100,7 @@ public:
     ptr->SetConnectionManager(shared_from_this());
 
     {
-      std::lock_guard<mutex::Mutex> lock(connections_lock_);
+      FETCH_LOCK(connections_lock_);
       AddService(ptr->handle(), service);
     }
 
@@ -109,7 +109,7 @@ public:
 
   std::size_t size() const
   {
-    std::lock_guard<mutex::Mutex> lock(connections_lock_);
+    FETCH_LOCK(connections_lock_);
     return connections_.size();
   }
 
@@ -128,8 +128,8 @@ public:
     {
       RemoveService(id);
 
-      std::lock_guard<mutex::Mutex> lock(connections_lock_);
-      auto                          it = connections_.find(id);
+      FETCH_LOCK(connections_lock_);
+      auto it = connections_.find(id);
       if (it != connections_.end())
       {
         connections_.erase(it);
@@ -153,7 +153,7 @@ public:
       auto ptr = wptr.lock();
       if (ptr)
       {
-        std::lock_guard<mutex::Mutex> lock(connections_lock_);
+        FETCH_LOCK(connections_lock_);
         connections_[ptr->handle()] = ptr;
         details_[ptr->handle()]     = std::make_shared<LockableDetails>();
         handle                      = ptr->handle();
@@ -169,7 +169,7 @@ public:
   std::shared_ptr<LockableDetails> GetDetails(connection_handle_type const &i)
   {
     LOG_STACK_TRACE_POINT;
-    std::lock_guard<mutex::Mutex> lock(details_lock_);
+    FETCH_LOCK(details_lock_);
     if (details_.find(i) == details_.end())
     {
       return nullptr;
@@ -180,25 +180,25 @@ public:
 
   shared_connection_type GetClient(connection_handle_type const &i)
   {
-    std::lock_guard<mutex::Mutex> lock(connections_lock_);
+    FETCH_LOCK(connections_lock_);
     return connections_[i].lock();
   }
 
   void WithClientDetails(std::function<void(details_map_type const &)> fnc) const
   {
-    std::lock_guard<mutex::Mutex> lock(details_lock_);
+    FETCH_LOCK(details_lock_);
     fnc(details_);
   }
 
   void WithClientDetails(std::function<void(details_map_type &)> fnc)
   {
-    std::lock_guard<mutex::Mutex> lock(details_lock_);
+    FETCH_LOCK(details_lock_);
     fnc(details_);
   }
 
   void WithConnections(std::function<void(connection_map_type const &)> fnc)
   {
-    std::lock_guard<mutex::Mutex> lock(connections_lock_);
+    FETCH_LOCK(connections_lock_);
     fnc(connections_);
   }
 
@@ -206,7 +206,7 @@ public:
   {
     std::list<connection_map_type::value_type> keys;
     {
-      std::lock_guard<mutex::Mutex> lock(connections_lock_);
+      FETCH_LOCK(connections_lock_);
       for (auto &item : connections_)
       {
         keys.push_back(item);
@@ -215,8 +215,8 @@ public:
 
     for (auto &item : keys)
     {
-      auto                          k = item.first;
-      std::lock_guard<mutex::Mutex> lock(connections_lock_);
+      auto k = item.first;
+      FETCH_LOCK(connections_lock_);
       if (connections_.find(k) != connections_.end())
       {
         f(item);
@@ -230,7 +230,7 @@ public:
     FETCH_LOG_WARN(LOGGING_NAME, "About to visit ", connections_.size(), " connections");
     std::list<connection_map_type::value_type> keys;
     {
-      std::lock_guard<mutex::Mutex> lock(connections_lock_);
+      FETCH_LOCK(connections_lock_);
       for (auto &item : connections_)
       {
         keys.push_back(item);
@@ -242,8 +242,8 @@ public:
       auto v = item.second.lock();
       if (v)
       {
-        auto                          k = item.first;
-        std::lock_guard<mutex::Mutex> lock(connections_lock_);
+        auto k = item.first;
+        FETCH_LOCK(connections_lock_);
         if (connections_.find(k) != connections_.end())
         {
           f(k, v);
