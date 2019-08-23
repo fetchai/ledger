@@ -54,7 +54,6 @@ public:
   VMDataLoader(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
                fetch::vm::Ptr<fetch::vm::String> const &mode);
 
-  //  static fetch::vm::Ptr<VMDataLoader> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id);
   static fetch::vm::Ptr<VMDataLoader> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
                                                   fetch::vm::Ptr<fetch::vm::String> const &mode);
 
@@ -139,38 +138,49 @@ struct MapSerializer<fetch::vm_modules::ml::VMDataLoader, D>
   using Type       = fetch::vm_modules::ml::VMDataLoader;
   using DriverType = D;
 
-  static uint8_t const MODE   = 1;
-  static uint8_t const LOADER = 2;
+  static uint8_t const MODE       = 1;
+  static uint8_t const HAS_LOADER = 2;
+  static uint8_t const LOADER     = 3;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(2);
+    auto map = map_constructor(3);
 
     map.Append(MODE, static_cast<uint8_t>(sp.mode_));
 
-    switch (sp.mode_)
+    if (sp.loader_)
     {
-    case vm_modules::ml::VMDataLoader::DataLoaderMode::COMMODITY:
-    {
-      throw std::runtime_error("commodity dataloader serialization not yet implemented");
+      map.Append(HAS_LOADER, true);
+
+      switch (sp.mode_)
+      {
+      case vm_modules::ml::VMDataLoader::DataLoaderMode::COMMODITY:
+      {
+        throw std::runtime_error("commodity dataloader serialization not yet implemented");
+      }
+      case vm_modules::ml::VMDataLoader::DataLoaderMode::MNIST:
+      {
+        throw std::runtime_error("mnist dataloader serialization not yet implemented");
+      }
+      case vm_modules::ml::VMDataLoader::DataLoaderMode::TENSOR:
+      {
+        auto tdl_ptr = std::static_pointer_cast<fetch::ml::dataloaders::TensorDataLoader<
+            fetch::math::Tensor<vm_modules::math::DataType>,
+            fetch::math::Tensor<vm_modules::math::DataType>>>(sp.loader_);
+        map.Append(LOADER, *tdl_ptr);
+        break;
+      }
+      default:
+      {
+        // this dataloader has no mode set, so it should not be serialisable
+        throw std::runtime_error("no mode specified for dataloader - serialisation not permitted");
+      }
+      }
     }
-    case vm_modules::ml::VMDataLoader::DataLoaderMode::MNIST:
+    else
     {
-      throw std::runtime_error("mnist dataloader serialization not yet implemented");
-    }
-    case vm_modules::ml::VMDataLoader::DataLoaderMode::TENSOR:
-    {
-      auto tdl_ptr = std::static_pointer_cast<fetch::ml::dataloaders::TensorDataLoader<
-          fetch::math::Tensor<vm_modules::math::DataType>,
-          fetch::math::Tensor<vm_modules::math::DataType>>>(sp.loader_);
-      map.Append(LOADER, *tdl_ptr);
-      break;
-    }
-    default:
-    {
-      throw std::runtime_error("unknown dataloader type");
-    }
+      map.Append(HAS_LOADER, false);
     }
   }
 
@@ -181,34 +191,40 @@ struct MapSerializer<fetch::vm_modules::ml::VMDataLoader, D>
     map.ExpectKeyGetValue(MODE, mode);
     sp.mode_ = static_cast<vm_modules::ml::VMDataLoader::DataLoaderMode>(mode);
 
-    switch (sp.mode_)
+    bool has_loader;
+    map.ExpectKeyGetValue(HAS_LOADER, has_loader);
+    if (has_loader)
     {
-    case vm_modules::ml::VMDataLoader::DataLoaderMode::COMMODITY:
-    {
-      throw std::runtime_error("commodity dataloader deserialization not yet implemented");
-    }
-    case vm_modules::ml::VMDataLoader::DataLoaderMode::MNIST:
-    {
-      throw std::runtime_error("mnist dataloader deserialization not yet implemented");
-    }
-    case vm_modules::ml::VMDataLoader::DataLoaderMode::TENSOR:
-    {
-      auto tdl_ptr = std::make_shared<fetch::ml::dataloaders::TensorDataLoader<
-          fetch::math::Tensor<vm_modules::math::DataType>,
-          fetch::math::Tensor<vm_modules::math::DataType>>>();
-      map.ExpectKeyGetValue(LOADER, *tdl_ptr);
+      switch (sp.mode_)
+      {
+      case vm_modules::ml::VMDataLoader::DataLoaderMode::COMMODITY:
+      {
+        throw std::runtime_error("commodity dataloader deserialization not yet implemented");
+      }
+      case vm_modules::ml::VMDataLoader::DataLoaderMode::MNIST:
+      {
+        throw std::runtime_error("mnist dataloader deserialization not yet implemented");
+      }
+      case vm_modules::ml::VMDataLoader::DataLoaderMode::TENSOR:
+      {
+        auto tdl_ptr = std::make_shared<fetch::ml::dataloaders::TensorDataLoader<
+            fetch::math::Tensor<vm_modules::math::DataType>,
+            fetch::math::Tensor<vm_modules::math::DataType>>>();
+        map.ExpectKeyGetValue(LOADER, *tdl_ptr);
 
-      sp.loader_ = std::static_pointer_cast<
-          fetch::ml::dataloaders::DataLoader<fetch::math::Tensor<vm_modules::math::DataType>,
-                                             fetch::math::Tensor<vm_modules::math::DataType>>>(
-          tdl_ptr);
+        sp.loader_ = std::static_pointer_cast<
+            fetch::ml::dataloaders::DataLoader<fetch::math::Tensor<vm_modules::math::DataType>,
+                                               fetch::math::Tensor<vm_modules::math::DataType>>>(
+            tdl_ptr);
 
-      break;
-    }
-    default:
-    {
-      throw std::runtime_error("unknown dataloader type");
-    }
+        break;
+      }
+      default:
+      {
+        // this dataloader didn't have any data added, so doesn't have a
+        throw std::runtime_error("cannot deserialise dataloader with no mode specified");
+      }
+      }
     }
   }
 };
