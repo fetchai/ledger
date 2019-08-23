@@ -13,8 +13,8 @@ function main()
     data_tensor.fillRandom();
     label_tensor.fillRandom();
 
-    var dataloader = DataLoader();
-    dataloader.addData("tensor", data_tensor, label_tensor);
+    var dataloader = DataLoader("tensor");
+    dataloader.addData(data_tensor, label_tensor);
 
     var graph = Graph();
     graph.addPlaceholder("Input");
@@ -26,27 +26,29 @@ function main()
 
     // test that every optimiser can be constructed and that running reduces loss
 
-    var optimiser1 = Optimiser("adagrad", graph, "Input", "Label", "Error");
-    var loss = optimiser1.run(dataloader, batch_size);
+    var optimiser1 = Optimiser("adagrad", graph, dataloader, "Input", "Label", "Error");
+    var loss = optimiser1.run(batch_size);
 
-    var optimiser2 = Optimiser("adam", graph, "Input", "Label", "Error");
-    var loss2 = optimiser2.run(dataloader, batch_size);
+    var optimiser2 = Optimiser("adam", graph, dataloader, "Input", "Label", "Error");
+    var loss2 = optimiser2.run(batch_size);
     assert(loss2 < loss);
 
-    var optimiser3 = Optimiser("momentum", graph, "Input", "Label", "Error");
-    loss = optimiser3.run(dataloader, batch_size);
+    var optimiser3 = Optimiser("momentum", graph, dataloader, "Input", "Label", "Error");
+    loss = optimiser3.run(batch_size);
     assert(loss < loss2);
 
-    var optimiser4 = Optimiser("rmsprop", graph, "Input", "Label", "Error");
-    loss2 = optimiser4.run(dataloader, batch_size);
+    var optimiser4 = Optimiser("rmsprop", graph, dataloader, "Input", "Label", "Error");
+    loss2 = optimiser4.run(batch_size);
     assert(loss2 < loss);
 
-    var optimiser5 = Optimiser("sgd", graph, "Input", "Label", "Error");
-    loss = optimiser5.run(dataloader, batch_size);
+    var optimiser5 = Optimiser("sgd", graph, dataloader, "Input", "Label", "Error");
+    loss = optimiser5.run(batch_size);
     assert(loss < loss2);
 
-    loss2 = optimiser1.run(dataloader, batch_size);
+    loss2 = optimiser1.run(batch_size);
     assert(loss2 < loss);
 
+
+    optimiser1.setGraph(graph);
 
 endfunction

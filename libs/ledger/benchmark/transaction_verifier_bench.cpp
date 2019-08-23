@@ -46,7 +46,7 @@ public:
 
   void OnTransaction(TransactionPtr const &) override
   {
-    std::lock_guard<std::mutex> lock(lock_);
+    FETCH_LOCK(lock_);
     ++count_;
 
     if (count_ >= threshold_)

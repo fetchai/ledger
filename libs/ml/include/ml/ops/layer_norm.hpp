@@ -43,8 +43,8 @@ public:
 
   explicit LayerNorm(SizeType axis    = static_cast<SizeType>(0),
                      DataType epsilon = fetch::math::function_tolerance<DataType>())
-    : epsilon_(epsilon)
-    , axis_(axis)
+    : axis_(axis)
+    , epsilon_(epsilon)
   {}
 
   explicit LayerNorm(SPType const &sp)
@@ -155,8 +155,8 @@ public:
   static constexpr char const *DESCRIPTOR = "LayerNormalization";
 
 private:
-  DataType epsilon_;
   SizeType axis_;
+  DataType epsilon_;
 
   TensorType prev_input_;
   TensorType cached_inv_sqrt_var_;

@@ -53,7 +53,7 @@ public:
 
   bool Train(SizeType n_steps) override;
   bool Train(SizeType n_steps, DataType &loss) override;
-  bool Validate() override;
+  bool Test(DataType &test_loss) override;
   bool Predict(TensorType &input, TensorType &output) override;
 
 private:
@@ -65,7 +65,8 @@ private:
   std::string output_;
   std::string error_;
 
-  void PrintStats(SizeType epoch, DataType loss);
+  void PrintStats(SizeType epoch, DataType loss,
+                  DataType test_loss = fetch::math::numeric_max<DataType>());
 };
 
 /**
@@ -139,8 +140,11 @@ bool DNNClassifier<TensorType>::Train(SizeType n_steps)
 template <typename TensorType>
 bool DNNClassifier<TensorType>::Train(SizeType n_steps, DataType &loss)
 {
-  loss = DataType{0};
-  DataType min_loss;
+  data_loader_ptr_->SetMode(dataloaders::DataLoaderMode::TRAIN);
+
+  loss               = DataType{0};
+  DataType min_loss  = fetch::math::numeric_max<DataType>();
+  DataType test_loss = fetch::math::numeric_max<DataType>();
   SizeType patience_count{0};
   bool     stop_early = false;
 
@@ -155,7 +159,11 @@ bool DNNClassifier<TensorType>::Train(SizeType n_steps, DataType &loss)
   {
     if (this->estimator_config_.print_stats)
     {
-      PrintStats(step, loss);
+      if (this->estimator_config_.test)
+      {
+        Test(test_loss);
+      }
+      PrintStats(step, loss, test_loss);
     }
 
     // run optimiser for one epoch
@@ -187,9 +195,20 @@ bool DNNClassifier<TensorType>::Train(SizeType n_steps, DataType &loss)
 }
 
 template <typename TensorType>
-bool DNNClassifier<TensorType>::Validate()
+bool DNNClassifier<TensorType>::Test(DataType &test_loss)
 {
-  throw std::runtime_error("validate not implemented");
+  data_loader_ptr_->SetMode(dataloaders::DataLoaderMode::TEST);
+
+  SizeType test_set_size = data_loader_ptr_->Size();
+
+  data_loader_ptr_->Reset();
+  bool is_done_set;
+  auto test_pair = data_loader_ptr_->PrepareBatch(test_set_size, is_done_set);
+
+  this->graph_ptr_->SetInput(label_, test_pair.first);
+  this->graph_ptr_->SetInput(input_, test_pair.second.at(0));
+  test_loss = *(this->graph_ptr_->Evaluate(error_).begin());
+
   return true;
 }
 
@@ -203,9 +222,17 @@ bool DNNClassifier<TensorType>::Predict(TensorType &input, TensorType &output)
 }
 
 template <typename TensorType>
-void DNNClassifier<TensorType>::PrintStats(SizeType epoch, DataType loss)
+void DNNClassifier<TensorType>::PrintStats(SizeType epoch, DataType loss, DataType test_loss)
 {
-  std::cout << "epoch: " << epoch << ", loss: " << loss << std::endl;
+  if (this->estimator_config_.test)
+  {
+    std::cout << "epoch: " << epoch << ", loss: " << loss << ", test loss: " << test_loss
+              << std::endl;
+  }
+  else
+  {
+    std::cout << "epoch: " << epoch << ", loss: " << loss << std::endl;
+  }
 }
 
 }  // namespace estimator
