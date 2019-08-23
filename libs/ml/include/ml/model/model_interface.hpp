@@ -227,15 +227,15 @@ bool ModelInterface<TensorType>::SetOptimiser()
 }  // namespace ml
 
 //
-//namespace serializers {
+// namespace serializers {
 //
 // TODO - serialise graph, dataloader, optimiser ....
 ///**
 // * serializer for OpType
 // * @tparam TensorType
 // */
-//template <typename TensorType, typename D>
-//struct MapSerializer<ml::model::ModelInterface<TensorType>, D>
+// template <typename TensorType, typename D>
+// struct MapSerializer<ml::model::ModelInterface<TensorType>, D>
 //{
 //  using Type       = ml::model::ModelInterface<TensorType>;
 //  using DriverType = D;
