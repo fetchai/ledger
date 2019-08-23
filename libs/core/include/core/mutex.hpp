@@ -24,17 +24,10 @@
 
 namespace fetch {
 
-class Mutex
+class Mutex : public std::mutex
 {
 public:
   Mutex(int, std::string const &);
-
-  void lock();
-
-  void unlock();
-
-private:
-  std::mutex mutex_;
 };
 
 #define FETCH_JOIN_IMPL(x, y) x##y

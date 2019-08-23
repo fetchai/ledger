@@ -26,14 +26,4 @@ namespace fetch {
 Mutex::Mutex(int, std::string const &)
 {}
 
-void Mutex::lock()
-{
-  mutex_.lock();
-}
-
-void Mutex::unlock()
-{
-  mutex_.unlock();
-}
-
 }  // namespace fetch
