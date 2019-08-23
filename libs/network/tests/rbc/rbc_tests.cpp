@@ -290,6 +290,16 @@ struct RbcMember
     cabinet = new_cabinet;
     rbc.ResetCabinet(cabinet);
   }
+
+  muddle::Address GetMuddleAddress() const
+  {
+    return muddle->GetAddress();
+  }
+
+  network::Uri GetHint() const
+  {
+    return fetch::network::Uri{"tcp://127.0.0.1:" + std::to_string(muddle_port)};
+  }
 };
 
 void GenerateRbcTest(uint32_t cabinet_size, uint32_t expected_completion_size,
@@ -313,17 +323,14 @@ void GenerateRbcTest(uint32_t cabinet_size, uint32_t expected_completion_size,
 
   std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
-#if 0
   // Connect muddles together (localhost for this example)
   for (uint32_t ii = 0; ii < cabinet_size; ii++)
   {
     for (uint32_t jj = ii + 1; jj < cabinet_size; jj++)
     {
-      committee[ii]->muddle.AddPeer(
-          fetch::network::Uri{"tcp://127.0.0.1:" + std::to_string(committee[jj]->muddle_port)});
+      committee[ii]->muddle->ConnectTo(committee[jj]->GetMuddleAddress(), committee[jj]->GetHint());
     }
   }
-#endif
 
   // Make sure everyone is connected to everyone else
   uint32_t kk = 0;
