@@ -148,7 +148,6 @@ void RunHonestComitteeRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
   {
     auto port_number = static_cast<uint16_t>(10000 + ii);
     committee.emplace_back(new CabinetNode{port_number, ii});
-
   }
   sleep_for(500ms);
 
