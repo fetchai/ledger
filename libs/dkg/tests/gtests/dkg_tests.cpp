@@ -37,6 +37,8 @@ using namespace fetch::crypto;
 using namespace fetch::muddle;
 using namespace fetch::dkg;
 
+static constexpr char const *LOGGING_NAME = "DkgTests";
+
 using Prover         = fetch::crypto::Prover;
 using ProverPtr      = std::shared_ptr<Prover>;
 using Certificate    = fetch::crypto::Prover;
@@ -417,10 +419,15 @@ struct CabinetMember
     muddle->Start({}, {muddle_port});
   }
 
-  ~CabinetMember()
+  void Stop()
   {
     muddle->Stop();
     network_manager.Stop();
+  }
+
+  ~CabinetMember()
+  {
+    Stop();
   }
 
   void SubmitShare(ConstByteArray const &                     destination,
@@ -569,6 +576,16 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
       member->dkg.ResetCabinet(cabinet, threshold);
     }
   }
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Tearing down the test started...");
+
+  for (auto &member : committee)
+  {
+    member->Stop();
+  }
+  committee.clear();
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Tearing down the test started...complete");
 }
 
 TEST(dkg, small_scale_test)
