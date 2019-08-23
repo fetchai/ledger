@@ -26,12 +26,12 @@ namespace fetch {
 Mutex::Mutex(int, std::string const &)
 {}
 
-void ProductionMutex::lock()
+void Mutex::lock()
 {
   mutex_.lock();
 }
 
-void ProductionMutex::unlock()
+void Mutex::unlock()
 {
   mutex_.unlock();
 }
