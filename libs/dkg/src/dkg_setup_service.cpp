@@ -190,7 +190,7 @@ DkgSetupService::State DkgSetupService::OnWaitForQualComplaints()
     if (size > manager_.polynomial_degree())
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Node: ", manager_.cabinet_index(),
-                     " DKG has failed: complaints size ", size);
+                     " DKG has failed: complaints size ", size, " greater than threshold.");
       state_ = State::FINAL;
       dkg_state_gauge_->set(static_cast<uint8_t>(state_.load()));
       // TODO(jmw): Failure state
@@ -219,12 +219,16 @@ DkgSetupService::State DkgSetupService::OnWaitForQualComplaints()
 DkgSetupService::State DkgSetupService::OnWaitForReconstructionShares()
 {
   std::unique_lock<std::mutex> lock{mutex_};
-  std::set<MuddleAddress> complaints_list = qual_complaints_manager_.Complaints();
-  std::set<MuddleAddress> remaining_honest;
-  std::set<MuddleAddress> diff;
-  std::set_difference(qual_.begin(), qual_.end(), complaints_list.begin(), complaints_list.end(), std::inserter(remaining_honest, remaining_honest.begin()));
-  std::set_difference(remaining_honest.begin(), remaining_honest.end(), reconstruction_shares_received_.begin(), reconstruction_shares_received_.end(), std::inserter(diff, diff.begin()));
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", manager_.cabinet_index(), " reconstruction shares remaining ", diff.size());
+  std::set<MuddleAddress>      complaints_list = qual_complaints_manager_.Complaints();
+  std::set<MuddleAddress>      remaining_honest;
+  std::set<MuddleAddress>      diff;
+  std::set_difference(qual_.begin(), qual_.end(), complaints_list.begin(), complaints_list.end(),
+                      std::inserter(remaining_honest, remaining_honest.begin()));
+  std::set_difference(remaining_honest.begin(), remaining_honest.end(),
+                      reconstruction_shares_received_.begin(),
+                      reconstruction_shares_received_.end(), std::inserter(diff, diff.begin()));
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", manager_.cabinet_index(),
+                  " reconstruction shares remaining ", diff.size());
   if (diff.empty())
   {
     lock.unlock();
@@ -683,8 +687,8 @@ void DkgSetupService::ResetCabinet(CabinetMembers const &cabinet, uint32_t thres
   complaints_answer_manager_.ResetCabinet(cabinet_size);
   qual_complaints_manager_.Reset();
 
-  shares_received_                = 0;
-  C_ik_received_                  = 0;
+  shares_received_ = 0;
+  C_ik_received_   = 0;
 
   A_ik_received_.clear();
   reconstruction_shares_received_.clear();
