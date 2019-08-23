@@ -13,8 +13,8 @@ function main()
     data_tensor.fillRandom();
     label_tensor.fillRandom();
 
-    var dataloader = DataLoader();
-    dataloader.addData("tensor", data_tensor, label_tensor);
+    var dataloader = DataLoader("tensor");
+    dataloader.addData(data_tensor, label_tensor);
 
     var graph = Graph();
     graph.addPlaceholder("Input");
@@ -48,5 +48,7 @@ function main()
     loss2 = optimiser1.run(batch_size);
     assert(loss2 < loss);
 
+
+    optimiser1.setGraph(graph);
 
 endfunction

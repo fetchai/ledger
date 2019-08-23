@@ -40,6 +40,86 @@ public:
   VmTestToolkit     toolkit{&stdout};
 };
 
+TEST_F(MLTests, trivial_tensor_dataloader_serialisation_test)
+{
+  static char const *dataloader_serialise_src = R"(
+    function main()
+      var dataloader = DataLoader("tensor");
+      var state = State<DataLoader>("dataloader");
+      state.set(dataloader);
+    endfunction
+  )";
+
+  std::string const state_name{"dataloader"};
+  ASSERT_TRUE(toolkit.Compile(dataloader_serialise_src));
+  EXPECT_CALL(toolkit.observer(), Write(state_name, _, _));
+  ASSERT_TRUE(toolkit.Run());
+
+  static char const *dataloader_deserialise_src = R"(
+      function main()
+        var state = State<DataLoader>("dataloader");
+        var dataloader = state.get();
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(dataloader_deserialise_src));
+  EXPECT_CALL(toolkit.observer(), Exists(state_name));
+  EXPECT_CALL(toolkit.observer(), Read(state_name, _, _)).Times(::testing::Between(1, 2));
+  ASSERT_TRUE(toolkit.Run());
+}
+
+TEST_F(MLTests, trivial_persistent_tensor_dataloader_serialisation_test)
+{
+  static char const *dataloader_serialise_src = R"(
+    persistent dataloader_state : DataLoader;
+    function main()
+      use dataloader_state;
+      var dataloader = dataloader_state.get(DataLoader("tensor"));
+      dataloader_state.set(dataloader);
+    endfunction
+  )";
+
+  std::string const state_name{"dataloader_state"};
+  ASSERT_TRUE(toolkit.Compile(dataloader_serialise_src));
+  ASSERT_TRUE(toolkit.Run());
+
+  static char const *dataloader_deserialise_src = R"(
+      persistent dataloader_state : DataLoader;
+      function main()
+        use dataloader_state;
+        var dataloader = dataloader_state.get();
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(dataloader_deserialise_src));
+  EXPECT_CALL(toolkit.observer(), Exists(state_name));
+  ASSERT_TRUE(toolkit.Run());
+}
+
+TEST_F(MLTests, trivial_commodity_dataloader_test)
+{
+  static char const *dataloader_serialise_src = R"(
+    function main()
+      var dataloader = DataLoader("commodity");
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(dataloader_serialise_src));
+  ASSERT_TRUE(toolkit.Run());
+}
+
+TEST_F(MLTests, trivial_mnist_dataloader_test)
+{
+  static char const *dataloader_serialise_src = R"(
+    function main()
+      var dataloader = DataLoader("mnist");
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(dataloader_serialise_src));
+  ASSERT_TRUE(toolkit.Run());
+}
+
 TEST_F(MLTests, dataloader_serialisation_test)
 {
   static char const *dataloader_serialise_src = R"(
@@ -53,8 +133,8 @@ TEST_F(MLTests, dataloader_serialisation_test)
       data_tensor.fill(7.0fp64);
       label_tensor.fill(7.0fp64);
 
-      var dataloader = DataLoader();
-      dataloader.addData("tensor", data_tensor, label_tensor);
+      var dataloader = DataLoader("tensor");
+      dataloader.addData(data_tensor, label_tensor);
 
       var state = State<DataLoader>("dataloader");
       state.set(dataloader);
@@ -180,8 +260,8 @@ TEST_F(MLTests, sgd_optimiser_serialisation_test)
       graph.addRelu("Output", "FC1");
       graph.addMeanSquareErrorLoss("Error", "Output", "Label");
 
-      var dataloader = DataLoader();
-      dataloader.addData("tensor", data_tensor, label_tensor);
+      var dataloader = DataLoader("tensor");
+      dataloader.addData(data_tensor, label_tensor);
 
       var batch_size = 8u64;
       var optimiser = Optimiser("sgd", graph, dataloader, "Input", "Label", "Error");
@@ -204,8 +284,8 @@ TEST_F(MLTests, sgd_optimiser_serialisation_test)
       graph2.addRelu("Output", "FC1");
       graph2.addMeanSquareErrorLoss("Error", "Output", "Label");
 
-      var dataloader2 = DataLoader();
-      dataloader2.addData("tensor", data_tensor, label_tensor);
+      var dataloader2 = DataLoader("tensor");
+      dataloader2.addData(data_tensor, label_tensor);
 
       var optimiser2 = Optimiser("sgd", graph2, dataloader2, "Input", "Label", "Error");
       var loss = optimiser2.run(batch_size);
@@ -220,8 +300,6 @@ TEST_F(MLTests, sgd_optimiser_serialisation_test)
   EXPECT_CALL(toolkit.observer(), Write(state_name, _, _));
   ASSERT_TRUE(toolkit.Run(&first_res));
   auto const loss1 = first_res.Get<fetch::fixed_point::fp64_t>();
-
-  std::cout << "loss1: " << loss1 << std::endl;
 
   static char const *optimiser_deserialise_src = R"(
       function main() : Fixed64
@@ -241,8 +319,110 @@ TEST_F(MLTests, sgd_optimiser_serialisation_test)
 
   auto const loss2 = second_res.Get<fetch::fixed_point::fp64_t>();
 
-  std::cout << "loss2: " << loss2 << std::endl;
   EXPECT_TRUE(loss1 == loss2);
+}
+
+TEST_F(MLTests, serialisation_several_components_test)
+{
+  static char const *several_serialise_src = R"(
+      function main()
+
+        var tensor_shape = Array<UInt64>(2);
+        tensor_shape[0] = 2u64;
+        tensor_shape[1] = 10u64;
+        var data_tensor = Tensor(tensor_shape);
+        var label_tensor = Tensor(tensor_shape);
+        data_tensor.fill(7.0fp64);
+        label_tensor.fill(7.0fp64);
+
+        var graph = Graph();
+        graph.addPlaceholder("Input");
+        graph.addPlaceholder("Label");
+        graph.addFullyConnected("FC1", "Input", 2, 2);
+        graph.addRelu("Output", "FC1");
+        graph.addMeanSquareErrorLoss("Error", "Output", "Label");
+        var graph_state = State<Graph>("graph");
+        graph_state.set(graph);
+
+        var dataloader = DataLoader("tensor");
+        dataloader.addData(data_tensor, label_tensor);
+        var dataloader_state = State<DataLoader>("dataloader");
+        dataloader_state.set(dataloader);
+
+        var batch_size = 8u64;
+        var optimiser = Optimiser("sgd", graph, dataloader, "Input", "Label", "Error");
+        var optimiser_state = State<Optimiser>("optimiser");
+        optimiser_state.set(optimiser);
+
+      endfunction
+    )";
+
+  std::string const graph_name{"graph"};
+  std::string const dl_name{"dataloader"};
+  std::string const opt_name{"optimiser"};
+
+  ASSERT_TRUE(toolkit.Compile(several_serialise_src));
+  EXPECT_CALL(toolkit.observer(), Write(graph_name, _, _));
+  EXPECT_CALL(toolkit.observer(), Write(dl_name, _, _));
+  EXPECT_CALL(toolkit.observer(), Write(opt_name, _, _));
+  ASSERT_TRUE(toolkit.Run());
+
+  static char const *several_deserialise_src = R"(
+      function main()
+        var graph_state = State<Graph>("graph");
+        var dataloader_state = State<DataLoader>("dataloader");
+        var optimiser_state = State<Optimiser>("optimiser");
+
+        var graph = graph_state.get();
+        var dataloader = dataloader_state.get();
+        var optimiser = optimiser_state.get();
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(several_deserialise_src));
+  EXPECT_CALL(toolkit.observer(), Exists(graph_name));
+  EXPECT_CALL(toolkit.observer(), Exists(dl_name));
+  EXPECT_CALL(toolkit.observer(), Exists(opt_name));
+  EXPECT_CALL(toolkit.observer(), Read(graph_name, _, _)).Times(::testing::Between(1, 2));
+  EXPECT_CALL(toolkit.observer(), Read(dl_name, _, _)).Times(::testing::Between(1, 2));
+  EXPECT_CALL(toolkit.observer(), Read(opt_name, _, _)).Times(::testing::Between(1, 2));
+  ASSERT_TRUE(toolkit.Run());
+}
+
+TEST_F(MLTests, optimiser_set_graph_test)
+{
+  static char const *several_serialise_src = R"(
+      function main()
+
+        var tensor_shape = Array<UInt64>(2);
+        tensor_shape[0] = 2u64;
+        tensor_shape[1] = 10u64;
+        var data_tensor = Tensor(tensor_shape);
+        var label_tensor = Tensor(tensor_shape);
+        data_tensor.fill(7.0fp64);
+        label_tensor.fill(7.0fp64);
+
+        var graph = Graph();
+        graph.addPlaceholder("Input");
+        graph.addPlaceholder("Label");
+        graph.addFullyConnected("FC1", "Input", 2, 2);
+        graph.addRelu("Output", "FC1");
+        graph.addMeanSquareErrorLoss("Error", "Output", "Label");
+
+        var dataloader = DataLoader("tensor");
+        dataloader.addData(data_tensor, label_tensor);
+
+        var batch_size = 8u64;
+        var optimiser = Optimiser("sgd", graph, dataloader, "Input", "Label", "Error");
+
+        optimiser.setGraph(graph);
+        optimiser.setDataloader(dataloader);
+
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(several_serialise_src));
+  ASSERT_TRUE(toolkit.Run());
 }
 
 }  // namespace

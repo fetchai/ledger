@@ -34,6 +34,7 @@
 #include "vm/address.hpp"
 #include "vm/function_decorators.hpp"
 #include "vm/module.hpp"
+#include "vm/string.hpp"
 #include "vm/variant.hpp"
 #include "vm_modules/vm_factory.hpp"
 
@@ -252,6 +253,31 @@ void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, msgpack::obj
 }
 
 /**
+ * Extract a string from a msgpack::object
+ *
+ * @param vm The instance to the VM
+ * @param pack The reference to the parameter pack to be populated
+ * @param obj The object to extract as string
+ */
+// TODO(issue 1256): Whole this function can be dropped once issue the is resolved
+void AddStringToParameterPack(vm::VM *vm, vm::ParameterPack &pack, msgpack::object const &obj)
+{
+  bool valid{false};
+
+  if (msgpack::type::STR == obj.type)
+  {
+    vm::Ptr<vm::String> string = new vm::String(vm, {obj.via.str.ptr, obj.via.str.size});
+    pack.Add(std::move(string));
+    valid = true;
+  }
+
+  if (!valid)
+  {
+    throw std::runtime_error("Invalid address formart");
+  }
+}
+
+/**
  * Extract an address from a JSON object
  *
  * @param vm The pointer to the VM
@@ -275,6 +301,25 @@ void AddAddressToParameterPack(vm::VM *vm, vm::ParameterPack &pack, variant::Var
 
   // add it to the parameter list
   pack.Add(vm_address);
+}
+/**
+ * Extract a string from a JSON object
+ *
+ * @param vm The pointer to the VM
+ * @param pack The parameter pack to be populated
+ * @param obj The variant to extract as string
+ */
+// TODO(issue 1256): Whole this function can be dropped once the issue is resolved
+void AddStringToParameterPack(vm::VM *vm, vm::ParameterPack &pack, variant::Variant const &obj)
+{
+  if (!obj.IsString())
+  {
+    throw std::runtime_error("Unable to parse string");
+  }
+
+  // create the instance of the address
+  vm::Ptr<vm::String> vm_string = new vm::String(vm, obj.As<std::string>());
+  pack.Add(std::move(vm_string));
 }
 
 /**
@@ -335,7 +380,8 @@ template <typename T>
 void AddToParameterPack(vm::VM *vm, vm::ParameterPack &params, vm::TypeId expected_type,
                         T const &variant)
 {
-  vm::ApplyFunctor<vm::IntegralTypes, vm::TypeIdCases<vm::TypeIds::Bool, vm::TypeIds::Address>,
+  vm::ApplyFunctor<vm::IntegralTypes,
+                   vm::TypeIdCases<vm::TypeIds::Bool, vm::TypeIds::Address, vm::TypeIds::String>,
                    vm::DefaultObjectCase>(
       expected_type,
       value_util::Slots(
@@ -348,6 +394,8 @@ void AddToParameterPack(vm::VM *vm, vm::ParameterPack &params, vm::TypeId expect
               }),
           vm::NullarySlot<vm::TypeIds::Address>(
               [&](auto) { AddAddressToParameterPack(vm, params, variant); }),
+          vm::NullarySlot<vm::TypeIds::String>(
+              [&](auto) { AddStringToParameterPack(vm, params, variant); }),
           vm::DefaultNullarySlot([&](auto) {
             AddStructuredDataObjectToParameterPack(vm, expected_type, params, variant);
           })));

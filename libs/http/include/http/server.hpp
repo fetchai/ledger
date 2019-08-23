@@ -150,8 +150,8 @@ public:
     }
 
     // TODO(issue 28): improve such that it works for multiple threads.
-    std::lock_guard<std::mutex> lock(eval_mutex_);
-    HTTPResponse                res("page not found", mime_types::GetMimeTypeFromExtension(".html"),
+    FETCH_LOCK(eval_mutex_);
+    HTTPResponse res("page not found", mime_types::GetMimeTypeFromExtension(".html"),
                      Status::CLIENT_ERROR_NOT_FOUND);
 
     // Ensure that the HTTP server remains operational
@@ -288,7 +288,7 @@ public:
 
   std::vector<MountedView> views()
   {
-    std::lock_guard<std::mutex> lock(eval_mutex_);
+    FETCH_LOCK(eval_mutex_);
     return views_;
   }
 

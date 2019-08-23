@@ -127,7 +127,7 @@ public:
               VerifyElementConsistency(element, acquired_thread_id);
               // update the thread counters
               {
-                std::lock_guard<std::mutex> lock(counter_mutex);
+                FETCH_LOCK(counter_mutex);
                 counters.at(acquired_thread_id) += 1;
               }
             }

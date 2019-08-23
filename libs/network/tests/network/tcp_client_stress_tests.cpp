@@ -130,7 +130,7 @@ public:
     Connect(host_name, port_number);
     this->OnMessage([](message_type const &value) {
       {
-        std::lock_guard<std::mutex> lock(mutex_);
+        FETCH_LOCK(mutex_);
         globalMessages.push_back(value);
       }
       clientReceivedCount++;

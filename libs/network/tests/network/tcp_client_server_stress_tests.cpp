@@ -49,7 +49,7 @@ public:
 
   void PushRequest(connection_handle_type /*client*/, message_type const &msg) override
   {
-    std::lock_guard<std::mutex> lock(messages_);
+    FETCH_LOCK(messages_);
     globalMessagesFromServer_.push_back(msg);
   }
 };
@@ -284,7 +284,7 @@ void TestCase5(std::string host, uint16_t port)
     std::vector<message_type> to_send;
 
     {
-      std::lock_guard<std::mutex> lock(messages_);
+      FETCH_LOCK(messages_);
       globalMessagesFromServer_.clear();
     }
 
@@ -330,7 +330,7 @@ void TestCase5(std::string host, uint16_t port)
     for (;;)
     {
       {
-        std::lock_guard<std::mutex> lock(messages_);
+        FETCH_LOCK(messages_);
 
         if (globalMessagesFromServer_.size() == to_send.size())
         {
@@ -342,7 +342,7 @@ void TestCase5(std::string host, uint16_t port)
       std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
 
-    std::lock_guard<std::mutex> lock(messages_);
+    FETCH_LOCK(messages_);
     std::sort(globalMessagesFromServer_.begin(), globalMessagesFromServer_.end());
     std::sort(to_send.begin(), to_send.end());
 
@@ -398,7 +398,7 @@ void TestCase6(std::string host, uint16_t port)
     std::mutex messages_recieve;
 
     auto lam = [&](message_type const &msg) {
-      std::lock_guard<std::mutex> lock(messages_recieve);
+      FETCH_LOCK(messages_recieve);
       to_recieve.push_back(msg);
     };
 
@@ -429,7 +429,7 @@ void TestCase6(std::string host, uint16_t port)
     for (;;)
     {
       {
-        std::lock_guard<std::mutex> lock(messages_recieve);
+        FETCH_LOCK(messages_recieve);
 
         if (to_recieve.size() == to_send.size())
         {
@@ -479,7 +479,7 @@ void TestCase7(std::string host, uint16_t port)
     std::vector<message_type> recieved_client;
 
     {
-      std::lock_guard<std::mutex> lock(messages_);
+      FETCH_LOCK(messages_);
       globalMessagesFromServer_.clear();
     }
 
@@ -511,7 +511,7 @@ void TestCase7(std::string host, uint16_t port)
     std::mutex messages_recieve;
 
     auto lam = [&](message_type const &msg) {
-      std::lock_guard<std::mutex> lock(messages_recieve);
+      FETCH_LOCK(messages_recieve);
       recieved_client.push_back(msg);
     };
 
@@ -551,7 +551,7 @@ void TestCase7(std::string host, uint16_t port)
     for (;;)
     {
       {
-        std::lock_guard<std::mutex> lock(messages_recieve);
+        FETCH_LOCK(messages_recieve);
 
         if (recieved_client.size() == to_send_from_server.size() &&
             globalMessagesFromServer_.size() == to_send_from_client.size())
@@ -564,7 +564,7 @@ void TestCase7(std::string host, uint16_t port)
       std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
 
-    std::lock_guard<std::mutex> lock(messages_);
+    FETCH_LOCK(messages_);
     std::sort(globalMessagesFromServer_.begin(), globalMessagesFromServer_.end());
     std::sort(to_send_from_client.begin(), to_send_from_client.end());
 
