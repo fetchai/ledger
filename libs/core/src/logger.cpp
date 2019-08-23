@@ -27,6 +27,7 @@ backward::SignalHandling         sh([](std::string const &fatal_msg) {
 });
 
 namespace fetch {
+
 std::map<std::thread::id, int> fetch::log::ReadableThread::thread_number_ =
     std::map<std::thread::id, int>();
 int        fetch::log::ReadableThread::thread_count_ = 0;
@@ -73,6 +74,6 @@ Context::~Context()
     fetch::logger.SetContext(details_->parent());
   }
 }
-}  // namespace log
 
+}  // namespace log
 }  // namespace fetch

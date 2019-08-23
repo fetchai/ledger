@@ -60,7 +60,7 @@ public:
         LOG_STACK_TRACE_POINT;
 
         {
-          std::lock_guard<fetch::mutex::Mutex> lock(message_mutex_);
+          FETCH_LOCK(message_mutex_);
           messages_.push_back(msg);
         }
 
