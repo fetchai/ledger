@@ -40,29 +40,28 @@ class StorageException : public std::exception
 public:
   StorageException()
     : error_code_(error::TYPE_ERROR)
-    , explanation_("unknown"){LOG_SET_CONTEXT_VARIABLE(stack_trace_)}
+    , explanation_("unknown"){}
 
     StorageException(char const *explanation)
     : error_code_(error::TYPE_ERROR)
-    , explanation_(std::string(explanation)){LOG_SET_CONTEXT_VARIABLE(stack_trace_)}
+    , explanation_(std::string(explanation)){}
 
     StorageException(std::string explanation)
     : error_code_(error::TYPE_ERROR)
-    , explanation_(std::move(explanation)){LOG_SET_CONTEXT_VARIABLE(stack_trace_)}
+    , explanation_(std::move(explanation)){}
 
     StorageException(byte_array::ConstByteArray const &explanation)
     : error_code_(error::TYPE_ERROR)
-    , explanation_(std::string(explanation)){LOG_SET_CONTEXT_VARIABLE(stack_trace_)}
+    , explanation_(std::string(explanation)){}
 
     StorageException(error::error_type error_code, std::string explanation)
     : error_code_(error_code)
-    , explanation_(std::move(explanation)){LOG_SET_CONTEXT_VARIABLE(stack_trace_)}
+    , explanation_(std::move(explanation)){}
 
     StorageException(error::error_type error_code, byte_array::ConstByteArray const &explanation)
     : error_code_(error_code)
     , explanation_(std::string(explanation))
   {
-    LOG_SET_CONTEXT_VARIABLE(stack_trace_)
   }
 
   virtual ~StorageException() = default;
@@ -82,14 +81,11 @@ public:
 
   void StackTrace() const
   {
-    LOG_PRINT_STACK_TRACE(stack_trace_, "Trace at time of exception")
   }
 
 private:
   uint64_t    error_code_;
   std::string explanation_;
-
-  LOG_CONTEXT_VARIABLE(stack_trace_)
 };
 }  // namespace storage
 }  // namespace fetch

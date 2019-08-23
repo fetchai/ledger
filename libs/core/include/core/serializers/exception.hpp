@@ -57,8 +57,6 @@ public:
 private:
   uint64_t    error_code_;
   std::string explanation_;
-
-  LOG_CONTEXT_VARIABLE(stack_trace_)
 };
 
 }  // namespace serializers

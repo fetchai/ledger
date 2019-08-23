@@ -29,25 +29,25 @@ namespace serializers {
 
 SerializableException::SerializableException()
   : error_code_(error::TYPE_ERROR)
-  , explanation_("unknown"){LOG_SET_CONTEXT_VARIABLE(stack_trace_)}
+  , explanation_("unknown"){}
 
   SerializableException::SerializableException(std::string explanation)
   : error_code_(error::TYPE_ERROR)
-  , explanation_(std::move(explanation)){LOG_SET_CONTEXT_VARIABLE(stack_trace_)}
+  , explanation_(std::move(explanation)){}
 
   SerializableException::SerializableException(byte_array::ConstByteArray const &explanation)
   : error_code_(error::TYPE_ERROR)
-  , explanation_(std::string(explanation)){LOG_SET_CONTEXT_VARIABLE(stack_trace_)}
+  , explanation_(std::string(explanation)){}
 
   SerializableException::SerializableException(error::error_type error_code,
                                                std::string       explanation)
   : error_code_(error_code)
-  , explanation_(std::move(explanation)){LOG_SET_CONTEXT_VARIABLE(stack_trace_)}
+  , explanation_(std::move(explanation)){}
 
   SerializableException::SerializableException(error::error_type                 error_code,
                                                byte_array::ConstByteArray const &explanation)
   : error_code_(error_code)
-  , explanation_(std::string(explanation)){LOG_SET_CONTEXT_VARIABLE(stack_trace_)}
+  , explanation_(std::string(explanation)){}
 
   SerializableException::~SerializableException()
 {}
@@ -69,7 +69,6 @@ std::string SerializableException::explanation() const
 
 void SerializableException::StackTrace() const
 {
-  LOG_PRINT_STACK_TRACE(stack_trace_, "Trace at time of exception")
 }
 
 }  // namespace serializers
