@@ -113,14 +113,18 @@ int main(int ac, char **av)
   if (std::string(av[1]) == "pseudo pass")
   {
     // if a pseudo pass is required, only run a pseudo pass on a base uncased bert model with random
+    // set batch_size
+	  SizeType batch_size = 1;
+    
     // weights and show the time
     BERTConfig config;
 
     GraphType g;
     auto      ret = make_bert_model(config, g);
-    SizeType batch_size = 1;
-    for(int i=0; i<500; i++){
-	    run_pseudo_forward_pass(ret.first, ret.second[11], config, g, batch_size, false);
+    
+    // run batches
+    for(int i=0; i<1; i++){
+	    run_pseudo_forward_pass(ret.first, ret.second[1], config, g, batch_size, false);
     }
     
     return 0;
@@ -137,7 +141,7 @@ int main(int ac, char **av)
     GraphType  g;
     std::cout << "start loading pretrained bert model" << std::endl;
     auto ret = load_pretrained_bert_model(file_path, config, g);
-    run_pseudo_forward_pass(ret.first, ret.second[11], config, g, static_cast<SizeType>(1), true);
+    run_pseudo_forward_pass(ret.first, ret.second[12], config, g, static_cast<SizeType>(1), true);
     return 0;
   }
   if (std::string(av[1]) != "finetune")
@@ -149,11 +153,12 @@ int main(int ac, char **av)
   }
 
 	// setup params for training
-	SizeType train_size = 100;
+	SizeType train_size = 16;
 	SizeType test_size = 10;
-	SizeType batch_size = 1;
+	SizeType batch_size = 4;
 	SizeType epochs = 1;
-	
+	SizeType layer_no = 12;
+	DataType lr = static_cast<DataType>(1e-4);
 	// load data into memory
   std::string file_path = av[2];
   std::string IMDB_path = av[3];
@@ -203,7 +208,7 @@ int main(int ac, char **av)
   std::string position     = ret.first[1];
   std::string tokens       = ret.first[2];
   std::string mask         = ret.first[3];
-  std::string layer_output = ret.second[11];
+  std::string layer_output = ret.second[layer_no];
 
   // Add linear classification layer
   std::string cls_token_output = g.template AddNode<fetch::ml::ops::Slice<TensorType>>(
@@ -222,12 +227,14 @@ int main(int ac, char **av)
 	
   // create optimizer
 	std::cout << "START TRAINING" << std::endl;
-	OptimiserType optimiser(std::make_shared<GraphType>(g), {segment, position, tokens, mask}, label, error, static_cast<DataType>(1e-4));
+	OptimiserType optimiser(std::make_shared<GraphType>(g), {segment, position, tokens, mask}, label, error, lr);
   for (SizeType i = 0; i < epochs; i++)
   {
     DataType loss = optimiser.Run(final_train_data, train_labels, batch_size);
     std::cout << "loss: " << loss << std::endl;
   }
+  FETCH_UNUSED(batch_size);
+  FETCH_UNUSED(epochs);
 
   std::cout << "Starting forward passing for manual evaluation" << std::endl;
   TensorType segment_data  = final_test_data[0];
@@ -460,6 +467,7 @@ std::pair<std::vector<std::string>, std::vector<std::string>> make_bert_model(BE
   // add layers as well as weights
   std::string layer_output = norm_embed;
   std::vector<std::string> encoder_outputs;
+	encoder_outputs.emplace_back(layer_output);
   for (SizeType i = 0u; i < n_encoder_layers; i++)
   {
     // create the encoding layer first
@@ -555,6 +563,7 @@ std::pair<std::vector<std::string>, std::vector<std::string>> load_pretrained_be
   // add layers as well as weights
   std::string layer_output = norm_embed;
   std::vector<std::string> encoder_outputs;
+  encoder_outputs.emplace_back(layer_output);
   FETCH_UNUSED(n_encoder_layers);
   for (SizeType i = 0u; i < n_encoder_layers; i++)
   {

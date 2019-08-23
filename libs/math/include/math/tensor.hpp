@@ -1223,19 +1223,29 @@ Tensor<T, C> &Tensor<T, C>::operator=(TensorSlice const &slice)
 template <typename T, typename C>
 bool Tensor<T, C>::Resize(SizeVector const &shape, bool copy)
 {
-  Tensor old_tensor = *this;
-
+	// if the shape is exactly the same and a copy of value is required, dont do anything
+	if ((this->shape() == shape) && copy){
+		return true;
+	}
+	
+	// this line does a shallow copy for speedy initializion of a tensor
+	Tensor old_tensor = *this;
+	SizeType old_size = this->size();
+	SizeType new_size_unpadded = Tensor::SizeFromShape(shape);
+	if(copy && (old_size == new_size_unpadded)){
+		old_tensor = this->Copy();
+	}
+	
   SizeType new_size = Tensor::PaddedSizeFromShape(shape);
   data_             = ContainerType(new_size);
-
   data_.SetAllZero();
   shape_         = shape;
-  size_          = Tensor::SizeFromShape(shape);  // Note: differs from new_size
+  size_          = new_size_unpadded;
   padded_height_ = PadValue(shape[0]);
   UpdateStrides();
 
   // Effectively a reshape
-  if (copy && (size_ == old_tensor.size()))
+  if (copy && (size_ == old_size))
   {
     auto it  = begin();
     auto oit = old_tensor.begin();
