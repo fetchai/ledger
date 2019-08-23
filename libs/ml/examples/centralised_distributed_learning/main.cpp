@@ -93,7 +93,7 @@ public:
       // Updating the weights
       for (auto &w : g_.GetTrainables())
       {
-        TensorType grad = w->get_gradients();
+        TensorType grad = w->get_gradients_references();
         fetch::math::Multiply(grad, DataType{-LEARNING_RATE}, grad);
         w->ApplyGradient(grad);
       }

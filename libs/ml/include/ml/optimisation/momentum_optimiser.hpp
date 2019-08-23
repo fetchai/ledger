@@ -111,7 +111,7 @@ void MomentumOptimiser<T>::ApplyGradients(SizeType batch_size)
   {
     // momentum[i] = momentum_update * momentum[i] + learning_rate * (input_grad[i]/batch_size)
     fetch::math::Multiply(*mit, momentum_update_, *mit);
-    fetch::math::Multiply((*trainable_it)->get_gradients(),
+    fetch::math::Multiply((*trainable_it)->get_gradients_references(),
                           (this->learning_rate_) / (static_cast<DataType>(batch_size)),
                           *gradient_it);
     fetch::math::Add(*mit, *gradient_it, *mit);

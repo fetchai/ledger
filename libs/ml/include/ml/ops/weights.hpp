@@ -272,9 +272,18 @@ public:
    * exports the weight gradients Array
    * @return const reference to internal accumulated gradient Array
    */
-  TensorType const &get_gradients() const override
+  TensorType const &get_gradients_references() const override
   {
     return *this->gradient_accumulation_;
+  }
+
+  /**
+   * returns deep copy of the weight gradients Array
+   * @return Internal accumulated gradient Array
+   */
+  TensorType GetGradients() const override
+  {
+    return this->gradient_accumulation_->Copy();
   }
 
   static constexpr OpType OpCode()
