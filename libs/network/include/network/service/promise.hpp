@@ -119,8 +119,6 @@ public:
   template <typename T>
   T As() const
   {
-    LOG_STACK_TRACE_POINT;
-
     T result{};
     if (!As<T>(result))
     {
@@ -133,8 +131,6 @@ public:
   template <typename T>
   bool As(T &ret) const
   {
-    LOG_STACK_TRACE_POINT;
-
     if (!Wait())
     {
       return false;

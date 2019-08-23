@@ -57,7 +57,6 @@ public:
     , manager_(std::move(manager))
     , network_manager_(network_manager)
   {
-    LOG_STACK_TRACE_POINT;
     auto socket_ptr = socket_.lock();
     if (socket_ptr)
     {
@@ -82,7 +81,6 @@ public:
 
   ~ClientConnection()
   {
-    LOG_STACK_TRACE_POINT;
     auto ptr = manager_.lock();
     if (!ptr)
     {
@@ -94,7 +92,6 @@ public:
 
   void Start()
   {
-    LOG_STACK_TRACE_POINT;
     auto ptr = manager_.lock();
     if (!ptr)
     {
@@ -213,7 +210,6 @@ private:
       return;
     }
 
-    LOG_STACK_TRACE_POINT;
     auto socket_ptr = socket_.lock();
     if (!socket_ptr)
     {
@@ -247,8 +243,6 @@ private:
 
   void ReadBody(StrongStrand strong_strand)
   {
-    LOG_STACK_TRACE_POINT;
-
     if (shutting_down_)
     {
       return;

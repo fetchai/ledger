@@ -57,7 +57,6 @@ public:
   Promise Call(uint32_t /*network_id*/, protocol_handler_type const &protocol,
                function_handler_type const &function, arguments &&... args)
   {
-    LOG_STACK_TRACE_POINT;
     FETCH_LOG_DEBUG(LOGGING_NAME, "Service Client Calling ", protocol, ":", function);
 
     Promise prom = MakePromise(protocol, function);

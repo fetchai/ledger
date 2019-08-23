@@ -53,8 +53,6 @@ bool HTTPResponse::ToStream(asio::streambuf &buffer) const
 {
   static char const *NEW_LINE = "\r\n";
 
-  LOG_STACK_TRACE_POINT;
-
   std::ostream stream(&buffer);
 
   stream << "HTTP/1.1 " << ToString(status_) << NEW_LINE;

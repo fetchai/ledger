@@ -81,8 +81,6 @@ public:
    */
   callable_type operator[](function_handler_type const &n)
   {
-    LOG_STACK_TRACE_POINT;
-
     auto iter = members_.find(n);
     if (iter == members_.end())
     {
@@ -168,8 +166,6 @@ public:
    */
   void RegisterFeed(feed_handler_type const &feed, AbstractPublicationFeed *publisher)
   {
-    LOG_STACK_TRACE_POINT;
-
     feeds_.push_back(std::make_shared<FeedSubscriptionManager>(feed, publisher));
   }
 
@@ -184,8 +180,6 @@ public:
   void Subscribe(uint64_t client,  // TODO(issue 21): Standardize client type over the code.
                  feed_handler_type const &feed, subscription_handler_type const &id)
   {
-    LOG_STACK_TRACE_POINT;
-
     FETCH_LOG_DEBUG(LOGGING_NAME, "Making subscription for ", client, " ", feed, " ", id);
 
     FETCH_LOCK(feeds_mutex_);
@@ -216,8 +210,6 @@ public:
   void Unsubscribe(uint64_t client,  // TODO(issue 21): Standardize client type over the code.
                    feed_handler_type const &feed, subscription_handler_type const &id)
   {
-    LOG_STACK_TRACE_POINT;
-
     FETCH_LOCK(feeds_mutex_);
 
     std::size_t i = 0;

@@ -44,9 +44,6 @@ public:
   SubscribeService(fetch::network::NetworkManager tm, uint16_t tcpPort)
     : ServiceServer(tcpPort, tm)
   {
-    // Macro used for debugging
-    LOG_STACK_TRACE_POINT;
-
     // Prints when compiled in debug mode. Options: logger.Debug logger.Info
     // logger.Error
     FETCH_LOG_DEBUG(LOGGING_NAME, "Constructing test node service with TCP port: ", tcpPort);

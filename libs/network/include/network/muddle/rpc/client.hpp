@@ -59,7 +59,6 @@ public:
                               FunctionId const &function, Args &&... args)
   {
     FETCH_LOCK(call_mutex_);
-    LOG_STACK_TRACE_POINT;
     // update the target address
     address_ = address;
 

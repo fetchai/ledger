@@ -107,8 +107,6 @@ public:
    */
   void Subscribe(uint64_t client, subscription_handler_type const &id)
   {
-    LOG_STACK_TRACE_POINT;
-
     FETCH_LOCK(subscribe_mutex_);
     subscribers_.push_back({client, id});
   }
@@ -122,8 +120,6 @@ public:
    */
   void Unsubscribe(uint64_t client, subscription_handler_type const &id)
   {
-    LOG_STACK_TRACE_POINT;
-
     std::vector<std::size_t> ids;
     FETCH_LOCK(subscribe_mutex_);
 

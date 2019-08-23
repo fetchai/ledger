@@ -55,10 +55,7 @@ public:
   TCPClient &operator=(TCPClient const &rhs) = delete;
   TCPClient &operator=(TCPClient &&rhs) = delete;
 
-  ~TCPClient() noexcept
-  {
-    LOG_STACK_TRACE_POINT;
-  }
+  ~TCPClient() = default;
 
   void Connect(byte_array::ConstByteArray const &host, uint16_t port)
   {

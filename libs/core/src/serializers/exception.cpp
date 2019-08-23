@@ -29,54 +29,28 @@ namespace serializers {
 
 SerializableException::SerializableException()
   : error_code_(error::TYPE_ERROR)
-  , explanation_("unknown")
-{
-  LOG_STACK_TRACE_POINT;
+  , explanation_("unknown"){LOG_SET_CONTEXT_VARIABLE(stack_trace_)}
 
-  LOG_SET_CONTEXT_VARIABLE(stack_trace_)
-}
-
-SerializableException::SerializableException(std::string explanation)
+  SerializableException::SerializableException(std::string explanation)
   : error_code_(error::TYPE_ERROR)
-  , explanation_(std::move(explanation))
-{
-  LOG_STACK_TRACE_POINT;
+  , explanation_(std::move(explanation)){LOG_SET_CONTEXT_VARIABLE(stack_trace_)}
 
-  LOG_SET_CONTEXT_VARIABLE(stack_trace_)
-}
-
-SerializableException::SerializableException(byte_array::ConstByteArray const &explanation)
+  SerializableException::SerializableException(byte_array::ConstByteArray const &explanation)
   : error_code_(error::TYPE_ERROR)
-  , explanation_(std::string(explanation))
-{
-  LOG_STACK_TRACE_POINT;
+  , explanation_(std::string(explanation)){LOG_SET_CONTEXT_VARIABLE(stack_trace_)}
 
-  LOG_SET_CONTEXT_VARIABLE(stack_trace_)
-}
-
-SerializableException::SerializableException(error::error_type error_code, std::string explanation)
+  SerializableException::SerializableException(error::error_type error_code,
+                                               std::string       explanation)
   : error_code_(error_code)
-  , explanation_(std::move(explanation))
-{
-  LOG_STACK_TRACE_POINT;
+  , explanation_(std::move(explanation)){LOG_SET_CONTEXT_VARIABLE(stack_trace_)}
 
-  LOG_SET_CONTEXT_VARIABLE(stack_trace_)
-}
-
-SerializableException::SerializableException(error::error_type                 error_code,
-                                             byte_array::ConstByteArray const &explanation)
+  SerializableException::SerializableException(error::error_type                 error_code,
+                                               byte_array::ConstByteArray const &explanation)
   : error_code_(error_code)
-  , explanation_(std::string(explanation))
-{
-  LOG_STACK_TRACE_POINT;
+  , explanation_(std::string(explanation)){LOG_SET_CONTEXT_VARIABLE(stack_trace_)}
 
-  LOG_SET_CONTEXT_VARIABLE(stack_trace_)
-}
-
-SerializableException::~SerializableException()
-{
-  LOG_STACK_TRACE_POINT;
-}
+  SerializableException::~SerializableException()
+{}
 
 char const *SerializableException::what() const noexcept
 {

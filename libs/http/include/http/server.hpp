@@ -73,14 +73,10 @@ public:
 
   explicit HTTPServer(NetworkManager const &network_manager)
     : networkManager_(network_manager)
-  {
-    LOG_STACK_TRACE_POINT;
-  }
+  {}
 
   virtual ~HTTPServer()
   {
-    LOG_STACK_TRACE_POINT;
-
     auto socketWeak = socket_;
     auto accepWeak  = acceptor_;
 
@@ -132,8 +128,6 @@ public:
 
   void PushRequest(handle_type client, HTTPRequest req) override
   {
-    LOG_STACK_TRACE_POINT;
-
     // TODO(issue 35): Need to actually add better support for the options here
     if (req.method() == Method::OPTIONS)
     {
@@ -224,11 +218,7 @@ public:
   static void Accept(std::shared_ptr<Socket> soc, std::shared_ptr<Acceptor> accep,
                      std::shared_ptr<ConnectionManager> manager)
   {
-    LOG_STACK_TRACE_POINT;
-
     auto cb = [soc, accep, manager](std::error_code ec) {
-      // LOG_LAMBDA_STACK_TRACE_POINT; // TODO(issue 28) : sort this
-
       if (!ec)
       {
         std::make_shared<HTTPConnection>(std::move(*soc), *manager)->Start();
@@ -278,7 +268,6 @@ public:
 
   void AddModule(HTTPModule const &module)
   {
-    LOG_STACK_TRACE_POINT;
     for (auto const &view : module.views())
     {
       this->AddView(view.description, view.method, view.route, view.parameters, view.view,

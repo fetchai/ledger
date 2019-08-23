@@ -110,35 +110,30 @@ public:
 
   void OnMessage(std::function<void(network::message_type const &msg)> const &f)
   {
-    LOG_STACK_TRACE_POINT;
     FETCH_LOCK(callback_mutex_);
     on_message_ = f;
   }
 
   void OnConnectionSuccess(std::function<void()> const &fnc)
   {
-    LOG_STACK_TRACE_POINT;
     FETCH_LOCK(callback_mutex_);
     on_connection_success_ = fnc;
   }
 
   void OnConnectionFailed(std::function<void()> const &fnc)
   {
-    LOG_STACK_TRACE_POINT;
     FETCH_LOCK(callback_mutex_);
     on_connection_failed_ = fnc;
   }
 
   void OnLeave(std::function<void()> const &fnc)
   {
-    LOG_STACK_TRACE_POINT;
     FETCH_LOCK(callback_mutex_);
     on_leave_ = fnc;
   }
 
   void ClearClosures() noexcept
   {
-    LOG_STACK_TRACE_POINT;
     FETCH_LOCK(callback_mutex_);
     on_connection_failed_  = nullptr;
     on_connection_success_ = nullptr;
@@ -187,7 +182,6 @@ protected:
 
   void SignalMessage(network::message_type const &msg)
   {
-    LOG_STACK_TRACE_POINT;
     std::function<void(network::message_type const &)> cb;
     {
       FETCH_LOCK(callback_mutex_);
@@ -201,7 +195,6 @@ protected:
 
   void SignalConnectionFailed()
   {
-    LOG_STACK_TRACE_POINT;
     std::function<void()> cb;
     {
       FETCH_LOCK(callback_mutex_);
@@ -217,7 +210,6 @@ protected:
 
   void SignalConnectionSuccess()
   {
-    LOG_STACK_TRACE_POINT;
     std::function<void()> cb;
     {
       FETCH_LOCK(callback_mutex_);

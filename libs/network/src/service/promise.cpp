@@ -55,7 +55,6 @@ PromiseBuilder PromiseImplementation::WithHandlers()
  */
 bool PromiseImplementation::Wait(uint32_t timeout_ms, bool throw_exception) const
 {
-  LOG_STACK_TRACE_POINT;
   bool const has_timeout = timeout_ms > 0;
   State      state_copy{state_};
   if (has_timeout)
@@ -90,7 +89,6 @@ bool PromiseImplementation::Wait(uint32_t timeout_ms, bool throw_exception) cons
 
 void PromiseImplementation::UpdateState(State state)
 {
-  LOG_STACK_TRACE_POINT;
   assert(state != State::WAITING);
 
   bool dispatch = false;
@@ -225,8 +223,6 @@ void PromiseImplementation::SetCompletionCallback(Callback const &cb)
 
 void PromiseImplementation::Fulfill(ConstByteArray const &value)
 {
-  LOG_STACK_TRACE_POINT;
-
   value_ = value;
 
   UpdateState(State::SUCCESS);
@@ -234,8 +230,6 @@ void PromiseImplementation::Fulfill(ConstByteArray const &value)
 
 void PromiseImplementation::Fail(SerializableException const &exception)
 {
-  LOG_STACK_TRACE_POINT;
-
   exception_ = std::make_unique<SerializableException>(exception);
 
   UpdateState(State::FAILED);

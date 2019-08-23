@@ -167,7 +167,6 @@ public:
 
   std::shared_ptr<LockableDetails> GetDetails(connection_handle_type const &i)
   {
-    LOG_STACK_TRACE_POINT;
     FETCH_LOCK(details_lock_);
     if (details_.find(i) == details_.end())
     {

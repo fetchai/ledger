@@ -42,8 +42,6 @@ public:
   void Add(protocol_handler_type const &name,
            Protocol *                   protocol)  // TODO(issue 19): Rename to AddProtocol
   {
-    LOG_STACK_TRACE_POINT;
-
     if (name < 1 || name > 255)
     {
       throw serializers::SerializableException(
@@ -67,8 +65,6 @@ protected:
   bool PushProtocolRequest(connection_handle_type client, network::message_type const &msg,
                            CallContext const &context = CallContext())
   {
-    LOG_STACK_TRACE_POINT;
-
     serializer_type             params(msg);
     service_classification_type type;
     params >> type;
@@ -99,14 +95,12 @@ protected:
   bool HandleRPCCallRequest(connection_handle_type client, serializer_type params,
                             CallContext context = CallContext())
   {
-    LOG_STACK_TRACE_POINT;
     bool            ret = true;
     serializer_type result;
     PromiseCounter  id;
 
     try
     {
-      LOG_STACK_TRACE_POINT;
       params >> id;
       FETCH_LOG_DEBUG(LOGGING_NAME, "HandleRPCCallRequest prom =", id);
       result << SERVICE_RESULT << id;
@@ -115,7 +109,6 @@ protected:
     }
     catch (serializers::SerializableException const &e)
     {
-      LOG_STACK_TRACE_POINT;
       FETCH_LOG_ERROR(LOGGING_NAME, "Serialization error (Function Call): ", e.what());
       result = serializer_type();
       result << SERVICE_ERROR << id << e;
@@ -125,14 +118,12 @@ protected:
                     " data size=", result.tell());
 
     {
-      LOG_STACK_TRACE_POINT;
       DeliverResponse(client, result.data());
     }
     return ret;
   }
   bool HandleSubscribeRequest(connection_handle_type client, serializer_type params)
   {
-    LOG_STACK_TRACE_POINT;
     bool                      ret = true;
     protocol_handler_type     protocol;
     feed_handler_type         feed;
@@ -140,7 +131,6 @@ protected:
 
     try
     {
-      LOG_STACK_TRACE_POINT;
       params >> protocol >> feed >> subid;
       auto &mod = *members_[protocol];
 
@@ -148,7 +138,6 @@ protected:
     }
     catch (serializers::SerializableException const &e)
     {
-      LOG_STACK_TRACE_POINT;
       FETCH_LOG_ERROR(LOGGING_NAME, "Serialization error (Subscribe): ", e.what());
       // result = serializer_type();
       // result << SERVICE_ERROR << id << e;
@@ -160,7 +149,6 @@ protected:
 
   bool HandleUnsubscribeRequest(connection_handle_type client, serializer_type params)
   {
-    LOG_STACK_TRACE_POINT;
     bool                      ret = true;
     protocol_handler_type     protocol;
     feed_handler_type         feed;
@@ -168,7 +156,6 @@ protected:
 
     try
     {
-      LOG_STACK_TRACE_POINT;
       params >> protocol >> feed >> subid;
       auto &mod = *members_[protocol];
 
@@ -176,7 +163,6 @@ protected:
     }
     catch (serializers::SerializableException const &e)
     {
-      LOG_STACK_TRACE_POINT;
       FETCH_LOG_ERROR(LOGGING_NAME, "Serialization error (Unsubscribe): ", e.what());
       // result = serializer_type();
       // result << SERVICE_ERROR << id << e;
@@ -205,8 +191,6 @@ private:
   void ExecuteCall(serializer_type &result, connection_handle_type const &connection_handle,
                    serializer_type params, CallContext const &context = CallContext())
   {
-    LOG_STACK_TRACE_POINT;
-
     protocol_handler_type protocol_number;
     function_handler_type function_number;
     params >> protocol_number >> function_number;

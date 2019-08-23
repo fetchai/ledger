@@ -33,8 +33,6 @@ HTTPConnectionManager::HTTPConnectionManager(AbstractHTTPServer &server)
 
 HTTPConnectionManager::handle_type HTTPConnectionManager::Join(connection_type client)
 {
-  LOG_STACK_TRACE_POINT;
-
   handle_type handle = server_.next_handle();
   FETCH_LOG_DEBUG(LOGGING_NAME, "Client joining with handle ", handle);
 
@@ -45,8 +43,6 @@ HTTPConnectionManager::handle_type HTTPConnectionManager::Join(connection_type c
 
 void HTTPConnectionManager::Leave(handle_type handle)
 {
-  LOG_STACK_TRACE_POINT;
-
   FETCH_LOCK(clients_mutex_);
 
   if (clients_.find(handle) != clients_.end())
@@ -60,8 +56,6 @@ void HTTPConnectionManager::Leave(handle_type handle)
 
 bool HTTPConnectionManager::Send(handle_type client, HTTPResponse const &res)
 {
-  LOG_STACK_TRACE_POINT;
-
   bool ret = true;
   clients_mutex_.lock();
 
@@ -84,15 +78,11 @@ bool HTTPConnectionManager::Send(handle_type client, HTTPResponse const &res)
 
 void HTTPConnectionManager::PushRequest(handle_type client, HTTPRequest const &req)
 {
-  LOG_STACK_TRACE_POINT;
-
   server_.PushRequest(client, req);
 }
 
 std::string HTTPConnectionManager::GetAddress(handle_type client)
 {
-  LOG_STACK_TRACE_POINT;
-
   FETCH_LOCK(clients_mutex_);
   if (clients_.find(client) != clients_.end())
   {

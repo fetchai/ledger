@@ -40,62 +40,32 @@ class StorageException : public std::exception
 public:
   StorageException()
     : error_code_(error::TYPE_ERROR)
-    , explanation_("unknown")
-  {
-    LOG_STACK_TRACE_POINT;
+    , explanation_("unknown"){LOG_SET_CONTEXT_VARIABLE(stack_trace_)}
 
-    LOG_SET_CONTEXT_VARIABLE(stack_trace_)
-  }
-
-  StorageException(char const *explanation)
+    StorageException(char const *explanation)
     : error_code_(error::TYPE_ERROR)
-    , explanation_(std::string(explanation))
-  {
-    LOG_STACK_TRACE_POINT;
+    , explanation_(std::string(explanation)){LOG_SET_CONTEXT_VARIABLE(stack_trace_)}
 
-    LOG_SET_CONTEXT_VARIABLE(stack_trace_)
-  }
-
-  StorageException(std::string explanation)
+    StorageException(std::string explanation)
     : error_code_(error::TYPE_ERROR)
-    , explanation_(std::move(explanation))
-  {
-    LOG_STACK_TRACE_POINT;
+    , explanation_(std::move(explanation)){LOG_SET_CONTEXT_VARIABLE(stack_trace_)}
 
-    LOG_SET_CONTEXT_VARIABLE(stack_trace_)
-  }
-
-  StorageException(byte_array::ConstByteArray const &explanation)
+    StorageException(byte_array::ConstByteArray const &explanation)
     : error_code_(error::TYPE_ERROR)
-    , explanation_(std::string(explanation))
-  {
-    LOG_STACK_TRACE_POINT;
+    , explanation_(std::string(explanation)){LOG_SET_CONTEXT_VARIABLE(stack_trace_)}
 
-    LOG_SET_CONTEXT_VARIABLE(stack_trace_)
-  }
-
-  StorageException(error::error_type error_code, std::string explanation)
+    StorageException(error::error_type error_code, std::string explanation)
     : error_code_(error_code)
-    , explanation_(std::move(explanation))
-  {
-    LOG_STACK_TRACE_POINT;
+    , explanation_(std::move(explanation)){LOG_SET_CONTEXT_VARIABLE(stack_trace_)}
 
-    LOG_SET_CONTEXT_VARIABLE(stack_trace_)
-  }
-
-  StorageException(error::error_type error_code, byte_array::ConstByteArray const &explanation)
+    StorageException(error::error_type error_code, byte_array::ConstByteArray const &explanation)
     : error_code_(error_code)
     , explanation_(std::string(explanation))
   {
-    LOG_STACK_TRACE_POINT;
-
     LOG_SET_CONTEXT_VARIABLE(stack_trace_)
   }
 
-  virtual ~StorageException()
-  {
-    LOG_STACK_TRACE_POINT;
-  }
+  virtual ~StorageException() = default;
 
   char const *what() const noexcept override
   {
