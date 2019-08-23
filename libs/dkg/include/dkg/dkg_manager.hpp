@@ -39,19 +39,17 @@ public:
   std::vector<Coefficient> GetCoefficients();
   std::pair<Share, Share>  GetOwnShares(MuddleAddress const &share_receiver);
   std::pair<Share, Share>  GetReceivedShares(MuddleAddress const &share_owner);
-  bool AddCoefficients(MuddleAddress const &from, std::vector<Coefficient> const &coefficients);
-  bool AddShares(MuddleAddress const &from, std::pair<Share, Share> const &shares);
+  void AddCoefficients(MuddleAddress const &from, std::vector<Coefficient> const &coefficients);
+  void AddShares(MuddleAddress const &from, std::pair<Share, Share> const &shares);
   std::unordered_set<MuddleAddress> ComputeComplaints();
   bool VerifyComplaintAnswer(MuddleAddress const &from, ComplaintAnswer const &answer);
   void ComputeSecretShare(std::set<MuddleAddress> const &qual);
   std::vector<Coefficient> GetQualCoefficients();
-  bool AddQualCoefficients(MuddleAddress const &from, std::vector<Coefficient> const &coefficients);
+  void AddQualCoefficients(MuddleAddress const &from, std::vector<Coefficient> const &coefficients);
   SharesExposedMap ComputeQualComplaints(std::set<MuddleAddress> const &qual);
   MuddleAddress    VerifyQualComplaint(MuddleAddress const &from, ComplaintAnswer const &answer);
   void             ComputePublicKeys(std::set<MuddleAddress> const &qual);
   void             AddReconstructionShare(MuddleAddress const &address);
-  bool             CheckDuplicateReconstructionShare(MuddleAddress const &from,
-                                                     MuddleAddress const &share_owner);
   void             AddReconstructionShare(MuddleAddress const &                  from,
                                           std::pair<MuddleAddress, Share> const &share);
   void             VerifyReconstructionShare(MuddleAddress const &from, ExposedShare const &share);

@@ -113,8 +113,8 @@ protected:
   QualComplaintsManager   qual_complaints_manager_;
 
   // Counters for types of messages received
-  std::atomic<uint32_t>   shares_received_{0};
-  std::atomic<uint32_t>   C_ik_received_{0};
+  std::set<MuddleAddress>   shares_received_;
+  std::set<MuddleAddress>   C_ik_received_;
   std::set<MuddleAddress> A_ik_received_;
   std::set<MuddleAddress> reconstruction_shares_received_;
 

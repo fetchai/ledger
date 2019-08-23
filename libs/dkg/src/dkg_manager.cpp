@@ -104,43 +104,20 @@ std::pair<DkgManager::Share, DkgManager::Share> DkgManager::GetReceivedShares(
   return shares_j;
 }
 
-bool DkgManager::AddCoefficients(MuddleAddress const &           from,
+void DkgManager::AddCoefficients(MuddleAddress const &           from,
                                  std::vector<Coefficient> const &coefficients)
 {
   for (uint32_t ii = 0; ii <= polynomial_degree_; ++ii)
   {
-    if (C_ik[identity_to_index_[from]][ii] == zeroG2_)
-    {
       C_ik[identity_to_index_[from]][ii].setStr(coefficients[ii]);
-    }
-    else
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
-                     " received duplicate coefficients from node ", identity_to_index_[from]);
-      return false;
-    }
   }
-  return true;
 }
 
-bool DkgManager::AddShares(MuddleAddress const &from, std::pair<Share, Share> const &shares)
+void DkgManager::AddShares(MuddleAddress const &from, std::pair<Share, Share> const &shares)
 {
   uint32_t from_index = identity_to_index_[from];
-  if (s_ij[from_index][cabinet_index_] == zeroFr_ &&
-      sprime_ij[from_index][cabinet_index_] == zeroFr_)
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, " received shares from node  ",
-                   from_index);
     s_ij[from_index][cabinet_index_].setStr(shares.first);
     sprime_ij[from_index][cabinet_index_].setStr(shares.second);
-    return true;
-  }
-  else
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_, " received duplicate shares from node ",
-                   from_index);
-    return false;
-  }
 }
 
 /**
@@ -247,24 +224,14 @@ std::vector<DkgManager::Coefficient> DkgManager::GetQualCoefficients()
   return coefficients;
 }
 
-bool DkgManager::AddQualCoefficients(const MuddleAddress &           from,
+void DkgManager::AddQualCoefficients(const MuddleAddress &           from,
                                      std::vector<Coefficient> const &coefficients)
 {
   uint32_t from_index = identity_to_index_[from];
   for (uint32_t ii = 0; ii <= polynomial_degree_; ++ii)
   {
-    if (A_ik[from_index][ii] == zeroG2_)
-    {
       A_ik[from_index][ii].setStr(coefficients[ii]);
-    }
-    else
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
-                     " received duplicate qual coefficients from node ", from_index);
-      return false;
-    }
   }
-  return true;
 }
 
 /**
@@ -386,20 +353,6 @@ void DkgManager::ComputePublicKeys(std::set<MuddleAddress> const &qual)
       UpdateRHS(jt, public_key_shares_[jt], A_ik[it]);
     }
   }
-}
-
-bool DkgManager::CheckDuplicateReconstructionShare(const MuddleAddress &from,
-                                                   const MuddleAddress &share_owner)
-{
-  uint32_t from_index = identity_to_index_[from];
-  if (reconstruction_shares.find(share_owner) != reconstruction_shares.end() &&
-      reconstruction_shares.at(share_owner).second[from_index] != zeroFr_)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
-                   " received duplicate reconstruction shares from node ", from_index);
-    return true;
-  }
-  return false;
 }
 
 void DkgManager::AddReconstructionShare(MuddleAddress const &address)
