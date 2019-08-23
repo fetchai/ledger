@@ -117,8 +117,8 @@ TYPED_TEST(SerializersTestNoInt, serialize_graph_saveable_params)
   g->SetInput("Input", tmp_data.Transpose());
   TensorType tmp_prediction = g->ForwardPropagate(output);
 
-  fetch::ml::GraphSaveableParams<TypeParam> gsp1 = g->GetGraphSaveableParams();
-  fetch::serializers::BigSerializer b;
+  fetch::ml::GraphSaveableParams<TypeParam>      gsp1 = g->GetGraphSaveableParams();
+  fetch::serializers::LargeObjectSerializeHelper b;
   b.Serialiaze(gsp1);
 
   auto gsp2 = std::make_shared<fetch::ml::GraphSaveableParams<TypeParam>>();

@@ -42,12 +42,23 @@ namespace serializers {
  * When serializing large objects it is useful to use this wrapper class
  * It ensures the right amount of memory is allocated first
  */
-class BigSerializer
+class LargeObjectSerializeHelper
 {
 public:
+  template <typename T>
+  void operator<<(T const &large_object)
+  {
+    Serialize(large_object);
+  }
 
   template <typename T>
-  void Serialiaze(T const & large_object)
+  void operator>>(T const &large_object)
+  {
+    Deserialize(large_object);
+  }
+
+  template <typename T>
+  void Serialize(T const &large_object)
   {
     counter_ << large_object;
     buffer_.Reserve(counter_.size());
@@ -55,7 +66,7 @@ public:
   }
 
   template <typename T>
-  void Deserialiaze(T & large_object)
+  void Deserialize(T &large_object)
   {
     buffer_.seek(0);
     buffer_ >> large_object;
@@ -63,7 +74,7 @@ public:
 
 private:
   MsgPackSerializer buffer_;
-  SizeCounter counter_;
+  SizeCounter       counter_;
 };
 
 template <typename WriteType, typename InitialType>
