@@ -116,9 +116,9 @@ private:
 
 protected:
   void InsertSharedCopy(std::shared_ptr<Graph<TensorType>> output_ptr);
-  std::unordered_map<std::string, NodePtrType>              nodes_;
-  std::unordered_map<std::string, SizeType>                 trainable_lookup_;
-  std::vector<NodePtrType>                                  trainable_nodes_;
+  std::unordered_map<std::string, NodePtrType> nodes_;
+  std::unordered_map<std::string, SizeType>    trainable_lookup_;
+  std::vector<NodePtrType>                     trainable_nodes_;
 };
 
 /**
