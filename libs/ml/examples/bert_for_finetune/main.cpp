@@ -156,7 +156,7 @@ int main(int ac, char **av)
 
 	// setup params for training
 	SizeType train_size = 1000;
-	SizeType test_size = 100;
+	SizeType test_size = 10;
 	SizeType batch_size = 4;
 	SizeType epochs = 2;
 	SizeType layer_no = 12;
@@ -228,14 +228,13 @@ int main(int ac, char **av)
 	std::cout << "finish creating cls model based on pretrain model" << std::endl;
 	
 	// output training stats
-	
 	std::cout << "output layer no: " << layer_no << std::endl;
 	std::cout << "train_size: " << 2 * train_size << std::endl;
 	std::cout << "batch_size: " << batch_size << std::endl;
 	std::cout << "epochs: " << epochs << std::endl;
 	std::cout << "lr: " << lr << std::endl;
 
-	evaluate_graph(g, ret.first, classification_output, final_test_data, test_labels);
+//	evaluate_graph(g, ret.first, classification_output, final_test_data, test_labels);
 
   // create optimizer
 	std::cout << "START TRAINING" << std::endl;
