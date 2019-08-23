@@ -104,7 +104,7 @@ protected:
   std::function<void(MuddleAddress const &, std::pair<std::string, std::string> const &)>
                                rpc_function_;
   telemetry::GaugePtr<uint8_t> dkg_state_gauge_;
-  std::atomic<State>           state_{State::INITIAL};
+  std::atomic<bool>            finished_;
   std::mutex                   mutex_;
 
   // Managing complaints
@@ -114,13 +114,13 @@ protected:
 
   // Counters for types of messages received
   std::set<MuddleAddress>   shares_received_;
-  std::set<MuddleAddress>   C_ik_received_;
-  std::set<MuddleAddress> A_ik_received_;
+  std::set<MuddleAddress>   coefficients_received_;
+  std::set<MuddleAddress> qual_coefficients_received_;
   std::set<MuddleAddress> reconstruction_shares_received_;
 
   std::shared_ptr<StateMachine> state_machine_;
   std::set<MuddleAddress>       qual_;  ///< Set of cabinet members who completed DKG
-  DkgManager                    manager_;
+  DkgManager                    dkg_manager_;
 
   /// @name Methods to send messages
   /// @{

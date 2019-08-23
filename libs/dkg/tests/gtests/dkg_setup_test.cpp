@@ -87,17 +87,17 @@ private:
   {
     if (Failure(Failures::SEND_BAD_SHARE))
     {
-      manager_.GenerateCoefficients();
+      dkg_manager_.GenerateCoefficients();
       SendBadShares();
     }
     else
     {
-      manager_.GenerateCoefficients();
+      dkg_manager_.GenerateCoefficients();
       for (auto &cab_i : cabinet_)
       {
         if (cab_i != address_)
         {
-          std::pair<MessageShare, MessageShare> shares{manager_.GetOwnShares(cab_i)};
+          std::pair<MessageShare, MessageShare> shares{dkg_manager_.GetOwnShares(cab_i)};
           rpc_function_(cab_i, shares);
         }
       }
@@ -109,12 +109,12 @@ private:
     else
     {
       SendBroadcast(DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAITING_FOR_SHARE),
-                                                    manager_.GetCoefficients(), "signature"}});
+                                                    dkg_manager_.GetCoefficients(), "signature"}});
       if (Failure(Failures::SEND_MULTIPLE_COEFFICIENTS))
       {
         SendBroadcast(
             DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAITING_FOR_SHARE),
-                                            manager_.GetCoefficients(), "signature"}});
+                                            dkg_manager_.GetCoefficients(), "signature"}});
       }
     }
   }
@@ -124,7 +124,7 @@ private:
     std::vector<std::string> coefficients;
     bn::G2                   fake;
     fake.clear();
-    for (size_t k = 0; k <= manager_.polynomial_degree(); k++)
+    for (size_t k = 0; k <= dkg_manager_.polynomial_degree(); k++)
     {
       coefficients.push_back(fake.getStr());
     }
@@ -152,7 +152,7 @@ private:
         }
         else
         {
-          std::pair<MessageShare, MessageShare> shares{manager_.GetOwnShares(cab_i)};
+          std::pair<MessageShare, MessageShare> shares{dkg_manager_.GetOwnShares(cab_i)};
           rpc_function_(cab_i, shares);
         }
       }
@@ -161,7 +161,7 @@ private:
 
   void BroadcastComplaints() override
   {
-    std::unordered_set<MuddleAddress> complaints_local = manager_.ComputeComplaints();
+    std::unordered_set<MuddleAddress> complaints_local = dkg_manager_.ComputeComplaints();
     for (auto const &cab : complaints_local)
     {
       complaints_manager_.Count(cab);
@@ -180,7 +180,7 @@ private:
     {
       for (auto const &reporter : complaints_manager_.ComplaintsFrom())
       {
-        complaints_answer.insert({reporter, manager_.GetOwnShares(reporter)});
+        complaints_answer.insert({reporter, dkg_manager_.GetOwnShares(reporter)});
       }
     }
     SendBroadcast(
@@ -201,7 +201,7 @@ private:
       std::vector<std::string> coefficients;
       bn::G2                   fake;
       fake.clear();
-      for (size_t k = 0; k <= manager_.polynomial_degree(); k++)
+      for (size_t k = 0; k <= dkg_manager_.polynomial_degree(); k++)
       {
         coefficients.push_back(fake.getStr());
       }
@@ -212,19 +212,19 @@ private:
     {
       SendBroadcast(
           DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAITING_FOR_QUAL_SHARES),
-                                          manager_.GetQualCoefficients(), "signature"}});
+                                          dkg_manager_.GetQualCoefficients(), "signature"}});
       if (Failure(Failures::SEND_MULTIPLE_QUAL_COEFFICIENTS))
       {
         SendBroadcast(
             DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAITING_FOR_QUAL_SHARES),
-                                            manager_.GetQualCoefficients(), "signature"}});
+                                            dkg_manager_.GetQualCoefficients(), "signature"}});
       }
     }
 
     complaints_answer_manager_.Clear();
     {
       std::unique_lock<std::mutex> lock{mutex_};
-      A_ik_received_.insert(address_);
+      qual_coefficients_received_.insert(address_);
       lock.unlock();
     }
   }
@@ -240,7 +240,7 @@ private:
       }
       SendBroadcast(
           DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAITING_FOR_QUAL_COMPLAINTS),
-                                    {{*victim, manager_.GetReceivedShares(*victim)}},
+                                    {{*victim, dkg_manager_.GetReceivedShares(*victim)}},
                                     "signature"}});
     }
     else if (Failure(Failures::WITHOLD_RECONSTRUCTION_SHARES))
@@ -252,7 +252,7 @@ private:
     {
       SendBroadcast(
           DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAITING_FOR_QUAL_COMPLAINTS),
-                                    manager_.ComputeQualComplaints(qual_), "signature"}});
+                                    dkg_manager_.ComputeQualComplaints(qual_), "signature"}});
     }
   }
 
@@ -271,8 +271,8 @@ private:
       for (auto const &in : qual_complaints_manager_.Complaints())
       {
         assert(qual_.find(in) != qual_.end());
-        manager_.AddReconstructionShare(in);
-        complaint_shares.insert({in, manager_.GetReceivedShares(in)});
+        dkg_manager_.AddReconstructionShare(in);
+        complaint_shares.insert({in, dkg_manager_.GetReceivedShares(in)});
       }
       SendBroadcast(
           DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAITING_FOR_RECONSTRUCTION_SHARES),

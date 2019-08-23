@@ -68,7 +68,7 @@ DkgSetupService::DkgSetupService(
   , dkg_state_gauge_{telemetry::Registry::Instance().CreateGauge<uint8_t>(
         "ledger_dkg_state_gauge", "State the DKG is in as integer in [0, 7]")}
   , state_machine_{std::make_shared<StateMachine>("BeaconSetupService", State::INITIAL, ToString)}
-  , manager_{address_}
+  , dkg_manager_{address_}
 {
   state_machine_->RegisterHandler(State::INITIAL, this, &DkgSetupService::OnInitial);
   state_machine_->RegisterHandler(State::WAITING_FOR_SHARE, this,
@@ -85,33 +85,32 @@ DkgSetupService::DkgSetupService(
                                   &DkgSetupService::OnWaitForReconstructionShares);
   state_machine_->RegisterHandler(State::FINAL, this, &DkgSetupService::OnFinal);
 
-  dkg_state_gauge_->set(static_cast<uint8_t>(state_.load()));
 }
 
 DkgSetupService::State DkgSetupService::OnInitial()
 {
   std::lock_guard<std::mutex> lock(mutex_);
+  dkg_state_gauge_->set(static_cast<uint8_t>(State::INITIAL));
+
   BroadcastShares();
-  state_.store(State::WAITING_FOR_SHARE);
-  dkg_state_gauge_->set(static_cast<uint8_t>(state_.load()));
   return State::WAITING_FOR_SHARE;
 }
 
 DkgSetupService::State DkgSetupService::OnWaitForShares()
 {
   std::unique_lock<std::mutex> lock{mutex_};
-  if ((C_ik_received_.size() == cabinet_.size() - 1) &&
+  dkg_state_gauge_->set(static_cast<uint8_t>(State::WAITING_FOR_SHARE));
+
+  if ((coefficients_received_.size() == cabinet_.size() - 1) &&
           (shares_received_.size() == cabinet_.size() - 1))
   {
     lock.unlock();
     BroadcastComplaints();
 
     // Clean up
-    C_ik_received_.clear();
+    coefficients_received_.clear();
     shares_received_.clear();
 
-    state_ = State::WAITING_FOR_COMPLAINTS;
-    dkg_state_gauge_->set(static_cast<uint8_t>(state_.load()));
     return State::WAITING_FOR_COMPLAINTS;
   }
 
@@ -122,17 +121,18 @@ DkgSetupService::State DkgSetupService::OnWaitForShares()
 DkgSetupService::State DkgSetupService::OnWaitForComplaints()
 {
   std::unique_lock<std::mutex> lock{mutex_};
-  if (complaints_manager_.IsFinished(manager_.polynomial_degree()))
+  dkg_state_gauge_->set(static_cast<uint8_t>(State::WAITING_FOR_COMPLAINTS));
+
+  if (complaints_manager_.IsFinished(dkg_manager_.polynomial_degree()))
   {
     // Complaints at this point consist only of parties which have received over threshold number of
     // complaints
-    FETCH_LOG_INFO(LOGGING_NAME, "Node ", manager_.cabinet_index(), " complaints size ",
+    FETCH_LOG_INFO(LOGGING_NAME, "Node ", dkg_manager_.cabinet_index(), " complaints size ",
                    complaints_manager_.Complaints().size());
     complaints_answer_manager_.Init(complaints_manager_.Complaints());
     lock.unlock();
     BroadcastComplaintsAnswer();
-    state_ = State::WAITING_FOR_COMPLAINT_ANSWERS;
-    dkg_state_gauge_->set(static_cast<uint8_t>(state_.load()));
+
     return State::WAITING_FOR_COMPLAINT_ANSWERS;
   }
 
@@ -143,24 +143,23 @@ DkgSetupService::State DkgSetupService::OnWaitForComplaints()
 DkgSetupService::State DkgSetupService::OnWaitForComplaintAnswers()
 {
   std::unique_lock<std::mutex> lock{mutex_};
+  dkg_state_gauge_->set(static_cast<uint8_t>(State::WAITING_FOR_COMPLAINT_ANSWERS));
+
   if (complaints_answer_manager_.IsFinished())
   {
     lock.unlock();
     if (BuildQual())
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Node ", manager_.cabinet_index(), "build qual of size ",
+      FETCH_LOG_INFO(LOGGING_NAME, "Node ", dkg_manager_.cabinet_index(), "build qual of size ",
                      qual_.size());
-      manager_.ComputeSecretShare(qual_);
+      dkg_manager_.ComputeSecretShare(qual_);
       BroadcastQualCoefficients();
-      state_ = State::WAITING_FOR_QUAL_SHARES;
-      dkg_state_gauge_->set(static_cast<uint8_t>(state_.load()));
+
       complaints_manager_.Clear();
       return State::WAITING_FOR_QUAL_SHARES;
     }
     else
     {
-      state_ = State::FINAL;
-      dkg_state_gauge_->set(static_cast<uint8_t>(state_.load()));
       complaints_manager_.Clear();
       // TODO(jmw): procedure failed for this node
       return State::FINAL;
@@ -172,18 +171,18 @@ DkgSetupService::State DkgSetupService::OnWaitForComplaintAnswers()
 
 DkgSetupService::State DkgSetupService::OnWaitForQualShares()
 {
+  dkg_state_gauge_->set(static_cast<uint8_t>(State::WAITING_FOR_QUAL_SHARES));
+
   std::set<MuddleAddress> diff;
-  std::set_difference(qual_.begin(), qual_.end(), A_ik_received_.begin(), A_ik_received_.end(),
+  std::set_difference(qual_.begin(), qual_.end(), qual_coefficients_received_.begin(), qual_coefficients_received_.end(),
                       std::inserter(diff, diff.begin()));
   if (diff.empty())
   {
     BroadcastQualComplaints();
 
     //Clean up
-    A_ik_received_.clear();
+    qual_coefficients_received_.clear();
 
-    state_ = State::WAITING_FOR_QUAL_COMPLAINTS;
-    dkg_state_gauge_->set(static_cast<uint8_t>(state_.load()));
     return State::WAITING_FOR_QUAL_COMPLAINTS;
   }
   state_machine_->Delay(std::chrono::milliseconds(10));
@@ -192,34 +191,33 @@ DkgSetupService::State DkgSetupService::OnWaitForQualShares()
 
 DkgSetupService::State DkgSetupService::OnWaitForQualComplaints()
 {
+  dkg_state_gauge_->set(static_cast<uint8_t>(State::WAITING_FOR_QUAL_COMPLAINTS));
+
   if (qual_complaints_manager_.IsFinished(qual_, address_))
   {
     CheckQualComplaints();
     size_t size = qual_complaints_manager_.ComplaintsSize();
 
-    if (size > manager_.polynomial_degree())
+    if (size > dkg_manager_.polynomial_degree())
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Node: ", manager_.cabinet_index(),
+      FETCH_LOG_WARN(LOGGING_NAME, "Node: ", dkg_manager_.cabinet_index(),
                      " DKG has failed: complaints size ", size, " greater than threshold.");
-      state_ = State::FINAL;
-      dkg_state_gauge_->set(static_cast<uint8_t>(state_.load()));
+
       // TODO(jmw): Failure state
       return State::FINAL;
     }
     else if (qual_complaints_manager_.ComplaintsFind(address_))
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Node: ", manager_.cabinet_index(), " is in qual complaints");
-      manager_.ComputePublicKeys(qual_);
-      state_ = State::FINAL;
-      dkg_state_gauge_->set(static_cast<uint8_t>(state_.load()));
+      FETCH_LOG_WARN(LOGGING_NAME, "Node: ", dkg_manager_.cabinet_index(), " is in qual complaints");
+      dkg_manager_.ComputePublicKeys(qual_);
+
       // TODO(jmw): Failure state
       return State::FINAL;
     }
     assert(qual_.find(address_) != qual_.end());
     BroadcastReconstructionShares();
     reconstruction_shares_received_.insert(address_);
-    state_ = State::WAITING_FOR_RECONSTRUCTION_SHARES;
-    dkg_state_gauge_->set(static_cast<uint8_t>(state_.load()));
+
     return State::WAITING_FOR_RECONSTRUCTION_SHARES;
   }
   state_machine_->Delay(std::chrono::milliseconds(10));
@@ -229,6 +227,8 @@ DkgSetupService::State DkgSetupService::OnWaitForQualComplaints()
 DkgSetupService::State DkgSetupService::OnWaitForReconstructionShares()
 {
   std::unique_lock<std::mutex> lock{mutex_};
+  dkg_state_gauge_->set(static_cast<uint8_t>(State::WAITING_FOR_RECONSTRUCTION_SHARES));
+
   std::set<MuddleAddress>      complaints_list = qual_complaints_manager_.Complaints();
   std::set<MuddleAddress>      remaining_honest;
   std::set<MuddleAddress>      diff;
@@ -237,34 +237,30 @@ DkgSetupService::State DkgSetupService::OnWaitForReconstructionShares()
   std::set_difference(remaining_honest.begin(), remaining_honest.end(),
                       reconstruction_shares_received_.begin(),
                       reconstruction_shares_received_.end(), std::inserter(diff, diff.begin()));
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", manager_.cabinet_index(),
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", dkg_manager_.cabinet_index(),
                   " reconstruction shares remaining ", diff.size());
   if (diff.empty())
   {
     lock.unlock();
-    if (!manager_.RunReconstruction())
+    if (!dkg_manager_.RunReconstruction())
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Node: ", manager_.cabinet_index(),
+      FETCH_LOG_WARN(LOGGING_NAME, "Node: ", dkg_manager_.cabinet_index(),
                      " DKG failed due to reconstruction failure");
 
       // Clean up
       reconstruction_shares_received_.clear();
 
-      state_ = State::FINAL;
-      dkg_state_gauge_->set(static_cast<uint8_t>(state_.load()));
       // TODO(jmw): Failure state
       return State::FINAL;
     }
     else
     {
-      manager_.ComputePublicKeys(qual_);
+      dkg_manager_.ComputePublicKeys(qual_);
 
       //Clean up
       reconstruction_shares_received_.clear();
-
-      state_ = State::FINAL;
-      dkg_state_gauge_->set(static_cast<uint8_t>(state_.load()));
       qual_complaints_manager_.Clear();
+
       return State::FINAL;
     }
   }
@@ -274,6 +270,9 @@ DkgSetupService::State DkgSetupService::OnWaitForReconstructionShares()
 
 DkgSetupService::State DkgSetupService::OnFinal()
 {
+  dkg_state_gauge_->set(static_cast<uint8_t>(State::FINAL));
+  finished_ = true;
+
   state_machine_->Delay(std::chrono::milliseconds(500));
   return State::FINAL;
 }
@@ -294,18 +293,18 @@ void DkgSetupService::SendBroadcast(DKGEnvelope const &env)
  */
 void DkgSetupService::BroadcastShares()
 {
-  manager_.GenerateCoefficients();
+  dkg_manager_.GenerateCoefficients();
   SendBroadcast(DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAITING_FOR_SHARE),
-                                                manager_.GetCoefficients(), "signature"}});
+                                                dkg_manager_.GetCoefficients(), "signature"}});
   for (auto &cab_i : cabinet_)
   {
     if (cab_i != address_)
     {
-      std::pair<MessageShare, MessageShare> shares{manager_.GetOwnShares(cab_i)};
+      std::pair<MessageShare, MessageShare> shares{dkg_manager_.GetOwnShares(cab_i)};
       rpc_function_(cab_i, shares);
     }
   }
-  FETCH_LOG_INFO(LOGGING_NAME, "Node ", manager_.cabinet_index(), " broadcasts coefficients ");
+  FETCH_LOG_INFO(LOGGING_NAME, "Node ", dkg_manager_.cabinet_index(), " broadcasts coefficients ");
 }
 
 /**
@@ -315,13 +314,13 @@ void DkgSetupService::BroadcastShares()
  */
 void DkgSetupService::BroadcastComplaints()
 {
-  std::unordered_set<MuddleAddress> complaints_local = manager_.ComputeComplaints();
+  std::unordered_set<MuddleAddress> complaints_local = dkg_manager_.ComputeComplaints();
   for (auto const &cab : complaints_local)
   {
     complaints_manager_.Count(cab);
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Node ", manager_.cabinet_index(), " broadcasts complaints size ",
+  FETCH_LOG_INFO(LOGGING_NAME, "Node ", dkg_manager_.cabinet_index(), " broadcasts complaints size ",
                  complaints_local.size());
   SendBroadcast(DKGEnvelope{ComplaintsMessage{complaints_local, "signature"}});
 }
@@ -337,9 +336,9 @@ void DkgSetupService::BroadcastComplaintsAnswer()
   std::unordered_map<MuddleAddress, std::pair<MessageShare, MessageShare>> complaints_answer;
   for (auto const &reporter : complaints_manager_.ComplaintsFrom())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Node ", manager_.cabinet_index(), " received complaints from ",
-                   manager_.cabinet_index(reporter));
-    complaints_answer.insert({reporter, manager_.GetOwnShares(reporter)});
+    FETCH_LOG_INFO(LOGGING_NAME, "Node ", dkg_manager_.cabinet_index(), " received complaints from ",
+                   dkg_manager_.cabinet_index(reporter));
+    complaints_answer.insert({reporter, dkg_manager_.GetOwnShares(reporter)});
   }
   SendBroadcast(
       DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAITING_FOR_COMPLAINT_ANSWERS),
@@ -353,11 +352,11 @@ void DkgSetupService::BroadcastQualCoefficients()
 {
   SendBroadcast(
       DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAITING_FOR_QUAL_SHARES),
-                                      manager_.GetQualCoefficients(), "signature"}});
+                                      dkg_manager_.GetQualCoefficients(), "signature"}});
   complaints_answer_manager_.Clear();
   {
     std::unique_lock<std::mutex> lock{mutex_};
-    A_ik_received_.insert(address_);
+    qual_coefficients_received_.insert(address_);
   }
 }
 
@@ -369,7 +368,7 @@ void DkgSetupService::BroadcastQualCoefficients()
 void DkgSetupService::BroadcastQualComplaints()
 {
   SendBroadcast(DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAITING_FOR_QUAL_COMPLAINTS),
-                                          manager_.ComputeQualComplaints(qual_), "signature"}});
+                                          dkg_manager_.ComputeQualComplaints(qual_), "signature"}});
 }
 
 /**
@@ -384,8 +383,8 @@ void DkgSetupService::BroadcastReconstructionShares()
   for (auto const &in : qual_complaints_manager_.Complaints())
   {
     assert(qual_.find(in) != qual_.end());
-    manager_.AddReconstructionShare(in);
-    complaint_shares.insert({in, manager_.GetReceivedShares(in)});
+    dkg_manager_.AddReconstructionShare(in);
+    complaint_shares.insert({in, dkg_manager_.GetReceivedShares(in)});
   }
   SendBroadcast(
       DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAITING_FOR_RECONSTRUCTION_SHARES),
@@ -434,8 +433,8 @@ void DkgSetupService::OnDkgMessage(MuddleAddress const &from, std::shared_ptr<DK
     break;
   }
   default:
-    FETCH_LOG_ERROR(LOGGING_NAME, "Node: ", manager_.cabinet_index(),
-                    " can not process payload from node ", manager_.cabinet_index(from));
+    FETCH_LOG_ERROR(LOGGING_NAME, "Node: ", dkg_manager_.cabinet_index(),
+                    " can not process payload from node ", dkg_manager_.cabinet_index(from));
   }
 }
 
@@ -448,22 +447,22 @@ void DkgSetupService::OnDkgMessage(MuddleAddress const &from, std::shared_ptr<DK
 void DkgSetupService::OnExposedShares(SharesMessage const &shares, MuddleAddress const &from_id)
 {
   uint64_t phase1     = shares.phase();
-  uint32_t from_index = manager_.cabinet_index(from_id);
+  uint32_t from_index = dkg_manager_.cabinet_index(from_id);
   if (phase1 == static_cast<uint64_t>(State::WAITING_FOR_COMPLAINT_ANSWERS))
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Node: ", manager_.cabinet_index(),
+    FETCH_LOG_INFO(LOGGING_NAME, "Node: ", dkg_manager_.cabinet_index(),
                    " received complaint answer from ", from_index);
     OnComplaintsAnswer(shares, from_id);
   }
   else if (phase1 == static_cast<uint64_t>(State::WAITING_FOR_QUAL_COMPLAINTS))
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Node: ", manager_.cabinet_index(),
+    FETCH_LOG_INFO(LOGGING_NAME, "Node: ", dkg_manager_.cabinet_index(),
                    " received QUAL complaint from ", from_index);
     OnQualComplaints(shares, from_id);
   }
   else if (phase1 == static_cast<uint64_t>(State::WAITING_FOR_RECONSTRUCTION_SHARES))
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Node: ", manager_.cabinet_index(),
+    FETCH_LOG_INFO(LOGGING_NAME, "Node: ", dkg_manager_.cabinet_index(),
                    " received reconstruction share from ", from_index);
     OnReconstructionShares(shares, from_id);
   }
@@ -481,15 +480,15 @@ void DkgSetupService::OnNewShares(MuddleAddress                                f
 {
   if (shares_received_.find(from) == shares_received_.end())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Node ", manager_.cabinet_index(), " received shares from node  ",
-                   manager_.cabinet_index(from));
-    manager_.AddShares(from, shares);
+    FETCH_LOG_INFO(LOGGING_NAME, "Node ", dkg_manager_.cabinet_index(), " received shares from node  ",
+                   dkg_manager_.cabinet_index(from));
+    dkg_manager_.AddShares(from, shares);
     shares_received_.insert(from);
   }
   else
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Node ", manager_.cabinet_index(), " received duplicate shares from node ",
-                   manager_.cabinet_index(from));
+    FETCH_LOG_WARN(LOGGING_NAME, "Node ", dkg_manager_.cabinet_index(), " received duplicate shares from node ",
+                   dkg_manager_.cabinet_index(from));
   }
 }
 
@@ -504,32 +503,32 @@ void DkgSetupService::OnNewCoefficients(CoefficientsMessage const &msg,
 {
   if (msg.phase() == static_cast<uint64_t>(State::WAITING_FOR_SHARE))
   {
-    if (C_ik_received_.find(from) == C_ik_received_.end())
+    if (coefficients_received_.find(from) == coefficients_received_.end())
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Node ", manager_.cabinet_index(), " received coefficients from node  ",
-                     manager_.cabinet_index(from));
-      manager_.AddCoefficients(from, msg.coefficients());
-      C_ik_received_.insert(from);
+      FETCH_LOG_INFO(LOGGING_NAME, "Node ", dkg_manager_.cabinet_index(), " received coefficients from node  ",
+                     dkg_manager_.cabinet_index(from));
+      dkg_manager_.AddCoefficients(from, msg.coefficients());
+      coefficients_received_.insert(from);
     }
     else
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Node ",  manager_.cabinet_index(),
-                     " received duplicate coefficients from node ",  manager_.cabinet_index(from));
+      FETCH_LOG_WARN(LOGGING_NAME, "Node ",  dkg_manager_.cabinet_index(),
+                     " received duplicate coefficients from node ",  dkg_manager_.cabinet_index(from));
     }
   }
   else if (msg.phase() == static_cast<uint64_t>(State::WAITING_FOR_QUAL_SHARES))
   {
-    if (A_ik_received_.find(from) == A_ik_received_.end())
+    if (qual_coefficients_received_.find(from) == qual_coefficients_received_.end())
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Node ", manager_.cabinet_index(), " received qual coefficients from node  ",
-                     manager_.cabinet_index(from));
-      manager_.AddQualCoefficients(from, msg.coefficients());
-      A_ik_received_.insert(from);
+      FETCH_LOG_INFO(LOGGING_NAME, "Node ", dkg_manager_.cabinet_index(), " received qual coefficients from node  ",
+                     dkg_manager_.cabinet_index(from));
+      dkg_manager_.AddQualCoefficients(from, msg.coefficients());
+      qual_coefficients_received_.insert(from);
     }
     else
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Node ", manager_.cabinet_index(),
-                     " received duplicate qual coefficients from node ", manager_.cabinet_index(from));
+      FETCH_LOG_WARN(LOGGING_NAME, "Node ", dkg_manager_.cabinet_index(),
+                     " received duplicate qual coefficients from node ", dkg_manager_.cabinet_index(from));
     }
   }
 }
@@ -542,8 +541,8 @@ void DkgSetupService::OnNewCoefficients(CoefficientsMessage const &msg,
  */
 void DkgSetupService::OnComplaints(ComplaintsMessage const &msg, MuddleAddress const &from_id)
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Node ", manager_.cabinet_index(), " received complaints from node ",
-                 manager_.cabinet_index(from_id));
+  FETCH_LOG_INFO(LOGGING_NAME, "Node ", dkg_manager_.cabinet_index(), " received complaints from node ",
+                 dkg_manager_.cabinet_index(from_id));
   complaints_manager_.Add(msg, from_id, address_);
 }
 
@@ -562,9 +561,9 @@ void DkgSetupService::OnComplaintsAnswer(SharesMessage const &answer, MuddleAddr
   }
   else
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Node ", manager_.cabinet_index(),
+    FETCH_LOG_WARN(LOGGING_NAME, "Node ", dkg_manager_.cabinet_index(),
                    " received multiple complaint answer from node ",
-                   manager_.cabinet_index(from_id));
+                   dkg_manager_.cabinet_index(from_id));
   }
 }
 
@@ -595,7 +594,7 @@ void DkgSetupService::OnReconstructionShares(SharesMessage const &shares_msg,
   // TODO(JMW): Could be problematic if qual has not been built yet
   if (qual_complaints_manager_.ComplaintsFind(from) or qual_.find(from) == qual_.end())
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Node ", manager_.cabinet_index(),
+    FETCH_LOG_WARN(LOGGING_NAME, "Node ", dkg_manager_.cabinet_index(),
                    " received message from invalid sender. Discarding.");
     return;
   }
@@ -603,14 +602,14 @@ void DkgSetupService::OnReconstructionShares(SharesMessage const &shares_msg,
   {
     for (auto const &share : shares_msg.shares())
     {
-      manager_.VerifyReconstructionShare(from, share);
+      dkg_manager_.VerifyReconstructionShare(from, share);
     }
     reconstruction_shares_received_.insert(from);
   }
   else
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Node ", manager_.cabinet_index(),
-                   " received duplicate reconstruction shares from node ", manager_.cabinet_index(from));
+    FETCH_LOG_WARN(LOGGING_NAME, "Node ", dkg_manager_.cabinet_index(),
+                   " received duplicate reconstruction shares from node ", dkg_manager_.cabinet_index(from));
   }
 }
 
@@ -634,7 +633,7 @@ void DkgSetupService::CheckComplaintAnswer(SharesMessage const &answer,
   }
   for (auto const &share : answer.shares())
   {
-    if (!manager_.VerifyComplaintAnswer(from_id, share))
+    if (!dkg_manager_.VerifyComplaintAnswer(from_id, share))
     {
       complaints_answer_manager_.Add(from_id);
     }
@@ -654,14 +653,14 @@ bool DkgSetupService::BuildQual()
   qual_ = complaints_answer_manager_.BuildQual(cabinet_);
   if (qual_.find(address_) == qual_.end())
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Node: ", manager_.cabinet_index(),
+    FETCH_LOG_WARN(LOGGING_NAME, "Node: ", dkg_manager_.cabinet_index(),
                    " build QUAL failed as not in QUAL");
     return false;
   }
-  else if (qual_.size() <= manager_.polynomial_degree())
+  else if (qual_.size() <= dkg_manager_.polynomial_degree())
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Node: ", manager_.cabinet_index(), " build QUAL failed as size ",
-                   qual_.size(), " less than threshold ", manager_.polynomial_degree());
+    FETCH_LOG_WARN(LOGGING_NAME, "Node: ", dkg_manager_.cabinet_index(), " build QUAL failed as size ",
+                   qual_.size(), " less than threshold ", dkg_manager_.polynomial_degree());
     return false;
   }
   return true;
@@ -685,7 +684,7 @@ void DkgSetupService::CheckQualComplaints()
       // Check person who's shares are being exposed is not in QUAL then don't bother with checks
       if (qual_.find(share.first) != qual_.end())
       {
-        qual_complaints_manager_.Complaints(manager_.VerifyQualComplaint(sender, share));
+        qual_complaints_manager_.Complaints(dkg_manager_.VerifyQualComplaint(sender, share));
       }
     }
   }
@@ -707,7 +706,7 @@ bool DkgSetupService::BasicMsgCheck(MuddleAddress const &              from,
   }
   else if (cabinet_.find(from) == cabinet_.end())
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Node ", manager_.cabinet_index(),
+    FETCH_LOG_WARN(LOGGING_NAME, "Node ", dkg_manager_.cabinet_index(),
                    " received message from unknown sender");
     return false;
   }
@@ -723,8 +722,8 @@ void DkgSetupService::ResetCabinet(CabinetMembers const &cabinet, uint32_t thres
 
   std::lock_guard<std::mutex> lock_{mutex_};
   cabinet_ = cabinet;
-  state_   = State::INITIAL;
-  manager_.Reset(cabinet, threshold);
+  finished_ = false;
+  dkg_manager_.Reset(cabinet, threshold);
   auto cabinet_size{static_cast<uint32_t>(cabinet_.size())};
   qual_.clear();
 
@@ -733,8 +732,8 @@ void DkgSetupService::ResetCabinet(CabinetMembers const &cabinet, uint32_t thres
   qual_complaints_manager_.Reset();
 
   shares_received_.clear();
-  C_ik_received_.clear();
-  A_ik_received_.clear();
+  coefficients_received_.clear();
+  qual_coefficients_received_.clear();
   reconstruction_shares_received_.clear();
 }
 
@@ -743,14 +742,14 @@ void DkgSetupService::ResetCabinet(CabinetMembers const &cabinet, uint32_t thres
  */
 bool DkgSetupService::finished() const
 {
-  return (state_.load() == State::FINAL);
+  return finished_.load();
 }
 
 void DkgSetupService::SetDkgOutput(bn::G2 &public_key, bn::Fr &secret_share,
                                    std::vector<bn::G2> &    public_key_shares,
                                    std::set<MuddleAddress> &qual)
 {
-  manager_.SetDkgOutput(public_key, secret_share, public_key_shares);
+  dkg_manager_.SetDkgOutput(public_key, secret_share, public_key_shares);
   qual = qual_;
 }
 
