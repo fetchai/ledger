@@ -147,40 +147,16 @@ void Muddle::Stop()
   reactor_.Stop();
   router_.Stop();
 
-  // close all existing connections
-  register_->DisconnectAll();
-
-  // client shutdown loop
-  clients_.DisconnectAll();
-
   // tear down all the servers
   {
     FETCH_LOCK(servers_lock_);
     servers_.clear();
   }
 
-  // wait for all the connections to close
-  Timepoint const deadline = Clock::now() + 10s;
-  for (;;)
-  {
-    // close all existing connections
-    register_->DisconnectAll();
+  // client shutdown loop
+  clients_.DisconnectAll();
 
-    auto const now = Clock::now();
-
-    if (now > deadline)
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Failed to wait for all connections to leave");
-      break;
-    }
-
-    if (GetNumDirectlyConnectedPeers() == 0)
-    {
-      break;
-    }
-
-    std::this_thread::sleep_for(100ms);
-  }
+  network_manager_.Stop();
 }
 
 /**

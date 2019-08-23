@@ -154,6 +154,8 @@ public:
 
   void Close() override
   {
+    DeactivateSelfManage();
+
     shutting_down_ = true;
     auto socket    = socket_.lock();
     if (socket)

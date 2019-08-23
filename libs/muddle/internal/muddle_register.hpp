@@ -87,7 +87,6 @@ public:
   WeakConnectionPtr LookupConnection(ConnectionHandle handle) const;
   WeakConnectionPtr LookupConnection(Address const &address) const;
 
-  void         DisconnectAll();
   bool         IsEmpty() const;
   UpdateStatus UpdateAddress(ConnectionHandle handle, Address const &address);
   bool         HasAddress(Address const &address) const;

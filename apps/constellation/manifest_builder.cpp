@@ -51,8 +51,6 @@ void GenerateDefaultManifest(std::string const &external_address, uint16_t port,
 {
   Peer peer;
 
-  FETCH_LOG_CRITICAL("GenManifest", "External Address: '", external_address, "'");
-
   // register the HTTP service
   peer.Update(external_address, port + HTTP_PORT_OFFSET);
   manifest.AddService(ServiceIdentifier{ServiceIdentifier::Type::HTTP}, ManifestEntry{peer});

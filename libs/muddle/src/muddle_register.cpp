@@ -100,24 +100,6 @@ MuddleRegister::WeakConnectionPtr MuddleRegister::LookupConnection(Address const
   return conn;
 }
 
-void MuddleRegister::DisconnectAll()
-{
-  FETCH_LOCK(lock_);
-
-  for (auto const &element : handle_index_)
-  {
-    auto conn = element.second->connection.lock();
-    if (conn)
-    {
-      conn->Close();
-    }
-  }
-
-  // tear it all down
-  handle_index_.clear();
-  address_index_.clear();
-}
-
 bool MuddleRegister::IsEmpty() const
 {
   FETCH_LOCK(lock_);
@@ -316,9 +298,6 @@ void MuddleRegister::Leave(ConnectionHandle handle)
       address_index_.erase(addr_it);
       ++removal_count;
     }
-
-    FETCH_LOG_WARN(LOGGING_NAME, "Removing ", removal_count,
-                   " address entries for handle: ", handle);
 
     handle_index_.erase(it);
   }

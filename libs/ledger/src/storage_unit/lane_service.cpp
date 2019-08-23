@@ -139,22 +139,7 @@ LaneService::LaneService(NetworkManager const &nm, ShardConfig config, Mode mode
 
 LaneService::~LaneService()
 {
-  reactor_.Stop();
 
-  workthread_ = nullptr;
-
-  FETCH_LOG_TRACE(LOGGING_NAME, "Lane ", cfg_.lane_id, " Teardown.");
-
-  external_muddle_->Stop();
-  internal_muddle_->Stop();
-  tx_sync_service_.reset();
-  state_db_protocol_.reset();
-  state_db_.reset();
-  tx_store_protocol_.reset();
-  tx_store_.reset();
-  tx_sync_protocol_.reset();
-  controller_protocol_.reset();
-  controller_.reset();
 }
 
 void LaneService::Start()
@@ -180,11 +165,18 @@ void LaneService::Start()
 
 void LaneService::Stop()
 {
-  tx_sync_service_->Stop();
+  reactor_.Stop();
   workthread_ = nullptr;
-
   external_muddle_->Stop();
   internal_muddle_->Stop();
+  tx_sync_service_.reset();
+  state_db_protocol_.reset();
+  state_db_.reset();
+  tx_store_protocol_.reset();
+  tx_store_.reset();
+  tx_sync_protocol_.reset();
+  controller_protocol_.reset();
+  controller_.reset();
 }
 
 bool LaneService::SyncIsReady()
