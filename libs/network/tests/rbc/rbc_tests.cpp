@@ -290,24 +290,24 @@ public:
   FaultyRbcMember(uint16_t port_number, uint16_t index,
                   const std::vector<FaultyRbc::Failures> &failure)
     : RbcMember{port_number, index}
-    , rbc{muddle.AsEndpoint(), muddle_certificate->identity().identifier(),
-          [this](ConstByteArray const &, ConstByteArray const &payload) -> void {
-            OnRbcMessage(payload);
-          },
-          failure}
+    , rbc_{muddle.AsEndpoint(), muddle_certificate->identity().identifier(),
+           [this](ConstByteArray const &, ConstByteArray const &payload) -> void {
+             OnRbcMessage(payload);
+           },
+           failure}
   {}
 
   void ResetCabinet(RBC::CabinetMembers const &new_cabinet) override
   {
-    rbc.ResetCabinet(new_cabinet);
+    rbc_.ResetCabinet(new_cabinet);
   }
   void Broadcast(SerialisedMessage const &msg, uint8_t num_messages) override
   {
-    rbc.Broadcast(msg, num_messages);
+    rbc_.Broadcast(msg, num_messages);
   }
 
 private:
-  FaultyRbc rbc;
+  FaultyRbc rbc_;
 };
 
 class HonestRbcMember : public RbcMember
@@ -316,23 +316,23 @@ class HonestRbcMember : public RbcMember
 public:
   HonestRbcMember(uint16_t port_number, uint16_t index)
     : RbcMember{port_number, index}
-    , rbc{muddle.AsEndpoint(), muddle_certificate->identity().identifier(),
-          [this](ConstByteArray const &, ConstByteArray const &payload) -> void {
-            OnRbcMessage(payload);
-          }}
+    , rbc_{muddle.AsEndpoint(), muddle_certificate->identity().identifier(),
+           [this](ConstByteArray const &, ConstByteArray const &payload) -> void {
+             OnRbcMessage(payload);
+           }}
   {}
 
   void ResetCabinet(RBC::CabinetMembers const &new_cabinet) override
   {
-    rbc.ResetCabinet(new_cabinet);
+    rbc_.ResetCabinet(new_cabinet);
   }
   void Broadcast(SerialisedMessage const &msg, uint8_t) override
   {
-    rbc.Broadcast(msg);
+    rbc_.Broadcast(msg);
   }
 
 private:
-  RBC rbc;
+  RBC rbc_;
 };
 
 void GenerateRbcTest(uint32_t cabinet_size, uint32_t expected_completion_size,
