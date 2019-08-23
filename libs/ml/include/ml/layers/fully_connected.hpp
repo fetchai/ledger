@@ -75,67 +75,6 @@ public:
     , out_size_(out)
     , time_distributed_(time_distributed)
   {
-    // setup overall architecture of the model
-    SetupArchitecture(activation_type, regulariser, regularisation_rate);
-
-    // initialize the weights and bias with specified initialization method
-    InitializeWeights(init_mode);
-  }
-
-  void InitializeWeights(WeightsInit init_mode)
-  {
-    // get correct name for the layer
-    std::string name = GetName();
-
-    // initialize weight with specified method
-    TensorType weights_data(std::vector<SizeType>({out_size_, in_size_}));
-    this->Initialise(weights_data, init_mode);
-    this->SetInput(name + "_Weights", weights_data);
-
-    // initialize bias with right shape and set to all zero
-    TensorType bias_data;
-    if (time_distributed_)
-    {
-      bias_data = TensorType(std::vector<SizeType>({out_size_, 1, 1}));
-    }
-    else
-    {
-      bias_data = TensorType(std::vector<SizeType>({out_size_, 1}));
-    }
-    this->SetInput(name + "_Bias", bias_data);
-  }
-
-  OpPtrType MakeSharedCopy(OpPtrType me) override
-  {
-    FETCH_UNUSED(me);
-    assert(me.get() == this);  // used for compatability
-
-    auto copyshare = std::make_shared<FullyConnected<TensorType>>();
-    InsertSharedCopy(copyshare);
-
-    return copyshare;
-  }
-
-  void InsertSharedCopy(OpPtrType output_ptr) override
-  {
-    // must be called with pointer to different op
-    assert(output_ptr.get() != this);
-
-    auto copyshare = std::dynamic_pointer_cast<FullyConnected<TensorType>>(output_ptr);
-    assert(copyshare);
-
-    copyshare->time_distributed_ = time_distributed_;
-    copyshare->in_size_          = in_size_;
-    copyshare->out_size_         = out_size_;
-
-    SubGraph<TensorType>::InsertSharedCopy(copyshare);
-  }
-
-  void SetupArchitecture(
-      details::ActivationType       activation_type     = details::ActivationType::NOTHING,
-      fetch::ml::RegularisationType regulariser         = fetch::ml::RegularisationType::NONE,
-      DataType                      regularisation_rate = static_cast<DataType>(0))
-  {
     // get correct name for the layer
     std::string name = GetName();
 
@@ -167,6 +106,39 @@ public:
     this->SetOutputNode(output);
     this->SetRegularisation(fetch::ml::details::CreateRegulariser<T>(regulariser),
                             regularisation_rate);
+
+    // initialize weight with specified method
+    TensorType weights_data(std::vector<SizeType>({out_size_, in_size_}));
+    this->Initialise(weights_data, init_mode);
+    this->SetInput(name + "_Weights", weights_data);
+
+    // initialize bias with right shape and set to all zero
+    TensorType bias_data;
+    if (time_distributed_)
+    {
+      bias_data = TensorType(std::vector<SizeType>({out_size_, 1, 1}));
+    }
+    else
+    {
+      bias_data = TensorType(std::vector<SizeType>({out_size_, 1}));
+    }
+    this->SetInput(name + "_Bias", bias_data);
+  }
+
+  OpPtrType MakeSharedCopy(OpPtrType me) override
+  {
+    FETCH_UNUSED(me);
+    assert(me.get() == this);  // used for compatability
+
+    auto copyshare = std::make_shared<FullyConnected<TensorType>>();
+
+    copyshare->time_distributed_ = time_distributed_;
+    copyshare->in_size_          = in_size_;
+    copyshare->out_size_         = out_size_;
+
+    SubGraph<TensorType>::InsertSharedCopy(copyshare);
+
+    return copyshare;
   }
 
   std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override

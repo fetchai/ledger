@@ -110,7 +110,8 @@ public:
 
   std::shared_ptr<Ops<TensorType>> MakeSharedCopy(std::shared_ptr<Ops<TensorType>> me) override
   {
-    // This is a copy of the implementation in Ops - overrides implementation in Placeholder
+    // This overrides implementation in Placeholder
+    assert(me.get() == this);
     return me;
   }
 
@@ -124,7 +125,9 @@ public:
   {
     FETCH_UNUSED(inputs);
     assert(inputs.empty());
+
     gradient_accumulation_->InlineAdd(error_signal);
+
     return {};
   }
 

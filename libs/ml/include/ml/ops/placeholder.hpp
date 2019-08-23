@@ -38,6 +38,7 @@ public:
   using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpPlaceholderSaveableParams<TensorType>;
+  using MyType        = PlaceHolder<TensorType >;
 
   PlaceHolder() = default;
 
@@ -76,11 +77,11 @@ public:
     FETCH_UNUSED(me);
     assert(me.get() == this);
 
-    auto copyshare = std::make_shared<PlaceHolder<TensorType>>();
+    auto copyshare = std::make_shared<MyType>(*this);
 
     if (this->output_)
     {
-      copyshare->output_ = std::make_shared<TensorType>(this->output_->shape());
+      copyshare->output_ = std::make_shared<TensorType>(this->output_->Copy());
     }
 
     return copyshare;

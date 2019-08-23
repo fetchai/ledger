@@ -60,10 +60,11 @@ public:
     return sp;
   }
 
-  virtual void InsertSharedCopy(std::shared_ptr<fetch::ml::ops::Ops<TensorType>> output_ptr)
+protected:
+  void InsertSharedCopy(std::shared_ptr<fetch::ml::ops::Ops<TensorType>> output_ptr)
   {
     if (output_ptr.get() == this)
-    {  // need to check this!
+    {
       throw std::runtime_error("This needs to be called with a separate ptr.");
     }
     auto copyshare = std::dynamic_pointer_cast<SubGraph<TensorType>>(output_ptr);
@@ -75,6 +76,7 @@ public:
     Graph<TensorType>::InsertSharedCopy(copyshare);
   }
 
+public:
   std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
       std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
   {

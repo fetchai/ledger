@@ -140,7 +140,8 @@ TYPED_TEST(FullyConnectedTest, set_input_and_evaluate_test)  // Use the class as
   ASSERT_EQ(output.shape().size(), 2);
   ASSERT_EQ(output.shape()[0], 10);
   ASSERT_EQ(output.shape()[1], 2);
-  // No way to test actual values for now as weights are randomly initialised.  // todo: true?
+  // No way to test actual values for now as weights are randomly initialised.
+  // todo: weights and biases can be set with fc.SetInput(name + "_Weights", weights_data) etc.
 }
 
 TYPED_TEST(FullyConnectedTest,
@@ -364,16 +365,18 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test_time_distributed)
   EXPECT_TRUE(pred_shared.AllClose(pred_not_shared, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));
 
-  // SGD is chosen to be the optimizer to reflect the gradient throw change in weights after 1
-  // iteration of training. Run 1 iteration of SGD to train on g shared
+//   SGD is chosen to be the optimizer to reflect the gradient throw change in weights after 1
+//   iteration of training. Run 1 iteration of SGD to train on g shared
   auto                                            lr = static_cast<DataType>(0.01);
   fetch::ml::optimisers::SGDOptimiser<TensorType> g_shared_optimiser(g_shared, {"Input"}, "Label",
                                                                      "Error", lr);
-  g_shared_optimiser.Run({data}, data, 1);
-  // Run 1 iteration of SGD to train on g not shared
+  DataType shared_loss = g_shared_optimiser.Run({data}, data, 1);
+//   Run 1 iteration of SGD to train on g not shared
   fetch::ml::optimisers::SGDOptimiser<TensorType> g_not_shared_optimiser(g_not_shared, {"Input"},
                                                                          "Label", "Error", lr);
-  g_not_shared_optimiser.Run({data}, data, 1);
+  DataType not_shared_loss = g_not_shared_optimiser.Run({data}, data, 1);
+
+  EXPECT_EQ(shared_loss, not_shared_loss);
 
   // check that all weights are equal
   auto g_shared_weights_after     = GetWeights<TensorType, GraphPtrType>(g_shared, true, true);
@@ -382,14 +385,14 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test_time_distributed)
   // check the all weights are initialized to be the same
   for (size_t i = 0; i < 2; i++)
   {
-    ASSERT_TRUE(g_shared_weights_before[i] == g_shared_weights_before[i + 2]);
-    ASSERT_TRUE(g_not_shared_weights_before[i] == g_not_shared_weights_before[i + 2]);
+    EXPECT_TRUE(g_shared_weights_before[i] == g_shared_weights_before[i + 2]);
+    EXPECT_TRUE(g_not_shared_weights_before[i] == g_not_shared_weights_before[i + 2]);
   }
 
   // check the weights are equal after training for shared weights
   for (size_t i = 0; i < 2; i++)
   {
-    ASSERT_TRUE(g_shared_weights_after[i] == g_shared_weights_after[i + 2]);
+    EXPECT_TRUE(g_shared_weights_after[i] == g_shared_weights_after[i + 2]);
   }
 
   // check the weights are different after training for not shared weights
@@ -407,11 +410,7 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test_time_distributed)
         g_not_shared_weights_after[i] + g_not_shared_weights_after[i + 2] -
         g_not_shared_weights_before[i] - g_not_shared_weights_before[i + 2];
 
-    //    std::cout << "shared_gradient.ToString(): " << shared_gradient.ToString() << std::endl;
-    //    std::cout << "not_shared_gradient.ToString(): " << not_shared_gradient.ToString() <<
-    //    std::endl;
-
-    ASSERT_TRUE(shared_gradient.AllClose(
+    EXPECT_TRUE(shared_gradient.AllClose(
         not_shared_gradient,
         static_cast<DataType>(100) * fetch::math::function_tolerance<DataType>()));
   }
@@ -644,7 +643,7 @@ TYPED_TEST(FullyConnectedTest, saveparams_test)
   layer2.SetInput(input_name, input);
   TypeParam prediction2 = layer2.Evaluate(output_name, true);
 
-  ASSERT_TRUE(prediction.AllClose(prediction2, fetch::math::function_tolerance<DataType>(),
+  EXPECT_TRUE(prediction.AllClose(prediction2, fetch::math::function_tolerance<DataType>(),
                                   fetch::math::function_tolerance<DataType>()));
 
   // train g

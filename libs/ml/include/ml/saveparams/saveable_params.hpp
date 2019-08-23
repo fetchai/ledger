@@ -54,8 +54,8 @@ struct NodeSaveableParams
   OpType                             operation_type       = OpType::NONE;
   std::shared_ptr<OpsSaveableParams> op_save_params;
 
-  NodeSaveableParams()
-  {}
+  NodeSaveableParams() = default;
+
 };
 
 template <class TensorType>
@@ -207,7 +207,6 @@ template <class TensorType>
 struct OpEmbeddingsSaveableParams : public OpWeightsSaveableParams<TensorType>
 {
   fetch::ml::OpType                  op_type = OpType::OP_EMBEDDINGS;
-  std::shared_ptr<TensorType>        embeddings_output;
   std::vector<fetch::math::SizeType> updated_rows;
   std::vector<fetch::math::SizeType> trailing_indices1 = {0, 0};
   std::vector<fetch::math::SizeType> trailing_indices2 = {0};
@@ -631,7 +630,6 @@ template <class TensorType>
 struct OpSwitchSaveableParams : public OpsSaveableParams
 {
   fetch::ml::OpType           op_type = OpType::OP_SWITCH;
-  std::shared_ptr<TensorType> output;
 };
 
 /**

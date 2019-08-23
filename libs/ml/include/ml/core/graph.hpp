@@ -92,45 +92,6 @@ public:
   GraphSaveableParams<TensorType> GetGraphSaveableParams();
   void                            SetGraphSaveableParams(GraphSaveableParams<TensorType> const &sp);
 
-  std::shared_ptr<Graph<TensorType>> MakeSharedCopy()
-  {  // todo: maybe this is unnecessary
-    auto copyshare = std::make_shared<Graph<TensorType>>();
-    InsertSharedCopy(copyshare);
-    return copyshare;
-  }
-
-  void InsertSharedCopy(std::shared_ptr<Graph<TensorType>> output_ptr)
-  {
-    if (output_ptr.get() == this)
-    {  // need to check this!
-      throw std::runtime_error("This needs to be called with a separate ptr.");
-    }
-
-    std::shared_ptr<Graph<TensorType>> copyshare = output_ptr;
-
-    // copy all the nodes, sharing the weights using MakeSharedCopy
-    for (auto const &n : nodes_)
-    {
-      std::string                       node_name = n.first;
-      std::shared_ptr<Node<TensorType>> n_ptr     = n.second;
-      OpPtrType                         op_ptr    = n_ptr->GetOp();
-
-      OpPtrType op_copyshare = op_ptr->MakeSharedCopy(op_ptr);
-
-      copyshare->nodes_[node_name] =
-          std::make_shared<Node<TensorType>>(*n_ptr, node_name, op_copyshare);
-      // todo: how do I copy trainable_nodes_ and trainable_lookup_?
-    }
-
-    for (auto const &n : this->nodes_)
-    {
-      std::string                       node_name = n.first;
-      std::shared_ptr<Node<TensorType>> n_ptr     = n.second;
-
-      copyshare->LinkNodesInGraph(node_name, this->nodes_[node_name]->GetInputNames());
-    }
-  }
-
   static constexpr char const *DESCRIPTOR = "Graph";
 
   template <class OperationType>
@@ -154,6 +115,7 @@ private:
   void LinkNodesInGraph(std::string const &node_name, std::vector<std::string> const &inputs);
 
 protected:
+  void InsertSharedCopy(std::shared_ptr<Graph<TensorType>> output_ptr);
   std::unordered_map<std::string, NodePtrType> nodes_;
   std::unordered_map<std::string, SizeType>    trainable_lookup_;
   std::vector<NodePtrType>                     trainable_nodes_;
@@ -615,9 +577,6 @@ template <class OperationType>
 meta::IfIsTrainable<TensorType, OperationType, void> Graph<TensorType>::AddTrainable(
     std::string const &name, std::shared_ptr<Node<TensorType>> node_ptr)
 {
-  auto op_ptr = node_ptr->GetOp();
-
-  // it must be safe to cast this op down to a weight
   trainable_nodes_.emplace_back(node_ptr);
   trainable_lookup_[name] = trainable_nodes_.size() - 1;
 }
@@ -640,11 +599,10 @@ meta::IfIsGraph<TensorType, OperationType, void> Graph<TensorType>::AddTrainable
   {
     // guarantee unique op name
     std::string node_name(name + "_" + trainable.first);
-    std::string resolved_name;
-    UpdateVariableName<OperationType>(node_name, resolved_name);
+    assert(trainable_lookup_.find(node_name) == trainable_lookup_.end());
 
     trainable_nodes_.emplace_back(concrete_op_ptr->trainable_nodes_.at(trainable.second));
-    trainable_lookup_[resolved_name] = trainable_nodes_.size() - 1;
+    trainable_lookup_[node_name] = trainable_nodes_.size() - 1;
   }
 }
 
@@ -717,6 +675,56 @@ std::vector<typename Graph<TensorType>::TrainablePtrType> Graph<TensorType>::Get
     ret.emplace_back(trainable_ptr);
   }
   return ret;
+}
+
+template<class T>
+void Graph<T>::InsertSharedCopy(std::shared_ptr<Graph<TensorType>> output_ptr) {
+  if (output_ptr.get() == this)
+  {
+    throw std::runtime_error("This needs to be called with a separate ptr.");
+  }
+
+  std::shared_ptr<Graph<TensorType>> copyshare = output_ptr;
+
+  // copy all the nodes, sharing the weights using MakeSharedCopy
+  for (auto const &n : nodes_)
+  {
+    std::string                       node_name = n.first;
+    std::shared_ptr<Node<TensorType>> n_ptr     = n.second;
+    OpPtrType                         op_ptr    = n_ptr->GetOp();
+
+    OpPtrType op_copyshare = op_ptr->MakeSharedCopy(op_ptr);
+
+    assert(copyshare->nodes_.find(node_name) == copyshare->nodes_.end());
+
+    copyshare->nodes_[node_name] =
+        std::make_shared<Node<TensorType>>(*n_ptr, node_name, op_copyshare);
+
+    // add node_ptr to trainable lookup etc. if required
+    auto is_trainable = std::dynamic_pointer_cast<fetch::ml::ops::Trainable<TensorType>>(op_copyshare);
+    auto is_graph = std::dynamic_pointer_cast<Graph<TensorType>>(op_copyshare);
+    if (is_trainable){
+      copyshare->trainable_nodes_.emplace_back(n_ptr);
+      copyshare->trainable_lookup_[node_name] = copyshare->trainable_nodes_.size() - 1;
+    }
+    else if (is_graph){
+      for (auto &trainable : is_graph->trainable_lookup_)
+      {
+        std::string subnode_name(node_name + "_" + trainable.first);
+        assert(copyshare->trainable_lookup_.find(subnode_name) == copyshare->trainable_lookup_.end());
+        copyshare->trainable_nodes_.emplace_back(is_graph->trainable_nodes_.at(trainable.second));
+        copyshare->trainable_lookup_[subnode_name] = copyshare->trainable_nodes_.size() - 1;
+      }
+    }
+  }
+
+  for (auto const &n : this->nodes_)
+  {
+    std::string                       node_name = n.first;
+    std::shared_ptr<Node<TensorType>> n_ptr     = n.second;
+
+    copyshare->LinkNodesInGraph(node_name, this->nodes_[node_name]->GetInputNames());
+  }
 }
 
 }  // namespace ml

@@ -38,6 +38,7 @@ public:
   using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpAbsSaveableParams<T>;
+  using MyType = Abs<TensorType >;
 
   Abs() = default;
 
@@ -50,6 +51,17 @@ public:
   std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
   {
     return std::make_shared<SPType>();
+  }
+
+  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
+  {
+    FETCH_UNUSED(me);
+    assert(me.get() == this);
+
+    auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
+
+    return copyshare;
   }
 
   /**

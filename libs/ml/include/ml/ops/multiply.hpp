@@ -37,6 +37,7 @@ public:
   using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpMultiplySaveableParams<T>;
+  using MyType        = Multiply<TensorType>;
 
   Multiply() = default;
 
@@ -52,6 +53,16 @@ public:
     return std::make_shared<SPType>(sp);
   }
 
+  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
+  {
+    FETCH_UNUSED(me);
+    assert(me.get() == this);
+
+    auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
+
+    return copyshare;
+  }
   /**
    * elementwise multiplication
    * for inputs to the multiply layer, if broadcasting is required, make sure the first input is the
