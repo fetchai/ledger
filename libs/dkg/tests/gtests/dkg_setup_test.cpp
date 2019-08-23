@@ -653,9 +653,7 @@ TEST(dkg_setup, send_multiple_complaint_answers)
 
 TEST(dkg_setup, qual_below_threshold)
 {
-  // Qual size is below threshold as two many nodes were disqualified so DKG fails for
-  // everyone
-  GenerateTest(4, 2, 2, 0,
+  GenerateTest(4, 3, 2, 0,
                {{FaultyDkgSetupService::Failures::BAD_COEFFICIENT},
                 {FaultyDkgSetupService::Failures::BAD_COEFFICIENT}});
 }
@@ -684,9 +682,8 @@ TEST(dkg_setup, send_fake_qual_complaint)
 
 TEST(dkg_setup, too_many_bad_qual_coefficients)
 {
-  // Two nodes send bad qual coefficients which means that there are
-  // not enough parties not (threshold + 1) parities not in complaints.
-  // DKG fails
+  // Three nodes send bad qual coefficients which means that there are
+  // not enough parties not in complaints. DKG fails
   GenerateTest(4, 2, 4, 0,
                {{FaultyDkgSetupService::Failures::BAD_QUAL_COEFFICIENTS},
                 {FaultyDkgSetupService::Failures::BAD_QUAL_COEFFICIENTS},
@@ -706,7 +703,7 @@ TEST(dkg_setup, withold_reconstruction_shares)
 {
   // Node 0 sends bad qual coefficients and another in collusion does not broadcast node 0's shares
   // so there are not enough shares to run reconstruction
-  GenerateTest(4, 2, 4, 0,
+  GenerateTest(4, 3, 4, 0,
                {{FaultyDkgSetupService::Failures::BAD_QUAL_COEFFICIENTS},
                 {FaultyDkgSetupService::Failures::WITHOLD_RECONSTRUCTION_SHARES}});
 }
