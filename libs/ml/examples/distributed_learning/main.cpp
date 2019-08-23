@@ -49,8 +49,8 @@
 // Remember to disable debug using | grep -v INFO
 #define NUMBER_OF_CLIENTS 10
 #define NUMBER_OF_PEERS 3
-#define NUMBER_OF_ITERATIONS 10
-#define BATCH_SIZE 32
+#define NUMBER_OF_ITERATIONS 20
+#define BATCH_SIZE 128
 #define SYNCHRONIZATION_INTERVAL 3
 #define MERGE_RATIO .5f
 #define LEARNING_RATE .001f
@@ -79,8 +79,9 @@ public:
 class TrainingClient
 {
 public:
-  TrainingClient(std::string const &images, std::string const &labels)
+  TrainingClient(std::string const &images, std::string const &labels, std::string const &id)
     : dataloader_(images, labels)
+    , id_(id)
   {
     dataloader_.SetTestRatio(TEST_SET_RATIO);
     dataloader_.SetRandomMode(true);
@@ -93,6 +94,10 @@ public:
     g_.AddNode<Softmax<TensorType>>("Softmax", {"FC3"});
     g_.AddNode<PlaceHolder<TensorType>>("Label", {});
     g_.AddNode<CrossEntropyLoss<TensorType>>("Error", {"Softmax", "Label"});
+
+    // Clear loss file
+    std::ofstream lossfile("losses_" + id_ + ".csv", std::ofstream::out | std::ofstream::trunc);
+    lossfile.close();
   }
 
   void SetCoordinator(std::shared_ptr<Coordinator> &coordinator_ptr)
@@ -102,7 +107,9 @@ public:
 
   void MainLoop()
   {
-    DataType loss;
+
+    std::ofstream lossfile("losses_" + id_ + ".csv", std::ofstream::out | std::ofstream::app);
+    DataType      loss;
 
     while (coordinator_ptr_->state == CoordinatorState::RUN)
     {
@@ -111,13 +118,13 @@ public:
 
       BroadcastGradients();
 
-      // Process gradients que
+      // Process gradients queue
       TensorVectorType new_gradients;
 
       // Load own gradient
       TensorVectorType gradients = g_.GetGradients();
 
-      // Sum all gradient in que
+      // Sum all gradient in queue
       while (!gradient_queue.empty())
       {
         {
@@ -136,11 +143,22 @@ public:
 
       // Validate loss for logging purpose
       Test(loss);
-      losses_values_.push_back(loss);
+
+      // Save loss variation data
+      // Upload to https://plot.ly/create/#/ for visualisation
+      if (lossfile)
+      {
+        lossfile << GetTimeStamp() << ", " << loss << "\n";
+      }
 
       // Shuffle the peers list to get new contact for next update
       fetch::random::Shuffle(gen_, peers_, peers_);
     }
+
+    lossfile << GetTimeStamp() << ", "
+             << "STOPPED"
+             << "\n";
+    lossfile.close();
   }
 
   DataType Train()
@@ -253,20 +271,12 @@ public:
     g_.set_weights(new_weights);
   }
 
-  std::vector<float> const &GetLossesValues() const
-  {
-    return losses_values_;
-  }
-
 private:
   // Client own graph
   fetch::ml::Graph<TensorType> g_;
 
   // Client own dataloader
   fetch::ml::dataloaders::MNISTLoader<TensorType, TensorType> dataloader_;
-
-  // Loss history
-  std::vector<float> losses_values_;
 
   // Connection to other nodes
   std::vector<std::shared_ptr<TrainingClient>> peers_;
@@ -283,6 +293,14 @@ private:
   std::queue<TensorVectorType> gradient_queue;
 
   std::shared_ptr<Coordinator> coordinator_ptr_;
+
+  std::string id_;
+
+  std::string GetTimeStamp()
+  {
+    // TODO: Implement timestamp
+    return "TIMESTAMP";
+  }
 };
 
 int main(int ac, char **av)
@@ -303,7 +321,7 @@ int main(int ac, char **av)
   for (unsigned int i(0); i < NUMBER_OF_CLIENTS; ++i)
   {
     // Instanciate NUMBER_OF_CLIENTS clients
-    clients[i] = std::make_shared<TrainingClient>(av[1], av[2]);
+    clients[i] = std::make_shared<TrainingClient>(av[1], av[2], std::to_string(i));
   }
 
   for (unsigned int i(0); i < NUMBER_OF_CLIENTS; ++i)
@@ -339,32 +357,30 @@ int main(int ac, char **av)
       t.join();
     }
 
-    // Synchronize weights
-    TensorVectorType weights = clients[0]->GetWeights();
+    // Synchronize weights by giving all clients average of all client's weights
+    TensorVectorType new_weights = clients[0]->GetWeights();
+
     for (unsigned int i(1); i < NUMBER_OF_CLIENTS; ++i)
     {
-      clients[i]->SetWeights(weights);
-    }
-  }
+      TensorVectorType other_weights = clients[i]->GetWeights();
 
-  // Save loss variation data
-  // Upload to https://plot.ly/create/#/ for visualisation
-  std::ofstream lossfile("losses.csv", std::ofstream::out | std::ofstream::trunc);
-  if (lossfile)
-  {
-    for (unsigned int i(0); i < clients.size(); ++i)
-    {
-      lossfile << "Client " << i << ", ";
-
-      for (unsigned int j(0); j < clients.at(i)->GetLossesValues().size(); ++j)
+      for (SizeType j{0}; j < other_weights.size(); j++)
       {
-        lossfile << clients.at(i)->GetLossesValues()[j] << ", ";
+        fetch::math::Add(new_weights.at(j), other_weights.at(j), new_weights.at(j));
       }
+    }
 
-      lossfile << "\n";
+    for (SizeType j{0}; j < new_weights.size(); j++)
+    {
+      fetch::math::Divide(new_weights.at(j), static_cast<DataType>(NUMBER_OF_CLIENTS),
+                          new_weights.at(j));
+    }
+
+    for (unsigned int i(0); i < NUMBER_OF_CLIENTS; ++i)
+    {
+      clients[i]->SetWeights(new_weights);
     }
   }
-  lossfile.close();
 
   return 0;
 }
