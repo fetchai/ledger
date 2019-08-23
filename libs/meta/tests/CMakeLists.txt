@@ -12,8 +12,11 @@ setup_compiler()
 
 fetch_add_test(pack_gtest fetch-meta meta/pack)
 fetch_add_test(type_util_gtest fetch-meta meta/type_util)
+fetch_add_test(value_util_gtest fetch-meta meta/value_util)
 
 target_include_directories(pack_gtest PRIVATE meta)
+target_include_directories(type_util_gtest PRIVATE meta)
+target_include_directories(value_util_gtest PRIVATE meta)
 
 fetch_add_test(fetch-meta-unit-tests fetch-meta unit/)
 target_link_libraries(fetch-meta-unit-tests PRIVATE fetch-core)
