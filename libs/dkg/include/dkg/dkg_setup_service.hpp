@@ -116,7 +116,7 @@ protected:
   std::atomic<uint32_t>   shares_received_{0};
   std::atomic<uint32_t>   C_ik_received_{0};
   std::set<MuddleAddress> A_ik_received_;
-  std::atomic<uint32_t>   reconstruction_shares_received_{0};
+  std::set<MuddleAddress> reconstruction_shares_received_;
 
   std::shared_ptr<StateMachine> state_machine_;
   std::set<MuddleAddress>       qual_;  ///< Set of cabinet members who completed DKG

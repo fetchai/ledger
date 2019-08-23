@@ -207,6 +207,7 @@ DkgSetupService::State DkgSetupService::OnWaitForQualComplaints()
     }
     assert(qual_.find(address_) != qual_.end());
     BroadcastReconstructionShares();
+    reconstruction_shares_received_.insert(address_);
     state_ = State::WAITING_FOR_RECONSTRUCTION_SHARES;
     dkg_state_gauge_->set(static_cast<uint8_t>(state_.load()));
     return State::WAITING_FOR_RECONSTRUCTION_SHARES;
@@ -218,8 +219,13 @@ DkgSetupService::State DkgSetupService::OnWaitForQualComplaints()
 DkgSetupService::State DkgSetupService::OnWaitForReconstructionShares()
 {
   std::unique_lock<std::mutex> lock{mutex_};
-  if (reconstruction_shares_received_.load() ==
-      qual_.size() - qual_complaints_manager_.ComplaintsSize() - 1)
+  std::set<MuddleAddress> complaints_list = qual_complaints_manager_.Complaints();
+  std::set<MuddleAddress> remaining_honest;
+  std::set<MuddleAddress> diff;
+  std::set_difference(qual_.begin(), qual_.end(), complaints_list.begin(), complaints_list.end(), std::inserter(remaining_honest, remaining_honest.begin()));
+  std::set_difference(remaining_honest.begin(), remaining_honest.end(), reconstruction_shares_received_.begin(), reconstruction_shares_received_.end(), std::inserter(diff, diff.begin()));
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", manager_.cabinet_index(), " reconstruction shares remaining ", diff.size());
+  if (diff.empty())
   {
     lock.unlock();
     if (!manager_.RunReconstruction())
@@ -556,7 +562,7 @@ void DkgSetupService::OnReconstructionShares(SharesMessage const &shares_msg,
     }
     manager_.VerifyReconstructionShare(from_id, share);
   }
-  ++reconstruction_shares_received_;
+  reconstruction_shares_received_.insert(from_id);
 }
 
 /**
@@ -679,9 +685,9 @@ void DkgSetupService::ResetCabinet(CabinetMembers const &cabinet, uint32_t thres
 
   shares_received_                = 0;
   C_ik_received_                  = 0;
-  reconstruction_shares_received_ = 0;
 
   A_ik_received_.clear();
+  reconstruction_shares_received_.clear();
 }
 
 /**
