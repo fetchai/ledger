@@ -27,6 +27,7 @@
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 
 #include <algorithm>
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
@@ -50,8 +51,7 @@
 #define NUMBER_OF_PEERS 3
 #define NUMBER_OF_ITERATIONS 10
 #define BATCH_SIZE 32
-//#define NUMBER_OF_BATCHES 3
-#define SYNCHRONIZATION_INTERVAL 1
+#define SYNCHRONIZATION_INTERVAL 3
 #define MERGE_RATIO .5f
 #define LEARNING_RATE .001f
 #define TEST_SET_RATIO 0.03f
@@ -63,6 +63,18 @@ using DataType         = float;
 using TensorType       = fetch::math::Tensor<DataType>;
 using TensorVectorType = std::vector<TensorType>;
 using SizeType         = fetch::math::SizeType;
+
+enum class CoordinatorState
+{
+  RUN,
+  STOP,
+};
+
+class Coordinator
+{
+public:
+  CoordinatorState state = CoordinatorState::RUN;
+};
 
 class TrainingClient
 {
@@ -83,12 +95,16 @@ public:
     g_.AddNode<CrossEntropyLoss<TensorType>>("Error", {"Softmax", "Label"});
   }
 
+  void SetCoordinator(std::shared_ptr<Coordinator> &coordinator_ptr)
+  {
+    coordinator_ptr_ = coordinator_ptr;
+  }
+
   void MainLoop()
   {
-
     DataType loss;
 
-    for (SizeType i{0}; i < 20; i++)
+    while (coordinator_ptr_->state == CoordinatorState::RUN)
     {
       // Create own gradient
       Train();
@@ -133,9 +149,6 @@ public:
 
     DataType loss        = 0;
     bool     is_done_set = false;
-
-    // Random sampling ensures that for relatively few training steps the proportion of shared
-    // training data is low
 
     std::pair<TensorType, std::vector<TensorType>> input;
     input = dataloader_.PrepareBatch(batch_size_, is_done_set);
@@ -213,7 +226,6 @@ public:
 
   void AddGradient(TensorVectorType gradient)
   {
-
     {
       std::lock_guard<std::mutex> l(queue_mutex_);
       gradient_queue.push(gradient);
@@ -269,6 +281,8 @@ private:
   SizeType batch_size_ = BATCH_SIZE;
 
   std::queue<TensorVectorType> gradient_queue;
+
+  std::shared_ptr<Coordinator> coordinator_ptr_;
 };
 
 int main(int ac, char **av)
@@ -280,6 +294,8 @@ int main(int ac, char **av)
     return 1;
   }
 
+  std::shared_ptr<Coordinator> coordinator = std::make_shared<Coordinator>();
+
   std::cout << "FETCH Distributed MNIST Demo -- Synchronised" << std::endl;
   std::srand((unsigned int)std::time(nullptr));
 
@@ -289,35 +305,45 @@ int main(int ac, char **av)
     // Instanciate NUMBER_OF_CLIENTS clients
     clients[i] = std::make_shared<TrainingClient>(av[1], av[2]);
   }
+
   for (unsigned int i(0); i < NUMBER_OF_CLIENTS; ++i)
   {
     // Give every client the full list of other clients
     clients[i]->AddPeers(clients);
+
+    // Give each client pointer to coordinator
+    clients[i]->SetCoordinator(coordinator);
   }
 
+  // Main loop
   for (unsigned int it(0); it < NUMBER_OF_ITERATIONS; ++it)
   {
 
-    if (it % SYNCHRONIZATION_INTERVAL == 0)
-    {
-      TensorVectorType weights = clients[0]->GetWeights();
-      for (unsigned int i(1); i < NUMBER_OF_CLIENTS; ++i)
-      {
-        clients[i]->SetWeights(weights);
-      }
-    }
-
+    // Start all clients
+    coordinator->state = CoordinatorState::RUN;
     std::cout << "================= ITERATION : " << it << " =================" << std::endl;
     std::list<std::thread> threads;
     for (auto &c : clients)
     {
-      // Start each client to train on NUMBER_OF_BATCHES * BATCH_SIZE examples
       threads.emplace_back([&c] { c->MainLoop(); });
     }
+
+    std::this_thread::sleep_for(std::chrono::seconds(SYNCHRONIZATION_INTERVAL));
+
+    // Send stop signal to all clients
+    coordinator->state = CoordinatorState::STOP;
+
+    // Wait for everyone to finish
     for (auto &t : threads)
     {
-      // Wait for everyone to finish (force synchronisation)
       t.join();
+    }
+
+    // Synchronize weights
+    TensorVectorType weights = clients[0]->GetWeights();
+    for (unsigned int i(1); i < NUMBER_OF_CLIENTS; ++i)
+    {
+      clients[i]->SetWeights(weights);
     }
   }
 
@@ -329,14 +355,12 @@ int main(int ac, char **av)
     for (unsigned int i(0); i < clients.size(); ++i)
     {
       lossfile << "Client " << i << ", ";
-    }
-    lossfile << "\n";
-    for (unsigned int i(0); i < clients.front()->GetLossesValues().size(); ++i)
-    {
-      for (auto &c : clients)
+
+      for (unsigned int j(0); j < clients.at(i)->GetLossesValues().size(); ++j)
       {
-        lossfile << c->GetLossesValues()[i] << ", ";
+        lossfile << clients.at(i)->GetLossesValues()[j] << ", ";
       }
+
       lossfile << "\n";
     }
   }
