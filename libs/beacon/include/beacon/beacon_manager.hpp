@@ -184,6 +184,11 @@ public:
     return certificate_->identity();
   }
 
+  uint32_t threshold() const
+  {
+    return threshold_;
+  }
+
   Id id()
   {
     return id_;
