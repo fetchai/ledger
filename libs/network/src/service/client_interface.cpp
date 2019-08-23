@@ -90,8 +90,8 @@ void ServiceClientInterface::Unsubscribe(subscription_handler_type id)
   LOG_STACK_TRACE_POINT;
   Subscription sub;
   {
-    subscription_mutex_lock_type lock(subscription_mutex_);
-    auto                         subscr = subscriptions_.find(id);
+    FETCH_LOCK(subscription_mutex_);
+    auto subscr = subscriptions_.find(id);
     if (subscr == subscriptions_.end())
     {
       if (std::find(cancelled_subscriptions_.begin(), cancelled_subscriptions_.end(), id) !=
@@ -183,8 +183,8 @@ bool ServiceClientInterface::ProcessServerMessage(network::message_type const &m
 
     AbstractCallable *cb = nullptr;
     {
-      subscription_mutex_lock_type lock(subscription_mutex_);
-      auto                         subscr = subscriptions_.find(sub);
+      FETCH_LOCK(subscription_mutex_);
+      auto subscr = subscriptions_.find(sub);
       if (subscr == subscriptions_.end())
       {
         if (std::find(cancelled_subscriptions_.begin(), cancelled_subscriptions_.end(), sub) ==
@@ -294,10 +294,10 @@ subscription_handler_type ServiceClientInterface::CreateSubscription(
 {
   LOG_STACK_TRACE_POINT;
 
-  subscription_mutex_lock_type lock(subscription_mutex_);
+  FETCH_LOCK(subscription_mutex_);
   subscription_index_counter_++;
   subscriptions_[subscription_index_counter_] = Subscription(protocol, feed, cb);
-  subscription_mutex_.unlock();
+
   return subscription_handler_type(subscription_index_counter_);
 }
 

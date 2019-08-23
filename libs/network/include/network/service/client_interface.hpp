@@ -44,9 +44,8 @@ class ServiceClientInterface
 {
   class Subscription;
 
-  using subscription_mutex_type      = fetch::mutex::Mutex;
-  using subscription_mutex_lock_type = std::lock_guard<subscription_mutex_type>;
-  using subscriptions_type           = std::unordered_map<subscription_handler_type, Subscription>;
+  using subscription_mutex_type = fetch::mutex::Mutex;
+  using subscriptions_type      = std::unordered_map<subscription_handler_type, Subscription>;
 
 public:
   static constexpr char const *LOGGING_NAME = "ServiceClientInterface";
@@ -56,9 +55,7 @@ public:
   virtual ~ServiceClientInterface() = default;
 
   template <typename... arguments>
-
   Promise Call(uint32_t /*network_id*/, protocol_handler_type const &protocol,
-
                function_handler_type const &function, arguments &&... args)
   {
     LOG_STACK_TRACE_POINT;

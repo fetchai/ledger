@@ -96,7 +96,7 @@ public:
         return;
       }
       {
-        std::lock_guard<mutex_type> lock(io_creation_mutex_);
+        FETCH_LOCK(io_creation_mutex_);
         strand_ = strand;
       }
 
@@ -110,7 +110,7 @@ public:
         std::shared_ptr<socket_type> socket = networkManager_.CreateIO<socket_type>();
 
         {
-          std::lock_guard<mutex_type> lock(io_creation_mutex_);
+          FETCH_LOCK(io_creation_mutex_);
           if (!posted_close_)
           {
             socket_ = socket;
@@ -176,7 +176,7 @@ public:
   bool is_alive() const override
   {
     LOG_STACK_TRACE_POINT;
-    std::lock_guard<mutex_type> lock(io_creation_mutex_);
+    FETCH_LOCK(io_creation_mutex_);
     return !socket_.expired() && connected_;
   }
 
@@ -190,7 +190,7 @@ public:
     }
 
     {
-      std::lock_guard<mutex_type> lock(queue_mutex_);
+      FETCH_LOCK(queue_mutex_);
       write_queue_.push_back(msg);
     }
 
@@ -218,7 +218,7 @@ public:
   void Close() override
   {
     LOG_STACK_TRACE_POINT;
-    std::lock_guard<mutex_type> lock(io_creation_mutex_);
+    FETCH_LOCK(io_creation_mutex_);
     posted_close_                         = true;
     std::weak_ptr<socket_type> socketWeak = socket_;
     std::weak_ptr<strand_type> strandWeak = strand_;
@@ -399,7 +399,7 @@ private:
     // Only one thread can get past here at a time. Effectively a try_lock
     // except that we can't unlock a mutex in the callback (undefined behaviour)
     {
-      std::lock_guard<mutex_type> lock(can_write_mutex_);
+      FETCH_LOCK(can_write_mutex_);
       if (can_write_)
       {
         can_write_ = false;
@@ -412,10 +412,10 @@ private:
 
     message_type buffer;
     {
-      std::lock_guard<mutex_type> lock(queue_mutex_);
+      FETCH_LOCK(queue_mutex_);
       if (write_queue_.empty())
       {
-        std::lock_guard<mutex_type> lock(can_write_mutex_);
+        FETCH_LOCK(can_write_mutex_);
         can_write_ = true;
         return;
       }
@@ -435,7 +435,7 @@ private:
       FETCH_UNUSED(len);
 
       {
-        std::lock_guard<mutex_type> lock(can_write_mutex_);
+        FETCH_LOCK(can_write_mutex_);
         can_write_ = true;
       }
 

@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/mutex.hpp"
 #include "core/string/ends_with.hpp"
 #include "telemetry/measurement.hpp"
 
@@ -65,8 +66,7 @@ public:
   Gauge &operator=(Gauge &&) = delete;
 
 private:
-  using Mutex     = std::mutex;
-  using LockGuard = std::lock_guard<Mutex>;
+  using Mutex = std::mutex;
 
   mutable Mutex lock_{};
   ValueType     value_{0};
@@ -102,7 +102,7 @@ Gauge<V>::Gauge(std::string const &name, std::string const &description, Labels 
 template <typename V>
 V Gauge<V>::get() const
 {
-  LockGuard guard{lock_};
+  FETCH_LOCK(lock_);
   return value_;
 }
 
@@ -115,7 +115,7 @@ V Gauge<V>::get() const
 template <typename V>
 void Gauge<V>::set(V const &value)
 {
-  LockGuard guard{lock_};
+  FETCH_LOCK(lock_);
   value_ = value;
 }
 
@@ -127,7 +127,7 @@ void Gauge<V>::set(V const &value)
 template <typename V>
 void Gauge<V>::increment(V const &value)
 {
-  LockGuard guard{lock_};
+  FETCH_LOCK(lock_);
   value_ += value;
 }
 
@@ -139,7 +139,7 @@ void Gauge<V>::increment(V const &value)
 template <typename V>
 void Gauge<V>::decrement(V const &value)
 {
-  LockGuard guard{lock_};
+  FETCH_LOCK(lock_);
   value_ -= value;
 }
 
@@ -152,7 +152,7 @@ void Gauge<V>::decrement(V const &value)
 template <typename V>
 void Gauge<V>::max(V const &value)
 {
-  LockGuard guard{lock_};
+  FETCH_LOCK(lock_);
   if (value > value_)
   {
     value_ = value;
