@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/containers/queue.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "core/mutex.hpp"
 #include "core/runnable.hpp"
 #include "core/state_machine.hpp"

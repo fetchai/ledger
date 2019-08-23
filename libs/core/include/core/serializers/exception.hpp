@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 
 #include <cstdint>
 #include <exception>

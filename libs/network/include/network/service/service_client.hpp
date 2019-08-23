@@ -28,7 +28,7 @@
 #include "network/service/server_interface.hpp"
 
 #include "core/assert.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "core/mutex.hpp"
 #include "network/tcp/tcp_client.hpp"
 

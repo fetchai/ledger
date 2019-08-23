@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "network/service/server.hpp"
 #include "network/tcp/tcp_server.hpp"
 #include "protocols/fetch_protocols.hpp"

@@ -20,7 +20,7 @@
 #include <condition_variable>
 
 #include "core/future_timepoint.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 
 namespace fetch {
 namespace network {

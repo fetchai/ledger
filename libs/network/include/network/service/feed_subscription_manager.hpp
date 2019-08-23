@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "core/mutex.hpp"
 #include "network/details/thread_pool.hpp"
 #include "network/generics/work_items_queue.hpp"

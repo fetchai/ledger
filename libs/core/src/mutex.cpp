@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "core/macros.hpp"
 #include "core/mutex.hpp"
 
