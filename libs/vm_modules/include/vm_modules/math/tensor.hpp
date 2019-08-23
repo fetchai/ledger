@@ -93,6 +93,8 @@ public:
   /// PRINTING AND EXPORTING ///
   //////////////////////////////
 
+  void FromString(fetch::vm::Ptr<fetch::vm::String> const &string);
+
   fetch::vm::Ptr<fetch::vm::String> ToString() const;
 
   fetch::math::Tensor<DataType> &GetTensor();

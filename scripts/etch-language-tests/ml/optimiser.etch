@@ -49,4 +49,6 @@ function main()
     assert(loss2 < loss);
 
 
+    optimiser1.setGraph(graph);
+
 endfunction

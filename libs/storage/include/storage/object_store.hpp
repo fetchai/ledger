@@ -94,13 +94,13 @@ public:
    */
   bool Get(ResourceID const &rid, type &object)
   {
-    std::lock_guard<mutex::Mutex> lock(mutex_);
+    FETCH_LOCK(mutex_);
     return LocklessGet(rid, object);
   }
 
   void Erase(ResourceID const &rid)
   {
-    std::lock_guard<mutex::Mutex> lock(mutex_);
+    FETCH_LOCK(mutex_);
     LocklessErase(rid);
   }
 
@@ -113,7 +113,7 @@ public:
    */
   bool Has(ResourceID const &rid)
   {
-    std::lock_guard<mutex::Mutex> lock(mutex_);
+    FETCH_LOCK(mutex_);
     return LocklessHas(rid);
   }
 
@@ -126,7 +126,7 @@ public:
    */
   void Set(ResourceID const &rid, type const &object)
   {
-    std::lock_guard<mutex::Mutex> lock(mutex_);
+    FETCH_LOCK(mutex_);
     LocklessSet(rid, object);
   }
 
@@ -140,7 +140,7 @@ public:
   template <typename F>
   void WithLock(F &&f)
   {
-    std::lock_guard<mutex::Mutex> lock(mutex_);
+    FETCH_LOCK(mutex_);
     f();
   }
 
@@ -210,13 +210,13 @@ public:
 
   std::size_t size() const
   {
-    std::lock_guard<mutex::Mutex> lock(mutex_);
+    FETCH_LOCK(mutex_);
     return store_.size();
   }
 
   void Flush(bool lazy = true)
   {
-    std::lock_guard<mutex::Mutex> lock(mutex_);
+    FETCH_LOCK(mutex_);
     store_.Flush(lazy);
   }
 

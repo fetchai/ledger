@@ -50,7 +50,7 @@ public:
 
   crypto::Identity Identity()
   {
-    std::lock_guard<mutex::Mutex> lock(identity_mutex_);
+    FETCH_LOCK(identity_mutex_);
     return identity_;
   }
 

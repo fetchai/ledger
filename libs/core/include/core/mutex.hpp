@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
+#include "core/abstract_mutex.hpp"
 #include "core/macros.hpp"
 
 #include <atomic>
@@ -39,8 +39,7 @@ namespace mutex {
 class ProductionMutex : public AbstractMutex
 {
 public:
-  ProductionMutex(int, std::string const &)
-  {}
+  ProductionMutex(int, std::string const &);
 };
 
 /**
@@ -55,62 +54,14 @@ class DebugMutex : public AbstractMutex
 
   static constexpr char const *LOGGING_NAME = "DebugMutex";
 
-  struct LockInfo
-  {
-    bool locked = true;
-  };
-
   class MutexTimeout
   {
   public:
-    static constexpr std::size_t DEFAULT_TIMEOUT_MS = 3000;
+    MutexTimeout(std::string filename, int const &line);
 
-    MutexTimeout(std::string filename, int const &line, std::size_t timeout_ms = DEFAULT_TIMEOUT_MS)
-      : filename_(std::move(filename))
-      , line_(line)
-    {
-      LOG_STACK_TRACE_POINT;
+    ~MutexTimeout();
 
-      thread_ = std::thread([=]() {
-        LOG_LAMBDA_STACK_TRACE_POINT;
-
-        // define the point at which the deadline has been reached
-        Timepoint const deadline = created_ + std::chrono::milliseconds(timeout_ms);
-
-        while (running_)
-        {
-          // exit waiting loop when the dead line has been reached
-          if (Clock::now() >= deadline)
-          {
-            break;
-          }
-
-          // wait
-          std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        }
-
-        if (running_)
-        {
-          this->Eval();
-        }
-      });
-    }
-
-    ~MutexTimeout()
-    {
-      running_ = false;
-      thread_.join();
-    }
-
-    void Eval()
-    {
-      LOG_STACK_TRACE_POINT;
-      FETCH_LOG_ERROR(LOGGING_NAME, "The system will terminate, mutex timed out: ", filename_, " ",
-                      line_);
-
-      // Send a sigint to ourselves since we have a handler for this
-      kill(0, SIGINT);
-    }
+    void Eval();
 
   private:
     std::string       filename_;
@@ -121,71 +72,24 @@ class DebugMutex : public AbstractMutex
   };
 
 public:
-  DebugMutex(int line, std::string file)
-    : AbstractMutex()
-    , line_(line)
-    , file_(std::move(file))
-  {}
+  DebugMutex(int line, std::string file);
 
   // TODO(ejf) No longer required?
   DebugMutex() = delete;
 
   DebugMutex &operator=(DebugMutex const &other) = delete;
 
-  void lock()
-  {
-    LOG_STACK_TRACE_POINT;
-    lock_mutex_.lock();
-    locked_ = Clock::now();
-    lock_mutex_.unlock();
+  void lock();
 
-    std::mutex::lock();
+  void unlock();
 
-    timeout_ = std::make_unique<MutexTimeout>(file_, line_);
-    fetch::logger.RegisterLock(this);
-    thread_id_ = std::this_thread::get_id();
-  }
+  int line() const;
 
-  void unlock()
-  {
-    LOG_STACK_TRACE_POINT;
+  std::string filename() const;
 
-    lock_mutex_.lock();
-    Timepoint const end_time   = Clock::now();
-    Duration const  delta_time = end_time - locked_;
-    double          total_time = static_cast<double>(
-        std::chrono::duration_cast<std::chrono::milliseconds>(delta_time).count());
+  std::string AsString() override;
 
-    lock_mutex_.unlock();
-
-    timeout_.reset(nullptr);
-    fetch::logger.RegisterUnlock(this, total_time, file_, line_);
-
-    std::mutex::unlock();
-  }
-
-  int line() const
-  {
-    return line_;
-  }
-
-  std::string filename() const
-  {
-    return file_;
-  }
-
-  std::string AsString() override
-  {
-    std::stringstream ss;
-    ss << "Locked by thread #" << fetch::log::ReadableThread::GetThreadID(thread_id_) << " in "
-       << filename() << " on " << line();
-    return ss.str();
-  }
-
-  std::thread::id thread_id() const override
-  {
-    return thread_id_;
-  }
+  std::thread::id thread_id() const override;
 
 private:
   std::mutex lock_mutex_;
