@@ -11,3 +11,5 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 setup_compiler()
 
 fetch_add_slow_test(fetch-beacon-tests fetch-beacon dkg)
+set_tests_properties(fetch-beacon-tests} PROPERTIES TIMEOUT 3000)
+

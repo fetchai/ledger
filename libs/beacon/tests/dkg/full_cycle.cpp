@@ -204,7 +204,7 @@ void RunHonestComitteeRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
     }
 
     // Collecting information about the committees finishing
-    for (uint64_t j = 0; j < 60; ++j)
+    for (uint64_t j = 0; j < 120; ++j)
     {
 
       for (auto &member : committee)
@@ -248,5 +248,5 @@ TEST(beacon, full_cycle)
 {
   //  SetGlobalLogLevel(LogLevel::CRITICAL);
   // TODO(tfr): Heuristically fails atm. RunHonestComitteeRenewal(100, 4, 4, 4, 10, 0.5);
-  RunHonestComitteeRenewal(800, 4, 2, 2, 10, 0.5);
+  RunHonestComitteeRenewal(1000, 4, 2, 2, 10, 0.5);
 }
