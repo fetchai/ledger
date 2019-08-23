@@ -228,6 +228,7 @@ int main(int ac, char **av)
 	std::cout << "finish creating cls model based on pretrain model" << std::endl;
 	
 	// output training stats
+	
 	std::cout << "output layer no: " << layer_no << std::endl;
 	std::cout << "train_size: " << 2 * train_size << std::endl;
 	std::cout << "batch_size: " << batch_size << std::endl;
