@@ -155,7 +155,7 @@ int main(int ac, char **av)
   }
 
 	// setup params for training
-	SizeType train_size = 1000;
+	SizeType train_size = 500;
 	SizeType test_size = 10;
 	SizeType batch_size = 4;
 	SizeType epochs = 2;
