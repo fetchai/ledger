@@ -38,7 +38,7 @@
 
 TEST(ValueUtilTests, Slots)
 {
-  auto f = fetch::value_util::Slots(fetch::value_util::Slot<int>([](auto x, auto y) {
+  auto   f = fetch::value_util::Slots(fetch::value_util::Slot<int>([](auto x, auto y) {
                                       std::ostringstream s;
                                       s << x * y;
                                       return s.str();
@@ -49,7 +49,9 @@ TEST(ValueUtilTests, Slots)
                                       return s.str();
                                     }),
                                     [](auto &&x, auto &&y) { return std::string(x + y); });
-  ASSERT_HOLDS(f(3, 14) == "42");
-  ASSERT_HOLDS(f(3.0, 0.14) == "3.14");
+  int    x = 3, y = 14;
+  double a = 3.0, b = 0.14;
+  ASSERT_HOLDS(f(x, y) == "42");
+  ASSERT_HOLDS(f(a, b) == "3.14");
   ASSERT_HOLDS(f(std::string("Hi, "), "there!") == "Hi, there!");
 }

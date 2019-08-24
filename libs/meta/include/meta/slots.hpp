@@ -61,37 +61,83 @@ struct Slot
   using type = SlotImpl<RV, Arg, Aty>;
 };
 
+template <class... As, class F>
+struct Slot<pack::Pack<As...>, F>
+{
+  using Args = pack::Pack<As...>;
+  using Aty  = pack::TupleSize<Args>;
+  using RV   = pack::InvokeResultT<F, Args>;
+
+  using type = Fn<RV, As...>;
+};
+
+// "pack expansion in using-declaration only available with ‘-std=c++17’ or ‘-std=gnu++17’"
+// So we'll need a few preparations to have it in C++14.
+
+template <class FirstParent, class OtherParents>
+struct FunctorChild : FirstParent, OtherParents
+{
+  template <class ConstructionArg>
+  constexpr FunctorChild(ConstructionArg const &construction_arg)
+    : FirstParent(construction_arg)
+    , OtherParents(construction_arg)
+  {}
+
+  template <class FirstArg, class... OtherArgs>
+  constexpr FunctorChild(FirstArg &&first_arg, OtherArgs &&... other_args)
+    : FirstParent(std::forward<FirstArg>(first_arg))
+    , OtherParents(std::forward<OtherArgs>(other_args)...)
+  {}
+
+  using FirstParent:: operator();
+  using OtherParents::operator();
+};
+
 template <class Arg, class F>
 using SlotT = typename Slot<Arg, F>::type;
 
 }  // namespace detail_
 
-template <class F, class Arg>
-struct SlotType : detail_::SlotT<Arg, F>
+template <class F, class... ArgSets>
+class SlotType : type_util::ReverseAccumulateT<detail_::FunctorChild, SlotType<F, ArgSets>...>
 {
-  using detail_::SlotT<Arg, F>::SlotT;
-};
+  using Parent = type_util::ReverseAccumulateT<detail_::FunctorChild, SlotType<F, ArgSets>...>;
 
-template <class F, class... Args>
-struct SlotType<F, pack::Pack<Args...>> : SlotType<F, Args>...
-{
+public:
   SlotType(F const &f)
-    : SlotType<F, Args>(f)...
+    : Parent(f)
   {}
+
+  using Parent::operator();
 };
 
-template <class... Args, class F>
+template <class F, class Args>
+class SlotType<F, Args> : detail_::SlotT<Args, F>
+{
+  using Parent = detail_::SlotT<Args, F>;
+
+public:
+  using Parent::Parent;
+  using Parent::operator();
+};
+
+template <class... ArgSets, class F>
 constexpr auto Slot(F &&f)
 {
-  return SlotType<F, pack::ConcatT<Args...>>(std::forward<F>(f));
+  return SlotType<F, ArgSets...>(std::forward<F>(f));
 }
 
 template <class... Fs>
-struct SlotsType : Fs...
+class SlotsType : type_util::ReverseAccumulateT<detail_::FunctorChild, Fs...>
 {
+  using Parent = type_util::ReverseAccumulateT<detail_::FunctorChild, Fs...>;
+
+public:
   constexpr SlotsType(Fs &&... fs)
-    : Fs(std::forward<Fs>(fs))...
+    : Parent(std::forward<Fs>(fs)...)
   {}
+
+  using Parent::operator();
 };
 
 template <class... Fs>

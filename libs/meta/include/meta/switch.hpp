@@ -299,8 +299,23 @@ struct Switch<pack::Pack<DefaultCase<DefaultImpl>, Ids...>>
 
 // Ids... are packed in a pack::Pack and sorted in ascending order, duplicates removed.
 // (Note that DefaultCase, if specified, would end up at the head of the list.)
+/**
+ * @tparam Ids... case labels
+ */
 template <class... Ids>
 using Switch = detail_::Switch<pack::UniqueSortT<pack::ConcatT<Ids...>>>;
+
+template <class Sequence, template <class Sequence::value_type> Ctor>
+struct LiftIntegerSequence;
+
+template <class Sequence, template <class Sequence::value_type> Ctor>
+using LiftIntegerSequenceT = typename LiftIntegerSequence<Sequence, Ctor>::type;
+
+template <template <typename Int, Int...> struct Root, typename Int, Int... ints,
+          template <Int> Ctor>
+struct LiftIntegerSequence<Root<Int, ints...>, Ctor> : pack::Type<pack::Ctor<ints>...>
+{
+};
 
 }  // namespace type_util
 }  // namespace fetch

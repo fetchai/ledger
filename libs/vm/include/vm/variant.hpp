@@ -1053,16 +1053,19 @@ using TypeIdCases = pack::Pack<TypeIdCase<ids>...>;
 
 using DefaultObjectCase = type_util::DefaultCase<DefaultVariantView>;
 
-using UnsignedIntegerTypes =
-    TypeIdCases<TypeIds::UInt8, TypeIds::UInt16, TypeIds::UInt32, TypeIds::UInt64>;
+template <TypeId... ids>
+using TypeIdSequence = std::integer_sequence<TypeId, ids...>;
 
-using SignedIntegerTypes =
-    TypeIdCases<TypeIds::Int8, TypeIds::Int16, TypeIds::Int32, TypeIds::Int64>;
+using UnsignedIntegerIds =
+    TypeIdSequence<TypeIds::UInt8, TypeIds::UInt16, TypeIds::UInt32, TypeIds::UInt64>;
 
-using FloatingPointTypes = TypeIdCases<TypeIds::Float32, TypeIds::Float64>;
-using FixedPointTypes    = TypeIdCases<TypeIds::Fixed32, TypeIds::Fixed64>;
+using SignedIntegerIds =
+    TypeIdSequence<TypeIds::Int8, TypeIds::Int16, TypeIds::Int32, TypeIds::Int64>;
 
-using IntegralTypes = pack::ConcatT<UnsignedIntegerTypes, SignedIntegerTypes>;
+using FloatingPointIds = TypeIdSequence<TypeIds::Float32, TypeIds::Float64>;
+using FixedPointIds    = TypeIdSequence<TypeIds::Fixed32, TypeIds::Fixed64>;
+
+using IntegralIds = pack::ConcatT<UnsignedIntegerIds, SignedIntegerIds>;
 
 using NumericTypes = pack::ConcatT<IntegralTypes, FloatingPointTypes, FixedPointTypes>;
 
