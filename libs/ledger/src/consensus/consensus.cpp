@@ -20,9 +20,10 @@
 
 constexpr char const *LOGGING_NAME = "Consensus";
 
-using Consensus    = fetch::ledger::Consensus;
-using NextBlockPtr = Consensus::NextBlockPtr;
-using Status       = Consensus::Status;
+using Consensus       = fetch::ledger::Consensus;
+using NextBlockPtr    = Consensus::NextBlockPtr;
+using Status          = Consensus::Status;
+using StakeManagerPtr = Consensus::StakeManagerPtr;
 
 Consensus::Consensus(StakeManagerPtr stake, BeaconServicePtr beacon, MainChain const& chain, Identity mining_identity, uint64_t aeon_period, uint64_t max_committee_size)
   : stake_{stake}
@@ -177,6 +178,21 @@ Status Consensus::ValidBlock(Block const &previous, Block const &current)
   return Status::YES;
 }
 
-void Consensus::Refresh() 
+void Consensus::Refresh()
 {
+}
+
+double & Consensus::threshold()
+{
+  return threshold_;
+}
+
+uint64_t & Consensus::max_committee_size()
+{
+  return max_committee_size_;
+}
+
+StakeManagerPtr Consensus::stake()
+{
+  return stake_;
 }

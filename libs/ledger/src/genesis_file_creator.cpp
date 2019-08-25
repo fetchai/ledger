@@ -33,6 +33,7 @@
 #include "storage/resource_mapper.hpp"
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
+#include "ledger/consensus/consensus.hpp"
 
 #include <cstddef>
 #include <fstream>
@@ -125,6 +126,17 @@ bool LoadFromFile(JSONDocument &document, std::string const &file_path)
 
 }  // namespace
 
+using ConsensusPtr     = std::shared_ptr<fetch::ledger::Consensus>;
+
+GenesisFileCreator::GenesisFileCreator(BlockCoordinator &    block_coordinator,
+                                              StorageUnitInterface &storage_unit,
+                                              ConsensusPtr consensus)
+  : block_coordinator_{block_coordinator}
+  , storage_unit_{storage_unit}
+  , consensus_{consensus}
+{}
+
+
 /**
  * Load a 'state file' with a given name
  *
@@ -146,9 +158,9 @@ void GenesisFileCreator::LoadFile(std::string const &name)
     {
       LoadState(doc["accounts"]);
 
-      if (stake_)
+      if (consensus_)
       {
-        LoadStake(doc["stake"]);
+        LoadConsensus(doc["consensus"]);
       }
       else
       {
@@ -237,10 +249,24 @@ void GenesisFileCreator::LoadState(Variant const &object)
   block_coordinator_.Reset();
 }
 
-void GenesisFileCreator::LoadStake(Variant const &object)
+void GenesisFileCreator::LoadConsensus(Variant const &object)
 {
-  if (stake_)
+  if (consensus_)
   {
+    uint64_t parsed_value;
+    double   parsed_value_double;
+
+    // Optionally overwrite default parameters
+    if(variant::Extract(object, "committeeSize", parsed_value))
+    {
+      consensus_->max_committee_size() = parsed_value;
+    }
+
+    if(variant::Extract(object, "threshold", parsed_value_double))
+    {
+      consensus_->threshold() = parsed_value_double;
+    }
+
     if (!object.Has("stakers"))
     {
       return;
@@ -277,11 +303,11 @@ void GenesisFileCreator::LoadStake(Variant const &object)
       }
     }
 
-    stake_->Reset(*snapshot);
+    consensus_->stake()->Reset(*snapshot);
   }
   else
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "No stake manager!");
+    FETCH_LOG_WARN(LOGGING_NAME, "No consensus object!");
   }
 }
 

@@ -179,8 +179,8 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
         "ledger_block_coordinator_mined_block_total", "The total number of mined blocks")}
   , executed_tx_count_{telemetry::Registry::Instance().CreateCounter(
         "ledger_block_coordinator_executed_tx_total", "The total number of executed transactions")}
-  , block_height_{telemetry::Registry::Instance().CreateGauge<uint64_t>("block_height_", "The current block height")}
-  , block_hash_{telemetry::Registry::Instance().CreateGauge<uint64_t>("block_hash_", "The last seen block hash beginning")}
+  , block_height_{telemetry::Registry::Instance().CreateGauge<uint64_t>("block_height", "The current block height")}
+  , block_hash_{telemetry::Registry::Instance().CreateGauge<uint64_t>("block_hash", "The last seen block hash beginning")}
 {
   // configure the state machine
   // clang-format off

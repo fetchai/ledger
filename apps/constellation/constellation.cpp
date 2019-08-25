@@ -444,7 +444,7 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
     FETCH_LOG_INFO(LOGGING_NAME,
                    "Loading from genesis save file. Location: ", cfg_.genesis_file_location);
 
-    GenesisFileCreator creator(block_coordinator_, *storage_, stake_.get());
+    GenesisFileCreator creator(block_coordinator_, *storage_, consensus_);
 
     if (cfg_.genesis_file_location.empty())
     {

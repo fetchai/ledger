@@ -54,6 +54,10 @@ public:
   Status ValidBlock(Block const &previous, Block const &current) override;
   void Refresh() override;
 
+  StakeManagerPtr stake();
+  double &threshold();
+  uint64_t &max_committee_size();
+
 private:
   StakeManagerPtr            stake_;
   BeaconServicePtr           beacon_;

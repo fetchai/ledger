@@ -26,16 +26,17 @@ class Variant;
 
 namespace ledger {
 
-class StakeManager;
 class BlockCoordinator;
 class StorageUnitInterface;
 
 class GenesisFileCreator
 {
 public:
+  using ConsensusPtr     = std::shared_ptr<fetch::ledger::Consensus>;
+
   // Construction / Destruction
   GenesisFileCreator(BlockCoordinator &block_coordinator, StorageUnitInterface &storage_unit,
-                     StakeManager *stake_manager);
+                     ConsensusPtr consensus);
   GenesisFileCreator(GenesisFileCreator const &) = delete;
   GenesisFileCreator(GenesisFileCreator &&)      = delete;
   ~GenesisFileCreator()                          = default;
@@ -48,20 +49,12 @@ public:
 
 private:
   void LoadState(variant::Variant const &object);
-  void LoadStake(variant::Variant const &object);
+  void LoadConsensus(variant::Variant const &object);
 
   BlockCoordinator &    block_coordinator_;
   StorageUnitInterface &storage_unit_;
-  StakeManager *        stake_{nullptr};
+  ConsensusPtr          consensus_;
 };
-
-inline GenesisFileCreator::GenesisFileCreator(BlockCoordinator &    block_coordinator,
-                                              StorageUnitInterface &storage_unit,
-                                              StakeManager *        stake_manager)
-  : block_coordinator_{block_coordinator}
-  , storage_unit_{storage_unit}
-  , stake_{stake_manager}
-{}
 
 }  // namespace ledger
 }  // namespace fetch
