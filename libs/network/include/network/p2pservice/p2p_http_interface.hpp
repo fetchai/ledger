@@ -234,14 +234,16 @@ private:
       Variant &block = block_list[block_idx++];
 
       // format the block number
-      block                 = Variant::Object();
-      block["hash"]         = "0x" + b->body.hash.ToHex();
-      block["previousHash"] = "0x" + b->body.previous_hash.ToHex();
-      block["merkleHash"]   = "0x" + b->body.merkle_hash.ToHex();
-      block["proof"]        = "0x" + b->proof.header().ToHex();
-      block["miner"]        = b->body.miner.display();
-      block["blockNumber"]  = b->body.block_number;
-      block["timestamp"]    = b->body.timestamp;
+      block                  = Variant::Object();
+      block["hash"]          = "0x" + b->body.hash.ToHex();
+      block["previousHash"]  = "0x" + b->body.previous_hash.ToHex();
+      block["merkleHash"]    = "0x" + b->body.merkle_hash.ToHex();
+      block["proof"]         = "0x" + b->proof.header().ToHex();
+      block["miner"]         = b->body.miner.display();
+      block["blockNumber"]   = b->body.block_number;
+      block["timestamp"]     = b->body.timestamp;
+      block["random_beacon"] = b->body.random_beacon;
+      block["weight"]        = b->weight;
 
       if (include_transactions)
       {

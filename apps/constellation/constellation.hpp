@@ -85,12 +85,15 @@ public:
     uint32_t     max_peers{0};
     uint32_t     transient_peers{0};
     uint32_t     block_interval_ms{0};
+    uint64_t     max_committee_size{0};
+    uint64_t     stake_delay_period{0};
+    uint64_t     aeon_period{0};
     uint32_t     block_difficulty{DEFAULT_BLOCK_DIFFICULTY};
     uint32_t     peers_update_cycle_ms{0};
     bool         disable_signing{false};
     bool         sign_broadcasts{false};
-    bool         load_state_file{false};
-    std::string  stakefile_location{""};
+    bool         load_genesis_file{false};
+    std::string  genesis_file_location{""};
     bool         proof_of_stake{false};
     NetworkMode  network_mode{NetworkMode::PUBLIC_NETWORK};
     FeatureFlags features{};
