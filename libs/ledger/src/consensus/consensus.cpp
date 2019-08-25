@@ -79,7 +79,7 @@ void Consensus::UpdateCurrentBlock(Block const &current)
     uint32_t threshold = uint32_t(std::ceil(cabinet_member_list.size() * threshold_));
 
     FETCH_LOG_INFO(LOGGING_NAME, "Block: ", current_block_number_,
-                   " creating new aeon. Periodicity: ", aeon_period_, " threshold: ", threshold,
+                   " creating new aeon. Periodicity: ", aeon_period_, " threshold: ", threshold, " as double: ", threshold_,
                    " cabinet size: ", cabinet_member_list.size());
 
     beacon_->StartNewCabinet(cabinet_member_list, threshold, current_block_number_,
@@ -182,12 +182,12 @@ void Consensus::Refresh()
 {
 }
 
-double & Consensus::threshold()
+double &Consensus::threshold()
 {
   return threshold_;
 }
 
-uint64_t & Consensus::max_committee_size()
+uint64_t &Consensus::max_committee_size()
 {
   return max_committee_size_;
 }

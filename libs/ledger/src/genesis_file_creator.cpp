@@ -260,11 +260,13 @@ void GenesisFileCreator::LoadConsensus(Variant const &object)
     if(variant::Extract(object, "committeeSize", parsed_value))
     {
       consensus_->max_committee_size() = parsed_value;
+      FETCH_LOG_INFO(LOGGING_NAME, "parsed1");
     }
 
     if(variant::Extract(object, "threshold", parsed_value_double))
     {
       consensus_->threshold() = parsed_value_double;
+      FETCH_LOG_INFO(LOGGING_NAME, "parsed2");
     }
 
     if (!object.Has("stakers"))
