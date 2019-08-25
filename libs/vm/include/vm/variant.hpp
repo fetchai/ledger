@@ -42,148 +42,148 @@ union Primitive
   }
 
   template <typename T>
-  constexpr auto Get() const noexcept;
+  auto Get() const noexcept;
 
-  constexpr void Set(bool value) noexcept
+  void Set(bool value) noexcept
   {
     ui8 = uint8_t(value);
   }
 
-  constexpr void Set(int8_t value) noexcept
+  void Set(int8_t value) noexcept
   {
     i8 = value;
   }
 
-  constexpr void Set(uint8_t value) noexcept
+  void Set(uint8_t value) noexcept
   {
     ui8 = value;
   }
 
-  constexpr void Set(int16_t value) noexcept
+  void Set(int16_t value) noexcept
   {
     i16 = value;
   }
 
-  constexpr void Set(uint16_t value) noexcept
+  void Set(uint16_t value) noexcept
   {
     ui16 = value;
   }
 
-  constexpr void Set(int32_t value) noexcept
+  void Set(int32_t value) noexcept
   {
     i32 = value;
   }
 
-  constexpr void Set(uint32_t value) noexcept
+  void Set(uint32_t value) noexcept
   {
     ui32 = value;
   }
 
-  constexpr void Set(int64_t value) noexcept
+  void Set(int64_t value) noexcept
   {
     i64 = value;
   }
 
-  constexpr void Set(uint64_t value) noexcept
+  void Set(uint64_t value) noexcept
   {
     ui64 = value;
   }
 
-  constexpr void Set(float value) noexcept
+  void Set(float value) noexcept
   {
     f32 = value;
   }
 
-  constexpr void Set(double value) noexcept
+  void Set(double value) noexcept
   {
     f64 = value;
   }
 
-  constexpr void Set(fixed_point::fp32_t value) noexcept
+  void Set(fixed_point::fp32_t value) noexcept
   {
     i32 = value.Data();
   }
 
-  constexpr void Set(fixed_point::fp64_t value) noexcept
+  void Set(fixed_point::fp64_t value) noexcept
   {
     i64 = value.Data();
   }
 };
 
 template <>
-constexpr auto Primitive::Get<bool>() const noexcept
+inline auto Primitive::Get<bool>() const noexcept
 {
   return bool(ui8);
 }
 
 template <>
-constexpr auto Primitive::Get<int8_t>() const noexcept
+inline auto Primitive::Get<int8_t>() const noexcept
 {
   return i8;
 }
 
 template <>
-constexpr auto Primitive::Get<uint8_t>() const noexcept
+inline auto Primitive::Get<uint8_t>() const noexcept
 {
   return ui8;
 }
 
 template <>
-constexpr auto Primitive::Get<int16_t>() const noexcept
+inline auto Primitive::Get<int16_t>() const noexcept
 {
   return i16;
 }
 
 template <>
-constexpr auto Primitive::Get<uint16_t>() const noexcept
+inline auto Primitive::Get<uint16_t>() const noexcept
 {
   return ui16;
 }
 
 template <>
-constexpr auto Primitive::Get<int32_t>() const noexcept
+inline auto Primitive::Get<int32_t>() const noexcept
 {
   return i32;
 }
 
 template <>
-constexpr auto Primitive::Get<uint32_t>() const noexcept
+inline auto Primitive::Get<uint32_t>() const noexcept
 {
   return ui32;
 }
 
 template <>
-constexpr auto Primitive::Get<int64_t>() const noexcept
+inline auto Primitive::Get<int64_t>() const noexcept
 {
   return i64;
 }
 
 template <>
-constexpr auto Primitive::Get<uint64_t>() const noexcept
+inline auto Primitive::Get<uint64_t>() const noexcept
 {
   return ui64;
 }
 
 template <>
-constexpr auto Primitive::Get<float>() const noexcept
+inline auto Primitive::Get<float>() const noexcept
 {
   return f32;
 }
 
 template <>
-constexpr auto Primitive::Get<double>() const noexcept
+inline auto Primitive::Get<double>() const noexcept
 {
   return f64;
 }
 
 template <>
-constexpr auto Primitive::Get<fixed_point::fp32_t>() const noexcept
+inline auto Primitive::Get<fixed_point::fp32_t>() const noexcept
 {
   return fixed_point::fp32_t::FromBase(i32);
 }
 
 template <>
-constexpr auto Primitive::Get<fixed_point::fp64_t>() const noexcept
+inline auto Primitive::Get<fixed_point::fp64_t>() const noexcept
 {
   return fixed_point::fp64_t::FromBase(i64);
 }
@@ -235,12 +235,12 @@ struct Variant
     Construct(other, other_type_id);
   }
 
-  constexpr void Construct() noexcept
+  void Construct() noexcept
   {
     type_id = TypeIds::Unknown;
   }
 
-  constexpr void Construct(Variant const &other) noexcept
+  void Construct(Variant const &other) noexcept
   {
     type_id = other.type_id;
     if (IsPrimitive())
@@ -253,7 +253,7 @@ struct Variant
     }
   }
 
-  constexpr void Construct(Variant &&other) noexcept
+  void Construct(Variant &&other) noexcept
   {
     type_id = other.type_id;
     if (IsPrimitive())
@@ -268,35 +268,35 @@ struct Variant
   }
 
   template <typename T>
-  constexpr std::enable_if_t<IsPrimitive<T>::value> Construct(T      other,
-                                                              TypeId other_type_id) noexcept
+  std::enable_if_t<IsPrimitive<T>::value> Construct(T      other,
+                                                    TypeId other_type_id) noexcept
   {
     primitive.Set(other);
     type_id = other_type_id;
   }
 
   template <typename T>
-  constexpr std::enable_if_t<IsPtr<T>::value> Construct(T const &other,
-                                                        TypeId   other_type_id) noexcept
+  std::enable_if_t<IsPtr<T>::value> Construct(T const &other,
+                                              TypeId   other_type_id) noexcept
   {
     new (&object) Ptr<Object>(other);
     type_id = other_type_id;
   }
 
   template <typename T>
-  constexpr std::enable_if_t<IsPtr<T>::value> Construct(T &&other, TypeId other_type_id) noexcept
+  std::enable_if_t<IsPtr<T>::value> Construct(T &&other, TypeId other_type_id) noexcept
   {
     new (&object) Ptr<Object>(std::forward<T>(other));
     type_id = other_type_id;
   }
 
-  constexpr void Construct(Primitive other, TypeId other_type_id) noexcept
+  void Construct(Primitive other, TypeId other_type_id) noexcept
   {
     primitive = other;
     type_id   = other_type_id;
   }
 
-  constexpr Variant &operator=(Variant const &other) noexcept
+  Variant &operator=(Variant const &other) noexcept
   {
     if (this != &other)
     {
@@ -334,7 +334,7 @@ struct Variant
     return *this;
   }
 
-  constexpr Variant &operator=(Variant &&other) noexcept
+  Variant &operator=(Variant &&other) noexcept
   {
     if (this != &other)
     {
@@ -374,7 +374,7 @@ struct Variant
   }
 
   template <typename T>
-  constexpr std::enable_if_t<IsPrimitive<T>::value> Assign(T other, TypeId other_type_id) noexcept
+  std::enable_if_t<IsPrimitive<T>::value> Assign(T other, TypeId other_type_id) noexcept
   {
     if (!IsPrimitive())
     {
@@ -385,7 +385,7 @@ struct Variant
   }
 
   template <typename T>
-  constexpr std::enable_if_t<IsPtr<T>::value> Assign(T const &other, TypeId other_type_id) noexcept
+  std::enable_if_t<IsPtr<T>::value> Assign(T const &other, TypeId other_type_id) noexcept
   {
     if (IsPrimitive())
     {
@@ -399,7 +399,7 @@ struct Variant
   }
 
   template <typename T>
-  constexpr std::enable_if_t<IsPtr<T>::value> Assign(T &&other, TypeId other_type_id) noexcept
+  std::enable_if_t<IsPtr<T>::value> Assign(T &&other, TypeId other_type_id) noexcept
   {
     if (IsPrimitive())
     {
@@ -413,33 +413,33 @@ struct Variant
   }
 
   template <typename T>
-  constexpr std::enable_if_t<IsVariant<T>::value> Assign(T const &other,
-                                                         TypeId /* other_type_id */) noexcept
+  std::enable_if_t<IsVariant<T>::value> Assign(T const &other,
+                                               TypeId /* other_type_id */) noexcept
   {
     operator=(other);
   }
 
   template <typename T>
-  constexpr std::enable_if_t<IsVariant<T>::value> Assign(T &&other,
-                                                         TypeId /* other_type_id */) noexcept
+  std::enable_if_t<IsVariant<T>::value> Assign(T &&other,
+                                               TypeId /* other_type_id */) noexcept
   {
     operator=(std::forward<T>(other));
   }
 
   template <typename T>
-  constexpr std::enable_if_t<IsPrimitive<T>::value, T> Get() const noexcept
+  std::enable_if_t<IsPrimitive<T>::value, T> Get() const noexcept
   {
     return primitive.Get<T>();
   }
 
   template <typename T>
-  constexpr std::enable_if_t<IsPtr<T>::value, T> Get() const noexcept
+  std::enable_if_t<IsPtr<T>::value, T> Get() const noexcept
   {
     return object;
   }
 
   template <typename T>
-  constexpr std::enable_if_t<IsVariant<T>::value, T> Get() const noexcept
+  std::enable_if_t<IsVariant<T>::value, T> Get() const noexcept
   {
     T variant;
     variant.type_id = type_id;
@@ -455,14 +455,14 @@ struct Variant
   }
 
   template <typename T>
-  constexpr std::enable_if_t<IsPrimitive<T>::value, T> Move() noexcept
+  std::enable_if_t<IsPrimitive<T>::value, T> Move() noexcept
   {
     type_id = TypeIds::Unknown;
     return primitive.Get<T>();
   }
 
   template <typename T>
-  constexpr std::enable_if_t<IsPtr<T>::value, T> Move() noexcept
+  std::enable_if_t<IsPtr<T>::value, T> Move() noexcept
   {
     type_id = TypeIds::Unknown;
     return std::move(object);
