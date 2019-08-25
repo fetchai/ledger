@@ -31,6 +31,7 @@
 #include "ledger/upow/synergetic_miner_interface.hpp"
 #include "moment/deadline_timer.hpp"
 #include "telemetry/telemetry.hpp"
+#include "ledger/consensus/consensus.hpp"
 
 #include <atomic>
 #include <chrono>
@@ -44,10 +45,6 @@ namespace fetch {
 
 namespace core {
 class FeatureFlags;
-}
-
-namespace beacon {
-class BeaconService;
 }
 
 namespace crypto {
@@ -65,8 +62,6 @@ class ExecutionManagerInterface;
 class MainChain;
 class StorageUnitInterface;
 class BlockSinkInterface;
-class StakeManagerInterface;
-class StakeManager;
 
 /**
  * The Block Coordinator is in charge of executing all the blocks that come into the system. It will
@@ -156,8 +151,9 @@ public:
   using ConstByteArray   = byte_array::ConstByteArray;
   using DAGPtr           = std::shared_ptr<ledger::DAGInterface>;
   using ProverPtr        = std::shared_ptr<crypto::Prover>;
-  using StakeManagerPtr  = std::shared_ptr<StakeManager>;
-  using BeaconServicePtr = std::shared_ptr<fetch::beacon::BeaconService>;
+  //using StakeManagerPtr  = std::shared_ptr<StakeManager>; / TODO(HUT): delete
+  //using BeaconServicePtr = std::shared_ptr<fetch::beacon::BeaconService>;
+  using ConsensusPtr           = std::shared_ptr<ledger::Consensus>;
 
   enum class State
   {
@@ -191,12 +187,12 @@ public:
   static char const *ToString(State state);
 
   // Construction / Destruction
-  BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr stake_mgr,
+  BlockCoordinator(MainChain &chain, DAGPtr dag, 
                    ExecutionManagerInterface &execution_manager, StorageUnitInterface &storage_unit,
                    BlockPackerInterface &packer, BlockSinkInterface &block_sink,
                    core::FeatureFlags const &features, ProverPtr const &prover,
                    std::size_t num_lanes, std::size_t num_slices, std::size_t block_difficulty,
-                   BeaconServicePtr beacon, uint64_t aeon_period = 0);
+                   ConsensusPtr consensus);
   BlockCoordinator(BlockCoordinator const &) = delete;
   BlockCoordinator(BlockCoordinator &&)      = delete;
   ~BlockCoordinator()                        = default;
@@ -313,8 +309,9 @@ private:
   /// @{
   MainChain &                chain_;              ///< Ref to system chain
   DAGPtr                     dag_;                ///< Ref to DAG
-  StakeManagerPtr            stake_;              ///< Ref to Stake manager
-  BeaconServicePtr           beacon_;             ///< Ref to beacon
+  /*StakeManagerPtr            stake_;              ///< Ref to Stake manager*/ // TODO(HUT):  delete
+  /*BeaconServicePtr           beacon_;             ///< Ref to beacon*/  // TODO(HUT): delete
+  ConsensusPtr               consensus_;
   ExecutionManagerInterface &execution_manager_;  ///< Ref to system execution manager
   StorageUnitInterface &     storage_unit_;       ///< Ref to the storage unit
   BlockPackerInterface &     block_packer_;       ///< Ref to the block packer
@@ -360,7 +357,6 @@ private:
   /// }
 
   /// @name Variables relating to POS consensus
-  uint64_t aeon_period_{0};      ///< Periodicity of committee renewal
   Flag     syncronised_{false};  ///< Flag to signal if this node is synchronised, or catching up
   /// @}
 

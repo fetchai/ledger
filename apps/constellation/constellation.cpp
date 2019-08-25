@@ -79,6 +79,9 @@ using StakeManagerPtr  = std::shared_ptr<ledger::StakeManager>;
 using EntropyPtr       = std::unique_ptr<ledger::EntropyGeneratorInterface>;
 using ConstByteArray   = byte_array::ConstByteArray;
 using BeaconServicePtr = std::shared_ptr<fetch::beacon::BeaconService>;
+using ConsensusPtr     = Constellation::ConsensusPtr;
+using MainChain        = ledger::MainChain;
+using Identity         = crypto::Identity;
 
 static const std::size_t HTTP_THREADS{4};
 static char const *      GENESIS_FILENAME = "genesis_file.json";
@@ -170,6 +173,18 @@ StakeManagerPtr CreateStakeManager(Constellation::Config const &cfg)
   return mgr;
 }
 
+ConsensusPtr CreateConsensus(Constellation::Config const &cfg, StakeManagerPtr stake, BeaconServicePtr beacon, MainChain const &chain, Identity const &identity)
+{
+  ConsensusPtr consensus{};
+
+  if (stake)
+  {
+    consensus = std::make_shared<ledger::Consensus>(stake, beacon, chain, identity, cfg.aeon_period, cfg.max_committee_size);
+  }
+
+  return consensus;
+}
+
 BeaconServicePtr CreateBeaconService(Constellation::Config const &cfg, MuddleEndpoint &endpoint,
                                      Constellation::CertificatePtr certificate)
 {
@@ -222,6 +237,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   , dag_{GenerateDAG(cfg_.features.IsEnabled("synergetic"), "dag_db_", true, certificate)}
   , beacon_{CreateBeaconService(cfg_, muddle_.AsEndpoint(), certificate)}
   , stake_{CreateStakeManager(cfg_)}
+  , consensus_{CreateConsensus(cfg_, stake_, beacon_, chain_, certificate->identity())}
   , execution_manager_{std::make_shared<ExecutionManager>(
         cfg_.num_executors, cfg_.log2_num_lanes, storage_,
         [this] {
@@ -232,12 +248,12 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
            ledger::MainChain::Mode::LOAD_PERSISTENT_DB}
   , block_packer_{cfg_.log2_num_lanes}
   , block_coordinator_{chain_,          dag_,
-                       stake_,          *execution_manager_,
+                                        *execution_manager_,
                        *storage_,       block_packer_,
                        *this,           cfg_.features,
                        certificate,     cfg_.num_lanes(),
                        cfg_.num_slices, cfg_.block_difficulty,
-                       beacon_,         cfg_.aeon_period}
+                       consensus_}
   , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_,
                                                               cfg_.network_mode)}
   , tx_processor_{dag_, *storage_, block_packer_, tx_status_cache_, cfg_.processor_threads}

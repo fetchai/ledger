@@ -70,6 +70,7 @@ public:
   using NetworkMode      = ledger::MainChainRpcService::Mode;
   using FeatureFlags     = core::FeatureFlags;
   using ConstByteArray   = byte_array::ConstByteArray;
+  using ConsensusPtr     = std::shared_ptr<ledger::Consensus>;
 
   static constexpr uint32_t DEFAULT_BLOCK_DIFFICULTY = 6;
 
@@ -145,9 +146,7 @@ private:
   using SynergeticMinerPtr     = std::unique_ptr<ledger::SynergeticMinerInterface>;
   using NaiveSynergeticMiner   = ledger::NaiveSynergeticMiner;
   using StakeManagerPtr        = std::shared_ptr<ledger::StakeManager>;
-  using EntropyPtr             = std::unique_ptr<ledger::EntropyGeneratorInterface>;
-
-  using BeaconServicePtr = std::shared_ptr<fetch::beacon::BeaconService>;
+  using BeaconServicePtr       = std::shared_ptr<fetch::beacon::BeaconService>;
 
   using ShardConfigs  = ledger::ShardConfigs;
   using TxStatusCache = ledger::TransactionStatusCache;
@@ -190,7 +189,8 @@ private:
   /// @name Staking
   /// @{
   BeaconServicePtr beacon_;
-  StakeManagerPtr  stake_;  ///< The stake system
+  StakeManagerPtr  stake_;      ///< The stake system
+  ConsensusPtr     consensus_;
   /// @}
 
   /// @name Block Processing
