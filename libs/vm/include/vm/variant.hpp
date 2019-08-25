@@ -1045,16 +1045,9 @@ public:
   }
 };
 
-template <TypeId id>
-using TypeIdCase = VariantView<IdToType<id>>;
-
+// Typeid sets
 template <TypeId... ids>
-using TypeIdCases = pack::Pack<TypeIdCase<ids>...>;
-
-using DefaultObjectCase = type_util::DefaultCase<DefaultVariantView>;
-
-template <TypeId... ids>
-using TypeIdSequence = std::integer_sequence<TypeId, ids...>;
+using TypeIdSequence = pack::Pack<IdToType<ids>...>;
 
 using UnsignedIntegerIds =
     TypeIdSequence<TypeIds::UInt8, TypeIds::UInt16, TypeIds::UInt32, TypeIds::UInt64>;
@@ -1062,134 +1055,166 @@ using UnsignedIntegerIds =
 using SignedIntegerIds =
     TypeIdSequence<TypeIds::Int8, TypeIds::Int16, TypeIds::Int32, TypeIds::Int64>;
 
+using IntegralTypeIds = pack::ConcatT<UnsignedIntegerIds, SignedIntegerIds>;
+
 using FloatingPointIds = TypeIdSequence<TypeIds::Float32, TypeIds::Float64>;
-using FixedPointIds    = TypeIdSequence<TypeIds::Fixed32, TypeIds::Fixed64>;
 
-using IntegralIds = pack::ConcatT<UnsignedIntegerIds, SignedIntegerIds>;
+using FixedPointIds = TypeIdSequence<TypeIds::Fixed32, TypeIds::Fixed64>;
 
-using NumericTypes = pack::ConcatT<IntegralTypes, FloatingPointTypes, FixedPointTypes>;
+using RealTypeIds = pack::ConcatT<FloatingPointIds, FixedPointIds>;
 
-using PrimitiveTypes = pack::ConsT<TypeIdCase<TypeIds::Bool>, NumericTypes>;
+using NumericTypeIds = pack::ConcatT<IntegralTypeIds, RealTypeIds>;
 
-using BuiltinTypes = pack::ConcatT<PrimitiveTypes, TypeIdCases<TypeIds::String, TypeIds::Address>>;
+using PrimitiveTypeIds = pack::ConsT<TypeIdConstant<TypeIds::Bool>, NumericTypeIds>;
 
-using NonInstantiatableTypes = TypeIdCases<TypeIds::Null, TypeIds::Void>;
+using BuiltinTypeIds = pack::ConcatT<PrimitiveTypeIds, TypeIdSequence<TypeIds::String, TypeIds::Address>>;
+
+using NonInstantiatableTypeIds = TypeIdSequence<TypeIds::Null, TypeIds::Void>;
+
+// Variant view sets, defined for those typeid sets
+template <class... TypeIdValues>
+using TypeIdCases = pack::TransformT<VariantView, pack::ConcatT<TypeIdValues...>>;
+
+using DefaultObjectCase = type_util::DefaultCase<DefaultVariantView>;
+
+using NonInstantiatableTypes = TypeIdCases<NonInstantaitableTypeIds>;
+
+using UnsignedIntegerTypes = TypeIdCases<UnsignedIntegerIds>;
+
+using SignedIntegerTypes = TypeIdCases<SignedIntegerIds>;
+
+using IntegralTypes = TypeIdCases<IntegralTypeIds>;
+
+using FloatingPointTypes = TypeIdCases<FloatingPointIds>;
+
+using FixedPointTypes = TypeIdCases<FixedPointIds>;
+
+using RealTypes = TypeIdCases<RealTypeIds>;
+
+using NumericTypes = TypeIdCases<NumericTypeIds>;
+
+using PrimitiveTypes = TypeIdCases<PrimitiveTypeIds>;
+
+using BuiltinTypes = TypeIdCases<BuiltinTypeIds>;
+
+using NonInstantiatableTypes = TypeIdCases<NonInstantiatableTypeIds>;
 
 template <class... Cases, class F, class... Variants>
 constexpr auto ApplyFunctor(TypeId type_id, F &&f, Variants &&... variants)
 {
-  return type_util::Switch<Cases...>::Invoke(type_id, std::forward<F>(f),
-                                             std::forward<Variants>(variants)...);
+  return pack::TransformT<type_util::Switch, pack::ConcatT<Cases...>>::Invoke(
+	  type_id,
+	  std::forward<F>(f),
+	  std::forward<Variants>(variants)...);
 }
 
 template <class F, class... Variants>
 constexpr auto ApplyIntegralFunctor(TypeId type_id, F &&f, Variants &&... variants)
 {
-  return ApplyFunctor<IntegralTypes>(type_id, std::forward<F>(f),
-                                     std::forward<Variants>(variants)...);
+  return ApplyFunctor<IntegralTypes>(
+	  type_id,
+	  std::forward<F>(f),
+	  std::forward<Variants>(variants)...);
 }
 
 template <class F, class... Variants>
 constexpr auto ApplyNumericFunctor(TypeId type_id, F &&f, Variants &&... variants)
 {
-  return ApplyFunctor<NumericTypes>(type_id, std::forward<F>(f),
-                                    std::forward<Variants>(variants)...);
+  return ApplyFunctor<NumericTypes>(
+	  type_id,
+	  std::forward<F>(f),
+	  std::forward<Variants>(variants)...);
 }
 
 template <class F, class... Variants>
 constexpr auto ApplyPrimitiveFunctor(TypeId type_id, F &&f, Variants &&... variants)
 {
-  return ApplyFunctor<PrimitiveTypes>(type_id, std::forward<F>(f),
-                                      std::forward<Variants>(variants)...);
+  return ApplyFunctor<PrimitiveTypes>(
+	  type_id,
+	  std::forward<F>(f),
+	  std::forward<Variants>(variants)...);
 }
 
 template <class F, class... Variants>
 constexpr auto ApplyBuiltinFunctor(TypeId type_id, F &&f, Variants &&... variants)
 {
-  return ApplyFunctor<BuiltinTypes>(type_id, std::forward<F>(f),
-                                    std::forward<Variants>(variants)...);
+  return ApplyFunctor<BuiltinTypes>(
+	  type_id,
+	  std::forward<F>(f),
+	  std::forward<Variants>(variants)...);
 }
 
-template <TypeId... type_ids, class F>
+template <class... Views, class F>
 constexpr auto TypeIdSlot(F &&f)
 {
-  return value_util::Slot<TypeIdCases<type_ids...>>(std::forward<F>(f));
+  return pack::ApplyT<value_util::Slot, pack::ConcatT<Views...>>(std::forward<F>(f));
 }
 
-template <TypeId... type_ids, class F>
+template <class... Views, class F>
 constexpr auto DefaultSlot(F &&f)
 {
-  return value_util::Slot<TypeIdCases<type_ids...>, DefaultVariantView>(std::forward<F>(f));
+  return pack::ApplyT<value_util::Slot, pack::ConcatT<Cases..., DefaultVariantView>>(std::forward<F>(f));
 }
 
 template <class F>
 constexpr auto IntegralSlot(F &&f)
 {
-  return value_util::Slot<IntegralTypes>(std::forward<F>(f));
+  return TypeIdSlot<IntegralTypes>(std::forward<F>(f));
 }
 
 template <class F>
 constexpr auto NumericSlot(F &&f)
 {
-  return value_util::Slot<NumericTypes>(std::forward<F>(f));
+  return TypeIdSlot<NumericTypes>(std::forward<F>(f));
 }
 
 template <class F>
 constexpr auto PrimitiveSlot(F &&f)
 {
-  return value_util::Slot<PrimitiveTypes>(std::forward<F>(f));
+  return TypeIdSlot<PrimitiveTypes>(std::forward<F>(f));
 }
 
 template <class F>
 constexpr auto BuiltinSlot(F &&f)
 {
-  return value_util::Slot<BuiltinTypes>(std::forward<F>(f));
+  return TypeIdSlot<BuiltinTypes>(std::forward<F>(f));
 }
 
-template <TypeId... type_ids, class F>
+template <class... TypeIdValues, class F>
 constexpr auto NullarySlot(F &&f)
 {
-  return value_util::Slot<IdToType<type_ids>...>(std::forward<F>(f));
+  return TypeIdSlot<TypeIdValues...>(std::forward<F>(f));
 }
 
-template <TypeId... type_ids, class F>
+template <class... TypeIdValues, class F>
 constexpr auto DefaultNullarySlot(F &&f)
 {
-  return value_util::Slot<IdToType<type_ids>..., VariantValue<TypeIds::NumReserved, Ptr<Object>>>(
-      std::forward<F>(f));
+  return NullarySlot<TypeIdValues..., VariantValue<TypeIds::NumReserved, Ptr<Object>>>(
+	  std::forward<F>(f));
 }
 
 template <class F>
 constexpr auto IntegralNullarySlot(F &&f)
 {
-  return NullarySlot<TypeIds::Int8, TypeIds::UInt8, TypeIds::Int16, TypeIds::UInt16, TypeIds::Int32,
-                     TypeIds::UInt32, TypeIds::Int64, TypeIds::UInt64>(std::forward<F>(f));
+  return NullarySlot<IntegralTypeIds>(std::forward<F>(f));
 }
 
 template <class F>
 constexpr auto NumericNullarySlot(F &&f)
 {
-  return NullarySlot<TypeIds::Int8, TypeIds::UInt8, TypeIds::Int16, TypeIds::UInt16, TypeIds::Int32,
-                     TypeIds::UInt32, TypeIds::Int64, TypeIds::UInt64, TypeIds::Float32,
-                     TypeIds::Float64, TypeIds::Fixed32, TypeIds::Fixed64>(std::forward<F>(f));
+  return NullarySlot<NumericTypeIds>(std::forward<F>(f));
 }
 
 template <class F>
 constexpr auto PrimitiveNullarySlot(F &&f)
 {
-  return NullarySlot<TypeIds::Bool, TypeIds::Int8, TypeIds::UInt8, TypeIds::Int16, TypeIds::UInt16,
-                     TypeIds::Int32, TypeIds::UInt32, TypeIds::Int64, TypeIds::UInt64,
-                     TypeIds::Float32, TypeIds::Float64, TypeIds::Fixed32, TypeIds::Fixed64>(
-      std::forward<F>(f));
+  return NullarySlot<PrimitiveTypeIds>(std::forward<F>(f));
 }
 
 template <class F>
 constexpr auto BuiltinNullarySlot(F &&f)
 {
-  return NullarySlot<TypeIds::Bool, TypeIds::Int8, TypeIds::UInt8, TypeIds::Int16, TypeIds::UInt16,
-                     TypeIds::Int32, TypeIds::UInt32, TypeIds::Int64, TypeIds::UInt64,
-                     TypeIds::Float32, TypeIds::Float64, TypeIds::Fixed32, TypeIds::Fixed64,
-                     TypeIds::String, TypeIds::Address>(std::forward<F>(f));
+  return NullarySlot<BuiltinTypeIds>(std::forward<F>(f));
 }
 
 }  // namespace vm

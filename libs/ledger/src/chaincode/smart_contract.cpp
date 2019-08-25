@@ -385,16 +385,14 @@ void AddToParameterPack(vm::VM *vm, vm::ParameterPack &params, vm::TypeId expect
                    vm::DefaultObjectCase>(
       expected_type,
       value_util::Slots(
-          vm::NullarySlot<vm::TypeIds::Bool, vm::TypeIds::Int8, vm::TypeIds::UInt8,
-                          vm::TypeIds::Int16, vm::TypeIds::UInt16, vm::TypeIds::Int32,
-                          vm::TypeIds::UInt32, vm::TypeIds::Int64, vm::TypeIds::UInt64>(
+          vm::NullarySlot<vm::IdToType<vm::TypeIds::Bool>, vm::IntegralTypeIds>(
               [&](auto cs) {
                 using Case = decltype(cs);
                 AddToParameterPack<typename Case::type>(params, variant);
               }),
-          vm::NullarySlot<vm::TypeIds::Address>(
+          vm::NullarySlot<vm::IdToType<vm::TypeIds::Address>>(
               [&](auto) { AddAddressToParameterPack(vm, params, variant); }),
-          vm::NullarySlot<vm::TypeIds::String>(
+          vm::NullarySlot<vm::IdToType<vm::TypeIds::String>>(
               [&](auto) { AddStringToParameterPack(vm, params, variant); }),
           vm::DefaultNullarySlot([&](auto) {
             AddStructuredDataObjectToParameterPack(vm, expected_type, params, variant);
@@ -661,11 +659,11 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
                 response["result"] = v.Get();
                 return Status::OK;
               }),
-              vm::TypeIdSlot<vm::TypeIds::Null>([&](auto &&) {
+              vm::TypeIdSlot<vm::IdToType<vm::TypeIds::Null>>([&](auto &&) {
                 response["result"] = variant::Variant::Null();
                 return Status::OK;
               }),
-              vm::TypeIdSlot<vm::TypeIds::String>([&](auto &&v) {
+              vm::TypeIdSlot<vm::IdToType<vm::TypeIds::String>>([&](auto &&v) {
                 response["result"] = v.Get()->str;
                 return Status::OK;
               }),
