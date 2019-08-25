@@ -110,8 +110,9 @@ def main():
     # form the genesis data
     genesis_file = {
         'version': 2,
-        'stake': {
+        'consensus': {
             'committeeSize': len(cabinet),
+            'threshold': 0.8,
             'stakers': stakes,
         },
         'accounts': state,
