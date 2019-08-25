@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include <unordered_map>
+#include <memory>
 
 namespace fetch {
 namespace ledger {
