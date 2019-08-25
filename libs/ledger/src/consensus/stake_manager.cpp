@@ -193,8 +193,6 @@ StakeManager::CommitteePtr StakeManager::GetCommittee(Block const &previous)
 
     DeterministicShuffle(committee_copy, previous.body.random_beacon);
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Rasdfasdf*****");
-
     return std::make_shared<Committee>(committee_copy);
   }
 }

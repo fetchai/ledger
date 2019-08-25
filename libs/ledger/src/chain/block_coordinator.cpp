@@ -27,9 +27,9 @@
 #include "ledger/chain/constants.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/transaction.hpp"
-#include "ledger/consensus/stake_manager.hpp"
-#include "ledger/consensus/stake_manager_interface.hpp"
-#include "ledger/consensus/stake_snapshot.hpp"
+//#include "ledger/consensus/stake_manager.hpp"
+//#include "ledger/consensus/stake_manager_interface.hpp"
+//#include "ledger/consensus/stake_snapshot.hpp"
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/execution_manager_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
@@ -39,12 +39,12 @@
 #include "telemetry/counter.hpp"
 #include "telemetry/registry.hpp"
 
-#include "beacon/beacon_service.hpp"
-#include "beacon/beacon_setup_protocol.hpp"
-#include "beacon/beacon_setup_service.hpp"
-#include "beacon/cabinet_member_details.hpp"
-#include "beacon/entropy.hpp"
-#include "beacon/event_manager.hpp"
+//#include "beacon/beacon_service.hpp"
+//#include "beacon/beacon_setup_protocol.hpp"
+//#include "beacon/beacon_setup_service.hpp"
+//#include "beacon/cabinet_member_details.hpp"
+//#include "beacon/entropy.hpp"
+//#include "beacon/event_manager.hpp"
 
 #include <cassert>
 #include <chrono>
@@ -96,18 +96,17 @@ SynergeticExecMgrPtr CreateSynergeticExecutor(core::FeatureFlags const &features
  * @param chain The reference to the main change
  * @param execution_manager  The reference to the execution manager
  */
-BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr stake,
+BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
                                    ExecutionManagerInterface &execution_manager,
                                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
                                    BlockSinkInterface &      block_sink,
                                    core::FeatureFlags const &features, ProverPtr const &prover,
                                    std::size_t num_lanes, std::size_t num_slices,
-                                   std::size_t block_difficulty, BeaconServicePtr beacon,
-                                   uint64_t aeon_period)
+                                   std::size_t block_difficulty, ConsensusPtr consensus
+                                   )
   : chain_{chain}
   , dag_{std::move(dag)}
-  , stake_{std::move(stake)}
-  , beacon_{std::move(beacon)}
+  , consensus_{std::move(consensus)}
   , execution_manager_{execution_manager}
   , storage_unit_{storage_unit}
   , block_packer_{packer}
@@ -125,7 +124,6 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr
   , exec_wait_periodic_{EXEC_NOTIFY_INTERVAL}
   , syncing_periodic_{NOTIFY_INTERVAL}
   , synergetic_exec_mgr_{CreateSynergeticExecutor(features, dag, storage_unit_)}
-  , aeon_period_{aeon_period}
   , reload_state_count_{telemetry::Registry::Instance().CreateCounter(
         "ledger_block_coordinator_reload_state_total",
         "The total number of times in the reload state")}
@@ -476,57 +474,30 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
   {
     return State::RESET;
   }
-  // TODO(HUT): this clock interferes with the timings in the stake manager
-  else if (mining_ && mining_enabled_ && ((Clock::now() >= next_block_time_) || stake_))
+  else if (mining_ && mining_enabled_ && ((Clock::now() >= next_block_time_) || consensus_))
   {
-    // Number of block we want to generate
-    uint64_t const block_number  = current_block_->body.block_number + 1;
-    uint64_t       random_beacon = 0;
-
-    // POS: Additional check, are we able to mine?
-    if (stake_)
-    {
-      bool should_generate = true;
-
-      // Try to get entropy for the block we are generating - is allowed to fail if we request too
-      // early
-      if (EntropyGeneratorInterface::Status::OK !=
-          beacon_->GenerateEntropy(current_block_->body.hash, block_number, random_beacon))
-      {
-        should_generate = false;
-      }
-
-      // Note here the previous block's entropy determines miner selection
-      if (should_generate && !stake_->ShouldGenerateBlock(*current_block_, mining_address_))
-      {
-        should_generate = false;
-      }
-
-      if (!should_generate)
-      {
-        // delay the invocation of this state machine
-        state_machine_->Delay(std::chrono::milliseconds{100});
-
-        // TODO(issue 1245): Refactor this stage, getting a little complicated
-        // TODO(HUT): reset here instead!
-        return State::SYNCHRONISED;
-      }
-    }
-
     // create a new block
-    next_block_                     = std::make_unique<Block>();
-    next_block_->body.previous_hash = current_block_->body.hash;
-    next_block_->body.block_number  = block_number;
-    next_block_->body.miner         = mining_address_;
-    next_block_->body.random_beacon = random_beacon;
+    next_block_ = std::make_unique<Block>();
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Minting new block! Number: ", block_number,
-                   " beacon: ", random_beacon);
-
-    if (stake_)
+    if(consensus_)
     {
-      next_block_->weight = stake_->GetBlockGenerationWeight(*current_block_, mining_address_);
+      consensus_->UpdateCurrentBlock(*current_block_);
+      // Failure will set this to a nullptr
+      next_block_ = consensus_->GenerateNextBlock();
     }
+
+    if (!next_block_)
+    {
+      state_machine_->Delay(std::chrono::milliseconds{100});
+      return State::RESET;
+    }
+
+    next_block_->body.previous_hash = current_block_->body.hash;
+    next_block_->body.block_number  = current_block_->body.block_number + 1;
+    next_block_->body.miner         = mining_address_;
+
+    FETCH_LOG_INFO(LOGGING_NAME, "Minting new block! Number: ", next_block_->body.block_number,
+                   " beacon: ", next_block_->body.random_beacon);
 
     // Attach current DAG state
     if (dag_)
@@ -564,15 +535,12 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
 
   bool const is_genesis = current_block_->body.previous_hash == GENESIS_DIGEST;
 
-  auto fail{[this](char const *reason, bool definetly_bad = true) {
+  auto fail{[this](char const *reason) {
     FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: ", reason, " (",
                    ToBase64(current_block_->body.hash), ')');
     FETCH_UNUSED(reason);
 
-    if (definetly_bad)
-    {
-      chain_.RemoveBlock(current_block_->body.hash);
-    }
+    chain_.RemoveBlock(current_block_->body.hash);
     return State::RESET;
   }};
 
@@ -586,65 +554,14 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
       return fail("No previous block in chain");
     }
 
-    // Check that the weight as given by the proof is correct
-    if (stake_)
+    if (consensus_)
     {
-      // Attempt to ascertain the beacon value within the block
-      uint64_t random_beacon = 0;
+      consensus_->UpdateCurrentBlock(*previous); // Only update with valid blocks
+      auto result = consensus_->ValidBlock(*previous, *current_block_);
 
-      // Try to get entropy for the block we are generating - it must eventually resolve to OK or
-      // FAILED
-      for (uint16_t i = 0;;)
+      if(!(result == ConsensusInterface::Status::YES || result == ConsensusInterface::Status::UNKNOWN))
       {
-        auto result = beacon_->GenerateEntropy(current_block_->body.hash,
-                                               current_block_->body.block_number, random_beacon);
-
-        if (result == EntropyGeneratorInterface::Status::OK)
-        {
-          break;
-        }
-
-        if (result == EntropyGeneratorInterface::Status::NOT_READY)
-        {
-          FETCH_LOG_INFO(LOGGING_NAME,
-                         "Waiting for entropy for block: ", current_block_->body.block_number);
-        }
-
-        if (result == EntropyGeneratorInterface::Status::FAILED ||
-            (result == EntropyGeneratorInterface::Status::OK &&
-             random_beacon != current_block_->body.random_beacon))
-        {
-          return fail("Failed to verify entropy during block validation. Discarding block.");
-        }
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(5));
-
-        if (i++ == 5)
-        {
-          state_machine_->Delay(std::chrono::milliseconds{100});
-          return fail("Timed out waiting for entropy when validating block", false);
-        }
-      }
-
-      if (current_block_->body.random_beacon != random_beacon)
-      {
-        FETCH_LOG_INFO(LOGGING_NAME, "Saw incorrect random beacon from: ",
-                       current_block_->body.miner.address().ToBase64(),
-                       ".Block number: ", current_block_->body.block_number,
-                       " expected: ", random_beacon, " got: ", current_block_->body.random_beacon);
-        return fail("Block has incorrect random beacon ");
-      }
-
-      if (!stake_->ValidMinerForBlock(*previous, current_block_->body.miner))
-      {
-        return fail("Block signed by miner deemed invalid by the staking mechanism");
-      }
-
-      if (current_block_->weight !=
-              stake_->GetBlockGenerationWeight(*previous, current_block_->body.miner) &&
-          current_block_->weight != 0)
-      {
-        return fail("Incorrect stake weight found for block.");
+        return fail("Consensus failed to verify block");
       }
     }
 
@@ -1185,50 +1102,11 @@ BlockCoordinator::State BlockCoordinator::OnReset()
     FETCH_LOG_ERROR(LOGGING_NAME, "Unable to find a previously executed block!");
   }
 
-  // trigger stake updates at the end of the block lifecycle
-  if (stake_ && block)
+  if(consensus_)
   {
-    stake_->UpdateCurrentBlock(*block);
-  }
-
-  if (beacon_)
-  {
-    // If we are on the head of the main chain, and it is a 'committee triggering' block
-    // and we are in sync.
-    // TODO(HUT): this needs very carefully looking at!
-    if (block && (*chain_.GetHeaviestBlock() == *block) /*&& syncronised_*/)
-    {
-      auto const block_number = block->body.block_number;
-
-      if ((block_number % aeon_period_) == 0)
-      {
-        beacon::BeaconService::CabinetMemberList cabinet_member_list;
-        auto const                               current_stakers = stake_->GetCommittee(*block);
-
-        for (auto const &staker : *current_stakers)
-        {
-          FETCH_LOG_DEBUG(LOGGING_NAME, "Adding staker: ", staker.identifier().ToBase64());
-          cabinet_member_list.insert(staker);
-        }
-
-        // uint32_t threshold = uint32_t((cabinet_member_list.size() / 2) + 1);
-        uint32_t threshold = uint32_t(cabinet_member_list.size());
-
-        FETCH_LOG_INFO(LOGGING_NAME, "Block: ", block_number,
-                       " creating new aeon. Periodicity: ", aeon_period_, " threshold: ", threshold,
-                       " cabinet size: ", cabinet_member_list.size());
-
-        // Disallow multiple invocations of cabinet generation
-        static bool did_genesis_already = false;
-
-        if (block_number != 0 || !did_genesis_already)
-        {
-          beacon_->StartNewCabinet(cabinet_member_list, threshold, block_number,
-                                   block_number + aeon_period_ + 1);
-          did_genesis_already = true;
-        }
-      }
-    }
+    FETCH_LOG_INFO(LOGGING_NAME, "\n\nUpdating current block!!!");
+    consensus_->UpdateCurrentBlock(*block);
+    consensus_->Refresh();
   }
 
   current_block_.reset();
