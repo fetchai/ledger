@@ -200,26 +200,25 @@ template <typename T>
 class Ptr
 {
 public:
-  constexpr Ptr() = default;
+  Ptr() = default;
 
-  constexpr Ptr(T *other) noexcept
+  Ptr(T *other) noexcept
     : ptr_{other}
   {}
 
-  static constexpr Ptr PtrFromThis(T *this__) noexcept(noexcept(this__->AddRef()))
+  static Ptr PtrFromThis(T *this__)
   {
     this__->AddRef();
     return Ptr(this__);
   }
 
-  constexpr Ptr &operator=(std::nullptr_t /* other */) noexcept(
-      noexcept(std::declval<Ptr>().Reset()))
+  Ptr &operator=(std::nullptr_t /* other */)
   {
     Reset();
     return *this;
   }
 
-  constexpr Ptr(Ptr const &other) noexcept(noexcept(std::declval<Ptr>().AddRef()))
+  Ptr(Ptr const &other)
   {
     ptr_ = other.ptr_;
     AddRef();
@@ -232,21 +231,20 @@ public:
   }
 
   template <typename U>
-  constexpr Ptr(Ptr<U> const &other) noexcept(noexcept(std::declval<Ptr>().AddRef()))
+  Ptr(Ptr<U> const &other)
   {
     ptr_ = static_cast<T *>(other.ptr_);
     AddRef();
   }
 
   template <typename U>
-  constexpr Ptr(Ptr<U> &&other) noexcept
+  Ptr(Ptr<U> &&other)
   {
     ptr_       = static_cast<T *>(other.ptr_);
     other.ptr_ = nullptr;
   }
 
-  constexpr Ptr &operator=(Ptr const &other) noexcept(noexcept(std::declval<Ptr>().Release()) &&
-                                                      noexcept(std::declval<Ptr>().AddRef()))
+  Ptr &operator=(Ptr const &other)
   {
     if (ptr_ != other.ptr_)
     {
@@ -257,7 +255,7 @@ public:
     return *this;
   }
 
-  constexpr Ptr &operator=(Ptr &&other) noexcept(noexcept(std::declval<Ptr>().Release()))
+  Ptr &operator=(Ptr &&other)
   {
     if (this != &other)
     {
@@ -269,8 +267,7 @@ public:
   }
 
   template <typename U>
-  constexpr Ptr &operator=(Ptr<U> const &other) noexcept(noexcept(std::declval<Ptr>().Release()) &&
-                                                         noexcept(std::declval<Ptr>().AddRef()))
+  Ptr &operator=(Ptr<U> const &other)
   {
     if (ptr_ != other.ptr_)
     {
@@ -282,7 +279,7 @@ public:
   }
 
   template <typename U>
-  constexpr Ptr &operator=(Ptr<U> &&other) noexcept(noexcept(std::declval<Ptr>().Release()))
+  Ptr &operator=(Ptr<U> &&other)
   {
     Release();
     ptr_       = static_cast<T *>(other.ptr_);
@@ -290,12 +287,12 @@ public:
     return *this;
   }
 
-  ~Ptr() noexcept(noexcept(std::declval<Ptr>().Release()))
+  ~Ptr()
   {
     Release();
   }
 
-  constexpr void Reset() noexcept(noexcept(std::declval<T>().Release()))
+  void Reset()
   {
     if (ptr_)
     {
@@ -304,22 +301,22 @@ public:
     }
   }
 
-  constexpr explicit operator bool() const noexcept
+  explicit operator bool() const noexcept
   {
     return ptr_ != nullptr;
   }
 
-  constexpr T *operator->() const noexcept
+  T *operator->() const noexcept
   {
     return ptr_;
   }
 
-  constexpr T &operator*() const noexcept
+  T &operator*() const noexcept
   {
     return *ptr_;
   }
 
-  constexpr std::size_t RefCount() const noexcept
+  std::size_t RefCount() const noexcept
   {
     return ptr_->ref_count_;
   }
@@ -327,7 +324,7 @@ public:
 private:
   T *ptr_ = nullptr;
 
-  constexpr void AddRef() noexcept(noexcept(std::declval<T>().AddRef()))
+  void AddRef()
   {
     if (ptr_)
     {
@@ -335,7 +332,7 @@ private:
     }
   }
 
-  constexpr void Release() noexcept(noexcept(std::declval<T>().Release()))
+  void Release()
   {
     if (ptr_)
     {
@@ -347,56 +344,56 @@ private:
   friend class Ptr;
 
   template <typename L, typename R>
-  friend constexpr bool operator==(Ptr<L> const &lhs, Ptr<R> const &rhs) noexcept;
+  friend bool operator==(Ptr<L> const &lhs, Ptr<R> const &rhs) noexcept;
 
   template <typename L>
-  friend constexpr bool operator==(Ptr<L> const &lhs, std::nullptr_t /* rhs */) noexcept;
+  friend bool operator==(Ptr<L> const &lhs, std::nullptr_t /* rhs */) noexcept;
 
   template <typename R>
-  friend constexpr bool operator==(std::nullptr_t /* lhs */, Ptr<R> const &rhs) noexcept;
+  friend bool operator==(std::nullptr_t /* lhs */, Ptr<R> const &rhs) noexcept;
 
   template <typename L, typename R>
-  friend constexpr bool operator!=(Ptr<L> const &lhs, Ptr<R> const &rhs) noexcept;
+  friend bool operator!=(Ptr<L> const &lhs, Ptr<R> const &rhs) noexcept;
 
   template <typename L>
-  friend constexpr bool operator!=(Ptr<L> const &lhs, std::nullptr_t /* rhs */) noexcept;
+  friend bool operator!=(Ptr<L> const &lhs, std::nullptr_t /* rhs */) noexcept;
 
   template <typename R>
-  friend constexpr bool operator!=(std::nullptr_t /* lhs */, Ptr<R> const &rhs) noexcept;
+  friend bool operator!=(std::nullptr_t /* lhs */, Ptr<R> const &rhs) noexcept;
 };
 
 template <typename L, typename R>
-constexpr bool operator==(Ptr<L> const &lhs, Ptr<R> const &rhs) noexcept
+bool operator==(Ptr<L> const &lhs, Ptr<R> const &rhs) noexcept
 {
   return (lhs.ptr_ == static_cast<L *>(rhs.ptr_));
 }
 
 template <typename L>
-constexpr bool operator==(Ptr<L> const &lhs, std::nullptr_t /* rhs */) noexcept
+bool operator==(Ptr<L> const &lhs, std::nullptr_t /* rhs */) noexcept
 {
   return (lhs.ptr_ == nullptr);
 }
 
 template <typename R>
-constexpr bool operator==(std::nullptr_t /* lhs */, Ptr<R> const &rhs) noexcept
+bool operator==(std::nullptr_t /* lhs */, Ptr<R> const &rhs) noexcept
 {
   return (nullptr == rhs.ptr_);
 }
 
 template <typename L, typename R>
-constexpr bool operator!=(Ptr<L> const &lhs, Ptr<R> const &rhs) noexcept
+bool operator!=(Ptr<L> const &lhs, Ptr<R> const &rhs) noexcept
 {
   return (lhs.ptr_ != static_cast<L *>(rhs.ptr_));
 }
 
 template <typename L>
-constexpr bool operator!=(Ptr<L> const &lhs, std::nullptr_t /* rhs */) noexcept
+bool operator!=(Ptr<L> const &lhs, std::nullptr_t /* rhs */) noexcept
 {
   return (lhs.ptr_ != nullptr);
 }
 
 template <typename R>
-constexpr bool operator!=(std::nullptr_t /* lhs */, Ptr<R> const &rhs) noexcept
+bool operator!=(std::nullptr_t /* lhs */, Ptr<R> const &rhs) noexcept
 {
   return (nullptr != rhs.ptr_);
 }
