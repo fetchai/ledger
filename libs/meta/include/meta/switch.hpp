@@ -305,15 +305,15 @@ struct Switch<pack::Pack<DefaultCase<DefaultImpl>, Ids...>>
 template <class... Ids>
 using Switch = detail_::Switch<pack::UniqueSortT<pack::ConcatT<Ids...>>>;
 
-template <class Sequence, template <class Sequence::value_type> Ctor>
+template <class Sequence, template <class Sequence::value_type> class Ctor>
 struct LiftIntegerSequence;
 
-template <class Sequence, template <class Sequence::value_type> Ctor>
+template <class Sequence, template <class Sequence::value_type> class Ctor>
 using LiftIntegerSequenceT = typename LiftIntegerSequence<Sequence, Ctor>::type;
 
 template <template <typename Int, Int...> struct Root, typename Int, Int... ints,
-          template <Int> Ctor>
-struct LiftIntegerSequence<Root<Int, ints...>, Ctor> : pack::Type<pack::Ctor<ints>...>
+          template <Int> class Ctor>
+struct LiftIntegerSequence<Root<Int, ints...>, Ctor> : pack::Type<Ctor<ints>...>
 {
 };
 
