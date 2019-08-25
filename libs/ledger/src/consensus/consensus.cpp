@@ -40,8 +40,6 @@ Consensus::Consensus(StakeManagerPtr stake, BeaconServicePtr beacon, MainChain c
 
 void Consensus::UpdateCurrentBlock(Block const &current)
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Updating current block: ", current.body.block_number);
-
   if(current.body.block_number > current_block_number_ && current.body.block_number != current_block_number_ + 1)
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Updating the current block more than one block ahead is invalid");
@@ -61,15 +59,12 @@ void Consensus::UpdateCurrentBlock(Block const &current)
 
   if(!is_genesis)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Updating staking with block: ", current_block_number_);
     stake_->UpdateCurrentBlock(current_block_);
   }
 
   if ((current_block_number_ % aeon_period_) == 0 && int64_t(current_block_number_) > last_committee_created_)
   {
     last_committee_created_ = int64_t(current_block_number_);
-
-    FETCH_LOG_INFO(LOGGING_NAME, "here C ", current.body.block_number, " x ", current_block_number_);
 
     CabinetMemberList cabinet_member_list;
     auto const current_stakers = stake_->GetCommittee(current_block_);

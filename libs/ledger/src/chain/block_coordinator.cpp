@@ -37,6 +37,7 @@
 #include "ledger/upow/synergetic_execution_manager.hpp"
 #include "ledger/upow/synergetic_executor.hpp"
 #include "telemetry/counter.hpp"
+#include "telemetry/gauge.hpp"
 #include "telemetry/registry.hpp"
 
 //#include "beacon/beacon_service.hpp"
@@ -178,6 +179,8 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
         "ledger_block_coordinator_mined_block_total", "The total number of mined blocks")}
   , executed_tx_count_{telemetry::Registry::Instance().CreateCounter(
         "ledger_block_coordinator_executed_tx_total", "The total number of executed transactions")}
+  , block_height_{telemetry::Registry::Instance().CreateGauge<uint64_t>("block_height_", "The current block height")}
+  , block_hash_{telemetry::Registry::Instance().CreateGauge<uint64_t>("block_hash_", "The last seen block hash beginning")}
 {
   // configure the state machine
   // clang-format off
@@ -1083,10 +1086,6 @@ BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
 
 BlockCoordinator::State BlockCoordinator::OnReset()
 {
-  reset_state_count_->increment();
-
-  FETCH_LOG_INFO(LOGGING_NAME, "Reset condition");
-
   Block const *block = nullptr;
 
   if (next_block_)
@@ -1102,9 +1101,16 @@ BlockCoordinator::State BlockCoordinator::OnReset()
     FETCH_LOG_ERROR(LOGGING_NAME, "Unable to find a previously executed block!");
   }
 
+  reset_state_count_->increment();
+
+  if(block)
+  {
+    block_height_->set(block->body.block_number);
+    block_hash_->set(*reinterpret_cast<uint64_t const *>(block->body.hash.pointer()));
+  }
+
   if(consensus_)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "\n\nUpdating current block!!!");
     consensus_->UpdateCurrentBlock(*block);
     consensus_->Refresh();
   }

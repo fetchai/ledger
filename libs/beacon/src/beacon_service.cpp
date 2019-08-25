@@ -22,6 +22,10 @@
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 
+#include "telemetry/counter.hpp"
+#include "telemetry/gauge.hpp"
+#include "telemetry/registry.hpp"
+
 #include <chrono>
 
 namespace fetch {
@@ -77,7 +81,9 @@ BeaconService::BeaconService(Endpoint &endpoint, CertificatePtr certificate,
   , cabinet_creator_{endpoint_, identity_}  // TODO(tfr): Make shared
   , cabinet_creator_protocol_{cabinet_creator_}
   , beacon_protocol_{*this}
-
+  , entropy_generated_count_{telemetry::Registry::Instance().CreateCounter(
+        "entropy_generated_total",
+        "The total number of times entropy has been generated")}
 {
 
   // Attaching beacon ready callback handler
@@ -459,6 +465,7 @@ BeaconService::State BeaconService::OnCompleteState()
 
   // Adding new entropy
   ready_entropy_queue_.push_back(current_entropy_);
+  entropy_generated_count_->add(1);
 
   // Preparing next
   next_entropy_       = Entropy();

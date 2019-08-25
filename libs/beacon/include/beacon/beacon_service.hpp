@@ -215,6 +215,8 @@ private:
   BeaconSetupServiceProtocol cabinet_creator_protocol_;
   BeaconServiceProtocol      beacon_protocol_;
   /// @}
+
+  telemetry::CounterPtr entropy_generated_count_;
 };
 
 }  // namespace beacon
