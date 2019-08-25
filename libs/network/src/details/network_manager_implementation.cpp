@@ -58,7 +58,7 @@ void NetworkManagerImplementation::Work()
 
 void NetworkManagerImplementation::Stop()
 {
-  std::lock_guard<fetch::mutex::Mutex> lock(thread_mutex_);
+  FETCH_LOCK(thread_mutex_);
   running_ = false;
 
   if (threads_.empty())

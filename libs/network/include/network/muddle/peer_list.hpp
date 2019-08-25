@@ -125,7 +125,6 @@ private:
   };
 
   using Mutex   = mutex::Mutex;
-  using Lock    = std::lock_guard<Mutex>;
   using PeerSet = std::unordered_set<Uri>;
 
   using MetadataMap = std::unordered_map<Uri, PeerMetadata>;

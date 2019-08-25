@@ -126,7 +126,7 @@ public:
     }
 
     {
-      std::lock_guard<mutex_type> lock(queue_mutex_);
+      FETCH_LOCK(queue_mutex_);
       write_queue_.push_back(msg);
     }
 
@@ -323,7 +323,7 @@ private:
     // Only one thread can get past here at a time. Effectively a try_lock
     // except that we can't unlock a mutex in the callback (undefined behaviour)
     {
-      std::lock_guard<mutex_type> lock(can_write_mutex_);
+      FETCH_LOCK(can_write_mutex_);
       if (can_write_)
       {
         can_write_ = false;
@@ -336,10 +336,10 @@ private:
 
     message_type buffer;
     {
-      std::lock_guard<mutex_type> lock(queue_mutex_);
+      FETCH_LOCK(queue_mutex_);
       if (write_queue_.empty())
       {
-        std::lock_guard<mutex_type> lock(can_write_mutex_);
+        FETCH_LOCK(can_write_mutex_);
         can_write_ = true;
         return;
       }
@@ -359,7 +359,7 @@ private:
       FETCH_UNUSED(len);
 
       {
-        std::lock_guard<mutex_type> lock(can_write_mutex_);
+        FETCH_LOCK(can_write_mutex_);
         can_write_ = true;
       }
 

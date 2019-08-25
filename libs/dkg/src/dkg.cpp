@@ -677,7 +677,7 @@ void DistributedKeyGeneration::OnReconstructionShares(
     // check equation (4)
     if (lhs == rhs)
     {
-      std::lock_guard<std::mutex> lock{mutex_};
+      FETCH_LOCK(mutex_);
       FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, "received good share from node ",
                      from_index, "for reconstructing node ", victim_index);
       reconstruction_shares.at(share.first).first.insert(from_index);  // good share received
@@ -970,7 +970,7 @@ void DistributedKeyGeneration::ResetCabinet()
 {
   assert(cabinet_.find(address_) != cabinet_.end());  // We should be in the cabinet
 
-  std::lock_guard<std::mutex> lock_{mutex_};
+  FETCH_LOCK(mutex_);
   finished_      = false;
   state_         = State::INITIAL;
   cabinet_index_ = static_cast<uint32_t>(std::distance(cabinet_.begin(), cabinet_.find(address_)));

@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/mutex.hpp"
 #include "telemetry/histogram.hpp"
 
 #include <ostream>
@@ -64,7 +65,7 @@ Histogram::Histogram(Iterator const &begin, Iterator const &end, std::string con
                      std::string const &description, Labels const &labels)
   : Measurement{name, description, labels}
 {
-  LockGuard guard{lock_};
+  FETCH_LOCK(lock_);
 
   // build up the initial bucket values
   for (auto it = begin; it != end; ++it)
@@ -80,7 +81,7 @@ Histogram::Histogram(Iterator const &begin, Iterator const &end, std::string con
  */
 void Histogram::Add(double const &value)
 {
-  LockGuard guard{lock_};
+  FETCH_LOCK(lock_);
 
   // update all of the buckets
   for (auto it = buckets_.lower_bound(value), end = buckets_.end(); it != end; ++it)
@@ -101,7 +102,7 @@ void Histogram::Add(double const &value)
  */
 void Histogram::ToStream(OutputStream &stream) const
 {
-  LockGuard guard{lock_};
+  FETCH_LOCK(lock_);
 
   WriteHeader(stream, "histogram");
   for (auto const &element : buckets_)
