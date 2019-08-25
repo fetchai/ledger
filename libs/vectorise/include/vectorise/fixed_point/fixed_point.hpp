@@ -748,7 +748,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Floor(FixedPoint<I, F> const &o)
     fp_state |= STATE_NAN;
     return NaN;
   }
-  return std::move(FixedPoint{o.Integer()});
+  return FixedPoint{o.Integer()};
 }
 
 /**
@@ -764,7 +764,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Round(FixedPoint<I, F> const &o)
     fp_state |= STATE_NAN;
     return NaN;
   }
-  return std::move(Floor(o + FixedPoint{0.5}));
+  return Floor(o + FixedPoint{0.5});
 }
 
 /**
@@ -1083,7 +1083,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::operator-() const
   }
   FixedPoint t(*this);
   t.data_ = -t.data_;
-  return std::move(t);
+  return t;
 }
 
 /**
@@ -1152,7 +1152,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::operator+(FixedPoint<I, F> const &n
 {
   FixedPoint res{*this};
   res += n;
-  return std::move(res);
+  return res;
 }
 
 /**
@@ -1165,7 +1165,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::operator-(FixedPoint<I, F> const &n
 {
   FixedPoint res{*this};
   res -= n;
-  return std::move(res);
+  return res;
 }
 
 /**
@@ -1178,7 +1178,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::operator*(FixedPoint<I, F> const &n
 {
   FixedPoint res{*this};
   res *= n;
-  return std::move(res);
+  return res;
 }
 
 /**
@@ -1191,7 +1191,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::operator/(FixedPoint<I, F> const &n
 {
   FixedPoint res{*this};
   res /= n;
-  return std::move(res);
+  return res;
 }
 
 /**
@@ -1204,7 +1204,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::operator&(FixedPoint<I, F> const &n
 {
   FixedPoint t{*this};
   t &= n;
-  return std::move(t);
+  return t;
 }
 
 /**
@@ -1217,7 +1217,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::operator|(FixedPoint<I, F> const &n
 {
   FixedPoint t{*this};
   t |= n;
-  return std::move(t);
+  return t;
 }
 
 /**
@@ -1230,7 +1230,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::operator^(FixedPoint<I, F> const &n
 {
   FixedPoint t{*this};
   t ^= n;
-  return std::move(t);
+  return t;
 }
 
 /**
@@ -1527,7 +1527,7 @@ template <std::uint16_t I, std::uint16_t F>
 template <typename T>
 constexpr FixedPoint<I, F> FixedPoint<I, F>::operator+(T const &n) const
 {
-  return std::move(*this + FixedPoint(n));
+  return *this + FixedPoint(n);
 }
 
 /**
@@ -1539,7 +1539,7 @@ template <std::uint16_t I, std::uint16_t F>
 template <typename T>
 constexpr FixedPoint<I, F> FixedPoint<I, F>::operator-(T const &n) const
 {
-  return std::move(*this - FixedPoint(n));
+  return *this - FixedPoint(n);
 }
 
 /**
@@ -1551,7 +1551,7 @@ template <std::uint16_t I, std::uint16_t F>
 template <typename T>
 constexpr FixedPoint<I, F> FixedPoint<I, F>::operator*(T const &n) const
 {
-  return std::move(*this * FixedPoint(n));
+  return *this * FixedPoint(n);
 }
 
 /**
@@ -1563,7 +1563,7 @@ template <std::uint16_t I, std::uint16_t F>
 template <typename T>
 constexpr FixedPoint<I, F> FixedPoint<I, F>::operator/(T const &n) const
 {
-  return std::move(*this / FixedPoint(n));
+  return *this / FixedPoint(n);
 }
 
 /**
@@ -1575,7 +1575,7 @@ template <std::uint16_t I, std::uint16_t F>
 template <typename T>
 constexpr FixedPoint<I, F> FixedPoint<I, F>::operator&(T const &n) const
 {
-  return std::move(*this & FixedPoint(n));
+  return *this & FixedPoint(n);
 }
 
 /**
@@ -1587,7 +1587,7 @@ template <std::uint16_t I, std::uint16_t F>
 template <typename T>
 constexpr FixedPoint<I, F> FixedPoint<I, F>::operator|(T const &n) const
 {
-  return std::move(*this | FixedPoint(n));
+  return *this | FixedPoint(n);
 }
 
 /**
@@ -1599,7 +1599,7 @@ template <std::uint16_t I, std::uint16_t F>
 template <typename T>
 constexpr FixedPoint<I, F> FixedPoint<I, F>::operator^(T const &n) const
 {
-  return std::move(*this ^ FixedPoint(n));
+  return *this ^ FixedPoint(n);
 }
 
 /**
@@ -1742,7 +1742,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Remainder(FixedPoint<I, F> const &x
                                                        FixedPoint<I, F> const &y)
 {
   FixedPoint result = x / y;
-  return std::move(x - Round(result) * y);
+  return x - Round(result) * y;
 }
 
 /**
@@ -1760,7 +1760,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Fmod(FixedPoint<I, F> const &x,
   {
     result += Abs(y);
   }
-  return std::move(Sign(x) * result);
+  return Sign(x) * result;
 }
 
 /**
@@ -1782,7 +1782,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Abs(FixedPoint<I, F> const &x)
     return POSITIVE_INFINITY;
   }
 
-  return std::move(x * Sign(x));
+  return x * Sign(x);
 }
 
 /**
@@ -1793,7 +1793,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Abs(FixedPoint<I, F> const &x)
 template <std::uint16_t I, std::uint16_t F>
 constexpr FixedPoint<I, F> FixedPoint<I, F>::Sign(FixedPoint<I, F> const &x)
 {
-  return std::move(FixedPoint{Type((x >= _0) - (x < _0))});
+  return FixedPoint{Type((x >= _0) - (x < _0))};
 }
 
 /**
@@ -1894,7 +1894,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Exp(FixedPoint<I, F> const &x)
   FixedPoint Q  = _1 - r + r2 - r3 + r4 - r5;
   FixedPoint e2 = P / Q;
 
-  return std::move(e1 * e2);
+  return e1 * e2;
 }
 
 /**
@@ -1985,7 +1985,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Log2(FixedPoint<I, F> const &x)
   FixedPoint Q = Q0 * (_1 + r) * (_1 + r * (Q01 + r * (Q02 + r * (Q01 + r)))) * CONST_LN2;
   FixedPoint R = P / Q;
 
-  return std::move(sign * (FixedPoint(k) + R));
+  return sign * (FixedPoint(k) + R);
 }
 
 /**
@@ -2110,7 +2110,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Sqrt(FixedPoint<I, F> const &x)
     twok <<= k;
   }
 
-  return std::move(twok * r);
+  return twok * r;
 }
 
 /**
@@ -2247,8 +2247,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Pow(FixedPoint<I, F> const &x,
   }
 
   FixedPoint s   = _1 * ((y.Integer() + 1) & 1) + Sign(x) * (y.Integer() & 1);
-  FixedPoint pow = s * Exp(y * Log(Abs(x)));
-  return std::move(pow);
+  return s * Exp(y * Log(Abs(x)));
 }
 
 template <std::uint16_t I, std::uint16_t F>
@@ -2258,10 +2257,10 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::SinPi2(FixedPoint<I, F> const &r)
 
   if (r > CONST_PI_4)
   {
-    return std::move(CosPi2(r - CONST_PI_2));
+    return CosPi2(r - CONST_PI_2);
   }
 
-  return std::move(SinApproxPi4(r));
+  return SinApproxPi4(r);
 }
 
 template <std::uint16_t I, std::uint16_t F>
@@ -2271,10 +2270,10 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::CosPi2(FixedPoint<I, F> const &r)
 
   if (r > CONST_PI_4)
   {
-    return std::move(SinPi2(CONST_PI_2 - r));
+    return SinPi2(CONST_PI_2 - r);
   }
 
-  return std::move(CosApproxPi4(r));
+  return CosApproxPi4(r);
 }
 
 template <>
@@ -2490,7 +2489,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Tan(FixedPoint<I, F> const &x)
     FixedPoint r2 = r * r;
     FixedPoint P  = r * (_1 + r2 * (P01 + r2 * P02));
     FixedPoint Q  = _1 + r2 * (Q01 + r2 * (Q02 + r2 * Q03));
-    return std::move(P / Q);
+    return P / Q;
   }
   else if (r < CONST_PI_2)
   {
@@ -2498,7 +2497,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Tan(FixedPoint<I, F> const &x)
     FixedPoint y2 = y * y;
     FixedPoint P  = -(_1 + y2 * (Q01 + y2 * (Q02 + y2 * Q03)));
     FixedPoint Q  = -CONST_PI_2 + r + y2 * y * (P01 + y2 * P02);
-    return std::move(P / Q);
+    return P / Q;
   }
   else
   {
@@ -2676,7 +2675,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::ATan(FixedPoint<I, F> const &x)
   FixedPoint P   = x * (_1 + x2 * (P03 + x2 * (P05 + x2 * (P07 + x2 * P09))));
   FixedPoint Q   = _1 + x2 * (Q02 + x2 * (Q04 + x2 * (Q06 + x2 * (Q08 + x2 * Q10))));
 
-  return std::move(P / Q);
+  return P / Q;
 }
 
 /**
@@ -2814,7 +2813,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::SinH(FixedPoint<I, F> const &x)
   }
 
   FixedPoint half{0.5};
-  return std::move(half * (Exp(x) - Exp(-x)));
+  return half * (Exp(x) - Exp(-x));
 }
 
 /**
@@ -2852,7 +2851,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::CosH(FixedPoint<I, F> const &x)
   }
 
   FixedPoint half{0.5};
-  return std::move(half * (Exp(x) + Exp(-x)));
+  return half * (Exp(x) + Exp(-x));
 }
 
 /**
@@ -2895,8 +2894,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::TanH(FixedPoint<I, F> const &x)
 
   FixedPoint e1     = Exp(x);
   FixedPoint e2     = Exp(-x);
-  FixedPoint result = (e1 - e2) / (e1 + e2);
-  return std::move(result);
+  return (e1 - e2) / (e1 + e2);
 }
 
 /**

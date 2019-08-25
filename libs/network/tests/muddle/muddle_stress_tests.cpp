@@ -126,7 +126,7 @@ protected:
     {
       buffer[i] = fill;
     }
-    return std::move(buffer);
+    return buffer;
   }
 
   static void ClientServer(MuddleEndpoint &endpoint, char const *target)
