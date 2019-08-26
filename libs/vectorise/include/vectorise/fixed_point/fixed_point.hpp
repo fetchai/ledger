@@ -2246,7 +2246,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Pow(FixedPoint<I, F> const &x,
     return NaN;
   }
 
-  FixedPoint s   = _1 * ((y.Integer() + 1) & 1) + Sign(x) * (y.Integer() & 1);
+  FixedPoint s = _1 * ((y.Integer() + 1) & 1) + Sign(x) * (y.Integer() & 1);
   return s * Exp(y * Log(Abs(x)));
 }
 
@@ -2892,8 +2892,8 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::TanH(FixedPoint<I, F> const &x)
     return NEGATIVE_INFINITY;
   }
 
-  FixedPoint e1     = Exp(x);
-  FixedPoint e2     = Exp(-x);
+  FixedPoint e1 = Exp(x);
+  FixedPoint e2 = Exp(-x);
   return (e1 - e2) / (e1 + e2);
 }
 
