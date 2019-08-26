@@ -52,7 +52,7 @@ private:
 
   BlockCoordinator &    block_coordinator_;
   StorageUnitInterface &storage_unit_;
-  StakeManager *        stake_manager_{nullptr};
+  StakeManager *        stake_{nullptr};
 };
 
 inline GenesisFileCreator::GenesisFileCreator(BlockCoordinator &    block_coordinator,
@@ -60,7 +60,7 @@ inline GenesisFileCreator::GenesisFileCreator(BlockCoordinator &    block_coordi
                                               StakeManager *        stake_manager)
   : block_coordinator_{block_coordinator}
   , storage_unit_{storage_unit}
-  , stake_manager_{stake_manager}
+  , stake_{stake_manager}
 {}
 
 }  // namespace ledger

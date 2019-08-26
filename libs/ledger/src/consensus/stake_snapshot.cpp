@@ -40,7 +40,7 @@ using DRNG        = random::LinearCongruentialGenerator;
  */
 StakeSnapshot::CommitteePtr StakeSnapshot::BuildCommittee(uint64_t entropy, std::size_t count) const
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Building committee from pool of: ", stake_index_.size());
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Building committee from pool of: ", stake_index_.size());
 
   CommitteePtr committee = std::make_shared<Committee>();
   committee->reserve(count);

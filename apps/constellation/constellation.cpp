@@ -78,7 +78,7 @@ using ConstByteArray   = byte_array::ConstByteArray;
 using BeaconServicePtr = std::shared_ptr<fetch::beacon::BeaconService>;
 
 static const std::size_t HTTP_THREADS{4};
-static char const *      SNAPSHOT_FILENAME = "snapshot.json";
+static char const *      GENESIS_FILENAME = "genesis_file.json";
 
 bool WaitForLaneServersToStart()
 {
@@ -171,14 +171,14 @@ ledger::ShardConfigs GenerateShardsConfig(Constellation::Config &config, uint16_
   return configs;
 }
 
-StakeManagerPtr CreateStakeManager(Constellation::Config const &      cfg,
-                                   ledger::EntropyGeneratorInterface &entropy)
+StakeManagerPtr CreateStakeManager(Constellation::Config const &cfg)
 {
   StakeManagerPtr mgr{};
 
   if (cfg.proof_of_stake)
   {
-    mgr = std::make_shared<ledger::StakeManager>(entropy, cfg.block_interval_ms);
+    mgr = std::make_shared<ledger::StakeManager>(cfg.max_committee_size, cfg.block_interval_ms,
+                                                 cfg.aeon_period);
   }
 
   return mgr;
@@ -239,7 +239,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
                                                                *muddle_, cfg_.log2_num_lanes))
   , dag_{GenerateDAG(cfg_.features.IsEnabled("synergetic"), "dag_db_", true, certificate)}
   , beacon_{CreateBeaconService(cfg_, muddle_->GetEndpoint(), certificate)}
-  , stake_{CreateStakeManager(cfg_, *beacon_)}
+  , stake_{CreateStakeManager(cfg_)}
   , execution_manager_{std::make_shared<ExecutionManager>(
         cfg_.num_executors, cfg_.log2_num_lanes, storage_,
         [this] {
@@ -255,7 +255,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
                        *this,           cfg_.features,
                        certificate,     cfg_.num_lanes(),
                        cfg_.num_slices, cfg_.block_difficulty,
-                       beacon_}
+                       beacon_,         cfg_.aeon_period}
   , main_chain_service_{std::make_shared<MainChainRpcService>(muddle_->GetEndpoint(), chain_,
                                                               trust_, cfg_.network_mode)}
   , tx_processor_{dag_, *storage_, block_packer_, tx_status_cache_, cfg_.processor_threads}
@@ -283,6 +283,10 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
                  "              :: ", Address::FromMuddleAddress(muddle_->GetAddress()).display());
   FETCH_LOG_INFO(LOGGING_NAME, "              :: ", muddle_->GetAddress().ToBase64());
   FETCH_LOG_INFO(LOGGING_NAME, "");
+
+  // Configure/override global parameters
+  ledger::STAKE_WARM_UP_PERIOD   = cfg_.stake_delay_period;
+  ledger::STAKE_COOL_DOWN_PERIOD = cfg_.stake_delay_period;
 
   // Enable experimental features
   if (cfg_.features.IsEnabled("synergetic"))
@@ -322,12 +326,6 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   for (auto const &module : http_modules_)
   {
     http_.AddModule(*module);
-  }
-
-  // If we are using POS, the beacon provides entropy
-  if (beacon_)
-  {
-    stake_->UpdateEntropy(*beacon_);
   }
 }
 
@@ -446,20 +444,20 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
   }
 
   // BEFORE the block coordinator starts its state set up special genesis
-  if (cfg_.proof_of_stake || cfg_.load_state_file)
+  if (cfg_.proof_of_stake || cfg_.load_genesis_file)
   {
     FETCH_LOG_INFO(LOGGING_NAME,
-                   "Loading from genesis save file. Location: ", cfg_.stakefile_location);
+                   "Loading from genesis save file. Location: ", cfg_.genesis_file_location);
 
     GenesisFileCreator creator(block_coordinator_, *storage_, stake_.get());
 
-    if (cfg_.stakefile_location.empty())
+    if (cfg_.genesis_file_location.empty())
     {
-      creator.LoadFile(SNAPSHOT_FILENAME);
+      creator.LoadFile(GENESIS_FILENAME);
     }
     else
     {
-      creator.LoadFile(cfg_.stakefile_location);
+      creator.LoadFile(cfg_.genesis_file_location);
     }
 
     FETCH_LOG_INFO(LOGGING_NAME, "Loaded from genesis save file.");
@@ -486,24 +484,6 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
   // Step 2. Main monitor loop
   //---------------------------------------------------------------
   bool start_up_in_progress{true};
-
-  std::size_t committee_size = 0;
-
-  if (stake_)
-  {
-    auto current = stake_->GetCurrentStakeSnapshot();
-
-    if (!current)
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "No current stake snapshot found!");
-    }
-    else
-    {
-      committee_size = current->size();
-    }
-
-    FETCH_LOG_INFO(LOGGING_NAME, "Committee size: ", committee_size);
-  }
 
   // monitor loop
   while (active_)
