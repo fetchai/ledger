@@ -1045,6 +1045,9 @@ public:
   }
 };
 
+template <TypeId id>
+using IdView = VariantView<IdToType<id>>;
+
 // Typeid sets
 template <TypeId... ids>
 using TypeIdSequence = pack::Pack<IdToType<ids>...>;
@@ -1065,19 +1068,26 @@ using RealTypeIds = pack::ConcatT<FloatingPointIds, FixedPointIds>;
 
 using NumericTypeIds = pack::ConcatT<IntegralTypeIds, RealTypeIds>;
 
-using PrimitiveTypeIds = pack::ConsT<TypeIdConstant<TypeIds::Bool>, NumericTypeIds>;
+using PrimitiveTypeIds = pack::ConsT<IdToType<TypeIds::Bool>, NumericTypeIds>;
 
-using BuiltinTypeIds = pack::ConcatT<PrimitiveTypeIds, TypeIdSequence<TypeIds::String, TypeIds::Address>>;
+using BuiltinTypeIds =
+    pack::ConcatT<PrimitiveTypeIds, TypeIdSequence<TypeIds::String, TypeIds::Address>>;
 
-using NonInstantiatableTypeIds = TypeIdSequence<TypeIds::Null, TypeIds::Void>;
+using NonInstantiableTypeIds = TypeIdSequence<TypeIds::Null, TypeIds::Void>;
 
 // Variant view sets, defined for those typeid sets
+template <class TypeIdValue>
+using AsVariantView = VariantView<TypeIdValue>;
+
 template <class... TypeIdValues>
-using TypeIdCases = pack::TransformT<VariantView, pack::ConcatT<TypeIdValues...>>;
+using TypeIdCases = pack::TransformT<AsVariantView, pack::ConcatT<TypeIdValues...>>;
+
+template <TypeId... ids>
+using TypeIdCaseSequence = TypeIdCases<TypeIdSequence<ids...>>;
 
 using DefaultObjectCase = type_util::DefaultCase<DefaultVariantView>;
 
-using NonInstantiatableTypes = TypeIdCases<NonInstantaitableTypeIds>;
+using NonInstantiableTypes = TypeIdCases<NonInstantiableTypeIds>;
 
 using UnsignedIntegerTypes = TypeIdCases<UnsignedIntegerIds>;
 
@@ -1097,63 +1107,54 @@ using PrimitiveTypes = TypeIdCases<PrimitiveTypeIds>;
 
 using BuiltinTypes = TypeIdCases<BuiltinTypeIds>;
 
-using NonInstantiatableTypes = TypeIdCases<NonInstantiatableTypeIds>;
+using NonInstantiableTypes = TypeIdCases<NonInstantiableTypeIds>;
 
 template <class... Cases, class F, class... Variants>
 constexpr auto ApplyFunctor(TypeId type_id, F &&f, Variants &&... variants)
 {
-  return pack::TransformT<type_util::Switch, pack::ConcatT<Cases...>>::Invoke(
-	  type_id,
-	  std::forward<F>(f),
-	  std::forward<Variants>(variants)...);
+  return pack::ApplyT<type_util::Switch, pack::ConcatT<Cases...>>::Invoke(
+      type_id, std::forward<F>(f), std::forward<Variants>(variants)...);
 }
 
 template <class F, class... Variants>
 constexpr auto ApplyIntegralFunctor(TypeId type_id, F &&f, Variants &&... variants)
 {
-  return ApplyFunctor<IntegralTypes>(
-	  type_id,
-	  std::forward<F>(f),
-	  std::forward<Variants>(variants)...);
+  return ApplyFunctor<IntegralTypes>(type_id, std::forward<F>(f),
+                                     std::forward<Variants>(variants)...);
 }
 
 template <class F, class... Variants>
 constexpr auto ApplyNumericFunctor(TypeId type_id, F &&f, Variants &&... variants)
 {
-  return ApplyFunctor<NumericTypes>(
-	  type_id,
-	  std::forward<F>(f),
-	  std::forward<Variants>(variants)...);
+  return ApplyFunctor<NumericTypes>(type_id, std::forward<F>(f),
+                                    std::forward<Variants>(variants)...);
 }
 
 template <class F, class... Variants>
 constexpr auto ApplyPrimitiveFunctor(TypeId type_id, F &&f, Variants &&... variants)
 {
-  return ApplyFunctor<PrimitiveTypes>(
-	  type_id,
-	  std::forward<F>(f),
-	  std::forward<Variants>(variants)...);
+  return ApplyFunctor<PrimitiveTypes>(type_id, std::forward<F>(f),
+                                      std::forward<Variants>(variants)...);
 }
 
 template <class F, class... Variants>
 constexpr auto ApplyBuiltinFunctor(TypeId type_id, F &&f, Variants &&... variants)
 {
-  return ApplyFunctor<BuiltinTypes>(
-	  type_id,
-	  std::forward<F>(f),
-	  std::forward<Variants>(variants)...);
+  return ApplyFunctor<BuiltinTypes>(type_id, std::forward<F>(f),
+                                    std::forward<Variants>(variants)...);
 }
 
 template <class... Views, class F>
 constexpr auto TypeIdSlot(F &&f)
 {
-  return pack::ApplyT<value_util::Slot, pack::ConcatT<Views...>>(std::forward<F>(f));
+  return pack::ApplyT<value_util::SlotType, pack::ConcatT<F, Views...>>(std::forward<F>(f));
 }
 
 template <class... Views, class F>
 constexpr auto DefaultSlot(F &&f)
 {
-  return pack::ApplyT<value_util::Slot, pack::ConcatT<Cases..., DefaultVariantView>>(std::forward<F>(f));
+  return pack::ApplyT<value_util::SlotType, pack::ConcatT<F, Views..., DefaultVariantView>>(
+      std::forward<F>(f));
 }
 
 template <class F>
@@ -1190,7 +1191,7 @@ template <class... TypeIdValues, class F>
 constexpr auto DefaultNullarySlot(F &&f)
 {
   return NullarySlot<TypeIdValues..., VariantValue<TypeIds::NumReserved, Ptr<Object>>>(
-	  std::forward<F>(f));
+      std::forward<F>(f));
 }
 
 template <class F>

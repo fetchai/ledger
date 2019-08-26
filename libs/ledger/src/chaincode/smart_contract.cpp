@@ -380,16 +380,16 @@ template <typename T>
 void AddToParameterPack(vm::VM *vm, vm::ParameterPack &params, vm::TypeId expected_type,
                         T const &variant)
 {
-  vm::ApplyFunctor<vm::IntegralTypes,
-                   vm::TypeIdCases<vm::TypeIds::Bool, vm::TypeIds::Address, vm::TypeIds::String>,
-                   vm::DefaultObjectCase>(
+  vm::ApplyFunctor<
+      vm::IntegralTypes,
+      vm::TypeIdCaseSequence<vm::TypeIds::Bool, vm::TypeIds::Address, vm::TypeIds::String>,
+      vm::DefaultObjectCase>(
       expected_type,
       value_util::Slots(
-          vm::NullarySlot<vm::IdToType<vm::TypeIds::Bool>, vm::IntegralTypeIds>(
-              [&](auto cs) {
-                using Case = decltype(cs);
-                AddToParameterPack<typename Case::type>(params, variant);
-              }),
+          vm::NullarySlot<vm::IdToType<vm::TypeIds::Bool>, vm::IntegralTypeIds>([&](auto cs) {
+            using Case = decltype(cs);
+            AddToParameterPack<typename Case::type>(params, variant);
+          }),
           vm::NullarySlot<vm::IdToType<vm::TypeIds::Address>>(
               [&](auto) { AddAddressToParameterPack(vm, params, variant); }),
           vm::NullarySlot<vm::IdToType<vm::TypeIds::String>>(
@@ -650,56 +650,55 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
 
   // extract the result from the contract output
 
-  auto ret_val =
-      vm::ApplyFunctor<vm::PrimitiveTypes, vm::TypeIdCases<vm::TypeIds::Null, vm::TypeIds::String>,
-                       vm::DefaultObjectCase>(
-          output.type_id,
-          value_util::Slots(
-              vm::PrimitiveSlot([&](auto &&v) {
-                response["result"] = v.Get();
-                return Status::OK;
-              }),
-              vm::TypeIdSlot<vm::IdToType<vm::TypeIds::Null>>([&](auto &&) {
-                response["result"] = variant::Variant::Null();
-                return Status::OK;
-              }),
-              vm::TypeIdSlot<vm::IdToType<vm::TypeIds::String>>([&](auto &&v) {
-                response["result"] = v.Get()->str;
-                return Status::OK;
-              }),
-              vm::DefaultSlot([&](auto &&v) {
-                vm::Variant const &output = v.CVar();
-                if (output.IsPrimitive())
+  auto ret_val = vm::ApplyFunctor<vm::PrimitiveTypes,
+                                  vm::TypeIdCaseSequence<vm::TypeIds::Null, vm::TypeIds::String>,
+                                  vm::DefaultObjectCase>(
+      output.type_id,
+      value_util::Slots(
+          vm::PrimitiveSlot([&](auto &&v) {
+            response["result"] = v.Get();
+            return Status::OK;
+          }),
+          vm::TypeIdSlot<vm::IdView<vm::TypeIds::Null>>([&](auto &&) {
+            response["result"] = variant::Variant::Null();
+            return Status::OK;
+          }),
+          vm::TypeIdSlot<vm::IdView<vm::TypeIds::String>>([&](auto &&v) {
+            response["result"] = v.Get()->str;
+            return Status::OK;
+          }),
+          vm::DefaultSlot([&](auto &&v) {
+            vm::Variant const &output = v.CVar();
+            if (output.IsPrimitive())
+            {
+              // TODO(tfr): add error - all types not covered
+              response["result"] = variant::Variant::Null();
+              FETCH_LOG_WARN(LOGGING_NAME,
+                             "Could not serialise result - possibly Void return-type");
+            }
+            else
+            {
+              variant::Variant var;
+              if (output.object == nullptr)
+              {
+                var = variant::Variant::Null();
+              }
+              else
+              {
+                if (!output.object->ToJSON(var))
                 {
-                  // TODO(tfr): add error - all types not covered
-                  response["result"] = variant::Variant::Null();
-                  FETCH_LOG_WARN(LOGGING_NAME,
-                                 "Could not serialise result - possibly Void return-type");
+                  response["status"] = "failed";
+                  response["result"] = "Failed to serialise object to JSON variant";
+                  FETCH_LOG_WARN(LOGGING_NAME, "Failed to serialise object to JSON variant for " +
+                                                   output.object->GetUniqueId());
+                  return Status::FAILED;
                 }
-                else
-                {
-                  variant::Variant var;
-                  if (output.object == nullptr)
-                  {
-                    var = variant::Variant::Null();
-                  }
-                  else
-                  {
-                    if (!output.object->ToJSON(var))
-                    {
-                      response["status"] = "failed";
-                      response["result"] = "Failed to serialise object to JSON variant";
-                      FETCH_LOG_WARN(LOGGING_NAME,
-                                     "Failed to serialise object to JSON variant for " +
-                                         output.object->GetUniqueId());
-                      return Status::FAILED;
-                    }
-                  }
-                  response["result"] = var;
-                }
-                return Status::OK;
-              })),
-          output);
+              }
+              response["result"] = var;
+            }
+            return Status::OK;
+          })),
+      output);
   if (ret_val == Status::OK)
   {
     response["status"] = "success";

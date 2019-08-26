@@ -311,7 +311,7 @@ struct LiftIntegerSequence;
 template <class Sequence, template <class Sequence::value_type> class Ctor>
 using LiftIntegerSequenceT = typename LiftIntegerSequence<Sequence, Ctor>::type;
 
-template <template <typename Int, Int...> struct Root, typename Int, Int... ints,
+template <template <typename Int, Int...> class Root, typename Int, Int... ints,
           template <Int> class Ctor>
 struct LiftIntegerSequence<Root<Int, ints...>, Ctor> : pack::Type<Ctor<ints>...>
 {
