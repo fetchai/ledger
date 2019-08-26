@@ -1129,7 +1129,6 @@ BlockCoordinator::State BlockCoordinator::OnReset()
   current_block_.reset();
   next_block_.reset();
   pending_txs_.reset();
-  blocks_to_common_ancestor_.clear();
 
   // we should update the next block time
   UpdateNextBlockTime();
