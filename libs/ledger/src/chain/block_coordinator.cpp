@@ -61,7 +61,8 @@ using DAGPtr               = std::shared_ptr<ledger::DAGInterface>;
 // Constants
 const std::chrono::milliseconds TX_SYNC_NOTIFY_INTERVAL{1000};
 const std::chrono::milliseconds EXEC_NOTIFY_INTERVAL{5000};
-const std::chrono::seconds      NOTIFY_INTERVAL{10};
+const std::chrono::seconds      STATE_NOTIFY_INTERVAL{20};
+const std::chrono::seconds      NOTIFY_INTERVAL{5};
 const std::chrono::seconds      WAIT_BEFORE_ASKING_FOR_MISSING_TX_INTERVAL{5};
 const std::chrono::seconds      WAIT_FOR_TX_TIMEOUT_INTERVAL{600};
 const uint32_t                  THRESHOLD_FOR_FAST_SYNCING{100u};
@@ -104,7 +105,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr
   , block_packer_{packer}
   , block_sink_{block_sink}
   , status_cache_{status_cache}
-  , periodic_print_{NOTIFY_INTERVAL}
+  , periodic_print_{STATE_NOTIFY_INTERVAL}
   , miner_{std::make_shared<consensus::DummyMiner>()}
   , last_executed_block_{GENESIS_DIGEST}
   , mining_address_{prover->identity()}
