@@ -66,7 +66,7 @@ public:
 
   State GetState() override
   {
-    return promise_->GetState();
+    return promise_->state();
   }
 
   PromiseCounter id() const override
@@ -74,12 +74,7 @@ public:
     return promise_->id();
   }
 
-  std::string &name()
-  {
-    return promise_->name();
-  }
-
-  const std::string &name() const
+  std::string const &name() const
   {
     return promise_->name();
   }

@@ -24,6 +24,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <chrono>
 
 namespace fetch {
 namespace ledger {
