@@ -83,7 +83,7 @@ ConstByteArray FromBase64(ConstByteArray const &str) noexcept
     break;
   }
 
-  return ret;
+  return std::move(ret);
 }
 
 // TODO(issue 1262): Caller can't unambiguously detect whether the conversion failed or not
@@ -114,7 +114,7 @@ ConstByteArray FromHex(ConstByteArray const &str) noexcept
     return ConstByteArray();
   }
 
-  return ret;
+  return std::move(ret);
 }
 
 }  // namespace byte_array
