@@ -596,6 +596,7 @@ def restart_nodes(parameters, test_instance):
 
     time.sleep(5)
 
+
 def add_node(parameters, test_instance):
 
     index = parameters["index"]
