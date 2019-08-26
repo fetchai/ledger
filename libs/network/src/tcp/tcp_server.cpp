@@ -134,7 +134,7 @@ void TCPServer::PushRequest(connection_handle_type client, message_type const &m
   LOG_STACK_TRACE_POINT;
   FETCH_LOG_DEBUG(LOGGING_NAME, "Got request from ", client);
 
-  std::lock_guard<mutex_type> lock(request_mutex_);
+  FETCH_LOCK(request_mutex_);
   requests_.push_back({client, msg});
 }
 
@@ -153,22 +153,22 @@ bool TCPServer::Send(connection_handle_type const &client, message_type const &m
 bool TCPServer::has_requests()
 {
   LOG_STACK_TRACE_POINT;
-  std::lock_guard<mutex_type> lock(request_mutex_);
-  bool                        ret = (requests_.size() != 0);
+  FETCH_LOCK(request_mutex_);
+  bool ret = (requests_.size() != 0);
   return ret;
 }
 
 TCPServer::Request TCPServer::Top()
 {
-  std::lock_guard<mutex_type> lock(request_mutex_);
-  Request                     top = requests_.front();
+  FETCH_LOCK(request_mutex_);
+  Request top = requests_.front();
   return top;
 }
 
 void TCPServer::Pop()
 {
   LOG_STACK_TRACE_POINT;
-  std::lock_guard<mutex_type> lock(request_mutex_);
+  FETCH_LOCK(request_mutex_);
   requests_.pop_front();
 }
 

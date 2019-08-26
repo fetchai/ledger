@@ -1027,12 +1027,12 @@ TEST_F(NiceMockBlockCoordinatorTests, UnknownTransactionDoesNotBlockForever)
   Advance();
 
   // Time out wait to request Tx from peers
-  clock_->Advance(std::chrono::seconds(31u));
+  clock_->Advance(std::chrono::seconds(6u));
 
   ASSERT_TRUE(RemainsOn(State::WAIT_FOR_TRANSACTIONS));
 
   // Time out wait for Tx - block should be invalidated at this point
-  clock_->Advance(std::chrono::seconds(31u));
+  clock_->Advance(std::chrono::seconds(601u));
 
   Tock(State::WAIT_FOR_TRANSACTIONS, State::SYNCHRONISED);
 }

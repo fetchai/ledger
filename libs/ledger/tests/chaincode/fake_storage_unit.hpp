@@ -38,13 +38,12 @@ public:
   /*using state_archive_type = std::unordered_map<bookmark_type, state_store_type>; */
   using lock_store_type = std::unordered_set<ShardIndex>;
   using mutex_type      = std::mutex;
-  using lock_guard_type = std::lock_guard<mutex_type>;
   using hash_type       = fetch::byte_array::ConstByteArray;
   using ResourceID      = fetch::storage::ResourceID;
 
   Document GetOrCreate(ResourceAddress const &key) override
   {
-    lock_guard_type lock(mutex_);
+    FETCH_LOCK(mutex_);
 
     Document doc;
 
@@ -63,8 +62,8 @@ public:
 
   Document Get(ResourceAddress const &key) override
   {
-    lock_guard_type lock(mutex_);
-    Document        doc;
+    FETCH_LOCK(mutex_);
+    Document doc;
 
     auto it = state_.find(key.id());
     if (it != state_.end())
@@ -81,14 +80,14 @@ public:
 
   void Set(ResourceAddress const &key, StateValue const &value) override
   {
-    lock_guard_type lock(mutex_);
+    FETCH_LOCK(mutex_);
 
     state_[key.id()] = value;
   }
 
   bool Lock(ShardIndex shard) override
   {
-    lock_guard_type lock(mutex_);
+    FETCH_LOCK(mutex_);
 
     bool success = false;
 
@@ -104,7 +103,7 @@ public:
 
   bool Unlock(ShardIndex shard) override
   {
-    lock_guard_type lock(mutex_);
+    FETCH_LOCK(mutex_);
 
     bool success = false;
 
@@ -120,15 +119,15 @@ public:
 
   void AddTransaction(fetch::ledger::Transaction const &tx) override
   {
-    lock_guard_type lock(mutex_);
+    FETCH_LOCK(mutex_);
     transactions_[tx.digest()] = tx;
   }
 
   bool GetTransaction(fetch::byte_array::ConstByteArray const &digest,
                       fetch::ledger::Transaction &             tx) override
   {
-    lock_guard_type lock(mutex_);
-    bool            success = false;
+    FETCH_LOCK(mutex_);
+    bool success = false;
 
     auto it = transactions_.find(digest);
     if (it != transactions_.end())
@@ -142,7 +141,7 @@ public:
 
   bool HasTransaction(ConstByteArray const &digest) override
   {
-    lock_guard_type lock(mutex_);
+    FETCH_LOCK(mutex_);
     return transactions_.find(digest) != transactions_.end();
   }
 

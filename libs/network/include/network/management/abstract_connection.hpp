@@ -63,7 +63,7 @@ public:
     FETCH_LOG_VARIABLE(h);
 
     {
-      std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
+      FETCH_LOCK(callback_mutex_);
       on_message_ = nullptr;
     }
 
@@ -85,7 +85,7 @@ public:
   // Common to all
   std::string Address() const
   {
-    std::lock_guard<mutex::Mutex> lock(address_mutex_);
+    FETCH_LOCK(address_mutex_);
     return address_;
   }
 
@@ -111,35 +111,35 @@ public:
   void OnMessage(std::function<void(network::message_type const &msg)> const &f)
   {
     LOG_STACK_TRACE_POINT;
-    std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
+    FETCH_LOCK(callback_mutex_);
     on_message_ = f;
   }
 
   void OnConnectionSuccess(std::function<void()> const &fnc)
   {
     LOG_STACK_TRACE_POINT;
-    std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
+    FETCH_LOCK(callback_mutex_);
     on_connection_success_ = fnc;
   }
 
   void OnConnectionFailed(std::function<void()> const &fnc)
   {
     LOG_STACK_TRACE_POINT;
-    std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
+    FETCH_LOCK(callback_mutex_);
     on_connection_failed_ = fnc;
   }
 
   void OnLeave(std::function<void()> const &fnc)
   {
     LOG_STACK_TRACE_POINT;
-    std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
+    FETCH_LOCK(callback_mutex_);
     on_leave_ = fnc;
   }
 
   void ClearClosures() noexcept
   {
     LOG_STACK_TRACE_POINT;
-    std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
+    FETCH_LOCK(callback_mutex_);
     on_connection_failed_  = nullptr;
     on_connection_success_ = nullptr;
     on_message_            = nullptr;
@@ -158,7 +158,7 @@ public:
 protected:
   void SetAddress(std::string const &addr)
   {
-    std::lock_guard<mutex::Mutex> lock(address_mutex_);
+    FETCH_LOCK(address_mutex_);
     address_ = addr;
   }
 
@@ -173,7 +173,7 @@ protected:
                     ", SignalLeave called.");
     std::function<void()> cb;
     {
-      std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
+      FETCH_LOCK(callback_mutex_);
       cb = on_leave_;
     }
 
@@ -190,7 +190,7 @@ protected:
     LOG_STACK_TRACE_POINT;
     std::function<void(network::message_type const &)> cb;
     {
-      std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
+      FETCH_LOCK(callback_mutex_);
       cb = on_message_;
     }
     if (cb)
@@ -204,7 +204,7 @@ protected:
     LOG_STACK_TRACE_POINT;
     std::function<void()> cb;
     {
-      std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
+      FETCH_LOCK(callback_mutex_);
       cb = on_leave_;
     }
     if (cb)
@@ -220,7 +220,7 @@ protected:
     LOG_STACK_TRACE_POINT;
     std::function<void()> cb;
     {
-      std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
+      FETCH_LOCK(callback_mutex_);
       cb = on_connection_success_;
     }
 
@@ -248,7 +248,7 @@ private:
     connection_handle_type ret = 0;
 
     {
-      std::lock_guard<fetch::mutex::Mutex> lck(global_handle_mutex_);
+      FETCH_LOCK(global_handle_mutex_);
 
       while (ret == 0)
       {

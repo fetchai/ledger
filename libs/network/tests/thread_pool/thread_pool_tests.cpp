@@ -143,8 +143,8 @@ TEST_P(ThreadPoolTests, DISABLED_CheckIdleWorkers)
   pool_->PostIdle([this, &log_mutex, &log]() {
     // update the log
     {
-      std::lock_guard<std::mutex> lock(log_mutex);
-      Timepoint const             now = Clock::now();
+      FETCH_LOCK(log_mutex);
+      Timepoint const now = Clock::now();
       log.push_back(now);
     }
 
