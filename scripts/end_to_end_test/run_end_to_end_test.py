@@ -298,11 +298,11 @@ class TestInstance():
                 self._nodes[index].append_to_cmd(["-private-network", ])
             self.start_node(index)
 
-        time.sleep(2)  # TODO(HUT): blocking http call to node for ready state
+        time.sleep(5)  # TODO(HUT): blocking http call to node for ready state
 
         if(self._pos_mode):
             output("POS mode. sleep extra time.")
-            time.sleep(2)
+            time.sleep(5)
 
     def stop(self):
         if self._nodes:
@@ -594,6 +594,7 @@ def restart_nodes(parameters, test_instance):
     for node_index in nodes:
         test_instance.restart_node(node_index)
 
+    time.sleep(5)
 
 def add_node(parameters, test_instance):
 

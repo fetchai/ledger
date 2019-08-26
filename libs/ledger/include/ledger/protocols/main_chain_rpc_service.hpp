@@ -175,7 +175,6 @@ private:
   telemetry::CounterPtr state_synchronising_;
   telemetry::CounterPtr state_wait_response_;
   telemetry::CounterPtr state_synchronised_;
-
   /// @}
 };
 

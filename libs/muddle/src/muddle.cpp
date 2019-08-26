@@ -135,6 +135,9 @@ bool Muddle::Start(Peers const &peers, Ports const &ports)
   // register this muddle instance
   MuddleRegistry::Instance().Register(shared_from_this());
 
+  // allow the muddle to start up
+  std::this_thread::sleep_for(1s);
+
   return true;
 }
 
