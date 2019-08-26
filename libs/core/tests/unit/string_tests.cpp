@@ -41,7 +41,7 @@ std::string Escape(std::string const &s)
     ret_val.append(s, i0, i - i0) += '\\';
     ret_val += (s[i] == '\n' ? 'n' : 't');
   }
-  return ret_val.append(s, i0) += '"';
+  return std::move(ret_val.append(s, i0) += '"');
 }
 
 TEST(StringTests, check_EndsWith)
