@@ -136,9 +136,9 @@ ledger::ShardConfigs GenerateShardsConfig(Config const &cfg, uint16_t start_port
     shard.external_port     = start_port++;
     shard.external_network_id =
         muddle::NetworkId{(static_cast<uint32_t>(i) & 0xFFFFFFu) | (uint32_t{'L'} << 24u)};
-    shard.internal_identity   = std::make_shared<crypto::ECDSASigner>();
-    shard.internal_port       = start_port++;
-    shard.internal_network_id = muddle::NetworkId{"ISRD"};
+    shard.internal_identity    = std::make_shared<crypto::ECDSASigner>();
+    shard.internal_port        = start_port++;
+    shard.internal_network_id  = muddle::NetworkId{"ISRD"};
     shard.verification_threads = cfg.verification_threads;
 
     auto const ext_identity = shard.external_identity->identity().identifier();
