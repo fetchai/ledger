@@ -161,5 +161,13 @@ using CopyReferenceKind =
 template <class Source, class Dest>
 using CopyReferenceKindT = typename CopyReferenceKind<Source, Dest>::type;
 
+template <class... Ts>
+struct Last : std::tuple_element<sizeof...(Ts) - 1, std::tuple<Ts...>>
+{
+};
+
+template <class... Ts>
+using LastT = typename Last<Ts...>::type;
+
 }  // namespace type_util
 }  // namespace fetch
