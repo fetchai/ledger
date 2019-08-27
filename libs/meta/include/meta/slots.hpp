@@ -26,9 +26,12 @@
 namespace fetch {
 namespace value_util {
 
+// This handler introduces functions that facilitate creating multi-dispatched anonymous callables:
+// Slot and Slots.
+
 namespace detail_ {
 
-template <class Arg, class F, class Args = pack::Nil, bool = pack::IsInvocableV<F, Args>>
+template <class Arg, class F, class Args = pack::Singleton<Arg>, bool = pack::IsInvocableV<F, Args>>
 struct Arity : pack::TupleSize<Args>
 {
 };
@@ -74,6 +77,11 @@ struct Slot<pack::Pack<As...>, F>
 // "pack expansion in using-declaration only available with ‘-std=c++17’ or ‘-std=gnu++17’"
 // So we'll need a few preparations to have it in C++14.
 
+/**
+ * @tparam FirstParent a callable type (one that defines operator())
+ * @tparam OtherParents a callable type (one that defines operator())
+ */
+
 template <class FirstParent, class OtherParents>
 struct FunctorChild : FirstParent, OtherParents
 {
@@ -98,16 +106,48 @@ using SlotT = typename Slot<Arg, F>::type;
 
 }  // namespace detail_
 
+/**
+ * A single slot: a callable type that handles every its argument set uniformly.
+ * Internally, SlotType stores a callable f and directs all invocations to it.
+ * ArgSets are a sequence of types, each one being a Pack of arguments of one operator() overload,
+ * so, e.g.
+ *     SlotType<F, pack::Pack<int>, pack::Pack<char, double, std:string const &>>
+ * defines member functions
+ *     auto operator()(int) cv
+ *     auto operator()(char, double, std::string const &) cv
+ * Their return types can be inferred as
+ *     InvokeResultT<F, int> and InvokeResultT<F, char, double, std::string const &>
+ * so F should be unambiguously called with both argument sets; and their cv-qualification
+ * reiterates that of F.
+ *
+ * As a convenience, an ArgSet can be a single type that is not a pack, a monotype overload;
+ * it corresponds to the shortest non-empty argument sequence f can handle
+ * with all arguments being of this type, so e.g. if
+ *     f is [](auto x, auto y, auto z){ return (x + y) * z; }
+ * then
+ *     SlotType<decltype(f), int>(f)
+ * has a single member overload
+ *     int operator()(int x, int y, int z) const.
+ *
+ * @tparam F a single callable that would be invoked on every argument set
+ * @tparam ArgSets...
+ */
 template <class F, class... ArgSets>
 class SlotType : type_util::ReverseAccumulateT<detail_::FunctorChild, SlotType<F, ArgSets>...>
 {
   using Parent = type_util::ReverseAccumulateT<detail_::FunctorChild, SlotType<F, ArgSets>...>;
 
 public:
+  /**
+   * @param f a single callable that would be invoked on every argument set
+   */
   SlotType(F const &f)
     : Parent(f)
   {}
 
+  /**
+   * Defines an operator() for every argument set as described above.
+   */
   using Parent::operator();
 };
 
@@ -121,18 +161,36 @@ public:
   using Parent::operator();
 };
 
+/**
+ * External constructor, a convenience function to infer F
+ * 
+ * @tparam ArgSets... argument sets of the SlotType
+ * @param f a callable to be invoked on every argument set
+ * @return SlotType
+ */
 template <class... ArgSets, class F>
 constexpr auto Slot(F &&f)
 {
   return SlotType<F, ArgSets...>(std::forward<F>(f));
 }
 
+/**
+ * Accepts a set of callable classes and exports all their member operator()s, so those should be
+ * unambiguous.
+ * The difference between SlotType and this class is that while the former invokes the same callable
+ * on every argument set, this one accepts a callable per each slot it contains.
+ *
+ * @tparam Fs... a set of slots (callable types)
+ */
 template <class... Fs>
 class SlotsType : type_util::ReverseAccumulateT<detail_::FunctorChild, Fs...>
 {
   using Parent = type_util::ReverseAccumulateT<detail_::FunctorChild, Fs...>;
 
 public:
+  /**
+   * @param fs... callables to initialize slots
+   */
   constexpr SlotsType(Fs &&... fs)
     : Parent(std::forward<Fs>(fs)...)
   {}
@@ -140,6 +198,12 @@ public:
   using Parent::operator();
 };
 
+/**
+ * External constructor, a convenience function to infer F
+ * 
+ * @param fs... slots
+ * @return SlotsType
+ */
 template <class... Fs>
 constexpr auto Slots(Fs &&... fs)
 {

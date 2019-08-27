@@ -533,11 +533,21 @@ struct AnyFloatingPoint : public Variant
   using Variant::Variant;
 };
 
-// IdToType<type_id> provides some useful information for a given type id:
-//     IdToType<type_id>::value        is the type_id itself;
-//     IdToType<type_id>::type         is the C++ type this id corresponds to;
-//     IdToType<type_id>::storage_type is the type used to store values of this type id inside
-//         Variant and in containers.
+/**
+ * Provides some useful information for a given type id:
+ *     IdToType<type_id>::value        is the type_id itself;
+ *     IdToType<type_id>::type         is the C++ type this id corresponds to;
+ *     IdToType<type_id>::storage_type is the type used to store values of this type id inside
+ *         Variant and in containers.
+ *
+ * In addition, some instantiations define static method
+ *     storage_type &Reference(Variant &v)
+ * that returns a reference to the value inside variant, and a constref-version of the same.
+ *
+ * Warning: the lifetime of a referred field should have already begun.
+ *
+ * @tparam id
+ */
 template <TypeId id>
 struct IdToType;
 
@@ -860,6 +870,8 @@ public:
 };
 
 // Partial specialization of VariantView for object types.
+// It inherits the otherwise non-existent VariantView<IdToType, true>,
+// to reuse methods common to primitive and non-primitive types.
 template <class IdToType>
 class VariantView<IdToType, false> : protected VariantView<IdToType, true>
 {
@@ -898,8 +910,7 @@ public:
 
 template <>
 class VariantView<IdToType<TypeIds::Null>, false>
-  : public IdToType<TypeIds::Null>  // parent defines value, type, storage_type and, perhaps,
-                                    // Reference(Variant &)
+  : public IdToType<TypeIds::Null>  // parent defines value, type and storage_type
 {
   using Parent = IdToType;
 
@@ -1109,6 +1120,26 @@ using BuiltinTypes = TypeIdCases<BuiltinTypeIds>;
 
 using NonInstantiableTypes = TypeIdCases<NonInstantiableTypeIds>;
 
+/**
+ * Invokes a functor on viewed variants, constructing views according to the type_id given.
+ * f should return the same (up to implicit conversion) type for all possible view types.
+ *
+ * When invoked as ApplyFunctor<C1, C2...>(type_id, f, var1...), it compares type_id
+ * against every Ci::value and, if Cn matches, passes control to f(Cn(var1), Cn(var2)...).
+ *
+ * If no vars given (i.e. ApplyFunctor<C1, C2...>(type_id, f), f is called with a special dummy
+ * zero-size argument whose type provides static constexpr method value, equal to type_id,
+ * and member types type and storage_type.
+ *
+ * When there's no match (i.e. there's no DefaultCase among Cases), zero value of f's return type
+ * is returned.
+ *
+ * @tparam Cases... a set of VariantView types to be handled, each one having a member value to be compared against type_id
+ * @param type_id the selector value that identifies a particular Case
+ * @param f a callable to be invoked on matching views, or a special dummy type-identifier
+ * @param variants... a (possibly empty) set of Variants to handle
+ * @return whatever f returns
+ */
 template <class... Cases, class F, class... Variants>
 constexpr auto ApplyFunctor(TypeId type_id, F &&f, Variants &&... variants)
 {
@@ -1116,6 +1147,7 @@ constexpr auto ApplyFunctor(TypeId type_id, F &&f, Variants &&... variants)
       type_id, std::forward<F>(f), std::forward<Variants>(variants)...);
 }
 
+// A specialization of ApplyFunctor for integral types only (Int* and UInt*).
 template <class F, class... Variants>
 constexpr auto ApplyIntegralFunctor(TypeId type_id, F &&f, Variants &&... variants)
 {
@@ -1123,6 +1155,7 @@ constexpr auto ApplyIntegralFunctor(TypeId type_id, F &&f, Variants &&... varian
                                      std::forward<Variants>(variants)...);
 }
 
+// A specialization of ApplyFunctor for numeric types only (Int*, UInt*, Float*, Fixed*).
 template <class F, class... Variants>
 constexpr auto ApplyNumericFunctor(TypeId type_id, F &&f, Variants &&... variants)
 {
@@ -1130,6 +1163,7 @@ constexpr auto ApplyNumericFunctor(TypeId type_id, F &&f, Variants &&... variant
                                     std::forward<Variants>(variants)...);
 }
 
+// A specialization of ApplyFunctor for primitive types only (Bool, Int*, UInt*, Float*, Fixed*).
 template <class F, class... Variants>
 constexpr auto ApplyPrimitiveFunctor(TypeId type_id, F &&f, Variants &&... variants)
 {
@@ -1137,6 +1171,8 @@ constexpr auto ApplyPrimitiveFunctor(TypeId type_id, F &&f, Variants &&... varia
                                       std::forward<Variants>(variants)...);
 }
 
+// A specialization of ApplyFunctor for all builtin types(Bool, Int*, UInt*, Float*, Fixed*,
+// String and Adress).
 template <class F, class... Variants>
 constexpr auto ApplyBuiltinFunctor(TypeId type_id, F &&f, Variants &&... variants)
 {
@@ -1144,12 +1180,43 @@ constexpr auto ApplyBuiltinFunctor(TypeId type_id, F &&f, Variants &&... variant
                                     std::forward<Variants>(variants)...);
 }
 
+// Slots can be used to construct anonymous callables for ApplyFunctor
+// that handle different type_ids _differently_.
+//
+// Example:
+//
+//     TypeId type_id = TypeIds::Int32;
+//
+//     ApplyFunctor<SignedIntegerTypes>(type_id,
+//         Slots(
+//             TypeIdSlot<VariantView<TypeIds::Int8>, VariantView<TypeIds::Int16>>(
+//                 [](auto){ return std::string{"This is a small integer."}; }),
+//
+//             TypeIdSlot<VariantView<TypeIds::Int32>, VariantView<TypeIds::Int64>>(
+//                 [](auto){ return std::string{"This is a large integer."}; })
+//         ));
+//                 
+/**
+ * Slot that handles Views by passing constructed views to f.
+ *
+ * @tparam Views... a set of VariantViews to be matched against type_id in ApplyFunctor invocation
+ * @param f a callable at the core of this slot
+ * @return slot
+ */
 template <class... Views, class F>
 constexpr auto TypeIdSlot(F &&f)
 {
   return pack::ApplyT<value_util::SlotType, pack::ConcatT<F, Views...>>(std::forward<F>(f));
 }
 
+/**
+ * Slot that handles Views by passing constructed views to f.
+ * It implicitly appends DefaultVariantView to handled Views.
+ *
+ * @tparam Views... a set of VariantViews to be matched against type_id in ApplyFunctor invocation
+ * @param f a callable at the core of this slot
+ * @return slot
+ */
 template <class... Views, class F>
 constexpr auto DefaultSlot(F &&f)
 {
@@ -1157,36 +1224,79 @@ constexpr auto DefaultSlot(F &&f)
       std::forward<F>(f));
 }
 
+/**
+ * Slot that handles Views of integral types by passing constructed views to f.
+ *
+ * @param f a callable at the core of this slot
+ * @return slot
+ */
 template <class F>
 constexpr auto IntegralSlot(F &&f)
 {
   return TypeIdSlot<IntegralTypes>(std::forward<F>(f));
 }
 
+/**
+ * Slot that handles Views of numeric types by passing constructed views to f.
+ *
+ * @param f a callable at the core of this slot
+ * @return slot
+ */
 template <class F>
 constexpr auto NumericSlot(F &&f)
 {
   return TypeIdSlot<NumericTypes>(std::forward<F>(f));
 }
 
+/**
+ * Slot that handles Views of primitive types by passing constructed views to f.
+ *
+ * @param f a callable at the core of this slot
+ * @return slot
+ */
 template <class F>
 constexpr auto PrimitiveSlot(F &&f)
 {
   return TypeIdSlot<PrimitiveTypes>(std::forward<F>(f));
 }
 
+/**
+ * Slot that handles Views of all builtin types by passing constructed views to f.
+ *
+ * @param f a callable at the core of this slot
+ * @return slot
+ */
 template <class F>
 constexpr auto BuiltinSlot(F &&f)
 {
   return TypeIdSlot<BuiltinTypes>(std::forward<F>(f));
 }
 
+/**
+ * Slot that handles dummy type arguments in zero-variant ApplyFunctor invocations.
+ * Unlike in a non-nullary slot, its type parameters should be instances of IdToType, to match
+ * a dummy argument passed by ApplyFunctor in case of type_id match.
+ *
+ * @tparam TypeIdValues... a set of TypeIds to be matched against type_id in ApplyFunctor invocation
+ * @param f a callable at the core of this slot
+ * @return slot
+ */
 template <class... TypeIdValues, class F>
 constexpr auto NullarySlot(F &&f)
 {
   return TypeIdSlot<TypeIdValues...>(std::forward<F>(f));
 }
 
+/**
+ * Slot that handles dummy type arguments in zero-variant ApplyFunctor invocations.
+ * It implicitly appends a dummy type that DefaultObjectCase passes for nullary invocations.
+ * Unlike in a non-nullary slot, its type parameters should be instances of IdToType, to match
+ * a dummy argument passed by ApplyFunctor in case of type_id match.
+ *
+ * @tparam TypeIdValues... a set of TypeIds to be matched against type_id in ApplyFunctor invocation
+ * @param f a callable at the core of this slot
+ * @return slot
+ */
 template <class... TypeIdValues, class F>
 constexpr auto DefaultNullarySlot(F &&f)
 {
@@ -1194,24 +1304,48 @@ constexpr auto DefaultNullarySlot(F &&f)
       std::forward<F>(f));
 }
 
+/**
+ * Slot that handles dummy type arguments of integral id-types in zero-variant invocations.
+ *
+ * @param f a callable at the core of this slot
+ * @return slot
+ */
 template <class F>
 constexpr auto IntegralNullarySlot(F &&f)
 {
   return NullarySlot<IntegralTypeIds>(std::forward<F>(f));
 }
 
+/**
+ * Slot that handles dummy type arguments of numeric id-types in zero-variant invocations.
+ *
+ * @param f a callable at the core of this slot
+ * @return slot
+ */
 template <class F>
 constexpr auto NumericNullarySlot(F &&f)
 {
   return NullarySlot<NumericTypeIds>(std::forward<F>(f));
 }
 
+/**
+ * Slot that handles dummy type arguments of primitive id-types in zero-variant invocations.
+ *
+ * @param f a callable at the core of this slot
+ * @return slot
+ */
 template <class F>
 constexpr auto PrimitiveNullarySlot(F &&f)
 {
   return NullarySlot<PrimitiveTypeIds>(std::forward<F>(f));
 }
 
+/**
+ * Slot that handles dummy type arguments of all builtin id-types in zero-variant invocations.
+ *
+ * @param f a callable at the core of this slot
+ * @return slot
+ */
 template <class F>
 constexpr auto BuiltinNullarySlot(F &&f)
 {
