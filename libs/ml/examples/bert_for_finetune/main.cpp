@@ -33,6 +33,7 @@
 #include "ml/serializers/ml_types.hpp"
 #include "math/metrics/cross_entropy.hpp"
 #include "ml/utilities/graph_builder.hpp"
+#include "core/filesystem/read_file_contents.hpp"
 
 #include <chrono>
 #include <fstream>
@@ -68,6 +69,20 @@ struct BERTConfig
   SizeType segment_size      = 2u;
   DataType epsilon           = static_cast<DataType>(1e-12);
   DataType dropout_keep_prob = static_cast<DataType>(0.9);
+};
+
+struct BERTInterface
+{
+	// the default names for input and outpus of a Fetch BERT model
+	std::vector<std::string> inputs = {"Segment", "Position", "Tokens", "Mask"};
+	std::vector<std::string> outputs;
+	
+	BERTInterface(BERTConfig const &config){
+		outputs.emplace_back("norm_embed");
+		for(SizeType i= static_cast<SizeType>(0); i<config.n_encoder_layers; i++){
+			outputs.emplace_back("SelfAttentionEncoder_No_" + std::to_string(i));
+		}
+	}
 };
 
 // data creation
@@ -107,6 +122,9 @@ void run_pseudo_forward_pass(std::vector<std::string> input_nodes, std::string o
 
 void evaluate_graph(GraphType &g, std::vector<std::string> input_nodes, std::string output_node, std::vector<TensorType> input_data, TensorType output_data);
 
+void save_graph_to_file(GraphType &g, std::string const file_name="/home/xiaodong/Projects/Fetch scripts/bert_finetune/serialized_model.bin");
+GraphType read_file_to_graph(std::string const file_name="/home/xiaodong/Projects/Fetch scripts/bert_finetune/serialized_model.bin");
+
 int main(int ac, char **av)
 {
   if (ac == 1)
@@ -118,76 +136,30 @@ int main(int ac, char **av)
   {
     // if a pseudo pass is required, only run a pseudo pass on a base uncased bert model with random
     // set batch_size
-//	  SizeType batch_size = 1;
+	  SizeType batch_size = 1;
     
 	  // weights and show the time
 	  BERTConfig config;
-	  
-	  config.ff_dims = 12;
-	  config.model_dims = 12;
-	  config.n_heads = 2;
-	  config.vocab_size = 3;
+	  BERTInterface interface(config);
 
 	  GraphType g;
-	  auto      ret = make_bert_model(config, g);
-
+//	  make_bert_model(config, g);
+//
 //	  // do a pseudo pass
 //	  // run batches
-//	  for(int i=0; i<1; i++){
-//		  run_pseudo_forward_pass(ret.first, ret.second[12], config, g, batch_size, false);
-//	  }
-//
-//		// start serializing
-	  fetch::ml::GraphSaveableParams<TensorType> gsp1 = g.GetGraphSaveableParams();
-	  std::cout << "got saveable params" << std::endl;
+//	  run_pseudo_forward_pass(interface.inputs, interface.outputs[12], config, g, batch_size, true);
 
-	  fetch::serializers::SizeCounter       counter;
-	  fetch::serializers::MsgPackSerializer b;
-	  counter << gsp1;
-	  std::cout << "finish counting" << std::endl;
-	  b.Reserve(counter.size());
-	  b << gsp1;
-	  std::cout << "finish serializing" << std::endl;
 
-		std::ofstream outFile ("/home/xiaodong/Projects/Fetch scripts/bert_finetune/serialized_model.bin", std::ios::out | std::ios::binary);
-		outFile.write(b.data().char_pointer(), std::streamsize(b.size()));
-		outFile.close();
-	  std::cout << b.size() << std::endl;
-		std::cout << "finish writing to file" << std::endl;
-
-		std::ifstream inFile ("/home/xiaodong/Projects/Fetch scripts/bert_finetune/serialized_model.bin", std::ios::in | std::ios::binary);
-	  //get length of file
-	  inFile.seekg(0, inFile.end);
-	  auto length = inFile.tellg();
-	  inFile.seekg(0, inFile.beg);
-	  std::cout << length << std::endl;
-	  // read file to buffer
-	  auto buffer = new char[static_cast<unsigned long>(length)];
-		inFile.read(buffer, length);
-		inFile.close();
-	  uint8_t *byte_buffer = reinterpret_cast<uint8_t *>(buffer);
-		fetch::byte_array::ConstByteArray fetch_buffer(byte_buffer, static_cast<std::size_t>(length));
-		
-		fetch::serializers::MsgPackSerializer b2(fetch_buffer);
-	  std::cout << b2.size() << std::endl;
-		std::cout << "finish reading from file" << std::endl;
+//	  save_graph_to_file(g);
 	
-	  // start deserializing
-//	  fetch::serializers::MsgPackSerializer b2 = b;
-	  b2.seek(0);
-	  fetch::ml::GraphSaveableParams<TensorType> gsp2;
-	  b2 >> gsp2;
-		std::cout << "finish deserializing" << std::endl;
-		auto g2 = std::make_shared<GraphType>();
-		fetch::ml::utilities::BuildGraph<TensorType>(gsp2, g2);
-		std::cout << "finish rebuilding graph" << std::endl;
+	  
+	  g = read_file_to_graph();
+	  
 	  
 	  // run batches
-//	  for(int i=0; i<1; i++){
-//	    run_pseudo_forward_pass(ret.first, ret.second[12], config, g, batch_size, false);
-//	  }
+	  run_pseudo_forward_pass(interface.inputs, interface.outputs[12], config, g, batch_size, true);
 	    
-	    return 0;
+	  return 0;
   }
   if (std::string(av[1]) == "pretrain pass")
   {
@@ -213,7 +185,7 @@ int main(int ac, char **av)
   }
 
 	// setup params for training
-	SizeType train_size = 100;
+	SizeType train_size = 20;
 	SizeType test_size = 10;
 	SizeType batch_size = 4;
 	SizeType epochs = 2;
@@ -233,21 +205,6 @@ int main(int ac, char **av)
   auto train_data = load_imdb_finetune_data(IMDB_path);
 	std::cout << "finish loading imdb from disk, start preprocessing" << std::endl;
 	
-	// get part of the training data out
-//	TensorType sliced_train_data_pos = train_data[0].Slice(std::make_pair(static_cast<SizeType>(0), train_size), static_cast<SizeType>(1)).Copy();
-//	std::cout << "train_data[0].View(0).Copy().ToString(): " << train_data[0].View(0).Copy().ToString() << std::endl;
-//	std::cout << "sliced.View(0).Copy().ToString(): " << sliced_train_data_pos.View(0).Copy().ToString() << std::endl;
-//	TensorType sliced_train_data_neg = train_data[1].Slice(std::make_pair(static_cast<SizeType>(0), train_size), static_cast<SizeType>(1)).Copy();
-	
-	// get test data out
-//	TensorType sliced_test_data_pos = train_data[2].Slice(std::make_pair(static_cast<SizeType>(0), test_size), static_cast<SizeType>(1)).Copy();
-//	TensorType sliced_test_data_neg = train_data[3].Slice(std::make_pair(static_cast<SizeType>(0), test_size), static_cast<SizeType>(1)).Copy();
-//	TensorType test_data_concate = TensorType::Concat({sliced_test_data_pos, sliced_test_data_neg}, static_cast<SizeType>(1));
-//	auto final_test_data = prepare_tensor_for_bert(test_data_concate, config);
-//	TensorType test_labels({static_cast<SizeType>(1), static_cast<SizeType>(2) * test_size});
-//	for(SizeType i=0; i<test_size; i++){
-//		test_labels.Set(static_cast<SizeType>(0), i, static_cast<DataType>(1));
-//	}
 	// evenly mix pos and neg train data together
 	TensorType train_data_mixed({train_data[0].shape(0), static_cast<SizeType>(2) * train_size});
 	for(SizeType i=0; i<train_size; i++){
@@ -321,44 +278,6 @@ int main(int ac, char **av)
     std::cout << "loss: " << loss << std::endl;
 	  evaluate_graph(g, ret.first, classification_output, final_test_data, test_labels);
   }
-//  // start serializing
-//  fetch::ml::GraphSaveableParams<TensorType> gsp1 = g.GetGraphSaveableParams();
-//  std::cout << "got saveable params" << std::endl;
-//
-//  fetch::serializers::SizeCounter       counter;
-//  fetch::serializers::MsgPackSerializer b;
-//  counter << gsp1;
-//  std::cout << "finish counting" << std::endl;
-//  b.Reserve(counter.size());
-//  b << gsp1;
-//  std::cout << "finish serializing" << std::endl;
-
-//	std::ofstream myFile ("/home/xiaodong/Projects/Fetch scripts/bert_finetune/serialized_model.bin", std::ios::out | std::ios::binary);
-//	uint8_t * out;
-//	b.WriteBytes(out, b.size());
-//	myFile.write((char *)out, sizeof(out));
-//	std::cout << sizeof(out) << std::endl;
-//	myFile.close();
-//	std::cout << "finish writing to file" << std::endl;
-//
-//	std::ifstream savedFile ("/home/xiaodong/Projects/Fetch scripts/bert_finetune/serialized_model.bin", std::ios::in | std::ios::binary);
-//	char * buffer;
-//	savedFile.read(buffer, sizeof(out));
-//	savedFile.close();
-//	fetch::serializers::MsgPackSerializer b2;
-//	b2.ReadBytes((uint8_t *)buffer, sizeof(buffer));
-//	std::cout << "finish reading from file" << std::endl;
-//
-//  // start deserializing
-//  b2.seek(0);
-//  fetch::ml::GraphSaveableParams<TensorType> gsp2;
-//  b2 >> gsp2;
-//	std::cout << "finish deserializing" << std::endl;
-//	auto g2 = std::make_shared<GraphType>();
-//	fetch::ml::utilities::BuildGraph<TensorType>(gsp2, g2);
-//	std::cout << "finish rebuilding graph" << std::endl;
-//
-//	evaluate_graph(*g2, ret.first, classification_output, final_test_data, test_labels);
 
   return 0;
 }
@@ -857,4 +776,49 @@ void run_pseudo_forward_pass(std::vector<std::string> input_nodes, std::string o
   {
     std::cout << "first token: \n" << output.View(0).Copy().View(0).Copy().ToString() << std::endl;
   }
+}
+
+void save_graph_to_file(GraphType &g, std::string const file_name){
+	// start serializing and writing to file
+	fetch::ml::GraphSaveableParams<TensorType> gsp1 = g.GetGraphSaveableParams();
+	std::cout << "got saveable params" << std::endl;
+	
+	fetch::serializers::SizeCounter       counter;
+	fetch::serializers::MsgPackSerializer b;
+	counter << gsp1;
+	std::cout << "finish counting" << std::endl;
+	b.Reserve(counter.size());
+	b << gsp1;
+	std::cout << "finish serializing" << std::endl;
+	
+	std::ofstream outFile (file_name, std::ios::out | std::ios::binary);
+	outFile.write(b.data().char_pointer(), std::streamsize(b.size()));
+	outFile.close();
+	std::cout << b.size() << std::endl;
+	std::cout << "finish writing to file" << std::endl;
+}
+
+GraphType read_file_to_graph(std::string const file_name){
+	auto cur_time  = std::chrono::high_resolution_clock::now();
+	// start reading a file and deserializing
+	fetch::byte_array::ConstByteArray buffer = fetch::core::ReadContentsOfFile(file_name.c_str());
+	std::cout << "The buffer read from file is of size: " << buffer.size() << " bytes" << std::endl;
+	fetch::serializers::MsgPackSerializer b;
+	b.ReadByteArray(buffer, buffer.size());
+	std::cout << "finish loading bytes to serlializer" << std::endl;
+	
+	// start deserializing
+	b.seek(0);
+	fetch::ml::GraphSaveableParams<TensorType> gsp2;
+	b >> gsp2;
+	std::cout << "finish deserializing" << std::endl;
+	auto g = std::make_shared<GraphType>();
+	fetch::ml::utilities::BuildGraph<TensorType>(gsp2, g);
+	std::cout << "finish rebuilding graph" << std::endl;
+	
+	auto time_span = std::chrono::duration_cast<std::chrono::duration<double>>(
+	 std::chrono::high_resolution_clock::now() - cur_time);
+	std::cout << "time span: " << static_cast<double>(time_span.count()) << std::endl;
+	
+	return *g;
 }
