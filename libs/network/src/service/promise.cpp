@@ -27,7 +27,7 @@ using byte_array::ConstByteArray;
 using serializers::SerializableException;
 
 using Counter = PromiseImplementation::Counter;
-using State = PromiseImplementation::State;
+using State   = PromiseImplementation::State;
 
 template <typename NAME, typename ID>
 void LogTimout(NAME const &name, ID const &id)
@@ -44,15 +44,15 @@ void LogTimout(NAME const &name, ID const &id)
 }  // namespace
 
 PromiseImplementation::Counter PromiseImplementation::counter_{0};
-PromiseImplementation::Mutex   PromiseImplementation::PromiseImplementation::counter_lock_{__LINE__, __FILE__};
+PromiseImplementation::Mutex   PromiseImplementation::PromiseImplementation::counter_lock_{__LINE__,
+                                                                                         __FILE__};
 
 std::chrono::seconds const PromiseImplementation::DEFAULT_TIMEOUT{30};
 
 PromiseImplementation::PromiseImplementation(uint64_t pro, uint64_t func)
   : protocol_{pro}
   , function_{func}
-{
-}
+{}
 
 ConstByteArray const &PromiseImplementation::value() const
 {

@@ -47,7 +47,7 @@ public:
   using Clock          = std::chrono::steady_clock;
   using Timepoint      = Clock::time_point;
 
-  ResolvableTo()  = default;
+  ResolvableTo()           = default;
   ~ResolvableTo() override = default;
 
   ResolvableTo(ResolvableTo const &rhs) = default;

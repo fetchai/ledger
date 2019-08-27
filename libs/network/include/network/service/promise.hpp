@@ -65,25 +65,25 @@ public:
   };
 
   static constexpr char const *LOGGING_NAME = "Promise";
-//  static constexpr uint32_t    FOREVER      = std::numeric_limits<uint32_t>::max();
+  //  static constexpr uint32_t    FOREVER      = std::numeric_limits<uint32_t>::max();
   static std::chrono::seconds const DEFAULT_TIMEOUT;
 
   // Construction / Destruction
   PromiseImplementation() = default;
   PromiseImplementation(uint64_t protocol, uint64_t function);
   PromiseImplementation(PromiseImplementation const &) = delete;
-  PromiseImplementation(PromiseImplementation &&) = delete;
-  ~PromiseImplementation() = default;
+  PromiseImplementation(PromiseImplementation &&)      = delete;
+  ~PromiseImplementation()                             = default;
 
   /// @name Accessors
   /// @{
-  ConstByteArray const &value() const;
-  Counter id() const;
-  uint64_t protocol() const;
-  uint64_t function() const;
-  State state() const;
+  ConstByteArray const &       value() const;
+  Counter                      id() const;
+  uint64_t                     protocol() const;
+  uint64_t                     function() const;
+  State                        state() const;
   SerializableException const &exception() const;
-  const std::string &name() const;
+  const std::string &          name() const;
   /// @}
 
   /// @name Basic State Helpers
@@ -139,7 +139,6 @@ public:
   PromiseImplementation &operator=(PromiseImplementation &&) = delete;
 
 protected:
-
   /// @name Callback Handlers
   /// @{
   void SetSuccessCallback(Callback const &cb);
@@ -148,7 +147,6 @@ protected:
   /// @}
 
 private:
-
   using Mutex       = mutex::Mutex;
   using AtomicState = std::atomic<State>;
   using Condition   = std::condition_variable;
