@@ -194,10 +194,10 @@ int main(int ac, char **av)
 	// setup params for training
 	SizeType train_size = 100;
 	SizeType test_size = 10;
-	SizeType batch_size = 2;
+	SizeType batch_size = 4;
 	SizeType epochs = 2;
 	SizeType layer_no = 12;
-	DataType lr = static_cast<DataType>(5e-5);
+	DataType lr = static_cast<DataType>(1e-4);
 	// load data into memory
   std::string file_path = av[2];
   std::string IMDB_path = av[3];
