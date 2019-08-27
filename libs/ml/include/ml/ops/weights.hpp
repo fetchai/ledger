@@ -19,6 +19,7 @@
 
 #include "core/random/lfg.hpp"
 #include "ml/ops/placeholder.hpp"
+#include "ml/ops/trainable.hpp"
 #include "ml/regularisers/regularisation.hpp"
 #include "ml/regularisers/regulariser.hpp"
 #include "ml/state_dict.hpp"
