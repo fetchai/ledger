@@ -118,55 +118,74 @@ int main(int ac, char **av)
     // set batch_size
 //	  SizeType batch_size = 1;
     
-  // weights and show the time
-  BERTConfig config;
+	  // weights and show the time
+	  BERTConfig config;
+	  
+	  config.ff_dims = 12;
+	  config.model_dims = 12;
+	  config.n_heads = 2;
+	  config.vocab_size = 3;
 
-  GraphType g;
-  auto      ret = make_bert_model(config, g);
-	
-//	// start serializing
-//  fetch::ml::GraphSaveableParams<TensorType> gsp1 = g.GetGraphSaveableParams();
-//  std::cout << "got saveable params" << std::endl;
+	  GraphType g;
+	  auto      ret = make_bert_model(config, g);
+
+//	  // do a pseudo pass
+//	  // run batches
+//	  for(int i=0; i<1; i++){
+//		  run_pseudo_forward_pass(ret.first, ret.second[12], config, g, batch_size, false);
+//	  }
 //
-//  fetch::serializers::SizeCounter       counter;
-//  fetch::serializers::MsgPackSerializer b;
-//  counter << gsp1;
-//  std::cout << "finish counting" << std::endl;
-//  b.Reserve(counter.size());
-//  b << gsp1;
-//  std::cout << "finish serializing" << std::endl;
+//		// start serializing
+//	  fetch::ml::GraphSaveableParams<TensorType> gsp1 = g.GetGraphSaveableParams();
+//	  std::cout << "got saveable params" << std::endl;
 //
-//	std::ofstream outFile ("/home/xiaodong/Projects/Fetch scripts/bert_finetune/serialized_model.bin", std::ios::out | std::ios::binary);
-//	uint8_t * out = {0};
-//	b.WriteBytes(out, b.size());
-//	outFile.write((char *)out, sizeof(out));
-//	std::cout << sizeof(out) << std::endl;
-//	outFile.close();
-//	std::cout << "finish writing to file" << std::endl;
+//	  fetch::serializers::SizeCounter       counter;
+//	  fetch::serializers::MsgPackSerializer b;
+//	  counter << gsp1;
+//	  std::cout << "finish counting" << std::endl;
+//	  b.Reserve(counter.size());
+//	  b << gsp1;
+//	  std::cout << "finish serializing" << std::endl;
 //
-//	std::ifstream savedFile ("/home/xiaodong/Projects/Fetch scripts/bert_finetune/serialized_model.bin", std::ios::in | std::ios::binary);
-//	char * buffer = {0};
-//	savedFile.read(buffer, sizeof(out));
-//	savedFile.close();
-//	fetch::serializers::MsgPackSerializer b2;
-//	b2.ReadBytes((uint8_t *)buffer, sizeof(buffer));
-//	std::cout << "finish reading from file" << std::endl;
+//		std::ofstream outFile ("/home/xiaodong/Projects/Fetch scripts/bert_finetune/serialized_model.bin", std::ios::out | std::ios::binary);
+//		outFile.write(b.data().char_pointer(), std::streamsize(b.size()));
+//		outFile.close();
+//	  std::cout << b.size() << std::endl;
+//		std::cout << "finish writing to file" << std::endl;
 //
-//  // start deserializing
-//  b2.seek(0);
-//  fetch::ml::GraphSaveableParams<TensorType> gsp2;
-//  b2 >> gsp2;
-//	std::cout << "finish deserializing" << std::endl;
-//	auto g2 = std::make_shared<GraphType>();
-//	fetch::ml::utilities::BuildGraph<TensorType>(gsp2, g2);
-//	std::cout << "finish rebuilding graph" << std::endl;
-    
-    // run batches
-//    for(int i=0; i<1; i++){
-//	    run_pseudo_forward_pass(ret.first, ret.second[1], config, g, batch_size, false);
-//    }
-    
-    return 0;
+//		std::ifstream inFile ("/home/xiaodong/Projects/Fetch scripts/bert_finetune/serialized_model.bin", std::ios::in | std::ios::binary);
+//	  //get length of file
+//	  inFile.seekg(0, inFile.end);
+//	  auto length = inFile.tellg();
+//	  inFile.seekg(0, inFile.beg);
+//	  std::cout << length << std::endl;
+//	  // read file to buffer
+//	  char* buffer = new char[static_cast<unsigned long>(length)];
+//		inFile.read(buffer, length);
+//		inFile.close();
+//	  std::cout << std::strlen(buffer) << std::endl;
+//		fetch::byte_array::ConstByteArray fetch_buffer(buffer);
+//		std::cout << fetch_buffer.size() << std::endl;
+//		fetch::serializers::MsgPackSerializer b2(fetch_buffer);
+//	  std::cout << b2.size() << std::endl;
+//		std::cout << "finish reading from file" << std::endl;
+//
+//	  // start deserializing
+////	  fetch::serializers::MsgPackSerializer b2 = b;
+//	  b2.seek(0);
+//	  fetch::ml::GraphSaveableParams<TensorType> gsp2;
+//	  b2 >> gsp2;
+//		std::cout << "finish deserializing" << std::endl;
+//		auto g2 = std::make_shared<GraphType>();
+//		fetch::ml::utilities::BuildGraph<TensorType>(gsp2, g2);
+//		std::cout << "finish rebuilding graph" << std::endl;
+	  
+	  // run batches
+//	  for(int i=0; i<1; i++){
+//	    run_pseudo_forward_pass(ret.first, ret.second[12], config, g, batch_size, false);
+//	  }
+	    
+	    return 0;
   }
   if (std::string(av[1]) == "pretrain pass")
   {
@@ -192,12 +211,12 @@ int main(int ac, char **av)
   }
 
 	// setup params for training
-	SizeType train_size = 100;
+	SizeType train_size = 200;
 	SizeType test_size = 10;
 	SizeType batch_size = 4;
 	SizeType epochs = 2;
 	SizeType layer_no = 12;
-	DataType lr = static_cast<DataType>(5e-5);
+	DataType lr = static_cast<DataType>(1e-5);
 	// load data into memory
   std::string file_path = av[2];
   std::string IMDB_path = av[3];
@@ -357,7 +376,7 @@ void evaluate_graph(GraphType &g, std::vector<std::string> input_nodes, std::str
 		total_val_loss += val_loss;
 		std::cout << output_data.At(0, b) << " | " << model_output.At(0, 0) << std::endl;
 	}
-	std::cout << "total val loss: " << total_val_loss << std::endl;
+	std::cout << "total val loss: " << total_val_loss / static_cast<DataType>(output_data.shape(1)) << std::endl;
 }
 
 std::vector<TensorType> load_imdb_finetune_data(std::string const &file_path)
