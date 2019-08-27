@@ -310,7 +310,7 @@ int main(int ac, char **av)
 	std::cout << "epochs: " << epochs << std::endl;
 	std::cout << "lr: " << lr << std::endl;
 
-//	evaluate_graph(g, ret.first, classification_output, final_test_data, test_labels);
+	evaluate_graph(g, ret.first, classification_output, final_test_data, test_labels);
 
   // create optimizer
 	std::cout << "START TRAINING" << std::endl;
