@@ -156,7 +156,7 @@ int main(int ac, char **av)
 
 	// setup params for training
 	SizeType train_size = 100;
-	SizeType test_size = 6;
+	SizeType test_size = 10;
 	SizeType batch_size = 4;
 	SizeType epochs = 2;
 	SizeType layer_no = 12;
@@ -180,7 +180,17 @@ int main(int ac, char **av)
 //	std::cout << "train_data[0].View(0).Copy().ToString(): " << train_data[0].View(0).Copy().ToString() << std::endl;
 //	std::cout << "sliced.View(0).Copy().ToString(): " << sliced_train_data_pos.View(0).Copy().ToString() << std::endl;
 //	TensorType sliced_train_data_neg = train_data[1].Slice(std::make_pair(static_cast<SizeType>(0), train_size), static_cast<SizeType>(1)).Copy();
-	// evenly mix pos and neg data together
+	
+	// get test data out
+//	TensorType sliced_test_data_pos = train_data[2].Slice(std::make_pair(static_cast<SizeType>(0), test_size), static_cast<SizeType>(1)).Copy();
+//	TensorType sliced_test_data_neg = train_data[3].Slice(std::make_pair(static_cast<SizeType>(0), test_size), static_cast<SizeType>(1)).Copy();
+//	TensorType test_data_concate = TensorType::Concat({sliced_test_data_pos, sliced_test_data_neg}, static_cast<SizeType>(1));
+//	auto final_test_data = prepare_tensor_for_bert(test_data_concate, config);
+//	TensorType test_labels({static_cast<SizeType>(1), static_cast<SizeType>(2) * test_size});
+//	for(SizeType i=0; i<test_size; i++){
+//		test_labels.Set(static_cast<SizeType>(0), i, static_cast<DataType>(1));
+//	}
+	// evenly mix pos and neg train data together
 	TensorType train_data_mixed({train_data[0].shape(0), static_cast<SizeType>(2) * train_size});
 	for(SizeType i=0; i<train_size; i++){
 		train_data_mixed.View(static_cast<SizeType>(2)*i).Assign(train_data[0].View(i));
@@ -194,17 +204,21 @@ int main(int ac, char **av)
 		train_labels.Set(static_cast<SizeType>(0), static_cast<SizeType>(2)*i, static_cast<DataType>(1));
 	}
 	
-	// get test data out
-	TensorType sliced_test_data_pos = train_data[2].Slice(std::make_pair(static_cast<SizeType>(0), test_size), static_cast<SizeType>(1)).Copy();
-	TensorType sliced_test_data_neg = train_data[3].Slice(std::make_pair(static_cast<SizeType>(0), test_size), static_cast<SizeType>(1)).Copy();
-	TensorType test_data_concate = TensorType::Concat({sliced_test_data_pos, sliced_test_data_neg}, static_cast<SizeType>(1));
-	auto final_test_data = prepare_tensor_for_bert(test_data_concate, config);
+	// evenly mix pos and neg test data together
+	TensorType test_data_mixed({train_data[0].shape(0), static_cast<SizeType>(2) * test_size});
+	for(SizeType i=0; i<test_size; i++){
+		test_data_mixed.View(static_cast<SizeType>(2)*i).Assign(train_data[2].View(i));
+		test_data_mixed.View(static_cast<SizeType>(2)*i+1).Assign(train_data[3].View(i));
+	}
+	auto final_test_data = prepare_tensor_for_bert(test_data_mixed, config);
+	
+	// prepare label for train data
 	TensorType test_labels({static_cast<SizeType>(1), static_cast<SizeType>(2) * test_size});
 	for(SizeType i=0; i<test_size; i++){
-		train_labels.Set(static_cast<SizeType>(0), i, static_cast<DataType>(1));
+		test_labels.Set(static_cast<SizeType>(0), static_cast<SizeType>(2)*i, static_cast<DataType>(1));
 	}
 	std::cout << "finish preparing train test data" << std::endl;
-	
+
   // load pretrained bert model
   GraphType g;
   auto      ret = load_pretrained_bert_model(file_path, config, g);
@@ -295,14 +309,18 @@ int main(int ac, char **av)
 
 void evaluate_graph(GraphType &g, std::vector<std::string> input_nodes, std::string output_node, std::vector<TensorType> input_data, TensorType output_data){
 	std::cout << "Starting forward passing for manual evaluation on: " << output_data.shape(1) << std::endl;
-	for (SizeType i=0; i< static_cast<SizeType>(4); i++){
-		g.SetInput(input_nodes[i], input_data[i]);
+	std::cout << "correct label | guessed label" << std::endl;
+	DataType total_val_loss = 0;
+	for(SizeType b=0; b< static_cast<SizeType>(output_data.shape(1)); b++){
+		for (SizeType i=0; i< static_cast<SizeType>(4); i++){
+			g.SetInput(input_nodes[i], input_data[i].View(b).Copy());
+		}
+		TensorType model_output = g.Evaluate(output_node, false);
+		DataType val_loss = fetch::math::CrossEntropyLoss<TensorType>(model_output, output_data);
+		total_val_loss += val_loss;
+		std::cout << output_data.At(0, b) << " | " << model_output.At(0, 0) << std::endl;
 	}
-	auto model_output = g.Evaluate(output_node, false);
-	DataType val_loss = fetch::math::CrossEntropyLoss<TensorType>(model_output, output_data);
-	std::cout << "model output: " << model_output.ToString() << std::endl;
-	std::cout << "label output: " << output_data.ToString() << std::endl;
-	std::cout << "val loss: " << val_loss << std::endl;
+	std::cout << "total val loss: " << total_val_loss << std::endl;
 }
 
 std::vector<TensorType> load_imdb_finetune_data(std::string const &file_path)
