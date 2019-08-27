@@ -48,13 +48,8 @@ using ConstByteArray = fetch::byte_array::ConstByteArray;
 class HonestDkgSetupService : public DkgSetupService
 {
 public:
-  HonestDkgSetupService(
-      Endpoint &endpoint, Identity identity,
-      std::function<void(DKGEnvelope const &)> broadcast_callback,
-      std::function<void(MuddleAddress const &, std::pair<std::string, std::string> const &)>
-          rpc_callback)
-    : DkgSetupService{endpoint, std::move(identity), std::move(broadcast_callback),
-                      std::move(rpc_callback)}
+  HonestDkgSetupService(Endpoint &endpoint, Identity identity)
+    : DkgSetupService{endpoint, std::move(identity)}
   {}
 
   void SetDkgOutput(bn::G2 &public_key, bn::Fr &secret_share,
@@ -83,14 +78,9 @@ public:
     WITHOLD_RECONSTRUCTION_SHARES
   };
 
-  FaultyDkgSetupService(
-      Endpoint &endpoint, Identity identity,
-      std::function<void(DKGEnvelope const &)> broadcast_callback,
-      std::function<void(MuddleAddress const &, std::pair<std::string, std::string> const &)>
-                                   rpc_callback,
-      const std::vector<Failures> &failures = {})
-    : DkgSetupService{endpoint, std::move(identity), std::move(broadcast_callback),
-                      std::move(rpc_callback)}
+  FaultyDkgSetupService(Endpoint &endpoint, Identity identity,
+                        const std::vector<Failures> &failures = {})
+    : DkgSetupService{endpoint, std::move(identity)}
   {
     for (auto f : failures)
     {
@@ -113,6 +103,18 @@ private:
     return failures_flags_[static_cast<uint8_t>(f)];
   }
 
+  void SendShares(MuddleAddress const &                        destination,
+                  std::pair<MessageShare, MessageShare> const &shares)
+  {
+    fetch::serializers::SizeCounter counter;
+    counter << shares;
+
+    fetch::serializers::MsgPackSerializer serializer;
+    serializer.Reserve(counter.size());
+    serializer << shares;
+    endpoint_.Send(destination, SERVICE_DKG, CHANNEL_SECRET_KEY, serializer.data());
+  }
+
   void BroadcastShares() override
   {
     if (Failure(Failures::SEND_BAD_SHARE))
@@ -130,7 +132,7 @@ private:
           continue;
         }
         std::pair<MessageShare, MessageShare> shares{dkg_manager_.GetOwnShares(cab_i.identifier())};
-        rpc_function_(cab_i.identifier(), shares);
+        SendShares(cab_i.identifier(), shares);
       }
     }
     if (Failure(Failures::BAD_COEFFICIENT))
@@ -180,13 +182,13 @@ private:
         trivial_share.clear();
         std::pair<MessageShare, MessageShare> shares{trivial_share.getStr(),
                                                      trivial_share.getStr()};
-        rpc_function_(cab_i.identifier(), shares);
+        SendShares(cab_i.identifier(), shares);
         sent_bad = true;
       }
       else
       {
         std::pair<MessageShare, MessageShare> shares{dkg_manager_.GetOwnShares(cab_i.identifier())};
-        rpc_function_(cab_i.identifier(), shares);
+        SendShares(cab_i.identifier(), shares);
       }
     }
   }
@@ -321,13 +323,11 @@ struct DkgMember
 {
   const static uint16_t CHANNEL_SHARES = 3;
 
-  uint16_t                              muddle_port;
-  NetworkManager                        network_manager;
-  fetch::core::Reactor                  reactor;
-  ProverPtr                             muddle_certificate;
-  Muddle                                muddle;
-  std::shared_ptr<muddle::Subscription> shares_subscription;
-  RBC                                   rbc;
+  uint16_t             muddle_port;
+  NetworkManager       network_manager;
+  fetch::core::Reactor reactor;
+  ProverPtr            muddle_certificate;
+  Muddle               muddle;
 
   // Set when DKG is finished
   bn::Fr              secret_share;
@@ -342,28 +342,7 @@ struct DkgMember
     , reactor{"ReactorName" + std::to_string(index)}
     , muddle_certificate{CreateNewCertificate()}
     , muddle{fetch::muddle::NetworkId{"TestNetwork"}, muddle_certificate, network_manager}
-    , shares_subscription(muddle.AsEndpoint().Subscribe(SERVICE_DKG, CHANNEL_SHARES))
-    , rbc{muddle.AsEndpoint(), muddle_certificate->identity().identifier(),
-          [this](ConstByteArray const &address, ConstByteArray const &payload) -> void {
-            DKGEnvelope   env;
-            DKGSerializer serializer{payload};
-            serializer >> env;
-            OnDkgMessage(address, env.Message());
-          }}
   {
-    // Set subscription for receiving shares
-    shares_subscription->SetMessageHandler([this](ConstByteArray const &from, uint16_t, uint16_t,
-                                                  uint16_t, muddle::Packet::Payload const &payload,
-                                                  ConstByteArray) {
-      fetch::serializers::MsgPackSerializer serialiser(payload);
-
-      std::pair<std::string, std::string> shares;
-      serialiser >> shares;
-
-      // Dispatch the event
-      OnNewShares(from, shares);
-    });
-
     network_manager.Start();
     muddle.Start({muddle_port});
   }
@@ -376,24 +355,10 @@ struct DkgMember
     network_manager.Stop();
   }
 
-  void SubmitShare(ConstByteArray const &                     destination,
-                   std::pair<std::string, std::string> const &shares)
-  {
-    fetch::serializers::SizeCounter counter;
-    counter << shares;
-
-    fetch::serializers::MsgPackSerializer serializer;
-    serializer.Reserve(counter.size());
-    serializer << shares;
-    muddle.AsEndpoint().Send(destination, SERVICE_DKG, CHANNEL_SHARES, serializer.data());
-  }
-  virtual void SetOutput()                                                                      = 0;
-  virtual void OnDkgMessage(ConstByteArray const &from, std::shared_ptr<DKGMessage> const &env) = 0;
-  virtual void OnNewShares(ConstByteArray const &                     from,
-                           std::pair<std::string, std::string> const &shares)                   = 0;
-  virtual void ResetCabinet(std::unordered_set<Identity> cabinet, uint32_t threshold)           = 0;
-  virtual std::weak_ptr<core::Runnable> GetWeakRunnable()                                       = 0;
-  virtual bool                          DkgFinished()                                           = 0;
+  virtual void SetOutput()                                                            = 0;
+  virtual void ResetCabinet(std::unordered_set<Identity> cabinet, uint32_t threshold) = 0;
+  virtual std::weak_ptr<core::Runnable> GetWeakRunnable()                             = 0;
+  virtual bool                          DkgFinished()                                 = 0;
 
   static ProverPtr CreateNewCertificate()
   {
@@ -417,17 +382,7 @@ struct FaultyDkgMember : DkgMember
   FaultyDkgMember(uint16_t port_number, uint16_t index,
                   const std::vector<FaultyDkgSetupService::Failures> &failures = {})
     : DkgMember{port_number, index}
-    , dkg{muddle.AsEndpoint(), muddle_certificate->identity(),
-          [this](DKGEnvelope const &envelope) -> void {
-            DKGSerializer serialiser;
-            serialiser << envelope;
-            rbc.Broadcast(serialiser.data());
-          },
-          [this](ConstByteArray const &                     destination,
-                 std::pair<std::string, std::string> const &shares) -> void {
-            SubmitShare(destination, shares);
-          },
-          failures}
+    , dkg{muddle.AsEndpoint(), muddle_certificate->identity(), failures}
   {
     dkg.SetBeaconReadyCallback([this](SharedAeonExecutionUnit) -> void { finished = true; });
   }
@@ -437,15 +392,6 @@ struct FaultyDkgMember : DkgMember
   void SetOutput() override
   {
     dkg.SetDkgOutput(public_key, secret_share, public_key_shares, qual_set);
-  }
-  void OnDkgMessage(ConstByteArray const &from, std::shared_ptr<DKGMessage> const &env) override
-  {
-    dkg.OnDkgMessage(from, env);
-  }
-  void OnNewShares(ConstByteArray const &                     from,
-                   std::pair<std::string, std::string> const &shares) override
-  {
-    dkg.OnNewShares(from, shares);
   }
 
   void ResetCabinet(std::unordered_set<Identity> cabinet, uint32_t threshold) override
@@ -491,16 +437,7 @@ struct HonestDkgMember : DkgMember
 
   HonestDkgMember(uint16_t port_number, uint16_t index)
     : DkgMember{port_number, index}
-    , dkg{muddle.AsEndpoint(), muddle_certificate->identity(),
-          [this](DKGEnvelope const &envelope) -> void {
-            DKGSerializer serialiser;
-            serialiser << envelope;
-            rbc.Broadcast(serialiser.data());
-          },
-          [this](ConstByteArray const &                     destination,
-                 std::pair<std::string, std::string> const &shares) -> void {
-            SubmitShare(destination, shares);
-          }}
+    , dkg{muddle.AsEndpoint(), muddle_certificate->identity()}
   {
     dkg.SetBeaconReadyCallback([this](SharedAeonExecutionUnit) -> void { finished = true; });
   }
@@ -510,15 +447,6 @@ struct HonestDkgMember : DkgMember
   void SetOutput() override
   {
     dkg.SetDkgOutput(public_key, secret_share, public_key_shares, qual_set);
-  }
-  void OnDkgMessage(ConstByteArray const &from, std::shared_ptr<DKGMessage> const &env) override
-  {
-    dkg.OnDkgMessage(from, env);
-  }
-  void OnNewShares(ConstByteArray const &                     from,
-                   std::pair<std::string, std::string> const &shares) override
-  {
-    dkg.OnNewShares(from, shares);
   }
   void ResetCabinet(std::unordered_set<Identity> cabinet, uint32_t threshold) override
   {
@@ -591,7 +519,6 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
   // Reset cabinet for rbc in pre-dkg sync
   for (uint32_t ii = 0; ii < cabinet_size; ii++)
   {
-    committee[ii]->rbc.ResetCabinet(cabinet);
     committee[ii]->ResetCabinet(cabinet_identities, threshold);
   }
 
@@ -686,6 +613,7 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
 
 TEST(dkg_setup, small_scale_test)
 {
+  SetGlobalLogLevel(LogLevel::TRACE);
   GenerateTest(4, 3, 4, 4);
 }
 
@@ -694,6 +622,7 @@ TEST(dkg_setup, send_bad_share)
   // Node 0 sends bad secret shares to Node 1 which complains against it.
   // Node 0 then broadcasts its real shares as defense and then is allowed into
   // qual
+  SetGlobalLogLevel(LogLevel::TRACE);
   GenerateTest(4, 3, 4, 4, {{FaultyDkgSetupService::Failures::SEND_BAD_SHARE}});
 }
 
@@ -701,6 +630,7 @@ TEST(dkg_setup, bad_coefficients)
 {
   // Node 0 broadcasts bad coefficients which fails verification by everyone.
   // Rejected from qual
+  SetGlobalLogLevel(LogLevel::TRACE);
   GenerateTest(4, 3, 3, 3, {{FaultyDkgSetupService::Failures::BAD_COEFFICIENT}});
 }
 
@@ -709,6 +639,7 @@ TEST(dkg_setup, send_empty_complaints_answer)
   // Node 0 sends computes bad secret shares to Node 1 which complains against it.
   // Node 0 then does not send real shares and instead sends empty complaint answer.
   // Node 0 should be disqualified from qual
+  SetGlobalLogLevel(LogLevel::TRACE);
   GenerateTest(4, 3, 3, 3,
                {{FaultyDkgSetupService::Failures::SEND_BAD_SHARE,
                  FaultyDkgSetupService::Failures::SEND_EMPTY_COMPLAINT_ANSWER}});
@@ -718,6 +649,7 @@ TEST(dkg_setup, send_multiple_messages)
 {
   // Node 0 sends multiple coefficients, complaint, complaint answers and qual coefficient messages.
   // Everyone should succeed in DKG
+  SetGlobalLogLevel(LogLevel::TRACE);
   GenerateTest(4, 3, 4, 4,
                {{FaultyDkgSetupService::Failures::SEND_MULTIPLE_COEFFICIENTS,
                  FaultyDkgSetupService::Failures::SEND_MULTIPLE_COMPLAINTS,
@@ -727,6 +659,7 @@ TEST(dkg_setup, send_multiple_messages)
 
 TEST(dkg_setup, qual_below_threshold)
 {
+  SetGlobalLogLevel(LogLevel::TRACE);
   GenerateTest(4, 3, 2, 0,
                {{FaultyDkgSetupService::Failures::BAD_COEFFICIENT},
                 {FaultyDkgSetupService::Failures::BAD_COEFFICIENT}});
@@ -736,6 +669,7 @@ TEST(dkg_setup, bad_qual_coefficients)
 {
   // Node 0 computes bad qual coefficients so node 0 is in qual complaints but everyone reconstructs
   // their shares. Everyone else except node 0 succeeds in DKG
+  SetGlobalLogLevel(LogLevel::TRACE);
   GenerateTest(4, 3, 4, 3, {{FaultyDkgSetupService::Failures::BAD_QUAL_COEFFICIENTS}});
 }
 
@@ -744,6 +678,7 @@ TEST(dkg_setup, send_fake_qual_complaint)
   // Node 0 sends fake qual coefficients. Should trigger warning and node 0's shares will be
   // reconstructed but everyone else should succeed in the DKG. Important test as it means
   // reconstruction computes the correct thing.
+  SetGlobalLogLevel(LogLevel::TRACE);
   GenerateTest(4, 3, 4, 4, {{FaultyDkgSetupService::Failures::SEND_FALSE_QUAL_COMPLAINT}});
 }
 
@@ -751,6 +686,7 @@ TEST(dkg_setup, too_many_bad_qual_coefficients)
 {
   // Three nodes send bad qual coefficients which means that there are
   // not enough parties not in complaints. DKG fails
+  SetGlobalLogLevel(LogLevel::TRACE);
   GenerateTest(4, 2, 4, 0,
                {{FaultyDkgSetupService::Failures::BAD_QUAL_COEFFICIENTS},
                 {FaultyDkgSetupService::Failures::BAD_QUAL_COEFFICIENTS},
@@ -761,6 +697,7 @@ TEST(dkg_setup, send_multiple_reconstruction_shares)
 {
   // Node sends multiple reconstruction shares which triggers warning but
   // DKG succeeds
+  SetGlobalLogLevel(LogLevel::TRACE);
   GenerateTest(4, 3, 4, 3,
                {{FaultyDkgSetupService::Failures::BAD_QUAL_COEFFICIENTS},
                 {FaultyDkgSetupService::Failures::SEND_MULTIPLE_RECONSTRUCTION_SHARES}});
@@ -770,6 +707,7 @@ TEST(dkg_setup, withold_reconstruction_shares)
 {
   // Node 0 sends bad qual coefficients and another in collusion does not broadcast node 0's shares
   // so there are not enough shares to run reconstruction
+  SetGlobalLogLevel(LogLevel::TRACE);
   GenerateTest(4, 3, 4, 0,
                {{FaultyDkgSetupService::Failures::BAD_QUAL_COEFFICIENTS},
                 {FaultyDkgSetupService::Failures::WITHOLD_RECONSTRUCTION_SHARES}});
