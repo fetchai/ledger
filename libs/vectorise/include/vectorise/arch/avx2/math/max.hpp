@@ -38,7 +38,7 @@ inline VectorRegister<int64_t, 128> Max(VectorRegister<int64_t, 128> const &a,
                                         VectorRegister<int64_t, 128> const &b)
 {
   __m128i mask = (a > b).data();
-  __m128i ret = _mm_blendv_epi8(a.data(), b.data(), mask);
+  __m128i ret = _mm_blendv_epi8(b.data(), a.data(), mask);
   return VectorRegister<int64_t, 128>(ret);
 }
 
@@ -46,7 +46,7 @@ inline VectorRegister<int64_t, 256> Max(VectorRegister<int64_t, 256> const &a,
                                         VectorRegister<int64_t, 256> const &b)
 {
   __m256i mask = (a > b).data();
-  __m256i ret = _mm256_blendv_epi8(a.data(), b.data(), mask);
+  __m256i ret = _mm256_blendv_epi8(b.data(), a.data(), mask);
   return VectorRegister<int64_t, 256>(ret);
 }
 
