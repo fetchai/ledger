@@ -51,13 +51,6 @@ public:
   HonestDkgSetupService(Endpoint &endpoint, Identity identity)
     : DkgSetupService{endpoint, std::move(identity)}
   {}
-
-  void SetDkgOutput(bn::G2 &public_key, bn::Fr &secret_share,
-                    std::vector<bn::G2> &public_key_shares, std::set<MuddleAddress> &qual)
-  {
-    dkg_manager_.SetDkgOutput(public_key, secret_share, public_key_shares);
-    qual = dkg_manager_.qual();
-  }
 };
 
 class FaultyDkgSetupService : public DkgSetupService
@@ -88,13 +81,6 @@ public:
     }
   }
 
-  void SetDkgOutput(bn::G2 &public_key, bn::Fr &secret_share,
-                    std::vector<bn::G2> &public_key_shares, std::set<MuddleAddress> &qual)
-  {
-    dkg_manager_.SetDkgOutput(public_key, secret_share, public_key_shares);
-    qual = dkg_manager_.qual();
-  }
-
 private:
   std::bitset<static_cast<uint8_t>(Failures::WITHOLD_RECONSTRUCTION_SHARES) + 1> failures_flags_;
 
@@ -119,19 +105,20 @@ private:
   {
     if (Failure(Failures::SEND_BAD_SHARE))
     {
-      dkg_manager_.GenerateCoefficients();
+      beacon_->manager.GenerateCoefficients();
       SendBadShares();
     }
     else
     {
-      dkg_manager_.GenerateCoefficients();
+      beacon_->manager.GenerateCoefficients();
       for (auto &cab_i : beacon_->aeon.members)
       {
         if (cab_i == identity_)
         {
           continue;
         }
-        std::pair<MessageShare, MessageShare> shares{dkg_manager_.GetOwnShares(cab_i.identifier())};
+        std::pair<MessageShare, MessageShare> shares{
+            beacon_->manager.GetOwnShares(cab_i.identifier())};
         SendShares(cab_i.identifier(), shares);
       }
     }
@@ -141,13 +128,14 @@ private:
     }
     else
     {
-      SendBroadcast(DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_SHARE),
-                                                    dkg_manager_.GetCoefficients(), "signature"}});
+      SendBroadcast(
+          DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_SHARE),
+                                          beacon_->manager.GetCoefficients(), "signature"}});
       if (Failure(Failures::SEND_MULTIPLE_COEFFICIENTS))
       {
         SendBroadcast(
             DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_SHARE),
-                                            dkg_manager_.GetCoefficients(), "signature"}});
+                                            beacon_->manager.GetCoefficients(), "signature"}});
       }
     }
   }
@@ -157,7 +145,7 @@ private:
     std::vector<std::string> coefficients;
     bn::G2                   fake;
     fake.clear();
-    for (size_t k = 0; k <= dkg_manager_.polynomial_degree(); k++)
+    for (size_t k = 0; k <= beacon_->manager.polynomial_degree(); k++)
     {
       coefficients.push_back(fake.getStr());
     }
@@ -187,7 +175,8 @@ private:
       }
       else
       {
-        std::pair<MessageShare, MessageShare> shares{dkg_manager_.GetOwnShares(cab_i.identifier())};
+        std::pair<MessageShare, MessageShare> shares{
+            beacon_->manager.GetOwnShares(cab_i.identifier())};
         SendShares(cab_i.identifier(), shares);
       }
     }
@@ -195,7 +184,7 @@ private:
 
   void BroadcastComplaints() override
   {
-    std::unordered_set<MuddleAddress> complaints_local = dkg_manager_.ComputeComplaints();
+    std::unordered_set<MuddleAddress> complaints_local = beacon_->manager.ComputeComplaints();
     for (auto const &cab : complaints_local)
     {
       complaints_manager_.Count(cab);
@@ -214,7 +203,7 @@ private:
     {
       for (auto const &reporter : complaints_manager_.ComplaintsFrom())
       {
-        complaints_answer.insert({reporter, dkg_manager_.GetOwnShares(reporter)});
+        complaints_answer.insert({reporter, beacon_->manager.GetOwnShares(reporter)});
       }
     }
     SendBroadcast(DKGEnvelope{SharesMessage{
@@ -234,7 +223,7 @@ private:
       std::vector<std::string> coefficients;
       bn::G2                   fake;
       fake.clear();
-      for (size_t k = 0; k <= dkg_manager_.polynomial_degree(); k++)
+      for (size_t k = 0; k <= beacon_->manager.polynomial_degree(); k++)
       {
         coefficients.push_back(fake.getStr());
       }
@@ -245,12 +234,12 @@ private:
     {
       SendBroadcast(
           DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_QUAL_SHARES),
-                                          dkg_manager_.GetQualCoefficients(), "signature"}});
+                                          beacon_->manager.GetQualCoefficients(), "signature"}});
       if (Failure(Failures::SEND_MULTIPLE_QUAL_COEFFICIENTS))
       {
         SendBroadcast(
             DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_QUAL_SHARES),
-                                            dkg_manager_.GetQualCoefficients(), "signature"}});
+                                            beacon_->manager.GetQualCoefficients(), "signature"}});
       }
     }
 
@@ -273,7 +262,7 @@ private:
       }
       SendBroadcast(DKGEnvelope{SharesMessage{
           static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS),
-          {{victim->identifier(), dkg_manager_.GetReceivedShares(victim->identifier())}},
+          {{victim->identifier(), beacon_->manager.GetReceivedShares(victim->identifier())}},
           "signature"}});
     }
     else if (Failure(Failures::WITHOLD_RECONSTRUCTION_SHARES))
@@ -285,7 +274,7 @@ private:
     {
       SendBroadcast(
           DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS),
-                                    dkg_manager_.ComputeQualComplaints(), "signature"}});
+                                    beacon_->manager.ComputeQualComplaints(), "signature"}});
     }
   }
 
@@ -303,8 +292,8 @@ private:
 
       for (auto const &in : qual_complaints_manager_.Complaints())
       {
-        dkg_manager_.AddReconstructionShare(in);
-        complaint_shares.insert({in, dkg_manager_.GetReceivedShares(in)});
+        beacon_->manager.AddReconstructionShare(in);
+        complaint_shares.insert({in, beacon_->manager.GetReceivedShares(in)});
       }
       SendBroadcast(
           DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_RECONSTRUCTION_SHARES),
@@ -355,7 +344,6 @@ struct DkgMember
     network_manager.Stop();
   }
 
-  virtual void SetOutput()                                                            = 0;
   virtual void QueueCabinet(std::unordered_set<Identity> cabinet, uint32_t threshold) = 0;
   virtual std::weak_ptr<core::Runnable> GetWeakRunnable()                             = 0;
   virtual bool                          DkgFinished()                                 = 0;
@@ -384,15 +372,13 @@ struct FaultyDkgMember : DkgMember
     : DkgMember{port_number, index}
     , dkg{muddle.AsEndpoint(), muddle_certificate->identity(), failures}
   {
-    dkg.SetBeaconReadyCallback([this](SharedAeonExecutionUnit) -> void { finished = true; });
+    dkg.SetBeaconReadyCallback([this](SharedAeonExecutionUnit beacon) -> void {
+      finished = true;
+      beacon->manager.SetDkgOutput(public_key, secret_share, public_key_shares, qual_set);
+    });
   }
 
   ~FaultyDkgMember() override = default;
-
-  void SetOutput() override
-  {
-    dkg.SetDkgOutput(public_key, secret_share, public_key_shares, qual_set);
-  }
 
   void QueueCabinet(std::unordered_set<Identity> cabinet, uint32_t threshold) override
   {
@@ -405,8 +391,14 @@ struct FaultyDkgMember : DkgMember
     }
     else
     {
+      // TODO(jmw): Fix this
+      std::set<ConstByteArray> cabinet_address;
+      for (auto &m : cabinet)
+      {
+        cabinet_address.insert(m.identifier());
+      }
       beacon->manager.SetCertificate(muddle_certificate);
-      beacon->manager.Reset(cabinet.size(), threshold);
+      beacon->manager.Reset(cabinet_address, threshold);
     }
 
     // Setting the aeon details
@@ -439,15 +431,14 @@ struct HonestDkgMember : DkgMember
     : DkgMember{port_number, index}
     , dkg{muddle.AsEndpoint(), muddle_certificate->identity()}
   {
-    dkg.SetBeaconReadyCallback([this](SharedAeonExecutionUnit) -> void { finished = true; });
+    dkg.SetBeaconReadyCallback([this](SharedAeonExecutionUnit beacon) -> void {
+      finished = true;
+      beacon->manager.SetDkgOutput(public_key, secret_share, public_key_shares, qual_set);
+    });
   }
 
   ~HonestDkgMember() override = default;
 
-  void SetOutput() override
-  {
-    dkg.SetDkgOutput(public_key, secret_share, public_key_shares, qual_set);
-  }
   void QueueCabinet(std::unordered_set<Identity> cabinet, uint32_t threshold) override
   {
     SharedAeonExecutionUnit beacon = std::make_shared<AeonExecutionUnit>();
@@ -459,8 +450,14 @@ struct HonestDkgMember : DkgMember
     }
     else
     {
+      // TODO(jmw): Fix this
+      std::set<ConstByteArray> cabinet_address;
+      for (auto &m : cabinet)
+      {
+        cabinet_address.insert(m.identifier());
+      }
       beacon->manager.SetCertificate(muddle_certificate);
-      beacon->manager.Reset(cabinet.size(), threshold);
+      beacon->manager.Reset(cabinet_address, threshold);
     }
 
     // Setting the aeon details
@@ -579,12 +576,6 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
           ++pp;
         }
       }
-    }
-
-    // Set DKG outputs
-    for (auto &member : committee)
-    {
-      member->SetOutput();
     }
 
     // Check everyone in qual agrees on qual
