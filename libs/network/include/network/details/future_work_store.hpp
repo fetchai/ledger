@@ -89,25 +89,24 @@ public:
 
     Timestamp const now = Clock::now();
 
-    // allow early exit
-    std::unique_lock<Mutex> lock(queue_mutex_, std::try_to_lock);
-    if (lock.owns_lock())
-    {
-      WorkItem item;
+    WorkItem item;
 
-      // empty loop condition
-      if (!queue_.empty())
+    {
+      // allow early exit
+      std::unique_lock<Mutex> lock(queue_mutex_, std::try_to_lock);
+      if (lock.owns_lock())
       {
-        Element const &next = queue_.top();
-        if (next.due <= now)
+        // empty loop condition
+        if (!queue_.empty())
         {
-          item = next.item;
-          queue_.pop();
+          Element const &next = queue_.top();
+          if (next.due <= now)
+          {
+            item = next.item;
+            queue_.pop();
+          }
         }
       }
-
-      // release the queue
-      lock.unlock();
 
       // dispatch all the work items
       if (item)
@@ -202,7 +201,6 @@ private:
   };
 
   using Queue = std::priority_queue<Element>;
-  using Mutex = fetch::mutex::Mutex;
   using Flag  = std::atomic<bool>;
 
   mutable Mutex queue_mutex_{__LINE__, __FILE__};  ///< Mutex protecting `queue_`
