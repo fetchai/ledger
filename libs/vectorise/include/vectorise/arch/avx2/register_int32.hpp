@@ -412,10 +412,10 @@ inline int32_t reduce(VectorRegister<int32_t, 128> const &x)
 
 inline int32_t reduce(VectorRegister<int32_t, 256> const &x)
 {
-  __m256i r = _mm256_hadd_epi32(x.data(), _mm256_setzero_si256());
-  r        = _mm256_hadd_epi32(r, _mm256_setzero_si256());
-  r        = _mm256_hadd_epi32(r, _mm256_setzero_si256());
-  return static_cast<int32_t>(_mm256_extract_epi32(r, 0));
+  VectorRegister<int32_t, 128> hi{_mm256_extractf128_si256(x.data(),1)};
+  VectorRegister<int32_t, 128> lo{_mm256_extractf128_si256(x.data(),0)};
+  hi = hi + lo;
+  return reduce(hi);
 }
 
 inline bool all_less_than(VectorRegister<int32_t, 128> const &x,

@@ -403,39 +403,40 @@ inline int64_t first_element(VectorRegister<int64_t, 256> const &x)
 
 inline VectorRegister<int64_t, 128> shift_elements_left(VectorRegister<int64_t, 128> const &x)
 {
-  __m128i n = _mm_bslli_si128(x.data(), 4);
+  __m128i n = _mm_bslli_si128(x.data(), 8);
   return n;
 }
 
 inline VectorRegister<int64_t, 256> shift_elements_left(VectorRegister<int64_t, 256> const &x)
 {
-  __m256i n = _mm256_bslli_epi128(x.data(), 4);
+  __m256i n = _mm256_bslli_epi128(x.data(), 8);
   return n;
 }
 
 inline VectorRegister<int64_t, 128> shift_elements_right(VectorRegister<int64_t, 128> const &x)
 {
-  __m128i n = _mm_bsrli_si128(x.data(), 4);
+  __m128i n = _mm_bsrli_si128(x.data(), 8);
   return n;
 }
 
 inline VectorRegister<int64_t, 256> shift_elements_right(VectorRegister<int64_t, 256> const &x)
 {
-  __m256i n = _mm256_bsrli_epi128(x.data(), 4);
+  __m256i n = _mm256_bsrli_epi128(x.data(), 8);
   return n;
 }
 
 inline int64_t reduce(VectorRegister<int64_t, 128> const &x)
 {
-  __m128i r = _mm_add_epi64(x.data(), _mm_bslli_si128(x.data(), 8));
+  __m128i r = _mm_add_epi64(x.data(), _mm_bsrli_si128(x.data(), 8));
   return static_cast<int64_t>(_mm_extract_epi64(r, 0));
 }
 
 inline int64_t reduce(VectorRegister<int64_t, 256> const &x)
 {
-  __m256i r = _mm256_add_epi64(x.data(), _mm256_bslli_epi128(x.data(), 8));
-  r        = _mm256_add_epi64(x.data(), _mm256_bslli_epi128(r, 8));
-  return static_cast<int64_t>(_mm256_extract_epi64(r, 0));
+  VectorRegister<int64_t, 128> hi{_mm256_extractf128_si256(x.data(),1)};
+  VectorRegister<int64_t, 128> lo{_mm256_extractf128_si256(x.data(),0)};
+  hi = hi + lo;
+  return reduce(hi);
 }
 
 inline bool all_less_than(VectorRegister<int64_t, 128> const &x,
