@@ -233,7 +233,8 @@ DkgSetupService::State DkgSetupService::OnWaitForComplaintAnswers()
     lock.unlock();
     if (BuildQual())
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Node ", dkg_manager_.cabinet_index(), "build qual size ", dkg_manager_.qual().size());
+      FETCH_LOG_INFO(LOGGING_NAME, "Node ", dkg_manager_.cabinet_index(), "build qual size ",
+                     dkg_manager_.qual().size());
       dkg_manager_.ComputeSecretShare();
       BroadcastQualCoefficients();
 
@@ -569,6 +570,22 @@ void DkgSetupService::OnExposedShares(SharesMessage const &shares, MuddleAddress
 void DkgSetupService::OnNewShares(MuddleAddress                                from,
                                   std::pair<MessageShare, MessageShare> const &shares)
 {
+  // Check if sender is in cabinet
+  bool in_cabinet{false};
+  for (auto &m : beacon_->aeon.members)
+  {
+    if (m.identifier() == from)
+    {
+      in_cabinet = true;
+    }
+  }
+  if (state_machine_->state() == State::IDLE || !in_cabinet)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Node ", dkg_manager_.cabinet_index(),
+                   " received shares while idle or from unknown sender");
+    return;
+  }
+
   if (shares_received_.find(from) == shares_received_.end())
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Node ", dkg_manager_.cabinet_index(),
