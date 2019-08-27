@@ -106,8 +106,6 @@ public:
     int ST       = int(range.SIMDToLower<VectorRegisterType::E_BLOCK_COUNT>());
     int STU      = int(range.SIMDToUpper<VectorRegisterType::E_BLOCK_COUNT>());
 
-    std::cout << "range: (" << range.from() << ", " << range.to() << std::endl;
-
     type ret{initial_value};
     VectorRegisterType         va, vc(initial_value);
     VectorRegisterIteratorType iter(this->pointer() + SFL, range.to());
@@ -181,6 +179,8 @@ public:
     int ST       = int(range.SIMDToLower<VectorRegisterType::E_BLOCK_COUNT>());
     int STU      = int(range.SIMDToUpper<VectorRegisterType::E_BLOCK_COUNT>());
 
+    std::cout << "range: (" << range.from() << ", " << range.to() << ")" << std::endl;
+
     VectorRegisterType         regs[sizeof...(args)];
     VectorRegisterIteratorType iters[sizeof...(args)];
     std::cout << "Vector iterator:" << std::endl;
@@ -249,8 +249,9 @@ public:
       std::cout << "Scalar iterator:" << std::endl;
       ScalarRegisterIteratorType scalar_self_iter(self_iter, 0);
       ScalarRegisterType scalar_self, scalar_tmp;
-      InitializeVectorIterators<scalar_size>(ST/sizeof(type), range.to()/sizeof(type), scalar_iters, std::forward<Args>(args)...);
+      InitializeVectorIterators<scalar_size>(ST, range.to() - ST, scalar_iters, std::forward<Args>(args)...);
       std::cout << "Scalar iterator:" << std::endl;
+      std::cout << "ST for type: " << ST << std::endl;
 
       std::cout << "ptr: " << scalar_self_iter.pointer() << std::endl;
       std::cout << "end: " << scalar_self_iter.end() << std::endl;
