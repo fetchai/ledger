@@ -178,7 +178,7 @@ bool QualComplaintsManager::IsFinished(std::set<MuddleAddress> const &qual,
 void QualComplaintsManager::Clear()
 {
   std::lock_guard<std::mutex> lock{mutex_};
-  assert(finished_);
+  // assert(finished_);
   complaints_.clear();
   complaints_received_.clear();
 }
