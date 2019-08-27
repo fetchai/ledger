@@ -76,8 +76,6 @@ DkgSetupService::DkgSetupService(Endpoint &endpoint, Identity identity)
                    fetch::serializers::MsgPackSerializer serializer{payload};
                    serializer >> connections;
 
-                   FETCH_LOG_INFO(LOGGING_NAME, "Node ", dkg_manager_.cabinet_index(),
-                                  "Received connections message");
                    if (ready_connections_.find(from) == ready_connections_.end())
                    {
                      ready_connections_.insert({from, connections});
@@ -93,7 +91,6 @@ DkgSetupService::DkgSetupService(Endpoint &endpoint, Identity identity)
          },
          CHANNEL_RBC_BROADCAST}
   , shares_subscription(endpoint_.Subscribe(SERVICE_DKG, CHANNEL_SECRET_KEY))
-  , dkg_manager_{identity_.identifier()}
 {
   state_machine_->RegisterHandler(State::IDLE, this, &DkgSetupService::OnIdle);
   state_machine_->RegisterHandler(State::WAIT_FOR_DIRECT_CONNECTIONS, this,
@@ -155,7 +152,6 @@ DkgSetupService::State DkgSetupService::OnIdle()
 
       pre_dkg_rbc_.ResetCabinet(cabinet);
       rbc_.ResetCabinet(cabinet);
-      dkg_manager_.Reset(cabinet, beacon_->manager.threshold());
       auto cabinet_size = static_cast<uint32_t>(cabinet.size());
       complaints_manager_.ResetCabinet(cabinet_size);
       complaints_answer_manager_.ResetCabinet(cabinet_size);
@@ -209,8 +205,7 @@ DkgSetupService::State DkgSetupService::OnWaitForDirectConnections()
   }
 
   state_machine_->Delay(std::chrono::milliseconds(200));
-  FETCH_LOG_INFO(LOGGING_NAME, "Node ", dkg_manager_.cabinet_index(),
-                 "waiting for all peers to join before starting setup. Connected: ",
+  FETCH_LOG_INFO(LOGGING_NAME, "Waiting for all peers to join before starting setup. Connected: ",
                  connected.size(), " expect: ", beacon_->aeon.members.size() - 1);
 
   return State::WAIT_FOR_DIRECT_CONNECTIONS;
@@ -240,7 +235,7 @@ DkgSetupService::State DkgSetupService::OnWaitForReadyConnections()
       else
       {
         state_machine_->Delay(std::chrono::milliseconds(100));
-        FETCH_LOG_INFO(LOGGING_NAME, dkg_manager_.cabinet_index(),
+        FETCH_LOG_INFO(LOGGING_NAME,
                        "Waiting for all peers to be ready before starting DKG. Ready: ",
                        ready_connections_.size(), " expect: ", beacon_->aeon.members.size() - 1);
         return State::WAIT_FOR_READY_CONNECTIONS;
@@ -253,8 +248,7 @@ DkgSetupService::State DkgSetupService::OnWaitForReadyConnections()
   }
 
   state_machine_->Delay(std::chrono::milliseconds(100));
-  FETCH_LOG_INFO(LOGGING_NAME, dkg_manager_.cabinet_index(),
-                 "Waiting for all peers to be ready before starting DKG. Ready: ",
+  FETCH_LOG_INFO(LOGGING_NAME, "Waiting for all peers to be ready before starting DKG. Ready: ",
                  ready_connections_.size(), " expect: ", beacon_->aeon.members.size() - 1);
   return State::WAIT_FOR_READY_CONNECTIONS;
 }
@@ -286,11 +280,11 @@ DkgSetupService::State DkgSetupService::OnWaitForComplaints()
   std::unique_lock<std::mutex> lock{mutex_};
   dkg_state_gauge_->set(static_cast<uint8_t>(State::WAIT_FOR_COMPLAINTS));
 
-  if (complaints_manager_.IsFinished(dkg_manager_.polynomial_degree()))
+  if (complaints_manager_.IsFinished(beacon_->manager.polynomial_degree()))
   {
     // Complaints at this point consist only of parties which have received over threshold number of
     // complaints
-    FETCH_LOG_INFO(LOGGING_NAME, "Node ", dkg_manager_.cabinet_index(), " complaints size ",
+    FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(), " complaints size ",
                    complaints_manager_.Complaints().size());
     complaints_answer_manager_.Init(complaints_manager_.Complaints());
     lock.unlock();
@@ -313,9 +307,9 @@ DkgSetupService::State DkgSetupService::OnWaitForComplaintAnswers()
     lock.unlock();
     if (BuildQual())
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Node ", dkg_manager_.cabinet_index(), "build qual size ",
-                     dkg_manager_.qual().size());
-      dkg_manager_.ComputeSecretShare();
+      FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(), "build qual size ",
+                     beacon_->manager.qual().size());
+      beacon_->manager.ComputeSecretShare();
       BroadcastQualCoefficients();
 
       complaints_manager_.Clear();
@@ -337,7 +331,7 @@ DkgSetupService::State DkgSetupService::OnWaitForQualShares()
   dkg_state_gauge_->set(static_cast<uint8_t>(State::WAIT_FOR_QUAL_SHARES));
 
   std::set<MuddleAddress> diff;
-  std::set<MuddleAddress> qual{dkg_manager_.qual()};
+  std::set<MuddleAddress> qual{beacon_->manager.qual()};
   std::set_difference(qual.begin(), qual.end(), qual_coefficients_received_.begin(),
                       qual_coefficients_received_.end(), std::inserter(diff, diff.begin()));
   if (diff.empty())
@@ -357,22 +351,22 @@ DkgSetupService::State DkgSetupService::OnWaitForQualComplaints()
 {
   dkg_state_gauge_->set(static_cast<uint8_t>(State::WAIT_FOR_QUAL_COMPLAINTS));
 
-  if (qual_complaints_manager_.IsFinished(dkg_manager_.qual(), identity_.identifier()))
+  if (qual_complaints_manager_.IsFinished(beacon_->manager.qual(), identity_.identifier()))
   {
     CheckQualComplaints();
     size_t size = qual_complaints_manager_.ComplaintsSize();
 
-    if (size > dkg_manager_.polynomial_degree())
+    if (size > beacon_->manager.polynomial_degree())
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Node: ", dkg_manager_.cabinet_index(),
+      FETCH_LOG_WARN(LOGGING_NAME, "Node: ", beacon_->manager.cabinet_index(),
                      " DKG has failed: complaints size ", size, " greater than threshold.");
       return State::BEACON_READY;
     }
     else if (qual_complaints_manager_.ComplaintsFind(identity_.identifier()))
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Node: ", dkg_manager_.cabinet_index(),
+      FETCH_LOG_WARN(LOGGING_NAME, "Node: ", beacon_->manager.cabinet_index(),
                      " is in qual complaints");
-      dkg_manager_.ComputePublicKeys();
+      beacon_->manager.ComputePublicKeys();
 
       return State::BEACON_READY;
     }
@@ -393,7 +387,7 @@ DkgSetupService::State DkgSetupService::OnWaitForReconstructionShares()
   std::set<MuddleAddress> complaints_list = qual_complaints_manager_.Complaints();
   std::set<MuddleAddress> remaining_honest;
   std::set<MuddleAddress> diff;
-  std::set<MuddleAddress> qual{dkg_manager_.qual()};
+  std::set<MuddleAddress> qual{beacon_->manager.qual()};
   std::set_difference(qual.begin(), qual.end(), complaints_list.begin(), complaints_list.end(),
                       std::inserter(remaining_honest, remaining_honest.begin()));
   std::set_difference(remaining_honest.begin(), remaining_honest.end(),
@@ -404,9 +398,9 @@ DkgSetupService::State DkgSetupService::OnWaitForReconstructionShares()
   if (diff.empty())
   {
     lock.unlock();
-    if (!dkg_manager_.RunReconstruction())
+    if (!beacon_->manager.RunReconstruction())
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Node: ", dkg_manager_.cabinet_index(),
+      FETCH_LOG_WARN(LOGGING_NAME, "Node: ", beacon_->manager.cabinet_index(),
                      " DKG failed due to reconstruction failure");
 
       // Clean up
@@ -416,7 +410,7 @@ DkgSetupService::State DkgSetupService::OnWaitForReconstructionShares()
     }
     else
     {
-      dkg_manager_.ComputePublicKeys();
+      beacon_->manager.ComputePublicKeys();
 
       // Clean up
       reconstruction_shares_received_.clear();
@@ -471,16 +465,16 @@ void DkgSetupService::SendBroadcast(DKGEnvelope const &env)
  */
 void DkgSetupService::BroadcastShares()
 {
-  dkg_manager_.GenerateCoefficients();
+  beacon_->manager.GenerateCoefficients();
   SendBroadcast(DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_SHARE),
-                                                dkg_manager_.GetCoefficients(), "signature"}});
+                                                beacon_->manager.GetCoefficients(), "signature"}});
   for (auto &cab_i : beacon_->aeon.members)
   {
     if (cab_i == identity_)
     {
       continue;
     }
-    std::pair<MessageShare, MessageShare> shares{dkg_manager_.GetOwnShares(cab_i.identifier())};
+    std::pair<MessageShare, MessageShare> shares{beacon_->manager.GetOwnShares(cab_i.identifier())};
 
     fetch::serializers::SizeCounter counter;
     counter << shares;
@@ -490,7 +484,8 @@ void DkgSetupService::BroadcastShares()
     serializer << shares;
     endpoint_.Send(cab_i.identifier(), SERVICE_DKG, CHANNEL_SECRET_KEY, serializer.data());
   }
-  FETCH_LOG_INFO(LOGGING_NAME, "Node ", dkg_manager_.cabinet_index(), " broadcasts coefficients ");
+  FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                 " broadcasts coefficients ");
 }
 
 /**
@@ -500,13 +495,13 @@ void DkgSetupService::BroadcastShares()
  */
 void DkgSetupService::BroadcastComplaints()
 {
-  std::unordered_set<MuddleAddress> complaints_local = dkg_manager_.ComputeComplaints();
+  std::unordered_set<MuddleAddress> complaints_local = beacon_->manager.ComputeComplaints();
   for (auto const &cab : complaints_local)
   {
     complaints_manager_.Count(cab);
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Node ", dkg_manager_.cabinet_index(),
+  FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                  " broadcasts complaints size ", complaints_local.size());
   SendBroadcast(DKGEnvelope{ComplaintsMessage{complaints_local, "signature"}});
 }
@@ -522,9 +517,9 @@ void DkgSetupService::BroadcastComplaintsAnswer()
   std::unordered_map<MuddleAddress, std::pair<MessageShare, MessageShare>> complaints_answer;
   for (auto const &reporter : complaints_manager_.ComplaintsFrom())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Node ", dkg_manager_.cabinet_index(),
-                   " received complaints from ", dkg_manager_.cabinet_index(reporter));
-    complaints_answer.insert({reporter, dkg_manager_.GetOwnShares(reporter)});
+    FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                   " received complaints from ", beacon_->manager.cabinet_index(reporter));
+    complaints_answer.insert({reporter, beacon_->manager.GetOwnShares(reporter)});
   }
   SendBroadcast(DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_COMPLAINT_ANSWERS),
                                           complaints_answer, "signature"}});
@@ -535,8 +530,9 @@ void DkgSetupService::BroadcastComplaintsAnswer()
  */
 void DkgSetupService::BroadcastQualCoefficients()
 {
-  SendBroadcast(DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_QUAL_SHARES),
-                                                dkg_manager_.GetQualCoefficients(), "signature"}});
+  SendBroadcast(
+      DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_QUAL_SHARES),
+                                      beacon_->manager.GetQualCoefficients(), "signature"}});
   complaints_answer_manager_.Clear();
   {
     std::unique_lock<std::mutex> lock{mutex_};
@@ -552,7 +548,7 @@ void DkgSetupService::BroadcastQualCoefficients()
 void DkgSetupService::BroadcastQualComplaints()
 {
   SendBroadcast(DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS),
-                                          dkg_manager_.ComputeQualComplaints(), "signature"}});
+                                          beacon_->manager.ComputeQualComplaints(), "signature"}});
 }
 
 /**
@@ -566,8 +562,8 @@ void DkgSetupService::BroadcastReconstructionShares()
   SharesExposedMap complaint_shares;
   for (auto const &in : qual_complaints_manager_.Complaints())
   {
-    dkg_manager_.AddReconstructionShare(in);
-    complaint_shares.insert({in, dkg_manager_.GetReceivedShares(in)});
+    beacon_->manager.AddReconstructionShare(in);
+    complaint_shares.insert({in, beacon_->manager.GetReceivedShares(in)});
   }
   SendBroadcast(
       DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_RECONSTRUCTION_SHARES),
@@ -616,8 +612,8 @@ void DkgSetupService::OnDkgMessage(MuddleAddress const &from, std::shared_ptr<DK
     break;
   }
   default:
-    FETCH_LOG_ERROR(LOGGING_NAME, "Node: ", dkg_manager_.cabinet_index(),
-                    " can not process payload from node ", dkg_manager_.cabinet_index(from));
+    FETCH_LOG_ERROR(LOGGING_NAME, "Node: ", beacon_->manager.cabinet_index(),
+                    " can not process payload from node ", beacon_->manager.cabinet_index(from));
   }
 }
 
@@ -630,22 +626,22 @@ void DkgSetupService::OnDkgMessage(MuddleAddress const &from, std::shared_ptr<DK
 void DkgSetupService::OnExposedShares(SharesMessage const &shares, MuddleAddress const &from_id)
 {
   uint64_t phase1     = shares.phase();
-  uint32_t from_index = dkg_manager_.cabinet_index(from_id);
+  uint32_t from_index = beacon_->manager.cabinet_index(from_id);
   if (phase1 == static_cast<uint64_t>(State::WAIT_FOR_COMPLAINT_ANSWERS))
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Node: ", dkg_manager_.cabinet_index(),
+    FETCH_LOG_INFO(LOGGING_NAME, "Node: ", beacon_->manager.cabinet_index(),
                    " received complaint answer from ", from_index);
     OnComplaintsAnswer(shares, from_id);
   }
   else if (phase1 == static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS))
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Node: ", dkg_manager_.cabinet_index(),
+    FETCH_LOG_INFO(LOGGING_NAME, "Node: ", beacon_->manager.cabinet_index(),
                    " received QUAL complaint from ", from_index);
     OnQualComplaints(shares, from_id);
   }
   else if (phase1 == static_cast<uint64_t>(State::WAIT_FOR_RECONSTRUCTION_SHARES))
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Node: ", dkg_manager_.cabinet_index(),
+    FETCH_LOG_INFO(LOGGING_NAME, "Node: ", beacon_->manager.cabinet_index(),
                    " received reconstruction share from ", from_index);
     OnReconstructionShares(shares, from_id);
   }
@@ -672,22 +668,22 @@ void DkgSetupService::OnNewShares(MuddleAddress                                f
   }
   if (state_machine_->state() == State::IDLE || !in_cabinet)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Node ", dkg_manager_.cabinet_index(),
+    FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                    " received shares while idle or from unknown sender");
     return;
   }
 
   if (shares_received_.find(from) == shares_received_.end())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Node ", dkg_manager_.cabinet_index(),
-                   " received shares from node  ", dkg_manager_.cabinet_index(from));
-    dkg_manager_.AddShares(from, shares);
+    FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                   " received shares from node  ", beacon_->manager.cabinet_index(from));
+    beacon_->manager.AddShares(from, shares);
     shares_received_.insert(from);
   }
   else
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Node ", dkg_manager_.cabinet_index(),
-                   " received duplicate shares from node ", dkg_manager_.cabinet_index(from));
+    FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                   " received duplicate shares from node ", beacon_->manager.cabinet_index(from));
   }
 }
 
@@ -703,32 +699,33 @@ void DkgSetupService::OnNewCoefficients(CoefficientsMessage const &msg, MuddleAd
   {
     if (coefficients_received_.find(from) == coefficients_received_.end())
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Node ", dkg_manager_.cabinet_index(),
-                     " received coefficients from node  ", dkg_manager_.cabinet_index(from));
-      dkg_manager_.AddCoefficients(from, msg.coefficients());
+      FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                     " received coefficients from node  ", beacon_->manager.cabinet_index(from));
+      beacon_->manager.AddCoefficients(from, msg.coefficients());
       coefficients_received_.insert(from);
     }
     else
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Node ", dkg_manager_.cabinet_index(),
+      FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                      " received duplicate coefficients from node ",
-                     dkg_manager_.cabinet_index(from));
+                     beacon_->manager.cabinet_index(from));
     }
   }
   else if (msg.phase() == static_cast<uint64_t>(State::WAIT_FOR_QUAL_SHARES))
   {
     if (qual_coefficients_received_.find(from) == qual_coefficients_received_.end())
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Node ", dkg_manager_.cabinet_index(),
-                     " received qual coefficients from node  ", dkg_manager_.cabinet_index(from));
-      dkg_manager_.AddQualCoefficients(from, msg.coefficients());
+      FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                     " received qual coefficients from node  ",
+                     beacon_->manager.cabinet_index(from));
+      beacon_->manager.AddQualCoefficients(from, msg.coefficients());
       qual_coefficients_received_.insert(from);
     }
     else
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Node ", dkg_manager_.cabinet_index(),
+      FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                      " received duplicate qual coefficients from node ",
-                     dkg_manager_.cabinet_index(from));
+                     beacon_->manager.cabinet_index(from));
     }
   }
 }
@@ -741,8 +738,8 @@ void DkgSetupService::OnNewCoefficients(CoefficientsMessage const &msg, MuddleAd
  */
 void DkgSetupService::OnComplaints(ComplaintsMessage const &msg, MuddleAddress const &from)
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Node ", dkg_manager_.cabinet_index(),
-                 " received complaints from node ", dkg_manager_.cabinet_index(from));
+  FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                 " received complaints from node ", beacon_->manager.cabinet_index(from));
   complaints_manager_.Add(msg, from, identity_.identifier());
 }
 
@@ -761,9 +758,9 @@ void DkgSetupService::OnComplaintsAnswer(SharesMessage const &answer, MuddleAddr
   }
   else
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Node ", dkg_manager_.cabinet_index(),
+    FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                    " received multiple complaint answer from node ",
-                   dkg_manager_.cabinet_index(from));
+                   beacon_->manager.cabinet_index(from));
   }
 }
 
@@ -792,9 +789,9 @@ void DkgSetupService::OnReconstructionShares(SharesMessage const &shares_msg,
   // Return if the sender is in complaints, or not in QUAL
   // TODO(JMW): Could be problematic if qual has not been built yet
   if (qual_complaints_manager_.ComplaintsFind(from) ||
-      dkg_manager_.qual().find(from) == dkg_manager_.qual().end())
+      beacon_->manager.qual().find(from) == beacon_->manager.qual().end())
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Node ", dkg_manager_.cabinet_index(),
+    FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                    " received message from invalid sender. Discarding.");
     return;
   }
@@ -802,15 +799,15 @@ void DkgSetupService::OnReconstructionShares(SharesMessage const &shares_msg,
   {
     for (auto const &share : shares_msg.shares())
     {
-      dkg_manager_.VerifyReconstructionShare(from, share);
+      beacon_->manager.VerifyReconstructionShare(from, share);
     }
     reconstruction_shares_received_.insert(from);
   }
   else
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Node ", dkg_manager_.cabinet_index(),
+    FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                    " received duplicate reconstruction shares from node ",
-                   dkg_manager_.cabinet_index(from));
+                   beacon_->manager.cabinet_index(from));
   }
 }
 
@@ -834,7 +831,7 @@ void DkgSetupService::CheckComplaintAnswer(SharesMessage const &answer,
   }
   for (auto const &share : answer.shares())
   {
-    if (!dkg_manager_.VerifyComplaintAnswer(from_id, share))
+    if (!beacon_->manager.VerifyComplaintAnswer(from_id, share))
     {
       complaints_answer_manager_.Add(from_id);
     }
@@ -857,19 +854,19 @@ bool DkgSetupService::BuildQual()
   {
     cabinet.insert(m.identifier());
   }
-  dkg_manager_.SetQual(complaints_answer_manager_.BuildQual(cabinet));
-  std::set<MuddleAddress> qual = dkg_manager_.qual();
+  beacon_->manager.SetQual(complaints_answer_manager_.BuildQual(cabinet));
+  std::set<MuddleAddress> qual = beacon_->manager.qual();
   if (qual.find(identity_.identifier()) == qual.end())
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Node: ", dkg_manager_.cabinet_index(),
+    FETCH_LOG_WARN(LOGGING_NAME, "Node: ", beacon_->manager.cabinet_index(),
                    " build QUAL failed as not in QUAL");
     return false;
   }
-  else if (qual.size() <= dkg_manager_.polynomial_degree())
+  else if (qual.size() <= beacon_->manager.polynomial_degree())
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Node: ", dkg_manager_.cabinet_index(),
+    FETCH_LOG_WARN(LOGGING_NAME, "Node: ", beacon_->manager.cabinet_index(),
                    " build QUAL failed as size ", qual.size(), " less than threshold ",
-                   dkg_manager_.polynomial_degree());
+                   beacon_->manager.polynomial_degree());
     return false;
   }
   return true;
@@ -880,7 +877,7 @@ bool DkgSetupService::BuildQual()
  */
 void DkgSetupService::CheckQualComplaints()
 {
-  std::set<MuddleAddress> qual{dkg_manager_.qual()};
+  std::set<MuddleAddress> qual{beacon_->manager.qual()};
   for (const auto &complaint : qual_complaints_manager_.ComplaintsReceived())
   {
     MuddleAddress sender = complaint.first;
@@ -894,7 +891,7 @@ void DkgSetupService::CheckQualComplaints()
       // Check person who's shares are being exposed is not in QUAL then don't bother with checks
       if (qual.find(share.first) != qual.end())
       {
-        qual_complaints_manager_.Complaints(dkg_manager_.VerifyQualComplaint(sender, share));
+        qual_complaints_manager_.Complaints(beacon_->manager.VerifyQualComplaint(sender, share));
       }
     }
   }
@@ -926,7 +923,7 @@ bool DkgSetupService::BasicMsgCheck(MuddleAddress const &              from,
   }
   else if (!in_cabinet)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Node ", dkg_manager_.cabinet_index(),
+    FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                    " received message from unknown sender");
     return false;
   }
