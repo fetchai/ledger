@@ -22,10 +22,6 @@
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 
-#include "telemetry/counter.hpp"
-#include "telemetry/gauge.hpp"
-#include "telemetry/registry.hpp"
-
 #include <chrono>
 
 namespace fetch {

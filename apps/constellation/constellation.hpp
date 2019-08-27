@@ -63,14 +63,13 @@ class BeaconService;
 class Constellation : public ledger::BlockSinkInterface
 {
 public:
-  using Peer2PeerService = p2p::P2PService;
-  using CertificatePtr   = Peer2PeerService::CertificatePtr;
-  using UriList          = std::vector<network::Uri>;
-  using Manifest         = network::Manifest;
-  using NetworkMode      = ledger::MainChainRpcService::Mode;
-  using FeatureFlags     = core::FeatureFlags;
-  using ConstByteArray   = byte_array::ConstByteArray;
-  using ConsensusPtr     = std::shared_ptr<ledger::Consensus>;
+  using CertificatePtr = std::shared_ptr<crypto::Prover>;
+  using UriList        = std::vector<network::Uri>;
+  using Manifest       = ledger::Manifest;
+  using NetworkMode    = ledger::MainChainRpcService::Mode;
+  using FeatureFlags   = core::FeatureFlags;
+  using ConstByteArray = byte_array::ConstByteArray;
+  using ConsensusPtr   = std::shared_ptr<ledger::Consensus>;
 
   static constexpr uint32_t DEFAULT_BLOCK_DIFFICULTY = 6;
 

@@ -35,6 +35,10 @@
 #include "beacon/events.hpp"
 #include "beacon/verification_vector_message.hpp"
 
+#include "telemetry/counter.hpp"
+#include "telemetry/gauge.hpp"
+#include "telemetry/registry.hpp"
+
 #include <cstdint>
 #include <deque>
 #include <iostream>
