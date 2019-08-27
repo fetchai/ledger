@@ -79,6 +79,7 @@ public:
   StakeUpdateQueue &      update_queue();
   StakeUpdateQueue const &update_queue() const;
   uint64_t                committee_size() const;
+  void                    SetCommitteeSize(uint64_t size);
 
   std::shared_ptr<StakeSnapshot const> GetCurrentStakeSnapshot() const;
 
@@ -115,6 +116,11 @@ private:
 inline uint64_t StakeManager::committee_size() const
 {
   return committee_size_;
+}
+
+inline void StakeManager::SetCommitteeSize(uint64_t size)
+{
+  committee_size_ = size;
 }
 
 inline StakeUpdateQueue &StakeManager::update_queue()

@@ -32,8 +32,8 @@
 
 #include "ledger/consensus/stake_manager.hpp"
 
-#include <unordered_map>
 #include <cmath>
+#include <unordered_map>
 
 namespace fetch {
 namespace ledger {
@@ -41,37 +41,37 @@ namespace ledger {
 class Consensus final : public ConsensusInterface
 {
 public:
-  using StakeManagerPtr        = std::shared_ptr<ledger::StakeManager>;
-  using BeaconServicePtr       = std::shared_ptr<fetch::beacon::BeaconService>;
-  using CabinetMemberList      = beacon::BeaconService::CabinetMemberList;
-  using Identity               = crypto::Identity;
-  using MainChain              = ledger::MainChain;
+  using StakeManagerPtr   = std::shared_ptr<ledger::StakeManager>;
+  using BeaconServicePtr  = std::shared_ptr<fetch::beacon::BeaconService>;
+  using CabinetMemberList = beacon::BeaconService::CabinetMemberList;
+  using Identity          = crypto::Identity;
+  using MainChain         = ledger::MainChain;
 
-  Consensus(StakeManagerPtr stake, BeaconServicePtr beacon, MainChain const& chain, Identity mining_identity, uint64_t aeon_period, uint64_t max_committee_size);
+  Consensus(StakeManagerPtr stake, BeaconServicePtr beacon, MainChain const &chain,
+            Identity mining_identity, uint64_t aeon_period, uint64_t max_committee_size);
 
-  void UpdateCurrentBlock(Block const &current) override;
+  void         UpdateCurrentBlock(Block const &current) override;
   NextBlockPtr GenerateNextBlock() override;
-  Status ValidBlock(Block const &previous, Block const &current) override;
-  void Refresh() override;
+  Status       ValidBlock(Block const &previous, Block const &current) override;
+  void         Refresh() override;
 
   StakeManagerPtr stake();
-  double &threshold();
-  uint64_t &max_committee_size();
+  void            SetThreshold(double threshold);
+  void            SetCommitteeSize(uint64_t size);
 
 private:
-  StakeManagerPtr            stake_;
-  BeaconServicePtr           beacon_;
-  MainChain const           &chain_;
-  Identity                   mining_identity_;
-  Address                    mining_address_;
-  uint64_t                   aeon_period_        = 0;
-  uint64_t                   max_committee_size_ = 0;
-  double                     threshold_          = 1.0;
-  uint64_t                   current_block_number_ = 0;
-  int64_t                    last_committee_created_ = -1;
-  Block                      current_block_;
+  StakeManagerPtr  stake_;
+  BeaconServicePtr beacon_;
+  MainChain const &chain_;
+  Identity         mining_identity_;
+  Address          mining_address_;
+  uint64_t         aeon_period_            = 0;
+  uint64_t         max_committee_size_     = 0;
+  double           threshold_              = 1.0;
+  uint64_t         current_block_number_   = 0;
+  int64_t          last_committee_created_ = -1;
+  Block            current_block_;
 };
 
 }  // namespace ledger
 }  // namespace fetch
-

@@ -82,8 +82,7 @@ BeaconService::BeaconService(Endpoint &endpoint, CertificatePtr certificate,
   , cabinet_creator_protocol_{cabinet_creator_}
   , beacon_protocol_{*this}
   , entropy_generated_count_{telemetry::Registry::Instance().CreateCounter(
-        "entropy_generated_total",
-        "The total number of times entropy has been generated")}
+        "entropy_generated_total", "The total number of times entropy has been generated")}
 {
 
   // Attaching beacon ready callback handler

@@ -103,8 +103,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
                                    BlockSinkInterface &      block_sink,
                                    core::FeatureFlags const &features, ProverPtr const &prover,
                                    std::size_t num_lanes, std::size_t num_slices,
-                                   std::size_t block_difficulty, ConsensusPtr consensus
-                                   )
+                                   std::size_t block_difficulty, ConsensusPtr consensus)
   : chain_{chain}
   , dag_{std::move(dag)}
   , consensus_{std::move(consensus)}
@@ -179,8 +178,10 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
         "ledger_block_coordinator_mined_block_total", "The total number of mined blocks")}
   , executed_tx_count_{telemetry::Registry::Instance().CreateCounter(
         "ledger_block_coordinator_executed_tx_total", "The total number of executed transactions")}
-  , block_height_{telemetry::Registry::Instance().CreateGauge<uint64_t>("block_height", "The current block height")}
-  , block_hash_{telemetry::Registry::Instance().CreateGauge<uint64_t>("block_hash", "The last seen block hash beginning")}
+  , block_height_{telemetry::Registry::Instance().CreateGauge<uint64_t>("block_height",
+                                                                        "The current block height")}
+  , block_hash_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        "block_hash", "The last seen block hash beginning")}
 {
   // configure the state machine
   // clang-format off
@@ -482,7 +483,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
     // create a new block
     next_block_ = std::make_unique<Block>();
 
-    if(consensus_)
+    if (consensus_)
     {
       consensus_->UpdateCurrentBlock(*current_block_);
       // Failure will set this to a nullptr
@@ -500,7 +501,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
     next_block_->body.miner         = mining_address_;
 
     FETCH_LOG_INFO(LOGGING_NAME, "Minting new block! Number: ", next_block_->body.block_number,
-                   " beacon: ", next_block_->body.random_beacon);
+                   " beacon: ", next_block_->body.entropy);
 
     // Attach current DAG state
     if (dag_)
@@ -559,10 +560,11 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
 
     if (consensus_)
     {
-      consensus_->UpdateCurrentBlock(*previous); // Only update with valid blocks
+      consensus_->UpdateCurrentBlock(*previous);  // Only update with valid blocks
       auto result = consensus_->ValidBlock(*previous, *current_block_);
 
-      if(!(result == ConsensusInterface::Status::YES || result == ConsensusInterface::Status::UNKNOWN))
+      if (!(result == ConsensusInterface::Status::YES ||
+            result == ConsensusInterface::Status::UNKNOWN))
       {
         return fail("Consensus failed to verify block");
       }
@@ -1103,13 +1105,13 @@ BlockCoordinator::State BlockCoordinator::OnReset()
 
   reset_state_count_->increment();
 
-  if(block)
+  if (block)
   {
     block_height_->set(block->body.block_number);
     block_hash_->set(*reinterpret_cast<uint64_t const *>(block->body.hash.pointer()));
   }
 
-  if(consensus_)
+  if (consensus_)
   {
     consensus_->UpdateCurrentBlock(*block);
     consensus_->Refresh();

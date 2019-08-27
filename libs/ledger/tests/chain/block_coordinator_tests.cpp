@@ -27,8 +27,8 @@
 #include "ledger/chain/constants.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/transaction_layout.hpp"
-#include "ledger/consensus/stake_manager_interface.hpp"
 #include "ledger/consensus/consensus.hpp"
+#include "ledger/consensus/stake_manager_interface.hpp"
 #include "ledger/testing/block_generator.hpp"
 #include "ledger/transaction_status_cache.hpp"
 #include "mock_block_packer.hpp"
@@ -98,8 +98,8 @@ protected:
     packer_            = std::make_unique<StrictMock<MockBlockPacker>>();
     block_sink_        = std::make_unique<FakeBlockSink>();
     block_coordinator_ = std::make_unique<BlockCoordinator>(
-        *main_chain_, DAGPtr{}, *execution_manager_, *storage_unit_, *packer_,
-        *block_sink_, FeatureFlags{}, signer, NUM_LANES, NUM_SLICES, 1u, ConsensusPtr{});
+        *main_chain_, DAGPtr{}, *execution_manager_, *storage_unit_, *packer_, *block_sink_,
+        FeatureFlags{}, signer, NUM_LANES, NUM_SLICES, 1u, ConsensusPtr{});
 
     block_coordinator_->SetBlockPeriod(std::chrono::seconds{10});
     block_coordinator_->EnableMining(true);
@@ -995,8 +995,8 @@ protected:
     packer_            = std::make_unique<NiceMock<MockBlockPacker>>();
     block_sink_        = std::make_unique<FakeBlockSink>();
     block_coordinator_ = std::make_unique<BlockCoordinator>(
-        *main_chain_, DAGPtr{}, *execution_manager_, *storage_unit_, *packer_,
-        *block_sink_, FeatureFlags{}, signer, NUM_LANES, NUM_SLICES, 1u, ConsensusPtr{});
+        *main_chain_, DAGPtr{}, *execution_manager_, *storage_unit_, *packer_, *block_sink_,
+        FeatureFlags{}, signer, NUM_LANES, NUM_SLICES, 1u, ConsensusPtr{});
 
     block_coordinator_->SetBlockPeriod(std::chrono::seconds{10});
     block_coordinator_->EnableMining(true);

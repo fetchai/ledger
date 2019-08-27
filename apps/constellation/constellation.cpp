@@ -173,13 +173,16 @@ StakeManagerPtr CreateStakeManager(Constellation::Config const &cfg)
   return mgr;
 }
 
-ConsensusPtr CreateConsensus(Constellation::Config const &cfg, StakeManagerPtr stake, BeaconServicePtr beacon, MainChain const &chain, Identity const &identity)
+ConsensusPtr CreateConsensus(Constellation::Config const &cfg, StakeManagerPtr stake,
+                             BeaconServicePtr beacon, MainChain const &chain,
+                             Identity const &identity)
 {
   ConsensusPtr consensus{};
 
   if (stake)
   {
-    consensus = std::make_shared<ledger::Consensus>(stake, beacon, chain, identity, cfg.aeon_period, cfg.max_committee_size);
+    consensus = std::make_shared<ledger::Consensus>(stake, beacon, chain, identity, cfg.aeon_period,
+                                                    cfg.max_committee_size);
   }
 
   return consensus;
@@ -247,12 +250,17 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   , chain_{cfg_.features.IsEnabled(FeatureFlags::MAIN_CHAIN_BLOOM_FILTER),
            ledger::MainChain::Mode::LOAD_PERSISTENT_DB}
   , block_packer_{cfg_.log2_num_lanes}
-  , block_coordinator_{chain_,          dag_,
-                                        *execution_manager_,
-                       *storage_,       block_packer_,
-                       *this,           cfg_.features,
-                       certificate,     cfg_.num_lanes(),
-                       cfg_.num_slices, cfg_.block_difficulty,
+  , block_coordinator_{chain_,
+                       dag_,
+                       *execution_manager_,
+                       *storage_,
+                       block_packer_,
+                       *this,
+                       cfg_.features,
+                       certificate,
+                       cfg_.num_lanes(),
+                       cfg_.num_slices,
+                       cfg_.block_difficulty,
                        consensus_}
   , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_,
                                                               cfg_.network_mode)}

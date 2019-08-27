@@ -189,7 +189,7 @@ private:
   /// @name Staking
   /// @{
   BeaconServicePtr beacon_;
-  StakeManagerPtr  stake_;      ///< The stake system
+  StakeManagerPtr  stake_;  ///< The stake system
   ConsensusPtr     consensus_;
   /// @}
 

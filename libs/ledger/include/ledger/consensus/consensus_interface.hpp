@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include <unordered_map>
 #include <memory>
+#include <unordered_map>
 
 namespace fetch {
 namespace ledger {
@@ -28,7 +28,7 @@ class Block;
 class ConsensusInterface
 {
 public:
-  using NextBlockPtr         = std::unique_ptr<Block>;
+  using NextBlockPtr = std::unique_ptr<Block>;
 
   enum class Status
   {
@@ -41,16 +41,16 @@ public:
   virtual ~ConsensusInterface() = default;
 
   // Let the consensus know which block you are on. Only valid
-  // to update the current block incrementally forward but valid 
+  // to update the current block incrementally forward but valid
   // to update backward any number
-  virtual void            UpdateCurrentBlock(Block const &current) = 0;
+  virtual void UpdateCurrentBlock(Block const &current) = 0;
 
   // Populate the next block for packing and submission. Will return
   // an empty pointer if the miner should not emit a block
-  virtual NextBlockPtr    GenerateNextBlock()                      = 0;
+  virtual NextBlockPtr GenerateNextBlock() = 0;
 
   // Verify a block according to consensus requirements
-  virtual Status          ValidBlock(Block const &previous, Block const &current)           = 0;
+  virtual Status ValidBlock(Block const &previous, Block const &current) = 0;
 
   // Refresh the consensus view on the main chain
   virtual void Refresh() = 0;
@@ -58,5 +58,3 @@ public:
 
 }  // namespace ledger
 }  // namespace fetch
-
-

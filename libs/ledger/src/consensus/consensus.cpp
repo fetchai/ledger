@@ -25,7 +25,8 @@ using NextBlockPtr    = Consensus::NextBlockPtr;
 using Status          = Consensus::Status;
 using StakeManagerPtr = Consensus::StakeManagerPtr;
 
-Consensus::Consensus(StakeManagerPtr stake, BeaconServicePtr beacon, MainChain const& chain, Identity mining_identity, uint64_t aeon_period, uint64_t max_committee_size)
+Consensus::Consensus(StakeManagerPtr stake, BeaconServicePtr beacon, MainChain const &chain,
+                     Identity mining_identity, uint64_t aeon_period, uint64_t max_committee_size)
   : stake_{stake}
   , beacon_{beacon}
   , chain_{chain}
@@ -36,14 +37,15 @@ Consensus::Consensus(StakeManagerPtr stake, BeaconServicePtr beacon, MainChain c
 {
   assert(stake);
   FETCH_UNUSED(chain_);
-  FETCH_UNUSED(max_committee_size_);
 }
 
 void Consensus::UpdateCurrentBlock(Block const &current)
 {
-  if(current.body.block_number > current_block_number_ && current.body.block_number != current_block_number_ + 1)
+  if (current.body.block_number > current_block_number_ &&
+      current.body.block_number != current_block_number_ + 1)
   {
-    FETCH_LOG_ERROR(LOGGING_NAME, "Updating the current block more than one block ahead is invalid");
+    FETCH_LOG_ERROR(LOGGING_NAME,
+                    "Updating the current block more than one block ahead is invalid");
     return;
   }
 
@@ -58,17 +60,18 @@ void Consensus::UpdateCurrentBlock(Block const &current)
   current_block_        = current;
   current_block_number_ = current.body.block_number;
 
-  if(!is_genesis)
+  if (!is_genesis)
   {
     stake_->UpdateCurrentBlock(current_block_);
   }
 
-  if ((current_block_number_ % aeon_period_) == 0 && int64_t(current_block_number_) > last_committee_created_)
+  if ((current_block_number_ % aeon_period_) == 0 &&
+      int64_t(current_block_number_) > last_committee_created_)
   {
     last_committee_created_ = int64_t(current_block_number_);
 
     CabinetMemberList cabinet_member_list;
-    auto const current_stakers = stake_->GetCommittee(current_block_);
+    auto const        current_stakers = stake_->GetCommittee(current_block_);
 
     for (auto const &staker : *current_stakers)
     {
@@ -76,29 +79,29 @@ void Consensus::UpdateCurrentBlock(Block const &current)
       cabinet_member_list.insert(staker);
     }
 
-    uint32_t threshold = uint32_t(std::ceil(cabinet_member_list.size() * threshold_));
+    uint32_t threshold = static_cast<uint32_t>(std::ceil(cabinet_member_list.size() * threshold_));
 
     FETCH_LOG_INFO(LOGGING_NAME, "Block: ", current_block_number_,
-                   " creating new aeon. Periodicity: ", aeon_period_, " threshold: ", threshold, " as double: ", threshold_,
-                   " cabinet size: ", cabinet_member_list.size());
+                   " creating new aeon. Periodicity: ", aeon_period_, " threshold: ", threshold,
+                   " as double: ", threshold_, " cabinet size: ", cabinet_member_list.size());
 
     beacon_->StartNewCabinet(cabinet_member_list, threshold, current_block_number_,
                              current_block_number_ + aeon_period_ + 1);
   }
 }
 
-NextBlockPtr Consensus::GenerateNextBlock() 
+NextBlockPtr Consensus::GenerateNextBlock()
 {
   NextBlockPtr ret;
 
   // Number of block we want to generate
-  uint64_t const block_number  = current_block_number_ + 1;
-  uint64_t       random_beacon = 0;
+  uint64_t const block_number = current_block_number_ + 1;
+  uint64_t       entropy      = 0;
 
   // Try to get entropy for the block we are generating - is allowed to fail if we request too
   // early
   if (EntropyGeneratorInterface::Status::OK !=
-      beacon_->GenerateEntropy(current_block_.body.hash, block_number, random_beacon))
+      beacon_->GenerateEntropy(current_block_.body.hash, block_number, entropy))
   {
     return ret;
   }
@@ -114,42 +117,41 @@ NextBlockPtr Consensus::GenerateNextBlock()
   ret->body.previous_hash = current_block_.body.hash;
   ret->body.block_number  = block_number;
   ret->body.miner         = mining_address_;
-  ret->body.random_beacon = random_beacon;
+  ret->body.entropy       = entropy;
   ret->weight             = stake_->GetBlockGenerationWeight(current_block_, mining_address_);
 
   return ret;
 }
 
-Status Consensus::ValidBlock(Block const &previous, Block const &current) 
+Status Consensus::ValidBlock(Block const &previous, Block const &current)
 {
   Status ret = Status::YES;
 
   // Attempt to ascertain the beacon value within the block
-  uint64_t random_beacon = 0;
+  uint64_t entropy = 0;
 
   // Try to get entropy for the block we are generating - because of races it could be
   // we have yet to receive it from the network.
-  auto result = beacon_->GenerateEntropy(current.body.hash,
-                                         current.body.block_number, random_beacon);
+  auto result = beacon_->GenerateEntropy(current.body.hash, current.body.block_number, entropy);
 
   switch (result)
   {
-    case EntropyGeneratorInterface::Status::NOT_READY:
-      FETCH_LOG_INFO(LOGGING_NAME, "Too early for entropy for block: ", current.body.block_number);
-      ret = Status::UNKNOWN;
+  case EntropyGeneratorInterface::Status::NOT_READY:
+    FETCH_LOG_INFO(LOGGING_NAME, "Too early for entropy for block: ", current.body.block_number);
+    ret = Status::UNKNOWN;
     break;
-    case EntropyGeneratorInterface::Status::OK:
-      if(random_beacon == current.body.random_beacon)
-      {
-        ret = Status::YES;
-      }
-      else
-      {
-        ret = Status::NO;
-      }
-    break;
-    case EntropyGeneratorInterface::Status::FAILED:
+  case EntropyGeneratorInterface::Status::OK:
+    if (entropy == current.body.entropy)
+    {
+      ret = Status::YES;
+    }
+    else
+    {
       ret = Status::NO;
+    }
+    break;
+  case EntropyGeneratorInterface::Status::FAILED:
+    ret = Status::NO;
     break;
   }
 
@@ -157,8 +159,8 @@ Status Consensus::ValidBlock(Block const &previous, Block const &current)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Saw incorrect random beacon from: ",
                    current_block_.body.miner.address().ToBase64(),
-                   ".Block number: ", current_block_.body.block_number,
-                   " expected: ", random_beacon, " got: ", current_block_.body.random_beacon);
+                   ".Block number: ", current_block_.body.block_number, " expected: ", entropy,
+                   " got: ", current_block_.body.entropy);
     return Status::NO;
   }
 
@@ -169,9 +171,11 @@ Status Consensus::ValidBlock(Block const &previous, Block const &current)
     return Status::NO;
   }
 
-  if (current.weight != stake_->GetBlockGenerationWeight(previous, current.body.miner) && current.weight != 0)
+  if (current.weight != stake_->GetBlockGenerationWeight(previous, current.body.miner) &&
+      current.weight != 0)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Incorrect stake weight found for block. Weight: ", current.weight);
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "Incorrect stake weight found for block. Weight: ", current.weight);
     return Status::NO;
   }
 
@@ -179,17 +183,18 @@ Status Consensus::ValidBlock(Block const &previous, Block const &current)
 }
 
 void Consensus::Refresh()
+{}
+
+void Consensus::SetThreshold(double threshold)
 {
+  threshold_ = threshold;
+  FETCH_LOG_INFO(LOGGING_NAME, "Set threshold to ", threshold_);
 }
 
-double &Consensus::threshold()
+void Consensus::SetCommitteeSize(uint64_t size)
 {
-  return threshold_;
-}
-
-uint64_t &Consensus::max_committee_size()
-{
-  return max_committee_size_;
+  max_committee_size_ = size;
+  stake_->SetCommitteeSize(max_committee_size_);
 }
 
 StakeManagerPtr Consensus::stake()

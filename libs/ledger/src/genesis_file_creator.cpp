@@ -26,6 +26,7 @@
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chain/constants.hpp"
 #include "ledger/chaincode/wallet_record.hpp"
+#include "ledger/consensus/consensus.hpp"
 #include "ledger/consensus/stake_manager.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
 #include "ledger/genesis_loading/genesis_file_creator.hpp"
@@ -33,7 +34,6 @@
 #include "storage/resource_mapper.hpp"
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
-#include "ledger/consensus/consensus.hpp"
 
 #include <cstddef>
 #include <fstream>
@@ -126,16 +126,14 @@ bool LoadFromFile(JSONDocument &document, std::string const &file_path)
 
 }  // namespace
 
-using ConsensusPtr     = std::shared_ptr<fetch::ledger::Consensus>;
+using ConsensusPtr = std::shared_ptr<fetch::ledger::Consensus>;
 
 GenesisFileCreator::GenesisFileCreator(BlockCoordinator &    block_coordinator,
-                                              StorageUnitInterface &storage_unit,
-                                              ConsensusPtr consensus)
+                                       StorageUnitInterface &storage_unit, ConsensusPtr consensus)
   : block_coordinator_{block_coordinator}
   , storage_unit_{storage_unit}
   , consensus_{consensus}
 {}
-
 
 /**
  * Load a 'state file' with a given name
@@ -257,16 +255,14 @@ void GenesisFileCreator::LoadConsensus(Variant const &object)
     double   parsed_value_double;
 
     // Optionally overwrite default parameters
-    if(variant::Extract(object, "committeeSize", parsed_value))
+    if (variant::Extract(object, "committeeSize", parsed_value))
     {
-      consensus_->max_committee_size() = parsed_value;
-      FETCH_LOG_INFO(LOGGING_NAME, "parsed1");
+      consensus_->SetCommitteeSize(parsed_value);
     }
 
-    if(variant::Extract(object, "threshold", parsed_value_double))
+    if (variant::Extract(object, "threshold", parsed_value_double))
     {
-      consensus_->threshold() = parsed_value_double;
-      FETCH_LOG_INFO(LOGGING_NAME, "parsed2");
+      consensus_->SetThreshold(parsed_value_double);
     }
 
     if (!object.Has("stakers"))
