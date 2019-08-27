@@ -356,10 +356,10 @@ inline float reduce(VectorRegister<float, 128> const &x)
 
 inline float reduce(VectorRegister<float, 256> const &x)
 {
-  __m256 r = _mm256_hadd_ps(x.data(), _mm256_setzero_ps());
-  r        = _mm256_hadd_ps(r, _mm256_setzero_ps());
-  r        = _mm256_hadd_ps(r, _mm256_setzero_ps());
-  return _mm256_cvtss_f32(r);
+  VectorRegister<float, 128> hi{_mm256_extractf128_ps(x.data(),1)};
+  VectorRegister<float, 128> lo{_mm256_extractf128_ps(x.data(),0)};
+  hi = hi + lo;
+  return reduce(hi);
 }
 
 inline bool all_less_than(VectorRegister<float, 128> const &x,
