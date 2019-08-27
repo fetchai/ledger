@@ -78,39 +78,6 @@ protected:
   bool is_training_ = true;
 };
 
-/**
- * Provide an interface for any trainable ops
- * @tparam T passes tensors to graph during update step
- */
-template <class T>
-class Trainable
-{
-public:
-  using TensorType   = T;
-  using ArrayPtrType = std::shared_ptr<TensorType>;
-  using DataType     = typename TensorType::Type;
-  using RegPtrType   = std::shared_ptr<fetch::ml::regularisers::Regulariser<T>>;
-
-  virtual void                           Step(typename T::Type learning_rate)         = 0;
-  virtual struct fetch::ml::StateDict<T> StateDict() const                            = 0;
-  virtual void              LoadStateDict(struct fetch::ml::StateDict<T> const &dict) = 0;
-  virtual TensorType const &get_weights() const                                       = 0;
-  virtual TensorType const &get_gradients() const                                     = 0;
-  virtual void              ResetGradients()                                          = 0;
-  virtual void              ApplyGradient(TensorType const &grad)                     = 0;
-  virtual void              ApplyRegularisation()                                     = 0;
-
-  void SetRegularisation(RegPtrType regulariser, DataType regularisation_rate = DataType{0.0})
-  {
-    regulariser_         = regulariser;
-    regularisation_rate_ = regularisation_rate;
-  }
-
-protected:
-  RegPtrType regulariser_;
-  DataType   regularisation_rate_ = static_cast<DataType>(0);
-};
-
 }  // namespace ops
 }  // namespace ml
 }  // namespace fetch
