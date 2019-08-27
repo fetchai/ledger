@@ -112,5 +112,5 @@ TYPED_TEST(TensorDataloaderTest, prepare_batch_test)
   auto tdl = fetch::ml::dataloaders::TensorDataLoader<TypeParam, TypeParam>(label_tensor.shape(),
                                                                             {data1_tensor.shape()});
   bool is_done_set = false;
-  auto batch       = tdl.PrepareBatch(50, is_done_set).second;
+  auto batch       = tdl.PrepareBatch(2, is_done_set).second;
 }
