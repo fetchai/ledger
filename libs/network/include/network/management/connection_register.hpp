@@ -41,15 +41,14 @@ public:
   using shared_service_client_type = std::shared_ptr<service::ServiceClient>;
   using weak_service_client_type   = std::weak_ptr<service::ServiceClient>;
   using details_type               = G;
-  using mutex_type                 = mutex::Mutex;
 
   static constexpr char const *LOGGING_NAME = "ConnectionRegisterImpl";
 
-  struct LockableDetails final : public details_type, public mutex_type
+  struct LockableDetails final : public details_type, public Mutex
   {
     LockableDetails()
       : details_type()
-      , mutex_type(__LINE__, __FILE__)
+      , Mutex(__LINE__, __FILE__)
     {}
   };
   using details_map_type =
@@ -168,7 +167,6 @@ public:
 
   std::shared_ptr<LockableDetails> GetDetails(connection_handle_type const &i)
   {
-    LOG_STACK_TRACE_POINT;
     FETCH_LOCK(details_lock_);
     if (details_.find(i) == details_.end())
     {
@@ -253,11 +251,11 @@ public:
   }
 
 private:
-  mutable mutex::Mutex connections_lock_{__LINE__, __FILE__};
-  connection_map_type  connections_;
+  mutable Mutex       connections_lock_{__LINE__, __FILE__};
+  connection_map_type connections_;
 
-  mutable mutex::Mutex details_lock_{__LINE__, __FILE__};
-  details_map_type     details_;
+  mutable Mutex    details_lock_{__LINE__, __FILE__};
+  details_map_type details_;
 
   void SignalClientLeave(connection_handle_type const &handle)
   {

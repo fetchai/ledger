@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "network/muddle/peer_list.hpp"
 #include "network/muddle/router.hpp"
 
