@@ -1223,19 +1223,21 @@ Tensor<T, C> &Tensor<T, C>::operator=(TensorSlice const &slice)
 template <typename T, typename C>
 bool Tensor<T, C>::Resize(SizeVector const &shape, bool copy)
 {
-	// if the shape is exactly the same and a copy of value is required, dont do anything
-	if ((this->shape() == shape) && copy){
-		return true;
-	}
-	
-	// this line does a shallow copy for speedy initializion of a tensor
-	Tensor old_tensor = *this;
-	SizeType old_size = this->size();
-	SizeType new_size_unpadded = Tensor::SizeFromShape(shape);
-	if(copy && (old_size == new_size_unpadded)){
-		old_tensor = this->Copy();
-	}
-	
+  // if the shape is exactly the same and a copy of value is required, dont do anything
+  if ((this->shape() == shape) && copy)
+  {
+    return true;
+  }
+
+  // this line does a shallow copy for speedy initializion of a tensor
+  Tensor   old_tensor        = *this;
+  SizeType old_size          = this->size();
+  SizeType new_size_unpadded = Tensor::SizeFromShape(shape);
+  if (copy && (old_size == new_size_unpadded))
+  {
+    old_tensor = this->Copy();
+  }
+
   SizeType new_size = Tensor::PaddedSizeFromShape(shape);
   data_             = ContainerType(new_size);
   data_.SetAllZero();
@@ -2295,7 +2297,7 @@ typename Tensor<T, C>::TensorSlice Tensor<T, C>::Slice(
     {
       assert(start_end_index.first < start_end_index.second);
       assert(start_end_index.first >= static_cast<SizeType>(0));
-	    assert(start_end_index.second <= shape(j));
+      assert(start_end_index.second <= shape(j));
       range.push_back({start_end_index.first, start_end_index.second, 1});
     }
     else
