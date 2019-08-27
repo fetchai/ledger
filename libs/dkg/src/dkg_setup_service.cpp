@@ -83,7 +83,7 @@ DkgSetupService::DkgSetupService(Endpoint &endpoint, Identity identity)
                      ready_connections_.insert({from, connections});
                    }
                  },
-                 CHANNEL_CONNECTIONS_SETUP}
+                 CHANNEL_CONNECTIONS_SETUP, false}
   , rbc_{endpoint_, identity_.identifier(),
          [this](MuddleAddress const &from, ConstByteArray const &payload) -> void {
            DKGEnvelope   env;
@@ -218,6 +218,12 @@ DkgSetupService::State DkgSetupService::OnWaitForDirectConnections()
 
 DkgSetupService::State DkgSetupService::OnWaitForReadyConnections()
 {
+  // Try broadcasting connections again in case they were discarded by RBCs who's cabinet was reset
+  // late
+  fetch::serializers::MsgPackSerializer serializer;
+  serializer << connections_;
+  pre_dkg_rbc_.Broadcast(serializer.data());
+
   if (ready_connections_.size() >= beacon_->aeon.members.size() - 1)
   {
     for (auto &m : beacon_->aeon.members)
@@ -233,16 +239,20 @@ DkgSetupService::State DkgSetupService::OnWaitForReadyConnections()
       }
       else
       {
-        state_machine_->Delay(std::chrono::milliseconds(10));
+        state_machine_->Delay(std::chrono::milliseconds(100));
+        FETCH_LOG_INFO(LOGGING_NAME, dkg_manager_.cabinet_index(),
+                       "Waiting for all peers to be ready before starting DKG. Ready: ",
+                       ready_connections_.size(), " expect: ", beacon_->aeon.members.size() - 1);
         return State::WAIT_FOR_READY_CONNECTIONS;
       }
     }
     FETCH_LOG_INFO(LOGGING_NAME, "All peers connected. Proceeding.");
+
     BroadcastShares();
     return State::WAIT_FOR_SHARE;
   }
 
-  state_machine_->Delay(std::chrono::milliseconds(10));
+  state_machine_->Delay(std::chrono::milliseconds(100));
   FETCH_LOG_INFO(LOGGING_NAME, dkg_manager_.cabinet_index(),
                  "Waiting for all peers to be ready before starting DKG. Ready: ",
                  ready_connections_.size(), " expect: ", beacon_->aeon.members.size() - 1);
