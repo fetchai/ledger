@@ -20,8 +20,6 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/serializers/counter.hpp"
 #include "core/serializers/main_serializer.hpp"
-#include "crypto/bls_base.hpp"
-#include "crypto/bls_dkg.hpp"
 #include "crypto/prover.hpp"
 
 #include <memory>
@@ -32,14 +30,14 @@ namespace beacon {
 
 struct CabinetMemberDetails  // TODO(tfr): rename into CabinetMember
 {
-  using BeaconManager = dkg::BeaconManager;
-  using Identity      = crypto::Identity;
-  using Signature     = byte_array::ConstByteArray;
+  using DkgManager = dkg::DkgManager;
+  using Identity   = crypto::Identity;
+  using Signature  = byte_array::ConstByteArray;
 
   /// Payload
   /// @{
-  Identity          identity;
-  BeaconManager::Id id;
+  Identity                 identity;
+  DkgManager::CabinetIndex id;
   /// @}
 
   Signature signature;
