@@ -125,6 +125,8 @@ TYPED_TEST(VectorRegisterTest, basic_tests)
   alignas(TypeParam::E_REGISTER_SIZE) type  a[TypeParam::E_BLOCK_COUNT], b[TypeParam::E_BLOCK_COUNT],
                                             sum[TypeParam::E_BLOCK_COUNT], diff[TypeParam::E_BLOCK_COUNT],
                                             prod[TypeParam::E_BLOCK_COUNT], div[TypeParam::E_BLOCK_COUNT];
+
+  type real_max{type(0)}, real_min{fetch::math::numeric_max<type>()};
   for (size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
   {
     // We don't want to check overflows right now, so we pick random numbers, but well within the type's limits
@@ -134,6 +136,10 @@ TYPED_TEST(VectorRegisterTest, basic_tests)
     diff[i] = a[i] - b[i];
     prod[i] = a[i] * b[i];
     div[i] = a[i] / b[i];
+    real_max = fetch::vectorise::Max(a[i], real_max);
+    real_max = fetch::vectorise::Max(b[i], real_max);
+    real_min = fetch::vectorise::Min(a[i], real_min);
+    real_min = fetch::vectorise::Min(b[i], real_min);
   }
   TypeParam va{a};
   TypeParam vb{b};
@@ -150,25 +156,20 @@ TYPED_TEST(VectorRegisterTest, basic_tests)
   EXPECT_TRUE(all_equal_to(vtmp4, vdiv));
 
   type reduce1 = reduce(vsum);
-  type reduce2 = reduce(vdiff);
-  type reduce3 = reduce(vprod);
-  type reduce4 = reduce(vdiv);
-
-  std::cout << "va  = " << va << std::endl;
-  std::cout << "vb  = " << vb << std::endl;
-  std::cout << "vsum  = " << vsum << std::endl;
-  std::cout << "vdiff = " << vdiff << std::endl;
-  std::cout << "vprod = " << vprod << std::endl;
-  std::cout << "vdiv  = " << vdiv << std::endl;
-  std::cout << "reduce(vsum)  = " << reduce1 << std::endl;
-  std::cout << "reduce(vdiff) = " << reduce2 << std::endl;
-  std::cout << "reduce(vprod) = " << reduce3 << std::endl;
-  std::cout << "reduce(vdiv)  = " << reduce4 << std::endl;
+  type hsum{0};
+  for (size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
+  {
+    hsum += sum[i];
+  }
+  EXPECT_EQ(hsum, reduce1);
 
   TypeParam vmax = Max(va, vb);
-  std::cout << "vmax  = " << vmax << std::endl;
   type max = Max(vmax);
-  std::cout << "max  = " << max << std::endl;
+  EXPECT_EQ(max, real_max);
+  
+  TypeParam vmin = Min(va, vb);
+  type min = Min(vmin);
+  EXPECT_EQ(min, real_min);
 }
 
 template <typename T>
@@ -181,7 +182,6 @@ TYPED_TEST(VectorReduceTest, reduce_tests)
 {
   using type = typename TypeParam::type;
   using array_type  = fetch::memory::SharedArray<type>;
-  using vector_type = typename array_type::VectorRegisterType;
 
   std::size_t N = 60;
   alignas(TypeParam::E_REGISTER_SIZE) array_type A(N), B(N);
@@ -206,7 +206,7 @@ TYPED_TEST(VectorReduceTest, reduce_tests)
         [](auto const &a, auto const &b) {
           return fetch::vectorise::Max(a, b);
         }, 
-        [](vector_type const &a) {
+        [](auto const &a) {
           return fetch::vectorise::Max(a);
         });
   std::cout << "Reduce: Max = " << ret << std::endl;
@@ -216,7 +216,7 @@ TYPED_TEST(VectorReduceTest, reduce_tests)
         [](auto const &a, auto const &b) {
           return fetch::vectorise::Max(a, b);
         }, 
-        [](vector_type const &a) {
+        [](auto const &a) {
           return fetch::vectorise::Max(a);
         });
   std::cout << "Reduce (range: 2, N-2): Max = " << ret << std::endl;
@@ -225,7 +225,7 @@ TYPED_TEST(VectorReduceTest, reduce_tests)
         [](auto const &a, auto const &b) {
           return fetch::vectorise::Min(a, b);
         }, 
-        [](vector_type const &a) {
+        [](auto const &a) {
           return fetch::vectorise::Min(a);
         }, type(N*N));
   std::cout << "Reduce: Min = " << ret << std::endl;
@@ -234,7 +234,7 @@ TYPED_TEST(VectorReduceTest, reduce_tests)
         [](auto const &a, auto const &b) {
           return fetch::vectorise::Min(a, b);
         }, 
-        [](vector_type const &a) {
+        [](auto const &a) {
           return fetch::vectorise::Min(a);
         }, type(N*N));
   std::cout << "Reduce (range: 2, N-2): Min = " << ret << std::endl;
@@ -242,10 +242,11 @@ TYPED_TEST(VectorReduceTest, reduce_tests)
   ret = A.in_parallel().SumReduce([](auto const &a, auto const &b) {
           return a + b;
         }, 
-        [](vector_type const &a) {
+        [](auto const &a) {
           return reduce(a);
         }, B);
   std::cout << "SumReduce: ret = " << ret << std::endl;
+  std::cout << "Sum = " << sum << std::endl;
 
   // ret = A.in_parallel().ProductReduce([](auto const &a, auto const &b) {
   //       return a * b;
