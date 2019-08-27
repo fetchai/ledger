@@ -54,13 +54,9 @@ inline T Max(VectorRegister<T, N> const &a)
   constexpr std::size_t size = N/(8 * sizeof(T));
   alignas(VectorRegister<T, N>::E_REGISTER_SIZE) T A[size];
   a.Store(A);
-  std::cout << "a = " << a << std::endl;
-  std::cout << "N = " << N << std::endl;
   T max{A[0]};
   for (std::size_t i=1; i < size; i++) {
-    std::cout << "A[" << i << "] = " << A[i] << std::endl;
     max = Max(A[i], max);
-    std::cout << "max = " << max << std::endl;
   }
   return max;
 }
