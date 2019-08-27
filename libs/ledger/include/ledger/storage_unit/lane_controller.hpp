@@ -72,8 +72,8 @@ private:
   // Most methods do not need both mutexes. If they do, they should
   // acquire them in alphabetic order
 
-  mutex::Mutex services_mutex_{__LINE__, __FILE__};
-  mutex::Mutex desired_connections_mutex_{__LINE__, __FILE__};
+  Mutex services_mutex_{__LINE__, __FILE__};
+  Mutex desired_connections_mutex_{__LINE__, __FILE__};
 
   std::unordered_map<Uri, Address> peer_connections_;
   UriSet                           desired_connections_;

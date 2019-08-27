@@ -122,8 +122,6 @@ public:
    */
   Function(function_type value)
   {
-    LOG_STACK_TRACE_POINT;
-
     function_ = value;
   }
 
@@ -138,8 +136,6 @@ public:
    */
   void operator()(serializer_type &result, serializer_type &params) override
   {
-    LOG_STACK_TRACE_POINT;
-
     UnrollArguments<>::template LoopOver<Args...>::Unroll(result, this->function_, params);
   }
   void operator()(serializer_type & /*result*/, CallableArgumentList const & /*additional_args*/,
@@ -165,15 +161,11 @@ public:
 
   Function(function_type value)
   {
-    LOG_STACK_TRACE_POINT;
-
     function_ = value;
   }
 
   void operator()(serializer_type &result, serializer_type & /*params*/) override
   {
-    LOG_STACK_TRACE_POINT;
-
     result << R(function_());
   }
 
@@ -200,13 +192,11 @@ public:
 
   Function(function_type value)
   {
-    LOG_STACK_TRACE_POINT;
     function_ = value;
   }
 
   void operator()(serializer_type &result, serializer_type & /*params*/) override
   {
-    LOG_STACK_TRACE_POINT;
     result << 0;
     function_();
   }

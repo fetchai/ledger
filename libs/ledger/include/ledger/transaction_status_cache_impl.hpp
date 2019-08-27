@@ -57,8 +57,6 @@ public:
   TransactionStatusCacheImpl &operator=(TransactionStatusCacheImpl &&) = delete;
 
 private:
-  using Mutex = mutex::Mutex;
-
   using Cache = DigestMap<TxStatusEx>;
 
   static constexpr std::chrono::hours   LIFETIME{24};

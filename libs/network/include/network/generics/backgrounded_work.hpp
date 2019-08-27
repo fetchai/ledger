@@ -46,7 +46,7 @@ public:
 
   BackgroundedWork()
   {
-    Lock lock(mutex_);
+    FETCH_LOCK(mutex_);
     workload_[PromiseState::WAITING];
     workload_[PromiseState::SUCCESS];
     workload_[PromiseState::FAILED];
@@ -55,12 +55,12 @@ public:
 
   ~BackgroundedWork()
   {
-    Lock lock(mutex_);
+    FETCH_LOCK(mutex_);
   }
 
   bool WorkCycle()
   {
-    Lock lock(mutex_);
+    FETCH_LOCK(mutex_);
 
     if (workload_[PromiseState::WAITING].empty())
     {
@@ -121,19 +121,19 @@ public:
 
   void Wake()
   {
-    Lock lock(mutex_);
+    FETCH_LOCK(mutex_);
     cv_.notify_one();
   }
 
   void WakeAll()
   {
-    Lock lock(mutex_);
+    FETCH_LOCK(mutex_);
     cv_.notify_all();
   }
 
   Results Get(PromiseState state, std::size_t limit)
   {
-    Lock    lock(mutex_);
+    FETCH_LOCK(mutex_);
     Results results;
 
     auto &worklist_for_state = workload_[state];
@@ -170,57 +170,57 @@ public:
 
   std::size_t CountPending()
   {
-    Lock lock(mutex_);
+    FETCH_LOCK(mutex_);
     return workload_[PromiseState::WAITING].size();
   }
 
   std::size_t CountCompleted()
   {
-    Lock lock(mutex_);
+    FETCH_LOCK(mutex_);
     return workload_[PromiseState::SUCCESS].size() + workload_[PromiseState::TIMEDOUT].size() +
            workload_[PromiseState::FAILED].size();
   }
 
   std::size_t CountSuccesses()
   {
-    Lock lock(mutex_);
+    FETCH_LOCK(mutex_);
     return workload_[PromiseState::SUCCESS].size();
   }
 
   std::size_t CountFailures()
   {
-    Lock lock(mutex_);
+    FETCH_LOCK(mutex_);
     return workload_[PromiseState::FAILED].size();
   }
 
   void DiscardFailures()
   {
-    Lock lock(mutex_);
+    FETCH_LOCK(mutex_);
     workload_[PromiseState::FAILED].clear();
   }
 
   void DiscardSuccesses()
   {
-    Lock lock(mutex_);
+    FETCH_LOCK(mutex_);
     workload_[PromiseState::FAILED].clear();
   }
 
   void DiscardTimeouts()
   {
-    Lock lock(mutex_);
+    FETCH_LOCK(mutex_);
     workload_[PromiseState::TIMEDOUT].clear();
   }
 
   std::size_t CountTimeouts()
   {
-    Lock lock(mutex_);
+    FETCH_LOCK(mutex_);
     return workload_[PromiseState::TIMEDOUT].size();
   }
 
   void Add(std::shared_ptr<WORKER> new_work)
   {
     {
-      Lock lock(mutex_);
+      FETCH_LOCK(mutex_);
       // TODO(kll): use a no-copy insert operator here..
       workload_[PromiseState::WAITING].push_back(new_work);
     }
@@ -230,7 +230,7 @@ public:
   void Add(std::vector<std::shared_ptr<WORKER>> new_works)
   {
     {
-      Lock lock(mutex_);
+      FETCH_LOCK(mutex_);
       // TODO(kll): use bulk insert operators here..
       for (auto new_work : new_works)
       {
@@ -243,7 +243,7 @@ public:
   template <class KEY>
   bool InFlight(const KEY &key)  // TODO(kll): Put const back here.
   {
-    Lock lock(mutex_);
+    FETCH_LOCK(mutex_);
 
     for (auto const &current_state : fetch::service::GetAllPromiseStates())
     {
@@ -270,7 +270,7 @@ public:
   template <class KEY>
   bool InFlightP(const KEY &key)  // TODO(kll): Put const back here.
   {
-    Lock lock(mutex_);
+    FETCH_LOCK(mutex_);
 
     for (auto const &current_state : fetch::service::GetAllPromiseStates())
     {
@@ -301,7 +301,7 @@ public:
 
     for (auto const &current_state : fetch::service::GetAllPromiseStates())
     {
-      Lock  lock(mutex_);
+      FETCH_LOCK(mutex_);
       auto &worklist_for_state = workload_[current_state];
       auto  workitem_iter      = worklist_for_state.begin();
       while (workitem_iter != worklist_for_state.end())
