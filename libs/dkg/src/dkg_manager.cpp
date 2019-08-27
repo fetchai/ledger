@@ -109,15 +109,15 @@ void DkgManager::AddCoefficients(MuddleAddress const &           from,
 {
   for (uint32_t ii = 0; ii <= polynomial_degree_; ++ii)
   {
-      C_ik[identity_to_index_[from]][ii].setStr(coefficients[ii]);
+    C_ik[identity_to_index_[from]][ii].setStr(coefficients[ii]);
   }
 }
 
 void DkgManager::AddShares(MuddleAddress const &from, std::pair<Share, Share> const &shares)
 {
   uint32_t from_index = identity_to_index_[from];
-    s_ij[from_index][cabinet_index_].setStr(shares.first);
-    sprime_ij[from_index][cabinet_index_].setStr(shares.second);
+  s_ij[from_index][cabinet_index_].setStr(shares.first);
+  sprime_ij[from_index][cabinet_index_].setStr(shares.second);
 }
 
 /**
@@ -201,11 +201,11 @@ bool DkgManager::VerifyComplaintAnswer(MuddleAddress const &from, ComplaintAnswe
  * If in qual a member computes individual share of the secret key and further computes and
  * broadcasts qual coefficients
  */
-void DkgManager::ComputeSecretShare(std::set<MuddleAddress> const &qual)
+void DkgManager::ComputeSecretShare()
 {
   secret_share_.clear();
   xprime_i = 0;
-  for (auto const &iq : qual)
+  for (auto const &iq : qual_)
   {
     uint32_t iq_index = identity_to_index_[iq];
     bn::Fr::add(secret_share_, secret_share_, s_ij[iq_index][cabinet_index_]);
@@ -224,13 +224,13 @@ std::vector<DkgManager::Coefficient> DkgManager::GetQualCoefficients()
   return coefficients;
 }
 
-void DkgManager::AddQualCoefficients(const MuddleAddress &           from,
+void DkgManager::AddQualCoefficients(MuddleAddress const &           from,
                                      std::vector<Coefficient> const &coefficients)
 {
   uint32_t from_index = identity_to_index_[from];
   for (uint32_t ii = 0; ii <= polynomial_degree_; ++ii)
   {
-      A_ik[from_index][ii].setStr(coefficients[ii]);
+    A_ik[from_index][ii].setStr(coefficients[ii]);
   }
 }
 
@@ -240,11 +240,11 @@ void DkgManager::AddQualCoefficients(const MuddleAddress &           from,
  *
  * @return Map of address and pair of secret shares for each qual member we wish to complain against
  */
-DkgManager::SharesExposedMap DkgManager::ComputeQualComplaints(std::set<MuddleAddress> const &qual)
+DkgManager::SharesExposedMap DkgManager::ComputeQualComplaints()
 {
   SharesExposedMap qual_complaints;
 
-  for (auto const &miner : qual)
+  for (auto const &miner : qual_)
   {
     uint32_t i = identity_to_index_[miner];
     if (i != cabinet_index_)
@@ -324,29 +324,29 @@ DkgManager::MuddleAddress DkgManager::VerifyQualComplaint(MuddleAddress const & 
  * Compute group public key and individual public key shares
  */
 
-void DkgManager::ComputePublicKeys(std::set<MuddleAddress> const &qual)
+void DkgManager::ComputePublicKeys()
 {
 
   FETCH_LOG_INFO(LOGGING_NAME, "Node: ", cabinet_index_, " compute public keys");
   // For all parties in $QUAL$, set $y_i = A_{i0} = g^{z_i} \bmod p$.
-  for (auto const &iq : qual)
+  for (auto const &iq : qual_)
   {
     uint32_t it = identity_to_index_[iq];
     y_i[it]     = A_ik[it][0];
   }
   // Compute public key $y = \prod_{i \in QUAL} y_i \bmod p$
   public_key_.clear();
-  for (auto const &iq : qual)
+  for (auto const &iq : qual_)
   {
     uint32_t it = identity_to_index_[iq];
     bn::G2::add(public_key_, public_key_, y_i[it]);
   }
   // Compute public_key_shares_ $v_j = \prod_{i \in QUAL} \prod_{k=0}^t (A_{ik})^{j^k} \bmod
   // p$
-  for (auto const &jq : qual)
+  for (auto const &jq : qual_)
   {
     uint32_t jt = identity_to_index_[jq];
-    for (auto const &iq : qual)
+    for (auto const &iq : qual_)
     {
       uint32_t it = identity_to_index_[iq];
       bn::G2::add(public_key_shares_[jt], public_key_shares_[jt], A_ik[it][0]);
@@ -504,6 +504,11 @@ void DkgManager::SetDkgOutput(bn::G2 &public_key, bn::Fr &secret_share,
   public_key        = public_key_;
   secret_share      = secret_share_;
   public_key_shares = public_key_shares_;
+}
+
+void DkgManager::SetQual(std::set<fetch::dkg::DkgManager::MuddleAddress> qual)
+{
+  qual_ = std::move(qual);
 }
 
 }  // namespace dkg
