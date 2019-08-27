@@ -79,6 +79,12 @@ public:
     , op_ptr_(op_ptr)
   {}
 
+  /**
+   * This is used to make a copy of one node from another, i.e. when sharing weights.
+   * @param old_node
+   * @param name
+   * @param op_ptr
+   */
   Node(Node &old_node, std::string name, std::shared_ptr<ops::Ops<TensorType>> op_ptr)
     : name_(std::move(name))
     , cached_output_status_(CachedOutputState::CHANGED_SIZE)

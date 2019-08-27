@@ -75,6 +75,7 @@ public:
   NodePtrType GetNode(std::string const &node_name) const;
   void        SetInput(std::string const &node_name, TensorType data);
   void        ResetGraphCache(std::shared_ptr<Node<T>> const &n, bool input_size_changed);
+  void ResetWholeGraphCache(bool input_size_changed);
   void SetRegularisation(RegPtrType regulariser, DataType regularisation_rate = DataType{0.0});
   bool SetRegularisation(std::string node_name, RegPtrType regulariser,
                          DataType regularisation_rate = DataType{0.0});
@@ -115,10 +116,10 @@ private:
   void LinkNodesInGraph(std::string const &node_name, std::vector<std::string> const &inputs);
 
 protected:
-  void InsertSharedCopy(std::shared_ptr<Graph<TensorType>> output_ptr);
   std::unordered_map<std::string, NodePtrType> nodes_;
   std::unordered_map<std::string, SizeType>    trainable_lookup_;
   std::vector<NodePtrType>                     trainable_nodes_;
+  void InsertSharedCopy(std::shared_ptr<Graph<TensorType>> output_ptr);
 };
 
 /**
@@ -245,10 +246,8 @@ void Graph<TensorType>::Step(DataType learning_rate)
     trainable_ptr->Step(learning_rate);
   }
 
-  for (auto const &t : nodes_)
-  {
-    ResetGraphCache(t.second, false);
-  }
+  // TODO(#1554) - we should only reset the cache for trained nodes, not all nodes
+  ResetWholeGraphCache(false);
 }
 
 template <typename TensorType>
@@ -260,10 +259,8 @@ void Graph<TensorType>::ApplyRegularisation()
     trainable_ptr->ApplyRegularisation();
   }
 
-  for (auto const &t : nodes_)
-  {
-    ResetGraphCache(t.second, false);
-  }
+  // TODO(#1554) - we should only reset the cache for trained nodes, not all nodes
+  ResetWholeGraphCache(false);
 }
 
 /**
@@ -292,11 +289,14 @@ meta::IfIsShareable<TensorType, OperationType, std::string> Graph<TensorType>::A
         [params...]() { return std::make_shared<OperationType>(params...); });
   }
   else
-  {  // if shared weight is specified by duplicate naming
+  {
+    // if name is duplicated then shared node is required
     NodePtrType target_node = GetNode(node_name);
 
+    // get a copy (shared when appropriate) of the target node Op
     auto op_copyshare = target_node->GetOp()->MakeSharedCopy(target_node->GetOp());
 
+    // make a new node by giving it the copied op
     node_ptr =
         std::make_shared<Node<TensorType>>(OperationType::OpCode(), updated_name, op_copyshare);
   }
@@ -455,6 +455,23 @@ void Graph<TensorType>::ResetGraphCache(NodePtrType const &n, bool input_size_ch
 }
 
 /**
+ * Resets node cache for all the nodes, clearing stored evaluation outputs
+ */
+template <typename TensorType>
+void Graph<TensorType>::ResetWholeGraphCache(bool input_size_changed)
+{
+  for (auto &node : nodes_)
+  {
+    node.second->ResetCache(input_size_changed);
+
+    auto graph_pointer = std::dynamic_pointer_cast<Graph<TensorType>>(node.second->GetOp());
+    if (graph_pointer){
+      graph_pointer->ResetWholeGraphCache(input_size_changed);
+    }
+  }
+}
+
+/**
  * Assigns all trainable parameters to a stateDict for exporting and serialising
  * @return  d is the StateDict of all trainable params
  */
@@ -552,6 +569,7 @@ void Graph<TensorType>::ApplyGradients(std::vector<TensorType> &grad)
 
   for (auto const &t : nodes_)
   {
+    // TODO(#1554) - we should only reset the cache for trained nodes, not all nodes
     ResetGraphCache(t.second, false);
   }
 }
@@ -689,6 +707,11 @@ std::vector<typename Graph<TensorType>::TrainablePtrType> Graph<TensorType>::Get
   return ret;
 }
 
+/**
+ * Inserts a copy of the graph (with shared op ptrs where appropriate) into output_ptr
+ * @tparam T
+ * @param output_ptr shared_ptr to the new graph. Needs to not be the same as the old graph!
+ */
 template <class T>
 void Graph<T>::InsertSharedCopy(std::shared_ptr<Graph<TensorType>> output_ptr)
 {
@@ -714,22 +737,22 @@ void Graph<T>::InsertSharedCopy(std::shared_ptr<Graph<TensorType>> output_ptr)
         std::make_shared<Node<TensorType>>(*n_ptr, node_name, op_copyshare);
 
     // add node_ptr to trainable lookup etc. if required
-    auto is_trainable =
+    auto trainable_ptr =
         std::dynamic_pointer_cast<fetch::ml::ops::Trainable<TensorType>>(op_copyshare);
-    auto is_graph = std::dynamic_pointer_cast<Graph<TensorType>>(op_copyshare);
-    if (is_trainable)
+    auto graph_ptr = std::dynamic_pointer_cast<Graph<TensorType>>(op_copyshare);
+    if (trainable_ptr)
     {
       copyshare->trainable_nodes_.emplace_back(n_ptr);
       copyshare->trainable_lookup_[node_name] = copyshare->trainable_nodes_.size() - 1;
     }
-    else if (is_graph)
+    else if (graph_ptr)
     {
-      for (auto &trainable : is_graph->trainable_lookup_)
+      for (auto &trainable : graph_ptr->trainable_lookup_)
       {
         std::string subnode_name(node_name + "_" + trainable.first);
         assert(copyshare->trainable_lookup_.find(subnode_name) ==
                copyshare->trainable_lookup_.end());
-        copyshare->trainable_nodes_.emplace_back(is_graph->trainable_nodes_.at(trainable.second));
+        copyshare->trainable_nodes_.emplace_back(graph_ptr->trainable_nodes_.at(trainable.second));
         copyshare->trainable_lookup_[subnode_name] = copyshare->trainable_nodes_.size() - 1;
       }
     }
