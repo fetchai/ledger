@@ -149,6 +149,8 @@ public:
   /// @name Muddle Setup
   /// @{
   bool            Start(Peers const &peers, Ports const &ports) override;
+  bool            Start(Uris const &peers, Ports const &ports) override;
+  bool            Start(Ports const &ports) override;
   void            Stop() override;
   MuddleEndpoint &GetEndpoint() override;
   /// @}

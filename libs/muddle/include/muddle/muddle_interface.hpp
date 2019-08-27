@@ -53,6 +53,7 @@ public:
   };
 
   using Peers         = std::unordered_set<std::string>;
+  using Uris          = std::unordered_set<network::Uri>;
   using Ports         = std::vector<uint16_t>;
   using Addresses     = std::unordered_set<Address>;
   using ConfidenceMap = std::unordered_map<Address, Confidence>;
@@ -74,6 +75,24 @@ public:
    * @return true if successful, otherwise false
    */
   virtual bool Start(Peers const &peers, Ports const &ports) = 0;
+
+  /**
+   * Start the muddle instance connecting to the initial set of peers and listing on the specified
+   * set of ports
+   *
+   * @param peers The initial set of peers that muddle should connect to
+   * @param ports The set of ports to listen on. Zero signals a random port
+   * @return true if successful, otherwise false
+   */
+  virtual bool Start(Uris const &peers, Ports const &ports) = 0;
+
+  /**
+   * Start the muddle instance listing on the specified set of ports
+   *
+   * @param ports The set of ports to listen on. Zero signals a random port
+   * @return true if successful, otherwise false
+   */
+  virtual bool Start(Ports const &ports) = 0;
 
   /**
    * Stop the muddle instance, this will cause all the connected to close
