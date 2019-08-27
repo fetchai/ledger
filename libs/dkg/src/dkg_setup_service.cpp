@@ -36,6 +36,9 @@ char const *ToString(DkgSetupService::State state)
   case DkgSetupService::State::WAIT_FOR_DIRECT_CONNECTIONS:
     text = "Waiting for direct connections";
     break;
+  case DkgSetupService::State::WAIT_FOR_READY_CONNECTIONS:
+    text = "Waiting for ready connections";
+    break;
   case DkgSetupService::State::WAIT_FOR_SHARE:
     text = "Waiting for shares and coefficients";
     break;
@@ -61,23 +64,42 @@ char const *ToString(DkgSetupService::State state)
   return text;
 }
 
-DkgSetupService::DkgSetupService(
-    Endpoint &endpoint, Identity identity,
-    std::function<void(DKGEnvelope const &)> broadcast_function,
-    std::function<void(MuddleAddress const &, std::pair<std::string, std::string> const &)>
-        rpc_function)
+DkgSetupService::DkgSetupService(Endpoint &endpoint, Identity identity)
   : identity_{std::move(identity)}
-  , broadcast_function_{std::move(broadcast_function)}
-  , rpc_function_{std::move(rpc_function)}
   , dkg_state_gauge_{telemetry::Registry::Instance().CreateGauge<uint8_t>(
         "ledger_dkg_state_gauge", "State the DKG is in as integer in [0, 7]")}
   , state_machine_{std::make_shared<StateMachine>("BeaconSetupService", State::IDLE, ToString)}
   , endpoint_{endpoint}
+  , pre_dkg_rbc_{endpoint_, identity_.identifier(),
+                 [this](MuddleAddress const &from, ConstByteArray const &payload) -> void {
+                   std::set<MuddleAddress>               connections;
+                   fetch::serializers::MsgPackSerializer serializer{payload};
+                   serializer >> connections;
+
+                   FETCH_LOG_INFO(LOGGING_NAME, "Node ", dkg_manager_.cabinet_index(),
+                                  "Received connections message");
+                   if (ready_connections_.find(from) == ready_connections_.end())
+                   {
+                     ready_connections_.insert({from, connections});
+                   }
+                 },
+                 CHANNEL_CONNECTIONS_SETUP}
+  , rbc_{endpoint_, identity_.identifier(),
+         [this](MuddleAddress const &from, ConstByteArray const &payload) -> void {
+           DKGEnvelope   env;
+           DKGSerializer serializer{payload};
+           serializer >> env;
+           OnDkgMessage(from, env.Message());
+         },
+         CHANNEL_RBC_BROADCAST}
+  , shares_subscription(endpoint_.Subscribe(SERVICE_DKG, CHANNEL_SECRET_KEY))
   , dkg_manager_{identity_.identifier()}
 {
   state_machine_->RegisterHandler(State::IDLE, this, &DkgSetupService::OnIdle);
   state_machine_->RegisterHandler(State::WAIT_FOR_DIRECT_CONNECTIONS, this,
                                   &DkgSetupService::OnWaitForDirectConnections);
+  state_machine_->RegisterHandler(State::WAIT_FOR_READY_CONNECTIONS, this,
+                                  &DkgSetupService::OnWaitForReadyConnections);
   state_machine_->RegisterHandler(State::WAIT_FOR_SHARE, this, &DkgSetupService::OnWaitForShares);
   state_machine_->RegisterHandler(State::WAIT_FOR_COMPLAINTS, this,
                                   &DkgSetupService::OnWaitForComplaints);
@@ -90,6 +112,19 @@ DkgSetupService::DkgSetupService(
   state_machine_->RegisterHandler(State::WAIT_FOR_RECONSTRUCTION_SHARES, this,
                                   &DkgSetupService::OnWaitForReconstructionShares);
   state_machine_->RegisterHandler(State::BEACON_READY, this, &DkgSetupService::OnBeaconReady);
+
+  // Set subscription for receiving shares
+  shares_subscription->SetMessageHandler([this](ConstByteArray const &from, uint16_t, uint16_t,
+                                                uint16_t, muddle::Packet::Payload const &payload,
+                                                ConstByteArray) {
+    fetch::serializers::MsgPackSerializer serialiser(payload);
+
+    std::pair<std::string, std::string> shares;
+    serialiser >> shares;
+
+    // Dispatch the event
+    OnNewShares(from, shares);
+  });
 }
 
 DkgSetupService::State DkgSetupService::OnIdle()
@@ -117,6 +152,9 @@ DkgSetupService::State DkgSetupService::OnIdle()
       {
         cabinet.insert(m.identifier());
       }
+
+      pre_dkg_rbc_.ResetCabinet(cabinet);
+      rbc_.ResetCabinet(cabinet);
       dkg_manager_.Reset(cabinet, beacon_->manager.threshold());
       auto cabinet_size = static_cast<uint32_t>(cabinet.size());
       complaints_manager_.ResetCabinet(cabinet_size);
@@ -139,44 +177,76 @@ DkgSetupService::State DkgSetupService::OnWaitForDirectConnections()
   auto                              v_peers = endpoint_.GetDirectlyConnectedPeers();
   std::unordered_set<MuddleAddress> peers(v_peers.begin(), v_peers.end());
 
-  bool     all_connected = true;
-  uint16_t connected     = 0;
+  std::set<MuddleAddress> connected;
 
   for (auto &m : beacon_->aeon.members)
   {
     // Skipping own address
     if (m == identity_)
     {
+      connected.insert(m.identifier());
       continue;
     }
 
     // Checking if other peers are there
     if (peers.find(m.identifier()) == peers.end())
     {
-      all_connected = false;
-
       // TODO(tfr): Request muddle to connect.
     }
     else
     {
-      connected++;
+      connected.insert(m.identifier());
     }
   }
 
-  if (all_connected)
+  if (connected.size() == beacon_->aeon.members.size())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "All peers connected. Proceeding.");
+    connections_ = connected;
+    fetch::serializers::MsgPackSerializer serializer;
+    serializer << connected;
+    pre_dkg_rbc_.Broadcast(serializer.data());
+    return State::WAIT_FOR_READY_CONNECTIONS;
+  }
 
+  state_machine_->Delay(std::chrono::milliseconds(200));
+  FETCH_LOG_INFO(LOGGING_NAME, "Node ", dkg_manager_.cabinet_index(),
+                 "waiting for all peers to join before starting setup. Connected: ",
+                 connected.size(), " expect: ", beacon_->aeon.members.size() - 1);
+
+  return State::WAIT_FOR_DIRECT_CONNECTIONS;
+}
+
+DkgSetupService::State DkgSetupService::OnWaitForReadyConnections()
+{
+  if (ready_connections_.size() >= beacon_->aeon.members.size() - 1)
+  {
+    for (auto &m : beacon_->aeon.members)
+    {
+      if (m == identity_)
+      {
+        continue;
+      }
+      if (ready_connections_.find(m.identifier()) != ready_connections_.end())
+      {
+        assert(ready_connections_.at(m.identifier()) == connections_);
+        // TODO(jmw): Strategy if connections for members are different
+      }
+      else
+      {
+        state_machine_->Delay(std::chrono::milliseconds(10));
+        return State::WAIT_FOR_READY_CONNECTIONS;
+      }
+    }
+    FETCH_LOG_INFO(LOGGING_NAME, "All peers connected. Proceeding.");
     BroadcastShares();
     return State::WAIT_FOR_SHARE;
   }
 
-  state_machine_->Delay(std::chrono::milliseconds(200));
-  FETCH_LOG_INFO(LOGGING_NAME,
-                 "Waiting for all peers to join before starting setup. Connected: ", connected,
-                 " expect: ", beacon_->aeon.members.size() - 1);
-
-  return State::WAIT_FOR_DIRECT_CONNECTIONS;
+  state_machine_->Delay(std::chrono::milliseconds(10));
+  FETCH_LOG_INFO(LOGGING_NAME, dkg_manager_.cabinet_index(),
+                 "Waiting for all peers to be ready before starting DKG. Ready: ",
+                 ready_connections_.size(), " expect: ", beacon_->aeon.members.size() - 1);
+  return State::WAIT_FOR_READY_CONNECTIONS;
 }
 
 DkgSetupService::State DkgSetupService::OnWaitForShares()
@@ -360,6 +430,8 @@ DkgSetupService::State DkgSetupService::OnBeaconReady()
   }
 
   beacon_.reset();
+  connections_.clear();
+  ready_connections_.clear();
   complaints_manager_.Clear();
   complaints_answer_manager_.Clear();
   qual_complaints_manager_.Clear();
@@ -378,7 +450,9 @@ DkgSetupService::State DkgSetupService::OnBeaconReady()
  */
 void DkgSetupService::SendBroadcast(DKGEnvelope const &env)
 {
-  broadcast_function_(env);
+  DKGSerializer serialiser;
+  serialiser << env;
+  rbc_.Broadcast(serialiser.data());
 }
 
 /**
@@ -397,7 +471,14 @@ void DkgSetupService::BroadcastShares()
       continue;
     }
     std::pair<MessageShare, MessageShare> shares{dkg_manager_.GetOwnShares(cab_i.identifier())};
-    rpc_function_(cab_i.identifier(), shares);
+
+    fetch::serializers::SizeCounter counter;
+    counter << shares;
+
+    fetch::serializers::MsgPackSerializer serializer;
+    serializer.Reserve(counter.size());
+    serializer << shares;
+    endpoint_.Send(cab_i.identifier(), SERVICE_DKG, CHANNEL_SECRET_KEY, serializer.data());
   }
   FETCH_LOG_INFO(LOGGING_NAME, "Node ", dkg_manager_.cabinet_index(), " broadcasts coefficients ");
 }

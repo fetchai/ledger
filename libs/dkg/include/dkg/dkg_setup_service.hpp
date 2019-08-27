@@ -22,6 +22,7 @@
 #include "dkg/dkg_complaints_manager.hpp"
 #include "dkg/dkg_manager.hpp"
 #include "dkg/dkg_messages.hpp"
+#include "network/muddle/rbc.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "telemetry/gauge.hpp"
 #include "telemetry/telemetry.hpp"
@@ -54,6 +55,7 @@ public:
   {
     IDLE,
     WAIT_FOR_DIRECT_CONNECTIONS,
+    WAIT_FOR_READY_CONNECTIONS,
     WAIT_FOR_SHARE,
     WAIT_FOR_COMPLAINTS,
     WAIT_FOR_COMPLAINT_ANSWERS,
@@ -63,12 +65,14 @@ public:
     BEACON_READY
   };
 
+  using ConstByteArray     = byte_array::ConstByteArray;
   using StateMachine       = core::StateMachine<State>;
   using StateMachinePtr    = std::shared_ptr<StateMachine>;
-  using MuddleAddress      = byte_array::ConstByteArray;
+  using MuddleAddress      = ConstByteArray;
   using Identity           = crypto::Identity;
   using CabinetMembers     = std::set<Identity>;
   using Endpoint           = muddle::MuddleEndpoint;
+  using RBC                = network::RBC;
   using MessageCoefficient = std::string;
   using MessageShare       = std::string;
   using SharesExposedMap = std::unordered_map<MuddleAddress, std::pair<MessageShare, MessageShare>>;
@@ -76,16 +80,13 @@ public:
   using SharedAeonExecutionUnit = std::shared_ptr<AeonExecutionUnit>;
   using CallbackFunction        = std::function<void(SharedAeonExecutionUnit)>;
 
-  DkgSetupService(
-      Endpoint &endpoint, Identity identity,
-      std::function<void(DKGEnvelope const &)> broadcast_function,
-      std::function<void(MuddleAddress const &, std::pair<std::string, std::string> const &)>
-          rpc_function);
+  DkgSetupService(Endpoint &endpoint, Identity identity);
 
   /// State functions
   /// @{
   State OnIdle();
   State OnWaitForDirectConnections();
+  State OnWaitForReadyConnections();
   State OnWaitForShares();
   State OnWaitForComplaints();
   State OnWaitForComplaintAnswers();
@@ -107,10 +108,7 @@ public:
   void OnDkgMessage(MuddleAddress const &from, std::shared_ptr<DKGMessage> msg_ptr);
 
 protected:
-  Identity                                 identity_;  ///< Our muddle address
-  std::function<void(DKGEnvelope const &)> broadcast_function_;
-  std::function<void(MuddleAddress const &, std::pair<std::string, std::string> const &)>
-                               rpc_function_;
+  Identity                     identity_;  ///< Our muddle address
   telemetry::GaugePtr<uint8_t> dkg_state_gauge_;
   std::mutex                   mutex_;
 
@@ -125,12 +123,18 @@ protected:
   std::set<MuddleAddress> qual_coefficients_received_;
   std::set<MuddleAddress> reconstruction_shares_received_;
 
-  std::shared_ptr<StateMachine>       state_machine_;
-  Endpoint &                          endpoint_;
-  CallbackFunction                    callback_function_;
-  std::deque<SharedAeonExecutionUnit> aeon_exe_queue_;
-  SharedAeonExecutionUnit             beacon_;
-  DkgManager                          dkg_manager_;
+  std::shared_ptr<StateMachine>         state_machine_;
+  Endpoint &                            endpoint_;
+  CallbackFunction                      callback_function_;
+  std::deque<SharedAeonExecutionUnit>   aeon_exe_queue_;
+  SharedAeonExecutionUnit               beacon_;
+  RBC                                   pre_dkg_rbc_;
+  RBC                                   rbc_;
+  std::shared_ptr<muddle::Subscription> shares_subscription;
+  DkgManager                            dkg_manager_;
+
+  std::set<MuddleAddress>                                    connections_;
+  std::unordered_map<MuddleAddress, std::set<MuddleAddress>> ready_connections_;
 
   /// @name Methods to send messages
   /// @{
