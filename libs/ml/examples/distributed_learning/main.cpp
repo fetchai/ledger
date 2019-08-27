@@ -62,13 +62,13 @@ int main(int ac, char **av)
 
   std::cout << "FETCH Distributed MNIST Demo" << std::endl;
 
-  std::vector<std::shared_ptr<TrainingClient>> clients(NUMBER_OF_CLIENTS);
+  std::vector<std::shared_ptr<TrainingClient<TensorType>>> clients(NUMBER_OF_CLIENTS);
   for (SizeType i{0}; i < NUMBER_OF_CLIENTS; ++i)
   {
     // Instantiate NUMBER_OF_CLIENTS clients
-    clients[i] = std::make_shared<TrainingClient>(av[1], av[2], std::to_string(i), BATCH_SIZE,
-                                                  static_cast<DataType>(LEARNING_RATE),
-                                                  TEST_SET_RATIO, NUMBER_OF_PEERS);
+    clients[i] = std::make_shared<TrainingClient<TensorType>>(
+        av[1], av[2], std::to_string(i), BATCH_SIZE, static_cast<DataType>(LEARNING_RATE),
+        TEST_SET_RATIO, NUMBER_OF_PEERS);
   }
 
   for (SizeType i{0}; i < NUMBER_OF_CLIENTS; ++i)
