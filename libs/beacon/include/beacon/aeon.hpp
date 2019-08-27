@@ -17,11 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "beacon/beacon_manager.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "crypto/bls_base.hpp"
-#include "crypto/bls_dkg.hpp"
 #include "crypto/prover.hpp"
+#include "dkg/dkg_manager.hpp"
 
 #include <atomic>
 #include <memory>
@@ -50,11 +48,11 @@ struct Aeon
 
 struct AeonExecutionUnit
 {
-  using BeaconManager  = dkg::BeaconManager;
+  using DkgManager     = dkg::DkgManager;
   using ConstByteArray = byte_array::ConstByteArray;
-  using SignatureShare = dkg::BeaconManager::SignedMessage;
+  using SignatureShare = dkg::DkgManager::SignedMessage;
 
-  BeaconManager  manager{};
+  DkgManager     manager{};
   SignatureShare member_share;
 
   Aeon aeon;
