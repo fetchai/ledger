@@ -21,9 +21,9 @@
 #include "core/service_ids.hpp"
 #include "crypto/sha256.hpp"
 #include "dkg/dkg_service.hpp"
-#include "network/muddle/muddle_endpoint.hpp"
-#include "network/muddle/packet.hpp"
-#include "network/muddle/subscription.hpp"
+#include "muddle/muddle_endpoint.hpp"
+#include "muddle/packet.hpp"
+#include "muddle/subscription.hpp"
 
 #include <chrono>
 #include <cstdint>

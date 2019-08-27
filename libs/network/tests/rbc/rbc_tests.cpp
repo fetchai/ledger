@@ -21,10 +21,10 @@
 #include "core/service_ids.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
-#include "network/muddle/muddle.hpp"
-#include "network/muddle/rbc.hpp"
-#include "network/muddle/rpc/client.hpp"
-#include "network/muddle/rpc/server.hpp"
+#include "muddle/muddle_interface.hpp"
+#include "muddle/rbc.hpp"
+#include "muddle/rpc/client.hpp"
+#include "muddle/rpc/server.hpp"
 
 #include "gtest/gtest.h"
 #include <iostream>
@@ -249,7 +249,7 @@ struct RbcMember
   uint16_t              muddle_port;
   NetworkManager        network_manager;
   ProverPtr             muddle_certificate;
-  Muddle                muddle;
+  MuddlePtr             muddle;
   RBC::CabinetMembers   cabinet;
   FaultyRbc             rbc;
   std::atomic<uint16_t> delivered_msgs{0};
@@ -259,21 +259,20 @@ struct RbcMember
     : muddle_port{port_number}
     , network_manager{"NetworkManager" + std::to_string(index), 1}
     , muddle_certificate{CreateCertificate()}
-    , muddle{fetch::muddle::NetworkId{"TestNetwork"}, muddle_certificate, network_manager}
-    , rbc{muddle.AsEndpoint(), muddle_certificate->identity().identifier(), cabinet,
+    , muddle{CreateMuddle("Test", muddle_certificate, network_manager, "127.0.0.1")}
+    , rbc{muddle->GetEndpoint(), muddle_certificate->identity().identifier(), cabinet,
           [this](ConstByteArray const &, ConstByteArray const &payload) -> void {
             OnRbcMessage(payload);
           },
           failures}
   {
     network_manager.Start();
-    muddle.Start({muddle_port});
+    muddle->Start({}, {muddle_port});
   }
 
   ~RbcMember()
   {
-    muddle.Stop();
-    muddle.Shutdown();
+    muddle->Stop();
     network_manager.Stop();
   }
 
@@ -290,6 +289,16 @@ struct RbcMember
   {
     cabinet = new_cabinet;
     rbc.ResetCabinet(cabinet);
+  }
+
+  muddle::Address GetMuddleAddress() const
+  {
+    return muddle->GetAddress();
+  }
+
+  network::Uri GetHint() const
+  {
+    return fetch::network::Uri{"tcp://127.0.0.1:" + std::to_string(muddle_port)};
   }
 };
 
@@ -319,8 +328,7 @@ void GenerateRbcTest(uint32_t cabinet_size, uint32_t expected_completion_size,
   {
     for (uint32_t jj = ii + 1; jj < cabinet_size; jj++)
     {
-      committee[ii]->muddle.AddPeer(
-          fetch::network::Uri{"tcp://127.0.0.1:" + std::to_string(committee[jj]->muddle_port)});
+      committee[ii]->muddle->ConnectTo(committee[jj]->GetMuddleAddress(), committee[jj]->GetHint());
     }
   }
 
@@ -331,7 +339,7 @@ void GenerateRbcTest(uint32_t cabinet_size, uint32_t expected_completion_size,
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     for (uint32_t mm = kk; mm < cabinet_size; ++mm)
     {
-      if (committee[mm]->muddle.AsEndpoint().GetDirectlyConnectedPeers().size() !=
+      if (committee[mm]->muddle->GetEndpoint().GetDirectlyConnectedPeers().size() !=
           (cabinet_size - 1))
       {
         break;

@@ -19,10 +19,10 @@
 
 #include "core/service_ids.hpp"
 #include "core/state_machine.hpp"
-#include "network/muddle/muddle.hpp"
-#include "network/muddle/rpc/client.hpp"
-#include "network/muddle/rpc/server.hpp"
-#include "network/muddle/subscription.hpp"
+#include "muddle/muddle_endpoint.hpp"
+#include "muddle/rpc/client.hpp"
+#include "muddle/rpc/server.hpp"
+#include "muddle/subscription.hpp"
 
 #include "beacon/aeon.hpp"
 #include "beacon/cabinet_member_details.hpp"
@@ -66,7 +66,6 @@ public:
   using SharedAeonExecutionUnit = std::shared_ptr<AeonExecutionUnit>;
   using CallbackFunction        = std::function<void(SharedAeonExecutionUnit)>;
   using Endpoint                = muddle::MuddleEndpoint;
-  using Muddle                  = muddle::Muddle;
   using Client                  = muddle::rpc::Client;
   using ClientPtr               = std::shared_ptr<Client>;
   using StateMachine            = core::StateMachine<State>;

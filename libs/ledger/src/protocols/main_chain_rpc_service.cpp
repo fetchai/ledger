@@ -26,7 +26,7 @@
 #include "ledger/chain/transaction_layout_rpc_serializers.hpp"
 #include "ledger/protocols/main_chain_rpc_service.hpp"
 #include "metrics/metrics.hpp"
-#include "network/muddle/packet.hpp"
+#include "muddle/packet.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/registry.hpp"
 
