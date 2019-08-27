@@ -261,7 +261,6 @@ inline VectorRegister<fixed_point::fp32_t, 256> operator*(VectorRegister<fixed_p
   VectorRegister<fixed_point::fp32_t, 128> prod_hi = a_hi * b_hi;
 
   VectorRegister<fixed_point::fp32_t, 256> prod(_mm256_set_m128i(prod_hi.data(), prod_lo.data()));
-  std::cout << "prod = " << std::hex << prod << std::dec << std::endl;
   return prod;
 }
 
@@ -394,15 +393,15 @@ inline fixed_point::fp32_t reduce(VectorRegister<fixed_point::fp32_t, 128> const
 {
   __m128i r = _mm_hadd_epi32(x.data(), _mm_setzero_si128());
   r        = _mm_hadd_epi32(r, _mm_setzero_si128());
-  return static_cast<fixed_point::fp32_t>(_mm_extract_epi32(r, 0));
+  return fixed_point::fp32_t::FromBase(_mm_extract_epi32(r, 0));
 }
 
 inline fixed_point::fp32_t reduce(VectorRegister<fixed_point::fp32_t, 256> const &x)
 {
-  __m256i r = _mm256_hadd_epi32(x.data(), _mm256_setzero_si256());
-  r        = _mm256_hadd_epi32(r, _mm256_setzero_si256());
-  r        = _mm256_hadd_epi32(r, _mm256_setzero_si256());
-  return static_cast<fixed_point::fp32_t>(_mm256_extract_epi32(r, 0));
+  VectorRegister<fixed_point::fp32_t, 128> hi{_mm256_extractf128_si256(x.data(),1)};
+  VectorRegister<fixed_point::fp32_t, 128> lo{_mm256_extractf128_si256(x.data(),0)};
+  hi = hi + lo;
+  return reduce(hi);
 }
 
 inline bool all_less_than(VectorRegister<fixed_point::fp32_t, 128> const &x,
