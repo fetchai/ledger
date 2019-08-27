@@ -26,6 +26,7 @@
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/ops/slice.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
+#include "ml/optimisation/sgd_optimiser.hpp"
 
 #include "core/serializers/base_types.hpp"
 #include "core/serializers/main_serializer.hpp"
@@ -48,7 +49,8 @@ using SizeVector = typename TensorType::SizeVector;
 
 using GraphType     = typename fetch::ml::Graph<TensorType>;
 using StateDictType = typename fetch::ml::StateDict<TensorType>;
-using OptimiserType = typename fetch::ml::optimisers::AdamOptimiser<TensorType>;
+//using OptimiserType = typename fetch::ml::optimisers::AdamOptimiser<TensorType>;
+using OptimiserType = typename fetch::ml::optimisers::SGDOptimiser<TensorType>;
 
 using RegType         = fetch::ml::RegularisationType;
 using WeightsInitType = fetch::ml::ops::WeightsInitialisation;
@@ -160,12 +162,12 @@ int main(int ac, char **av)
 	  inFile.seekg(0, inFile.beg);
 	  std::cout << length << std::endl;
 	  // read file to buffer
-	  char* buffer = new char[static_cast<unsigned long>(length)];
+	  auto buffer = new char[static_cast<unsigned long>(length)];
 		inFile.read(buffer, length);
 		inFile.close();
-	  std::cout << std::strlen(buffer) << std::endl;
-		fetch::byte_array::ConstByteArray fetch_buffer(buffer);
-		std::cout << fetch_buffer.size() << std::endl;
+	  uint8_t *byte_buffer = reinterpret_cast<uint8_t *>(buffer);
+		fetch::byte_array::ConstByteArray fetch_buffer(byte_buffer, static_cast<std::size_t>(length));
+		
 		fetch::serializers::MsgPackSerializer b2(fetch_buffer);
 	  std::cout << b2.size() << std::endl;
 		std::cout << "finish reading from file" << std::endl;
@@ -216,7 +218,7 @@ int main(int ac, char **av)
 	SizeType batch_size = 4;
 	SizeType epochs = 2;
 	SizeType layer_no = 12;
-	DataType lr = static_cast<DataType>(5e-5);
+	DataType lr = static_cast<DataType>(1e-5);
 	// load data into memory
   std::string file_path = av[2];
   std::string IMDB_path = av[3];
