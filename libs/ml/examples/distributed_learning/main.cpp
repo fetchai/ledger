@@ -30,10 +30,15 @@
 #include <utility>
 #include <vector>
 
-#define NUMBER_OF_CLIENTS 5
-#define NUMBER_OF_ITERATIONS 50
-#define NUMBER_OF_ROUNDS 5
+#define NUMBER_OF_CLIENTS 10
+#define NUMBER_OF_ITERATIONS 100
+#define NUMBER_OF_ROUNDS 10
 #define SYNCHRONIZATION_MODE CoordinatorMode::ASYNCHRONOUS
+
+#define BATCH_SIZE 128
+#define LEARNING_RATE .001f
+#define TEST_SET_RATIO 0.03f
+#define NUMBER_OF_PEERS 3
 
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
@@ -61,7 +66,9 @@ int main(int ac, char **av)
   for (SizeType i{0}; i < NUMBER_OF_CLIENTS; ++i)
   {
     // Instantiate NUMBER_OF_CLIENTS clients
-    clients[i] = std::make_shared<TrainingClient>(av[1], av[2], std::to_string(i));
+    clients[i] = std::make_shared<TrainingClient>(av[1], av[2], std::to_string(i), BATCH_SIZE,
+                                                  static_cast<DataType>(LEARNING_RATE),
+                                                  TEST_SET_RATIO, NUMBER_OF_PEERS);
   }
 
   for (SizeType i{0}; i < NUMBER_OF_CLIENTS; ++i)
@@ -92,7 +99,7 @@ int main(int ac, char **av)
       t.join();
     }
 
-    if (coordinator->GetMode() == CoordinatorMode::ASYNCHRONOUS)
+    if (coordinator->GetMode() == CoordinatorMode::SEMISYNCHRONOUS)
     {
       break;
     }

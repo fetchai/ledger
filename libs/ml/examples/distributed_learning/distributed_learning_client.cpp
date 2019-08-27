@@ -27,10 +27,16 @@ using VectorTensorType = std::vector<TensorType>;
 using SizeType         = fetch::math::SizeType;
 
 TrainingClient::TrainingClient(std::string const &images, std::string const &labels,
-                               std::string const &id)
+                               std::string const &id, SizeType batch_size, DataType learning_rate,
+                               float test_set_ratio, SizeType number_of_peers)
   : dataloader_(images, labels)
   , id_(std::move(id))
+  , batch_size_(batch_size)
+  , learning_rate_(learning_rate)
+  , test_set_ratio_(test_set_ratio)
+  , number_of_peers_(number_of_peers)
 {
+
   dataloader_.SetTestRatio(test_set_ratio_);
   dataloader_.SetRandomMode(true);
   g_.AddNode<PlaceHolder<TensorType>>("Input", {});
@@ -56,15 +62,16 @@ void TrainingClient::SetCoordinator(std::shared_ptr<Coordinator> coordinator_ptr
 /**
  * Main loop that runs in thread
  */
-
 void TrainingClient::MainLoop()
 {
   if (coordinator_ptr_->GetMode() == CoordinatorMode::SYNCHRONOUS)
   {
+    // Do one batch and end
     TrainOnce();
   }
   else
   {
+    // Train batches until coordinator will tell clients to stop
     TrainWithCoordinator();
   }
 }
@@ -288,27 +295,32 @@ void TrainingClient::TrainWithCoordinator()
  */
 void TrainingClient::DoBatch()
 {
-  // Shuffle the peers list to get new contact for next update
-  fetch::random::Shuffle(gen_, peers_, peers_);
-
   // Train one batch to create own gradient
   Train();
 
-  // Put own gradient to peers queues
-  BroadcastGradients();
+  VectorTensorType gradients = g_.GetGradientsReferences();
 
-  // Load own gradient
-  VectorTensorType gradients = g_.GetGradients();
-  VectorTensorType new_gradients;
-
-  // Sum all gradient in queue
-  while (!gradient_queue_.empty())
+  // Interaction with peers is skipped in synchronous mode
+  if (coordinator_ptr_->GetMode() != CoordinatorMode::SYNCHRONOUS)
   {
-    GetNewGradients(new_gradients);
+    // Shuffle the peers list to get new contact for next update
+    fetch::random::Shuffle(gen_, peers_, peers_);
 
-    for (SizeType j{0}; j < gradients.size(); j++)
+    // Put own gradient to peers queues
+    BroadcastGradients();
+
+    // Load own gradient
+    VectorTensorType new_gradients;
+
+    // Sum all gradient in queue
+    while (!gradient_queue_.empty())
     {
-      fetch::math::Add(gradients.at(j), new_gradients.at(j), gradients.at(j));
+      GetNewGradients(new_gradients);
+
+      for (SizeType j{0}; j < gradients.size(); j++)
+      {
+        fetch::math::Add(gradients.at(j), new_gradients.at(j), gradients.at(j));
+      }
     }
   }
 

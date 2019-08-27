@@ -42,11 +42,6 @@ using TensorType       = fetch::math::Tensor<DataType>;
 using VectorTensorType = std::vector<TensorType>;
 using SizeType         = fetch::math::SizeType;
 
-#define BATCH_SIZE 128
-#define LEARNING_RATE .001f
-#define TEST_SET_RATIO 0.03f
-#define NUMBER_OF_PEERS 3
-
 enum class CoordinatorMode
 {
   SYNCHRONOUS,
@@ -106,7 +101,9 @@ private:
 class TrainingClient
 {
 public:
-  TrainingClient(std::string const &images, std::string const &labels, std::string const &id);
+  TrainingClient(std::string const &images, std::string const &labels, std::string const &id,
+                 SizeType batch_size, DataType learning_rate, float test_set_ratio,
+                 SizeType number_of_peers);
   void SetCoordinator(std::shared_ptr<Coordinator> coordinator_ptr);
   void MainLoop();
 
@@ -141,14 +138,14 @@ private:
   // random number generator for shuffling peers
   fetch::random::LaggedFibonacciGenerator<> gen_;
 
-  // Learning hyperparameters
-  SizeType batch_size_      = BATCH_SIZE;
-  float    test_set_ratio_  = TEST_SET_RATIO;
-  SizeType number_of_peers_ = NUMBER_OF_PEERS;
-  DataType learning_rate_   = static_cast<DataType>(LEARNING_RATE);
-
   // Client id (identification name)
   std::string id_;
+
+  // Learning hyperparameters
+  SizeType batch_size_      = 0;
+  DataType learning_rate_   = static_cast<DataType>(0);
+  float    test_set_ratio_  = 0.0f;
+  SizeType number_of_peers_ = 0;
 
   void        GetNewGradients(VectorTensorType &new_gradients);
   std::string GetTimeStamp();
