@@ -32,7 +32,7 @@ namespace fetch {
 namespace serializers {
 
 MsgPackSerializer::MsgPackSerializer(byte_array::ByteArray const &s)
-  : data_{s.Copy()}
+  : data_{s}
 {}
 
 MsgPackSerializer::MsgPackSerializer(MsgPackSerializer const &from)
