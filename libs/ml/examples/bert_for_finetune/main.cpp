@@ -118,11 +118,11 @@ int main(int ac, char **av)
     // set batch_size
 //	  SizeType batch_size = 1;
     
-    // weights and show the time
-    BERTConfig config;
+  // weights and show the time
+  BERTConfig config;
 
-    GraphType g;
-    auto      ret = make_bert_model(config, g);
+  GraphType g;
+  auto      ret = make_bert_model(config, g);
 	
 //	// start serializing
 //  fetch::ml::GraphSaveableParams<TensorType> gsp1 = g.GetGraphSaveableParams();
@@ -136,16 +136,16 @@ int main(int ac, char **av)
 //  b << gsp1;
 //  std::cout << "finish serializing" << std::endl;
 //
-//	std::ofstream myFile ("/home/xiaodong/Projects/Fetch scripts/bert_finetune/serialized_model.bin", std::ios::out | std::ios::binary);
-//	uint8_t * out;
+//	std::ofstream outFile ("/home/xiaodong/Projects/Fetch scripts/bert_finetune/serialized_model.bin", std::ios::out | std::ios::binary);
+//	uint8_t * out = {0};
 //	b.WriteBytes(out, b.size());
-//	myFile.write((char *)out, sizeof(out));
+//	outFile.write((char *)out, sizeof(out));
 //	std::cout << sizeof(out) << std::endl;
-//	myFile.close();
+//	outFile.close();
 //	std::cout << "finish writing to file" << std::endl;
 //
 //	std::ifstream savedFile ("/home/xiaodong/Projects/Fetch scripts/bert_finetune/serialized_model.bin", std::ios::in | std::ios::binary);
-//	char * buffer;
+//	char * buffer = {0};
 //	savedFile.read(buffer, sizeof(out));
 //	savedFile.close();
 //	fetch::serializers::MsgPackSerializer b2;
@@ -197,7 +197,7 @@ int main(int ac, char **av)
 	SizeType batch_size = 4;
 	SizeType epochs = 2;
 	SizeType layer_no = 12;
-	DataType lr = static_cast<DataType>(1e-4);
+	DataType lr = static_cast<DataType>(5e-5);
 	// load data into memory
   std::string file_path = av[2];
   std::string IMDB_path = av[3];
