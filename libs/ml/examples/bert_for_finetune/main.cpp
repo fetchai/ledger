@@ -116,18 +116,55 @@ int main(int ac, char **av)
   {
     // if a pseudo pass is required, only run a pseudo pass on a base uncased bert model with random
     // set batch_size
-	  SizeType batch_size = 1;
+//	  SizeType batch_size = 1;
     
     // weights and show the time
     BERTConfig config;
 
     GraphType g;
     auto      ret = make_bert_model(config, g);
+	
+//	// start serializing
+//  fetch::ml::GraphSaveableParams<TensorType> gsp1 = g.GetGraphSaveableParams();
+//  std::cout << "got saveable params" << std::endl;
+//
+//  fetch::serializers::SizeCounter       counter;
+//  fetch::serializers::MsgPackSerializer b;
+//  counter << gsp1;
+//  std::cout << "finish counting" << std::endl;
+//  b.Reserve(counter.size());
+//  b << gsp1;
+//  std::cout << "finish serializing" << std::endl;
+//
+//	std::ofstream myFile ("/home/xiaodong/Projects/Fetch scripts/bert_finetune/serialized_model.bin", std::ios::out | std::ios::binary);
+//	uint8_t * out;
+//	b.WriteBytes(out, b.size());
+//	myFile.write((char *)out, sizeof(out));
+//	std::cout << sizeof(out) << std::endl;
+//	myFile.close();
+//	std::cout << "finish writing to file" << std::endl;
+//
+//	std::ifstream savedFile ("/home/xiaodong/Projects/Fetch scripts/bert_finetune/serialized_model.bin", std::ios::in | std::ios::binary);
+//	char * buffer;
+//	savedFile.read(buffer, sizeof(out));
+//	savedFile.close();
+//	fetch::serializers::MsgPackSerializer b2;
+//	b2.ReadBytes((uint8_t *)buffer, sizeof(buffer));
+//	std::cout << "finish reading from file" << std::endl;
+//
+//  // start deserializing
+//  b2.seek(0);
+//  fetch::ml::GraphSaveableParams<TensorType> gsp2;
+//  b2 >> gsp2;
+//	std::cout << "finish deserializing" << std::endl;
+//	auto g2 = std::make_shared<GraphType>();
+//	fetch::ml::utilities::BuildGraph<TensorType>(gsp2, g2);
+//	std::cout << "finish rebuilding graph" << std::endl;
     
     // run batches
-    for(int i=0; i<1; i++){
-	    run_pseudo_forward_pass(ret.first, ret.second[1], config, g, batch_size, false);
-    }
+//    for(int i=0; i<1; i++){
+//	    run_pseudo_forward_pass(ret.first, ret.second[1], config, g, batch_size, false);
+//    }
     
     return 0;
   }
@@ -157,7 +194,7 @@ int main(int ac, char **av)
 	// setup params for training
 	SizeType train_size = 100;
 	SizeType test_size = 10;
-	SizeType batch_size = 4;
+	SizeType batch_size = 2;
 	SizeType epochs = 2;
 	SizeType layer_no = 12;
 	DataType lr = static_cast<DataType>(5e-5);
@@ -265,7 +302,7 @@ int main(int ac, char **av)
 
   evaluate_graph(g, ret.first, classification_output, final_test_data, test_labels);
 
-  // start serializing
+//  // start serializing
 //  fetch::ml::GraphSaveableParams<TensorType> gsp1 = g.GetGraphSaveableParams();
 //  std::cout << "got saveable params" << std::endl;
 //
