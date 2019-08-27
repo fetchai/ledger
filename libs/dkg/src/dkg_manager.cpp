@@ -171,8 +171,14 @@ std::unordered_set<DkgManager::MuddleAddress> DkgManager::ComputeComplaints()
 
 bool DkgManager::VerifyComplaintAnswer(MuddleAddress const &from, ComplaintAnswer const &answer)
 {
-  CabinetIndex reporter_index = identity_to_index_[answer.first];
   CabinetIndex from_index     = identity_to_index_[from];
+  if(identity_to_index_.find(answer.first) == identity_to_index_.end())
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_, " received complaint answer with unknown reporter index");
+    return true;
+  }
+
+  CabinetIndex reporter_index = identity_to_index_[answer.first];
   // Verify shares received
   bn::Fr s, sprime;
   bn::G2 lhsG, rhsG;
