@@ -20,7 +20,7 @@
 #include "crypto/mcl_dkg.hpp"
 #include "dkg/dkg_complaints_manager.hpp"
 #include "dkg/dkg_messages.hpp"
-#include "network/muddle/rpc/client.hpp"
+#include "muddle/rpc/client.hpp"
 #include "telemetry/gauge.hpp"
 #include "telemetry/telemetry.hpp"
 

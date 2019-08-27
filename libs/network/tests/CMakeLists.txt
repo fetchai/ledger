@@ -25,10 +25,6 @@ fetch_add_slow_test(network_gtest fetch-network network)
 target_include_directories(network_gtest PRIVATE include)
 target_link_libraries(network_gtest PRIVATE fetch-ledger)
 
-fetch_add_integration_test(muddle_gtest fetch-network muddle)
-target_include_directories(muddle_gtest PRIVATE include)
-target_link_libraries(muddle_gtest PRIVATE fetch-ledger)
-
 fetch_add_integration_test(rbc_gtest fetch-network rbc)
 target_include_directories(rbc_gtest PRIVATE include)
 target_link_libraries(rbc_gtest PRIVATE fetch-ledger)
