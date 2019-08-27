@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "beacon/aeon.hpp"
 #include "core/state_machine.hpp"
 #include "dkg/dkg_complaints_manager.hpp"
 #include "dkg/dkg_manager.hpp"
@@ -51,40 +52,53 @@ public:
 
   enum class State : uint8_t
   {
-    INITIAL,
-    WAITING_FOR_SHARE,
-    WAITING_FOR_COMPLAINTS,
-    WAITING_FOR_COMPLAINT_ANSWERS,
-    WAITING_FOR_QUAL_SHARES,
-    WAITING_FOR_QUAL_COMPLAINTS,
-    WAITING_FOR_RECONSTRUCTION_SHARES,
-    FINAL
+    IDLE,
+    WAIT_FOR_DIRECT_CONNECTIONS,
+    WAIT_FOR_SHARE,
+    WAIT_FOR_COMPLAINTS,
+    WAIT_FOR_COMPLAINT_ANSWERS,
+    WAIT_FOR_QUAL_SHARES,
+    WAIT_FOR_QUAL_COMPLAINTS,
+    WAIT_FOR_RECONSTRUCTION_SHARES,
+    BEACON_READY
   };
 
   using StateMachine       = core::StateMachine<State>;
   using StateMachinePtr    = std::shared_ptr<StateMachine>;
   using MuddleAddress      = byte_array::ConstByteArray;
-  using CabinetMembers     = std::set<MuddleAddress>;
+  using Identity           = crypto::Identity;
+  using CabinetMembers     = std::set<Identity>;
   using Endpoint           = muddle::MuddleEndpoint;
   using MessageCoefficient = std::string;
   using MessageShare       = std::string;
   using SharesExposedMap = std::unordered_map<MuddleAddress, std::pair<MessageShare, MessageShare>>;
+  using AeonExecutionUnit       = beacon::AeonExecutionUnit;
+  using SharedAeonExecutionUnit = std::shared_ptr<AeonExecutionUnit>;
+  using CallbackFunction        = std::function<void(SharedAeonExecutionUnit)>;
 
   DkgSetupService(
-      MuddleAddress address, std::function<void(DKGEnvelope const &)> broadcast_function,
+      Endpoint &endpoint, Identity identity,
+      std::function<void(DKGEnvelope const &)> broadcast_function,
       std::function<void(MuddleAddress const &, std::pair<std::string, std::string> const &)>
           rpc_function);
 
   /// State functions
   /// @{
-  State OnInitial();
+  State OnIdle();
+  State OnWaitForDirectConnections();
   State OnWaitForShares();
   State OnWaitForComplaints();
   State OnWaitForComplaintAnswers();
   State OnWaitForQualShares();
   State OnWaitForQualComplaints();
   State OnWaitForReconstructionShares();
-  State OnFinal();
+  State OnBeaconReady();
+  /// @}
+
+  /// Setup management
+  /// @{
+  void QueueSetup(SharedAeonExecutionUnit beacon);
+  void SetBeaconReadyCallback(CallbackFunction callback);
   /// @}
 
   std::weak_ptr<core::Runnable> GetWeakRunnable();
@@ -92,19 +106,12 @@ public:
   void OnNewShares(MuddleAddress from_id, std::pair<MessageShare, MessageShare> const &shares);
   void OnDkgMessage(MuddleAddress const &from, std::shared_ptr<DKGMessage> msg_ptr);
 
-  void ResetCabinet(CabinetMembers const &cabinet, uint32_t threshold);
-  bool finished() const;
-  void SetDkgOutput(bn::G2 &public_key, bn::Fr &secret_share,
-                    std::vector<bn::G2> &public_key_shares, std::set<MuddleAddress> &qual);
-
 protected:
-  CabinetMembers                           cabinet_;  ///< Muddle addresses of cabinet members
-  MuddleAddress                            address_;  ///< Our muddle address
+  Identity                                 identity_;  ///< Our muddle address
   std::function<void(DKGEnvelope const &)> broadcast_function_;
   std::function<void(MuddleAddress const &, std::pair<std::string, std::string> const &)>
                                rpc_function_;
   telemetry::GaugePtr<uint8_t> dkg_state_gauge_;
-  std::atomic<bool>            finished_;
   std::mutex                   mutex_;
 
   // Managing complaints
@@ -113,14 +120,17 @@ protected:
   QualComplaintsManager   qual_complaints_manager_;
 
   // Counters for types of messages received
-  std::set<MuddleAddress>   shares_received_;
-  std::set<MuddleAddress>   coefficients_received_;
+  std::set<MuddleAddress> shares_received_;
+  std::set<MuddleAddress> coefficients_received_;
   std::set<MuddleAddress> qual_coefficients_received_;
   std::set<MuddleAddress> reconstruction_shares_received_;
 
-  std::shared_ptr<StateMachine> state_machine_;
-  std::set<MuddleAddress>       qual_;  ///< Set of cabinet members who completed DKG
-  DkgManager                    dkg_manager_;
+  std::shared_ptr<StateMachine>       state_machine_;
+  Endpoint &                          endpoint_;
+  CallbackFunction                    callback_function_;
+  std::deque<SharedAeonExecutionUnit> aeon_exe_queue_;
+  SharedAeonExecutionUnit             beacon_;
+  DkgManager                          dkg_manager_;
 
   /// @name Methods to send messages
   /// @{
