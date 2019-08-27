@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "http/http_client.hpp"
 #include "http/request.hpp"
 #include "http/response.hpp"

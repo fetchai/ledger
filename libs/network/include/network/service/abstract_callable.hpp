@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "core/serializers/type_register.hpp"
 #include "network/service/types.hpp"
 
@@ -139,9 +139,6 @@ template <typename S, typename... arguments>
 void PackCall(S &serializer, protocol_handler_type const &protocol,
               function_handler_type const &function, arguments &&... args)
 {
-
-  LOG_STACK_TRACE_POINT;
-
   serializer << protocol;
   serializer << function;
 
@@ -160,8 +157,6 @@ template <typename S>
 void PackCall(S &serializer, protocol_handler_type const &protocol,
               function_handler_type const &function)
 {
-  LOG_STACK_TRACE_POINT;
-
   serializer << protocol;
   serializer << function;
   serializer.seek(0);
@@ -183,8 +178,6 @@ void PackCallWithPackedArguments(S &serializer, protocol_handler_type const &pro
                                  function_handler_type const &function,
                                  byte_array::ByteArray const &args)
 {
-  LOG_STACK_TRACE_POINT;
-
   serializer << protocol;
   serializer << function;
 
@@ -214,8 +207,6 @@ void PackArgs(S &serializer, arguments &&... args)
 template <typename S>
 void PackArgs(S &serializer)
 {
-  LOG_STACK_TRACE_POINT;
-
   serializer.seek(0);
 }
 
