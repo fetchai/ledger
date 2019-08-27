@@ -100,3 +100,17 @@ TYPED_TEST(TensorDataloaderTest, test_validation_splitting_dataloader_test)
   EXPECT_THROW(tdl.SetMode(DataLoaderMode::TEST), std::runtime_error);
   EXPECT_THROW(tdl.SetMode(DataLoaderMode::VALIDATE), std::runtime_error);
 }
+
+TYPED_TEST(TensorDataloaderTest, prepare_batch_test)
+{
+  TypeParam label_tensor = TypeParam::UniformRandom(4);
+  TypeParam data1_tensor = TypeParam::UniformRandom(24);
+  label_tensor.Reshape({1, 1});
+  data1_tensor.Reshape({2, 3, 1});
+
+  // generate a plausible tensor data loader
+  auto tdl = fetch::ml::dataloaders::TensorDataLoader<TypeParam, TypeParam>(label_tensor.shape(),
+                                                                            {data1_tensor.shape()});
+  bool is_done_set = false;
+  auto batch       = tdl.PrepareBatch(50, is_done_set).second;
+}
