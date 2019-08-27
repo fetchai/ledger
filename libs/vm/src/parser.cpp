@@ -1552,7 +1552,7 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
     }
   }
   // Return the root of the infix expression tree
-  return std::move(infix_stack_.front().node);
+  return {std::move(infix_stack_.front().node)};
 }
 
 bool Parser::HandleIdentifier()
