@@ -32,7 +32,6 @@ class WorkItemsQueue
 {
   using mutex_type = std::mutex;
   using cv_type    = std::condition_variable;
-  using lock_type  = std::unique_lock<mutex_type>;
   using store_type = std::list<TYPE>;
 
 public:
@@ -50,7 +49,7 @@ public:
   void Add(const TYPE &item)
   {
     {
-      lock_type lock(mutex_);
+      FETCH_LOCK(mutex_);
       q_.push_back(item);
       count_++;
     }
@@ -61,7 +60,7 @@ public:
   void Add(ITERATOR_GIVING_TYPE iter, ITERATOR_GIVING_TYPE end)
   {
     {
-      lock_type lock(mutex_);
+      FETCH_LOCK(mutex_);
       while (iter != end)
       {
         q_.push_back(*iter);
@@ -84,7 +83,7 @@ public:
 
   bool Remaining()
   {
-    lock_type lock(mutex_);
+    FETCH_LOCK(mutex_);
     return !q_.empty();
   }
 
@@ -100,14 +99,14 @@ public:
     {
       return true;
     }
-    lock_type lock(mutex_);
+    std::unique_lock<mutex_type> lock(mutex_);
     cv_.wait(lock);
     return !quit_.load();
   }
 
   std::size_t Get(std::vector<TYPE> &output, std::size_t limit)
   {
-    lock_type lock(mutex_);
+    FETCH_LOCK(mutex_);
     output.reserve(limit);
     while (!q_.empty() && output.size() < limit)
     {

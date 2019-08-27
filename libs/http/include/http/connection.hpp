@@ -19,7 +19,7 @@
 
 #include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "core/mutex.hpp"
 #include "http/abstract_connection.hpp"
 #include "http/http_connection_manager.hpp"
@@ -50,23 +50,17 @@ public:
     , manager_(manager)
     , write_mutex_(__LINE__, __FILE__)
   {
-    LOG_STACK_TRACE_POINT;
-
     FETCH_LOG_DEBUG(LOGGING_NAME, "HTTP connection from ",
                     socket_.remote_endpoint().address().to_string());
   }
 
   ~HTTPConnection()
   {
-    LOG_STACK_TRACE_POINT;
-
     manager_.Leave(handle_);
   }
 
   void Start()
   {
-    LOG_STACK_TRACE_POINT;
-
     is_open_ = true;
     handle_  = manager_.Join(shared_from_this());
     if (is_open_)
@@ -77,8 +71,6 @@ public:
 
   void Send(HTTPResponse const &response) override
   {
-    LOG_STACK_TRACE_POINT;
-
     bool write_in_progress = false;
     {
       FETCH_LOCK(write_mutex_);
@@ -105,8 +97,6 @@ public:
 public:
   void ReadHeader(buffer_ptr_type buffer_ptr = nullptr)
   {
-    LOG_STACK_TRACE_POINT;
-
     FETCH_LOG_DEBUG(LOGGING_NAME, "Ready to ready HTTP header");
 
     shared_request_type request = std::make_shared<HTTPRequest>();
@@ -147,8 +137,6 @@ public:
 
   void ReadBody(buffer_ptr_type buffer_ptr, shared_request_type request)
   {
-    LOG_STACK_TRACE_POINT;
-
     FETCH_LOG_DEBUG(LOGGING_NAME, "Read HTTP body");
     // Check if we got all the body
     if (request->content_length() <= buffer_ptr->size())
@@ -196,8 +184,6 @@ public:
 
   void HandleError(std::error_code const &ec, shared_request_type /*req*/)
   {
-    LOG_STACK_TRACE_POINT;
-
     std::stringstream ss;
     ss << ec << ":" << ec.message();
     FETCH_LOG_DEBUG(LOGGING_NAME, "HTTP error: ", ss.str());
@@ -207,8 +193,6 @@ public:
 
   void Write()
   {
-    LOG_STACK_TRACE_POINT;
-
     buffer_ptr_type buffer_ptr =
         std::make_shared<asio::streambuf>(std::numeric_limits<std::size_t>::max());
     {
@@ -244,8 +228,6 @@ public:
 
   void Close()
   {
-    LOG_STACK_TRACE_POINT;
-
     is_open_ = false;
     manager_.Leave(handle_);
   }
@@ -254,7 +236,7 @@ private:
   asio::ip::tcp::tcp::socket socket_;
   HTTPConnectionManager &    manager_;
   response_queue_type        write_queue_;
-  fetch::mutex::Mutex        write_mutex_;
+  Mutex                      write_mutex_;
 
   handle_type handle_;
   bool        is_open_ = false;

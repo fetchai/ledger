@@ -41,11 +41,9 @@ Client::Client(std::string name, MuddleEndpoint &endpoint, uint16_t service, uin
   , service_(service)
   , channel_(channel)
 {
-  LOG_STACK_TRACE_POINT;
   handler_ = std::make_shared<Handler>([this](Promise promise) {
-    LOG_STACK_TRACE_POINT;
-
     FETCH_LOG_DEBUG(LOGGING_NAME, "Handling an inner promise ", promise->id());
+
     try
     {
       ProcessServerMessage(promise->value());
@@ -63,7 +61,6 @@ Client::Client(std::string name, MuddleEndpoint &endpoint, uint16_t service, uin
 
 Client::~Client()
 {
-  LOG_STACK_TRACE_POINT;
   FETCH_LOG_WARN(LOGGING_NAME, "Client teardown...");
   // clear that handler
   handler_.reset();
@@ -78,7 +75,6 @@ Client::~Client()
 
 bool Client::DeliverRequest(network::message_type const &data)
 {
-  LOG_STACK_TRACE_POINT;
   FETCH_LOG_DEBUG(LOGGING_NAME, "Please send this packet to the server  ", service_, ",", channel_);
 
   unsigned long long int ident = 0;
@@ -96,8 +92,6 @@ bool Client::DeliverRequest(network::message_type const &data)
     WeakHandler handler = handler_;
     promise.WithHandlers()
         .Then([handler, promise]() {
-          LOG_STACK_TRACE_POINT;
-
           FETCH_LOG_DEBUG(LOGGING_NAME, "Got the response to our question...",
                           "@prom=", promise.id());
           auto callback = handler.lock();
@@ -107,8 +101,6 @@ bool Client::DeliverRequest(network::message_type const &data)
           }
         })
         .Catch([promise]() {
-          LOG_STACK_TRACE_POINT;
-
           // TODO(EJF): This is actually a bug since the RPC promise implementation doesn't have a
           // callback process
           FETCH_LOG_DEBUG(LOGGING_NAME, "Exchange promise failed", "@prom=", promise.id());
@@ -116,7 +108,7 @@ bool Client::DeliverRequest(network::message_type const &data)
 
     // Add this new wrapping promise to the execution queue
     {
-      std::unique_lock<std::mutex> lk(promise_queue_lock_);
+      FETCH_LOCK(promise_queue_lock_);
       promise_queue_.emplace_back(std::move(promise));
       promise_queue_cv_.notify_one();
     }
@@ -133,7 +125,6 @@ bool Client::DeliverRequest(network::message_type const &data)
 
 void Client::BackgroundWorker()
 {
-  LOG_STACK_TRACE_POINT;
   using PromiseState = service::PromiseState;
 
   SetThreadName(name_);
@@ -147,7 +138,7 @@ void Client::BackgroundWorker()
 
     // attempt to extract and promises from the queue
     {
-      std::unique_lock<std::mutex> lk(promise_queue_lock_);
+      FETCH_LOCK(promise_queue_lock_);
       if (!promise_queue_.empty())
       {
         pending_promises.splice(pending_promises.end(), promise_queue_);

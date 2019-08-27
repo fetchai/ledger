@@ -255,7 +255,6 @@ private:
 
   static constexpr uint64_t COMMON_PATH_TO_ANCESTOR_LENGTH_LIMIT = 1000;
 
-  using Mutex                = fetch::mutex::Mutex;
   using BlockPtr             = MainChain::BlockPtr;
   using NextBlockPtr         = std::unique_ptr<Block>;
   using PendingBlocks        = std::deque<BlockPtr>;

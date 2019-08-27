@@ -72,7 +72,6 @@ private:
   using WorkItemPtr    = std::shared_ptr<WorkItem>;
   using WorkQueueStack = std::vector<WorkItemPtr>;
   using ThreadPool     = threading::Pool;
-  using Mutex          = mutex::Mutex;
 
   void ExecuteItem(WorkQueue &queue, ProblemData const &problem_data, uint64_t block,
                    std::size_t num_lanes);

@@ -28,7 +28,7 @@
 #include "network/service/server_interface.hpp"
 
 #include "core/assert.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "core/mutex.hpp"
 #include "network/tcp/tcp_client.hpp"
 
@@ -57,8 +57,6 @@ public:
       ptr->ActivateSelfManage();
 
       ptr->OnMessage([this](network::message_type const &msg) {
-        LOG_STACK_TRACE_POINT;
-
         {
           FETCH_LOCK(message_mutex_);
           messages_.push_back(msg);
@@ -79,8 +77,6 @@ public:
     using std::chrono::milliseconds;
 
     tearing_down_ = true;
-
-    LOG_STACK_TRACE_POINT;
 
     auto ptr = connection_.lock();
 
@@ -118,7 +114,6 @@ public:
     {
       return ptr->handle();
     }
-    LOG_STACK_TRACE_POINT;
     TODO_FAIL("connection is dead in ServiceClient::handle");
   }
 
@@ -208,8 +203,6 @@ private:
   {
     ++active_count_;
 
-    LOG_STACK_TRACE_POINT;
-
     while (!tearing_down_)
     {
       network::message_type msg;
@@ -253,7 +246,7 @@ private:
 
   network_manager_type              network_manager_;
   std::deque<network::message_type> messages_;
-  mutable fetch::mutex::Mutex       message_mutex_;
+  mutable Mutex                     message_mutex_;
 
   std::atomic<bool>        tearing_down_{false};
   std::atomic<std::size_t> active_count_{0};

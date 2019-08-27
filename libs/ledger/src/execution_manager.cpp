@@ -19,7 +19,7 @@
 #include "core/assert.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "core/mutex.hpp"
 #include "core/set_thread_name.hpp"
 #include "ledger/execution_manager.hpp"

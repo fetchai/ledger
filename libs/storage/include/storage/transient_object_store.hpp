@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/containers/queue.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "core/mutex.hpp"
 #include "core/runnable.hpp"
 #include "core/set_thread_name.hpp"
@@ -96,7 +96,6 @@ private:
     Flushing
   };
 
-  using Mutex           = fetch::mutex::Mutex;
   using StateMachinePtr = std::shared_ptr<core::StateMachine<Phase>>;
   using Queue           = fetch::core::MPMCQueue<ResourceID, 1 << 15>;
   using RecentQueue     = fetch::core::MPMCQueue<ledger::TransactionLayout, 1 << 15>;

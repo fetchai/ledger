@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "core/reactor.hpp"
 #include "core/runnable.hpp"
 #include "core/set_thread_name.hpp"

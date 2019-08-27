@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/json/document.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "ledger/state_sentinel_adapter.hpp"

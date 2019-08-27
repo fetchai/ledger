@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "core/string/to_lower.hpp"
 #include "core/string/trim.hpp"
 #include "http/response.hpp"
@@ -52,8 +52,6 @@ byte_array::ByteArray CopyBuffer(asio::streambuf &buffer, std::size_t length)
 bool HTTPResponse::ToStream(asio::streambuf &buffer) const
 {
   static char const *NEW_LINE = "\r\n";
-
-  LOG_STACK_TRACE_POINT;
 
   std::ostream stream(&buffer);
 
