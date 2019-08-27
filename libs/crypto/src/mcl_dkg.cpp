@@ -28,7 +28,8 @@
 namespace bn = mcl::bn256;
 
 namespace fetch {
-namespace dkg {
+namespace crypto {
+namespace mcl {
 
 /**
  * LHS and RHS functions are used for checking consistency between publicly broadcasted coefficients
@@ -296,5 +297,6 @@ Signature LagrangeInterpolation(std::unordered_map<CabinetIndex, Signature> cons
   return res;
 }
 
-}  // namespace dkg
+}  // namespace mcl
+}  // namespace crypto
 }  // namespace fetch

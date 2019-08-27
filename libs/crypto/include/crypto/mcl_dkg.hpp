@@ -31,7 +31,8 @@
 namespace bn = mcl::bn256;
 
 namespace fetch {
-namespace dkg {
+namespace crypto {
+namespace mcl {
 
 using PrivateKey     = bn::Fr;
 using PublicKey      = bn::G2;
@@ -45,18 +46,26 @@ using CabinetIndex   = uint32_t;
  */
 bn::G2 ComputeLHS(bn::G2 &tmpG, bn::G2 const &G, bn::G2 const &H, bn::Fr const &share1,
                   bn::Fr const &share2);
+
 bn::G2 ComputeLHS(bn::G2 const &G, bn::G2 const &H, bn::Fr const &share1, bn::Fr const &share2);
-void   UpdateRHS(uint32_t rank, bn::G2 &rhsG, std::vector<bn::G2> const &input);
+
+void UpdateRHS(uint32_t rank, bn::G2 &rhsG, std::vector<bn::G2> const &input);
+
 bn::G2 ComputeRHS(uint32_t rank, std::vector<bn::G2> const &input);
-void   ComputeShares(bn::Fr &s_i, bn::Fr &sprime_i, std::vector<bn::Fr> const &a_i,
-                     std::vector<bn::Fr> const &b_i, uint32_t rank);
+
+void ComputeShares(bn::Fr &s_i, bn::Fr &sprime_i, std::vector<bn::Fr> const &a_i,
+                   std::vector<bn::Fr> const &b_i, uint32_t rank);
+
 bn::Fr ComputeZi(std::set<uint32_t> const &parties, std::vector<bn::Fr> const &shares);
+
 std::vector<bn::Fr> InterpolatePolynom(std::vector<bn::Fr> const &a, std::vector<bn::Fr> const &b);
 
 // For signatures
 Signature SignShare(MessagePayload const &message, PrivateKey const &x_i);
-bool      VerifySign(PublicKey const &y, MessagePayload const &message, Signature const &sign,
-                     Group const &G);
+
+bool VerifySign(PublicKey const &y, MessagePayload const &message, Signature const &sign,
+                Group const &G);
+
 Signature LagrangeInterpolation(std::unordered_map<CabinetIndex, Signature> const &shares);
 
 /**
@@ -98,5 +107,6 @@ void Init(std::vector<std::vector<T>> &data, uint32_t i, uint32_t j)
   }
 }
 
-}  // namespace dkg
+}  // namespace mcl
+}  // namespace crypto
 }  // namespace fetch
