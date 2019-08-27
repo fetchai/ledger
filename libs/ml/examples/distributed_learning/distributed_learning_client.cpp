@@ -17,26 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "../../examples/distributed_learning/distributed_learning_client.hpp"
-#include "core/random.hpp"
-#include "math/matrix_operations.hpp"
-#include "math/tensor.hpp"
-#include "ml/core/graph.hpp"
-#include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
-#include "ml/layers/fully_connected.hpp"
-#include "ml/ops/activation.hpp"
-#include "ml/ops/loss_functions/cross_entropy_loss.hpp"
-
-#include <algorithm>
-#include <chrono>
-#include <ctime>
-#include <fstream>
-#include <iostream>
-#include <mutex>
-#include <queue>
-#include <string>
-#include <thread>
-#include <utility>
-#include <vector>
 
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
