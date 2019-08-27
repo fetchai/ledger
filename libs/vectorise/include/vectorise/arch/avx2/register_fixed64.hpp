@@ -363,15 +363,16 @@ inline fixed_point::fp64_t first_element(
 
 inline fixed_point::fp64_t reduce(VectorRegister<fixed_point::fp64_t, 128> const &x)
 {
-  __m128i r = _mm_add_epi64(x.data(), _mm_bslli_si128(x.data(), 8));
-  return fixed_point::fp64_t::FromBase(_mm_extract_epi64(r, 0));
+  int64_t ret = reduce(VectorRegister<int64_t, 128>(x.data()));
+  return fixed_point::fp64_t::FromBase(ret);
 }
 
 inline fixed_point::fp64_t reduce(VectorRegister<fixed_point::fp64_t, 256> const &x)
 {
-  __m256i r = _mm256_add_epi64(x.data(), _mm256_bslli_epi128(x.data(), 8));
-  r        = _mm256_add_epi64(x.data(), _mm256_bslli_epi128(r, 8));
-  return fixed_point::fp64_t::FromBase(_mm256_extract_epi64(r, 0));
+  VectorRegister<fixed_point::fp64_t, 128> hi{_mm256_extractf128_si256(x.data(),1)};
+  VectorRegister<fixed_point::fp64_t, 128> lo{_mm256_extractf128_si256(x.data(),0)};
+  hi = hi + lo;
+  return reduce(hi);
 }
 
 inline bool all_less_than(VectorRegister<fixed_point::fp64_t, 128> const &x,
