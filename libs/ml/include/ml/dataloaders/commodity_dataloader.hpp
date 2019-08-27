@@ -43,9 +43,11 @@ public:
   using ReturnType = std::pair<LabelType, std::vector<InputType>>;
   using SizeType   = math::SizeType;
 
-  explicit CommodityDataLoader(bool random_mode = false)
-    : DataLoader<LabelType, InputType>(random_mode)
-  {}
+  explicit CommodityDataLoader()
+    : DataLoader<LabelType, InputType>()
+  {
+    UpdateRanges();
+  }
 
   ~CommodityDataLoader() override = default;
 
@@ -53,6 +55,9 @@ public:
   SizeType   Size() const override;
   bool       IsDone() const override;
   void       Reset() override;
+
+  virtual void SetTestRatio(float new_test_ratio) override;
+  virtual void SetValidationRatio(float new_validation_ratio) override;
 
   bool AddData(InputType const &data, LabelType const &label) override;
 
@@ -64,12 +69,29 @@ private:
   SizeType   rows_to_skip_ = 1;
   SizeType   cols_to_skip_ = 1;
   ReturnType buffer_;
-  SizeType   cursor_ = 0;
-  SizeType   size_   = 0;
+
+  SizeType size_ = 0;
+
+  std::shared_ptr<SizeType> train_cursor_      = std::make_shared<SizeType>(0);
+  std::shared_ptr<SizeType> test_cursor_       = std::make_shared<SizeType>(0);
+  std::shared_ptr<SizeType> validation_cursor_ = std::make_shared<SizeType>(0);
+
+  SizeType train_size_;
+  SizeType test_size_;
+  SizeType validation_size_;
+
+  SizeType total_size_;
+  SizeType test_offset_;
+  SizeType validation_offset_;
+
+  float test_to_train_ratio_       = 0.0f;
+  float validation_to_train_ratio_ = 0.0f;
 
   random::Random rand;
 
   void GetAtIndex(SizeType index);
+  void UpdateCursor() override;
+  void UpdateRanges();
 };
 
 /**
@@ -90,6 +112,8 @@ bool CommodityDataLoader<LabelType, InputType>::AddData(InputType const &data,
   assert(data_.shape().at(1) == labels_.shape().at(1));
   size_ = data.shape().at(1);
 
+  UpdateRanges();
+
   return true;
 }
 
@@ -105,12 +129,12 @@ CommodityDataLoader<LabelType, InputType>::GetNext()
 {
   if (this->random_mode_)
   {
-    GetAtIndex(static_cast<SizeType>(decltype(rand)::generator()) % Size());
+    GetAtIndex(this->current_min_ + (static_cast<SizeType>(decltype(rand)::generator()) % Size()));
     return buffer_;
   }
   else
   {
-    GetAtIndex(static_cast<SizeType>(cursor_++));
+    GetAtIndex((*this->current_cursor_)++);
     return buffer_;
   }
 }
@@ -123,22 +147,36 @@ template <typename LabelType, typename InputType>
 typename CommodityDataLoader<LabelType, InputType>::SizeType
 CommodityDataLoader<LabelType, InputType>::Size() const
 {
-  return static_cast<SizeType>(size_);
+  return static_cast<SizeType>(this->current_size_);
 }
 
 template <typename LabelType, typename InputType>
 bool CommodityDataLoader<LabelType, InputType>::IsDone() const
 {
-  return cursor_ >= size_;
+  return *this->current_cursor_ >= this->current_max_;
 }
 
 /**
- * Resets the cursor to 0
+ * Resets current cursor to beginning
  */
 template <typename LabelType, typename InputType>
 void CommodityDataLoader<LabelType, InputType>::Reset()
 {
-  cursor_ = 0;
+  *(this->current_cursor_) = this->current_min_;
+}
+
+template <typename LabelType, typename InputType>
+void CommodityDataLoader<LabelType, InputType>::SetTestRatio(float new_test_ratio)
+{
+  FETCH_UNUSED(new_test_ratio);
+  throw std::runtime_error("Test set splitting is not supported for this dataloader.");
+}
+
+template <typename LabelType, typename InputType>
+void CommodityDataLoader<LabelType, InputType>::SetValidationRatio(float new_validation_ratio)
+{
+  FETCH_UNUSED(new_validation_ratio);
+  throw std::runtime_error("Validation set splitting is not supported for this dataloader.");
 }
 
 /**
@@ -150,6 +188,81 @@ void CommodityDataLoader<LabelType, InputType>::GetAtIndex(CommodityDataLoader::
 {
   buffer_.first  = labels_.View(index).Copy();
   buffer_.second = std::vector<InputType>({data_.View(index).Copy()});
+}
+
+template <typename LabelType, typename InputType>
+void CommodityDataLoader<LabelType, InputType>::UpdateCursor()
+{
+  if (this->mode_ == DataLoaderMode::TRAIN)
+  {
+    this->current_cursor_ = train_cursor_;
+    this->current_min_    = 0;
+    this->current_max_    = test_offset_;
+    this->current_size_   = train_size_;
+  }
+  else if (this->mode_ == DataLoaderMode::TEST)
+  {
+    this->current_cursor_ = test_cursor_;
+    this->current_min_    = test_offset_;
+    this->current_max_    = validation_offset_;
+    this->current_size_   = test_size_;
+  }
+  else if (this->mode_ == DataLoaderMode::VALIDATE)
+  {
+    this->current_cursor_ = validation_cursor_;
+    this->current_min_    = validation_offset_;
+    this->current_max_    = total_size_;
+    this->current_size_   = validation_size_;
+  }
+  else
+  {
+    throw std::runtime_error("Unsupported dataloader mode.");
+  }
+}
+
+template <typename LabelType, typename InputType>
+void CommodityDataLoader<LabelType, InputType>::UpdateRanges()
+{
+  float test_percentage       = 1.0f - test_to_train_ratio_ - validation_to_train_ratio_;
+  float validation_percentage = test_percentage + test_to_train_ratio_;
+
+  // Define where test set starts
+  test_offset_ = static_cast<std::uint32_t>(test_percentage * static_cast<float>(size_));
+
+  if (test_offset_ == static_cast<SizeType>(0))
+  {
+    test_offset_ = static_cast<SizeType>(1);
+  }
+
+  // Define where validation set starts
+  validation_offset_ =
+      static_cast<std::uint32_t>(validation_percentage * static_cast<float>(size_));
+
+  if (validation_offset_ <= test_offset_)
+  {
+    validation_offset_ = test_offset_ + 1;
+  }
+
+  // boundary check and fix
+  if (validation_offset_ > size_)
+  {
+    validation_offset_ = size_;
+  }
+
+  if (test_offset_ > size_)
+  {
+    test_offset_ = size_;
+  }
+
+  validation_size_ = size_ - validation_offset_;
+  test_size_       = validation_offset_ - test_offset_;
+  train_size_      = test_offset_;
+
+  *train_cursor_      = 0;
+  *test_cursor_       = test_offset_;
+  *validation_cursor_ = validation_offset_;
+
+  UpdateCursor();
 }
 
 }  // namespace dataloaders

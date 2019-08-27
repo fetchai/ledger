@@ -39,7 +39,6 @@ MuddleRegister::MuddleRegister(Dispatcher &dispatcher)
  */
 void MuddleRegister::VisitConnectionMap(MuddleRegister::ConnectionMapCallback const &cb)
 {
-  LOG_STACK_TRACE_POINT;
   FETCH_LOCK(connection_map_lock_);
   cb(connection_map_);
 }
@@ -51,7 +50,6 @@ void MuddleRegister::VisitConnectionMap(MuddleRegister::ConnectionMapCallback co
  */
 void MuddleRegister::Broadcast(ConstByteArray const &data) const
 {
-  LOG_STACK_TRACE_POINT;
   FETCH_LOCK(connection_map_lock_);
   FETCH_LOG_DEBUG(LOGGING_NAME, "Broadcasting message.");
 
@@ -76,7 +74,6 @@ void MuddleRegister::Broadcast(ConstByteArray const &data) const
  */
 MuddleRegister::ConnectionPtr MuddleRegister::LookupConnection(ConnectionHandle handle) const
 {
-  LOG_STACK_TRACE_POINT;
   ConnectionPtr conn;
 
   {
@@ -99,7 +96,6 @@ MuddleRegister::ConnectionPtr MuddleRegister::LookupConnection(ConnectionHandle 
  */
 void MuddleRegister::Enter(ConnectionPtr const &ptr)
 {
-  LOG_STACK_TRACE_POINT;
   FETCH_LOCK(connection_map_lock_);
 
   auto strong_conn = ptr.lock();
@@ -127,7 +123,6 @@ void MuddleRegister::Enter(ConnectionPtr const &ptr)
  */
 void MuddleRegister::Leave(connection_handle_type id)
 {
-  LOG_STACK_TRACE_POINT;
   {
     FETCH_LOCK(connection_map_lock_);
 

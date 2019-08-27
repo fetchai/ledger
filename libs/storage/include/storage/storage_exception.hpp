@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "storage/storage_exception.hpp"
 #include <exception>
 #include <string>
@@ -41,61 +41,34 @@ public:
   StorageException()
     : error_code_(error::TYPE_ERROR)
     , explanation_("unknown")
-  {
-    LOG_STACK_TRACE_POINT;
-
-    LOG_SET_CONTEXT_VARIABLE(stack_trace_)
-  }
+  {}
 
   StorageException(char const *explanation)
     : error_code_(error::TYPE_ERROR)
     , explanation_(std::string(explanation))
-  {
-    LOG_STACK_TRACE_POINT;
-
-    LOG_SET_CONTEXT_VARIABLE(stack_trace_)
-  }
+  {}
 
   StorageException(std::string explanation)
     : error_code_(error::TYPE_ERROR)
     , explanation_(std::move(explanation))
-  {
-    LOG_STACK_TRACE_POINT;
-
-    LOG_SET_CONTEXT_VARIABLE(stack_trace_)
-  }
+  {}
 
   StorageException(byte_array::ConstByteArray const &explanation)
     : error_code_(error::TYPE_ERROR)
     , explanation_(std::string(explanation))
-  {
-    LOG_STACK_TRACE_POINT;
-
-    LOG_SET_CONTEXT_VARIABLE(stack_trace_)
-  }
+  {}
 
   StorageException(error::error_type error_code, std::string explanation)
     : error_code_(error_code)
     , explanation_(std::move(explanation))
-  {
-    LOG_STACK_TRACE_POINT;
-
-    LOG_SET_CONTEXT_VARIABLE(stack_trace_)
-  }
+  {}
 
   StorageException(error::error_type error_code, byte_array::ConstByteArray const &explanation)
     : error_code_(error_code)
     , explanation_(std::string(explanation))
-  {
-    LOG_STACK_TRACE_POINT;
+  {}
 
-    LOG_SET_CONTEXT_VARIABLE(stack_trace_)
-  }
-
-  virtual ~StorageException()
-  {
-    LOG_STACK_TRACE_POINT;
-  }
+  virtual ~StorageException() = default;
 
   char const *what() const noexcept override
   {
@@ -111,15 +84,11 @@ public:
   }
 
   void StackTrace() const
-  {
-    LOG_PRINT_STACK_TRACE(stack_trace_, "Trace at time of exception")
-  }
+  {}
 
 private:
   uint64_t    error_code_;
   std::string explanation_;
-
-  LOG_CONTEXT_VARIABLE(stack_trace_)
 };
 }  // namespace storage
 }  // namespace fetch

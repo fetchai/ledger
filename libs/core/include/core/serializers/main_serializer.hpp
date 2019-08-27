@@ -20,7 +20,7 @@
 #include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "core/serializers/array_interface.hpp"
 #include "core/serializers/binary_interface.hpp"
 #include "core/serializers/container_constructor_interface.hpp"
@@ -246,7 +246,7 @@ typename BinarySerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::
   }
   catch (std::exception const &e)
   {
-    throw std::runtime_error("Error deserializing " + static_cast<std::string>(typeid(T).name()) +
+    throw std::runtime_error("Error serializing " + static_cast<std::string>(typeid(T).name()) +
                              ".\n" + std::string(e.what()));
   }
 
@@ -287,7 +287,7 @@ typename ArraySerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::o
   }
   catch (std::exception const &e)
   {
-    throw std::runtime_error("Error deserializing " + static_cast<std::string>(typeid(T).name()) +
+    throw std::runtime_error("Error serializing " + static_cast<std::string>(typeid(T).name()) +
                              ".\n" + std::string(e.what()));
   }
 
@@ -328,7 +328,7 @@ typename MapSerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::ope
   }
   catch (std::exception const &e)
   {
-    throw std::runtime_error("Error deserializing " + static_cast<std::string>(typeid(T).name()) +
+    throw std::runtime_error("Error serializing " + static_cast<std::string>(typeid(T).name()) +
                              ".\n" + std::string(e.what()));
   }
 

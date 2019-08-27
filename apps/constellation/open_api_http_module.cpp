@@ -26,7 +26,7 @@ OpenAPIHttpModule::OpenAPIHttpModule()
 {
   Get("/api/definitions", "Returns the API definition.",
       [this](http::ViewParameters const &, http::HTTPRequest const &) {
-        std::lock_guard<std::mutex> lock(server_lock_);
+        FETCH_LOCK(server_lock_);
 
         Variant response{Variant::Object()};
         if (server_ == nullptr)
@@ -84,7 +84,7 @@ OpenAPIHttpModule::OpenAPIHttpModule()
 
 void OpenAPIHttpModule::Reset(http::HTTPServer *srv)
 {
-  std::lock_guard<std::mutex> lock(server_lock_);
+  FETCH_LOCK(server_lock_);
   server_ = srv;
 }
 

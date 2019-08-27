@@ -168,7 +168,7 @@ int main(int ac, char **av)
     scaler.Normalise(orig_test_label, test_label);
   }
 
-  DataLoaderType loader(train_label.shape(), {train_data.shape()}, false);
+  DataLoaderType loader(train_label.shape(), {train_data.shape()});
   loader.AddData(train_data, train_label);
 
   std::cout << "Build model & optimiser... " << std::endl;

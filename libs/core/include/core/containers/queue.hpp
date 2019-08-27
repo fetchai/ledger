@@ -99,14 +99,14 @@ public:
    */
   std::size_t operator++(int)
   {
-    std::lock_guard<std::mutex> lock(lock_);
+    FETCH_LOCK(lock_);
     return static_cast<Base &>(*this)++;
   }
 
   template <typename Function>
   void Increment(Function &&function)
   {
-    std::lock_guard<std::mutex> lock(lock_);
+    FETCH_LOCK(lock_);
     Base::Increment(std::forward<Function>(function));
   }
 

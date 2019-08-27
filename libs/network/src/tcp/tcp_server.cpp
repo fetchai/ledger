@@ -34,8 +34,6 @@ TCPServer::TCPServer(uint16_t port, network_manager_type const &network_manager)
   : network_manager_{network_manager}
   , port_{port}
 {
-  LOG_STACK_TRACE_POINT;
-
   FETCH_LOG_DEBUG(LOGGING_NAME, "Creating TCP server on tcp://0.0.0.0:", port);
 
   manager_ = std::make_shared<ClientManager>(*this);
@@ -131,57 +129,49 @@ void TCPServer::Stop()
 
 void TCPServer::PushRequest(connection_handle_type client, message_type const &msg)
 {
-  LOG_STACK_TRACE_POINT;
   FETCH_LOG_DEBUG(LOGGING_NAME, "Got request from ", client);
 
-  std::lock_guard<mutex_type> lock(request_mutex_);
+  FETCH_LOCK(request_mutex_);
   requests_.push_back({client, msg});
 }
 
 void TCPServer::Broadcast(message_type const &msg)
 {
-  LOG_STACK_TRACE_POINT;
   manager_->Broadcast(msg);
 }
 
 bool TCPServer::Send(connection_handle_type const &client, message_type const &msg)
 {
-  LOG_STACK_TRACE_POINT;
   return manager_->Send(client, msg);
 }
 
 bool TCPServer::has_requests()
 {
-  LOG_STACK_TRACE_POINT;
-  std::lock_guard<mutex_type> lock(request_mutex_);
-  bool                        ret = (requests_.size() != 0);
+  FETCH_LOCK(request_mutex_);
+  bool ret = (requests_.size() != 0);
   return ret;
 }
 
 TCPServer::Request TCPServer::Top()
 {
-  std::lock_guard<mutex_type> lock(request_mutex_);
-  Request                     top = requests_.front();
+  FETCH_LOCK(request_mutex_);
+  Request top = requests_.front();
   return top;
 }
 
 void TCPServer::Pop()
 {
-  LOG_STACK_TRACE_POINT;
-  std::lock_guard<mutex_type> lock(request_mutex_);
+  FETCH_LOCK(request_mutex_);
   requests_.pop_front();
 }
 
 std::string TCPServer::GetAddress(connection_handle_type const &client)
 {
-  LOG_STACK_TRACE_POINT;
   return manager_->GetAddress(client);
 }
 
 void TCPServer::Accept(std::shared_ptr<asio::ip::tcp::tcp::acceptor> acceptor)
 {
-  LOG_STACK_TRACE_POINT;
-
   auto strongSocket                = network_manager_.CreateIO<asio::ip::tcp::tcp::socket>();
   std::weak_ptr<ClientManager> man = manager_;
 

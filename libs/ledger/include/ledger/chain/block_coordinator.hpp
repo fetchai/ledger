@@ -251,7 +251,6 @@ private:
 
   static constexpr uint64_t COMMON_PATH_TO_ANCESTOR_LENGTH_LIMIT = 1000;
 
-  using Mutex                = fetch::mutex::Mutex;
   using BlockPtr             = MainChain::BlockPtr;
   using NextBlockPtr         = std::unique_ptr<Block>;
   using PendingBlocks        = std::deque<BlockPtr>;
@@ -376,6 +375,7 @@ private:
   telemetry::CounterPtr         unable_to_find_tx_count_;
   telemetry::HistogramPtr       tx_sync_times_;
   telemetry::GaugePtr<uint64_t> current_block_num_;
+  telemetry::GaugePtr<uint64_t> next_block_num_;
   /// @}
 };
 
