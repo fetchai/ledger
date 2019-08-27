@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "../../examples/distributed_learning/coordinator.hpp"
 #include "../../examples/distributed_learning/distributed_learning_client.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"

@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "../../examples/distributed_learning/coordinator.hpp"
 #include "core/random.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
@@ -38,64 +39,6 @@
 
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
-
-enum class CoordinatorMode
-{
-  SYNCHRONOUS,
-  SEMISYNCHRONOUS,
-  ASYNCHRONOUS
-};
-
-enum class CoordinatorState
-{
-  RUN,
-  STOP,
-};
-
-class Coordinator
-{
-public:
-  using SizeType = fetch::math::SizeType;
-
-  Coordinator(CoordinatorMode mode, SizeType iterations_count = 0)
-    : mode_(mode)
-    , iterations_count_(iterations_count)
-  {}
-
-  void IncrementIterationsCounter()
-  {
-    std::lock_guard<std::mutex> l(iterations_mutex_);
-    iterations_done_++;
-
-    if (iterations_done_ >= iterations_count_)
-    {
-      state_ = CoordinatorState::STOP;
-    }
-  }
-
-  void Reset()
-  {
-    iterations_done_ = 0;
-    state_           = CoordinatorState::RUN;
-  }
-
-  CoordinatorMode GetMode() const
-  {
-    return mode_;
-  }
-
-  CoordinatorState GetState() const
-  {
-    return state_;
-  }
-
-private:
-  CoordinatorMode  mode_;
-  CoordinatorState state_           = CoordinatorState::RUN;
-  SizeType         iterations_done_ = 0;
-  SizeType         iterations_count_;
-  std::mutex       iterations_mutex_;
-};
 
 template <class TensorType>
 class TrainingClient
