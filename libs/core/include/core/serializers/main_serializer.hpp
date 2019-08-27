@@ -38,6 +38,45 @@
 namespace fetch {
 namespace serializers {
 
+/**
+ * When serializing large objects it is useful to use this wrapper class
+ * It ensures the right amount of memory is allocated first
+ */
+class LargeObjectSerializeHelper
+{
+public:
+  template <typename T>
+  void operator<<(T const &large_object)
+  {
+    Serialize(large_object);
+  }
+
+  template <typename T>
+  void operator>>(T const &large_object)
+  {
+    Deserialize(large_object);
+  }
+
+  template <typename T>
+  void Serialize(T const &large_object)
+  {
+    counter_ << large_object;
+    buffer_.Reserve(counter_.size());
+    buffer_ << large_object;
+  }
+
+  template <typename T>
+  void Deserialize(T &large_object)
+  {
+    buffer_.seek(0);
+    buffer_ >> large_object;
+  }
+
+private:
+  MsgPackSerializer buffer_;
+  SizeCounter       counter_;
+};
+
 template <typename WriteType, typename InitialType>
 void MsgPackSerializer::WritePrimitive(InitialType const &val)
 {
