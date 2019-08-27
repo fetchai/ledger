@@ -75,7 +75,6 @@ BeaconService::BeaconService(Endpoint &endpoint, CertificatePtr certificate,
   , rpc_client_{"BeaconService", endpoint_, SERVICE_DKG, CHANNEL_RPC}
   , event_manager_{std::move(event_manager)}
   , cabinet_creator_{endpoint_, identity_}  // TODO(tfr): Make shared
-  , cabinet_creator_protocol_{cabinet_creator_}
   , beacon_protocol_{*this}
 
 {
@@ -88,7 +87,6 @@ BeaconService::BeaconService(Endpoint &endpoint, CertificatePtr certificate,
 
   // Attaching the protocol
   rpc_server_ = std::make_shared<Server>(endpoint_, SERVICE_DKG, CHANNEL_RPC);
-  rpc_server_->Add(RPC_BEACON_SETUP, &cabinet_creator_protocol_);
   rpc_server_->Add(RPC_BEACON, &beacon_protocol_);
 
   // Subcribing to incoming entropy
@@ -197,7 +195,13 @@ void BeaconService::StartNewCabinet(CabinetMemberList members, uint32_t threshol
   else
   {
     beacon->manager.SetCertificate(certificate_);
-    beacon->manager.Reset(members.size(), threshold);
+    // TODO(jmw): Fix
+    std::set<ConstByteArray> cabinet;
+    for (auto &m : members)
+    {
+      cabinet.insert(m.identifier());
+    }
+    beacon->manager.Reset(cabinet, threshold);
   }
 
   // Setting the aeon details
@@ -238,8 +242,9 @@ BeaconService::State BeaconService::OnWaitForSetupCompletionState()
       Serializer                msgser;
       VerificationVectorMessage vv;
 
-      vv.round                = active_exe_unit_->aeon.round_start;
-      vv.verification_vectors = active_exe_unit_->manager.verification_vectors();
+      vv.round = active_exe_unit_->aeon.round_start;
+      // TODO(jmw): Change to group public key
+      // vv.verification_vectors = active_exe_unit_->manager.verification_vectors();
 
       msgser << vv;
       endpoint_.Broadcast(SERVICE_DKG, CHANNEL_VERIFICATION_VECTORS, msgser.data());
@@ -270,7 +275,8 @@ BeaconService::State BeaconService::OnWaitForVerificationVectors()
     // Creating the public key
     if (vv.round == active_exe_unit_->aeon.round_start)
     {
-      active_exe_unit_->manager.CreateGroupPublicKey(vv.verification_vectors);
+      // TODO(jmw): Set group public key
+      // active_exe_unit_->manager.CreateGroupPublicKey(vv.verification_vectors);
       return State::OBSERVE_ENTROPY_GENERATION;
     }
   }
@@ -435,7 +441,7 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
   {
     // Storing the result of current entropy
     current_entropy_.signature = active_exe_unit_->manager.GroupSignature();
-    auto sign                  = crypto::bls::ToBinary(current_entropy_.signature);
+    auto sign                  = current_entropy_.signature.getStr();
     current_entropy_.entropy   = crypto::Hash<crypto::SHA256>(crypto::Hash<crypto::SHA256>(sign));
 
     // Broadcasting the entropy to those listening, but not participating
