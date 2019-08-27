@@ -61,7 +61,7 @@ public:
   using CounterType    = uint8_t;
 
   RBC(Endpoint &endpoint, MuddleAddress address, CallbackFunction call_back,
-      uint16_t channel = CHANNEL_RBC_BROADCAST);
+      uint16_t channel = CHANNEL_RBC_BROADCAST, bool ordered_delivery = true);
 
   /// RBC Operation
   /// @{
@@ -167,6 +167,7 @@ private:
   std::atomic<uint8_t>  msg_counter_{0};  ///< Counter for messages we have broadcasted
   PartyList             parties_;         ///< Keeps track of messages from cabinet members
   std::unordered_map<TagType, BroadcastMessage> broadcasts_;  ///< map from tag to broadcasts
+  bool                                          ordered_delivery_;
 
   // For broadcast
   MuddleAddress const address_;            ///< Our muddle address

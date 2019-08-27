@@ -34,8 +34,10 @@ constexpr char const *LOGGING_NAME = "RBC";
  * @param threshold Threshold number of Byzantine peers
  * @param dkg
  */
-RBC::RBC(Endpoint &endpoint, MuddleAddress address, CallbackFunction call_back, uint16_t channel)
+RBC::RBC(Endpoint &endpoint, MuddleAddress address, CallbackFunction call_back, uint16_t channel,
+         bool ordered_delivery)
   : channel_{channel}
+  , ordered_delivery_{ordered_delivery}
   , address_{std::move(address)}
   , endpoint_{endpoint}
   , deliver_msg_callback_{std::move(call_back)}
@@ -596,8 +598,7 @@ bool RBC::BasicMessageCheck(MuddleAddress const &from, RBCMessage const &msg)
 
   if ((current_cabinet_.find(from) == current_cabinet_.end()) || (msg.channel() != channel_))
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Node ", id_,
-                   " received message from unknown sender/wrong channel");
+    FETCH_LOG_WARN(LOGGING_NAME, "Received message from unknown sender/wrong channel");
     return false;
   }
 
@@ -692,23 +693,30 @@ bool RBC::CheckTag(RBCMessage const &msg)
 
   FETCH_LOG_TRACE(LOGGING_NAME, "Node ", id_, " has counter ", msg_counter, " for node ", msg.id());
   assert(msg.channel() == channel_);
-  if (msg.counter() == msg_counter)
+  if (ordered_delivery_)
+  {
+    if (msg.counter() == msg_counter)
+    {
+      return true;
+    }
+    else if (msg.counter() > msg_counter)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Node ", id_, " has counter ", msg_counter,
+                     " does not match tag counter ", std::to_string(msg.counter()), " for node ",
+                     msg.id());
+      // Store counter of message for processing later
+      if (parties_[msg.id()].undelivered_msg.find(msg.counter()) ==
+          parties_[msg.id()].undelivered_msg.end())
+      {
+        parties_[msg.id()].undelivered_msg.insert({msg.counter(), msg.tag()});
+      }
+    }
+    return false;
+  }
+  else
   {
     return true;
   }
-  else if (msg.counter() > msg_counter)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Node ", id_, " has counter ", msg_counter,
-                   " does not match tag counter ", std::to_string(msg.counter()), " for node ",
-                   msg.id());
-    // Store counter of message for processing later
-    if (parties_[msg.id()].undelivered_msg.find(msg.counter()) ==
-        parties_[msg.id()].undelivered_msg.end())
-    {
-      parties_[msg.id()].undelivered_msg.insert({msg.counter(), msg.tag()});
-    }
-  }
-  return false;
 }
 
 /**
