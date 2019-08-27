@@ -204,7 +204,7 @@ void TrainingClient::BroadcastGradients()
   VectorTensorType current_gradient = g_.GetGradients();
 
   // Give gradients to peers
-  for (unsigned int i(0); i < number_of_peers_; ++i)
+  for (SizeType i{0}; i < number_of_peers_; ++i)
   {
     peers_[i]->AddGradient(current_gradient);
   }

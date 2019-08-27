@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "../../examples/distributed_learning/distributed_learning_client.hpp"
-#include "core/random.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
@@ -54,17 +53,16 @@ int main(int ac, char **av)
 
   std::shared_ptr<Coordinator> coordinator = std::make_shared<Coordinator>();
 
-  std::cout << "FETCH Distributed MNIST Demo -- Synchronised" << std::endl;
-  std::srand((unsigned int)std::time(nullptr));
+  std::cout << "FETCH Distributed MNIST Demo -- Semi-synchronised" << std::endl;
 
   std::vector<std::shared_ptr<TrainingClient>> clients(NUMBER_OF_CLIENTS);
-  for (unsigned int i(0); i < NUMBER_OF_CLIENTS; ++i)
+  for (SizeType i{0}; i < NUMBER_OF_CLIENTS; ++i)
   {
-    // Instanciate NUMBER_OF_CLIENTS clients
+    // Instantiate NUMBER_OF_CLIENTS clients
     clients[i] = std::make_shared<TrainingClient>(av[1], av[2], std::to_string(i));
   }
 
-  for (unsigned int i(0); i < NUMBER_OF_CLIENTS; ++i)
+  for (SizeType i{0}; i < NUMBER_OF_CLIENTS; ++i)
   {
     // Give every client the full list of other clients
     clients[i]->AddPeers(clients);
@@ -74,7 +72,7 @@ int main(int ac, char **av)
   }
 
   // Main loop
-  for (unsigned int it(0); it < NUMBER_OF_ITERATIONS; ++it)
+  for (SizeType it{0}; it < NUMBER_OF_ITERATIONS; ++it)
   {
 
     // Start all clients
@@ -101,7 +99,7 @@ int main(int ac, char **av)
     VectorTensorType new_weights = clients[0]->GetWeights();
 
     // Sum all wights
-    for (unsigned int i(1); i < NUMBER_OF_CLIENTS; ++i)
+    for (SizeType i{1}; i < NUMBER_OF_CLIENTS; ++i)
     {
       VectorTensorType other_weights = clients[i]->GetWeights();
 

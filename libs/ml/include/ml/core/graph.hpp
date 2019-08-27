@@ -492,15 +492,23 @@ std::vector<TensorType> Graph<TensorType>::get_weights() const
   return ret;
 }
 
+/**
+ * Write weights from vector to trainables - used for importing model
+ * @tparam TensorType
+ * @param new_weights
+ */
 template <typename TensorType>
 void Graph<TensorType>::SetWeights(std::vector<TensorType> &new_weights)
 {
-  SizeType index = 0;
-  for (auto &t : trainable_nodes_)
+  auto trainable_it = trainable_nodes_.begin();
+  auto weights_it   = new_weights.begin();
   {
-    auto trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
-    trainable_ptr->SetWeights(new_weights.at(index));
-    index++;
+    auto trainable_ptr =
+        std::dynamic_pointer_cast<ops::Trainable<TensorType>>((*trainable_it)->GetOp());
+    trainable_ptr->SetWeights(*weights_it);
+
+    ++trainable_it;
+    ++weights_it;
   }
 }
 
