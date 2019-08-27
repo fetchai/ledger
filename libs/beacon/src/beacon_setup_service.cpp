@@ -1,3 +1,4 @@
+/*
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -386,3 +387,4 @@ std::weak_ptr<core::Runnable> BeaconSetupService::GetWeakRunnable()
 
 }  // namespace beacon
 }  // namespace fetch
+ */

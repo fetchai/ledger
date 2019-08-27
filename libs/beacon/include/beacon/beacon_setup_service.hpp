@@ -1,4 +1,6 @@
 #pragma once
+/*
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -48,14 +50,12 @@ public:
     SEND_SHARES,
     WAIT_FOR_SHARES,
 
-    /*
         // TODO(tfr): Instate qual support
         BROADCAST_COMPLAINTS,
         WAIT_FOR_COMPLAINT_ANSWERS,
 
         BROADCAST_QUAL_SHARES,
         WAIT_FOR_QUAL_COMPLAINTS,
-    */
 
     GENERATE_KEYS,
     BEACON_READY
@@ -145,3 +145,4 @@ private:
 
 }  // namespace beacon
 }  // namespace fetch
+*/
