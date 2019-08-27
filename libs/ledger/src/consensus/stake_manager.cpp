@@ -176,8 +176,6 @@ StakeManager::CommitteePtr StakeManager::GetCommittee(Block const &previous)
                    last_snapshot);
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Periodicity: ", snapshot_validity_periodicity_);
-
   // If the last committee was the valid committee, return this. Otherwise, deterministically
   // shuffle the committee using the random beacon
   if (last_snapshot == previous.body.block_number)

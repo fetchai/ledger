@@ -111,7 +111,7 @@ public:
   static uint8_t const SLICES         = 7;
   static uint8_t const DAG_EPOCH      = 8;
   static uint8_t const TIMESTAMP      = 9;
-  static uint8_t const entropy        = 10;
+  static uint8_t const ENTROPY        = 10;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &body)
@@ -126,7 +126,7 @@ public:
     map.Append(SLICES, body.slices);
     map.Append(DAG_EPOCH, body.dag_epoch);
     map.Append(TIMESTAMP, body.timestamp);
-    map.Append(entropy, body.entropy);
+    map.Append(ENTROPY, body.entropy);
   }
 
   template <typename MapDeserializer>
@@ -141,7 +141,7 @@ public:
     map.ExpectKeyGetValue(SLICES, body.slices);
     map.ExpectKeyGetValue(DAG_EPOCH, body.dag_epoch);
     map.ExpectKeyGetValue(TIMESTAMP, body.timestamp);
-    map.ExpectKeyGetValue(entropy, body.entropy);
+    map.ExpectKeyGetValue(ENTROPY, body.entropy);
   }
 };
 

@@ -27,9 +27,6 @@
 #include "ledger/chain/constants.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/transaction.hpp"
-//#include "ledger/consensus/stake_manager.hpp"
-//#include "ledger/consensus/stake_manager_interface.hpp"
-//#include "ledger/consensus/stake_snapshot.hpp"
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/execution_manager_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
@@ -39,13 +36,6 @@
 #include "telemetry/counter.hpp"
 #include "telemetry/gauge.hpp"
 #include "telemetry/registry.hpp"
-
-//#include "beacon/beacon_service.hpp"
-//#include "beacon/beacon_setup_protocol.hpp"
-//#include "beacon/beacon_setup_service.hpp"
-//#include "beacon/cabinet_member_details.hpp"
-//#include "beacon/entropy.hpp"
-//#include "beacon/event_manager.hpp"
 
 #include <cassert>
 #include <chrono>

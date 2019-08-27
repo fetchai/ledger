@@ -151,9 +151,7 @@ public:
   using ConstByteArray = byte_array::ConstByteArray;
   using DAGPtr         = std::shared_ptr<ledger::DAGInterface>;
   using ProverPtr      = std::shared_ptr<crypto::Prover>;
-  // using StakeManagerPtr  = std::shared_ptr<StakeManager>; / TODO(HUT): delete
-  // using BeaconServicePtr = std::shared_ptr<fetch::beacon::BeaconService>;
-  using ConsensusPtr = std::shared_ptr<ledger::Consensus>;
+  using ConsensusPtr   = std::shared_ptr<ledger::Consensus>;
 
   enum class State
   {
@@ -306,11 +304,8 @@ private:
 
   /// @name External Components
   /// @{
-  MainChain &chain_;  ///< Ref to system chain
-  DAGPtr     dag_;    ///< Ref to DAG
-  /*StakeManagerPtr            stake_;              ///< Ref to Stake manager*/  // TODO(HUT):
-                                                                                 // delete
-  /*BeaconServicePtr           beacon_;             ///< Ref to beacon*/  // TODO(HUT): delete
+  MainChain &                chain_;  ///< Ref to system chain
+  DAGPtr                     dag_;    ///< Ref to DAG
   ConsensusPtr               consensus_;
   ExecutionManagerInterface &execution_manager_;  ///< Ref to system execution manager
   StorageUnitInterface &     storage_unit_;       ///< Ref to the storage unit
