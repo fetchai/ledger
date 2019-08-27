@@ -51,7 +51,6 @@ public:
   using WeightsInitType = fetch::ml::ops::WeightsInitialisation;
   using ActivationType  = fetch::ml::details::ActivationType;
   using SPType          = LayerSelfAttentionEncoderSaveableParams<T>;
-  using ThisActivation = ActivationType::RELU;
 
   SelfAttentionEncoder() = default;
 
@@ -164,7 +163,7 @@ private:
     std::string ff_first_layer =
         this->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
             name + "_Feedforward_No_1", {input}, static_cast<SizeType>(model_dim_),
-            static_cast<SizeType>(ff_dim_), ThisActivation, RegType::NONE,
+            static_cast<SizeType>(ff_dim_), ActivationType::GELU, RegType::NONE,
             static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT, true);
 
     // do dropout
