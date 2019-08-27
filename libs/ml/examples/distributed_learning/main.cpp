@@ -276,7 +276,7 @@ public:
     // Step of SGD optimiser
     for (SizeType j{0}; j < gradients.size(); j++)
     {
-      fetch::math::Multiply(gradients.at(j), -LEARNING_RATE, gradients.at(j));
+      fetch::math::Multiply(gradients.at(j), -learning_rate_, gradients.at(j));
     }
 
     // Apply gradients to own model
@@ -319,12 +319,12 @@ private:
 
   // Learning hyperparameters
   SizeType batch_size_      = BATCH_SIZE;
-  SizeType test_set_ratio_  = TEST_SET_RATIO;
+  float    test_set_ratio_  = TEST_SET_RATIO;
   SizeType number_of_peers_ = NUMBER_OF_PEERS;
-  SizeType learning_rate_   = LEARNING_RATE
+  DataType learning_rate_   = LEARNING_RATE;
 
-      // Client id (identification name)
-      std::string id_;
+  // Client id (identification name)
+  std::string id_;
 
   // Timestamp for logging
   std::string GetTimeStamp()
