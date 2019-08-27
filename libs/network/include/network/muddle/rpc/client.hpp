@@ -59,7 +59,6 @@ public:
                               FunctionId const &function, Args &&... args)
   {
     FETCH_LOCK(call_mutex_);
-    LOG_STACK_TRACE_POINT;
     // update the target address
     address_ = address;
 
@@ -76,7 +75,6 @@ protected:
 
 private:
   using Flag         = std::atomic<bool>;
-  using Mutex        = fetch::mutex::Mutex;
   using PromiseQueue = std::list<MuddleEndpoint::Response>;
 
   static std::size_t const NUM_THREADS = 1;

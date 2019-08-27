@@ -31,7 +31,6 @@ class LaneIdentity
 public:
   using connectivity_details_type = LaneConnectivityDetails;
   using network_manager_type      = fetch::network::NetworkManager;
-  using mutex_type                = fetch::mutex::Mutex;
   using ping_type                 = uint32_t;
   using lane_type                 = uint32_t;
 
@@ -80,7 +79,7 @@ public:
   /// @}
 
 private:
-  mutex::Mutex     identity_mutex_{__LINE__, __FILE__};
+  Mutex            identity_mutex_{__LINE__, __FILE__};
   crypto::Identity identity_;
 
   network_manager_type manager_;

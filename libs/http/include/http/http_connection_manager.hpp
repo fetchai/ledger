@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "http/abstract_connection.hpp"
 #include "http/abstract_server.hpp"
 
@@ -46,7 +46,7 @@ public:
 private:
   AbstractHTTPServer &                   server_;
   std::map<handle_type, connection_type> clients_;
-  fetch::mutex::Mutex                    clients_mutex_;
+  Mutex                                  clients_mutex_;
 };
 
 }  // namespace http

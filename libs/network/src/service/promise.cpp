@@ -38,7 +38,7 @@ void LogTimout(NAME const &name, ID const &id)
 }  // namespace
 
 PromiseImplementation::Counter PromiseImplementation::counter_{0};
-PromiseImplementation::Mutex   PromiseImplementation::counter_lock_{__LINE__, __FILE__};
+Mutex                          PromiseImplementation::counter_lock_{__LINE__, __FILE__};
 
 PromiseBuilder PromiseImplementation::WithHandlers()
 {
@@ -55,7 +55,6 @@ PromiseBuilder PromiseImplementation::WithHandlers()
  */
 bool PromiseImplementation::Wait(uint32_t timeout_ms, bool throw_exception) const
 {
-  LOG_STACK_TRACE_POINT;
   bool const has_timeout = timeout_ms > 0;
   State      state_copy{state_};
   if (has_timeout)
@@ -90,13 +89,12 @@ bool PromiseImplementation::Wait(uint32_t timeout_ms, bool throw_exception) cons
 
 void PromiseImplementation::UpdateState(State state)
 {
-  LOG_STACK_TRACE_POINT;
   assert(state != State::WAITING);
 
   bool dispatch = false;
 
   {
-    std::unique_lock<std::mutex> lock(notify_lock_);
+    FETCH_LOCK(notify_lock_);
     if (state_ == State::WAITING)
     {
       state_   = state;
@@ -225,8 +223,6 @@ void PromiseImplementation::SetCompletionCallback(Callback const &cb)
 
 void PromiseImplementation::Fulfill(ConstByteArray const &value)
 {
-  LOG_STACK_TRACE_POINT;
-
   value_ = value;
 
   UpdateState(State::SUCCESS);
@@ -234,8 +230,6 @@ void PromiseImplementation::Fulfill(ConstByteArray const &value)
 
 void PromiseImplementation::Fail(SerializableException const &exception)
 {
-  LOG_STACK_TRACE_POINT;
-
   exception_ = std::make_unique<SerializableException>(exception);
 
   UpdateState(State::FAILED);

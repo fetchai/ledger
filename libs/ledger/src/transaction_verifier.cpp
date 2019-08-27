@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "core/string/to_lower.hpp"
 #include "core/threading.hpp"
 #include "ledger/chain/transaction.hpp"
