@@ -239,43 +239,38 @@ void RBC::OnRBC(MuddleAddress const &from, RBCMessage const &message)
 
   {
     FETCH_LOCK(lock_);
-    sender_index = CabinetIndex(from);
 
     if (!BasicMessageCheck(from, message))
     {
       return;
     }
+    sender_index = CabinetIndex(from);
   }
 
   switch (message.type())
   {
   case RBCMessageType::R_BROADCAST:
   {
-    FETCH_LOG_TRACE(LOGGING_NAME, "Node: ", id_, " received RBroadcast from node ", sender_index);
     OnRBroadcast(RBCMessage::New<RBroadcast>(message), sender_index);
     break;
   }
   case RBCMessageType::R_ECHO:
   {
-    FETCH_LOG_TRACE(LOGGING_NAME, "Node: ", id_, " received REcho from node ", sender_index);
     OnREcho(RBCMessage::New<REcho>(message), sender_index);
     break;
   }
   case RBCMessageType::R_READY:
   {
-    FETCH_LOG_TRACE(LOGGING_NAME, "Node: ", id_, " received RReady from node ", sender_index);
     OnRReady(RBCMessage::New<RReady>(message), sender_index);
     break;
   }
   case RBCMessageType::R_REQUEST:
   {
-    FETCH_LOG_TRACE(LOGGING_NAME, "Node: ", id_, " received RRequest from node ", sender_index);
     OnRRequest(RBCMessage::New<RRequest>(message), sender_index);
     break;
   }
   case RBCMessageType::R_ANSWER:
   {
-    FETCH_LOG_TRACE(LOGGING_NAME, "Node: ", id_, " received RAnswer from node ", sender_index);
     OnRAnswer(RBCMessage::New<RAnswer>(message), sender_index);
     break;
   }
@@ -308,9 +303,9 @@ void RBC::OnRBroadcast(MessageBroadcast const &msg, uint32_t sender_index)
     return;
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "onRBroadcast: Node ", id_, " received msg ", tag, " from node ",
-                 sender_index, " with counter ", std::to_string(msg->counter()), " and id ",
-                 msg->id());
+  FETCH_LOG_TRACE(LOGGING_NAME, "onRBroadcast: Node ", id_, " received msg ", tag, " from node ",
+                  sender_index, " with counter ", std::to_string(msg->counter()), " and id ",
+                  msg->id());
   if (sender_index == msg->id())
   {
     if (SetMbar(tag, msg, sender_index))
@@ -513,6 +508,7 @@ void RBC::OnRAnswer(MessageAnswer const &msg, uint32_t sender_index)
 
   if (msg_hash == broadcasts_[tag].message_hash)
   {
+    FETCH_LOG_TRACE(LOGGING_NAME, "Node: ", id_, " received RAnswer from node ", sender_index);
     if (broadcasts_[tag].original_message.empty())
     {
       broadcasts_[tag].original_message = msg->message();
