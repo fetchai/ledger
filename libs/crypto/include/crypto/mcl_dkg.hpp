@@ -33,6 +33,13 @@ namespace bn = mcl::bn256;
 namespace fetch {
 namespace dkg {
 
+using PrivateKey     = bn::Fr;
+using PublicKey      = bn::G2;
+using Signature      = bn::G1;
+using Group          = bn::G2;
+using MessagePayload = byte_array::ConstByteArray;
+using CabinetIndex   = uint32_t;
+
 /**
  * Helper functions for computations used in the DKG
  */
@@ -45,10 +52,12 @@ void   ComputeShares(bn::Fr &s_i, bn::Fr &sprime_i, std::vector<bn::Fr> const &a
                      std::vector<bn::Fr> const &b_i, uint32_t rank);
 bn::Fr ComputeZi(std::set<uint32_t> const &parties, std::vector<bn::Fr> const &shares);
 std::vector<bn::Fr> InterpolatePolynom(std::vector<bn::Fr> const &a, std::vector<bn::Fr> const &b);
-bn::G1              SignShare(byte_array::ConstByteArray const &message, bn::Fr const &x_i);
-bool   VerifySign(bn::G2 const &y, byte_array::ConstByteArray const &message, bn::G1 const &sign,
-                  bn::G2 const &G);
-bn::G1 LagrangeInterpolation(std::unordered_map<uint32_t, bn::G1> const &shares);
+
+// For signatures
+Signature SignShare(MessagePayload const &message, PrivateKey const &x_i);
+bool      VerifySign(PublicKey const &y, MessagePayload const &message, Signature const &sign,
+                     Group const &G);
+Signature LagrangeInterpolation(std::unordered_map<CabinetIndex, Signature> const &shares);
 
 /**
  * Vector initialisation for mcl data structures
