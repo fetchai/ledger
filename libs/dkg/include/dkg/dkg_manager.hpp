@@ -32,8 +32,85 @@ public:
   using ComplaintAnswer  = std::pair<MuddleAddress, std::pair<Share, Share>>;
   using ExposedShare     = std::pair<MuddleAddress, std::pair<Share, Share>>;
   using SharesExposedMap = std::unordered_map<MuddleAddress, std::pair<Share, Share>>;
+  using Certificate      = crypto::Prover;
+  using CertificatePtr   = std::shared_ptr<Certificate>;
+  using Signature        = crypto::mcl::Signature;
+  using PublicKey        = crypto::mcl::PublicKey;
+  using PrivateKey       = crypto::mcl::PrivateKey;
+  using CabinetIndex     = crypto::mcl::CabinetIndex;
+  using MessagePayload   = crypto::mcl::MessagePayload;
+  using Identity         = crypto::Identity;
 
-  explicit DkgManager(MuddleAddress address);
+  enum class AddResult
+  {
+    SUCCESS,
+    NOT_MEMBER,
+    SIGNATURE_ALREADY_ADDED,
+    INVALID_SIGNATURE
+  };
+
+  struct SignedMessage
+  {
+    std::string signature;
+    std::string public_key;
+    Identity    identity;
+  };
+
+  DkgManager(CertificatePtr = nullptr);
+
+  DkgManager(DkgManager const &) = delete;
+  DkgManager &operator=(DkgManager const &) = delete;
+
+  void SetCertificate(CertificatePtr certificate)
+  {
+    certificate_ = certificate;
+  }
+  bool can_verify()
+  {
+    return signature_buffer_.size() >= polynomial_degree_ + 1;
+  }
+  /*
+   * @brief verifies the group signature.
+   */
+  bool Verify()
+  {
+    group_signature_ = crypto::mcl::LagrangeInterpolation(signature_buffer_);
+    return Verify(group_signature_);
+  }
+  bool Verify(Signature const &)
+  {
+    return crypto::mcl::VerifySign(public_key_, current_message_, group_signature_, group_g_);
+  }
+  /*
+   * @brief returns the signature as a ConstByteArray
+   */
+  Signature GroupSignature() const
+  {
+    return group_signature_;
+  }
+  void SetMessage(MessagePayload next_message)
+  {
+    current_message_ = next_message;
+    signature_buffer_.clear();
+    already_signed_.clear();
+  }
+  SignedMessage Sign()
+  {
+    SignedMessage smsg;
+    Signature     signature  = crypto::mcl::SignShare(current_message_, secret_share_);
+    PublicKey     public_key = public_key_shares_[cabinet_index_];
+    smsg.identity            = certificate_->identity();
+
+    if (!crypto::mcl::VerifySign(public_key, current_message_, signature, group_g_))
+    {
+      throw std::runtime_error("Failed to sign.");
+    }
+
+    smsg.signature  = signature.getStr();
+    smsg.public_key = public_key.getStr();
+
+    return smsg;
+  }
 
   void                     GenerateCoefficients();
   std::vector<Coefficient> GetCoefficients();
@@ -56,8 +133,10 @@ public:
   bool             RunReconstruction();
   void             Reset(std::set<MuddleAddress> const &cabinet, uint32_t threshold);
   void             SetDkgOutput(bn::G2 &public_key, bn::Fr &secret_share,
-                                std::vector<bn::G2> &public_key_shares);
+                                std::vector<bn::G2> &public_key_shares, std::set<MuddleAddress> &qual);
   void             SetQual(std::set<MuddleAddress> qual);
+  AddResult        AddSignaturePart(Identity const &from, std::string, std::string signature);
+
   std::set<MuddleAddress> const &qual() const
   {
     return qual_;
@@ -67,11 +146,11 @@ public:
   {
     return polynomial_degree_;
   }
-  uint32_t cabinet_index() const
+  CabinetIndex cabinet_index() const
   {
     return cabinet_index_;
   }
-  uint32_t cabinet_index(MuddleAddress const &address) const
+  CabinetIndex cabinet_index(MuddleAddress const &address) const
   {
     assert(identity_to_index_.find(address) != identity_to_index_.end());
     return identity_to_index_.at(address);
@@ -83,14 +162,14 @@ private:
   static bn::G2 group_g_;  ///< Generator of group used in DKG
   static bn::G2 group_h_;  ///< Generator of subgroup used in DKG
 
-  MuddleAddress address_;
-  uint32_t      cabinet_size_;       ///< Size of committee
-  uint32_t      polynomial_degree_;  ///< Degree of polynomial in DKG
-  uint32_t      cabinet_index_;      ///< Index of our address in cabinet_
+  CertificatePtr certificate_;
+  uint32_t       cabinet_size_;       ///< Size of committee
+  uint32_t       polynomial_degree_;  ///< Degree of polynomial in DKG
+  CabinetIndex   cabinet_index_;      ///< Index of our address in cabinet_
 
   /// Member details
   /// @{
-  std::unordered_map<MuddleAddress, uint32_t> identity_to_index_;
+  std::unordered_map<MuddleAddress, CabinetIndex> identity_to_index_;
   /// @}
 
   // What the DKG should return
@@ -109,9 +188,50 @@ private:
   std::vector<std::vector<bn::G2>> g__s_ij;
   std::vector<bn::G2>              g__a_i;
 
-  std::unordered_map<MuddleAddress, std::pair<std::set<uint32_t>, std::vector<bn::Fr>>>
+  std::unordered_map<MuddleAddress, std::pair<std::set<CabinetIndex>, std::vector<bn::Fr>>>
       reconstruction_shares;  ///< Map from id of node_i in complaints to a pair <parties which
                               ///< exposed shares of node_i, the shares that were exposed>
+
+  /// Message signature management
+  /// @{
+  std::unordered_set<MuddleAddress>           already_signed_;
+  std::unordered_map<CabinetIndex, Signature> signature_buffer_;
+  MessagePayload                              current_message_;
+  Signature                                   group_signature_;
+  /// }
 };
 }  // namespace dkg
+
+namespace serializers {
+
+template <typename D>
+struct MapSerializer<dkg::DkgManager::SignedMessage, D>
+{
+public:
+  using Type       = dkg::DkgManager::SignedMessage;
+  using DriverType = D;
+
+  static uint8_t const SIGNATURE  = 0;
+  static uint8_t const PUBLIC_KEY = 1;
+  static uint8_t const IDENTITY   = 2;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &member)
+  {
+    auto map = map_constructor(3);
+
+    map.Append(SIGNATURE, member.signature);
+    map.Append(PUBLIC_KEY, member.public_key);
+    map.Append(IDENTITY, member.identity);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &member)
+  {
+    map.ExpectKeyGetValue(SIGNATURE, member.signature);
+    map.ExpectKeyGetValue(PUBLIC_KEY, member.public_key);
+    map.ExpectKeyGetValue(IDENTITY, member.identity);
+  }
+};
+}  // namespace serializers
 }  // namespace fetch

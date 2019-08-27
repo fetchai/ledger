@@ -20,7 +20,6 @@
 #include "beacon/aeon.hpp"
 #include "core/state_machine.hpp"
 #include "dkg/dkg_complaints_manager.hpp"
-#include "dkg/dkg_manager.hpp"
 #include "dkg/dkg_messages.hpp"
 #include "network/muddle/rbc.hpp"
 #include "network/muddle/rpc/client.hpp"
@@ -131,7 +130,6 @@ protected:
   RBC                                   pre_dkg_rbc_;
   RBC                                   rbc_;
   std::shared_ptr<muddle::Subscription> shares_subscription;
-  DkgManager                            dkg_manager_;
 
   std::set<MuddleAddress>                                    connections_;
   std::unordered_map<MuddleAddress, std::set<MuddleAddress>> ready_connections_;

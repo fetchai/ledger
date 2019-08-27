@@ -300,11 +300,11 @@ State DkgService::OnBroadcastSignatureState()
                  " (round: ", this_round, ")");
 
   // create the signature
-  bn::G1 signature{SignShare(payload, aeon_secret_share_)};
+  bn::G1 signature{crypto::mcl::SignShare(payload, aeon_secret_share_)};
 
   // Sanity check: verify own signature
 
-  if (!VerifySign(aeon_public_key_shares_[id_], payload, signature, group_g_))
+  if (!crypto::mcl::VerifySign(aeon_public_key_shares_[id_], payload, signature, group_g_))
   {
     FETCH_LOG_ERROR("Node ", id_, " computed bad share for payload ", payload.ToBase64());
     state_machine_->Delay(500ms);
@@ -385,7 +385,8 @@ State DkgService::OnCollectSignaturesState()
       if (it->round == this_round)
       {
         // verify the signature
-        if (!VerifySign(aeon_public_key_shares_[it->id], payload, it->signature, group_g_))
+        if (!crypto::mcl::VerifySign(aeon_public_key_shares_[it->id], payload, it->signature,
+                                     group_g_))
         {
           FETCH_LOG_ERROR(LOGGING_NAME, "Node ", id_, " failed to verify signature from node ",
                           it->id, " for round ", it->round, ". Discarding");
@@ -418,7 +419,7 @@ State DkgService::OnCollectSignaturesState()
     round->RecoverSignature();
 
     // verify that the signature is correct
-    if (!VerifySign(aeon_public_key_, payload, round->round_signature(), group_g_))
+    if (!crypto::mcl::VerifySign(aeon_public_key_, payload, round->round_signature(), group_g_))
     {
       FETCH_LOG_CRITICAL(LOGGING_NAME, "Node ", id_,
                          " failed to lookup verify signature for payload ", payload.ToBase64());

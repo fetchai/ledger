@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "crypto/ecdsa.hpp"
 #include "dkg/dkg_manager.hpp"
 
 namespace fetch {
@@ -28,9 +29,16 @@ bn::G2 DkgManager::group_h_;
 
 constexpr char const *LOGGING_NAME = "DKG";
 
-DkgManager::DkgManager(MuddleAddress address)
-  : address_{std::move(address)}
+DkgManager::DkgManager(CertificatePtr certificate)
+  : certificate_{certificate}
 {
+  if (certificate_ == nullptr)
+  {
+    auto ptr = new crypto::ECDSASigner();
+    certificate_.reset(ptr);
+    ptr->GenerateKeys();
+  }
+
   static std::once_flag flag;
 
   std::call_once(flag, []() {
@@ -66,12 +74,13 @@ void DkgManager::GenerateCoefficients()
 
   for (uint32_t k = 0; k <= polynomial_degree_; k++)
   {
-    C_ik[cabinet_index_][k] = ComputeLHS(g__a_i[k], group_g_, group_h_, a_i[k], b_i[k]);
+    C_ik[cabinet_index_][k] =
+        crypto::mcl::ComputeLHS(g__a_i[k], group_g_, group_h_, a_i[k], b_i[k]);
   }
 
   for (uint32_t l = 0; l < cabinet_size_; l++)
   {
-    ComputeShares(s_ij[cabinet_index_][l], sprime_ij[cabinet_index_][l], a_i, b_i, l);
+    crypto::mcl::ComputeShares(s_ij[cabinet_index_][l], sprime_ij[cabinet_index_][l], a_i, b_i, l);
   }
 }
 
@@ -88,9 +97,9 @@ std::vector<DkgManager::Coefficient> DkgManager::GetCoefficients()
 std::pair<DkgManager::Share, DkgManager::Share> DkgManager::GetOwnShares(
     MuddleAddress const &receiver)
 {
-  uint32_t receiver_index = identity_to_index_[receiver];
-  bn::Fr   sij            = s_ij[cabinet_index_][receiver_index];
-  bn::Fr   sprimeij       = sprime_ij[cabinet_index_][receiver_index];
+  CabinetIndex receiver_index = identity_to_index_[receiver];
+  bn::Fr       sij            = s_ij[cabinet_index_][receiver_index];
+  bn::Fr       sprimeij       = sprime_ij[cabinet_index_][receiver_index];
 
   std::pair<Share, Share> shares_j{sij.getStr(), sprimeij.getStr()};
   return shares_j;
@@ -115,7 +124,7 @@ void DkgManager::AddCoefficients(MuddleAddress const &           from,
 
 void DkgManager::AddShares(MuddleAddress const &from, std::pair<Share, Share> const &shares)
 {
-  uint32_t from_index = identity_to_index_[from];
+  CabinetIndex from_index = identity_to_index_[from];
   s_ij[from_index][cabinet_index_].setStr(shares.first);
   sprime_ij[from_index][cabinet_index_].setStr(shares.second);
 }
@@ -131,16 +140,16 @@ std::unordered_set<DkgManager::MuddleAddress> DkgManager::ComputeComplaints()
   std::unordered_set<MuddleAddress> complaints_local;
   for (auto &cab : identity_to_index_)
   {
-    uint32_t i = cab.second;
+    CabinetIndex i = cab.second;
     if (i != cabinet_index_)
     {
       // Can only require this if group_g_, group_h_ do not take the default values from clear()
       if (C_ik[i][0] != zeroG2_ && s_ij[i][cabinet_index_] != zeroFr_)
       {
         bn::G2 rhs, lhs;
-        lhs = ComputeLHS(g__s_ij[i][cabinet_index_], group_g_, group_h_, s_ij[i][cabinet_index_],
-                         sprime_ij[i][cabinet_index_]);
-        rhs = ComputeRHS(cabinet_index_, C_ik[i]);
+        lhs = crypto::mcl::ComputeLHS(g__s_ij[i][cabinet_index_], group_g_, group_h_,
+                                      s_ij[i][cabinet_index_], sprime_ij[i][cabinet_index_]);
+        rhs = crypto::mcl::ComputeRHS(cabinet_index_, C_ik[i]);
         if (lhs != rhs)
         {
           FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
@@ -162,8 +171,8 @@ std::unordered_set<DkgManager::MuddleAddress> DkgManager::ComputeComplaints()
 
 bool DkgManager::VerifyComplaintAnswer(MuddleAddress const &from, ComplaintAnswer const &answer)
 {
-  uint32_t reporter_index = identity_to_index_[answer.first];
-  uint32_t from_index     = identity_to_index_[from];
+  CabinetIndex reporter_index = identity_to_index_[answer.first];
+  CabinetIndex from_index     = identity_to_index_[from];
   // Verify shares received
   bn::Fr s, sprime;
   bn::G2 lhsG, rhsG;
@@ -173,8 +182,8 @@ bool DkgManager::VerifyComplaintAnswer(MuddleAddress const &from, ComplaintAnswe
   rhsG.clear();
   s.setStr(answer.second.first);
   sprime.setStr(answer.second.second);
-  rhsG = ComputeRHS(reporter_index, C_ik[from_index]);
-  lhsG = ComputeLHS(group_g_, group_h_, s, sprime);
+  rhsG = crypto::mcl::ComputeRHS(reporter_index, C_ik[from_index]);
+  lhsG = crypto::mcl::ComputeLHS(group_g_, group_h_, s, sprime);
   if (lhsG != rhsG)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Node: ", cabinet_index_, " verification for node ", from_index,
@@ -207,7 +216,7 @@ void DkgManager::ComputeSecretShare()
   xprime_i = 0;
   for (auto const &iq : qual_)
   {
-    uint32_t iq_index = identity_to_index_[iq];
+    CabinetIndex iq_index = identity_to_index_[iq];
     bn::Fr::add(secret_share_, secret_share_, s_ij[iq_index][cabinet_index_]);
     bn::Fr::add(xprime_i, xprime_i, sprime_ij[iq_index][cabinet_index_]);
   }
@@ -227,7 +236,7 @@ std::vector<DkgManager::Coefficient> DkgManager::GetQualCoefficients()
 void DkgManager::AddQualCoefficients(MuddleAddress const &           from,
                                      std::vector<Coefficient> const &coefficients)
 {
-  uint32_t from_index = identity_to_index_[from];
+  CabinetIndex from_index = identity_to_index_[from];
   for (uint32_t ii = 0; ii <= polynomial_degree_; ++ii)
   {
     A_ik[from_index][ii].setStr(coefficients[ii]);
@@ -246,7 +255,7 @@ DkgManager::SharesExposedMap DkgManager::ComputeQualComplaints()
 
   for (auto const &miner : qual_)
   {
-    uint32_t i = identity_to_index_[miner];
+    CabinetIndex i = identity_to_index_[miner];
     if (i != cabinet_index_)
     {
       // Can only require this if G, H do not take the default values from clear()
@@ -254,7 +263,7 @@ DkgManager::SharesExposedMap DkgManager::ComputeQualComplaints()
       {
         bn::G2 rhs, lhs;
         lhs = g__s_ij[i][cabinet_index_];
-        rhs = ComputeRHS(cabinet_index_, A_ik[i]);
+        rhs = crypto::mcl::ComputeRHS(cabinet_index_, A_ik[i]);
         if (lhs != rhs)
         {
           FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
@@ -278,8 +287,8 @@ DkgManager::SharesExposedMap DkgManager::ComputeQualComplaints()
 DkgManager::MuddleAddress DkgManager::VerifyQualComplaint(MuddleAddress const &  from,
                                                           ComplaintAnswer const &answer)
 {
-  uint32_t from_index   = identity_to_index_[from];
-  uint32_t victim_index = identity_to_index_[answer.first];
+  CabinetIndex from_index   = identity_to_index_[from];
+  CabinetIndex victim_index = identity_to_index_[answer.first];
   // verify complaint, i.e. (4) holds (5) not
   bn::G2 lhs, rhs;
   bn::Fr s, sprime;
@@ -290,8 +299,8 @@ DkgManager::MuddleAddress DkgManager::VerifyQualComplaint(MuddleAddress const & 
   s.setStr(answer.second.first);
   sprime.setStr(answer.second.second);
   // check equation (4)
-  lhs = ComputeLHS(group_g_, group_h_, s, sprime);
-  rhs = ComputeRHS(from_index, C_ik[victim_index]);
+  lhs = crypto::mcl::ComputeLHS(group_g_, group_h_, s, sprime);
+  rhs = crypto::mcl::ComputeRHS(from_index, C_ik[victim_index]);
   if (lhs != rhs)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
@@ -303,7 +312,7 @@ DkgManager::MuddleAddress DkgManager::VerifyQualComplaint(MuddleAddress const & 
   {
     // check equation (5)
     bn::G2::mul(lhs, group_g_, s);  // G^s
-    rhs = ComputeRHS(from_index, A_ik[victim_index]);
+    rhs = crypto::mcl::ComputeRHS(from_index, A_ik[victim_index]);
     if (lhs != rhs)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
@@ -331,33 +340,33 @@ void DkgManager::ComputePublicKeys()
   // For all parties in $QUAL$, set $y_i = A_{i0} = g^{z_i} \bmod p$.
   for (auto const &iq : qual_)
   {
-    uint32_t it = identity_to_index_[iq];
-    y_i[it]     = A_ik[it][0];
+    CabinetIndex it = identity_to_index_[iq];
+    y_i[it]         = A_ik[it][0];
   }
   // Compute public key $y = \prod_{i \in QUAL} y_i \bmod p$
   public_key_.clear();
   for (auto const &iq : qual_)
   {
-    uint32_t it = identity_to_index_[iq];
+    CabinetIndex it = identity_to_index_[iq];
     bn::G2::add(public_key_, public_key_, y_i[it]);
   }
   // Compute public_key_shares_ $v_j = \prod_{i \in QUAL} \prod_{k=0}^t (A_{ik})^{j^k} \bmod
   // p$
   for (auto const &jq : qual_)
   {
-    uint32_t jt = identity_to_index_[jq];
+    CabinetIndex jt = identity_to_index_[jq];
     for (auto const &iq : qual_)
     {
-      uint32_t it = identity_to_index_[iq];
+      CabinetIndex it = identity_to_index_[iq];
       bn::G2::add(public_key_shares_[jt], public_key_shares_[jt], A_ik[it][0]);
-      UpdateRHS(jt, public_key_shares_[jt], A_ik[it]);
+      crypto::mcl::UpdateRHS(jt, public_key_shares_[jt], A_ik[it]);
     }
   }
 }
 
 void DkgManager::AddReconstructionShare(MuddleAddress const &address)
 {
-  uint32_t index = identity_to_index_[address];
+  CabinetIndex index = identity_to_index_[address];
   reconstruction_shares.insert({address, {{}, std::vector<bn::Fr>(cabinet_size_, zeroFr_)}});
   reconstruction_shares.at(address).first.insert(cabinet_index_);
   reconstruction_shares.at(address).second[cabinet_index_] = s_ij[index][cabinet_index_];
@@ -366,8 +375,8 @@ void DkgManager::AddReconstructionShare(MuddleAddress const &address)
 void DkgManager::AddReconstructionShare(MuddleAddress const &                  from,
                                         std::pair<MuddleAddress, Share> const &share)
 {
-  uint32_t from_index = identity_to_index_[from];
-  uint32_t index      = identity_to_index_[share.first];
+  CabinetIndex from_index = identity_to_index_[from];
+  CabinetIndex index      = identity_to_index_[share.first];
   FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, "received good share from node ",
                  from_index, "for reconstructing node ", index);
   if (reconstruction_shares.find(share.first) == reconstruction_shares.end())
@@ -389,7 +398,7 @@ void DkgManager::AddReconstructionShare(MuddleAddress const &                  f
 
 void DkgManager::VerifyReconstructionShare(MuddleAddress const &from, ExposedShare const &share)
 {
-  uint32_t victim_index = identity_to_index_[share.first];
+  CabinetIndex victim_index = identity_to_index_[share.first];
   // assert(qual_complaints_manager_.ComplaintsFind(share.first)); // Fails for nodes who receive
   // shares for themselves when they don't know they are being complained against
   bn::G2 lhs, rhs;
@@ -401,8 +410,8 @@ void DkgManager::VerifyReconstructionShare(MuddleAddress const &from, ExposedSha
 
   s.setStr(share.second.first);
   sprime.setStr(share.second.second);
-  lhs = ComputeLHS(group_g_, group_h_, s, sprime);
-  rhs = ComputeRHS(identity_to_index_[from], C_ik[victim_index]);
+  lhs = crypto::mcl::ComputeLHS(group_g_, group_h_, s, sprime);
+  rhs = crypto::mcl::ComputeRHS(identity_to_index_[from], C_ik[victim_index]);
   // check equation (4)
   if (lhs == rhs)
   {
@@ -424,12 +433,13 @@ void DkgManager::VerifyReconstructionShare(MuddleAddress const &from, ExposedSha
 bool DkgManager::RunReconstruction()
 {
   std::vector<std::vector<bn::Fr>> a_ik;
-  Init(a_ik, static_cast<uint32_t>(cabinet_size_), static_cast<uint32_t>(polynomial_degree_ + 1));
+  crypto::mcl::Init(a_ik, static_cast<uint32_t>(cabinet_size_),
+                    static_cast<uint32_t>(polynomial_degree_ + 1));
   for (auto const &in : reconstruction_shares)
   {
-    uint32_t            victim_index = identity_to_index_[in.first];
-    std::set<uint32_t>  parties{in.second.first};
-    std::vector<bn::Fr> shares{in.second.second};
+    CabinetIndex           victim_index = identity_to_index_[in.first];
+    std::set<CabinetIndex> parties{in.second.first};
+    std::vector<bn::Fr>    shares{in.second.second};
     if (parties.size() <= polynomial_degree_)
     {
       // Do not have enough good shares to be able to do reconstruction
@@ -437,14 +447,14 @@ bool DkgManager::RunReconstruction()
                      " failed with party size ", parties.size());
       return false;
     }
-    else if (in.first == address_)
+    else if (in.first == certificate_->identity().identifier())
     {
       // Do not run reconstruction for myself
       FETCH_LOG_WARN(LOGGING_NAME, "Node: ", cabinet_index_, " polynomial being reconstructed.");
       continue;
     }
     // compute $z_i$ using Lagrange interpolation (without corrupted parties)
-    z_i[victim_index] = ComputeZi(in.second.first, in.second.second);
+    z_i[victim_index] = crypto::mcl::ComputeZi(in.second.first, in.second.second);
     std::vector<bn::Fr> points, shares_f;
     for (const auto &index : parties)
     {
@@ -453,7 +463,7 @@ bool DkgManager::RunReconstruction()
       points.push_back(index + 1);  // adjust index in computation
       shares_f.push_back(shares[index]);
     }
-    a_ik[victim_index] = InterpolatePolynom(points, shares_f);
+    a_ik[victim_index] = crypto::mcl::InterpolatePolynom(points, shares_f);
     for (size_t k = 0; k <= polynomial_degree_; k++)
     {
       bn::G2::mul(A_ik[victim_index][k], group_g_, a_ik[victim_index][k]);
@@ -470,10 +480,10 @@ void DkgManager::Reset(std::set<MuddleAddress> const &cabinet, uint32_t threshol
   polynomial_degree_ = threshold - 1;
 
   // identity_to_index_
-  uint32_t index = 0;
+  CabinetIndex index = 0;
   for (auto const &cab : cabinet)
   {
-    if (cab == address_)
+    if (cab == certificate_->identity().identifier())
     {
       cabinet_index_ = index;
     }
@@ -484,31 +494,61 @@ void DkgManager::Reset(std::set<MuddleAddress> const &cabinet, uint32_t threshol
   secret_share_.clear();
   public_key_.clear();
   xprime_i.clear();
-  Init(y_i, cabinet_size_);
-  Init(public_key_shares_, cabinet_size_);
-  Init(s_ij, cabinet_size_, cabinet_size_);
-  Init(sprime_ij, cabinet_size_, cabinet_size_);
-  Init(z_i, cabinet_size_);
-  Init(C_ik, cabinet_size_, threshold);
-  Init(A_ik, cabinet_size_, threshold);
-  Init(g__s_ij, cabinet_size_, cabinet_size_);
-  Init(g__a_i, threshold);
+  crypto::mcl::Init(y_i, cabinet_size_);
+  crypto::mcl::Init(public_key_shares_, cabinet_size_);
+  crypto::mcl::Init(s_ij, cabinet_size_, cabinet_size_);
+  crypto::mcl::Init(sprime_ij, cabinet_size_, cabinet_size_);
+  crypto::mcl::Init(z_i, cabinet_size_);
+  crypto::mcl::Init(C_ik, cabinet_size_, threshold);
+  crypto::mcl::Init(A_ik, cabinet_size_, threshold);
+  crypto::mcl::Init(g__s_ij, cabinet_size_, cabinet_size_);
+  crypto::mcl::Init(g__a_i, threshold);
 
   reconstruction_shares.clear();
 }
 
 void DkgManager::SetDkgOutput(bn::G2 &public_key, bn::Fr &secret_share,
-                              std::vector<bn::G2> &public_key_shares)
+                              std::vector<bn::G2> &public_key_shares, std::set<MuddleAddress> &qual)
 {
-  Init(public_key_shares, static_cast<uint32_t>(cabinet_size_));
+  // crypto::mcl::Init(public_key_shares, cabinet_size_);
   public_key        = public_key_;
   secret_share      = secret_share_;
   public_key_shares = public_key_shares_;
+  qual              = qual_;
 }
 
 void DkgManager::SetQual(std::set<fetch::dkg::DkgManager::MuddleAddress> qual)
 {
   qual_ = std::move(qual);
+}
+
+DkgManager::AddResult DkgManager::AddSignaturePart(Identity const &from, std::string,
+                                                   std::string     sig_str)
+{
+  auto it = identity_to_index_.find(from.identifier());
+  assert(it != identity_to_index_.end());
+
+  if (it == identity_to_index_.end())
+  {
+    return AddResult::NOT_MEMBER;
+  }
+
+  if (already_signed_.find(from.identifier()) != already_signed_.end())
+  {
+    return AddResult::SIGNATURE_ALREADY_ADDED;
+  }
+
+  uint64_t  n = it->second;
+  Signature signature;
+  signature.setStr(sig_str);
+  if (!crypto::mcl::VerifySign(public_key_shares_[n], current_message_, signature, group_g_))
+  {
+    return AddResult::INVALID_SIGNATURE;
+  }
+
+  signature_buffer_.insert({n, signature});
+  already_signed_.insert(from.identifier());
+  return AddResult::SUCCESS;
 }
 
 }  // namespace dkg
