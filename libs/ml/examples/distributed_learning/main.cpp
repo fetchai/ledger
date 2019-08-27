@@ -83,7 +83,6 @@ int main(int ac, char **av)
   // Main loop
   for (SizeType it{0}; it < NUMBER_OF_ROUNDS; ++it)
   {
-
     // Start all clients
     coordinator->Reset();
     std::cout << "================= ROUND : " << it << " =================" << std::endl;
@@ -99,7 +98,7 @@ int main(int ac, char **av)
       t.join();
     }
 
-    if (coordinator->GetMode() == CoordinatorMode::SEMISYNCHRONOUS)
+    if (coordinator->GetMode() == CoordinatorMode::ASYNCHRONOUS)
     {
       break;
     }
