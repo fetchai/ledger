@@ -19,10 +19,7 @@
 
 #include "core/assert.hpp"
 #include "math/tensor.hpp"
-#include "ml/regularisers/reg_types.hpp"
-#include "ml/regularisers/regulariser.hpp"
 #include "ml/saveparams/saveable_params.hpp"
-#include "ml/state_dict.hpp"
 
 #include <functional>
 #include <memory>
