@@ -56,55 +56,17 @@ void TrainingClient::SetCoordinator(std::shared_ptr<Coordinator> coordinator_ptr
 /**
  * Main loop that runs in thread
  */
+
 void TrainingClient::MainLoop()
 {
-  std::ofstream lossfile("losses_" + id_ + ".csv", std::ofstream::out | std::ofstream::app);
-  DataType      loss;
-
-  while (coordinator_ptr_->state == CoordinatorState::RUN)
+  if (coordinator_ptr_->GetMode() == CoordinatorMode::SYNCHRONOUS)
   {
-    // Shuffle the peers list to get new contact for next update
-    fetch::random::Shuffle(gen_, peers_, peers_);
-
-    // Train one batch to create own gradient
-    Train();
-
-    // Put own gradient to peers queues
-    BroadcastGradients();
-
-    // Load own gradient
-    VectorTensorType gradients = g_.GetGradients();
-    VectorTensorType new_gradients;
-
-    // Sum all gradient in queue
-    while (!gradient_queue_.empty())
-    {
-      GetNewGradients(new_gradients);
-
-      for (SizeType j{0}; j < gradients.size(); j++)
-      {
-        fetch::math::Add(gradients.at(j), new_gradients.at(j), gradients.at(j));
-      }
-    }
-
-    // Apply sum of all gradients from queue along with own gradient
-    ApplyGradient(gradients);
-
-    // Validate loss for logging purpose
-    Test(loss);
-
-    // Save loss variation data
-    // Upload to https://plot.ly/create/#/ for visualisation
-    if (lossfile)
-    {
-      lossfile << GetTimeStamp() << ", " << loss << "\n";
-    }
+    TrainOnce();
   }
-
-  lossfile << GetTimeStamp() << ", "
-           << "STOPPED"
-           << "\n";
-  lossfile.close();
+  else
+  {
+    TrainWithCoordinator();
+  }
 }
 
 /**
@@ -263,4 +225,93 @@ std::string TrainingClient::GetTimeStamp()
 {
   // TODO(1564): Implement timestamp
   return "TIMESTAMP";
+}
+
+/**
+ * Do one batch training, run model on test set and write loss to csv file
+ */
+void TrainingClient::TrainOnce()
+{
+  std::ofstream lossfile("losses_" + id_ + ".csv", std::ofstream::out | std::ofstream::app);
+  DataType      loss;
+
+  DoBatch();
+
+  // Validate loss for logging purpose
+  Test(loss);
+
+  // Save loss variation data
+  // Upload to https://plot.ly/create/#/ for visualisation
+  if (lossfile)
+  {
+    lossfile << GetTimeStamp() << ", " << loss << "\n";
+  }
+
+  lossfile << GetTimeStamp() << ", "
+           << "STOPPED"
+           << "\n";
+  lossfile.close();
+}
+
+/**
+ * Do batch training repeatedly while coordinator state is set to RUN
+ */
+void TrainingClient::TrainWithCoordinator()
+{
+  std::ofstream lossfile("losses_" + id_ + ".csv", std::ofstream::out | std::ofstream::app);
+  DataType      loss;
+
+  while (coordinator_ptr_->GetState() == CoordinatorState::RUN)
+  {
+    DoBatch();
+    coordinator_ptr_->IncrementIterationsCounter();
+
+    // Validate loss for logging purpose
+    Test(loss);
+
+    // Save loss variation data
+    // Upload to https://plot.ly/create/#/ for visualisation
+    if (lossfile)
+    {
+      lossfile << GetTimeStamp() << ", " << loss << "\n";
+    }
+  }
+
+  lossfile << GetTimeStamp() << ", "
+           << "STOPPED"
+           << "\n";
+  lossfile.close();
+}
+
+/**
+ * Do one batch and broadcast gradients
+ */
+void TrainingClient::DoBatch()
+{
+  // Shuffle the peers list to get new contact for next update
+  fetch::random::Shuffle(gen_, peers_, peers_);
+
+  // Train one batch to create own gradient
+  Train();
+
+  // Put own gradient to peers queues
+  BroadcastGradients();
+
+  // Load own gradient
+  VectorTensorType gradients = g_.GetGradients();
+  VectorTensorType new_gradients;
+
+  // Sum all gradient in queue
+  while (!gradient_queue_.empty())
+  {
+    GetNewGradients(new_gradients);
+
+    for (SizeType j{0}; j < gradients.size(); j++)
+    {
+      fetch::math::Add(gradients.at(j), new_gradients.at(j), gradients.at(j));
+    }
+  }
+
+  // Apply sum of all gradients from queue along with own gradient
+  ApplyGradient(gradients);
 }

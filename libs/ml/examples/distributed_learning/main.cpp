@@ -30,9 +30,10 @@
 #include <utility>
 #include <vector>
 
-#define NUMBER_OF_CLIENTS 10
-#define NUMBER_OF_ITERATIONS 20
-#define SYNCHRONIZATION_INTERVAL 3
+#define NUMBER_OF_CLIENTS 5
+#define NUMBER_OF_ITERATIONS 50
+#define NUMBER_OF_ROUNDS 5
+#define SYNCHRONIZATION_MODE CoordinatorMode::ASYNCHRONOUS
 
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
@@ -51,9 +52,10 @@ int main(int ac, char **av)
     return 1;
   }
 
-  std::shared_ptr<Coordinator> coordinator = std::make_shared<Coordinator>();
+  std::shared_ptr<Coordinator> coordinator =
+      std::make_shared<Coordinator>(SYNCHRONIZATION_MODE, NUMBER_OF_ITERATIONS);
 
-  std::cout << "FETCH Distributed MNIST Demo -- Semi-synchronised" << std::endl;
+  std::cout << "FETCH Distributed MNIST Demo" << std::endl;
 
   std::vector<std::shared_ptr<TrainingClient>> clients(NUMBER_OF_CLIENTS);
   for (SizeType i{0}; i < NUMBER_OF_CLIENTS; ++i)
@@ -72,27 +74,27 @@ int main(int ac, char **av)
   }
 
   // Main loop
-  for (SizeType it{0}; it < NUMBER_OF_ITERATIONS; ++it)
+  for (SizeType it{0}; it < NUMBER_OF_ROUNDS; ++it)
   {
 
     // Start all clients
-    coordinator->state = CoordinatorState::RUN;
-    std::cout << "================= ITERATION : " << it << " =================" << std::endl;
+    coordinator->Reset();
+    std::cout << "================= ROUND : " << it << " =================" << std::endl;
     std::list<std::thread> threads;
     for (auto &c : clients)
     {
       threads.emplace_back([&c] { c->MainLoop(); });
     }
 
-    std::this_thread::sleep_for(std::chrono::seconds(SYNCHRONIZATION_INTERVAL));
-
-    // Send stop signal to all clients
-    coordinator->state = CoordinatorState::STOP;
-
     // Wait for everyone to finish
     for (auto &t : threads)
     {
       t.join();
+    }
+
+    if (coordinator->GetMode() == CoordinatorMode::ASYNCHRONOUS)
+    {
+      break;
     }
 
     // Synchronize weights by giving all clients average of all client's weights

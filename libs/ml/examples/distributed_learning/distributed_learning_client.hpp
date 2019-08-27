@@ -47,6 +47,13 @@ using SizeType         = fetch::math::SizeType;
 #define TEST_SET_RATIO 0.03f
 #define NUMBER_OF_PEERS 3
 
+enum class CoordinatorMode
+{
+  SYNCHRONOUS,
+  SEMISYNCHRONOUS,
+  ASYNCHRONOUS
+};
+
 enum class CoordinatorState
 {
   RUN,
@@ -56,15 +63,53 @@ enum class CoordinatorState
 class Coordinator
 {
 public:
-  CoordinatorState state = CoordinatorState::RUN;
+  Coordinator(CoordinatorMode mode, SizeType iterations_count = 0)
+    : mode_(mode)
+    , iterations_count_(iterations_count)
+  {}
+
+  void IncrementIterationsCounter()
+  {
+    std::lock_guard<std::mutex> l(iterations_mutex_);
+    iterations_done_++;
+
+    if (iterations_done_ >= iterations_count_)
+    {
+      state_ = CoordinatorState::STOP;
+    }
+  }
+
+  void Reset()
+  {
+    iterations_done_ = 0;
+    state_           = CoordinatorState::RUN;
+  }
+
+  CoordinatorMode GetMode() const
+  {
+    return mode_;
+  }
+
+  CoordinatorState GetState() const
+  {
+    return state_;
+  }
+
+private:
+  CoordinatorMode  mode_;
+  CoordinatorState state_           = CoordinatorState::RUN;
+  SizeType         iterations_done_ = 0;
+  SizeType         iterations_count_;
+  std::mutex       iterations_mutex_;
 };
 
 class TrainingClient
 {
 public:
   TrainingClient(std::string const &images, std::string const &labels, std::string const &id);
-  void             SetCoordinator(std::shared_ptr<Coordinator> coordinator_ptr);
-  void             MainLoop();
+  void SetCoordinator(std::shared_ptr<Coordinator> coordinator_ptr);
+  void MainLoop();
+
   DataType         Train();
   void             Test(DataType &test_loss);
   VectorTensorType GetGradients() const;
@@ -107,4 +152,8 @@ private:
 
   void        GetNewGradients(VectorTensorType &new_gradients);
   std::string GetTimeStamp();
+
+  void TrainOnce();
+  void TrainWithCoordinator();
+  void DoBatch();
 };
