@@ -155,7 +155,7 @@ int main(int ac, char **av)
   }
 
 	// setup params for training
-	SizeType train_size = 250;
+	SizeType train_size = 100;
 	SizeType test_size = 10;
 	SizeType batch_size = 4;
 	SizeType epochs = 2;
@@ -185,12 +185,22 @@ int main(int ac, char **av)
 	// get part of the training data out
 	TensorType sliced_train_data_pos = train_data[0].Slice(std::make_pair(static_cast<SizeType>(0), train_size), static_cast<SizeType>(1)).Copy();
 	TensorType sliced_train_data_neg = train_data[1].Slice(std::make_pair(static_cast<SizeType>(0), train_size), static_cast<SizeType>(1)).Copy();
-	TensorType train_data_concate = TensorType::Concat({sliced_train_data_pos, sliced_train_data_neg}, static_cast<SizeType>(1));
-	auto final_train_data = prepare_tensor_for_bert(train_data_concate, config);
+	TensorType train_data_mixed({config.max_seq_len, static_cast<SizeType>(2) * train_size});
+	// evenly mix pos and neg data together
+	for(SizeType i=0; i<train_size; i++){
+		train_data_mixed.View(static_cast<SizeType>(2)*i).Assign(sliced_train_data_pos.View(i));
+		train_data_mixed.View(static_cast<SizeType>(2)*i+1).Assign(sliced_train_data_neg.View(i));
+	}
+	std::cout << "train_data_mixed.ToString(): " << train_data_mixed.ToString() << std::endl;
+	auto final_train_data = prepare_tensor_for_bert(train_data_mixed, config);
+	
+	// prepare label for train data
 	TensorType train_labels({static_cast<SizeType>(1), static_cast<SizeType>(2) * train_size});
 	for(SizeType i=0; i<train_size; i++){
-		train_labels.Set(static_cast<SizeType>(0), i, static_cast<DataType>(1));
+		train_labels.Set(static_cast<SizeType>(0), static_cast<SizeType>(2)*i, static_cast<DataType>(1));
 	}
+	
+	// get test data out
 	TensorType sliced_test_data_pos = train_data[2].Slice(std::make_pair(static_cast<SizeType>(0), test_size), static_cast<SizeType>(1)).Copy();
 	TensorType sliced_test_data_neg = train_data[3].Slice(std::make_pair(static_cast<SizeType>(0), test_size), static_cast<SizeType>(1)).Copy();
 	TensorType test_data_concate = TensorType::Concat({sliced_test_data_pos, sliced_test_data_neg}, static_cast<SizeType>(1));
