@@ -81,11 +81,6 @@ public:
     : pointer_(ptr)
     , size_(n)
   {
-    std::cout << "E_TYPE_SIZE      : " << E_TYPE_SIZE << std::endl;
-    std::cout << "E_SIMD_SIZE      : " << E_SIMD_SIZE << std::endl;
-    std::cout << "E_SIMD_COUNT_IM  : " << E_SIMD_COUNT_IM << std::endl;
-    std::cout << "E_SIMD_COUNT     : " << E_SIMD_COUNT << std::endl;
-    std::cout << "E_LOG_SIMD_COUNT : " << E_LOG_SIMD_COUNT << std::endl;
   }
 
   ConstParallelDispatcher<Type> in_parallel() const
@@ -204,16 +199,11 @@ public:
 
   constexpr SizeType padded_size() const noexcept
   {
-    std::cout << "size_ = " << size_ << std::endl;
-    std::cout << "E_LOG_SIMD_COUNT = " << E_LOG_SIMD_COUNT << std::endl;
-    std::cout << "size_ >> E_LOG_SIMD_COUNT = " << simd_size() << std::endl;
     std::size_t padded = std::size_t((size_) >> E_LOG_SIMD_COUNT) << E_LOG_SIMD_COUNT;
-    std::cout << "padded = " << padded << std::endl;
     if (padded < size_)
     {
       padded += E_SIMD_SIZE;
     }
-    std::cout << "padded = " << padded << std::endl;
     return padded;
   }
 
