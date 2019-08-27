@@ -51,7 +51,6 @@ public:
   Reactor &operator=(Reactor &&) = delete;
 
 private:
-  using Mutex       = mutex::Mutex;
   using RunnableMap = std::map<Runnable const *, WeakRunnable>;
   using Flag        = std::atomic<bool>;
   using ThreadPtr   = std::unique_ptr<std::thread>;

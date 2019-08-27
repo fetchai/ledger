@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/common.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "meta/value_util.hpp"
 #include "vectorise/memory/shared_array.hpp"
 

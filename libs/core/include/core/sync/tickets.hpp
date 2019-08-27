@@ -95,10 +95,7 @@ inline void Tickets::Wait()
 {
   std::unique_lock<std::mutex> lock(mutex_);
   // wait for an event to be triggered
-  while (count_ == 0)
-  {
-    cv_.wait(lock);
-  }
+  cv_.wait(lock, [this]() { return count_ != 0; });
   --count_;
 }
 
