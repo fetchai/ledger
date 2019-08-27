@@ -117,8 +117,8 @@ using SlotT = typename Slot<Arg, F>::type;
  *     auto operator()(char, double, std::string const &) cv
  * Their return types can be inferred as
  *     InvokeResultT<F, int> and InvokeResultT<F, char, double, std::string const &>
- * so F should be unambiguously called with both argument sets; and their cv-qualification
- * reiterates that of F.
+ * so F should be unambiguously called with both argument sets; and their cv-qualifications
+ * reiterate that of F.
  *
  * As a convenience, an ArgSet can be a single type that is not a pack, a monotype overload;
  * it corresponds to the shortest non-empty argument sequence f can handle
@@ -139,14 +139,14 @@ class SlotType : type_util::ReverseAccumulateT<detail_::FunctorChild, SlotType<F
 
 public:
   /**
-   * @param f a single callable that would be invoked on every argument set
+   * @param f a single callable to be invoked on every accepted argument set
    */
   SlotType(F const &f)
     : Parent(f)
   {}
 
   /**
-   * Defines an operator() for every argument set as described above.
+   * Defines an operator() for every accepted argument set as described above.
    */
   using Parent::operator();
 };
@@ -165,7 +165,7 @@ public:
  * External constructor, a convenience function to infer F
  * 
  * @tparam ArgSets... argument sets of the SlotType
- * @param f a callable to be invoked on every argument set
+ * @param f a callable to be invoked on every accepted argument set
  * @return SlotType
  */
 template <class... ArgSets, class F>
