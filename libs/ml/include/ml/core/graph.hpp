@@ -75,7 +75,7 @@ public:
   NodePtrType GetNode(std::string const &node_name) const;
   void        SetInput(std::string const &node_name, TensorType data);
   void        ResetGraphCache(std::shared_ptr<Node<T>> const &n, bool input_size_changed);
-  void ResetWholeGraphCache(bool input_size_changed);
+  void        ResetWholeGraphCache(bool input_size_changed);
   void SetRegularisation(RegPtrType regulariser, DataType regularisation_rate = DataType{0.0});
   bool SetRegularisation(std::string node_name, RegPtrType regulariser,
                          DataType regularisation_rate = DataType{0.0});
@@ -465,7 +465,8 @@ void Graph<TensorType>::ResetWholeGraphCache(bool input_size_changed)
     node.second->ResetCache(input_size_changed);
 
     auto graph_pointer = std::dynamic_pointer_cast<Graph<TensorType>>(node.second->GetOp());
-    if (graph_pointer){
+    if (graph_pointer)
+    {
       graph_pointer->ResetWholeGraphCache(input_size_changed);
     }
   }
