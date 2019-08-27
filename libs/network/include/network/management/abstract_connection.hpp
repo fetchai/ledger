@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "core/mutex.hpp"
 #include "network/management/abstract_connection_register.hpp"
 #include "network/message.hpp"
@@ -110,35 +110,30 @@ public:
 
   void OnMessage(std::function<void(network::message_type const &msg)> const &f)
   {
-    LOG_STACK_TRACE_POINT;
     FETCH_LOCK(callback_mutex_);
     on_message_ = f;
   }
 
   void OnConnectionSuccess(std::function<void()> const &fnc)
   {
-    LOG_STACK_TRACE_POINT;
     FETCH_LOCK(callback_mutex_);
     on_connection_success_ = fnc;
   }
 
   void OnConnectionFailed(std::function<void()> const &fnc)
   {
-    LOG_STACK_TRACE_POINT;
     FETCH_LOCK(callback_mutex_);
     on_connection_failed_ = fnc;
   }
 
   void OnLeave(std::function<void()> const &fnc)
   {
-    LOG_STACK_TRACE_POINT;
     FETCH_LOCK(callback_mutex_);
     on_leave_ = fnc;
   }
 
   void ClearClosures() noexcept
   {
-    LOG_STACK_TRACE_POINT;
     FETCH_LOCK(callback_mutex_);
     on_connection_failed_  = nullptr;
     on_connection_success_ = nullptr;
@@ -187,7 +182,6 @@ protected:
 
   void SignalMessage(network::message_type const &msg)
   {
-    LOG_STACK_TRACE_POINT;
     std::function<void(network::message_type const &)> cb;
     {
       FETCH_LOCK(callback_mutex_);
@@ -201,7 +195,6 @@ protected:
 
   void SignalConnectionFailed()
   {
-    LOG_STACK_TRACE_POINT;
     std::function<void()> cb;
     {
       FETCH_LOCK(callback_mutex_);
@@ -217,7 +210,6 @@ protected:
 
   void SignalConnectionSuccess()
   {
-    LOG_STACK_TRACE_POINT;
     std::function<void()> cb;
     {
       FETCH_LOCK(callback_mutex_);
@@ -241,7 +233,7 @@ private:
   std::string           address_;
   std::atomic<uint16_t> port_;
 
-  mutable mutex::Mutex address_mutex_{__LINE__, __FILE__};
+  mutable Mutex address_mutex_{__LINE__, __FILE__};
 
   static connection_handle_type next_handle()
   {
@@ -263,8 +255,8 @@ private:
   std::atomic<connection_handle_type> const handle_;
 
   static connection_handle_type global_handle_counter_;
-  static fetch::mutex::Mutex    global_handle_mutex_;
-  mutable fetch::mutex::Mutex   callback_mutex_{__LINE__, __FILE__};
+  static Mutex                  global_handle_mutex_;
+  mutable Mutex                 callback_mutex_{__LINE__, __FILE__};
 
   shared_type self_;
 

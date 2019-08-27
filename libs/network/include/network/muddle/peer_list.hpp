@@ -124,9 +124,7 @@ private:
     bool        connected            = false;  ///< Whether the last/current attempt has succeeded.
   };
 
-  using Mutex   = mutex::Mutex;
-  using PeerSet = std::unordered_set<Uri>;
-
+  using PeerSet     = std::unordered_set<Uri>;
   using MetadataMap = std::unordered_map<Uri, PeerMetadata>;
 
   Router &router_;

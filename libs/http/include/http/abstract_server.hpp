@@ -42,8 +42,8 @@ public:
   }
 
 private:
-  static handle_type         global_handle_counter_;
-  static fetch::mutex::Mutex global_handle_mutex_;
+  static handle_type global_handle_counter_;
+  static Mutex       global_handle_mutex_;
 };
 
 }  // namespace http

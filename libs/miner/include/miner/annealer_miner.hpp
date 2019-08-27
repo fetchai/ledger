@@ -30,7 +30,6 @@ class AnnealerMiner : public MinerInterface
 {
 public:
   using transaction_type       = std::shared_ptr<TransactionItem>;
-  using mutex_type             = fetch::mutex::Mutex;
   using transaction_queue_type = std::vector<transaction_type>;
   using generator_type         = ledger::BlockGenerator;
 
@@ -151,8 +150,8 @@ private:
     return generator_.unspent().size() + pending_queue_.size();
   }
 
-  mutex_type pending_queue_lock_{__LINE__, __FILE__};  ///< Protects both `pending_queue_` and
-                                                       ///< `transaction_index_`
+  Mutex pending_queue_lock_{__LINE__, __FILE__};  ///< Protects both `pending_queue_` and
+                                                  ///< `transaction_index_`
   transaction_queue_type pending_queue_;
   std::size_t            transaction_index_{0};
 

@@ -40,6 +40,7 @@
 #include "vectorise/platform.hpp"
 
 #include <cstdint>
+#include <vector>
 
 namespace fetch {
 namespace storage {

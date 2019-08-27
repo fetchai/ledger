@@ -754,7 +754,7 @@ constexpr meta::IfIsUnsignedInteger<T, UInt<S>> UInt<S>::operator+(T n) const
   UInt<S> ret{*this}, nint{n};
   ret += nint;
 
-  return std::move(ret);
+  return ret;
 }
 
 template <uint16_t S>
@@ -764,7 +764,7 @@ constexpr meta::IfIsUnsignedInteger<T, UInt<S>> UInt<S>::operator-(T n) const
   UInt<S> ret{*this}, nint{n};
   ret -= nint;
 
-  return std::move(ret);
+  return ret;
 }
 
 template <uint16_t S>
@@ -774,7 +774,7 @@ constexpr meta::IfIsUnsignedInteger<T, UInt<S>> UInt<S>::operator*(T n) const
   UInt<S> ret{*this}, nint{n};
   ret *= nint;
 
-  return std::move(ret);
+  return ret;
 }
 
 template <uint16_t S>
@@ -784,7 +784,7 @@ constexpr meta::IfIsUnsignedInteger<T, UInt<S>> UInt<S>::operator/(T n) const
   UInt<S> ret{*this}, nint{n};
   ret /= nint;
 
-  return std::move(ret);
+  return ret;
 }
 
 template <uint16_t S>
@@ -794,7 +794,7 @@ constexpr meta::IfIsUnsignedInteger<T, UInt<S>> UInt<S>::operator%(T n) const
   UInt<S> ret{*this}, nint{n};
   ret %= nint;
 
-  return std::move(ret);
+  return ret;
 }
 
 template <uint16_t S>
@@ -804,7 +804,7 @@ constexpr meta::IfIsUnsignedInteger<T, UInt<S>> UInt<S>::operator&(T n) const
   UInt<S> ret{*this}, nint{n};
   ret &= nint;
 
-  return std::move(ret);
+  return ret;
 }
 
 template <uint16_t S>
@@ -814,7 +814,7 @@ constexpr meta::IfIsUnsignedInteger<T, UInt<S>> UInt<S>::operator|(T n) const
   UInt<S> ret{*this}, nint{n};
   ret |= nint;
 
-  return std::move(ret);
+  return ret;
 }
 
 template <uint16_t S>
@@ -824,7 +824,7 @@ constexpr meta::IfIsUnsignedInteger<T, UInt<S>> UInt<S>::operator^(T n) const
   UInt<S> ret{*this}, nint{n};
   ret ^= nint;
 
-  return std::move(ret);
+  return ret;
 }
 
 template <uint16_t S>
