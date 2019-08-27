@@ -130,7 +130,6 @@ public:
 
 private:
   using Queue = std::deque<WorkItem>;
-  using Mutex = mutex::Mutex;
 
   mutable Mutex     mutex_{__LINE__, __FILE__};  ///< Mutex protecting `queue_`
   Queue             queue_;                      ///< The queue of work items

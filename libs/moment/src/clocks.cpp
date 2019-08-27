@@ -30,11 +30,10 @@ namespace fetch {
 namespace moment {
 namespace {
 
-using Mutex      = mutex::Mutex;
 using ClockStore = std::unordered_map<std::string, ClockPtr>;
 
-mutex::Mutex clock_store_lock{__LINE__, __FILE__};
-ClockStore   clock_store;
+Mutex      clock_store_lock{__LINE__, __FILE__};
+ClockStore clock_store;
 
 /**
  * Create a normal version of the clock

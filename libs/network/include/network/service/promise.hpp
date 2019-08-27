@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "core/mutex.hpp"
 #include "core/serializers/exception.hpp"
 #include "network/service/types.hpp"
@@ -119,8 +119,6 @@ public:
   template <typename T>
   T As() const
   {
-    LOG_STACK_TRACE_POINT;
-
     T result{};
     if (!As<T>(result))
     {
@@ -133,8 +131,6 @@ public:
   template <typename T>
   bool As(T &ret) const
   {
-    LOG_STACK_TRACE_POINT;
-
     if (!Wait())
     {
       return false;
@@ -148,7 +144,6 @@ public:
   /// @}
 
 private:
-  using Mutex       = mutex::Mutex;
   using AtomicState = std::atomic<State>;
   using Condition   = std::condition_variable;
 

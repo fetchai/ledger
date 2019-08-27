@@ -19,7 +19,7 @@
 
 #include "core/assert.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "core/mutex.hpp"
 #include "core/serializers/exception.hpp"
 #include "network/message.hpp"
@@ -92,14 +92,10 @@ public:
     : super_type(port, network_manager)
     , network_manager_(network_manager)
     , message_mutex_(__LINE__, __FILE__)
-  {
-    LOG_STACK_TRACE_POINT;
-  }
+  {}
 
   ~ServiceServer()
   {
-    LOG_STACK_TRACE_POINT;
-
     FETCH_LOCK(client_rpcs_mutex_);
 
     for (auto &c : client_rpcs_)
@@ -131,8 +127,6 @@ protected:
 private:
   void PushRequest(handle_type client, network::message_type const &msg) override
   {
-    LOG_STACK_TRACE_POINT;
-
     FETCH_LOCK(message_mutex_);
     FETCH_LOG_DEBUG(LOGGING_NAME, "RPC call from ", client);
     PendingMessage pm = {client, msg};
@@ -144,8 +138,6 @@ private:
 
   void ProcessMessages()
   {
-    LOG_STACK_TRACE_POINT;
-
     bool has_messages = false;
     {
       FETCH_LOCK(message_mutex_);
@@ -206,10 +198,10 @@ private:
 
   network_manager_type network_manager_;
 
-  std::deque<PendingMessage>  messages_;
-  mutable fetch::mutex::Mutex message_mutex_{__LINE__, __FILE__};
+  std::deque<PendingMessage> messages_;
+  mutable Mutex              message_mutex_{__LINE__, __FILE__};
 
-  mutable fetch::mutex::Mutex                 client_rpcs_mutex_{__LINE__, __FILE__};
+  mutable Mutex                               client_rpcs_mutex_{__LINE__, __FILE__};
   std::map<handle_type, ClientRPCInterface *> client_rpcs_;
 };
 }  // namespace service

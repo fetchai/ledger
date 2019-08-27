@@ -36,7 +36,6 @@ class Resolver
 {
 public:
   using Address  = byte_array::ConstByteArray;
-  using Mutex    = mutex::Mutex;
   using PeerList = std::vector<network::Peer>;
   using PeerMap  = std::unordered_map<Address, PeerList>;
   using Uri      = network::Uri;
