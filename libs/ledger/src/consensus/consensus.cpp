@@ -79,7 +79,8 @@ void Consensus::UpdateCurrentBlock(Block const &current)
       cabinet_member_list.insert(staker);
     }
 
-    uint32_t threshold = static_cast<uint32_t>(std::ceil(cabinet_member_list.size() * threshold_));
+    uint32_t threshold = static_cast<uint32_t>(
+        std::ceil(static_cast<double>(cabinet_member_list.size()) * threshold_));
 
     FETCH_LOG_INFO(LOGGING_NAME, "Block: ", current_block_number_,
                    " creating new aeon. Periodicity: ", aeon_period_, " threshold: ", threshold,
