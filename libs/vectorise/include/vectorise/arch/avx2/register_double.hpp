@@ -324,8 +324,10 @@ inline double reduce(VectorRegister<double, 128> const &x)
 
 inline double reduce(VectorRegister<double, 256> const &x)
 {
-  __m256d r = _mm256_hadd_pd(x.data(), _mm256_setzero_pd());
-  return _mm256_cvtsd_f64(r);
+  VectorRegister<double, 128> hi{_mm256_extractf128_pd(x.data(),1)};
+  VectorRegister<double, 128> lo{_mm256_extractf128_pd(x.data(),0)};
+  hi = hi + lo;
+  return reduce(hi);
 }
 
 inline bool all_less_than(VectorRegister<double, 128> const &x,
