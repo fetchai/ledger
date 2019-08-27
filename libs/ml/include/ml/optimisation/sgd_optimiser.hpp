@@ -94,7 +94,7 @@ void SGDOptimiser<T>::ApplyGradients(SizeType batch_size)
   while (gradient_it != this->gradients_.end())
   {
     // output_grad[i] = (input_grad[i] / batch_size) * -learning_rate
-    fetch::math::Multiply((*trainable_it)->get_gradients_references(),
+    fetch::math::Multiply((*trainable_it)->GetGradientsReferences(),
                           neg_learning_rate_div_batch_size, *gradient_it);
 
     // Apply gradient weights[i]+=output_grad[i]

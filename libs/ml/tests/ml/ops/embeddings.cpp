@@ -133,12 +133,12 @@ TYPED_TEST(EmbeddingsTest, backward)
 
   e.Backward({std::make_shared<TypeParam>(input)}, error_signal);
 
-  TensorType grad = e.get_gradients_references();
+  TensorType grad = e.GetGradientsReferences();
   fetch::math::Multiply(grad, DataType{-1}, grad);
   e.ApplyGradient(grad);
 
   // Get a copy of the gradients and check that they were zeroed out after Step
-  TensorType grads_copy = e.get_gradients_references();
+  TensorType grads_copy = e.GetGradientsReferences();
 
   EXPECT_TRUE(TensorType::Zeroes({6, 1}).AllClose(grads_copy.View(SizeType(input(0, 0))).Copy()));
   EXPECT_TRUE(TensorType::Zeroes({6, 1}).AllClose(grads_copy.View(SizeType(input(1, 0))).Copy()));
