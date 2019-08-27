@@ -356,7 +356,7 @@ struct DkgMember
   }
 
   virtual void SetOutput()                                                            = 0;
-  virtual void ResetCabinet(std::unordered_set<Identity> cabinet, uint32_t threshold) = 0;
+  virtual void QueueCabinet(std::unordered_set<Identity> cabinet, uint32_t threshold) = 0;
   virtual std::weak_ptr<core::Runnable> GetWeakRunnable()                             = 0;
   virtual bool                          DkgFinished()                                 = 0;
 
@@ -394,7 +394,7 @@ struct FaultyDkgMember : DkgMember
     dkg.SetDkgOutput(public_key, secret_share, public_key_shares, qual_set);
   }
 
-  void ResetCabinet(std::unordered_set<Identity> cabinet, uint32_t threshold) override
+  void QueueCabinet(std::unordered_set<Identity> cabinet, uint32_t threshold) override
   {
     SharedAeonExecutionUnit beacon = std::make_shared<AeonExecutionUnit>();
 
@@ -448,7 +448,7 @@ struct HonestDkgMember : DkgMember
   {
     dkg.SetDkgOutput(public_key, secret_share, public_key_shares, qual_set);
   }
-  void ResetCabinet(std::unordered_set<Identity> cabinet, uint32_t threshold) override
+  void QueueCabinet(std::unordered_set<Identity> cabinet, uint32_t threshold) override
   {
     SharedAeonExecutionUnit beacon = std::make_shared<AeonExecutionUnit>();
 
@@ -485,7 +485,8 @@ struct HonestDkgMember : DkgMember
 
 void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
                   uint32_t expected_completion_size,
-                  const std::vector<std::vector<FaultyDkgSetupService::Failures>> &failures = {})
+                  const std::vector<std::vector<FaultyDkgSetupService::Failures>> &failures    = {},
+                  uint16_t                                                         setup_delay = 0)
 {
   std::unordered_set<Identity>                                        cabinet_identities;
   std::set<RBC::MuddleAddress>                                        cabinet;
@@ -519,7 +520,7 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
   // Reset cabinet for rbc in pre-dkg sync
   for (uint32_t ii = 0; ii < cabinet_size; ii++)
   {
-    committee[ii]->ResetCabinet(cabinet_identities, threshold);
+    committee[ii]->QueueCabinet(cabinet_identities, threshold);
   }
 
   // Wait until everyone else has connected
@@ -559,6 +560,7 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
     for (auto &member : committee)
     {
       member->reactor.Start();
+      std::this_thread::sleep_for(std::chrono::milliseconds(setup_delay));
     }
 
     // Loop until everyone is finished with DKG
@@ -613,7 +615,6 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
 
 TEST(dkg_setup, small_scale_test)
 {
-  SetGlobalLogLevel(LogLevel::TRACE);
   GenerateTest(4, 3, 4, 4);
 }
 
@@ -622,7 +623,6 @@ TEST(dkg_setup, send_bad_share)
   // Node 0 sends bad secret shares to Node 1 which complains against it.
   // Node 0 then broadcasts its real shares as defense and then is allowed into
   // qual
-  SetGlobalLogLevel(LogLevel::TRACE);
   GenerateTest(4, 3, 4, 4, {{FaultyDkgSetupService::Failures::SEND_BAD_SHARE}});
 }
 
@@ -630,7 +630,6 @@ TEST(dkg_setup, bad_coefficients)
 {
   // Node 0 broadcasts bad coefficients which fails verification by everyone.
   // Rejected from qual
-  SetGlobalLogLevel(LogLevel::TRACE);
   GenerateTest(4, 3, 3, 3, {{FaultyDkgSetupService::Failures::BAD_COEFFICIENT}});
 }
 
@@ -639,7 +638,6 @@ TEST(dkg_setup, send_empty_complaints_answer)
   // Node 0 sends computes bad secret shares to Node 1 which complains against it.
   // Node 0 then does not send real shares and instead sends empty complaint answer.
   // Node 0 should be disqualified from qual
-  SetGlobalLogLevel(LogLevel::TRACE);
   GenerateTest(4, 3, 3, 3,
                {{FaultyDkgSetupService::Failures::SEND_BAD_SHARE,
                  FaultyDkgSetupService::Failures::SEND_EMPTY_COMPLAINT_ANSWER}});
@@ -649,7 +647,6 @@ TEST(dkg_setup, send_multiple_messages)
 {
   // Node 0 sends multiple coefficients, complaint, complaint answers and qual coefficient messages.
   // Everyone should succeed in DKG
-  SetGlobalLogLevel(LogLevel::TRACE);
   GenerateTest(4, 3, 4, 4,
                {{FaultyDkgSetupService::Failures::SEND_MULTIPLE_COEFFICIENTS,
                  FaultyDkgSetupService::Failures::SEND_MULTIPLE_COMPLAINTS,
@@ -659,7 +656,6 @@ TEST(dkg_setup, send_multiple_messages)
 
 TEST(dkg_setup, qual_below_threshold)
 {
-  SetGlobalLogLevel(LogLevel::TRACE);
   GenerateTest(4, 3, 2, 0,
                {{FaultyDkgSetupService::Failures::BAD_COEFFICIENT},
                 {FaultyDkgSetupService::Failures::BAD_COEFFICIENT}});
@@ -678,7 +674,6 @@ TEST(dkg_setup, send_fake_qual_complaint)
   // Node 0 sends fake qual coefficients. Should trigger warning and node 0's shares will be
   // reconstructed but everyone else should succeed in the DKG. Important test as it means
   // reconstruction computes the correct thing.
-  SetGlobalLogLevel(LogLevel::TRACE);
   GenerateTest(4, 3, 4, 4, {{FaultyDkgSetupService::Failures::SEND_FALSE_QUAL_COMPLAINT}});
 }
 
@@ -686,7 +681,6 @@ TEST(dkg_setup, too_many_bad_qual_coefficients)
 {
   // Three nodes send bad qual coefficients which means that there are
   // not enough parties not in complaints. DKG fails
-  SetGlobalLogLevel(LogLevel::TRACE);
   GenerateTest(4, 2, 4, 0,
                {{FaultyDkgSetupService::Failures::BAD_QUAL_COEFFICIENTS},
                 {FaultyDkgSetupService::Failures::BAD_QUAL_COEFFICIENTS},
@@ -697,7 +691,6 @@ TEST(dkg_setup, send_multiple_reconstruction_shares)
 {
   // Node sends multiple reconstruction shares which triggers warning but
   // DKG succeeds
-  SetGlobalLogLevel(LogLevel::TRACE);
   GenerateTest(4, 3, 4, 3,
                {{FaultyDkgSetupService::Failures::BAD_QUAL_COEFFICIENTS},
                 {FaultyDkgSetupService::Failures::SEND_MULTIPLE_RECONSTRUCTION_SHARES}});
@@ -707,8 +700,14 @@ TEST(dkg_setup, withold_reconstruction_shares)
 {
   // Node 0 sends bad qual coefficients and another in collusion does not broadcast node 0's shares
   // so there are not enough shares to run reconstruction
-  SetGlobalLogLevel(LogLevel::TRACE);
   GenerateTest(4, 3, 4, 0,
                {{FaultyDkgSetupService::Failures::BAD_QUAL_COEFFICIENTS},
                 {FaultyDkgSetupService::Failures::WITHOLD_RECONSTRUCTION_SHARES}});
+}
+
+TEST(dkg_setup, long_delay_between_starts)
+{
+  // Start nodes with delay (ms) between starting service
+  SetGlobalLogLevel(LogLevel::TRACE);
+  GenerateTest(4, 3, 4, 4, {}, 1000);
 }
