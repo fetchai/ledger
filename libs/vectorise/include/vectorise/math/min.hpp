@@ -53,13 +53,9 @@ inline T Min(VectorRegister<T, N> const &a)
   constexpr std::size_t size = N/(8 * sizeof(T));
   alignas(VectorRegister<T, N>::E_REGISTER_SIZE) T A[size];
   a.Store(A);
-  std::cout << "a = " << a << std::endl;
-  std::cout << "N = " << N << std::endl;
   T min{A[0]};
   for (std::size_t i=1; i < size; i++) {
-    std::cout << "A[" << i << "] = " << A[i] << std::endl;
     min = Min(A[i], min);
-    std::cout << "min = " << min << std::endl;
   }
   return min;
 }
