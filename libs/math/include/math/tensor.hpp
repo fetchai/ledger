@@ -2294,6 +2294,8 @@ typename Tensor<T, C>::TensorSlice Tensor<T, C>::Slice(
     if (axis == j)
     {
       assert(start_end_index.first < start_end_index.second);
+      assert(start_end_index.first >= static_cast<SizeType>(0));
+	    assert(start_end_index.second <= shape(j));
       range.push_back({start_end_index.first, start_end_index.second, 1});
     }
     else

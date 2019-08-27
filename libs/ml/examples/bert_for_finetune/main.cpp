@@ -156,7 +156,7 @@ int main(int ac, char **av)
 
 	// setup params for training
 	SizeType train_size = 100;
-	SizeType test_size = 10;
+	SizeType test_size = 6;
 	SizeType batch_size = 4;
 	SizeType epochs = 2;
 	SizeType layer_no = 12;
@@ -174,24 +174,18 @@ int main(int ac, char **av)
   // prepare IMDB data
   auto train_data = load_imdb_finetune_data(IMDB_path);
 	std::cout << "finish loading imdb from disk, start preprocessing" << std::endl;
-  std::vector<TensorType> labels;
-  TensorType label_train_pos({static_cast<SizeType>(1), train_data[0].shape(1)});
-  label_train_pos.Fill(static_cast<SizeType>(1));
-	TensorType label_train_neg({static_cast<SizeType>(1), train_data[1].shape(1)});
-	TensorType label_test_pos({static_cast<SizeType>(1), train_data[2].shape(1)});
-	label_test_pos.Fill(static_cast<SizeType>(1));
-	TensorType label_test_neg({static_cast<SizeType>(1), train_data[3].shape(1)});
 	
 	// get part of the training data out
-	TensorType sliced_train_data_pos = train_data[0].Slice(std::make_pair(static_cast<SizeType>(0), train_size), static_cast<SizeType>(1)).Copy();
-	TensorType sliced_train_data_neg = train_data[1].Slice(std::make_pair(static_cast<SizeType>(0), train_size), static_cast<SizeType>(1)).Copy();
-	TensorType train_data_mixed({config.max_seq_len, static_cast<SizeType>(2) * train_size});
+//	TensorType sliced_train_data_pos = train_data[0].Slice(std::make_pair(static_cast<SizeType>(0), train_size), static_cast<SizeType>(1)).Copy();
+//	std::cout << "train_data[0].View(0).Copy().ToString(): " << train_data[0].View(0).Copy().ToString() << std::endl;
+//	std::cout << "sliced.View(0).Copy().ToString(): " << sliced_train_data_pos.View(0).Copy().ToString() << std::endl;
+//	TensorType sliced_train_data_neg = train_data[1].Slice(std::make_pair(static_cast<SizeType>(0), train_size), static_cast<SizeType>(1)).Copy();
 	// evenly mix pos and neg data together
+	TensorType train_data_mixed({train_data[0].shape(0), static_cast<SizeType>(2) * train_size});
 	for(SizeType i=0; i<train_size; i++){
-		train_data_mixed.View(static_cast<SizeType>(2)*i).Assign(sliced_train_data_pos.View(i));
-		train_data_mixed.View(static_cast<SizeType>(2)*i+1).Assign(sliced_train_data_neg.View(i));
+		train_data_mixed.View(static_cast<SizeType>(2)*i).Assign(train_data[0].View(i));
+		train_data_mixed.View(static_cast<SizeType>(2)*i+1).Assign(train_data[1].View(i));
 	}
-	std::cout << "train_data_mixed.ToString(): " << train_data_mixed.ToString() << std::endl;
 	auto final_train_data = prepare_tensor_for_bert(train_data_mixed, config);
 	
 	// prepare label for train data
@@ -326,7 +320,7 @@ std::vector<TensorType> prepare_tensor_for_bert(TensorType const &data, BERTConf
   // check that data shape is proper for bert input
   if (data.shape().size() != 2 || data.shape(0) != max_seq_len)
   {
-    std::runtime_error("Incorrect data shape for bert");
+    std::runtime_error("Incorrect data shape for given bert config");
   }
 
   // build segment, mask and pos data for each sentence in the data
