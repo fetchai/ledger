@@ -201,7 +201,6 @@ private:
   };
 
   using Queue = std::priority_queue<Element>;
-  using Mutex = fetch::mutex::Mutex;
   using Flag  = std::atomic<bool>;
 
   mutable Mutex queue_mutex_{__LINE__, __FILE__};  ///< Mutex protecting `queue_`

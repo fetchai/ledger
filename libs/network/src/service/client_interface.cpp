@@ -32,7 +32,6 @@ Promise ServiceClientInterface::CallWithPackedArguments(protocol_handler_type co
                                                         function_handler_type const &function,
                                                         byte_array::ByteArray const &args)
 {
-  LOG_STACK_TRACE_POINT;
   FETCH_LOG_DEBUG(LOGGING_NAME, "Service Client Calling (2) ", protocol, ":", function);
 
   Promise         prom = MakePromise();
@@ -69,7 +68,6 @@ subscription_handler_type ServiceClientInterface::Subscribe(protocol_handler_typ
                                                             feed_handler_type const &    feed,
                                                             AbstractCallable *           callback)
 {
-  LOG_STACK_TRACE_POINT;
   FETCH_LOG_INFO(LOGGING_NAME, "PubSub: SUBSCRIBE ", int(protocol), ":", int(feed));
 
   subscription_handler_type subid = CreateSubscription(protocol, feed, callback);
@@ -87,7 +85,6 @@ subscription_handler_type ServiceClientInterface::Subscribe(protocol_handler_typ
 void ServiceClientInterface::Unsubscribe(subscription_handler_type id)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "PubSub: Unsub ", int(id));
-  LOG_STACK_TRACE_POINT;
   Subscription sub;
   {
     FETCH_LOCK(subscription_mutex_);
@@ -131,7 +128,6 @@ void ServiceClientInterface::Unsubscribe(subscription_handler_type id)
 void ServiceClientInterface::ProcessRPCResult(network::message_type const &msg,
                                               service::serializer_type &   params)
 {
-  LOG_STACK_TRACE_POINT;
   PromiseCounter id;
   params >> id;
 
@@ -146,7 +142,6 @@ void ServiceClientInterface::ProcessRPCResult(network::message_type const &msg,
 
 bool ServiceClientInterface::ProcessServerMessage(network::message_type const &msg)
 {
-  LOG_STACK_TRACE_POINT;
   bool ret = true;
 
   serializer_type params(msg);
@@ -292,8 +287,6 @@ void ServiceClientInterface::RemovePromise(PromiseCounter id)
 subscription_handler_type ServiceClientInterface::CreateSubscription(
     protocol_handler_type const &protocol, feed_handler_type const &feed, AbstractCallable *cb)
 {
-  LOG_STACK_TRACE_POINT;
-
   FETCH_LOCK(subscription_mutex_);
   subscription_index_counter_++;
   subscriptions_[subscription_index_counter_] = Subscription(protocol, feed, cb);

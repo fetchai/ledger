@@ -65,7 +65,6 @@ private:
     Timestamp      timestamp;
   };
 
-  using Mutex      = mutex::Mutex;
   using EntryStack = std::vector<Entry>;
 
   void ThreadEntryPoint();

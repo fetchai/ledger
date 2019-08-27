@@ -71,7 +71,6 @@ public:
 
 private:
   using Counter = std::atomic<uint16_t>;
-  using Mutex   = mutex::Mutex;
 
   struct PromiseEntry
   {

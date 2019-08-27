@@ -501,7 +501,7 @@ std::vector<TensorType> Graph<TensorType>::get_weights() const
     auto trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
     ret.emplace_back(trainable_ptr->get_weights());
   }
-  return std::move(ret);
+  return ret;
 }
 
 /**
@@ -519,7 +519,7 @@ std::vector<TensorType> Graph<TensorType>::GetGradients() const
     auto trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
     ret.emplace_back(trainable_ptr->get_gradients());
   }
-  return std::move(ret);
+  return ret;
 }
 
 /**

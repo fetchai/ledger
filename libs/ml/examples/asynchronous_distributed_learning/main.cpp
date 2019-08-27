@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/mutex.hpp"
 #include "core/random.hpp"
 #include "math/statistics/mean.hpp"
 #include "math/tensor.hpp"
