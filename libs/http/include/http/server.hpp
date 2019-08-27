@@ -112,11 +112,11 @@ public:
     NetworkManager &                   threadMan = networkManager_;
 
     networkManager_.Post([&socRef, &accepRef, manager, &threadMan, port] {
-      FETCH_LOG_INFO(LOGGING_NAME, "Starting HTTPServer on http://127.0.0.1:", port);
-
-      auto soc = threadMan.CreateIO<Socket>();
-
+      auto soc   = threadMan.CreateIO<Socket>();
       auto accep = threadMan.CreateIO<Acceptor>(asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port));
+
+      FETCH_LOG_INFO(LOGGING_NAME,
+                     "Starting HTTPServer on http://127.0.0.1:", accep->local_endpoint().port());
 
       // allow initiating class to post closes to these
       socRef   = soc;

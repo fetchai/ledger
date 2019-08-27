@@ -216,7 +216,6 @@ void PackArgs(S &serializer)
 
 enum Callable
 {
-  CLIENT_ID_ARG      = 1ull,
   CLIENT_CONTEXT_ARG = 2ull,
 };
 

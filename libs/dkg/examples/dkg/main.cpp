@@ -23,7 +23,7 @@
 #include "crypto/prover.hpp"
 #include "dkg/dkg_service.hpp"
 #include "dkg/pre_dkg_sync.hpp"
-#include "network/muddle/muddle.hpp"
+#include "muddle/muddle_interface.hpp"
 
 #include <chrono>
 #include <cstdint>
@@ -66,7 +66,7 @@ int main()
     NetworkManager       network_manager;
     fetch::core::Reactor reactor;
     ProverPtr            muddle_certificate;
-    Muddle               muddle;
+    MuddlePtr            muddle;
     DkgService           dkg_service;
     PreDkgSync           pre_sync;
     CabinetMember(uint16_t port_number, uint16_t index)
@@ -74,12 +74,12 @@ int main()
       , network_manager{"NetworkManager" + std::to_string(index), 1}
       , reactor{"ReactorName" + std::to_string(index)}
       , muddle_certificate{CreateNewCertificate()}
-      , muddle{fetch::muddle::NetworkId{"TestNetwork"}, muddle_certificate, network_manager}
-      , dkg_service{muddle.AsEndpoint(), muddle_certificate->identity().identifier()}
-      , pre_sync{muddle, 4}
+      , muddle{CreateMuddle("Test", muddle_certificate, network_manager, "127.0.0.1")}
+      , dkg_service{muddle->GetEndpoint(), muddle_certificate->identity().identifier()}
+      , pre_sync{*muddle, 4}
     {
       network_manager.Start();
-      muddle.Start({muddle_port});
+      muddle->Start({}, {muddle_port});
     }
   };
 
@@ -161,8 +161,7 @@ int main()
   for (auto &member : committee)
   {
     member->reactor.Stop();
-    member->muddle.Stop();
-    member->muddle.Shutdown();
+    member->muddle->Stop();
     member->network_manager.Stop();
   }
   std::this_thread::sleep_for(std::chrono::seconds(1));
