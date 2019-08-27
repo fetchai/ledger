@@ -22,18 +22,12 @@
 
 namespace fetch {
 namespace beacon {
-class BeaconSetupService;
+class DkgSetupService;
 class BeaconSetupServiceProtocol : public service::Protocol
 {
 public:
-  // Protocol call numbers
-  enum
-  {
-    SUBMIT_SHARE
-  };
-
   // Construction / Destruction
-  explicit BeaconSetupServiceProtocol(BeaconSetupService &service);
+  explicit BeaconSetupServiceProtocol(DkgSetupService &service);
 
   BeaconSetupServiceProtocol(BeaconSetupServiceProtocol const &) = delete;
   BeaconSetupServiceProtocol(BeaconSetupServiceProtocol &&)      = delete;
@@ -44,7 +38,7 @@ public:
   BeaconSetupServiceProtocol &operator=(BeaconSetupServiceProtocol &&) = delete;
 
 private:
-  BeaconSetupService &service_;
+  DkgSetupService &service_;
 };
 }  // namespace beacon
 }  // namespace fetch
