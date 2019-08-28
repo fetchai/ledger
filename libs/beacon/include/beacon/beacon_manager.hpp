@@ -88,6 +88,7 @@ public:
   void             SetDkgOutput(bn::G2 &public_key, bn::Fr &secret_share,
                                 std::vector<bn::G2> &public_key_shares, std::set<MuddleAddress> &qual);
   void             SetQual(std::set<MuddleAddress> qual);
+  void             SetGroupPublicKey(PublicKey const &public_key);
   void             Reset(std::set<MuddleAddress> const &cabinet, uint32_t threshold);
 
   AddResult     AddSignaturePart(Identity const &from, PublicKey, Signature signature);
@@ -120,6 +121,10 @@ public:
   bool can_verify()
   {
     return signature_buffer_.size() >= polynomial_degree_ + 1;
+  }
+  std::string group_public_key() const
+  {
+    return public_key_.getStr();
   }
   ///}
 

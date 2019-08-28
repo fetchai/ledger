@@ -494,6 +494,12 @@ void BeaconManager::SetQual(std::set<fetch::dkg::BeaconManager::MuddleAddress> q
   qual_ = std::move(qual);
 }
 
+void BeaconManager::SetGroupPublicKey(PublicKey const &public_key)
+{
+  assert(public_key_ == zeroG2_);
+  public_key_ = public_key;
+}
+
 /**
  * @brief resets the class back to a state where a new cabinet is set up.
  * @param cabinet_size is the size of the cabinet.
@@ -579,9 +585,9 @@ bool BeaconManager::Verify()
 /**
  * @brief verifies a group signature.
  */
-bool BeaconManager::Verify(Signature const &)
+bool BeaconManager::Verify(Signature const &signature)
 {
-  return crypto::mcl::VerifySign(public_key_, current_message_, group_signature_, group_g_);
+  return crypto::mcl::VerifySign(public_key_, current_message_, signature, group_g_);
 }
 
 /**
