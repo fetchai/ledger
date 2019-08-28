@@ -75,6 +75,7 @@ using StakeManagerPtr = std::shared_ptr<ledger::StakeManager>;
 using EntropyPtr      = std::unique_ptr<ledger::EntropyGeneratorInterface>;
 using DkgServicePtr   = std::unique_ptr<dkg::DkgService>;
 using ConstByteArray  = byte_array::ConstByteArray;
+using Config          = Constellation::Config;
 
 static const std::size_t HTTP_THREADS{4};
 static char const *      SNAPSHOT_FILENAME = "snapshot.json";
@@ -120,34 +121,34 @@ std::shared_ptr<ledger::DAGInterface> GenerateDAG(bool generate, std::string con
   return nullptr;
 }
 
-ledger::ShardConfigs GenerateShardsConfig(uint32_t num_lanes, uint16_t start_port,
-                                          std::string const &storage_path)
+ledger::ShardConfigs GenerateShardsConfig(Config const &cfg, uint16_t start_port)
 {
-  ledger::ShardConfigs configs(num_lanes);
+  ledger::ShardConfigs configs(cfg.num_lanes());
 
-  for (uint32_t i = 0; i < num_lanes; ++i)
+  for (uint32_t i = 0; i < cfg.num_lanes(); ++i)
   {
-    auto &cfg = configs[i];
+    auto &shard = configs[i];
 
-    cfg.lane_id           = i;
-    cfg.num_lanes         = num_lanes;
-    cfg.storage_path      = storage_path;
-    cfg.external_identity = std::make_shared<crypto::ECDSASigner>();
-    cfg.external_port     = start_port++;
-    cfg.external_network_id =
+    shard.lane_id           = i;
+    shard.num_lanes         = cfg.num_lanes();
+    shard.storage_path      = cfg.db_prefix;
+    shard.external_identity = std::make_shared<crypto::ECDSASigner>();
+    shard.external_port     = start_port++;
+    shard.external_network_id =
         muddle::NetworkId{(static_cast<uint32_t>(i) & 0xFFFFFFu) | (uint32_t{'L'} << 24u)};
-    cfg.internal_identity   = std::make_shared<crypto::ECDSASigner>();
-    cfg.internal_port       = start_port++;
-    cfg.internal_network_id = muddle::NetworkId{"ISRD"};
+    shard.internal_identity    = std::make_shared<crypto::ECDSASigner>();
+    shard.internal_port        = start_port++;
+    shard.internal_network_id  = muddle::NetworkId{"ISRD"};
+    shard.verification_threads = cfg.verification_threads;
 
-    auto const ext_identity = cfg.external_identity->identity().identifier();
-    auto const int_identity = cfg.internal_identity->identity().identifier();
+    auto const ext_identity = shard.external_identity->identity().identifier();
+    auto const int_identity = shard.internal_identity->identity().identifier();
 
     FETCH_LOG_INFO(Constellation::LOGGING_NAME, "Shard ", i + 1);
     FETCH_LOG_INFO(Constellation::LOGGING_NAME, " - Internal ", ToBase64(int_identity), " - ",
-                   cfg.internal_network_id.ToString(), " - tcp://0.0.0.0:", cfg.internal_port);
+                   shard.internal_network_id.ToString(), " - tcp://0.0.0.0:", shard.internal_port);
     FETCH_LOG_INFO(Constellation::LOGGING_NAME, " - External ", ToBase64(ext_identity), " - ",
-                   cfg.external_network_id.ToString(), " - tcp://0.0.0.0:", cfg.external_port);
+                   shard.external_network_id.ToString(), " - tcp://0.0.0.0:", shard.external_port);
   }
 
   return configs;
@@ -204,7 +205,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   , p2p_port_(LookupLocalPort(cfg_.manifest, ServiceType::CORE))
   , http_port_(LookupLocalPort(cfg_.manifest, ServiceType::HTTP))
   , lane_port_start_(LookupLocalPort(cfg_.manifest, ServiceType::LANE))
-  , shard_cfgs_{GenerateShardsConfig(config.num_lanes(), lane_port_start_, cfg_.db_prefix)}
+  , shard_cfgs_{GenerateShardsConfig(cfg_, lane_port_start_)}
   , reactor_{"Reactor"}
   , network_manager_{"NetMgr", CalcNetworkManagerThreads(cfg_.num_lanes())}
   , http_network_manager_{"Http", HTTP_THREADS}
