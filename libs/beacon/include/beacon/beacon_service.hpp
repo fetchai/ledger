@@ -27,7 +27,6 @@
 
 #include "beacon/aeon.hpp"
 #include "beacon/beacon_protocol.hpp"
-#include "beacon/beacon_setup_protocol.hpp"
 #include "beacon/beacon_setup_service.hpp"
 #include "beacon/cabinet_member_details.hpp"
 #include "beacon/entropy.hpp"

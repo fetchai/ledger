@@ -40,7 +40,6 @@
 #include "telemetry/registry.hpp"
 
 #include "beacon/beacon_service.hpp"
-#include "beacon/beacon_setup_protocol.hpp"
 #include "beacon/beacon_setup_service.hpp"
 #include "beacon/cabinet_member_details.hpp"
 #include "beacon/entropy.hpp"

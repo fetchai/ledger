@@ -316,7 +316,7 @@ struct DkgMember
   NetworkManager       network_manager;
   fetch::core::Reactor reactor;
   ProverPtr            muddle_certificate;
-  MuddlePtr                muddle;
+  MuddlePtr            muddle;
 
   // Set when DKG is finished
   bn::Fr              secret_share;
@@ -333,7 +333,7 @@ struct DkgMember
     , muddle{CreateMuddle("Test", muddle_certificate, network_manager, "127.0.0.1")}
   {
     network_manager.Start();
-    muddle->Start({},{muddle_port});
+    muddle->Start({}, {muddle_port});
   }
 
   virtual ~DkgMember()
@@ -522,7 +522,8 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
   {
     for (uint32_t jj = ii + 1; jj < cabinet_size; jj++)
     {
-      committee[ii]->muddle->ConnectTo(committee[jj]->muddle->GetAddress(), peers_list[committee[jj]->muddle->GetAddress()]);
+      committee[ii]->muddle->ConnectTo(committee[jj]->muddle->GetAddress(),
+                                       peers_list[committee[jj]->muddle->GetAddress()]);
     }
   }
 
@@ -532,7 +533,8 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     for (uint32_t mm = kk; mm < cabinet_size; ++mm)
     {
-      if (committee[mm]->muddle->GetEndpoint().GetDirectlyConnectedPeers().size() != cabinet_size - 1)
+      if (committee[mm]->muddle->GetEndpoint().GetDirectlyConnectedPeers().size() !=
+          cabinet_size - 1)
       {
         break;
       }
