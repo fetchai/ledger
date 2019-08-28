@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/optimisation/adam_optimiser.hpp"
 #include <distributed_learning_client.hpp>
 
 template <class TensorType>
@@ -36,22 +37,29 @@ public:
   {
     PrepareDataLoader();
     PrepareModel();
+
     this->label_name_ = "Label";
     this->error_name_ = "Error";
     this->inputs_names_.push_back("Input");
+
+    PrepareOptimiser();
   }
 
   void PrepareModel() override
   {
-    this->g_.template AddNode<PlaceHolder<TensorType>>("Input", {});
+    this->g_ptr_ = std::make_shared<fetch::ml::Graph<TensorType>>();
+    this->g_     = *this->g_ptr_;
+
+    this->inputs_names_ = {this->g_.template AddNode<PlaceHolder<TensorType>>("Input", {})};
     this->g_.template AddNode<FullyConnected<TensorType>>("FC1", {"Input"}, 28u * 28u, 10u);
     this->g_.template AddNode<Relu<TensorType>>("Relu1", {"FC1"});
     this->g_.template AddNode<FullyConnected<TensorType>>("FC2", {"Relu1"}, 10u, 10u);
     this->g_.template AddNode<Relu<TensorType>>("Relu2", {"FC2"});
     this->g_.template AddNode<FullyConnected<TensorType>>("FC3", {"Relu2"}, 10u, 10u);
     this->g_.template AddNode<Softmax<TensorType>>("Softmax", {"FC3"});
-    this->g_.template AddNode<PlaceHolder<TensorType>>("Label", {});
-    this->g_.template AddNode<CrossEntropyLoss<TensorType>>("Error", {"Softmax", "Label"});
+    this->label_name_ = this->g_.template AddNode<PlaceHolder<TensorType>>("Label", {});
+    this->error_name_ =
+        this->g_.template AddNode<CrossEntropyLoss<TensorType>>("Error", {"Softmax", "Label"});
   }
 
   void PrepareDataLoader() override
@@ -61,6 +69,14 @@ public:
                                                                                       labels_);
     this->dataloader_ptr_->SetTestRatio(test_set_ratio_);
     this->dataloader_ptr_->SetRandomMode(true);
+  }
+
+  void PrepareOptimiser() override
+  {
+    // Initialise Optimiser
+    this->opti_ptr_ = std::make_shared<fetch::ml::optimisers::AdamOptimiser<TensorType>>(
+        std::shared_ptr<fetch::ml::Graph<TensorType>>(this->g_ptr_), this->inputs_names_,
+        this->label_name_, this->error_name_, this->learning_rate_);
   }
 
 private:

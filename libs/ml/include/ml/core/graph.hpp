@@ -106,6 +106,8 @@ public:
   meta::IfIsNotGraphOrTrainable<TensorType, OperationType, void> AddTrainable(
       std::string const &name, std::shared_ptr<Node<TensorType>> node_ptr);
 
+  void AddExternalGradients(std::vector<TensorType> grads);
+
 private:
   void ApplyRegularisation();
 
@@ -575,6 +577,19 @@ void Graph<TensorType>::ApplyGradients(std::vector<TensorType> &grad)
     trainable_ptr->ApplyGradient(*grad_it);
     ResetGraphCache(t, false);
     ++grad_it;
+  }
+}
+
+template <typename T>
+void Graph<T>::AddExternalGradients(std::vector<TensorType> grads)
+{
+  assert(grads.size() == trainable_nodes_.size());
+  auto gt_it = trainable_nodes_.begin();
+  for (auto const &grad : grads)
+  {
+    auto weights_ptr = std::dynamic_pointer_cast<ops::Weights<TensorType>>((*gt_it)->GetOp());
+    weights_ptr->AddExternalGradient(grad);
+    ++gt_it;
   }
 }
 

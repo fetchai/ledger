@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "../../examples/distributed_learning/distributed_learning_client.hpp"
+#include "ml/optimisation/adam_optimiser.hpp"
 #include "word2vec_training_params.hpp"
 
 template <class TensorType>
@@ -32,6 +33,7 @@ public:
                  std::string const &vocab_file, SizeType batch_size, SizeType number_of_peers);
   void PrepareModel() override;
   void PrepareDataLoader() override;
+  void PrepareOptimiser() override;
   void Test(DataType &test_loss) override;
 
 private:
@@ -97,6 +99,15 @@ void Word2VecClient<TensorType>::PrepareDataLoader()
   w2v_data_loader_ptr_->LoadVocab(vocab_file_);
 
   this->dataloader_ptr_ = w2v_data_loader_ptr_;
+}
+
+template <class TensorType>
+void Word2VecClient<TensorType>::PrepareOptimiser()
+{
+  // Initialise Optimiser
+  this->opti_ptr_ = std::make_shared<fetch::ml::optimisers::AdamOptimiser<TensorType>>(
+      std::shared_ptr<fetch::ml::Graph<TensorType>>(this->g_ptr_), this->inputs_names_,
+      this->label_name_, this->error_name_, this->learning_rate_);
 }
 
 /**
@@ -198,7 +209,7 @@ void Word2VecClient<TensorType>::TestEmbeddings(std::string const &word0, std::s
       sg_layer->GetEmbeddings(sg_layer);
 
   std::cout << std::endl;
-  PrintKNN(this->data_loader_, embeddings->get_weights(), word0, K);
+  PrintKNN(embeddings->get_weights(), word0, K);
   std::cout << std::endl;
-  PrintWordAnalogy(this->data_loader_, embeddings->get_weights(), word1, word2, word3, K);
+  PrintWordAnalogy(embeddings->get_weights(), word1, word2, word3, K);
 }

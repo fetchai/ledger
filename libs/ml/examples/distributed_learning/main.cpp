@@ -32,10 +32,10 @@
 #include <utility>
 #include <vector>
 
-#define NUMBER_OF_CLIENTS 5
-#define NUMBER_OF_ITERATIONS 300
-#define NUMBER_OF_ROUNDS 3
-#define SYNCHRONIZATION_MODE CoordinatorMode::ASYNCHRONOUS
+#define NUMBER_OF_CLIENTS 10
+#define NUMBER_OF_ITERATIONS 100
+#define NUMBER_OF_ROUNDS 10
+#define SYNCHRONIZATION_MODE CoordinatorMode::SEMI_SYNCHRONOUS
 
 #define BATCH_SIZE 32
 #define LEARNING_RATE .001f
