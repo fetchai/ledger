@@ -25,8 +25,8 @@ namespace fetch {
 namespace beacon {
 struct PublicKeyMessage
 {
-  uint64_t                                          round{0};
-  crypto::mcl::Signature group_public_key;
+  uint64_t               round{0};
+  crypto::mcl::PublicKey group_public_key;
 
   bool operator<(PublicKeyMessage const &other) const
   {
@@ -45,7 +45,7 @@ public:
   using Type       = beacon::PublicKeyMessage;
   using DriverType = D;
 
-  static uint8_t const ROUND                = 0;
+  static uint8_t const ROUND            = 0;
   static uint8_t const GROUP_PUBLIC_KEY = 1;
 
   template <typename Constructor>
