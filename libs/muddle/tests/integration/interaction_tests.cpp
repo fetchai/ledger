@@ -29,7 +29,6 @@
 
 namespace {
 
-using fetch::byte_array::ConstByteArray;
 using fetch::network::NetworkManager;
 using fetch::muddle::CreateMuddle;
 using fetch::muddle::Packet;
@@ -85,7 +84,7 @@ protected:
 
       while (node->GetNumDirectlyConnectedPeers() != 2)
       {
-        sleep_for(100ms);
+        sleep_for(1000ms);
       }
 
       auto const connected_peers = node->GetDirectlyConnectedPeers();
@@ -95,6 +94,8 @@ protected:
         FETCH_LOG_INFO(LOGGING_NAME, " - Connected to: ", NodeIndex(peer));
       }
     }
+
+    sleep_for(1000ms);
   }
 
   void TearDown() override
