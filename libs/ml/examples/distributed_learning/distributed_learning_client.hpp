@@ -48,9 +48,8 @@ class TrainingClient
   using VectorTensorType = std::vector<TensorType>;
 
 public:
-  TrainingClient(std::string const &images, std::string const &labels, std::string const &id,
-                 SizeType batch_size, DataType learning_rate, float test_set_ratio,
-                 SizeType number_of_peers);
+  TrainingClient(std::string const &id, SizeType batch_size, DataType learning_rate,
+                 float test_set_ratio, SizeType number_of_peers);
   void SetCoordinator(std::shared_ptr<Coordinator> coordinator_ptr);
   void MainLoop();
 
@@ -63,14 +62,19 @@ public:
   void             AddGradient(VectorTensorType gradient);
   void             ApplyGradient(VectorTensorType gradients);
   void             SetWeights(VectorTensorType &new_weights);
+  virtual void     PrepareModel()      = 0;
+  virtual void     PrepareDataLoader() = 0;
 
-private:
+protected:
   // Client's own graph and mutex to protect it's weights
   fetch::ml::Graph<TensorType> g_;
   std::mutex                   model_mutex_;
 
   // Client's own dataloader
-  fetch::ml::dataloaders::MNISTLoader<TensorType, TensorType> dataloader_;
+  std::shared_ptr<fetch::ml::dataloaders::DataLoader<TensorType, TensorType>> dataloader_ptr_;
+
+  std::vector<std::string> inputs_names_;
+  std::string              label_name_;
 
   // Connection to other nodes
   std::vector<std::shared_ptr<TrainingClient>> peers_;
@@ -103,29 +107,16 @@ private:
 };
 
 template <class TensorType>
-TrainingClient<TensorType>::TrainingClient(std::string const &images, std::string const &labels,
-                                           std::string const &id, SizeType batch_size,
+TrainingClient<TensorType>::TrainingClient(std::string const &id, SizeType batch_size,
                                            DataType learning_rate, float test_set_ratio,
                                            SizeType number_of_peers)
-  : dataloader_(images, labels)
-  , id_(std::move(id))
+
+  : id_(std::move(id))
   , batch_size_(batch_size)
   , learning_rate_(learning_rate)
   , test_set_ratio_(test_set_ratio)
   , number_of_peers_(number_of_peers)
 {
-  dataloader_.SetTestRatio(test_set_ratio_);
-  dataloader_.SetRandomMode(true);
-  g_.template AddNode<PlaceHolder<TensorType>>("Input", {});
-  g_.template AddNode<FullyConnected<TensorType>>("FC1", {"Input"}, 28u * 28u, 10u);
-  g_.template AddNode<Relu<TensorType>>("Relu1", {"FC1"});
-  g_.template AddNode<FullyConnected<TensorType>>("FC2", {"Relu1"}, 10u, 10u);
-  g_.template AddNode<Relu<TensorType>>("Relu2", {"FC1"});
-  g_.template AddNode<FullyConnected<TensorType>>("FC3", {"Relu2"}, 10u, 10u);
-  g_.template AddNode<Softmax<TensorType>>("Softmax", {"FC3"});
-  g_.template AddNode<PlaceHolder<TensorType>>("Label", {});
-  g_.template AddNode<CrossEntropyLoss<TensorType>>("Error", {"Softmax", "Label"});
-
   // Clear loss file
   std::ofstream lossfile("losses_" + id_ + ".csv", std::ofstream::out | std::ofstream::trunc);
   lossfile.close();
@@ -162,20 +153,29 @@ void TrainingClient<TensorType>::MainLoop()
 template <class TensorType>
 typename TensorType::Type TrainingClient<TensorType>::Train()
 {
-  dataloader_.SetMode(fetch::ml::dataloaders::DataLoaderMode::TRAIN);
-  dataloader_.SetRandomMode(true);
+  dataloader_ptr_->SetMode(fetch::ml::dataloaders::DataLoaderMode::TRAIN);
+  dataloader_ptr_->SetRandomMode(true);
 
   DataType loss        = static_cast<DataType>(0);
   bool     is_done_set = false;
 
   std::pair<TensorType, std::vector<TensorType>> input;
-  input = dataloader_.PrepareBatch(batch_size_, is_done_set);
+  input = dataloader_ptr_->PrepareBatch(batch_size_, is_done_set);
 
   {
     std::lock_guard<std::mutex> l(model_mutex_);
 
-    g_.SetInput("Input", input.second.at(0));
-    g_.SetInput("Label", input.first);
+    // Set inputs and label
+    auto input_data_it = input.second.begin();
+    auto input_name_it = inputs_names_.begin();
+
+    while (input_name_it != inputs_names_.end())
+    {
+      g_.SetInput(*input_name_it, *input_data_it);
+      ++input_name_it;
+      ++input_data_it;
+    }
+    g_.SetInput(label_name_, input.first);
 
     TensorType loss_tensor = g_.ForwardPropagate("Error");
     loss                   = *(loss_tensor.begin());
@@ -192,16 +192,16 @@ typename TensorType::Type TrainingClient<TensorType>::Train()
 template <class TensorType>
 void TrainingClient<TensorType>::Test(DataType &test_loss)
 {
-  dataloader_.SetMode(fetch::ml::dataloaders::DataLoaderMode::TEST);
+  dataloader_ptr_->SetMode(fetch::ml::dataloaders::DataLoaderMode::TEST);
 
   // Disable random to run model on whole test set
-  dataloader_.SetRandomMode(false);
+  dataloader_ptr_->SetRandomMode(false);
 
-  SizeType test_set_size = dataloader_.Size();
+  SizeType test_set_size = dataloader_ptr_->Size();
 
-  dataloader_.Reset();
+  dataloader_ptr_->Reset();
   bool is_done_set;
-  auto test_pair = dataloader_.PrepareBatch(test_set_size, is_done_set);
+  auto test_pair = dataloader_ptr_->PrepareBatch(test_set_size, is_done_set);
   {
     std::lock_guard<std::mutex> l(model_mutex_);
 

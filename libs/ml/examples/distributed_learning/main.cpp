@@ -21,6 +21,7 @@
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
+#include "mnist_client.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -67,7 +68,7 @@ int main(int ac, char **av)
   for (SizeType i{0}; i < NUMBER_OF_CLIENTS; ++i)
   {
     // Instantiate NUMBER_OF_CLIENTS clients
-    clients[i] = std::make_shared<TrainingClient<TensorType>>(
+    clients[i] = std::make_shared<MNISTClient<TensorType>>(
         av[1], av[2], std::to_string(i), BATCH_SIZE, static_cast<DataType>(LEARNING_RATE),
         TEST_SET_RATIO, NUMBER_OF_PEERS);
   }
