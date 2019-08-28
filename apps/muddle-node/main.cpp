@@ -65,8 +65,8 @@ struct AggregateData
 
 using Statistics = fetch::SynchronisedState<AggregateData>;
 
-std::atomic<bool>        gActive{true};
-std::atomic<std::size_t> gInterruptCount{0};
+std::atomic<bool>        global_active{true};
+std::atomic<std::size_t> global_interrupt_count{0};
 
 Statistics gStatistics;
 
@@ -79,7 +79,7 @@ constexpr char const *LOGGING_NAME{"main"};
  */
 void InterruptHandler(int /*signal*/)
 {
-  std::size_t const interrupt_count = ++gInterruptCount;
+  std::size_t const interrupt_count = ++global_interrupt_count;
 
   if (interrupt_count > 1)
   {
@@ -91,7 +91,7 @@ void InterruptHandler(int /*signal*/)
   }
 
   // signal that the program should stop
-  gActive = false;
+  global_active = false;
 
   if (interrupt_count >= 3)
   {
@@ -253,7 +253,7 @@ int main(int argc, char **argv)
   std::signal(SIGTERM, InterruptHandler);
 
   Timepoint last_update = Clock::now();
-  while (gActive)
+  while (global_active)
   {
     endpoint.Broadcast(SERVICE, CHANNEL, "hello");
 

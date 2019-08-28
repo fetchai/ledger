@@ -416,7 +416,7 @@ struct CabinetMember
     });
 
     network_manager.Start();
-    muddle->Start({}, {muddle_port});
+    muddle->Start({muddle_port});
   }
 
   void Stop()

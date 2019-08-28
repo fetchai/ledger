@@ -132,7 +132,7 @@ BootstrapMonitor::BootstrapMonitor(ProverPtr entity, uint16_t p2p_port, std::str
   state_machine_->RegisterHandler(State::Notify, this, &BootstrapMonitor::OnNotify);
 }
 
-bool BootstrapMonitor::DiscoverPeers(UriList &peers, std::string const &external_address)
+bool BootstrapMonitor::DiscoverPeers(UriSet &peers, std::string const &external_address)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Bootstrapping network node @ ", BOOTSTRAP_HOST);
 
@@ -190,7 +190,7 @@ bool BootstrapMonitor::UpdateExternalAddress()
   return success;
 }
 
-bool BootstrapMonitor::RunDiscovery(UriList &peers)
+bool BootstrapMonitor::RunDiscovery(UriSet &peers)
 {
   bool success{false};
 
@@ -316,7 +316,7 @@ bool BootstrapMonitor::RunDiscovery(UriList &peers)
           return false;
         }
 
-        peers.emplace_back(std::move(uri));
+        peers.emplace(std::move(uri));
       }
     }
   }

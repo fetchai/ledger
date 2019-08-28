@@ -67,14 +67,27 @@ using fetch::crypto::Prover;
 using fetch::Constellation;
 using fetch::BootstrapMonitor;
 using fetch::core::WeakRunnable;
+using fetch::network::Uri;
 
 using BootstrapPtr = std::unique_ptr<BootstrapMonitor>;
 using ProverPtr    = std::shared_ptr<Prover>;
 using NetworkMode  = fetch::Constellation::NetworkMode;
-using UriList      = fetch::Constellation::UriList;
+using UriSet       = fetch::Constellation::UriSet;
+using Uris         = std::vector<Uri>;
 
 std::atomic<fetch::Constellation *> gConstellationInstance{nullptr};
 std::atomic<std::size_t>            gInterruptCount{0};
+
+UriSet ToUriSet(Uris const &uris)
+{
+  UriSet s{};
+  for (auto const &uri : uris)
+  {
+    s.emplace(uri);
+  }
+
+  return s;
+}
 
 /**
  * The main interrupt handler for the application
@@ -137,7 +150,7 @@ bool HasVersionFlag(int argc, char **argv)
  * @param uris The initial set of nodes
  * @return The new bootstrap pointer if one exists
  */
-BootstrapPtr CreateBootstrap(Settings const &settings, ProverPtr const &prover, UriList &uris)
+BootstrapPtr CreateBootstrap(Settings const &settings, ProverPtr const &prover, UriSet &uris)
 {
   BootstrapPtr bootstrap{};
 
@@ -213,7 +226,7 @@ int main(int argc, char **argv)
       auto p2p_key = fetch::GenerateP2PKey();
 
       // create the bootrap monitor (if configued to do so)
-      auto initial_peers = settings.peers.value();
+      auto initial_peers = ToUriSet(settings.peers.value());
       auto bootstrap     = CreateBootstrap(settings, p2p_key, initial_peers);
 
       for (auto const &uri : initial_peers)

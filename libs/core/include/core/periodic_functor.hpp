@@ -24,6 +24,9 @@
 namespace fetch {
 namespace core {
 
+/**
+ * Simple wrapper around a periodic function that can be submitted to a reactor
+ */
 class PeriodicFunctor : public PeriodicRunnable
 {
 public:

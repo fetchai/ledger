@@ -79,7 +79,7 @@ int main()
       , pre_sync{*muddle, 4}
     {
       network_manager.Start();
-      muddle->Start({}, {muddle_port});
+      muddle->Start({muddle_port});
     }
   };
 

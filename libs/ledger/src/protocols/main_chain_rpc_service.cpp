@@ -380,7 +380,7 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
   else
   {
     // determine the status of the request that is in flight
-    auto const status = current_request_->GetState();
+    auto const status = current_request_->state();
 
     if (PromiseState::WAITING != status)
     {
@@ -458,7 +458,7 @@ MainChainRpcService::State MainChainRpcService::OnWaitingForResponse()
   else
   {
     // determine the status of the request that is in flight
-    auto const status = current_request_->GetState();
+    auto const status = current_request_->state();
 
     if (PromiseState::WAITING != status)
     {

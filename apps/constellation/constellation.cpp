@@ -388,7 +388,7 @@ void Constellation::DumpOpenAPI(std::ostream &stream)
  *
  * @param initial_peers The peers that should be initially connected to
  */
-void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstrap_monitor)
+void Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstrap_monitor)
 {
   using Peers = muddle::MuddleInterface::Peers;
 
@@ -408,15 +408,7 @@ void Constellation::Run(UriList const &initial_peers, core::WeakRunnable bootstr
   http_open_api_module_->Reset(&http_);
   network_manager_.Start();
   http_network_manager_.Start();
-
-  // TODO(EJF): Tidy up
-  Peers external_peers{};
-  for (auto const &peer : initial_peers)
-  {
-    external_peers.emplace(peer.ToString());
-  }
-
-  muddle_->Start(external_peers, {p2p_port_});
+  muddle_->Start(initial_peers, {p2p_port_});
 
   /// LANE / SHARD SERVERS
 

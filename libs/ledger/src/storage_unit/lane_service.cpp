@@ -149,8 +149,8 @@ void LaneService::Start()
                  " Service on tcp://127.0.0.1:", cfg_.internal_port,
                  " ID: ", ToBase64(cfg_.internal_identity->identity().identifier()));
 
-  external_muddle_->Start({}, {cfg_.external_port});
-  internal_muddle_->Start({}, {cfg_.internal_port});
+  external_muddle_->Start({cfg_.external_port});
+  internal_muddle_->Start({cfg_.internal_port});
 
   tx_sync_service_->Start();
 

@@ -64,7 +64,7 @@ class Constellation : public ledger::BlockSinkInterface
 {
 public:
   using CertificatePtr = std::shared_ptr<crypto::Prover>;
-  using UriList        = std::vector<network::Uri>;
+  using UriSet         = std::unordered_set<network::Uri>;
   using Manifest       = ledger::Manifest;
   using NetworkMode    = ledger::MainChainRpcService::Mode;
   using FeatureFlags   = core::FeatureFlags;
@@ -106,11 +106,11 @@ public:
 
   static constexpr char const *LOGGING_NAME = "constellation";
 
-  // Construction / Destruction
+  // Construction / Destructionp
   Constellation(CertificatePtr certificate, Config config);
   ~Constellation() override = default;
 
-  void Run(UriList const &initial_peers, core::WeakRunnable bootstrap_monitor);
+  void Run(UriSet const &initial_peers, core::WeakRunnable bootstrap_monitor);
   void SignalStop();
 
   void DumpOpenAPI(std::ostream &stream);

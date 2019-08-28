@@ -99,7 +99,7 @@ protected:
     managerA_->Start();
     managerB_->Start();
 
-    networkA_->Start({}, {8000});
+    networkA_->Start({8000});
     networkB_->Start({"tcp://127.0.0.1:8000"}, {9000});
 
     sleep_for(seconds{1});

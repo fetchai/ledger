@@ -67,7 +67,7 @@ TEST_F(DispatcherTests, CheckExchange)
   EXPECT_FALSE(prom->IsWaiting());
   EXPECT_FALSE(prom->IsFailed());
   EXPECT_TRUE(prom->IsSuccessful());
-  EXPECT_TRUE(prom->Wait(0, false));
+  EXPECT_TRUE(prom->Wait(false));
 }
 
 TEST_F(DispatcherTests, CheckWrongResponder)
@@ -103,7 +103,7 @@ TEST_F(DispatcherTests, CheckNeverResolved)
   EXPECT_FALSE(prom->IsWaiting());
   EXPECT_TRUE(prom->IsFailed());
   EXPECT_FALSE(prom->IsSuccessful());
-  EXPECT_FALSE(prom->Wait(0, false));
+  EXPECT_FALSE(prom->Wait(false));
 }
 
 TEST_F(DispatcherTests, CheckConnectionFailure)
@@ -123,5 +123,5 @@ TEST_F(DispatcherTests, CheckConnectionFailure)
   EXPECT_FALSE(prom->IsWaiting());
   EXPECT_TRUE(prom->IsFailed());
   EXPECT_FALSE(prom->IsSuccessful());
-  EXPECT_FALSE(prom->Wait(0, false));
+  EXPECT_FALSE(prom->Wait(false));
 }

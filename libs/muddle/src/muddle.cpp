@@ -22,6 +22,7 @@
 #include "muddle_server.hpp"
 #include "peer_selector.hpp"
 
+#include "core/containers/set_intersection.hpp"
 #include "core/logger.hpp"
 #include "core/serializers/base_types.hpp"
 #include "core/serializers/main_serializer.hpp"
@@ -71,6 +72,8 @@ Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager 
                                        reactor_, *register_, clients_, router_))
   , rpc_server_(router_, SERVICE_MUDDLE, CHANNEL_RPC)
 {
+  register_->AttachRouter(router_);
+
   // register the status update
   clients_.SetStatusCallback(
       [this](Uri const &peer, Handle handle, PeerConnectionList::ConnectionState state) {
@@ -106,19 +109,39 @@ Muddle::~Muddle()
  */
 bool Muddle::Start(Peers const &peers, Ports const &ports)
 {
-  router_.Start();
-
-  // make the initial connections to the remote hosts
-  Uri uri{};
+  Uris uris{};
   for (auto const &peer : peers)
   {
+    Uri uri{};
     if (!uri.Parse(peer))
     {
       return false;
     }
 
+    // add the uri to the set
+    uris.emplace(std::move(uri));
+  }
+
+  return Start(uris, ports);
+}
+
+/**
+ * Start the muddle instance connecting to the initial set of peers and listing on the specified
+ * set of ports
+ *
+ * @param peers The initial set of peers that muddle should connect to
+ * @param ports The set of ports to listen on. Zero signals a random port
+ * @return true if successful, otherwise false
+ */
+bool Muddle::Start(Uris const &peers, Ports const &ports)
+{
+  router_.Start();
+
+  // make the initial connections to the remote hosts
+  for (auto const &peer : peers)
+  {
     // mark this peer as a persistent one
-    clients_.AddPersistentPeer(uri);
+    clients_.AddPersistentPeer(peer);
   }
 
   // create all the muddle servers
@@ -139,6 +162,17 @@ bool Muddle::Start(Peers const &peers, Ports const &ports)
   std::this_thread::sleep_for(1s);
 
   return true;
+}
+
+/**
+ * Start the muddle instance listing on the specified set of ports
+ *
+ * @param ports The set of ports to listen on. Zero signals a random port
+ * @return true if successful, otherwise false
+ */
+bool Muddle::Start(Ports const &ports)
+{
+  return Start(Uris{}, ports);
 }
 
 /**
@@ -217,7 +251,7 @@ Muddle::Ports Muddle::GetListeningPorts() const
  */
 Muddle::Addresses Muddle::GetDirectlyConnectedPeers() const
 {
-  return register_->GetCurrentAddressSet();
+  return router_.GetDirectlyConnectedPeerSet();
 }
 
 /**
@@ -227,7 +261,7 @@ Muddle::Addresses Muddle::GetDirectlyConnectedPeers() const
  */
 Muddle::Addresses Muddle::GetIncomingConnectedPeers() const
 {
-  return register_->GetIncomingAddressSet();
+  return GetDirectlyConnectedPeers() & register_->GetIncomingAddressSet();
 }
 
 /**
@@ -237,7 +271,7 @@ Muddle::Addresses Muddle::GetIncomingConnectedPeers() const
  */
 Muddle::Addresses Muddle::GetOutgoingConnectedPeers() const
 {
-  return register_->GetOutgoingAddressSet();
+  return GetDirectlyConnectedPeers() & register_->GetOutgoingAddressSet();
 }
 
 /**
