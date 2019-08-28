@@ -447,11 +447,13 @@ BeaconSetupService::State BeaconSetupService::OnBeaconReady()
   }
 
   beacon_.reset();
+  pre_dkg_rbc_.ResetCabinet({});
+  rbc_.ResetCabinet({});
   connections_.clear();
   ready_connections_.clear();
-  complaints_manager_.Clear();
-  complaints_answer_manager_.Clear();
-  qual_complaints_manager_.Clear();
+  complaints_manager_.ResetCabinet(0);
+  complaints_answer_manager_.ResetCabinet(0);
+  qual_complaints_manager_.Reset();
   shares_received_.clear();
   coefficients_received_.clear();
   qual_coefficients_received_.clear();
@@ -592,6 +594,7 @@ void BeaconSetupService::BroadcastReconstructionShares()
 void BeaconSetupService::OnDkgMessage(MuddleAddress const &       from,
                                       std::shared_ptr<DKGMessage> msg_ptr)
 {
+  std::lock_guard<std::mutex> lock(mutex_);
   if (state_machine_->state() == State::IDLE || !BasicMsgCheck(from, msg_ptr))
   {
     return;

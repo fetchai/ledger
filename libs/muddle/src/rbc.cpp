@@ -305,9 +305,9 @@ void RBC::OnRBroadcast(MessageBroadcast const &msg, uint32_t sender_index)
     return;
   }
 
-  FETCH_LOG_TRACE(LOGGING_NAME, "onRBroadcast: Node ", id_, " received msg ", tag, " from node ",
-                  sender_index, " with counter ", std::to_string(msg->counter()), " and id ",
-                  msg->id());
+  FETCH_LOG_INFO(LOGGING_NAME, "onRBroadcast: Node ", id_, " received msg ", tag, " from node ",
+                 sender_index, " with counter ", std::to_string(msg->counter()), " and id ",
+                 msg->id());
   if (sender_index == msg->id())
   {
     if (SetMbar(tag, msg, sender_index))
@@ -404,9 +404,9 @@ void RBC::OnRReadyLockFree(MessageReady const &msg, uint32_t sender_index)
   }
 
   auto msgs_counter = ReceivedReady(tag, msg);
-  FETCH_LOG_INFO(LOGGING_NAME, "onRReady: Node ", id_, " received msg ", tag, " from node ",
-                 sender_index, " with counter ", std::to_string(msg->counter()), ", id ", msg->id(),
-                 " and ready count ", msgs_counter.ready_count);
+  FETCH_LOG_TRACE(LOGGING_NAME, "onRReady: Node ", id_, " received msg ", tag, " from node ",
+                  sender_index, " with counter ", std::to_string(msg->counter()), ", id ",
+                  msg->id(), " and ready count ", msgs_counter.ready_count);
 
   if (threshold_ > 0 && msgs_counter.ready_count == threshold_ + 1 &&
       msgs_counter.echo_count < (current_cabinet_.size() - threshold_))
@@ -562,14 +562,13 @@ void RBC::Deliver(SerialisedMessage const &msg, uint32_t sender_index)
   // Try to deliver old messages
   if (!parties_[sender_index].undelivered_msg.empty())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, " checks old messages for node ", sender_index);
+    FETCH_LOG_TRACE(LOGGING_NAME, "Node ", id_, " checks old messages for node ", sender_index);
     auto old_tag_msg = parties_[sender_index].undelivered_msg.begin();
 
     while (old_tag_msg != parties_[sender_index].undelivered_msg.end() &&
            old_tag_msg->first == parties_[sender_index].deliver_s)
     {
       TagType old_tag = old_tag_msg->second;
-      FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, "testing msg with tag ", old_tag);
       assert(!broadcasts_[old_tag].original_message.empty());
       FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, " delivered msg ", old_tag, " with counter ",
                      old_tag_msg->first, " and id ", sender_index);

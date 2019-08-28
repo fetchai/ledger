@@ -27,7 +27,7 @@ bn::Fr BeaconManager::zeroFr_;
 bn::G2 BeaconManager::group_g_;
 bn::G2 BeaconManager::group_h_;
 
-constexpr char const *LOGGING_NAME = "DKG";
+constexpr char const *LOGGING_NAME = "BeaconManager";
 
 BeaconManager::BeaconManager(CertificatePtr certificate)
   : certificate_{std::move(certificate)}
@@ -62,7 +62,8 @@ BeaconManager::BeaconManager(CertificatePtr certificate)
 
 void BeaconManager::GenerateCoefficients()
 {
-  std::vector<bn::Fr> a_i(polynomial_degree_ + 1, zeroFr_), b_i(polynomial_degree_ + 1, zeroFr_);
+  std::vector<PrivateKey> a_i(polynomial_degree_ + 1, zeroFr_);
+  std::vector<PrivateKey> b_i(polynomial_degree_ + 1, zeroFr_);
   for (uint32_t k = 0; k <= polynomial_degree_; k++)
   {
     a_i[k].setRand();
@@ -98,8 +99,8 @@ std::pair<BeaconManager::Share, BeaconManager::Share> BeaconManager::GetOwnShare
     MuddleAddress const &receiver)
 {
   CabinetIndex receiver_index = identity_to_index_[receiver];
-  bn::Fr       sij            = s_ij[cabinet_index_][receiver_index];
-  bn::Fr       sprimeij       = sprime_ij[cabinet_index_][receiver_index];
+  PrivateKey   sij            = s_ij[cabinet_index_][receiver_index];
+  PrivateKey   sprimeij       = sprime_ij[cabinet_index_][receiver_index];
 
   std::pair<Share, Share> shares_j{sij.getStr(), sprimeij.getStr()};
   return shares_j;
@@ -146,7 +147,8 @@ std::unordered_set<BeaconManager::MuddleAddress> BeaconManager::ComputeComplaint
       // Can only require this if group_g_, group_h_ do not take the default values from clear()
       if (C_ik[i][0] != zeroG2_ && s_ij[i][cabinet_index_] != zeroFr_)
       {
-        bn::G2 rhs, lhs;
+        PublicKey rhs;
+        PublicKey lhs;
         lhs = crypto::mcl::ComputeLHS(g__s_ij[i][cabinet_index_], group_g_, group_h_,
                                       s_ij[i][cabinet_index_], sprime_ij[i][cabinet_index_]);
         rhs = crypto::mcl::ComputeRHS(cabinet_index_, C_ik[i]);
@@ -181,8 +183,10 @@ bool BeaconManager::VerifyComplaintAnswer(MuddleAddress const &from, ComplaintAn
 
   CabinetIndex reporter_index = identity_to_index_[answer.first];
   // Verify shares received
-  bn::Fr s, sprime;
-  bn::G2 lhsG, rhsG;
+  PrivateKey s;
+  PrivateKey sprime;
+  PublicKey  lhsG;
+  PublicKey  rhsG;
   s.clear();
   sprime.clear();
   lhsG.clear();
@@ -268,7 +272,8 @@ BeaconManager::SharesExposedMap BeaconManager::ComputeQualComplaints()
       // Can only require this if G, H do not take the default values from clear()
       if (A_ik[i][0] != zeroG2_)
       {
-        bn::G2 rhs, lhs;
+        PublicKey rhs;
+        PublicKey lhs;
         lhs = g__s_ij[i][cabinet_index_];
         rhs = crypto::mcl::ComputeRHS(cabinet_index_, A_ik[i]);
         if (lhs != rhs)
@@ -297,8 +302,10 @@ BeaconManager::MuddleAddress BeaconManager::VerifyQualComplaint(MuddleAddress co
   CabinetIndex from_index   = identity_to_index_[from];
   CabinetIndex victim_index = identity_to_index_[answer.first];
   // verify complaint, i.e. (4) holds (5) not
-  bn::G2 lhs, rhs;
-  bn::Fr s, sprime;
+  PublicKey  lhs;
+  PublicKey  rhs;
+  PrivateKey s;
+  PrivateKey sprime;
   lhs.clear();
   rhs.clear();
   s.clear();
@@ -373,7 +380,7 @@ void BeaconManager::ComputePublicKeys()
 void BeaconManager::AddReconstructionShare(MuddleAddress const &address)
 {
   CabinetIndex index = identity_to_index_[address];
-  reconstruction_shares.insert({address, {{}, std::vector<bn::Fr>(cabinet_size_, zeroFr_)}});
+  reconstruction_shares.insert({address, {{}, std::vector<PrivateKey>(cabinet_size_, zeroFr_)}});
   reconstruction_shares.at(address).first.insert(cabinet_index_);
   reconstruction_shares.at(address).second[cabinet_index_] = s_ij[index][cabinet_index_];
 }
@@ -387,7 +394,8 @@ void BeaconManager::AddReconstructionShare(MuddleAddress const &                
                  from_index, "for reconstructing node ", index);
   if (reconstruction_shares.find(share.first) == reconstruction_shares.end())
   {
-    reconstruction_shares.insert({share.first, {{}, std::vector<bn::Fr>(cabinet_size_, zeroFr_)}});
+    reconstruction_shares.insert(
+        {share.first, {{}, std::vector<PrivateKey>(cabinet_size_, zeroFr_)}});
   }
   else if (reconstruction_shares.at(share.first).second[from_index] != zeroFr_)
   {
@@ -395,7 +403,7 @@ void BeaconManager::AddReconstructionShare(MuddleAddress const &                
                    " received duplicate reconstruction shares from node ", from_index);
     return;
   }
-  bn::Fr s;
+  PrivateKey s;
   s.clear();
   s.setStr(share.second);
   reconstruction_shares.at(share.first).first.insert(from_index);
@@ -407,8 +415,10 @@ void BeaconManager::VerifyReconstructionShare(MuddleAddress const &from, Exposed
   CabinetIndex victim_index = identity_to_index_[share.first];
   // assert(qual_complaints_manager_.ComplaintsFind(share.first)); // Fails for nodes who receive
   // shares for themselves when they don't know they are being complained against
-  bn::G2 lhs, rhs;
-  bn::Fr s, sprime;
+  PublicKey  lhs;
+  PublicKey  rhs;
+  PrivateKey s;
+  PrivateKey sprime;
   lhs.clear();
   rhs.clear();
   s.clear();
@@ -438,14 +448,14 @@ void BeaconManager::VerifyReconstructionShare(MuddleAddress const &from, Exposed
  */
 bool BeaconManager::RunReconstruction()
 {
-  std::vector<std::vector<bn::Fr>> a_ik;
+  std::vector<std::vector<PrivateKey>> a_ik;
   crypto::mcl::Init(a_ik, static_cast<uint32_t>(cabinet_size_),
                     static_cast<uint32_t>(polynomial_degree_ + 1));
   for (auto const &in : reconstruction_shares)
   {
-    CabinetIndex           victim_index = identity_to_index_[in.first];
-    std::set<CabinetIndex> parties{in.second.first};
-    std::vector<bn::Fr>    shares{in.second.second};
+    CabinetIndex            victim_index = identity_to_index_[in.first];
+    std::set<CabinetIndex>  parties{in.second.first};
+    std::vector<PrivateKey> shares{in.second.second};
     if (parties.size() <= polynomial_degree_)
     {
       // Do not have enough good shares to be able to do reconstruction
@@ -461,7 +471,8 @@ bool BeaconManager::RunReconstruction()
     }
     // compute $z_i$ using Lagrange interpolation (without corrupted parties)
     z_i[victim_index] = crypto::mcl::ComputeZi(in.second.first, in.second.second);
-    std::vector<bn::Fr> points, shares_f;
+    std::vector<PrivateKey> points;
+    std::vector<PrivateKey> shares_f;
     for (const auto &index : parties)
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, " run reconstruction for node ",
@@ -478,8 +489,8 @@ bool BeaconManager::RunReconstruction()
   return true;
 }
 
-void BeaconManager::SetDkgOutput(bn::G2 &public_key, bn::Fr &secret_share,
-                                 std::vector<bn::G2> &    public_key_shares,
+void BeaconManager::SetDkgOutput(PublicKey &public_key, PrivateKey &secret_share,
+                                 std::vector<PublicKey> & public_key_shares,
                                  std::set<MuddleAddress> &qual)
 {
   // crypto::mcl::Init(public_key_shares, cabinet_size_);

@@ -205,9 +205,6 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
     }
   });
 
-  // Initialising the MCL library
-  bn::initPairing();
-
   // TODO(private issue 792): this shouldn't be here, but if it is, it locks the whole system on
   // startup. RecoverFromStartup();
 }

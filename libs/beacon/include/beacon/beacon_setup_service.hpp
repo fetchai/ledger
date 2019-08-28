@@ -36,7 +36,7 @@ namespace beacon {
 class BeaconSetupService
 {
 public:
-  static constexpr char const *LOGGING_NAME = "DkgSetupService";
+  static constexpr char const *LOGGING_NAME = "BeaconSetupService";
 
   enum class State : uint8_t
   {

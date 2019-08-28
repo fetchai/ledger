@@ -327,8 +327,8 @@ struct DkgMember
   bn::Fr              secret_share;
   bn::G2              public_key;
   RBC::CabinetMembers qual_set;
-  std::vector<bn::G2> public_key_shares;
-  bool                finished;
+  std::vector<bn::G2> public_key_shares{};
+  bool                finished{false};
 
   DkgMember(uint16_t port_number, uint16_t index)
     : muddle_port{port_number}
