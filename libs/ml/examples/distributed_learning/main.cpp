@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "coordinator.hpp"
-#include "distributed_learning_client.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
+#include "ml/distributed_learning/coordinator.hpp"
+#include "ml/distributed_learning/distributed_learning_client.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "mnist_client.hpp"
 

@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "../../examples/distributed_learning/coordinator.hpp"
 #include "core/random.hpp"
 #include "file_loader.hpp"
 #include "math/clustering/knn.hpp"
@@ -25,6 +24,7 @@
 #include "math/tensor.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/dataloaders/word2vec_loaders/sgns_w2v_dataloader.hpp"
+#include "ml/distributed_learning/coordinator.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/layers/skip_gram.hpp"
 #include "ml/ops/activation.hpp"

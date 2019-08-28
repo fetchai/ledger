@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "../../examples/distributed_learning/distributed_learning_client.hpp"
+#include "ml/distributed_learning/distributed_learning_client.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "word2vec_training_params.hpp"
 

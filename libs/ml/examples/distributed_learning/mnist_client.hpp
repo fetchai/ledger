@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "ml/optimisation/adam_optimiser.hpp"
-#include <distributed_learning_client.hpp>
+#include <ml/distributed_learning/distributed_learning_client.hpp>
 
 template <class TensorType>
 class MNISTClient : public TrainingClient<TensorType>
