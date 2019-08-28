@@ -72,7 +72,6 @@ public:
                            SizeType const &subset_size = SIZE_NOT_SET);
 
   std::shared_ptr<Graph<T>> GetGraph();
-  void AddExternalGradientsToGraph(std::vector<TensorType> grads);
 
   template <typename X, typename D>
   friend struct serializers::MapSerializer;
@@ -477,17 +476,6 @@ typename Optimiser<T>::SizeType Optimiser<T>::UpdateBatchSize(SizeType const &ba
     updated_batch_size = data_size;
   }
   return updated_batch_size;
-}
-
-template <typename T>
-void Optimiser<T>::AddExternalGradientsToGraph(std::vector<TensorType> grads)
-{
-  assert(grads.size() == graph_trainables_.size());
-  auto gt_it = graph_trainables_.begin();
-  for (auto const & grad : grads){
-     gt_it->AddExternalGradient(*grad);
-     ++gt_it;
-  }
 }
 
 template <typename T>
