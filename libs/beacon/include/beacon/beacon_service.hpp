@@ -34,6 +34,10 @@
 #include "beacon/events.hpp"
 #include "beacon/public_key_message.hpp"
 
+#include "telemetry/counter.hpp"
+#include "telemetry/gauge.hpp"
+#include "telemetry/registry.hpp"
+
 #include <cstdint>
 #include <deque>
 #include <iostream>
@@ -212,6 +216,8 @@ private:
   BeaconSetupService    cabinet_creator_;
   BeaconServiceProtocol beacon_protocol_;
   /// @}
+
+  telemetry::CounterPtr entropy_generated_count_;
 };
 
 }  // namespace beacon

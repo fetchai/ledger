@@ -69,17 +69,16 @@ public:
     OUT_OF_SEQUENCE_MSGS,
     WRONG_RANK
   };
-  FaultyRbc(Endpoint &endpoint, MuddleAddress address, CabinetMembers const &cabinet,
+  FaultyRbc(Endpoint &endpoint, MuddleAddress address,
             std::function<void(ConstByteArray const &address, ConstByteArray const &payload)>
                                          broadcast_callback,
-            const std::vector<Failures> &failures = {})
+            const std::vector<Failures> &failure)
     : RBC{endpoint, std::move(address), std::move(broadcast_callback)}
   {
-    for (auto f : failures)
+    for (auto f : failure)
     {
       failures_flags_.set(static_cast<uint32_t>(f));
     }
-    ResetCabinet(cabinet);
   }
 
   void Broadcast(SerialisedMessage const &msg, uint8_t num_messages)
@@ -244,33 +243,17 @@ private:
   }
 };
 
-struct RbcMember
+class RbcMember
 {
+
+public:
   uint16_t              muddle_port;
-  NetworkManager        network_manager;
   ProverPtr             muddle_certificate;
+  NetworkManager        network_manager;
   MuddlePtr             muddle;
-  RBC::CabinetMembers   cabinet;
-  FaultyRbc             rbc;
   std::atomic<uint16_t> delivered_msgs{0};
 
-  RbcMember(uint16_t port_number, uint16_t index,
-            const std::vector<FaultyRbc::Failures> &failures = {})
-    : muddle_port{port_number}
-    , network_manager{"NetworkManager" + std::to_string(index), 1}
-    , muddle_certificate{CreateCertificate()}
-    , muddle{CreateMuddle("Test", muddle_certificate, network_manager, "127.0.0.1")}
-    , rbc{muddle->GetEndpoint(), muddle_certificate->identity().identifier(), cabinet,
-          [this](ConstByteArray const &, ConstByteArray const &payload) -> void {
-            OnRbcMessage(payload);
-          },
-          failures}
-  {
-    network_manager.Start();
-    muddle->Start({}, {muddle_port});
-  }
-
-  ~RbcMember()
+  virtual ~RbcMember()
   {
     muddle->Stop();
     network_manager.Stop();
@@ -284,13 +267,6 @@ struct RbcMember
     assert(msg == "Hello");
     ++delivered_msgs;
   }
-
-  void ResetCabinet(RBC::CabinetMembers const &new_cabinet)
-  {
-    cabinet = new_cabinet;
-    rbc.ResetCabinet(cabinet);
-  }
-
   muddle::Address GetMuddleAddress() const
   {
     return muddle->GetAddress();
@@ -300,6 +276,71 @@ struct RbcMember
   {
     return fetch::network::Uri{"tcp://127.0.0.1:" + std::to_string(muddle_port)};
   }
+
+  virtual void ResetCabinet(RBC::CabinetMembers const &new_cabinet)          = 0;
+  virtual void Broadcast(SerialisedMessage const &msg, uint8_t num_messages) = 0;
+
+protected:
+  RbcMember(uint16_t port_number, uint16_t index)
+    : muddle_port{port_number}
+    , muddle_certificate{CreateCertificate()}
+    , network_manager{"NetworkManager" + std::to_string(index), 1}
+    , muddle{CreateMuddle("Test", muddle_certificate, network_manager, "127.0.0.1")}
+  {
+    network_manager.Start();
+    muddle->Start({}, {muddle_port});
+  }
+};
+
+class FaultyRbcMember : public RbcMember
+{
+public:
+  FaultyRbcMember(uint16_t port_number, uint16_t index,
+                  const std::vector<FaultyRbc::Failures> &failure)
+    : RbcMember{port_number, index}
+    , rbc_{muddle->GetEndpoint(), muddle_certificate->identity().identifier(),
+           [this](ConstByteArray const &, ConstByteArray const &payload) -> void {
+             OnRbcMessage(payload);
+           },
+           failure}
+  {}
+
+  void ResetCabinet(RBC::CabinetMembers const &new_cabinet) override
+  {
+    rbc_.ResetCabinet(new_cabinet);
+  }
+  void Broadcast(SerialisedMessage const &msg, uint8_t num_messages) override
+  {
+    rbc_.Broadcast(msg, num_messages);
+  }
+
+private:
+  FaultyRbc rbc_;
+};
+
+class HonestRbcMember : public RbcMember
+{
+
+public:
+  HonestRbcMember(uint16_t port_number, uint16_t index)
+    : RbcMember{port_number, index}
+    , rbc_{muddle->GetEndpoint(), muddle_certificate->identity().identifier(),
+           [this](ConstByteArray const &, ConstByteArray const &payload) -> void {
+             OnRbcMessage(payload);
+           }}
+  {}
+
+  void ResetCabinet(RBC::CabinetMembers const &new_cabinet) override
+  {
+    rbc_.ResetCabinet(new_cabinet);
+  }
+  void Broadcast(SerialisedMessage const &msg, uint8_t) override
+  {
+    rbc_.Broadcast(msg);
+  }
+
+private:
+  RBC rbc_;
 };
 
 void GenerateRbcTest(uint32_t cabinet_size, uint32_t expected_completion_size,
@@ -307,21 +348,27 @@ void GenerateRbcTest(uint32_t cabinet_size, uint32_t expected_completion_size,
                      uint8_t                                              num_messages = 1)
 {
 
+  RBC::CabinetMembers                     cabinet;
   std::vector<std::unique_ptr<RbcMember>> committee;
   for (uint16_t ii = 0; ii < cabinet_size; ++ii)
   {
     auto port_number = static_cast<uint16_t>(9000 + ii);
-    if (!failures.empty() && ii < failures.size())
+    if (ii < failures.size() && !failures[ii].empty())
     {
-      committee.emplace_back(new RbcMember{port_number, ii, failures[ii]});
+      committee.emplace_back(new FaultyRbcMember{port_number, ii, failures[ii]});
     }
     else
     {
-      committee.emplace_back(new RbcMember{port_number, ii});
+      committee.emplace_back(new HonestRbcMember{port_number, ii});
     }
+    cabinet.insert(committee[ii]->muddle_certificate->identity().identifier());
   }
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(500));
+  // Reset cabinet
+  for (auto &member : committee)
+  {
+    member->ResetCabinet(cabinet);
+  }
 
   // Connect muddles together (localhost for this example)
   for (uint32_t ii = 0; ii < cabinet_size; ii++)
@@ -351,19 +398,6 @@ void GenerateRbcTest(uint32_t cabinet_size, uint32_t expected_completion_size,
     }
   }
 
-  RBC::CabinetMembers cabinet;
-  for (auto &member : committee)
-  {
-    cabinet.insert(member->muddle_certificate->identity().identifier());
-  }
-  assert(cabinet.size() == cabinet_size);
-
-  // Reset cabinet
-  for (auto &member : committee)
-  {
-    member->ResetCabinet(cabinet);
-  }
-
   // First node sends a broadcast
   {
     std::string                           msg = "Hello";
@@ -372,7 +406,7 @@ void GenerateRbcTest(uint32_t cabinet_size, uint32_t expected_completion_size,
     uint32_t sender_index = cabinet_size - 1;
     for (auto ii = 0; ii < num_messages; ++ii)
     {
-      committee[sender_index]->rbc.Broadcast(serialiser.data(), num_messages);
+      committee[sender_index]->Broadcast(serialiser.data(), num_messages);
     }
 
     std::this_thread::sleep_for(std::chrono::seconds(1 * num_messages));
@@ -386,6 +420,11 @@ void GenerateRbcTest(uint32_t cabinet_size, uint32_t expected_completion_size,
     }
     EXPECT_EQ(pp, expected_completion_size);
   }
+}
+
+TEST(rbc, all_honest)
+{
+  GenerateRbcTest(4, 3, {});
 }
 
 TEST(rbc, bad_message)

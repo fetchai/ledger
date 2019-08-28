@@ -64,9 +64,9 @@ void TrimToSize(T &container, uint64_t max_allowed)
 }
 
 template <typename T>
-void DeterministicShuffle(T &container, uint64_t random_beacon)
+void DeterministicShuffle(T &container, uint64_t entropy)
 {
-  DRNG rng(random_beacon);
+  DRNG rng(entropy);
   std::shuffle(container.begin(), container.end(), rng);
 }
 
@@ -104,7 +104,7 @@ void StakeManager::UpdateCurrentBlock(Block const &current)
   {
     auto snapshot = LookupStakeSnapshot(current.body.block_number);
     committee_history_[current.body.block_number] =
-        snapshot->BuildCommittee(current.body.random_beacon, committee_size_);
+        snapshot->BuildCommittee(current.body.entropy, committee_size_);
   }
 
   TrimToSize(stake_history_, HISTORY_LENGTH);
@@ -113,7 +113,7 @@ void StakeManager::UpdateCurrentBlock(Block const &current)
 
 bool StakeManager::ShouldGenerateBlock(Block const &previous, Address const &address)
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Should generate block? Prev: ", previous.body.block_number);
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Should generate block? Prev: ", previous.body.block_number);
 
   auto const committee = GetCommittee(previous);
 
@@ -133,9 +133,9 @@ bool StakeManager::ShouldGenerateBlock(Block const &previous, Address const &add
 
   for (std::size_t i = 0; i < (*committee).size(); ++i)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Block: ", previous.body.block_number,
-                   " Saw committee member: ", Address((*committee)[i]).address().ToBase64(),
-                   "we are: ", address.address().ToBase64());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Block: ", previous.body.block_number,
+                    " Saw committee member: ", Address((*committee)[i]).address().ToBase64(),
+                    "we are: ", address.address().ToBase64());
 
     if (Address((*committee)[i]) == address)
     {
@@ -176,8 +176,6 @@ StakeManager::CommitteePtr StakeManager::GetCommittee(Block const &previous)
                    last_snapshot);
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Periodicity: ", snapshot_validity_periodicity_);
-
   // If the last committee was the valid committee, return this. Otherwise, deterministically
   // shuffle the committee using the random beacon
   if (last_snapshot == previous.body.block_number)
@@ -191,9 +189,7 @@ StakeManager::CommitteePtr StakeManager::GetCommittee(Block const &previous)
 
     Committee committee_copy = *committee_ptr;
 
-    DeterministicShuffle(committee_copy, previous.body.random_beacon);
-
-    FETCH_LOG_INFO(LOGGING_NAME, "Rasdfasdf*****");
+    DeterministicShuffle(committee_copy, previous.body.entropy);
 
     return std::make_shared<Committee>(committee_copy);
   }

@@ -236,8 +236,8 @@ class TestInstance():
 
         # Create a stake file into the logging directory for all nodes
         genesis_file_location = self._workspace+"/genesis_file.json"
-        cmd = [stake_gen, *nodes_mining_identities, "-t",
-               str(len(nodes_mining_identities) - 1), "-o", genesis_file_location]
+        cmd = [stake_gen, *nodes_mining_identities,
+               "-o", genesis_file_location]
 
         # After giving the relevant nodes identities, make a stake file
         exit_code = subprocess.call(cmd)
