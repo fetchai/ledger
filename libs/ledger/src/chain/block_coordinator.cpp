@@ -213,7 +213,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr
   });
 
   // Initialising the BLS library
-  crypto::bls::Init();
+  bn::initPairing();
 
   // TODO(private issue 792): this shouldn't be here, but if it is, it locks the whole system on
   // startup. RecoverFromStartup();

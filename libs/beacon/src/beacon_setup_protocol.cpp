@@ -17,13 +17,13 @@
 //------------------------------------------------------------------------------
 
 #include "beacon/beacon_setup_protocol.hpp"
+#include "beacon/beacon_setup_service.hpp"
 #include "core/service_ids.hpp"
-#include "dkg/dkg_setup_service.hpp"
 
 namespace fetch {
 namespace beacon {
 
-BeaconSetupServiceProtocol::BeaconSetupServiceProtocol(DkgSetupService &service)
+BeaconSetupServiceProtocol::BeaconSetupServiceProtocol(BeaconSetupService &service)
   : service_(service)
 {}
 

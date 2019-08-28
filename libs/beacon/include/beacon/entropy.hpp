@@ -30,7 +30,7 @@ struct Entropy
 {
   using ConstByteArray = byte_array::ConstByteArray;
   using SignatureShare = AeonExecutionUnit::SignatureShare;
-  using GroupSignature = dkg::DkgManager::Signature;
+  using GroupSignature = dkg::BeaconManager::Signature;
 
   uint64_t       round{0};
   ConstByteArray seed{"genesis"};

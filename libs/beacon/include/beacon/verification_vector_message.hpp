@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "beacon/beacon_manager.hpp"
+#include "crypto/bls_dkg.hpp"
 
 #include <vector>
 
@@ -25,10 +25,8 @@ namespace fetch {
 namespace beacon {
 struct VerificationVectorMessage
 {
-  using BeaconManager = dkg::BeaconManager;
-
-  uint64_t                                       round{0};
-  std::vector<BeaconManager::VerificationVector> verification_vectors{};
+  uint64_t                                          round{0};
+  std::vector<crypto::bls::dkg::VerificationVector> verification_vectors{};
 
   bool operator<(VerificationVectorMessage const &other) const
   {

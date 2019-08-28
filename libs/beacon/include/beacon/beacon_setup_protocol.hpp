@@ -22,12 +22,12 @@
 
 namespace fetch {
 namespace beacon {
-class DkgSetupService;
+class BeaconSetupService;
 class BeaconSetupServiceProtocol : public service::Protocol
 {
 public:
   // Construction / Destruction
-  explicit BeaconSetupServiceProtocol(DkgSetupService &service);
+  explicit BeaconSetupServiceProtocol(BeaconSetupService &service);
 
   BeaconSetupServiceProtocol(BeaconSetupServiceProtocol const &) = delete;
   BeaconSetupServiceProtocol(BeaconSetupServiceProtocol &&)      = delete;
@@ -38,7 +38,7 @@ public:
   BeaconSetupServiceProtocol &operator=(BeaconSetupServiceProtocol &&) = delete;
 
 private:
-  DkgSetupService &service_;
+  BeaconSetupService &service_;
 };
 }  // namespace beacon
 }  // namespace fetch

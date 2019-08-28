@@ -30,14 +30,14 @@ namespace beacon {
 
 struct CabinetMemberDetails  // TODO(tfr): rename into CabinetMember
 {
-  using DkgManager = dkg::DkgManager;
-  using Identity   = crypto::Identity;
-  using Signature  = byte_array::ConstByteArray;
+  using BeaconManager = dkg::BeaconManager;
+  using Identity      = crypto::Identity;
+  using Signature     = byte_array::ConstByteArray;
 
   /// Payload
   /// @{
-  Identity                 identity;
-  DkgManager::CabinetIndex id;
+  Identity                    identity;
+  BeaconManager::CabinetIndex id;
   /// @}
 
   Signature signature;
