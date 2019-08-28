@@ -53,7 +53,6 @@ public:
 
 private:
   using Mutex               = std::mutex;
-  using LockGuard           = std::lock_guard<Mutex>;
   using HistogramCollection = std::unordered_map<std::string, HistogramPtr>;
 
   HistogramPtr LookupHistogram(std::string const &key);

@@ -216,8 +216,6 @@ private:
   using Client     = std::shared_ptr<network::AbstractConnection>;
   using ThreadPool = network::ThreadPool;
   using Register   = std::shared_ptr<MuddleRegister>;
-  using Mutex      = mutex::Mutex;
-  using Lock       = std::lock_guard<Mutex>;
   using Clock      = std::chrono::system_clock;
   using Timepoint  = Clock::time_point;
   using Duration   = Clock::duration;

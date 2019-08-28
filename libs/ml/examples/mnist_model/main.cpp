@@ -17,19 +17,19 @@
 //------------------------------------------------------------------------------
 
 #include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
-#include "ml/estimators/dnn_classifier.hpp"
+#include "ml/model/dnn_classifier.hpp"
 #include "ml/optimisation/types.hpp"
 
 #include <iostream>
 
-using namespace fetch::ml::estimator;
+using namespace fetch::ml::model;
 using namespace fetch::ml::optimisers;
 
 using DataType   = float;
 using TensorType = fetch::math::Tensor<DataType>;
 using SizeType   = typename TensorType::SizeType;
 
-using EstimatorType  = typename fetch::ml::estimator::DNNClassifier<TensorType>;
+using ModelType      = typename fetch::ml::model::DNNClassifier<TensorType>;
 using DataLoaderType = typename fetch::ml::dataloaders::MNISTLoader<TensorType, TensorType>;
 
 int main(int ac, char **av)
@@ -44,17 +44,16 @@ int main(int ac, char **av)
   std::cout << "FETCH MNIST Demo" << std::endl;
 
   /// setup config ///
-  EstimatorConfig<DataType> estimator_config;
-  estimator_config.learning_rate_param.mode =
+  ModelConfig<DataType> model_config;
+  model_config.learning_rate_param.mode =
       fetch::ml::optimisers::LearningRateParam<DataType>::LearningRateDecay::EXPONENTIAL;
-  estimator_config.learning_rate_param.starting_learning_rate = static_cast<DataType>(0.001);
-  estimator_config.learning_rate_param.exponential_decay_rate = static_cast<DataType>(0.99);
-  estimator_config.batch_size                                 = 64;  // minibatch training size
-  estimator_config.subset_size    = 1000;  // only train on the first 1000 samples
-  estimator_config.early_stopping = true;  // stop early if no improvement
-  estimator_config.patience       = 30;
-  estimator_config.opt            = OptimiserType::ADAM;
-  estimator_config.print_stats    = true;
+  model_config.learning_rate_param.starting_learning_rate = static_cast<DataType>(0.001);
+  model_config.learning_rate_param.exponential_decay_rate = static_cast<DataType>(0.99);
+  model_config.batch_size                                 = 64;  // minibatch training size
+  model_config.subset_size    = 1000;  // only train on the first 1000 samples
+  model_config.early_stopping = true;  // stop early if no improvement
+  model_config.patience       = 30;
+  model_config.print_stats    = true;
 
   // setup dataloader
   auto data_loader_ptr = std::make_shared<DataLoaderType>(av[1], av[2]);
@@ -64,15 +63,15 @@ int main(int ac, char **av)
 
   DataType loss;
 
-  // run estimator in training mode
-  EstimatorType estimator(estimator_config, data_loader_ptr, {784, 100, 20, 10});
+  // run model in training mode
+  ModelType model(data_loader_ptr, OptimiserType::ADAM, model_config, {784, 100, 20, 10});
 
   // training loop - early stopping will prevent long training time
-  estimator.Train(1000000, loss);
+  model.Train(1000000, loss);
 
-  // Run estimator on a test set
+  // Run model on a test set
   DataType test_loss;
-  estimator.Test(test_loss);
+  model.Test(test_loss);
 
   std::cout << "The training has finished, validation loss: " << test_loss << std::endl;
 

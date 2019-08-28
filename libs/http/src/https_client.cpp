@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "http/https_client.hpp"
 #include "network/fetch_asio.hpp"
 

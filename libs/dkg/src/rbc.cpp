@@ -102,7 +102,7 @@ void RBC::ResetCabinet()
     threshold_ = static_cast<uint32_t>(current_cabinet_.size() / 3);
   }
   assert(current_cabinet_.size() > 3 * threshold_);
-  std::lock_guard<std::mutex> lock{mutex_broadcast_};
+  FETCH_LOCK(mutex_broadcast_);
   id_ = static_cast<uint32_t>(
       std::distance(current_cabinet_.begin(), current_cabinet_.find(address_)));
   parties_.clear();
@@ -144,7 +144,7 @@ void RBC::Broadcast(RBCEnvelope const &env)
   env_serializer.Reserve(env_counter.size());
   env_serializer << env;
 
-  std::lock_guard<std::mutex> lock{mutex_broadcast_};
+  FETCH_LOCK(mutex_broadcast_);
   endpoint_.Broadcast(SERVICE_DKG, CHANNEL_BROADCAST, env_serializer.data());
 }
 
@@ -172,7 +172,7 @@ void RBC::SendRBroadcast(SerialisedMessage const &msg)
  */
 bool RBC::SetMbar(TagType tag, RMessage const &msg, uint32_t sender_index)
 {
-  std::lock_guard<std::mutex> lock(mutex_broadcast_);
+  FETCH_LOCK(mutex_broadcast_);
   if (broadcasts_[tag].mbar.empty())
   {
     broadcasts_[tag].mbar = msg.message();
@@ -195,7 +195,7 @@ bool RBC::SetMbar(TagType tag, RMessage const &msg, uint32_t sender_index)
  */
 bool RBC::SetDbar(TagType tag, RHash const &msg)
 {
-  std::lock_guard<std::mutex> lock(mutex_broadcast_);
+  FETCH_LOCK(mutex_broadcast_);
   broadcasts_[tag].dbar = msg.hash();
   TruncatedHash msg_hash;
   if (!broadcasts_[tag].mbar.empty())
@@ -213,8 +213,8 @@ bool RBC::SetDbar(TagType tag, RHash const &msg)
  */
 bool RBC::ReceivedEcho(TagType tag, REcho const &msg)
 {
-  std::lock_guard<std::mutex> lock(mutex_broadcast_);
-  auto &                      msg_count = broadcasts_[tag].msgs_count[msg.hash()];
+  FETCH_LOCK(mutex_broadcast_);
+  auto &msg_count = broadcasts_[tag].msgs_count[msg.hash()];
   msg_count.echo_count++;
   return (msg_count.echo_count == current_cabinet_.size() - threshold_ &&
           msg_count.ready_count <= threshold_);
@@ -228,8 +228,8 @@ bool RBC::ReceivedEcho(TagType tag, REcho const &msg)
  */
 struct RBC::MsgCount RBC::ReceivedReady(TagType tag, RHash const &msg)
 {
-  std::lock_guard<std::mutex> lock(mutex_broadcast_);
-  auto &                      msg_count = broadcasts_[tag].msgs_count[msg.hash()];
+  FETCH_LOCK(mutex_broadcast_);
+  auto &msg_count = broadcasts_[tag].msgs_count[msg.hash()];
   msg_count.ready_count++;
   MsgCount res = msg_count;
   return res;
@@ -548,7 +548,7 @@ void RBC::Deliver(SerialisedMessage const &msg, uint32_t sender_index)
   MuddleAddress miner_id{*std::next(current_cabinet_.begin(), sender_index)};
   deliver_msg_callback_(miner_id, msg);
   // Try to deliver old messages
-  std::lock_guard<std::mutex> lock(mutex_deliver_);
+  FETCH_LOCK(mutex_deliver_);
   if (!parties_[sender_index].undelivered_msg.empty())
   {
     FETCH_LOG_TRACE(LOGGING_NAME, "Node ", id_, " checks old tags for node ", sender_index);
@@ -585,7 +585,7 @@ uint32_t RBC::CabinetIndex(MuddleAddress const &other_address) const
  */
 bool RBC::CheckTag(RBCMessage const &msg)
 {
-  std::lock_guard<std::mutex> lock(mutex_deliver_);
+  FETCH_LOCK(mutex_deliver_);
   if (msg.id() >= current_cabinet_.size())
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Node ", id_, " received message with unknown tag id");
@@ -623,7 +623,7 @@ bool RBC::CheckTag(RBCMessage const &msg)
  */
 bool RBC::SetPartyFlag(uint32_t sender_index, TagType tag, MsgType msg_type)
 {
-  std::lock_guard<std::mutex> lock(mutex_flags_);
+  FETCH_LOCK(mutex_flags_);
   assert(parties_.size() == current_cabinet_.size());
   auto &iter  = parties_[sender_index].flags[tag];
   auto  index = static_cast<uint32_t>(msg_type);

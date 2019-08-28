@@ -62,8 +62,6 @@ void FeedSubscriptionManager::PublishingProcessor()
 
 void FeedSubscriptionManager::AttachToService(ServiceServerInterface *service)
 {
-  LOG_STACK_TRACE_POINT;
-
   auto feed = feed_;
   publisher_->create_publisher(feed_,
                                [service, feed, this](fetch::byte_array::ConstByteArray const &msg) {
@@ -75,8 +73,8 @@ void FeedSubscriptionManager::AttachToService(ServiceServerInterface *service)
 
                                  params.Allocate(msg.size());
                                  params.WriteBytes(msg.pointer(), msg.size());
-                                 LOG_STACK_TRACE_POINT;
-                                 lock_type lock(subscribe_mutex_);
+
+                                 FETCH_LOCK(subscribe_mutex_);
 
                                  std::vector<publishing_workload_type> notifications_to_send;
                                  notifications_to_send.reserve(16);

@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "ledger/chaincode/dummy_contract.hpp"
 #include "ledger/chaincode/factory.hpp"
