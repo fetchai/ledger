@@ -375,7 +375,6 @@ BeaconSetupService::State BeaconSetupService::OnWaitForQualComplaints()
       return State::BEACON_READY;
     }
     BroadcastReconstructionShares();
-    reconstruction_shares_received_.insert(identity_.identifier());
 
     return State::WAIT_FOR_RECONSTRUCTION_SHARES;
   }
@@ -390,38 +389,48 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReconstructionShares()
 
   std::set<MuddleAddress> complaints_list = qual_complaints_manager_.Complaints();
   std::set<MuddleAddress> remaining_honest;
-  std::set<MuddleAddress> diff;
   std::set<MuddleAddress> qual{beacon_->manager.qual()};
   std::set_difference(qual.begin(), qual.end(), complaints_list.begin(), complaints_list.end(),
                       std::inserter(remaining_honest, remaining_honest.begin()));
-  std::set_difference(remaining_honest.begin(), remaining_honest.end(),
-                      reconstruction_shares_received_.begin(),
-                      reconstruction_shares_received_.end(), std::inserter(diff, diff.begin()));
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", dkg_manager_.cabinet_index(),
-                  " reconstruction shares remaining ", diff.size());
-  if (diff.empty())
+  bool received_all{true};
+  for (auto const &member : remaining_honest)
   {
+    if (member != identity_.identifier() &&
+        reconstruction_shares_received_.find(member) == reconstruction_shares_received_.end())
+    {
+      received_all = false;
+      break;
+    }
+  }
+  if (received_all)
+  {
+    // Process reconstruction shares. Return if the sender is in complaints, or not in QUAL
+    for (auto const &share : reconstruction_shares_received_)
+    {
+      MuddleAddress from = share.first;
+      if (qual_complaints_manager_.ComplaintsFind(from) ||
+          beacon_->manager.qual().find(from) == beacon_->manager.qual().end())
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                       " received message from invalid sender. Discarding.");
+        continue;
+      }
+      for (auto const &elem : share.second)
+      {
+        beacon_->manager.VerifyReconstructionShare(from, elem);
+      }
+    }
     lock.unlock();
     if (!beacon_->manager.RunReconstruction())
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Node: ", beacon_->manager.cabinet_index(),
                      " DKG failed due to reconstruction failure");
-
-      // Clean up
-      reconstruction_shares_received_.clear();
-
-      return State::BEACON_READY;
     }
     else
     {
       beacon_->manager.ComputePublicKeys();
-
-      // Clean up
-      reconstruction_shares_received_.clear();
-      qual_complaints_manager_.Clear();
-
-      return State::BEACON_READY;
     }
+    return State::BEACON_READY;
   }
   state_machine_->Delay(std::chrono::milliseconds(10));
   return State::WAIT_FOR_RECONSTRUCTION_SHARES;
@@ -793,22 +802,9 @@ void BeaconSetupService::OnQualComplaints(SharesMessage const &shares_msg,
 void BeaconSetupService::OnReconstructionShares(SharesMessage const &shares_msg,
                                                 MuddleAddress const &from)
 {
-  // Return if the sender is in complaints, or not in QUAL
-  // TODO(JMW): Could be problematic if qual has not been built yet
-  if (qual_complaints_manager_.ComplaintsFind(from) ||
-      beacon_->manager.qual().find(from) == beacon_->manager.qual().end())
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-                   " received message from invalid sender. Discarding.");
-    return;
-  }
   if (reconstruction_shares_received_.find(from) == reconstruction_shares_received_.end())
   {
-    for (auto const &share : shares_msg.shares())
-    {
-      beacon_->manager.VerifyReconstructionShare(from, share);
-    }
-    reconstruction_shares_received_.insert(from);
+    reconstruction_shares_received_.insert({from, shares_msg.shares()});
   }
   else
   {

@@ -130,10 +130,10 @@ protected:
   QualComplaintsManager   qual_complaints_manager_;
 
   // Counters for types of messages received
-  std::set<MuddleAddress> shares_received_;
-  std::set<MuddleAddress> coefficients_received_;
-  std::set<MuddleAddress> qual_coefficients_received_;
-  std::set<MuddleAddress> reconstruction_shares_received_;
+  std::set<MuddleAddress>                   shares_received_;
+  std::set<MuddleAddress>                   coefficients_received_;
+  std::set<MuddleAddress>                   qual_coefficients_received_;
+  std::map<MuddleAddress, SharesExposedMap> reconstruction_shares_received_;
 
   /// @name Methods to send messages
   /// @{
