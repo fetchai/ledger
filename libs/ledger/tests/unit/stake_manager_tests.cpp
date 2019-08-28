@@ -124,7 +124,7 @@ protected:
       block.body.previous_hash = block.body.hash;
       block.body.hash          = GenerateRandomAddress(rng_).address();
       block.body.block_number += 1;
-      block.body.random_beacon += 1;
+      block.body.entropy += 1;
 
       stake_manager_->UpdateCurrentBlock(block);
     }

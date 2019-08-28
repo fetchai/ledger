@@ -77,7 +77,8 @@ BeaconService::BeaconService(Endpoint &endpoint, CertificatePtr certificate,
   , cabinet_creator_{endpoint_, identity_}  // TODO(tfr): Make shared
   , cabinet_creator_protocol_{cabinet_creator_}
   , beacon_protocol_{*this}
-
+  , entropy_generated_count_{telemetry::Registry::Instance().CreateCounter(
+        "entropy_generated_total", "The total number of times entropy has been generated")}
 {
 
   // Attaching beacon ready callback handler
@@ -144,7 +145,7 @@ BeaconService::BeaconService(Endpoint &endpoint, CertificatePtr certificate,
 BeaconService::Status BeaconService::GenerateEntropy(Digest /*block_digest*/, uint64_t block_number,
                                                      uint64_t &entropy)
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Requesting entropy for block number: ", block_number);
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Requesting entropy for block number: ", block_number);
 
   uint64_t round = block_number / blocks_per_round_;
 
@@ -459,6 +460,7 @@ BeaconService::State BeaconService::OnCompleteState()
 
   // Adding new entropy
   ready_entropy_queue_.push_back(current_entropy_);
+  entropy_generated_count_->add(1);
 
   // Preparing next
   next_entropy_       = Entropy();

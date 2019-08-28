@@ -11,7 +11,6 @@ import base58
 
 TOTAL_SUPPLY = 11529975750000000000
 MUDDLE_ADDDRESS_RAW_LENGTH = 64
-DEFAULT_THRESHOLD = 0.6
 
 
 def _muddle_address(text):
@@ -30,8 +29,13 @@ def parse_commandline():
                         default=1, help='The percentage of tokens to be staked')
     parser.add_argument(
         '-o', '--output', default='genesis_file.json', help='Path to generated file')
-    parser.add_argument('-t', '--threshold', type=int,
+    parser.add_argument('-t', '--threshold', type=float, default=0.6,
                         help='The required threshold')
+    parser.add_argument('-m', '--max-committee', type=int,
+                        help='The maximum committee size allowed')
+    parser.add_argument('-n', '--no-formatting', dest='no_formatting', action='store_true',
+                        help='Whether to format the output file for readability')
+    parser.set_defaults(no_formatting=False)
     return parser.parse_args()
 
 
@@ -66,22 +70,18 @@ def create_record(address, balance, stake):
 def main():
     args = parse_commandline()
 
-    # check the threshold
-    if args.threshold is None:
-        total = len(args.addresses)
-        threshold = min(total, max(1, int(DEFAULT_THRESHOLD * total)))
-        print('Calculated threshold:', threshold)
-    elif args.threshold > len(args.addresses):
-        print('Threshold can\'t be more that the number of stakers')
-    elif args.threshold < 0:
-        print('Threshold must be larger than 0')
-    else:
-        threshold = args.threshold
-
     # build up the stake information
     individual_balance = TOTAL_SUPPLY // len(args.addresses)
     individual_stake = (min(args.stake_percentage, 100)
                         * individual_balance) // 100
+
+    max_committee = 0
+
+    if not args.max_committee:
+        max_committee = len(args.addresses)
+    else:
+        max_committee = args.max_committee
+
     stakes = []
     state = []
     cabinet = []
@@ -110,8 +110,9 @@ def main():
     # form the genesis data
     genesis_file = {
         'version': 2,
-        'stake': {
-            'committeeSize': len(cabinet),
+        'consensus': {
+            'committeeSize': max_committee,
+            'threshold': float(args.threshold),
             'stakers': stakes,
         },
         'accounts': state,
@@ -119,7 +120,10 @@ def main():
 
     # dump the file
     with open(args.output, 'w') as output_file:
-        json.dump(genesis_file, output_file, indent=4, sort_keys=True)
+        if args.no_formatting:
+            json.dump(genesis_file, output_file)
+        else:
+            json.dump(genesis_file, output_file, indent=4, sort_keys=True)
 
 
 if __name__ == '__main__':
