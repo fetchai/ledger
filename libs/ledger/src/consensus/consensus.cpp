@@ -37,7 +37,7 @@ Consensus::Consensus(StakeManagerPtr stake, BeaconServicePtr beacon, MainChain c
   , aeon_period_{aeon_period}
   , max_committee_size_{max_committee_size}
 {
-  assert(stake);
+  assert(stake_);
   FETCH_UNUSED(chain_);
 }
 
