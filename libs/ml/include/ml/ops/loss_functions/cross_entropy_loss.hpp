@@ -59,7 +59,7 @@ public:
   {
     assert(inputs.size() == 2);
     assert(inputs.at(0)->size() == inputs.at(1)->size());
-
+		
     output(0, 0) = fetch::math::CrossEntropyLoss((*inputs.at(0)), (*inputs.at(1)));
   }
 
