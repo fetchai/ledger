@@ -49,7 +49,9 @@ public:
   virtual struct fetch::ml::StateDict<T> StateDict() const                            = 0;
   virtual void              LoadStateDict(struct fetch::ml::StateDict<T> const &dict) = 0;
   virtual TensorType const &get_weights() const                                       = 0;
-  virtual TensorType const &get_gradients() const                                     = 0;
+  virtual void              SetWeights(TensorType &new_value)                         = 0;
+  virtual TensorType const &GetGradientsReferences() const                            = 0;
+  virtual TensorType        GetGradients() const                                      = 0;
   virtual void              ResetGradients()                                          = 0;
   virtual void              ApplyGradient(TensorType const &grad)                     = 0;
   virtual void              ApplyRegularisation()                                     = 0;
