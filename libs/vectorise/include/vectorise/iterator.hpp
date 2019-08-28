@@ -44,26 +44,20 @@ public:
     , end_(reinterpret_cast<mm_register_type *>(o.end()))
   {
     ptr_ += offset;
-    std::cout << "ptr_ = " << std::hex << ptrdiff_t(ptr_) << std::endl;
-    std::cout << "end_ = " << std::hex << ptrdiff_t(end_) << std::endl;
   }
 
   VectorRegisterIterator(type const *d, std::size_t size)
     : ptr_((mm_register_type *)d)
     , end_((mm_register_type *)(d + size))
   {
-    std::cout << "ptr_ = " << std::hex << ptrdiff_t(ptr_) << std::endl;
-    std::cout << "end_ = " << std::hex << ptrdiff_t(end_) << std::endl;
   }
 
   void Next(VectorRegisterType &m)
   {
     assert((end_ == nullptr) || (ptr_ < end_));
-    std::cout << "ptr_ = " << std::hex << ptrdiff_t(ptr_) << std::endl;
 
     m.data() = *ptr_;
     ++ptr_;
-    std::cout << "ptr_ = " << std::hex << ptrdiff_t(ptr_) << std::endl;
   }
 
   mm_register_type *pointer() const
