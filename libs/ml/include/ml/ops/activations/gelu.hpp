@@ -38,6 +38,7 @@ public:
   using SizeType      = typename TensorType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpGeluSaveableParams<TensorType>;
+  using MyType        = Gelu<TensorType>;
 
   Gelu() = default;
 
@@ -53,6 +54,16 @@ public:
     return sp;
   }
 
+  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
+  {
+    FETCH_UNUSED(me);
+    assert(me.get() == this);
+
+    auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
+
+    return copyshare;
+  }
   // 0.5x(1+tanh(0.797885x+0.035677x^3))
   void Forward(VecTensorType const &inputs, TensorType &output) override
   {

@@ -48,7 +48,7 @@ public:
   fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> Evaluate(
       fetch::vm::Ptr<fetch::vm::String> const &name);
 
-  void BackPropagateError(fetch::vm::Ptr<fetch::vm::String> const &name);
+  void BackPropagate(fetch::vm::Ptr<fetch::vm::String> const &name);
 
   void Step(DataType lr);
 

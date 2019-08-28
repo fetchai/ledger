@@ -143,336 +143,336 @@ void BuildNodeAndInsertTrainables(NodeSaveableParams<T> const &nsp, std::string 
   {
     op_ptr = GetOp<ops::Abs<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<ops::Abs<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case ops::Add<T>::OpCode():
   {
     op_ptr = GetOp<ops::Add<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<ops::Add<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case ops::Concatenate<T>::OpCode():
   {
     op_ptr = GetOp<ops::Concatenate<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<ops::Concatenate<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case ops::Convolution1D<T>::OpCode():
   {
     op_ptr = GetOp<ops::Convolution1D<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<ops::Convolution1D<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case ops::Convolution2D<T>::OpCode():
   {
     op_ptr = GetOp<ops::Convolution2D<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<ops::Convolution2D<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case ops::CrossEntropyLoss<T>::OpCode():
   {
     op_ptr = GetOp<ops::CrossEntropyLoss<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<ops::CrossEntropyLoss<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case ops::Divide<T>::OpCode():
   {
     op_ptr = GetOp<ops::Divide<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<ops::Divide<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case ops::Dropout<T>::OpCode():
   {
     op_ptr = GetOp<ops::Dropout<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<ops::Dropout<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case ops::Elu<T>::OpCode():
   {
     op_ptr = GetOp<ops::Elu<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<ops::Elu<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case ops::Embeddings<T>::OpCode():
   {
     op_ptr = GetOp<ops::Embeddings<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<ops::Embeddings<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case ops::Exp<T>::OpCode():
   {
     op_ptr = GetOp<ops::Exp<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<ops::Exp<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case ops::Flatten<T>::OpCode():
   {
     op_ptr = GetOp<ops::Flatten<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<ops::Flatten<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case ops::LayerNorm<T>::OpCode():
   {
     op_ptr = GetOp<ops::LayerNorm<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<ops::LayerNorm<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case ops::LeakyRelu<T>::OpCode():
   {
     op_ptr = GetOp<ops::LeakyRelu<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<ops::LeakyRelu<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case ops::LeakyReluOp<T>::OpCode():
   {
     op_ptr = GetOp<ops::LeakyReluOp<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<ops::LeakyReluOp<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case ops::Log<T>::OpCode():
   {
     op_ptr = GetOp<ops::Log<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<ops::Log<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case ops::LogSigmoid<T>::OpCode():
   {
     op_ptr = GetOp<ops::LogSigmoid<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<ops::LogSigmoid<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case ops::LogSoftmax<T>::OpCode():
   {
     op_ptr = GetOp<ops::LogSoftmax<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<ops::LogSoftmax<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case ops::MatrixMultiply<T>::OpCode():
   {
     op_ptr = GetOp<ops::MatrixMultiply<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<ops::MatrixMultiply<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case ops::MeanSquareErrorLoss<T>::OpCode():
   {
     op_ptr = GetOp<ops::MeanSquareErrorLoss<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<ops::MeanSquareErrorLoss<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case ops::MaskFill<T>::OpCode():
   {
     op_ptr = GetOp<ops::MaskFill<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<ops::MaskFill<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case ops::MaxPool1D<T>::OpCode():
   {
     op_ptr = GetOp<ops::MaxPool1D<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<ops::MaxPool1D<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case ops::MaxPool2D<T>::OpCode():
   {
     op_ptr = GetOp<ops::MaxPool2D<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<ops::MaxPool2D<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case ops::Maximum<T>::OpCode():
   {
     op_ptr = GetOp<ops::Maximum<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<ops::Maximum<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case ops::Multiply<T>::OpCode():
   {
     op_ptr = GetOp<ops::Multiply<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<ops::Multiply<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case ops::PlaceHolder<T>::OpCode():
   {
     op_ptr = GetOp<ops::PlaceHolder<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<ops::PlaceHolder<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case ops::RandomisedRelu<T>::OpCode():
   {
     op_ptr = GetOp<ops::RandomisedRelu<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<ops::RandomisedRelu<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case ops::Relu<T>::OpCode():
   {
     op_ptr = GetOp<ops::Relu<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<ops::Relu<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case ops::Reshape<T>::OpCode():
   {
     op_ptr = GetOp<ops::Reshape<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<ops::Reshape<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case ops::Sigmoid<T>::OpCode():
   {
     op_ptr = GetOp<ops::Sigmoid<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<ops::Sigmoid<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case ops::Slice<T>::OpCode():
   {
     op_ptr = GetOp<ops::Slice<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<ops::Slice<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case ops::Softmax<T>::OpCode():
   {
     op_ptr = GetOp<ops::Softmax<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<ops::Softmax<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case ops::SoftmaxCrossEntropyLoss<T>::OpCode():
   {
     op_ptr = GetOp<ops::SoftmaxCrossEntropyLoss<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<ops::SoftmaxCrossEntropyLoss<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case ops::Sqrt<T>::OpCode():
   {
     op_ptr = GetOp<ops::Sqrt<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<ops::Sqrt<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case ops::Subtract<T>::OpCode():
   {
     op_ptr = GetOp<ops::Subtract<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<ops::Subtract<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case ops::Switch<T>::OpCode():
   {
     op_ptr = GetOp<ops::Switch<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<ops::Switch<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case ops::TanH<T>::OpCode():
   {
     op_ptr = GetOp<ops::TanH<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<ops::TanH<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case ops::Transpose<T>::OpCode():
   {
     op_ptr = GetOp<ops::Transpose<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<ops::Transpose<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case ops::Weights<T>::OpCode():
   {
     op_ptr = GetOp<ops::Weights<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<ops::Weights<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case OpType::LAYER_CONVOLUTION_1D:
   {
     op_ptr = BuildLayer<T, layers::Convolution1D<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<layers::Convolution1D<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case OpType::LAYER_CONVOLUTION_2D:
   {
     op_ptr = BuildLayer<T, layers::Convolution2D<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<layers::Convolution2D<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case OpType::LAYER_FULLY_CONNECTED:
   {
     op_ptr = BuildLayer<T, layers::FullyConnected<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<layers::FullyConnected<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case OpType::LAYER_LAYER_NORM:
   {
     op_ptr = BuildLayer<T, layers::LayerNorm<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<layers::LayerNorm<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case OpType::LAYER_MULTI_HEAD_ATTENTION:
   {
     op_ptr = BuildLayer<T, layers::MultiheadAttention<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<layers::MultiheadAttention<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case OpType::LAYER_PRELU:
   {
     op_ptr = BuildLayer<T, layers::PRelu<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<layers::PRelu<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case OpType::LAYER_SCALED_DOT_PRODUCT_ATTENTION:
   {
     op_ptr = BuildLayer<T, layers::ScaledDotProductAttention<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<layers::ScaledDotProductAttention<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case OpType::LAYER_SELF_ATTENTION_ENCODER:
   {
     op_ptr = BuildLayer<T, layers::SelfAttentionEncoder<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<layers::SelfAttentionEncoder<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case OpType::LAYER_SKIP_GRAM:
   {
     op_ptr = BuildLayer<T, layers::SkipGram<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<layers::SkipGram<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   default:

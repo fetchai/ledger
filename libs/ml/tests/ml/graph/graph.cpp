@@ -49,7 +49,7 @@ TYPED_TEST(GraphTest, node_placeholder)
   TensorType gt   = TensorType::FromString(R"(1, 2, 3, 4, 5, 6, 7, 8)");
 
   g.SetInput("Input", data);
-  TensorType prediction = g.ForwardPropagate("Input");
+  TensorType prediction = g.Evaluate("Input");
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt));
@@ -69,7 +69,7 @@ TYPED_TEST(GraphTest, node_relu)
       TensorType::FromString(R"(0, 0, 2, 0, 4, 0, 6, 0, 8, 0, 10, 0, 12, 0, 14, 0, 16)");
 
   g.SetInput("Input", data);
-  TensorType prediction = g.ForwardPropagate("Relu");
+  TensorType prediction = g.Evaluate("Relu");
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt));
@@ -100,7 +100,7 @@ TYPED_TEST(GraphTest, no_such_node_test)  // Use the class as a Node
   TensorType data(std::vector<SizeType>({5, 10}));
   g.SetInput("Input", data);
 
-  ASSERT_ANY_THROW(g.ForwardPropagate("FullyConnected"));
+  ASSERT_ANY_THROW(g.Evaluate("FullyConnected"));
 }
 
 TYPED_TEST(GraphTest, node_add_wrong_order_test)  // Use the class as a Node
@@ -120,7 +120,6 @@ TYPED_TEST(GraphTest, node_add_wrong_order_test)  // Use the class as a Node
 
   auto result = g.Evaluate("FC3");
 
-
   fetch::ml::Graph<TensorType> g2;
 
   g2.template AddNode<fetch::ml::layers::FullyConnected<TensorType>>("FC3", {"FC2"}, 3u, 3u);
@@ -134,7 +133,6 @@ TYPED_TEST(GraphTest, node_add_wrong_order_test)  // Use the class as a Node
   auto result2 = g2.Evaluate("FC3");
 
   EXPECT_TRUE(result == result2);
-
 }
 
 TYPED_TEST(GraphTest, multi_nodes_have_same_name)
@@ -264,7 +262,7 @@ TYPED_TEST(GraphTest,
 
   g.SetInput(input_name1, data1);
   g.SetInput(input_name2, data2);
-  TypeParam output = g.ForwardPropagate("Diamond_Op3");
+  TypeParam output = g.Evaluate("Diamond_Op3");
 
   // Test correct values
   ASSERT_EQ(output.shape(), data1.shape());
@@ -277,7 +275,7 @@ TYPED_TEST(GraphTest,
   g.SetInput(input_name2, data2);
 
   // Recompute graph
-  output = g.ForwardPropagate("Diamond_Op3");
+  output = g.Evaluate("Diamond_Op3");
 
   // Test correct values
   ASSERT_EQ(output.shape(), data1.shape());
@@ -318,10 +316,10 @@ TYPED_TEST(GraphTest, diamond_graph_backward)  // output=(input1*input2)-(input1
   // Forward
   g.SetInput(input_name1, data1);
   g.SetInput(input_name2, data2);
-  TypeParam output = g.ForwardPropagate(output_name);
+  TypeParam output = g.Evaluate(output_name);
 
   // Calculate Gradient
-  g.BackPropagateSignal(output_name, error_signal);
+  g.BackPropagate(output_name, error_signal);
 
   // Test gradient
   std::vector<TypeParam> gradients = g.GetGradients();
@@ -353,10 +351,10 @@ TYPED_TEST(GraphTest, diamond_graph_backward)  // output=(input1*input2)-(input1
   g.ApplyGradients(gradients);
 
   // Recompute graph
-  output = g.ForwardPropagate("Diamond_Op3");
+  output = g.Evaluate("Diamond_Op3");
 
   // Calculate Gradient
-  g.BackPropagateSignal(output_name, error_signal);
+  g.BackPropagate(output_name, error_signal);
 
   // Test Weights
   std::vector<TypeParam> weights2 = g.get_weights();

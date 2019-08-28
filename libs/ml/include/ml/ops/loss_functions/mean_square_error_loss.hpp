@@ -37,6 +37,7 @@ public:
   using SizeType      = typename TensorType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpMeanSquareErrorSaveableParams<T>;
+  using MyType        = MeanSquareErrorLoss<TensorType>;
 
   explicit MeanSquareErrorLoss(SPType const &sp)
     : Ops<T>(sp)
@@ -55,6 +56,18 @@ public:
 
     ret->weightings = weightings_;
     return ret;
+  }
+
+  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
+  {
+    FETCH_UNUSED(me);
+    assert(me.get() == this);
+
+    auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
+    copyshare->weightings_ = weightings_.Copy();
+
+    return copyshare;
   }
 
   void Forward(VecTensorType const &inputs, TensorType &output) override

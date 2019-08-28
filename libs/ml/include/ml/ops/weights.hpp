@@ -109,6 +109,13 @@ public:
     return sp;
   }
 
+  std::shared_ptr<Ops<TensorType>> MakeSharedCopy(std::shared_ptr<Ops<TensorType>> me) override
+  {
+    // This overrides implementation in Placeholder
+    assert(me.get() == this);
+    return me;
+  }
+
   ArrayPtrType GetShareableWeights()
   {
     return this->output_;
@@ -119,7 +126,9 @@ public:
   {
     FETCH_UNUSED(inputs);
     assert(inputs.empty());
+
     gradient_accumulation_->InlineAdd(error_signal);
+
     return {};
   }
 

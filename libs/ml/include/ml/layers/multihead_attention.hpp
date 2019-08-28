@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "layers.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/layers/scaled_dot_product_attention.hpp"
 #include "ml/ops/add.hpp"
