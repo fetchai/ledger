@@ -171,10 +171,11 @@ std::unordered_set<DkgManager::MuddleAddress> DkgManager::ComputeComplaints()
 
 bool DkgManager::VerifyComplaintAnswer(MuddleAddress const &from, ComplaintAnswer const &answer)
 {
-  CabinetIndex from_index     = identity_to_index_[from];
-  if(identity_to_index_.find(answer.first) == identity_to_index_.end())
+  CabinetIndex from_index = identity_to_index_[from];
+  if (identity_to_index_.find(answer.first) == identity_to_index_.end())
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_, " received complaint answer with unknown reporter index");
+    FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
+                   " received complaint answer with unknown reporter index");
     return true;
   }
 
@@ -338,7 +339,6 @@ DkgManager::MuddleAddress DkgManager::VerifyQualComplaint(MuddleAddress const & 
 /**
  * Compute group public key and individual public key shares
  */
-
 void DkgManager::ComputePublicKeys()
 {
 
@@ -478,6 +478,26 @@ bool DkgManager::RunReconstruction()
   return true;
 }
 
+void DkgManager::SetDkgOutput(bn::G2 &public_key, bn::Fr &secret_share,
+                              std::vector<bn::G2> &public_key_shares, std::set<MuddleAddress> &qual)
+{
+  // crypto::mcl::Init(public_key_shares, cabinet_size_);
+  public_key        = public_key_;
+  secret_share      = secret_share_;
+  public_key_shares = public_key_shares_;
+  qual              = qual_;
+}
+
+void DkgManager::SetQual(std::set<fetch::dkg::DkgManager::MuddleAddress> qual)
+{
+  qual_ = std::move(qual);
+}
+
+/**
+ * @brief resets the class back to a state where a new cabinet is set up.
+ * @param cabinet_size is the size of the cabinet.
+ * @param threshold is the threshold to be able to generate a signature.
+ */
 void DkgManager::Reset(std::set<MuddleAddress> const &cabinet, uint32_t threshold)
 {
   assert(threshold > 0);
@@ -513,23 +533,14 @@ void DkgManager::Reset(std::set<MuddleAddress> const &cabinet, uint32_t threshol
   reconstruction_shares.clear();
 }
 
-void DkgManager::SetDkgOutput(bn::G2 &public_key, bn::Fr &secret_share,
-                              std::vector<bn::G2> &public_key_shares, std::set<MuddleAddress> &qual)
-{
-  // crypto::mcl::Init(public_key_shares, cabinet_size_);
-  public_key        = public_key_;
-  secret_share      = secret_share_;
-  public_key_shares = public_key_shares_;
-  qual              = qual_;
-}
-
-void DkgManager::SetQual(std::set<fetch::dkg::DkgManager::MuddleAddress> qual)
-{
-  qual_ = std::move(qual);
-}
-
-DkgManager::AddResult DkgManager::AddSignaturePart(Identity const &from, std::string,
-                                                   std::string     sig_str)
+/**
+ * @brief adds a signature share.
+ * @param from is the identity of the sending node.
+ * @param public_key is the public key of the peer.
+ * @param signature is the signature part.
+ */
+DkgManager::AddResult DkgManager::AddSignaturePart(Identity const &from, PublicKey,
+                                                   Signature       signature)
 {
   auto it = identity_to_index_.find(from.identifier());
   assert(it != identity_to_index_.end());
@@ -544,9 +555,7 @@ DkgManager::AddResult DkgManager::AddSignaturePart(Identity const &from, std::st
     return AddResult::SIGNATURE_ALREADY_ADDED;
   }
 
-  uint64_t  n = it->second;
-  Signature signature;
-  signature.setStr(sig_str);
+  uint64_t n = it->second;
   if (!crypto::mcl::VerifySign(public_key_shares_[n], current_message_, signature, group_g_))
   {
     return AddResult::INVALID_SIGNATURE;
@@ -555,6 +564,63 @@ DkgManager::AddResult DkgManager::AddSignaturePart(Identity const &from, std::st
   signature_buffer_.insert({n, signature});
   already_signed_.insert(from.identifier());
   return AddResult::SUCCESS;
+}
+
+/**
+ * @brief verifies the group signature.
+ */
+bool DkgManager::Verify()
+{
+  group_signature_ = crypto::mcl::LagrangeInterpolation(signature_buffer_);
+  return Verify(group_signature_);
+}
+
+/**
+ * @brief verifies a group signature.
+ */
+bool DkgManager::Verify(Signature const &)
+{
+  return crypto::mcl::VerifySign(public_key_, current_message_, group_signature_, group_g_);
+}
+
+/**
+ * @brief returns the signature as a ConstByteArray
+ */
+DkgManager::Signature DkgManager::GroupSignature() const
+{
+  return group_signature_;
+}
+
+/**
+ * @brief sets the next message to be signed.
+ * @param next_message is the message to be signed.
+ */
+void DkgManager::SetMessage(MessagePayload next_message)
+{
+  current_message_ = next_message;
+  signature_buffer_.clear();
+  already_signed_.clear();
+}
+
+/**
+ * @brief signs the current message.
+ */
+DkgManager::SignedMessage DkgManager::Sign()
+{
+  SignedMessage smsg;
+  Signature     signature  = crypto::mcl::SignShare(current_message_, secret_share_);
+  PublicKey     public_key = public_key_shares_[cabinet_index_];
+  smsg.identity            = certificate_->identity();
+
+  if (!crypto::mcl::VerifySign(public_key, current_message_, signature, group_g_))
+  {
+    throw std::runtime_error("Failed to sign.");
+  }
+
+  smsg.signature  = signature;
+  smsg.public_key = public_key;
+
+  return smsg;
 }
 
 }  // namespace dkg

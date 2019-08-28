@@ -51,9 +51,9 @@ public:
 
   struct SignedMessage
   {
-    std::string signature;
-    std::string public_key;
-    Identity    identity;
+    Signature signature;
+    PublicKey public_key;
+    Identity  identity;
   };
 
   DkgManager(CertificatePtr = nullptr);
@@ -64,52 +64,6 @@ public:
   void SetCertificate(CertificatePtr certificate)
   {
     certificate_ = certificate;
-  }
-  bool can_verify()
-  {
-    return signature_buffer_.size() >= polynomial_degree_ + 1;
-  }
-  /*
-   * @brief verifies the group signature.
-   */
-  bool Verify()
-  {
-    group_signature_ = crypto::mcl::LagrangeInterpolation(signature_buffer_);
-    return Verify(group_signature_);
-  }
-  bool Verify(Signature const &)
-  {
-    return crypto::mcl::VerifySign(public_key_, current_message_, group_signature_, group_g_);
-  }
-  /*
-   * @brief returns the signature as a ConstByteArray
-   */
-  Signature GroupSignature() const
-  {
-    return group_signature_;
-  }
-  void SetMessage(MessagePayload next_message)
-  {
-    current_message_ = next_message;
-    signature_buffer_.clear();
-    already_signed_.clear();
-  }
-  SignedMessage Sign()
-  {
-    SignedMessage smsg;
-    Signature     signature  = crypto::mcl::SignShare(current_message_, secret_share_);
-    PublicKey     public_key = public_key_shares_[cabinet_index_];
-    smsg.identity            = certificate_->identity();
-
-    if (!crypto::mcl::VerifySign(public_key, current_message_, signature, group_g_))
-    {
-      throw std::runtime_error("Failed to sign.");
-    }
-
-    smsg.signature  = signature.getStr();
-    smsg.public_key = public_key.getStr();
-
-    return smsg;
   }
 
   void                     GenerateCoefficients();
@@ -131,12 +85,20 @@ public:
                                           std::pair<MuddleAddress, Share> const &share);
   void             VerifyReconstructionShare(MuddleAddress const &from, ExposedShare const &share);
   bool             RunReconstruction();
-  void             Reset(std::set<MuddleAddress> const &cabinet, uint32_t threshold);
   void             SetDkgOutput(bn::G2 &public_key, bn::Fr &secret_share,
                                 std::vector<bn::G2> &public_key_shares, std::set<MuddleAddress> &qual);
   void             SetQual(std::set<MuddleAddress> qual);
-  AddResult        AddSignaturePart(Identity const &from, std::string, std::string signature);
+  void             Reset(std::set<MuddleAddress> const &cabinet, uint32_t threshold);
 
+  AddResult     AddSignaturePart(Identity const &from, PublicKey, Signature signature);
+  bool          Verify();
+  bool          Verify(Signature const &);
+  Signature     GroupSignature() const;
+  void          SetMessage(MessagePayload next_message);
+  SignedMessage Sign();
+
+  /// Property methods
+  /// @{
   std::set<MuddleAddress> const &qual() const
   {
     return qual_;
@@ -155,6 +117,11 @@ public:
     assert(identity_to_index_.find(address) != identity_to_index_.end());
     return identity_to_index_.at(address);
   }
+  bool can_verify()
+  {
+    return signature_buffer_.size() >= polynomial_degree_ + 1;
+  }
+  ///}
 
 private:
   static bn::G2 zeroG2_;   ///< Zero for public key type
@@ -181,10 +148,10 @@ private:
   // Temporary for DKG construction
   bn::Fr                           xprime_i;
   std::vector<bn::G2>              y_i;
-  std::vector<std::vector<bn::Fr>> s_ij, sprime_ij;
+  std::vector<std::vector<bn::Fr>> s_ij, sprime_ij;  ///< Secret shares
   std::vector<bn::Fr>              z_i;
-  std::vector<std::vector<bn::G2>> C_ik;
-  std::vector<std::vector<bn::G2>> A_ik;
+  std::vector<std::vector<bn::G2>> C_ik;  ///< Verification vectors from cabinet members
+  std::vector<std::vector<bn::G2>> A_ik;  ///< Qual verification vectors
   std::vector<std::vector<bn::G2>> g__s_ij;
   std::vector<bn::G2>              g__a_i;
 
@@ -220,16 +187,20 @@ public:
   {
     auto map = map_constructor(3);
 
-    map.Append(SIGNATURE, member.signature);
-    map.Append(PUBLIC_KEY, member.public_key);
+    map.Append(SIGNATURE, member.signature.getStr());
+    map.Append(PUBLIC_KEY, member.public_key.getStr());
     map.Append(IDENTITY, member.identity);
   }
 
   template <typename MapDeserializer>
   static void Deserialize(MapDeserializer &map, Type &member)
   {
-    map.ExpectKeyGetValue(SIGNATURE, member.signature);
-    map.ExpectKeyGetValue(PUBLIC_KEY, member.public_key);
+    std::string sig_str;
+    std::string key_str;
+    map.ExpectKeyGetValue(SIGNATURE, sig_str);
+    map.ExpectKeyGetValue(PUBLIC_KEY, key_str);
+    member.signature.setStr(sig_str);
+    member.public_key.setStr(key_str);
     map.ExpectKeyGetValue(IDENTITY, member.identity);
   }
 };
