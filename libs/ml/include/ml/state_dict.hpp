@@ -19,7 +19,10 @@
 
 #include "math/base_types.hpp"
 #include "math/tensor.hpp"
+
 #include <list>
+#include <map>
+#include <string>
 
 namespace fetch {
 namespace ml {

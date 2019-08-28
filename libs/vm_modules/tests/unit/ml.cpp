@@ -389,4 +389,40 @@ TEST_F(MLTests, serialisation_several_components_test)
   ASSERT_TRUE(toolkit.Run());
 }
 
+TEST_F(MLTests, optimiser_set_graph_test)
+{
+  static char const *several_serialise_src = R"(
+      function main()
+
+        var tensor_shape = Array<UInt64>(2);
+        tensor_shape[0] = 2u64;
+        tensor_shape[1] = 10u64;
+        var data_tensor = Tensor(tensor_shape);
+        var label_tensor = Tensor(tensor_shape);
+        data_tensor.fill(7.0fp64);
+        label_tensor.fill(7.0fp64);
+
+        var graph = Graph();
+        graph.addPlaceholder("Input");
+        graph.addPlaceholder("Label");
+        graph.addFullyConnected("FC1", "Input", 2, 2);
+        graph.addRelu("Output", "FC1");
+        graph.addMeanSquareErrorLoss("Error", "Output", "Label");
+
+        var dataloader = DataLoader("tensor");
+        dataloader.addData(data_tensor, label_tensor);
+
+        var batch_size = 8u64;
+        var optimiser = Optimiser("sgd", graph, dataloader, "Input", "Label", "Error");
+
+        optimiser.setGraph(graph);
+        optimiser.setDataloader(dataloader);
+
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(several_serialise_src));
+  ASSERT_TRUE(toolkit.Run());
+}
+
 }  // namespace

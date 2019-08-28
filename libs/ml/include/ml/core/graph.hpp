@@ -82,8 +82,8 @@ public:
   virtual void LoadStateDict(struct fetch::ml::StateDict<T> const &dict);
 
   std::vector<TensorType> get_weights() const;
-  void                    set_weights(std::vector<TensorType> &new_weights);
-  std::vector<TensorType> get_gradients_references() const;
+  void                    SetWeights(std::vector<TensorType> &new_weights);
+  std::vector<TensorType> GetGradientsReferences() const;
   std::vector<TensorType> GetGradients() const;
   void                    ApplyGradients(std::vector<TensorType> &grad);
 
@@ -489,6 +489,44 @@ std::vector<TensorType> Graph<TensorType>::get_weights() const
     auto trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
     ret.emplace_back(trainable_ptr->get_weights());
   }
+  return ret;
+}
+
+/**
+ * Write weights from vector to trainables - used for importing model
+ * @tparam TensorType
+ * @param new_weights
+ */
+template <typename TensorType>
+void Graph<TensorType>::SetWeights(std::vector<TensorType> &new_weights)
+{
+  auto trainable_it = trainable_nodes_.begin();
+  auto weights_it   = new_weights.begin();
+  {
+    auto trainable_ptr =
+        std::dynamic_pointer_cast<ops::Trainable<TensorType>>((*trainable_it)->GetOp());
+    trainable_ptr->SetWeights(*weights_it);
+
+    ++trainable_it;
+    ++weights_it;
+  }
+}
+
+/**
+ * Assigns all trainable accumulated gradient parameters to vector of TensorType for exporting and
+ * serialising
+ * @return ret is vector containing all gradient values
+ */
+template <typename TensorType>
+std::vector<TensorType> Graph<TensorType>::GetGradientsReferences() const
+{
+  std::vector<TensorType> ret;
+
+  for (auto const &t : trainable_nodes_)
+  {
+    auto trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
+    ret.emplace_back(trainable_ptr->GetGradientsReferences());
+  }
   return std::move(ret);
 }
 
@@ -537,7 +575,7 @@ std::vector<TensorType> Graph<TensorType>::GetGradients() const
     auto trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
     ret.emplace_back(trainable_ptr->GetGradients());
   }
-  return std::move(ret);
+  return ret;
 }
 
 /**

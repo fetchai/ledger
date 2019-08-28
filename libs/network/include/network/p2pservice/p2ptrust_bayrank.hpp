@@ -19,7 +19,7 @@
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "core/macros.hpp"
 #include "core/mutex.hpp"
 #include "math/statistics/normal.hpp"
@@ -64,7 +64,6 @@ protected:
   };
   using TrustStore   = std::vector<PeerTrustRating>;
   using RankingStore = std::unordered_map<IDENTITY, std::size_t>;
-  using Mutex        = mutex::Mutex;
   using PeerTrusts   = typename P2PTrustInterface<IDENTITY>::PeerTrusts;
 
 public:

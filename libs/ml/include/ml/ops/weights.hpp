@@ -19,6 +19,7 @@
 
 #include "core/random/lfg.hpp"
 #include "ml/ops/placeholder.hpp"
+#include "ml/ops/trainable.hpp"
 #include "ml/regularisers/regularisation.hpp"
 #include "ml/regularisers/regulariser.hpp"
 #include "ml/state_dict.hpp"
@@ -263,7 +264,7 @@ public:
     return *this->output_;
   }
 
-  void set_weights(TensorType &new_value) override
+  void SetWeights(TensorType &new_value) override
   {
     this->output_->Assign(new_value);
   }
@@ -272,7 +273,7 @@ public:
    * exports the weight gradients Array
    * @return const reference to internal accumulated gradient Array
    */
-  TensorType const &get_gradients_references() const override
+  TensorType const &GetGradientsReferences() const override
   {
     return *this->gradient_accumulation_;
   }

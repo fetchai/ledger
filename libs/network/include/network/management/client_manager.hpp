@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "core/mutex.hpp"
 #include "network/management/abstract_connection.hpp"
 #include "network/tcp/abstract_server.hpp"
@@ -45,17 +45,14 @@ public:
   ClientManager(AbstractNetworkServer &server)
     : server_(server)
     , clients_mutex_(__LINE__, __FILE__)
-  {
-    LOG_STACK_TRACE_POINT;
-  }
+  {}
 
   connection_handle_type Join(connection_type client)
   {
-    LOG_STACK_TRACE_POINT;
     connection_handle_type handle = client->handle();
     FETCH_LOG_DEBUG(LOGGING_NAME, "Client ", handle, " is joining");
 
-    std::lock_guard<fetch::mutex::Mutex> lock(clients_mutex_);
+    FETCH_LOCK(clients_mutex_);
     clients_[handle] = client;
     return handle;
   }
@@ -63,8 +60,7 @@ public:
   // TODO(issue 28): may be risky if handle type is made small
   void Leave(connection_handle_type handle)
   {
-    LOG_STACK_TRACE_POINT;
-    std::lock_guard<fetch::mutex::Mutex> lock(clients_mutex_);
+    FETCH_LOCK(clients_mutex_);
 
     auto client{clients_.find(handle)};
     if (client != clients_.end())
@@ -76,7 +72,6 @@ public:
 
   bool Send(connection_handle_type client, message_type const &msg)
   {
-    LOG_STACK_TRACE_POINT;
     bool ret = true;
     clients_mutex_.lock();
 
@@ -100,7 +95,6 @@ public:
 
   void Broadcast(message_type const &msg)
   {
-    LOG_STACK_TRACE_POINT;
     clients_mutex_.lock();
     for (auto &client : clients_)
     {
@@ -114,7 +108,6 @@ public:
 
   void PushRequest(connection_handle_type client, message_type const &msg)
   {
-    LOG_STACK_TRACE_POINT;
     try
     {
       server_.PushRequest(client, msg);
@@ -128,8 +121,7 @@ public:
 
   std::string GetAddress(connection_handle_type client)
   {
-    LOG_STACK_TRACE_POINT;
-    std::lock_guard<fetch::mutex::Mutex> lock(clients_mutex_);
+    FETCH_LOCK(clients_mutex_);
     if (clients_.find(client) != clients_.end())
     {
       return clients_[client]->Address();
@@ -140,7 +132,7 @@ public:
 private:
   AbstractNetworkServer &                           server_;
   std::map<connection_handle_type, connection_type> clients_;
-  fetch::mutex::Mutex                               clients_mutex_;
+  Mutex                                             clients_mutex_;
 };
 }  // namespace network
 }  // namespace fetch

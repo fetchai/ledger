@@ -23,7 +23,7 @@
 #include "crypto/sha256.hpp"
 #include "storage/resource_mapper.hpp"
 
-#include <set>
+#include <unordered_set>
 
 namespace fetch {
 namespace testing {

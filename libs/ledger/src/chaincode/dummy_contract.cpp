@@ -20,6 +20,7 @@
 
 #include <chrono>
 #include <random>
+#include <thread>
 
 static constexpr std::size_t MINIMUM_TIME = 50;
 static constexpr std::size_t MAXIMUM_TIME = 200;

@@ -144,7 +144,7 @@ void AdamOptimiser<T>::ApplyGradients(SizeType batch_size)
   while (gradient_it != this->gradients_.end())
   {
     // cache[i] = (beta1_t_ * cache[i]) + ((one_ - beta1_t_) * (input_gradients[i]/batch_size));
-    fetch::math::Multiply((*trainable_it)->get_gradients_references(),
+    fetch::math::Multiply((*trainable_it)->GetGradientsReferences(),
                           (one_ - beta1_t_) / static_cast<DataType>(batch_size), *gradient_it);
     fetch::math::Multiply(*cached_weight_it, beta1_t_, *cached_weight_it);
     fetch::math::Add(*cached_weight_it, *gradient_it, *cached_weight_it);
@@ -154,7 +154,7 @@ void AdamOptimiser<T>::ApplyGradients(SizeType batch_size)
 
     // momentum[i] = (beta2_t_ * momentum[i]) + ((one_ - beta2_t_) *
     // ((input_gradients[i]/batch_size)^2));
-    fetch::math::Divide((*trainable_it)->get_gradients_references(),
+    fetch::math::Divide((*trainable_it)->GetGradientsReferences(),
                         static_cast<DataType>(batch_size), *vt_it);
     fetch::math::Square(*vt_it, *vt_it);
     fetch::math::Multiply(*vt_it, (one_ - beta2_t_), *vt_it);

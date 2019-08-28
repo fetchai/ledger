@@ -147,7 +147,7 @@ void LogCriticalV2(char const *name, Args &&... args)
 /// @name Logging Macros
 /// @{
 
-// Debug
+// Trace
 #if FETCH_COMPILE_LOGGING_LEVEL >= 6
 #define FETCH_LOG_TRACE_ENABLED
 #define FETCH_LOG_TRACE(name, ...) fetch::LogTraceV2(name, __VA_ARGS__)

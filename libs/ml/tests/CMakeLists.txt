@@ -21,6 +21,6 @@ fetch_add_test(ml_utilities_gtest fetch-ml ml/utilities)
 
 fetch_add_slow_test(ml_clustering_gtest fetch-ml ml/clustering)
 fetch_add_slow_test(ml_dataloader_gtest fetch-ml ml/dataloader)
-fetch_add_slow_test(ml_estimator_gtest fetch-ml ml/estimators)
+fetch_add_slow_test(ml_model_gtest fetch-ml ml/model)
 fetch_add_slow_test(ml_layers_gtest fetch-ml ml/layers)
 fetch_add_slow_test(ml_training_gtest fetch-ml ml/training)

@@ -23,6 +23,7 @@
 
 #include <functional>
 #include <vector>
+
 namespace fetch {
 namespace service {
 
@@ -81,8 +82,6 @@ public:
    */
   HasPublicationFeed(std::size_t n = 256)
   {
-    LOG_STACK_TRACE_POINT;
-
     publisher_.resize(n);
   }
 
@@ -93,8 +92,6 @@ public:
    */
   void create_publisher(feed_handler_type feed, function_type function) override
   {
-    LOG_STACK_TRACE_POINT;
-
     if (publisher_[feed])
     {
       TODO_FAIL(
@@ -117,8 +114,6 @@ public:
   template <typename... Args>
   void Publish(feed_handler_type feed, Args &&... args)
   {
-    LOG_STACK_TRACE_POINT;
-
     serializer_type params;
 
     // TODO(issue 21): we should benchmark subscription too
@@ -128,18 +123,17 @@ public:
 
     if (publisher_[feed])
     {
-      LOG_STACK_TRACE_POINT
       publisher_[feed](params.data());
     }
     else
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Could not find publisher for ", feed);
-      fetch::logger.StackTrace(2, false);
     }
   }
 
 private:
   std::vector<function_type> publisher_;
 };
+
 }  // namespace service
 }  // namespace fetch
