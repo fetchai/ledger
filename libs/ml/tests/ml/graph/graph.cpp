@@ -103,6 +103,40 @@ TYPED_TEST(GraphTest, no_such_node_test)  // Use the class as a Node
   ASSERT_ANY_THROW(g.ForwardPropagate("FullyConnected"));
 }
 
+TYPED_TEST(GraphTest, node_add_wrong_order_test)  // Use the class as a Node
+{
+  using TensorType = TypeParam;
+  using SizeType   = typename TypeParam::SizeType;
+
+  fetch::ml::Graph<TensorType> g;
+
+  g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
+  g.template AddNode<fetch::ml::layers::FullyConnected<TensorType>>("FC1", {"Input"}, 3u, 3u);
+  g.template AddNode<fetch::ml::layers::FullyConnected<TensorType>>("FC2", {"FC1"}, 3u, 3u);
+  g.template AddNode<fetch::ml::layers::FullyConnected<TensorType>>("FC3", {"FC2"}, 3u, 3u);
+
+  TensorType data(std::vector<SizeType>({3, 10}));
+  g.SetInput("Input", data);
+
+  auto result = g.Evaluate("FC3");
+
+
+  fetch::ml::Graph<TensorType> g2;
+
+  g2.template AddNode<fetch::ml::layers::FullyConnected<TensorType>>("FC3", {"FC2"}, 3u, 3u);
+  g2.template AddNode<fetch::ml::layers::FullyConnected<TensorType>>("FC2", {"FC1"}, 3u, 3u);
+  g2.template AddNode<fetch::ml::layers::FullyConnected<TensorType>>("FC1", {"Input"}, 3u, 3u);
+  g2.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
+
+  TensorType data2(std::vector<SizeType>({3, 10}));
+  g2.SetInput("Input", data);
+
+  auto result2 = g2.Evaluate("FC3");
+
+  EXPECT_TRUE(result == result2);
+
+}
+
 TYPED_TEST(GraphTest, multi_nodes_have_same_name)
 {
   using TensorType = TypeParam;

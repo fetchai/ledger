@@ -91,7 +91,7 @@ void SerializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_type
                                                                                           op);
     break;
   }
-  case ml::OpType::OP_CROSS_ENTROPY_LOSS:
+  case ml::OpType::LOSS_CROSS_ENTROPY:
   {
     SerializeImplementation<TensorType, D, ml::OpCrossEntropyLossSaveableParams<TensorType>>(
         map, code, op);
@@ -174,7 +174,7 @@ void SerializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_type
         map, code, op);
     break;
   }
-  case ml::OpType::OP_MEAN_SQUARE_ERROR_LOSS:
+  case ml::OpType::LOSS_MEAN_SQUARE_ERROR:
   {
     SerializeImplementation<TensorType, D, ml::OpMeanSquareErrorSaveableParams<TensorType>>(
         map, code, op);
@@ -244,7 +244,7 @@ void SerializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_type
     SerializeImplementation<TensorType, D, ml::OpSliceSaveableParams<TensorType>>(map, code, op);
     break;
   }
-  case ml::OpType::OP_SOFTMAX_CROSS_ENTROPY_LOSS:
+  case ml::OpType::LOSS_SOFTMAX_CROSS_ENTROPY:
   {
     SerializeImplementation<TensorType, D, ml::OpSoftmaxCrossEntropySaveableParams<TensorType>>(
         map, code, op);
@@ -376,7 +376,7 @@ void DeserializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_ty
         map, code);
     break;
   }
-  case ml::OpType::OP_CROSS_ENTROPY_LOSS:
+  case ml::OpType::LOSS_CROSS_ENTROPY:
   {
     op = DeserializeImplementation<TensorType, D, ml::OpCrossEntropyLossSaveableParams<TensorType>>(
         map, code);
@@ -468,7 +468,7 @@ void DeserializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_ty
         map, code);
     break;
   }
-  case ml::OpType::OP_MEAN_SQUARE_ERROR_LOSS:
+  case ml::OpType::LOSS_MEAN_SQUARE_ERROR:
   {
     op = DeserializeImplementation<TensorType, D, ml::OpMeanSquareErrorSaveableParams<TensorType>>(
         map, code);
@@ -533,7 +533,7 @@ void DeserializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_ty
                                                                                            code);
     break;
   }
-  case ml::OpType::OP_SOFTMAX_CROSS_ENTROPY_LOSS:
+  case ml::OpType::LOSS_SOFTMAX_CROSS_ENTROPY:
   {
     op = DeserializeImplementation<TensorType, D,
                                    ml::OpSoftmaxCrossEntropySaveableParams<TensorType>>(map, code);

@@ -34,6 +34,10 @@
 namespace fetch {
 namespace ml {
 
+// TODO - split node adding and graph building into two stages: compilation and building
+// TODO - implement sanity checks on second stage - e.g. you may not use loss function in a certain
+// way (via OpKind)
+
 /**
  * The full graph on which to run the computation
  */
@@ -62,12 +66,24 @@ public:
   virtual void Step(DataType learning_rate);
 
   template <class OperationType, typename... Params>
-  meta::IfIsNotShareable<TensorType, OperationType, std::string> AddNode(
-      std::string const &node_name, std::vector<std::string> const &inputs, Params... params);
+  std::string AddNode(std::string const &node_name, std::vector<std::string> const &inputs,
+                      Params... params);
 
   template <class OperationType, typename... Params>
-  meta::IfIsShareable<TensorType, OperationType, std::string> AddNode(
-      std::string const &node_name, std::vector<std::string> const &inputs, Params... params);
+  meta::IfIsShareable<TensorType, OperationType, NodePtrType> MakeDuplicateNode(
+      std::string const &node_name, std::string &updated_name, Params... params);
+
+  template <class OperationType, typename... Params>
+  meta::IfIsNotShareable<TensorType, OperationType, NodePtrType> MakeDuplicateNode(
+      std::string const &node_name, std::string &updated_name, Params... params);
+
+  //  template <class OperationType, typename... Params>
+  //  meta::IfIsNotShareable<TensorType, OperationType, std::string> AddNode(
+  //      std::string const &node_name, std::vector<std::string> const &inputs, Params... params);
+  //
+  //  template <class OperationType, typename... Params>
+  //  meta::IfIsShareable<TensorType, OperationType, std::string> AddNode(
+  //      std::string const &node_name, std::vector<std::string> const &inputs, Params... params);
 
   bool InsertNode(std::string const &node_name, NodePtrType node_ptr);
 
@@ -257,18 +273,10 @@ void Graph<TensorType>::ApplyRegularisation()
   }
 }
 
-/**
- * Adds a node without trainable parameters.
- * @tparam OperationType Op template type
- * @tparam Params template for input parameters to node
- * @param node_name non-unique specified node name
- * @param inputs names of node inputs to the node
- * @param params input parameters to the node op
- */
 template <typename TensorType>
 template <class OperationType, typename... Params>
-meta::IfIsShareable<TensorType, OperationType, std::string> Graph<TensorType>::AddNode(
-    std::string const &node_name, std::vector<std::string> const &inputs, Params... params)
+std::string Graph<TensorType>::AddNode(std::string const &             node_name,
+                                       std::vector<std::string> const &inputs, Params... params)
 {
   // guarantee unique op name
   std::string updated_name;
@@ -283,13 +291,8 @@ meta::IfIsShareable<TensorType, OperationType, std::string> Graph<TensorType>::A
         [params...]() { return std::make_shared<OperationType>(params...); });
   }
   else
-  {  // if shared weight is specified by duplicate naming
-    // Instantiate the node based on pointer to shared target node
-    NodePtrType target_node = GetNode(node_name);
-    node_ptr                = std::make_shared<Node<TensorType>>(
-        OperationType::OpCode(), updated_name, [target_node, params...]() {
-          return std::make_shared<OperationType>(target_node->GetOp(), params...);
-        });
+  {
+    node_ptr = MakeDuplicateNode<OperationType, Params...>(node_name, updated_name, params...);
   }
 
   // put node in look up table
@@ -305,40 +308,29 @@ meta::IfIsShareable<TensorType, OperationType, std::string> Graph<TensorType>::A
   return updated_name;
 }
 
-/**
- * Adds a node without trainable parameters.
- * @tparam OperationType Op template type
- * @tparam Params template for input parameters to node
- * @param node_name non-unique specified node name
- * @param inputs names of node inputs to the node
- * @param params input parameters to the node op
- */
 template <typename TensorType>
 template <class OperationType, typename... Params>
-meta::IfIsNotShareable<TensorType, OperationType, std::string> Graph<TensorType>::AddNode(
-    std::string const &node_name, std::vector<std::string> const &inputs, Params... params)
+meta::IfIsShareable<TensorType, OperationType, typename Graph<TensorType>::NodePtrType>
+Graph<TensorType>::MakeDuplicateNode(std::string const &node_name, std::string &updated_name,
+                                     Params... params)
 {
-  // guarantee unique op name
-  std::string updated_name;
-  UpdateVariableName<OperationType>(node_name, updated_name);
+  // if shared weight is specified by duplicate naming
+  // Instantiate the node based on pointer to shared target node
+  NodePtrType target_node = GetNode(node_name);
+  return std::make_shared<Node<TensorType>>(
+      OperationType::OpCode(), updated_name, [target_node, params...]() {
+        return std::make_shared<OperationType>(target_node->GetOp(), params...);
+      });
+}
 
-  NodePtrType node_ptr;
-  // Instantiate the node based on params
-  node_ptr = std::make_shared<Node<TensorType>>(
-      OperationType::OpCode(), updated_name,
-      [params...]() { return std::make_shared<OperationType>(params...); });
-
-  // put node in look up table
-  nodes_[updated_name] = node_ptr;
-
-  // assign inputs and outputs to the new node
-  LinkNodesInGraph(updated_name, inputs);
-
-  // add to map of trainable ops if necessary
-  AddTrainable<OperationType>(updated_name, node_ptr);
-
-  // return unique node name (may not be identical to node_name)
-  return updated_name;
+template <typename TensorType>
+template <class OperationType, typename... Params>
+meta::IfIsNotShareable<TensorType, OperationType, typename Graph<TensorType>::NodePtrType>
+Graph<TensorType>::MakeDuplicateNode(std::string const &node_name, std::string & /* updated_name */,
+                                     Params... /* params */)
+{
+  throw std::runtime_error("OperationType is not shareable. Cannot make duplicate of node named: " +
+                           node_name);
 }
 
 /**
