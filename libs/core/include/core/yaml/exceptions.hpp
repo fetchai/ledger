@@ -17,29 +17,52 @@
 //
 //------------------------------------------------------------------------------
 
-#include <mutex>
+#include "core/byte_array/byte_array.hpp"
+#include "core/byte_array/tokenizer/token.hpp"
+
+#include <exception>
+#include <sstream>
 #include <string>
-#include <thread>
+#include <utility>
 
 namespace fetch {
-namespace mutex {
+namespace yaml {
 
-class AbstractMutex : public std::mutex
+class UnrecognisedYamlSymbolException : public std::exception
 {
-public:
-  AbstractMutex()
-    : std::mutex()
-  {}
+  std::string str_;
 
-  virtual std::string AsString()
+public:
+  UnrecognisedYamlSymbolException(byte_array::Token const &token)
   {
-    return "(mutex)";
+    std::stringstream msg;
+    msg << "Unrecognised symbol '";
+    msg << token << '\'' << " at line " << token.line() << ", character " << token.character()
+        << "\n";
+    str_ = msg.str();
   }
 
-  virtual std::thread::id thread_id() const
+  virtual char const *what() const throw()
   {
-    return {};
+    return str_.c_str();
   }
 };
-}  // namespace mutex
+
+class YamlParseException : public std::exception
+{
+public:
+  YamlParseException(std::string err)
+    : error_(std::move(err))
+  {}
+  virtual ~YamlParseException()
+  {}
+  virtual char const *what() const throw()
+  {
+    return error_.c_str();
+  }
+
+private:
+  std::string error_;
+};
+}  // namespace yaml
 }  // namespace fetch

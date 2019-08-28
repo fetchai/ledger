@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "core/mutex.hpp"
 #include "network/details/thread_pool.hpp"
 #include "network/generics/work_items_queue.hpp"
@@ -52,7 +52,6 @@ class AbstractPublicationFeed;
 class FeedSubscriptionManager
 {
 public:
-  using mutex_type             = fetch::mutex::Mutex;
   using service_type           = fetch::service::ServiceServerInterface;
   using connection_handle_type = uint64_t;
   using publishing_workload_type =
@@ -108,8 +107,6 @@ public:
    */
   void Subscribe(uint64_t client, subscription_handler_type const &id)
   {
-    LOG_STACK_TRACE_POINT;
-
     FETCH_LOCK(subscribe_mutex_);
     subscribers_.push_back({client, id});
   }
@@ -123,8 +120,6 @@ public:
    */
   void Unsubscribe(uint64_t client, subscription_handler_type const &id)
   {
-    LOG_STACK_TRACE_POINT;
-
     std::vector<std::size_t> ids;
     FETCH_LOCK(subscribe_mutex_);
 
@@ -169,7 +164,7 @@ private:
   };
 
   std::vector<ClientSubscription> subscribers_;
-  fetch::mutex::Mutex             subscribe_mutex_;
+  Mutex                           subscribe_mutex_;
   feed_handler_type               feed_;
 
   fetch::service::AbstractPublicationFeed *publisher_ = nullptr;

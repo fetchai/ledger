@@ -86,6 +86,12 @@ public:
 
   void FillRandom();
 
+  /////////////////
+  /// RESHAPING ///
+  /////////////////
+
+  void Squeeze();
+
   bool Reshape(
       fetch::vm::Ptr<fetch::vm::Array<fetch::math::Tensor<DataType>::SizeType>> const &new_shape);
 

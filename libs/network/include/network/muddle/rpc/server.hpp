@@ -42,7 +42,6 @@ public:
   using Address          = MuddleEndpoint::Address;
   using SubscriptionPtr  = MuddleEndpoint::SubscriptionPtr;
   using SubscriptionMap  = std::unordered_map<ProtocolId, SubscriptionPtr>;
-  using Mutex            = mutex::Mutex;
 
   static constexpr char const *LOGGING_NAME = "MuddleRpcServer";
 

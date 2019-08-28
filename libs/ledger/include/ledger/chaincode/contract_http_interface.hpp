@@ -53,7 +53,6 @@ public:
   ContractHttpInterface &operator=(ContractHttpInterface &&) = delete;
 
 private:
-  using Mutex          = mutex::Mutex;
   using ConstByteArray = byte_array::ConstByteArray;
   using TxHashes       = std::vector<ConstByteArray>;
 
