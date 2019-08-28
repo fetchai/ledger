@@ -19,7 +19,7 @@
 
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "network/management/network_manager.hpp"
 #include "network/message.hpp"
@@ -55,10 +55,7 @@ public:
   TCPClient &operator=(TCPClient const &rhs) = delete;
   TCPClient &operator=(TCPClient &&rhs) = delete;
 
-  ~TCPClient() noexcept
-  {
-    LOG_STACK_TRACE_POINT;
-  }
+  ~TCPClient() = default;
 
   void Connect(byte_array::ConstByteArray const &host, uint16_t port)
   {

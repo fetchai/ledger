@@ -70,13 +70,16 @@ public:
         this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Key", {});
     std::string value =
         this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Value", {});
+    std::string mask =
+        this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Mask", {});
 
     // do n_heads time linear transformation
     std::vector<std::string> heads;
-    for (SizeType i{0}; i < n_heads_; i++)
+    for (SizeType i = 0; i < n_heads_; i++)
     {
-      std::string head_name             = name + "_Head_No_" + std::to_string(static_cast<int>(i));
-      std::string head_attention_output = create_one_attention_head(head_name, query, key, value);
+      std::string head_name = name + "_Head_No_" + std::to_string(static_cast<int>(i));
+      std::string head_attention_output =
+          create_one_attention_head(head_name, query, key, value, mask);
       heads.emplace_back(head_attention_output);
     }
 
@@ -95,11 +98,13 @@ public:
     this->AddInputNode(query);
     this->AddInputNode(key);
     this->AddInputNode(value);
+    this->AddInputNode(mask);
     this->SetOutputNode(transformed_multihead);
   }
 
   std::string create_one_attention_head(std::string const &head_name, std::string const &query,
-                                        std::string const &key, std::string const &value)
+                                        std::string const &key, std::string const &value,
+                                        std::string const &mask)
   {
     // transform input vectors to attention space
     std::string transformed_query =
@@ -109,19 +114,19 @@ public:
             static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT, true);
     std::string transformed_key =
         this->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
-            head_name + "_Query_Transform", {key}, static_cast<SizeType>(model_dim_),
+            head_name + "_Key_Transform", {key}, static_cast<SizeType>(model_dim_),
             static_cast<SizeType>(key_dim_), ActivationType::NOTHING, RegType::NONE,
             static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT, true);
     std::string transformed_value =
         this->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
-            head_name + "_Query_Transform", {value}, static_cast<SizeType>(model_dim_),
+            head_name + "_Value_Transform", {value}, static_cast<SizeType>(model_dim_),
             static_cast<SizeType>(value_dim_), ActivationType::NOTHING, RegType::NONE,
             static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT, true);
     // do the scaled dot product attention
     std::string attention_output =
         this->template AddNode<fetch::ml::layers::ScaledDotProductAttention<TensorType>>(
             head_name + "_Scaled_Dot_Product_Attention",
-            {transformed_query, transformed_key, transformed_value}, key_dim_, dropout_);
+            {transformed_query, transformed_key, transformed_value, mask}, key_dim_, dropout_);
     return attention_output;
   }
 

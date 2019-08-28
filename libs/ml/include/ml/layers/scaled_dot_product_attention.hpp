@@ -23,6 +23,7 @@
 #include "ml/ops/activations/softmax.hpp"
 #include "ml/ops/add.hpp"
 #include "ml/ops/divide.hpp"
+#include "ml/ops/mask_fill.hpp"
 #include "ml/ops/matrix_multiply.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/ops/transpose.hpp"
@@ -51,6 +52,7 @@ public:
   ScaledDotProductAttention() = default;
   ScaledDotProductAttention(SizeType dk, DataType dropout = static_cast<DataType>(0.9))
     : key_dim_(dk)
+    , dropout_(dropout)
   {
     std::string name = DESCRIPTOR;
 
@@ -61,6 +63,8 @@ public:
         this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Key", {});
     std::string value =
         this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Value", {});
+    std::string mask =
+        this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Mask", {});
 
     // Be advised that the matrix multiplication sequence is different from what is proposed in the
     // paper as our batch dimension is the last dimension, which the feature dimension is the first
@@ -81,15 +85,19 @@ public:
     std::string scaled_kq_matmul = this->template AddNode<fetch::ml::ops::Divide<TensorType>>(
         name + "_Scaled_Key_Query_MatMul", {kq_matmul, sqrt_dk_ph});
 
+    // masking: make sure u mask along the feature dimension, if the mask is to be broadcasted
+    std::string masked_scaled_kq_matmul =
+        this->template AddNode<fetch::ml::ops::MaskFill<TensorType>>(
+            name + "_Masking", {mask, scaled_kq_matmul}, static_cast<DataType>(-1e9));
+
     // softmax
     std::string attention_weight = this->template AddNode<fetch::ml::ops::Softmax<TensorType>>(
-        name + "_Softmax", {scaled_kq_matmul}, static_cast<SizeType>(0));
+        name + "_Softmax", {masked_scaled_kq_matmul}, static_cast<SizeType>(0));
 
     // dropout
     std::string dropout_attention_weight =
         this->template AddNode<fetch::ml::ops::Dropout<TensorType>>(name + "_Dropout",
-                                                                    {attention_weight}, dropout);
-
+                                                                    {attention_weight}, dropout_);
     // attention vectors
     std::string weight_value_matmul =
         this->template AddNode<fetch::ml::ops::MatrixMultiply<TensorType>>(
@@ -97,11 +105,10 @@ public:
 
     // in the end, the output is of shape (feature_length, query_num, batch_num)
 
-    // TODO (#1449) masking op translation decoder
-
     this->AddInputNode(query);
     this->AddInputNode(key);
     this->AddInputNode(value);
+    this->AddInputNode(mask);
     this->SetOutputNode(weight_value_matmul);
   }
 
@@ -118,6 +125,7 @@ public:
 
     // asign layer specific params
     ret->key_dim = key_dim_;
+    ret->dropout = dropout_;
     return ret;
   }
 
@@ -125,6 +133,7 @@ public:
   {
     // assign layer specific params
     key_dim_ = sp.key_dim;
+    dropout_ = sp.dropout;
   }
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
@@ -141,6 +150,7 @@ public:
 
 private:
   SizeType key_dim_;
+  DataType dropout_;
 };
 
 }  // namespace layers

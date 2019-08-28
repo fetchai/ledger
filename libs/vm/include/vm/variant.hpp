@@ -465,7 +465,7 @@ struct Variant
   std::enable_if_t<IsPtr<T>::value, T> Move() noexcept
   {
     type_id = TypeIds::Unknown;
-    return std::move(object);
+    return {std::move(object)};
   }
 
   template <typename T>

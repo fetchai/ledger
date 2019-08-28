@@ -52,7 +52,7 @@ int main(int ac, char **av)
 
   fetch::ml::dataloaders::C2VLoader<LabelType, ContextType> cloader(MAX_CONTEXTS);
 
-  cloader.AddData(ReadFile(av[1]));
+  cloader.AddDataAsString(ReadFile(av[1]));
   std::cout << "Number of different function names: " << cloader.function_name_counter().size()
             << std::endl;
   std::cout << "Number of different paths: " << cloader.path_counter().size() << std::endl;

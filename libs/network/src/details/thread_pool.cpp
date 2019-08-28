@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "core/threading.hpp"
 #include "network/details/thread_pool.hpp"
 
@@ -251,9 +251,6 @@ void ThreadPoolImplementation::ProcessLoop(std::size_t index)
 
         FETCH_LOG_DEBUG(LOGGING_NAME, "Entering idle state (thread: ", index, ')');
 
-        // snooze for a while or until more work arrives
-        LOG_STACK_TRACE_POINT;
-
         // calculate the maximum time to wait. If the two queues are empty then this will be zero
         auto const next_future_item = future_work_.TimeUntilNextItem();
         auto const next_idle_cycle  = idle_work_.DueIn();
@@ -326,7 +323,7 @@ bool ThreadPoolImplementation::Poll()
   // trigger any required idle work (if it is time to do so)
   if (idle_work_.IsDue())
   {
-    count += idle_work_.Visit([this](WorkItem const &item) { ExecuteWorkload(item); });
+    count += idle_work_.Visit([this](WorkItem const &item) noexcept { ExecuteWorkload(item); });
   }
 
   // update the global counter
@@ -351,8 +348,6 @@ bool ThreadPoolImplementation::ExecuteWorkload(WorkItem const &workload)
   {
     try
     {
-      LOG_STACK_TRACE_POINT;
-
       // execute the item
       workload();
 

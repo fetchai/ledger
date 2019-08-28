@@ -71,6 +71,8 @@ public:
   SizeType UpdateBatchSize(SizeType const &batch_size, SizeType const &data_size,
                            SizeType const &subset_size = SIZE_NOT_SET);
 
+  std::shared_ptr<Graph<T>> GetGraph();
+
   template <typename X, typename D>
   friend struct serializers::MapSerializer;
 
@@ -201,6 +203,7 @@ typename T::Type Optimiser<T>::Run(std::vector<TensorType> const &data, TensorTy
   {
     batch_labels_ = TensorType{labels_size};
   }
+  SizeType i{0};
   while (step_ < n_data)
   {
     // Prepare batch
@@ -248,6 +251,7 @@ typename T::Type Optimiser<T>::Run(std::vector<TensorType> const &data, TensorTy
     cumulative_step_ += batch_size;
 
     loss_sum_ += loss_;
+    i++;
     loss_ = static_cast<DataType>(0);
     PrintStats(batch_size, n_data);
 
@@ -255,7 +259,7 @@ typename T::Type Optimiser<T>::Run(std::vector<TensorType> const &data, TensorTy
   }
   epoch_++;
 
-  return loss_sum_;
+  return loss_sum_ / static_cast<DataType>(i);
 }
 
 /**
@@ -315,6 +319,7 @@ typename T::Type Optimiser<T>::RunImplementation(
   bool is_done_set = loader.IsDone();
 
   std::pair<TensorType, std::vector<TensorType>> input;
+  SizeType                                       i{0};
 
   // - check not completed more steps than user specified subset_size
   // - is_done_set checks if loader.IsDone inside PrepareBatch
@@ -351,6 +356,7 @@ typename T::Type Optimiser<T>::RunImplementation(
     cumulative_step_ += batch_size;
     // reset loss
     loss_sum_ += loss_;
+    i++;
     loss_ = DataType{0};
     // update learning rate
     UpdateLearningRate();
@@ -360,7 +366,7 @@ typename T::Type Optimiser<T>::RunImplementation(
   }
 
   epoch_++;
-  return loss_sum_;
+  return loss_sum_ / static_cast<DataType>(i);
 }
 
 template <typename T>
@@ -430,6 +436,7 @@ void Optimiser<T>::UpdateLearningRate()
   }
   }
 }
+
 /**
  * helper method for setting or updating batch size in case of invalid parameter combinations.
  * For example, batch_size cannot be larger than data_size or subset_size.
@@ -475,6 +482,12 @@ template <typename T>
 void Optimiser<T>::ResetGradients()
 {
   this->graph_->ResetGradients();
+}
+
+template <typename T>
+std::shared_ptr<Graph<T>> Optimiser<T>::GetGraph()
+{
+  return graph_;
 }
 
 }  // namespace optimisers

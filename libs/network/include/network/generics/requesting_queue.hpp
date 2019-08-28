@@ -36,8 +36,6 @@ class RequestingQueueOf
 public:
   using Key          = K;
   using Promised     = R;
-  using Mutex        = fetch::mutex::Mutex;
-  using Lock         = std::lock_guard<Mutex>;
   using Promise      = P;
   using PromiseState = fetch::service::PromiseState;
   using PromiseMap   = std::unordered_map<Key, Promise, H>;
