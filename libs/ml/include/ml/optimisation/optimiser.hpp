@@ -72,10 +72,10 @@ public:
                            SizeType const &subset_size = SIZE_NOT_SET);
 
   std::shared_ptr<Graph<T>> GetGraph();
+  void AddExternalGradientsToGraph(std::vector<TensorType> grads);
 
   template <typename X, typename D>
   friend struct serializers::MapSerializer;
-
 protected:
   std::shared_ptr<Graph<T>> graph_;
   std::vector<std::string>  input_node_names_ = {};
@@ -106,6 +106,7 @@ private:
   void         ResetGradients();
 
   void PrintStats(SizeType batch_size, SizeType subset_size);
+
   void Init();
 
   DataType RunImplementation(fetch::ml::dataloaders::DataLoader<TensorType, TensorType> &loader,
@@ -203,7 +204,7 @@ typename T::Type Optimiser<T>::Run(std::vector<TensorType> const &data, TensorTy
   {
     batch_labels_ = TensorType{labels_size};
   }
-  SizeType i{0};
+  SizeType k{0};
   while (step_ < n_data)
   {
     // Prepare batch
@@ -251,7 +252,7 @@ typename T::Type Optimiser<T>::Run(std::vector<TensorType> const &data, TensorTy
     cumulative_step_ += batch_size;
 
     loss_sum_ += loss_;
-    i++;
+    k++;
     loss_ = static_cast<DataType>(0);
     PrintStats(batch_size, n_data);
 
@@ -259,7 +260,7 @@ typename T::Type Optimiser<T>::Run(std::vector<TensorType> const &data, TensorTy
   }
   epoch_++;
 
-  return loss_sum_ / static_cast<DataType>(i);
+  return loss_sum_ / static_cast<DataType>(k);
 }
 
 /**
@@ -476,6 +477,17 @@ typename Optimiser<T>::SizeType Optimiser<T>::UpdateBatchSize(SizeType const &ba
     updated_batch_size = data_size;
   }
   return updated_batch_size;
+}
+
+template <typename T>
+void Optimiser<T>::AddExternalGradientsToGraph(std::vector<TensorType> grads)
+{
+  assert(grads.size() == graph_trainables_.size());
+  auto gt_it = graph_trainables_.begin();
+  for (auto const & grad : grads){
+     gt_it->AddExternalGradient(*grad);
+     ++gt_it;
+  }
 }
 
 template <typename T>

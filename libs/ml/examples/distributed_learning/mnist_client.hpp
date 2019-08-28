@@ -46,7 +46,7 @@ public:
     this->g_.template AddNode<FullyConnected<TensorType>>("FC1", {"Input"}, 28u * 28u, 10u);
     this->g_.template AddNode<Relu<TensorType>>("Relu1", {"FC1"});
     this->g_.template AddNode<FullyConnected<TensorType>>("FC2", {"Relu1"}, 10u, 10u);
-    this->g_.template AddNode<Relu<TensorType>>("Relu2", {"FC1"});
+    this->g_.template AddNode<Relu<TensorType>>("Relu2", {"FC2"});
     this->g_.template AddNode<FullyConnected<TensorType>>("FC3", {"Relu2"}, 10u, 10u);
     this->g_.template AddNode<Softmax<TensorType>>("Softmax", {"FC3"});
     this->g_.template AddNode<PlaceHolder<TensorType>>("Label", {});
