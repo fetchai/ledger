@@ -77,14 +77,14 @@ template <class TensorType>
 void Word2VecClient<TensorType>::PrepareModel()
 {
 
-  this->g_.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
-  this->g_.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Context", {});
-  this->label_name_ = this->g_.template AddNode<PlaceHolder<TensorType>>("Label", {});
-  skipgram_         = this->g_.template AddNode<fetch::ml::layers::SkipGram<TensorType>>(
+  this->g_ptr_->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
+  this->g_ptr_->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Context", {});
+  this->label_name_ = this->g_ptr_->template AddNode<PlaceHolder<TensorType>>("Label", {});
+  skipgram_         = this->g_ptr_->template AddNode<fetch::ml::layers::SkipGram<TensorType>>(
       "SkipGram", {"Input", "Context"}, SizeType(1), SizeType(1), tp_.embedding_size,
       w2v_data_loader_ptr_->vocab_size());
 
-  this->error_name_ = this->g_.template AddNode<CrossEntropyLoss<TensorType>>(
+  this->error_name_ = this->g_ptr_->template AddNode<CrossEntropyLoss<TensorType>>(
       "Error", {skipgram_, this->label_name_});
 
   this->inputs_names_.push_back({"Input", "Context"});
@@ -202,7 +202,7 @@ void Word2VecClient<TensorType>::TestEmbeddings(std::string const &word0, std::s
   // first get hold of the skipgram layer by searching the return name in the graph
   std::shared_ptr<fetch::ml::layers::SkipGram<TensorType>> sg_layer =
       std::dynamic_pointer_cast<fetch::ml::layers::SkipGram<TensorType>>(
-          (this->g_.GetNode(skipgram_))->GetOp());
+          (this->g_ptr_->GetNode(skipgram_))->GetOp());
 
   // next get hold of the embeddings
   std::shared_ptr<fetch::ml::ops::Embeddings<TensorType>> embeddings =

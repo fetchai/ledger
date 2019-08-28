@@ -69,9 +69,9 @@ public:
 
 protected:
   // Client's own graph and mutex to protect it's weights
-  std::shared_ptr<fetch::ml::Graph<TensorType>> g_ptr_;
-  fetch::ml::Graph<TensorType>                  g_;
-  std::mutex                                    model_mutex_;
+  std::shared_ptr<fetch::ml::Graph<TensorType>> g_ptr_ =
+      std::make_shared<fetch::ml::Graph<TensorType>>();
+  std::mutex model_mutex_;
 
   // Client's own dataloader
   std::shared_ptr<fetch::ml::dataloaders::DataLoader<TensorType, TensorType>> dataloader_ptr_;
@@ -175,15 +175,15 @@ typename TensorType::Type TrainingClient<TensorType>::Train()
 
     while (input_name_it != inputs_names_.end())
     {
-      g_.SetInput(*input_name_it, *input_data_it);
+      g_ptr_->SetInput(*input_name_it, *input_data_it);
       ++input_name_it;
       ++input_data_it;
     }
-    g_.SetInput(label_name_, input.first);
+    g_ptr_->SetInput(label_name_, input.first);
 
-    TensorType loss_tensor = g_.ForwardPropagate(error_name_);
+    TensorType loss_tensor = g_ptr_->ForwardPropagate(error_name_);
     loss                   = *(loss_tensor.begin());
-    g_.BackPropagateError(error_name_);
+    g_ptr_->BackPropagateError(error_name_);
   }
 
   return loss;
@@ -215,13 +215,13 @@ void TrainingClient<TensorType>::Test(DataType &test_loss)
 
     while (input_name_it != inputs_names_.end())
     {
-      g_.SetInput(*input_name_it, *input_data_it);
+      g_ptr_->SetInput(*input_name_it, *input_data_it);
       ++input_name_it;
       ++input_data_it;
     }
-    g_.SetInput(label_name_, test_pair.first);
+    g_ptr_->SetInput(label_name_, test_pair.first);
 
-    test_loss = *(g_.Evaluate(error_name_).begin());
+    test_loss = *(g_ptr_->Evaluate(error_name_).begin());
   }
 }
 
@@ -232,7 +232,7 @@ template <class TensorType>
 std::vector<TensorType> TrainingClient<TensorType>::GetGradients() const
 {
   std::lock_guard<std::mutex> l(const_cast<std::mutex &>(model_mutex_));
-  return g_.GetGradients();
+  return g_ptr_->GetGradients();
 }
 
 /**
@@ -242,7 +242,7 @@ template <class TensorType>
 std::vector<TensorType> TrainingClient<TensorType>::GetWeights() const
 {
   std::lock_guard<std::mutex> l(const_cast<std::mutex &>(model_mutex_));
-  return g_.get_weights();
+  return g_ptr_->get_weights();
 }
 
 /**
@@ -269,7 +269,7 @@ template <class TensorType>
 void TrainingClient<TensorType>::BroadcastGradients()
 {
   // Load own gradient
-  VectorTensorType current_gradient = g_.GetGradients();
+  VectorTensorType current_gradient = g_ptr_->GetGradients();
 
   // Give gradients to peers
   for (SizeType i{0}; i < number_of_peers_; ++i)
@@ -307,7 +307,7 @@ void TrainingClient<TensorType>::ApplyGradient(VectorTensorType gradients)
   // Apply gradients to own model
   {
     std::lock_guard<std::mutex> l(model_mutex_);
-    g_.ApplyGradients(gradients);
+    g_ptr_->ApplyGradients(gradients);
   }
 }
 
@@ -319,7 +319,7 @@ template <class TensorType>
 void TrainingClient<TensorType>::SetWeights(VectorTensorType &new_weights)
 {
   std::lock_guard<std::mutex> l(const_cast<std::mutex &>(model_mutex_));
-  g_.SetWeights(new_weights);
+  g_ptr_->SetWeights(new_weights);
 }
 
 template <class TensorType>
@@ -422,7 +422,7 @@ void TrainingClient<TensorType>::DoBatch()
     {
       GetNewGradients(new_gradients);
 
-      g_.AddExternalGradients(new_gradients);
+      g_ptr_->AddExternalGradients(new_gradients);
     }
   }
 

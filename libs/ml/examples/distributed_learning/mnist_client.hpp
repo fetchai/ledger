@@ -37,29 +37,21 @@ public:
   {
     PrepareDataLoader();
     PrepareModel();
-
-    this->label_name_ = "Label";
-    this->error_name_ = "Error";
-    this->inputs_names_.push_back("Input");
-
     PrepareOptimiser();
   }
 
   void PrepareModel() override
   {
-    this->g_ptr_ = std::make_shared<fetch::ml::Graph<TensorType>>();
-    this->g_     = *this->g_ptr_;
-
-    this->inputs_names_ = {this->g_.template AddNode<PlaceHolder<TensorType>>("Input", {})};
-    this->g_.template AddNode<FullyConnected<TensorType>>("FC1", {"Input"}, 28u * 28u, 10u);
-    this->g_.template AddNode<Relu<TensorType>>("Relu1", {"FC1"});
-    this->g_.template AddNode<FullyConnected<TensorType>>("FC2", {"Relu1"}, 10u, 10u);
-    this->g_.template AddNode<Relu<TensorType>>("Relu2", {"FC2"});
-    this->g_.template AddNode<FullyConnected<TensorType>>("FC3", {"Relu2"}, 10u, 10u);
-    this->g_.template AddNode<Softmax<TensorType>>("Softmax", {"FC3"});
-    this->label_name_ = this->g_.template AddNode<PlaceHolder<TensorType>>("Label", {});
+    this->inputs_names_ = {this->g_ptr_->template AddNode<PlaceHolder<TensorType>>("Input", {})};
+    this->g_ptr_->template AddNode<FullyConnected<TensorType>>("FC1", {"Input"}, 28u * 28u, 10u);
+    this->g_ptr_->template AddNode<Relu<TensorType>>("Relu1", {"FC1"});
+    this->g_ptr_->template AddNode<FullyConnected<TensorType>>("FC2", {"Relu1"}, 10u, 10u);
+    this->g_ptr_->template AddNode<Relu<TensorType>>("Relu2", {"FC2"});
+    this->g_ptr_->template AddNode<FullyConnected<TensorType>>("FC3", {"Relu2"}, 10u, 10u);
+    this->g_ptr_->template AddNode<Softmax<TensorType>>("Softmax", {"FC3"});
+    this->label_name_ = this->g_ptr_->template AddNode<PlaceHolder<TensorType>>("Label", {});
     this->error_name_ =
-        this->g_.template AddNode<CrossEntropyLoss<TensorType>>("Error", {"Softmax", "Label"});
+        this->g_ptr_->template AddNode<CrossEntropyLoss<TensorType>>("Error", {"Softmax", "Label"});
   }
 
   void PrepareDataLoader() override
