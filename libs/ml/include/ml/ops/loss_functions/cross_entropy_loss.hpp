@@ -98,7 +98,7 @@ public:
       ++b_it;
       ++r_it;
     }
-    return {ret / batch_size, ret / batch_size};
+    return {ret / batch_size, ret};
   }
 
   std::vector<typename T::SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
