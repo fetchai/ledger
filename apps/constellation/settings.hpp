@@ -92,8 +92,8 @@ public:
 
   /// @name State File
   /// @{
-  settings::Setting<bool>        load_state;
-  settings::Setting<std::string> stakefile_location;
+  settings::Setting<bool>        load_genesis_file;
+  settings::Setting<std::string> genesis_file_location;
   /// @}
 
   /// @name Experimental
@@ -103,7 +103,10 @@ public:
 
   /// @name Proof of Stake
   /// @{
-  settings::Setting<bool> proof_of_stake;
+  settings::Setting<bool>     proof_of_stake;
+  settings::Setting<uint64_t> max_committee_size;
+  settings::Setting<uint64_t> stake_delay_period;
+  settings::Setting<uint64_t> aeon_period;
   /// @}
 
   // Operators

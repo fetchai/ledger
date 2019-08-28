@@ -82,6 +82,11 @@ bool Address::Parse(ConstByteArray const &input, Address &output)
   return success;
 }
 
+Address Address::FromMuddleAddress(ConstByteArray const &muddle)
+{
+  return Address{crypto::Hash<crypto::SHA256>(muddle)};
+}
+
 /**
  * Create an address from an identity
  *

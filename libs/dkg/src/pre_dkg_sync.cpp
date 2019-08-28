@@ -23,9 +23,9 @@ char const *LOGGING_NAME = "Pre-Dkg Sync";
 namespace fetch {
 namespace dkg {
 
-PreDkgSync::PreDkgSync(Muddle &muddle, uint16_t channel)
+PreDkgSync::PreDkgSync(muddle::MuddleInterface &muddle, uint16_t channel)
   : muddle_{muddle}
-  , rbc_{muddle_.AsEndpoint(), muddle_.identity().identifier(),
+  , rbc_{muddle_.GetEndpoint(), muddle_.GetAddress(),
          [this](MuddleAddress const &address, ConstByteArray const &payload) -> void {
            std::set<MuddleAddress>               connections;
            fetch::serializers::MsgPackSerializer serializer{payload};
@@ -104,21 +104,12 @@ void PreDkgSync::Connect()
 {
   for (auto const &peer : peers_)
   {
-    auto connections = muddle_.AsEndpoint().GetDirectlyConnectedPeers();
-    if (peer.first != muddle_.identity().identifier() &&
-        std::find(connections.begin(), connections.end(), peer.first) == connections.end())
-    {
-      muddle_.AddPeer(peer.second);
-    }
-    else
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "Already connected!");
-    }
+    muddle_.ConnectTo(peer.first, peer.second);
   }
 
-  while (muddle_.AsEndpoint().GetDirectlyConnectedPeers().size() != peers_.size() - 1)
+  while (muddle_.GetDirectlyConnectedPeers().size() != peers_.size() - 1)
   {
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
   }
 
   // Send ready message with list of connected peers

@@ -30,7 +30,6 @@
 #include "ledger/chaincode/token_contract.hpp"
 #include "ledger/storage_unit/storage_unit_client.hpp"
 #include "miner/resource_mapper.hpp"
-#include "network/p2pservice/p2p_service.hpp"
 #include "network/p2pservice/p2ptrust_interface.hpp"
 #include "version/fetch_version.hpp"
 
@@ -44,40 +43,22 @@ class P2PHttpInterface : public http::HTTPModule
 {
 public:
   using MainChain            = ledger::MainChain;
-  using Muddle               = muddle::Muddle;
-  using TrustSystem          = P2PTrustInterface<Muddle::Address>;
   using BlockPackerInterface = ledger::BlockPackerInterface;
   using WeakStateMachine     = std::weak_ptr<core::StateMachineInterface>;
   using WeakStateMachines    = std::vector<WeakStateMachine>;
 
   static constexpr char const *LOGGING_NAME = "P2PHttpInterface";
 
-  P2PHttpInterface(uint32_t log2_num_lanes, MainChain &chain, Muddle &muddle,
-                   P2PService &p2p_service, TrustSystem &trust, BlockPackerInterface &packer,
+  P2PHttpInterface(uint32_t log2_num_lanes, MainChain &chain, BlockPackerInterface &packer,
                    WeakStateMachines state_machines)
     : log2_num_lanes_(log2_num_lanes)
     , chain_(chain)
-    , muddle_(muddle)
-    , p2p_(p2p_service)
-    , trust_(trust)
     , packer_(packer)
     , state_machines_(std::move(state_machines))
   {
     Get("/api/status/chain", "Gets the status of the chain.",
         [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
           return GetChainStatus(params, request);
-        });
-    Get("/api/status/muddle", "Gives the status of the muddle.",
-        [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
-          return GetMuddleStatus(params, request);
-        });
-    Get("/api/status/p2p", "Returns the status of the P2P subsystem.",
-        [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
-          return GetP2PStatus(params, request);
-        });
-    Get("/api/status/trust", "Provides details on the trust subsystem.",
-        [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
-          return GetTrustStatus(params, request);
         });
     Get("/api/status/backlog", "Provides mem pool status.",
         [this](http::ViewParameters const &params, http::HTTPRequest const &request) {
@@ -123,73 +104,9 @@ private:
       include_transactions = true;
     }
 
-    Variant response     = Variant::Object();
-    response["chain"]    = GenerateBlockList(include_transactions, chain_length);
-    response["identity"] = fetch::byte_array::ToBase64(muddle_.identity().identifier());
-    response["block"]    = fetch::byte_array::ToBase64(chain_.GetHeaviestBlockHash());
-
-    return http::CreateJsonResponse(response);
-  }
-
-  http::HTTPResponse GetMuddleStatus(http::ViewParameters const & /*params*/,
-                                     http::HTTPRequest const & /*request*/)
-  {
-    auto const connections = muddle_.GetConnections(true);
-
-    Variant response = Variant::Array(connections.size());
-
-    std::size_t index = 0;
-    for (auto const &entry : connections)
-    {
-      Variant object = Variant::Object();
-
-      object["identity"] = byte_array::ToBase64(entry.first);
-      object["uri"]      = entry.second.uri();
-
-      response[index++] = object;
-    }
-
-    return http::CreateJsonResponse(response);
-  }
-
-  http::HTTPResponse GetP2PStatus(http::ViewParameters const & /*params*/,
-                                  http::HTTPRequest const & /*request*/)
-  {
-    Variant response          = Variant::Object();
-    response["identityCache"] = GenerateIdentityCache();
-
-    return http::CreateJsonResponse(response);
-  }
-
-  http::HTTPResponse GetTrustStatus(http::ViewParameters const & /*params*/,
-                                    http::HTTPRequest const & /*request*/)
-  {
-    auto peers_trusts = trust_.GetPeersAndTrusts();
-
-    std::vector<variant::Variant> peer_data_list;
-
-    for (auto const &pt : peers_trusts)
-    {
-      variant::Variant peer_data = variant::Variant::Object();
-      peer_data["target"]        = pt.name;
-      peer_data["blacklisted"]   = muddle_.IsBlacklisted(pt.address);
-      peer_data["value"]         = pt.trust;
-      peer_data["active"]        = muddle_.IsConnected(pt.address);
-      peer_data["desired"]       = p2p_.IsDesired(pt.address);
-      peer_data["source"]        = byte_array::ToBase64(muddle_.identity().identifier());
-
-      peer_data_list.push_back(peer_data);
-    }
-
-    variant::Variant trust_list = variant::Variant::Array(peer_data_list.size());
-    for (std::size_t i = 0; i < peer_data_list.size(); i++)
-    {
-      trust_list[i] = peer_data_list[i];
-    }
-
-    Variant response     = Variant::Object();
-    response["identity"] = fetch::byte_array::ToBase64(muddle_.identity().identifier());
-    response["trusts"]   = trust_list;
+    Variant response  = Variant::Object();
+    response["chain"] = GenerateBlockList(include_transactions, chain_length);
+    response["block"] = fetch::byte_array::ToBase64(chain_.GetHeaviestBlockHash());
 
     return http::CreateJsonResponse(response);
   }
@@ -234,14 +151,16 @@ private:
       Variant &block = block_list[block_idx++];
 
       // format the block number
-      block                 = Variant::Object();
-      block["hash"]         = "0x" + b->body.hash.ToHex();
-      block["previousHash"] = "0x" + b->body.previous_hash.ToHex();
-      block["merkleHash"]   = "0x" + b->body.merkle_hash.ToHex();
-      block["proof"]        = "0x" + b->proof.header().ToHex();
-      block["miner"]        = b->body.miner.display();
-      block["blockNumber"]  = b->body.block_number;
-      block["timestamp"]    = b->body.timestamp;
+      block                  = Variant::Object();
+      block["hash"]          = "0x" + b->body.hash.ToHex();
+      block["previousHash"]  = "0x" + b->body.previous_hash.ToHex();
+      block["merkleHash"]    = "0x" + b->body.merkle_hash.ToHex();
+      block["proof"]         = "0x" + b->proof.header().ToHex();
+      block["miner"]         = b->body.miner.display();
+      block["blockNumber"]   = b->body.block_number;
+      block["timestamp"]     = b->body.timestamp;
+      block["random_beacon"] = b->body.random_beacon;
+      block["weight"]        = b->weight;
 
       if (include_transactions)
       {
@@ -273,35 +192,8 @@ private:
     return block_list;
   }
 
-  Variant GenerateIdentityCache()
-  {
-    // make a copy of the identity cache
-    IdentityCache::Cache cache_copy;
-    p2p_.identity_cache().VisitCache(
-        [&cache_copy](IdentityCache::Cache const &cache) { cache_copy = cache; });
-
-    auto cache = Variant::Array(cache_copy.size());
-
-    std::size_t index = 0;
-    for (auto const &entry : cache_copy)
-    {
-      // format the individual entries
-      auto cache_entry        = Variant::Object();
-      cache_entry["identity"] = byte_array::ToBase64(entry.first);
-      cache_entry["uri"]      = entry.second.uri.uri();
-
-      // add it to the main cache representation
-      cache[index++] = cache_entry;
-    }
-
-    return cache;
-  }
-
   uint32_t              log2_num_lanes_;
   MainChain &           chain_;
-  Muddle &              muddle_;
-  P2PService &          p2p_;
-  TrustSystem &         trust_;
   BlockPackerInterface &packer_;
   WeakStateMachines     state_machines_;
 };

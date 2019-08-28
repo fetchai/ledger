@@ -21,10 +21,10 @@
 #include "core/service_ids.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
-#include "network/muddle/muddle.hpp"
-#include "network/muddle/rbc.hpp"
-#include "network/muddle/rpc/client.hpp"
-#include "network/muddle/rpc/server.hpp"
+#include "muddle/muddle_interface.hpp"
+#include "muddle/rbc.hpp"
+#include "muddle/rpc/client.hpp"
+#include "muddle/rpc/server.hpp"
 
 #include "gtest/gtest.h"
 #include <iostream>
@@ -250,13 +250,12 @@ public:
   uint16_t              muddle_port;
   ProverPtr             muddle_certificate;
   NetworkManager        network_manager;
-  Muddle                muddle;
+  MuddlePtr             muddle;
   std::atomic<uint16_t> delivered_msgs{0};
 
   virtual ~RbcMember()
   {
-    muddle.Stop();
-    muddle.Shutdown();
+    muddle->Stop();
     network_manager.Stop();
   }
 
@@ -268,6 +267,15 @@ public:
     assert(msg == "Hello");
     ++delivered_msgs;
   }
+  muddle::Address GetMuddleAddress() const
+  {
+    return muddle->GetAddress();
+  }
+
+  network::Uri GetHint() const
+  {
+    return fetch::network::Uri{"tcp://127.0.0.1:" + std::to_string(muddle_port)};
+  }
 
   virtual void ResetCabinet(RBC::CabinetMembers const &new_cabinet)          = 0;
   virtual void Broadcast(SerialisedMessage const &msg, uint8_t num_messages) = 0;
@@ -277,10 +285,10 @@ protected:
     : muddle_port{port_number}
     , muddle_certificate{CreateCertificate()}
     , network_manager{"NetworkManager" + std::to_string(index), 1}
-    , muddle{fetch::muddle::NetworkId{"TestNetwork"}, muddle_certificate, network_manager}
+    , muddle{CreateMuddle("Test", muddle_certificate, network_manager, "127.0.0.1")}
   {
     network_manager.Start();
-    muddle.Start({muddle_port});
+    muddle->Start({}, {muddle_port});
   }
 };
 
@@ -290,7 +298,7 @@ public:
   FaultyRbcMember(uint16_t port_number, uint16_t index,
                   const std::vector<FaultyRbc::Failures> &failure)
     : RbcMember{port_number, index}
-    , rbc_{muddle.AsEndpoint(), muddle_certificate->identity().identifier(),
+    , rbc_{muddle->GetEndpoint(), muddle_certificate->identity().identifier(),
            [this](ConstByteArray const &, ConstByteArray const &payload) -> void {
              OnRbcMessage(payload);
            },
@@ -316,7 +324,7 @@ class HonestRbcMember : public RbcMember
 public:
   HonestRbcMember(uint16_t port_number, uint16_t index)
     : RbcMember{port_number, index}
-    , rbc_{muddle.AsEndpoint(), muddle_certificate->identity().identifier(),
+    , rbc_{muddle->GetEndpoint(), muddle_certificate->identity().identifier(),
            [this](ConstByteArray const &, ConstByteArray const &payload) -> void {
              OnRbcMessage(payload);
            }}
@@ -367,8 +375,7 @@ void GenerateRbcTest(uint32_t cabinet_size, uint32_t expected_completion_size,
   {
     for (uint32_t jj = ii + 1; jj < cabinet_size; jj++)
     {
-      committee[ii]->muddle.AddPeer(
-          fetch::network::Uri{"tcp://127.0.0.1:" + std::to_string(committee[jj]->muddle_port)});
+      committee[ii]->muddle->ConnectTo(committee[jj]->GetMuddleAddress(), committee[jj]->GetHint());
     }
   }
 
@@ -379,7 +386,7 @@ void GenerateRbcTest(uint32_t cabinet_size, uint32_t expected_completion_size,
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     for (uint32_t mm = kk; mm < cabinet_size; ++mm)
     {
-      if (committee[mm]->muddle.AsEndpoint().GetDirectlyConnectedPeers().size() !=
+      if (committee[mm]->muddle->GetEndpoint().GetDirectlyConnectedPeers().size() !=
           (cabinet_size - 1))
       {
         break;

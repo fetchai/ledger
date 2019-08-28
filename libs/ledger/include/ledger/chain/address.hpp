@@ -74,7 +74,8 @@ public:
   using ConstByteArray = byte_array::ConstByteArray;
 
   // Helpers
-  static bool Parse(ConstByteArray const &input, Address &output);
+  static bool    Parse(ConstByteArray const &input, Address &output);
+  static Address FromMuddleAddress(ConstByteArray const &muddle);
 
   // Construction / Destruction
   Address() = default;
