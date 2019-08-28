@@ -61,6 +61,7 @@ public:
     BAD_COEFFICIENT,
     SEND_MULTIPLE_COEFFICIENTS,
     SEND_BAD_SHARE,
+    SEND_MULTIPLE_SHARES,
     SEND_MULTIPLE_COMPLAINTS,
     SEND_EMPTY_COMPLAINT_ANSWER,
     SEND_MULTIPLE_COMPLAINT_ANSWERS,
@@ -120,6 +121,10 @@ private:
         std::pair<MessageShare, MessageShare> shares{
             beacon_->manager.GetOwnShares(cab_i.identifier())};
         SendShares(cab_i.identifier(), shares);
+        if (Failure(Failures::SEND_MULTIPLE_SHARES))
+        {
+          SendShares(cab_i.identifier(), shares);
+        }
       }
     }
     if (Failure(Failures::BAD_COEFFICIENT))
@@ -586,8 +591,6 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
   }
 }
 
-// TODO(jmw): Send multiple shares
-
 TEST(dkg_setup, small_scale_test)
 {
   GenerateTest(4, 3, 4, 4);
@@ -623,7 +626,8 @@ TEST(dkg_setup, send_multiple_messages)
   // Node 0 sends multiple coefficients, complaint, complaint answers and qual coefficient messages.
   // Everyone should succeed in DKG
   GenerateTest(4, 3, 4, 4,
-               {{FaultySetupService::Failures::SEND_MULTIPLE_COEFFICIENTS,
+               {{FaultySetupService::Failures::SEND_MULTIPLE_SHARES,
+                 FaultySetupService::Failures::SEND_MULTIPLE_COEFFICIENTS,
                  FaultySetupService::Failures::SEND_MULTIPLE_COMPLAINTS,
                  FaultySetupService::Failures::SEND_MULTIPLE_COMPLAINT_ANSWERS,
                  FaultySetupService::Failures::SEND_MULTIPLE_QUAL_COEFFICIENTS}});
