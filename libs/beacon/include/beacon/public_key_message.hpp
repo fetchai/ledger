@@ -17,18 +17,18 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/bls_dkg.hpp"
+#include "crypto/mcl_dkg.hpp"
 
 #include <vector>
 
 namespace fetch {
 namespace beacon {
-struct VerificationVectorMessage
+struct PublicKeyMessage
 {
   uint64_t                                          round{0};
-  std::vector<crypto::bls::dkg::VerificationVector> verification_vectors{};
+  crypto::mcl::Signature group_public_key;
 
-  bool operator<(VerificationVectorMessage const &other) const
+  bool operator<(PublicKeyMessage const &other) const
   {
     // Lower rounds come first, hence >
     return round > other.round;
@@ -39,14 +39,14 @@ struct VerificationVectorMessage
 namespace serializers {
 
 template <typename D>
-struct MapSerializer<beacon::VerificationVectorMessage, D>
+struct MapSerializer<beacon::PublicKeyMessage, D>
 {
 public:
-  using Type       = beacon::VerificationVectorMessage;
+  using Type       = beacon::PublicKeyMessage;
   using DriverType = D;
 
   static uint8_t const ROUND                = 0;
-  static uint8_t const VERIFICATION_VECTORS = 1;
+  static uint8_t const GROUP_PUBLIC_KEY = 1;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &vv)
@@ -54,14 +54,16 @@ public:
     auto map = map_constructor(2);
 
     map.Append(ROUND, vv.round);
-    map.Append(VERIFICATION_VECTORS, vv.verification_vectors);
+    map.Append(GROUP_PUBLIC_KEY, vv.group_public_key.getStr());
   }
 
   template <typename MapDeserializer>
   static void Deserialize(MapDeserializer &map, Type &vv)
   {
     map.ExpectKeyGetValue(ROUND, vv.round);
-    map.ExpectKeyGetValue(VERIFICATION_VECTORS, vv.verification_vectors);
+    std::string key_str;
+    map.ExpectKeyGetValue(GROUP_PUBLIC_KEY, key_str);
+    vv.group_public_key.setStr(key_str);
   }
 };
 
