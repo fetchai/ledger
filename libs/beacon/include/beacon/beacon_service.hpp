@@ -141,8 +141,7 @@ private:
   bool AddSignature(SignatureShare share)
   {
     assert(active_exe_unit_ != nullptr);
-    auto ret = active_exe_unit_->manager.AddSignaturePart(share.identity, share.public_key,
-                                                          share.signature);
+    auto ret = active_exe_unit_->manager.AddSignaturePart(share.identity, share.signature);
 
     // Checking that the signature is valid
     if (ret == BeaconManager::AddResult::INVALID_SIGNATURE)

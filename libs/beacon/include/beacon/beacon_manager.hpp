@@ -52,7 +52,6 @@ public:
   struct SignedMessage
   {
     Signature signature;
-    PublicKey public_key;
     Identity  identity;
   };
 
@@ -91,7 +90,7 @@ public:
   void             SetGroupPublicKey(PublicKey const &public_key);
   void             Reset(std::set<MuddleAddress> const &cabinet, uint32_t threshold);
 
-  AddResult AddSignaturePart(Identity const &from, PublicKey const &, Signature const &signature);
+  AddResult AddSignaturePart(Identity const &from, Signature const &signature);
   bool      Verify();
   bool      Verify(Signature const &);
   Signature GroupSignature() const;
@@ -193,7 +192,6 @@ public:
     auto map = map_constructor(3);
 
     map.Append(SIGNATURE, member.signature.getStr());
-    map.Append(PUBLIC_KEY, member.public_key.getStr());
     map.Append(IDENTITY, member.identity);
   }
 
@@ -201,11 +199,8 @@ public:
   static void Deserialize(MapDeserializer &map, Type &member)
   {
     std::string sig_str;
-    std::string key_str;
     map.ExpectKeyGetValue(SIGNATURE, sig_str);
-    map.ExpectKeyGetValue(PUBLIC_KEY, key_str);
     member.signature.setStr(sig_str);
-    member.public_key.setStr(key_str);
     map.ExpectKeyGetValue(IDENTITY, member.identity);
   }
 };

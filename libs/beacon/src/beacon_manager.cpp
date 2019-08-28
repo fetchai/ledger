@@ -547,9 +547,7 @@ void BeaconManager::Reset(std::set<MuddleAddress> const &cabinet, uint32_t thres
  * @param signature is the signature part.
  */
 
-// TODO(jmw): Remove public key from signature message
-BeaconManager::AddResult BeaconManager::AddSignaturePart(Identity const & from, PublicKey const &,
-                                                         Signature const &signature)
+BeaconManager::AddResult BeaconManager::AddSignaturePart(Identity const & from, Signature const &signature)
 {
   auto it = identity_to_index_.find(from.identifier());
   assert(it != identity_to_index_.end());
@@ -627,7 +625,6 @@ BeaconManager::SignedMessage BeaconManager::Sign()
   }
 
   smsg.signature  = signature;
-  smsg.public_key = public_key;
 
   return smsg;
 }
