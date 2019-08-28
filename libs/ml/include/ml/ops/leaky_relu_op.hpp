@@ -40,6 +40,7 @@ public:
   using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpLeakyReluOpSaveableParams<T>;
+  using MyType        = LeakyReluOp<TensorType>;
 
   LeakyReluOp() = default;
 
@@ -55,6 +56,16 @@ public:
     return sp;
   }
 
+  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
+  {
+    FETCH_UNUSED(me);
+    assert(me.get() == this);
+
+    auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
+
+    return copyshare;
+  }
   // LeakyRelu(x,alpha)=max(0,x)+alpha*min(0,x)
   void Forward(VecTensorType const &inputs, TensorType &output) override
   {

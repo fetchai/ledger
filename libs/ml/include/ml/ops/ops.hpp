@@ -61,6 +61,8 @@ public:
     is_training_ = sp.is_training;
   }
 
+  virtual std::shared_ptr<Ops<TensorType>> MakeSharedCopy(std::shared_ptr<Ops<TensorType>> me) = 0;
+
   void SetTraining(bool is_training)
   {
     is_training_ = is_training;
