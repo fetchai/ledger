@@ -376,7 +376,6 @@ private:
   telemetry::CounterPtr         executed_block_count_;
   telemetry::CounterPtr         mined_block_count_;
   telemetry::CounterPtr         executed_tx_count_;
-  telemetry::GaugePtr<uint64_t> block_height_;
   telemetry::GaugePtr<uint64_t> block_hash_;
   /// @}
 };
