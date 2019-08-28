@@ -72,7 +72,7 @@ bool RunTest(fetch::ml::optimisers::OptimiserType optimiser_type,
   fetch::ml::model::ModelConfig<DataType> model_config;
   model_config.learning_rate_param.mode =
       fetch::ml::optimisers::LearningRateParam<DataType>::LearningRateDecay::EXPONENTIAL;
-  model_config.learning_rate_param.starting_learning_rate = static_cast<DataType>(0.1);
+  model_config.learning_rate_param.starting_learning_rate = static_cast<DataType>(0.5);
   model_config.learning_rate_param.exponential_decay_rate = static_cast<DataType>(0.99);
 
   // set up data
