@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/containers/set_intersection.hpp"
 #include "core/containers/is_in.hpp"
+#include "core/containers/set_intersection.hpp"
 
 #include "gtest/gtest.h"
 
@@ -27,8 +27,8 @@ namespace {
 
 TEST(SetIntersection, BasicSetCheck)
 {
-  std::unordered_set<int> a = {1,2,3,4,5,6};
-  std::unordered_set<int> b = {3,4,5,6,7,8};
+  std::unordered_set<int> a = {1, 2, 3, 4, 5, 6};
+  std::unordered_set<int> b = {3, 4, 5, 6, 7, 8};
 
   auto const c = a & b;
 
@@ -41,8 +41,8 @@ TEST(SetIntersection, BasicSetCheck)
 
 TEST(SetIntersection, BasicSetMapCheck1)
 {
-  std::unordered_set<int> a = {1,2,3,4,5,6};
-  std::unordered_map<int, int> b = {{3, 1},{4, 1},{5, 1},{6, 1},{7, 1},{8, 1}};
+  std::unordered_set<int>      a = {1, 2, 3, 4, 5, 6};
+  std::unordered_map<int, int> b = {{3, 1}, {4, 1}, {5, 1}, {6, 1}, {7, 1}, {8, 1}};
 
   auto const c = a & b;
 
@@ -55,8 +55,8 @@ TEST(SetIntersection, BasicSetMapCheck1)
 
 TEST(SetIntersection, BasicSetMapCheck2)
 {
-  std::unordered_map<int, int> a = {{3, 1},{4, 1},{5, 1},{6, 1},{7, 1},{8, 1}};
-  std::unordered_set<int> b = {1,2,3,4,5,6};
+  std::unordered_map<int, int> a = {{3, 1}, {4, 1}, {5, 1}, {6, 1}, {7, 1}, {8, 1}};
+  std::unordered_set<int>      b = {1, 2, 3, 4, 5, 6};
 
   auto const c = a & b;
 
@@ -67,4 +67,4 @@ TEST(SetIntersection, BasicSetMapCheck2)
   EXPECT_TRUE(core::IsIn(c, 6));
 }
 
-} // namespace
+}  // namespace

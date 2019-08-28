@@ -21,8 +21,8 @@
 #include "router.hpp"
 #include "routing_message.hpp"
 
-#include "core/containers/set_intersection.hpp"
 #include "core/byte_array/encoders.hpp"
+#include "core/containers/set_intersection.hpp"
 #include "core/logger.hpp"
 #include "core/serializers/base_types.hpp"
 #include "core/serializers/main_serializer.hpp"

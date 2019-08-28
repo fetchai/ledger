@@ -17,15 +17,15 @@
 //------------------------------------------------------------------------------
 
 #include "core/threading/synchronised_state.hpp"
-#include "network/management/network_manager.hpp"
-#include "muddle/muddle_interface.hpp"
 #include "muddle/muddle_endpoint.hpp"
+#include "muddle/muddle_interface.hpp"
+#include "network/management/network_manager.hpp"
 
 #include "gtest/gtest.h"
 
 #include <chrono>
-#include <thread>
 #include <sstream>
+#include <thread>
 
 namespace {
 
@@ -218,8 +218,6 @@ TEST_F(InteractionTests, MutualConnections)
       }
     }
   });
-
 }
 
-} // namespace
-
+}  // namespace

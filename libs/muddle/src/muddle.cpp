@@ -22,10 +22,10 @@
 #include "muddle_server.hpp"
 #include "peer_selector.hpp"
 
+#include "core/containers/set_intersection.hpp"
 #include "core/logger.hpp"
 #include "core/serializers/base_types.hpp"
 #include "core/serializers/main_serializer.hpp"
-#include "core/containers/set_intersection.hpp"
 #include "core/service_ids.hpp"
 #include "network/tcp/tcp_client.hpp"
 #include "network/tcp/tcp_server.hpp"

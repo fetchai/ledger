@@ -23,10 +23,10 @@
 #include "network/management/abstract_connection_register.hpp"
 #include "telemetry/telemetry.hpp"
 
+#include <atomic>
 #include <functional>
 #include <memory>
 #include <unordered_map>
-#include <atomic>
 
 namespace fetch {
 namespace network {
@@ -76,7 +76,7 @@ public:
   static constexpr char const *LOGGING_NAME = "MuddleReg";
 
   // Construction / Destruction
-  MuddleRegister() = default;
+  MuddleRegister()                       = default;
   MuddleRegister(MuddleRegister const &) = delete;
   MuddleRegister(MuddleRegister &&)      = delete;
   ~MuddleRegister() override             = default;
@@ -85,7 +85,7 @@ public:
   MuddleRegister &operator=(MuddleRegister const &) = delete;
   MuddleRegister &operator=(MuddleRegister &&) = delete;
 
-  void AttachRouter(Router &router);
+  void              AttachRouter(Router &router);
   void              Broadcast(ConstByteArray const &data) const;
   WeakConnectionPtr LookupConnection(ConnectionHandle handle) const;
   WeakConnectionPtr LookupConnection(Address const &address) const;
@@ -111,7 +111,7 @@ protected:
   /// @}
 
 private:
-  std::atomic<Router*> router_{nullptr};
+  std::atomic<Router *> router_{nullptr};
 
   mutable Mutex lock_{__LINE__, __FILE__};
   HandleIndex   handle_index_;

@@ -17,14 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include <unordered_set>
-#include <unordered_map>
 #include <algorithm>
+#include <unordered_map>
+#include <unordered_set>
 
 namespace fetch {
 
 template <typename K, typename H>
-std::unordered_set<K, H> operator&(std::unordered_set<K, H> const &lhs, std::unordered_set<K, H> const &rhs)
+std::unordered_set<K, H> operator&(std::unordered_set<K, H> const &lhs,
+                                   std::unordered_set<K, H> const &rhs)
 {
   std::unordered_set<K, H> result;
 
@@ -35,7 +36,8 @@ std::unordered_set<K, H> operator&(std::unordered_set<K, H> const &lhs, std::uno
 }
 
 template <typename K, typename V, typename H>
-std::unordered_set<K, H> operator&(std::unordered_set<K, H> const &lhs, std::unordered_map<K, V, H> const &rhs)
+std::unordered_set<K, H> operator&(std::unordered_set<K, H> const &   lhs,
+                                   std::unordered_map<K, V, H> const &rhs)
 {
   std::unordered_set<K> result;
 
@@ -46,7 +48,8 @@ std::unordered_set<K, H> operator&(std::unordered_set<K, H> const &lhs, std::uno
 }
 
 template <typename K, typename V, typename H>
-std::unordered_set<K, H> operator&(std::unordered_map<K, V, H> const &lhs, std::unordered_set<K, H> const &rhs)
+std::unordered_set<K, H> operator&(std::unordered_map<K, V, H> const &lhs,
+                                   std::unordered_set<K, H> const &   rhs)
 {
   std::unordered_set<K> result;
 
@@ -56,4 +59,4 @@ std::unordered_set<K, H> operator&(std::unordered_map<K, V, H> const &lhs, std::
   return result;
 }
 
-} // namespace fetch
+}  // namespace fetch
