@@ -28,12 +28,12 @@
 #include "beacon/aeon.hpp"
 #include "beacon/beacon_protocol.hpp"
 #include "beacon/beacon_setup_protocol.hpp"
+#include "beacon/beacon_setup_service.hpp"
 #include "beacon/cabinet_member_details.hpp"
 #include "beacon/entropy.hpp"
 #include "beacon/event_manager.hpp"
 #include "beacon/events.hpp"
-#include "beacon/verification_vector_message.hpp"
-#include "dkg/dkg_setup_service.hpp"
+#include "beacon/public_key_message.hpp"
 
 #include <cstdint>
 #include <deque>
@@ -88,8 +88,7 @@ public:
   using Serializer              = serializers::MsgPackSerializer;
   using Digest                  = ledger::Digest;
   using SharedEventManager      = EventManager::SharedEventManager;
-  using DkgManager              = dkg::DkgManager;
-  using DkgSetupService         = dkg::DkgSetupService;
+  using BeaconSetupService      = beacon::BeaconSetupService;
 
   BeaconService()                      = delete;
   BeaconService(BeaconService const &) = delete;
@@ -148,7 +147,7 @@ private:
                                                           share.signature);
 
     // Checking that the signature is valid
-    if (ret == DkgManager::AddResult::INVALID_SIGNATURE)
+    if (ret == BeaconManager::AddResult::INVALID_SIGNATURE)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Signature invalid.");
 
@@ -158,7 +157,7 @@ private:
 
       return false;
     }
-    else if (ret == DkgManager::AddResult::NOT_MEMBER)
+    else if (ret == BeaconManager::AddResult::NOT_MEMBER)
     {  // And that it was sent by a member of the cabinet
       FETCH_LOG_ERROR(LOGGING_NAME, "Signature from non-member.");
 
@@ -197,10 +196,10 @@ private:
 
   /// Observing beacon
   /// @{
-  SubscriptionPtr                                verification_vec_subscription_{nullptr};
-  std::priority_queue<VerificationVectorMessage> incoming_verification_vectors_{};
-  SubscriptionPtr                                entropy_subscription_{nullptr};
-  std::priority_queue<Entropy>                   incoming_entropy_{};
+  SubscriptionPtr                       group_public_key_subscription_{nullptr};
+  std::priority_queue<PublicKeyMessage> incoming_group_public_keys_{};
+  SubscriptionPtr                       entropy_subscription_{nullptr};
+  std::priority_queue<Entropy>          incoming_entropy_{};
   /// @}
 
   ServerPtr           rpc_server_{nullptr};
@@ -213,7 +212,7 @@ private:
 
   /// Distributed Key Generation
   /// @{
-  DkgSetupService       cabinet_creator_;
+  BeaconSetupService    cabinet_creator_;
   BeaconServiceProtocol beacon_protocol_;
   /// @}
 };
