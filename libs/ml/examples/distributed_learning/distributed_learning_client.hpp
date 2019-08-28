@@ -49,12 +49,12 @@ class TrainingClient
 
 public:
   TrainingClient(std::string const &id, SizeType batch_size, DataType learning_rate,
-                 float test_set_ratio, SizeType number_of_peers);
+                 SizeType number_of_peers);
   void SetCoordinator(std::shared_ptr<Coordinator> coordinator_ptr);
   void MainLoop();
 
   DataType         Train();
-  void             Test(DataType &test_loss);
+  virtual void     Test(DataType &test_loss);
   VectorTensorType GetGradients() const;
   VectorTensorType GetWeights() const;
   void             AddPeers(std::vector<std::shared_ptr<TrainingClient>> const &clients);
@@ -75,6 +75,7 @@ protected:
 
   std::vector<std::string> inputs_names_;
   std::string              label_name_;
+  std::string              error_name_;
 
   // Connection to other nodes
   std::vector<std::shared_ptr<TrainingClient>> peers_;
@@ -95,7 +96,6 @@ protected:
   // Learning hyperparameters
   SizeType batch_size_      = 0;
   DataType learning_rate_   = static_cast<DataType>(0);
-  float    test_set_ratio_  = 0.0f;
   SizeType number_of_peers_ = 0;
 
   void        GetNewGradients(VectorTensorType &new_gradients);
@@ -108,13 +108,11 @@ protected:
 
 template <class TensorType>
 TrainingClient<TensorType>::TrainingClient(std::string const &id, SizeType batch_size,
-                                           DataType learning_rate, float test_set_ratio,
-                                           SizeType number_of_peers)
+                                           DataType learning_rate, SizeType number_of_peers)
 
   : id_(std::move(id))
   , batch_size_(batch_size)
   , learning_rate_(learning_rate)
-  , test_set_ratio_(test_set_ratio)
   , number_of_peers_(number_of_peers)
 {
   // Clear loss file
@@ -177,9 +175,9 @@ typename TensorType::Type TrainingClient<TensorType>::Train()
     }
     g_.SetInput(label_name_, input.first);
 
-    TensorType loss_tensor = g_.ForwardPropagate("Error");
+    TensorType loss_tensor = g_.ForwardPropagate(error_name_);
     loss                   = *(loss_tensor.begin());
-    g_.BackPropagateError("Error");
+    g_.BackPropagateError(error_name_);
   }
 
   return loss;
@@ -205,10 +203,19 @@ void TrainingClient<TensorType>::Test(DataType &test_loss)
   {
     std::lock_guard<std::mutex> l(model_mutex_);
 
-    g_.SetInput("Input", test_pair.second.at(0));
-    g_.SetInput("Label", test_pair.first);
+    // Set inputs and label
+    auto input_data_it = test_pair.second.begin();
+    auto input_name_it = inputs_names_.begin();
 
-    test_loss = *(g_.Evaluate("Error").begin());
+    while (input_name_it != inputs_names_.end())
+    {
+      g_.SetInput(*input_name_it, *input_data_it);
+      ++input_name_it;
+      ++input_data_it;
+    }
+    g_.SetInput(label_name_, test_pair.first);
+
+    test_loss = *(g_.Evaluate(error_name_).begin());
   }
 }
 

@@ -29,7 +29,7 @@ public:
   MNISTClient(std::string const &images, std::string const &labels, std::string const &id,
               SizeType batch_size, DataType learning_rate, float test_set_ratio,
               SizeType number_of_peers)
-    : TrainingClient<TensorType>(id, batch_size, learning_rate, test_set_ratio, number_of_peers)
+    : TrainingClient<TensorType>(id, batch_size, learning_rate, number_of_peers)
     , images_(std::move(images))
     , labels_(std::move(labels))
     , test_set_ratio_(test_set_ratio)
@@ -37,6 +37,7 @@ public:
     PrepareDataLoader();
     PrepareModel();
     this->label_name_ = "Label";
+    this->error_name_ = "Error";
     this->inputs_names_.push_back("Input");
   }
 

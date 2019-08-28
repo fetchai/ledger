@@ -32,12 +32,12 @@
 #include <utility>
 #include <vector>
 
-#define NUMBER_OF_CLIENTS 10
-#define NUMBER_OF_ITERATIONS 100
-#define NUMBER_OF_ROUNDS 10
+#define NUMBER_OF_CLIENTS 5
+#define NUMBER_OF_ITERATIONS 300
+#define NUMBER_OF_ROUNDS 3
 #define SYNCHRONIZATION_MODE CoordinatorMode::ASYNCHRONOUS
 
-#define BATCH_SIZE 128
+#define BATCH_SIZE 32
 #define LEARNING_RATE .001f
 #define TEST_SET_RATIO 0.03f
 #define NUMBER_OF_PEERS 3
