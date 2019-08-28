@@ -191,12 +191,12 @@ int main(int ac, char **av)
   }
 
   // setup params for training
-  SizeType train_size = 2;
-  SizeType test_size  = 2;
-  SizeType batch_size = 2;
-  SizeType epochs     = 100;
-  SizeType layer_no   = 0;
-  DataType lr         = static_cast<DataType>(1e-2);
+  SizeType train_size = 32;
+  SizeType test_size  = 4;
+  SizeType batch_size = 4;
+  SizeType epochs     = 1000;
+  SizeType layer_no   = 1;
+  DataType lr         = static_cast<DataType>(1e-3);
   // load data into memory
   std::string file_path = av[2];
   std::string IMDB_path = av[3];
@@ -205,9 +205,9 @@ int main(int ac, char **av)
   std::cout << "Starting FETCH BERT Demo" << std::endl;
 
   BERTConfig config;
-	config.max_seq_len = 5;
-	config.model_dims = 4;
-	config.ff_dims = 3;
+	config.max_seq_len = 10;
+	config.model_dims = 8;
+	config.ff_dims = 10;
 	config.n_heads = 2;
 	config.vocab_size = 120;
   
@@ -257,7 +257,7 @@ int main(int ac, char **av)
   {
     DataType loss = optimiser.Run(all_train_data[0].first, all_train_data[0].second, batch_size);
     std::cout << "loss: " << loss << std::endl;
-//	  evaluate_graph(g, bert_inputs, classification_output, all_train_data[1].first, all_train_data[1].second);
+	  evaluate_graph(g, bert_inputs, classification_output, all_train_data[1].first, all_train_data[1].second);
   }
 
   return 0;
@@ -520,9 +520,10 @@ std::pair<std::vector<std::string>, std::vector<std::string>> make_bert_model(
   std::string sum_embed = g.template AddNode<fetch::ml::ops::Add<TensorType>>(
       "all_input_add", {token_embedding, seg_pos_sum_embed});
 
-  // create layernorm layer and get statedict
-  std::string norm_embed = g.template AddNode<fetch::ml::layers::LayerNorm<TensorType>>(
-      "norm_embed", {sum_embed}, SizeVector({model_dims, 1}), 0u, epsilon);
+  // create layernorm layer
+//  std::string norm_embed = g.template AddNode<fetch::ml::layers::LayerNorm<TensorType>>(
+//      "norm_embed", {sum_embed}, SizeVector({model_dims, 1}), 0u, epsilon);
+	std::string norm_embed = sum_embed;
 
   // add layers as well as weights
   std::string              layer_output = norm_embed;

@@ -236,7 +236,6 @@ typename T::Type Optimiser<T>::Run(std::vector<TensorType> const &data, TensorTy
     }
 
     // Set Label
-    std::cout << "batch_labels_.ToString(): " << batch_labels_.ToString() << std::endl;
     graph_->SetInput(label_node_name_, batch_labels_);
 
     auto loss_tensor = graph_->ForwardPropagate(output_node_name_);

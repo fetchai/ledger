@@ -40,6 +40,7 @@ namespace ops {
  */
 enum class WeightsInitialisation
 {
+	TMP,
   ONES,
   ZEROS,
   XAVIER_GLOROT,
@@ -201,6 +202,22 @@ public:
         array.data()[j] = typename TensorType::Type(0);
       }
       break;
+    }
+    case WeightsInitialisation::ONES:
+    {
+	    for (std::uint64_t j = 0; j < array.data().size(); ++j)
+	    {
+		    array.data()[j] = typename TensorType::Type(1);
+	    }
+	    break;
+    }
+    case WeightsInitialisation::TMP:
+    {
+	    for (std::uint64_t j = 0; j < array.data().size(); ++j)
+	    {
+	    	array.data()[j] = typename TensorType::Type(0.01);
+	    }
+	    break;
     }
     case WeightsInitialisation::XAVIER_GLOROT:
     {
