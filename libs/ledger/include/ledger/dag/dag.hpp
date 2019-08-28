@@ -30,7 +30,6 @@
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/dag/dag_node.hpp"
 #include "ledger/upow/work.hpp"
-#include "network/p2pservice/p2p_service.hpp"
 #include "storage/object_store.hpp"
 
 #include <cstdint>
@@ -44,6 +43,10 @@
 #include <vector>
 
 namespace fetch {
+namespace crypto {
+class Prover;
+}
+
 namespace ledger {
 
 struct DAGTip
@@ -82,7 +85,7 @@ private:
   using DAGTipPtr       = std::shared_ptr<DAGTip>;
   using DAGNodePtr      = std::shared_ptr<DAGNode>;
   using Mutex           = std::recursive_mutex;
-  using CertificatePtr  = p2p::P2PService::CertificatePtr;
+  using CertificatePtr  = std::shared_ptr<crypto::Prover>;
   using DAGTypes        = DAGInterface::DAGTypes;
 
 public:

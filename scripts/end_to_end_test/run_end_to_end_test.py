@@ -231,20 +231,20 @@ class TestInstance():
                 # Copy the keyfile from its location to the node's cwd
                 shutil.copy(key_path, node.root+"/p2p.key")
 
-        stake_gen = os.path.abspath("./scripts/generate-initial-state.py")
+        stake_gen = os.path.abspath("./scripts/generate-genesis-file.py")
         verify_file(stake_gen)
 
         # Create a stake file into the logging directory for all nodes
-        snapshot_location = self._workspace+"/snapshot.json"
+        genesis_file_location = self._workspace+"/genesis_file.json"
         cmd = [stake_gen, *nodes_mining_identities, "-t",
-               str(len(nodes_mining_identities) - 1), "-o", snapshot_location]
+               str(len(nodes_mining_identities) - 1), "-o", genesis_file_location]
 
         # After giving the relevant nodes identities, make a stake file
         exit_code = subprocess.call(cmd)
 
         # Give all nodes this stake file, plus append POS flag for when node starts
         for index in range(self._number_of_nodes):
-            shutil.copy(snapshot_location, self._nodes[index].root)
+            shutil.copy(genesis_file_location, self._nodes[index].root)
             self._nodes[index].append_to_cmd(["-pos", "-private-network", ])
 
     def restart_node(self, index):
@@ -298,11 +298,11 @@ class TestInstance():
                 self._nodes[index].append_to_cmd(["-private-network", ])
             self.start_node(index)
 
-        time.sleep(2)  # TODO(HUT): blocking http call to node for ready state
+        time.sleep(5)  # TODO(HUT): blocking http call to node for ready state
 
         if(self._pos_mode):
             output("POS mode. sleep extra time.")
-            time.sleep(2)
+            time.sleep(5)
 
     def stop(self):
         if self._nodes:
@@ -593,6 +593,8 @@ def restart_nodes(parameters, test_instance):
 
     for node_index in nodes:
         test_instance.restart_node(node_index)
+
+    time.sleep(5)
 
 
 def add_node(parameters, test_instance):

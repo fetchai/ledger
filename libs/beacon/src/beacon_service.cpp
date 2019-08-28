@@ -142,7 +142,7 @@ BeaconService::BeaconService(Endpoint &endpoint, CertificatePtr certificate,
 BeaconService::Status BeaconService::GenerateEntropy(Digest /*block_digest*/, uint64_t block_number,
                                                      uint64_t &entropy)
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Generating entropy");
+  FETCH_LOG_INFO(LOGGING_NAME, "Requesting entropy for block number: ", block_number);
 
   uint64_t round = block_number / blocks_per_round_;
 

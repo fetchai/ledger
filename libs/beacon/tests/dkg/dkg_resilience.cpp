@@ -23,10 +23,10 @@
 #include "core/service_ids.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
-#include "network/muddle/muddle.hpp"
-#include "network/muddle/rbc.hpp"
-#include "network/muddle/rpc/client.hpp"
-#include "network/muddle/rpc/server.hpp"
+#include "muddle/muddle_interface.hpp"
+#include "muddle/rbc.hpp"
+#include "muddle/rpc/client.hpp"
+#include "muddle/rpc/server.hpp"
 
 #include "gtest/gtest.h"
 #include <iostream>
@@ -316,7 +316,7 @@ struct DkgMember
   NetworkManager       network_manager;
   fetch::core::Reactor reactor;
   ProverPtr            muddle_certificate;
-  Muddle               muddle;
+  MuddlePtr                muddle;
 
   // Set when DKG is finished
   bn::Fr              secret_share;
@@ -330,17 +330,16 @@ struct DkgMember
     , network_manager{"NetworkManager" + std::to_string(index), 1}
     , reactor{"ReactorName" + std::to_string(index)}
     , muddle_certificate{CreateNewCertificate()}
-    , muddle{fetch::muddle::NetworkId{"TestNetwork"}, muddle_certificate, network_manager}
+    , muddle{CreateMuddle("Test", muddle_certificate, network_manager, "127.0.0.1")}
   {
     network_manager.Start();
-    muddle.Start({muddle_port});
+    muddle->Start({},{muddle_port});
   }
 
   virtual ~DkgMember()
   {
     reactor.Stop();
-    muddle.Stop();
-    muddle.Shutdown();
+    muddle->Stop();
     network_manager.Stop();
   }
 
@@ -369,7 +368,7 @@ struct FaultyDkgMember : DkgMember
   FaultyDkgMember(uint16_t port_number, uint16_t index,
                   const std::vector<FaultySetupService::Failures> &failures = {})
     : DkgMember{port_number, index}
-    , dkg{muddle.AsEndpoint(), muddle_certificate->identity(), failures}
+    , dkg{muddle->GetEndpoint(), muddle_certificate->identity(), failures}
   {
     dkg.SetBeaconReadyCallback([this](SharedAeonExecutionUnit beacon) -> void {
       finished = true;
@@ -427,7 +426,7 @@ struct HonestDkgMember : DkgMember
 
   HonestDkgMember(uint16_t port_number, uint16_t index)
     : DkgMember{port_number, index}
-    , dkg{muddle.AsEndpoint(), muddle_certificate->identity()}
+    , dkg{muddle->GetEndpoint(), muddle_certificate->identity()}
   {
     dkg.SetBeaconReadyCallback([this](SharedAeonExecutionUnit beacon) -> void {
       finished = true;
@@ -502,7 +501,7 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
     }
     if (ii >= (cabinet_size - qual_size))
     {
-      expected_qual.insert(committee[ii]->muddle.identity().identifier());
+      expected_qual.insert(committee[ii]->muddle->GetAddress());
       qual_index.insert(ii);
     }
     peers_list.insert({committee[ii]->muddle_certificate->identity().identifier(),
@@ -523,8 +522,7 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
   {
     for (uint32_t jj = ii + 1; jj < cabinet_size; jj++)
     {
-      committee[ii]->muddle.AddPeer(
-          peers_list[committee[jj]->muddle_certificate->identity().identifier()]);
+      committee[ii]->muddle->ConnectTo(committee[jj]->muddle->GetAddress(), peers_list[committee[jj]->muddle->GetAddress()]);
     }
   }
 
@@ -534,7 +532,7 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     for (uint32_t mm = kk; mm < cabinet_size; ++mm)
     {
-      if (committee[mm]->muddle.AsEndpoint().GetDirectlyConnectedPeers().size() != cabinet_size - 1)
+      if (committee[mm]->muddle->GetEndpoint().GetDirectlyConnectedPeers().size() != cabinet_size - 1)
       {
         break;
       }

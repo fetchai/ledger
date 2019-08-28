@@ -21,9 +21,10 @@
 #include "core/state_machine.hpp"
 #include "dkg/dkg_complaints_manager.hpp"
 #include "dkg/dkg_messages.hpp"
-#include "network/muddle/muddle.hpp"
-#include "network/muddle/rbc.hpp"
-#include "network/muddle/rpc/client.hpp"
+#include "muddle/muddle_endpoint.hpp"
+#include "muddle/rbc.hpp"
+#include "muddle/rpc/client.hpp"
+#include "muddle/subscription.hpp"
 #include "telemetry/gauge.hpp"
 #include "telemetry/telemetry.hpp"
 
@@ -61,7 +62,8 @@ public:
   using Identity           = crypto::Identity;
   using CabinetMembers     = std::set<Identity>;
   using Endpoint           = muddle::MuddleEndpoint;
-  using RBC                = network::RBC;
+  using RBC                = muddle::RBC;
+  using SubscriptionPtr    = muddle::MuddleEndpoint::SubscriptionPtr;
   using MessageCoefficient = std::string;
   using MessageShare       = std::string;
   using SharesExposedMap = std::unordered_map<MuddleAddress, std::pair<MessageShare, MessageShare>>;
@@ -108,11 +110,11 @@ public:
   void OnDkgMessage(MuddleAddress const &from, std::shared_ptr<DKGMessage> msg_ptr);
 
 protected:
-  Identity                              identity_;
-  Endpoint &                            endpoint_;
-  std::shared_ptr<muddle::Subscription> shares_subscription;
-  RBC                                   pre_dkg_rbc_;
-  RBC                                   rbc_;
+  Identity        identity_;
+  Endpoint &      endpoint_;
+  SubscriptionPtr shares_subscription;
+  RBC             pre_dkg_rbc_;
+  RBC             rbc_;
 
   std::mutex                          mutex_;
   CallbackFunction                    callback_function_;

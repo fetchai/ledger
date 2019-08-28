@@ -146,7 +146,7 @@ void GenesisFileCreator::LoadFile(std::string const &name)
     {
       LoadState(doc["accounts"]);
 
-      if (stake_manager_)
+      if (stake_)
       {
         LoadStake(doc["stake"]);
       }
@@ -239,15 +239,8 @@ void GenesisFileCreator::LoadState(Variant const &object)
 
 void GenesisFileCreator::LoadStake(Variant const &object)
 {
-  if (stake_manager_)
+  if (stake_)
   {
-    std::size_t committee_size{1};
-
-    if (!variant::Extract(object, "committeeSize", committee_size))
-    {
-      return;
-    }
-
     if (!object.Has("stakers"))
     {
       return;
@@ -284,7 +277,7 @@ void GenesisFileCreator::LoadStake(Variant const &object)
       }
     }
 
-    stake_manager_->Reset(*snapshot, committee_size);
+    stake_->Reset(*snapshot);
   }
   else
   {

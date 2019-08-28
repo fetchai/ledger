@@ -26,6 +26,7 @@ static constexpr uint16_t SERVICE_P2P        = 1001;
 static constexpr uint16_t SERVICE_MAIN_CHAIN = 2002;
 static constexpr uint16_t SERVICE_LANE       = 3003;
 static constexpr uint16_t SERVICE_LANE_CTRL  = 3004;
+static constexpr uint16_t SERVICE_SHARD_MGMT = 3100;
 static constexpr uint16_t SERVICE_EXECUTOR   = 4004;
 static constexpr uint16_t SERVICE_DAG        = 4005;
 static constexpr uint16_t SERVICE_RBC        = 5001;
@@ -38,7 +39,7 @@ static constexpr uint16_t CHANNEL_RPC = 1;  // for convenience we essentially
                                             // potential RPC interface
 
 // Muddle Service Channels
-static constexpr uint16_t CHANNEL_ROUTING = 1;
+static constexpr uint16_t CHANNEL_ROUTING = 256;  // direct only
 
 // P2P Service Channels
 
@@ -60,8 +61,9 @@ static constexpr uint16_t CHANNEL_ENTROPY_DISTRIBUTION = 451;
 static constexpr uint16_t CHANNEL_PUBLIC_KEY           = 452;
 
 // RPC Protocol identifiers
-static constexpr uint64_t RPC_MAIN_CHAIN = 199;
-
+static constexpr uint64_t RPC_SHARD_MGMT        = 10;
+static constexpr uint64_t RPC_MUDDLE_DISCOVERY  = 100;
+static constexpr uint64_t RPC_MAIN_CHAIN        = 199;
 static constexpr uint64_t RPC_IDENTITY          = 200;
 static constexpr uint64_t RPC_STATE             = 201;
 static constexpr uint64_t RPC_TX_STORE          = 202;

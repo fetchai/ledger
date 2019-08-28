@@ -23,10 +23,10 @@
 #include "crypto/prover.hpp"
 #include "dkg/dkg.hpp"
 #include "dkg/pre_dkg_sync.hpp"
-#include "network/muddle/muddle.hpp"
-#include "network/muddle/rbc.hpp"
-#include "network/muddle/rpc/client.hpp"
-#include "network/muddle/rpc/server.hpp"
+#include "muddle/muddle_interface.hpp"
+#include "muddle/rbc.hpp"
+#include "muddle/rpc/client.hpp"
+#include "muddle/rpc/server.hpp"
 
 #include "gtest/gtest.h"
 #include <iostream>
@@ -36,6 +36,8 @@ using namespace fetch::network;
 using namespace fetch::crypto;
 using namespace fetch::muddle;
 using namespace fetch::dkg;
+
+static constexpr char const *LOGGING_NAME = "DkgTests";
 
 using Prover         = fetch::crypto::Prover;
 using ProverPtr      = std::shared_ptr<Prover>;
@@ -352,7 +354,7 @@ struct CabinetMember
   uint16_t                              muddle_port;
   NetworkManager                        network_manager;
   ProverPtr                             muddle_certificate;
-  Muddle                                muddle;
+  MuddlePtr                             muddle;
   std::shared_ptr<muddle::Subscription> shares_subscription;
   RBC                                   rbc;
   FaultyDkg                             dkg;
@@ -369,9 +371,9 @@ struct CabinetMember
     : muddle_port{port_number}
     , network_manager{"NetworkManager" + std::to_string(index), 1}
     , muddle_certificate{CreateNewCertificate()}
-    , muddle{fetch::muddle::NetworkId{"TestNetwork"}, muddle_certificate, network_manager}
-    , shares_subscription(muddle.AsEndpoint().Subscribe(SERVICE_DKG, CHANNEL_SHARES))
-    , rbc{muddle.AsEndpoint(), muddle_certificate->identity().identifier(),
+    , muddle{CreateMuddle("Test", muddle_certificate, network_manager, "127.0.0.1")}
+    , shares_subscription(muddle->GetEndpoint().Subscribe(SERVICE_DKG, CHANNEL_SHARES))
+    , rbc{muddle->GetEndpoint(), muddle_certificate->identity().identifier(),
           [this](ConstByteArray const &address, ConstByteArray const &payload) -> void {
             DKGEnvelope   env;
             DKGSerializer serializer{payload};
@@ -389,7 +391,7 @@ struct CabinetMember
             SubmitShare(destination, shares);
           },
           failures}
-    , pre_sync{muddle, 4}
+    , pre_sync{*muddle, 4}
   {
     // Set subscription for receiving shares
     shares_subscription->SetMessageHandler([this](ConstByteArray const &from, uint16_t, uint16_t,
@@ -405,14 +407,18 @@ struct CabinetMember
     });
 
     network_manager.Start();
-    muddle.Start({muddle_port});
+    muddle->Start({}, {muddle_port});
+  }
+
+  void Stop()
+  {
+    muddle->Stop();
+    network_manager.Stop();
   }
 
   ~CabinetMember()
   {
-    muddle.Stop();
-    muddle.Shutdown();
-    network_manager.Stop();
+    Stop();
   }
 
   void SubmitShare(ConstByteArray const &                     destination,
@@ -424,7 +430,7 @@ struct CabinetMember
     fetch::serializers::MsgPackSerializer serializer;
     serializer.Reserve(counter.size());
     serializer << shares;
-    muddle.AsEndpoint().Send(destination, SERVICE_DKG, CHANNEL_SHARES, serializer.data());
+    muddle->GetEndpoint().Send(destination, SERVICE_DKG, CHANNEL_SHARES, serializer.data());
   }
   void SetOutput()
   {
@@ -467,7 +473,7 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
     }
     if (ii >= (cabinet_size - qual_size))
     {
-      expected_qual.insert(committee[ii]->muddle.identity().identifier());
+      expected_qual.insert(committee[ii]->muddle->GetAddress());
       qual_index.insert(ii);
     }
     peers_list.insert({committee[ii]->muddle_certificate->identity().identifier(),
@@ -475,7 +481,7 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
     cabinet.insert(committee[ii]->muddle_certificate->identity().identifier());
   }
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
   // Reset cabinet for rbc in pre-dkg sync
   for (uint32_t ii = 0; ii < cabinet_size; ii++)
   {
@@ -493,11 +499,12 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
   uint32_t kk = 0;
   while (kk < cabinet_size)
   {
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     for (uint32_t mm = kk; mm < cabinet_size; ++mm)
     {
       if (!committee[mm]->pre_sync.ready())
       {
+        FETCH_LOG_WARN("DkgTests", "Waiting for pre-sync");
         break;
       }
       else
@@ -526,6 +533,7 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
         {
           if (!committee[qq]->dkg.finished())
           {
+            FETCH_LOG_WARN("DkgTests", "Waiting for to finish");
             break;
           }
           else
@@ -571,6 +579,16 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
       member->dkg.ResetCabinet(cabinet, threshold);
     }
   }
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Tearing down the test started...");
+
+  for (auto &member : committee)
+  {
+    member->Stop();
+  }
+  committee.clear();
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Tearing down the test started...complete");
 }
 
 TEST(dkg, small_scale_test)

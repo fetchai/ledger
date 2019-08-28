@@ -25,6 +25,9 @@ namespace ledger {
 
 using byte_array::FromBase64;
 
+uint64_t STAKE_WARM_UP_PERIOD   = 100;
+uint64_t STAKE_COOL_DOWN_PERIOD = 100;
+
 Digest GENESIS_DIGEST      = FromBase64("0+++++++++++++++++Genesis+++++++++++++++++0=");
 Digest GENESIS_MERKLE_ROOT = FromBase64("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
 

@@ -20,10 +20,10 @@
 #include "core/state_machine.hpp"
 
 #include "ledger/consensus/entropy_generator_interface.hpp"
-#include "network/muddle/muddle.hpp"
-#include "network/muddle/rpc/client.hpp"
-#include "network/muddle/rpc/server.hpp"
-#include "network/muddle/subscription.hpp"
+#include "muddle/muddle_endpoint.hpp"
+#include "muddle/rpc/client.hpp"
+#include "muddle/rpc/server.hpp"
+#include "muddle/subscription.hpp"
 
 #include "beacon/aeon.hpp"
 #include "beacon/beacon_protocol.hpp"
@@ -74,7 +74,6 @@ public:
   using BeaconManager           = dkg::BeaconManager;
   using SharedAeonExecutionUnit = std::shared_ptr<AeonExecutionUnit>;
   using Endpoint                = muddle::MuddleEndpoint;
-  using Muddle                  = muddle::Muddle;
   using Client                  = muddle::rpc::Client;
   using ClientPtr               = std::shared_ptr<Client>;
   using CabinetMemberList       = std::unordered_set<Identity>;
