@@ -88,13 +88,13 @@ public:
                                 std::vector<bn::G2> &public_key_shares, std::set<MuddleAddress> &qual);
   void             SetQual(std::set<MuddleAddress> qual);
   void             SetGroupPublicKey(PublicKey const &public_key);
-  void             Reset(std::set<MuddleAddress> const &cabinet, uint32_t threshold);
+  void             Reset(std::set<Identity> const &cabinet, uint32_t threshold);
 
-  AddResult AddSignaturePart(Identity const &from, Signature const &signature);
-  bool      Verify();
-  bool      Verify(Signature const &);
-  Signature GroupSignature() const;
-  void      SetMessage(MessagePayload next_message);
+  AddResult     AddSignaturePart(Identity const &from, Signature const &signature);
+  bool          Verify();
+  bool          Verify(Signature const &);
+  Signature     GroupSignature() const;
+  void          SetMessage(MessagePayload next_message);
   SignedMessage Sign();
 
   /// Property methods

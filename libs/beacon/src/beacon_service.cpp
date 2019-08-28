@@ -196,13 +196,7 @@ void BeaconService::StartNewCabinet(CabinetMemberList members, uint32_t threshol
   else
   {
     beacon->manager.SetCertificate(certificate_);
-    // TODO(jmw): Fix
-    std::set<ConstByteArray> cabinet;
-    for (auto &m : members)
-    {
-      cabinet.insert(m.identifier());
-    }
-    beacon->manager.Reset(cabinet, threshold);
+    beacon->manager.Reset(members, threshold);
   }
 
   // Setting the aeon details

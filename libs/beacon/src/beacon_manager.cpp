@@ -505,22 +505,22 @@ void BeaconManager::SetGroupPublicKey(PublicKey const &public_key)
  * @param cabinet_size is the size of the cabinet.
  * @param threshold is the threshold to be able to generate a signature.
  */
-void BeaconManager::Reset(std::set<MuddleAddress> const &cabinet, uint32_t threshold)
+void BeaconManager::Reset(std::set<Identity> const &cabinet, uint32_t threshold)
 {
   assert(threshold > 0);
   auto cabinet_size{static_cast<uint32_t>(cabinet.size())};
   cabinet_size_      = cabinet_size;
   polynomial_degree_ = threshold - 1;
 
-  // identity_to_index_
+  // Ordering of identities determines the index of each node
   CabinetIndex index = 0;
   for (auto const &cab : cabinet)
   {
-    if (cab == certificate_->identity().identifier())
+    if (cab.identifier() == certificate_->identity().identifier())
     {
       cabinet_index_ = index;
     }
-    identity_to_index_.insert({cab, index});
+    identity_to_index_.insert({cab.identifier(), index});
     ++index;
   }
 
@@ -547,7 +547,8 @@ void BeaconManager::Reset(std::set<MuddleAddress> const &cabinet, uint32_t thres
  * @param signature is the signature part.
  */
 
-BeaconManager::AddResult BeaconManager::AddSignaturePart(Identity const & from, Signature const &signature)
+BeaconManager::AddResult BeaconManager::AddSignaturePart(Identity const & from,
+                                                         Signature const &signature)
 {
   auto it = identity_to_index_.find(from.identifier());
   assert(it != identity_to_index_.end());
@@ -624,7 +625,7 @@ BeaconManager::SignedMessage BeaconManager::Sign()
     throw std::runtime_error("Failed to sign.");
   }
 
-  smsg.signature  = signature;
+  smsg.signature = signature;
 
   return smsg;
 }

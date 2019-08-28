@@ -75,7 +75,7 @@ public:
   using Endpoint                = muddle::MuddleEndpoint;
   using Client                  = muddle::rpc::Client;
   using ClientPtr               = std::shared_ptr<Client>;
-  using CabinetMemberList       = std::unordered_set<Identity>;
+  using CabinetMemberList       = std::set<Identity>;
   using ConstByteArray          = byte_array::ConstByteArray;
   using Server                  = fetch::muddle::rpc::Server;
   using ServerPtr               = std::shared_ptr<Server>;

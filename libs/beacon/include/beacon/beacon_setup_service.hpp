@@ -33,9 +33,6 @@
 namespace fetch {
 namespace beacon {
 
-/**
- * //TODO(jmw): DKG protocol
- */
 class BeaconSetupService
 {
 public:

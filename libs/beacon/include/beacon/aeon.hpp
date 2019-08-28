@@ -35,9 +35,9 @@ struct Aeon
   using Identity  = crypto::Identity;
   using TimeStamp = std::chrono::time_point<std::chrono::system_clock>;
 
-  std::unordered_set<Identity> members{};
-  uint64_t                     round_start{0};
-  uint64_t                     round_end{0};
+  std::set<Identity> members{};
+  uint64_t           round_start{0};
+  uint64_t           round_end{0};
 
   // Timeouts for waiting for other members
   /// @{

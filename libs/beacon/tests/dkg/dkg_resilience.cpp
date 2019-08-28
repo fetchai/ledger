@@ -343,9 +343,9 @@ struct DkgMember
     network_manager.Stop();
   }
 
-  virtual void QueueCabinet(std::unordered_set<Identity> cabinet, uint32_t threshold) = 0;
-  virtual std::weak_ptr<core::Runnable> GetWeakRunnable()                             = 0;
-  virtual bool                          DkgFinished()                                 = 0;
+  virtual void QueueCabinet(std::set<Identity> cabinet, uint32_t threshold) = 0;
+  virtual std::weak_ptr<core::Runnable> GetWeakRunnable()                   = 0;
+  virtual bool                          DkgFinished()                       = 0;
 
   static ProverPtr CreateNewCertificate()
   {
@@ -378,7 +378,7 @@ struct FaultyDkgMember : DkgMember
 
   ~FaultyDkgMember() override = default;
 
-  void QueueCabinet(std::unordered_set<Identity> cabinet, uint32_t threshold) override
+  void QueueCabinet(std::set<Identity> cabinet, uint32_t threshold) override
   {
     SharedAeonExecutionUnit beacon = std::make_shared<AeonExecutionUnit>();
 
@@ -389,14 +389,8 @@ struct FaultyDkgMember : DkgMember
     }
     else
     {
-      // TODO(jmw): Fix this
-      std::set<ConstByteArray> cabinet_address;
-      for (auto &m : cabinet)
-      {
-        cabinet_address.insert(m.identifier());
-      }
       beacon->manager.SetCertificate(muddle_certificate);
-      beacon->manager.Reset(cabinet_address, threshold);
+      beacon->manager.Reset(cabinet, threshold);
     }
 
     // Setting the aeon details
@@ -436,7 +430,7 @@ struct HonestDkgMember : DkgMember
 
   ~HonestDkgMember() override = default;
 
-  void QueueCabinet(std::unordered_set<Identity> cabinet, uint32_t threshold) override
+  void QueueCabinet(std::set<Identity> cabinet, uint32_t threshold) override
   {
     SharedAeonExecutionUnit beacon = std::make_shared<AeonExecutionUnit>();
 
@@ -447,14 +441,8 @@ struct HonestDkgMember : DkgMember
     }
     else
     {
-      // TODO(jmw): Fix this
-      std::set<ConstByteArray> cabinet_address;
-      for (auto &m : cabinet)
-      {
-        cabinet_address.insert(m.identifier());
-      }
       beacon->manager.SetCertificate(muddle_certificate);
-      beacon->manager.Reset(cabinet_address, threshold);
+      beacon->manager.Reset(cabinet, threshold);
     }
 
     // Setting the aeon details
@@ -482,8 +470,7 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
                   const std::vector<std::vector<FaultySetupService::Failures>> &failures    = {},
                   uint16_t                                                      setup_delay = 0)
 {
-  std::unordered_set<Identity>                                        cabinet_identities;
-  std::set<RBC::MuddleAddress>                                        cabinet;
+  std::set<Identity>                                                  cabinet_identities;
   std::vector<std::unique_ptr<DkgMember>>                             committee;
   std::set<RBC::MuddleAddress>                                        expected_qual;
   std::unordered_map<byte_array::ConstByteArray, fetch::network::Uri> peers_list;
@@ -507,7 +494,6 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
     peers_list.insert({committee[ii]->muddle_certificate->identity().identifier(),
                        fetch::network::Uri{"tcp://127.0.0.1:" + std::to_string(port_number)}});
     cabinet_identities.insert(committee[ii]->muddle_certificate->identity());
-    cabinet.insert(committee[ii]->muddle_certificate->identity().identifier());
   }
 
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
