@@ -51,6 +51,8 @@ class TrainingClient
 public:
   TrainingClient(std::string const &id, SizeType batch_size, DataType learning_rate,
                  SizeType number_of_peers);
+  virtual ~TrainingClient() = default;
+
   void SetCoordinator(std::shared_ptr<Coordinator> coordinator_ptr);
   void MainLoop();
 
