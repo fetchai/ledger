@@ -29,7 +29,6 @@
 
 namespace {
 
-using std::chrono_literals::operator""ms;
 using fetch::byte_array::ConstByteArray;
 using fetch::network::NetworkManager;
 using fetch::muddle::CreateMuddle;
@@ -39,6 +38,8 @@ using fetch::muddle::MuddleEndpoint;
 using fetch::network::Uri;
 using fetch::network::Peer;
 using std::this_thread::sleep_for;
+
+using namespace std::chrono_literals;
 
 constexpr char const *LOGGING_NAME = "InteractionTests";
 
