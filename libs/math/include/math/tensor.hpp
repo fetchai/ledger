@@ -288,9 +288,11 @@ public:
 
   ConstSliceType Slice() const;
   ConstSliceType Slice(SizeType index, SizeType axis = 0) const;
+  ConstSliceType Slice(std::pair<SizeType, SizeType> start_end_index, SizeType axis = 0) const;
   ConstSliceType Slice(SizeVector index, SizeVector axes) const;
   TensorSlice    Slice();
   TensorSlice    Slice(SizeType index, SizeType axis = 0);
+  TensorSlice    Slice(std::pair<SizeType, SizeType> start_end_index, SizeType axis = 0);
   TensorSlice    Slice(SizeVector index, SizeVector axes);
 
   /////////////
@@ -693,7 +695,10 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
     switch (c[i])
     {
     case ';':
-      ++n;
+      if (i < c.size() - 1)
+      {
+        ++n;
+      }
       ++i;
       break;
     case ',':
@@ -706,7 +711,7 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
     default:
       if (byte_array::consumers::NumberConsumer<1, 2>(c, i) == -1)
       {
-        failed = true;
+        throw std::runtime_error("invalid character used in string to set tensor");
       }
       else
       {
@@ -2161,6 +2166,36 @@ typename Tensor<T, C>::ConstSliceType Tensor<T, C>::Slice(SizeType index, SizeTy
 }
 
 /**
+ * Returns a Slice Range that is not permitted to alter the original tensor
+ * @tparam T
+ * @tparam C
+ * @param index
+ * @param axis
+ * @return
+ */
+template <typename T, typename C>
+typename Tensor<T, C>::ConstSliceType Tensor<T, C>::Slice(
+    std::pair<SizeType, SizeType> start_end_index, SizeType axis) const
+{
+  std::vector<SizeVector> range;
+
+  for (SizeType j = 0; j < shape().size(); ++j)
+  {
+    if (axis == j)
+    {
+      assert(start_end_index.first < start_end_index.second);
+      range.push_back({start_end_index.first, start_end_index.second, 1});
+    }
+    else
+    {
+      range.push_back({0, shape().at(j), 1});
+    }
+  }
+
+  return ConstSliceType(*this, range, axis);
+}
+
+/**
  * Returns a Slice along multiple dimensions that is not permitted to alter the original tensor
  * @tparam T
  * @tparam C
@@ -2220,6 +2255,36 @@ typename Tensor<T, C>::TensorSlice Tensor<T, C>::Slice(SizeType index, SizeType 
     if (axis == j)
     {
       range.push_back({index, index + 1, 1});
+    }
+    else
+    {
+      range.push_back({0, shape().at(j), 1});
+    }
+  }
+
+  return TensorSlice(*this, range, axis);
+}
+
+/**
+ * Returns a Slice Range of the tensor
+ * @tparam T
+ * @tparam C
+ * @param index
+ * @param axis
+ * @return
+ */
+template <typename T, typename C>
+typename Tensor<T, C>::TensorSlice Tensor<T, C>::Slice(
+    std::pair<SizeType, SizeType> start_end_index, SizeType axis)
+{
+  std::vector<SizeVector> range;
+
+  for (SizeType j = 0; j < shape().size(); ++j)
+  {
+    if (axis == j)
+    {
+      assert(start_end_index.first < start_end_index.second);
+      range.push_back({start_end_index.first, start_end_index.second, 1});
     }
     else
     {

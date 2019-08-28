@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "storage/new_revertible_document_store.hpp"
 #include "storage/resource_mapper.hpp"
 

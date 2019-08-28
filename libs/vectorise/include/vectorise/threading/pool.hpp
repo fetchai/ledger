@@ -60,7 +60,7 @@ public:
     running_ = false;
 
     {
-      std::lock_guard<std::mutex> lock(mutex_);
+      FETCH_LOCK(mutex_);
       condition_.notify_all();
     }
 
@@ -80,7 +80,7 @@ public:
         std::make_shared<task_type>(std::bind(f, std::forward<Args>(args)...));
 
     {
-      std::lock_guard<std::mutex> lock(mutex_);
+      FETCH_LOCK(mutex_);
       tasks_.emplace([task]() { (*task)(); });
     }
 
@@ -102,7 +102,7 @@ public:
 
   bool Empty()
   {
-    std::unique_lock<std::mutex> lock(mutex_);
+    FETCH_LOCK(mutex_);
     return tasks_.empty();
   }
 

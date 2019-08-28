@@ -142,7 +142,7 @@ protected:
     {
       buffer[i] = fill;
     }
-    return std::move(buffer);
+    return {std::move(buffer)};
   }
 
   static void ClientServer(MuddleEndpoint &endpoint, char const *target)
@@ -209,7 +209,7 @@ protected:
   MuddlePtr         networkB_;
 };
 
-TEST_F(MuddleRpcStressTests, ContinuousBiDirectionalTraffic)
+TEST_F(MuddleRpcStressTests, DISABLED_ContinuousBiDirectionalTraffic)
 {
   std::thread nodeA([this]() { ClientServer(networkA_->AsEndpoint(), NETWORK_B_PUBLIC_KEY); });
   std::thread nodeB([this]() { ClientServer(networkB_->AsEndpoint(), NETWORK_A_PUBLIC_KEY); });

@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
 #include "ledger/storage_unit/transaction_sinks.hpp"
@@ -102,8 +102,8 @@ private:
 
   ObjectStore *store_;  ///< The pointer to the object store
 
-  mutex::Mutex cache_mutex_{__LINE__, __FILE__};  ///< The mutex protecting cache_
-  Cache        cache_;
+  Mutex cache_mutex_{__LINE__, __FILE__};  ///< The mutex protecting cache_
+  Cache cache_;
 
   int id_;
 };
