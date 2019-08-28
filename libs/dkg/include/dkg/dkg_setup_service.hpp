@@ -79,6 +79,9 @@ public:
   using SharedAeonExecutionUnit = std::shared_ptr<AeonExecutionUnit>;
   using CallbackFunction        = std::function<void(SharedAeonExecutionUnit)>;
 
+  DkgSetupService()                        = delete;
+  DkgSetupService(DkgSetupService const &) = delete;
+  DkgSetupService(DkgSetupService &&)      = delete;
   DkgSetupService(Endpoint &endpoint, Identity identity);
 
   /// State functions
@@ -107,9 +110,22 @@ public:
   void OnDkgMessage(MuddleAddress const &from, std::shared_ptr<DKGMessage> msg_ptr);
 
 protected:
-  Identity                     identity_;  ///< Our muddle address
-  telemetry::GaugePtr<uint8_t> dkg_state_gauge_;
-  std::mutex                   mutex_;
+  Identity                              identity_;
+  Endpoint &                            endpoint_;
+  std::shared_ptr<muddle::Subscription> shares_subscription;
+  RBC                                   pre_dkg_rbc_;
+  RBC                                   rbc_;
+
+  std::mutex                          mutex_;
+  CallbackFunction                    callback_function_;
+  std::deque<SharedAeonExecutionUnit> aeon_exe_queue_;
+  SharedAeonExecutionUnit             beacon_;
+
+  std::shared_ptr<StateMachine> state_machine_;
+  telemetry::GaugePtr<uint8_t>  dkg_state_gauge_;
+
+  std::set<MuddleAddress>                                    connections_;
+  std::unordered_map<MuddleAddress, std::set<MuddleAddress>> ready_connections_;
 
   // Managing complaints
   ComplaintsManager       complaints_manager_;
@@ -121,18 +137,6 @@ protected:
   std::set<MuddleAddress> coefficients_received_;
   std::set<MuddleAddress> qual_coefficients_received_;
   std::set<MuddleAddress> reconstruction_shares_received_;
-
-  std::shared_ptr<StateMachine>         state_machine_;
-  Endpoint &                            endpoint_;
-  CallbackFunction                      callback_function_;
-  std::deque<SharedAeonExecutionUnit>   aeon_exe_queue_;
-  SharedAeonExecutionUnit               beacon_;
-  RBC                                   pre_dkg_rbc_;
-  RBC                                   rbc_;
-  std::shared_ptr<muddle::Subscription> shares_subscription;
-
-  std::set<MuddleAddress>                                    connections_;
-  std::unordered_map<MuddleAddress, std::set<MuddleAddress>> ready_connections_;
 
   /// @name Methods to send messages
   /// @{

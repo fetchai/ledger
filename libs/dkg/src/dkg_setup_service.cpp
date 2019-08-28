@@ -66,10 +66,8 @@ char const *ToString(DkgSetupService::State state)
 
 DkgSetupService::DkgSetupService(Endpoint &endpoint, Identity identity)
   : identity_{std::move(identity)}
-  , dkg_state_gauge_{telemetry::Registry::Instance().CreateGauge<uint8_t>(
-        "ledger_dkg_state_gauge", "State the DKG is in as integer in [0, 7]")}
-  , state_machine_{std::make_shared<StateMachine>("BeaconSetupService", State::IDLE, ToString)}
   , endpoint_{endpoint}
+  , shares_subscription(endpoint_.Subscribe(SERVICE_DKG, CHANNEL_SECRET_KEY))
   , pre_dkg_rbc_{endpoint_, identity_.identifier(),
                  [this](MuddleAddress const &from, ConstByteArray const &payload) -> void {
                    std::set<MuddleAddress>               connections;
@@ -90,7 +88,9 @@ DkgSetupService::DkgSetupService(Endpoint &endpoint, Identity identity)
            OnDkgMessage(from, env.Message());
          },
          CHANNEL_RBC_BROADCAST}
-  , shares_subscription(endpoint_.Subscribe(SERVICE_DKG, CHANNEL_SECRET_KEY))
+  , state_machine_{std::make_shared<StateMachine>("BeaconSetupService", State::IDLE, ToString)}
+  , dkg_state_gauge_{telemetry::Registry::Instance().CreateGauge<uint8_t>(
+        "ledger_dkg_state_gauge", "State the DKG is in as integer in [0, 9]")}
 {
   state_machine_->RegisterHandler(State::IDLE, this, &DkgSetupService::OnIdle);
   state_machine_->RegisterHandler(State::WAIT_FOR_DIRECT_CONNECTIONS, this,
@@ -213,6 +213,9 @@ DkgSetupService::State DkgSetupService::OnWaitForDirectConnections()
 
 DkgSetupService::State DkgSetupService::OnWaitForReadyConnections()
 {
+  std::lock_guard<std::mutex> lock(mutex_);
+  dkg_state_gauge_->set(static_cast<uint8_t>(State::WAIT_FOR_READY_CONNECTIONS));
+
   // Try broadcasting connections again in case they were discarded by RBCs who's cabinet was reset
   // late
   fetch::serializers::MsgPackSerializer serializer;
