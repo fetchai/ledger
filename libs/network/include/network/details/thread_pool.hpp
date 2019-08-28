@@ -114,7 +114,6 @@ public:
   ThreadPoolImplementation &operator=(ThreadPoolImplementation &&) = delete;
 
 private:
-  using Mutex      = fetch::mutex::Mutex;
   using ThreadPtr  = std::shared_ptr<std::thread>;
   using ThreadPool = std::vector<ThreadPtr>;
   using Flag       = std::atomic<bool>;

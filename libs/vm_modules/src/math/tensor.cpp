@@ -73,7 +73,9 @@ void VMTensor::Bind(Module &module)
       .CreateMemberFunction("fill", &VMTensor::Fill)
       .CreateMemberFunction("fillRandom", &VMTensor::FillRandom)
       .CreateMemberFunction("reshape", &VMTensor::Reshape)
+      .CreateMemberFunction("squeeze", &VMTensor::Squeeze)
       .CreateMemberFunction("size", &VMTensor::size)
+      .CreateMemberFunction("fromString", &VMTensor::FromString)
       .CreateMemberFunction("toString", &VMTensor::ToString);
 }
 
@@ -146,6 +148,11 @@ void VMTensor::FillRandom()
   tensor_.FillUniformRandom();
 }
 
+void VMTensor::Squeeze()
+{
+  tensor_.Squeeze();
+}
+
 bool VMTensor::Reshape(Ptr<Array<SizeType>> const &new_shape)
 {
   return tensor_.Reshape(new_shape->elements);
@@ -154,6 +161,12 @@ bool VMTensor::Reshape(Ptr<Array<SizeType>> const &new_shape)
 //////////////////////////////
 /// PRINTING AND EXPORTING ///
 //////////////////////////////
+
+void VMTensor::FromString(fetch::vm::Ptr<fetch::vm::String> const &string)
+{
+  auto tmp = fetch::math::Tensor<DataType>::FromString(string->str);
+  tensor_.Assign(tmp);
+}
 
 Ptr<String> VMTensor::ToString() const
 {

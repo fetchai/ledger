@@ -103,7 +103,9 @@ void VMOptimiser::Bind(Module &module)
           [](VM *vm, TypeId type_id) -> Ptr<VMOptimiser> { return new VMOptimiser(vm, type_id); })
       .CreateMemberFunction("run", &VMOptimiser::RunData)
       .CreateMemberFunction("run", &VMOptimiser::RunLoader)
-      .CreateMemberFunction("run", &VMOptimiser::RunLoaderNoSubset);
+      .CreateMemberFunction("run", &VMOptimiser::RunLoaderNoSubset)
+      .CreateMemberFunction("setGraph", &VMOptimiser::SetGraph)
+      .CreateMemberFunction("setDataloader", &VMOptimiser::SetDataloader);
 }
 
 Ptr<VMOptimiser> VMOptimiser::Constructor(VM *vm, TypeId type_id, Ptr<String> const &mode,
@@ -132,6 +134,16 @@ VMOptimiser::DataType VMOptimiser::RunLoader(uint64_t batch_size, uint64_t subse
 VMOptimiser::DataType VMOptimiser::RunLoaderNoSubset(uint64_t batch_size)
 {
   return optimiser_->Run(*loader_, batch_size);
+}
+
+void VMOptimiser::SetGraph(Ptr<VMGraph> const &graph)
+{
+  *(optimiser_->GetGraph()) = graph->GetGraph();
+}
+
+void VMOptimiser::SetDataloader(Ptr<VMDataLoader> const &loader)
+{
+  *loader_ = *(loader->GetDataLoader());
 }
 
 bool VMOptimiser::SerializeTo(serializers::MsgPackSerializer &buffer)

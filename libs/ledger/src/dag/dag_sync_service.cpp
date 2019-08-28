@@ -64,7 +64,7 @@ DAGSyncService::DAGSyncService(MuddleEndpoint &                      muddle_endp
         std::vector<DAGNode> result;
         serialiser >> result;
 
-        std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
+        FETCH_LOCK(mutex_);
         this->recvd_broadcast_nodes_.push_back(std::move(result));
       });
 }
@@ -115,7 +115,7 @@ DAGSyncService::State DAGSyncService::OnAddBroadcastRecent()
   std::vector<std::vector<DAGNode>> recvd_broadcast_nodes;
 
   {
-    std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
+    FETCH_LOCK(mutex_);
     recvd_broadcast_nodes = std::move(recvd_broadcast_nodes_);
     recvd_broadcast_nodes_.clear();
   }

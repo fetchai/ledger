@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/mutex.hpp"
+
 #include <chrono>
 #include <condition_variable>
 #include <cstddef>
@@ -65,7 +67,7 @@ inline Tickets::Tickets(Count initial)
 inline void Tickets::Post()
 {
   {
-    std::lock_guard<std::mutex> lock(mutex_);
+    FETCH_LOCK(mutex_);
     ++count_;
   }
   cv_.notify_one();
@@ -78,7 +80,7 @@ inline void Tickets::Post()
 inline void Tickets::Post(Count &count)
 {
   {
-    std::lock_guard<std::mutex> lock(mutex_);
+    FETCH_LOCK(mutex_);
     count = ++count_;
   }
   cv_.notify_one();
@@ -93,10 +95,7 @@ inline void Tickets::Wait()
 {
   std::unique_lock<std::mutex> lock(mutex_);
   // wait for an event to be triggered
-  while (count_ == 0)
-  {
-    cv_.wait(lock);
-  }
+  cv_.wait(lock, [this]() { return count_ != 0; });
   --count_;
 }
 
