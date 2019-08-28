@@ -39,6 +39,7 @@ public:
   using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpConvolution1DSaveableParams<TensorType>;
+  using MyType        = Convolution1D<TensorType>;
 
   explicit Convolution1D(SizeType stride_size = 1)
     : stride_size_(stride_size)
@@ -57,6 +58,17 @@ public:
     auto sp         = std::make_shared<SPType>();
     sp->stride_size = stride_size_;
     return sp;
+  }
+
+  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
+  {
+    FETCH_UNUSED(me);
+    assert(me.get() == this);
+
+    auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
+
+    return copyshare;
   }
 
   std::vector<typename TensorType::SizeType> ComputeOutputShape(
