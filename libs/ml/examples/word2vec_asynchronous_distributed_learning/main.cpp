@@ -31,7 +31,6 @@
 #include "ml/optimisation/sgd_optimiser.hpp"
 #include "model_saver.hpp"
 
-
 #include <algorithm>
 #include <chrono>
 #include <cstddef>
@@ -148,8 +147,8 @@ void PrintKNN(GraphW2VLoader<DataType> const &dl, TensorType const &embeddings,
 }
 
 void TestEmbeddings(Graph<TensorType> const &g, std::string const &skip_gram_name,
-                    GraphW2VLoader<DataType> const &dl, std::string const & word0,
-                    std::string const & word1, std::string const & word2, std::string const & word3,
+                    GraphW2VLoader<DataType> const &dl, std::string const &word0,
+                    std::string const &word1, std::string const &word2, std::string const &word3,
                     SizeType K)
 {
   // first get hold of the skipgram layer by searching the return name in the graph
@@ -216,7 +215,7 @@ public:
     //    dataloader_.SetTestRatio(TEST_SET_RATIO);
     dataloader_.SetRandomMode(true);
     /// DATA LOADING ///
-//    dataloader_.BuildVocab({ReadFile(train_file)}, tp_.min_count);
+    //    dataloader_.BuildVocab({ReadFile(train_file)}, tp_.min_count);
     dataloader_.LoadVocab(vocab_file);
 
     // calc the compatiable linear lr decay
@@ -481,7 +480,6 @@ int main(int ac, char **av)
       static_cast<DataType>(tp.batch_size) * tp.ending_learning_rate_per_sample;
   tp.learning_rate_param.starting_learning_rate = tp.starting_learning_rate;
   tp.learning_rate_param.ending_learning_rate   = tp.ending_learning_rate;
-
 
   GraphW2VLoader<DataType> data_loader(tp.window_size, tp.negative_sample_size, tp.freq_thresh,
                                        tp.max_word_count);

@@ -610,18 +610,17 @@ void Graph<TensorType>::ApplyGradients(std::vector<TensorType> &grad)
   }
 }
 
-
 template <typename T>
 void Graph<T>::AddExternalGradients(std::vector<TensorType> grads)
 {
   assert(grads.size() == trainable_nodes_.size());
   auto gt_it = trainable_nodes_.begin();
-  for (auto const & grad : grads){
-     gt_it->AddExternalGradient(*grad);
-     ++gt_it;
+  for (auto const &grad : grads)
+  {
+    gt_it->AddExternalGradient(*grad);
+    ++gt_it;
   }
 }
-
 
 /**
  * Connect the new node to the current graph by setting input and output nodes to it and saving it

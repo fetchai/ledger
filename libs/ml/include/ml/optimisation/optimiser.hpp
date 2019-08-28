@@ -75,6 +75,7 @@ public:
 
   template <typename X, typename D>
   friend struct serializers::MapSerializer;
+
 protected:
   std::shared_ptr<Graph<T>> graph_;
   std::vector<std::string>  input_node_names_ = {};
