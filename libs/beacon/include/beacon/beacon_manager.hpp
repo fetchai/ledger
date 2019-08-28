@@ -91,11 +91,11 @@ public:
   void             SetGroupPublicKey(PublicKey const &public_key);
   void             Reset(std::set<MuddleAddress> const &cabinet, uint32_t threshold);
 
-  AddResult     AddSignaturePart(Identity const &from, PublicKey, Signature signature);
-  bool          Verify();
-  bool          Verify(Signature const &);
-  Signature     GroupSignature() const;
-  void          SetMessage(MessagePayload next_message);
+  AddResult AddSignaturePart(Identity const &from, PublicKey const &, Signature const &signature);
+  bool      Verify();
+  bool      Verify(Signature const &);
+  Signature GroupSignature() const;
+  void      SetMessage(MessagePayload next_message);
   SignedMessage Sign();
 
   /// Property methods

@@ -30,7 +30,7 @@ bn::G2 BeaconManager::group_h_;
 constexpr char const *LOGGING_NAME = "DKG";
 
 BeaconManager::BeaconManager(CertificatePtr certificate)
-  : certificate_{certificate}
+  : certificate_{std::move(certificate)}
 {
   if (certificate_ == nullptr)
   {
@@ -546,8 +546,10 @@ void BeaconManager::Reset(std::set<MuddleAddress> const &cabinet, uint32_t thres
  * @param public_key is the public key of the peer.
  * @param signature is the signature part.
  */
-BeaconManager::AddResult BeaconManager::AddSignaturePart(Identity const &from, PublicKey,
-                                                         Signature       signature)
+
+// TODO(jmw): Remove public key from signature message
+BeaconManager::AddResult BeaconManager::AddSignaturePart(Identity const & from, PublicKey const &,
+                                                         Signature const &signature)
 {
   auto it = identity_to_index_.find(from.identifier());
   assert(it != identity_to_index_.end());

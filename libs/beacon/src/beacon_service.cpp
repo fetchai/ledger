@@ -182,7 +182,7 @@ void BeaconService::StartNewCabinet(CabinetMemberList members, uint32_t threshol
                                     uint64_t round_start, uint64_t round_end)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Starting new cabinet from ", round_start, " to ", round_end);
-  //TODO(jmw): Fix deadlock here
+  // TODO(jmw): Fix deadlock here
   // std::lock_guard<std::mutex> lock(mutex_);
 
   SharedAeonExecutionUnit beacon = std::make_shared<AeonExecutionUnit>();
