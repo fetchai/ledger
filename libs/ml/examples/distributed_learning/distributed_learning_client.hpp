@@ -26,6 +26,7 @@
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
+#include "ml/optimisation/optimiser.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -64,17 +65,23 @@ public:
   void             SetWeights(VectorTensorType &new_weights);
   virtual void     PrepareModel()      = 0;
   virtual void     PrepareDataLoader() = 0;
+  virtual void     PrepareOptimiser()  = 0;
 
 protected:
   // Client's own graph and mutex to protect it's weights
-  fetch::ml::Graph<TensorType> g_;
-  std::mutex                   model_mutex_;
+  std::shared_ptr<fetch::ml::Graph<TensorType>> g_ptr_;
+  fetch::ml::Graph<TensorType>                  g_;
+  std::mutex                                    model_mutex_;
 
   // Client's own dataloader
   std::shared_ptr<fetch::ml::dataloaders::DataLoader<TensorType, TensorType>> dataloader_ptr_;
 
+  // Client's own optimiser
+  std::shared_ptr<fetch::ml::optimisers::Optimiser<TensorType>> opti_ptr_;
+
   std::vector<std::string> inputs_names_;
   std::string              label_name_;
+  std::string              error_name_;
 
   // Connection to other nodes
   std::vector<std::shared_ptr<TrainingClient>> peers_;
@@ -392,8 +399,6 @@ void TrainingClient<TensorType>::DoBatch()
   // Train one batch to create own gradient
   Train();
 
-  VectorTensorType gradients = g_.GetGradientsReferences();
-
   // Interaction with peers is skipped in synchronous mode
   if (coordinator_ptr_->GetMode() != CoordinatorMode::SYNCHRONOUS)
   {
@@ -411,13 +416,13 @@ void TrainingClient<TensorType>::DoBatch()
     {
       GetNewGradients(new_gradients);
 
-      for (SizeType j{0}; j < gradients.size(); j++)
-      {
-        fetch::math::Add(gradients.at(j), new_gradients.at(j), gradients.at(j));
-      }
+      g_.AddExternalGradients(new_gradients);
     }
   }
 
   // Apply sum of all gradients from queue along with own gradient
-  ApplyGradient(gradients);
+  {
+    std::lock_guard<std::mutex> l(model_mutex_);
+    opti_ptr_->ApplyGradients(batch_size_);
+  }
 }

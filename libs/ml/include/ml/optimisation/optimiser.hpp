@@ -72,6 +72,7 @@ public:
                            SizeType const &subset_size = SIZE_NOT_SET);
 
   std::shared_ptr<Graph<T>> GetGraph();
+  virtual void              ApplyGradients(SizeType batch_size) = 0;
 
   template <typename X, typename D>
   friend struct serializers::MapSerializer;
@@ -102,8 +103,7 @@ private:
   TensorType                                     batch_labels_;
   LearningRateParam<DataType>                    learning_rate_param_;
 
-  virtual void ApplyGradients(SizeType batch_size) = 0;
-  void         ResetGradients();
+  void ResetGradients();
 
   void PrintStats(SizeType batch_size, SizeType subset_size);
 

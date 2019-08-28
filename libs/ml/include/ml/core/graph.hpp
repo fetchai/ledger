@@ -532,36 +532,6 @@ std::vector<TensorType> Graph<TensorType>::GetGradientsReferences() const
   return std::move(ret);
 }
 
-template <typename TensorType>
-void Graph<TensorType>::set_weights(std::vector<TensorType> &new_weights)
-{
-  SizeType index = 0;
-  for (auto &t : trainable_nodes_)
-  {
-    auto trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
-    trainable_ptr->set_weights(new_weights.at(index));
-    index++;
-  }
-}
-
-/**
- * Assigns all trainable accumulated gradient parameters to vector of TensorType for exporting and
- * serialising
- * @return ret is vector containing all gradient values
- */
-template <typename TensorType>
-std::vector<TensorType> Graph<TensorType>::get_gradients_references() const
-{
-  std::vector<TensorType> ret;
-
-  for (auto const &t : trainable_nodes_)
-  {
-    auto trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
-    ret.emplace_back(trainable_ptr->get_gradients_references());
-  }
-  return std::move(ret);
-}
-
 /**
  * Assigns all trainable accumulated gradient parameters to vector of TensorType for exporting and
  * serialising
@@ -617,7 +587,8 @@ void Graph<T>::AddExternalGradients(std::vector<TensorType> grads)
   auto gt_it = trainable_nodes_.begin();
   for (auto const &grad : grads)
   {
-    gt_it->AddExternalGradient(*grad);
+    auto weights_ptr = std::dynamic_pointer_cast<ops::Weights<TensorType>>((*gt_it)->GetOp());
+    weights_ptr->AddExternalGradient(grad);
     ++gt_it;
   }
 }

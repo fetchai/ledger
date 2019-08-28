@@ -413,7 +413,7 @@ public:
   void SetWeights(TensorVectorType &new_weights)
   {
     std::lock_guard<std::mutex> l(const_cast<std::mutex &>(model_mutex_));
-    graph_->set_weights(new_weights);
+    graph_->SetWeights(new_weights);
   }
 
   std::vector<DataType> const &GetLossesValues() const
