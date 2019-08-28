@@ -62,7 +62,8 @@ ModelType SetupModel(fetch::ml::optimisers::OptimiserType     optimiser_type,
 
 template <typename TypeParam>
 bool RunTest(fetch::ml::optimisers::OptimiserType optimiser_type,
-             typename TypeParam::Type             tolerance)
+             typename TypeParam::Type             tolerance,
+             typename TypeParam::Type             lr = static_cast<typename TypeParam::Type>(0.5))
 {
   using DataType  = typename TypeParam::Type;
   using ModelType = fetch::ml::model::DNNClassifier<TypeParam>;
@@ -72,7 +73,7 @@ bool RunTest(fetch::ml::optimisers::OptimiserType optimiser_type,
   fetch::ml::model::ModelConfig<DataType> model_config;
   model_config.learning_rate_param.mode =
       fetch::ml::optimisers::LearningRateParam<DataType>::LearningRateDecay::EXPONENTIAL;
-  model_config.learning_rate_param.starting_learning_rate = static_cast<DataType>(0.5);
+  model_config.learning_rate_param.starting_learning_rate = lr;
   model_config.learning_rate_param.exponential_decay_rate = static_cast<DataType>(0.99);
 
   // set up data
@@ -119,8 +120,9 @@ TYPED_TEST(ModelsTest, adagrad_dnnclasifier)
 TYPED_TEST(ModelsTest, adam_dnnclasifier)
 {
   using DataType = typename TypeParam::Type;
-  ASSERT_TRUE(
-      RunTest<TypeParam>(fetch::ml::optimisers::OptimiserType::ADAM, static_cast<DataType>(1e-5)));
+  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::optimisers::OptimiserType::ADAM,
+                                 static_cast<DataType>(1e-5),
+                                 static_cast<typename TypeParam::Type>(0.1)));
 }
 TYPED_TEST(ModelsTest, momentum_dnnclasifier)
 {
