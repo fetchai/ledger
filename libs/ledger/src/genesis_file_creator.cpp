@@ -39,6 +39,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <utility>
 
 namespace fetch {
 namespace ledger {
@@ -132,7 +133,7 @@ GenesisFileCreator::GenesisFileCreator(BlockCoordinator &    block_coordinator,
                                        StorageUnitInterface &storage_unit, ConsensusPtr consensus)
   : block_coordinator_{block_coordinator}
   , storage_unit_{storage_unit}
-  , consensus_{consensus}
+  , consensus_{std::move(consensus)}
 {}
 
 /**

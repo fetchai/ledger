@@ -16,6 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include <utility>
+
 #include "ledger/consensus/consensus.hpp"
 
 constexpr char const *LOGGING_NAME = "Consensus";
@@ -27,10 +29,10 @@ using StakeManagerPtr = Consensus::StakeManagerPtr;
 
 Consensus::Consensus(StakeManagerPtr stake, BeaconServicePtr beacon, MainChain const &chain,
                      Identity mining_identity, uint64_t aeon_period, uint64_t max_committee_size)
-  : stake_{stake}
-  , beacon_{beacon}
+  : stake_{std::move(stake)}
+  , beacon_{std::move(beacon)}
   , chain_{chain}
-  , mining_identity_{mining_identity}
+  , mining_identity_{std::move(mining_identity)}
   , mining_address_{Address(mining_identity_)}
   , aeon_period_{aeon_period}
   , max_committee_size_{max_committee_size}
