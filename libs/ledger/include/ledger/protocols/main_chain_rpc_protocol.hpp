@@ -64,7 +64,6 @@ private:
 
   Blocks TimeTravel(Digest start, int64_t limit)
   {
-    LOG_STACK_TRACE_POINT;
     return Copy(chain_.TimeTravel(std::move(start), limit));
   }
 
