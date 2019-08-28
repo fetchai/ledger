@@ -116,7 +116,6 @@ std::set<ComplaintsMessage::MuddleAddress> ComplaintsManager::Complaints() const
 void ComplaintsManager::Clear()
 {
   std::lock_guard<std::mutex> lock(mutex_);
-  //assert(finished_);
   complaints_counter_.clear();
   complaints_from_.clear();
   complaints_.clear();

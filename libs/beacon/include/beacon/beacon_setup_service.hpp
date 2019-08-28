@@ -1,6 +1,4 @@
 #pragma once
-/*
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -21,75 +19,63 @@
 
 #include "core/service_ids.hpp"
 #include "core/state_machine.hpp"
+#include "dkg/dkg_complaints_manager.hpp"
+#include "dkg/dkg_messages.hpp"
 #include "network/muddle/muddle.hpp"
+#include "network/muddle/rbc.hpp"
 #include "network/muddle/rpc/client.hpp"
-#include "network/muddle/rpc/server.hpp"
-#include "network/muddle/subscription.hpp"
+#include "telemetry/gauge.hpp"
+#include "telemetry/telemetry.hpp"
 
 #include "beacon/aeon.hpp"
-#include "beacon/cabinet_member_details.hpp"
-#include "beacon/entropy.hpp"
 
 namespace fetch {
 namespace beacon {
 
+/**
+ * //TODO(jmw): DKG protocol
+ */
 class BeaconSetupService
 {
 public:
-  static constexpr char const *LOGGING_NAME = "BeaconSetupService";
+  static constexpr char const *LOGGING_NAME = "DkgSetupService";
 
-  enum class State
+  enum class State : uint8_t
   {
-    IDLE = 0,
+    IDLE,
     WAIT_FOR_DIRECT_CONNECTIONS,
-
-    BROADCAST_ID,
-    WAIT_FOR_IDS,
-
-    CREATE_SHARES,
-    SEND_SHARES,
-    WAIT_FOR_SHARES,
-
-        // TODO(tfr): Instate qual support
-        BROADCAST_COMPLAINTS,
-        WAIT_FOR_COMPLAINT_ANSWERS,
-
-        BROADCAST_QUAL_SHARES,
-        WAIT_FOR_QUAL_COMPLAINTS,
-
-    GENERATE_KEYS,
+    WAIT_FOR_READY_CONNECTIONS,
+    WAIT_FOR_SHARE,
+    WAIT_FOR_COMPLAINTS,
+    WAIT_FOR_COMPLAINT_ANSWERS,
+    WAIT_FOR_QUAL_SHARES,
+    WAIT_FOR_QUAL_COMPLAINTS,
+    WAIT_FOR_RECONSTRUCTION_SHARES,
     BEACON_READY
   };
 
-  using BeaconManager           = dkg::BeaconManager;
-  using Identity                = crypto::Identity;
+  using ConstByteArray     = byte_array::ConstByteArray;
+  using StateMachine       = core::StateMachine<State>;
+  using StateMachinePtr    = std::shared_ptr<StateMachine>;
+  using MuddleAddress      = ConstByteArray;
+  using Identity           = crypto::Identity;
+  using CabinetMembers     = std::set<Identity>;
+  using Endpoint           = muddle::MuddleEndpoint;
+  using RBC                = network::RBC;
+  using MessageCoefficient = std::string;
+  using MessageShare       = std::string;
+  using SharesExposedMap = std::unordered_map<MuddleAddress, std::pair<MessageShare, MessageShare>>;
   using SharedAeonExecutionUnit = std::shared_ptr<AeonExecutionUnit>;
   using CallbackFunction        = std::function<void(SharedAeonExecutionUnit)>;
-  using Endpoint                = muddle::MuddleEndpoint;
-  using Muddle                  = muddle::Muddle;
-  using Client                  = muddle::rpc::Client;
-  using ClientPtr               = std::shared_ptr<Client>;
-  using StateMachine            = core::StateMachine<State>;
-  using StateMachinePtr         = std::shared_ptr<StateMachine>;
-  using ConstByteArray          = byte_array::ConstByteArray;
-  using SubscriptionPtr         = muddle::MuddleEndpoint::SubscriptionPtr;
-  using Serializer              = serializers::MsgPackSerializer;
-  using Address                 = byte_array::ConstByteArray;
-  using PrivateKey              = BeaconManager::PrivateKey;
-  using VerificationVector      = BeaconManager::VerificationVector;
-
-  struct ShareSubmission
-  {
-    Identity           from{};
-    PrivateKey         share{};
-    VerificationVector verification_vector{};
-  };
-
-  struct DeliveryDetails
-  {
-    bool             was_delivered{false};
-    service::Promise response{nullptr};
-  };
+  using DKGMessage              = dkg::DKGMessage;
+  using ComplaintsManager       = dkg::ComplaintsManager;
+  using ComplaintsAnswerManager = dkg::ComplaintsAnswerManager;
+  using QualComplaintsManager   = dkg::QualComplaintsManager;
+  using DKGEnvelope             = dkg::DKGEnvelope;
+  using ComplaintsMessage       = dkg::ComplaintsMessage;
+  using CoefficientsMessage     = dkg::CoefficientsMessage;
+  using SharesMessage           = dkg::SharesMessage;
+  using DKGSerializer           = dkg::DKGSerializer;
 
   BeaconSetupService()                           = delete;
   BeaconSetupService(BeaconSetupService const &) = delete;
@@ -100,19 +86,14 @@ public:
   /// @{
   State OnIdle();
   State OnWaitForDirectConnections();
-  State OnBroadcastID();
-  State WaitForIDs();
-  State CreateShares();
-  State SendShares();
-
+  State OnWaitForReadyConnections();
   State OnWaitForShares();
-  State OnGenerateKeys();
+  State OnWaitForComplaints();
+  State OnWaitForComplaintAnswers();
+  State OnWaitForQualShares();
+  State OnWaitForQualComplaints();
+  State OnWaitForReconstructionShares();
   State OnBeaconReady();
-  /// @}
-
-  /// Protocol calls
-  /// @{
-  bool SubmitShare(Identity from, PrivateKey share, VerificationVector verification_vector);
   /// @}
 
   /// Setup management
@@ -123,26 +104,66 @@ public:
 
   std::weak_ptr<core::Runnable> GetWeakRunnable();
 
-private:
-  Identity            identity_;
-  Endpoint &          endpoint_;
-  SubscriptionPtr     share_subscription_;
-  SubscriptionPtr     id_subscription_;
-  muddle::rpc::Client rpc_client_;
+  void OnNewShares(MuddleAddress from_id, std::pair<MessageShare, MessageShare> const &shares);
+  void OnDkgMessage(MuddleAddress const &from, std::shared_ptr<DKGMessage> msg_ptr);
+
+protected:
+  Identity                              identity_;
+  Endpoint &                            endpoint_;
+  std::shared_ptr<muddle::Subscription> shares_subscription;
+  RBC                                   pre_dkg_rbc_;
+  RBC                                   rbc_;
 
   std::mutex                          mutex_;
   CallbackFunction                    callback_function_;
   std::deque<SharedAeonExecutionUnit> aeon_exe_queue_;
   SharedAeonExecutionUnit             beacon_;
 
-  std::shared_ptr<StateMachine>                   state_machine_;
-  std::vector<CabinetMemberDetails>               member_details_queue_;
-  std::unordered_map<Identity, BeaconManager::Id> member_details_;
+  std::shared_ptr<StateMachine> state_machine_;
+  telemetry::GaugePtr<uint8_t>  dkg_state_gauge_;
 
-  std::unordered_map<Identity, DeliveryDetails> share_delivery_details_;
-  std::unordered_map<Identity, ShareSubmission> submitted_shares_;
+  std::set<MuddleAddress>                                    connections_;
+  std::unordered_map<MuddleAddress, std::set<MuddleAddress>> ready_connections_;
+
+  // Managing complaints
+  ComplaintsManager       complaints_manager_;
+  ComplaintsAnswerManager complaints_answer_manager_;
+  QualComplaintsManager   qual_complaints_manager_;
+
+  // Counters for types of messages received
+  std::set<MuddleAddress> shares_received_;
+  std::set<MuddleAddress> coefficients_received_;
+  std::set<MuddleAddress> qual_coefficients_received_;
+  std::set<MuddleAddress> reconstruction_shares_received_;
+
+  /// @name Methods to send messages
+  /// @{
+  void         SendBroadcast(DKGEnvelope const &env);
+  virtual void BroadcastShares();
+  virtual void BroadcastComplaints();
+  virtual void BroadcastComplaintsAnswer();
+  virtual void BroadcastQualCoefficients();
+  virtual void BroadcastQualComplaints();
+  virtual void BroadcastReconstructionShares();
+  /// @}
+
+  /// @name Handlers for messages
+  /// @{
+  void OnNewCoefficients(CoefficientsMessage const &coefficients, MuddleAddress const &from_id);
+  void OnComplaints(ComplaintsMessage const &complaint, MuddleAddress const &from_id);
+  void OnExposedShares(SharesMessage const &shares, MuddleAddress const &from_id);
+  void OnComplaintsAnswer(SharesMessage const &answer, MuddleAddress const &from_id);
+  void OnQualComplaints(SharesMessage const &shares, MuddleAddress const &from_id);
+  void OnReconstructionShares(SharesMessage const &shares, MuddleAddress const &from_id);
+  /// @}
+
+  /// @name Helper methods
+  /// @{
+  bool BasicMsgCheck(MuddleAddress const &from, std::shared_ptr<DKGMessage> const &msg_ptr);
+  void CheckComplaintAnswer(SharesMessage const &answer, MuddleAddress const &from_id);
+  bool BuildQual();
+  void CheckQualComplaints();
+  /// @}
 };
-
 }  // namespace beacon
 }  // namespace fetch
-*/

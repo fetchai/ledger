@@ -17,12 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/bls_base.hpp"
-#include "crypto/bls_dkg.hpp"
-#include "crypto/ecdsa.hpp"
-#include "crypto/identity.hpp"
-
-#include <unordered_map>
+#include "crypto/mcl_dkg.hpp"
+#include "dkg/dkg_messages.hpp"
 
 namespace fetch {
 namespace dkg {
@@ -30,23 +26,20 @@ namespace dkg {
 class BeaconManager
 {
 public:
-  using VerificationVector = crypto::bls::dkg::VerificationVector;
-  using ParticipantVector  = crypto::bls::dkg::ParticipantVector;
-  using IdList             = crypto::bls::IdList;
-  using SignatureList      = crypto::bls::SignatureList;
-  using PrivateKeyList     = crypto::bls::PrivateKeyList;
-
-  using Signature  = crypto::bls::Signature;
-  using PublicKey  = crypto::bls::PublicKey;
-  using PrivateKey = crypto::bls::PrivateKey;
-  using Id         = crypto::bls::Id;
-
-  using Certificate    = crypto::Prover;
-  using CertificatePtr = std::shared_ptr<Certificate>;
-  using Identity       = crypto::Identity;
-
-  using Contribution   = crypto::bls::dkg::Contribution;
-  using ConstByteArray = fetch::byte_array::ConstByteArray;
+  using MuddleAddress    = byte_array::ConstByteArray;
+  using Share            = DKGMessage::Share;
+  using Coefficient      = DKGMessage::Coefficient;
+  using ComplaintAnswer  = std::pair<MuddleAddress, std::pair<Share, Share>>;
+  using ExposedShare     = std::pair<MuddleAddress, std::pair<Share, Share>>;
+  using SharesExposedMap = std::unordered_map<MuddleAddress, std::pair<Share, Share>>;
+  using Certificate      = crypto::Prover;
+  using CertificatePtr   = std::shared_ptr<Certificate>;
+  using Signature        = crypto::mcl::Signature;
+  using PublicKey        = crypto::mcl::PublicKey;
+  using PrivateKey       = crypto::mcl::PrivateKey;
+  using CabinetIndex     = crypto::mcl::CabinetIndex;
+  using MessagePayload   = crypto::mcl::MessagePayload;
+  using Identity         = crypto::Identity;
 
   enum class AddResult
   {
@@ -63,188 +56,117 @@ public:
     Identity  identity;
   };
 
-  BeaconManager(CertificatePtr cert = nullptr)
-    : certificate_{cert}
-  {
-    if (certificate_ == nullptr)
-    {
-      auto ptr = new crypto::ECDSASigner();
-      certificate_.reset(ptr);
-      ptr->GenerateKeys();
-    }
-  }
+  BeaconManager(CertificatePtr = nullptr);
 
   BeaconManager(BeaconManager const &) = delete;
   BeaconManager &operator=(BeaconManager const &) = delete;
 
-  void SetCertificate(CertificatePtr cert)
+  void SetCertificate(CertificatePtr certificate)
   {
-    certificate_ = cert;
+    certificate_ = certificate;
   }
 
-  /*
-   * @brief resets the class back to a state where a new cabinet is set up.
-   * @param cabinet_size is the size of the cabinet.
-   * @param threshold is the threshold to be able to generate a signature.
-   */
-  void Reset(uint64_t cabinet_size, uint32_t threshold);
+  void                     GenerateCoefficients();
+  std::vector<Coefficient> GetCoefficients();
+  std::pair<Share, Share>  GetOwnShares(MuddleAddress const &share_receiver);
+  std::pair<Share, Share>  GetReceivedShares(MuddleAddress const &share_owner);
+  void AddCoefficients(MuddleAddress const &from, std::vector<Coefficient> const &coefficients);
+  void AddShares(MuddleAddress const &from, std::pair<Share, Share> const &shares);
+  std::unordered_set<MuddleAddress> ComputeComplaints();
+  bool VerifyComplaintAnswer(MuddleAddress const &from, ComplaintAnswer const &answer);
+  void ComputeSecretShare();
+  std::vector<Coefficient> GetQualCoefficients();
+  void AddQualCoefficients(MuddleAddress const &from, std::vector<Coefficient> const &coefficients);
+  SharesExposedMap ComputeQualComplaints();
+  MuddleAddress    VerifyQualComplaint(MuddleAddress const &from, ComplaintAnswer const &answer);
+  void             ComputePublicKeys();
+  void             AddReconstructionShare(MuddleAddress const &address);
+  void             AddReconstructionShare(MuddleAddress const &                  from,
+                                          std::pair<MuddleAddress, Share> const &share);
+  void             VerifyReconstructionShare(MuddleAddress const &from, ExposedShare const &share);
+  bool             RunReconstruction();
+  void             SetDkgOutput(bn::G2 &public_key, bn::Fr &secret_share,
+                                std::vector<bn::G2> &public_key_shares, std::set<MuddleAddress> &qual);
+  void             SetQual(std::set<MuddleAddress> qual);
+  void             Reset(std::set<MuddleAddress> const &cabinet, uint32_t threshold);
 
-  /*
-   * @brief adds a member to the current cabinet.
-   * @param identity is the network identity of the node
-   * @param id is the BLS identifier used in the algorithm.
-   * @returns true if successful.
-   */
-  bool InsertMember(Identity identity, Id id);
-
-  /*
-   * @brief generates the shares and verification vectors.
-   */
-  void GenerateContribution();
-
-  /*
-   * @brief returns the verification vector.
-   */
-  VerificationVector GetVerificationVector() const;
-
-  /*
-   * @brief gets a share for given peer.
-   * @param identity is the identity of the peer.
-   */
-  PrivateKey GetShare(Identity identity) const;
-
-  /*
-   * @brief adds a share from a peer to the internal share register
-   * @param identity is the identity of the peer.
-   * @param verification is the peers verification vector.
-   */
-  bool AddShare(Identity from, PrivateKey share, VerificationVector verification);
-
-  /*
-   * @brief creates the group key pair.
-   */
-  void CreateKeyPair();
-
-  /*
-   * @brief creates the public key from verification vectors.
-   */
-  void CreateGroupPublicKey(std::vector<VerificationVector> const &verification_vectors);
-
-  /*
-   * @brief sets the next message to be signed.
-   * @param next_message is the message to be signed.
-   */
-  void SetMessage(ConstByteArray next_message);
-
-  /*
-   * @brief signs the current message.
-   */
+  AddResult     AddSignaturePart(Identity const &from, PublicKey, Signature signature);
+  bool          Verify();
+  bool          Verify(Signature const &);
+  Signature     GroupSignature() const;
+  void          SetMessage(MessagePayload next_message);
   SignedMessage Sign();
-
-  /*
-   * @brief adds a signature share.
-   * @param from is the identity of the sending node.
-   * @param public_key is the public key of the peer.
-   * @param signature is the signature part.
-   */
-  AddResult AddSignaturePart(Identity from, PublicKey public_key, Signature signature);
-
-  /*
-   * @brief verifies the group signature.
-   */
-  bool Verify();
-
-  /*
-   * @brief verifies a group signature.
-   */
-  bool Verify(Signature const &);
-
-  /*
-   * @brief returns the signature as a ConstByteArray
-   */
-  Signature GroupSignature() const
-  {
-    return group_signature_;
-  }
 
   /// Property methods
   /// @{
-  ConstByteArray current_message() const
+  std::set<MuddleAddress> const &qual() const
   {
-    return current_message_;
+    return qual_;
   }
 
-  PublicKey public_key()
+  uint32_t polynomial_degree() const
   {
-    return public_key_;
+    return polynomial_degree_;
   }
-
-  Identity identity()
+  CabinetIndex cabinet_index() const
   {
-    return certificate_->identity();
+    return cabinet_index_;
   }
-
-  uint32_t threshold() const
+  CabinetIndex cabinet_index(MuddleAddress const &address) const
   {
-    return threshold_;
+    assert(identity_to_index_.find(address) != identity_to_index_.end());
+    return identity_to_index_.at(address);
   }
-
-  Id id()
-  {
-    return id_;
-  }
-
   bool can_verify()
   {
-    return signature_buffer_.size() >= threshold_;
+    return signature_buffer_.size() >= polynomial_degree_ + 1;
   }
+  ///}
 
-  std::vector<VerificationVector> verification_vectors()
-  {
-    return verification_vectors_;
-  }
-  /// }
 private:
-  uint64_t cabinet_size_{0};
-  uint32_t threshold_{0};
+  static bn::G2 zeroG2_;   ///< Zero for public key type
+  static bn::Fr zeroFr_;   ///< Zero for private key type
+  static bn::G2 group_g_;  ///< Generator of group used in DKG
+  static bn::G2 group_h_;  ///< Generator of subgroup used in DKG
+
+  CertificatePtr certificate_;
+  uint32_t       cabinet_size_;       ///< Size of committee
+  uint32_t       polynomial_degree_;  ///< Degree of polynomial in DKG
+  CabinetIndex   cabinet_index_;      ///< Index of our address in cabinet_
 
   /// Member details
   /// @{
-  std::unordered_map<Identity, uint64_t> identity_to_index_;
+  std::unordered_map<MuddleAddress, CabinetIndex> identity_to_index_;
   /// @}
 
-  /// Member identity and secrets
-  /// @{
-  CertificatePtr certificate_;
-  Id             id_;
-  Contribution   contribution_;
-  /// }
+  // What the DKG should return
+  bn::Fr                  secret_share_;       ///< Share of group private key (x_i)
+  bn::G2                  public_key_;         ///< Group public key (y)
+  std::vector<bn::G2>     public_key_shares_;  ///< Public keys of cabinet generated by DKG (v_i)
+  std::set<MuddleAddress> qual_;               ///< Set of qualified members
 
-  /// Beacon keys
-  /// @{
-  PrivateKey secret_key_share_;
-  PublicKey  group_public_key_;
-  PublicKey  public_key_;
-  /// }
+  // Temporary for DKG construction
+  bn::Fr                           xprime_i;
+  std::vector<bn::G2>              y_i;
+  std::vector<std::vector<bn::Fr>> s_ij, sprime_ij;  ///< Secret shares
+  std::vector<bn::Fr>              z_i;
+  std::vector<std::vector<bn::G2>> C_ik;  ///< Verification vectors from cabinet members
+  std::vector<std::vector<bn::G2>> A_ik;  ///< Qual verification vectors
+  std::vector<std::vector<bn::G2>> g__s_ij;
+  std::vector<bn::G2>              g__a_i;
+
+  std::unordered_map<MuddleAddress, std::pair<std::set<CabinetIndex>, std::vector<bn::Fr>>>
+      reconstruction_shares;  ///< Map from id of node_i in complaints to a pair <parties which
+  ///< exposed shares of node_i, the shares that were exposed>
 
   /// Message signature management
   /// @{
-  std::unordered_set<Identity> already_signed_;
-  SignatureList                signature_buffer_;
-  IdList                       signer_ids_;
-  ConstByteArray               current_message_;
-  Signature                    group_signature_;
-  /// }
-
-  /// Details from other members
-  /// @{
-  PrivateKeyList                  received_shares_;
-  ParticipantVector               participants_;
-  std::vector<PublicKey>          public_keys_;
-  std::vector<VerificationVector> verification_vectors_;
+  std::unordered_set<MuddleAddress>           already_signed_;
+  std::unordered_map<CabinetIndex, Signature> signature_buffer_;
+  MessagePayload                              current_message_;
+  Signature                                   group_signature_;
   /// }
 };
-
 }  // namespace dkg
 
 namespace serializers {
@@ -265,20 +187,22 @@ public:
   {
     auto map = map_constructor(3);
 
-    map.Append(SIGNATURE, member.signature);
-    map.Append(PUBLIC_KEY, member.public_key);
+    map.Append(SIGNATURE, member.signature.getStr());
+    map.Append(PUBLIC_KEY, member.public_key.getStr());
     map.Append(IDENTITY, member.identity);
   }
 
   template <typename MapDeserializer>
   static void Deserialize(MapDeserializer &map, Type &member)
   {
-    map.ExpectKeyGetValue(SIGNATURE, member.signature);
-    map.ExpectKeyGetValue(PUBLIC_KEY, member.public_key);
+    std::string sig_str;
+    std::string key_str;
+    map.ExpectKeyGetValue(SIGNATURE, sig_str);
+    map.ExpectKeyGetValue(PUBLIC_KEY, key_str);
+    member.signature.setStr(sig_str);
+    member.public_key.setStr(key_str);
     map.ExpectKeyGetValue(IDENTITY, member.identity);
   }
 };
-
 }  // namespace serializers
-
 }  // namespace fetch
