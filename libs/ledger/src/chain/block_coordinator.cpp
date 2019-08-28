@@ -1095,7 +1095,6 @@ BlockCoordinator::State BlockCoordinator::OnReset()
 
   if (block)
   {
-    block_height_->set(block->body.block_number);
     block_hash_->set(*reinterpret_cast<uint64_t const *>(block->body.hash.pointer()));
   }
 
