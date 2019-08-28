@@ -90,6 +90,7 @@ public:
   void Stop();
 
   void Route(Handle handle, PacketPtr packet);
+  void ConnectionDropped(Handle handle);
 
   /// @name Endpoint Methods (Publicly visible)
   /// @{
@@ -117,7 +118,8 @@ public:
 
   AddressList GetDirectlyConnectedPeers() const override;
 
-  RoutingTable GetRoutingTable() const;
+  AddressSet GetDirectlyConnectedPeerSet() const override;
+
   /// @}
 
   void Cleanup();
@@ -163,8 +165,6 @@ private:
   void SendToConnection(Handle handle, PacketPtr packet);
   void RoutePacket(PacketPtr packet, bool external = true);
   void DispatchDirect(Handle handle, PacketPtr packet);
-  void KillConnection(Handle handle, Address const &peer);
-  void KillConnection(Handle handle);
 
   void DispatchPacket(PacketPtr packet, Address transmitter);
 

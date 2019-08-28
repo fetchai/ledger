@@ -79,7 +79,7 @@ int main(int argc, char **argv)
 
   // Start networking etc.
   network_manager.Start();
-  muddle->Start({}, {uint16_t(std::stoi(args[1]))});
+  muddle->Start({uint16_t(std::stoi(args[1]))});
 
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
 

@@ -39,6 +39,7 @@ public:
   using Response        = network::PromiseOf<Payload>;
   using SubscriptionPtr = std::shared_ptr<Subscription>;
   using AddressList     = std::vector<Packet::Address>;
+  using AddressSet      = std::unordered_set<Packet::Address>;
   using Options         = uint64_t;
 
   /// @name Message Options
@@ -158,6 +159,13 @@ public:
    * @return The list of addresses
    */
   virtual AddressList GetDirectlyConnectedPeers() const = 0;
+
+  /**
+   * Request the list of peers that this muddle is directly connected to at the moment
+   *
+   * @return The list of addresses
+   */
+  virtual AddressSet GetDirectlyConnectedPeerSet() const = 0;
 };
 
 }  // namespace muddle

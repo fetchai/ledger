@@ -21,6 +21,7 @@
 #include "router.hpp"
 #include "routing_message.hpp"
 
+#include "core/containers/set_intersection.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/logger.hpp"
 #include "core/serializers/base_types.hpp"
@@ -338,6 +339,24 @@ void Router::Route(Handle handle, PacketPtr packet)
   }
 }
 
+void Router::ConnectionDropped(Handle handle)
+{
+  FETCH_LOG_INFO(LOGGING_NAME, "Connection ", handle, " dropped");
+
+  FETCH_LOCK(routing_table_lock_);
+  for (auto it = routing_table_.begin(); it != routing_table_.end();)
+  {
+    if (it->second.handle == handle)
+    {
+      it = routing_table_.erase(it);
+    }
+    else
+    {
+      ++it;
+    }
+  }
+}
+
 Address const &Router::GetAddress() const
 {
   return address_;
@@ -426,17 +445,6 @@ void Router::Broadcast(uint16_t service, uint16_t channel, Payload const &payloa
 }
 
 /**
- * Get a copy of the current routing table
- *
- * @return List of IDs from the routing table.
- */
-Router::RoutingTable Router::GetRoutingTable() const
-{
-  FETCH_LOCK(routing_table_lock_);
-  return routing_table_;
-}
-
-/**
  * Periodic call initiated from the main muddle instance used for periodic maintenance of the
  * router
  */
@@ -507,7 +515,26 @@ MuddleEndpoint::SubscriptionPtr Router::Subscribe(Address const &address, uint16
 
 MuddleEndpoint::AddressList Router::GetDirectlyConnectedPeers() const
 {
-  return register_.GetCurrentConnectionAddresses();
+  auto peers = GetDirectlyConnectedPeerSet();
+  return {std::make_move_iterator(peers.begin()), std::make_move_iterator(peers.end())};
+}
+
+Router::AddressSet Router::GetDirectlyConnectedPeerSet() const
+{
+  AddressSet peers{};
+  auto const current_direct_peers = register_.GetCurrentAddressSet();
+
+  FETCH_LOCK(routing_table_lock_);
+  for (auto const &address : current_direct_peers)
+  {
+    auto const raw_address = ConvertAddress(address);
+    if (routing_table_.find(raw_address) != routing_table_.end())
+    {
+      peers.emplace(address);
+    }
+  }
+
+  return peers;
 }
 
 /**

@@ -18,6 +18,7 @@
 
 #include "dispatcher.hpp"
 #include "muddle_register.hpp"
+#include "router.hpp"
 
 #include "network/management/abstract_connection.hpp"
 #include "telemetry/counter.hpp"
@@ -36,6 +37,11 @@ MuddleRegister::Entry::Entry(WeakConnectionPtr c)
     handle   = conn->handle();
     outgoing = conn->Type() == network::AbstractConnection::TYPE_OUTGOING;
   }
+}
+
+void MuddleRegister::AttachRouter(Router &router)
+{
+  router_ = &router;
 }
 
 /**
@@ -300,6 +306,13 @@ void MuddleRegister::Leave(ConnectionHandle handle)
     }
 
     handle_index_.erase(it);
+  }
+
+  // signal the router
+  auto const router = router_.load();
+  if (router)
+  {
+    router->ConnectionDropped(handle);
   }
 }
 

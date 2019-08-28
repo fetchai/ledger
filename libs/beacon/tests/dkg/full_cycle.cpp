@@ -120,7 +120,7 @@ struct CabinetNode
     , identity{muddle_certificate->identity()}
   {
     network_manager.Start();
-    muddle->Start({}, {muddle_port});
+    muddle->Start({muddle_port});
   }
 
   muddle::Address GetMuddleAddress() const

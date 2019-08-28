@@ -26,6 +26,7 @@
 #include <functional>
 #include <memory>
 #include <unordered_map>
+#include <atomic>
 
 namespace fetch {
 namespace network {
@@ -34,6 +35,7 @@ class AbstractConnection;
 namespace muddle {
 
 class Dispatcher;
+class Router;
 
 /**
  * The Muddle registers monitors all incoming and outgoing connections maintained in a given muddle.
@@ -74,7 +76,7 @@ public:
   static constexpr char const *LOGGING_NAME = "MuddleReg";
 
   // Construction / Destruction
-  MuddleRegister()                       = default;
+  MuddleRegister() = default;
   MuddleRegister(MuddleRegister const &) = delete;
   MuddleRegister(MuddleRegister &&)      = delete;
   ~MuddleRegister() override             = default;
@@ -83,6 +85,7 @@ public:
   MuddleRegister &operator=(MuddleRegister const &) = delete;
   MuddleRegister &operator=(MuddleRegister &&) = delete;
 
+  void AttachRouter(Router &router);
   void              Broadcast(ConstByteArray const &data) const;
   WeakConnectionPtr LookupConnection(ConnectionHandle handle) const;
   WeakConnectionPtr LookupConnection(Address const &address) const;
@@ -108,6 +111,8 @@ protected:
   /// @}
 
 private:
+  std::atomic<Router*> router_{nullptr};
+
   mutable Mutex lock_{__LINE__, __FILE__};
   HandleIndex   handle_index_;
   AddressIndex  address_index_;

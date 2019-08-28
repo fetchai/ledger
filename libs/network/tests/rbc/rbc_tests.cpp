@@ -267,7 +267,7 @@ struct RbcMember
           failures}
   {
     network_manager.Start();
-    muddle->Start({}, {muddle_port});
+    muddle->Start({muddle_port});
   }
 
   ~RbcMember()

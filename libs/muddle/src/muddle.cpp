@@ -25,6 +25,7 @@
 #include "core/logger.hpp"
 #include "core/serializers/base_types.hpp"
 #include "core/serializers/main_serializer.hpp"
+#include "core/containers/set_intersection.hpp"
 #include "core/service_ids.hpp"
 #include "network/tcp/tcp_client.hpp"
 #include "network/tcp/tcp_server.hpp"
@@ -71,6 +72,8 @@ Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager 
                                        reactor_, *register_, clients_, router_))
   , rpc_server_(router_, SERVICE_MUDDLE, CHANNEL_RPC)
 {
+  register_->AttachRouter(router_);
+
   // register the status update
   clients_.SetStatusCallback(
       [this](Uri const &peer, Handle handle, PeerConnectionList::ConnectionState state) {
@@ -248,7 +251,7 @@ Muddle::Ports Muddle::GetListeningPorts() const
  */
 Muddle::Addresses Muddle::GetDirectlyConnectedPeers() const
 {
-  return register_->GetCurrentAddressSet();
+  return router_.GetDirectlyConnectedPeerSet();
 }
 
 /**
@@ -258,7 +261,7 @@ Muddle::Addresses Muddle::GetDirectlyConnectedPeers() const
  */
 Muddle::Addresses Muddle::GetIncomingConnectedPeers() const
 {
-  return register_->GetIncomingAddressSet();
+  return GetDirectlyConnectedPeers() & register_->GetIncomingAddressSet();
 }
 
 /**
@@ -268,7 +271,7 @@ Muddle::Addresses Muddle::GetIncomingConnectedPeers() const
  */
 Muddle::Addresses Muddle::GetOutgoingConnectedPeers() const
 {
-  return register_->GetOutgoingAddressSet();
+  return GetDirectlyConnectedPeers() & register_->GetOutgoingAddressSet();
 }
 
 /**

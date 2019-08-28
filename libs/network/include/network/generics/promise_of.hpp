@@ -46,8 +46,7 @@ public:
 
   // Promise Accessors
   RESULT Get() const override;
-  bool   Wait(uint32_t timeout_ms      = std::numeric_limits<uint32_t>::max(),
-              bool     throw_exception = true) const;
+  bool   Wait(bool throw_exception = true) const;
 
   Promise const &GetInnerPromise() const
   {
@@ -128,14 +127,13 @@ inline PromiseOf<TYPE>::operator bool() const
  * Waits for the promise to complete
  *
  * @tparam TYPE The expected return type of the promise
- * @param timeout_ms The timeout in milliseconds to wait for this promise to conclude
  * @param throw_exception Signal if the function should throw an exception in the case of an error
  * @return true if the promise has been fulfilled (given the constraints), otherwise false
  */
 template <typename TYPE>
-inline bool PromiseOf<TYPE>::Wait(uint32_t timeout_ms, bool throw_exception) const
+inline bool PromiseOf<TYPE>::Wait(bool throw_exception) const
 {
-  promise_->Wait(timeout_ms, throw_exception);
+  promise_->Wait(throw_exception);
   return promise_->IsSuccessful();
 }
 

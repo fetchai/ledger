@@ -91,7 +91,7 @@ struct CabinetNode
     , beacon_service{muddle->GetEndpoint(), muddle_certificate, event_manager}
   {
     network_manager.Start();
-    muddle->Start({}, {muddle_port});
+    muddle->Start({muddle_port});
   }
 
   muddle::Address GetMuddleAddress() const
