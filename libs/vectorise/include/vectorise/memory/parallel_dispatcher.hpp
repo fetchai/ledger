@@ -410,8 +410,11 @@ public:
 
   enum
   {
+    scalar_size = 8 * sizeof(type),
     vector_size = vectorise::VectorRegisterSize<type>::value
   };
+  using ScalarRegisterType         = typename vectorise::VectorRegister<type, scalar_size>;
+  using ScalarRegisterIteratorType = vectorise::VectorRegisterIterator<type, scalar_size>;
   using VectorRegisterType         = typename vectorise::VectorRegister<type, vector_size>;
   using VectorRegisterIteratorType = vectorise::VectorRegisterIterator<type, vector_size>;
 
@@ -419,122 +422,80 @@ public:
     : super_type(ptr, size)
   {}
 
-  template <typename F>
+  template <class F>
+  void RangedApply(Range const &range, F &&apply)
+  {
+    int SFL = int(range.SIMDFromLower<VectorRegisterType::E_BLOCK_COUNT>());
+    int SF = int(range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>());
+    int ST = int(range.SIMDToLower<VectorRegisterType::E_BLOCK_COUNT>());
+    int STU = int(range.SIMDToUpper<VectorRegisterType::E_BLOCK_COUNT>());
+
+    VectorRegisterType vc;
+
+    if (SFL != SF)
+    {
+      ScalarRegisterType  c;
+      for (size_t i = range.from(); i < SF; i += ScalarRegisterType::E_BLOCK_COUNT)
+      {
+        apply(c);
+        c.Store(this->pointer() + i);
+      }
+    }
+
+    for (int i = SF; i < ST; i += VectorRegisterType::E_BLOCK_COUNT)
+    {
+      apply(vc);
+      vc.Store(this->pointer() + i);
+    }
+
+    if (STU != ST)
+    {
+      ScalarRegisterType  c;
+      for (int i = ST; i < range.to(); i += ScalarRegisterType::E_BLOCK_COUNT)
+      {
+        apply(c);
+        c.Store(this->pointer() + i);
+      }
+    }
+  }
+
+  template <class F>
   void Apply(F &&apply)
   {
     Range range(0, this->size());
-    return Apply(range, std::move(apply));
+    return RangedApply(range, std::move(apply));
   }
 
-  // TODO (issue 1113): This function is potentially slow
-  template <typename... Args>
-  void Apply(typename details::MatrixApplyFreeFunction<VectorRegisterType, void>::template Unroll<
-                 Args...>::signature_type &&apply,
-             Args &&... args)
+  template <class F, typename... Args>
+  void RangedApplyMultiple(Range const &range, F &&apply, Args &&... args)
   {
-    VectorRegisterType         regs[sizeof...(args)], c;
-    VectorRegisterIteratorType iters[sizeof...(args)];
-    ConstParallelDispatcher<T>::InitializeVectorIterators(0, this->size(), iters,
-                                                          std::forward<Args>(args)...);
-
-    std::size_t N = this->size();
-    for (std::size_t i = 0; i < N; i += VectorRegisterType::E_BLOCK_COUNT)
-    {
-      details::UnrollNext<sizeof...(args), VectorRegisterType, VectorRegisterIteratorType>::Apply(
-          regs, iters);
-
-      details::MatrixApplyFreeFunction<VectorRegisterType, void>::template Unroll<Args...>::Apply(
-          regs, std::move(apply), c);
-
-      c.Store(this->pointer() + i);
-    }
-  }
-
-  template <typename F>
-  void Apply(Range const &range, F &&apply)
-  {
-    int SFL = int(range.SIMDFromLower<VectorRegisterType::E_BLOCK_COUNT>());
-
-    int SF = int(range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>());
-    int ST = int(range.SIMDToLower<VectorRegisterType::E_BLOCK_COUNT>());
-
-    int STU = int(range.SIMDToUpper<VectorRegisterType::E_BLOCK_COUNT>());
-
-    VectorRegisterType c;
-
-    if (SFL != SF)
-    {
-      apply(c);
-
-      int Q = VectorRegisterType::E_BLOCK_COUNT - (SF - int(range.from()));
-      for (int i = 0; i < VectorRegisterType::E_BLOCK_COUNT; ++i)
-      {
-        type value = first_element(c);
-        c          = shift_elements_right(c);
-        if (Q <= i)
-        {
-          this->pointer()[SFL + i] = value;
-        }
-      }
-    }
-
-    for (int i = SF; i < ST; i += VectorRegisterType::E_BLOCK_COUNT)
-    {
-      apply(c);
-      c.Store(this->pointer() + i);
-    }
-
-    if (STU != ST)
-    {
-      apply(c);
-
-      int Q = (int(range.to()) - ST - 1);
-      for (int i = 0; i <= Q; ++i)
-      {
-        type value              = first_element(c);
-        c                       = shift_elements_right(c);
-        this->pointer()[ST + i] = value;
-      }
-    }
-  }
-
-  template <typename F, typename... Args>
-  void Apply(Range const &range, F &&apply, Args &&... args)
-  {
-    int SFL = int(range.SIMDFromLower<VectorRegisterType::E_BLOCK_COUNT>());
-
-    int SF = int(range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>());
-    int ST = int(range.SIMDToLower<VectorRegisterType::E_BLOCK_COUNT>());
-
-    int STU      = int(range.SIMDToUpper<VectorRegisterType::E_BLOCK_COUNT>());
-    int SIMDSize = STU - SFL;
+    size_t SFL = range.SIMDFromLower<VectorRegisterType::E_BLOCK_COUNT>();
+    size_t SF = range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>();
+    size_t ST = range.SIMDToLower<VectorRegisterType::E_BLOCK_COUNT>();
+    size_t STU  = range.SIMDToUpper<VectorRegisterType::E_BLOCK_COUNT>();
 
     VectorRegisterType         regs[sizeof...(args)], c;
     VectorRegisterIteratorType iters[sizeof...(args)];
-
-    ConstParallelDispatcher<T>::InitializeVectorIterators(std::size_t(SFL), std::size_t(SIMDSize),
-                                                          iters, std::forward<Args>(args)...);
+    InitializeVectorIterators<vector_size>(SF, range.to(), iters, std::forward<Args>(args)...);
 
     if (SFL != SF)
     {
-      details::UnrollNext<sizeof...(args), VectorRegisterType, VectorRegisterIteratorType>::Apply(
-          regs, iters);
-      details::MatrixApplyFreeFunction<VectorRegisterType, void>::template Unroll<Args...>::Apply(
-          regs, apply, c);
+      ScalarRegisterType  c;
+      ScalarRegisterType         scalar_regs[sizeof...(args)];
+      ScalarRegisterIteratorType scalar_iters[sizeof...(args)];
+      InitializeVectorIterators<scalar_size>(range.from(), SF, scalar_iters, std::forward<Args>(args)...);
 
-      int Q = VectorRegisterType::E_BLOCK_COUNT - (SF - int(range.from()));
-      for (int i = 0; i < VectorRegisterType::E_BLOCK_COUNT; ++i)
+      for (size_t i = range.from(); i < SF; i += ScalarRegisterType::E_BLOCK_COUNT)
       {
-        type value = first_element(c);
-        c          = shift_elements_right(c);
-        if (Q <= i)
-        {
-          this->pointer()[SFL + i] = value;
-        }
+        details::UnrollNext<sizeof...(args), ScalarRegisterType, ScalarRegisterIteratorType>::Apply(
+          scalar_regs, scalar_iters);
+        details::MatrixApplyFreeFunction<ScalarRegisterType, void>::template Unroll<Args...>::Apply(
+          scalar_regs, apply, c);
+        c.Store(this->pointer() + i);
       }
     }
 
-    for (int i = SF; i < ST; i += VectorRegisterType::E_BLOCK_COUNT)
+    for (size_t i = SF; i < ST; i += VectorRegisterType::E_BLOCK_COUNT)
     {
       details::UnrollNext<sizeof...(args), VectorRegisterType, VectorRegisterIteratorType>::Apply(
           regs, iters);
@@ -546,23 +507,24 @@ public:
 
     if (STU != ST)
     {
-      std::cout << "STU = " << STU << std::endl;
-      std::cout << "ST = " << ST << std::endl;
-      std::cout << "range.to() = " << range.to() << std::endl;
-      details::UnrollNext<sizeof...(args), VectorRegisterType, VectorRegisterIteratorType>::Apply(
-          regs, iters);
-      details::MatrixApplyFreeFunction<VectorRegisterType, void>::template Unroll<Args...>::Apply(
-          regs, apply, c);
-
-      int Q = (int(range.to()) - ST - 1);
-      std::cout << "Q = " << Q << std::endl;
-      for (int i = 0; i <= Q; ++i)
+      ScalarRegisterType  c;
+      for (size_t i = ST; i < range.to(); i += ScalarRegisterType::E_BLOCK_COUNT)
       {
-        type value              = first_element(c);
-        c                       = shift_elements_right(c);
-        this->pointer()[ST + i] = value;
+        details::UnrollNext<sizeof...(args), ScalarRegisterType, ScalarRegisterIteratorType>::Apply(
+          regs, iters);
+        details::MatrixApplyFreeFunction<ScalarRegisterType, void>::template Unroll<Args...>::Apply(
+          regs, apply, c);
+        apply(c);
+        c.Store(this->pointer() + i);
       }
     }
+  }
+
+  template <class F, typename... Args>
+  void Apply(F &&apply, Args &&... args)
+  {
+    Range range(0, this->size());
+    return RangedApplyMultiple(range, std::move(apply), std::forward<Args>(args)...);
   }
 
   type *pointer()
