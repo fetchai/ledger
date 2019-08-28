@@ -19,6 +19,7 @@
 
 #include "core/random/lfg.hpp"
 #include "ml/ops/placeholder.hpp"
+#include "ml/ops/trainable.hpp"
 #include "ml/regularisers/regularisation.hpp"
 #include "ml/regularisers/regulariser.hpp"
 #include "ml/state_dict.hpp"
@@ -108,6 +109,13 @@ public:
     return sp;
   }
 
+  std::shared_ptr<Ops<TensorType>> MakeSharedCopy(std::shared_ptr<Ops<TensorType>> me) override
+  {
+    // This overrides implementation in Placeholder
+    assert(me.get() == this);
+    return me;
+  }
+
   ArrayPtrType GetShareableWeights()
   {
     return this->output_;
@@ -118,7 +126,9 @@ public:
   {
     FETCH_UNUSED(inputs);
     assert(inputs.empty());
+
     gradient_accumulation_->InlineAdd(error_signal);
+
     return {};
   }
 
@@ -263,13 +273,27 @@ public:
     return *this->output_;
   }
 
+  void SetWeights(TensorType &new_value) override
+  {
+    this->output_->Assign(new_value);
+  }
+
   /**
    * exports the weight gradients Array
    * @return const reference to internal accumulated gradient Array
    */
-  TensorType const &get_gradients() const override
+  TensorType const &GetGradientsReferences() const override
   {
     return *this->gradient_accumulation_;
+  }
+
+  /**
+   * returns deep copy of the weight gradients Array
+   * @return Internal accumulated gradient Array
+   */
+  TensorType GetGradients() const override
+  {
+    return this->gradient_accumulation_->Copy();
   }
 
   static constexpr OpType OpCode()
