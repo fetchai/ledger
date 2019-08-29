@@ -76,8 +76,8 @@ void Cosine(ArrayType const &a, ArrayType const &b, typename ArrayType::Type &r)
 
   fetch::math::Divide(r, denom_r, r);
 
-  assert(r <= 1.0);
-  assert(r >= -1.0);
+  assert(r <= 1.0 + function_tolerance<typename ArrayType::Type>());
+  assert(r >= -1.0 - function_tolerance<typename ArrayType::Type>());
 }
 
 template <typename ArrayType>
