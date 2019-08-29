@@ -60,10 +60,7 @@ public:
   BeaconManager(BeaconManager const &) = delete;
   BeaconManager &operator=(BeaconManager const &) = delete;
 
-  void SetCertificate(CertificatePtr certificate)
-  {
-    certificate_ = certificate;
-  }
+  void SetCertificate(CertificatePtr certificate);
 
   void                     GenerateCoefficients();
   std::vector<Coefficient> GetCoefficients();
@@ -99,32 +96,12 @@ public:
 
   /// Property methods
   /// @{
-  std::set<MuddleAddress> const &qual() const
-  {
-    return qual_;
-  }
-
-  uint32_t polynomial_degree() const
-  {
-    return polynomial_degree_;
-  }
-  CabinetIndex cabinet_index() const
-  {
-    return cabinet_index_;
-  }
-  CabinetIndex cabinet_index(MuddleAddress const &address) const
-  {
-    assert(identity_to_index_.find(address) != identity_to_index_.end());
-    return identity_to_index_.at(address);
-  }
-  bool can_verify()
-  {
-    return signature_buffer_.size() >= polynomial_degree_ + 1;
-  }
-  std::string group_public_key() const
-  {
-    return public_key_.getStr();
-  }
+  std::set<MuddleAddress> const &qual() const;
+  uint32_t                       polynomial_degree() const;
+  CabinetIndex                   cabinet_index() const;
+  CabinetIndex                   cabinet_index(MuddleAddress const &address) const;
+  bool                           can_verify();
+  std::string                    group_public_key() const;
   ///}
 
 private:

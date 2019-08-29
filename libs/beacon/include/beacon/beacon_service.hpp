@@ -64,7 +64,7 @@ public:
     COMPLETE,
     COMITEE_ROTATION,
 
-    WAIT_FOR_VERIFICATION_VECTORS,
+    WAIT_FOR_PUBLIC_KEYS,
     OBSERVE_ENTROPY_GENERATION
   };
 
@@ -132,7 +132,7 @@ protected:
 
   State OnComiteeState();
 
-  State OnWaitForVerificationVectors();
+  State OnWaitForPublicKeys();
   State OnObserveEntropyGeneration();
   /// @}
 

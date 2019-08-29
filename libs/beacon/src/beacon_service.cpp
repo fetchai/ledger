@@ -54,8 +54,8 @@ char const *ToString(BeaconService::State state)
   case BeaconService::State::OBSERVE_ENTROPY_GENERATION:
     text = "Observe entropy generation";
     break;
-  case BeaconService::State::WAIT_FOR_VERIFICATION_VECTORS:
-    text = "Waiting for verification vectors.";
+  case BeaconService::State::WAIT_FOR_PUBLIC_KEYS:
+    text = "Waiting for public keys";
     break;
   }
 
@@ -103,7 +103,6 @@ BeaconService::BeaconService(Endpoint &endpoint, CertificatePtr certificate,
         serialiser >> result;
 
         std::lock_guard<std::mutex> lock(mutex_);
-
         this->incoming_entropy_.emplace(std::move(result));
       });
 
@@ -134,8 +133,8 @@ BeaconService::BeaconService(Endpoint &endpoint, CertificatePtr certificate,
   state_machine_->RegisterHandler(State::COMITEE_ROTATION, this, &BeaconService::OnComiteeState);
 
   // Pipe 2
-  state_machine_->RegisterHandler(State::WAIT_FOR_VERIFICATION_VECTORS, this,
-                                  &BeaconService::OnWaitForVerificationVectors);
+  state_machine_->RegisterHandler(State::WAIT_FOR_PUBLIC_KEYS, this,
+                                  &BeaconService::OnWaitForPublicKeys);
   state_machine_->RegisterHandler(State::OBSERVE_ENTROPY_GENERATION, this,
                                   &BeaconService::OnObserveEntropyGeneration);
 }
@@ -229,7 +228,7 @@ BeaconService::State BeaconService::OnWaitForSetupCompletionState()
     // observe the process
     if (active_exe_unit_->observe_only)
     {
-      return State::WAIT_FOR_VERIFICATION_VECTORS;
+      return State::WAIT_FOR_PUBLIC_KEYS;
     }
     else
     {
@@ -251,7 +250,7 @@ BeaconService::State BeaconService::OnWaitForSetupCompletionState()
   return State::WAIT_FOR_SETUP_COMPLETION;
 }
 
-BeaconService::State BeaconService::OnWaitForVerificationVectors()
+BeaconService::State BeaconService::OnWaitForPublicKeys()
 {
   std::lock_guard<std::mutex> lock(mutex_);
 
@@ -275,7 +274,7 @@ BeaconService::State BeaconService::OnWaitForVerificationVectors()
     }
   }
 
-  return State::WAIT_FOR_VERIFICATION_VECTORS;
+  return State::WAIT_FOR_PUBLIC_KEYS;
 }
 
 BeaconService::State BeaconService::OnObserveEntropyGeneration()

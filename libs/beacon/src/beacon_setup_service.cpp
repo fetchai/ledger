@@ -74,6 +74,7 @@ BeaconSetupService::BeaconSetupService(Endpoint &endpoint, Identity identity)
                    fetch::serializers::MsgPackSerializer serializer{payload};
                    serializer >> connections;
 
+                   std::lock_guard<std::mutex> lock(mutex_);
                    if (ready_connections_.find(from) == ready_connections_.end())
                    {
                      ready_connections_.insert({from, connections});
@@ -332,6 +333,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForComplaintAnswers()
 
 BeaconSetupService::State BeaconSetupService::OnWaitForQualShares()
 {
+  std::unique_lock<std::mutex> lock{mutex_};
   dkg_state_gauge_->set(static_cast<uint8_t>(State::WAIT_FOR_QUAL_SHARES));
 
   std::set<MuddleAddress> diff;
@@ -353,6 +355,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForQualShares()
 
 BeaconSetupService::State BeaconSetupService::OnWaitForQualComplaints()
 {
+  std::unique_lock<std::mutex> lock{mutex_};
   dkg_state_gauge_->set(static_cast<uint8_t>(State::WAIT_FOR_QUAL_COMPLAINTS));
 
   if (qual_complaints_manager_.IsFinished(beacon_->manager.qual(), identity_.identifier()))
@@ -549,10 +552,7 @@ void BeaconSetupService::BroadcastQualCoefficients()
       DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_QUAL_SHARES),
                                       beacon_->manager.GetQualCoefficients(), "signature"}});
   complaints_answer_manager_.Clear();
-  {
-    std::unique_lock<std::mutex> lock{mutex_};
-    qual_coefficients_received_.insert(identity_.identifier());
-  }
+  qual_coefficients_received_.insert(identity_.identifier());
 }
 
 /**
@@ -674,6 +674,7 @@ void BeaconSetupService::OnExposedShares(SharesMessage const &shares, MuddleAddr
 void BeaconSetupService::OnNewShares(MuddleAddress                                from,
                                      std::pair<MessageShare, MessageShare> const &shares)
 {
+  std::lock_guard<std::mutex> lock(mutex_);
   // Check if sender is in cabinet
   bool in_cabinet{false};
   for (auto &m : beacon_->aeon.members)

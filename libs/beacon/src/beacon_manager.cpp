@@ -60,6 +60,11 @@ BeaconManager::BeaconManager(CertificatePtr certificate)
   });
 }
 
+void BeaconManager::SetCertificate(CertificatePtr certificate)
+{
+  certificate_ = certificate;
+}
+
 void BeaconManager::GenerateCoefficients()
 {
   std::vector<PrivateKey> a_i(polynomial_degree_ + 1, zeroFr_);
@@ -187,10 +192,6 @@ bool BeaconManager::VerifyComplaintAnswer(MuddleAddress const &from, ComplaintAn
   PrivateKey sprime;
   PublicKey  lhsG;
   PublicKey  rhsG;
-  s.clear();
-  sprime.clear();
-  lhsG.clear();
-  rhsG.clear();
   s.setStr(answer.second.first);
   sprime.setStr(answer.second.second);
   rhsG = crypto::mcl::ComputeRHS(reporter_index, C_ik[from_index]);
@@ -306,10 +307,6 @@ BeaconManager::MuddleAddress BeaconManager::VerifyQualComplaint(MuddleAddress co
   PublicKey  rhs;
   PrivateKey s;
   PrivateKey sprime;
-  lhs.clear();
-  rhs.clear();
-  s.clear();
-  sprime.clear();
   s.setStr(answer.second.first);
   sprime.setStr(answer.second.second);
   // check equation (4)
@@ -357,7 +354,6 @@ void BeaconManager::ComputePublicKeys()
     y_i[it]         = A_ik[it][0];
   }
   // Compute public key $y = \prod_{i \in QUAL} y_i \bmod p$
-  public_key_.clear();
   for (auto const &iq : qual_)
   {
     CabinetIndex it = identity_to_index_[iq];
@@ -404,7 +400,6 @@ void BeaconManager::AddReconstructionShare(MuddleAddress const &                
     return;
   }
   PrivateKey s;
-  s.clear();
   s.setStr(share.second);
   reconstruction_shares.at(share.first).first.insert(from_index);
   reconstruction_shares.at(share.first).second[from_index] = s;
@@ -419,11 +414,6 @@ void BeaconManager::VerifyReconstructionShare(MuddleAddress const &from, Exposed
   PublicKey  rhs;
   PrivateKey s;
   PrivateKey sprime;
-  lhs.clear();
-  rhs.clear();
-  s.clear();
-  sprime.clear();
-
   s.setStr(share.second.first);
   sprime.setStr(share.second.second);
   lhs = crypto::mcl::ComputeLHS(group_g_, group_h_, s, sprime);
@@ -493,7 +483,6 @@ void BeaconManager::SetDkgOutput(PublicKey &public_key, PrivateKey &secret_share
                                  std::vector<PublicKey> & public_key_shares,
                                  std::set<MuddleAddress> &qual)
 {
-  // crypto::mcl::Init(public_key_shares, cabinet_size_);
   public_key        = public_key_;
   secret_share      = secret_share_;
   public_key_shares = public_key_shares_;
@@ -548,6 +537,7 @@ void BeaconManager::Reset(std::set<Identity> const &cabinet, uint32_t threshold)
   crypto::mcl::Init(g__s_ij, cabinet_size_, cabinet_size_);
   crypto::mcl::Init(g__a_i, threshold);
 
+  qual_.clear();
   reconstruction_shares.clear();
 }
 
@@ -619,6 +609,7 @@ void BeaconManager::SetMessage(MessagePayload next_message)
   current_message_ = next_message;
   signature_buffer_.clear();
   already_signed_.clear();
+  // TODO(jmw): Should group_signature_ be cleared here?
 }
 
 /**
@@ -626,19 +617,50 @@ void BeaconManager::SetMessage(MessagePayload next_message)
  */
 BeaconManager::SignedMessage BeaconManager::Sign()
 {
-  SignedMessage smsg;
-  Signature     signature  = crypto::mcl::SignShare(current_message_, secret_share_);
-  PublicKey     public_key = public_key_shares_[cabinet_index_];
-  smsg.identity            = certificate_->identity();
+  Signature signature = crypto::mcl::SignShare(current_message_, secret_share_);
 
-  if (!crypto::mcl::VerifySign(public_key, current_message_, signature, group_g_))
+  if (!crypto::mcl::VerifySign(public_key_shares_[cabinet_index_], current_message_, signature,
+                               group_g_))
   {
     throw std::runtime_error("Failed to sign.");
   }
 
+  SignedMessage smsg;
+  smsg.identity  = certificate_->identity();
   smsg.signature = signature;
 
   return smsg;
+}
+
+std::set<BeaconManager::MuddleAddress> const &BeaconManager::qual() const
+{
+  return qual_;
+}
+
+uint32_t BeaconManager::polynomial_degree() const
+{
+  return polynomial_degree_;
+}
+
+BeaconManager::CabinetIndex BeaconManager::cabinet_index() const
+{
+  return cabinet_index_;
+}
+
+BeaconManager::CabinetIndex BeaconManager::cabinet_index(MuddleAddress const &address) const
+{
+  assert(identity_to_index_.find(address) != identity_to_index_.end());
+  return identity_to_index_.at(address);
+}
+
+bool BeaconManager::can_verify()
+{
+  return signature_buffer_.size() >= polynomial_degree_ + 1;
+}
+
+std::string BeaconManager::group_public_key() const
+{
+  return public_key_.getStr();
 }
 
 }  // namespace dkg

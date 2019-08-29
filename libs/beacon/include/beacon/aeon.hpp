@@ -57,8 +57,7 @@ struct AeonExecutionUnit
 
   Aeon aeon;
 
-  std::atomic<bool> ready{false};
-  std::atomic<bool> observe_only{false};
+  bool observe_only{false};
 };
 
 }  // namespace beacon

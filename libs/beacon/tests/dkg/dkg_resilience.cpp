@@ -249,11 +249,7 @@ private:
     }
 
     complaints_answer_manager_.Clear();
-    {
-      std::unique_lock<std::mutex> lock{mutex_};
-      qual_coefficients_received_.insert(identity_.identifier());
-      lock.unlock();
-    }
+    qual_coefficients_received_.insert(identity_.identifier());
   }
 
   void BroadcastQualComplaints() override
