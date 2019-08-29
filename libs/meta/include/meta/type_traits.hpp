@@ -20,7 +20,6 @@
 #include "meta/tags.hpp"
 #include "meta/type_util.hpp"
 
-#include <functional>
 #include <string>
 #include <type_traits>
 
@@ -177,34 +176,6 @@ struct IsNotImplementedImpl
 };
 template <typename A, typename R>
 using IfIsNotImplemented = typename IsNotImplementedImpl<A, R>::Type;
-
-template <class F, class... Args>
-using IsNothrowInvocable =
-    std::integral_constant<bool, noexcept(std::declval<F>()(std::declval<Args>()...))>;
-
-template <class F, class... Args>
-static constexpr auto IsNothrowInvocableV = IsNothrowInvocable<F, Args...>::value;
-
-template <class F, class... Args>
-struct InvokeResult
-{
-  using type = decltype(std::declval<F>()(std::declval<Args>()...));
-};
-
-template <class F, class... Args>
-using InvokeResultT = typename InvokeResult<F, Args...>::type;
-
-template <class C, class RV, class... Args, class... Args1>
-struct InvokeResult<RV (C::*)(Args...), Args1...>
-{
-  using type = RV;
-};
-
-template <class C, class RV, class... Args, class... Args1>
-struct InvokeResult<RV (C::*)(Args...) const, Args1...>
-{
-  using type = RV;
-};
 
 }  // namespace meta
 }  // namespace fetch
