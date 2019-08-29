@@ -468,20 +468,22 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
   }
   else if (mining_ && mining_enabled_ && ((Clock::now() >= next_block_time_) || consensus_))
   {
-    // create a new block
-    next_block_ = std::make_unique<Block>();
-
     if (consensus_)
     {
       consensus_->UpdateCurrentBlock(*current_block_);
       // Failure will set this to a nullptr
       next_block_ = consensus_->GenerateNextBlock();
     }
+    else
+    {
+      // create a new block
+      next_block_ = std::make_unique<Block>();
+    }
 
     if (!next_block_)
     {
       state_machine_->Delay(std::chrono::milliseconds{100});
-      return State::RESET;
+      return State::SYNCHRONISED;
     }
 
     next_block_->body.previous_hash = current_block_->body.hash;
