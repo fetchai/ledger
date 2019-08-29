@@ -61,7 +61,7 @@ public:
   using CounterType    = uint8_t;
 
   RBC(Endpoint &endpoint, MuddleAddress address, CallbackFunction call_back,
-      uint16_t channel = CHANNEL_RBC_BROADCAST);
+      uint16_t channel = CHANNEL_RBC_BROADCAST, bool ordered_delivery = true);
 
   /// RBC Operation
   /// @{
@@ -97,17 +97,13 @@ protected:
 
   /// Events
   /// @{
-  // Thread safe
+  // Unsafe
   virtual void OnRBC(MuddleAddress const &from, RBCMessage const &message);
   void         OnRBroadcast(MessageBroadcast const &msg, uint32_t sender_index);
   void         OnREcho(MessageEcho const &msg, uint32_t sender_index);
   void         OnRReady(MessageReady const &msg, uint32_t sender_index);
   void         OnRRequest(MessageRequest const &msg, uint32_t sender_index);
   void         OnRAnswer(MessageAnswer const &msg, uint32_t sender_index);
-
-  // Unsafe
-  void OnREchoLockFree(MessageEcho const &msg, uint32_t sender_index);
-  void OnRReadyLockFree(MessageReady const &msg, uint32_t sender_index);
   /// @}
 
   /// Message communication - not thread safe.
@@ -167,6 +163,7 @@ private:
   std::atomic<uint8_t>  msg_counter_{0};  ///< Counter for messages we have broadcasted
   PartyList             parties_;         ///< Keeps track of messages from cabinet members
   std::unordered_map<TagType, BroadcastMessage> broadcasts_;  ///< map from tag to broadcasts
+  bool                                          ordered_delivery_;
 
   // For broadcast
   MuddleAddress const address_;            ///< Our muddle address

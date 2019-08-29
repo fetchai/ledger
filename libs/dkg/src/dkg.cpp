@@ -90,7 +90,8 @@ void DistributedKeyGeneration::SendCoefficients(std::vector<bn::Fr> const &a_i,
   std::vector<MessageCoefficient> coefficients;
   for (size_t k = 0; k <= polynomial_degree_; k++)
   {
-    C_ik[cabinet_index_][k] = ComputeLHS(g__a_i[k], group_g_, group_h_, a_i[k], b_i[k]);
+    C_ik[cabinet_index_][k] =
+        crypto::mcl::ComputeLHS(g__a_i[k], group_g_, group_h_, a_i[k], b_i[k]);
     coefficients.push_back(C_ik[cabinet_index_][k].getStr());
   }
   SendBroadcast(DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAITING_FOR_SHARE),
@@ -110,7 +111,7 @@ void DistributedKeyGeneration::SendShares(std::vector<bn::Fr> const &a_i,
   uint32_t j = 0;
   for (auto &cab_i : cabinet_)
   {
-    ComputeShares(s_ij[cabinet_index_][j], sprime_ij[cabinet_index_][j], a_i, b_i, j);
+    crypto::mcl::ComputeShares(s_ij[cabinet_index_][j], sprime_ij[cabinet_index_][j], a_i, b_i, j);
     if (j != cabinet_index_)
     {
       std::pair<MessageShare, MessageShare> shares{s_ij[cabinet_index_][j].getStr(),
@@ -279,7 +280,7 @@ void DistributedKeyGeneration::ReceivedComplaint()
 {
   std::unique_lock<std::mutex> lock{mutex_};
   if (!received_all_complaints_ && state_ == State::WAITING_FOR_COMPLAINTS &&
-      complaints_manager_.IsFinished(cabinet_, cabinet_index_, polynomial_degree_))
+      complaints_manager_.IsFinished(polynomial_degree_))
   {
     // Complaints at this point consist only of parties which have received over threshold number of
     // complaints
@@ -301,7 +302,7 @@ void DistributedKeyGeneration::ReceivedComplaintsAnswer()
 {
   std::unique_lock<std::mutex> lock{mutex_};
   if (!received_all_complaints_answer_ && state_ == State::WAITING_FOR_COMPLAINT_ANSWERS &&
-      complaints_answer_manager_.IsFinished(cabinet_, cabinet_index_))
+      complaints_answer_manager_.IsFinished())
   {
     received_all_complaints_answer_.store(true);
     lock.unlock();
@@ -577,7 +578,7 @@ void DistributedKeyGeneration::OnComplaints(ComplaintsMessage const &msg,
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, " received complaints from node ",
                  CabinetIndex(from_id));
-  complaints_manager_.Add(msg, from_id, CabinetIndex(from_id), address_);
+  complaints_manager_.Add(msg, from_id, address_);
   ReceivedComplaint();
 }
 
@@ -592,7 +593,7 @@ void DistributedKeyGeneration::OnComplaintsAnswer(SharesMessage const &answer,
                                                   MuddleAddress const &from_id)
 {
   uint32_t from_index{CabinetIndex(from_id)};
-  if (complaints_answer_manager_.Count(from_index))
+  if (complaints_answer_manager_.Count(from_id))
   {
     CheckComplaintAnswer(answer, from_id, from_index);
     ReceivedComplaintsAnswer();
@@ -660,8 +661,8 @@ void DistributedKeyGeneration::OnReconstructionShares(SharesMessage const &share
 
     s.setStr(share.second.first);
     sprime.setStr(share.second.second);
-    lhs = ComputeLHS(group_g_, group_h_, s, sprime);
-    rhs = ComputeRHS(from_index, C_ik[victim_index]);
+    lhs = crypto::mcl::ComputeLHS(group_g_, group_h_, s, sprime);
+    rhs = crypto::mcl::ComputeRHS(from_index, C_ik[victim_index]);
     // check equation (4)
     if (lhs == rhs)
     {
@@ -700,9 +701,9 @@ DistributedKeyGeneration::ComputeComplaints()
       if (C_ik[i][0] != zeroG2_ && s_ij[i][cabinet_index_] != zeroFr_)
       {
         bn::G2 rhs, lhs;
-        lhs = ComputeLHS(g__s_ij[i][cabinet_index_], group_g_, group_h_, s_ij[i][cabinet_index_],
-                         sprime_ij[i][cabinet_index_]);
-        rhs = ComputeRHS(cabinet_index_, C_ik[i]);
+        lhs = crypto::mcl::ComputeLHS(g__s_ij[i][cabinet_index_], group_g_, group_h_,
+                                      s_ij[i][cabinet_index_], sprime_ij[i][cabinet_index_]);
+        rhs = crypto::mcl::ComputeRHS(cabinet_index_, C_ik[i]);
         if (lhs != rhs)
         {
           FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
@@ -753,8 +754,8 @@ void DistributedKeyGeneration::CheckComplaintAnswer(SharesMessage const &answer,
     rhsG.clear();
     s.setStr(share.second.first);
     sprime.setStr(share.second.second);
-    rhsG = ComputeRHS(reporter_index, C_ik[from_index]);
-    lhsG = ComputeLHS(group_g_, group_h_, s, sprime);
+    rhsG = crypto::mcl::ComputeRHS(reporter_index, C_ik[from_index]);
+    lhsG = crypto::mcl::ComputeLHS(group_g_, group_h_, s, sprime);
     if (lhsG != rhsG)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Node: ", cabinet_index_, " verification for node ",
@@ -829,7 +830,7 @@ DistributedKeyGeneration::SharesExposedMap DistributedKeyGeneration::ComputeQual
       {
         bn::G2 rhs, lhs;
         lhs = g__s_ij[i][cabinet_index_];
-        rhs = ComputeRHS(cabinet_index_, A_ik[i]);
+        rhs = crypto::mcl::ComputeRHS(cabinet_index_, A_ik[i]);
         if (lhs != rhs)
         {
           FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
@@ -880,8 +881,8 @@ void DistributedKeyGeneration::CheckQualComplaints()
         s.setStr(share.second.first);
         sprime.setStr(share.second.second);
         // check equation (4)
-        lhs = ComputeLHS(group_g_, group_h_, s, sprime);
-        rhs = ComputeRHS(from_index, C_ik[victim_index]);
+        lhs = crypto::mcl::ComputeLHS(group_g_, group_h_, s, sprime);
+        rhs = crypto::mcl::ComputeRHS(from_index, C_ik[victim_index]);
         if (lhs != rhs)
         {
           FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
@@ -893,7 +894,7 @@ void DistributedKeyGeneration::CheckQualComplaints()
         {
           // check equation (5)
           bn::G2::mul(lhs, group_g_, s);  // G^s
-          rhs = ComputeRHS(from_index, A_ik[victim_index]);
+          rhs = crypto::mcl::ComputeRHS(from_index, A_ik[victim_index]);
           if (lhs != rhs)
           {
             FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
@@ -938,7 +939,8 @@ void DistributedKeyGeneration::ComputeSecretShare()
 bool DistributedKeyGeneration::RunReconstruction()
 {
   std::vector<std::vector<bn::Fr>> a_ik;
-  Init(a_ik, static_cast<uint32_t>(cabinet_.size()), static_cast<uint32_t>(polynomial_degree_ + 1));
+  crypto::mcl::Init(a_ik, static_cast<uint32_t>(cabinet_.size()),
+                    static_cast<uint32_t>(polynomial_degree_ + 1));
   for (auto const &in : reconstruction_shares)
   {
     std::set<uint32_t>  parties{in.second.first};
@@ -952,7 +954,7 @@ bool DistributedKeyGeneration::RunReconstruction()
     }
     // compute $z_i$ using Lagrange interpolation (without corrupted parties)
     uint32_t victim_index{CabinetIndex(in.first)};
-    z_i[victim_index] = ComputeZi(in.second.first, in.second.second);
+    z_i[victim_index] = crypto::mcl::ComputeZi(in.second.first, in.second.second);
     std::vector<bn::Fr> points, shares_f;
     for (const auto &index : parties)
     {
@@ -961,7 +963,7 @@ bool DistributedKeyGeneration::RunReconstruction()
       points.push_back(index + 1);  // adjust index in computation
       shares_f.push_back(shares[index]);
     }
-    a_ik[victim_index] = InterpolatePolynom(points, shares_f);
+    a_ik[victim_index] = crypto::mcl::InterpolatePolynom(points, shares_f);
     for (size_t k = 0; k <= polynomial_degree_; k++)
     {
       bn::G2::mul(A_ik[victim_index][k], group_g_, a_ik[victim_index][k]);
@@ -998,7 +1000,7 @@ void DistributedKeyGeneration::ComputePublicKeys()
     {
       uint32_t it{CabinetIndex(iq)};
       bn::G2::add(public_key_shares_[jt], public_key_shares_[jt], A_ik[it][0]);
-      UpdateRHS(jt, public_key_shares_[jt], A_ik[it]);
+      crypto::mcl::UpdateRHS(jt, public_key_shares_[jt], A_ik[it]);
     }
   }
   state_ = State::FINAL;
@@ -1056,15 +1058,15 @@ void DistributedKeyGeneration::ResetCabinet(CabinetMembers const &cabinet, uint3
   public_key_.clear();
   qual_.clear();
   xprime_i.clear();
-  Init(y_i, cabinet_size);
-  Init(public_key_shares_, cabinet_size);
-  Init(s_ij, cabinet_size, cabinet_size);
-  Init(sprime_ij, cabinet_size, cabinet_size);
-  Init(z_i, cabinet_size);
-  Init(C_ik, cabinet_size, threshold);
-  Init(A_ik, cabinet_size, threshold);
-  Init(g__s_ij, cabinet_size, cabinet_size);
-  Init(g__a_i, threshold);
+  crypto::mcl::Init(y_i, cabinet_size);
+  crypto::mcl::Init(public_key_shares_, cabinet_size);
+  crypto::mcl::Init(s_ij, cabinet_size, cabinet_size);
+  crypto::mcl::Init(sprime_ij, cabinet_size, cabinet_size);
+  crypto::mcl::Init(z_i, cabinet_size);
+  crypto::mcl::Init(C_ik, cabinet_size, threshold);
+  crypto::mcl::Init(A_ik, cabinet_size, threshold);
+  crypto::mcl::Init(g__s_ij, cabinet_size, cabinet_size);
+  crypto::mcl::Init(g__a_i, threshold);
 
   complaints_manager_.ResetCabinet(cabinet_size);
   complaints_answer_manager_.ResetCabinet(cabinet_size);
@@ -1097,7 +1099,7 @@ void DistributedKeyGeneration::SetDkgOutput(bn::G2 &public_key, bn::Fr &secret_s
                                             std::vector<bn::G2> &    public_key_shares,
                                             std::set<MuddleAddress> &qual)
 {
-  Init(public_key_shares, static_cast<uint32_t>(cabinet_.size()));
+  crypto::mcl::Init(public_key_shares, static_cast<uint32_t>(cabinet_.size()));
   public_key        = public_key_;
   secret_share      = secret_share_;
   public_key_shares = public_key_shares_;

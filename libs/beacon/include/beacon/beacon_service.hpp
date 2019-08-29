@@ -27,13 +27,12 @@
 
 #include "beacon/aeon.hpp"
 #include "beacon/beacon_protocol.hpp"
-#include "beacon/beacon_setup_protocol.hpp"
 #include "beacon/beacon_setup_service.hpp"
 #include "beacon/cabinet_member_details.hpp"
 #include "beacon/entropy.hpp"
 #include "beacon/event_manager.hpp"
 #include "beacon/events.hpp"
-#include "beacon/verification_vector_message.hpp"
+#include "beacon/public_key_message.hpp"
 
 #include "telemetry/counter.hpp"
 #include "telemetry/gauge.hpp"
@@ -65,7 +64,7 @@ public:
     COMPLETE,
     COMITEE_ROTATION,
 
-    WAIT_FOR_VERIFICATION_VECTORS,
+    WAIT_FOR_PUBLIC_KEYS,
     OBSERVE_ENTROPY_GENERATION
   };
 
@@ -80,7 +79,7 @@ public:
   using Endpoint                = muddle::MuddleEndpoint;
   using Client                  = muddle::rpc::Client;
   using ClientPtr               = std::shared_ptr<Client>;
-  using CabinetMemberList       = std::unordered_set<Identity>;
+  using CabinetMemberList       = std::set<Identity>;
   using ConstByteArray          = byte_array::ConstByteArray;
   using Server                  = fetch::muddle::rpc::Server;
   using ServerPtr               = std::shared_ptr<Server>;
@@ -91,6 +90,7 @@ public:
   using Serializer              = serializers::MsgPackSerializer;
   using Digest                  = ledger::Digest;
   using SharedEventManager      = EventManager::SharedEventManager;
+  using BeaconSetupService      = beacon::BeaconSetupService;
 
   BeaconService()                      = delete;
   BeaconService(BeaconService const &) = delete;
@@ -132,7 +132,7 @@ protected:
 
   State OnComiteeState();
 
-  State OnWaitForVerificationVectors();
+  State OnWaitForPublicKeys();
   State OnObserveEntropyGeneration();
   /// @}
 
@@ -145,8 +145,7 @@ private:
   bool AddSignature(SignatureShare share)
   {
     assert(active_exe_unit_ != nullptr);
-    auto ret = active_exe_unit_->manager.AddSignaturePart(share.identity, share.public_key,
-                                                          share.signature);
+    auto ret = active_exe_unit_->manager.AddSignaturePart(share.identity, share.signature);
 
     // Checking that the signature is valid
     if (ret == BeaconManager::AddResult::INVALID_SIGNATURE)
@@ -198,10 +197,10 @@ private:
 
   /// Observing beacon
   /// @{
-  SubscriptionPtr                                verification_vec_subscription_{nullptr};
-  std::priority_queue<VerificationVectorMessage> incoming_verification_vectors_{};
-  SubscriptionPtr                                entropy_subscription_{nullptr};
-  std::priority_queue<Entropy>                   incoming_entropy_{};
+  SubscriptionPtr                       group_public_key_subscription_{nullptr};
+  std::priority_queue<PublicKeyMessage> incoming_group_public_keys_{};
+  SubscriptionPtr                       entropy_subscription_{nullptr};
+  std::priority_queue<Entropy>          incoming_entropy_{};
   /// @}
 
   ServerPtr           rpc_server_{nullptr};
@@ -214,9 +213,8 @@ private:
 
   /// Distributed Key Generation
   /// @{
-  BeaconSetupService         cabinet_creator_;
-  BeaconSetupServiceProtocol cabinet_creator_protocol_;
-  BeaconServiceProtocol      beacon_protocol_;
+  BeaconSetupService    cabinet_creator_;
+  BeaconServiceProtocol beacon_protocol_;
   /// @}
 
   telemetry::CounterPtr entropy_generated_count_;

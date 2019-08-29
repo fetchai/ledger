@@ -62,7 +62,7 @@ byte_array::ConstByteArray Round::GetRoundEntropy() const
 void Round::RecoverSignature()
 {
   FETCH_LOCK(lock_);
-  round_signature_ = LagrangeInterpolation(round_sig_shares_);
+  round_signature_ = crypto::mcl::LagrangeInterpolation(round_sig_shares_);
   has_signature_   = true;
   round_entropy_   = crypto::Hash<crypto::SHA256>(round_signature_.getStr());
 }
