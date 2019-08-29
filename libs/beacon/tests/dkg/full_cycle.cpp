@@ -38,8 +38,6 @@
 #include "core/serializers/main_serializer.hpp"
 #include "core/service_ids.hpp"
 #include "core/state_machine.hpp"
-#include "crypto/bls_base.hpp"
-#include "crypto/bls_dkg.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
 
@@ -50,7 +48,6 @@
 #include "network/generics/requesting_queue.hpp"
 
 #include "beacon/beacon_service.hpp"
-#include "beacon/beacon_setup_protocol.hpp"
 #include "beacon/beacon_setup_service.hpp"
 #include "beacon/cabinet_member_details.hpp"
 #include "beacon/entropy.hpp"
@@ -140,8 +137,6 @@ void RunHonestComitteeRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
 {
   std::cout << "- Setup" << std::endl;
   uint16_t number_of_nodes = static_cast<uint16_t>(number_of_cabinets * cabinet_size);
-  // Initialising the BLS library
-  crypto::bls::Init();
 
   std::vector<std::unique_ptr<CabinetNode>> committee;
   for (uint16_t ii = 0; ii < number_of_nodes; ++ii)
@@ -258,6 +253,7 @@ void RunHonestComitteeRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
   for (auto &member : committee)
   {
     member->reactor.Stop();
+    member->muddle->Stop();
     member->network_manager.Stop();
   }
 

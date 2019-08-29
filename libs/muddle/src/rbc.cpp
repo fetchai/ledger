@@ -34,8 +34,10 @@ constexpr char const *LOGGING_NAME = "RBC";
  * @param threshold Threshold number of Byzantine peers
  * @param dkg
  */
-RBC::RBC(Endpoint &endpoint, MuddleAddress address, CallbackFunction call_back, uint16_t channel)
+RBC::RBC(Endpoint &endpoint, MuddleAddress address, CallbackFunction call_back, uint16_t channel,
+         bool ordered_delivery)
   : channel_{channel}
+  , ordered_delivery_{ordered_delivery}
   , address_{std::move(address)}
   , endpoint_{endpoint}
   , deliver_msg_callback_{std::move(call_back)}
@@ -135,14 +137,13 @@ void RBC::Broadcast(SerialisedMessage const &msg)
 {
   MessageBroadcast broadcast_msg;
 
-  {  // Creating broadcast message and broadcasting
-    assert(!lock_.owns_lock());
-    FETCH_LOCK(lock_);
+  // Creating broadcast message and broadcasting
+  assert(!lock_.owns_lock());
+  FETCH_LOCK(lock_);
 
-    broadcast_msg = RBCMessage::New<RBroadcast>(channel_, static_cast<IdType>(id_),
-                                                static_cast<CounterType>(++msg_counter_), msg);
-    InternalBroadcast(*broadcast_msg);
-  }
+  broadcast_msg = RBCMessage::New<RBroadcast>(channel_, static_cast<IdType>(id_),
+                                              static_cast<CounterType>(++msg_counter_), msg);
+  InternalBroadcast(*broadcast_msg);
 
   // Sending message to self
   OnRBroadcast(broadcast_msg, id_);
@@ -234,48 +235,39 @@ struct RBC::MessageCount RBC::ReceivedReady(TagType tag, MessageHash const &msg)
 void RBC::OnRBC(MuddleAddress const &from, RBCMessage const &message)
 {
   assert(!lock_.owns_lock());
+  FETCH_LOCK(lock_);
 
   uint32_t sender_index;
-
+  if (!BasicMessageCheck(from, message))
   {
-    FETCH_LOCK(lock_);
-    sender_index = CabinetIndex(from);
-
-    if (!BasicMessageCheck(from, message))
-    {
-      return;
-    }
+    return;
   }
+  sender_index = CabinetIndex(from);
 
   switch (message.type())
   {
   case RBCMessageType::R_BROADCAST:
   {
-    FETCH_LOG_TRACE(LOGGING_NAME, "Node: ", id_, " received RBroadcast from node ", sender_index);
     OnRBroadcast(RBCMessage::New<RBroadcast>(message), sender_index);
     break;
   }
   case RBCMessageType::R_ECHO:
   {
-    FETCH_LOG_TRACE(LOGGING_NAME, "Node: ", id_, " received REcho from node ", sender_index);
     OnREcho(RBCMessage::New<REcho>(message), sender_index);
     break;
   }
   case RBCMessageType::R_READY:
   {
-    FETCH_LOG_TRACE(LOGGING_NAME, "Node: ", id_, " received RReady from node ", sender_index);
     OnRReady(RBCMessage::New<RReady>(message), sender_index);
     break;
   }
   case RBCMessageType::R_REQUEST:
   {
-    FETCH_LOG_TRACE(LOGGING_NAME, "Node: ", id_, " received RRequest from node ", sender_index);
     OnRRequest(RBCMessage::New<RRequest>(message), sender_index);
     break;
   }
   case RBCMessageType::R_ANSWER:
   {
-    FETCH_LOG_TRACE(LOGGING_NAME, "Node: ", id_, " received RAnswer from node ", sender_index);
     OnRAnswer(RBCMessage::New<RAnswer>(message), sender_index);
     break;
   }
@@ -293,8 +285,7 @@ void RBC::OnRBC(MuddleAddress const &from, RBCMessage const &message)
  */
 void RBC::OnRBroadcast(MessageBroadcast const &msg, uint32_t sender_index)
 {
-  assert(!lock_.owns_lock());
-  FETCH_LOCK(lock_);
+  assert(lock_.owns_lock());
   assert(msg != nullptr);
   assert(msg->type() == MessageType::R_BROADCAST);
   assert(msg->is_valid());
@@ -319,7 +310,7 @@ void RBC::OnRBroadcast(MessageBroadcast const &msg, uint32_t sender_index)
       MessageEcho echo_msg = RBCMessage::New<REcho>(msg->channel(), msg->id(), msg->counter(),
                                                     crypto::Hash<HashFunction>(msg->message()));
       InternalBroadcast(*echo_msg);
-      OnREchoLockFree(echo_msg, id_);
+      OnREcho(echo_msg, id_);
     }
   }
   else
@@ -339,20 +330,11 @@ void RBC::OnRBroadcast(MessageBroadcast const &msg, uint32_t sender_index)
  */
 void RBC::OnREcho(MessageEcho const &msg, uint32_t sender_index)
 {
-  assert(!lock_.owns_lock());
-  FETCH_LOCK(lock_);
-  assert(msg != nullptr);
-  assert(msg->is_valid());
-
-  OnREchoLockFree(msg, sender_index);
-}
-
-void RBC::OnREchoLockFree(MessageEcho const &msg, uint32_t sender_index)
-{
   assert(lock_.owns_lock());
   assert(msg != nullptr);
   assert(msg->is_valid());
   TagType tag = msg->tag();
+
   if (!SetPartyFlag(sender_index, tag, MessageType::R_ECHO))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "onREcho: Node ", id_, " received repeated msg ", tag,
@@ -370,7 +352,7 @@ void RBC::OnREchoLockFree(MessageEcho const &msg, uint32_t sender_index)
         RBCMessage::New<RReady>(msg->channel(), msg->id(), msg->counter(), msg->hash());
 
     InternalBroadcast(*ready_msg);
-    OnRReadyLockFree(ready_msg, id_);
+    OnRReady(ready_msg, id_);
   }
 }
 
@@ -384,18 +366,9 @@ void RBC::OnREchoLockFree(MessageEcho const &msg, uint32_t sender_index)
  */
 void RBC::OnRReady(MessageReady const &msg, uint32_t sender_index)
 {
-  assert(!lock_.owns_lock());
-  FETCH_LOCK(lock_);
-
-  OnRReadyLockFree(msg, sender_index);
-}
-
-void RBC::OnRReadyLockFree(MessageReady const &msg, uint32_t sender_index)
-{
   assert(lock_.owns_lock());
   assert(msg != nullptr);
   assert(msg->is_valid());
-
   TagType tag = msg->tag();
 
   if (!SetPartyFlag(sender_index, tag, MessageType::R_READY))
@@ -407,9 +380,9 @@ void RBC::OnRReadyLockFree(MessageReady const &msg, uint32_t sender_index)
   }
 
   auto msgs_counter = ReceivedReady(tag, msg);
-  FETCH_LOG_INFO(LOGGING_NAME, "onRReady: Node ", id_, " received msg ", tag, " from node ",
-                 sender_index, " with counter ", std::to_string(msg->counter()), ", id ", msg->id(),
-                 " and ready count ", msgs_counter.ready_count);
+  FETCH_LOG_TRACE(LOGGING_NAME, "onRReady: Node ", id_, " received msg ", tag, " from node ",
+                  sender_index, " with counter ", std::to_string(msg->counter()), ", id ",
+                  msg->id(), " and ready count ", msgs_counter.ready_count);
 
   if (threshold_ > 0 && msgs_counter.ready_count == threshold_ + 1 &&
       msgs_counter.echo_count < (current_cabinet_.size() - threshold_))
@@ -418,7 +391,7 @@ void RBC::OnRReadyLockFree(MessageReady const &msg, uint32_t sender_index)
         RBCMessage::New<RReady>(msg->channel(), msg->id(), msg->counter(), msg->hash());
 
     InternalBroadcast(*ready_msg);
-    OnRReadyLockFree(ready_msg, id_);
+    OnRReady(ready_msg, id_);
   }
   else if (msgs_counter.ready_count == 2 * threshold_ + 1)
   {
@@ -460,12 +433,11 @@ void RBC::OnRReadyLockFree(MessageReady const &msg, uint32_t sender_index)
  */
 void RBC::OnRRequest(MessageRequest const &msg, uint32_t sender_index)
 {
-  assert(!lock_.owns_lock());
-  FETCH_LOCK(lock_);
+  assert(lock_.owns_lock());
   assert(msg != nullptr);
   assert(msg->is_valid());
-
   TagType tag = msg->tag();
+
   if (!SetPartyFlag(sender_index, tag, MessageType::R_REQUEST))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "onRRequest: Node ", id_, " received repeated msg ", tag,
@@ -493,12 +465,11 @@ void RBC::OnRRequest(MessageRequest const &msg, uint32_t sender_index)
  */
 void RBC::OnRAnswer(MessageAnswer const &msg, uint32_t sender_index)
 {
-  assert(!lock_.owns_lock());
-  FETCH_LOCK(lock_);
+  assert(lock_.owns_lock());
   assert(msg != nullptr);
   assert(msg->is_valid());
-
   TagType tag = msg->tag();
+
   if (!SetPartyFlag(sender_index, tag, MessageType::R_ANSWER))
   {
     return;
@@ -513,6 +484,7 @@ void RBC::OnRAnswer(MessageAnswer const &msg, uint32_t sender_index)
 
   if (msg_hash == broadcasts_[tag].message_hash)
   {
+    FETCH_LOG_TRACE(LOGGING_NAME, "Node: ", id_, " received RAnswer from node ", sender_index);
     if (broadcasts_[tag].original_message.empty())
     {
       broadcasts_[tag].original_message = msg->message();
@@ -549,7 +521,6 @@ void RBC::OnRAnswer(MessageAnswer const &msg, uint32_t sender_index)
 void RBC::Deliver(SerialisedMessage const &msg, uint32_t sender_index)
 {
   assert(lock_.owns_lock());
-
   assert(parties_.size() == current_cabinet_.size());
 
   MuddleAddress miner_id{*std::next(current_cabinet_.begin(), sender_index)};
@@ -564,14 +535,13 @@ void RBC::Deliver(SerialisedMessage const &msg, uint32_t sender_index)
   // Try to deliver old messages
   if (!parties_[sender_index].undelivered_msg.empty())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, " checks old messages for node ", sender_index);
+    FETCH_LOG_TRACE(LOGGING_NAME, "Node ", id_, " checks old messages for node ", sender_index);
     auto old_tag_msg = parties_[sender_index].undelivered_msg.begin();
 
     while (old_tag_msg != parties_[sender_index].undelivered_msg.end() &&
            old_tag_msg->first == parties_[sender_index].deliver_s)
     {
       TagType old_tag = old_tag_msg->second;
-      FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, "testing msg with tag ", old_tag);
       assert(!broadcasts_[old_tag].original_message.empty());
       FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, " delivered msg ", old_tag, " with counter ",
                      old_tag_msg->first, " and id ", sender_index);
@@ -596,12 +566,11 @@ void RBC::Deliver(SerialisedMessage const &msg, uint32_t sender_index)
  */
 bool RBC::BasicMessageCheck(MuddleAddress const &from, RBCMessage const &msg)
 {
-  // assert(lock_.owns_lock());
+  assert(lock_.owns_lock());
 
   if ((current_cabinet_.find(from) == current_cabinet_.end()) || (msg.channel() != channel_))
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Node ", id_,
-                   " received message from unknown sender/wrong channel");
+    FETCH_LOG_WARN(LOGGING_NAME, "Received message from unknown sender/wrong channel");
     return false;
   }
 
@@ -696,23 +665,30 @@ bool RBC::CheckTag(RBCMessage const &msg)
 
   FETCH_LOG_TRACE(LOGGING_NAME, "Node ", id_, " has counter ", msg_counter, " for node ", msg.id());
   assert(msg.channel() == channel_);
-  if (msg.counter() == msg_counter)
+  if (ordered_delivery_)
+  {
+    if (msg.counter() == msg_counter)
+    {
+      return true;
+    }
+    else if (msg.counter() > msg_counter)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Node ", id_, " has counter ", msg_counter,
+                     " does not match tag counter ", std::to_string(msg.counter()), " for node ",
+                     msg.id());
+      // Store counter of message for processing later
+      if (parties_[msg.id()].undelivered_msg.find(msg.counter()) ==
+          parties_[msg.id()].undelivered_msg.end())
+      {
+        parties_[msg.id()].undelivered_msg.insert({msg.counter(), msg.tag()});
+      }
+    }
+    return false;
+  }
+  else
   {
     return true;
   }
-  else if (msg.counter() > msg_counter)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Node ", id_, " has counter ", msg_counter,
-                   " does not match tag counter ", std::to_string(msg.counter()), " for node ",
-                   msg.id());
-    // Store counter of message for processing later
-    if (parties_[msg.id()].undelivered_msg.find(msg.counter()) ==
-        parties_[msg.id()].undelivered_msg.end())
-    {
-      parties_[msg.id()].undelivered_msg.insert({msg.counter(), msg.tag()});
-    }
-  }
-  return false;
 }
 
 /**

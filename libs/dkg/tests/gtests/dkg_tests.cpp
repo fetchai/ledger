@@ -46,20 +46,6 @@ using CertificatePtr = std::shared_ptr<Certificate>;
 using Address        = fetch::muddle::Packet::Address;
 using ConstByteArray = fetch::byte_array::ConstByteArray;
 
-ProverPtr CreateNewCertificate()
-{
-  using Signer    = fetch::crypto::ECDSASigner;
-  using SignerPtr = std::shared_ptr<Signer>;
-
-  SignerPtr certificate = std::make_shared<Signer>();
-
-  certificate->GenerateKeys();
-
-  return certificate;
-}
-
-uint16_t CHANNEL_SHARES = 3;
-
 class FaultyDkg : public DistributedKeyGeneration
 {
 public:
@@ -145,7 +131,8 @@ private:
     for (size_t k = 0; k <= polynomial_degree_; k++)
     {
       coefficients.push_back(C_ik[cabinet_index_][k].getStr());
-      C_ik[cabinet_index_][k] = ComputeLHS(g__a_i[k], group_g_, group_h_, a_i[k], b_i[k]);
+      C_ik[cabinet_index_][k] =
+          crypto::mcl::ComputeLHS(g__a_i[k], group_g_, group_h_, a_i[k], b_i[k]);
     }
     // Send empty coefficients to everyone
     SendBroadcast(DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAITING_FOR_SHARE),
@@ -158,7 +145,8 @@ private:
     bool     sent_bad{false};
     for (auto &cab_i : cabinet_)
     {
-      ComputeShares(s_ij[cabinet_index_][j], sprime_ij[cabinet_index_][j], a_i, b_i, j);
+      crypto::mcl::ComputeShares(s_ij[cabinet_index_][j], sprime_ij[cabinet_index_][j], a_i, b_i,
+                                 j);
       if (j != cabinet_index_)
       {
         // Send a one node trivial shares
@@ -200,7 +188,8 @@ private:
         }
         else
         {
-          ComputeShares(s_ij[cabinet_index_][j], sprime_ij[cabinet_index_][j], a_i, b_i, j);
+          crypto::mcl::ComputeShares(s_ij[cabinet_index_][j], sprime_ij[cabinet_index_][j], a_i,
+                                     b_i, j);
           std::pair<MessageShare, MessageShare> shares{s_ij[cabinet_index_][j].getStr(),
                                                        sprime_ij[cabinet_index_][j].getStr()};
           rpc_function_(cab_i, shares);
@@ -360,6 +349,8 @@ private:
 
 struct CabinetMember
 {
+  const static uint16_t CHANNEL_SHARES = 3;
+
   uint16_t                              muddle_port;
   NetworkManager                        network_manager;
   ProverPtr                             muddle_certificate;
@@ -444,6 +435,18 @@ struct CabinetMember
   void SetOutput()
   {
     dkg.SetDkgOutput(public_key, secret_share, public_key_shares, qual_set);
+  }
+
+  static ProverPtr CreateNewCertificate()
+  {
+    using Signer    = fetch::crypto::ECDSASigner;
+    using SignerPtr = std::shared_ptr<Signer>;
+
+    SignerPtr certificate = std::make_shared<Signer>();
+
+    certificate->GenerateKeys();
+
+    return certificate;
   }
 };
 

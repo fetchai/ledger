@@ -20,8 +20,6 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/serializers/counter.hpp"
 #include "core/serializers/main_serializer.hpp"
-#include "crypto/bls_base.hpp"
-#include "crypto/bls_dkg.hpp"
 #include "crypto/prover.hpp"
 
 #include <memory>
@@ -38,8 +36,8 @@ struct CabinetMemberDetails  // TODO(tfr): rename into CabinetMember
 
   /// Payload
   /// @{
-  Identity          identity;
-  BeaconManager::Id id;
+  Identity                    identity;
+  BeaconManager::CabinetIndex id;
   /// @}
 
   Signature signature;

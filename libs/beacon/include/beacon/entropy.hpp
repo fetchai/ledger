@@ -79,7 +79,7 @@ public:
     map.Append(ROUND, member.round);
     map.Append(SEED, member.seed);
     map.Append(ENTROPY, member.entropy);
-    map.Append(SIGNATURE, member.signature);
+    map.Append(SIGNATURE, member.signature.getStr());
   }
 
   template <typename MapDeserializer>
@@ -88,7 +88,9 @@ public:
     map.ExpectKeyGetValue(ROUND, member.round);
     map.ExpectKeyGetValue(SEED, member.seed);
     map.ExpectKeyGetValue(ENTROPY, member.entropy);
-    map.ExpectKeyGetValue(SIGNATURE, member.signature);
+    std::string sig_str;
+    map.ExpectKeyGetValue(SIGNATURE, sig_str);
+    member.signature.setStr(sig_str);
   }
 };
 
