@@ -260,13 +260,12 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
 
 BeaconSetupService::State BeaconSetupService::OnWaitForShares()
 {
-  std::unique_lock<std::mutex> lock{mutex_};
+  std::lock_guard<std::mutex> lock(mutex_);
   dkg_state_gauge_->set(static_cast<uint8_t>(State::WAIT_FOR_SHARE));
 
   if ((coefficients_received_.size() == beacon_->aeon.members.size() - 1) &&
       (shares_received_.size() == beacon_->aeon.members.size() - 1))
   {
-    lock.unlock();
     BroadcastComplaints();
 
     // Clean up
@@ -282,7 +281,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForShares()
 
 BeaconSetupService::State BeaconSetupService::OnWaitForComplaints()
 {
-  std::unique_lock<std::mutex> lock{mutex_};
+  std::lock_guard<std::mutex> lock(mutex_);
   dkg_state_gauge_->set(static_cast<uint8_t>(State::WAIT_FOR_COMPLAINTS));
 
   if (complaints_manager_.IsFinished(beacon_->manager.polynomial_degree()))
@@ -292,7 +291,6 @@ BeaconSetupService::State BeaconSetupService::OnWaitForComplaints()
     FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(), " complaints size ",
                    complaints_manager_.Complaints().size());
     complaints_answer_manager_.Init(complaints_manager_.Complaints());
-    lock.unlock();
     BroadcastComplaintsAnswer();
 
     return State::WAIT_FOR_COMPLAINT_ANSWERS;
@@ -304,12 +302,11 @@ BeaconSetupService::State BeaconSetupService::OnWaitForComplaints()
 
 BeaconSetupService::State BeaconSetupService::OnWaitForComplaintAnswers()
 {
-  std::unique_lock<std::mutex> lock{mutex_};
+  std::lock_guard<std::mutex> lock(mutex_);
   dkg_state_gauge_->set(static_cast<uint8_t>(State::WAIT_FOR_COMPLAINT_ANSWERS));
 
   if (complaints_answer_manager_.IsFinished())
   {
-    lock.unlock();
     if (BuildQual())
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(), "build qual size ",
@@ -333,7 +330,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForComplaintAnswers()
 
 BeaconSetupService::State BeaconSetupService::OnWaitForQualShares()
 {
-  std::unique_lock<std::mutex> lock{mutex_};
+  std::lock_guard<std::mutex> lock(mutex_);
   dkg_state_gauge_->set(static_cast<uint8_t>(State::WAIT_FOR_QUAL_SHARES));
 
   std::set<MuddleAddress> diff;
@@ -355,7 +352,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForQualShares()
 
 BeaconSetupService::State BeaconSetupService::OnWaitForQualComplaints()
 {
-  std::unique_lock<std::mutex> lock{mutex_};
+  std::lock_guard<std::mutex> lock(mutex_);
   dkg_state_gauge_->set(static_cast<uint8_t>(State::WAIT_FOR_QUAL_COMPLAINTS));
 
   if (qual_complaints_manager_.IsFinished(beacon_->manager.qual(), identity_.identifier()))
@@ -387,7 +384,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForQualComplaints()
 
 BeaconSetupService::State BeaconSetupService::OnWaitForReconstructionShares()
 {
-  std::unique_lock<std::mutex> lock{mutex_};
+  std::lock_guard<std::mutex> lock(mutex_);
   dkg_state_gauge_->set(static_cast<uint8_t>(State::WAIT_FOR_RECONSTRUCTION_SHARES));
 
   std::set<MuddleAddress> complaints_list = qual_complaints_manager_.Complaints();
@@ -423,7 +420,6 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReconstructionShares()
         beacon_->manager.VerifyReconstructionShare(from, elem);
       }
     }
-    lock.unlock();
     if (!beacon_->manager.RunReconstruction())
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Node: ", beacon_->manager.cabinet_index(),
