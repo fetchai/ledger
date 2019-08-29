@@ -28,9 +28,6 @@ namespace math {
 template <typename T1, typename T2>
 fetch::meta::IsIterableTwoArg<T1, T2, void> PolyfillInlineAdd(T1 &ret, T2 const &other)
 {
-  using Type               = typename T1::Type;
-  using VectorRegisterType = typename TensorView<Type>::VectorRegisterType;
-
   // To vectorise this operation, we add column by column
   // as the framework garantuees continous aligned segments
   // of memory along the columns
@@ -40,9 +37,9 @@ fetch::meta::IsIterableTwoArg<T1, T2, void> PolyfillInlineAdd(T1 &ret, T2 const 
     auto ret_slice = ret.data().slice(ret.padded_height() * j, ret.padded_height());
     auto slice     = other.data().slice(other.padded_height() * j, other.padded_height());
 
-    ret_slice.in_parallel().Apply(range,
-                                  [](VectorRegisterType const &a, VectorRegisterType const &b,
-                                     VectorRegisterType &c) { c = b + a; },
+    ret_slice.in_parallel().RangedApplyMultiple(range,
+                                  [](auto const &a, auto const &b,
+                                     auto &c) { c = b + a; },
                                   ret_slice, slice);
   }
 }
@@ -50,9 +47,6 @@ fetch::meta::IsIterableTwoArg<T1, T2, void> PolyfillInlineAdd(T1 &ret, T2 const 
 template <typename T1, typename T2>
 fetch::meta::IsIterableTwoArg<T1, T2, void> Assign(T1 ret, T2 const &other)
 {
-  using Type               = typename T1::Type;
-  using VectorRegisterType = typename TensorView<Type>::VectorRegisterType;
-
   memory::Range range(0, std::size_t(ret.height()));
 
   // To vectorise this operation, we assign column by column
@@ -64,18 +58,15 @@ fetch::meta::IsIterableTwoArg<T1, T2, void> Assign(T1 ret, T2 const &other)
     auto ret_slice = ret.data().slice(ret.padded_height() * j, ret.padded_height());
     auto slice     = other.data().slice(other.padded_height() * j, other.padded_height());
 
-    ret_slice.in_parallel().Apply(
-        range, [](VectorRegisterType const &a, VectorRegisterType &b) { b = a; }, slice);
+    ret_slice.in_parallel().RangedApplyMultiple(
+        range, [](auto const &a, auto &b) { b = a; }, slice);
   }
 }
 
 template <typename T1, typename T2>
 fetch::meta::IsIterableTwoArg<T1, T2, void> AssignVector(T1 ret, T2 const &other)
 {
-  using Type               = typename T1::Type;
-  using VectorRegisterType = typename TensorView<Type>::VectorRegisterType;
-
-  ret.data().in_parallel().Apply([](VectorRegisterType const &a, VectorRegisterType &b) { b = a; },
+  ret.data().in_parallel().ApplyMultiple([](auto const &a, auto &b) { b = a; },
                                  other.data());
 }
 

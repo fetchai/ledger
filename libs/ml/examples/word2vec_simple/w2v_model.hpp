@@ -305,22 +305,20 @@ void W2VModel<ArrayType>::SGNSTrain(  // TODO (#1304) CBOW implementation not SG
 
       // Embeddings: step for all weights
       float learning_rate      = alpha_;
-      using VectorRegisterType = typename fetch::math::TensorView<DataType>::VectorRegisterType;
       fetch::memory::Range range(0, std::size_t(gradient_weights_.height()));
-      VectorRegisterType          rate(learning_rate);
-      VectorRegisterType          zero(static_cast<DataType>(0));
+      DataType zero{0};
 
       for (auto const &r : updated_rows_weights_)
       {
         auto input = gradient_weights_.View(r);
         auto ret   = weights_.View(r);  // embeddings.View(r);
 
-        ret.data().in_parallel().Apply(
+        ret.data().in_parallel().RangedApplyMultiple(
             range,
-            [rate](VectorRegisterType const &a, VectorRegisterType const &b,
-                   VectorRegisterType &c) { c = b + a * rate; },
+            [learning_rate](auto const &a, auto const &b,
+                   auto &c) { c = b + a * decltype(a)(learning_rate); },
             input.data(), ret.data());
-        input.data().in_parallel().Apply([zero](VectorRegisterType &a) { a = zero; });
+        input.data().in_parallel().Apply([zero](auto &a) { a = decltype(a)(zero); });
       }
 
       updated_rows_weights_.clear();
@@ -450,21 +448,19 @@ void W2VModel<ArrayType>::CBOWTrain(ArrayType &target, ArrayType &context)
 
   // Embeddings: Step in
   float learning_rate      = alpha_;
-  using VectorRegisterType = typename fetch::math::TensorView<DataType>::VectorRegisterType;
   fetch::memory::Range range(0, std::size_t(gradient_weights_.height()));
-  VectorRegisterType          rate(learning_rate);
-  VectorRegisterType          zero(static_cast<DataType>(0));
+  DataType zero{0};
 
   for (auto const &r : updated_rows_weights_)
   {
     auto input = gradient_weights_.View(r);
     auto ret   = weights_.View(r);  // embeddings.View(r);
 
-    ret.data().in_parallel().Apply(range,
-                                   [rate](VectorRegisterType const &a, VectorRegisterType const &b,
-                                          VectorRegisterType &c) { c = b + a * rate; },
+    ret.data().in_parallel().RangedApplyMultiple(range,
+                                   [learning_rate](auto const &a, auto const &b,
+                                          auto &c) { c = b + a * decltype(a)(learning_rate); },
                                    input.data(), ret.data());
-    input.data().in_parallel().Apply([zero](VectorRegisterType &a) { a = zero; });
+    input.data().in_parallel().Apply([zero](auto &a) { a = decltype(a)(zero); });
   }
 
   updated_rows_weights_.clear();

@@ -24,15 +24,15 @@
 #include <cstdlib>
 #include <iostream>
 
-using type        = fetch::fixed_point::fp32_t;
+using type        = float;//fetch::fixed_point::fp64_t;
 using array_type  = fetch::memory::Array<type>;
 using vector_type = typename array_type::VectorRegisterType;
 
 void RelativeDifference(array_type const &A, array_type const &B, array_type &C)
 {
-  vector_type cst(type(0.5));
-  C.in_parallel().Apply([cst](vector_type const &a, vector_type const &b,
-                              vector_type &c) { c = cst * (a - b) / (a + b); },
+  type cst{0.5};
+  C.in_parallel().Apply([cst](auto const &a, auto const &b,
+                              auto &c) { c = decltype(a)(cst) * (a - b) / (a + b); },
                         A, B);
 }
 

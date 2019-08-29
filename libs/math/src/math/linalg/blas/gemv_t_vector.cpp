@@ -75,26 +75,22 @@ void Blas<S, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
     {
       if (beta == static_cast<Type>(0.0))
       {
-
-        VectorRegisterType fetch_vec_zero(static_cast<Type>(0.0));
+        Type zero{0.0};
 
         auto                 ret_slice = y.data().slice(0, y.padded_size());
         memory::Range range(std::size_t(0), std::size_t(leny));
-        ret_slice.in_parallel().Apply(
-            range, [fetch_vec_zero](VectorRegisterType &vw_fv_y) { vw_fv_y = fetch_vec_zero; });
+        ret_slice.in_parallel().RangedApply(range,
+              [zero](auto &vw_fv_y) { vw_fv_y = decltype(vw_fv_y)(zero); });
       }
       else
       {
-
-        VectorRegisterType fetch_vec_beta(beta);
-
         auto                 ret_slice  = y.data().slice(0, y.padded_size());
         auto                 slice_fv_y = y.data().slice(0, y.padded_size());
         memory::Range range(std::size_t(0), std::size_t(leny));
-        ret_slice.in_parallel().Apply(
+        ret_slice.in_parallel().RangedApplyMultiple(
             range,
-            [fetch_vec_beta](VectorRegisterType const &vr_fv_y, VectorRegisterType &vw_fv_y) {
-              vw_fv_y = fetch_vec_beta * vr_fv_y;
+            [beta](auto const &vr_fv_y, auto &vw_fv_y) {
+              vw_fv_y = decltype(vr_fv_y)(beta) * vw_fv_y;
             },
             slice_fv_y);
       }
