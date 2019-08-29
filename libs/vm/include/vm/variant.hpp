@@ -295,8 +295,8 @@ struct Variant
   {
     if (this != &other)
     {
-      bool const is_object       = IsPrimitive() == false;
-      bool const other_is_object = other.IsPrimitive() == false;
+      bool const is_object       = !IsPrimitive();
+      bool const other_is_object = !other.IsPrimitive();
       type_id                    = other.type_id;
       if (is_object)
       {
@@ -333,8 +333,8 @@ struct Variant
   {
     if (this != &other)
     {
-      bool const is_object       = IsPrimitive() == false;
-      bool const other_is_object = other.IsPrimitive() == false;
+      bool const is_object       = !IsPrimitive();
+      bool const other_is_object = !other.IsPrimitive();
       type_id                    = other.type_id;
       other.type_id              = TypeIds::Unknown;
       if (is_object)
@@ -371,7 +371,7 @@ struct Variant
   template <typename T, typename std::enable_if_t<IsPrimitive<T>::value> * = nullptr>
   void Assign(T other, TypeId other_type_id)
   {
-    if (IsPrimitive() == false)
+    if (!IsPrimitive())
     {
       object.Reset();
     }
@@ -490,7 +490,7 @@ struct Variant
 
   void Reset()
   {
-    if (IsPrimitive() == false)
+    if (!IsPrimitive())
     {
       object.Reset();
     }
