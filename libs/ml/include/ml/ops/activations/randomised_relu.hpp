@@ -40,6 +40,7 @@ public:
   using RNG           = fetch::random::LaggedFibonacciGenerator<>;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpRandomisedReluSaveableParams<TensorType>;
+  using MyType        = RandomisedRelu<TensorType>;
 
   RandomisedRelu(DataType const lower_bound, DataType const upper_bound,
                  SizeType const &random_seed = 25102015)
@@ -75,6 +76,17 @@ public:
     sp->index        = rng_.GetIndex();
     sp->random_value = random_value_;
     return sp;
+  }
+
+  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
+  {
+    FETCH_UNUSED(me);
+    assert(me.get() == this);
+
+    auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
+
+    return copyshare;
   }
 
   void Forward(VecTensorType const &inputs, TensorType &output) override

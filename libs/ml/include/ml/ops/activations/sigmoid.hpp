@@ -39,6 +39,7 @@ public:
   using SizeType      = typename TensorType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpSigmoidSaveableParams<T>;
+  using MyType        = Sigmoid<TensorType>;
 
   Sigmoid() = default;
 
@@ -51,6 +52,17 @@ public:
   std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
   {
     return std::make_shared<SPType>();
+  }
+
+  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
+  {
+    FETCH_UNUSED(me);
+    assert(me.get() == this);
+
+    auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
+
+    return copyshare;
   }
 
   void Forward(VecTensorType const &inputs, TensorType &output) override

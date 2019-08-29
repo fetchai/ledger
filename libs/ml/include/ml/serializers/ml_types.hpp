@@ -1327,7 +1327,7 @@ struct MapSerializer<ml::OpEmbeddingsSaveableParams<TensorType>, D>
 };
 
 /**
- * serializer for Embeddings saveable params
+ * serializer for Exp saveable params
  * @tparam TensorType
  */
 template <typename TensorType, typename D>
@@ -1360,7 +1360,7 @@ struct MapSerializer<ml::OpExpSaveableParams<TensorType>, D>
 };
 
 /**
- * serializer for Embeddings saveable params
+ * serializer for Flatten saveable params
  * @tparam TensorType
  */
 template <typename TensorType, typename D>

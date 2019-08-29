@@ -36,6 +36,7 @@ public:
   using VecTensorType  = typename Ops<T>::VecTensorType;
   using ConstSliceType = typename TensorType::ConstSliceType;
   using SPType         = OpSliceSaveableParams<T>;
+  using MyType         = Slice<TensorType>;
 
   explicit Slice(std::vector<SizeType> indices, std::vector<SizeType> axes)
   {
@@ -68,6 +69,15 @@ public:
     sp->axis    = axis_;
 
     return sp;
+  }
+
+  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
+  {
+    FETCH_UNUSED(me);
+    assert(me.get() == this);
+
+    return std::make_shared<MyType>(*this);  // calls default copy constructor of MyType;
   }
 
   void Forward(VecTensorType const &inputs, TensorType &output) override
