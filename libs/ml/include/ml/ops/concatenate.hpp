@@ -35,6 +35,7 @@ public:
   using SizeType      = fetch::math::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpConcatenateSaveableParams<T>;
+  using MyType        = Concatenate<TensorType>;
 
   explicit Concatenate(SizeType axis)
     : axis_(axis)
@@ -53,6 +54,17 @@ public:
     auto sp_ptr  = std::make_shared<SPType>();
     sp_ptr->axis = axis_;
     return sp_ptr;
+  }
+
+  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
+  {
+    FETCH_UNUSED(me);
+    assert(me.get() == this);
+
+    auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
+
+    return copyshare;
   }
 
   /**

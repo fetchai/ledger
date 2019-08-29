@@ -125,7 +125,7 @@ void PlusOneTest()
 
   for (auto &w : g.GetTrainables())
   {
-    TypeParam grad = w->get_gradients();
+    TypeParam grad = w->GetGradientsReferences();
     fetch::math::Multiply(grad, DataType{-alpha}, grad);
     w->ApplyGradient(grad);
   }
@@ -158,7 +158,7 @@ void PlusOneTest()
 
     for (auto &w : g.GetTrainables())
     {
-      TypeParam grad = w->get_gradients();
+      TypeParam grad = w->GetGradientsReferences();
       fetch::math::Multiply(grad, DataType{-alpha}, grad);
       w->ApplyGradient(grad);
     }
@@ -236,7 +236,7 @@ void CategoricalPlusOneTest(bool add_softmax = false)
 
   for (auto &w : g.GetTrainables())
   {
-    TypeParam grad = w->get_gradients();
+    TypeParam grad = w->GetGradientsReferences();
     fetch::math::Multiply(grad, DataType{-alpha}, grad);
     w->ApplyGradient(grad);
   }
@@ -269,7 +269,7 @@ void CategoricalPlusOneTest(bool add_softmax = false)
 
     for (auto &w : g.GetTrainables())
     {
-      TypeParam grad = w->get_gradients();
+      TypeParam grad = w->GetGradientsReferences();
       fetch::math::Multiply(grad, DataType{-alpha}, grad);
       w->ApplyGradient(grad);
     }
@@ -338,7 +338,7 @@ void CategoricalXorTest(bool add_softmax = false)
 
   for (auto &w : g.GetTrainables())
   {
-    TypeParam grad = w->get_gradients();
+    TypeParam grad = w->GetGradientsReferences();
     fetch::math::Multiply(grad, DataType{-alpha}, grad);
     w->ApplyGradient(grad);
   }
@@ -368,7 +368,7 @@ void CategoricalXorTest(bool add_softmax = false)
 
     for (auto &w : g.GetTrainables())
     {
-      TypeParam grad = w->get_gradients();
+      TypeParam grad = w->GetGradientsReferences();
       fetch::math::Multiply(grad, DataType{-alpha}, grad);
       w->ApplyGradient(grad);
     }

@@ -38,6 +38,7 @@ public:
   using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpPlaceholderSaveableParams<TensorType>;
+  using MyType        = PlaceHolder<TensorType>;
 
   PlaceHolder() = default;
 
@@ -62,6 +63,28 @@ public:
       tp.output = std::make_shared<TensorType>(output_->Copy());
     }
     return std::make_shared<SPType>(tp);
+  }
+
+  /**
+   * For placeholders should not be shared, therefore a layer sharing its elements
+   * with another node should use a new (unshared) placeholder op
+   * @param me
+   * @return
+   */
+  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
+  {
+    FETCH_UNUSED(me);
+    assert(me.get() == this);
+
+    auto copyshare = std::make_shared<MyType>(*this);
+
+    if (this->output_)
+    {
+      copyshare->output_ = std::make_shared<TensorType>(this->output_->Copy());
+    }
+
+    return copyshare;
   }
 
   void Forward(VecTensorType const &inputs, TensorType &output) override
