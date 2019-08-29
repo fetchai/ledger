@@ -62,7 +62,7 @@ struct BERTConfig
 
 struct BERTInterface
 {
-  // the default names for input and outpus of a Fetch BERT model
+  // the default names for input and outpus of a Fetch bert model
   std::vector<std::string> inputs = {"Segment", "Position", "Tokens", "Mask"};
   std::vector<std::string> outputs;
 
@@ -91,7 +91,7 @@ int main()
   // This example will create a simple bert-like model that can classify between single token input
   // and shuffled token input e.g. 0111111 will be classified as 1, 01121312 will be classified as
   // 0.
-  std::cout << "FETCH BERT Toy CLS Demo" << std::endl;
+  std::cout << "FETCH bert Toy CLS Demo" << std::endl;
 
   SizeType train_size = 1000;
   SizeType test_size  = 100;
@@ -162,8 +162,6 @@ std::pair<std::vector<std::string>, std::vector<std::string>> MakeBertModel(
   SizeType segment_size      = config.segment_size;
   DataType epsilon           = config.epsilon;
   DataType dropout_keep_prob = config.dropout_keep_prob;
-
-  std::cout << max_seq_len << std::endl;
 
   // initiate graph
   std::string segment = g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Segment", {});
