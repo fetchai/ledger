@@ -52,7 +52,7 @@
 #include <utility>
 #include <vector>
 
-#define NUMBER_OF_CLIENTS 10
+#define NUMBER_OF_CLIENTS 1
 #define NUMBER_OF_ITERATIONS 100
 #define NUMBER_OF_ROUNDS 10
 #define SYNCHRONIZATION_MODE CoordinatorMode::ASYNCHRONOUS
@@ -60,7 +60,7 @@
 #define BATCH_SIZE 128
 #define LEARNING_RATE .001f
 #define TEST_SET_RATIO 0.03f
-#define NUMBER_OF_PEERS 3
+#define NUMBER_OF_PEERS 1
 
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
@@ -72,11 +72,11 @@ using TensorType       = fetch::math::Tensor<DataType>;
 using VectorTensorType = std::vector<TensorType>;
 using SizeType         = typename TensorType::SizeType;
 
-std::string ReadFile(std::string const &path)
-{
-  std::ifstream t(path);
-  return std::string((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
-}
+//std::string ReadFile(std::string const &path)
+//{
+//  std::ifstream t(path);
+//  return std::string((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
+//}
 
 int main(int ac, char **av)
 {
@@ -104,19 +104,19 @@ int main(int ac, char **av)
   tp.learning_rate_param.starting_learning_rate = tp.starting_learning_rate;
   tp.learning_rate_param.ending_learning_rate   = tp.ending_learning_rate;
 
-  GraphW2VLoader<DataType> data_loader(tp.window_size, tp.negative_sample_size, tp.freq_thresh,
-                                       tp.max_word_count);
+//  GraphW2VLoader<DataType> data_loader(tp.window_size, tp.negative_sample_size, tp.freq_thresh,
+//                                       tp.max_word_count);
   // set up dataloader
   /// DATA LOADING ///
-  std::string vocab_file = "/tmp/vocab.txt";
-  data_loader.BuildVocab({ReadFile(train_file)}, tp.min_count);
-  data_loader.SaveVocab(vocab_file);
+//  std::string vocab_file = "/tmp/vocab.txt";
+//  data_loader.BuildVocab({ReadFile(train_file)}, tp.min_count);
+//  data_loader.SaveVocab(vocab_file);
 
   std::vector<std::shared_ptr<TrainingClient<TensorType>>> clients(NUMBER_OF_CLIENTS);
   for (unsigned int i(0); i < NUMBER_OF_CLIENTS; ++i)
   {
     // Instanciate NUMBER_OF_CLIENTS clients
-    clients[i] = std::make_shared<Word2VecClient<TensorType>>(std::to_string(i), tp, vocab_file,
+    clients[i] = std::make_shared<Word2VecClient<TensorType>>(std::to_string(i), tp, train_file,
                                                               BATCH_SIZE, NUMBER_OF_PEERS);
   }
 

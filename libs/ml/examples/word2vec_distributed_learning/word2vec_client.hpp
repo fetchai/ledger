@@ -21,6 +21,12 @@
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "word2vec_training_params.hpp"
 
+std::string ReadFile(std::string const &path)
+{
+  std::ifstream t(path);
+  return std::string((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
+}
+
 template <class TensorType>
 class Word2VecClient : public TrainingClient<TensorType>
 {
@@ -71,11 +77,14 @@ Word2VecClient<TensorType>::Word2VecClient(std::string const &               id,
   // end of an epoch (despite capping by ending learning rate)
   std::cout << "dataloader_.EstimatedSampleNumber(): "
             << w2v_data_loader_ptr_->EstimatedSampleNumber() << std::endl;
+
+  PrepareOptimiser();
 }
 
 template <class TensorType>
 void Word2VecClient<TensorType>::PrepareModel()
 {
+  this->g_ptr_ = std::make_shared<fetch::ml::Graph<TensorType>>();
 
   this->g_ptr_->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
   this->g_ptr_->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Context", {});
@@ -96,7 +105,8 @@ void Word2VecClient<TensorType>::PrepareDataLoader()
 
   w2v_data_loader_ptr_ = std::make_shared<fetch::ml::dataloaders::GraphW2VLoader<DataType>>(
       tp_.window_size, tp_.negative_sample_size, tp_.freq_thresh, tp_.max_word_count);
-  w2v_data_loader_ptr_->LoadVocab(vocab_file_);
+//  w2v_data_loader_ptr_->LoadVocab(vocab_file_);
+  w2v_data_loader_ptr_->BuildVocab({ReadFile(vocab_file_)}, tp_.min_count);
 
   this->dataloader_ptr_ = w2v_data_loader_ptr_;
 }

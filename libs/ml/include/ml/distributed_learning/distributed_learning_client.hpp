@@ -71,8 +71,9 @@ public:
 
 protected:
   // Client's own graph and mutex to protect it's weights
-  std::shared_ptr<fetch::ml::Graph<TensorType>> g_ptr_ =
-      std::make_shared<fetch::ml::Graph<TensorType>>();
+//  std::shared_ptr<fetch::ml::Graph<TensorType>> g_ptr_ =
+//      std::make_shared<fetch::ml::Graph<TensorType>>();
+  std::shared_ptr<fetch::ml::Graph<TensorType>> g_ptr_;
   std::mutex model_mutex_;
 
   // Client's own dataloader
@@ -159,8 +160,8 @@ void TrainingClient<TensorType>::MainLoop()
 template <class TensorType>
 typename TensorType::Type TrainingClient<TensorType>::Train()
 {
-  dataloader_ptr_->SetMode(fetch::ml::dataloaders::DataLoaderMode::TRAIN);
-  dataloader_ptr_->SetRandomMode(true);
+//  dataloader_ptr_->SetMode(fetch::ml::dataloaders::DataLoaderMode::TRAIN);
+//  dataloader_ptr_->SetRandomMode(true);
 
   DataType loss        = static_cast<DataType>(0);
   bool     is_done_set = false;
