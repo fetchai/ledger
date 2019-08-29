@@ -442,7 +442,6 @@ public:
     if (it == deserialization_constructors_.end())
     {
       TypeInfo tinfo = GetTypeInfo(type_id);
-
       if (tinfo.template_type_id == TypeIds::Unknown)
       {
         return false;
@@ -584,10 +583,10 @@ private:
   ChargeAmount charge_total_{0};
   /// @}
 
-  void AddOpcodeInfo(uint16_t opcode, std::string const &name, Handler const &handler,
+  void AddOpcodeInfo(uint16_t opcode, std::string name, Handler handler,
                      ChargeAmount static_charge = 1)
   {
-    opcode_info_array_[opcode] = OpcodeInfo(name, handler, static_charge);
+    opcode_info_array_[opcode] = OpcodeInfo(std::move(name), std::move(handler), static_charge);
   }
 
   bool Execute(std::string &error, Variant &output);
@@ -1608,6 +1607,7 @@ private:
   void Handler__VariableObjectInplaceRightDivide();
   void Handler__PrimitiveModulo();
   void Handler__VariablePrimitiveInplaceModulo();
+  void Handler__InitialiseArray();
 
   friend class Object;
   friend class Module;

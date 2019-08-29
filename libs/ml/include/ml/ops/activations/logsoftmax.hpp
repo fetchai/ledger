@@ -39,6 +39,7 @@ public:
   using SizeType      = typename TensorType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpLogSoftmaxSaveableParams<T>;
+  using MyType        = LogSoftmax<TensorType>;
 
   explicit LogSoftmax(SizeType axis = 1)
     : axis_(axis)
@@ -59,6 +60,16 @@ public:
     return sp_ptr;
   }
 
+  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
+  {
+    FETCH_UNUSED(me);
+    assert(me.get() == this);
+
+    auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
+
+    return copyshare;
+  }
   void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(output.shape() == ComputeOutputShape(inputs));
