@@ -40,6 +40,7 @@ public:
   using RNG           = fetch::random::LaggedFibonacciGenerator<>;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpDropoutSaveableParams<TensorType>;
+  using MyType        = Dropout<TensorType>;
 
   explicit Dropout(DataType const probability, SizeType const &random_seed = 25102015)
     : probability_(probability)
@@ -70,6 +71,14 @@ public:
     sp.buffer      = rng_.GetBuffer();
     sp.index       = rng_.GetIndex();
     return std::make_shared<SPType>(sp);
+  }
+
+  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
+  {
+    assert(me.get() == this);
+
+    return me;
   }
 
   void Forward(VecTensorType const &inputs, TensorType &output) override

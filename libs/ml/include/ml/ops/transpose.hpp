@@ -35,6 +35,7 @@ public:
   using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpTransposeSaveableParams<T>;
+  using MyType        = Transpose<TensorType>;
 
   explicit Transpose(std::vector<SizeType> transpose_vector = {1, 0, 2})
     : transpose_vector_(transpose_vector)
@@ -55,6 +56,16 @@ public:
     return std::make_shared<SPType>(sp);
   }
 
+  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
+  {
+    FETCH_UNUSED(me);
+    assert(me.get() == this);
+
+    auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
+
+    return copyshare;
+  }
   void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(inputs.size() == 1);

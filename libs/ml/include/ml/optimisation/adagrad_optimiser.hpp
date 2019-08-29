@@ -110,8 +110,8 @@ void AdaGradOptimiser<T>::ApplyGradients(SizeType batch_size)
   while (gradient_it != this->gradients_.end())
   {
     // cache[i] += (input_grad[i]/batch_size)^2
-    fetch::math::Divide((*trainable_it)->get_gradients(), static_cast<DataType>(batch_size),
-                        *gradient_it);
+    fetch::math::Divide((*trainable_it)->GetGradientsReferences(),
+                        static_cast<DataType>(batch_size), *gradient_it);
     fetch::math::Square(*gradient_it, *gradient_it);
     fetch::math::Add(*cached_weight_it, *gradient_it, *cached_weight_it);
 
@@ -119,7 +119,7 @@ void AdaGradOptimiser<T>::ApplyGradients(SizeType batch_size)
     // output_grad[i] = learning_rate * (grad[i]/batch_size) / (sqrt(cache[i]) + epsilon)
     fetch::math::Sqrt(*cached_weight_it, *gradient_it);
     fetch::math::Add(*gradient_it, epsilon_, *gradient_it);
-    fetch::math::Divide((*trainable_it)->get_gradients(), *gradient_it, *gradient_it);
+    fetch::math::Divide((*trainable_it)->GetGradientsReferences(), *gradient_it, *gradient_it);
     fetch::math::Multiply(
         *gradient_it, (-this->learning_rate_) / (static_cast<DataType>(batch_size)), *gradient_it);
 
