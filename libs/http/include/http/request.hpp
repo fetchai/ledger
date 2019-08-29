@@ -20,7 +20,7 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/json/document.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "http/authentication_level.hpp"
 #include "http/header.hpp"
 #include "http/method.hpp"
@@ -98,7 +98,6 @@ public:
 
   json::JSONDocument JSON() const
   {
-    LOG_STACK_TRACE_POINT;
     return json::JSONDocument(body());
   }
 

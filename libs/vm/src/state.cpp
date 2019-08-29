@@ -118,14 +118,14 @@ bool WriteHelper(std::string const &name, Ptr<Object> const &val, VM *vm)
     return true;
   }
 
-  // convert the type into a byte stream
-  MsgPackSerializer buffer;
   if (val == nullptr)
   {
     vm->RuntimeError("Cannot serialise null reference");
     return false;
   }
 
+  // convert the type into a byte stream
+  MsgPackSerializer buffer;
   if (!val->SerializeTo(buffer))
   {
     if (!vm->HasError())

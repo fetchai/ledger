@@ -102,7 +102,7 @@ public:
 
   bool Empty()
   {
-    std::unique_lock<std::mutex> lock(mutex_);
+    FETCH_LOCK(mutex_);
     return tasks_.empty();
   }
 

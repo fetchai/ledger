@@ -22,6 +22,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
+#include <limits>
 #include <memory>
 #include <string>
 #include <vector>
@@ -355,7 +356,7 @@ void Generator::HandleBlock(IRBlockNodePtr const &block_node)
     {
       IRExpressionNodePtr expression = ConvertToIRExpressionNodePtr(child);
       HandleExpression(expression);
-      if (expression->type->IsVoid() == false)
+      if (!expression->type->IsVoid())
       {
         // The result of the expression is not consumed, so issue an
         // instruction that will pop it and throw it away
@@ -688,7 +689,7 @@ void Generator::HandleVarStatement(IRNodePtr const &node)
   uint16_t       variable_index = function_->AddVariable(v->name, type_id, scope_number);
   v->index                      = variable_index;
 
-  if (v->type->IsPrimitive() == false)
+  if (!v->type->IsPrimitive())
   {
     Scope &scope = scopes_[scope_number];
     scope.objects.push_back(variable_index);
@@ -1069,6 +1070,11 @@ void Generator::HandleExpression(IRExpressionNodePtr const &node)
     HandleFalse(node);
     break;
   }
+  case NodeKind::InitialiserList:
+  {
+    HandleInitialiserList(node);
+    break;
+  }
   case NodeKind::Null:
   {
     HandleNull(node);
@@ -1290,9 +1296,33 @@ void Generator::HandleFalse(IRExpressionNodePtr const &node)
   AddLineNumber(node->line, pc);
 }
 
+void Generator::HandleInitialiserList(IRExpressionNodePtr const &node)
+{
+  auto const &node_type{node->type};
+  if (!node_type->IsInstantiation() || node_type->template_type->name != "Array" ||
+      node_type->parameter_types.size() == 0)
+  // NB: if there's no better way to check this, there _should_ be a better way to check this
+  {
+    return;  // hypothetical no-op, in fact this situation is catched earlier
+  }
+  assert(node->children.size() <= static_cast<std::size_t>(std::numeric_limits<uint16_t>::max()) &&
+         node_type->parameter_types.size() != 0 && bool(node_type->parameter_types.front()));
+
+  for (auto expr : node->children)
+  {
+    HandleExpression(ConvertToIRExpressionNodePtr(expr));
+  }
+
+  Executable::Instruction instruction{Opcodes::InitialiseArray};
+  instruction.type_id = node_type->resolved_id;
+  instruction.data    = static_cast<uint16_t>(node->children.size());
+  uint16_t pc         = function_->AddInstruction(instruction);
+  AddLineNumber(node->line, pc);
+}
+
 void Generator::HandleNull(IRExpressionNodePtr const &node)
 {
-  if (node->type->IsPrimitive() == false)
+  if (!node->type->IsPrimitive())
   {
     Executable::Instruction instruction(Opcodes::PushNull);
     instruction.type_id = node->type->resolved_id;

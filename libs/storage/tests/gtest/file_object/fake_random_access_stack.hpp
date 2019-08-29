@@ -19,7 +19,9 @@
 
 #include "core/macros.hpp"
 #include "storage/storage_exception.hpp"
+
 #include <unordered_map>
+#include <vector>
 
 template <typename STACK_ELEMENTS>
 class FakeRandomAccessStack

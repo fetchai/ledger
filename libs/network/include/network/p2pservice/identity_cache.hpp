@@ -39,7 +39,6 @@ public:
   using Uri           = network::Uri;
   using Clock         = std::chrono::steady_clock;
   using Timepoint     = Clock::time_point;
-  using Mutex         = mutex::Mutex;
   using AddressSet    = std::unordered_set<Address>;
 
   struct CacheElement

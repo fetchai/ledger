@@ -151,6 +151,7 @@ IRFunctionPtr IRBuilder::BuildFunction(FunctionPtr const &function)
 IRTypePtrArray IRBuilder::BuildTypes(const TypePtrArray &types)
 {
   IRTypePtrArray array;
+  array.reserve(types.size());
   for (auto const &type : types)
   {
     array.push_back(BuildType(type));
@@ -161,6 +162,7 @@ IRTypePtrArray IRBuilder::BuildTypes(const TypePtrArray &types)
 IRVariablePtrArray IRBuilder::BuildVariables(const VariablePtrArray &variables)
 {
   IRVariablePtrArray array;
+  array.reserve(variables.size());
   for (auto const &variable : variables)
   {
     array.push_back(BuildVariable(variable));
