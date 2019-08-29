@@ -34,7 +34,8 @@
 namespace fetch {
 namespace ml {
 
-// TODO - split node adding and graph building into two stages: compilation and building
+
+// TODO - harmonise InsertSharedCopy with AddTrainable
 // TODO - implement sanity checks on second stage - e.g. you may not use loss function in a certain
 // way (via OpKind)
 // TODO - update tests to no longer permit duplicate naming unless shared
@@ -144,7 +145,23 @@ private:
       std::string const &node_name, std::string &updated_name);
 
   void ResetGraphCache(bool input_size_changed, std::shared_ptr<Node<T>> n = {});
+
+  void CheckCompileAndValidate();
+
 };
+
+template <typename TensorType>
+void Graph<TensorType>::CheckCompileAndValidate()
+{
+  if (graph_state_ != GraphState::READY)
+  {
+    Compile();
+    if (graph_state_ != GraphState::READY)
+    {
+      throw std::runtime_error("graph compilation failed - graph is not valid");
+    }
+  }
+}
 
 //////////////////////
 /// PUBLIC METHODS ///
@@ -155,6 +172,8 @@ template <class OperationType, typename... Params>
 std::string Graph<TensorType>::AddNode(std::string const &             node_name,
                                        std::vector<std::string> const &inputs, Params... params)
 {
+  graph_state_ = GraphState::NOT_COMPILED;
+
   // guarantee unique op name
   std::string updated_name;
   bool        is_duplicate = UpdateVariableName<OperationType>(node_name, updated_name);
@@ -181,6 +200,10 @@ std::string Graph<TensorType>::AddNode(std::string const &             node_name
   return updated_name;
 }
 
+/**
+ * Links Node inputs and sets up the trainables object ready for use by an optimiser
+ * @tparam TensorType
+ */
 template <typename TensorType>
 void Graph<TensorType>::Compile()
 {
@@ -211,17 +234,11 @@ void Graph<TensorType>::Compile()
 }
 
 /**
- * Appends op to map of trainable nodes. Called by AddNode if the node is for a trainable op
- * @tparam OperationType template class of operation
- * @param name the guaranteed unique name of the node
- * @param op the pointer to the op
- */
-/**
- * Appends all trainable ops from op.trainable_ to map of trainable nodes.
- * Called by AddNode if the OperationType is a graph
- * @tparam OperationType template class of operation
- * @param name the guaranteed unique name of the node
- * @param op the pointer to the op
+ * Appends op to map of trainable nodes. Called by AddNode
+ * If this op is a layer/subgraph/graph then appends all trainable ops from op.trainable_
+ * @tparam TensorType
+ * @param node_ptr
+ * @param node_name
  */
 template <typename TensorType>
 void Graph<TensorType>::AddTrainable(NodePtrType node_ptr, std::string const &node_name)
@@ -256,11 +273,8 @@ void Graph<TensorType>::AddTrainable(NodePtrType node_ptr, std::string const &no
 template <typename TensorType>
 TensorType Graph<TensorType>::Evaluate(std::string const &node_name, bool is_training)
 {
-  // if (!(graph_state_ == GraphState::READY))
-  // {
-  //    throw std::runtime_error("cannot evaluate graph because graph state set to " +
-  //    graph_state_);
-  // }
+  CheckCompileAndValidate();
+
   if (nodes_.find(node_name) != nodes_.end())
   {
     return ((*(nodes_[node_name]->Evaluate(is_training))).Copy());
@@ -281,11 +295,8 @@ TensorType Graph<TensorType>::Evaluate(std::string const &node_name, bool is_tra
 template <typename TensorType>
 void Graph<TensorType>::BackPropagate(std::string const &node_name, TensorType const &error_signal)
 {
-  //  if (!(graph_state_ == GraphState::READY))
-  //  {
-  //    throw std::runtime_error("cannot evaluate graph because graph state set to " +
-  //    graph_state_);
-  //  }
+  CheckCompileAndValidate();
+
   if (nodes_.find(node_name) != nodes_.end())
   {
     nodes_[node_name]->BackPropagate(error_signal);
@@ -345,11 +356,8 @@ bool Graph<TensorType>::SetRegularisation(std::string node_name, RegPtrType regu
 template <typename TensorType>
 void Graph<TensorType>::Step(DataType learning_rate)
 {
-  // if (!(graph_state_ == GraphState::READY))
-  // {
-  //    throw std::runtime_error("cannot evaluate graph because graph state set to " +
-  //    graph_state_);
-  // }
+  CheckCompileAndValidate();
+
   for (auto &t : trainable_nodes_)
   {
     auto trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
@@ -363,11 +371,8 @@ void Graph<TensorType>::Step(DataType learning_rate)
 template <typename TensorType>
 void Graph<TensorType>::ApplyRegularisation()
 {
-  // if (!(graph_state_ == GraphState::READY))
-  // {
-  //    throw std::runtime_error("cannot evaluate graph because graph state set to " +
-  //    graph_state_);
-  // }
+  CheckCompileAndValidate();
+
   for (auto &t : trainable_nodes_)
   {
     auto trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
@@ -622,6 +627,8 @@ void Graph<TensorType>::ResetGradients()
 template <typename TensorType>
 void Graph<TensorType>::ApplyGradients(std::vector<TensorType> &grad)
 {
+  CheckCompileAndValidate();
+
   auto grad_it = grad.begin();
   for (auto const &t : trainable_nodes_)
   {

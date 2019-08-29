@@ -97,6 +97,7 @@ public:
     this->AddInputNode(input);
     this->AddInputNode(mask);
     this->SetOutputNode(feedforward_residual);
+    this->Compile();
   }
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override

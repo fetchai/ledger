@@ -81,11 +81,14 @@ public:
     std::string output = this->template AddNode<fetch::ml::ops::Convolution2D<TensorType>>(
         name + "_Conv2D", {input, weights}, stride_size_);
 
+
     output = fetch::ml::details::AddActivationNode<T>(activation_type, this, name + "_Activation",
                                                       output);
 
     this->AddInputNode(input);
     this->SetOutputNode(output);
+
+    this->Compile();
   }
 
   std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
