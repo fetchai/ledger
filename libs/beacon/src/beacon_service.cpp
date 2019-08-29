@@ -498,7 +498,6 @@ BeaconService::State BeaconService::OnComiteeState()
   return State::WAIT_FOR_SETUP_COMPLETION;
 }
 
-
 bool BeaconService::AddSignature(SignatureShare share)
 {
   assert(active_exe_unit_ != nullptr);
