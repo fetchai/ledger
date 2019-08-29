@@ -137,14 +137,13 @@ void RBC::Broadcast(SerialisedMessage const &msg)
 {
   MessageBroadcast broadcast_msg;
 
-  {  // Creating broadcast message and broadcasting
-    assert(!lock_.owns_lock());
-    FETCH_LOCK(lock_);
+  // Creating broadcast message and broadcasting
+  assert(!lock_.owns_lock());
+  FETCH_LOCK(lock_);
 
-    broadcast_msg = RBCMessage::New<RBroadcast>(channel_, static_cast<IdType>(id_),
-                                                static_cast<CounterType>(++msg_counter_), msg);
-    InternalBroadcast(*broadcast_msg);
-  }
+  broadcast_msg = RBCMessage::New<RBroadcast>(channel_, static_cast<IdType>(id_),
+                                              static_cast<CounterType>(++msg_counter_), msg);
+  InternalBroadcast(*broadcast_msg);
 
   // Sending message to self
   OnRBroadcast(broadcast_msg, id_);
@@ -236,18 +235,14 @@ struct RBC::MessageCount RBC::ReceivedReady(TagType tag, MessageHash const &msg)
 void RBC::OnRBC(MuddleAddress const &from, RBCMessage const &message)
 {
   assert(!lock_.owns_lock());
+  FETCH_LOCK(lock_);
 
   uint32_t sender_index;
-
+  if (!BasicMessageCheck(from, message))
   {
-    FETCH_LOCK(lock_);
-
-    if (!BasicMessageCheck(from, message))
-    {
-      return;
-    }
-    sender_index = CabinetIndex(from);
+    return;
   }
+  sender_index = CabinetIndex(from);
 
   switch (message.type())
   {
@@ -290,8 +285,7 @@ void RBC::OnRBC(MuddleAddress const &from, RBCMessage const &message)
  */
 void RBC::OnRBroadcast(MessageBroadcast const &msg, uint32_t sender_index)
 {
-  assert(!lock_.owns_lock());
-  FETCH_LOCK(lock_);
+  assert(lock_.owns_lock());
   assert(msg != nullptr);
   assert(msg->type() == MessageType::R_BROADCAST);
   assert(msg->is_valid());
@@ -316,7 +310,7 @@ void RBC::OnRBroadcast(MessageBroadcast const &msg, uint32_t sender_index)
       MessageEcho echo_msg = RBCMessage::New<REcho>(msg->channel(), msg->id(), msg->counter(),
                                                     crypto::Hash<HashFunction>(msg->message()));
       InternalBroadcast(*echo_msg);
-      OnREchoLockFree(echo_msg, id_);
+      OnREcho(echo_msg, id_);
     }
   }
   else
@@ -336,20 +330,11 @@ void RBC::OnRBroadcast(MessageBroadcast const &msg, uint32_t sender_index)
  */
 void RBC::OnREcho(MessageEcho const &msg, uint32_t sender_index)
 {
-  assert(!lock_.owns_lock());
-  FETCH_LOCK(lock_);
-  assert(msg != nullptr);
-  assert(msg->is_valid());
-
-  OnREchoLockFree(msg, sender_index);
-}
-
-void RBC::OnREchoLockFree(MessageEcho const &msg, uint32_t sender_index)
-{
   assert(lock_.owns_lock());
   assert(msg != nullptr);
   assert(msg->is_valid());
   TagType tag = msg->tag();
+
   if (!SetPartyFlag(sender_index, tag, MessageType::R_ECHO))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "onREcho: Node ", id_, " received repeated msg ", tag,
@@ -367,7 +352,7 @@ void RBC::OnREchoLockFree(MessageEcho const &msg, uint32_t sender_index)
         RBCMessage::New<RReady>(msg->channel(), msg->id(), msg->counter(), msg->hash());
 
     InternalBroadcast(*ready_msg);
-    OnRReadyLockFree(ready_msg, id_);
+    OnRReady(ready_msg, id_);
   }
 }
 
@@ -381,18 +366,9 @@ void RBC::OnREchoLockFree(MessageEcho const &msg, uint32_t sender_index)
  */
 void RBC::OnRReady(MessageReady const &msg, uint32_t sender_index)
 {
-  assert(!lock_.owns_lock());
-  FETCH_LOCK(lock_);
-
-  OnRReadyLockFree(msg, sender_index);
-}
-
-void RBC::OnRReadyLockFree(MessageReady const &msg, uint32_t sender_index)
-{
   assert(lock_.owns_lock());
   assert(msg != nullptr);
   assert(msg->is_valid());
-
   TagType tag = msg->tag();
 
   if (!SetPartyFlag(sender_index, tag, MessageType::R_READY))
@@ -415,7 +391,7 @@ void RBC::OnRReadyLockFree(MessageReady const &msg, uint32_t sender_index)
         RBCMessage::New<RReady>(msg->channel(), msg->id(), msg->counter(), msg->hash());
 
     InternalBroadcast(*ready_msg);
-    OnRReadyLockFree(ready_msg, id_);
+    OnRReady(ready_msg, id_);
   }
   else if (msgs_counter.ready_count == 2 * threshold_ + 1)
   {
@@ -457,12 +433,11 @@ void RBC::OnRReadyLockFree(MessageReady const &msg, uint32_t sender_index)
  */
 void RBC::OnRRequest(MessageRequest const &msg, uint32_t sender_index)
 {
-  assert(!lock_.owns_lock());
-  FETCH_LOCK(lock_);
+  assert(lock_.owns_lock());
   assert(msg != nullptr);
   assert(msg->is_valid());
-
   TagType tag = msg->tag();
+
   if (!SetPartyFlag(sender_index, tag, MessageType::R_REQUEST))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "onRRequest: Node ", id_, " received repeated msg ", tag,
@@ -490,12 +465,11 @@ void RBC::OnRRequest(MessageRequest const &msg, uint32_t sender_index)
  */
 void RBC::OnRAnswer(MessageAnswer const &msg, uint32_t sender_index)
 {
-  assert(!lock_.owns_lock());
-  FETCH_LOCK(lock_);
+  assert(lock_.owns_lock());
   assert(msg != nullptr);
   assert(msg->is_valid());
-
   TagType tag = msg->tag();
+
   if (!SetPartyFlag(sender_index, tag, MessageType::R_ANSWER))
   {
     return;
@@ -547,7 +521,6 @@ void RBC::OnRAnswer(MessageAnswer const &msg, uint32_t sender_index)
 void RBC::Deliver(SerialisedMessage const &msg, uint32_t sender_index)
 {
   assert(lock_.owns_lock());
-
   assert(parties_.size() == current_cabinet_.size());
 
   MuddleAddress miner_id{*std::next(current_cabinet_.begin(), sender_index)};
@@ -593,7 +566,7 @@ void RBC::Deliver(SerialisedMessage const &msg, uint32_t sender_index)
  */
 bool RBC::BasicMessageCheck(MuddleAddress const &from, RBCMessage const &msg)
 {
-  // assert(lock_.owns_lock());
+  assert(lock_.owns_lock());
 
   if ((current_cabinet_.find(from) == current_cabinet_.end()) || (msg.channel() != channel_))
   {
