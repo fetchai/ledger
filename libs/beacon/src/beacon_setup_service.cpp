@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "beacon/beacon_setup_service.hpp"
 #include "core/containers/set_difference.hpp"
 #include "core/containers/set_intersection.hpp"
 #include "ledger/shards/shard_management_service.hpp"
-#include "muddle/muddle_interface.hpp"
 #include "muddle/muddle_endpoint.hpp"
-#include "beacon/beacon_setup_service.hpp"
+#include "muddle/muddle_interface.hpp"
 #include "telemetry/registry.hpp"
 
 #include <mutex>
@@ -71,7 +71,8 @@ char const *ToString(BeaconSetupService::State state)
   return text;
 }
 
-BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identity, ShardManagementService &manifest_cache)
+BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identity,
+                                       ShardManagementService &manifest_cache)
   : identity_{std::move(identity)}
   , manifest_cache_{manifest_cache}
   , muddle_{muddle}
@@ -185,7 +186,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForDirectConnections()
   {
     // Skipping own address
     if (m == identity_)
-    { 
+    {
       continue;
     }
 

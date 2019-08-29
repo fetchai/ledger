@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "muddle/muddle_interface.hpp"
 #include "beacon/aeon.hpp"
 #include "beacon/beacon_service.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
+#include "muddle/muddle_interface.hpp"
 
 #include <chrono>
 

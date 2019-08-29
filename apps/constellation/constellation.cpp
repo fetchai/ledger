@@ -222,7 +222,7 @@ muddle::MuddlePtr CreateBeaconNetwork(Config const &cfg, CertificatePtr certific
 
 BeaconServicePtr CreateBeaconService(Constellation::Config const &cfg, MuddleInterface &muddle,
                                      ledger::ShardManagementService &manifest_cache,
-                                     CertificatePtr certificate)
+                                     CertificatePtr                  certificate)
 {
   BeaconServicePtr                         beacon{};
   beacon::EventManager::SharedEventManager event_manager = beacon::EventManager::New();

@@ -35,17 +35,15 @@ namespace muddle {
 
 class MuddleInterface;
 
-} // namespace muddle
+}  // namespace muddle
 
 namespace ledger {
 
 class ShardManagementService;
 
-} // namespace ledger
+}  // namespace ledger
 
 namespace beacon {
-
-
 
 class BeaconSetupService
 {
@@ -92,7 +90,8 @@ public:
   using ShardManagementService  = ledger::ShardManagementService;
   using SharesExposedMap = std::unordered_map<MuddleAddress, std::pair<MessageShare, MessageShare>>;
 
-  BeaconSetupService(MuddleInterface &muddle, Identity identity, ShardManagementService &manifest_cache);
+  BeaconSetupService(MuddleInterface &muddle, Identity identity,
+                     ShardManagementService &manifest_cache);
   BeaconSetupService(BeaconSetupService const &) = delete;
   BeaconSetupService(BeaconSetupService &&)      = delete;
 
@@ -122,13 +121,13 @@ public:
   void OnDkgMessage(MuddleAddress const &from, std::shared_ptr<DKGMessage> msg_ptr);
 
 protected:
-  Identity            identity_;
+  Identity                identity_;
   ShardManagementService &manifest_cache_;
   MuddleInterface &       muddle_;
   MuddleEndpoint &        endpoint_;
-  SubscriptionPtr shares_subscription;
-  RBC             pre_dkg_rbc_;
-  RBC             rbc_;
+  SubscriptionPtr         shares_subscription;
+  RBC                     pre_dkg_rbc_;
+  RBC                     rbc_;
 
   std::mutex                          mutex_;
   CallbackFunction                    callback_function_;
