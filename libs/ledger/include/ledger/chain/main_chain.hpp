@@ -44,16 +44,6 @@
 namespace fetch {
 namespace ledger {
 
-using std::int8_t;
-using std::int16_t;
-using std::int32_t;
-using std::int64_t;
-
-using std::uint8_t;
-using std::uint16_t;
-using std::uint32_t;
-using std::uint64_t;
-
 /**
  * Main chain contains and manages block headers. No verification of headers is
  * done, the structure will purely accept new headers and provide the current
