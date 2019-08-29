@@ -68,7 +68,7 @@ struct BERTConfig
   SizeType vocab_size        = 30522u;
   SizeType segment_size      = 2u;
   DataType epsilon           = static_cast<DataType>(1e-12);
-  DataType dropout_keep_prob = static_cast<DataType>(1);
+  DataType dropout_keep_prob = static_cast<DataType>(0.9);
 };
 
 struct BERTInterface
