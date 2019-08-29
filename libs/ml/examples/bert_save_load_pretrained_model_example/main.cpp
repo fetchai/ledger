@@ -133,25 +133,27 @@ int main(int ac, char **av)
   // load pretrained bert model and print its output of a toy input
   BERTConfig    config;
   BERTInterface interface(config);
-  GraphType     g;
+  GraphType *   g = new GraphType();
 
   std::cout << "load pretrained pytorch bert model from folder: \n"
             << pretrained_model_dir << std::endl;
-  LoadPretrainedBertModel(pretrained_model_dir, config, g);
+  LoadPretrainedBertModel(pretrained_model_dir, config, *g);
 
-  std::cout << "print the cls token output for the bert loaded from txt files" << std::endl;
+  std::cout << "get an output for the bert loaded from txt files" << std::endl;
   TensorType first_output =
       RunPseudoForwardPass(interface.inputs, interface.outputs[interface.outputs.size() - 1],
-                           config, g, static_cast<SizeType>(1), false);
+                           config, *g, static_cast<SizeType>(1), false);
 
   std::cout << "save the pretrained bert model to file: \n" << saved_model_path << std::endl;
-  SaveGraphToFile(g, saved_model_path);
-  g.~GraphType();
+  SaveGraphToFile(*g, saved_model_path);
+
+  // delete the model for memory efficiency
+  delete g;
 
   std::cout << "load saved model for testing" << std::endl;
   GraphType g2 = ReadFileToGraph(saved_model_path);
 
-  std::cout << "print the cls token output for the bert loaded from bin file" << std::endl;
+  std::cout << "get another output for the bert loaded from bin file" << std::endl;
   TensorType second_output =
       RunPseudoForwardPass(interface.inputs, interface.outputs[interface.outputs.size() - 1],
                            config, g2, static_cast<SizeType>(1), false);
