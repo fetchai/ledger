@@ -216,25 +216,25 @@ std::shared_ptr<T> Node<T>::Evaluate(bool is_training)
     cached_output_status_ = CachedOutputState::VALID_CACHE;
   }
 
-  if (false && (name_ == "ClsTokenOutput"))
-  {
-    std::cout << "name_: " << name_ << std::endl;
-    for (std::size_t i = 0; i < cached_output_.shape().size(); i++)
-    {
-      std::cout << cached_output_.shape(i) << " , ";
-    }
-    std::cout << std::endl;
-    if (cached_output_.shape().size() > 2)
-    {
-      std::cout << "cached_output_: \n"
-                << cached_output_.View(0).Copy().ToString() << std::endl
-                << std::endl;
-    }
-    else
-    {
-      std::cout << "cached_output_: \n" << cached_output_.ToString() << std::endl << std::endl;
-    }
-  }
+  //  if (false && (name_ == "ClsTokenOutput"))
+  //  {
+  //    std::cout << "name_: " << name_ << std::endl;
+  //    for (std::size_t i = 0; i < cached_output_.shape().size(); i++)
+  //    {
+  //      std::cout << cached_output_.shape(i) << " , ";
+  //    }
+  //    std::cout << std::endl;
+  //    if (cached_output_.shape().size() > 2)
+  //    {
+  //      std::cout << "cached_output_: \n"
+  //                << cached_output_.View(0).Copy().ToString() << std::endl
+  //                << std::endl;
+  //    }
+  //    else
+  //    {
+  //      std::cout << "cached_output_: \n" << cached_output_.ToString() << std::endl << std::endl;
+  //    }
+  //  }
 
   return std::make_shared<T>(cached_output_);
 }
@@ -264,8 +264,9 @@ std::vector<std::pair<Node<T> *, T>> Node<T>::BackPropagateSignal(TensorType con
     //	  std::cout << std::endl;
     //	  if (bp_it->shape().size() > 2) {
     //		  std::cout << "error: \n" << bp_it->View(0).Copy().ToString() << std::endl <<
-    // std::endl; 	  } else { 		  std::cout << "error: \n" << bp_it->ToString() << std::endl <<
-    // std::endl;
+    // std::endl; 	  } else { 		  std::cout << "error: \n" << bp_it->ToString() <<
+    // std::endl
+    // << std::endl;
     //	  }
 
     auto ret = i->BackPropagateSignal(*bp_it);
