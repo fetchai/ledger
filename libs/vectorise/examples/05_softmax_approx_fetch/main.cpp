@@ -34,18 +34,16 @@ void SoftMax(array_type const &A, array_type &B)
 {
   type sum{0};
 
-  auto kernel1 = [&sum](auto const &a, auto &b) {
-    decltype(a) e = approx_exp(a);
-    sum           = sum + e;
-    b             = e;
-  };
+  B.in_parallel().Apply(
+    [&sum](auto const &a, auto &b) {
+      decltype(a) e = approx_exp(a);
+      sum           = sum + reduce(e);
+      b             = e;
+    },
+    A);
 
-  B.in_parallel().Apply(kernel1, A);
-
-  type scale(1. / fetch::vectorise::reduce(sum));
-  auto        kernel2 = [scale](auto const &a, auto &b) { b = a * scale; };
-
-  B.in_parallel().Apply(kernel2, B);
+  type scale(type(1.0 / sum));
+  B.in_parallel().Apply([scale](auto const &a, auto &b) { b = a * decltype(a)(scale); }, B);
 }
 
 int main(int argc, char const **argv)
