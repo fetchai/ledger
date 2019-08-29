@@ -180,6 +180,7 @@ BeaconSetupService::State BeaconSetupService::OnIdle()
 BeaconSetupService::State BeaconSetupService::OnWaitForDirectConnections()
 {
   std::lock_guard<std::mutex> lock(mutex_);
+  dkg_state_gauge_->set(static_cast<uint8_t>(State::WAIT_FOR_DIRECT_CONNECTIONS));
 
   std::unordered_set<MuddleAddress> aeon_members;
   for (auto &m : beacon_->aeon.members)
