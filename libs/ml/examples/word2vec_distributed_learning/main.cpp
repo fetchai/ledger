@@ -52,7 +52,7 @@
 #include <utility>
 #include <vector>
 
-#define NUMBER_OF_CLIENTS 1
+#define NUMBER_OF_CLIENTS 3
 #define NUMBER_OF_ITERATIONS 100
 #define NUMBER_OF_ROUNDS 10
 #define SYNCHRONIZATION_MODE CoordinatorMode::ASYNCHRONOUS
@@ -60,7 +60,7 @@
 #define BATCH_SIZE 128
 #define LEARNING_RATE .001f
 #define TEST_SET_RATIO 0.03f
-#define NUMBER_OF_PEERS 1
+#define NUMBER_OF_PEERS 2
 
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;

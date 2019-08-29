@@ -91,17 +91,17 @@ void Word2VecClient<TensorType>::PrepareModel()
 {
   this->g_ptr_ = std::make_shared<fetch::ml::Graph<TensorType>>();
 
-  this->g_ptr_->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
-  this->g_ptr_->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Context", {});
+  std::string input_name = this->g_ptr_->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
+  std::string context_name = this->g_ptr_->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Context", {});
   this->label_name_ = this->g_ptr_->template AddNode<PlaceHolder<TensorType>>("Label", {});
   skipgram_         = this->g_ptr_->template AddNode<fetch::ml::layers::SkipGram<TensorType>>(
-      "SkipGram", {"Input", "Context"}, SizeType(1), SizeType(1), tp_.embedding_size,
+      "SkipGram", {input_name, context_name}, SizeType(1), SizeType(1), tp_.embedding_size,
       w2v_data_loader_ptr_->vocab_size());
 
   this->error_name_ = this->g_ptr_->template AddNode<CrossEntropyLoss<TensorType>>(
       "Error", {skipgram_, this->label_name_});
 
-  this->inputs_names_.push_back({"Input", "Context"});
+  this->inputs_names_ = {input_name, context_name};
 }
 
 template <class TensorType>
