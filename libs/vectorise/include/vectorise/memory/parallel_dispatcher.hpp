@@ -423,12 +423,12 @@ public:
   {}
 
   template <class F>
-  void RangedApply(Range const &range, F &&apply)
+  void RangedApply(Range const &range, F const &&apply)
   {
-    int SFL = int(range.SIMDFromLower<VectorRegisterType::E_BLOCK_COUNT>());
-    int SF = int(range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>());
-    int ST = int(range.SIMDToLower<VectorRegisterType::E_BLOCK_COUNT>());
-    int STU = int(range.SIMDToUpper<VectorRegisterType::E_BLOCK_COUNT>());
+    size_t SFL = range.SIMDFromLower<VectorRegisterType::E_BLOCK_COUNT>();
+    size_t SF = range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>();
+    size_t ST = range.SIMDToLower<VectorRegisterType::E_BLOCK_COUNT>();
+    size_t STU = range.SIMDToUpper<VectorRegisterType::E_BLOCK_COUNT>();
 
     VectorRegisterType vc;
 
@@ -442,7 +442,7 @@ public:
       }
     }
 
-    for (int i = SF; i < ST; i += VectorRegisterType::E_BLOCK_COUNT)
+    for (size_t i = SF; i < ST; i += VectorRegisterType::E_BLOCK_COUNT)
     {
       apply(vc);
       vc.Store(this->pointer() + i);
@@ -451,7 +451,7 @@ public:
     if (STU != ST)
     {
       ScalarRegisterType  c;
-      for (int i = ST; i < range.to(); i += ScalarRegisterType::E_BLOCK_COUNT)
+      for (size_t i = ST; i < range.to(); i += ScalarRegisterType::E_BLOCK_COUNT)
       {
         apply(c);
         c.Store(this->pointer() + i);
@@ -460,14 +460,14 @@ public:
   }
 
   template <class F>
-  void Apply(F &&apply)
+  void Apply(F const &&apply)
   {
     Range range(0, this->size());
     return RangedApply(range, std::move(apply));
   }
 
   template <class F, typename... Args>
-  void RangedApplyMultiple(Range const &range, F &&apply, Args &&... args)
+  void RangedApplyMultiple(Range const &range, F const &&apply, Args &&... args)
   {
     size_t SFL = range.SIMDFromLower<VectorRegisterType::E_BLOCK_COUNT>();
     size_t SF = range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>();
@@ -476,14 +476,14 @@ public:
 
     VectorRegisterType         regs[sizeof...(args)], c;
     VectorRegisterIteratorType iters[sizeof...(args)];
-    InitializeVectorIterators<vector_size>(SF, range.to(), iters, std::forward<Args>(args)...);
+    super_type::template InitializeVectorIterators<vector_size>(SF, range.to(), iters, std::forward<Args>(args)...);
 
     if (SFL != SF)
     {
       ScalarRegisterType  c;
       ScalarRegisterType         scalar_regs[sizeof...(args)];
       ScalarRegisterIteratorType scalar_iters[sizeof...(args)];
-      InitializeVectorIterators<scalar_size>(range.from(), SF, scalar_iters, std::forward<Args>(args)...);
+      super_type::template InitializeVectorIterators<scalar_size>(range.from(), SF, scalar_iters, std::forward<Args>(args)...);
 
       for (size_t i = range.from(); i < SF; i += ScalarRegisterType::E_BLOCK_COUNT)
       {
@@ -501,27 +501,28 @@ public:
           regs, iters);
       details::MatrixApplyFreeFunction<VectorRegisterType, void>::template Unroll<Args...>::Apply(
           regs, apply, c);
-
       c.Store(this->pointer() + i);
     }
 
     if (STU != ST)
     {
       ScalarRegisterType  c;
+      ScalarRegisterType         scalar_regs[sizeof...(args)];
+      ScalarRegisterIteratorType scalar_iters[sizeof...(args)];
+      super_type::template InitializeVectorIterators<scalar_size>(ST, range.to(), scalar_iters, std::forward<Args>(args)...);
       for (size_t i = ST; i < range.to(); i += ScalarRegisterType::E_BLOCK_COUNT)
       {
         details::UnrollNext<sizeof...(args), ScalarRegisterType, ScalarRegisterIteratorType>::Apply(
-          regs, iters);
+          scalar_regs, scalar_iters);
         details::MatrixApplyFreeFunction<ScalarRegisterType, void>::template Unroll<Args...>::Apply(
-          regs, apply, c);
-        apply(c);
+          scalar_regs, apply, c);
         c.Store(this->pointer() + i);
       }
     }
   }
 
   template <class F, typename... Args>
-  void Apply(F &&apply, Args &&... args)
+  void Apply(F const &&apply, Args &&... args)
   {
     Range range(0, this->size());
     return RangedApplyMultiple(range, std::move(apply), std::forward<Args>(args)...);
