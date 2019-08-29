@@ -96,7 +96,7 @@ public:
   BeaconService()                      = delete;
   BeaconService(BeaconService const &) = delete;
 
-  BeaconService(MuddleInterface &muddle, ledger::ShardManagementService &manifest_cache,
+  BeaconService(MuddleInterface &muddle, ledger::ManifestCacheInterface &manifest_cache,
                 CertificatePtr certificate, SharedEventManager event_manager,
                 uint64_t blocks_per_round = 1);
 

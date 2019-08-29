@@ -63,7 +63,7 @@ char const *ToString(BeaconService::State state)
 }
 
 BeaconService::BeaconService(MuddleInterface &               muddle,
-                             ledger::ShardManagementService &manifest_cache,
+                             ledger::ManifestCacheInterface &manifest_cache,
                              CertificatePtr certificate, SharedEventManager event_manager,
                              uint64_t blocks_per_round)
   : certificate_{certificate}

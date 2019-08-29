@@ -72,7 +72,7 @@ char const *ToString(BeaconSetupService::State state)
 }
 
 BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identity,
-                                       ShardManagementService &manifest_cache)
+                                       ManifestCacheInterface &manifest_cache)
   : identity_{std::move(identity)}
   , manifest_cache_{manifest_cache}
   , muddle_{muddle}

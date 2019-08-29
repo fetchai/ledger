@@ -20,6 +20,7 @@
 #include "core/mutex.hpp"
 #include "core/periodic_runnable.hpp"
 #include "ledger/shards/manifest.hpp"
+#include "ledger/shards/manifest_cache_interface.hpp"
 #include "ledger/shards/shard_management_protocol.hpp"
 #include "muddle/address.hpp"
 #include "muddle/muddle_interface.hpp"
@@ -39,10 +40,10 @@ namespace ledger {
 class ShardManagementInterface;
 
 class ShardManagementService : public core::PeriodicRunnable
+                             , public ledger::ManifestCacheInterface
 {
 public:
   using MuddleInterface = muddle::MuddleInterface;
-  using Address         = muddle::Address;
   using Addresses       = MuddleInterface::Addresses;
 
   // Construction / Destruction
@@ -53,7 +54,7 @@ public:
   ~ShardManagementService() override                     = default;
 
   // Manifest Queries
-  bool QueryManifest(Address const &address, Manifest &manifest);
+  bool QueryManifest(Address const &address, Manifest &manifest) override;
 
   // External Operations
   Manifest RequestManifest();

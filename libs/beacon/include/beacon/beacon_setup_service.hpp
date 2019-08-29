@@ -39,7 +39,7 @@ class MuddleInterface;
 
 namespace ledger {
 
-class ShardManagementService;
+class ManifestCacheInterface;
 
 }  // namespace ledger
 
@@ -87,11 +87,11 @@ public:
   using CoefficientsMessage     = dkg::CoefficientsMessage;
   using SharesMessage           = dkg::SharesMessage;
   using DKGSerializer           = dkg::DKGSerializer;
-  using ShardManagementService  = ledger::ShardManagementService;
+  using ManifestCacheInterface  = ledger::ManifestCacheInterface;
   using SharesExposedMap = std::unordered_map<MuddleAddress, std::pair<MessageShare, MessageShare>>;
 
   BeaconSetupService(MuddleInterface &muddle, Identity identity,
-                     ShardManagementService &manifest_cache);
+                     ManifestCacheInterface &manifest_cache);
   BeaconSetupService(BeaconSetupService const &) = delete;
   BeaconSetupService(BeaconSetupService &&)      = delete;
 
@@ -122,7 +122,7 @@ public:
 
 protected:
   Identity                identity_;
-  ShardManagementService &manifest_cache_;
+  ManifestCacheInterface &manifest_cache_;
   MuddleInterface &       muddle_;
   MuddleEndpoint &        endpoint_;
   SubscriptionPtr         shares_subscription;
