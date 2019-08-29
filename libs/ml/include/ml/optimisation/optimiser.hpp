@@ -230,7 +230,7 @@ typename T::Type Optimiser<T>::Run(std::vector<TensorType> const &data, TensorTy
     // Set inputs
     auto name_it = input_node_names_.begin();
     for (auto &input : batch_data_)
-    { 
+    {
       graph_->SetInput(*name_it, input);
       ++name_it;
     }
@@ -244,7 +244,7 @@ typename T::Type Optimiser<T>::Run(std::vector<TensorType> const &data, TensorTy
 
     // Compute and apply gradient
     ApplyGradients(batch_size);
-    
+
     ResetGradients();
 
     step_ += batch_size;

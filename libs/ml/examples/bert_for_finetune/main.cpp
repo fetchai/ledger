@@ -108,12 +108,14 @@ void put_weight_in_attention_heads(StateDictType &state_dict, SizeType n_heads, 
 // bert model creation functions
 std::pair<std::vector<std::string>, std::vector<std::string>> load_pretrained_bert_model(
     std::string const &file_path, BERTConfig const &config, GraphType &g);
-std::pair<std::vector<std::string>, std::vector<std::string>> make_bert_model(
+std::pair<std::vector<std::string>, std::vector<std::string>> MakeBertModel(
     BERTConfig const &config, GraphType &g);
 
 // finetuning functions
-std::pair<std::vector<TensorType>, TensorType> prepare_simple_cls_token_input(SizeType size, BERTConfig const & config);
-std::vector<std::pair<std::vector<TensorType>, TensorType>> prepare_data_for_simple_cls(SizeType train_size, SizeType test_size, BERTConfig const & config);
+std::pair<std::vector<TensorType>, TensorType> prepare_simple_cls_token_input(
+    SizeType size, BERTConfig const &config);
+std::vector<std::pair<std::vector<TensorType>, TensorType>> prepare_data_for_simple_cls(
+    SizeType train_size, SizeType test_size, BERTConfig const &config);
 std::vector<TensorType> load_imdb_finetune_data(std::string const &file_path);
 std::vector<TensorType> prepare_tensor_for_bert(TensorType const &data, BERTConfig const &config);
 
@@ -121,8 +123,8 @@ void run_pseudo_forward_pass(std::vector<std::string> input_nodes, std::string o
                              BERTConfig const &config, GraphType g, SizeType batch_size,
                              bool verbose = false);
 
-void evaluate_graph(GraphType &g, std::vector<std::string> input_nodes, std::string output_node,
-                    std::vector<TensorType> input_data, TensorType output_data);
+void EvaluateGraph(GraphType &g, std::vector<std::string> input_nodes, std::string output_node,
+                   std::vector<TensorType> input_data, TensorType output_data);
 
 void save_graph_to_file(
     GraphType &g, std::string const file_name =
@@ -131,7 +133,9 @@ GraphType read_file_to_graph(
     std::string const file_name =
         "/home/xiaodong/Projects/Fetch scripts/bert_finetune/serialized_model.bin");
 
-std::vector<std::pair<std::vector<TensorType>, TensorType>> prepare_IMDB_finetune_data(std::string const &file_path, SizeType train_size, SizeType test_size, BERTConfig const & config);
+std::vector<std::pair<std::vector<TensorType>, TensorType>> prepare_IMDB_finetune_data(
+    std::string const &file_path, SizeType train_size, SizeType test_size,
+    BERTConfig const &config);
 
 int main(int ac, char **av)
 {
@@ -151,7 +155,7 @@ int main(int ac, char **av)
     BERTInterface interface(config);
 
     GraphType g;
-    //	  make_bert_model(config, g);
+    //	  MakeBertModel(config, g);
     //
     //	  // do a pseudo pass
     //	  // run batches
@@ -207,16 +211,16 @@ int main(int ac, char **av)
   BERTConfig config;
   // prepare IMDB data
   auto all_train_data = prepare_IMDB_finetune_data(IMDB_path, train_size, test_size, config);
-//  auto all_train_data = prepare_data_for_simple_cls(train_size, test_size, config);
-  
+  //  auto all_train_data = prepare_data_for_simple_cls(train_size, test_size, config);
+
   // load pretrained bert model
   GraphType g;
   load_pretrained_bert_model(file_path, config, g);
   BERTInterface ret(config);
   std::cout << "finish loading pretraining model" << std::endl;
-	
-  std::vector<std::string> bert_inputs = ret.inputs;
-  std::string layer_output = ret.outputs[layer_no];
+
+  std::vector<std::string> bert_inputs  = ret.inputs;
+  std::string              layer_output = ret.outputs[layer_no];
 
   // Add linear classification layer
   std::string cls_token_output = g.template AddNode<fetch::ml::ops::Slice<TensorType>>(
@@ -240,24 +244,25 @@ int main(int ac, char **av)
   std::cout << "epochs: " << epochs << std::endl;
   std::cout << "lr: " << lr << std::endl;
 
-  evaluate_graph(g, bert_inputs, classification_output, all_train_data[1].first, all_train_data[1].second);
+  EvaluateGraph(g, bert_inputs, classification_output, all_train_data[1].first,
+                all_train_data[1].second);
 
   // create optimizer
   std::cout << "START TRAINING" << std::endl;
-  OptimiserType optimiser(std::make_shared<GraphType>(g), bert_inputs, label,
-                          error, lr);
+  OptimiserType optimiser(std::make_shared<GraphType>(g), bert_inputs, label, error, lr);
   for (SizeType i = 0; i < epochs; i++)
   {
     DataType loss = optimiser.Run(all_train_data[0].first, all_train_data[0].second, batch_size);
     std::cout << "loss: " << loss << std::endl;
-	  evaluate_graph(g, bert_inputs, classification_output, all_train_data[1].first, all_train_data[1].second);
+    EvaluateGraph(g, bert_inputs, classification_output, all_train_data[1].first,
+                  all_train_data[1].second);
   }
 
   return 0;
 }
 
-void evaluate_graph(GraphType &g, std::vector<std::string> input_nodes, std::string output_node,
-                    std::vector<TensorType> input_data, TensorType output_data)
+void EvaluateGraph(GraphType &g, std::vector<std::string> input_nodes, std::string output_node,
+                   std::vector<TensorType> input_data, TensorType output_data)
 {
   std::cout << "Starting forward passing for manual evaluation on: " << output_data.shape(1)
             << std::endl;
@@ -270,55 +275,60 @@ void evaluate_graph(GraphType &g, std::vector<std::string> input_nodes, std::str
       g.SetInput(input_nodes[i], input_data[i].View(b).Copy());
     }
     TensorType model_output = g.Evaluate(output_node, false);
-    DataType   val_loss     = fetch::math::CrossEntropyLoss<TensorType>(model_output, output_data.View(b).Copy());
+    DataType   val_loss =
+        fetch::math::CrossEntropyLoss<TensorType>(model_output, output_data.View(b).Copy());
     total_val_loss += val_loss;
-    std::cout << output_data.At(0, b) << " | " << model_output.At(0, 0) << " | " << val_loss << std::endl;
+    std::cout << output_data.At(0, b) << " | " << model_output.At(0, 0) << " | " << val_loss
+              << std::endl;
   }
   std::cout << "total val loss: " << total_val_loss / static_cast<DataType>(output_data.shape(1))
             << std::endl;
 }
 
-std::vector<std::pair<std::vector<TensorType>, TensorType>> prepare_IMDB_finetune_data(std::string const &file_path, SizeType train_size, SizeType test_size, BERTConfig const & config){
-	// prepare IMDB data
-	auto train_data = load_imdb_finetune_data(file_path);
-	std::cout << "finish loading imdb from disk, start preprocessing" << std::endl;
-	
-	// evenly mix pos and neg train data together
-	TensorType train_data_mixed({config.max_seq_len, static_cast<SizeType>(2) * train_size});
-	for (SizeType i = 0; i < train_size; i++)
-	{
-		train_data_mixed.View(static_cast<SizeType>(2) * i).Assign(train_data[0].View(i));
-		train_data_mixed.View(static_cast<SizeType>(2) * i + 1).Assign(train_data[1].View(i));
-	}
-	auto final_train_data = prepare_tensor_for_bert(train_data_mixed, config);
-	
-	// prepare label for train data
-	TensorType train_labels({static_cast<SizeType>(1), static_cast<SizeType>(2) * train_size});
-	for (SizeType i = 0; i < train_size; i++)
-	{
-		train_labels.Set(static_cast<SizeType>(0), static_cast<SizeType>(2) * i + 1,
-		                 static_cast<DataType>(1));
-	}
-	
-	// evenly mix pos and neg test data together
-	TensorType test_data_mixed({config.max_seq_len, static_cast<SizeType>(2) * test_size});
-	for (SizeType i = 0; i < test_size; i++)
-	{
-		test_data_mixed.View(static_cast<SizeType>(2) * i).Assign(train_data[2].View(i));
-		test_data_mixed.View(static_cast<SizeType>(2) * i + 1).Assign(train_data[3].View(i));
-	}
-	auto final_test_data = prepare_tensor_for_bert(test_data_mixed, config);
-	
-	// prepare label for train data
-	TensorType test_labels({static_cast<SizeType>(1), static_cast<SizeType>(2) * test_size});
-	for (SizeType i = 0; i < test_size; i++)
-	{
-		test_labels.Set(static_cast<SizeType>(0), static_cast<SizeType>(2) * i + 1,
-		                static_cast<DataType>(1));
-	}
-	std::cout << "finish preparing train test data" << std::endl;
-	
-	return {std::make_pair(final_train_data, train_labels), std::make_pair(final_test_data, test_labels)};
+std::vector<std::pair<std::vector<TensorType>, TensorType>> prepare_IMDB_finetune_data(
+    std::string const &file_path, SizeType train_size, SizeType test_size, BERTConfig const &config)
+{
+  // prepare IMDB data
+  auto train_data = load_imdb_finetune_data(file_path);
+  std::cout << "finish loading imdb from disk, start preprocessing" << std::endl;
+
+  // evenly mix pos and neg train data together
+  TensorType train_data_mixed({config.max_seq_len, static_cast<SizeType>(2) * train_size});
+  for (SizeType i = 0; i < train_size; i++)
+  {
+    train_data_mixed.View(static_cast<SizeType>(2) * i).Assign(train_data[0].View(i));
+    train_data_mixed.View(static_cast<SizeType>(2) * i + 1).Assign(train_data[1].View(i));
+  }
+  auto final_train_data = prepare_tensor_for_bert(train_data_mixed, config);
+
+  // prepare label for train data
+  TensorType train_labels({static_cast<SizeType>(1), static_cast<SizeType>(2) * train_size});
+  for (SizeType i = 0; i < train_size; i++)
+  {
+    train_labels.Set(static_cast<SizeType>(0), static_cast<SizeType>(2) * i + 1,
+                     static_cast<DataType>(1));
+  }
+
+  // evenly mix pos and neg test data together
+  TensorType test_data_mixed({config.max_seq_len, static_cast<SizeType>(2) * test_size});
+  for (SizeType i = 0; i < test_size; i++)
+  {
+    test_data_mixed.View(static_cast<SizeType>(2) * i).Assign(train_data[2].View(i));
+    test_data_mixed.View(static_cast<SizeType>(2) * i + 1).Assign(train_data[3].View(i));
+  }
+  auto final_test_data = prepare_tensor_for_bert(test_data_mixed, config);
+
+  // prepare label for train data
+  TensorType test_labels({static_cast<SizeType>(1), static_cast<SizeType>(2) * test_size});
+  for (SizeType i = 0; i < test_size; i++)
+  {
+    test_labels.Set(static_cast<SizeType>(0), static_cast<SizeType>(2) * i + 1,
+                    static_cast<DataType>(1));
+  }
+  std::cout << "finish preparing train test data" << std::endl;
+
+  return {std::make_pair(final_train_data, train_labels),
+          std::make_pair(final_test_data, test_labels)};
 }
 
 std::vector<TensorType> load_imdb_finetune_data(std::string const &file_path)
@@ -474,7 +484,7 @@ void put_weight_in_attention_heads(StateDictType &state_dict, SizeType n_heads, 
   }
 }
 
-std::pair<std::vector<std::string>, std::vector<std::string>> make_bert_model(
+std::pair<std::vector<std::string>, std::vector<std::string>> MakeBertModel(
     BERTConfig const &config, GraphType &g)
 {
   SizeType n_encoder_layers  = config.n_encoder_layers;
@@ -486,7 +496,7 @@ std::pair<std::vector<std::string>, std::vector<std::string>> make_bert_model(
   SizeType segment_size      = config.segment_size;
   DataType epsilon           = config.epsilon;
   DataType dropout_keep_prob = config.dropout_keep_prob;
-  
+
   std::cout << max_seq_len << std::endl;
 
   // initiate graph
@@ -514,9 +524,8 @@ std::pair<std::vector<std::string>, std::vector<std::string>> make_bert_model(
       "all_input_add", {token_embedding, seg_pos_sum_embed});
 
   // create layernorm layer
-//  std::string norm_embed = g.template AddNode<fetch::ml::layers::LayerNorm<TensorType>>(
-//      "norm_embed", {sum_embed}, SizeVector({model_dims, 1}), 0u, epsilon);
-	std::string norm_embed = sum_embed;
+  std::string norm_embed = g.template AddNode<fetch::ml::layers::LayerNorm<TensorType>>(
+      "norm_embed", {sum_embed}, SizeVector({model_dims, 1}), 0u, epsilon);
 
   // add layers as well as weights
   std::string              layer_output = norm_embed;
@@ -686,57 +695,61 @@ std::pair<std::vector<std::string>, std::vector<std::string>> load_pretrained_be
                         encoder_outputs);
 }
 
-std::pair<std::vector<TensorType>, TensorType> prepare_simple_cls_token_input(SizeType size, BERTConfig const & config){
-	TensorType data({config.max_seq_len, size});
-	TensorType labels({static_cast<SizeType>(1), size});
-	
-	DataType a = 105;
-	DataType b = 106;
-	DataType same_label = 1;
-	DataType diff_label = 0;
-	
-	for (SizeType i = 0; i < size; i++)
-	{
-		data.Set(0, i, static_cast<DataType>(101));
-		if (i % 4 == 0)
-		{ // all a
-			for (SizeType entry = 1; entry < config.max_seq_len; entry++)
-			{
-				data.Set(entry, i, a);
-			}
-			labels.Set(0u, i, same_label);
-		}
-		else if (i % 4 == 2)
-		{  // all b
-			for (SizeType entry = 1; entry < config.max_seq_len; entry++)
-			{
-				data.Set(entry, i, b);
-			}
-			labels.Set(0u, i, same_label);
-		}
-		else
-		{  // interval data
-			for (SizeType entry = 1; entry < config.max_seq_len; entry++)
-			{
-				if (entry % 2 == 1)
-				{
-					data.Set(entry, i, a);
-				}
-				else
-				{
-					data.Set(entry, i, b);
-				}
-			}
-			labels.Set(0u, i, diff_label);
-		}
-	}
-	auto final_data = prepare_tensor_for_bert(data, config);
-	return std::make_pair(final_data, labels);
+std::pair<std::vector<TensorType>, TensorType> prepare_simple_cls_token_input(
+    SizeType size, BERTConfig const &config)
+{
+  TensorType data({config.max_seq_len, size});
+  TensorType labels({static_cast<SizeType>(1), size});
+
+  DataType a          = 105;
+  DataType b          = 106;
+  DataType same_label = 1;
+  DataType diff_label = 0;
+
+  for (SizeType i = 0; i < size; i++)
+  {
+    data.Set(0, i, static_cast<DataType>(101));
+    if (i % 4 == 0)
+    {  // all a
+      for (SizeType entry = 1; entry < config.max_seq_len; entry++)
+      {
+        data.Set(entry, i, a);
+      }
+      labels.Set(0u, i, same_label);
+    }
+    else if (i % 4 == 2)
+    {  // all b
+      for (SizeType entry = 1; entry < config.max_seq_len; entry++)
+      {
+        data.Set(entry, i, b);
+      }
+      labels.Set(0u, i, same_label);
+    }
+    else
+    {  // interval data
+      for (SizeType entry = 1; entry < config.max_seq_len; entry++)
+      {
+        if (entry % 2 == 1)
+        {
+          data.Set(entry, i, a);
+        }
+        else
+        {
+          data.Set(entry, i, b);
+        }
+      }
+      labels.Set(0u, i, diff_label);
+    }
+  }
+  auto final_data = prepare_tensor_for_bert(data, config);
+  return std::make_pair(final_data, labels);
 }
 
-std::vector<std::pair<std::vector<TensorType>, TensorType>> prepare_data_for_simple_cls(SizeType train_size, SizeType test_size, BERTConfig const & config)
+std::vector<std::pair<std::vector<TensorType>, TensorType>> prepare_data_for_simple_cls(
+    SizeType train_size, SizeType test_size, BERTConfig const &config)
 {
-	return {prepare_simple_cls_token_input(train_size, config), prepare_simple_cls_token_input(test_size, config)};
+  return {prepare_simple_cls_token_input(train_size, config),
+          prepare_simple_cls_token_input(test_size, config)};
 }
 
 void run_pseudo_forward_pass(std::vector<std::string> input_nodes, std::string output_node,
@@ -788,11 +801,12 @@ void run_pseudo_forward_pass(std::vector<std::string> input_nodes, std::string o
             << std::endl;
   if (verbose)
   {
-  	for (std::size_t i = 0;  i< output.shape().size(); i++) {
-  	    std::cout << " | " <<  output.shape(i);
-  	}
+    for (std::size_t i = 0; i < output.shape().size(); i++)
+    {
+      std::cout << " | " << output.shape(i);
+    }
     std::cout << "first token: \n" << output.View(0).Copy().View(1).Copy().ToString() << std::endl;
-	  std::cout << "first token: \n" << output.View(1).Copy().View(1).Copy().ToString() << std::endl;
+    std::cout << "first token: \n" << output.View(1).Copy().View(1).Copy().ToString() << std::endl;
   }
 }
 
