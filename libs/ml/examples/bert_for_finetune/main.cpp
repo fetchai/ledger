@@ -95,7 +95,7 @@ std::vector<TensorType> LoadIMDBFinetuneData(std::string const &file_path);
 std::vector<TensorType> PrepareTensorForBert(TensorType const &data, BERTConfig const &config);
 
 void EvaluateGraph(GraphType &g, std::vector<std::string> input_nodes, std::string output_node,
-                   std::vector<TensorType> input_data, TensorType output_data, bool verbose=true);
+                   std::vector<TensorType> input_data, TensorType output_data, bool verbose = true);
 
 GraphType ReadFileToGraph(std::string const file_name);
 
@@ -131,7 +131,7 @@ int main(int ac, char **av)
   auto all_train_data = PrepareIMDBFinetuneTrainData(IMDB_path, train_size, test_size, config);
 
   // load pretrained bert model
-  GraphType g = ReadFileToGraph(file_path);
+  GraphType     g = ReadFileToGraph(file_path);
   BERTInterface bertInterface(config);
   std::cout << "finish loading pretraining model" << std::endl;
 
@@ -180,49 +180,49 @@ int main(int ac, char **av)
 void EvaluateGraph(GraphType &g, std::vector<std::string> input_nodes, std::string output_node,
                    std::vector<TensorType> input_data, TensorType output_data, bool verbose)
 {
-	// Evaluate the model classification performance on a set of test data.
-	std::cout << "Starting forward passing for manual evaluation on: " << output_data.shape(1)
-	          << std::endl;
-	if (verbose)
-	{
-		std::cout << "correct label | guessed label | sample loss" << std::endl;
-	}
-	DataType total_val_loss  = 0;
-	DataType correct_counter = static_cast<DataType>(0);
-	for (SizeType b = 0; b < static_cast<SizeType>(output_data.shape(1)); b++)
-	{
-		for (SizeType i = 0; i < static_cast<SizeType>(4); i++)
-		{
-			g.SetInput(input_nodes[i], input_data[i].View(b).Copy());
-		}
-		TensorType model_output = g.Evaluate(output_node, false);
-		DataType   val_loss =
-		 fetch::math::CrossEntropyLoss<TensorType>(model_output, output_data.View(b).Copy());
-		total_val_loss += val_loss;
-		
-		// count correct guesses
-		if (model_output.At(0, 0) > static_cast<DataType>(0.5) &&
-		    output_data.At(0, b) == static_cast<DataType>(1))
-		{
-			correct_counter++;
-		}
-		else if (model_output.At(0, 0) < static_cast<DataType>(0.5) &&
-		         output_data.At(0, b) == static_cast<DataType>(0))
-		{
-			correct_counter++;
-		}
-		
-		// show guessed values
-		if (verbose)
-		{
-			std::cout << output_data.At(0, b) << " | " << model_output.At(0, 0) << " | " << val_loss
-			          << std::endl;
-		}
-	}
-	std::cout << "val acc: " << correct_counter / static_cast<DataType>(output_data.shape(1))
-	          << std::endl;
-	std::cout << "total val loss: " << total_val_loss / static_cast<DataType>(output_data.shape(1))
-	          << std::endl;
+  // Evaluate the model classification performance on a set of test data.
+  std::cout << "Starting forward passing for manual evaluation on: " << output_data.shape(1)
+            << std::endl;
+  if (verbose)
+  {
+    std::cout << "correct label | guessed label | sample loss" << std::endl;
+  }
+  DataType total_val_loss  = 0;
+  DataType correct_counter = static_cast<DataType>(0);
+  for (SizeType b = 0; b < static_cast<SizeType>(output_data.shape(1)); b++)
+  {
+    for (SizeType i = 0; i < static_cast<SizeType>(4); i++)
+    {
+      g.SetInput(input_nodes[i], input_data[i].View(b).Copy());
+    }
+    TensorType model_output = g.Evaluate(output_node, false);
+    DataType   val_loss =
+        fetch::math::CrossEntropyLoss<TensorType>(model_output, output_data.View(b).Copy());
+    total_val_loss += val_loss;
+
+    // count correct guesses
+    if (model_output.At(0, 0) > static_cast<DataType>(0.5) &&
+        output_data.At(0, b) == static_cast<DataType>(1))
+    {
+      correct_counter++;
+    }
+    else if (model_output.At(0, 0) < static_cast<DataType>(0.5) &&
+             output_data.At(0, b) == static_cast<DataType>(0))
+    {
+      correct_counter++;
+    }
+
+    // show guessed values
+    if (verbose)
+    {
+      std::cout << output_data.At(0, b) << " | " << model_output.At(0, 0) << " | " << val_loss
+                << std::endl;
+    }
+  }
+  std::cout << "val acc: " << correct_counter / static_cast<DataType>(output_data.shape(1))
+            << std::endl;
+  std::cout << "total val loss: " << total_val_loss / static_cast<DataType>(output_data.shape(1))
+            << std::endl;
 }
 
 std::vector<std::pair<std::vector<TensorType>, TensorType>> PrepareIMDBFinetuneTrainData(
@@ -247,8 +247,8 @@ std::vector<std::pair<std::vector<TensorType>, TensorType>> PrepareIMDBFinetuneT
   {
     train_labels.Set(static_cast<SizeType>(0), static_cast<SizeType>(2) * i,
                      static_cast<DataType>(1));
-	  train_labels.Set(static_cast<SizeType>(1), static_cast<SizeType>(2) * i + 1,
-	                   static_cast<DataType>(1));
+    train_labels.Set(static_cast<SizeType>(1), static_cast<SizeType>(2) * i + 1,
+                     static_cast<DataType>(1));
   }
 
   // evenly mix pos and neg test data together
@@ -264,10 +264,10 @@ std::vector<std::pair<std::vector<TensorType>, TensorType>> PrepareIMDBFinetuneT
   TensorType test_labels({static_cast<SizeType>(2), static_cast<SizeType>(2) * test_size});
   for (SizeType i = 0; i < test_size; i++)
   {
-	  test_labels.Set(static_cast<SizeType>(0), static_cast<SizeType>(2) * i,
-	                   static_cast<DataType>(1));
-	  test_labels.Set(static_cast<SizeType>(1), static_cast<SizeType>(2) * i + 1,
-	                   static_cast<DataType>(1));
+    test_labels.Set(static_cast<SizeType>(0), static_cast<SizeType>(2) * i,
+                    static_cast<DataType>(1));
+    test_labels.Set(static_cast<SizeType>(1), static_cast<SizeType>(2) * i + 1,
+                    static_cast<DataType>(1));
   }
   std::cout << "finish preparing train test data" << std::endl;
 
