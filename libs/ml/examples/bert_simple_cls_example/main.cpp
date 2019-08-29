@@ -76,10 +76,6 @@ struct BERTInterface
   }
 };
 
-TensorType create_position_data(SizeType max_seq_len, SizeType batch_size);
-std::pair<std::vector<TensorType>, TensorType> prepare_data_for_simple_cls(SizeType max_seq_len,
-                                                                           SizeType batch_size);
-
 std::pair<std::vector<std::string>, std::vector<std::string>> MakeBertModel(
     BERTConfig const &config, GraphType &g);
 
