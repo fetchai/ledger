@@ -1332,7 +1332,7 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
 
     case Token::Kind::LeftBrace:
       parses =
-          HandleOpener(NodeKind::InitialiserList, NodeKind::Index, Token::Kind::RightBrace, "}");
+          HandleOpener(NodeKind::InitialiserList, NodeKind::Unknown, Token::Kind::RightBrace, "}");
       break;
 
     case Token::Kind::RightParenthesis:
