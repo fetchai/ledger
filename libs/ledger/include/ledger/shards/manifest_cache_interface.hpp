@@ -27,7 +27,7 @@ class Manifest;
 class ManifestCacheInterface
 {
 public:
-  using Address         = muddle::Address;
+  using Address = muddle::Address;
 
   ManifestCacheInterface()          = default;
   virtual ~ManifestCacheInterface() = default;
@@ -38,5 +38,5 @@ public:
   /// @}
 };
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

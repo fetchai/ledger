@@ -23,12 +23,12 @@
 #include "core/service_ids.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
+#include "ledger/shards/manifest.hpp"
+#include "ledger/shards/manifest_cache_interface.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rbc.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
-#include "ledger/shards/manifest_cache_interface.hpp"
-#include "ledger/shards/manifest.hpp"
 
 #include "gtest/gtest.h"
 #include <iostream>
@@ -59,7 +59,8 @@ struct DummyManifestCache : public ManifestCacheInterface
 class HonestSetupService : public BeaconSetupService
 {
 public:
-  HonestSetupService(MuddleInterface &endpoint, Identity identity, ManifestCacheInterface &manifest_cache)
+  HonestSetupService(MuddleInterface &endpoint, Identity identity,
+                     ManifestCacheInterface &manifest_cache)
     : BeaconSetupService{endpoint, std::move(identity), manifest_cache}
   {}
 };
@@ -83,7 +84,8 @@ public:
     WITHOLD_RECONSTRUCTION_SHARES
   };
 
-  FaultySetupService(MuddleInterface &endpoint, Identity identity, ManifestCacheInterface &manifest_cache,
+  FaultySetupService(MuddleInterface &endpoint, Identity identity,
+                     ManifestCacheInterface &     manifest_cache,
                      const std::vector<Failures> &failures = {})
     : BeaconSetupService{endpoint, std::move(identity), manifest_cache}
   {

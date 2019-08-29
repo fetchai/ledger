@@ -39,8 +39,7 @@ namespace ledger {
 
 class ShardManagementInterface;
 
-class ShardManagementService : public core::PeriodicRunnable
-                             , public ledger::ManifestCacheInterface
+class ShardManagementService : public core::PeriodicRunnable, public ledger::ManifestCacheInterface
 {
 public:
   using MuddleInterface = muddle::MuddleInterface;

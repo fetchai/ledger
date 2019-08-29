@@ -52,8 +52,8 @@
 #include "beacon/cabinet_member_details.hpp"
 #include "beacon/entropy.hpp"
 #include "beacon/event_manager.hpp"
-#include "ledger/shards/manifest_cache_interface.hpp"
 #include "ledger/shards/manifest.hpp"
+#include "ledger/shards/manifest_cache_interface.hpp"
 
 #include <cstdint>
 #include <deque>
