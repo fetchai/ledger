@@ -90,7 +90,7 @@ void Blas<S, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
         ret_slice.in_parallel().RangedApplyMultiple(
             range,
             [beta](auto const &vr_fv_y, auto &vw_fv_y) {
-              vw_fv_y = decltype(vr_fv_y)(beta) * vw_fv_y;
+              vw_fv_y = decltype(vr_fv_y)(beta) * vr_fv_y;
             },
             slice_fv_y);
       }
