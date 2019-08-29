@@ -69,13 +69,16 @@ TEST_F(InitializerListTests, used_in_invoke_expressions)
 
 TEST_F(InitializerListTests, not_inferred)
 {
-  for (std::string wrong: {"{}", "{1, 2, 3}"}) {
+  for (std::string wrong : {"{}", "{1, 2, 3}"})
+  {
     ASSERT_FALSE(toolkit.Compile((
-             R"(
+                                     R"(
       function main()
         var x = )" + wrong + R"(;
       endfunction
-    )").c_str())) << "This one managed to break through: " << wrong;
+    )")
+                                     .c_str()))
+        << "This one managed to break through: " << wrong;
   }
 }
 
