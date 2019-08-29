@@ -91,8 +91,10 @@ void Word2VecClient<TensorType>::PrepareModel()
 {
   this->g_ptr_ = std::make_shared<fetch::ml::Graph<TensorType>>();
 
-  std::string input_name = this->g_ptr_->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
-  std::string context_name = this->g_ptr_->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Context", {});
+  std::string input_name =
+      this->g_ptr_->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
+  std::string context_name =
+      this->g_ptr_->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Context", {});
   this->label_name_ = this->g_ptr_->template AddNode<PlaceHolder<TensorType>>("Label", {});
   skipgram_         = this->g_ptr_->template AddNode<fetch::ml::layers::SkipGram<TensorType>>(
       "SkipGram", {input_name, context_name}, SizeType(1), SizeType(1), tp_.embedding_size,
@@ -110,7 +112,7 @@ void Word2VecClient<TensorType>::PrepareDataLoader()
 
   w2v_data_loader_ptr_ = std::make_shared<fetch::ml::dataloaders::GraphW2VLoader<DataType>>(
       tp_.window_size, tp_.negative_sample_size, tp_.freq_thresh, tp_.max_word_count);
-//  w2v_data_loader_ptr_->LoadVocab(vocab_file_);
+  //  w2v_data_loader_ptr_->LoadVocab(vocab_file_);
   w2v_data_loader_ptr_->BuildVocab({ReadFile(vocab_file_)}, tp_.min_count);
 
   this->dataloader_ptr_ = w2v_data_loader_ptr_;

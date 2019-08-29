@@ -72,7 +72,7 @@ using TensorType       = fetch::math::Tensor<DataType>;
 using VectorTensorType = std::vector<TensorType>;
 using SizeType         = typename TensorType::SizeType;
 
-//std::string ReadFile(std::string const &path)
+// std::string ReadFile(std::string const &path)
 //{
 //  std::ifstream t(path);
 //  return std::string((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
@@ -104,13 +104,13 @@ int main(int ac, char **av)
   tp.learning_rate_param.starting_learning_rate = tp.starting_learning_rate;
   tp.learning_rate_param.ending_learning_rate   = tp.ending_learning_rate;
 
-//  GraphW2VLoader<DataType> data_loader(tp.window_size, tp.negative_sample_size, tp.freq_thresh,
-//                                       tp.max_word_count);
+  //  GraphW2VLoader<DataType> data_loader(tp.window_size, tp.negative_sample_size, tp.freq_thresh,
+  //                                       tp.max_word_count);
   // set up dataloader
   /// DATA LOADING ///
-//  std::string vocab_file = "/tmp/vocab.txt";
-//  data_loader.BuildVocab({ReadFile(train_file)}, tp.min_count);
-//  data_loader.SaveVocab(vocab_file);
+  //  std::string vocab_file = "/tmp/vocab.txt";
+  //  data_loader.BuildVocab({ReadFile(train_file)}, tp.min_count);
+  //  data_loader.SaveVocab(vocab_file);
 
   std::vector<std::shared_ptr<TrainingClient<TensorType>>> clients(NUMBER_OF_CLIENTS);
   for (unsigned int i(0); i < NUMBER_OF_CLIENTS; ++i)
