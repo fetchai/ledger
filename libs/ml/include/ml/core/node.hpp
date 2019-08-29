@@ -250,16 +250,16 @@ std::vector<std::pair<Node<T> *, T>> Node<T>::BackPropagateSignal(TensorType con
   auto bp_it = back_propagated_error_signals.begin();
   for (auto &i : input_nodes_)
   {
-	  std::cout << "name_: " << name_ << std::endl;
-	  for (std::size_t j = 0; j < bp_it->shape().size(); j++) {
-		  std::cout << cached_output_.shape(j) << " , ";
-	  }
-	  std::cout << std::endl;
-	  if (bp_it->shape().size() > 2) {
-		  std::cout << "error: \n" << bp_it->View(0).Copy().ToString() << std::endl << std::endl;
-	  } else {
-		  std::cout << "error: \n" << bp_it->ToString() << std::endl << std::endl;
-	  }
+//	  std::cout << "name_: " << name_ << std::endl;
+//	  for (std::size_t j = 0; j < bp_it->shape().size(); j++) {
+//		  std::cout << cached_output_.shape(j) << " , ";
+//	  }
+//	  std::cout << std::endl;
+//	  if (bp_it->shape().size() > 2) {
+//		  std::cout << "error: \n" << bp_it->View(0).Copy().ToString() << std::endl << std::endl;
+//	  } else {
+//		  std::cout << "error: \n" << bp_it->ToString() << std::endl << std::endl;
+//	  }
   	
   	
     auto ret = i->BackPropagateSignal(*bp_it);

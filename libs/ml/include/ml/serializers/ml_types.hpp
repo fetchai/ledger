@@ -1273,31 +1273,19 @@ struct MapSerializer<ml::OpEmbeddingsSaveableParams<TensorType>, D>
 
   static uint8_t const OP_CODE        = 1;
   static uint8_t const BASE_CLASS     = 2;
-  static uint8_t const HAS_EMBED_OUT  = 3;
-  static uint8_t const EMBED_OUTPUT   = 4;
-  static uint8_t const UPDATED_ROWS   = 5;
-  static uint8_t const TRAILING_IND_1 = 6;
-  static uint8_t const TRAILING_IND_2 = 7;
+  static uint8_t const UPDATED_ROWS   = 3;
+  static uint8_t const TRAILING_IND_1 = 4;
+  static uint8_t const TRAILING_IND_2 = 5;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(7);
+    auto map = map_constructor(5);
     map.Append(OP_CODE, sp.op_type);
 
     // serialize parent class
     auto base_pointer = static_cast<ml::OpWeightsSaveableParams<TensorType> const *>(&sp);
     map.Append(BASE_CLASS, *base_pointer);
-
-    if (sp.embeddings_output)
-    {
-      map.Append(HAS_EMBED_OUT, true);
-      map.Append(EMBED_OUTPUT, *sp.embeddings_output);
-    }
-    else
-    {
-      map.Append(HAS_EMBED_OUT, false);
-    }
     map.Append(UPDATED_ROWS, sp.updated_rows);
     map.Append(TRAILING_IND_1, sp.trailing_indices1);
     map.Append(TRAILING_IND_2, sp.trailing_indices2);
@@ -1310,16 +1298,6 @@ struct MapSerializer<ml::OpEmbeddingsSaveableParams<TensorType>, D>
 
     auto base_pointer = static_cast<ml::OpWeightsSaveableParams<TensorType> *>(&sp);
     map.ExpectKeyGetValue(BASE_CLASS, *base_pointer);
-
-    bool has_embed_out;
-    map.ExpectKeyGetValue(HAS_EMBED_OUT, has_embed_out);
-    if (has_embed_out)
-    {
-      TensorType e_out;
-      map.ExpectKeyGetValue(EMBED_OUTPUT, e_out);
-      sp.embeddings_output = std::make_shared<TensorType>(e_out);
-    }
-
     map.ExpectKeyGetValue(UPDATED_ROWS, sp.updated_rows);
     map.ExpectKeyGetValue(TRAILING_IND_1, sp.trailing_indices1);
     map.ExpectKeyGetValue(TRAILING_IND_2, sp.trailing_indices2);

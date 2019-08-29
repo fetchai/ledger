@@ -91,11 +91,11 @@ int main(/*int ac, char **av*/)
 	 "all_input_add", {token_embedding, seg_pos_add});
 	
 	// create layernorm layer
-//	sum_input = g.template AddNode<fetch::ml::layers::LayerNorm<ArrayType>>(
-//	 "norm_embedddd", {sum_input}, SizeVector({model_dims, 1}), 0u);
+	std::string norm_input = g.template AddNode<fetch::ml::layers::LayerNorm<ArrayType>>(
+	 "norm_embedddd", {sum_input}, SizeVector({model_dims, 1}), 0u);
 	
 	// Ensemble the whole bert model
-	std::string layer_output = sum_input;
+	std::string layer_output = norm_input;
 	for (SizeType i = 0u; i < n_encoder_layers; i++)
 	{
 		layer_output = g.template AddNode<fetch::ml::layers::SelfAttentionEncoder<ArrayType>>(

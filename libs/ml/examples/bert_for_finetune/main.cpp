@@ -191,12 +191,12 @@ int main(int ac, char **av)
   }
 
   // setup params for training
-  SizeType train_size = 32;
-  SizeType test_size  = 4;
+  SizeType train_size = 20;
+  SizeType test_size  = 5;
   SizeType batch_size = 4;
   SizeType epochs     = 1000;
   SizeType layer_no   = 1;
-  DataType lr         = static_cast<DataType>(1e-3);
+  DataType lr         = static_cast<DataType>(1e-4);
   // load data into memory
   std::string file_path = av[2];
   std::string IMDB_path = av[3];
@@ -205,20 +205,13 @@ int main(int ac, char **av)
   std::cout << "Starting FETCH BERT Demo" << std::endl;
 
   BERTConfig config;
-	config.max_seq_len = 10;
-	config.model_dims = 8;
-	config.ff_dims = 10;
-	config.n_heads = 2;
-	config.vocab_size = 120;
-  
   // prepare IMDB data
-//  auto all_train_data = prepare_IMDB_finetune_data(IMDB_path, train_size, test_size, config);
-  auto all_train_data = prepare_data_for_simple_cls(train_size, test_size, config);
+  auto all_train_data = prepare_IMDB_finetune_data(IMDB_path, train_size, test_size, config);
+//  auto all_train_data = prepare_data_for_simple_cls(train_size, test_size, config);
   
   // load pretrained bert model
   GraphType g;
-//  load_pretrained_bert_model(file_path, config, g);
-	make_bert_model(config, g);
+  load_pretrained_bert_model(file_path, config, g);
   BERTInterface ret(config);
   std::cout << "finish loading pretraining model" << std::endl;
 	
