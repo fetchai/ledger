@@ -474,13 +474,13 @@ public:
     size_t ST = range.SIMDToLower<VectorRegisterType::E_BLOCK_COUNT>();
     size_t STU  = range.SIMDToUpper<VectorRegisterType::E_BLOCK_COUNT>();
 
-    VectorRegisterType         regs[sizeof...(args)], c;
+    VectorRegisterType         regs[sizeof...(args)], vc{type(0)};
     VectorRegisterIteratorType iters[sizeof...(args)];
     super_type::template InitializeVectorIterators<vector_size>(SF, range.to(), iters, std::forward<Args>(args)...);
 
     if (SFL != SF)
     {
-      ScalarRegisterType  c;
+      ScalarRegisterType  c{type(0)};
       ScalarRegisterType         scalar_regs[sizeof...(args)];
       ScalarRegisterIteratorType scalar_iters[sizeof...(args)];
       super_type::template InitializeVectorIterators<scalar_size>(range.from(), SF, scalar_iters, std::forward<Args>(args)...);
@@ -500,13 +500,13 @@ public:
       details::UnrollNext<sizeof...(args), VectorRegisterType, VectorRegisterIteratorType>::Apply(
           regs, iters);
       details::MatrixApplyFreeFunction<VectorRegisterType, void>::template Unroll<Args...>::Apply(
-          regs, apply, c);
-      c.Store(this->pointer() + i);
+          regs, apply, vc);
+      vc.Store(this->pointer() + i);
     }
 
     if (STU != ST)
     {
-      ScalarRegisterType  c;
+      ScalarRegisterType  c{type(0)};
       ScalarRegisterType         scalar_regs[sizeof...(args)];
       ScalarRegisterIteratorType scalar_iters[sizeof...(args)];
       super_type::template InitializeVectorIterators<scalar_size>(ST, range.to(), scalar_iters, std::forward<Args>(args)...);
