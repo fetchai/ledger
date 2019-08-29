@@ -27,8 +27,6 @@
 
 #include <sstream>
 
-#include <iostream>
-
 using namespace fetch::vm;
 
 namespace {
