@@ -253,8 +253,8 @@ int main(int argc, char **argv)
   std::cout << "beginning training...: " << std::endl;
 
   // Initialise Optimiser
-  fetch::ml::optimisers::AdamOptimiser<TensorType> optimiser(g, {"Input", "Context"}, "Label", error,
-                                                            tp.learning_rate_param);
+  fetch::ml::optimisers::AdamOptimiser<TensorType> optimiser(g, {"Input", "Context"}, "Label",
+                                                             error, tp.learning_rate_param);
 
   // Training loop
   for (SizeType i{0}; i < tp.training_epochs; i++)
