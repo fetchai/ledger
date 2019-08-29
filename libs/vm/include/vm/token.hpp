@@ -71,6 +71,8 @@ struct Token
     RightParenthesis,
     LeftSquareBracket,
     RightSquareBracket,
+    LeftBrace,
+    RightBrace,
     Plus,
     Minus,
     Multiply,
