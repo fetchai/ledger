@@ -23,15 +23,11 @@
 #include "ml/layers/self_attention_encoder.hpp"
 #include "ml/ops/add.hpp"
 #include "ml/ops/embeddings.hpp"
-#include "ml/ops/loss_functions/cross_entropy_loss.hpp"
-#include "ml/ops/slice.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
-#include "ml/optimisation/sgd_optimiser.hpp"
 
 #include "core/filesystem/read_file_contents.hpp"
 #include "core/serializers/base_types.hpp"
 #include "core/serializers/main_serializer.hpp"
-#include "math/metrics/cross_entropy.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"
 
@@ -51,7 +47,6 @@ using SizeVector = typename TensorType::SizeVector;
 using GraphType     = typename fetch::ml::Graph<TensorType>;
 using StateDictType = typename fetch::ml::StateDict<TensorType>;
 using OptimiserType = typename fetch::ml::optimisers::AdamOptimiser<TensorType>;
-// using OptimiserType = typename fetch::ml::optimisers::SGDOptimiser<TensorType>;
 
 using RegType         = fetch::ml::RegularisationType;
 using WeightsInitType = fetch::ml::ops::WeightsInitialisation;
@@ -68,7 +63,7 @@ struct BERTConfig
   SizeType vocab_size        = 30522u;
   SizeType segment_size      = 2u;
   DataType epsilon           = static_cast<DataType>(1e-12);
-  DataType dropout_keep_prob = static_cast<DataType>(1);
+  DataType dropout_keep_prob = static_cast<DataType>(0.9);
 };
 
 struct BERTInterface
