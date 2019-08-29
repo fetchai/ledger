@@ -157,6 +157,8 @@ std::string ReadFile(std::string const &path)
 
 struct TrainingParams
 {
+  // TODO (#1585) something is broken here. if u set max_word_count to sth smaller like 10000, there
+  // would be an error at the end of the sentence
   SizeType max_word_count = fetch::math::numeric_max<SizeType>();  // maximum number to be trained
   SizeType negative_sample_size = 5;     // number of negative sample per word-context pair
   SizeType window_size          = 5;     // window size for context sampling
