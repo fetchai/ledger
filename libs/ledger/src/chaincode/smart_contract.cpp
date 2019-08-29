@@ -386,13 +386,13 @@ void AddToParameterPack(vm::VM *vm, vm::ParameterPack &params, vm::TypeId expect
       vm::DefaultObjectCase>(
       expected_type,
       value_util::Slots(
-          vm::NullarySlot<vm::IdToType<vm::TypeIds::Bool>, vm::IntegralTypeIds>([&](auto cs) {
+          vm::NullarySlot<vm::TypeIdTraits<vm::TypeIds::Bool>, vm::IntegralTypeIds>([&](auto cs) {
             using Case = decltype(cs);
             AddToParameterPack<typename Case::type>(params, variant);
           }),
-          vm::NullarySlot<vm::IdToType<vm::TypeIds::Address>>(
+          vm::NullarySlot<vm::TypeIdTraits<vm::TypeIds::Address>>(
               [&](auto) { AddAddressToParameterPack(vm, params, variant); }),
-          vm::NullarySlot<vm::IdToType<vm::TypeIds::String>>(
+          vm::NullarySlot<vm::TypeIdTraits<vm::TypeIds::String>>(
               [&](auto) { AddStringToParameterPack(vm, params, variant); }),
           vm::DefaultNullarySlot([&](auto) {
             AddStructuredDataObjectToParameterPack(vm, expected_type, params, variant);

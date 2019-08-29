@@ -535,9 +535,9 @@ struct AnyFloatingPoint : public Variant
 
 /**
  * Provides some useful information for a given type id:
- *     IdToType<type_id>::value        is the type_id itself;
- *     IdToType<type_id>::type         is the C++ type this id corresponds to;
- *     IdToType<type_id>::storage_type is the type used to store values of this type id inside
+ *     TypeIdTraits<type_id>::value        is the type_id itself;
+ *     TypeIdTraits<type_id>::type         is the C++ type this id corresponds to;
+ *     TypeIdTraits<type_id>::storage_type is the type used to store values of this type id inside
  *         Variant and in containers.
  *
  * In addition, some instantiations define static method
@@ -549,7 +549,7 @@ struct AnyFloatingPoint : public Variant
  * @tparam id
  */
 template <TypeId id>
-struct IdToType;
+struct TypeIdTraits;
 
 template <TypeId id, typename T, typename U = T>
 struct VariantValue : std::integral_constant<TypeId, id>
@@ -560,165 +560,99 @@ struct VariantValue : std::integral_constant<TypeId, id>
 };
 
 template <>
-struct IdToType<TypeIds::Unknown> : VariantValue<TypeIds::Unknown, Unknown>
+struct TypeIdTraits<TypeIds::Unknown> : VariantValue<TypeIds::Unknown, Unknown>
 {
 };
 
 template <>
-struct IdToType<TypeIds::Null> : VariantValue<TypeIds::Null, std::nullptr_t>
+struct TypeIdTraits<TypeIds::Null> : VariantValue<TypeIds::Null, std::nullptr_t>
 {
 };
 
 template <>
-struct IdToType<TypeIds::Void> : VariantValue<TypeIds::Void, void>
+struct TypeIdTraits<TypeIds::Void> : VariantValue<TypeIds::Void, void>
 {
 };
 
-template <>
-struct IdToType<TypeIds::Bool> : VariantValue<TypeIds::Bool, bool, uint8_t>
-{
-  static constexpr auto &Reference(Variant &v) noexcept
-  {
-    return v.primitive.ui8;
-  }
-  static constexpr auto &Reference(Variant const &v) noexcept
-  {
-    return v.primitive.ui8;
-  }
-};
-
-template <>
-struct IdToType<TypeIds::Int8> : VariantValue<TypeIds::Int8, int8_t>
+template <TypeId type_id, typename Type, typename StorageType, StorageType(Primitive::*field)>
+struct PrimitiveField : VariantValue<type_id, Type, StorageType>
 {
   static constexpr auto &Reference(Variant &v) noexcept
   {
-    return v.primitive.i8;
+    return v.primitive.*field;
   }
   static constexpr auto &Reference(Variant const &v) noexcept
   {
-    return v.primitive.i8;
+    return v.primitive.*field;
   }
 };
 
 template <>
-struct IdToType<TypeIds::UInt8> : VariantValue<TypeIds::UInt8, uint8_t>
+struct TypeIdTraits<TypeIds::Bool> : PrimitiveField<TypeIds::Bool, bool, uint8_t, &Primitive::ui8>
 {
-  static constexpr auto &Reference(Variant &v) noexcept
-  {
-    return v.primitive.ui8;
-  }
-  static constexpr auto &Reference(Variant const &v) noexcept
-  {
-    return v.primitive.ui8;
-  }
 };
 
 template <>
-struct IdToType<TypeIds::Int16> : VariantValue<TypeIds::Int16, int16_t>
+struct TypeIdTraits<TypeIds::Int8> : PrimitiveField<TypeIds::Int8, int8_t, int8_t, &Primitive::i8>
 {
-  static constexpr auto &Reference(Variant &v) noexcept
-  {
-    return v.primitive.i16;
-  }
-  static constexpr auto &Reference(Variant const &v) noexcept
-  {
-    return v.primitive.i16;
-  }
 };
 
 template <>
-struct IdToType<TypeIds::UInt16> : VariantValue<TypeIds::UInt16, uint16_t>
+struct TypeIdTraits<TypeIds::UInt8>
+  : PrimitiveField<TypeIds::UInt8, uint8_t, uint8_t, &Primitive::ui8>
 {
-  static constexpr auto &Reference(Variant &v) noexcept
-  {
-    return v.primitive.ui16;
-  }
-  static constexpr auto &Reference(Variant const &v) noexcept
-  {
-    return v.primitive.ui16;
-  }
 };
 
 template <>
-struct IdToType<TypeIds::Int32> : VariantValue<TypeIds::Int32, int32_t>
+struct TypeIdTraits<TypeIds::Int16>
+  : PrimitiveField<TypeIds::Int16, int16_t, int16_t, &Primitive::i16>
 {
-  static constexpr auto &Reference(Variant &v) noexcept
-  {
-    return v.primitive.i32;
-  }
-  static constexpr auto &Reference(Variant const &v) noexcept
-  {
-    return v.primitive.i32;
-  }
 };
 
 template <>
-struct IdToType<TypeIds::UInt32> : VariantValue<TypeIds::UInt32, uint32_t>
+struct TypeIdTraits<TypeIds::UInt16>
+  : PrimitiveField<TypeIds::UInt16, uint16_t, uint16_t, &Primitive::ui16>
 {
-  static constexpr auto &Reference(Variant &v) noexcept
-  {
-    return v.primitive.ui32;
-  }
-  static constexpr auto &Reference(Variant const &v) noexcept
-  {
-    return v.primitive.ui32;
-  }
 };
 
 template <>
-struct IdToType<TypeIds::Int64> : VariantValue<TypeIds::Int64, int64_t>
+struct TypeIdTraits<TypeIds::Int32>
+  : PrimitiveField<TypeIds::Int32, int32_t, int32_t, &Primitive::i32>
 {
-  static constexpr auto &Reference(Variant &v) noexcept
-  {
-    return v.primitive.i64;
-  }
-  static constexpr auto &Reference(Variant const &v) noexcept
-  {
-    return v.primitive.i64;
-  }
 };
 
 template <>
-struct IdToType<TypeIds::UInt64> : VariantValue<TypeIds::UInt64, uint64_t>
+struct TypeIdTraits<TypeIds::UInt32>
+  : PrimitiveField<TypeIds::UInt32, uint32_t, uint32_t, &Primitive::ui32>
 {
-  static constexpr auto &Reference(Variant &v) noexcept
-  {
-    return v.primitive.ui64;
-  }
-  static constexpr auto &Reference(Variant const &v) noexcept
-  {
-    return v.primitive.ui64;
-  }
 };
 
 template <>
-struct IdToType<TypeIds::Float32> : VariantValue<TypeIds::Float32, float>
+struct TypeIdTraits<TypeIds::Int64>
+  : PrimitiveField<TypeIds::Int64, int64_t, int64_t, &Primitive::i64>
 {
-  static constexpr auto &Reference(Variant &v) noexcept
-  {
-    return v.primitive.f32;
-  }
-  static constexpr auto &Reference(Variant const &v) noexcept
-  {
-    return v.primitive.f32;
-  }
 };
 
 template <>
-struct IdToType<TypeIds::Float64> : VariantValue<TypeIds::Float64, double>
+struct TypeIdTraits<TypeIds::UInt64>
+  : PrimitiveField<TypeIds::UInt64, uint64_t, uint64_t, &Primitive::ui64>
 {
-  static constexpr auto &Reference(Variant &v) noexcept
-  {
-    return v.primitive.f64;
-  }
-  static constexpr auto &Reference(Variant const &v) noexcept
-  {
-    return v.primitive.f64;
-  }
 };
 
 template <>
-struct IdToType<TypeIds::Fixed32> : VariantValue<TypeIds::Fixed32, fixed_point::fp32_t>
+struct TypeIdTraits<TypeIds::Float32>
+  : PrimitiveField<TypeIds::Float32, float, float, &Primitive::f32>
+{
+};
+
+template <>
+struct TypeIdTraits<TypeIds::Float64>
+  : PrimitiveField<TypeIds::Float64, double, double, &Primitive::f64>
+{
+};
+
+template <>
+struct TypeIdTraits<TypeIds::Fixed32> : VariantValue<TypeIds::Fixed32, fixed_point::fp32_t>
 {
   static fixed_point::fp32_t &Reference(Variant &v) noexcept
   {
@@ -731,7 +665,7 @@ struct IdToType<TypeIds::Fixed32> : VariantValue<TypeIds::Fixed32, fixed_point::
 };
 
 template <>
-struct IdToType<TypeIds::Fixed64> : VariantValue<TypeIds::Fixed64, fixed_point::fp64_t>
+struct TypeIdTraits<TypeIds::Fixed64> : VariantValue<TypeIds::Fixed64, fixed_point::fp64_t>
 {
   static fixed_point::fp64_t &Reference(Variant &v) noexcept
   {
@@ -743,8 +677,7 @@ struct IdToType<TypeIds::Fixed64> : VariantValue<TypeIds::Fixed64, fixed_point::
   }
 };
 
-template <>
-struct IdToType<TypeIds::String> : VariantValue<TypeIds::String, Ptr<String>>
+struct ObjectField
 {
   static constexpr auto &Reference(Variant &v) noexcept
   {
@@ -757,31 +690,28 @@ struct IdToType<TypeIds::String> : VariantValue<TypeIds::String, Ptr<String>>
 };
 
 template <>
-struct IdToType<TypeIds::Address> : VariantValue<TypeIds::Address, Ptr<Address>>
+struct TypeIdTraits<TypeIds::String> : VariantValue<TypeIds::String, Ptr<String>>, ObjectField
 {
-  static constexpr auto &Reference(Variant &v) noexcept
-  {
-    return v.object;
-  }
-  static constexpr auto const &Reference(Variant const &v) noexcept
-  {
-    return v.object;
-  }
+};
+
+template <>
+struct TypeIdTraits<TypeIds::Address> : VariantValue<TypeIds::Address, Ptr<Address>>, ObjectField
+{
 };
 
 /**
  * Case alternative for type_util::Switch.
  * It stores a value of type Variant and provides access to exactly one of its fields,
- * according to IdToType, thus effectively mapping type ids known at run-time on compile-time
+ * according to TypeIdTraits, thus effectively mapping type ids known at run-time on compile-time
  * information such as types and variant struct members.
  *
- * @tparam IdToType an instance of IdToType template defined above
+ * @tparam TypeIdTraits an instance of TypeIdTraits template defined above
  */
-template <class IdToType, bool = IsPrimitive<typename IdToType::type>::value>
-class VariantView
-  : public IdToType  // parent defines value, type, storage_type and, perhaps, Reference(Variant &)
+template <class TypeIdTraits, bool = IsPrimitive<typename TypeIdTraits::type>::value>
+class VariantView : public TypeIdTraits  // parent defines value, type, storage_type
+                                         // and, perhaps, Reference()
 {
-  using Parent = IdToType;
+  // using Parent = TypeIdTraits;
 
 protected:
   Variant *      v_  = nullptr;
@@ -843,7 +773,7 @@ public:
   }
 
   /**
-   * Invoked by type_util::Switch when a selector type id matches IdToType::value.
+   * Invoked by type_util::Switch when a selector type id matches TypeIdTraits::value.
    *
    * @param f templated function to be invoked of viewed arguments
    * @return
@@ -864,18 +794,18 @@ public:
   template <class F>
   static constexpr decltype(auto) Invoke(F &&f)
   {
-    // IdToType provides members type, storage_type and value
-    return value_util::Invoke(std::forward<F>(f), IdToType{});
+    // TypeIdTraits provides members type, storage_type and value
+    return value_util::Invoke(std::forward<F>(f), TypeIdTraits{});
   }
 };
 
 // Partial specialization of VariantView for object types.
-// It inherits the otherwise non-existent VariantView<IdToType, true>,
+// It inherits the otherwise non-existent VariantView<TypeIdTraits, true>,
 // to reuse methods common to primitive and non-primitive types.
-template <class IdToType>
-class VariantView<IdToType, false> : protected VariantView<IdToType, true>
+template <class TypeIdTraits>
+class VariantView<TypeIdTraits, false> : protected VariantView<TypeIdTraits, true>
 {
-  using Parent = VariantView<IdToType, true>;
+  using Parent = VariantView<TypeIdTraits, true>;
   using Parent::v_;
   using Parent::Parent;
 
@@ -904,15 +834,15 @@ public:
   template <class F>
   static constexpr decltype(auto) Invoke(F &&f)
   {
-    return value_util::Invoke(std::forward<F>(f), IdToType{});
+    return value_util::Invoke(std::forward<F>(f), TypeIdTraits{});
   }
 };
 
 template <>
-class VariantView<IdToType<TypeIds::Null>, false>
-  : public IdToType<TypeIds::Null>  // parent defines value, type and storage_type
+class VariantView<TypeIdTraits<TypeIds::Null>, false>
+  : public TypeIdTraits<TypeIds::Null>  // parent defines value, type and storage_type
 {
-  using Parent = IdToType;
+  using Parent = TypeIdTraits;
 
 protected:
   Variant *      v_  = nullptr;
@@ -956,7 +886,7 @@ public:
   }
 
   /**
-   * Invoked by type_util::Switch when a selector type id matches IdToType::value.
+   * Invoked by type_util::Switch when a selector type id matches TypeIdTraits::value.
    *
    * @param f templated function to be invoked of viewed arguments
    * @param args... variants
@@ -970,12 +900,12 @@ public:
   template <class F>
   static constexpr decltype(auto) Invoke(F &&f)
   {
-    return value_util::Invoke(std::forward<F>(f), IdToType<TypeIds::Null>{});
+    return value_util::Invoke(std::forward<F>(f), TypeIdTraits<TypeIds::Null>{});
   }
 };
 
 // Class DefaultVariantView is used for DefaultCase clauses of type_util::Switch.
-class DefaultVariantView : public VariantValue<TypeIds::NumReserved, Ptr<Object>>
+class DefaultVariantView : protected VariantValue<TypeIds::NumReserved, Ptr<Object>>
 {
   using Parent = VariantValue<TypeIds::NumReserved, Ptr<Object>>;
 
@@ -1057,11 +987,11 @@ public:
 };
 
 template <TypeId id>
-using IdView = VariantView<IdToType<id>>;
+using IdView = VariantView<TypeIdTraits<id>>;
 
 // Typeid sets
 template <TypeId... ids>
-using TypeIdSequence = pack::Pack<IdToType<ids>...>;
+using TypeIdSequence = pack::Pack<TypeIdTraits<ids>...>;
 
 using UnsignedIntegerIds =
     TypeIdSequence<TypeIds::UInt8, TypeIds::UInt16, TypeIds::UInt32, TypeIds::UInt64>;
@@ -1079,7 +1009,7 @@ using RealTypeIds = pack::ConcatT<FloatingPointIds, FixedPointIds>;
 
 using NumericTypeIds = pack::ConcatT<IntegralTypeIds, RealTypeIds>;
 
-using PrimitiveTypeIds = pack::ConsT<IdToType<TypeIds::Bool>, NumericTypeIds>;
+using PrimitiveTypeIds = pack::ConsT<TypeIdTraits<TypeIds::Bool>, NumericTypeIds>;
 
 using BuiltinTypeIds =
     pack::ConcatT<PrimitiveTypeIds, TypeIdSequence<TypeIds::String, TypeIds::Address>>;
@@ -1134,7 +1064,8 @@ using NonInstantiableTypes = TypeIdCases<NonInstantiableTypeIds>;
  * When there's no match (i.e. there's no DefaultCase among Cases), zero value of f's return type
  * is returned.
  *
- * @tparam Cases... a set of VariantView types to be handled, each one having a member value to be compared against type_id
+ * @tparam Cases... a set of VariantView types to be handled, each one having a member value to be
+ * compared against type_id
  * @param type_id the selector value that identifies a particular Case
  * @param f a callable to be invoked on matching views, or a special dummy type-identifier
  * @param variants... a (possibly empty) set of Variants to handle
@@ -1195,7 +1126,7 @@ constexpr auto ApplyBuiltinFunctor(TypeId type_id, F &&f, Variants &&... variant
 //             TypeIdSlot<VariantView<TypeIds::Int32>, VariantView<TypeIds::Int64>>(
 //                 [](auto){ return std::string{"This is a large integer."}; })
 //         ));
-//                 
+//
 /**
  * Slot that handles Views by passing constructed views to f.
  *
@@ -1274,7 +1205,7 @@ constexpr auto BuiltinSlot(F &&f)
 
 /**
  * Slot that handles dummy type arguments in zero-variant ApplyFunctor invocations.
- * Unlike in a non-nullary slot, its type parameters should be instances of IdToType, to match
+ * Unlike in a non-nullary slot, its type parameters should be instances of TypeIdTraits, to match
  * a dummy argument passed by ApplyFunctor in case of type_id match.
  *
  * @tparam TypeIdValues... a set of TypeIds to be matched against type_id in ApplyFunctor invocation
@@ -1290,7 +1221,7 @@ constexpr auto NullarySlot(F &&f)
 /**
  * Slot that handles dummy type arguments in zero-variant ApplyFunctor invocations.
  * It implicitly appends a dummy type that DefaultObjectCase passes for nullary invocations.
- * Unlike in a non-nullary slot, its type parameters should be instances of IdToType, to match
+ * Unlike in a non-nullary slot, its type parameters should be instances of TypeIdTraits, to match
  * a dummy argument passed by ApplyFunctor in case of type_id match.
  *
  * @tparam TypeIdValues... a set of TypeIds to be matched against type_id in ApplyFunctor invocation
