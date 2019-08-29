@@ -1546,7 +1546,7 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &starting_hash,
 
   if (!bloom_filter_->ReportFalsePositives(false_positives))
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Bloom filter false positive rate exceeded threshold");
+    FETCH_LOG_INFO(LOGGING_NAME, "Bloom filter false positive rate exceeded threshold");
   }
 
   return duplicates;

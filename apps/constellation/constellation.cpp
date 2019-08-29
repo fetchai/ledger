@@ -65,6 +65,9 @@ using fetch::network::AtomicCounterName;
 using fetch::ledger::Address;
 using fetch::ledger::GenesisFileCreator;
 using fetch::muddle::MuddleEndpoint;
+using fetch::muddle::MuddleInterface;
+using fetch::ledger::Manifest;
+using fetch::network::NetworkManager;
 
 using ExecutorPtr = std::shared_ptr<Executor>;
 
@@ -77,8 +80,10 @@ using EntropyPtr       = std::unique_ptr<ledger::EntropyGeneratorInterface>;
 using ConstByteArray   = byte_array::ConstByteArray;
 using BeaconServicePtr = std::shared_ptr<fetch::beacon::BeaconService>;
 using ConsensusPtr     = Constellation::ConsensusPtr;
+using CertificatePtr   = Constellation::CertificatePtr;
 using MainChain        = ledger::MainChain;
 using Identity         = crypto::Identity;
+using Config           = Constellation::Config;
 
 static const std::size_t HTTP_THREADS{4};
 static char const *      GENESIS_FILENAME = "genesis_file.json";
@@ -202,15 +207,31 @@ ConsensusPtr CreateConsensus(Constellation::Config const &cfg, StakeManagerPtr s
   return consensus;
 }
 
-BeaconServicePtr CreateBeaconService(Constellation::Config const &cfg, MuddleEndpoint &endpoint,
-                                     Constellation::CertificatePtr certificate)
+muddle::MuddlePtr CreateBeaconNetwork(Config const &cfg, CertificatePtr certificate,
+                                      NetworkManager const &nm)
+{
+  muddle::MuddlePtr network;
+
+  if (cfg.proof_of_stake)
+  {
+    network = muddle::CreateMuddle("DKGN", certificate, nm,
+                                   cfg.manifest.FindExternalAddress(ServiceIdentifier::Type::DKG));
+  }
+
+  return network;
+}
+
+BeaconServicePtr CreateBeaconService(Constellation::Config const &cfg, MuddleInterface &muddle,
+                                     ledger::ShardManagementService &manifest_cache,
+                                     CertificatePtr certificate)
 {
   BeaconServicePtr                         beacon{};
   beacon::EventManager::SharedEventManager event_manager = beacon::EventManager::New();
 
   if (cfg.proof_of_stake)
   {
-    beacon = std::make_unique<fetch::beacon::BeaconService>(endpoint, certificate, event_manager);
+    beacon = std::make_unique<fetch::beacon::BeaconService>(muddle, manifest_cache, certificate,
+                                                            event_manager);
   }
 
   return beacon;
@@ -256,7 +277,8 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   , shard_management_(std::make_shared<ShardManagementService>(cfg_.manifest, lane_control_,
                                                                *muddle_, cfg_.log2_num_lanes))
   , dag_{GenerateDAG(cfg_.features.IsEnabled("synergetic"), "dag_db_", true, certificate)}
-  , beacon_{CreateBeaconService(cfg_, muddle_->GetEndpoint(), certificate)}
+  , beacon_network_{CreateBeaconNetwork(cfg_, certificate, network_manager_)}
+  , beacon_{CreateBeaconService(cfg_, *beacon_network_, *shard_management_, certificate)}
   , stake_{CreateStakeManager(cfg_)}
   , consensus_{CreateConsensus(cfg_, stake_, beacon_, chain_, certificate->identity())}
   , execution_manager_{std::make_shared<ExecutionManager>(
@@ -457,6 +479,12 @@ void Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstra
 
       std::this_thread::sleep_for(std::chrono::milliseconds{500});
     }
+  }
+
+  // beacon network
+  if (beacon_network_)
+  {
+    beacon_network_->Start({LookupLocalPort(cfg_.manifest, ServiceIdentifier::Type::DKG)});
   }
 
   // BEFORE the block coordinator starts its state set up special genesis

@@ -29,7 +29,21 @@
 #include "beacon/entropy.hpp"
 
 namespace fetch {
+namespace muddle {
+
+class MuddleInterface;
+
+} // namespace muddle
+
+namespace ledger {
+
+class ShardManagementService;
+
+} // namespace ledger
+
 namespace beacon {
+
+
 
 class BeaconSetupService
 {
@@ -65,7 +79,8 @@ public:
   using Identity                = crypto::Identity;
   using SharedAeonExecutionUnit = std::shared_ptr<AeonExecutionUnit>;
   using CallbackFunction        = std::function<void(SharedAeonExecutionUnit)>;
-  using Endpoint                = muddle::MuddleEndpoint;
+  using MuddleEndpoint          = muddle::MuddleEndpoint;
+  using MuddleInterface         = muddle::MuddleInterface;
   using Client                  = muddle::rpc::Client;
   using ClientPtr               = std::shared_ptr<Client>;
   using StateMachine            = core::StateMachine<State>;
@@ -76,6 +91,7 @@ public:
   using Address                 = byte_array::ConstByteArray;
   using PrivateKey              = BeaconManager::PrivateKey;
   using VerificationVector      = BeaconManager::VerificationVector;
+  using ShardManagementService  = ledger::ShardManagementService;
 
   struct ShareSubmission
   {
@@ -90,10 +106,9 @@ public:
     service::Promise response{nullptr};
   };
 
-  BeaconSetupService()                           = delete;
+  BeaconSetupService(MuddleInterface &muddle, Identity identity, ShardManagementService &manifest_cache);
   BeaconSetupService(BeaconSetupService const &) = delete;
   BeaconSetupService(BeaconSetupService &&)      = delete;
-  BeaconSetupService(Endpoint &endpoint, Identity identity);
 
   /// State functions
   /// @{
@@ -123,11 +138,13 @@ public:
   std::weak_ptr<core::Runnable> GetWeakRunnable();
 
 private:
-  Identity            identity_;
-  Endpoint &          endpoint_;
-  SubscriptionPtr     share_subscription_;
-  SubscriptionPtr     id_subscription_;
-  muddle::rpc::Client rpc_client_;
+  Identity                identity_;
+  ShardManagementService &manifest_cache_;
+  MuddleInterface &       muddle_;
+  MuddleEndpoint &        endpoint_;
+  SubscriptionPtr         share_subscription_;
+  SubscriptionPtr         id_subscription_;
+  muddle::rpc::Client     rpc_client_;
 
   std::mutex                          mutex_;
   CallbackFunction                    callback_function_;

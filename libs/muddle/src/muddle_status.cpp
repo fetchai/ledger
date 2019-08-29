@@ -118,6 +118,7 @@ void BuildMuddleStatus(Muddle const &muddle, variant::Variant &output)
 {
   output            = variant::Variant::Object();
   output["network"] = muddle.GetNetwork().ToString();
+  output["address"] = muddle.GetAddress().ToBase64();
 
   BuildConnectionList(muddle.connection_register(), output["connections"]);
   BuildPeerLists(muddle.connection_list(), output["peers"]);
@@ -128,17 +129,26 @@ void BuildMuddleStatus(Muddle const &muddle, variant::Variant &output)
 
 variant::Variant GetStatusSummary()
 {
+  auto instances = MuddleRegistry::Instance().GetMap();
+
   // create the output array
-  auto output = variant::Variant::Object();
+  auto output = variant::Variant::Array(instances.size());
 
   // build all the statuses for all the muddles
-  for (auto const &element : MuddleRegistry::Instance().GetMap())
+  std::size_t index{0};
+  for (auto const &element : instances)
   {
     auto muddle = element.second.lock();
     if (muddle)
     {
-      BuildMuddleStatus(*muddle, output[element.first.ToBase64()]);
+      BuildMuddleStatus(*muddle, output[index]);
     }
+    else
+    {
+      output[index] = variant::Variant::Null();
+    }
+
+    ++index;
   }
 
   return output;

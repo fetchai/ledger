@@ -16,12 +16,18 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/containers/set_difference.hpp"
+#include "ledger/shards/shard_management_service.hpp"
+#include "muddle/muddle_interface.hpp"
+#include "muddle/muddle_endpoint.hpp"
 #include "beacon/beacon_setup_protocol.hpp"
 #include "beacon/beacon_setup_service.hpp"
 #include "network/generics/requesting_queue.hpp"
 
 namespace fetch {
 namespace beacon {
+
+using ledger::ServiceIdentifier;
 
 char const *ToString(BeaconSetupService::State state)
 {
@@ -61,14 +67,15 @@ char const *ToString(BeaconSetupService::State state)
   return text;
 }
 
-BeaconSetupService::BeaconSetupService(Endpoint &endpoint, Identity identity)
+BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identity, ShardManagementService &manifest_cache)
   : identity_{std::move(identity)}
-  , endpoint_{endpoint}
+  , manifest_cache_{manifest_cache}
+  , muddle_{muddle}
+  , endpoint_{muddle_.GetEndpoint()}
   , id_subscription_(endpoint_.Subscribe(SERVICE_DKG, CHANNEL_ID_DISTRIBUTION))
   , rpc_client_{"BeaconSetupService", endpoint_, SERVICE_DKG, CHANNEL_RPC}
   , state_machine_{std::make_shared<StateMachine>("BeaconSetupService", State::IDLE, ToString)}
 {
-
   state_machine_->RegisterHandler(State::IDLE, this, &BeaconSetupService::OnIdle);
   state_machine_->RegisterHandler(State::WAIT_FOR_DIRECT_CONNECTIONS, this,
                                   &BeaconSetupService::OnWaitForDirectConnections);
@@ -128,12 +135,8 @@ BeaconSetupService::State BeaconSetupService::OnIdle()
 BeaconSetupService::State BeaconSetupService::OnWaitForDirectConnections()
 {
   std::lock_guard<std::mutex> lock(mutex_);
-  auto                        v_peers = endpoint_.GetDirectlyConnectedPeers();
-  std::unordered_set<Address> peers(v_peers.begin(), v_peers.end());
 
-  bool     all_connected = true;
-  uint16_t connected     = 0;
-
+  std::unordered_set<Address> aeon_members;
   for (auto &m : beacon_->aeon.members)
   {
     // Skipping own address
@@ -142,29 +145,53 @@ BeaconSetupService::State BeaconSetupService::OnWaitForDirectConnections()
       continue;
     }
 
-    // Checking if other peers are there
-    if (peers.find(m.identifier()) == peers.end())
-    {
-      all_connected = false;
+    aeon_members.emplace(m.identifier());
+  }
 
-      // TODO(tfr): Request muddle to connect.
+  // add the outstanding peers
+  auto const outstanding_peers = aeon_members - muddle_.GetDirectlyConnectedPeers();
+
+  ledger::Manifest manifest{};
+  for (auto const &address : outstanding_peers)
+  {
+    std::unique_ptr<network::Uri> hint{};
+
+    // lookup the manifest for the desired address
+    if (manifest_cache_.QueryManifest(address, manifest))
+    {
+      // attempt to find the service entry
+      auto it = manifest.FindService(ServiceIdentifier::Type::DKG);
+      if (it != manifest.end())
+      {
+        hint = std::make_unique<network::Uri>(it->second.uri());
+      }
+    }
+
+    if (hint)
+    {
+      // tell muddle to connect to the address with the specified hint
+      muddle_.ConnectTo(address, *hint);
     }
     else
     {
-      connected++;
+      // tell muddle to connect to the address using normal service discovery
+      muddle_.ConnectTo(address);
     }
   }
 
-  if (all_connected)
+  // request removal of unwanted connections
+  muddle_.DisconnectFrom(muddle_.GetRequestedPeers() - aeon_members);
+
+  // if there are no outstanding peers then it means that we are all connected!
+  if (outstanding_peers.empty())
   {
     FETCH_LOG_INFO(LOGGING_NAME, "All peers connected. Proceeding.");
     return State::BROADCAST_ID;
   }
 
   state_machine_->Delay(std::chrono::milliseconds(200));
-  FETCH_LOG_INFO(LOGGING_NAME,
-                 "Waiting for all peers to join before starting setup. Connected: ", connected,
-                 " expect: ", beacon_->aeon.members.size() - 1);
+  FETCH_LOG_INFO(LOGGING_NAME, "Waiting for all peers to join before starting setup. Outstanding: ",
+                 outstanding_peers.size(), " / ", aeon_members.size());
 
   return State::WAIT_FOR_DIRECT_CONNECTIONS;
 }

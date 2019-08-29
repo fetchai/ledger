@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "muddle/muddle_interface.hpp"
 #include "beacon/aeon.hpp"
-
 #include "beacon/beacon_service.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
@@ -62,11 +62,13 @@ char const *ToString(BeaconService::State state)
   return text;
 }
 
-BeaconService::BeaconService(Endpoint &endpoint, CertificatePtr certificate,
-                             SharedEventManager event_manager, uint64_t blocks_per_round)
+BeaconService::BeaconService(MuddleInterface &               muddle,
+                             ledger::ShardManagementService &manifest_cache,
+                             CertificatePtr certificate, SharedEventManager event_manager,
+                             uint64_t blocks_per_round)
   : certificate_{certificate}
   , identity_{certificate->identity()}
-  , endpoint_{endpoint}
+  , endpoint_{muddle.GetEndpoint()}
   , state_machine_{std::make_shared<StateMachine>("BeaconService", State::WAIT_FOR_SETUP_COMPLETION,
                                                   ToString)}
   , blocks_per_round_{blocks_per_round}
@@ -74,7 +76,7 @@ BeaconService::BeaconService(Endpoint &endpoint, CertificatePtr certificate,
   , entropy_subscription_{endpoint_.Subscribe(SERVICE_DKG, CHANNEL_ENTROPY_DISTRIBUTION)}
   , rpc_client_{"BeaconService", endpoint_, SERVICE_DKG, CHANNEL_RPC}
   , event_manager_{std::move(event_manager)}
-  , cabinet_creator_{endpoint_, identity_}  // TODO(tfr): Make shared
+  , cabinet_creator_{muddle, identity_, manifest_cache}  // TODO(tfr): Make shared
   , cabinet_creator_protocol_{cabinet_creator_}
   , beacon_protocol_{*this}
   , entropy_generated_count_{telemetry::Registry::Instance().CreateCounter(

@@ -78,6 +78,7 @@ public:
   using BeaconManager           = dkg::BeaconManager;
   using SharedAeonExecutionUnit = std::shared_ptr<AeonExecutionUnit>;
   using Endpoint                = muddle::MuddleEndpoint;
+  using MuddleInterface         = muddle::MuddleInterface;
   using Client                  = muddle::rpc::Client;
   using ClientPtr               = std::shared_ptr<Client>;
   using CabinetMemberList       = std::unordered_set<Identity>;
@@ -95,7 +96,8 @@ public:
   BeaconService()                      = delete;
   BeaconService(BeaconService const &) = delete;
 
-  BeaconService(Endpoint &endpoint, CertificatePtr certificate, SharedEventManager event_manager,
+  BeaconService(MuddleInterface &muddle, ledger::ShardManagementService &manifest_cache,
+                CertificatePtr certificate, SharedEventManager event_manager,
                 uint64_t blocks_per_round = 1);
 
   /// @name Entropy Generator

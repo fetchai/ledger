@@ -32,7 +32,7 @@ class MuddleRegistry
 {
 public:
   using WeakMuddlePtr = std::weak_ptr<Muddle>;
-  using MuddleMap     = std::unordered_map<Address, WeakMuddlePtr>;
+  using MuddleMap     = std::unordered_map<Muddle const *, WeakMuddlePtr>;
 
   static MuddleRegistry &Instance();
 
@@ -40,7 +40,7 @@ public:
   ~MuddleRegistry() = default;
 
   void Register(WeakMuddlePtr muddle);
-  void Unregister(Address const &address);
+  void Unregister(Muddle const *muddle);
 
   MuddleMap GetMap() const;
 
