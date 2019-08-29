@@ -62,6 +62,7 @@ public:
   ///////////////////////////////////
 
   Node() = default;
+
   Node(OpType const &operation_type, std::string name,
        std::function<std::shared_ptr<ops::Ops<TensorType>>()> const &constructor)
     : name_(std::move(name))
@@ -70,12 +71,29 @@ public:
   {
     op_ptr_ = constructor();
   }
+
   Node(OpType const &operation_type, std::string name, std::shared_ptr<ops::Ops<TensorType>> op_ptr)
     : name_(std::move(name))
     , cached_output_status_(CachedOutputState::CHANGED_SIZE)
     , operation_type_(operation_type)
     , op_ptr_(op_ptr)
   {}
+
+  /**
+   * This is used to make a copy of one node from another, i.e. when sharing weights.
+   * @param old_node
+   * @param name
+   * @param op_ptr
+   */
+  Node(Node &old_node, std::string name, std::shared_ptr<ops::Ops<TensorType>> op_ptr)
+    : name_(std::move(name))
+    , cached_output_status_(CachedOutputState::CHANGED_SIZE)
+    , operation_type_(old_node.get_op_type())
+    , op_ptr_(op_ptr)
+  {
+    cached_output_ = old_node.cached_output_.Copy();
+  }
+
   virtual ~Node() = default;
 
   ///////////////////////
@@ -301,8 +319,11 @@ std::vector<typename Node<T>::NodePtrType> const &Node<T>::GetOutputs() const
 template <typename T>
 void Node<T>::ResetCache(bool input_size_changed)
 {
-  cached_output_status_ =
-      input_size_changed ? CachedOutputState::CHANGED_SIZE : CachedOutputState::CHANGED_CONTENT;
+  if (cached_output_status_ != CachedOutputState::CHANGED_SIZE)
+  {
+    cached_output_status_ =
+        input_size_changed ? CachedOutputState::CHANGED_SIZE : CachedOutputState::CHANGED_CONTENT;
+  }
 }
 
 /**

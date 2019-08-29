@@ -31,8 +31,8 @@
 namespace fetch {
 namespace serializers {
 
-MsgPackSerializer::MsgPackSerializer(byte_array::ByteArray const &s)
-  : data_{s.Copy()}
+MsgPackSerializer::MsgPackSerializer(byte_array::ByteArray s)
+  : data_{std::move(s)}
 {}
 
 MsgPackSerializer::MsgPackSerializer(MsgPackSerializer const &from)

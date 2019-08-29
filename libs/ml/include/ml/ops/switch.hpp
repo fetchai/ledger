@@ -38,6 +38,7 @@ public:
   using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpSwitchSaveableParams<T>;
+  using MyType        = Switch<TensorType>;
 
   Switch() = default;
 
@@ -46,6 +47,22 @@ public:
   {}
 
   ~Switch() override = default;
+
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
+  {
+    SPType sp{};
+    return std::make_shared<SPType>(sp);
+  }
+  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
+  {
+    FETCH_UNUSED(me);
+    assert(me.get() == this);
+
+    auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
+
+    return copyshare;
+  }
 
   /**
    * based on boolean condition, switch between second and third array's element.
@@ -83,12 +100,6 @@ public:
     // be adivsed, it is not reasonable to return gradient for mask, so the mask gradient is set to
     // zero here
     return {mask_return_signal, then_return_signal, else_return_signal};
-  }
-
-  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
-  {
-    SPType sp{};
-    return std::make_shared<SPType>(sp);
   }
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
