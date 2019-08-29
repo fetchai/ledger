@@ -63,7 +63,6 @@ using fetch::network::AtomicInFlightCounter;
 using fetch::network::AtomicCounterName;
 using fetch::ledger::Address;
 using fetch::ledger::GenesisFileCreator;
-using fetch::muddle::MuddleEndpoint;
 using fetch::muddle::MuddleInterface;
 using fetch::ledger::Manifest;
 using fetch::network::NetworkManager;
