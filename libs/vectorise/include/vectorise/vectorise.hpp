@@ -28,12 +28,12 @@
 namespace fetch {
 namespace vectorise {
 
-ADD_REGISTER_SIZE(int32_t, sizeof(int32_t));
-ADD_REGISTER_SIZE(int64_t, sizeof(int64_t));
-ADD_REGISTER_SIZE(float, sizeof(float));
-ADD_REGISTER_SIZE(double, sizeof(double));
-ADD_REGISTER_SIZE(fixed_point::fp32_t, sizeof(fixed_point::fp32_t));
-ADD_REGISTER_SIZE(fixed_point::fp64_t, sizeof(fixed_point::fp64_t));
+ADD_REGISTER_SIZE(int32_t, 8 * sizeof(int32_t));
+ADD_REGISTER_SIZE(int64_t, 8 * sizeof(int64_t));
+ADD_REGISTER_SIZE(float, 8 * sizeof(float));
+ADD_REGISTER_SIZE(double, 8 * sizeof(double));
+ADD_REGISTER_SIZE(fixed_point::fp32_t, 8 * sizeof(fixed_point::fp32_t));
+ADD_REGISTER_SIZE(fixed_point::fp64_t, 8 * sizeof(fixed_point::fp64_t));
 
 }  // namespace vectorise
 }  // namespace fetch
