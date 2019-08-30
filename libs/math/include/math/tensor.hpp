@@ -288,7 +288,6 @@ public:
 
   ConstSliceType Slice() const;
   ConstSliceType Slice(SizeType index, SizeType axis = 0) const;
-  ConstSliceType Slice(std::pair<SizeType, SizeType> start_end_index, SizeType axis = 0) const;
   ConstSliceType Slice(SizeVector index, SizeVector axes) const;
   TensorSlice    Slice();
   TensorSlice    Slice(SizeType index, SizeType axis = 0);
@@ -2167,36 +2166,6 @@ typename Tensor<T, C>::ConstSliceType Tensor<T, C>::Slice(SizeType index, SizeTy
     if (axis == j)
     {
       range.push_back({index, index + 1, 1});
-    }
-    else
-    {
-      range.push_back({0, shape().at(j), 1});
-    }
-  }
-
-  return ConstSliceType(*this, range, axis);
-}
-
-/**
- * Returns a Slice Range that is not permitted to alter the original tensor
- * @tparam T
- * @tparam C
- * @param index
- * @param axis
- * @return
- */
-template <typename T, typename C>
-typename Tensor<T, C>::ConstSliceType Tensor<T, C>::Slice(
-    std::pair<SizeType, SizeType> start_end_index, SizeType axis) const
-{
-  std::vector<SizeVector> range;
-
-  for (SizeType j = 0; j < shape().size(); ++j)
-  {
-    if (axis == j)
-    {
-      assert(start_end_index.first < start_end_index.second);
-      range.push_back({start_end_index.first, start_end_index.second, 1});
     }
     else
     {

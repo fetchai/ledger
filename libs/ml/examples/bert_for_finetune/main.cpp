@@ -19,24 +19,17 @@
 #include "math/tensor.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
-#include "ml/layers/normalisation/layer_norm.hpp"
-#include "ml/layers/self_attention_encoder.hpp"
-#include "ml/ops/add.hpp"
 #include "ml/ops/embeddings.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/ops/slice.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
-#include "ml/optimisation/sgd_optimiser.hpp"
+
+#include "utilities.hpp"
 
 #include "core/filesystem/read_file_contents.hpp"
 #include "core/serializers/base_types.hpp"
-#include "core/serializers/main_serializer.hpp"
-#include "math/metrics/cross_entropy.hpp"
 #include "ml/serializers/ml_types.hpp"
-#include "ml/utilities/graph_builder.hpp"
 
-#include <chrono>
-#include <fstream>
 #include <iostream>
 #include <string>
 
@@ -51,54 +44,13 @@ using SizeVector = typename TensorType::SizeVector;
 using GraphType     = typename fetch::ml::Graph<TensorType>;
 using StateDictType = typename fetch::ml::StateDict<TensorType>;
 using OptimiserType = typename fetch::ml::optimisers::AdamOptimiser<TensorType>;
-// using OptimiserType = typename fetch::ml::optimisers::SGDOptimiser<TensorType>;
 
 using RegType         = fetch::ml::RegularisationType;
 using WeightsInitType = fetch::ml::ops::WeightsInitialisation;
 using ActivationType  = fetch::ml::details::ActivationType;
 
-struct BERTConfig
-{
-  // the default config is for bert base uncased pretrained model
-  SizeType n_encoder_layers  = 12u;
-  SizeType max_seq_len       = 512u;
-  SizeType model_dims        = 768u;
-  SizeType n_heads           = 12u;
-  SizeType ff_dims           = 3072u;
-  SizeType vocab_size        = 30522u;
-  SizeType segment_size      = 2u;
-  DataType epsilon           = static_cast<DataType>(1e-12);
-  DataType dropout_keep_prob = static_cast<DataType>(0.9);
-};
-
-struct BERTInterface
-{
-  // the default names for input and outpus of a Fetch BERT model
-  std::vector<std::string> inputs = {"Segment", "Position", "Tokens", "Mask"};
-  std::vector<std::string> outputs;
-
-  BERTInterface(BERTConfig const &config)
-  {
-    outputs.emplace_back("norm_embed");
-    for (SizeType i = static_cast<SizeType>(0); i < config.n_encoder_layers; i++)
-    {
-      outputs.emplace_back("SelfAttentionEncoder_No_" + std::to_string(i));
-    }
-  }
-};
-
-// load tensor functionalities
-TensorType LoadTensorFromFile(std::string file_name);
-
-// finetuning functions
+// IMDB dataset loading and preparing
 std::vector<TensorType> LoadIMDBFinetuneData(std::string const &file_path);
-std::vector<TensorType> PrepareTensorForBert(TensorType const &data, BERTConfig const &config);
-
-void EvaluateGraph(GraphType &g, std::vector<std::string> input_nodes, std::string output_node,
-                   std::vector<TensorType> input_data, TensorType output_data, bool verbose = true);
-
-GraphType ReadFileToGraph(std::string const file_name);
-
 std::vector<std::pair<std::vector<TensorType>, TensorType>> PrepareIMDBFinetuneTrainData(
     std::string const &file_path, SizeType train_size, SizeType test_size,
     BERTConfig const &config);
@@ -118,7 +70,7 @@ int main(int ac, char **av)
   SizeType batch_size = 4;
   SizeType epochs     = 20;
   SizeType layer_no   = 12;
-  DataType lr         = static_cast<DataType>(5e-5);
+  DataType lr         = static_cast<DataType>(1e-5);
   // load data into memory
   std::string file_path = av[1];
   std::string IMDB_path = av[2];
@@ -175,54 +127,6 @@ int main(int ac, char **av)
   }
 
   return 0;
-}
-
-void EvaluateGraph(GraphType &g, std::vector<std::string> input_nodes, std::string output_node,
-                   std::vector<TensorType> input_data, TensorType output_data, bool verbose)
-{
-  // Evaluate the model classification performance on a set of test data.
-  std::cout << "Starting forward passing for manual evaluation on: " << output_data.shape(1)
-            << std::endl;
-  if (verbose)
-  {
-    std::cout << "correct label | guessed label | sample loss" << std::endl;
-  }
-  DataType total_val_loss  = 0;
-  DataType correct_counter = static_cast<DataType>(0);
-  for (SizeType b = 0; b < static_cast<SizeType>(output_data.shape(1)); b++)
-  {
-    for (SizeType i = 0; i < static_cast<SizeType>(4); i++)
-    {
-      g.SetInput(input_nodes[i], input_data[i].View(b).Copy());
-    }
-    TensorType model_output = g.Evaluate(output_node, false);
-    DataType   val_loss =
-        fetch::math::CrossEntropyLoss<TensorType>(model_output, output_data.View(b).Copy());
-    total_val_loss += val_loss;
-
-    // count correct guesses
-    if (model_output.At(0, 0) > static_cast<DataType>(0.5) &&
-        output_data.At(0, b) == static_cast<DataType>(1))
-    {
-      correct_counter++;
-    }
-    else if (model_output.At(0, 0) < static_cast<DataType>(0.5) &&
-             output_data.At(0, b) == static_cast<DataType>(0))
-    {
-      correct_counter++;
-    }
-
-    // show guessed values
-    if (verbose)
-    {
-      std::cout << output_data.At(0, b) << " | " << model_output.At(0, 0) << " | " << val_loss
-                << std::endl;
-    }
-  }
-  std::cout << "val acc: " << correct_counter / static_cast<DataType>(output_data.shape(1))
-            << std::endl;
-  std::cout << "total val loss: " << total_val_loss / static_cast<DataType>(output_data.shape(1))
-            << std::endl;
 }
 
 std::vector<std::pair<std::vector<TensorType>, TensorType>> PrepareIMDBFinetuneTrainData(
@@ -282,82 +186,4 @@ std::vector<TensorType> LoadIMDBFinetuneData(std::string const &file_path)
   TensorType test_pos  = LoadTensorFromFile(file_path + "test_pos");
   TensorType test_neg  = LoadTensorFromFile(file_path + "test_neg");
   return {train_pos, train_neg, test_pos, test_neg};
-}
-
-std::vector<TensorType> PrepareTensorForBert(TensorType const &data, BERTConfig const &config)
-{
-  SizeType max_seq_len = config.max_seq_len;
-  // check that data shape is proper for bert input
-  if (data.shape().size() != 2 || data.shape(0) != max_seq_len)
-  {
-    std::runtime_error("Incorrect data shape for given bert config");
-  }
-
-  // build segment, mask and pos data for each sentence in the data
-  SizeType batch_size = data.shape(1);
-
-  // segment data and position data need no adjustment, they are universal for all input during
-  // finetuning
-  TensorType segment_data({max_seq_len, batch_size});
-  TensorType position_data({max_seq_len, batch_size});
-  for (SizeType i = 0; i < max_seq_len; i++)
-  {
-    for (SizeType b = 0; b < batch_size; b++)
-    {
-      position_data.Set(i, b, static_cast<DataType>(i));
-    }
-  }
-
-  // mask data is the only one that is dependent on token data
-  TensorType mask_data({max_seq_len, 1, batch_size});
-  for (SizeType b = 0; b < batch_size; b++)
-  {
-    for (SizeType i = 0; i < max_seq_len; i++)
-    {
-      // stop filling 1 to mask if current position is 0 for token
-      if (data.At(i, b) == static_cast<DataType>(0))
-      {
-        break;
-      }
-      mask_data.Set(i, 0, b, static_cast<DataType>(1));
-    }
-  }
-  return {segment_data, position_data, data, mask_data};
-}
-
-TensorType LoadTensorFromFile(std::string file_name)
-{
-  std::ifstream weight_file(file_name);
-  assert(weight_file.is_open());
-
-  std::string weight_str;
-  getline(weight_file, weight_str);
-  weight_file.close();
-
-  return TensorType::FromString(weight_str);
-}
-
-GraphType ReadFileToGraph(std::string const file_name)
-{
-  auto cur_time = std::chrono::high_resolution_clock::now();
-  // start reading a file and deserializing
-  fetch::byte_array::ConstByteArray buffer = fetch::core::ReadContentsOfFile(file_name.c_str());
-  std::cout << "The buffer read from file is of size: " << buffer.size() << " bytes" << std::endl;
-  fetch::serializers::MsgPackSerializer b(buffer);
-  std::cout << "finish loading bytes to serlializer" << std::endl;
-
-  // start deserializing
-  b.seek(0);
-  fetch::ml::GraphSaveableParams<TensorType> gsp2;
-  b >> gsp2;
-  std::cout << "finish deserializing" << std::endl;
-  auto g = std::make_shared<GraphType>();
-  fetch::ml::utilities::BuildGraph<TensorType>(gsp2, g);
-  std::cout << "finish rebuilding graph" << std::endl;
-
-  auto time_span = std::chrono::duration_cast<std::chrono::duration<double>>(
-      std::chrono::high_resolution_clock::now() - cur_time);
-  std::cout << "time span: " << static_cast<double>(time_span.count()) << std::endl;
-
-  return *g;
 }
