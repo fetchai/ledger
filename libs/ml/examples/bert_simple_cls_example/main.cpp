@@ -23,7 +23,7 @@
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/ops/slice.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
-#include "utilities.hpp"
+#include "bert_utilities.hpp"
 
 #include <iostream>
 #include <string>
