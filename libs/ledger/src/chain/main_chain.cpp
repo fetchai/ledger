@@ -45,21 +45,6 @@ using fetch::generics::MilliTimer;
 namespace fetch {
 namespace ledger {
 
-namespace {
-
-void AddBlockToBloomFilter(BasicBloomFilter &bf, Block const &block)
-{
-  for (auto const &slice : block.body.slices)
-  {
-    for (auto const &tx : slice)
-    {
-      bf.Add(tx.digest());
-    }
-  }
-}
-
-}  // namespace
-
 /**
  * Constructs the main chain
  *
@@ -154,7 +139,7 @@ BlockStatus MainChain::AddBlock(Block const &blk)
 
   if (status == BlockStatus::ADDED)
   {
-    AddBlockToBloomFilter(*bloom_filter_, *block);
+    AddBlockToBloomFilter(*block);
   }
 
   return status;
@@ -170,9 +155,9 @@ void MainChain::CacheBlock(IntBlockPtr const &block) const
   ASSERT(static_cast<bool>(block));
 
   auto hash{block->body.hash};
-  auto retVal{block_chain_.emplace(hash, block)};
+  auto ret_val{block_chain_.emplace(hash, block)};
   // under all circumstances, it _should_ be a fresh block
-  ASSERT(retVal.second);
+  ASSERT(ret_val.second);
   // keep parent-child reference
   references_.emplace(block->body.previous_hash, std::move(hash));
 }
@@ -206,11 +191,14 @@ void MainChain::KeepBlock(IntBlockPtr const &block) const
   if (block->body.previous_hash != GENESIS_DIGEST)
   {
     // notify stored parent
-    if (block_store_->Get(storage::ResourceID(block->body.previous_hash), record) &&
-        record.next_hash != hash)
+    if (block_store_->Get(storage::ResourceID(block->body.previous_hash), record))
     {
-      record.next_hash = hash;
-      block_store_->Set(storage::ResourceID(record.hash()), record);
+      if (record.next_hash != hash)
+      {
+        record.next_hash = hash;
+        block_store_->Set(storage::ResourceID(record.hash()), record);
+      }
+      // before checking for this block's children in storage, reset next_hash to genesis
       record.next_hash = GENESIS_DIGEST;
     }
   }
@@ -240,7 +228,7 @@ void MainChain::KeepBlock(IntBlockPtr const &block) const
  * @param[out] block The location of block
  * @return True iff the block is found in the storage
  */
-bool MainChain::LoadBlock(BlockHash const &hash, Block &block) const
+bool MainChain::LoadBlock(BlockHash const &hash, Block &block, BlockHash *next_hash) const
 {
   assert(static_cast<bool>(block_store_));
 
@@ -248,12 +236,27 @@ bool MainChain::LoadBlock(BlockHash const &hash, Block &block) const
   if (block_store_->Get(storage::ResourceID(hash), record))
   {
     block = record.block;
-    AddBlockToBloomFilter(*bloom_filter_, block);
+    AddBlockToBloomFilter(block);
+    if (next_hash)
+    {
+      *next_hash = record.next_hash;
+    }
 
     return true;
   }
 
   return false;
+}
+
+void MainChain::AddBlockToBloomFilter(Block const &block) const
+{
+  for (auto const &slice : block.body.slices)
+  {
+    for (auto const &tx : slice)
+    {
+      bloom_filter_->Add(tx.digest());
+    }
+  }
 }
 
 /**
@@ -404,6 +407,10 @@ MainChain::Blocks MainChain::GetHeaviestChain(uint64_t limit) const
  */
 MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) const
 {
+  if (limit == 0)
+  {
+    return Blocks{};
+  }
   limit = std::min(limit, static_cast<uint64_t>(MainChain::UPPER_BOUND));
   MilliTimer myTimer("MainChain::ChainPreceding");
 
@@ -412,30 +419,70 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) 
   Blocks result;
 
   // lookup the heaviest block hash
-  BlockPtr  block;
-  BlockHash current_hash = std::move(start);
-
-  while (result.size() < limit)
+  for (BlockHash current_hash = std::move(start);
+       // exit once we have gathered enough blocks or reached genesis
+       result.size() < limit && current_hash != GENESIS_DIGEST;)
   {
-    // exit once we have reached genesis
-    if (GENESIS_DIGEST == current_hash)
-    {
-      break;
-    }
-
     // lookup the block
-    block = GetBlock(current_hash);
+    auto block = GetBlock(current_hash);
     if (!block)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: ", ToBase64(current_hash));
       throw std::runtime_error("Failed to lookup block");
     }
 
-    // update the results
-    result.push_back(block);
-
     // walk the hash
     current_hash = block->body.previous_hash;
+
+    // update the results
+    result.push_back(std::move(block));
+  }
+
+  return result;
+}
+
+/**
+ * Walk the block history collecting blocks until either genesis or the block limit is reached.
+ * Unlike in GetChainPreceding, positive value in limit indicates forward-travel.
+ *
+ * @param start The hash of the first block
+ * @param limit The maximum number of blocks to be returned, negative for towards genesis, positive
+ * for towards tip
+ * @return The array of blocks
+ * @throws std::runtime_error if a block lookup occurs
+ */
+MainChain::Blocks MainChain::TimeTravel(BlockHash start, int64_t limit) const
+{
+  if (limit <= 0)
+  {
+    return GetChainPreceding(std::move(start), static_cast<uint64_t>(-limit));
+  }
+
+  const auto lim =
+      static_cast<std::size_t>(std::min(limit, static_cast<int64_t>(MainChain::UPPER_BOUND)));
+  MilliTimer myTimer("MainChain::ChainPreceding");
+
+  FETCH_LOCK(lock_);
+
+  Blocks result;
+
+  // lookup the heaviest block hash
+  Block     block;
+  BlockHash next_hash;
+
+  // exit once we have gathered enough blocks or reached genesis
+  for (BlockHash current_hash{std::move(start)};
+       // check for returned subchain size
+       result.size() < lim
+       // genesis as the next hash designates the tip of the chain
+       && current_hash != GENESIS_DIGEST
+       // lookup the block in storage
+       && LoadBlock(current_hash, block, &next_hash);
+       // walk the stack
+       current_hash = std::move(next_hash))
+  {
+    // update the results
+    result.push_back(std::make_unique<Block>(block));
   }
 
   return result;
