@@ -532,3 +532,44 @@ GraphType ReadFileToGraph(std::string const file_name)
 
   return *g;
 }
+
+std::vector<TensorType> PrepareTensorForBert(TensorType const &data, BERTConfig const &config)
+{
+  SizeType max_seq_len = config.max_seq_len;
+  // check that data shape is proper for bert input
+  if (data.shape().size() != 2 || data.shape(0) != max_seq_len)
+  {
+    std::runtime_error("Incorrect data shape for given bert config");
+  }
+
+  // build segment, mask and pos data for each sentence in the data
+  SizeType batch_size = data.shape(1);
+
+  // segment data and position data need no adjustment, they are universal for all input during
+  // finetuning
+  TensorType segment_data({max_seq_len, batch_size});
+  TensorType position_data({max_seq_len, batch_size});
+  for (SizeType i = 0; i < max_seq_len; i++)
+  {
+    for (SizeType b = 0; b < batch_size; b++)
+    {
+      position_data.Set(i, b, static_cast<DataType>(i));
+    }
+  }
+
+  // mask data is the only one that is dependent on token data
+  TensorType mask_data({max_seq_len, 1, batch_size});
+  for (SizeType b = 0; b < batch_size; b++)
+  {
+    for (SizeType i = 0; i < max_seq_len; i++)
+    {
+      // stop filling 1 to mask if current position is 0 for token
+      if (data.At(i, b) == static_cast<DataType>(0))
+      {
+        break;
+      }
+      mask_data.Set(i, 0, b, static_cast<DataType>(1));
+    }
+  }
+  return {segment_data, position_data, data, mask_data};
+}

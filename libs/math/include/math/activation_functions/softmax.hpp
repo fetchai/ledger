@@ -33,8 +33,8 @@ namespace math {
 namespace details {
 
 /*
- * Really naive implementation that relies only on ArrayType providing a At(std::size_t) method
- * TODO(private, 520) -- Clean up once we get unified ArrayType + operations
+ * Really naive implementation that relies only on TensorType providing a At(std::size_t) method
+ * TODO(private, 520) -- Clean up once we get unified TensorType + operations
  */
 
 template <typename ArrayType1, typename ArrayType2>
