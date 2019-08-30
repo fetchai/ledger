@@ -144,6 +144,10 @@ std::vector<TensorType> LoadData(std::string const &train_data_filename,
   auto train_data_tensor =
       fetch::ml::dataloaders::ReadCSV<TensorType>(train_data_filename, 0, 0, true);
 
+  for (std::size_t j = 0; j < 5; ++j) {
+    std::cout << "train_data_tensor: " << train_data_tensor(0, j) << std::endl;
+  }
+  
   std::cout << "loading train labels...: " << std::endl;
   auto train_labels_tensor =
       fetch::ml::dataloaders::ReadCSV<TensorType>(train_labels_filename, 0, 0, true);
