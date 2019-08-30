@@ -161,6 +161,8 @@ TYPED_TEST(VectorRegisterTest, basic_tests)
   {
     hsum += sum[i];
   }
+  std::cout << "hsum = " << hsum << std::endl;
+  std::cout << "reduce(vsum) = " << reduce1 << std::endl;
   EXPECT_EQ(hsum, reduce1);
 
   TypeParam vmax = Max(va, vb);
@@ -183,9 +185,9 @@ TYPED_TEST(VectorReduceTest, reduce_tests)
   using type = typename TypeParam::type;
   using array_type  = fetch::memory::SharedArray<type>;
 
-  std::size_t N = 60;
+  std::size_t N = 20, offset = 2;
   alignas(TypeParam::E_REGISTER_SIZE) array_type A(N), B(N);
-  type sum{0}, max_a{type(0)}, min_a{type(N)};
+  type sum{0}, partial_sum{0}, max_a{type(0)}, min_a{type(N)}, partial_max{0}, partial_min{type(N)};
 
   for (std::size_t i = 0; i < N; ++i)
   {
@@ -196,10 +198,19 @@ TYPED_TEST(VectorReduceTest, reduce_tests)
     sum += A[i] + B[i];
     max_a = fetch::vectorise::Max(A[i], max_a);
     min_a = fetch::vectorise::Min(A[i], min_a);
+    if (i >= offset && i < N - offset)
+    {
+      partial_sum += A[i] + B[i];
+      partial_max = fetch::vectorise::Max(A[i], partial_max);
+      partial_min = fetch::vectorise::Min(A[i], partial_min);
+    }
   }
   std::cout << "Sum = " << sum << std::endl;
+  std::cout << "Sum(2, N-2) = " << partial_sum << std::endl;
   std::cout << "Max = " << max_a << std::endl;
   std::cout << "Min = " << min_a << std::endl;
+
+  std::cout << "A: " << ptrdiff_t(&A[0]) << ", " << ptrdiff_t(&A[N-1]) << std::endl;
 
   type ret;
   ret = A.in_parallel().Reduce(
@@ -209,6 +220,7 @@ TYPED_TEST(VectorReduceTest, reduce_tests)
         [](auto const &a) {
           return fetch::vectorise::Max(a);
         });
+  EXPECT_EQ(ret, max_a);
   std::cout << "Reduce: Max = " << ret << std::endl;
 
   fetch::memory::Range range(2, A.size() -2);
@@ -219,7 +231,9 @@ TYPED_TEST(VectorReduceTest, reduce_tests)
         [](auto const &a) {
           return fetch::vectorise::Max(a);
         });
+  EXPECT_EQ(ret, partial_max);
   std::cout << "Reduce (range: 2, N-2): Max = " << ret << std::endl;
+  std::cout << "Reduce (range: 2, N-2): Actual Max = " << partial_max << std::endl;
 
   ret = A.in_parallel().Reduce(
         [](auto const &a, auto const &b) {
@@ -228,6 +242,7 @@ TYPED_TEST(VectorReduceTest, reduce_tests)
         [](auto const &a) {
           return fetch::vectorise::Min(a);
         }, type(N*N));
+  EXPECT_EQ(ret, min_a);
   std::cout << "Reduce: Min = " << ret << std::endl;
 
   ret = A.in_parallel().Reduce(range,
@@ -237,7 +252,9 @@ TYPED_TEST(VectorReduceTest, reduce_tests)
         [](auto const &a) {
           return fetch::vectorise::Min(a);
         }, type(N*N));
+  EXPECT_EQ(ret, partial_min);
   std::cout << "Reduce (range: 2, N-2): Min = " << ret << std::endl;
+  std::cout << "Reduce (range: 2, N-2): Actual Min = " << partial_min << std::endl;
 
   ret = A.in_parallel().SumReduce([](auto const &a, auto const &b) {
           return a + b;
@@ -245,6 +262,7 @@ TYPED_TEST(VectorReduceTest, reduce_tests)
         [](auto const &a) {
           return reduce(a);
         }, B);
+  EXPECT_EQ(ret, sum);
   std::cout << "SumReduce: ret = " << ret << std::endl;
   std::cout << "Sum = " << sum << std::endl;
 
@@ -254,13 +272,14 @@ TYPED_TEST(VectorReduceTest, reduce_tests)
 
   // std::cout << "ProductReduce: ret = " << ret << std::endl;
 
-  
-  // ret = A.in_parallel().GenericReduce(range, std::plus<vector_type>{}, [](auto const &a, auto const &b) {
-  //       return a * b;
-  //       },
-  //       [](vector_type const &vr_a_i) {
-  //           return reduce(vr_a_i);
-  //       },
-  //       type(0), B);
-  // std::cout << "GenericReduce(range): ret = " << ret << std::endl;
+  ret = A.in_parallel().SumReduce(range,
+        [](auto const &a, auto const &b) {
+          return a + b;
+        }, 
+        [](auto const &a) {
+          return reduce(a);
+        }, B);
+  EXPECT_EQ(ret, partial_sum);
+  std::cout << "SumReduce (range: 2, N-2): ret = " << ret << std::endl;
+  std::cout << "Sum = " << partial_sum << std::endl;
 }
