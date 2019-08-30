@@ -17,39 +17,26 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/mutex.hpp"
 #include "muddle/address.hpp"
 
-#include <memory>
-#include <unordered_map>
-
 namespace fetch {
-namespace muddle {
+namespace ledger {
 
-class Muddle;
+class Manifest;
 
-class MuddleRegistry
+class ManifestCacheInterface
 {
 public:
-  using WeakMuddlePtr = std::weak_ptr<Muddle>;
-  using MuddleMap     = std::unordered_map<Muddle const *, WeakMuddlePtr>;
+  using Address = muddle::Address;
 
-  static MuddleRegistry &Instance();
+  ManifestCacheInterface()          = default;
+  virtual ~ManifestCacheInterface() = default;
 
-  MuddleRegistry()  = default;
-  ~MuddleRegistry() = default;
-
-  void Register(WeakMuddlePtr muddle);
-  void Unregister(Muddle const *muddle);
-
-  MuddleMap GetMap() const;
-
-private:
-  using Mutex = mutex::Mutex;
-
-  mutable Mutex lock_{__LINE__, __FILE__};
-  MuddleMap     map_;
+  /// @name Manifest Cache Interface
+  /// @{
+  virtual bool QueryManifest(Address const &address, Manifest &manifest) = 0;
+  /// @}
 };
 
-}  // namespace muddle
+}  // namespace ledger
 }  // namespace fetch

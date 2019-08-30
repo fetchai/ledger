@@ -31,6 +31,18 @@
 #include "beacon/aeon.hpp"
 
 namespace fetch {
+namespace muddle {
+
+class MuddleInterface;
+
+}  // namespace muddle
+
+namespace ledger {
+
+class ManifestCacheInterface;
+
+}  // namespace ledger
+
 namespace beacon {
 
 class BeaconSetupService
@@ -52,18 +64,18 @@ public:
     BEACON_READY
   };
 
-  using ConstByteArray     = byte_array::ConstByteArray;
-  using StateMachine       = core::StateMachine<State>;
-  using StateMachinePtr    = std::shared_ptr<StateMachine>;
-  using MuddleAddress      = ConstByteArray;
-  using Identity           = crypto::Identity;
-  using CabinetMembers     = std::set<Identity>;
-  using Endpoint           = muddle::MuddleEndpoint;
-  using RBC                = muddle::RBC;
-  using SubscriptionPtr    = muddle::MuddleEndpoint::SubscriptionPtr;
-  using MessageCoefficient = std::string;
-  using MessageShare       = std::string;
-  using SharesExposedMap = std::unordered_map<MuddleAddress, std::pair<MessageShare, MessageShare>>;
+  using ConstByteArray          = byte_array::ConstByteArray;
+  using StateMachine            = core::StateMachine<State>;
+  using StateMachinePtr         = std::shared_ptr<StateMachine>;
+  using MuddleAddress           = ConstByteArray;
+  using Identity                = crypto::Identity;
+  using CabinetMembers          = std::set<Identity>;
+  using MuddleEndpoint          = muddle::MuddleEndpoint;
+  using MuddleInterface         = muddle::MuddleInterface;
+  using RBC                     = muddle::RBC;
+  using SubscriptionPtr         = muddle::MuddleEndpoint::SubscriptionPtr;
+  using MessageCoefficient      = std::string;
+  using MessageShare            = std::string;
   using SharedAeonExecutionUnit = std::shared_ptr<AeonExecutionUnit>;
   using CallbackFunction        = std::function<void(SharedAeonExecutionUnit)>;
   using DKGMessage              = dkg::DKGMessage;
@@ -75,11 +87,13 @@ public:
   using CoefficientsMessage     = dkg::CoefficientsMessage;
   using SharesMessage           = dkg::SharesMessage;
   using DKGSerializer           = dkg::DKGSerializer;
+  using ManifestCacheInterface  = ledger::ManifestCacheInterface;
+  using SharesExposedMap = std::unordered_map<MuddleAddress, std::pair<MessageShare, MessageShare>>;
 
-  BeaconSetupService()                           = delete;
+  BeaconSetupService(MuddleInterface &muddle, Identity identity,
+                     ManifestCacheInterface &manifest_cache);
   BeaconSetupService(BeaconSetupService const &) = delete;
   BeaconSetupService(BeaconSetupService &&)      = delete;
-  BeaconSetupService(Endpoint &endpoint, Identity identity);
 
   /// State functions
   /// @{
@@ -107,11 +121,13 @@ public:
   void OnDkgMessage(MuddleAddress const &from, std::shared_ptr<DKGMessage> msg_ptr);
 
 protected:
-  Identity        identity_;
-  Endpoint &      endpoint_;
-  SubscriptionPtr shares_subscription;
-  RBC             pre_dkg_rbc_;
-  RBC             rbc_;
+  Identity                identity_;
+  ManifestCacheInterface &manifest_cache_;
+  MuddleInterface &       muddle_;
+  MuddleEndpoint &        endpoint_;
+  SubscriptionPtr         shares_subscription;
+  RBC                     pre_dkg_rbc_;
+  RBC                     rbc_;
 
   std::mutex                          mutex_;
   CallbackFunction                    callback_function_;

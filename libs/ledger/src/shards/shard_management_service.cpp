@@ -56,6 +56,32 @@ ShardManagementService::ShardManagementService(Manifest manifest, ShardManagemen
   rpc_server_.Add(RPC_SHARD_MGMT, &mgmt_proto_);
 }
 
+bool ShardManagementService::QueryManifest(Address const &address, Manifest &manifest)
+{
+  bool success{false};
+
+  FETCH_LOCK(lock_);
+
+  // attempt to lookup the manifest from the cache
+  auto it = manifest_cache_.find(address);
+
+  if (it == manifest_cache_.end())
+  {
+    // add the address to the pending set
+    if (pending_requests_.find(address) != pending_requests_.end())
+    {
+      unavailable_requests_.emplace(address);
+    }
+  }
+  else
+  {
+    manifest = it->second.manifest;
+    success  = true;
+  }
+
+  return success;
+}
+
 Manifest ShardManagementService::RequestManifest()
 {
   return manifest_;
@@ -64,6 +90,7 @@ Manifest ShardManagementService::RequestManifest()
 void ShardManagementService::Periodically()
 {
   FETCH_LOG_TRACE(LOGGING_NAME, "### Shard Management Periodical ###");
+  FETCH_LOCK(lock_);
 
   // resolve previous requests
   ResolveUpdates();
@@ -117,8 +144,17 @@ void ShardManagementService::ResolveUpdates()
   }
 }
 
-void ShardManagementService::RequestUpdates(Addresses const &addresses)
+void ShardManagementService::RequestUpdates(Addresses addresses)
 {
+  // update the requested addresses with any unavailable queries
+  for (auto const &address : unavailable_requests_)
+  {
+    addresses.emplace(address);
+  }
+
+  // strip and pending
+  addresses = addresses - pending_requests_;
+
   // request the manifest from the address
   for (auto const &address : addresses)
   {
@@ -136,9 +172,10 @@ void ShardManagementService::UpdateShards(Addresses const &addresses)
     return;
   }
 
+  ShardAddressCfg shard_address_cfg(static_cast<std::size_t>(num_shards_));
+
   // based on the resolved addresses build up the array of peer connection maps which can be
   // passed on to the corresponding lanes
-  ShardAddressCfg shard_address_cfg(static_cast<std::size_t>(num_shards_));
   for (auto const &address : addresses)
   {
     auto it = manifest_cache_.find(address);

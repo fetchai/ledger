@@ -23,6 +23,8 @@
 #include "core/service_ids.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
+#include "ledger/shards/manifest.hpp"
+#include "ledger/shards/manifest_cache_interface.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rbc.hpp"
 #include "muddle/rpc/client.hpp"
@@ -37,6 +39,7 @@ using namespace fetch::crypto;
 using namespace fetch::muddle;
 using namespace fetch::dkg;
 using namespace fetch::beacon;
+using namespace fetch::ledger;
 
 using Prover         = fetch::crypto::Prover;
 using ProverPtr      = std::shared_ptr<Prover>;
@@ -45,11 +48,20 @@ using CertificatePtr = std::shared_ptr<Certificate>;
 using Address        = fetch::muddle::Packet::Address;
 using ConstByteArray = fetch::byte_array::ConstByteArray;
 
+struct DummyManifestCache : public ManifestCacheInterface
+{
+  bool QueryManifest(Address const &, Manifest &) override
+  {
+    return false;
+  }
+};
+
 class HonestSetupService : public BeaconSetupService
 {
 public:
-  HonestSetupService(Endpoint &endpoint, Identity identity)
-    : BeaconSetupService{endpoint, std::move(identity)}
+  HonestSetupService(MuddleInterface &endpoint, Identity identity,
+                     ManifestCacheInterface &manifest_cache)
+    : BeaconSetupService{endpoint, std::move(identity), manifest_cache}
   {}
 };
 
@@ -72,9 +84,10 @@ public:
     WITHOLD_RECONSTRUCTION_SHARES
   };
 
-  FaultySetupService(Endpoint &endpoint, Identity identity,
+  FaultySetupService(MuddleInterface &endpoint, Identity identity,
+                     ManifestCacheInterface &     manifest_cache,
                      const std::vector<Failures> &failures = {})
-    : BeaconSetupService{endpoint, std::move(identity)}
+    : BeaconSetupService{endpoint, std::move(identity), manifest_cache}
   {
     for (auto f : failures)
     {
@@ -364,12 +377,13 @@ struct DkgMember
 struct FaultyDkgMember : DkgMember
 {
   using SharedAeonExecutionUnit = BeaconSetupService::SharedAeonExecutionUnit;
+  DummyManifestCache manifest_cache;
   FaultySetupService dkg;
 
   FaultyDkgMember(uint16_t port_number, uint16_t index,
                   const std::vector<FaultySetupService::Failures> &failures = {})
     : DkgMember{port_number, index}
-    , dkg{muddle->GetEndpoint(), muddle_certificate->identity(), failures}
+    , dkg{*muddle, muddle_certificate->identity(), manifest_cache, failures}
   {
     dkg.SetBeaconReadyCallback([this](SharedAeonExecutionUnit beacon) -> void {
       finished = true;
@@ -417,11 +431,12 @@ struct FaultyDkgMember : DkgMember
 struct HonestDkgMember : DkgMember
 {
   using SharedAeonExecutionUnit = BeaconSetupService::SharedAeonExecutionUnit;
+  DummyManifestCache manifest_cache;
   HonestSetupService dkg;
 
   HonestDkgMember(uint16_t port_number, uint16_t index)
     : DkgMember{port_number, index}
-    , dkg{muddle->GetEndpoint(), muddle_certificate->identity()}
+    , dkg{*muddle, muddle_certificate->identity(), manifest_cache}
   {
     dkg.SetBeaconReadyCallback([this](SharedAeonExecutionUnit beacon) -> void {
       finished = true;

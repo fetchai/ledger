@@ -54,6 +54,7 @@ public:
 
   iterator       FindService(ServiceIdentifier const &service);
   const_iterator FindService(ServiceIdentifier const &service) const;
+  const_iterator FindService(ServiceIdentifier::Type service_type) const;
 
   void AddService(ServiceIdentifier const &id, ManifestEntry const &entry);
   void AddService(ServiceIdentifier const &id, ManifestEntry &&entry);
