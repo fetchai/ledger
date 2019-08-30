@@ -22,8 +22,8 @@
 #include "ml/ops/embeddings.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 
-#include "ml/serializers/ml_types.hpp"
 #include "bert_utilities.hpp"
+#include "ml/serializers/ml_types.hpp"
 
 #include <iostream>
 #include <string>
