@@ -64,8 +64,7 @@ public:
     TIMEDOUT
   };
 
-  static constexpr char const *LOGGING_NAME = "Promise";
-  //  static constexpr uint32_t    FOREVER      = std::numeric_limits<uint32_t>::max();
+  static constexpr char const *     LOGGING_NAME = "Promise";
   static std::chrono::seconds const DEFAULT_TIMEOUT;
 
   // Construction / Destruction

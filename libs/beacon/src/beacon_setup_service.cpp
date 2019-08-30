@@ -123,17 +123,7 @@ BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identit
   state_machine_->RegisterHandler(State::BEACON_READY, this, &BeaconSetupService::OnBeaconReady);
 
   // Set subscription for receiving shares
-  shares_subscription->SetMessageHandler([this](ConstByteArray const &from, uint16_t, uint16_t,
-                                                uint16_t, muddle::Packet::Payload const &payload,
-                                                ConstByteArray) {
-    fetch::serializers::MsgPackSerializer serialiser(payload);
-
-    std::pair<std::string, std::string> shares;
-    serialiser >> shares;
-
-    // Dispatch the event
-    OnNewShares(from, shares);
-  });
+  shares_subscription->SetMessageHandler(this, &BeaconSetupService::OnNewSharesPacket);
 }
 
 BeaconSetupService::State BeaconSetupService::OnIdle()
@@ -535,7 +525,8 @@ void BeaconSetupService::BroadcastShares()
     fetch::serializers::MsgPackSerializer serializer;
     serializer.Reserve(counter.size());
     serializer << shares;
-    endpoint_.Send(cab_i.identifier(), SERVICE_DKG, CHANNEL_SECRET_KEY, serializer.data());
+    endpoint_.Send(cab_i.identifier(), SERVICE_DKG, CHANNEL_SECRET_KEY, serializer.data(),
+                   MuddleEndpoint::OPTION_ENCRYPTED);
   }
   FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                  " broadcasts coefficients ");
@@ -697,6 +688,26 @@ void BeaconSetupService::OnExposedShares(SharesMessage const &shares, MuddleAddr
                    " received reconstruction share from ", from_index);
     OnReconstructionShares(shares, from_id);
   }
+}
+
+void BeaconSetupService::OnNewSharesPacket(muddle::Packet const &packet, MuddleAddress const &last_hop)
+{
+  // // TODO(EJF): This will need to be enabled after encryption support has been added
+#if 0
+  if (!packet.IsEncrypted())
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Non encrpypted packet recv'ed");
+    return;
+  }
+#endif
+
+  fetch::serializers::MsgPackSerializer serialiser(packet.GetPayload());
+
+  std::pair<std::string, std::string> shares;
+  serialiser >> shares;
+
+  // Dispatch the event
+  OnNewShares(packet.GetSender(), shares);
 }
 
 /**
