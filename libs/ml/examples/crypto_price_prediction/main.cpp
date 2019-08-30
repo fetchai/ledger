@@ -53,9 +53,9 @@ using DataLoaderType   = fetch::ml::dataloaders::TensorDataLoader<TensorType, Te
 
 struct TrainingParams
 {
-  SizeType epochs{25};
-  SizeType batch_size{1000};
-  bool     normalise = false;
+  SizeType epochs{1000};
+  SizeType batch_size{10};
+  bool     normalise = true;
 };
 
 std::shared_ptr<GraphType> BuildModel(std::string &input_name, std::string &output_name,
@@ -107,15 +107,15 @@ std::shared_ptr<GraphType> BuildModel(std::string &input_name, std::string &outp
 
   SizeType conv1D_1_filters        = 8;
   SizeType conv1D_1_input_channels = 1;
-  SizeType conv1D_1_kernel_size    = 192;
-  SizeType conv1D_1_stride         = 2;
+  SizeType conv1D_1_kernel_size    = 32;
+  SizeType conv1D_1_stride         = 3;
 
-  typename TensorType::Type keep_prob_1{0.5};
+  typename TensorType::Type keep_prob_1{1.0};
 
   SizeType conv1D_2_filters        = 1;
   SizeType conv1D_2_input_channels = conv1D_1_filters;
-  SizeType conv1D_2_kernel_size    = 164;
-  SizeType conv1D_2_stride         = 3;
+  SizeType conv1D_2_kernel_size    = 176;
+  SizeType conv1D_2_stride         = 2;
 
   input_name = g->AddNode<PlaceHolder<TensorType>>("Input", {});
   label_name = g->AddNode<PlaceHolder<TensorType>>("Label", {});
@@ -144,10 +144,6 @@ std::vector<TensorType> LoadData(std::string const &train_data_filename,
   auto train_data_tensor =
       fetch::ml::dataloaders::ReadCSV<TensorType>(train_data_filename, 0, 0, true);
 
-  for (std::size_t j = 0; j < 5; ++j) {
-    std::cout << "train_data_tensor: " << train_data_tensor(0, j) << std::endl;
-  }
-  
   std::cout << "loading train labels...: " << std::endl;
   auto train_labels_tensor =
       fetch::ml::dataloaders::ReadCSV<TensorType>(train_labels_filename, 0, 0, true);
