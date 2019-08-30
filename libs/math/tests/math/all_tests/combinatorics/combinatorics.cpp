@@ -25,9 +25,9 @@
 
 using namespace fetch::math::combinatorics;
 
-using DataType  = double;
-using ArrayType = fetch::math::Tensor<DataType>;
-using SizeType  = std::uint64_t;
+using DataType   = double;
+using TensorType = fetch::math::Tensor<DataType>;
+using SizeType   = std::uint64_t;
 
 template <typename T>
 class CombinatoricsTest : public ::testing::Test
@@ -130,8 +130,8 @@ TYPED_TEST(CombinatoricsTest, test_combinations_standard_input)
   SizeType n = 5;
   SizeType r = 2;
 
-  ArrayType python_output({2, 10});
-  ArrayType fetch_output({2, 10});
+  TensorType python_output({2, 10});
+  TensorType fetch_output({2, 10});
 
   // Row 1
   python_output.Set(SizeType{0}, SizeType{0}, 4);
@@ -173,7 +173,7 @@ TYPED_TEST(CombinatoricsTest, test_combinations_standard_input)
   python_output.Set(SizeType{0}, SizeType{9}, 1);
   python_output.Set(SizeType{1}, SizeType{9}, 2);
 
-  fetch_output = combinations<ArrayType>(n, r);
+  fetch_output = combinations<TensorType>(n, r);
 
   ASSERT_TRUE(fetch_output.AllClose(python_output));
 }
@@ -184,8 +184,8 @@ TYPED_TEST(CombinatoricsTest, test_combinations_edge_case1)
   SizeType n = 5;
   SizeType r = 5;
 
-  ArrayType python_output({5, 1});
-  ArrayType fetch_output({5, 1});
+  TensorType python_output({5, 1});
+  TensorType fetch_output({5, 1});
 
   // Row 1
   python_output.Set(SizeType{0}, SizeType{0}, 1);
@@ -194,7 +194,7 @@ TYPED_TEST(CombinatoricsTest, test_combinations_edge_case1)
   python_output.Set(SizeType{3}, SizeType{0}, 4);
   python_output.Set(SizeType{4}, SizeType{0}, 5);
 
-  fetch_output = combinations<ArrayType>(n, r);
+  fetch_output = combinations<TensorType>(n, r);
 
   ASSERT_TRUE(fetch_output.AllClose(python_output));
 }
@@ -205,13 +205,13 @@ TYPED_TEST(CombinatoricsTest, test_combinations_edge_case2)
   SizeType n = 1;
   SizeType r = 1;
 
-  ArrayType python_output({1, 1});
-  ArrayType fetch_output({1, 1});
+  TensorType python_output({1, 1});
+  TensorType fetch_output({1, 1});
 
   // Row 1
   python_output.Set(SizeType{0}, SizeType{0}, 1);
 
-  fetch_output = combinations<ArrayType>(n, r);
+  fetch_output = combinations<TensorType>(n, r);
   ASSERT_TRUE(fetch_output.AllClose(python_output));
 }
 
@@ -221,9 +221,9 @@ TYPED_TEST(CombinatoricsTest, test_combinations_edge_case3)
   SizeType n = 12;
   SizeType r = 0;
 
-  ArrayType python_output{};
-  ArrayType fetch_output{};
+  TensorType python_output{};
+  TensorType fetch_output{};
 
-  fetch_output = combinations<ArrayType>(n, r);
+  fetch_output = combinations<TensorType>(n, r);
   ASSERT_TRUE(fetch_output.AllClose(python_output));
 }

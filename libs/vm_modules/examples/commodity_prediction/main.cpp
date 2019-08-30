@@ -42,9 +42,9 @@
 #include <string>
 #include <vector>
 
-using DataType  = fetch::vm_modules::math::VMTensor::DataType;
-using ArrayType = fetch::math::Tensor<DataType>;
-using System    = fetch::vm_modules::System;
+using DataType   = fetch::vm_modules::math::VMTensor::DataType;
+using TensorType = fetch::math::Tensor<DataType>;
+using System     = fetch::vm_modules::System;
 
 using fetch::byte_array::FromHex;
 using fetch::byte_array::ToHex;
@@ -54,7 +54,7 @@ using fetch::byte_array::ToHex;
 fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> read_csv(
     fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &filename, bool transpose)
 {
-  ArrayType weights = fetch::ml::dataloaders::ReadCSV<ArrayType>(filename->str, 0, 0, transpose);
+  TensorType weights = fetch::ml::dataloaders::ReadCSV<TensorType>(filename->str, 0, 0, transpose);
   return vm->CreateNewObject<fetch::vm_modules::math::VMTensor>(weights);
 }
 
