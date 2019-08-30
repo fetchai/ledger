@@ -693,6 +693,8 @@ void BeaconSetupService::OnExposedShares(SharesMessage const &shares, MuddleAddr
 void BeaconSetupService::OnNewSharesPacket(muddle::Packet const &packet,
                                            MuddleAddress const & last_hop)
 {
+  FETCH_UNUSED(last_hop);
+
   // // TODO(EJF): This will need to be enabled after encryption support has been added
 #if 0
   if (!packet.IsEncrypted())
