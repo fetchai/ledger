@@ -27,6 +27,8 @@
 #include "muddle/subscription.hpp"
 #include "telemetry/gauge.hpp"
 #include "telemetry/telemetry.hpp"
+#include "moment/clocks.hpp"
+#include "moment/deadline_timer.hpp"
 
 #include "beacon/aeon.hpp"
 
@@ -53,9 +55,10 @@ public:
   enum class State : uint8_t
   {
     IDLE,
-    WAIT_FOR_DIRECT_CONNECTIONS,
+    RESET,
+    CONNECT_TO_ALL,
     WAIT_FOR_READY_CONNECTIONS,
-    WAIT_FOR_SHARE,
+    WAIT_FOR_SHARES,
     WAIT_FOR_COMPLAINTS,
     WAIT_FOR_COMPLAINT_ANSWERS,
     WAIT_FOR_QUAL_SHARES,
@@ -89,6 +92,7 @@ public:
   using DKGSerializer           = dkg::DKGSerializer;
   using ManifestCacheInterface  = ledger::ManifestCacheInterface;
   using SharesExposedMap = std::unordered_map<MuddleAddress, std::pair<MessageShare, MessageShare>>;
+  using DeadlineTimer           = fetch::moment::DeadlineTimer;
 
   BeaconSetupService(MuddleInterface &muddle, Identity identity,
                      ManifestCacheInterface &manifest_cache);
@@ -98,7 +102,8 @@ public:
   /// State functions
   /// @{
   State OnIdle();
-  State OnWaitForDirectConnections();
+  State OnReset();
+  State OnConnectToAll();
   State OnWaitForReadyConnections();
   State OnWaitForShares();
   State OnWaitForComplaints();
@@ -129,16 +134,9 @@ protected:
   RBC                     pre_dkg_rbc_;
   RBC                     rbc_;
 
-  std::mutex                          mutex_;
-  CallbackFunction                    callback_function_;
-  std::deque<SharedAeonExecutionUnit> aeon_exe_queue_;
-  SharedAeonExecutionUnit             beacon_;
-
   std::shared_ptr<StateMachine> state_machine_;
-  telemetry::GaugePtr<uint8_t>  dkg_state_gauge_;
 
   std::set<MuddleAddress>                                    connections_;
-  std::unordered_map<MuddleAddress, std::set<MuddleAddress>> ready_connections_;
 
   // Managing complaints
   ComplaintsManager       complaints_manager_;
@@ -179,6 +177,30 @@ protected:
   bool BuildQual();
   void CheckQualComplaints();
   /// @}
+
+  // Helper functions
+  uint64_t PreDKGThreshold();
+
+  // Telemetry
+  telemetry::GaugePtr<uint8_t>  beacon_dkg_state_gauge_;
+  telemetry::GaugePtr<uint64_t> beacon_dkg_connections_gauge_;
+
+  // Members below protected by mutex
+  std::mutex                          mutex_;
+  CallbackFunction                    callback_function_;
+  std::deque<SharedAeonExecutionUnit> aeon_exe_queue_;
+  SharedAeonExecutionUnit             beacon_;
+  std::unordered_map<MuddleAddress, std::set<MuddleAddress>> ready_connections_;
+
+private:
+  // Timing management
+  void SetTimeToProceed(State state);
+  bool using_timing = true;
+  moment::ClockPtr                  clock_ = moment::GetClock("beacon:dkg", moment::ClockType::STEADY);
+  moment::ClockInterface::Timestamp time_started_{clock_->Never()};
+  DeadlineTimer                     timer_to_proceed_{"beacon:dkg"};
+
 };
+
 }  // namespace beacon
 }  // namespace fetch
