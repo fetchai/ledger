@@ -23,7 +23,7 @@
 #include "ml/optimisation/adam_optimiser.hpp"
 
 #include "ml/serializers/ml_types.hpp"
-#include "utilities.hpp"
+#include "bert_utilities.hpp"
 
 #include <iostream>
 #include <string>
