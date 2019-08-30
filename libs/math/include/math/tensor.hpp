@@ -1228,7 +1228,7 @@ bool Tensor<T, C>::Resize(SizeVector const &shape, bool copy)
     return true;
   }
 
-  // this line does a shallow copy for speedy initializion of a tensor
+  // a shallow copy for speedy initializion of a tensor
   Tensor   old_tensor        = *this;
   SizeType old_size          = this->size();
   SizeType new_size_unpadded = Tensor::SizeFromShape(shape);
