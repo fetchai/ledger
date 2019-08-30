@@ -29,6 +29,8 @@
 #include "vm_modules/ml/graph.hpp"
 #include "vm_modules/ml/state_dict.hpp"
 
+#include "core/byte_array/decoders.hpp"
+
 using namespace fetch::vm;
 
 namespace fetch {
@@ -155,7 +157,9 @@ void VMGraph::Bind(Module &module)
       .CreateMemberFunction("addCrossEntropyLoss", &VMGraph::AddCrossEntropyLoss)
       .CreateMemberFunction("addMeanSquareErrorLoss", &VMGraph::AddMeanSquareErrorLoss)
       .CreateMemberFunction("loadStateDict", &VMGraph::LoadStateDict)
-      .CreateMemberFunction("stateDict", &VMGraph::StateDict);
+      .CreateMemberFunction("stateDict", &VMGraph::StateDict)
+      .CreateMemberFunction("serializeToString", &VMGraph::SerializeToString)
+      .CreateMemberFunction("deserializeFromString", &VMGraph::DeserializeFromString);
 }
 
 VMGraph::GraphType &VMGraph::GetGraph()
@@ -184,6 +188,27 @@ bool VMGraph::DeserializeFrom(serializers::MsgPackSerializer &buffer)
   return true;
 }
 
+fetch::vm::Ptr<fetch::vm::String> VMGraph::SerializeToString()
+{
+  serializers::MsgPackSerializer b;
+  SerializeTo(b);
+  auto byte_array_data = b.data().ToBase64();
+  return {new fetch::vm::String(vm_, static_cast<std::string>(byte_array_data))};
+}
+
+fetch::vm::Ptr<VMGraph> VMGraph::DeserializeFromString(
+    fetch::vm::Ptr<fetch::vm::String> const &graph_string)
+{
+  byte_array::ConstByteArray b(graph_string->str);
+  b = byte_array::FromBase64(b);
+  MsgPackSerializer buffer(b);
+  DeserializeFrom(buffer);
+
+  auto vm_graph        = fetch::vm::Ptr<VMGraph>(new VMGraph(vm_, type_id_));
+  vm_graph->GetGraph() = graph_;
+
+  return vm_graph;
+}
 }  // namespace ml
 }  // namespace vm_modules
 }  // namespace fetch

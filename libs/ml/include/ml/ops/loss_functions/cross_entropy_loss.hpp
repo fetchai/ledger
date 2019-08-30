@@ -83,53 +83,37 @@ public:
     assert(inputs.at(0)->size() == inputs.at(1)->size());
     assert(inputs.at(0)->shape().size() == 2);
 
+    bool     is_binary  = (inputs.at(0)->shape(0) == 1);
+    DataType batch_size = static_cast<DataType>(inputs.at(0)->shape(1));
+
     TensorType ret({inputs.at(0)->shape()});
-    if (inputs.at(0)->shape().at(0) == 1)  // not one-hot
+
+    auto     a_it = inputs.at(0)->cbegin();
+    auto     b_it = inputs.at(1)->cbegin();
+    auto     r_it = ret.begin();
+    DataType one{1};
+
+    while (a_it.is_valid())
     {
-      // (Sigmoid(x)-y)*x
-      auto     a_it = inputs.at(0)->cbegin();
-      auto     b_it = inputs.at(1)->cbegin();
-      auto     r_it = ret.begin();
-      DataType zero{0};
-      DataType one{1};
-
-      while (a_it.is_valid())
+      // TODO (#1583) Decide how to handle the following assertion. The assertion is here to assure
+      // no 0 division would happen during loss calculation. But for low precision datatype this
+      // would happen eventurally. We can either remove it or add an epsilon on denominators.
+      // assert(*a_it > 0 && *a_it < 1);
+      assert(*b_it == 0 || *b_it == 1);
+      if (*b_it == 1)
       {
-        // Sigmoid(x)
-        if (*a_it >= zero)
-        {
-          fetch::math::Exp(-(*a_it), *r_it);
-          *r_it = one / (one + (*r_it));
-        }
-        else
-        {
-          fetch::math::Exp(*a_it, *r_it);
-          *r_it = *r_it / (*r_it + one);
-        }
-
-        // (Sigmoid(x)-y)*x
-        *r_it = (*r_it - (*b_it)) * (*a_it);
-
-        ++a_it;
-        ++b_it;
-        ++r_it;
+        *r_it = -*b_it / *a_it;
       }
-    }
-    else if (inputs.at(0)->shape().size())  // one-hot
-    {
-      fetch::math::Softmax((*inputs.at(0)), ret, 0);
-
-      auto b_it = inputs.at(1)->cbegin();
-      auto r_it = ret.begin();
-      while (b_it.is_valid())
+      else if (is_binary)
       {
-        *r_it = -(*b_it) / (*r_it);
-        ++b_it;
-        ++r_it;
+        *r_it = (one - *b_it) / (one - *a_it);
       }
-    }
 
-    return {ret, ret};
+      ++a_it;
+      ++b_it;
+      ++r_it;
+    }
+    return {ret / batch_size, ret};
   }
 
   std::vector<typename T::SizeType> ComputeOutputShape(VecTensorType const &inputs) const override

@@ -190,7 +190,7 @@ bool StorageUnitClient::RevertToHash(Hash const &hash, uint64_t index)
   {
     assert(!hash.empty());
 
-    FETCH_LOG_INFO(LOGGING_NAME, "reverting tree leaf: ", lane_merkle_hash.ToHex());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "reverting tree leaf: ", lane_merkle_hash.ToHex());
 
     // make the call to the RPC server
     auto promise = rpc_client_->CallSpecificAddress(LookupAddress(lane_index++), RPC_STATE,
@@ -287,8 +287,8 @@ byte_array::ConstByteArray StorageUnitClient::Commit(uint64_t const commit_index
       }
     }
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Committing merkle hash at index: ", commit_index,
-                   " to stack: ", tree.root().ToHex());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Committing merkle hash at index: ", commit_index,
+                    " to stack: ", tree.root().ToHex());
 
     permanent_state_merkle_stack_.Push(tree);
     permanent_state_merkle_stack_.Flush(false);
