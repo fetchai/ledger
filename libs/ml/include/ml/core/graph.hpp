@@ -34,6 +34,15 @@
 namespace fetch {
 namespace ml {
 
+namespace optimisers {
+template <typename TensorType>
+class Optimiser;
+}  // namespace optimisers
+
+namespace model {
+template <typename TensorType>
+class ModelInterface;
+}  // namespace model
 
 // TODO - harmonise InsertSharedCopy with AddTrainable
 // TODO - implement sanity checks on second stage - e.g. you may not use loss function in a certain
@@ -126,10 +135,14 @@ protected:
   std::unordered_map<std::string, SizeType>                     trainable_lookup_;
   std::vector<NodePtrType>                                      trainable_nodes_;
 
-  void InsertSharedCopy(std::shared_ptr<Graph<TensorType>> output_ptr);
+  void       InsertSharedCopy(std::shared_ptr<Graph<TensorType>> output_ptr);
+  TensorType ForwardPropagate(std::string const &node_name, bool is_training = true);
 
 private:
   GraphState graph_state_ = GraphState::NOT_COMPILED;
+
+  friend class optimisers::Optimiser<TensorType>;
+  friend class model::ModelInterface<TensorType>;
 
   template <typename OperationType>
   bool UpdateVariableName(std::string const &name, std::string &ret);
@@ -147,7 +160,6 @@ private:
   void ResetGraphCache(bool input_size_changed, std::shared_ptr<Node<T>> n = {});
 
   void CheckCompileAndValidate();
-
 };
 
 template <typename TensorType>
@@ -278,6 +290,27 @@ TensorType Graph<TensorType>::Evaluate(std::string const &node_name, bool is_tra
   if (nodes_.find(node_name) != nodes_.end())
   {
     return ((*(nodes_[node_name]->Evaluate(is_training))).Copy());
+  }
+  else
+  {
+    throw std::runtime_error("Cannot evaluate: node [" + node_name + "] not in graph");
+  }
+}
+
+/**
+ * Evaluates the output of a node via a shallow copy. This is used by the optimiser
+ * and isn't safe for external users.
+ * @param node_name name of node to evaluate for output
+ * @return a copy of the output tensor
+ */
+template <typename TensorType>
+TensorType Graph<TensorType>::ForwardPropagate(std::string const &node_name, bool is_training)
+{
+  CheckCompileAndValidate();
+
+  if (nodes_.find(node_name) != nodes_.end())
+  {
+    return ((*(nodes_[node_name]->Evaluate(is_training))));
   }
   else
   {

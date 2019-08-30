@@ -100,7 +100,6 @@ public:
     this->AddInputNode(mask);
     this->SetOutputNode(transformed_multihead);
     this->Compile();
-
   }
 
   std::string create_one_attention_head(std::string const &head_name, std::string const &query,
