@@ -36,15 +36,15 @@
 #include <string>
 #include <vector>
 
-using DataType  = fetch::vm_modules::math::VMTensor::DataType;
-using ArrayType = fetch::math::Tensor<DataType>;
-using System    = fetch::vm_modules::System;
+using DataType   = fetch::vm_modules::math::VMTensor::DataType;
+using TensorType = fetch::math::Tensor<DataType>;
+using System     = fetch::vm_modules::System;
 
 // read the weights and bias csv files
 fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> read_csv(
     fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &filename, bool transpose)
 {
-  ArrayType tensor = fetch::ml::dataloaders::ReadCSV<ArrayType>(filename->str, 0, 0, transpose);
+  TensorType tensor = fetch::ml::dataloaders::ReadCSV<TensorType>(filename->str, 0, 0, transpose);
   tensor.Reshape({1, tensor.shape(0), tensor.shape(1)});
 
   return vm->CreateNewObject<fetch::vm_modules::math::VMTensor>(tensor);

@@ -1286,7 +1286,6 @@ struct MapSerializer<ml::OpEmbeddingsSaveableParams<TensorType>, D>
     // serialize parent class
     auto base_pointer = static_cast<ml::OpWeightsSaveableParams<TensorType> const *>(&sp);
     map.Append(BASE_CLASS, *base_pointer);
-
     map.Append(UPDATED_ROWS, sp.updated_rows);
     map.Append(TRAILING_IND_1, sp.trailing_indices1);
     map.Append(TRAILING_IND_2, sp.trailing_indices2);
@@ -1299,7 +1298,6 @@ struct MapSerializer<ml::OpEmbeddingsSaveableParams<TensorType>, D>
 
     auto base_pointer = static_cast<ml::OpWeightsSaveableParams<TensorType> *>(&sp);
     map.ExpectKeyGetValue(BASE_CLASS, *base_pointer);
-
     map.ExpectKeyGetValue(UPDATED_ROWS, sp.updated_rows);
     map.ExpectKeyGetValue(TRAILING_IND_1, sp.trailing_indices1);
     map.ExpectKeyGetValue(TRAILING_IND_2, sp.trailing_indices2);
