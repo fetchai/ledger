@@ -227,7 +227,7 @@ void BuildNodeAndInsertTrainables(NodeSaveableParams<T> const &nsp, std::string 
   {
     op_ptr = GetOp<ops::Gelu<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
-    g->template AddTrainable<ops::Gelu<T>>(name, node);
+    g->AddTrainable(node, name);
     break;
   }
   case ops::LayerNorm<T>::OpCode():
