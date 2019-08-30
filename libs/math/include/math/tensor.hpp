@@ -288,7 +288,6 @@ public:
 
   ConstSliceType Slice() const;
   ConstSliceType Slice(SizeType index, SizeType axis = 0) const;
-  ConstSliceType Slice(std::pair<SizeType, SizeType> start_end_index, SizeType axis = 0) const;
   ConstSliceType Slice(SizeVector index, SizeVector axes) const;
   TensorSlice    Slice();
   TensorSlice    Slice(SizeType index, SizeType axis = 0);
@@ -1223,19 +1222,31 @@ Tensor<T, C> &Tensor<T, C>::operator=(TensorSlice const &slice)
 template <typename T, typename C>
 bool Tensor<T, C>::Resize(SizeVector const &shape, bool copy)
 {
-  Tensor old_tensor = *this;
+  // if the shape is exactly the same and a copy of value is required, dont do anything
+  if ((this->shape() == shape) && copy)
+  {
+    return true;
+  }
+
+  // a shallow copy for speedy initializion of a tensor
+  Tensor   old_tensor        = *this;
+  SizeType old_size          = this->size();
+  SizeType new_size_unpadded = Tensor::SizeFromShape(shape);
+  if (copy && (old_size == new_size_unpadded))
+  {
+    old_tensor = this->Copy();
+  }
 
   SizeType new_size = Tensor::PaddedSizeFromShape(shape);
   data_             = ContainerType(new_size);
-
   data_.SetAllZero();
   shape_         = shape;
-  size_          = Tensor::SizeFromShape(shape);  // Note: differs from new_size
+  size_          = new_size_unpadded;
   padded_height_ = PadValue(shape[0]);
   UpdateStrides();
 
   // Effectively a reshape
-  if (copy && (size_ == old_tensor.size()))
+  if (copy && (size_ == old_size))
   {
     auto it  = begin();
     auto oit = old_tensor.begin();
@@ -2166,36 +2177,6 @@ typename Tensor<T, C>::ConstSliceType Tensor<T, C>::Slice(SizeType index, SizeTy
 }
 
 /**
- * Returns a Slice Range that is not permitted to alter the original tensor
- * @tparam T
- * @tparam C
- * @param index
- * @param axis
- * @return
- */
-template <typename T, typename C>
-typename Tensor<T, C>::ConstSliceType Tensor<T, C>::Slice(
-    std::pair<SizeType, SizeType> start_end_index, SizeType axis) const
-{
-  std::vector<SizeVector> range;
-
-  for (SizeType j = 0; j < shape().size(); ++j)
-  {
-    if (axis == j)
-    {
-      assert(start_end_index.first < start_end_index.second);
-      range.push_back({start_end_index.first, start_end_index.second, 1});
-    }
-    else
-    {
-      range.push_back({0, shape().at(j), 1});
-    }
-  }
-
-  return ConstSliceType(*this, range, axis);
-}
-
-/**
  * Returns a Slice along multiple dimensions that is not permitted to alter the original tensor
  * @tparam T
  * @tparam C
@@ -2284,6 +2265,8 @@ typename Tensor<T, C>::TensorSlice Tensor<T, C>::Slice(
     if (axis == j)
     {
       assert(start_end_index.first < start_end_index.second);
+      assert(start_end_index.first >= static_cast<SizeType>(0));
+      assert(start_end_index.second <= shape(j));
       range.push_back({start_end_index.first, start_end_index.second, 1});
     }
     else
