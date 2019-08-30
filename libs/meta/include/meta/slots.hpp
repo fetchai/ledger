@@ -163,7 +163,7 @@ public:
 
 /**
  * External constructor, a convenience function to infer F
- * 
+ *
  * @tparam ArgSets... argument sets of the SlotType
  * @param f a callable to be invoked on every accepted argument set
  * @return SlotType
@@ -200,7 +200,7 @@ public:
 
 /**
  * External constructor, a convenience function to infer F
- * 
+ *
  * @param fs... slots
  * @return SlotsType
  */
