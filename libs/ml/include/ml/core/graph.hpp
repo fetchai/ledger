@@ -255,8 +255,9 @@ void Graph<TensorType>::Compile()
 template <typename TensorType>
 void Graph<TensorType>::AddTrainable(NodePtrType node_ptr, std::string const &node_name)
 {
-  auto trainable_ptr = std::dynamic_pointer_cast<fetch::ml::ops::Trainable<TensorType>>(node_ptr);
-  auto graph_ptr     = std::dynamic_pointer_cast<Graph<TensorType>>(node_ptr);
+  auto op_ptr        = node_ptr->GetOp();
+  auto trainable_ptr = std::dynamic_pointer_cast<fetch::ml::ops::Trainable<TensorType>>(op_ptr);
+  auto graph_ptr     = std::dynamic_pointer_cast<Graph<TensorType>>(op_ptr);
 
   // if its a trainable
   if (trainable_ptr)
@@ -544,9 +545,10 @@ struct fetch::ml::StateDict<TensorType> Graph<TensorType>::StateDict() const
   struct fetch::ml::StateDict<TensorType> d;
   for (auto const &t : trainable_lookup_)
   {
-    auto trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(
-        trainable_nodes_.at(t.second)->GetOp());
-    d.dict_.emplace(t.first, trainable_ptr->StateDict());
+    auto node_ptr      = trainable_nodes_.at(t.second);
+    auto op_ptr        = node_ptr->GetOp();
+    auto weights_ptr = std::dynamic_pointer_cast<ops::Weights<TensorType>>(op_ptr);
+    d.dict_.emplace(t.first, weights_ptr->StateDict());
   }
   return d;
 }
