@@ -56,11 +56,11 @@ void GenerateDefaultManifest(std::string const &external_address, uint16_t port,
   manifest.AddService(ServiceIdentifier{ServiceIdentifier::Type::HTTP}, ManifestEntry{peer});
 
   // register the P2P service
-  peer.Update(external_address, port + P2P_PORT_OFFSET);
+  peer.Update(external_address, static_cast<uint16_t>(port + P2P_PORT_OFFSET));
   manifest.AddService(ServiceIdentifier{ServiceIdentifier::Type::CORE}, ManifestEntry{peer});
 
   // register the DKG service
-  peer.Update(external_address, port + DKG_PORT_OFFSET);
+  peer.Update(external_address, static_cast<uint16_t>(port + DKG_PORT_OFFSET));
   manifest.AddService(ServiceIdentifier{ServiceIdentifier::Type::DKG}, ManifestEntry{peer});
 
   // register all of the lanes (storage shards)
