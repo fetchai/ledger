@@ -143,8 +143,8 @@ TYPED_TEST(SerializersTestNoInt, serialize_graph_saveable_params)
   g->SetInput("Input", data.Transpose());
   g2->SetInput("Input", data.Transpose());
 
-  TensorType prediction  = g->ForwardPropagate(output);
-  TensorType prediction2 = g2->ForwardPropagate(output);
+  TensorType prediction  = g->ForwardPropagate(output).Copy();
+  TensorType prediction2 = g2->ForwardPropagate(output).Copy();
 
   // test correct values
   EXPECT_TRUE(prediction.AllClose(prediction2, fetch::math::function_tolerance<DataType>(),
@@ -163,10 +163,10 @@ TYPED_TEST(SerializersTestNoInt, serialize_graph_saveable_params)
   g2->Step(DataType{0.1f});
 
   g->SetInput("Input", data.Transpose());
-  TensorType prediction3 = g->ForwardPropagate(output);
+  TensorType prediction3 = g->ForwardPropagate(output).Copy();
 
   g2->SetInput("Input", data.Transpose());
-  TensorType prediction4 = g2->ForwardPropagate(output);
+  TensorType prediction4 = g2->ForwardPropagate(output).Copy();
 
   EXPECT_FALSE(prediction.AllClose(prediction3, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));

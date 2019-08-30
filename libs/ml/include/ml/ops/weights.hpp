@@ -209,10 +209,12 @@ public:
     {
     case WeightsInitialisation::ZEROS:
     {
-      for (std::uint64_t j = 0; j < array.data().size(); ++j)
-      {
-        array.data()[j] = typename TensorType::Type(0);
-      }
+      array.Fill(typename TensorType::Type(0));
+      break;
+    }
+    case WeightsInitialisation::ONES:
+    {
+      array.Fill(typename TensorType::Type(1));
       break;
     }
     case WeightsInitialisation::XAVIER_GLOROT:
