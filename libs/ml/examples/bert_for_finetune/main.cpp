@@ -24,7 +24,7 @@
 #include "ml/ops/slice.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 
-#include "utilities.hpp"
+#include "bert_utilities.hpp"
 
 #include "core/filesystem/read_file_contents.hpp"
 #include "core/serializers/base_types.hpp"
