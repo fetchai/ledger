@@ -659,11 +659,11 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
             response["result"] = v.Get();
             return Status::OK;
           }),
-          vm::TypeIdSlot<vm::IdView<vm::TypeIds::Null>>([&](auto &&) {
+          vm::ViewSlot<vm::TypeIdView<vm::TypeIds::Null>>([&](auto &&) {
             response["result"] = variant::Variant::Null();
             return Status::OK;
           }),
-          vm::TypeIdSlot<vm::IdView<vm::TypeIds::String>>([&](auto &&v) {
+          vm::ViewSlot<vm::TypeIdView<vm::TypeIds::String>>([&](auto &&v) {
             response["result"] = v.Get()->str;
             return Status::OK;
           }),

@@ -243,265 +243,265 @@ struct Variant
   }
 
   void Construct(Variant const &other)
+
+      type_id = other.type_id;
+  if (IsPrimitive())
   {
-    type_id = other.type_id;
-    if (IsPrimitive())
-    {
-      primitive = other.primitive;
-    }
-    else
-    {
-      new (&object) Ptr<Object>(other.object);
-    }
+    primitive = other.primitive;
   }
+  else
+  {
+    new (&object) Ptr<Object>(other.object);
+  }
+}
 
   void Construct(Variant &&other)
+{
+  type_id = other.type_id;
+  if (IsPrimitive())
   {
-    type_id = other.type_id;
-    if (IsPrimitive())
+    primitive = other.primitive;
+  }
+  else
+  {
+    new (&object) Ptr<Object>(std::move(other.object));
+  }
+  other.type_id = TypeIds::Unknown;
+}
+
+template <typename T, typename std::enable_if_t<IsPrimitive<T>::value> * = nullptr>
+void Construct(T other, TypeId other_type_id)
+{
+  primitive.Set(other);
+  type_id = other_type_id;
+}
+
+template <typename T, typename std::enable_if_t<IsPtr<T>::value> * = nullptr>
+void Construct(T const &other, TypeId other_type_id)
+{
+  new (&object) Ptr<Object>(other);
+  type_id = other_type_id;
+}
+
+template <typename T, typename std::enable_if_t<IsPtr<T>::value> * = nullptr>
+void Construct(T &&other, TypeId other_type_id)
+{
+  new (&object) Ptr<Object>(std::forward<T>(other));
+  type_id = other_type_id;
+}
+
+void Construct(Primitive other, TypeId other_type_id)
+{
+  primitive = other;
+  type_id   = other_type_id;
+}
+
+Variant &operator=(Variant const &other)
+{
+  if (this != &other)
+  {
+    bool const is_object       = !IsPrimitive();
+    bool const other_is_object = !other.IsPrimitive();
+    type_id                    = other.type_id;
+    if (is_object)
     {
-      primitive = other.primitive;
-    }
-    else
-    {
-      new (&object) Ptr<Object>(std::move(other.object));
-    }
-    other.type_id = TypeIds::Unknown;
-  }
-
-  template <typename T, typename std::enable_if_t<IsPrimitive<T>::value> * = nullptr>
-  void Construct(T other, TypeId other_type_id)
-  {
-    primitive.Set(other);
-    type_id = other_type_id;
-  }
-
-  template <typename T, typename std::enable_if_t<IsPtr<T>::value> * = nullptr>
-  void Construct(T const &other, TypeId other_type_id)
-  {
-    new (&object) Ptr<Object>(other);
-    type_id = other_type_id;
-  }
-
-  template <typename T, typename std::enable_if_t<IsPtr<T>::value> * = nullptr>
-  void Construct(T &&other, TypeId other_type_id)
-  {
-    new (&object) Ptr<Object>(std::forward<T>(other));
-    type_id = other_type_id;
-  }
-
-  void Construct(Primitive other, TypeId other_type_id)
-  {
-    primitive = other;
-    type_id   = other_type_id;
-  }
-
-  Variant &operator=(Variant const &other)
-  {
-    if (this != &other)
-    {
-      bool const is_object       = !IsPrimitive();
-      bool const other_is_object = !other.IsPrimitive();
-      type_id                    = other.type_id;
-      if (is_object)
+      if (other_is_object)
       {
-        if (other_is_object)
-        {
-          // Copy object to current object
-          object = other.object;
-        }
-        else
-        {
-          // Copy primitive to current object
-          object.Reset();
-          primitive = other.primitive;
-        }
+        // Copy object to current object
+        object = other.object;
       }
       else
       {
-        if (other_is_object)
-        {
-          // Copy object to current primitive
-          new (&object) Ptr<Object>(other.object);
-        }
-        else
-        {
-          // Copy primitive to current primitive
-          primitive = other.primitive;
-        }
+        // Copy primitive to current object
+        object.Reset();
+        primitive = other.primitive;
       }
     }
-    return *this;
-  }
-
-  Variant &operator=(Variant &&other)
-  {
-    if (this != &other)
+    else
     {
-      bool const is_object       = !IsPrimitive();
-      bool const other_is_object = !other.IsPrimitive();
-      type_id                    = other.type_id;
-      other.type_id              = TypeIds::Unknown;
-      if (is_object)
+      if (other_is_object)
       {
-        if (other_is_object)
-        {
-          // Move object to current object
-          object = std::move(other.object);
-        }
-        else
-        {
-          // Move primitive to current object
-          object.Reset();
-          primitive = other.primitive;
-        }
+        // Copy object to current primitive
+        new (&object) Ptr<Object>(other.object);
       }
       else
       {
-        if (other_is_object)
-        {
-          // Move object to current primitive
-          new (&object) Ptr<Object>(std::move(other.object));
-        }
-        else
-        {
-          // Move primitive to current primitive
-          primitive = other.primitive;
-        }
+        // Copy primitive to current primitive
+        primitive = other.primitive;
       }
     }
-    return *this;
   }
+  return *this;
+}
 
-  template <typename T, typename std::enable_if_t<IsPrimitive<T>::value> * = nullptr>
-  void Assign(T other, TypeId other_type_id)
+Variant &operator=(Variant &&other)
+{
+  if (this != &other)
   {
-    if (!IsPrimitive())
+    bool const is_object       = !IsPrimitive();
+    bool const other_is_object = !other.IsPrimitive();
+    type_id                    = other.type_id;
+    other.type_id              = TypeIds::Unknown;
+    if (is_object)
     {
-      object.Reset();
+      if (other_is_object)
+      {
+        // Move object to current object
+        object = std::move(other.object);
+      }
+      else
+      {
+        // Move primitive to current object
+        object.Reset();
+        primitive = other.primitive;
+      }
     }
-    primitive.Set(other);
+    else
+    {
+      if (other_is_object)
+      {
+        // Move object to current primitive
+        new (&object) Ptr<Object>(std::move(other.object));
+      }
+      else
+      {
+        // Move primitive to current primitive
+        primitive = other.primitive;
+      }
+    }
+  }
+  return *this;
+}
+
+template <typename T, typename std::enable_if_t<IsPrimitive<T>::value> * = nullptr>
+void Assign(T other, TypeId other_type_id)
+{
+  if (!IsPrimitive())
+  {
+    object.Reset();
+  }
+  primitive.Set(other);
+  type_id = other_type_id;
+}
+
+template <typename T, typename std::enable_if_t<IsPtr<T>::value> * = nullptr>
+void Assign(T const &other, TypeId other_type_id)
+{
+  if (IsPrimitive())
+  {
+    Construct(other, other_type_id);
+  }
+  else
+  {
+    object  = other;
     type_id = other_type_id;
   }
+}
 
-  template <typename T, typename std::enable_if_t<IsPtr<T>::value> * = nullptr>
-  void Assign(T const &other, TypeId other_type_id)
+template <typename T, typename std::enable_if_t<IsPtr<T>::value> * = nullptr>
+void Assign(T &&other, TypeId other_type_id)
+{
+  if (IsPrimitive())
   {
-    if (IsPrimitive())
-    {
-      Construct(other, other_type_id);
-    }
-    else
-    {
-      object  = other;
-      type_id = other_type_id;
-    }
+    Construct(std::forward<T>(other), other_type_id);
   }
+  else
+  {
+    object  = std::forward<T>(other);
+    type_id = other_type_id;
+  }
+}
 
-  template <typename T, typename std::enable_if_t<IsPtr<T>::value> * = nullptr>
-  void Assign(T &&other, TypeId other_type_id)
-  {
-    if (IsPrimitive())
-    {
-      Construct(std::forward<T>(other), other_type_id);
-    }
-    else
-    {
-      object  = std::forward<T>(other);
-      type_id = other_type_id;
-    }
-  }
+template <typename T, typename std::enable_if_t<IsVariant<T>::value> * = nullptr>
+void Assign(T const &other, TypeId /* other_type_id */)
+{
+  operator=(other);
+}
 
-  template <typename T, typename std::enable_if_t<IsVariant<T>::value> * = nullptr>
-  void Assign(T const &other, TypeId /* other_type_id */)
-  {
-    operator=(other);
-  }
+template <typename T, typename std::enable_if_t<IsVariant<T>::value> * = nullptr>
+void Assign(T &&other, TypeId /* other_type_id */)
+{
+  operator=(std::forward<T>(other));
+}
 
-  template <typename T, typename std::enable_if_t<IsVariant<T>::value> * = nullptr>
-  void Assign(T &&other, TypeId /* other_type_id */)
-  {
-    operator=(std::forward<T>(other));
-  }
+template <typename T>
+typename std::enable_if_t<IsPrimitive<T>::value, T> Get() const
+{
+  return primitive.Get<T>();
+}
 
-  template <typename T>
-  typename std::enable_if_t<IsPrimitive<T>::value, T> Get() const
-  {
-    return primitive.Get<T>();
-  }
+template <typename T>
+typename std::enable_if_t<IsPtr<T>::value, T> Get() const
+{
+  return object;
+}
 
-  template <typename T>
-  typename std::enable_if_t<IsPtr<T>::value, T> Get() const
+template <typename T>
+typename std::enable_if_t<IsVariant<T>::value, T> Get() const
+{
+  T variant;
+  variant.type_id = type_id;
+  if (IsPrimitive())
   {
-    return object;
+    variant.primitive = primitive;
   }
+  else
+  {
+    new (&variant.object) Ptr<Object>(object);
+  }
+  return variant;
+}
 
-  template <typename T>
-  typename std::enable_if_t<IsVariant<T>::value, T> Get() const
-  {
-    T variant;
-    variant.type_id = type_id;
-    if (IsPrimitive())
-    {
-      variant.primitive = primitive;
-    }
-    else
-    {
-      new (&variant.object) Ptr<Object>(object);
-    }
-    return variant;
-  }
+template <typename T>
+typename std::enable_if_t<IsPrimitive<T>::value, T> Move()
+{
+  type_id = TypeIds::Unknown;
+  return primitive.Get<T>();
+}
 
-  template <typename T>
-  typename std::enable_if_t<IsPrimitive<T>::value, T> Move()
-  {
-    type_id = TypeIds::Unknown;
-    return primitive.Get<T>();
-  }
+template <typename T>
+typename std::enable_if_t<IsPtr<T>::value, T> Move()
+{
+  type_id = TypeIds::Unknown;
+  return {std::move(object)};
+}
 
-  template <typename T>
-  typename std::enable_if_t<IsPtr<T>::value, T> Move()
+template <typename T>
+typename std::enable_if_t<IsVariant<T>::value, T> Move()
+{
+  T variant;
+  variant.type_id = type_id;
+  if (IsPrimitive())
   {
-    type_id = TypeIds::Unknown;
-    return {std::move(object)};
+    variant.primitive = primitive;
   }
+  else
+  {
+    new (&variant.object) Ptr<Object>(std::move(object));
+  }
+  type_id = TypeIds::Unknown;
+  return variant;
+}
 
-  template <typename T>
-  typename std::enable_if_t<IsVariant<T>::value, T> Move()
-  {
-    T variant;
-    variant.type_id = type_id;
-    if (IsPrimitive())
-    {
-      variant.primitive = primitive;
-    }
-    else
-    {
-      new (&variant.object) Ptr<Object>(std::move(object));
-    }
-    type_id = TypeIds::Unknown;
-    return variant;
-  }
+~Variant()
+{
+  Reset();
+}
 
-  ~Variant()
-  {
-    Reset();
-  }
+bool IsPrimitive() const
+{
+  return type_id <= TypeIds::PrimitiveMaxId;
+}
 
-  bool IsPrimitive() const
+void Reset()
+{
+  if (!IsPrimitive())
   {
-    return type_id <= TypeIds::PrimitiveMaxId;
+    object.Reset();
   }
-
-  void Reset()
-  {
-    if (!IsPrimitive())
-    {
-      object.Reset();
-    }
-    type_id = TypeIds::Unknown;
-  }
-};
+  type_id = TypeIds::Unknown;
+}
+};  // namespace vm
 
 struct TemplateParameter1 : public Variant
 {
@@ -733,7 +733,7 @@ public:
   /**
    * Read-only access to the value of a particular type inside the variant.
    *
-   * @return cv's value of this type id, or that of v_, whichever set
+   * @return cv_'s value of this type id, or that of v_, whichever set
    */
   constexpr auto Get() const noexcept
   {
@@ -842,7 +842,7 @@ template <>
 class VariantView<TypeIdTraits<TypeIds::Null>, false>
   : public TypeIdTraits<TypeIds::Null>  // parent defines value, type and storage_type
 {
-  using Parent = TypeIdTraits;
+  using Parent = TypeIdTraits<TypeIds::Null>;
 
 protected:
   Variant *      v_  = nullptr;
@@ -856,14 +856,14 @@ protected:
   {}
 
 public:
-  using typename Parent::type;
-  using typename Parent::storage_type;
+  using Parent::type;
+  using Parent::storage_type;
   using Parent::value;
 
   /**
    * Read-only access to the value of a particular type inside the variant.
    *
-   * @return cv's value of this type id, or that of v_, whichever set
+   * @return cv_'s value of this type id, or that of v_, whichever set
    */
   constexpr auto Get() const noexcept
   {
@@ -900,14 +900,16 @@ public:
   template <class F>
   static constexpr decltype(auto) Invoke(F &&f)
   {
-    return value_util::Invoke(std::forward<F>(f), TypeIdTraits<TypeIds::Null>{});
+    return value_util::Invoke(std::forward<F>(f), Parent{});
   }
 };
 
+using DefaultVariantValue = VariantValue<TypeIds::NumReserved, Ptr<Object>>;
+
 // Class DefaultVariantView is used for DefaultCase clauses of type_util::Switch.
-class DefaultVariantView : protected VariantValue<TypeIds::NumReserved, Ptr<Object>>
+class DefaultVariantView : protected DefaultVariantValue
 {
-  using Parent = VariantValue<TypeIds::NumReserved, Ptr<Object>>;
+  using Parent = DefaultVariantValue;
 
   Variant *      v_  = nullptr;
   Variant const *cv_ = nullptr;
@@ -927,7 +929,7 @@ public:
   /**
    * Read-only access to the value of a particular type inside the variant.
    *
-   * @return cv's value of this type id, or that of v_, whichever set
+   * @return cv_'s value of this type id, or that of v_, whichever set
    */
   auto Get() const noexcept
   {
@@ -981,13 +983,15 @@ public:
   template <class F>
   static constexpr decltype(auto) Invoke(F &&f)
   {
-    return value_util::Invoke(std::forward<F>(f),
-                              VariantValue<TypeIds::NumReserved, Ptr<Object>>{});
+    return value_util::Invoke(std::forward<F>(f), DefaultVariantValue{});
   }
 };
 
 template <TypeId id>
-using IdView = VariantView<TypeIdTraits<id>>;
+using TypeIdView = VariantView<TypeIdTraits<id>>;
+
+template <class TypeIdValue>
+using AsVariantView = VariantView<TypeIdValue>;
 
 // Typeid sets
 template <TypeId... ids>
@@ -1017,9 +1021,6 @@ using BuiltinTypeIds =
 using NonInstantiableTypeIds = TypeIdSequence<TypeIds::Null, TypeIds::Void>;
 
 // Variant view sets, defined for those typeid sets
-template <class TypeIdValue>
-using AsVariantView = VariantView<TypeIdValue>;
-
 template <class... TypeIdValues>
 using TypeIdCases = pack::TransformT<AsVariantView, pack::ConcatT<TypeIdValues...>>;
 
@@ -1058,7 +1059,7 @@ using NonInstantiableTypes = TypeIdCases<NonInstantiableTypeIds>;
  * against every Ci::value and, if Cn matches, passes control to f(Cn(var1), Cn(var2)...).
  *
  * If no vars given (i.e. ApplyFunctor<C1, C2...>(type_id, f), f is called with a special dummy
- * zero-size argument whose type provides static constexpr method value, equal to type_id,
+ * zero-size argument whose type provides static constexpr member value, equal to type_id,
  * and member types type and storage_type.
  *
  * When there's no match (i.e. there's no DefaultCase among Cases), zero value of f's return type
@@ -1067,7 +1068,7 @@ using NonInstantiableTypes = TypeIdCases<NonInstantiableTypeIds>;
  * @tparam Cases... a set of VariantView types to be handled, each one having a member value to be
  * compared against type_id
  * @param type_id the selector value that identifies a particular Case
- * @param f a callable to be invoked on matching views, or a special dummy type-identifier
+ * @param f a callable to be invoked on matching views, or on a special dummy type-identifier
  * @param variants... a (possibly empty) set of Variants to handle
  * @return whatever f returns
  */
@@ -1120,10 +1121,10 @@ constexpr auto ApplyBuiltinFunctor(TypeId type_id, F &&f, Variants &&... variant
 //
 //     ApplyFunctor<SignedIntegerTypes>(type_id,
 //         Slots(
-//             TypeIdSlot<VariantView<TypeIds::Int8>, VariantView<TypeIds::Int16>>(
+//             ViewSlot<VariantView<TypeIds::Int8>, VariantView<TypeIds::Int16>>(
 //                 [](auto){ return std::string{"This is a small integer."}; }),
 //
-//             TypeIdSlot<VariantView<TypeIds::Int32>, VariantView<TypeIds::Int64>>(
+//             ViewSlot<VariantView<TypeIds::Int32>, VariantView<TypeIds::Int64>>(
 //                 [](auto){ return std::string{"This is a large integer."}; })
 //         ));
 //
@@ -1135,7 +1136,7 @@ constexpr auto ApplyBuiltinFunctor(TypeId type_id, F &&f, Variants &&... variant
  * @return slot
  */
 template <class... Views, class F>
-constexpr auto TypeIdSlot(F &&f)
+constexpr auto ViewSlot(F &&f)
 {
   return pack::ApplyT<value_util::SlotType, pack::ConcatT<F, Views...>>(std::forward<F>(f));
 }
@@ -1164,7 +1165,7 @@ constexpr auto DefaultSlot(F &&f)
 template <class F>
 constexpr auto IntegralSlot(F &&f)
 {
-  return TypeIdSlot<IntegralTypes>(std::forward<F>(f));
+  return ViewSlot<IntegralTypes>(std::forward<F>(f));
 }
 
 /**
@@ -1176,7 +1177,7 @@ constexpr auto IntegralSlot(F &&f)
 template <class F>
 constexpr auto NumericSlot(F &&f)
 {
-  return TypeIdSlot<NumericTypes>(std::forward<F>(f));
+  return ViewSlot<NumericTypes>(std::forward<F>(f));
 }
 
 /**
@@ -1188,7 +1189,7 @@ constexpr auto NumericSlot(F &&f)
 template <class F>
 constexpr auto PrimitiveSlot(F &&f)
 {
-  return TypeIdSlot<PrimitiveTypes>(std::forward<F>(f));
+  return ViewSlot<PrimitiveTypes>(std::forward<F>(f));
 }
 
 /**
@@ -1200,7 +1201,7 @@ constexpr auto PrimitiveSlot(F &&f)
 template <class F>
 constexpr auto BuiltinSlot(F &&f)
 {
-  return TypeIdSlot<BuiltinTypes>(std::forward<F>(f));
+  return ViewSlot<BuiltinTypes>(std::forward<F>(f));
 }
 
 /**
@@ -1215,7 +1216,7 @@ constexpr auto BuiltinSlot(F &&f)
 template <class... TypeIdValues, class F>
 constexpr auto NullarySlot(F &&f)
 {
-  return TypeIdSlot<TypeIdValues...>(std::forward<F>(f));
+  return ViewSlot<TypeIdValues...>(std::forward<F>(f));
 }
 
 /**
@@ -1231,8 +1232,7 @@ constexpr auto NullarySlot(F &&f)
 template <class... TypeIdValues, class F>
 constexpr auto DefaultNullarySlot(F &&f)
 {
-  return NullarySlot<TypeIdValues..., VariantValue<TypeIds::NumReserved, Ptr<Object>>>(
-      std::forward<F>(f));
+  return NullarySlot<TypeIdValues..., DefaultVariantValue>(std::forward<F>(f));
 }
 
 /**
@@ -1283,5 +1283,5 @@ constexpr auto BuiltinNullarySlot(F &&f)
   return NullarySlot<BuiltinTypeIds>(std::forward<F>(f));
 }
 
-}  // namespace vm
+}  // namespace fetch
 }  // namespace fetch
