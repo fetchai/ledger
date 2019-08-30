@@ -53,9 +53,26 @@ public:
 
   SizeType total_count;
 
-  DataType        data;          // word -> (id, count)
-  ReverseDataType reverse_data;  // id -> (word, count)
+  DataType              data;          // word -> (id, count)
+  ReverseDataType       reverse_data;  // id -> (word, count)
+  std::vector<SizeType> PutSentenceInVocab(const std::vector<std::string> &strings);
 };
+
+std::vector<math::SizeType> Vocab::PutSentenceInVocab(std::vector<std::string> const &strings)
+{
+  std::vector<SizeType> indices;
+  indices.reserve(strings.size());
+
+  for (std::string const &s : strings)
+  {
+    auto value = data.insert(
+        std::make_pair(s, std::make_pair(static_cast<SizeType>(data.size()),
+                                         0)));       // insert a word info block into vocab_.data
+    indices.push_back((*value.first).second.first);  // update the word in the sentence to index
+    value.first->second.second++;                    // adding up count for word s
+  }
+  return indices;
+}
 
 /**
  * Update the meta-data in vocabulary every time vocabulary is changed
@@ -175,27 +192,26 @@ void Vocab::Load(std::string const &filename)
 
   std::ifstream infile(filename, std::ios::binary);
 
-  std::string line;
   std::string word;
   SizeType    idx;
   SizeType    count;
 
   std::pair<SizeType, SizeType>                         p1;
   std::pair<std::string, std::pair<SizeType, SizeType>> p2;
-  while (infile.peek() != EOF)
+
+  std::string buf;
+  while (std::getline(infile, buf, '\n'))
   {
-    infile >> line;
-    word = line;
+    if (!buf.empty())
+    {
+      std::stringstream ss(buf);
 
-    infile >> line;
-    idx = std::stoull(line);
+      ss >> word >> idx >> count;
 
-    infile >> line;
-    count = std::stoull(line);
-
-    p1 = {idx, count};
-    p2 = {word, p1};
-    data.insert(p2);
+      p1 = {idx, count};
+      p2 = {word, p1};
+      data.insert(p2);
+    }
   }
 }
 

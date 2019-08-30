@@ -49,7 +49,7 @@ private:
 void UnigramTable::Reset(std::vector<SizeType> const &count, SizeType size)
 {
 
-  if (size && count.size())
+  if (size && !count.empty())
   {
     // sum_counts
     SizeType sum_count =
