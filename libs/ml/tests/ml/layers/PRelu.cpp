@@ -195,8 +195,9 @@ TYPED_TEST(PReluTest, saveparams_test)
 
   // set input and evaluate
   layer.SetInput(input_name, input);
-  TypeParam prediction;
-  prediction = layer.Evaluate(output_name, true);
+//  layer.Compile();
+
+  TypeParam prediction = layer.Evaluate(output_name, true);
 
   // extract saveparams
   auto sp = layer.GetOpSaveableParams();

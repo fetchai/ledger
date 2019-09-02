@@ -545,8 +545,8 @@ struct fetch::ml::StateDict<TensorType> Graph<TensorType>::StateDict() const
   struct fetch::ml::StateDict<TensorType> d;
   for (auto const &t : trainable_lookup_)
   {
-    auto node_ptr      = trainable_nodes_.at(t.second);
-    auto op_ptr        = node_ptr->GetOp();
+    auto node_ptr    = trainable_nodes_.at(t.second);
+    auto op_ptr      = node_ptr->GetOp();
     auto weights_ptr = std::dynamic_pointer_cast<ops::Weights<TensorType>>(op_ptr);
     d.dict_.emplace(t.first, weights_ptr->StateDict());
   }
