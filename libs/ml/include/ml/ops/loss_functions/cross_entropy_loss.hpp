@@ -85,6 +85,7 @@ public:
 
     bool     is_binary  = (inputs.at(0)->shape(0) == 1);
     DataType batch_size = static_cast<DataType>(inputs.at(0)->shape(1));
+    DataType res;
 
     TensorType ret({inputs.at(0)->shape()});
 
@@ -95,18 +96,27 @@ public:
 
     while (a_it.is_valid())
     {
-      // TODO (#1583) Decide how to handle the following assertion. The assertion is here to assure
-      // no 0 division would happen during loss calculation. But for low precision datatype this
-      // would happen eventurally. We can either remove it or add an epsilon on denominators.
-      // assert(*a_it > 0 && *a_it < 1);
       assert(*b_it == 0 || *b_it == 1);
+
       if (*b_it == 1)
       {
-        *r_it = -*b_it / *a_it;
+        res = *a_it;
+        if (res == static_cast<DataType>(0))
+        {
+          res += epsilon_;
+        }
+
+        *r_it = -*b_it / res;
       }
       else if (is_binary)
       {
-        *r_it = (one - *b_it) / (one - *a_it);
+        res = (one - *a_it);
+        if (res == static_cast<DataType>(0))
+        {
+          res += epsilon_;
+        }
+
+        *r_it = (one - *b_it) / (res);
       }
 
       ++a_it;
@@ -126,6 +136,8 @@ public:
   {
     return OpType::OP_CROSS_ENTROPY_LOSS;
   }
+
+  DataType                     epsilon_   = fetch::math::function_tolerance<DataType>();
   static constexpr char const *DESCRIPTOR = "CrossEntropyLoss";
 };
 
