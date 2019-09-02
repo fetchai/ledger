@@ -39,7 +39,7 @@ void recursively_increment_n_times(Wrapper &protected_value, uint8_t n)
 {
   if (n > 0)
   {
-    protected_value.Apply([&protected_value, n](auto &payload) -> void {
+    protected_value.ApplyVoid([&protected_value, n](auto &payload) {
       ++payload;
       recursively_increment_n_times(protected_value, static_cast<uint8_t>(n - 1));
     });
@@ -106,7 +106,7 @@ public:
   {
     Wrapper<std::vector<std::string>, std::mutex> protected_vector(3u, "abc");
 
-    protected_vector.Apply([](auto &vector_payload) -> void {
+    protected_vector.ApplyVoid([](auto &vector_payload) {
       EXPECT_EQ(vector_payload.size(), 3u);
       EXPECT_EQ(vector_payload[0], std::string{"abc"});
     });
@@ -117,7 +117,7 @@ public:
   {
     const Wrapper<ConstType, std::mutex> const_protected_const_value(initial_value);
 
-    const_protected_const_value.Apply([this](auto &payload) -> void {
+    const_protected_const_value.ApplyVoid([this](auto &payload) {
       EXPECT_TRUE(is_read_only(payload));
 
       EXPECT_EQ(payload, initial_value);
@@ -129,7 +129,7 @@ public:
   {
     Wrapper<ConstType, std::mutex> protected_const_value(initial_value);
 
-    protected_const_value.Apply([this](auto &payload) -> void {
+    protected_const_value.ApplyVoid([this](auto &payload) {
       EXPECT_TRUE(is_read_only(payload));
 
       EXPECT_EQ(payload, initial_value);
@@ -141,7 +141,7 @@ public:
   {
     const Wrapper<Type, std::mutex> const_protected_value(initial_value);
 
-    const_protected_value.Apply([this](auto &payload) -> void {
+    const_protected_value.ApplyVoid([this](auto &payload) {
       EXPECT_TRUE(is_read_only(payload));
 
       EXPECT_EQ(payload, initial_value);
@@ -153,7 +153,7 @@ public:
   {
     Wrapper<Type, std::mutex> protected_value(initial_value);
 
-    protected_value.Apply([this](auto &payload) -> void {
+    protected_value.ApplyVoid([this](auto &payload) {
       EXPECT_FALSE(is_read_only(payload));
 
       EXPECT_EQ(payload, initial_value);
@@ -162,7 +162,7 @@ public:
       EXPECT_EQ(payload, new_value);
     });
 
-    protected_value.Apply([this](auto &payload) -> void { EXPECT_EQ(payload, new_value); });
+    protected_value.ApplyVoid([this](auto &payload) { EXPECT_EQ(payload, new_value); });
   }
 
   template <template <typename, typename> class Wrapper>
@@ -191,7 +191,7 @@ public:
     // would deadlock with non-recursive mutex
     recursively_increment_n_times(protected_value_with_recursive_mutex, iterations);
 
-    protected_value_with_recursive_mutex.Apply([this](auto &payload) -> void {
+    protected_value_with_recursive_mutex.ApplyVoid([this](auto &payload) {
       auto const final_value = initial_value + iterations;
       EXPECT_EQ(payload, final_value);
     });
@@ -209,7 +209,7 @@ public:
 
     Wrapper<Type, TestMutex> protected_value_with_test_mutex{};
 
-    protected_value_with_test_mutex.Apply([&payload_spy](auto &) -> void { payload_spy.call(); });
+    protected_value_with_test_mutex.ApplyVoid([&payload_spy](auto &) { payload_spy.call(); });
   }
 
   template <template <typename, typename> class Wrapper>
@@ -225,11 +225,11 @@ public:
     EXPECT_CALL(*mutex_spy, unlock()).Times(2);
 
     Wrapper<Type, TestMutex> protected_value_with_test_mutex{};
-    protected_value_with_test_mutex.Apply([&protected_value_with_test_mutex,
-                                           &payload_spy](auto &) -> void {
-      payload_spy.call();
-      protected_value_with_test_mutex.Apply([&payload_spy](auto &) -> void { payload_spy.call(); });
-    });
+    protected_value_with_test_mutex.ApplyVoid(
+        [&protected_value_with_test_mutex, &payload_spy](auto &) {
+          payload_spy.call();
+          protected_value_with_test_mutex.ApplyVoid([&payload_spy](auto &) { payload_spy.call(); });
+        });
   }
 
   ConstType initial_value;

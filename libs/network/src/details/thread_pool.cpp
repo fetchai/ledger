@@ -137,7 +137,7 @@ void ThreadPoolImplementation::Start()
 
   // start all the threads
   {
-    threads_.Apply([this](auto &threads) -> void {
+    threads_.ApplyVoid([this](auto &threads) {
       detailed_assert(threads.empty());
 
       for (std::size_t thread_idx = 0; thread_idx < max_threads_; ++thread_idx)
@@ -175,7 +175,7 @@ void ThreadPoolImplementation::Start()
  */
 void ThreadPoolImplementation::Stop()
 {
-  threads_.Apply([this](auto &threads) -> void {
+  threads_.ApplyVoid([this](auto &threads) {
     // We have made the design decision that we will not allow pooled work to stop the thread pool.
     // While strictly not necessary, this has been done as a guard against desired behaviour. If
     // this assumption should prove to be invalid in the future removing this check here should

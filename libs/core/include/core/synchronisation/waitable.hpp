@@ -45,20 +45,18 @@ public:
   Waitable &operator=(Waitable &&) = delete;
 
   template <typename Handler>
-  auto Apply(Handler &&handler)
-      -> std::enable_if_t<std::is_void<decltype(protected_payload_.Apply(handler))>::value, void>
+  void ApplyVoid(Handler &&handler)
   {
-    protected_payload_.Apply([this, handler](auto &payload) -> void {
+    protected_payload_.ApplyVoid([this, handler](auto &payload) {
       handler(payload);
       condition_.notify_all();
     });
   }
 
   template <typename Handler>
-  auto Apply(Handler &&handler) const
-      -> std::enable_if_t<std::is_void<decltype(protected_payload_.Apply(handler))>::value, void>
+  void ApplyVoid(Handler &&handler) const
   {
-    protected_payload_.Apply([this, handler](auto const &payload) -> void {
+    protected_payload_.ApplyVoid([this, handler](auto const &payload) {
       handler(payload);
       condition_.notify_all();
     });

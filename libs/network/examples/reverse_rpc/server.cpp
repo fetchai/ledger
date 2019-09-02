@@ -52,8 +52,8 @@ public:
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Registering: ", context.sender_address.ToBase64());
 
-    node_set_.Apply(
-        [&context](AddressSet &addresses) -> void { addresses.insert(context.sender_address); });
+    node_set_.ApplyVoid(
+        [&context](AddressSet &addresses) { addresses.insert(context.sender_address); });
   }
 
   Strings SearchFor(std::string const &val)
@@ -62,7 +62,7 @@ public:
 
     // generate the set of address to whom we are directly connected and have registered
     AddressSet addresses{};
-    node_set_.Apply([&addresses, &connected_peers](AddressSet const &node_addresses) {
+    node_set_.ApplyVoid([&addresses, &connected_peers](AddressSet const &node_addresses) {
       for (auto const &address : connected_peers)
       {
         if (node_addresses.find(address) != node_addresses.end())
