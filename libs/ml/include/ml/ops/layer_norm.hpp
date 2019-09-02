@@ -39,6 +39,7 @@ public:
   using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpLayerNormSaveableParams<T>;
+  using MyType        = LayerNorm<TensorType>;
 
   explicit LayerNorm(SizeType axis    = static_cast<SizeType>(0),
                      DataType epsilon = fetch::math::function_tolerance<DataType>())
@@ -57,6 +58,32 @@ public:
   }
 
   ~LayerNorm() override = default;
+
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
+  {
+    auto sp = std::make_shared<SPType>();
+
+    sp->epsilon             = epsilon_;
+    sp->axis                = axis_;
+    sp->prev_input          = prev_input_;
+    sp->cached_inv_sqrt_var = cached_inv_sqrt_var_;
+    sp->cached_output       = cached_output_;
+
+    return sp;
+  }
+  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
+  {
+    FETCH_UNUSED(me);
+    assert(me.get() == this);
+
+    auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
+    copyshare->prev_input_          = TensorType(prev_input_.shape());
+    copyshare->cached_inv_sqrt_var_ = TensorType(cached_inv_sqrt_var_.shape());
+    copyshare->cached_output_       = TensorType(cached_output_.shape());
+
+    return copyshare;
+  }
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
@@ -118,19 +145,6 @@ public:
     output_error_signal = cached_inv_sqrt_var_ / feature_length * (dmu_dx - dout_dx - dvar_dx);
 
     return {output_error_signal};
-  }
-
-  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
-  {
-    auto sp = std::make_shared<SPType>();
-
-    sp->epsilon             = epsilon_;
-    sp->axis                = axis_;
-    sp->prev_input          = prev_input_;
-    sp->cached_inv_sqrt_var = cached_inv_sqrt_var_;
-    sp->cached_output       = cached_output_;
-
-    return sp;
   }
 
   static constexpr OpType OpCode()

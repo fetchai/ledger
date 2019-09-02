@@ -54,7 +54,7 @@ public:
    * @param s Input mutable instance of ByteArray to copy content from (by
    *          value as explained above)
    */
-  MsgPackSerializer(byte_array::ByteArray const &s);
+  MsgPackSerializer(byte_array::ByteArray s);
   MsgPackSerializer(MsgPackSerializer const &from);
 
   MsgPackSerializer &operator=(MsgPackSerializer const &from);

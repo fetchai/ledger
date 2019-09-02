@@ -71,7 +71,7 @@ TYPED_TEST(EmbeddingsTest, forward)
     }
   }
 
-  e.fetch::ml::ops::template Weights<TypeParam>::SetData(weights);
+  e.SetData(weights);
 
   TypeParam input(std::vector<uint64_t>({2, 1}));
   input.At(0, 0) = typename TypeParam::Type(3);
@@ -83,18 +83,12 @@ TYPED_TEST(EmbeddingsTest, forward)
   ASSERT_EQ(output.shape(), std::vector<typename TypeParam::SizeType>({6, 2, 1}));
 
   std::vector<int> gt{30, 31, 32, 33, 34, 35, 50, 51, 52, 53, 54, 55};
-  std::cout << " ---- " << std::endl;
+
   for (unsigned int i{0}; i < 2; ++i)
   {
     for (unsigned int j{0}; j < 6; ++j)
     {
       EXPECT_EQ(output.At(j, i, 0), typename TypeParam::Type(gt[(i * 6) + j]));
-      if (output.At(j, i, 0) != (typename TypeParam::Type(gt[(i * 6) + j])))
-      {
-        std::cerr << "ERROR: " << output.At(j, i, 0) << " "
-                  << typename TypeParam::Type(gt[(i * 6) + j]) << std::endl;
-        std::exit(-1);
-      }
     }
   }
 }
@@ -115,7 +109,7 @@ TYPED_TEST(EmbeddingsTest, backward)
     }
   }
 
-  e.fetch::ml::ops::template Weights<TypeParam>::SetData(weights);
+  e.SetData(weights);
 
   TensorType input(std::vector<uint64_t>({2, 1}));
   input.At(0, 0) = DataType{3};
@@ -135,12 +129,12 @@ TYPED_TEST(EmbeddingsTest, backward)
 
   e.Backward({std::make_shared<TypeParam>(input)}, error_signal);
 
-  TensorType grad = e.get_gradients();
+  TensorType grad = e.GetGradientsReferences();
   fetch::math::Multiply(grad, DataType{-1}, grad);
   e.ApplyGradient(grad);
 
   // Get a copy of the gradients and check that they were zeroed out after Step
-  TensorType grads_copy = e.get_gradients();
+  TensorType grads_copy = e.GetGradientsReferences();
 
   EXPECT_TRUE(TensorType::Zeroes({6, 1}).AllClose(grads_copy.View(SizeType(input(0, 0))).Copy()));
   EXPECT_TRUE(TensorType::Zeroes({6, 1}).AllClose(grads_copy.View(SizeType(input(1, 0))).Copy()));
@@ -181,9 +175,9 @@ TYPED_TEST(EmbeddingsTest, saveparams_test)
 
   OpType op(6, 10);
 
-  op.fetch::ml::ops::template Weights<TypeParam>::SetData(weights);
+  op.SetData(weights);
 
-  TensorType prediction(op.ComputeOutputShape({std::make_shared<TensorType const>(weights)}));
+  TensorType prediction(op.ComputeOutputShape({std::make_shared<TensorType const>(input)}));
 
   op.Forward({std::make_shared<TensorType const>(input)}, prediction);
 
@@ -206,7 +200,7 @@ TYPED_TEST(EmbeddingsTest, saveparams_test)
   OpType new_op(*dsp2);
 
   // check that new predictions match the old
-  TensorType new_prediction(op.ComputeOutputShape({std::make_shared<TensorType const>(weights)}));
+  TensorType new_prediction(op.ComputeOutputShape({std::make_shared<TensorType const>(input)}));
   new_op.Forward({std::make_shared<TensorType const>(input)}, new_prediction);
 
   // test correct values
@@ -231,7 +225,7 @@ TYPED_TEST(EmbeddingsTest, saveparams_backward)
     }
   }
 
-  op.fetch::ml::ops::template Weights<TypeParam>::SetData(weights);
+  op.SetData(weights);
 
   TensorType input(std::vector<uint64_t>({2, 1}));
   input.At(0, 0) = DataType{3};
