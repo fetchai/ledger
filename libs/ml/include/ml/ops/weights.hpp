@@ -135,7 +135,7 @@ public:
     return {};
   }
 
-  void AddExternalGradient(TensorType const &extern_grad)
+  void AddToGradient(TensorType const &extern_grad)
   {
     gradient_accumulation_->InlineAdd(extern_grad);
   }

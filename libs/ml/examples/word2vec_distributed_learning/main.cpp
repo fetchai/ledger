@@ -67,7 +67,7 @@ using namespace fetch::ml::layers;
 using namespace fetch::ml;
 using namespace fetch::ml::dataloaders;
 
-using DataType         = double;
+using DataType         = fetch::fixed_point::FixedPoint<32, 32>;
 using TensorType       = fetch::math::Tensor<DataType>;
 using VectorTensorType = std::vector<TensorType>;
 using SizeType         = typename TensorType::SizeType;
@@ -97,7 +97,6 @@ int main(int ac, char **av)
       std::make_shared<Coordinator>(SYNCHRONIZATION_MODE, NUMBER_OF_ITERATIONS);
 
   std::cout << "FETCH Distributed Word2vec Demo -- Asynchronous" << std::endl;
-  std::srand((unsigned int)std::time(nullptr));
 
   TrainingParams<TensorType> tp;
 
@@ -127,15 +126,15 @@ int main(int ac, char **av)
   }
 
   std::vector<std::shared_ptr<TrainingClient<TensorType>>> clients(NUMBER_OF_CLIENTS);
-  for (unsigned int i(0); i < NUMBER_OF_CLIENTS; ++i)
+  for (SizeType i(0); i < NUMBER_OF_CLIENTS; ++i)
   {
-    // Instanciate NUMBER_OF_CLIENTS clients
+    // Instantiate NUMBER_OF_CLIENTS clients
     clients[i] = std::make_shared<Word2VecClient<TensorType>>(std::to_string(i), tp, vocab_file,
                                                               train_data[i],
                                                               BATCH_SIZE, NUMBER_OF_PEERS);
   }
 
-  for (unsigned int i(0); i < NUMBER_OF_CLIENTS; ++i)
+  for (SizeType i(0); i < NUMBER_OF_CLIENTS; ++i)
   {
     // Give every client the full list of other clients
     clients[i]->AddPeers(clients);
@@ -145,7 +144,7 @@ int main(int ac, char **av)
   }
 
   // Main loop
-  for (unsigned int it(0); it < NUMBER_OF_ROUNDS; ++it)
+  for (SizeType it(0); it < NUMBER_OF_ROUNDS; ++it)
   {
 
     // Start all clients
@@ -154,7 +153,7 @@ int main(int ac, char **av)
     std::list<std::thread> threads;
     for (auto &c : clients)
     {
-      threads.emplace_back([&c] { c->MainLoop(); });
+      threads.emplace_back([&c] { c->Run(); });
     }
 
     // Wait for everyone to finish
@@ -171,7 +170,7 @@ int main(int ac, char **av)
     // Synchronize weights by giving all clients average of all client's weights
     VectorTensorType new_weights = clients[0]->GetWeights();
 
-    // Sum all wights
+    // Sum all weights
     for (SizeType i{1}; i < NUMBER_OF_CLIENTS; ++i)
     {
       VectorTensorType other_weights = clients[i]->GetWeights();
@@ -190,7 +189,7 @@ int main(int ac, char **av)
     }
 
     // Update models of all clients by average model
-    for (unsigned int i(0); i < NUMBER_OF_CLIENTS; ++i)
+    for (SizeType i(0); i < NUMBER_OF_CLIENTS; ++i)
     {
       clients[i]->SetWeights(new_weights);
     }

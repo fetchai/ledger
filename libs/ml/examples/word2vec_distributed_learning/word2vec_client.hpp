@@ -21,17 +21,6 @@
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "word2vec_training_params.hpp"
 
-//std::string ReadFile(std::string const &path)
-//{
-//  std::ifstream t(path);
-//  if (t.fail())
-//  {
-//    throw std::runtime_error("Cannot open file " + path);
-//  }
-//
-//  return std::string((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
-//}
-
 template <class TensorType>
 class Word2VecClient : public TrainingClient<TensorType>
 {
@@ -117,7 +106,6 @@ void Word2VecClient<TensorType>::PrepareDataLoader()
   w2v_data_loader_ptr_ = std::make_shared<fetch::ml::dataloaders::GraphW2VLoader<DataType>>(
       tp_.window_size, tp_.negative_sample_size, tp_.freq_thresh, tp_.max_word_count);
   w2v_data_loader_ptr_->LoadVocab(vocab_file_);
-//  w2v_data_loader_ptr_->BuildVocab({ReadFile(vocab_file_)}, tp_.min_count);
   w2v_data_loader_ptr_->BuildOnlyData({training_data_}, tp_.min_count);
 
   this->dataloader_ptr_ = w2v_data_loader_ptr_;
@@ -139,10 +127,10 @@ void Word2VecClient<TensorType>::PrepareOptimiser()
 template <class TensorType>
 void Word2VecClient<TensorType>::Test(DataType &test_loss)
 {
-  // Implement loss mechanism
+  // TODO(issue 1595): Implement loss mechanism
   test_loss = static_cast<DataType>(0);
 
-  // Implement test frequency mechanism
+  // TODO(issue 1596): Implement test frequency mechanism
   // if (i % tp_.test_frequency == 0)
   //{
   TestEmbeddings(tp_.word0, tp_.word1, tp_.word2, tp_.word3, tp_.k);

@@ -28,18 +28,18 @@ struct TrainingParams
   using DataType = typename TensorType::Type;
 
   SizeType max_word_count = fetch::math::numeric_max<SizeType>();  // maximum number to be trained
-  SizeType negative_sample_size = 5;     // number of negative sample per word-context pair
-  SizeType window_size          = 5;     // window size for context sampling
-  DataType freq_thresh          = 1e-3;  // frequency threshold for subsampling
-  SizeType min_count            = 5;     // infrequent word removal threshold
+  SizeType negative_sample_size = 5;  // number of negative sample per word-context pair
+  SizeType window_size          = 5;  // window size for context sampling
+  DataType freq_thresh          = DataType{1e-3};  // frequency threshold for subsampling
+  SizeType min_count            = 5;               // infrequent word removal threshold
 
   SizeType batch_size      = 100000;  // training data batch size
   SizeType embedding_size  = 100;     // dimension of embedding vec
   SizeType training_epochs = 1;
   SizeType test_frequency  = 1;
   DataType starting_learning_rate_per_sample =
-      0.00001;  // these are the learning rates we have for each sample
-  DataType ending_learning_rate_per_sample = 0.000001;
+      DataType{0.00001};  // these are the learning rates we have for each sample
+  DataType ending_learning_rate_per_sample = DataType{0.000001};
   DataType starting_learning_rate;  // this is the true learning rate set for the graph training
   DataType ending_learning_rate;
 

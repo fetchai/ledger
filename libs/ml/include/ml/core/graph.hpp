@@ -109,7 +109,7 @@ public:
   meta::IfIsNotGraphOrTrainable<TensorType, OperationType, void> AddTrainable(
       std::string const &name, std::shared_ptr<Node<TensorType>> node_ptr);
 
-  void AddExternalGradients(std::vector<TensorType> grads);
+  void AddGradients(std::vector<TensorType> grads);
 
 private:
   void ApplyRegularisation();
@@ -617,15 +617,21 @@ void Graph<TensorType>::ApplyGradients(std::vector<TensorType> &grad)
   }
 }
 
+/**
+ * Adds a vector of Tensors to the gradient accumulation of all the trainable pointers in the graph.
+ * Typical use case is injecting external gradients e.g when doing distributed learning.
+ * @tparam T
+ * @param grads The vector of gradients - needs to have the same length as the number of trainables
+ */
 template <typename T>
-void Graph<T>::AddExternalGradients(std::vector<TensorType> grads)
+void Graph<T>::AddGradients(std::vector<TensorType> grads)
 {
   assert(grads.size() == trainable_nodes_.size());
   auto gt_it = trainable_nodes_.begin();
   for (auto const &grad : grads)
   {
     auto weights_ptr = std::dynamic_pointer_cast<ops::Weights<TensorType>>((*gt_it)->GetOp());
-    weights_ptr->AddExternalGradient(grad);
+    weights_ptr->AddToGradient(grad);
     ++gt_it;
   }
 }

@@ -22,42 +22,48 @@
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
+#include "../../../examples/word2vec_distributed_learning/word2vec_training_params.hpp"
 
 #include <string>
 
 using namespace fetch::ml;
 using namespace fetch::ml::dataloaders;
 
-using SizeType   = fetch::math::SizeType;
-using TensorType = fetch::math::Tensor<double>;
-
+template <typename TensorType>
 struct TrainingParams
 {
-  SizeType max_word_count       = 15;  // maximum number to be trained
-  SizeType negative_sample_size = 0;   // number of negative sample per word-context pair
-  SizeType window_size          = 1;   // window size for context sampling
-  double   freq_thresh          = 1;   // frequency threshold for subsampling
-  SizeType min_count            = 0;   // infrequent word removal threshold
-} tp;
+  using SizeType                = typename TensorType::SizeType;
+  using DataType                = typename TensorType::Type;
+  SizeType max_word_count       = 15;            // maximum number to be trained
+  SizeType negative_sample_size = 0;            // number of negative sample per word-context pair
+  SizeType window_size          = 1;            // window size for context sampling
+  DataType freq_thresh          = DataType{1};  // frequency threshold for subsampling
+  SizeType min_count            = 0;            // infrequent word removal threshold
+};
 
 template <typename T>
 class SkipGramDataloaderTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tensor<float>,
-                                 fetch::math::Tensor<double>,
+using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
+
 TYPED_TEST_CASE(SkipGramDataloaderTest, MyTypes);
 
 TYPED_TEST(SkipGramDataloaderTest, loader_test)
 {
+  using TensorType = TypeParam;
+  using SizeType   = typename TensorType::SizeType;
+  using DataType   = typename TensorType::Type;
+
+  TrainingParams<TensorType> tp;
+  tp.max_word_count = 9;
+
   std::string training_data = "This is a test sentence of total length ten words.";
 
-  SizeType               max_word_count = 9;
-  GraphW2VLoader<double> loader(tp.window_size, tp.negative_sample_size, tp.freq_thresh,
-                                max_word_count);
-
+  GraphW2VLoader<DataType> loader(tp.window_size, tp.negative_sample_size, tp.freq_thresh,
+                                  tp.max_word_count);
   loader.BuildVocab({training_data});
 
   std::vector<std::pair<std::string, std::string>> gt_input_context_pairs(
@@ -108,6 +114,12 @@ TYPED_TEST(SkipGramDataloaderTest, loader_test)
 
 TYPED_TEST(SkipGramDataloaderTest, test_different_building_methods)
 {
+  using TensorType = TypeParam;
+  using SizeType   = typename TensorType::SizeType;
+  using DataType   = typename TensorType::Type;
+
+  TrainingParams<TensorType> tp;
+
   std::string training_data = "This is a test sentence of total length ten words.";
   std::string extra_vocab = "This is an extra sentence so that vocab is bigger than training data.";
 
