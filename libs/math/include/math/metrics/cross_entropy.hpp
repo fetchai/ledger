@@ -49,7 +49,8 @@ typename ArrayType::Type CrossEntropyLoss(ArrayType const &x, ArrayType const &y
   auto n_examples = x.shape().at(1);
   auto n_dims     = x.shape().at(0);
 
-  auto ret = static_cast<DataType>(0);
+  auto     ret     = static_cast<DataType>(0);
+  DataType epsilon = fetch::math::function_tolerance<DataType>();
 
   // if not a one-hot, must be binary logistic regression cost
   if (n_dims == 1)
@@ -64,7 +65,7 @@ typename ArrayType::Type CrossEntropyLoss(ArrayType const &x, ArrayType const &y
       assert((*y_it == one) || (*y_it == static_cast<DataType>(0)));
       if (*y_it == one)
       {
-        ret -= Log(*x_it);
+        ret -= Log(*x_it + epsilon);
       }
       else
       {
@@ -73,7 +74,7 @@ typename ArrayType::Type CrossEntropyLoss(ArrayType const &x, ArrayType const &y
         {
           throw std::runtime_error("cannot take log of negative values");
         }
-        ret -= Log(tmp);
+        ret -= Log(tmp + epsilon);
       }
       ++x_it;
       ++y_it;
@@ -86,7 +87,7 @@ typename ArrayType::Type CrossEntropyLoss(ArrayType const &x, ArrayType const &y
 
     for (SizeType idx = 0; idx < n_examples; ++idx)
     {
-      ret -= Log(x.At(SizeType(gt[idx]), idx));
+      ret -= Log(x.At(SizeType(gt[idx]), idx) + epsilon);
     }
   }
   Divide(ret, static_cast<DataType>(n_examples), ret);

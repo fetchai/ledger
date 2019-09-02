@@ -105,6 +105,7 @@ int main(int ac, char **av)
     // Instantiate NUMBER_OF_CLIENTS clients
     clients[i] = std::make_shared<Word2VecClient<TensorType>>(
         std::to_string(i), tp, train_file, BATCH_SIZE, NUMBER_OF_PEERS, console_mutex_ptr_);
+    // TODO(1597): Replace ID with something more sensible
   }
 
   for (SizeType i(0); i < NUMBER_OF_CLIENTS; ++i)

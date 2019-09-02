@@ -71,6 +71,7 @@ int main(int ac, char **av)
     clients[i] = std::make_shared<MNISTClient<TensorType>>(
         av[1], av[2], std::to_string(i), BATCH_SIZE, static_cast<DataType>(LEARNING_RATE),
         TEST_SET_RATIO, NUMBER_OF_PEERS);
+    // TODO(1597): Replace ID with something more sensible
   }
 
   for (SizeType i{0}; i < NUMBER_OF_CLIENTS; ++i)
@@ -102,7 +103,7 @@ int main(int ac, char **av)
 
     if (coordinator->GetMode() == CoordinatorMode::ASYNCHRONOUS)
     {
-      break;
+      continue;
     }
 
     // Synchronize weights by giving all clients average of all client's weights
