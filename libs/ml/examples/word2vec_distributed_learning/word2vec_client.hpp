@@ -21,16 +21,16 @@
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "word2vec_training_params.hpp"
 
-std::string ReadFile(std::string const &path)
-{
-  std::ifstream t(path);
-  if (t.fail())
-  {
-    throw std::runtime_error("Cannot open file " + path);
-  }
-
-  return std::string((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
-}
+//std::string ReadFile(std::string const &path)
+//{
+//  std::ifstream t(path);
+//  if (t.fail())
+//  {
+//    throw std::runtime_error("Cannot open file " + path);
+//  }
+//
+//  return std::string((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
+//}
 
 template <class TensorType>
 class Word2VecClient : public TrainingClient<TensorType>
@@ -41,7 +41,8 @@ class Word2VecClient : public TrainingClient<TensorType>
 
 public:
   Word2VecClient(std::string const &id, TrainingParams<TensorType> const &tp,
-                 std::string const &vocab_file, SizeType batch_size, SizeType number_of_peers);
+                 std::string const &vocab_file, std::string const &training_data,
+                 SizeType batch_size, SizeType number_of_peers);
   void PrepareModel() override;
   void PrepareDataLoader() override;
   void PrepareOptimiser() override;
@@ -51,6 +52,7 @@ private:
   TrainingParams<TensorType>                                        tp_;
   std::string                                                       skipgram_;
   std::string                                                       vocab_file_;
+  std::string                                                       training_data_;
   std::shared_ptr<fetch::ml::dataloaders::GraphW2VLoader<DataType>> w2v_data_loader_ptr_;
 
   void PrintWordAnalogy(TensorType const &embeddings, std::string const &word1,
@@ -65,11 +67,13 @@ private:
 template <class TensorType>
 Word2VecClient<TensorType>::Word2VecClient(std::string const &               id,
                                            TrainingParams<TensorType> const &tp,
-                                           std::string const &vocab_file, SizeType batch_size,
+                                           std::string const &vocab_file,
+                                           std::string const &training_data, SizeType batch_size,
                                            SizeType number_of_peers)
   : TrainingClient<TensorType>(id, batch_size, tp.starting_learning_rate, number_of_peers)
   , tp_(tp)
   , vocab_file_(vocab_file)
+  , training_data_(training_data)
 {
   PrepareDataLoader();
   PrepareModel();
@@ -112,8 +116,9 @@ void Word2VecClient<TensorType>::PrepareDataLoader()
 
   w2v_data_loader_ptr_ = std::make_shared<fetch::ml::dataloaders::GraphW2VLoader<DataType>>(
       tp_.window_size, tp_.negative_sample_size, tp_.freq_thresh, tp_.max_word_count);
-  //  w2v_data_loader_ptr_->LoadVocab(vocab_file_);
-  w2v_data_loader_ptr_->BuildVocab({ReadFile(vocab_file_)}, tp_.min_count);
+  w2v_data_loader_ptr_->LoadVocab(vocab_file_);
+//  w2v_data_loader_ptr_->BuildVocab({ReadFile(vocab_file_)}, tp_.min_count);
+  w2v_data_loader_ptr_->BuildOnlyData({training_data_}, tp_.min_count);
 
   this->dataloader_ptr_ = w2v_data_loader_ptr_;
 }
