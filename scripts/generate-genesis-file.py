@@ -7,7 +7,7 @@ import base64
 import sys
 import binascii
 import base58
-
+import time
 
 TOTAL_SUPPLY = 11529975750000000000
 MUDDLE_ADDDRESS_RAW_LENGTH = 64
@@ -36,6 +36,8 @@ def parse_commandline():
     parser.add_argument('-n', '--no-formatting', dest='no_formatting', action='store_true',
                         help='Whether to format the output file for readability')
     parser.set_defaults(no_formatting=False)
+    parser.add_argument('-w', '--when-start', type=int, default=60,
+                        help='The genesis block has a time for the blockchain to start.  Specify how far from now in seconds it should be')
     return parser.parse_args()
 
 
@@ -107,9 +109,11 @@ def main():
         # update the random beacon config
         cabinet.append(address)
 
+    #import ipdb; ipdb.set_trace(context=20)
     # form the genesis data
     genesis_file = {
         'version': 2,
+        'startTime': int(time.time()) + args.when_start,
         'consensus': {
             'committeeSize': max_committee,
             'threshold': float(args.threshold),

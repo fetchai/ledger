@@ -52,6 +52,7 @@ class BeaconSetupService
 public:
   static constexpr char const *LOGGING_NAME = "BeaconSetupService";
 
+  // Note: these must be maintained in the order which they are called
   enum class State : uint8_t
   {
     IDLE,
@@ -73,6 +74,7 @@ public:
   using MuddleAddress           = ConstByteArray;
   using Identity                = crypto::Identity;
   using CabinetMembers          = std::set<Identity>;
+  using MuddleAddresses         = std::set<MuddleAddress>;
   using MuddleEndpoint          = muddle::MuddleEndpoint;
   using MuddleInterface         = muddle::MuddleInterface;
   using RBC                     = muddle::RBC;
@@ -195,10 +197,14 @@ protected:
 private:
   // Timing management
   void SetTimeToProceed(State state);
-  bool using_timing = true;
   moment::ClockPtr                  clock_ = moment::GetClock("beacon:dkg", moment::ClockType::STEADY);
-  moment::ClockInterface::Timestamp time_started_{clock_->Never()};
+  /* moment::ClockInterface::Timestamp time_started_{clock_->Never()}; */
   DeadlineTimer                     timer_to_proceed_{"beacon:dkg"};
+  uint64_t reference_timepoint_   = 0;
+  uint64_t state_deadline_        = 0;
+  uint64_t seconds_for_state_     = 0;
+  uint64_t expected_dkg_timespan_ = 0;
+  bool     condition_to_proceed_  = false;
 
 };
 

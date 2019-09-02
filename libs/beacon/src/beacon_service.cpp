@@ -181,7 +181,7 @@ BeaconService::Status BeaconService::GenerateEntropy(Digest /*block_digest*/, ui
 }
 
 void BeaconService::StartNewCabinet(CabinetMemberList members, uint32_t threshold,
-                                    uint64_t round_start, uint64_t round_end)
+                                    uint64_t round_start, uint64_t round_end, uint64_t last_block_time)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Starting new cabinet from ", round_start, " to ", round_end);
   std::lock_guard<std::mutex> lock(mutex_);
@@ -201,9 +201,10 @@ void BeaconService::StartNewCabinet(CabinetMemberList members, uint32_t threshol
   }
 
   // Setting the aeon details
-  beacon->aeon.round_start = round_start;
-  beacon->aeon.round_end   = round_end;
-  beacon->aeon.members     = std::move(members);
+  beacon->aeon.round_start               = round_start;
+  beacon->aeon.round_end                 = round_end;
+  beacon->aeon.members                   = std::move(members);
+  beacon->aeon.start_reference_timepoint = last_block_time + 2;
 
   // Even "observe only" details need to pass through the setup phase
   // to preserve order.

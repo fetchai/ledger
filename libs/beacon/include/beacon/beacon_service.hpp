@@ -109,7 +109,7 @@ public:
   /// @{
   /// @brief this function is called when the node is in the cabinet
   void StartNewCabinet(CabinetMemberList members, uint32_t threshold, uint64_t round_start,
-                       uint64_t round_end);
+                       uint64_t round_end, uint64_t last_block_time);
   /// @}
 
   /// Beacon runnables

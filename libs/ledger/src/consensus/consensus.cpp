@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include <utility>
+#include <ctime>
 
 #include "ledger/consensus/consensus.hpp"
 
@@ -88,8 +89,22 @@ void Consensus::UpdateCurrentBlock(Block const &current)
                    " creating new aeon. Periodicity: ", aeon_period_, " threshold: ", threshold,
                    " as double: ", threshold_, " cabinet size: ", cabinet_member_list.size());
 
+    uint64_t last_block_time = current.body.timestamp;
+
+    if (current.body.block_number == 0 && last_block_time == 0)
+    {
+      uint64_t current_time           = static_cast<uint64_t>(std::time(nullptr));
+      uint64_t wait_time_s            = 5;
+      uint64_t future_start           = current_time + (2*wait_time_s);
+      uint64_t future_start_quantised = future_start - (future_start % wait_time_s);
+
+      FETCH_LOG_INFO(LOGGING_NAME, "Manually setting start time to: ", future_start_quantised, ". Current: ", current_time);
+
+      last_block_time = future_start_quantised;
+    }
+
     beacon_->StartNewCabinet(cabinet_member_list, threshold, current_block_number_,
-                             current_block_number_ + aeon_period_ + 1);
+                             current_block_number_ + aeon_period_ + 1, last_block_time);
   }
 }
 

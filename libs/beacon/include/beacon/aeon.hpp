@@ -41,8 +41,9 @@ struct Aeon
 
   // Timeouts for waiting for other members
   /// @{
-  uint64_t  setup_timeout_round{uint64_t(-1)};
-  TimeStamp setup_timeout;
+  //uint64_t  setup_timeout_round{uint64_t(-1)};
+  //TimeStamp setup_timeout;
+  uint64_t  start_reference_timepoint{uint64_t(-1)};
   /// @}
 };
 
