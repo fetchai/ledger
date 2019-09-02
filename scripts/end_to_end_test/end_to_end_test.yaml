@@ -1,4 +1,4 @@
-# YAML file to dictate integration tests
+# End-to-end test scenarios
 
 ---
 test_description: >

@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
-#include "core/threading/synchronised_state.hpp"
+#include "core/synchronisation/waitable.hpp"
 #include "ledger/chain/digest.hpp"
 #include "ledger/execution_result.hpp"
 #include "network/generics/milli_timer.hpp"

@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,14 +16,18 @@
 //
 //------------------------------------------------------------------------------
 
+#include <cstddef>
 #include <iomanip>
 #include <sstream>
+#include <string>
 
 namespace fetch {
 
+namespace {
 static constexpr std::size_t MAX_THREAD_NAME_LEN = 16;  // posix limit
+}
 
-inline void SetThreadName(std::string name)
+void SetThreadName(std::string name)
 {
   if (name.size() > MAX_THREAD_NAME_LEN)
   {
@@ -40,7 +43,7 @@ inline void SetThreadName(std::string name)
 #endif
 }
 
-inline void SetThreadName(std::string const &prefix, std::size_t index)
+void SetThreadName(std::string const &prefix, std::size_t index)
 {
   static constexpr std::size_t MAX_INDEX_LEN  = 2;
   static constexpr std::size_t MAX_PREFIX_LEN = MAX_THREAD_NAME_LEN - MAX_INDEX_LEN;
