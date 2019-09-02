@@ -711,7 +711,7 @@ template <class TypeIdTraits, bool = IsPrimitive<typename TypeIdTraits::type>::v
 class VariantView : public TypeIdTraits  // parent defines value, type, storage_type
                                          // and, perhaps, Reference()
 {
-  // using Parent = TypeIdTraits;
+  using Parent = TypeIdTraits;
 
 protected:
   Variant *      v_  = nullptr;
