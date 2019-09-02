@@ -57,9 +57,7 @@ public:
   }
 
   template <typename Handler>
-  auto Apply(Handler &&handler)
-      -> std::enable_if_t<!std::is_void<decltype(handler(payload_))>::value,
-                          decltype(handler(payload_))>
+  auto Apply(Handler &&handler) -> decltype(handler(payload_))
   {
     std::lock_guard<M> lock(mutex_);
 
@@ -67,9 +65,7 @@ public:
   }
 
   template <typename Handler>
-  auto Apply(Handler &&handler) const
-      -> std::enable_if_t<!std::is_void<decltype(handler(payload_))>::value,
-                          decltype(handler(payload_)) const>
+  auto Apply(Handler &&handler) const -> decltype(handler(payload_))
   {
     std::lock_guard<M> lock(mutex_);
 

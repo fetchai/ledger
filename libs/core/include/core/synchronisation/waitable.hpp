@@ -63,9 +63,7 @@ public:
   }
 
   template <typename Handler>
-  auto Apply(Handler &&handler)
-      -> std::enable_if_t<!std::is_void<decltype(protected_payload_.Apply(handler))>::value,
-                          decltype(protected_payload_.Apply(handler))>
+  auto Apply(Handler &&handler) -> decltype(protected_payload_.Apply(handler))
   {
     return protected_payload_.Apply([this, handler](auto &payload) -> decltype(handler(payload)) {
       auto const result = handler(payload);
@@ -76,9 +74,7 @@ public:
   }
 
   template <typename Handler>
-  auto Apply(Handler &&handler) const
-      -> std::enable_if_t<!std::is_void<decltype(protected_payload_.Apply(handler))>::value,
-                          decltype(protected_payload_.Apply(handler)) const>
+  auto Apply(Handler &&handler) const -> decltype(protected_payload_.Apply(handler))
   {
     return protected_payload_.Apply(
         [this, handler](auto const &payload) -> decltype(handler(payload)) {
