@@ -91,7 +91,7 @@ int main(int ac, char **av)
     std::list<std::thread> threads;
     for (auto &c : clients)
     {
-      threads.emplace_back([&c] { c->MainLoop(); });
+      threads.emplace_back([&c] { c->Run(); });
     }
 
     // Wait for everyone to finish

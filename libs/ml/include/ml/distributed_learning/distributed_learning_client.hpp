@@ -54,7 +54,7 @@ public:
   virtual ~TrainingClient() = default;
 
   void SetCoordinator(std::shared_ptr<Coordinator> coordinator_ptr);
-  void MainLoop();
+  void Run();
 
   DataType         Train();
   virtual void     Test(DataType &test_loss);
@@ -70,9 +70,7 @@ public:
   virtual void     PrepareOptimiser()  = 0;
 
 protected:
-  // Client's own graph and mutex to protect it's weights
-  //  std::shared_ptr<fetch::ml::Graph<TensorType>> g_ptr_ =
-  //      std::make_shared<fetch::ml::Graph<TensorType>>();
+  // Client's own graph and mutex to protect its weights
   std::shared_ptr<fetch::ml::Graph<TensorType>> g_ptr_;
   std::mutex                                    model_mutex_;
 
@@ -139,7 +137,7 @@ void TrainingClient<TensorType>::SetCoordinator(std::shared_ptr<Coordinator> coo
  * Main loop that runs in thread
  */
 template <class TensorType>
-void TrainingClient<TensorType>::MainLoop()
+void TrainingClient<TensorType>::Run()
 {
   if (coordinator_ptr_->GetMode() == CoordinatorMode::SYNCHRONOUS)
   {
@@ -425,7 +423,7 @@ void TrainingClient<TensorType>::DoBatch()
     {
       GetNewGradients(new_gradients);
 
-      g_ptr_->AddExternalGradients(new_gradients);
+      g_ptr_->AddGradients(new_gradients);
     }
   }
 

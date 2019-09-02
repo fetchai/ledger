@@ -112,7 +112,6 @@ void Word2VecClient<TensorType>::PrepareDataLoader()
 
   w2v_data_loader_ptr_ = std::make_shared<fetch::ml::dataloaders::GraphW2VLoader<DataType>>(
       tp_.window_size, tp_.negative_sample_size, tp_.freq_thresh, tp_.max_word_count);
-  //  w2v_data_loader_ptr_->LoadVocab(vocab_file_);
   w2v_data_loader_ptr_->BuildVocab({ReadFile(vocab_file_)}, tp_.min_count);
 
   this->dataloader_ptr_ = w2v_data_loader_ptr_;
