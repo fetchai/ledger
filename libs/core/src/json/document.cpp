@@ -94,7 +94,7 @@ void JSONDocument::ExtractPrimitive(Variant &variant, JSONToken const &token,
       throw JSONParseException(std::string("Failed to convert str=") + str + " to long double");
     }
 
-    if (!isfinite(converted_value))
+    if (!std::isfinite(converted_value))
     {
       throw JSONParseException(std::string("Failed to convert str=") + str +
                                " to finite long double");
