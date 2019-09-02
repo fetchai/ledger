@@ -497,18 +497,14 @@ void SaveGraphToFile(GraphType &g, std::string const file_name)
   fetch::ml::GraphSaveableParams<TensorType> gsp1 = g.GetGraphSaveableParams();
   std::cout << "got saveable params" << std::endl;
 
-  fetch::serializers::SizeCounter       counter;
-  fetch::serializers::MsgPackSerializer b;
-  counter << gsp1;
-  std::cout << "finish counting" << std::endl;
-  b.Reserve(counter.size());
+  fetch::serializers::LargeObjectSerializeHelper b;
   b << gsp1;
   std::cout << "finish serializing" << std::endl;
 
   std::ofstream outFile(file_name, std::ios::out | std::ios::binary);
-  outFile.write(b.data().char_pointer(), std::streamsize(b.size()));
+  outFile.write(b.buffer.data().char_pointer(), std::streamsize(b.buffer.size()));
   outFile.close();
-  std::cout << b.size() << std::endl;
+  std::cout << b.buffer.size() << std::endl;
   std::cout << "finish writing to file" << std::endl;
 }
 
