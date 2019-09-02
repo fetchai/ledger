@@ -92,6 +92,29 @@ TYPED_TEST(CrossEntropyTest, onehot_forward_test)
               static_cast<double>(3.6888794541) / static_cast<float>(n_data_points), 3e-7);
 }
 
+TYPED_TEST(CrossEntropyTest, onehot_forward_log_zero_test)
+{
+  using Type = typename TypeParam::Type;
+
+  std::uint64_t n_classes     = 3;
+  std::uint64_t n_data_points = 2;
+
+  TypeParam data1(std::vector<std::uint64_t>{n_classes, n_data_points});
+  TypeParam data2(std::vector<std::uint64_t>{n_classes, n_data_points});
+  TypeParam gt(std::vector<std::uint64_t>{n_classes, n_data_points});
+
+  data1 = TypeParam::FromString("0.1, 0.0, 0.9; 0.5, 0.0, 0.5");
+  data1 = data1.Transpose();
+  data2 = TypeParam::FromString("0.0, 1.0, 0; 1, 0, 0");
+  data2 = data2.Transpose();
+
+  fetch::ml::ops::CrossEntropyLoss<TypeParam> op;
+  TypeParam                                   result({1, 1});
+  op.Forward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, result);
+
+  EXPECT_TRUE(result(0, 0) == fetch::math::numeric_inf<Type>());
+}
+
 TYPED_TEST(CrossEntropyTest, binary_forward_test)
 {
   using SizeType = typename TypeParam::SizeType;
