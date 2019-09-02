@@ -86,7 +86,6 @@ int main(int ac, char **av)
       std::make_shared<Coordinator>(SYNCHRONIZATION_MODE, NUMBER_OF_ITERATIONS);
 
   std::cout << "FETCH Distributed Word2vec Demo -- Asynchronous" << std::endl;
-  std::srand((uint32_t)std::time(nullptr));
 
   TrainingParams<TensorType> tp;
 

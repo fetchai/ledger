@@ -133,10 +133,10 @@ void Word2VecClient<TensorType>::PrepareOptimiser()
 template <class TensorType>
 void Word2VecClient<TensorType>::Test(DataType &test_loss)
 {
-  // Implement loss mechanism
+  // TODO(issue 1595): Implement loss mechanism
   test_loss = static_cast<DataType>(0);
 
-  // Implement test frequency mechanism
+  // TODO(issue 1596): Implement test frequency mechanism
   // if (i % tp_.test_frequency == 0)
   //{
   TestEmbeddings(tp_.word0, tp_.word1, tp_.word2, tp_.word3, tp_.k);
