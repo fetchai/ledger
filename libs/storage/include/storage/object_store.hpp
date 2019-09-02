@@ -146,8 +146,7 @@ public:
 
   /**
    * Do a get without locking the structure, do this when it is guaranteed you
-   * have locked (using
-   * WithLock) or don't need to lock (single threaded scenario)
+   * have locked (using WithLock) or don't need to lock (single threaded scenario)
    *
    * @param: rid The key
    * @param: object The object
@@ -177,8 +176,7 @@ public:
 
   /**
    * Do a has without locking the structure, do this when it is guaranteed you
-   * have locked (using
-   * WithLock) or don't need to lock (single threaded scenario)
+   * have locked (using WithLock) or don't need to lock (single threaded scenario)
    *
    * @param: rid The key
    * @param: object The object
@@ -193,8 +191,7 @@ public:
 
   /**
    * Do a set without locking the structure, do this when it is guaranteed you
-   * have locked (using
-   * WithLock) or don't need to lock (single threaded scenario)
+   * have locked (using WithLock) or don't need to lock (single threaded scenario)
    *
    * @param: rid The key
    * @param: object The object
