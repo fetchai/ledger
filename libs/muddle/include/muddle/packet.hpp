@@ -123,6 +123,7 @@ public:
   bool              IsBroadcast() const noexcept;
   bool              IsExchange() const noexcept;
   bool              IsStamped() const noexcept;
+  bool              IsEncrypted() const noexcept;
   uint8_t           GetTTL() const noexcept;
   uint16_t          GetService() const noexcept;
   uint16_t          GetChannel() const noexcept;
@@ -210,6 +211,11 @@ inline bool Packet::IsExchange() const noexcept
 inline bool Packet::IsStamped() const noexcept
 {
   return header_.stamped;
+}
+
+inline bool Packet::IsEncrypted() const noexcept
+{
+  return false;
 }
 
 inline uint8_t Packet::GetTTL() const noexcept

@@ -52,6 +52,8 @@
 #include "beacon/cabinet_member_details.hpp"
 #include "beacon/entropy.hpp"
 #include "beacon/event_manager.hpp"
+#include "ledger/shards/manifest.hpp"
+#include "ledger/shards/manifest_cache_interface.hpp"
 
 #include <cstdint>
 #include <deque>
@@ -63,6 +65,7 @@
 
 using namespace fetch;
 using namespace fetch::beacon;
+using namespace fetch::ledger;
 using namespace std::chrono_literals;
 
 using std::this_thread::sleep_for;
@@ -89,6 +92,14 @@ ProverPtr CreateNewCertificate()
   return certificate;
 }
 
+struct DummyManifesttCache : public ManifestCacheInterface
+{
+  bool QueryManifest(Address const &, Manifest &) override
+  {
+    return false;
+  }
+};
+
 struct CabinetNode
 {
   using Prover         = crypto::Prover;
@@ -103,6 +114,7 @@ struct CabinetNode
   core::Reactor                    reactor;
   ProverPtr                        muddle_certificate;
   Muddle                           muddle;
+  DummyManifesttCache              manifest_cache;
   BeaconService                    beacon_service;
   crypto::Identity                 identity;
 
@@ -113,7 +125,7 @@ struct CabinetNode
     , reactor{"ReactorName" + std::to_string(index)}
     , muddle_certificate{CreateNewCertificate()}
     , muddle{muddle::CreateMuddle("Test", muddle_certificate, network_manager, "127.0.0.1")}
-    , beacon_service{muddle->GetEndpoint(), muddle_certificate, event_manager}
+    , beacon_service{*muddle, manifest_cache, muddle_certificate, event_manager}
     , identity{muddle_certificate->identity()}
   {
     network_manager.Start();

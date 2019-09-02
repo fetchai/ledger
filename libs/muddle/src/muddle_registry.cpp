@@ -34,14 +34,14 @@ void MuddleRegistry::Register(WeakMuddlePtr muddle)
   if (concrete)
   {
     FETCH_LOCK(lock_);
-    map_[concrete->GetAddress()] = std::move(muddle);
+    map_[concrete.get()] = std::move(muddle);
   }
 }
 
-void MuddleRegistry::Unregister(Address const &address)
+void MuddleRegistry::Unregister(Muddle const *muddle)
 {
   FETCH_LOCK(lock_);
-  map_.erase(address);
+  map_.erase(muddle);
 }
 
 MuddleRegistry::MuddleMap MuddleRegistry::GetMap() const

@@ -17,8 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/mutex.hpp"
 #include "core/periodic_runnable.hpp"
 #include "ledger/shards/manifest.hpp"
+#include "ledger/shards/manifest_cache_interface.hpp"
 #include "ledger/shards/shard_management_protocol.hpp"
 #include "muddle/address.hpp"
 #include "muddle/muddle_interface.hpp"
@@ -37,11 +39,10 @@ namespace ledger {
 
 class ShardManagementInterface;
 
-class ShardManagementService : public core::PeriodicRunnable
+class ShardManagementService : public core::PeriodicRunnable, public ledger::ManifestCacheInterface
 {
 public:
   using MuddleInterface = muddle::MuddleInterface;
-  using Address         = muddle::Address;
   using Addresses       = MuddleInterface::Addresses;
 
   // Construction / Destruction
@@ -50,6 +51,9 @@ public:
   ShardManagementService(ShardManagementService const &) = delete;
   ShardManagementService(ShardManagementService &&)      = delete;
   ~ShardManagementService() override                     = default;
+
+  // Manifest Queries
+  bool QueryManifest(Address const &address, Manifest &manifest) override;
 
   // External Operations
   Manifest RequestManifest();
@@ -63,6 +67,7 @@ private:
   using Timepoint = Clock::time_point;
   using RpcServer = muddle::rpc::Server;
   using RpcClient = muddle::rpc::Client;
+  using Mutex     = mutex::Mutex;
 
   struct Entry
   {
@@ -77,7 +82,7 @@ private:
   /// @{
   void Periodically() override;
   void ResolveUpdates();
-  void RequestUpdates(Addresses const &addresses);
+  void RequestUpdates(Addresses addresses);
   void UpdateShards(Addresses const &addresses);
   void RefreshCache();
   /// @}
@@ -91,9 +96,11 @@ private:
   ShardManagementProtocol   mgmt_proto_;
   RpcClient                 rpc_client_;
 
-  /// @name Reactor State
+  /// @name Manifest Cache
   /// @{
+  mutable Mutex   lock_{__LINE__, __FILE__};
   ManifestCache   manifest_cache_;
+  Addresses       unavailable_requests_;
   PendingPromises pending_requests_;
   /// @}
 };

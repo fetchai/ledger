@@ -17,12 +17,19 @@
 //------------------------------------------------------------------------------
 
 #include "beacon/beacon_setup_service.hpp"
+#include "core/containers/set_difference.hpp"
+#include "core/containers/set_intersection.hpp"
+#include "ledger/shards/shard_management_service.hpp"
+#include "muddle/muddle_endpoint.hpp"
+#include "muddle/muddle_interface.hpp"
 #include "telemetry/registry.hpp"
 
 #include <mutex>
 
 namespace fetch {
 namespace beacon {
+
+using ledger::ServiceIdentifier;
 
 char const *ToString(BeaconSetupService::State state)
 {
@@ -64,9 +71,12 @@ char const *ToString(BeaconSetupService::State state)
   return text;
 }
 
-BeaconSetupService::BeaconSetupService(Endpoint &endpoint, Identity identity)
+BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identity,
+                                       ManifestCacheInterface &manifest_cache)
   : identity_{std::move(identity)}
-  , endpoint_{endpoint}
+  , manifest_cache_{manifest_cache}
+  , muddle_{muddle}
+  , endpoint_{muddle_.GetEndpoint()}
   , shares_subscription(endpoint_.Subscribe(SERVICE_DKG, CHANNEL_SECRET_KEY))
   , pre_dkg_rbc_{endpoint_, identity_.identifier(),
                  [this](MuddleAddress const &from, ConstByteArray const &payload) -> void {
@@ -113,17 +123,7 @@ BeaconSetupService::BeaconSetupService(Endpoint &endpoint, Identity identity)
   state_machine_->RegisterHandler(State::BEACON_READY, this, &BeaconSetupService::OnBeaconReady);
 
   // Set subscription for receiving shares
-  shares_subscription->SetMessageHandler([this](ConstByteArray const &from, uint16_t, uint16_t,
-                                                uint16_t, muddle::Packet::Payload const &payload,
-                                                ConstByteArray) {
-    fetch::serializers::MsgPackSerializer serialiser(payload);
-
-    std::pair<std::string, std::string> shares;
-    serialiser >> shares;
-
-    // Dispatch the event
-    OnNewShares(from, shares);
-  });
+  shares_subscription->SetMessageHandler(this, &BeaconSetupService::OnNewSharesPacket);
 }
 
 BeaconSetupService::State BeaconSetupService::OnIdle()
@@ -172,43 +172,72 @@ BeaconSetupService::State BeaconSetupService::OnWaitForDirectConnections()
   std::lock_guard<std::mutex> lock(mutex_);
   dkg_state_gauge_->set(static_cast<uint8_t>(State::WAIT_FOR_DIRECT_CONNECTIONS));
 
-  auto                              v_peers = endpoint_.GetDirectlyConnectedPeers();
-  std::unordered_set<MuddleAddress> peers(v_peers.begin(), v_peers.end());
-
-  std::set<MuddleAddress> connected;
-
+  std::unordered_set<MuddleAddress> aeon_members;
   for (auto &m : beacon_->aeon.members)
   {
     // Skipping own address
     if (m == identity_)
     {
-      connected.insert(m.identifier());
       continue;
     }
 
-    // Checking if other peers are there
-    if (peers.find(m.identifier()) == peers.end())
+    aeon_members.emplace(m.identifier());
+  }
+
+  // add the outstanding peers
+  auto const connected_peers   = muddle_.GetDirectlyConnectedPeers();
+  auto const outstanding_peers = aeon_members - connected_peers;
+
+  ledger::Manifest manifest{};
+  for (auto const &address : outstanding_peers)
+  {
+    std::unique_ptr<network::Uri> hint{};
+
+    // lookup the manifest for the desired address
+    if (manifest_cache_.QueryManifest(address, manifest))
     {
-      // TODO(tfr): Request muddle to connect.
+      // attempt to find the service entry
+      auto it = manifest.FindService(ServiceIdentifier::Type::DKG);
+      if (it != manifest.end())
+      {
+        hint = std::make_unique<network::Uri>(it->second.uri());
+      }
+    }
+
+    if (hint)
+    {
+      // tell muddle to connect to the address with the specified hint
+      muddle_.ConnectTo(address, *hint);
     }
     else
     {
-      connected.insert(m.identifier());
+      // tell muddle to connect to the address using normal service discovery
+      muddle_.ConnectTo(address);
     }
   }
 
-  if (connected.size() == beacon_->aeon.members.size())
+  // request removal of unwanted connections
+  muddle_.DisconnectFrom(muddle_.GetRequestedPeers() - aeon_members);
+
+  // if there are no outstanding peers then it means that we are all connected!
+  if (outstanding_peers.empty())
   {
-    connections_ = connected;
+    // created the connected set
+    auto connected = aeon_members & connected_peers;
+    connected.emplace(identity_.identifier());
+
+    connections_ = std::set<MuddleAddress>(connected.begin(), connected.end());
+
     fetch::serializers::MsgPackSerializer serializer;
-    serializer << connected;
+    serializer << connections_;
+
     pre_dkg_rbc_.Broadcast(serializer.data());
     return State::WAIT_FOR_READY_CONNECTIONS;
   }
 
   state_machine_->Delay(std::chrono::milliseconds(200));
-  FETCH_LOG_INFO(LOGGING_NAME, "Waiting for all peers to join before starting setup. Connected: ",
-                 connected.size(), " expect: ", beacon_->aeon.members.size() - 1);
+  FETCH_LOG_INFO(LOGGING_NAME, "Waiting for all peers to join before starting setup. Outstanding: ",
+                 outstanding_peers.size(), " / ", aeon_members.size());
 
   return State::WAIT_FOR_DIRECT_CONNECTIONS;
 }
@@ -496,7 +525,8 @@ void BeaconSetupService::BroadcastShares()
     fetch::serializers::MsgPackSerializer serializer;
     serializer.Reserve(counter.size());
     serializer << shares;
-    endpoint_.Send(cab_i.identifier(), SERVICE_DKG, CHANNEL_SECRET_KEY, serializer.data());
+    endpoint_.Send(cab_i.identifier(), SERVICE_DKG, CHANNEL_SECRET_KEY, serializer.data(),
+                   MuddleEndpoint::OPTION_ENCRYPTED);
   }
   FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                  " broadcasts coefficients ");
@@ -658,6 +688,29 @@ void BeaconSetupService::OnExposedShares(SharesMessage const &shares, MuddleAddr
                    " received reconstruction share from ", from_index);
     OnReconstructionShares(shares, from_id);
   }
+}
+
+void BeaconSetupService::OnNewSharesPacket(muddle::Packet const &packet,
+                                           MuddleAddress const & last_hop)
+{
+  FETCH_UNUSED(last_hop);
+
+  // // TODO(EJF): This will need to be enabled after encryption support has been added
+#if 0
+  if (!packet.IsEncrypted())
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Non encrpypted packet recv'ed");
+    return;
+  }
+#endif
+
+  fetch::serializers::MsgPackSerializer serialiser(packet.GetPayload());
+
+  std::pair<std::string, std::string> shares;
+  serialiser >> shares;
+
+  // Dispatch the event
+  OnNewShares(packet.GetSender(), shares);
 }
 
 /**

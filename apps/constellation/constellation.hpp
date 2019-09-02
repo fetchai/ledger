@@ -190,6 +190,7 @@ private:
 
   /// @name Staking
   /// @{
+  MuddlePtr        beacon_network_;
   BeaconServicePtr beacon_;
   StakeManagerPtr  stake_;  ///< The stake system
   ConsensusPtr     consensus_;

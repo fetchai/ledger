@@ -163,7 +163,14 @@ void Reactor::Monitor()
     // execute the item if it can be executed
     if (runnable)
     {
-      runnable->Execute();
+      try
+      {
+        runnable->Execute();
+      }
+      catch (std::exception const &ex)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Error generated in reactor: ", ex.what());
+      }
     }
   }
 }

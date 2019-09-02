@@ -363,6 +363,7 @@ MainChainRpcService::State MainChainRpcService::OnRequestHeaviestChain()
     next_state = State::WAIT_FOR_HEAVIEST_CHAIN;
   }
 
+  state_machine_->Delay(std::chrono::milliseconds{500});
   return next_state;
 }
 
@@ -471,12 +472,20 @@ MainChainRpcService::State MainChainRpcService::OnWaitingForResponse()
       {
         FETCH_LOG_INFO(LOGGING_NAME, "Chain request to: ", ToBase64(current_peer_address_),
                        " failed. Reason: ", service::ToString(status));
+
+        state_machine_->Delay(std::chrono::seconds{1});
+        return State::REQUEST_HEAVIEST_CHAIN;
       }
 
       // clear the state
       current_peer_address_  = Address{};
       current_missing_block_ = BlockHash{};
       next_state             = State::SYNCHRONISED;
+    }
+    else
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Still waiting for heaviest chain response");
+      state_machine_->Delay(std::chrono::seconds{1});
     }
   }
 

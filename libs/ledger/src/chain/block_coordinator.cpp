@@ -455,6 +455,13 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
 
   FETCH_UNUSED(current);
 
+  if (State::SYNCHRONISING == previous)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Chain Sync complete on 0x", current_block_->body.hash.ToHex(),
+                   " (block: ", current_block_->body.block_number, " prev: 0x",
+                   current_block_->body.previous_hash.ToHex(), ")");
+  }
+
   // ensure the periodic print is not trigger once we have synced
   syncing_periodic_.Reset();
 
@@ -507,9 +514,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
   }
   else if (State::SYNCHRONISING == previous)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Chain Sync complete on 0x", current_block_->body.hash.ToHex(),
-                   " (block: ", current_block_->body.block_number, " prev: 0x",
-                   current_block_->body.previous_hash.ToHex(), ")");
+    //
   }
   else
   {

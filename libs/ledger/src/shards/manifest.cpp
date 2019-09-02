@@ -76,6 +76,11 @@ Manifest::const_iterator Manifest::FindService(ServiceIdentifier const &service)
   return service_map_.find(service);
 }
 
+Manifest::const_iterator Manifest::FindService(ServiceIdentifier::Type service_type) const
+{
+  return service_map_.find(ServiceIdentifier{service_type});
+}
+
 void Manifest::AddService(ServiceIdentifier const &id, ManifestEntry const &entry)
 {
   service_map_.emplace(id, entry);

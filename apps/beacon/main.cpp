@@ -25,6 +25,7 @@
 #include "crypto/bls_dkg.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
+#include "ledger/shards/manifest_cache_interface.hpp"
 
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rpc/client.hpp"
@@ -66,6 +67,14 @@ ProverPtr CreateNewCertificate()
   return certificate;
 }
 
+struct DummyManifestCache : public ledger::ManifestCacheInterface
+{
+  bool QueryManifest(Address const &, ledger::Manifest &) override
+  {
+    return false;
+  }
+};
+
 struct CabinetNode
 {
   using Prover         = crypto::Prover;
@@ -79,6 +88,7 @@ struct CabinetNode
   core::Reactor           reactor;
   ProverPtr               muddle_certificate;
   Muddle                  muddle;
+  DummyManifestCache      manifest_cache;
   BeaconService           beacon_service;
 
   CabinetNode(uint16_t port_number, uint16_t index, EventManager::SharedEventManager event_manager)
@@ -87,7 +97,7 @@ struct CabinetNode
     , reactor{"ReactorName" + std::to_string(index)}
     , muddle_certificate{CreateNewCertificate()}
     , muddle{muddle::CreateMuddle("Test", muddle_certificate, network_manager, "127.0.0.1")}
-    , beacon_service{muddle->GetEndpoint(), muddle_certificate, event_manager}
+    , beacon_service{*muddle, manifest_cache, muddle_certificate, event_manager}
   {
     network_manager.Start();
     muddle->Start({muddle_port});

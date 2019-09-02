@@ -93,7 +93,7 @@ Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager 
 
 Muddle::~Muddle()
 {
-  MuddleRegistry::Instance().Unregister(node_address_);
+  MuddleRegistry::Instance().Unregister(this);
 
   // ensure the instance has stopped
   Stop();
