@@ -21,9 +21,9 @@
 
 #include <cassert>
 #include <cerrno>
+#include <cmath>
 #include <cstdint>
 #include <cstdlib>
-#include <cmath>
 #include <string>
 
 namespace fetch {
@@ -96,7 +96,8 @@ void JSONDocument::ExtractPrimitive(Variant &variant, JSONToken const &token,
 
     if (!isfinite(converted_value))
     {
-      throw JSONParseException(std::string("Failed to convert str=") + str + " to finite long double");
+      throw JSONParseException(std::string("Failed to convert str=") + str +
+                               " to finite long double");
     }
 
     // update the variant
