@@ -43,6 +43,9 @@ public:
   template <typename Handler>
   void ApplyVoid(Handler &&handler)
   {
+    static_assert(std::is_void<decltype(handler(payload_))>::value,
+                  "Use this method with void handlers only");
+
     std::lock_guard<M> lock(mutex_);
 
     handler(payload_);
@@ -51,6 +54,9 @@ public:
   template <typename Handler>
   void ApplyVoid(Handler &&handler) const
   {
+    static_assert(std::is_void<decltype(handler(payload_))>::value,
+                  "Use this method with void handlers only");
+
     std::lock_guard<M> lock(mutex_);
 
     handler(payload_);
@@ -59,6 +65,9 @@ public:
   template <typename Handler>
   auto Apply(Handler &&handler) -> decltype(handler(payload_))
   {
+    static_assert(!std::is_void<decltype(handler(payload_))>::value,
+                  "Use this method with non-void handlers only");
+
     std::lock_guard<M> lock(mutex_);
 
     return handler(payload_);
@@ -67,6 +76,9 @@ public:
   template <typename Handler>
   auto Apply(Handler &&handler) const -> decltype(handler(payload_))
   {
+    static_assert(!std::is_void<decltype(handler(payload_))>::value,
+                  "Use this method with non-void handlers only");
+
     std::lock_guard<M> lock(mutex_);
 
     return handler(payload_);
