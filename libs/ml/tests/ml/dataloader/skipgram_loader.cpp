@@ -22,7 +22,6 @@
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
-#include "../../../examples/word2vec_distributed_learning/word2vec_training_params.hpp"
 
 #include <string>
 
@@ -30,11 +29,11 @@ using namespace fetch::ml;
 using namespace fetch::ml::dataloaders;
 
 template <typename TensorType>
-struct TrainingParams
+struct TrainingParamsForTests
 {
   using SizeType                = typename TensorType::SizeType;
   using DataType                = typename TensorType::Type;
-  SizeType max_word_count       = 15;            // maximum number to be trained
+  SizeType max_word_count       = 15;           // maximum number to be trained
   SizeType negative_sample_size = 0;            // number of negative sample per word-context pair
   SizeType window_size          = 1;            // window size for context sampling
   DataType freq_thresh          = DataType{1};  // frequency threshold for subsampling
@@ -57,7 +56,7 @@ TYPED_TEST(SkipGramDataloaderTest, loader_test)
   using SizeType   = typename TensorType::SizeType;
   using DataType   = typename TensorType::Type;
 
-  TrainingParams<TensorType> tp;
+  TrainingParamsForTests<TensorType> tp;
   tp.max_word_count = 9;
 
   std::string training_data = "This is a test sentence of total length ten words.";
@@ -83,7 +82,7 @@ TYPED_TEST(SkipGramDataloaderTest, loader_test)
        std::pair<std::string, std::string>("length", "ten")});
 
   // test that get next works when called individually
-  for (std::size_t j = 0; j < 100; ++j)
+  for (SizeType j = 0; j < 100; ++j)
   {
     if (loader.IsDone())
     {
@@ -101,7 +100,7 @@ TYPED_TEST(SkipGramDataloaderTest, loader_test)
   // test when preparebatch is called
   bool is_done_set = false;
   auto batch       = loader.PrepareBatch(50, is_done_set).second;
-  for (std::size_t j = 0; j < 50; j++)
+  for (SizeType j = 0; j < 50; j++)
   {
     std::string input         = loader.WordFromIndex(static_cast<SizeType>(batch.at(0).At(0, j)));
     std::string context       = loader.WordFromIndex(static_cast<SizeType>(batch.at(1).At(0, j)));
@@ -118,13 +117,13 @@ TYPED_TEST(SkipGramDataloaderTest, test_different_building_methods)
   using SizeType   = typename TensorType::SizeType;
   using DataType   = typename TensorType::Type;
 
-  TrainingParams<TensorType> tp;
+  TrainingParamsForTests<TensorType> tp;
 
   std::string training_data = "This is a test sentence of total length ten words.";
   std::string extra_vocab = "This is an extra sentence so that vocab is bigger than training data.";
 
-  GraphW2VLoader<double> loader(tp.window_size, tp.negative_sample_size, tp.freq_thresh,
-                                tp.max_word_count);
+  GraphW2VLoader<DataType> loader(tp.window_size, tp.negative_sample_size, tp.freq_thresh,
+                                  tp.max_word_count);
 
   loader.BuildOnlyVocab({training_data, extra_vocab});
   loader.BuildOnlyData({training_data});
@@ -148,7 +147,7 @@ TYPED_TEST(SkipGramDataloaderTest, test_different_building_methods)
        std::pair<std::string, std::string>("ten", "words")});
 
   // test that get next works when called individually
-  for (std::size_t j = 0; j < 100; ++j)
+  for (SizeType j = 0; j < 100; ++j)
   {
     if (loader.IsDone())
     {
@@ -166,7 +165,7 @@ TYPED_TEST(SkipGramDataloaderTest, test_different_building_methods)
   // test when preparebatch is called
   bool is_done_set = false;
   auto batch       = loader.PrepareBatch(50, is_done_set).second;
-  for (std::size_t j = 0; j < 50; j++)
+  for (SizeType j = 0; j < 50; j++)
   {
     std::string input         = loader.WordFromIndex(static_cast<SizeType>(batch.at(0).At(0, j)));
     std::string context       = loader.WordFromIndex(static_cast<SizeType>(batch.at(1).At(0, j)));
@@ -179,19 +178,26 @@ TYPED_TEST(SkipGramDataloaderTest, test_different_building_methods)
 
 TYPED_TEST(SkipGramDataloaderTest, test_save_load_vocab)
 {
+  using TensorType = TypeParam;
+  using SizeType   = typename TensorType::SizeType;
+  using DataType   = typename TensorType::Type;
+
+  TrainingParamsForTests<TensorType> tp;
+  tp.max_word_count      = 100;
+  std::string vocab_file = "/tmp/test_vocab.txt";
+
   std::string training_data = "This is a test sentence of total length ten words.";
   std::string extra_vocab = "This is an extra sentence so that vocab is bigger than training data.";
 
-  SizeType               max_word_count = 100;
-  GraphW2VLoader<double> initial_loader(tp.window_size, tp.negative_sample_size, tp.freq_thresh,
-                                        max_word_count);
+  GraphW2VLoader<DataType> initial_loader(tp.window_size, tp.negative_sample_size, tp.freq_thresh,
+                                          tp.max_word_count);
 
   initial_loader.BuildOnlyVocab({training_data, extra_vocab});
-  initial_loader.SaveVocab("/tmp/test_vocab.txt");
+  initial_loader.SaveVocab(vocab_file);
 
-  GraphW2VLoader<double> loader(tp.window_size, tp.negative_sample_size, tp.freq_thresh,
-                                max_word_count);
-  loader.LoadVocab("/tmp/test_vocab.txt");
+  GraphW2VLoader<DataType> loader(tp.window_size, tp.negative_sample_size, tp.freq_thresh,
+                                  tp.max_word_count);
+  loader.LoadVocab(vocab_file);
   loader.BuildOnlyData({training_data});
 
   std::vector<std::pair<std::string, std::string>> gt_input_context_pairs(
@@ -213,7 +219,7 @@ TYPED_TEST(SkipGramDataloaderTest, test_save_load_vocab)
        std::pair<std::string, std::string>("ten", "words")});
 
   // test that get next works when called individually
-  for (std::size_t j = 0; j < 100; ++j)
+  for (SizeType j = 0; j < 100; ++j)
   {
     if (loader.IsDone())
     {
@@ -231,7 +237,7 @@ TYPED_TEST(SkipGramDataloaderTest, test_save_load_vocab)
   // test when preparebatch is called
   bool is_done_set = false;
   auto batch       = loader.PrepareBatch(50, is_done_set).second;
-  for (std::size_t j = 0; j < 50; j++)
+  for (SizeType j = 0; j < 50; j++)
   {
     std::string input         = loader.WordFromIndex(static_cast<SizeType>(batch.at(0).At(0, j)));
     std::string context       = loader.WordFromIndex(static_cast<SizeType>(batch.at(1).At(0, j)));

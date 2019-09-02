@@ -56,7 +56,7 @@ private:
 template <class TensorType>
 Word2VecClient<TensorType>::Word2VecClient(std::string const &               id,
                                            TrainingParams<TensorType> const &tp,
-                                           std::string const &vocab_file,
+                                           std::string const &               vocab_file,
                                            std::string const &training_data, SizeType batch_size,
                                            SizeType number_of_peers)
   : TrainingClient<TensorType>(id, batch_size, tp.starting_learning_rate, number_of_peers)

@@ -221,7 +221,7 @@ void GraphW2VLoader<T>::Reset()
 {
   current_sentence_ = 0;
   current_word_     = 0;
-  unigram_table_.Reset();
+  unigram_table_.ResetRNG();
   labels_.Fill(BufferPositionUnused);
   buffer_pos_ = 0;
   reset_count_++;
@@ -376,7 +376,7 @@ void GraphW2VLoader<T>::InitUnigramTable(SizeType size, bool use_vocab_frequenci
     {
       frequencies[kvp.second.first] = kvp.second.second;
     }
-    unigram_table_.Reset(frequencies, size);
+    unigram_table_.ResetTable(frequencies, size);
   }
   else  // use counts from data
   {
@@ -389,7 +389,7 @@ void GraphW2VLoader<T>::InitUnigramTable(SizeType size, bool use_vocab_frequenci
         frequencies[id]++;
       }
     }
-    unigram_table_.Reset(frequencies, size);
+    unigram_table_.ResetTable(frequencies, size);
   }
 }
 /**
@@ -623,8 +623,12 @@ void GraphW2VLoader<T>::BuildOnlyData(std::vector<std::string> const &sents, Siz
     std::vector<SizeType> indices{};
     for (std::string const &word : preprocessed_string)
     {
-      auto value = vocab_.data.at(word);
-      indices.push_back(value.first);  // update the word in the sentence to index
+      // some words will be missing from the vocab because of infrequency
+      if (vocab_.data.find(word) != vocab_.data.end())
+      {
+        auto value = vocab_.data[word];
+        indices.push_back(value.first);  // update the word in the sentence to index
+      }
     }
 
     data_.push_back(indices);
@@ -755,7 +759,6 @@ typename GraphW2VLoader<T>::SizeType GraphW2VLoader<T>::WindowSize()
 {
   return window_size_;
 }
-
 
 /**
  * Preprocesses a string turning it into a vector of words

@@ -166,7 +166,7 @@ void W2VLoader<T>::Reset()
   current_sentence_ = 0;
   current_word_     = 0;
   rng_.Seed(1337);
-  unigram_table_.Reset();
+  unigram_table_.ResetRNG();
 }
 
 template <typename T>
@@ -225,7 +225,7 @@ void W2VLoader<T>::InitUnigramTable()
   {
     frequencies[kvp.second.first] = kvp.second.second;
   }
-  unigram_table_.Reset(frequencies, 1e8);
+  unigram_table_.ResetTable(frequencies, 1e8);
 }
 
 /**

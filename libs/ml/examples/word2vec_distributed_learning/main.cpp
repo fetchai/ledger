@@ -72,7 +72,7 @@ using TensorType       = fetch::math::Tensor<DataType>;
 using VectorTensorType = std::vector<TensorType>;
 using SizeType         = typename TensorType::SizeType;
 
- std::string ReadFile(std::string const &path)
+std::string ReadFile(std::string const &path)
 {
   std::ifstream t(path);
   if (t.fail())
@@ -108,30 +108,34 @@ int main(int ac, char **av)
   tp.learning_rate_param.starting_learning_rate = tp.starting_learning_rate;
   tp.learning_rate_param.ending_learning_rate   = tp.ending_learning_rate;
 
+  // set up dataloader
   GraphW2VLoader<DataType> data_loader(tp.window_size, tp.negative_sample_size, tp.freq_thresh,
                                        tp.max_word_count);
-  // set up dataloader
-  /// DATA LOADING ///
-  std::string vocab_file = "/tmp/vocab.txt";
-  data_loader.BuildVocab({ReadFile(train_file)}, tp.min_count);
+  std::string              vocab_file = "/tmp/vocab.txt";
+  data_loader.BuildOnlyVocab({ReadFile(train_file)}, tp.min_count, true);
   data_loader.SaveVocab(vocab_file);
 
   // split train file into NUMBER_OF_CLIENTS
   std::vector<std::string> train_data;
-  auto input_data = ReadFile(train_file);
-  auto chars_per_client = static_cast<SizeType >(input_data.size() / NUMBER_OF_CLIENTS);
-  for (unsigned int i(0); i < NUMBER_OF_CLIENTS; ++i)
+  auto                     input_data = ReadFile(train_file);
+  auto     chars_per_client = static_cast<SizeType>(input_data.size() / NUMBER_OF_CLIENTS);
+  SizeType pos{0};
+  SizeType oldpos{0};
+  for (SizeType i(0); i < NUMBER_OF_CLIENTS; ++i)
   {
-    train_data.push_back(input_data.substr(i*chars_per_client, (i+1)*chars_per_client));
+    oldpos = pos;
+    pos    = (i + 1) * chars_per_client;
+    // find next instance of space character
+    pos = input_data.find(" ", pos, 1);
+    train_data.push_back(input_data.substr(oldpos, pos));
   }
 
   std::vector<std::shared_ptr<TrainingClient<TensorType>>> clients(NUMBER_OF_CLIENTS);
   for (SizeType i(0); i < NUMBER_OF_CLIENTS; ++i)
   {
     // Instantiate NUMBER_OF_CLIENTS clients
-    clients[i] = std::make_shared<Word2VecClient<TensorType>>(std::to_string(i), tp, vocab_file,
-                                                              train_data[i],
-                                                              BATCH_SIZE, NUMBER_OF_PEERS);
+    clients[i] = std::make_shared<Word2VecClient<TensorType>>(
+        std::to_string(i), tp, vocab_file, train_data[i], BATCH_SIZE, NUMBER_OF_PEERS);
   }
 
   for (SizeType i(0); i < NUMBER_OF_CLIENTS; ++i)
