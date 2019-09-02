@@ -41,7 +41,8 @@ class Word2VecClient : public TrainingClient<TensorType>
 
 public:
   Word2VecClient(std::string const &id, TrainingParams<TensorType> const &tp,
-                 std::string const &vocab_file, SizeType batch_size, SizeType number_of_peers);
+                 std::string const &vocab_file, SizeType batch_size, SizeType number_of_peers,
+                 std::shared_ptr<std::mutex> console_mutex_ptr);
   void PrepareModel() override;
   void PrepareDataLoader() override;
   void PrepareOptimiser() override;
@@ -52,6 +53,7 @@ private:
   std::string                                                       skipgram_;
   std::string                                                       vocab_file_;
   std::shared_ptr<fetch::ml::dataloaders::GraphW2VLoader<DataType>> w2v_data_loader_ptr_;
+  std::shared_ptr<std::mutex>                                       console_mutex_ptr_;
 
   void PrintWordAnalogy(TensorType const &embeddings, std::string const &word1,
                         std::string const &word2, std::string const &word3, SizeType k);
@@ -66,10 +68,12 @@ template <class TensorType>
 Word2VecClient<TensorType>::Word2VecClient(std::string const &               id,
                                            TrainingParams<TensorType> const &tp,
                                            std::string const &vocab_file, SizeType batch_size,
-                                           SizeType number_of_peers)
+                                           SizeType                    number_of_peers,
+                                           std::shared_ptr<std::mutex> console_mutex_ptr)
   : TrainingClient<TensorType>(id, batch_size, tp.starting_learning_rate, number_of_peers)
   , tp_(tp)
   , vocab_file_(vocab_file)
+  , console_mutex_ptr_(console_mutex_ptr)
 {
   PrepareDataLoader();
   PrepareModel();
@@ -121,7 +125,7 @@ template <class TensorType>
 void Word2VecClient<TensorType>::PrepareOptimiser()
 {
   // Initialise Optimiser
-  this->opti_ptr_ = std::make_shared<fetch::ml::optimisers::AdamOptimiser<TensorType>>(
+  this->opti_ptr_ = std::make_shared<fetch::ml::optimisers::SGDOptimiser<TensorType>>(
       std::shared_ptr<fetch::ml::Graph<TensorType>>(this->g_ptr_), this->inputs_names_,
       this->label_name_, this->error_name_, this->learning_rate_);
 }
@@ -215,6 +219,9 @@ void Word2VecClient<TensorType>::TestEmbeddings(std::string const &word0, std::s
                                                 std::string const &word2, std::string const &word3,
                                                 SizeType K)
 {
+  // Lock model
+  std::lock_guard<std::mutex> l(this->model_mutex_);
+
   // first get hold of the skipgram layer by searching the return name in the graph
   std::shared_ptr<fetch::ml::layers::SkipGram<TensorType>> sg_layer =
       std::dynamic_pointer_cast<fetch::ml::layers::SkipGram<TensorType>>(
@@ -224,8 +231,14 @@ void Word2VecClient<TensorType>::TestEmbeddings(std::string const &word0, std::s
   std::shared_ptr<fetch::ml::ops::Embeddings<TensorType>> embeddings =
       sg_layer->GetEmbeddings(sg_layer);
 
-  std::cout << std::endl;
-  PrintKNN(embeddings->get_weights(), word0, K);
-  std::cout << std::endl;
-  PrintWordAnalogy(embeddings->get_weights(), word1, word2, word3, K);
+  {
+    // Lock console
+    std::lock_guard<std::mutex> l(*console_mutex_ptr_);
+
+    std::cout << std::endl;
+    std::cout << "Client " << this->id_ << ": " << std::endl;
+    PrintKNN(embeddings->get_weights(), word0, K);
+    std::cout << std::endl;
+    PrintWordAnalogy(embeddings->get_weights(), word1, word2, word3, K);
+  }
 }

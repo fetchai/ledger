@@ -80,6 +80,8 @@ int main(int ac, char **av)
     return 1;
   }
 
+  std::shared_ptr<std::mutex> console_mutex_ptr_ = std::make_shared<std::mutex>();
+
   std::string train_file = av[1];
 
   std::shared_ptr<Coordinator> coordinator =
@@ -101,8 +103,8 @@ int main(int ac, char **av)
   for (SizeType i(0); i < NUMBER_OF_CLIENTS; ++i)
   {
     // Instantiate NUMBER_OF_CLIENTS clients
-    clients[i] = std::make_shared<Word2VecClient<TensorType>>(std::to_string(i), tp, train_file,
-                                                              BATCH_SIZE, NUMBER_OF_PEERS);
+    clients[i] = std::make_shared<Word2VecClient<TensorType>>(
+        std::to_string(i), tp, train_file, BATCH_SIZE, NUMBER_OF_PEERS, console_mutex_ptr_);
   }
 
   for (SizeType i(0); i < NUMBER_OF_CLIENTS; ++i)

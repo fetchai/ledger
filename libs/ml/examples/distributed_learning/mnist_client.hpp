@@ -42,6 +42,8 @@ public:
 
   void PrepareModel() override
   {
+    this->g_ptr_ = std::make_shared<fetch::ml::Graph<TensorType>>();
+
     this->inputs_names_ = {this->g_ptr_->template AddNode<PlaceHolder<TensorType>>("Input", {})};
     this->g_ptr_->template AddNode<FullyConnected<TensorType>>("FC1", {"Input"}, 28u * 28u, 10u);
     this->g_ptr_->template AddNode<Relu<TensorType>>("Relu1", {"FC1"});
