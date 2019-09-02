@@ -117,6 +117,7 @@ public:
   void                            AddOutput(NodePtrType const &o);
   std::vector<NodePtrType> const &GetOutputs() const;
   void                            ResetCache(bool input_size_changed);
+  void                            ResetInputsAndOutputs();
 
   std::string const &GetNodeName()
   {
@@ -255,6 +256,17 @@ std::vector<std::pair<Node<T> *, T>> Node<T>::BackPropagate(TensorType const &er
     }
   }
   return non_back_propagated_error_signals;
+}
+
+/**
+ * Resets input and output node ptr containers. Useful for graph decopmiling.
+ * @tparam T
+ */
+template <typename T>
+void Node<T>::ResetInputsAndOutputs()
+{
+  input_nodes_.clear();
+  outputs_.clear();
 }
 
 /**

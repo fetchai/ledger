@@ -771,11 +771,12 @@ struct MapSerializer<ml::GraphSaveableParams<TensorType>, D>
   static uint8_t const CONNECTIONS_FIRST  = 2;
   static uint8_t const CONNECTIONS_SECOND = 3;
   static uint8_t const NODES              = 4;
+  static uint8_t const GRAPH_STATE        = 5;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(4);
+    auto map = map_constructor(5);
     map.Append(OP_CODE, sp.op_type);
 
     // split connections into keys and values
@@ -802,6 +803,7 @@ struct MapSerializer<ml::GraphSaveableParams<TensorType>, D>
     }
 
     map.Append(NODES, nodevec);
+    map.Append(GRAPH_STATE, sp.graph_state);
   }
 
   template <typename MapDeserializer>
@@ -831,6 +833,8 @@ struct MapSerializer<ml::GraphSaveableParams<TensorType>, D>
       sp.nodes.insert(std::make_pair(node_name, nsp));
       ++it3;
     }
+
+    map.ExpectKeyGetValue(GRAPH_STATE, sp.graph_state);
   }
 };
 

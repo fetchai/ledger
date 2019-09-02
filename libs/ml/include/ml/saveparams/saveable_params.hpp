@@ -68,6 +68,8 @@ struct GraphSaveableParams
 
   std::vector<std::pair<std::string, std::vector<std::string>>>                    connections;
   std::unordered_map<std::string, std::shared_ptr<NodeSaveableParams<TensorType>>> nodes;
+
+  uint8_t graph_state;
 };
 
 template <class TensorType>

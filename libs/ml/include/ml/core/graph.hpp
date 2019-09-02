@@ -51,7 +51,10 @@ class ModelInterface;
 // TODO - move adding trainables methods from graph building utility into Graph, remove
 // AddTrainables
 
-enum class GraphState
+// TODO - rework graph GetTrainables so that graph stores trainables recursively, but optimiser gets
+// a flat vector of ptrs
+
+enum class GraphState : uint8_t
 {
   NOT_COMPILED,
   INVALID,
@@ -87,6 +90,7 @@ public:
   std::string AddNode(std::string const &node_name, std::vector<std::string> const &inputs,
                       Params... params);
 
+  void ResetCompile();
   void Compile();
   void AddTrainable(NodePtrType node_ptr, std::string const &node_name);
 
@@ -213,18 +217,49 @@ std::string Graph<TensorType>::AddNode(std::string const &             node_name
 }
 
 /**
+ * Undoes the work of a previous Compile call.
+ * Since compilation could be called multiple times during graph construction, this is
+ * necessary to avoid duplication connections/trainables
+ * @tparam TensorType
+ */
+template <typename TensorType>
+void Graph<TensorType>::ResetCompile()
+{
+  // clear trainables from any previous compilation
+  trainable_lookup_.clear();
+  trainable_nodes_.clear();
+
+  for (auto &connection : connections_)
+  {
+    auto node_name   = connection.first;
+    auto node_inputs = connection.second;
+
+    //    // recursive call to ResetCompile if its a graph
+    //    auto node_ptr = nodes_.at(node_name);
+    //    auto op_ptr        = node_ptr->GetOp();
+    //    auto graph_ptr     = std::dynamic_pointer_cast<Graph<TensorType>>(op_ptr);
+    //    if (graph_ptr)
+    //    {
+    //      graph_ptr->ResetCompile();
+    //    }
+
+    // remove inputs and output from the node
+    nodes_.at(node_name)->ResetInputsAndOutputs();
+  }
+  graph_state_ = GraphState::NOT_COMPILED;
+}
+
+/**
  * Links Node inputs and sets up the trainables object ready for use by an optimiser
  * @tparam TensorType
  */
 template <typename TensorType>
 void Graph<TensorType>::Compile()
 {
-  bool valid = true;
-  // loop through added nodes doing the following
-  // 1. linking node inputs
-  // 2. adding trainables
-  // 3. checking for invalidities
+  ResetCompile();
 
+  bool valid = true;
+  // loop through added nodes setting inputs and outputs and setting trainables
   for (auto &connection : connections_)
   {
     auto node_name   = connection.first;
@@ -234,6 +269,8 @@ void Graph<TensorType>::Compile()
     auto node_ptr = nodes_.at(node_name);
     AddTrainable(node_ptr, node_name);
   }
+
+  // TODO: check for graph invalidities here - this can reset valid to false
 
   if (valid)
   {
@@ -271,9 +308,18 @@ void Graph<TensorType>::AddTrainable(NodePtrType node_ptr, std::string const &no
     for (auto &trainable : graph_ptr->trainable_lookup_)
     {
       std::string subnode_name(node_name + "_" + trainable.first);
-      assert(graph_ptr->trainable_lookup_.find(subnode_name) == graph_ptr->trainable_lookup_.end());
-      graph_ptr->trainable_nodes_.emplace_back(graph_ptr->trainable_nodes_.at(trainable.second));
-      graph_ptr->trainable_lookup_[subnode_name] = graph_ptr->trainable_nodes_.size() - 1;
+
+      // only add new trainable that aren't already there
+      // graph re-compilation can lead to a valid call to add the same trainables twice, this should
+      // be ignored
+      if (graph_ptr->trainable_lookup_.find(subnode_name) == graph_ptr->trainable_lookup_.end())
+      {
+        //        graph_ptr->trainable_nodes_.emplace_back(graph_ptr->trainable_nodes_.at(trainable.second));
+        //        graph_ptr->trainable_lookup_[subnode_name] = graph_ptr->trainable_nodes_.size() -
+        //        1;
+        trainable_nodes_.emplace_back(graph_ptr->trainable_nodes_.at(trainable.second));
+        trainable_lookup_[subnode_name] = graph_ptr->trainable_nodes_.size() - 1;
+      }
     }
   }
 }
@@ -444,17 +490,17 @@ template <typename TensorType>
 GraphSaveableParams<TensorType> Graph<TensorType>::GetGraphSaveableParams()
 {
   GraphSaveableParams<TensorType> gs;
+  gs.connections = connections_;
   for (auto const &npair : nodes_)
   {
     std::string node_name = npair.first;
     auto        node      = npair.second;
 
-    gs.connections.emplace_back(std::make_pair(node_name, node->GetInputNames()));
-
     auto nsp = node->GetNodeSaveableParams();
     gs.nodes.insert(std::make_pair(node_name, nsp));
   }
 
+  gs.graph_state = static_cast<uint8_t>(graph_state_);
   return gs;
 }
 
@@ -463,11 +509,15 @@ void Graph<TensorType>::SetGraphSaveableParams(GraphSaveableParams<TensorType> c
 {
   assert(nodes_.size() == sp.connections.size());
 
+  connections_ = sp.connections;
+
   // assign inputs and outputs to the nodes
   for (auto &node : sp.connections)
   {
     LinkNodesInGraph(node.first, node.second);
   }
+
+  graph_state_ = static_cast<GraphState>(sp.graph_state);
 }
 
 template <typename TensorType>
@@ -681,13 +731,11 @@ void Graph<TensorType>::ApplyGradients(std::vector<TensorType> &grad)
 
 /**
  * Connect the new node to the current graph by setting input and output nodes to it and saving it
- * in the lookup table
+ * in the lookup table. Can also be used by ResetCompile to unlink previously linked nodes
  * @tparam TensorType
- * @tparam OperationType
- * @tparam Params
  * @param node_name
  * @param inputs
- * @param op
+ * @param unlink
  */
 template <typename TensorType>
 void Graph<TensorType>::LinkNodesInGraph(std::string const &             node_name,
