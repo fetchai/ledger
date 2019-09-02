@@ -62,7 +62,8 @@ using DAGPtr               = std::shared_ptr<ledger::DAGInterface>;
 // Constants
 const std::chrono::milliseconds TX_SYNC_NOTIFY_INTERVAL{1000};
 const std::chrono::milliseconds EXEC_NOTIFY_INTERVAL{5000};
-const std::chrono::seconds      NOTIFY_INTERVAL{10};
+const std::chrono::seconds      STATE_NOTIFY_INTERVAL{20};
+const std::chrono::seconds      NOTIFY_INTERVAL{5};
 const std::chrono::seconds      WAIT_BEFORE_ASKING_FOR_MISSING_TX_INTERVAL{5};
 const std::chrono::seconds      WAIT_FOR_TX_TIMEOUT_INTERVAL{600};
 const uint32_t                  THRESHOLD_FOR_FAST_SYNCING{100u};
@@ -103,7 +104,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr
   , storage_unit_{storage_unit}
   , block_packer_{packer}
   , block_sink_{block_sink}
-  , periodic_print_{NOTIFY_INTERVAL}
+  , periodic_print_{STATE_NOTIFY_INTERVAL}
   , miner_{std::make_shared<consensus::DummyMiner>()}
   , last_executed_block_{GENESIS_DIGEST}
   , mining_address_{prover->identity()}
@@ -115,7 +116,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr
   , tx_wait_periodic_{TX_SYNC_NOTIFY_INTERVAL}
   , exec_wait_periodic_{EXEC_NOTIFY_INTERVAL}
   , syncing_periodic_{NOTIFY_INTERVAL}
-  , synergetic_exec_mgr_{CreateSynergeticExecutor(features, dag, storage_unit_)}
+  , synergetic_exec_mgr_{CreateSynergeticExecutor(features, dag_, storage_unit_)}
   , reload_state_count_{telemetry::Registry::Instance().CreateCounter(
         "ledger_block_coordinator_reload_state_total",
         "The total number of times in the reload state")}
@@ -1124,7 +1125,6 @@ BlockCoordinator::State BlockCoordinator::OnReset()
   current_block_.reset();
   next_block_.reset();
   pending_txs_.reset();
-  blocks_to_common_ancestor_.clear();
 
   // we should update the next block time
   UpdateNextBlockTime();

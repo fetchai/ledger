@@ -45,7 +45,10 @@ enum class WeightsInitialisation
   ZEROS,
   XAVIER_GLOROT,
   XAVIER_FAN_IN,
-  XAVIER_FAN_OUT
+  XAVIER_FAN_OUT,
+  XAVIER_GLOROT_UNIFORM,
+  XAVIER_FAN_IN_UNIFORM,
+  XAVIER_FAN_OUT_UNIFORM
 };
 
 template <class T>
@@ -109,6 +112,13 @@ public:
     return sp;
   }
 
+  std::shared_ptr<Ops<TensorType>> MakeSharedCopy(std::shared_ptr<Ops<TensorType>> me) override
+  {
+    // This overrides implementation in Placeholder
+    assert(me.get() == this);
+    return me;
+  }
+
   ArrayPtrType GetShareableWeights()
   {
     return this->output_;
@@ -119,7 +129,9 @@ public:
   {
     FETCH_UNUSED(inputs);
     assert(inputs.empty());
+
     gradient_accumulation_->InlineAdd(error_signal);
+
     return {};
   }
 
@@ -197,10 +209,12 @@ public:
     {
     case WeightsInitialisation::ZEROS:
     {
-      for (std::uint64_t j = 0; j < array.data().size(); ++j)
-      {
-        array.data()[j] = typename TensorType::Type(0);
-      }
+      array.Fill(typename TensorType::Type(0));
+      break;
+    }
+    case WeightsInitialisation::ONES:
+    {
+      array.Fill(typename TensorType::Type(1));
       break;
     }
     case WeightsInitialisation::XAVIER_GLOROT:
@@ -216,6 +230,21 @@ public:
     case WeightsInitialisation::XAVIER_FAN_OUT:
     {
       XavierInitialisation(array, std::sqrt(1.0 / double(out_size)), seed);
+      break;
+    }
+    case WeightsInitialisation::XAVIER_GLOROT_UNIFORM:
+    {
+      XavierInitialisationUniform(array, std::sqrt(6.0 / double(in_size + out_size)), seed);
+      break;
+    }
+    case WeightsInitialisation::XAVIER_FAN_IN_UNIFORM:
+    {
+      XavierInitialisationUniform(array, std::sqrt(3.0 / double(in_size)), seed);
+      break;
+    }
+    case WeightsInitialisation::XAVIER_FAN_OUT_UNIFORM:
+    {
+      XavierInitialisationUniform(array, std::sqrt(3.0 / double(out_size)), seed);
       break;
     }
     default:
@@ -264,13 +293,27 @@ public:
     return *this->output_;
   }
 
+  void SetWeights(TensorType &new_value) override
+  {
+    this->output_->Assign(new_value);
+  }
+
   /**
    * exports the weight gradients Array
    * @return const reference to internal accumulated gradient Array
    */
-  TensorType const &get_gradients() const override
+  TensorType const &GetGradientsReferences() const override
   {
     return *this->gradient_accumulation_;
+  }
+
+  /**
+   * returns deep copy of the weight gradients Array
+   * @return Internal accumulated gradient Array
+   */
+  TensorType GetGradients() const override
+  {
+    return this->gradient_accumulation_->Copy();
   }
 
   static constexpr OpType OpCode()
@@ -281,7 +324,7 @@ public:
 
 private:
   /**
-   * xavier weights initialisation
+   * xavier weights initialisation assuming guassian generator
    * using a normal distribution with mean 0 and variance 2 / (input nodes + output nodes)
    * @param weights
    */
@@ -290,6 +333,27 @@ private:
   {
     // TODO (665) this is a uniform distribution; in principle we should be using a guassian
     // distribution instead we use a unifrom from -std dev -> + std dev
+    fetch::random::LaggedFibonacciGenerator<> lfg_(seed);
+
+    // http://proceedings.mlr.press/v9/glorot10a/glorot10a.pdf
+    auto it = array.begin();
+    while (it.is_valid())
+    {
+      auto ran_val = lfg_.AsDouble();  // random value in range 0 <-> 1
+      ran_val -= 0.5;
+      ran_val *= 2.0;                 // random value in range -1 <-> +1
+      ran_val *= normalising_factor;  // random value in range -sigma <-> +sigma
+
+      *it = typename TensorType::Type(ran_val);
+      ++it;
+    }
+  }
+
+  static void XavierInitialisationUniform(TensorType &array, double normalising_factor,
+                                          SizeType seed = 123456789)
+  {
+    // TODO (#1562) this is based on uniform random generator, and it should be set to default
+    // weight initialization method distribution instead we use a unifrom from -std dev -> + std dev
     fetch::random::LaggedFibonacciGenerator<> lfg_(seed);
 
     // http://proceedings.mlr.press/v9/glorot10a/glorot10a.pdf

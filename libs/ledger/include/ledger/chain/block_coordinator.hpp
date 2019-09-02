@@ -253,7 +253,7 @@ private:
     ERROR
   };
 
-  static constexpr uint64_t COMMON_PATH_TO_ANCESTOR_LENGTH_LIMIT = 1000;
+  static constexpr uint64_t COMMON_PATH_TO_ANCESTOR_LENGTH_LIMIT = 5000;
 
   using BlockPtr             = MainChain::BlockPtr;
   using NextBlockPtr         = std::unique_ptr<Block>;

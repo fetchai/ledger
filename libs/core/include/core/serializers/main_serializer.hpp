@@ -60,21 +60,20 @@ public:
   template <typename T>
   void Serialize(T const &large_object)
   {
-    counter_ << large_object;
-    buffer_.Reserve(counter_.size());
-    buffer_ << large_object;
+    counter << large_object;
+    buffer.Reserve(counter.size());
+    buffer << large_object;
   }
 
   template <typename T>
   void Deserialize(T &large_object)
   {
-    buffer_.seek(0);
-    buffer_ >> large_object;
+    buffer.seek(0);
+    buffer >> large_object;
   }
 
-private:
-  MsgPackSerializer buffer_;
-  SizeCounter       counter_;
+  MsgPackSerializer buffer;
+  SizeCounter       counter;
 };
 
 template <typename WriteType, typename InitialType>
