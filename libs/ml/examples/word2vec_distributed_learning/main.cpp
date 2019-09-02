@@ -67,7 +67,7 @@ using namespace fetch::ml::layers;
 using namespace fetch::ml;
 using namespace fetch::ml::dataloaders;
 
-using DataType         = double;
+using DataType         = fetch::fixed_point::FixedPoint<32, 32>;
 using TensorType       = fetch::math::Tensor<DataType>;
 using VectorTensorType = std::vector<TensorType>;
 using SizeType         = typename TensorType::SizeType;
