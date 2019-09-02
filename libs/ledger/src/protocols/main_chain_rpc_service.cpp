@@ -309,8 +309,8 @@ void MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
 }
 
 /**
- * Request from a random peer the heaviest chain, starting from the newest block
- * and going backwards. The client is free to return less blocks than requested.
+ * Request from a random peer the heaviest chain, starting from genesis
+ * and going forward. The client is free to return less blocks than requested.
  *
  */
 MainChainRpcService::State MainChainRpcService::OnRequestHeaviestChain()
