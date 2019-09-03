@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/clustering/knn.hpp"
 #include "ml/distributed_learning/distributed_learning_client.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "word2vec_training_params.hpp"
@@ -41,7 +42,6 @@ class Word2VecClient : public TrainingClient<TensorType>
 
 public:
   Word2VecClient(std::string const &id, W2VTrainingParams<DataType> const &tp,
-                 std::string const &vocab_file, SizeType batch_size, SizeType number_of_peers,
                  std::shared_ptr<std::mutex> const &console_mutex_ptr);
   void PrepareModel();
   void PrepareDataLoader();
@@ -67,17 +67,15 @@ private:
 template <class TensorType>
 Word2VecClient<TensorType>::Word2VecClient(std::string const &                id,
                                            W2VTrainingParams<DataType> const &tp,
-                                           std::string const &vocab_file, SizeType batch_size,
-                                           SizeType                           number_of_peers,
                                            std::shared_ptr<std::mutex> const &console_mutex_ptr)
   : tp_(tp)
-  , vocab_file_(vocab_file)
+  , vocab_file_(tp.vocab_file)
   , console_mutex_ptr_(console_mutex_ptr)
 {
   this->id_              = id;
-  this->batch_size_      = batch_size;
+  this->batch_size_      = tp.batch_size;
   this->learning_rate_   = tp.starting_learning_rate;
-  this->number_of_peers_ = number_of_peers;
+  this->number_of_peers_ = tp.number_of_peers;
 
   PrepareDataLoader();
   PrepareModel();

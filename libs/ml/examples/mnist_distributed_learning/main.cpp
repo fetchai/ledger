@@ -32,16 +32,6 @@
 #include <utility>
 #include <vector>
 
-#define NUMBER_OF_CLIENTS 10
-#define NUMBER_OF_ITERATIONS 100
-#define NUMBER_OF_ROUNDS 10
-#define SYNCHRONIZATION_MODE CoordinatorMode::SEMI_SYNCHRONOUS
-
-#define BATCH_SIZE 32
-#define LEARNING_RATE .001f
-#define TEST_SET_RATIO 0.03f
-#define NUMBER_OF_PEERS 3
-
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
 
@@ -96,25 +86,31 @@ int main(int ac, char **av)
     return 1;
   }
 
+  CoordinatorParams      coord_params;
   ClientParams<DataType> client_params;
-  client_params.learning_rate   = static_cast<DataType>(LEARNING_RATE);
-  client_params.batch_size      = BATCH_SIZE;
-  client_params.number_of_peers = NUMBER_OF_PEERS;
 
-  std::shared_ptr<Coordinator> coordinator =
-      std::make_shared<Coordinator>(SYNCHRONIZATION_MODE, NUMBER_OF_ITERATIONS);
+  SizeType number_of_clients    = 10;
+  SizeType number_of_rounds     = 10;
+  coord_params.mode             = CoordinatorMode::SEMI_SYNCHRONOUS;
+  coord_params.iterations_count = 100;
+  client_params.batch_size      = 32;
+  client_params.learning_rate   = static_cast<DataType>(.001f);
+  float test_set_ratio          = 0.03f;
+  client_params.number_of_peers = 3;
+
+  std::shared_ptr<Coordinator> coordinator = std::make_shared<Coordinator>(coord_params);
 
   std::cout << "FETCH Distributed MNIST Demo" << std::endl;
 
-  std::vector<std::shared_ptr<TrainingClient<TensorType>>> clients(NUMBER_OF_CLIENTS);
-  for (SizeType i{0}; i < NUMBER_OF_CLIENTS; ++i)
+  std::vector<std::shared_ptr<TrainingClient<TensorType>>> clients(number_of_clients);
+  for (SizeType i{0}; i < number_of_clients; ++i)
   {
     // Instantiate NUMBER_OF_CLIENTS clients
-    clients[i] = MakeClient(std::to_string(i), client_params, av[1], av[2], TEST_SET_RATIO);
+    clients[i] = MakeClient(std::to_string(i), client_params, av[1], av[2], test_set_ratio);
     // TODO(1597): Replace ID with something more sensible
   }
 
-  for (SizeType i{0}; i < NUMBER_OF_CLIENTS; ++i)
+  for (SizeType i{0}; i < number_of_clients; ++i)
   {
     // Give every client the full list of other clients
     clients[i]->AddPeers(clients);
@@ -124,7 +120,7 @@ int main(int ac, char **av)
   }
 
   // Main loop
-  for (SizeType it{0}; it < NUMBER_OF_ROUNDS; ++it)
+  for (SizeType it{0}; it < number_of_rounds; ++it)
   {
     // Start all clients
     coordinator->Reset();
@@ -150,7 +146,7 @@ int main(int ac, char **av)
     VectorTensorType new_weights = clients[0]->GetWeights();
 
     // Sum all wights
-    for (SizeType i{1}; i < NUMBER_OF_CLIENTS; ++i)
+    for (SizeType i{1}; i < number_of_clients; ++i)
     {
       VectorTensorType other_weights = clients[i]->GetWeights();
 
@@ -163,12 +159,12 @@ int main(int ac, char **av)
     // Divide weights by number of clients to calculate the average
     for (SizeType j{0}; j < new_weights.size(); j++)
     {
-      fetch::math::Divide(new_weights.at(j), static_cast<DataType>(NUMBER_OF_CLIENTS),
+      fetch::math::Divide(new_weights.at(j), static_cast<DataType>(number_of_clients),
                           new_weights.at(j));
     }
 
     // Update models of all clients by average model
-    for (unsigned int i(0); i < NUMBER_OF_CLIENTS; ++i)
+    for (unsigned int i(0); i < number_of_clients; ++i)
     {
       clients[i]->SetWeights(new_weights);
     }
