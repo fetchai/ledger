@@ -40,16 +40,16 @@
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
 
-using DataType   = fetch::fixed_point::fp64_t;
-//using DataType   = double;
+using DataType = fetch::fixed_point::fp64_t;
+// using DataType   = double;
 using TensorType = fetch::math::Tensor<DataType>;
 using SizeType   = TensorType::SizeType;
 
 using GraphType        = fetch::ml::Graph<TensorType>;
 using CostFunctionType = fetch::ml::ops::MeanSquareErrorLoss<TensorType>;
-//using OptimiserType    = fetch::ml::optimisers::SGDOptimiser<TensorType>;
-using OptimiserType    = fetch::ml::optimisers::AdamOptimiser<TensorType>;
-using DataLoaderType   = fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>;
+// using OptimiserType    = fetch::ml::optimisers::SGDOptimiser<TensorType>;
+using OptimiserType  = fetch::ml::optimisers::AdamOptimiser<TensorType>;
+using DataLoaderType = fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>;
 
 struct TrainingParams
 {
@@ -211,11 +211,6 @@ int main(int ac, char **av)
 
     auto result = fetch::math::MeanAbsoluteError(prediction, orig_test_label);
     std::cout << "mean absolute validation error: " << result << std::endl;
-
-    std::cout << "sizeof(g->GetGraphSaveableParams()): " << sizeof(g->GetGraphSaveableParams()) << std::endl;
-
-//    SaveGraphToFile(*g, "./bitcoin_price_prediction_graph" + std::to_string(i) + ".bin");
-
   }
 
   SaveGraphToFile(*g, "./bitcoin_price_prediction_graph.bin");
