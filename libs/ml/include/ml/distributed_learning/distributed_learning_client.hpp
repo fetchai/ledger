@@ -59,7 +59,8 @@ class TrainingClient
   using VectorTensorType = std::vector<TensorType>;
 
 public:
-  TrainingClient() = default;
+  TrainingClient(std::string const &id, ClientParams<DataType> const &client_params);
+
   TrainingClient(
       std::string const &id, std::shared_ptr<fetch::ml::Graph<TensorType>> const &graph_ptr,
       std::shared_ptr<fetch::ml::dataloaders::DataLoader<TensorType, TensorType>> const &loader_ptr,
@@ -80,6 +81,7 @@ public:
   void             AddGradient(VectorTensorType gradient);
   void             ApplyGradient(VectorTensorType gradients);
   void             SetWeights(VectorTensorType &new_weights);
+  void             SetParams(ClientParams<DataType> const &new_params);
 
 protected:
   // Client id (identification name)
@@ -123,6 +125,7 @@ protected:
   void TrainOnce();
   void TrainWithCoordinator();
   void DoBatch();
+  void ClearLossFile();
 };
 
 template <class TensorType>
@@ -135,16 +138,37 @@ TrainingClient<TensorType>::TrainingClient(
   , g_ptr_(graph_ptr)
   , dataloader_ptr_(loader_ptr)
   , opti_ptr_(optimiser_ptr)
-  , inputs_names_(client_params.inputs_names)
-  , label_name_(client_params.label_name)
-  , error_name_(client_params.error_name)
-  , batch_size_(client_params.batch_size)
-  , learning_rate_(client_params.learning_rate)
-  , number_of_peers_(client_params.number_of_peers)
 {
-  // Clear loss file
+  SetParams(client_params);
+  ClearLossFile();
+}
+
+template <class TensorType>
+TrainingClient<TensorType>::TrainingClient(std::string const &           id,
+                                           ClientParams<DataType> const &client_params)
+  : id_(std::move(id))
+{
+  SetParams(client_params);
+  ClearLossFile();
+}
+
+template <class TensorType>
+void TrainingClient<TensorType>::ClearLossFile()
+{
   std::ofstream lossfile("losses_" + id_ + ".csv", std::ofstream::out | std::ofstream::trunc);
   lossfile.close();
+}
+
+template <class TensorType>
+void TrainingClient<TensorType>::SetParams(
+    ClientParams<typename TensorType::Type> const &new_params)
+{
+  inputs_names_    = new_params.inputs_names;
+  label_name_      = new_params.label_name;
+  error_name_      = new_params.error_name;
+  batch_size_      = new_params.batch_size;
+  learning_rate_   = new_params.learning_rate;
+  number_of_peers_ = new_params.number_of_peers;
 }
 
 template <class TensorType>
