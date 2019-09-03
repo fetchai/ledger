@@ -394,7 +394,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
     if (!condition_to_proceed_)
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Waiting for all peers to be ready before starting DKG. Ready: ",
-                     can_see.size(), " expect: ", require_connections);
+                     can_see.size(), " expect: ", require_connections, " Note, all: ", connected_peers.size());
     }
 
     state_machine_->Delay(std::chrono::milliseconds(500));
