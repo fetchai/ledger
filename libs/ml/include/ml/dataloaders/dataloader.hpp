@@ -187,6 +187,8 @@ DataLoader<LabelType, InputType>::PrepareBatch(fetch::math::SizeType batch_size,
 template <typename LabelType, typename DataType>
 void DataLoader<LabelType, DataType>::SetMode(DataLoaderMode new_mode)
 {
+  if (mode_ == new_mode)
+    return;
   mode_ = new_mode;
   UpdateCursor();
 

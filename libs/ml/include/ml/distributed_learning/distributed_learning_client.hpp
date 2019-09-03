@@ -28,18 +28,28 @@
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/optimisation/optimiser.hpp"
 
-#include <algorithm>
-#include <chrono>
-#include <ctime>
 #include <fstream>
 #include <mutex>
 #include <queue>
 #include <string>
-#include <utility>
 #include <vector>
 
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
+
+template <typename DataType>
+struct ClientParams
+{
+  using SizeType = fetch::math::SizeType;
+
+  SizeType batch_size;
+  DataType learning_rate;
+  SizeType number_of_peers;
+
+  std::vector<std::string> inputs_names = {"Input"};
+  std::string              label_name   = "Label";
+  std::string              error_name   = "Error";
+};
 
 template <class TensorType>
 class TrainingClient
@@ -49,8 +59,13 @@ class TrainingClient
   using VectorTensorType = std::vector<TensorType>;
 
 public:
-  TrainingClient(std::string const &id, SizeType batch_size, DataType learning_rate,
-                 SizeType number_of_peers);
+  TrainingClient() = default;
+  TrainingClient(
+      std::string const &id, std::shared_ptr<fetch::ml::Graph<TensorType>> const &graph_ptr,
+      std::shared_ptr<fetch::ml::dataloaders::DataLoader<TensorType, TensorType>> const &loader_ptr,
+      std::shared_ptr<fetch::ml::optimisers::Optimiser<TensorType>> const &optimiser_ptr,
+      ClientParams<DataType> const &                                       client_params);
+
   virtual ~TrainingClient() = default;
 
   void SetCoordinator(std::shared_ptr<Coordinator> coordinator_ptr);
@@ -65,11 +80,11 @@ public:
   void             AddGradient(VectorTensorType gradient);
   void             ApplyGradient(VectorTensorType gradients);
   void             SetWeights(VectorTensorType &new_weights);
-  virtual void     PrepareModel()      = 0;
-  virtual void     PrepareDataLoader() = 0;
-  virtual void     PrepareOptimiser()  = 0;
 
 protected:
+  // Client id (identification name)
+  std::string id_;
+
   // Client's own graph and mutex to protect its weights
   std::shared_ptr<fetch::ml::Graph<TensorType>> g_ptr_;
   std::mutex                                    model_mutex_;
@@ -97,9 +112,6 @@ protected:
   // random number generator for shuffling peers
   fetch::random::LaggedFibonacciGenerator<> gen_;
 
-  // Client id (identification name)
-  std::string id_;
-
   // Learning hyperparameters
   SizeType batch_size_      = 0;
   DataType learning_rate_   = static_cast<DataType>(0);
@@ -114,13 +126,21 @@ protected:
 };
 
 template <class TensorType>
-TrainingClient<TensorType>::TrainingClient(std::string const &id, SizeType batch_size,
-                                           DataType learning_rate, SizeType number_of_peers)
-
+TrainingClient<TensorType>::TrainingClient(
+    std::string const &id, std::shared_ptr<fetch::ml::Graph<TensorType>> const &graph_ptr,
+    std::shared_ptr<fetch::ml::dataloaders::DataLoader<TensorType, TensorType>> const &loader_ptr,
+    std::shared_ptr<fetch::ml::optimisers::Optimiser<TensorType>> const &optimiser_ptr,
+    ClientParams<DataType> const &                                       client_params)
   : id_(std::move(id))
-  , batch_size_(batch_size)
-  , learning_rate_(learning_rate)
-  , number_of_peers_(number_of_peers)
+  , g_ptr_(graph_ptr)
+  , dataloader_ptr_(loader_ptr)
+  , opti_ptr_(optimiser_ptr)
+  , inputs_names_(client_params.inputs_names)
+  , label_name_(client_params.label_name)
+  , error_name_(client_params.error_name)
+  , batch_size_(client_params.batch_size)
+  , learning_rate_(client_params.learning_rate)
+  , number_of_peers_(client_params.number_of_peers)
 {
   // Clear loss file
   std::ofstream lossfile("losses_" + id_ + ".csv", std::ofstream::out | std::ofstream::trunc);
@@ -158,8 +178,8 @@ void TrainingClient<TensorType>::Run()
 template <class TensorType>
 typename TensorType::Type TrainingClient<TensorType>::Train()
 {
-  //  dataloader_ptr_->SetMode(fetch::ml::dataloaders::DataLoaderMode::TRAIN);
-  //  dataloader_ptr_->SetRandomMode(true);
+  dataloader_ptr_->SetMode(fetch::ml::dataloaders::DataLoaderMode::TRAIN);
+  dataloader_ptr_->SetRandomMode(true);
 
   DataType loss        = static_cast<DataType>(0);
   bool     is_done_set = false;

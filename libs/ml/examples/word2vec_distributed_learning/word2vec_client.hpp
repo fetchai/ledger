@@ -40,16 +40,16 @@ class Word2VecClient : public TrainingClient<TensorType>
   using VectorTensorType = std::vector<TensorType>;
 
 public:
-  Word2VecClient(std::string const &id, TrainingParams<TensorType> const &tp,
+  Word2VecClient(std::string const &id, W2VTrainingParams<DataType> const &tp,
                  std::string const &vocab_file, SizeType batch_size, SizeType number_of_peers,
-                 std::shared_ptr<std::mutex> console_mutex_ptr);
-  void PrepareModel() override;
-  void PrepareDataLoader() override;
-  void PrepareOptimiser() override;
+                 std::shared_ptr<std::mutex> const &console_mutex_ptr);
+  void PrepareModel();
+  void PrepareDataLoader();
+  void PrepareOptimiser();
   void Test(DataType &test_loss) override;
 
 private:
-  TrainingParams<TensorType>                                        tp_;
+  W2VTrainingParams<DataType>                                       tp_;
   std::string                                                       skipgram_;
   std::string                                                       vocab_file_;
   std::shared_ptr<fetch::ml::dataloaders::GraphW2VLoader<DataType>> w2v_data_loader_ptr_;
@@ -65,16 +65,20 @@ private:
 };
 
 template <class TensorType>
-Word2VecClient<TensorType>::Word2VecClient(std::string const &               id,
-                                           TrainingParams<TensorType> const &tp,
+Word2VecClient<TensorType>::Word2VecClient(std::string const &                id,
+                                           W2VTrainingParams<DataType> const &tp,
                                            std::string const &vocab_file, SizeType batch_size,
-                                           SizeType                    number_of_peers,
-                                           std::shared_ptr<std::mutex> console_mutex_ptr)
-  : TrainingClient<TensorType>(id, batch_size, tp.starting_learning_rate, number_of_peers)
-  , tp_(tp)
+                                           SizeType                           number_of_peers,
+                                           std::shared_ptr<std::mutex> const &console_mutex_ptr)
+  : tp_(tp)
   , vocab_file_(vocab_file)
   , console_mutex_ptr_(console_mutex_ptr)
 {
+  this->id_              = id;
+  this->batch_size_      = batch_size;
+  this->learning_rate_   = tp.starting_learning_rate;
+  this->number_of_peers_ = number_of_peers;
+
   PrepareDataLoader();
   PrepareModel();
 

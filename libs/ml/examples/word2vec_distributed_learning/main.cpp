@@ -89,7 +89,7 @@ int main(int ac, char **av)
 
   std::cout << "FETCH Distributed Word2vec Demo -- Asynchronous" << std::endl;
 
-  TrainingParams<TensorType> tp;
+  W2VTrainingParams<DataType> tp;
 
   // calc the true starting learning rate
   tp.starting_learning_rate =

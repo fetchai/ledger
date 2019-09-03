@@ -21,7 +21,7 @@
 #include "ml/distributed_learning/coordinator.hpp"
 #include "ml/distributed_learning/distributed_learning_client.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
-#include "mnist_client.hpp"
+#include "ml/optimisation/adam_optimiser.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -50,6 +50,43 @@ using TensorType       = fetch::math::Tensor<DataType>;
 using VectorTensorType = std::vector<TensorType>;
 using SizeType         = fetch::math::SizeType;
 
+std::shared_ptr<TrainingClient<TensorType>> MakeClient(std::string const &     id,
+                                                       ClientParams<DataType> &client_params,
+                                                       std::string const &     images,
+                                                       std::string const &     labels,
+                                                       float                   test_set_ratio)
+{
+  // Initialise model
+  std::shared_ptr<fetch::ml::Graph<TensorType>> g_ptr =
+      std::make_shared<fetch::ml::Graph<TensorType>>();
+
+  client_params.inputs_names = {g_ptr->template AddNode<PlaceHolder<TensorType>>("Input", {})};
+  g_ptr->template AddNode<FullyConnected<TensorType>>("FC1", {"Input"}, 28u * 28u, 10u);
+  g_ptr->template AddNode<Relu<TensorType>>("Relu1", {"FC1"});
+  g_ptr->template AddNode<FullyConnected<TensorType>>("FC2", {"Relu1"}, 10u, 10u);
+  g_ptr->template AddNode<Relu<TensorType>>("Relu2", {"FC2"});
+  g_ptr->template AddNode<FullyConnected<TensorType>>("FC3", {"Relu2"}, 10u, 10u);
+  g_ptr->template AddNode<Softmax<TensorType>>("Softmax", {"FC3"});
+  client_params.label_name = g_ptr->template AddNode<PlaceHolder<TensorType>>("Label", {});
+  client_params.error_name =
+      g_ptr->template AddNode<CrossEntropyLoss<TensorType>>("Error", {"Softmax", "Label"});
+
+  // Initialise DataLoader
+  std::shared_ptr<fetch::ml::dataloaders::MNISTLoader<TensorType, TensorType>> dataloader_ptr =
+      std::make_shared<fetch::ml::dataloaders::MNISTLoader<TensorType, TensorType>>(images, labels);
+  dataloader_ptr->SetTestRatio(test_set_ratio);
+  dataloader_ptr->SetRandomMode(true);
+
+  // Initialise Optimiser
+  std::shared_ptr<fetch::ml::optimisers::Optimiser<TensorType>> optimiser_ptr =
+      std::make_shared<fetch::ml::optimisers::AdamOptimiser<TensorType>>(
+          std::shared_ptr<fetch::ml::Graph<TensorType>>(g_ptr), client_params.inputs_names,
+          client_params.label_name, client_params.error_name, client_params.learning_rate);
+
+  return std::make_shared<TrainingClient<TensorType>>(id, g_ptr, dataloader_ptr, optimiser_ptr,
+                                                      client_params);
+}
+
 int main(int ac, char **av)
 {
   if (ac < 3)
@@ -58,6 +95,11 @@ int main(int ac, char **av)
               << " PATH/TO/train-images-idx3-ubyte PATH/TO/train-labels-idx1-ubyte" << std::endl;
     return 1;
   }
+
+  ClientParams<DataType> client_params;
+  client_params.learning_rate   = static_cast<DataType>(LEARNING_RATE);
+  client_params.batch_size      = BATCH_SIZE;
+  client_params.number_of_peers = NUMBER_OF_PEERS;
 
   std::shared_ptr<Coordinator> coordinator =
       std::make_shared<Coordinator>(SYNCHRONIZATION_MODE, NUMBER_OF_ITERATIONS);
@@ -68,9 +110,7 @@ int main(int ac, char **av)
   for (SizeType i{0}; i < NUMBER_OF_CLIENTS; ++i)
   {
     // Instantiate NUMBER_OF_CLIENTS clients
-    clients[i] = std::make_shared<MNISTClient<TensorType>>(
-        av[1], av[2], std::to_string(i), BATCH_SIZE, static_cast<DataType>(LEARNING_RATE),
-        TEST_SET_RATIO, NUMBER_OF_PEERS);
+    clients[i] = MakeClient(std::to_string(i), client_params, av[1], av[2], TEST_SET_RATIO);
     // TODO(1597): Replace ID with something more sensible
   }
 
