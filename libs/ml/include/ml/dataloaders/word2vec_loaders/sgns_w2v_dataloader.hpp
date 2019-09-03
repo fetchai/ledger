@@ -137,7 +137,7 @@ GraphW2VLoader<T>::GraphW2VLoader(SizeType window_size, SizeType negative_sample
 template <typename T>
 T GraphW2VLoader<T>::EstimatedSampleNumber()
 {
-  T estimated_sample_number = 0;
+  T estimated_sample_number = T{0};
   T word_freq;
   T estimated_sample_number_per_word = static_cast<T>((window_size_ + 1) * (1 + negative_samples_));
   for (auto word_info : vocab_.data)
@@ -350,7 +350,7 @@ void GraphW2VLoader<T>::BufferNextSamples()
         static_cast<T>(vocab_.reverse_data[data_.at(current_sentence_).at(current_word_)].second) /
         static_cast<T>(vocab_.total_count);
     auto random_var = static_cast<T>(lfg_.AsDouble());  // random variable between 0-1
-    if (random_var < 1 - fetch::math::Sqrt(freq_thresh_ / word_freq))
+    if (random_var < T{1} - fetch::math::Sqrt(freq_thresh_ / word_freq))
     {  // subsample for a cumulative prob of 1 - sqrt(thresh/freq) // N.B. if word_freq <
        // freq_thresh, then subsampling would not happen
       // store data in case this is the last word
