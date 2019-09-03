@@ -294,9 +294,6 @@ void Graph<TensorType>::AddTrainable(NodePtrType node_ptr, std::string const &no
       // be ignored
       if (graph_ptr->trainable_lookup_.find(subnode_name) == graph_ptr->trainable_lookup_.end())
       {
-        //        graph_ptr->trainable_nodes_.emplace_back(graph_ptr->trainable_nodes_.at(trainable.second));
-        //        graph_ptr->trainable_lookup_[subnode_name] = graph_ptr->trainable_nodes_.size() -
-        //        1;
         trainable_nodes_.emplace_back(graph_ptr->trainable_nodes_.at(trainable.second));
         trainable_lookup_[subnode_name] = trainable_nodes_.size() - 1;
       }
@@ -316,7 +313,7 @@ TensorType Graph<TensorType>::Evaluate(std::string const &node_name, bool is_tra
 
   if (nodes_.find(node_name) != nodes_.end())
   {
-    return ((*(nodes_[node_name]->Evaluate(is_training))).Copy());
+    return (*(nodes_[node_name]->Evaluate(is_training))).Copy();
   }
   else
   {
@@ -337,7 +334,7 @@ TensorType Graph<TensorType>::ForwardPropagate(std::string const &node_name, boo
 
   if (nodes_.find(node_name) != nodes_.end())
   {
-    return ((*(nodes_[node_name]->Evaluate(is_training))));
+    return (*(nodes_[node_name]->Evaluate(is_training)));
   }
   else
   {
