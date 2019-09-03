@@ -345,7 +345,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
   auto       can_see             = (connected_peers & aeon_members);
   auto const require_connections = PreDKGThreshold() - 1;
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "All connections:  ", connected_peers.size());
+  FETCH_LOG_DEBUG(LOGGING_NAME, "All connections:   ", connected_peers.size());
   FETCH_LOG_DEBUG(LOGGING_NAME, "Relevant connections: ", can_see.size());
 
   beacon_dkg_all_connections_gauge_->set(connected_peers.size());
