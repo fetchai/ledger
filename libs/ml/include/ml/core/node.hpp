@@ -110,13 +110,14 @@ public:
 
   VecTensorType                                 GatherInputs() const;
   std::shared_ptr<T>                            Evaluate(bool is_training);
-  std::vector<std::pair<Node<T> *, TensorType>> BackPropagateSignal(TensorType const &error_signal);
+  std::vector<std::pair<Node<T> *, TensorType>> BackPropagate(TensorType const &error_signal);
 
   void                            AddInput(NodePtrType const &i);
   std::vector<std::string>        GetInputNames();
   void                            AddOutput(NodePtrType const &o);
   std::vector<NodePtrType> const &GetOutputs() const;
   void                            ResetCache(bool input_size_changed);
+  void                            ResetInputsAndOutputs();
 
   std::string const &GetNodeName()
   {
@@ -227,7 +228,7 @@ std::shared_ptr<T> Node<T>::Evaluate(bool is_training)
  * @return
  */
 template <typename T>
-std::vector<std::pair<Node<T> *, T>> Node<T>::BackPropagateSignal(TensorType const &error_signal)
+std::vector<std::pair<Node<T> *, T>> Node<T>::BackPropagate(TensorType const &error_signal)
 {
   VecTensorType           inputs                        = GatherInputs();
   std::vector<TensorType> back_propagated_error_signals = op_ptr_->Backward(inputs, error_signal);
@@ -237,7 +238,7 @@ std::vector<std::pair<Node<T> *, T>> Node<T>::BackPropagateSignal(TensorType con
   auto bp_it = back_propagated_error_signals.begin();
   for (auto &i : input_nodes_)
   {
-    auto ret = i->BackPropagateSignal(*bp_it);
+    auto ret = i->BackPropagate(*bp_it);
     non_back_propagated_error_signals.insert(non_back_propagated_error_signals.end(), ret.begin(),
                                              ret.end());
     ++bp_it;
@@ -255,6 +256,17 @@ std::vector<std::pair<Node<T> *, T>> Node<T>::BackPropagateSignal(TensorType con
     }
   }
   return non_back_propagated_error_signals;
+}
+
+/**
+ * Resets input and output node ptr containers. Useful for graph decopmiling.
+ * @tparam T
+ */
+template <typename T>
+void Node<T>::ResetInputsAndOutputs()
+{
+  input_nodes_.clear();
+  outputs_.clear();
 }
 
 /**

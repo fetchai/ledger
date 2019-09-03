@@ -177,9 +177,10 @@ typename TensorType::Type TrainingClient<TensorType>::Train()
     g_.SetInput("Input", input.second.at(0));
     g_.SetInput("Label", input.first);
 
-    TensorType loss_tensor = g_.ForwardPropagate("Error");
+    TensorType loss_tensor = g_.Evaluate("Error");
     loss                   = *(loss_tensor.begin());
-    g_.BackPropagateError("Error");
+    g_.BackPropagate("Error");
+    g_.ApplyRegularisation();
   }
 
   return loss;
