@@ -235,9 +235,10 @@ class TestInstance():
         verify_file(stake_gen)
 
         # Create a stake file into the logging directory for all nodes
+        # Importantly, set the time to start
         genesis_file_location = self._workspace+"/genesis_file.json"
         cmd = [stake_gen, *nodes_mining_identities,
-               "-o", genesis_file_location]
+               "-o", genesis_file_location, "-w", "10"]
 
         # After giving the relevant nodes identities, make a stake file
         exit_code = subprocess.call(cmd)

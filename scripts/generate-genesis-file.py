@@ -36,7 +36,7 @@ def parse_commandline():
     parser.add_argument('-n', '--no-formatting', dest='no_formatting', action='store_true',
                         help='Whether to format the output file for readability')
     parser.set_defaults(no_formatting=False)
-    parser.add_argument('-w', '--when-start', type=int, default=60,
+    parser.add_argument('-w', '--when-start', type=int,
                         help='The genesis block has a time for the blockchain to start.  Specify how far from now in seconds it should be')
     return parser.parse_args()
 
@@ -109,11 +109,16 @@ def main():
         # update the random beacon config
         cabinet.append(address)
 
+    start_time = 0
+
+    if args.when_start:
+        start_time = int(time.time()) + args.when_start
+
     # form the genesis data
     genesis_file = {
         'version': 2,
-        'startTime': int(time.time()) + args.when_start,
         'consensus': {
+            'startTime': start_time,
             'committeeSize': max_committee,
             'threshold': float(args.threshold),
             'stakers': stakes,
