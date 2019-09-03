@@ -26,8 +26,6 @@
 
 #include <string>
 
-using namespace fetch::core;
-
 namespace {
 
 using namespace fetch::core;
@@ -71,8 +69,6 @@ TEST(StringTests, check_StartsWith)
   EXPECT_FALSE(StartsWith("Hello World", "Hello World..."));
   EXPECT_FALSE(StartsWith("Hello World", "...Hello World"));
 }
-
-using namespace fetch::string;
 
 TEST(StringTests, check_Replace)
 {
