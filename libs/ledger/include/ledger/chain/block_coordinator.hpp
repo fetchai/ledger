@@ -21,7 +21,7 @@
 #include "core/mutex.hpp"
 #include "core/periodic_action.hpp"
 #include "core/state_machine.hpp"
-#include "core/threading/synchronised_state.hpp"
+#include "core/synchronisation/protected.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/transaction.hpp"
@@ -225,13 +225,17 @@ public:
 
   ConstByteArray GetLastExecutedBlock() const
   {
-    return last_executed_block_.Get();
+    return last_executed_block_.Apply([](auto const &last_executed_block_hash) -> ConstByteArray {
+      return last_executed_block_hash;
+    });
   }
 
   bool IsSynced() const
   {
-    return (state_machine_->state() == State::SYNCHRONISED) &&
-           (last_executed_block_.Get() == chain_.GetHeaviestBlockHash());
+    return last_executed_block_.Apply([this](auto const &last_executed_block_hash) -> bool {
+      return (state_machine_->state() == State::SYNCHRONISED) &&
+             (last_executed_block_hash == chain_.GetHeaviestBlockHash());
+    });
   }
 
   void Reset();
@@ -262,7 +266,7 @@ private:
   using StateMachinePtr      = std::shared_ptr<StateMachine>;
   using MinerPtr             = std::shared_ptr<consensus::ConsensusMinerInterface>;
   using TxDigestSetPtr       = std::unique_ptr<DigestSet>;
-  using LastExecutedBlock    = SynchronisedState<ConstByteArray>;
+  using LastExecutedBlock    = Protected<ConstByteArray>;
   using FutureTimepoint      = fetch::core::FutureTimepoint;
   using DeadlineTimer        = fetch::moment::DeadlineTimer;
   using SynergeticExecMgrPtr = std::unique_ptr<SynergeticExecutionManagerInterface>;

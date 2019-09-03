@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/threading/synchronised_state.hpp"
+#include "core/synchronisation/protected.hpp"
 #include "ledger/chain/address.hpp"
 #include "ledger/consensus/stake_update_interface.hpp"
 
@@ -66,7 +66,7 @@ private:
   using StakeMap     = std::unordered_map<Address, StakeAmount>;
   using BlockUpdates = std::map<BlockIndex, StakeMap>;
 
-  SynchronisedState<BlockUpdates> updates_{};  ///< The update queue
+  Protected<BlockUpdates> updates_{};  ///< The update queue
 };
 
 /**
@@ -78,7 +78,7 @@ private:
 template <typename Visitor>
 void StakeUpdateQueue::VisitUnderlyingQueue(Visitor &&visitor)
 {
-  updates_.Apply([&](BlockUpdates &updates) { visitor(updates); });
+  updates_.ApplyVoid([&](BlockUpdates &updates) { visitor(updates); });
 }
 
 }  // namespace ledger

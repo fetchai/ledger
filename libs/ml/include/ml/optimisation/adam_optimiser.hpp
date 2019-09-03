@@ -59,6 +59,8 @@ public:
 
   ~AdamOptimiser() override = default;
 
+  void ApplyGradients(SizeType batch_size) override;
+
 private:
   std::vector<TensorType> cache_;
   std::vector<TensorType> momentum_;
@@ -72,7 +74,6 @@ private:
   DataType epsilon_;
   DataType one_{1};
 
-  void ApplyGradients(SizeType batch_size) override;
   void ResetCache();
   void Init();
 };

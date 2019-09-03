@@ -1328,6 +1328,16 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator-=(FixedPoint<I, F> const 
       *this = NEGATIVE_INFINITY;
     }
   }
+  else if (IsPosInfinity(n))
+  {
+    fp_state |= STATE_INFINITY;
+    *this = NEGATIVE_INFINITY;
+  }
+  else if (IsNegInfinity(n))
+  {
+    fp_state |= STATE_INFINITY;
+    *this = POSITIVE_INFINITY;
+  }
   else
   {
     if (CheckOverflow(static_cast<NextType>(data_) - static_cast<NextType>(n.Data())))

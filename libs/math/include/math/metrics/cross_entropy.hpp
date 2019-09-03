@@ -41,7 +41,6 @@ template <typename ArrayType>
 typename ArrayType::Type CrossEntropyLoss(ArrayType const &x, ArrayType const &y)
 {
   using DataType = typename ArrayType::Type;
-  using SizeType = typename ArrayType::SizeType;
 
   assert(x.shape() == y.shape());
   assert(x.shape().size() == 2);

@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
+#include "core/synchronisation/protected.hpp"
 #include "network/details/future_work_store.hpp"
 #include "network/details/idle_work_store.hpp"
 #include "network/details/work_store.hpp"
@@ -127,8 +128,7 @@ private:
 
   std::size_t const max_threads_;  ///< Config: Max number of threads
 
-  mutable Mutex threads_mutex_{__LINE__, __FILE__};  ///< Mutex protecting the thread store
-  ThreadPool    threads_;                            ///< Container of threads
+  Protected<ThreadPool> threads_;  ///< Container of threads
 
   WorkStore       work_;         ///< The main work queue
   FutureWorkStore future_work_;  ///< The future work queue
