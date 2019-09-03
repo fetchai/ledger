@@ -897,9 +897,9 @@ struct MapSerializer<ml::NodeSaveableParams<TensorType>, D>
   using Type       = ml::NodeSaveableParams<TensorType>;
   using DriverType = D;
 
-  static uint8_t const NAME                 = 1;
-  static uint8_t const OP_CODE              = 2;
-  static uint8_t const OP                   = 3;
+  static uint8_t const NAME    = 1;
+  static uint8_t const OP_CODE = 2;
+  static uint8_t const OP      = 3;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)

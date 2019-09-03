@@ -48,8 +48,8 @@ struct NodeSaveableParams
   using DataType = typename TensorType::Type;
   using SizeType = typename TensorType::SizeType;
 
-  std::string                        name = "";
-  OpType                             operation_type       = OpType::NONE;
+  std::string                        name           = "";
+  OpType                             operation_type = OpType::NONE;
   std::shared_ptr<OpsSaveableParams> op_save_params;
 
   NodeSaveableParams() = default;
