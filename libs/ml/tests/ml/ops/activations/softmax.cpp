@@ -305,7 +305,7 @@ TYPED_TEST(SoftmaxTest, forward_3d_tensor_axes_0_2_test)
     ++it_g;
   }
 
-  fetch::ml::ops::Softmax<TensorType> op({0, 2});
+  fetch::ml::ops::Softmax<TensorType> op({0, 2}, false);
   TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
@@ -343,7 +343,7 @@ TYPED_TEST(SoftmaxTest, backward_3d_tensor_axes_0_2_test)
     ++it_g;
   }
 
-  fetch::ml::ops::Softmax<TensorType> op({0, 2});
+  fetch::ml::ops::Softmax<TensorType> op({0, 2}, false);
   std::vector<TensorType>             prediction =
       op.Backward({std::make_shared<const TensorType>(data)}, error);
 
@@ -429,7 +429,7 @@ TYPED_TEST(SoftmaxTest, saveparams_backward_3d_tensor_axes_0_2_test)
     ++it_g;
   }
 
-  fetch::ml::ops::Softmax<TensorType> op({0, 2});
+  fetch::ml::ops::Softmax<TensorType> op({0, 2}, false);
 
   // run op once to make sure caches etc. have been filled. Otherwise the test might be trivial!
   std::vector<TensorType> prediction =

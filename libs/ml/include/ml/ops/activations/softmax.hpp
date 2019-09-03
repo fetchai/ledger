@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/activation_functions/softmax.hpp"
+#include "math/standard_functions/clamp.hpp"
 #include "ml/ops/ops.hpp"
 
 #include <cassert>
@@ -40,28 +41,32 @@ public:
   using SPType        = OpSoftmaxSaveableParams<T>;
   using MyType        = Softmax<TensorType>;
 
-  explicit Softmax(SizeType axis = 0)
+  explicit Softmax(SizeType axis = 0, bool clamp = true)
     : axis_(axis)
+    , clamp_(clamp)
   {}
 
-  explicit Softmax(std::vector<SizeType> axes)
+  explicit Softmax(std::vector<SizeType> axes, bool clamp = true)
     : axes_(axes)
+    , clamp_(clamp)
   {}
 
   explicit Softmax(SPType const &sp)
     : Ops<T>(sp)
   {
-    axis_ = sp.axis;
-    axes_ = sp.axes;
+    axis_  = sp.axis;
+    axes_  = sp.axes;
+    clamp_ = sp.clamp;
   }
 
   ~Softmax() override = default;
 
   std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
   {
-    auto sp_ptr  = std::make_shared<SPType>();
-    sp_ptr->axis = axis_;
-    sp_ptr->axes = axes_;
+    auto sp_ptr   = std::make_shared<SPType>();
+    sp_ptr->axis  = axis_;
+    sp_ptr->axes  = axes_;
+    sp_ptr->clamp = clamp_;
     return sp_ptr;
   }
 
@@ -87,6 +92,10 @@ public:
     else
     {
       fetch::math::Softmax((*inputs.at(0)), output, axes_);
+    }
+    if (clamp_)
+    {
+      math::Clamp(epsilon_, static_cast<DataType>(1) - epsilon_, output);
     }
   }
 
@@ -142,6 +151,8 @@ public:
 private:
   SizeType              axis_;
   std::vector<SizeType> axes_;
+  bool                  clamp_;
+  DataType              epsilon_ = fetch::math::function_tolerance<DataType>();
 };
 
 }  // namespace ops
