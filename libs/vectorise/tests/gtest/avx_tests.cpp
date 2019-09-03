@@ -186,7 +186,7 @@ TYPED_TEST(VectorReduceTest, reduce_tests)
   using array_type  = fetch::memory::SharedArray<type>;
 
   std::size_t N = 20, offset = 2;
-  alignas(TypeParam::E_REGISTER_SIZE) array_type A(N), B(N);
+  alignas(TypeParam::E_REGISTER_SIZE) array_type A(N), B(N), C(N);
   type sum{0}, partial_sum{0}, max_a{type(0)}, min_a{type(N)}, partial_max{0}, partial_min{type(N)};
 
   for (std::size_t i = 0; i < N; ++i)
@@ -266,12 +266,6 @@ TYPED_TEST(VectorReduceTest, reduce_tests)
   std::cout << "SumReduce: ret = " << ret << std::endl;
   std::cout << "Sum = " << sum << std::endl;
 
-  // ret = A.in_parallel().ProductReduce([](auto const &a, auto const &b) {
-  //       return a * b;
-  //       }, B);
-
-  // std::cout << "ProductReduce: ret = " << ret << std::endl;
-
   ret = A.in_parallel().SumReduce(range,
         [](auto const &a, auto const &b) {
           return a + b;
@@ -282,4 +276,29 @@ TYPED_TEST(VectorReduceTest, reduce_tests)
   EXPECT_EQ(ret, partial_sum);
   std::cout << "SumReduce (range: 2, N-2): ret = " << ret << std::endl;
   std::cout << "Sum = " << partial_sum << std::endl;
+
+  C.in_parallel().Apply(
+    [](auto const &a, auto const &b, auto &c) {
+        c = a + b;
+    }, 
+    A, B);
+
+  for (std::size_t i = 0; i < N; ++i)
+  {
+    std::cout << "C[" << i << "] = " << C[i] << std::endl;
+  }
+
+  type beta(4);
+  fetch::memory::Range small_range(8, 16);
+  C.in_parallel().RangedApplyMultiple(
+    small_range,
+    [beta](auto const &a, auto const &b, auto &c) {
+        c = a * decltype(a)(beta) + b;
+    }, 
+    A, B);
+
+  for (std::size_t i = 0; i < N; ++i)
+  {
+    std::cout << "C[" << i << "] = " << C[i] << std::endl;
+  }
 }
