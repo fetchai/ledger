@@ -44,15 +44,15 @@ template <typename TensorType>
 class ModelInterface;
 }  // namespace model
 
+// TODO - rework AddTrainable and GetTrainables so that graph stores trainables recursively, but optimiser gets
+// a flat vector of ptrs
+
 // TODO - harmonise InsertSharedCopy with AddTrainable
 // TODO - implement sanity checks on second stage - e.g. you may not use loss function in a certain
 // way (via OpKind)
 // TODO - update tests to no longer permit duplicate naming unless shared
 // TODO - move adding trainables methods from graph building utility into Graph, remove
 // AddTrainables
-
-// TODO - rework graph GetTrainables so that graph stores trainables recursively, but optimiser gets
-// a flat vector of ptrs
 
 enum class GraphState : uint8_t
 {
@@ -267,6 +267,7 @@ void Graph<TensorType>::Compile()
     LinkNodesInGraph(node_name, node_inputs);
 
     auto node_ptr = nodes_.at(node_name);
+
     AddTrainable(node_ptr, node_name);
   }
 
@@ -309,7 +310,7 @@ void Graph<TensorType>::AddTrainable(NodePtrType node_ptr, std::string const &no
     {
       std::string subnode_name(node_name + "_" + trainable.first);
 
-      // only add new trainable that aren't already there
+      // only add new trainable
       // graph re-compilation can lead to a valid call to add the same trainables twice, this should
       // be ignored
       if (graph_ptr->trainable_lookup_.find(subnode_name) == graph_ptr->trainable_lookup_.end())
@@ -318,7 +319,7 @@ void Graph<TensorType>::AddTrainable(NodePtrType node_ptr, std::string const &no
         //        graph_ptr->trainable_lookup_[subnode_name] = graph_ptr->trainable_nodes_.size() -
         //        1;
         trainable_nodes_.emplace_back(graph_ptr->trainable_nodes_.at(trainable.second));
-        trainable_lookup_[subnode_name] = graph_ptr->trainable_nodes_.size() - 1;
+        trainable_lookup_[subnode_name] = trainable_nodes_.size() - 1;
       }
     }
   }
