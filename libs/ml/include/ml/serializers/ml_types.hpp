@@ -898,19 +898,15 @@ struct MapSerializer<ml::NodeSaveableParams<TensorType>, D>
   using DriverType = D;
 
   static uint8_t const NAME                 = 1;
-  static uint8_t const CACHED_OUTPUT        = 2;
-  static uint8_t const CACHED_OUTPUT_STATUS = 3;
-  static uint8_t const OP_CODE              = 4;
-  static uint8_t const OP                   = 5;
+  static uint8_t const OP_CODE              = 2;
+  static uint8_t const OP                   = 3;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(5);
+    auto map = map_constructor(3);
 
     map.Append(NAME, sp.name);
-    map.Append(CACHED_OUTPUT, sp.cached_output);
-    map.Append(CACHED_OUTPUT_STATUS, sp.cached_output_status);
     map.Append(OP_CODE, sp.operation_type);
 
     SerializeAnyOp<TensorType, D>(map, OP, sp.operation_type, sp.op_save_params);
@@ -920,8 +916,6 @@ struct MapSerializer<ml::NodeSaveableParams<TensorType>, D>
   static void Deserialize(MapDeserializer &map, Type &sp)
   {
     map.ExpectKeyGetValue(NAME, sp.name);
-    map.ExpectKeyGetValue(CACHED_OUTPUT, sp.cached_output);
-    map.ExpectKeyGetValue(CACHED_OUTPUT_STATUS, sp.cached_output_status);
     map.ExpectKeyGetValue(OP_CODE, sp.operation_type);
 
     DeserializeAnyOp<TensorType, D>(map, OP, sp.operation_type, sp.op_save_params);

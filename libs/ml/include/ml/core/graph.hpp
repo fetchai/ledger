@@ -351,10 +351,17 @@ TensorType Graph<TensorType>::ForwardPropagate(std::string const &node_name, boo
 template <typename TensorType>
 void Graph<TensorType>::BackPropagate(std::string const &node_name, TensorType const &error_signal)
 {
+  // check graph compiled
   Compile();
 
   if (nodes_.find(node_name) != nodes_.end())
   {
+    // Forward propagate if necessary
+    if (!(nodes_[node_name]->HasValidCache()))
+    {
+      ForwardPropagate(node_name);
+    }
+
     nodes_[node_name]->BackPropagate(error_signal);
   }
   else
