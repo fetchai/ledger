@@ -31,11 +31,12 @@
 #include <utility>
 #include <vector>
 
-// TODO(1604) - rework AddTrainable and GetTrainables so that graph stores trainables recursively, but
-// optimiser gets a flat vector of ptrs
+// TODO(1604) - rework AddTrainable and GetTrainables so that graph stores trainables recursively,
+// but optimiser gets a flat vector of ptrs
 // TODO(1605) - harmonise InsertSharedCopy with AddTrainable
 // TODO(#1554) - we should only reset the cache for trained nodes, not all nodes
-// TODO(1467) - implement validity checks on graph compilation - e.g. loss function should not appear in middle of graph
+// TODO(1467) - implement validity checks on graph compilation - e.g. loss function should not
+// appear in middle of graph
 
 namespace fetch {
 namespace ml {
@@ -246,7 +247,8 @@ void Graph<TensorType>::Compile()
       AddTrainable(node_ptr, node_name);
     }
 
-    // TODO(1467) - implement validity checks on graph compilation - e.g. loss function should not appear in middle of graph
+    // TODO(1467) - implement validity checks on graph compilation - e.g. loss function should not
+    // appear in middle of graph
     if (valid)
     {
       graph_state_ = GraphState::READY;
