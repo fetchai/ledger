@@ -1281,6 +1281,8 @@ uint64_t GetExpectedDKGTime(uint64_t cabinet_size)
     expected_dkg_time_s = 30;
   }
 
+  FETCH_LOG_INFO(LOGGING_NAME, "Note: Expect DKG time to be ", expected_dkg_time_s, " s");
+
   return expected_dkg_time_s;
 }
 
