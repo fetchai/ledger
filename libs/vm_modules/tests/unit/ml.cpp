@@ -340,19 +340,8 @@ TEST_F(MLTests, sgd_optimiser_serialisation_test)
       // to the state
       ////////////
 
-      var graph2 = Graph();
-      graph2.addPlaceholder("Input");
-      graph2.addPlaceholder("Label");
-      graph2.addFullyConnected("FC1", "Input", 2, 2);
-      graph2.addRelu("Output", "FC1");
-      graph2.addMeanSquareErrorLoss("Error", "Output", "Label");
-
-      var dataloader2 = DataLoader("tensor");
-      dataloader2.addData(data_tensor, label_tensor);
-
-      var optimiser2 = Optimiser("sgd", graph2, dataloader2, "Input", "Label", "Error");
-      var loss = optimiser2.run(batch_size);
-      return loss;
+     var loss = optimiser.run(batch_size);
+     return loss;
 
     endfunction
   )";
