@@ -111,7 +111,8 @@ void Consensus::UpdateCurrentBlock(Block const &current)
     else
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Starting DKG with timestamp: ", last_block_time,
-                     " current: ", current_time, " diff: ", int64_t(current_time) - int64_t(last_block_time));
+                     " current: ", current_time,
+                     " diff: ", int64_t(current_time) - int64_t(last_block_time));
     }
 
     uint64_t block_interval = 1;
