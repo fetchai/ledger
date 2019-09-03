@@ -130,6 +130,8 @@ public:
 
   static constexpr char const *DESCRIPTOR = "Graph";
 
+  void AddGradients(std::vector<TensorType> grads);
+
 protected:
   std::unordered_map<std::string, NodePtrType>                  nodes_;
   std::vector<std::pair<std::string, std::vector<std::string>>> connections_;
@@ -138,8 +140,6 @@ protected:
 
   void       InsertSharedCopy(std::shared_ptr<Graph<TensorType>> output_ptr);
   TensorType ForwardPropagate(std::string const &node_name, bool is_training = true);
-
-  void AddGradients(std::vector<TensorType> grads);
 
 private:
   GraphState graph_state_ = GraphState::NOT_COMPILED;
