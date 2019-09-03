@@ -48,10 +48,24 @@ private:
   Timestamp deadline_{};
 };
 
+inline DeadlineTimer::DeadlineTimer(char const *clock)
+  : clock_{GetClock(clock, ClockType::STEADY)}
+{}
+
 template <typename R, typename P>
 inline void DeadlineTimer::Restart(std::chrono::duration<R, P> const &period)
 {
   deadline_ = clock_->Now() + period;
+}
+
+inline void DeadlineTimer::Restart(uint64_t period_ms)
+{
+  Restart(std::chrono::milliseconds{period_ms});
+}
+
+inline bool DeadlineTimer::HasExpired() const
+{
+  return deadline_ <= clock_->Now();
 }
 
 }  // namespace moment

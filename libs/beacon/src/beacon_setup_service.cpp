@@ -22,6 +22,8 @@
 #include "ledger/shards/shard_management_service.hpp"
 #include "muddle/muddle_endpoint.hpp"
 #include "muddle/muddle_interface.hpp"
+#include "telemetry/counter.hpp"
+#include "telemetry/gauge.hpp"
 #include "telemetry/registry.hpp"
 
 #include <ctime>
@@ -117,6 +119,10 @@ BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identit
         "beacon_dkg_state_gauge", "State the DKG is in as integer in [0, 10]")}
   , beacon_dkg_connections_gauge_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
         "beacon_dkg_connections_gauge", "Connections the network has made as a prerequisite")}
+  , beacon_dkg_all_connections_gauge_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        "beacon_dkg_all_connections_gauge", "Connections the network has made in general")}
+  , beacon_dkg_failures_total_{telemetry::Registry::Instance().CreateCounter(
+        "beacon_dkg_failures_total", "The total number of DKG failures")}
 {
   // clang-format off
   state_machine_->RegisterHandler(State::IDLE, this, &BeaconSetupService::OnIdle);
@@ -177,6 +183,12 @@ BeaconSetupService::State BeaconSetupService::OnReset()
 {
   std::lock_guard<std::mutex> lock(mutex_);
   beacon_dkg_state_gauge_->set(static_cast<uint8_t>(State::RESET));
+
+  if (state_machine_->previous_state() != State::RESET &&
+      state_machine_->previous_state() != State::IDLE)
+  {
+    beacon_dkg_failures_total_->add(1u);
+  }
 
   assert(beacon_);
 
@@ -336,6 +348,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
   FETCH_LOG_DEBUG(LOGGING_NAME, "All connections: ", connected_peers.size());
   FETCH_LOG_DEBUG(LOGGING_NAME, "Relevant connections: ", can_see.size());
 
+  beacon_dkg_all_connections_gauge_->set(connected_peers.size());
   beacon_dkg_connections_gauge_->set(can_see.size());
 
   // If we get over threshold connections, send a message to all peers each time

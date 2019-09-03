@@ -45,8 +45,7 @@ public:
    *
    * @return The current timestamp
    */
-  virtual Timestamp Now() const   = 0;
-  virtual Timestamp Never() const = 0;
+  virtual Timestamp Now() const = 0;
 
   /// @}
 };

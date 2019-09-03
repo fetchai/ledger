@@ -191,6 +191,8 @@ protected:
   // Telemetry
   telemetry::GaugePtr<uint8_t>  beacon_dkg_state_gauge_;
   telemetry::GaugePtr<uint64_t> beacon_dkg_connections_gauge_;
+  telemetry::GaugePtr<uint64_t> beacon_dkg_all_connections_gauge_;
+  telemetry::CounterPtr         beacon_dkg_failures_total_;
 
   // Members below protected by mutex
   std::mutex                                                 mutex_;
@@ -204,13 +206,12 @@ private:
   // Timing management
   void             SetTimeToProceed(State state);
   moment::ClockPtr clock_ = moment::GetClock("beacon:dkg", moment::ClockType::STEADY);
-  /* moment::ClockInterface::Timestamp time_started_{clock_->Never()}; */
-  DeadlineTimer timer_to_proceed_{"beacon:dkg"};
-  uint64_t      reference_timepoint_   = 0;
-  uint64_t      state_deadline_        = 0;
-  uint64_t      seconds_for_state_     = 0;
-  uint64_t      expected_dkg_timespan_ = 0;
-  bool          condition_to_proceed_  = false;
+  DeadlineTimer    timer_to_proceed_{"beacon:dkg"};
+  uint64_t         reference_timepoint_   = 0;
+  uint64_t         state_deadline_        = 0;
+  uint64_t         seconds_for_state_     = 0;
+  uint64_t         expected_dkg_timespan_ = 0;
+  bool             condition_to_proceed_  = false;
 };
 
 }  // namespace beacon

@@ -34,12 +34,6 @@ public:
     return clock_.Now() + offset_;
   }
 
-  Timestamp Never() const override
-  {
-    // todo
-    return clock_.Now() + offset_;
-  }
-
   void AddOffset(Duration const &duration) override
   {
     offset_ += duration;

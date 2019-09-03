@@ -147,9 +147,6 @@ void RunHonestComitteeRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
                               uint16_t number_of_cabinets = 4, uint16_t cabinet_size = 4,
                               uint16_t numbers_per_aeon = 10, double threshold = 0.5)
 {
-  FETCH_UNUSED(numbers_per_aeon);
-  FETCH_UNUSED(threshold);
-
   std::cout << "- Setup" << std::endl;
   uint16_t number_of_nodes = static_cast<uint16_t>(number_of_cabinets * cabinet_size);
 
@@ -237,12 +234,12 @@ void RunHonestComitteeRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
     if (i < total_renewals)
     {
       std::cout << "- Scheduling round " << i << std::endl;
-      // for (auto &member : committee)
-      //{
-      //  /*member->beacon_service.StartNewCabinet(
-      //      cabinet, static_cast<uint32_t>(static_cast<double>(cabinet.size()) * threshold),
-      //      i * numbers_per_aeon, (i + 1) * numbers_per_aeon); */
-      //}
+      for (auto &member : committee)
+      {
+        member->beacon_service.StartNewCabinet(
+            cabinet, static_cast<uint32_t>(static_cast<double>(cabinet.size()) * threshold),
+            i * numbers_per_aeon, (i + 1) * numbers_per_aeon, 0);
+      }
     }
 
     // Collecting information about the committees finishing
@@ -272,13 +269,13 @@ void RunHonestComitteeRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
     member->network_manager.Stop();
   }
 
-  // std::cout << " - Testing" << std::endl;
-  //// Verifying stats
-  //// TODO(tfr): Check that the hashes are acutally the same
-  // for (auto finish_stat : rounds_finished)
-  //{
-  //  EXPECT_EQ(finish_stat.second, total_renewals);
-  //}
+  std::cout << " - Testing" << std::endl;
+  // Verifying stats
+  // TODO(tfr): Check that the hashes are acutally the same
+  for (auto finish_stat : rounds_finished)
+  {
+    EXPECT_EQ(finish_stat.second, total_renewals);
+  }
 }
 
 TEST(beacon, full_cycle)

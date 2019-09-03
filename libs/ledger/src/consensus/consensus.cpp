@@ -114,8 +114,11 @@ void Consensus::UpdateCurrentBlock(Block const &current)
                      " current: ", current_time);
     }
 
+    uint64_t block_interval = 1000;
+
     beacon_->StartNewCabinet(cabinet_member_list, threshold, current_block_number_,
-                             current_block_number_ + aeon_period_ + 1, last_block_time);
+                             current_block_number_ + aeon_period_ + 1,
+                             last_block_time + block_interval);
   }
 }
 

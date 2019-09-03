@@ -40,12 +40,6 @@ public:
   {
     return ChronoClock::now();
   }
-
-  Timestamp Never() const override
-  {
-    return ChronoClock::time_point::max();
-    // return ChronoClock::now();
-  }
   /// @}
 
   // Operators
