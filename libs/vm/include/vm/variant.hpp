@@ -227,7 +227,7 @@ struct Variant
   template <typename T, typename std::enable_if_t<IsPtr<T>::value> * = nullptr>
   Variant(T &&other, TypeId other_type_id) noexcept
   {
-    Construct(std::move(other), other_type_id);
+    Construct(std::forward<T>(other), other_type_id);
   }
 
   Variant(Primitive other, TypeId other_type_id) noexcept
