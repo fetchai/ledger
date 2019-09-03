@@ -87,9 +87,6 @@ void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
     }
     else if (beta != static_cast<Type>(1.0))
     {
-
-      VectorRegisterType fetch_vec_beta(beta);
-
       auto ret_slice = c.data().slice(c.padded_height() * j, c.height());
       auto slice_c_j = c.data().slice(c.padded_height() * std::size_t(j), c.padded_height());
       memory::Range range(std::size_t(0), std::size_t(c.height()));
@@ -103,10 +100,7 @@ void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
 
     for (l = 0; l < a.width(); ++l)
     {
-      Type temp;
-      temp = alpha * b(j, l);
-
-      VectorRegisterType fetch_vec_temp(temp);
+      Type temp = alpha * b(j, l);
 
       auto ret_slice = c.data().slice(c.padded_height() * j, c.height());
       auto slice_c_j = c.data().slice(c.padded_height() * std::size_t(j), c.padded_height());
