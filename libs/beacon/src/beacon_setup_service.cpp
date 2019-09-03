@@ -284,7 +284,9 @@ BeaconSetupService::State BeaconSetupService::OnConnectToAll()
     }
 
     // request removal of unwanted connections
-    muddle_.DisconnectFrom(muddle_.GetRequestedPeers() - aeon_members);
+    auto unwanted_connections = muddle_.GetRequestedPeers() - aeon_members;
+    FETCH_LOG_INFO(LOGGING_NAME, "Removing unwanted connections: ", unwanted_connections.size());
+    muddle_.DisconnectFrom(unwanted_connections);
   }
 
   if (timer_to_proceed_.HasExpired())
