@@ -234,52 +234,58 @@ BeaconSetupService::State BeaconSetupService::OnConnectToAll()
   std::lock_guard<std::mutex> lock(mutex_);
   beacon_dkg_state_gauge_->set(static_cast<uint8_t>(State::CONNECT_TO_ALL));
 
-  std::unordered_set<MuddleAddress> aeon_members;
-  for (auto &m : beacon_->aeon.members)
+
+  if (state_machine_->previous_state() != State::CONNECT_TO_ALL)
   {
-    // Skipping own address
-    if (m == identity_)
+    std::unordered_set<MuddleAddress> aeon_members;
+    for (auto &m : beacon_->aeon.members)
     {
-      continue;
+      // Skipping own address
+      if (m == identity_)
+      {
+        continue;
+      }
+
+      aeon_members.emplace(m.identifier());
     }
 
-    aeon_members.emplace(m.identifier());
-  }
+    // add the outstanding peers
+    auto const connected_peers   = muddle_.GetDirectlyConnectedPeers();
+    auto const outstanding_peers = aeon_members - connected_peers;
 
-  // add the outstanding peers
-  auto const connected_peers   = muddle_.GetDirectlyConnectedPeers();
-  auto const outstanding_peers = aeon_members - connected_peers;
-
-  ledger::Manifest manifest{};
-  for (auto const &address : outstanding_peers)
-  {
-    std::unique_ptr<network::Uri> hint{};
-
-    // lookup the manifest for the desired address
-    if (manifest_cache_.QueryManifest(address, manifest))
+    ledger::Manifest manifest{};
+    for (auto const &address : outstanding_peers)
     {
-      // attempt to find the service entry
-      auto it = manifest.FindService(ServiceIdentifier::Type::DKG);
-      if (it != manifest.end())
+      std::unique_ptr<network::Uri> hint{};
+
+      // lookup the manifest for the desired address
+      if (manifest_cache_.QueryManifest(address, manifest))
       {
-        hint = std::make_unique<network::Uri>(it->second.uri());
+        // attempt to find the service entry
+        auto it = manifest.FindService(ServiceIdentifier::Type::DKG);
+        if (it != manifest.end())
+        {
+          hint = std::make_unique<network::Uri>(it->second.uri());
+        }
+      }
+
+      if (hint)
+      {
+        // tell muddle to connect to the address with the specified hint
+        muddle_.ConnectTo(address, *hint);
+        FETCH_LOG_INFO(LOGGING_NAME, "\n\nAdded peer with hint");
+      }
+      else
+      {
+        // tell muddle to connect to the address using normal service discovery
+        muddle_.ConnectTo(address);
+        FETCH_LOG_INFO(LOGGING_NAME, "\n\nAdded peer without hint");
       }
     }
 
-    if (hint)
-    {
-      // tell muddle to connect to the address with the specified hint
-      muddle_.ConnectTo(address, *hint);
-    }
-    else
-    {
-      // tell muddle to connect to the address using normal service discovery
-      muddle_.ConnectTo(address);
-    }
+    // request removal of unwanted connections
+    muddle_.DisconnectFrom(muddle_.GetRequestedPeers() - aeon_members);
   }
-
-  // request removal of unwanted connections
-  muddle_.DisconnectFrom(muddle_.GetRequestedPeers() - aeon_members);
 
   if (timer_to_proceed_.HasExpired())
   {
