@@ -29,11 +29,11 @@ using namespace fetch::ml;
 using namespace fetch::ml::dataloaders;
 
 template <typename TensorType>
-struct TrainingParamsForTests
+struct TrainingParams
 {
   using SizeType                = typename TensorType::SizeType;
   using DataType                = typename TensorType::Type;
-  SizeType max_word_count       = 15;           // maximum number to be trained
+  SizeType max_word_count       = 15;            // maximum number to be trained
   SizeType negative_sample_size = 0;            // number of negative sample per word-context pair
   SizeType window_size          = 1;            // window size for context sampling
   DataType freq_thresh          = DataType{1};  // frequency threshold for subsampling
@@ -56,7 +56,7 @@ TYPED_TEST(SkipGramDataloaderTest, loader_test)
   using SizeType   = typename TensorType::SizeType;
   using DataType   = typename TensorType::Type;
 
-  TrainingParamsForTests<TensorType> tp;
+  TrainingParams<TensorType> tp;
   tp.max_word_count = 9;
 
   std::string training_data = "This is a test sentence of total length ten words.";
