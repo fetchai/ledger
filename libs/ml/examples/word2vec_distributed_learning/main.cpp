@@ -51,6 +51,7 @@ int main(int ac, char **av)
   CoordinatorParams           coord_params;
   W2VTrainingParams<DataType> client_params;
 
+  // Distributed learning parameters:
   SizeType number_of_clients    = 10;
   SizeType number_of_rounds     = 10;
   coord_params.mode             = CoordinatorMode::SEMI_SYNCHRONOUS;
@@ -58,13 +59,20 @@ int main(int ac, char **av)
   client_params.batch_size      = 32;
   client_params.learning_rate   = static_cast<DataType>(.001f);
   client_params.number_of_peers = 3;
-  client_params.vocab_file      = av[1];
 
-  std::shared_ptr<std::mutex> console_mutex_ptr_ = std::make_shared<std::mutex>();
+  // Word2Vec parameters:
+  client_params.vocab_file           = av[1];
+  client_params.negative_sample_size = 5;  // number of negative sample per word-context pair
+  client_params.window_size          = 5;  // window size for context sampling
+  client_params.freq_thresh          = DataType{1e-3};  // frequency threshold for subsampling
+  client_params.min_count            = 5;               // infrequent word removal threshold
+  client_params.embedding_size       = 100;             // dimension of embedding vec
 
-  std::shared_ptr<Coordinator> coordinator = std::make_shared<Coordinator>(coord_params);
-
-  std::cout << "FETCH Distributed Word2vec Demo -- Asynchronous" << std::endl;
+  client_params.k     = 20;       // how many nearest neighbours to compare against
+  client_params.word0 = "three";  // test word to consider
+  client_params.word1 = "king";
+  client_params.word2 = "queen";
+  client_params.word3 = "father";
 
   // calc the true starting learning rate
   client_params.starting_learning_rate = static_cast<DataType>(client_params.batch_size) *
@@ -73,6 +81,10 @@ int main(int ac, char **av)
                                        client_params.ending_learning_rate_per_sample;
   client_params.learning_rate_param.starting_learning_rate = client_params.starting_learning_rate;
   client_params.learning_rate_param.ending_learning_rate   = client_params.ending_learning_rate;
+
+  std::shared_ptr<std::mutex>  console_mutex_ptr_ = std::make_shared<std::mutex>();
+  std::shared_ptr<Coordinator> coordinator        = std::make_shared<Coordinator>(coord_params);
+  std::cout << "FETCH Distributed Word2vec Demo -- Asynchronous" << std::endl;
 
   std::vector<std::shared_ptr<TrainingClient<TensorType>>> clients(number_of_clients);
   for (SizeType i(0); i < number_of_clients; ++i)
