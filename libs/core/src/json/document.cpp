@@ -21,6 +21,7 @@
 
 #include <cassert>
 #include <cerrno>
+#include <cmath>
 #include <cstdint>
 #include <cstdlib>
 #include <string>
@@ -42,8 +43,7 @@ constexpr char const *LOGGING_NAME = "JSONDocument";
 void JSONDocument::ExtractPrimitive(Variant &variant, JSONToken const &token,
                                     ConstByteArray const &document)
 {
-  bool        success{false};
-  char const *str = nullptr;
+  bool success{false};
 
   switch (token.type)
   {
@@ -68,8 +68,10 @@ void JSONDocument::ExtractPrimitive(Variant &variant, JSONToken const &token,
     break;
 
   case NUMBER_INT:
-    str     = document.char_pointer() + token.first;
-    variant = std::strtoll(str, nullptr, 10);
+  {
+    std::string const str{document.SubArray(token.first, token.second)};
+
+    variant = std::strtoll(str.c_str(), nullptr, 10);
     if (errno == ERANGE)
     {
       errno = 0;
@@ -79,10 +81,15 @@ void JSONDocument::ExtractPrimitive(Variant &variant, JSONToken const &token,
     }
     success = true;
     break;
+  }
 
   case NUMBER_FLOAT:
-    str     = document.char_pointer() + token.first;
-    variant = std::strtold(str, nullptr);
+  {
+    std::string const str{document.SubArray(token.first, token.second)};
+
+    // convert the value
+    auto const converted_value = static_cast<double>(std::strtold(str.c_str(), nullptr));
+
     if (errno == ERANGE)
     {
       errno = 0;
@@ -90,8 +97,18 @@ void JSONDocument::ExtractPrimitive(Variant &variant, JSONToken const &token,
 
       throw JSONParseException(std::string("Failed to convert str=") + str + " to long double");
     }
+
+    if (!std::isfinite(converted_value))
+    {
+      throw JSONParseException(std::string("Failed to convert str=") + str +
+                               " to finite long double");
+    }
+
+    // update the variant
+    variant = converted_value;
     success = true;
     break;
+  }
 
   default:
     break;
