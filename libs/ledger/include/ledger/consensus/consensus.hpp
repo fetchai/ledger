@@ -57,6 +57,7 @@ public:
   StakeManagerPtr stake();
   void            SetThreshold(double threshold);
   void            SetCommitteeSize(uint64_t size);
+  void            SetDefaultStartTime(uint64_t default_start_time);
 
 private:
   StakeManagerPtr  stake_;
@@ -70,6 +71,7 @@ private:
   uint64_t         current_block_number_   = 0;
   int64_t          last_committee_created_ = -1;
   Block            current_block_;
+  uint64_t         default_start_time_ = 0;
 };
 
 }  // namespace ledger

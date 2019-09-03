@@ -96,7 +96,8 @@ public:
   std::size_t                                    ComplaintsSize() const;
   bool                                           ComplaintsFind(MuddleAddress const &id) const;
   std::set<QualComplaintsManager::MuddleAddress> Complaints() const;
-  bool IsFinished(std::set<MuddleAddress> const &qual, MuddleAddress const &node_id);
+  bool IsFinished(std::set<MuddleAddress> const &qual, MuddleAddress const &node_id,
+                  uint32_t threshold);
   void Clear();
   void Reset();
 };

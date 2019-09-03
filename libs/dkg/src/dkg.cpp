@@ -352,7 +352,7 @@ void DistributedKeyGeneration::ReceivedQualComplaint()
 {
   std::unique_lock<std::mutex> lock{mutex_};
   if (!received_all_qual_complaints_ && (state_ == State::WAITING_FOR_QUAL_COMPLAINTS) &&
-      (qual_complaints_manager_.IsFinished(qual_, address_)))
+      (qual_complaints_manager_.IsFinished(qual_, address_, polynomial_degree_)))
   {
     CheckQualComplaints();
     received_all_qual_complaints_.store(true);

@@ -299,9 +299,9 @@ void RBC::OnRBroadcast(MessageBroadcast const &msg, uint32_t sender_index)
     return;
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "onRBroadcast: Node ", id_, " received msg ", tag, " from node ",
-                 sender_index, " with counter ", std::to_string(msg->counter()), " and id ",
-                 msg->id());
+  FETCH_LOG_DEBUG(LOGGING_NAME, "onRBroadcast: Node ", id_, " received msg ", tag, " from node ",
+                  sender_index, " with counter ", std::to_string(msg->counter()), " and id ",
+                  msg->id());
   if (sender_index == msg->id())
   {
     if (SetMbar(tag, msg, sender_index))
@@ -416,8 +416,8 @@ void RBC::OnRReady(MessageReady const &msg, uint32_t sender_index)
     }
     else if (msg->id() != id_ && CheckTag(*msg))
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, " delivered msg ", tag, " with counter ",
-                     std::to_string(msg->counter()), " and id ", msg->id());
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", id_, " delivered msg ", tag, " with counter ",
+                      std::to_string(msg->counter()), " and id ", msg->id());
 
       Deliver(broadcasts_[tag].original_message, msg->id());
     }
@@ -505,8 +505,8 @@ void RBC::OnRAnswer(MessageAnswer const &msg, uint32_t sender_index)
 
   if (msg->id() != id_ && CheckTag(*msg))
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, " delivered msg ", tag, " with counter ",
-                   std::to_string(msg->counter()), " and id ", msg->id());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", id_, " delivered msg ", tag, " with counter ",
+                    std::to_string(msg->counter()), " and id ", msg->id());
 
     Deliver(broadcasts_[tag].original_message, msg->id());
   }
@@ -543,8 +543,8 @@ void RBC::Deliver(SerialisedMessage const &msg, uint32_t sender_index)
     {
       TagType old_tag = old_tag_msg->second;
       assert(!broadcasts_[old_tag].original_message.empty());
-      FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, " delivered msg ", old_tag, " with counter ",
-                     old_tag_msg->first, " and id ", sender_index);
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", id_, " delivered msg ", old_tag, " with counter ",
+                      old_tag_msg->first, " and id ", sender_index);
 
       // Unlock and lock here to allow the callback funtion to use the RBC
       lock_.unlock();

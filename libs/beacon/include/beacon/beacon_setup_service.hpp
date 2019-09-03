@@ -65,6 +65,7 @@ public:
     WAIT_FOR_QUAL_SHARES,
     WAIT_FOR_QUAL_COMPLAINTS,
     WAIT_FOR_RECONSTRUCTION_SHARES,
+    DRY_RUN_SIGNING,
     BEACON_READY
   };
 
@@ -95,6 +96,7 @@ public:
   using ManifestCacheInterface  = ledger::ManifestCacheInterface;
   using SharesExposedMap = std::unordered_map<MuddleAddress, std::pair<MessageShare, MessageShare>>;
   using DeadlineTimer    = fetch::moment::DeadlineTimer;
+  using SignatureShare   = AeonExecutionUnit::SignatureShare;
 
   BeaconSetupService(MuddleInterface &muddle, Identity identity,
                      ManifestCacheInterface &manifest_cache);
@@ -113,6 +115,7 @@ public:
   State OnWaitForQualShares();
   State OnWaitForQualComplaints();
   State OnWaitForReconstructionShares();
+  State OnDryRun();
   State OnBeaconReady();
   /// @}
 
@@ -127,13 +130,15 @@ public:
   void OnNewSharesPacket(muddle::Packet const &packet, MuddleAddress const &last_hop);
   void OnNewShares(MuddleAddress from_id, std::pair<MessageShare, MessageShare> const &shares);
   void OnDkgMessage(MuddleAddress const &from, std::shared_ptr<DKGMessage> msg_ptr);
+  void OnNewDryRunPacket(muddle::Packet const &packet, MuddleAddress const &last_hop);
 
 protected:
   Identity                identity_;
   ManifestCacheInterface &manifest_cache_;
   MuddleInterface &       muddle_;
   MuddleEndpoint &        endpoint_;
-  SubscriptionPtr         shares_subscription;
+  SubscriptionPtr         shares_subscription_;
+  SubscriptionPtr         dry_run_subscription_;
   RBC                     pre_dkg_rbc_;
   RBC                     rbc_;
 
@@ -193,6 +198,7 @@ protected:
   std::deque<SharedAeonExecutionUnit>                        aeon_exe_queue_;
   SharedAeonExecutionUnit                                    beacon_;
   std::unordered_map<MuddleAddress, std::set<MuddleAddress>> ready_connections_;
+  std::map<MuddleAddress, SignatureShare>                    dry_run_shares_;
 
 private:
   // Timing management
