@@ -71,7 +71,6 @@ public:
 
 private:
   using Counter = std::atomic<uint16_t>;
-  using Mutex   = mutex::Mutex;
 
   struct PromiseEntry
   {
@@ -101,12 +100,6 @@ private:
   telemetry::GaugePtr<double> exchange_time_max_;
   /// @}
 };
-
-inline uint16_t Dispatcher::GetNextCounter()
-{
-  FETCH_LOCK(counter_lock_);
-  return counter_++;
-}
 
 }  // namespace muddle
 }  // namespace fetch

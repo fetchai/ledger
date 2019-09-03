@@ -71,7 +71,6 @@ public:
   BasicMiner &operator=(BasicMiner &&) = delete;
 
 private:
-  using Mutex      = mutex::Mutex;
   using ThreadPool = threading::Pool;
   using Queue      = TransactionLayoutQueue;
 

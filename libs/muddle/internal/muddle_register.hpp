@@ -27,6 +27,7 @@
 #include <functional>
 #include <memory>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace fetch {
 namespace network {
@@ -48,7 +49,6 @@ public:
   using ConnectionMap         = std::unordered_map<ConnectionHandle, WeakConnectionPtr>;
   using ConnectionMapCallback = std::function<void(ConnectionMap const &)>;
   using ConstByteArray        = byte_array::ConstByteArray;
-  using Mutex                 = mutex::Mutex;
   using Handle                = connection_handle_type;
 
   enum class UpdateStatus

@@ -157,10 +157,11 @@ std::string ReadFile(std::string const &path)
 
 struct TrainingParams
 {
+  // TODO (#1585) something is broken here. if u set max_word_count to sth smaller like 10000, there
+  // would be an error at the end of the sentence
   SizeType max_word_count = fetch::math::numeric_max<SizeType>();  // maximum number to be trained
   SizeType negative_sample_size = 5;     // number of negative sample per word-context pair
   SizeType window_size          = 5;     // window size for context sampling
-  bool     train_mode           = true;  // reserve for future compatibility with CBOW
   DataType freq_thresh          = 1e-3;  // frequency threshold for subsampling
   SizeType min_count            = 5;     // infrequent word removal threshold
 
@@ -209,7 +210,7 @@ int main(int argc, char **argv)
   std::cout << "Setting up training data...: " << std::endl;
 
   GraphW2VLoader<DataType> data_loader(tp.window_size, tp.negative_sample_size, tp.freq_thresh,
-                                       tp.max_word_count, tp.train_mode);
+                                       tp.max_word_count);
   // set up dataloader
   /// DATA LOADING ///
   data_loader.BuildVocab({ReadFile(train_file)}, tp.min_count);
@@ -254,8 +255,8 @@ int main(int argc, char **argv)
   std::cout << "beginning training...: " << std::endl;
 
   // Initialise Optimiser
-  fetch::ml::optimisers::SGDOptimiser<TensorType> optimiser(g, {"Input", "Context"}, "Label", error,
-                                                            tp.learning_rate_param);
+  fetch::ml::optimisers::AdamOptimiser<TensorType> optimiser(g, {"Input", "Context"}, "Label",
+                                                             error, tp.learning_rate_param);
 
   // Training loop
   for (SizeType i{0}; i < tp.training_epochs; i++)

@@ -19,7 +19,7 @@
 #include "peer_list.hpp"
 #include "router.hpp"
 
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 
 #include <algorithm>
 #include <cstddef>

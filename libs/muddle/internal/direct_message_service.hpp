@@ -72,7 +72,6 @@ private:
     Phase  phase{Phase::INITIAL};
   };
 
-  using Mutex        = mutex::Mutex;
   using Reservations = std::unordered_map<Address, Handle>;
 
   template <typename T>

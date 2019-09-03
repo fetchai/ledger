@@ -17,13 +17,16 @@
 //------------------------------------------------------------------------------
 
 #include "core/commandline/parameter_parser.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "settings/setting_base.hpp"
 #include "settings/setting_collection.hpp"
 
 #include <algorithm>
 #include <cassert>
+#include <iomanip>
 #include <set>
+#include <sstream>
+#include <string>
 
 namespace fetch {
 namespace settings {
@@ -149,6 +152,11 @@ void SettingCollection::UpdateFromEnv(char const *prefix, detail::EnvironmentInt
       iss >> *setting;
     }
   }
+}
+
+SettingCollection::Settings const &SettingCollection::settings() const
+{
+  return settings_;
 }
 
 }  // namespace settings

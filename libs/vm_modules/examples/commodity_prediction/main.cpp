@@ -30,6 +30,7 @@
 #include "vm/module.hpp"
 #include "vm/variant.hpp"
 #include "vm_modules/core/print.hpp"
+#include "vm_modules/core/system.hpp"
 #include "vm_modules/math/tensor.hpp"
 #include "vm_modules/ml/ml.hpp"
 
@@ -41,40 +42,19 @@
 #include <string>
 #include <vector>
 
-using DataType  = fetch::vm_modules::math::VMTensor::DataType;
-using ArrayType = fetch::math::Tensor<DataType>;
+using DataType   = fetch::vm_modules::math::VMTensor::DataType;
+using TensorType = fetch::math::Tensor<DataType>;
+using System     = fetch::vm_modules::System;
 
 using fetch::byte_array::FromHex;
 using fetch::byte_array::ToHex;
-
-struct System : public fetch::vm::Object
-{
-  System()           = delete;
-  ~System() override = default;
-
-  static int32_t Argc(fetch::vm::VM * /*vm*/, fetch::vm::TypeId /*type_id*/)
-  {
-    return int32_t(System::args.size());
-  }
-
-  static fetch::vm::Ptr<fetch::vm::String> Argv(fetch::vm::VM *vm, fetch::vm::TypeId /*type_id*/,
-                                                int32_t        a)
-  {
-    return fetch::vm::Ptr<fetch::vm::String>(
-        new fetch::vm::String(vm, System::args[std::size_t(a)]));
-  }
-
-  static std::vector<std::string> args;
-};
-
-std::vector<std::string> System::args;
 
 // read the weights and bias csv files
 
 fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> read_csv(
     fetch::vm::VM *vm, fetch::vm::Ptr<fetch::vm::String> const &filename, bool transpose)
 {
-  ArrayType weights = fetch::ml::dataloaders::ReadCSV<ArrayType>(filename->str, 0, 0, transpose);
+  TensorType weights = fetch::ml::dataloaders::ReadCSV<TensorType>(filename->str, 0, 0, transpose);
   return vm->CreateNewObject<fetch::vm_modules::math::VMTensor>(weights);
 }
 
@@ -283,26 +263,26 @@ int RunEtchScript(std::string const &filename, std::shared_ptr<fetch::vm::Module
 
 int main(int argc, char **argv)
 {
-  if (argc < 3)
+  // parse the command line parameters
+  System::Parse(argc, argv);
+
+  fetch::commandline::ParamsParser const &pp = System::GetParamsParser();
+
+  // ensure the program has the correct number of args
+  if (3u != pp.arg_size())
   {
-    std::cerr << "usage ./" << argv[0] << " [filename]" << std::endl;
-    std::exit(-9);
+    std::cerr << "Usage: " << pp.GetArg(0)
+              << " <etch_saver_filename> <etch_loader_filename> -- [script args...]" << std::endl;
+    return 1;
   }
 
-  for (int i = 3; i < argc; ++i)
-  {
-    System::args.emplace_back(std::string(argv[i]));
-  }
-
-  std::string etch_saver  = argv[1];
-  std::string etch_loader = argv[2];
+  std::string etch_saver  = pp.GetArg(1);
+  std::string etch_loader = pp.GetArg(2);
 
   /// Set up module
   auto module = std::make_shared<fetch::vm::Module>();
 
-  module->CreateClassType<System>("System")
-      .CreateStaticMemberFunction("Argc", &System::Argc)
-      .CreateStaticMemberFunction("Argv", &System::Argv);
+  fetch::vm_modules::System::Bind(*module);
 
   fetch::vm_modules::ml::BindML(*module);
 

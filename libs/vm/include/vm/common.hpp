@@ -19,7 +19,6 @@
 
 #include "meta/type_util.hpp"
 
-#include <assert.h>
 #include <cmath>
 #include <cstdint>
 #include <functional>
@@ -44,26 +43,27 @@ using TypeIndex      = std::type_index;
 using TypeIndexArray = std::vector<TypeIndex>;
 
 namespace TypeIds {
-static TypeId const Unknown        = 0;
-static TypeId const Null           = 1;
-static TypeId const Void           = 2;
-static TypeId const Bool           = 3;
-static TypeId const Int8           = 4;
-static TypeId const UInt8          = 5;
-static TypeId const Int16          = 6;
-static TypeId const UInt16         = 7;
-static TypeId const Int32          = 8;
-static TypeId const UInt32         = 9;
-static TypeId const Int64          = 10;
-static TypeId const UInt64         = 11;
-static TypeId const Float32        = 12;
-static TypeId const Float64        = 13;
-static TypeId const Fixed32        = 14;
-static TypeId const Fixed64        = 15;
-static TypeId const PrimitiveMaxId = 15;
-static TypeId const String         = 16;
-static TypeId const Address        = 17;
-static TypeId const NumReserved    = 18;
+static constexpr TypeId Unknown         = 0;
+static constexpr TypeId Null            = 1;
+static constexpr TypeId InitialiserList = 2;
+static constexpr TypeId Void            = 3;
+static constexpr TypeId Bool            = 4;
+static constexpr TypeId Int8            = 5;
+static constexpr TypeId UInt8           = 6;
+static constexpr TypeId Int16           = 7;
+static constexpr TypeId UInt16          = 8;
+static constexpr TypeId Int32           = 9;
+static constexpr TypeId UInt32          = 10;
+static constexpr TypeId Int64           = 11;
+static constexpr TypeId UInt64          = 12;
+static constexpr TypeId Float32         = 13;
+static constexpr TypeId Float64         = 14;
+static constexpr TypeId Fixed32         = 15;
+static constexpr TypeId Fixed64         = 16;
+static constexpr TypeId PrimitiveMaxId  = 16;
+static constexpr TypeId String          = 17;
+static constexpr TypeId Address         = 18;
+static constexpr TypeId NumReserved     = 19;
 }  // namespace TypeIds
 
 enum class NodeCategory : uint8_t
@@ -146,7 +146,8 @@ enum class NodeKind : uint16_t
   PersistentStatement                       = 67,
   UseStatement                              = 68,
   UseStatementKeyList                       = 69,
-  UseAnyStatement                           = 70
+  UseAnyStatement                           = 70,
+  InitialiserList                           = 71
 };
 
 enum class ExpressionKind : uint8_t
@@ -193,22 +194,18 @@ enum class FunctionKind : uint8_t
 
 struct TypeInfo
 {
-  TypeInfo()
-  {
-    type_kind        = TypeKind::Unknown;
-    template_type_id = TypeIds::Unknown;
-  }
-  TypeInfo(TypeKind type_kind__, std::string const &name__, TypeId template_type_id__,
-           TypeIdArray const &parameter_type_ids__)
-  {
-    type_kind          = type_kind__;
-    name               = name__;
-    template_type_id   = template_type_id__;
-    parameter_type_ids = parameter_type_ids__;
-  }
-  TypeKind    type_kind;
+  TypeInfo() = default;
+  TypeInfo(TypeKind type_kind__, std::string name__, TypeId template_type_id__,
+           TypeIdArray parameter_type_ids__)
+    : type_kind{type_kind__}
+    , name{std::move(name__)}
+    , template_type_id{template_type_id__}
+    , parameter_type_ids{std::move(parameter_type_ids__)}
+  {}
+
+  TypeKind    type_kind = TypeKind::Unknown;
   std::string name;
-  TypeId      template_type_id;
+  TypeId      template_type_id = TypeIds::Unknown;
   TypeIdArray parameter_type_ids;
 };
 using TypeInfoArray = std::vector<TypeInfo>;
@@ -282,6 +279,10 @@ private:
   std::unordered_map<TypeIndex, TypeId> map_;
   std::unordered_map<TypeId, TypeIndex> reverse_;
   friend class Analyser;
+};
+
+struct InitialiserListPlaceholder
+{
 };
 
 }  // namespace vm

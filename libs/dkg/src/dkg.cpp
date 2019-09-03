@@ -666,7 +666,7 @@ void DistributedKeyGeneration::OnReconstructionShares(SharesMessage const &share
     // check equation (4)
     if (lhs == rhs)
     {
-      std::lock_guard<std::mutex> lock{mutex_};
+      FETCH_LOCK(mutex_);
       FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, "received good share from node ",
                      from_index, "for reconstructing node ", victim_index);
       reconstruction_shares.at(share.first).first.insert(from_index);  // good share received
@@ -956,7 +956,7 @@ bool DistributedKeyGeneration::RunReconstruction()
     uint32_t victim_index{CabinetIndex(in.first)};
     z_i[victim_index] = crypto::mcl::ComputeZi(in.second.first, in.second.second);
     std::vector<bn::Fr> points, shares_f;
-    for (const auto &index : parties)
+    for (auto const &index : parties)
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, " run reconstruction for node ",
                      victim_index, " with shares from node ", index);
@@ -1048,7 +1048,7 @@ void DistributedKeyGeneration::ResetCabinet(CabinetMembers const &cabinet, uint3
   assert(cabinet.find(address_) != cabinet.end());  // We should be in the cabinet
   assert(threshold > 0);
 
-  std::lock_guard<std::mutex> lock_{mutex_};
+  FETCH_LOCK(mutex_);
   cabinet_           = cabinet;
   polynomial_degree_ = threshold - 1;
   state_             = State::INITIAL;

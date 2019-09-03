@@ -1,7 +1,25 @@
-function main()
+function ascii()
 
     var myString : String = "Hello World";
+    assert(myString.length() == 11);
 
-    assert(11 == myString.length());
+endfunction
+
+
+function utf8()
+
+    var myString1 : String = "他身旁放着一支磨尖的花岗岩长矛备用";
+    var myString2_4byte_characters : String = "𩶘𢵧𢺳𣲷𤓓𤶸𤷪𥄫𦉘𦟌𦧲𦧺𧨾𨅝𨈇𨋢𨳊𨳍𨳒𩶘";
+
+    assert(myString1.length() == 17);
+    assert(myString2_4byte_characters.length() == 20);
+
+endfunction
+
+
+function main()
+
+   ascii();
+   utf8();
 
 endfunction

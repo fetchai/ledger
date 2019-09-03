@@ -57,7 +57,7 @@ protected:
   void SetUp() override
   {
     mock_ = std::make_unique<Mock>();
-    pool_ = MakeThreadPool(GetParam());
+    pool_ = MakeThreadPool(GetParam(), "test_thread_pool_name");
     pool_->Start();
   }
 
@@ -143,8 +143,8 @@ TEST_P(ThreadPoolTests, DISABLED_CheckIdleWorkers)
   pool_->PostIdle([this, &log_mutex, &log]() {
     // update the log
     {
-      std::lock_guard<std::mutex> lock(log_mutex);
-      Timepoint const             now = Clock::now();
+      FETCH_LOCK(log_mutex);
+      Timepoint const now = Clock::now();
       log.push_back(now);
     }
 

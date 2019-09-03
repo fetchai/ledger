@@ -57,7 +57,6 @@ public:
 
 private:
   using Mutex     = std::mutex;
-  using LockGuard = std::lock_guard<Mutex>;
   using BucketMap = std::map<double, uint64_t>;
 
   template <typename Iterator>

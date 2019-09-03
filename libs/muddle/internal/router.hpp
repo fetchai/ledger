@@ -141,7 +141,6 @@ public:
 
 private:
   using HandleMap  = std::unordered_map<Handle, std::unordered_set<Packet::RawAddress>>;
-  using Mutex      = mutex::Mutex;
   using Clock      = std::chrono::steady_clock;
   using Timepoint  = Clock::time_point;
   using EchoCache  = std::unordered_map<std::size_t, Timepoint>;

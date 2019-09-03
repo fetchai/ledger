@@ -92,7 +92,6 @@ public:
   PeerSelector &operator=(PeerSelector &&) = delete;
 
 private:
-  using Mutex           = mutex::Mutex;
   using PendingPromised = std::unordered_map<Address, std::shared_ptr<PromiseTask>>;
 
   void   Periodically() override;

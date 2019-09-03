@@ -20,30 +20,66 @@
 #include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/logger.hpp"
-#include "core/serializers/counter.hpp"
-#include "core/serializers/exception.hpp"
-#include "core/serializers/group_definitions.hpp"
-#include "vectorise/platform.hpp"
-
-#include "core/serializers/main_serializer_definition.hpp"
-
+#include "core/logging.hpp"
 #include "core/serializers/array_interface.hpp"
 #include "core/serializers/binary_interface.hpp"
 #include "core/serializers/container_constructor_interface.hpp"
+#include "core/serializers/counter.hpp"
+#include "core/serializers/exception.hpp"
+#include "core/serializers/group_definitions.hpp"
+#include "core/serializers/main_serializer_definition.hpp"
 #include "core/serializers/map_interface.hpp"
 #include "vectorise/platform.hpp"
 
-#include "core/serializers/counter.hpp"
+#include <stdexcept>
+#include <string>
 #include <type_traits>
 
 namespace fetch {
 namespace serializers {
 
+/**
+ * When serializing large objects it is useful to use this wrapper class
+ * It ensures the right amount of memory is allocated first
+ */
+class LargeObjectSerializeHelper
+{
+public:
+  template <typename T>
+  void operator<<(T const &large_object)
+  {
+    Serialize(large_object);
+  }
+
+  template <typename T>
+  void operator>>(T const &large_object)
+  {
+    Deserialize(large_object);
+  }
+
+  template <typename T>
+  void Serialize(T const &large_object)
+  {
+    counter << large_object;
+    buffer.Reserve(counter.size());
+    buffer << large_object;
+  }
+
+  template <typename T>
+  void Deserialize(T &large_object)
+  {
+    buffer.seek(0);
+    buffer >> large_object;
+  }
+
+  MsgPackSerializer buffer;
+  SizeCounter       counter;
+};
+
 template <typename WriteType, typename InitialType>
 void MsgPackSerializer::WritePrimitive(InitialType const &val)
 {
-  WriteType w = static_cast<WriteType>(val);
+  auto w = static_cast<WriteType>(val);
   WriteBytes(reinterpret_cast<uint8_t const *>(&w), sizeof(w));
 }
 
@@ -248,7 +284,7 @@ typename BinarySerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::
   }
   catch (std::exception const &e)
   {
-    throw std::runtime_error("Error deserializing " + static_cast<std::string>(typeid(T).name()) +
+    throw std::runtime_error("Error serializing " + static_cast<std::string>(typeid(T).name()) +
                              ".\n" + std::string(e.what()));
   }
 
@@ -289,7 +325,7 @@ typename ArraySerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::o
   }
   catch (std::exception const &e)
   {
-    throw std::runtime_error("Error deserializing " + static_cast<std::string>(typeid(T).name()) +
+    throw std::runtime_error("Error serializing " + static_cast<std::string>(typeid(T).name()) +
                              ".\n" + std::string(e.what()));
   }
 
@@ -330,7 +366,7 @@ typename MapSerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::ope
   }
   catch (std::exception const &e)
   {
-    throw std::runtime_error("Error deserializing " + static_cast<std::string>(typeid(T).name()) +
+    throw std::runtime_error("Error serializing " + static_cast<std::string>(typeid(T).name()) +
                              ".\n" + std::string(e.what()));
   }
 

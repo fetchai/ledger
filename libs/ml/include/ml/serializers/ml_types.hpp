@@ -180,6 +180,11 @@ void SerializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_type
         map, code, op);
     break;
   }
+  case ml::OpType::OP_MASK_FILL:
+  {
+    SerializeImplementation<TensorType, D, ml::OpMaskFillSaveableParams<TensorType>>(map, code, op);
+    break;
+  }
   case ml::OpType::OP_MAX_POOL_1D:
   {
     SerializeImplementation<TensorType, D, ml::OpMaxPool1DSaveableParams<TensorType>>(map, code,
@@ -232,6 +237,11 @@ void SerializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_type
   case ml::OpType::OP_SOFTMAX:
   {
     SerializeImplementation<TensorType, D, ml::OpSoftmaxSaveableParams<TensorType>>(map, code, op);
+    break;
+  }
+  case ml::OpType::OP_SLICE:
+  {
+    SerializeImplementation<TensorType, D, ml::OpSliceSaveableParams<TensorType>>(map, code, op);
     break;
   }
   case ml::OpType::OP_SOFTMAX_CROSS_ENTROPY_LOSS:
@@ -446,6 +456,12 @@ void DeserializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_ty
                                                                                               code);
     break;
   }
+  case ml::OpType::OP_MASK_FILL:
+  {
+    op = DeserializeImplementation<TensorType, D, ml::OpMaskFillSaveableParams<TensorType>>(map,
+                                                                                            code);
+    break;
+  }
   case ml::OpType::OP_MATRIX_MULTIPLY:
   {
     op = DeserializeImplementation<TensorType, D, ml::OpMatrixMultiplySaveableParams<TensorType>>(
@@ -538,6 +554,11 @@ void DeserializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_ty
   {
     op =
         DeserializeImplementation<TensorType, D, ml::OpSwitchSaveableParams<TensorType>>(map, code);
+    break;
+  }
+  case ml::OpType::OP_SLICE:
+  {
+    op = DeserializeImplementation<TensorType, D, ml::OpSliceSaveableParams<TensorType>>(map, code);
     break;
   }
   case ml::OpType::OP_TANH:
@@ -1252,22 +1273,19 @@ struct MapSerializer<ml::OpEmbeddingsSaveableParams<TensorType>, D>
 
   static uint8_t const OP_CODE        = 1;
   static uint8_t const BASE_CLASS     = 2;
-  static uint8_t const EMBED_OUTPUT   = 3;
-  static uint8_t const UPDATED_ROWS   = 4;
-  static uint8_t const TRAILING_IND_1 = 5;
-  static uint8_t const TRAILING_IND_2 = 6;
+  static uint8_t const UPDATED_ROWS   = 3;
+  static uint8_t const TRAILING_IND_1 = 4;
+  static uint8_t const TRAILING_IND_2 = 5;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(6);
+    auto map = map_constructor(5);
     map.Append(OP_CODE, sp.op_type);
 
     // serialize parent class
     auto base_pointer = static_cast<ml::OpWeightsSaveableParams<TensorType> const *>(&sp);
     map.Append(BASE_CLASS, *base_pointer);
-
-    map.Append(EMBED_OUTPUT, *sp.embeddings_output);
     map.Append(UPDATED_ROWS, sp.updated_rows);
     map.Append(TRAILING_IND_1, sp.trailing_indices1);
     map.Append(TRAILING_IND_2, sp.trailing_indices2);
@@ -1280,11 +1298,6 @@ struct MapSerializer<ml::OpEmbeddingsSaveableParams<TensorType>, D>
 
     auto base_pointer = static_cast<ml::OpWeightsSaveableParams<TensorType> *>(&sp);
     map.ExpectKeyGetValue(BASE_CLASS, *base_pointer);
-
-    TensorType e_out;
-    map.ExpectKeyGetValue(EMBED_OUTPUT, e_out);
-    sp.embeddings_output = std::make_shared<TensorType>(e_out);
-
     map.ExpectKeyGetValue(UPDATED_ROWS, sp.updated_rows);
     map.ExpectKeyGetValue(TRAILING_IND_1, sp.trailing_indices1);
     map.ExpectKeyGetValue(TRAILING_IND_2, sp.trailing_indices2);
@@ -1292,7 +1305,7 @@ struct MapSerializer<ml::OpEmbeddingsSaveableParams<TensorType>, D>
 };
 
 /**
- * serializer for Embeddings saveable params
+ * serializer for Exp saveable params
  * @tparam TensorType
  */
 template <typename TensorType, typename D>
@@ -1325,7 +1338,7 @@ struct MapSerializer<ml::OpExpSaveableParams<TensorType>, D>
 };
 
 /**
- * serializer for Embeddings saveable params
+ * serializer for Flatten saveable params
  * @tparam TensorType
  */
 template <typename TensorType, typename D>
@@ -1395,7 +1408,7 @@ struct MapSerializer<ml::OpGeluSaveableParams<TensorType>, D>
 };
 
 /**
- * serializer for OpMaximumSaveableParams saveable params
+ * serializer for OpLayerNormSaveableParams saveable params
  * @tparam TensorType
  */
 template <typename TensorType, typename D>
@@ -1445,7 +1458,7 @@ struct MapSerializer<ml::OpLayerNormSaveableParams<TensorType>, D>
 };
 
 /**
- * serializer for Embeddings saveable params
+ * serializer for LeakyRelu saveable params
  * @tparam TensorType
  */
 template <typename TensorType, typename D>
@@ -1481,7 +1494,7 @@ struct MapSerializer<ml::OpLeakyReluSaveableParams<TensorType>, D>
 };
 
 /**
- * serializer for Embeddings saveable params
+ * serializer for LeakyReluOp saveable params
  * @tparam TensorType
  */
 template <typename TensorType, typename D>
@@ -1517,7 +1530,7 @@ struct MapSerializer<ml::OpLeakyReluOpSaveableParams<TensorType>, D>
 };
 
 /**
- * serializer for Embeddings saveable params
+ * serializer for Log saveable params
  * @tparam TensorType
  */
 template <typename TensorType, typename D>
@@ -2125,6 +2138,52 @@ struct MapSerializer<ml::OpSigmoidSaveableParams<TensorType>, D>
     auto ops_pointer = static_cast<ml::OpsSaveableParams *>(&sp);
     map.ExpectKeyGetValue(BASE_OPS, (*ops_pointer));
     map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+  }
+};
+
+/**
+ * serializer for OpSliceaveableParams
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::OpSliceSaveableParams<TensorType>, D>
+{
+  using Type       = ml::OpSliceSaveableParams<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const BASE_OPS = 1;
+  static uint8_t const OP_CODE  = 2;
+
+  static uint8_t const AXES    = 3;
+  static uint8_t const INDICES = 4;
+  static uint8_t const AXIS    = 5;
+  static uint8_t const INDEX   = 6;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(6);
+
+    // serialize parent class first
+    auto ops_pointer = static_cast<ml::OpsSaveableParams const *>(&sp);
+    map.Append(BASE_OPS, *(ops_pointer));
+    map.Append(OP_CODE, sp.op_type);
+    map.Append(AXES, sp.axes);
+    map.Append(INDICES, sp.indices);
+    map.Append(AXIS, sp.axis);
+    map.Append(INDEX, sp.index);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    auto ops_pointer = static_cast<ml::OpsSaveableParams *>(&sp);
+    map.ExpectKeyGetValue(BASE_OPS, (*ops_pointer));
+    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+    map.ExpectKeyGetValue(AXES, sp.axes);
+    map.ExpectKeyGetValue(INDICES, sp.indices);
+    map.ExpectKeyGetValue(AXIS, sp.axis);
+    map.ExpectKeyGetValue(INDEX, sp.index);
   }
 };
 
@@ -2737,11 +2796,12 @@ struct MapSerializer<ml::LayerScaledDotProductAttentionSaveableParams<TensorType
   static uint8_t const SUB_GRAPH = 1;
   static uint8_t const OP_CODE   = 2;
   static uint8_t const KEY_DIM   = 3;
+  static uint8_t const DROPOUT   = 4;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(3);
+    auto map = map_constructor(4);
 
     // serialize parent class first
     auto base_pointer = static_cast<ml::SubGraphSaveableParams<TensorType> const *>(&sp);
@@ -2749,6 +2809,7 @@ struct MapSerializer<ml::LayerScaledDotProductAttentionSaveableParams<TensorType
 
     map.Append(OP_CODE, sp.op_type);
     map.Append(KEY_DIM, sp.key_dim);
+    map.Append(DROPOUT, sp.dropout);
   }
 
   template <typename MapDeserializer>
@@ -2759,6 +2820,7 @@ struct MapSerializer<ml::LayerScaledDotProductAttentionSaveableParams<TensorType
 
     map.ExpectKeyGetValue(OP_CODE, sp.op_type);
     map.ExpectKeyGetValue(KEY_DIM, sp.key_dim);
+    map.ExpectKeyGetValue(DROPOUT, sp.dropout);
   }
 };
 

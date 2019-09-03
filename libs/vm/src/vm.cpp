@@ -168,6 +168,8 @@ VM::VM(Module *module)
                 [](VM *vm) { vm->Handler__PrimitiveModulo(); });
   AddOpcodeInfo(Opcodes::VariablePrimitiveInplaceModulo, "VariablePrimitiveInplaceModulo",
                 [](VM *vm) { vm->Handler__VariablePrimitiveInplaceModulo(); });
+  AddOpcodeInfo(Opcodes::InitialiseArray, "InitialiseArray",
+                [](VM *vm) { vm->Handler__InitialiseArray(); });
 
   opcode_map_.clear();
   for (uint16_t i = 0; i < num_functions; ++i)

@@ -44,8 +44,7 @@ void LogTimout(NAME const &name, ID const &id)
 }  // namespace
 
 PromiseImplementation::Counter PromiseImplementation::counter_{0};
-PromiseImplementation::Mutex   PromiseImplementation::PromiseImplementation::counter_lock_{__LINE__,
-                                                                                         __FILE__};
+Mutex                          PromiseImplementation::counter_lock_{__LINE__, __FILE__};
 
 std::chrono::seconds const PromiseImplementation::DEFAULT_TIMEOUT{30};
 
@@ -196,7 +195,7 @@ void PromiseImplementation::UpdateState(State state) const
   bool dispatch = false;
 
   {
-    std::unique_lock<std::mutex> lock(notify_lock_);
+    FETCH_LOCK(notify_lock_);
     if (state_ == State::WAITING)
     {
       state_   = state;
@@ -255,6 +254,44 @@ PromiseImplementation::Counter PromiseImplementation::GetNextId()
   return counter_++;
 }
 
+// promise builder
+
+PromiseBuilder::PromiseBuilder(PromiseImplementation &promise)
+  : promise_(promise)
+{}
+
+PromiseBuilder::~PromiseBuilder()
+{
+  promise_.SetSuccessCallback(callback_success_);
+  promise_.SetFailureCallback(callback_failure_);
+  promise_.SetCompletionCallback(callback_complete_);
+
+  // in the rare (probably failure case) when the promise has been resolved during before the
+  // responses have been set
+  if (!promise_.IsWaiting())
+  {
+    promise_.DispatchCallbacks();
+  }
+}
+
+PromiseBuilder &PromiseBuilder::Then(Callback const &cb)
+{
+  callback_success_ = cb;
+  return *this;
+}
+
+PromiseBuilder &PromiseBuilder::Catch(Callback const &cb)
+{
+  callback_failure_ = cb;
+  return *this;
+}
+
+PromiseBuilder &PromiseBuilder::Finally(Callback const &cb)
+{
+  callback_complete_ = cb;
+  return *this;
+}
+
 }  // namespace details
 
 /**
@@ -291,6 +328,16 @@ static const std::array<PromiseState, 4> promise_states{
 const std::array<PromiseState, 4> &GetAllPromiseStates()
 {
   return promise_states;
+}
+
+Promise MakePromise()
+{
+  return std::make_shared<details::PromiseImplementation>();
+}
+
+Promise MakePromise(uint64_t pro, uint64_t func)
+{
+  return std::make_shared<details::PromiseImplementation>(pro, func);
 }
 
 }  // namespace service

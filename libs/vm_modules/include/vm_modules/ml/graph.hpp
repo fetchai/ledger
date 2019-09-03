@@ -84,6 +84,18 @@ public:
 
   static void Bind(fetch::vm::Module &module);
 
+  GraphType &GetGraph();
+
+  bool SerializeTo(serializers::MsgPackSerializer &buffer) override;
+
+  bool DeserializeFrom(serializers::MsgPackSerializer &buffer) override;
+
+  fetch::vm::Ptr<fetch::vm::String> SerializeToString();
+
+  fetch::vm::Ptr<VMGraph> DeserializeFromString(
+      fetch::vm::Ptr<fetch::vm::String> const &graph_string);
+
+private:
   GraphType graph_;
 };
 

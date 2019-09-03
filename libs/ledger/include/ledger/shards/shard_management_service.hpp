@@ -67,7 +67,6 @@ private:
   using Timepoint = Clock::time_point;
   using RpcServer = muddle::rpc::Server;
   using RpcClient = muddle::rpc::Client;
-  using Mutex     = mutex::Mutex;
 
   struct Entry
   {

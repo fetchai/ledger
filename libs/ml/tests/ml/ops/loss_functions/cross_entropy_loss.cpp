@@ -17,11 +17,15 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/main_serializer_definition.hpp"
-#include "gtest/gtest.h"
 #include "math/tensor.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+
+#include "gtest/gtest.h"
+
+#include <memory>
+
 template <typename T>
 class CrossEntropyTest : public ::testing::Test
 {
@@ -66,213 +70,146 @@ TYPED_TEST(CrossEntropyTest, perfect_match_forward_test)
   EXPECT_EQ(result(0, 0), typename TypeParam::Type(0));
 }
 
-TYPED_TEST(CrossEntropyTest, one_dimensional_forward_test)
+TYPED_TEST(CrossEntropyTest, onehot_forward_test)
 {
-  std::uint64_t n_classes     = 4;
-  std::uint64_t n_data_points = 8;
+  std::uint64_t n_classes     = 3;
+  std::uint64_t n_data_points = 2;
 
   TypeParam data1(std::vector<std::uint64_t>{n_classes, n_data_points});
   TypeParam data2(std::vector<std::uint64_t>{n_classes, n_data_points});
+  TypeParam gt(std::vector<std::uint64_t>{n_classes, n_data_points});
 
-  // set gt data
-  std::vector<std::uint64_t> gt_data = {1, 2, 3, 0, 3, 1, 0, 2};
-  for (std::uint64_t i = 0; i < n_data_points; ++i)
-  {
-    for (std::uint64_t j = 0; j < n_classes; ++j)
-    {
-      if (gt_data[i] == j)
-      {
-        data2.Set(j, i, typename TypeParam::Type(1));
-      }
-      else
-      {
-        data2.Set(j, i, typename TypeParam::Type(0));
-      }
-    }
-  }
-
-  // set softmax probabilities
-  std::vector<double> logits{0.1, 0.8, 0.05, 0.05, 0.2, 0.5, 0.2, 0.1, 0.05, 0.05, 0.8,
-                             0.1, 0.5, 0.1,  0.1,  0.3, 0.2, 0.3, 0.1, 0.4,  0.1,  0.7,
-                             0.1, 0.1, 0.7,  0.1,  0.1, 0.1, 0.1, 0.1, 0.5,  0.3};
-
-  std::uint64_t counter{0};
-  for (std::uint64_t i{0}; i < n_data_points; ++i)
-  {
-    for (std::uint64_t j{0}; j < n_classes; ++j)
-    {
-      data1.Set(j, i, typename TypeParam::Type(logits[counter]));
-      ++counter;
-    }
-  }
+  data1 = TypeParam::FromString("0.05, 0.05, 0.9; 0.5, 0.2, 0.3");
+  data1 = data1.Transpose();
+  data2 = TypeParam::FromString("0.0, 1.0, 0; 1, 0, 0");
+  data2 = data2.Transpose();
 
   fetch::ml::ops::CrossEntropyLoss<TypeParam> op;
   TypeParam                                   result({1, 1});
   op.Forward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, result);
 
-  EXPECT_NEAR(static_cast<double>(result(0, 0)), static_cast<double>(0.893887639), 3e-7);
+  EXPECT_NEAR(static_cast<double>(result(0, 0)),
+              static_cast<double>(3.6888794541) / static_cast<float>(n_data_points), 3e-7);
 }
 
-TYPED_TEST(CrossEntropyTest, non_one_hot_forward_test)
+TYPED_TEST(CrossEntropyTest, onehot_forward_log_zero_test)
 {
+  using Type = typename TypeParam::Type;
+
+  std::uint64_t n_classes     = 3;
+  std::uint64_t n_data_points = 2;
+
+  TypeParam data1(std::vector<std::uint64_t>{n_classes, n_data_points});
+  TypeParam data2(std::vector<std::uint64_t>{n_classes, n_data_points});
+  TypeParam gt(std::vector<std::uint64_t>{n_classes, n_data_points});
+
+  data1 = TypeParam::FromString("0.1, 0.0, 0.9; 0.5, 0.0, 0.5");
+  data1 = data1.Transpose();
+  data2 = TypeParam::FromString("0.0, 1.0, 0; 1, 0, 0");
+  data2 = data2.Transpose();
+
+  fetch::ml::ops::CrossEntropyLoss<TypeParam> op;
+  TypeParam                                   result({1, 1});
+  op.Forward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, result);
+
+  EXPECT_TRUE(result(0, 0) == fetch::math::numeric_inf<Type>());
+}
+
+TYPED_TEST(CrossEntropyTest, binary_forward_test)
+{
+  using SizeType = typename TypeParam::SizeType;
+
   std::uint64_t n_classes     = 1;
-  std::uint64_t n_data_points = 4;
+  std::uint64_t n_data_points = 3;
 
   TypeParam data1(std::vector<std::uint64_t>{n_classes, n_data_points});
   TypeParam data2(std::vector<std::uint64_t>{n_classes, n_data_points});
+  TypeParam gt(std::vector<std::uint64_t>{n_classes, n_data_points});
 
-  // set gt data
-  std::vector<std::uint64_t> gt_data = {0, 0, 0, 1};
-  for (std::uint64_t i = 0; i < n_data_points; ++i)
+  std::vector<double> input_vals{0.05, 0.1, 0.5};
+  std::vector<double> targets{1.0, 0.0, 1.0};
+
+  for (SizeType i = 0; i < n_data_points * n_classes; ++i)
   {
-    for (std::uint64_t j = 0; j < n_classes; ++j)
-    {
-      if (gt_data[i] == j)
-      {
-        data2.Set(j, i, typename TypeParam::Type(1));
-      }
-      else
-      {
-        data2.Set(j, i, typename TypeParam::Type(0));
-      }
-    }
-  }
-
-  // set softmax probabilities
-  std::vector<double> logits{0.01, 0.05, 0.50, 0.9};
-
-  for (std::uint64_t i = 0; i < n_data_points * n_classes; ++i)
-  {
-    data1.Set(0, i, typename TypeParam::Type(logits[i]));
+    data1.Set(SizeType{0}, i, typename TypeParam::Type(input_vals[i]));
+    data2.Set(SizeType{0}, i, typename TypeParam::Type(targets[i]));
   }
 
   fetch::ml::ops::CrossEntropyLoss<TypeParam> op;
   TypeParam                                   result({1, 1});
   op.Forward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, result);
 
-  ASSERT_FLOAT_EQ(static_cast<float>(result(0, 0)), float(2.6491587));
+  ASSERT_FLOAT_EQ(static_cast<float>(result(0, 0)),
+                  float(3.7942399698) / static_cast<float>(n_data_points));
 }
 
-TYPED_TEST(CrossEntropyTest, trivial_one_dimensional_backward_test)
+TYPED_TEST(CrossEntropyTest, binary_backward_test)
 {
   using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
 
-  std::uint64_t n_classes     = 3;
-  std::uint64_t n_data_points = 1;
+  std::uint64_t n_classes     = 1;
+  std::uint64_t n_data_points = 3;
 
   TypeParam data1(std::vector<std::uint64_t>{n_classes, n_data_points});
   TypeParam data2(std::vector<std::uint64_t>{n_classes, n_data_points});
   TypeParam gt(std::vector<std::uint64_t>{n_classes, n_data_points});
 
   // set gt data
-  std::vector<double> gt_data{-0., -9.3890561, -0.};
+  std::vector<double> gt_data{-20, 1.1111111111111111, -2.0000};
   for (SizeType i = 0; i < gt.size(); ++i)
   {
-    gt.Set(i, SizeType{0}, typename TypeParam::Type(gt_data[i]));
+    gt.Set(SizeType{0}, i, typename TypeParam::Type(gt_data[i]));
   }
+  gt = gt / static_cast<DataType>(n_data_points);
 
-  std::vector<double> unscaled_vals{-1.0, -1.0, 1.0};
-  std::vector<double> targets{0.0, 1.0, 0.0};
+  std::vector<double> input_vals{0.05, 0.1, 0.5};
+  std::vector<double> targets{1.0, 0.0, 1.0};
 
   for (SizeType i = 0; i < n_data_points * n_classes; ++i)
   {
-    data1.Set(i, SizeType{0}, typename TypeParam::Type(unscaled_vals[i]));
-    data2.Set(i, SizeType{0}, typename TypeParam::Type(targets[i]));
+    data1.Set(SizeType{0}, i, typename TypeParam::Type(input_vals[i]));
+    data2.Set(SizeType{0}, i, typename TypeParam::Type(targets[i]));
   }
 
   TypeParam error_signal({1, 1});
   error_signal(0, 0) = DataType{1};
 
   fetch::ml::ops::CrossEntropyLoss<TypeParam> op;
+  std::cout << op.Backward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)},
+                           error_signal)
+                   .at(0)
+                   .ToString()
+            << std::endl;
   EXPECT_TRUE(op.Backward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)},
                           error_signal)
                   .at(0)
                   .AllClose(gt, typename TypeParam::Type(1e-5), typename TypeParam::Type(1e-5)));
 }
 
-TYPED_TEST(CrossEntropyTest, one_dimensional_backward_test)
+TYPED_TEST(CrossEntropyTest, onehot_backward_test)
 {
   using DataType = typename TypeParam::Type;
 
-  std::uint64_t n_classes     = 4;
-  std::uint64_t n_data_points = 8;
+  std::uint64_t n_classes     = 3;
+  std::uint64_t n_data_points = 2;
 
   TypeParam data1(std::vector<std::uint64_t>{n_classes, n_data_points});
   TypeParam data2(std::vector<std::uint64_t>{n_classes, n_data_points});
   TypeParam gt(std::vector<std::uint64_t>{n_classes, n_data_points});
 
   // set gt data
-  std::vector<double> gt_data{-0., -0.244132, -0., -0.,       -0., -0.315196, -0.,       -0., -0.,
-                              -0., -0.244132, -0., -0.315937, -0., -0.,       -0.,       -0., -0.,
-                              -0., -0.346439, -0., -0.264643, -0., -0.,       -0.264643, -0., -0.,
-                              -0., -0.,       -0., -0.315937, -0.};
+  gt = TypeParam::FromString("0, -20.0000000000,  0; -2.0000000000,   0,   0");
+  gt = gt.Transpose();
+  gt = gt / static_cast<DataType>(n_data_points);
 
-  std::uint64_t counter{0};
-  for (std::uint64_t i = 0; i < n_data_points; ++i)
-  {
-    for (std::uint64_t j = 0; j < n_classes; ++j)
-    {
-      gt.Set(j, i, typename TypeParam::Type(gt_data[counter]));
-      ++counter;
-    }
-  }
-
-  std::vector<double> unscaled_vals{0.1, 0.8, 0.05, 0.05, 0.2, 0.5, 0.2, 0.1, 0.05, 0.05, 0.8,
-                                    0.1, 0.5, 0.1,  0.1,  0.3, 0.2, 0.3, 0.1, 0.4,  0.1,  0.7,
-                                    0.1, 0.1, 0.7,  0.1,  0.1, 0.1, 0.1, 0.1, 0.5,  0.3};
-  std::vector<double> target{0.0, 0.1, 0.00, 0.00, 0.0, 0.1, 0.0, 0.0, 0.0, 0.0, 0.1,
-                             0.0, 0.1, 0.0,  0.0,  0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.1,
-                             0.0, 0.0, 0.1,  0.0,  0.0, 0.0, 0.0, 0.0, 0.1, 0.0};
-
-  counter = 0;
-  for (std::uint64_t i = 0; i < n_data_points; ++i)
-  {
-    for (std::uint64_t j = 0; j < n_classes; ++j)
-    {
-      data1.Set(j, i, typename TypeParam::Type(unscaled_vals[counter]));
-      data2.Set(j, i, typename TypeParam::Type(target[counter]));
-      ++counter;
-    }
-  }
+  data1 = TypeParam::FromString("0.05, 0.05, 0.9; 0.5, 0.2, 0.3");
+  data1 = data1.Transpose();
+  data2 = TypeParam::FromString("0.0, 1.0, 0; 1, 0, 0");
+  data2 = data2.Transpose();
 
   TypeParam error_signal({1, 1});
   error_signal(0, 0) = DataType{1};
-
-  fetch::ml::ops::CrossEntropyLoss<TypeParam> op;
-  EXPECT_TRUE(op.Backward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)},
-                          error_signal)
-                  .at(0)
-                  .AllClose(gt, typename TypeParam::Type(1e-5), typename TypeParam::Type(1e-5)));
-}
-
-TYPED_TEST(CrossEntropyTest, non_one_hot_dimensional_backward_test)
-{
-  std::uint64_t n_classes     = 1;
-  std::uint64_t n_data_points = 8;
-
-  TypeParam data1(std::vector<std::uint64_t>{n_classes, n_data_points});
-  TypeParam data2(std::vector<std::uint64_t>{n_classes, n_data_points});
-  TypeParam gt(std::vector<std::uint64_t>{n_classes, n_data_points});
-
-  // set gt data
-  std::vector<double> gt_data{0.0524979, -0.24802, -0.0243751, 0., 0., 26, 1e+9, 0};
-  for (std::uint64_t i = 0; i < gt.size(); ++i)
-  {
-    gt.Set(0, i, typename TypeParam::Type(gt_data[i]));
-  }
-
-  // theoretically these needn't lie between 0 and 1
-  std::vector<double> unscaled_vals{0.1, 0.8, -0.05, 100000, 123456, -26, 999999999, 9999999};
-  std::vector<double> target{0.0, 1.0, 0., 1.0, 1.0, 1., 0.0, 1.0};
-  for (std::uint64_t i = 0; i < n_data_points * n_classes; ++i)
-  {
-    data1.Set(0, i, typename TypeParam::Type(unscaled_vals[i]));
-    data2.Set(0, i, typename TypeParam::Type(target[i]));
-  }
-
-  TypeParam error_signal({1, 1});
-  error_signal(0, 0) = typename TypeParam::Type{1};
 
   fetch::ml::ops::CrossEntropyLoss<TypeParam> op;
   EXPECT_TRUE(op.Backward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)},
@@ -286,7 +223,7 @@ TYPED_TEST(CrossEntropyTest, saveparams_test)
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
   using SPType     = typename fetch::ml::ops::CrossEntropyLoss<TensorType>::SPType;
-  using OpType     = typename fetch::ml::ops::CrossEntropyLoss<TensorType>;
+  using OpType     = fetch::ml::ops::CrossEntropyLoss<TensorType>;
 
   std::uint64_t n_classes     = 4;
   std::uint64_t n_data_points = 8;
@@ -365,7 +302,7 @@ TYPED_TEST(CrossEntropyTest, saveparams_one_dimensional_backward_test)
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
   using SPType     = typename fetch::ml::ops::CrossEntropyLoss<TensorType>::SPType;
-  using OpType     = typename fetch::ml::ops::CrossEntropyLoss<TensorType>;
+  using OpType     = fetch::ml::ops::CrossEntropyLoss<TensorType>;
 
   std::uint64_t n_classes     = 4;
   std::uint64_t n_data_points = 8;
@@ -375,38 +312,14 @@ TYPED_TEST(CrossEntropyTest, saveparams_one_dimensional_backward_test)
   TypeParam gt(std::vector<std::uint64_t>{n_classes, n_data_points});
 
   // set gt data
-  std::vector<double> gt_data{-0., -0.244132, -0., -0.,       -0., -0.315196, -0.,       -0., -0.,
-                              -0., -0.244132, -0., -0.315937, -0., -0.,       -0.,       -0., -0.,
-                              -0., -0.346439, -0., -0.264643, -0., -0.,       -0.264643, -0., -0.,
-                              -0., -0.,       -0., -0.315937, -0.};
+  gt = TypeParam::FromString("0, -20.0000000000,  0; -2.0000000000,   0,   0");
+  gt = gt.Transpose();
+  gt = gt / static_cast<DataType>(n_data_points);
 
-  std::uint64_t counter{0};
-  for (std::uint64_t i = 0; i < n_data_points; ++i)
-  {
-    for (std::uint64_t j = 0; j < n_classes; ++j)
-    {
-      gt.Set(j, i, typename TypeParam::Type(gt_data[counter]));
-      ++counter;
-    }
-  }
-
-  std::vector<double> unscaled_vals{0.1, 0.8, 0.05, 0.05, 0.2, 0.5, 0.2, 0.1, 0.05, 0.05, 0.8,
-                                    0.1, 0.5, 0.1,  0.1,  0.3, 0.2, 0.3, 0.1, 0.4,  0.1,  0.7,
-                                    0.1, 0.1, 0.7,  0.1,  0.1, 0.1, 0.1, 0.1, 0.5,  0.3};
-  std::vector<double> target{0.0, 0.1, 0.00, 0.00, 0.0, 0.1, 0.0, 0.0, 0.0, 0.0, 0.1,
-                             0.0, 0.1, 0.0,  0.0,  0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.1,
-                             0.0, 0.0, 0.1,  0.0,  0.0, 0.0, 0.0, 0.0, 0.1, 0.0};
-
-  counter = 0;
-  for (std::uint64_t i = 0; i < n_data_points; ++i)
-  {
-    for (std::uint64_t j = 0; j < n_classes; ++j)
-    {
-      data1.Set(j, i, typename TypeParam::Type(unscaled_vals[counter]));
-      data2.Set(j, i, typename TypeParam::Type(target[counter]));
-      ++counter;
-    }
-  }
+  data1 = TypeParam::FromString("0.05, 0.05, 0.9; 0.5, 0.2, 0.3");
+  data1 = data1.Transpose();
+  data2 = TypeParam::FromString("0.0, 1.0, 0; 1, 0, 0");
+  data2 = data2.Transpose();
 
   TypeParam error_signal({1, 1});
   error_signal(0, 0) = DataType{1};

@@ -35,6 +35,7 @@ public:
   using SizeType      = typename TensorType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpSQRTSaveableParams<T>;
+  using MyType        = Sqrt<TensorType>;
 
   Sqrt() = default;
 
@@ -50,6 +51,16 @@ public:
     return std::make_shared<SPType>(sp);
   }
 
+  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
+  {
+    FETCH_UNUSED(me);
+    assert(me.get() == this);
+
+    auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
+
+    return copyshare;
+  }
   /**
    * elementwise square root
    * @param inputs vector containing one tensor which is the input tensor to Sqrt

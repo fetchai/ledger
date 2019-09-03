@@ -130,8 +130,6 @@ public:
   PeerConnectionList &operator=(PeerConnectionList &&) = delete;
 
 private:
-  using Mutex       = mutex::Mutex;
-  using Lock        = std::lock_guard<Mutex>;
   using MetadataMap = std::unordered_map<Uri, PeerMetadata>;
 
   StatusCallback status_callback_;

@@ -25,6 +25,9 @@
 
 #include "gtest/gtest.h"
 
+#include <memory>
+#include <vector>
+
 template <typename T>
 class ConcatenateTest : public ::testing::Test
 {
@@ -91,7 +94,7 @@ TYPED_TEST(ConcatenateTest, saveparams_test)
   using DataType      = typename TypeParam::Type;
   using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
   using SPType        = typename fetch::ml::ops::Concatenate<TensorType>::SPType;
-  using OpType        = typename fetch::ml::ops::Concatenate<TensorType>;
+  using OpType        = fetch::ml::ops::Concatenate<TensorType>;
 
   TypeParam data1 = TypeParam::UniformRandom(64);
   TypeParam data2 = TypeParam::UniformRandom(64);
@@ -138,8 +141,8 @@ TYPED_TEST(ConcatenateTest, saveparams_test)
 TYPED_TEST(ConcatenateTest, saveparams_backward_test)
 {
   using TensorType = TypeParam;
-  using OpType     = typename fetch::ml::ops::Concatenate<TensorType>;
-  using SPType     = typename OpType ::SPType;
+  using OpType     = fetch::ml::ops::Concatenate<TensorType>;
+  using SPType     = typename OpType::SPType;
 
   TypeParam data1(std::vector<fetch::math::SizeType>({8, 8}));
   TypeParam data2(std::vector<fetch::math::SizeType>({8, 8}));

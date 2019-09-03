@@ -28,29 +28,31 @@ using namespace fetch::core;
 
 class ArrayTests : public ::testing::Test
 {
-protected:
+public:
   using ArrU64 = Array<uint64_t, 4>;
+
+  ArrayTests()
+  {
+    static_assert(sizeof(mem) >= ArrU64::size() * sizeof(ArrU64::value_type),
+                  "Size of pre-set memory must be bigger or equal to memory needed for array type "
+                  "under test");
+  }
+
+  uint64_t mem[10] = {0x0f0f0f0f0f0f0f0full, 0xf0f0f0f0f0f0f0f0ull, 0x0707070707070707ull,
+                      0x7070707070707070ull, 0x0a0a0a0a0a0a0a0aull, 0xa0a0a0a0a0a0a0a0ull,
+                      0x0505050505050505ull, 0x5050505050505050ull, 0xaaaaaaaaaaaaaaaaull,
+                      0x5555555555555555ull};
 };
 
 TEST_F(ArrayTests, test_default_constr)
 {
-  using Memory = uint64_t[10];
-  static_assert(sizeof(Memory) >= ArrU64::size() * sizeof(ArrU64::value_type),
-                "Size of pre-set memory must be bigger or equal to memory needed for array type "
-                "under the test.");
-
-  Memory mem = {0x0f0f0f0f0f0f0f0full, 0xf0f0f0f0f0f0f0f0ull, 0x0707070707070707ull,
-                0x7070707070707070ull, 0x0a0a0a0a0a0a0a0aull, 0xa0a0a0a0a0a0a0a0ull,
-                0x0505050505050505ull, 0x5050505050505050ull, 0xaaaaaaaaaaaaaaaaull,
-                0x5555555555555555ull};
-
   std::size_t i{0};
   for (auto const &itm : mem)
   {
     ASSERT_NE(itm, 0ll);
     ++i;
   }
-  ASSERT_EQ(sizeof(Memory) / sizeof(mem[0]), i);
+  ASSERT_EQ(sizeof(mem) / sizeof(mem[0]), i);
 
   auto const &arr = *new (mem) ArrU64{};
   for (auto const &itm : arr)
@@ -61,14 +63,6 @@ TEST_F(ArrayTests, test_default_constr)
 
 TEST_F(ArrayTests, test_aggregate_initialisation)
 {
-  uint64_t mem[] = {0x0f0f0f0f0f0f0f0full, 0xf0f0f0f0f0f0f0f0ull, 0x0707070707070707ull,
-                    0x7070707070707070ull, 0x0a0a0a0a0a0a0a0aull, 0xa0a0a0a0a0a0a0a0ull,
-                    0x0505050505050505ull, 0x5050505050505050ull, 0xaaaaaaaaaaaaaaaaull,
-                    0x5555555555555555ull};
-  static_assert(sizeof(mem) >= ArrU64::size() * sizeof(ArrU64::value_type),
-                "Size of pre-set memory must be bigger or equal to memory needed for array type "
-                "under the test.");
-
   auto const &arr = *new (mem) ArrU64{1ull, 2ull};
   EXPECT_EQ(1ull, arr[0]);
   EXPECT_EQ(2ull, arr[1]);
@@ -80,14 +74,6 @@ TEST_F(ArrayTests, test_aggregate_initialisation)
 
 TEST_F(ArrayTests, test_forward_iteration_1)
 {
-  uint64_t mem[] = {0x0f0f0f0f0f0f0f0full, 0xf0f0f0f0f0f0f0f0ull, 0x0707070707070707ull,
-                    0x7070707070707070ull, 0x0a0a0a0a0a0a0a0aull, 0xa0a0a0a0a0a0a0a0ull,
-                    0x0505050505050505ull, 0x5050505050505050ull, 0xaaaaaaaaaaaaaaaaull,
-                    0x5555555555555555ull};
-  static_assert(sizeof(mem) >= ArrU64::size() * sizeof(ArrU64::value_type),
-                "Size of pre-set memory must be bigger or equal to memory needed for array type "
-                "under the test.");
-
   auto const &arr = *new (mem) ArrU64{1ull, 2ull};
 
   uint64_t const exp_order[] = {1ull, 2ull, 0ull, 0ull};
@@ -102,14 +88,6 @@ TEST_F(ArrayTests, test_forward_iteration_1)
 
 TEST_F(ArrayTests, test_reverse_iteration)
 {
-  uint64_t mem[] = {0x0f0f0f0f0f0f0f0full, 0xf0f0f0f0f0f0f0f0ull, 0x0707070707070707ull,
-                    0x7070707070707070ull, 0x0a0a0a0a0a0a0a0aull, 0xa0a0a0a0a0a0a0a0ull,
-                    0x0505050505050505ull, 0x5050505050505050ull, 0xaaaaaaaaaaaaaaaaull,
-                    0x5555555555555555ull};
-  static_assert(sizeof(mem) >= ArrU64::size() * sizeof(ArrU64::value_type),
-                "Size of pre-set memoty must be bigger or equal to memory needed for array type "
-                "under the test.");
-
   auto const &arr = *new (mem) ArrU64{1ull, 2ull};
 
   uint64_t const exp_order[] = {0ull, 0ull, 2ull, 1ull};
@@ -124,14 +102,6 @@ TEST_F(ArrayTests, test_reverse_iteration)
 
 TEST_F(ArrayTests, test_reverse_iteration_with_assignment)
 {
-  uint64_t mem[] = {0x0f0f0f0f0f0f0f0full, 0xf0f0f0f0f0f0f0f0ull, 0x0707070707070707ull,
-                    0x7070707070707070ull, 0x0a0a0a0a0a0a0a0aull, 0xa0a0a0a0a0a0a0a0ull,
-                    0x0505050505050505ull, 0x5050505050505050ull, 0xaaaaaaaaaaaaaaaaull,
-                    0x5555555555555555ull};
-  static_assert(sizeof(mem) >= ArrU64::size() * sizeof(ArrU64::value_type),
-                "Size of pre-set memoty must be bigger or equal to memory needed for array type "
-                "under the test.");
-
   auto &arr = *new (mem) ArrU64{};
 
   uint64_t const exp_order[] = {1ull, 2ull, 0ull, 0ull};
@@ -147,14 +117,6 @@ TEST_F(ArrayTests, test_reverse_iteration_with_assignment)
 
 TEST_F(ArrayTests, test_forward_iteration_with_assignment)
 {
-  uint64_t mem[] = {0x0f0f0f0f0f0f0f0full, 0xf0f0f0f0f0f0f0f0ull, 0x0707070707070707ull,
-                    0x7070707070707070ull, 0x0a0a0a0a0a0a0a0aull, 0xa0a0a0a0a0a0a0a0ull,
-                    0x0505050505050505ull, 0x5050505050505050ull, 0xaaaaaaaaaaaaaaaaull,
-                    0x5555555555555555ull};
-  static_assert(sizeof(mem) >= ArrU64::size() * sizeof(ArrU64::value_type),
-                "Size of pre-set memoty must be bigger or equal to memory needed for array type "
-                "under the test.");
-
   auto &arr = *new (mem) ArrU64{};
 
   uint64_t const exp_order[] = {1ull, 2ull, 0ull, 0ull};

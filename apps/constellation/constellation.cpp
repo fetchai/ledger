@@ -39,6 +39,8 @@
 #include "network/p2pservice/p2p_http_interface.hpp"
 #include "network/uri.hpp"
 #include "open_api_http_module.hpp"
+#include "telemetry/counter.hpp"
+#include "telemetry/registry.hpp"
 #include "telemetry_http_module.hpp"
 
 #include "beacon/beacon_service.hpp"
@@ -129,46 +131,46 @@ std::shared_ptr<ledger::DAGInterface> GenerateDAG(bool generate, std::string con
   return nullptr;
 }
 
-ledger::ShardConfigs GenerateShardsConfig(Constellation::Config &config, uint16_t start_port,
-                                          std::string const &storage_path)
+ledger::ShardConfigs GenerateShardsConfig(Config &cfg, uint16_t start_port)
 {
-  ledger::ShardConfigs configs(config.num_lanes());
+  ledger::ShardConfigs configs(cfg.num_lanes());
 
-  for (uint32_t i = 0; i < config.num_lanes(); ++i)
+  for (uint32_t i = 0; i < cfg.num_lanes(); ++i)
   {
     // lookup the service in the provided manifest
-    auto it = config.manifest.FindService(
+    auto it = cfg.manifest.FindService(
         ServiceIdentifier{ServiceIdentifier::Type::LANE, static_cast<int32_t>(i)});
 
-    if (it == config.manifest.end())
+    if (it == cfg.manifest.end())
     {
       FETCH_LOG_ERROR(Constellation::LOGGING_NAME, "Unable to update manifest for lane ", i);
       throw std::runtime_error("Invalid manifest provided");
     }
 
-    auto &cfg = configs[i];
+    auto &shard = configs[i];
 
-    cfg.lane_id           = i;
-    cfg.num_lanes         = config.num_lanes();
-    cfg.storage_path      = storage_path;
-    cfg.external_name     = it->second.uri().GetTcpPeer().address();
-    cfg.external_identity = std::make_shared<crypto::ECDSASigner>();
-    cfg.external_port     = start_port++;
-    cfg.external_network_id =
+    shard.lane_id           = i;
+    shard.num_lanes         = cfg.num_lanes();
+    shard.storage_path      = cfg.db_prefix;
+    shard.external_name     = it->second.uri().GetTcpPeer().address();
+    shard.external_identity = std::make_shared<crypto::ECDSASigner>();
+    shard.external_port     = start_port++;
+    shard.external_network_id =
         muddle::NetworkId{(static_cast<uint32_t>(i) & 0xFFFFFFu) | (uint32_t{'L'} << 24u)};
-    cfg.internal_name       = it->second.uri().GetTcpPeer().address();
-    cfg.internal_identity   = std::make_shared<crypto::ECDSASigner>();
-    cfg.internal_port       = start_port++;
-    cfg.internal_network_id = muddle::NetworkId{"ISRD"};
+    shard.internal_name        = it->second.uri().GetTcpPeer().address();
+    shard.internal_identity    = std::make_shared<crypto::ECDSASigner>();
+    shard.internal_port        = start_port++;
+    shard.internal_network_id  = muddle::NetworkId{"ISRD"};
+    shard.verification_threads = cfg.verification_threads;
 
-    auto const ext_identity = cfg.external_identity->identity().identifier();
-    auto const int_identity = cfg.internal_identity->identity().identifier();
+    auto const ext_identity = shard.external_identity->identity().identifier();
+    auto const int_identity = shard.internal_identity->identity().identifier();
 
     FETCH_LOG_INFO(Constellation::LOGGING_NAME, "Shard ", i + 1);
     FETCH_LOG_INFO(Constellation::LOGGING_NAME, " - Internal ", ToBase64(int_identity), " - ",
-                   cfg.internal_network_id.ToString(), " - tcp://0.0.0.0:", cfg.internal_port);
+                   shard.internal_network_id.ToString(), " - tcp://0.0.0.0:", shard.internal_port);
     FETCH_LOG_INFO(Constellation::LOGGING_NAME, " - External ", ToBase64(ext_identity), " - ",
-                   cfg.external_network_id.ToString(), " - tcp://0.0.0.0:", cfg.external_port);
+                   shard.external_network_id.ToString(), " - tcp://0.0.0.0:", shard.external_port);
 
     // update the manifest with the generated identity
     it->second.UpdateAddress(ext_identity);
@@ -255,7 +257,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   , p2p_port_(LookupLocalPort(cfg_.manifest, ServiceIdentifier::Type::CORE))
   , http_port_(LookupLocalPort(cfg_.manifest, ServiceIdentifier::Type::HTTP))
   , lane_port_start_(LookupLocalPort(cfg_.manifest, ServiceIdentifier::Type::LANE, 0))
-  , shard_cfgs_{GenerateShardsConfig(cfg_, lane_port_start_, cfg_.db_prefix)}
+  , shard_cfgs_{GenerateShardsConfig(cfg_, lane_port_start_)}
   , reactor_{"Reactor"}
   , network_manager_{"NetMgr", CalcNetworkManagerThreads(cfg_.num_lanes())}
   , http_network_manager_{"Http", HTTP_THREADS}
@@ -305,19 +307,23 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   , tx_processor_{dag_, *storage_, block_packer_, tx_status_cache_, cfg_.processor_threads}
   , http_open_api_module_{std::make_shared<OpenAPIHttpModule>()}
   , http_{http_network_manager_}
-  , http_modules_{
-        http_open_api_module_,
-        std::make_shared<p2p::P2PHttpInterface>(
+  , http_modules_{http_open_api_module_,
+                  std::make_shared<p2p::P2PHttpInterface>(
             cfg_.log2_num_lanes, chain_, block_packer_,
-            p2p::P2PHttpInterface::WeakStateMachines{main_chain_service_->GetWeakStateMachine(),
-                                                     block_coordinator_.GetWeakStateMachine()}),
-        std::make_shared<ledger::TxStatusHttpInterface>(tx_status_cache_),
-        std::make_shared<ledger::TxQueryHttpInterface>(*storage_),
-        std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_),
-        std::make_shared<LoggingHttpModule>(),
-        std::make_shared<TelemetryHttpModule>(),
+                      p2p::P2PHttpInterface::WeakStateMachines{
+                          main_chain_service_->GetWeakStateMachine(),
+                          block_coordinator_.GetWeakStateMachine()}),
+                  std::make_shared<ledger::TxStatusHttpInterface>(tx_status_cache_),
+                  std::make_shared<ledger::TxQueryHttpInterface>(*storage_),
+                  std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_),
+                  std::make_shared<LoggingHttpModule>(),
+                  std::make_shared<TelemetryHttpModule>(),
         std::make_shared<MuddleStatusModule>(),
-        std::make_shared<HealthCheckHttpModule>(chain_, *main_chain_service_, block_coordinator_)}
+                  std::make_shared<HealthCheckHttpModule>(chain_, *main_chain_service_,
+                                                          block_coordinator_)}
+  , uptime_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_uptime_ticks_total",
+        "The number of intervals that ledger instance has been alive for")}
 {
 
   // print the start up log banner
@@ -561,6 +567,9 @@ void Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstra
 
       FETCH_LOG_INFO(LOGGING_NAME, "Startup complete");
     }
+
+    // update the uptime counter
+    uptime_->increment();
   }
 
   //---------------------------------------------------------------
@@ -587,6 +596,11 @@ void Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstra
 void Constellation::OnBlock(ledger::Block const &block)
 {
   main_chain_service_->BroadcastBlock(block);
+}
+
+void Constellation::SignalStop()
+{
+  active_ = false;
 }
 
 }  // namespace fetch

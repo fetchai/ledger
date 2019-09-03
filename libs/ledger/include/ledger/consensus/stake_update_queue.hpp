@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/threading/synchronised_state.hpp"
+#include "core/synchronisation/protected.hpp"
 #include "crypto/identity.hpp"
 #include "ledger/consensus/stake_update_interface.hpp"
 
@@ -67,37 +67,9 @@ public:
 private:
   using StakeMap     = std::unordered_map<Identity, StakeAmount>;
   using BlockUpdates = std::map<BlockIndex, StakeMap>;
-  using SyncUpdates  = SynchronisedState<BlockUpdates>;
 
-  SyncUpdates updates_{};  ///< The update queue
+  Protected<BlockUpdates> updates_{};  ///< The update queue
 };
-
-/**
- * Gets the number of block updates currently pending in the queue
-
- * @return The number of pending updates
- */
-inline std::size_t StakeUpdateQueue::size() const
-{
-  std::size_t size{0};
-
-  updates_.Apply([&size](BlockUpdates const &updates) { size = updates.size(); });
-
-  return size;
-}
-
-/**
- * Adds / Updates the change of stake to be applied at a given block index
- *
- * @param block_index The block index at which to apply the update
- * @param identity The identity of the stake holder
- * @param stake The amount of tokens to be staked
- */
-inline void StakeUpdateQueue::AddStakeUpdate(BlockIndex block_index, Identity const &identity,
-                                             StakeAmount stake)
-{
-  updates_.Apply([&](BlockUpdates &updates) { updates[block_index][identity] = stake; });
-}
 
 /**
  * Visit the underlying queue container directly
@@ -108,7 +80,7 @@ inline void StakeUpdateQueue::AddStakeUpdate(BlockIndex block_index, Identity co
 template <typename Visitor>
 void StakeUpdateQueue::VisitUnderlyingQueue(Visitor &&visitor)
 {
-  updates_.Apply([&](BlockUpdates &updates) { visitor(updates); });
+  updates_.ApplyVoid([&](BlockUpdates &updates) { visitor(updates); });
 }
 
 }  // namespace ledger

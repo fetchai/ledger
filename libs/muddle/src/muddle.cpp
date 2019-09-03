@@ -23,7 +23,7 @@
 #include "peer_selector.hpp"
 
 #include "core/containers/set_intersection.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "core/serializers/base_types.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "core/service_ids.hpp"
@@ -458,7 +458,6 @@ Muddle::ServerList const &Muddle::servers() const
  */
 void Muddle::RunPeriodicMaintenance()
 {
-  LOG_STACK_TRACE_POINT;
   FETCH_LOG_TRACE(LOGGING_NAME, "Running periodic maintenance");
 
   try
@@ -519,7 +518,6 @@ void Muddle::RunPeriodicMaintenance()
  */
 void Muddle::CreateTcpServer(uint16_t port)
 {
-  LOG_STACK_TRACE_POINT;
   using ServerImpl = MuddleServer<network::TCPServer>;
 
   // create the server
@@ -543,7 +541,6 @@ void Muddle::CreateTcpServer(uint16_t port)
  */
 void Muddle::CreateTcpClient(Uri const &peer)
 {
-  LOG_STACK_TRACE_POINT;
   using ClientImpl       = network::TCPClient;
   using ConnectionRegPtr = std::shared_ptr<network::AbstractConnectionRegister>;
 

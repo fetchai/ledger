@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "core/mutex.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "network/management/client_manager.hpp"
@@ -57,7 +57,6 @@ public:
     , manager_(std::move(manager))
     , network_manager_(network_manager)
   {
-    LOG_STACK_TRACE_POINT;
     auto socket_ptr = socket_.lock();
     if (socket_ptr)
     {
@@ -82,7 +81,6 @@ public:
 
   ~ClientConnection()
   {
-    LOG_STACK_TRACE_POINT;
     auto ptr = manager_.lock();
     if (!ptr)
     {
@@ -94,7 +92,6 @@ public:
 
   void Start()
   {
-    LOG_STACK_TRACE_POINT;
     auto ptr = manager_.lock();
     if (!ptr)
     {
@@ -126,7 +123,7 @@ public:
     }
 
     {
-      std::lock_guard<mutex_type> lock(queue_mutex_);
+      FETCH_LOCK(queue_mutex_);
       write_queue_.push_back(msg);
     }
 
@@ -215,7 +212,6 @@ private:
       return;
     }
 
-    LOG_STACK_TRACE_POINT;
     auto socket_ptr = socket_.lock();
     if (!socket_ptr)
     {
@@ -249,8 +245,6 @@ private:
 
   void ReadBody(StrongStrand strong_strand)
   {
-    LOG_STACK_TRACE_POINT;
-
     if (shutting_down_)
     {
       return;
@@ -325,7 +319,7 @@ private:
     // Only one thread can get past here at a time. Effectively a try_lock
     // except that we can't unlock a mutex in the callback (undefined behaviour)
     {
-      std::lock_guard<mutex_type> lock(can_write_mutex_);
+      FETCH_LOCK(can_write_mutex_);
       if (can_write_)
       {
         can_write_ = false;
@@ -338,10 +332,10 @@ private:
 
     message_type buffer;
     {
-      std::lock_guard<mutex_type> lock(queue_mutex_);
+      FETCH_LOCK(queue_mutex_);
       if (write_queue_.empty())
       {
-        std::lock_guard<mutex_type> lock(can_write_mutex_);
+        FETCH_LOCK(can_write_mutex_);
         can_write_ = true;
         return;
       }
@@ -361,7 +355,7 @@ private:
       FETCH_UNUSED(len);
 
       {
-        std::lock_guard<mutex_type> lock(can_write_mutex_);
+        FETCH_LOCK(can_write_mutex_);
         can_write_ = true;
       }
 

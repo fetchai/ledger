@@ -1,7 +1,7 @@
 #
 # F E T C H   M L   B E N C H M A R K S
 #
-cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
 project(fetch-ml)
 
 # CMake configuration
@@ -13,3 +13,4 @@ setup_compiler()
 add_fetch_gbench(benchmark_ml_activations fetch-ml activations)
 add_fetch_gbench(benchmark_ml_ops fetch-ml ops)
 add_fetch_gbench(benchmark_ml_training fetch-ml training)
+add_fetch_gbench(benchmark_ml_serialization fetch-ml serialization)

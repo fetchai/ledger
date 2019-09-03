@@ -37,7 +37,7 @@ public:
   ParamsParser(ParamsParser &&)      = delete;
   ~ParamsParser()                    = default;
 
-  void Parse(int argc, char **argv);
+  void Parse(int argc, const char *const argv[]);
 
   template <typename T>
   T GetArg(std::size_t i, T const &default_value) const;
@@ -64,7 +64,6 @@ public:
 private:
   std::map<std::string, std::string> params_{};
   std::vector<std::string>           args_{};
-  std::size_t                        arg_count_{0};
 };
 
 template <typename T>
@@ -107,21 +106,6 @@ T ParamsParser::GetParam(std::string const &key, T const &default_value) const
   T                 ret;
   s >> ret;
   return ret;
-}
-
-inline std::size_t ParamsParser::arg_size() const
-{
-  return args_.size();
-}
-
-inline std::size_t ParamsParser::param_size() const
-{
-  return params_.size();
-}
-
-inline std::map<std::string, std::string> const &ParamsParser::params() const
-{
-  return params_;
 }
 
 }  // namespace commandline

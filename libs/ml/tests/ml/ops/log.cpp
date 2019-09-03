@@ -138,7 +138,7 @@ TYPED_TEST(LogBothTest, saveparams_test)
   using DataType      = typename TypeParam::Type;
   using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
   using SPType        = typename fetch::ml::ops::Log<TensorType>::SPType;
-  using OpType        = typename fetch::ml::ops::Log<TensorType>;
+  using OpType        = fetch::ml::ops::Log<TensorType>;
 
   TensorType data = TensorType::FromString("1, 2, 4, 8, 100, 1000");
   TensorType gt   = TensorType::FromString(
@@ -182,8 +182,8 @@ TYPED_TEST(LogBothTest, saveparams_test)
 TYPED_TEST(LogBothTest, saveparams_backward_test)
 {
   using TensorType = TypeParam;
-  using OpType     = typename fetch::ml::ops::Log<TensorType>;
-  using SPType     = typename OpType ::SPType;
+  using OpType     = fetch::ml::ops::Log<TensorType>;
+  using SPType     = typename OpType::SPType;
 
   TensorType data  = TensorType::FromString("1, -2, 4, -10, 100");
   TensorType error = TensorType::FromString("1, 1, 1, 2, 0");

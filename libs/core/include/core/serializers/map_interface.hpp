@@ -19,9 +19,12 @@
 
 #include "core/serializers/base_types.hpp"
 
+#include <cstdint>
+
 namespace fetch {
 namespace serializers {
 namespace interfaces {
+
 template <typename Driver>
 class MapInterface
 {

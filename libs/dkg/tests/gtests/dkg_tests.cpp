@@ -29,7 +29,13 @@
 #include "muddle/rpc/server.hpp"
 
 #include "gtest/gtest.h"
-#include <iostream>
+
+#include <cstdint>
+#include <functional>
+#include <set>
+#include <thread>
+#include <utility>
+#include <vector>
 
 using namespace fetch;
 using namespace fetch::network;

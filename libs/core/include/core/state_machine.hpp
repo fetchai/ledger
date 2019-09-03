@@ -17,10 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
-#include "core/mutex.hpp"
+#include "core/logging.hpp"
+#include "core/macros.hpp"
 #include "core/runnable.hpp"
 #include "core/state_machine_interface.hpp"
+#include "core/synchronisation/protected.hpp"
 
 #include <atomic>
 #include <chrono>
@@ -47,13 +48,14 @@ namespace core {
 template <typename State>
 class StateMachine : public StateMachineInterface, public Runnable
 {
-public:
   static_assert(std::is_enum<State>::value, "");
 
-  using Callback            = std::function<State(State /*current*/, State /*previous*/)>;
-  using StateChangeCallback = std::function<void(State /*current*/, State /*previous*/)>;
-  using StateMapper         = std::function<char const *(State)>;
+  using Callback                     = std::function<State(State /*current*/, State /*previous*/)>;
+  using StateChangeCallback          = std::function<void(State /*current*/, State /*previous*/)>;
+  using StateMapper                  = std::function<char const *(State)>;
+  using ProtectedStateChangeCallback = Protected<StateChangeCallback>;
 
+public:
   // Construction / Destruction
   explicit StateMachine(std::string name, State initial, StateMapper mapper = StateMapper{});
   StateMachine(StateMachine const &)     = delete;
@@ -99,22 +101,21 @@ public:
   StateMachine &operator=(StateMachine &&) = delete;
 
 private:
-  using Clock       = std::chrono::steady_clock;
-  using Timepoint   = Clock::time_point;
-  using Duration    = Clock::duration;
-  using CallbackMap = std::unordered_map<State, Callback>;
-  using Mutex       = std::mutex;
+  using Clock                = std::chrono::steady_clock;
+  using Timepoint            = Clock::time_point;
+  using Duration             = Clock::duration;
+  using CallbackMap          = std::unordered_map<State, Callback>;
+  using ProtectedCallbackMap = Protected<CallbackMap>;
 
   void Reset();
 
-  std::string const   name_;
-  StateMapper         mapper_;
-  mutable Mutex       callbacks_mutex_;
-  CallbackMap         callbacks_{};
-  std::atomic<State>  current_state_;
-  std::atomic<State>  previous_state_{current_state_.load()};
-  Timepoint           next_execution_{};
-  StateChangeCallback state_change_callback_{};
+  std::string const            name_;
+  StateMapper                  mapper_;
+  ProtectedCallbackMap         callbacks_{};
+  std::atomic<State>           current_state_;
+  std::atomic<State>           previous_state_{current_state_.load()};
+  Timepoint                    next_execution_{};
+  ProtectedStateChangeCallback state_change_callback_{};
 };
 
 /**
@@ -157,8 +158,9 @@ template <typename C>
 void StateMachine<S>::RegisterHandler(S state, C *instance,
                                       S (C::*func)(S /*current*/, S /*previous*/))
 {
-  FETCH_LOCK(callbacks_mutex_);
-  callbacks_[state] = [instance, func](S state, S prev) { return (instance->*func)(state, prev); };
+  callbacks_.ApplyVoid([func, instance, state](auto &callbacks) {
+    callbacks[state] = [func, instance](S state, S prev) { return (instance->*func)(state, prev); };
+  });
 }
 
 /**
@@ -174,11 +176,12 @@ template <typename S>
 template <typename C>
 void StateMachine<S>::RegisterHandler(S state, C *instance, S (C::*func)(S /*current*/))
 {
-  FETCH_LOCK(callbacks_mutex_);
-  callbacks_[state] = [instance, func](S state, S prev) {
-    FETCH_UNUSED(prev);
-    return (instance->*func)(state);
-  };
+  callbacks_.ApplyVoid([func, instance, state](auto &callbacks) {
+    callbacks[state] = [func, instance](S state, S prev) {
+      FETCH_UNUSED(prev);
+      return (instance->*func)(state);
+    };
+  });
 }
 
 /**
@@ -194,12 +197,13 @@ template <typename S>
 template <typename C>
 void StateMachine<S>::RegisterHandler(S state, C *instance, S (C::*func)())
 {
-  FETCH_LOCK(callbacks_mutex_);
-  callbacks_[state] = [instance, func](S state, S prev) {
-    FETCH_UNUSED(state);
-    FETCH_UNUSED(prev);
-    return (instance->*func)();
-  };
+  callbacks_.ApplyVoid([func, instance, state](auto &callbacks) {
+    callbacks[state] = [func, instance](S state, S prev) {
+      FETCH_UNUSED(state);
+      FETCH_UNUSED(prev);
+      return (instance->*func)();
+    };
+  });
 }
 
 /**
@@ -210,9 +214,10 @@ void StateMachine<S>::RegisterHandler(S state, C *instance, S (C::*func)())
 template <typename S>
 void StateMachine<S>::Reset()
 {
-  FETCH_LOCK(callbacks_mutex_);
-  callbacks_.clear();
-  state_change_callback_ = StateChangeCallback{};
+  callbacks_.ApplyVoid([](auto &callbacks) { callbacks.clear(); });
+
+  state_change_callback_.ApplyVoid(
+      [](auto &state_change_callback) { state_change_callback = StateChangeCallback{}; });
 }
 
 /**
@@ -224,8 +229,8 @@ void StateMachine<S>::Reset()
 template <typename S>
 void StateMachine<S>::OnStateChange(StateChangeCallback cb)
 {
-  FETCH_LOCK(callbacks_mutex_);
-  state_change_callback_ = std::move(cb);
+  state_change_callback_.ApplyVoid(
+      [&cb](auto &state_change_callback) { state_change_callback = std::move(cb); });
 }
 
 /**
@@ -298,29 +303,31 @@ bool StateMachine<S>::IsReadyToExecute() const
 template <typename S>
 void StateMachine<S>::Execute()
 {
-  FETCH_LOCK(callbacks_mutex_);
-
-  // loop up the current state event callback map
-  auto it = callbacks_.find(current_state_);
-  if (it != callbacks_.end())
-  {
-    // execute the state handler
-    S const next_state = it->second(current_state_, previous_state_);
-
-    // perform the state updates
-    previous_state_ = current_state_.load();
-    current_state_  = next_state;
-
-    // detect a state change
-    if (current_state_ != previous_state_)
+  callbacks_.ApplyVoid([this](auto &callbacks) {
+    // iterate over the current state event callback map
+    auto it = callbacks.find(current_state_);
+    if (it != callbacks.end())
     {
-      // trigger the state change callback if configured
-      if (state_change_callback_)
+      // execute the state handler
+      S const next_state = it->second(current_state_, previous_state_);
+
+      // perform the state updates
+      previous_state_ = current_state_.load();
+      current_state_  = next_state;
+
+      // detect a state change
+      if (current_state_ != previous_state_)
       {
-        state_change_callback_(current_state_, previous_state_);
+        // trigger the state change callback if configured
+        state_change_callback_.ApplyVoid([this](auto &state_change_callback) {
+          if (state_change_callback)
+          {
+            state_change_callback(current_state_, previous_state_);
+          }
+        });
       }
     }
-  }
+  });
 }
 
 /**

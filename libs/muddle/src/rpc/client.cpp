@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/threading.hpp"
 #include "muddle/rpc/client.hpp"
 
 #include <chrono>

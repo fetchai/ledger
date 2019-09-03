@@ -23,7 +23,7 @@
 
 #include "core/byte_array/encoders.hpp"
 #include "core/containers/set_intersection.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "core/serializers/base_types.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "core/service_ids.hpp"
@@ -62,7 +62,6 @@ namespace {
  */
 std::size_t GenerateEchoId(Packet const &packet)
 {
-  LOG_STACK_TRACE_POINT;
   crypto::FNV hash;
   hash.Reset();
 
@@ -116,11 +115,10 @@ bool operator==(Packet::RawAddress const &lhs, Packet::Address const &rhs)
  */
 ConstByteArray ToConstByteArray(Packet::RawAddress const &addr)
 {
-  LOG_STACK_TRACE_POINT;
   ByteArray buffer;
   buffer.Resize(addr.size());
   std::memcpy(buffer.pointer(), addr.data(), addr.size());
-  return std::move(buffer);
+  return {std::move(buffer)};
 }
 
 template <typename T>
@@ -189,7 +187,6 @@ Router::PacketPtr FormatPacket(Packet::Address const &from, NetworkId const &net
 
 std::string DescribePacket(Packet const &packet)
 {
-  LOG_STACK_TRACE_POINT;
   std::ostringstream oss;
 
   oss << "To: " << ToBase64(packet.GetTarget()) << " From: " << ToBase64(packet.GetSender())
@@ -211,7 +208,6 @@ std::string DescribePacket(Packet const &packet)
  */
 Packet::RawAddress Router::ConvertAddress(Packet::Address const &address)
 {
-  LOG_STACK_TRACE_POINT;
   Packet::RawAddress raw_address;
 
   if (raw_address.size() != address.size())
@@ -301,7 +297,6 @@ Router::PacketPtr const &Router::Sign(PacketPtr const &p) const
  */
 void Router::Route(Handle handle, PacketPtr packet)
 {
-  LOG_STACK_TRACE_POINT;
   FETCH_LOG_TRACE(LOGGING_NAME, "RX: (conn: ", handle, ") ", DescribePacket(*packet));
 
   // discard all foreign packets
@@ -432,7 +427,6 @@ void Router::Send(Address const &address, uint16_t service, uint16_t channel, ui
  */
 void Router::Broadcast(uint16_t service, uint16_t channel, Payload const &payload)
 {
-  LOG_STACK_TRACE_POINT;
   // get the next counter for this message
   uint16_t const counter = dispatcher_.GetNextCounter();
 
@@ -464,7 +458,6 @@ void Router::Cleanup()
 Router::Response Router::Exchange(Address const &address, uint16_t service, uint16_t channel,
                                   Payload const &request)
 {
-  LOG_STACK_TRACE_POINT;
   // get the next counter for this message
   uint16_t const counter = dispatcher_.GetNextCounter();
 
@@ -552,7 +545,6 @@ Router::UpdateStatus Router::AssociateHandleWithAddress(Handle                  
                                                         Packet::RawAddress const &address,
                                                         bool                      direct)
 {
-  LOG_STACK_TRACE_POINT;
   UpdateStatus status{UpdateStatus::NO_CHANGE};
 
   // At the moment these updates (and by extension the routing logic) works on a first
@@ -628,7 +620,6 @@ Router::UpdateStatus Router::AssociateHandleWithAddress(Handle                  
  */
 Router::Handle Router::LookupHandle(Packet::RawAddress const &address) const
 {
-  LOG_STACK_TRACE_POINT;
   Handle handle = 0;
 
   {
@@ -685,7 +676,6 @@ Router::Handle Router::LookupRandomHandle(Packet::RawAddress const & /*address*/
  */
 void Router::SendToConnection(Handle handle, PacketPtr packet)
 {
-  LOG_STACK_TRACE_POINT;
   // internal method, we expect all inputs be valid at this stage
   assert(static_cast<bool>(packet));
 
@@ -732,7 +722,6 @@ void Router::SendToConnection(Handle handle, PacketPtr packet)
  */
 void Router::RoutePacket(PacketPtr packet, bool external)
 {
-  LOG_STACK_TRACE_POINT;
 
   // black list support
 
@@ -860,7 +849,6 @@ void Router::DispatchPacket(PacketPtr packet, Address transmitter)
  */
 bool Router::IsEcho(Packet const &packet, bool register_echo)
 {
-  LOG_STACK_TRACE_POINT;
   bool is_echo = true;
 
   // combine the 3 fields together into a single index
@@ -891,7 +879,6 @@ bool Router::IsEcho(Packet const &packet, bool register_echo)
  */
 void Router::CleanEchoCache()
 {
-  LOG_STACK_TRACE_POINT;
   FETCH_LOCK(echo_cache_lock_);
 
   auto const now = Clock::now();

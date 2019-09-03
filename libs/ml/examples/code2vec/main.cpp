@@ -19,7 +19,6 @@
 #include "math/tensor.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/dataloaders/code2vec_context_loaders/context_loader.hpp"
-#include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activations/softmax.hpp"
 #include "ml/ops/concatenate.hpp"
 #include "ml/ops/embeddings.hpp"
@@ -32,14 +31,11 @@
 #include "ml/ops/weights.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 
-#include <chrono>
 #include <cstdint>
 #include <fstream>
 #include <iostream>
 #include <set>
 #include <string>
-#include <tuple>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -81,7 +77,7 @@ int main(int ac, char **av)
 
   for (int i(1); i < ac; ++i)
   {
-    cloader.AddData(ReadFile(av[i]));
+    cloader.AddDataAsString(ReadFile(av[i]));
   }
 
   std::cout << "Number of different function names: " << cloader.function_name_counter().size()

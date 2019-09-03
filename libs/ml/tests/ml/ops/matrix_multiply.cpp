@@ -16,14 +16,17 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/base_types.hpp"
-
 #include "core/serializers/main_serializer_definition.hpp"
-#include "gtest/gtest.h"
+#include "math/base_types.hpp"
 #include "math/tensor.hpp"
 #include "ml/ops/matrix_multiply.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+
+#include "gtest/gtest.h"
+
+#include <memory>
+
 template <typename T>
 class MatrixMultiplyTest : public ::testing::Test
 {
@@ -173,7 +176,7 @@ TYPED_TEST(MatrixMultiplyTest, saveparams_backward_batch_test)
 {
   using TensorType = TypeParam;
   using OpType     = typename fetch::ml::ops::MatrixMultiply<TensorType>;
-  using SPType     = typename OpType ::SPType;
+  using SPType     = typename OpType::SPType;
   TypeParam a1({3, 4, 2});
   TypeParam b1({4, 3, 2});
   TypeParam error({3, 3, 2});

@@ -21,6 +21,8 @@
 #include "math/statistics/mean.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/dataloaders/dataloader.hpp"
+#include "ml/optimisation/learning_rate_params.hpp"
+#include "ml/utilities/graph_builder.hpp"
 
 #include <chrono>
 
@@ -29,27 +31,6 @@ namespace ml {
 namespace optimisers {
 
 static constexpr fetch::math::SizeType SIZE_NOT_SET = fetch::math::numeric_max<math::SizeType>();
-
-/**
- * Training annealing config
- * @tparam T
- */
-template <typename T>
-struct LearningRateParam
-{
-  using DataType = T;
-  enum class LearningRateDecay
-  {
-    EXPONENTIAL,
-    LINEAR,
-    NONE
-  };
-  LearningRateDecay mode                   = LearningRateDecay::NONE;
-  DataType          starting_learning_rate = static_cast<DataType>(0.1);
-  DataType          ending_learning_rate   = static_cast<DataType>(0.0001);
-  DataType          linear_decay_rate      = static_cast<DataType>(0.0000000000001);
-  DataType          exponential_decay_rate = static_cast<DataType>(0.999);
-};
 
 /**
  * Abstract gradient optimiser class
@@ -64,6 +45,7 @@ public:
   using DataType   = typename TensorType::Type;
   using SizeType   = typename TensorType::SizeType;
 
+  Optimiser() = default;
   Optimiser(std::shared_ptr<Graph<T>> graph, std::vector<std::string> input_node_names,
             std::string label_node_name, std::string output_node_name,
             DataType const &learning_rate = DataType(0.001));
@@ -88,6 +70,11 @@ public:
   void     UpdateLearningRate();
   SizeType UpdateBatchSize(SizeType const &batch_size, SizeType const &data_size,
                            SizeType const &subset_size = SIZE_NOT_SET);
+
+  std::shared_ptr<Graph<T>> GetGraph();
+
+  template <typename X, typename D>
+  friend struct serializers::MapSerializer;
 
 protected:
   std::shared_ptr<Graph<T>> graph_;
@@ -114,8 +101,9 @@ private:
   std::vector<TensorType>                        batch_data_;
   TensorType                                     batch_labels_;
   LearningRateParam<DataType>                    learning_rate_param_;
-  virtual void                                   ApplyGradients(SizeType batch_size) = 0;
-  void                                           ResetGradients();
+
+  virtual void ApplyGradients(SizeType batch_size) = 0;
+  void         ResetGradients();
 
   void PrintStats(SizeType batch_size, SizeType subset_size);
   void Init();
@@ -131,7 +119,7 @@ void Optimiser<T>::Init()
   graph_trainables_ = graph_->GetTrainables();
   for (auto &train : graph_trainables_)
   {
-    this->gradients_.emplace_back(TensorType(train->get_weights().shape()));
+    gradients_.emplace_back(TensorType(train->get_weights().shape()));
   }
 }
 
@@ -215,6 +203,7 @@ typename T::Type Optimiser<T>::Run(std::vector<TensorType> const &data, TensorTy
   {
     batch_labels_ = TensorType{labels_size};
   }
+  SizeType i{0};
   while (step_ < n_data)
   {
     // Prepare batch
@@ -262,6 +251,7 @@ typename T::Type Optimiser<T>::Run(std::vector<TensorType> const &data, TensorTy
     cumulative_step_ += batch_size;
 
     loss_sum_ += loss_;
+    i++;
     loss_ = static_cast<DataType>(0);
     PrintStats(batch_size, n_data);
 
@@ -269,7 +259,7 @@ typename T::Type Optimiser<T>::Run(std::vector<TensorType> const &data, TensorTy
   }
   epoch_++;
 
-  return loss_sum_;
+  return loss_sum_ / static_cast<DataType>(i);
 }
 
 /**
@@ -329,6 +319,7 @@ typename T::Type Optimiser<T>::RunImplementation(
   bool is_done_set = loader.IsDone();
 
   std::pair<TensorType, std::vector<TensorType>> input;
+  SizeType                                       i{0};
 
   // - check not completed more steps than user specified subset_size
   // - is_done_set checks if loader.IsDone inside PrepareBatch
@@ -365,6 +356,7 @@ typename T::Type Optimiser<T>::RunImplementation(
     cumulative_step_ += batch_size;
     // reset loss
     loss_sum_ += loss_;
+    i++;
     loss_ = DataType{0};
     // update learning rate
     UpdateLearningRate();
@@ -374,7 +366,7 @@ typename T::Type Optimiser<T>::RunImplementation(
   }
 
   epoch_++;
-  return loss_sum_;
+  return loss_sum_ / static_cast<DataType>(i);
 }
 
 template <typename T>
@@ -444,6 +436,7 @@ void Optimiser<T>::UpdateLearningRate()
   }
   }
 }
+
 /**
  * helper method for setting or updating batch size in case of invalid parameter combinations.
  * For example, batch_size cannot be larger than data_size or subset_size.
@@ -491,6 +484,118 @@ void Optimiser<T>::ResetGradients()
   this->graph_->ResetGradients();
 }
 
+template <typename T>
+std::shared_ptr<Graph<T>> Optimiser<T>::GetGraph()
+{
+  return graph_;
+}
+
 }  // namespace optimisers
 }  // namespace ml
+
+namespace serializers {
+/**
+ * serializer for Optimiser
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::optimisers::Optimiser<TensorType>, D>
+{
+  using Type       = ml::optimisers::Optimiser<TensorType>;
+  using DriverType = D;
+
+  // public member variables
+  static uint8_t const GRAPH               = 1;
+  static uint8_t const INPUT_NODE_NAMES    = 2;
+  static uint8_t const LABEL_NODE_NAME     = 3;
+  static uint8_t const OUTPUT_NODE_NAME    = 4;
+  static uint8_t const LEARNING_RATE       = 5;
+  static uint8_t const LEARNING_RATE_PARAM = 6;
+  static uint8_t const EPOCH               = 7;
+
+  // private member variables
+  static uint8_t const LOSS            = 8;
+  static uint8_t const LOSS_SUM        = 9;
+  static uint8_t const STEP            = 10;
+  static uint8_t const CUMULATIVE_STEP = 11;
+  static uint8_t const INPUT_FIRST     = 12;
+  static uint8_t const INPUT_SECOND    = 13;
+  static uint8_t const CUR_LABEL       = 14;
+  static uint8_t const PRED_LABEL      = 15;
+  static uint8_t const CUR_TIME        = 16;
+  static uint8_t const START_TIME      = 17;
+  static uint8_t const TIME_SPAN       = 18;
+  static uint8_t const STAT_STRING     = 19;
+  static uint8_t const BATCH_DATA      = 20;
+  static uint8_t const BATCH_LABELS    = 21;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(21);
+
+    // serialize the graph first
+    map.Append(GRAPH, sp.graph_->GetGraphSaveableParams());
+
+    map.Append(INPUT_NODE_NAMES, sp.input_node_names_);
+    map.Append(LABEL_NODE_NAME, sp.label_node_name_);
+    map.Append(OUTPUT_NODE_NAME, sp.output_node_name_);
+    map.Append(LEARNING_RATE, sp.learning_rate_);
+    map.Append(LEARNING_RATE_PARAM, sp.learning_rate_param_);
+
+    map.Append(EPOCH, sp.epoch_);
+    map.Append(LOSS, sp.loss_);
+    map.Append(LOSS_SUM, sp.loss_sum_);
+    map.Append(STEP, sp.step_);
+    map.Append(CUMULATIVE_STEP, sp.cumulative_step_);
+
+    map.Append(INPUT_FIRST, sp.input_.first);
+    map.Append(INPUT_SECOND, sp.input_.second);
+
+    map.Append(CUR_LABEL, sp.cur_label_);
+    map.Append(PRED_LABEL, sp.pred_label_);
+
+    map.Append(STAT_STRING, sp.stat_string_);
+    map.Append(BATCH_DATA, sp.batch_data_);
+    map.Append(BATCH_LABELS, sp.batch_labels_);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    // deserialize the graph first
+    fetch::ml::GraphSaveableParams<TensorType> gsp;
+    map.ExpectKeyGetValue(GRAPH, gsp);
+    auto graph_ptr = std::make_shared<fetch::ml::Graph<TensorType>>();
+    ml::utilities::BuildGraph(gsp, graph_ptr);
+    sp.graph_ = graph_ptr;
+
+    map.ExpectKeyGetValue(INPUT_NODE_NAMES, sp.input_node_names_);
+    map.ExpectKeyGetValue(LABEL_NODE_NAME, sp.label_node_name_);
+    map.ExpectKeyGetValue(OUTPUT_NODE_NAME, sp.output_node_name_);
+    map.ExpectKeyGetValue(LEARNING_RATE, sp.learning_rate_);
+    map.ExpectKeyGetValue(LEARNING_RATE_PARAM, sp.learning_rate_param_);
+
+    // recover gradients and gradient trainables from graph
+    sp.Init();
+
+    map.ExpectKeyGetValue(EPOCH, sp.epoch_);
+    map.ExpectKeyGetValue(LOSS, sp.loss_);
+    map.ExpectKeyGetValue(LOSS_SUM, sp.loss_sum_);
+    map.ExpectKeyGetValue(STEP, sp.step_);
+    map.ExpectKeyGetValue(CUMULATIVE_STEP, sp.cumulative_step_);
+
+    map.ExpectKeyGetValue(INPUT_FIRST, sp.input_.first);
+    map.ExpectKeyGetValue(INPUT_SECOND, sp.input_.second);
+
+    map.ExpectKeyGetValue(CUR_LABEL, sp.cur_label_);
+    map.ExpectKeyGetValue(PRED_LABEL, sp.pred_label_);
+
+    map.ExpectKeyGetValue(STAT_STRING, sp.stat_string_);
+    map.ExpectKeyGetValue(BATCH_DATA, sp.batch_data_);
+    map.ExpectKeyGetValue(BATCH_LABELS, sp.batch_labels_);
+  }
+};
+}  // namespace serializers
+
 }  // namespace fetch
