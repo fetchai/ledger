@@ -19,7 +19,7 @@
 #include "math/activation_functions/softmax.hpp"
 #include "math/statistics/mean.hpp"
 #include "math/tensor.hpp"
-#include "ml/layers/layers.hpp"
+#include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions.hpp"
 #include "ml/ops/weights.hpp"
@@ -118,9 +118,10 @@ void PlusOneTest()
     cur_gt.At(0, 0) = gt.At(step, 0);
     g.SetInput(label_name, cur_gt);
 
-    auto error_tensor = g.ForwardPropagate(error_name);
+    auto error_tensor = g.Evaluate(error_name);
     loss += error_tensor(0, 0);
-    g.BackPropagateError(error_name);
+    g.BackPropagate(error_name);
+    g.ApplyRegularisation();
   }
 
   for (auto &w : g.GetTrainables())
@@ -147,9 +148,10 @@ void PlusOneTest()
       cur_gt.At(0, 0) = gt.At(step, 0);
       g.SetInput(label_name, cur_gt);
 
-      auto error_tensor = g.ForwardPropagate(error_name);
+      auto error_tensor = g.Evaluate(error_name);
       loss += error_tensor(0, 0);
-      g.BackPropagateError(error_name);
+      g.BackPropagate(error_name);
+      g.ApplyRegularisation();
     }
 
     // This task is so easy the loss should fall on every training step
@@ -229,9 +231,10 @@ void CategoricalPlusOneTest(bool add_softmax = false)
     auto cur_gt = gt.View(step).Copy();
     g.SetInput(label_name, cur_gt);
 
-    auto error_tensor = g.ForwardPropagate(error_name);
+    auto error_tensor = g.Evaluate(error_name);
     loss += error_tensor(0, 0);
-    g.BackPropagateError(error_name);
+    g.BackPropagate(error_name);
+    g.ApplyRegularisation();
   }
 
   for (auto &w : g.GetTrainables())
@@ -258,9 +261,10 @@ void CategoricalPlusOneTest(bool add_softmax = false)
       auto cur_gt = gt.View(step).Copy();
       g.SetInput(label_name, cur_gt);
 
-      auto error_tensor = g.ForwardPropagate(error_name);
+      auto error_tensor = g.Evaluate(error_name);
       loss += error_tensor(0, 0);
-      g.BackPropagateError(error_name);
+      g.BackPropagate(error_name);
+      g.ApplyRegularisation();
     }
 
     // This task is so easy the loss should fall on every training step
@@ -331,9 +335,10 @@ void CategoricalXorTest(bool add_softmax = false)
     cur_gt = gt.View(step).Copy();
     g.SetInput(label_name, cur_gt);
 
-    auto error_tensor = g.ForwardPropagate(error_name);
+    auto error_tensor = g.Evaluate(error_name);
     loss += error_tensor(0, 0);
-    g.BackPropagateError(error_name);
+    g.BackPropagate(error_name);
+    g.ApplyRegularisation();
   }
 
   for (auto &w : g.GetTrainables())
@@ -358,9 +363,10 @@ void CategoricalXorTest(bool add_softmax = false)
       cur_input = data.View(step).Copy();
       g.SetInput(input_name, cur_input);
       cur_gt            = gt.View(step).Copy();
-      auto error_tensor = g.ForwardPropagate(error_name);
+      auto error_tensor = g.Evaluate(error_name);
       loss += error_tensor(0, 0);
-      g.BackPropagateError(error_name);
+      g.BackPropagate(error_name);
+      g.ApplyRegularisation();
     }
 
     EXPECT_GE(current_loss, loss);

@@ -48,10 +48,8 @@ struct NodeSaveableParams
   using DataType = typename TensorType::Type;
   using SizeType = typename TensorType::SizeType;
 
-  std::string                        name = "";
-  TensorType                         cached_output{};
-  uint8_t                            cached_output_status = fetch::math::numeric_max<uint8_t>();
-  OpType                             operation_type       = OpType::NONE;
+  std::string                        name           = "";
+  OpType                             operation_type = OpType::NONE;
   std::shared_ptr<OpsSaveableParams> op_save_params;
 
   NodeSaveableParams() = default;
@@ -68,6 +66,8 @@ struct GraphSaveableParams
 
   std::vector<std::pair<std::string, std::vector<std::string>>>                    connections;
   std::unordered_map<std::string, std::shared_ptr<NodeSaveableParams<TensorType>>> nodes;
+
+  uint8_t graph_state;
 };
 
 template <class TensorType>
@@ -145,7 +145,7 @@ struct OpConvolution2DSaveableParams : public OpsSaveableParams
 template <class TensorType>
 struct OpCrossEntropyLossSaveableParams : public OpsSaveableParams
 {
-  fetch::ml::OpType op_type = OpType::OP_CROSS_ENTROPY_LOSS;
+  fetch::ml::OpType op_type = OpType::LOSS_CROSS_ENTROPY;
 };
 
 /**
@@ -429,7 +429,7 @@ template <class TensorType>
 struct OpMeanSquareErrorSaveableParams : public OpsSaveableParams
 {
   using DataType            = typename TensorType::Type;
-  fetch::ml::OpType op_type = OpType::OP_MEAN_SQUARE_ERROR_LOSS;
+  fetch::ml::OpType op_type = OpType::LOSS_MEAN_SQUARE_ERROR;
   TensorType        weightings;
 };
 
@@ -621,7 +621,7 @@ template <class TensorType>
 struct OpSoftmaxCrossEntropySaveableParams : public OpsSaveableParams
 {
   using DataType            = typename TensorType::Type;
-  fetch::ml::OpType op_type = OpType::OP_SOFTMAX_CROSS_ENTROPY_LOSS;
+  fetch::ml::OpType op_type = OpType::LOSS_SOFTMAX_CROSS_ENTROPY;
 };
 
 /**

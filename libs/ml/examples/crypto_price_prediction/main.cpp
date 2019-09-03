@@ -201,7 +201,7 @@ int main(int ac, char **av)
     optimiser.Run(loader, tp.batch_size);
 
     g->SetInput(input_name, test_data);
-    auto prediction = g->ForwardPropagate(output_name, false);
+    auto prediction = g->Evaluate(output_name, false);
     prediction.Reshape({prediction.shape().at(1), prediction.shape().at(2)});
 
     if (tp.normalise)

@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "layers.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/layers/scaled_dot_product_attention.hpp"
 #include "ml/ops/add.hpp"
@@ -100,6 +99,7 @@ public:
     this->AddInputNode(value);
     this->AddInputNode(mask);
     this->SetOutputNode(transformed_multihead);
+    this->Compile();
   }
 
   std::string create_one_attention_head(std::string const &head_name, std::string const &query,

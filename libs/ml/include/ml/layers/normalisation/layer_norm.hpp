@@ -95,6 +95,8 @@ public:
 
     this->AddInputNode(input);
     this->SetOutputNode(shifted_output);
+
+    this->Compile();
   }
 
   std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
