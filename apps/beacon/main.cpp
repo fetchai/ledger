@@ -174,11 +174,11 @@ int main()
     if ((block_number % aeon_length) == 0)
     {
       auto cabinet = all_cabinets[block_number % number_of_cabinets];
-      for (auto &member : committee)
-      {
-        member->beacon_service.StartNewCabinet(cabinet, static_cast<uint32_t>(cabinet.size() / 2),
-                                               block_number, block_number + aeon_length);
-      }
+      // for (auto &member : committee)
+      //{
+      //  member->beacon_service.StartNewCabinet(cabinet, static_cast<uint32_t>(cabinet.size() / 2),
+      //                                         block_number, block_number + aeon_length);
+      //}
     }
 
     uint64_t entropy;

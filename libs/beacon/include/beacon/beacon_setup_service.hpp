@@ -137,14 +137,8 @@ protected:
   RBC                     pre_dkg_rbc_;
   RBC                     rbc_;
 
-  std::mutex                          mutex_;
-  CallbackFunction                    callback_function_;
-  std::deque<SharedAeonExecutionUnit> aeon_exe_queue_;
-  SharedAeonExecutionUnit             beacon_;
-
   std::shared_ptr<StateMachine> state_machine_;
-
-  std::set<MuddleAddress> connections_;
+  std::set<MuddleAddress>       connections_;
 
   // Managing complaints
   ComplaintsManager       complaints_manager_;
