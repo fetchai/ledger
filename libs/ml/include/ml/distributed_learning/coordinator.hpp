@@ -33,12 +33,20 @@ enum class CoordinatorState
   STOP,
 };
 
+struct CoordinatorParams
+{
+  using SizeType = fetch::math::SizeType;
+
+  CoordinatorMode mode;
+  SizeType        iterations_count;
+};
+
 class Coordinator
 {
 public:
   using SizeType = fetch::math::SizeType;
 
-  Coordinator(CoordinatorMode mode, SizeType iterations_count = 0);
+  Coordinator(CoordinatorParams const &params);
   void             IncrementIterationsCounter();
   void             Reset();
   CoordinatorMode  GetMode() const;
@@ -52,9 +60,9 @@ private:
   std::mutex       iterations_mutex_;
 };
 
-Coordinator::Coordinator(CoordinatorMode mode, SizeType iterations_count)
-  : mode_(mode)
-  , iterations_count_(iterations_count)
+Coordinator::Coordinator(CoordinatorParams const &params)
+  : mode_(params.mode)
+  , iterations_count_(params.iterations_count)
 {}
 
 void Coordinator::IncrementIterationsCounter()

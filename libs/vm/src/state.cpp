@@ -250,6 +250,8 @@ private:
   {
     value_      = value.Get<Value>();
     mod_status_ = eModifStatus::modified;
+    FlushIO();
+    mod_status_ = eModifStatus::undefined;
   }
 
   template <typename Y = T>
@@ -262,6 +264,8 @@ private:
     }
     value_      = std::move(v);
     mod_status_ = eModifStatus::modified;
+    FlushIO();
+    mod_status_ = eModifStatus::undefined;
   }
 
   void FlushIO()
