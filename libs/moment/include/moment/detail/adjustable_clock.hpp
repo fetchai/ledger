@@ -36,7 +36,7 @@ public:
 
   Timestamp Never() const override
   {
-      // todo
+    // todo
     return clock_.Now() + offset_;
   }
 

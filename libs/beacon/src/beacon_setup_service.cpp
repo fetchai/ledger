@@ -24,8 +24,8 @@
 #include "muddle/muddle_interface.hpp"
 #include "telemetry/registry.hpp"
 
-#include <mutex>
 #include <ctime>
+#include <mutex>
 
 namespace fetch {
 namespace beacon {
@@ -77,7 +77,8 @@ char const *ToString(BeaconSetupService::State state)
 
 uint64_t GetTime()
 {
-  return static_cast<uint64_t>(std::time(nullptr));;
+  return static_cast<uint64_t>(std::time(nullptr));
+  ;
 }
 
 BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identity,
@@ -209,7 +210,7 @@ BeaconSetupService::State BeaconSetupService::OnReset()
   shares_received_.clear();
 
   // The pre-dkg will get held in reset mode until the DKG start time
-  if(timer_to_proceed_.HasExpired())
+  if (timer_to_proceed_.HasExpired())
   {
     SetTimeToProceed(State::CONNECT_TO_ALL);
     return State::CONNECT_TO_ALL;
@@ -275,7 +276,7 @@ BeaconSetupService::State BeaconSetupService::OnConnectToAll()
   // request removal of unwanted connections
   muddle_.DisconnectFrom(muddle_.GetRequestedPeers() - aeon_members);
 
-  if(timer_to_proceed_.HasExpired())
+  if (timer_to_proceed_.HasExpired())
   {
     SetTimeToProceed(State::WAIT_FOR_READY_CONNECTIONS);
     return State::WAIT_FOR_READY_CONNECTIONS;
@@ -303,7 +304,7 @@ std::set<T> ConvertToSet(std::unordered_set<T> const &from)
 {
   std::set<T> ret;
 
-  for(auto const &i : from)
+  for (auto const &i : from)
   {
     ret.insert(i);
   }
@@ -322,7 +323,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
 
   beacon_dkg_state_gauge_->set(static_cast<uint8_t>(State::WAIT_FOR_READY_CONNECTIONS));
 
-  auto const connected_peers   = muddle_.GetDirectlyConnectedPeers();
+  auto const connected_peers = muddle_.GetDirectlyConnectedPeers();
 
   std::unordered_set<MuddleAddress> aeon_members;
   for (auto &m : beacon_->aeon.members)
@@ -336,7 +337,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
     aeon_members.emplace(m.identifier());
   }
 
-  auto connections = (connected_peers & aeon_members);
+  auto       connections         = (connected_peers & aeon_members);
   auto const require_connections = PreDKGThreshold() - 1;
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "All connections: ", connected_peers.size());
@@ -346,7 +347,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
 
   // If we get over threshold connections, send a message to all peers each time
   // we increase over this threshold (note we won't advance if we ourselves don't get over)
-  if(connections.size() > connections_.size() && connections.size() >= require_connections)
+  if (connections.size() > connections_.size() && connections.size() >= require_connections)
   {
     fetch::serializers::MsgPackSerializer serializer;
     serializer << connections_;
@@ -358,17 +359,20 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
   }
 
   // Whether to proceed (if threshold peers have also met this condition)
-  const bool is_ok = (ready_connections_.size() >= require_connections && connections_.size() >= require_connections);
+  const bool is_ok = (ready_connections_.size() >= require_connections &&
+                      connections_.size() >= require_connections);
 
-  if(!condition_to_proceed_ && is_ok)
+  if (!condition_to_proceed_ && is_ok)
   {
     condition_to_proceed_ = true;
-    FETCH_LOG_INFO(LOGGING_NAME, "State: ", ToString(state_machine_->state()), " Ready. Seconds to spare: ", state_deadline_ - GetTime(), " of ", seconds_for_state_);
+    FETCH_LOG_INFO(LOGGING_NAME, "State: ", ToString(state_machine_->state()),
+                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(), " of ",
+                   seconds_for_state_);
   }
 
-  if(timer_to_proceed_.HasExpired())
+  if (timer_to_proceed_.HasExpired())
   {
-    if(!condition_to_proceed_)
+    if (!condition_to_proceed_)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to guarantee peers were ready for DKG!");
       SetTimeToProceed(State::RESET);
@@ -381,11 +385,10 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
   }
   else
   {
-    if(!condition_to_proceed_)
+    if (!condition_to_proceed_)
     {
-      FETCH_LOG_INFO(LOGGING_NAME,
-                   "Waiting for all peers to be ready before starting DKG. Ready: ",
-                   connections.size(), " expect: ", require_connections);
+      FETCH_LOG_INFO(LOGGING_NAME, "Waiting for all peers to be ready before starting DKG. Ready: ",
+                     connections.size(), " expect: ", require_connections);
     }
 
     state_machine_->Delay(std::chrono::milliseconds(500));
@@ -405,18 +408,20 @@ BeaconSetupService::State BeaconSetupService::OnWaitForShares()
   beacon_dkg_state_gauge_->set(static_cast<uint8_t>(State::WAIT_FOR_SHARES));
 
   const bool coeff_failed  = (coefficients_received_.size() < beacon_->manager.polynomial_degree());
-  const bool shares_failed = (shares_received_.size() <       beacon_->manager.polynomial_degree());
-  const bool is_ok = !coeff_failed && !shares_failed;
+  const bool shares_failed = (shares_received_.size() < beacon_->manager.polynomial_degree());
+  const bool is_ok         = !coeff_failed && !shares_failed;
 
-  if(!condition_to_proceed_ && is_ok)
+  if (!condition_to_proceed_ && is_ok)
   {
     condition_to_proceed_ = true;
-    FETCH_LOG_INFO(LOGGING_NAME, "State: ", ToString(state_machine_->state()), " Ready. Seconds to spare: ", state_deadline_ - GetTime(), " of ", seconds_for_state_);
+    FETCH_LOG_INFO(LOGGING_NAME, "State: ", ToString(state_machine_->state()),
+                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(), " of ",
+                   seconds_for_state_);
   }
 
-  if(timer_to_proceed_.HasExpired())
+  if (timer_to_proceed_.HasExpired())
   {
-    if(!condition_to_proceed_)
+    if (!condition_to_proceed_)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to collect enough shares! Resetting");
       SetTimeToProceed(State::RESET);
@@ -439,17 +444,20 @@ BeaconSetupService::State BeaconSetupService::OnWaitForComplaints()
 
   const bool is_ok = complaints_manager_.IsFinished(beacon_->manager.polynomial_degree());
 
-  if(!condition_to_proceed_ && is_ok)
+  if (!condition_to_proceed_ && is_ok)
   {
     condition_to_proceed_ = true;
-    FETCH_LOG_INFO(LOGGING_NAME, "State: ", ToString(state_machine_->state()), " Ready. Seconds to spare: ", state_deadline_ - GetTime(), " of ", seconds_for_state_);
+    FETCH_LOG_INFO(LOGGING_NAME, "State: ", ToString(state_machine_->state()),
+                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(), " of ",
+                   seconds_for_state_);
   }
 
-  if(timer_to_proceed_.HasExpired())
+  if (timer_to_proceed_.HasExpired())
   {
-    if(!condition_to_proceed_)
+    if (!condition_to_proceed_)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Failed to collect enough complaints within the time period! Resetting.");
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "Failed to collect enough complaints within the time period! Resetting.");
       SetTimeToProceed(State::RESET);
       return State::RESET;
     }
@@ -476,15 +484,17 @@ BeaconSetupService::State BeaconSetupService::OnWaitForComplaintAnswers()
 
   bool const is_ok = complaints_answer_manager_.IsFinished();
 
-  if(!condition_to_proceed_ && is_ok)
+  if (!condition_to_proceed_ && is_ok)
   {
     condition_to_proceed_ = true;
-    FETCH_LOG_INFO(LOGGING_NAME, "State: ", ToString(state_machine_->state()), " Ready. Seconds to spare: ", state_deadline_ - GetTime(), " of ", seconds_for_state_);
+    FETCH_LOG_INFO(LOGGING_NAME, "State: ", ToString(state_machine_->state()),
+                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(), " of ",
+                   seconds_for_state_);
   }
 
-  if(timer_to_proceed_.HasExpired())
+  if (timer_to_proceed_.HasExpired())
   {
-    if(!is_ok)
+    if (!is_ok)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Ran out of time to collect complaint answers! Resetting.");
       SetTimeToProceed(State::RESET);
@@ -524,11 +534,12 @@ BeaconSetupService::State BeaconSetupService::OnWaitForQualShares()
 
   const bool is_ok = (qual_coefficients_received_.size() >= beacon_->manager.polynomial_degree());
 
-  if(timer_to_proceed_.HasExpired())
+  if (timer_to_proceed_.HasExpired())
   {
-    if(!is_ok)
+    if (!is_ok)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Failed to collect enough qual shares! Collected: ", qual_coefficients_received_.size(), " of ", beacon_->manager.qual().size());
+      FETCH_LOG_INFO(LOGGING_NAME, "Failed to collect enough qual shares! Collected: ",
+                     qual_coefficients_received_.size(), " of ", beacon_->manager.qual().size());
       SetTimeToProceed(State::RESET);
       return State::RESET;
     }
@@ -547,12 +558,14 @@ BeaconSetupService::State BeaconSetupService::OnWaitForQualComplaints()
   std::lock_guard<std::mutex> lock(mutex_);
   beacon_dkg_state_gauge_->set(static_cast<uint8_t>(State::WAIT_FOR_QUAL_COMPLAINTS));
 
-  const bool is_ok = /* qual_complaints_manager_.IsFinished(beacon_->manager.qual(), identity_.identifier());*/ true;
+  const bool is_ok =
+      /* qual_complaints_manager_.IsFinished(beacon_->manager.qual(), identity_.identifier());*/
+      true;
   condition_to_proceed_ = is_ok;
 
-  if(timer_to_proceed_.HasExpired())
+  if (timer_to_proceed_.HasExpired())
   {
-    if(!condition_to_proceed_)
+    if (!condition_to_proceed_)
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Failed to collect enough qual complaints!");
       SetTimeToProceed(State::RESET);
@@ -610,9 +623,9 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReconstructionShares()
   }
 
   // TODO(HUT): ask Jenny about this to confirm - not checked (?)
-  //bool const is_ok = (received_count >= beacon_->manager.polynomial_degree());
+  // bool const is_ok = (received_count >= beacon_->manager.polynomial_degree());
 
-  if(timer_to_proceed_.HasExpired())
+  if (timer_to_proceed_.HasExpired())
   {
     // Process reconstruction shares. Fail if the sender is in complaints, or not in QUAL
     for (auto const &share : reconstruction_shares_received_)
@@ -1163,19 +1176,19 @@ uint64_t GetExpectedDKGTime(uint64_t cabinet_size)
   uint64_t expected_dkg_time_s = 10 * (cabinet_size << 1);
 
   // empirical times observed - the base time you expect it to take based on cabinet size
-  if(cabinet_size < 200)
+  if (cabinet_size < 200)
   {
     expected_dkg_time_s = 27229;
   }
-  if(cabinet_size < 90)
+  if (cabinet_size < 90)
   {
     expected_dkg_time_s = 1304;
   }
-  if(cabinet_size < 60)
+  if (cabinet_size < 60)
   {
     expected_dkg_time_s = 305;
   }
-  if(cabinet_size < 30)
+  if (cabinet_size < 30)
   {
     expected_dkg_time_s = 60;
   }
@@ -1194,9 +1207,9 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
   FETCH_LOG_INFO(LOGGING_NAME, "Determining time allowed to move on from state: ", ToString(state));
   condition_to_proceed_ = false;
 
-  uint64_t cabinet_size                    = beacon_->aeon.members.size();
-  uint64_t expected_dkg_time_s             = GetExpectedDKGTime(cabinet_size);
-  uint64_t current_time                    = GetTime();
+  uint64_t cabinet_size        = beacon_->aeon.members.size();
+  uint64_t expected_dkg_time_s = GetExpectedDKGTime(cabinet_size);
+  uint64_t current_time        = GetTime();
 
   // RESET state will delay DKG until the start point (or next start point)
   if (state == BeaconSetupService::State::RESET)
@@ -1208,7 +1221,7 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
     uint64_t dkg_time         = expected_dkg_time_s;
     uint16_t failures         = 0;
 
-    while(next_start_point < current_time)
+    while (next_start_point < current_time)
     {
       failures++;
       next_start_point += dkg_time;
@@ -1218,56 +1231,57 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
     expected_dkg_timespan_ = dkg_time;
     reference_timepoint_   = next_start_point;
 
-    FETCH_LOG_INFO(LOGGING_NAME, "DKG: ", beacon_->aeon.round_start, " failures so far: ", failures);
+    FETCH_LOG_INFO(LOGGING_NAME, "DKG: ", beacon_->aeon.round_start,
+                   " failures so far: ", failures);
   }
 
   // Assign each state an equal amount of time for now
-  uint64_t  time_slots_in_dkg = 8;
-  uint64_t  time_per_slot = expected_dkg_timespan_ / time_slots_in_dkg;
+  uint64_t time_slots_in_dkg = 8;
+  uint64_t time_per_slot     = expected_dkg_timespan_ / time_slots_in_dkg;
   /* auto deadline = clock_->Now() + std::chrono::seconds{0}; */
 
   uint64_t time_sub_slot = 0;
 
   switch (state)
   {
-  case BeaconSetupService::State::BEACON_READY:   // No timeout - return
-  case BeaconSetupService::State::IDLE:           // No timeout - return
+  case BeaconSetupService::State::BEACON_READY:  // No timeout - return
+  case BeaconSetupService::State::IDLE:          // No timeout - return
     return;
     break;
   case BeaconSetupService::State::RESET:
-    time_sub_slot = 0;
+    time_sub_slot      = 0;
     seconds_for_state_ = 0;
     break;
   case BeaconSetupService::State::CONNECT_TO_ALL:
-    time_sub_slot = 1;
+    time_sub_slot      = 1;
     seconds_for_state_ = 1;
     break;
   case BeaconSetupService::State::WAIT_FOR_READY_CONNECTIONS:
-    time_sub_slot = 2;
+    time_sub_slot      = 2;
     seconds_for_state_ = 2;
     break;
   case BeaconSetupService::State::WAIT_FOR_SHARES:
-    time_sub_slot = 3;
+    time_sub_slot      = 3;
     seconds_for_state_ = 3;
     break;
   case BeaconSetupService::State::WAIT_FOR_COMPLAINTS:
-    time_sub_slot = 4;
+    time_sub_slot      = 4;
     seconds_for_state_ = 4;
     break;
   case BeaconSetupService::State::WAIT_FOR_COMPLAINT_ANSWERS:
-    time_sub_slot = 5;
+    time_sub_slot      = 5;
     seconds_for_state_ = 5;
     break;
   case BeaconSetupService::State::WAIT_FOR_QUAL_SHARES:
-    time_sub_slot = 6;
+    time_sub_slot      = 6;
     seconds_for_state_ = 6;
     break;
   case BeaconSetupService::State::WAIT_FOR_QUAL_COMPLAINTS:
-    time_sub_slot = 7;
+    time_sub_slot      = 7;
     seconds_for_state_ = 7;
     break;
   case BeaconSetupService::State::WAIT_FOR_RECONSTRUCTION_SHARES:
-    time_sub_slot = 8;
+    time_sub_slot      = 8;
     seconds_for_state_ = 8;
     break;
   }
@@ -1275,14 +1289,17 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
   seconds_for_state_ = seconds_for_state_ * time_per_slot;
   state_deadline_    = reference_timepoint_ + (time_sub_slot * time_per_slot);
 
-  if(state_deadline_ < current_time)
+  if (state_deadline_ < current_time)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "\n#### Deadline for ", ToString(state), " has passed! This should not happen");
+    FETCH_LOG_WARN(LOGGING_NAME, "\n#### Deadline for ", ToString(state),
+                   " has passed! This should not happen");
     timer_to_proceed_.Restart(0);
   }
   else
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "#### Proceeding to next state \"", ToString(state),"\", to last ", state_deadline_ - current_time, " seconds (deadline: ", state_deadline_, ")");
+    FETCH_LOG_INFO(LOGGING_NAME, "#### Proceeding to next state \"", ToString(state),
+                   "\", to last ", state_deadline_ - current_time,
+                   " seconds (deadline: ", state_deadline_, ")");
     timer_to_proceed_.Restart(std::chrono::seconds{state_deadline_ - current_time});
   }
 }

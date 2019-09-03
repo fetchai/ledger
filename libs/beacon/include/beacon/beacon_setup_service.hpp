@@ -21,14 +21,14 @@
 #include "core/state_machine.hpp"
 #include "dkg/dkg_complaints_manager.hpp"
 #include "dkg/dkg_messages.hpp"
+#include "moment/clocks.hpp"
+#include "moment/deadline_timer.hpp"
 #include "muddle/muddle_endpoint.hpp"
 #include "muddle/rbc.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/subscription.hpp"
 #include "telemetry/gauge.hpp"
 #include "telemetry/telemetry.hpp"
-#include "moment/clocks.hpp"
-#include "moment/deadline_timer.hpp"
 
 #include "beacon/aeon.hpp"
 
@@ -94,7 +94,7 @@ public:
   using DKGSerializer           = dkg::DKGSerializer;
   using ManifestCacheInterface  = ledger::ManifestCacheInterface;
   using SharesExposedMap = std::unordered_map<MuddleAddress, std::pair<MessageShare, MessageShare>>;
-  using DeadlineTimer           = fetch::moment::DeadlineTimer;
+  using DeadlineTimer    = fetch::moment::DeadlineTimer;
 
   BeaconSetupService(MuddleInterface &muddle, Identity identity,
                      ManifestCacheInterface &manifest_cache);
@@ -138,7 +138,7 @@ protected:
 
   std::shared_ptr<StateMachine> state_machine_;
 
-  std::set<MuddleAddress>                                    connections_;
+  std::set<MuddleAddress> connections_;
 
   // Managing complaints
   ComplaintsManager       complaints_manager_;
@@ -188,24 +188,23 @@ protected:
   telemetry::GaugePtr<uint64_t> beacon_dkg_connections_gauge_;
 
   // Members below protected by mutex
-  std::mutex                          mutex_;
-  CallbackFunction                    callback_function_;
-  std::deque<SharedAeonExecutionUnit> aeon_exe_queue_;
-  SharedAeonExecutionUnit             beacon_;
+  std::mutex                                                 mutex_;
+  CallbackFunction                                           callback_function_;
+  std::deque<SharedAeonExecutionUnit>                        aeon_exe_queue_;
+  SharedAeonExecutionUnit                                    beacon_;
   std::unordered_map<MuddleAddress, std::set<MuddleAddress>> ready_connections_;
 
 private:
   // Timing management
-  void SetTimeToProceed(State state);
-  moment::ClockPtr                  clock_ = moment::GetClock("beacon:dkg", moment::ClockType::STEADY);
+  void             SetTimeToProceed(State state);
+  moment::ClockPtr clock_ = moment::GetClock("beacon:dkg", moment::ClockType::STEADY);
   /* moment::ClockInterface::Timestamp time_started_{clock_->Never()}; */
-  DeadlineTimer                     timer_to_proceed_{"beacon:dkg"};
-  uint64_t reference_timepoint_   = 0;
-  uint64_t state_deadline_        = 0;
-  uint64_t seconds_for_state_     = 0;
-  uint64_t expected_dkg_timespan_ = 0;
-  bool     condition_to_proceed_  = false;
-
+  DeadlineTimer timer_to_proceed_{"beacon:dkg"};
+  uint64_t      reference_timepoint_   = 0;
+  uint64_t      state_deadline_        = 0;
+  uint64_t      seconds_for_state_     = 0;
+  uint64_t      expected_dkg_timespan_ = 0;
+  bool          condition_to_proceed_  = false;
 };
 
 }  // namespace beacon

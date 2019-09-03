@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include <utility>
 #include <ctime>
+#include <utility>
 
 #include "ledger/consensus/consensus.hpp"
 
@@ -95,10 +95,11 @@ void Consensus::UpdateCurrentBlock(Block const &current)
     {
       uint64_t current_time           = static_cast<uint64_t>(std::time(nullptr));
       uint64_t wait_time_s            = 5;
-      uint64_t future_start           = current_time + (2*wait_time_s);
+      uint64_t future_start           = current_time + (2 * wait_time_s);
       uint64_t future_start_quantised = future_start - (future_start % wait_time_s);
 
-      FETCH_LOG_INFO(LOGGING_NAME, "Manually setting start time to: ", future_start_quantised, ". Current: ", current_time);
+      FETCH_LOG_INFO(LOGGING_NAME, "Manually setting start time to: ", future_start_quantised,
+                     ". Current: ", current_time);
 
       last_block_time = future_start_quantised;
     }

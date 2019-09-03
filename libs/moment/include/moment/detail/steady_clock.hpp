@@ -44,7 +44,7 @@ public:
   Timestamp Never() const override
   {
     return ChronoClock::time_point::max();
-    //return ChronoClock::now();
+    // return ChronoClock::now();
   }
   /// @}
 
