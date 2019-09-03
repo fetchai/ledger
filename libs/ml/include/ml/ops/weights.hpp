@@ -135,6 +135,11 @@ public:
     return {};
   }
 
+  void AddToGradient(TensorType const &extern_grad)
+  {
+    gradient_accumulation_->InlineAdd(extern_grad);
+  }
+
   bool SetData(TensorType const &data) override
   {
     bool shape_changed = PlaceHolder<T>::SetData(data);
