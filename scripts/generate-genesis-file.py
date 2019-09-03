@@ -109,7 +109,6 @@ def main():
         # update the random beacon config
         cabinet.append(address)
 
-    #import ipdb; ipdb.set_trace(context=20)
     # form the genesis data
     genesis_file = {
         'version': 2,

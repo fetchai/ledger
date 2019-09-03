@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -18,40 +17,26 @@
 //------------------------------------------------------------------------------
 
 #include "moment/clocks.hpp"
+#include "moment/deadline_timer.hpp"
+
+#include <chrono>
+#include <cstdint>
 
 namespace fetch {
 namespace moment {
 
-class DeadlineTimer
+DeadlineTimer::DeadlineTimer(char const *clock)
+  : clock_{GetClock(clock, ClockType::STEADY)}
+{}
+
+void DeadlineTimer::Restart(uint64_t period_ms)
 {
-public:
-  // Construction / Destruction
-  explicit DeadlineTimer(char const *clock);
-  DeadlineTimer(DeadlineTimer const &) = default;
-  DeadlineTimer(DeadlineTimer &&)      = default;
-  ~DeadlineTimer()                     = default;
+  Restart(std::chrono::milliseconds{period_ms});
+}
 
-  template <typename R, typename P>
-  void Restart(std::chrono::duration<R, P> const &period);
-  void Restart(uint64_t period_ms);
-
-  bool HasExpired() const;
-
-  // Operators
-  DeadlineTimer &operator=(DeadlineTimer const &) = default;
-  DeadlineTimer &operator=(DeadlineTimer &&) = default;
-
-private:
-  using Timestamp = ClockInterface::Timestamp;
-
-  ClockPtr  clock_;
-  Timestamp deadline_{};
-};
-
-template <typename R, typename P>
-inline void DeadlineTimer::Restart(std::chrono::duration<R, P> const &period)
+bool DeadlineTimer::HasExpired() const
 {
-  deadline_ = clock_->Now() + period;
+  return deadline_ <= clock_->Now();
 }
 
 }  // namespace moment

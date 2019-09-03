@@ -1251,9 +1251,6 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
   // Assign each state an equal amount of time for now
   uint64_t time_slots_in_dkg = 8;
   uint64_t time_per_slot     = expected_dkg_timespan_ / time_slots_in_dkg;
-  /* auto deadline = clock_->Now() + std::chrono::seconds{0}; */
-
-  uint64_t time_sub_slot = 0;
 
   switch (state)
   {
@@ -1262,45 +1259,36 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
     return;
     break;
   case BeaconSetupService::State::RESET:
-    time_sub_slot      = 0;
     seconds_for_state_ = 0;
     break;
   case BeaconSetupService::State::CONNECT_TO_ALL:
-    time_sub_slot      = 1;
     seconds_for_state_ = 1;
     break;
   case BeaconSetupService::State::WAIT_FOR_READY_CONNECTIONS:
-    time_sub_slot      = 2;
     seconds_for_state_ = 2;
     break;
   case BeaconSetupService::State::WAIT_FOR_SHARES:
-    time_sub_slot      = 3;
     seconds_for_state_ = 3;
     break;
   case BeaconSetupService::State::WAIT_FOR_COMPLAINTS:
-    time_sub_slot      = 4;
     seconds_for_state_ = 4;
     break;
   case BeaconSetupService::State::WAIT_FOR_COMPLAINT_ANSWERS:
-    time_sub_slot      = 5;
     seconds_for_state_ = 5;
     break;
   case BeaconSetupService::State::WAIT_FOR_QUAL_SHARES:
-    time_sub_slot      = 6;
     seconds_for_state_ = 6;
     break;
   case BeaconSetupService::State::WAIT_FOR_QUAL_COMPLAINTS:
-    time_sub_slot      = 7;
     seconds_for_state_ = 7;
     break;
   case BeaconSetupService::State::WAIT_FOR_RECONSTRUCTION_SHARES:
-    time_sub_slot      = 8;
     seconds_for_state_ = 8;
     break;
   }
 
   seconds_for_state_ = seconds_for_state_ * time_per_slot;
-  state_deadline_    = reference_timepoint_ + (time_sub_slot * time_per_slot);
+  state_deadline_    = reference_timepoint_ + (seconds_for_state_ * time_per_slot);
 
   if (state_deadline_ < current_time)
   {
