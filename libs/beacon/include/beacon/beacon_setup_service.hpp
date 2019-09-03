@@ -124,6 +124,7 @@ public:
 
   std::weak_ptr<core::Runnable> GetWeakRunnable();
 
+  void OnNewSharesPacket(muddle::Packet const &packet, MuddleAddress const &last_hop);
   void OnNewShares(MuddleAddress from_id, std::pair<MessageShare, MessageShare> const &shares);
   void OnDkgMessage(MuddleAddress const &from, std::shared_ptr<DKGMessage> msg_ptr);
 
@@ -135,6 +136,11 @@ protected:
   SubscriptionPtr         shares_subscription;
   RBC                     pre_dkg_rbc_;
   RBC                     rbc_;
+
+  std::mutex                          mutex_;
+  CallbackFunction                    callback_function_;
+  std::deque<SharedAeonExecutionUnit> aeon_exe_queue_;
+  SharedAeonExecutionUnit             beacon_;
 
   std::shared_ptr<StateMachine> state_machine_;
 

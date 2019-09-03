@@ -347,7 +347,7 @@ struct DkgMember
     , muddle{CreateMuddle("Test", muddle_certificate, network_manager, "127.0.0.1")}
   {
     network_manager.Start();
-    muddle->Start(MuddleInterface::Peers{}, {muddle_port});
+    muddle->Start({muddle_port});
   }
 
   virtual ~DkgMember()

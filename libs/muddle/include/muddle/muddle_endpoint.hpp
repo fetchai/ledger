@@ -44,8 +44,9 @@ public:
 
   /// @name Message Options
   /// @{
-  static constexpr Options OPTION_DEFAULT  = 0;
-  static constexpr Options OPTION_EXCHANGE = 1ull;
+  static constexpr Options OPTION_DEFAULT   = 0;
+  static constexpr Options OPTION_EXCHANGE  = 1ull;
+  static constexpr Options OPTION_ENCRYPTED = 1ull << 1ull;
   /// @}
 
   // Construction / Destruction
