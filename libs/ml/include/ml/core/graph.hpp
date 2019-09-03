@@ -44,15 +44,17 @@ template <typename TensorType>
 class ModelInterface;
 }  // namespace model
 
-// TODO - rework AddTrainable and GetTrainables so that graph stores trainables recursively, but optimiser gets
-// a flat vector of ptrs
+// TODO - rework AddTrainable and GetTrainables so that graph stores trainables recursively, but
+// optimiser gets a flat vector of ptrs
 
 // TODO - harmonise InsertSharedCopy with AddTrainable
+
 // TODO - implement sanity checks on second stage - e.g. you may not use loss function in a certain
 // way (via OpKind)
+
 // TODO - update tests to no longer permit duplicate naming unless shared
-// TODO - move adding trainables methods from graph building utility into Graph, remove
-// AddTrainables
+
+// TODO - move adding trainables methods from graph building utility into Graph
 
 enum class GraphState : uint8_t
 {
@@ -117,7 +119,7 @@ public:
 
   NodePtrType GetNode(std::string const &node_name) const;
 
-  virtual struct fetch::ml::StateDict<TensorType> StateDict() const;
+  virtual struct fetch::ml::StateDict<TensorType> StateDict();
   virtual void LoadStateDict(struct fetch::ml::StateDict<T> const &dict);
 
   std::vector<TensorType> get_weights() const;
@@ -162,22 +164,8 @@ private:
       std::string const &node_name, std::string &updated_name);
 
   void ResetGraphCache(bool input_size_changed, std::shared_ptr<Node<T>> n = {});
-
-  void CheckCompileAndValidate();
 };
 
-template <typename TensorType>
-void Graph<TensorType>::CheckCompileAndValidate()
-{
-  if (graph_state_ != GraphState::READY)
-  {
-    Compile();
-    if (graph_state_ != GraphState::READY)
-    {
-      throw std::runtime_error("graph compilation failed - graph is not valid");
-    }
-  }
-}
 
 //////////////////////
 /// PUBLIC METHODS ///
@@ -234,15 +222,6 @@ void Graph<TensorType>::ResetCompile()
     auto node_name   = connection.first;
     auto node_inputs = connection.second;
 
-    //    // recursive call to ResetCompile if its a graph
-    //    auto node_ptr = nodes_.at(node_name);
-    //    auto op_ptr        = node_ptr->GetOp();
-    //    auto graph_ptr     = std::dynamic_pointer_cast<Graph<TensorType>>(op_ptr);
-    //    if (graph_ptr)
-    //    {
-    //      graph_ptr->ResetCompile();
-    //    }
-
     // remove inputs and output from the node
     nodes_.at(node_name)->ResetInputsAndOutputs();
   }
@@ -256,31 +235,35 @@ void Graph<TensorType>::ResetCompile()
 template <typename TensorType>
 void Graph<TensorType>::Compile()
 {
-  ResetCompile();
-
-  bool valid = true;
-  // loop through added nodes setting inputs and outputs and setting trainables
-  for (auto &connection : connections_)
+  if (graph_state_ != GraphState::READY)
   {
-    auto node_name   = connection.first;
-    auto node_inputs = connection.second;
-    LinkNodesInGraph(node_name, node_inputs);
+    bool valid = true;
 
-    auto node_ptr = nodes_.at(node_name);
+    ResetCompile();
 
-    AddTrainable(node_ptr, node_name);
+    // set inputs and outputs to nodes and set trainables
+    for (auto &connection : connections_)
+    {
+      auto node_name   = connection.first;
+      auto node_inputs = connection.second;
+      LinkNodesInGraph(node_name, node_inputs);
+
+      auto node_ptr = nodes_.at(node_name);
+
+      AddTrainable(node_ptr, node_name);
+    }
+
+    // TODO: check for graph invalidities here - this can reset valid to false
+    if (valid)
+    {
+      graph_state_ = GraphState::READY;
+    }
+    else
+    {
+      graph_state_ = GraphState::INVALID;
+    }
   }
 
-  // TODO: check for graph invalidities here - this can reset valid to false
-
-  if (valid)
-  {
-    graph_state_ = GraphState::READY;
-  }
-  else
-  {
-    graph_state_ = GraphState::INVALID;
-  }
 }
 
 /**
@@ -333,7 +316,7 @@ void Graph<TensorType>::AddTrainable(NodePtrType node_ptr, std::string const &no
 template <typename TensorType>
 TensorType Graph<TensorType>::Evaluate(std::string const &node_name, bool is_training)
 {
-  CheckCompileAndValidate();
+  Compile();
 
   if (nodes_.find(node_name) != nodes_.end())
   {
@@ -354,7 +337,7 @@ TensorType Graph<TensorType>::Evaluate(std::string const &node_name, bool is_tra
 template <typename TensorType>
 TensorType Graph<TensorType>::ForwardPropagate(std::string const &node_name, bool is_training)
 {
-  CheckCompileAndValidate();
+  Compile();
 
   if (nodes_.find(node_name) != nodes_.end())
   {
@@ -376,7 +359,7 @@ TensorType Graph<TensorType>::ForwardPropagate(std::string const &node_name, boo
 template <typename TensorType>
 void Graph<TensorType>::BackPropagate(std::string const &node_name, TensorType const &error_signal)
 {
-  CheckCompileAndValidate();
+  Compile();
 
   if (nodes_.find(node_name) != nodes_.end())
   {
@@ -405,6 +388,7 @@ void Graph<TensorType>::BackPropagate(std::string const &node_name, TensorType c
 template <typename TensorType>
 void Graph<TensorType>::SetRegularisation(RegPtrType regulariser, DataType regularisation_rate)
 {
+  Compile();
   for (auto &t : trainable_nodes_)
   {
     auto tmp = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
@@ -423,6 +407,7 @@ template <typename TensorType>
 bool Graph<TensorType>::SetRegularisation(std::string node_name, RegPtrType regulariser,
                                           DataType regularisation_rate)
 {
+  Compile();
   NodePtrType t             = trainable_nodes_.at(trainable_lookup_.at(node_name));
   auto        trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
   trainable_ptr->SetRegularisation(regulariser, regularisation_rate);
@@ -437,7 +422,7 @@ bool Graph<TensorType>::SetRegularisation(std::string node_name, RegPtrType regu
 template <typename TensorType>
 void Graph<TensorType>::Step(DataType learning_rate)
 {
-  CheckCompileAndValidate();
+  Compile();
 
   for (auto &t : trainable_nodes_)
   {
@@ -452,7 +437,7 @@ void Graph<TensorType>::Step(DataType learning_rate)
 template <typename TensorType>
 void Graph<TensorType>::ApplyRegularisation()
 {
-  CheckCompileAndValidate();
+  Compile();
 
   for (auto &t : trainable_nodes_)
   {
@@ -591,8 +576,9 @@ void Graph<TensorType>::ResetGraphCache(bool input_size_changed, NodePtrType n)
  * @return  d is the StateDict of all trainable params
  */
 template <typename TensorType>
-struct fetch::ml::StateDict<TensorType> Graph<TensorType>::StateDict() const
+struct fetch::ml::StateDict<TensorType> Graph<TensorType>::StateDict()
 {
+  Compile();
   struct fetch::ml::StateDict<TensorType> d;
   for (auto const &t : trainable_lookup_)
   {
@@ -713,7 +699,7 @@ void Graph<TensorType>::ResetGradients()
 template <typename TensorType>
 void Graph<TensorType>::ApplyGradients(std::vector<TensorType> &grad)
 {
-  CheckCompileAndValidate();
+  Compile();
 
   auto grad_it = grad.begin();
   for (auto const &t : trainable_nodes_)

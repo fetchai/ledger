@@ -116,6 +116,8 @@ private:
 template <class T>
 void Optimiser<T>::Init()
 {
+  graph_->Compile();
+
   graph_trainables_ = graph_->GetTrainables();
   for (auto &train : graph_trainables_)
   {

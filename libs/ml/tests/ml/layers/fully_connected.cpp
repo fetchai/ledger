@@ -302,8 +302,10 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test)
   // check the weights are different after training for not shared weights
   for (size_t i = 0; i < 2; i++)
   {
-    std::cout << "g_not_shared_weights_after[i].ToString(): " << g_not_shared_weights_after[i].ToString() << std::endl;
-    std::cout << "g_not_shared_weights_after[i + 2].ToString(): " << g_not_shared_weights_after[i + 2].ToString() << std::endl;
+    std::cout << "g_not_shared_weights_after[i].ToString(): "
+              << g_not_shared_weights_after[i].ToString() << std::endl;
+    std::cout << "g_not_shared_weights_after[i + 2].ToString(): "
+              << g_not_shared_weights_after[i + 2].ToString() << std::endl;
     EXPECT_FALSE(g_not_shared_weights_after[i] == g_not_shared_weights_after[i + 2]);
   }
 
