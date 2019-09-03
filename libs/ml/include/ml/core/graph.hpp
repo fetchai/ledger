@@ -166,7 +166,6 @@ private:
   void ResetGraphCache(bool input_size_changed, std::shared_ptr<Node<T>> n = {});
 };
 
-
 //////////////////////
 /// PUBLIC METHODS ///
 //////////////////////
@@ -263,7 +262,6 @@ void Graph<TensorType>::Compile()
       graph_state_ = GraphState::INVALID;
     }
   }
-
 }
 
 /**
