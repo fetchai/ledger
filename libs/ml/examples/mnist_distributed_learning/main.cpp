@@ -145,7 +145,7 @@ int main(int ac, char **av)
     // Synchronize weights by giving all clients average of all client's weights
     VectorTensorType new_weights = clients[0]->GetWeights();
 
-    // Sum all wights
+    // Sum all weights
     for (SizeType i{1}; i < number_of_clients; ++i)
     {
       VectorTensorType other_weights = clients[i]->GetWeights();

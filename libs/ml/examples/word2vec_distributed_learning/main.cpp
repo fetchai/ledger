@@ -48,23 +48,25 @@ int main(int ac, char **av)
     return 1;
   }
 
-  CoordinatorParams           coord_params;
+  CoordinatorParams           coord_params{};
   W2VTrainingParams<DataType> client_params;
 
   // Distributed learning parameters:
   SizeType number_of_clients    = 10;
   SizeType number_of_rounds     = 10;
+
   coord_params.mode             = CoordinatorMode::SEMI_SYNCHRONOUS;
   coord_params.iterations_count = 100;
-  client_params.batch_size      = 32;
+
+  client_params.batch_size      = 100000;
   client_params.learning_rate   = static_cast<DataType>(.001f);
   client_params.number_of_peers = 3;
 
   // Word2Vec parameters:
-  client_params.vocab_file           = av[1];
+  client_params.vocab_file           = "/tmp/vocab.txt";
   client_params.negative_sample_size = 5;  // number of negative sample per word-context pair
   client_params.window_size          = 5;  // window size for context sampling
-  client_params.freq_thresh          = DataType{1e-3};  // frequency threshold for subsampling
+  client_params.freq_thresh          = DataType{0.001f};  // frequency threshold for subsampling
   client_params.min_count            = 5;               // infrequent word removal threshold
   client_params.embedding_size       = 100;             // dimension of embedding vec
 
@@ -91,14 +93,13 @@ int main(int ac, char **av)
   std::string train_file = av[1];
   GraphW2VLoader<DataType> data_loader(client_params.window_size, client_params.negative_sample_size, client_params.freq_thresh,
                                        client_params.max_word_count);
-  std::string              vocab_file = "/tmp/vocab.txt";
-  data_loader.BuildOnlyVocab({ReadFile(train_file)}, client_params.min_count, true);
-  data_loader.SaveVocab(vocab_file);
+  data_loader.BuildVocabAndData({ReadFile(train_file)}, client_params.min_count);
+  data_loader.SaveVocab(client_params.vocab_file);
 
-  // split train file into NUMBER_OF_CLIENTS
-  std::vector<std::string> train_data;
+  // split train file into number_of_clients parts
+  std::vector<W2VTrainingParams<DataType>> params_vec;
   auto                     input_data = ReadFile(train_file);
-  auto     chars_per_client = static_cast<SizeType>(input_data.size() / NUMBER_OF_CLIENTS);
+  auto     chars_per_client = static_cast<SizeType>(input_data.size() / number_of_clients);
   SizeType pos{0};
   SizeType oldpos{0};
   for (SizeType i(0); i < number_of_clients; ++i)
@@ -107,14 +108,16 @@ int main(int ac, char **av)
     pos    = (i + 1) * chars_per_client;
     // find next instance of space character
     pos = input_data.find(" ", pos, 1);
-    train_data.push_back(input_data.substr(oldpos, pos));
+    W2VTrainingParams<DataType> cl_params = client_params;
+    cl_params.data = {input_data.substr(oldpos, pos)};
+    params_vec.push_back(cl_params);
   }
 
   std::vector<std::shared_ptr<TrainingClient<TensorType>>> clients(number_of_clients);
   for (SizeType i(0); i < number_of_clients; ++i)
   {
     // Instantiate NUMBER_OF_CLIENTS clients
-    clients[i] = std::make_shared<Word2VecClient<TensorType>>(std::to_string(i), client_params,
+    clients[i] = std::make_shared<Word2VecClient<TensorType>>(std::to_string(i), params_vec[i],
                                                               console_mutex_ptr_);
     // TODO(1597): Replace ID with something more sensible
   }

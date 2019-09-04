@@ -57,11 +57,8 @@ public:
   void SetTestRatio(float new_test_ratio) override;
   void SetValidationRatio(float new_validation_ratio) override;
 
-  void BuildVocab(std::vector<std::string> const &sents, SizeType min_count = 0);
-  void BuildOnlyVocab(const std::vector<std::string> &sents, SizeType min_count = 0,
-                      bool remove_infrequent = true);
-  void BuildOnlyData(const std::vector<std::string> &sents, SizeType min_count = 0,
-                     bool remove_infrequent = true);
+  void BuildVocabAndData(std::vector<std::string> const &sents, SizeType min_count = 0);
+  void BuildOnlyData(const std::vector<std::string> &sents, SizeType min_count = 0);
   void SaveVocab(std::string const &filename);
   void LoadVocab(std::string const &filename);
   T    EstimatedSampleNumber();
@@ -98,7 +95,6 @@ private:
 
   static std::vector<std::string> PreprocessString(std::string const &s, SizeType length_limit);
   void                            BufferNextSamples();
-  void                            Update();
   void                            UpdateCursor() override;
 };
 
@@ -144,19 +140,20 @@ T GraphW2VLoader<T>::EstimatedSampleNumber()
   T estimated_sample_number = T{0};
   T word_freq;
   T estimated_sample_number_per_word = static_cast<T>((window_size_ + 1) * (1 + negative_samples_));
-  for (auto word_info : vocab_.data)
+  // todo: use data frequencies
+  for (auto word_count : vocab_.counts)
   {
-    word_freq = static_cast<T>(word_info.second.second) / static_cast<T>(vocab_.total_count);
+    word_freq = static_cast<T>(word_count) / static_cast<T>(vocab_.total_count);
     if (word_freq > freq_thresh_)
     {
-      estimated_sample_number += static_cast<T>(word_info.second.second) *
+      estimated_sample_number += static_cast<T>(word_count) *
                                  estimated_sample_number_per_word *
                                  fetch::math::Sqrt(freq_thresh_ / word_freq);
     }
     else
     {
       estimated_sample_number +=
-          static_cast<T>(word_info.second.second) * estimated_sample_number_per_word;
+          static_cast<T>(word_count) * estimated_sample_number_per_word;
     }
   }
   return estimated_sample_number;
@@ -173,23 +170,6 @@ math::SizeType GraphW2VLoader<T>::Size() const
   return size_;
 }
 
-/**
- * update stats of data in dataloader, including: size_,
- */
-template <typename T>
-void GraphW2VLoader<T>::Update()
-{
-  // update data set size
-  SizeType size(0);
-  for (auto const &s : data_)
-  {
-    if ((SizeType)s.size() > (2 * window_size_))
-    {
-      size += (SizeType)s.size() - (2 * window_size_);
-    }
-  }
-  size_ = size;
-}
 
 /**
  * checks if we've passed through all the data and need to reset
@@ -250,7 +230,7 @@ void GraphW2VLoader<T>::SetValidationRatio(float new_validation_ratio)
 template <typename T>
 bool GraphW2VLoader<T>::WordKnown(std::string const &word) const
 {
-  return vocab_.WordKnown(word);
+  return vocab_.vocab.find(word) != vocab_.vocab.end();
 }
 
 /**
@@ -262,25 +242,21 @@ template <typename T>
 void GraphW2VLoader<T>::RemoveInfrequent(SizeType min)
 {
   // remove infrequent words from vocab first
-  vocab_.RemoveInfrequentWord(min);
-
-  // compactify the vocabulary
-  auto old2new = vocab_.Compactify();
-
-  // create reverse vocab
-  auto reverse_vocab = vocab_.GetReverseVocab();
+  auto old2new = vocab_.RemoveInfrequentWord(min);
 
   // create a new data_ for storing text
   std::vector<std::vector<SizeType>> new_data;
+  SizeType new_size(0);
+
 
   std::vector<SizeType> new_sent_buffer;  // buffer for each sentence
-  for (auto const &sent_it : data_)
+  for (auto const &sentence : data_)
   {
     // clear the buffer for this new sentence
     new_sent_buffer.clear();
 
     // reserve every word that is not infrequent
-    for (auto word_it : sent_it)
+    for (auto word_it : sentence)
     {
       if (old2new.count(word_it) > 0)
       {  // if a word is in old2new, append the new id of it to the new sentence
@@ -292,24 +268,17 @@ void GraphW2VLoader<T>::RemoveInfrequent(SizeType min)
     // sentence
     if (new_sent_buffer.size() <= 2 * window_size_)
     {
-      for (auto const &word_id : new_sent_buffer)
-      {  // reduce the count for all the word in this sentence
-        vocab_.data[reverse_vocab[word_id].first].second -= 1;
-      }
+      vocab_.RemoveSentenceFromVocab(sentence);
       // N.B. for practical concerns, we do not further remove infrequent words
     }
     else
     {  // reserve the sentence if the sentence is still long enough
       new_data.push_back(new_sent_buffer);
+      new_size += new_sent_buffer.size() - (2 * window_size_);
     }
   }
   data_ = new_data;
-
-  // update vocab
-  vocab_.Update();
-
-  // update dl
-  Update();
+  size_ = new_size;
 }
 
 /**
@@ -321,19 +290,19 @@ template <typename T>
 void GraphW2VLoader<T>::RemoveInfrequentFromData(SizeType min)
 {
   // count frequency of words in data_
-  std::map<SizeType, SizeType> count_map;  // word id -> count
+  std::vector<SizeType> counts(vocab_size(), SizeType{0});
 
   for (auto const &sent : data_)
   {
     for (auto const &id : sent)
     {
-      auto inserted_elem = count_map.insert(std::make_pair(id, 0));
-      inserted_elem.first->second++;  // adding up count for word s
+      counts[id]++;
     }
   }
 
   // create a new data_ for storing text
   std::vector<std::vector<SizeType>> new_data;
+  SizeType new_size(0);
   std::vector<SizeType>              new_sent_buffer;  // buffer for each sentence
 
   for (auto sent_it : data_)
@@ -344,7 +313,7 @@ void GraphW2VLoader<T>::RemoveInfrequentFromData(SizeType min)
     // reserve every word that is not infrequent
     for (auto word_it : sent_it)
     {
-      if (count_map[word_it] > min)
+      if (counts[word_it] > min)
       {
         new_sent_buffer.push_back(word_it);
       }
@@ -354,13 +323,12 @@ void GraphW2VLoader<T>::RemoveInfrequentFromData(SizeType min)
     {
       // reserve the sentence if the sentence is still long enough
       new_data.push_back(new_sent_buffer);
+      new_size += new_sent_buffer.size() - (2 * window_size_);
     }
   }
 
   data_ = new_data;
-
-  // update dl
-  Update();
+  size_ = new_size;
 }
 /**
  * initialises the unigram table for negative frequency based sampling
@@ -371,25 +339,20 @@ void GraphW2VLoader<T>::InitUnigramTable(SizeType size, bool use_vocab_frequenci
 {
   if (use_vocab_frequencies)
   {
-    std::vector<SizeType> frequencies(vocab_size());
-    for (auto const &kvp : vocab_.data)
-    {
-      frequencies[kvp.second.first] = kvp.second.second;
-    }
-    unigram_table_.ResetTable(frequencies, size);
+    unigram_table_.ResetTable(vocab_.counts, size);
   }
   else  // use counts from data
   {
-    std::vector<SizeType> frequencies(vocab_size(), SizeType{0});
+    std::vector<SizeType> counts(vocab_size(), SizeType{0});
 
     for (auto const &sent : data_)
     {
       for (auto const &id : sent)
       {
-        frequencies[id]++;
+        counts[id]++;
       }
     }
-    unigram_table_.ResetTable(frequencies, size);
+    unigram_table_.ResetTable(counts, size);
   }
 }
 /**
@@ -413,7 +376,7 @@ void GraphW2VLoader<T>::BufferNextSamples()
   while (true)
   {
     auto word_freq =
-        static_cast<T>(vocab_.reverse_data[data_.at(current_sentence_).at(current_word_)].second) /
+        static_cast<T>(vocab_.counts[data_.at(current_sentence_).at(current_word_)]) /
         static_cast<T>(vocab_.total_count);
     auto random_var = static_cast<T>(lfg_.AsDouble());  // random variable between 0-1
     if (random_var < T{1} - fetch::math::Sqrt(freq_thresh_ / word_freq))
@@ -555,7 +518,7 @@ bool GraphW2VLoader<T>::AddData(InputType const &input, LabelType const &label)
  * @return bool indicates success
  */
 template <typename T>
-void GraphW2VLoader<T>::BuildVocab(std::vector<std::string> const &sents, SizeType min_count)
+void GraphW2VLoader<T>::BuildVocabAndData(std::vector<std::string> const &sents, SizeType min_count)
 {
   // build vocab from sentences
   std::cout << "building vocab and data" << std::endl;
@@ -580,15 +543,14 @@ void GraphW2VLoader<T>::BuildVocab(std::vector<std::string> const &sents, SizeTy
 
     std::vector<SizeType> indices = vocab_.PutSentenceInVocab(preprocessed_string);
     data_.push_back(indices);
+    size_ += indices.size() - (2 * window_size_);
   }
 
-  // update stats in vocab_ and dl
-  vocab_.Update();
-  Update();
-
-  // remove infrequent words from data
-  std::cout << "Removing infrequent words from vocab and data" << std::endl;
-  RemoveInfrequent(min_count);
+  if (min_count > 0) {
+    // remove infrequent words from data
+    std::cout << "Removing infrequent words from vocab and data" << std::endl;
+    RemoveInfrequent(min_count);
+  }
 
   // initialise unigram
   std::cout << "Initialising unigram" << std::endl;
@@ -596,10 +558,9 @@ void GraphW2VLoader<T>::BuildVocab(std::vector<std::string> const &sents, SizeTy
 }
 
 template <typename T>
-void GraphW2VLoader<T>::BuildOnlyData(std::vector<std::string> const &sents, SizeType min_count,
-                                      bool remove_infrequent)
+void GraphW2VLoader<T>::BuildOnlyData(std::vector<std::string> const &sents, SizeType min_count)
 {
-  assert(vocab_.data.size() != 0);
+  assert(vocab_.total_count >= 0);
 
   // build vocab from sentences
   std::cout << "building data " << std::endl;
@@ -624,20 +585,18 @@ void GraphW2VLoader<T>::BuildOnlyData(std::vector<std::string> const &sents, Siz
     for (std::string const &word : preprocessed_string)
     {
       // some words will be missing from the vocab because of infrequency
-      if (vocab_.data.find(word) != vocab_.data.end())
+      auto word_it = vocab_.vocab.find(word);
+      if (word_it != vocab_.vocab.end())
       {
-        auto value = vocab_.data[word];
-        indices.push_back(value.first);  // update the word in the sentence to index
+        indices.push_back(word_it->second);  // update the word in the sentence to index
       }
     }
 
     data_.push_back(indices);
+    size_ += indices.size() - (2 * window_size_);
   }
 
-  // update stats in vocab_ and dl
-  Update();
-
-  if (remove_infrequent)
+  if (min_count > 0)
   {
     // remove infrequent words from data
     std::cout << "Removing infrequent words from data" << std::endl;
@@ -647,43 +606,6 @@ void GraphW2VLoader<T>::BuildOnlyData(std::vector<std::string> const &sents, Siz
   // initialise unigram
   std::cout << "Initialising unigram" << std::endl;
   InitUnigramTable(1e8, false);
-}
-
-template <typename T>
-void GraphW2VLoader<T>::BuildOnlyVocab(std::vector<std::string> const &sents, SizeType min_count,
-                                       bool remove_infrequent)
-{
-  // build vocab from sentences
-  std::cout << "building vocab " << std::endl;
-  for (auto const &s : sents)
-  {
-    // make sure the max_word_count is not exceeded, and also the remain words space allows a
-    // meaningful sentence
-    if (size_ >= max_word_count_ - 2 * window_size_)
-    {
-      return;
-    }
-
-    // if we can take in more words, then start processing words
-    std::vector<std::string> preprocessed_string = PreprocessString(s, max_word_count_ - size_);
-
-    if (preprocessed_string.size() <= 2 * window_size_)
-    {  // dispose short sentences before we create vocabulary and count frequency
-      continue;
-    }
-
-    vocab_.PutSentenceInVocab(preprocessed_string);
-  }
-
-  // update stats in vocab_
-  vocab_.Update();
-
-  if (remove_infrequent)
-  {
-    // remove infrequent words from data
-    std::cout << "Removing infrequent words from vocab" << std::endl;
-    RemoveInfrequent(min_count);
-  }
 }
 
 /**
@@ -716,7 +638,7 @@ void GraphW2VLoader<T>::LoadVocab(std::string const &filename)
 template <typename T>
 math::SizeType GraphW2VLoader<T>::vocab_size() const
 {
-  return vocab_.data.size();
+  return vocab_.vocab.size();
 }
 
 /**

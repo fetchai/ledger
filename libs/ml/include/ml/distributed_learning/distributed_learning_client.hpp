@@ -119,6 +119,9 @@ protected:
   DataType learning_rate_   = static_cast<DataType>(0);
   SizeType number_of_peers_ = 0;
 
+  // Count for number of batches
+  SizeType batch_counter_ = 0;
+
   void        GetNewGradients(VectorTensorType &new_gradients);
   std::string GetTimeStamp();
 
@@ -476,4 +479,5 @@ void TrainingClient<TensorType>::DoBatch()
     std::lock_guard<std::mutex> l(model_mutex_);
     opti_ptr_->ApplyGradients(batch_size_);
   }
+  batch_counter_++;
 }

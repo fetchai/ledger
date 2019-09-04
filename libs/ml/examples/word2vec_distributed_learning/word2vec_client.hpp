@@ -51,7 +51,6 @@ public:
 private:
   W2VTrainingParams<DataType>                                       tp_;
   std::string                                                       skipgram_;
-  std::string                                                       vocab_file_;
   std::shared_ptr<fetch::ml::dataloaders::GraphW2VLoader<DataType>> w2v_data_loader_ptr_;
   std::shared_ptr<std::mutex>                                       console_mutex_ptr_;
 
@@ -69,20 +68,18 @@ Word2VecClient<TensorType>::Word2VecClient(std::string const &                id
                                            W2VTrainingParams<DataType> const &tp,
                                            std::shared_ptr<std::mutex> const &console_mutex_ptr)
   : TrainingClient<TensorType>(id, tp)
-  , vocab_file_(tp.vocab_file)
-  , console_mutex_ptr_(console_mutex_ptr)
+    , tp_(tp)
+    , console_mutex_ptr_(console_mutex_ptr)
 {
   PrepareDataLoader();
   PrepareModel();
 
+  DataType est_samples = w2v_data_loader_ptr_->EstimatedSampleNumber();
   // calc the compatiable linear lr decay
-  tp_.learning_rate_param.linear_decay_rate =
-      static_cast<DataType>(1) /
-      w2v_data_loader_ptr_
-          ->EstimatedSampleNumber();  // this decay rate gurantee the lr is reduced to zero by the
+  tp_.learning_rate_param.linear_decay_rate = DataType{1} / est_samples;
+  // this decay rate gurantees that the lr is reduced to zero by the
   // end of an epoch (despite capping by ending learning rate)
-  std::cout << "dataloader_.EstimatedSampleNumber(): "
-            << w2v_data_loader_ptr_->EstimatedSampleNumber() << std::endl;
+  std::cout << "id: " << id << ", dataloader_.EstimatedSampleNumber(): " << est_samples << std::endl;
 
   PrepareOptimiser();
 }
@@ -113,8 +110,8 @@ void Word2VecClient<TensorType>::PrepareDataLoader()
 
   w2v_data_loader_ptr_ = std::make_shared<fetch::ml::dataloaders::GraphW2VLoader<DataType>>(
       tp_.window_size, tp_.negative_sample_size, tp_.freq_thresh, tp_.max_word_count);
-  w2v_data_loader_ptr_->LoadVocab(vocab_file_);
-  w2v_data_loader_ptr_->BuildOnlyData({training_data_}, tp_.min_count);
+  w2v_data_loader_ptr_->LoadVocab(tp_.vocab_file);
+  w2v_data_loader_ptr_->BuildOnlyData({tp_.data}, tp_.min_count);
 
   this->dataloader_ptr_ = w2v_data_loader_ptr_;
 }
@@ -124,8 +121,8 @@ void Word2VecClient<TensorType>::PrepareOptimiser()
 {
   // Initialise Optimiser
   this->opti_ptr_ = std::make_shared<fetch::ml::optimisers::SGDOptimiser<TensorType>>(
-      std::shared_ptr<fetch::ml::Graph<TensorType>>(this->g_ptr_), this->inputs_names_,
-      this->label_name_, this->error_name_, this->learning_rate_);
+      this->g_ptr_, this->inputs_names_,
+      this->label_name_, this->error_name_, tp_.learning_rate_param);
 }
 
 /**
@@ -138,11 +135,10 @@ void Word2VecClient<TensorType>::Test(DataType &test_loss)
   // TODO(issue 1595): Implement loss mechanism
   test_loss = static_cast<DataType>(0);
 
-  // TODO(issue 1596): Implement test frequency mechanism
-  // if (i % tp_.test_frequency == 0)
-  //{
-  TestEmbeddings(tp_.word0, tp_.word1, tp_.word2, tp_.word3, tp_.k);
-  //}
+  if (this->batch_counter_ % tp_.test_frequency == 1)
+  {
+    TestEmbeddings(tp_.word0, tp_.word1, tp_.word2, tp_.word3, tp_.k);
+  }
 }
 
 template <class TensorType>
@@ -159,7 +155,7 @@ void Word2VecClient<TensorType>::PrintWordAnalogy(TensorType const & embeddings,
   }
   else
   {
-    std::cout << "Find word that to " << word3 << " is what " << word2 << " is to " << word1
+    std::cout << "Find word that is to " << word3 << " what " << word2 << " is to " << word1
               << std::endl;
   }
 
@@ -231,10 +227,10 @@ void Word2VecClient<TensorType>::TestEmbeddings(std::string const &word0, std::s
 
   {
     // Lock console
-    std::lock_guard<std::mutex> l(*console_mutex_ptr_);
+    std::lock_guard<std::mutex> l2(*console_mutex_ptr_);
 
     std::cout << std::endl;
-    std::cout << "Client " << this->id_ << ": " << std::endl;
+    std::cout << "Client " << this->id_ << ", batches done = " << this->batch_counter_ << std::endl;
     PrintKNN(embeddings->get_weights(), word0, K);
     std::cout << std::endl;
     PrintWordAnalogy(embeddings->get_weights(), word1, word2, word3, K);
