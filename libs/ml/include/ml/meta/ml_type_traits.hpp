@@ -23,17 +23,27 @@
 namespace fetch {
 namespace ml {
 
+enum class OpKind : uint8_t
+{
+  INVALID,
+  OP,
+  LOSS,
+  LAYER
+};
+
 enum class OpType : uint16_t
 {
-  NONE,
   GRAPH,
-  SUBGRAPH,
+
+  // OpKind - INVALID
+  NONE,
+
+  // OpKind - Op
   OP_ABS,
   OP_ADD,
   OP_CONCATENATE,
   OP_CONVOLUTION_1D,
   OP_CONVOLUTION_2D,
-  OP_CROSS_ENTROPY_LOSS,
   OP_DIVIDE,
   OP_DROPOUT,
   OP_ELU,
@@ -51,7 +61,6 @@ enum class OpType : uint16_t
   OP_MATRIX_MULTIPLY,
   OP_MAX_POOL_1D,
   OP_MAX_POOL_2D,
-  OP_MEAN_SQUARE_ERROR_LOSS,
   OP_MAXIMUM,
   OP_MULTIPLY,
   OP_PLACEHOLDER,
@@ -61,7 +70,6 @@ enum class OpType : uint16_t
   OP_RESHAPE,
   OP_SIGMOID,
   OP_SOFTMAX,
-  OP_SOFTMAX_CROSS_ENTROPY_LOSS,
   OP_SQRT,
   OP_SUBTRACT,
   OP_SWITCH,
@@ -69,6 +77,14 @@ enum class OpType : uint16_t
   OP_TRANSPOSE,
   OP_WEIGHTS,
   OP_SLICE,
+
+  // OpKind - LOSS
+  LOSS_CROSS_ENTROPY,
+  LOSS_SOFTMAX_CROSS_ENTROPY,
+  LOSS_MEAN_SQUARE_ERROR,
+
+  // OpKind - LAYER
+  SUBGRAPH,
   LAYER_CONVOLUTION_1D,
   LAYER_CONVOLUTION_2D,
   LAYER_FULLY_CONNECTED,

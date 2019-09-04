@@ -114,13 +114,15 @@ TYPED_TEST(SkipGramTest, saveparams_test)
   // train g
   layer.SetInput(label_name, labels);
   TypeParam loss = layer.Evaluate(error_output);
-  layer.BackPropagateError(error_output);
+  layer.BackPropagate(error_output);
+  layer.ApplyRegularisation();
   layer.Step(DataType{0.1f});
 
   // train g2
   layer2.SetInput(label_name, labels);
   TypeParam loss2 = layer2.Evaluate(error_output);
-  layer2.BackPropagateError(error_output);
+  layer2.BackPropagate(error_output);
+  layer2.ApplyRegularisation();
   layer2.Step(DataType{0.1f});
 
   EXPECT_TRUE(loss.AllClose(loss2, fetch::math::function_tolerance<DataType>(),
