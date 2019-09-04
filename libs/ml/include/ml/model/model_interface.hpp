@@ -165,7 +165,7 @@ bool ModelInterface<TensorType>::Test(DataType &test_loss)
 
   this->graph_ptr_->SetInput(label_, test_pair.first);
   this->graph_ptr_->SetInput(input_, test_pair.second.at(0));
-  test_loss = *(this->graph_ptr_->Evaluate(error_).begin());
+  test_loss = *(this->graph_ptr_->ForwardPropagate(error_).begin());
 
   return true;
 }
@@ -179,7 +179,7 @@ bool ModelInterface<TensorType>::Predict(TensorType &input, TensorType &output)
   }
 
   this->graph_ptr_->SetInput(input_, input);
-  output = this->graph_ptr_->ForwardPropagate(output_);
+  output = this->graph_ptr_->Evaluate(output_);
 
   return true;
 }

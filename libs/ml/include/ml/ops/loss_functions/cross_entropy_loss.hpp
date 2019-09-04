@@ -124,7 +124,7 @@ public:
 
   static constexpr OpType OpCode()
   {
-    return OpType::OP_CROSS_ENTROPY_LOSS;
+    return OpType::LOSS_CROSS_ENTROPY;
   }
   static constexpr char const *DESCRIPTOR = "CrossEntropyLoss";
 };
