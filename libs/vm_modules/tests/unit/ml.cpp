@@ -332,26 +332,7 @@ TEST_F(MLTests, sgd_optimiser_serialisation_test)
       var state = State<Optimiser>("optimiser");
       state.set(optimiser);
 
-      ////////////
-      // TODO (1533) - this is necessary due to a bug
-      // now make a totally new optimiser, graph and dataloader with identical properties
-      // this is necessary because the optimiser data is not written at state.set time
-      // therefore the internal states of the optimser after calling run will be saved
-      // to the state
-      ////////////
-
-      var graph2 = Graph();
-      graph2.addPlaceholder("Input");
-      graph2.addPlaceholder("Label");
-      graph2.addFullyConnected("FC1", "Input", 2, 2);
-      graph2.addRelu("Output", "FC1");
-      graph2.addMeanSquareErrorLoss("Error", "Output", "Label");
-
-      var dataloader2 = DataLoader("tensor");
-      dataloader2.addData(data_tensor, label_tensor);
-
-      var optimiser2 = Optimiser("sgd", graph2, dataloader2, "Input", "Label", "Error");
-      var loss = optimiser2.run(batch_size);
+      var loss = optimiser.run(batch_size);
       return loss;
 
     endfunction

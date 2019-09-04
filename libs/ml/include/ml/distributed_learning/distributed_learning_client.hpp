@@ -34,6 +34,10 @@
 #include <string>
 #include <vector>
 
+namespace fetch {
+namespace ml {
+namespace distributed_learning {
+
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
 
@@ -70,18 +74,28 @@ public:
   virtual ~TrainingClient() = default;
 
   void SetCoordinator(std::shared_ptr<Coordinator> coordinator_ptr);
+
   void Run();
 
-  DataType         Train();
-  virtual void     Test(DataType &test_loss);
+  DataType Train();
+
+  virtual void Test(DataType &test_loss);
+
   VectorTensorType GetGradients() const;
+
   VectorTensorType GetWeights() const;
-  void             AddPeers(std::vector<std::shared_ptr<TrainingClient>> const &clients);
-  void             BroadcastGradients();
-  void             AddGradient(VectorTensorType gradient);
-  void             ApplyGradient(VectorTensorType gradients);
-  void             SetWeights(VectorTensorType &new_weights);
-  void             SetParams(ClientParams<DataType> const &new_params);
+
+  void AddPeers(std::vector<std::shared_ptr<TrainingClient>> const &clients);
+
+  void BroadcastGradients();
+
+  void AddGradient(VectorTensorType gradient);
+
+  void ApplyGradient(VectorTensorType gradients);
+
+  void SetWeights(VectorTensorType &new_weights);
+
+  void SetParams(ClientParams<DataType> const &new_params);
 
 protected:
   // Client id (identification name)
@@ -119,12 +133,16 @@ protected:
   DataType learning_rate_   = static_cast<DataType>(0);
   SizeType number_of_peers_ = 0;
 
-  void        GetNewGradients(VectorTensorType &new_gradients);
+  void GetNewGradients(VectorTensorType &new_gradients);
+
   std::string GetTimeStamp();
 
   void TrainOnce();
+
   void TrainWithCoordinator();
+
   void DoBatch();
+
   void ClearLossFile();
 };
 
@@ -477,3 +495,7 @@ void TrainingClient<TensorType>::DoBatch()
     opti_ptr_->ApplyGradients(batch_size_);
   }
 }
+
+}  // namespace distributed_learning
+}  // namespace ml
+}  // namespace fetch
