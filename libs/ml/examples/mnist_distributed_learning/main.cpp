@@ -91,7 +91,7 @@ int main(int ac, char **av)
   ClientParams<DataType> client_params;
 
   SizeType number_of_clients    = 10;
-  SizeType number_of_rounds     = 10;
+  SizeType number_of_rounds     = 3;
   coord_params.mode             = CoordinatorMode::SEMI_SYNCHRONOUS;
   coord_params.iterations_count = 100;
   client_params.batch_size      = 32;

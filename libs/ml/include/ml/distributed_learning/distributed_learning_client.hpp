@@ -397,8 +397,12 @@ void TrainingClient<TensorType>::GetNewGradients(VectorTensorType &new_gradients
 template <class TensorType>
 std::string TrainingClient<TensorType>::GetTimeStamp()
 {
-  // TODO(1564): Implement timestamp
-  return "TIMESTAMP";
+  std::time_t now = std::time(nullptr);
+
+  char buffer[30] = {0};
+  std::strftime(buffer, sizeof(buffer), "%Y-%m-%d-%H:%M:%S", gmtime(&now));
+
+  return {buffer};
 }
 
 /**
@@ -419,7 +423,7 @@ void TrainingClient<TensorType>::TrainOnce()
   // Upload to https://plot.ly/create/#/ for visualisation
   if (lossfile)
   {
-    lossfile << GetTimeStamp() << ", " << loss << "\n";
+    lossfile << GetTimeStamp() << ", " << static_cast<double>(loss) << "\n";
   }
 
   lossfile << GetTimeStamp() << ", "
@@ -449,7 +453,7 @@ void TrainingClient<TensorType>::TrainWithCoordinator()
     // Upload to https://plot.ly/create/#/ for visualisation
     if (lossfile)
     {
-      lossfile << GetTimeStamp() << ", " << loss << "\n";
+      lossfile << GetTimeStamp() << ", " << static_cast<double>(loss) << "\n";
     }
   }
 
