@@ -26,7 +26,6 @@
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
-//#include "ml/optimisation/sgd_optimiser.hpp"
 #include "ml/utilities/min_max_scaler.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
@@ -41,19 +40,17 @@ using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
 
 using DataType = fetch::fixed_point::fp64_t;
-// using DataType   = double;
 using TensorType = fetch::math::Tensor<DataType>;
 using SizeType   = TensorType::SizeType;
 
 using GraphType        = fetch::ml::Graph<TensorType>;
 using CostFunctionType = fetch::ml::ops::MeanSquareErrorLoss<TensorType>;
-// using OptimiserType    = fetch::ml::optimisers::SGDOptimiser<TensorType>;
 using OptimiserType  = fetch::ml::optimisers::AdamOptimiser<TensorType>;
 using DataLoaderType = fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>;
 
 struct TrainingParams
 {
-  SizeType epochs{3};
+  SizeType epochs{1};
   SizeType batch_size{1000};
   bool     normalise = false;
 };
