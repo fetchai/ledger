@@ -26,7 +26,7 @@ namespace http {
 
 bool NormalAccessAuthentication(HTTPRequest const &req)
 {
-  return !(req.authentication_level() < AuthenticationLevel::DEFAULT_LEVEL);
+  return req.authentication_level() >= AuthenticationLevel::DEFAULT_LEVEL;
 }
 
 /// Post methods
