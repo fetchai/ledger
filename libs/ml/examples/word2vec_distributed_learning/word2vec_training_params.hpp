@@ -21,6 +21,10 @@
 /// PARAMETERS AND CONSTANTS ///
 ////////////////////////////////
 
+namespace fetch {
+namespace ml {
+namespace distributed_learning {
+
 template <class DataType>
 struct W2VTrainingParams : public ClientParams<DataType>
 {
@@ -52,3 +56,7 @@ struct W2VTrainingParams : public ClientParams<DataType>
   std::string word3    = "father";
   std::string save_loc = "./model.fba";  // save file location for exporting graph
 };
+
+}  // namespace distributed_learning
+}  // namespace ml
+}  // namespace fetch
