@@ -92,7 +92,7 @@ public:
 
     // softmax
     std::string attention_weight = this->template AddNode<fetch::ml::ops::Softmax<TensorType>>(
-        name + "_Softmax", {masked_scaled_kq_matmul}, static_cast<SizeType>(0),false);
+        name + "_Softmax", {masked_scaled_kq_matmul}, static_cast<SizeType>(0), false);
 
     // dropout
     std::string dropout_attention_weight =
