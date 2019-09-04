@@ -20,6 +20,10 @@
 #include "math/base_types.hpp"
 #include <mutex>
 
+namespace fetch {
+namespace ml {
+namespace distributed_learning {
+
 enum class CoordinatorMode
 {
   SYNCHRONOUS,
@@ -47,9 +51,13 @@ public:
   using SizeType = fetch::math::SizeType;
 
   Coordinator(CoordinatorParams const &params);
-  void             IncrementIterationsCounter();
-  void             Reset();
-  CoordinatorMode  GetMode() const;
+
+  void IncrementIterationsCounter();
+
+  void Reset();
+
+  CoordinatorMode GetMode() const;
+
   CoordinatorState GetState() const;
 
 private:
@@ -91,3 +99,6 @@ CoordinatorState Coordinator::GetState() const
 {
   return state_;
 }
+}  // namespace distributed_learning
+}  // namespace ml
+}  // namespace fetch
