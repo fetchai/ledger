@@ -51,6 +51,11 @@ template <typename TensorType>
 class ModelInterface;
 }  // namespace model
 
+namespace distributed_learning {
+template <typename TensorType>
+class TrainingClient;
+} // namespace distributed_learning
+
 enum class GraphState : uint8_t
 {
   NOT_COMPILED,
@@ -146,6 +151,7 @@ private:
 
   friend class optimisers::Optimiser<TensorType>;
   friend class model::ModelInterface<TensorType>;
+  friend class distributed_learning::TrainingClient<TensorType>;
 
   template <typename OperationType>
   bool UpdateVariableName(std::string const &name, std::string &ret);
