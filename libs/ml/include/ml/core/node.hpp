@@ -259,7 +259,7 @@ std::vector<std::pair<Node<T> *, T>> Node<T>::BackPropagate(TensorType const &er
 }
 
 /**
- * Resets input and output node ptr containers. Useful for graph decopmiling.
+ * Resets input and output node ptr containers. Useful for graph decompiling.
  * @tparam T
  */
 template <typename T>
