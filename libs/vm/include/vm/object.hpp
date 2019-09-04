@@ -23,6 +23,8 @@
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm/common.hpp"
 
+#include <type_traits>
+
 namespace fetch {
 namespace vm {
 
@@ -39,30 +41,16 @@ struct Variant;
 class Address;
 struct String;
 
-template <typename T, typename = void>
-struct IsPrimitive : std::false_type
-{
-};
 template <typename T>
-struct IsPrimitive<
-    T, std::enable_if_t<type_util::IsAnyOfV<T, void, bool, int8_t, uint8_t, int16_t, uint16_t,
-                                            int32_t, uint32_t, int64_t, uint64_t, float, double,
-                                            fixed_point::fp32_t, fixed_point::fp64_t>>>
-  : std::true_type
-{
-};
+using IsPrimitive =
+    type_util::IsAnyOf<T, void, bool, int8_t, uint8_t, int16_t, uint16_t, int32_t, uint32_t,
+                       int64_t, uint64_t, float, double, fixed_point::fp32_t, fixed_point::fp64_t>;
 
 template <typename T, typename R = void>
 using IfIsPrimitive = std::enable_if_t<IsPrimitive<std::decay_t<T>>::value, R>;
 
-template <typename T, typename = void>
-struct IsObject : std::false_type
-{
-};
 template <typename T>
-struct IsObject<T, typename std::enable_if_t<std::is_base_of<Object, T>::value>> : std::true_type
-{
-};
+using IsObject = std::is_base_of<Object, T>;
 
 template <typename T>
 struct IsPtr : std::false_type
@@ -76,53 +64,20 @@ struct IsPtr<Ptr<T>> : std::true_type
 template <typename T, typename R = void>
 using IfIsPtr = std::enable_if_t<IsPtr<std::decay_t<T>>::value, R>;
 
-template <typename T, typename = void>
-struct IsVariant : std::false_type
-{
-};
 template <typename T>
-struct IsVariant<T, typename std::enable_if_t<std::is_base_of<Variant, T>::value>> : std::true_type
-{
-};
+using IsVariant = std::is_base_of<Variant, T>;
 
-template <typename T, typename = void>
-struct IsAddress : std::false_type
-{
-};
 template <typename T>
-struct IsAddress<T, typename std::enable_if_t<std::is_base_of<Address, T>::value>> : std::true_type
-{
-};
+using IsAddress = std::is_base_of<Address, T>;
 
-template <typename T, typename = void>
-struct IsString : std::false_type
-{
-};
 template <typename T>
-struct IsString<T, std::enable_if_t<std::is_base_of<String, std::decay_t<T>>::value>>
-  : std::true_type
-{
-};
+using IsString = std::is_base_of<String, std::decay_t<T>>;
 
-template <typename T, typename = void>
-struct IsNonconstRef : std::false_type
-{
-};
 template <typename T>
-struct IsNonconstRef<T, typename std::enable_if_t<std::is_same<T, std::decay_t<T> &>::value>>
-  : std::true_type
-{
-};
+using IsNonconstRef = std::is_same<T, std::decay_t<T> &>;
 
-template <typename T, typename = void>
-struct IsConstRef : std::false_type
-{
-};
 template <typename T>
-struct IsConstRef<T, typename std::enable_if_t<std::is_same<T, std::decay_t<T> const &>::value>>
-  : std::true_type
-{
-};
+using IsConstRef = std::is_same<T, std::decay_t<T> const &>;
 
 template <typename T>
 struct GetManagedType;
@@ -132,48 +87,27 @@ struct GetManagedType<Ptr<T>>
   using type = T;
 };
 
-template <typename T, typename = void>
-struct IsPrimitiveParameter : std::false_type
-{
-};
 template <typename T>
-struct IsPrimitiveParameter<
-    T, typename std::enable_if_t<!IsNonconstRef<T>::value && IsPrimitive<std::decay_t<T>>::value>>
-  : std::true_type
-{
-};
+using IsPrimitiveParameter =
+    std::integral_constant<bool, !IsNonconstRef<T>::value && IsPrimitive<std::decay_t<T>>::value>;
 
-template <typename T, typename = void>
-struct IsPtrParameter : std::false_type
-{
-};
 template <typename T>
-struct IsPtrParameter<
-    T, typename std::enable_if_t<IsConstRef<T>::value && IsPtr<std::decay_t<T>>::value>>
-  : std::true_type
-{
-};
+using IsPtrParameter =
+    std::integral_constant<bool, IsConstRef<T>::value && IsPtr<std::decay_t<T>>::value>;
 
-template <typename T, typename = void>
-struct IsVariantParameter : std::false_type
-{
-};
 template <typename T>
-struct IsVariantParameter<
-    T, typename std::enable_if_t<IsConstRef<T>::value && IsVariant<std::decay_t<T>>::value>>
-  : std::true_type
-{
-};
+using IsVariantParameter =
+    std::integral_constant<bool, IsConstRef<T>::value && IsVariant<std::decay_t<T>>::value>;
 
 template <typename T, typename = void>
 struct GetStorageType;
 template <typename T>
-struct GetStorageType<T, typename std::enable_if_t<IsPrimitive<T>::value>>
+struct GetStorageType<T, std::enable_if_t<IsPrimitive<T>::value>>
 {
   using type = T;
 };
 template <typename T>
-struct GetStorageType<T, typename std::enable_if_t<IsPtr<T>::value>>
+struct GetStorageType<T, std::enable_if_t<IsPtr<T>::value>>
 {
   using type = Ptr<Object>;
 };
@@ -245,12 +179,12 @@ protected:
   std::size_t ref_count_;
 
 private:
-  void AddRef()
+  constexpr void AddRef() noexcept
   {
     ++ref_count_;
   }
 
-  void Release()
+  constexpr void Release() noexcept
   {
     if (--ref_count_ == 0)
     {
@@ -266,15 +200,11 @@ template <typename T>
 class Ptr
 {
 public:
-  Ptr()
-  {
-    ptr_ = nullptr;
-  }
+  Ptr() = default;
 
-  Ptr(T *other)
-  {
-    ptr_ = other;
-  }
+  Ptr(T *other) noexcept
+    : ptr_{other}
+  {}
 
   static Ptr PtrFromThis(T *this__)
   {
@@ -294,7 +224,7 @@ public:
     AddRef();
   }
 
-  Ptr(Ptr &&other)
+  constexpr Ptr(Ptr &&other) noexcept
   {
     ptr_       = other.ptr_;
     other.ptr_ = nullptr;
@@ -371,28 +301,28 @@ public:
     }
   }
 
-  explicit operator bool() const
+  explicit operator bool() const noexcept
   {
     return ptr_ != nullptr;
   }
 
-  T *operator->() const
+  T *operator->() const noexcept
   {
     return ptr_;
   }
 
-  T &operator*() const
+  T &operator*() const noexcept
   {
     return *ptr_;
   }
 
-  std::size_t RefCount() const
+  std::size_t RefCount() const noexcept
   {
     return ptr_->ref_count_;
   }
 
 private:
-  T *ptr_;
+  T *ptr_ = nullptr;
 
   void AddRef()
   {
@@ -414,56 +344,56 @@ private:
   friend class Ptr;
 
   template <typename L, typename R>
-  friend bool operator==(Ptr<L> const &lhs, Ptr<R> const &rhs);
+  friend bool operator==(Ptr<L> const &lhs, Ptr<R> const &rhs) noexcept;
 
   template <typename L>
-  friend bool operator==(Ptr<L> const &lhs, std::nullptr_t /* rhs */);
+  friend bool operator==(Ptr<L> const &lhs, std::nullptr_t /* rhs */) noexcept;
 
   template <typename R>
-  friend bool operator==(std::nullptr_t /* lhs */, Ptr<R> const &rhs);
+  friend bool operator==(std::nullptr_t /* lhs */, Ptr<R> const &rhs) noexcept;
 
   template <typename L, typename R>
-  friend bool operator!=(Ptr<L> const &lhs, Ptr<R> const &rhs);
+  friend bool operator!=(Ptr<L> const &lhs, Ptr<R> const &rhs) noexcept;
 
   template <typename L>
-  friend bool operator!=(Ptr<L> const &lhs, std::nullptr_t /* rhs */);
+  friend bool operator!=(Ptr<L> const &lhs, std::nullptr_t /* rhs */) noexcept;
 
   template <typename R>
-  friend bool operator!=(std::nullptr_t /* lhs */, Ptr<R> const &rhs);
+  friend bool operator!=(std::nullptr_t /* lhs */, Ptr<R> const &rhs) noexcept;
 };
 
 template <typename L, typename R>
-bool operator==(Ptr<L> const &lhs, Ptr<R> const &rhs)
+bool operator==(Ptr<L> const &lhs, Ptr<R> const &rhs) noexcept
 {
   return (lhs.ptr_ == static_cast<L *>(rhs.ptr_));
 }
 
 template <typename L>
-bool operator==(Ptr<L> const &lhs, std::nullptr_t /* rhs */)
+bool operator==(Ptr<L> const &lhs, std::nullptr_t /* rhs */) noexcept
 {
   return (lhs.ptr_ == nullptr);
 }
 
 template <typename R>
-bool operator==(std::nullptr_t /* lhs */, Ptr<R> const &rhs)
+bool operator==(std::nullptr_t /* lhs */, Ptr<R> const &rhs) noexcept
 {
   return (nullptr == rhs.ptr_);
 }
 
 template <typename L, typename R>
-bool operator!=(Ptr<L> const &lhs, Ptr<R> const &rhs)
+bool operator!=(Ptr<L> const &lhs, Ptr<R> const &rhs) noexcept
 {
   return (lhs.ptr_ != static_cast<L *>(rhs.ptr_));
 }
 
 template <typename L>
-bool operator!=(Ptr<L> const &lhs, std::nullptr_t /* rhs */)
+bool operator!=(Ptr<L> const &lhs, std::nullptr_t /* rhs */) noexcept
 {
   return (lhs.ptr_ != nullptr);
 }
 
 template <typename R>
-bool operator!=(std::nullptr_t /* lhs */, Ptr<R> const &rhs)
+bool operator!=(std::nullptr_t /* lhs */, Ptr<R> const &rhs) noexcept
 {
   return (nullptr != rhs.ptr_);
 }
