@@ -51,6 +51,11 @@ template <typename TensorType>
 class ModelInterface;
 }  // namespace model
 
+namespace distributed_learning {
+template <typename TensorType>
+class TrainingClient;
+}  // namespace distributed_learning
+
 enum class GraphState : uint8_t
 {
   NOT_COMPILED,
@@ -130,6 +135,8 @@ public:
 
   static constexpr char const *DESCRIPTOR = "Graph";
 
+  void AddGradients(std::vector<TensorType> grads);
+
 protected:
   std::unordered_map<std::string, NodePtrType>                  nodes_;
   std::vector<std::pair<std::string, std::vector<std::string>>> connections_;
@@ -139,13 +146,12 @@ protected:
   void       InsertSharedCopy(std::shared_ptr<Graph<TensorType>> output_ptr);
   TensorType ForwardPropagate(std::string const &node_name, bool is_training = true);
 
-  void AddGradients(std::vector<TensorType> grads);
-
 private:
   GraphState graph_state_ = GraphState::NOT_COMPILED;
 
   friend class optimisers::Optimiser<TensorType>;
   friend class model::ModelInterface<TensorType>;
+  friend class distributed_learning::TrainingClient<TensorType>;
 
   template <typename OperationType>
   bool UpdateVariableName(std::string const &name, std::string &ret);
