@@ -103,7 +103,7 @@ TYPED_TEST(GraphTest, no_such_node_test)  // Use the class as a Node
   ASSERT_ANY_THROW(g.Evaluate("FullyConnected"));
 }
 
-TYPED_TEST(GraphTest, node_add_wrong_order_test)  // Use the class as a Node
+TYPED_TEST(GraphTest, node_add_wrong_order_test)
 {
   using TensorType = TypeParam;
   using SizeType   = typename TypeParam::SizeType;

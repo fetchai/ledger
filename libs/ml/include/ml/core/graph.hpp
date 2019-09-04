@@ -51,6 +51,11 @@ template <typename TensorType>
 class ModelInterface;
 }  // namespace model
 
+namespace distributed_learning {
+template <typename TensorType>
+class TrainingClient;
+}  // namespace distributed_learning
+
 enum class GraphState : uint8_t
 {
   NOT_COMPILED,
@@ -146,6 +151,7 @@ private:
 
   friend class optimisers::Optimiser<TensorType>;
   friend class model::ModelInterface<TensorType>;
+  friend class distributed_learning::TrainingClient<TensorType>;
 
   template <typename OperationType>
   bool UpdateVariableName(std::string const &name, std::string &ret);
@@ -294,9 +300,6 @@ void Graph<TensorType>::AddTrainable(NodePtrType node_ptr, std::string const &no
       // be ignored
       if (graph_ptr->trainable_lookup_.find(subnode_name) == graph_ptr->trainable_lookup_.end())
       {
-        //        graph_ptr->trainable_nodes_.emplace_back(graph_ptr->trainable_nodes_.at(trainable.second));
-        //        graph_ptr->trainable_lookup_[subnode_name] = graph_ptr->trainable_nodes_.size() -
-        //        1;
         trainable_nodes_.emplace_back(graph_ptr->trainable_nodes_.at(trainable.second));
         trainable_lookup_[subnode_name] = trainable_nodes_.size() - 1;
       }
@@ -316,7 +319,7 @@ TensorType Graph<TensorType>::Evaluate(std::string const &node_name, bool is_tra
 
   if (nodes_.find(node_name) != nodes_.end())
   {
-    return ((*(nodes_[node_name]->Evaluate(is_training))).Copy());
+    return (*(nodes_[node_name]->Evaluate(is_training))).Copy();
   }
   else
   {
@@ -337,7 +340,7 @@ TensorType Graph<TensorType>::ForwardPropagate(std::string const &node_name, boo
 
   if (nodes_.find(node_name) != nodes_.end())
   {
-    return ((*(nodes_[node_name]->Evaluate(is_training))));
+    return (*(nodes_[node_name]->Evaluate(is_training)));
   }
   else
   {
@@ -355,7 +358,6 @@ TensorType Graph<TensorType>::ForwardPropagate(std::string const &node_name, boo
 template <typename TensorType>
 void Graph<TensorType>::BackPropagate(std::string const &node_name, TensorType const &error_signal)
 {
-  // check graph compiled
   Compile();
 
   if (nodes_.find(node_name) != nodes_.end())
