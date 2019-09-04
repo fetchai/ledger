@@ -54,7 +54,7 @@ class ModelInterface;
 namespace distributed_learning {
 template <typename TensorType>
 class TrainingClient;
-} // namespace distributed_learning
+}  // namespace distributed_learning
 
 enum class GraphState : uint8_t
 {
