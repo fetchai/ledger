@@ -110,6 +110,7 @@ public:
     this->AddInputNode(value);
     this->AddInputNode(mask);
     this->SetOutputNode(weight_value_matmul);
+    this->Compile();
   }
 
   std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
