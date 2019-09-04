@@ -17,15 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "layers.hpp"
 #include "math/standard_functions/sqrt.hpp"
 #include "ml/layers/fully_connected.hpp"
+#include "ml/layers/multihead_attention.hpp"
 #include "ml/layers/normalisation/layer_norm.hpp"
 #include "ml/ops/activations/dropout.hpp"
 #include "ml/ops/add.hpp"
 #include "ml/ops/concatenate.hpp"
 #include "ml/ops/placeholder.hpp"
-#include "multihead_attention.hpp"
 
 #include <cmath>
 #include <cstdint>
@@ -100,6 +99,7 @@ public:
     this->AddInputNode(input);
     this->AddInputNode(mask);
     this->SetOutputNode(feedforward_residual);
+    this->Compile();
   }
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override

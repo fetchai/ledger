@@ -246,7 +246,7 @@ typename TensorType::Type TrainingClient<TensorType>::Train()
 
     TensorType loss_tensor = g_ptr_->ForwardPropagate(error_name_);
     loss                   = *(loss_tensor.begin());
-    g_ptr_->BackPropagateError(error_name_);
+    g_ptr_->BackPropagate(error_name_);
   }
 
   return loss;

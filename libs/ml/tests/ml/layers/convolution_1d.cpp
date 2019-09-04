@@ -302,7 +302,7 @@ TYPED_TEST(Convolution1DTest, node_backward_test)  // Use the class as a Node
   conv.AddInput(placeholder_node);
 
   TypeParam prediction     = *conv.Evaluate(true);
-  auto      backprop_error = conv.BackPropagateSignal(error_signal);
+  auto      backprop_error = conv.BackPropagate(error_signal);
 
   // test correct values
   ASSERT_EQ(backprop_error.size(), 1);
@@ -489,13 +489,15 @@ TYPED_TEST(Convolution1DTest, saveparams_test)
   // train g
   layer.SetInput(label_name, labels);
   TypeParam loss = layer.Evaluate(error_output);
-  layer.BackPropagateError(error_output);
+  layer.BackPropagate(error_output);
+  layer.ApplyRegularisation();
   layer.Step(DataType{0.1f});
 
   // train g2
   layer2.SetInput(label_name, labels);
   TypeParam loss2 = layer2.Evaluate(error_output);
-  layer2.BackPropagateError(error_output);
+  layer2.BackPropagate(error_output);
+  layer2.ApplyRegularisation();
   layer2.Step(DataType{0.1f});
 
   EXPECT_TRUE(loss.AllClose(loss2, fetch::math::function_tolerance<DataType>(),

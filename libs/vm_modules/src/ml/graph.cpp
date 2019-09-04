@@ -59,15 +59,15 @@ void VMGraph::SetInput(VMPtrString const &name, Ptr<VMTensorType> const &input)
 
 Ptr<VMTensorType> VMGraph::Evaluate(VMPtrString const &name)
 {
-  MathTensorType    t   = graph_.ForwardPropagate(name->str);
+  MathTensorType    t   = graph_.Evaluate(name->str);
   Ptr<VMTensorType> ret = this->vm_->CreateNewObject<math::VMTensor>(t.shape());
   (*ret).Copy(t);
   return ret;
 }
 
-void VMGraph::BackPropagateError(VMPtrString const &name)
+void VMGraph::BackPropagate(VMPtrString const &name)
 {
-  graph_.BackPropagateError(name->str);
+  graph_.BackPropagate(name->str);
 }
 
 void VMGraph::Step(DataType lr)
@@ -146,7 +146,7 @@ void VMGraph::Bind(Module &module)
           [](VM *vm, TypeId type_id) -> Ptr<VMGraph> { return new VMGraph(vm, type_id); })
       .CreateMemberFunction("setInput", &VMGraph::SetInput)
       .CreateMemberFunction("evaluate", &VMGraph::Evaluate)
-      .CreateMemberFunction("backPropagate", &VMGraph::BackPropagateError)
+      .CreateMemberFunction("backPropagate", &VMGraph::BackPropagate)
       .CreateMemberFunction("step", &VMGraph::Step)
       .CreateMemberFunction("addPlaceholder", &VMGraph::AddPlaceholder)
       .CreateMemberFunction("addFullyConnected", &VMGraph::AddFullyConnected)
