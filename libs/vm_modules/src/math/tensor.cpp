@@ -148,9 +148,11 @@ void VMTensor::FillRandom()
   tensor_.FillUniformRandom();
 }
 
-void VMTensor::Squeeze()
+Ptr<VMTensor> VMTensor::Squeeze()
 {
-  tensor_.Squeeze();
+  auto squeezed_tensor = tensor_.Copy();
+  squeezed_tensor.Squeeze();
+  return fetch::vm::Ptr<VMTensor>(new VMTensor(vm_, type_id_, squeezed_tensor));
 }
 
 bool VMTensor::Reshape(Ptr<Array<SizeType>> const &new_shape)
