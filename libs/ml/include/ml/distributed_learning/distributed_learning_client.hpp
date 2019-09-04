@@ -397,12 +397,19 @@ void TrainingClient<TensorType>::GetNewGradients(VectorTensorType &new_gradients
 template <class TensorType>
 std::string TrainingClient<TensorType>::GetTimeStamp()
 {
-  std::time_t now = std::time(nullptr);
+  auto now       = std::chrono::system_clock::now();
+  auto in_time_t = std::chrono::system_clock::to_time_t(now);
 
-  char buffer[30] = {0};
-  std::strftime(buffer, sizeof(buffer), "%Y-%m-%d-%H:%M:%S", gmtime(&now));
+  auto now_milliseconds =
+      std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
 
-  return {buffer};
+  std::stringstream ss;
+  ss << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d-%H:%M:%S");
+
+  // add milliseconds to timestamp string
+  ss << '.' << std::setfill('0') << std::setw(3) << now_milliseconds.count();
+
+  return ss.str();
 }
 
 /**
