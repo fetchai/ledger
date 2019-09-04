@@ -41,32 +41,28 @@ public:
   using SPType        = OpSoftmaxSaveableParams<T>;
   using MyType        = Softmax<TensorType>;
 
-  explicit Softmax(SizeType axis = 0, bool clamp = true)
+  explicit Softmax(SizeType axis = 0)
     : axis_(axis)
-    , clamp_(clamp)
   {}
 
-  explicit Softmax(std::vector<SizeType> axes, bool clamp = true)
+  explicit Softmax(std::vector<SizeType> axes)
     : axes_(axes)
-    , clamp_(clamp)
   {}
 
   explicit Softmax(SPType const &sp)
     : Ops<T>(sp)
   {
-    axis_  = sp.axis;
-    axes_  = sp.axes;
-    clamp_ = sp.clamp;
+    axis_ = sp.axis;
+    axes_ = sp.axes;
   }
 
   ~Softmax() override = default;
 
   std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
   {
-    auto sp_ptr   = std::make_shared<SPType>();
-    sp_ptr->axis  = axis_;
-    sp_ptr->axes  = axes_;
-    sp_ptr->clamp = clamp_;
+    auto sp_ptr  = std::make_shared<SPType>();
+    sp_ptr->axis = axis_;
+    sp_ptr->axes = axes_;
     return sp_ptr;
   }
 
@@ -93,10 +89,9 @@ public:
     {
       fetch::math::Softmax((*inputs.at(0)), output, axes_);
     }
-    if (clamp_)
-    {
-      math::Clamp(epsilon_, static_cast<DataType>(1) - epsilon_, output);
-    }
+
+    // Clamping for numerical stability
+    math::Clamp(epsilon_, one_minus_epsilon_, output);
   }
 
   std::vector<TensorType> Backward(VecTensorType const &inputs,
@@ -151,8 +146,8 @@ public:
 private:
   SizeType              axis_;
   std::vector<SizeType> axes_;
-  bool                  clamp_;
-  DataType              epsilon_ = fetch::math::function_tolerance<DataType>();
+  DataType              epsilon_           = fetch::math::numeric_min<DataType>();
+  DataType              one_minus_epsilon_ = static_cast<DataType>(1) - epsilon_;
 };
 
 }  // namespace ops

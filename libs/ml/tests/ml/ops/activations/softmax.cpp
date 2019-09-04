@@ -305,7 +305,7 @@ TYPED_TEST(SoftmaxTest, forward_3d_tensor_axes_0_2_test)
     ++it_g;
   }
 
-  fetch::ml::ops::Softmax<TensorType> op({0, 2}, false);
+  fetch::ml::ops::Softmax<TensorType> op(std::vector<SizeType>({0, 2}));
   TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
