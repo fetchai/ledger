@@ -404,7 +404,7 @@ std::string TrainingClient<TensorType>::GetTimeStamp()
       std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
 
   std::stringstream ss;
-  ss << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d-%H:%M:%S");
+  ss << std::put_time(std::gmtime(&in_time_t), "%Y-%m-%d-%H:%M:%S");
 
   // add milliseconds to timestamp string
   ss << '.' << std::setfill('0') << std::setw(3) << now_milliseconds.count();
