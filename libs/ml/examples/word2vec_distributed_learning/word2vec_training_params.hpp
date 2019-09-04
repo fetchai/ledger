@@ -32,9 +32,9 @@ struct W2VTrainingParams : public ClientParams<DataType>
   SizeType negative_sample_size = 5;  // number of negative sample per word-context pair
   SizeType window_size          = 5;  // window size for context sampling
   DataType freq_thresh          = DataType{0.001f};  // frequency threshold for subsampling
-  SizeType min_count            = 5;               // infrequent word removal threshold
+  SizeType min_count            = 5;                 // infrequent word removal threshold
 
-  SizeType embedding_size = 100;     // dimension of embedding vec
+  SizeType embedding_size = 100;  // dimension of embedding vec
   SizeType test_frequency = 5;
   DataType starting_learning_rate_per_sample =
       DataType{0.025f};  // these are the learning rates we have for each sample

@@ -33,7 +33,7 @@ struct TrainingParams
 {
   using SizeType                = typename TensorType::SizeType;
   using DataType                = typename TensorType::Type;
-  SizeType max_word_count       = 15;            // maximum number to be trained
+  SizeType max_word_count       = 15;           // maximum number to be trained
   SizeType negative_sample_size = 0;            // number of negative sample per word-context pair
   SizeType window_size          = 1;            // window size for context sampling
   DataType freq_thresh          = DataType{1};  // frequency threshold for subsampling

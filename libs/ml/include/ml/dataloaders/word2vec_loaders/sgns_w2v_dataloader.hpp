@@ -146,14 +146,12 @@ T GraphW2VLoader<T>::EstimatedSampleNumber()
     word_freq = static_cast<T>(word_count) / static_cast<T>(vocab_.total_count);
     if (word_freq > freq_thresh_)
     {
-      estimated_sample_number += static_cast<T>(word_count) *
-                                 estimated_sample_number_per_word *
+      estimated_sample_number += static_cast<T>(word_count) * estimated_sample_number_per_word *
                                  fetch::math::Sqrt(freq_thresh_ / word_freq);
     }
     else
     {
-      estimated_sample_number +=
-          static_cast<T>(word_count) * estimated_sample_number_per_word;
+      estimated_sample_number += static_cast<T>(word_count) * estimated_sample_number_per_word;
     }
   }
   return estimated_sample_number;
@@ -169,7 +167,6 @@ math::SizeType GraphW2VLoader<T>::Size() const
 {
   return size_;
 }
-
 
 /**
  * checks if we've passed through all the data and need to reset
@@ -246,8 +243,7 @@ void GraphW2VLoader<T>::RemoveInfrequent(SizeType min)
 
   // create a new data_ for storing text
   std::vector<std::vector<SizeType>> new_data;
-  SizeType new_size(0);
-
+  SizeType                           new_size(0);
 
   std::vector<SizeType> new_sent_buffer;  // buffer for each sentence
   for (auto const &sentence : data_)
@@ -302,7 +298,7 @@ void GraphW2VLoader<T>::RemoveInfrequentFromData(SizeType min)
 
   // create a new data_ for storing text
   std::vector<std::vector<SizeType>> new_data;
-  SizeType new_size(0);
+  SizeType                           new_size(0);
   std::vector<SizeType>              new_sent_buffer;  // buffer for each sentence
 
   for (auto sent_it : data_)
@@ -375,9 +371,8 @@ void GraphW2VLoader<T>::BufferNextSamples()
   // subsample too frequent word
   while (true)
   {
-    auto word_freq =
-        static_cast<T>(vocab_.counts[data_.at(current_sentence_).at(current_word_)]) /
-        static_cast<T>(vocab_.total_count);
+    auto word_freq = static_cast<T>(vocab_.counts[data_.at(current_sentence_).at(current_word_)]) /
+                     static_cast<T>(vocab_.total_count);
     auto random_var = static_cast<T>(lfg_.AsDouble());  // random variable between 0-1
     if (random_var < T{1} - fetch::math::Sqrt(freq_thresh_ / word_freq))
     {  // subsample for a cumulative prob of 1 - sqrt(thresh/freq) // N.B. if word_freq <
@@ -546,7 +541,8 @@ void GraphW2VLoader<T>::BuildVocabAndData(std::vector<std::string> const &sents,
     size_ += indices.size() - (2 * window_size_);
   }
 
-  if (min_count > 0) {
+  if (min_count > 0)
+  {
     // remove infrequent words from data
     std::cout << "Removing infrequent words from vocab and data" << std::endl;
     RemoveInfrequent(min_count);

@@ -68,8 +68,8 @@ Word2VecClient<TensorType>::Word2VecClient(std::string const &                id
                                            W2VTrainingParams<DataType> const &tp,
                                            std::shared_ptr<std::mutex> const &console_mutex_ptr)
   : TrainingClient<TensorType>(id, tp)
-    , tp_(tp)
-    , console_mutex_ptr_(console_mutex_ptr)
+  , tp_(tp)
+  , console_mutex_ptr_(console_mutex_ptr)
 {
   PrepareDataLoader();
   PrepareModel();
@@ -79,7 +79,8 @@ Word2VecClient<TensorType>::Word2VecClient(std::string const &                id
   tp_.learning_rate_param.linear_decay_rate = DataType{1} / est_samples;
   // this decay rate gurantees that the lr is reduced to zero by the
   // end of an epoch (despite capping by ending learning rate)
-  std::cout << "id: " << id << ", dataloader_.EstimatedSampleNumber(): " << est_samples << std::endl;
+  std::cout << "id: " << id << ", dataloader_.EstimatedSampleNumber(): " << est_samples
+            << std::endl;
 
   PrepareOptimiser();
 }
@@ -121,8 +122,8 @@ void Word2VecClient<TensorType>::PrepareOptimiser()
 {
   // Initialise Optimiser
   this->opti_ptr_ = std::make_shared<fetch::ml::optimisers::SGDOptimiser<TensorType>>(
-      this->g_ptr_, this->inputs_names_,
-      this->label_name_, this->error_name_, tp_.learning_rate_param);
+      this->g_ptr_, this->inputs_names_, this->label_name_, this->error_name_,
+      tp_.learning_rate_param);
 }
 
 /**

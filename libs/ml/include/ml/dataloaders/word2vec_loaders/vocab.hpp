@@ -26,7 +26,8 @@ namespace fetch {
 namespace ml {
 namespace dataloaders {
 
-class Vocab {
+class Vocab
+{
 public:
   using SizeType                         = fetch::math::SizeType;
   using DataType                         = std::map<std::string, std::pair<SizeType, SizeType>>;
@@ -47,32 +48,39 @@ public:
 
   SizeType total_count = 0;
 
-  std::map<std::string, SizeType> vocab;  // word -> id
-  std::vector<std::string> reverse_vocab;  // id -> word
-  std::vector<SizeType> counts;   // id -> count
+  std::map<std::string, SizeType> vocab;          // word -> id
+  std::vector<std::string>        reverse_vocab;  // id -> word
+  std::vector<SizeType>           counts;         // id -> count
 
   std::vector<SizeType> PutSentenceInVocab(const std::vector<std::string> &sentence);
 
   void RemoveSentenceFromVocab(const std::vector<SizeType> &sentence);
 };
 
-std::vector<math::SizeType> Vocab::PutSentenceInVocab(std::vector<std::string> const &sentence) {
+std::vector<math::SizeType> Vocab::PutSentenceInVocab(std::vector<std::string> const &sentence)
+{
   std::vector<SizeType> indices;
   indices.reserve(sentence.size());
 
-  for (std::string const &word : sentence) {
+  for (std::string const &word : sentence)
+  {
     auto word_it = vocab.find(word);
 
-    if (word_it != vocab.end()) {
+    if (word_it != vocab.end())
+    {
       counts[word_it->second]++;
       indices.push_back(word_it->second);
-    } else {
+    }
+    else
+    {
       SizeType word_id = vocab.size();
-      vocab[word] = word_id;
-      if (word_id + 1 > reverse_vocab.size()) {
+      vocab[word]      = word_id;
+      if (word_id + 1 > reverse_vocab.size())
+      {
         reverse_vocab.resize(word_id + 128, "");
       }
-      if (word_id + 1 > counts.size()) {
+      if (word_id + 1 > counts.size())
+      {
         counts.resize(word_id + 128, SizeType{0});
       }
       reverse_vocab[word_id] = word;
@@ -90,8 +98,10 @@ std::vector<math::SizeType> Vocab::PutSentenceInVocab(std::vector<std::string> c
   return indices;
 }
 
-void Vocab::RemoveSentenceFromVocab(std::vector<SizeType> const &sentence) {
-  for (SizeType const &word_id : sentence) {
+void Vocab::RemoveSentenceFromVocab(std::vector<SizeType> const &sentence)
+{
+  for (SizeType const &word_id : sentence)
+  {
     counts[word_id]--;
     total_count--;
   }
@@ -100,20 +110,25 @@ void Vocab::RemoveSentenceFromVocab(std::vector<SizeType> const &sentence) {
 /**
  * remove word that have fewer counts then min
  */
-std::map<Vocab::SizeType, Vocab::SizeType> Vocab::RemoveInfrequentWord(Vocab::SizeType min) {
+std::map<Vocab::SizeType, Vocab::SizeType> Vocab::RemoveInfrequentWord(Vocab::SizeType min)
+{
 
   std::map<SizeType, SizeType> old2new;  // store the old to new relation for futher use
-  SizeType new_word_id = 0;
+  SizeType                     new_word_id = 0;
 
   SizeType original_vocab_size = vocab.size();
-  for (SizeType word_id = 0; word_id < original_vocab_size; word_id++) {
+  for (SizeType word_id = 0; word_id < original_vocab_size; word_id++)
+  {
     std::string word = reverse_vocab[word_id];
-    if (counts[word_id] < min) {
+    if (counts[word_id] < min)
+    {
       vocab.erase(word);
-    } else {
-      old2new[word_id] = new_word_id;
-      vocab[word] = new_word_id;
-      counts[new_word_id] = counts[word_id];
+    }
+    else
+    {
+      old2new[word_id]           = new_word_id;
+      vocab[word]                = new_word_id;
+      counts[new_word_id]        = counts[word_id];
       reverse_vocab[new_word_id] = reverse_vocab[word_id];
       total_count -= counts[word_id];
       new_word_id++;
@@ -130,13 +145,15 @@ std::map<Vocab::SizeType, Vocab::SizeType> Vocab::RemoveInfrequentWord(Vocab::Si
  * save vocabulary to a file
  * @return
  */
-void Vocab::Save(std::string const &filename) const {
+void Vocab::Save(std::string const &filename) const
+{
   std::ofstream outfile(filename, std::ios::binary);
 
   outfile << vocab.size() << "\n";
   outfile << total_count << "\n";
 
-  for (auto &val : vocab) {
+  for (auto &val : vocab)
+  {
     outfile << val.first << " ";
     outfile << val.second << " ";
     outfile << counts[val.second] << "\n";
@@ -147,7 +164,8 @@ void Vocab::Save(std::string const &filename) const {
  * load vocabulary to a file
  * @return
  */
-void Vocab::Load(std::string const &filename) {
+void Vocab::Load(std::string const &filename)
+{
   vocab.clear();
   total_count = 0;
   reverse_vocab.clear();
@@ -162,19 +180,21 @@ void Vocab::Load(std::string const &filename) {
   counts.resize(vocab_size, 0);
 
   std::string word;
-  SizeType idx;
-  SizeType count;
+  SizeType    idx;
+  SizeType    count;
 
   std::string buf;
-  while (std::getline(infile, buf, '\n')) {
-    if (!buf.empty()) {
+  while (std::getline(infile, buf, '\n'))
+  {
+    if (!buf.empty())
+    {
       std::stringstream ss(buf);
 
       ss >> word >> idx >> count;
 
-      vocab[word] = idx;
+      vocab[word]        = idx;
       reverse_vocab[idx] = word;
-      counts[idx] = count;
+      counts[idx]        = count;
     }
   }
 }
@@ -185,10 +205,14 @@ void Vocab::Load(std::string const &filename) {
  * @param index
  * @return
  */
-std::string Vocab::WordFromIndex(SizeType index) const {
-  if (reverse_vocab.size() > index + 1) {
+std::string Vocab::WordFromIndex(SizeType index) const
+{
+  if (reverse_vocab.size() > index + 1)
+  {
     return reverse_vocab[index];
-  } else {
+  }
+  else
+  {
     return "";
   }
 }
@@ -199,14 +223,16 @@ std::string Vocab::WordFromIndex(SizeType index) const {
  * @param word
  * @return
  */
-math::SizeType Vocab::IndexFromWord(std::string const &word) const {
+math::SizeType Vocab::IndexFromWord(std::string const &word) const
+{
   auto word_it = vocab.find(word);
-  if (word_it != vocab.end()) {
+  if (word_it != vocab.end())
+  {
     return word_it->second;
   }
   return UNKNOWN_WORD;
 }
 
-}
+}  // namespace dataloaders
 }  // namespace ml
 }  // namespace fetch
