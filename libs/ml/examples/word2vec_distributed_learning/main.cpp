@@ -52,11 +52,12 @@ int main(int ac, char **av)
   W2VTrainingParams<DataType> client_params;
 
   // Distributed learning parameters:
-  SizeType number_of_clients = 10;
-  SizeType number_of_rounds  = 10;
+  SizeType number_of_clients = 5;
+  SizeType number_of_rounds  = 1000;  // how many rounds of synchronization to perform
 
   coord_params.mode             = CoordinatorMode::SEMI_SYNCHRONOUS;
-  coord_params.iterations_count = 100;
+  coord_params.iterations_count = 100;  //  Synchronization occurs after this number of batches
+  // have been processed in total by the clients
 
   client_params.batch_size      = 100000;
   client_params.learning_rate   = static_cast<DataType>(.001f);
@@ -93,7 +94,7 @@ int main(int ac, char **av)
   GraphW2VLoader<DataType> data_loader(client_params.window_size,
                                        client_params.negative_sample_size,
                                        client_params.freq_thresh, client_params.max_word_count);
-  data_loader.BuildVocabAndData({ReadFile(train_file)}, client_params.min_count);
+  data_loader.BuildVocabAndData({ReadFile(train_file)}, client_params.min_count, false);
   data_loader.SaveVocab(client_params.vocab_file);
 
   // split train file into number_of_clients parts
