@@ -164,8 +164,7 @@ bool VMTensor::Reshape(Ptr<Array<SizeType>> const &new_shape)
 
 void VMTensor::FromString(fetch::vm::Ptr<fetch::vm::String> const &string)
 {
-  auto tmp = fetch::math::Tensor<DataType>::FromString(string->str);
-  tensor_.Assign(tmp);
+  tensor_.Assign(fetch::math::Tensor<DataType>::FromString(string->str));
 }
 
 Ptr<String> VMTensor::ToString() const
