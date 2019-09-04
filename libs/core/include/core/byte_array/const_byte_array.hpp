@@ -19,6 +19,8 @@
 
 #include "core/common.hpp"
 #include "core/logging.hpp"
+#include "meta/pack.hpp"
+#include "meta/slots.hpp"
 #include "meta/value_util.hpp"
 #include "vectorise/memory/shared_array.hpp"
 
@@ -484,85 +486,6 @@ protected:
 private:
   constexpr static char const *LOGGING_NAME = "ConstByteArray";
 
-  /**
-   * AddSize is a binary callable object that, when called,
-   * returns the sum of its first argument and the size of the second.
-   * By default, `size' is whatever returned by arg.size().
-   * As a special case, the second argument can be a char, an int8_t or uint8_t,
-   * in which case its size is always 1.
-   */
-  struct AddSize
-  {
-  public:
-    template <class Arg>
-    constexpr std::size_t operator()(std::size_t counter, Arg &&arg) noexcept(
-        noexcept(static_cast<std::size_t>(std::declval<Arg>().size())))
-    {
-      return counter + static_cast<std::size_t>(std::forward<Arg>(arg).size());
-    }
-
-    constexpr std::size_t operator()(std::size_t counter, std::uint8_t) noexcept
-    {
-      return counter + 1;
-    }
-
-    constexpr std::size_t operator()(std::size_t counter, std::int8_t) noexcept
-    {
-      return counter + 1;
-    }
-
-    constexpr std::size_t operator()(std::size_t counter, char) noexcept
-    {
-      return counter + 1;
-    }
-  };
-
-  /**
-   * AddBytes is a binary callable object that keeps a reference to this bytearray.
-   * It accepts two arguments: the offset and a anoher bytearray,
-   * and pastes its second argument's contents into this bytearray starting at offset.
-   * As a special case, the second argument can be a char, an int8_t or uint8_t,
-   * in which case it is simply put into array at offset.
-   * Returns the sum of its first argument and the size of the second, i.e. next offset
-   * past the last copied byte, to be used in left-folds.
-   */
-  class AddBytes
-  {
-    self_type &self_;
-
-  public:
-    AddBytes(self_type &self)
-      : self_(self)
-    {}
-
-    template <class Arg>
-    constexpr std::size_t operator()(std::size_t counter, Arg &&arg) noexcept(
-        noexcept(std::memcpy(self_.pointer() + counter, arg.pointer(), arg.size())) &&
-        noexcept(std::forward<Arg>(arg).size()))
-    {
-      std::memcpy(self_.pointer() + counter, arg.pointer(), arg.size());
-      return counter + std::forward<Arg>(arg).size();
-    }
-
-    constexpr std::size_t operator()(std::size_t counter, std::uint8_t arg) noexcept
-    {
-      self_.pointer()[counter] = arg;
-      return counter + 1;
-    }
-
-    constexpr std::size_t operator()(std::size_t counter, std::int8_t arg) noexcept
-    {
-      self_.pointer()[counter] = static_cast<std::uint8_t>(arg);
-      return counter + 1;
-    }
-
-    constexpr std::size_t operator()(std::size_t counter, char arg) noexcept
-    {
-      self_.pointer()[counter] = static_cast<std::uint8_t>(arg);
-      return counter + 1;
-    }
-  };
-
   template <typename T>
   using AppendedType =
       std::conditional_t<type_util::IsAnyOfV<std::decay_t<T>, std::uint8_t, char, std::int8_t>,
@@ -578,9 +501,42 @@ private:
   {
     auto old_size{size()};
     // grow enough to contain all the arguments
-    Resize(value_util::Accumulate(AddSize{}, old_size, args...));
+    Resize(value_util::Accumulate(
+        // A binary callable object that, when called,
+        // returns the sum of its first argument and the size of the second.
+        value_util::Slots(
+            [](std::size_t accum, auto &&arg) {
+              // By default, `size' is whatever returned by arg.size().
+              return accum + static_cast<std::size_t>(arg.size());
+            },
+            value_util::Slot<pack::Pack<std::size_t, uint8_t>, pack::Pack<std::size_t, int8_t>,
+                             pack::Pack<std::size_t, char>>([](std::size_t accum, auto) {
+              // As a special case, the second argument can be a char, an int8_t or uint8_t,
+              // in which case its size is always 1.
+              return accum + 1;
+            })),
+        old_size, args...));
     // write down arguments' contents
-    value_util::Accumulate(AddBytes{*this}, old_size, args...);
+    value_util::Accumulate(
+        /**
+         * A binary callable object that accepts two arguments: the offset and a anoher bytearray,
+         * and pastes its second argument's contents into this bytearray starting at offset.
+         * Returns the sum of its first argument and the size of the second, i.e. next offset
+         * past the last copied byte, to be used in left-folds.
+         */
+        value_util::Slots(
+            [this](std::size_t accum, auto &&arg) {
+              std::memcpy(pointer() + accum, arg.pointer(), arg.size());
+              return accum + arg.size();
+            },
+            value_util::Slot<pack::Pack<std::size_t, uint8_t>, pack::Pack<std::size_t, int8_t>,
+                             pack::Pack<std::size_t, char>>([this](std::size_t accum, auto arg) {
+              // As a special case, the second argument can be a char, an int8_t or uint8_t,
+              // in which case it is simply put into array at offset.
+              pointer()[accum] = static_cast<uint8_t>(arg);
+              return accum + 1;
+            })),
+        old_size, args...);
   }
 
   shared_array_type data_;
