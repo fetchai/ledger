@@ -2335,6 +2335,7 @@ std::string Tensor<T, C>::ToString() const
       {
         ss << At(i, j) << ", ";
       }
+      ss << "; ";
     }
   }
   else
