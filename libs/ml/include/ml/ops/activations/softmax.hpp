@@ -90,7 +90,7 @@ public:
       fetch::math::Softmax((*inputs.at(0)), output, axes_);
     }
 
-    // Clamping for numerical stability
+    // Clamping ensures numerical stability
     math::Clamp(epsilon_, one_minus_epsilon_, output);
   }
 
