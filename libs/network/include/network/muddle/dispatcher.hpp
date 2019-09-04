@@ -83,13 +83,13 @@ private:
   using PromiseSet = std::unordered_set<uint64_t>;
   using HandleMap  = std::unordered_map<Handle, PromiseSet>;
 
-  Mutex    counter_lock_{__LINE__, __FILE__};
+  Mutex    counter_lock_;
   uint16_t counter_{1};
 
-  Mutex      promises_lock_{__LINE__, __FILE__};
+  Mutex      promises_lock_;
   PromiseMap promises_;
 
-  Mutex     handles_lock_{__LINE__, __FILE__};
+  Mutex     handles_lock_;
   HandleMap handles_;
 
   /// @name Telemetry

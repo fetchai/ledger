@@ -24,8 +24,8 @@ namespace fetch {
 namespace service {
 
 ServiceClientInterface::ServiceClientInterface()
-  : subscription_mutex_(__LINE__, __FILE__)
-  , promises_mutex_(__LINE__, __FILE__)
+  : subscription_mutex_{}
+  , promises_mutex_{}
 {}
 
 Promise ServiceClientInterface::CallWithPackedArguments(protocol_handler_type const &protocol,

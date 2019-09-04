@@ -64,7 +64,7 @@ public:
   }
 
 private:
-  mutable Mutex mutex_{__LINE__, __FILE__};
+  mutable Mutex mutex_;
   Contents      contents_;
 };
 

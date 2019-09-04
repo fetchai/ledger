@@ -72,7 +72,7 @@ public:
    * a service.
    */
   FeedSubscriptionManager(feed_handler_type const &feed, AbstractPublicationFeed *publisher)
-    : subscribe_mutex_(__LINE__, __FILE__)
+    : subscribe_mutex_{}
     , feed_(feed)
     , publisher_(publisher)
   {

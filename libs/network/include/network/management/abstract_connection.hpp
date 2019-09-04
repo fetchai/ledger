@@ -233,7 +233,7 @@ private:
   std::string           address_;
   std::atomic<uint16_t> port_;
 
-  mutable Mutex address_mutex_{__LINE__, __FILE__};
+  mutable Mutex address_mutex_;
 
   static connection_handle_type next_handle()
   {
@@ -256,7 +256,7 @@ private:
 
   static connection_handle_type global_handle_counter_;
   static Mutex                  global_handle_mutex_;
-  mutable Mutex                 callback_mutex_{__LINE__, __FILE__};
+  mutable Mutex                 callback_mutex_;
 
   shared_type self_;
 

@@ -17,23 +17,16 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/macros.hpp"
-
 #include <mutex>
-#include <string>
 
 namespace fetch {
 
-class Mutex : public std::mutex
-{
-public:
-  Mutex(int, std::string const &);
-};
+using Mutex = std::mutex;
 
 #define FETCH_JOIN_IMPL(x, y) x##y
 #define FETCH_JOIN(x, y) FETCH_JOIN_IMPL(x, y)
 
 #define FETCH_LOCK(lockable) \
-  std::lock_guard<decltype(lockable)> FETCH_JOIN(mutex_locked_on_line, __LINE__)(lockable)
+  std::lock_guard<decltype(lockable)> FETCH_JOIN(mutex_locked_on_line, __LINE__)(lockable);
 
 }  // namespace fetch
