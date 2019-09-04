@@ -213,8 +213,6 @@ TYPED_TEST(ScaledDotProductAttention,
   using DataType = typename TypeParam::Type;
   using SizeType = typename TypeParam::SizeType;
 
-  std::cout << fetch::math::function_tolerance<DataType>() << std::endl;
-
   fetch::ml::layers::ScaledDotProductAttention<TypeParam> att(static_cast<SizeType>(3),
                                                               DataType(1));
 

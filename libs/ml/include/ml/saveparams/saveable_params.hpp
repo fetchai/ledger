@@ -610,7 +610,6 @@ struct OpSoftmaxSaveableParams : public OpsSaveableParams
 {
   fetch::math::SizeType              axis = fetch::math::numeric_max<fetch::math::SizeType>();
   std::vector<fetch::math::SizeType> axes{};
-  bool                               clamp   = true;
   fetch::ml::OpType                  op_type = OpType::OP_SOFTMAX;
 };
 
