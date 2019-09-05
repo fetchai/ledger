@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "peer_list.hpp"
+#include "muddle/network_id.hpp"
 
 #include "gmock/gmock.h"
 
@@ -27,6 +28,7 @@
 using fetch::muddle::PeerConnectionList;
 using fetch::network::Peer;
 using fetch::network::Uri;
+using fetch::muddle::NetworkId;
 
 namespace fetch {
 namespace muddle {
@@ -69,7 +71,7 @@ protected:
     , connection_(std::make_shared<fetch::muddle::DevNull>())
   {}
 
-  PeerConnectionList peer_list_;
+  PeerConnectionList peer_list_{NetworkId{"TEST"}};
   Uri                peer_;
   ConnectionPtr      connection_;
 };

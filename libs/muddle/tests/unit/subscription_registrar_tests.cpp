@@ -22,6 +22,7 @@
 #include "core/byte_array/encoders.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "muddle/subscription.hpp"
+#include "muddle/network_id.hpp"
 #include "network/uri.hpp"
 
 #include "gmock/gmock.h"
@@ -29,6 +30,8 @@
 #include <cstdint>
 #include <memory>
 #include <utility>
+
+using fetch::muddle::NetworkId;
 
 static auto const SAMPLE_ADDRESS = fetch::byte_array::FromBase64(
     "wvV0DQgjcMNsmtkTTTZtX0JSAGA9+bHi7iRTczWDZsVJznK4c5enNJFSUyZScG40D3Dp2gdpT2WmnZO1lkUheQ==");
@@ -44,7 +47,7 @@ protected:
 
   void SetUp() override
   {
-    registrar_ = std::make_unique<SubscriptionRegistrar>();
+    registrar_ = std::make_unique<SubscriptionRegistrar>(NetworkId{"TEST"});
   }
 
   PacketPtr CreatePacket(uint16_t service, uint16_t channel,
