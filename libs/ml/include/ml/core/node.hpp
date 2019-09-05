@@ -138,6 +138,15 @@ public:
     return operation_type_;
   }
 
+  bool HasValidCache()
+  {
+    if (cached_output_status_ == CachedOutputState::VALID_CACHE)
+    {
+      return true;
+    }
+    return false;
+  }
+
 private:
   std::vector<NodePtrType> input_nodes_;
   std::vector<NodePtrType> outputs_;
@@ -160,11 +169,9 @@ std::shared_ptr<typename Node<T>::SPType> Node<T>::GetNodeSaveableParams() const
 {
   auto sp_ptr = std::make_shared<SPType>();
 
-  sp_ptr->name                 = name_;
-  sp_ptr->cached_output        = cached_output_;
-  sp_ptr->cached_output_status = static_cast<uint8_t>(cached_output_status_);
-  sp_ptr->operation_type       = operation_type_;
-  sp_ptr->op_save_params       = op_ptr_->GetOpSaveableParams();
+  sp_ptr->name           = name_;
+  sp_ptr->operation_type = operation_type_;
+  sp_ptr->op_save_params = op_ptr_->GetOpSaveableParams();
 
   return sp_ptr;
 }
@@ -350,8 +357,7 @@ void Node<TensorType>::SetNodeSaveableParams(NodeSaveableParams<TensorType> cons
                                              std::shared_ptr<ops::Ops<TensorType>> op_ptr)
 {
   name_                 = nsp.name;
-  cached_output_        = nsp.cached_output;
-  cached_output_status_ = static_cast<CachedOutputState>(nsp.cached_output_status);
+  cached_output_status_ = CachedOutputState::CHANGED_SIZE;
   operation_type_       = nsp.operation_type;
   op_ptr_               = op_ptr;
 }
