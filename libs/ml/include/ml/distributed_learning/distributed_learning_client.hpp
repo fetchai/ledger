@@ -60,6 +60,7 @@ class TrainingClient
   using SizeType         = typename TensorType::SizeType;
   using VectorTensorType = std::vector<TensorType>;
   using TimestampType    = int64_t;
+  using GradientType     = std::pair<VectorTensorType, TimestampType>;
 
 public:
   TrainingClient(std::string const &id, ClientParams<DataType> const &client_params);
@@ -88,7 +89,7 @@ public:
 
   void BroadcastGradients();
 
-  void AddGradient(VectorTensorType gradient);
+  void AddGradient(GradientType gradient);
 
   void ApplyGradient(VectorTensorType gradients);
 
@@ -121,8 +122,8 @@ protected:
   std::shared_ptr<Coordinator<TensorType>> coordinator_ptr_;
 
   // Gradient queue access and mutex to protect it
-  std::queue<std::pair<VectorTensorType, TimestampType>> gradient_queue_;
-  std::mutex                                             queue_mutex_;
+  std::queue<GradientType> gradient_queue_;
+  std::mutex               queue_mutex_;
 
   // Learning hyperparameters
   SizeType batch_size_    = 0;
@@ -311,7 +312,7 @@ template <class TensorType>
 void TrainingClient<TensorType>::BroadcastGradients()
 {
   // Load own gradient
-  VectorTensorType current_gradient = g_ptr_->GetGradients();
+  GradientType current_gradient = std::make_pair(g_ptr_->GetGradients(), GetTimestamp());
 
   // Give gradients to peers
   for (SizeType i{0}; i < peers_.size(); ++i)
@@ -325,11 +326,11 @@ void TrainingClient<TensorType>::BroadcastGradients()
  * @param gradient
  */
 template <class TensorType>
-void TrainingClient<TensorType>::AddGradient(VectorTensorType gradient)
+void TrainingClient<TensorType>::AddGradient(GradientType gradient)
 {
   {
     std::lock_guard<std::mutex> l(queue_mutex_);
-    gradient_queue_.push(std::make_pair(gradient, GetTimestamp()));
+    gradient_queue_.push(gradient);
   }
 }
 
