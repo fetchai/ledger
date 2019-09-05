@@ -50,7 +50,7 @@ using DataLoaderType   = fetch::ml::dataloaders::TensorDataLoader<TensorType, Te
 
 struct TrainingParams
 {
-  SizeType epochs{1};
+  SizeType epochs{5};
   SizeType batch_size{1000};
   bool     normalise = false;
 };
@@ -202,6 +202,8 @@ int main(int ac, char **av)
     {
       scaler.DeNormalise(prediction, prediction);
     }
+
+    SaveGraphToFile(*g, "./bitcoin_price_prediction_graph" + std::to_string(i) + ".bin");
 
     auto result = fetch::math::MeanAbsoluteError(prediction, orig_test_label);
     std::cout << "mean absolute validation error: " << result << std::endl;
