@@ -39,14 +39,14 @@
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
 
-using DataType = fetch::fixed_point::fp64_t;
+using DataType   = fetch::fixed_point::fp64_t;
 using TensorType = fetch::math::Tensor<DataType>;
 using SizeType   = TensorType::SizeType;
 
 using GraphType        = fetch::ml::Graph<TensorType>;
 using CostFunctionType = fetch::ml::ops::MeanSquareErrorLoss<TensorType>;
-using OptimiserType  = fetch::ml::optimisers::AdamOptimiser<TensorType>;
-using DataLoaderType = fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>;
+using OptimiserType    = fetch::ml::optimisers::AdamOptimiser<TensorType>;
+using DataLoaderType   = fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>;
 
 struct TrainingParams
 {
