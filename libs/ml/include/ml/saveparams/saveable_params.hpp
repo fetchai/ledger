@@ -48,10 +48,8 @@ struct NodeSaveableParams
   using DataType = typename TensorType::Type;
   using SizeType = typename TensorType::SizeType;
 
-  std::string                        name = "";
-  TensorType                         cached_output{};
-  uint8_t                            cached_output_status = fetch::math::numeric_max<uint8_t>();
-  OpType                             operation_type       = OpType::NONE;
+  std::string                        name           = "";
+  OpType                             operation_type = OpType::NONE;
   std::shared_ptr<OpsSaveableParams> op_save_params;
 
   NodeSaveableParams() = default;
