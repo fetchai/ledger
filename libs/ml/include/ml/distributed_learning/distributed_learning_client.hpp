@@ -395,9 +395,25 @@ std::string TrainingClient<TensorType>::GetStrTimestamp()
 template <class TensorType>
 int64_t TrainingClient<TensorType>::GetTimestamp()
 {
+<<<<<<< HEAD
   return std::chrono::duration_cast<std::chrono::milliseconds>(
              std::chrono::system_clock::now().time_since_epoch())
       .count();
+=======
+  auto now       = std::chrono::system_clock::now();
+  auto in_time_t = std::chrono::system_clock::to_time_t(now);
+
+  auto now_milliseconds =
+      std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
+
+  std::stringstream ss;
+  ss << std::put_time(std::gmtime(&in_time_t), "%Y-%m-%d-%H:%M:%S");
+
+  // add milliseconds to timestamp string
+  ss << '.' << std::setfill('0') << std::setw(3) << now_milliseconds.count();
+
+  return ss.str();
+>>>>>>> 723e573e9f3a11af44e85b3651be56438feeba95
 }
 
 /**
@@ -448,7 +464,11 @@ void TrainingClient<TensorType>::TrainWithCoordinator()
     // Upload to https://plot.ly/create/#/ for visualisation
     if (lossfile)
     {
+<<<<<<< HEAD
       lossfile << GetStrTimestamp() << ", " << static_cast<double>(loss) << "\n";
+=======
+      lossfile << GetTimeStamp() << ", " << static_cast<double>(loss) << "\n";
+>>>>>>> 723e573e9f3a11af44e85b3651be56438feeba95
     }
   }
 
