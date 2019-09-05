@@ -67,7 +67,7 @@ std::shared_ptr<TrainingClient<TensorType>> MakeClient(std::string const &     i
       std::make_shared<fetch::ml::dataloaders::MNISTLoader<TensorType, TensorType>>(images, labels);
   dataloader_ptr->SetTestRatio(test_set_ratio);
   dataloader_ptr->SetRandomMode(true);
-gi  // Initialise Optimiser
+  // Initialise Optimiser
   std::shared_ptr<fetch::ml::optimisers::Optimiser<TensorType>> optimiser_ptr =
       std::make_shared<fetch::ml::optimisers::AdamOptimiser<TensorType>>(
           std::shared_ptr<fetch::ml::Graph<TensorType>>(g_ptr), client_params.inputs_names,
