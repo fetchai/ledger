@@ -67,7 +67,7 @@ public:
 
   CoordinatorState GetState() const;
 
-  std::vector<std::shared_ptr<TrainingClient<TensorType>>> NextPeersList();
+  std::vector<std::shared_ptr<TrainingClient<TensorType>>> NextPeersList(std::string &client_id);
 
   void AddClient(ClientPtrType const &new_client);
   void SetClientsList(std::vector<ClientPtrType> const &new_client);
@@ -149,12 +149,22 @@ void Coordinator<TensorType>::SetClientsList(
  * Get list of new peers
  */
 template <typename TensorType>
-std::vector<std::shared_ptr<TrainingClient<TensorType>>> Coordinator<TensorType>::NextPeersList()
+std::vector<std::shared_ptr<TrainingClient<TensorType>>> Coordinator<TensorType>::NextPeersList(
+    std::string &client_id)
 {
   std::vector<std::shared_ptr<TrainingClient<TensorType>>> shuffled_clients;
 
+  for (auto &cl : clients_)
+  {
+    if (cl->GetId() == client_id)
+    {
+      continue;
+    }
+    shuffled_clients.push_back(cl);
+  }
+
   // Shuffle the peers list to get new contact for next update
-  fetch::random::Shuffle(gen_, clients_, shuffled_clients);
+  fetch::random::Shuffle(gen_, shuffled_clients, shuffled_clients);
 
   // Create vector subset
   std::vector<std::shared_ptr<TrainingClient<TensorType>>> new_peers(

@@ -27,13 +27,13 @@
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/optimisation/optimiser.hpp"
 
+#include <condition_variable>
 #include <fstream>
 #include <mutex>
 #include <queue>
 #include <string>
-#include <vector>
 #include <thread>
-#include <condition_variable>
+#include <vector>
 
 namespace fetch {
 namespace ml {
@@ -73,7 +73,11 @@ public:
       std::shared_ptr<fetch::ml::optimisers::Optimiser<TensorType>> const &optimiser_ptr,
       ClientParams<DataType> const &                                       client_params);
 
-  virtual ~TrainingClient() = default;
+  virtual ~TrainingClient()
+  {
+    export_stopped_ = true;
+    export_buffer_cv_.notify_all();
+  }
 
   void SetCoordinator(std::shared_ptr<Coordinator<TensorType>> coordinator_ptr);
 
@@ -98,6 +102,8 @@ public:
   void SetWeights(VectorTensorType &new_weights);
 
   void SetParams(ClientParams<DataType> const &new_params);
+
+  std::string GetId() const;
 
 protected:
   // Client id (identification name)
@@ -127,14 +133,15 @@ protected:
   std::queue<GradientType> gradient_queue_;
   std::mutex               queue_mutex_;
 
-    // Export buffer access and mutex to protect it
-    std::queue<GradientType> export_buffer_;
-    std::mutex               export_buffer_mutex_;
-    std::condition_variable export_buffer_cv_;
-    std::mutex               export_buffer_cv_mutex_;
-    std::shared_ptr<std::thread> export_buffer_thread_;
+  // Export buffer logic
+  std::queue<GradientType>     export_buffer_;
+  std::mutex                   export_buffer_mutex_;
+  std::condition_variable      export_buffer_cv_;
+  std::mutex                   export_buffer_cv_mutex_;
+  std::shared_ptr<std::thread> export_buffer_thread_;
+  bool                         export_stopped_ = false;
 
-    // Learning hyperparameters
+  // Learning hyperparameters
   SizeType batch_size_    = 0;
   DataType learning_rate_ = static_cast<DataType>(0);
 
@@ -151,36 +158,39 @@ protected:
 
   void ClearLossFile();
 
-  void ExportBufferLoop() {
-    GradientType gradient;
+  void ExportBufferLoop()
+  {
+    GradientType                 gradient;
     std::unique_lock<std::mutex> l(export_buffer_cv_mutex_);
 
-    while (true) {
+    while (!export_stopped_)
+    {
       export_buffer_cv_.wait(l);
+      if (export_stopped_)
+        break;
 
-      if (!export_buffer_.empty()) {
-        std::lock_guard<std::mutex> l(queue_mutex_);
+      if (!export_buffer_.empty())
+      {
+        std::lock_guard<std::mutex> l(export_buffer_mutex_);
         {
           gradient = export_buffer_.front();
           export_buffer_.pop();
         }
 
         // Give gradients to peers
-        for (SizeType i{0}; i < peers_.size(); ++i) {
-            std::cout<<id_<<" sending gradient to "<<peers_[i]->id_<<std::endl;
+        for (SizeType i{0}; i < peers_.size(); ++i)
+        {
           peers_[i]->AddGradient(gradient);
         }
       }
     }
   }
 
-    void Initialise()
-    {
+  void Initialise()
+  {
     // Start export buffer thread
-      export_buffer_thread_=std::make_shared<std::thread>(&TrainingClient::ExportBufferLoop, this);
-    }
-
-
+    export_buffer_thread_ = std::make_shared<std::thread>(&TrainingClient::ExportBufferLoop, this);
+  }
 };
 
 template <class TensorType>
@@ -232,6 +242,12 @@ void TrainingClient<TensorType>::SetCoordinator(
     std::shared_ptr<Coordinator<TensorType>> coordinator_ptr)
 {
   coordinator_ptr_ = coordinator_ptr;
+}
+
+template <class TensorType>
+std::string TrainingClient<TensorType>::GetId() const
+{
+  return id_;
 }
 
 /**
@@ -354,27 +370,24 @@ std::vector<TensorType> TrainingClient<TensorType>::GetWeights() const
 template <class TensorType>
 void TrainingClient<TensorType>::AddGradient(GradientType &gradient)
 {
-  {
-    std::lock_guard<std::mutex> l(queue_mutex_);
-    gradient_queue_.push(gradient);
-  }
-  std::cout<<id_<<" - Got new gradient"<<std::endl;
+  std::lock_guard<std::mutex> l(queue_mutex_);
+  gradient_queue_.push(gradient);
 }
 
 /**
  * Adds gradient to export queue
  * @param gradient
  */
-    template <class TensorType>
-    void TrainingClient<TensorType>::AddExportGradient(GradientType &gradient)
-    {
-      std::unique_lock<std::mutex> l(export_buffer_cv_mutex_);
-      {
-        std::lock_guard<std::mutex> l(export_buffer_mutex_);
-        export_buffer_.push(gradient);
-      }
-      export_buffer_cv_.notify_all();
-    }
+template <class TensorType>
+void TrainingClient<TensorType>::AddExportGradient(GradientType &gradient)
+{
+  std::unique_lock<std::mutex> l(export_buffer_cv_mutex_);
+  {
+    std::lock_guard<std::mutex> l(export_buffer_mutex_);
+    export_buffer_.push(gradient);
+  }
+  export_buffer_cv_.notify_all();
+}
 
 /**
  * Applies gradient multiplied by -LEARNING_RATE
@@ -513,7 +526,7 @@ void TrainingClient<TensorType>::DoBatch()
   // Interaction with peers is skipped in synchronous mode
   if (coordinator_ptr_->GetMode() != CoordinatorMode::SYNCHRONOUS)
   {
-    peers_ = coordinator_ptr_->NextPeersList();
+    peers_ = coordinator_ptr_->NextPeersList(id_);
 
     // Load own gradient
     GradientType current_gradient = std::make_pair(g_ptr_->GetGradients(), GetTimestamp());
