@@ -133,9 +133,9 @@ public:
   GraphSaveableParams<TensorType> GetGraphSaveableParams();
   void                            SetGraphSaveableParams(GraphSaveableParams<TensorType> const &sp);
 
-  static constexpr char const *DESCRIPTOR = "Graph";
-
   void AddGradients(std::vector<TensorType> grads);
+
+  static constexpr char const *DESCRIPTOR = "Graph";
 
 protected:
   std::unordered_map<std::string, NodePtrType>                  nodes_;
