@@ -16,8 +16,8 @@ setup_compiler()
 
 setup_library(fetch-yaml)
 target_link_libraries(fetch-yaml
-                      PUBLIC fetch-core)
+                      PUBLIC fetch-core fetch-variant)
 
-#add_test_target()
+# add_test_target()
 #add_subdirectory(examples)
 #add_subdirectory(benchmark)

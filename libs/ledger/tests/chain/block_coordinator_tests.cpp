@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/bloom_filter.hpp"
+#include "bloom_filter/bloom_filter.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/feature_flags.hpp"
 #include "crypto/ecdsa.hpp"

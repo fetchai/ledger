@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/bloom_filter.hpp"
+#include "bloom_filter/bloom_filter.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/mutex.hpp"

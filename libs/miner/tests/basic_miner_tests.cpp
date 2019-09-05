@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/bloom_filter.hpp"
+#include "bloom_filter/bloom_filter.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_layout.hpp"

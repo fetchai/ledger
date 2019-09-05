@@ -1,8 +1,8 @@
 #
-# F E T C H   C O R E   L I B R A R Y
+# F E T C H   B L O O M   F I L T E R   L I B R A R Y
 #
 cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
-project(fetch-core)
+project(fetch-bloomfilter)
 
 # CMake Configuration
 include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
@@ -14,19 +14,15 @@ setup_compiler()
 # Main Library Target
 # ------------------------------------------------------------------------------
 
-setup_library(fetch-core)
-target_link_libraries(fetch-core
-                      PUBLIC fetch-vectorise
-
-                             fetch-telemetry
-                             vendor-backward-cpp
-                             vendor-spdlog)
-
+setup_library(fetch-bloomfilter)
+target_link_libraries(fetch-bloomfilter
+                      PUBLIC fetch-core
+                      fetch-crypto)
 # ------------------------------------------------------------------------------
 # Example Targets
 # ------------------------------------------------------------------------------
 
-add_subdirectory(examples)
+# add_subdirectory(examples)
 
 # ------------------------------------------------------------------------------
 # Test Targets
@@ -38,4 +34,4 @@ add_test_target()
 # Benchmark Targets
 # ------------------------------------------------------------------------------
 
-add_subdirectory(benchmark)
+# add_subdirectory(benchmark)

@@ -18,6 +18,6 @@ setup_library(fetch-json)
 target_link_libraries(fetch-json
                       PUBLIC fetch-core fetch-variant)
 
-#add_test_target()
+# add_test_target()
 #add_subdirectory(examples)
 #add_subdirectory(benchmark)
