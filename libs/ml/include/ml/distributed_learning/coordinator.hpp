@@ -157,8 +157,9 @@ std::vector<std::shared_ptr<TrainingClient<TensorType>>> Coordinator<TensorType>
   fetch::random::Shuffle(gen_, clients_, shuffled_clients);
 
   // Create vector subset
-  std::vector<std::shared_ptr<TrainingClient<TensorType>>> new_peers(
-      shuffled_clients.cbegin(), shuffled_clients.cbegin() + number_of_peers_);
+  std::vector<std::shared_ptr<TrainingClient<TensorType>>> new_peers(number_of_peers_);
+  std::copy(std::begin(shuffled_clients), std::begin(shuffled_clients) + number_of_peers_,
+            std::back_inserter(new_peers));
 
   return std::move(new_peers);
 }
