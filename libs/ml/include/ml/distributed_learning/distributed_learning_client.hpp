@@ -61,6 +61,7 @@ class TrainingClient
   using DataType         = typename TensorType::Type;
   using SizeType         = typename TensorType::SizeType;
   using VectorTensorType = std::vector<TensorType>;
+    using TimestampType =  int64_t;
 
 public:
   TrainingClient(std::string const &id, ClientParams<DataType> const &client_params);
@@ -122,7 +123,7 @@ protected:
   std::shared_ptr<Coordinator> coordinator_ptr_;
 
   // Gradient queue access and mutex to protect it
-  std::queue<VectorTensorType> gradient_queue_;
+  std::queue<std::pair<VectorTensorType,TimestampType>> gradient_queue_;
   std::mutex                   queue_mutex_;
 
   // random number generator for shuffling peers
@@ -135,7 +136,8 @@ protected:
 
   void GetNewGradients(VectorTensorType &new_gradients);
 
-  std::string GetTimeStamp();
+  std::string GetStrTimestamp();
+  TimestampType GetTimestamp();
 
   void TrainOnce();
 
@@ -350,7 +352,7 @@ void TrainingClient<TensorType>::AddGradient(VectorTensorType gradient)
 {
   {
     std::lock_guard<std::mutex> l(queue_mutex_);
-    gradient_queue_.push(gradient);
+    gradient_queue_.push(std::make_pair(gradient,GetTimestamp()));
   }
 }
 
@@ -389,13 +391,13 @@ template <class TensorType>
 void TrainingClient<TensorType>::GetNewGradients(VectorTensorType &new_gradients)
 {
   std::lock_guard<std::mutex> l(queue_mutex_);
-  new_gradients = gradient_queue_.front();
+  new_gradients = gradient_queue_.front().first;
   gradient_queue_.pop();
 }
 
 // Timestamp for logging
 template <class TensorType>
-std::string TrainingClient<TensorType>::GetTimeStamp()
+std::string TrainingClient<TensorType>::GetStrTimestamp()
 {
   auto now       = std::chrono::system_clock::now();
   auto in_time_t = std::chrono::system_clock::to_time_t(now);
@@ -410,6 +412,13 @@ std::string TrainingClient<TensorType>::GetTimeStamp()
   ss << '.' << std::setfill('0') << std::setw(3) << now_milliseconds.count();
 
   return ss.str();
+}
+
+// Timestamp for gradient queue
+    template <class TensorType>
+    int64_t  TrainingClient<TensorType>::GetTimestamp()
+{
+ return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
 
 /**
@@ -430,10 +439,10 @@ void TrainingClient<TensorType>::TrainOnce()
   // Upload to https://plot.ly/create/#/ for visualisation
   if (lossfile)
   {
-    lossfile << GetTimeStamp() << ", " << static_cast<double>(loss) << "\n";
+    lossfile << GetStrTimestamp() << ", " << static_cast<double>(loss) << "\n";
   }
 
-  lossfile << GetTimeStamp() << ", "
+  lossfile << GetStrTimestamp() << ", "
            << "STOPPED"
            << "\n";
   lossfile.close();
@@ -460,11 +469,11 @@ void TrainingClient<TensorType>::TrainWithCoordinator()
     // Upload to https://plot.ly/create/#/ for visualisation
     if (lossfile)
     {
-      lossfile << GetTimeStamp() << ", " << static_cast<double>(loss) << "\n";
+      lossfile << GetStrTimestamp() << ", " << static_cast<double>(loss) << "\n";
     }
   }
 
-  lossfile << GetTimeStamp() << ", "
+  lossfile << GetStrTimestamp() << ", "
            << "STOPPED"
            << "\n";
   lossfile.close();
