@@ -151,6 +151,7 @@ void ShardManagementService::RequestUpdates(Addresses addresses)
   {
     addresses.emplace(address);
   }
+  unavailable_requests_.clear();
 
   // strip and pending
   addresses = addresses - pending_requests_;
