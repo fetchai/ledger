@@ -57,6 +57,7 @@ std::shared_ptr<GraphType> BuildGraph(bool shared = false, bool time_distributed
   std::string label = g->template AddNode<PlaceHolderType>("Label", {});
   std::string error = g->template AddNode<MSEType>("Error", {output, label});
 
+  g->Compile();
   return g;
 }
 
@@ -301,6 +302,10 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test)
   // check the weights are different after training for not shared weights
   for (size_t i = 0; i < 2; i++)
   {
+    std::cout << "g_not_shared_weights_after[i].ToString(): "
+              << g_not_shared_weights_after[i].ToString() << std::endl;
+    std::cout << "g_not_shared_weights_after[i + 2].ToString(): "
+              << g_not_shared_weights_after[i + 2].ToString() << std::endl;
     EXPECT_FALSE(g_not_shared_weights_after[i] == g_not_shared_weights_after[i + 2]);
   }
 
@@ -462,7 +467,7 @@ TYPED_TEST(FullyConnectedTest, node_backward_test)  // Use the class as a Node
   TypeParam prediction = *fc.Evaluate(true);
 
   TypeParam error_signal(std::vector<typename TypeParam::SizeType>({42, 2}));
-  auto      backprop_error = fc.BackPropagateSignal(error_signal);
+  auto      backprop_error = fc.BackPropagate(error_signal);
 
   ASSERT_EQ(backprop_error.size(), 1);
   ASSERT_EQ(backprop_error[0].second.shape().size(), 3);
@@ -572,7 +577,8 @@ TYPED_TEST(FullyConnectedTest, training_should_change_output)
   // train g
   layer.SetInput(label_name, labels);
   TypeParam loss = layer.Evaluate(error_output);
-  layer.BackPropagateError(error_output);
+  layer.BackPropagate(error_output);
+  layer.ApplyRegularisation();
   layer.Step(DataType{0.1f});
 
   TypeParam prediction3 = layer.Evaluate(output_name);
@@ -649,13 +655,15 @@ TYPED_TEST(FullyConnectedTest, saveparams_test)
   // train g
   layer.SetInput(label_name, labels);
   TypeParam loss = layer.Evaluate(error_output);
-  layer.BackPropagateError(error_output);
+  layer.BackPropagate(error_output);
+  layer.ApplyRegularisation();
   layer.Step(DataType{0.1f});
 
   // train g2
   layer2.SetInput(label_name, labels);
   TypeParam loss2 = layer2.Evaluate(error_output);
-  layer2.BackPropagateError(error_output);
+  layer2.BackPropagate(error_output);
+  layer2.ApplyRegularisation();
   layer2.Step(DataType{0.1f});
 
   EXPECT_TRUE(loss.AllClose(loss2, fetch::math::function_tolerance<DataType>(),

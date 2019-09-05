@@ -23,6 +23,8 @@
 
 #include "gmock/gmock.h"
 
+#include <sstream>
+
 using namespace fetch::vm;
 
 namespace {
@@ -30,7 +32,8 @@ namespace {
 class StateTests : public ::testing::Test
 {
 public:
-  VmTestToolkit toolkit;
+  std::ostringstream out;
+  VmTestToolkit      toolkit{&out};
 };
 
 TEST_F(StateTests, SanityCheck)
@@ -409,6 +412,108 @@ TEST_F(StateTests, test_serialisation_of_structured_data)
 
   ASSERT_TRUE(toolkit.Compile(deser_src));
   ASSERT_TRUE(toolkit.Run());
+}
+
+TEST_F(StateTests,
+       primitive_state_variables_bound_to_the_same_resource_give_consistent_view_of_the_storage)
+{
+  static char const *TEXT = R"(
+    function main()
+      var a = State<Int32>("account");
+      var b = State<Int32>("account");
+      a.set(1);
+      b.set(2);
+      print(toString(a.get()));
+      print(".");
+      print(toString(b.get()));
+    endfunction
+  )";
+
+  EXPECT_CALL(toolkit.observer(), Write("account", _, _)).Times(2);
+  EXPECT_CALL(toolkit.observer(), Read("account", _, _)).Times(2);
+  EXPECT_CALL(toolkit.observer(), Exists("account")).Times(2);
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(out.str(), "2.2");
+}
+
+TEST_F(StateTests,
+       pointer_state_variables_bound_to_the_same_resource_give_consistent_view_of_the_storage)
+{
+  static char const *TEXT = R"(
+    function main()
+      var a = State<String>("name");
+      var b = State<String>("name");
+      a.set("Alice");
+      b.set("Bob");
+      print(a.get());
+      print(".");
+      print(b.get());
+    endfunction
+  )";
+
+  EXPECT_CALL(toolkit.observer(), Write("name", _, _)).Times(2);
+  EXPECT_CALL(toolkit.observer(), Read("name", _, _)).Times(2);
+  EXPECT_CALL(toolkit.observer(), Exists("name")).Times(2);
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(out.str(), "Bob.Bob");
+}
+
+TEST_F(
+    StateTests,
+    primitive_sharded_state_variables_bound_to_the_same_resource_give_consistent_view_of_the_storage)
+{
+  static char const *TEXT = R"(
+    function main()
+      var a = ShardedState<Int32>("account");
+      var b = ShardedState<Int32>("account");
+      a.set("balance", 1);
+      b.set("balance", 2);
+      print(toString(a.get("balance")));
+      print(".");
+      print(toString(b.get("balance")));
+    endfunction
+  )";
+
+  EXPECT_CALL(toolkit.observer(), Write("account.balance", _, _)).Times(2);
+  EXPECT_CALL(toolkit.observer(), Read("account.balance", _, _)).Times(2);
+  EXPECT_CALL(toolkit.observer(), Exists("account.balance")).Times(2);
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(out.str(), "2.2");
+}
+
+TEST_F(
+    StateTests,
+    pointer_sharded_state_variables_bound_to_the_same_resource_give_consistent_view_of_the_storage)
+{
+  static char const *TEXT = R"(
+    function main()
+      var a = ShardedState<String>("personal_info");
+      var b = ShardedState<String>("personal_info");
+      a.set("name", "Alice");
+      b.set("name", "Bob");
+      print(a.get("name"));
+      print(".");
+      print(b.get("name"));
+    endfunction
+  )";
+
+  EXPECT_CALL(toolkit.observer(), Write("personal_info.name", _, _)).Times(2);
+  EXPECT_CALL(toolkit.observer(), Read("personal_info.name", _, _)).Times(2);
+  EXPECT_CALL(toolkit.observer(), Exists("personal_info.name")).Times(2);
+
+  ASSERT_TRUE(toolkit.Compile(TEXT));
+  ASSERT_TRUE(toolkit.Run());
+
+  ASSERT_EQ(out.str(), "Bob.Bob");
 }
 
 }  // namespace

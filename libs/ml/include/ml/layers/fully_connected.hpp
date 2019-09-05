@@ -123,6 +123,7 @@ public:
       bias_data = TensorType(std::vector<SizeType>({out_size_, 1}));
     }
     this->SetInput(name + "_Bias", bias_data);
+    this->Compile();
   }
 
   OpPtrType MakeSharedCopy(OpPtrType me) override

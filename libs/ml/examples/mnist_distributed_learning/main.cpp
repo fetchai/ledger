@@ -34,6 +34,7 @@
 
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
+using namespace fetch::ml::distributed_learning;
 
 using DataType         = fetch::fixed_point::FixedPoint<32, 32>;
 using TensorType       = fetch::math::Tensor<DataType>;

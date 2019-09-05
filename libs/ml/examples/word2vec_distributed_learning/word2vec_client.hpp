@@ -22,6 +22,10 @@
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "word2vec_training_params.hpp"
 
+namespace fetch {
+namespace ml {
+namespace distributed_learning {
+
 std::string ReadFile(std::string const &path)
 {
   std::ifstream t(path);
@@ -43,9 +47,13 @@ class Word2VecClient : public TrainingClient<TensorType>
 public:
   Word2VecClient(std::string const &id, W2VTrainingParams<DataType> const &tp,
                  std::shared_ptr<std::mutex> const &console_mutex_ptr);
+
   void PrepareModel();
+
   void PrepareDataLoader();
+
   void PrepareOptimiser();
+
   void Test(DataType &test_loss) override;
 
 private:
@@ -237,3 +245,7 @@ void Word2VecClient<TensorType>::TestEmbeddings(std::string const &word0, std::s
     PrintWordAnalogy(embeddings->get_weights(), word1, word2, word3, K);
   }
 }
+
+}  // namespace distributed_learning
+}  // namespace ml
+}  // namespace fetch

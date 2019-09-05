@@ -34,6 +34,10 @@
 #include <string>
 #include <vector>
 
+namespace fetch {
+namespace ml {
+namespace distributed_learning {
+
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
 
@@ -70,18 +74,28 @@ public:
   virtual ~TrainingClient() = default;
 
   void SetCoordinator(std::shared_ptr<Coordinator> coordinator_ptr);
+
   void Run();
 
-  DataType         Train();
-  virtual void     Test(DataType &test_loss);
+  DataType Train();
+
+  virtual void Test(DataType &test_loss);
+
   VectorTensorType GetGradients() const;
+
   VectorTensorType GetWeights() const;
-  void             AddPeers(std::vector<std::shared_ptr<TrainingClient>> const &clients);
-  void             BroadcastGradients();
-  void             AddGradient(VectorTensorType gradient);
-  void             ApplyGradient(VectorTensorType gradients);
-  void             SetWeights(VectorTensorType &new_weights);
-  void             SetParams(ClientParams<DataType> const &new_params);
+
+  void AddPeers(std::vector<std::shared_ptr<TrainingClient>> const &clients);
+
+  void BroadcastGradients();
+
+  void AddGradient(VectorTensorType gradient);
+
+  void ApplyGradient(VectorTensorType gradients);
+
+  void SetWeights(VectorTensorType &new_weights);
+
+  void SetParams(ClientParams<DataType> const &new_params);
 
 protected:
   // Client id (identification name)
@@ -126,8 +140,11 @@ protected:
   std::string GetTimeStamp();
 
   void TrainOnce();
+
   void TrainWithCoordinator();
+
   void DoBatch();
+
   void ClearLossFile();
 };
 
@@ -231,7 +248,7 @@ typename TensorType::Type TrainingClient<TensorType>::Train()
 
     TensorType loss_tensor = g_ptr_->ForwardPropagate(error_name_);
     loss                   = *(loss_tensor.begin());
-    g_ptr_->BackPropagateError(error_name_);
+    g_ptr_->BackPropagate(error_name_);
   }
 
   return loss;
@@ -481,3 +498,7 @@ void TrainingClient<TensorType>::DoBatch()
   }
   batch_counter_++;
 }
+
+}  // namespace distributed_learning
+}  // namespace ml
+}  // namespace fetch
