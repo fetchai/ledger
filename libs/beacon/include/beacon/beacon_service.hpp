@@ -109,7 +109,7 @@ public:
   /// @{
   /// @brief this function is called when the node is in the cabinet
   void StartNewCabinet(CabinetMemberList members, uint32_t threshold, uint64_t round_start,
-                       uint64_t round_end);
+                       uint64_t round_end, uint64_t start_time);
   /// @}
 
   /// Beacon runnables
@@ -118,8 +118,6 @@ public:
   std::weak_ptr<core::Runnable> GetSetupRunnable();
   /// @}
 
-  template <typename T>
-  friend class core::StateMachine;
   friend class BeaconServiceProtocol;
 
 protected:
@@ -144,34 +142,7 @@ protected:
   /// @}
 
 private:
-  bool AddSignature(SignatureShare share)
-  {
-    assert(active_exe_unit_ != nullptr);
-    auto ret = active_exe_unit_->manager.AddSignaturePart(share.identity, share.signature);
-
-    // Checking that the signature is valid
-    if (ret == BeaconManager::AddResult::INVALID_SIGNATURE)
-    {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Signature invalid.");
-
-      EventInvalidSignature event;
-      // TODO(tfr): Received invalid signature - fill event details
-      event_manager_->Dispatch(event);
-
-      return false;
-    }
-    else if (ret == BeaconManager::AddResult::NOT_MEMBER)
-    {  // And that it was sent by a member of the cabinet
-      FETCH_LOG_ERROR(LOGGING_NAME, "Signature from non-member.");
-
-      EventSignatureFromNonMember event;
-      // TODO(tfr): Received signature from non-member - deal with it.
-      event_manager_->Dispatch(event);
-
-      return false;
-    }
-    return true;
-  }
+  bool AddSignature(SignatureShare share);
 
   std::mutex      mutex_;
   CertificatePtr  certificate_;

@@ -54,6 +54,7 @@ private:
   BlockCoordinator &    block_coordinator_;
   StorageUnitInterface &storage_unit_;
   ConsensusPtr          consensus_;
+  uint64_t              start_time_ = 0;
 };
 
 }  // namespace ledger

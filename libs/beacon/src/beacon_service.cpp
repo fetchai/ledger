@@ -181,7 +181,7 @@ BeaconService::Status BeaconService::GenerateEntropy(Digest /*block_digest*/, ui
 }
 
 void BeaconService::StartNewCabinet(CabinetMemberList members, uint32_t threshold,
-                                    uint64_t round_start, uint64_t round_end)
+                                    uint64_t round_start, uint64_t round_end, uint64_t start_time)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Starting new cabinet from ", round_start, " to ", round_end);
   std::lock_guard<std::mutex> lock(mutex_);
@@ -201,9 +201,10 @@ void BeaconService::StartNewCabinet(CabinetMemberList members, uint32_t threshol
   }
 
   // Setting the aeon details
-  beacon->aeon.round_start = round_start;
-  beacon->aeon.round_end   = round_end;
-  beacon->aeon.members     = std::move(members);
+  beacon->aeon.round_start               = round_start;
+  beacon->aeon.round_end                 = round_end;
+  beacon->aeon.members                   = std::move(members);
+  beacon->aeon.start_reference_timepoint = start_time;
 
   // Even "observe only" details need to pass through the setup phase
   // to preserve order.
@@ -498,6 +499,35 @@ BeaconService::State BeaconService::OnComiteeState()
   active_exe_unit_.reset();
 
   return State::WAIT_FOR_SETUP_COMPLETION;
+}
+
+bool BeaconService::AddSignature(SignatureShare share)
+{
+  assert(active_exe_unit_ != nullptr);
+  auto ret = active_exe_unit_->manager.AddSignaturePart(share.identity, share.signature);
+
+  // Checking that the signature is valid
+  if (ret == BeaconManager::AddResult::INVALID_SIGNATURE)
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Signature invalid.");
+
+    EventInvalidSignature event;
+    // TODO(tfr): Received invalid signature - fill event details
+    event_manager_->Dispatch(event);
+
+    return false;
+  }
+  else if (ret == BeaconManager::AddResult::NOT_MEMBER)
+  {  // And that it was sent by a member of the cabinet
+    FETCH_LOG_ERROR(LOGGING_NAME, "Signature from non-member.");
+
+    EventSignatureFromNonMember event;
+    // TODO(tfr): Received signature from non-member - deal with it.
+    event_manager_->Dispatch(event);
+
+    return false;
+  }
+  return true;
 }
 
 std::weak_ptr<core::Runnable> BeaconService::GetMainRunnable()

@@ -21,6 +21,8 @@
 #include "core/state_machine.hpp"
 #include "dkg/dkg_complaints_manager.hpp"
 #include "dkg/dkg_messages.hpp"
+#include "moment/clocks.hpp"
+#include "moment/deadline_timer.hpp"
 #include "muddle/muddle_endpoint.hpp"
 #include "muddle/rbc.hpp"
 #include "muddle/rpc/client.hpp"
@@ -50,17 +52,20 @@ class BeaconSetupService
 public:
   static constexpr char const *LOGGING_NAME = "BeaconSetupService";
 
+  // Note: these must be maintained in the order which they are called
   enum class State : uint8_t
   {
     IDLE,
-    WAIT_FOR_DIRECT_CONNECTIONS,
+    RESET,
+    CONNECT_TO_ALL,
     WAIT_FOR_READY_CONNECTIONS,
-    WAIT_FOR_SHARE,
+    WAIT_FOR_SHARES,
     WAIT_FOR_COMPLAINTS,
     WAIT_FOR_COMPLAINT_ANSWERS,
     WAIT_FOR_QUAL_SHARES,
     WAIT_FOR_QUAL_COMPLAINTS,
     WAIT_FOR_RECONSTRUCTION_SHARES,
+    DRY_RUN_SIGNING,
     BEACON_READY
   };
 
@@ -70,6 +75,7 @@ public:
   using MuddleAddress           = ConstByteArray;
   using Identity                = crypto::Identity;
   using CabinetMembers          = std::set<Identity>;
+  using MuddleAddresses         = std::set<MuddleAddress>;
   using MuddleEndpoint          = muddle::MuddleEndpoint;
   using MuddleInterface         = muddle::MuddleInterface;
   using RBC                     = muddle::RBC;
@@ -89,6 +95,8 @@ public:
   using DKGSerializer           = dkg::DKGSerializer;
   using ManifestCacheInterface  = ledger::ManifestCacheInterface;
   using SharesExposedMap = std::unordered_map<MuddleAddress, std::pair<MessageShare, MessageShare>>;
+  using DeadlineTimer    = fetch::moment::DeadlineTimer;
+  using SignatureShare   = AeonExecutionUnit::SignatureShare;
 
   BeaconSetupService(MuddleInterface &muddle, Identity identity,
                      ManifestCacheInterface &manifest_cache);
@@ -98,7 +106,8 @@ public:
   /// State functions
   /// @{
   State OnIdle();
-  State OnWaitForDirectConnections();
+  State OnReset();
+  State OnConnectToAll();
   State OnWaitForReadyConnections();
   State OnWaitForShares();
   State OnWaitForComplaints();
@@ -106,6 +115,7 @@ public:
   State OnWaitForQualShares();
   State OnWaitForQualComplaints();
   State OnWaitForReconstructionShares();
+  State OnDryRun();
   State OnBeaconReady();
   /// @}
 
@@ -120,26 +130,20 @@ public:
   void OnNewSharesPacket(muddle::Packet const &packet, MuddleAddress const &last_hop);
   void OnNewShares(MuddleAddress from_id, std::pair<MessageShare, MessageShare> const &shares);
   void OnDkgMessage(MuddleAddress const &from, std::shared_ptr<DKGMessage> msg_ptr);
+  void OnNewDryRunPacket(muddle::Packet const &packet, MuddleAddress const &last_hop);
 
 protected:
   Identity                identity_;
   ManifestCacheInterface &manifest_cache_;
   MuddleInterface &       muddle_;
   MuddleEndpoint &        endpoint_;
-  SubscriptionPtr         shares_subscription;
+  SubscriptionPtr         shares_subscription_;
+  SubscriptionPtr         dry_run_subscription_;
   RBC                     pre_dkg_rbc_;
   RBC                     rbc_;
 
-  std::mutex                          mutex_;
-  CallbackFunction                    callback_function_;
-  std::deque<SharedAeonExecutionUnit> aeon_exe_queue_;
-  SharedAeonExecutionUnit             beacon_;
-
   std::shared_ptr<StateMachine> state_machine_;
-  telemetry::GaugePtr<uint8_t>  dkg_state_gauge_;
-
-  std::set<MuddleAddress>                                    connections_;
-  std::unordered_map<MuddleAddress, std::set<MuddleAddress>> ready_connections_;
+  std::set<MuddleAddress>       connections_;
 
   // Managing complaints
   ComplaintsManager       complaints_manager_;
@@ -180,6 +184,35 @@ protected:
   bool BuildQual();
   void CheckQualComplaints();
   /// @}
+
+  // Helper functions
+  uint64_t PreDKGThreshold();
+
+  // Telemetry
+  telemetry::GaugePtr<uint8_t>  beacon_dkg_state_gauge_;
+  telemetry::GaugePtr<uint64_t> beacon_dkg_connections_gauge_;
+  telemetry::GaugePtr<uint64_t> beacon_dkg_all_connections_gauge_;
+  telemetry::CounterPtr         beacon_dkg_failures_total_;
+
+  // Members below protected by mutex
+  std::mutex                                                 mutex_;
+  CallbackFunction                                           callback_function_;
+  std::deque<SharedAeonExecutionUnit>                        aeon_exe_queue_;
+  SharedAeonExecutionUnit                                    beacon_;
+  std::unordered_map<MuddleAddress, std::set<MuddleAddress>> ready_connections_;
+  std::map<MuddleAddress, SignatureShare>                    dry_run_shares_;
+
+private:
+  // Timing management
+  void             SetTimeToProceed(State state);
+  moment::ClockPtr clock_ = moment::GetClock("beacon:dkg", moment::ClockType::STEADY);
+  DeadlineTimer    timer_to_proceed_{"beacon:dkg"};
+  uint64_t         reference_timepoint_   = 0;
+  uint64_t         state_deadline_        = 0;
+  uint64_t         seconds_for_state_     = 0;
+  uint64_t         expected_dkg_timespan_ = 0;
+  bool             condition_to_proceed_  = false;
 };
+
 }  // namespace beacon
 }  // namespace fetch

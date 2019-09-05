@@ -74,7 +74,7 @@ void ComplaintsManager::Add(ComplaintsMessage const &msg, MuddleAddress const &f
 bool ComplaintsManager::IsFinished(uint32_t polynomial_degree)
 {
   FETCH_LOCK(mutex_);
-  if (complaints_received_.size() == cabinet_size_ - 1)
+  if (complaints_received_.size() >= polynomial_degree)
   {
     // TODO(jmw): Add miners which did not send a complaint to complaints?
     // All miners who have received over t complaints are also disqualified
@@ -163,18 +163,22 @@ bool QualComplaintsManager::ComplaintsFind(MuddleAddress const &id) const
 }
 
 bool QualComplaintsManager::IsFinished(std::set<MuddleAddress> const &qual,
-                                       MuddleAddress const &          node_id)
+                                       MuddleAddress const &node_id, uint32_t threshold)
 {
+
   FETCH_LOCK(mutex_);
-  for (const auto &member : qual)
+  uint32_t total_intersecting_complaints = 0;
+
+  for (auto const &qualified_member : qual)
   {
-    if (member != node_id && complaints_received_.find(member) == complaints_received_.end())
+    if (qualified_member != node_id &&
+        complaints_received_.find(qualified_member) != complaints_received_.end())
     {
-      return false;
+      total_intersecting_complaints++;
     }
   }
-  finished_ = true;
-  return true;
+
+  return total_intersecting_complaints >= threshold;
 }
 
 void QualComplaintsManager::Clear()
