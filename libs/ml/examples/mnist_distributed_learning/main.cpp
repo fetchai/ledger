@@ -67,8 +67,7 @@ std::shared_ptr<TrainingClient<TensorType>> MakeClient(std::string const &     i
       std::make_shared<fetch::ml::dataloaders::MNISTLoader<TensorType, TensorType>>(images, labels);
   dataloader_ptr->SetTestRatio(test_set_ratio);
   dataloader_ptr->SetRandomMode(true);
-
-  // Initialise Optimiser
+gi  // Initialise Optimiser
   std::shared_ptr<fetch::ml::optimisers::Optimiser<TensorType>> optimiser_ptr =
       std::make_shared<fetch::ml::optimisers::AdamOptimiser<TensorType>>(
           std::shared_ptr<fetch::ml::Graph<TensorType>>(g_ptr), client_params.inputs_names,
@@ -90,11 +89,11 @@ int main(int ac, char **av)
   CoordinatorParams      coord_params;
   ClientParams<DataType> client_params;
 
-  SizeType number_of_clients    = 3;
-  SizeType number_of_rounds     = 3;
+  SizeType number_of_clients    = 10;
+  SizeType number_of_rounds     = 10;
   coord_params.mode             = CoordinatorMode::SEMI_SYNCHRONOUS;
-  coord_params.iterations_count = 20;
-  coord_params.number_of_peers  = 2;
+  coord_params.iterations_count = 100;
+  coord_params.number_of_peers  = 3;
   client_params.batch_size      = 32;
   client_params.learning_rate   = static_cast<DataType>(.001f);
   float test_set_ratio          = 0.03f;
