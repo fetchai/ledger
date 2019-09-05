@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "coordinator.hpp"
-#include "core/random.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
 #include "ml/core/graph.hpp"
@@ -48,7 +47,6 @@ struct ClientParams
 
   SizeType batch_size;
   DataType learning_rate;
-  SizeType number_of_peers;
 
   std::vector<std::string> inputs_names = {"Input"};
   std::string              label_name   = "Label";
@@ -61,7 +59,7 @@ class TrainingClient
   using DataType         = typename TensorType::Type;
   using SizeType         = typename TensorType::SizeType;
   using VectorTensorType = std::vector<TensorType>;
-    using TimestampType =  int64_t;
+  using TimestampType    = int64_t;
 
 public:
   TrainingClient(std::string const &id, ClientParams<DataType> const &client_params);
@@ -74,7 +72,7 @@ public:
 
   virtual ~TrainingClient() = default;
 
-  void SetCoordinator(std::shared_ptr<Coordinator> coordinator_ptr);
+  void SetCoordinator(std::shared_ptr<Coordinator<TensorType>> coordinator_ptr);
 
   void Run();
 
@@ -120,23 +118,19 @@ protected:
   std::vector<std::shared_ptr<TrainingClient>> peers_;
 
   // Access to coordinator
-  std::shared_ptr<Coordinator> coordinator_ptr_;
+  std::shared_ptr<Coordinator<TensorType>> coordinator_ptr_;
 
   // Gradient queue access and mutex to protect it
-  std::queue<std::pair<VectorTensorType,TimestampType>> gradient_queue_;
-  std::mutex                   queue_mutex_;
-
-  // random number generator for shuffling peers
-  fetch::random::LaggedFibonacciGenerator<> gen_;
+  std::queue<std::pair<VectorTensorType, TimestampType>> gradient_queue_;
+  std::mutex                                             queue_mutex_;
 
   // Learning hyperparameters
-  SizeType batch_size_      = 0;
-  DataType learning_rate_   = static_cast<DataType>(0);
-  SizeType number_of_peers_ = 0;
+  SizeType batch_size_    = 0;
+  DataType learning_rate_ = static_cast<DataType>(0);
 
   void GetNewGradients(VectorTensorType &new_gradients);
 
-  std::string GetStrTimestamp();
+  std::string   GetStrTimestamp();
   TimestampType GetTimestamp();
 
   void TrainOnce();
@@ -183,16 +177,16 @@ template <class TensorType>
 void TrainingClient<TensorType>::SetParams(
     ClientParams<typename TensorType::Type> const &new_params)
 {
-  inputs_names_    = new_params.inputs_names;
-  label_name_      = new_params.label_name;
-  error_name_      = new_params.error_name;
-  batch_size_      = new_params.batch_size;
-  learning_rate_   = new_params.learning_rate;
-  number_of_peers_ = new_params.number_of_peers;
+  inputs_names_  = new_params.inputs_names;
+  label_name_    = new_params.label_name;
+  error_name_    = new_params.error_name;
+  batch_size_    = new_params.batch_size;
+  learning_rate_ = new_params.learning_rate;
 }
 
 template <class TensorType>
-void TrainingClient<TensorType>::SetCoordinator(std::shared_ptr<Coordinator> coordinator_ptr)
+void TrainingClient<TensorType>::SetCoordinator(
+    std::shared_ptr<Coordinator<TensorType>> coordinator_ptr)
 {
   coordinator_ptr_ = coordinator_ptr;
 }
@@ -311,23 +305,6 @@ std::vector<TensorType> TrainingClient<TensorType>::GetWeights() const
 }
 
 /**
- * Add pointers to other clients
- * @param clients
- */
-template <class TensorType>
-void TrainingClient<TensorType>::AddPeers(
-    std::vector<std::shared_ptr<TrainingClient>> const &clients)
-{
-  for (auto const &p : clients)
-  {
-    if (p.get() != this)
-    {
-      peers_.push_back(p);
-    }
-  }
-}
-
-/**
  * Adds own gradient to peers queues
  */
 template <class TensorType>
@@ -337,7 +314,7 @@ void TrainingClient<TensorType>::BroadcastGradients()
   VectorTensorType current_gradient = g_ptr_->GetGradients();
 
   // Give gradients to peers
-  for (SizeType i{0}; i < number_of_peers_; ++i)
+  for (SizeType i{0}; i < peers_.size(); ++i)
   {
     peers_[i]->AddGradient(current_gradient);
   }
@@ -352,7 +329,7 @@ void TrainingClient<TensorType>::AddGradient(VectorTensorType gradient)
 {
   {
     std::lock_guard<std::mutex> l(queue_mutex_);
-    gradient_queue_.push(std::make_pair(gradient,GetTimestamp()));
+    gradient_queue_.push(std::make_pair(gradient, GetTimestamp()));
   }
 }
 
@@ -415,10 +392,12 @@ std::string TrainingClient<TensorType>::GetStrTimestamp()
 }
 
 // Timestamp for gradient queue
-    template <class TensorType>
-    int64_t  TrainingClient<TensorType>::GetTimestamp()
+template <class TensorType>
+int64_t TrainingClient<TensorType>::GetTimestamp()
 {
- return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+  return std::chrono::duration_cast<std::chrono::milliseconds>(
+             std::chrono::system_clock::now().time_since_epoch())
+      .count();
 }
 
 /**
@@ -491,8 +470,7 @@ void TrainingClient<TensorType>::DoBatch()
   // Interaction with peers is skipped in synchronous mode
   if (coordinator_ptr_->GetMode() != CoordinatorMode::SYNCHRONOUS)
   {
-    // Shuffle the peers list to get new contact for next update
-    fetch::random::Shuffle(gen_, peers_, peers_);
+    peers_ = coordinator_ptr_->NextPeersList();
 
     // Put own gradient to peers queues
     BroadcastGradients();

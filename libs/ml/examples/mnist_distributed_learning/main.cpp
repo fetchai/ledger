@@ -94,12 +94,13 @@ int main(int ac, char **av)
   SizeType number_of_rounds     = 10;
   coord_params.mode             = CoordinatorMode::SEMI_SYNCHRONOUS;
   coord_params.iterations_count = 100;
+  coord_params.number_of_peers  = 3;
   client_params.batch_size      = 32;
   client_params.learning_rate   = static_cast<DataType>(.001f);
   float test_set_ratio          = 0.03f;
-  client_params.number_of_peers = 3;
 
-  std::shared_ptr<Coordinator> coordinator = std::make_shared<Coordinator>(coord_params);
+  std::shared_ptr<Coordinator<TensorType>> coordinator =
+      std::make_shared<Coordinator<TensorType>>(coord_params);
 
   std::cout << "FETCH Distributed MNIST Demo" << std::endl;
 
@@ -109,13 +110,13 @@ int main(int ac, char **av)
     // Instantiate NUMBER_OF_CLIENTS clients
     clients[i] = MakeClient(std::to_string(i), client_params, av[1], av[2], test_set_ratio);
     // TODO(1597): Replace ID with something more sensible
+
+    // Give client pointer to coordinator
+    coordinator->AddClient(clients[i]);
   }
 
   for (SizeType i{0}; i < number_of_clients; ++i)
   {
-    // Give every client the full list of other clients
-    clients[i]->AddPeers(clients);
-
     // Give each client pointer to coordinator
     clients[i]->SetCoordinator(coordinator);
   }
