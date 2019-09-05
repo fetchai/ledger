@@ -75,11 +75,11 @@ std::vector<math::SizeType> Vocab::PutSentenceInVocab(std::vector<std::string> c
     {
       SizeType word_id = vocab.size();
       vocab[word]      = word_id;
-      if (word_id + 1 > reverse_vocab.size())
+      if (word_id >= reverse_vocab.size())
       {
         reverse_vocab.resize(word_id + 128, "");
       }
-      if (word_id + 1 > counts.size())
+      if (word_id >= counts.size())
       {
         counts.resize(word_id + 128, SizeType{0});
       }
@@ -207,7 +207,7 @@ void Vocab::Load(std::string const &filename)
  */
 std::string Vocab::WordFromIndex(SizeType index) const
 {
-  if (reverse_vocab.size() > index + 1)
+  if (reverse_vocab.size() > index)
   {
     return reverse_vocab[index];
   }
