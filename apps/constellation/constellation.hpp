@@ -25,7 +25,7 @@
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chain/consensus/consensus_miner_interface.hpp"
 #include "ledger/chain/main_chain.hpp"
-#include "ledger/consensus/entropy_generator_interface.hpp"
+#include "entropy/entropy_generator_interface.hpp"
 #include "ledger/consensus/stake_manager.hpp"
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/execution_manager.hpp"

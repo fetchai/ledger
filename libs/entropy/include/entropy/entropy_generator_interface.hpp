@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/digest.hpp"
+#include "core/byte_array/const_byte_array.hpp"
 
 namespace fetch {
 namespace ledger {
@@ -25,6 +25,8 @@ namespace ledger {
 class EntropyGeneratorInterface
 {
 public:
+  using Digest = byte_array::ConstByteArray;
+  
   // Construction / Destruction
   EntropyGeneratorInterface()          = default;
   virtual ~EntropyGeneratorInterface() = default;

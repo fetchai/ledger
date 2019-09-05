@@ -20,7 +20,7 @@
 #include "core/bitvector.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "crypto/identity.hpp"
-#include "ledger/chain/address.hpp"
+#include "address/address.hpp"
 #include "ledger/chain/digest.hpp"
 
 #include <cstdint>

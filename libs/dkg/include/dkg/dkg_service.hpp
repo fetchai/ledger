@@ -26,8 +26,8 @@
 #include "dkg/dkg_rpc_protocol.hpp"
 #include "dkg/rbc.hpp"
 #include "dkg/round.hpp"
-#include "ledger/chain/address.hpp"
-#include "ledger/consensus/entropy_generator_interface.hpp"
+#include "address/address.hpp"
+#include "entropy/entropy_generator_interface.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
 
@@ -113,7 +113,7 @@ public:
   };
 
   using Endpoint       = muddle::MuddleEndpoint;
-  using Digest         = ledger::Digest;
+  using Digest         = ledger::EntropyGeneratorInterface::Digest;
   using ConstByteArray = byte_array::ConstByteArray;
   using MuddleAddress  = ConstByteArray;
   using CabinetMembers = std::set<MuddleAddress>;

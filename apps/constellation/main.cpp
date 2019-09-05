@@ -33,7 +33,7 @@
 #include "crypto/identity.hpp"
 #include "crypto/prover.hpp"
 #include "key_generator.hpp"
-#include "ledger/chain/address.hpp"
+#include "address/address.hpp"
 #include "network/adapters.hpp"
 #include "network/p2pservice/manifest.hpp"
 #include "network/p2pservice/p2p_service_defs.hpp"

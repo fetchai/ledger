@@ -21,7 +21,7 @@
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "dkg/dkg_service.hpp"
-#include "ledger/chain/address.hpp"
+#include "address/address.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chain/constants.hpp"

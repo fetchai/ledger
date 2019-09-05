@@ -19,7 +19,8 @@ target_link_libraries(fetch-dkg
                       PUBLIC fetch-core
                              fetch-crypto
                              fetch-network
-                             fetch-ledger
+                             fetch-address
+                             fetch-entropy
                              fetch-logging)
 
 add_test_target()

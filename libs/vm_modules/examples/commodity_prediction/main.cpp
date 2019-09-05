@@ -21,7 +21,6 @@
 #include "core/byte_array/encoders.hpp"
 #include "json/document.hpp"
 #include "core/serializers/main_serializer.hpp"
-#include "ledger/state_adapter.hpp"
 #include "math/tensor.hpp"
 #include "ml/dataloaders/ReadCSV.hpp"
 #include "ml/serializers/ml_types.hpp"

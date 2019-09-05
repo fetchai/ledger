@@ -26,7 +26,7 @@
 #include "crypto/fnv.hpp"
 #include "crypto/identity.hpp"
 #include "crypto/sha256.hpp"
-#include "ledger/chain/address.hpp"
+#include "address/address.hpp"
 #include "ledger/chain/transaction_serializer.hpp"
 
 #include <cstdint>

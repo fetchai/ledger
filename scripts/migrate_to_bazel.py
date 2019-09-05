@@ -11,6 +11,8 @@ for l in glob.glob("libs/*/CMakeLists.txt"):
   with open(l, "r") as fb:
     bf = fb.read()
 
+  _, dirname, _ = l.split("/")
+
   library_name = bf.split("setup_library(",1)[1].split(")")[0]
   deps = []
 
@@ -30,6 +32,7 @@ for l in glob.glob("libs/*/CMakeLists.txt"):
 
   libraries[library_name] = {
     "name": library_name,
+    "dirname": dirname,
     "depends": deps,
     "passed": [x for x in deps if x.startswith("fetch")],
     "required_by": []
@@ -43,8 +46,10 @@ for lib in libraries.values():
   for d in lib["passed"]:
     libraries[d]["required_by"].append(lib["name"])
 
+order = []
 while len(zero_deps) != 0:
   libname = zero_deps[0]
+  order.append(libname)
   zero_deps = zero_deps[1:]
   lib = libraries[libname]
 
@@ -68,3 +73,32 @@ for lib in libraries.values():
     print(lib["passed"])
     print("")
 
+print("")
+print("---")
+
+for libname in order:
+  lib = libraries[libname]
+  dirname = lib["dirname"]
+
+  depends = []
+  for dep in lib["depends"]:
+    if not dep.startswith("fetch"):
+      continue
+    x = libraries[dep]
+    d = x["dirname"]
+    depends.append("\"//libs/%s:%s\"" %(d, dep))
+
+  with open("libs/%s/BUILD" % dirname, "w") as fb:
+    fb.write(
+  """cc_library(
+  name = "%s",
+  visibility = [
+      "//visibility:public",
+  ],
+  srcs = glob(["src/*.cpp"]),
+  hdrs = glob(["include/*.hpp", "include/**/*.hpp"]),
+  deps = [
+    %s
+  ],
+)""" % (libname, ",\n    ".join(depends))
+)

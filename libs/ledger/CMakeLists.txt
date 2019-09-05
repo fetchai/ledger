@@ -30,6 +30,7 @@ target_link_libraries(fetch-ledger
                              fetch-dkg
                              fetch-bloomfilter
                              fetch-logging
+                             fetch-entropy                             
                              vendor-msgpack)
 
 add_test_target()

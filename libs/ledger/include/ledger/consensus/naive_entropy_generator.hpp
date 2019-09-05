@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/consensus/entropy_generator_interface.hpp"
+#include "entropy/entropy_generator_interface.hpp"
 
 namespace fetch {
 namespace ledger {
