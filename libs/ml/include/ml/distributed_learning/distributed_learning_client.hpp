@@ -399,8 +399,19 @@ void TrainingClient<TensorType>::GetNewGradients(VectorTensorType &new_gradients
 template <class TensorType>
 std::string TrainingClient<TensorType>::GetTimeStamp()
 {
-  // TODO(1564): Implement timestamp
-  return "TIMESTAMP";
+  auto now       = std::chrono::system_clock::now();
+  auto in_time_t = std::chrono::system_clock::to_time_t(now);
+
+  auto now_milliseconds =
+      std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
+
+  std::stringstream ss;
+  ss << std::put_time(std::gmtime(&in_time_t), "%Y-%m-%d-%H:%M:%S");
+
+  // add milliseconds to timestamp string
+  ss << '.' << std::setfill('0') << std::setw(3) << now_milliseconds.count();
+
+  return ss.str();
 }
 
 /**
@@ -421,7 +432,7 @@ void TrainingClient<TensorType>::TrainOnce()
   // Upload to https://plot.ly/create/#/ for visualisation
   if (lossfile)
   {
-    lossfile << GetTimeStamp() << ", " << loss << "\n";
+    lossfile << GetTimeStamp() << ", " << static_cast<double>(loss) << "\n";
   }
 
   lossfile << GetTimeStamp() << ", "
@@ -451,7 +462,7 @@ void TrainingClient<TensorType>::TrainWithCoordinator()
     // Upload to https://plot.ly/create/#/ for visualisation
     if (lossfile)
     {
-      lossfile << GetTimeStamp() << ", " << loss << "\n";
+      lossfile << GetTimeStamp() << ", " << static_cast<double>(loss) << "\n";
     }
   }
 
