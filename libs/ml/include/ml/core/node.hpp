@@ -169,7 +169,7 @@ std::shared_ptr<typename Node<T>::SPType> Node<T>::GetNodeSaveableParams() const
 {
   auto sp_ptr = std::make_shared<SPType>();
 
-  sp_ptr->name = name_;
+  sp_ptr->name           = name_;
   sp_ptr->operation_type = operation_type_;
   sp_ptr->op_save_params = op_ptr_->GetOpSaveableParams();
 
