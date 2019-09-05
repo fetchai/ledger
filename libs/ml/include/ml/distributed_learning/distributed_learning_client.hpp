@@ -32,6 +32,8 @@
 #include <queue>
 #include <string>
 #include <vector>
+#include <thread>
+#include <condition_variable>
 
 namespace fetch {
 namespace ml {
@@ -87,9 +89,9 @@ public:
 
   void AddPeers(std::vector<std::shared_ptr<TrainingClient>> const &clients);
 
-  void BroadcastGradients();
+  void AddGradient(GradientType &gradient);
 
-  void AddGradient(GradientType gradient);
+  void AddExportGradient(GradientType &gradient);
 
   void ApplyGradient(VectorTensorType gradients);
 
@@ -125,7 +127,14 @@ protected:
   std::queue<GradientType> gradient_queue_;
   std::mutex               queue_mutex_;
 
-  // Learning hyperparameters
+    // Export buffer access and mutex to protect it
+    std::queue<GradientType> export_buffer_;
+    std::mutex               export_buffer_mutex_;
+    std::condition_variable export_buffer_cv_;
+    std::mutex               export_buffer_cv_mutex_;
+    std::shared_ptr<std::thread> export_buffer_thread_;
+
+    // Learning hyperparameters
   SizeType batch_size_    = 0;
   DataType learning_rate_ = static_cast<DataType>(0);
 
@@ -141,6 +150,37 @@ protected:
   void DoBatch();
 
   void ClearLossFile();
+
+  void ExportBufferLoop() {
+    GradientType gradient;
+    std::unique_lock<std::mutex> l(export_buffer_cv_mutex_);
+
+    while (true) {
+      export_buffer_cv_.wait(l);
+
+      if (!export_buffer_.empty()) {
+        std::lock_guard<std::mutex> l(queue_mutex_);
+        {
+          gradient = export_buffer_.front();
+          export_buffer_.pop();
+        }
+
+        // Give gradients to peers
+        for (SizeType i{0}; i < peers_.size(); ++i) {
+            std::cout<<id_<<" sending gradient to "<<peers_[i]->id_<<std::endl;
+          peers_[i]->AddGradient(gradient);
+        }
+      }
+    }
+  }
+
+    void Initialise()
+    {
+    // Start export buffer thread
+      export_buffer_thread_=std::make_shared<std::thread>(&TrainingClient::ExportBufferLoop, this);
+    }
+
+
 };
 
 template <class TensorType>
@@ -156,6 +196,7 @@ TrainingClient<TensorType>::TrainingClient(
 {
   SetParams(client_params);
   ClearLossFile();
+  Initialise();
 }
 
 template <class TensorType>
@@ -165,6 +206,7 @@ TrainingClient<TensorType>::TrainingClient(std::string const &           id,
 {
   SetParams(client_params);
   ClearLossFile();
+  Initialise();
 }
 
 template <class TensorType>
@@ -306,33 +348,33 @@ std::vector<TensorType> TrainingClient<TensorType>::GetWeights() const
 }
 
 /**
- * Adds own gradient to peers queues
- */
-template <class TensorType>
-void TrainingClient<TensorType>::BroadcastGradients()
-{
-  // Load own gradient
-  GradientType current_gradient = std::make_pair(g_ptr_->GetGradients(), GetTimestamp());
-
-  // Give gradients to peers
-  for (SizeType i{0}; i < peers_.size(); ++i)
-  {
-    peers_[i]->AddGradient(current_gradient);
-  }
-}
-
-/**
  * Adds gradient to own gradient queue
  * @param gradient
  */
 template <class TensorType>
-void TrainingClient<TensorType>::AddGradient(GradientType gradient)
+void TrainingClient<TensorType>::AddGradient(GradientType &gradient)
 {
   {
     std::lock_guard<std::mutex> l(queue_mutex_);
     gradient_queue_.push(gradient);
   }
+  std::cout<<id_<<" - Got new gradient"<<std::endl;
 }
+
+/**
+ * Adds gradient to export queue
+ * @param gradient
+ */
+    template <class TensorType>
+    void TrainingClient<TensorType>::AddExportGradient(GradientType &gradient)
+    {
+      std::unique_lock<std::mutex> l(export_buffer_cv_mutex_);
+      {
+        std::lock_guard<std::mutex> l(export_buffer_mutex_);
+        export_buffer_.push(gradient);
+      }
+      export_buffer_cv_.notify_all();
+    }
 
 /**
  * Applies gradient multiplied by -LEARNING_RATE
@@ -473,8 +515,11 @@ void TrainingClient<TensorType>::DoBatch()
   {
     peers_ = coordinator_ptr_->NextPeersList();
 
-    // Put own gradient to peers queues
-    BroadcastGradients();
+    // Load own gradient
+    GradientType current_gradient = std::make_pair(g_ptr_->GetGradients(), GetTimestamp());
+
+    // Add gradient to export queue
+    AddExportGradient(current_gradient);
 
     // Load own gradient
     VectorTensorType new_gradients;
