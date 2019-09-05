@@ -125,7 +125,7 @@ CoordinatorState Coordinator<TensorType>::GetState() const
 
 /**
  * Add pointer to client
- * @param new_client
+ * @param clients
  */
 template <typename TensorType>
 void Coordinator<TensorType>::AddClient(
@@ -135,8 +135,8 @@ void Coordinator<TensorType>::AddClient(
 }
 
 /**
- * Set coordinator's clients
- * @param new_clients
+ * Add pointer to client
+ * @param clients
  */
 template <typename TensorType>
 void Coordinator<TensorType>::SetClientsList(
@@ -157,9 +157,9 @@ std::vector<std::shared_ptr<TrainingClient<TensorType>>> Coordinator<TensorType>
   fetch::random::Shuffle(gen_, clients_, shuffled_clients);
 
   // Create vector subset
-  std::vector<std::shared_ptr<TrainingClient<TensorType>>> new_peers(number_of_peers_);
-  std::copy(std::begin(shuffled_clients), std::begin(shuffled_clients) + number_of_peers_,
-            std::back_inserter(new_peers));
+  std::vector<std::shared_ptr<TrainingClient<TensorType>>> new_peers(
+      shuffled_clients.begin(),
+      shuffled_clients.begin() + static_cast<fetch::math::PtrDiffType>(number_of_peers_));
 
   return std::move(new_peers);
 }
