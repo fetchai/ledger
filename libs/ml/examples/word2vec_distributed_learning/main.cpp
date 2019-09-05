@@ -94,12 +94,11 @@ int main(int ac, char **av)
     // Instantiate NUMBER_OF_CLIENTS clients
     clients[i] = std::make_shared<Word2VecClient<TensorType>>(std::to_string(i), client_params,
                                                               console_mutex_ptr_);
-
-    // Give client to coordinator
-    coordinator->AddClient(clients[i]);
-
     // TODO(1597): Replace ID with something more sensible
   }
+
+  // Give list of clients to coordinator
+  coordinator->SetClientsList(clients);
 
   for (SizeType i(0); i < number_of_clients; ++i)
   {

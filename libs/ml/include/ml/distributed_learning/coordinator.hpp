@@ -54,7 +54,8 @@ template <typename TensorType>
 class Coordinator
 {
 public:
-  using SizeType = fetch::math::SizeType;
+  using SizeType      = fetch::math::SizeType;
+  using ClientPtrType = std::shared_ptr<TrainingClient<TensorType>>;
 
   Coordinator(CoordinatorParams const &params);
 
@@ -68,7 +69,8 @@ public:
 
   std::vector<std::shared_ptr<TrainingClient<TensorType>>> NextPeersList();
 
-  void AddClient(std::shared_ptr<TrainingClient<TensorType>> const &new_client);
+  void AddClient(ClientPtrType const &new_client);
+  void SetClientsList(std::vector<ClientPtrType> const &new_client);
 
 private:
   CoordinatorMode                                          mode_;
@@ -123,13 +125,24 @@ CoordinatorState Coordinator<TensorType>::GetState() const
 
 /**
  * Add pointer to client
- * @param clients
+ * @param new_client
  */
 template <typename TensorType>
 void Coordinator<TensorType>::AddClient(
     std::shared_ptr<TrainingClient<TensorType>> const &new_client)
 {
   clients_.push_back(new_client);
+}
+
+/**
+ * Set coordinator's clients
+ * @param new_clients
+ */
+template <typename TensorType>
+void Coordinator<TensorType>::SetClientsList(
+    std::vector<std::shared_ptr<TrainingClient<TensorType>>> const &new_clients)
+{
+  clients_ = new_clients;
 }
 
 /**

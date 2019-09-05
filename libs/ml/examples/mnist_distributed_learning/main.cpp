@@ -110,10 +110,10 @@ int main(int ac, char **av)
     // Instantiate NUMBER_OF_CLIENTS clients
     clients[i] = MakeClient(std::to_string(i), client_params, av[1], av[2], test_set_ratio);
     // TODO(1597): Replace ID with something more sensible
-
-    // Give client pointer to coordinator
-    coordinator->AddClient(clients[i]);
   }
+
+  // Give list of clients to coordinator
+  coordinator->SetClientsList(clients);
 
   for (SizeType i{0}; i < number_of_clients; ++i)
   {
