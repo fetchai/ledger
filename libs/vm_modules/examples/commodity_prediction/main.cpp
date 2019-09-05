@@ -19,7 +19,7 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/json/document.hpp"
+#include "json/document.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "ledger/state_adapter.hpp"
 #include "math/tensor.hpp"

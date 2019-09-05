@@ -20,7 +20,7 @@
 #include "core/assert.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/json/document.hpp"
+#include "json/document.hpp"
 #include "core/logging.hpp"
 #include "core/state_machine_interface.hpp"
 #include "http/json_response.hpp"

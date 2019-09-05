@@ -17,8 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/decoders.hpp"
-#include "core/yaml/document.hpp"
-#include "core/yaml/exceptions.hpp"
+#include "yaml/document.hpp"
+#include "yaml/exceptions.hpp"
 
 #include <cassert>
 #include <cerrno>

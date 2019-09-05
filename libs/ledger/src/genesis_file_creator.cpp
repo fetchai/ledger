@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/decoders.hpp"
-#include "core/json/document.hpp"
+#include "json/document.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "dkg/dkg_service.hpp"

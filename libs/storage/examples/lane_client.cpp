@@ -19,7 +19,7 @@
 #include "core/byte_array/consumers.hpp"
 #include "core/byte_array/tokenizer/tokenizer.hpp"
 #include "core/commandline/parameter_parser.hpp"
-#include "core/json/document.hpp"
+#include "json/document.hpp"
 #include "core/logging.hpp"
 #include "core/string/trim.hpp"
 #include "ledger/chain/transaction.hpp"

@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/yaml/document.hpp"
+#include "yaml/document.hpp"
 
 #include "gtest/gtest.h"
 

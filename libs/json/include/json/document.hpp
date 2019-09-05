@@ -20,7 +20,7 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/consumers.hpp"
-#include "core/json/exceptions.hpp"
+#include "json/exceptions.hpp"
 #include "variant/variant.hpp"
 
 #include <cstddef>

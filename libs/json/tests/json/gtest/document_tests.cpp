@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/json/document.hpp"
+#include "json/document.hpp"
 
 #include "gtest/gtest.h"
 

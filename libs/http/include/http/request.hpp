@@ -19,7 +19,7 @@
 
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/json/document.hpp"
+#include "json/document.hpp"
 #include "core/logging.hpp"
 #include "http/authentication_level.hpp"
 #include "http/header.hpp"
