@@ -59,7 +59,7 @@ public:
 
   void BuildVocabAndData(std::vector<std::string> const &sents, SizeType min_count = 0,
                          bool build_data = true);
-  void BuildOnlyData(const std::vector<std::string> &sents, SizeType min_count = 0);
+  void BuildData(const std::vector<std::string> &sents, SizeType min_count = 0);
   void SaveVocab(std::string const &filename);
   void LoadVocab(std::string const &filename);
   T    EstimatedSampleNumber();
@@ -561,7 +561,7 @@ void GraphW2VLoader<T>::BuildVocabAndData(std::vector<std::string> const &sents,
 }
 
 template <typename T>
-void GraphW2VLoader<T>::BuildOnlyData(std::vector<std::string> const &sents, SizeType min_count)
+void GraphW2VLoader<T>::BuildData(std::vector<std::string> const &sents, SizeType min_count)
 {
   assert(vocab_.total_count >= 0);
 

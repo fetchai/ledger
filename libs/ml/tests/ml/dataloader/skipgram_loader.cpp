@@ -133,7 +133,7 @@ TYPED_TEST(SkipGramDataloaderTest, test_save_load_vocab)
   GraphW2VLoader<DataType> loader(tp.window_size, tp.negative_sample_size, tp.freq_thresh,
                                   tp.max_word_count);
   loader.LoadVocab(vocab_file);
-  loader.BuildOnlyData({training_data});
+  loader.BuildData({training_data});
 
   std::vector<std::pair<std::string, std::string>> gt_input_context_pairs(
       {std::pair<std::string, std::string>("is", "this"),
