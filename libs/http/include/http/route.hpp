@@ -19,7 +19,7 @@
 
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 #include "http/validators.hpp"
 #include "http/view_parameters.hpp"
 

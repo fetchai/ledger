@@ -19,7 +19,7 @@
 #include "settings.hpp"
 
 #include "core/commandline/parameter_parser.hpp"
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 #include "vectorise/platform.hpp"
 
 #include <cstddef>

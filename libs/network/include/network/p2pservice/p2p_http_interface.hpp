@@ -21,7 +21,7 @@
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "json/document.hpp"
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 #include "core/state_machine_interface.hpp"
 #include "http/json_response.hpp"
 #include "http/module.hpp"

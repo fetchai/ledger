@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 #include "core/string/to_lower.hpp"
 #include "core/string/trim.hpp"
 #include "http/response.hpp"

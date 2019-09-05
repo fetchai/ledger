@@ -18,6 +18,7 @@
 
 #include "ledger/state_sentinel_adapter.hpp"
 #include "storage/resource_mapper.hpp"
+#include "logging/logging.hpp"
 
 namespace fetch {
 namespace ledger {

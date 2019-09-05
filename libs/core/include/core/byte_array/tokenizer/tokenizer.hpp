@@ -36,8 +36,6 @@ public:
   using consumer_function_type = std::function<int(byte_array_type const &, uint64_t &)>;
   using indexer_function_type  = std::function<int(byte_array_type const &, uint64_t, int const &)>;
 
-  static constexpr char const *LOGGING_NAME = "Tokenizer";
-
   void SetConsumerIndexer(indexer_function_type function)
   {
     indexer_ = function;

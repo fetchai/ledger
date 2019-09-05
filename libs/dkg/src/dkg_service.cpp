@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "core/service_ids.hpp"
 #include "crypto/sha256.hpp"

@@ -1,8 +1,8 @@
 #
-# F E T C H   S T O R A G E   L I B R A R Y
+# F E T C H   L O G G I N G   L I B R A R Y
 #
 cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
-project(fetch-storage)
+project(fetch-logging)
 
 # CMake Configuration
 include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
@@ -14,23 +14,23 @@ setup_compiler()
 # Main Library Target
 # ------------------------------------------------------------------------------
 
-setup_library(fetch-storage)
-target_link_libraries(fetch-storage
-                      PUBLIC fetch-core
-                             fetch-crypto
-                             fetch-testing
-                             fetch-logging
-                             fetch-network
-                             vendor-mio)
+setup_library(fetch-logging)
+target_link_libraries(fetch-logging
+                      PUBLIC fetch-core fetch-telemetry vendor-spdlog)
+# ------------------------------------------------------------------------------
+# Example Targets
+# ------------------------------------------------------------------------------
+
+# add_subdirectory(examples)
 
 # ------------------------------------------------------------------------------
 # Test Targets
 # ------------------------------------------------------------------------------
 
-add_test_target()
+# add_test_target()
 
 # ------------------------------------------------------------------------------
 # Benchmark Targets
 # ------------------------------------------------------------------------------
 
-add_benchmark_target()
+# add_subdirectory(benchmark)

@@ -32,8 +32,6 @@ namespace core {
 class Reactor
 {
 public:
-  static constexpr char const *LOGGING_NAME = "Reactor";
-
   // Construction / Destruction
   explicit Reactor(std::string name);
   Reactor(Reactor const &) = delete;

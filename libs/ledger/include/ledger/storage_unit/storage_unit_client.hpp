@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/future_timepoint.hpp"
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 #include "core/service_ids.hpp"
 #include "crypto/merkle_tree.hpp"
 #include "ledger/shard_config.hpp"

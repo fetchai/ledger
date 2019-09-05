@@ -18,6 +18,7 @@
 
 #include "json/document.hpp"
 #include "json/exceptions.hpp"
+#include "logging/logging.hpp"
 
 #include <cassert>
 #include <cerrno>

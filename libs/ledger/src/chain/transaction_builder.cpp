@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 #include "core/macros.hpp"
 #include "crypto/prover.hpp"
 #include "crypto/sha256.hpp"

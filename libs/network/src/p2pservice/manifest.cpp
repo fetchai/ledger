@@ -18,7 +18,7 @@
 
 #include "json/document.hpp"
 #include "json/exceptions.hpp"
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 #include "network/p2pservice/manifest.hpp"
 #include "variant/variant_utils.hpp"
 

@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "dkg/rbc.hpp"

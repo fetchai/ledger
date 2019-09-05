@@ -24,6 +24,7 @@
 #include "ledger/chain/transaction_serializer.hpp"
 #include "meta/type_traits.hpp"
 #include "vectorise/platform.hpp"
+#include "logging/logging.hpp"
 
 #include <cassert>
 #include <cstddef>

@@ -19,7 +19,7 @@
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 #include "core/macros.hpp"
 #include "core/mutex.hpp"
 #include "math/statistics/normal.hpp"

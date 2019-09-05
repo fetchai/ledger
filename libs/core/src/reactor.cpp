@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "core/logging.hpp"
 #include "core/reactor.hpp"
 #include "core/runnable.hpp"
 #include "core/set_thread_name.hpp"
@@ -163,11 +162,11 @@ void Reactor::Monitor()
       }
       catch (std::exception const &ex)
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "Error generated in reactor: ", name_, " error: ", ex.what());
+// TODO: Logging not supported in code        FETCH_LOG_INFO(LOGGING_NAME, "Error generated in reactor: ", name_, " error: ", ex.what());
       }
       catch (...)
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "Unknown error generated in reactor: ", name_);
+// TODO: Logging not supported in code       FETCH_LOG_INFO(LOGGING_NAME, "Unknown error generated in reactor: ", name_);
       }
     }
   }

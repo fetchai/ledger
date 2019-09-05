@@ -19,6 +19,7 @@
 
 #include "core/mutex.hpp"
 #include "network/muddle/packet.hpp"
+#include "logging/logging.hpp"
 
 #include <cstdint>
 #include <functional>

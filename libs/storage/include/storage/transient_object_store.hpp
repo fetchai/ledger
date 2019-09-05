@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/containers/queue.hpp"
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 #include "core/mutex.hpp"
 #include "core/runnable.hpp"
 #include "core/set_thread_name.hpp"

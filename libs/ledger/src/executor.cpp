@@ -18,7 +18,7 @@
 
 #include "core/assert.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 #include "core/macros.hpp"
 #include "core/mutex.hpp"
 #include "ledger/chain/transaction.hpp"

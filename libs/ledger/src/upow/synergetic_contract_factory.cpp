@@ -20,6 +20,7 @@
 #include "ledger/chain/digest.hpp"
 #include "ledger/chaincode/smart_contract_manager.hpp"
 #include "ledger/upow/synergetic_contract_factory.hpp"
+#include "logging/logging.hpp"
 
 namespace fetch {
 namespace ledger {

@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/bitvector.hpp"
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 #include "core/random/lcg.hpp"
 #include "core/random/lfg.hpp"
 #include "math/approx_exp.hpp"

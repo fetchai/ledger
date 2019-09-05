@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 #include "core/mutex.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/registry.hpp"

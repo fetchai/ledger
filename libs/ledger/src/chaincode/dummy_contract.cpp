@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chaincode/dummy_contract.hpp"
+#include "logging/logging.hpp"
 
 #include <chrono>
 #include <random>

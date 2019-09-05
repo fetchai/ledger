@@ -24,7 +24,7 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/commandline/params.hpp"
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 #include "core/macros.hpp"
 #include "core/runnable.hpp"
 #include "core/string/to_lower.hpp"

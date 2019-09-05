@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 #include "dkg/dkg_messages.hpp"
 
 namespace fetch {

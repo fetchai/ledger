@@ -35,6 +35,7 @@
 #include "vm/module.hpp"
 #include "vm/string.hpp"
 #include "vm_modules/vm_factory.hpp"
+#include "logging/logging.hpp"
 
 #include <algorithm>
 #include <cstddef>

@@ -61,7 +61,10 @@ while len(zero_deps) != 0:
 
 print("")
 print("---")
+
 for lib in libraries.values():
-  print(lib["name"]) 
-  print(lib["passed"])
-  print("")
+  if len(lib["passed"]) > 0:
+    print(lib["name"]) 
+    print(lib["passed"])
+    print("")
+

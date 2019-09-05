@@ -20,7 +20,7 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 #include "core/mutex.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "network/fetch_asio.hpp"

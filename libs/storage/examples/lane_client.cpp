@@ -20,7 +20,7 @@
 #include "core/byte_array/tokenizer/tokenizer.hpp"
 #include "core/commandline/parameter_parser.hpp"
 #include "json/document.hpp"
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 #include "core/string/trim.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "network/service/service_client.hpp"

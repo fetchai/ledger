@@ -19,7 +19,6 @@
 #include "core/serializers/exception.hpp"
 
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/logging.hpp"
 
 #include <string>
 #include <utility>

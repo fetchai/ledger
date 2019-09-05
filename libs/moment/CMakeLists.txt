@@ -15,7 +15,7 @@ setup_compiler()
 # ------------------------------------------------------------------------------
 
 setup_library(fetch-moment)
-target_link_libraries(fetch-moment PUBLIC fetch-core)
+target_link_libraries(fetch-moment PUBLIC fetch-core fetch-logging)
 
 # Unit tests
 add_subdirectory(tests)

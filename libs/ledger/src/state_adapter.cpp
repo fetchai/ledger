@@ -18,6 +18,7 @@
 
 #include "ledger/state_adapter.hpp"
 #include "storage/resource_mapper.hpp"
+#include "logging/logging.hpp"
 
 using fetch::storage::ResourceAddress;
 
