@@ -41,6 +41,7 @@
 #include <memory>
 #include <unordered_map>
 #include <vector>
+#include <string>
 
 namespace fetch {
 
@@ -136,8 +137,6 @@ public:
   using ConnectionDataList = std::vector<ConnectionData>;
   using ConnectionMap      = std::unordered_map<Address, Uri>;
 
-  static constexpr char const *LOGGING_NAME = "Muddle";
-
   // Construction / Destruction
   Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager const &nm,
          bool sign_packets = false, bool sign_broadcasts = false,
@@ -211,6 +210,8 @@ private:
   void CreateTcpServer(uint16_t port);
   void CreateTcpClient(Uri const &peer);
 
+  std::string const    name_;
+  char const * const   logging_name_{name_.c_str()};
   CertificatePtr const certificate_;  ///< The private and public keys for the node identity
   std::string const    external_address_;
   Address const        node_address_;

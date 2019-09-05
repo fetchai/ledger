@@ -20,6 +20,7 @@
 #include "muddle_register.hpp"
 #include "router.hpp"
 #include "routing_message.hpp"
+#include "muddle_logging_name.hpp"
 
 #include "core/byte_array/encoders.hpp"
 #include "core/containers/set_intersection.hpp"
@@ -51,8 +52,9 @@ using fetch::byte_array::ConstByteArray;
 
 namespace fetch {
 namespace muddle {
-
 namespace {
+
+constexpr char const *BASE_NAME = "Router";
 
 /**
  * Generate an id for echo cancellation id
@@ -134,7 +136,7 @@ ConstByteArray EncodePayload(T const &msg)
   }
   catch (std::exception const &ex)
   {
-    FETCH_LOG_ERROR(Router::LOGGING_NAME, "Unable to encode payload: ", ex.what());
+    FETCH_LOG_ERROR(BASE_NAME, "Unable to encode payload: ", ex.what());
   }
 
   return payload;
@@ -154,7 +156,7 @@ bool ExtractPayload(ConstByteArray const &payload, T &msg)
   }
   catch (std::exception const &ex)
   {
-    FETCH_LOG_ERROR(Router::LOGGING_NAME, "Unable to extract payload: ", ex.what());
+    FETCH_LOG_ERROR(BASE_NAME, "Unable to extract payload: ", ex.what());
   }
 
   return success;
@@ -238,10 +240,12 @@ Packet::Address Router::ConvertAddress(Packet::RawAddress const &address)
  */
 Router::Router(NetworkId network_id, Address address, MuddleRegister &reg, Dispatcher &dispatcher,
                Prover *prover, bool sign_broadcasts)
-  : address_(std::move(address))
+  : name_{GenerateLoggingName(BASE_NAME, network_id)}
+  , address_(std::move(address))
   , address_raw_(ConvertAddress(address_))
   , register_(reg)
   , dispatcher_(dispatcher)
+  , registrar_(network_id)
   , network_id_(network_id)
   , prover_(prover)
   , sign_broadcasts_(prover && sign_broadcasts)
@@ -297,19 +301,19 @@ Router::PacketPtr const &Router::Sign(PacketPtr const &p) const
  */
 void Router::Route(Handle handle, PacketPtr packet)
 {
-  FETCH_LOG_TRACE(LOGGING_NAME, "RX: (conn: ", handle, ") ", DescribePacket(*packet));
+  FETCH_LOG_TRACE(logging_name_, "RX: (conn: ", handle, ") ", DescribePacket(*packet));
 
   // discard all foreign packets
   if (packet->GetNetworkId() != network_id_.value())
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Discarding foreign packet: ", DescribePacket(*packet), " at ",
+    FETCH_LOG_WARN(logging_name_, "Discarding foreign packet: ", DescribePacket(*packet), " at ",
                    ToBase64(address_), ":", network_id_.ToString());
     return;
   }
 
   if (!Genuine(packet))
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Packet's authenticity not verified:", DescribePacket(*packet));
+    FETCH_LOG_WARN(logging_name_, "Packet's authenticity not verified:", DescribePacket(*packet));
     return;
   }
 
@@ -336,7 +340,7 @@ void Router::Route(Handle handle, PacketPtr packet)
 
 void Router::ConnectionDropped(Handle handle)
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Connection ", handle, " dropped");
+  FETCH_LOG_INFO(logging_name_, "Connection ", handle, " dropped");
 
   FETCH_LOCK(routing_table_lock_);
   for (auto it = routing_table_.begin(); it != routing_table_.end();)
@@ -412,7 +416,7 @@ void Router::Send(Address const &address, uint16_t service, uint16_t channel, ui
 
   Sign(packet);
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Exchange Response: ", ToBase64(address), " (", service, '-',
+  FETCH_LOG_TRACE(logging_name_, "Exchange Response: ", ToBase64(address), " (", service, '-',
                   channel, '-', message_num, ")");
 
   RoutePacket(packet, false);
@@ -464,7 +468,7 @@ Router::Response Router::Exchange(Address const &address, uint16_t service, uint
   // register with the dispatcher that we are expecting a response
   auto promise = dispatcher_.RegisterExchange(service, channel, counter, address);
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Exchange Request: ", ToBase64(address), " (", service, '-',
+  FETCH_LOG_TRACE(logging_name_, "Exchange Request: ", ToBase64(address), " (", service, '-',
                   channel, '-', counter, ") prom: ", promise->id());
 
   // format the packet and route the packet
@@ -577,7 +581,7 @@ Router::UpdateStatus Router::AssociateHandleWithAddress(Handle                  
     // update the routing table if required
     if (is_duplicate_direct)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Duplicate direct (detected)");
+      FETCH_LOG_INFO(logging_name_, "Duplicate direct (detected)");
 
       // we do not overwrite the routing table for additional direct connections
       status = UpdateStatus::DUPLICATE_DIRECT;
@@ -595,9 +599,9 @@ Router::UpdateStatus Router::AssociateHandleWithAddress(Handle                  
       status  = UpdateStatus::UPDATED;
       display = is_empty || is_upgrade;
 
-      FETCH_LOG_TRACE(LOGGING_NAME, is_connection_update, "-", is_duplicate_direct, "-", is_upgrade,
+      FETCH_LOG_TRACE(logging_name_, is_connection_update, "-", is_duplicate_direct, "-", is_upgrade,
                       "-", is_different, "-", is_update);
-      FETCH_LOG_TRACE(LOGGING_NAME, "Handle was: ", prev_handle, " now: ", handle,
+      FETCH_LOG_TRACE(logging_name_, "Handle was: ", prev_handle, " now: ", handle,
                       " direct: ", direct, "-", routing_data.direct);
       FETCH_LOG_VARIABLE(prev_handle);
     }
@@ -605,7 +609,7 @@ Router::UpdateStatus Router::AssociateHandleWithAddress(Handle                  
 
   if (display)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Adding ", ((direct) ? "direct" : "normal"),
+    FETCH_LOG_INFO(logging_name_, "Adding ", ((direct) ? "direct" : "normal"),
                    " route for: ", ToBase64(ToConstByteArray(address)));
   }
 
@@ -698,19 +702,19 @@ void Router::SendToConnection(Handle handle, PacketPtr packet)
     buffer.Resize(packet->GetPacketSize());
     if (Packet::ToBuffer(*packet, buffer.pointer(), buffer.size()))
     {
-      FETCH_LOG_TRACE(LOGGING_NAME, "TX: (conn: ", handle, ") ", DescribePacket(*packet));
+      FETCH_LOG_TRACE(logging_name_, "TX: (conn: ", handle, ") ", DescribePacket(*packet));
 
       // dispatch to the connection object
       conn->Send(buffer);
     }
     else
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Failed to generate binary stream for packet");
+      FETCH_LOG_WARN(logging_name_, "Failed to generate binary stream for packet");
     }
   }
   else
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Unable to route packet to handle: ", handle);
+    FETCH_LOG_WARN(logging_name_, "Unable to route packet to handle: ", handle);
   }
 }
 
@@ -728,11 +732,11 @@ void Router::RoutePacket(PacketPtr packet, bool external)
   /// Step 1. Determine if we should drop this packet (for whatever reason)
   if (external)
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Routing external packet.");
+    FETCH_LOG_TRACE(logging_name_, "Routing external packet.");
     // Handle TTL based routing timeout
     if (packet->GetTTL() <= 2u)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Message has timed out (TTL): ", DescribePacket(*packet));
+      FETCH_LOG_WARN(logging_name_, "Message has timed out (TTL): ", DescribePacket(*packet));
       return;
     }
     // decrement the TTL
@@ -750,7 +754,7 @@ void Router::RoutePacket(PacketPtr packet, bool external)
   // broadcast packet
   if (packet->IsBroadcast())
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Routing packet.");
+    FETCH_LOG_TRACE(logging_name_, "Routing packet.");
     if (packet->GetSender() != address_)
     {
       DispatchPacket(packet, address_);
@@ -761,14 +765,14 @@ void Router::RoutePacket(PacketPtr packet, bool external)
     buffer.Resize(packet->GetPacketSize());
     if (Packet::ToBuffer(*packet, buffer.pointer(), buffer.size()))
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "BX:           ", DescribePacket(*packet));
+      FETCH_LOG_TRACE(logging_name_, "BX:           ", DescribePacket(*packet));
 
       // broadcast the data across the network
       register_.Broadcast(buffer);
     }
     else
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Failed to serialise muddle packet to stream");
+      FETCH_LOG_WARN(logging_name_, "Failed to serialise muddle packet to stream");
     }
   }
   else
@@ -787,7 +791,7 @@ void Router::RoutePacket(PacketPtr packet, bool external)
     handle = LookupRandomHandle(packet->GetTargetRaw());
     if (handle)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Speculative routing to peer: ", ToBase64(packet->GetTarget()));
+      FETCH_LOG_WARN(logging_name_, "Speculative routing to peer: ", ToBase64(packet->GetTarget()));
       SendToConnection(handle, packet);
     }
   }
@@ -801,7 +805,7 @@ void Router::RoutePacket(PacketPtr packet, bool external)
  */
 void Router::DispatchDirect(Handle handle, PacketPtr packet)
 {
-  FETCH_LOG_DEBUG(LOGGING_NAME, "==> Direct message sent to router");
+  FETCH_LOG_TRACE(logging_name_, "==> Direct message sent to router");
 
   // dispatch to the direct message handler if needed
   if (direct_message_handler_)
@@ -834,7 +838,7 @@ void Router::DispatchPacket(PacketPtr packet, Address transmitter)
       return;
     }
 
-    FETCH_LOG_WARN(LOGGING_NAME,
+    FETCH_LOG_WARN(logging_name_,
                    "Unable to locate handler for routed message. Net: ", packet->GetNetworkId(),
                    " Service: ", packet->GetService(), " Channel: ", packet->GetChannel());
   });

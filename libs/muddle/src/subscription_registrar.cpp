@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "subscription_registrar.hpp"
+#include "muddle_logging_name.hpp"
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/logging.hpp"
@@ -29,6 +30,8 @@
 namespace fetch {
 namespace muddle {
 namespace {
+
+constexpr char const *BASE_NAME = "SubRegister";
 
 /**
  * Combine the service and channel identifiers
@@ -46,6 +49,11 @@ uint32_t Combine(uint16_t service, uint16_t channel)
 }
 
 }  // namespace
+
+SubscriptionRegistrar::SubscriptionRegistrar(NetworkId const &network)
+  : name_{GenerateLoggingName(BASE_NAME, network)}
+{
+}
 
 /**
  * Register a subscription with an address, service and channel identifier
@@ -120,7 +128,7 @@ bool SubscriptionRegistrar::Dispatch(PacketPtr packet, Address transmitter)
 
       if (!success)
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Failed to dispatch message to a given subscription");
+        FETCH_LOG_WARN(logging_name_, "Failed to dispatch message to a given subscription");
       }
     }
   }
@@ -135,48 +143,12 @@ bool SubscriptionRegistrar::Dispatch(PacketPtr packet, Address transmitter)
 
       if (!success)
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Failed to dispatch message to a given subscription2");
+        FETCH_LOG_WARN(logging_name_, "Failed to dispatch message to a given subscription (address specific)");
       }
     }
   }
 
-  if (!success)
-  {
-    Debug("While dispatching");
-  }
-
   return success;
-}
-
-void SubscriptionRegistrar::Debug(std::string const &prefix) const
-{
-  FETCH_LOG_WARN(LOGGING_NAME, prefix,
-                 "SubscriptionRegistrar: --------------------------------------");
-
-  FETCH_LOG_WARN(LOGGING_NAME, prefix,
-                 "SubscriptionRegistrar:dispatch_map_ = ", dispatch_map_.size(), " entries.");
-  FETCH_LOG_WARN(LOGGING_NAME, prefix,
-                 "SubscriptionRegistrar:address_dispatch_map_ = ", address_dispatch_map_.size(),
-                 " entries.");
-
-  for (auto const &mapping : address_dispatch_map_)
-  {
-    auto numb = std::get<0>(mapping.first);
-    auto addr = std::get<1>(mapping.first);
-    FETCH_LOG_WARN(LOGGING_NAME, prefix,
-                   "SubscriptionRegistrar:address_dispatch_map_ Addr=", addr.ToBase64(),
-                   "  Service=", ((numb >> 16u) & 0xFFFF));
-  }
-  for (auto const &mapping : dispatch_map_)
-  {
-    auto numb = mapping.first;
-    auto serv = (numb >> 16u) & 0xFFFF;
-    auto chan = numb & 0xFFFF;
-    FETCH_LOG_WARN(LOGGING_NAME, prefix, "SubscriptionRegistrar:dispatch_map_ Serv=", serv,
-                   "  Chan=", chan);
-  }
-  FETCH_LOG_WARN(LOGGING_NAME, prefix,
-                 ":subscriptionRegistrar: --------------------------------------");
 }
 
 }  // namespace muddle

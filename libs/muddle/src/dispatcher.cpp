@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "dispatcher.hpp"
+#include "muddle_logging_name.hpp"
 
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
@@ -60,7 +61,8 @@ uint64_t Combine(uint16_t service, uint16_t channel, uint16_t counter)
 }  // namespace
 
 Dispatcher::Dispatcher(NetworkId const &network_id, Packet::Address const &address)
-  : exchange_success_totals_{Registry::Instance().CreateCounter(
+  : name_{GenerateLoggingName("Dispatcher", network_id)}
+  , exchange_success_totals_{Registry::Instance().CreateCounter(
         "ledger_muddle_exchange_success_total", "The total number of successful exchanges",
         {{"network_id", network_id.ToString()},
          {"address", static_cast<std::string>(address.ToBase64())}})}
@@ -97,7 +99,7 @@ Dispatcher::Promise Dispatcher::RegisterExchange(uint16_t service, uint16_t chan
   auto it = promises_.find(id);
   if (it != promises_.end())
   {
-    FETCH_LOG_ERROR(LOGGING_NAME, "Duplicate promise: ", service, ':', channel, ':', counter,
+    FETCH_LOG_ERROR(logging_name_, "Duplicate promise: ", service, ':', channel, ':', counter,
                     " forced to remove entry");
     promises_.erase(it);
   }
@@ -141,9 +143,9 @@ bool Dispatcher::Dispatch(PacketPtr packet)
       }
       else
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "Recieved response from wrong address");
-        FETCH_LOG_INFO(LOGGING_NAME, "Expected : " + ToBase64(it->second.address));
-        FETCH_LOG_INFO(LOGGING_NAME, "Recieved : " + ToBase64(packet->GetSender()));
+        FETCH_LOG_WARN(logging_name_, "Received response from wrong address");
+        FETCH_LOG_WARN(logging_name_, "Expected : " + ToBase64(it->second.address));
+        FETCH_LOG_WARN(logging_name_, "Received : " + ToBase64(packet->GetSender()));
       }
     }
   }
@@ -235,7 +237,7 @@ void Dispatcher::Cleanup(Timepoint const &now)
     auto const delta = now - promise_it->second.timestamp;
     if (delta > PROMISE_TIMEOUT)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Discarding promise due to timeout");
+      FETCH_LOG_INFO(logging_name_, "Discarding promise due to timeout");
       promise_it->second.promise->Fail();
       dead_promises.insert(promise_it->first);
 

@@ -121,6 +121,8 @@ void ShardManagementService::ResolveUpdates()
   {
     if (it->second->IsSuccessful())
     {
+      FETCH_LOG_TRACE(LOGGING_NAME, "Resolved manifest from: ", it->first.ToBase64());
+
       // lookup the cache entry
       auto &entry = manifest_cache_[it->first];
 
@@ -159,6 +161,8 @@ void ShardManagementService::RequestUpdates(Addresses addresses)
   // request the manifest from the address
   for (auto const &address : addresses)
   {
+    FETCH_LOG_TRACE(LOGGING_NAME, "Request manifest: ", address.ToBase64());
+
     pending_requests_.emplace(
         address, rpc_client_.CallSpecificAddress(address, RPC_SHARD_MGMT,
                                                  ShardManagementProtocol::REQUEST_MANIFEST));

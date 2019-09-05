@@ -53,6 +53,7 @@ void BuildPeerInfo(PeerSelector const &peer_selector, variant::Variant &output)
   {
     auto &output_peer = output[peer_idx] = variant::Variant::Object();
 
+    output_peer["targetAddress"] = entry.first.ToBase64();
     output_peer["currentIndex"] = entry.second.peer_index;
 
     auto &address_list = output_peer["addresses"] =
@@ -63,7 +64,7 @@ void BuildPeerInfo(PeerSelector const &peer_selector, variant::Variant &output)
     {
       auto &addr_entry = address_list[address_idx] = variant::Variant::Object();
 
-      addr_entry["address"]     = address_entry.peer.ToString();
+      addr_entry["peerAddress"] = address_entry.peer.ToString();
       addr_entry["unreachable"] = address_entry.unreachable;
 
       ++address_idx;

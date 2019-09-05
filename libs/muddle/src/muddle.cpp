@@ -21,6 +21,7 @@
 #include "muddle_registry.hpp"
 #include "muddle_server.hpp"
 #include "peer_selector.hpp"
+#include "muddle_logging_name.hpp"
 
 #include "core/containers/set_intersection.hpp"
 #include "core/logging.hpp"
@@ -53,22 +54,23 @@ static std::size_t const PEER_SELECTION_INTERVAL_MS = 500;
  */
 Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager const &nm,
                bool sign_packets, bool sign_broadcasts, std::string external_address)
-  : certificate_(std::move(certificate))
+  : name_{GenerateLoggingName("Muddle", network_id)}
+  , certificate_(std::move(certificate))
   , external_address_(std::move(external_address))
   , node_address_(certificate_->identity().identifier())
   , network_manager_(nm)
   , dispatcher_(network_id, certificate_->identity().identifier())
-  , register_(std::make_shared<MuddleRegister>())
+  , register_(std::make_shared<MuddleRegister>(network_id))
   , router_(network_id, node_address_, *register_, dispatcher_,
             sign_packets ? certificate_.get() : nullptr, sign_packets && sign_broadcasts)
-  , clients_()
+  , clients_(network_id)
   , network_id_(network_id)
   , reactor_{"muddle"}
   , maintenance_periodic_(std::make_shared<core::PeriodicFunctor>(
         std::chrono::milliseconds{MAINTENANCE_INTERVAL_MS}, this, &Muddle::RunPeriodicMaintenance))
   , direct_message_service_(node_address_, router_, *register_, clients_)
   , peer_selector_(
-        std::make_shared<PeerSelector>(std::chrono::milliseconds{PEER_SELECTION_INTERVAL_MS},
+        std::make_shared<PeerSelector>(network_id, std::chrono::milliseconds{PEER_SELECTION_INTERVAL_MS},
                                        reactor_, *register_, clients_, router_))
   , rpc_server_(router_, SERVICE_MUDDLE, CHANNEL_RPC)
 {
@@ -343,7 +345,7 @@ void Muddle::ConnectTo(Address const &address, network::Uri const &uri_hint)
     }
     else
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Incompatible hint uri type: ", uri_hint.ToString());
+      FETCH_LOG_WARN(logging_name_, "Incompatible hint uri type: ", uri_hint.ToString());
     }
   }
 }
@@ -458,7 +460,7 @@ Muddle::ServerList const &Muddle::servers() const
  */
 void Muddle::RunPeriodicMaintenance()
 {
-  FETCH_LOG_TRACE(LOGGING_NAME, "Running periodic maintenance");
+  FETCH_LOG_TRACE(logging_name_, "Running periodic maintenance");
 
   try
   {
@@ -473,7 +475,7 @@ void Muddle::RunPeriodicMaintenance()
       }
 
       external_addresses.emplace_back(network::Peer(external_address_, port));
-      FETCH_LOG_TRACE(LOGGING_NAME, "Discovery: ", external_addresses.back().ToString());
+      FETCH_LOG_TRACE(logging_name_, "Discovery: ", external_addresses.back().ToString());
     }
     discovery_service_.UpdatePeers(std::move(external_addresses));
 
@@ -486,7 +488,7 @@ void Muddle::RunPeriodicMaintenance()
         CreateTcpClient(peer);
         break;
       default:
-        FETCH_LOG_ERROR(LOGGING_NAME, "Unable to create client connection to ", peer.uri());
+        FETCH_LOG_ERROR(logging_name_, "Unable to create client connection to ", peer.uri());
         break;
       }
     }
@@ -506,7 +508,7 @@ void Muddle::RunPeriodicMaintenance()
   }
   catch (std::exception const &e)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Exception in periodic maintenance: ", e.what());
+    FETCH_LOG_WARN(logging_name_, "Exception in periodic maintenance: ", e.what());
   }
 }
 
@@ -551,7 +553,7 @@ void Muddle::CreateTcpClient(Uri const &peer)
   assert(strong_conn);
   auto conn_handle = strong_conn->handle();
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Creating connection to ", peer.ToString(), " (conn: ", conn_handle,
+  FETCH_LOG_INFO(logging_name_, "Creating connection to ", peer.ToString(), " (conn: ", conn_handle,
                  ")");
 
   ConnectionRegPtr reg = std::static_pointer_cast<network::AbstractConnectionRegister>(register_);
@@ -569,12 +571,12 @@ void Muddle::CreateTcpClient(Uri const &peer)
   strong_conn->OnConnectionSuccess([this, peer]() { clients_.OnConnectionEstablished(peer); });
 
   strong_conn->OnConnectionFailed([this, peer]() {
-    FETCH_LOG_INFO(LOGGING_NAME, "Connection to ", peer.ToString(), " failed");
+    FETCH_LOG_INFO(logging_name_, "Connection to ", peer.ToString(), " failed");
     clients_.RemoveConnection(peer);
   });
 
   strong_conn->OnLeave([this, peer]() {
-    FETCH_LOG_INFO(LOGGING_NAME, "Connection to ", peer.ToString(), " left");
+    FETCH_LOG_INFO(logging_name_, "Connection to ", peer.ToString(), " left");
     clients_.RemoveConnection(peer);
   });
 
@@ -590,12 +592,12 @@ void Muddle::CreateTcpClient(Uri const &peer)
       }
       else
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Failed to read packet from buffer");
+        FETCH_LOG_WARN(logging_name_, "Failed to read packet from buffer");
       }
     }
     catch (std::exception const &ex)
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Error processing packet from ", peer.ToString(),
+      FETCH_LOG_ERROR(logging_name_, "Error processing packet from ", peer.ToString(),
                       " error: ", ex.what());
     }
   });

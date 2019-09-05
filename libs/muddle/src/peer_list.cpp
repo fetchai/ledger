@@ -18,6 +18,7 @@
 
 #include "peer_list.hpp"
 #include "router.hpp"
+#include "muddle_logging_name.hpp"
 
 #include "core/logging.hpp"
 
@@ -27,9 +28,15 @@
 #include <utility>
 
 static constexpr std::size_t MAX_LOG2_BACKOFF = 11;  // 2048
+static constexpr char const *BASE_NAME = "MuddlePeers";
 
 namespace fetch {
 namespace muddle {
+
+PeerConnectionList::PeerConnectionList(NetworkId const &network)
+  : name_{GenerateLoggingName(BASE_NAME, network)}
+{
+}
 
 void PeerConnectionList::SetStatusCallback(StatusCallback callback)
 {
@@ -155,7 +162,7 @@ void PeerConnectionList::OnConnectionEstablished(Uri const &peer)
     status_callback_(peer, connection_handle, ConnectionState::CONNECTED);
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Connection to ", peer.uri(),
+  FETCH_LOG_INFO(logging_name_, "Connection to ", peer.uri(),
                  " established (conn: ", connection_handle, ")");
 }
 
@@ -186,7 +193,7 @@ void PeerConnectionList::RemoveConnection(Handle handle)
   {
     if (it->second->handle() == handle)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "(AB): Connection to ", it->first.uri(), " lost");
+      FETCH_LOG_DEBUG(logging_name_, "Connection to ", it->first.uri(), " lost");
       auto metadata = peer_metadata_.find(it->first);
       if (metadata != peer_metadata_.end())
       {
@@ -207,7 +214,7 @@ void PeerConnectionList::Disconnect(Uri const &peer)
     peer_connections_.erase(peer);
   }
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Connection to ", peer.uri(), " shut down");
+  FETCH_LOG_DEBUG(logging_name_, "Connection to ", peer.uri(), " shut down");
 }
 
 void PeerConnectionList::DisconnectAll()

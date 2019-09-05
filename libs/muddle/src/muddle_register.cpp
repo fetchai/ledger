@@ -19,6 +19,7 @@
 #include "dispatcher.hpp"
 #include "muddle_register.hpp"
 #include "router.hpp"
+#include "muddle_logging_name.hpp"
 
 #include "network/management/abstract_connection.hpp"
 #include "telemetry/counter.hpp"
@@ -27,6 +28,8 @@
 
 namespace fetch {
 namespace muddle {
+
+static constexpr char const *BASE_NAME = "MuddleReg";
 
 MuddleRegister::Entry::Entry(WeakConnectionPtr c)
   : connection{std::move(c)}
@@ -37,6 +40,11 @@ MuddleRegister::Entry::Entry(WeakConnectionPtr c)
     handle   = conn->handle();
     outgoing = conn->Type() == network::AbstractConnection::TYPE_OUTGOING;
   }
+}
+
+MuddleRegister::MuddleRegister(NetworkId const &network)
+  : name_{GenerateLoggingName(BASE_NAME, network)}
+{
 }
 
 void MuddleRegister::AttachRouter(Router &router)
@@ -115,7 +123,7 @@ bool MuddleRegister::IsEmpty() const
   {
     if (!address_index_.empty())
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Logical inconsistency");
+      FETCH_LOG_WARN(logging_name_, "Logical inconsistency");
       assert(false);
     }
   }
@@ -252,7 +260,7 @@ void MuddleRegister::Enter(WeakConnectionPtr const &ptr)
   auto strong_conn = ptr.lock();
   if (!strong_conn)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Attempting to register lost connection!");
+    FETCH_LOG_WARN(logging_name_, "Attempting to register lost connection!");
     return;
   }
 
@@ -262,11 +270,11 @@ void MuddleRegister::Enter(WeakConnectionPtr const &ptr)
   // extra level of debug
   if (handle_index_.find(handle) != handle_index_.end())
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Trying to update an existing connection ID");
+    FETCH_LOG_WARN(logging_name_, "Trying to update an existing connection ID");
     return;
   }
 
-  FETCH_LOG_TRACE(LOGGING_NAME, "### Connection ", handle, " started type: ", strong_conn->Type());
+  FETCH_LOG_TRACE(logging_name_, "### Connection ", handle, " started type: ", strong_conn->Type());
 
   // add the connection to the map
   handle_index_.emplace(handle, std::make_shared<Entry>(ptr));
@@ -281,7 +289,7 @@ void MuddleRegister::Leave(ConnectionHandle handle)
 {
   FETCH_LOCK(lock_);
 
-  FETCH_LOG_TRACE(LOGGING_NAME, "### Connection ", handle, " ended");
+  FETCH_LOG_TRACE(logging_name_, "### Connection ", handle, " ended");
 
   auto it = handle_index_.find(handle);
   if (it != handle_index_.end())
