@@ -133,9 +133,9 @@ public:
   GraphSaveableParams<TensorType> GetGraphSaveableParams();
   void                            SetGraphSaveableParams(GraphSaveableParams<TensorType> const &sp);
 
-  static constexpr char const *DESCRIPTOR = "Graph";
-
   void AddGradients(std::vector<TensorType> grads);
+
+  static constexpr char const *DESCRIPTOR = "Graph";
 
 protected:
   std::unordered_map<std::string, NodePtrType>                  nodes_;
@@ -362,6 +362,12 @@ void Graph<TensorType>::BackPropagate(std::string const &node_name, TensorType c
 
   if (nodes_.find(node_name) != nodes_.end())
   {
+    // Forward propagate if necessary
+    if (!(nodes_[node_name]->HasValidCache()))
+    {
+      ForwardPropagate(node_name);
+    }
+
     nodes_[node_name]->BackPropagate(error_signal);
   }
   else
