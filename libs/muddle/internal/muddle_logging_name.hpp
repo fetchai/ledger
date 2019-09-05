@@ -26,5 +26,5 @@ class NetworkId;
 
 std::string GenerateLoggingName(char const *base, NetworkId const &network);
 
-} // namespace muddle
-} // namespace fetch
+}  // namespace muddle
+}  // namespace fetch

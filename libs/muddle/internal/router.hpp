@@ -172,7 +172,7 @@ private:
   bool             Genuine(PacketPtr const &p) const;
 
   std::string const     name_;
-  char const * const    logging_name_{name_.c_str()};
+  char const *const     logging_name_{name_.c_str()};
   Address const         address_;
   RawAddress const      address_raw_;
   MuddleRegister &      register_;

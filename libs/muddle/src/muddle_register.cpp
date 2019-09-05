@@ -17,9 +17,9 @@
 //------------------------------------------------------------------------------
 
 #include "dispatcher.hpp"
+#include "muddle_logging_name.hpp"
 #include "muddle_register.hpp"
 #include "router.hpp"
-#include "muddle_logging_name.hpp"
 
 #include "network/management/abstract_connection.hpp"
 #include "telemetry/counter.hpp"
@@ -44,8 +44,7 @@ MuddleRegister::Entry::Entry(WeakConnectionPtr c)
 
 MuddleRegister::MuddleRegister(NetworkId const &network)
   : name_{GenerateLoggingName(BASE_NAME, network)}
-{
-}
+{}
 
 void MuddleRegister::AttachRouter(Router &router)
 {

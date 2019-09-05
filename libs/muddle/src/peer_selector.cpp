@@ -18,10 +18,10 @@
 
 #include "direct_message_service.hpp"
 #include "discovery_service.hpp"
+#include "muddle_logging_name.hpp"
 #include "muddle_register.hpp"
 #include "peer_list.hpp"
 #include "peer_selector.hpp"
-#include "muddle_logging_name.hpp"
 
 #include "core/containers/set_difference.hpp"
 #include "core/reactor.hpp"
@@ -31,7 +31,7 @@ namespace fetch {
 namespace muddle {
 
 static constexpr std::size_t MINIMUM_PEERS = 3;
-static constexpr char const *BASE_NAME  = "PeerSelector";
+static constexpr char const *BASE_NAME     = "PeerSelector";
 
 PeerSelector::PeerSelector(NetworkId const &network, Duration const &interval,
                            core::Reactor &reactor, MuddleRegister const &reg,
@@ -239,7 +239,8 @@ PeerSelector::UriSet PeerSelector::GenerateUriSet(Addresses const &addresses)
           // specified number of attempts
           if ((!connection_metadata.connected) && (connection_metadata.consecutive_failures >= 6))
           {
-            FETCH_LOG_CRITICAL(logging_name_, "Marking ", current_uri.ToString(), " as unreachable");
+            FETCH_LOG_CRITICAL(logging_name_, "Marking ", current_uri.ToString(),
+                               " as unreachable");
             current_peer.unreachable = true;
           }
         }

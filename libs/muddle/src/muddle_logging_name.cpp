@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "muddle_logging_name.hpp"
 #include "muddle/network_id.hpp"
+#include "muddle_logging_name.hpp"
 
 #include <sstream>
 
@@ -31,5 +31,5 @@ std::string GenerateLoggingName(char const *base, NetworkId const &network)
   return oss.str();
 }
 
-} // namespace muddle
-} // namespace fetch
+}  // namespace muddle
+}  // namespace fetch

@@ -17,11 +17,11 @@
 //------------------------------------------------------------------------------
 
 #include "muddle.hpp"
+#include "muddle_logging_name.hpp"
 #include "muddle_register.hpp"
 #include "muddle_registry.hpp"
 #include "muddle_server.hpp"
 #include "peer_selector.hpp"
-#include "muddle_logging_name.hpp"
 
 #include "core/containers/set_intersection.hpp"
 #include "core/logging.hpp"
@@ -69,9 +69,9 @@ Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager 
   , maintenance_periodic_(std::make_shared<core::PeriodicFunctor>(
         std::chrono::milliseconds{MAINTENANCE_INTERVAL_MS}, this, &Muddle::RunPeriodicMaintenance))
   , direct_message_service_(node_address_, router_, *register_, clients_)
-  , peer_selector_(
-        std::make_shared<PeerSelector>(network_id, std::chrono::milliseconds{PEER_SELECTION_INTERVAL_MS},
-                                       reactor_, *register_, clients_, router_))
+  , peer_selector_(std::make_shared<PeerSelector>(
+        network_id, std::chrono::milliseconds{PEER_SELECTION_INTERVAL_MS}, reactor_, *register_,
+        clients_, router_))
   , rpc_server_(router_, SERVICE_MUDDLE, CHANNEL_RPC)
 {
   register_->AttachRouter(router_);

@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "subscription_registrar.hpp"
 #include "muddle_logging_name.hpp"
+#include "subscription_registrar.hpp"
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/logging.hpp"
@@ -52,8 +52,7 @@ uint32_t Combine(uint16_t service, uint16_t channel)
 
 SubscriptionRegistrar::SubscriptionRegistrar(NetworkId const &network)
   : name_{GenerateLoggingName(BASE_NAME, network)}
-{
-}
+{}
 
 /**
  * Register a subscription with an address, service and channel identifier
@@ -143,7 +142,8 @@ bool SubscriptionRegistrar::Dispatch(PacketPtr packet, Address transmitter)
 
       if (!success)
       {
-        FETCH_LOG_WARN(logging_name_, "Failed to dispatch message to a given subscription (address specific)");
+        FETCH_LOG_WARN(logging_name_,
+                       "Failed to dispatch message to a given subscription (address specific)");
       }
     }
   }

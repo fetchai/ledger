@@ -17,10 +17,10 @@
 //------------------------------------------------------------------------------
 
 #include "dispatcher.hpp"
+#include "muddle_logging_name.hpp"
 #include "muddle_register.hpp"
 #include "router.hpp"
 #include "routing_message.hpp"
-#include "muddle_logging_name.hpp"
 
 #include "core/byte_array/encoders.hpp"
 #include "core/containers/set_intersection.hpp"
@@ -599,8 +599,8 @@ Router::UpdateStatus Router::AssociateHandleWithAddress(Handle                  
       status  = UpdateStatus::UPDATED;
       display = is_empty || is_upgrade;
 
-      FETCH_LOG_TRACE(logging_name_, is_connection_update, "-", is_duplicate_direct, "-", is_upgrade,
-                      "-", is_different, "-", is_update);
+      FETCH_LOG_TRACE(logging_name_, is_connection_update, "-", is_duplicate_direct, "-",
+                      is_upgrade, "-", is_different, "-", is_update);
       FETCH_LOG_TRACE(logging_name_, "Handle was: ", prev_handle, " now: ", handle,
                       " direct: ", direct, "-", routing_data.direct);
       FETCH_LOG_VARIABLE(prev_handle);

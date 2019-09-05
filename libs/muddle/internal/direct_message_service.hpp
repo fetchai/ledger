@@ -103,7 +103,7 @@ private:
 
   Address const       address_;
   std::string const   name_;
-  char const * const  logging_name_{name_.c_str()};
+  char const *const   logging_name_{name_.c_str()};
   Router &            router_;
   MuddleRegister &    register_;
   PeerConnectionList &peers_;

@@ -1335,7 +1335,7 @@ void BlockCoordinator::Reset()
 void BlockCoordinator::EnableMining(bool enable)
 {
   mining_enabled_ = enable;
-  syncronised_    = enable; // Super curious!
+  syncronised_    = enable;  // Super curious!
 }
 
 }  // namespace ledger

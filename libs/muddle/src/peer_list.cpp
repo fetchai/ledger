@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "muddle_logging_name.hpp"
 #include "peer_list.hpp"
 #include "router.hpp"
-#include "muddle_logging_name.hpp"
 
 #include "core/logging.hpp"
 
@@ -28,15 +28,14 @@
 #include <utility>
 
 static constexpr std::size_t MAX_LOG2_BACKOFF = 11;  // 2048
-static constexpr char const *BASE_NAME = "MuddlePeers";
+static constexpr char const *BASE_NAME        = "MuddlePeers";
 
 namespace fetch {
 namespace muddle {
 
 PeerConnectionList::PeerConnectionList(NetworkId const &network)
   : name_{GenerateLoggingName(BASE_NAME, network)}
-{
-}
+{}
 
 void PeerConnectionList::SetStatusCallback(StatusCallback callback)
 {

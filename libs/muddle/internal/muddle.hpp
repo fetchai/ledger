@@ -39,9 +39,9 @@
 
 #include <chrono>
 #include <memory>
+#include <string>
 #include <unordered_map>
 #include <vector>
-#include <string>
 
 namespace fetch {
 
@@ -211,7 +211,7 @@ private:
   void CreateTcpClient(Uri const &peer);
 
   std::string const    name_;
-  char const * const   logging_name_{name_.c_str()};
+  char const *const    logging_name_{name_.c_str()};
   CertificatePtr const certificate_;  ///< The private and public keys for the node identity
   std::string const    external_address_;
   Address const        node_address_;

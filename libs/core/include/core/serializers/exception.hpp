@@ -48,7 +48,7 @@ public:
                         byte_array::ConstByteArray const &explanation);
   SerializableException(SerializableException const &)     = default;
   SerializableException(SerializableException &&) noexcept = default;
-  ~SerializableException() override = default;
+  ~SerializableException() override                        = default;
   /// @}
 
   char const *what() const noexcept override;

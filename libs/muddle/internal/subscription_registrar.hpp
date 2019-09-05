@@ -109,7 +109,7 @@ private:
   using AddressDispatchMap = std::map<AddressIndex, SubscriptionFeed>;
 
   std::string const name_;
-  char const * const logging_name_{name_.c_str()};
+  char const *const logging_name_{name_.c_str()};
 
   mutable Mutex      lock_;                  ///< The registrar lock
   DispatchMap        dispatch_map_;          ///< The {service,channel} dispatch map
