@@ -2324,7 +2324,7 @@ std::string Tensor<T, C>::ToString() const
   {
     for (SizeType i(0); i < shape_[0]; ++i)
     {
-      ss << At(i) << "\t";
+      ss << At(i) << ", ";
     }
   }
   else if (shape_.size() == 2)
@@ -2333,9 +2333,9 @@ std::string Tensor<T, C>::ToString() const
     {
       for (SizeType j(0); j < shape_[1]; ++j)
       {
-        ss << At(i, j) << "\t";
+        ss << At(i, j) << ", ";
       }
-      ss << "\n";
+      ss << "; ";
     }
   }
   else
