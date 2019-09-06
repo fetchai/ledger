@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/threading.hpp"
+#include "core/set_thread_name.hpp"
 #include "ledger/block_packer_interface.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_layout.hpp"

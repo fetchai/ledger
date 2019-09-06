@@ -152,7 +152,7 @@ protected:
 
   /// Mutex setup that allows easy debugging of deadlocks
   /// @{
-  mutable mutex::Mutex lock_{__LINE__, __FILE__};
+  mutable Mutex lock_{__LINE__, __FILE__};
   /// @}
 private:
   /// Variable Declarations

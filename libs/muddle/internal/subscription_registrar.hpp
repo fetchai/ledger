@@ -31,6 +31,7 @@ namespace fetch {
 namespace muddle {
 
 class Subscription;
+class NetworkId;
 
 /**
  * Top level map of subscriptions that is kept by the muddle router
@@ -82,10 +83,8 @@ public:
   using PacketPtr       = std::shared_ptr<Packet>;
   using Address         = Packet::Address;
 
-  static constexpr char const *LOGGING_NAME = "SubscriptionRegistrar";
-
   // Construction / Destruction
-  SubscriptionRegistrar()                              = default;
+  explicit SubscriptionRegistrar(NetworkId const &network);
   SubscriptionRegistrar(SubscriptionRegistrar const &) = delete;
   SubscriptionRegistrar(SubscriptionRegistrar &&)      = delete;
   ~SubscriptionRegistrar()                             = default;
@@ -102,14 +101,15 @@ public:
 
   bool Dispatch(PacketPtr packet, Address transmitter);
 
-  void Debug(std::string const &prefix) const;
-
 private:
   using Mutex              = std::mutex;
   using Index              = uint32_t;
   using AddressIndex       = std::tuple<uint32_t, Address>;
   using DispatchMap        = std::map<Index, SubscriptionFeed>;
   using AddressDispatchMap = std::map<AddressIndex, SubscriptionFeed>;
+
+  std::string const name_;
+  char const *const logging_name_{name_.c_str()};
 
   mutable Mutex      lock_;                  ///< The registrar lock
   DispatchMap        dispatch_map_;          ///< The {service,channel} dispatch map

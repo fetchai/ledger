@@ -26,7 +26,10 @@
 #include <atomic>
 #include <functional>
 #include <memory>
+#include <string>
 #include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
 namespace fetch {
 namespace network {
@@ -36,6 +39,7 @@ namespace muddle {
 
 class Dispatcher;
 class Router;
+class NetworkId;
 
 /**
  * The Muddle registers monitors all incoming and outgoing connections maintained in a given muddle.
@@ -48,7 +52,6 @@ public:
   using ConnectionMap         = std::unordered_map<ConnectionHandle, WeakConnectionPtr>;
   using ConnectionMapCallback = std::function<void(ConnectionMap const &)>;
   using ConstByteArray        = byte_array::ConstByteArray;
-  using Mutex                 = mutex::Mutex;
   using Handle                = connection_handle_type;
 
   enum class UpdateStatus
@@ -73,10 +76,8 @@ public:
   using HandleIndex  = std::unordered_map<ConnectionHandle, EntryPtr>;
   using AddressIndex = std::unordered_multimap<Address, EntryPtr>;
 
-  static constexpr char const *LOGGING_NAME = "MuddleReg";
-
   // Construction / Destruction
-  MuddleRegister()                       = default;
+  explicit MuddleRegister(NetworkId const &network);
   MuddleRegister(MuddleRegister const &) = delete;
   MuddleRegister(MuddleRegister &&)      = delete;
   ~MuddleRegister() override             = default;
@@ -111,6 +112,9 @@ protected:
   /// @}
 
 private:
+  std::string const name_;
+  char const *const logging_name_{name_.c_str()};
+
   std::atomic<Router *> router_{nullptr};
 
   mutable Mutex lock_{__LINE__, __FILE__};

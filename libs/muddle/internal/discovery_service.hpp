@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/threading/synchronised_state.hpp"
+#include "core/synchronisation/protected.hpp"
 #include "muddle/address.hpp"
 #include "muddle/muddle_endpoint.hpp"
 #include "network/peer.hpp"
@@ -54,11 +54,10 @@ public:
 
 private:
   using SubscriptionPtr = MuddleEndpoint::SubscriptionPtr;
-  using SyncPeers       = SynchronisedState<Peers>;
 
   Peers GetConnectionInformation();
 
-  SyncPeers possible_peers_{};
+  Protected<Peers> possible_peers_{};
 };
 
 }  // namespace muddle

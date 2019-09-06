@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/threading/synchronised_state.hpp"
+#include "core/synchronisation/protected.hpp"
 #include "muddle/muddle_endpoint.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "network/management/network_manager.hpp"
@@ -49,7 +49,7 @@ protected:
   using SubscriptionPtrs = std::vector<SubscriptionPtr>;
   using MuddleAddress    = fetch::muddle::Address;
   using Counters         = std::unordered_map<uint64_t, std::unordered_map<uint64_t, uint64_t>>;
-  using SyncCounters     = fetch::SynchronisedState<Counters>;
+  using SyncCounters     = fetch::Protected<Counters>;
 
   static constexpr uint16_t SERVICE = 1;
   static constexpr uint16_t CHANNEL = 2;
@@ -130,7 +130,7 @@ protected:
 
   void OnMessage(Packet const &packet, MuddleAddress const &)
   {
-    counters_.Apply([this, &packet](Counters &counters) {
+    counters_.ApplyVoid([this, &packet](Counters &counters) {
       ++(counters[NodeIndex(packet.GetSender())][NodeIndex(packet.GetTarget())]);
     });
   }
@@ -194,7 +194,7 @@ TEST_F(InteractionTests, MutualConnections)
     node3_->GetEndpoint().Send(node2_->GetAddress(), SERVICE, CHANNEL, "hello");
   }
 
-  counters_.Apply([](Counters const &counters) {
+  counters_.ApplyVoid([](Counters const &counters) {
 
 #ifdef FETCH_LOG_DEBUG_ENABLED
     std::ostringstream oss;

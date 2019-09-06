@@ -26,34 +26,26 @@ namespace meta {
 
 namespace internal {
 
-template <template <typename...> class Source, typename SourceInstantiation,
-          template <typename...> class Destination>
-struct ConveyTypeParameterPackImpl
+template <template <typename...> class, typename, template <typename...> class>
+struct ConveyTypeParameterPackImpl;
+template <template <typename...> class Source, template <typename...> class Destination,
+          typename... Args>
+struct ConveyTypeParameterPackImpl<Source, Source<Args...>, Destination>
 {
-  template <typename T, typename... Args>
-  struct Inject
-  {
-  };
-  template <typename... Args>
-  struct Inject<Source<Args...>>
-  {
-    using type = Destination<Args...>;
-  };
-
-  using type = typename Inject<SourceInstantiation>::type;
+  using type = Destination<Args...>;
 };
 
 }  // namespace internal
 
 /**
- * Accepts a class template of the form Source<typename...Args>, a type which
+ * Accepts a class template of the form Source<typename ...Args>, a type which
  * is an instantiation Source<Args...>, and another class template
- * Target<typename...Args>.
+ * Target<typename ...Args>.
  *
  * Evaluates to a type which is the instantiation Target<Args...>
  *
  * Example:
- *   template <typename... Ts>
+ *   template <typename ... Ts>
  *   struct NeedsParamPackToWork {...}
  *
  *   template <typename ArbitraryStdTuple>

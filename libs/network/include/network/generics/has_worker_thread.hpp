@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/threading.hpp"
+#include "core/set_thread_name.hpp"
 #include "network/generics/resolvable.hpp"
 #include "network/service/promise.hpp"
 

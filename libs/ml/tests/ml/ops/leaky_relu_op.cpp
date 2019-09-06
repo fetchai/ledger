@@ -16,14 +16,18 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/base_types.hpp"
-
 #include "core/serializers/main_serializer_definition.hpp"
-#include "gtest/gtest.h"
+#include "math/base_types.hpp"
 #include "math/tensor.hpp"
 #include "ml/ops/leaky_relu_op.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+
+#include "gtest/gtest.h"
+
+#include <memory>
+#include <vector>
+
 template <typename T>
 class LeakyReluOpTest : public ::testing::Test
 {
@@ -97,7 +101,7 @@ TYPED_TEST(LeakyReluOpTest, saveparams_test)
   using DataType      = typename TypeParam::Type;
   using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
   using SPType        = typename fetch::ml::ops::LeakyReluOp<TensorType>::SPType;
-  using OpType        = typename fetch::ml::ops::LeakyReluOp<TensorType>;
+  using OpType        = fetch::ml::ops::LeakyReluOp<TensorType>;
 
   TensorType data =
       TensorType::FromString("1, -2, 3,-4, 5,-6, 7,-8; -1,  2,-3, 4,-5, 6,-7, 8").Transpose();
@@ -148,8 +152,8 @@ TYPED_TEST(LeakyReluOpTest, saveparams_test)
 TYPED_TEST(LeakyReluOpTest, saveparams_backward_test)
 {
   using TensorType = TypeParam;
-  using OpType     = typename fetch::ml::ops::LeakyReluOp<TensorType>;
-  using SPType     = typename OpType ::SPType;
+  using OpType     = fetch::ml::ops::LeakyReluOp<TensorType>;
+  using SPType     = typename OpType::SPType;
 
   TensorType alpha = TensorType::FromString(R"(
     0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)")

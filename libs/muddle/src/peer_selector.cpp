@@ -18,6 +18,7 @@
 
 #include "direct_message_service.hpp"
 #include "discovery_service.hpp"
+#include "muddle_logging_name.hpp"
 #include "muddle_register.hpp"
 #include "peer_list.hpp"
 #include "peer_selector.hpp"
@@ -30,12 +31,13 @@ namespace fetch {
 namespace muddle {
 
 static constexpr std::size_t MINIMUM_PEERS = 3;
-static constexpr char const *LOGGING_NAME  = "PeerSelector";
+static constexpr char const *BASE_NAME     = "PeerSelector";
 
-PeerSelector::PeerSelector(Duration const &interval, core::Reactor &reactor,
-                           MuddleRegister const &reg, PeerConnectionList &connections,
-                           MuddleEndpoint &endpoint)
+PeerSelector::PeerSelector(NetworkId const &network, Duration const &interval,
+                           core::Reactor &reactor, MuddleRegister const &reg,
+                           PeerConnectionList &connections, MuddleEndpoint &endpoint)
   : core::PeriodicRunnable(interval)
+  , name_{GenerateLoggingName(BASE_NAME, network)}
   , reactor_{reactor}
   , connections_{connections}
   , register_{reg}
@@ -141,7 +143,7 @@ void PeerSelector::Periodically()
         auto conn = register_.LookupConnection(address).lock();
         if (conn)
         {
-          FETCH_LOG_WARN(LOGGING_NAME, "Dropping Address: ", address.ToBase64());
+          FETCH_LOG_WARN(logging_name_, "Dropping Address: ", address.ToBase64());
 
           auto const handle = conn->handle();
 
@@ -187,19 +189,19 @@ void PeerSelector::OnResolvedAddress(Address const &address, service::Promise co
     // remove any previous entries for this address (avoid stale information)
     peers_info_.erase(address);
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Successful resolution for ", address.ToBase64());
+    FETCH_LOG_INFO(logging_name_, "Successful resolution for ", address.ToBase64());
 
     // create the new entry and populate
     auto &metadata = peers_info_[address];
     for (auto const &peer_address : peer_addresses)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "- Candidate: ", peer_address.ToString());
+      FETCH_LOG_TRACE(logging_name_, "- Candidate: ", peer_address.ToString());
       metadata.peer_data.emplace_back(peer_address);
     }
   }
   else
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Unable to resolve address for: ", address.ToBase64(),
+    FETCH_LOG_WARN(logging_name_, "Unable to resolve address for: ", address.ToBase64(),
                    " code: ", int(promise->state()));
   }
 
@@ -237,14 +239,15 @@ PeerSelector::UriSet PeerSelector::GenerateUriSet(Addresses const &addresses)
           // specified number of attempts
           if ((!connection_metadata.connected) && (connection_metadata.consecutive_failures >= 6))
           {
-            FETCH_LOG_CRITICAL(LOGGING_NAME, "Marking ", current_uri.ToString(), " as unreachable");
+            FETCH_LOG_CRITICAL(logging_name_, "Marking ", current_uri.ToString(),
+                               " as unreachable");
             current_peer.unreachable = true;
           }
         }
 
         if (!current_peer.unreachable)
         {
-          FETCH_LOG_TRACE(LOGGING_NAME, "Mapped ", address.ToBase64(), " to ",
+          FETCH_LOG_TRACE(logging_name_, "Mapped ", address.ToBase64(), " to ",
                           current_uri.ToString());
 
           uris.emplace(std::move(current_uri));

@@ -1,7 +1,7 @@
 #
 # F E T C H   B E A C O N   T E S T S
 #
-cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
 project(fetch-beacon)
 
 # CMake configuration

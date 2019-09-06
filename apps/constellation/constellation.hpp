@@ -43,6 +43,7 @@
 #include "muddle/muddle_interface.hpp"
 #include "network/p2pservice/p2ptrust_bayrank.hpp"
 #include "open_api_http_module.hpp"
+#include "telemetry/telemetry.hpp"
 
 #include <atomic>
 #include <cstddef>
@@ -221,14 +222,11 @@ private:
   HttpServer  http_;                  ///< The HTTP server
   HttpModules http_modules_;          ///< The set of modules currently configured
   /// @}
-};
 
-/**
- * Signal that constellation should attempt to shutdown gracefully
- */
-inline void Constellation::SignalStop()
-{
-  active_ = false;
-}
+  /// @name Telemetry
+  /// @{
+  telemetry::CounterPtr uptime_;
+  /// @}
+};
 
 }  // namespace fetch

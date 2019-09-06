@@ -21,7 +21,7 @@
 #include "core/filesystem/read_file_contents.hpp"
 #include "core/filesystem/write_to_file.hpp"
 #include "core/macros.hpp"
-#include "core/threading/synchronised_state.hpp"
+#include "core/synchronisation/protected.hpp"
 #include "crypto/ecdsa.hpp"
 #include "http/module.hpp"
 #include "http/server.hpp"
@@ -63,7 +63,7 @@ struct AggregateData
   std::size_t total_messages{0};
 };
 
-using Statistics = fetch::SynchronisedState<AggregateData>;
+using Statistics = fetch::Protected<AggregateData>;
 
 std::atomic<bool>        global_active{true};
 std::atomic<std::size_t> global_interrupt_count{0};
@@ -134,7 +134,7 @@ ProverPtr RestoreOrCreateKey(ParamsParser const &params)
 AddressSet GenerateDesiredAddresses()
 {
   std::vector<Address> addresses{};
-  gStatistics.Apply([&](AggregateData const &data) {
+  gStatistics.ApplyVoid([&](AggregateData const &data) {
     for (auto const &element : data.counters)
     {
       addresses.emplace_back(element.first);
@@ -224,7 +224,7 @@ int main(int argc, char **argv)
     FETCH_UNUSED(payload);
 
     // aggregate the statistics
-    gStatistics.Apply([&](AggregateData &data) {
+    gStatistics.ApplyVoid([&](AggregateData &data) {
       ++(data.counters[from]);
       ++data.total_messages;
 

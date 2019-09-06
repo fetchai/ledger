@@ -101,7 +101,6 @@ protected:
 
 private:
   using Flag            = std::atomic<bool>;
-  using Mutex           = fetch::mutex::Mutex;
   using PromiseQueue    = std::list<MuddleEndpoint::Response>;
   using SubscriptionPtr = MuddleEndpoint::SubscriptionPtr;
 

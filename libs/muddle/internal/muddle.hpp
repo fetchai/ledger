@@ -39,6 +39,7 @@
 
 #include <chrono>
 #include <memory>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
@@ -136,8 +137,6 @@ public:
   using ConnectionDataList = std::vector<ConnectionData>;
   using ConnectionMap      = std::unordered_map<Address, Uri>;
 
-  static constexpr char const *LOGGING_NAME = "Muddle";
-
   // Construction / Destruction
   Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager const &nm,
          bool sign_packets = false, bool sign_broadcasts = false,
@@ -201,8 +200,6 @@ private:
   using Client          = std::shared_ptr<network::AbstractConnection>;
   using ThreadPool      = network::ThreadPool;
   using Register        = std::shared_ptr<MuddleRegister>;
-  using Mutex           = mutex::Mutex;
-  using Lock            = std::lock_guard<Mutex>;
   using Clock           = std::chrono::system_clock;
   using Timepoint       = Clock::time_point;
   using Duration        = Clock::duration;
@@ -213,6 +210,8 @@ private:
   void CreateTcpServer(uint16_t port);
   void CreateTcpClient(Uri const &peer);
 
+  std::string const    name_;
+  char const *const    logging_name_{name_.c_str()};
   CertificatePtr const certificate_;  ///< The private and public keys for the node identity
   std::string const    external_address_;
   Address const        node_address_;

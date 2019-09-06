@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "core/serializers/base_types.hpp"
 #include "core/serializers/counter.hpp"
 #include "core/serializers/main_serializer.hpp"
@@ -105,7 +105,8 @@ struct UnrollArguments
     static void Unroll(serializer_type &result, class_type &cls, member_function_pointer &m,
                        serializer_type &s, used_args &... used)
     {
-      typename std::decay<T>::type l;
+      std::decay_t<T> l;
+
       s >> l;
       UnrollArguments<class_type, member_function_pointer, return_type, used_args..., T>::
           template LoopOver<CountArguments<remaining_args...>::value, remaining_args...>::Unroll(
@@ -122,7 +123,7 @@ struct UnrollArguments
     static void Unroll(serializer_type &result, class_type &cls, member_function_pointer &m,
                        serializer_type &s, used_args &... used)
     {
-      typename std::decay<T>::type l;
+      std::decay_t<T> l;
 
       s >> l;
       Invoke<class_type, member_function_pointer, return_type, used_args..., T>::MemberFunction(
@@ -166,7 +167,7 @@ struct UnrollPointers
                                  " TODO: Make custom " + "exception");
       }
 
-      typename std::decay<T>::type *ptr = (typename std::decay<T>::type *)arg.pointer;
+      std::decay_t<T> *ptr = (std::decay_t<T> *)arg.pointer;
       UnrollPointers<COUNTER - 1, class_type, member_function_pointer, return_type, used_args...,
                      T>::template LoopOver<remaining_args...>::Unroll(result, cls, m,
                                                                       additional_args, s, used...,
@@ -234,8 +235,6 @@ public:
    */
   CallableClassMember(class_type *cls, member_function_pointer function)
   {
-    LOG_STACK_TRACE_POINT;
-
     class_    = cls;
     function_ = function;
     this->SetSignature(details::SignatureToString<C, R, Args...>::Signature());
@@ -244,8 +243,6 @@ public:
   CallableClassMember(uint64_t arguments, class_type *cls, member_function_pointer value)
     : AbstractCallable(arguments)
   {
-    LOG_STACK_TRACE_POINT;
-
     class_    = cls;
     function_ = value;
     this->SetSignature(details::SignatureToString<C, R, Args...>::Signature());
@@ -262,8 +259,6 @@ public:
    */
   void operator()(serializer_type &result, serializer_type &params) override
   {
-    LOG_STACK_TRACE_POINT;
-
     details::UnrollArguments<class_type, member_function_pointer, return_type>::template LoopOver<
         details::CountArguments<Args...>::value, Args...>::Unroll(result, *class_, this->function_,
                                                                   params);
@@ -272,8 +267,6 @@ public:
   void operator()(serializer_type &result, CallableArgumentList const &additional_args,
                   serializer_type &params) override
   {
-    LOG_STACK_TRACE_POINT;
-
     detailed_assert(EXTRA_ARGS == additional_args.size());
 
     details::UnrollPointers<N, class_type, member_function_pointer, return_type>::template LoopOver<
@@ -297,8 +290,6 @@ private:
 public:
   CallableClassMember(class_type *cls, member_function_pointer value)
   {
-    LOG_STACK_TRACE_POINT;
-
     class_    = cls;
     function_ = value;
   }
@@ -306,16 +297,12 @@ public:
   CallableClassMember(uint64_t arguments, class_type *cls, member_function_pointer value)
     : AbstractCallable(arguments)
   {
-    LOG_STACK_TRACE_POINT;
-
     class_    = cls;
     function_ = value;
   }
 
   void operator()(serializer_type &result, serializer_type & /*params*/) override
   {
-    LOG_STACK_TRACE_POINT;
-
     auto ret = ((*class_).*function_)();
 
     serializers::SizeCounter counter;
@@ -327,8 +314,6 @@ public:
   void operator()(serializer_type &result, CallableArgumentList const & /*additional_args*/,
                   serializer_type & /*params*/) override
   {
-    LOG_STACK_TRACE_POINT;
-
     auto                     ret = ((*class_).*function_)();
     serializers::SizeCounter counter;
     counter << ret;
@@ -353,8 +338,6 @@ private:
 public:
   CallableClassMember(class_type *cls, member_function_pointer value)
   {
-    LOG_STACK_TRACE_POINT;
-
     class_    = cls;
     function_ = value;
   }
@@ -362,16 +345,12 @@ public:
   CallableClassMember(uint64_t arguments, class_type *cls, member_function_pointer value)
     : AbstractCallable(arguments)
   {
-    LOG_STACK_TRACE_POINT;
-
     class_    = cls;
     function_ = value;
   }
 
   void operator()(serializer_type &result, serializer_type & /*params*/) override
   {
-    LOG_STACK_TRACE_POINT;
-
     result << 0;
     ((*class_).*function_)();
   }
@@ -379,8 +358,6 @@ public:
   void operator()(serializer_type &result, CallableArgumentList const & /*additional_args*/,
                   serializer_type & /*params*/) override
   {
-    LOG_STACK_TRACE_POINT;
-
     result << 0;
     ((*class_).*function_)();
   }

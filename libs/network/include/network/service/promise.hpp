@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "core/mutex.hpp"
 #include "core/serializers/exception.hpp"
 #include "network/service/types.hpp"
@@ -146,7 +146,6 @@ protected:
   /// @}
 
 private:
-  using Mutex       = mutex::Mutex;
   using AtomicState = std::atomic<State>;
   using Condition   = std::condition_variable;
 
@@ -181,41 +180,13 @@ class PromiseBuilder
 public:
   using Callback = PromiseImplementation::Callback;
 
-  explicit PromiseBuilder(PromiseImplementation &promise)
-    : promise_(promise)
-  {}
+  explicit PromiseBuilder(PromiseImplementation &promise);
 
-  ~PromiseBuilder()
-  {
-    promise_.SetSuccessCallback(callback_success_);
-    promise_.SetFailureCallback(callback_failure_);
-    promise_.SetCompletionCallback(callback_complete_);
+  ~PromiseBuilder();
 
-    // in the rare (probably failure case) when the promise has been resolved during before the
-    // responses have been set
-    if (!promise_.IsWaiting())
-    {
-      promise_.DispatchCallbacks();
-    }
-  }
-
-  PromiseBuilder &Then(Callback const &cb)
-  {
-    callback_success_ = cb;
-    return *this;
-  }
-
-  PromiseBuilder &Catch(Callback const &cb)
-  {
-    callback_failure_ = cb;
-    return *this;
-  }
-
-  PromiseBuilder &Finally(Callback const &cb)
-  {
-    callback_complete_ = cb;
-    return *this;
-  }
+  PromiseBuilder &Then(Callback const &cb);
+  PromiseBuilder &Catch(Callback const &cb);
+  PromiseBuilder &Finally(Callback const &cb);
 
 private:
   PromiseImplementation &promise_;
@@ -232,15 +203,8 @@ using PromiseState   = details::PromiseImplementation::State;
 using Promise        = std::shared_ptr<details::PromiseImplementation>;
 using PromiseStates  = std::array<PromiseState, 4>;
 
-inline Promise MakePromise()
-{
-  return std::make_shared<details::PromiseImplementation>();
-}
-
-inline Promise MakePromise(uint64_t pro, uint64_t func)
-{
-  return std::make_shared<details::PromiseImplementation>(pro, func);
-}
+Promise MakePromise();
+Promise MakePromise(uint64_t pro, uint64_t func);
 
 char const *         ToString(PromiseState state);
 const PromiseStates &GetAllPromiseStates();

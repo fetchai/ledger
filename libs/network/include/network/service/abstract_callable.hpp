@@ -18,9 +18,13 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "core/serializers/type_register.hpp"
 #include "network/service/types.hpp"
+
+#include <cstdint>
+#include <string>
+#include <type_traits>
 
 namespace fetch {
 namespace service {
@@ -28,7 +32,7 @@ namespace service {
 namespace details {
 
 template <typename T>
-using base_type = typename std::remove_cv<typename std::remove_reference<T>::type>::type;
+using base_type = std::remove_cv_t<std::remove_reference_t<T>>;
 
 template <typename R, typename F, typename... Args>
 struct ArgsToString
@@ -134,9 +138,6 @@ template <typename S, typename... arguments>
 void PackCall(S &serializer, protocol_handler_type const &protocol,
               function_handler_type const &function, arguments &&... args)
 {
-
-  LOG_STACK_TRACE_POINT;
-
   serializer << protocol;
   serializer << function;
 
@@ -155,8 +156,6 @@ template <typename S>
 void PackCall(S &serializer, protocol_handler_type const &protocol,
               function_handler_type const &function)
 {
-  LOG_STACK_TRACE_POINT;
-
   serializer << protocol;
   serializer << function;
   serializer.seek(0);
@@ -178,8 +177,6 @@ void PackCallWithPackedArguments(S &serializer, protocol_handler_type const &pro
                                  function_handler_type const &function,
                                  byte_array::ByteArray const &args)
 {
-  LOG_STACK_TRACE_POINT;
-
   serializer << protocol;
   serializer << function;
 
@@ -209,8 +206,6 @@ void PackArgs(S &serializer, arguments &&... args)
 template <typename S>
 void PackArgs(S &serializer)
 {
-  LOG_STACK_TRACE_POINT;
-
   serializer.seek(0);
 }
 

@@ -22,8 +22,8 @@
 namespace fetch {
 namespace service {
 
-/* A class that defines the context specific parameters being passed to an invoked API func.
- *
+/*
+ * A class that defines the context specific parameters being passed to an invoked API func.
  */
 class CallContext
 {
@@ -50,6 +50,7 @@ private:
 }  // namespace service
 
 namespace serializers {
+
 template <typename D>
 struct IgnoredSerializer<service::CallContext, D>
 {
@@ -57,5 +58,6 @@ public:
   using Type       = service::CallContext;
   using DriverType = D;
 };
+
 }  // namespace serializers
 }  // namespace fetch

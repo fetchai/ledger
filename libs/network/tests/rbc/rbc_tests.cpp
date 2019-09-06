@@ -83,7 +83,6 @@ public:
 
   void Broadcast(SerialisedMessage const &msg, uint8_t num_messages)
   {
-    assert(!lock_.owns_lock());
     FETCH_LOCK(lock_);
 
     uint32_t sender_index = this->id();
@@ -159,7 +158,6 @@ private:
     msg_serializer.Reserve(msg_counter.size());
     msg_serializer << msg;
 
-    assert(lock_.owns_lock());
     if ((Failure(Failures::NO_ECHO) && msg.type() == RBCMessageType::R_ECHO) ||
         (Failure(Failures::NO_READY) && msg.type() == RBCMessageType::R_READY) ||
         (Failure(Failures::NO_ANSWER) && msg.type() == RBCMessageType::R_ANSWER))
@@ -184,7 +182,6 @@ private:
 
   void OnRBC(MuddleAddress const &from, RBCMessage const &msg) override
   {
-    assert(!lock_.owns_lock());
     FETCH_LOCK(lock_);
     if (!BasicMessageCheck(from, msg))
     {

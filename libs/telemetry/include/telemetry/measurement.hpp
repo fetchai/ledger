@@ -17,11 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include <cstddef>
+#include <functional>
 #include <iosfwd>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
-#include <utility>
 
 namespace fetch {
 namespace telemetry {
@@ -96,27 +97,6 @@ OutputStream &OutputStream::operator<<(T &&element)
 {
   stream_ << element;
   return *this;
-}
-
-inline Measurement::Measurement(std::string name, std::string description, Labels labels)
-  : name_{std::move(name)}
-  , description_{std::move(description)}
-  , labels_{std::move(labels)}
-{}
-
-inline std::string const &Measurement::name() const
-{
-  return name_;
-}
-
-inline std::string const &Measurement::description() const
-{
-  return description_;
-}
-
-inline Measurement::Labels const &Measurement::labels() const
-{
-  return labels_;
 }
 
 }  // namespace telemetry

@@ -21,7 +21,7 @@
 #include "core/mutex.hpp"
 #include "core/periodic_action.hpp"
 #include "core/state_machine.hpp"
-#include "core/threading/synchronised_state.hpp"
+#include "core/synchronisation/protected.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/transaction.hpp"
@@ -226,13 +226,17 @@ public:
 
   ConstByteArray GetLastExecutedBlock() const
   {
-    return last_executed_block_.Get();
+    return last_executed_block_.Apply([](auto const &last_executed_block_hash) -> ConstByteArray {
+      return last_executed_block_hash;
+    });
   }
 
   bool IsSynced() const
   {
-    return (state_machine_->state() == State::SYNCHRONISED) &&
-           (last_executed_block_.Get() == chain_.GetHeaviestBlockHash());
+    return last_executed_block_.Apply([this](auto const &last_executed_block_hash) -> bool {
+      return (state_machine_->state() == State::SYNCHRONISED) &&
+             (last_executed_block_hash == chain_.GetHeaviestBlockHash());
+    });
   }
 
   void Reset();
@@ -250,9 +254,8 @@ private:
     ERROR
   };
 
-  static constexpr uint64_t COMMON_PATH_TO_ANCESTOR_LENGTH_LIMIT = 1000;
+  static constexpr uint64_t COMMON_PATH_TO_ANCESTOR_LENGTH_LIMIT = 5000;
 
-  using Mutex                = fetch::mutex::Mutex;
   using BlockPtr             = MainChain::BlockPtr;
   using NextBlockPtr         = std::unique_ptr<Block>;
   using PendingBlocks        = std::deque<BlockPtr>;
@@ -264,7 +267,7 @@ private:
   using StateMachinePtr      = std::shared_ptr<StateMachine>;
   using MinerPtr             = std::shared_ptr<consensus::ConsensusMinerInterface>;
   using TxDigestSetPtr       = std::unique_ptr<DigestSet>;
-  using LastExecutedBlock    = SynchronisedState<ConstByteArray>;
+  using LastExecutedBlock    = Protected<ConstByteArray>;
   using FutureTimepoint      = fetch::core::FutureTimepoint;
   using DeadlineTimer        = fetch::moment::DeadlineTimer;
   using SynergeticExecMgrPtr = std::unique_ptr<SynergeticExecutionManagerInterface>;
@@ -324,21 +327,22 @@ private:
 
   /// @name State Machine State
   /// @{
-  Address         mining_address_;         ///< The miners address
-  StateMachinePtr state_machine_;          ///< The main state machine for this service
-  std::size_t     block_difficulty_;       ///< The number of leading zeros needed in the proof
-  std::size_t     num_lanes_;              ///< The current number of lanes
-  std::size_t     num_slices_;             ///< The current number of slices
-  Flag            mining_{false};          ///< Flag to signal if this node generating blocks
-  Flag            mining_enabled_{false};  ///< Short term signal to toggle on and off
-  BlockPeriod     block_period_;           ///< The desired period before a block is generated
-  Timepoint       next_block_time_;        ///< The next point that a block should be generated
-  BlockPtr        current_block_{};        ///< The pointer to the current block (read only)
-  NextBlockPtr    next_block_{};           ///< The next block being created (read / write)
-  TxDigestSetPtr  pending_txs_{};          ///< The list of pending txs that are being waited on
-  PeriodicAction  tx_wait_periodic_;       ///< Periodic print for transaction waiting
-  PeriodicAction  exec_wait_periodic_;     ///< Periodic print for execution
-  PeriodicAction  syncing_periodic_;       ///< Periodic print for synchronisation
+  Address         mining_address_;          ///< The miners address
+  StateMachinePtr state_machine_;           ///< The main state machine for this service
+  std::size_t     block_difficulty_;        ///< The number of leading zeros needed in the proof
+  std::size_t     num_lanes_;               ///< The current number of lanes
+  std::size_t     num_slices_;              ///< The current number of slices
+  Flag            mining_{false};           ///< Flag to signal if this node generating blocks
+  Flag            mining_enabled_{false};   ///< Short term signal to toggle on and off
+  BlockPeriod     block_period_;            ///< The desired period before a block is generated
+  Timepoint       next_block_time_;         ///< The next point that a block should be generated
+  BlockPtr        current_block_{};         ///< The pointer to the current block (read only)
+  NextBlockPtr    next_block_{};            ///< The next block being created (read / write)
+  TxDigestSetPtr  pending_txs_{};           ///< The list of pending txs that are being waited on
+  PeriodicAction  tx_wait_periodic_;        ///< Periodic print for transaction waiting
+  PeriodicAction  exec_wait_periodic_;      ///< Periodic print for execution
+  PeriodicAction  syncing_periodic_;        ///< Periodic print for synchronisation
+  Timepoint       start_waiting_for_tx_{};  ///< The time at which we started waiting for txs
   DeadlineTimer   wait_for_tx_timeout_{"bc:deadline"};  ///< Timeout when waiting for transactions
   DeadlineTimer   wait_before_asking_for_missing_tx_{
       "bc:deadline"};              ///< Time to wait before asking peers for any missing txs
@@ -376,6 +380,11 @@ private:
   telemetry::CounterPtr         executed_block_count_;
   telemetry::CounterPtr         mined_block_count_;
   telemetry::CounterPtr         executed_tx_count_;
+  telemetry::CounterPtr         request_tx_count_;
+  telemetry::CounterPtr         unable_to_find_tx_count_;
+  telemetry::HistogramPtr       tx_sync_times_;
+  telemetry::GaugePtr<uint64_t> current_block_num_;
+  telemetry::GaugePtr<uint64_t> next_block_num_;
   telemetry::GaugePtr<uint64_t> block_hash_;
   /// @}
 };
@@ -391,12 +400,6 @@ void BlockCoordinator::SetBlockPeriod(std::chrono::duration<R, P> const &period)
 
   // signal that we are mining
   mining_ = true;
-}
-
-inline void BlockCoordinator::EnableMining(bool enable)
-{
-  mining_enabled_ = enable;
-  syncronised_    = enable;
 }
 
 }  // namespace ledger

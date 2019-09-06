@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/encoders.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "core/serializers/counter.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "core/service_ids.hpp"
@@ -55,21 +55,15 @@ using Mode                   = MainChainRpcService::Mode;
  * @param mode The mode for the main chain
  * @return The initial state for the state machine
  */
-State GetInitialState(Mode mode)
+constexpr State GetInitialState(Mode mode) noexcept
 {
-  State initial_state = State::REQUEST_HEAVIEST_CHAIN;
-
   switch (mode)
   {
   case Mode::STANDALONE:
-    initial_state = State::SYNCHRONISED;
-    break;
-  case Mode::PRIVATE_NETWORK:
-  case Mode::PUBLIC_NETWORK:
-    break;
+    return State::SYNCHRONISED;
+  default:
+    return State::REQUEST_HEAVIEST_CHAIN;
   }
-
-  return initial_state;
 }
 
 }  // namespace
@@ -226,32 +220,6 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
   }
 }
 
-char const *MainChainRpcService::ToString(State state)
-{
-  char const *text = "unknown";
-
-  switch (state)
-  {
-  case State::REQUEST_HEAVIEST_CHAIN:
-    text = "Requesting Heaviest Chain";
-    break;
-  case State::WAIT_FOR_HEAVIEST_CHAIN:
-    text = "Waiting for Heaviest Chain";
-    break;
-  case State::SYNCHRONISING:
-    text = "Synchronising";
-    break;
-  case State::WAITING_FOR_RESPONSE:
-    text = "Waiting for Sync Response";
-    break;
-  case State::SYNCHRONISED:
-    text = "Synchronised";
-    break;
-  }
-
-  return text;
-}
-
 MainChainRpcService::Address MainChainRpcService::GetRandomTrustedPeer() const
 {
   static random::LinearCongruentialGenerator rng;
@@ -281,7 +249,7 @@ void MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
 
   for (auto it = block_list.rbegin(), end = block_list.rend(); it != end; ++it)
   {
-    // skip the geneis block
+    // skip the genesis block
     if (it->body.previous_hash == GENESIS_DIGEST)
     {
       continue;

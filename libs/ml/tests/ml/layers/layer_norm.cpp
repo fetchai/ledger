@@ -87,8 +87,9 @@ TYPED_TEST(LayerNormTest, ops_backward_test)  // Use the class as an Ops
 TYPED_TEST(LayerNormTest, node_forward_test)  // Use the class as a Node
 {
   TypeParam data(std::vector<typename TypeParam::SizeType>({5, 10, 2}));
-  auto      placeholder =
-      std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::OP_PLACEHOLDER, "Input");
+  auto      placeholder = std::make_shared<fetch::ml::Node<TypeParam>>(
+      fetch::ml::OpType::OP_PLACEHOLDER, "Input",
+      []() { return std::make_shared<fetch::ml::ops::PlaceHolder<TypeParam>>(); });
   std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder->GetOp())
       ->SetData(data);
 
@@ -109,8 +110,9 @@ TYPED_TEST(LayerNormTest, node_forward_test)  // Use the class as a Node
 TYPED_TEST(LayerNormTest, node_backward_test)  // Use the class as a Node
 {
   TypeParam data({5, 10, 2});
-  auto      placeholder =
-      std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::OP_PLACEHOLDER, "Input");
+  auto      placeholder = std::make_shared<fetch::ml::Node<TypeParam>>(
+      fetch::ml::OpType::OP_PLACEHOLDER, "Input",
+      []() { return std::make_shared<fetch::ml::ops::PlaceHolder<TypeParam>>(); });
   std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder->GetOp())
       ->SetData(data);
 
@@ -187,7 +189,7 @@ TYPED_TEST(LayerNormTest, getStateDict)
 TYPED_TEST(LayerNormTest, saveparams_test)
 {
   using DataType  = typename TypeParam::Type;
-  using LayerType = typename fetch::ml::layers::LayerNorm<TypeParam>;
+  using LayerType = fetch::ml::layers::LayerNorm<TypeParam>;
   using SPType    = typename LayerType::SPType;
 
   std::string input_name  = "LayerNorm_Input";
@@ -270,8 +272,7 @@ TYPED_TEST(LayerNormTest, saveparams_test)
   layer2.SetInput(input_name, input);
   TypeParam prediction4 = layer2.Evaluate(output_name);
 
-  EXPECT_FALSE(prediction.AllClose(prediction3, fetch::math::function_tolerance<DataType>(),
-                                   fetch::math::function_tolerance<DataType>()));
+  EXPECT_FALSE(prediction == prediction3);
 
   EXPECT_TRUE(prediction3.AllClose(prediction4, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));

@@ -33,12 +33,11 @@ using TensorType = fetch::math::Tensor<double>;
 
 struct TrainingParams
 {
-  SizeType max_word_count       = 9;     // maximum number to be trained
-  SizeType negative_sample_size = 0;     // number of negative sample per word-context pair
-  SizeType window_size          = 1;     // window size for context sampling
-  bool     train_mode           = true;  // reserve for future compatibility with CBOW
-  double   freq_thresh          = 1;     // frequency threshold for subsampling
-  SizeType min_count            = 0;     // infrequent word removal threshold
+  SizeType max_word_count       = 9;  // maximum number to be trained
+  SizeType negative_sample_size = 0;  // number of negative sample per word-context pair
+  SizeType window_size          = 1;  // window size for context sampling
+  double   freq_thresh          = 1;  // frequency threshold for subsampling
+  SizeType min_count            = 0;  // infrequent word removal threshold
 } tp;
 
 template <typename T>
@@ -56,7 +55,7 @@ TYPED_TEST(SkipGramDataloaderTest, loader_test)
   std::string training_data = "This is a test sentence of total length ten words.";
 
   GraphW2VLoader<double> loader(tp.window_size, tp.negative_sample_size, tp.freq_thresh,
-                                tp.max_word_count, tp.train_mode);
+                                tp.max_word_count);
   loader.BuildVocab({training_data});
 
   std::vector<std::pair<std::string, std::string>> gt_input_context_pairs(

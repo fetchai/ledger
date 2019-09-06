@@ -71,6 +71,30 @@ static constexpr meta::IfIsFixedPoint<T, T> numeric_lowest()
 }
 
 template <typename T>
+fetch::meta::IfIsFloat<T, T> static numeric_inf()
+{
+  return std::numeric_limits<T>::infinity();
+}
+
+template <typename T>
+fetch::meta::IfIsFixedPoint<T, T> static numeric_inf()
+{
+  return T::POSITIVE_INFINITY;
+}
+
+template <typename T>
+fetch::meta::IfIsFloat<T, T> static numeric_negative_inf()
+{
+  return -std::numeric_limits<T>::infinity();
+}
+
+template <typename T>
+fetch::meta::IfIsFixedPoint<T, T> static numeric_negative_inf()
+{
+  return T::NEGATIVE_INFINITY;
+}
+
+template <typename T>
 fetch::meta::IfIsFixedPoint<T, T> static function_tolerance()
 {
   return T::TOLERANCE;

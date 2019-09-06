@@ -30,8 +30,6 @@ class AnnealerMiner : public MinerInterface
 {
 public:
   using transaction_type       = std::shared_ptr<TransactionItem>;
-  using mutex_type             = fetch::mutex::Mutex;
-  using lock_guard_type        = std::lock_guard<mutex_type>;
   using transaction_queue_type = std::vector<transaction_type>;
   using generator_type         = ledger::BlockGenerator;
 
@@ -39,7 +37,7 @@ public:
 
   void EnqueueTransaction(ledger::TransactionSummary const &tx) override
   {
-    lock_guard_type lock(pending_queue_lock_);
+    FETCH_LOCK(pending_queue_lock_);
 
     auto stx = std::make_shared<TransactionItem>(tx, transaction_index_++);
 
@@ -54,7 +52,7 @@ public:
 
     // push the currently pending elements into the generator
     {
-      lock_guard_type lock(pending_queue_lock_);
+      FETCH_LOCK(pending_queue_lock_);
 
       for (auto &tx : pending_queue_)
       {
@@ -148,12 +146,12 @@ private:
 
   uint64_t backlog() const override
   {
-    lock_guard_type lock(pending_queue_lock_);
+    FETCH_LOCK(pending_queue_lock_);
     return generator_.unspent().size() + pending_queue_.size();
   }
 
-  mutex_type pending_queue_lock_{__LINE__, __FILE__};  ///< Protects both `pending_queue_` and
-                                                       ///< `transaction_index_`
+  Mutex pending_queue_lock_{__LINE__, __FILE__};  ///< Protects both `pending_queue_` and
+                                                  ///< `transaction_index_`
   transaction_queue_type pending_queue_;
   std::size_t            transaction_index_{0};
 

@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/main_serializer.hpp"
 #include "math/tensor.hpp"
 #include "ml/dataloaders/commodity_dataloader.hpp"
 #include "ml/dataloaders/dataloader.hpp"
@@ -52,68 +53,103 @@ VMDataLoader::VMDataLoader(VM *vm, TypeId type_id)
   : Object(vm, type_id)
 {}
 
-Ptr<VMDataLoader> VMDataLoader::Constructor(VM *vm, TypeId type_id)
+VMDataLoader::VMDataLoader(VM *vm, TypeId type_id, fetch::vm::Ptr<fetch::vm::String> const &mode)
+  : Object(vm, type_id)
 {
-  return new VMDataLoader(vm, type_id);
+  if (mode->str == "tensor")
+  {
+    mode_   = DataLoaderMode::TENSOR;
+    loader_ = std::make_shared<TensorLoaderType>();
+  }
+  else if (mode->str == "commodity")
+  {
+    mode_   = DataLoaderMode::COMMODITY;
+    loader_ = std::make_shared<CommodityLoaderType>();
+  }
+  else if (mode->str == "mnist")
+  {
+    mode_   = DataLoaderMode::MNIST;
+    loader_ = std::make_shared<CommodityLoaderType>();
+  }
+  else
+  {
+    throw std::runtime_error("unknown dataloader mode");
+  }
+}
+
+fetch::vm::Ptr<VMDataLoader> VMDataLoader::Constructor(
+    fetch::vm::VM *vm, fetch::vm::TypeId type_id, fetch::vm::Ptr<fetch::vm::String> const &mode)
+{
+  return new VMDataLoader(vm, type_id, mode);
 }
 
 void VMDataLoader::Bind(Module &module)
 {
   module.CreateClassType<VMDataLoader>("DataLoader")
       .CreateConstructor(&VMDataLoader::Constructor)
+      .CreateSerializeDefaultConstructor(
+          [](VM *vm, TypeId type_id) -> Ptr<VMDataLoader> { return new VMDataLoader(vm, type_id); })
       .CreateMemberFunction("addData", &VMDataLoader::AddDataByFiles)
       .CreateMemberFunction("addData", &VMDataLoader::AddDataByData)
       .CreateMemberFunction("getNext", &VMDataLoader::GetNext)
       .CreateMemberFunction("isDone", &VMDataLoader::IsDone);
 }
 
-void VMDataLoader::AddDataByFiles(Ptr<String> const &mode, Ptr<String> const &xfilename,
-                                  Ptr<String> const &yfilename)
+void VMDataLoader::AddDataByFiles(Ptr<String> const &xfilename, Ptr<String> const &yfilename)
 {
-  if (mode->str == "commodity")
+  switch (mode_)
+  {
+  case DataLoaderMode::COMMODITY:
   {
     AddCommodityData(xfilename, yfilename);
+    break;
   }
-  else if (mode->str == "mnist")
+  case DataLoaderMode::MNIST:
   {
     AddMnistData(xfilename, yfilename);
+    break;
   }
-  else
+  default:
   {
-    throw std::runtime_error("mode not valid for xfilename, yfilename input to addData");
+    throw std::runtime_error("current dataloader mode does not support AddDataByFiles");
+  }
   }
 }
 
-void VMDataLoader::AddDataByData(Ptr<String> const &mode, Ptr<VMTensorType> const &data,
-                                 Ptr<VMTensorType> const &labels)
+void VMDataLoader::AddDataByData(Ptr<VMTensorType> const &data, Ptr<VMTensorType> const &labels)
 {
-  if (mode->str == "tensor")
+  switch (mode_)
+  {
+  case DataLoaderMode::TENSOR:
   {
     AddTensorData(data, labels);
+    break;
   }
-  else
+  default:
   {
-    throw std::runtime_error("mode not valid for xfilename, yfilename input to addData");
+    throw std::runtime_error("current dataloader mode does not support AddDataByData");
+  }
   }
 }
 
 void VMDataLoader::AddCommodityData(Ptr<String> const &xfilename, Ptr<String> const &yfilename)
 {
-  CommodityLoaderType loader;
-  loader.AddData(xfilename->str, yfilename->str);
-  loader_ = std::make_shared<CommodityLoaderType>(loader);
+  auto data  = fetch::ml::dataloaders::ReadCSV<MathTensorType>(xfilename->str);
+  auto label = fetch::ml::dataloaders::ReadCSV<MathTensorType>(yfilename->str);
+
+  std::static_pointer_cast<CommodityLoaderType>(loader_)->AddData(data, label);
 }
 
 void VMDataLoader::AddMnistData(Ptr<String> const &xfilename, Ptr<String> const &yfilename)
 {
-  loader_ = std::make_shared<MnistLoaderType>(xfilename->str, yfilename->str);
+  std::static_pointer_cast<MnistLoaderType>(loader_)->SetupWithDataFiles(xfilename->str,
+                                                                         yfilename->str);
 }
 
 void VMDataLoader::AddTensorData(Ptr<VMTensorType> const &data, Ptr<VMTensorType> const &labels)
 {
-  TensorLoaderType loader(labels->GetTensor().shape(), {data->GetTensor().shape()});
-  loader.AddData(data->GetTensor(), labels->GetTensor());
-  loader_ = std::make_shared<TensorLoaderType>(loader);
+  std::static_pointer_cast<TensorLoaderType>(loader_)->AddData(data->GetTensor(),
+                                                               labels->GetTensor());
 }
 
 Ptr<VMTrainingPair> VMDataLoader::GetNext()
@@ -131,6 +167,26 @@ Ptr<VMTrainingPair> VMDataLoader::GetNext()
 bool VMDataLoader::IsDone()
 {
   return loader_->IsDone();
+}
+
+VMDataLoader::DataLoaderPtrType &VMDataLoader::GetDataLoader()
+{
+  return loader_;
+}
+
+bool VMDataLoader::SerializeTo(serializers::MsgPackSerializer &buffer)
+{
+  buffer << *this;
+  return true;
+}
+
+bool VMDataLoader::DeserializeFrom(serializers::MsgPackSerializer &buffer)
+{
+  buffer.seek(0);
+  auto dl = std::make_shared<fetch::vm_modules::ml::VMDataLoader>(this->vm_, this->type_id_);
+  buffer >> *dl;
+  *this = *dl;
+  return true;
 }
 
 }  // namespace ml

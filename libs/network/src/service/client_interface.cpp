@@ -44,7 +44,6 @@ void ServiceClientInterface::ProcessRPCResult(network::message_type const &msg,
 
 bool ServiceClientInterface::ProcessServerMessage(network::message_type const &msg)
 {
-  LOG_STACK_TRACE_POINT;
   bool ret = true;
 
   serializer_type params(msg);

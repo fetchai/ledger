@@ -70,7 +70,15 @@ public:
 
   DataType AtThree(uint64_t idx1, uint64_t idx2, uint64_t idx3) const;
 
-  void SetAt(uint64_t index, DataType value);
+  DataType AtFour(uint64_t idx1, uint64_t idx2, uint64_t idx3, uint64_t idx4) const;
+
+  void SetAtOne(uint64_t idx1, DataType value);
+
+  void SetAtTwo(uint64_t idx1, uint64_t idx2, DataType value);
+
+  void SetAtThree(uint64_t idx1, uint64_t idx2, uint64_t idx3, DataType value);
+
+  void SetAtFour(uint64_t idx1, uint64_t idx2, uint64_t idx3, uint64_t idx4, DataType value);
 
   void Copy(fetch::math::Tensor<DataType> const &other);
 
@@ -78,12 +86,20 @@ public:
 
   void FillRandom();
 
+  /////////////////
+  /// RESHAPING ///
+  /////////////////
+
+  void Squeeze();
+
   bool Reshape(
       fetch::vm::Ptr<fetch::vm::Array<fetch::math::Tensor<DataType>::SizeType>> const &new_shape);
 
   //////////////////////////////
   /// PRINTING AND EXPORTING ///
   //////////////////////////////
+
+  void FromString(fetch::vm::Ptr<fetch::vm::String> const &string);
 
   fetch::vm::Ptr<fetch::vm::String> ToString() const;
 

@@ -107,7 +107,7 @@ private:
 
   uint64_t BROADCAST_BATCH_SIZE = 5;
 
-  fetch::mutex::Mutex               mutex_{__LINE__, __FILE__};
+  Mutex                             mutex_{__LINE__, __FILE__};
   std::vector<std::vector<DAGNode>> recvd_broadcast_nodes_;
 };
 

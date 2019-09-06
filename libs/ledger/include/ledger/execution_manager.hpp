@@ -19,7 +19,8 @@
 
 #include "core/byte_array/encoders.hpp"
 #include "core/mutex.hpp"
-#include "core/threading/synchronised_state.hpp"
+#include "core/synchronisation/protected.hpp"
+#include "core/synchronisation/waitable.hpp"
 #include "ledger/chain/address.hpp"
 #include "ledger/chain/constants.hpp"
 #include "ledger/execution_item.hpp"
@@ -101,8 +102,6 @@ private:
   using Condition         = std::condition_variable;
   using ResourceID        = storage::ResourceID;
   using AtomicState       = std::atomic<State>;
-  using SyncCounters      = SynchronisedState<Counters>;
-  using SyncedState       = SynchronisedState<State>;
   using CounterPtr        = telemetry::CounterPtr;
   using HistogramPtr      = telemetry::HistogramPtr;
 
@@ -111,7 +110,7 @@ private:
   Flag running_{false};
   Flag monitor_ready_{false};
 
-  SyncedState state_{State::IDLE};
+  Protected<State> state_{State::IDLE};
 
   StorageUnitPtr storage_;
 
@@ -131,7 +130,7 @@ private:
   Counter completed_executions_{0};
   Counter num_slices_{0};
 
-  SyncCounters counters_{};
+  Waitable<Counters> counters_{};
 
   ThreadPool thread_pool_;
   ThreadPtr  monitor_thread_;

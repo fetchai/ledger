@@ -18,7 +18,7 @@
 
 #include "core/assert.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "core/macros.hpp"
 #include "core/mutex.hpp"
 #include "ledger/chain/transaction.hpp"
@@ -80,7 +80,7 @@ bool GenerateContractName(Transaction const &tx, Identifier &identifier)
   // if there is a contract present simply parse the name
   if (!contract_name.empty())
   {
-    if (!identifier.Parse(contract_name))
+    if (!identifier.Parse(std::move(contract_name)))
     {
       return false;
     }

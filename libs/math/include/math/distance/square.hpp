@@ -24,7 +24,7 @@ namespace math {
 namespace distance {
 
 template <typename ArrayType>
-inline typename ArrayType::Type SquareDistance(ArrayType const &A, ArrayType const &B)
+typename ArrayType::Type SquareDistance(ArrayType const &A, ArrayType const &B)
 {
   using Type = typename ArrayType::Type;
   auto it1   = A.begin();

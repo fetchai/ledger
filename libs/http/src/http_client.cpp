@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "http/http_client.hpp"
 #include "http/request.hpp"
 #include "http/response.hpp"
@@ -186,6 +186,16 @@ std::size_t HttpClient::ReadUntil(asio::streambuf &buffer, char const *delimiter
 void HttpClient::ReadExactly(asio::streambuf &buffer, std::size_t length, std::error_code &ec)
 {
   asio::read(socket_, buffer, asio::transfer_exactly(length), ec);
+}
+
+std::string const &HttpClient::host() const
+{
+  return host_;
+}
+
+uint16_t HttpClient::port() const
+{
+  return port_;
 }
 
 }  // namespace http

@@ -686,7 +686,7 @@ def run_test(build_directory, yaml_file, constellation_exe):
             test_instance.dump_debug()
             sys.exit(1)
 
-    output("\nAll end to end tests have passed :)")
+    output("\nAll end to end tests have passed")
 
 
 def parse_commandline():

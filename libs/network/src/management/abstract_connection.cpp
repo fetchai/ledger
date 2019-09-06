@@ -22,7 +22,7 @@ namespace fetch {
 namespace network {
 
 AbstractConnection::connection_handle_type AbstractConnection::global_handle_counter_ = 1;
-fetch::mutex::Mutex AbstractConnection::global_handle_mutex_(__LINE__, __FILE__);
+Mutex AbstractConnection::global_handle_mutex_(__LINE__, __FILE__);
 
 // Construction / Destruction
 AbstractConnection::AbstractConnection()
@@ -38,7 +38,7 @@ AbstractConnection::~AbstractConnection()
   FETCH_LOG_VARIABLE(h);
 
   {
-    std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
+    FETCH_LOCK(callback_mutex_);
     on_message_ = nullptr;
   }
 
@@ -54,7 +54,7 @@ AbstractConnection::~AbstractConnection()
 // Common to allx
 std::string AbstractConnection::Address() const
 {
-  std::lock_guard<mutex::Mutex> lock(address_mutex_);
+  FETCH_LOCK(address_mutex_);
   return address_;
 }
 
@@ -79,36 +79,31 @@ AbstractConnection::weak_ptr_type AbstractConnection::connection_pointer()
 
 void AbstractConnection::OnMessage(std::function<void(network::message_type const &msg)> const &f)
 {
-  LOG_STACK_TRACE_POINT;
-  std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
+  FETCH_LOCK(callback_mutex_);
   on_message_ = f;
 }
 
 void AbstractConnection::OnConnectionSuccess(std::function<void()> const &fnc)
 {
-  LOG_STACK_TRACE_POINT;
-  std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
+  FETCH_LOCK(callback_mutex_);
   on_connection_success_ = fnc;
 }
 
 void AbstractConnection::OnConnectionFailed(std::function<void()> const &fnc)
 {
-  LOG_STACK_TRACE_POINT;
-  std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
+  FETCH_LOCK(callback_mutex_);
   on_connection_failed_ = fnc;
 }
 
 void AbstractConnection::OnLeave(std::function<void()> const &fnc)
 {
-  LOG_STACK_TRACE_POINT;
-  std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
+  FETCH_LOCK(callback_mutex_);
   on_leave_ = fnc;
 }
 
 void AbstractConnection::ClearClosures() noexcept
 {
-  LOG_STACK_TRACE_POINT;
-  std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
+  FETCH_LOCK(callback_mutex_);
   on_connection_failed_  = nullptr;
   on_connection_success_ = nullptr;
   on_message_            = nullptr;
@@ -126,7 +121,7 @@ void AbstractConnection::DeactivateSelfManage()
 
 void AbstractConnection::SetAddress(std::string const &addr)
 {
-  std::lock_guard<mutex::Mutex> lock(address_mutex_);
+  FETCH_LOCK(address_mutex_);
   address_ = addr;
 }
 
@@ -141,7 +136,7 @@ void AbstractConnection::SignalLeave()
                   ", SignalLeave called.");
   std::function<void()> cb;
   {
-    std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
+    FETCH_LOCK(callback_mutex_);
     cb = on_leave_;
   }
 
@@ -155,10 +150,9 @@ void AbstractConnection::SignalLeave()
 
 void AbstractConnection::SignalMessage(network::message_type const &msg)
 {
-  LOG_STACK_TRACE_POINT;
   std::function<void(network::message_type const &)> cb;
   {
-    std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
+    FETCH_LOCK(callback_mutex_);
     cb = on_message_;
   }
   if (cb)
@@ -169,10 +163,9 @@ void AbstractConnection::SignalMessage(network::message_type const &msg)
 
 void AbstractConnection::SignalConnectionFailed()
 {
-  LOG_STACK_TRACE_POINT;
   std::function<void()> cb;
   {
-    std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
+    FETCH_LOCK(callback_mutex_);
     cb = on_leave_;
   }
   if (cb)
@@ -185,10 +178,9 @@ void AbstractConnection::SignalConnectionFailed()
 
 void AbstractConnection::SignalConnectionSuccess()
 {
-  LOG_STACK_TRACE_POINT;
   std::function<void()> cb;
   {
-    std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
+    FETCH_LOCK(callback_mutex_);
     cb = on_connection_success_;
   }
 
@@ -205,7 +197,7 @@ AbstractConnection::connection_handle_type AbstractConnection::next_handle()
   connection_handle_type ret = 0;
 
   {
-    std::lock_guard<fetch::mutex::Mutex> lck(global_handle_mutex_);
+    FETCH_LOCK(global_handle_mutex_);
 
     while (ret == 0)
     {

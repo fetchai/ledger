@@ -74,7 +74,6 @@ public:
   using RequestingSubTreeList = network::RequestingQueueOf<uint64_t, TxArray>;
   using PromiseOfTxList       = network::PromiseOf<TxArray>;
   using ResourceID            = storage::ResourceID;
-  using Mutex                 = mutex::Mutex;
   using EventNewTransaction   = std::function<void(Transaction const &)>;
   using TrimCacheCallback     = std::function<void()>;
   using State                 = tx_sync::State;

@@ -19,7 +19,7 @@
 
 #include "core/assert.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "core/mutex.hpp"
 #include "core/serializers/exception.hpp"
 #include "network/message.hpp"
@@ -92,27 +92,21 @@ public:
     : super_type(port, network_manager)
     , network_manager_(network_manager)
     , message_mutex_(__LINE__, __FILE__)
-  {
-    LOG_STACK_TRACE_POINT;
-  }
+  {}
 
   ~ServiceServer()
   {
-    LOG_STACK_TRACE_POINT;
-
-    client_rpcs_mutex_.lock();
+    FETCH_LOCK(client_rpcs_mutex_);
 
     for (auto &c : client_rpcs_)
     {
       delete c.second;
     }
-
-    client_rpcs_mutex_.unlock();
   }
 
   ClientRPCInterface &ServiceInterfaceOf(handle_type const &i)
   {
-    std::lock_guard<fetch::mutex::Mutex> lock(client_rpcs_mutex_);
+    FETCH_LOCK(client_rpcs_mutex_);
 
     if (client_rpcs_.find(i) == client_rpcs_.end())
     {
@@ -133,9 +127,7 @@ protected:
 private:
   void PushRequest(handle_type client, network::message_type const &msg) override
   {
-    LOG_STACK_TRACE_POINT;
-
-    std::lock_guard<fetch::mutex::Mutex> lock(message_mutex_);
+    FETCH_LOCK(message_mutex_);
     FETCH_LOG_DEBUG(LOGGING_NAME, "RPC call from ", client);
     PendingMessage pm = {client, msg};
     messages_.push_back(pm);
@@ -146,27 +138,28 @@ private:
 
   void ProcessMessages()
   {
-    LOG_STACK_TRACE_POINT;
-
-    message_mutex_.lock();
-    bool has_messages = (!messages_.empty());
-    message_mutex_.unlock();
+    bool has_messages = false;
+    {
+      FETCH_LOCK(message_mutex_);
+      has_messages = (!messages_.empty());
+    }
 
     while (has_messages)
     {
       FETCH_LOG_DEBUG(LOGGING_NAME, "MESSAGES!!!!");
-      message_mutex_.lock();
 
       PendingMessage pm;
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Server side backlog: ", messages_.size());
-      has_messages = (!messages_.empty());
-      if (has_messages)
-      {  // To ensure we can make a worker pool in the future
-        pm = messages_.front();
-        messages_.pop_front();
-      };
+      {
+        FETCH_LOCK(message_mutex_);
 
-      message_mutex_.unlock();
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Server side backlog: ", messages_.size());
+        has_messages = (!messages_.empty());
+        if (has_messages)
+        {  // To ensure we can make a worker pool in the future
+          pm = messages_.front();
+          messages_.pop_front();
+        }
+      }
 
       if (has_messages)
       {
@@ -179,13 +172,14 @@ private:
 
             FETCH_LOG_INFO(LOGGING_NAME, "PushProtocolRequest returned FALSE!");
 
-            client_rpcs_mutex_.lock();
-            if (client_rpcs_.find(pm.client) != client_rpcs_.end())
             {
-              auto &c   = client_rpcs_[pm.client];
-              processed = c->ProcessMessage(pm.message);
+              FETCH_LOCK(client_rpcs_mutex_);
+              if (client_rpcs_.find(pm.client) != client_rpcs_.end())
+              {
+                auto &c   = client_rpcs_[pm.client];
+                processed = c->ProcessMessage(pm.message);
+              }
             }
-            client_rpcs_mutex_.unlock();
 
             if (!processed)
             {
@@ -204,10 +198,10 @@ private:
 
   network_manager_type network_manager_;
 
-  std::deque<PendingMessage>  messages_;
-  mutable fetch::mutex::Mutex message_mutex_{__LINE__, __FILE__};
+  std::deque<PendingMessage> messages_;
+  mutable Mutex              message_mutex_{__LINE__, __FILE__};
 
-  mutable fetch::mutex::Mutex                 client_rpcs_mutex_{__LINE__, __FILE__};
+  mutable Mutex                               client_rpcs_mutex_{__LINE__, __FILE__};
   std::map<handle_type, ClientRPCInterface *> client_rpcs_;
 };
 }  // namespace service

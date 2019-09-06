@@ -37,6 +37,7 @@ public:
   using SizeType      = typename TensorType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpReluSaveableParams<T>;
+  using MyType        = Relu<TensorType>;
 
   Relu() = default;
 
@@ -51,6 +52,16 @@ public:
     return std::make_shared<SPType>();
   }
 
+  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
+  {
+    FETCH_UNUSED(me);
+    assert(me.get() == this);
+
+    auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
+
+    return copyshare;
+  }
   // f(x)=max(0,x);
   void Forward(VecTensorType const &inputs, TensorType &output) override
   {

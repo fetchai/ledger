@@ -82,7 +82,6 @@ RBC::RBC(Endpoint &endpoint, MuddleAddress address, CallbackFunction call_back, 
  */
 bool RBC::ResetCabinet(CabinetMembers const &cabinet)
 {
-  assert(!lock_.owns_lock());
   FETCH_LOCK(lock_);
 
   // Empty cabinets cannot be instated.
@@ -138,7 +137,6 @@ void RBC::Broadcast(SerialisedMessage const &msg)
   MessageBroadcast broadcast_msg;
 
   // Creating broadcast message and broadcasting
-  assert(!lock_.owns_lock());
   FETCH_LOCK(lock_);
 
   broadcast_msg = RBCMessage::New<RBroadcast>(channel_, static_cast<IdType>(id_),
@@ -183,7 +181,6 @@ void RBC::InternalBroadcast(RBCMessage const &msg)
   msg_serializer << msg;
 
   // Broadcast without echo
-  assert(lock_.owns_lock());
   for (const auto &address : current_cabinet_)
   {
     if (address != address_)
@@ -201,8 +198,6 @@ void RBC::InternalBroadcast(RBCMessage const &msg)
  */
 bool RBC::ReceivedEcho(TagType tag, MessageEcho const &msg)
 {
-  assert(lock_.owns_lock());
-
   auto &msg_count = broadcasts_[tag].msgs_count[msg->hash()];
   msg_count.echo_count++;
   return (msg_count.echo_count == current_cabinet_.size() - threshold_ &&
@@ -217,8 +212,6 @@ bool RBC::ReceivedEcho(TagType tag, MessageEcho const &msg)
  */
 struct RBC::MessageCount RBC::ReceivedReady(TagType tag, MessageHash const &msg)
 {
-  assert(lock_.owns_lock());
-
   auto &msg_count = broadcasts_[tag].msgs_count[msg->hash()];
   msg_count.ready_count++;
   MessageCount res = msg_count;
@@ -234,7 +227,6 @@ struct RBC::MessageCount RBC::ReceivedReady(TagType tag, MessageHash const &msg)
  */
 void RBC::OnRBC(MuddleAddress const &from, RBCMessage const &message)
 {
-  assert(!lock_.owns_lock());
   FETCH_LOCK(lock_);
 
   uint32_t sender_index;
@@ -285,7 +277,6 @@ void RBC::OnRBC(MuddleAddress const &from, RBCMessage const &message)
  */
 void RBC::OnRBroadcast(MessageBroadcast const &msg, uint32_t sender_index)
 {
-  assert(lock_.owns_lock());
   assert(msg != nullptr);
   assert(msg->type() == MessageType::R_BROADCAST);
   assert(msg->is_valid());
@@ -330,7 +321,6 @@ void RBC::OnRBroadcast(MessageBroadcast const &msg, uint32_t sender_index)
  */
 void RBC::OnREcho(MessageEcho const &msg, uint32_t sender_index)
 {
-  assert(lock_.owns_lock());
   assert(msg != nullptr);
   assert(msg->is_valid());
   TagType tag = msg->tag();
@@ -366,7 +356,6 @@ void RBC::OnREcho(MessageEcho const &msg, uint32_t sender_index)
  */
 void RBC::OnRReady(MessageReady const &msg, uint32_t sender_index)
 {
-  assert(lock_.owns_lock());
   assert(msg != nullptr);
   assert(msg->is_valid());
   TagType tag = msg->tag();
@@ -433,7 +422,6 @@ void RBC::OnRReady(MessageReady const &msg, uint32_t sender_index)
  */
 void RBC::OnRRequest(MessageRequest const &msg, uint32_t sender_index)
 {
-  assert(lock_.owns_lock());
   assert(msg != nullptr);
   assert(msg->is_valid());
   TagType tag = msg->tag();
@@ -465,7 +453,6 @@ void RBC::OnRRequest(MessageRequest const &msg, uint32_t sender_index)
  */
 void RBC::OnRAnswer(MessageAnswer const &msg, uint32_t sender_index)
 {
-  assert(lock_.owns_lock());
   assert(msg != nullptr);
   assert(msg->is_valid());
   TagType tag = msg->tag();
@@ -520,7 +507,6 @@ void RBC::OnRAnswer(MessageAnswer const &msg, uint32_t sender_index)
  */
 void RBC::Deliver(SerialisedMessage const &msg, uint32_t sender_index)
 {
-  assert(lock_.owns_lock());
   assert(parties_.size() == current_cabinet_.size());
 
   MuddleAddress miner_id{*std::next(current_cabinet_.begin(), sender_index)};
@@ -566,8 +552,6 @@ void RBC::Deliver(SerialisedMessage const &msg, uint32_t sender_index)
  */
 bool RBC::BasicMessageCheck(MuddleAddress const &from, RBCMessage const &msg)
 {
-  assert(lock_.owns_lock());
-
   if ((current_cabinet_.find(from) == current_cabinet_.end()) || (msg.channel() != channel_))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Received message from unknown sender/wrong channel");
@@ -587,7 +571,6 @@ bool RBC::BasicMessageCheck(MuddleAddress const &from, RBCMessage const &msg)
  */
 bool RBC::SetMbar(TagType tag, MessageContents const &msg, uint32_t sender_index)
 {
-  assert(lock_.owns_lock());
   assert(msg != nullptr);
   assert(msg->is_valid());
 
@@ -614,7 +597,6 @@ bool RBC::SetMbar(TagType tag, MessageContents const &msg, uint32_t sender_index
  */
 bool RBC::SetDbar(TagType tag, MessageHash const &msg)
 {
-  assert(lock_.owns_lock());
   broadcasts_[tag].message_hash = msg->hash();
   assert(msg != nullptr);
   assert(msg->is_valid());
@@ -636,8 +618,6 @@ bool RBC::SetDbar(TagType tag, MessageHash const &msg)
  */
 uint32_t RBC::CabinetIndex(MuddleAddress const &other_address) const
 {
-  assert(lock_.owns_lock());
-
   auto iter = current_cabinet_.find(other_address);
   assert(iter != current_cabinet_.end());
   return static_cast<uint32_t>(std::distance(current_cabinet_.begin(), iter));
@@ -652,8 +632,6 @@ uint32_t RBC::CabinetIndex(MuddleAddress const &other_address) const
  */
 bool RBC::CheckTag(RBCMessage const &msg)
 {
-  assert(lock_.owns_lock());
-
   if (msg.id() >= current_cabinet_.size())
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Node ", id_, " received message with unknown tag id");
@@ -702,7 +680,6 @@ bool RBC::CheckTag(RBCMessage const &msg)
  */
 bool RBC::SetPartyFlag(uint32_t sender_index, TagType tag, MessageType msg_type)
 {
-  assert(lock_.owns_lock());
   assert(parties_.size() == current_cabinet_.size());
 
   auto &iter  = parties_[sender_index].flags[tag];

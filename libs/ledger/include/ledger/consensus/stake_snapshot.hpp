@@ -20,6 +20,7 @@
 #include "crypto/identity.hpp"
 
 #include <memory>
+#include <vector>
 
 namespace fetch {
 namespace ledger {

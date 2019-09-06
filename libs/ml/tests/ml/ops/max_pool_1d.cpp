@@ -16,14 +16,17 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/base_types.hpp"
-
 #include "core/serializers/main_serializer_definition.hpp"
-#include "gtest/gtest.h"
+#include "math/base_types.hpp"
 #include "math/tensor.hpp"
 #include "ml/ops/max_pool_1d.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+
+#include "gtest/gtest.h"
+
+#include <memory>
+
 template <typename T>
 class MaxPool1DTest : public ::testing::Test
 {
@@ -318,7 +321,7 @@ TYPED_TEST(MaxPool1DTest, saveparams_backward_test_2_channels)
   using TensorType = TypeParam;
   using SizeType   = typename TypeParam::SizeType;
   using OpType     = typename fetch::ml::ops::MaxPool1D<TensorType>;
-  using SPType     = typename OpType ::SPType;
+  using SPType     = typename OpType::SPType;
 
   TensorType          data({2, 5, 2});
   TensorType          error({2, 2, 2});

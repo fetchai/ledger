@@ -21,6 +21,9 @@
 
 #include <vector>
 
+#include <cstdint>
+#include <memory>
+
 namespace fetch {
 namespace beacon {
 struct PublicKeyMessage

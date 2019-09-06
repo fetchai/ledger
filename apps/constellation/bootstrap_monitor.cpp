@@ -367,4 +367,28 @@ BootstrapMonitor::State BootstrapMonitor::OnNotify()
   return next_state;
 }
 
+char const *BootstrapMonitor::ToString(State state)
+{
+  char const *text = "Unknown";
+
+  switch (state)
+  {
+  case State::Notify:
+    text = "Notify";
+    break;
+  }
+
+  return text;
+}
+
+std::string const &BootstrapMonitor::external_address() const
+{
+  return external_address_;
+}
+
+core::WeakRunnable BootstrapMonitor::GetWeakRunnable() const
+{
+  return state_machine_;
+}
+
 }  // namespace fetch

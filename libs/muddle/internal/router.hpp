@@ -67,8 +67,6 @@ public:
 
   using RoutingTable = std::unordered_map<Packet::RawAddress, RoutingData>;
 
-  static constexpr char const *LOGGING_NAME = "Router";
-
   // Helper functions
   static Packet::RawAddress ConvertAddress(Packet::Address const &address);
   static Packet::Address    ConvertAddress(Packet::RawAddress const &address);
@@ -141,7 +139,6 @@ public:
 
 private:
   using HandleMap  = std::unordered_map<Handle, std::unordered_set<Packet::RawAddress>>;
-  using Mutex      = mutex::Mutex;
   using Clock      = std::chrono::steady_clock;
   using Timepoint  = Clock::time_point;
   using EchoCache  = std::unordered_map<std::size_t, Timepoint>;
@@ -174,6 +171,8 @@ private:
   PacketPtr const &Sign(PacketPtr const &p) const;
   bool             Genuine(PacketPtr const &p) const;
 
+  std::string const     name_;
+  char const *const     logging_name_{name_.c_str()};
   Address const         address_;
   RawAddress const      address_raw_;
   MuddleRegister &      register_;

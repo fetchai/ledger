@@ -164,10 +164,9 @@ public:
 
   Type operator()(SizeType const &index) const;
   template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, Type>::type &operator[](S const &i);
+  std::enable_if_t<std::is_integral<S>::value, Type> &operator[](S const &i);
   template <typename S>
-  typename std::enable_if<std::is_integral<S>::value, Type>::type const &operator[](
-      S const &i) const;
+  std::enable_if_t<std::is_integral<S>::value, Type> const &operator[](S const &i) const;
 
   Tensor &operator=(ConstSliceType const &slice);
   Tensor &operator=(TensorSlice const &slice);
@@ -292,6 +291,7 @@ public:
   ConstSliceType Slice(SizeVector index, SizeVector axes) const;
   TensorSlice    Slice();
   TensorSlice    Slice(SizeType index, SizeType axis = 0);
+  TensorSlice    Slice(std::pair<SizeType, SizeType> start_end_index, SizeType axis = 0);
   TensorSlice    Slice(SizeVector index, SizeVector axes);
 
   /////////////
@@ -694,7 +694,10 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
     switch (c[i])
     {
     case ';':
-      ++n;
+      if (i < c.size() - 1)
+      {
+        ++n;
+      }
       ++i;
       break;
     case ',':
@@ -707,7 +710,7 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
     default:
       if (byte_array::consumers::NumberConsumer<1, 2>(c, i) == -1)
       {
-        failed = true;
+        throw std::runtime_error("invalid character used in string to set tensor");
       }
       else
       {
@@ -1000,14 +1003,29 @@ void Tensor<T, C>::Assign(TensorSlice const &other)
 template <typename T, typename C>
 void Tensor<T, C>::Assign(Tensor const &other)
 {
-  auto it1 = begin();
-  auto it2 = other.begin();
-  assert(it1.size() == it2.size());
-  while (it1.is_valid())
+  if (this->size() == other.size())
   {
-    *it1 = *it2;
-    ++it1;
-    ++it2;
+    auto it1 = begin();
+    auto it2 = other.begin();
+
+    while (it1.is_valid())
+    {
+      *it1 = *it2;
+      ++it1;
+      ++it2;
+    }
+  }
+  else
+  {
+    if (!(Broadcast(
+            [](const T &x, const T &y, T &z) {
+              FETCH_UNUSED(x);
+              z = y;
+            },
+            *this, other, *this)))
+    {
+      throw std::runtime_error("arrays not broadcastable for assignment!");
+    }
   }
 }
 
@@ -1115,8 +1133,8 @@ typename Tensor<T, C>::Type Tensor<T, C>::operator()(SizeType const &index) cons
  */
 template <typename T, typename C>
 template <typename S>
-typename std::enable_if<std::is_integral<S>::value, typename Tensor<T, C>::Type>::type
-    &Tensor<T, C>::operator[](S const &n)
+std::enable_if_t<std::is_integral<S>::value, typename Tensor<T, C>::Type> &Tensor<T, C>::operator[](
+    S const &n)
 {
   assert(static_cast<SizeType>(n) < size());
   if (shape_.size() == 1)
@@ -1144,7 +1162,7 @@ typename std::enable_if<std::is_integral<S>::value, typename Tensor<T, C>::Type>
  */
 template <typename T, typename C>
 template <typename S>
-typename std::enable_if<std::is_integral<S>::value, typename Tensor<T, C>::Type>::type const
+std::enable_if_t<std::is_integral<S>::value, typename Tensor<T, C>::Type> const
     &Tensor<T, C>::operator[](S const &i) const
 {
   return data_[i];
@@ -1204,19 +1222,31 @@ Tensor<T, C> &Tensor<T, C>::operator=(TensorSlice const &slice)
 template <typename T, typename C>
 bool Tensor<T, C>::Resize(SizeVector const &shape, bool copy)
 {
-  Tensor old_tensor = *this;
+  // if the shape is exactly the same and a copy of value is required, dont do anything
+  if ((this->shape() == shape) && copy)
+  {
+    return true;
+  }
+
+  // a shallow copy for speedy initializion of a tensor
+  Tensor   old_tensor        = *this;
+  SizeType old_size          = this->size();
+  SizeType new_size_unpadded = Tensor::SizeFromShape(shape);
+  if (copy && (old_size == new_size_unpadded))
+  {
+    old_tensor = this->Copy();
+  }
 
   SizeType new_size = Tensor::PaddedSizeFromShape(shape);
   data_             = ContainerType(new_size);
-
   data_.SetAllZero();
   shape_         = shape;
-  size_          = Tensor::SizeFromShape(shape);  // Note: differs from new_size
+  size_          = new_size_unpadded;
   padded_height_ = PadValue(shape[0]);
   UpdateStrides();
 
   // Effectively a reshape
-  if (copy && (size_ == old_tensor.size()))
+  if (copy && (size_ == old_size))
   {
     auto it  = begin();
     auto oit = old_tensor.begin();
@@ -2206,6 +2236,38 @@ typename Tensor<T, C>::TensorSlice Tensor<T, C>::Slice(SizeType index, SizeType 
     if (axis == j)
     {
       range.push_back({index, index + 1, 1});
+    }
+    else
+    {
+      range.push_back({0, shape().at(j), 1});
+    }
+  }
+
+  return TensorSlice(*this, range, axis);
+}
+
+/**
+ * Returns a Slice Range of the tensor
+ * @tparam T
+ * @tparam C
+ * @param index
+ * @param axis
+ * @return
+ */
+template <typename T, typename C>
+typename Tensor<T, C>::TensorSlice Tensor<T, C>::Slice(
+    std::pair<SizeType, SizeType> start_end_index, SizeType axis)
+{
+  std::vector<SizeVector> range;
+
+  for (SizeType j = 0; j < shape().size(); ++j)
+  {
+    if (axis == j)
+    {
+      assert(start_end_index.first < start_end_index.second);
+      assert(start_end_index.first >= static_cast<SizeType>(0));
+      assert(start_end_index.second <= shape(j));
+      range.push_back({start_end_index.first, start_end_index.second, 1});
     }
     else
     {

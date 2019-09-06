@@ -38,6 +38,7 @@ public:
   using VecTensorType = typename Ops<T>::VecTensorType;
   using DataType      = typename T::Type;
   using SPType        = OpDivideSaveableParams<TensorType>;
+  using MyType        = Divide<TensorType>;
 
   Divide() = default;
 
@@ -51,6 +52,17 @@ public:
   {
     auto sp = std::make_shared<SPType>();
     return sp;
+  }
+
+  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
+  {
+    FETCH_UNUSED(me);
+    assert(me.get() == this);
+
+    auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
+
+    return copyshare;
   }
 
   /**

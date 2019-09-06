@@ -19,6 +19,7 @@
 
 #include "core/random/lcg.hpp"
 #include "math/tensor.hpp"
+#include "meta/type_traits.hpp"
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/dataloaders/word2vec_loaders/unigram_table.hpp"
 #include "ml/dataloaders/word2vec_loaders/vocab.hpp"
@@ -36,26 +37,33 @@ namespace dataloaders {
 template <typename T>
 class W2VLoader : public DataLoader<fetch::math::Tensor<T>, fetch::math::Tensor<T>>
 {
+
 public:
-  // The intended T is the typename for the data input to the neural network, which should be a
-  // float or double or fix-point type.
+  static_assert(meta::IsFloat<T> || meta::IsFixedPoint<T>,
+                "The intended T is the typename for the data input to the neural network, which "
+                "should be a float or double or fixed-point type.");
   static constexpr T WindowContextUnused = -1;
 
+  using InputType = fetch::math::Tensor<T>;
   using LabelType = fetch::math::Tensor<T>;
-  using DataType  = fetch::math::Tensor<T>;
 
   using SizeType   = fetch::math::SizeType;
   using VocabType  = Vocab;
-  using ReturnType = std::pair<LabelType, std::vector<DataType>>;
+  using ReturnType = std::pair<LabelType, std::vector<InputType>>;
 
-  W2VLoader(SizeType window_size, SizeType negative_samples, bool mode);
+  W2VLoader(SizeType window_size, SizeType negative_samples);
 
-  bool       IsDone() const override;
-  void       Reset() override;
+  bool IsDone() const override;
+  void Reset() override;
+  void SetTestRatio(float new_test_ratio) override;
+  void SetValidationRatio(float new_validation_ratio) override;
+
   void       RemoveInfrequent(SizeType min);
   void       InitUnigramTable();
   void       GetNext(ReturnType &t);
   ReturnType GetNext() override;
+
+  bool AddData(InputType const &input, LabelType const &label) override;
 
   bool BuildVocab(std::string const &s);
   void SaveVocab(std::string const &filename);
@@ -78,13 +86,14 @@ private:
   std::vector<std::vector<SizeType>>         data_;
   fetch::random::LinearCongruentialGenerator rng_;
   UnigramTable                               unigram_table_;
-  bool                                       mode_;
+  DataLoaderMode                             mode_;
 
   fetch::math::Tensor<T> target_;  // reusable target tensor
   fetch::math::Tensor<T> label_;   // reusable label tensor
 
   std::vector<SizeType>    StringsToIndices(std::vector<std::string> const &strings);
   std::vector<std::string> PreprocessString(std::string const &s);
+  void                     UpdateCursor() override;
 };
 
 /**
@@ -95,13 +104,12 @@ private:
  * @param mode
  */
 template <typename T>
-W2VLoader<T>::W2VLoader(SizeType window_size, SizeType negative_samples, bool mode)
-  : DataLoader<LabelType, DataType>(false)  // no random mode specified
+W2VLoader<T>::W2VLoader(SizeType window_size, SizeType negative_samples)
+  : DataLoader<LabelType, InputType>()
   , current_sentence_(0)
   , current_word_(0)
   , window_size_(window_size)
   , negative_samples_(negative_samples)
-  , mode_(mode)
   , target_({window_size_ * 2, 1})
   , label_({negative_samples_, 1})
 {}
@@ -161,6 +169,20 @@ void W2VLoader<T>::Reset()
   unigram_table_.Reset();
 }
 
+template <typename T>
+void W2VLoader<T>::SetTestRatio(float new_test_ratio)
+{
+  FETCH_UNUSED(new_test_ratio);
+  throw std::runtime_error("Test set splitting is not supported for this dataloader.");
+}
+
+template <typename T>
+void W2VLoader<T>::SetValidationRatio(float new_validation_ratio)
+{
+  FETCH_UNUSED(new_validation_ratio);
+  throw std::runtime_error("Validation set splitting is not supported for this dataloader.");
+}
+
 /**
  * Remove words that appears less than MIN times. operation is destructive
  * @tparam T
@@ -169,7 +191,7 @@ void W2VLoader<T>::Reset()
 template <typename T>
 void W2VLoader<T>::RemoveInfrequent(SizeType min)
 {
-  W2VLoader new_loader(window_size_, negative_samples_, mode_);
+  W2VLoader                                            new_loader(window_size_, negative_samples_);
   std::map<SizeType, std::pair<std::string, SizeType>> reverse_vocab;
   for (auto const &kvp : vocab_.data)
   {
@@ -276,6 +298,14 @@ typename W2VLoader<T>::ReturnType W2VLoader<T>::GetNext()
   ReturnType p(label_, {target_});
   GetNext(p);
   return p;
+}
+
+template <typename T>
+bool W2VLoader<T>::AddData(InputType const &input, LabelType const &label)
+{
+  FETCH_UNUSED(input);
+  FETCH_UNUSED(label);
+  throw std::runtime_error("Add Data not used for W2V loader");
 }
 
 /**
@@ -419,6 +449,15 @@ std::vector<std::string> W2VLoader<T>::PreprocessString(std::string const &s)
     words.push_back(word);
   }
   return words;
+}
+
+template <typename T>
+void W2VLoader<T>::UpdateCursor()
+{
+  if (this->mode_ != DataLoaderMode::TRAIN)
+  {
+    throw std::runtime_error("Other mode than training not supported.");
+  }
 }
 
 }  // namespace dataloaders

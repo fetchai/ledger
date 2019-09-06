@@ -22,6 +22,8 @@
 #include "muddle/address.hpp"
 #include "network/management/abstract_connection.hpp"
 
+#include <string>
+
 namespace fetch {
 namespace muddle {
 
@@ -72,7 +74,6 @@ private:
     Phase  phase{Phase::INITIAL};
   };
 
-  using Mutex        = mutex::Mutex;
   using Reservations = std::unordered_map<Address, Handle>;
 
   template <typename T>
@@ -101,6 +102,8 @@ private:
                                  Handle *previous_handle = nullptr);
 
   Address const       address_;
+  std::string const   name_;
+  char const *const   logging_name_{name_.c_str()};
   Router &            router_;
   MuddleRegister &    register_;
   PeerConnectionList &peers_;

@@ -55,15 +55,19 @@ public:
   SelfAttentionEncoder() = default;
 
   SelfAttentionEncoder(SizeType n_heads, SizeType model_dim, SizeType ff_dim,
-                       DataType residual_dropout    = static_cast<DataType>(0.9),
-                       DataType attention_dropout   = static_cast<DataType>(0.9),
-                       DataType feedforward_dropout = static_cast<DataType>(0.9))
+                       DataType       residual_dropout    = static_cast<DataType>(0.9),
+                       DataType       attention_dropout   = static_cast<DataType>(0.9),
+                       DataType       feedforward_dropout = static_cast<DataType>(0.9),
+                       DataType       epsilon         = fetch::math::function_tolerance<DataType>(),
+                       ActivationType activation_type = ActivationType::GELU)
     : n_heads_(n_heads)
     , model_dim_(model_dim)
     , ff_dim_(ff_dim)
     , residual_dropout_(residual_dropout)
     , attention_dropout_(attention_dropout)
     , feedforward_dropout_(feedforward_dropout)
+    , epsilon_(epsilon)
+    , activation_type_(activation_type)
   {
     // make sure all heads can be concatenate together to form model_dim
     assert(model_dim_ % n_heads_ == 0);
@@ -73,11 +77,13 @@ public:
     // all input shapes are (feature_length, model_dim, batch_num)
     std::string input =
         this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Input", {});
+    std::string mask =
+        this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Mask", {});
 
     // multihead attention on input time series vector
     std::string multihead_self_attention =
         this->template AddNode<fetch::ml::layers::MultiheadAttention<TensorType>>(
-            name + "_Multihead_Attention", {input, input, input}, n_heads, model_dim_,
+            name + "_Multihead_Attention", {input, input, input, mask}, n_heads, model_dim_,
             attention_dropout_);
 
     // make residual connection
@@ -92,6 +98,7 @@ public:
         residual_connection(name + "_Feedforward_Residual", attention_residual, feedforward);
 
     this->AddInputNode(input);
+    this->AddInputNode(mask);
     this->SetOutputNode(feedforward_residual);
   }
 
@@ -119,6 +126,7 @@ public:
     ret->residual_dropout    = residual_dropout_;
     ret->attention_dropout   = attention_dropout_;
     ret->feedforward_dropout = feedforward_dropout_;
+    ret->epsilon             = epsilon_;
 
     return ret;
   }
@@ -132,6 +140,7 @@ public:
     residual_dropout_    = sp.residual_dropout;
     attention_dropout_   = sp.attention_dropout;
     feedforward_dropout_ = sp.feedforward_dropout;
+    epsilon_             = sp.epsilon;
   }
 
   static constexpr OpType OpCode()
@@ -142,20 +151,22 @@ public:
   static constexpr char const *DESCRIPTOR = "SelfAttentionEncoder";
 
 private:
-  SizeType n_heads_;
-  SizeType model_dim_;
-  SizeType ff_dim_;
-  DataType residual_dropout_;
-  DataType attention_dropout_;
-  DataType feedforward_dropout_;
+  SizeType       n_heads_;
+  SizeType       model_dim_;
+  SizeType       ff_dim_;
+  DataType       residual_dropout_;
+  DataType       attention_dropout_;
+  DataType       feedforward_dropout_;
+  DataType       epsilon_;
+  ActivationType activation_type_;
 
   std::string positionwise_feedforward(std::string name, std::string const &input)
   {
-    // position wise feedforward with relu acitvation
+    // position wise feedforward with gelu acitvation
     std::string ff_first_layer =
         this->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
             name + "_Feedforward_No_1", {input}, static_cast<SizeType>(model_dim_),
-            static_cast<SizeType>(ff_dim_), ActivationType::RELU, RegType::NONE,
+            static_cast<SizeType>(ff_dim_), activation_type_, RegType::NONE,
             static_cast<DataType>(0), WeightsInitType::XAVIER_GLOROT, true);
 
     // do dropout
@@ -186,7 +197,8 @@ private:
     std::vector<SizeType> data_shape({model_dim_, 1});
     std::string           normalized_residual =
         this->template AddNode<fetch::ml::layers::LayerNorm<TensorType>>(
-            name + "_LayerNorm", {residual_addition}, data_shape, static_cast<SizeType>(0));
+            name + "_LayerNorm", {residual_addition}, data_shape, static_cast<SizeType>(0),
+            epsilon_);
 
     return normalized_residual;
   }

@@ -23,7 +23,6 @@
 
 #include "ml/utilities/graph_builder.hpp"
 
-#include "core/serializers/base_types.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "ml/serializers/ml_types.hpp"
 
@@ -118,15 +117,13 @@ TYPED_TEST(SerializersTestNoInt, serialize_graph_saveable_params)
   g->SetInput("Input", tmp_data.Transpose());
   TensorType tmp_prediction = g->ForwardPropagate(output);
 
-  fetch::ml::GraphSaveableParams<TypeParam> gsp1 = g->GetGraphSaveableParams();
-  fetch::serializers::MsgPackSerializer     b;
-  b << gsp1;
-  b.seek(0);
+  fetch::ml::GraphSaveableParams<TypeParam>      gsp1 = g->GetGraphSaveableParams();
+  fetch::serializers::LargeObjectSerializeHelper b;
+  b.Serialize(gsp1);
 
   auto gsp2 = std::make_shared<fetch::ml::GraphSaveableParams<TypeParam>>();
 
-  b >> *gsp2;
-
+  b.Deserialize(*gsp2);
   EXPECT_EQ(gsp1.connections, gsp2->connections);
 
   for (auto const &gsp2_node_pair : gsp2->nodes)
@@ -146,8 +143,8 @@ TYPED_TEST(SerializersTestNoInt, serialize_graph_saveable_params)
   g->SetInput("Input", data.Transpose());
   g2->SetInput("Input", data.Transpose());
 
-  TensorType prediction  = g->ForwardPropagate(output);
-  TensorType prediction2 = g2->ForwardPropagate(output);
+  TensorType prediction  = g->ForwardPropagate(output).Copy();
+  TensorType prediction2 = g2->ForwardPropagate(output).Copy();
 
   // test correct values
   EXPECT_TRUE(prediction.AllClose(prediction2, fetch::math::function_tolerance<DataType>(),
@@ -166,10 +163,10 @@ TYPED_TEST(SerializersTestNoInt, serialize_graph_saveable_params)
   g2->Step(DataType{0.1f});
 
   g->SetInput("Input", data.Transpose());
-  TensorType prediction3 = g->ForwardPropagate(output);
+  TensorType prediction3 = g->ForwardPropagate(output).Copy();
 
   g2->SetInput("Input", data.Transpose());
-  TensorType prediction4 = g2->ForwardPropagate(output);
+  TensorType prediction4 = g2->ForwardPropagate(output).Copy();
 
   EXPECT_FALSE(prediction.AllClose(prediction3, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));

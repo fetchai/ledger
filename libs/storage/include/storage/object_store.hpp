@@ -94,13 +94,13 @@ public:
    */
   bool Get(ResourceID const &rid, type &object)
   {
-    std::lock_guard<mutex::Mutex> lock(mutex_);
+    FETCH_LOCK(mutex_);
     return LocklessGet(rid, object);
   }
 
   void Erase(ResourceID const &rid)
   {
-    std::lock_guard<mutex::Mutex> lock(mutex_);
+    FETCH_LOCK(mutex_);
     LocklessErase(rid);
   }
 
@@ -113,7 +113,7 @@ public:
    */
   bool Has(ResourceID const &rid)
   {
-    std::lock_guard<mutex::Mutex> lock(mutex_);
+    FETCH_LOCK(mutex_);
     return LocklessHas(rid);
   }
 
@@ -126,7 +126,7 @@ public:
    */
   void Set(ResourceID const &rid, type const &object)
   {
-    std::lock_guard<mutex::Mutex> lock(mutex_);
+    FETCH_LOCK(mutex_);
     LocklessSet(rid, object);
   }
 
@@ -140,14 +140,13 @@ public:
   template <typename F>
   void WithLock(F &&f)
   {
-    std::lock_guard<mutex::Mutex> lock(mutex_);
+    FETCH_LOCK(mutex_);
     f();
   }
 
   /**
    * Do a get without locking the structure, do this when it is guaranteed you
-   * have locked (using
-   * WithLock) or don't need to lock (single threaded scenario)
+   * have locked (using WithLock) or don't need to lock (single threaded scenario)
    *
    * @param: rid The key
    * @param: object The object
@@ -177,8 +176,7 @@ public:
 
   /**
    * Do a has without locking the structure, do this when it is guaranteed you
-   * have locked (using
-   * WithLock) or don't need to lock (single threaded scenario)
+   * have locked (using WithLock) or don't need to lock (single threaded scenario)
    *
    * @param: rid The key
    * @param: object The object
@@ -193,8 +191,7 @@ public:
 
   /**
    * Do a set without locking the structure, do this when it is guaranteed you
-   * have locked (using
-   * WithLock) or don't need to lock (single threaded scenario)
+   * have locked (using WithLock) or don't need to lock (single threaded scenario)
    *
    * @param: rid The key
    * @param: object The object
@@ -210,13 +207,13 @@ public:
 
   std::size_t size() const
   {
-    std::lock_guard<mutex::Mutex> lock(mutex_);
+    FETCH_LOCK(mutex_);
     return store_.size();
   }
 
   void Flush(bool lazy = true)
   {
-    std::lock_guard<mutex::Mutex> lock(mutex_);
+    FETCH_LOCK(mutex_);
     store_.Flush(lazy);
   }
 
@@ -313,7 +310,7 @@ public:
   }
 
 private:
-  mutable mutex::Mutex mutex_{__LINE__, __FILE__};
+  mutable Mutex        mutex_{__LINE__, __FILE__};
   KeyByteArrayStore<S> store_;
 };
 
