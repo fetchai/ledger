@@ -494,8 +494,7 @@ struct LayerMultiHeadSaveableParams : public SubGraphSaveableParams<TensorType>
 template <class TensorType>
 struct OpPlaceholderSaveableParams : public OpsSaveableParams
 {
-  fetch::ml::OpType           op_type = OpType::OP_PLACEHOLDER;
-  std::shared_ptr<TensorType> output;
+  fetch::ml::OpType op_type = OpType::OP_PLACEHOLDER;
 };
 
 /**

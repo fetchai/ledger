@@ -1937,30 +1937,19 @@ struct MapSerializer<ml::OpPlaceholderSaveableParams<TensorType>, D>
   using Type       = ml::OpPlaceholderSaveableParams<TensorType>;
   using DriverType = D;
 
-  static uint8_t const BASE_OPS       = 1;
-  static uint8_t const OP_CODE        = 2;
-  static uint8_t const OUTPUT_PRESENT = 3;
-  static uint8_t const OUTPUT         = 4;
+  static uint8_t const BASE_OPS = 1;
+  static uint8_t const OP_CODE  = 2;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(4);
+    auto map = map_constructor(2);
 
     // serialize parent class first
     auto ops_pointer = static_cast<ml::OpsSaveableParams const *>(&sp);
     map.Append(BASE_OPS, *(ops_pointer));
 
     map.Append(OP_CODE, sp.op_type);
-    if (sp.output)
-    {
-      map.Append(OUTPUT_PRESENT, true);
-      map.Append(OUTPUT, *(sp.output));
-    }
-    else
-    {
-      map.Append(OUTPUT_PRESENT, false);
-    }
   }
 
   template <typename MapDeserializer>
@@ -1970,14 +1959,6 @@ struct MapSerializer<ml::OpPlaceholderSaveableParams<TensorType>, D>
     map.ExpectKeyGetValue(BASE_OPS, (*ops_pointer));
 
     map.ExpectKeyGetValue(OP_CODE, sp.op_type);
-    bool has_weights = true;
-    map.ExpectKeyGetValue(OUTPUT_PRESENT, has_weights);
-    if (has_weights)
-    {
-      TensorType output;
-      map.ExpectKeyGetValue(OUTPUT, output);
-      sp.output = std::make_shared<TensorType>(output);
-    }
   }
 };
 
@@ -2452,16 +2433,19 @@ struct MapSerializer<ml::OpWeightsSaveableParams<TensorType>, D>
   static uint8_t const OP_CODE    = 1;
   static uint8_t const BASE_CLASS = 2;
 
-  static uint8_t const REGULARISATION_TYPE = 3;
-  static uint8_t const REGULARISATION_RATE = 4;
+  static uint8_t const OUTPUT_PRESENT = 3;
+  static uint8_t const OUTPUT         = 4;
 
-  static uint8_t const HAS_GRADIENT          = 5;
-  static uint8_t const GRADIENT_ACCUMULATION = 6;
+  static uint8_t const REGULARISATION_TYPE = 5;
+  static uint8_t const REGULARISATION_RATE = 6;
+
+  static uint8_t const HAS_GRADIENT          = 7;
+  static uint8_t const GRADIENT_ACCUMULATION = 8;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(6);
+    auto map = map_constructor(8);
 
     // serialize parent class first
     auto base_pointer = static_cast<ml::OpPlaceholderSaveableParams<TensorType> const *>(&sp);
@@ -2469,11 +2453,20 @@ struct MapSerializer<ml::OpWeightsSaveableParams<TensorType>, D>
 
     map.Append(OP_CODE, sp.op_type);
 
+    if (sp.output)
+    {
+      map.Append(OUTPUT_PRESENT, true);
+      map.Append(OUTPUT, *(sp.output));
+    }
+    else
+    {
+      map.Append(OUTPUT_PRESENT, false);
+    }
+
     // first set the regulariser type
     map.Append(REGULARISATION_TYPE, static_cast<uint8_t>(sp.regularisation_type));
     map.Append(REGULARISATION_RATE, sp.regularisation_rate);
 
-    //
     if (sp.gradient_accumulation)
     {
       map.Append(HAS_GRADIENT, true);
@@ -2492,6 +2485,15 @@ struct MapSerializer<ml::OpWeightsSaveableParams<TensorType>, D>
     map.ExpectKeyGetValue(BASE_CLASS, *base_pointer);
 
     map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+
+    bool has_weights = true;
+    map.ExpectKeyGetValue(OUTPUT_PRESENT, has_weights);
+    if (has_weights)
+    {
+      TensorType output;
+      map.ExpectKeyGetValue(OUTPUT, output);
+      sp.output = std::make_shared<TensorType>(output);
+    }
 
     uint8_t rt;
     map.ExpectKeyGetValue(REGULARISATION_TYPE, rt);
