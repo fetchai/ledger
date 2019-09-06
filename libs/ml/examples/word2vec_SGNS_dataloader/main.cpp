@@ -213,7 +213,7 @@ int main(int argc, char **argv)
                                        tp.max_word_count);
   // set up dataloader
   /// DATA LOADING ///
-  data_loader.BuildVocab({ReadFile(train_file)}, tp.min_count);
+  data_loader.BuildVocabAndData({ReadFile(train_file)}, tp.min_count);
 
   /////////////////////////////////////////
   /// SET UP PROPER TRAINING PARAMETERS ///
@@ -232,7 +232,7 @@ int main(int argc, char **argv)
       static_cast<DataType>(1) /
       data_loader
           .EstimatedSampleNumber();  // this decay rate gurantee the lr is reduced to zero by the
-                                     // end of an epoch (despit capping by ending learning rate)
+                                     // end of an epoch (despite capping by ending learning rate)
   std::cout << "data_loader.EstimatedSampleNumber(): " << data_loader.EstimatedSampleNumber()
             << std::endl;
 
