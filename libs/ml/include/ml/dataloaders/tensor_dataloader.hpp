@@ -112,7 +112,8 @@ TensorDataLoader<LabelType, InputType>::GetNext()
   if (this->random_mode_)
   {
     *this->current_cursor_ =
-        this->current_min_ + (static_cast<SizeType>(decltype(rand)::generator()) % Size());
+        this->current_min_ +
+        (static_cast<SizeType>(decltype(rand)::generator()) % this->current_size_);
   }
   else
   {
