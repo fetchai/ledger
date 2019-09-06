@@ -658,6 +658,8 @@ TEST(dkg_setup, delay_between_starts)
   GenerateTest(4, 3, 4, 4, {}, 1000);
 }
 
+// The tests below are for now disabled as failure to complete DKG means everyone runs forever
+
 TEST(dkg_setup, DISABLED_qual_below_threshold)
 {
   GenerateTest(4, 3, 2, 0,

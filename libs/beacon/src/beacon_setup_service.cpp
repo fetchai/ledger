@@ -1308,7 +1308,7 @@ uint64_t GetExpectedDKGTime(uint64_t cabinet_size)
   }
   if (cabinet_size < 30)
   {
-    expected_dkg_time_s = 40;
+    expected_dkg_time_s = 30;
   }
 
   FETCH_LOG_INFO(BeaconSetupService::LOGGING_NAME, "Note: Expect DKG time to be ",
