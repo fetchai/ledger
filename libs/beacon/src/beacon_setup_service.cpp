@@ -402,8 +402,8 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
   {
     if (!condition_to_proceed_)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Waiting for all peers to be ready before starting DKG. Ready: ",
-                     can_see.size(), " expect: ", require_connections, " Note, all: ", connected_peers.size());
+      FETCH_LOG_INFO(LOGGING_NAME, "Waiting for all peers to be ready before starting DKG. We have: ",
+                     can_see.size(), " expect: ", require_connections, " Other ready peers: ", ready_connections_.size());
     }
 
     state_machine_->Delay(std::chrono::milliseconds(500));
@@ -1315,8 +1315,6 @@ uint64_t GetExpectedDKGTime(uint64_t cabinet_size)
     expected_dkg_time_s = 30;
   }
 
-  FETCH_LOG_INFO(BeaconSetupService::LOGGING_NAME, "Note: Expect DKG time to be ", expected_dkg_time_s, " s");
-
   return expected_dkg_time_s;
 }
 
@@ -1326,7 +1324,7 @@ void SetTimeBySlots(BeaconSetupService::State state, uint64_t &time_slots_total,
   std::map<BeaconSetupService::State, uint64_t> time_slot_map;
 
   time_slot_map[BeaconSetupService::State::RESET]                          = 0;
-  time_slot_map[BeaconSetupService::State::CONNECT_TO_ALL]                 = 1;
+  time_slot_map[BeaconSetupService::State::CONNECT_TO_ALL]                 = 10;
   time_slot_map[BeaconSetupService::State::WAIT_FOR_READY_CONNECTIONS]     = 10;
   time_slot_map[BeaconSetupService::State::WAIT_FOR_SHARES]                = 10;
   time_slot_map[BeaconSetupService::State::WAIT_FOR_COMPLAINTS]            = 10;
@@ -1334,7 +1332,7 @@ void SetTimeBySlots(BeaconSetupService::State state, uint64_t &time_slots_total,
   time_slot_map[BeaconSetupService::State::WAIT_FOR_QUAL_SHARES]           = 10;
   time_slot_map[BeaconSetupService::State::WAIT_FOR_QUAL_COMPLAINTS]       = 10;
   time_slot_map[BeaconSetupService::State::WAIT_FOR_RECONSTRUCTION_SHARES] = 10;
-  time_slot_map[BeaconSetupService::State::DRY_RUN_SIGNING]                = 29;
+  time_slot_map[BeaconSetupService::State::DRY_RUN_SIGNING]                = 20;
 
   time_slot_for_state = time_slot_map[state];
 
@@ -1374,14 +1372,14 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
     {
       failures++;
       next_start_point += dkg_time;
-      dkg_time = dkg_time * 2;
+      dkg_time = dkg_time  + uint64_t(0.5 * expected_dkg_time_s);
     }
 
     expected_dkg_timespan_ = dkg_time;
     reference_timepoint_   = next_start_point;
 
     FETCH_LOG_INFO(LOGGING_NAME, "DKG: ", beacon_->aeon.round_start,
-                   " failures so far: ", failures);
+                   " failures so far: ", failures, " allotted time: ", expected_dkg_timespan_, " base time: ", expected_dkg_time_s);
   }
 
   // No timeout for these states
