@@ -18,8 +18,8 @@
 
 #include "dkg/pre_dkg_sync.hpp"
 
-#include <thread>
 #include <chrono>
+#include <thread>
 
 char const *LOGGING_NAME = "Pre-Dkg Sync";
 

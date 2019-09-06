@@ -1,6 +1,7 @@
 #
 # M U D D L E   N O D E
 #
+cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
 cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 project(muddle-node)
 
