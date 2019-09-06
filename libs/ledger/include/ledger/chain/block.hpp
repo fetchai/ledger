@@ -27,6 +27,7 @@
 #include "ledger/dag/dag_epoch.hpp"
 
 #include <cstdint>
+#include <ctime>
 #include <memory>
 #include <vector>
 

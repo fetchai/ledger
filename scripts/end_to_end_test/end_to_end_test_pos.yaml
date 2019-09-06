@@ -28,14 +28,14 @@ setup_conditions:
     node_connections: [[0, 1], [0, 2], [1, 2]]
     mining_nodes: [0, 1, 2]
     pos_mode: True
-    max_test_time: 240
+    max_test_time: 440
 
 steps:
+    - sleep : 20
     - send_txs : { "name": "batch1", "amount": 10, "nodes" : [1] }
     - verify_txs : { "name": "batch1", "nodes" : [0, 1, 2] }
     - destake : { "nodes" : [0] }
     - sleep : 4
     - send_txs : { "name": "batch1", "amount": 10, "nodes" : [1] }
     - verify_txs : { "name": "batch1", "nodes" : [0, 1, 2] }
-    - sleep : 10
 ...

@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include <algorithm>
+#include <set>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -28,6 +29,17 @@ std::unordered_set<K, H> operator&(std::unordered_set<K, H> const &lhs,
                                    std::unordered_set<K, H> const &rhs)
 {
   std::unordered_set<K, H> result;
+
+  std::copy_if(lhs.begin(), lhs.end(), std::inserter(result, result.begin()),
+               [&rhs](K const &item) { return rhs.find(item) != rhs.end(); });
+
+  return result;
+}
+
+template <typename K, typename H>
+std::set<K, H> operator&(std::set<K, H> const &lhs, std::set<K, H> const &rhs)
+{
+  std::set<K, H> result;
 
   std::copy_if(lhs.begin(), lhs.end(), std::inserter(result, result.begin()),
                [&rhs](K const &item) { return rhs.find(item) != rhs.end(); });
