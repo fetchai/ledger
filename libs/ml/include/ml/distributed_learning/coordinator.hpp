@@ -17,12 +17,16 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/random.hpp"
 #include "math/base_types.hpp"
 #include <mutex>
 
 namespace fetch {
 namespace ml {
 namespace distributed_learning {
+
+template <class TensorType>
+class TrainingClient;
 
 enum class CoordinatorMode
 {
@@ -43,12 +47,15 @@ struct CoordinatorParams
 
   CoordinatorMode mode;
   SizeType        iterations_count;
+  SizeType        number_of_peers;
 };
 
+template <typename TensorType>
 class Coordinator
 {
 public:
-  using SizeType = fetch::math::SizeType;
+  using SizeType      = fetch::math::SizeType;
+  using ClientPtrType = std::shared_ptr<TrainingClient<TensorType>>;
 
   Coordinator(CoordinatorParams const &params);
 
@@ -60,20 +67,33 @@ public:
 
   CoordinatorState GetState() const;
 
+  std::vector<std::shared_ptr<TrainingClient<TensorType>>> NextPeersList(std::string &client_id);
+
+  void AddClient(ClientPtrType const &new_client);
+  void SetClientsList(std::vector<ClientPtrType> const &new_client);
+
 private:
-  CoordinatorMode  mode_;
-  CoordinatorState state_           = CoordinatorState::RUN;
-  SizeType         iterations_done_ = 0;
-  SizeType         iterations_count_;
-  std::mutex       iterations_mutex_;
+  CoordinatorMode                                          mode_;
+  CoordinatorState                                         state_           = CoordinatorState::RUN;
+  SizeType                                                 iterations_done_ = 0;
+  SizeType                                                 iterations_count_;
+  std::mutex                                               iterations_mutex_;
+  std::vector<std::shared_ptr<TrainingClient<TensorType>>> clients_;
+  SizeType                                                 number_of_peers_;
+
+  // random number generator for shuffling peers
+  fetch::random::LaggedFibonacciGenerator<> gen_;
 };
 
-Coordinator::Coordinator(CoordinatorParams const &params)
+template <typename TensorType>
+Coordinator<TensorType>::Coordinator(CoordinatorParams const &params)
   : mode_(params.mode)
   , iterations_count_(params.iterations_count)
+  , number_of_peers_(params.number_of_peers)
 {}
 
-void Coordinator::IncrementIterationsCounter()
+template <typename TensorType>
+void Coordinator<TensorType>::IncrementIterationsCounter()
 {
   std::lock_guard<std::mutex> l(iterations_mutex_);
   iterations_done_++;
@@ -84,21 +104,76 @@ void Coordinator::IncrementIterationsCounter()
   }
 }
 
-void Coordinator::Reset()
+template <typename TensorType>
+void Coordinator<TensorType>::Reset()
 {
   iterations_done_ = 0;
   state_           = CoordinatorState::RUN;
 }
 
-CoordinatorMode Coordinator::GetMode() const
+template <typename TensorType>
+CoordinatorMode Coordinator<TensorType>::GetMode() const
 {
   return mode_;
 }
 
-CoordinatorState Coordinator::GetState() const
+template <typename TensorType>
+CoordinatorState Coordinator<TensorType>::GetState() const
 {
   return state_;
 }
+
+/**
+ * Add pointer to client
+ * @param clients
+ */
+template <typename TensorType>
+void Coordinator<TensorType>::AddClient(
+    std::shared_ptr<TrainingClient<TensorType>> const &new_client)
+{
+  clients_.push_back(new_client);
+}
+
+/**
+ * Add pointer to client
+ * @param clients
+ */
+template <typename TensorType>
+void Coordinator<TensorType>::SetClientsList(
+    std::vector<std::shared_ptr<TrainingClient<TensorType>>> const &new_clients)
+{
+  clients_ = new_clients;
+}
+
+/**
+ * Get list of new peers
+ */
+template <typename TensorType>
+std::vector<std::shared_ptr<TrainingClient<TensorType>>> Coordinator<TensorType>::NextPeersList(
+    std::string &client_id)
+{
+  std::vector<std::shared_ptr<TrainingClient<TensorType>>> shuffled_clients;
+
+  for (auto &cl : clients_)
+  {
+    if (cl->GetId() == client_id)
+    {
+      continue;
+    }
+    shuffled_clients.push_back(cl);
+  }
+
+  // Shuffle the peers list to get new contact for next update
+  fetch::random::Shuffle(gen_, shuffled_clients, shuffled_clients);
+
+  // Create vector subset
+  std::vector<std::shared_ptr<TrainingClient<TensorType>>> new_peers(
+      shuffled_clients.begin(),
+      shuffled_clients.begin() + static_cast<fetch::math::PtrDiffType>(number_of_peers_));
+
+  return std::move(new_peers);
+}
+
 }  // namespace distributed_learning
 }  // namespace ml
 }  // namespace fetch

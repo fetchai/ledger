@@ -18,22 +18,26 @@
 //------------------------------------------------------------------------------
 
 #include "core/random/lcg.hpp"
+#include "math/base_types.hpp"
+#include "math/tensor.hpp"
+
+#include <numeric>
 
 namespace fetch {
 namespace ml {
 
 class UnigramTable
 {
-  using SizeType = fetch::math::SizeType;
-
 public:
-  UnigramTable(std::vector<SizeType> const &frequencies = {}, SizeType size = 1e8);
+  using SizeType = fetch::math::SizeType;
+  explicit UnigramTable(std::vector<SizeType> const &frequencies = {}, SizeType size = 1e8);
 
-  void Reset(std::vector<SizeType> const &frequencies, SizeType size);
+  void ResetTable(std::vector<SizeType> const &count, SizeType size);
   bool Sample(SizeType &ret);
   bool SampleNegative(SizeType positive_index, SizeType &ret);
   bool SampleNegative(fetch::math::Tensor<SizeType> const &positive_indices, SizeType &ret);
-  void Reset();
+  void ResetRNG();
+  std::vector<SizeType> GetTable();
 
 private:
   std::vector<SizeType>                      data_;
@@ -46,36 +50,41 @@ private:
  * @param count
  * @param size
  */
-void UnigramTable::Reset(std::vector<SizeType> const &count, SizeType size)
+inline void UnigramTable::ResetTable(std::vector<SizeType> const &count, SizeType size)
 {
 
-  if (size && count.size())
+  if (size && !count.empty())
   {
-    // sum_counts
-    SizeType sum_count =
-        static_cast<SizeType>(std::accumulate(std::begin(count), std::end(count), 0));
-
     data_.resize(size);
 
     double total(0);
     for (auto const &c : count)
     {
-      total += std::pow(static_cast<double>(c) / static_cast<double>(sum_count), 0.75);
+      total += std::pow(static_cast<double>(c), 0.75);
     }
 
     std::size_t i(0);
-    double n = pow(static_cast<double>(count[i]) / static_cast<double>(sum_count), 0.75) / total;
+    double      n = pow(static_cast<double>(count[i]), 0.75) / total;
     for (std::size_t j(0); j < size; ++j)
     {
-      data_[j] = i;
-      if (static_cast<double>(j) / static_cast<double>(size) > static_cast<double>(n))
+      while (static_cast<double>(j) / static_cast<double>(size) > static_cast<double>(n))
       {
         i++;
-        n += pow(static_cast<double>(count[i]) / static_cast<double>(sum_count), 0.75) / total;
+        assert(i < count.size());
+        n += pow(static_cast<double>(count[i]), 0.75) / total;
       }
+      data_[j] = i;
     }
-    assert(i == count.size() - 1);
   }
+}
+
+/**
+ * Returns the unigram table. Useful for testing.
+ * @return
+ */
+inline std::vector<typename UnigramTable::SizeType> UnigramTable::GetTable()
+{
+  return data_;
 }
 
 /**
@@ -83,16 +92,16 @@ void UnigramTable::Reset(std::vector<SizeType> const &count, SizeType size)
  * @param size size of the table
  * @param frequencies vector of frequencies used to calculate how many rows per index
  */
-UnigramTable::UnigramTable(std::vector<SizeType> const &frequencies, SizeType size)
+inline UnigramTable::UnigramTable(std::vector<SizeType> const &frequencies, SizeType size)
 {
-  Reset(frequencies, size);
+  ResetTable(frequencies, size);
 }
 
 /**
  * samples a random data point from the unigram table
  * @return
  */
-bool UnigramTable::Sample(SizeType &ret)
+inline bool UnigramTable::Sample(SizeType &ret)
 {
   ret = data_[rng_() % data_.size()];
   return true;
@@ -103,7 +112,7 @@ bool UnigramTable::Sample(SizeType &ret)
  * @param positive_index
  * @return
  */
-bool UnigramTable::SampleNegative(SizeType positive_index, SizeType &ret)
+inline bool UnigramTable::SampleNegative(SizeType positive_index, SizeType &ret)
 {
   ret = data_[rng_() % data_.size()];
 
@@ -126,8 +135,8 @@ bool UnigramTable::SampleNegative(SizeType positive_index, SizeType &ret)
  * @param ret
  * @return
  */
-bool UnigramTable::SampleNegative(fetch::math::Tensor<SizeType> const &positive_indices,
-                                  SizeType &                           ret)
+inline bool UnigramTable::SampleNegative(fetch::math::Tensor<SizeType> const &positive_indices,
+                                         SizeType &                           ret)
 {
   ret = data_[rng_() % data_.size()];
 
@@ -159,7 +168,7 @@ bool UnigramTable::SampleNegative(fetch::math::Tensor<SizeType> const &positive_
 /**
  * resets random number generation for sampling
  */
-void UnigramTable::Reset()
+inline void UnigramTable::ResetRNG()
 {
   rng_.Seed(42 * 1337);
 }
