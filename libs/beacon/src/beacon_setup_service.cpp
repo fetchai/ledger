@@ -123,6 +123,8 @@ BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identit
         "beacon_dkg_all_connections_gauge", "Connections the network has made in general")}
   , beacon_dkg_failures_total_{telemetry::Registry::Instance().CreateCounter(
         "beacon_dkg_failures_total", "The total number of DKG failures")}
+  , beacon_dkg_dry_run_failures_total_{telemetry::Registry::Instance().CreateCounter(
+        "beacon_dkg_dry_run_failures_total", "The total number of DKG dry run failures")}
 {
   // clang-format off
   state_machine_->RegisterHandler(State::IDLE, this, &BeaconSetupService::OnIdle);
@@ -213,6 +215,7 @@ BeaconSetupService::State BeaconSetupService::OnReset()
   reconstruction_shares_received_.clear();
   shares_received_.clear();
   dry_run_shares_.clear();
+  dry_run_public_keys_.clear();
 
   // The pre-dkg will get held in reset mode until the DKG start time
   if (timer_to_proceed_.HasExpired())
@@ -273,13 +276,11 @@ BeaconSetupService::State BeaconSetupService::OnConnectToAll()
       {
         // tell muddle to connect to the address with the specified hint
         muddle_.ConnectTo(address, *hint);
-        FETCH_LOG_INFO(LOGGING_NAME, "\n\nAdded peer with hint");
       }
       else
       {
         // tell muddle to connect to the address using normal service discovery
         muddle_.ConnectTo(address);
-        FETCH_LOG_INFO(LOGGING_NAME, "\n\nAdded peer without hint");
       }
     }
 
@@ -685,12 +686,14 @@ BeaconSetupService::State BeaconSetupService::OnDryRun()
     // insert ourselves - others will insert here also via gossip
     dry_run_shares_[identity_.identifier()] = beacon_->member_share;
 
+    DryRunInfo to_send{beacon_->manager.group_public_key(), beacon_->member_share};
+
     // Gossip this to everyone
     // TODO(HUT): size of member share is known so can reserve.
     {
       // serializer.Reserve(counter.size());
       fetch::serializers::MsgPackSerializer serializer;
-      serializer << dry_run_shares_[identity_.identifier()];
+      serializer << to_send;
       FETCH_LOG_INFO(LOGGING_NAME, "share size: ", serializer.size());
       endpoint_.Broadcast(SERVICE_DKG, CHANNEL_SIGN_DRY_RUN, serializer.data());
     }
@@ -698,12 +701,34 @@ BeaconSetupService::State BeaconSetupService::OnDryRun()
 
   if (timer_to_proceed_.HasExpired())
   {
+    bool found_key = false;
+
+    for(auto const &key_and_count : dry_run_public_keys_)
+    {
+      if(key_and_count.second >= beacon_->manager.polynomial_degree())
+      {
+        found_key = true;
+      }
+    }
+
+    if(!found_key)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to reach consensus on group public key!");
+    }
+
     for (auto const &share : dry_run_shares_)
     {
       beacon_->manager.AddSignaturePart(share.second.identity, share.second.signature);
     }
 
-    if (beacon_->manager.can_verify() && beacon_->manager.Verify())
+    bool const could_sign = beacon_->manager.can_verify() && beacon_->manager.Verify();
+
+    if(!could_sign)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to sign group signature");
+    }
+
+    if (could_sign && found_key)
     {
       SetTimeToProceed(State::BEACON_READY);
       return State::BEACON_READY;
@@ -966,12 +991,13 @@ void BeaconSetupService::OnNewDryRunPacket(muddle::Packet const &packet,
 
   fetch::serializers::MsgPackSerializer serialiser(packet.GetPayload());
 
-  SignatureShare share;
-  serialiser >> share;
+  DryRunInfo to_receive;
+  serialiser >> to_receive;
 
   // TODO(HUT): cabinet check
   std::lock_guard<std::mutex> lock(mutex_);
-  dry_run_shares_[packet.GetSender()] = share;
+  dry_run_public_keys_[to_receive.public_key]++;
+  dry_run_shares_[packet.GetSender()] = to_receive.sig_share;
 }
 
 /**
@@ -1300,7 +1326,7 @@ void SetTimeBySlots(BeaconSetupService::State state, uint64_t &time_slots_total,
   std::map<BeaconSetupService::State, uint64_t> time_slot_map;
 
   time_slot_map[BeaconSetupService::State::RESET]                          = 0;
-  time_slot_map[BeaconSetupService::State::CONNECT_TO_ALL]                 = 10;
+  time_slot_map[BeaconSetupService::State::CONNECT_TO_ALL]                 = 1;
   time_slot_map[BeaconSetupService::State::WAIT_FOR_READY_CONNECTIONS]     = 10;
   time_slot_map[BeaconSetupService::State::WAIT_FOR_SHARES]                = 10;
   time_slot_map[BeaconSetupService::State::WAIT_FOR_COMPLAINTS]            = 10;
@@ -1308,7 +1334,7 @@ void SetTimeBySlots(BeaconSetupService::State state, uint64_t &time_slots_total,
   time_slot_map[BeaconSetupService::State::WAIT_FOR_QUAL_SHARES]           = 10;
   time_slot_map[BeaconSetupService::State::WAIT_FOR_QUAL_COMPLAINTS]       = 10;
   time_slot_map[BeaconSetupService::State::WAIT_FOR_RECONSTRUCTION_SHARES] = 10;
-  time_slot_map[BeaconSetupService::State::DRY_RUN_SIGNING]                = 20;
+  time_slot_map[BeaconSetupService::State::DRY_RUN_SIGNING]                = 29;
 
   time_slot_for_state = time_slot_map[state];
 
@@ -1390,4 +1416,5 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
 }
 
 }  // namespace beacon
+
 }  // namespace fetch
