@@ -139,6 +139,12 @@ BeaconService::BeaconService(MuddleInterface &               muddle,
                                   &BeaconService::OnWaitForPublicKeys);
   state_machine_->RegisterHandler(State::OBSERVE_ENTROPY_GENERATION, this,
                                   &BeaconService::OnObserveEntropyGeneration);
+
+  state_machine_->OnStateChange([this](State current, State previous) {
+    FETCH_UNUSED(this);
+    FETCH_LOG_INFO(LOGGING_NAME, "Current state: ", ToString(current),
+                   " (previous: ", ToString(previous), ")");
+  });
 }
 
 BeaconService::Status BeaconService::GenerateEntropy(Digest /*block_digest*/, uint64_t block_number,
@@ -447,9 +453,9 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
     current_entropy_.entropy   = crypto::Hash<crypto::SHA256>(crypto::Hash<crypto::SHA256>(sign));
 
     // Broadcasting the entropy to those listening, but not participating
-    Serializer msgser;
-    msgser << current_entropy_;
-    endpoint_.Broadcast(SERVICE_DKG, CHANNEL_ENTROPY_DISTRIBUTION, msgser.data());
+    //Serializer msgser;
+    //msgser << current_entropy_;
+    //endpoint_.Broadcast(SERVICE_DKG, CHANNEL_ENTROPY_DISTRIBUTION, msgser.data());
 
     return State::COMPLETE;
   }
