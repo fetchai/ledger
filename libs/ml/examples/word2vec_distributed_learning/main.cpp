@@ -55,11 +55,11 @@ int main(int ac, char **av)
   // Distributed learning parameters:
   SizeType number_of_clients    = 10;
   SizeType number_of_rounds     = 10;
+  coord_params.number_of_peers  = 3;
   coord_params.mode             = CoordinatorMode::SEMI_SYNCHRONOUS;
   coord_params.iterations_count = 100;
   client_params.batch_size      = 32;
   client_params.learning_rate   = static_cast<DataType>(.001f);
-  client_params.number_of_peers = 3;
 
   // Word2Vec parameters:
   client_params.vocab_file           = av[1];
@@ -83,8 +83,9 @@ int main(int ac, char **av)
   client_params.learning_rate_param.starting_learning_rate = client_params.starting_learning_rate;
   client_params.learning_rate_param.ending_learning_rate   = client_params.ending_learning_rate;
 
-  std::shared_ptr<std::mutex>  console_mutex_ptr_ = std::make_shared<std::mutex>();
-  std::shared_ptr<Coordinator> coordinator        = std::make_shared<Coordinator>(coord_params);
+  std::shared_ptr<std::mutex>              console_mutex_ptr_ = std::make_shared<std::mutex>();
+  std::shared_ptr<Coordinator<TensorType>> coordinator =
+      std::make_shared<Coordinator<TensorType>>(coord_params);
   std::cout << "FETCH Distributed Word2vec Demo -- Asynchronous" << std::endl;
 
   std::vector<std::shared_ptr<TrainingClient<TensorType>>> clients(number_of_clients);
@@ -96,11 +97,11 @@ int main(int ac, char **av)
     // TODO(1597): Replace ID with something more sensible
   }
 
+  // Give list of clients to coordinator
+  coordinator->SetClientsList(clients);
+
   for (SizeType i(0); i < number_of_clients; ++i)
   {
-    // Give every client the full list of other clients
-    clients[i]->AddPeers(clients);
-
     // Give each client pointer to coordinator
     clients[i]->SetCoordinator(coordinator);
   }
