@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/logging.hpp"
+#include "meta/value_util.hpp"
 
 #include <cassert>
 #include <iostream>
@@ -28,17 +29,10 @@ namespace assert {
 namespace details {
 struct Printer
 {
-  template <typename T, typename... Args>
-  static void Print(T const &next, Args... args)
+  template <typename... Args>
+  static void Print(Args &&... args)
   {
-    std::cerr << next;
-    Print(args...);
-  }
-
-  template <typename T>
-  static void Print(T const &next)
-  {
-    std::cerr << next;
+    value_util::ForEach([](auto &&arg) { std::cerr << arg; }, std::forward<Args>(args)...);
   }
 };
 }  // namespace details

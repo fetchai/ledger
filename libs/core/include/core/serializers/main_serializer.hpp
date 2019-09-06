@@ -29,6 +29,7 @@
 #include "core/serializers/group_definitions.hpp"
 #include "core/serializers/main_serializer_definition.hpp"
 #include "core/serializers/map_interface.hpp"
+#include "meta/value_util.hpp"
 #include "vectorise/platform.hpp"
 
 #include <stdexcept>
@@ -425,15 +426,8 @@ MsgPackSerializer &MsgPackSerializer::Append(ARGS const &... args)
     }
   }
 
-  AppendInternal(args...);
+  value_util::ForEach([this](auto &&arg) { *this << arg; }, args...);
   return *this;
-}
-
-template <typename T, typename... ARGS>
-void MsgPackSerializer::AppendInternal(T const &arg, ARGS const &... args)
-{
-  *this << arg;
-  AppendInternal(args...);
 }
 
 }  // namespace serializers

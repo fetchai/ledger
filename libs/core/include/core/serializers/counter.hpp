@@ -28,6 +28,7 @@
 #include "core/serializers/exception.hpp"
 #include "core/serializers/group_definitions.hpp"
 #include "core/serializers/map_interface.hpp"
+#include "meta/value_util.hpp"
 #include "vectorise/platform.hpp"
 
 #include <cstddef>
@@ -198,23 +199,13 @@ public:
   }
 
   template <typename... ARGS>
-  self_type &Append(ARGS const &... args)
+  self_type &Append(ARGS &&... args)
   {
-    AppendInternal(args...);
+    value_util::ForEach([this](auto &&arg) { *this << arg; }, std::forward<ARGS>(args)...);
     return *this;
   }
 
 private:
-  template <typename T, typename... ARGS>
-  void AppendInternal(T const &arg, ARGS const &... args)
-  {
-    *this << arg;
-    AppendInternal(args...);
-  }
-
-  void AppendInternal()
-  {}
-
   std::size_t size_          = 0;
   std::size_t pos_           = 0;
   std::size_t reserved_size_ = 0;

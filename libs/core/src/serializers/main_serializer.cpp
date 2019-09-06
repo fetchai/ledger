@@ -154,8 +154,5 @@ byte_array::ByteArray const &MsgPackSerializer::data() const
   return data_;
 }
 
-void MsgPackSerializer::AppendInternal()
-{}
-
 }  // namespace serializers
 }  // namespace fetch

@@ -160,10 +160,6 @@ public:
   MsgPackSerializer &Append(ARGS const &... args);
 
 private:
-  template <typename T, typename... ARGS>
-  void AppendInternal(T const &arg, ARGS const &... args);
-  void AppendInternal();
-
   ByteArray   data_;
   uint64_t    pos_ = 0;
   SizeCounter size_counter_;

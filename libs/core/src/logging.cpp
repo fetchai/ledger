@@ -29,6 +29,13 @@
 namespace fetch {
 namespace {
 
+auto LogCounter(char const *type, char const *hint)
+{
+  return telemetry::Registry::Instance().CreateCounter(
+      std::string("ledger_") + type + "log_messages_total",
+      std::string("The number of ") + hint + "log messages printed");
+}
+
 class LogRegistry
 {
 public:
@@ -59,84 +66,59 @@ private:
   Registry registry_;
 
   // Telemetry
-  CounterPtr log_messages_{telemetry::Registry::Instance().CreateCounter(
-      "ledger_log_messages_total", "The number of log messages printed")};
-  CounterPtr log_trace_messages_{telemetry::Registry::Instance().CreateCounter(
-      "ledger_log_trace_messages_total", "The number of trace log messages printed")};
-  CounterPtr log_debug_messages_{telemetry::Registry::Instance().CreateCounter(
-      "ledger_log_debug_messages_total", "The number of debug log messages printed")};
-  CounterPtr log_info_messages_{telemetry::Registry::Instance().CreateCounter(
-      "ledger_log_info_messages_total", "The number of info log messages printed")};
-  CounterPtr log_warn_messages_{telemetry::Registry::Instance().CreateCounter(
-      "ledger_log_warn_messages_total", "The number of warning log messages printed")};
-  CounterPtr log_error_messages_{telemetry::Registry::Instance().CreateCounter(
-      "ledger_log_error_messages_total", "The number of error log messages printed")};
-  CounterPtr log_critical_messages_{telemetry::Registry::Instance().CreateCounter(
-      "ledger_log_critical_messages_total", "The number of critical log messages printed")};
+  CounterPtr log_messages_{LogCounter("", "")};
+  CounterPtr log_trace_messages_{LogCounter("trace_", "trace ")};
+  CounterPtr log_debug_messages_{LogCounter("debug_", "debug ")};
+  CounterPtr log_info_messages_{LogCounter("info_", "info ")};
+  CounterPtr log_warn_messages_{LogCounter("warn_", "warning ")};
+  CounterPtr log_error_messages_{LogCounter("error_", "error ")};
+  CounterPtr log_critical_messages_{LogCounter("critical_", "critical ")};
 };
 
 constexpr LogLevel DEFAULT_LEVEL = LogLevel::INFO;
 
 LogRegistry registry_;
 
-LogLevel ConvertToLevel(spdlog::level::level_enum level)
+constexpr LogLevel ConvertToLevel(spdlog::level::level_enum level) noexcept
 {
-  LogLevel new_level = LogLevel::INFO;
-
   switch (level)
   {
   case spdlog::level::trace:
-    new_level = LogLevel::TRACE;
-    break;
+    return LogLevel::TRACE;
   case spdlog::level::debug:
-    new_level = LogLevel::DEBUG;
-    break;
+    return LogLevel::DEBUG;
   case spdlog::level::info:
-    new_level = LogLevel::INFO;
-    break;
+    return LogLevel::INFO;
   case spdlog::level::warn:
-    new_level = LogLevel::WARNING;
-    break;
+    return LogLevel::WARNING;
   case spdlog::level::err:
-    new_level = LogLevel::ERROR;
-    break;
+    return LogLevel::ERROR;
   case spdlog::level::critical:
-    new_level = LogLevel::CRITICAL;
-    break;
-  case spdlog::level::off:
-    break;
+    return LogLevel::CRITICAL;
+  default:
+    return LogLevel::INFO;
   }
-
-  return new_level;
 }
 
-spdlog::level::level_enum ConvertFromLevel(LogLevel level)
+constexpr spdlog::level::level_enum ConvertFromLevel(LogLevel level) noexcept
 {
-  spdlog::level::level_enum new_level = spdlog::level::info;
-
   switch (level)
   {
   case LogLevel::TRACE:
-    new_level = spdlog::level::trace;
-    break;
+    return spdlog::level::trace;
   case LogLevel::DEBUG:
-    new_level = spdlog::level::debug;
-    break;
+    return spdlog::level::debug;
   case LogLevel::INFO:
-    new_level = spdlog::level::info;
-    break;
+    return spdlog::level::info;
   case LogLevel::WARNING:
-    new_level = spdlog::level::warn;
-    break;
+    return spdlog::level::warn;
   case LogLevel::ERROR:
-    new_level = spdlog::level::err;
-    break;
+    return spdlog::level::err;
   case LogLevel::CRITICAL:
-    new_level = spdlog::level::critical;
-    break;
+    return spdlog::level::critical;
+  default:
+    return spdlog::level::info;
   }
-
-  return new_level;
 }
 
 LogRegistry::LogRegistry()
@@ -231,7 +213,7 @@ void SetLogLevel(char const *name, LogLevel level)
   registry_.SetLevel(name, level);
 }
 
-void Log(LogLevel level, char const *name, std::string &&message)
+void Log(LogLevel level, char const *name, std::string message)
 {
   registry_.Log(level, name, std::move(message));
 }

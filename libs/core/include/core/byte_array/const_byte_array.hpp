@@ -499,7 +499,8 @@ private:
   template <typename... Args>
   void AppendInternal(Args... args)
   {
-    auto old_size{size()};
+    const auto old_size{size()};
+
     // grow enough to contain all the arguments
     Resize(value_util::Accumulate(
         // A binary callable object that, when called,
@@ -516,6 +517,7 @@ private:
               return accum + 1;
             })),
         old_size, args...));
+
     // write down arguments' contents
     value_util::Accumulate(
         /**
