@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/random.hpp"
 #include "core/serializers/group_definitions.hpp"
 #include "ml/dataloaders/dataloader.hpp"
 
@@ -85,6 +86,8 @@ protected:
   SizeType batch_label_dim_ = fetch::math::numeric_max<SizeType>();
   SizeType batch_data_dim_  = fetch::math::numeric_max<SizeType>();
 
+  random::Random rand;
+
   void UpdateRanges();
   void UpdateCursor() override;
 };
@@ -103,10 +106,19 @@ template <typename LabelType, typename InputType>
 typename TensorDataLoader<LabelType, InputType>::ReturnType
 TensorDataLoader<LabelType, InputType>::GetNext()
 {
-
   ReturnType ret(labels_.View(*this->current_cursor_).Copy(one_sample_label_shape_),
                  {data_.View(*this->current_cursor_).Copy(one_sample_data_shapes_.at(0))});
-  (*this->current_cursor_)++;
+
+  if (this->random_mode_)
+  {
+    *this->current_cursor_ =
+        this->current_min_ + (static_cast<SizeType>(decltype(rand)::generator()) % Size());
+  }
+  else
+  {
+    (*this->current_cursor_)++;
+  }
+
   return ret;
 }
 
