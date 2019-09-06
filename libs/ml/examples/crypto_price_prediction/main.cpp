@@ -50,7 +50,7 @@ using DataLoaderType   = fetch::ml::dataloaders::TensorDataLoader<TensorType, Te
 
 struct TrainingParams
 {
-  SizeType epochs{1};
+  SizeType epochs{5};
   SizeType batch_size{1000};
   bool     normalise = false;
 };
@@ -81,11 +81,11 @@ std::shared_ptr<GraphType> BuildModel(std::string &input_name, std::string &outp
   std::string layer_2 = g->AddNode<Dropout<TensorType>>("Dropout_1", {layer_1}, keep_prob_1);
 
   output_name = g->AddNode<fetch::ml::layers::Convolution1D<TensorType>>(
-      "Conv1D_2", {layer_2}, conv1D_2_filters, conv1D_2_input_channels, conv1D_2_kernel_size,
+      "Output", {layer_2}, conv1D_2_filters, conv1D_2_input_channels, conv1D_2_kernel_size,
       conv1D_2_stride);
 
   error_name = g->AddNode<fetch::ml::ops::MeanSquareErrorLoss<TensorType>>(
-      "error_name", {output_name, label_name});
+      "Error", {output_name, label_name});
   return g;
 }
 
@@ -202,6 +202,8 @@ int main(int ac, char **av)
     {
       scaler.DeNormalise(prediction, prediction);
     }
+
+    SaveGraphToFile(*g, "./bitcoin_price_prediction_graph" + std::to_string(i) + ".bin");
 
     auto result = fetch::math::MeanAbsoluteError(prediction, orig_test_label);
     std::cout << "mean absolute validation error: " << result << std::endl;
