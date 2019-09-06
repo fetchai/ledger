@@ -44,24 +44,13 @@ public:
 
   explicit PlaceHolder(SPType const &sp)
     : Ops<T>(sp)
-  {
-    if (sp.output)
-    {
-      output_ = std::make_shared<TensorType>();
-      output_->Resize(sp.output->shape());
-      output_->Copy(*(sp.output));
-    }
-  }
+  {}
 
   ~PlaceHolder() override = default;
 
   std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
   {
     SPType tp{};
-    if (output_)
-    {
-      tp.output = std::make_shared<TensorType>(output_->Copy());
-    }
     return std::make_shared<SPType>(tp);
   }
 
@@ -117,6 +106,7 @@ public:
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     FETCH_UNUSED(inputs);
+    assert(output_);
     return output_->shape();
   }
 
