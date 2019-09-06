@@ -42,6 +42,7 @@ class PeerConnectionList;
 class MuddleRegister;
 class MuddleEndpoint;
 class DirectMessageService;
+class NetworkId;
 
 class PeerSelector : public core::PeriodicRunnable
 {
@@ -74,8 +75,9 @@ public:
   using PeersInfo = std::unordered_map<Address, Metadata>;
 
   // Construction / Destruction
-  PeerSelector(Duration const &interval, core::Reactor &reactor, MuddleRegister const &reg,
-               PeerConnectionList &connections, MuddleEndpoint &endpoint);
+  PeerSelector(NetworkId const &network, Duration const &interval, core::Reactor &reactor,
+               MuddleRegister const &reg, PeerConnectionList &connections,
+               MuddleEndpoint &endpoint);
   PeerSelector(PeerSelector const &) = delete;
   PeerSelector(PeerSelector &&)      = delete;
   ~PeerSelector() override           = default;
@@ -98,6 +100,9 @@ private:
   void   ResolveAddresses(Addresses const &addresses);
   void   OnResolvedAddress(Address const &address, service::Promise const &promise);
   UriSet GenerateUriSet(Addresses const &addresses);
+
+  std::string const name_;
+  char const *const logging_name_{name_.c_str()};
 
   core::Reactor &       reactor_;
   PeerConnectionList &  connections_;

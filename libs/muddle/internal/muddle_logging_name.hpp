@@ -17,12 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include <cstdint>
+#include <string>
 
 namespace fetch {
 namespace muddle {
 
-static constexpr uint16_t CHANNEL_DISCOVERY = 10;
+class NetworkId;
+
+std::string GenerateLoggingName(char const *base, NetworkId const &network);
 
 }  // namespace muddle
 }  // namespace fetch

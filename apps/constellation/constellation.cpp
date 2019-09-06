@@ -309,7 +309,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   , http_{http_network_manager_}
   , http_modules_{http_open_api_module_,
                   std::make_shared<p2p::P2PHttpInterface>(
-            cfg_.log2_num_lanes, chain_, block_packer_,
+                      cfg_.log2_num_lanes, chain_, block_packer_,
                       p2p::P2PHttpInterface::WeakStateMachines{
                           main_chain_service_->GetWeakStateMachine(),
                           block_coordinator_.GetWeakStateMachine()}),
@@ -318,7 +318,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
                   std::make_shared<ledger::ContractHttpInterface>(*storage_, tx_processor_),
                   std::make_shared<LoggingHttpModule>(),
                   std::make_shared<TelemetryHttpModule>(),
-        std::make_shared<MuddleStatusModule>(),
+                  std::make_shared<MuddleStatusModule>(),
                   std::make_shared<HealthCheckHttpModule>(chain_, *main_chain_service_,
                                                           block_coordinator_)}
   , uptime_{telemetry::Registry::Instance().CreateCounter(

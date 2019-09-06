@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,44 +16,20 @@
 //
 //------------------------------------------------------------------------------
 
-#include "muddle/address.hpp"
-#include "network/uri.hpp"
+#include "muddle/network_id.hpp"
+#include "muddle_logging_name.hpp"
 
-#include <chrono>
-#include <unordered_map>
+#include <sstream>
 
 namespace fetch {
 namespace muddle {
 
-class DiscoveryCache
+std::string GenerateLoggingName(char const *base, NetworkId const &network)
 {
-public:
-  using Uris = std::vector<network::Uri>;
-
-  // Construction / Destruction
-  DiscoveryCache()                       = default;
-  DiscoveryCache(DiscoveryCache const &) = delete;
-  DiscoveryCache(DiscoveryCache &&)      = delete;
-  ~DiscoveryCache()                      = default;
-
-  // Operators
-  DiscoveryCache &operator=(DiscoveryCache const &) = delete;
-  DiscoveryCache &operator=(DiscoveryCache &&) = delete;
-
-private:
-  using Clock     = std::chrono::steady_clock;
-  using Timepoint = Clock::time_point;
-
-  struct Entry
-  {
-    Uris      uris;
-    Timepoint timestamp{Clock::now()};
-
-    explicit Entry(Uris u)
-      : uris{std::move(u)}
-    {}
-  };
-};
+  std::ostringstream oss{};
+  oss << base << ':' << network.ToString();
+  return oss.str();
+}
 
 }  // namespace muddle
 }  // namespace fetch
