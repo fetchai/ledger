@@ -163,9 +163,9 @@ private:
   RequestingSubTreeList pending_subtree_;
   RequestingTxList      pending_objects_;
 
-  std::queue<uint8_t>                                          roots_to_sync_;
+  std::queue<uint64_t>                                         roots_to_sync_;
   uint64_t                                                     root_size_ = 0;
-  std::unordered_map<PromiseOfTxList::PromiseCounter, uint8_t> promise_id_to_roots_;
+  std::unordered_map<PromiseOfTxList::PromiseCounter, uint64_t> promise_id_to_roots_;
 
   std::atomic_bool is_ready_{false};
 };

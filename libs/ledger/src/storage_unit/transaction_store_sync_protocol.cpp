@@ -73,6 +73,7 @@ void TransactionStoreSyncProtocol::TrimCache()
 {
   generics::MilliTimer timer("ObjectSync:TrimCache", 500);
   FETCH_LOCK(cache_mutex_);
+  FETCH_LOG_INFO(LOGGING_NAME, "Lane ", id_, ": TrimCache invoked.");
 
   // reserve the space for the next cache
   Cache next_cache;
@@ -95,7 +96,7 @@ void TransactionStoreSyncProtocol::TrimCache()
   if (curr_cache_size && (next_cache_size != curr_cache_size))
   {
     FETCH_UNUSED(id_);  // logging only
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Lane ", id_, ": New cache size: ", next_cache_size,
+    FETCH_LOG_INFO(LOGGING_NAME, "Lane ", id_, ": New cache size: ", next_cache_size,
                     " Old cache size: ", curr_cache_size);
   }
 
