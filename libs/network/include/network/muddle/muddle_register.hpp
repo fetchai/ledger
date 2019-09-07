@@ -73,7 +73,7 @@ protected:
   /// @}
 
 private:
-  mutable Mutex connection_map_lock_{__LINE__, __FILE__};
+  mutable Mutex connection_map_lock_;
   ConnectionMap connection_map_;
   Dispatcher &  dispatcher_;
 };

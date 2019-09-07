@@ -129,7 +129,7 @@ private:
 
   Router &router_;
 
-  mutable Mutex lock_{__LINE__, __FILE__};
+  mutable Mutex lock_;
   PeerSet       persistent_peers_;
   PeerMap       peer_connections_;
   MetadataMap   peer_metadata_;

@@ -47,7 +47,7 @@ public:
                 const network_manager_type &                 network_manager)
     : connection_(connection)
     , network_manager_(network_manager)
-    , message_mutex_(__LINE__, __FILE__)
+    , message_mutex_{}
   {
     auto ptr = connection_.lock();
     if (ptr)

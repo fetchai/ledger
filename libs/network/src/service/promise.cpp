@@ -38,7 +38,7 @@ void LogTimout(NAME const &name, ID const &id)
 }  // namespace
 
 PromiseImplementation::Counter PromiseImplementation::counter_{0};
-Mutex                          PromiseImplementation::counter_lock_{__LINE__, __FILE__};
+Mutex                          PromiseImplementation::counter_lock_;
 
 PromiseBuilder PromiseImplementation::WithHandlers()
 {
