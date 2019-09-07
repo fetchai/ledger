@@ -25,6 +25,8 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <stdexcept>
+#include <string>
 
 using namespace fetch::byte_array;
 
@@ -79,7 +81,6 @@ public:
 
 TEST(MsgPacker, SimpleTypes)
 {
-  // Setup
   MsgPackSerializer stream;
   HelloWorld        a1, b1;
   a1.compact = true;

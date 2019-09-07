@@ -57,17 +57,9 @@ private:
   std::string description_{};
 };
 
-inline std::istream &operator>>(std::istream &stream, SettingBase &setting)
-{
-  setting.FromStream(stream);
-  return stream;
-}
+std::istream &operator>>(std::istream &stream, SettingBase &setting);
 
-inline std::ostream &operator<<(std::ostream &stream, SettingBase const &setting)
-{
-  setting.ToStream(stream);
-  return stream;
-}
+std::ostream &operator<<(std::ostream &stream, SettingBase const &setting);
 
 }  // namespace settings
 }  // namespace fetch

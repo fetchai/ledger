@@ -100,7 +100,7 @@ public:
    * @fnc is a pointer to the callable function.
    *
    * The pointer provided is used to invoke the callable when a call
-   * matching the identifier is recieved by a service.
+   * matching the identifier is received by a service.
    *
    * In the next implementation of this, one should use unique_ptr
    * rather than a raw pointer. This will have no impact on the rest of

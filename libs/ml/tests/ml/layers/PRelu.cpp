@@ -19,11 +19,11 @@
 #include "math/tensor.hpp"
 #include "ml/layers/PRelu.hpp"
 #include "ml/meta/ml_type_traits.hpp"
+#include "ml/serializers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
-#include "ml/serializers/ml_types.hpp"
 
 #include <memory>
 #include <vector>

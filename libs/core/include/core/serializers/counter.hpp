@@ -35,6 +35,7 @@
 #include <exception>
 #include <stdexcept>
 #include <type_traits>
+#include <typeinfo>
 
 namespace fetch {
 namespace serializers {

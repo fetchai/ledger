@@ -125,8 +125,7 @@ private:
   RecentQueue     most_recent_seen_;  ///< The queue of elements to be stored
   Callback        set_callback_;      ///< The completion handler
   Flag            stop_{false};       ///< Flag to signal the stop of the worker
-  static constexpr core::Tickets::Count recent_queue_alarm_threshold{RecentQueue::QUEUE_LENGTH >>
-                                                                     1};
+  static constexpr std::size_t recent_queue_alarm_threshold{RecentQueue::QUEUE_LENGTH >> 1u};
 };
 
 /**
@@ -402,7 +401,7 @@ bool TransientObjectStore<O>::Has(ResourceID const &rid)
 template <typename O>
 void TransientObjectStore<O>::Set(ResourceID const &rid, O const &object, bool newly_seen)
 {
-  static core::Tickets::Count prev_count{0};
+  static std::size_t prev_count{0};
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Adding TX: ", byte_array::ToBase64(rid.id()));
 

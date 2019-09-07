@@ -117,8 +117,6 @@ public:
   }
 
 private:
-  constexpr static char const *LOGGING_NAME = "JSONDocument";
-
   struct JSONObject
   {
     uint64_t start = 0;
