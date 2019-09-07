@@ -221,6 +221,7 @@ BeaconSetupService::State BeaconSetupService::OnReset()
     return State::CONNECT_TO_ALL;
   }
 
+  state_machine_->Delay(std::chrono::milliseconds(10));
   return State::RESET;
 }
 
@@ -295,6 +296,7 @@ BeaconSetupService::State BeaconSetupService::OnConnectToAll()
     return State::WAIT_FOR_READY_CONNECTIONS;
   }
 
+  state_machine_->Delay(std::chrono::milliseconds(10));
   return State::CONNECT_TO_ALL;
 }
 
@@ -716,6 +718,7 @@ BeaconSetupService::State BeaconSetupService::OnDryRun()
     }
   }
 
+  state_machine_->Delay(std::chrono::milliseconds(10));
   return State::DRY_RUN_SIGNING;
 }
 
