@@ -263,7 +263,7 @@ private:
   std::vector<middleware_type>                          middleware_;
   std::map<function_handler_type, stored_type>          members_;
   std::vector<std::shared_ptr<FeedSubscriptionManager>> feeds_;
-  Mutex                                                 feeds_mutex_{__LINE__, __FILE__};
+  Mutex                                                 feeds_mutex_;
 };
 }  // namespace service
 }  // namespace fetch

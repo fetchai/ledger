@@ -160,14 +160,14 @@ private:
   ExceptionPtr   exception_;
   std::string    name_;
 
-  mutable Mutex callback_lock_{__LINE__, __FILE__};
+  mutable Mutex callback_lock_;
   Callback      callback_success_;
   Callback      callback_failure_;
   Callback      callback_completion_;
 
 #define FETCH_PROMISE_CV
 #ifdef FETCH_PROMISE_CV
-  mutable Mutex     notify_lock_{__LINE__, __FILE__};
+  mutable Mutex     notify_lock_;
   mutable Condition notify_;
 #endif
 };

@@ -310,7 +310,7 @@ protected:
 
 private:
   mutable bool         dirty_ = false;
-  mutable Mutex        mutex_{__LINE__, __FILE__};
+  mutable Mutex        mutex_;
   mutable TrustStore   trust_store_;
   mutable RankingStore ranking_store_;
 };

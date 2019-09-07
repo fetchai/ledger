@@ -203,13 +203,13 @@ private:
   Prover *              prover_          = nullptr;
   bool                  sign_broadcasts_ = false;
 
-  mutable Mutex routing_table_lock_{__LINE__, __FILE__};
+  mutable Mutex routing_table_lock_;
   RoutingTable  routing_table_;  ///< The map routing table from address to handle (Protected by
                                  ///< routing_table_lock_)
   HandleMap
       routing_table_handles_;  ///< The map of handles to address (Protected by routing_table_lock_)
 
-  mutable Mutex echo_cache_lock_{__LINE__, __FILE__};
+  mutable Mutex echo_cache_lock_;
   EchoCache     echo_cache_;
 
   ThreadPool dispatch_thread_pool_;

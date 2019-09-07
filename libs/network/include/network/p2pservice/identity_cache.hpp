@@ -82,7 +82,7 @@ public:
 private:
   void UpdateInternal(Address const &address, Uri const &uri);
 
-  mutable Mutex lock_{__LINE__, __FILE__};
+  mutable Mutex lock_;
   Cache         cache_;
 };
 

@@ -28,7 +28,7 @@ namespace http {
 
 HTTPConnectionManager::HTTPConnectionManager(AbstractHTTPServer &server)
   : server_(server)
-  , clients_mutex_(__LINE__, __FILE__)
+  , clients_mutex_{}
 {}
 
 HTTPConnectionManager::handle_type HTTPConnectionManager::Join(connection_type client)
