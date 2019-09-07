@@ -447,7 +447,7 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
   if (!active_exe_unit_->manager.can_verify())
   {
     // TODO(HUT): look at this delay
-    state_machine_->Delay(std::chrono::milliseconds(1000));
+    state_machine_->Delay(std::chrono::milliseconds(5000));
     return State::BROADCAST_SIGNATURE;
   }
 
