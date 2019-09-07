@@ -195,7 +195,7 @@ protected:
   uint64_t PreDKGThreshold();
 
   // Telemetry
-  telemetry::GaugePtr<uint8_t>  beacon_dkg_state_gauge_;
+  telemetry::GaugePtr<uint64_t> beacon_dkg_state_gauge_;
   telemetry::GaugePtr<uint64_t> beacon_dkg_connections_gauge_;
   telemetry::GaugePtr<uint64_t> beacon_dkg_all_connections_gauge_;
   telemetry::CounterPtr         beacon_dkg_failures_total_;

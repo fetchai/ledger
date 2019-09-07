@@ -115,7 +115,7 @@ BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identit
          },
          CHANNEL_RBC_BROADCAST}
   , state_machine_{std::make_shared<StateMachine>("BeaconSetupService", State::IDLE, ToString)}
-  , beacon_dkg_state_gauge_{telemetry::Registry::Instance().CreateGauge<uint8_t>(
+  , beacon_dkg_state_gauge_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
         "beacon_dkg_state_gauge", "State the DKG is in as integer in [0, 10]")}
   , beacon_dkg_connections_gauge_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
         "beacon_dkg_connections_gauge", "Connections the network has made as a prerequisite")}
@@ -149,7 +149,7 @@ BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identit
 BeaconSetupService::State BeaconSetupService::OnIdle()
 {
   std::lock_guard<std::mutex> lock(mutex_);
-  beacon_dkg_state_gauge_->set(static_cast<uint8_t>(State::IDLE));
+  beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::IDLE));
 
   beacon_.reset();
 
@@ -184,7 +184,7 @@ BeaconSetupService::State BeaconSetupService::OnIdle()
 BeaconSetupService::State BeaconSetupService::OnReset()
 {
   std::lock_guard<std::mutex> lock(mutex_);
-  beacon_dkg_state_gauge_->set(static_cast<uint8_t>(State::RESET));
+  beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::RESET));
 
   if (state_machine_->previous_state() != State::RESET &&
       state_machine_->previous_state() != State::IDLE)
@@ -235,7 +235,7 @@ BeaconSetupService::State BeaconSetupService::OnReset()
 BeaconSetupService::State BeaconSetupService::OnConnectToAll()
 {
   std::lock_guard<std::mutex> lock(mutex_);
-  beacon_dkg_state_gauge_->set(static_cast<uint8_t>(State::CONNECT_TO_ALL));
+  beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::CONNECT_TO_ALL));
 
 
   if (state_machine_->previous_state() != State::CONNECT_TO_ALL)
@@ -335,7 +335,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
 {
   std::lock_guard<std::mutex> lock(mutex_);
 
-  beacon_dkg_state_gauge_->set(static_cast<uint8_t>(State::WAIT_FOR_READY_CONNECTIONS));
+  beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::WAIT_FOR_READY_CONNECTIONS));
 
   auto const connected_peers = muddle_.GetDirectlyConnectedPeers();
 
@@ -420,7 +420,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
 BeaconSetupService::State BeaconSetupService::OnWaitForShares()
 {
   std::lock_guard<std::mutex> lock(mutex_);
-  beacon_dkg_state_gauge_->set(static_cast<uint8_t>(State::WAIT_FOR_SHARES));
+  beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::WAIT_FOR_SHARES));
 
   auto       intersection = (coefficients_received_ & shares_received_);
   const bool is_ok        = intersection.size() >= beacon_->manager.polynomial_degree();
@@ -454,7 +454,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForShares()
 BeaconSetupService::State BeaconSetupService::OnWaitForComplaints()
 {
   std::lock_guard<std::mutex> lock(mutex_);
-  beacon_dkg_state_gauge_->set(static_cast<uint8_t>(State::WAIT_FOR_COMPLAINTS));
+  beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::WAIT_FOR_COMPLAINTS));
 
   const bool is_ok = complaints_manager_.IsFinished(beacon_->manager.polynomial_degree());
 
@@ -494,7 +494,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForComplaints()
 BeaconSetupService::State BeaconSetupService::OnWaitForComplaintAnswers()
 {
   std::lock_guard<std::mutex> lock(mutex_);
-  beacon_dkg_state_gauge_->set(static_cast<uint8_t>(State::WAIT_FOR_COMPLAINT_ANSWERS));
+  beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::WAIT_FOR_COMPLAINT_ANSWERS));
 
   // TODO(HUT): fix this.
   //bool const is_ok = complaints_answer_manager_.IsFinished();
@@ -541,7 +541,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForComplaintAnswers()
 BeaconSetupService::State BeaconSetupService::OnWaitForQualShares()
 {
   std::lock_guard<std::mutex> lock(mutex_);
-  beacon_dkg_state_gauge_->set(static_cast<uint8_t>(State::WAIT_FOR_QUAL_SHARES));
+  beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::WAIT_FOR_QUAL_SHARES));
 
   auto       intersection = (qual_coefficients_received_ & beacon_->manager.qual());
   const bool is_ok        = (intersection.size() >= beacon_->manager.polynomial_degree());
@@ -568,7 +568,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForQualShares()
 BeaconSetupService::State BeaconSetupService::OnWaitForQualComplaints()
 {
   std::lock_guard<std::mutex> lock(mutex_);
-  beacon_dkg_state_gauge_->set(static_cast<uint8_t>(State::WAIT_FOR_QUAL_COMPLAINTS));
+  beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS));
 
   const bool is_ok =
       /* qual_complaints_manager_.IsFinished(beacon_->manager.qual(), identity_.identifier());*/
@@ -613,7 +613,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForQualComplaints()
 BeaconSetupService::State BeaconSetupService::OnWaitForReconstructionShares()
 {
   std::lock_guard<std::mutex> lock(mutex_);
-  beacon_dkg_state_gauge_->set(static_cast<uint8_t>(State::WAIT_FOR_RECONSTRUCTION_SHARES));
+  beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::WAIT_FOR_RECONSTRUCTION_SHARES));
 
   MuddleAddresses complaints_list = qual_complaints_manager_.Complaints();
   MuddleAddresses remaining_honest;
@@ -749,7 +749,7 @@ BeaconSetupService::State BeaconSetupService::OnDryRun()
 BeaconSetupService::State BeaconSetupService::OnBeaconReady()
 {
   std::lock_guard<std::mutex> lock(mutex_);
-  beacon_dkg_state_gauge_->set(static_cast<uint8_t>(State::BEACON_READY));
+  beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::BEACON_READY));
 
   FETCH_LOG_INFO(LOGGING_NAME, "*** New beacon generated! ***");
 
