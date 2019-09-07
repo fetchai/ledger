@@ -120,7 +120,7 @@ private:
 
   /// @name State Hash Support
   /// @{
-  mutable Mutex        merkle_mutex_{__LINE__, __FILE__};
+  mutable Mutex        merkle_mutex_;
   MerkleTree           current_merkle_;
   PermanentMerkleStack permanent_state_merkle_stack_{};
   /// @}

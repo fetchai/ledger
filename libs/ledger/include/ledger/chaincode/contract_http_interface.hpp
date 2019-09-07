@@ -102,7 +102,7 @@ private:
   StorageInterface &    storage_;
   TransactionProcessor &processor_;
   ChainCodeCache        contract_cache_{};
-  Mutex                 access_log_lock_{__LINE__, __FILE__};
+  Mutex                 access_log_lock_;
   std::ofstream         access_log_;
 };
 

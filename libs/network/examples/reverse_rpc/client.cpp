@@ -76,7 +76,7 @@ public:
   }
 
 private:
-  Mutex   mutex_{__LINE__, __FILE__};
+  Mutex   mutex_;
   Strings strings_;
 };
 

@@ -145,7 +145,7 @@ private:
   using Metadata    = std::tuple<Address, uint16_t, uint16_t, uint16_t>;
   using MetadataMap = std::unordered_map<uint64_t, Metadata>;
 
-  Mutex       metadata_lock_{__LINE__, __FILE__};
+  Mutex       metadata_lock_;
   uint64_t    metadata_index_ = 0;
   MetadataMap metadata_;
 };

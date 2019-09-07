@@ -70,7 +70,7 @@ public:
 
 private:
   Cache         cache_;
-  mutable Mutex mutex_{__LINE__, __FILE__};
+  mutable Mutex mutex_;
 };
 
 /**
