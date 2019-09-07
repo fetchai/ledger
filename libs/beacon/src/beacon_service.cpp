@@ -186,6 +186,11 @@ BeaconService::Status BeaconService::GenerateEntropy(Digest /*block_digest*/, ui
   return Status::OK;
 }
 
+void BeaconService::AbortCabinet(uint64_t round_start)
+{
+  cabinet_creator_.Abort(round_start);
+}
+
 void BeaconService::StartNewCabinet(CabinetMemberList members, uint32_t threshold,
                                     uint64_t round_start, uint64_t round_end, uint64_t start_time)
 {
@@ -441,7 +446,8 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
   // Checking if we can verify
   if (!active_exe_unit_->manager.can_verify())
   {
-    state_machine_->Delay(std::chrono::milliseconds(200));
+    // TODO(HUT): look at this delay
+    state_machine_->Delay(std::chrono::milliseconds(1000));
     return State::BROADCAST_SIGNATURE;
   }
 

@@ -217,6 +217,12 @@ BeaconSetupService::State BeaconSetupService::OnReset()
   dry_run_shares_.clear();
   dry_run_public_keys_.clear();
 
+  if(beacon_->aeon.round_start < abort_below_)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Aborting DKG");
+    return State::IDLE;
+  }
+
   // The pre-dkg will get held in reset mode until the DKG start time
   if (timer_to_proceed_.HasExpired())
   {
@@ -1281,6 +1287,12 @@ void BeaconSetupService::QueueSetup(SharedAeonExecutionUnit beacon)
   assert(beacon != nullptr);
 
   aeon_exe_queue_.push_back(beacon);
+}
+
+void BeaconSetupService::Abort(uint64_t abort_below)
+{
+  std::lock_guard<std::mutex> lock(mutex_);
+  abort_below_ = abort_below;
 }
 
 void BeaconSetupService::SetBeaconReadyCallback(CallbackFunction callback)

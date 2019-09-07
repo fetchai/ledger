@@ -128,6 +128,7 @@ public:
   /// Setup management
   /// @{
   void QueueSetup(SharedAeonExecutionUnit beacon);
+  void Abort(uint64_t round_start);
   void SetBeaconReadyCallback(CallbackFunction callback);
   /// @}
 
@@ -211,6 +212,8 @@ protected:
   std::map<std::string, uint16_t>                            dry_run_public_keys_;
 
 private:
+  uint64_t abort_below_ = 0;
+
   // Timing management
   void             SetTimeToProceed(State state);
   moment::ClockPtr clock_ = moment::GetClock("beacon:dkg", moment::ClockType::STEADY);

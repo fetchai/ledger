@@ -121,6 +121,10 @@ void Consensus::UpdateCurrentBlock(Block const &current)
                              current_block_number_ + aeon_period_ + 1,
                              last_block_time + block_interval);
   }
+  else if ((current_block_number_ -1  % aeon_period_) == 0)
+  {
+    beacon_->AbortCabinet(current_block_number_);
+  }
 }
 
 NextBlockPtr Consensus::GenerateNextBlock()
