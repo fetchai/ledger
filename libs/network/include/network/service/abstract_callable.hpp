@@ -41,10 +41,8 @@ struct ArgsToString
   static std::string Value()
   {
     return value_util::Accumulate(
-	    [](std::string accum, std::string arg) {
-		    return std::move(accum) + ", " + arg;
-	    },
-	    serializers::TypeRegister<base_type<Args>>::Value()...);
+        [](std::string accum, std::string arg) { return std::move(accum) + ", " + arg; },
+        serializers::TypeRegister<base_type<Args>>::Value()...);
   }
 };
 
@@ -58,7 +56,7 @@ struct ArgsToString<R>
 };
 
 template <typename R>
-struct ArgsToString<R, void>: ArgsToString<R>
+struct ArgsToString<R, void> : ArgsToString<R>
 {
 };
 

@@ -35,7 +35,8 @@ namespace value_util {
 
 // A no-op empty pack case.
 template <class F>
-constexpr void Accumulate(F &&) noexcept {}
+constexpr void Accumulate(F &&) noexcept
+{}
 
 // The zero case: the pack is empty past a0.
 template <class F, typename RV>
