@@ -33,6 +33,10 @@ namespace value_util {
  * ranges.
  */
 
+// A no-op empty pack case.
+template <class F>
+constexpr void Accumulate(F &&) noexcept {}
+
 // The zero case: the pack is empty past a0.
 template <class F, typename RV>
 constexpr auto Accumulate(F &&, RV &&rv) noexcept(std::is_nothrow_move_constructible<RV>::value)
@@ -40,7 +44,7 @@ constexpr auto Accumulate(F &&, RV &&rv) noexcept(std::is_nothrow_move_construct
   return std::forward<RV>(rv);
 }
 
-// The recursion base: last step, only two values left.
+// The base of the recursion: last step, only two values left.
 template <class F, typename A, typename B>
 constexpr auto Accumulate(F &&f, A &&a, B &&b)
 {
