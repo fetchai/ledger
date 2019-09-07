@@ -496,7 +496,9 @@ BeaconSetupService::State BeaconSetupService::OnWaitForComplaintAnswers()
   std::lock_guard<std::mutex> lock(mutex_);
   beacon_dkg_state_gauge_->set(static_cast<uint8_t>(State::WAIT_FOR_COMPLAINT_ANSWERS));
 
-  bool const is_ok = complaints_answer_manager_.IsFinished();
+  // TODO(HUT): fix this.
+  //bool const is_ok = complaints_answer_manager_.IsFinished();
+  bool const is_ok = true;
 
   if (!condition_to_proceed_ && is_ok)
   {
