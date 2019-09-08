@@ -529,9 +529,11 @@ def verify_txs(parameters, test_instance):
                     output("found executed TX")
                     break
 
-                tx_b64 = codecs.encode(codecs.decode(tx, 'hex'), 'base64').decode()
+                tx_b64 = codecs.encode(codecs.decode(
+                    tx, 'hex'), 'base64').decode()
                 time.sleep(1)
-                output("Waiting for TX to get executed (node {}). Found: {} Tx: {}".format( node_index, status, tx_b64))
+                output("Waiting for TX to get executed (node {}). Found: {} Tx: {}".format(
+                    node_index, status, tx_b64))
 
             seen_balance = api.tokens.balance(identity)
             if balance != seen_balance:

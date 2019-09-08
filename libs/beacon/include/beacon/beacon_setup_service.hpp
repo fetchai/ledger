@@ -49,7 +49,7 @@ namespace beacon {
 
 struct DryRunInfo
 {
-  std::string    public_key;
+  std::string                       public_key;
   AeonExecutionUnit::SignatureShare sig_share;
 };
 

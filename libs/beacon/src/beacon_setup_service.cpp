@@ -217,7 +217,7 @@ BeaconSetupService::State BeaconSetupService::OnReset()
   dry_run_shares_.clear();
   dry_run_public_keys_.clear();
 
-  if(beacon_->aeon.round_start < abort_below_)
+  if (beacon_->aeon.round_start < abort_below_)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Aborting DKG");
     return State::IDLE;
@@ -242,7 +242,6 @@ BeaconSetupService::State BeaconSetupService::OnConnectToAll()
 {
   std::lock_guard<std::mutex> lock(mutex_);
   beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::CONNECT_TO_ALL));
-
 
   if (state_machine_->previous_state() != State::CONNECT_TO_ALL)
   {
@@ -408,8 +407,10 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
   {
     if (!condition_to_proceed_)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Waiting for all peers to be ready before starting DKG. We have: ",
-                     can_see.size(), " expect: ", require_connections, " Other ready peers: ", ready_connections_.size());
+      FETCH_LOG_INFO(
+          LOGGING_NAME,
+          "Waiting for all peers to be ready before starting DKG. We have: ", can_see.size(),
+          " expect: ", require_connections, " Other ready peers: ", ready_connections_.size());
     }
 
     state_machine_->Delay(std::chrono::milliseconds(500));
@@ -503,7 +504,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForComplaintAnswers()
   beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::WAIT_FOR_COMPLAINT_ANSWERS));
 
   // TODO(HUT): fix this.
-  //bool const is_ok = complaints_answer_manager_.IsFinished();
+  // bool const is_ok = complaints_answer_manager_.IsFinished();
   bool const is_ok = true;
 
   if (!condition_to_proceed_ && is_ok)
@@ -711,15 +712,15 @@ BeaconSetupService::State BeaconSetupService::OnDryRun()
   {
     bool found_key = false;
 
-    for(auto const &key_and_count : dry_run_public_keys_)
+    for (auto const &key_and_count : dry_run_public_keys_)
     {
-      if(key_and_count.second >= beacon_->manager.polynomial_degree())
+      if (key_and_count.second >= beacon_->manager.polynomial_degree())
       {
         found_key = true;
       }
     }
 
-    if(!found_key)
+    if (!found_key)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to reach consensus on group public key!");
     }
@@ -731,7 +732,7 @@ BeaconSetupService::State BeaconSetupService::OnDryRun()
 
     bool const could_sign = beacon_->manager.can_verify() && beacon_->manager.Verify();
 
-    if(!could_sign)
+    if (!could_sign)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to sign group signature");
     }
@@ -1390,14 +1391,14 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
     {
       failures++;
       next_start_point += dkg_time;
-      dkg_time = dkg_time  + uint64_t(0.5 * expected_dkg_time_s);
+      dkg_time = dkg_time + uint64_t(0.5 * expected_dkg_time_s);
     }
 
     expected_dkg_timespan_ = dkg_time;
     reference_timepoint_   = next_start_point;
 
-    FETCH_LOG_INFO(LOGGING_NAME, "DKG: ", beacon_->aeon.round_start,
-                   " failures so far: ", failures, " allotted time: ", expected_dkg_timespan_, " base time: ", expected_dkg_time_s);
+    FETCH_LOG_INFO(LOGGING_NAME, "DKG: ", beacon_->aeon.round_start, " failures so far: ", failures,
+                   " allotted time: ", expected_dkg_timespan_, " base time: ", expected_dkg_time_s);
   }
 
   // No timeout for these states

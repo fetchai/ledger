@@ -21,8 +21,8 @@
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "muddle/muddle_interface.hpp"
-#include "telemetry/gauge.hpp"
 #include "telemetry/counter.hpp"
+#include "telemetry/gauge.hpp"
 
 #include <chrono>
 
@@ -83,7 +83,8 @@ BeaconService::BeaconService(MuddleInterface &               muddle,
   , beacon_entropy_generated_total_{telemetry::Registry::Instance().CreateCounter(
         "beacon_entropy_generated_total", "The total number of times entropy has been generated")}
   , beacon_entropy_future_signature_seen_total_{telemetry::Registry::Instance().CreateCounter(
-        "beacon_entropy_future_signature_seen_total", "The total number of times entropy has been generated")}
+        "beacon_entropy_future_signature_seen_total",
+        "The total number of times entropy has been generated")}
   , beacon_entropy_last_requested_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
         "beacon_entropy_last_requested", "The last entropy value requested from the beacon")}
 {
@@ -467,9 +468,9 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
     current_entropy_.entropy   = crypto::Hash<crypto::SHA256>(crypto::Hash<crypto::SHA256>(sign));
 
     // Broadcasting the entropy to those listening, but not participating
-    //Serializer msgser;
-    //msgser << current_entropy_;
-    //endpoint_.Broadcast(SERVICE_DKG, CHANNEL_ENTROPY_DISTRIBUTION, msgser.data());
+    // Serializer msgser;
+    // msgser << current_entropy_;
+    // endpoint_.Broadcast(SERVICE_DKG, CHANNEL_ENTROPY_DISTRIBUTION, msgser.data());
 
     return State::COMPLETE;
   }
