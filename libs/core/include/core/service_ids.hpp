@@ -39,7 +39,8 @@ static constexpr uint16_t CHANNEL_RPC = 1;  // for convenience we essentially
                                             // potential RPC interface
 
 // Muddle Service Channels
-static constexpr uint16_t CHANNEL_ROUTING = 256;  // direct only
+static constexpr uint16_t CHANNEL_ROUTING      = 256;  // direct only
+static constexpr uint16_t CHANNEL_ANNOUNCEMENT = 257;
 
 // P2P Service Channels
 
