@@ -625,7 +625,7 @@ TEST(dkg_setup, DISABLED_bad_coefficients)
   GenerateTest(4, 3, 3, 3, {{FaultySetupService::Failures::BAD_COEFFICIENT}});
 }
 
-TEST(dkg_setup, send_empty_complaints_answer)
+TEST(dkg_setup, DISABLED_send_empty_complaints_answer)
 {
   // Node 0 sends computes bad secret shares to Node 1 which complains against it.
   // Node 0 then does not send real shares and instead sends empty complaint answer.
@@ -647,21 +647,21 @@ TEST(dkg_setup, send_multiple_messages)
                  FaultySetupService::Failures::SEND_MULTIPLE_QUAL_COEFFICIENTS}});
 }
 
-TEST(dkg_setup, qual_below_threshold)
+TEST(dkg_setup, DISABLED_qual_below_threshold)
 {
   GenerateTest(4, 3, 2, 0,
                {{FaultySetupService::Failures::BAD_COEFFICIENT},
                 {FaultySetupService::Failures::BAD_COEFFICIENT}});
 }
 
-TEST(dkg_setup, bad_qual_coefficients)
+TEST(dkg_setup, DISABLED_bad_qual_coefficients)
 {
   // Node 0 computes bad qual coefficients so node 0 is in qual complaints but everyone reconstructs
   // their shares. Everyone else except node 0 succeeds in DKG
   GenerateTest(4, 3, 4, 3, {{FaultySetupService::Failures::BAD_QUAL_COEFFICIENTS}});
 }
 
-TEST(dkg_setup, send_fake_qual_complaint)
+TEST(dkg_setup, DISABLED_send_fake_qual_complaint)
 {
   // Node 0 sends fake qual coefficients. Should trigger warning and node 0's shares will be
   // reconstructed but everyone else should succeed in the DKG. Important test as it means

@@ -711,7 +711,6 @@ BeaconSetupService::State BeaconSetupService::OnDryRun()
       fetch::serializers::MsgPackSerializer serializer;
       serializer.Reserve(counter.size());
       serializer << to_send;
-      FETCH_LOG_INFO(LOGGING_NAME, "share size: ", serializer.size());
       endpoint_.Broadcast(SERVICE_DKG, CHANNEL_SIGN_DRY_RUN, serializer.data());
     }
   }
