@@ -192,7 +192,9 @@ private:
   BeaconServiceProtocol beacon_protocol_;
   /// @}
 
-  telemetry::CounterPtr entropy_generated_count_;
+  telemetry::CounterPtr         beacon_entropy_generated_total_;
+  telemetry::CounterPtr         beacon_entropy_future_signature_seen_total_;
+  telemetry::GaugePtr<uint64_t> beacon_entropy_last_requested_;
 };
 
 }  // namespace beacon

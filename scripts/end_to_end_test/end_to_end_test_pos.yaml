@@ -19,10 +19,10 @@
 #    - send_txs : { "name": "batch1", "amount": 10, "nodes" : [1] }
 #    - verify_txs : { "name": "batch1", "nodes" : [0, 1, 2, 3] }
 #...
-#---
-#test_description: >
-#        Transactions sync and are executed across nodes when using POS
-#
+---
+test_description: >
+        Transactions sync and are executed across nodes when using POS
+
 setup_conditions:
     test_name : "multinode_POS_with_destaking"
     number_of_nodes: 10

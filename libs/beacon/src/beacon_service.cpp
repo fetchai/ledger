@@ -21,6 +21,8 @@
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "muddle/muddle_interface.hpp"
+#include "telemetry/gauge.hpp"
+#include "telemetry/counter.hpp"
 
 #include <chrono>
 
@@ -78,8 +80,12 @@ BeaconService::BeaconService(MuddleInterface &               muddle,
   , event_manager_{std::move(event_manager)}
   , cabinet_creator_{muddle, identity_, manifest_cache}  // TODO(tfr): Make shared
   , beacon_protocol_{*this}
-  , entropy_generated_count_{telemetry::Registry::Instance().CreateCounter(
-        "entropy_generated_total", "The total number of times entropy has been generated")}
+  , beacon_entropy_generated_total_{telemetry::Registry::Instance().CreateCounter(
+        "beacon_entropy_generated_total", "The total number of times entropy has been generated")}
+  , beacon_entropy_future_signature_seen_total_{telemetry::Registry::Instance().CreateCounter(
+        "beacon_entropy_future_signature_seen_total", "The total number of times entropy has been generated")}
+  , beacon_entropy_last_requested_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        "beacon_entropy_last_requested", "The last entropy value requested from the beacon")}
 {
 
   // Attaching beacon ready callback handler
@@ -151,6 +157,7 @@ BeaconService::Status BeaconService::GenerateEntropy(Digest /*block_digest*/, ui
                                                      uint64_t &entropy)
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Requesting entropy for block number: ", block_number);
+  beacon_entropy_last_requested_->set(block_number);
 
   uint64_t round = block_number / blocks_per_round_;
 
@@ -417,6 +424,7 @@ void BeaconService::SubmitSignatureShare(uint64_t round, SignatureShare share)
   }
   else if (round > current_entropy_.round)
   {
+    beacon_entropy_future_signature_seen_total_->add(1);
     // Otherwise it is stored to be dealt with at a later point.
     signature_queue_.push_back({round, share});
   }
@@ -479,7 +487,7 @@ BeaconService::State BeaconService::OnCompleteState()
 
   // Adding new entropy
   ready_entropy_queue_.push_back(current_entropy_);
-  entropy_generated_count_->add(1);
+  beacon_entropy_generated_total_->add(1);
 
   // Preparing next
   next_entropy_       = Entropy();
