@@ -64,6 +64,7 @@ Settings::Settings()
   , transient_peers       {*this, "transient-peers",         DEFAULT_TRANSIENT_PEERS,      "The number of the peers which will be random in answer sent to peer requests"}
   , peer_update_interval  {*this, "peers-update-cycle-ms",   0,                            "How fast to do peering updates"}
   , disable_signing       {*this, "disable-signing",         false,                        "Disable the signing of all network messages"}
+  , kademlia_routing      {*this, "kademlia-routing",        true,                         "Controls if kademalia routing is used in the main P2P network"}
   , bootstrap             {*this, "bootstrap",               false,                        "Signal that we should connect to the bootstrap server"}
   , discoverable          {*this, "discoverable",            false,                        "Signal that this node can be advertised on the bootstrap server"}
   , hostname              {*this, "host-name",               "",                           "The hostname or identifier for this node"}

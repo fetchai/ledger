@@ -72,6 +72,7 @@ public:
   settings::Setting<uint32_t>    transient_peers;
   settings::Setting<uint32_t>    peer_update_interval;
   settings::Setting<bool>        disable_signing;
+  settings::Setting<bool>        kademlia_routing;
   /// @}
 
   /// @name Bootstrap Config

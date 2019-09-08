@@ -90,6 +90,7 @@ public:
   void              AddDesiredPeer(Address const &address, network::Peer const &hint);
   void              RemoveDesiredPeer(Address const &address);
   Addresses         GetDesiredPeers() const;
+  Addresses         GetKademliaPeers() const;
   Addresses         GetPendingRequests() const;
   PeersInfo         GetPeerCache() const;
   PeerSelectionMode GetMode() const;

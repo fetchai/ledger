@@ -106,6 +106,12 @@ PeerSelector::Addresses PeerSelector::GetDesiredPeers() const
   return desired_addresses_;
 }
 
+PeerSelector::Addresses PeerSelector::GetKademliaPeers() const
+{
+  FETCH_LOCK(lock_);
+  return kademlia_addresses_;
+}
+
 PeerSelector::Addresses PeerSelector::GetPendingRequests() const
 {
   Addresses addresses;
