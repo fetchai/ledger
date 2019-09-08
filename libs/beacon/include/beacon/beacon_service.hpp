@@ -155,6 +155,7 @@ private:
   /// General configuration
   /// @{
   uint64_t blocks_per_round_;
+  bool     broadcasting_ = false;
   /// @}
 
   /// Beacon and entropy control units

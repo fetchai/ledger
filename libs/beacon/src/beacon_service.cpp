@@ -149,8 +149,10 @@ BeaconService::BeaconService(MuddleInterface &               muddle,
 
   state_machine_->OnStateChange([this](State current, State previous) {
     FETCH_UNUSED(this);
-    FETCH_LOG_INFO(LOGGING_NAME, "Current state: ", ToString(current),
-                   " (previous: ", ToString(previous), ")");
+    FETCH_UNUSED(current);
+    FETCH_UNUSED(previous);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Current state: ", ToString(current),
+                    " (previous: ", ToString(previous), ")");
   });
 }
 
@@ -202,7 +204,9 @@ void BeaconService::AbortCabinet(uint64_t round_start)
 void BeaconService::StartNewCabinet(CabinetMemberList members, uint32_t threshold,
                                     uint64_t round_start, uint64_t round_end, uint64_t start_time)
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Starting new cabinet from ", round_start, " to ", round_end);
+  auto diff_time = int64_t(static_cast<uint64_t>(std::time(nullptr))) - int64_t(start_time);
+  FETCH_LOG_INFO(LOGGING_NAME, "Starting new cabinet from ", round_start, " to ", round_end,
+                 "at time: ", start_time, " (diff): ", diff_time);
   std::lock_guard<std::mutex> lock(mutex_);
 
   SharedAeonExecutionUnit beacon = std::make_shared<AeonExecutionUnit>();
@@ -455,8 +459,7 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
   // Checking if we can verify
   if (!active_exe_unit_->manager.can_verify())
   {
-    // TODO(HUT): look at this delay
-    state_machine_->Delay(std::chrono::milliseconds(5000));
+    state_machine_->Delay(std::chrono::milliseconds(1000));
     return State::BROADCAST_SIGNATURE;
   }
 
@@ -468,9 +471,12 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
     current_entropy_.entropy   = crypto::Hash<crypto::SHA256>(crypto::Hash<crypto::SHA256>(sign));
 
     // Broadcasting the entropy to those listening, but not participating
-    // Serializer msgser;
-    // msgser << current_entropy_;
-    // endpoint_.Broadcast(SERVICE_DKG, CHANNEL_ENTROPY_DISTRIBUTION, msgser.data());
+    if (broadcasting_)
+    {
+      Serializer msgser;
+      msgser << current_entropy_;
+      endpoint_.Broadcast(SERVICE_DKG, CHANNEL_ENTROPY_DISTRIBUTION, msgser.data());
+    }
 
     return State::COMPLETE;
   }

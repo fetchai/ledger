@@ -97,23 +97,9 @@ void Consensus::UpdateCurrentBlock(Block const &current)
       last_block_time = default_start_time_;
     }
 
-    if (current.body.block_number == 0 && last_block_time == 0)
-    {
-      uint64_t wait_time_s            = 5;
-      uint64_t future_start           = current_time + (2 * wait_time_s);
-      uint64_t future_start_quantised = future_start - (future_start % wait_time_s);
-
-      FETCH_LOG_INFO(LOGGING_NAME, "Manually setting start time to: ", future_start_quantised,
-                     ". Current: ", current_time);
-
-      last_block_time = future_start_quantised;
-    }
-    else
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "Starting DKG with timestamp: ", last_block_time,
-                     " current: ", current_time,
-                     " diff: ", int64_t(current_time) - int64_t(last_block_time));
-    }
+    FETCH_LOG_INFO(LOGGING_NAME, "Starting DKG with timestamp: ", last_block_time,
+                   " current: ", current_time,
+                   " diff: ", int64_t(current_time) - int64_t(last_block_time));
 
     uint64_t block_interval = 1;
 

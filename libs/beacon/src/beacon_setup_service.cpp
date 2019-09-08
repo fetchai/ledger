@@ -125,6 +125,8 @@ BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identit
         "beacon_dkg_failures_total", "The total number of DKG failures")}
   , beacon_dkg_dry_run_failures_total_{telemetry::Registry::Instance().CreateCounter(
         "beacon_dkg_dry_run_failures_total", "The total number of DKG dry run failures")}
+  , beacon_dkg_aborts_total_{telemetry::Registry::Instance().CreateCounter(
+        "beacon_dkg_aborts_total", "The total number of DKG forced aborts")}
 {
   // clang-format off
   state_machine_->RegisterHandler(State::IDLE, this, &BeaconSetupService::OnIdle);
@@ -313,7 +315,11 @@ uint64_t BeaconSetupService::PreDKGThreshold()
   uint64_t ret = threshold + (cabinet_size / 3);
 
   // Needs at least two members to be distributed
-  assert(ret >= 2);
+  if (ret < 2)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "DKG has to few in cabinet: ", cabinet_size);
+    ret = 3;
+  }
 
   return ret;
 }
@@ -577,9 +583,9 @@ BeaconSetupService::State BeaconSetupService::OnWaitForQualComplaints()
   std::lock_guard<std::mutex> lock(mutex_);
   beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS));
 
-  const bool is_ok =
-      /* qual_complaints_manager_.IsFinished(beacon_->manager.qual(), identity_.identifier());*/
-      true;
+  const bool is_ok = qual_complaints_manager_.IsFinished(
+      beacon_->manager.qual(), identity_.identifier(), beacon_->manager.polynomial_degree());
+
   condition_to_proceed_ = is_ok;
 
   if (timer_to_proceed_.HasExpired())
@@ -698,10 +704,12 @@ BeaconSetupService::State BeaconSetupService::OnDryRun()
     DryRunInfo to_send{beacon_->manager.group_public_key(), beacon_->member_share};
 
     // Gossip this to everyone
-    // TODO(HUT): size of member share is known so can reserve.
     {
-      // serializer.Reserve(counter.size());
+      fetch::serializers::SizeCounter counter;
+      counter << to_send;
+
       fetch::serializers::MsgPackSerializer serializer;
+      serializer.Reserve(counter.size());
       serializer << to_send;
       FETCH_LOG_INFO(LOGGING_NAME, "share size: ", serializer.size());
       endpoint_.Broadcast(SERVICE_DKG, CHANNEL_SIGN_DRY_RUN, serializer.data());
@@ -1294,6 +1302,7 @@ void BeaconSetupService::Abort(uint64_t abort_below)
 {
   std::lock_guard<std::mutex> lock(mutex_);
   abort_below_ = abort_below;
+  beacon_dkg_aborts_total_->add(1u);
 }
 
 void BeaconSetupService::SetBeaconReadyCallback(CallbackFunction callback)

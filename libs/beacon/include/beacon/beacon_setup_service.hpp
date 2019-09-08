@@ -201,6 +201,7 @@ protected:
   telemetry::GaugePtr<uint64_t> beacon_dkg_all_connections_gauge_;
   telemetry::CounterPtr         beacon_dkg_failures_total_;
   telemetry::CounterPtr         beacon_dkg_dry_run_failures_total_;
+  telemetry::CounterPtr         beacon_dkg_aborts_total_;
 
   // Members below protected by mutex
   std::mutex                                                 mutex_;
