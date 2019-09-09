@@ -18,9 +18,6 @@
 
 #include "dkg/dkg_complaints_manager.hpp"
 
-#include <cstdint>
-#include <mutex>
-
 namespace fetch {
 namespace dkg {
 
@@ -28,7 +25,7 @@ constexpr char const *LOGGING_NAME = "DKGComplaints";
 
 void ComplaintsManager::ResetCabinet(uint32_t cabinet_size)
 {
-  FETCH_LOCK(mutex_);
+  std::lock_guard<std::mutex> lock{mutex_};
   cabinet_size_ = cabinet_size;
   finished_     = false;
   complaints_counter_.clear();
@@ -39,14 +36,14 @@ void ComplaintsManager::ResetCabinet(uint32_t cabinet_size)
 
 void ComplaintsManager::Count(MuddleAddress const &address)
 {
-  FETCH_LOCK(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   ++complaints_counter_[address];
 }
 
 void ComplaintsManager::Add(ComplaintsMessage const &msg, MuddleAddress const &from_id,
                             MuddleAddress const &address)
 {
-  FETCH_LOCK(mutex_);
+  std::lock_guard<std::mutex> lock{mutex_};
   // Check if we have received a complaints message from this node before and if not log that we
   // received a complaint message
   if (complaints_received_.find(from_id) == complaints_received_.end())
@@ -74,7 +71,7 @@ void ComplaintsManager::Add(ComplaintsMessage const &msg, MuddleAddress const &f
 bool ComplaintsManager::IsFinished(uint32_t polynomial_degree)
 {
   FETCH_LOCK(mutex_);
-  if (complaints_received_.size() >= polynomial_degree)
+  if (complaints_received_.size() == cabinet_size_ - 1)
   {
     // TODO(jmw): Add miners which did not send a complaint to complaints?
     // All miners who have received over t complaints are also disqualified
@@ -93,15 +90,15 @@ bool ComplaintsManager::IsFinished(uint32_t polynomial_degree)
 
 std::set<ComplaintsMessage::MuddleAddress> ComplaintsManager::ComplaintsFrom() const
 {
-  FETCH_LOCK(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   assert(finished_);
   return complaints_from_;
 }
 
 uint32_t ComplaintsManager::ComplaintsCount(MuddleAddress const &address)
 {
-  FETCH_LOCK(mutex_);
-  auto iter = complaints_counter_.find(address);
+  std::lock_guard<std::mutex> lock(mutex_);
+  auto                        iter = complaints_counter_.find(address);
   if (iter == complaints_counter_.end())
   {
     return 0;
@@ -111,14 +108,14 @@ uint32_t ComplaintsManager::ComplaintsCount(MuddleAddress const &address)
 
 std::set<ComplaintsMessage::MuddleAddress> ComplaintsManager::Complaints() const
 {
-  FETCH_LOCK(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   assert(finished_);
   return complaints_;
 }
 
 void ComplaintsManager::Clear()
 {
-  FETCH_LOCK(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   complaints_counter_.clear();
   complaints_from_.clear();
   complaints_.clear();
@@ -127,13 +124,13 @@ void ComplaintsManager::Clear()
 
 void QualComplaintsManager::Complaints(MuddleAddress const &id)
 {
-  FETCH_LOCK(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   complaints_.insert(id);
 }
 
 std::set<QualComplaintsManager::MuddleAddress> QualComplaintsManager::Complaints() const
 {
-  FETCH_LOCK(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   assert(finished_);
   return complaints_;
 }
@@ -141,7 +138,7 @@ std::set<QualComplaintsManager::MuddleAddress> QualComplaintsManager::Complaints
 void QualComplaintsManager::Received(MuddleAddress const &                               id,
                                      std::unordered_map<CabinetId, ExposedShares> const &complaints)
 {
-  FETCH_LOCK(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   complaints_received_.insert({id, complaints});
 }
 
@@ -152,13 +149,13 @@ const QualComplaintsManager::QualComplaints &QualComplaintsManager::ComplaintsRe
 
 std::size_t QualComplaintsManager::ComplaintsSize() const
 {
-  FETCH_LOCK(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   return complaints_.size();
 }
 
 bool QualComplaintsManager::ComplaintsFind(MuddleAddress const &id) const
 {
-  FETCH_LOCK(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   return complaints_.find(id) != complaints_.end();
 }
 
@@ -183,14 +180,14 @@ bool QualComplaintsManager::IsFinished(std::set<MuddleAddress> const &qual,
 
 void QualComplaintsManager::Clear()
 {
-  FETCH_LOCK(mutex_);
+  std::lock_guard<std::mutex> lock{mutex_};
   complaints_.clear();
   complaints_received_.clear();
 }
 
 void QualComplaintsManager::Reset()
 {
-  FETCH_LOCK(mutex_);
+  std::lock_guard<std::mutex> lock{mutex_};
   finished_ = false;
   complaints_.clear();
   complaints_received_.clear();
@@ -198,13 +195,13 @@ void QualComplaintsManager::Reset()
 
 void ComplaintsAnswerManager::Init(std::set<MuddleAddress> const &complaints)
 {
-  FETCH_LOCK(mutex_);
+  std::lock_guard<std::mutex> lock{mutex_};
   std::copy(complaints.begin(), complaints.end(), std::inserter(complaints_, complaints_.begin()));
 }
 
 void ComplaintsAnswerManager::ResetCabinet(uint32_t cabinet_size)
 {
-  FETCH_LOCK(mutex_);
+  std::lock_guard<std::mutex> lock{mutex_};
   cabinet_size_ = cabinet_size;
   finished_     = false;
   complaints_.clear();
@@ -212,13 +209,13 @@ void ComplaintsAnswerManager::ResetCabinet(uint32_t cabinet_size)
 
 void ComplaintsAnswerManager::Add(MuddleAddress const &member)
 {
-  FETCH_LOCK(mutex_);
+  std::lock_guard<std::mutex> lock{mutex_};
   complaints_.insert(member);
 }
 
 bool ComplaintsAnswerManager::Count(MuddleAddress const &from)
 {
-  FETCH_LOCK(mutex_);
+  std::lock_guard<std::mutex> lock{mutex_};
   if (complaint_answers_received_.find(from) == complaint_answers_received_.end())
   {
     complaint_answers_received_.insert(from);
@@ -232,7 +229,7 @@ bool ComplaintsAnswerManager::Count(MuddleAddress const &from)
 
 bool ComplaintsAnswerManager::IsFinished()
 {
-  FETCH_LOCK(mutex_);
+  std::lock_guard<std::mutex> lock{mutex_};
   if (complaint_answers_received_.size() == cabinet_size_ - 1)
   {
     // TODO(jmw): Add miners which did not send a complaint answer to complaints to complaints?
@@ -245,7 +242,7 @@ bool ComplaintsAnswerManager::IsFinished()
 std::set<ComplaintsAnswerManager::MuddleAddress> ComplaintsAnswerManager::BuildQual(
     std::set<MuddleAddress> const &cabinet)
 {
-  FETCH_LOCK(mutex_);
+  std::lock_guard<std::mutex> lock{mutex_};
   assert(finished_);
   std::set<MuddleAddress> qual;
   std::set_difference(cabinet.begin(), cabinet.end(), complaints_.begin(), complaints_.end(),
@@ -255,7 +252,7 @@ std::set<ComplaintsAnswerManager::MuddleAddress> ComplaintsAnswerManager::BuildQ
 
 void ComplaintsAnswerManager::Clear()
 {
-  FETCH_LOCK(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   complaints_.clear();
   complaint_answers_received_.clear();
 }

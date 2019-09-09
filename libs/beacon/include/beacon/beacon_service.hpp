@@ -110,6 +110,8 @@ public:
   /// @brief this function is called when the node is in the cabinet
   void StartNewCabinet(CabinetMemberList members, uint32_t threshold, uint64_t round_start,
                        uint64_t round_end, uint64_t start_time);
+
+  void AbortCabinet(uint64_t round_start);
   /// @}
 
   /// Beacon runnables
@@ -153,6 +155,7 @@ private:
   /// General configuration
   /// @{
   uint64_t blocks_per_round_;
+  bool     broadcasting_ = false;
   /// @}
 
   /// Beacon and entropy control units
@@ -190,7 +193,9 @@ private:
   BeaconServiceProtocol beacon_protocol_;
   /// @}
 
-  telemetry::CounterPtr entropy_generated_count_;
+  telemetry::CounterPtr         beacon_entropy_generated_total_;
+  telemetry::CounterPtr         beacon_entropy_future_signature_seen_total_;
+  telemetry::GaugePtr<uint64_t> beacon_entropy_last_requested_;
 };
 
 }  // namespace beacon
