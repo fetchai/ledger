@@ -26,8 +26,6 @@
 namespace fetch {
 namespace muddle {
 
-using byte_array::ByteArray;
-
 uint64_t CalculateDistance(Address const &from, Address const &to)
 {
   uint64_t distance = std::numeric_limits<uint64_t>::max();
