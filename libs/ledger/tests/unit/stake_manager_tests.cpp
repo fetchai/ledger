@@ -73,6 +73,13 @@ protected:
 
     for (std::size_t round = 0; round < num_rounds; ++round)
     {
+      auto const committee = stake_manager_->BuildCommittee(block);
+      ASSERT_TRUE(static_cast<bool>(committee));
+      ASSERT_EQ(committee->size(), committee_size);
+
+      // update the statistics
+      stats.at(committee->at(0)) += 1;
+
       // "forge" the next block
       block.body.previous_hash = block.body.hash;
       block.body.hash          = GenerateRandomAddress(rng_).address();
