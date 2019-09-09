@@ -26,5 +26,5 @@ enum class PeerSelectionMode
   KADEMLIA  ///< Kademlia announcing and routing
 };
 
-} // namespace muddle
-} // namespace fetch
+}  // namespace muddle
+}  // namespace fetch

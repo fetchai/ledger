@@ -691,7 +691,7 @@ Router::Handle Router::LookupKademliaClosestHandle(Address const &address) const
   auto const directly_connected = GetDirectlyConnectedPeerSet();
   if (!directly_connected.empty())
   {
-    auto it = directly_connected.begin();
+    auto it   = directly_connected.begin();
     auto node = *it++;
 
     uint64_t best_distance = CalculateDistance(address, node);

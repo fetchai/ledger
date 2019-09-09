@@ -18,8 +18,8 @@
 
 #include "xor_metric.hpp"
 
-#include "core/macros.hpp"
 #include "core/byte_array/decoders.hpp"
+#include "core/macros.hpp"
 
 #include "gtest/gtest.h"
 
@@ -183,7 +183,7 @@ Config const CONFIGS[] = {
 };
 // clang-format on
 
-std::ostream & FETCH_MAYBE_UNUSED operator<<(std::ostream &stream, Config const &cfg)
+std::ostream &FETCH_MAYBE_UNUSED operator<<(std::ostream &stream, Config const &cfg)
 {
   stream << cfg.from << ":" << cfg.to << ":" << cfg.distance;
   return stream;
@@ -194,17 +194,16 @@ class XorMetricTests : public ::testing::TestWithParam<Config>
 protected:
 };
 
-
 TEST_P(XorMetricTests, CheckDistance)
 {
   auto const &cfg = GetParam();
 
   auto const from_address = FromHex(cfg.from);
-  auto const to_address = FromHex(cfg.to);
+  auto const to_address   = FromHex(cfg.to);
 
   EXPECT_EQ(cfg.distance, fetch::muddle::CalculateDistance(from_address, to_address));
 }
 
 INSTANTIATE_TEST_CASE_P(ParamBased, XorMetricTests, testing::ValuesIn(CONFIGS), );
 
-} // namespace
+}  // namespace

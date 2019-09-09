@@ -335,9 +335,8 @@ void PeerSelector::OnAnnouncement(Address const &from, byte_array::ConstByteArra
   FETCH_LOCK(lock_);
 
   // attempt to locate the existing node
-  auto const it = std::find_if(kademlia_nodes_.begin(), kademlia_nodes_.end(), [&](KademliaNode const &node) {
-    return node.address == from;
-  });
+  auto const it = std::find_if(kademlia_nodes_.begin(), kademlia_nodes_.end(),
+                               [&](KademliaNode const &node) { return node.address == from; });
 
   if (it != kademlia_nodes_.end())
   {
@@ -374,8 +373,10 @@ void PeerSelector::OnAnnouncement(Address const &from, byte_array::ConstByteArra
 
 void PeerSelector::ScheduleNextAnnouncement()
 {
-  static constexpr uint64_t MIN_ANNOUNCE_TIME_MS = duration_cast<milliseconds>(MIN_ANNONCEMENT_INTERVAL).count();
-  static constexpr uint64_t MAX_ANNOUNCE_TIME_MS = duration_cast<milliseconds>(MAX_ANNONCEMENT_INTERVAL).count();
+  static constexpr uint64_t MIN_ANNOUNCE_TIME_MS =
+      duration_cast<milliseconds>(MIN_ANNONCEMENT_INTERVAL).count();
+  static constexpr uint64_t MAX_ANNOUNCE_TIME_MS =
+      duration_cast<milliseconds>(MAX_ANNONCEMENT_INTERVAL).count();
   static constexpr uint64_t DELTA_ANNOUNCE_TIME_MS = MAX_ANNOUNCE_TIME_MS - MIN_ANNOUNCE_TIME_MS;
   static_assert(MIN_ANNOUNCE_TIME_MS < MAX_ANNOUNCE_TIME_MS, "Min must be smaller than max");
   static_assert(DELTA_ANNOUNCE_TIME_MS != 0, "Delta can't be zero");

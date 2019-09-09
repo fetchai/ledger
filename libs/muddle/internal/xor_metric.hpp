@@ -35,5 +35,5 @@ uint64_t CalculateDistance(std::array<uint8_t, LENGTH> const &from,
   return CalculateDistance(from.data(), to.data(), LENGTH);
 }
 
-} // namespace muddle
-} // namespace fetch
+}  // namespace muddle
+}  // namespace fetch

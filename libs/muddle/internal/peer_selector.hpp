@@ -23,17 +23,17 @@
 #include "core/periodic_runnable.hpp"
 #include "core/random/lcg.hpp"
 #include "crypto/fnv.hpp"
+#include "moment/deadline_timer.hpp"
 #include "muddle/address.hpp"
 #include "muddle/peer_selection_mode.hpp"
 #include "muddle/rpc/client.hpp"
 #include "network/peer.hpp"
 #include "network/uri.hpp"
-#include "moment/deadline_timer.hpp"
 
 #include <chrono>
+#include <list>
 #include <unordered_map>
 #include <unordered_set>
-#include <list>
 
 namespace fetch {
 namespace core {
@@ -106,7 +106,7 @@ private:
   using PendingPromised = std::unordered_map<Address, std::shared_ptr<PromiseTask>>;
   using SubscriptionPtr = MuddleEndpoint::SubscriptionPtr;
   using DeadlineTimer   = moment::DeadlineTimer;
-  using Rng = random::LinearCongruentialGenerator;
+  using Rng             = random::LinearCongruentialGenerator;
 
   struct KademliaNode
   {
@@ -114,7 +114,7 @@ private:
     DeadlineTimer lifetime{CLOCK_NAME};
 
     template <typename R, typename P>
-    KademliaNode(Address address, std::chrono::duration<R,P> const &duration)
+    KademliaNode(Address address, std::chrono::duration<R, P> const &duration)
       : address{std::move(address)}
     {
       lifetime.Restart(duration);
