@@ -21,6 +21,7 @@
 #include "muddle_register.hpp"
 #include "router.hpp"
 #include "routing_message.hpp"
+#include "xor_metric.hpp"
 
 #include "core/byte_array/encoders.hpp"
 #include "core/containers/set_intersection.hpp"
@@ -641,6 +642,11 @@ Router::Handle Router::LookupHandle(Packet::RawAddress const &address) const
   return handle;
 }
 
+void Router::SetKademliaRouting(bool enable)
+{
+  kademlia_routing_ = enable;
+}
+
 /**
  * Looks up a random handle from the routing table.
  * @param address paremeter not used
@@ -670,6 +676,39 @@ Router::Handle Router::LookupRandomHandle(Packet::RawAddress const & /*address*/
   }
 
   return 0;
+}
+
+/**
+ * Lookup the closest directly connected handle to route the packet to
+ *
+ * @param address The address
+ * @return
+ */
+Router::Handle Router::LookupKademliaClosestHandle(Address const &address) const
+{
+  Handle handle{0};
+
+  auto const directly_connected = GetDirectlyConnectedPeerSet();
+  if (!directly_connected.empty())
+  {
+    auto it   = directly_connected.begin();
+    auto node = *it++;
+
+    uint64_t best_distance = CalculateDistance(address, node);
+    for (; it != directly_connected.end(); ++it)
+    {
+      uint64_t const distance = CalculateDistance(address, *it);
+
+      if (distance < best_distance)
+      {
+        node = *it;
+      }
+    }
+
+    handle = LookupHandle(ConvertAddress(node));
+  }
+
+  return handle;
 }
 
 /**
@@ -783,6 +822,12 @@ void Router::RoutePacket(PacketPtr packet, bool external)
     {
       // one of our direct connections is the target address, route and complete
       SendToConnection(handle, packet);
+      return;
+    }
+
+    if (kademlia_routing_)
+    {
+      handle = LookupKademliaClosestHandle(packet->GetTarget());
       return;
     }
 

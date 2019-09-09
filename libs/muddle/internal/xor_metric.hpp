@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,17 +17,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dkg/dkg_rpc_protocol.hpp"
-#include "dkg/dkg_service.hpp"
+#include "muddle/address.hpp"
+
+#include <array>
+#include <cstdint>
 
 namespace fetch {
-namespace dkg {
+namespace muddle {
 
-DkgRpcProtocol::DkgRpcProtocol(DkgService &service)
-  : service_{service}
+uint64_t CalculateDistance(Address const &from, Address const &to);
+uint64_t CalculateDistance(void const *from, void const *to, std::size_t length);
+
+template <std::size_t LENGTH>
+uint64_t CalculateDistance(std::array<uint8_t, LENGTH> const &from,
+                           std::array<uint8_t, LENGTH> const &to)
 {
-  Expose(SUBMIT_SIGNATURE, &service_, &DkgService::SubmitSignatureShare);
+  return CalculateDistance(from.data(), to.data(), LENGTH);
 }
 
-}  // namespace dkg
+}  // namespace muddle
 }  // namespace fetch

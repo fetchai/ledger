@@ -29,14 +29,12 @@ namespace fetch {
 namespace muddle {
 namespace {
 
-void BuildDesiredPeers(PeerSelector const &peer_selector, variant::Variant &output)
+void BuildPeerSet(PeerSelector::Addresses const &address_set, variant::Variant &output)
 {
-  auto const desired = peer_selector.GetDesiredPeers();
-
-  output = variant::Variant::Array(desired.size());
+  output = variant::Variant::Array(address_set.size());
 
   std::size_t idx{0};
-  for (auto const &address : desired)
+  for (auto const &address : address_set)
   {
     output[idx++] = address.ToBase64();
   }
@@ -78,7 +76,8 @@ void BuildPeerSelection(PeerSelector const &peer_selector, variant::Variant &out
 {
   output = variant::Variant::Object();
 
-  BuildDesiredPeers(peer_selector, output["desiredPeers"]);
+  BuildPeerSet(peer_selector.GetDesiredPeers(), output["desiredPeers"]);
+  BuildPeerSet(peer_selector.GetKademliaPeers(), output["kademliaPeers"]);
   BuildPeerInfo(peer_selector, output["peerInfo"]);
 }
 

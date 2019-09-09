@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include <ctime>
 #include <utility>
 
 #include "ledger/consensus/consensus.hpp"
@@ -88,8 +89,27 @@ void Consensus::UpdateCurrentBlock(Block const &current)
                    " creating new aeon. Periodicity: ", aeon_period_, " threshold: ", threshold,
                    " as double: ", threshold_, " cabinet size: ", cabinet_member_list.size());
 
+    uint64_t last_block_time = current.body.timestamp;
+    uint64_t current_time    = static_cast<uint64_t>(std::time(nullptr));
+
+    if (current.body.block_number == 0)
+    {
+      last_block_time = default_start_time_;
+    }
+
+    FETCH_LOG_INFO(LOGGING_NAME, "Starting DKG with timestamp: ", last_block_time,
+                   " current: ", current_time,
+                   " diff: ", int64_t(current_time) - int64_t(last_block_time));
+
+    uint64_t block_interval = 1;
+
     beacon_->StartNewCabinet(cabinet_member_list, threshold, current_block_number_,
-                             current_block_number_ + aeon_period_ + 1);
+                             current_block_number_ + aeon_period_ + 1,
+                             last_block_time + block_interval);
+  }
+  else if ((current_block_number_ - 1 % aeon_period_) == 0)
+  {
+    beacon_->AbortCabinet(current_block_number_);
   }
 }
 
@@ -203,4 +223,9 @@ void Consensus::SetCommitteeSize(uint64_t size)
 StakeManagerPtr Consensus::stake()
 {
   return stake_;
+}
+
+void Consensus::SetDefaultStartTime(uint64_t default_start_time)
+{
+  default_start_time_ = default_start_time;
 }

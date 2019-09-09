@@ -18,9 +18,6 @@
 
 #include "dkg/dkg_complaints_manager.hpp"
 
-#include <cstdint>
-#include <mutex>
-
 namespace fetch {
 namespace dkg {
 
@@ -39,7 +36,7 @@ void ComplaintsManager::ResetCabinet(uint32_t cabinet_size)
 
 void ComplaintsManager::Count(MuddleAddress const &address)
 {
-  FETCH_LOCK(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   ++complaints_counter_[address];
 }
 
@@ -93,15 +90,15 @@ bool ComplaintsManager::IsFinished(uint32_t polynomial_degree)
 
 std::set<ComplaintsMessage::MuddleAddress> ComplaintsManager::ComplaintsFrom() const
 {
-  FETCH_LOCK(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   assert(finished_);
   return complaints_from_;
 }
 
 uint32_t ComplaintsManager::ComplaintsCount(MuddleAddress const &address)
 {
-  FETCH_LOCK(mutex_);
-  auto iter = complaints_counter_.find(address);
+  std::lock_guard<std::mutex> lock(mutex_);
+  auto                        iter = complaints_counter_.find(address);
   if (iter == complaints_counter_.end())
   {
     return 0;
@@ -111,14 +108,14 @@ uint32_t ComplaintsManager::ComplaintsCount(MuddleAddress const &address)
 
 std::set<ComplaintsMessage::MuddleAddress> ComplaintsManager::Complaints() const
 {
-  FETCH_LOCK(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   assert(finished_);
   return complaints_;
 }
 
 void ComplaintsManager::Clear()
 {
-  FETCH_LOCK(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   complaints_counter_.clear();
   complaints_from_.clear();
   complaints_.clear();
@@ -127,21 +124,22 @@ void ComplaintsManager::Clear()
 
 void QualComplaintsManager::Complaints(MuddleAddress const &id)
 {
-  FETCH_LOCK(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   complaints_.insert(id);
 }
 
 std::set<QualComplaintsManager::MuddleAddress> QualComplaintsManager::Complaints() const
 {
-  FETCH_LOCK(mutex_);
-  assert(finished_);
+  std::lock_guard<std::mutex> lock(mutex_);
+  // TODO(HUT): Discuss w/Jenny
+  /*assert(finished_); */
   return complaints_;
 }
 
 void QualComplaintsManager::Received(MuddleAddress const &                               id,
                                      std::unordered_map<CabinetId, ExposedShares> const &complaints)
 {
-  FETCH_LOCK(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   complaints_received_.insert({id, complaints});
 }
 
@@ -152,29 +150,33 @@ const QualComplaintsManager::QualComplaints &QualComplaintsManager::ComplaintsRe
 
 std::size_t QualComplaintsManager::ComplaintsSize() const
 {
-  FETCH_LOCK(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   return complaints_.size();
 }
 
 bool QualComplaintsManager::ComplaintsFind(MuddleAddress const &id) const
 {
-  FETCH_LOCK(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   return complaints_.find(id) != complaints_.end();
 }
 
 bool QualComplaintsManager::IsFinished(std::set<MuddleAddress> const &qual,
-                                       MuddleAddress const &          node_id)
+                                       MuddleAddress const &node_id, uint32_t threshold)
 {
   FETCH_LOCK(mutex_);
-  for (const auto &member : qual)
+
+  uint32_t total_intersecting_complaints = 0;
+
+  for (auto const &qualified_member : qual)
   {
-    if (member != node_id && complaints_received_.find(member) == complaints_received_.end())
+    if (qualified_member != node_id &&
+        complaints_received_.find(qualified_member) != complaints_received_.end())
     {
-      return false;
+      total_intersecting_complaints++;
     }
   }
-  finished_ = true;
-  return true;
+
+  return total_intersecting_complaints >= threshold;
 }
 
 void QualComplaintsManager::Clear()
@@ -226,10 +228,11 @@ bool ComplaintsAnswerManager::Count(MuddleAddress const &from)
   }
 }
 
-bool ComplaintsAnswerManager::IsFinished()
+bool ComplaintsAnswerManager::IsFinished(uint32_t threshold)
 {
   FETCH_LOCK(mutex_);
-  if (complaint_answers_received_.size() == cabinet_size_ - 1)
+
+  if (complaint_answers_received_.size() >= threshold)
   {
     // TODO(jmw): Add miners which did not send a complaint answer to complaints to complaints?
     finished_ = true;
@@ -251,7 +254,7 @@ std::set<ComplaintsAnswerManager::MuddleAddress> ComplaintsAnswerManager::BuildQ
 
 void ComplaintsAnswerManager::Clear()
 {
-  FETCH_LOCK(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   complaints_.clear();
   complaint_answers_received_.clear();
 }

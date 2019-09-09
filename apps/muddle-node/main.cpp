@@ -131,31 +131,6 @@ ProverPtr RestoreOrCreateKey(ParamsParser const &params)
   return certificate;
 }
 
-AddressSet GenerateDesiredAddresses()
-{
-  std::vector<Address> addresses{};
-  gStatistics.ApplyVoid([&](AggregateData const &data) {
-    for (auto const &element : data.counters)
-    {
-      addresses.emplace_back(element.first);
-    }
-  });
-
-  // seed our RNG
-  std::random_device rd;
-  std::mt19937       g(rd());
-  std::shuffle(addresses.begin(), addresses.end(), g);
-
-  // create the desired address set
-  AddressSet desired{};
-  for (std::size_t i = 0, end = std::min<std::size_t>(3u, addresses.size()); i < end; ++i)
-  {
-    desired.emplace(addresses[i]);
-  }
-
-  return desired;
-}
-
 class MetricsModule : public http::HTTPModule
 {
 public:
@@ -207,6 +182,7 @@ int main(int argc, char **argv)
   char const *external_address = (external == nullptr) ? "127.0.0.1" : external;
 
   auto muddle = CreateMuddle("exmp", prover, nm, external_address);
+  muddle->SetPeerSelectionMode(muddle::PeerSelectionMode::KADEMLIA);
 
   FETCH_LOG_INFO(LOGGING_NAME, "Muddle Node: ", muddle->GetAddress().ToBase64());
 
@@ -220,7 +196,7 @@ int main(int argc, char **argv)
   // lookup the endpoint
   auto &endpoint = muddle->GetEndpoint();
   auto  sub      = endpoint.Subscribe(SERVICE, CHANNEL);
-  sub->SetMessageHandler([&endpoint](Address const &from, Packet::Payload const &payload) {
+  sub->SetMessageHandler([&muddle](Address const &from, Packet::Payload const &payload) {
     FETCH_UNUSED(payload);
 
     // aggregate the statistics
@@ -232,7 +208,7 @@ int main(int argc, char **argv)
       {
         FETCH_LOG_INFO(LOGGING_NAME, "Message Summary: ", data.total_messages, " from ",
                        data.counters.size(),
-                       " peers (connected: ", endpoint.GetDirectlyConnectedPeers().size(), ")");
+                       " peers (connected: ", muddle->GetNumDirectlyConnectedPeers(), ")");
 
         for (auto const &element : data.counters)
         {
@@ -252,37 +228,11 @@ int main(int argc, char **argv)
   std::signal(SIGINT, InterruptHandler);
   std::signal(SIGTERM, InterruptHandler);
 
-  Timepoint last_update = Clock::now();
   while (global_active)
   {
     endpoint.Broadcast(SERVICE, CHANNEL, "hello");
 
-    auto const now   = Clock::now();
-    auto const delta = now - last_update;
-
-    if (delta > 20s)
-    {
-      // generate the desired peers
-      auto const desired_peers = GenerateDesiredAddresses();
-      auto const current_peers = muddle->GetRequestedPeers();
-      auto const additions     = desired_peers - current_peers;
-      auto const removals      = current_peers - desired_peers;
-
-      FETCH_LOG_INFO(LOGGING_NAME, "Update Peers");
-      for (auto const &address : desired_peers)
-      {
-        FETCH_LOG_INFO(LOGGING_NAME, "To: ", address.ToBase64());
-      }
-
-      // ensure we try and connect to the requested addresses
-      muddle->ConnectTo(additions);
-      muddle->DisconnectFrom(removals);
-
-      // reset the duraction
-      last_update = now;
-    }
-
-    sleep_for(1s);
+    sleep_for(500ms);
   }
 
   if (http)

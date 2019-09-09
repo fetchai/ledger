@@ -22,6 +22,7 @@ import shutil
 import traceback
 import time
 import pickle
+import codecs
 import subprocess
 from threading import Event
 from pathlib import Path
@@ -235,9 +236,10 @@ class TestInstance():
         verify_file(stake_gen)
 
         # Create a stake file into the logging directory for all nodes
+        # Importantly, set the time to start
         genesis_file_location = self._workspace+"/genesis_file.json"
         cmd = [stake_gen, *nodes_mining_identities,
-               "-o", genesis_file_location]
+               "-o", genesis_file_location, "-w", "10"]
 
         # After giving the relevant nodes identities, make a stake file
         exit_code = subprocess.call(cmd)
@@ -527,9 +529,11 @@ def verify_txs(parameters, test_instance):
                     output("found executed TX")
                     break
 
-                time.sleep(0.5)
-                output("Waiting for TX to get executed (node {}). Found: {}".format(
-                    node_index, status))
+                tx_b64 = codecs.encode(codecs.decode(
+                    tx, 'hex'), 'base64').decode()
+                time.sleep(1)
+                output("Waiting for TX to get executed (node {}). Found: {} Tx: {}".format(
+                    node_index, status, tx_b64))
 
             seen_balance = api.tokens.balance(identity)
             if balance != seen_balance:

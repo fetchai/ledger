@@ -109,7 +109,9 @@ public:
   /// @{
   /// @brief this function is called when the node is in the cabinet
   void StartNewCabinet(CabinetMemberList members, uint32_t threshold, uint64_t round_start,
-                       uint64_t round_end);
+                       uint64_t round_end, uint64_t start_time);
+
+  void AbortCabinet(uint64_t round_start);
   /// @}
 
   /// Beacon runnables
@@ -118,8 +120,6 @@ public:
   std::weak_ptr<core::Runnable> GetSetupRunnable();
   /// @}
 
-  template <typename T>
-  friend class core::StateMachine;
   friend class BeaconServiceProtocol;
 
 protected:
@@ -144,34 +144,7 @@ protected:
   /// @}
 
 private:
-  bool AddSignature(SignatureShare share)
-  {
-    assert(active_exe_unit_ != nullptr);
-    auto ret = active_exe_unit_->manager.AddSignaturePart(share.identity, share.signature);
-
-    // Checking that the signature is valid
-    if (ret == BeaconManager::AddResult::INVALID_SIGNATURE)
-    {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Signature invalid.");
-
-      EventInvalidSignature event;
-      // TODO(tfr): Received invalid signature - fill event details
-      event_manager_->Dispatch(event);
-
-      return false;
-    }
-    else if (ret == BeaconManager::AddResult::NOT_MEMBER)
-    {  // And that it was sent by a member of the cabinet
-      FETCH_LOG_ERROR(LOGGING_NAME, "Signature from non-member.");
-
-      EventSignatureFromNonMember event;
-      // TODO(tfr): Received signature from non-member - deal with it.
-      event_manager_->Dispatch(event);
-
-      return false;
-    }
-    return true;
-  }
+  bool AddSignature(SignatureShare share);
 
   std::mutex      mutex_;
   CertificatePtr  certificate_;
@@ -182,6 +155,7 @@ private:
   /// General configuration
   /// @{
   uint64_t blocks_per_round_;
+  bool     broadcasting_ = false;
   /// @}
 
   /// Beacon and entropy control units
@@ -219,7 +193,9 @@ private:
   BeaconServiceProtocol beacon_protocol_;
   /// @}
 
-  telemetry::CounterPtr entropy_generated_count_;
+  telemetry::CounterPtr         beacon_entropy_generated_total_;
+  telemetry::CounterPtr         beacon_entropy_future_signature_seen_total_;
+  telemetry::GaugePtr<uint64_t> beacon_entropy_last_requested_;
 };
 
 }  // namespace beacon

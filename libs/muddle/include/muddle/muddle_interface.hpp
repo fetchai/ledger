@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "muddle/address.hpp"
+#include "muddle/peer_selection_mode.hpp"
 #include "network/uri.hpp"
 
 #include <cstdint>
@@ -172,6 +173,19 @@ public:
 
   /// @name Peer Control
   /// @{
+
+  /**
+   * Query the current peer selection mode for this muddle
+   *
+   * @return The current mode
+   */
+  virtual PeerSelectionMode GetPeerSelectionMode() const = 0;
+
+  /**
+   * Update the current peer selection mode for this muddle
+   * @param mode
+   */
+  virtual void SetPeerSelectionMode(PeerSelectionMode mode) = 0;
 
   /**
    * Get the set of addresses that have been requested to connect to

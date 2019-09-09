@@ -17,38 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/service/protocol.hpp"
-
 namespace fetch {
-namespace dkg {
+namespace muddle {
 
-class DkgService;
-
-/**
- * The RPC protocol class for the DKG Service
- */
-class DkgRpcProtocol : public service::Protocol
+enum class PeerSelectionMode
 {
-public:
-  enum
-  {
-    SUBMIT_SIGNATURE,
-    SUBMIT_SHARE,
-  };
-
-  // Construction / Destruction
-  explicit DkgRpcProtocol(DkgService &service);
-  DkgRpcProtocol(DkgRpcProtocol const &) = delete;
-  DkgRpcProtocol(DkgRpcProtocol &&)      = delete;
-  ~DkgRpcProtocol() override             = default;
-
-  // Operators
-  DkgRpcProtocol &operator=(DkgRpcProtocol const &) = delete;
-  DkgRpcProtocol &operator=(DkgRpcProtocol &&) = delete;
-
-private:
-  DkgService &service_;
+  DEFAULT,  ///< User request based routing
+  KADEMLIA  ///< Kademlia announcing and routing
 };
 
-}  // namespace dkg
+}  // namespace muddle
 }  // namespace fetch

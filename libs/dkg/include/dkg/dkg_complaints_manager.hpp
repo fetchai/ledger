@@ -96,7 +96,8 @@ public:
   std::size_t                                    ComplaintsSize() const;
   bool                                           ComplaintsFind(MuddleAddress const &id) const;
   std::set<QualComplaintsManager::MuddleAddress> Complaints() const;
-  bool IsFinished(std::set<MuddleAddress> const &qual, MuddleAddress const &node_id);
+  bool IsFinished(std::set<MuddleAddress> const &qual, MuddleAddress const &node_id,
+                  uint32_t threshold);
   void Clear();
   void Reset();
 };
@@ -121,7 +122,7 @@ public:
   void                    ResetCabinet(uint32_t cabinet_size);
   void                    Add(MuddleAddress const &miner);
   bool                    Count(MuddleAddress const &from);
-  bool                    IsFinished();
+  bool                    IsFinished(uint32_t threshold);
   std::set<MuddleAddress> BuildQual(std::set<MuddleAddress> const &miners);
   void                    Clear();
 };

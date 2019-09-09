@@ -93,6 +93,11 @@ public:
     return current_state_;
   }
 
+  State previous_state() const
+  {
+    return previous_state_;
+  }
+
   template <typename R, typename P>
   void Delay(std::chrono::duration<R, P> const &delay);
 
