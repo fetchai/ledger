@@ -1399,7 +1399,7 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
     {
       failures++;
       next_start_point += dkg_time;
-      dkg_time = dkg_time + uint64_t(0.5 * expected_dkg_time_s);
+      dkg_time = dkg_time + uint64_t(0.5 * double(expected_dkg_time_s));
     }
 
     expected_dkg_timespan_ = dkg_time;
