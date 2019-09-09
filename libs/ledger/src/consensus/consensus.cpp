@@ -83,7 +83,7 @@ Consensus::CommitteePtr Consensus::GetCommittee(Block const &previous)
     FETCH_LOG_INFO(LOGGING_NAME,
                    "No committee history found for block: ", previous.body.block_number, " AKA ",
                    last_snapshot);
-    // TODO(jmw): Check: should return nullptr here?
+    return nullptr;
   }
 
   // If the last committee was the valid committee, return this. Otherwise, deterministically
