@@ -166,44 +166,6 @@ private:
 };
 
 /**
- * Attach the state interface to the contract instance
- *
- * @param state The reference
- */
-inline void Contract::Attach(ledger::StateAdapter &state)
-{
-  state_ = &state;
-}
-
-/**
- * Detach the state interface from the contract instance
- */
-inline void Contract::Detach()
-{
-  state_ = nullptr;
-}
-
-/**
- * Query Handler Map Accessor
- *
- * @return The query handler map
- */
-inline Contract::QueryHandlerMap const &Contract::query_handlers() const
-{
-  return query_handlers_;
-}
-
-/**
- * Transaction Handler Map Accessor
- *
- * @return The transaction handler map
- */
-inline Contract::TransactionHandlerMap const &Contract::transaction_handlers() const
-{
-  return transaction_handlers_;
-}
-
-/**
  * Register a class member function as an init handler
  *
  * @tparam C The class type

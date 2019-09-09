@@ -136,5 +136,51 @@ void TransactionProcessor::ThreadEntryPoint()
   }
 }
 
+/**
+ * Start the transaction processor
+ */
+void TransactionProcessor::Start()
+{
+  verifier_.Start();
+  running_ = true;
+  poll_new_tx_thread_ =
+      std::make_unique<std::thread>(&TransactionProcessor::ThreadEntryPoint, this);
+}
+
+/**
+ * Stop the transactions processor
+ */
+void TransactionProcessor::Stop()
+{
+  running_ = false;
+  if (poll_new_tx_thread_)
+  {
+    poll_new_tx_thread_->join();
+    poll_new_tx_thread_.reset();
+  }
+
+  verifier_.Stop();
+}
+
+/**
+ * Add a single transaction to the processor
+ *
+ * @param tx The reference to the new transaction to be processed
+ */
+void TransactionProcessor::AddTransaction(TransactionPtr const &tx)
+{
+  verifier_.AddTransaction(tx);
+}
+
+/**
+ * Add a single transaction to the processor
+ *
+ * @param tx The reference to the new transaction to be processed
+ */
+void TransactionProcessor::AddTransaction(TransactionPtr &&tx)
+{
+  verifier_.AddTransaction(std::move(tx));
+}
+
 }  // namespace ledger
 }  // namespace fetch
