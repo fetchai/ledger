@@ -209,15 +209,15 @@ BeaconSetupService::State BeaconSetupService::OnReset()
   complaints_answer_manager_.ResetCabinet(cabinet_size);
   complaints_manager_.ResetCabinet(cabinet_size);
   connections_.clear();
-  pre_dkg_rbc_.ResetCabinet(cabinet);
   qual_coefficients_received_.clear();
   qual_complaints_manager_.Reset();
-  rbc_.ResetCabinet(cabinet);
   ready_connections_.clear();
   reconstruction_shares_received_.clear();
   shares_received_.clear();
   dry_run_shares_.clear();
   dry_run_public_keys_.clear();
+  pre_dkg_rbc_.ResetCabinet({});
+  rbc_.ResetCabinet({});
 
   if (beacon_->aeon.round_start < abort_below_)
   {
@@ -225,9 +225,13 @@ BeaconSetupService::State BeaconSetupService::OnReset()
     return State::IDLE;
   }
 
-  // The pre-dkg will get held in reset mode until the DKG start time
+  // The dkg has to be reset to 0 to clear old messages,
+  // before being reset with the cabinet
   if (timer_to_proceed_.HasExpired())
   {
+    pre_dkg_rbc_.ResetCabinet(cabinet);
+    rbc_.ResetCabinet(cabinet);
+
     SetTimeToProceed(State::CONNECT_TO_ALL);
     return State::CONNECT_TO_ALL;
   }
@@ -509,9 +513,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForComplaintAnswers()
   std::lock_guard<std::mutex> lock(mutex_);
   beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::WAIT_FOR_COMPLAINT_ANSWERS));
 
-  // TODO(HUT): fix this.
-  // bool const is_ok = complaints_answer_manager_.IsFinished();
-  bool const is_ok = true;
+  bool const is_ok = complaints_answer_manager_.IsFinished(beacon_->manager.polynomial_degree());
 
   if (!condition_to_proceed_ && is_ok)
   {

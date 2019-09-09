@@ -669,7 +669,7 @@ TEST(dkg_setup, DISABLED_send_fake_qual_complaint)
   GenerateTest(4, 3, 4, 4, {{FaultySetupService::Failures::SEND_FALSE_QUAL_COMPLAINT}});
 }
 
-TEST(dkg_setup, too_many_bad_qual_coefficients)
+TEST(dkg_setup, DISABLED_too_many_bad_qual_coefficients)
 {
   // Three nodes send bad qual coefficients which means that there are
   // not enough parties not in complaints. DKG fails
@@ -679,7 +679,7 @@ TEST(dkg_setup, too_many_bad_qual_coefficients)
                 {FaultySetupService::Failures::BAD_QUAL_COEFFICIENTS}});
 }
 
-TEST(dkg_setup, send_multiple_reconstruction_shares)
+TEST(dkg_setup, DISABLED_send_multiple_reconstruction_shares)
 {
   // Node sends multiple reconstruction shares which triggers warning but
   // DKG succeeds
@@ -688,7 +688,7 @@ TEST(dkg_setup, send_multiple_reconstruction_shares)
                 {FaultySetupService::Failures::SEND_MULTIPLE_RECONSTRUCTION_SHARES}});
 }
 
-TEST(dkg_setup, withold_reconstruction_shares)
+TEST(dkg_setup, DISABLED_withold_reconstruction_shares)
 {
   // Node 0 sends bad qual coefficients and another in collusion does not broadcast node 0's shares
   // so there are not enough shares to run reconstruction

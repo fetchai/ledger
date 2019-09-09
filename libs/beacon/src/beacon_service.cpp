@@ -151,8 +151,8 @@ BeaconService::BeaconService(MuddleInterface &               muddle,
     FETCH_UNUSED(this);
     FETCH_UNUSED(current);
     FETCH_UNUSED(previous);
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Current state: ", ToString(current),
-                    " (previous: ", ToString(previous), ")");
+    FETCH_LOG_INFO(LOGGING_NAME, "Current state: ", ToString(current),
+                   " (previous: ", ToString(previous), ")");
   });
 }
 
@@ -460,6 +460,9 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
   if (!active_exe_unit_->manager.can_verify())
   {
     state_machine_->Delay(std::chrono::milliseconds(1000));
+    FETCH_LOG_INFO(LOGGING_NAME,
+                   "Failed to verify group signature. Rebroadcasting signature for round: ",
+                   current_entropy_.round);
     return State::BROADCAST_SIGNATURE;
   }
 

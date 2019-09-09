@@ -622,7 +622,7 @@ BeaconManager::SignedMessage BeaconManager::Sign()
   if (!crypto::mcl::VerifySign(public_key_shares_[cabinet_index_], current_message_, signature,
                                group_g_))
   {
-    throw std::runtime_error("Failed to sign.");
+    throw std::runtime_error("Failed to sign the current message.");
   }
 
   SignedMessage smsg;

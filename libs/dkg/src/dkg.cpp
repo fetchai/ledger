@@ -302,7 +302,7 @@ void DistributedKeyGeneration::ReceivedComplaintsAnswer()
 {
   std::unique_lock<std::mutex> lock{mutex_};
   if (!received_all_complaints_answer_ && state_ == State::WAITING_FOR_COMPLAINT_ANSWERS &&
-      complaints_answer_manager_.IsFinished())
+      complaints_answer_manager_.IsFinished(polynomial_degree_))
   {
     received_all_complaints_answer_.store(true);
     lock.unlock();

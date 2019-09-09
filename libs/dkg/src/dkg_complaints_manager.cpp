@@ -227,10 +227,11 @@ bool ComplaintsAnswerManager::Count(MuddleAddress const &from)
   }
 }
 
-bool ComplaintsAnswerManager::IsFinished()
+bool ComplaintsAnswerManager::IsFinished(uint32_t threshold)
 {
   std::lock_guard<std::mutex> lock{mutex_};
-  if (complaint_answers_received_.size() == cabinet_size_ - 1)
+
+  if (complaint_answers_received_.size() >= threshold)
   {
     // TODO(jmw): Add miners which did not send a complaint answer to complaints to complaints?
     finished_ = true;
