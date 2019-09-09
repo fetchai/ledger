@@ -1,5 +1,5 @@
 cc_library(
-  name = "fetch-version fetch-logging",
+  name = "fetch-version",
   visibility = [
       "//visibility:public",
   ],
@@ -8,4 +8,34 @@ cc_library(
   deps = [
     
   ],
+  copts = [
+        "-Ilibs/metrics/include",
+    "-Ilibs/settings/include",
+    "-Ilibs/crypto/include",
+    "-Ilibs/ledger/include",
+    "-Ilibs/vm_modules/include",
+    "-Ilibs/core/include",
+    "-Ilibs/moment/include",
+    "-Ilibs/dkg/include",
+    "-Ilibs/network/include",
+    "-Ilibs/entropy/include",
+    "-Ilibs/meta/include",
+    "-Ilibs/math/include",
+    "-Ilibs/storage/include",
+    "-Ilibs/testing/include",
+    "-Ilibs/vm/include",
+    "-Ilibs/json/include",
+    "-Ilibs/version/include",
+    "-Ilibs/bloom_filter/include",
+    "-Ilibs/ml/include",
+    "-Ilibs/http/include",
+    "-Ilibs/address/include",
+    "-Ilibs/variant/include",
+    "-Ilibs/yaml/include",
+    "-Ilibs/bazel_test/include",
+    "-Ilibs/telemetry/include",
+    "-Ilibs/logging/include",
+    "-Ilibs/vectorise/include",
+    "-Ilibs/miner/include"
+  ],  
 )

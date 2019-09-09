@@ -13,7 +13,7 @@ for l in glob.glob("libs/*/CMakeLists.txt"):
 
   _, dirname, _ = l.split("/")
 
-  library_name = bf.split("setup_library(",1)[1].split(")")[0]
+  library_name = bf.split("project(",1)[1].split(")")[0]
   deps = []
 
   if "target_link_libraries" in bf:
@@ -67,12 +67,15 @@ while len(zero_deps) != 0:
 print("")
 print("---")
 
+copts = []
 for lib in libraries.values():
   if len(lib["passed"]) > 0:
     print(lib["name"]) 
     print(lib["passed"])
     print("")
-
+  d = lib["dirname"]
+  copts.append("\"-Ilibs/%s/include\"" % d)
+  
 print("")
 print("---")
 
@@ -81,12 +84,14 @@ for libname in order:
   dirname = lib["dirname"]
 
   depends = []
+
   for dep in lib["depends"]:
     if not dep.startswith("fetch"):
       continue
     x = libraries[dep]
     d = x["dirname"]
     depends.append("\"//libs/%s:%s\"" %(d, dep))
+
 
   with open("libs/%s/BUILD" % dirname, "w") as fb:
     fb.write(
@@ -100,5 +105,8 @@ for libname in order:
   deps = [
     %s
   ],
-)""" % (libname, ",\n    ".join(depends))
+  copts = [
+        %s
+  ],  
+)""" % (libname, ",\n    ".join(depends), ",\n    ".join(copts))
 )
