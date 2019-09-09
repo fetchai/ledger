@@ -25,7 +25,7 @@ constexpr char const *LOGGING_NAME = "DKGComplaints";
 
 void ComplaintsManager::ResetCabinet(uint32_t cabinet_size)
 {
-  std::lock_guard<std::mutex> lock{mutex_};
+  FETCH_LOCK(mutex);
   cabinet_size_ = cabinet_size;
   finished_     = false;
   complaints_counter_.clear();
@@ -43,7 +43,7 @@ void ComplaintsManager::Count(MuddleAddress const &address)
 void ComplaintsManager::Add(ComplaintsMessage const &msg, MuddleAddress const &from_id,
                             MuddleAddress const &address)
 {
-  std::lock_guard<std::mutex> lock{mutex_};
+  FETCH_LOCK(mutex);
   // Check if we have received a complaints message from this node before and if not log that we
   // received a complaint message
   if (complaints_received_.find(from_id) == complaints_received_.end())
@@ -181,14 +181,14 @@ bool QualComplaintsManager::IsFinished(std::set<MuddleAddress> const &qual,
 
 void QualComplaintsManager::Clear()
 {
-  std::lock_guard<std::mutex> lock{mutex_};
+  FETCH_LOCK(mutex);
   complaints_.clear();
   complaints_received_.clear();
 }
 
 void QualComplaintsManager::Reset()
 {
-  std::lock_guard<std::mutex> lock{mutex_};
+  FETCH_LOCK(mutex);
   finished_ = false;
   complaints_.clear();
   complaints_received_.clear();
@@ -196,13 +196,13 @@ void QualComplaintsManager::Reset()
 
 void ComplaintsAnswerManager::Init(std::set<MuddleAddress> const &complaints)
 {
-  std::lock_guard<std::mutex> lock{mutex_};
+  FETCH_LOCK(mutex);
   std::copy(complaints.begin(), complaints.end(), std::inserter(complaints_, complaints_.begin()));
 }
 
 void ComplaintsAnswerManager::ResetCabinet(uint32_t cabinet_size)
 {
-  std::lock_guard<std::mutex> lock{mutex_};
+  FETCH_LOCK(mutex);
   cabinet_size_ = cabinet_size;
   finished_     = false;
   complaints_.clear();
@@ -210,13 +210,13 @@ void ComplaintsAnswerManager::ResetCabinet(uint32_t cabinet_size)
 
 void ComplaintsAnswerManager::Add(MuddleAddress const &member)
 {
-  std::lock_guard<std::mutex> lock{mutex_};
+  FETCH_LOCK(mutex);
   complaints_.insert(member);
 }
 
 bool ComplaintsAnswerManager::Count(MuddleAddress const &from)
 {
-  std::lock_guard<std::mutex> lock{mutex_};
+  FETCH_LOCK(mutex);
   if (complaint_answers_received_.find(from) == complaint_answers_received_.end())
   {
     complaint_answers_received_.insert(from);
@@ -230,7 +230,7 @@ bool ComplaintsAnswerManager::Count(MuddleAddress const &from)
 
 bool ComplaintsAnswerManager::IsFinished(uint32_t threshold)
 {
-  std::lock_guard<std::mutex> lock{mutex_};
+  FETCH_LOCK(mutex);
 
   if (complaint_answers_received_.size() >= threshold)
   {
@@ -244,7 +244,7 @@ bool ComplaintsAnswerManager::IsFinished(uint32_t threshold)
 std::set<ComplaintsAnswerManager::MuddleAddress> ComplaintsAnswerManager::BuildQual(
     std::set<MuddleAddress> const &cabinet)
 {
-  std::lock_guard<std::mutex> lock{mutex_};
+  FETCH_LOCK(mutex);
   assert(finished_);
   std::set<MuddleAddress> qual;
   std::set_difference(cabinet.begin(), cabinet.end(), complaints_.begin(), complaints_.end(),
