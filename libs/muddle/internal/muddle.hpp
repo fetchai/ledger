@@ -169,16 +169,18 @@ public:
 
   /// @name Peer Control
   /// @{
-  Addresses GetRequestedPeers() const override;
-  void      ConnectTo(Address const &address) override;
-  void      ConnectTo(Addresses const &addresses) override;
-  void      ConnectTo(Address const &address, network::Uri const &uri_hint) override;
-  void      ConnectTo(AddressHints const &address_hints) override;
-  void      DisconnectFrom(Address const &address) override;
-  void      DisconnectFrom(Addresses const &addresses) override;
-  void      SetConfidence(Address const &address, Confidence confidence) override;
-  void      SetConfidence(Addresses const &addresses, Confidence confidence) override;
-  void      SetConfidence(ConfidenceMap const &map) override;
+  PeerSelectionMode GetPeerSelectionMode() const override;
+  void              SetPeerSelectionMode(PeerSelectionMode mode) override;
+  Addresses         GetRequestedPeers() const override;
+  void              ConnectTo(Address const &address) override;
+  void              ConnectTo(Addresses const &addresses) override;
+  void              ConnectTo(Address const &address, network::Uri const &uri_hint) override;
+  void              ConnectTo(AddressHints const &address_hints) override;
+  void              DisconnectFrom(Address const &address) override;
+  void              DisconnectFrom(Addresses const &addresses) override;
+  void              SetConfidence(Address const &address, Confidence confidence) override;
+  void              SetConfidence(Addresses const &addresses, Confidence confidence) override;
+  void              SetConfidence(ConfidenceMap const &map) override;
   /// @}
 
   /// @name Internal Accessors

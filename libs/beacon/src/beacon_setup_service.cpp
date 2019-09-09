@@ -236,6 +236,7 @@ BeaconSetupService::State BeaconSetupService::OnReset()
     return State::CONNECT_TO_ALL;
   }
 
+  state_machine_->Delay(std::chrono::milliseconds(10));
   return State::RESET;
 }
 
@@ -249,57 +250,56 @@ BeaconSetupService::State BeaconSetupService::OnConnectToAll()
   std::lock_guard<std::mutex> lock(mutex_);
   beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::CONNECT_TO_ALL));
 
-  if (state_machine_->previous_state() != State::CONNECT_TO_ALL)
+  std::unordered_set<MuddleAddress> aeon_members;
+  for (auto &m : beacon_->aeon.members)
   {
-    std::unordered_set<MuddleAddress> aeon_members;
-    for (auto &m : beacon_->aeon.members)
+    // Skipping own address
+    if (m == identity_)
     {
-      // Skipping own address
-      if (m == identity_)
-      {
-        continue;
-      }
-
-      aeon_members.emplace(m.identifier());
+      continue;
     }
 
-    // add the outstanding peers
-    auto const connected_peers   = muddle_.GetDirectlyConnectedPeers();
-    auto const outstanding_peers = aeon_members - connected_peers;
-
-    ledger::Manifest manifest{};
-    for (auto const &address : outstanding_peers)
-    {
-      std::unique_ptr<network::Uri> hint{};
-
-      // lookup the manifest for the desired address
-      if (manifest_cache_.QueryManifest(address, manifest))
-      {
-        // attempt to find the service entry
-        auto it = manifest.FindService(ServiceIdentifier::Type::DKG);
-        if (it != manifest.end())
-        {
-          hint = std::make_unique<network::Uri>(it->second.uri());
-        }
-      }
-
-      if (hint)
-      {
-        // tell muddle to connect to the address with the specified hint
-        muddle_.ConnectTo(address, *hint);
-      }
-      else
-      {
-        // tell muddle to connect to the address using normal service discovery
-        muddle_.ConnectTo(address);
-      }
-    }
-
-    // request removal of unwanted connections
-    auto unwanted_connections = muddle_.GetRequestedPeers() - aeon_members;
-    FETCH_LOG_INFO(LOGGING_NAME, "Removing unwanted connections: ", unwanted_connections.size());
-    muddle_.DisconnectFrom(unwanted_connections);
+    aeon_members.emplace(m.identifier());
   }
+
+  // add the outstanding peers
+  auto const connected_peers   = muddle_.GetDirectlyConnectedPeers();
+  auto const outstanding_peers = aeon_members - connected_peers;
+
+  ledger::Manifest manifest{};
+  for (auto const &address : outstanding_peers)
+  {
+    std::unique_ptr<network::Uri> hint{};
+
+    // lookup the manifest for the desired address
+    if (manifest_cache_.QueryManifest(address, manifest))
+    {
+      // attempt to find the service entry
+      auto it = manifest.FindService(ServiceIdentifier::Type::DKG);
+      if (it != manifest.end())
+      {
+        hint = std::make_unique<network::Uri>(it->second.uri());
+      }
+    }
+
+    if (hint)
+    {
+      // tell muddle to connect to the address with the specified hint
+      muddle_.ConnectTo(address, *hint);
+      FETCH_LOG_WARN(LOGGING_NAME, "Added peer with hint");
+    }
+    else
+    {
+      // tell muddle to connect to the address using normal service discovery
+      muddle_.ConnectTo(address);
+      FETCH_LOG_WARN(LOGGING_NAME, "Added peer without hint");
+    }
+  }
+
+  // request removal of unwanted connections
+  auto unwanted_connections = muddle_.GetRequestedPeers() - aeon_members;
+  FETCH_LOG_INFO(LOGGING_NAME, "Removing unwanted connections: ", unwanted_connections.size());
+  muddle_.DisconnectFrom(unwanted_connections);
 
   if (timer_to_proceed_.HasExpired())
   {
@@ -307,6 +307,7 @@ BeaconSetupService::State BeaconSetupService::OnConnectToAll()
     return State::WAIT_FOR_READY_CONNECTIONS;
   }
 
+  state_machine_->Delay(std::chrono::milliseconds(500));
   return State::CONNECT_TO_ALL;
 }
 
@@ -759,6 +760,7 @@ BeaconSetupService::State BeaconSetupService::OnDryRun()
     }
   }
 
+  state_machine_->Delay(std::chrono::milliseconds(10));
   return State::DRY_RUN_SIGNING;
 }
 

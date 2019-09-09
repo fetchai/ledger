@@ -133,6 +133,8 @@ public:
     direct_message_handler_ = std::move(handler);
   }
 
+  void SetKademliaRouting(bool enable = true);
+
   // Operators
   Router &operator=(Router const &) = delete;
   Router &operator=(Router &&) = delete;
@@ -158,6 +160,7 @@ private:
                                           bool direct);
 
   Handle LookupRandomHandle(Packet::RawAddress const &address) const;
+  Handle LookupKademliaClosestHandle(Address const &address) const;
 
   void SendToConnection(Handle handle, PacketPtr packet);
   void RoutePacket(PacketPtr packet, bool external = true);
@@ -183,6 +186,7 @@ private:
   NetworkId             network_id_;
   Prover *              prover_          = nullptr;
   bool                  sign_broadcasts_ = false;
+  std::atomic<bool>     kademlia_routing_{false};
 
   mutable Mutex routing_table_lock_{__LINE__, __FILE__};
   RoutingTable  routing_table_;  ///< The map routing table from address to handle (Protected by

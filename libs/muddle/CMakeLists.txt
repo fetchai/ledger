@@ -15,7 +15,7 @@ setup_compiler()
 # ------------------------------------------------------------------------------
 
 setup_library(fetch-muddle)
-target_link_libraries(fetch-muddle PUBLIC fetch-network)
+target_link_libraries(fetch-muddle PUBLIC fetch-network fetch-moment)
 
 # Unit tests
 add_subdirectory(tests)

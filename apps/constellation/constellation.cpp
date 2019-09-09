@@ -338,6 +338,11 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   ledger::STAKE_WARM_UP_PERIOD   = cfg_.stake_delay_period;
   ledger::STAKE_COOL_DOWN_PERIOD = cfg_.stake_delay_period;
 
+  if (cfg_.kademlia_routing)
+  {
+    muddle_->SetPeerSelectionMode(muddle::PeerSelectionMode::KADEMLIA);
+  }
+
   // Enable experimental features
   if (cfg_.features.IsEnabled("synergetic"))
   {

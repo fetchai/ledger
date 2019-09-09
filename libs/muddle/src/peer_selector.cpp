@@ -22,16 +22,36 @@
 #include "muddle_register.hpp"
 #include "peer_list.hpp"
 #include "peer_selector.hpp"
+#include "xor_metric.hpp"
 
 #include "core/containers/set_difference.hpp"
+#include "core/containers/set_intersection.hpp"
 #include "core/reactor.hpp"
 #include "core/service_ids.hpp"
 
 namespace fetch {
 namespace muddle {
 
-static constexpr std::size_t MINIMUM_PEERS = 3;
-static constexpr char const *BASE_NAME     = "PeerSelector";
+using namespace std::chrono;
+using namespace std::chrono_literals;
+
+static constexpr auto        MIN_ANNONCEMENT_INTERVAL = 15min;
+static constexpr auto        MAX_ANNONCEMENT_INTERVAL = 30min;
+static constexpr std::size_t MINIMUM_PEERS            = 3;
+static constexpr char const *BASE_NAME                = "PeerSelector";
+static constexpr std::size_t MAX_CACHE_KAD_NODES      = 20;
+static constexpr std::size_t MAX_CONNECTED_KAD_NODES  = 3;
+
+static std::unordered_set<Address> operator+(std::unordered_set<Address>        input,
+                                             std::unordered_set<Address> const &other)
+{
+  for (auto const &address : other)
+  {
+    input.emplace(address);
+  }
+
+  return input;
+}
 
 PeerSelector::PeerSelector(NetworkId const &network, Duration const &interval,
                            core::Reactor &reactor, MuddleRegister const &reg,
@@ -42,8 +62,12 @@ PeerSelector::PeerSelector(NetworkId const &network, Duration const &interval,
   , connections_{connections}
   , register_{reg}
   , endpoint_{endpoint}
+  , address_{endpoint_.GetAddress()}
   , rpc_client_{"PeerSelect", endpoint_, SERVICE_MUDDLE, CHANNEL_RPC}
-{}
+  , announcement_subscription_{endpoint_.Subscribe(SERVICE_MUDDLE, CHANNEL_ANNOUNCEMENT)}
+{
+  announcement_subscription_->SetMessageHandler(this, &PeerSelector::OnAnnouncement);
+}
 
 void PeerSelector::AddDesiredPeer(Address const &address)
 {
@@ -82,6 +106,12 @@ PeerSelector::Addresses PeerSelector::GetDesiredPeers() const
   return desired_addresses_;
 }
 
+PeerSelector::Addresses PeerSelector::GetKademliaPeers() const
+{
+  FETCH_LOCK(lock_);
+  return kademlia_addresses_;
+}
+
 PeerSelector::Addresses PeerSelector::GetPendingRequests() const
 {
   Addresses addresses;
@@ -103,14 +133,49 @@ PeerSelector::PeersInfo PeerSelector::GetPeerCache() const
   return peers_info_;
 }
 
+PeerSelectionMode PeerSelector::GetMode() const
+{
+  FETCH_LOCK(lock_);
+  return mode_;
+}
+
+void PeerSelector::SetMode(PeerSelectionMode mode)
+{
+  FETCH_LOCK(lock_);
+
+  auto const previous_mode{mode_};
+  mode_ = mode;
+
+  if (previous_mode != mode_)
+  {
+    switch (mode_)
+    {
+    case PeerSelectionMode::DEFAULT:
+      kademlia_addresses_.clear();
+      break;
+    case PeerSelectionMode::KADEMLIA:
+      announcement_interval_.Restart(0);
+      break;
+    }
+  }
+}
+
 void PeerSelector::Periodically()
 {
   FETCH_LOCK(lock_);
 
+  // kademlia selection
+  if (PeerSelectionMode::KADEMLIA == mode_)
+  {
+    MakeAnnouncement();
+    UpdateKademliaPeers();
+  }
+
   // get the set of addresses to which we want to connect to
   auto const currently_connected_peers = register_.GetCurrentAddressSet();
   auto const current_outgoing_peers    = register_.GetOutgoingAddressSet();
-  auto const outstanding_peers         = desired_addresses_ - currently_connected_peers;
+  auto const target_peers              = desired_addresses_ + kademlia_addresses_;
+  auto const outstanding_peers         = target_peers - currently_connected_peers;
   auto const unwanted_peers            = current_outgoing_peers - desired_addresses_;
 
   // resolve any outstanding unknown addresses
@@ -258,6 +323,103 @@ PeerSelector::UriSet PeerSelector::GenerateUriSet(Addresses const &addresses)
   }
 
   return uris;
+}
+
+void PeerSelector::OnAnnouncement(Address const &from, byte_array::ConstByteArray const &payload)
+{
+  static constexpr auto CACHE_LIFETIME = MAX_ANNONCEMENT_INTERVAL + MIN_ANNONCEMENT_INTERVAL;
+  FETCH_UNUSED(payload);
+
+  FETCH_LOG_INFO(logging_name_, "Received announcement from: ", from.ToBase64());
+
+  FETCH_LOCK(lock_);
+
+  // attempt to locate the existing node
+  auto const it = std::find_if(kademlia_nodes_.begin(), kademlia_nodes_.end(), [&](KademliaNode const &node) {
+    return node.address == from;
+  });
+
+  if (it != kademlia_nodes_.end())
+  {
+    // clear the lifetime
+    it->lifetime.Restart(CACHE_LIFETIME);
+  }
+  else
+  {
+    // add the node into the list
+    kademlia_nodes_.emplace_back(KademliaNode{from, CACHE_LIFETIME});
+
+    // sort by distance
+    kademlia_nodes_.sort([this](KademliaNode const &a, KademliaNode const &b) {
+      auto const distance_a = CalculateDistance(address_, a.address);
+      auto const distance_b = CalculateDistance(address_, b.address);
+
+      if (distance_a == distance_b)
+      {
+        return a.address < b.address;
+      }
+      else
+      {
+        return distance_a < distance_b;
+      }
+    });
+
+    // trim the kademlia cache nodes
+    while (kademlia_nodes_.size() > MAX_CACHE_KAD_NODES)
+    {
+      kademlia_nodes_.pop_back();
+    }
+  }
+}
+
+void PeerSelector::ScheduleNextAnnouncement()
+{
+  static constexpr uint64_t MIN_ANNOUNCE_TIME_MS = duration_cast<milliseconds>(MIN_ANNONCEMENT_INTERVAL).count();
+  static constexpr uint64_t MAX_ANNOUNCE_TIME_MS = duration_cast<milliseconds>(MAX_ANNONCEMENT_INTERVAL).count();
+  static constexpr uint64_t DELTA_ANNOUNCE_TIME_MS = MAX_ANNOUNCE_TIME_MS - MIN_ANNOUNCE_TIME_MS;
+  static_assert(MIN_ANNOUNCE_TIME_MS < MAX_ANNOUNCE_TIME_MS, "Min must be smaller than max");
+  static_assert(DELTA_ANNOUNCE_TIME_MS != 0, "Delta can't be zero");
+
+  uint64_t const next_interval = (rng_() % DELTA_ANNOUNCE_TIME_MS) + MIN_ANNOUNCE_TIME_MS;
+  announcement_interval_.Restart(next_interval);
+}
+
+void PeerSelector::MakeAnnouncement()
+{
+  if (announcement_interval_.HasExpired())
+  {
+    // send out the announcement
+    endpoint_.Broadcast(SERVICE_MUDDLE, CHANNEL_ANNOUNCEMENT, {});
+
+    // schedule the next announcement
+    ScheduleNextAnnouncement();
+  }
+}
+
+void PeerSelector::UpdateKademliaPeers()
+{
+  kademlia_addresses_.clear();
+
+  for (auto it = kademlia_nodes_.begin(); it != kademlia_nodes_.end();)
+  {
+    if (it->lifetime.HasExpired())
+    {
+      // removed the expired nodes
+      it = kademlia_nodes_.erase(it);
+      continue;
+    }
+
+    // add the element into the set
+    kademlia_addresses_.emplace(it->address);
+
+    // exit if we have reached the end of the requested nodes
+    if (kademlia_addresses_.size() >= MAX_CONNECTED_KAD_NODES)
+    {
+      break;
+    }
+
+    ++it;
+  }
 }
 
 }  // namespace muddle
