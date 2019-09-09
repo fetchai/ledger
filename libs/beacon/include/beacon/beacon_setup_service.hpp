@@ -103,6 +103,7 @@ public:
   using SharesExposedMap = std::unordered_map<MuddleAddress, std::pair<MessageShare, MessageShare>>;
   using DeadlineTimer    = fetch::moment::DeadlineTimer;
   using SignatureShare   = AeonExecutionUnit::SignatureShare;
+  using GroupPubKeyPlusSigShare = std::pair<std::string, SignatureShare>;
 
   BeaconSetupService(MuddleInterface &muddle, Identity identity,
                      ManifestCacheInterface &manifest_cache);
@@ -209,7 +210,7 @@ protected:
   std::deque<SharedAeonExecutionUnit>                        aeon_exe_queue_;
   SharedAeonExecutionUnit                                    beacon_;
   std::unordered_map<MuddleAddress, std::set<MuddleAddress>> ready_connections_;
-  std::map<MuddleAddress, SignatureShare>                    dry_run_shares_;
+  std::map<MuddleAddress, GroupPubKeyPlusSigShare>           dry_run_shares_;
   std::map<std::string, uint16_t>                            dry_run_public_keys_;
 
 private:

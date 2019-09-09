@@ -702,7 +702,8 @@ BeaconSetupService::State BeaconSetupService::OnDryRun()
     beacon_->member_share = beacon_->manager.Sign();
 
     // insert ourselves - others will insert here also via gossip
-    dry_run_shares_[identity_.identifier()] = beacon_->member_share;
+    dry_run_shares_[identity_.identifier()] =
+        GroupPubKeyPlusSigShare{beacon_->manager.group_public_key(), beacon_->member_share};
 
     DryRunInfo to_send{beacon_->manager.group_public_key(), beacon_->member_share};
 
@@ -720,34 +721,47 @@ BeaconSetupService::State BeaconSetupService::OnDryRun()
 
   if (timer_to_proceed_.HasExpired())
   {
-    bool found_key = false;
+    bool found_key     = false;
+    bool found_our_key = false;
 
     for (auto const &key_and_count : dry_run_public_keys_)
     {
       if (key_and_count.second >= beacon_->manager.polynomial_degree())
       {
-        found_key = true;
+        found_key     = true;
+        found_our_key = beacon_->manager.group_public_key() == key_and_count.first;
       }
     }
 
     if (!found_key)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to reach consensus on group public key!");
+      SetTimeToProceed(State::RESET);
+      return State::RESET;
+    }
+
+    if (!found_our_key)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Other nodes didn't agree with our computed group public key!");
+      SetTimeToProceed(State::RESET);
+      return State::RESET;
     }
 
     for (auto const &share : dry_run_shares_)
     {
-      beacon_->manager.AddSignaturePart(share.second.identity, share.second.signature);
+      GroupPubKeyPlusSigShare const &shares_for_identity = share.second;
+
+      // Note, only add signatures if it agrees with the group public key
+      if (shares_for_identity.first == beacon_->manager.group_public_key())
+      {
+        beacon_->manager.AddSignaturePart(shares_for_identity.second.identity,
+                                          shares_for_identity.second.signature);
+      }
     }
 
     bool const could_sign = beacon_->manager.can_verify() && beacon_->manager.Verify();
 
-    if (!could_sign)
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Failed to sign group signature");
-    }
-
-    if (could_sign && found_key)
+    if (could_sign)
     {
       SetTimeToProceed(State::BEACON_READY);
       return State::BEACON_READY;
@@ -1017,7 +1031,8 @@ void BeaconSetupService::OnNewDryRunPacket(muddle::Packet const &packet,
   // TODO(HUT): cabinet check
   std::lock_guard<std::mutex> lock(mutex_);
   dry_run_public_keys_[to_receive.public_key]++;
-  dry_run_shares_[packet.GetSender()] = to_receive.sig_share;
+  dry_run_shares_[packet.GetSender()] =
+      GroupPubKeyPlusSigShare{to_receive.public_key, to_receive.sig_share};
 }
 
 /**
