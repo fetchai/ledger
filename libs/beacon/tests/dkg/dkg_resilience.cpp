@@ -697,7 +697,7 @@ TEST(dkg_setup, DISABLED_withold_reconstruction_shares)
                 {FaultySetupService::Failures::WITHOLD_RECONSTRUCTION_SHARES}});
 }
 
-TEST(dkg_setup, long_delay_between_starts)
+TEST(dkg_setup, DISABLED_long_delay_between_starts)
 {
   // Start nodes with delay (ms) between starting service
   SetGlobalLogLevel(LogLevel::TRACE);

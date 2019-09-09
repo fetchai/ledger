@@ -131,7 +131,8 @@ void QualComplaintsManager::Complaints(MuddleAddress const &id)
 std::set<QualComplaintsManager::MuddleAddress> QualComplaintsManager::Complaints() const
 {
   std::lock_guard<std::mutex> lock(mutex_);
-  assert(finished_);
+  // TODO(HUT): Discuss w/Jenny
+  /*assert(finished_); */
   return complaints_;
 }
 
