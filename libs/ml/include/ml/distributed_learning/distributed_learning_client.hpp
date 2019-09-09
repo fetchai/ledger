@@ -39,9 +39,6 @@ namespace fetch {
 namespace ml {
 namespace distributed_learning {
 
-using namespace fetch::ml::ops;
-using namespace fetch::ml::layers;
-
 template <typename DataType>
 struct ClientParams
 {
