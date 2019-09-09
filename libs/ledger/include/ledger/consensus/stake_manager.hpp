@@ -56,24 +56,18 @@ public:
   using CommitteePtr = std::shared_ptr<Committee const>;
 
   // Construction / Destruction
-  StakeManager(uint64_t committee_size, uint32_t block_interval_ms = 1000,
-               uint64_t snapshot_validity_periodicity = 1);
+  StakeManager(uint64_t committee_size);
   StakeManager(StakeManager const &) = delete;
   StakeManager(StakeManager &&)      = delete;
   ~StakeManager() override           = default;
 
   /// @name Stake Manager Interface
   /// @{
-  void     UpdateCurrentBlock(Block const &current) override;
-  uint64_t GetBlockGenerationWeight(Block const &previous, Address const &address) override;
-  bool     ShouldGenerateBlock(Block const &previous, Address const &address) override;
-  bool     ValidMinerForBlock(Block const &previous, Address const &address) override;
+  void         UpdateCurrentBlock(Block const &current) override;
+  CommitteePtr BuildCommittee(Block const &current);
   /// @}
 
   uint32_t BlockInterval();
-
-  // TODO(HUT): promote this to the interface (?)
-  CommitteePtr GetCommittee(Block const &previous);
 
   // Accessors for the executor
   StakeUpdateQueue &      update_queue();
@@ -83,8 +77,8 @@ public:
 
   std::shared_ptr<StakeSnapshot const> GetCurrentStakeSnapshot() const;
 
-  void Reset(StakeSnapshot const &snapshot);
-  void Reset(StakeSnapshot &&snapshot);
+  StakeManager::CommitteePtr Reset(StakeSnapshot const &snapshot);
+  StakeManager::CommitteePtr Reset(StakeSnapshot &&snapshot);
 
   // Operators
   StakeManager &operator=(StakeManager const &) = delete;
@@ -96,21 +90,17 @@ private:
   using BlockIndex       = uint64_t;
   using StakeSnapshotPtr = std::shared_ptr<StakeSnapshot>;
   using StakeHistory     = std::map<BlockIndex, StakeSnapshotPtr>;
-  using CommitteeHistory = std::map<BlockIndex, CommitteePtr>;
 
-  StakeSnapshotPtr LookupStakeSnapshot(BlockIndex block);
-  void             ResetInternal(StakeSnapshotPtr &&snapshot);
+  StakeSnapshotPtr           LookupStakeSnapshot(BlockIndex block);
+  StakeManager::CommitteePtr ResetInternal(StakeSnapshotPtr &&snapshot);
 
   // Config & Components
-  uint64_t committee_size_{0};                 ///< The "static" size of the committee
-  uint64_t snapshot_validity_periodicity_{1};  ///< The period to use when building committees
+  uint64_t committee_size_{0};  ///< The "static" size of the committee
 
   StakeUpdateQueue update_queue_;            ///< The update queue of events
   StakeHistory     stake_history_{};         ///< Cache of historical snapshots
-  CommitteeHistory committee_history_{};     ///< Cache of historical committees
   StakeSnapshotPtr current_{};               ///< Most recent snapshot
   BlockIndex       current_block_index_{0};  ///< Block index of most recent snapshot
-  uint32_t         block_interval_ms_{std::numeric_limits<uint32_t>::max()};
 };
 
 inline uint64_t StakeManager::committee_size() const
@@ -137,6 +127,26 @@ inline std::shared_ptr<StakeSnapshot const> StakeManager::GetCurrentStakeSnapsho
 {
   return current_;
 }
+
+namespace {
+template <typename T>
+void TrimToSize(T &container, uint64_t max_allowed)
+{
+  if (container.size() >= max_allowed)
+  {
+    auto const num_to_remove = container.size() - max_allowed;
+
+    if (num_to_remove > 0)
+    {
+      auto end = container.begin();
+      std::advance(end, static_cast<std::ptrdiff_t>(num_to_remove));
+
+      container.erase(container.begin(), end);
+    }
+  }
+}
+
+}  // namespace
 
 }  // namespace ledger
 }  // namespace fetch

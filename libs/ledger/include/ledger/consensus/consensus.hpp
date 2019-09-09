@@ -47,11 +47,13 @@ public:
   using MainChain         = ledger::MainChain;
 
   Consensus(StakeManagerPtr stake, BeaconServicePtr beacon, MainChain const &chain,
-            Identity mining_identity, uint64_t aeon_period, uint64_t max_committee_size);
+            Identity mining_identity, uint64_t aeon_period, uint64_t max_committee_size,
+            uint32_t block_interval_ms = 1000);
 
   void         UpdateCurrentBlock(Block const &current) override;
   NextBlockPtr GenerateNextBlock() override;
   Status       ValidBlock(Block const &previous, Block const &current) override;
+  void         Reset(StakeSnapshot const &snapshot);
   void         Refresh() override;
 
   StakeManagerPtr stake();
@@ -59,6 +61,14 @@ public:
   void            SetCommitteeSize(uint64_t size);
 
 private:
+  static constexpr std::size_t HISTORY_LENGTH = 1000;
+
+  using Committee    = StakeManager::Committee;
+  using CommitteePtr = std::shared_ptr<Committee const>;
+
+  using BlockIndex       = uint64_t;
+  using CommitteeHistory = std::map<BlockIndex, CommitteePtr>;
+
   StakeManagerPtr  stake_;
   BeaconServicePtr beacon_;
   MainChain const &chain_;
@@ -70,6 +80,13 @@ private:
   uint64_t         current_block_number_   = 0;
   int64_t          last_committee_created_ = -1;
   Block            current_block_;
+  CommitteeHistory committee_history_{};  ///< Cache of historical committees
+  uint32_t         block_interval_ms_{std::numeric_limits<uint32_t>::max()};
+
+  CommitteePtr GetCommittee(Block const &previous);
+  bool         ValidMinerForBlock(Block const &previous, Address const &address);
+  uint64_t     GetBlockGenerationWeight(Block const &previous, Address const &address);
+  bool         ShouldGenerateBlock(Block const &previous, Address const &address);
 };
 
 }  // namespace ledger

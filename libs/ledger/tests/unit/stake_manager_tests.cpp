@@ -31,7 +31,6 @@
 namespace {
 
 using fetch::ledger::Block;
-using fetch::ledger::Address;
 using fetch::ledger::StakeSnapshot;
 using fetch::ledger::StakeManager;
 using fetch::ledger::NaiveEntropyGenerator;
@@ -45,38 +44,6 @@ using RoundStats      = std::unordered_map<Identity, std::size_t>;
 constexpr uint64_t MAX_COMMITTEE_SIZE = 1;
 
 constexpr char const *LOGGING_NAME = "StakeMgrTests";
-
-bool IndexOf(std::vector<Identity> const &identities, Identity const &target, std::size_t &index)
-{
-  bool found{false};
-
-  std::size_t idx{0};
-  for (auto const &identity : identities)
-  {
-    if (identity == target)
-    {
-      index = idx;
-      found = true;
-      break;
-    }
-
-    ++idx;
-  }
-
-  return found;
-}
-
-std::size_t WeightOf(std::vector<Identity> const &identities, Identity const &target)
-{
-  std::size_t weight{0};
-  std::size_t index{0};
-  if (IndexOf(identities, target, index))
-  {
-    weight = identities.size() - index;
-  }
-
-  return weight;
-}
 
 class StakeManagerTests : public ::testing::Test
 {
@@ -106,20 +73,6 @@ protected:
 
     for (std::size_t round = 0; round < num_rounds; ++round)
     {
-      // validate the committee vs the generation weight
-      auto const committee = stake_manager_->GetCommittee(block);
-      ASSERT_TRUE(static_cast<bool>(committee));  // fails
-      ASSERT_EQ(committee->size(), committee_size);
-
-      // update the statistics
-      stats.at(committee->at(0)) += 1;
-
-      for (auto const &identity : identities)
-      {
-        EXPECT_EQ(WeightOf(*committee, identity),
-                  stake_manager_->GetBlockGenerationWeight(block, Address(identity)));
-      }
-
       // "forge" the next block
       block.body.previous_hash = block.body.hash;
       block.body.hash          = GenerateRandomAddress(rng_).address();
