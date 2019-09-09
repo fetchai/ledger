@@ -41,7 +41,7 @@ public:
 
   enum
   {
-    LOG_PADDING = 2,
+    LOG_PADDING = 8,
     PADDING     = static_cast<SizeType>(1) << LOG_PADDING
   };
 
