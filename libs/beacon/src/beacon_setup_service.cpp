@@ -1426,8 +1426,8 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
 
   SetTimeBySlots(state, time_slots_total, time_slot_for_state);
 
-  seconds_for_state_ = uint64_t(time_slot_for_state * time_per_slot);
-  state_deadline_    = reference_timepoint_ + uint64_t(time_slots_total * time_per_slot);
+  seconds_for_state_ = uint64_t(double(time_slot_for_state) * time_per_slot);
+  state_deadline_    = reference_timepoint_ + uint64_t(double(time_slots_total) * time_per_slot);
 
   if (state_deadline_ < current_time)
   {
