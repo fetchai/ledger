@@ -26,11 +26,9 @@ namespace beacon {
 
 constexpr char const *LOGGING_NAME = "DKGComplaints";
 
-void ComplaintsManager::ResetCabinet(MuddleAddress const &address, uint32_t qual_size,
-                                     uint32_t threshold)
+void ComplaintsManager::ResetCabinet(MuddleAddress const &address, uint32_t threshold)
 {
   FETCH_LOCK(mutex_);
-  qual_size_ = qual_size;
   threshold_ = threshold;
   address_   = address;
   finished_  = false;
@@ -74,10 +72,10 @@ void ComplaintsManager::AddComplaintsFrom(ComplaintsMessage const &msg,
   }
 }
 
-bool ComplaintsManager::IsFinished(std::set<Identity> const &cabinet)
+void ComplaintsManager::Finish(std::set<Identity> const &cabinet)
 {
   FETCH_LOCK(mutex_);
-  if (!finished_ && complaints_received_.size() >= qual_size_ - 1)
+  if (!finished_)
   {
     // Add miners which did not send a complaint to complaints
     for (auto const &cab : cabinet)
@@ -98,7 +96,6 @@ bool ComplaintsManager::IsFinished(std::set<Identity> const &cabinet)
     }
     finished_ = true;
   }
-  return finished_;
 }
 
 std::set<ComplaintsManager::MuddleAddress> ComplaintsManager::ComplaintsAgainstSelf() const
@@ -147,11 +144,10 @@ void ComplaintAnswersManager::Init(std::set<MuddleAddress> const &complaints)
   std::copy(complaints.begin(), complaints.end(), std::inserter(complaints_, complaints_.begin()));
 }
 
-void ComplaintAnswersManager::ResetCabinet(uint32_t qual_size)
+void ComplaintAnswersManager::ResetCabinet()
 {
   FETCH_LOCK(mutex_);
-  qual_size_ = qual_size;
-  finished_  = false;
+  finished_ = false;
   complaints_.clear();
 }
 
@@ -173,10 +169,10 @@ void ComplaintAnswersManager::AddComplaintAnswerFrom(MuddleAddress const &from,
   complaint_answers_received_.insert({from, complaint_answer});
 }
 
-bool ComplaintAnswersManager::IsFinished(std::set<Identity> const &cabinet, Identity const &node_id)
+void ComplaintAnswersManager::Finish(std::set<Identity> const &cabinet, Identity const &node_id)
 {
   FETCH_LOCK(mutex_);
-  if (!finished_ && complaint_answers_received_.size() >= qual_size_ - 1)
+  if (!finished_)
   {
     // Add miners which did not send a complaint answer to complaints
     for (auto const cab : cabinet)
@@ -192,7 +188,6 @@ bool ComplaintAnswersManager::IsFinished(std::set<Identity> const &cabinet, Iden
     }
     finished_ = true;
   }
-  return finished_;
 }
 
 ComplaintAnswersManager::ComplaintAnswers ComplaintAnswersManager::ComplaintAnswersReceived() const
@@ -246,29 +241,22 @@ void QualComplaintsManager::AddComplaintsFrom(
   complaints_received_.insert({id, complaints});
 }
 
-bool QualComplaintsManager::IsFinished(std::set<MuddleAddress> const &qual,
-                                       MuddleAddress const &node_id, uint32_t polynomial_degree)
+void QualComplaintsManager::Finish(std::set<MuddleAddress> const &qual,
+                                   MuddleAddress const &          node_id)
 {
   FETCH_LOCK(mutex_);
   if (!finished_)
   {
-    uint32_t total_intersecting_complaints = 0;
-
     for (auto const &qualified_member : qual)
     {
       if (qualified_member != node_id &&
-          complaints_received_.find(qualified_member) != complaints_received_.end())
+          complaints_received_.find(qualified_member) == complaints_received_.end())
       {
-        total_intersecting_complaints++;
+        complaints_.insert(qualified_member);
       }
     }
-
-    if (total_intersecting_complaints >= polynomial_degree)
-    {
-      finished_ = true;
-    }
+    finished_ = true;
   }
-  return finished_;
 }
 
 const QualComplaintsManager::QualComplaints &QualComplaintsManager::ComplaintsReceived() const

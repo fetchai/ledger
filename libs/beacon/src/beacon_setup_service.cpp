@@ -204,8 +204,8 @@ BeaconSetupService::State BeaconSetupService::OnReset()
   }
 
   coefficients_received_.clear();
-  complaint_answers_manager_.ResetCabinet(QualSize());
-  complaints_manager_.ResetCabinet(identity_.identifier(), QualSize(),
+  complaint_answers_manager_.ResetCabinet();
+  complaints_manager_.ResetCabinet(identity_.identifier(),
                                    beacon_->manager.polynomial_degree() + 1);
   connections_.clear();
   qual_coefficients_received_.clear();
@@ -451,15 +451,6 @@ BeaconSetupService::State BeaconSetupService::OnWaitForShares()
 
   if (timer_to_proceed_.HasExpired())
   {
-    auto intersection = (coefficients_received_ & shares_received_);
-    if (intersection.size() < QualSize() - 1)
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-                     " Failed to collect enough shares! Resetting");
-      SetTimeToProceed(State::RESET);
-      return State::RESET;
-    }
-
     BroadcastComplaints();
     SetTimeToProceed(State::WAIT_FOR_COMPLAINTS);
     return State::WAIT_FOR_COMPLAINTS;
@@ -476,13 +467,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForComplaints()
 
   if (timer_to_proceed_.HasExpired())
   {
-    if (!complaints_manager_.IsFinished(beacon_->aeon.members))
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-                     " Failed to collect enough complaints within the time period! Resetting.");
-      SetTimeToProceed(State::RESET);
-      return State::RESET;
-    }
+    complaints_manager_.Finish(beacon_->aeon.members);
 
     FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(), " complaints size ",
                    complaints_manager_.Complaints().size());
@@ -504,14 +489,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForComplaintAnswers()
 
   if (timer_to_proceed_.HasExpired())
   {
-    if (!complaint_answers_manager_.IsFinished(beacon_->aeon.members, identity_))
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-                     " Ran out of time to collect complaint answers! Resetting.");
-      SetTimeToProceed(State::RESET);
-      return State::RESET;
-    }
-
+    complaint_answers_manager_.Finish(beacon_->aeon.members, identity_);
     CheckComplaintAnswers();
     if (BuildQual())
     {
@@ -542,17 +520,6 @@ BeaconSetupService::State BeaconSetupService::OnWaitForQualShares()
 
   if (timer_to_proceed_.HasExpired())
   {
-    auto intersection = (qual_coefficients_received_ & beacon_->manager.qual());
-    if (intersection.size() < beacon_->manager.polynomial_degree())
-    {
-      FETCH_LOG_TRACE(
-          LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-          " Failed to collect enough qual shares! Collected: ", qual_coefficients_received_.size(),
-          " of ", beacon_->manager.qual().size() - 1);
-      SetTimeToProceed(State::RESET);
-      return State::RESET;
-    }
-
     BroadcastQualComplaints();
 
     SetTimeToProceed(State::WAIT_FOR_QUAL_COMPLAINTS);
@@ -569,14 +536,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForQualComplaints()
 
   if (timer_to_proceed_.HasExpired())
   {
-    if (!qual_complaints_manager_.IsFinished(beacon_->manager.qual(), identity_.identifier(),
-                                             beacon_->manager.polynomial_degree()))
-    {
-      FETCH_LOG_TRACE(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-                      " Failed to collect enough qual complaints!");
-      SetTimeToProceed(State::RESET);
-      return State::RESET;
-    }
+    qual_complaints_manager_.Finish(beacon_->manager.qual(), identity_.identifier());
 
     CheckQualComplaints();
     std::size_t const size = qual_complaints_manager_.ComplaintsSize();
@@ -610,29 +570,6 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReconstructionShares()
 
   if (timer_to_proceed_.HasExpired())
   {
-    MuddleAddresses complaints_list = qual_complaints_manager_.Complaints();
-    MuddleAddresses remaining_honest;
-    MuddleAddresses qual{beacon_->manager.qual()};
-    std::set_difference(qual.begin(), qual.end(), complaints_list.begin(), complaints_list.end(),
-                        std::inserter(remaining_honest, remaining_honest.begin()));
-
-    uint16_t received_count = 0;
-    for (auto const &member : remaining_honest)
-    {
-      if (member != identity_.identifier() &&
-          reconstruction_shares_received_.find(member) != reconstruction_shares_received_.end())
-      {
-        received_count++;
-      }
-    }
-
-    if (received_count < beacon_->manager.polynomial_degree())
-    {
-      FETCH_LOG_TRACE(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-                      " Failed to collect enough reconstruction shares!");
-      SetTimeToProceed(State::RESET);
-      return State::RESET;
-    }
     // Process reconstruction shares. Reconstruction shares from non-qual members
     // or people in qual complaints should not be considered
     for (auto const &share : reconstruction_shares_received_)

@@ -43,7 +43,6 @@ class ComplaintsManager
   using Identity          = crypto::Identity;
   using ComplaintsMessage = dkg::ComplaintsMessage;
 
-  uint32_t      qual_size_{0};  ///< Number of complaint messages to wait for
   uint32_t      threshold_{0};  ///< DKG threshold
   MuddleAddress address_;       ///< Address of node
   std::unordered_map<MuddleAddress, std::unordered_set<MuddleAddress>>
@@ -59,10 +58,10 @@ class ComplaintsManager
 public:
   ComplaintsManager() = default;
 
-  void ResetCabinet(MuddleAddress const &address, uint32_t qual_size, uint32_t threshold);
+  void ResetCabinet(MuddleAddress const &address, uint32_t threshold);
   void AddComplaintAgainst(MuddleAddress const &address);
   void AddComplaintsFrom(ComplaintsMessage const &msg, MuddleAddress const &from_id);
-  bool IsFinished(std::set<Identity> const &committee);
+  void Finish(std::set<Identity> const &committee);
 
   std::set<MuddleAddress> ComplaintsAgainstSelf() const;
   bool                    FindComplaint(MuddleAddress const &complaint_address,
@@ -83,7 +82,6 @@ class ComplaintAnswersManager
   using Answer           = std::unordered_map<MuddleAddress, ExposedShares>;
   using ComplaintAnswers = std::unordered_map<MuddleAddress, Answer>;
 
-  uint32_t                qual_size_;
   std::set<MuddleAddress> complaints_;
   ComplaintAnswers        complaint_answers_received_;
   bool                    finished_{false};
@@ -93,10 +91,10 @@ public:
   ComplaintAnswersManager() = default;
 
   void Init(std::set<MuddleAddress> const &complaints);
-  void ResetCabinet(uint32_t qual_size);
+  void ResetCabinet();
   void AddComplaintAgainst(MuddleAddress const &miner);
   void AddComplaintAnswerFrom(MuddleAddress const &from, Answer const &complaint_answer);
-  bool IsFinished(std::set<Identity> const &cabinet, Identity const &node_id);
+  void Finish(std::set<Identity> const &cabinet, Identity const &node_id);
   ComplaintAnswers        ComplaintAnswersReceived() const;
   std::set<MuddleAddress> BuildQual(std::set<MuddleAddress> const &miners) const;
 };
@@ -126,8 +124,7 @@ public:
   void AddComplaintAgainst(MuddleAddress const &complainer_address);
   void AddComplaintsFrom(MuddleAddress const &                                   from,
                          std::unordered_map<MuddleAddress, ExposedShares> const &complaints);
-  bool IsFinished(std::set<MuddleAddress> const &qual, MuddleAddress const &node_id,
-                  uint32_t threshold);
+  void Finish(std::set<MuddleAddress> const &qual, MuddleAddress const &node_id);
 
   const QualComplaints &                         ComplaintsReceived() const;
   std::size_t                                    ComplaintsSize() const;
