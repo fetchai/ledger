@@ -540,6 +540,8 @@ BeaconSetupService::State BeaconSetupService::OnWaitForQualComplaints()
     CheckQualComplaints();
     std::size_t const size = qual_complaints_manager_.ComplaintsSize();
 
+    // Reset if complaints is over threshold as this breaks the initial assumption on the
+    // number of Byzantine nodes
     if (size > beacon_->manager.polynomial_degree())
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Node: ", beacon_->manager.cabinet_index(),
