@@ -211,7 +211,7 @@ bool HTTPRequest::ParseStartLine(byte_array::ByteArray &line)
     ++i;
   }
 
-  byte_array_type method = line.SubArray(0, i);
+  byte_array::ConstByteArray method = line.SubArray(0, i);
   FromString(method, method_);
 
   ++i;

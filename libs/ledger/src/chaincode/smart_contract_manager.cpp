@@ -39,6 +39,7 @@
 
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::FromBase64;
+using fetch::vm::FunctionDecoratorKind;
 
 namespace fetch {
 namespace ledger {
@@ -125,9 +126,7 @@ Contract::Result SmartContractManager::OnCreate(Transaction const &tx, BlockInde
     return {Status::FAILED};
   }
 
-  // Set the scope for the smart contract to execute its on_init if it exists
-  auto const &tx_signatures = tx.signatories();
-  if (tx_signatures.size() != 1)
+  if (tx.signatories().size() != 1)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Only one signature allowed when setting up smart contract");
     return {Status::FAILED};
@@ -156,7 +155,7 @@ Contract::Result SmartContractManager::OnCreate(Transaction const &tx, BlockInde
 
       switch (kind)
       {
-      case vm::FunctionDecoratorKind::ON_INIT:
+      case FunctionDecoratorKind::ON_INIT:
         if (!on_init_function.empty())
         {
           FETCH_LOG_WARN(LOGGING_NAME, "More than one init function found in SC. Terminating.");
@@ -170,7 +169,9 @@ Contract::Result SmartContractManager::OnCreate(Transaction const &tx, BlockInde
         FETCH_LOG_WARN(LOGGING_NAME, "Invalid function decorator found when adding SC");
         return {Status::FAILED};
 
-      default:
+      case FunctionDecoratorKind::ACTION:
+      case FunctionDecoratorKind::NONE:
+      case FunctionDecoratorKind::QUERY:
         break;
       }
     }
@@ -220,7 +221,7 @@ storage::ResourceAddress SmartContractManager::CreateAddressForContract(
   // this function is only really applicable to the storage of smart contracts
   assert(contract_id.type() == Identifier::Type::SMART_CONTRACT);
 
-  // create the resource address in the form fetch.contracts.state.<digest of contract>
+  // create the resource address in the form fetch.contract.state.<digest of contract>
   return StateAdapter::CreateAddress(Identifier{NAME}, contract_id.qualifier());
 }
 
