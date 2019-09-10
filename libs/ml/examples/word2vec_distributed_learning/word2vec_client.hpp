@@ -54,7 +54,7 @@ public:
 
   void PrepareOptimiser();
 
-  void Test(DataType &test_loss) override;
+  void Test() override;
 
 private:
   W2VTrainingParams<DataType>                                       tp_;
@@ -139,10 +139,10 @@ void Word2VecClient<TensorType>::PrepareOptimiser()
  * @param test_loss
  */
 template <class TensorType>
-void Word2VecClient<TensorType>::Test(DataType &test_loss)
+void Word2VecClient<TensorType>::Test()
 {
   // TODO(issue 1595): Implement loss mechanism
-  test_loss = static_cast<DataType>(0);
+  // this->loss = static_cast<DataType>(0);
 
   if (this->batch_counter_ % tp_.test_frequency == 1)
   {

@@ -55,9 +55,19 @@ std::vector<std::string> SplitTrainingData(std::string const &train_file,
   {
     old_pos = pos;
     pos     = (i + 1) * chars_per_client;
-    // find next instance of space character
-    pos = input_data.find(" ", pos, 1);
-    client_data.push_back(input_data.substr(old_pos, pos));
+
+    if (i == number_of_clients - 1)
+    {
+      // Last client gets the rest
+      pos = input_data.size();
+    }
+    else
+    {
+      // find next instance of space character
+      pos = input_data.find(" ", pos, 1);
+    }
+
+    client_data.push_back(input_data.substr(old_pos, pos - old_pos));
   }
   return client_data;
 }
@@ -83,11 +93,11 @@ int main(int ac, char **av)
   W2VTrainingParams<DataType> client_params;
 
   // Distributed learning parameters:
-  SizeType number_of_clients    = 10;
-  SizeType number_of_rounds     = 10;
-  coord_params.number_of_peers  = 3;
+  SizeType number_of_clients    = 4;
+  SizeType number_of_rounds     = 100;
+  coord_params.number_of_peers  = 2;
   coord_params.mode             = CoordinatorMode::SEMI_SYNCHRONOUS;
-  coord_params.iterations_count = 100;  //  Synchronization occurs after this number of batches
+  coord_params.iterations_count = 10;  //  Synchronization occurs after this number of batches
   // have been processed in total by the clients
 
   client_params.batch_size    = 100000;
