@@ -98,6 +98,12 @@ void ComplaintsManager::Finish(std::set<Identity> const &cabinet)
   }
 }
 
+uint32_t ComplaintsManager::NumComplaintsReceived() const
+{
+  FETCH_LOCK(mutex_);
+  return static_cast<uint32_t>(complaints_received_.size());
+}
+
 std::set<ComplaintsManager::MuddleAddress> ComplaintsManager::ComplaintsAgainstSelf() const
 {
   FETCH_LOCK(mutex_);
@@ -190,6 +196,12 @@ void ComplaintAnswersManager::Finish(std::set<Identity> const &cabinet, Identity
   }
 }
 
+uint32_t ComplaintAnswersManager::NumComplaintAnswersReceived() const
+{
+  FETCH_LOCK(mutex_);
+  return static_cast<uint32_t>(complaint_answers_received_.size());
+}
+
 ComplaintAnswersManager::ComplaintAnswers ComplaintAnswersManager::ComplaintAnswersReceived() const
 {
   FETCH_LOCK(mutex_);
@@ -259,11 +271,34 @@ void QualComplaintsManager::Finish(std::set<MuddleAddress> const &qual,
   }
 }
 
-const QualComplaintsManager::QualComplaints &QualComplaintsManager::ComplaintsReceived() const
+uint32_t QualComplaintsManager::NumComplaintsReceived(std::set<MuddleAddress> const &qual) const
+{
+  FETCH_LOCK(mutex_);
+  uint32_t qual_complaints{0};
+  for (auto const &mem : qual)
+  {
+    if (complaints_received_.find(mem) != complaints_received_.end())
+    {
+      qual_complaints++;
+    }
+  }
+  return qual_complaints;
+}
+
+QualComplaintsManager::QualComplaints QualComplaintsManager::ComplaintsReceived(
+    std::set<MuddleAddress> const &qual) const
 {
   FETCH_LOCK(mutex_);
   assert(finished_);
-  return complaints_received_;
+  QualComplaints qual_complaints;
+  for (auto const &mem : qual)
+  {
+    if (complaints_received_.find(mem) != complaints_received_.end())
+    {
+      qual_complaints.insert({mem, complaints_received_.at(mem)});
+    }
+  }
+  return qual_complaints;
 }
 
 std::size_t QualComplaintsManager::ComplaintsSize() const

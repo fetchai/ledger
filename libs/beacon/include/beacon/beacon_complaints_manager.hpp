@@ -63,6 +63,7 @@ public:
   void AddComplaintsFrom(ComplaintsMessage const &msg, MuddleAddress const &from_id);
   void Finish(std::set<Identity> const &committee);
 
+  uint32_t                NumComplaintsReceived() const;
   std::set<MuddleAddress> ComplaintsAgainstSelf() const;
   bool                    FindComplaint(MuddleAddress const &complaint_address,
                                         MuddleAddress const &complainer_address) const;
@@ -90,11 +91,12 @@ class ComplaintAnswersManager
 public:
   ComplaintAnswersManager() = default;
 
-  void Init(std::set<MuddleAddress> const &complaints);
-  void ResetCabinet();
-  void AddComplaintAgainst(MuddleAddress const &miner);
-  void AddComplaintAnswerFrom(MuddleAddress const &from, Answer const &complaint_answer);
-  void Finish(std::set<Identity> const &cabinet, Identity const &node_id);
+  void     Init(std::set<MuddleAddress> const &complaints);
+  void     ResetCabinet();
+  void     AddComplaintAgainst(MuddleAddress const &miner);
+  void     AddComplaintAnswerFrom(MuddleAddress const &from, Answer const &complaint_answer);
+  void     Finish(std::set<Identity> const &cabinet, Identity const &node_id);
+  uint32_t NumComplaintAnswersReceived() const;
   ComplaintAnswers        ComplaintAnswersReceived() const;
   std::set<MuddleAddress> BuildQual(std::set<MuddleAddress> const &miners) const;
 };
@@ -126,9 +128,10 @@ public:
                          std::unordered_map<MuddleAddress, ExposedShares> const &complaints);
   void Finish(std::set<MuddleAddress> const &qual, MuddleAddress const &node_id);
 
-  const QualComplaints &                         ComplaintsReceived() const;
-  std::size_t                                    ComplaintsSize() const;
-  bool                                           FindComplaint(MuddleAddress const &address) const;
+  uint32_t       NumComplaintsReceived(std::set<MuddleAddress> const &qual) const;
+  QualComplaints ComplaintsReceived(std::set<MuddleAddress> const &qual) const;
+  std::size_t    ComplaintsSize() const;
+  bool           FindComplaint(MuddleAddress const &address) const;
   std::set<QualComplaintsManager::MuddleAddress> Complaints() const;
 };
 }  // namespace beacon
