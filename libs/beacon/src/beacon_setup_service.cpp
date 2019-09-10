@@ -332,7 +332,6 @@ uint32_t BeaconSetupService::QualSize()
 {
   // Set to 2/3n for now
   return static_cast<uint32_t>(beacon_->aeon.members.size() - beacon_->aeon.members.size() / 3);
-  // return static_cast<uint32_t>(beacon_->aeon.members.size());
 }
 
 template <typename T>
