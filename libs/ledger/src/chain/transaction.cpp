@@ -98,5 +98,188 @@ bool Transaction::IsSignedByFromAddress() const
   return it != signatories_.end();
 }
 
+/**
+ * Get the digest of the transaction
+ *
+ * @return The computed transaction
+ */
+Digest const &Transaction::digest() const
+{
+  return digest_;
+}
+
+/**
+ * Get the sender address for the transaction
+ *
+ * @return The sender address
+ */
+Address const &Transaction::from() const
+{
+  return from_;
+}
+
+/**
+ * Get the list of transfers for this transaction
+ *
+ * @return The transfer list
+ */
+Transaction::Transfers const &Transaction::transfers() const
+{
+  return transfers_;
+}
+
+/**
+ * Get the block index from which this transaction becomes valid
+ *
+ * @return The "valid from" block index
+ */
+Transaction::BlockIndex Transaction::valid_from() const
+{
+  return valid_from_;
+}
+
+/**
+ * Get the block index from which this transaction becomes invalid
+ *
+ * @return The "valid until" block index
+ */
+Transaction::BlockIndex Transaction::valid_until() const
+{
+  return valid_until_;
+}
+
+/**
+ * Determines the validity of the transaction based on a block index
+ *
+ * @param block_index The block index being tested
+ * @return The validity status for the specified block
+ */
+Transaction::Validity Transaction::GetValidity(BlockIndex block_index) const
+{
+  Validity validity{Validity::INVALID};
+
+  if (block_index < valid_until_)
+  {
+    validity = Validity::VALID;
+
+    if (valid_from_ && (valid_from_ > block_index))
+    {
+      validity = Validity::PENDING;
+    }
+  }
+
+  return validity;
+}
+
+/**
+ * Return the charge associated with the transaction
+ *
+ * @return The charge amount
+ */
+Transaction::TokenAmount Transaction::charge() const
+{
+  return charge_;
+}
+
+/**
+ * Get the charge limit associated with the transaction
+ *
+ * @return The charge limit
+ */
+Transaction::TokenAmount Transaction::charge_limit() const
+{
+  return charge_limit_;
+}
+
+/**
+ * Get the contract mode for this transaction
+ *
+ * @return The transaction mode
+ */
+Transaction::ContractMode Transaction::contract_mode() const
+{
+  return contract_mode_;
+}
+
+/**
+ * Get the contract digest for this smart contract transaction
+ *
+ * @return The contract digest
+ */
+Address const &Transaction::contract_digest() const
+{
+  return contract_digest_;
+}
+
+/**
+ * Get the contract address for this smart contract transaction
+ *
+ * @return The contract address
+ */
+Address const &Transaction::contract_address() const
+{
+  return contract_address_;
+}
+
+/**
+ * Get the chain code identifier for this chain code transaction
+ *
+ * @return The chain code identifier
+ */
+Transaction::ConstByteArray const &Transaction::chain_code() const
+{
+  return chain_code_;
+}
+
+/**
+ * Get the action being invoked in this transaction
+ *
+ * @return The action name
+ */
+Transaction::ConstByteArray const &Transaction::action() const
+{
+  return action_;
+}
+
+/**
+ * Get the shard mask associated with this transaction
+ *
+ * @return The shard mask
+ */
+BitVector const &Transaction::shard_mask() const
+{
+  return shard_mask_;
+}
+
+/**
+ * Get the data payload associated with this transaction
+ *
+ * @return The data bytes
+ */
+Transaction::ConstByteArray const &Transaction::data() const
+{
+  return data_;
+}
+
+/**
+ * Get the array of signatories associated with this transaction
+ *
+ * @return The signatories
+ */
+Transaction::Signatories const &Transaction::signatories() const
+{
+  return signatories_;
+}
+
+/**
+ * Check to see if this transaction is verified
+ *
+ * @return True if the transaction is verified, otherwise false
+ */
+bool Transaction::IsVerified() const
+{
+  return verified_;
+}
+
 }  // namespace ledger
 }  // namespace fetch
