@@ -77,7 +77,7 @@ void ComplaintsManager::AddComplaintsFrom(ComplaintsMessage const &msg,
 bool ComplaintsManager::IsFinished(std::set<Identity> const &cabinet)
 {
   FETCH_LOCK(mutex_);
-  if (complaints_received_.size() >= qual_size_ - 1)
+  if (!finished_ && complaints_received_.size() >= qual_size_ - 1)
   {
     // Add miners which did not send a complaint to complaints
     for (auto const &cab : cabinet)
@@ -176,7 +176,7 @@ void ComplaintAnswersManager::AddComplaintAnswerFrom(MuddleAddress const &from,
 bool ComplaintAnswersManager::IsFinished(std::set<Identity> const &cabinet, Identity const &node_id)
 {
   FETCH_LOCK(mutex_);
-  if (complaint_answers_received_.size() >= qual_size_ - 1)
+  if (!finished_ && complaint_answers_received_.size() >= qual_size_ - 1)
   {
     // Add miners which did not send a complaint answer to complaints
     for (auto const cab : cabinet)
@@ -191,9 +191,8 @@ bool ComplaintAnswersManager::IsFinished(std::set<Identity> const &cabinet, Iden
       }
     }
     finished_ = true;
-    return true;
   }
-  return false;
+  return finished_;
 }
 
 ComplaintAnswersManager::ComplaintAnswers ComplaintAnswersManager::ComplaintAnswersReceived() const
@@ -251,20 +250,23 @@ bool QualComplaintsManager::IsFinished(std::set<MuddleAddress> const &qual,
                                        MuddleAddress const &node_id, uint32_t polynomial_degree)
 {
   FETCH_LOCK(mutex_);
-  uint32_t total_intersecting_complaints = 0;
-
-  for (auto const &qualified_member : qual)
+  if (!finished_)
   {
-    if (qualified_member != node_id &&
-        complaints_received_.find(qualified_member) != complaints_received_.end())
+    uint32_t total_intersecting_complaints = 0;
+
+    for (auto const &qualified_member : qual)
     {
-      total_intersecting_complaints++;
+      if (qualified_member != node_id &&
+          complaints_received_.find(qualified_member) != complaints_received_.end())
+      {
+        total_intersecting_complaints++;
+      }
     }
-  }
 
-  if (total_intersecting_complaints >= polynomial_degree)
-  {
-    finished_ = true;
+    if (total_intersecting_complaints >= polynomial_degree)
+    {
+      finished_ = true;
+    }
   }
   return finished_;
 }
