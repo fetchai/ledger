@@ -79,51 +79,6 @@ private:
   UnderlyingList list_;     ///< The list of transaction layouts
 };
 
-inline TransactionLayoutQueue::ConstIterator TransactionLayoutQueue::cbegin() const
-{
-  return list_.cbegin();
-}
-
-inline TransactionLayoutQueue::ConstIterator TransactionLayoutQueue::begin() const
-{
-  return list_.begin();
-}
-
-inline TransactionLayoutQueue::Iterator TransactionLayoutQueue::begin()
-{
-  return list_.begin();
-}
-
-inline TransactionLayoutQueue::ConstIterator TransactionLayoutQueue::cend() const
-{
-  return list_.cend();
-}
-
-inline TransactionLayoutQueue::ConstIterator TransactionLayoutQueue::end() const
-{
-  return list_.end();
-}
-
-inline TransactionLayoutQueue::Iterator TransactionLayoutQueue::end()
-{
-  return list_.end();
-}
-
-inline std::size_t TransactionLayoutQueue::size() const
-{
-  return digests_.size();
-}
-
-inline bool TransactionLayoutQueue::empty() const
-{
-  return digests_.empty();
-}
-
-inline TransactionLayoutQueue::DigestSet const &TransactionLayoutQueue::digests() const
-{
-  return digests_;
-}
-
 template <typename SortPredicate>
 void TransactionLayoutQueue::Sort(SortPredicate &&predicate)
 {
