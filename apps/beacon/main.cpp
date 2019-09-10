@@ -40,12 +40,14 @@
 #include "beacon/event_manager.hpp"
 
 #include <cstdint>
+#include <ctime>
 #include <deque>
 #include <iostream>
 #include <random>
 #include <stdexcept>
 #include <unordered_map>
 #include <vector>
+
 using namespace fetch;
 using namespace fetch::beacon;
 
@@ -177,7 +179,8 @@ int main()
       for (auto &member : committee)
       {
         member->beacon_service.StartNewCabinet(cabinet, static_cast<uint32_t>(cabinet.size() / 2),
-                                               block_number, block_number + aeon_length);
+                                               block_number, block_number + aeon_length,
+                                               static_cast<uint64_t>(std::time(nullptr)));
       }
     }
 

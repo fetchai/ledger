@@ -155,8 +155,7 @@ void GenesisFileCreator::LoadFile(std::string const &name)
 
     if (is_correct_version)
     {
-      LoadState(doc["accounts"]);
-
+      // Note: consensus has to be loaded before the state since that generates the block
       if (consensus_)
       {
         LoadConsensus(doc["consensus"]);
@@ -165,6 +164,8 @@ void GenesisFileCreator::LoadFile(std::string const &name)
       {
         FETCH_LOG_WARN(LOGGING_NAME, "No stake manager provided when loading from stake file!");
       }
+
+      LoadState(doc["accounts"]);
     }
     else
     {
@@ -235,6 +236,7 @@ void GenesisFileCreator::LoadState(Variant const &object)
 
   ledger::Block genesis_block;
 
+  genesis_block.body.timestamp    = start_time_;
   genesis_block.body.merkle_hash  = merkle_commit_hash;
   genesis_block.body.block_number = 0;
   genesis_block.body.miner        = ledger::Address(crypto::Hash<crypto::SHA256>(""));
@@ -259,6 +261,12 @@ void GenesisFileCreator::LoadConsensus(Variant const &object)
     if (variant::Extract(object, "committeeSize", parsed_value))
     {
       consensus_->SetCommitteeSize(parsed_value);
+    }
+
+    if (variant::Extract(object, "startTime", parsed_value))
+    {
+      start_time_ = parsed_value;
+      consensus_->SetDefaultStartTime(parsed_value);
     }
 
     if (variant::Extract(object, "threshold", parsed_value_double))

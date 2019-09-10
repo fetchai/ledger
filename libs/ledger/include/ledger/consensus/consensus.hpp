@@ -59,6 +59,7 @@ public:
   StakeManagerPtr stake();
   void            SetThreshold(double threshold);
   void            SetCommitteeSize(uint64_t size);
+  void            SetDefaultStartTime(uint64_t default_start_time);
 
 private:
   static constexpr std::size_t HISTORY_LENGTH = 1000;
@@ -80,6 +81,8 @@ private:
   uint64_t         current_block_number_   = 0;
   int64_t          last_committee_created_ = -1;
   Block            current_block_;
+
+  uint64_t         default_start_time_ = 0;
   CommitteeHistory committee_history_{};  ///< Cache of historical committees
   uint32_t         block_interval_ms_{std::numeric_limits<uint32_t>::max()};
 

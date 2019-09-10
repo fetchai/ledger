@@ -21,13 +21,17 @@
 
 #include "core/mutex.hpp"
 #include "core/periodic_runnable.hpp"
+#include "core/random/lcg.hpp"
 #include "crypto/fnv.hpp"
+#include "moment/deadline_timer.hpp"
 #include "muddle/address.hpp"
+#include "muddle/peer_selection_mode.hpp"
 #include "muddle/rpc/client.hpp"
 #include "network/peer.hpp"
 #include "network/uri.hpp"
 
 #include <chrono>
+#include <list>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -82,24 +86,51 @@ public:
   PeerSelector(PeerSelector &&)      = delete;
   ~PeerSelector() override           = default;
 
-  void      AddDesiredPeer(Address const &address);
-  void      AddDesiredPeer(Address const &address, network::Peer const &hint);
-  void      RemoveDesiredPeer(Address const &address);
-  Addresses GetDesiredPeers() const;
-  Addresses GetPendingRequests() const;
-  PeersInfo GetPeerCache() const;
+  void              AddDesiredPeer(Address const &address);
+  void              AddDesiredPeer(Address const &address, network::Peer const &hint);
+  void              RemoveDesiredPeer(Address const &address);
+  Addresses         GetDesiredPeers() const;
+  Addresses         GetKademliaPeers() const;
+  Addresses         GetPendingRequests() const;
+  PeersInfo         GetPeerCache() const;
+  PeerSelectionMode GetMode() const;
+  void              SetMode(PeerSelectionMode mode);
 
   // Operators
   PeerSelector &operator=(PeerSelector const &) = delete;
   PeerSelector &operator=(PeerSelector &&) = delete;
 
 private:
+  static constexpr char const *CLOCK_NAME = "PeerSelectorClock";
+
   using PendingPromised = std::unordered_map<Address, std::shared_ptr<PromiseTask>>;
+  using SubscriptionPtr = MuddleEndpoint::SubscriptionPtr;
+  using DeadlineTimer   = moment::DeadlineTimer;
+  using Rng             = random::LinearCongruentialGenerator;
+
+  struct KademliaNode
+  {
+    Address       address{};
+    DeadlineTimer lifetime{CLOCK_NAME};
+
+    template <typename R, typename P>
+    KademliaNode(Address address, std::chrono::duration<R, P> const &duration)
+      : address{std::move(address)}
+    {
+      lifetime.Restart(duration);
+    }
+  };
+
+  using NodeList = std::list<KademliaNode>;
 
   void   Periodically() override;
   void   ResolveAddresses(Addresses const &addresses);
   void   OnResolvedAddress(Address const &address, service::Promise const &promise);
   UriSet GenerateUriSet(Addresses const &addresses);
+  void   OnAnnouncement(Address const &from, byte_array::ConstByteArray const &payload);
+  void   ScheduleNextAnnouncement();
+  void   MakeAnnouncement();
+  void   UpdateKademliaPeers();
 
   std::string const name_;
   char const *const logging_name_{name_.c_str()};
@@ -108,12 +139,19 @@ private:
   PeerConnectionList &  connections_;
   MuddleRegister const &register_;
   MuddleEndpoint &      endpoint_;
+  Address const         address_;
   rpc::Client           rpc_client_;
+  SubscriptionPtr       announcement_subscription_;
 
-  mutable Mutex   lock_{__LINE__, __FILE__};
-  Addresses       desired_addresses_;
-  PendingPromised pending_resolutions_;
-  PeersInfo       peers_info_;
+  mutable Mutex     lock_{__LINE__, __FILE__};
+  Rng               rng_{};
+  DeadlineTimer     announcement_interval_{CLOCK_NAME};
+  PeerSelectionMode mode_{PeerSelectionMode::DEFAULT};
+  Addresses         desired_addresses_;
+  Addresses         kademlia_addresses_;
+  PendingPromised   pending_resolutions_;
+  PeersInfo         peers_info_;
+  NodeList          kademlia_nodes_;
 };
 
 }  // namespace muddle
