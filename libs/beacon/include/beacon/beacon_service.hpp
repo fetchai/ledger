@@ -59,7 +59,7 @@ public:
   {
     WAIT_FOR_SETUP_COMPLETION,
     PREPARE_ENTROPY_GENERATION,
-    //BROADCAST_SIGNATURE,
+    // BROADCAST_SIGNATURE,
     COLLECT_SIGNATURES,
     VERIFY_SIGNATURES,
     COMPLETE,
@@ -125,7 +125,7 @@ public:
 
   struct SignatureInformation
   {
-    uint64_t round{uint64_t(-1)};
+    uint64_t                                               round{uint64_t(-1)};
     std::map<BeaconManager::MuddleAddress, SignatureShare> threshold_signatures;
   };
 
@@ -173,19 +173,19 @@ private:
   std::deque<Entropy> ready_entropy_queue_;
   Entropy             latest_entropy_;
 
-  std::shared_ptr<AeonExecutionUnit>              active_exe_unit_;
-  Entropy                                         next_entropy_{};
-  Entropy                                         current_entropy_;
+  std::shared_ptr<AeonExecutionUnit> active_exe_unit_;
+  Entropy                            next_entropy_{};
+  Entropy                            current_entropy_;
   /// @}
 
   /// Variables relating to getting threshold signatures of the seed
   /// @{
-  //std::deque<std::pair<uint64_t, SignatureShare>> signature_queue_;
+  // std::deque<std::pair<uint64_t, SignatureShare>> signature_queue_;
 
   std::map<uint64_t, SignatureInformation> signatures_being_built_;
-  std::size_t                                 random_number_{0};
-  Identity qual_promise_identity_;
-  service::Promise sig_share_promise_;
+  std::size_t                              random_number_{0};
+  Identity                                 qual_promise_identity_;
+  service::Promise                         sig_share_promise_;
   /// @}
 
   /// Observing beacon

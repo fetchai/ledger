@@ -159,8 +159,8 @@ public:
   using Type       = dkg::BeaconManager::SignedMessage;
   using DriverType = D;
 
-  static uint8_t const SIGNATURE  = 0;
-  static uint8_t const IDENTITY   = 1;
+  static uint8_t const SIGNATURE = 0;
+  static uint8_t const IDENTITY  = 1;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &member)
