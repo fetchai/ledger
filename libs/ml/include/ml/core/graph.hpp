@@ -252,7 +252,7 @@ void Graph<TensorType>::Compile()
   case GraphState::UPDATED:
   {
     // graph already compiled. do nothing
-    return;
+    break;
   }
   case GraphState::INVALID:
   case GraphState::NOT_COMPILED:
@@ -283,6 +283,7 @@ void Graph<TensorType>::Compile()
     {
       graph_state_ = GraphState::INVALID;
     }
+    break;
   }
   default:
   {
@@ -434,6 +435,7 @@ void Graph<TensorType>::BackPropagate(std::string const &node_name, TensorType c
     {
       nodes_[node_name]->BackPropagate(error_signal);
       graph_state_ = GraphState::BACKWARD;
+      break;
     }
     default:
     {
