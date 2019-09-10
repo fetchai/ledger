@@ -416,9 +416,9 @@ struct FaultyDkgMember : DkgMember
     }
 
     // Setting the aeon details
-    beacon->aeon.round_start               = 0;
-    beacon->aeon.round_end                 = 10;
-    beacon->aeon.members                   = std::move(cabinet);
+    beacon->aeon.round_start = 0;
+    beacon->aeon.round_end   = 10;
+    beacon->aeon.members     = std::move(cabinet);
     // Plus 5 so tests pass on first DKG attempt
     beacon->aeon.start_reference_timepoint = static_cast<uint64_t>(std::time(nullptr)) + 5;
 
@@ -471,9 +471,9 @@ struct HonestDkgMember : DkgMember
     }
 
     // Setting the aeon details
-    beacon->aeon.round_start               = 0;
-    beacon->aeon.round_end                 = 10;
-    beacon->aeon.members                   = std::move(cabinet);
+    beacon->aeon.round_start = 0;
+    beacon->aeon.round_end   = 10;
+    beacon->aeon.members     = std::move(cabinet);
     // Plus 5 so tests pass on first DKG attempt
     beacon->aeon.start_reference_timepoint = static_cast<uint64_t>(std::time(nullptr)) + 5;
 
@@ -660,7 +660,8 @@ TEST(dkg_setup, delay_between_starts)
   GenerateTest(4, 3, 4, 4, {}, 1000);
 }
 
-// TODO(jmw): The tests below are for now disabled as failure to complete DKG means everyone runs forever. To be fixed later
+// TODO(jmw): The tests below are for now disabled as failure to complete DKG means everyone runs
+// forever. To be fixed later
 //  when we have termination
 TEST(dkg_setup, DISABLED_qual_below_threshold)
 {

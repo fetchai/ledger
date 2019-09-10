@@ -451,9 +451,8 @@ BeaconSetupService::State BeaconSetupService::OnWaitForShares()
 
   if (timer_to_proceed_.HasExpired())
   {
-    auto       intersection = (coefficients_received_ & shares_received_);
-    const bool is_ok        = intersection.size() >= QualSize() - 1;
-    if (!is_ok)
+    auto intersection = (coefficients_received_ & shares_received_);
+    if (intersection.size() < QualSize() - 1)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                      " Failed to collect enough shares! Resetting");
@@ -477,8 +476,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForComplaints()
 
   if (timer_to_proceed_.HasExpired())
   {
-    const bool is_ok = complaints_manager_.IsFinished(beacon_->aeon.members);
-    if (!is_ok)
+    if (!complaints_manager_.IsFinished(beacon_->aeon.members))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                      " Failed to collect enough complaints within the time period! Resetting.");
@@ -506,8 +504,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForComplaintAnswers()
 
   if (timer_to_proceed_.HasExpired())
   {
-    bool const is_ok = complaint_answers_manager_.IsFinished(beacon_->aeon.members, identity_);
-    if (!is_ok)
+    if (!complaint_answers_manager_.IsFinished(beacon_->aeon.members, identity_))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                      " Ran out of time to collect complaint answers! Resetting.");
@@ -545,9 +542,8 @@ BeaconSetupService::State BeaconSetupService::OnWaitForQualShares()
 
   if (timer_to_proceed_.HasExpired())
   {
-    auto       intersection = (qual_coefficients_received_ & beacon_->manager.qual());
-    const bool is_ok        = (intersection.size() >= beacon_->manager.polynomial_degree());
-    if (!is_ok)
+    auto intersection = (qual_coefficients_received_ & beacon_->manager.qual());
+    if (intersection.size() < beacon_->manager.polynomial_degree())
     {
       FETCH_LOG_TRACE(
           LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
@@ -573,9 +569,8 @@ BeaconSetupService::State BeaconSetupService::OnWaitForQualComplaints()
 
   if (timer_to_proceed_.HasExpired())
   {
-    const bool is_ok = qual_complaints_manager_.IsFinished(
-        beacon_->manager.qual(), identity_.identifier(), beacon_->manager.polynomial_degree());
-    if (!is_ok)
+    if (!qual_complaints_manager_.IsFinished(beacon_->manager.qual(), identity_.identifier(),
+                                             beacon_->manager.polynomial_degree()))
     {
       FETCH_LOG_TRACE(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                       " Failed to collect enough qual complaints!");
@@ -694,7 +689,8 @@ BeaconSetupService::State BeaconSetupService::OnDryRun()
     if (beacon_->manager.AddSignaturePart(identity_, beacon_->member_share.signature) !=
         BeaconManager::AddResult::SUCCESS)
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(), ": Failed to sign current message.");
+      FETCH_LOG_ERROR(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                      ": Failed to sign current message.");
       SetTimeToProceed(State::RESET);
       return State::RESET;
     }
