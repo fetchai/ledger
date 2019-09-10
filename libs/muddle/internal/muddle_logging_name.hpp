@@ -17,38 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/service/protocol.hpp"
+#include <string>
 
 namespace fetch {
-namespace dkg {
+namespace muddle {
 
-class DkgService;
+class NetworkId;
 
-/**
- * The RPC protocol class for the DKG Service
- */
-class DkgRpcProtocol : public service::Protocol
-{
-public:
-  enum
-  {
-    SUBMIT_SIGNATURE,
-    SUBMIT_SHARE,
-  };
+std::string GenerateLoggingName(char const *base, NetworkId const &network);
 
-  // Construction / Destruction
-  explicit DkgRpcProtocol(DkgService &service);
-  DkgRpcProtocol(DkgRpcProtocol const &) = delete;
-  DkgRpcProtocol(DkgRpcProtocol &&)      = delete;
-  ~DkgRpcProtocol() override             = default;
-
-  // Operators
-  DkgRpcProtocol &operator=(DkgRpcProtocol const &) = delete;
-  DkgRpcProtocol &operator=(DkgRpcProtocol &&) = delete;
-
-private:
-  DkgService &service_;
-};
-
-}  // namespace dkg
+}  // namespace muddle
 }  // namespace fetch

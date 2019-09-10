@@ -2,7 +2,6 @@
 # F E T C H   M U D D L E   L I B R A R Y
 #
 cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
-cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 project(fetch-muddle)
 
 # CMake Configuration
@@ -16,7 +15,7 @@ setup_compiler()
 # ------------------------------------------------------------------------------
 
 setup_library(fetch-muddle)
-target_link_libraries(fetch-muddle PUBLIC fetch-network)
+target_link_libraries(fetch-muddle PUBLIC fetch-network fetch-moment)
 
 # Unit tests
 add_subdirectory(tests)

@@ -29,14 +29,12 @@ namespace fetch {
 namespace muddle {
 namespace {
 
-void BuildDesiredPeers(PeerSelector const &peer_selector, variant::Variant &output)
+void BuildPeerSet(PeerSelector::Addresses const &address_set, variant::Variant &output)
 {
-  auto const desired = peer_selector.GetDesiredPeers();
-
-  output = variant::Variant::Array(desired.size());
+  output = variant::Variant::Array(address_set.size());
 
   std::size_t idx{0};
-  for (auto const &address : desired)
+  for (auto const &address : address_set)
   {
     output[idx++] = address.ToBase64();
   }
@@ -53,7 +51,8 @@ void BuildPeerInfo(PeerSelector const &peer_selector, variant::Variant &output)
   {
     auto &output_peer = output[peer_idx] = variant::Variant::Object();
 
-    output_peer["currentIndex"] = entry.second.peer_index;
+    output_peer["targetAddress"] = entry.first.ToBase64();
+    output_peer["currentIndex"]  = entry.second.peer_index;
 
     auto &address_list = output_peer["addresses"] =
         variant::Variant::Array(entry.second.peer_data.size());
@@ -63,7 +62,7 @@ void BuildPeerInfo(PeerSelector const &peer_selector, variant::Variant &output)
     {
       auto &addr_entry = address_list[address_idx] = variant::Variant::Object();
 
-      addr_entry["address"]     = address_entry.peer.ToString();
+      addr_entry["peerAddress"] = address_entry.peer.ToString();
       addr_entry["unreachable"] = address_entry.unreachable;
 
       ++address_idx;
@@ -77,7 +76,8 @@ void BuildPeerSelection(PeerSelector const &peer_selector, variant::Variant &out
 {
   output = variant::Variant::Object();
 
-  BuildDesiredPeers(peer_selector, output["desiredPeers"]);
+  BuildPeerSet(peer_selector.GetDesiredPeers(), output["desiredPeers"]);
+  BuildPeerSet(peer_selector.GetKademliaPeers(), output["kademliaPeers"]);
   BuildPeerInfo(peer_selector, output["peerInfo"]);
 }
 

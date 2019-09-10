@@ -21,6 +21,8 @@
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "muddle/muddle_interface.hpp"
+#include "telemetry/counter.hpp"
+#include "telemetry/gauge.hpp"
 
 #include <chrono>
 
@@ -78,8 +80,13 @@ BeaconService::BeaconService(MuddleInterface &               muddle,
   , event_manager_{std::move(event_manager)}
   , cabinet_creator_{muddle, identity_, manifest_cache}  // TODO(tfr): Make shared
   , beacon_protocol_{*this}
-  , entropy_generated_count_{telemetry::Registry::Instance().CreateCounter(
-        "entropy_generated_total", "The total number of times entropy has been generated")}
+  , beacon_entropy_generated_total_{telemetry::Registry::Instance().CreateCounter(
+        "beacon_entropy_generated_total", "The total number of times entropy has been generated")}
+  , beacon_entropy_future_signature_seen_total_{telemetry::Registry::Instance().CreateCounter(
+        "beacon_entropy_future_signature_seen_total",
+        "The total number of times entropy has been generated")}
+  , beacon_entropy_last_requested_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        "beacon_entropy_last_requested", "The last entropy value requested from the beacon")}
 {
 
   // Attaching beacon ready callback handler
@@ -139,12 +146,21 @@ BeaconService::BeaconService(MuddleInterface &               muddle,
                                   &BeaconService::OnWaitForPublicKeys);
   state_machine_->RegisterHandler(State::OBSERVE_ENTROPY_GENERATION, this,
                                   &BeaconService::OnObserveEntropyGeneration);
+
+  state_machine_->OnStateChange([this](State current, State previous) {
+    FETCH_UNUSED(this);
+    FETCH_UNUSED(current);
+    FETCH_UNUSED(previous);
+    FETCH_LOG_INFO(LOGGING_NAME, "Current state: ", ToString(current),
+                   " (previous: ", ToString(previous), ")");
+  });
 }
 
 BeaconService::Status BeaconService::GenerateEntropy(Digest /*block_digest*/, uint64_t block_number,
                                                      uint64_t &entropy)
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Requesting entropy for block number: ", block_number);
+  beacon_entropy_last_requested_->set(block_number);
 
   uint64_t round = block_number / blocks_per_round_;
 
@@ -180,10 +196,17 @@ BeaconService::Status BeaconService::GenerateEntropy(Digest /*block_digest*/, ui
   return Status::OK;
 }
 
+void BeaconService::AbortCabinet(uint64_t round_start)
+{
+  cabinet_creator_.Abort(round_start);
+}
+
 void BeaconService::StartNewCabinet(CabinetMemberList members, uint32_t threshold,
                                     uint64_t round_start, uint64_t round_end, uint64_t start_time)
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Starting new cabinet from ", round_start, " to ", round_end);
+  auto diff_time = int64_t(static_cast<uint64_t>(std::time(nullptr))) - int64_t(start_time);
+  FETCH_LOG_INFO(LOGGING_NAME, "Starting new cabinet from ", round_start, " to ", round_end,
+                 "at time: ", start_time, " (diff): ", diff_time);
   std::lock_guard<std::mutex> lock(mutex_);
 
   SharedAeonExecutionUnit beacon = std::make_shared<AeonExecutionUnit>();
@@ -406,6 +429,7 @@ void BeaconService::SubmitSignatureShare(uint64_t round, SignatureShare share)
   }
   else if (round > current_entropy_.round)
   {
+    beacon_entropy_future_signature_seen_total_->add(1);
     // Otherwise it is stored to be dealt with at a later point.
     signature_queue_.push_back({round, share});
   }
@@ -435,7 +459,10 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
   // Checking if we can verify
   if (!active_exe_unit_->manager.can_verify())
   {
-    state_machine_->Delay(std::chrono::milliseconds(200));
+    state_machine_->Delay(std::chrono::milliseconds(1000));
+    FETCH_LOG_INFO(LOGGING_NAME,
+                   "Failed to verify group signature. Rebroadcasting signature for round: ",
+                   current_entropy_.round);
     return State::BROADCAST_SIGNATURE;
   }
 
@@ -447,9 +474,12 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
     current_entropy_.entropy   = crypto::Hash<crypto::SHA256>(crypto::Hash<crypto::SHA256>(sign));
 
     // Broadcasting the entropy to those listening, but not participating
-    Serializer msgser;
-    msgser << current_entropy_;
-    endpoint_.Broadcast(SERVICE_DKG, CHANNEL_ENTROPY_DISTRIBUTION, msgser.data());
+    if (broadcasting_)
+    {
+      Serializer msgser;
+      msgser << current_entropy_;
+      endpoint_.Broadcast(SERVICE_DKG, CHANNEL_ENTROPY_DISTRIBUTION, msgser.data());
+    }
 
     return State::COMPLETE;
   }
@@ -467,7 +497,7 @@ BeaconService::State BeaconService::OnCompleteState()
 
   // Adding new entropy
   ready_entropy_queue_.push_back(current_entropy_);
-  entropy_generated_count_->add(1);
+  beacon_entropy_generated_total_->add(1);
 
   // Preparing next
   next_entropy_       = Entropy();

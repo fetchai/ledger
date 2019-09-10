@@ -39,6 +39,7 @@
 
 #include <chrono>
 #include <memory>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
@@ -136,8 +137,6 @@ public:
   using ConnectionDataList = std::vector<ConnectionData>;
   using ConnectionMap      = std::unordered_map<Address, Uri>;
 
-  static constexpr char const *LOGGING_NAME = "Muddle";
-
   // Construction / Destruction
   Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager const &nm,
          bool sign_packets = false, bool sign_broadcasts = false,
@@ -170,16 +169,18 @@ public:
 
   /// @name Peer Control
   /// @{
-  Addresses GetRequestedPeers() const override;
-  void      ConnectTo(Address const &address) override;
-  void      ConnectTo(Addresses const &addresses) override;
-  void      ConnectTo(Address const &address, network::Uri const &uri_hint) override;
-  void      ConnectTo(AddressHints const &address_hints) override;
-  void      DisconnectFrom(Address const &address) override;
-  void      DisconnectFrom(Addresses const &addresses) override;
-  void      SetConfidence(Address const &address, Confidence confidence) override;
-  void      SetConfidence(Addresses const &addresses, Confidence confidence) override;
-  void      SetConfidence(ConfidenceMap const &map) override;
+  PeerSelectionMode GetPeerSelectionMode() const override;
+  void              SetPeerSelectionMode(PeerSelectionMode mode) override;
+  Addresses         GetRequestedPeers() const override;
+  void              ConnectTo(Address const &address) override;
+  void              ConnectTo(Addresses const &addresses) override;
+  void              ConnectTo(Address const &address, network::Uri const &uri_hint) override;
+  void              ConnectTo(AddressHints const &address_hints) override;
+  void              DisconnectFrom(Address const &address) override;
+  void              DisconnectFrom(Addresses const &addresses) override;
+  void              SetConfidence(Address const &address, Confidence confidence) override;
+  void              SetConfidence(Addresses const &addresses, Confidence confidence) override;
+  void              SetConfidence(ConfidenceMap const &map) override;
   /// @}
 
   /// @name Internal Accessors
@@ -211,6 +212,8 @@ private:
   void CreateTcpServer(uint16_t port);
   void CreateTcpClient(Uri const &peer);
 
+  std::string const    name_;
+  char const *const    logging_name_{name_.c_str()};
   CertificatePtr const certificate_;  ///< The private and public keys for the node identity
   std::string const    external_address_;
   Address const        node_address_;

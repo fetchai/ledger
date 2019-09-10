@@ -2,7 +2,6 @@
 # F E T C H   M U D D L E   T E S T S
 #
 cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
-cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 project(fetch-muddle)
 
 # CMake configuration

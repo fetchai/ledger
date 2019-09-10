@@ -25,6 +25,7 @@
 #include <atomic>
 #include <chrono>
 #include <memory>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -43,8 +44,6 @@ public:
   using Timepoint = Clock::time_point;
   using Handle    = uint64_t;
   using Address   = Packet::Address;
-
-  static constexpr char const *LOGGING_NAME = "MuddleDispatch";
 
   // Construction / Destruction
   explicit Dispatcher(NetworkId const &network_id, Packet::Address const &address);
@@ -82,6 +81,9 @@ private:
   using PromiseMap = std::unordered_map<uint64_t, PromiseEntry>;
   using PromiseSet = std::unordered_set<uint64_t>;
   using HandleMap  = std::unordered_map<Handle, PromiseSet>;
+
+  std::string const name_;
+  char const *const logging_name_{name_.c_str()};
 
   Mutex    counter_lock_{__LINE__, __FILE__};
   uint16_t counter_{1};

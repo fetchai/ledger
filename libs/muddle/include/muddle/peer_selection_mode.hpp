@@ -17,12 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include <cstdint>
-
 namespace fetch {
 namespace muddle {
 
-static constexpr uint16_t CHANNEL_DISCOVERY = 10;
+enum class PeerSelectionMode
+{
+  DEFAULT,  ///< User request based routing
+  KADEMLIA  ///< Kademlia announcing and routing
+};
 
 }  // namespace muddle
 }  // namespace fetch

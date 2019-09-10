@@ -34,6 +34,7 @@ namespace fetch {
 namespace muddle {
 
 class Router;
+class NetworkId;
 
 /**
  * The peer connection list manages (and owns) the outgoing muddle connections. In the event that
@@ -87,10 +88,8 @@ public:
 
   using UriMap = std::unordered_map<Handle, Uri>;
 
-  static constexpr char const *LOGGING_NAME = "PeerConnList";
-
   // Construction / Destruction
-  PeerConnectionList()                           = default;
+  explicit PeerConnectionList(NetworkId const &network);
   PeerConnectionList(PeerConnectionList const &) = delete;
   PeerConnectionList(PeerConnectionList &&)      = delete;
   ~PeerConnectionList()                          = default;
@@ -131,6 +130,9 @@ public:
 
 private:
   using MetadataMap = std::unordered_map<Uri, PeerMetadata>;
+
+  std::string const name_;
+  char const *const logging_name_{name_.c_str()};
 
   StatusCallback status_callback_;
 

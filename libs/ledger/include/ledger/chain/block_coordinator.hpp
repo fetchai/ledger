@@ -355,10 +355,6 @@ private:
   SynergeticExecMgrPtr synergetic_exec_mgr_;
   /// }
 
-  /// @name Variables relating to POS consensus
-  Flag syncronised_{false};  ///< Flag to signal if this node is synchronised, or catching up
-  /// @}
-
   /// @name Telemetry
   /// @{
   telemetry::CounterPtr         reload_state_count_;

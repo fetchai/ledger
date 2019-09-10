@@ -47,6 +47,12 @@ class ManifestCacheInterface;
 
 namespace beacon {
 
+struct DryRunInfo
+{
+  std::string                       public_key;
+  AeonExecutionUnit::SignatureShare sig_share;
+};
+
 class BeaconSetupService
 {
 public:
@@ -98,6 +104,7 @@ public:
   using DeadlineTimer    = fetch::moment::DeadlineTimer;
   using SignatureShare   = AeonExecutionUnit::SignatureShare;
   using BeaconManager    = dkg::BeaconManager;
+  using GroupPubKeyPlusSigShare = std::pair<std::string, SignatureShare>;
 
   BeaconSetupService(MuddleInterface &muddle, Identity identity,
                      ManifestCacheInterface &manifest_cache);
@@ -123,6 +130,7 @@ public:
   /// Setup management
   /// @{
   void QueueSetup(SharedAeonExecutionUnit beacon);
+  void Abort(uint64_t round_start);
   void SetBeaconReadyCallback(CallbackFunction callback);
   /// @}
 
@@ -191,10 +199,12 @@ protected:
   uint32_t QualSize();
 
   // Telemetry
-  telemetry::GaugePtr<uint8_t>  beacon_dkg_state_gauge_;
+  telemetry::GaugePtr<uint64_t> beacon_dkg_state_gauge_;
   telemetry::GaugePtr<uint64_t> beacon_dkg_connections_gauge_;
   telemetry::GaugePtr<uint64_t> beacon_dkg_all_connections_gauge_;
   telemetry::CounterPtr         beacon_dkg_failures_total_;
+  telemetry::CounterPtr         beacon_dkg_dry_run_failures_total_;
+  telemetry::CounterPtr         beacon_dkg_aborts_total_;
 
   // Members below protected by mutex
   std::mutex                                                 mutex_;
@@ -202,9 +212,12 @@ protected:
   std::deque<SharedAeonExecutionUnit>                        aeon_exe_queue_;
   SharedAeonExecutionUnit                                    beacon_;
   std::unordered_map<MuddleAddress, std::set<MuddleAddress>> ready_connections_;
-  std::map<MuddleAddress, SignatureShare>                    dry_run_shares_;
+  std::map<MuddleAddress, GroupPubKeyPlusSigShare>           dry_run_shares_;
+  std::map<std::string, uint16_t>                            dry_run_public_keys_;
 
 private:
+  uint64_t abort_below_ = 0;
+
   // Timing management
   void             SetTimeToProceed(State state);
   moment::ClockPtr clock_ = moment::GetClock("beacon:dkg", moment::ClockType::STEADY);
@@ -215,6 +228,31 @@ private:
   uint64_t         expected_dkg_timespan_ = 0;
   bool             condition_to_proceed_  = false;
 };
-
 }  // namespace beacon
+
+namespace serializers {
+template <typename D>
+struct ArraySerializer<beacon::DryRunInfo, D>
+{
+
+public:
+  using Type       = beacon::DryRunInfo;
+  using DriverType = D;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &array_constructor, Type const &b)
+  {
+    auto array = array_constructor(2);
+    array.Append(b.public_key);
+    array.Append(b.sig_share);
+  }
+
+  template <typename ArrayDeserializer>
+  static void Deserialize(ArrayDeserializer &array, Type &b)
+  {
+    array.GetNextValue(b.public_key);
+    array.GetNextValue(b.sig_share);
+  }
+};
+}  // namespace serializers
 }  // namespace fetch
