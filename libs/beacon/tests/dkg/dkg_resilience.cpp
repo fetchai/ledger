@@ -597,67 +597,39 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
 
 TEST(dkg_setup, small_scale_test)
 {
-  GenerateTest(4, 3, 4, 4);
-}
-
-TEST(dkg_setup, send_bad_share)
-{
-  // Node 0 sends bad secret shares to Node 1 which complains against it.
-  // Node 0 then broadcasts its real shares as defense and then is allowed into
-  // qual
-  GenerateTest(4, 3, 4, 4, {{FaultySetupService::Failures::SEND_BAD_SHARE}});
-}
-
-TEST(dkg_setup, bad_coefficients)
-{
-  // Node 0 broadcasts bad coefficients which fails verification by everyone.
-  // Rejected from qual
-  GenerateTest(4, 3, 3, 3, {{FaultySetupService::Failures::BAD_COEFFICIENT}});
+  // Put delay (ms) between node start times
+  GenerateTest(4, 3, 4, 4, {}, 1000);
 }
 
 TEST(dkg_setup, send_empty_complaint_answer)
 {
   // Node 0 sends computes bad secret shares to Node 1 which complains against it.
   // Node 0 then does not send real shares and instead sends empty complaint answer.
-  // Node 0 should be disqualified from qual
+  // Node 0 should be disqualified from qual. A different node sends bad secret shares
+  // but then reveals correct shares in complaint answer so is allowed into qual.
   GenerateTest(4, 3, 3, 3,
                {{FaultySetupService::Failures::SEND_BAD_SHARE,
-                 FaultySetupService::Failures::SEND_EMPTY_COMPLAINT_ANSWER}});
+                 FaultySetupService::Failures::SEND_EMPTY_COMPLAINT_ANSWER},
+                {FaultySetupService::Failures::SEND_BAD_SHARE}});
 }
 
 TEST(dkg_setup, send_multiple_messages)
 {
-  // Node 0 sends multiple of each DKG message. Everyone should succeed in DKG
-  GenerateTest(4, 3, 4, 4,
-               {{FaultySetupService::Failures::SEND_MULTIPLE_SHARES,
+  // Node 0 broadcasts bad coefficients which fails verification by everyone and is
+  // rejected from qual. Another node sends multiple of each DKG message but should succeed in DKG.
+  // A third node sends fake qual coefficients. Should trigger warning and this node's shares will
+  // be reconstructed but should succeed in the DKG. Thirs behavious important to test as it means
+  // reconstruction computes the correct thing.
+  GenerateTest(5, 3, 4, 4,
+               {{FaultySetupService::Failures::BAD_COEFFICIENT},
+                {FaultySetupService::Failures::SEND_MULTIPLE_SHARES,
                  FaultySetupService::Failures::SEND_MULTIPLE_COEFFICIENTS,
                  FaultySetupService::Failures::SEND_MULTIPLE_COMPLAINTS,
                  FaultySetupService::Failures::SEND_MULTIPLE_COMPLAINT_ANSWERS,
                  FaultySetupService::Failures::SEND_MULTIPLE_QUAL_COEFFICIENTS,
                  FaultySetupService::Failures::SEND_MULTIPLE_QUAL_COMPLAINTS,
-                 FaultySetupService::Failures::SEND_MULTIPLE_RECONSTRUCTION_SHARES}});
-}
-
-TEST(dkg_setup, bad_qual_coefficients)
-{
-  // Node 0 computes bad qual coefficients so node 0 is in qual complaints but everyone reconstructs
-  // their shares. Everyone else except node 0 succeeds in DKG
-  GenerateTest(4, 3, 4, 3, {{FaultySetupService::Failures::BAD_QUAL_COEFFICIENTS}});
-}
-
-TEST(dkg_setup, send_fake_qual_complaint)
-{
-  // Node 0 sends fake qual coefficients. Should trigger warning and node 0's shares will be
-  // reconstructed but everyone else should succeed in the DKG. Important test as it means
-  // reconstruction computes the correct thing.
-  GenerateTest(4, 3, 4, 4, {{FaultySetupService::Failures::SEND_FALSE_QUAL_COMPLAINT}});
-}
-
-TEST(dkg_setup, delay_between_starts)
-{
-  // Start nodes with delay (ms) between starting service
-  SetGlobalLogLevel(LogLevel::TRACE);
-  GenerateTest(4, 3, 4, 4, {}, 1000);
+                 FaultySetupService::Failures::SEND_MULTIPLE_RECONSTRUCTION_SHARES},
+                {FaultySetupService::Failures::SEND_FALSE_QUAL_COMPLAINT}});
 }
 
 // TODO(jmw): The tests below are for now disabled as failure to complete DKG means everyone runs
