@@ -25,6 +25,7 @@
 #include "telemetry/gauge.hpp"
 
 #include <chrono>
+#include <iterator>
 
 namespace fetch {
 namespace beacon {
@@ -41,11 +42,14 @@ char const *ToString(BeaconService::State state)
   case BeaconService::State::PREPARE_ENTROPY_GENERATION:
     text = "Preparing entropy generation";
     break;
-  case BeaconService::State::BROADCAST_SIGNATURE:
-    text = "Broadcasting signatures";
-    break;
+  //case BeaconService::State::BROADCAST_SIGNATURE:
+  //  text = "Broadcasting signatures";
+  //  break;
   case BeaconService::State::COLLECT_SIGNATURES:
     text = "Collecting signatures";
+    break;
+  case BeaconService::State::VERIFY_SIGNATURES:
+    text = "Verifying signatures";
     break;
   case BeaconService::State::COMPLETE:
     text = "Sending shares";
@@ -134,10 +138,12 @@ BeaconService::BeaconService(MuddleInterface &               muddle,
                                   &BeaconService::OnWaitForSetupCompletionState);
   state_machine_->RegisterHandler(State::PREPARE_ENTROPY_GENERATION, this,
                                   &BeaconService::OnPrepareEntropyGeneration);
-  state_machine_->RegisterHandler(State::BROADCAST_SIGNATURE, this,
-                                  &BeaconService::OnBroadcastSignatureState);
+  //state_machine_->RegisterHandler(State::BROADCAST_SIGNATURE, this,
+  //                                &BeaconService::OnBroadcastSignatureState);
   state_machine_->RegisterHandler(State::COLLECT_SIGNATURES, this,
                                   &BeaconService::OnCollectSignaturesState);
+  state_machine_->RegisterHandler(State::VERIFY_SIGNATURES, this,
+                                  &BeaconService::OnVerifySignaturesState);
   state_machine_->RegisterHandler(State::COMPLETE, this, &BeaconService::OnCompleteState);
   state_machine_->RegisterHandler(State::COMITEE_ROTATION, this, &BeaconService::OnComiteeState);
 
@@ -375,98 +381,145 @@ BeaconService::State BeaconService::OnPrepareEntropyGeneration()
   active_exe_unit_->member_share = active_exe_unit_->manager.Sign();
 
   // Ready to broadcast signatures
-  return State::BROADCAST_SIGNATURE;
-}
-
-BeaconService::State BeaconService::OnBroadcastSignatureState()
-{
-  std::lock_guard<std::mutex> lock(mutex_);
-
-  for (auto &member : active_exe_unit_->aeon.members)
-  {
-    if (member == identity_)
-    {
-      signature_queue_.push_back({current_entropy_.round, active_exe_unit_->member_share});
-    }
-    else
-    {
-      // Communicating signatures
-      rpc_client_.CallSpecificAddress(member.identifier(), RPC_BEACON,
-                                      BeaconServiceProtocol::SUBMIT_SIGNATURE_SHARE,
-                                      current_entropy_.round, active_exe_unit_->member_share);
-      // TODO(tfr): Handle events that time out?
-    }
-  }
-
   return State::COLLECT_SIGNATURES;
 }
 
-void BeaconService::SubmitSignatureShare(uint64_t round, SignatureShare share)
+//BeaconService::State BeaconService::OnBroadcastSignatureState()
+//{
+//  std::lock_guard<std::mutex> lock(mutex_);
+//
+//  for (auto &member : active_exe_unit_->aeon.members)
+//  {
+//    if (member == identity_)
+//    {
+//      signature_queue_.push_back({current_entropy_.round, active_exe_unit_->member_share});
+//    }
+//    else
+//    {
+//      // Communicating signatures
+//      rpc_client_.CallSpecificAddress(member.identifier(), RPC_BEACON,
+//                                      BeaconServiceProtocol::SUBMIT_SIGNATURE_SHARE,
+//                                      current_entropy_.round, active_exe_unit_->member_share);
+//      // TODO(tfr): Handle events that time out?
+//    }
+//  }
+//
+//  return State::COLLECT_SIGNATURES;
+//}
+
+/**
+ * Peers can call this function (RPC endpoint) to get threshold signatures that
+ * this peer has collected
+ */
+BeaconService::SignatureInformation BeaconService::GetSignatureShares(uint64_t round) /*const*/
 {
+  FETCH_LOG_INFO(LOGGING_NAME, "askA");
   std::lock_guard<std::mutex> lock(mutex_);
+  FETCH_LOG_INFO(LOGGING_NAME, "askB");
 
-  // Late messages are ignored
-  if (round < current_entropy_.round)
+  // If this is too far in the future or the past return empty struct
+  if(signatures_being_built_.find(round) == signatures_being_built_.end())
   {
-    return;
-  }
-
-  // This is to ensure that the system remains operational even
-  // if no active unit is running
-  if (active_exe_unit_ == nullptr)
-  {
-    signature_queue_.push_back({round, share});
-    return;
+    return {};
   }
 
-  // In case the active unit
-  if ((active_exe_unit_->aeon.round_start <= round) && (round < active_exe_unit_->aeon.round_end))
-  {
-    if (round == current_entropy_.round)
-    {
-      AddSignature(share);
-    }
-  }
-  else if (round > current_entropy_.round)
-  {
-    beacon_entropy_future_signature_seen_total_->add(1);
-    // Otherwise it is stored to be dealt with at a later point.
-    signature_queue_.push_back({round, share});
-  }
+  return signatures_being_built_[round];
 }
 
 BeaconService::State BeaconService::OnCollectSignaturesState()
 {
   std::lock_guard<std::mutex> lock(mutex_);
 
-  // Adding signatures from the queue
-  std::deque<std::pair<uint64_t, SignatureShare>> remaining_shares;
-  while (!signature_queue_.empty())
+  // On first entry to function, populate with our info
+  if (state_machine_->previous_state() != State::COLLECT_SIGNATURES)
   {
-    auto f = signature_queue_.front();
-    signature_queue_.pop_front();
-    if (f.first == current_entropy_.round)
-    {
-      AddSignature(f.second);
-    }
-    else if (f.first > current_entropy_.round)
-    {
-      remaining_shares.push_back(f);
-    }
-  }
-  signature_queue_ = remaining_shares;
+    SignatureInformation this_round;
+    this_round.round                           = current_entropy_.round;
+    this_round.threshold_signatures[identity_.identifier()] = active_exe_unit_->member_share;
+    signatures_being_built_[current_entropy_.round] = this_round;
 
-  // Checking if we can verify
-  if (!active_exe_unit_->manager.can_verify())
-  {
-    state_machine_->Delay(std::chrono::milliseconds(1000));
-    FETCH_LOG_INFO(LOGGING_NAME,
-                   "Failed to verify group signature. Rebroadcasting signature for round: ",
-                   current_entropy_.round);
-    return State::BROADCAST_SIGNATURE;
+    // TODO(HUT): clean old sigs here
   }
 
-  if (active_exe_unit_->manager.Verify())
+  // Attempt to get signatures from a peer we do not have the signature of
+  auto missing_signatures_from = active_exe_unit_->manager.qual();
+  auto const &signatures_struct = signatures_being_built_[current_entropy_.round];
+
+  for (auto it = missing_signatures_from.begin(); it != missing_signatures_from.end();)
+  {
+    // If we have already seen, remove
+    if(signatures_struct.threshold_signatures.find(*it) != signatures_struct.threshold_signatures.end())
+    {
+      it = missing_signatures_from.erase(it);
+    }
+    else
+    {
+      ++it;
+    }
+  }
+
+  if(missing_signatures_from.empty())
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Signatures from all qual are already fulfilled");
+    return State::VERIFY_SIGNATURES;
+  }
+
+  // semi randomly select a qual member we haven't got the signature information from to query
+  std::size_t random_member_index = random_number_++ % missing_signatures_from.size();
+  auto it = std::next(missing_signatures_from.begin(), long(random_member_index));
+
+  qual_promise_identity_ = Identity(*it);
+  sig_share_promise_ = rpc_client_.CallSpecificAddress(qual_promise_identity_.identifier(), RPC_BEACON, BeaconServiceProtocol::GET_SIGNATURE_SHARES, current_entropy_.round);
+
+  state_machine_->Delay(std::chrono::milliseconds(50));
+
+  return State::VERIFY_SIGNATURES;
+}
+
+BeaconService::State BeaconService::OnVerifySignaturesState()
+{
+  FETCH_LOG_INFO(LOGGING_NAME, "WAit for lock");
+  std::lock_guard<std::mutex> lock(mutex_);
+
+  SignatureInformation ret;
+
+  FETCH_LOG_INFO(LOGGING_NAME, "resolving...");
+  //sig_share_promise_->
+
+  // Attempt to resolve the promise and add it
+  if(!sig_share_promise_->As<SignatureInformation>(ret))
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to resolve RPC promise from ", qual_promise_identity_.identifier().ToBase64());
+    return State::COLLECT_SIGNATURES;
+  }
+  FETCH_LOG_INFO(LOGGING_NAME, "resolved");
+
+  if(ret.round != current_entropy_.round)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Peer returned the wrong round when asked for signatures. Peer: ", qual_promise_identity_.identifier().ToBase64(), " returned: ", ret.round, " expected: ", current_entropy_.round);
+    return State::COLLECT_SIGNATURES;
+  }
+
+  if(ret.threshold_signatures.empty())
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Peer wasn't ready when asking for signatures: ", qual_promise_identity_.identifier().ToBase64());
+    state_machine_->Delay(std::chrono::milliseconds(10));
+    return State::COLLECT_SIGNATURES;
+  }
+
+  // Success - Add relevant info
+  auto &signatures_struct = signatures_being_built_[current_entropy_.round];
+
+  for(auto const &address_sig_pair : ret.threshold_signatures)
+  {
+    signatures_struct.threshold_signatures[address_sig_pair.first] = address_sig_pair.second;
+    // Let the manager know
+    AddSignature(address_sig_pair.second);
+  }
+
+  FETCH_LOG_INFO(LOGGING_NAME, "After adding, we have ", signatures_struct.threshold_signatures.size(), " signatures.");
+
+  if (active_exe_unit_->manager.can_verify() && active_exe_unit_->manager.Verify())
   {
     // Storing the result of current entropy
     current_entropy_.signature = active_exe_unit_->manager.GroupSignature();
@@ -483,12 +536,10 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
 
     return State::COMPLETE;
   }
-
-  FETCH_LOG_CRITICAL(
-      LOGGING_NAME,
-      "Valid signatures have generated an invalid group signature - this should not happen.");
-  // TODO(tfr): Work out how this should be dealt with
-  return State::COMPLETE;
+  else
+  {
+    return State::COLLECT_SIGNATURES;
+  }
 }
 
 BeaconService::State BeaconService::OnCompleteState()
@@ -569,6 +620,58 @@ std::weak_ptr<core::Runnable> BeaconService::GetSetupRunnable()
 {
   return cabinet_creator_.GetWeakRunnable();
 }
+
+ // // Adding signatures from the queue
+ // std::deque<std::pair<uint64_t, SignatureShare>> remaining_shares;
+ // while (!signature_queue_.empty())
+ // {
+ //   auto f = signature_queue_.front();
+ //   signature_queue_.pop_front();
+ //   if (f.first == current_entropy_.round)
+ //   {
+ //     AddSignature(f.second);
+ //   }
+ //   else if (f.first > current_entropy_.round)
+ //   {
+ //     remaining_shares.push_back(f);
+ //   }
+ // }
+ // signature_queue_ = remaining_shares;
+
+ // // Checking if we can verify
+ // if (!active_exe_unit_->manager.can_verify())
+ // {
+ //   state_machine_->Delay(std::chrono::milliseconds(1000));
+ //   FETCH_LOG_INFO(LOGGING_NAME,
+ //                  "Failed to verify group signature. Rebroadcasting signature for round: ",
+ //                  current_entropy_.round);
+ //   return State::BROADCAST_SIGNATURE;
+ // }
+
+ // if (active_exe_unit_->manager.Verify())
+ // {
+ //   // Storing the result of current entropy
+ //   current_entropy_.signature = active_exe_unit_->manager.GroupSignature();
+ //   auto sign                  = current_entropy_.signature.getStr();
+ //   current_entropy_.entropy   = crypto::Hash<crypto::SHA256>(crypto::Hash<crypto::SHA256>(sign));
+
+ //   // Broadcasting the entropy to those listening, but not participating
+ //   if (broadcasting_)
+ //   {
+ //     Serializer msgser;
+ //     msgser << current_entropy_;
+ //     endpoint_.Broadcast(SERVICE_DKG, CHANNEL_ENTROPY_DISTRIBUTION, msgser.data());
+ //   }
+
+ //   return State::COMPLETE;
+ // }
+
+ // FETCH_LOG_CRITICAL(
+ //     LOGGING_NAME,
+ //     "Valid signatures have generated an invalid group signature - this should not happen.");
+ // // TODO(tfr): Work out how this should be dealt with
+ // return State::COMPLETE;
+
 
 }  // namespace beacon
 }  // namespace fetch

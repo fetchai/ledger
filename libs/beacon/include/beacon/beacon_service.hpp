@@ -59,8 +59,9 @@ public:
   {
     WAIT_FOR_SETUP_COMPLETION,
     PREPARE_ENTROPY_GENERATION,
-    BROADCAST_SIGNATURE,
+    //BROADCAST_SIGNATURE,
     COLLECT_SIGNATURES,
+    VERIFY_SIGNATURES,
     COMPLETE,
     COMITEE_ROTATION,
 
@@ -122,14 +123,21 @@ public:
 
   friend class BeaconServiceProtocol;
 
+  struct SignatureInformation
+  {
+    uint64_t round{uint64_t(-1)};
+    std::map<BeaconManager::MuddleAddress, SignatureShare> threshold_signatures;
+  };
+
 protected:
   /// State methods
   /// @{
   State OnWaitForSetupCompletionState();
   State OnPrepareEntropyGeneration();
 
-  State OnBroadcastSignatureState();
+  /*State OnBroadcastSignatureState();*/
   State OnCollectSignaturesState();
+  State OnVerifySignaturesState();
   State OnCompleteState();
 
   State OnComiteeState();
@@ -140,7 +148,7 @@ protected:
 
   /// Protocol endpoints
   /// @{
-  void SubmitSignatureShare(uint64_t round, SignatureShare);
+  SignatureInformation GetSignatureShares(uint64_t round) /*const*/;
   /// @}
 
 private:
@@ -168,7 +176,16 @@ private:
   std::shared_ptr<AeonExecutionUnit>              active_exe_unit_;
   Entropy                                         next_entropy_{};
   Entropy                                         current_entropy_;
-  std::deque<std::pair<uint64_t, SignatureShare>> signature_queue_;
+  /// @}
+
+  /// Variables relating to getting threshold signatures of the seed
+  /// @{
+  //std::deque<std::pair<uint64_t, SignatureShare>> signature_queue_;
+
+  std::map<uint64_t, SignatureInformation> signatures_being_built_;
+  std::size_t                                 random_number_{0};
+  Identity qual_promise_identity_;
+  service::Promise sig_share_promise_;
   /// @}
 
   /// Observing beacon
@@ -199,4 +216,30 @@ private:
 };
 
 }  // namespace beacon
+
+namespace serializers {
+template <typename D>
+struct ArraySerializer<beacon::BeaconService::SignatureInformation, D>
+{
+
+public:
+  using Type       = beacon::BeaconService::SignatureInformation;
+  using DriverType = D;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &array_constructor, Type const &b)
+  {
+    auto array = array_constructor(2);
+    array.Append(b.round);
+    array.Append(b.threshold_signatures);
+  }
+
+  template <typename ArrayDeserializer>
+  static void Deserialize(ArrayDeserializer &array, Type &b)
+  {
+    array.GetNextValue(b.round);
+    array.GetNextValue(b.threshold_signatures);
+  }
+};
+}  // namespace serializers
 }  // namespace fetch

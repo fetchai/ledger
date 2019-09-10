@@ -160,13 +160,12 @@ public:
   using DriverType = D;
 
   static uint8_t const SIGNATURE  = 0;
-  static uint8_t const PUBLIC_KEY = 1;
-  static uint8_t const IDENTITY   = 2;
+  static uint8_t const IDENTITY   = 1;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &member)
   {
-    auto map = map_constructor(3);
+    auto map = map_constructor(2);
 
     map.Append(SIGNATURE, member.signature.getStr());
     map.Append(IDENTITY, member.identity);

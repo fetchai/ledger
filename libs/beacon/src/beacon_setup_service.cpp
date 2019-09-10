@@ -286,20 +286,20 @@ BeaconSetupService::State BeaconSetupService::OnConnectToAll()
     {
       // tell muddle to connect to the address with the specified hint
       muddle_.ConnectTo(address, *hint);
-      FETCH_LOG_WARN(LOGGING_NAME, "Added peer with hint");
     }
     else
     {
       // tell muddle to connect to the address using normal service discovery
       muddle_.ConnectTo(address);
-      FETCH_LOG_WARN(LOGGING_NAME, "Added peer without hint");
     }
   }
 
   // request removal of unwanted connections
   auto unwanted_connections = muddle_.GetRequestedPeers() - aeon_members;
-  FETCH_LOG_INFO(LOGGING_NAME, "Removing unwanted connections: ", unwanted_connections.size());
   muddle_.DisconnectFrom(unwanted_connections);
+
+  // Update telemetry
+  beacon_dkg_all_connections_gauge_->set(muddle_.GetDirectlyConnectedPeers().size());
 
   if (timer_to_proceed_.HasExpired())
   {

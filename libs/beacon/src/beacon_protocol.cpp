@@ -26,7 +26,7 @@ namespace beacon {
 BeaconServiceProtocol::BeaconServiceProtocol(BeaconService &service)
   : service_(service)
 {
-  this->Expose(SUBMIT_SIGNATURE_SHARE, &service_, &BeaconService::SubmitSignatureShare);
+  this->Expose(GET_SIGNATURE_SHARES, &service_, &BeaconService::GetSignatureShares);
 }
 
 }  // namespace beacon
