@@ -83,7 +83,6 @@ void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
       Type zero{0.0};
 
       auto ret_slice = c.data().slice(c.padded_height() * j, c.height());
-      std::cout << "ret_slice: " << std::hex << ptrdiff_t(ret_slice.pointer()) << std::endl;
       memory::Range range(std::size_t(0), std::size_t(c.height()));
       ret_slice.in_parallel().RangedApply(
           range, [zero](auto &&vw_c_j) { 
