@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-#include "fetch_teams/ledger/logger.hpp"
+#include "core/logging.hpp"
 #include "oef-base/comms/CharArrayBuffer.hpp"
 #include "oef-base/comms/Endianness.hpp"
 #include "oef-base/comms/IMessageWriter.hpp"

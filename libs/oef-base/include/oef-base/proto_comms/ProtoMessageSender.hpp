@@ -7,7 +7,7 @@
 #include "oef-base/comms/Endianness.hpp"
 #include "oef-base/comms/IMessageWriter.hpp"
 
-#include "fetch_teams/ledger/logger.hpp"
+#include "core/logging.hpp"
 
 template <typename TXType, typename Reader, typename Sender>
 class ProtoMessageEndpoint;

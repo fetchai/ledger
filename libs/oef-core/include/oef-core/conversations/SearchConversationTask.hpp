@@ -3,7 +3,7 @@
 #include <memory>
 #include <utility>
 
-#include "fetch_teams/ledger/logger.hpp"
+#include "core/logging.hpp"
 #include "mt-core/comms/src/cpp/OefAgentEndpoint.hpp"
 #include "mt-core/conversations/src/cpp/SearchConversationTypes.hpp"
 #include "mt-core/tasks-oef-base/TSendProtoTask.hpp"

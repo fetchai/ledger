@@ -1,14 +1,16 @@
 #pragma once
 
-#include <boost/asio.hpp>
+#include "network/fetch_asio.hpp"
 
 class ISocketOwner
 {
 public:
-  using Socket = boost::asio::ip::tcp::socket;
+  using Socket = asio::ip::tcp::socket;
 
-  ISocketOwner() {}
-  virtual ~ISocketOwner() {}
-  virtual Socket& socket() = 0;
-  virtual void go() = 0;
+  ISocketOwner()
+  {}
+  virtual ~ISocketOwner()
+  {}
+  virtual Socket &socket() = 0;
+  virtual void    go()     = 0;
 };

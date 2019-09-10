@@ -1,14 +1,14 @@
 #pragma once
 
-#include "oef-base/comms/EndpointBase.hpp"
-#include "oef-base/comms/ISocketOwner.hpp"
-#include "oef-base/comms/RingBuffer.hpp"
-#include <boost/asio.hpp>
-
-#include "fetch_teams/ledger/logger.hpp"
+#include "core/logging.hpp"
+#include "network/fetch_asio.hpp"
 #include "oef-base/comms/Core.hpp"
+#include "oef-base/comms/EndpointBase.hpp"
 #include "oef-base/comms/IMessageReader.hpp"
 #include "oef-base/comms/IMessageWriter.hpp"
+#include "oef-base/comms/ISocketOwner.hpp"
+#include "oef-base/comms/RingBuffer.hpp"
+
 #include <iostream>
 
 template <typename TXType>
@@ -42,7 +42,7 @@ public:
 protected:
   virtual void async_read(const std::size_t &bytes_needed) override;
   virtual void async_write() override;
-  virtual bool is_eof(const boost::system::error_code &ec) const override;
+  virtual bool is_eof(std::error_code const &ec) const override;
 
 protected:
   Socket sock;

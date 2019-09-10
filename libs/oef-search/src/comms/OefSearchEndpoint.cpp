@@ -61,7 +61,7 @@ void OefSearchEndpoint::setup()
     }
   });
 
-  endpoint->setOnErrorHandler([myGroupId, myself_wp](const boost::system::error_code &ec) {
+  endpoint->setOnErrorHandler([myGroupId, myself_wp](const system::error_code &ec) {
     if (auto myself_sp = myself_wp.lock())
     {
       // myself_sp -> factory -> endpointClosed();

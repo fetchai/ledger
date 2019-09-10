@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include "fetch_teams/ledger/logger.hpp"
+#include "core/logging.hpp"
 #include "mt-core/agents/src/cpp/Agents.hpp"
 #include "mt-core/comms/src/cpp/OefListenerStarterTask.hpp"
 #include "mt-core/secure/experimental/cpp/public_key_utils.hpp"

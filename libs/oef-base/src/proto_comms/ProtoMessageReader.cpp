@@ -1,4 +1,4 @@
-#include "ProtoMessageReader.hpp"
+#include "oef-base/proto_comms/ProtoMessageReader.hpp"
 #include "oef-base/proto_comms/ProtoMessageEndpoint.hpp"
 
 ProtoMessageReader::consumed_needed_pair ProtoMessageReader::initial()

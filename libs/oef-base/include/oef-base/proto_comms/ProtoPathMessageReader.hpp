@@ -1,6 +1,6 @@
 #pragma once
 
-#include "fetch_teams/ledger/logger.hpp"
+#include "core/logging.hpp"
 #include "oef-base/comms/ConstCharArrayBuffer.hpp"
 #include "oef-base/comms/Endianness.hpp"
 #include "oef-base/comms/EndpointBase.hpp"

@@ -1,5 +1,5 @@
-#include "Taskpool.hpp"
-#include "fetch_teams/ledger/logger.hpp"
+#include "oef-base/threading/Taskpool.hpp"
+#include "core/logging.hpp"
 
 #include "oef-base/monitoring/Counter.hpp"
 #include "oef-base/monitoring/Gauge.hpp"

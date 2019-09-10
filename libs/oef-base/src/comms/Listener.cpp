@@ -1,8 +1,8 @@
 #include <functional>
 #include <iostream>
 
-#include "Core.hpp"
-#include "Listener.hpp"
+#include "oef-base/comms/Core.hpp"
+#include "oef-base/comms/Listener.hpp"
 #include "oef-base/monitoring/Counter.hpp"
 
 static Counter accepting("mt-core.network.accept");
@@ -24,8 +24,8 @@ void Listener::start_accept()
       std::bind(&Listener::handle_accept, this, new_connection, std::placeholders::_1));
 }
 
-void Listener::handle_accept(std::shared_ptr<ISocketOwner>    new_connection,
-                             const boost::system::error_code &error)
+void Listener::handle_accept(std::shared_ptr<ISocketOwner> new_connection,
+                             std::error_code const &       error)
 {
   accepted++;
   if (!error)

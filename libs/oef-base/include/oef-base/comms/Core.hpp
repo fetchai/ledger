@@ -1,11 +1,13 @@
 #pragma once
 
+#include <atomic>
 #include <memory>
 #include <mutex>
-#include <atomic>
-#include <boost/asio.hpp>
 
-using boost::asio::ip::tcp;
+#include "network/fetch_asio.hpp"
+
+// TODO: not permitted to polute global namespace
+using asio::ip::tcp;
 
 class Core
 {
@@ -16,11 +18,18 @@ public:
   void run(void);
   void stop(void);
 
-  operator boost::asio::io_context*() { return context.get(); }
-  operator boost::asio::io_context&() { return *context; }
+  operator asio::io_context *()
+  {
+    return context.get();
+  }
+  operator asio::io_context &()
+  {
+    return *context;
+  }
 
   std::shared_ptr<tcp::acceptor> makeAcceptor(unsigned short int port);
+
 private:
-  std::shared_ptr<boost::asio::io_context> context;
-  boost::asio::io_context::work *work;
+  std::shared_ptr<asio::io_context> context;
+  asio::io_context::work *          work;
 };

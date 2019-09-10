@@ -1,6 +1,6 @@
 #pragma once
 
-#include "fetch_teams/ledger/logger.hpp"
+#include "core/logging.hpp"
 #include "mt-core/karma/src/cpp/KarmaAccount.hpp"
 #include "oef-base/proto_comms/ProtoMessageEndpoint.hpp"
 #include <memory>

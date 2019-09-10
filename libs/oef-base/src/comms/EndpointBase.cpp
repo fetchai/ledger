@@ -1,7 +1,7 @@
-#include "EndpointBase.hpp"
-#include "fetch_teams/ledger/logger.hpp"
+#include "oef-base/comms/EndpointBase.hpp"
+#include "core/logging.hpp"
 
-#include "boost/beast/websocket/error.hpp"
+// TODO: Replace beast #include "boost/beast/websocket/error.hpp"
 #include "oef-base/monitoring/Gauge.hpp"
 #include "oef-base/utils/Uri.hpp"
 #include <cstdlib>
@@ -12,10 +12,10 @@ static std::atomic<std::size_t> endpoint_ident(1000);
 template <typename TXType>
 bool EndpointBase<TXType>::connect(const Uri &uri, Core &core)
 {
-  boost::asio::ip::tcp::resolver        resolver(core);
-  boost::asio::ip::tcp::resolver::query query(uri.host, std::to_string(uri.port));
-  auto                                  results = resolver.resolve(query);
-  boost::system::error_code             ec;
+  asio::ip::tcp::resolver        resolver(core);
+  asio::ip::tcp::resolver::query query(uri.host, std::to_string(uri.port));
+  auto                           results = resolver.resolve(query);
+  std::error_code                ec;
 
   for (auto &endpoint : results)
   {
@@ -161,7 +161,7 @@ void EndpointBase<TXType>::eof()
 }
 
 template <typename TXType>
-void EndpointBase<TXType>::error(const boost::system::error_code &ec)
+void EndpointBase<TXType>::error(std::error_code const &ec)
 {
   if (*state & ERRORED_ENDPOINT)
   {
@@ -235,7 +235,7 @@ void EndpointBase<TXType>::go()
 {
   remote_id = socket().remote_endpoint().address().to_string();
   FETCH_LOG_INFO(LOGGING_NAME, "remote_id detected as: ", remote_id);
-  boost::asio::socket_base::linger option(false, 0);
+  asio::socket_base::linger option(false, 0);
   socket().set_option(option);
 
   if (onStart)
@@ -266,7 +266,7 @@ void EndpointBase<TXType>::go()
 }
 
 template <typename TXType>
-void EndpointBase<TXType>::complete_sending(StateTypeP state, const boost::system::error_code &ec,
+void EndpointBase<TXType>::complete_sending(StateTypeP state, std::error_code const &ec,
                                             const size_t &bytes)
 {
   try
@@ -277,7 +277,7 @@ void EndpointBase<TXType>::complete_sending(StateTypeP state, const boost::syste
       return;
     }
 
-    if (is_eof(ec) || ec == boost::asio::error::operation_aborted)
+    if (is_eof(ec) || ec == asio::error::operation_aborted)
     {
       FETCH_LOG_INFO(LOGGING_NAME, "complete_sending EOF:  ", ec);
       *state |= CLOSED_ENDPOINT;
@@ -319,7 +319,7 @@ void EndpointBase<TXType>::create_messages()
 }
 
 template <typename TXType>
-void EndpointBase<TXType>::complete_reading(StateTypeP state, const boost::system::error_code &ec,
+void EndpointBase<TXType>::complete_reading(StateTypeP state, std::error_code const &ec,
                                             const size_t &bytes)
 {
   try
@@ -332,7 +332,7 @@ void EndpointBase<TXType>::complete_reading(StateTypeP state, const boost::syste
 
     // std::cout << reader.get() << ":  complete_reading:  " << ec << ", "<< bytes << std::endl;
 
-    if (is_eof(ec) || ec == boost::asio::error::operation_aborted)
+    if (is_eof(ec) || ec == asio::error::operation_aborted)
     {
       // std::cout << "complete_reading: eof" << std::endl;
       *state |= CLOSED_ENDPOINT;

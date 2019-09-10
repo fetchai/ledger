@@ -1,22 +1,21 @@
-#include "EndpointWebSocket.hpp"
+#include "oef-base/comms/EndpointWebSocket.hpp"
 
-#include "boost/asio/bind_executor.hpp"
 #include "oef-base/monitoring/Gauge.hpp"
 #include "oef-base/utils/Uri.hpp"
 
 #include <utility>
 
-namespace websocket = boost::beast::websocket;
+// namespace websocket = beast::websocket;
 
 static Gauge wsep_count("mt-core.network.EndpointWebSocket");
 
 template <typename TXType>
-EndpointWebSocket<TXType>::EndpointWebSocket(boost::asio::io_context &io_context,
+EndpointWebSocket<TXType>::EndpointWebSocket(asio::io_context &io_context,
                                              std::size_t sendBufferSize, std::size_t readBufferSize,
                                              ConfigMap configMap)
   : EndpointBase<TXType>(sendBufferSize, readBufferSize, configMap)
-  , web_socket_(io_context)
-  , strand_(web_socket_.get_executor())
+//  , web_socket_(io_context)
+//  , strand_(web_socket_.get_executor())
 {
   wsep_count++;
 }
@@ -31,6 +30,7 @@ template <typename TXType>
 void EndpointWebSocket<TXType>::close()
 {
   Lock lock(this->mutex);
+  /*
   *state |= this->CLOSED_ENDPOINT;
   try
   {
@@ -40,20 +40,24 @@ void EndpointWebSocket<TXType>::close()
   {
     FETCH_LOG_INFO(LOGGING_NAME, "WebSocket already closed!");
   }
+  */
 }
 
 template <typename TXType>
 void EndpointWebSocket<TXType>::go()
 {
+  /*
   FETCH_LOG_WARN(LOGGING_NAME, "Got new connection, probably WebSocket..");
-  web_socket_.async_accept(boost::asio::bind_executor(
+  web_socket_.async_accept(asio::bind_executor(
       strand_,
       std::bind(&EndpointWebSocket::on_accept, shared_from_this(), std::placeholders::_1)));
+      */
 }
 
 template <typename TXType>
 void EndpointWebSocket<TXType>::async_write()
 {
+  /*
   auto data = sendBuffer.getDataBuffers();
 
   int i = 0;
@@ -68,18 +72,20 @@ void EndpointWebSocket<TXType>::async_write()
 
   auto my_state = state;
 
-  web_socket_.async_write(
-      data, [this, my_state](const boost::system::error_code &ec, const size_t &bytes) {
-        this->complete_sending(my_state, ec, bytes);
-      });
+  web_socket_.async_write(data, [this, my_state](std::error_code const &ec, const size_t &bytes) {
+    this->complete_sending(my_state, ec, bytes);
+  });
+  */
 }
 
 template <typename TXType>
 void EndpointWebSocket<TXType>::async_read(const std::size_t &bytes_needed)
 {
+  /*
   auto space    = readBuffer.getSpaceBuffers();
   auto my_state = state;
   async_read_at_least(bytes_needed, 0, space, my_state);
+  */
 }
 
 template <typename TXType>
@@ -88,6 +94,7 @@ void EndpointWebSocket<TXType>::async_read_at_least(const std::size_t &bytes_nee
                                                     std::vector<RingBuffer::mutable_buffer> &space,
                                                     std::shared_ptr<StateType> my_state)
 {
+  /*
   if (*state != this->RUNNING_ENDPOINT)
   {
     return;
@@ -98,7 +105,7 @@ void EndpointWebSocket<TXType>::async_read_at_least(const std::size_t &bytes_nee
   }
 
   web_socket_.async_read_some(space, [this, my_state, &bytes_read, bytes_needed, &space](
-                                         const boost::system::error_code &ec, const size_t &bytes) {
+                                         std::error_code const &ec, const size_t &bytes) {
     bytes_read += bytes;
     if (bytes_read >= bytes_needed)
     {
@@ -111,13 +118,16 @@ void EndpointWebSocket<TXType>::async_read_at_least(const std::size_t &bytes_nee
       this->async_read_at_least(bytes_needed, bytes_read, space, my_state);
     }
   });
+  */
 }
 
 template <typename TXType>
-void EndpointWebSocket<TXType>::on_accept(const boost::system::error_code &ec)
+void EndpointWebSocket<TXType>::on_accept(std::error_code const &ec)
 {
+  /*
   FETCH_LOG_WARN(LOGGING_NAME, "WebSocket accepted");
   EndpointBase<TXType>::go();
+  */
   /*
     using namespace std::chrono_literals;
     if (ec)
@@ -125,12 +135,12 @@ void EndpointWebSocket<TXType>::on_accept(const boost::system::error_code &ec)
       FETCH_LOG_WARN("Error accepting web socket: ", ec.message());
       return;
     }
-    //boost::beast::multi_buffer buffer;
+    //beast::multi_buffer buffer;
     // Read a message into our buffer
     //web_socket_.read(buffer);
 
     auto space = readBuffer.getSpaceBuffers();
-    boost::system::error_code errorCode;
+    system::error_code errorCode;
 
     FETCH_LOG_INFO(LOGGING_NAME, "Reading...");
     auto bytes = web_socket_.read_some(space, errorCode);
@@ -159,9 +169,11 @@ void EndpointWebSocket<TXType>::on_accept(const boost::system::error_code &ec)
 }
 
 template <typename TXType>
-bool EndpointWebSocket<TXType>::is_eof(const boost::system::error_code &ec) const
+bool EndpointWebSocket<TXType>::is_eof(std::error_code const &ec) const
 {
-  return ec == boost::beast::websocket::error::closed;
+  /*
+  return ec == beast::websocket::error::closed;
+  */
 }
 
 template class EndpointWebSocket<std::shared_ptr<google::protobuf::Message>>;

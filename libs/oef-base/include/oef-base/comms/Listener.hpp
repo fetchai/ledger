@@ -1,12 +1,12 @@
 #pragma once
 #pragma once
 
-#include <boost/asio.hpp>
-#include <memory>
-
+#include "network/fetch_asio.hpp"
 #include "oef-base/comms/ISocketOwner.hpp"
 
-using boost::asio::ip::tcp;
+#include <memory>
+
+using asio::ip::tcp;
 
 class Core;
 
@@ -19,8 +19,7 @@ public:
   virtual ~Listener();
 
   void start_accept();
-  void handle_accept(std::shared_ptr<ISocketOwner>    new_connection,
-                     const boost::system::error_code &error);
+  void handle_accept(std::shared_ptr<ISocketOwner> new_connection, std::error_code const &error);
 
   std::shared_ptr<tcp::acceptor> acceptor;
   CONN_CREATOR                   creator;

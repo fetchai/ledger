@@ -1,4 +1,4 @@
-#include "ProtoPathMessageSender.hpp"
+#include "oef-base/proto_comms/ProtoPathMessageSender.hpp"
 
 #include "oef-base/monitoring/Counter.hpp"
 #include "oef-base/proto_comms/ProtoMessageEndpoint.hpp"

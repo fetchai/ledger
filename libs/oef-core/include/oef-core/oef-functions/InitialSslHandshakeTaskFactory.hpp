@@ -1,10 +1,10 @@
 #pragma once
 
-#include "fetch_teams/ledger/logger.hpp"
+#include "core/logging.hpp"
 #include "mt-core/agents/src/cpp/Agents.hpp"
 #include "oef-base/comms/Endianness.hpp"
 #include "oef-base/comms/IOefTaskFactory.hpp"
-//#include "fetch_teams/ledger/crypto/ecdsa.hpp"
+//#include "core/crypto/ecdsa.hpp"
 #include "mt-core/oef-functions/src/cpp/OefFunctionsTaskFactory.hpp"
 #include "mt-core/secure/experimental/cpp/public_key_utils.hpp"
 

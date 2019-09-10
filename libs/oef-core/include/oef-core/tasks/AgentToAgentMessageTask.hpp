@@ -1,6 +1,6 @@
 #pragma once
 
-#include "fetch_teams/ledger/logger.hpp"
+#include "core/logging.hpp"
 #include "mt-core/agents/src/cpp/Agent.hpp"
 #include "mt-core/agents/src/cpp/Agents.hpp"
 #include "mt-core/comms/src/cpp/OefAgentEndpoint.hpp"

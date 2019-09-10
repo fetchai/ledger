@@ -1,13 +1,12 @@
 #pragma once
 
-#include "fetch_teams/ledger/logger.hpp"
+#include "core/logging.hpp"
 #include "oef-base/comms/EndpointBase.hpp"
 #include "oef-base/comms/RingBuffer.hpp"
 
-#include "boost/asio/ip/tcp.hpp"
-#include "boost/asio/strand.hpp"
-#include "boost/beast.hpp"
-#include "boost/beast/core.hpp"
+//#include "boost/beast.hpp"  // TODO: Get rid of beast
+//#include "boost/beast/core.hpp"
+#include "network/fetch_asio.hpp"
 
 #include <memory>
 
@@ -26,11 +25,11 @@ public:
   using Socket    = typename EndpointBase<TXType>::Socket;
   using Lock      = typename EndpointBase<TXType>::Lock;
   using StateType = typename EndpointBase<TXType>::StateType;
-  using WebSocket = boost::beast::websocket::stream<Socket>;
+  // TODO: Fix  using WebSocket = beast::websocket::stream<Socket>;
 
   static constexpr char const *LOGGING_NAME = "EndpointWebSocket";
 
-  explicit EndpointWebSocket(boost::asio::io_context &io_context, std::size_t sendBufferSize,
+  explicit EndpointWebSocket(asio::io_context &io_context, std::size_t sendBufferSize,
                              std::size_t readBufferSize, ConfigMap configMap);
 
   virtual ~EndpointWebSocket();
@@ -51,16 +50,19 @@ public:
 protected:
   virtual void async_read(const std::size_t &bytes_needed) override;
   virtual void async_write() override;
-  virtual bool is_eof(const boost::system::error_code &ec) const override;
+  virtual bool is_eof(std::error_code const &ec) const override;
 
   void async_read_at_least(const std::size_t &bytes_needed, std::size_t bytes_read,
                            std::vector<RingBuffer::mutable_buffer> &space,
                            std::shared_ptr<StateType>               my_state);
 
 private:
-  void on_accept(const boost::system::error_code &ec);
+  void on_accept(std::error_code const &ec);
 
 private:
-  WebSocket                                                   web_socket_;
-  boost::asio::strand<boost::asio::io_context::executor_type> strand_;
+  /*
+  TODO FIX:
+  WebSocket                                     web_socket_;
+  asio::strand<asio::io_context::executor_type> strand_;
+  */
 };

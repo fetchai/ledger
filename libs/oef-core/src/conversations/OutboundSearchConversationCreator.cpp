@@ -1,6 +1,6 @@
 #include "OutboundSearchConversationCreator.hpp"
 
-#include "fetch_teams/ledger/logger.hpp"
+#include "core/logging.hpp"
 #include "oef-base/proto_comms/ProtoMessageEndpoint.hpp"
 #include "oef-base/threading/StateMachineTask.hpp"
 #include "oef-base/utils/Uri.hpp"

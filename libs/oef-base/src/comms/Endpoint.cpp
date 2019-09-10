@@ -1,8 +1,8 @@
-#include "Endpoint.hpp"
-#include "fetch_teams/ledger/logger.hpp"
-
+#include "oef-base/comms/Endpoint.hpp"
+#include "core/logging.hpp"
 #include "oef-base/monitoring/Gauge.hpp"
 #include "oef-base/utils/Uri.hpp"
+
 #include <cstdlib>
 
 static Gauge ep_count("mt-core.network.Endpoint");
@@ -38,10 +38,9 @@ void Endpoint<TXType>::async_write()
   FETCH_LOG_DEBUG(LOGGING_NAME, "run_sending: START");
 
   auto my_state = state;
-  boost::asio::async_write(
-      sock, data, [this, my_state](const boost::system::error_code &ec, const size_t &bytes) {
-        this->complete_sending(my_state, ec, bytes);
-      });
+  asio::async_write(sock, data, [this, my_state](std::error_code const &ec, const size_t &bytes) {
+    this->complete_sending(my_state, ec, bytes);
+  });
 }
 
 template <typename TXType>
@@ -50,17 +49,16 @@ void Endpoint<TXType>::async_read(const std::size_t &bytes_needed)
   auto space    = readBuffer.getSpaceBuffers();
   auto my_state = state;
 
-  boost::asio::async_read(
-      sock, space, boost::asio::transfer_at_least(bytes_needed),
-      [this, my_state](const boost::system::error_code &ec, const size_t &bytes) {
-        this->complete_reading(my_state, ec, bytes);
-      });
+  asio::async_read(sock, space, asio::transfer_at_least(bytes_needed),
+                   [this, my_state](std::error_code const &ec, const size_t &bytes) {
+                     this->complete_reading(my_state, ec, bytes);
+                   });
 }
 
 template <typename TXType>
-bool Endpoint<TXType>::is_eof(const boost::system::error_code &ec) const
+bool Endpoint<TXType>::is_eof(std::error_code const &ec) const
 {
-  return ec == boost::asio::error::eof;
+  return ec == asio::error::eof;
 }
 
 template class Endpoint<std::shared_ptr<google::protobuf::Message>>;

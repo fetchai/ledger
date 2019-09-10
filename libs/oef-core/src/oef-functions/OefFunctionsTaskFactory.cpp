@@ -1,6 +1,6 @@
 #include "OefFunctionsTaskFactory.hpp"
 
-#include "fetch_teams/ledger/logger.hpp"
+#include "core/logging.hpp"
 #include "mt-core/conversations/src/cpp/SearchConversationTask.hpp"
 #include "mt-core/conversations/src/cpp/SearchConversationTypes.hpp"
 #include "mt-core/conversations/src/cpp/SearchQueryTask.hpp"

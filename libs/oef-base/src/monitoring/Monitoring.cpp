@@ -1,10 +1,10 @@
-#include "Monitoring.hpp"
+#include "oef-base/monitoring/Monitoring.hpp"
 
 #include <atomic>
-#include <vector>
+#include <iostream>
 #include <map>
 #include <mutex>
-#include <iostream>
+#include <vector>
 
 Monitoring::MonitoringInner *Monitoring::inner = 0;
 
@@ -17,9 +17,7 @@ Monitoring::Monitoring()
 }
 
 Monitoring::~Monitoring()
-{
-}
-
+{}
 
 Monitoring::IdType Monitoring::find(const NameType &name)
 {
@@ -27,37 +25,36 @@ Monitoring::IdType Monitoring::find(const NameType &name)
   {
     inner = new MonitoringInner;
   }
-  return inner -> get(name);
+  return inner->get(name);
 }
 
 void Monitoring::add(IdType id, CountType delta)
 {
-  inner -> access(id) += delta;
+  inner->access(id) += delta;
 }
 
 void Monitoring::set(IdType id, CountType delta)
 {
-  inner -> access(id) = delta;
+  inner->access(id) = delta;
 }
 
 void Monitoring::sub(IdType id, CountType delta)
 {
-  inner -> access(id) -= delta;
+  inner->access(id) -= delta;
 }
 
 void Monitoring::report(ReportFunc func)
 {
-  for(const auto &name2id : inner -> getNames())
-    {
-      func(name2id.first, inner -> access(name2id.second));
-    }
+  for (const auto &name2id : inner->getNames())
+  {
+    func(name2id.first, inner->access(name2id.second));
+  }
 }
 
 void Monitoring::max(IdType id, CountType value)
-{
-}
+{}
 
 Monitoring::CountType Monitoring::get(IdType id)
 {
-  return inner -> access(id);
+  return inner->access(id);
 }

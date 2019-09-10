@@ -1,7 +1,7 @@
 #pragma once
 
-#include "fetch_teams/ledger/experimental/crypto/ecdsa.hpp"
-#include "fetch_teams/ledger/logger.hpp"
+#include "core/experimental/crypto/ecdsa.hpp"
+#include "core/logging.hpp"
 #include "mt-core/agents/src/cpp/Agents.hpp"
 #include "oef-base/comms/Endianness.hpp"
 #include "oef-base/comms/IOefTaskFactory.hpp"

@@ -4,29 +4,28 @@
 
 #include <boost/program_options.hpp>
 
-
 int main(int argc, char *argv[])
 {
   // parse args
 
   std::string config_file, config_string;
 
-  boost::program_options::options_description desc{"Options"};
+  program_options::options_description desc{"Options"};
 
-  desc.add_options()
-      ("config_file", boost::program_options::value<std::string>(&config_file)->default_value(""),
-       "Path to the configuration file.");
+  desc.add_options()("config_file",
+                     program_options::value<std::string>(&config_file)->default_value(""),
+                     "Path to the configuration file.");
 
-  desc.add_options()
-    ("config_string", boost::program_options::value<std::string>(&config_string)->default_value(""),
-        "Configuration JSON.");
-  boost::program_options::variables_map vm;
+  desc.add_options()("config_string",
+                     program_options::value<std::string>(&config_string)->default_value(""),
+                     "Configuration JSON.");
+  program_options::variables_map vm;
   try
   {
     store(parse_command_line(argc, argv, desc), vm);
     notify(vm);
   }
-  catch (std::exception& ex)
+  catch (std::exception &ex)
   {
     FETCH_LOG_WARN("MAIN", "Failed to parse command line arguments: ", ex.what());
     return 1;
@@ -41,7 +40,6 @@ int main(int argc, char *argv[])
     desc.print(std::cout);
     return 1;
   }
-
 
   if (!myCore.configure(config_file, config_string))
   {

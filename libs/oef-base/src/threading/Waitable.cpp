@@ -1,4 +1,4 @@
-#include "Waitable.hpp"
+#include "oef-base/threading/Waitable.hpp"
 
 Notification::NotificationBuilder Waitable::makeNotification(void)
 {
@@ -16,14 +16,14 @@ void Waitable::wake(void)
     waiting_local.swap(waiting);
   }
 
-  for(auto& waiter : waiting_local)
+  for (auto &waiter : waiting_local)
   {
-    waiter -> Notify();
+    waiter->Notify();
   }
 }
 
-
-void swap(Waitable& v1, Waitable& v2) {
+void swap(Waitable &v1, Waitable &v2)
+{
   v1.swap(v2);
 }
 
@@ -36,8 +36,8 @@ void Waitable::cancel(void)
     waiting_local.swap(waiting);
   }
 
-  for(auto& waiter : waiting_local)
+  for (auto &waiter : waiting_local)
   {
-    waiter -> Fail();
+    waiter->Fail();
   }
 }

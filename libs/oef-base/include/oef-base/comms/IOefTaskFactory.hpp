@@ -3,8 +3,7 @@
 #include <memory>
 #include <vector>
 
-#include <boost/asio.hpp>
-
+#include "network/fetch_asio.hpp"
 #include "oef-base/comms/ConstCharArrayBuffer.hpp"
 
 class OutboundConversations;
@@ -15,7 +14,7 @@ class IOefTaskFactory
   friend OefEndpoint;
 
 public:
-  using buffer  = boost::asio::const_buffer;
+  using buffer  = asio::const_buffer;
   using buffers = std::vector<buffer>;
 
   IOefTaskFactory(std::shared_ptr<OefEndpoint>           the_endpoint,

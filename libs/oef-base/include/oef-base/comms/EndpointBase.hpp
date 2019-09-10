@@ -1,16 +1,15 @@
 #pragma once
 
-#include "oef-base/threading/Notification.hpp"
-#include "oef-base/threading/Waitable.hpp"
-
-#include "boost/asio.hpp"
-#include "oef-base/comms/ISocketOwner.hpp"
-#include "oef-base/comms/RingBuffer.hpp"
-
-#include "fetch_teams/ledger/logger.hpp"
+#include "core/logging.hpp"
+#include "network/fetch_asio.hpp"
 #include "oef-base/comms/Core.hpp"
 #include "oef-base/comms/IMessageReader.hpp"
 #include "oef-base/comms/IMessageWriter.hpp"
+#include "oef-base/comms/ISocketOwner.hpp"
+#include "oef-base/comms/RingBuffer.hpp"
+#include "oef-base/threading/Notification.hpp"
+#include "oef-base/threading/Waitable.hpp"
+
 #include <iostream>
 #include <list>
 
@@ -22,12 +21,12 @@ class EndpointBase : public ISocketOwner, public Waitable
 public:
   using Mutex     = std::mutex;
   using Lock      = std::lock_guard<Mutex>;
-  using Socket    = boost::asio::ip::tcp::socket;
+  using Socket    = asio::ip::tcp::socket;
   using ConfigMap = std::unordered_map<std::string, std::string>;
 
   using message_type = TXType;
 
-  using ErrorNotification      = std::function<void(const boost::system::error_code &ec)>;
+  using ErrorNotification      = std::function<void(std::error_code const &ec)>;
   using EofNotification        = std::function<void()>;
   using StartNotification      = std::function<void()>;
   using ProtoErrorNotification = std::function<void(const std::string &message)>;
@@ -101,7 +100,7 @@ protected:
   virtual void async_read(const std::size_t &bytes_needed) = 0;
   virtual void async_write()                               = 0;
 
-  virtual bool is_eof(const boost::system::error_code &ec) const = 0;
+  virtual bool is_eof(std::error_code const &ec) const = 0;
 
 protected:
   RingBuffer sendBuffer;
@@ -121,15 +120,13 @@ protected:
 
   std::shared_ptr<StateType> state;
 
-  virtual void error(const boost::system::error_code &ec);
+  virtual void error(std::error_code const &ec);
   virtual void proto_error(const std::string &msg);
   virtual void eof();
 
-  virtual void complete_sending(StateTypeP state, const boost::system::error_code &ec,
-                                const size_t &bytes);
+  virtual void complete_sending(StateTypeP state, std::error_code const &ec, const size_t &bytes);
   virtual void create_messages();
-  virtual void complete_reading(StateTypeP state, const boost::system::error_code &ec,
-                                const size_t &bytes);
+  virtual void complete_reading(StateTypeP state, std::error_code const &ec, const size_t &bytes);
 
 private:
   std::vector<Notification::Notification> waiting;

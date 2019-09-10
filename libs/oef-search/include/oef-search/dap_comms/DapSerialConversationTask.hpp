@@ -4,7 +4,7 @@
 #include <queue>
 #include <utility>
 
-#include "fetch_teams/ledger/logger.hpp"
+#include "core/logging.hpp"
 #include "oef-base/threading/StateMachineTask.hpp"
 
 #include "mt-search/comms/src/cpp/OefSearchEndpoint.hpp"

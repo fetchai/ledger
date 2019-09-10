@@ -1,4 +1,4 @@
-#include "Notification.hpp"
+#include "oef-base/threading/Notification.hpp"
 
 #include <cassert>
 
@@ -32,9 +32,9 @@ void Notification::NotificationImplementation::DispatchCallbacks()
   }
 
   // invalidate the callbacks
-  callback_success_    = nullptr;
-  callback_failure_    = nullptr;
-  callback_complete_   = nullptr;
+  callback_success_  = nullptr;
+  callback_failure_  = nullptr;
+  callback_complete_ = nullptr;
 }
 
 void Notification::NotificationImplementation::UpdateState(State state)
