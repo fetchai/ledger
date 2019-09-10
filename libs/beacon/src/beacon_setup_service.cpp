@@ -589,6 +589,8 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReconstructionShares()
       }
     }
 
+    // Reset if reconstruction fails as this breaks the initial assumption on the
+    // number of Byzantine nodes
     if (!beacon_->manager.RunReconstruction())
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Node: ", beacon_->manager.cabinet_index(),
