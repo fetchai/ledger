@@ -696,6 +696,7 @@ BeaconSetupService::State BeaconSetupService::OnDryRun()
     }
 
     // insert ourselves - others will insert here also via gossip
+    dry_run_public_keys_[beacon_->manager.group_public_key()]++;
     dry_run_shares_[identity_.identifier()] =
         GroupPubKeyPlusSigShare{beacon_->manager.group_public_key(), beacon_->member_share};
 
@@ -720,7 +721,7 @@ BeaconSetupService::State BeaconSetupService::OnDryRun()
 
     for (auto const &key_and_count : dry_run_public_keys_)
     {
-      if (key_and_count.second >= beacon_->manager.polynomial_degree())
+      if (key_and_count.second >= QualSize())
       {
         found_key     = true;
         found_our_key = beacon_->manager.group_public_key() == key_and_count.first;
