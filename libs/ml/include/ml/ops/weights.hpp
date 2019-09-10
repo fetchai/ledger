@@ -159,13 +159,6 @@ public:
     return false;
   }
 
-  void Step(typename T::Type learning_rate) override
-  {
-    this->gradient_accumulation_->InlineMultiply(-learning_rate);
-    this->output_->InlineAdd(*gradient_accumulation_);
-    ResetGradients();
-  }
-
   void ApplyGradient(TensorType const &grad) override
   {
     this->output_->InlineAdd(grad);
