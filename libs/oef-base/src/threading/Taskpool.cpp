@@ -1,8 +1,8 @@
 #include "Taskpool.hpp"
 #include "fetch_teams/ledger/logger.hpp"
 
-#include "base/src/cpp/monitoring/Counter.hpp"
-#include "base/src/cpp/monitoring/Gauge.hpp"
+#include "oef-base/monitoring/Counter.hpp"
+#include "oef-base/monitoring/Gauge.hpp"
 
 static std::weak_ptr<Taskpool> gDefaultTaskPool;
 
@@ -11,7 +11,8 @@ static Gauge gauge_running("mt-core.taskpool.gauge.running_tasks");
 static Gauge gauge_suspended("mt-core.taskpool.gauge.sleeping_tasks");
 static Gauge gauge_future("mt-core.taskpool.gauge.future_tasks");
 
-Taskpool::Taskpool():quit(false)
+Taskpool::Taskpool()
+  : quit(false)
 {
   Counter("mt-core.tasks.popped-for-run");
   Counter("mt-core.tasks.run.std::exception");
@@ -28,8 +29,7 @@ void Taskpool::setDefault()
 }
 
 Taskpool::~Taskpool()
-{
-}
+{}
 
 std::weak_ptr<Taskpool> Taskpool::getDefaultTaskpool()
 {
@@ -38,7 +38,7 @@ std::weak_ptr<Taskpool> Taskpool::getDefaultTaskpool()
 
 void Taskpool::run(std::size_t thread_idx)
 {
-  while(true)
+  while (true)
   {
     if (quit)
     {
@@ -52,7 +52,8 @@ void Taskpool::run(std::size_t thread_idx)
       Lock lock(mutex);
       if (pending_tasks.empty())
       {
-        cv_status = work_available.wait_until(lock, lockless_getNextWakeTime(now, Milliseconds(100)));
+        cv_status =
+            work_available.wait_until(lock, lockless_getNextWakeTime(now, Milliseconds(100)));
       }
     }
 
@@ -75,8 +76,8 @@ void Taskpool::run(std::size_t thread_idx)
       Lock lock(mutex);
       if (!pending_tasks.empty())
       {
-        mytask = pending_tasks.front();
-        mytask -> pool = 0;
+        mytask       = pending_tasks.front();
+        mytask->pool = 0;
         pending_tasks.pop_front();
         Counter("mt-core.tasks.popped-for-run")++;
         Counter("mt-core.immediate-tasks.popped-for-run")++;
@@ -97,21 +98,22 @@ void Taskpool::run(std::size_t thread_idx)
 
     try
     {
-      if (mytask -> isCancelled())
+      if (mytask->isCancelled())
       {
         status = CANCELLED;
       }
       else
       {
-        status = mytask -> runThunk();
-      }    }
-    catch(std::exception &ex)
+        status = mytask->runThunk();
+      }
+    }
+    catch (std::exception &ex)
     {
       Counter("mt-core.tasks.run.std::exception")++;
       FETCH_LOG_INFO(LOGGING_NAME, "Threadpool caught:", ex.what());
       status = ERRORED;
     }
-    catch(...)
+    catch (...)
     {
       Counter("mt-core.tasks.run.exception")++;
       FETCH_LOG_INFO(LOGGING_NAME, "Threadpool caught: other exception");
@@ -123,14 +125,14 @@ void Taskpool::run(std::size_t thread_idx)
       running_tasks.erase(thread_idx);
     }
 
-    switch(status)
+    switch (status)
     {
     case DEFER:
-      {
-        Counter("mt-core.tasks.run.deferred")++;
-        suspend(mytask);
-      }
-      break;
+    {
+      Counter("mt-core.tasks.run.deferred")++;
+      suspend(mytask);
+    }
+    break;
     case ERRORED:
       Counter("mt-core.tasks.run.errored")++;
       mytask.reset();
@@ -153,7 +155,7 @@ void Taskpool::remove(TaskP task)
   bool did = false;
   {
     auto iter = pending_tasks.begin();
-    while(iter != pending_tasks.end())
+    while (iter != pending_tasks.end())
     {
       if (*iter == task)
       {
@@ -204,7 +206,6 @@ void Taskpool::updateStatus() const
   gauge_running   = running_tasks.size();
   gauge_suspended = suspended_tasks.size();
   gauge_future    = future_tasks.size();
-
 }
 
 void Taskpool::stop(void)
@@ -212,18 +213,18 @@ void Taskpool::stop(void)
   Lock lock(mutex);
   quit = true;
 
-  for(auto const &t : pending_tasks)
+  for (auto const &t : pending_tasks)
   {
-    t -> cancel();
+    t->cancel();
   }
   pending_tasks.clear();
 
-  for(auto const &kv : running_tasks)
+  for (auto const &kv : running_tasks)
   {
     auto t = kv.second;
     if (t)
     {
-      t -> cancel();
+      t->cancel();
     }
   }
 
@@ -235,13 +236,13 @@ void Taskpool::stop(void)
 void Taskpool::suspend(TaskP task)
 {
   Counter("mt-core.tasks.suspended")++;
-  task -> pool = shared_from_this();
+  task->pool = shared_from_this();
   suspended_tasks.insert(task);
 }
 
 void Taskpool::submit(TaskP task)
 {
-  if (task -> isRunnable())
+  if (task->isRunnable())
   {
     Lock lock(mutex);
     Counter("mt-core.tasks.moved-to-runnable")++;
@@ -260,13 +261,13 @@ void Taskpool::after(TaskP task, const Milliseconds &delay)
 
   FutureTask ft;
   ft.task = task;
-  ft.due = Clock::now() + delay;
+  ft.due  = Clock::now() + delay;
 
   future_tasks.push(ft);
   Counter("mt-core.tasks.futured")++;
 }
 
-Taskpool::Timestamp Taskpool::lockless_getNextWakeTime(const Timestamp &current_time,
+Taskpool::Timestamp Taskpool::lockless_getNextWakeTime(const Timestamp &   current_time,
                                                        const Milliseconds &deflt)
 {
   Timestamp result = current_time + deflt;
@@ -277,22 +278,18 @@ Taskpool::Timestamp Taskpool::lockless_getNextWakeTime(const Timestamp &current_
   return result;
 }
 
-
 Taskpool::TaskP Taskpool::lockless_getNextFutureWork(const Timestamp &current_time)
 {
   TaskP result;
-  while(
-        (!future_tasks.empty())
-        &&
-        future_tasks.top().due <= current_time)
+  while ((!future_tasks.empty()) && future_tasks.top().due <= current_time)
   {
     auto r = future_tasks.top().task;
     future_tasks.pop();
 
-    if (!(r -> isCancelled()))
+    if (!(r->isCancelled()))
     {
-      result = r;
-      result -> pool = 0;
+      result       = r;
+      result->pool = 0;
       Counter("mt-core.tasks.popped-for-run")++;
       Counter("mt-core.future-tasks.popped-for-run")++;
       break;
@@ -300,7 +297,6 @@ Taskpool::TaskP Taskpool::lockless_getNextFutureWork(const Timestamp &current_ti
   }
   return result;
 }
-
 
 void Taskpool::cancelTaskGroup(std::size_t group_id)
 {
@@ -313,9 +309,9 @@ void Taskpool::cancelTaskGroup(std::size_t group_id)
     Lock lock(mutex);
     {
       auto iter = pending_tasks.begin();
-      while(iter != pending_tasks.end())
+      while (iter != pending_tasks.end())
       {
-        if ((*iter) -> group_id == group_id)
+        if ((*iter)->group_id == group_id)
         {
           tasks.push_back(*iter);
           iter = pending_tasks.erase(iter);
@@ -329,9 +325,9 @@ void Taskpool::cancelTaskGroup(std::size_t group_id)
 
     {
       auto iter = suspended_tasks.begin();
-      while(iter != suspended_tasks.end())
+      while (iter != suspended_tasks.end())
       {
-        if ((*iter) -> group_id == group_id)
+        if ((*iter)->group_id == group_id)
         {
           tasks.push_back(*iter);
           iter = suspended_tasks.erase(iter);
@@ -344,9 +340,9 @@ void Taskpool::cancelTaskGroup(std::size_t group_id)
     }
   }
 
-  for(auto t : tasks)
+  for (auto t : tasks)
   {
-      FETCH_LOG_INFO(LOGGING_NAME, "cancelTaskGroup ", group_id, " (P) task ", t -> task_id);
-      t -> cancel();
+    FETCH_LOG_INFO(LOGGING_NAME, "cancelTaskGroup ", group_id, " (P) task ", t->task_id);
+    t->cancel();
   }
 }

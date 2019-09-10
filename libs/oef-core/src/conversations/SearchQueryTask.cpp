@@ -1,9 +1,9 @@
 #include "mt-core/conversations/src/cpp/SearchQueryTask.hpp"
-#include "base/src/cpp/conversation/OutboundConversations.hpp"
-#include "base/src/cpp/conversation/OutboundConversation.hpp"
-#include "protos/src/protos/search_response.pb.h"
 #include "mt-core/tasks/src/cpp/utils.hpp"
-#include "base/src/cpp/monitoring/Counter.hpp"
+#include "oef-base/conversation/OutboundConversation.hpp"
+#include "oef-base/conversation/OutboundConversations.hpp"
+#include "oef-base/monitoring/Counter.hpp"
+#include "protos/src/protos/search_response.pb.h"
 
 static Counter tasks_created("mt-core.search.query.tasks_created");
 static Counter tasks_resolved("mt-core.search.query.tasks_resolved");
@@ -16,25 +16,14 @@ SearchQueryTask::EntryPoint searchQueryTaskEntryPoints[] = {
     &SearchQueryTask::handleResponse,
 };
 
-SearchQueryTask::SearchQueryTask(
-    std::shared_ptr<SearchQueryTask::IN_PROTO> initiator,
-    std::shared_ptr<OutboundConversations> outbounds,
-    std::shared_ptr<OefAgentEndpoint> endpoint,
-    uint32_t msg_id,
-    std::string core_key,
-    std::string agent_uri,
-    uint16_t ttl)
-    :  SearchConversationTask(
-        "search",
-        std::move(initiator),
-        std::move(outbounds),
-        std::move(endpoint),
-        msg_id,
-        std::move(core_key),
-        std::move(agent_uri),
-        searchQueryTaskEntryPoints,
-        this)
-    , ttl_{ttl}
+SearchQueryTask::SearchQueryTask(std::shared_ptr<SearchQueryTask::IN_PROTO> initiator,
+                                 std::shared_ptr<OutboundConversations>     outbounds,
+                                 std::shared_ptr<OefAgentEndpoint> endpoint, uint32_t msg_id,
+                                 std::string core_key, std::string agent_uri, uint16_t ttl)
+  : SearchConversationTask("search", std::move(initiator), std::move(outbounds),
+                           std::move(endpoint), msg_id, std::move(core_key), std::move(agent_uri),
+                           searchQueryTaskEntryPoints, this)
+  , ttl_{ttl}
 {
   tasks_created++;
 }
@@ -47,11 +36,10 @@ SearchQueryTask::~SearchQueryTask()
 SearchQueryTask::StateResult SearchQueryTask::handleResponse(void)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Woken ");
-  FETCH_LOG_INFO(LOGGING_NAME, "Response.. ",
-                 conversation -> getAvailableReplyCount()
-  );
+  FETCH_LOG_INFO(LOGGING_NAME, "Response.. ", conversation->getAvailableReplyCount());
 
-  if (conversation -> getAvailableReplyCount() == 0){
+  if (conversation->getAvailableReplyCount() == 0)
+  {
     return SearchQueryTask::StateResult(0, ERRORED);
   }
 
@@ -61,24 +49,27 @@ SearchQueryTask::StateResult SearchQueryTask::handleResponse(void)
     return SearchQueryTask::StateResult(0, ERRORED);
   }
 
-  if (conversation->getAvailableReplyCount()==0)
+  if (conversation->getAvailableReplyCount() == 0)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "No available reply for search query, waiting more...");
     return SearchQueryTask::StateResult(0, DEFER);
   }
 
-  auto response = std::static_pointer_cast<fetch::oef::pb::SearchResponse>(conversation->getReply(0));
+  auto response =
+      std::static_pointer_cast<fetch::oef::pb::SearchResponse>(conversation->getReply(0));
 
   auto answer = std::make_shared<OUT_PROTO>();
   answer->set_answer_id(msg_id_);
 
   if (ttl_ == 1)
   {
-    FETCH_LOG_INFO(LOGGING_NAME,  "Got search response: ", response->DebugString(), ", size: ", response->result_size());
+    FETCH_LOG_INFO(LOGGING_NAME, "Got search response: ", response->DebugString(),
+                   ", size: ", response->result_size());
     auto answer_agents = answer->mutable_agents();
     if (response->result_size() < 1)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Got empty search result! Sending: ", answer->DebugString(), " to agent ", agent_uri_);
+      FETCH_LOG_WARN(LOGGING_NAME, "Got empty search result! Sending: ", answer->DebugString(),
+                     " to agent ", agent_uri_);
     }
     else
     {
@@ -92,16 +83,18 @@ SearchQueryTask::StateResult SearchQueryTask::handleResponse(void)
           answer_agents->add_agents(uri.agentPartAsString());
         }
       }
-      FETCH_LOG_INFO(LOGGING_NAME, "Sending ", answer_agents->agents().size(), "agents to ", agent_uri_);
+      FETCH_LOG_INFO(LOGGING_NAME, "Sending ", answer_agents->agents().size(), "agents to ",
+                     agent_uri_);
     }
   }
   else
   {
-    FETCH_LOG_INFO(LOGGING_NAME,  "Got wide search response: ", response->DebugString());
+    FETCH_LOG_INFO(LOGGING_NAME, "Got wide search response: ", response->DebugString());
     auto agents_wide = answer->mutable_agents_wide();
-    if (response->result_size()<1)
+    if (response->result_size() < 1)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Got empty search result! Sending: ", answer->DebugString(), " to agent ", agent_uri_);
+      FETCH_LOG_WARN(LOGGING_NAME, "Got empty search result! Sending: ", answer->DebugString(),
+                     " to agent ", agent_uri_);
     }
     else
     {
@@ -144,7 +137,8 @@ SearchQueryTask::StateResult SearchQueryTask::handleResponse(void)
   return SearchQueryTask::StateResult(0, COMPLETE);
 }
 
-std::shared_ptr<SearchQueryTask::REQUEST_PROTO> SearchQueryTask::make_request_proto() {
+std::shared_ptr<SearchQueryTask::REQUEST_PROTO> SearchQueryTask::make_request_proto()
+{
   auto search_query = std::make_shared<fetch::oef::pb::SearchQuery>();
   search_query->set_source_key(core_key_);
   if (initiator->has_query_v2())

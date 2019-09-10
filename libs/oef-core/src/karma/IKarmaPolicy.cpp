@@ -2,23 +2,19 @@
 
 #include <memory>
 
-#include "base/src/cpp/threading/Task.hpp"
 #include "KarmaAccount.hpp"
+#include "oef-base/threading/Task.hpp"
 
 IKarmaPolicy::IKarmaPolicy()
-{
-}
+{}
 
 IKarmaPolicy::~IKarmaPolicy()
-{
-}
-
-
+{}
 
 // because friendship is not heritable.
 void IKarmaPolicy::changeAccountNumber(KarmaAccount *acc, std::size_t number)
 {
-  acc -> id = number;
+  acc->id = number;
 }
 
 // because friendship is not heritable.

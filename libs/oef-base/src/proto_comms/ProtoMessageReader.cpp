@@ -1,30 +1,31 @@
 #include "ProtoMessageReader.hpp"
-#include "base/src/cpp/proto_comms/ProtoMessageEndpoint.hpp"
+#include "oef-base/proto_comms/ProtoMessageEndpoint.hpp"
 
-ProtoMessageReader::consumed_needed_pair ProtoMessageReader::initial() {
+ProtoMessageReader::consumed_needed_pair ProtoMessageReader::initial()
+{
   return consumed_needed_pair(0, 1);
 }
 
 ProtoMessageReader::consumed_needed_pair ProtoMessageReader::checkForMessage(const buffers &data)
 {
-  //std::cout << "ProtoMessageReader::checkForMessage" << std::endl;
+  // std::cout << "ProtoMessageReader::checkForMessage" << std::endl;
 
   std::string s;
 
   std::size_t consumed = 0;
-  std::size_t needed = 1;
+  std::size_t needed   = 1;
 
   ConstCharArrayBuffer chars(data);
-  std::istream is(&chars);
+  std::istream         is(&chars);
 
-  while(true)
+  while (true)
   {
-    //std::cout << "checkForMessage in " << chars.remainingData() << " bytes." << std::endl;
-    //chars.diagnostic();
+    // std::cout << "checkForMessage in " << chars.remainingData() << " bytes." << std::endl;
+    // chars.diagnostic();
 
-    uint32_t body_size_u32;
+    uint32_t    body_size_u32;
     std::size_t body_size;
-    uint32_t head_size = sizeof(uint32_t);
+    uint32_t    head_size = sizeof(uint32_t);
 
     if (chars.remainingData() < head_size)
     {
@@ -32,7 +33,7 @@ ProtoMessageReader::consumed_needed_pair ProtoMessageReader::checkForMessage(con
       break;
     }
 
-    switch(endianness)
+    switch (endianness)
     {
     case BAD:
       throw std::invalid_argument("Read attempted while endianness determined to be BAD.");
@@ -67,12 +68,10 @@ ProtoMessageReader::consumed_needed_pair ProtoMessageReader::checkForMessage(con
 
     body_size = body_size_u32;
 
-    if (body_size > 10000) // TODO(kll)
+    if (body_size > 10000)  // TODO(kll)
     {
-      throw std::invalid_argument(
-                                  std::string("Proto deserialisation refuses incoming ")
-                                  + std::to_string(body_size)
-                                  + " bytes message header.");
+      throw std::invalid_argument(std::string("Proto deserialisation refuses incoming ") +
+                                  std::to_string(body_size) + " bytes message header.");
       break;
     }
 
@@ -85,15 +84,14 @@ ProtoMessageReader::consumed_needed_pair ProtoMessageReader::checkForMessage(con
     consumed += head_size;
     consumed += body_size;
 
-
     if (onComplete)
     {
-      //std::cout << "MESSAGE = " << head_size << "+" << body_size << " bytes" << std::endl;
+      // std::cout << "MESSAGE = " << head_size << "+" << body_size << " bytes" << std::endl;
       onComplete(ConstCharArrayBuffer(chars, chars.current + body_size));
     }
     else
     {
-      FETCH_LOG_WARN(LOGGING_NAME,  "No onComplete handler set.");
+      FETCH_LOG_WARN(LOGGING_NAME, "No onComplete handler set.");
     }
     chars.advance(body_size);
   }
@@ -104,7 +102,7 @@ void ProtoMessageReader::setDetectedEndianness(Endianness newstate)
 {
   if (auto endpoint_sp = endpoint.lock())
   {
-    endpoint_sp -> setEndianness(newstate);
+    endpoint_sp->setEndianness(newstate);
   }
 }
 

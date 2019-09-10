@@ -1,31 +1,31 @@
 #include "MtCore.hpp"
 
-#include <iostream>
 #include <fstream>
+#include <iostream>
 
-#include "base/src/cpp/comms/Core.hpp"
-#include "base/src/cpp/comms/OefListenerSet.hpp"
-#include "mt-core/comms/src/cpp/OefListenerStarterTask.hpp"
-#include "mt-core/oef-functions/src/cpp/InitialHandshakeTaskFactory.hpp"
-#include "mt-core/conversations/src/cpp/OutboundSearchConversationCreator.hpp"
-#include "base/src/cpp/monitoring/Monitoring.hpp"
-#include "base/src/cpp/threading/MonitoringTask.hpp"
 #include "mt-core/comms/src/cpp/OefAgentEndpoint.hpp"
+#include "mt-core/comms/src/cpp/OefListenerStarterTask.hpp"
+#include "mt-core/conversations/src/cpp/OutboundSearchConversationCreator.hpp"
+#include "mt-core/oef-functions/src/cpp/InitialHandshakeTaskFactory.hpp"
+#include "oef-base/comms/Core.hpp"
+#include "oef-base/comms/OefListenerSet.hpp"
+#include "oef-base/monitoring/Monitoring.hpp"
+#include "oef-base/threading/MonitoringTask.hpp"
 
 #include "mt-core/karma/src/cpp/KarmaPolicyBasic.hpp"
 #include "mt-core/karma/src/cpp/KarmaPolicyNone.hpp"
 #include "mt-core/karma/src/cpp/KarmaRefreshTask.hpp"
 
 #include "google/protobuf/util/json_util.h"
-#include "base/src/cpp/comms/Endpoint.hpp"
-#include "base/src/cpp/comms/EndpointWebSocket.hpp"
+#include "oef-base/comms/Endpoint.hpp"
+#include "oef-base/comms/EndpointWebSocket.hpp"
 #include <stdio.h>
 
 #include <ctype.h>
 
-#include "mt-core/secure/experimental/cpp/EndpointSSL.hpp"
-#include "mt-core/oef-functions/src/cpp/InitialSslHandshakeTaskFactory.hpp"
 #include "mt-core/oef-functions/src/cpp/InitialSecureHandshakeTaskFactory.hpp"
+#include "mt-core/oef-functions/src/cpp/InitialSslHandshakeTaskFactory.hpp"
+#include "mt-core/secure/experimental/cpp/EndpointSSL.hpp"
 #include "mt-core/tasks/src/cpp/OefLoginTimeoutTask.hpp"
 
 // openssl utils
@@ -39,12 +39,12 @@ static const unsigned int minimum_thread_count = 1;
 std::string prometheusUpThatNamingString(const std::string &name)
 {
   std::string r;
-  bool upshift = false;
-  for(int i=0;i<name.length();i++)
+  bool        upshift = false;
+  for (int i = 0; i < name.length(); i++)
   {
     auto c = name[i];
 
-    switch(c)
+    switch (c)
     {
     case '-':
     case '_':
@@ -88,7 +88,7 @@ std::string prometheusUpThatNamingString(const std::string &name)
       if (upshift)
       {
         r += std::string(1, ::toupper(c));
-        upshift=false;
+        upshift = false;
         break;
       }
     default:
@@ -109,35 +109,39 @@ int MtCore::run()
   FETCH_LOG_INFO(LOGGING_NAME, "comms_thread_count: ", config_.comms_thread_count());
   FETCH_LOG_INFO(LOGGING_NAME, "tasks_thread_count: ", config_.tasks_thread_count());
 
-  listeners = std::make_shared<OefListenerSet<IOefTaskFactory<OefAgentEndpoint>, OefAgentEndpoint>>();
-  core = std::make_shared<Core>();
+  listeners =
+      std::make_shared<OefListenerSet<IOefTaskFactory<OefAgentEndpoint>, OefAgentEndpoint>>();
+  core       = std::make_shared<Core>();
   auto tasks = std::make_shared<Taskpool>();
-  tasks -> setDefault();
+  tasks->setDefault();
   outbounds = std::make_shared<OutboundConversations>();
 
-  std::function<void (void)> run_comms = std::bind(&Core::run, core.get());
-  std::function<void (std::size_t thread_number)> run_tasks = std::bind(&Taskpool::run, tasks.get(), _1);
+  std::function<void(void)>                      run_comms = std::bind(&Core::run, core.get());
+  std::function<void(std::size_t thread_number)> run_tasks =
+      std::bind(&Taskpool::run, tasks.get(), _1);
 
   comms_runners.start(std::max(config_.comms_thread_count(), minimum_thread_count), run_comms);
   tasks_runners.start(std::max(config_.tasks_thread_count(), minimum_thread_count), run_tasks);
 
   Uri core_uri(config_.core_uri());
   Uri search_uri(config_.search_uri());
-  outbounds -> addConversationCreator("search", std::make_shared<OutboundSearchConversationCreator>(config_.core_key(),
-      core_uri, search_uri, *core, outbounds));
+  outbounds->addConversationCreator(
+      "search", std::make_shared<OutboundSearchConversationCreator>(config_.core_key(), core_uri,
+                                                                    search_uri, *core, outbounds));
   agents_ = std::make_shared<Agents>();
 
   if (config_.karma_policy().size())
   {
     FETCH_LOG_INFO(LOGGING_NAME, "KARMA = BASIC");
-    karma_policy = std::make_shared<KarmaPolicyBasic>(config_.karma_policy());
+    karma_policy      = std::make_shared<KarmaPolicyBasic>(config_.karma_policy());
     auto ref_interval = config_.karma_refresh_interval_ms();
     if (ref_interval == 0)
     {
       ref_interval = 1000;
     }
-    std::shared_ptr<Task> refresher = std::make_shared<KarmaRefreshTask>(karma_policy.get(), ref_interval);
-    refresher -> submit();
+    std::shared_ptr<Task> refresher =
+        std::make_shared<KarmaRefreshTask>(karma_policy.get(), ref_interval);
+    refresher->submit();
   }
   else
   {
@@ -145,15 +149,15 @@ int MtCore::run()
     karma_policy = std::make_shared<KarmaPolicyNone>();
     FETCH_LOG_INFO(LOGGING_NAME, "KARMA = NONE!!");
   }
-  
+
   white_list_ = std::make_shared<std::set<PublicKey>>();
   if (!config_.white_list_file().empty())
   {
     white_list_enabled_ = true;
     if (load_ssl_pub_keys(config_.white_list_file()))
     {
-      FETCH_LOG_INFO(LOGGING_NAME, white_list_->size(), " keys loaded successfully from white list file: ",
-                     config_.white_list_file());
+      FETCH_LOG_INFO(LOGGING_NAME, white_list_->size(),
+                     " keys loaded successfully from white list file: ", config_.white_list_file());
     }
     else
     {
@@ -164,19 +168,21 @@ int MtCore::run()
   else
   {
     white_list_enabled_ = false;
-    FETCH_LOG_INFO(LOGGING_NAME, "White list disabled for SSL connection, because no white list file was provided!");
+    FETCH_LOG_INFO(
+        LOGGING_NAME,
+        "White list disabled for SSL connection, because no white list file was provided!");
   }
   startListeners(karma_policy.get());
 
   Monitoring mon;
-  auto mon_task = std::make_shared<MonitoringTask>();
-  mon_task -> submit();
+  auto       mon_task = std::make_shared<MonitoringTask>();
+  mon_task->submit();
 
   std::map<std::string, std::string> prometheus_names;
 
-  while(1)
+  while (1)
   {
-    tasks -> updateStatus();
+    tasks->updateStatus();
 
     unsigned int snooze = 3;
 
@@ -188,36 +194,36 @@ int MtCore::run()
       }
 
       std::string final_file = config_.prometheus_log_file();
-      std::string temp_file = final_file + ".tmp";
+      std::string temp_file  = final_file + ".tmp";
 
       std::fstream fs;
       fs.open(temp_file.c_str(), std::fstream::out);
       if (fs.is_open())
       {
-        mon.report([&fs, &prometheus_names](const std::string &name, std::size_t value){
-            std::string new_name;
-            auto new_name_iter = prometheus_names.find(name);
-            if (new_name_iter == prometheus_names.end())
-            {
-              new_name = prometheusUpThatNamingString(name);
-              prometheus_names[name] = new_name;
-            }
-            else
-            {
-              new_name = new_name_iter -> second;
-            }
+        mon.report([&fs, &prometheus_names](const std::string &name, std::size_t value) {
+          std::string new_name;
+          auto        new_name_iter = prometheus_names.find(name);
+          if (new_name_iter == prometheus_names.end())
+          {
+            new_name               = prometheusUpThatNamingString(name);
+            prometheus_names[name] = new_name;
+          }
+          else
+          {
+            new_name = new_name_iter->second;
+          }
 
-            if (new_name.find("_gauge_") != std::string::npos)
-            {
-              fs << "# TYPE " << new_name << " gauge" << std::endl;
-            }
-            else
-            {
-              new_name += "_total";
-              fs << "# TYPE " << new_name << " counter" << std::endl;
-            }
-            fs << new_name << " " << value<< std::endl;
-          });
+          if (new_name.find("_gauge_") != std::string::npos)
+          {
+            fs << "# TYPE " << new_name << " gauge" << std::endl;
+          }
+          else
+          {
+            new_name += "_total";
+            fs << "# TYPE " << new_name << " counter" << std::endl;
+          }
+          fs << new_name << " " << value << std::endl;
+        });
 
         if (::rename(temp_file.c_str(), final_file.c_str()) != 0)
         {
@@ -232,9 +238,9 @@ int MtCore::run()
     else
     {
       FETCH_LOG_INFO(LOGGING_NAME, "----------------------------------------------");
-      mon.report([](const std::string &name, std::size_t value){
-          FETCH_LOG_INFO(LOGGING_NAME, name, ":", value);
-        });
+      mon.report([](const std::string &name, std::size_t value) {
+        FETCH_LOG_INFO(LOGGING_NAME, name, ":", value);
+      });
     }
     sleep(snooze);
   }
@@ -243,43 +249,44 @@ int MtCore::run()
 
 void MtCore::startListeners(IKarmaPolicy *karmaPolicy)
 {
-  std::size_t login_timeout_ms = 1000;
+  std::size_t               login_timeout_ms = 1000;
   std::chrono::milliseconds login_timeout(login_timeout_ms);
 
-  IOefListener<IOefTaskFactory<OefAgentEndpoint>, OefAgentEndpoint>::FactoryCreator initialFactoryCreator =
-    [this, login_timeout](std::shared_ptr<OefAgentEndpoint> endpoint)
-    {
-      endpoint -> addGoFunction([login_timeout](std::shared_ptr<OefAgentEndpoint> self){
+  IOefListener<IOefTaskFactory<OefAgentEndpoint>, OefAgentEndpoint>::FactoryCreator
+      initialFactoryCreator = [this, login_timeout](std::shared_ptr<OefAgentEndpoint> endpoint) {
+        endpoint->addGoFunction([login_timeout](std::shared_ptr<OefAgentEndpoint> self) {
           auto timeout = std::make_shared<OefLoginTimeoutTask>(self);
-          timeout -> submit(login_timeout);
+          timeout->submit(login_timeout);
         });
-      return std::make_shared<InitialHandshakeTaskFactory>(config_.core_key(), endpoint, outbounds, agents_);
-    };
+        return std::make_shared<InitialHandshakeTaskFactory>(config_.core_key(), endpoint,
+                                                             outbounds, agents_);
+      };
 
   Uri core_uri(config_.core_uri());
   FETCH_LOG_INFO(LOGGING_NAME, "Listener on ", core_uri.port);
   std::unordered_map<std::string, std::string> endpointConfig;
-  auto task = std::make_shared<OefListenerStarterTask<Endpoint>>(core_uri.port, listeners, core, initialFactoryCreator, karmaPolicy, endpointConfig);
-  task -> submit();
+  auto task = std::make_shared<OefListenerStarterTask<Endpoint>>(
+      core_uri.port, listeners, core, initialFactoryCreator, karmaPolicy, endpointConfig);
+  task->submit();
   if (!config_.ws_uri().empty())
   {
     Uri ws_uri(config_.ws_uri());
     FETCH_LOG_INFO(LOGGING_NAME, "Listener on ", ws_uri.port);
     std::unordered_map<std::string, std::string> endpointConfigWS;
-    auto task_ws = std::make_shared<OefListenerStarterTask<EndpointWebSocket>>(ws_uri.port, listeners, core, initialFactoryCreator, karmaPolicy, endpointConfigWS);
-    task_ws -> submit();
+    auto task_ws = std::make_shared<OefListenerStarterTask<EndpointWebSocket>>(
+        ws_uri.port, listeners, core, initialFactoryCreator, karmaPolicy, endpointConfigWS);
+    task_ws->submit();
   }
   if (!config_.ssl_uri().empty())
   {
-    initialFactoryCreator =
-      [this, login_timeout](std::shared_ptr<OefAgentEndpoint> endpoint)
-      {
-        endpoint -> addGoFunction([login_timeout](std::shared_ptr<OefAgentEndpoint> self){
-            auto timeout = std::make_shared<OefLoginTimeoutTask>(self);
-            timeout -> submit(login_timeout);
-          });
-        return std::make_shared<InitialSslHandshakeTaskFactory>(config_.core_key(), endpoint, outbounds, agents_, white_list_, white_list_enabled_);
-      };
+    initialFactoryCreator = [this, login_timeout](std::shared_ptr<OefAgentEndpoint> endpoint) {
+      endpoint->addGoFunction([login_timeout](std::shared_ptr<OefAgentEndpoint> self) {
+        auto timeout = std::make_shared<OefLoginTimeoutTask>(self);
+        timeout->submit(login_timeout);
+      });
+      return std::make_shared<InitialSslHandshakeTaskFactory>(
+          config_.core_key(), endpoint, outbounds, agents_, white_list_, white_list_enabled_);
+    };
 
     Uri ssl_uri(config_.ssl_uri());
     FETCH_LOG_INFO(LOGGING_NAME, "TLS/SSL Listener on ", ssl_uri.port);
@@ -289,37 +296,37 @@ void MtCore::startListeners(IKarmaPolicy *karmaPolicy)
       endpointConfigSSL["core_cert_pk_file"] = config_.core_cert_pk_file();
       endpointConfigSSL["tmp_dh_file"]       = config_.tmp_dh_file();
 
-      auto task_ssl = std::make_shared<OefListenerStarterTask<EndpointSSL>>(ssl_uri.port, listeners, core,
-                                                                            initialFactoryCreator, karmaPolicy,
-                                                                            endpointConfigSSL);
+      auto task_ssl = std::make_shared<OefListenerStarterTask<EndpointSSL>>(
+          ssl_uri.port, listeners, core, initialFactoryCreator, karmaPolicy, endpointConfigSSL);
       task_ssl->submit();
     }
     else
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Cannot create SSL endpoint because required files not set: core_cert_pk_file=",
+      FETCH_LOG_WARN(
+          LOGGING_NAME,
+          "Cannot create SSL endpoint because required files not set: core_cert_pk_file=",
           config_.core_cert_pk_file(), ", tmp_dh_file=", config_.tmp_dh_file());
     }
   }
   if (!config_.secure_uri().empty())
   {
-    initialFactoryCreator =
-      [this, login_timeout](std::shared_ptr<OefAgentEndpoint> endpoint)
-      {
-         endpoint -> addGoFunction([login_timeout](std::shared_ptr<OefAgentEndpoint> self){
-            auto timeout = std::make_shared<OefLoginTimeoutTask>(self);
-            timeout -> submit(login_timeout);
-          });
-         return std::make_shared<InitialSecureHandshakeTaskFactory>(config_.core_key(), endpoint, outbounds, agents_);
-      };
+    initialFactoryCreator = [this, login_timeout](std::shared_ptr<OefAgentEndpoint> endpoint) {
+      endpoint->addGoFunction([login_timeout](std::shared_ptr<OefAgentEndpoint> self) {
+        auto timeout = std::make_shared<OefLoginTimeoutTask>(self);
+        timeout->submit(login_timeout);
+      });
+      return std::make_shared<InitialSecureHandshakeTaskFactory>(config_.core_key(), endpoint,
+                                                                 outbounds, agents_);
+    };
 
-    Uri secure_uri(config_.secure_uri());
+    Uri                                          secure_uri(config_.secure_uri());
     std::unordered_map<std::string, std::string> endpointConfigSec;
     FETCH_LOG_INFO(LOGGING_NAME, "Secure Listener on ", secure_uri.port);
-    auto task_secure = std::make_shared<OefListenerStarterTask<Endpoint>>(secure_uri.port, listeners, core, initialFactoryCreator, karmaPolicy, endpointConfigSec);
-    task_secure -> submit();
+    auto task_secure = std::make_shared<OefListenerStarterTask<Endpoint>>(
+        secure_uri.port, listeners, core, initialFactoryCreator, karmaPolicy, endpointConfigSec);
+    task_secure->submit();
   }
 }
-
 
 bool MtCore::configure(const std::string &config_file, const std::string &config_json)
 {
@@ -355,14 +362,14 @@ bool MtCore::configureFromJsonFile(const std::string &config_file)
   return configureFromJson(json);
 }
 
-
 bool MtCore::configureFromJson(const std::string &config_json)
 {
   google::protobuf::util::JsonParseOptions options;
   options.ignore_unknown_fields = true;
 
   auto status = google::protobuf::util::JsonStringToMessage(config_json, &config_, options);
-  if (!status.ok()) {
+  if (!status.ok())
+  {
     FETCH_LOG_ERROR(LOGGING_NAME, "Parse error: '" + status.ToString() + "'");
   }
   return status.ok();
@@ -370,26 +377,29 @@ bool MtCore::configureFromJson(const std::string &config_json)
 
 bool MtCore::load_ssl_pub_keys(std::string white_list_file)
 {
-  try {
+  try
+  {
     std::ifstream file{white_list_file};
-    std::string line;
-    while(std::getline(file,line))
+    std::string   line;
+    while (std::getline(file, line))
     {
-      if(line.empty()) continue;
-      try 
+      if (line.empty())
+        continue;
+      try
       {
         EvpPublicKey pub_key{line};
         FETCH_LOG_INFO(LOGGING_NAME, "inserting in white list : ", pub_key);
-        white_list_->insert(pub_key); 
+        white_list_->insert(pub_key);
       }
-      catch (std::exception& e)
+      catch (std::exception &e)
       {
-        FETCH_LOG_WARN(LOGGING_NAME, " error inserting file in white list: ", line, " - ", e.what()); 
+        FETCH_LOG_WARN(LOGGING_NAME, " error inserting file in white list: ", line, " - ",
+                       e.what());
       }
     }
     return true;
-  } 
-  catch (std::exception& ex)
+  }
+  catch (std::exception &ex)
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Exception: ", ex.what());
     return false;

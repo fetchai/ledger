@@ -1,26 +1,25 @@
 #include "MtSearch.hpp"
 
-#include <iostream>
 #include <fstream>
+#include <iostream>
 
-#include "base/src/cpp/comms/Core.hpp"
-#include "base/src/cpp/comms/Endpoint.hpp"
-#include "base/src/cpp/comms/IOefListener.hpp"
-#include "base/src/cpp/comms/OefListenerSet.hpp"
+#include "oef-base/comms/Core.hpp"
+#include "oef-base/comms/Endpoint.hpp"
+#include "oef-base/comms/IOefListener.hpp"
+#include "oef-base/comms/OefListenerSet.hpp"
 
-#include "base/src/cpp/monitoring/Monitoring.hpp"
-#include "base/src/cpp/threading/MonitoringTask.hpp"
+#include "oef-base/monitoring/Monitoring.hpp"
+#include "oef-base/threading/MonitoringTask.hpp"
 
-#include "base/src/cpp/utils/Uri.hpp"
+#include "oef-base/utils/Uri.hpp"
 
 #include "google/protobuf/util/json_util.h"
-#include "mt-search/comms/src/cpp/OefSearchEndpoint.hpp"
 #include "mt-search/comms/src/cpp/OefListenerStarterTask.hpp"
+#include "mt-search/comms/src/cpp/OefSearchEndpoint.hpp"
 #include "mt-search/dap_comms/src/cpp/OutboundDapConversationCreator.hpp"
 #include <stdio.h>
 
 #include <ctype.h>
-
 
 using namespace std::placeholders;
 
@@ -29,12 +28,12 @@ static const unsigned int minimum_thread_count = 1;
 std::string prometheusUpThatNamingString(const std::string &name)
 {
   std::string r;
-  bool upshift = false;
-  for(int i=0;i<name.length();i++)
+  bool        upshift = false;
+  for (int i = 0; i < name.length(); i++)
   {
     auto c = name[i];
 
-    switch(c)
+    switch (c)
     {
     case '-':
     case '_':
@@ -78,7 +77,7 @@ std::string prometheusUpThatNamingString(const std::string &name)
       if (upshift)
       {
         r += std::string(1, ::toupper(c));
-        upshift=false;
+        upshift = false;
         break;
       }
     default:
@@ -97,24 +96,25 @@ int MtSearch::run()
   FETCH_LOG_INFO(LOGGING_NAME, "comms_thread_count: ", config_.comms_thread_count());
   FETCH_LOG_INFO(LOGGING_NAME, "tasks_thread_count: ", config_.tasks_thread_count());
 
-  core = std::make_shared<Core>();
+  core       = std::make_shared<Core>();
   auto tasks = std::make_shared<Taskpool>();
-  tasks -> setDefault();
+  tasks->setDefault();
   outbounds = std::make_shared<OutboundConversations>();
   listeners = std::make_shared<OefListenerSet<SearchTaskFactory, OefSearchEndpoint>>();
 
   std::size_t thread_group_id = 1500;
-  for(const auto& dap_config : config_.daps()) {
+  for (const auto &dap_config : config_.daps())
+  {
     ++thread_group_id;
     Uri uri(dap_config.uri());
-    outbounds -> addConversationCreator(
+    outbounds->addConversationCreator(
         dap_config.name(),
-        std::make_shared<OutboundDapConversationCreator>(thread_group_id, uri, *core, outbounds)
-    );
+        std::make_shared<OutboundDapConversationCreator>(thread_group_id, uri, *core, outbounds));
   }
 
-  std::function<void (void)> run_comms = std::bind(&Core::run, core.get());
-  std::function<void (std::size_t thread_number)> run_tasks = std::bind(&Taskpool::run, tasks.get(), _1);
+  std::function<void(void)>                      run_comms = std::bind(&Core::run, core.get());
+  std::function<void(std::size_t thread_number)> run_tasks =
+      std::bind(&Taskpool::run, tasks.get(), _1);
 
   comms_runners.start(std::max(config_.comms_thread_count(), minimum_thread_count), run_comms);
   tasks_runners.start(std::max(config_.tasks_thread_count(), minimum_thread_count), run_tasks);
@@ -122,14 +122,14 @@ int MtSearch::run()
   startListeners();
 
   Monitoring mon;
-  auto mon_task = std::make_shared<MonitoringTask>();
-  mon_task -> submit();
+  auto       mon_task = std::make_shared<MonitoringTask>();
+  mon_task->submit();
 
   std::map<std::string, std::string> prometheus_names;
 
-  while(1)
+  while (1)
   {
-    tasks -> updateStatus();
+    tasks->updateStatus();
 
     unsigned int snooze = 3;
 
@@ -141,36 +141,36 @@ int MtSearch::run()
       }
 
       std::string final_file = config_.prometheus_log_file();
-      std::string temp_file = final_file + ".tmp";
+      std::string temp_file  = final_file + ".tmp";
 
       std::fstream fs;
       fs.open(temp_file.c_str(), std::fstream::out);
       if (fs.is_open())
       {
-        mon.report([&fs, &prometheus_names](const std::string &name, std::size_t value){
-            std::string new_name;
-            auto new_name_iter = prometheus_names.find(name);
-            if (new_name_iter == prometheus_names.end())
-            {
-              new_name = prometheusUpThatNamingString(name);
-              prometheus_names[name] = new_name;
-            }
-            else
-            {
-              new_name = new_name_iter -> second;
-            }
+        mon.report([&fs, &prometheus_names](const std::string &name, std::size_t value) {
+          std::string new_name;
+          auto        new_name_iter = prometheus_names.find(name);
+          if (new_name_iter == prometheus_names.end())
+          {
+            new_name               = prometheusUpThatNamingString(name);
+            prometheus_names[name] = new_name;
+          }
+          else
+          {
+            new_name = new_name_iter->second;
+          }
 
-            if (new_name.find("_gauge_") != std::string::npos)
-            {
-              fs << "# TYPE " << new_name << " gauge" << std::endl;
-            }
-            else
-            {
-              new_name += "_total";
-              fs << "# TYPE " << new_name << " counter" << std::endl;
-            }
-            fs << new_name << " " << value<< std::endl;
-          });
+          if (new_name.find("_gauge_") != std::string::npos)
+          {
+            fs << "# TYPE " << new_name << " gauge" << std::endl;
+          }
+          else
+          {
+            new_name += "_total";
+            fs << "# TYPE " << new_name << " counter" << std::endl;
+          }
+          fs << new_name << " " << value << std::endl;
+        });
 
         if (::rename(temp_file.c_str(), final_file.c_str()) != 0)
         {
@@ -185,9 +185,9 @@ int MtSearch::run()
     else
     {
       FETCH_LOG_INFO(LOGGING_NAME, "----------------------------------------------");
-      mon.report([](const std::string &name, std::size_t value){
-          FETCH_LOG_INFO(LOGGING_NAME, name, ":", value);
-        });
+      mon.report([](const std::string &name, std::size_t value) {
+        FETCH_LOG_INFO(LOGGING_NAME, name, ":", value);
+      });
     }
     sleep(snooze);
   }
@@ -197,8 +197,7 @@ int MtSearch::run()
 void MtSearch::startListeners()
 {
   IOefListener<SearchTaskFactory, OefSearchEndpoint>::FactoryCreator initialFactoryCreator =
-      [this](std::shared_ptr<OefSearchEndpoint> endpoint)
-      {
+      [this](std::shared_ptr<OefSearchEndpoint> endpoint) {
         return std::make_shared<SearchTaskFactory>(endpoint, outbounds);
       };
 
@@ -206,9 +205,9 @@ void MtSearch::startListeners()
   FETCH_LOG_INFO(LOGGING_NAME, "Listener on ", search_uri.port);
   std::unordered_map<std::string, std::string> endpointConfig;
 
-  auto task = std::make_shared<OefListenerStarterTask<Endpoint>>(search_uri.port, listeners, core, initialFactoryCreator, endpointConfig);
-  task -> submit();
-
+  auto task = std::make_shared<OefListenerStarterTask<Endpoint>>(
+      search_uri.port, listeners, core, initialFactoryCreator, endpointConfig);
+  task->submit();
 }
 
 bool MtSearch::configure(const std::string &config_file, const std::string &config_json)

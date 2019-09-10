@@ -1,10 +1,10 @@
 #include "mt-core/conversations/src/cpp/SearchUpdateTask.hpp"
-#include "base/src/cpp/conversation/OutboundConversations.hpp"
-#include "base/src/cpp/conversation/OutboundConversation.hpp"
-#include "protos/src/protos/search_response.pb.h"
-#include "base/src/cpp/monitoring/Counter.hpp"
-#include "base/src/cpp/utils/Uri.hpp"
 #include "mt-core/tasks/src/cpp/utils.hpp"
+#include "oef-base/conversation/OutboundConversation.hpp"
+#include "oef-base/conversation/OutboundConversations.hpp"
+#include "oef-base/monitoring/Counter.hpp"
+#include "oef-base/utils/Uri.hpp"
+#include "protos/src/protos/search_response.pb.h"
 
 static Counter update_task_created("mt-core.search.update.tasks_created");
 static Counter update_task_errored("mt-core.search.update.tasks_errored");
@@ -15,23 +15,13 @@ SearchUpdateTask::EntryPoint searchUpdateTaskEntryPoints[] = {
     &SearchUpdateTask::handleResponse,
 };
 
-SearchUpdateTask::SearchUpdateTask(
-    std::shared_ptr<SearchUpdateTask::IN_PROTO> initiator,
-    std::shared_ptr<OutboundConversations> outbounds,
-    std::shared_ptr<OefAgentEndpoint> endpoint,
-    uint32_t msg_id,
-    std::string core_key,
-    std::string agent_uri)
-    :  SearchConversationTask(
-        "update",
-        std::move(initiator),
-        std::move(outbounds),
-        std::move(endpoint),
-        msg_id,
-        std::move(core_key),
-        std::move(agent_uri),
-        searchUpdateTaskEntryPoints,
-        this)
+SearchUpdateTask::SearchUpdateTask(std::shared_ptr<SearchUpdateTask::IN_PROTO> initiator,
+                                   std::shared_ptr<OutboundConversations>      outbounds,
+                                   std::shared_ptr<OefAgentEndpoint> endpoint, uint32_t msg_id,
+                                   std::string core_key, std::string agent_uri)
+  : SearchConversationTask("update", std::move(initiator), std::move(outbounds),
+                           std::move(endpoint), msg_id, std::move(core_key), std::move(agent_uri),
+                           searchUpdateTaskEntryPoints, this)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Task created.");
   update_task_created++;
@@ -45,17 +35,17 @@ SearchUpdateTask::~SearchUpdateTask()
 SearchUpdateTask::StateResult SearchUpdateTask::handleResponse(void)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Woken ");
-  FETCH_LOG_INFO(LOGGING_NAME, "Response.. ",
-                 conversation -> getAvailableReplyCount()
-  );
+  FETCH_LOG_INFO(LOGGING_NAME, "Response.. ", conversation->getAvailableReplyCount());
 
-  if (conversation -> getAvailableReplyCount() == 0){
+  if (conversation->getAvailableReplyCount() == 0)
+  {
     update_task_errored++;
     return SearchUpdateTask::StateResult(0, ERRORED);
   }
 
   auto resp = conversation->getReply(0);
-  if (!resp){
+  if (!resp)
+  {
     FETCH_LOG_ERROR(LOGGING_NAME, "Got nullptr as reply");
     update_task_errored++;
     return SearchUpdateTask::StateResult(0, ERRORED);
@@ -94,8 +84,8 @@ SearchUpdateTask::StateResult SearchUpdateTask::handleResponse(void)
 std::shared_ptr<SearchUpdateTask::REQUEST_PROTO> SearchUpdateTask::make_request_proto()
 {
   auto update = std::make_shared<fetch::oef::pb::Update>();
-  update -> set_key(core_key_);
-  fetch::oef::pb::Update_DataModelInstance* dm = update -> add_data_models();
+  update->set_key(core_key_);
+  fetch::oef::pb::Update_DataModelInstance *dm = update->add_data_models();
   dm->set_key(agent_uri_);
   if (initiator->description().has_model())
   {
@@ -105,10 +95,11 @@ std::shared_ptr<SearchUpdateTask::REQUEST_PROTO> SearchUpdateTask::make_request_
   OEFURI::URI uri;
   uri.coreKey = core_key_;
   uri.parseAgent(agent_uri_);
-  uri.empty = false;
+  uri.empty           = false;
   std::string row_key = uri.toString();
   dm->mutable_service_description()->CopyFrom(initiator->description_v2());
-  for(auto& cqo: *(dm->mutable_service_description()->mutable_actions())) {
+  for (auto &cqo : *(dm->mutable_service_description()->mutable_actions()))
+  {
     cqo.set_row_key(row_key);
   }
   return update;

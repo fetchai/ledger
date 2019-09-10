@@ -1,39 +1,27 @@
 #include "mt-core/conversations/src/cpp/SearchRemoveTask.hpp"
-#include "base/src/cpp/conversation/OutboundConversations.hpp"
-#include "base/src/cpp/conversation/OutboundConversation.hpp"
-#include "protos/src/protos/search_response.pb.h"
-#include "base/src/cpp/monitoring/Counter.hpp"
 #include "mt-core/tasks/src/cpp/utils.hpp"
+#include "oef-base/conversation/OutboundConversation.hpp"
+#include "oef-base/conversation/OutboundConversations.hpp"
+#include "oef-base/monitoring/Counter.hpp"
+#include "protos/src/protos/search_response.pb.h"
 
 static Counter remove_task_created("mt-core.search.remove.tasks_created");
 static Counter remove_task_errored("mt-core.search.remove.tasks_errored");
 static Counter remove_task_succeeded("mt-core.search.remove.tasks_succeeded");
-
 
 SearchRemoveTask::EntryPoint searchRemoveTaskEntryPoints[] = {
     &SearchRemoveTask::createConv,
     &SearchRemoveTask::handleResponse,
 };
 
-SearchRemoveTask::SearchRemoveTask(
-    std::shared_ptr<SearchRemoveTask::IN_PROTO> initiator,
-    std::shared_ptr<OutboundConversations> outbounds,
-    std::shared_ptr<OefAgentEndpoint> endpoint,
-    uint32_t msg_id,
-    std::string core_key,
-    std::string agent_uri,
-    bool remove_row)
-    :  SearchConversationTask(
-        "remove",
-        std::move(initiator),
-        std::move(outbounds),
-        std::move(endpoint),
-        msg_id,
-        std::move(core_key),
-        std::move(agent_uri),
-        searchRemoveTaskEntryPoints,
-        this)
-    , remove_row_(remove_row)
+SearchRemoveTask::SearchRemoveTask(std::shared_ptr<SearchRemoveTask::IN_PROTO> initiator,
+                                   std::shared_ptr<OutboundConversations>      outbounds,
+                                   std::shared_ptr<OefAgentEndpoint> endpoint, uint32_t msg_id,
+                                   std::string core_key, std::string agent_uri, bool remove_row)
+  : SearchConversationTask("remove", std::move(initiator), std::move(outbounds),
+                           std::move(endpoint), msg_id, std::move(core_key), std::move(agent_uri),
+                           searchRemoveTaskEntryPoints, this)
+  , remove_row_(remove_row)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Task created.");
   remove_task_created++;
@@ -47,16 +35,16 @@ SearchRemoveTask::~SearchRemoveTask()
 SearchRemoveTask::StateResult SearchRemoveTask::handleResponse(void)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Woken ");
-  FETCH_LOG_INFO(LOGGING_NAME, "Response.. ",
-                 conversation -> getAvailableReplyCount()
-  );
+  FETCH_LOG_INFO(LOGGING_NAME, "Response.. ", conversation->getAvailableReplyCount());
 
-  if (conversation -> getAvailableReplyCount() == 0){
+  if (conversation->getAvailableReplyCount() == 0)
+  {
     remove_task_errored++;
     return SearchRemoveTask::StateResult(0, ERRORED);
   }
 
-  auto response = std::static_pointer_cast<fetch::oef::pb::RemoveResponse>(conversation->getReply(0));
+  auto response =
+      std::static_pointer_cast<fetch::oef::pb::RemoveResponse>(conversation->getReply(0));
 
   // TODO should add a status answer, even in the case of no error
 
@@ -81,7 +69,7 @@ SearchRemoveTask::StateResult SearchRemoveTask::handleResponse(void)
   }
   else
   {
-    remove_task_succeeded ++;
+    remove_task_succeeded++;
   }
 
   FETCH_LOG_INFO(LOGGING_NAME, "COMPLETE");
@@ -105,10 +93,11 @@ std::shared_ptr<SearchRemoveTask::REQUEST_PROTO> SearchRemoveTask::make_request_
     OEFURI::URI uri;
     uri.coreKey = core_key_;
     uri.parseAgent(agent_uri_);
-    uri.empty = false;
+    uri.empty           = false;
     std::string row_key = uri.toString();
     remove->mutable_service_description()->CopyFrom(initiator->description_v2());
-    for(auto& cqo: *(remove->mutable_service_description()->mutable_actions())) {
+    for (auto &cqo : *(remove->mutable_service_description()->mutable_actions()))
+    {
       cqo.set_row_key(row_key);
     }
   }

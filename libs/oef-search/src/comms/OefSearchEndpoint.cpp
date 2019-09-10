@@ -1,17 +1,16 @@
 #include "OefSearchEndpoint.hpp"
 
-#include "base/src/cpp/proto_comms/ProtoMessageReader.hpp"
-#include "base/src/cpp/proto_comms/ProtoMessageSender.hpp"
-#include "base/src/cpp/comms/Endianness.hpp"
-#include "base/src/cpp/monitoring/Gauge.hpp"
-#include "base/src/cpp/monitoring/Counter.hpp"
-#include "base/src/cpp/threading/Task.hpp"
-#include "base/src/cpp/threading/Taskpool.hpp"
-#include "base/src/cpp/utils/Uri.hpp"
 #include "mt-search/comms/src/cpp/SearchTaskFactory.hpp"
+#include "oef-base/comms/Endianness.hpp"
+#include "oef-base/monitoring/Counter.hpp"
+#include "oef-base/monitoring/Gauge.hpp"
+#include "oef-base/proto_comms/ProtoMessageReader.hpp"
+#include "oef-base/proto_comms/ProtoMessageSender.hpp"
+#include "oef-base/threading/Task.hpp"
+#include "oef-base/threading/Taskpool.hpp"
+#include "oef-base/utils/Uri.hpp"
 
 static Gauge count("mt-search.network.OefSearchEndpoint");
-
 
 OefSearchEndpoint::OefSearchEndpoint(std::shared_ptr<ProtoEndpoint> endpoint)
   : Parent(std::move(endpoint))
@@ -48,41 +47,44 @@ void OefSearchEndpoint::setup()
   // can't do this in the constructor because shared_from_this doesn't work in there.
   std::weak_ptr<OefSearchEndpoint> myself_wp = shared_from_this();
 
-  endpoint->setOnStartHandler([myself_wp](){
-    });
+  endpoint->setOnStartHandler([myself_wp]() {});
 
   auto myGroupId = getIdent();
 
-  endpoint->setOnCompleteHandler([myGroupId, myself_wp](bool success, unsigned long id, Uri uri, ConstCharArrayBuffer buffers){
+  endpoint->setOnCompleteHandler([myGroupId, myself_wp](bool success, unsigned long id, Uri uri,
+                                                        ConstCharArrayBuffer buffers) {
     if (auto myself_sp = myself_wp.lock())
     {
       Task::setThreadGroupId(myGroupId);
-      myself_sp -> factory -> current_uri_ = uri;
-      myself_sp -> factory -> processMessage(buffers);
+      myself_sp->factory->current_uri_ = uri;
+      myself_sp->factory->processMessage(buffers);
     }
   });
 
-  endpoint->setOnErrorHandler([myGroupId, myself_wp](const boost::system::error_code& ec) {
-    if (auto myself_sp = myself_wp.lock()) {
-      //myself_sp -> factory -> endpointClosed();
-     // myself_sp -> factory.reset();
-      Taskpool::getDefaultTaskpool() . lock() -> cancelTaskGroup(myGroupId);
+  endpoint->setOnErrorHandler([myGroupId, myself_wp](const boost::system::error_code &ec) {
+    if (auto myself_sp = myself_wp.lock())
+    {
+      // myself_sp -> factory -> endpointClosed();
+      // myself_sp -> factory.reset();
+      Taskpool::getDefaultTaskpool().lock()->cancelTaskGroup(myGroupId);
     }
   });
 
   endpoint->setOnEofHandler([myGroupId, myself_wp]() {
-    if (auto myself_sp = myself_wp.lock()) {
-     // myself_sp -> factory -> endpointClosed();
-      //myself_sp -> factory.reset();
-      Taskpool::getDefaultTaskpool() . lock() -> cancelTaskGroup(myGroupId);
+    if (auto myself_sp = myself_wp.lock())
+    {
+      // myself_sp -> factory -> endpointClosed();
+      // myself_sp -> factory.reset();
+      Taskpool::getDefaultTaskpool().lock()->cancelTaskGroup(myGroupId);
     }
   });
 
   endpoint->setOnProtoErrorHandler([myGroupId, myself_wp](const std::string &message) {
-    if (auto myself_sp = myself_wp.lock()) {
-     // myself_sp -> factory -> endpointClosed();
-      //myself_sp -> factory.reset();
-      Taskpool::getDefaultTaskpool() . lock() -> cancelTaskGroup(myGroupId);
+    if (auto myself_sp = myself_wp.lock())
+    {
+      // myself_sp -> factory -> endpointClosed();
+      // myself_sp -> factory.reset();
+      Taskpool::getDefaultTaskpool().lock()->cancelTaskGroup(myGroupId);
     }
   });
 }
@@ -91,7 +93,7 @@ void OefSearchEndpoint::setFactory(std::shared_ptr<SearchTaskFactory> new_factor
 {
   if (factory)
   {
-    new_factory -> endpoint = factory -> endpoint;
+    new_factory->endpoint = factory->endpoint;
   }
   factory = new_factory;
 }
