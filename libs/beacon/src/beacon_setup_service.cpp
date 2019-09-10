@@ -113,7 +113,7 @@ BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identit
            serializer >> env;
            OnDkgMessage(from, env.Message());
          },
-         CHANNEL_RBC_BROADCAST}
+         CHANNEL_RBC_BROADCAST, false}
   , state_machine_{std::make_shared<StateMachine>("BeaconSetupService", State::IDLE, ToString)}
   , beacon_dkg_state_gauge_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
         "beacon_dkg_state_gauge", "State the DKG is in as integer in [0, 10]")}

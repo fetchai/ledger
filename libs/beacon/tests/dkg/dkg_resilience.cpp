@@ -661,8 +661,7 @@ TEST(dkg_setup, delay_between_starts)
 }
 
 // TODO(jmw): The tests below are for now disabled as failure to complete DKG means everyone runs
-// forever. To be fixed later
-//  when we have termination
+//  forever. To be fixed later when we have termination
 TEST(dkg_setup, DISABLED_qual_below_threshold)
 {
   GenerateTest(4, 3, 2, 0,
