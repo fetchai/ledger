@@ -24,7 +24,6 @@
 
 #include <algorithm>
 #include <cstring>
-#include <iostream>
 
 namespace fetch {
 namespace memory {
@@ -137,7 +136,7 @@ public:
 
   constexpr VectorSliceType slice(std::size_t offset, std::size_t length) const noexcept
   {
-    //assert(std::size_t(offset / E_SIMD_COUNT) * E_SIMD_COUNT == offset);
+    assert(std::size_t(offset / E_SIMD_COUNT) * E_SIMD_COUNT == offset);
     assert((length + offset) <= padded_size());
     return VectorSliceType(pointer_ + offset, length);
   }
