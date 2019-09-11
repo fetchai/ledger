@@ -492,7 +492,7 @@ TYPED_TEST(Convolution1DTest, saveparams_test)
   layer.BackPropagate(error_output);
   layer.ApplyRegularisation();
   auto grads = layer.GetGradients();
-  layer.ApplyGradients(grads);
+  layer.ApplyGradients(static_cast<DataType>(-0.1) * grads);
 
   // train g2
   layer2.SetInput(label_name, labels);
@@ -500,7 +500,7 @@ TYPED_TEST(Convolution1DTest, saveparams_test)
   layer2.BackPropagate(error_output);
   layer2.ApplyRegularisation();
   auto grads2 = layer2.GetGradients();
-  layer2.ApplyGradients(grads2);
+  layer2.ApplyGradients(static_cast<DataType>(-0.1) * grads2);
 
   EXPECT_TRUE(loss.AllClose(loss2, fetch::math::function_tolerance<DataType>(),
                             fetch::math::function_tolerance<DataType>()));

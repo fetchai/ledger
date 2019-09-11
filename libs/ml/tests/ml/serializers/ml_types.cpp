@@ -156,7 +156,7 @@ TYPED_TEST(SerializersTestNoInt, serialize_graph_saveable_params)
   g->BackPropagate(error_output);
   g->ApplyRegularisation();
   auto grads = g->GetGradients();
-  g->ApplyGradients(grads);
+  g->ApplyGradients(static_cast<DataType>(-0.1) * grads);
 
   // train g2
   g2->SetInput(label_name, labels);
@@ -164,7 +164,7 @@ TYPED_TEST(SerializersTestNoInt, serialize_graph_saveable_params)
   g2->BackPropagate(error_output);
   g2->ApplyRegularisation();
   auto grads2 = g2->GetGradients();
-  g2->ApplyGradients(grads2);
+  g2->ApplyGradients(static_cast<DataType>(-0.1) * grads2);
 
   g->SetInput("Input", data.Transpose());
   TensorType prediction3 = g->Evaluate(output);
