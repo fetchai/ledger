@@ -186,7 +186,6 @@ public:
   static constexpr char const *DESCRIPTOR = "Variable";
 
 protected:
-  TensorPtrType      data_;
   TensorPtrType      gradient_accumulation_;
   RegularisationType regularisation_type = RegularisationType::NONE;
   DataType           regularisation_rate = fetch::math::numeric_max<DataType>();
