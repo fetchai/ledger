@@ -9,19 +9,19 @@ namespace dmlf {
 class LocalLearnerNetworker: public ILearnerNetworker
 {
 public:
-  LocalLearnerNetworker()
-  {
-  }
-  virtual ~LocalLearnerNetworker()
-  {
-  }
+  LocalLearnerNetworker();
+  virtual ~LocalLearnerNetworker();
+  virtual void pushUpdate( std::shared_ptr<IUpdate> update);
+  virtual std::size_t getUpdateCount() const;
+  virtual std::shared_ptr<IUpdate> getUpdate();
 
-  virtual void pushUpdate( std::shared_ptr<IUpdate> update) = 0;
-  virtual std::size_t getUpdateCount() const = 0;
-  virtual std::shared_ptr<IUpdate> getUpdate() = 0;
-
+  virtual std::size_t getCount() = 0;
 protected:
 private:
+  std::size_t ident;
+
+  static std::size_t &getCounter();
+
   LocalLearnerNetworker(const LocalLearnerNetworker &other) = delete;
   LocalLearnerNetworker &operator=(const LocalLearnerNetworker &other) = delete;
   bool operator==(const LocalLearnerNetworker &other) = delete;
