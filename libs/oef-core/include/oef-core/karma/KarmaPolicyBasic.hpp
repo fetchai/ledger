@@ -3,9 +3,9 @@
 #include <map>
 #include <vector>
 
-#include "mt-core/karma/src/cpp/IKarmaPolicy.hpp"
-#include "mt-core/karma/src/cpp/KarmaAccount.hpp"
 #include "oef-base/utils/BucketsOf.hpp"
+#include "oef-core/karma/IKarmaPolicy.hpp"
+#include "oef-core/karma/KarmaAccount.hpp"
 
 #include "google/protobuf/map.h"
 

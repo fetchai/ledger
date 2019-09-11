@@ -3,15 +3,15 @@
 #include <memory>
 #include <utility>
 
+#include "agent.pb.h"
 #include "core/logging.hpp"
-#include "mt-core/comms/src/cpp/OefAgentEndpoint.hpp"
-#include "mt-core/conversations/src/cpp/SearchConversationTypes.hpp"
 #include "mt-core/tasks-oef-base/TSendProtoTask.hpp"
 #include "oef-base/conversation/OutboundConversation.hpp"
 #include "oef-base/conversation/OutboundConversations.hpp"
 #include "oef-base/threading/StateMachineTask.hpp"
 #include "oef-base/utils/Uri.hpp"
-#include "protos/src/protos/agent.pb.h"
+#include "oef-core/comms/OefAgentEndpoint.hpp"
+#include "oef-core/conversations/SearchConversationTypes.hpp"
 
 template <typename IN_PROTO, typename OUT_PROTO, typename REQUEST_PROTO, typename IMPL_CLASS>
 class SearchConversationTask : public StateMachineTask<IMPL_CLASS>

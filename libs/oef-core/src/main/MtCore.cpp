@@ -3,18 +3,18 @@
 #include <fstream>
 #include <iostream>
 
-#include "mt-core/comms/src/cpp/OefAgentEndpoint.hpp"
-#include "mt-core/comms/src/cpp/OefListenerStarterTask.hpp"
-#include "mt-core/conversations/src/cpp/OutboundSearchConversationCreator.hpp"
-#include "mt-core/oef-functions/src/cpp/InitialHandshakeTaskFactory.hpp"
 #include "oef-base/comms/Core.hpp"
 #include "oef-base/comms/OefListenerSet.hpp"
 #include "oef-base/monitoring/Monitoring.hpp"
 #include "oef-base/threading/MonitoringTask.hpp"
+#include "oef-core/comms/OefAgentEndpoint.hpp"
+#include "oef-core/comms/OefListenerStarterTask.hpp"
+#include "oef-core/conversations/OutboundSearchConversationCreator.hpp"
+#include "oef-core/oef-functions/InitialHandshakeTaskFactory.hpp"
 
-#include "mt-core/karma/src/cpp/KarmaPolicyBasic.hpp"
-#include "mt-core/karma/src/cpp/KarmaPolicyNone.hpp"
-#include "mt-core/karma/src/cpp/KarmaRefreshTask.hpp"
+#include "oef-core/karma/KarmaPolicyBasic.hpp"
+#include "oef-core/karma/KarmaPolicyNone.hpp"
+#include "oef-core/karma/KarmaRefreshTask.hpp"
 
 #include "google/protobuf/util/json_util.h"
 #include "oef-base/comms/Endpoint.hpp"
@@ -23,10 +23,10 @@
 
 #include <ctype.h>
 
-#include "mt-core/oef-functions/src/cpp/InitialSecureHandshakeTaskFactory.hpp"
-#include "mt-core/oef-functions/src/cpp/InitialSslHandshakeTaskFactory.hpp"
 #include "mt-core/secure/experimental/cpp/EndpointSSL.hpp"
-#include "mt-core/tasks/src/cpp/OefLoginTimeoutTask.hpp"
+#include "oef-core/oef-functions/InitialSecureHandshakeTaskFactory.hpp"
+#include "oef-core/oef-functions/InitialSslHandshakeTaskFactory.hpp"
+#include "oef-core/tasks/OefLoginTimeoutTask.hpp"
 
 // openssl utils
 extern std::string RSA_Modulus_from_PEM_f(std::string file_path);

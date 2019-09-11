@@ -1,7 +1,7 @@
-#include "mt-core/conversations/src/cpp/SearchAddressUpdateTask.hpp"
+#include "oef-core/conversations/SearchAddressUpdateTask.hpp"
 #include "oef-base/conversation/OutboundConversation.hpp"
 #include "oef-base/conversation/OutboundConversations.hpp"
-#include "protos/src/protos/search_response.pb.h"
+#include "search_response.pb.h"
 
 SearchAddressUpdateTask::EntryPoint searchAddressUpdateTaskEntryPoints[] = {
     &SearchAddressUpdateTask::createConv,

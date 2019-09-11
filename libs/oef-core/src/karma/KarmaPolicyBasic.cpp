@@ -1,8 +1,8 @@
-#include "KarmaPolicyBasic.hpp"
+#include "oef-core/karma/KarmaPolicyBasic.hpp"
 #include "core/logging.hpp"
 
-#include "XDisconnect.hpp"
-#include "XKarma.hpp"
+#include "oef-core/karma/XDisconnect.hpp"
+#include "oef-core/karma/XKarma.hpp"
 
 std::atomic<std::size_t> tick_amounts(0);
 std::atomic<std::size_t> tick_counter(0);

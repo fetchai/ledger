@@ -1,7 +1,6 @@
-#include "KarmaAccount.hpp"
-
-#include "IKarmaPolicy.hpp"
+#include "oef-core/karma/KarmaAccount.hpp"
 #include "core/logging.hpp"
+#include "oef-core/karma/IKarmaPolicy.hpp"
 
 void swap(KarmaAccount &v1, KarmaAccount &v2)
 {

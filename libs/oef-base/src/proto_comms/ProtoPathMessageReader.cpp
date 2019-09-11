@@ -2,7 +2,7 @@
 #include "oef-base/comms/Endpoint.hpp"
 #include "oef-base/monitoring/Counter.hpp"
 #include "oef-base/proto_comms/ProtoMessageEndpoint.hpp"
-#include "protos/src/protos/transport.pb.h"
+#include "transport.pb.h"
 
 static Counter bytes_consumed_counter("mt-core.comms.protopath.read.bytes_consumed");
 static Counter bytes_requested_counter("mt-core.comms.protopath.read.bytes_requested");

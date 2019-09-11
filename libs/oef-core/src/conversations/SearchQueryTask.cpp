@@ -1,9 +1,9 @@
-#include "mt-core/conversations/src/cpp/SearchQueryTask.hpp"
-#include "mt-core/tasks/src/cpp/utils.hpp"
+#include "oef-core/conversations/SearchQueryTask.hpp"
 #include "oef-base/conversation/OutboundConversation.hpp"
 #include "oef-base/conversation/OutboundConversations.hpp"
 #include "oef-base/monitoring/Counter.hpp"
-#include "protos/src/protos/search_response.pb.h"
+#include "oef-core/tasks/utils.hpp"
+#include "search_response.pb.h"
 
 static Counter tasks_created("mt-core.search.query.tasks_created");
 static Counter tasks_resolved("mt-core.search.query.tasks_resolved");

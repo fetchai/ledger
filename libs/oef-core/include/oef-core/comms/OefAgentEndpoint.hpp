@@ -1,8 +1,8 @@
 #pragma once
 
 #include "core/logging.hpp"
-#include "mt-core/karma/src/cpp/KarmaAccount.hpp"
 #include "oef-base/proto_comms/ProtoMessageEndpoint.hpp"
+#include "oef-core/karma/KarmaAccount.hpp"
 #include <memory>
 
 class Core;

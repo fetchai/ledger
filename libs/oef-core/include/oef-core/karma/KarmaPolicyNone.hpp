@@ -1,8 +1,8 @@
 #pragma once
 
 #include "core/logging.hpp"
-#include "mt-core/karma/src/cpp/IKarmaPolicy.hpp"
-#include "mt-core/karma/src/cpp/KarmaAccount.hpp"
+#include "oef-core/karma/IKarmaPolicy.hpp"
+#include "oef-core/karma/KarmaAccount.hpp"
 
 class KarmaPolicyNone : public IKarmaPolicy
 {

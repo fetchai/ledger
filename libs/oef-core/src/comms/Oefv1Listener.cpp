@@ -1,11 +1,11 @@
-#include "Oefv1Listener.hpp"
+#include "oef-core/comms/Oefv1Listener.hpp"
 
 #include <memory>
 
-#include "mt-core/comms/src/cpp/OefAgentEndpoint.hpp"
 #include "mt-core/secure/experimental/cpp/EndpointSSL.hpp"
 #include "oef-base/comms/Core.hpp"
 #include "oef-base/comms/EndpointWebSocket.hpp"
+#include "oef-core/comms/OefAgentEndpoint.hpp"
 
 template <template <typename> class EndpointType>
 Oefv1Listener<EndpointType>::Oefv1Listener(std::shared_ptr<Core> core, int port,

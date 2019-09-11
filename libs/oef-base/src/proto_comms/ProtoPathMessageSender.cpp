@@ -3,7 +3,8 @@
 #include "oef-base/monitoring/Counter.hpp"
 #include "oef-base/proto_comms/ProtoMessageEndpoint.hpp"
 #include "oef-base/utils/Uri.hpp"
-#include "protos/src/protos/transport.pb.h"
+#include "transport.pb.h"
+
 #include <google/protobuf/message.h>
 
 static Counter bytes_produced_counter("mt-core.comms.protopath.send.bytes_produced");

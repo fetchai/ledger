@@ -41,7 +41,7 @@ public:
 
   virtual Socket &socket() override
   {
-    return web_socket_.next_layer();
+    return *static_cast<Socket *>(nullptr);  // TODO: web_socket_.next_layer();
   }
 
   virtual void close() override;

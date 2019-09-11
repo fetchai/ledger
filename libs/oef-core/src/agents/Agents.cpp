@@ -1,6 +1,5 @@
-#include "Agents.hpp"
-
-#include "mt-core/agents/src/cpp/Agent.hpp"
+#include "oef-core/agents/Agents.hpp"
+#include "oef-core/agents/Agent.hpp"
 
 void Agents::add(const std::string &key, std::shared_ptr<OefAgentEndpoint> endpoint)
 {

@@ -1,11 +1,10 @@
-#include "InitialHandshakeTaskFactory.hpp"
+#include "oef-core/oef-functions/InitialHandshakeTaskFactory.hpp"
+#include "oef-core/oef-functions/OefHeartbeatTask.hpp"
 
-#include "OefHeartbeatTask.hpp"
-
-#include "mt-core/comms/src/cpp/OefAgentEndpoint.hpp"
-#include "mt-core/oef-functions/src/cpp/OefFunctionsTaskFactory.hpp"
+#include "agent.pb.h"
 #include "mt-core/tasks-oef-base/TSendProtoTask.hpp"
-#include "protos/src/protos/agent.pb.h"
+#include "oef-core/comms/OefAgentEndpoint.hpp"
+#include "oef-core/oef-functions/OefFunctionsTaskFactory.hpp"
 
 void InitialHandshakeTaskFactory::processMessage(ConstCharArrayBuffer &data)
 {

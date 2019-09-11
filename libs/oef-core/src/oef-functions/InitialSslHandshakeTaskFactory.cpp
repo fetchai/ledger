@@ -1,12 +1,12 @@
-#include "InitialSslHandshakeTaskFactory.hpp"
-#include "OefHeartbeatTask.hpp"
-#include "mt-core/agents/src/cpp/Agent.hpp"
-#include "mt-core/comms/src/cpp/OefAgentEndpoint.hpp"
-#include "mt-core/oef-functions/src/cpp/OefFunctionsTaskFactory.hpp"
+#include "oef-core/oef-functions/InitialSslHandshakeTaskFactory.hpp"
 #include "mt-core/secure/experimental/cpp/EndpointSSL.hpp"
 #include "mt-core/tasks-oef-base/TSendProtoTask.hpp"
+#include "oef-core/agents/Agent.hpp"
+#include "oef-core/comms/OefAgentEndpoint.hpp"
+#include "oef-core/oef-functions/OefFunctionsTaskFactory.hpp"
+#include "oef-core/oef-functions/OefHeartbeatTask.hpp"
 
-#include "protos/src/protos/agent.pb.h"
+#include "agent.pb.h"
 
 #include <fstream>
 #include <string>

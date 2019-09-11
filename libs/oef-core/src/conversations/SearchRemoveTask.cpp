@@ -1,9 +1,9 @@
-#include "mt-core/conversations/src/cpp/SearchRemoveTask.hpp"
-#include "mt-core/tasks/src/cpp/utils.hpp"
+#include "oef-core/conversations/SearchRemoveTask.hpp"
 #include "oef-base/conversation/OutboundConversation.hpp"
 #include "oef-base/conversation/OutboundConversations.hpp"
 #include "oef-base/monitoring/Counter.hpp"
-#include "protos/src/protos/search_response.pb.h"
+#include "oef-core/tasks/utils.hpp"
+#include "search_response.pb.h"
 
 static Counter remove_task_created("mt-core.search.remove.tasks_created");
 static Counter remove_task_errored("mt-core.search.remove.tasks_errored");

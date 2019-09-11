@@ -1,10 +1,10 @@
-#include "mt-core/conversations/src/cpp/SearchUpdateTask.hpp"
-#include "mt-core/tasks/src/cpp/utils.hpp"
+#include "oef-core/conversations/SearchUpdateTask.hpp"
 #include "oef-base/conversation/OutboundConversation.hpp"
 #include "oef-base/conversation/OutboundConversations.hpp"
 #include "oef-base/monitoring/Counter.hpp"
 #include "oef-base/utils/Uri.hpp"
-#include "protos/src/protos/search_response.pb.h"
+#include "oef-core/tasks/utils.hpp"
+#include "search_response.pb.h"
 
 static Counter update_task_created("mt-core.search.update.tasks_created");
 static Counter update_task_errored("mt-core.search.update.tasks_errored");

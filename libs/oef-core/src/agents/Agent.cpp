@@ -1,12 +1,10 @@
-#include "Agent.hpp"
-
-#include "mt-core/comms/src/cpp/OefAgentEndpoint.hpp"
+#include "oef-core/agents/Agent.hpp"
+#include "oef-core/comms/OefAgentEndpoint.hpp"
 
 Notification::NotificationBuilder Agent::send(std::shared_ptr<google::protobuf::Message> s)
 {
-  return endpoint -> send(s);
+  return endpoint->send(s);
 }
-
 
 void Agent::run_sending()
 {

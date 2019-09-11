@@ -1,7 +1,5 @@
-#include "OefAgentEndpoint.hpp"
-
-#include "mt-core/karma/src/cpp/IKarmaPolicy.hpp"
-#include "mt-core/karma/src/cpp/XKarma.hpp"
+#include "oef-core/comms/OefAgentEndpoint.hpp"
+#include "agent.pb.h"
 #include "mt-core/tasks-oef-base/TSendProtoTask.hpp"
 #include "oef-base/comms/Endianness.hpp"
 #include "oef-base/comms/IOefTaskFactory.hpp"
@@ -11,7 +9,8 @@
 #include "oef-base/proto_comms/ProtoMessageSender.hpp"
 #include "oef-base/threading/Task.hpp"
 #include "oef-base/threading/Taskpool.hpp"
-#include "protos/src/protos/agent.pb.h"
+#include "oef-core/karma/IKarmaPolicy.hpp"
+#include "oef-core/karma/XKarma.hpp"
 
 static Gauge   count("mt-core.network.OefAgentEndpoint");
 static Counter hb_sent("mt-core.network.OefAgentEndpoint.heartbeats.sent");

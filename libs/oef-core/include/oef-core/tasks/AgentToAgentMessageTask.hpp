@@ -1,11 +1,11 @@
 #pragma once
 
 #include "core/logging.hpp"
-#include "mt-core/agents/src/cpp/Agent.hpp"
-#include "mt-core/agents/src/cpp/Agents.hpp"
-#include "mt-core/comms/src/cpp/OefAgentEndpoint.hpp"
 #include "mt-core/tasks-oef-base/IMtCoreTask.hpp"
-#include "mt-core/tasks/src/cpp/utils.hpp"
+#include "oef-core/agents/Agent.hpp"
+#include "oef-core/agents/Agents.hpp"
+#include "oef-core/comms/OefAgentEndpoint.hpp"
+#include "oef-core/tasks/utils.hpp"
 
 class OefEndpoint;
 

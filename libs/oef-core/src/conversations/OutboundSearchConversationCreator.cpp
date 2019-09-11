@@ -1,19 +1,19 @@
-#include "OutboundSearchConversationCreator.hpp"
+#include "oef-core/conversations/OutboundSearchConversationCreator.hpp"
 
 #include "core/logging.hpp"
 #include "oef-base/proto_comms/ProtoMessageEndpoint.hpp"
 #include "oef-base/threading/StateMachineTask.hpp"
 #include "oef-base/utils/Uri.hpp"
 
-#include "mt-core/conversations/src/cpp/SearchAddressUpdateTask.hpp"
+#include "oef-core/conversations/SearchAddressUpdateTask.hpp"
 
 #include "oef-base/conversation/OutboundConversationWorkerTask.hpp"
-#include "protos/src/protos/search_message.pb.h"
-#include "protos/src/protos/search_query.pb.h"
-#include "protos/src/protos/search_remove.pb.h"
-#include "protos/src/protos/search_response.pb.h"
-#include "protos/src/protos/search_transport.pb.h"
-#include "protos/src/protos/search_update.pb.h"
+#include "search_message.pb.h"
+#include "search_query.pb.h"
+#include "search_remove.pb.h"
+#include "search_response.pb.h"
+#include "search_transport.pb.h"
+#include "search_update.pb.h"
 
 #include <google/protobuf/message.h>
 

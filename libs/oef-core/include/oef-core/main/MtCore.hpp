@@ -5,16 +5,16 @@
 #include <vector>
 
 #include "core/logging.hpp"
-#include "mt-core/agents/src/cpp/Agents.hpp"
-#include "mt-core/comms/src/cpp/OefListenerStarterTask.hpp"
 #include "mt-core/secure/experimental/cpp/public_key_utils.hpp"
 #include "oef-base/comms/Core.hpp"
 #include "oef-base/comms/OefListenerSet.hpp"
 #include "oef-base/conversation/OutboundConversations.hpp"
 #include "oef-base/threading/Taskpool.hpp"
 #include "oef-base/threading/Threadpool.hpp"
+#include "oef-core/agents/Agents.hpp"
+#include "oef-core/comms/OefListenerStarterTask.hpp"
 
-#include "protos/src/protos/config.pb.h"
+#include "config.pb.h"
 
 class Core;
 class IKarmaPolicy;

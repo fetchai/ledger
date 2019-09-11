@@ -1,4 +1,4 @@
-#include "KarmaPolicyNone.hpp"
+#include "oef-core/karma/KarmaPolicyNone.hpp"
 
 #include <unistd.h>
 
@@ -11,8 +11,7 @@ KarmaPolicyNone::KarmaPolicyNone()
 }
 
 KarmaPolicyNone::~KarmaPolicyNone()
-{
-}
+{}
 
 KarmaAccount KarmaPolicyNone::getAccount(const std::string &pubkey, const std::string &ip)
 {

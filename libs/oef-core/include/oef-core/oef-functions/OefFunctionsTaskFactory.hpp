@@ -1,10 +1,10 @@
 #pragma once
 
 #include "core/logging.hpp"
-#include "mt-core/agents/src/cpp/Agents.hpp"
 #include "oef-base/comms/IOefTaskFactory.hpp"
+#include "oef-core/agents/Agents.hpp"
 
-#include "protos/src/protos/agent.pb.h"
+#include "agent.pb.h"
 
 namespace google {
 namespace protobuf {

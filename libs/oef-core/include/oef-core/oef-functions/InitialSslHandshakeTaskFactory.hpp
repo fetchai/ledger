@@ -1,12 +1,12 @@
 #pragma once
 
 #include "core/logging.hpp"
-#include "mt-core/agents/src/cpp/Agents.hpp"
 #include "oef-base/comms/Endianness.hpp"
 #include "oef-base/comms/IOefTaskFactory.hpp"
+#include "oef-core/agents/Agents.hpp"
 //#include "core/crypto/ecdsa.hpp"
-#include "mt-core/oef-functions/src/cpp/OefFunctionsTaskFactory.hpp"
 #include "mt-core/secure/experimental/cpp/public_key_utils.hpp"
+#include "oef-core/oef-functions/OefFunctionsTaskFactory.hpp"
 
 #include <set>
 #include <string>
