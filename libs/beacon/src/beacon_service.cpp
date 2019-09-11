@@ -479,17 +479,25 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
 
 BeaconService::State BeaconService::OnVerifySignaturesState()
 {
-  std::lock_guard<std::mutex> lock(mutex_);
-
   SignatureInformation ret;
 
-  // Attempt to resolve the promise and add it
-  if (!sig_share_promise_->As<SignatureInformation>(ret))
+  try
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Failed to resolve RPC promise from ",
-                   qual_promise_identity_.identifier().ToBase64());
-    return State::COLLECT_SIGNATURES;
+    // Attempt to resolve the promise and add it
+    if (!sig_share_promise_->As<SignatureInformation>(ret))
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to resolve RPC promise from ",
+                     qual_promise_identity_.identifier().ToBase64());
+      return State::COLLECT_SIGNATURES;
+    }
   }
+  catch(...)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Promise timed out and threw!");
+  }
+
+  // Don't lock until the promise has resolved!
+  std::lock_guard<std::mutex> lock(mutex_);
 
   if (ret.threshold_signatures.empty())
   {
