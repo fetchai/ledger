@@ -90,9 +90,6 @@ void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
           [](auto const &vr_a_i, auto const &vr_b_j) {
             return vr_a_i * vr_b_j;
           },
-          [](VectorRegisterType const &vr_a_i) -> Type {
-            return reduce(vr_a_i);
-          },
           slice_b_j);
       if (beta == static_cast<Type>(0.0))
       {

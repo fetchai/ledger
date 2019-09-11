@@ -38,9 +38,6 @@ type InnerProduct(array_type const &A, array_type const &B)
         auto d = a - b;
         return d * d;
       },
-      [](vector_type const &a) -> type {
-        return reduce(a);
-      },
       B);
 
   return ret;

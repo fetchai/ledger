@@ -79,8 +79,10 @@ void Blas<S, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
 
         auto                 ret_slice = y.data().slice(0, y.padded_size());
         memory::Range range(std::size_t(0), std::size_t(leny));
-        ret_slice.in_parallel().RangedApply(range,
-              [zero](auto &vw_fv_y) { vw_fv_y = decltype(vw_fv_y)(zero); });
+        ret_slice.in_parallel().RangedApply(
+          range, [zero](auto &&vw_fv_y) { 
+            vw_fv_y = static_cast<std::remove_reference_t<decltype(vw_fv_y)>>(zero);
+          });
       }
       else
       {
@@ -90,7 +92,7 @@ void Blas<S, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
         ret_slice.in_parallel().RangedApplyMultiple(
             range,
             [beta](auto const &vr_fv_y, auto &vw_fv_y) {
-              vw_fv_y = decltype(vr_fv_y)(beta) * vr_fv_y;
+              vw_fv_y = static_cast<std::remove_reference_t<decltype(vr_fv_y)>>(beta) * vr_fv_y;
             },
             slice_fv_y);
       }
@@ -137,9 +139,6 @@ void Blas<S, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
           range,
           [](auto const &vr_a_j, auto const &vr_fv_x) -> auto {
             return vr_a_j * vr_fv_x;
-          },
-          [](VectorRegisterType const &vr_a_j) -> Type {
-            return reduce(vr_a_j);
           },
           slice_fv_x);
       y[jy] = y[jy] + alpha * temp;
