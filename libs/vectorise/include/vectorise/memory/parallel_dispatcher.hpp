@@ -22,7 +22,6 @@
 #include "vectorise/platform.hpp"
 #include "vectorise/vectorise.hpp"
 
-#include <iostream>
 #include <type_traits>
 
 namespace fetch {
@@ -101,22 +100,19 @@ public:
   template <class OP, class F1, class F2>
   inline type GenericRangedOpReduce(Range const &range, type const initial_value, OP &&op, F1 const &&kernel, F2 &&hkernel)
   {
-    int SFL      = int(range.SIMDFromLower<VectorRegisterType::E_BLOCK_COUNT>());
-    int SF       = int(range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>());
-    int ST       = int(range.SIMDToLower<VectorRegisterType::E_BLOCK_COUNT>());
-    int STU      = int(range.SIMDToUpper<VectorRegisterType::E_BLOCK_COUNT>());
+    size_t SF       = range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>();
+    size_t ST       = range.SIMDToLower<VectorRegisterType::E_BLOCK_COUNT>();
+    size_t STU      = range.SIMDToUpper<VectorRegisterType::E_BLOCK_COUNT>();
 
     type ret{initial_value};
     VectorRegisterType         va, vc(initial_value);
-    VectorRegisterIteratorType iter(this->pointer() + SFL, range.to());
+    VectorRegisterIteratorType iter(this->pointer() + SF, STU);
     ScalarRegisterType b(initial_value);
 
-    if (SFL != SF)
+    if (SF != range.from())
     {
-      ScalarRegisterIteratorType scalar_iter(iter, std::size_t(SF)/sizeof(type));
+      ScalarRegisterIteratorType scalar_iter(this->pointer() + range.from(), SF);
       ScalarRegisterType a, tmp;
-
-      iter.Next(va);
 
       while (static_cast<void*>(scalar_iter.pointer()) < static_cast<void*>(iter.pointer()))
       {
@@ -126,22 +122,25 @@ public:
       }
     }
 
-    for (int i = SF; i < ST; i += VectorRegisterType::E_BLOCK_COUNT)
+    if (ST >= VectorRegisterType::E_BLOCK_COUNT)
     {
-      VectorRegisterType tmp;
-      iter.Next(va);
-      tmp = kernel(va);
-      vc  = op(vc, tmp);
-    }
+      for (size_t i = SF; i < ST; i += VectorRegisterType::E_BLOCK_COUNT)
+      {
+        VectorRegisterType tmp;
+        iter.Next(va);
+        tmp = kernel(va);
+        vc  = op(vc, tmp);
+      }
 
-    ret += hkernel(vc);
+      ret += hkernel(vc);
+    }
 
     if (STU != ST)
     {
-      ScalarRegisterIteratorType scalar_iter(iter, 0);
+      ScalarRegisterIteratorType scalar_iter(this->pointer() + ST, range.to() - ST);
       ScalarRegisterType a, tmp;
 
-      while (static_cast<void*>(scalar_iter.pointer()) < static_cast<void*>(iter.end()))
+      while (static_cast<void*>(scalar_iter.pointer()) < static_cast<void*>(scalar_iter.end()))
       {
         scalar_iter.Next(a);
         tmp = kernel(a);
@@ -152,59 +151,58 @@ public:
     return ret;
   }
 
-  template <class F1, class F2>
-  type SumReduce(F1 const &&kernel, F2 &&hkernel)
+  template <class F>
+  type SumReduce(F const &&kernel)
   {
     Range range(0, this->size());
-    return GenericRangedOpReduce(range, type(0), std::plus<void>{}, std::move(kernel), hkernel);
+    return GenericRangedOpReduce(range, type(0), std::plus<void>{}, std::move(kernel),
+      [](VectorRegisterType const &a) -> type {
+        return reduce(a);
+      });
   }
 
-  template <class F1, class F2>
-  type SumReduce(Range const &range, F1 const &&kernel, F2 &&hkernel)
+  template <class F>
+  type SumReduce(Range const &range, F const &&kernel)
   {
-    return GenericRangedOpReduce(range, type(0), std::plus<void>{}, std::move(kernel), hkernel);
+    return GenericRangedOpReduce(range, type(0), std::plus<void>{}, std::move(kernel),
+      [](VectorRegisterType const &a) -> type {
+        return reduce(a);
+      });
   }
 
-  template <class F1, class F2>
-  type ProductReduce(Range const &range, F1 const &&kernel, F2 &&hkernel)
+  template <class F>
+  type ProductReduce(Range const &range, F const &&kernel)
   {
-    return GenericRangedOpReduce(range, type(1), std::multiplies<void>{}, std::move(kernel), hkernel);
+    return GenericRangedOpReduce(range, type(1), std::multiplies<void>{}, std::move(kernel),
+      [](VectorRegisterType const &a) -> type {
+        return reduce(a);
+      });
   }
 
   template <class F1, class F2, class OP,typename... Args>
   inline type GenericRangedReduceMultiple(Range const &range, type const c, OP const &&op, F1 const &&kernel, F2 &&hkernel, Args &&... args)
   {
-    size_t SFL      = range.SIMDFromLower<VectorRegisterType::E_BLOCK_COUNT>();
     size_t SF       = range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>();
     size_t ST       = range.SIMDToLower<VectorRegisterType::E_BLOCK_COUNT>();
     size_t STU      = range.SIMDToUpper<VectorRegisterType::E_BLOCK_COUNT>();
 
-    std::cout << "SFL: " << SFL << std::endl;
-    std::cout << "SF: " << SF << std::endl;
-    std::cout << "ST: " << ST << std::endl;
-    std::cout << "STU: " << STU << std::endl;
-    std::cout << "range: (" << range.from() << ", " << range.to() << ")" << std::endl;
+    // std::cout << "SF: " << SF << std::endl;
+    // std::cout << "ST: " << ST << std::endl;
+    // std::cout << "STU: " << STU << std::endl;
+    // std::cout << "range: (" << range.from() << ", " << range.to() << ")" << std::endl;
 
     VectorRegisterType         regs[sizeof...(args)];
     VectorRegisterIteratorType iters[sizeof...(args)];
-    std::cout << "Vector iterator:" << std::endl;
     VectorRegisterIteratorType self_iter(this->pointer() + SF, ST);
     VectorRegisterType         vc(c), tmp, self;
     InitializeVectorIterators<vector_size>(SF, ST, iters, std::forward<Args>(args)...);
 
-    std::cout << "ptr: " << self_iter.pointer() << std::endl;
-    std::cout << "end: " << self_iter.end() << std::endl;
-
     // Taking care of head
     type ret{0};
-    if (SFL != range.from())
+    if (SF != range.from())
     {
-      std::cout << "SFL: " << SFL << std::endl;
-      std::cout << "SF: " << SF << std::endl;
-
       ScalarRegisterType         scalar_regs[sizeof...(args)];
       ScalarRegisterIteratorType scalar_iters[sizeof...(args)];
-      std::cout << "Scalar iterator:" << std::endl;
       ScalarRegisterIteratorType scalar_self_iter(this->pointer() + range.from(), SF);
       ScalarRegisterType scalar_self, scalar_tmp;
       InitializeVectorIterators<scalar_size>(range.from(), SF, scalar_iters, std::forward<Args>(args)...);
@@ -216,110 +214,98 @@ public:
         scalar_self_iter.Next(scalar_self);
         scalar_tmp = details::MatrixReduceFreeFunction<ScalarRegisterType>::template Unroll<Args...>::Apply(
            scalar_self, scalar_regs, kernel);
-        std::cout << "self = " << scalar_self << std::endl;
-        std::cout << "tmp = " << scalar_tmp << std::endl;
         ret = op(ret, scalar_tmp.data());
-        std::cout << "tmp = " << scalar_tmp << std::endl;
       }
     }
-    std::cout << "ret = " << ret << std::endl;
 
-    std::cout << "SF: " << SF << ", ST: " << ST << std::endl;
-    for (size_t i = SF; i < ST; i += VectorRegisterType::E_BLOCK_COUNT)
+    if (ST >= VectorRegisterType::E_BLOCK_COUNT)
     {
-      std::cout << "i = " << i << std::endl;
-      details::UnrollNext<sizeof...(args), VectorRegisterType, VectorRegisterIteratorType>::Apply(
-          regs, iters);
-      self_iter.Next(self);
-      tmp = details::MatrixReduceFreeFunction<VectorRegisterType>::template Unroll<Args...>::Apply(
-          self, regs, kernel);
-      std::cout << "self = " << self << std::endl;
-      std::cout << "tmp = " << tmp << std::endl;
-      std::cout << "c = " << vc << std::endl;
-      vc = op(vc, tmp);
-      std::cout << "c = " << vc << std::endl;
+      for (size_t i = SF; i < ST; i += VectorRegisterType::E_BLOCK_COUNT)
+      {
+        details::UnrollNext<sizeof...(args), VectorRegisterType, VectorRegisterIteratorType>::Apply(
+            regs, iters);
+        self_iter.Next(self);
+        tmp = details::MatrixReduceFreeFunction<VectorRegisterType>::template Unroll<Args...>::Apply(
+            self, regs, kernel);
+        vc = op(vc, tmp);
+      }
+      ret += hkernel(vc);
     }
-    std::cout << "hkernel = " << hkernel(vc) << std::endl;
-    ret += hkernel(vc);
-    std::cout << "ret = " << ret << std::endl;
 
     if (STU != ST)
     {
-      std::cout << "STU: " << STU << std::endl;
-      std::cout << "ST: " << ST << std::endl;
-
       ScalarRegisterType         scalar_regs[sizeof...(args)];
       ScalarRegisterIteratorType scalar_iters[sizeof...(args)];
-      std::cout << "Scalar iterator:" << std::endl;
       ScalarRegisterIteratorType scalar_self_iter(this->pointer() + ST, range.to() - ST);
       ScalarRegisterType scalar_self, scalar_tmp;
       InitializeVectorIterators<scalar_size>(ST, range.to() - ST, scalar_iters, std::forward<Args>(args)...);
-      std::cout << "Scalar iterator:" << std::endl;
-      std::cout << "ST for type: " << ST << std::endl;
-
-      std::cout << "ptr: " << scalar_self_iter.pointer() << std::endl;
-      std::cout << "end: " << scalar_self_iter.end() << std::endl;
 
       while (static_cast<void*>(scalar_self_iter.pointer()) < static_cast<void*>(scalar_self_iter.end()))
       {
-        std::cout << "ptr: " << scalar_self_iter.pointer() << std::endl;
-        std::cout << "end: " << scalar_self_iter.end() << std::endl;
         details::UnrollNext<sizeof...(args), ScalarRegisterType, ScalarRegisterIteratorType>::Apply(
           scalar_regs, scalar_iters);
         scalar_self_iter.Next(scalar_self);
-        std::cout << "self = " << scalar_self << std::endl;
         scalar_tmp = details::MatrixReduceFreeFunction<ScalarRegisterType>::template Unroll<Args...>::Apply(
            scalar_self, scalar_regs, kernel);
-        std::cout << "self = " << scalar_self << std::endl;
-        std::cout << "tmp = " << scalar_tmp << std::endl;
         ret = op(ret, scalar_tmp.data());
-        std::cout << "tmp = " << scalar_tmp << std::endl;
       }
     }
 
     return ret;
   }
 
-  template <class F1, class F2, typename... Args>
-  type SumReduce(F1 const &&kernel, F2 &&hkernel, Args &&... args)
+  template <class F, typename... Args>
+  type SumReduce(F const &&kernel, Args &&... args)
   {
     Range range(0, this->size());
-    return GenericRangedReduceMultiple(range, type(0), std::plus<void>{}, std::move(kernel), hkernel, std::forward<Args>(args)...);
+    return GenericRangedReduceMultiple(range, type(0), std::plus<void>{}, std::move(kernel),
+      [](VectorRegisterType const &a) -> type {
+        return reduce(a);
+      }, std::forward<Args>(args)...);
   }
 
-  template <class F1, class F2, typename... Args>
-  type ProductReduce(F1 const &&kernel, F2 &&hkernel, Args &&... args)
+  template <class F, typename... Args>
+  type ProductReduce(F const &&kernel, Args &&... args)
   {
     Range range(0, this->size());
-    return GenericRangedReduceMultiple(range, type(1), std::multiplies<void>{}, std::move(kernel), hkernel, std::forward<Args>(args)...);
+    return GenericRangedReduceMultiple(range, type(1), std::multiplies<void>{}, std::move(kernel),
+      [](VectorRegisterType const &a) -> type {
+        return reduce(a);
+      },
+      std::forward<Args>(args)...);
   }
 
-  template <class F1, class F2, typename... Args>
-  type SumReduce(Range const &range, F1 const &&kernel, F2 &&hkernel, Args &&... args)
+  template <class F, typename... Args>
+  type SumReduce(Range const &range, F const &&kernel, Args &&... args)
   {
-    return GenericRangedReduceMultiple(range, type(0), std::plus<void>{}, std::move(kernel), hkernel, std::forward<Args>(args)...);
+    return GenericRangedReduceMultiple(range, type(0), std::plus<void>{}, std::move(kernel),
+      [](VectorRegisterType const &a) -> type {
+        return reduce(a);
+      }, std::forward<Args>(args)...);
   }
 
   template <class F1, class F2>
   inline type Reduce(Range const &range, F1 const &&kernel, F2 &&hkernel, type const initial_value = type(0))
   {
-    int SFL = int(range.SIMDFromLower<VectorRegisterType::E_BLOCK_COUNT>());
-    int SF = int(range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>());
-    int ST = int(range.SIMDToLower<VectorRegisterType::E_BLOCK_COUNT>());
-    int STU      = int(range.SIMDToUpper<VectorRegisterType::E_BLOCK_COUNT>());
+    size_t SF = range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>();
+    size_t ST = range.SIMDToLower<VectorRegisterType::E_BLOCK_COUNT>();
+    size_t STU = range.SIMDToUpper<VectorRegisterType::E_BLOCK_COUNT>();
+
+    // std::cout << "SF: " << SF << std::endl;
+    // std::cout << "ST: " << ST << std::endl;
+    // std::cout << "STU: " << STU << std::endl;
+    // std::cout << "range: (" << range.from() << ", " << range.to() << ")" << std::endl;
 
     VectorRegisterType         va, vc(initial_value);
-    VectorRegisterIteratorType iter(this->pointer() + SFL, range.to());
+    VectorRegisterIteratorType iter(this->pointer() + SF, range.to() - SF);
     ScalarRegisterType c(initial_value);
 
-    if (SFL != SF)
+    if (SF != range.from())
     {
-      ScalarRegisterIteratorType scalar_iter(iter, std::size_t(SF)/sizeof(type));
+      ScalarRegisterIteratorType scalar_iter(this->pointer() + range.from(), SF);
       ScalarRegisterType a;
 
-      iter.Next(va);
-
-      while (static_cast<void*>(scalar_iter.pointer()) < static_cast<void*>(iter.pointer()))
+      while (static_cast<void*>(scalar_iter.pointer()) < static_cast<void*>(scalar_iter.end()))
       {
         scalar_iter.Next(a);
         c = kernel(a, c);
@@ -327,17 +313,20 @@ public:
       vc = VectorRegisterType(c.data());
     }
 
-    for (int i = SF; i < ST; i += VectorRegisterType::E_BLOCK_COUNT)
+    if (ST >= VectorRegisterType::E_BLOCK_COUNT)
     {
-      iter.Next(va);
-      vc = kernel(va, vc);
-    }
+      for (size_t i = SF; i < ST; i += VectorRegisterType::E_BLOCK_COUNT)
+      {
+        iter.Next(va);
+        vc = kernel(va, vc);
+      }
 
-    c.data() = hkernel(vc);
+      c.data() = hkernel(vc);
+    }
 
     if (STU != ST)
     {
-      ScalarRegisterIteratorType scalar_iter(iter, 0);
+      ScalarRegisterIteratorType scalar_iter(this->pointer() + ST, range.to() - ST);
       ScalarRegisterType a;
 
       while (static_cast<void*>(scalar_iter.pointer()) < static_cast<void*>(scalar_iter.end()))
@@ -433,26 +422,47 @@ public:
   {
     size_t SF = range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>();
     size_t ST = range.SIMDToLower<VectorRegisterType::E_BLOCK_COUNT>();
+    VectorRegisterType vc(type(0));
+    ScalarRegisterType  c(type(0));
 
-    VectorRegisterType vc;
+    // std::cout << "SF: 0x" << std::hex << SF << std::endl;
+    // std::cout << "ST: 0x" << std::hex << ST << std::endl;
+    // std::cout << "range: (" << std::dec << range.from() << ", " << range.to() << ")" << std::endl;
+    // std::cout << "ptr: 0x" << std::hex << ptrdiff_t(this->pointer()) << std::endl;
+    // std::cout << "ptr + size: 0x" << std::hex << ptrdiff_t(this->pointer() + this->size()) << std::endl;
 
-    ScalarRegisterType  c;
+    // std::cout << "ptr + range.from(): 0x" << std::hex << ptrdiff_t(this->pointer() + range.from()) << std::endl;
+    // std::cout << "ptr + range.to(): 0x" << std::hex << ptrdiff_t(this->pointer() + range.to()) << std::endl;
+
     for (size_t i = range.from(); i < SF; i += ScalarRegisterType::E_BLOCK_COUNT)
     {
+      // std::cout << "Scalar:" << std::endl;
+      // std::cout << "c[" << i << "] = " << c << std::endl;
       apply(c);
+      // std::cout << "c[" << i << "] = " << c << std::endl;
       c.Store(this->pointer() + i);
+      // std::cout << "store to " << std::hex << ptrdiff_t(this->pointer() + i) << std::endl;
     }
 
+    // std::cout << "VectorRegisterType::E_BLOCK_COUNT : " << VectorRegisterType::E_BLOCK_COUNT << std::endl;
     for (size_t i = SF; i < ST; i += VectorRegisterType::E_BLOCK_COUNT)
     {
+      // std::cout << "Vector:" << std::endl;
+      // std::cout << "vc[" << i << "] = " << vc << std::endl;
       apply(vc);
+      // std::cout << "vc[" << i << "] = " << vc << std::endl;
       vc.Store(this->pointer() + i);
+      // std::cout << "store to " << std::hex << ptrdiff_t(this->pointer() + i) << std::endl;
     }
 
     for (size_t i = ST; i < range.to(); i += ScalarRegisterType::E_BLOCK_COUNT)
     {
+      // std::cout << "Scalar:" << std::endl;
+      // std::cout << "c[" << i << "] = " << c << std::endl;
       apply(c);
+      // std::cout << "c[" << i << "] = " << c << std::endl;
       c.Store(this->pointer() + i);
+      // std::cout << "store to " << std::hex << ptrdiff_t(this->pointer() + i) << std::endl;
     }
   }
 
@@ -466,18 +476,26 @@ public:
   template <class F, typename... Args>
   void RangedApplyMultiple(Range const &range, F const &&apply, Args &&... args)
   {
-    size_t SFL = range.SIMDFromLower<VectorRegisterType::E_BLOCK_COUNT>();
     size_t SF = range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>();
     size_t ST = range.SIMDToLower<VectorRegisterType::E_BLOCK_COUNT>();
     size_t STU  = range.SIMDToUpper<VectorRegisterType::E_BLOCK_COUNT>();
 
-    VectorRegisterType         regs[sizeof...(args)], vc{type(0)};
-    VectorRegisterIteratorType iters[sizeof...(args)];
-    super_type::template InitializeVectorIterators<vector_size>(SF, ST, iters, std::forward<Args>(args)...);
+    // std::cout << "SF: 0x" << std::hex << SF << std::endl;
+    // std::cout << "ST: 0x" << std::hex << ST << std::endl;
+    // std::cout << "range: (" << std::dec << range.from() << ", " << range.to() << ")" << std::endl;
+    // std::cout << "ptr: 0x" << std::hex << ptrdiff_t(this->pointer()) << std::endl;
+    // std::cout << "ptr + size: 0x" << std::hex << ptrdiff_t(this->pointer() + this->size()) << std::endl;
 
-    if (SFL != SF)
+    // std::cout << "ptr + range.from(): 0x" << std::hex << ptrdiff_t(this->pointer() + range.from()) << std::endl;
+    // std::cout << "ptr + range.to(): 0x" << std::hex << ptrdiff_t(this->pointer() + range.to()) << std::endl;
+
+    VectorRegisterType         regs[sizeof...(args)], vc(type(0));
+    VectorRegisterIteratorType iters[sizeof...(args)];
+    super_type::template InitializeVectorIterators<vector_size>(SF, ST - SF, iters, std::forward<Args>(args)...);
+
+    if (SF != range.from())
     {
-      ScalarRegisterType  c{type(0)};
+      ScalarRegisterType  c(type(0));
       ScalarRegisterType         scalar_regs[sizeof...(args)];
       ScalarRegisterIteratorType scalar_iters[sizeof...(args)];
       super_type::template InitializeVectorIterators<scalar_size>(range.from(), SF, scalar_iters, std::forward<Args>(args)...);
@@ -492,13 +510,16 @@ public:
       }
     }
 
-    for (size_t i = SF; i < ST; i += VectorRegisterType::E_BLOCK_COUNT)
+    if (ST >= VectorRegisterType::E_BLOCK_COUNT)
     {
-      details::UnrollNext<sizeof...(args), VectorRegisterType, VectorRegisterIteratorType>::Apply(
-          regs, iters);
-      details::MatrixApplyFreeFunction<VectorRegisterType, void>::template Unroll<Args...>::Apply(
-          regs, apply, vc);
-      vc.Store(this->pointer() + i);
+      for (size_t i = SF; i < ST; i += VectorRegisterType::E_BLOCK_COUNT)
+      {
+        details::UnrollNext<sizeof...(args), VectorRegisterType, VectorRegisterIteratorType>::Apply(
+            regs, iters);
+        details::MatrixApplyFreeFunction<VectorRegisterType, void>::template Unroll<Args...>::Apply(
+            regs, apply, vc);
+        vc.Store(this->pointer() + i);
+      }
     }
 
     if (STU != ST)
