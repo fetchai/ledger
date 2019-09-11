@@ -51,7 +51,7 @@ using DataLoaderType   = fetch::ml::dataloaders::TensorDataLoader<TensorType, Te
 struct TrainingParams
 {
   SizeType epochs{5};
-  SizeType batch_size{10000};
+  SizeType batch_size{1000};
   bool     normalise = false;
 };
 
@@ -65,7 +65,7 @@ std::shared_ptr<GraphType> BuildModel(std::string &input_name, std::string &outp
   SizeType conv1D_1_kernel_size    = 32;
   SizeType conv1D_1_stride         = 2;
 
-  typename TensorType::Type keep_prob_1{1.0};
+  typename TensorType::Type keep_prob_1{0.5};
 
   SizeType conv1D_2_filters        = 1;
   SizeType conv1D_2_input_channels = conv1D_1_filters;
