@@ -241,12 +241,12 @@ TYPED_TEST(FreeFunctionsTest, Max_TwoDimension)
   array1(3, 0) = DataType{21};
   array1(3, 1) = DataType{-0.5};
 
-  TypeParam output{n_data};
+  TypeParam output{{4, 1}};
   fetch::math::Max(array1, 1, output);
-  EXPECT_EQ(output(0), DataType{21});
-  EXPECT_EQ(output(1), DataType{0});
-  EXPECT_EQ(output(2), DataType{999});
-  EXPECT_EQ(output(3), DataType{21});
+  EXPECT_EQ(output(0, 0), DataType{21});
+  EXPECT_EQ(output(1, 0), DataType{0});
+  EXPECT_EQ(output(2, 0), DataType{999});
+  EXPECT_EQ(output(3, 0), DataType{21});
 
   TypeParam output2{n_features};
   fetch::math::Max(array1, 0, output2);
