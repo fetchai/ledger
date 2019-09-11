@@ -522,6 +522,8 @@ def verify_txs(parameters, test_instance):
         # Verify TXs - will block until they have executed
         for tx, identity, balance in tx_and_identity:
 
+            error_message = ""
+
             # Check TX has executed, unless we expect it should already have been mined
             while True:
                 status = api.tx.status(tx)
@@ -533,8 +535,13 @@ def verify_txs(parameters, test_instance):
                 tx_b64 = codecs.encode(codecs.decode(
                     tx, 'hex'), 'base64').decode()
                 time.sleep(1)
-                output("Waiting for TX to get executed (node {}). Found: {} Tx: {}".format(
-                    node_index, status, tx_b64))
+
+                next_error_message = "Waiting for TX to get executed (node {}). Found: {} Tx: {}".format(
+                    node_index, status, tx_b64)
+
+                if next_error_message != error_message:
+                    output(next_error_message)
+                    error_message = next_error_message
 
             time.sleep(0.1)
             seen_balance = api.tokens.balance(identity)
@@ -688,7 +695,7 @@ def run_test(build_directory, yaml_file, constellation_exe):
             print('Failed to parse yaml or to run test! Error: "{}"'.format(str(e)))
             traceback.print_exc()
             test_instance.stop()
-            test_instance.dump_debug()
+            #test_instance.dump_debug()
             sys.exit(1)
 
     output("\nAll end to end tests have passed")
