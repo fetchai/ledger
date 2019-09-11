@@ -19,10 +19,10 @@
 
 #include "core/assert.hpp"
 #include "ml/ops/dataholder.hpp"
-#include "ml/saveparams/saveable_params.hpp"
 #include "ml/ops/trainable.hpp"
 #include "ml/regularisers/regularisation.hpp"
 #include "ml/regularisers/regulariser.hpp"
+#include "ml/saveparams/saveable_params.hpp"
 
 #include <cassert>
 #include <memory>
@@ -30,13 +30,19 @@
 
 namespace fetch {
 namespace ml {
-namespace ops {
 
-// TODO         - Constants, Variables, Placeholders
-// serial           - save,     save,      do not save
-// trainable        - no,      yes,        no
-// data mutable     - no,       yes,        yes
-// shareable?       - yes,      yes,       no
+template <class TensorType>
+struct OpVariableSaveableParams : public OpDataHolderSaveableParams<TensorType>
+{
+  using DataType                      = typename TensorType::Type;
+  fetch::ml::OpType           op_type = OpType::OP_PLACEHOLDER;
+  std::shared_ptr<TensorType> data;
+  std::shared_ptr<TensorType> gradient_accumulation;
+  RegularisationType          regularisation_type = RegularisationType::NONE;
+  DataType                    regularisation_rate = fetch::math::numeric_max<DataType>();
+};
+
+namespace ops {
 
 /**
  * A Variable is a DataHolder intended to store trainable data; for example weights.
@@ -52,8 +58,9 @@ class Variable : public DataHolder<T>, public Trainable<T>
 {
 public:
   using TensorType    = T;
+  using DataType      = typename TensorType::Type;
   using SizeType      = typename TensorType::SizeType;
-  using TensorPtrType  = std::shared_ptr<TensorType>;
+  using TensorPtrType = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpVariableSaveableParams<TensorType>;
   using MyType        = Variable<TensorType>;
@@ -61,7 +68,7 @@ public:
   Variable() = default;
 
   explicit Variable(SPType const &sp)
-    : Ops<T>(sp)
+    : DataHolder<T>(sp)
   {
     if (sp.data)
     {
@@ -82,7 +89,7 @@ public:
 
   std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
   {
-    auto sp   = std::make_shared<SPType>();
+    auto sp = std::make_shared<SPType>();
     if (this->data_)
     {
       sp->data = std::make_shared<TensorType>(this->data_->Copy());
@@ -107,7 +114,8 @@ public:
     return sp;
   }
 
-  std::vector<TensorType> Backward(VecTensorType const &inputs, TensorType const & error_signal) override
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     FETCH_UNUSED(inputs);
     assert(inputs.empty());
@@ -131,10 +139,32 @@ public:
     bool shape_changed = DataHolder<T>::SetData(data);
     if (shape_changed)
     {
-      gradient_accumulation_ = std::make_shared<TensorType>(this->output_->shape());
+      gradient_accumulation_ = std::make_shared<TensorType>(this->data_->shape());
       return true;
     }
     return false;
+  }
+
+  void ApplyGradient(TensorType const &grad) override
+  {
+    this->data_->InlineAdd(grad);
+    ResetGradients();
+  }
+
+  /**
+   * Set all gradient values to 0
+   */
+  void ResetGradients() override
+  {
+    gradient_accumulation_->Fill(typename T::Type(0));
+  }
+
+  void ApplyRegularisation() override
+  {
+    if (this->regulariser_)
+    {
+      this->regulariser_->ApplyRegularisation(*this->data_, this->regularisation_rate_);
+    }
   }
 
   /**
@@ -144,7 +174,6 @@ public:
    */
   std::shared_ptr<Ops<TensorType>> MakeSharedCopy(std::shared_ptr<Ops<TensorType>> me) override
   {
-    // This overrides implementation in Variable
     assert(me.get() == this);
     return me;
   }
@@ -157,10 +186,11 @@ public:
   static constexpr char const *DESCRIPTOR = "Variable";
 
 protected:
-  TensorPtrType data_;
-  TensorPtrType gradient_accumulation_;
+  TensorPtrType      data_;
+  TensorPtrType      gradient_accumulation_;
+  RegularisationType regularisation_type = RegularisationType::NONE;
+  DataType           regularisation_rate = fetch::math::numeric_max<DataType>();
 };
-
 }  // namespace ops
 }  // namespace ml
 }  // namespace fetch

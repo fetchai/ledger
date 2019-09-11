@@ -65,8 +65,7 @@ public:
 
   explicit Weights(SPType const &sp)
     : Variable<T>(sp)
-  {
-  }
+  {}
 
   ~Weights() override = default;
 
@@ -81,33 +80,11 @@ public:
     return sp;
   }
 
-  void Step(typename T::Type learning_rate) override
+  std::shared_ptr<Ops<TensorType>> MakeSharedCopy(std::shared_ptr<Ops<TensorType>> me) override
   {
-    this->gradient_accumulation_->InlineMultiply(-learning_rate);
-    this->output_->InlineAdd(*gradient_accumulation_);
-    ResetGradients();
-  }
-
-  void ApplyGradient(TensorType const &grad) override
-  {
-    this->output_->InlineAdd(grad);
-    ResetGradients();
-  }
-
-  /**
-   * Set all gradient values to 0
-   */
-  void ResetGradients() override
-  {
-    gradient_accumulation_->Fill(typename T::Type(0));
-  }
-
-  void ApplyRegularisation() override
-  {
-    if (this->regulariser_)
-    {
-      this->regulariser_->ApplyRegularisation(*this->output_, this->regularisation_rate_);
-    }
+    // This overrides implementation in Placeholder
+    assert(me.get() == this);
+    return me;
   }
 
   /**
@@ -117,7 +94,7 @@ public:
   struct fetch::ml::StateDict<T> StateDict() const override
   {
     struct fetch::ml::StateDict<T> d;
-    d.weights_ = this->output_;
+    d.weights_ = this->data_;
     return d;
   }
 
@@ -129,7 +106,7 @@ public:
   LoadStateDict(struct fetch::ml::StateDict<T> const &dict) override
   {
     assert(dict.dict_.empty());
-    SetData(*dict.weights_);
+    this->SetData(*dict.weights_);
   }
 
   /**
@@ -219,18 +196,19 @@ public:
       throw;
     }
   }
+
   /**
    * exports the weight values Array
    * @return const reference to internal values Array
    */
   TensorType const &get_weights() const override
   {
-    return *this->output_;
+    return *this->data_;
   }
 
   void SetWeights(TensorType &new_value) override
   {
-    this->output_->Assign(new_value);
+    this->data_->Assign(new_value);
   }
 
   /**
@@ -311,10 +289,7 @@ private:
 template <class TensorType>
 struct OpWeightsSaveableParams : public OpVariableSaveableParams<TensorType>
 {
-  fetch::ml::OpType           op_type = OpType::OP_WEIGHTS;
-  std::shared_ptr<TensorType> gradient_accumulation;
-  RegularisationType          regularisation_type;
-  typename TensorType::Type   regularisation_rate;
+  fetch::ml::OpType op_type = OpType::OP_WEIGHTS;
 };
 
 }  // namespace ml

@@ -52,7 +52,7 @@ public:
   PlaceHolder() = default;
 
   explicit PlaceHolder(SPType const &sp)
-    : Ops<T>(sp)
+    : DataHolder<T>(sp)
   {}
 
   ~PlaceHolder() override = default;
@@ -68,7 +68,8 @@ public:
    * @param error_signal
    * @return
    */
-  std::vector<TensorType> Backward(VecTensorType const &inputs, TensorType const & error_signal) override
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     FETCH_UNUSED(inputs);
     FETCH_UNUSED(error_signal);
@@ -89,9 +90,9 @@ public:
 
     auto copyshare = std::make_shared<MyType>(*this);
 
-    if (this->output_)
+    if (this->data_)
     {
-      copyshare->output_ = std::make_shared<TensorType>(this->output_->Copy());
+      copyshare->data_ = std::make_shared<TensorType>(this->data_->Copy());
     }
 
     return copyshare;

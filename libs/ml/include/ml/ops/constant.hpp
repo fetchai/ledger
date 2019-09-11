@@ -29,30 +29,33 @@ namespace fetch {
 namespace ml {
 namespace ops {
 
-// TODO         - Constants, Variables, Placeholders
-// serial           - save,     save,      do not save
-// trainable        - no,      yes,        no
-// data mutable     - no,       yes,        yes
-// shareable?       - yes,      yes,       no
-
+/**
+ * A Constant is a DataHolder intended to store an immutable value.
+ * It has the following features:
+ * 1. trainable: no
+ * 2. mutable: no, the data can be only written once
+ * 3. shareable: yes, shared layers can re-used constants
+ * 4. saveable: yes, the data is stored upon serialisation
+ * @tparam T
+ */
 template <class T>
-class Variable : public DataHolder<T>
+class Constant : public DataHolder<T>
 {
 public:
   using TensorType    = T;
   using SizeType      = typename TensorType::SizeType;
-  using TensorPtrType  = std::shared_ptr<TensorType>;
+  using TensorPtrType = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  using SPType        = OpVariableSaveableParams<TensorType>;
-  using MyType        = Variable<TensorType>;
+  using SPType        = OpConstantSaveableParams<TensorType>;
+  using MyType        = Constant<TensorType>;
 
-  Variable() = default;
+  Constant() = default;
 
-  explicit Variable(SPType const &sp)
-    : Ops<T>(sp)
+  explicit Constant(SPType const &sp)
+    : DataHolder<T>(sp)
   {}
 
-  ~Variable() override = default;
+  ~Constant() override = default;
 
   std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
   {
@@ -60,28 +63,18 @@ public:
   }
 
   /**
-   * abstract method, variable sharing should be implemented by concrete Op
+   * shares the constant
    * @param me
    * @return
    */
-  virtual std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
-      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override = 0;
-
-  /**
-   * forward recovers the stored data
-   * @param inputs
-   * @param output
-   */
-  void Forward(VecTensorType const &inputs, TensorType &output) override
+  std::shared_ptr<Ops<TensorType>> MakeSharedCopy(std::shared_ptr<Ops<TensorType>> me) override
   {
-    FETCH_UNUSED(inputs);
-    assert(inputs.empty());
-    assert(data_);
-    output = *(data_);
+    assert(me.get() == this);
+    return me;
   }
 
   /**
-   * backward simply passes back the error signal
+   * backward not callable for constant. constant are not trainable
    * @param inputs
    * @param error_signal
    * @return
@@ -90,19 +83,36 @@ public:
                                    TensorType const &   error_signal) override
   {
     FETCH_UNUSED(inputs);
-    assert(inputs.empty());
-    return {error_signal};
+    FETCH_UNUSED(error_signal);
+    throw std::runtime_error("backward called on constant, but constant is not trainable");
+  }
+
+  /**
+   * sets the internally stored data
+   * @param data
+   * @return
+   */
+  bool SetData(TensorType const &data) override
+  {
+    if (!data_set_once_)
+    {
+      return this->SetData(data);
+    }
+    else
+    {
+      throw std::runtime_error("cannot set data in constant more than once");
+    }
   }
 
   static constexpr OpType OpCode()
   {
-    return OpType::OP_VARIABLE;
+    return OpType::OP_CONSTANT;
   }
 
-  static constexpr char const *DESCRIPTOR = "Variable";
+  static constexpr char const *DESCRIPTOR = "CONSTANT";
 
 protected:
-  TensorPtrType data_;
+  bool data_set_once_ = false;
 };
 
 }  // namespace ops

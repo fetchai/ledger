@@ -30,7 +30,7 @@ namespace ops {
 /**
  * DataHolder is an abstract class for sharing implementations between
  * Constant, Variable, and PlaceHolder
- * @tparam T 
+ * @tparam T
  */
 
 template <class T>
@@ -39,9 +39,9 @@ class DataHolder : public Ops<T>
 public:
   using TensorType    = T;
   using SizeType      = typename TensorType::SizeType;
-  using TensorPtrType  = std::shared_ptr<TensorType>;
+  using TensorPtrType = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  using SPType        = OpDataHolderSaveableParams;
+  using SPType        = OpDataHolderSaveableParams<T>;
   using MyType        = DataHolder<TensorType>;
 
   DataHolder() = default;
@@ -76,7 +76,8 @@ public:
    * @param error_signal
    * @return
    */
-  std::vector<TensorType> Backward(VecTensorType const &inputs, TensorType const & error_signal) override
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     FETCH_UNUSED(inputs);
     FETCH_UNUSED(error_signal);
