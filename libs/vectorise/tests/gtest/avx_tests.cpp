@@ -24,6 +24,7 @@
 #include "gtest/gtest.h"
 
 #include <functional>
+#include <memory>
 
 using namespace fetch::vectorise;
 
@@ -130,8 +131,8 @@ TYPED_TEST(VectorRegisterTest, basic_tests)
   for (size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
   {
     // We don't want to check overflows right now, so we pick random numbers, but well within the type's limits
-    a[i] = type(double(random()) / (double)(RAND_MAX) * (1 << (TypeParam::E_REGISTER_SIZE/2)) );
-    b[i] = type(double(random()) / (double)(RAND_MAX) * (1 << (TypeParam::E_REGISTER_SIZE/2)) + 1 );
+    a[i] = type((double(random()) / (double)(RAND_MAX)) * (double)(fetch::math::numeric_max<type>()/2) );
+    b[i] = type((double(random()) / (double)(RAND_MAX)) * (double)(fetch::math::numeric_max<type>()/2) );
     sum[i] = a[i] + b[i];
     diff[i] = a[i] - b[i];
     prod[i] = a[i] * b[i];
@@ -161,8 +162,6 @@ TYPED_TEST(VectorRegisterTest, basic_tests)
   {
     hsum += sum[i];
   }
-  std::cout << "hsum = " << hsum << std::endl;
-  std::cout << "reduce(vsum) = " << reduce1 << std::endl;
   EXPECT_EQ(hsum, reduce1);
 
   TypeParam vmax = Max(va, vb);
@@ -191,10 +190,8 @@ TYPED_TEST(VectorReduceTest, reduce_tests)
 
   for (std::size_t i = 0; i < N; ++i)
   {
-    A[i] = type((i+1)*4);
-    B[i] = type((i+1)*(i+1));
-    std::cout << "A[" << i << "] = " << A[i] << std::endl;
-    std::cout << "B[" << i << "] = " << B[i] << std::endl;
+    A[i] = fetch::math::Sin(type(-0.1) * type(i));
+    B[i] = fetch::math::Sin(type(0.1) * type(i+1));
     sum += A[i] + B[i];
     max_a = fetch::vectorise::Max(A[i], max_a);
     min_a = fetch::vectorise::Min(A[i], min_a);
@@ -205,12 +202,6 @@ TYPED_TEST(VectorReduceTest, reduce_tests)
       partial_min = fetch::vectorise::Min(A[i], partial_min);
     }
   }
-  std::cout << "Sum = " << sum << std::endl;
-  std::cout << "Sum(2, N-2) = " << partial_sum << std::endl;
-  std::cout << "Max = " << max_a << std::endl;
-  std::cout << "Min = " << min_a << std::endl;
-
-  std::cout << "A: " << ptrdiff_t(&A[0]) << ", " << ptrdiff_t(&A[N-1]) << std::endl;
 
   type ret;
   ret = A.in_parallel().Reduce(
@@ -221,7 +212,6 @@ TYPED_TEST(VectorReduceTest, reduce_tests)
           return fetch::vectorise::Max(a);
         });
   EXPECT_EQ(ret, max_a);
-  std::cout << "Reduce: Max = " << ret << std::endl;
 
   fetch::memory::Range range(2, A.size() -2);
   ret = A.in_parallel().Reduce(range,
@@ -232,8 +222,6 @@ TYPED_TEST(VectorReduceTest, reduce_tests)
           return fetch::vectorise::Max(a);
         });
   EXPECT_EQ(ret, partial_max);
-  std::cout << "Reduce (range: 2, N-2): Max = " << ret << std::endl;
-  std::cout << "Reduce (range: 2, N-2): Actual Max = " << partial_max << std::endl;
 
   ret = A.in_parallel().Reduce(
         [](auto const &a, auto const &b) {
@@ -243,7 +231,6 @@ TYPED_TEST(VectorReduceTest, reduce_tests)
           return fetch::vectorise::Min(a);
         }, type(N*N));
   EXPECT_EQ(ret, min_a);
-  std::cout << "Reduce: Min = " << ret << std::endl;
 
   ret = A.in_parallel().Reduce(range,
         [](auto const &a, auto const &b) {
@@ -253,29 +240,19 @@ TYPED_TEST(VectorReduceTest, reduce_tests)
           return fetch::vectorise::Min(a);
         }, type(N*N));
   EXPECT_EQ(ret, partial_min);
-  std::cout << "Reduce (range: 2, N-2): Min = " << ret << std::endl;
-  std::cout << "Reduce (range: 2, N-2): Actual Min = " << partial_min << std::endl;
 
   ret = A.in_parallel().SumReduce([](auto const &a, auto const &b) {
           return a + b;
         }, 
-        [](auto const &a) {
-          return reduce(a);
-        }, B);
+        B);
   EXPECT_EQ(ret, sum);
-  std::cout << "SumReduce: ret = " << ret << std::endl;
-  std::cout << "Sum = " << sum << std::endl;
 
   ret = A.in_parallel().SumReduce(range,
         [](auto const &a, auto const &b) {
           return a + b;
         }, 
-        [](auto const &a) {
-          return reduce(a);
-        }, B);
+        B);
   EXPECT_EQ(ret, partial_sum);
-  std::cout << "SumReduce (range: 2, N-2): ret = " << ret << std::endl;
-  std::cout << "Sum = " << partial_sum << std::endl;
 
   C.in_parallel().Apply(
     [](auto const &a, auto const &b, auto &c) {
@@ -285,11 +262,11 @@ TYPED_TEST(VectorReduceTest, reduce_tests)
 
   for (std::size_t i = 0; i < N; ++i)
   {
-    std::cout << "C[" << i << "] = " << C[i] << std::endl;
+    EXPECT_EQ(C[i], A[i] + B[i]);
   }
 
   type beta(4);
-  fetch::memory::Range small_range(8, 16);
+  fetch::memory::Range small_range(6, 15);
   C.in_parallel().RangedApplyMultiple(
     small_range,
     [beta](auto const &a, auto const &b, auto &c) {
@@ -297,8 +274,33 @@ TYPED_TEST(VectorReduceTest, reduce_tests)
     }, 
     A, B);
 
+  for (std::size_t i = 6; i < 15; ++i)
+  {
+    EXPECT_EQ(C[i], A[i]*beta + B[i]);
+  }
+
+  // Assign tests, assign all of B to C
+  C.in_parallel().Apply(
+    [](auto const &a, auto &c) {
+        c = a;
+    }, 
+    B);
+
   for (std::size_t i = 0; i < N; ++i)
   {
-    std::cout << "C[" << i << "] = " << C[i] << std::endl;
+    EXPECT_EQ(C[i], B[i]);
+  }
+
+  // Assign range (6,15) of A to C
+  C.in_parallel().RangedApplyMultiple(
+    small_range,
+    [](auto const &a, auto &c) {
+        c = a;
+    }, 
+    A);
+
+  for (std::size_t i = 6; i < 15; ++i)
+  {
+    EXPECT_EQ(C[i], A[i]);
   }
 }
