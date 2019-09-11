@@ -15,10 +15,7 @@ setup_compiler()
 # ------------------------------------------------------------------------------
 
 setup_library(fetch-bloomfilter)
-target_link_libraries(fetch-bloomfilter
-                      PUBLIC fetch-core
-                      fetch-crypto
-                      fetch-logging)
+target_link_libraries(fetch-bloomfilter PUBLIC fetch-core fetch-crypto fetch-logging)
 # ------------------------------------------------------------------------------
 # Example Targets
 # ------------------------------------------------------------------------------

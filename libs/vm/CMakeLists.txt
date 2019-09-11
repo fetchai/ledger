@@ -19,6 +19,6 @@ target_link_libraries(fetch-vm
                       PUBLIC utf8cpp
                              fetch-math
                              fetch-core
-                             fetch-variant                             
+                             fetch-variant
                              fetch-address
                              fetch-logging)

@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "address/address.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/containers/mapping.hpp"
@@ -26,7 +27,6 @@
 #include "dkg/dkg_rpc_protocol.hpp"
 #include "dkg/rbc.hpp"
 #include "dkg/round.hpp"
-#include "address/address.hpp"
 #include "entropy/entropy_generator_interface.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"

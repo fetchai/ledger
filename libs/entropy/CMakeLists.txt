@@ -15,8 +15,7 @@ setup_compiler()
 # ------------------------------------------------------------------------------
 
 setup_library(fetch-entropy)
-target_link_libraries(fetch-entropy
-                      INTERFACE fetch-core)
+target_link_libraries(fetch-entropy INTERFACE fetch-core)
 # ------------------------------------------------------------------------------
 # Example Targets
 # ------------------------------------------------------------------------------

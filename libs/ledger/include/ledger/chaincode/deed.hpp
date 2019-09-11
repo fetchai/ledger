@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "address/address.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "crypto/fnv.hpp"
-#include "address/address.hpp"
 
 #include <cstdint>
 

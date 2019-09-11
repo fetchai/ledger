@@ -21,9 +21,9 @@
 #include "core/byte_array/decoders.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_serializer.hpp"
+#include "logging/logging.hpp"
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
-#include "logging/logging.hpp"
 
 namespace fetch {
 namespace ledger {

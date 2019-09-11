@@ -18,11 +18,9 @@ setup_library(fetch-oef-search)
 target_link_libraries(fetch-oef-search
                       PUBLIC fetch-core
                              fetch-oef-messages
-                             fetch-oef-base                             
+                             fetch-oef-base
                              fetch-network)
 
-# Test targets
-# add_test_target()
+# Test targets add_test_target()
 
-# Example targets
-#add_subdirectory(examples)
+# Example targets add_subdirectory(examples)

@@ -17,8 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
-#include "logging/logging.hpp"
 #include "core/mutex.hpp"
+#include "logging/logging.hpp"
 #include "network/muddle/subscription_registrar.hpp"
 
 #include <cstdint>

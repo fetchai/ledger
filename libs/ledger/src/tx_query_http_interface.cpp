@@ -18,12 +18,12 @@
 
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "logging/logging.hpp"
 #include "core/macros.hpp"
 #include "http/json_response.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "ledger/tx_query_http_interface.hpp"
+#include "logging/logging.hpp"
 #include "miner/resource_mapper.hpp"
 #include "variant/variant.hpp"
 

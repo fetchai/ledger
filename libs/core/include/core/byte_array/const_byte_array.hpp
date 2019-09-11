@@ -473,7 +473,6 @@ protected:
   }
 
 private:
-
   /**
    * AddSize is a binary callable object that, when called,
    * returns the sum of its first argument and the size of the second.
@@ -598,8 +597,6 @@ inline ConstByteArray operator+(char const *a, ConstByteArray const &b)
 }  // namespace byte_array
 }  // namespace fetch
 
-
-
 namespace std {
 
 template <>
@@ -609,13 +606,13 @@ struct hash<fetch::byte_array::ConstByteArray>
   {
     uint64_t h = 2166136261U;
     uint64_t i;
-  
+
     for (i = 0; i < value.size(); ++i)
     {
-      h = ( h * 16777619 ) ^ value[i];
+      h = (h * 16777619) ^ value[i];
     }
-  
-   return h;
+
+    return h;
   }
 };
 
@@ -625,4 +622,3 @@ struct hash<fetch::byte_array::ByteArray> : public hash<fetch::byte_array::Const
 };
 
 }  // namespace std
-

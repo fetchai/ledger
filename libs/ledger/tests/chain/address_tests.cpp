@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "address/address.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/identity.hpp"
 #include "crypto/sha256.hpp"
-#include "address/address.hpp"
 
 #include "gtest/gtest.h"
 

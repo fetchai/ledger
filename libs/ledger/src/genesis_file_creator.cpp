@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "address/address.hpp"
 #include "core/byte_array/decoders.hpp"
-#include "json/document.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "dkg/dkg_service.hpp"
-#include "address/address.hpp"
+#include "json/document.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chain/constants.hpp"

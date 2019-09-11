@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "address/address.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/serializers/group_definitions.hpp"
 #include "core/serializers/main_serializer.hpp"
-#include "address/address.hpp"
 #include "ledger/chain/block.hpp"
 
 #include "gtest/gtest.h"

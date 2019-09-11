@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "address/address.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/mutex.hpp"
@@ -26,7 +27,6 @@
 #include "crypto/fnv.hpp"
 #include "crypto/identity.hpp"
 #include "crypto/sha256.hpp"
-#include "address/address.hpp"
 #include "ledger/chain/transaction_serializer.hpp"
 
 #include <cstdint>

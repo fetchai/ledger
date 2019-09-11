@@ -27,9 +27,9 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <sstream>
 #include <string>
 #include <vector>
-#include <sstream>
 
 namespace fetch {
 namespace vectorise {

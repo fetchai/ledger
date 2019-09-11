@@ -252,7 +252,6 @@ function (configure_vendor_targets)
     target_compile_definitions(vendor-asio INTERFACE ASIO_HAS_STD_STRING_VIEW)
   endif (APPLE)
 
-
   # OpenSSL
   add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/openssl)
   add_library(vendor-openssl2 INTERFACE)

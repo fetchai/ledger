@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "logging/logging.hpp"
 #include "core/serializers/base_types.hpp"
 #include "core/serializers/main_serializer.hpp"
+#include "logging/logging.hpp"
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/muddle_register.hpp"
 #include "network/muddle/muddle_server.hpp"

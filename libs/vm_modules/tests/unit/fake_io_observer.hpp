@@ -23,8 +23,8 @@
 #include <cstdint>
 #include <map>
 #include <string>
-#include <unordered_set>
 #include <unordered_map>
+#include <unordered_set>
 
 class FakeIoObserver : public fetch::vm::IoObserverInterface
 {

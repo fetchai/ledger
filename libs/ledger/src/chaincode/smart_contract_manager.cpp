@@ -25,12 +25,12 @@
 #include "ledger/chaincode/contract.hpp"
 #include "ledger/chaincode/smart_contract.hpp"
 #include "ledger/chaincode/smart_contract_manager.hpp"
+#include "logging/logging.hpp"
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
 #include "vm/function_decorators.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/vm_factory.hpp"
-#include "logging/logging.hpp"
 
 #include <cassert>
 #include <memory>

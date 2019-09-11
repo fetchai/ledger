@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "constellation.hpp"
 #include "bloom_filter/bloom_filter.hpp"
+#include "constellation.hpp"
 #include "dkg/dkg_service.hpp"
 #include "health_check_http_module.hpp"
 #include "http/middleware/allow_origin.hpp"

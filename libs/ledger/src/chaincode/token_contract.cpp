@@ -22,9 +22,9 @@
 #include "ledger/chaincode/deed.hpp"
 #include "ledger/chaincode/token_contract.hpp"
 #include "ledger/chaincode/wallet_record.hpp"
+#include "logging/logging.hpp"
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
-#include "logging/logging.hpp"
 
 #include <memory>
 #include <unordered_map>

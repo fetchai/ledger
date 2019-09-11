@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "logging/logging.hpp"
 #include "dkg/rbc_envelope.hpp"
+#include "logging/logging.hpp"
 
 #include <cassert>
 #include <memory>

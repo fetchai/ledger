@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/ecdsa.hpp"
 #include "address/address.hpp"
+#include "crypto/ecdsa.hpp"
 #include "ledger/chain/json_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_builder.hpp"

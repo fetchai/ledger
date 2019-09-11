@@ -18,9 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "logging/logging.hpp"
 #include "http/abstract_connection.hpp"
 #include "http/abstract_server.hpp"
+#include "logging/logging.hpp"
 
 #include <cstdint>
 

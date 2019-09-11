@@ -1,8 +1,25 @@
 #pragma once
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018-2019 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
 
-#include <utility>
-#include <string>
 #include <stdexcept>
+#include <string>
+#include <utility>
 
 class IKarmaPolicy;
 
@@ -11,45 +28,63 @@ class KarmaAccount
 public:
   static constexpr char const *LOGGING_NAME = "KarmaAccount";
 
-  KarmaAccount(const KarmaAccount &other) { copy(other); }
-  KarmaAccount &operator=(const KarmaAccount &other) { copy(other); return *this; }
-  bool operator==(const KarmaAccount &other) const { return compare(other)==0; }
-  bool operator<(const KarmaAccount &other) const { return compare(other)==-1; }
+  KarmaAccount(const KarmaAccount &other)
+  {
+    copy(other);
+  }
+  KarmaAccount &operator=(const KarmaAccount &other)
+  {
+    copy(other);
+    return *this;
+  }
+  bool operator==(const KarmaAccount &other) const
+  {
+    return compare(other) == 0;
+  }
+  bool operator<(const KarmaAccount &other) const
+  {
+    return compare(other) == -1;
+  }
   KarmaAccount(IKarmaPolicy *policy)
   {
-    this -> id = 0;
-    this -> policy = policy;
-    this -> name = "NULL_KARMA_ACCOUNT";
+    this->id     = 0;
+    this->policy = policy;
+    this->name   = "NULL_KARMA_ACCOUNT";
   }
 
   KarmaAccount()
   {
-    this -> id = 0;
-    this -> policy = 0;
+    this->id     = 0;
+    this->policy = 0;
   }
 
   virtual ~KarmaAccount()
-  {
-  }
+  {}
 
   std::string getBalance();
 
-  virtual void upgrade(const std::string &pubkey="", const std::string &ip="");
+  virtual void upgrade(const std::string &pubkey = "", const std::string &ip = "");
 
-  virtual bool perform(const std::string &action, bool force=false);
+  virtual bool perform(const std::string &action, bool force = false);
   virtual bool couldPerform(const std::string &action);
 
   friend void swap(KarmaAccount &a, KarmaAccount &b);
-  std::size_t operator*() const { return id; }
+  std::size_t operator*() const
+  {
+    return id;
+  }
 
-  const std::string &getName(void) const { return name; }
+  const std::string &getName(void) const
+  {
+    return name;
+  }
+
 protected:
-
   friend IKarmaPolicy;
 
-  std::size_t id;
+  std::size_t   id;
   IKarmaPolicy *policy;
-  std::string name;
+  std::string   name;
 
   int compare(const KarmaAccount &other) const
   {
@@ -57,15 +92,17 @@ protected:
     {
       throw std::logic_error("KarmaAccounts are not comparable between policies.");
     }
-    if (id > other.id) return 1;
-    if (id < other.id) return -1;
+    if (id > other.id)
+      return 1;
+    if (id < other.id)
+      return -1;
     return 0;
   }
   void copy(const KarmaAccount &other)
   {
-    id = other.id;
+    id     = other.id;
     policy = other.policy;
-    name = other.name;
+    name   = other.name;
   }
   void swap(KarmaAccount &other)
   {
@@ -79,10 +116,10 @@ protected:
 
   KarmaAccount(std::size_t id, IKarmaPolicy *policy, const std::string &name)
   {
-    this -> id = id;
-    this -> policy = policy;
-    this -> name = name;
+    this->id     = id;
+    this->policy = policy;
+    this->name   = name;
   }
 };
 
-void swap(KarmaAccount& v1, KarmaAccount& v2);
+void swap(KarmaAccount &v1, KarmaAccount &v2);

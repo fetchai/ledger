@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "logging/logging.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "core/service_ids.hpp"
 #include "crypto/sha256.hpp"
 #include "dkg/dkg_service.hpp"
+#include "logging/logging.hpp"
 #include "network/muddle/muddle_endpoint.hpp"
 #include "network/muddle/packet.hpp"
 #include "network/muddle/subscription.hpp"

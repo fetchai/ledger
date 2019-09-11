@@ -28,6 +28,7 @@
 #include "ledger/fetch_msgpack.hpp"
 #include "ledger/state_adapter.hpp"
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
+#include "logging/logging.hpp"
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
 #include "vm/address.hpp"
@@ -35,7 +36,6 @@
 #include "vm/module.hpp"
 #include "vm/string.hpp"
 #include "vm_modules/vm_factory.hpp"
-#include "logging/logging.hpp"
 
 #include <algorithm>
 #include <cstddef>

@@ -18,8 +18,8 @@
 
 #include "contract_test.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "json/document.hpp"
 #include "core/serializers/main_serializer.hpp"
+#include "json/document.hpp"
 #include "ledger/chain/transaction_builder.hpp"
 #include "ledger/chaincode/deed.hpp"
 #include "ledger/chaincode/token_contract.hpp"

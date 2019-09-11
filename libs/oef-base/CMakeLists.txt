@@ -15,13 +15,8 @@ setup_compiler()
 # ------------------------------------------------------------------------------
 
 setup_library(fetch-oef-base)
-target_link_libraries(fetch-oef-base
-                      PUBLIC fetch-core
-                             fetch-oef-messages
-                             fetch-network)
+target_link_libraries(fetch-oef-base PUBLIC fetch-core fetch-oef-messages fetch-network)
 
-# Test targets
-# add_test_target()
+# Test targets add_test_target()
 
-# Example targets
-#add_subdirectory(examples)
+# Example targets add_subdirectory(examples)

@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "address/address.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "crypto/identity.hpp"
-#include "address/address.hpp"
 #include "ledger/identifier.hpp"
 #include "ledger/state_adapter.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"

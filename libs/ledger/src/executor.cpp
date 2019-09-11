@@ -18,7 +18,6 @@
 
 #include "core/assert.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "logging/logging.hpp"
 #include "core/macros.hpp"
 #include "core/mutex.hpp"
 #include "ledger/chain/transaction.hpp"
@@ -28,6 +27,7 @@
 #include "ledger/executor.hpp"
 #include "ledger/state_sentinel_adapter.hpp"
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
+#include "logging/logging.hpp"
 #include "metrics/metrics.hpp"
 #include "telemetry/histogram.hpp"
 #include "telemetry/registry.hpp"

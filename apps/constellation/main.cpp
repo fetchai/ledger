@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "address/address.hpp"
 #include "bootstrap_monitor.hpp"
 #include "config_builder.hpp"
 #include "constants.hpp"
@@ -24,7 +25,6 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/commandline/params.hpp"
-#include "logging/logging.hpp"
 #include "core/macros.hpp"
 #include "core/runnable.hpp"
 #include "core/string/to_lower.hpp"
@@ -33,7 +33,7 @@
 #include "crypto/identity.hpp"
 #include "crypto/prover.hpp"
 #include "key_generator.hpp"
-#include "address/address.hpp"
+#include "logging/logging.hpp"
 #include "network/adapters.hpp"
 #include "network/p2pservice/manifest.hpp"
 #include "network/p2pservice/p2p_service_defs.hpp"

@@ -16,15 +16,13 @@ setup_compiler()
 
 setup_library(fetch-oef-core)
 target_link_libraries(fetch-oef-core
-                      PUBLIC fetch-core                      
+                      PUBLIC fetch-core
                              vendor-openssl2
                              fetch-oef-messages
                              fetch-oef-base
-                             fetch-network
-                             )
+                             fetch-network)
 
-# Test targets
-# add_test_target()
+# Test targets add_test_target()
 
 # Example targets
 add_subdirectory(examples)

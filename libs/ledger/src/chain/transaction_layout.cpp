@@ -18,8 +18,8 @@
 
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_layout.hpp"
-#include "storage/resource_mapper.hpp"
 #include "logging/logging.hpp"
+#include "storage/resource_mapper.hpp"
 
 #include <utility>
 

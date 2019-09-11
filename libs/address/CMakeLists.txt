@@ -15,10 +15,7 @@ setup_compiler()
 # ------------------------------------------------------------------------------
 
 setup_library(fetch-address)
-target_link_libraries(fetch-address
-                      PUBLIC fetch-core
-                      fetch-crypto
-                      fetch-logging)
+target_link_libraries(fetch-address PUBLIC fetch-core fetch-crypto fetch-logging)
 # ------------------------------------------------------------------------------
 # Example Targets
 # ------------------------------------------------------------------------------

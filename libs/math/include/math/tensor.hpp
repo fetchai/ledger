@@ -42,10 +42,10 @@
 #include <memory>
 #include <numeric>
 #include <random>
+#include <sstream>
 #include <stdexcept>
 #include <utility>
 #include <vector>
-#include <sstream>
 
 namespace fetch {
 namespace math {

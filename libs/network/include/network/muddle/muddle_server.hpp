@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "logging/logging.hpp"
 #include "core/serializers/main_serializer.hpp"
+#include "logging/logging.hpp"
 #include "network/muddle/router.hpp"
 #include "network/tcp/abstract_server.hpp"
 

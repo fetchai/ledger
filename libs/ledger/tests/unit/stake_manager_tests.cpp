@@ -21,8 +21,8 @@
 #include "ledger/consensus/naive_entropy_generator.hpp"
 #include "ledger/consensus/stake_manager.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
-#include "random_address.hpp"
 #include "logging/logging.hpp"
+#include "random_address.hpp"
 
 #include "gtest/gtest.h"
 

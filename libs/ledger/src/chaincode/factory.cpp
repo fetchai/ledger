@@ -16,13 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "logging/logging.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "ledger/chaincode/dummy_contract.hpp"
 #include "ledger/chaincode/factory.hpp"
 #include "ledger/chaincode/smart_contract.hpp"
 #include "ledger/chaincode/smart_contract_manager.hpp"
 #include "ledger/chaincode/token_contract.hpp"
+#include "logging/logging.hpp"
 
 #include <functional>
 #include <stdexcept>

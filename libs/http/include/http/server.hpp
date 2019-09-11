@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "logging/logging.hpp"
 #include "http/abstract_server.hpp"
 #include "http/connection.hpp"
 #include "http/http_connection_manager.hpp"
@@ -29,6 +28,7 @@
 #include "http/response.hpp"
 #include "http/route.hpp"
 #include "http/status.hpp"
+#include "logging/logging.hpp"
 #include "network/fetch_asio.hpp"
 #include "network/management/network_manager.hpp"
 

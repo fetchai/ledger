@@ -18,9 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "logging/logging.hpp"
 #include "core/mutex.hpp"
 #include "core/serializers/main_serializer.hpp"
+#include "logging/logging.hpp"
 #include "network/management/client_manager.hpp"
 #include "network/management/network_manager.hpp"
 #include "network/message.hpp"

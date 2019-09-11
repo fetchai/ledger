@@ -162,11 +162,13 @@ void Reactor::Monitor()
       }
       catch (std::exception const &ex)
       {
-// TODO: Logging not supported in code        FETCH_LOG_INFO(LOGGING_NAME, "Error generated in reactor: ", name_, " error: ", ex.what());
+        // TODO: Logging not supported in code        FETCH_LOG_INFO(LOGGING_NAME, "Error generated
+        // in reactor: ", name_, " error: ", ex.what());
       }
       catch (...)
       {
-// TODO: Logging not supported in code       FETCH_LOG_INFO(LOGGING_NAME, "Unknown error generated in reactor: ", name_);
+        // TODO: Logging not supported in code       FETCH_LOG_INFO(LOGGING_NAME, "Unknown error
+        // generated in reactor: ", name_);
       }
     }
   }

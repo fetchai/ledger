@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
 #include "bloom_filter/bloom_filter.hpp"
+#include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "crypto/hash.hpp"

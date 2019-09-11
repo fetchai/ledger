@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "core/future_timepoint.hpp"
-#include "logging/logging.hpp"
 #include "core/service_ids.hpp"
 #include "crypto/merkle_tree.hpp"
 #include "ledger/shard_config.hpp"
@@ -27,6 +26,7 @@
 #include "ledger/storage_unit/lane_identity_protocol.hpp"
 #include "ledger/storage_unit/lane_service.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
+#include "logging/logging.hpp"
 #include "network/generics/backgrounded_work.hpp"
 #include "network/generics/has_worker_thread.hpp"
 #include "network/management/connection_register.hpp"

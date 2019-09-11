@@ -18,9 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/bitvector.hpp"
-#include "logging/logging.hpp"
 #include "core/random/lcg.hpp"
 #include "core/random/lfg.hpp"
+#include "logging/logging.hpp"
 #include "math/approx_exp.hpp"
 
 namespace fetch {

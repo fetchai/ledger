@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "address/address.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/serializers/base_types.hpp"
-#include "address/address.hpp"
 #include "ledger/chain/consensus/proof_of_work.hpp"
 #include "ledger/chain/digest.hpp"
 #include "ledger/chain/transaction_layout.hpp"

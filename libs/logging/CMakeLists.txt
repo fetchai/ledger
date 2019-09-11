@@ -15,8 +15,7 @@ setup_compiler()
 # ------------------------------------------------------------------------------
 
 setup_library(fetch-logging)
-target_link_libraries(fetch-logging
-                      PUBLIC fetch-core fetch-telemetry vendor-spdlog)
+target_link_libraries(fetch-logging PUBLIC fetch-core fetch-telemetry vendor-spdlog)
 # ------------------------------------------------------------------------------
 # Example Targets
 # ------------------------------------------------------------------------------

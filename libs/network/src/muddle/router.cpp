@@ -17,11 +17,11 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/encoders.hpp"
-#include "logging/logging.hpp"
 #include "core/serializers/base_types.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "core/service_ids.hpp"
 #include "crypto/fnv.hpp"
+#include "logging/logging.hpp"
 #include "network/muddle/dispatcher.hpp"
 #include "network/muddle/muddle_register.hpp"
 #include "network/muddle/packet.hpp"

@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "logging/logging.hpp"
 #include "http/http_client.hpp"
 #include "http/request.hpp"
 #include "http/response.hpp"
+#include "logging/logging.hpp"
 #include "network/fetch_asio.hpp"
 
 #include <system_error>

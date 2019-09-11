@@ -22,9 +22,9 @@
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_encoding.hpp"
 #include "ledger/chain/transaction_serializer.hpp"
+#include "logging/logging.hpp"
 #include "meta/type_traits.hpp"
 #include "vectorise/platform.hpp"
-#include "logging/logging.hpp"
 
 #include <cassert>
 #include <cstddef>

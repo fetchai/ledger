@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "logging/logging.hpp"
 #include "core/serializers/type_register.hpp"
+#include "logging/logging.hpp"
 #include "network/service/types.hpp"
 
 #include <cstdint>

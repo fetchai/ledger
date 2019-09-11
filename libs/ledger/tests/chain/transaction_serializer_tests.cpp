@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "address/address.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "crypto/ecdsa.hpp"
-#include "address/address.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_builder.hpp"
 #include "ledger/chain/transaction_serializer.hpp"

@@ -19,9 +19,9 @@
 
 #include "core/assert.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "logging/logging.hpp"
 #include "core/mutex.hpp"
 #include "core/serializers/exception.hpp"
+#include "logging/logging.hpp"
 #include "network/message.hpp"
 #include "network/service/client_interface.hpp"
 #include "network/service/error_codes.hpp"

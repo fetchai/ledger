@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/bitvector.hpp"
 #include "bloom_filter/bloom_filter.hpp"
+#include "core/bitvector.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "crypto/fnv.hpp"
 #include "crypto/hash.hpp"

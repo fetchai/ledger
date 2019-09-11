@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/synchronisation/protected.hpp"
 #include "address/address.hpp"
+#include "core/synchronisation/protected.hpp"
 #include "ledger/consensus/stake_update_interface.hpp"
 
 #include <map>

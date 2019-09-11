@@ -26,7 +26,7 @@ class EntropyGeneratorInterface
 {
 public:
   using Digest = byte_array::ConstByteArray;
-  
+
   // Construction / Destruction
   EntropyGeneratorInterface()          = default;
   virtual ~EntropyGeneratorInterface() = default;

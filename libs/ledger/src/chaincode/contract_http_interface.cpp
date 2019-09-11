@@ -17,18 +17,18 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/decoders.hpp"
-#include "json/document.hpp"
-#include "logging/logging.hpp"
 #include "core/serializers/base_types.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "core/string/replace.hpp"
 #include "http/json_response.hpp"
+#include "json/document.hpp"
 #include "ledger/chain/json_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chaincode/contract.hpp"
 #include "ledger/chaincode/contract_http_interface.hpp"
 #include "ledger/state_adapter.hpp"
 #include "ledger/transaction_processor.hpp"
+#include "logging/logging.hpp"
 #include "variant/variant.hpp"
 
 #include <ctime>

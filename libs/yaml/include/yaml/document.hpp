@@ -20,8 +20,8 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/consumers.hpp"
-#include "yaml/exceptions.hpp"
 #include "variant/variant.hpp"
+#include "yaml/exceptions.hpp"
 
 #include <cstddef>
 #include <cstdint>

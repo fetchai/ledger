@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "logging/logging.hpp"
 #include "http/authentication_level.hpp"
 #include "http/middleware/token_auth.hpp"
+#include "logging/logging.hpp"
 
 namespace fetch {
 namespace http {

@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "logging/logging.hpp"
 #include "address/address.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/transaction.hpp"
+#include "logging/logging.hpp"
 #include "miner/basic_miner.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/gauge.hpp"

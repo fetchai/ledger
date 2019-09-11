@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "logging/logging.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/core/byte_array_wrapper.hpp"
 #include "vm_modules/core/panic.hpp"
@@ -30,7 +31,6 @@
 #include "vm_modules/polyfill/bitshifting.hpp"
 #include "vm_modules/polyfill/bitwise_ops.hpp"
 #include "vm_modules/vm_factory.hpp"
-#include "logging/logging.hpp"
 
 #include <cstdint>
 #include <memory>
