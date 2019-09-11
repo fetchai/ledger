@@ -81,6 +81,7 @@ public:
     : pointer_(ptr)
     , size_(n)
   {
+    assert(ptrdiff_t(ptr) % E_SIMD_SIZE == 0);
   }
 
   ConstParallelDispatcher<Type> in_parallel() const
