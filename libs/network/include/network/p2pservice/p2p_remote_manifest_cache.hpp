@@ -47,8 +47,6 @@ public:
   using Manifest   = network::Manifest;
   using Address    = muddle::Packet::Address;
   using Cache      = std::unordered_map<Address, CacheEntry>;
-  using Mutex      = mutex::Mutex;
-  using Lock       = std::unique_lock<Mutex>;
   using AddressSet = std::unordered_set<Address>;
 
   // Construction / Destruction
@@ -72,7 +70,7 @@ public:
 
 private:
   Cache         cache_;
-  mutable Mutex mutex_{__LINE__, __FILE__};
+  mutable Mutex mutex_;
 };
 
 /**

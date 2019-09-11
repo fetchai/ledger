@@ -17,19 +17,18 @@
 //
 //------------------------------------------------------------------------------
 
-#include <functional>
-#include <map>
-#include <memory>
-#include <vector>
-
 #include "core/assert.hpp"
 #include "core/mutex.hpp"
-#include "core/serializers/byte_array.hpp"
 #include "network/management/abstract_connection.hpp"
 #include "network/service/callable_class_member.hpp"
 #include "network/service/error_codes.hpp"
 #include "network/service/feed_subscription_manager.hpp"
 #include "network/service/types.hpp"
+
+#include <functional>
+#include <map>
+#include <memory>
+#include <vector>
 
 namespace fetch {
 namespace service {
@@ -82,8 +81,6 @@ public:
    */
   callable_type operator[](function_handler_type const &n)
   {
-    LOG_STACK_TRACE_POINT;
-
     auto iter = members_.find(n);
     if (iter == members_.end())
     {
@@ -103,7 +100,7 @@ public:
    * @fnc is a pointer to the callable function.
    *
    * The pointer provided is used to invoke the callable when a call
-   * matching the identifier is recieved by a service.
+   * matching the identifier is received by a service.
    *
    * In the next implementation of this, one should use unique_ptr
    * rather than a raw pointer. This will have no impact on the rest of
@@ -169,8 +166,6 @@ public:
    */
   void RegisterFeed(feed_handler_type const &feed, AbstractPublicationFeed *publisher)
   {
-    LOG_STACK_TRACE_POINT;
-
     feeds_.push_back(std::make_shared<FeedSubscriptionManager>(feed, publisher));
   }
 
@@ -185,11 +180,9 @@ public:
   void Subscribe(uint64_t client,  // TODO(issue 21): Standardize client type over the code.
                  feed_handler_type const &feed, subscription_handler_type const &id)
   {
-    LOG_STACK_TRACE_POINT;
-
     FETCH_LOG_DEBUG(LOGGING_NAME, "Making subscription for ", client, " ", feed, " ", id);
 
-    feeds_mutex_.lock();
+    FETCH_LOCK(feeds_mutex_);
     std::size_t i = 0;
     for (; i < feeds_.size(); ++i)
     {
@@ -202,10 +195,8 @@ public:
     {
       TODO_FAIL("make serializable error, feed not found");
     }
-    auto &f = feeds_[i];
-    feeds_mutex_.unlock();
 
-    f->Subscribe(client, id);
+    feeds_[i]->Subscribe(client, id);
   }
 
   /* Unsubscribe client to feed.
@@ -219,9 +210,8 @@ public:
   void Unsubscribe(uint64_t client,  // TODO(issue 21): Standardize client type over the code.
                    feed_handler_type const &feed, subscription_handler_type const &id)
   {
-    LOG_STACK_TRACE_POINT;
+    FETCH_LOCK(feeds_mutex_);
 
-    feeds_mutex_.lock();
     std::size_t i = 0;
     for (; i < feeds_.size(); ++i)
     {
@@ -234,10 +224,7 @@ public:
     {
       TODO_FAIL("make serializable error, feed not found");
     }
-    auto &f = feeds_[i];
-    feeds_mutex_.unlock();
-
-    f->Unsubscribe(client, id);
+    feeds_[i]->Unsubscribe(client, id);
   }
 
   /* Access memeber to the feeds in the protocol.
@@ -273,11 +260,10 @@ public:
   }
 
 private:
-  std::vector<middleware_type> middleware_;
-
+  std::vector<middleware_type>                          middleware_;
   std::map<function_handler_type, stored_type>          members_;
   std::vector<std::shared_ptr<FeedSubscriptionManager>> feeds_;
-  fetch::mutex::Mutex                                   feeds_mutex_{__LINE__, __FILE__};
+  Mutex                                                 feeds_mutex_;
 };
 }  // namespace service
 }  // namespace fetch

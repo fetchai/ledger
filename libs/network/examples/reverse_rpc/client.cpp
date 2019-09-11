@@ -17,14 +17,20 @@
 //------------------------------------------------------------------------------
 
 #include "core/commandline/parameter_parser.hpp"
-#include "core/logger.hpp"
-#include "core/serializers/byte_array.hpp"
-#include "network/service/service_client.hpp"
-
+#include "core/logging.hpp"
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
+#include "network/service/service_client.hpp"
 #include "service_ids.hpp"
+
+#include <chrono>
+#include <cstddef>
+#include <cstdlib>
+#include <memory>
+#include <string>
+#include <thread>
+#include <vector>
 
 using fetch::muddle::Muddle;
 using fetch::muddle::rpc::Server;
@@ -33,7 +39,7 @@ using fetch::muddle::NetworkId;
 using fetch::network::NetworkManager;
 using fetch::network::Uri;
 using fetch::service::Protocol;
-using fetch::mutex::Mutex;
+using fetch::Mutex;
 using fetch::commandline::ParamsParser;
 using std::chrono::milliseconds;
 using std::this_thread::sleep_for;
@@ -70,7 +76,7 @@ public:
   }
 
 private:
-  Mutex   mutex_{__LINE__, __FILE__};
+  Mutex   mutex_;
   Strings strings_;
 };
 

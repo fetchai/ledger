@@ -170,35 +170,43 @@ bool JsonClient::Request(Method method, ConstByteArray const &endpoint, Headers 
 {
   bool success = false;
 
-  // make the request
-  HTTPRequest http_request;
-  http_request.SetMethod(method);
-  http_request.SetURI(endpoint);
-
-  if (headers)
+  try
   {
-    for (auto const &element : *headers)
+    // make the request
+    HTTPRequest http_request;
+    http_request.SetMethod(method);
+    http_request.SetURI(endpoint);
+
+    if (headers)
     {
-      http_request.AddHeader(element.first, element.second);
+      for (auto const &element : *headers)
+      {
+        http_request.AddHeader(element.first, element.second);
+      }
     }
-  }
 
-  if (request)
+    if (request)
+    {
+      std::ostringstream oss;
+      oss << *request;
+      http_request.SetBody(oss.str());
+
+      // override the content type
+      http_request.AddHeader("Content-Type", "application/json");
+    }
+
+    fetch::http::HTTPResponse http_response;
+    success = client_->Request(http_request, http_response);
+
+    // attempt to parse the body
+    json::JSONDocument doc(http_response.body());
+    response = doc.root();
+  }
+  catch (std::exception const &ex)
   {
-    std::ostringstream oss;
-    oss << *request;
-    http_request.SetBody(oss.str());
-
-    // override the content type
-    http_request.AddHeader("Content-Type", "application/json");
+    FETCH_LOG_INFO(LOGGING_NAME, "Failed to make ", ToString(method), " to ", endpoint);
+    success = false;
   }
-
-  fetch::http::HTTPResponse http_response;
-  success = client_->Request(http_request, http_response);
-
-  // attempt to parse the body
-  json::JSONDocument doc(http_response.body());
-  response = doc.root();
 
   return success;
 }
@@ -211,6 +219,84 @@ bool JsonClient::Request(Method method, ConstByteArray const &endpoint, Headers 
 HttpClientInterface const &JsonClient::underlying_client() const
 {
   return *client_;
+}
+
+/**
+ * Makes a GET request to the specified endpoint
+ *
+ * @param endpoint The target endpoint
+ * @param response The output response
+ * @return true if successful, otherwise false
+ */
+bool JsonClient::Get(ConstByteArray const &endpoint, Variant &response)
+{
+  return Request(Method::GET, endpoint, nullptr, nullptr, response);
+}
+
+/**
+ * Makes a GET request to the specified endpoint, with specified headers
+ *
+ * @param endpoint The target endpoint
+ * @param headers The headers to be used in the request
+ * @param response The output response
+ * @return true if successful, otherwise false
+ */
+bool JsonClient::Get(ConstByteArray const &endpoint, Headers const &headers, Variant &response)
+{
+  return Request(Method::GET, endpoint, &headers, nullptr, response);
+}
+
+/**
+ * Makes a POST request to the specified endpoint with a specified payload
+ *
+ * @param endpoint The target endpoint
+ * @param request The request payload to be sent
+ * @param response The output response
+ * @return true if successful, otherwise false
+ */
+bool JsonClient::Post(ConstByteArray const &endpoint, Variant const &request, Variant &response)
+{
+  return Request(Method::POST, endpoint, nullptr, &request, response);
+}
+
+/**
+ * Makes a POST request to the specified endpoint
+ *
+ * @param endpoint The target endpoint
+ * @param response The output response
+ * @return true if successful, otherwise false
+ */
+bool JsonClient::Post(ConstByteArray const &endpoint, Variant &response)
+{
+  return Request(Method::POST, endpoint, nullptr, nullptr, response);
+}
+
+/**
+ * Makes a POST request to the specified endpoint with a specified payload and headers
+ *
+ * @param endpoint The target endpoint
+ * @param headers The headers to the used in the request
+ * @param request The request to payload
+ * @param response The output response
+ * @return true if successful, otherwise false
+ */
+bool JsonClient::Post(ConstByteArray const &endpoint, Headers const &headers,
+                      Variant const &request, Variant &response)
+{
+  return Request(Method::POST, endpoint, &headers, &request, response);
+}
+
+/**
+ * Makes a POST request to the specified endpoint with a specified headers
+ *
+ * @param endpoint The target endpoint
+ * @param headers The headers to be used in the request
+ * @param response The output response
+ * @return true if successful, otherwise false
+ */
+bool JsonClient::Post(ConstByteArray const &endpoint, Headers const &headers, Variant &response)
+{
+  return Request(Method::POST, endpoint, &headers, nullptr, response);
 }
 
 }  // namespace http

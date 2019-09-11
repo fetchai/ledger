@@ -17,10 +17,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/encoders.hpp"
-#include "core/logger.hpp"
-#include "core/serializers/byte_array.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
-#include "core/serializers/stl_types.hpp"
+#include "core/logging.hpp"
+#include "core/serializers/base_types.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "core/service_ids.hpp"
 #include "crypto/fnv.hpp"
 #include "network/muddle/dispatcher.hpp"
@@ -60,7 +59,6 @@ namespace {
  */
 std::size_t GenerateEchoId(Packet const &packet)
 {
-  LOG_STACK_TRACE_POINT;
   crypto::FNV hash;
   hash.Reset();
 
@@ -114,11 +112,10 @@ bool operator==(Packet::RawAddress const &lhs, Packet::Address const &rhs)
  */
 ConstByteArray ToConstByteArray(Packet::RawAddress const &addr)
 {
-  LOG_STACK_TRACE_POINT;
   ByteArray buffer;
   buffer.Resize(addr.size());
   std::memcpy(buffer.pointer(), addr.data(), addr.size());
-  return std::move(buffer);
+  return {std::move(buffer)};
 }
 
 /**
@@ -167,7 +164,6 @@ Router::PacketPtr FormatPacket(Packet::Address const &from, NetworkId const &net
 
 std::string DescribePacket(Packet const &packet)
 {
-  LOG_STACK_TRACE_POINT;
   std::ostringstream oss;
 
   oss << "To: " << ToBase64(packet.GetTarget()) << " From: " << ToBase64(packet.GetSender())
@@ -189,7 +185,6 @@ std::string DescribePacket(Packet const &packet)
  */
 Packet::RawAddress Router::ConvertAddress(Packet::Address const &address)
 {
-  LOG_STACK_TRACE_POINT;
   Packet::RawAddress raw_address;
 
   if (raw_address.size() != address.size())
@@ -279,7 +274,6 @@ Router::PacketPtr const &Router::Sign(PacketPtr const &p) const
  */
 void Router::Route(Handle handle, PacketPtr packet)
 {
-  LOG_STACK_TRACE_POINT;
   FETCH_LOG_DEBUG(LOGGING_NAME, "Routing packet: ", DescribePacket(*packet));
 
   // discard all foreign packets
@@ -329,7 +323,6 @@ void Router::Route(Handle handle, PacketPtr packet)
  */
 void Router::AddConnection(Handle handle)
 {
-  LOG_STACK_TRACE_POINT;
   // create and format the packet
   auto packet = FormatDirect(address_, network_id_, SERVICE_MUDDLE, CHANNEL_ROUTING);
   packet->SetExchange(true);  // signal that this is the request half of a direct message
@@ -356,7 +349,6 @@ void Router::RemoveConnection(Handle /*handle*/)
 void Router::Send(Address const &address, uint16_t service, uint16_t channel,
                   Payload const &message)
 {
-  LOG_STACK_TRACE_POINT;
   // get the next counter for this message
   uint16_t const counter = dispatcher_.GetNextCounter();
 
@@ -381,7 +373,6 @@ void Router::Send(Address const &address, uint16_t service, uint16_t channel,
 void Router::Send(Address const &address, uint16_t service, uint16_t channel, uint16_t message_num,
                   Payload const &payload)
 {
-  LOG_STACK_TRACE_POINT;
   // format the packet
   auto packet =
       FormatPacket(address_, network_id_, service, channel, message_num, DEFAULT_TTL, payload);
@@ -403,7 +394,6 @@ void Router::Send(Address const &address, uint16_t service, uint16_t channel, ui
  */
 void Router::Broadcast(uint16_t service, uint16_t channel, Payload const &payload)
 {
-  LOG_STACK_TRACE_POINT;
   // get the next counter for this message
   uint16_t const counter = dispatcher_.GetNextCounter();
 
@@ -494,7 +484,6 @@ void Router::Cleanup()
 Router::Response Router::Exchange(Address const &address, uint16_t service, uint16_t channel,
                                   Payload const &request)
 {
-  LOG_STACK_TRACE_POINT;
   // get the next counter for this message
   uint16_t const counter = dispatcher_.GetNextCounter();
 
@@ -573,7 +562,6 @@ MuddleEndpoint::AddressList Router::GetDirectlyConnectedPeers() const
  */
 bool Router::IsConnected(Address const &target) const
 {
-  LOG_STACK_TRACE_POINT;
   FETCH_LOCK(routing_table_lock_);
 
   auto raw_address = ConvertAddress(target);
@@ -606,7 +594,6 @@ bool Router::IsConnected(Address const &target) const
 bool Router::AssociateHandleWithAddress(Handle handle, Packet::RawAddress const &address,
                                         bool direct)
 {
-  LOG_STACK_TRACE_POINT;
   bool update_complete = false;
 
   // At the moment these updates (and by extension the routing logic) works on a first
@@ -693,7 +680,6 @@ Router::Handle Router::LookupHandleFromAddress(Packet::Address const &address) c
  */
 Router::Handle Router::LookupHandle(Packet::RawAddress const &address) const
 {
-  LOG_STACK_TRACE_POINT;
   Handle handle = 0;
 
   {
@@ -749,7 +735,6 @@ Router::Handle Router::LookupRandomHandle(Packet::RawAddress const & /*address*/
  */
 void Router::KillConnection(Handle handle, Address const &peer)
 {
-  LOG_STACK_TRACE_POINT;
   auto conn = register_.LookupConnection(handle).lock();
   if (conn)
   {
@@ -770,7 +755,6 @@ void Router::KillConnection(Handle handle, Address const &peer)
  */
 void Router::KillConnection(Handle handle)
 {
-  LOG_STACK_TRACE_POINT;
   Address address;
   {
     FETCH_LOCK(routing_table_lock_);
@@ -798,7 +782,6 @@ void Router::KillConnection(Handle handle)
  */
 void Router::SendToConnection(Handle handle, PacketPtr packet)
 {
-  LOG_STACK_TRACE_POINT;
   // internal method, we expect all inputs be valid at this stage
   assert(static_cast<bool>(packet));
 
@@ -817,13 +800,19 @@ void Router::SendToConnection(Handle handle, PacketPtr packet)
     }
 
     // serialize the packet to the buffer
-    serializers::ByteArrayBuffer buffer;
-    buffer << *packet;
+    ByteArray buffer;
+    buffer.Resize(packet->GetPacketSize());
+    if (Packet::ToBuffer(*packet, buffer.pointer(), buffer.size()))
+    {
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Sending out: ", DescribePacket(*packet));
 
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Sending out: ", DescribePacket(*packet));
-
-    // dispatch to the connection object
-    conn->Send(buffer.data());
+      // dispatch to the connection object
+      conn->Send(buffer);
+    }
+    else
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to generate binary stream for packet");
+    }
   }
   else
   {
@@ -839,7 +828,6 @@ void Router::SendToConnection(Handle handle, PacketPtr packet)
  */
 void Router::RoutePacket(PacketPtr packet, bool external)
 {
-  LOG_STACK_TRACE_POINT;
   /// Step 1. Determine if we should drop this packet (for whatever reason)
   if (external)
   {
@@ -872,11 +860,17 @@ void Router::RoutePacket(PacketPtr packet, bool external)
     }
 
     // serialize the packet to the buffer
-    serializers::ByteArrayBuffer buffer;
-    buffer << *packet;
-
-    // broadcast the data across the network
-    register_.Broadcast(buffer.data());
+    ByteArray buffer{};
+    buffer.Resize(packet->GetPacketSize());
+    if (Packet::ToBuffer(*packet, buffer.pointer(), buffer.size()))
+    {
+      // broadcast the data across the network
+      register_.Broadcast(buffer);
+    }
+    else
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to serialise muddle packet to stream");
+    }
   }
   else
   {
@@ -908,7 +902,6 @@ void Router::RoutePacket(PacketPtr packet, bool external)
  */
 void Router::DispatchDirect(Handle handle, PacketPtr packet)
 {
-  LOG_STACK_TRACE_POINT;
   FETCH_LOG_DEBUG(LOGGING_NAME, "==> Direct message sent to router");
 
   if (SERVICE_MUDDLE == packet->GetService())
@@ -944,7 +937,6 @@ void Router::DispatchDirect(Handle handle, PacketPtr packet)
  */
 void Router::DispatchPacket(PacketPtr packet, Address transmitter)
 {
-  LOG_STACK_TRACE_POINT;
   dispatch_thread_pool_->Post([this, packet, transmitter]() {
     bool const isPossibleExchangeResponse = !packet->IsExchange();
 
@@ -977,7 +969,6 @@ void Router::DispatchPacket(PacketPtr packet, Address transmitter)
  */
 bool Router::IsEcho(Packet const &packet, bool register_echo)
 {
-  LOG_STACK_TRACE_POINT;
   bool is_echo = true;
 
   // combine the 3 fields together into a single index
@@ -1008,7 +999,6 @@ bool Router::IsEcho(Packet const &packet, bool register_echo)
  */
 void Router::CleanEchoCache()
 {
-  LOG_STACK_TRACE_POINT;
   FETCH_LOCK(echo_cache_lock_);
 
   auto const now = Clock::now();
@@ -1049,7 +1039,6 @@ bool Router::IsBlacklisted(Address const &target) const
 
 void Router::DropPeer(Address const &peer)
 {
-  LOG_STACK_TRACE_POINT;
   FETCH_LOG_WARN(LOGGING_NAME, "Dropping peer from router: ", ToBase64(peer));
   Handle h = LookupHandle(ConvertAddress(peer));
   if (h)

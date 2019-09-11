@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "core/string/to_lower.hpp"
 #include "core/string/trim.hpp"
 #include "http/response.hpp"
@@ -52,8 +52,6 @@ byte_array::ByteArray CopyBuffer(asio::streambuf &buffer, std::size_t length)
 bool HTTPResponse::ToStream(asio::streambuf &buffer) const
 {
   static char const *NEW_LINE = "\r\n";
-
-  LOG_STACK_TRACE_POINT;
 
   std::ostream stream(&buffer);
 
@@ -184,7 +182,7 @@ bool HTTPResponse::ParseHeaderLine(std::size_t line_idx, char const *begin, char
   {
     if (*current == ':')
     {
-      // located our seperator (saftey checks done afterwards)
+      // located our separator (safety checks done afterwards)
       key_end     = current - 1;
       value_start = current + 1;
       break;
@@ -201,7 +199,7 @@ bool HTTPResponse::ParseHeaderLine(std::size_t line_idx, char const *begin, char
     return false;
   }
 
-  // construct the stings
+  // construct the strings
   std::string key(key_start, static_cast<std::size_t>((key_end - key_start) + 1));
   std::string value(value_start, static_cast<std::size_t>((value_end - value_start) + 1));
 

@@ -16,11 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/block.hpp"
-
-#include "core/serializers/byte_array_buffer.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "crypto/merkle_tree.hpp"
 #include "crypto/sha256.hpp"
+#include "ledger/chain/block.hpp"
 #include "ledger/chain/constants.hpp"
 
 #include <cstddef>
@@ -29,6 +28,10 @@
 
 namespace fetch {
 namespace ledger {
+
+Block::Block()
+  : first_seen_timestamp{static_cast<uint64_t>(std::time(nullptr))}
+{}
 
 /**
  * Get the number of transactions present in the block
@@ -68,7 +71,7 @@ void Block::UpdateDigest()
   tx_merkle_tree.CalculateRoot();
 
   // Generate hash stream
-  serializers::ByteArrayBuffer buf;
+  serializers::MsgPackSerializer buf;
   buf << body.previous_hash << body.merkle_hash << body.block_number << body.miner
       << body.log2_num_lanes << body.timestamp << tx_merkle_tree.root() << nonce;
 

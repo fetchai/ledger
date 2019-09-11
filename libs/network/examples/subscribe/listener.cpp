@@ -20,7 +20,13 @@
 #include "network/service/service_client.hpp"
 #include "protocols/fetch_protocols.hpp"
 #include "protocols/subscribe/commands.hpp"
+
+#include <chrono>
+#include <cstdint>
 #include <iostream>
+#include <string>
+#include <thread>
+#include <utility>
 
 using namespace fetch::service;
 using namespace fetch::protocols;

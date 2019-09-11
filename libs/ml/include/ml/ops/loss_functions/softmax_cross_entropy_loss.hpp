@@ -17,15 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include <cassert>
-#include <memory>
-#include <vector>
-
 #include "math/activation_functions/sigmoid.hpp"
 #include "math/activation_functions/softmax.hpp"
 #include "math/fundamental_operators.hpp"
 #include "math/metrics/cross_entropy.hpp"
 #include "ml/ops/ops.hpp"
+
+#include <cassert>
+#include <memory>
+#include <vector>
 
 namespace fetch {
 namespace ml {
@@ -35,41 +35,64 @@ template <class T>
 class SoftmaxCrossEntropyLoss : public Ops<T>
 {
 public:
-  using ArrayType     = T;
-  using DataType      = typename ArrayType::Type;
-  using SizeType      = typename ArrayType::SizeType;
+  using TensorType    = T;
+  using DataType      = typename TensorType::Type;
+  using SizeType      = typename TensorType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SPType        = OpSoftmaxCrossEntropySaveableParams<T>;
+  using MyType        = SoftmaxCrossEntropyLoss<TensorType>;
 
-  SoftmaxCrossEntropyLoss()          = default;
-  virtual ~SoftmaxCrossEntropyLoss() = default;
+  SoftmaxCrossEntropyLoss() = default;
 
-  void Forward(VecTensorType const &inputs, ArrayType &output) override
+  explicit SoftmaxCrossEntropyLoss(SPType const &sp)
+    : Ops<T>(sp)
+  {}
+
+  ~SoftmaxCrossEntropyLoss() override = default;
+
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
+  {
+    SPType sp{};
+    return std::make_shared<SPType>(sp);
+  }
+
+  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
+  {
+    FETCH_UNUSED(me);
+    assert(me.get() == this);
+
+    auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
+
+    return copyshare;
+  }
+
+  void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     // third term may be present for specifying n_classes
     assert(inputs.size() == 2);
-    assert(inputs.at(0).get().size() == inputs.at(1).get().size());
+    assert(inputs.at(0)->size() == inputs.at(1)->size());
 
     // sanity check the softmax adds up to 1
-    assert(Sum(fetch::math::Softmax(inputs.at(0).get())) -
-               (DataType(inputs.at(0).get().shape().at(0))) <
+    assert(Sum(fetch::math::Softmax((*inputs.at(0)))) - (DataType(inputs.at(0)->shape().at(0))) <
            0.0001);
 
     // softmax forward & then CrossEntropy
     output(0, 0) =
-        fetch::math::CrossEntropyLoss(fetch::math::Softmax(inputs.at(0).get()), inputs.at(1).get());
+        fetch::math::CrossEntropyLoss(fetch::math::Softmax((*inputs.at(0))), (*inputs.at(1)));
   }
 
-  std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                  ArrayType const &    error_signal) override
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     FETCH_UNUSED(error_signal);
 
     assert(inputs.size() == 2);
-    assert(inputs.at(0).get().size() == inputs.at(1).get().size());
+    assert(inputs.at(0)->size() == inputs.at(1)->size());
 
-    ArrayType ret({inputs.at(0).get().shape()});
-    fetch::math::Softmax(inputs.at(0).get(), ret);
-    fetch::math::Subtract(ret, inputs.at(1).get(), ret);
+    TensorType ret({inputs.at(0)->shape()});
+    fetch::math::Softmax((*inputs.at(0)), ret, 0);
+    fetch::math::Subtract(ret, (*inputs.at(1)), ret);
 
     return {ret, ret};
   }
@@ -80,6 +103,10 @@ public:
     return {1, 1};
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::LOSS_SOFTMAX_CROSS_ENTROPY;
+  }
   static constexpr char const *DESCRIPTOR = "SoftmaxCrossEntropyLoss";
 };
 

@@ -16,17 +16,20 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/service/server.hpp"
-
-#include "core/threading/synchronised_state.hpp"
+#include "core/synchronisation/protected.hpp"
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "network/muddle/rpc/server.hpp"
+#include "network/service/server.hpp"
 #include "service_ids.hpp"
 
 #include <iostream>
-#include <set>
+#include <memory>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
+using fetch::Protected;
 using fetch::muddle::Muddle;
 using fetch::muddle::NetworkId;
 using fetch::muddle::rpc::Server;
@@ -45,12 +48,12 @@ public:
     : muddle_{std::move(muddle)}
   {}
 
-  void Register(CallContext const *context)
+  void Register(CallContext const context)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Registering: ", context->sender_address.ToBase64());
+    FETCH_LOG_INFO(LOGGING_NAME, "Registering: ", context.sender_address.ToBase64());
 
-    node_set_.Apply(
-        [context](AddressSet &addresses) { addresses.insert(context->sender_address); });
+    node_set_.ApplyVoid(
+        [&context](AddressSet &addresses) { addresses.insert(context.sender_address); });
   }
 
   Strings SearchFor(std::string const &val)
@@ -59,7 +62,7 @@ public:
 
     // generate the set of address to whom we are directly connected and have registered
     AddressSet addresses{};
-    node_set_.Apply([&addresses, &connected_peers](AddressSet const &node_addresses) {
+    node_set_.ApplyVoid([&addresses, &connected_peers](AddressSet const &node_addresses) {
       for (auto const &address : connected_peers)
       {
         if (node_addresses.find(address) != node_addresses.end())
@@ -89,14 +92,13 @@ public:
   }
 
 private:
-  using RpcClientPtr   = std::shared_ptr<Client>;
-  using AddressSet     = std::unordered_set<Muddle::Address>;
-  using SyncAddressSet = fetch::SynchronisedState<AddressSet>;
+  using RpcClientPtr = std::shared_ptr<Client>;
+  using AddressSet   = std::unordered_set<Muddle::Address>;
 
   MuddlePtr    muddle_;
   RpcClientPtr client_{
       std::make_shared<Client>("RRPClient", muddle_->AsEndpoint(), SERVICE_TEST, CHANNEL_RPC)};
-  SyncAddressSet node_set_{};
+  Protected<AddressSet> node_set_{};
 };
 
 // Next we make a protocol for the implementation

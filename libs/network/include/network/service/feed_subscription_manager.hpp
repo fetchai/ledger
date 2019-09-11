@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "core/mutex.hpp"
 #include "network/details/thread_pool.hpp"
 #include "network/generics/work_items_queue.hpp"
@@ -52,8 +52,6 @@ class AbstractPublicationFeed;
 class FeedSubscriptionManager
 {
 public:
-  using mutex_type             = fetch::mutex::Mutex;
-  using lock_type              = std::lock_guard<fetch::mutex::Mutex>;
   using service_type           = fetch::service::ServiceServerInterface;
   using connection_handle_type = uint64_t;
   using publishing_workload_type =
@@ -74,7 +72,7 @@ public:
    * a service.
    */
   FeedSubscriptionManager(feed_handler_type const &feed, AbstractPublicationFeed *publisher)
-    : subscribe_mutex_(__LINE__, __FILE__)
+    : subscribe_mutex_{}
     , feed_(feed)
     , publisher_(publisher)
   {
@@ -109,11 +107,8 @@ public:
    */
   void Subscribe(uint64_t client, subscription_handler_type const &id)
   {
-    LOG_STACK_TRACE_POINT;
-
-    subscribe_mutex_.lock();
+    FETCH_LOCK(subscribe_mutex_);
     subscribers_.push_back({client, id});
-    subscribe_mutex_.unlock();
   }
 
   /* Unsubscribe client to feed.
@@ -125,10 +120,9 @@ public:
    */
   void Unsubscribe(uint64_t client, subscription_handler_type const &id)
   {
-    LOG_STACK_TRACE_POINT;
-
-    subscribe_mutex_.lock();
     std::vector<std::size_t> ids;
+    FETCH_LOCK(subscribe_mutex_);
+
     for (std::size_t i = 0; i < subscribers_.size(); ++i)
     {
       if ((subscribers_[i].client == client) && (subscribers_[i].id == id))
@@ -142,7 +136,6 @@ public:
     {
       subscribers_.erase(std::next(subscribers_.begin(), int64_t(i)));
     }
-    subscribe_mutex_.unlock();
   }
 
   /* Returns the feed type.
@@ -171,7 +164,7 @@ private:
   };
 
   std::vector<ClientSubscription> subscribers_;
-  fetch::mutex::Mutex             subscribe_mutex_;
+  Mutex                           subscribe_mutex_;
   feed_handler_type               feed_;
 
   fetch::service::AbstractPublicationFeed *publisher_ = nullptr;

@@ -17,20 +17,17 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/byte_array.hpp"
+#include "core/assert.hpp"
+#include "core/logging.hpp"
+#include "core/mutex.hpp"
 #include "core/serializers/serializable_exception.hpp"
 #include "network/service/callable_class_member.hpp"
-#include "network/service/message_types.hpp"
-#include "network/service/protocol.hpp"
-
 #include "network/service/client_interface.hpp"
 #include "network/service/error_codes.hpp"
+#include "network/service/message_types.hpp"
 #include "network/service/promise.hpp"
+#include "network/service/protocol.hpp"
 #include "network/service/server_interface.hpp"
-
-#include "core/assert.hpp"
-#include "core/logger.hpp"
-#include "core/mutex.hpp"
 #include "network/tcp/tcp_client.hpp"
 
 #include <map>
@@ -39,7 +36,6 @@
 namespace fetch {
 namespace service {
 
-// template <typename T>
 class ServiceClient : public ServiceClientInterface, public ServiceServerInterface
 {
 public:
@@ -51,7 +47,7 @@ public:
                 const network_manager_type &                 network_manager)
     : connection_(connection)
     , network_manager_(network_manager)
-    , message_mutex_(__LINE__, __FILE__)
+    , message_mutex_{}
   {
     auto ptr = connection_.lock();
     if (ptr)
@@ -59,10 +55,8 @@ public:
       ptr->ActivateSelfManage();
 
       ptr->OnMessage([this](network::message_type const &msg) {
-        LOG_STACK_TRACE_POINT;
-
         {
-          std::lock_guard<fetch::mutex::Mutex> lock(message_mutex_);
+          FETCH_LOCK(message_mutex_);
           messages_.push_back(msg);
         }
 
@@ -81,8 +75,6 @@ public:
     using std::chrono::milliseconds;
 
     tearing_down_ = true;
-
-    LOG_STACK_TRACE_POINT;
 
     auto ptr = connection_.lock();
 
@@ -120,7 +112,6 @@ public:
     {
       return ptr->handle();
     }
-    LOG_STACK_TRACE_POINT;
     TODO_FAIL("connection is dead in ServiceClient::handle");
   }
 
@@ -210,8 +201,6 @@ private:
   {
     ++active_count_;
 
-    LOG_STACK_TRACE_POINT;
-
     while (!tearing_down_)
     {
       network::message_type msg;
@@ -255,7 +244,7 @@ private:
 
   network_manager_type              network_manager_;
   std::deque<network::message_type> messages_;
-  mutable fetch::mutex::Mutex       message_mutex_;
+  mutable Mutex                     message_mutex_;
 
   std::atomic<bool>        tearing_down_{false};
   std::atomic<std::size_t> active_count_{0};

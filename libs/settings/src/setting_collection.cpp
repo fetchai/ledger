@@ -17,11 +17,16 @@
 //------------------------------------------------------------------------------
 
 #include "core/commandline/parameter_parser.hpp"
+#include "core/logging.hpp"
 #include "settings/setting_base.hpp"
 #include "settings/setting_collection.hpp"
 
 #include <algorithm>
 #include <cassert>
+#include <iomanip>
+#include <set>
+#include <sstream>
+#include <string>
 
 namespace fetch {
 namespace settings {
@@ -92,6 +97,7 @@ void SettingCollection::UpdateFromArgs(int argc, char **argv)
 {
   ParamsParser parser;
   parser.Parse(argc, argv);
+  std::set<std::string> settings_changed;
 
   for (auto *setting : settings_)
   {
@@ -103,7 +109,33 @@ void SettingCollection::UpdateFromArgs(int argc, char **argv)
       // update the setting
       std::istringstream iss{cmd_value};
       iss >> *setting;
+      settings_changed.insert(setting->name());
     }
+  }
+
+  if (settings_changed.size() != parser.param_size())
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Unrecognised parameter(s) passed.");
+
+    for (auto const &i : parser.params())
+    {
+      auto &parameter_name = i.first;
+      if (settings_changed.find(parameter_name) == settings_changed.end())
+      {
+        FETCH_LOG_ERROR(LOGGING_NAME, "Unrecognised parameter: -", parameter_name);
+      }
+    }
+
+    std::ostringstream oss;
+    oss << "\nValid parameters:";
+
+    for (auto const &setting : settings_)
+    {
+      oss << "\n-" << setting->name() << std::setw(int(30 - setting->name().size())) << " \""
+          << setting->description() << "\"";
+    }
+
+    FETCH_LOG_INFO(LOGGING_NAME, oss.str());
   }
 }
 
@@ -120,6 +152,11 @@ void SettingCollection::UpdateFromEnv(char const *prefix, detail::EnvironmentInt
       iss >> *setting;
     }
   }
+}
+
+SettingCollection::Settings const &SettingCollection::settings() const
+{
+  return settings_;
 }
 
 }  // namespace settings

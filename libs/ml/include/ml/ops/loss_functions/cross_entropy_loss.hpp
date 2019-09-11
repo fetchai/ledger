@@ -17,15 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include <cassert>
-#include <memory>
-#include <vector>
-
 #include "math/activation_functions/sigmoid.hpp"
 #include "math/activation_functions/softmax.hpp"
 #include "math/fundamental_operators.hpp"
 #include "math/metrics/cross_entropy.hpp"
 #include "ml/ops/ops.hpp"
+
+#include <cassert>
+#include <memory>
+#include <vector>
 
 namespace fetch {
 namespace ml {
@@ -35,78 +35,85 @@ template <class T>
 class CrossEntropyLoss : public Ops<T>
 {
 public:
-  using ArrayType     = T;
-  using DataType      = typename ArrayType::Type;
-  using SizeType      = typename ArrayType::SizeType;
+  using TensorType    = T;
+  using DataType      = typename TensorType::Type;
+  using SizeType      = typename TensorType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SPType        = OpCrossEntropyLossSaveableParams<TensorType>;
+  using MyType        = CrossEntropyLoss<TensorType>;
 
-  CrossEntropyLoss()          = default;
-  virtual ~CrossEntropyLoss() = default;
+  CrossEntropyLoss() = default;
 
-  void Forward(VecTensorType const &inputs, ArrayType &output) override
+  explicit CrossEntropyLoss(SPType const &sp)
+    : Ops<T>(sp)
+  {}
+
+  ~CrossEntropyLoss() override = default;
+
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
   {
-    assert(inputs.size() == 2);
-    assert(inputs.at(0).get().size() == inputs.at(1).get().size());
-
-    output(0, 0) = fetch::math::CrossEntropyLoss(inputs.at(0).get(), inputs.at(1).get());
+    auto sp = std::make_shared<SPType>();
+    return sp;
   }
 
-  std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                  ArrayType const &    error_signal) override
+  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
+  {
+    FETCH_UNUSED(me);
+    assert(me.get() == this);
+
+    auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
+
+    return copyshare;
+  }
+  void Forward(VecTensorType const &inputs, TensorType &output) override
+  {
+    assert(inputs.size() == 2);
+    assert(inputs.at(0)->size() == inputs.at(1)->size());
+
+    output(0, 0) = fetch::math::CrossEntropyLoss((*inputs.at(0)), (*inputs.at(1)));
+  }
+
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     FETCH_UNUSED(error_signal);
 
     assert(inputs.size() == 2);
-    assert(inputs.at(0).get().size() == inputs.at(1).get().size());
-    assert(inputs.at(0).get().shape().size() == 2);
+    assert(inputs.at(0)->size() == inputs.at(1)->size());
+    assert(inputs.at(0)->shape().size() == 2);
 
-    ArrayType ret({inputs.at(0).get().shape()});
-    if (inputs.at(0).get().shape().at(0) == 1)  // not one-hot
+    bool     is_binary  = (inputs.at(0)->shape(0) == 1);
+    DataType batch_size = static_cast<DataType>(inputs.at(0)->shape(1));
+
+    TensorType ret({inputs.at(0)->shape()});
+
+    auto     a_it = inputs.at(0)->cbegin();
+    auto     b_it = inputs.at(1)->cbegin();
+    auto     r_it = ret.begin();
+    DataType one{1};
+
+    while (a_it.is_valid())
     {
-      // (Sigmoid(x)-y)*x
-      auto     a_it = inputs.at(0).get().cbegin();
-      auto     b_it = inputs.at(1).get().cbegin();
-      auto     r_it = ret.begin();
-      DataType zero{0};
-      DataType one{1};
-
-      while (a_it.is_valid())
+      // TODO (#1583) Decide how to handle the following assertion. The assertion is here to assure
+      // no 0 division would happen during loss calculation. But for low precision datatype this
+      // would happen eventurally. We can either remove it or add an epsilon on denominators.
+      // assert(*a_it > 0 && *a_it < 1);
+      assert(*b_it == 0 || *b_it == 1);
+      if (*b_it == 1)
       {
-        // Sigmoid(x)
-        if (*a_it >= zero)
-        {
-          fetch::math::Exp(-(*a_it), *r_it);
-          *r_it = one / (one + (*r_it));
-        }
-        else
-        {
-          fetch::math::Exp(*a_it, *r_it);
-          *r_it = *r_it / (*r_it + one);
-        }
-
-        // (Sigmoid(x)-y)*x
-        *r_it = (*r_it - (*b_it)) * (*a_it);
-
-        ++a_it;
-        ++b_it;
-        ++r_it;
+        *r_it = -*b_it / *a_it;
       }
-    }
-    else if (inputs.at(0).get().shape().size())  // one-hot
-    {
-      fetch::math::Softmax(inputs.at(0).get(), ret, 1);
-
-      auto b_it = inputs.at(1).get().cbegin();
-      auto r_it = ret.begin();
-      while (b_it.is_valid())
+      else if (is_binary)
       {
-        *r_it = -(*b_it) / (*r_it);
-        ++b_it;
-        ++r_it;
+        *r_it = (one - *b_it) / (one - *a_it);
       }
-    }
 
-    return {ret, ret};
+      ++a_it;
+      ++b_it;
+      ++r_it;
+    }
+    return {ret / batch_size, ret};
   }
 
   std::vector<typename T::SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
@@ -115,6 +122,10 @@ public:
     return {1, 1};
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::LOSS_CROSS_ENTROPY;
+  }
   static constexpr char const *DESCRIPTOR = "CrossEntropyLoss";
 };
 

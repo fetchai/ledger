@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/standard_functions/sqrt.hpp"
-#include "ml/graph.hpp"
+#include "ml/core/graph.hpp"
 #include "optimiser.hpp"
 
 namespace fetch {
@@ -28,16 +28,16 @@ namespace optimisers {
 /**
  * Root Mean Square Propagation optimiser explained in paper:
  * https://www.cs.toronto.edu/~tijmen/csc321/slides/lecture_slides_lec6.pdf
- * @tparam T ArrayType
+ * @tparam T TensorType
  * @tparam C CriterionType
  */
 template <class T>
 class RMSPropOptimiser : public Optimiser<T>
 {
 public:
-  using ArrayType = T;
-  using DataType  = typename ArrayType::Type;
-  using SizeType  = typename ArrayType::SizeType;
+  using TensorType = T;
+  using DataType   = typename TensorType::Type;
+  using SizeType   = typename TensorType::SizeType;
 
   RMSPropOptimiser(std::shared_ptr<Graph<T>>       graph,
                    std::vector<std::string> const &input_node_names,
@@ -56,10 +56,10 @@ public:
   ~RMSPropOptimiser() override = default;
 
 private:
-  std::vector<ArrayType> cache_;
-  DataType               decay_rate_;
-  DataType               one_{1};
-  DataType               epsilon_;
+  std::vector<TensorType> cache_;
+  DataType                decay_rate_;
+  DataType                one_{1};
+  DataType                epsilon_;
 
   void ApplyGradients(SizeType batch_size) override;
   void ResetCache();
@@ -72,7 +72,7 @@ void RMSPropOptimiser<T>::Init()
   auto weights = this->graph_->get_weights();
   for (auto &train : this->graph_trainables_)
   {
-    this->cache_.emplace_back(ArrayType(train->get_weights().shape()));
+    this->cache_.emplace_back(TensorType(train->get_weights().shape()));
   }
 
   ResetCache();
@@ -118,8 +118,8 @@ void RMSPropOptimiser<T>::ApplyGradients(SizeType batch_size)
   while (gradient_it != this->gradients_.end())
   {
     // cache[i] = decay_rate * cache[i] + (1 - decay_rate) * ((input_grad[i]/batch_size)^2)
-    fetch::math::Divide((*trainable_it)->get_gradients(), static_cast<DataType>(batch_size),
-                        *gradient_it);
+    fetch::math::Divide((*trainable_it)->GetGradientsReferences(),
+                        static_cast<DataType>(batch_size), *gradient_it);
     fetch::math::Square(*gradient_it, *gradient_it);
 
     fetch::math::Multiply(*gradient_it, (one_ - decay_rate_), *gradient_it);
@@ -130,7 +130,7 @@ void RMSPropOptimiser<T>::ApplyGradients(SizeType batch_size)
     // output_grad[i] = learning_rate * (input_grad[i]/batch_size) / (sqrt(cache[i]) + epsilon)
     fetch::math::Sqrt(*cached_weight_it, *gradient_it);
     fetch::math::Add(*gradient_it, epsilon_, *gradient_it);
-    fetch::math::Divide((*trainable_it)->get_gradients(), *gradient_it, *gradient_it);
+    fetch::math::Divide((*trainable_it)->GetGradientsReferences(), *gradient_it, *gradient_it);
     fetch::math::Multiply(
         *gradient_it, (-this->learning_rate_) / (static_cast<DataType>(batch_size)), *gradient_it);
 

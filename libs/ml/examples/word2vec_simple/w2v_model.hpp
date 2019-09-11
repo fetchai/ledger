@@ -25,13 +25,13 @@
 namespace fetch {
 namespace ml {
 
-template <typename ArrayType>
+template <typename TensorType>
 class W2VModel
 {
 private:
-  using SizeType      = typename ArrayType::SizeType;
-  using DataType      = typename ArrayType::Type;
-  using ContainerType = typename ArrayType::ContainerType;
+  using SizeType      = typename TensorType::SizeType;
+  using DataType      = typename TensorType::Type;
+  using ContainerType = typename TensorType::ContainerType;
 
   SizeType embeddings_size_;
   SizeType negative_;
@@ -39,21 +39,21 @@ private:
   DataType alpha_;
   DataType starting_alpha_;
 
-  ArrayType word_vector_;
+  TensorType word_vector_;
 
-  ArrayType                          embeddings_;
-  ArrayType                          gradient_embeddings_;
+  TensorType                         embeddings_;
+  TensorType                         gradient_embeddings_;
   std::vector<fetch::math::SizeType> updated_rows_embeddings_;
 
-  ArrayType                          weights_;
-  ArrayType                          gradient_weights_;
+  TensorType                         weights_;
+  TensorType                         gradient_weights_;
   std::vector<fetch::math::SizeType> updated_rows_weights_;
 
-  ArrayType target_weights_;
-  ArrayType error_signal_;
+  TensorType target_weights_;
+  TensorType error_signal_;
 
-  ArrayType error_words_;
-  ArrayType error_target_weights_;
+  TensorType error_words_;
+  TensorType error_target_weights_;
 
   dataloaders::W2VLoader<DataType> &data_loader_;
 
@@ -70,15 +70,15 @@ public:
 
   void UpdateLearningRate(SizeType i, SizeType iter, SizeType iterations);
   void Train(SizeType iter, SizeType print_frequency, bool cbow = true);
-  void CBOWTrain(ArrayType &context, ArrayType &target);
-  void SGNSTrain(ArrayType const &context, ArrayType const &target);
+  void CBOWTrain(TensorType &context, TensorType &target);
+  void SGNSTrain(TensorType const &context, TensorType const &target);
 
-  ArrayType Embeddings();
+  TensorType Embeddings();
 };
 
-template <typename ArrayType>
-W2VModel<ArrayType>::W2VModel(SizeType embeddings_size, SizeType negative, DataType starting_alpha,
-                              dataloaders::W2VLoader<DataType> &data_loader)
+template <typename TensorType>
+W2VModel<TensorType>::W2VModel(SizeType embeddings_size, SizeType negative, DataType starting_alpha,
+                               dataloaders::W2VLoader<DataType> &data_loader)
   : embeddings_size_(embeddings_size)
   , negative_(negative)
   , alpha_(starting_alpha)
@@ -86,19 +86,19 @@ W2VModel<ArrayType>::W2VModel(SizeType embeddings_size, SizeType negative, DataT
   , data_loader_(data_loader)
 {
   // instantiate with enough memory for skipgram - we'll resize down if its cbow
-  word_vector_  = ArrayType({embeddings_size_, 2 * data_loader_.window_size()});
-  error_words_  = ArrayType(word_vector_.shape());
-  error_signal_ = ArrayType({SizeType(negative_), 2 * data_loader_.window_size()});
+  word_vector_  = TensorType({embeddings_size_, 2 * data_loader_.window_size()});
+  error_words_  = TensorType(word_vector_.shape());
+  error_signal_ = TensorType({SizeType(negative_), 2 * data_loader_.window_size()});
 
-  embeddings_          = ArrayType({embeddings_size_, data_loader.vocab_size()});
-  gradient_embeddings_ = ArrayType({embeddings_size_, data_loader.vocab_size()});
+  embeddings_          = TensorType({embeddings_size_, data_loader.vocab_size()});
+  gradient_embeddings_ = TensorType({embeddings_size_, data_loader.vocab_size()});
 
-  weights_          = ArrayType({embeddings_size_, data_loader.vocab_size()});
-  gradient_weights_ = ArrayType({embeddings_size_, data_loader.vocab_size()});
+  weights_          = TensorType({embeddings_size_, data_loader.vocab_size()});
+  gradient_weights_ = TensorType({embeddings_size_, data_loader.vocab_size()});
 
-  target_weights_ = ArrayType({embeddings_size_, negative});
+  target_weights_ = TensorType({embeddings_size_, negative});
 
-  error_target_weights_ = ArrayType(target_weights_.shape());
+  error_target_weights_ = TensorType(target_weights_.shape());
 
   {  // Embeddings: Initialise
     fetch::random::LinearCongruentialGenerator rng;
@@ -122,15 +122,15 @@ W2VModel<ArrayType>::W2VModel(SizeType embeddings_size, SizeType negative, DataT
 
 /**
  * Print training statistics
- * @tparam ArrayType
+ * @tparam TensorType
  * @param i
  * @param iter
  * @param iterations
  * @param print_frequency
  */
-template <typename ArrayType>
-void W2VModel<ArrayType>::PrintStats(SizeType const &i, SizeType const &iter,
-                                     SizeType const &iterations, SizeType const &print_frequency)
+template <typename TensorType>
+void W2VModel<TensorType>::PrintStats(SizeType const &i, SizeType const &iter,
+                                      SizeType const &iterations, SizeType const &print_frequency)
 {
   cur_time_ = std::chrono::high_resolution_clock::now();
   auto time_span =
@@ -146,8 +146,8 @@ void W2VModel<ArrayType>::PrintStats(SizeType const &i, SizeType const &iter,
   last_time_ = cur_time_;
 }
 
-template <typename ArrayType>
-void W2VModel<ArrayType>::UpdateLearningRate(SizeType i, SizeType iter, SizeType iterations)
+template <typename TensorType>
+void W2VModel<TensorType>::UpdateLearningRate(SizeType i, SizeType iter, SizeType iterations)
 {
   alpha_ =
       starting_alpha_ * ((static_cast<DataType>(iter * iterations) - static_cast<DataType>(i)) /
@@ -164,18 +164,18 @@ void W2VModel<ArrayType>::UpdateLearningRate(SizeType i, SizeType iter, SizeType
  * @param print_frequency
  * @param cbow
  */
-template <typename ArrayType>
-void W2VModel<ArrayType>::Train(SizeType iter, SizeType print_frequency, bool cbow)
+template <typename TensorType>
+void W2VModel<TensorType>::Train(SizeType iter, SizeType print_frequency, bool cbow)
 {
   //  if (cbow)
   //  {
   //    word_vector_.Reshape({embeddings_size_, 1});
-  //    error_words_  = ArrayType(word_vector_.shape());
-  //    error_signal_ = ArrayType({SizeType(negative_), 1});
+  //    error_words_  = TensorType(word_vector_.shape());
+  //    error_signal_ = TensorType({SizeType(negative_), 1});
   //  }
   word_vector_.Reshape({embeddings_size_, 1});
-  error_words_  = ArrayType(word_vector_.shape());
-  error_signal_ = ArrayType({SizeType(negative_), 1});
+  error_words_  = TensorType(word_vector_.shape());
+  error_signal_ = TensorType({SizeType(negative_), 1});
 
   data_loader_.Reset();
   data_loader_.GetNext();
@@ -215,9 +215,9 @@ void W2VModel<ArrayType>::Train(SizeType iter, SizeType print_frequency, bool cb
   std::cout << "Done Training" << std::endl;
 }
 
-template <typename ArrayType>
-void W2VModel<ArrayType>::SGNSTrain(  // TODO (#1304) CBOW implementation not SGNS
-    ArrayType const &target, ArrayType const &context)
+template <typename TensorType>
+void W2VModel<TensorType>::SGNSTrain(  // TODO (#1304) CBOW implementation not SGNS
+    TensorType const &target, TensorType const &context)
 {
   for (DataType const &cur_context_word : context)
   {
@@ -339,10 +339,10 @@ void W2VModel<ArrayType>::SGNSTrain(  // TODO (#1304) CBOW implementation not SG
 
 /**
  * CBOW specific implementation of training loop
- * @tparam ArrayType
+ * @tparam TensorType
  */
-template <typename ArrayType>
-void W2VModel<ArrayType>::CBOWTrain(ArrayType &target, ArrayType &context)
+template <typename TensorType>
+void W2VModel<TensorType>::CBOWTrain(TensorType &target, TensorType &context)
 {
 
   ///////////////////////
@@ -484,11 +484,11 @@ void W2VModel<ArrayType>::CBOWTrain(ArrayType &target, ArrayType &context)
 
 /**
  * Copies out embeddings
- * @tparam ArrayType
+ * @tparam TensorType
  * @return
  */
-template <typename ArrayType>
-ArrayType W2VModel<ArrayType>::Embeddings()
+template <typename TensorType>
+TensorType W2VModel<TensorType>::Embeddings()
 {
   return embeddings_;
 }

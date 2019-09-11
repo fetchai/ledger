@@ -40,6 +40,7 @@
 #include "vectorise/platform.hpp"
 
 #include <cstdint>
+#include <vector>
 
 namespace fetch {
 namespace storage {
@@ -56,7 +57,7 @@ struct FileBlockType
 
   FileBlockType()
   {
-    // Ensures that padded bytes are not uninitialized.
+    // Ensures that padded bytes are not uninitialised.
     memset(this, 0, sizeof(decltype(*this)));
     previous         = UNDEFINED;
     next             = UNDEFINED;

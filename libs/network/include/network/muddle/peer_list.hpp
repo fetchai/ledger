@@ -124,15 +124,12 @@ private:
     bool        connected            = false;  ///< Whether the last/current attempt has succeeded.
   };
 
-  using Mutex   = mutex::Mutex;
-  using Lock    = std::lock_guard<Mutex>;
-  using PeerSet = std::unordered_set<Uri>;
-
+  using PeerSet     = std::unordered_set<Uri>;
   using MetadataMap = std::unordered_map<Uri, PeerMetadata>;
 
   Router &router_;
 
-  mutable Mutex lock_{__LINE__, __FILE__};
+  mutable Mutex lock_;
   PeerSet       persistent_peers_;
   PeerMap       peer_connections_;
   MetadataMap   peer_metadata_;

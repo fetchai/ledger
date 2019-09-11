@@ -87,6 +87,11 @@ ConstByteArray LoadFileContents(std::string const &file_path)
   {
     size = file.tellg();
 
+    if (size == 0)
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to load stakefile! : ", file_path);
+    }
+
     if (size > 0)
     {
       buffer.Resize(static_cast<std::size_t>(size));
@@ -96,6 +101,10 @@ ConstByteArray LoadFileContents(std::string const &file_path)
 
       file.close();
     }
+  }
+  else
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Failed to load stakefile! : ", file_path);
   }
 
   return {buffer};
@@ -353,7 +362,7 @@ void GenesisFileCreator::LoadDKG(variant::Variant const &object)
 {
   if (dkg_)
   {
-    std::size_t threshold{1};
+    uint32_t threshold{1};
 
     if (!variant::Extract(object, "threshold", threshold))
     {
@@ -388,6 +397,15 @@ void GenesisFileCreator::LoadDKG(variant::Variant const &object)
     dkg_->ResetCabinet(std::move(members), threshold);
   }
 }
+
+GenesisFileCreator::GenesisFileCreator(BlockCoordinator &    block_coordinator,
+                                       StorageUnitInterface &storage_unit,
+                                       StakeManager *stake_manager, dkg::DkgService *dkg)
+  : block_coordinator_{block_coordinator}
+  , storage_unit_{storage_unit}
+  , stake_manager_{stake_manager}
+  , dkg_{dkg}
+{}
 
 }  // namespace ledger
 }  // namespace fetch

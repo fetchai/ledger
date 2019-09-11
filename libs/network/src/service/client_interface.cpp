@@ -24,21 +24,20 @@ namespace fetch {
 namespace service {
 
 ServiceClientInterface::ServiceClientInterface()
-  : subscription_mutex_(__LINE__, __FILE__)
-  , promises_mutex_(__LINE__, __FILE__)
+  : subscription_mutex_{}
+  , promises_mutex_{}
 {}
 
 Promise ServiceClientInterface::CallWithPackedArguments(protocol_handler_type const &protocol,
                                                         function_handler_type const &function,
                                                         byte_array::ByteArray const &args)
 {
-  LOG_STACK_TRACE_POINT;
   FETCH_LOG_DEBUG(LOGGING_NAME, "Service Client Calling (2) ", protocol, ":", function);
 
   Promise         prom = MakePromise();
   serializer_type params;
 
-  serializers::SizeCounter<serializer_type> counter;
+  serializers::SizeCounter counter;
   counter << SERVICE_FUNCTION_CALL << prom->id();
   PackCallWithPackedArguments(counter, protocol, function, args);
 
@@ -69,13 +68,12 @@ subscription_handler_type ServiceClientInterface::Subscribe(protocol_handler_typ
                                                             feed_handler_type const &    feed,
                                                             AbstractCallable *           callback)
 {
-  LOG_STACK_TRACE_POINT;
   FETCH_LOG_INFO(LOGGING_NAME, "PubSub: SUBSCRIBE ", int(protocol), ":", int(feed));
 
   subscription_handler_type subid = CreateSubscription(protocol, feed, callback);
   serializer_type           params;
 
-  serializers::SizeCounter<serializer_type> counter;
+  serializers::SizeCounter counter;
   counter << SERVICE_SUBSCRIBE << protocol << feed << subid;
   params.Reserve(counter.size());
 
@@ -87,11 +85,10 @@ subscription_handler_type ServiceClientInterface::Subscribe(protocol_handler_typ
 void ServiceClientInterface::Unsubscribe(subscription_handler_type id)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "PubSub: Unsub ", int(id));
-  LOG_STACK_TRACE_POINT;
   Subscription sub;
   {
-    subscription_mutex_lock_type lock(subscription_mutex_);
-    auto                         subscr = subscriptions_.find(id);
+    FETCH_LOCK(subscription_mutex_);
+    auto subscr = subscriptions_.find(id);
     if (subscr == subscriptions_.end())
     {
       if (std::find(cancelled_subscriptions_.begin(), cancelled_subscriptions_.end(), id) !=
@@ -119,7 +116,7 @@ void ServiceClientInterface::Unsubscribe(subscription_handler_type id)
   {
     serializer_type params;
 
-    serializers::SizeCounter<serializer_type> counter;
+    serializers::SizeCounter counter;
     counter << SERVICE_UNSUBSCRIBE << sub.protocol << sub.feed << id;
     params.Reserve(counter.size());
 
@@ -131,7 +128,6 @@ void ServiceClientInterface::Unsubscribe(subscription_handler_type id)
 void ServiceClientInterface::ProcessRPCResult(network::message_type const &msg,
                                               service::serializer_type &   params)
 {
-  LOG_STACK_TRACE_POINT;
   PromiseCounter id;
   params >> id;
 
@@ -146,7 +142,6 @@ void ServiceClientInterface::ProcessRPCResult(network::message_type const &msg,
 
 bool ServiceClientInterface::ProcessServerMessage(network::message_type const &msg)
 {
-  LOG_STACK_TRACE_POINT;
   bool ret = true;
 
   serializer_type params(msg);
@@ -183,8 +178,8 @@ bool ServiceClientInterface::ProcessServerMessage(network::message_type const &m
 
     AbstractCallable *cb = nullptr;
     {
-      subscription_mutex_lock_type lock(subscription_mutex_);
-      auto                         subscr = subscriptions_.find(sub);
+      FETCH_LOCK(subscription_mutex_);
+      auto subscr = subscriptions_.find(sub);
       if (subscr == subscriptions_.end())
       {
         if (std::find(cancelled_subscriptions_.begin(), cancelled_subscriptions_.end(), sub) ==
@@ -292,12 +287,10 @@ void ServiceClientInterface::RemovePromise(PromiseCounter id)
 subscription_handler_type ServiceClientInterface::CreateSubscription(
     protocol_handler_type const &protocol, feed_handler_type const &feed, AbstractCallable *cb)
 {
-  LOG_STACK_TRACE_POINT;
-
-  subscription_mutex_lock_type lock(subscription_mutex_);
+  FETCH_LOCK(subscription_mutex_);
   subscription_index_counter_++;
   subscriptions_[subscription_index_counter_] = Subscription(protocol, feed, cb);
-  subscription_mutex_.unlock();
+
   return subscription_handler_type(subscription_index_counter_);
 }
 

@@ -23,27 +23,53 @@
 #include "math/trigonometry.hpp"
 #include "ml/ops/ops.hpp"
 
+#include <cassert>
+#include <vector>
+
 namespace fetch {
 namespace ml {
 namespace ops {
 
 template <class T>
-class TanH : public fetch::ml::Ops<T>
+class TanH : public fetch::ml::ops::Ops<T>
 {
 public:
-  using ArrayType     = T;
-  using DataType      = typename ArrayType::Type;
-  using SizeType      = typename ArrayType::SizeType;
+  using TensorType    = T;
+  using DataType      = typename TensorType::Type;
+  using SizeType      = typename TensorType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SPType        = OpTanhSaveableParams<T>;
+  using MyType        = TanH<TensorType>;
 
-  TanH()          = default;
-  virtual ~TanH() = default;
+  TanH() = default;
 
-  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
+  explicit TanH(SPType const &sp)
+    : Ops<T>(sp)
+  {}
+
+  ~TanH() override = default;
+
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
+  {
+    SPType sp{};
+    return std::make_shared<SPType>(sp);
+  }
+
+  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
+  {
+    FETCH_UNUSED(me);
+    assert(me.get() == this);
+
+    auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
+
+    return copyshare;
+  }
+  void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(inputs.size() == 1);
     assert(output.shape() == this->ComputeOutputShape(inputs));
-    fetch::math::TanH(inputs.front().get(), output);
+    fetch::math::TanH(*(inputs.front()), output);
     // ensures numerical stability
     for (auto &val : output)
     {
@@ -54,16 +80,16 @@ public:
     }
   }
 
-  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                          ArrayType const &    error_signal)
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     assert(inputs.size() == 1);
 
-    assert(inputs.front().get().shape() == error_signal.shape());
+    assert(inputs.front()->shape() == error_signal.shape());
 
-    ArrayType return_signal = error_signal.Copy();
+    TensorType return_signal = error_signal.Copy();
 
-    ArrayType t(this->ComputeOutputShape(inputs));
+    TensorType t(this->ComputeOutputShape(inputs));
     Forward(inputs, t);
 
     // gradient of tanh: 1 - tanh(x)^2
@@ -76,9 +102,14 @@ public:
     return {return_signal};
   }
 
-  virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    return inputs.front().get().shape();
+    return inputs.front()->shape();
+  }
+
+  static constexpr OpType OpCode()
+  {
+    return OpType::OP_TANH;
   }
 
   static constexpr char const *DESCRIPTOR = "TanH";

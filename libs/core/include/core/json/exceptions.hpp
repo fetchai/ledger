@@ -21,42 +21,21 @@
 #include "core/byte_array/tokenizer/token.hpp"
 
 #include <exception>
-#include <sstream>
 #include <string>
 #include <utility>
 
 namespace fetch {
 namespace json {
 
-class UnrecognisedJSONSymbolException : public std::exception
-{
-  std::string str_;
-
-public:
-  UnrecognisedJSONSymbolException(byte_array::Token const &token)
-  {
-    std::stringstream msg;
-    msg << "Unrecognised symbol '";
-    msg << token << '\'' << " at line " << token.line() << ", character " << token.character()
-        << "\n";
-    str_ = msg.str();
-  }
-
-  virtual char const *what() const throw()
-  {
-    return str_.c_str();
-  }
-};
-
 class JSONParseException : public std::exception
 {
 public:
-  JSONParseException(std::string err)
+  explicit JSONParseException(std::string err)
     : error_(std::move(err))
   {}
-  virtual ~JSONParseException()
-  {}
-  virtual char const *what() const throw()
+  ~JSONParseException() override = default;
+
+  char const *what() const noexcept override
   {
     return error_.c_str();
   }

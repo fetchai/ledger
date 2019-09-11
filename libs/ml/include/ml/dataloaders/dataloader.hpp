@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/group_definitions.hpp"
 #include "math/base_types.hpp"
 
 #include <cstdint>
@@ -28,53 +29,75 @@ namespace fetch {
 namespace ml {
 namespace dataloaders {
 
-template <typename LabelType, typename DataType>
+enum class DataLoaderMode
+{
+  TRAIN,
+  VALIDATE,
+  TEST,
+};
+
+template <typename LabelType, typename InputType>
 class DataLoader
 {
 public:
   using SizeType   = fetch::math::SizeType;
   using SizeVector = fetch::math::SizeVector;
-  using ReturnType = std::pair<LabelType, std::vector<DataType>>;
+  using ReturnType = std::pair<LabelType, std::vector<InputType>>;
 
   /**
-   * Dataloaders are required to provide label and DataType shapes to the parent Dataloader
+   * Dataloaders are required to provide label and InputType shapes to the parent Dataloader
    * @param random_mode
    * @param label_shape
    * @param data_shapes
    */
-  explicit DataLoader(bool random_mode)
-    : random_mode_(random_mode)
+  explicit DataLoader()
   {}
 
-  virtual ~DataLoader()        = default;
+  virtual ~DataLoader() = default;
+
   virtual ReturnType GetNext() = 0;
 
+  virtual bool       AddData(InputType const &data, LabelType const &label) = 0;
   virtual ReturnType PrepareBatch(fetch::math::SizeType subset_size, bool &is_done_set);
 
-  virtual std::uint64_t Size() const   = 0;
-  virtual bool          IsDone() const = 0;
-  virtual void          Reset()        = 0;
+  virtual SizeType Size() const                                   = 0;
+  virtual bool     IsDone() const                                 = 0;
+  virtual void     Reset()                                        = 0;
+  virtual void     SetTestRatio(float new_test_ratio)             = 0;
+  virtual void     SetValidationRatio(float new_validation_ratio) = 0;
+  void             SetMode(DataLoaderMode new_mode);
+  void             SetRandomMode(bool random_mode_state);
+
+  template <typename X, typename D>
+  friend struct fetch::serializers::MapSerializer;
 
 protected:
-  bool random_mode_ = false;
+  virtual void              UpdateCursor() = 0;
+  std::shared_ptr<SizeType> current_cursor_;
+  SizeType                  current_min_;
+  SizeType                  current_max_;
+  SizeType                  current_size_;
+
+  bool           random_mode_ = false;
+  DataLoaderMode mode_        = DataLoaderMode::TRAIN;
 
 private:
   bool       size_not_set_ = true;
   ReturnType cur_training_pair_;
+  ReturnType ret_pair_;
 
-  void SetDataSize(std::pair<LabelType, std::vector<DataType>> &ret_pair);
-  std::pair<LabelType, std::vector<DataType>> ret_pair_;
+  void SetDataSize(std::pair<LabelType, std::vector<InputType>> &ret_pair);
 };
 
 /**
  * This method sets the shapes of the data and labels, as well as the return pair.
  * @tparam LabelType
- * @tparam DataType
+ * @tparam InputType
  * @param ret_pair
  */
-template <typename LabelType, typename DataType>
-void DataLoader<LabelType, DataType>::SetDataSize(
-    std::pair<LabelType, std::vector<DataType>> &ret_pair)
+template <typename LabelType, typename InputType>
+void DataLoader<LabelType, InputType>::SetDataSize(
+    std::pair<LabelType, std::vector<InputType>> &ret_pair)
 {
   ret_pair_.first = ret_pair.first.Copy();
 
@@ -90,15 +113,14 @@ void DataLoader<LabelType, DataType>::SetDataSize(
  * Size of each tensor is [data,subset_size], where data can have any dimensions and trailing
  * dimension is subset_size
  * @tparam LabelType
- * @tparam DataType
+ * @tparam InputType
  * @param batch_size i.e. batch size of returned Tensors
  * @return pair of label tensor and vector of data tensors with specified batch size
  */
-template <typename LabelType, typename DataType>
-typename DataLoader<LabelType, DataType>::ReturnType DataLoader<LabelType, DataType>::PrepareBatch(
-    fetch::math::SizeType subset_size, bool &is_done_set)
+template <typename LabelType, typename InputType>
+typename DataLoader<LabelType, InputType>::ReturnType
+DataLoader<LabelType, InputType>::PrepareBatch(fetch::math::SizeType batch_size, bool &is_done_set)
 {
-  //
   if (size_not_set_)
   {
     // first ever call to PrepareBatch requires a dummy GetNext to identify tensor shapes
@@ -110,10 +132,10 @@ typename DataLoader<LabelType, DataType>::ReturnType DataLoader<LabelType, DataT
   }
 
   // if the label is set to be the wrong batch_size reshape
-  if (ret_pair_.first.shape().at(ret_pair_.first.shape().size() - 1) != subset_size)
+  if (ret_pair_.first.shape().at(ret_pair_.first.shape().size() - 1) != batch_size)
   {
     SizeVector new_shape               = ret_pair_.first.shape();
-    new_shape.at(new_shape.size() - 1) = subset_size;
+    new_shape.at(new_shape.size() - 1) = batch_size;
     ret_pair_.first.Reshape(new_shape);
   }
 
@@ -123,16 +145,16 @@ typename DataLoader<LabelType, DataType>::ReturnType DataLoader<LabelType, DataT
     // reshape the tensor to the correct batch size
     if (ret_pair_.second.at(tensor_count)
             .shape()
-            .at(ret_pair_.second.at(tensor_count).shape().size() - 1) != subset_size)
+            .at(ret_pair_.second.at(tensor_count).shape().size() - 1) != batch_size)
     {
       SizeVector new_shape               = ret_pair_.second.at(tensor_count).shape();
-      new_shape.at(new_shape.size() - 1) = subset_size;
+      new_shape.at(new_shape.size() - 1) = batch_size;
       ret_pair_.second.at(tensor_count).Reshape(new_shape);
     }
   }
 
   SizeType data_idx{0};
-  while (data_idx < subset_size)
+  while (data_idx < batch_size)
   {
     // check if end of data
     if (IsDone())
@@ -162,6 +184,75 @@ typename DataLoader<LabelType, DataType>::ReturnType DataLoader<LabelType, DataT
   return ret_pair_;
 }
 
+template <typename LabelType, typename DataType>
+void DataLoader<LabelType, DataType>::SetMode(DataLoaderMode new_mode)
+{
+  if (mode_ == new_mode)
+  {
+    return;
+  }
+  mode_ = new_mode;
+  UpdateCursor();
+
+  if (this->current_min_ == this->current_max_)
+  {
+    throw std::runtime_error("Dataloader has no set for selected mode.");
+  }
+}
+
+template <typename LabelType, typename DataType>
+void DataLoader<LabelType, DataType>::SetRandomMode(bool random_mode_state)
+{
+  random_mode_ = random_mode_state;
+}
+
 }  // namespace dataloaders
 }  // namespace ml
+
+namespace serializers {
+
+/**
+ * serializer for Dataloader
+ * @tparam TensorType
+ */
+template <typename LabelType, typename InputType, typename D>
+struct MapSerializer<fetch::ml::dataloaders::DataLoader<LabelType, InputType>, D>
+{
+  using Type       = fetch::ml::dataloaders::DataLoader<LabelType, InputType>;
+  using DriverType = D;
+
+  static uint8_t const RANDOM_MODE              = 1;
+  static uint8_t const SIZE_NOT_SET             = 2;
+  static uint8_t const CUR_TRAINING_PAIR_FIRST  = 3;
+  static uint8_t const CUR_TRAINING_PAIR_SECOND = 4;
+  static uint8_t const RET_PAIR_FIRST           = 5;
+  static uint8_t const RET_PAIR_SECOND          = 6;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(6);
+
+    map.Append(RANDOM_MODE, sp.random_mode_);
+    map.Append(SIZE_NOT_SET, sp.size_not_set_);
+    map.Append(CUR_TRAINING_PAIR_FIRST, sp.cur_training_pair_.first);
+    map.Append(CUR_TRAINING_PAIR_SECOND, sp.cur_training_pair_.second);
+    map.Append(RET_PAIR_FIRST, sp.ret_pair_.first);
+    map.Append(RET_PAIR_SECOND, sp.ret_pair_.second);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(RANDOM_MODE, sp.random_mode_);
+    map.ExpectKeyGetValue(SIZE_NOT_SET, sp.size_not_set_);
+    map.ExpectKeyGetValue(CUR_TRAINING_PAIR_FIRST, sp.cur_training_pair_.first);
+    map.ExpectKeyGetValue(CUR_TRAINING_PAIR_SECOND, sp.cur_training_pair_.second);
+    map.ExpectKeyGetValue(RET_PAIR_FIRST, sp.ret_pair_.first);
+    map.ExpectKeyGetValue(RET_PAIR_SECOND, sp.ret_pair_.second);
+  }
+};
+
+}  // namespace serializers
+
 }  // namespace fetch

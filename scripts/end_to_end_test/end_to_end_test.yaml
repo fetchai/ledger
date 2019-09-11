@@ -1,4 +1,4 @@
-# YAML file to dictate integration tests
+# End-to-end test scenarios
 
 ---
 test_description: >
@@ -71,7 +71,7 @@ test_description: >
     Send lots of transactions to a node
 
 setup_conditions:
-    test_name : "miner_recieves_more_tx"
+    test_name : "miner_receives_more_tx"
     number_of_nodes: 1
     mining_nodes: [0]
     max_test_time: 60

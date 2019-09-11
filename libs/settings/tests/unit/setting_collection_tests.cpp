@@ -17,13 +17,16 @@
 //------------------------------------------------------------------------------
 
 #include "mock_environment.hpp"
-
 #include "settings/setting.hpp"
 #include "settings/setting_collection.hpp"
 
 #include "gmock/gmock.h"
 
-#include <memory>
+#include <cstddef>
+#include <cstdint>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace {
 

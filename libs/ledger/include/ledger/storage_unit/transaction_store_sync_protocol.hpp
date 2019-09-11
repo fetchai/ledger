@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
 #include "ledger/storage_unit/transaction_sinks.hpp"
@@ -95,15 +95,15 @@ private:
   using TxArray = std::vector<Transaction>;
 
   uint64_t ObjectCount();
-  TxArray  PullObjects(service::CallContext const *call_context);
+  TxArray  PullObjects(service::CallContext const &call_context);
 
   TxArray PullSubtree(byte_array::ConstByteArray const &rid, uint64_t mask);
   TxArray PullSpecificObjects(std::vector<storage::ResourceID> const &rids);
 
   ObjectStore *store_;  ///< The pointer to the object store
 
-  mutex::Mutex cache_mutex_{__LINE__, __FILE__};  ///< The mutex protecting cache_
-  Cache        cache_;
+  Mutex cache_mutex_;  ///< The mutex protecting cache_
+  Cache cache_;
 
   int id_;
 };

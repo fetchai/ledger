@@ -18,8 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/future_timepoint.hpp"
-#include "core/logger.hpp"
-#include "core/serializers/typed_byte_array_buffer.hpp"
+#include "core/logging.hpp"
 #include "core/service_ids.hpp"
 #include "crypto/merkle_tree.hpp"
 #include "ledger/shard_config.hpp"
@@ -103,7 +102,6 @@ private:
   using AddressList          = std::vector<MuddleEndpoint::Address>;
   using MerkleTree           = crypto::MerkleTree;
   using PermanentMerkleStack = fetch::storage::ObjectStack<crypto::MerkleTree>;
-  using Mutex                = fetch::mutex::Mutex;
 
   static constexpr char const *MERKLE_FILENAME_DOC   = "merkle_stack.db";
   static constexpr char const *MERKLE_FILENAME_INDEX = "merkle_stack_index.db";
@@ -122,16 +120,11 @@ private:
 
   /// @name State Hash Support
   /// @{
-  mutable Mutex        merkle_mutex_{__LINE__, __FILE__};
+  mutable Mutex        merkle_mutex_;
   MerkleTree           current_merkle_;
   PermanentMerkleStack permanent_state_merkle_stack_{};
   /// @}
 };
-
-inline uint32_t StorageUnitClient::num_lanes() const
-{
-  return 1u << log2_num_lanes_;
-}
 
 }  // namespace ledger
 }  // namespace fetch

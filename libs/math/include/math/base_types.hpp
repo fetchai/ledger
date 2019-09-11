@@ -28,9 +28,10 @@
 namespace fetch {
 namespace math {
 
-using SizeType   = uint64_t;
-using SizeVector = std::vector<SizeType>;
-using SizeSet    = std::unordered_set<SizeType>;
+using SizeType    = uint64_t;
+using PtrDiffType = int64_t;
+using SizeVector  = std::vector<SizeType>;
+using SizeSet     = std::unordered_set<SizeType>;
 
 constexpr SizeType NO_AXIS = SizeType(-1);
 
@@ -71,15 +72,45 @@ static constexpr meta::IfIsFixedPoint<T, T> numeric_lowest()
 }
 
 template <typename T>
-meta::IfIsFixedPoint<T, T> static function_tolerance()
+fetch::meta::IfIsFloat<T, T> static numeric_inf()
+{
+  return std::numeric_limits<T>::infinity();
+}
+
+template <typename T>
+fetch::meta::IfIsFixedPoint<T, T> static numeric_inf()
+{
+  return T::POSITIVE_INFINITY;
+}
+
+template <typename T>
+fetch::meta::IfIsFloat<T, T> static numeric_negative_inf()
+{
+  return -std::numeric_limits<T>::infinity();
+}
+
+template <typename T>
+fetch::meta::IfIsFixedPoint<T, T> static numeric_negative_inf()
+{
+  return T::NEGATIVE_INFINITY;
+}
+
+template <typename T>
+fetch::meta::IfIsFixedPoint<T, T> static function_tolerance()
 {
   return T::TOLERANCE;
 }
 
 template <typename T>
+fetch::meta::IfIsInteger<T, T> static function_tolerance()
+{
+  return T(0);
+}
+
+template <typename T>
 fetch::meta::IfIsFloat<T, T> static function_tolerance()
 {
-  return T(1e-7);
+  return T(1e-6);
 }
 
 }  // namespace math

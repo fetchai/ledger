@@ -20,7 +20,8 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/json/document.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
+#include "http/authentication_level.hpp"
 #include "http/header.hpp"
 #include "http/method.hpp"
 #include "http/query.hpp"
@@ -38,10 +39,9 @@ namespace http {
 class HTTPRequest
 {
 public:
-  using byte_array_type = byte_array::ConstByteArray;
-  using Clock           = std::chrono::high_resolution_clock;
-  using Timepoint       = Clock::time_point;
-  using Duration        = Clock::duration;
+  using Clock     = std::chrono::high_resolution_clock;
+  using Timepoint = Clock::time_point;
+  using Duration  = Clock::duration;
 
   static constexpr char const *LOGGING_NAME = "HTTPRequest";
 
@@ -55,12 +55,12 @@ public:
     return method_;
   }
 
-  byte_array_type const &uri() const
+  byte_array::ConstByteArray const &uri() const
   {
     return uri_;
   }
 
-  byte_array_type const &protocol() const
+  byte_array::ConstByteArray const &protocol() const
   {
     return protocol_;
   }
@@ -97,8 +97,6 @@ public:
 
   json::JSONDocument JSON() const
   {
-    LOG_STACK_TRACE_POINT;
-
     return json::JSONDocument(body());
   }
 
@@ -107,7 +105,7 @@ public:
     method_ = method;
   }
 
-  void SetURI(byte_array_type const &uri)
+  void SetURI(byte_array::ConstByteArray const &uri)
   {
     uri_ = uri;
   }
@@ -152,6 +150,28 @@ public:
            static_cast<double>(Clock::period::den);
   }
 
+  void AddAuthentication(byte_array::ConstByteArray const &auth_method, uint32_t level)
+  {
+    if (auth_method_.size() != 0)
+    {
+      auth_method_.Append(", ");
+    }
+
+    auth_method_.Append(auth_method);
+    auth_level_ |= level;
+  }
+
+  void SetAuthentication(byte_array::ConstByteArray const &auth_method, uint32_t level)
+  {
+    auth_method_ = auth_method;
+    auth_level_  = level;
+  }
+
+  uint32_t authentication_level() const
+  {
+    return auth_level_;
+  }
+
 private:
   bool ParseStartLine(byte_array::ByteArray &line);
 
@@ -164,10 +184,10 @@ private:
   Header   header_;
   QuerySet query_;
 
-  Method          method_{Method::GET};
-  byte_array_type full_uri_;
-  byte_array_type uri_;
-  byte_array_type protocol_;
+  Method                     method_{Method::GET};
+  byte_array::ConstByteArray full_uri_;
+  byte_array::ConstByteArray uri_;
+  byte_array::ConstByteArray protocol_;
 
   bool is_valid_ = true;
 
@@ -178,6 +198,12 @@ private:
   Timepoint created_{Clock::now()};
   Timepoint processed_{};
   /// @}
+
+  /// Authenticated
+  /// @{
+  byte_array::ByteArray auth_method_{};
+  uint32_t              auth_level_{AuthenticationLevel::DEFAULT_LEVEL};
+  /// }
 };
 }  // namespace http
 }  // namespace fetch

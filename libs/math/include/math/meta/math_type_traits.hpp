@@ -27,7 +27,6 @@
 
 namespace fetch {
 namespace math {
-
 namespace meta {
 
 //////////////////

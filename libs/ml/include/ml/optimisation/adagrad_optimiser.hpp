@@ -18,8 +18,12 @@
 //------------------------------------------------------------------------------
 
 #include "math/standard_functions/sqrt.hpp"
-#include "ml/graph.hpp"
+#include "ml/core/graph.hpp"
 #include "ml/optimisation/optimiser.hpp"
+
+#include <memory>
+#include <string>
+#include <vector>
 
 namespace fetch {
 namespace ml {
@@ -28,16 +32,16 @@ namespace optimisers {
 /**
  * Adaptive Gradient Algorithm optimiser
  * i.e. Modified stochastic gradient descent with per-parameter learning rate
- * @tparam T ArrayType
+ * @tparam T TensorType
  * @tparam C CriterionType
  */
 template <class T>
 class AdaGradOptimiser : public Optimiser<T>
 {
 public:
-  using ArrayType = T;
-  using DataType  = typename ArrayType::Type;
-  using SizeType  = typename ArrayType::SizeType;
+  using TensorType = T;
+  using DataType   = typename TensorType::Type;
+  using SizeType   = typename TensorType::SizeType;
 
   AdaGradOptimiser(std::shared_ptr<Graph<T>>       graph,
                    std::vector<std::string> const &input_node_names,
@@ -51,11 +55,11 @@ public:
                    fetch::ml::optimisers::LearningRateParam<DataType> const &learning_rate_param,
                    DataType const &epsilon = DataType{1e-8f});
 
-  virtual ~AdaGradOptimiser() = default;
+  ~AdaGradOptimiser() override = default;
 
 private:
-  std::vector<ArrayType> cache_;
-  DataType               epsilon_;
+  std::vector<TensorType> cache_;
+  DataType                epsilon_;
 
   void ApplyGradients(SizeType batch_size) override;
   void ResetCache();
@@ -72,7 +76,7 @@ AdaGradOptimiser<T>::AdaGradOptimiser(std::shared_ptr<Graph<T>>       graph,
 {
   for (auto &train : this->graph_trainables_)
   {
-    this->cache_.emplace_back(ArrayType(train->get_weights().shape()));
+    this->cache_.emplace_back(TensorType(train->get_weights().shape()));
   }
   ResetCache();
 }
@@ -88,7 +92,7 @@ AdaGradOptimiser<T>::AdaGradOptimiser(
 {
   for (auto &train : this->graph_trainables_)
   {
-    this->cache_.emplace_back(ArrayType(train->get_weights().shape()));
+    this->cache_.emplace_back(TensorType(train->get_weights().shape()));
   }
   ResetCache();
 }
@@ -106,8 +110,8 @@ void AdaGradOptimiser<T>::ApplyGradients(SizeType batch_size)
   while (gradient_it != this->gradients_.end())
   {
     // cache[i] += (input_grad[i]/batch_size)^2
-    fetch::math::Divide((*trainable_it)->get_gradients(), static_cast<DataType>(batch_size),
-                        *gradient_it);
+    fetch::math::Divide((*trainable_it)->GetGradientsReferences(),
+                        static_cast<DataType>(batch_size), *gradient_it);
     fetch::math::Square(*gradient_it, *gradient_it);
     fetch::math::Add(*cached_weight_it, *gradient_it, *cached_weight_it);
 
@@ -115,7 +119,7 @@ void AdaGradOptimiser<T>::ApplyGradients(SizeType batch_size)
     // output_grad[i] = learning_rate * (grad[i]/batch_size) / (sqrt(cache[i]) + epsilon)
     fetch::math::Sqrt(*cached_weight_it, *gradient_it);
     fetch::math::Add(*gradient_it, epsilon_, *gradient_it);
-    fetch::math::Divide((*trainable_it)->get_gradients(), *gradient_it, *gradient_it);
+    fetch::math::Divide((*trainable_it)->GetGradientsReferences(), *gradient_it, *gradient_it);
     fetch::math::Multiply(
         *gradient_it, (-this->learning_rate_) / (static_cast<DataType>(batch_size)), *gradient_it);
 

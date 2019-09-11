@@ -17,18 +17,18 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor.hpp"
-#include "ml/graph.hpp"
-#include "ml/layers/self_attention.hpp"
+#include "ml/core/graph.hpp"
+#include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activations/relu.hpp"
 #include "ml/ops/loss_functions.hpp"
-#include "ml/ops/multiply.hpp"
 #include "ml/ops/placeholder.hpp"
-#include "ml/ops/subtract.hpp"
 #include "ml/optimisation/adagrad_optimiser.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "ml/optimisation/momentum_optimiser.hpp"
 #include "ml/optimisation/rmsprop_optimiser.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
+#include "ml/saveparams/saveable_params.hpp"
+#include "ml/serializers/ml_types.hpp"
 
 #include "gtest/gtest.h"
 
@@ -40,6 +40,10 @@ class OptimisersTest : public ::testing::Test
 using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 TYPED_TEST_CASE(OptimisersTest, MyTypes);
+
+//////////////////////////
+/// reusable functions ///
+//////////////////////////
 
 template <typename TypeParam>
 std::shared_ptr<fetch::ml::Graph<TypeParam>> PrepareTestGraph(
@@ -118,6 +122,10 @@ void PrepareTestDataAndLabels2D(TypeParam &data, TypeParam &gt)
   gt.Set(1, 2, DataType(11));
 }
 
+/////////////////
+/// SGD TESTS ///
+/////////////////
+
 TYPED_TEST(OptimisersTest, sgd_optimiser_training)
 {
   using DataType = typename TypeParam::Type;
@@ -136,7 +144,7 @@ TYPED_TEST(OptimisersTest, sgd_optimiser_training)
   TypeParam gt;
   PrepareTestDataAndLabels1D(data, gt);
 
-  // Initialize Optimiser
+  // Initialise Optimiser
   fetch::ml::optimisers::SGDOptimiser<TypeParam> optimiser(g, {input_name}, label_name, output_name,
                                                            learning_rate);
 
@@ -182,7 +190,7 @@ TYPED_TEST(OptimisersTest, sgd_optimiser_training_2D)
   TypeParam gt;
   PrepareTestDataAndLabels2D(data, gt);
 
-  // Initialize Optimiser
+  // Initialise Optimiser
   fetch::ml::optimisers::SGDOptimiser<TypeParam> optimiser(g, {input_name}, label_name, output_name,
                                                            learning_rate);
 
@@ -210,6 +218,53 @@ TYPED_TEST(OptimisersTest, sgd_optimiser_training_2D)
                   static_cast<double>(data.size()));
 }
 
+TYPED_TEST(OptimisersTest, sgd_optimiser_serialisation)
+{
+  using DataType = typename TypeParam::Type;
+
+  DataType learning_rate = DataType{0.06f};
+
+  // Prepare model
+  std::string                                  input_name;
+  std::string                                  label_name;
+  std::string                                  output_name;
+  std::shared_ptr<fetch::ml::Graph<TypeParam>> g =
+      PrepareTestGraph<TypeParam>(4, 2, input_name, label_name, output_name);
+
+  // Prepare data and labels
+  TypeParam data;
+  TypeParam gt;
+  PrepareTestDataAndLabels2D(data, gt);
+
+  // Initialise Optimiser
+  fetch::ml::optimisers::SGDOptimiser<TypeParam> optimiser(g, {input_name}, label_name, output_name,
+                                                           learning_rate);
+
+  // Do 2 optimiser steps
+  optimiser.Run({data}, gt);
+  DataType loss = optimiser.Run({data}, gt);
+
+  // serialise the optimiser
+  fetch::serializers::MsgPackSerializer b;
+  b << optimiser;
+
+  // deserialis the optimiser
+  b.seek(0);
+  auto optimiser_2 = std::make_shared<fetch::ml::optimisers::SGDOptimiser<TypeParam>>();
+  b >> *optimiser_2;
+
+  // Do 2 optimiser steps
+  loss            = optimiser.Run({data}, gt);
+  DataType loss_2 = optimiser_2->Run({data}, gt);
+
+  // Test loss
+  EXPECT_EQ(static_cast<DataType>(loss), static_cast<DataType>(loss_2));
+}
+
+//////////////////////
+/// MOMENTUM TESTS ///
+//////////////////////
+
 TYPED_TEST(OptimisersTest, momentum_optimiser_training)
 {
   using DataType = typename TypeParam::Type;
@@ -228,7 +283,7 @@ TYPED_TEST(OptimisersTest, momentum_optimiser_training)
   TypeParam gt;
   PrepareTestDataAndLabels1D(data, gt);
 
-  // Initialize Optimiser
+  // Initialise Optimiser
   fetch::ml::optimisers::MomentumOptimiser<TypeParam> optimiser(g, {input_name}, label_name,
                                                                 output_name, learning_rate);
 
@@ -274,7 +329,7 @@ TYPED_TEST(OptimisersTest, momentum_optimiser_training_2D)
   TypeParam gt;
   PrepareTestDataAndLabels2D(data, gt);
 
-  // Initialize Optimiser
+  // Initialise Optimiser
   fetch::ml::optimisers::MomentumOptimiser<TypeParam> optimiser(g, {input_name}, label_name,
                                                                 output_name, learning_rate);
 
@@ -320,7 +375,7 @@ TYPED_TEST(OptimisersTest, adagrad_optimiser_training)
   TypeParam gt;
   PrepareTestDataAndLabels1D(data, gt);
 
-  // Initialize Optimiser
+  // Initialise Optimiser
   fetch::ml::optimisers::AdaGradOptimiser<TypeParam> optimiser(g, {input_name}, label_name,
                                                                output_name, learning_rate);
 
@@ -366,7 +421,7 @@ TYPED_TEST(OptimisersTest, adagrad_optimiser_training_2D)
   TypeParam gt;
   PrepareTestDataAndLabels2D(data, gt);
 
-  // Initialize Optimiser
+  // Initialise Optimiser
   fetch::ml::optimisers::AdaGradOptimiser<TypeParam> optimiser(g, {input_name}, label_name,
                                                                output_name, learning_rate);
 
@@ -412,7 +467,7 @@ TYPED_TEST(OptimisersTest, rmsprop_optimiser_training)
   TypeParam gt;
   PrepareTestDataAndLabels1D(data, gt);
 
-  // Initialize Optimiser
+  // Initialise Optimiser
   fetch::ml::optimisers::RMSPropOptimiser<TypeParam> optimiser(g, {input_name}, label_name,
                                                                output_name, learning_rate);
 
@@ -458,7 +513,7 @@ TYPED_TEST(OptimisersTest, rmsprop_optimiser_training_2D)
   TypeParam gt;
   PrepareTestDataAndLabels2D(data, gt);
 
-  // Initialize Optimiser
+  // Initialise Optimiser
   fetch::ml::optimisers::RMSPropOptimiser<TypeParam> optimiser(g, {input_name}, label_name,
                                                                output_name, learning_rate);
 
@@ -504,7 +559,7 @@ TYPED_TEST(OptimisersTest, adam_optimiser_training)
   TypeParam gt;
   PrepareTestDataAndLabels1D(data, gt);
 
-  // Initialize Optimiser
+  // Initialise Optimiser
   fetch::ml::optimisers::AdamOptimiser<TypeParam> optimiser(g, {input_name}, label_name,
                                                             output_name, learning_rate);
 
@@ -549,7 +604,7 @@ TYPED_TEST(OptimisersTest, adam_optimiser_training_2D)
   TypeParam gt;
   PrepareTestDataAndLabels2D(data, gt);
 
-  // Initialize Optimiser
+  // Initialise Optimiser
   fetch::ml::optimisers::AdamOptimiser<TypeParam> optimiser(g, {input_name}, label_name,
                                                             output_name, learning_rate);
 
@@ -588,14 +643,14 @@ TYPED_TEST(OptimisersTest, adam_optimiser_minibatch_training)
   std::string                                  output_name;
   std::shared_ptr<fetch::ml::Graph<TypeParam>> g =
 
-      PrepareTestGraph<TypeParam>(1, 1, input_name, label_name, output_name);
+      PrepareTestGraph<TypeParam>(1u, 1u, input_name, label_name, output_name);
 
   // Prepare data and labels
   TypeParam data;
   TypeParam gt;
   PrepareTestDataAndLabels1D(data, gt);
 
-  // Initialize Optimiser
+  // Initialise Optimiser
   fetch::ml::optimisers::AdamOptimiser<TypeParam> optimiser(g, {input_name}, label_name,
                                                             output_name, learning_rate);
 
@@ -604,7 +659,7 @@ TYPED_TEST(OptimisersTest, adam_optimiser_minibatch_training)
   DataType loss = optimiser.Run({data}, gt, 2);
 
   // Test loss
-  EXPECT_NEAR(static_cast<double>(loss), 1.2803993316525915, 1e-5);
+  EXPECT_NEAR(static_cast<double>(loss), 0.64019902935251594, 1e-5);
 
   // Test weights
   std::vector<TypeParam> weights = g->get_weights();

@@ -38,7 +38,7 @@ void LogTimout(NAME const &name, ID const &id)
 }  // namespace
 
 PromiseImplementation::Counter PromiseImplementation::counter_{0};
-PromiseImplementation::Mutex   PromiseImplementation::counter_lock_{__LINE__, __FILE__};
+Mutex                          PromiseImplementation::counter_lock_;
 
 PromiseBuilder PromiseImplementation::WithHandlers()
 {
@@ -55,7 +55,6 @@ PromiseBuilder PromiseImplementation::WithHandlers()
  */
 bool PromiseImplementation::Wait(uint32_t timeout_ms, bool throw_exception) const
 {
-  LOG_STACK_TRACE_POINT;
   bool const has_timeout = timeout_ms > 0;
   State      state_copy{state_};
   if (has_timeout)
@@ -90,13 +89,12 @@ bool PromiseImplementation::Wait(uint32_t timeout_ms, bool throw_exception) cons
 
 void PromiseImplementation::UpdateState(State state)
 {
-  LOG_STACK_TRACE_POINT;
   assert(state != State::WAITING);
 
   bool dispatch = false;
 
   {
-    std::unique_lock<std::mutex> lock(notify_lock_);
+    FETCH_LOCK(notify_lock_);
     if (state_ == State::WAITING)
     {
       state_   = state;
@@ -155,6 +153,149 @@ PromiseImplementation::Counter PromiseImplementation::GetNextId()
   return counter_++;
 }
 
+PromiseImplementation::PromiseImplementation(uint64_t pro, uint64_t func)
+  : protocol_(pro)
+  , function_(func)
+{}
+
+PromiseImplementation::ConstByteArray const &PromiseImplementation::value() const
+{
+  return value_;
+}
+
+PromiseImplementation::Counter PromiseImplementation::id() const
+{
+  return id_;
+}
+
+uint64_t PromiseImplementation::protocol() const
+{
+  return protocol_;
+}
+
+uint64_t PromiseImplementation::function() const
+{
+  return function_;
+}
+
+PromiseImplementation::State PromiseImplementation::state() const
+{
+  return state_;
+}
+
+PromiseImplementation::SerializableException const &PromiseImplementation::exception() const
+{
+  return (*exception_);
+}
+
+bool PromiseImplementation::IsWaiting() const
+{
+  return (State::WAITING == state_);
+}
+
+bool PromiseImplementation::IsSuccessful() const
+{
+  return (State::SUCCESS == state_);
+}
+
+bool PromiseImplementation::IsFailed() const
+{
+  return (State::FAILED == state_);
+}
+
+void PromiseImplementation::SetSuccessCallback(Callback const &cb)
+{
+  FETCH_LOCK(callback_lock_);
+  callback_success_ = cb;
+}
+
+void PromiseImplementation::SetFailureCallback(Callback const &cb)
+{
+  FETCH_LOCK(callback_lock_);
+  callback_failure_ = cb;
+}
+
+void PromiseImplementation::SetCompletionCallback(Callback const &cb)
+{
+  FETCH_LOCK(callback_lock_);
+  callback_completion_ = cb;
+}
+
+void PromiseImplementation::Fulfill(ConstByteArray const &value)
+{
+  value_ = value;
+
+  UpdateState(State::SUCCESS);
+}
+
+void PromiseImplementation::Fail(SerializableException const &exception)
+{
+  exception_ = std::make_unique<SerializableException>(exception);
+
+  UpdateState(State::FAILED);
+}
+
+void PromiseImplementation::Fail()
+{
+  UpdateState(State::FAILED);
+}
+
+std::string &PromiseImplementation::name()
+{
+  return name_;
+}
+
+const std::string &PromiseImplementation::name() const
+{
+  return name_;
+}
+
+PromiseImplementation::State PromiseImplementation::GetState() const
+{
+  return state_;
+}
+
+bool PromiseImplementation::Wait(bool throw_exception) const
+{
+  return Wait(FOREVER, throw_exception);
+}
+
+PromiseBuilder::PromiseBuilder(PromiseImplementation &promise)
+  : promise_(promise)
+{}
+
+PromiseBuilder::~PromiseBuilder()
+{
+  promise_.SetSuccessCallback(callback_success_);
+  promise_.SetFailureCallback(callback_failure_);
+  promise_.SetCompletionCallback(callback_complete_);
+
+  // in the rare (probably failure case) when the promise has been resolved during before the
+  // responses have been set
+  if (!promise_.IsWaiting())
+  {
+    promise_.DispatchCallbacks();
+  }
+}
+
+PromiseBuilder &PromiseBuilder::Then(Callback const &cb)
+{
+  callback_success_ = cb;
+  return *this;
+}
+
+PromiseBuilder &PromiseBuilder::Catch(Callback const &cb)
+{
+  callback_failure_ = cb;
+  return *this;
+}
+
+PromiseBuilder &PromiseBuilder::Finally(Callback const &cb)
+{
+  callback_complete_ = cb;
+  return *this;
+}
+
 }  // namespace details
 
 /**
@@ -191,6 +332,16 @@ static const std::array<PromiseState, 4> promise_states{
 const std::array<PromiseState, 4> &GetAllPromiseStates()
 {
   return promise_states;
+}
+
+Promise MakePromise()
+{
+  return std::make_shared<details::PromiseImplementation>();
+}
+
+Promise MakePromise(uint64_t pro, uint64_t func)
+{
+  return std::make_shared<details::PromiseImplementation>(pro, func);
 }
 
 }  // namespace service

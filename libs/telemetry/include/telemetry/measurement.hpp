@@ -17,13 +17,32 @@
 //
 //------------------------------------------------------------------------------
 
+#include <cstddef>
+#include <functional>
 #include <iosfwd>
 #include <string>
 #include <unordered_map>
-#include <utility>
+#include <unordered_set>
 
 namespace fetch {
 namespace telemetry {
+
+class OutputStream
+{
+public:
+  explicit OutputStream(std::ostream &stream);
+
+  template <typename T>
+  OutputStream &operator<<(T &&element);
+
+  bool HeaderIsRequired(std::string const &name);
+
+private:
+  using NameSet = std::unordered_set<std::string>;
+
+  std::ostream &stream_;
+  NameSet       metrics_;
+};
 
 class Measurement
 {
@@ -56,15 +75,15 @@ public:
    * @param stream The stream to be updated
    * @param mode The mode to be used when generating the stream
    */
-  virtual void ToStream(std::ostream &stream, StreamMode mode) const = 0;
+  virtual void ToStream(OutputStream &stream) const = 0;
 
   /// @}
 
 protected:
-  std::ostream &WriteHeader(std::ostream &stream, char const *type_name, StreamMode mode) const;
-  std::ostream &WriteValuePrefix(std::ostream &stream) const;
-  std::ostream &WriteValuePrefix(std::ostream &stream, std::string const &suffix) const;
-  std::ostream &WriteValuePrefix(std::ostream &stream, std::string const &suffix,
+  OutputStream &WriteHeader(OutputStream &stream, char const *type_name) const;
+  OutputStream &WriteValuePrefix(OutputStream &stream) const;
+  OutputStream &WriteValuePrefix(OutputStream &stream, std::string const &suffix) const;
+  OutputStream &WriteValuePrefix(OutputStream &stream, std::string const &suffix,
                                  Labels const &extra) const;
 
 private:
@@ -73,25 +92,11 @@ private:
   Labels            labels_;
 };
 
-inline Measurement::Measurement(std::string name, std::string description, Labels labels)
-  : name_{std::move(name)}
-  , description_{std::move(description)}
-  , labels_{std::move(labels)}
-{}
-
-inline std::string const &Measurement::name() const
+template <typename T>
+OutputStream &OutputStream::operator<<(T &&element)
 {
-  return name_;
-}
-
-inline std::string const &Measurement::description() const
-{
-  return description_;
-}
-
-inline Measurement::Labels const &Measurement::labels() const
-{
-  return labels_;
+  stream_ << element;
+  return *this;
 }
 
 }  // namespace telemetry

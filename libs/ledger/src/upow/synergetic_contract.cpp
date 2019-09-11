@@ -17,13 +17,14 @@
 //------------------------------------------------------------------------------
 
 #include "core/json/document.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "ledger/state_sentinel_adapter.hpp"
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
 #include "ledger/upow/synergetic_contract.hpp"
 #include "vectorise/uint/uint.hpp"
+#include "vm/array.hpp"
 #include "vm/compiler.hpp"
 #include "vm/vm.hpp"
 #include "vm_modules/core/structured_data.hpp"
@@ -42,28 +43,25 @@ using vm_modules::math::UInt256Wrapper;
 using vm_modules::VMFactory;
 using vm_modules::StructuredData;
 using byte_array::ConstByteArray;
+using crypto::Hash;
+using crypto::SHA256;
 
 using Status                = SynergeticContract::Status;
 using ProblemData           = SynergeticContract::ProblemData;
 using VmStructuredData      = vm::Ptr<vm_modules::StructuredData>;
 using VmStructuredDataArray = vm::Ptr<vm::Array<VmStructuredData>>;
 
-constexpr char const *LOGGING_NAME = "SynContract";
+constexpr char const *LOGGING_NAME = "SynergeticContract";
 
 enum class FunctionKind
 {
-  NORMAL,     ///< Normal (undecorated) function
+  NONE,       ///< Normal (undecorated) function
   WORK,       ///< A function that is called to do some work
   OBJECTIVE,  ///< A function that is called to determine the quality of the work
   PROBLEM,    ///< The problem function
   CLEAR,      ///< The clear function
   INVALID,    ///< The function has an invalid decorator
 };
-
-Digest ComputeDigest(ConstByteArray const &source)
-{
-  return crypto::Hash<crypto::SHA256>(source);
-}
 
 std::string ErrorsToLog(std::vector<std::string> const &errors)
 {
@@ -79,7 +77,7 @@ std::string ErrorsToLog(std::vector<std::string> const &errors)
 
 FunctionKind DetermineKind(vm::Executable::Function const &fn)
 {
-  FunctionKind kind{FunctionKind::NORMAL};
+  FunctionKind kind{FunctionKind::NONE};
 
   // loop through all the function annotations
   if (1u == fn.annotations.size())
@@ -124,7 +122,8 @@ VmStructuredData CreateProblemData(vm::VM *vm, ConstByteArray const &problem_dat
     json::JSONDocument doc{problem_data};
 
     // create the structured data
-    data = StructuredData::Constructor(vm, vm->GetTypeId<VmStructuredData>(), doc.root());
+    data =
+        StructuredData::ConstructorFromVariant(vm, vm->GetTypeId<VmStructuredData>(), doc.root());
   }
   catch (std::exception const &ex)
   {
@@ -167,7 +166,7 @@ VmStructuredDataArray CreateProblemData(vm::VM *vm, ProblemData const &problem_d
 }  // namespace
 
 SynergeticContract::SynergeticContract(ConstByteArray const &source)
-  : digest_{ComputeDigest(source)}
+  : digest_{Hash<SHA256>(source)}
   , module_{VMFactory::GetModule(VMFactory::USE_SYNERGETIC)}
 {
   // ensure the source has size
@@ -227,7 +226,7 @@ SynergeticContract::SynergeticContract(ConstByteArray const &source)
       name     = "clear";
       function = &clear_function_;
       break;
-    case FunctionKind::NORMAL:
+    case FunctionKind::NONE:
     case FunctionKind::INVALID:
       break;
     }
@@ -379,6 +378,66 @@ vm::Variant const &SynergeticContract::GetSolution() const
   }
 
   return *solution_;
+}
+
+Digest const &SynergeticContract::digest() const
+{
+  return digest_;
+}
+
+std::string const &SynergeticContract::work_function() const
+{
+  return work_function_;
+}
+
+std::string const &SynergeticContract::problem_function() const
+{
+  return problem_function_;
+}
+
+std::string const &SynergeticContract::objective_function() const
+{
+  return objective_function_;
+}
+
+std::string const &SynergeticContract::clear_function() const
+{
+  return clear_function_;
+}
+
+void SynergeticContract::Attach(StorageInterface &storage)
+{
+  storage_ = &storage;
+}
+
+void SynergeticContract::Detach()
+{
+  storage_ = nullptr;
+  problem_.reset();
+  solution_.reset();
+}
+
+char const *ToString(SynergeticContract::Status status)
+{
+  char const *text = "Unknown";
+
+  switch (status)
+  {
+  case SynergeticContract::Status::SUCCESS:
+    text = "Success";
+    break;
+  case SynergeticContract::Status::VM_EXECUTION_ERROR:
+    text = "VM Execution Error";
+    break;
+  case SynergeticContract::Status::NO_STATE_ACCESS:
+    text = "No State Access";
+    break;
+  case SynergeticContract::Status::GENERAL_ERROR:
+    text = "General Error";
+    break;
+  }
+
+  return text;
 }
 
 }  // namespace ledger

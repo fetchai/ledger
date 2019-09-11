@@ -22,15 +22,14 @@
 #include "math/meta/math_type_traits.hpp"
 #include "math/standard_functions/pow.hpp"
 
-#include <cmath>
-
 namespace fetch {
 namespace math {
 namespace distance {
 
 template <typename ArrayType>
-inline meta::IfIsMathArray<ArrayType, typename ArrayType::Type> Minkowski(
-    ArrayType const &a, ArrayType const &b, typename ArrayType::Type n)
+meta::IfIsMathArray<ArrayType, typename ArrayType::Type> Minkowski(ArrayType const &        a,
+                                                                   ArrayType const &        b,
+                                                                   typename ArrayType::Type n)
 {
   detailed_assert(a.size() == b.size());
   using DataType = typename ArrayType::Type;
@@ -42,6 +41,7 @@ inline meta::IfIsMathArray<ArrayType, typename ArrayType::Type> Minkowski(
     sum += Pow(fetch::vectorise::Max(val, *b_it) - fetch::vectorise::Min(val, *b_it), n);
     ++b_it;
   }
+
   return Pow(sum, DataType{1} / DataType{n});
 }
 

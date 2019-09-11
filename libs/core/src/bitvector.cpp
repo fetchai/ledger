@@ -416,4 +416,29 @@ std::size_t BitVector::PopCount() const
   return std::min(ret, size_);
 }
 
+std::ostream &operator<<(std::ostream &s, BitVector const &b)
+{
+#if 1
+  for (std::size_t i = 0; i < b.size(); ++i)
+  {
+    if (i && ((i % 10) == 0))
+    {
+      s << ' ';
+    }
+    s << b.bit(i);
+  }
+#else
+  for (std::size_t i = 0; i < b.blocks(); ++i)
+  {
+    if (i != 0)
+    {
+      s << " ";
+    }
+    s << std::hex << b(i);
+  }
+#endif
+
+  return s;
+}
+
 }  // namespace fetch

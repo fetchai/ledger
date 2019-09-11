@@ -30,18 +30,46 @@ template <class T>
 class MaxPool2D : public Ops<T>
 {
 public:
-  using ArrayType     = T;
-  using SizeType      = typename ArrayType::SizeType;
-  using DataType      = typename ArrayType::Type;
-  using ArrayPtrType  = std::shared_ptr<ArrayType>;
+  using TensorType    = T;
+  using SizeType      = typename TensorType::SizeType;
+  using DataType      = typename TensorType::Type;
+  using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SPType        = OpMaxPool2DSaveableParams<T>;
+  using MyType        = MaxPool2D<TensorType>;
 
   MaxPool2D(SizeType const kernel_size, SizeType const stride_size)
     : kernel_size_{kernel_size}
     , stride_size_{stride_size}
   {}
+
+  explicit MaxPool2D(SPType const &sp)
+    : Ops<T>(sp)
+  {
+    kernel_size_ = sp.kernel_size;
+    stride_size_ = sp.stride_size;
+  }
+
   ~MaxPool2D() override = default;
 
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
+  {
+    SPType sp{};
+    sp.kernel_size = kernel_size_;
+    sp.stride_size = stride_size_;
+    return std::make_shared<SPType>(sp);
+  }
+
+  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
+  {
+    FETCH_UNUSED(me);
+    assert(me.get() == this);
+
+    auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
+
+    return copyshare;
+  }
   /**
    * Applies 2D max pooling of kernel_size_ x kernel_size_ for each channel described here:
    * http://ais.uni-bonn.de/papers/icann2010_maxpool.pdf
@@ -51,11 +79,11 @@ public:
    * number_of_stride_sized_steps_over_input_height x number_of_stride_sized_steps_over_input_width]
    * @return: output tensor parameter
    */
-  void Forward(VecTensorType const &inputs, ArrayType &output) override
+  void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(inputs.size() == 1);
     // Input must be a 4D tensor [C x W x H x N]
-    assert(inputs.at(0).get().shape().size() == 4);
+    assert(inputs.at(0)->shape().size() == 4);
     assert(output.shape() == ComputeOutputShape(inputs));
 
     SizeType iterw;
@@ -76,14 +104,14 @@ public:
 
           for (SizeType c{0}; c < output.shape().at(0); ++c)  // Iterate over output channels
           {
-            max = inputs.at(0).get().At(c, iterw, iterh, n_i);
+            max = inputs.at(0)->At(c, iterw, iterh, n_i);
 
             // Get maximum value on kernel_size_ x kernel_size_ window
             for (SizeType jw{0}; jw < kernel_size_; jw++)  // Iterate over kernel width
             {
               for (SizeType jh{0}; jh < kernel_size_; jh++)  // Iterate over kernel width
               {
-                val = inputs.at(0).get().At(c, iterw + jw, iterh + jh, n_i);
+                val = inputs.at(0)->At(c, iterw + jw, iterh + jh, n_i);
                 if (val > max)
                 {
                   max = val;
@@ -111,12 +139,12 @@ public:
    * @return: output vector of tensors with back propagated error signal
    * output[0]=input_error[inputs[0].shape]
    */
-  std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                  ArrayType const &    error_signal) override
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     assert(inputs.size() == 1);
     assert(error_signal.shape() == ComputeOutputShape(inputs));
-    ArrayType return_signal{inputs.at(0).get().shape()};
+    TensorType return_signal{inputs.at(0)->shape()};
 
     SizeType iterh;
     SizeType iterw;
@@ -138,7 +166,7 @@ public:
           // Iterate over output channels
           for (SizeType c{0}; c < error_signal.shape().at(0); ++c)
           {
-            max       = inputs.at(0).get().At(c, iterw, iterh, n_i);
+            max       = inputs.at(0)->At(c, iterw, iterh, n_i);
             max_iterw = iterw;
             max_iterh = iterh;
 
@@ -148,7 +176,7 @@ public:
               for (SizeType jh{0}; jh < kernel_size_; jh++)  // Iterate over kernel width
               {
 
-                val = inputs.at(0).get().At(c, iterw + jw, iterh + jh, n_i);
+                val = inputs.at(0)->At(c, iterw + jw, iterh + jh, n_i);
                 if (val > max)
                 {
                   max       = val;
@@ -175,18 +203,22 @@ public:
     std::vector<SizeType> output_shape;
 
     // output_shape_[0]=number of output channels
-    output_shape.emplace_back(inputs.at(0).get().shape().at(0));
+    output_shape.emplace_back(inputs.at(0)->shape().at(0));
     // output_shape_[1]=number of stride_size steps over input height
-    output_shape.emplace_back((inputs.at(0).get().shape().at(1) - (kernel_size_ - stride_size_)) /
+    output_shape.emplace_back((inputs.at(0)->shape().at(1) - (kernel_size_ - stride_size_)) /
                               stride_size_);
     // output_shape_[2]=number of stride_size steps over input width
-    output_shape.emplace_back((inputs.at(0).get().shape().at(2) - (kernel_size_ - stride_size_)) /
+    output_shape.emplace_back((inputs.at(0)->shape().at(2) - (kernel_size_ - stride_size_)) /
                               stride_size_);
     // output_shape_[3]=batch dimension
-    output_shape.emplace_back(inputs.at(0).get().shape().at(3));
+    output_shape.emplace_back(inputs.at(0)->shape().at(3));
     return output_shape;
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::OP_MAX_POOL_2D;
+  }
   static constexpr char const *DESCRIPTOR = "MaxPool2D";
 
 private:

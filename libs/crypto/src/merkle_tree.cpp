@@ -61,7 +61,7 @@ void MerkleTree::CalculateRoot() const
   // If necessary bump the 'leaves' up to a power of 2
   while (!platform::IsLog2(uint64_t(hashes.size())))
   {
-    hashes.push_back(Digest{});
+    hashes.emplace_back();
   }
 
   // Now, repeatedly condense the vector by calculating the parents of each of the roots
@@ -79,6 +79,51 @@ void MerkleTree::CalculateRoot() const
 
   assert(hashes.size() == 1);
   root_ = hashes[0];
+}
+
+MerkleTree::Digest const &MerkleTree::root() const
+{
+  return root_;
+}
+
+MerkleTree::Container const &MerkleTree::leaf_nodes() const
+{
+  return leaf_nodes_;
+}
+
+std::size_t MerkleTree::size() const
+{
+  return leaf_nodes_.size();
+}
+
+MerkleTree::Iterator MerkleTree::begin()
+{
+  return leaf_nodes_.begin();
+}
+
+MerkleTree::ConstIterator MerkleTree::begin() const
+{
+  return leaf_nodes_.begin();
+}
+
+MerkleTree::ConstIterator MerkleTree::cbegin()
+{
+  return leaf_nodes_.cbegin();
+}
+
+MerkleTree::Iterator MerkleTree::end()
+{
+  return leaf_nodes_.end();
+}
+
+MerkleTree::ConstIterator MerkleTree::end() const
+{
+  return leaf_nodes_.end();
+}
+
+MerkleTree::ConstIterator MerkleTree::cend() const
+{
+  return leaf_nodes_.cend();
 }
 
 }  // namespace crypto

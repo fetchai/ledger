@@ -44,7 +44,7 @@ public:
 
   /// @name Measurement Interface
   /// @{
-  void ToStream(std::ostream &stream, StreamMode mode) const override;
+  void ToStream(OutputStream &stream) const override;
   /// @}
 
   // Operators
@@ -53,7 +53,6 @@ public:
 
 private:
   using Mutex               = std::mutex;
-  using LockGuard           = std::lock_guard<Mutex>;
   using HistogramCollection = std::unordered_map<std::string, HistogramPtr>;
 
   HistogramPtr LookupHistogram(std::string const &key);

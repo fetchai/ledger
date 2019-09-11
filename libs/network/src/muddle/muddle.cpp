@@ -16,10 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
-#include "core/serializers/byte_array.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
-#include "core/serializers/stl_types.hpp"
+#include "core/logging.hpp"
+#include "core/serializers/base_types.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/muddle_register.hpp"
 #include "network/muddle/muddle_server.hpp"
@@ -41,7 +40,6 @@ namespace muddle {
 
 static ConstByteArray ConvertAddress(Packet::RawAddress const &address)
 {
-  LOG_STACK_TRACE_POINT;
   ByteArray output(address.size());
   std::copy(address.begin(), address.end(), output.pointer());
 
@@ -70,7 +68,7 @@ Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager 
   : certificate_(std::move(certificate))
   , identity_(certificate_->identity())
   , network_manager_(nm)
-  , dispatcher_()
+  , dispatcher_(network_id, certificate_->identity().identifier())
   , register_(std::make_shared<MuddleRegister>(dispatcher_))
   , router_(network_id, identity_.identifier(), *register_, dispatcher_,
             sign_packets ? certificate_.get() : nullptr, sign_packets && sign_broadcasts)
@@ -86,7 +84,6 @@ Muddle::Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager 
  */
 void Muddle::Start(PortList const &ports, UriList const &initial_peer_list)
 {
-  LOG_STACK_TRACE_POINT;
   // start the thread pool
   thread_pool_->Start();
   router_.Start();
@@ -113,7 +110,6 @@ void Muddle::Start(PortList const &ports, UriList const &initial_peer_list)
  */
 void Muddle::Stop()
 {
-  LOG_STACK_TRACE_POINT;
   thread_pool_->Stop();
   router_.Stop();
 
@@ -130,7 +126,6 @@ void Muddle::Stop()
  */
 void Muddle::Shutdown()
 {
-  LOG_STACK_TRACE_POINT;
   dispatcher_.FailAllPendingPromises();
 }
 
@@ -142,7 +137,6 @@ void Muddle::Shutdown()
  */
 bool Muddle::UriToDirectAddress(const Uri &uri, Address &address) const
 {
-  LOG_STACK_TRACE_POINT;
   PeerConnectionList::Handle handle = clients_.UriToHandle(uri);
   if (handle == 0)
   {
@@ -158,7 +152,6 @@ bool Muddle::UriToDirectAddress(const Uri &uri, Address &address) const
  */
 Muddle::ConnectionMap Muddle::GetConnections(bool direct_only)
 {
-  LOG_STACK_TRACE_POINT;
   ConnectionMap connection_map;
 
   auto const routing_table = router_.GetRoutingTable();
@@ -206,7 +199,6 @@ Muddle::ConnectionMap Muddle::GetConnections(bool direct_only)
 
 void Muddle::DropPeer(Address const &peer)
 {
-  LOG_STACK_TRACE_POINT;
   FETCH_LOG_INFO(LOGGING_NAME, "Drop address peer: ", ToBase64(peer));
   Handle h = router_.LookupHandle(Router::ConvertAddress(peer));
   if (h)
@@ -226,7 +218,6 @@ void Muddle::DropPeer(Address const &peer)
  */
 void Muddle::RunPeriodicMaintenance()
 {
-  LOG_STACK_TRACE_POINT;
   FETCH_LOG_DEBUG(LOGGING_NAME, "Running periodic maintenance");
 
   try
@@ -274,7 +265,6 @@ void Muddle::RunPeriodicMaintenance()
  */
 void Muddle::CreateTcpServer(uint16_t port)
 {
-  LOG_STACK_TRACE_POINT;
   using ServerImpl = MuddleServer<network::TCPServer>;
 
   // create the server
@@ -299,7 +289,6 @@ void Muddle::CreateTcpServer(uint16_t port)
  */
 void Muddle::CreateTcpClient(Uri const &peer)
 {
-  LOG_STACK_TRACE_POINT;
   using ClientImpl       = network::TCPClient;
   using ConnectionRegPtr = std::shared_ptr<network::AbstractConnectionRegister>;
 
@@ -339,14 +328,17 @@ void Muddle::CreateTcpClient(Uri const &peer)
   strong_conn->OnMessage([this, peer, conn_handle](network::message_type const &msg) {
     try
     {
-      // un-marshall the data
-      serializers::ByteArrayBuffer buffer(msg);
-
       auto packet = std::make_shared<Packet>();
-      buffer >> *packet;
 
-      // dispatch the message to router
-      router_.Route(conn_handle, packet);
+      if (Packet::FromBuffer(*packet, msg.pointer(), msg.size()))
+      {
+        // dispatch the message to router
+        router_.Route(conn_handle, packet);
+      }
+      else
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to read packet from buffer");
+      }
     }
     catch (std::exception const &ex)
     {
@@ -362,20 +354,17 @@ void Muddle::CreateTcpClient(Uri const &peer)
 
 void Muddle::Blacklist(Address const &target)
 {
-  LOG_STACK_TRACE_POINT;
   DropPeer(target);
   router_.Blacklist(target);
 }
 
 void Muddle::Whitelist(Address const &target)
 {
-  LOG_STACK_TRACE_POINT;
   router_.Whitelist(target);
 }
 
 bool Muddle::IsBlacklisted(Address const &target) const
 {
-  LOG_STACK_TRACE_POINT;
   return router_.IsBlacklisted(target);
 }
 

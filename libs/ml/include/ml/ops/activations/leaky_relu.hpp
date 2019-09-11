@@ -30,34 +30,60 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class LeakyRelu : public fetch::ml::Ops<T>
+class LeakyRelu : public fetch::ml::ops::Ops<T>
 {
 public:
-  using ArrayType     = T;
-  using DataType      = typename ArrayType::Type;
-  using SizeType      = typename ArrayType::SizeType;
+  using TensorType    = T;
+  using DataType      = typename TensorType::Type;
+  using SizeType      = typename TensorType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SPType        = OpLeakyReluSaveableParams<TensorType>;
+  using MyType        = LeakyRelu<TensorType>;
 
   explicit LeakyRelu(DataType a = DataType(0.01))
     : a_(a)
   {}
-  ~LeakyRelu() override = default;
 
-  void Forward(VecTensorType const &inputs, ArrayType &output) override
+  explicit LeakyRelu(SPType const &sp)
+    : Ops<T>(sp)
   {
-    assert(inputs.size() == 1);
-    fetch::math::LeakyRelu(inputs.front().get(), a_, output);
+    a_ = sp.a;
   }
 
-  std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                  ArrayType const &    error_signal) override
+  ~LeakyRelu() override = default;
+
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
+  {
+    SPType sp{};
+    sp.a = a_;
+    return std::make_shared<SPType>(sp);
+  }
+
+  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
+  {
+    FETCH_UNUSED(me);
+    assert(me.get() == this);
+
+    auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
+
+    return copyshare;
+  }
+  void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(inputs.size() == 1);
-    assert(inputs.front().get().shape() == error_signal.shape());
-    DataType  zero{0};
-    DataType  one{1};
-    ArrayType ret{error_signal.shape()};
-    ArrayType t{inputs.front().get().shape()};
+    fetch::math::LeakyRelu((*inputs.front()), a_, output);
+  }
+
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
+  {
+    assert(inputs.size() == 1);
+    assert(inputs.front()->shape() == error_signal.shape());
+    DataType   zero{0};
+    DataType   one{1};
+    TensorType ret{error_signal.shape()};
+    TensorType t{inputs.front()->shape()};
 
     // gradient of leaky relu function is a where x<0; and 1.0 where x>=0
     this->Forward(inputs, t);
@@ -88,9 +114,13 @@ public:
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    return inputs.front().get().shape();
+    return inputs.front()->shape();
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::OP_LEAKY_RELU;
+  }
   static constexpr char const *DESCRIPTOR = "LeakyRelu";
 
 private:

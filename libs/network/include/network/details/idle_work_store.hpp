@@ -19,8 +19,12 @@
 
 #include "core/mutex.hpp"
 
-#include <algorithm>
-#include <string>
+#include <atomic>
+#include <chrono>
+#include <functional>
+#include <memory>
+#include <mutex>
+#include <vector>
 
 namespace fetch {
 namespace network {
@@ -33,9 +37,7 @@ namespace details {
 class IdleWorkStore
 {
 public:
-  using WorkItem   = std::function<void()>;
-  using mutex_type = fetch::mutex::Mutex;
-  using lock_type  = std::unique_lock<mutex_type>;
+  using WorkItem = std::function<void()>;
 
   IdleWorkStore()                         = default;
   IdleWorkStore(const IdleWorkStore &rhs) = delete;
@@ -88,7 +90,13 @@ public:
 
     if (mutex_.try_lock())
     {
-      is_due = Clock::now() >= (last_run_ + interval_);
+      try
+      {
+        is_due = Clock::now() >= (last_run_ + interval_);
+      }
+      catch (...)
+      {
+      }
 
       mutex_.unlock();
     }
@@ -140,6 +148,8 @@ public:
   {
     std::size_t num_processed = 0;
 
+    static_assert(noexcept(visitor(std::declval<WorkItem>())),
+                  "To ensure mutex release, callback must be noexcept");
     if (mutex_.try_lock())
     {
       for (auto const &work : store_)
@@ -187,10 +197,9 @@ private:
   using Clock     = std::chrono::system_clock;
   using Timestamp = Clock::time_point;
   using Flag      = std::atomic<bool>;
-  using Mutex     = fetch::mutex::Mutex;
   using Store     = std::vector<WorkItem>;
 
-  mutable Mutex             mutex_{__LINE__, __FILE__};
+  mutable Mutex             mutex_;
   Store                     store_;
   Flag                      shutdown_{false};
   std::chrono::milliseconds interval_{0};

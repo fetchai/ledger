@@ -167,7 +167,6 @@ public:
 
 private:
   using HandleMap  = std::unordered_map<Handle, std::unordered_set<Packet::RawAddress>>;
-  using Mutex      = mutex::Mutex;
   using Clock      = std::chrono::steady_clock;
   using Timepoint  = Clock::time_point;
   using EchoCache  = std::unordered_map<std::size_t, Timepoint>;
@@ -204,13 +203,13 @@ private:
   Prover *              prover_          = nullptr;
   bool                  sign_broadcasts_ = false;
 
-  mutable Mutex routing_table_lock_{__LINE__, __FILE__};
+  mutable Mutex routing_table_lock_;
   RoutingTable  routing_table_;  ///< The map routing table from address to handle (Protected by
                                  ///< routing_table_lock_)
   HandleMap
       routing_table_handles_;  ///< The map of handles to address (Protected by routing_table_lock_)
 
-  mutable Mutex echo_cache_lock_{__LINE__, __FILE__};
+  mutable Mutex echo_cache_lock_;
   EchoCache     echo_cache_;
 
   ThreadPool dispatch_thread_pool_;

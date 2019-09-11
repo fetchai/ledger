@@ -20,14 +20,19 @@
 #include "core/byte_array/tokenizer/tokenizer.hpp"
 #include "core/commandline/parameter_parser.hpp"
 #include "core/json/document.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "core/string/trim.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "network/service/service_client.hpp"
 #include "storage/document_store_protocol.hpp"
 #include "version/cli_header.hpp"
 
+#include <cstddef>
+#include <cstdint>
 #include <iostream>
+#include <memory>
+#include <string>
+#include <vector>
 
 using namespace fetch;
 using namespace fetch::service;

@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/byte_array.hpp"
 #include "core/serializers/counter.hpp"
 #include "core/serializers/serializable_exception.hpp"
 #include "network/message.hpp"
@@ -45,9 +44,7 @@ class ServiceClientInterface
 {
   class Subscription;
 
-  using subscription_mutex_type      = fetch::mutex::Mutex;
-  using subscription_mutex_lock_type = std::lock_guard<subscription_mutex_type>;
-  using subscriptions_type           = std::unordered_map<subscription_handler_type, Subscription>;
+  using subscriptions_type = std::unordered_map<subscription_handler_type, Subscription>;
 
 public:
   static constexpr char const *LOGGING_NAME = "ServiceClientInterface";
@@ -57,19 +54,16 @@ public:
   virtual ~ServiceClientInterface() = default;
 
   template <typename... arguments>
-
   Promise Call(uint32_t /*network_id*/, protocol_handler_type const &protocol,
-
                function_handler_type const &function, arguments &&... args)
   {
-    LOG_STACK_TRACE_POINT;
     FETCH_LOG_DEBUG(LOGGING_NAME, "Service Client Calling ", protocol, ":", function);
 
     Promise prom = MakePromise(protocol, function);
 
     serializer_type params;
 
-    serializers::SizeCounter<serializer_type> counter;
+    serializers::SizeCounter counter;
     counter << SERVICE_FUNCTION_CALL << prom->id();
 
     PackCall(counter, protocol, function, args...);
@@ -163,11 +157,11 @@ private:
 
   subscriptions_type                   subscriptions_;
   std::list<subscription_handler_type> cancelled_subscriptions_;
-  subscription_mutex_type              subscription_mutex_;
+  Mutex                                subscription_mutex_;
   subscription_handler_type            subscription_index_counter_;
 
   std::map<PromiseCounter, Promise> promises_;
-  fetch::mutex::Mutex               promises_mutex_;
+  Mutex                             promises_mutex_;
 };
 }  // namespace service
 }  // namespace fetch

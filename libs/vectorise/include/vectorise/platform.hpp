@@ -22,6 +22,150 @@
 namespace fetch {
 namespace platform {
 
+inline uint8_t ToBigEndian(uint8_t x)
+{
+  return x;
+}
+
+inline uint8_t FromBigEndian(uint8_t x)
+{
+  return x;
+}
+
+inline uint16_t ToBigEndian(uint16_t x)
+{
+  return __builtin_bswap16(x);
+}
+
+inline uint16_t FromBigEndian(uint16_t x)
+{
+  return __builtin_bswap16(x);
+}
+
+inline uint32_t ToBigEndian(uint32_t x)
+{
+  return __builtin_bswap32(x);
+}
+
+inline uint32_t FromBigEndian(uint32_t x)
+{
+  return __builtin_bswap32(x);
+}
+
+inline uint64_t ToBigEndian(uint64_t x)
+{
+  return __builtin_bswap64(x);
+}
+
+inline uint64_t FromBigEndian(uint64_t x)
+{
+  return __builtin_bswap64(x);
+}
+
+inline int8_t ToBigEndian(int8_t x)
+{
+  return x;
+}
+
+inline int8_t FromBigEndian(int8_t x)
+{
+  return x;
+}
+
+inline int16_t ToBigEndian(int16_t x)
+{
+  return static_cast<int16_t>(__builtin_bswap16(static_cast<uint16_t>(x)));
+}
+
+inline int16_t FromBigEndian(int16_t x)
+{
+  return static_cast<int16_t>(__builtin_bswap16(static_cast<uint16_t>(x)));
+}
+
+inline int32_t ToBigEndian(int32_t x)
+{
+  return static_cast<int32_t>(__builtin_bswap32(static_cast<uint32_t>(x)));
+}
+
+inline int32_t FromBigEndian(int32_t x)
+{
+  return static_cast<int32_t>(__builtin_bswap32(static_cast<uint32_t>(x)));
+}
+
+inline int64_t ToBigEndian(int64_t x)
+{
+  return static_cast<int64_t>(__builtin_bswap64(static_cast<uint64_t>(x)));
+}
+
+inline int64_t FromBigEndian(int64_t x)
+{
+  return static_cast<int64_t>(__builtin_bswap64(static_cast<uint64_t>(x)));
+}
+
+inline float ToBigEndian(float x)
+{
+  union
+  {
+    float    value;
+    uint32_t bytes;
+  } conversion;
+  static_assert(sizeof(float) == sizeof(uint32_t),
+                "float and uint32_t are required to be same size.");
+  static_assert(sizeof(conversion) == sizeof(uint32_t), "");
+
+  conversion.value = x;
+  conversion.bytes = __builtin_bswap32(conversion.bytes);
+  return conversion.value;
+}
+
+inline float FromBigEndian(float x)
+{
+  union
+  {
+    float    value;
+    uint32_t bytes;
+  } conversion;
+  static_assert(sizeof(float) == sizeof(uint32_t),
+                "float and uint32_t are required to be same size.");
+  static_assert(sizeof(conversion) == sizeof(uint32_t), "");
+
+  conversion.value = x;
+  conversion.bytes = __builtin_bswap32(conversion.bytes);
+  return conversion.value;
+}
+
+inline double ToBigEndian(double x)
+{
+  union
+  {
+    double   value;
+    uint64_t bytes;
+  } conversion;
+  static_assert(sizeof(double) == sizeof(uint64_t),
+                "double and uint64_t are required to be same size.");
+  static_assert(sizeof(conversion) == sizeof(uint64_t), "");
+
+  conversion.value = x;
+  conversion.bytes = __builtin_bswap64(conversion.bytes);
+  return conversion.value;
+}
+
+inline double FromBigEndian(double x)
+{
+  union
+  {
+    double   value;
+    uint64_t bytes;
+  } conversion;
+  static_assert(sizeof(double) == sizeof(uint64_t),
+                "double and uint64_t are required to be same size.");
+  static_assert(sizeof(conversion) == sizeof(uint64_t), "");
+
+  conversion.value = x;
+  conversion.bytes = __builtin_bswap64(conversion.bytes);
+  return conversion.value;
+}
+
 struct Parallelisation
 {
   enum
@@ -96,7 +240,7 @@ inline uint64_t CountTrailingZeroes64(uint64_t x)
  * @return
  */
 template <typename T>
-constexpr inline int32_t HighestSetBit(T n_input)
+constexpr int32_t HighestSetBit(T n_input)
 {
   auto const n = static_cast<uint64_t>(n_input);
 
@@ -146,7 +290,7 @@ inline bool IsLog2(uint64_t value)
 }
 
 template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
-inline T DivideCeil(T x, T y)
+T DivideCeil(T x, T y)
 {
   T ret = x / y;
 

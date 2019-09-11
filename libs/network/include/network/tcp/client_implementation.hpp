@@ -20,15 +20,13 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/logger.hpp"
-#include "core/serializers/byte_array.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
-#include "network/management/network_manager.hpp"
-#include "network/message.hpp"
-
+#include "core/logging.hpp"
 #include "core/mutex.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "network/fetch_asio.hpp"
 #include "network/management/abstract_connection.hpp"
+#include "network/management/network_manager.hpp"
+#include "network/message.hpp"
 
 #include <atomic>
 #include <memory>
@@ -63,7 +61,6 @@ public:
 
   ~TCPClientImplementation() override
   {
-    LOG_STACK_TRACE_POINT;
     if (!Closed() && !posted_close_)
     {
       Close();
@@ -72,13 +69,11 @@ public:
 
   void Connect(byte_array::ConstByteArray const &host, uint16_t port)
   {
-    LOG_STACK_TRACE_POINT;
     Connect(host, byte_array::ConstByteArray(std::to_string(port)));
   }
 
   void Connect(byte_array::ConstByteArray const &host, byte_array::ConstByteArray const &port)
   {
-    LOG_STACK_TRACE_POINT;
     self_type self = shared_from_this();
 
     FETCH_LOG_DEBUG(LOGGING_NAME, "Client posting connect");
@@ -98,7 +93,7 @@ public:
         return;
       }
       {
-        std::lock_guard<mutex_type> lock(io_creation_mutex_);
+        FETCH_LOCK(io_creation_mutex_);
         strand_ = strand;
       }
 
@@ -112,7 +107,7 @@ public:
         std::shared_ptr<socket_type> socket = networkManager_.CreateIO<socket_type>();
 
         {
-          std::lock_guard<mutex_type> lock(io_creation_mutex_);
+          FETCH_LOCK(io_creation_mutex_);
           if (!posted_close_)
           {
             socket_ = socket;
@@ -128,8 +123,6 @@ public:
           {
             return;
           }
-
-          LOG_STACK_TRACE_POINT;
 
           FETCH_LOG_DEBUG(LOGGING_NAME, "Finished connecting.");
           if (!ec)
@@ -177,22 +170,20 @@ public:
 
   bool is_alive() const override
   {
-    LOG_STACK_TRACE_POINT;
-    std::lock_guard<mutex_type> lock(io_creation_mutex_);
+    FETCH_LOCK(io_creation_mutex_);
     return !socket_.expired() && connected_;
   }
 
   void Send(message_type const &omsg) override
   {
     message_type msg = omsg.Copy();
-    LOG_STACK_TRACE_POINT;
     if (!connected_)
     {
       return;
     }
 
     {
-      std::lock_guard<mutex_type> lock(queue_mutex_);
+      FETCH_LOCK(queue_mutex_);
       write_queue_.push_back(msg);
     }
 
@@ -219,8 +210,7 @@ public:
 
   void Close() override
   {
-    LOG_STACK_TRACE_POINT;
-    std::lock_guard<mutex_type> lock(io_creation_mutex_);
+    FETCH_LOCK(io_creation_mutex_);
     posted_close_                         = true;
     std::weak_ptr<socket_type> socketWeak = socket_;
     std::weak_ptr<strand_type> strandWeak = strand_;
@@ -267,7 +257,6 @@ private:
 
   void ReadHeader() noexcept
   {
-    LOG_STACK_TRACE_POINT;
     auto strand = strand_.lock();
     if (!strand)
     {
@@ -322,7 +311,6 @@ private:
 
   void ReadBody(byte_array::ByteArray const &header) noexcept
   {
-    LOG_STACK_TRACE_POINT;
     auto strand = strand_.lock();
     assert(strand->running_in_this_thread());
 
@@ -401,7 +389,7 @@ private:
     // Only one thread can get past here at a time. Effectively a try_lock
     // except that we can't unlock a mutex in the callback (undefined behaviour)
     {
-      std::lock_guard<mutex_type> lock(can_write_mutex_);
+      FETCH_LOCK(can_write_mutex_);
       if (can_write_)
       {
         can_write_ = false;
@@ -414,10 +402,10 @@ private:
 
     message_type buffer;
     {
-      std::lock_guard<mutex_type> lock(queue_mutex_);
+      FETCH_LOCK(queue_mutex_);
       if (write_queue_.empty())
       {
-        std::lock_guard<mutex_type> lock(can_write_mutex_);
+        FETCH_LOCK(can_write_mutex_);
         can_write_ = true;
         return;
       }
@@ -437,7 +425,7 @@ private:
       FETCH_UNUSED(len);
 
       {
-        std::lock_guard<mutex_type> lock(can_write_mutex_);
+        FETCH_LOCK(can_write_mutex_);
         can_write_ = true;
       }
 

@@ -19,6 +19,11 @@
 #include "settings/setting_base.hpp"
 #include "settings/setting_collection.hpp"
 
+#include <istream>
+#include <ostream>
+#include <string>
+#include <utility>
+
 namespace fetch {
 namespace settings {
 
@@ -27,6 +32,28 @@ SettingBase::SettingBase(SettingCollection &reg, std::string &&name, std::string
   , description_{std::move(description)}
 {
   reg.Add(*this);
+}
+
+std::string const &SettingBase::name() const
+{
+  return name_;
+}
+
+std::string const &SettingBase::description() const
+{
+  return description_;
+}
+
+std::istream &operator>>(std::istream &stream, SettingBase &setting)
+{
+  setting.FromStream(stream);
+  return stream;
+}
+
+std::ostream &operator<<(std::ostream &stream, SettingBase const &setting)
+{
+  setting.ToStream(stream);
+  return stream;
 }
 
 }  // namespace settings

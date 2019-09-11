@@ -16,9 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "crypto/sha256.hpp"
 #include "ledger/chain/consensus/proof_of_work.hpp"
 
-#include "crypto/sha256.hpp"
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <utility>
 
 namespace fetch {
 namespace ledger {
@@ -60,6 +64,21 @@ void ProofOfWork::SetHeader(byte_array::ByteArray header)
 {
   header_ = header;
   assert(header_ == header);
+}
+
+byte_array::ConstByteArray const &ProofOfWork::header() const
+{
+  return header_;
+}
+
+vectorise::UInt<256> const &ProofOfWork::digest() const
+{
+  return digest_;
+}
+
+vectorise::UInt<256> const &ProofOfWork::target() const
+{
+  return target_;
 }
 
 }  // namespace consensus

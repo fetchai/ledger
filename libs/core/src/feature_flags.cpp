@@ -70,6 +70,96 @@ void FeatureFlags::Parse(ConstByteArray const &contents)
   }
 }
 
+/**
+ * Check to see if a feature is enabled (present)
+ *
+ * @param value The feature being queried
+ * @return true if present, otherwise false
+ */
+bool FeatureFlags::IsEnabled(ConstByteArray const &value) const
+{
+  return flags_.find(value) != flags_.end();
+}
+
+/**
+ * Return the iterator to the beginning of the feature set
+ *
+ * @return The iterator to the beginning
+ */
+FeatureFlags::Iterator FeatureFlags::begin()
+{
+  return flags_.begin();
+}
+
+/**
+ * Return the const iterator to the beginning of the feature set
+ *
+ * @return The const iterator to the beginning
+ */
+FeatureFlags::ConstIterator FeatureFlags::begin() const
+{
+  return flags_.begin();
+}
+
+/**
+ * Return the const iterator to the beginning of the feature set
+ *
+ * @return The const iterator to the beginning
+ */
+FeatureFlags::ConstIterator FeatureFlags::cbegin() const
+{
+  return flags_.cbegin();
+}
+
+/**
+ * Return the iterator to the end of the feature set
+ *
+ * @return The iterator to the end
+ */
+FeatureFlags::Iterator FeatureFlags::end()
+{
+  return flags_.end();
+}
+
+/**
+ * Return the const iterator to the end of the feature set
+ *
+ * @return The const iterator to the end
+ */
+FeatureFlags::ConstIterator FeatureFlags::end() const
+{
+  return flags_.end();
+}
+
+/**
+ * Return the const iterator to the end of the feature set
+ *
+ * @return The const iterator to the end
+ */
+FeatureFlags::ConstIterator FeatureFlags::cend() const
+{
+  return flags_.cend();
+}
+
+/**
+ * Determine if the current flag set is empty
+ *
+ * @return true if there are no flags otherwise false
+ */
+bool FeatureFlags::empty() const
+{
+  return flags_.empty();
+}
+
+/**
+ * Return the number of
+ * @return
+ */
+std::size_t FeatureFlags::size() const
+{
+  return flags_.size();
+}
+
 std::ostream &operator<<(std::ostream &stream, core::FeatureFlags const &flags)
 {
   bool add_sep{false};

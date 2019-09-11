@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/mutex.hpp"
 #include "telemetry/histogram.hpp"
 #include "telemetry/histogram_map.hpp"
 
@@ -55,14 +56,14 @@ void HistogramMap::Add(std::string const &key, double const &value)
  * @param stream The stream to be updated
  * @param mode The mode to be used when generating the stream
  */
-void HistogramMap::ToStream(std::ostream &stream, StreamMode mode) const
+void HistogramMap::ToStream(OutputStream &stream) const
 {
-  LockGuard guard{lock_};
-  WriteHeader(stream, "histogram", mode);
+  FETCH_LOCK(lock_);
+  WriteHeader(stream, "histogram");
 
   for (auto const &e : histograms_)
   {
-    e.second->ToStream(stream, StreamMode::WITHOUT_HEADER);
+    e.second->ToStream(stream);
   }
 }
 
@@ -74,8 +75,8 @@ void HistogramMap::ToStream(std::ostream &stream, StreamMode mode) const
  */
 HistogramPtr HistogramMap::LookupHistogram(std::string const &key)
 {
-  LockGuard guard{lock_};
-  auto      it = histograms_.find(key);
+  FETCH_LOCK(lock_);
+  auto it = histograms_.find(key);
   if (it == histograms_.end())
   {
     // create and update the set of labels

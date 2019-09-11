@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/common.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "meta/value_util.hpp"
 #include "vectorise/memory/shared_array.hpp"
 
@@ -119,6 +119,7 @@ public:
       FETCH_LOG_WARN(LOGGING_NAME,
                      "ReadBytes target array is too big for us to fill. dest_size=", dest_size,
                      " src_offset=", src_offset, " size=", size());
+
       throw std::range_error("ReadBytes target array is too big");
     }
     std::memcpy(dest, pointer() + src_offset, dest_size);
@@ -274,8 +275,9 @@ public:
 
   self_type operator+(self_type const &other) const
   {
-    self_type ret;
-    ret.Append(*this, other);
+    self_type ret = this->Copy();
+    ret.Resize(other.size() + size());
+    std::memcpy(ret.pointer() + size(), other.pointer(), other.size());
     return ret;
   }
 
@@ -586,22 +588,8 @@ private:
   value_type *      arr_pointer_{nullptr};
 };
 
-inline std::ostream &operator<<(std::ostream &os, ConstByteArray const &str)
-{
-  char const *arr = reinterpret_cast<char const *>(str.pointer());
-  for (std::size_t i = 0; i < str.size(); ++i)
-  {
-    os << arr[i];
-  }
-  return os;
-}
-
-inline ConstByteArray operator+(char const *a, ConstByteArray const &b)
-{
-  ConstByteArray s(a);
-  s = s + b;
-  return s;
-}
+std::ostream & operator<<(std::ostream &os, ConstByteArray const &str);
+ConstByteArray operator+(char const *a, ConstByteArray const &b);
 
 }  // namespace byte_array
 }  // namespace fetch

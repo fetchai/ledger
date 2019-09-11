@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/graph.hpp"
+#include "ml/core/graph.hpp"
 #include "ml/optimisation/optimiser.hpp"
 
 namespace fetch {
@@ -27,16 +27,16 @@ namespace optimisers {
 /**
  * Adaptive Momentum optimiser
  * i.e.  Stochastic gradient descent with momentum
- * @tparam T ArrayType
+ * @tparam T TensorType
  * @tparam C CriterionType
  */
 template <class T>
 class MomentumOptimiser : public Optimiser<T>
 {
 public:
-  using ArrayType = T;
-  using DataType  = typename ArrayType::Type;
-  using SizeType  = typename ArrayType::SizeType;
+  using TensorType = T;
+  using DataType   = typename TensorType::Type;
+  using SizeType   = typename TensorType::SizeType;
 
   MomentumOptimiser(std::shared_ptr<Graph<T>>       graph,
                     std::vector<std::string> const &input_node_names,
@@ -53,10 +53,10 @@ public:
   ~MomentumOptimiser() override = default;
 
 private:
-  std::vector<ArrayType> momentum_;
-  DataType               momentum_update_;
-  DataType               negative_one_{-1};
-  DataType               zero_{0};
+  std::vector<TensorType> momentum_;
+  DataType                momentum_update_;
+  DataType                negative_one_{-1};
+  DataType                zero_{0};
 
   void ApplyGradients(SizeType batch_size) override;
   void ResetMomentum();
@@ -68,7 +68,7 @@ void MomentumOptimiser<T>::Init()
 {
   for (auto &train : this->graph_trainables_)
   {
-    this->momentum_.emplace_back(ArrayType(train->get_weights().shape()));
+    this->momentum_.emplace_back(TensorType(train->get_weights().shape()));
   }
   ResetMomentum();
 }
@@ -111,7 +111,7 @@ void MomentumOptimiser<T>::ApplyGradients(SizeType batch_size)
   {
     // momentum[i] = momentum_update * momentum[i] + learning_rate * (input_grad[i]/batch_size)
     fetch::math::Multiply(*mit, momentum_update_, *mit);
-    fetch::math::Multiply((*trainable_it)->get_gradients(),
+    fetch::math::Multiply((*trainable_it)->GetGradientsReferences(),
                           (this->learning_rate_) / (static_cast<DataType>(batch_size)),
                           *gradient_it);
     fetch::math::Add(*mit, *gradient_it, *mit);

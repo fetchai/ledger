@@ -18,16 +18,14 @@
 //------------------------------------------------------------------------------
 
 #include "math/base_types.hpp"
+#include "math/tensor_declaration.hpp"
 #include "math/tensor_slice_iterator.hpp"
+
 #include <cassert>
 #include <unordered_set>
 
 namespace fetch {
 namespace math {
-
-// need to forward declare
-template <typename T, typename C>
-class Tensor;
 
 /* Computes the shape resulting from squeezing.
  * @param a is the input shape.
@@ -91,7 +89,7 @@ inline bool ShapeFromSqueeze(SizeVector const &a, SizeVector &b, SizeSet const &
  * @param axis is the axes to squeeze.
  */
 template <typename T, typename C>
-inline void Squeeze(Tensor<T, C> &arr, SizeType const &axis = SizeType(-1))
+void Squeeze(Tensor<T, C> &arr, SizeType const &axis = SizeType(-1))
 {
   SizeVector newshape;
   ShapeFromSqueeze(arr.shape(), newshape, axis);
@@ -111,9 +109,10 @@ void Squeeze(Tensor<T, C> &arr, SizeSet const &axes)
 }
 
 namespace reduce_details {
+
 template <typename F, typename T, typename C>
-inline void Reduce(F fnc, ConstTensorSliceIterator<T, C> &it_a, TensorSliceIterator<T, C> &it_b,
-                   SizeType const &N)
+void Reduce(F fnc, ConstTensorSliceIterator<T, C> &it_a, TensorSliceIterator<T, C> &it_b,
+            SizeType const &N)
 {
   while (bool(it_a) && bool(it_b))
   {
@@ -138,7 +137,7 @@ inline void Reduce(F fnc, ConstTensorSliceIterator<T, C> &it_a, TensorSliceItera
  * @param axis are the axis along which the reduction happens.
  */
 template <typename F, typename T, typename C>
-inline void Reduce(F fnc, Tensor<T, C> const &input, Tensor<T, C> &output, SizeType const &axis = 0)
+void Reduce(F fnc, Tensor<T, C> const &input, Tensor<T, C> &output, SizeType const &axis = 0)
 {
   SizeType N;
 
@@ -161,7 +160,7 @@ inline void Reduce(F fnc, Tensor<T, C> const &input, Tensor<T, C> &output, SizeT
   {
     // Move the axis we want to reduce to the front
     // to make it iterable in the inner most loop.
-    it_a.MoveAxesToFront(axis);
+    it_a.MoveAxisToFront(axis);
   }
 
   N = it_a.range(0).total_steps;
@@ -176,7 +175,7 @@ inline void Reduce(F fnc, Tensor<T, C> const &input, Tensor<T, C> &output, SizeT
  * @param axes are the axes along which the reduction happens.
  */
 template <typename F, typename T, typename C>
-inline void Reduce(F fnc, Tensor<T, C> const &input, Tensor<T, C> &output, SizeVector const &axes)
+void Reduce(F fnc, Tensor<T, C> const &input, Tensor<T, C> &output, SizeVector const &axes)
 {
   SizeType N;
 
@@ -199,7 +198,7 @@ inline void Reduce(F fnc, Tensor<T, C> const &input, Tensor<T, C> &output, SizeV
 
   // Move the axis we want to reduce to the front
   // to make it iterable in the inner most loop.
-  it_a.MoveAxesToFront(axes);
+  it_a.MoveAxisToFront(axes);
 
   N = 1;
   for (SizeType i = 0; i < axes.size(); ++i)

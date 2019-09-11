@@ -32,8 +32,8 @@ namespace math {
 namespace details {
 
 /*
- * Really naive implementation that relies only on ArrayType providing a At(std::size_t) method
- * TODO(private, 520) -- Clean up once we get unified ArrayType + operations
+ * Really naive implementation that relies only on TensorType providing a At(std::size_t) method
+ * TODO(private, 520) -- Clean up once we get unified TensorType + operations
  */
 
 template <typename ArrayType1, typename ArrayType2>
@@ -65,23 +65,27 @@ void Softmax1DImplementation(ArrayType1 const &array, ArrayType2 &ret)
   }
 }
 
+/**
+ * Any-D softmax implementation
+ * @tparam ArrayType
+ * @param array
+ * @param ret
+ * @param axis
+ */
 template <typename ArrayType>
-void Softmax2DImplementation(ArrayType const &array, ArrayType &ret,
+void SoftmaxNDImplementation(ArrayType const &array, ArrayType &ret,
                              typename ArrayType::SizeType axis)
 {
-  assert(ret.size() == array.size());
-  assert(array.shape().size() == 2);
-  assert(ret.shape().size() == 2);
-  assert((axis == 0) || (axis == 1));
+  // Subtract max for numerical stability
+  ArrayType sums = ReduceMax(array, axis);
+  Subtract(array, sums, ret);
 
-  for (std::size_t i = 0; i < array.shape()[axis]; ++i)
-  {
-    auto cur_slice = array.Slice(i, axis).Copy();
-    auto ret_slice = ret.Slice(i, axis).Copy();
-    Softmax1DImplementation(cur_slice, ret_slice);
-    ret.Slice(i, axis).Assign(ret_slice);
-  }
+  // exp(x)/sum(exp(x))
+  Exp(ret, ret);
+  ReduceSum(ret, axis, sums);
+  Divide(ret, sums, ret);
 }
+
 }  // namespace details
 
 template <typename ArrayType>
@@ -94,13 +98,9 @@ void Softmax(ArrayType const &array, ArrayType &ret, typename ArrayType::SizeTyp
     assert(axis == 0);
     details::Softmax1DImplementation(array, ret);
   }
-  else if ((array.shape().size() == 2) && (ret.shape().size() == 2))
-  {
-    details::Softmax2DImplementation(array, ret, axis);
-  }
   else
   {
-    throw std::runtime_error("softmax for nDimensions not yet handled");
+    details::SoftmaxNDImplementation(array, ret, axis);
   }
 }
 
@@ -124,6 +124,29 @@ ArrayType Softmax(ArrayType const &array)
   ArrayType ret{array.shape()};
   Softmax(array, ret, 0);
   return ret;
+}
+
+/**
+ * Softmax implementation for multiple dimensions
+ * @tparam ArrayType
+ * @param array
+ * @param ret
+ * @param axes Vector of SizeType
+ */
+template <typename ArrayType>
+void Softmax(ArrayType const &array, ArrayType &ret, std::vector<SizeType> axes)
+{
+  assert(ret.shape() == array.shape());
+  assert(axes.size() >= 2);
+
+  // Subtract max for numerical stability
+  ArrayType sums = ReduceMax(array, axes);
+  Subtract(array, sums, ret);
+
+  // exp(x)/sum(exp(x))
+  Exp(ret, ret);
+  ReduceSum(ret, axes, sums);
+  Divide(ret, sums, ret);
 }
 
 }  // namespace math

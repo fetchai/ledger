@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "network/fetch_asio.hpp"
 #include "network/management/network_manager.hpp"
 #include "network/message.hpp"

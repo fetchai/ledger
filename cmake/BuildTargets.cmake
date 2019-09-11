@@ -86,8 +86,7 @@ macro (setup_compiler)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
   endif (FETCH_WARNINGS_AS_ERRORS)
 
-  # prefer PIC
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+  set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
   if (FETCH_ENABLE_COVERAGE)
     if (_is_clang_compiler)
@@ -143,6 +142,11 @@ macro (setup_compiler)
     set(FETCH_COMPILE_LOGGING_LEVEL "info")
   endif ()
 
+  # debug mutex configuration
+  if (FETCH_ENABLE_DEADLOCK_DETECTION)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFETCH_DEBUG_MUTEX")
+  endif (FETCH_ENABLE_DEADLOCK_DETECTION)
+
   # based on the configued logging level
   if ("${FETCH_COMPILE_LOGGING_LEVEL}" STREQUAL "trace")
     add_definitions(-DFETCH_COMPILE_LOGGING_LEVEL=6)
@@ -167,6 +171,39 @@ macro (setup_compiler)
   endif ()
 
 endmacro (setup_compiler)
+
+function (conditionally_enable_lto)
+  if (FETCH_ENABLE_LTO)
+
+    include(CheckIPOSupported)
+    check_ipo_supported(RESULT
+                        result
+                        OUTPUT
+                        output)
+
+    if (result)
+
+      fetch_info("[LTO] Link-time optimisation is supported")
+
+      if (CMAKE_BUILD_TYPE STREQUAL Debug)
+        fetch_info("[LTO] Debug build: link-time optimisation disabled")
+        set(CMAKE_INTERPROCEDURAL_OPTIMIZATION FALSE)
+      else ()
+        fetch_info("[LTO] Link-time optimisation enabled")
+        set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+      endif ()
+
+    else ()
+
+      message(
+        FATAL_ERROR
+          "[LTO] CMake does not support link-time optimisation for this compiler. To proceed, explicitly disable the FETCH_ENABLE_LTO option"
+        )
+
+    endif ()
+
+  endif ()
+endfunction ()
 
 function (configure_vendor_targets)
 
@@ -221,7 +258,7 @@ function (configure_vendor_targets)
   # MCL TODO: Work out how to get this to work with the already found version of OpenSSL
   set(USE_GMP OFF CACHE BOOL "use gmp" FORCE)
   set(USE_OPENSSL OFF CACHE BOOL "use openssl" FORCE)
-  set(ONLY_LIB OFF CACHE BOOL "use openssl" FORCE)
+  set(ONLY_LIB ON CACHE BOOL "only lib" FORCE)
   add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/mcl)
   target_include_directories(mcl_st INTERFACE ${FETCH_ROOT_VENDOR_DIR}/mcl/include)
   target_compile_definitions(mcl_st
@@ -269,6 +306,12 @@ function (configure_vendor_targets)
   # Spdlog
   add_library(vendor-spdlog INTERFACE)
   target_include_directories(vendor-spdlog INTERFACE ${FETCH_ROOT_VENDOR_DIR}/spdlog/include)
+
+  # utfcpp
+  set(UTF8_TESTS OFF CACHE BOOL "Enable tests for UTF8-CPP" FORCE)
+  set(UTF8_INSTALL OFF CACHE BOOL "Enable installation for UTF8-CPP" FORCE)
+  set(UTF8_SAMPLES OFF CACHE BOOL "Enable building samples for UTF8-CPP" FORCE)
+  add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/utfcpp)
 
 endfunction (configure_vendor_targets)
 

@@ -20,14 +20,15 @@
 #include "core/assert.hpp"
 #include "math/fundamental_operators.hpp"
 #include "math/standard_functions/abs.hpp"
-#include <cmath>
+
+#include <cassert>
 
 namespace fetch {
 namespace math {
 namespace distance {
 
 template <typename ArrayType>
-inline typename ArrayType::Type Manhattan(ArrayType const &a, ArrayType const &b)
+typename ArrayType::Type Manhattan(ArrayType const &a, ArrayType const &b)
 {
   assert(a.size() == b.size());
   using Type = typename ArrayType::Type;

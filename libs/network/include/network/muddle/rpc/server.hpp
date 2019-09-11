@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/decoders.hpp"
+#include "core/byte_array/encoders.hpp"
 #include "core/mutex.hpp"
 #include "network/muddle/muddle_endpoint.hpp"
 #include "network/service/call_context.hpp"
@@ -40,7 +42,6 @@ public:
   using Address          = MuddleEndpoint::Address;
   using SubscriptionPtr  = MuddleEndpoint::SubscriptionPtr;
   using SubscriptionMap  = std::unordered_map<ProtocolId, SubscriptionPtr>;
-  using Mutex            = mutex::Mutex;
 
   static constexpr char const *LOGGING_NAME = "MuddleRpcServer";
 
@@ -121,11 +122,12 @@ private:
     service::CallContext context;
     context.sender_address      = from;
     context.transmitter_address = transmitter;
+    context.MarkAsValid();
 
     // dispatch down to the core RPC level
     try
     {
-      PushProtocolRequest(index, payload, &context);
+      PushProtocolRequest(index, payload, context);
     }
     catch (std::exception const &ex)
     {
@@ -143,7 +145,7 @@ private:
   using Metadata    = std::tuple<Address, uint16_t, uint16_t, uint16_t>;
   using MetadataMap = std::unordered_map<uint64_t, Metadata>;
 
-  Mutex       metadata_lock_{__LINE__, __FILE__};
+  Mutex       metadata_lock_;
   uint64_t    metadata_index_ = 0;
   MetadataMap metadata_;
 };

@@ -233,7 +233,7 @@ TEST(DISABLED_mmap_random_access_stack, set_bulk)
     reference.push_back(temp);
   }
 
-  // avoid uninitialized warning from compiler
+  // avoid uninitialised warning from compiler
   std::size_t index     = 0;
   std::size_t elements  = 0;
   std::size_t temp_size = 0;

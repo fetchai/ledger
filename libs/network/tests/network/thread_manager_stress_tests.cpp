@@ -20,18 +20,19 @@
 
 #include "gtest/gtest.h"
 
+#include <chrono>
+#include <cstddef>
 #include <cstdlib>
-#include <iostream>
 #include <memory>
+#include <thread>
 
 using namespace fetch::network;
+
+namespace {
 
 template <std::size_t N = 1>
 void TestCase1()
 {
-  std::cout << "TEST CASE 1. Threads: " << N << std::endl;
-  std::cout << "Info: Testing thread manager starting, stopping and posting" << std::endl;
-
   {
     NetworkManager tmanager{"NetMgr", N};
     tmanager.Start();
@@ -53,19 +54,13 @@ void TestCase1()
     tmanager.Start();
 
     tmanager.Post([]() { std::this_thread::sleep_for(std::chrono::milliseconds(100)); });
-    tmanager.Post([]() { std::cout << "This thread prints stuff" << std::endl; });
     tmanager.Stop();
   }
-
-  SUCCEED() << "Success." << std::endl;
 }
 
 template <std::size_t N = 1>
 void TestCase3()
 {
-  std::cout << "TEST CASE 3. Threads: " << N << std::endl;
-  std::cout << "Info: Testing thread manager thread starvation/balancing" << std::endl;
-
   for (std::size_t index = 0; index < 10; ++index)
   {
     {
@@ -96,44 +91,31 @@ void TestCase3()
       std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
       testRunning = 2;
-      std::cout << "Stopping TM" << std::endl;
       tmanager.Stop();
-      std::cout << "Stopped TM" << std::endl;
-
-      std::cout << "Thread workload: ";
-
-      for (auto &i : ints)
-      {
-        std::cout << i << " ";
-      }
-      std::cout << std::endl;
     }
   }
-  SUCCEED() << "Success." << std::endl;
 }
 
 template <std::size_t N = 1>
 void TestCase4()
 {
-  std::cout << "TEST CASE 4. Threads: " << N << std::endl;
-  std::cout << "Info: Stopping thread manager through its own post mechanism" << std::endl;
   for (std::size_t i = 0; i < 1000; ++i)
   {
     NetworkManager tmanager{"NetMgr", N};
     tmanager.Start();
     tmanager.Post([&tmanager]() { tmanager.Stop(); });
   }
-  SUCCEED() << "Success." << std::endl;
 }
 
 TEST(thread_manager_stress_test, basic_test)
 {
-
   TestCase1<1>();
   TestCase3<1>();
-  // TestCase4<1>(); // fails
+  // TestCase4<1>(); // fails as thread pool cannot be stopped by thread it owns
 
   TestCase1<10>();
   TestCase3<10>();
   // TestCase4<10>();
 }
+
+}  // namespace

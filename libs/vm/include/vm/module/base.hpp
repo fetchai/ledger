@@ -19,27 +19,22 @@
 
 #include "vm/vm.hpp"
 
+#include <type_traits>
+#include <typeinfo>
+#include <utility>
+
 namespace fetch {
 namespace vm {
 
 template <typename T>
-struct IsResult
-{
-  static const int value = 1;
-};
-template <>
-struct IsResult<void>
-{
-  static const int value = 0;
-};
-
-template <typename T>
 struct StackGetter
 {
-  static T Get(VM *vm, int sp_offset)
+  using DecayedT = std::decay_t<T>;
+
+  static DecayedT Get(VM *vm, int sp_offset)
   {
     Variant &v = vm->stack_[vm->sp_ - sp_offset];
-    return v.Move<T>();
+    return v.Move<DecayedT>();
   }
 };
 
@@ -56,7 +51,7 @@ struct StackSetter
 template <typename T, typename = void>
 struct TypeGetter;
 template <typename T>
-struct TypeGetter<T, typename std::enable_if_t<IsPrimitive<T>::value || IsVariant<T>::value>>
+struct TypeGetter<T, std::enable_if_t<IsPrimitive<T>::value || IsVariant<T>::value>>
 {
   static TypeIndex GetTypeIndex()
   {
@@ -64,21 +59,21 @@ struct TypeGetter<T, typename std::enable_if_t<IsPrimitive<T>::value || IsVarian
   }
 };
 template <typename T>
-struct TypeGetter<T, typename std::enable_if_t<IsPtr<T>::value>>
+struct TypeGetter<T, std::enable_if_t<IsPtr<T>::value>>
 {
   static TypeIndex GetTypeIndex()
   {
-    using ManagedType = typename GetManagedType<T>::type;
+    using ManagedType = GetManagedType<T>;
     return TypeIndex(typeid(ManagedType));
   }
 };
 
 template <typename T>
-struct TypeGetter<T, typename std::enable_if_t<IsAddress<T>::value>>
+struct TypeGetter<T, std::enable_if_t<IsAddress<T>::value>>
 {
   static TypeIndex GetTypeIndex()
   {
-    using ManagedType = typename GetManagedType<Ptr<T>>::type;
+    using ManagedType = GetManagedType<Ptr<T>>;
     return TypeIndex(typeid(ManagedType));
   }
 };
@@ -87,7 +82,7 @@ template <typename T, typename = void>
 struct ParameterTypeGetter;
 template <typename T>
 struct ParameterTypeGetter<
-    T, typename std::enable_if_t<IsPrimitiveParameter<T>::value || IsVariantParameter<T>::value>>
+    T, std::enable_if_t<IsPrimitiveParameter<T>::value || IsVariantParameter<T>::value>>
 {
   static TypeIndex GetTypeIndex()
   {
@@ -95,11 +90,11 @@ struct ParameterTypeGetter<
   }
 };
 template <typename T>
-struct ParameterTypeGetter<T, typename std::enable_if_t<IsPtrParameter<T>::value>>
+struct ParameterTypeGetter<T, std::enable_if_t<IsPtrParameter<T>::value>>
 {
   static TypeIndex GetTypeIndex()
   {
-    using ManagedType = typename GetManagedType<std::decay_t<T>>::type;
+    using ManagedType = GetManagedType<std::decay_t<T>>;
     return TypeIndex(typeid(ManagedType));
   }
 };
@@ -112,19 +107,8 @@ struct UnrollTypes<T, Ts...>
   // Invoked on non-final type
   static void Unroll(TypeIndexArray &array)
   {
-    TypeIndex const type_index = TypeGetter<T>::GetTypeIndex();
-    array.push_back(type_index);
+    array.emplace_back(TypeGetter<T>::GetTypeIndex());
     UnrollTypes<Ts...>::Unroll(array);
-  }
-};
-template <typename T>
-struct UnrollTypes<T>
-{
-  // Invoked on final type
-  static void Unroll(TypeIndexArray &array)
-  {
-    TypeIndex const type_index = TypeGetter<T>::GetTypeIndex();
-    array.push_back(type_index);
   }
 };
 template <>
@@ -154,19 +138,8 @@ struct UnrollParameterTypes<T, Ts...>
   // Invoked on non-final type
   static void Unroll(TypeIndexArray &array)
   {
-    TypeIndex const type_index = ParameterTypeGetter<T>::GetTypeIndex();
-    array.push_back(type_index);
+    array.emplace_back(ParameterTypeGetter<T>::GetTypeIndex());
     UnrollParameterTypes<Ts...>::Unroll(array);
-  }
-};
-template <typename T>
-struct UnrollParameterTypes<T>
-{
-  // Invoked on final type
-  static void Unroll(TypeIndexArray &array)
-  {
-    TypeIndex const type_index = ParameterTypeGetter<T>::GetTypeIndex();
-    array.push_back(type_index);
   }
 };
 template <>
@@ -177,72 +150,25 @@ struct UnrollParameterTypes<>
   {}
 };
 
-template <typename... Ts>
-struct UnrollTupleParameterTypes;
-template <typename... Ts>
-struct UnrollTupleParameterTypes<std::tuple<Ts...>>
-{
-  static void Unroll(TypeIndexArray &array)
-  {
-    UnrollParameterTypes<Ts...>::Unroll(array);
-  }
-};
+template <typename Tuple>
+using UnrollTupleParameterTypes = meta::UnpackTuple<Tuple, UnrollParameterTypes>;
 
 template <typename T, typename = void>
 struct MakeParameterType;
 template <typename T>
-struct MakeParameterType<T, typename std::enable_if_t<fetch::vm::IsPrimitive<T>::value>>
+struct MakeParameterType<T, std::enable_if_t<fetch::vm::IsPrimitive<T>::value>>
 {
   using type = T;
 };
 template <typename T>
-struct MakeParameterType<T, typename std::enable_if_t<fetch::vm::IsVariant<T>::value>>
+struct MakeParameterType<T, std::enable_if_t<fetch::vm::IsVariant<T>::value>>
 {
   using type = T const &;
 };
 template <typename T>
-struct MakeParameterType<T, typename std::enable_if_t<fetch::vm::IsPtr<T>::value>>
+struct MakeParameterType<T, std::enable_if_t<fetch::vm::IsPtr<T>::value>>
 {
   using type = T const &;
-};
-
-template <typename Type, typename OutputType, typename... InputTypes>
-struct IndexedValueGetter;
-template <typename Type, typename OutputType, typename... InputTypes>
-struct IndexedValueGetter<Type, std::tuple<InputTypes...>, OutputType>
-{
-  using type = OutputType (Type::*)(typename fetch::vm::MakeParameterType<InputTypes>::type...);
-};
-
-template <typename Type, typename OutputType, typename... InputTypes>
-struct IndexedValueSetter;
-template <typename Type, typename OutputType, typename... InputTypes>
-struct IndexedValueSetter<Type, std::tuple<InputTypes...>, OutputType>
-{
-  using type = void (Type::*)(typename fetch::vm::MakeParameterType<InputTypes>::type...,
-                              typename fetch::vm::MakeParameterType<OutputType>::type);
-};
-
-template <typename F>
-struct FunctorTraits;
-template <typename F>
-struct FunctorTraits : FunctorTraits<decltype(&std::remove_reference_t<F>::operator())>
-{
-};
-template <typename ReturnType, typename Class_, typename... Args>
-struct FunctorTraits<ReturnType (Class_::*)(Args...) const>
-{
-  using class_type      = Class_;
-  using return_type     = ReturnType;
-  using args_tuple_type = std::tuple<Args...>;
-};
-// Support mutable lambdas
-template <typename ReturnType, typename Class_, typename... Args>
-struct FunctorTraits<ReturnType (Class_::*)(Args...)>
-{
-  using class_type      = Class_;
-  using return_type     = ReturnType;
-  using args_tuple_type = std::tuple<Args...>;
 };
 
 }  // namespace vm

@@ -216,8 +216,6 @@ private:
   using Client     = std::shared_ptr<network::AbstractConnection>;
   using ThreadPool = network::ThreadPool;
   using Register   = std::shared_ptr<MuddleRegister>;
-  using Mutex      = mutex::Mutex;
-  using Lock       = std::lock_guard<Mutex>;
   using Clock      = std::chrono::system_clock;
   using Timepoint  = Clock::time_point;
   using Duration   = Clock::duration;
@@ -234,7 +232,7 @@ private:
   Register             register_;         ///< The register for all the connection
   Router               router_;           ///< The packet router for the node
   ThreadPool           thread_pool_;      ///< The thread pool / task queue
-  Mutex                servers_lock_{__LINE__, __FILE__};
+  Mutex                servers_lock_;
   ServerList           servers_;  ///< The list of listening servers
   PeerConnectionList   clients_;  ///< The list of active and possible inactive connections
   Timepoint            last_cleanup_ = Clock::now();

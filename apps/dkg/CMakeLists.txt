@@ -1,7 +1,7 @@
 #
-# E T C H
+# D K G
 #
-cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
 project(dkg)
 
 setup_compiler()

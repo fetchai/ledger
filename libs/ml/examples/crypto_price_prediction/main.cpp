@@ -19,18 +19,20 @@
 #include "math/metrics/mean_absolute_error.hpp"
 #include "math/normalize_array.hpp"
 #include "math/tensor.hpp"
-
-#include "vectorise/fixed_point/fixed_point.hpp"
-
+#include "ml/core/graph.hpp"
 #include "ml/dataloaders/ReadCSV.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
-#include "ml/graph.hpp"
 #include "ml/layers/convolution_1d.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
+#include "ml/utilities/min_max_scaler.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
+
+#include "ml/serializers/ml_types.hpp"
 
 #include <iostream>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -39,131 +41,18 @@ using namespace fetch::ml::layers;
 
 using DataType   = fetch::fixed_point::fp64_t;
 using TensorType = fetch::math::Tensor<DataType>;
-using SizeType   = typename TensorType::SizeType;
+using SizeType   = TensorType::SizeType;
 
-using GraphType        = typename fetch::ml::Graph<TensorType>;
-using CostFunctionType = typename fetch::ml::ops::MeanSquareErrorLoss<TensorType>;
-using OptimiserType    = typename fetch::ml::optimisers::AdamOptimiser<TensorType>;
-using DataLoaderType   = typename fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>;
+using GraphType        = fetch::ml::Graph<TensorType>;
+using CostFunctionType = fetch::ml::ops::MeanSquareErrorLoss<TensorType>;
+using OptimiserType    = fetch::ml::optimisers::AdamOptimiser<TensorType>;
+using DataLoaderType   = fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>;
 
 struct TrainingParams
 {
-  SizeType epochs{10};
-  SizeType batch_size{10};
-  bool     normalise = true;
-};
-
-class DataNormaliser
-{
-
-public:
-  // set up min, max, and range tensors
-  TensorType x_min;
-  TensorType x_max;
-  TensorType x_range;
-
-  DataNormaliser() = default;
-
-  /**
-   * calculate the min, max, and range for reference data
-   * @param reference_tensor
-   */
-  void SetScale(TensorType &reference_tensor)
-  {
-    x_min   = TensorType({1, reference_tensor.shape(1)});
-    x_max   = TensorType({1, reference_tensor.shape(1)});
-    x_range = TensorType({1, reference_tensor.shape(1)});
-
-    x_min.Fill(fetch::math::numeric_max<DataType>());
-    x_max.Fill(fetch::math::numeric_lowest<DataType>());
-    x_range.Fill(fetch::math::numeric_lowest<DataType>());
-
-    // calculate min, max, and range of each feature
-    for (std::size_t i = 0; i < reference_tensor.shape(2); ++i)
-    {
-      auto x_min_it   = x_min.begin();
-      auto x_max_it   = x_max.begin();
-      auto x_range_it = x_range.begin();
-      auto ref_it     = reference_tensor.Slice(i, 2).begin();
-      while (x_min_it.is_valid())
-      {
-        if (*x_min_it > *ref_it)
-        {
-          *x_min_it = *ref_it;
-        }
-
-        if (*x_max_it < *ref_it)
-        {
-          *x_max_it = *ref_it;
-        }
-
-        if (*x_range_it < (*x_max_it - *x_min_it))
-        {
-          *x_range_it = (*x_max_it - *x_min_it);
-        }
-
-        ++ref_it;
-        ++x_min_it;
-        ++x_max_it;
-        ++x_range_it;
-      }
-    }
-  }
-
-  /**
-   * normalise tensor data with respect to reference data
-   * @return
-   */
-  void Normalise(TensorType const &input_tensor, TensorType &output_tensor)
-  {
-    output_tensor.Reshape(input_tensor.shape());
-    SizeType batch_dim = input_tensor.shape().size() - 1;
-
-    // apply normalisation to each feature according to scale -1, 1
-    for (std::size_t i = 0; i < input_tensor.shape(2); ++i)
-    {
-      auto x_min_it   = x_min.begin();
-      auto x_range_it = x_range.begin();
-      auto in_it      = input_tensor.Slice(i, batch_dim).begin();
-      auto ret_it     = output_tensor.Slice(i, batch_dim).begin();
-      while (ret_it.is_valid())
-      {
-        *ret_it = (*in_it - *x_min_it) / (*x_range_it);
-
-        ++in_it;
-        ++ret_it;
-        ++x_min_it;
-        ++x_range_it;
-      }
-    }
-  }
-
-  /**
-   * denormalise tensor data with respect to reference data
-   */
-  void DeNormalise(TensorType const &input_tensor, TensorType &output_tensor)
-  {
-    output_tensor.Reshape(input_tensor.shape());
-    SizeType batch_dim = input_tensor.shape().size() - 1;
-
-    // apply normalisation to each feature according to scale -1, 1
-    for (std::size_t i = 0; i < input_tensor.shape(2); ++i)
-    {
-      auto x_min_it   = x_min.begin();
-      auto x_range_it = x_range.begin();
-      auto in_it      = input_tensor.Slice(i, batch_dim).begin();
-      auto ret_it     = output_tensor.Slice(i, batch_dim).begin();
-      while (ret_it.is_valid())
-      {
-        *ret_it = ((*in_it) * (*x_range_it)) + *x_min_it;
-
-        ++in_it;
-        ++ret_it;
-        ++x_min_it;
-        ++x_range_it;
-      }
-    }
-  }
+  SizeType epochs{5};
+  SizeType batch_size{1000};
+  bool     normalise = false;
 };
 
 std::shared_ptr<GraphType> BuildModel(std::string &input_name, std::string &output_name,
@@ -171,24 +60,17 @@ std::shared_ptr<GraphType> BuildModel(std::string &input_name, std::string &outp
 {
   auto g = std::make_shared<GraphType>();
 
-  SizeType conv1D_1_filters        = 16;
+  SizeType conv1D_1_filters        = 8;
   SizeType conv1D_1_input_channels = 1;
-  SizeType conv1D_1_kernel_size    = 96;
-  SizeType conv1D_1_stride         = 3;
+  SizeType conv1D_1_kernel_size    = 32;
+  SizeType conv1D_1_stride         = 2;
 
-  typename TensorType::Type keep_prob_1{0.9};
+  typename TensorType::Type keep_prob_1{0.5};
 
-  SizeType conv1D_2_filters        = 8;
+  SizeType conv1D_2_filters        = 1;
   SizeType conv1D_2_input_channels = conv1D_1_filters;
-  SizeType conv1D_2_kernel_size    = 48;
+  SizeType conv1D_2_kernel_size    = 51;
   SizeType conv1D_2_stride         = 2;
-
-  typename TensorType::Type keep_prob_2{0.9};
-
-  SizeType conv1D_3_filters        = 1;
-  SizeType conv1D_3_input_channels = conv1D_2_filters;
-  SizeType conv1D_3_kernel_size    = 47;
-  SizeType conv1D_3_stride         = 1;
 
   input_name = g->AddNode<PlaceHolder<TensorType>>("Input", {});
   label_name = g->AddNode<PlaceHolder<TensorType>>("Label", {});
@@ -198,17 +80,12 @@ std::shared_ptr<GraphType> BuildModel(std::string &input_name, std::string &outp
       conv1D_1_stride, fetch::ml::details::ActivationType::RELU);
   std::string layer_2 = g->AddNode<Dropout<TensorType>>("Dropout_1", {layer_1}, keep_prob_1);
 
-  std::string layer_3 = g->AddNode<fetch::ml::layers::Convolution1D<TensorType>>(
-      "Conv1D_2", {layer_2}, conv1D_2_filters, conv1D_2_input_channels, conv1D_2_kernel_size,
-      conv1D_2_stride, fetch::ml::details::ActivationType::RELU);
-  std::string layer_4 = g->AddNode<Dropout<TensorType>>("Dropout_2", {layer_3}, keep_prob_2);
-
   output_name = g->AddNode<fetch::ml::layers::Convolution1D<TensorType>>(
-      "Conv1D_3", {layer_4}, conv1D_3_filters, conv1D_3_input_channels, conv1D_3_kernel_size,
-      conv1D_3_stride);
+      "Output", {layer_2}, conv1D_2_filters, conv1D_2_input_channels, conv1D_2_kernel_size,
+      conv1D_2_stride);
 
   error_name = g->AddNode<fetch::ml::ops::MeanSquareErrorLoss<TensorType>>(
-      "error_name", {output_name, label_name});
+      "Error", {output_name, label_name});
   return g;
 }
 
@@ -243,6 +120,25 @@ std::vector<TensorType> LoadData(std::string const &train_data_filename,
   return {train_data_tensor, train_labels_tensor, test_data_tensor, test_labels_tensor};
 }
 
+void SaveGraphToFile(GraphType &g, std::string const file_name)
+{
+
+  // start serializing and writing to file
+  fetch::ml::GraphSaveableParams<TensorType> gsp1 = g.GetGraphSaveableParams();
+  std::cout << "got saveable params" << std::endl;
+
+  fetch::serializers::LargeObjectSerializeHelper losh;
+
+  losh << gsp1;
+  std::cout << "finish serializing" << std::endl;
+
+  std::ofstream outFile(file_name, std::ios::out | std::ios::binary);
+  outFile.write(losh.buffer.data().char_pointer(), std::streamsize(losh.buffer.size()));
+  outFile.close();
+  std::cout << losh.buffer.size() << std::endl;
+  std::cout << "finish writing to file" << std::endl;
+}
+
 int main(int ac, char **av)
 {
   if (ac < 5)
@@ -253,8 +149,8 @@ int main(int ac, char **av)
     return 1;
   }
 
-  TrainingParams tp;
-  DataNormaliser scaler;
+  TrainingParams                                 tp;
+  fetch::ml::utilities::MinMaxScaler<TensorType> scaler;
 
   std::cout << "FETCH Crypto price prediction demo" << std::endl;
 
@@ -281,7 +177,7 @@ int main(int ac, char **av)
     scaler.Normalise(orig_test_label, test_label);
   }
 
-  DataLoaderType loader(train_label.shape(), {train_data.shape()}, false);
+  DataLoaderType loader(train_label.shape(), {train_data.shape()});
   loader.AddData(train_data, train_label);
 
   std::cout << "Build model & optimiser... " << std::endl;
@@ -306,9 +202,14 @@ int main(int ac, char **av)
     {
       scaler.DeNormalise(prediction, prediction);
     }
+
+    SaveGraphToFile(*g, "./bitcoin_price_prediction_graph" + std::to_string(i) + ".bin");
+
     auto result = fetch::math::MeanAbsoluteError(prediction, orig_test_label);
     std::cout << "mean absolute validation error: " << result << std::endl;
   }
+
+  SaveGraphToFile(*g, "./bitcoin_price_prediction_graph.bin");
 
   return 0;
 }

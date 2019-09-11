@@ -18,11 +18,11 @@
 //------------------------------------------------------------------------------
 
 #include "core/containers/queue.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "core/mutex.hpp"
 #include "core/runnable.hpp"
+#include "core/set_thread_name.hpp"
 #include "core/state_machine.hpp"
-#include "core/threading.hpp"
 #include "ledger/chain/transaction_layout.hpp"
 #include "storage/object_store.hpp"
 
@@ -96,7 +96,6 @@ private:
     Flushing
   };
 
-  using Mutex           = fetch::mutex::Mutex;
   using StateMachinePtr = std::shared_ptr<core::StateMachine<Phase>>;
   using Queue           = fetch::core::MPMCQueue<ResourceID, 1 << 15>;
   using RecentQueue     = fetch::core::MPMCQueue<ledger::TransactionLayout, 1 << 15>;
@@ -118,7 +117,7 @@ private:
   std::size_t             extracted_count = 0;
   std::size_t             written_count   = 0;
 
-  mutable Mutex   cache_mutex_{__LINE__, __FILE__};  ///< The mutex for the cache
+  mutable Mutex   cache_mutex_;       ///< The mutex for the cache
   StateMachinePtr state_machine_;     ///< The state machine controlling the worker writing to disk
   Cache           cache_;             ///< The main object cache
   Archive         archive_;           ///< The persistent object store
@@ -126,8 +125,7 @@ private:
   RecentQueue     most_recent_seen_;  ///< The queue of elements to be stored
   Callback        set_callback_;      ///< The completion handler
   Flag            stop_{false};       ///< Flag to signal the stop of the worker
-  static constexpr core::Tickets::Count recent_queue_alarm_threshold{RecentQueue::QUEUE_LENGTH >>
-                                                                     1};
+  static constexpr std::size_t recent_queue_alarm_threshold{RecentQueue::QUEUE_LENGTH >> 1u};
 };
 
 /**
@@ -136,7 +134,7 @@ private:
  * @tparam O The type of the object being stored
  */
 template <typename O>
-inline TransientObjectStore<O>::TransientObjectStore(uint32_t log2_num_lanes)
+TransientObjectStore<O>::TransientObjectStore(uint32_t log2_num_lanes)
   : log2_num_lanes_(log2_num_lanes)
   , rids(batch_size_)
   , state_machine_{
@@ -403,7 +401,7 @@ bool TransientObjectStore<O>::Has(ResourceID const &rid)
 template <typename O>
 void TransientObjectStore<O>::Set(ResourceID const &rid, O const &object, bool newly_seen)
 {
-  static core::Tickets::Count prev_count{0};
+  static std::size_t prev_count{0};
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Adding TX: ", byte_array::ToBase64(rid.id()));
 
@@ -506,8 +504,8 @@ bool TransientObjectStore<O>::GetFromCache(ResourceID const &rid, O &object)
 template <typename O>
 void TransientObjectStore<O>::SetInCache(ResourceID const &rid, O const &object)
 {
-  typename Cache ::iterator it;
-  bool                      inserted{false};
+  typename Cache::iterator it;
+  bool                     inserted{false};
 
   // attempt to insert the element into the map
   std::tie(it, inserted) = cache_.emplace(rid, object);

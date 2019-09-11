@@ -40,16 +40,15 @@ public:
   void Increment(Labels const &keys);
   /// @}
 
-  void ToStream(std::ostream &stream, StreamMode mode) const override;
+  void ToStream(OutputStream &stream) const override;
 
   // Operators
   CounterMap &operator=(CounterMap const &) = delete;
   CounterMap &operator=(CounterMap &&) = delete;
 
 private:
-  using Mutex     = std::mutex;
-  using LockGuard = std::lock_guard<Mutex>;
-  using Counters  = std::unordered_map<Labels, CounterPtr>;
+  using Mutex    = std::mutex;
+  using Counters = std::unordered_map<Labels, CounterPtr>;
 
   CounterPtr LookupCounter(Labels const &keys);
 

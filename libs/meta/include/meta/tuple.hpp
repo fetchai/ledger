@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "meta/param_pack.hpp"
+
 #include <cstddef>
 #include <tuple>
 #include <utility>
@@ -24,31 +26,96 @@
 namespace fetch {
 namespace meta {
 
-template <typename T, typename... Ts>
-struct RemoveFirstType;
-template <typename T, typename... Ts>
-struct RemoveFirstType<std::tuple<T, Ts...>>
-{
-  using type = typename std::tuple<Ts...>;
-};
+template <std::size_t... Is>
+using IndexSequence = std::index_sequence<Is...>;
 
-template <typename... Ts>
-struct RemoveLastType;
-template <typename... Ts>
-struct RemoveLastType<std::tuple<Ts...>>
+namespace internal {
+
+template <std::size_t, typename...>
+struct SplitTuple;
+template <std::size_t N, typename... Ts>
+struct SplitTuple<N, std::tuple<Ts...>>
 {
+private:
+  static_assert(N <= sizeof...(Ts), "Slice index exceeds tuple size");
+
+  static constexpr std::size_t start_length = N;
+  static constexpr std::size_t end_length   = sizeof...(Ts) - N;
+
   template <std::size_t... Is>
-  static std::tuple<std::tuple_element_t<Is, std::tuple<Ts...>>...> f(std::index_sequence<Is...>);
-  using type = decltype(f(std::make_index_sequence<sizeof...(Ts) - 1u>()));
+  static std::tuple<std::tuple_element_t<Is, std::tuple<Ts...>>...> get_start(IndexSequence<Is...>);
+  template <std::size_t... Is>
+  static std::tuple<std::tuple_element_t<N + Is, std::tuple<Ts...>>...> get_end(
+      IndexSequence<Is...>);
+
+public:
+  using Initial  = decltype(get_start(std::make_index_sequence<start_length>()));
+  using Terminal = decltype(get_end(std::make_index_sequence<end_length>()));
+
+  static_assert(std::tuple_size<Initial>::value == start_length, "");
+  static_assert(std::tuple_size<Terminal>::value == end_length, "");
 };
 
+template <typename>
+struct TupleOperations;
 template <typename... Ts>
-struct GetLastType;
-template <typename... Ts>
-struct GetLastType<std::tuple<Ts...>>
+struct TupleOperations<std::tuple<Ts...>>
 {
-  using type = typename std::tuple_element_t<sizeof...(Ts) - 1u, std::tuple<Ts...>>;
+  using type                        = std::tuple<Ts...>;
+  static constexpr std::size_t size = std::tuple_size<type>::value;
+
+  template <std::size_t N>
+  using TakeInitial = TupleOperations<typename SplitTuple<N, type>::Initial>;
+  template <std::size_t N>
+  using DropInitial = TupleOperations<typename SplitTuple<N, type>::Terminal>;
+  template <std::size_t N>
+  using TakeTerminal =
+      TupleOperations<typename SplitTuple<std::tuple_size<type>::value - N, type>::Terminal>;
+  template <std::size_t N>
+  using DropTerminal =
+      TupleOperations<typename SplitTuple<std::tuple_size<type>::value - N, type>::Initial>;
 };
+
+template <typename>
+struct Tuple;
+template <>
+struct Tuple<std::tuple<>> : TupleOperations<std::tuple<>>
+{
+};
+template <typename T, typename... Ts>
+struct Tuple<std::tuple<T, Ts...>> : TupleOperations<std::tuple<T, Ts...>>
+{
+  using FirstType = T;
+  using LastType  = std::tuple_element_t<
+      0, typename TupleOperations<std::tuple<T, Ts...>>::template TakeTerminal<1>::type>;
+};
+
+template <typename T>
+struct IsStdTupleImpl : std::false_type
+{
+};
+template <typename... Args>
+struct IsStdTupleImpl<std::tuple<Args...>> : std::true_type
+{
+};
+
+}  // namespace internal
+
+template <typename T>
+using Tuple = typename internal::Tuple<T>;
+
+template <typename Tuple, template <typename...> class Destination>
+using UnpackTuple = ConveyTypeParameterPack<std::tuple, Tuple, Destination>;
+
+template <typename Tuple>
+constexpr decltype(auto) IndexSequenceFromTuple()
+{
+  return std::make_index_sequence<std::tuple_size<std::remove_reference_t<Tuple>>::value>();
+}
+
+template <typename T>
+constexpr bool IsStdTuple =
+    internal::IsStdTupleImpl<std::remove_cv_t<std::remove_reference_t<T>>>::value;
 
 }  // namespace meta
 }  // namespace fetch

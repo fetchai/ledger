@@ -17,15 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
-#include <cmath>
+#include <cassert>
 
 namespace fetch {
 namespace math {
 namespace distance {
 
 template <typename ArrayType>
-inline typename ArrayType::Type SquareDistance(ArrayType const &A, ArrayType const &B)
+typename ArrayType::Type SquareDistance(ArrayType const &A, ArrayType const &B)
 {
   using Type = typename ArrayType::Type;
   auto it1   = A.begin();
@@ -36,11 +35,11 @@ inline typename ArrayType::Type SquareDistance(ArrayType const &A, ArrayType con
   while (it1.is_valid())
   {
     Type d = (*it1) - (*it2);
-
-    ret += d * d;
+    ret += (d * d);
     ++it1;
     ++it2;
   }
+
   return ret;
 }
 

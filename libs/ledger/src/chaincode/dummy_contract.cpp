@@ -20,6 +20,7 @@
 
 #include <chrono>
 #include <random>
+#include <thread>
 
 static constexpr std::size_t MINIMUM_TIME = 50;
 static constexpr std::size_t MAXIMUM_TIME = 200;
@@ -34,7 +35,7 @@ DummyContract::DummyContract()
   OnTransaction("run", this, &DummyContract::Run);
 }
 
-DummyContract::Status DummyContract::Wait(Transaction const &, BlockIndex)
+DummyContract::Result DummyContract::Wait(Transaction const &, BlockIndex)
 {
   std::random_device rd;
   std::mt19937       rng;
@@ -54,13 +55,13 @@ DummyContract::Status DummyContract::Wait(Transaction const &, BlockIndex)
 
   ++counter_;
 
-  return Status::OK;
+  return {Status::OK};
 }
 
-DummyContract::Status DummyContract::Run(Transaction const &, BlockIndex)
+DummyContract::Result DummyContract::Run(Transaction const &, BlockIndex)
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Running that contract...");
-  return Status::OK;
+  return {Status::OK};
 }
 
 }  // namespace ledger

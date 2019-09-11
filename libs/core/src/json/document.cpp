@@ -21,12 +21,17 @@
 
 #include <cassert>
 #include <cerrno>
+#include <cmath>
 #include <cstdint>
 #include <cstdlib>
 #include <string>
 
 namespace fetch {
 namespace json {
+
+namespace {
+constexpr char const *LOGGING_NAME = "JSONDocument";
+}
 
 /**
  * Extract a primitive value from a JSONToken
@@ -38,8 +43,7 @@ namespace json {
 void JSONDocument::ExtractPrimitive(Variant &variant, JSONToken const &token,
                                     ConstByteArray const &document)
 {
-  bool        success{false};
-  char const *str = nullptr;
+  bool success{false};
 
   switch (token.type)
   {
@@ -64,8 +68,10 @@ void JSONDocument::ExtractPrimitive(Variant &variant, JSONToken const &token,
     break;
 
   case NUMBER_INT:
-    str     = document.char_pointer() + token.first;
-    variant = std::strtoll(str, nullptr, 10);
+  {
+    std::string const str{document.SubArray(token.first, token.second)};
+
+    variant = std::strtoll(str.c_str(), nullptr, 10);
     if (errno == ERANGE)
     {
       errno = 0;
@@ -75,10 +81,15 @@ void JSONDocument::ExtractPrimitive(Variant &variant, JSONToken const &token,
     }
     success = true;
     break;
+  }
 
   case NUMBER_FLOAT:
-    str     = document.char_pointer() + token.first;
-    variant = std::strtold(str, nullptr);
+  {
+    std::string const str{document.SubArray(token.first, token.second)};
+
+    // convert the value
+    auto const converted_value = static_cast<double>(std::strtold(str.c_str(), nullptr));
+
     if (errno == ERANGE)
     {
       errno = 0;
@@ -86,8 +97,18 @@ void JSONDocument::ExtractPrimitive(Variant &variant, JSONToken const &token,
 
       throw JSONParseException(std::string("Failed to convert str=") + str + " to long double");
     }
+
+    if (!std::isfinite(converted_value))
+    {
+      throw JSONParseException(std::string("Failed to convert str=") + str +
+                               " to finite long double");
+    }
+
+    // update the variant
+    variant = converted_value;
     success = true;
     break;
+  }
 
   default:
     break;
@@ -308,8 +329,9 @@ void JSONDocument::Parse(ConstByteArray const &document)
  */
 void JSONDocument::Tokenise(ConstByteArray const &document)
 {
-  int      line = 0;
-  uint64_t pos  = 0;
+  int      line     = 0;
+  uint64_t pos      = 0;
+  uint64_t last_pos = 0;
 
   objects_ = 0;
 
@@ -323,12 +345,13 @@ void JSONDocument::Tokenise(ConstByteArray const &document)
 
   uint16_t element_counter = 0;
 
-  char const *ptr = reinterpret_cast<char const *>(document.pointer());
+  auto ptr = reinterpret_cast<uint8_t const *>(document.pointer());
   while (pos < document.size())
   {
-    auto        words16 = reinterpret_cast<uint16_t const *>(ptr + pos);
-    auto        words   = reinterpret_cast<uint32_t const *>(ptr + pos);
-    char const &c       = *(ptr + pos);
+    auto           words16 = reinterpret_cast<uint16_t const *>(ptr + pos);
+    auto           words   = reinterpret_cast<uint32_t const *>(ptr + pos);
+    uint8_t const &c       = *(ptr + pos);
+
     if ((document.size() - pos) > 2)
     {
       // Handling white spaces
@@ -358,6 +381,7 @@ void JSONDocument::Tokenise(ConstByteArray const &document)
     switch (c)
     {
     case '\n':
+      last_pos = pos;
       ++line;
       // Falls through.
     case '\t':
@@ -477,7 +501,10 @@ void JSONDocument::Tokenise(ConstByteArray const &document)
           uint8_t(byte_array::consumers::NumberConsumer<NUMBER_INT, NUMBER_FLOAT>(document, pos));
       if (type == uint8_t(-1))
       {
-        throw JSONParseException("Unable to parse integer.");
+        throw JSONParseException("Unable to parse integer on line " + std::to_string(line) +
+                                 ", char " + std::to_string(pos - last_pos) +
+                                 ", char value: " + std::to_string(uint64_t(document[pos])) + ", " +
+                                 std::to_string(c));
       }
       tokens_.push_back({oldpos, pos - oldpos, type});
       break;

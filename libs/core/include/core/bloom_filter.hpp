@@ -193,12 +193,12 @@ public:
   void Add(fetch::byte_array::ConstByteArray const &);
   /*
    * Inform the Bloom filter of detected false positives. This is used to
-   * track the quality of the filter. Returns false if the quality of the
-   * filter has deteriorated below a predefined threshold; true otherwise.
+   * track the quality of the filter. Returns true if the quality of the
+   * filter has deteriorated below a predefined threshold; false otherwise.
    */
   bool ReportFalsePositives(std::size_t);
 
-public:
+private:
   BitVector                         bits_;
   internal::HashSourceFactory const hash_source_factory_;
   std::size_t                       entry_count_{};

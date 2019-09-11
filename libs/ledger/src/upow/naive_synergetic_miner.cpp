@@ -16,8 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/byte_array.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "ledger/chain/digest.hpp"
 #include "ledger/chaincode/smart_contract_manager.hpp"
 #include "ledger/upow/naive_synergetic_miner.hpp"
@@ -35,7 +34,7 @@ namespace {
 constexpr char const *LOGGING_NAME = "NaiveSynMiner";
 
 using UInt256 = vectorise::UInt<256>;
-using serializers::ByteArrayBuffer;
+using serializers::MsgPackSerializer;
 using byte_array::ConstByteArray;
 
 using DagNodes = NaiveSynergeticMiner::DagNodes;
@@ -174,7 +173,7 @@ SynergeticContractPtr NaiveSynergeticMiner::LoadContract(Digest const &contract_
     try
     {
       // create and decode the document buffer
-      ByteArrayBuffer buffer{resource_document.document};
+      MsgPackSerializer buffer{resource_document.document};
 
       // parse the contents of the document
       ConstByteArray document{};
@@ -201,7 +200,7 @@ WorkPtr NaiveSynergeticMiner::MineSolution(Digest const &     contract_digest,
   // if no contract can be loaded then simple return
   if (!contract)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup contract: 0x", contract_digest.ToHex());
+    FETCH_LOG_WARN(LOGGING_NAME, "Unable to look up contract: 0x", contract_digest.ToHex());
     return {};
   }
 

@@ -19,42 +19,70 @@
 
 #include "ml/ops/ops.hpp"
 
+#include <cassert>
+#include <vector>
+
 namespace fetch {
 namespace ml {
 namespace ops {
 
 template <class T>
-class Transpose : public fetch::ml::Ops<T>
+class Transpose : public fetch::ml::ops::Ops<T>
 {
 public:
-  using ArrayType     = T;
-  using SizeType      = typename ArrayType::SizeType;
-  using ArrayPtrType  = std::shared_ptr<ArrayType>;
+  using TensorType    = T;
+  using SizeType      = typename TensorType::SizeType;
+  using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SPType        = OpTransposeSaveableParams<T>;
+  using MyType        = Transpose<TensorType>;
 
-  Transpose(std::vector<SizeType> transpose_vector = {1, 0, 2})
+  explicit Transpose(std::vector<SizeType> transpose_vector = {1, 0, 2})
     : transpose_vector_(transpose_vector)
   {}
 
-  virtual ~Transpose() = default;
+  explicit Transpose(SPType const &sp)
+    : Ops<T>(sp)
+  {
+    transpose_vector_ = sp.transpose_vector;
+  }
 
-  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
+  ~Transpose() override = default;
+
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
+  {
+    SPType sp{};
+    sp.transpose_vector = transpose_vector_;
+    return std::make_shared<SPType>(sp);
+  }
+
+  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
+  {
+    FETCH_UNUSED(me);
+    assert(me.get() == this);
+
+    auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
+
+    return copyshare;
+  }
+  void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(inputs.size() == 1);
     assert(output.shape() == this->ComputeOutputShape(inputs));
 
-    if (inputs.front().get().shape().size() == 2)
+    if (inputs.front()->shape().size() == 2)
     {
-      output.Copy(inputs.front().get().Transpose());
+      output.Copy(inputs.front()->Transpose());
     }
     else
     {
-      output.Copy(inputs.front().get().Transpose(transpose_vector_));
+      output.Copy(inputs.front()->Transpose(transpose_vector_));
     }
   }
 
-  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                          ArrayType const &    error_signal)
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     FETCH_UNUSED(inputs);
     assert(inputs.size() == 1);
@@ -70,17 +98,17 @@ public:
     }
   }
 
-  virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     // 2D transpose
-    if (inputs.at(0).get().shape().size() == 2)
+    if (inputs.at(0)->shape().size() == 2)
     {
-      return {inputs.front().get().shape().at(1), inputs.front().get().shape().at(0)};
+      return {inputs.front()->shape().at(1), inputs.front()->shape().at(0)};
     }
     // Transpose by given vector
     else
     {
-      std::vector<SizeType> input_shape = inputs.front().get().shape();
+      std::vector<SizeType> input_shape = inputs.front()->shape();
       std::vector<SizeType> shape;
 
       shape.reserve(shape.size());
@@ -93,7 +121,12 @@ public:
     }
   }
 
-  std::vector<SizeType>        transpose_vector_;
+  std::vector<SizeType> transpose_vector_;
+
+  static constexpr OpType OpCode()
+  {
+    return OpType::OP_TRANSPOSE;
+  }
   static constexpr char const *DESCRIPTOR = "Transpose";
 };
 

@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/core/subgraph.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/ops/add.hpp"
@@ -25,11 +26,10 @@
 #include "ml/ops/weights.hpp"
 #include "ml/regularisers/regularisation.hpp"
 #include "ml/regularisers/regulariser.hpp"
-#include "ml/subgraph.hpp"
+#include "ml/saveparams/saveable_params.hpp"
 
-#include <cmath>
 #include <functional>
-#include <random>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -41,32 +41,62 @@ template <class T>
 class FullyConnected : public SubGraph<T>
 {
 public:
-  using ArrayType    = T;
-  using ArrayPtrType = std::shared_ptr<ArrayType>;
-  using SizeType     = typename ArrayType::SizeType;
-  using DataType     = typename ArrayType::Type;
-  using WeightsInit  = fetch::ml::ops::WeightsInitialisation;
+  using TensorType    = T;
+  using ArrayPtrType  = std::shared_ptr<TensorType>;
+  using SizeType      = typename TensorType::SizeType;
+  using DataType      = typename TensorType::Type;
+  using WeightsInit   = fetch::ml::ops::WeightsInitialisation;
+  using VecTensorType = typename SubGraph<T>::VecTensorType;
+  using SPType        = LayerFullyConnectedSaveableParams<TensorType>;
 
+  using OpPtrType      = std::shared_ptr<fetch::ml::ops::Ops<TensorType>>;
+  using GraphType      = fetch::ml::Graph<TensorType>;
+  using GraphPtrType   = std::shared_ptr<GraphType>;
+  using WeightsType    = fetch::ml::ops::Weights<TensorType>;
+  using WeightsPtrType = std::shared_ptr<WeightsType>;
+
+  FullyConnected() = default;
+
+  /**
+   * Normal fully connected layer constructor
+   * @param in
+   * @param out
+   * @param activation_type
+   * @param regulariser
+   * @param regularisation_rate
+   * @param init_mode
+   */
   FullyConnected(SizeType in, SizeType out,
-                 details::ActivationType activation_type = details::ActivationType::NOTHING,
-                 fetch::ml::details::RegularisationType regulariser =
-                     fetch::ml::details::RegularisationType::NONE,
-                 DataType           regularisation_rate = static_cast<DataType>(0),
-                 std::string const &name = "FC", WeightsInit init_mode = WeightsInit::XAVIER_GLOROT)
+                 details::ActivationType       activation_type = details::ActivationType::NOTHING,
+                 fetch::ml::RegularisationType regulariser = fetch::ml::RegularisationType::NONE,
+                 DataType                      regularisation_rate = static_cast<DataType>(0),
+                 WeightsInit init_mode = WeightsInit::XAVIER_GLOROT, bool time_distributed = false)
     : in_size_(in)
     , out_size_(out)
+    , time_distributed_(time_distributed)
   {
+    // get correct name for the layer
+    std::string name = GetName();
+
+    // start to set up the structure
     std::string input =
-        this->template AddNode<fetch::ml::ops::PlaceHolder<ArrayType>>(name + "_Input", {});
-    std::string flat_input =
-        this->template AddNode<fetch::ml::ops::Flatten<ArrayType>>(name + "_Flatten", {input});
+        this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Input", {});
+
+    // for non time distributed layer, flatten the input
+    std::string flat_input = input;
+    if (!time_distributed_)
+    {
+      flat_input =
+          this->template AddNode<fetch::ml::ops::Flatten<TensorType>>(name + "_Flatten", {input});
+    }
+
     std::string weights =
-        this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Weights", {});
-    std::string weights_matmul = this->template AddNode<fetch::ml::ops::MatrixMultiply<ArrayType>>(
+        this->template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Weights", {});
+    std::string weights_matmul = this->template AddNode<fetch::ml::ops::MatrixMultiply<TensorType>>(
         name + "_MatrixMultiply", {weights, flat_input});
     std::string bias =
-        this->template AddNode<fetch::ml::ops::Weights<ArrayType>>(name + "_Bias", {});
-    std::string output = this->template AddNode<fetch::ml::ops::Add<ArrayType>>(
+        this->template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Bias", {});
+    std::string output = this->template AddNode<fetch::ml::ops::Add<TensorType>>(
         name + "_Add", {weights_matmul, bias});
 
     output = fetch::ml::details::AddActivationNode<T>(activation_type, this, name + "_Activation",
@@ -77,29 +107,114 @@ public:
     this->SetRegularisation(fetch::ml::details::CreateRegulariser<T>(regulariser),
                             regularisation_rate);
 
-    ArrayType weights_data(std::vector<SizeType>({out, in}));
+    // initialize weight with specified method
+    TensorType weights_data(std::vector<SizeType>({out_size_, in_size_}));
     this->Initialise(weights_data, init_mode);
-    this->SetInput(weights, weights_data);
+    this->SetInput(name + "_Weights", weights_data);
 
-    ArrayType bias_data(std::vector<SizeType>({out, 1}));
-    this->SetInput(bias, bias_data);
+    // initialize bias with right shape and set to all zero
+    TensorType bias_data;
+    if (time_distributed_)
+    {
+      bias_data = TensorType(std::vector<SizeType>({out_size_, 1, 1}));
+    }
+    else
+    {
+      bias_data = TensorType(std::vector<SizeType>({out_size_, 1}));
+    }
+    this->SetInput(name + "_Bias", bias_data);
+    this->Compile();
   }
 
-  std::vector<SizeType> ComputeOutputShape(
-      std::vector<std::reference_wrapper<ArrayType const>> const &) const
+  OpPtrType MakeSharedCopy(OpPtrType me) override
   {
-    return {this->out_size_, 1};
+    FETCH_UNUSED(me);
+    assert(me.get() == this);  // used for compatability
+
+    auto copyshare = std::make_shared<FullyConnected<TensorType>>();
+
+    copyshare->time_distributed_ = time_distributed_;
+    copyshare->in_size_          = in_size_;
+    copyshare->out_size_         = out_size_;
+
+    SubGraph<TensorType>::InsertSharedCopy(copyshare);
+
+    return copyshare;
+  }
+
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
+  {
+    auto ret = std::make_shared<SPType>();
+    // get base class saveable params
+    std::shared_ptr<OpsSaveableParams> sgsp = SubGraph<TensorType>::GetOpSaveableParams();
+
+    // assign base class saveable params to ret
+    auto sg_ptr1 = std::dynamic_pointer_cast<typename SubGraph<TensorType>::SPType>(sgsp);
+    auto sg_ptr2 = std::static_pointer_cast<typename SubGraph<TensorType>::SPType>(ret);
+    *sg_ptr2     = *sg_ptr1;
+
+    // asign layer specific params
+    ret->in_size          = in_size_;
+    ret->out_size         = out_size_;
+    ret->time_distributed = time_distributed_;
+
+    return ret;
+  }
+
+  void SetOpSaveableParams(SPType const &sp)
+  {
+    // assign layer specific params
+    in_size_          = sp.in_size;
+    out_size_         = sp.out_size;
+    time_distributed_ = sp.time_distributed;
+  }
+
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
+  {
+    if (!time_distributed_)
+    {
+      SizeType total_in_size = 1;
+      for (size_t i = 0; i < inputs.front()->shape().size() - 1; i++)
+      {
+        total_in_size *= inputs.front()->shape(i);
+      }
+      assert(total_in_size == this->in_size_);
+      return {this->out_size_, inputs.front()->shape(inputs.front()->shape().size() - 1)};
+    }
+    else
+    {
+      assert(inputs.front()->shape().size() == 3);
+      assert(inputs.front()->shape(0) == in_size_);
+      return {this->out_size_, inputs.front()->shape(inputs.front()->shape().size() - 2),
+              inputs.front()->shape(inputs.front()->shape().size() - 1)};
+    }
+  }
+
+  static constexpr OpType OpCode()
+  {
+    return fetch::ml::OpType::LAYER_FULLY_CONNECTED;
   }
 
   static constexpr char const *DESCRIPTOR = "FullyConnected";
 
 private:
-  SizeType in_size_;
-  SizeType out_size_;
+  SizeType in_size_          = fetch::math::numeric_max<SizeType>();
+  SizeType out_size_         = fetch::math::numeric_max<SizeType>();
+  bool     time_distributed_ = false;
 
-  void Initialise(ArrayType &weights, WeightsInit init_mode)
+  void Initialise(TensorType &weights, WeightsInit init_mode)
   {
-    fetch::ml::ops::Weights<ArrayType>::Initialise(weights, in_size_, out_size_, init_mode);
+    fetch::ml::ops::Weights<TensorType>::Initialise(weights, in_size_, out_size_, init_mode);
+  }
+
+  std::string GetName()
+  {
+    std::string name = DESCRIPTOR;
+    if (time_distributed_)
+    {
+      name = "TimeDistributed_" + name;
+    }
+    return name;
   }
 };
 

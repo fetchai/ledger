@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "http/abstract_server.hpp"
 #include "http/connection.hpp"
 #include "http/http_connection_manager.hpp"
@@ -50,34 +50,33 @@ class HTTPServer : public AbstractHTTPServer
 public:
   using handle_type = uint64_t;
 
-  using network_manager_type = network::NetworkManager;
-  using socket_type          = asio::ip::tcp::tcp::socket;
-  using acceptor_type        = asio::ip::tcp::tcp::acceptor;
-  using manager_type         = HTTPConnectionManager;
+  using NetworkManager    = network::NetworkManager;
+  using Socket            = asio::ip::tcp::tcp::socket;
+  using Acceptor          = asio::ip::tcp::tcp::acceptor;
+  using ConnectionManager = HTTPConnectionManager;
 
-  using request_middleware_type  = std::function<void(HTTPRequest &)>;
-  using view_type                = typename HTTPModule::view_type;
-  using response_middleware_type = std::function<void(HTTPResponse &, HTTPRequest const &)>;
+  using RequestMiddleware  = std::function<void(HTTPRequest &)>;
+  using ViewType           = typename HTTPModule::ViewType;
+  using Authenticator      = typename HTTPModule::Authenticator;
+  using ResponseMiddleware = std::function<void(HTTPResponse &, HTTPRequest const &)>;
 
   static constexpr char const *LOGGING_NAME = "HTTPServer";
 
   struct MountedView
   {
-    Method    method;
-    Route     route;
-    view_type view;
+    byte_array::ConstByteArray description;
+    Method                     method;
+    Route                      route;
+    ViewType                   view;
+    Authenticator              authenticator;
   };
 
-  explicit HTTPServer(network_manager_type const &network_manager)
+  explicit HTTPServer(NetworkManager const &network_manager)
     : networkManager_(network_manager)
-  {
-    LOG_STACK_TRACE_POINT;
-  }
+  {}
 
   virtual ~HTTPServer()
   {
-    LOG_STACK_TRACE_POINT;
-
     auto socketWeak = socket_;
     auto accepWeak  = acceptor_;
 
@@ -96,25 +95,21 @@ public:
         acceptor->close(dummy);
       }
     });
-
-    // TODO (issue 1220): This appears to cause a double free due to a race
-    /* manager_.reset(); */
   }
 
   void Start(uint16_t port)
   {
-    std::shared_ptr<manager_type> manager   = manager_;
-    std::weak_ptr<socket_type> &  socRef    = socket_;
-    std::weak_ptr<acceptor_type> &accepRef  = acceptor_;
-    network_manager_type &        threadMan = networkManager_;
+    std::shared_ptr<ConnectionManager> manager   = manager_;
+    std::weak_ptr<Socket> &            socRef    = socket_;
+    std::weak_ptr<Acceptor> &          accepRef  = acceptor_;
+    NetworkManager &                   threadMan = networkManager_;
 
     networkManager_.Post([&socRef, &accepRef, manager, &threadMan, port] {
       FETCH_LOG_INFO(LOGGING_NAME, "Starting HTTPServer on http://127.0.0.1:", port);
 
-      auto soc = threadMan.CreateIO<socket_type>();
+      auto soc = threadMan.CreateIO<Socket>();
 
-      auto accep =
-          threadMan.CreateIO<acceptor_type>(asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port));
+      auto accep = threadMan.CreateIO<Acceptor>(asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port));
 
       // allow initiating class to post closes to these
       socRef   = soc;
@@ -130,8 +125,6 @@ public:
 
   void PushRequest(handle_type client, HTTPRequest req) override
   {
-    LOG_STACK_TRACE_POINT;
-
     // TODO(issue 35): Need to actually add better support for the options here
     if (req.method() == Method::OPTIONS)
     {
@@ -148,53 +141,81 @@ public:
     }
 
     // TODO(issue 28): improve such that it works for multiple threads.
-    eval_mutex_.lock();
-    for (auto &m : pre_view_middleware_)
-    {
-      m(req);
-    }
-
-    HTTPResponse   res("page not found", mime_types::GetMimeTypeFromExtension(".html"),
+    FETCH_LOCK(eval_mutex_);
+    HTTPResponse res("page not found", mime_types::GetMimeTypeFromExtension(".html"),
                      Status::CLIENT_ERROR_NOT_FOUND);
-    ViewParameters params;
 
-    for (auto &v : views_)
+    // Ensure that the HTTP server remains operational
+    // even if exceptions are thrown
+    try
     {
-      // skip all views that don't match the required method
-      if (v.method != req.method())
+      // applying pre-process middleware
+      for (auto &m : pre_view_middleware_)
       {
-        continue;
+        m(req);
       }
 
-      if (v.route.Match(req.uri(), params))
+      // finding the view that matches the URL
+      ViewParameters params;
+      for (auto &v : views_)
       {
-        res = v.view(params, req);
-        break;
+        // skip all views that don't match the required method
+        if (v.method != req.method())
+        {
+          continue;
+        }
+
+        if (v.route.Match(req.uri(), params))
+        {
+          // checking that the correct level of authentication is present
+          if (!v.authenticator(req))
+          {
+            res = HTTPResponse("authentication required",
+                               fetch::http::mime_types::GetMimeTypeFromExtension(".html"),
+                               Status::SERVER_ERROR_NETWORK_AUTHENTICATION_REQUIRED);
+            manager_->Send(client, res);
+            return;
+          }
+
+          // generating result
+          res = v.view(params, req);
+          break;
+        }
+      }
+
+      // signal that the request has been processed
+      req.SetProcessed();
+
+      for (auto &m : post_view_middleware_)
+      {
+        m(res, req);
       }
     }
-
-    // signal that the request has been processed
-    req.SetProcessed();
-
-    for (auto &m : post_view_middleware_)
+    catch (std::exception const &e)
     {
-      m(res, req);
+      HTTPResponse response("internal error: " + std::string(e.what()),
+                            fetch::http::mime_types::GetMimeTypeFromExtension(".html"),
+                            Status::SERVER_ERROR_INTERNAL_SERVER_ERROR);
+      manager_->Send(client, response);
+      return;
     }
-
-    eval_mutex_.unlock();
+    catch (...)
+    {
+      HTTPResponse response("unknown internal error",
+                            fetch::http::mime_types::GetMimeTypeFromExtension(".html"),
+                            Status::SERVER_ERROR_INTERNAL_SERVER_ERROR);
+      manager_->Send(client, response);
+      return;
+    }
 
     manager_->Send(client, res);
   }
 
   // Accept static void to avoid having to create shared ptr to this class
-  static void Accept(std::shared_ptr<socket_type> soc, std::shared_ptr<acceptor_type> accep,
-                     std::shared_ptr<manager_type> manager)
+  static void Accept(std::shared_ptr<Socket> soc, std::shared_ptr<Acceptor> accep,
+                     std::shared_ptr<ConnectionManager> manager)
   {
-    LOG_STACK_TRACE_POINT;
-
     auto cb = [soc, accep, manager](std::error_code ec) {
-      // LOG_LAMBDA_STACK_TRACE_POINT; // TODO(issue 28) : sort this
-
       if (!ec)
       {
         std::make_shared<HTTPConnection>(std::move(*soc), *manager)->Start();
@@ -205,9 +226,9 @@ public:
         return;
       }
 
-      std::shared_ptr<socket_type>   s = soc;
-      std::shared_ptr<acceptor_type> a = accep;
-      std::shared_ptr<manager_type>  m = manager;
+      std::shared_ptr<Socket>            s = soc;
+      std::shared_ptr<Acceptor>          a = accep;
+      std::shared_ptr<ConnectionManager> m = manager;
 
       HTTPServer::Accept(s, a, m);
     };
@@ -216,42 +237,64 @@ public:
     accep->async_accept(*soc, cb);
   }
 
-  void AddMiddleware(request_middleware_type const &middleware)
+  void AddMiddleware(RequestMiddleware const &middleware)
   {
     pre_view_middleware_.push_back(middleware);
   }
 
-  void AddMiddleware(response_middleware_type const &middleware)
+  void AddMiddleware(ResponseMiddleware const &middleware)
   {
     post_view_middleware_.push_back(middleware);
   }
 
-  void AddView(Method method, byte_array::ByteArray const &path, view_type const &view)
+  void AddView(byte_array::ConstByteArray description, Method method,
+               byte_array::ByteArray const &path, std::vector<HTTPParameter> const &parameters,
+               ViewType const &view, Authenticator authenticator)
   {
-    views_.push_back({method, Route::FromString(path), view});
+    auto route = Route::FromString(path);
+
+    for (auto const &param : parameters)
+    {
+      validators::Validator v = param.validator;
+      v.description           = param.description;
+      route.AddValidator(param.name, std::move(v));
+    }
+
+    views_.push_back({std::move(description), method, std::move(route), view, authenticator});
   }
 
   void AddModule(HTTPModule const &module)
   {
-    LOG_STACK_TRACE_POINT;
     for (auto const &view : module.views())
     {
-      this->AddView(view.method, view.route, view.view);
+      this->AddView(view.description, view.method, view.route, view.parameters, view.view,
+                    view.authenticator);
     }
+  }
+
+  std::vector<MountedView> views()
+  {
+    FETCH_LOCK(eval_mutex_);
+    return views_;
+  }
+
+  std::vector<MountedView> views_unsafe()
+  {
+    return views_;
   }
 
 private:
   std::mutex eval_mutex_;
 
-  std::vector<request_middleware_type>  pre_view_middleware_;
-  std::vector<MountedView>              views_;
-  std::vector<response_middleware_type> post_view_middleware_;
+  std::vector<RequestMiddleware>  pre_view_middleware_;
+  std::vector<MountedView>        views_;
+  std::vector<ResponseMiddleware> post_view_middleware_;
 
-  network_manager_type          networkManager_;
-  std::deque<HTTPRequest>       requests_;
-  std::weak_ptr<acceptor_type>  acceptor_;
-  std::weak_ptr<socket_type>    socket_;
-  std::shared_ptr<manager_type> manager_{std::make_shared<manager_type>(*this)};
+  NetworkManager                     networkManager_;
+  std::deque<HTTPRequest>            requests_;
+  std::weak_ptr<Acceptor>            acceptor_;
+  std::weak_ptr<Socket>              socket_;
+  std::shared_ptr<ConnectionManager> manager_{std::make_shared<ConnectionManager>(*this)};
 };
 }  // namespace http
 }  // namespace fetch

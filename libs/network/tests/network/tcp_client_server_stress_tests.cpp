@@ -49,7 +49,7 @@ public:
 
   void PushRequest(connection_handle_type /*client*/, message_type const &msg) override
   {
-    std::lock_guard<std::mutex> lock(messages_);
+    FETCH_LOCK(messages_);
     globalMessagesFromServer_.push_back(msg);
   }
 };
@@ -123,8 +123,6 @@ void TestCase0(std::string /*host*/, uint16_t port)
     Server server(port, nmanager);
     server.Start();
   }
-
-  SUCCEED() << "Success." << std::endl;
 }
 
 template <std::size_t N = 1>
@@ -148,8 +146,6 @@ void TestCase1(std::string /*host*/, uint16_t port)
     nmanager.Start();
     server.Start();
   }
-
-  SUCCEED() << "Success." << std::endl;
 }
 
 template <std::size_t N = 1>
@@ -183,8 +179,6 @@ void TestCase2(std::string host, uint16_t port)
       nmanager.Stop();
     }
   }
-
-  SUCCEED() << "Success." << std::endl;
 }
 
 template <std::size_t N = 1>
@@ -227,8 +221,6 @@ void TestCase3(std::string host, uint16_t port)
       nmanager.Stop();
     }
   }
-
-  SUCCEED() << "Success." << std::endl;
 }
 
 template <std::size_t N = 1>
@@ -270,8 +262,6 @@ void TestCase4(std::string host, uint16_t port)
       std::this_thread::sleep_for(std::chrono::milliseconds(4));
     }
   }
-
-  SUCCEED() << "Success." << std::endl;
 }
 
 template <std::size_t N = 1>
@@ -294,7 +284,7 @@ void TestCase5(std::string host, uint16_t port)
     std::vector<message_type> to_send;
 
     {
-      std::lock_guard<std::mutex> lock(messages_);
+      FETCH_LOCK(messages_);
       globalMessagesFromServer_.clear();
     }
 
@@ -340,7 +330,7 @@ void TestCase5(std::string host, uint16_t port)
     for (;;)
     {
       {
-        std::lock_guard<std::mutex> lock(messages_);
+        FETCH_LOCK(messages_);
 
         if (globalMessagesFromServer_.size() == to_send.size())
         {
@@ -352,13 +342,13 @@ void TestCase5(std::string host, uint16_t port)
       std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
 
-    std::lock_guard<std::mutex> lock(messages_);
+    FETCH_LOCK(messages_);
     std::sort(globalMessagesFromServer_.begin(), globalMessagesFromServer_.end());
     std::sort(to_send.begin(), to_send.end());
 
     if (globalMessagesFromServer_ != to_send)
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to match server messages. Recieved: ");
+      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to match server messages. Received: ");
 
       for (auto const &i : globalMessagesFromServer_)
       {
@@ -366,8 +356,6 @@ void TestCase5(std::string host, uint16_t port)
       }
     }
   }
-
-  SUCCEED() << "Success." << std::endl;
 }
 
 template <std::size_t N = 1>
@@ -388,7 +376,7 @@ void TestCase6(std::string host, uint16_t port)
 
     // Create packets of varying sizes
     std::vector<message_type> to_send;
-    std::vector<message_type> to_recieve;
+    std::vector<message_type> to_receive;
 
     for (std::size_t i = 0; i < 5; ++i)
     {
@@ -407,11 +395,11 @@ void TestCase6(std::string host, uint16_t port)
       throw 1;
     }
 
-    std::mutex messages_recieve;
+    std::mutex messages_receive;
 
     auto lam = [&](message_type const &msg) {
-      std::lock_guard<std::mutex> lock(messages_recieve);
-      to_recieve.push_back(msg);
+      FETCH_LOCK(messages_receive);
+      to_receive.push_back(msg);
     };
 
     i->OnMessage(lam);
@@ -441,9 +429,9 @@ void TestCase6(std::string host, uint16_t port)
     for (;;)
     {
       {
-        std::lock_guard<std::mutex> lock(messages_recieve);
+        FETCH_LOCK(messages_receive);
 
-        if (to_recieve.size() == to_send.size())
+        if (to_receive.size() == to_send.size())
         {
           break;
         }
@@ -453,12 +441,12 @@ void TestCase6(std::string host, uint16_t port)
       std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
 
-    std::sort(to_recieve.begin(), to_recieve.end());
+    std::sort(to_receive.begin(), to_receive.end());
     std::sort(to_send.begin(), to_send.end());
 
-    if (to_recieve != to_send)
+    if (to_receive != to_send)
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to match server messages. Recieved: ");
+      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to match server messages. Received: ");
 
       for (auto const &i : globalMessagesFromServer_)
       {
@@ -466,8 +454,6 @@ void TestCase6(std::string host, uint16_t port)
       }
     }
   }
-
-  SUCCEED() << "Success." << std::endl;
 }
 
 template <std::size_t N = 1>
@@ -490,10 +476,10 @@ void TestCase7(std::string host, uint16_t port)
     std::vector<message_type> to_send_from_server;
     std::vector<message_type> to_send_from_client;
 
-    std::vector<message_type> recieved_client;
+    std::vector<message_type> received_client;
 
     {
-      std::lock_guard<std::mutex> lock(messages_);
+      FETCH_LOCK(messages_);
       globalMessagesFromServer_.clear();
     }
 
@@ -522,11 +508,11 @@ void TestCase7(std::string host, uint16_t port)
       throw 1;
     }
 
-    std::mutex messages_recieve;
+    std::mutex messages_receive;
 
     auto lam = [&](message_type const &msg) {
-      std::lock_guard<std::mutex> lock(messages_recieve);
-      recieved_client.push_back(msg);
+      FETCH_LOCK(messages_receive);
+      received_client.push_back(msg);
     };
 
     i->OnMessage(lam);
@@ -565,9 +551,9 @@ void TestCase7(std::string host, uint16_t port)
     for (;;)
     {
       {
-        std::lock_guard<std::mutex> lock(messages_recieve);
+        FETCH_LOCK(messages_receive);
 
-        if (recieved_client.size() == to_send_from_server.size() &&
+        if (received_client.size() == to_send_from_server.size() &&
             globalMessagesFromServer_.size() == to_send_from_client.size())
         {
           break;
@@ -578,11 +564,11 @@ void TestCase7(std::string host, uint16_t port)
       std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
 
-    std::lock_guard<std::mutex> lock(messages_);
+    FETCH_LOCK(messages_);
     std::sort(globalMessagesFromServer_.begin(), globalMessagesFromServer_.end());
     std::sort(to_send_from_client.begin(), to_send_from_client.end());
 
-    std::sort(recieved_client.begin(), recieved_client.end());
+    std::sort(received_client.begin(), received_client.end());
     std::sort(to_send_from_server.begin(), to_send_from_server.end());
 
     if (globalMessagesFromServer_ != to_send_from_client)
@@ -591,55 +577,52 @@ void TestCase7(std::string host, uint16_t port)
       throw 1;
     }
 
-    if (recieved_client != to_send_from_server)
+    if (received_client != to_send_from_server)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Failed to match server->client messages.");
       throw 1;
     }
   }
-
-  SUCCEED() << "Success." << std::endl;
 }
 
 class TCPClientServerTest : public testing::TestWithParam<std::size_t>
 {
+public:
+  TCPClientServerTest()
+    : host{"localhost"}
+    , port_number{8079}
+    , iterations{GetParam()}
+  {}
+
+  std::string const host;
+  uint16_t const    port_number;
+  std::size_t const iterations;
 };
 
-TEST_P(TCPClientServerTest, basic_test)
+TEST_P(TCPClientServerTest, DISABLED_basic_test)
 {
-
-  std::string host       = "localhost";
-  uint16_t    portNumber = 8079;
-
-  std::cerr << "Testing communications on port: " << portNumber << std::endl;
-
-  std::size_t iterations = GetParam();
-
-  FETCH_LOG_INFO(LOGGING_NAME, "Running test iterations: ", iterations);
-
   for (std::size_t i = 0; i < iterations; ++i)
   {
-    TestCase0<1>(host, portNumber);
-    TestCase1<1>(host, portNumber);
-    TestCase2<1>(host, portNumber);
-    TestCase3<1>(host, portNumber);
-    TestCase4<1>(host, portNumber);
-    TestCase5<1>(host, portNumber);
-    TestCase6<1>(host, portNumber);
-    TestCase7<1>(host, portNumber);
+    TestCase0<1>(host, port_number);
+    TestCase1<1>(host, port_number);
+    TestCase2<1>(host, port_number);
+    TestCase3<1>(host, port_number);
+    TestCase4<1>(host, port_number);
+    TestCase5<1>(host, port_number);
+    TestCase6<1>(host, port_number);
+    TestCase7<1>(host, port_number);
 
-    TestCase0<10>(host, portNumber);
-    TestCase1<10>(host, portNumber);
-    TestCase2<10>(host, portNumber);
-    TestCase3<10>(host, portNumber);
-    TestCase4<10>(host, portNumber);
-    TestCase5<10>(host, portNumber);
-    TestCase6<10>(host, portNumber);
-    TestCase7<10>(host, portNumber);
+    TestCase0<10>(host, port_number);
+    TestCase1<10>(host, port_number);
+    TestCase2<10>(host, port_number);
+    TestCase3<10>(host, port_number);
+    TestCase4<10>(host, port_number);
+    TestCase5<10>(host, port_number);
+    TestCase6<10>(host, port_number);
+    TestCase7<10>(host, port_number);
   }
-
-  SUCCEED() << "Success." << std::endl;
 }
+
 INSTANTIATE_TEST_CASE_P(MyGroup, TCPClientServerTest, testing::Values<std::size_t>(4),
                         testing::PrintToStringParamName());
 // testing::Values<std::size_t>(4): 4 is the number of iterations to run this test under 30 sec.

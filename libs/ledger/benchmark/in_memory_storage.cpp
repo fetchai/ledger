@@ -18,6 +18,8 @@
 
 #include "in_memory_storage.hpp"
 
+#include <stdexcept>
+
 using Document  = InMemoryStorageUnit::Document;
 using Keys      = InMemoryStorageUnit::Keys;
 using TxLayouts = InMemoryStorageUnit::TxLayouts;

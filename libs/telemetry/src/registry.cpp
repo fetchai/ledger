@@ -23,6 +23,13 @@
 #include "telemetry/histogram_map.hpp"
 #include "telemetry/registry.hpp"
 
+#include <initializer_list>
+#include <memory>
+#include <ostream>
+#include <string>
+#include <utility>
+#include <vector>
+
 namespace fetch {
 namespace telemetry {
 
@@ -79,7 +86,7 @@ CounterPtr Registry::CreateCounter(std::string name, std::string description, La
 
     // add the counter to the register
     {
-      LockGuard guard(lock_);
+      FETCH_LOCK(lock_);
       measurements_.push_back(counter);
     }
   }
@@ -106,7 +113,7 @@ CounterMapPtr Registry::CreateCounterMap(std::string name, std::string descripti
 
     // add the counter to the register
     {
-      LockGuard guard(lock_);
+      FETCH_LOCK(lock_);
       measurements_.emplace_back(map);
     }
   }
@@ -120,7 +127,7 @@ CounterMapPtr Registry::CreateCounterMap(std::string name, std::string descripti
  * @param buckets The set of buckets to be used
  * @param name The name of the metric
  * @param description The description of the metric
- * @param labels The labels assoicated with the metric
+ * @param labels The labels associated with the metric
  * @return The pointer to the created metric if successful, otherwise a nullptr
  */
 HistogramPtr Registry::CreateHistogram(std::initializer_list<double> const &buckets,
@@ -135,7 +142,7 @@ HistogramPtr Registry::CreateHistogram(std::initializer_list<double> const &buck
 
     // add the counter to the register
     {
-      LockGuard guard(lock_);
+      FETCH_LOCK(lock_);
       measurements_.push_back(histogram);
     }
   }
@@ -158,7 +165,7 @@ HistogramMapPtr Registry::CreateHistogramMap(std::vector<double> buckets, std::s
 
     // add the counter to the register
     {
-      LockGuard guard(lock_);
+      FETCH_LOCK(lock_);
       measurements_.emplace_back(histogram_map);
     }
   }
@@ -173,10 +180,12 @@ HistogramMapPtr Registry::CreateHistogramMap(std::vector<double> buckets, std::s
  */
 void Registry::Collect(std::ostream &stream)
 {
-  LockGuard guard(lock_);
+  OutputStream telemetry_stream{stream};
+
+  FETCH_LOCK(lock_);
   for (auto const &measurement : measurements_)
   {
-    measurement->ToStream(stream, Measurement::StreamMode::FULL);
+    measurement->ToStream(telemetry_stream);
   }
 }
 

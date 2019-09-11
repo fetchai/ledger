@@ -17,9 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/byte_array.hpp"
-#include "core/serializers/stl_types.hpp"
-#include "core/serializers/typed_byte_array_buffer.hpp"
+#include "core/serializers/base_types.hpp"
 #include "network/service/abstract_callable.hpp"
 
 #include <functional>
@@ -74,8 +72,8 @@ private:
   {
     static void MemberFunction(serializer_type &result, function_type &m, used_args &... args)
     {
-      result << uint8_t(0);
       m(args...);
+      result << uint8_t(0);
     };
   };
 
@@ -123,11 +121,8 @@ public:
    * @function is the member function.
    */
   Function(function_type value)
-  {
-    LOG_STACK_TRACE_POINT;
-
-    function_ = value;
-  }
+    : function_{std::move(value)}
+  {}
 
   /* Operator to invoke the function.
    * @result is the serializer to which the result is written.
@@ -140,9 +135,7 @@ public:
    */
   void operator()(serializer_type &result, serializer_type &params) override
   {
-    LOG_STACK_TRACE_POINT;
-
-    UnrollArguments<>::template LoopOver<Args...>::Unroll(result, this->function_, params);
+    UnrollArguments<>::template LoopOver<Args...>::Unroll(result, function_, params);
   }
   void operator()(serializer_type & /*result*/, CallableArgumentList const & /*additional_args*/,
                   serializer_type & /*params*/) override
@@ -166,16 +159,11 @@ public:
   static constexpr char const *LOGGING_NAME = "Function<R()>";
 
   Function(function_type value)
-  {
-    LOG_STACK_TRACE_POINT;
-
-    function_ = value;
-  }
+    : function_{std::move(value)}
+  {}
 
   void operator()(serializer_type &result, serializer_type & /*params*/) override
   {
-    LOG_STACK_TRACE_POINT;
-
     result << R(function_());
   }
 
@@ -201,16 +189,13 @@ public:
   static constexpr char const *LOGGING_NAME = "Function<void()>";
 
   Function(function_type value)
-  {
-    LOG_STACK_TRACE_POINT;
-    function_ = value;
-  }
+    : function_{std::move(value)}
+  {}
 
   void operator()(serializer_type &result, serializer_type & /*params*/) override
   {
-    LOG_STACK_TRACE_POINT;
-    result << 0;
     function_();
+    result << uint8_t(0);
   }
   void operator()(serializer_type & /*result*/, CallableArgumentList const & /*additional_args*/,
                   serializer_type & /*params*/) override

@@ -31,55 +31,70 @@ namespace ml {
 namespace ops {
 
 template <class T>
-class LogSoftmax : public fetch::ml::Ops<T>
+class LogSoftmax : public fetch::ml::ops::Ops<T>
 {
 public:
-  using ArrayType     = T;
-  using DataType      = typename ArrayType::Type;
-  using SizeType      = typename ArrayType::SizeType;
+  using TensorType    = T;
+  using DataType      = typename TensorType::Type;
+  using SizeType      = typename TensorType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SPType        = OpLogSoftmaxSaveableParams<T>;
+  using MyType        = LogSoftmax<TensorType>;
 
-  explicit LogSoftmax(SizeType axis = 0)
+  explicit LogSoftmax(SizeType axis = 1)
     : axis_(axis)
   {}
+
+  explicit LogSoftmax(SPType const &sp)
+    : Ops<T>(sp)
+  {
+    axis_ = sp.axis;
+  }
+
   ~LogSoftmax() override = default;
 
-  void Forward(VecTensorType const &inputs, ArrayType &output) override
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
+  {
+    auto sp_ptr  = std::make_shared<SPType>();
+    sp_ptr->axis = axis_;
+    return sp_ptr;
+  }
+
+  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
+  {
+    FETCH_UNUSED(me);
+    assert(me.get() == this);
+
+    auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
+
+    return copyshare;
+  }
+  void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(output.shape() == ComputeOutputShape(inputs));
     assert(inputs.size() == 1);
-    fetch::math::Softmax(inputs.front().get(), output, axis_);
+    fetch::math::Softmax((*inputs.front()), output, axis_);
     fetch::math::Log(output, output);
   }
 
-  std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                  ArrayType const &    error_signal) override
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     assert(inputs.size() == 1);
-    assert(inputs.front().get().shape() == error_signal.shape());
+    assert(inputs.front()->shape() == error_signal.shape());
 
-    ArrayType return_signal = error_signal.Copy();
-    ArrayType t(error_signal.shape());
-    fetch::math::Softmax(inputs.front().get(), t, axis_);
+    TensorType return_signal = error_signal.Copy();
+    TensorType t(error_signal.shape());
+    fetch::math::Softmax((*inputs.front()), t, axis_);
 
     // return_signal.InlineMultiply(t);
 
-    // 1D softmax
-    if (inputs.front().get().shape().size() == 1)
+    // N-D softmax with 1 batch dimension
+    if (inputs.front()->shape().size() > 1)
     {
-      typename ArrayType::Type sum = return_signal.Sum();
+      TensorType sum = ReduceSum(return_signal, axis_);
       t.InlineMultiply(sum);
-    }
-    // 2D softmax
-    else if (inputs.front().get().shape().size() == 2)
-    {
-      ArrayType sum;
-      sum = ReduceSum(return_signal, 1 - axis_);
-      t.InlineMultiply(sum);
-    }
-    else
-    {
-      throw std::runtime_error("Softmax over >= 3 dimensions not implemented");
     }
 
     return_signal.InlineSubtract(t);
@@ -88,9 +103,13 @@ public:
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    return inputs.front().get().shape();
+    return inputs.front()->shape();
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::OP_LOGSOFTMAX;
+  }
   static constexpr char const *DESCRIPTOR = "LogSoftmax";
 
 private:

@@ -19,15 +19,14 @@
 
 #include "core/assert.hpp"
 #include "math/meta/math_type_traits.hpp"
-#include <cmath>
 
 namespace fetch {
 namespace math {
 namespace distance {
 
 template <typename ArrayType, typename F>
-inline meta::IfIsMathArray<ArrayType, ArrayType> &PairWiseDistance(ArrayType const &a, F &&metric,
-                                                                   ArrayType &ret)
+meta::IfIsMathArray<ArrayType, ArrayType> &PairWiseDistance(ArrayType const &a, F &&metric,
+                                                            ArrayType &ret)
 {
   using SizeType = typename ArrayType::SizeType;
 

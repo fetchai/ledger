@@ -17,13 +17,18 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "core/mutex.hpp"
 #include "network/management/abstract_connection_register.hpp"
 #include "network/message.hpp"
 
 #include <atomic>
+#include <cstdint>
+#include <functional>
 #include <memory>
+#include <mutex>
+#include <string>
+#include <utility>
 
 namespace fetch {
 namespace network {
@@ -58,7 +63,7 @@ public:
     FETCH_LOG_VARIABLE(h);
 
     {
-      std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
+      FETCH_LOCK(callback_mutex_);
       on_message_ = nullptr;
     }
 
@@ -80,7 +85,7 @@ public:
   // Common to all
   std::string Address() const
   {
-    std::lock_guard<mutex::Mutex> lock(address_mutex_);
+    FETCH_LOCK(address_mutex_);
     return address_;
   }
 
@@ -105,36 +110,31 @@ public:
 
   void OnMessage(std::function<void(network::message_type const &msg)> const &f)
   {
-    LOG_STACK_TRACE_POINT;
-    std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
+    FETCH_LOCK(callback_mutex_);
     on_message_ = f;
   }
 
   void OnConnectionSuccess(std::function<void()> const &fnc)
   {
-    LOG_STACK_TRACE_POINT;
-    std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
+    FETCH_LOCK(callback_mutex_);
     on_connection_success_ = fnc;
   }
 
   void OnConnectionFailed(std::function<void()> const &fnc)
   {
-    LOG_STACK_TRACE_POINT;
-    std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
+    FETCH_LOCK(callback_mutex_);
     on_connection_failed_ = fnc;
   }
 
   void OnLeave(std::function<void()> const &fnc)
   {
-    LOG_STACK_TRACE_POINT;
-    std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
+    FETCH_LOCK(callback_mutex_);
     on_leave_ = fnc;
   }
 
   void ClearClosures() noexcept
   {
-    LOG_STACK_TRACE_POINT;
-    std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
+    FETCH_LOCK(callback_mutex_);
     on_connection_failed_  = nullptr;
     on_connection_success_ = nullptr;
     on_message_            = nullptr;
@@ -153,7 +153,7 @@ public:
 protected:
   void SetAddress(std::string const &addr)
   {
-    std::lock_guard<mutex::Mutex> lock(address_mutex_);
+    FETCH_LOCK(address_mutex_);
     address_ = addr;
   }
 
@@ -166,9 +166,9 @@ protected:
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Connection terminated for handle ", handle_.load(),
                     ", SignalLeave called.");
-    std::function<void(void)> cb;
+    std::function<void()> cb;
     {
-      std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
+      FETCH_LOCK(callback_mutex_);
       cb = on_leave_;
     }
 
@@ -182,10 +182,9 @@ protected:
 
   void SignalMessage(network::message_type const &msg)
   {
-    LOG_STACK_TRACE_POINT;
     std::function<void(network::message_type const &)> cb;
     {
-      std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
+      FETCH_LOCK(callback_mutex_);
       cb = on_message_;
     }
     if (cb)
@@ -196,10 +195,9 @@ protected:
 
   void SignalConnectionFailed()
   {
-    LOG_STACK_TRACE_POINT;
     std::function<void()> cb;
     {
-      std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
+      FETCH_LOCK(callback_mutex_);
       cb = on_leave_;
     }
     if (cb)
@@ -212,10 +210,9 @@ protected:
 
   void SignalConnectionSuccess()
   {
-    LOG_STACK_TRACE_POINT;
     std::function<void()> cb;
     {
-      std::lock_guard<fetch::mutex::Mutex> lock(callback_mutex_);
+      FETCH_LOCK(callback_mutex_);
       cb = on_connection_success_;
     }
 
@@ -236,14 +233,14 @@ private:
   std::string           address_;
   std::atomic<uint16_t> port_;
 
-  mutable mutex::Mutex address_mutex_{__LINE__, __FILE__};
+  mutable Mutex address_mutex_;
 
   static connection_handle_type next_handle()
   {
     connection_handle_type ret = 0;
 
     {
-      std::lock_guard<fetch::mutex::Mutex> lck(global_handle_mutex_);
+      FETCH_LOCK(global_handle_mutex_);
 
       while (ret == 0)
       {
@@ -258,8 +255,8 @@ private:
   std::atomic<connection_handle_type> const handle_;
 
   static connection_handle_type global_handle_counter_;
-  static fetch::mutex::Mutex    global_handle_mutex_;
-  mutable fetch::mutex::Mutex   callback_mutex_{__LINE__, __FILE__};
+  static Mutex                  global_handle_mutex_;
+  mutable Mutex                 callback_mutex_;
 
   shared_type self_;
 

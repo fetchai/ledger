@@ -18,9 +18,11 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "core/serializers/byte_array_buffer.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "meta/type_traits.hpp"
 #include "vectorise/platform.hpp"
+
+#include <stdexcept>
 
 namespace fetch {
 namespace ledger {
@@ -120,7 +122,7 @@ meta::IfIsSignedInteger<T, T> Negate(T value)
 }
 
 template <typename T>
-meta::IfIsInteger<T, T> DecodeInteger(fetch::serializers::ByteArrayBuffer &buffer)
+meta::IfIsInteger<T, T> DecodeInteger(fetch::serializers::MsgPackSerializer &buffer)
 {
   // determine the traits of the output type
   constexpr bool        output_is_signed   = meta::IsSignedInteger<T>;

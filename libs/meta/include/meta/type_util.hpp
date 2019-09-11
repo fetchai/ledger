@@ -129,37 +129,5 @@ struct InvokeResult
 template <class F, class... Args>
 using InvokeResultT = typename InvokeResult<F, Args...>::type;
 
-template <class...>
-struct Switch;
-
-template <class... Clauses>
-using SwitchT = typename Switch<Clauses...>::type;
-
-template <class If, class Then, class... Else>
-struct Switch<If, Then, Else...> : std::conditional<If::value, Then, SwitchT<Else...>>
-{
-};
-
-template <class Default>
-struct Switch<Default>
-{
-  using type = Default;
-};
-
-template <>
-struct Switch<>
-{
-  using type = void;
-};
-
-template <class Source, class Dest>
-using CopyReferenceKind =
-    Switch<std::is_lvalue_reference<Source>, std::add_lvalue_reference_t<Dest>,
-           std::is_rvalue_reference<Source>, std::add_rvalue_reference_t<std::decay_t<Dest>>,
-           std::decay_t<Dest>>;
-
-template <class Source, class Dest>
-using CopyReferenceKindT = typename CopyReferenceKind<Source, Dest>::type;
-
 }  // namespace type_util
 }  // namespace fetch

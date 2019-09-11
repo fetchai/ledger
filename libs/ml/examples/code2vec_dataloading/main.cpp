@@ -30,10 +30,10 @@
 #define MAX_CONTEXTS 20
 
 using DataType    = uint64_t;
-using ArrayType   = fetch::math::Tensor<DataType>;
+using TensorType  = fetch::math::Tensor<DataType>;
 using SizeType    = fetch::math::Tensor<DataType>::SizeType;
-using LabelType   = ArrayType;
-using ContextType = ArrayType;
+using LabelType   = TensorType;
+using ContextType = TensorType;
 
 std::string ReadFile(std::string const &path)
 {
@@ -52,7 +52,7 @@ int main(int ac, char **av)
 
   fetch::ml::dataloaders::C2VLoader<LabelType, ContextType> cloader(MAX_CONTEXTS);
 
-  cloader.AddData(ReadFile(av[1]));
+  cloader.AddDataAsString(ReadFile(av[1]));
   std::cout << "Number of different function names: " << cloader.function_name_counter().size()
             << std::endl;
   std::cout << "Number of different paths: " << cloader.path_counter().size() << std::endl;

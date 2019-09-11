@@ -59,7 +59,7 @@ public:
 
   shared_service_client_type GetService(connection_handle_type const &i)
   {
-    std::lock_guard<mutex::Mutex> lock(service_lock_);
+    FETCH_LOCK(service_lock_);
     if (services_.find(i) == services_.end())
     {
       return nullptr;
@@ -70,7 +70,7 @@ public:
   // TODO(kll): Rename this to match ServiceClients below.
   void WithServices(std::function<void(service_map_type const &)> f) const
   {
-    std::lock_guard<mutex::Mutex> lock(service_lock_);
+    FETCH_LOCK(service_lock_);
     f(services_);
   }
 
@@ -79,7 +79,7 @@ public:
     std::list<service_map_type::value_type> keys;
 
     {
-      std::lock_guard<mutex::Mutex> lock(service_lock_);
+      FETCH_LOCK(service_lock_);
       for (auto &item : services_)
       {
         keys.push_back(item);
@@ -88,8 +88,8 @@ public:
 
     for (auto &item : keys)
     {
-      auto                          k = item.first;
-      std::lock_guard<mutex::Mutex> lock(service_lock_);
+      auto k = item.first;
+      FETCH_LOCK(service_lock_);
       if (services_.find(k) != services_.end())
       {
         f(item);
@@ -104,7 +104,7 @@ public:
     std::list<service_map_type::value_type> keys;
 
     {
-      std::lock_guard<mutex::Mutex> lock(service_lock_);
+      FETCH_LOCK(service_lock_);
       for (auto &item : services_)
       {
         keys.push_back(item);
@@ -116,8 +116,8 @@ public:
       auto v = item.second.lock();
       if (v)
       {
-        auto                          k = item.first;
-        std::lock_guard<mutex::Mutex> lock(service_lock_);
+        auto k = item.first;
+        FETCH_LOCK(service_lock_);
         if (services_.find(k) != services_.end())
         {
           f(k, v);
@@ -135,8 +135,8 @@ protected:
   void RemoveService(connection_handle_type const &n)
   {
     --number_of_services_;
-    std::lock_guard<mutex::Mutex> lock(service_lock_);
-    auto                          it = services_.find(n);
+    FETCH_LOCK(service_lock_);
+    auto it = services_.find(n);
     if (it != services_.end())
     {
       services_.erase(it);
@@ -147,12 +147,12 @@ protected:
   {
     ++number_of_services_;
 
-    std::lock_guard<mutex::Mutex> lock(service_lock_);
+    FETCH_LOCK(service_lock_);
     services_[n] = ptr;
   }
 
 private:
-  mutable mutex::Mutex  service_lock_{__LINE__, __FILE__};
+  mutable Mutex         service_lock_;
   service_map_type      services_;
   std::atomic<uint64_t> number_of_services_;
 };

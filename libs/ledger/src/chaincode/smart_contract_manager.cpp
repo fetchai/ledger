@@ -16,28 +16,30 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chaincode/smart_contract_manager.hpp"
-
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "crypto/fnv.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "ledger/chain/transaction.hpp"
+#include "ledger/chaincode/contract.hpp"
 #include "ledger/chaincode/smart_contract.hpp"
-#include "ledger/chaincode/vm_definition.hpp"
+#include "ledger/chaincode/smart_contract_manager.hpp"
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
 #include "vm/function_decorators.hpp"
+#include "vm/module.hpp"
 #include "vm_modules/vm_factory.hpp"
 
-#include <algorithm>
-#include <stdexcept>
+#include <cassert>
+#include <memory>
 #include <string>
 #include <unordered_set>
+#include <vector>
 
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::FromBase64;
+using fetch::vm::FunctionDecoratorKind;
 
 namespace fetch {
 namespace ledger {
@@ -62,14 +64,14 @@ SmartContractManager::SmartContractManager()
   OnTransaction("create", this, &SmartContractManager::OnCreate);
 }
 
-Contract::Status SmartContractManager::OnCreate(Transaction const &tx, BlockIndex)
+Contract::Result SmartContractManager::OnCreate(Transaction const &tx, BlockIndex)
 {
   // attempt to parse the transaction
   variant::Variant data;
   if (!ParseAsJson(tx, data))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "FAILED TO PARSE TRANSACTION");
-    return Status::FAILED;
+    return {Status::FAILED};
   }
 
   ConstByteArray contract_source;
@@ -93,13 +95,13 @@ Contract::Status SmartContractManager::OnCreate(Transaction const &tx, BlockInde
     FETCH_LOG_WARN(LOGGING_NAME,
                    "Failed to parse contract source from transaction body. Debug: ", contract_hash,
                    " - ", contract_type, " : ", contract_source);
-    return Status::FAILED;
+    return {Status::FAILED};
   }
 
   if (!IsValidContractType(contract_type))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Invalid contract type: ", contract_type);
-    return Status::FAILED;
+    return {Status::FAILED};
   }
 
   // decode the contents of the contract
@@ -121,15 +123,13 @@ Contract::Status SmartContractManager::OnCreate(Transaction const &tx, BlockInde
                    "Warning! Failed to match calculated hash with provided hash: ", calculated_hash,
                    " to ", contract_hash);
 
-    return Status::FAILED;
+    return {Status::FAILED};
   }
 
-  // Set the scope for the smart contract to execute its on_init if it exists
-  auto const &tx_signatures = tx.signatories();
-  if (tx_signatures.size() != 1)
+  if (tx.signatories().size() != 1)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Only one signature allowed when setting up smart contract");
-    return Status::FAILED;
+    return {Status::FAILED};
   }
 
   if (contract_type == ConstByteArray{"smart"})
@@ -138,7 +138,7 @@ Contract::Status SmartContractManager::OnCreate(Transaction const &tx, BlockInde
     if (!scope.Parse(calculated_hash + "." + tx.from().display()))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to parse scope for smart contract");
-      return Status::FAILED;
+      return {Status::FAILED};
     }
     state().PushContext(scope);
 
@@ -155,11 +155,11 @@ Contract::Status SmartContractManager::OnCreate(Transaction const &tx, BlockInde
 
       switch (kind)
       {
-      case vm::FunctionDecoratorKind::ON_INIT:
+      case FunctionDecoratorKind::ON_INIT:
         if (!on_init_function.empty())
         {
           FETCH_LOG_WARN(LOGGING_NAME, "More than one init function found in SC. Terminating.");
-          return Status::FAILED;
+          return {Status::FAILED};
         }
         FETCH_LOG_DEBUG(LOGGING_NAME, "Found init function for SC");
         on_init_function = fn.name;
@@ -167,9 +167,11 @@ Contract::Status SmartContractManager::OnCreate(Transaction const &tx, BlockInde
 
       case vm::FunctionDecoratorKind::INVALID:
         FETCH_LOG_WARN(LOGGING_NAME, "Invalid function decorator found when adding SC");
-        return Status::FAILED;
+        return {Status::FAILED};
 
-      default:
+      case FunctionDecoratorKind::ACTION:
+      case FunctionDecoratorKind::NONE:
+      case FunctionDecoratorKind::QUERY:
         break;
       }
     }
@@ -182,7 +184,7 @@ Contract::Status SmartContractManager::OnCreate(Transaction const &tx, BlockInde
 
       // Dispatch to the init. method
       auto const status = smart_contract.DispatchInitialise(tx.signatories().begin()->address);
-      if (status != Status::OK)
+      if (status.status != Status::OK)
       {
         return status;
       }
@@ -194,17 +196,14 @@ Contract::Status SmartContractManager::OnCreate(Transaction const &tx, BlockInde
     state().PopContext();
   }
 
-  // TODO(issue 767): Needs to check success for this operation
-  auto success = true;
-  SetStateRecord(contract_source, calculated_hash);
-
-  if (!success)
+  auto const status = SetStateRecord(contract_source, calculated_hash);
+  if (status != StateAdapter::Status::OK)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Failed to store smart contract to state DB!");
-    return Status::FAILED;
+    return {Status::FAILED};
   }
 
-  return Status::OK;
+  return {Status::OK};
 }
 
 /**
@@ -219,7 +218,7 @@ storage::ResourceAddress SmartContractManager::CreateAddressForContract(
   // this function is only really applicable to the storage of smart contracts
   assert(contract_id.type() == Identifier::Type::SMART_CONTRACT);
 
-  // create the resource address in the form fetch.contracts.state.<digest of contract>
+  // create the resource address in the form fetch.contract.state.<digest of contract>
   return StateAdapter::CreateAddress(Identifier{NAME}, contract_id.qualifier());
 }
 

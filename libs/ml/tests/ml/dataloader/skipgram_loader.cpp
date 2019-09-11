@@ -28,36 +28,42 @@
 using namespace fetch::ml;
 using namespace fetch::ml::dataloaders;
 
-using SizeType  = fetch::math::SizeType;
-using ArrayType = fetch::math::Tensor<double>;
-
+template <typename TensorType>
 struct TrainingParams
 {
-  SizeType max_word_count       = 9;     // maximum number to be trained
-  SizeType negative_sample_size = 0;     // number of negative sample per word-context pair
-  SizeType window_size          = 1;     // window size for context sampling
-  bool     train_mode           = true;  // reserve for future compatibility with CBOW
-  double   freq_thresh          = 1;     // frequency threshold for subsampling
-  SizeType min_count            = 0;     // infrequent word removal threshold
-} tp;
+  using SizeType                = typename TensorType::SizeType;
+  using DataType                = typename TensorType::Type;
+  SizeType max_word_count       = 15;           // maximum number to be trained
+  SizeType negative_sample_size = 0;            // number of negative sample per word-context pair
+  SizeType window_size          = 1;            // window size for context sampling
+  DataType freq_thresh          = DataType{1};  // frequency threshold for subsampling
+  SizeType min_count            = 0;            // infrequent word removal threshold
+};
 
 template <typename T>
 class SkipGramDataloaderTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<fetch::math::Tensor<int>, fetch::math::Tensor<float>,
-                                 fetch::math::Tensor<double>,
+using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
+
 TYPED_TEST_CASE(SkipGramDataloaderTest, MyTypes);
 
 TYPED_TEST(SkipGramDataloaderTest, loader_test)
 {
+  using TensorType = TypeParam;
+  using SizeType   = typename TensorType::SizeType;
+  using DataType   = typename TensorType::Type;
+
+  TrainingParams<TensorType> tp;
+  tp.max_word_count = 9;
+
   std::string training_data = "This is a test sentence of total length ten words.";
 
-  GraphW2VLoader<double> loader(tp.window_size, tp.negative_sample_size, tp.freq_thresh,
-                                tp.max_word_count, tp.train_mode);
-  loader.BuildVocab({training_data});
+  GraphW2VLoader<DataType> loader(tp.window_size, tp.negative_sample_size, tp.freq_thresh,
+                                  tp.max_word_count);
+  loader.BuildVocabAndData({training_data});
 
   std::vector<std::pair<std::string, std::string>> gt_input_context_pairs(
       {std::pair<std::string, std::string>("is", "this"),
@@ -76,31 +82,103 @@ TYPED_TEST(SkipGramDataloaderTest, loader_test)
        std::pair<std::string, std::string>("length", "ten")});
 
   // test that get next works when called individually
-  for (std::size_t j = 0; j < 100; ++j)
+  for (SizeType j = 0; j < 100; ++j)
   {
     if (loader.IsDone())
     {
       loader.Reset();
     }
-    std::vector<ArrayType> left_and_right = loader.GetNext().second;
+    std::vector<TensorType> left_and_right = loader.GetNext().second;
     std::string input = loader.WordFromIndex(static_cast<SizeType>(left_and_right.at(0).At(0, 0)));
     std::string context =
         loader.WordFromIndex(static_cast<SizeType>(left_and_right.at(1).At(0, 0)));
     auto input_context = std::make_pair(input, context);
 
-    ASSERT_EQ(input_context, gt_input_context_pairs.at(j % gt_input_context_pairs.size()));
+    EXPECT_EQ(input_context, gt_input_context_pairs.at(j % gt_input_context_pairs.size()));
   }
 
   // test when preparebatch is called
   bool is_done_set = false;
   auto batch       = loader.PrepareBatch(50, is_done_set).second;
-  for (std::size_t j = 0; j < 50; j++)
+  for (SizeType j = 0; j < 50; j++)
   {
     std::string input         = loader.WordFromIndex(static_cast<SizeType>(batch.at(0).At(0, j)));
     std::string context       = loader.WordFromIndex(static_cast<SizeType>(batch.at(1).At(0, j)));
     auto        input_context = std::make_pair(input, context);
 
-    ASSERT_EQ(input_context, gt_input_context_pairs.at(j % gt_input_context_pairs.size()));
+    EXPECT_EQ(input_context, gt_input_context_pairs.at(j % gt_input_context_pairs.size()));
   }
-  ASSERT_EQ(is_done_set, true);
+  EXPECT_EQ(is_done_set, true);
+}
+
+TYPED_TEST(SkipGramDataloaderTest, test_save_load_vocab)
+{
+  using TensorType = TypeParam;
+  using SizeType   = typename TensorType::SizeType;
+  using DataType   = typename TensorType::Type;
+
+  TrainingParams<TensorType> tp;
+  tp.max_word_count      = 100;
+  std::string vocab_file = "/tmp/test_vocab.txt";
+
+  std::string training_data = "This is a test sentence of total length ten words.";
+  std::string extra_vocab = "This is an extra sentence so that vocab is bigger than training data.";
+
+  GraphW2VLoader<DataType> initial_loader(tp.window_size, tp.negative_sample_size, tp.freq_thresh,
+                                          tp.max_word_count);
+
+  initial_loader.BuildVocabAndData({training_data, extra_vocab});
+  initial_loader.SaveVocab(vocab_file);
+
+  GraphW2VLoader<DataType> loader(tp.window_size, tp.negative_sample_size, tp.freq_thresh,
+                                  tp.max_word_count);
+  loader.LoadVocab(vocab_file);
+  loader.BuildData({training_data});
+
+  std::vector<std::pair<std::string, std::string>> gt_input_context_pairs(
+      {std::pair<std::string, std::string>("is", "this"),
+       std::pair<std::string, std::string>("is", "a"),
+       std::pair<std::string, std::string>("a", "is"),
+       std::pair<std::string, std::string>("a", "test"),
+       std::pair<std::string, std::string>("test", "a"),
+       std::pair<std::string, std::string>("test", "sentence"),
+       std::pair<std::string, std::string>("sentence", "test"),
+       std::pair<std::string, std::string>("sentence", "of"),
+       std::pair<std::string, std::string>("of", "sentence"),
+       std::pair<std::string, std::string>("of", "total"),
+       std::pair<std::string, std::string>("total", "of"),
+       std::pair<std::string, std::string>("total", "length"),
+       std::pair<std::string, std::string>("length", "total"),
+       std::pair<std::string, std::string>("length", "ten"),
+       std::pair<std::string, std::string>("ten", "length"),
+       std::pair<std::string, std::string>("ten", "words")});
+
+  // test that get next works when called individually
+  for (SizeType j = 0; j < 100; ++j)
+  {
+    if (loader.IsDone())
+    {
+      loader.Reset();
+    }
+    std::vector<TensorType> left_and_right = loader.GetNext().second;
+    std::string input = loader.WordFromIndex(static_cast<SizeType>(left_and_right.at(0).At(0, 0)));
+    std::string context =
+        loader.WordFromIndex(static_cast<SizeType>(left_and_right.at(1).At(0, 0)));
+    auto input_context = std::make_pair(input, context);
+
+    EXPECT_EQ(input_context, gt_input_context_pairs.at(j % gt_input_context_pairs.size()));
+  }
+
+  // test when preparebatch is called
+  bool is_done_set = false;
+  auto batch       = loader.PrepareBatch(50, is_done_set).second;
+  for (SizeType j = 0; j < 50; j++)
+  {
+    std::string input         = loader.WordFromIndex(static_cast<SizeType>(batch.at(0).At(0, j)));
+    std::string context       = loader.WordFromIndex(static_cast<SizeType>(batch.at(1).At(0, j)));
+    auto        input_context = std::make_pair(input, context);
+
+    EXPECT_EQ(input_context, gt_input_context_pairs.at(j % gt_input_context_pairs.size()));
+  }
+  EXPECT_EQ(is_done_set, true);
 }

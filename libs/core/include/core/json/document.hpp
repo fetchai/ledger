@@ -72,9 +72,9 @@ public:
     variant_ = Variant::Object();
   }
 
-  JSONDocument(JSONDocument const &) = delete;
-  JSONDocument(JSONDocument &&)      = default;
-  ~JSONDocument()                    = default;
+  JSONDocument(JSONDocument const &)     = default;
+  JSONDocument(JSONDocument &&) noexcept = default;
+  ~JSONDocument()                        = default;
 
   Variant &operator[](std::size_t i)
   {
@@ -117,8 +117,6 @@ public:
   }
 
 private:
-  constexpr static char const *LOGGING_NAME = "JSONDocument";
-
   struct JSONObject
   {
     uint64_t start = 0;

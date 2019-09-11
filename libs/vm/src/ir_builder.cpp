@@ -120,7 +120,8 @@ IRVariablePtr IRBuilder::BuildVariable(VariablePtr const &variable)
     return ir_variable;
   }
   IRTypePtr ir_type = BuildType(variable->type);
-  ir_variable       = CreateIRVariable(variable->variable_kind, variable->name, ir_type);
+  ir_variable =
+      CreateIRVariable(variable->variable_kind, variable->name, ir_type, variable->referenced);
   variable_map_.AddPair(variable, ir_variable);
   ir_->AddVariable(ir_variable);
   return ir_variable;
@@ -150,6 +151,7 @@ IRFunctionPtr IRBuilder::BuildFunction(FunctionPtr const &function)
 IRTypePtrArray IRBuilder::BuildTypes(const TypePtrArray &types)
 {
   IRTypePtrArray array;
+  array.reserve(types.size());
   for (auto const &type : types)
   {
     array.push_back(BuildType(type));
@@ -160,6 +162,7 @@ IRTypePtrArray IRBuilder::BuildTypes(const TypePtrArray &types)
 IRVariablePtrArray IRBuilder::BuildVariables(const VariablePtrArray &variables)
 {
   IRVariablePtrArray array;
+  array.reserve(variables.size());
   for (auto const &variable : variables)
   {
     array.push_back(BuildVariable(variable));

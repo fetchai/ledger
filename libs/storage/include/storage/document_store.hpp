@@ -72,7 +72,7 @@ public:
   void Load(std::string const &doc_file, std::string const &doc_diff, std::string const &index_file,
             std::string const &index_diff, bool const &create = true)
   {
-    std::lock_guard<mutex::Mutex> lock(mutex_);
+    FETCH_LOCK(mutex_);
     file_object_.Load(doc_file, doc_diff, create);
     key_index_.Load(index_file, index_diff, create);
   }
@@ -80,21 +80,21 @@ public:
   void New(std::string const &doc_file, std::string const &doc_diff, std::string const &index_file,
            std::string const &index_diff)
   {
-    std::lock_guard<mutex::Mutex> lock(mutex_);
+    FETCH_LOCK(mutex_);
     file_object_.New(doc_file, doc_diff);
     key_index_.New(index_file, index_diff);
   }
 
   void Load(std::string const &doc_file, std::string const &index_file, bool const &create = true)
   {
-    std::lock_guard<mutex::Mutex> lock(mutex_);
+    FETCH_LOCK(mutex_);
     file_object_.Load(doc_file, create);
     key_index_.Load(index_file, create);
   }
 
   void New(std::string const &doc_file, std::string const &index_file)
   {
-    std::lock_guard<mutex::Mutex> lock(mutex_);
+    FETCH_LOCK(mutex_);
     file_object_.New(doc_file);
     key_index_.New(index_file);
   }
@@ -104,7 +104,7 @@ public:
     byte_array::ConstByteArray const &address = rid.id();
     index_type                        index   = 0;
 
-    std::lock_guard<mutex::Mutex> lock(mutex_);
+    FETCH_LOCK(mutex_);
 
     // If the file already exists, seek to it
     if (key_index_.GetIfExists(address, index))
@@ -136,7 +136,7 @@ public:
     byte_array::ConstByteArray const &address = rid.id();
     index_type                        index   = 0;
 
-    std::lock_guard<mutex::Mutex> lock(mutex_);
+    FETCH_LOCK(mutex_);
 
     if (key_index_.GetIfExists(address, index))
     {
@@ -163,7 +163,7 @@ public:
     byte_array::ConstByteArray const &address = rid.id();
     index_type                        index   = 0;
 
-    std::lock_guard<mutex::Mutex> lock(mutex_);
+    FETCH_LOCK(mutex_);
 
     if (key_index_.GetIfExists(address, index))
     {
@@ -183,7 +183,7 @@ public:
 
   void Flush(bool lazy = true)
   {
-    std::lock_guard<mutex::Mutex> lock(mutex_);
+    FETCH_LOCK(mutex_);
     file_object_.Flush(lazy);
     key_index_.Flush(lazy);
   }
@@ -290,8 +290,8 @@ public:
   // have commit functionality
   byte_array_type Commit()
   {
-    std::lock_guard<mutex::Mutex> lock(mutex_);
-    byte_array_type               hash = key_index_.Hash();
+    FETCH_LOCK(mutex_);
+    byte_array_type hash = key_index_.Hash();
 
     if (key_index_.underlying_stack().HashExists(hash) ||
         file_object_.underlying_stack().HashExists(hash))
@@ -308,7 +308,7 @@ public:
 
   bool RevertToHash(byte_array_type const &hash)
   {
-    std::lock_guard<mutex::Mutex> lock(mutex_);
+    FETCH_LOCK(mutex_);
 
     // TODO(private issue 615): HashExists implement
     if (!(key_index_.underlying_stack().HashExists(hash) &&
@@ -329,19 +329,19 @@ public:
 
   bool HashExists(byte_array_type const &hash)
   {
-    std::lock_guard<mutex::Mutex> lock(mutex_);
+    FETCH_LOCK(mutex_);
     return key_index_.underlying_stack().HashExists(hash) &&
            file_object_.underlying_stack().HashExists(hash);
   }
 
   hash_type CurrentHash()
   {
-    std::lock_guard<mutex::Mutex> lock(mutex_);
+    FETCH_LOCK(mutex_);
     return key_index_.Hash();
   }
 
 protected:
-  mutex::Mutex         mutex_{__LINE__, __FILE__};
+  Mutex                mutex_;
   key_value_index_type key_index_;
   file_object_type     file_object_;
 };

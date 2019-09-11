@@ -16,10 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/exception.hpp"
-
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/logger.hpp"
+#include "core/serializers/exception.hpp"
 
 #include <string>
 #include <utility>
@@ -30,53 +28,31 @@ namespace serializers {
 SerializableException::SerializableException()
   : error_code_(error::TYPE_ERROR)
   , explanation_("unknown")
-{
-  LOG_STACK_TRACE_POINT;
-
-  LOG_SET_CONTEXT_VARIABLE(stack_trace_)
-}
+{}
 
 SerializableException::SerializableException(std::string explanation)
   : error_code_(error::TYPE_ERROR)
   , explanation_(std::move(explanation))
-{
-  LOG_STACK_TRACE_POINT;
-
-  LOG_SET_CONTEXT_VARIABLE(stack_trace_)
-}
+{}
 
 SerializableException::SerializableException(byte_array::ConstByteArray const &explanation)
   : error_code_(error::TYPE_ERROR)
   , explanation_(std::string(explanation))
-{
-  LOG_STACK_TRACE_POINT;
-
-  LOG_SET_CONTEXT_VARIABLE(stack_trace_)
-}
+{}
 
 SerializableException::SerializableException(error::error_type error_code, std::string explanation)
   : error_code_(error_code)
   , explanation_(std::move(explanation))
-{
-  LOG_STACK_TRACE_POINT;
-
-  LOG_SET_CONTEXT_VARIABLE(stack_trace_)
-}
+{}
 
 SerializableException::SerializableException(error::error_type                 error_code,
                                              byte_array::ConstByteArray const &explanation)
   : error_code_(error_code)
   , explanation_(std::string(explanation))
-{
-  LOG_STACK_TRACE_POINT;
-
-  LOG_SET_CONTEXT_VARIABLE(stack_trace_)
-}
+{}
 
 SerializableException::~SerializableException()
-{
-  LOG_STACK_TRACE_POINT;
-}
+{}
 
 char const *SerializableException::what() const noexcept
 {
@@ -94,9 +70,7 @@ std::string SerializableException::explanation() const
 }
 
 void SerializableException::StackTrace() const
-{
-  LOG_PRINT_STACK_TRACE(stack_trace_, "Trace at time of exception")
-}
+{}
 
 }  // namespace serializers
 }  // namespace fetch

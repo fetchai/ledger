@@ -1,5 +1,26 @@
-function main()
+function ascii()
 
     assert("Hello World".substr(6, 11) == "World");
+
+endfunction
+
+
+function utf8()
+
+    var text = '他身旁放着一支磨尖的花岗岩长矛备用，脚边卧着一头犬族猛兽，它发出的喘hōu声表明它虽已入睡却睡不安稳。';
+
+    assert(text.substr(0, 5) == "他身旁放着");
+    assert(text.substr(6, 17) == "支磨尖的花岗岩长矛备用");
+    assert(text.substr(18, 22) == "脚边卧着");
+    assert(text.substr(23, 28) == "头犬族猛兽");
+    assert(text.substr(29, 51) == "它发出的喘hōu声表明它虽已入睡却睡不安稳。");
+
+endfunction
+
+
+function main()
+
+    ascii();
+    utf8();
 
 endfunction

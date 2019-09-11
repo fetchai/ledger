@@ -30,6 +30,7 @@
 #include <cstdint>
 #include <functional>
 #include <iostream>
+#include <limits>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -58,12 +59,12 @@ struct Getter<T, IfIsPtr<T>>
 {
   static TypeId GetTypeId(RegisteredTypes const &types, T const & /* parameter */)
   {
-    using ManagedType = typename GetManagedType<std::decay_t<T>>::type;
+    using ManagedType = GetManagedType<std::decay_t<T>>;
     return types.GetTypeId(TypeIndex(typeid(ManagedType)));
   }
 };
 template <typename T>
-struct Getter<T, typename std::enable_if_t<IsVariant<T>::value>>
+struct Getter<T, std::enable_if_t<IsVariant<T>::value>>
 {
   static TypeId GetTypeId(RegisteredTypes const & /* types */, T const &parameter)
   {
@@ -441,7 +442,6 @@ public:
     if (it == deserialization_constructors_.end())
     {
       TypeInfo tinfo = GetTypeInfo(type_id);
-
       if (tinfo.template_type_id == TypeIds::Unknown)
       {
         return false;
@@ -481,23 +481,34 @@ public:
     return constructor(this, type_id);
   }
 
+  struct OpcodeInfo
+  {
+    OpcodeInfo() = default;
+
+    OpcodeInfo(std::string name__, Handler handler__, ChargeAmount charge)
+      : name(std::move(name__))
+      , handler(std::move(handler__))
+      , static_charge{charge}
+    {}
+
+    std::string  name;
+    Handler      handler;
+    ChargeAmount static_charge;
+  };
+
+  ChargeAmount GetChargeTotal() const;
+  void         IncreaseChargeTotal(ChargeAmount const amount);
+  ChargeAmount GetChargeLimit() const;
+  void         SetChargeLimit(ChargeAmount limit);
+
+  void UpdateCharges(std::unordered_map<std::string, ChargeAmount> const &);
+
 private:
   static const int FRAME_STACK_SIZE = 50;
   static const int STACK_SIZE       = 5000;
   static const int MAX_LIVE_OBJECTS = 200;
   static const int MAX_RANGE_LOOPS  = 50;
 
-  struct OpcodeInfo
-  {
-    OpcodeInfo() = default;
-    OpcodeInfo(std::string name__, Handler handler__)
-      : name(std::move(name__))
-      , handler(std::move(handler__))
-    {}
-
-    std::string name;
-    Handler     handler;
-  };
   using OpcodeInfoArray = std::vector<OpcodeInfo>;
   using OpcodeMap       = std::unordered_map<std::string, uint16_t>;
 
@@ -531,16 +542,10 @@ private:
   friend struct TypeGetter;
   template <typename T, typename S>
   friend struct ParameterTypeGetter;
-  template <typename ReturnType, typename FreeFunction, typename... Ts>
-  friend struct FreeFunctionInvokerHelper;
-  template <typename Type, typename ReturnType, typename MemberFunction, typename... Ts>
-  friend struct MemberFunctionInvokerHelper;
-  template <typename Type, typename ReturnType, typename Constructor, typename... Ts>
-  friend struct ConstructorInvokerHelper;
-  template <typename ReturnType, typename StaticMemberFunction, typename... Ts>
-  friend struct StaticMemberFunctionInvokerHelper;
-  template <typename ReturnType, typename Functor, typename... Ts>
-  friend struct FunctorInvokerHelper;
+  template <int, typename, typename, typename>
+  friend struct VmFreeFunctionInvoker;
+  template <int, typename, typename, typename>
+  friend struct VmMemberFunctionInvoker;
 
   TypeInfoArray                  type_info_array_;
   TypeInfoMap                    type_info_map_;
@@ -570,10 +575,18 @@ private:
   OutputDeviceMap                output_devices_;
   InputDeviceMap                 input_devices_;
   DeserializeConstructorMap      deserialization_constructors_;
+  OpcodeInfo *                   current_op_{nullptr};
 
-  void AddOpcodeInfo(uint16_t opcode, std::string const &name, Handler const &handler)
+  /// @name Charges
+  /// @{
+  ChargeAmount charge_limit_{std::numeric_limits<ChargeAmount>::max()};
+  ChargeAmount charge_total_{0};
+  /// @}
+
+  void AddOpcodeInfo(uint16_t opcode, std::string name, Handler handler,
+                     ChargeAmount static_charge = 1)
   {
-    opcode_info_array_[opcode] = OpcodeInfo(name, handler);
+    opcode_info_array_[opcode] = OpcodeInfo(std::move(name), std::move(handler), static_charge);
   }
 
   bool Execute(std::string &error, Variant &output);
@@ -1594,6 +1607,7 @@ private:
   void Handler__VariableObjectInplaceRightDivide();
   void Handler__PrimitiveModulo();
   void Handler__VariablePrimitiveInplaceModulo();
+  void Handler__InitialiseArray();
 
   friend class Object;
   friend class Module;

@@ -19,57 +19,87 @@
 
 #include "ml/ops/ops.hpp"
 
+#include <cassert>
+#include <vector>
+
 namespace fetch {
 namespace ml {
 namespace ops {
 
 template <class T>
-class Exp : public fetch::ml::Ops<T>
+class Exp : public fetch::ml::ops::Ops<T>
 {
 public:
-  using ArrayType     = T;
-  using DataType      = typename ArrayType::Type;
-  using SizeType      = typename ArrayType::SizeType;
+  using TensorType    = T;
+  using DataType      = typename TensorType::Type;
+  using SizeType      = typename TensorType::SizeType;
   using VecTensorType = typename Ops<T>::VecTensorType;
+  using SPType        = OpExpSaveableParams<T>;
+  using MyType        = Exp<TensorType>;
 
-  Exp()          = default;
-  virtual ~Exp() = default;
+  Exp() = default;
 
+  explicit Exp(SPType const &sp)
+    : Ops<T>(sp)
+  {}
+
+  ~Exp() override = default;
+
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
+  {
+    auto sp = std::make_shared<SPType>();
+    return sp;
+  }
+
+  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
+  {
+    FETCH_UNUSED(me);
+    assert(me.get() == this);
+
+    auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
+
+    return copyshare;
+  }
   /**
    * elementwise exp
    * @param inputs vector containing one tensor which is the input tensor to Exp
    * @return
    */
-  virtual void Forward(VecTensorType const &inputs, ArrayType &output)
+  void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(inputs.size() == 1);
     assert(output.shape() == this->ComputeOutputShape(inputs));
 
-    fetch::math::Exp(inputs.at(0).get(), output);
+    fetch::math::Exp((*inputs.at(0)), output);
   }
 
   /**
    * elementwise exp gradient is:
    * f'(input0)= e^x * error_signal
    */
-  virtual std::vector<ArrayType> Backward(VecTensorType const &inputs,
-                                          ArrayType const &    error_signal)
+  std::vector<TensorType> Backward(VecTensorType const &inputs,
+                                   TensorType const &   error_signal) override
   {
     assert(inputs.size() == 1);
     assert(error_signal.shape() == this->ComputeOutputShape(inputs));
 
-    ArrayType ret_error_signal(inputs.at(0).get().shape());
-    fetch::math::Exp(inputs.at(0).get(), ret_error_signal);
+    TensorType ret_error_signal(inputs.at(0)->shape());
+    fetch::math::Exp((*inputs.at(0)), ret_error_signal);
     fetch::math::Multiply(error_signal, ret_error_signal, ret_error_signal);
 
     return {ret_error_signal};
   }
 
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    return inputs.front().get().shape();
+    return inputs.front()->shape();
   }
 
+  static constexpr OpType OpCode()
+  {
+    return OpType::OP_EXP;
+  }
   static constexpr char const *DESCRIPTOR = "Exp";
 };
 

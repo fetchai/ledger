@@ -48,7 +48,7 @@ public:
 
   /// @name Measurement Interface
   /// @{
-  void ToStream(std::ostream &stream, StreamMode mode) const override;
+  void ToStream(OutputStream &stream) const override;
   /// @}
 
   // Operators
@@ -57,7 +57,6 @@ public:
 
 private:
   using Mutex     = std::mutex;
-  using LockGuard = std::lock_guard<Mutex>;
   using BucketMap = std::map<double, uint64_t>;
 
   template <typename Iterator>

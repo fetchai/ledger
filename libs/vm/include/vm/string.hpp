@@ -38,13 +38,10 @@ struct String : public Object
   String()           = delete;
   ~String() override = default;
 
-  String(VM *vm, std::string str__, bool is_literal__ = false)
-    : Object(vm, TypeIds::String)
-    , str(std::move(str__))
-    , is_literal(is_literal__)
-  {}
+  String(VM *vm, std::string str__, bool is_literal__ = false);
 
   int32_t                 Length() const;
+  int32_t                 SizeInBytes() const;
   void                    Trim();
   int32_t                 Find(Ptr<String> const &substring) const;
   Ptr<String>             Substring(int32_t start_index, int32_t end_index);
@@ -60,11 +57,12 @@ struct String : public Object
   bool        IsGreaterThanOrEqual(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
   void        Add(Ptr<Object> &lhso, Ptr<Object> &rhso) override;
 
-  bool SerializeTo(ByteArrayBuffer &buffer) override;
-  bool DeserializeFrom(ByteArrayBuffer &buffer) override;
+  bool SerializeTo(MsgPackSerializer &buffer) override;
+  bool DeserializeFrom(MsgPackSerializer &buffer) override;
 
   std::string str;
   bool        is_literal;
+  int32_t     length;
 };
 
 }  // namespace vm

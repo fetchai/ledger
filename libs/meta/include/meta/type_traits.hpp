@@ -21,6 +21,7 @@
 #include "meta/type_util.hpp"
 
 #include <string>
+#include <tuple>
 #include <type_traits>
 
 namespace fetch {
@@ -31,6 +32,36 @@ class ConstByteArray;
 }  // namespace byte_array
 
 namespace meta {
+
+template <typename... T>
+struct Is
+{
+  template <typename... Y>
+  struct SameAs
+  {
+    static constexpr bool value = std::is_same<std::tuple<T...>, std::tuple<Y...>>::value;
+  };
+
+  template <typename Y0, typename... Y>
+  struct SameAsEvery
+  {
+    static_assert(sizeof...(T) == 1,
+                  "There must be just single type T provided in to encapsulating  `Is<T...>` "
+                  "template in order to evaluate SameAsEvery<...> sub-template.");
+    using FirstT                = typename std::tuple_element<0ull, std::tuple<T...>>::type;
+    static constexpr bool value = std::is_same<FirstT, Y0>::value && SameAsEvery<Y...>::value;
+  };
+
+  template <typename Y>
+  struct SameAsEvery<Y>
+  {
+    static_assert(sizeof...(T) == 1,
+                  "There must be just single type T provided in to encapsulating  `Is<T...>` "
+                  "template in order to evaluate SameAsEvery<...> sub-template.");
+    using FirstT                = typename std::tuple_element<0ull, std::tuple<T...>>::type;
+    static constexpr bool value = std::is_same<FirstT, Y>::value;
+  };
+};
 
 template <typename T>
 static constexpr bool IsBoolean = std::is_same<T, bool>::value;
@@ -70,7 +101,7 @@ template <typename T>
 constexpr bool IsAny8BitInteger = std::is_same<T, int8_t>::value || std::is_same<T, uint8_t>::value;
 
 template <typename T>
-using Decay = typename std::decay<T>::type;
+using Decay = std::decay_t<T>;
 
 template <bool C, typename R = void>
 using EnableIf = std::enable_if_t<C, R>;
@@ -108,22 +139,12 @@ using IfIsUnsignedInteger = EnableIf<IsUnsignedInteger<T>, R>;
 template <typename T, typename R = void>
 using IfIsSignedInteger = EnableIf<IsSignedInteger<T>, R>;
 
+
 template <typename T, typename R = void>
 using IfIsNullPtr = EnableIf<IsNullPtr<T>, R>;
 
 template <typename T, typename R = void>
 using IfIsPod = EnableIf<std::is_pod<T>::value, R>;
-
-//////////////////////////////////////////////////////////////
-/// TEMPLATE FOR FUNCTIONS THAT ARE NOT YET IMPLEMENTED
-//////////////////////////////////////////////////////////////
-
-template <typename A, typename R>
-struct IsNotImplementedImpl
-{
-};
-template <typename A, typename R>
-using IfIsNotImplemented = typename IsNotImplementedImpl<A, R>::Type;
 
 }  // namespace meta
 }  // namespace fetch

@@ -27,8 +27,6 @@ namespace http {
 
 bool HTTPRequest::ParseBody(asio::streambuf &buffer)
 {
-  LOG_STACK_TRACE_POINT;
-
   // TODO(issue 35): Handle encoding
   body_data_ = byte_array::ByteArray();
   body_data_.Resize(content_length());
@@ -51,8 +49,6 @@ bool HTTPRequest::ParseBody(asio::streambuf &buffer)
 
 bool HTTPRequest::ParseHeader(asio::streambuf &buffer, std::size_t end)
 {
-  LOG_STACK_TRACE_POINT;
-
   header_data_ = byte_array::ByteArray();
   header_data_.Resize(end);
 
@@ -198,8 +194,6 @@ bool HTTPRequest::ToStream(asio::streambuf &buffer, std::string const &host, uin
 
 bool HTTPRequest::ParseStartLine(byte_array::ByteArray &line)
 {
-  LOG_STACK_TRACE_POINT;
-
   std::size_t i = 0;
   while (line[i] != ' ')
   {
@@ -217,7 +211,7 @@ bool HTTPRequest::ParseStartLine(byte_array::ByteArray &line)
     ++i;
   }
 
-  byte_array_type method = line.SubArray(0, i);
+  byte_array::ConstByteArray method = line.SubArray(0, i);
   FromString(method, method_);
 
   ++i;

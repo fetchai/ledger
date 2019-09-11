@@ -32,9 +32,9 @@
 
 using namespace fetch::ml;
 using namespace fetch::ml::dataloaders;
-using FloatType = float;
-using SizeType  = fetch::math::SizeType;
-using ArrayType = fetch::math::Tensor<FloatType>;
+using FloatType  = float;
+using SizeType   = fetch::math::SizeType;
+using TensorType = fetch::math::Tensor<FloatType>;
 
 std::string ReadFile(std::string const &path)
 {
@@ -43,7 +43,7 @@ std::string ReadFile(std::string const &path)
 }
 
 void SaveEmbeddings(W2VLoader<FloatType> const &data_loader, std::string output_filename,
-                    ArrayType &embeddings)
+                    TensorType &embeddings)
 {
   std::ofstream outfile(output_filename, std::ios::binary);
 
@@ -62,7 +62,7 @@ void SaveEmbeddings(W2VLoader<FloatType> const &data_loader, std::string output_
   }
 }
 
-ArrayType LoadEmbeddings(std::string filename)
+TensorType LoadEmbeddings(std::string filename)
 {
 
   std::ifstream input(filename, std::ios::binary);
@@ -81,7 +81,7 @@ ArrayType LoadEmbeddings(std::string filename)
   std::cout << "embeddings_size: " << embeddings_size << std::endl;
   std::cout << "vocab_size: " << vocab_size << std::endl;
 
-  ArrayType embeddings({embeddings_size, vocab_size});
+  TensorType embeddings({embeddings_size, vocab_size});
 
   std::string cur_word;
   std::string cur_string;
@@ -128,7 +128,7 @@ int main(int argc, char **argv)
   int                      i;
   std::string              train_file      = "";
   bool                     load            = false;  // whether to load or train new embeddings
-  bool                     train_mode      = true;   // true for cbow, false for sgns
+  bool                     mode            = true;   // true for cbow, false for sgns
   std::string              output_file     = "";
   SizeType                 top_k           = 10;
   std::vector<std::string> test_words      = {"france", "paris", "italy"};
@@ -150,11 +150,11 @@ int main(int argc, char **argv)
     assert((std::string(argv[i + 1]) == "cbow") || (std::string(argv[i + 1]) == "sgns"));
     if (std::string(argv[i + 1]) == "cbow")
     {
-      train_mode = true;
+      mode = true;
     }
     else
     {
-      train_mode = false;
+      mode = false;
     }
   }
   if ((i = ArgPos((char *)"-output", argc, argv)) > 0)
@@ -211,9 +211,9 @@ int main(int argc, char **argv)
   }
 
   // if no train file specified - we just run analogy example
-  ArrayType embeddings;
+  TensorType embeddings;
 
-  W2VLoader<FloatType> data_loader(window_size, negative, train_mode);
+  W2VLoader<FloatType> data_loader(window_size, negative);
 
   if (!load)
   {
@@ -229,7 +229,7 @@ int main(int argc, char **argv)
     data_loader.SaveVocab("vocab_" + output_file);
 
     /// TRAIN EMBEDDINGS ///
-    if (train_mode == 1)
+    if (mode == 1)
     {
       std::cout << "Training CBOW" << std::endl;
     }
@@ -239,8 +239,8 @@ int main(int argc, char **argv)
     }
 
     std::cout << "training embeddings " << std::endl;
-    W2VModel<ArrayType> w2v(embeddings_size, negative, alpha, data_loader);
-    w2v.Train(iter, print_frequency, train_mode);
+    W2VModel<TensorType> w2v(embeddings_size, negative, alpha, data_loader);
+    w2v.Train(iter, print_frequency, mode);
     embeddings = w2v.Embeddings();
 
     /// SAVE EMBEDDINGS ///

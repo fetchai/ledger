@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/stl_types.hpp"
+#include "core/serializers/base_types.hpp"
 #include "network/generics/promise_of.hpp"
 #include "network/service/promise.hpp"
 
@@ -36,8 +36,6 @@ class RequestingQueueOf
 public:
   using Key          = K;
   using Promised     = R;
-  using Mutex        = fetch::mutex::Mutex;
-  using Lock         = std::lock_guard<Mutex>;
   using Promise      = P;
   using PromiseState = fetch::service::PromiseState;
   using PromiseMap   = std::unordered_map<Key, Promise, H>;
@@ -97,7 +95,7 @@ public:
   RequestingQueueOf &operator=(RequestingQueueOf &&) = delete;
 
 private:
-  mutable Mutex     mutex_{__LINE__, __FILE__};
+  mutable Mutex     mutex_;
   PromiseMap        requests_;   ///< The map of currently monitored promises
   SuccessfulResults completed_;  ///< The map of completed promises
   FailedResults     failed_;     ///< The set of failed keys

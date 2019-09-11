@@ -36,5 +36,6 @@ int main()
   {
     std::cout << "Signature verified." << std::endl;
   }
+
   return 0;
 }

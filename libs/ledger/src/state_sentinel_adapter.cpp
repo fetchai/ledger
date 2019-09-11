@@ -22,6 +22,10 @@
 namespace fetch {
 namespace ledger {
 
+namespace {
+constexpr char const *LOGGING_NAME = "StateSentinelAdapter";
+}
+
 /**
  * Constructs a state adapter from a storage interface and a scope
  *
@@ -147,7 +151,7 @@ StateSentinelAdapter::Status StateSentinelAdapter::Exists(std::string const &key
 bool StateSentinelAdapter::IsAllowedResource(std::string const &key) const
 {
   // build the associated resources address
-  ResourceAddress const address{key};
+  storage::ResourceAddress const address{key};
 
   // determine which shard this resource is mapped to
   auto const mapped_shard = address.lane(shards_.log2_size());
@@ -163,6 +167,21 @@ bool StateSentinelAdapter::IsAllowedResource(std::string const &key) const
 #endif
 
   return is_allowed;
+}
+
+uint64_t StateSentinelAdapter::num_lookups() const
+{
+  return lookups_;
+}
+
+uint64_t StateSentinelAdapter::num_bytes_read() const
+{
+  return bytes_read_;
+}
+
+uint64_t StateSentinelAdapter::num_bytes_written() const
+{
+  return bytes_written_;
 }
 
 }  // namespace ledger

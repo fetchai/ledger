@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/group_definitions.hpp"
 #include "vectorise/memory/shared_array.hpp"
 #include "vectorise/platform.hpp"
 
@@ -99,62 +100,51 @@ private:
   std::size_t     blocks_{0};
 };
 
-inline std::ostream &operator<<(std::ostream &s, BitVector const &b)
+std::ostream &operator<<(std::ostream &s, BitVector const &b);
+
+namespace serializers {
+
+template <typename D>
+struct ArraySerializer<BitVector, D>
 {
-#if 1
-  for (std::size_t i = 0; i < b.size(); ++i)
+public:
+  using Type       = BitVector;
+  using DriverType = D;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &array_constructor, Type const &mask)
   {
-    if (i && ((i % 10) == 0))
+    uint64_t const bit_size   = mask.size();
+    uint64_t const block_size = mask.blocks();
+
+    auto array = array_constructor(block_size + 1);
+
+    auto const &underlying_blocks = mask.data();
+    array.Append(bit_size);
+    for (uint64_t i = 0; i < block_size; ++i)
     {
-      s << ' ';
+      array.Append(underlying_blocks[i]);
     }
-    s << b.bit(i);
   }
-#else
-  for (std::size_t i = 0; i < b.blocks(); ++i)
+
+  template <typename ArrayDeserializer>
+  static void Deserialize(ArrayDeserializer &array, Type &mask)
   {
-    if (i != 0)
+    uint64_t bit_size   = 0;
+    uint64_t block_size = array.size() - 1;
+
+    array.GetNextValue(bit_size);
+
+    mask.Resize(bit_size);
+    assert(mask.blocks() == block_size);
+    auto &underlying_blocks = mask.data();
+
+    for (uint64_t i = 0; i < block_size; ++i)
     {
-      s << " ";
+      array.GetNextValue(underlying_blocks[i]);
     }
-    s << std::hex << b(i);
   }
-#endif
+};
 
-  return s;
-}
-
-template <typename T>
-void Serialize(T &s, BitVector const &mask)
-{
-  uint64_t const bit_size   = mask.size();
-  uint64_t const block_size = mask.blocks();
-
-  s << bit_size << block_size;
-
-  auto const &underlying_blocks = mask.data();
-  for (uint64_t i = 0; i < block_size; ++i)
-  {
-    s << underlying_blocks[i];
-  }
-}
-
-template <typename T>
-void Deserialize(T &s, BitVector &mask)
-{
-  uint64_t bit_size   = 0;
-  uint64_t block_size = 0;
-
-  s >> bit_size >> block_size;
-
-  mask.Resize(bit_size);
-  assert(mask.blocks() == block_size);
-
-  auto &underlying_blocks = mask.data();
-  for (uint64_t i = 0; i < block_size; ++i)
-  {
-    s >> underlying_blocks[i];
-  }
-}
-
+}  // namespace serializers
 }  // namespace fetch

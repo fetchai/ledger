@@ -27,7 +27,7 @@
 namespace fetch {
 namespace ledger {
 
-using DAGNodesSerializer = fetch::serializers::ByteArrayBuffer;
+using DAGNodesSerializer = fetch::serializers::MsgPackSerializer;
 
 DAGSyncService::DAGSyncService(MuddleEndpoint &                      muddle_endpoint,
                                std::shared_ptr<ledger::DAGInterface> dag)
@@ -64,7 +64,7 @@ DAGSyncService::DAGSyncService(MuddleEndpoint &                      muddle_endp
         std::vector<DAGNode> result;
         serialiser >> result;
 
-        std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
+        FETCH_LOCK(mutex_);
         this->recvd_broadcast_nodes_.push_back(std::move(result));
       });
 }
@@ -93,7 +93,7 @@ DAGSyncService::State DAGSyncService::OnBroadcastRecent()
   if (nodes_to_broadcast_.size() > BROADCAST_BATCH_SIZE)
   {
     // determine the serialised size of the dag nodes to send
-    fetch::serializers::SizeCounter<std::vector<DAGNode>> counter;
+    fetch::serializers::SizeCounter counter;
     counter << nodes_to_broadcast_;
 
     // allocate the buffer and serialise the dag nodes to send
@@ -115,7 +115,7 @@ DAGSyncService::State DAGSyncService::OnAddBroadcastRecent()
   std::vector<std::vector<DAGNode>> recvd_broadcast_nodes;
 
   {
-    std::lock_guard<fetch::mutex::Mutex> lock(mutex_);
+    FETCH_LOCK(mutex_);
     recvd_broadcast_nodes = std::move(recvd_broadcast_nodes_);
     recvd_broadcast_nodes_.clear();
   }
