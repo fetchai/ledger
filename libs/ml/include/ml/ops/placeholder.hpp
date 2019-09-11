@@ -73,7 +73,7 @@ public:
   {
     FETCH_UNUSED(inputs);
     FETCH_UNUSED(error_signal);
-    throw std::runtime_error("backward called on placeholder, but placeholders are not trainable");
+    return {};
   }
 
   /**
