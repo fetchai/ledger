@@ -59,7 +59,12 @@ public:
 
   std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
   {
-    return std::make_shared<SPType>();
+    auto sp = std::make_shared<SPType>();
+    if (this->data_)
+    {
+      sp->data = std::make_shared<TensorType>(this->data_->Copy());
+    }
+    return sp;
   }
 
   /**
