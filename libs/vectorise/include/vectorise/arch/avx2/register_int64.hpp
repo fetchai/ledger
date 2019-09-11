@@ -233,10 +233,10 @@ inline VectorRegister<int64_t, 128> operator*(VectorRegister<int64_t, 128> const
                                               VectorRegister<int64_t, 128> const &b)
 {
   // TODO(private 440): SSE implementation required
-  int64_t d1[2];
+  alignas(16) int64_t d1[2];
   _mm_store_si128(reinterpret_cast<__m128i *>(d1), a.data());
 
-  int64_t d2[2];
+  alignas(16) int64_t d2[2];
   _mm_store_si128(reinterpret_cast<__m128i *>(d2), b.data());
 
   int64_t ret[2];
@@ -251,10 +251,10 @@ inline VectorRegister<int64_t, 256> operator*(VectorRegister<int64_t, 256> const
                                               VectorRegister<int64_t, 256> const &b)
 {
   // TODO(private 440): SSE implementation required
-  int64_t d1[4];
+  alignas(32) int64_t d1[4];
   _mm256_store_si256(reinterpret_cast<__m256i *>(d1), a.data());
 
-  int64_t d2[4];
+  alignas(32) int64_t d2[4];
   _mm256_store_si256(reinterpret_cast<__m256i *>(d2), b.data());
 
   int64_t ret[4];
@@ -271,10 +271,10 @@ inline VectorRegister<int64_t, 128> operator/(VectorRegister<int64_t, 128> const
                                               VectorRegister<int64_t, 128> const &b)
 {
   // TODO(private 440): SSE implementation required
-  int64_t d1[2];
+  alignas(16) int64_t d1[2];
   _mm_store_si128(reinterpret_cast<__m128i *>(d1), a.data());
 
-  int64_t d2[2];
+  alignas(16) int64_t d2[2];
   _mm_store_si128(reinterpret_cast<__m128i *>(d2), b.data());
 
   int64_t ret[2];
@@ -291,10 +291,10 @@ inline VectorRegister<int64_t, 256> operator/(VectorRegister<int64_t, 256> const
                                               VectorRegister<int64_t, 256> const &b)
 {
   // TODO(private 440): SSE implementation required
-  int64_t d1[4];
+  alignas(32) int64_t d1[4];
   _mm256_store_si256(reinterpret_cast<__m256i *>(d1), a.data());
 
-  int64_t d2[4];
+  alignas(32) int64_t d2[4];
   _mm256_store_si256(reinterpret_cast<__m256i *>(d2), b.data());
 
   int64_t ret[4];

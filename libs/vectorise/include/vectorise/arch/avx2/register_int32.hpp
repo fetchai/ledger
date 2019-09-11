@@ -246,10 +246,10 @@ inline VectorRegister<int32_t, 128> operator/(VectorRegister<int32_t, 128> const
                                               VectorRegister<int32_t, 128> const &b)
 {
   // TODO(private 440): SSE implementation required
-  int32_t d1[4];
+  alignas(16) int32_t d1[4];
   _mm_store_si128(reinterpret_cast<__m128i *>(d1), a.data());
 
-  int32_t d2[4];
+  alignas(16) int32_t d2[4];
   _mm_store_si128(reinterpret_cast<__m128i *>(d2), b.data());
 
   int32_t ret[4];
@@ -269,10 +269,10 @@ inline VectorRegister<int32_t, 256> operator/(VectorRegister<int32_t, 256> const
 {
 
   // TODO(private 440): SSE implementation required
-  int32_t d1[8];
+  alignas(32) int32_t d1[8];
   _mm256_store_si256(reinterpret_cast<__m256i *>(d1), a.data());
 
-  int32_t d2[8];
+  alignas(32) int32_t d2[8];
   _mm256_store_si256(reinterpret_cast<__m256i *>(d2), b.data());
 
   int32_t ret[8];
