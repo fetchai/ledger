@@ -492,6 +492,7 @@ TYPED_TEST(Convolution1DTest, saveparams_test)
   layer.BackPropagate(error_output);
   layer.ApplyRegularisation();
   auto grads = layer.GetGradients();
+  layer.ApplyGradients(grads);
 
   // train g2
   layer2.SetInput(label_name, labels);
