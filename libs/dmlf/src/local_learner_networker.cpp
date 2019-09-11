@@ -40,6 +40,12 @@ LocalLearnerNetworker::~LocalLearnerNetworker()
 {
 }
 
+void LocalLearnerNetworker::resetAll(void)
+{
+  index.clear();
+  getCounter() = 0;
+}
+
 void LocalLearnerNetworker::pushUpdate( std::shared_ptr<IUpdate> update)
 {
   std::vector<LocalLearnerNetworker*> targets;

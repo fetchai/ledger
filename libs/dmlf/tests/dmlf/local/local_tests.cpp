@@ -21,7 +21,7 @@
 #include "dmlf/iupdate.hpp"
 #include "dmlf/local_learner_networker.hpp"
 #include "dmlf/simple_cycling_algorithm.hpp"
-
+#include <thread>
 #include <ostream>
 
 namespace {
@@ -59,31 +59,34 @@ namespace {
   class LocalLearnerInstance
   {
   public:
+    //using Mutex = fetch::Mutex;
+    using Mutex = std::mutex;
+    using Lock = std::unique_lock<Mutex>;
+
     NetP net;
     std::size_t number;
     std::size_t integrations;
-    bool produced;
+    std::size_t produced;
+    mutable Mutex mut;
+    bool quitflag = false;
 
     LocalLearnerInstance(NetP net, std::size_t number)
     {
       this -> integrations = 0;
       this -> number = number;
       this -> net = net;
-      this -> produced = false;
+      this -> produced = 0;
     }
 
     bool work(void)
     {
       bool result = false;
-      if (!produced)
+      while(produced < 10)
       {
-        for(std::size_t cycle = 0; cycle < 10 ;cycle++)
-        {
-          auto output = std::to_string(number) + ":" + std::to_string(cycle);
-          auto upd =std::make_shared<DummyUpdate>(output);
-          net -> pushUpdate(upd);
-        }
-        produced = true;
+        auto output = std::to_string(number) + ":" + std::to_string(produced);
+        produced++;
+        auto upd =std::make_shared<DummyUpdate>(output);
+        net -> pushUpdate(upd);
         result = true;
       }
 
@@ -94,6 +97,44 @@ namespace {
         result = true;
       }
       return result;
+    }
+
+    void quit(void)
+    {
+      Lock lock(mut);
+      quitflag = true;
+    }
+
+    void mt_work(void)
+    {
+      while(true)
+      {
+        {
+          Lock lock(mut);
+          if (quitflag)
+          {
+            return;
+          }
+        }
+
+        if (produced < 10)
+        {
+          auto output = std::to_string(number) + ":" + std::to_string(produced);
+          produced++;
+          auto upd =std::make_shared<DummyUpdate>(output);
+          net -> pushUpdate(upd);
+          continue;
+        }
+
+        if (net -> getUpdateCount() > 0)
+        {
+          net -> getUpdate();
+          integrations++;
+          continue;
+        }
+
+        sleep(1);
+      }
     }
   };
 
@@ -107,6 +148,7 @@ namespace {
 
     void SetUp() override
     {
+      fetch::dmlf::LocalLearnerNetworker::resetAll();
     }
 
     void DoWork()
@@ -114,7 +156,7 @@ namespace {
       for(std::size_t i = 0;i< 20; i++)
       {
         auto local = std::make_shared<fetch::dmlf::LocalLearnerNetworker>();
-        auto alg = std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(20, 20);
+        auto alg = std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(20, 5);
         std::shared_ptr<fetch::dmlf::ILearnerNetworker> interf = local;
         interf -> setShuffleAlgorithm(alg);
         insts.push_back(std::make_shared<LocalLearnerInstance>(interf, i));
@@ -133,21 +175,72 @@ namespace {
         }
       }
     }
+    void DoMtWork()
+    {
+      for(std::size_t i = 0;i< 20; i++)
+      {
+        auto local = std::make_shared<fetch::dmlf::LocalLearnerNetworker>();
+        auto alg = std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(20, 5);
+        std::shared_ptr<fetch::dmlf::ILearnerNetworker> interf = local;
+        interf -> setShuffleAlgorithm(alg);
+        insts.push_back(std::make_shared<LocalLearnerInstance>(interf, i));
+      }
+
+      using Thread = std::thread;
+      using ThreadP = std::shared_ptr<Thread>;
+      using Threads = std::list<ThreadP>;
+
+      Threads threads;
+
+      for (auto inst : insts)
+      {
+        auto func = [inst](){
+          inst->mt_work();
+        };
+
+        auto t = std::make_shared<std::thread>(func);
+        threads.push_back(t);
+      }
+      sleep(3);
+
+      for (auto inst : insts)
+      {
+        inst->quit();
+      }
+
+      for (auto &t : threads)
+      {
+        t -> join();
+      }
+    }
   };
 
-  TEST_F(LocalLearnerNetworkerTests, basicPass)
+  TEST_F(LocalLearnerNetworkerTests, singleThreadedVersion)
   {
     DoWork();
 
-    std::vector<std::size_t> icount;
+    std::size_t total_integrations = 0;
     for(auto inst : insts)
     {
-      icount.push_back(inst -> integrations);
-      std::cout << "integrations = " << std::to_string(inst -> integrations) << std::endl;
+      total_integrations += inst -> integrations;
     }
 
     EXPECT_EQ(insts.size(),20);
+    EXPECT_EQ(total_integrations, 20 * 10 * 5);
   }
 
+  TEST_F(LocalLearnerNetworkerTests, multiThreadedVersion)
+  {
+    DoMtWork();
+
+    std::size_t total_integrations = 0;
+    for(auto inst : insts)
+    {
+      total_integrations += inst -> integrations;
+    }
+
+    EXPECT_EQ(insts.size(),20);
+    EXPECT_EQ(total_integrations, 20 * 10 * 5);
+    }
 }  // namespace
 

@@ -36,6 +36,8 @@ public:
   virtual std::shared_ptr<IUpdate> getUpdate();
 
   virtual std::size_t getCount();
+
+  static void resetAll(void);
 protected:
 private:
   using LocalLearnerNetworkerIndex = std::map<std::size_t, LocalLearnerNetworker*>;
