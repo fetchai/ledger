@@ -27,8 +27,6 @@
 #include <immintrin.h>
 #include <smmintrin.h>
 
-#include <iostream>
-
 namespace fetch {
 namespace vectorise {
 
@@ -243,25 +241,16 @@ inline std::ostream &operator<<(std::ostream &s, __int128_t const &n)
 inline VectorRegister<fixed_point::fp64_t, 128> operator*(VectorRegister<fixed_point::fp64_t, 128> const &a,
                                               VectorRegister<fixed_point::fp64_t, 128> const &b)
 {
-  std::cout << "a = " << a << std::endl;
-  std::cout << "b = " << b << std::endl;
   fixed_point::fp64_t::NextType a128[2], b128[2], prod[2];
   a128[0] = _mm_extract_epi64(a.data(), 0);
   a128[1] = _mm_extract_epi64(a.data(), 1);
-  std::cout << "a[0] = " << a128[0] << std::endl;
-  std::cout << "a[1] = " << a128[1] << std::endl;
   b128[0] = _mm_extract_epi64(b.data(), 0);
   b128[1] = _mm_extract_epi64(b.data(), 1);
   prod[0] = a128[0] * b128[0];
   prod[1] = a128[1] * b128[1];
-  std::cout << "prod[0] = " << prod[0] << std::endl;
-  std::cout << "prod[1] = " << prod[1] << std::endl;
   __m256i vprod = _mm256_load_si256(reinterpret_cast<__m256i const *>(prod));
-  std::cout << "prod = " << std::hex << VectorRegister<fixed_point::fp64_t, 256>(vprod) << std::dec << std::endl;
   vprod = _mm256_bsrli_epi128(vprod, 4);
-  std::cout << "prod = " << std::hex << VectorRegister<fixed_point::fp64_t, 256>(vprod) << std::dec << std::endl;
   vprod = _mm256_permute4x64_epi64(vprod, 0x8);
-  std::cout << "prod = " << std::hex << VectorRegister<fixed_point::fp64_t, 256>(vprod) << std::dec << std::endl;
   return VectorRegister<fixed_point::fp64_t, 128>(_mm256_extractf128_si256(vprod, 0));
 }
 
@@ -278,7 +267,6 @@ inline VectorRegister<fixed_point::fp64_t, 256> operator*(VectorRegister<fixed_p
   VectorRegister<fixed_point::fp64_t, 128> prod_hi = a_hi * b_hi;
 
   VectorRegister<fixed_point::fp64_t, 256> prod(_mm256_set_m128i(prod_hi.data(), prod_lo.data()));
-  std::cout << "prod = " << std::hex << prod << std::dec << std::endl;
   return prod;
 }
 
@@ -407,8 +395,6 @@ inline bool all_equal_to(VectorRegister<fixed_point::fp64_t, 128> const &x,
                           VectorRegister<fixed_point::fp64_t, 128> const &y)
 {
   __m128i r = (x == y).data();
-  std::cout << "r = " << VectorRegister<fixed_point::fp64_t, 128>(r) << std::endl;
-  std::cout << "mask = " << std::hex << _mm_movemask_epi8(r) << std::endl;
   return _mm_movemask_epi8(r) == 0xFFFF;
 }
 
@@ -416,9 +402,7 @@ inline bool all_equal_to(VectorRegister<fixed_point::fp64_t, 256> const &x,
                           VectorRegister<fixed_point::fp64_t, 256> const &y)
 {
   __m256i r = (x == y).data();
-  std::cout << "r = " << VectorRegister<fixed_point::fp64_t, 256>(r) << std::endl;
   uint64_t mask = static_cast<uint64_t>(_mm256_movemask_epi8(r));
-  std::cout << "mask = " << std::hex << mask << std::endl;
   return mask == 0xffffffffffffffffULL;
 }
 

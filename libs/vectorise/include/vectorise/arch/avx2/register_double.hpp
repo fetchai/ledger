@@ -21,7 +21,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <iostream>
+#include <ostream>
 #include <iomanip>
 
 #include <emmintrin.h>
