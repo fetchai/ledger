@@ -220,8 +220,12 @@ BeaconSetupService::State BeaconSetupService::OnReset()
 
   if (beacon_->aeon.round_start < abort_below_)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Aborting DKG");
+    FETCH_LOG_INFO(LOGGING_NAME, "Aborting DKG. Round start: ", beacon_->aeon.round_start, " abort all below: ", abort_below_);
     return State::IDLE;
+  }
+  else
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Not aborting DKG. Round: ", beacon_->aeon.round_start, " abort all below: ", abort_below_);
   }
 
   // The dkg has to be reset to 0 to clear old messages,

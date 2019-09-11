@@ -99,6 +99,7 @@ constexpr PublicTxStatus Convert(TransactionStatus       tx_processing_pipeline_
 Variant ToVariant(Digest const &digest, TransactionStatusCache::TxStatus const &tx_status)
 {
   auto retval{Variant::Object()};
+
   retval["tx"]        = ToBase64(digest);
   retval["status"]    = ToString(Convert(tx_status.status, tx_status.contract_exec_result.status));
   retval["exit_code"] = tx_status.contract_exec_result.return_value;
@@ -127,7 +128,9 @@ TxStatusHttpInterface::TxStatusHttpInterface(TxStatusCachePtr status_cache)
           // convert the digest back to binary
           auto const digest = FromHex(params["digest"]);
 
-          FETCH_LOG_DEBUG(LOGGING_NAME, "Querying status of: ", digest.ToBase64());
+          FETCH_LOG_INFO(LOGGING_NAME, "thing thing thingaab");
+          std::this_thread::sleep_for(std::chrono::milliseconds(100));
+          FETCH_LOG_INFO(LOGGING_NAME, "Querying status of: ", digest.ToBase64());
 
           // prepare the response
           auto const response{ToVariant(digest, status_cache_->Query(digest))};

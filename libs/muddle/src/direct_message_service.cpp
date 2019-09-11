@@ -309,7 +309,7 @@ void DirectMessageService::OnRoutingAccepted(Handle handle, PacketPtr const &pac
   {
   case Router::UpdateStatus::NO_CHANGE:
   case Router::UpdateStatus::UPDATED:
-    FETCH_LOG_INFO(logging_name_, "New routable connetion");
+    FETCH_LOG_INFO(logging_name_, "New routable connection");
     break;
 
   case Router::UpdateStatus::DUPLICATE_DIRECT:
