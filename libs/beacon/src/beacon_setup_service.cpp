@@ -220,7 +220,8 @@ BeaconSetupService::State BeaconSetupService::OnReset()
 
   if (beacon_->aeon.round_start < abort_below_)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Aborting DKG. Round start: ", beacon_->aeon.round_start, " abort all below: ", abort_below_);
+    FETCH_LOG_INFO(LOGGING_NAME, "Aborting DKG. Round start: ", beacon_->aeon.round_start,
+                   " abort all below: ", abort_below_);
     return State::IDLE;
   }
 

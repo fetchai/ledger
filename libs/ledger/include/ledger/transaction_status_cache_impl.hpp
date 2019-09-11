@@ -86,7 +86,7 @@ typename TransactionStatusCacheImpl<CLOCK>::TxStatus TransactionStatusCacheImpl<
     if (cache_.end() != it)
     {
       FETCH_LOG_INFO("noname", "thing thing thingaa");
-      FETCH_LOG_WARN("noname","query IS found! ", digest.ToBase64());
+      FETCH_LOG_WARN("noname", "query IS found! ", digest.ToBase64());
       return it->second.status;
     }
   }
