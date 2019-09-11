@@ -1,13 +1,12 @@
 cc_library(
-  name = "fetch-logging",
+  name = "fetch-oef-messages",
   visibility = [
       "//visibility:public",
   ],
   srcs = glob(["src/*.cpp"]),
   hdrs = glob(["include/*.hpp", "include/**/*.hpp"]),
   deps = [
-    "//libs/core:fetch-core",
-    "//libs/telemetry:fetch-telemetry"
+    
   ],
   copts = [
         "-Ilibs/metrics/include",

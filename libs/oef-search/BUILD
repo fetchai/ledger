@@ -1,5 +1,5 @@
 cc_library(
-  name = "fetch-logging",
+  name = "fetch-oef-search",
   visibility = [
       "//visibility:public",
   ],
@@ -7,7 +7,9 @@ cc_library(
   hdrs = glob(["include/*.hpp", "include/**/*.hpp"]),
   deps = [
     "//libs/core:fetch-core",
-    "//libs/telemetry:fetch-telemetry"
+    "//libs/oef-messages:fetch-oef-messages",
+    "//libs/oef-base:fetch-oef-base",
+    "//libs/network:fetch-network"
   ],
   copts = [
         "-Ilibs/metrics/include",

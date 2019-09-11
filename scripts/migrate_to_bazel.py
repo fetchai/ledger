@@ -15,9 +15,8 @@ for l in glob.glob("libs/*/CMakeLists.txt"):
 
   library_name = bf.split("project(",1)[1].split(")")[0]
   deps = []
-
   if "target_link_libraries" in bf:
-    deps = bf.split("target_link_libraries(",1)[1].split(")")[0]
+    deps = bf.rsplit("target_link_libraries(",1)[1].split(")")[0]
 
     if "PUBLIC" in deps:
       deps = deps.split("PUBLIC")[1]
@@ -28,17 +27,18 @@ for l in glob.glob("libs/*/CMakeLists.txt"):
     deps = [y.strip() for y in deps.split(" ") if y != ""]
 
   # Removing self-dependency
-  deps = [x for x in deps if x != library_name]
+  deps = [x for x in deps if x != library_name and not x.startswith("$")]
 
+  passed = [x for x in deps if x.startswith("fetch")]
   libraries[library_name] = {
     "name": library_name,
     "dirname": dirname,
     "depends": deps,
-    "passed": [x for x in deps if x.startswith("fetch")],
+    "passed": passed,
     "required_by": []
   }
 
-  if len(deps) == 0:
+  if len(passed) == 0:
     zero_deps.append(library_name)
 
 ## Computing dependencies
