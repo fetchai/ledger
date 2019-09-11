@@ -78,7 +78,7 @@ fetch::meta::IfIsFloat<T, T> static numeric_inf()
 }
 
 template <typename T>
-fetch::meta::IfIsFixedPoint<T, T> static numeric_inf()
+meta::IfIsFixedPoint<T, T> static numeric_inf()
 {
   return T::POSITIVE_INFINITY;
 }
@@ -90,13 +90,13 @@ fetch::meta::IfIsFloat<T, T> static numeric_negative_inf()
 }
 
 template <typename T>
-fetch::meta::IfIsFixedPoint<T, T> static numeric_negative_inf()
+meta::IfIsFixedPoint<T, T> static numeric_negative_inf()
 {
   return T::NEGATIVE_INFINITY;
 }
 
 template <typename T>
-fetch::meta::IfIsFixedPoint<T, T> static function_tolerance()
+meta::IfIsFixedPoint<T, T> static function_tolerance()
 {
   return T::TOLERANCE;
 }

@@ -139,6 +139,16 @@ using IfIsUnsignedInteger = EnableIf<IsUnsignedInteger<T>, R>;
 template <typename T, typename R = void>
 using IfIsSignedInteger = EnableIf<IsSignedInteger<T>, R>;
 
+//////////////////////////////////////////////////////////////
+/// TEMPLATE FOR FUNCTIONS THAT ARE NOT YET IMPLEMENTED
+//////////////////////////////////////////////////////////////
+
+template <typename A, typename R>
+struct IsNotImplementedImpl
+{
+};
+template <typename A, typename R>
+using IfIsNotImplemented = typename IsNotImplementedImpl<A, R>::Type;
 
 template <typename T, typename R = void>
 using IfIsNullPtr = EnableIf<IsNullPtr<T>, R>;
