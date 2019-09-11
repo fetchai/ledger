@@ -580,7 +580,11 @@ TYPED_TEST(FullyConnectedTest, training_should_change_output)
   layer.BackPropagate(error_output);
   layer.ApplyRegularisation();
   auto grads = layer.GetGradients();
-  layer.ApplyGradients(static_cast<DataType>(-0.1) * grads);
+  for (auto &grad : grads)
+  {
+    grad *= static_cast<DataType>(-0.1);
+  }
+  layer.ApplyGradients(grads);
 
   TypeParam prediction3 = layer.Evaluate(output_name);
 
