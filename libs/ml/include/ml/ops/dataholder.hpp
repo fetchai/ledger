@@ -17,8 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
-#include "ml/ops/dataholder.hpp"
 #include "ml/saveparams/saveable_params.hpp"
 
 #include <cassert>
@@ -30,32 +28,29 @@ namespace ml {
 namespace ops {
 
 /**
- * A PlaceHolder is a DataHolder intended to store input data.
- * It has the following features:
- * 1. trainable: no
- * 2. mutable: yes, the data can be repeatedly overwritten
- * 3. shareable: no, shared layers should have their own placeholders
- * 4. saveable: no, the data is not stored upon serialisation
- * @tparam T
+ * DataHolder is an abstract class for sharing implementations between
+ * Constant, Variable, and PlaceHolder
+ * @tparam T 
  */
+
 template <class T>
-class PlaceHolder : public DataHolder<T>
+class DataHolder : public Ops<T>
 {
 public:
   using TensorType    = T;
   using SizeType      = typename TensorType::SizeType;
-  using ArrayPtrType  = std::shared_ptr<TensorType>;
+  using TensorPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  using SPType        = OpPlaceholderSaveableParams<TensorType>;
-  using MyType        = PlaceHolder<TensorType>;
+  using SPType        = OpDataHolderSaveableParams;
+  using MyType        = DataHolder<TensorType>;
 
-  PlaceHolder() = default;
+  DataHolder() = default;
 
-  explicit PlaceHolder(SPType const &sp)
+  explicit DataHolder(SPType const &sp)
     : Ops<T>(sp)
   {}
 
-  ~PlaceHolder() override = default;
+  ~DataHolder() override = default;
 
   std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
   {
@@ -63,7 +58,20 @@ public:
   }
 
   /**
-   * backward not callable for placeholder. placeholders are not trainable
+   * forward recovers the stored data
+   * @param inputs
+   * @param output
+   */
+  void Forward(VecTensorType const &inputs, TensorType &output) override
+  {
+    FETCH_UNUSED(inputs);
+    assert(inputs.empty());
+    assert(data_);
+    output = *(data_);
+  }
+
+  /**
+   * backward should not be required for dataholders
    * @param inputs
    * @param error_signal
    * @return
@@ -72,37 +80,42 @@ public:
   {
     FETCH_UNUSED(inputs);
     FETCH_UNUSED(error_signal);
-    throw std::runtime_error("backward called on placeholder, but placeholders are not trainable");
+    assert(inputs.empty());
+    return {};
   }
 
   /**
-   * Placeholders should not be shared, therefore a layer sharing its elements
-   * with another node should use a new (unshared) placeholder op
-   * @param me
+   * sets the internally stored data
+   * @param data
    * @return
    */
-  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
-      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
+  virtual bool SetData(TensorType const &data)
   {
-    FETCH_UNUSED(me);
-    assert(me.get() == this);
-
-    auto copyshare = std::make_shared<MyType>(*this);
-
-    if (this->output_)
+    bool shape_changed = true;
+    if (data_)
     {
-      copyshare->output_ = std::make_shared<TensorType>(this->output_->Copy());
+      shape_changed = (data_->shape() != data.shape());
     }
+    data_ = std::make_shared<TensorType>(data);
+    return shape_changed;
+  }
 
-    return copyshare;
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
+  {
+    FETCH_UNUSED(inputs);
+    assert(data_);
+    return data_->shape();
   }
 
   static constexpr OpType OpCode()
   {
-    return OpType::OP_PLACEHOLDER;
+    return OpType::OP_DATAHOLDER;
   }
 
-  static constexpr char const *DESCRIPTOR = "PlaceHolder";
+  static constexpr char const *DESCRIPTOR = "DataHolder";
+
+protected:
+  TensorPtrType data_;
 };
 
 }  // namespace ops

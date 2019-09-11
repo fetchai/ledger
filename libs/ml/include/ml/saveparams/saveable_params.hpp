@@ -491,11 +491,33 @@ struct LayerMultiHeadSaveableParams : public SubGraphSaveableParams<TensorType>
   DataType dropout;
 };
 
-template <class TensorType>
-struct OpPlaceholderSaveableParams : public OpsSaveableParams
+struct OpDataHolderSaveableParams : public OpsSaveableParams
 {
   fetch::ml::OpType op_type = OpType::OP_PLACEHOLDER;
 };
+
+template <class TensorType>
+struct OpConstantSaveableParams : public OpDataHolderSaveableParams
+{
+  fetch::ml::OpType op_type = OpType::OP_PLACEHOLDER;
+  std::shared_ptr<TensorType> data;
+};
+
+template <class TensorType>
+struct OpPlaceholderSaveableParams : public OpDataHolderSaveableParams
+{
+  fetch::ml::OpType op_type = OpType::OP_PLACEHOLDER;
+};
+
+
+template <class TensorType>
+struct OpVariableSaveableParams : public OpDataHolderSaveableParams
+{
+  fetch::ml::OpType op_type = OpType::OP_PLACEHOLDER;
+  std::shared_ptr<TensorType> data;
+};
+
+
 
 /**
  * Saveable parameters for Layer PRelu saveable params

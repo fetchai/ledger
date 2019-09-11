@@ -18,10 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/random/lfg.hpp"
-#include "ml/ops/placeholder.hpp"
-#include "ml/ops/trainable.hpp"
-#include "ml/regularisers/regularisation.hpp"
-#include "ml/regularisers/regulariser.hpp"
+#include "ml/ops/variable.hpp"
 #include "ml/state_dict.hpp"
 
 #include <cassert>
@@ -52,39 +49,23 @@ enum class WeightsInitialisation
 };
 
 template <class T>
-class Weights : public fetch::ml::ops::PlaceHolder<T>, public Trainable<T>
+class Weights : public fetch::ml::ops::Variable<T>
 {
 public:
   using TensorType     = T;
   using SizeType       = typename TensorType::SizeType;
   using DataType       = typename TensorType::Type;
   using ArrayPtrType   = std::shared_ptr<TensorType>;
-  using VecTensorType  = typename PlaceHolder<T>::VecTensorType;
+  using VecTensorType  = typename Variable<T>::VecTensorType;
   using SPType         = OpWeightsSaveableParams<TensorType>;
   using WeightsPtrType = typename std::shared_ptr<Weights<TensorType>>;
-
-protected:
-  ArrayPtrType gradient_accumulation_;
 
 public:
   Weights() = default;
 
   explicit Weights(SPType const &sp)
-    : PlaceHolder<T>(sp)
+    : Variable<T>(sp)
   {
-    if (sp.output)
-    {
-      this->output_ = std::make_shared<TensorType>(sp.output->Copy());
-    }
-
-    if (sp.gradient_accumulation)
-    {
-      gradient_accumulation_ = std::make_shared<TensorType>(sp.gradient_accumulation->Copy());
-    }
-
-    this->SetRegularisation(
-        fetch::ml::details::CreateRegulariser<TensorType>(sp.regularisation_type),
-        sp.regularisation_rate);
   }
 
   ~Weights() override = default;
@@ -92,71 +73,12 @@ public:
   std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
   {
     auto sp   = std::make_shared<SPType>();
-    auto p_sp = PlaceHolder<T>::GetOpSaveableParams();
+    auto p_sp = Variable<T>::GetOpSaveableParams();
 
-    auto cast_sp = std::static_pointer_cast<OpPlaceholderSaveableParams<TensorType>>(sp);
-    *cast_sp     = *(std::static_pointer_cast<OpPlaceholderSaveableParams<TensorType>>(p_sp));
+    auto cast_sp = std::static_pointer_cast<OpVariableSaveableParams<TensorType>>(sp);
+    *cast_sp     = *(std::static_pointer_cast<OpVariableSaveableParams<TensorType>>(p_sp));
 
-    if (this->output_)
-    {
-      sp->output = std::make_shared<TensorType>(this->output_->Copy());
-    }
-
-    if (gradient_accumulation_)
-    {
-      sp->gradient_accumulation = std::make_shared<TensorType>(gradient_accumulation_->Copy());
-    }
-
-    if (this->regulariser_)
-    {
-      sp->regularisation_type = this->regulariser_->reg_type;
-    }
-    else
-    {
-      sp->regularisation_type = RegularisationType::NONE;
-    }
-
-    sp->regularisation_rate = this->regularisation_rate_;
     return sp;
-  }
-
-  std::shared_ptr<Ops<TensorType>> MakeSharedCopy(std::shared_ptr<Ops<TensorType>> me) override
-  {
-    // This overrides implementation in Placeholder
-    assert(me.get() == this);
-    return me;
-  }
-
-  ArrayPtrType GetShareableWeights()
-  {
-    return this->output_;
-  }
-
-  std::vector<TensorType> Backward(VecTensorType const &inputs,
-                                   TensorType const &   error_signal) override
-  {
-    FETCH_UNUSED(inputs);
-    assert(inputs.empty());
-
-    gradient_accumulation_->InlineAdd(error_signal);
-
-    return {};
-  }
-
-  void AddToGradient(TensorType const &extern_grad)
-  {
-    gradient_accumulation_->InlineAdd(extern_grad);
-  }
-
-  bool SetData(TensorType const &data) override
-  {
-    bool shape_changed = PlaceHolder<T>::SetData(data);
-    if (shape_changed)
-    {
-      gradient_accumulation_ = std::make_shared<TensorType>(this->output_->shape());
-      return true;
-    }
-    return false;
   }
 
   void Step(typename T::Type learning_rate) override
@@ -387,10 +309,9 @@ private:
 }  // namespace ops
 
 template <class TensorType>
-struct OpWeightsSaveableParams : public OpPlaceholderSaveableParams<TensorType>
+struct OpWeightsSaveableParams : public OpVariableSaveableParams<TensorType>
 {
   fetch::ml::OpType           op_type = OpType::OP_WEIGHTS;
-  std::shared_ptr<TensorType> output;
   std::shared_ptr<TensorType> gradient_accumulation;
   RegularisationType          regularisation_type;
   typename TensorType::Type   regularisation_rate;

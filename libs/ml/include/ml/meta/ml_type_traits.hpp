@@ -42,8 +42,10 @@ enum class OpType : uint16_t
   OP_ABS,
   OP_ADD,
   OP_CONCATENATE,
+  OP_CONSTANT,
   OP_CONVOLUTION_1D,
   OP_CONVOLUTION_2D,
+  OP_DATAHOLDER,
   OP_DIVIDE,
   OP_DROPOUT,
   OP_ELU,
@@ -75,6 +77,7 @@ enum class OpType : uint16_t
   OP_SWITCH,
   OP_TANH,
   OP_TRANSPOSE,
+  OP_VARIABLE,
   OP_WEIGHTS,
   OP_SLICE,
 
