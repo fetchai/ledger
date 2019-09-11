@@ -24,7 +24,7 @@ target_link_libraries(fetch-dmlf
                              pthread)
 
 # Test targets
-#add_test_target()
+add_test_target()
 
 # Example targets
 #add_subdirectory(examples)
