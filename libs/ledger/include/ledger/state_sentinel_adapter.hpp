@@ -21,6 +21,9 @@
 #include "ledger/state_adapter.hpp"
 #include "vectorise/platform.hpp"
 
+#include <cstdint>
+#include <string>
+
 namespace fetch {
 namespace ledger {
 
@@ -31,8 +34,6 @@ namespace ledger {
 class StateSentinelAdapter : public StateAdapter
 {
 public:
-  static constexpr char const *LOGGING_NAME = "StateSentinelAdapter";
-
   // Construction / Destruction
   StateSentinelAdapter(StorageInterface &storage, Identifier scope, BitVector const &shards);
   ~StateSentinelAdapter() override;
@@ -46,18 +47,9 @@ public:
 
   /// @name Counter Access
   /// @{
-  uint64_t num_lookups() const
-  {
-    return lookups_;
-  }
-  uint64_t num_bytes_read() const
-  {
-    return bytes_read_;
-  }
-  uint64_t num_bytes_written() const
-  {
-    return bytes_written_;
-  }
+  uint64_t num_lookups() const;
+  uint64_t num_bytes_read() const;
+  uint64_t num_bytes_written() const;
   /// @}
 
 private:

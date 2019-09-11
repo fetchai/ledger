@@ -36,9 +36,9 @@ class TransactionStatusCache;
 class TransactionProcessor : public TransactionSink
 {
 public:
-  static constexpr char const *LOGGING_NAME = "TransactionProcessor";
-  using DAGPtr                              = std::shared_ptr<::fetch::ledger::DAGInterface>;
-  using TxStatusCachePtr                    = std::shared_ptr<TransactionStatusCache>;
+  using DAGPtr           = std::shared_ptr<fetch::ledger::DAGInterface>;
+  using TxStatusCachePtr = std::shared_ptr<TransactionStatusCache>;
+
   // Construction / Destruction
   TransactionProcessor(DAGPtr dag, StorageUnitInterface &storage, BlockPackerInterface &packer,
                        TxStatusCachePtr tx_status_cache, std::size_t num_threads);

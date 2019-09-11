@@ -30,7 +30,7 @@ using fetch::ledger::detail::DecodeInteger;
 
 MsgPackSerializer CreateEncodedBuffer(char const *hex)
 {
-  return {FromHex(hex)};
+  return MsgPackSerializer{FromHex(hex)};
 }
 
 TEST(IntegerEncodingTests, CheckSmallUnsignedEncode)
