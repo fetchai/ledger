@@ -28,6 +28,7 @@
 #include "network/muddle/muddle.hpp"
 #include "network/muddle/rpc/client.hpp"
 #include "storage/resource_mapper.hpp"
+#include "telemetry/telemetry.hpp"
 #include "transaction_finder_protocol.hpp"
 #include "transaction_store_sync_protocol.hpp"
 
@@ -84,6 +85,7 @@ public:
   using ObjectStorePtr        = std::shared_ptr<ObjectStore>;
   using LaneControllerPtr     = std::shared_ptr<LaneController>;
   using TxFinderProtocolPtr   = std::shared_ptr<TxFinderProtocol>;
+  using TxStoredTxCounterPtr  = telemetry::CounterPtr;
 
   static constexpr char const *LOGGING_NAME = "TransactionStoreSyncService";
   static constexpr std::size_t MAX_OBJECT_COUNT_RESOLUTION_PER_CYCLE = 128;
@@ -159,12 +161,13 @@ private:
 
   RequestingObjectCount pending_object_count_;
   uint64_t              max_object_count_;
+  TxStoredTxCounterPtr  stored_transactions_;
 
   RequestingSubTreeList pending_subtree_;
   RequestingTxList      pending_objects_;
 
-  std::queue<uint64_t>                                         roots_to_sync_;
-  uint64_t                                                     root_size_ = 0;
+  std::queue<uint64_t>                                          roots_to_sync_;
+  uint64_t                                                      root_size_ = 0;
   std::unordered_map<PromiseOfTxList::PromiseCounter, uint64_t> promise_id_to_roots_;
 
   std::atomic_bool is_ready_{false};

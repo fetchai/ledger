@@ -691,9 +691,13 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, S
     }
     else
     {
-      if (wait_before_asking_for_missing_tx_.HasExpired())
+      if (((chain_.GetHeaviestBlock()->body.block_number - current_block_->body.block_number) > 30) || wait_before_asking_for_missing_tx_.HasExpired())
       {
         request_tx_count_->increment();
+
+        FETCH_LOG_WARN(LOGGING_NAME, "OnWaitForTransactions: Calling IssueCallForMissingTxs for ", pending_txs_->size(), " TXs (for block: ",
+                       current_block_->body.block_number, ", heaviest block: ",
+                       chain_.GetHeaviestBlock()->body.block_number, ")");
 
         storage_unit_.IssueCallForMissingTxs(*pending_txs_);
         have_asked_for_missing_txs_ = true;
