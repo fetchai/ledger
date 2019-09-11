@@ -383,7 +383,8 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
 
   // If we get over threshold connections, send a message to all peers with the info
   // (note we won't advance if we ourselves don't get over)
-  if (can_see.size() > connections_.size() && can_see.size() >= require_connections && !condition_to_proceed_)
+  if (can_see.size() > connections_.size() && can_see.size() >= require_connections &&
+      !condition_to_proceed_)
   {
     fetch::serializers::MsgPackSerializer serializer;
     serializer << connections_;
@@ -1393,15 +1394,15 @@ void SetTimeBySlots(BeaconSetupService::State state, uint64_t &time_slots_total,
   std::map<BeaconSetupService::State, uint64_t> time_slot_map;
 
   time_slot_map[BeaconSetupService::State::RESET]                          = 0;
-  time_slot_map[BeaconSetupService::State::CONNECT_TO_ALL]                 = 10;
-  time_slot_map[BeaconSetupService::State::WAIT_FOR_READY_CONNECTIONS]     = 10;
+  time_slot_map[BeaconSetupService::State::CONNECT_TO_ALL]                 = 15;
+  time_slot_map[BeaconSetupService::State::WAIT_FOR_READY_CONNECTIONS]     = 15;
   time_slot_map[BeaconSetupService::State::WAIT_FOR_SHARES]                = 10;
   time_slot_map[BeaconSetupService::State::WAIT_FOR_COMPLAINTS]            = 10;
   time_slot_map[BeaconSetupService::State::WAIT_FOR_COMPLAINT_ANSWERS]     = 10;
   time_slot_map[BeaconSetupService::State::WAIT_FOR_QUAL_SHARES]           = 10;
   time_slot_map[BeaconSetupService::State::WAIT_FOR_QUAL_COMPLAINTS]       = 10;
   time_slot_map[BeaconSetupService::State::WAIT_FOR_RECONSTRUCTION_SHARES] = 10;
-  time_slot_map[BeaconSetupService::State::DRY_RUN_SIGNING]                = 20;
+  time_slot_map[BeaconSetupService::State::DRY_RUN_SIGNING]                = 10;
 
   time_slot_for_state = time_slot_map[state];
 
@@ -1421,8 +1422,8 @@ void SetTimeBySlots(BeaconSetupService::State state, uint64_t &time_slots_total,
 void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
 {
   uint64_t current_time = GetTime();
-  FETCH_LOG_INFO(LOGGING_NAME, "Determining time allowed to move on from state: ", ToString(state),
-                 " at ", current_time);
+  FETCH_LOG_INFO(LOGGING_NAME, "Determining time allowed to move on from state: \"",
+                 ToString(state), "\" at ", current_time);
   condition_to_proceed_ = false;
 
   uint64_t cabinet_size        = beacon_->aeon.members.size();

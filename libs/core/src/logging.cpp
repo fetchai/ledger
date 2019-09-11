@@ -31,8 +31,8 @@
 #pragma clang diagnostic ignored "-Wsign-conversion"
 #endif
 
-#include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/sinks/dup_filter_sink.h"
+#include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/spdlog.h"
 
 #if defined(__clang__)
@@ -167,8 +167,7 @@ spdlog::level::level_enum ConvertFromLevel(LogLevel level)
 }
 
 LogRegistry::LogRegistry()
-{
-}
+{}
 
 void LogRegistry::Log(LogLevel level, char const *name, std::string &&message)
 {
@@ -244,7 +243,8 @@ LogRegistry::Logger &LogRegistry::GetLogger(char const *name)
   if (it == registry_.end())
   {
     // create the new logger instance - note it suppresses duplicate messages
-    auto dup_filter = std::make_shared<spdlog::sinks::dup_filter_sink_mt>(std::chrono::milliseconds(100));
+    auto dup_filter =
+        std::make_shared<spdlog::sinks::dup_filter_sink_mt>(std::chrono::milliseconds(100));
     dup_filter->add_sink(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
 
     auto logger = std::make_shared<spdlog::logger>(name, dup_filter);

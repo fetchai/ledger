@@ -52,10 +52,10 @@ char const *ToString(BeaconService::State state)
     text = "Verifying signatures";
     break;
   case BeaconService::State::COMPLETE:
-    text = "Sending shares";
+    text = "Completion state";
     break;
   case BeaconService::State::COMITEE_ROTATION:
-    text = "Waiting for shares";
+    text = "Decide on committee rotation";
     break;
   case BeaconService::State::OBSERVE_ENTROPY_GENERATION:
     text = "Observe entropy generation";
@@ -429,7 +429,7 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
   std::lock_guard<std::mutex> lock(mutex_);
 
   // On first entry to function, populate with our info
-  if (state_machine_->previous_state() != State::COLLECT_SIGNATURES)
+  if (state_machine_->previous_state() == State::PREPARE_ENTROPY_GENERATION)
   {
     SignatureInformation this_round;
     this_round.round                                        = current_entropy_.round;
@@ -484,14 +484,14 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
   try
   {
     // Attempt to resolve the promise and add it
-    if(!sig_share_promise_->IsSuccessful() || !sig_share_promise_->As<SignatureInformation>(ret))
+    if (!sig_share_promise_->IsSuccessful() || !sig_share_promise_->As<SignatureInformation>(ret))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to resolve RPC promise from ",
                      qual_promise_identity_.identifier().ToBase64());
       return State::COLLECT_SIGNATURES;
     }
   }
-  catch(...)
+  catch (...)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Promise timed out and threw! This should not happen.");
   }
@@ -515,19 +515,19 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
     return State::COLLECT_SIGNATURES;
   }
 
-
   // Success - Add relevant info
   auto &signatures_struct = signatures_being_built_[current_entropy_.round];
+  auto &all_sigs_map      = signatures_struct.threshold_signatures;
 
   for (auto const &address_sig_pair : ret.threshold_signatures)
   {
-    signatures_struct.threshold_signatures[address_sig_pair.first] = address_sig_pair.second;
+    all_sigs_map[address_sig_pair.first] = address_sig_pair.second;
     // Let the manager know
     AddSignature(address_sig_pair.second);
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "After adding, we have ",
-                 signatures_struct.threshold_signatures.size(), " signatures. Round: ", current_entropy_.round);
+  FETCH_LOG_INFO(LOGGING_NAME, "After adding, we have ", all_sigs_map.size(),
+                 " signatures. Round: ", current_entropy_.round);
 
   if (active_exe_unit_->manager.can_verify() && active_exe_unit_->manager.Verify())
   {
@@ -543,6 +543,8 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
       msgser << current_entropy_;
       endpoint_.Broadcast(SERVICE_DKG, CHANNEL_ENTROPY_DISTRIBUTION, msgser.data());
     }
+
+    FETCH_LOG_INFO(LOGGING_NAME, "Generated new entropy value");
 
     return State::COMPLETE;
   }
@@ -618,6 +620,18 @@ bool BeaconService::AddSignature(SignatureShare share)
 
     return false;
   }
+
+  if (ret == BeaconManager::AddResult::SIGNATURE_ALREADY_ADDED)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Accidental duplicate signature added!");
+  }
+
+  if (ret == BeaconManager::AddResult::INVALID_SIGNATURE)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Invalid signature found!");
+    return false;
+  }
+
   return true;
 }
 
