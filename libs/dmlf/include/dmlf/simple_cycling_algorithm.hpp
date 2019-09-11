@@ -1,40 +1,33 @@
 #pragma once
 
-// Delete bits as needed
+#include <memory>
 
-//#include <algorithm>
-//#include <utility>
-//#include <iostream>
+#include "dmlf/ishuffle_algorithm.hpp"
 
-class SimpleCyclingAlgorithm
+namespace fetch {
+namespace dmlf {
+
+class SimpleCyclingAlgorithm: public IShuffleAlgorithm
 {
 public:
-  SimpleCyclingAlgorithm()
+  SimpleCyclingAlgorithm(std::size_t count):IShuffleAlgorithm(count)
   {
+    next = 0;
   }
   virtual ~SimpleCyclingAlgorithm()
   {
   }
 
-  //friend std::ostream& operator<<(std::ostream& os, const SimpleCyclingAlgorithm &output);
-  //friend void swap(SimpleCyclingAlgorithm &a, SimpleCyclingAlgorithm &b);
+  std::vector<std::size_t> getNextOutputs(std::size_t number_of_outputs);
 protected:
-  // int compare(const SimpleCyclingAlgorithm &other) const { ... }
-  // void copy(const SimpleCyclingAlgorithm &other) { ... }
-  // void clear(void) { ... }
-  // bool empty(void) const { ... }
-  // void swap(SimpleCyclingAlgorithm &other) { ... }
 private:
-  SimpleCyclingAlgorithm(const SimpleCyclingAlgorithm &other) = delete; // { copy(other); }
-  SimpleCyclingAlgorithm &operator=(const SimpleCyclingAlgorithm &other) = delete; // { copy(other); return *this; }
-  bool operator==(const SimpleCyclingAlgorithm &other) = delete; // const { return compare(other)==0; }
-  bool operator<(const SimpleCyclingAlgorithm &other) = delete; // const { return compare(other)==-1; }
+  std::size_t next;
 
-  //bool operator!=(const SimpleCyclingAlgorithm &other) const { return compare(other)!=0; }
-  //bool operator>(const SimpleCyclingAlgorithm &other) const { return compare(other)==1; }
-  //bool operator<=(const SimpleCyclingAlgorithm &other) const { return compare(other)!=1; }
-  //bool operator>=(const SimpleCyclingAlgorithm &other) const { return compare(other)!=-1; }
+  SimpleCyclingAlgorithm(const SimpleCyclingAlgorithm &other) = delete;
+  SimpleCyclingAlgorithm &operator=(const SimpleCyclingAlgorithm &other) = delete;
+  bool operator==(const SimpleCyclingAlgorithm &other) = delete;
+  bool operator<(const SimpleCyclingAlgorithm &other) = delete;
 };
 
-//std::ostream& operator<<(std::ostream& os, const SimpleCyclingAlgorithm &output) {}
-//void swap(SimpleCyclingAlgorithm& v1, SimpleCyclingAlgorithm& v2);
+}
+}

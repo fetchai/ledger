@@ -1,10 +1,11 @@
 #pragma once
 
-// Delete bits as needed
+#include <memory>
 
-//#include <algorithm>
-//#include <utility>
-//#include <iostream>
+namespace fetch {
+namespace dmlf {
+
+class IUpdate;
 
 class ILearnerNetworker
 {
@@ -16,25 +17,17 @@ public:
   {
   }
 
-  //friend std::ostream& operator<<(std::ostream& os, const ILearnerNetworker &output);
-  //friend void swap(ILearnerNetworker &a, ILearnerNetworker &b);
-protected:
-  // int compare(const ILearnerNetworker &other) const { ... }
-  // void copy(const ILearnerNetworker &other) { ... }
-  // void clear(void) { ... }
-  // bool empty(void) const { ... }
-  // void swap(ILearnerNetworker &other) { ... }
-private:
-  ILearnerNetworker(const ILearnerNetworker &other) = delete; // { copy(other); }
-  ILearnerNetworker &operator=(const ILearnerNetworker &other) = delete; // { copy(other); return *this; }
-  bool operator==(const ILearnerNetworker &other) = delete; // const { return compare(other)==0; }
-  bool operator<(const ILearnerNetworker &other) = delete; // const { return compare(other)==-1; }
+  virtual void pushUpdate( std::shared_ptr<IUpdate> update) = 0;
+  virtual std::size_t getUpdateCount() const = 0;
+  virtual std::shared_ptr<IUpdate> getUpdate() = 0;
 
-  //bool operator!=(const ILearnerNetworker &other) const { return compare(other)!=0; }
-  //bool operator>(const ILearnerNetworker &other) const { return compare(other)==1; }
-  //bool operator<=(const ILearnerNetworker &other) const { return compare(other)!=1; }
-  //bool operator>=(const ILearnerNetworker &other) const { return compare(other)!=-1; }
+protected:
+private:
+  ILearnerNetworker(const ILearnerNetworker &other) = delete;
+  ILearnerNetworker &operator=(const ILearnerNetworker &other) = delete;
+  bool operator==(const ILearnerNetworker &other) = delete;
+  bool operator<(const ILearnerNetworker &other) = delete;
 };
 
-//std::ostream& operator<<(std::ostream& os, const ILearnerNetworker &output) {}
-//void swap(ILearnerNetworker& v1, ILearnerNetworker& v2);
+}
+}

@@ -1,12 +1,12 @@
 #pragma once
 
-// Delete bits as needed
+#include <memory>
+#include "dmlf/ilearner_networker.hpp"
 
-//#include <algorithm>
-//#include <utility>
-//#include <iostream>
+namespace fetch {
+namespace dmlf {
 
-class LocalLearnerNetworker
+class LocalLearnerNetworker: public ILearnerNetworker
 {
 public:
   LocalLearnerNetworker()
@@ -16,25 +16,17 @@ public:
   {
   }
 
-  //friend std::ostream& operator<<(std::ostream& os, const LocalLearnerNetworker &output);
-  //friend void swap(LocalLearnerNetworker &a, LocalLearnerNetworker &b);
-protected:
-  // int compare(const LocalLearnerNetworker &other) const { ... }
-  // void copy(const LocalLearnerNetworker &other) { ... }
-  // void clear(void) { ... }
-  // bool empty(void) const { ... }
-  // void swap(LocalLearnerNetworker &other) { ... }
-private:
-  LocalLearnerNetworker(const LocalLearnerNetworker &other) = delete; // { copy(other); }
-  LocalLearnerNetworker &operator=(const LocalLearnerNetworker &other) = delete; // { copy(other); return *this; }
-  bool operator==(const LocalLearnerNetworker &other) = delete; // const { return compare(other)==0; }
-  bool operator<(const LocalLearnerNetworker &other) = delete; // const { return compare(other)==-1; }
+  virtual void pushUpdate( std::shared_ptr<IUpdate> update) = 0;
+  virtual std::size_t getUpdateCount() const = 0;
+  virtual std::shared_ptr<IUpdate> getUpdate() = 0;
 
-  //bool operator!=(const LocalLearnerNetworker &other) const { return compare(other)!=0; }
-  //bool operator>(const LocalLearnerNetworker &other) const { return compare(other)==1; }
-  //bool operator<=(const LocalLearnerNetworker &other) const { return compare(other)!=1; }
-  //bool operator>=(const LocalLearnerNetworker &other) const { return compare(other)!=-1; }
+protected:
+private:
+  LocalLearnerNetworker(const LocalLearnerNetworker &other) = delete;
+  LocalLearnerNetworker &operator=(const LocalLearnerNetworker &other) = delete;
+  bool operator==(const LocalLearnerNetworker &other) = delete;
+  bool operator<(const LocalLearnerNetworker &other) = delete;
 };
 
-//std::ostream& operator<<(std::ostream& os, const LocalLearnerNetworker &output) {}
-//void swap(LocalLearnerNetworker& v1, LocalLearnerNetworker& v2);
+}
+}

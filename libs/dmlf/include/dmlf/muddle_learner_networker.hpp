@@ -1,12 +1,12 @@
 #pragma once
 
-// Delete bits as needed
+#include <memory>
+#include "dmlf/ilearner_networker.hpp"
 
-//#include <algorithm>
-//#include <utility>
-//#include <iostream>
+namespace fetch {
+namespace dmlf {
 
-class MuddleLearnerNetworker
+class MuddleLearnerNetworker: public ILearnerNetworker
 {
 public:
   MuddleLearnerNetworker()
@@ -16,25 +16,16 @@ public:
   {
   }
 
-  //friend std::ostream& operator<<(std::ostream& os, const MuddleLearnerNetworker &output);
-  //friend void swap(MuddleLearnerNetworker &a, MuddleLearnerNetworker &b);
+  virtual void pushUpdate( std::shared_ptr<IUpdate> update);
+  virtual std::size_t getUpdateCount() const;
+  virtual std::shared_ptr<IUpdate> getUpdate();
 protected:
-  // int compare(const MuddleLearnerNetworker &other) const { ... }
-  // void copy(const MuddleLearnerNetworker &other) { ... }
-  // void clear(void) { ... }
-  // bool empty(void) const { ... }
-  // void swap(MuddleLearnerNetworker &other) { ... }
 private:
-  MuddleLearnerNetworker(const MuddleLearnerNetworker &other) = delete; // { copy(other); }
-  MuddleLearnerNetworker &operator=(const MuddleLearnerNetworker &other) = delete; // { copy(other); return *this; }
-  bool operator==(const MuddleLearnerNetworker &other) = delete; // const { return compare(other)==0; }
-  bool operator<(const MuddleLearnerNetworker &other) = delete; // const { return compare(other)==-1; }
-
-  //bool operator!=(const MuddleLearnerNetworker &other) const { return compare(other)!=0; }
-  //bool operator>(const MuddleLearnerNetworker &other) const { return compare(other)==1; }
-  //bool operator<=(const MuddleLearnerNetworker &other) const { return compare(other)!=1; }
-  //bool operator>=(const MuddleLearnerNetworker &other) const { return compare(other)!=-1; }
+  MuddleLearnerNetworker(const MuddleLearnerNetworker &other) = delete;
+  MuddleLearnerNetworker &operator=(const MuddleLearnerNetworker &other) = delete;
+  bool operator==(const MuddleLearnerNetworker &other) = delete;
+  bool operator<(const MuddleLearnerNetworker &other) = delete;
 };
 
-//std::ostream& operator<<(std::ostream& os, const MuddleLearnerNetworker &output) {}
-//void swap(MuddleLearnerNetworker& v1, MuddleLearnerNetworker& v2);
+}
+}
