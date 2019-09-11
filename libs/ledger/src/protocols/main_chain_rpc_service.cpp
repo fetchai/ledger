@@ -61,9 +61,12 @@ constexpr State GetInitialState(Mode mode) noexcept
   {
   case Mode::STANDALONE:
     return State::SYNCHRONISED;
-  default:
-    return State::REQUEST_HEAVIEST_CHAIN;
+  case Mode::PRIVATE_NETWORK:
+  case Mode::PUBLIC_NETWORK:
+    break;
   }
+
+  return State::REQUEST_HEAVIEST_CHAIN;
 }
 
 }  // namespace
