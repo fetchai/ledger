@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "math/base_types.hpp"
-#include "vectorise/math/standard_functions.hpp"
 #include "math/fundamental_operators.hpp"
 #include "math/linalg/blas/base.hpp"
 #include "math/linalg/blas/gemm_nn_novector.hpp"
@@ -30,6 +29,7 @@
 #include "math/linalg/prototype.hpp"
 #include "math/meta/math_type_traits.hpp"
 #include "math/tensor_reduce.hpp"
+#include "vectorise/math/standard_functions.hpp"
 
 #include <cassert>
 #include <numeric>

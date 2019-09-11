@@ -17,12 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include <limits>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <ostream>
 #include <iomanip>
+#include <limits>
+#include <ostream>
 
 #include <emmintrin.h>
 #include <immintrin.h>
@@ -165,7 +165,7 @@ private:
   mm_register_type data_;
 };
 
-template<>
+template <>
 inline std::ostream &operator<<(std::ostream &s, VectorRegister<int32_t, 128> const &n)
 {
   alignas(16) int32_t out[4];
@@ -177,15 +177,15 @@ inline std::ostream &operator<<(std::ostream &s, VectorRegister<int32_t, 128> co
   return s;
 }
 
-template<>
+template <>
 inline std::ostream &operator<<(std::ostream &s, VectorRegister<int32_t, 256> const &n)
 {
   alignas(32) int32_t out[8];
   n.Store(out);
   s << std::setprecision(std::numeric_limits<int32_t>::digits10);
   s << std::fixed;
-  s << out[0] << ", " << out[1] << ", " << out[2] << ", " << out[3] << ", "
-    << out[4] << ", " << out[5] << ", " << out[6] << ", " << out[7];
+  s << out[0] << ", " << out[1] << ", " << out[2] << ", " << out[3] << ", " << out[4] << ", "
+    << out[5] << ", " << out[6] << ", " << out[7];
 
   return s;
 }
@@ -291,8 +291,8 @@ inline VectorRegister<int32_t, 256> operator/(VectorRegister<int32_t, 256> const
   inline VectorRegister<type, 128> operator op(VectorRegister<type, 128> const &a, \
                                                VectorRegister<type, 128> const &b) \
   {                                                                                \
-    L ret  = fnc(a.data(), b.data());                                              \
-    return VectorRegister<type, 128>(ret);                       \
+    L ret = fnc(a.data(), b.data());                                               \
+    return VectorRegister<type, 128>(ret);                                         \
   }
 
 FETCH_ADD_OPERATOR(==, int32_t, __m128i, _mm_cmpeq_epi32)
@@ -304,8 +304,8 @@ FETCH_ADD_OPERATOR(>, int32_t, __m128i, _mm_cmpgt_epi32)
   inline VectorRegister<type, 256> operator op(VectorRegister<type, 256> const &a, \
                                                VectorRegister<type, 256> const &b) \
   {                                                                                \
-    L ret  = fnc(a.data(), b.data());                                              \
-    return VectorRegister<type, 256>(ret);                        \
+    L ret = fnc(a.data(), b.data());                                               \
+    return VectorRegister<type, 256>(ret);                                         \
   }
 
 FETCH_ADD_OPERATOR(==, int32_t, __m256i, _mm256_cmpeq_epi32)
@@ -317,7 +317,7 @@ inline VectorRegister<int32_t, 128> operator!=(VectorRegister<int32_t, 128> cons
                                                VectorRegister<int32_t, 128> const &b)
 {
   __m128i ret = (a == b).data();
-  ret = _mm_andnot_si128(ret, ret);
+  ret         = _mm_andnot_si128(ret, ret);
   return VectorRegister<int32_t, 128>(ret);
 }
 
@@ -325,7 +325,7 @@ inline VectorRegister<int32_t, 256> operator!=(VectorRegister<int32_t, 256> cons
                                                VectorRegister<int32_t, 256> const &b)
 {
   __m256i ret = (a == b).data();
-  ret = _mm256_andnot_si256(ret, ret);
+  ret         = _mm256_andnot_si256(ret, ret);
   return VectorRegister<int32_t, 256>(ret);
 }
 
@@ -342,28 +342,28 @@ inline VectorRegister<int32_t, 256> operator<(VectorRegister<int32_t, 256> const
 }
 
 inline VectorRegister<int32_t, 128> operator<=(VectorRegister<int32_t, 128> const &a,
-                                              VectorRegister<int32_t, 128> const &b)
+                                               VectorRegister<int32_t, 128> const &b)
 {
   __m128i ret = _mm_or_si128((a < b).data(), (a == b).data());
   return VectorRegister<int32_t, 128>(ret);
 }
 
 inline VectorRegister<int32_t, 256> operator<=(VectorRegister<int32_t, 256> const &a,
-                                              VectorRegister<int32_t, 256> const &b)
+                                               VectorRegister<int32_t, 256> const &b)
 {
   __m256i ret = _mm256_or_si256((a < b).data(), (a == b).data());
   return VectorRegister<int32_t, 256>(ret);
 }
 
 inline VectorRegister<int32_t, 128> operator>=(VectorRegister<int32_t, 128> const &a,
-                                              VectorRegister<int32_t, 128> const &b)
+                                               VectorRegister<int32_t, 128> const &b)
 {
   __m128i ret = _mm_or_si128((a < b).data(), (a == b).data());
   return VectorRegister<int32_t, 128>(ret);
 }
 
 inline VectorRegister<int32_t, 256> operator>=(VectorRegister<int32_t, 256> const &a,
-                                              VectorRegister<int32_t, 256> const &b)
+                                               VectorRegister<int32_t, 256> const &b)
 {
   __m256i ret = _mm256_or_si256((a > b).data(), (a == b).data());
   return VectorRegister<int32_t, 256>(ret);
@@ -406,14 +406,14 @@ inline VectorRegister<int32_t, 256> shift_elements_right(VectorRegister<int32_t,
 inline int32_t reduce(VectorRegister<int32_t, 128> const &x)
 {
   __m128i r = _mm_hadd_epi32(x.data(), _mm_setzero_si128());
-  r        = _mm_hadd_epi32(r, _mm_setzero_si128());
+  r         = _mm_hadd_epi32(r, _mm_setzero_si128());
   return static_cast<int32_t>(_mm_extract_epi32(r, 0));
 }
 
 inline int32_t reduce(VectorRegister<int32_t, 256> const &x)
 {
-  VectorRegister<int32_t, 128> hi{_mm256_extractf128_si256(x.data(),1)};
-  VectorRegister<int32_t, 128> lo{_mm256_extractf128_si256(x.data(),0)};
+  VectorRegister<int32_t, 128> hi{_mm256_extractf128_si256(x.data(), 1)};
+  VectorRegister<int32_t, 128> lo{_mm256_extractf128_si256(x.data(), 0)};
   hi = hi + lo;
   return reduce(hi);
 }
@@ -447,29 +447,29 @@ inline bool any_less_than(VectorRegister<int32_t, 256> const &x,
 }
 
 inline bool all_equal_to(VectorRegister<int32_t, 128> const &x,
-                          VectorRegister<int32_t, 128> const &y)
+                         VectorRegister<int32_t, 128> const &y)
 {
   __m128i r = (x == y).data();
   return _mm_movemask_epi8(r) == 0xFFFF;
 }
 
 inline bool all_equal_to(VectorRegister<int32_t, 256> const &x,
-                          VectorRegister<int32_t, 256> const &y)
+                         VectorRegister<int32_t, 256> const &y)
 {
-  __m256i r = (x == y).data();
+  __m256i  r    = (x == y).data();
   uint32_t mask = static_cast<uint32_t>(_mm256_movemask_epi8(r));
   return mask == 0xFFFFFFFFUL;
 }
 
 inline bool any_equal_to(VectorRegister<int32_t, 128> const &x,
-                          VectorRegister<int32_t, 128> const &y)
+                         VectorRegister<int32_t, 128> const &y)
 {
   __m128i r = (x == y).data();
   return _mm_movemask_epi8(r) != 0;
 }
 
 inline bool any_equal_to(VectorRegister<int32_t, 256> const &x,
-                          VectorRegister<int32_t, 256> const &y)
+                         VectorRegister<int32_t, 256> const &y)
 {
   __m256i r = (x == y).data();
   return _mm256_movemask_epi8(r) != 0;

@@ -22,8 +22,8 @@
 #include "vectorise/arch/avx2/math/min.hpp"
 #endif
 
-#include <cstddef>
 #include <cmath>
+#include <cstddef>
 
 namespace fetch {
 namespace vectorise {
@@ -42,7 +42,7 @@ inline fetch::math::meta::IfIsFixedPoint<T, T> Min(T const &a, T const &b)
 
 template <typename T>
 inline VectorRegister<T, 8 * sizeof(T)> Min(VectorRegister<T, 8 * sizeof(T)> const &a,
-                                VectorRegister<T, 8 * sizeof(T)> const &b)
+                                            VectorRegister<T, 8 * sizeof(T)> const &b)
 {
   return VectorRegister<T, 8 * sizeof(T)>(fetch::vectorise::Min(a.data(), b.data()));
 }
@@ -50,11 +50,12 @@ inline VectorRegister<T, 8 * sizeof(T)> Min(VectorRegister<T, 8 * sizeof(T)> con
 template <typename T, std::size_t N>
 inline T Min(VectorRegister<T, N> const &a)
 {
-  constexpr std::size_t size = N/(8 * sizeof(T));
+  constexpr std::size_t                            size = N / (8 * sizeof(T));
   alignas(VectorRegister<T, N>::E_REGISTER_SIZE) T A[size];
   a.Store(A);
   T min{A[0]};
-  for (std::size_t i=1; i < size; i++) {
+  for (std::size_t i = 1; i < size; i++)
+  {
     min = Min(A[i], min);
   }
   return min;

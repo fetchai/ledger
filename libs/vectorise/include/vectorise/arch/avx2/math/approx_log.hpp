@@ -91,7 +91,7 @@ inline VectorRegister<double, 256> approx_log(VectorRegister<double, 256> const 
     exponent = 11,
   };
 
-  alignas(32) constexpr uint64_t    mask[4]         = {uint64_t(-1), 0, 0 ,0};
+  alignas(32) constexpr uint64_t    mask[4]         = {uint64_t(-1), 0, 0, 0};
   constexpr double                  multiplier      = double(1ull << mantissa);
   constexpr double                  exponent_offset = (double(((1ull << (exponent - 1)) - 1)));
   const VectorRegister<double, 256> a(double(M_LN2 / multiplier));

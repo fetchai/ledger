@@ -48,8 +48,7 @@ public:
   VectorRegisterIterator(type const *d, std::size_t size)
     : ptr_((mm_register_type *)d)
     , end_((mm_register_type *)(d + size))
-  {
-  }
+  {}
 
   void Next(VectorRegisterType &m)
   {
@@ -68,6 +67,7 @@ public:
   {
     return end_;
   }
+
 private:
   mm_register_type *ptr_;
   mm_register_type *end_;

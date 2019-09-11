@@ -71,7 +71,8 @@ template <typename T, typename R>
 using IfNoVectorSupportFor = typename std::enable_if<!HasVectorSupport<T>::value, R>::type;
 
 template <typename T>
-static constexpr bool IsVectorRegister = std::is_base_of<vectorise::BaseVectorRegisterType, T>::value;
+static constexpr bool IsVectorRegister =
+    std::is_base_of<vectorise::BaseVectorRegisterType, T>::value;
 
 template <typename T>
 static constexpr bool IsNotVectorRegister = !IsVectorRegister<T>;

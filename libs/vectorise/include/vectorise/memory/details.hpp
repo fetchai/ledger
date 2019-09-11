@@ -36,7 +36,7 @@ struct MatrixApplyFreeFunction
   {
     using signature_type =
         typename MatrixApplyFreeFunction<B, R, Args...,
-                                          B const &>::template Unroll<Remaining...>::signature_type;
+                                         B const &>::template Unroll<Remaining...>::signature_type;
 
     static R Apply(B const *regs, signature_type &&fnc, B &ret, Args &&... args)
     {

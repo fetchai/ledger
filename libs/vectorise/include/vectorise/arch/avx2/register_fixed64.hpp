@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/fixed_point/fixed_point.hpp"
 #include "vectorise/arch/avx2/register_int64.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 
 #include <cmath>
 #include <cstddef>
@@ -74,12 +74,12 @@ public:
     return data_;
   }
 
-  void Store(type * ptr) const
+  void Store(type *ptr) const
   {
     _mm_store_si128(reinterpret_cast<mm_register_type *>(ptr), data_);
   }
 
-  void Stream(type * ptr) const
+  void Stream(type *ptr) const
   {
     _mm_stream_si128(reinterpret_cast<mm_register_type *>(ptr), data_);
   }
@@ -139,12 +139,12 @@ public:
     return data_;
   }
 
-  void Store(type * ptr) const
+  void Store(type *ptr) const
   {
     _mm256_store_si256(reinterpret_cast<mm_register_type *>(ptr), data_);
   }
 
-  void Stream(type * ptr) const
+  void Stream(type *ptr) const
   {
     _mm256_stream_si256(reinterpret_cast<mm_register_type *>(ptr), data_);
   }
@@ -162,7 +162,7 @@ private:
   mm_register_type data_;
 };
 
-template<>
+template <>
 inline std::ostream &operator<<(std::ostream &s, VectorRegister<fixed_point::fp64_t, 128> const &n)
 {
   alignas(16) fixed_point::fp64_t out[4];
@@ -174,7 +174,7 @@ inline std::ostream &operator<<(std::ostream &s, VectorRegister<fixed_point::fp6
   return s;
 }
 
-template<>
+template <>
 inline std::ostream &operator<<(std::ostream &s, VectorRegister<fixed_point::fp64_t, 256> const &n)
 {
   alignas(32) fixed_point::fp64_t out[8];
@@ -238,24 +238,26 @@ inline std::ostream &operator<<(std::ostream &s, __int128_t const &n)
   return s;
 }
 
-inline VectorRegister<fixed_point::fp64_t, 128> operator*(VectorRegister<fixed_point::fp64_t, 128> const &a,
-                                              VectorRegister<fixed_point::fp64_t, 128> const &b)
+inline VectorRegister<fixed_point::fp64_t, 128> operator*(
+    VectorRegister<fixed_point::fp64_t, 128> const &a,
+    VectorRegister<fixed_point::fp64_t, 128> const &b)
 {
   alignas(32) fixed_point::fp64_t::NextType a128[2], b128[2], prod[2];
-  a128[0] = _mm_extract_epi64(a.data(), 0);
-  a128[1] = _mm_extract_epi64(a.data(), 1);
-  b128[0] = _mm_extract_epi64(b.data(), 0);
-  b128[1] = _mm_extract_epi64(b.data(), 1);
-  prod[0] = a128[0] * b128[0];
-  prod[1] = a128[1] * b128[1];
+  a128[0]       = _mm_extract_epi64(a.data(), 0);
+  a128[1]       = _mm_extract_epi64(a.data(), 1);
+  b128[0]       = _mm_extract_epi64(b.data(), 0);
+  b128[1]       = _mm_extract_epi64(b.data(), 1);
+  prod[0]       = a128[0] * b128[0];
+  prod[1]       = a128[1] * b128[1];
   __m256i vprod = _mm256_load_si256(reinterpret_cast<__m256i const *>(prod));
-  vprod = _mm256_bsrli_epi128(vprod, 4);
-  vprod = _mm256_permute4x64_epi64(vprod, 0x8);
+  vprod         = _mm256_bsrli_epi128(vprod, 4);
+  vprod         = _mm256_permute4x64_epi64(vprod, 0x8);
   return VectorRegister<fixed_point::fp64_t, 128>(_mm256_extractf128_si256(vprod, 0));
 }
 
-inline VectorRegister<fixed_point::fp64_t, 256> operator*(VectorRegister<fixed_point::fp64_t, 256> const &a,
-                                              VectorRegister<fixed_point::fp64_t, 256> const &b)
+inline VectorRegister<fixed_point::fp64_t, 256> operator*(
+    VectorRegister<fixed_point::fp64_t, 256> const &a,
+    VectorRegister<fixed_point::fp64_t, 256> const &b)
 {
   // Use the above multiplication in 2 steps, for each 128bit lane
   VectorRegister<fixed_point::fp64_t, 128> a_lo(_mm256_extractf128_si256(a.data(), 0));
@@ -270,8 +272,9 @@ inline VectorRegister<fixed_point::fp64_t, 256> operator*(VectorRegister<fixed_p
   return prod;
 }
 
-inline VectorRegister<fixed_point::fp64_t, 128> operator/(VectorRegister<fixed_point::fp64_t, 128> const &a,
-                                              VectorRegister<fixed_point::fp64_t, 128> const &b)
+inline VectorRegister<fixed_point::fp64_t, 128> operator/(
+    VectorRegister<fixed_point::fp64_t, 128> const &a,
+    VectorRegister<fixed_point::fp64_t, 128> const &b)
 {
   // TODO(private 440): AVX implementation required
   alignas(VectorRegister<fixed_point::fp64_t, 128>::E_REGISTER_SIZE) fixed_point::fp64_t d1[2];
@@ -288,8 +291,9 @@ inline VectorRegister<fixed_point::fp64_t, 128> operator/(VectorRegister<fixed_p
   return VectorRegister<fixed_point::fp64_t, 128>(ret);
 }
 
-inline VectorRegister<fixed_point::fp64_t, 256> operator/(VectorRegister<fixed_point::fp64_t, 256> const &a,
-                                                          VectorRegister<fixed_point::fp64_t, 256> const &b)
+inline VectorRegister<fixed_point::fp64_t, 256> operator/(
+    VectorRegister<fixed_point::fp64_t, 256> const &a,
+    VectorRegister<fixed_point::fp64_t, 256> const &b)
 {
 
   // TODO(private 440): SSE implementation required
@@ -337,14 +341,12 @@ inline VectorRegister<fixed_point::fp64_t, 128> shift_elements_right(
   return VectorRegister<fixed_point::fp64_t, 128>(fixed_point::fp64_t{});
 }
 
-inline fixed_point::fp64_t first_element(
-    VectorRegister<fixed_point::fp64_t, 128> const &x)
+inline fixed_point::fp64_t first_element(VectorRegister<fixed_point::fp64_t, 128> const &x)
 {
   return fixed_point::fp64_t::FromBase(first_element(VectorRegister<int64_t, 128>(x.data())));
 }
 
-inline fixed_point::fp64_t first_element(
-    VectorRegister<fixed_point::fp64_t, 256> const &x)
+inline fixed_point::fp64_t first_element(VectorRegister<fixed_point::fp64_t, 256> const &x)
 {
   return fixed_point::fp64_t::FromBase(first_element(VectorRegister<int64_t, 256>(x.data())));
 }
@@ -357,8 +359,8 @@ inline fixed_point::fp64_t reduce(VectorRegister<fixed_point::fp64_t, 128> const
 
 inline fixed_point::fp64_t reduce(VectorRegister<fixed_point::fp64_t, 256> const &x)
 {
-  VectorRegister<fixed_point::fp64_t, 128> hi{_mm256_extractf128_si256(x.data(),1)};
-  VectorRegister<fixed_point::fp64_t, 128> lo{_mm256_extractf128_si256(x.data(),0)};
+  VectorRegister<fixed_point::fp64_t, 128> hi{_mm256_extractf128_si256(x.data(), 1)};
+  VectorRegister<fixed_point::fp64_t, 128> lo{_mm256_extractf128_si256(x.data(), 0)};
   hi = hi + lo;
   return reduce(hi);
 }
@@ -392,29 +394,29 @@ inline bool any_less_than(VectorRegister<fixed_point::fp64_t, 256> const &x,
 }
 
 inline bool all_equal_to(VectorRegister<fixed_point::fp64_t, 128> const &x,
-                          VectorRegister<fixed_point::fp64_t, 128> const &y)
+                         VectorRegister<fixed_point::fp64_t, 128> const &y)
 {
   __m128i r = (x == y).data();
   return _mm_movemask_epi8(r) == 0xFFFF;
 }
 
 inline bool all_equal_to(VectorRegister<fixed_point::fp64_t, 256> const &x,
-                          VectorRegister<fixed_point::fp64_t, 256> const &y)
+                         VectorRegister<fixed_point::fp64_t, 256> const &y)
 {
-  __m256i r = (x == y).data();
+  __m256i  r    = (x == y).data();
   uint64_t mask = static_cast<uint64_t>(_mm256_movemask_epi8(r));
   return mask == 0xffffffffffffffffULL;
 }
 
 inline bool any_equal_to(VectorRegister<fixed_point::fp64_t, 128> const &x,
-                          VectorRegister<fixed_point::fp64_t, 128> const &y)
+                         VectorRegister<fixed_point::fp64_t, 128> const &y)
 {
   __m128i r = (x == y).data();
   return _mm_movemask_epi8(r) != 0;
 }
 
 inline bool any_equal_to(VectorRegister<fixed_point::fp64_t, 256> const &x,
-                          VectorRegister<fixed_point::fp64_t, 256> const &y)
+                         VectorRegister<fixed_point::fp64_t, 256> const &y)
 {
   __m256i r = (x == y).data();
   return _mm256_movemask_epi8(r) != 0;

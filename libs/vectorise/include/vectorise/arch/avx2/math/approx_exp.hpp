@@ -44,12 +44,14 @@ inline VectorRegister<double, 64> approx_exp(VectorRegister<double, 64> const &x
 //   return VectorRegister<int64_t, 64>(std::exp(x.data()));
 // }
 
-inline VectorRegister<fixed_point::fp32_t, 32> approx_exp(VectorRegister<fixed_point::fp32_t, 32> const &x)
+inline VectorRegister<fixed_point::fp32_t, 32> approx_exp(
+    VectorRegister<fixed_point::fp32_t, 32> const &x)
 {
   return VectorRegister<fixed_point::fp32_t, 32>(fixed_point::fp32_t::Exp(x.data()));
 }
 
-inline VectorRegister<fixed_point::fp64_t, 64> approx_exp(VectorRegister<fixed_point::fp64_t, 64> const &x)
+inline VectorRegister<fixed_point::fp64_t, 64> approx_exp(
+    VectorRegister<fixed_point::fp64_t, 64> const &x)
 {
   return VectorRegister<fixed_point::fp64_t, 64>(fixed_point::fp64_t::Exp(x.data()));
 }
@@ -129,10 +131,10 @@ inline VectorRegister<double, 256> approx_exp(VectorRegister<double, 256> const 
   const VectorRegister<double, 256> a(double(multiplier / M_LN2));
   const VectorRegister<double, 256> b(double(exponent_offset * multiplier - 60801));
 
-  VectorRegister<double, 256> y    = a * x + b;
+  VectorRegister<double, 256> y = a * x + b;
   // _mm256_cvtpd_epu64 not available until AVX512VL + AVX512DQ, need to emulated it, disabled
-  __m256i                     conv = _mm256_castpd_si256(y.data()); // _mm256_cvtpd_epu64(y.data());
-  conv                             = _mm256_and_si256(conv, *reinterpret_cast<__m256i const *>(mask));
+  __m256i conv = _mm256_castpd_si256(y.data());  // _mm256_cvtpd_epu64(y.data());
+  conv         = _mm256_and_si256(conv, *reinterpret_cast<__m256i const *>(mask));
 
   conv = _mm256_shuffle_epi32(conv, 3 | (0 << 2) | (3 << 4) | (1 << 6));
 

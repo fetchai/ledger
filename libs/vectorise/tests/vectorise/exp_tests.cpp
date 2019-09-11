@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vectorise/math/standard_functions.hpp"
 #include "vectorise/memory/array.hpp"
 #include "vectorise/memory/shared_array.hpp"
-#include "vectorise/math/standard_functions.hpp"
 #include "vectorise/vectorise.hpp"
 
 #include "gtest/gtest.h"
@@ -32,8 +32,7 @@ using vector_type = typename array_type::VectorRegisterType;
 
 void Exponentials(array_type const &A, array_type &C)
 {
-  C.in_parallel().Apply([](auto const &a, auto &c) { c = fetch::vectorise::exp(a); },
-                        A);
+  C.in_parallel().Apply([](auto const &a, auto &c) { c = fetch::vectorise::exp(a); }, A);
 }
 
 TEST(vectorise_exp_gtest, exp_test)

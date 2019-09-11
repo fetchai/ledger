@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/memory/shared_array.hpp"
 #include "vectorise/math/standard_functions.hpp"
+#include "vectorise/memory/shared_array.hpp"
 
 #include "benchmark/benchmark.h"
 
@@ -48,7 +48,7 @@ protected:
   {}
 
   ndarray_type a_, b_;
-}; 
+};
 BENCHMARK_TEMPLATE_F(ParallelDispatcherKernelBench, kernel_implementation, double)
 (benchmark::State &st)
 {
@@ -59,7 +59,6 @@ BENCHMARK_TEMPLATE_F(ParallelDispatcherKernelBench, kernel_implementation, doubl
     // Here we use a kernel to compute the same, using an approximation
     a_.in_parallel().Apply(
         [one](auto const &x, auto &y) {
-
           // We approximate the exponential function by a clever first order
           // Taylor expansion
           y = fetch::vectorise::approx_exp(decltype(x)(one) + approx_log(x));

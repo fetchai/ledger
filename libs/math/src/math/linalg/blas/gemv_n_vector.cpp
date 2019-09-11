@@ -78,24 +78,23 @@ void Blas<S, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
       {
         Type zero{0.0};
 
-        auto                 ret_slice = y.data().slice(0, y.padded_size());
+        auto          ret_slice = y.data().slice(0, y.padded_size());
         memory::Range range(std::size_t(0), std::size_t(leny));
-        ret_slice.in_parallel().RangedApply(
-          range, [zero](auto &&vw_fv_y) { 
-            vw_fv_y = static_cast<std::remove_reference_t<decltype(vw_fv_y)>>(zero);
-          });
+        ret_slice.in_parallel().RangedApply(range, [zero](auto &&vw_fv_y) {
+          vw_fv_y = static_cast<std::remove_reference_t<decltype(vw_fv_y)>>(zero);
+        });
       }
       else
       {
-        auto                 ret_slice  = y.data().slice(0, y.padded_size());
-        auto                 slice_fv_y = y.data().slice(0, y.padded_size());
+        auto          ret_slice  = y.data().slice(0, y.padded_size());
+        auto          slice_fv_y = y.data().slice(0, y.padded_size());
         memory::Range range(std::size_t(0), std::size_t(leny));
         ret_slice.in_parallel().RangedApplyMultiple(
-          range,
-          [beta](auto const &vr_fv_y, auto &vw_fv_y) {
-            vw_fv_y = static_cast<std::remove_reference_t<decltype(vr_fv_y)>>(beta) * vr_fv_y;
-          },
-          slice_fv_y);
+            range,
+            [beta](auto const &vr_fv_y, auto &vw_fv_y) {
+              vw_fv_y = static_cast<std::remove_reference_t<decltype(vr_fv_y)>>(beta) * vr_fv_y;
+            },
+            slice_fv_y);
       }
     }
     else
@@ -139,7 +138,8 @@ void Blas<S, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
       ret_slice.in_parallel().RangedApplyMultiple(
           range,
           [temp](auto const &vr_fv_y, auto const &vr_a_j, auto &vw_fv_y) {
-            vw_fv_y = vr_fv_y + static_cast<std::remove_reference_t<decltype(vw_fv_y)>>(temp) * vr_a_j;
+            vw_fv_y =
+                vr_fv_y + static_cast<std::remove_reference_t<decltype(vw_fv_y)>>(temp) * vr_a_j;
           },
           slice_fv_y, slice_a_j);
       jx = jx + incx;

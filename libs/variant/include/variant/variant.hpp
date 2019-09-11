@@ -21,8 +21,8 @@
 #include "crypto/fnv.hpp"
 #include "meta/type_traits.hpp"
 #include "variant/detail/element_pool.hpp"
-#include "vectorise/meta/math_type_traits.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+#include "vectorise/meta/math_type_traits.hpp"
 
 #include <cassert>
 #include <cstddef>

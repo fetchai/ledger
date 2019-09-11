@@ -19,9 +19,9 @@
 
 #include "math/fundamental_operators.hpp"
 #include "math/matrix_operations.hpp"
-#include "vectorise/math/max.hpp"
 #include "math/trigonometry.hpp"
 #include "ml/ops/ops.hpp"
+#include "vectorise/math/max.hpp"
 
 #include <cassert>
 #include <vector>

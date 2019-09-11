@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/math/max.hpp"
 #include "math/fundamental_operators.hpp"
 #include "math/standard_functions/exp.hpp"
+#include "vectorise/math/max.hpp"
 
 #include <cassert>
 

@@ -18,9 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "vectorise/math/max.hpp"
 #include "math/meta/math_type_traits.hpp"
 #include "math/standard_functions/pow.hpp"
+#include "vectorise/math/max.hpp"
 
 namespace fetch {
 namespace math {

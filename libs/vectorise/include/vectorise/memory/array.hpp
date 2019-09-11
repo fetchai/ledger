@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-
 #include "meta/log2.hpp"
 #include "vectorise/fixed_point/type_traits.hpp"
 #include "vectorise/memory/iterator.hpp"

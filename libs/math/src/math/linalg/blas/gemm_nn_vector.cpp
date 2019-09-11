@@ -48,10 +48,10 @@ void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
       {
         Type zero{0.0};
 
-        auto                 ret_slice = c.data().slice(c.padded_height() * j, c.height());
+        auto          ret_slice = c.data().slice(c.padded_height() * j, c.height());
         memory::Range range(std::size_t(0), std::size_t(c.height()));
-        ret_slice.in_parallel().RangedApply(range,
-              [zero](auto &vw_c_j) { vw_c_j = decltype(vw_c_j)(zero); });
+        ret_slice.in_parallel().RangedApply(
+            range, [zero](auto &vw_c_j) { vw_c_j = decltype(vw_c_j)(zero); });
       }
     }
     else
@@ -78,13 +78,12 @@ void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
     std::size_t l;
     if (beta == static_cast<Type>(0.0))
     {
-      Type zero{0.0};
-      auto                 ret_slice = c.data().slice(c.padded_height() * j, c.height());
+      Type          zero{0.0};
+      auto          ret_slice = c.data().slice(c.padded_height() * j, c.height());
       memory::Range range(std::size_t(0), std::size_t(c.height()));
-      ret_slice.in_parallel().RangedApply(
-          range, [zero](auto &&vw_c_j) { 
-            vw_c_j = static_cast<std::remove_reference_t<decltype(vw_c_j)>>(zero);
-          });
+      ret_slice.in_parallel().RangedApply(range, [zero](auto &&vw_c_j) {
+        vw_c_j = static_cast<std::remove_reference_t<decltype(vw_c_j)>>(zero);
+      });
     }
     else if (beta != static_cast<Type>(1.0))
     {

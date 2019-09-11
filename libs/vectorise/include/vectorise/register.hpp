@@ -48,8 +48,8 @@ struct VectorRegisterSize
     };                                \
   }
 
-#include <cstddef>
 #include <cmath>
+#include <cstddef>
 #include <ostream>
 
 namespace details {
@@ -120,15 +120,15 @@ public:
   {
     return data_;
   }
-  type &data() 
+  type &data()
   {
     return data_;
   }
 
-#define FETCH_ADD_OPERATOR(OP)                            \
+#define FETCH_ADD_OPERATOR(OP)                                  \
   VectorRegister operator OP(VectorRegister const &other) const \
-  {                                                       \
-    return VectorRegister(type(data_ OP other.data_));    \
+  {                                                             \
+    return VectorRegister(type(data_ OP other.data_));          \
   }
   APPLY_OPERATOR_LIST(FETCH_ADD_OPERATOR);
 #undef FETCH_ADD_OPERATOR
@@ -192,30 +192,25 @@ inline T reduce(VectorRegister<T, N> const &x)
 }
 
 template <typename T, std::size_t N = 8 * sizeof(T)>
-inline bool all_less_than(VectorRegister<T, N> const &x,
-                          VectorRegister<T, N> const &y)
+inline bool all_less_than(VectorRegister<T, N> const &x, VectorRegister<T, N> const &y)
 {
   return x.data() < y.data();
 }
 
 template <typename T, std::size_t N = 8 * sizeof(T)>
-inline bool any_less_than(VectorRegister<T, N> const &x,
-                          VectorRegister<T, N> const &y)
+inline bool any_less_than(VectorRegister<T, N> const &x, VectorRegister<T, N> const &y)
 {
   return x.data() < y.data();
 }
 
-
 template <typename T, std::size_t N = 8 * sizeof(T)>
-inline bool all_equal_to(VectorRegister<T, N> const &x,
-                         VectorRegister<T, N> const &y)
+inline bool all_equal_to(VectorRegister<T, N> const &x, VectorRegister<T, N> const &y)
 {
-return x.data() == y.data();
+  return x.data() == y.data();
 }
 
 template <typename T, std::size_t N = 8 * sizeof(T)>
-inline bool any_equal_to(VectorRegister<T, N> const &x,
-                         VectorRegister<T, N> const &y)
+inline bool any_equal_to(VectorRegister<T, N> const &x, VectorRegister<T, N> const &y)
 {
   return x.data() == y.data();
 }

@@ -24,9 +24,8 @@
 #include "vectorise/math/max.hpp"
 #include "vectorise/math/min.hpp"
 
-
-#include <cstddef>
 #include <cmath>
+#include <cstddef>
 
 namespace fetch {
 namespace vectorise {

@@ -49,12 +49,11 @@ void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
       {
         Type zero{0.0};
 
-        auto                 ret_slice = c.data().slice(c.padded_height() * j, c.height());
+        auto          ret_slice = c.data().slice(c.padded_height() * j, c.height());
         memory::Range range(std::size_t(0), std::size_t(c.height()));
-        ret_slice.in_parallel().RangedApply(
-          range, [zero](auto &&vw_c_j) { 
-            vw_c_j = static_cast<std::remove_reference_t<decltype(vw_c_j)>>(zero);
-          });
+        ret_slice.in_parallel().RangedApply(range, [zero](auto &&vw_c_j) {
+          vw_c_j = static_cast<std::remove_reference_t<decltype(vw_c_j)>>(zero);
+        });
       }
     }
     else
@@ -65,11 +64,11 @@ void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
         auto slice_c_j = c.data().slice(c.padded_height() * std::size_t(j), c.padded_height());
         memory::Range range(std::size_t(0), std::size_t(c.height()));
         ret_slice.in_parallel().RangedApplyMultiple(
-          range,
-          [beta](auto const &vr_c_j, auto &vw_c_j) {
-            vw_c_j = static_cast<std::remove_reference_t<decltype(vw_c_j)>>(beta) * vr_c_j;
-          },
-          slice_c_j);
+            range,
+            [beta](auto const &vr_c_j, auto &vw_c_j) {
+              vw_c_j = static_cast<std::remove_reference_t<decltype(vw_c_j)>>(beta) * vr_c_j;
+            },
+            slice_c_j);
       }
     }
 
@@ -86,11 +85,7 @@ void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
       auto slice_b_j = b.data().slice(b.padded_height() * std::size_t(j), b.padded_height());
       memory::Range range(std::size_t(0), std::size_t(a.height()));
       temp = slice_a_i.in_parallel().SumReduce(
-          range,
-          [](auto const &vr_a_i, auto const &vr_b_j) {
-            return vr_a_i * vr_b_j;
-          },
-          slice_b_j);
+          range, [](auto const &vr_a_i, auto const &vr_b_j) { return vr_a_i * vr_b_j; }, slice_b_j);
       if (beta == static_cast<Type>(0.0))
       {
         c(i, j) = alpha * temp;

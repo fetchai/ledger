@@ -88,57 +88,57 @@ class VectorRegisterTest : public ::testing::Test
 };
 
 #ifdef __AVX2__
-using MyTypes = ::testing::Types< fetch::vectorise::VectorRegister<float, 128>,
-                                  fetch::vectorise::VectorRegister<float, 256>, 
-                                  fetch::vectorise::VectorRegister<int32_t, 128>,
-                                  fetch::vectorise::VectorRegister<int32_t, 256>,
-                                  fetch::vectorise::VectorRegister<int64_t, 128>,
-                                  fetch::vectorise::VectorRegister<int64_t, 256>,
-                                  fetch::vectorise::VectorRegister<fetch::fixed_point::fp32_t, 128>,
-                                  fetch::vectorise::VectorRegister<fetch::fixed_point::fp32_t, 256>,
-                                  fetch::vectorise::VectorRegister<fetch::fixed_point::fp64_t, 128>,
-                                  fetch::vectorise::VectorRegister<fetch::fixed_point::fp64_t, 256>,
-                                  fetch::vectorise::VectorRegister<double, 128>,
-                                  fetch::vectorise::VectorRegister<double, 256>>;
+using MyTypes = ::testing::Types<
+    fetch::vectorise::VectorRegister<float, 128>, fetch::vectorise::VectorRegister<float, 256>,
+    fetch::vectorise::VectorRegister<int32_t, 128>, fetch::vectorise::VectorRegister<int32_t, 256>,
+    fetch::vectorise::VectorRegister<int64_t, 128>, fetch::vectorise::VectorRegister<int64_t, 256>,
+    fetch::vectorise::VectorRegister<fetch::fixed_point::fp32_t, 128>,
+    fetch::vectorise::VectorRegister<fetch::fixed_point::fp32_t, 256>,
+    fetch::vectorise::VectorRegister<fetch::fixed_point::fp64_t, 128>,
+    fetch::vectorise::VectorRegister<fetch::fixed_point::fp64_t, 256>,
+    fetch::vectorise::VectorRegister<double, 128>, fetch::vectorise::VectorRegister<double, 256>>;
 
-using MyFPTypes = ::testing::Types<fetch::vectorise::VectorRegister<float, 256>, 
-                                  fetch::vectorise::VectorRegister<fetch::fixed_point::fp32_t, 256>,
-                                  fetch::vectorise::VectorRegister<fetch::fixed_point::fp64_t, 256>,
-                                  fetch::vectorise::VectorRegister<double, 256>>;
+using MyFPTypes =
+    ::testing::Types<fetch::vectorise::VectorRegister<float, 256>,
+                     fetch::vectorise::VectorRegister<fetch::fixed_point::fp32_t, 256>,
+                     fetch::vectorise::VectorRegister<fetch::fixed_point::fp64_t, 256>,
+                     fetch::vectorise::VectorRegister<double, 256>>;
 #else
-using MyTypes = ::testing::Types< fetch::vectorise::VectorRegister<float, 32>,
-                                  fetch::vectorise::VectorRegister<int32_t, 32>,
-                                  fetch::vectorise::VectorRegister<int64_t, 64>,
-                                  fetch::vectorise::VectorRegister<fetch::fixed_point::fp32_t, 32>,
-                                  fetch::vectorise::VectorRegister<fetch::fixed_point::fp64_t, 64>,
-                                  fetch::vectorise::VectorRegister<double, 64>>;
+using MyTypes = ::testing::Types<fetch::vectorise::VectorRegister<float, 32>,
+                                 fetch::vectorise::VectorRegister<int32_t, 32>,
+                                 fetch::vectorise::VectorRegister<int64_t, 64>,
+                                 fetch::vectorise::VectorRegister<fetch::fixed_point::fp32_t, 32>,
+                                 fetch::vectorise::VectorRegister<fetch::fixed_point::fp64_t, 64>,
+                                 fetch::vectorise::VectorRegister<double, 64>>;
 
-using MyFPTypes = ::testing::Types< fetch::vectorise::VectorRegister<float, 32>,
-                                  fetch::vectorise::VectorRegister<fetch::fixed_point::fp32_t, 32>,
-                                  fetch::vectorise::VectorRegister<fetch::fixed_point::fp64_t, 64>,
-                                  fetch::vectorise::VectorRegister<double, 64>>;
+using MyFPTypes = ::testing::Types<fetch::vectorise::VectorRegister<float, 32>,
+                                   fetch::vectorise::VectorRegister<fetch::fixed_point::fp32_t, 32>,
+                                   fetch::vectorise::VectorRegister<fetch::fixed_point::fp64_t, 64>,
+                                   fetch::vectorise::VectorRegister<double, 64>>;
 #endif
-
 
 TYPED_TEST_CASE(VectorRegisterTest, MyTypes);
 TYPED_TEST(VectorRegisterTest, basic_tests)
 {
   using type = typename TypeParam::type;
 
-  alignas(TypeParam::E_REGISTER_SIZE) type  a[TypeParam::E_BLOCK_COUNT], b[TypeParam::E_BLOCK_COUNT],
-                                            sum[TypeParam::E_BLOCK_COUNT], diff[TypeParam::E_BLOCK_COUNT],
-                                            prod[TypeParam::E_BLOCK_COUNT], div[TypeParam::E_BLOCK_COUNT];
+  alignas(TypeParam::E_REGISTER_SIZE) type a[TypeParam::E_BLOCK_COUNT], b[TypeParam::E_BLOCK_COUNT],
+      sum[TypeParam::E_BLOCK_COUNT], diff[TypeParam::E_BLOCK_COUNT], prod[TypeParam::E_BLOCK_COUNT],
+      div[TypeParam::E_BLOCK_COUNT];
 
   type real_max{type(0)}, real_min{fetch::math::numeric_max<type>()};
   for (size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
   {
-    // We don't want to check overflows right now, so we pick random numbers, but well within the type's limits
-    a[i] = type((double(random()) / (double)(RAND_MAX)) * (double)(fetch::math::numeric_max<type>()/2) );
-    b[i] = type((double(random()) / (double)(RAND_MAX)) * (double)(fetch::math::numeric_max<type>()/2) );
-    sum[i] = a[i] + b[i];
-    diff[i] = a[i] - b[i];
-    prod[i] = a[i] * b[i];
-    div[i] = a[i] / b[i];
+    // We don't want to check overflows right now, so we pick random numbers, but well within the
+    // type's limits
+    a[i]     = type((double(random()) / (double)(RAND_MAX)) *
+                (double)(fetch::math::numeric_max<type>() / 2));
+    b[i]     = type((double(random()) / (double)(RAND_MAX)) *
+                (double)(fetch::math::numeric_max<type>() / 2));
+    sum[i]   = a[i] + b[i];
+    diff[i]  = a[i] - b[i];
+    prod[i]  = a[i] * b[i];
+    div[i]   = a[i] / b[i];
     real_max = fetch::vectorise::Max(a[i], real_max);
     real_max = fetch::vectorise::Max(b[i], real_max);
     real_min = fetch::vectorise::Min(a[i], real_min);
@@ -147,14 +147,14 @@ TYPED_TEST(VectorRegisterTest, basic_tests)
   TypeParam va{a};
   TypeParam vb{b};
 
-  auto vsum = va + vb;
+  auto vsum  = va + vb;
   auto vdiff = va - vb;
   auto vprod = va * vb;
-  auto vdiv = va / vb;
+  auto vdiv  = va / vb;
 
   TypeParam vtmp1{sum}, vtmp2{diff}, vtmp3{prod}, vtmp4{div};
   EXPECT_TRUE(all_equal_to(vtmp1, vsum));
-  EXPECT_TRUE(all_equal_to(vtmp2, vdiff));  
+  EXPECT_TRUE(all_equal_to(vtmp2, vdiff));
   EXPECT_TRUE(all_equal_to(vtmp3, vprod));
   EXPECT_TRUE(all_equal_to(vtmp4, vdiv));
 
@@ -167,11 +167,11 @@ TYPED_TEST(VectorRegisterTest, basic_tests)
   EXPECT_EQ(hsum, reduce1);
 
   TypeParam vmax = Max(va, vb);
-  type max = Max(vmax);
+  type      max  = Max(vmax);
   EXPECT_EQ(max, real_max);
-  
+
   TypeParam vmin = Min(va, vb);
-  type min = Min(vmin);
+  type      min  = Min(vmin);
   EXPECT_EQ(min, real_min);
 }
 
@@ -183,17 +183,17 @@ class VectorReduceTest : public ::testing::Test
 TYPED_TEST_CASE(VectorReduceTest, MyFPTypes);
 TYPED_TEST(VectorReduceTest, reduce_tests)
 {
-  using type = typename TypeParam::type;
-  using array_type  = fetch::memory::SharedArray<type>;
+  using type       = typename TypeParam::type;
+  using array_type = fetch::memory::SharedArray<type>;
 
-  std::size_t N = 20, offset = 2;
+  std::size_t                                    N = 20, offset = 2;
   alignas(TypeParam::E_REGISTER_SIZE) array_type A(N), B(N), C(N);
   type sum{0}, partial_sum{0}, max_a{type(0)}, min_a{type(N)}, partial_max{0}, partial_min{type(N)};
 
   for (std::size_t i = 0; i < N; ++i)
   {
     A[i] = fetch::math::Sin(type(-0.1) * type(i));
-    B[i] = fetch::math::Sin(type(0.1) * type(i+1));
+    B[i] = fetch::math::Sin(type(0.1) * type(i + 1));
     sum += A[i] + B[i];
     max_a = fetch::vectorise::Max(A[i], max_a);
     min_a = fetch::vectorise::Min(A[i], min_a);
@@ -207,86 +207,52 @@ TYPED_TEST(VectorReduceTest, reduce_tests)
 
   type ret;
   ret = A.in_parallel().Reduce(
-        [](auto const &a, auto const &b) {
-          return fetch::vectorise::Max(a, b);
-        }, 
-        [](auto const &a) {
-          return fetch::vectorise::Max(a);
-        });
+      [](auto const &a, auto const &b) { return fetch::vectorise::Max(a, b); },
+      [](auto const &a) { return fetch::vectorise::Max(a); });
   EXPECT_EQ(ret, max_a);
 
-  fetch::memory::Range range(2, A.size() -2);
-  ret = A.in_parallel().Reduce(range,
-        [](auto const &a, auto const &b) {
-          return fetch::vectorise::Max(a, b);
-        }, 
-        [](auto const &a) {
-          return fetch::vectorise::Max(a);
-        });
+  fetch::memory::Range range(2, A.size() - 2);
+  ret = A.in_parallel().Reduce(
+      range, [](auto const &a, auto const &b) { return fetch::vectorise::Max(a, b); },
+      [](auto const &a) { return fetch::vectorise::Max(a); });
   EXPECT_EQ(ret, partial_max);
 
   ret = A.in_parallel().Reduce(
-        [](auto const &a, auto const &b) {
-          return fetch::vectorise::Min(a, b);
-        }, 
-        [](auto const &a) {
-          return fetch::vectorise::Min(a);
-        }, type(N*N));
+      [](auto const &a, auto const &b) { return fetch::vectorise::Min(a, b); },
+      [](auto const &a) { return fetch::vectorise::Min(a); }, type(N * N));
   EXPECT_EQ(ret, min_a);
 
-  ret = A.in_parallel().Reduce(range,
-        [](auto const &a, auto const &b) {
-          return fetch::vectorise::Min(a, b);
-        }, 
-        [](auto const &a) {
-          return fetch::vectorise::Min(a);
-        }, type(N*N));
+  ret = A.in_parallel().Reduce(
+      range, [](auto const &a, auto const &b) { return fetch::vectorise::Min(a, b); },
+      [](auto const &a) { return fetch::vectorise::Min(a); }, type(N * N));
   EXPECT_EQ(ret, partial_min);
 
-  ret = A.in_parallel().SumReduce([](auto const &a, auto const &b) {
-          return a + b;
-        }, 
-        B);
+  ret = A.in_parallel().SumReduce([](auto const &a, auto const &b) { return a + b; }, B);
   EXPECT_EQ(ret, sum);
 
-  ret = A.in_parallel().SumReduce(range,
-        [](auto const &a, auto const &b) {
-          return a + b;
-        }, 
-        B);
+  ret = A.in_parallel().SumReduce(range, [](auto const &a, auto const &b) { return a + b; }, B);
   EXPECT_EQ(ret, partial_sum);
 
-  C.in_parallel().Apply(
-    [](auto const &a, auto const &b, auto &c) {
-        c = a + b;
-    }, 
-    A, B);
+  C.in_parallel().Apply([](auto const &a, auto const &b, auto &c) { c = a + b; }, A, B);
 
   for (std::size_t i = 0; i < N; ++i)
   {
     EXPECT_EQ(C[i], A[i] + B[i]);
   }
 
-  type beta(4);
+  type                 beta(4);
   fetch::memory::Range small_range(6, 15);
   C.in_parallel().RangedApplyMultiple(
-    small_range,
-    [beta](auto const &a, auto const &b, auto &c) {
-        c = a * decltype(a)(beta) + b;
-    }, 
-    A, B);
+      small_range, [beta](auto const &a, auto const &b, auto &c) { c = a * decltype(a)(beta) + b; },
+      A, B);
 
   for (std::size_t i = 6; i < 15; ++i)
   {
-    EXPECT_EQ(C[i], A[i]*beta + B[i]);
+    EXPECT_EQ(C[i], A[i] * beta + B[i]);
   }
 
   // Assign tests, assign all of B to C
-  C.in_parallel().Apply(
-    [](auto const &a, auto &c) {
-        c = a;
-    }, 
-    B);
+  C.in_parallel().Apply([](auto const &a, auto &c) { c = a; }, B);
 
   for (std::size_t i = 0; i < N; ++i)
   {
@@ -294,12 +260,7 @@ TYPED_TEST(VectorReduceTest, reduce_tests)
   }
 
   // Assign range (6,15) of A to C
-  C.in_parallel().RangedApplyMultiple(
-    small_range,
-    [](auto const &a, auto &c) {
-        c = a;
-    }, 
-    A);
+  C.in_parallel().RangedApplyMultiple(small_range, [](auto const &a, auto &c) { c = a; }, A);
 
   for (std::size_t i = 6; i < 15; ++i)
   {

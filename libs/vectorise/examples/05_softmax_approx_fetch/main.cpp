@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vectorise/math/standard_functions.hpp"
 #include "vectorise/memory/array.hpp"
 #include "vectorise/memory/shared_array.hpp"
-#include "vectorise/math/standard_functions.hpp"
 
 #include <chrono>
 #include <cmath>
@@ -35,12 +35,12 @@ void SoftMax(array_type const &A, array_type &B)
   type sum{0};
 
   B.in_parallel().Apply(
-    [&sum](auto const &a, auto &b) {
-      decltype(a) e = approx_exp(a);
-      sum           = sum + reduce(e);
-      b             = e;
-    },
-    A);
+      [&sum](auto const &a, auto &b) {
+        decltype(a) e = approx_exp(a);
+        sum           = sum + reduce(e);
+        b             = e;
+      },
+      A);
 
   type scale(type(1.0 / sum));
   B.in_parallel().Apply([scale](auto const &a, auto &b) { b = a * decltype(a)(scale); }, B);

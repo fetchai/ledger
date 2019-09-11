@@ -364,10 +364,10 @@ public:
   /// Getter/Setter ///
   /////////////////////
 
-  constexpr Type Data() const;
-  constexpr void SetData(Type n) const;
+  constexpr Type        Data() const;
+  constexpr void        SetData(Type n) const;
   constexpr Type const *pointer() const;
-  constexpr Type *pointer();
+  constexpr Type *      pointer();
 
   ///////////////////////////////////////////////////////////////////
   /// FixedPoint implementations of common mathematical functions ///
