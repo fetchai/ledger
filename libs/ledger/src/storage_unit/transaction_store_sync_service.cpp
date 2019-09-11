@@ -203,7 +203,6 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingObjec
     return State::QUERY_OBJECT_COUNTS;
   }
 
-  state_machine_->Delay(std::chrono::milliseconds{0});
   return State::QUERY_SUBTREE;
 }
 
