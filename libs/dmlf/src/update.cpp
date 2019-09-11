@@ -17,3 +17,10 @@
 //------------------------------------------------------------------------------
 
 #include "dmlf/update.hpp"
+
+namespace fetch {
+namespace dmlf {
+
+}  // namespace dmlf
+}  // namespace fetch
+

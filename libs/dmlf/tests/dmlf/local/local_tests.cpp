@@ -21,8 +21,11 @@
 #include "dmlf/iupdate.hpp"
 #include "dmlf/local_learner_networker.hpp"
 #include "dmlf/simple_cycling_algorithm.hpp"
+#include "dmlf/update.hpp"
+
 #include <thread>
 #include <ostream>
+#include <chrono>
 
 namespace {
 
@@ -53,6 +56,10 @@ namespace {
     virtual TimeStampType TimeStamp() const
     {
       return stamp_;
+    }
+    virtual FingerprintType Fingerprint() const
+    {
+      return fetch::byte_array::ByteArray{};
     }
   };
 
@@ -242,5 +249,38 @@ namespace {
     EXPECT_EQ(insts.size(),20);
     EXPECT_EQ(total_integrations, 20 * 10 * 5);
     }
+  
+  using namespace std::chrono_literals;
+  class UpdateSerialisationTests : public ::testing::Test
+  {
+  protected:
+    
+    void SetUp() override
+    {
+    }
+
+  };
+
+  TEST_F(LocalLearnerNetworkerTests, basicPass)
+  {
+    EXPECT_EQ(1,1);
+  }
+
+  TEST_F(UpdateSerialisationTests, basicPass)
+  {
+    std::shared_ptr<fetch::dmlf::IUpdate> update_1 = std::make_shared<fetch::dmlf::Update<int>>(std::vector<int>{1,2,4});
+    std::this_thread::sleep_for(1.54321s);
+    std::shared_ptr<fetch::dmlf::IUpdate> update_2 = std::make_shared<fetch::dmlf::Update<int>>();
+    
+    EXPECT_NE(update_1->TimeStamp(), update_2->TimeStamp());
+    EXPECT_NE(update_1->Fingerprint(), update_2->Fingerprint());
+    
+    auto update_1_bytes = update_1->serialise();
+    update_2->deserialise(update_1_bytes);
+
+    EXPECT_EQ(update_1->TimeStamp(), update_2->TimeStamp());
+    EXPECT_EQ(update_1->Fingerprint(), update_2->Fingerprint());
+  }
+  
 }  // namespace
 

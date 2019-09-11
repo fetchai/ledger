@@ -18,6 +18,10 @@
 //------------------------------------------------------------------------------
 
 #include "dmlf/iupdate.hpp"
+#include "crypto/hash.hpp"
+#include "crypto/sha256.hpp" 
+#include "core/serializers/main_serializer.hpp"
+#include "core/serializers/base_types.hpp"
 
 #include <vector>
 #include <cstdint>
@@ -29,31 +33,44 @@ namespace dmlf {
 template <typename T>
 class Update : public IUpdate
 {
+template <typename TT, typename D>
+friend struct serializers::MapSerializer;
+
 public:
   using TensorType       = T;
   using VectorTensorType = std::vector<TensorType>;
   using TimeStampType    = IUpdate::TimeStampType; 
-  
+  using FingerprintType  = IUpdate::FingerprintType;
+
   explicit Update()
     : stamp_{CurrentTime()}
   {
   }
   explicit Update(VectorTensorType gradients)
-    : gradients_{gradients}
-    , stamp_{CurrentTime()}
+    : stamp_{CurrentTime()}
+    , gradients_{gradients}
+    , fingerprint_{ComputeFingerprint()}
   {
   }
   
   virtual byte_array::ByteArray serialise() override
   {
-    return byte_array::ByteArray{};
+    serializers::MsgPackSerializer serializer;
+    serializer << *this;
+    return serializer.data();
   }
-  virtual void deserialise(byte_array::ByteArray&) override
+  virtual void deserialise(byte_array::ByteArray& map) override
   {
+    serializers::MsgPackSerializer serializer{map};
+    serializer >> *this;
   }
   virtual TimeStampType TimeStamp() const override 
   {
     return stamp_;
+  }
+  virtual FingerprintType Fingerprint() const override
+  {
+    return fingerprint_;
   }
 
   virtual ~Update()
@@ -66,15 +83,57 @@ private:
   bool operator==(const Update &other) = delete;
   bool operator<(const Update &other) = delete;
   
-  TimeStampType CurrentTime() 
+  static TimeStampType CurrentTime() 
   {
     return static_cast<TimeStampType>
       (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count());
   }
   
-  VectorTensorType gradients_;
+  FingerprintType ComputeFingerprint()
+  {
+    serializers::MsgPackSerializer serializer;
+    serializer << gradients_;
+    return crypto::Hash<crypto::SHA256>(serializer.data());
+  }
+
   TimeStampType stamp_;
+  VectorTensorType gradients_;
+  FingerprintType fingerprint_;
 };
 
 }  // namespace dmlf
+
+namespace serializers {
+
+template <typename T, typename D>
+struct MapSerializer<fetch::dmlf::Update<T>, D>
+{
+public:
+  using Type        = fetch::dmlf::Update<T>;
+  using DriverType  = D;
+
+  static uint8_t const TIME_STAMP  = 1;
+  static uint8_t const GRADIENTS   = 2;
+  static uint8_t const FINGERPRINT = 3;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &update)
+  {
+    auto map = map_constructor(3);
+    map.Append(TIME_STAMP , update.stamp_);
+    map.Append(GRADIENTS  , update.gradients_);
+    map.Append(FINGERPRINT, update.fingerprint_);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &update)
+  {
+    map.ExpectKeyGetValue(TIME_STAMP , update.stamp_);
+    map.ExpectKeyGetValue(GRADIENTS  , update.gradients_);
+    map.ExpectKeyGetValue(FINGERPRINT, update.fingerprint_);
+  }
+};
+
+
+}  // namespace serializers
 }  // namespace fetch
