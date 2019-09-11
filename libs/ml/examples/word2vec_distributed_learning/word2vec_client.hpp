@@ -129,7 +129,7 @@ template <class TensorType>
 void Word2VecClient<TensorType>::PrepareOptimiser()
 {
   // Initialise Optimiser
-  this->opti_ptr_ = std::make_shared<fetch::ml::optimisers::AdamOptimiser<TensorType>>(
+  this->opti_ptr_ = std::make_shared<fetch::ml::optimisers::SGDOptimiser<TensorType>>(
       this->g_ptr_, this->inputs_names_, this->label_name_, this->error_name_,
       tp_.learning_rate_param);
 }

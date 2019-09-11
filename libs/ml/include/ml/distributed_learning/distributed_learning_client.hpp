@@ -426,6 +426,9 @@ void TrainingClient<TensorType>::TrainOnce()
     lossfile << GetStrTimestamp() << ", " << static_cast<double>(loss_) << "\n";
   }
 
+  opti_ptr_->IncrementEpochCounter();
+  opti_ptr_->UpdateLearningRate();
+
   lossfile << GetStrTimestamp() << ", "
            << "STOPPED"
            << "\n";
@@ -456,6 +459,9 @@ void TrainingClient<TensorType>::TrainWithCoordinator()
       lossfile << GetStrTimestamp() << ", " << static_cast<double>(this->loss_) << "\n";
     }
   }
+
+  opti_ptr_->IncrementEpochCounter();
+  opti_ptr_->UpdateLearningRate();
 
   if (lossfile)
   {
@@ -502,6 +508,8 @@ void TrainingClient<TensorType>::DoBatch()
   {
     std::lock_guard<std::mutex> l(model_mutex_);
     opti_ptr_->ApplyGradients(batch_size_);
+    opti_ptr_->IncrementBatchCounters(batch_size_);
+    opti_ptr_->UpdateLearningRate();
   }
   batch_counter_++;
 }
