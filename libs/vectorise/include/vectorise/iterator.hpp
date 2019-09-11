@@ -20,7 +20,6 @@
 #include "vectorise/register.hpp"
 
 #include <cassert>
-#include <iostream>
 
 namespace fetch {
 namespace vectorise {
