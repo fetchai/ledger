@@ -21,12 +21,13 @@
 #include "ledger/upow/synergetic_executor.hpp"
 #include "logging/logging.hpp"
 
-#include <limits>
+#include <cstddef>
+#include <cstdint>
 
 namespace fetch {
 namespace ledger {
 
-constexpr char const *LOGGING_NAME = "SynExec";
+constexpr char const *LOGGING_NAME = "SynergeticExecutor";
 
 SynergeticExecutor::SynergeticExecutor(StorageInterface &storage)
   : storage_{storage}

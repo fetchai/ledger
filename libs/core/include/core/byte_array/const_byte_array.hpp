@@ -577,22 +577,8 @@ private:
   value_type *      arr_pointer_{nullptr};
 };
 
-inline std::ostream &operator<<(std::ostream &os, ConstByteArray const &str)
-{
-  char const *arr = reinterpret_cast<char const *>(str.pointer());
-  for (std::size_t i = 0; i < str.size(); ++i)
-  {
-    os << arr[i];
-  }
-  return os;
-}
-
-inline ConstByteArray operator+(char const *a, ConstByteArray const &b)
-{
-  ConstByteArray s(a);
-  s = s + b;
-  return s;
-}
+std::ostream & operator<<(std::ostream &os, ConstByteArray const &str);
+ConstByteArray operator+(char const *a, ConstByteArray const &b);
 
 }  // namespace byte_array
 }  // namespace fetch

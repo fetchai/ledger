@@ -50,6 +50,7 @@
 
 using fetch::byte_array::ConstByteArray;
 using fetch::vm_modules::VMFactory;
+using fetch::vm::FunctionDecoratorKind;
 
 namespace fetch {
 namespace ledger {
@@ -129,9 +130,9 @@ SmartContract::SmartContract(std::string const &source)
 
     switch (kind)
     {
-    case vm::FunctionDecoratorKind::NORMAL:
+    case FunctionDecoratorKind::NONE:
       break;
-    case vm::FunctionDecoratorKind::ON_INIT:
+    case FunctionDecoratorKind::ON_INIT:
       FETCH_LOG_DEBUG(LOGGING_NAME, "Registering on_init: ", fn.name,
                       " (Contract: ", contract_digest().ToBase64(), ')');
 
@@ -141,7 +142,7 @@ SmartContract::SmartContract(std::string const &source)
       // register the initialiser (on duplicate this will throw)
       OnInitialise(this, &SmartContract::InvokeInit);
       break;
-    case vm::FunctionDecoratorKind::ACTION:
+    case FunctionDecoratorKind::ACTION:
       FETCH_LOG_DEBUG(LOGGING_NAME, "Registering Action: ", fn.name,
                       " (Contract: ", contract_digest().ToBase64(), ')');
 
@@ -150,7 +151,7 @@ SmartContract::SmartContract(std::string const &source)
         return InvokeAction(name, tx, index);
       });
       break;
-    case vm::FunctionDecoratorKind::QUERY:
+    case FunctionDecoratorKind::QUERY:
       FETCH_LOG_DEBUG(LOGGING_NAME, "Registering Query: ", fn.name,
                       " (Contract: ", contract_digest().ToBase64(), ')');
 
@@ -159,8 +160,7 @@ SmartContract::SmartContract(std::string const &source)
         return InvokeQuery(name, request, response);
       });
       break;
-
-    case vm::FunctionDecoratorKind::INVALID:
+    case FunctionDecoratorKind::INVALID:
       FETCH_LOG_DEBUG(LOGGING_NAME, "Invalid function decorator found");
       throw SmartContractException(SmartContractException::Category::COMPILATION,
                                    {"Invalid decorator found in contract"});

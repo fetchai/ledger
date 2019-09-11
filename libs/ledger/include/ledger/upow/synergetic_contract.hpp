@@ -123,65 +123,7 @@ private:
   VariantPtr        solution_;
 };
 
-inline Digest const &SynergeticContract::digest() const
-{
-  return digest_;
-}
-
-inline std::string const &SynergeticContract::work_function() const
-{
-  return work_function_;
-}
-
-inline std::string const &SynergeticContract::problem_function() const
-{
-  return problem_function_;
-}
-
-inline std::string const &SynergeticContract::objective_function() const
-{
-  return objective_function_;
-}
-
-inline std::string const &SynergeticContract::clear_function() const
-{
-  return clear_function_;
-}
-
-inline void SynergeticContract::Attach(StorageInterface &storage)
-{
-  storage_ = &storage;
-}
-
-inline void SynergeticContract::Detach()
-{
-  storage_ = nullptr;
-  problem_.reset();
-  solution_.reset();
-}
-
-inline constexpr char const *ToString(SynergeticContract::Status status)
-{
-  char const *text = "Unknown";
-
-  switch (status)
-  {
-  case SynergeticContract::Status::SUCCESS:
-    text = "Success";
-    break;
-  case SynergeticContract::Status::VM_EXECUTION_ERROR:
-    text = "VM Execution Error";
-    break;
-  case SynergeticContract::Status::NO_STATE_ACCESS:
-    text = "No State Access";
-    break;
-  case SynergeticContract::Status::GENERAL_ERROR:
-    text = "General Error";
-    break;
-  }
-
-  return text;
-}
+char const *ToString(SynergeticContract::Status status);
 
 using SynergeticContractPtr = std::shared_ptr<SynergeticContract>;
 

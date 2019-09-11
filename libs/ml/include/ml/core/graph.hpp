@@ -58,9 +58,12 @@ class TrainingClient;
 
 enum class GraphState : uint8_t
 {
-  NOT_COMPILED,
-  INVALID,
-  READY
+  INVALID,       // graph described through adding nodes is not valid for compilation
+  NOT_COMPILED,  // occurs whenever adding new nodes to graph
+  COMPILED,      // added nodes have been link and trainables compiled
+  EVALUATED,     // forward pass has been completed - ready for backprop
+  BACKWARD,      // backward pass has been completed - ready for apply gradients
+  UPDATED        // gradients have been applied
 };
 
 /**
@@ -104,12 +107,11 @@ public:
   /// graph training functions ///
   ////////////////////////////////
 
-  void         SetInput(std::string const &node_name, TensorType data);
-  TensorType   Evaluate(std::string const &node_name, bool is_training = true);
-  void         BackPropagate(std::string const &node_name, TensorType const &error_signal = {});
-  void         ApplyRegularisation();
-  virtual void Step(DataType learning_rate);
-  void         ApplyGradients(std::vector<TensorType> &grad);
+  void       SetInput(std::string const &node_name, TensorType data);
+  TensorType Evaluate(std::string const &node_name, bool is_training = true);
+  void       BackPropagate(std::string const &node_name, TensorType const &error_signal = {});
+  void       ApplyRegularisation();
+  void       ApplyGradients(std::vector<TensorType> &grad);
 
   /////////////////////////////////////
   /// graph serialisation functions ///
@@ -152,6 +154,9 @@ private:
   friend class optimisers::Optimiser<TensorType>;
   friend class model::ModelInterface<TensorType>;
   friend class distributed_learning::TrainingClient<TensorType>;
+
+  TensorType ForwardImplementation(std::string const &node_name, bool is_training,
+                                   bool evaluate_mode);
 
   template <typename OperationType>
   bool UpdateVariableName(std::string const &name, std::string &ret);
@@ -215,6 +220,8 @@ std::string Graph<TensorType>::AddNode(std::string const &             node_name
 template <typename TensorType>
 void Graph<TensorType>::ResetCompile()
 {
+  graph_state_ = GraphState::NOT_COMPILED;
+
   // clear trainables from any previous compilation
   trainable_lookup_.clear();
   trainable_nodes_.clear();
@@ -227,7 +234,6 @@ void Graph<TensorType>::ResetCompile()
     // remove inputs and output from the node
     nodes_.at(node_name)->ResetInputsAndOutputs();
   }
-  graph_state_ = GraphState::NOT_COMPILED;
 }
 
 /**
@@ -237,7 +243,18 @@ void Graph<TensorType>::ResetCompile()
 template <typename TensorType>
 void Graph<TensorType>::Compile()
 {
-  if (graph_state_ != GraphState::READY)
+  switch (graph_state_)
+  {
+  case GraphState::COMPILED:
+  case GraphState::EVALUATED:
+  case GraphState::BACKWARD:
+  case GraphState::UPDATED:
+  {
+    // graph already compiled. do nothing
+    break;
+  }
+  case GraphState::INVALID:
+  case GraphState::NOT_COMPILED:
   {
     bool valid = true;
 
@@ -259,12 +276,18 @@ void Graph<TensorType>::Compile()
     // appear in middle of graph
     if (valid)
     {
-      graph_state_ = GraphState::READY;
+      graph_state_ = GraphState::COMPILED;
     }
     else
     {
       graph_state_ = GraphState::INVALID;
     }
+    break;
+  }
+  default:
+  {
+    throw std::runtime_error("cannot evaluate graph - unrecognised graph state");
+  }
   }
 }
 
@@ -315,16 +338,7 @@ void Graph<TensorType>::AddTrainable(NodePtrType node_ptr, std::string const &no
 template <typename TensorType>
 TensorType Graph<TensorType>::Evaluate(std::string const &node_name, bool is_training)
 {
-  Compile();
-
-  if (nodes_.find(node_name) != nodes_.end())
-  {
-    return (*(nodes_[node_name]->Evaluate(is_training))).Copy();
-  }
-  else
-  {
-    throw std::runtime_error("Cannot evaluate: node [" + node_name + "] not in graph");
-  }
+  return ForwardImplementation(node_name, is_training, true);
 }
 
 /**
@@ -336,11 +350,51 @@ TensorType Graph<TensorType>::Evaluate(std::string const &node_name, bool is_tra
 template <typename TensorType>
 TensorType Graph<TensorType>::ForwardPropagate(std::string const &node_name, bool is_training)
 {
+  return ForwardImplementation(node_name, is_training, false);
+}
+
+/**
+ * computes the forward pass. either invoked by an external and returns a deep copy of the result,
+ * or invoked by a friend of graph and returns a shallow copy of the result tensor
+ * @tparam TensorType
+ * @param node_name
+ * @param is_training
+ * @param evaluate_mode if true, returns a deep copy of the result tensor
+ * @return
+ */
+template <typename TensorType>
+TensorType Graph<TensorType>::ForwardImplementation(std::string const &node_name, bool is_training,
+                                                    bool evaluate_mode)
+{
   Compile();
 
   if (nodes_.find(node_name) != nodes_.end())
   {
-    return (*(nodes_[node_name]->Evaluate(is_training)));
+    switch (graph_state_)
+    {
+    case GraphState::INVALID:
+    case GraphState::NOT_COMPILED:
+    {
+      throw std::runtime_error("cannot compile and evaluate graph");
+    }
+    case GraphState::COMPILED:
+    case GraphState::EVALUATED:
+    case GraphState::BACKWARD:
+    case GraphState::UPDATED:
+    {
+      graph_state_ = GraphState::EVALUATED;
+      auto ret     = (*(nodes_[node_name]->Evaluate(is_training)));
+      if (evaluate_mode)
+      {
+        return ret.Copy();
+      }
+      return ret;
+    }
+    default:
+    {
+      throw std::runtime_error("cannot evaluate graph - unrecognised graph state");
+    }
+    }
   }
   else
   {
@@ -360,19 +414,37 @@ void Graph<TensorType>::BackPropagate(std::string const &node_name, TensorType c
 {
   Compile();
 
+  // check node to backprop from exists in graph
   if (nodes_.find(node_name) != nodes_.end())
   {
-    // Forward propagate if necessary
-    if (!(nodes_[node_name]->HasValidCache()))
+    switch (graph_state_)
     {
-      ForwardPropagate(node_name);
+    case GraphState::INVALID:
+    case GraphState::NOT_COMPILED:
+    {
+      throw std::runtime_error("Cannot backpropagate: graph not compiled or invalid");
     }
-
-    nodes_[node_name]->BackPropagate(error_signal);
+    case GraphState::COMPILED:
+    {
+      throw std::runtime_error("Cannot backpropagate: forward pass not completed on graph");
+    }
+    case GraphState::EVALUATED:
+    case GraphState::BACKWARD:
+    case GraphState::UPDATED:
+    {
+      nodes_[node_name]->BackPropagate(error_signal);
+      graph_state_ = GraphState::BACKWARD;
+      break;
+    }
+    default:
+    {
+      throw std::runtime_error("cannot backpropagate: unrecognised graph state");
+    }
+    }
   }
   else
   {
-    throw std::runtime_error("Cannot backpropagate signal: node [" + node_name + "] not in graph");
+    throw std::runtime_error("Cannot backpropagate: node [" + node_name + "] not in graph");
   }
 }
 
@@ -421,22 +493,51 @@ bool Graph<TensorType>::SetRegularisation(std::string node_name, RegPtrType regu
 }
 
 /**
- * takes a training step
- * @param learning_rate the learning rate (alpha) hyperparameter
+ * Add gradient values to weight for each trainable
+ * @param grad vector of gradient values for each trainable stored in TensorType
  */
 template <typename TensorType>
-void Graph<TensorType>::Step(DataType learning_rate)
+void Graph<TensorType>::ApplyGradients(std::vector<TensorType> &grad)
 {
   Compile();
 
-  for (auto &t : trainable_nodes_)
+  switch (graph_state_)
   {
-    auto trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
-    trainable_ptr->Step(learning_rate);
+  case GraphState::INVALID:
+  case GraphState::NOT_COMPILED:
+  case GraphState::COMPILED:
+  case GraphState::EVALUATED:
+  {
+    throw std::runtime_error(
+        "cannot apply gradients: backpropagate not previously called on graph");
   }
+  case GraphState::BACKWARD:
+  {
+    auto grad_it = grad.begin();
+    for (auto const &t : trainable_nodes_)
+    {
+      auto trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
+      trainable_ptr->ApplyGradient(*grad_it);
+      ++grad_it;
+    }
 
-  // TODO(#1554) - we should only reset the cache for trained nodes, not all nodes
-  ResetGraphCache(false);
+    for (auto const &t : nodes_)
+    {
+      // TODO(#1554) - we should only reset the cache for trained nodes, not all nodes
+      ResetGraphCache(false, t.second);
+    }
+    return;
+  }
+  case GraphState::UPDATED:
+  {
+    // no gradients to apply - nothing to do
+    return;
+  }
+  default:
+  {
+    throw std::runtime_error("cannot apply gradients: unrecognised graph state");
+  }
+  }
 }
 
 template <typename TensorType>
@@ -509,6 +610,29 @@ void Graph<TensorType>::SetGraphSaveableParams(GraphSaveableParams<TensorType> c
   }
 
   graph_state_ = static_cast<GraphState>(sp.graph_state);
+
+  switch (graph_state_)
+  {
+  case GraphState::INVALID:
+  case GraphState::NOT_COMPILED:
+  case GraphState::COMPILED:
+  {
+    // valid graph states, nothing to do
+    return;
+  }
+  case GraphState::EVALUATED:
+  case GraphState::BACKWARD:
+  case GraphState::UPDATED:
+  {
+    // we revert state back to compile to prevent immediate backpropagation after deserialisation
+    graph_state_ = GraphState::COMPILED;
+    return;
+  }
+  default:
+  {
+    throw std::runtime_error("cannot setGraphSaveableParams: graph state not recognised");
+  }
+  }
 }
 
 template <typename TensorType>
@@ -694,30 +818,6 @@ void Graph<TensorType>::ResetGradients()
   {
     auto trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
     trainable_ptr->ResetGradients();
-  }
-}
-
-/**
- * Add gradient values to weight for each trainable
- * @param grad vector of gradient values for each trainable stored in TensorType
- */
-template <typename TensorType>
-void Graph<TensorType>::ApplyGradients(std::vector<TensorType> &grad)
-{
-  Compile();
-
-  auto grad_it = grad.begin();
-  for (auto const &t : trainable_nodes_)
-  {
-    auto trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
-    trainable_ptr->ApplyGradient(*grad_it);
-    ++grad_it;
-  }
-
-  for (auto const &t : nodes_)
-  {
-    // TODO(#1554) - we should only reset the cache for trained nodes, not all nodes
-    ResetGraphCache(false, t.second);
   }
 }
 

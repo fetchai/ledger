@@ -23,5 +23,6 @@ namespace fetch {
 namespace http {
 
 using ViewParameters = KeyValueSet;
-}
+
+}  // namespace http
 }  // namespace fetch

@@ -212,5 +212,50 @@ TransactionLayoutQueue::Iterator TransactionLayoutQueue::Erase(Iterator const &i
   return list_.erase(iterator);
 }
 
+TransactionLayoutQueue::ConstIterator TransactionLayoutQueue::cbegin() const
+{
+  return list_.cbegin();
+}
+
+TransactionLayoutQueue::ConstIterator TransactionLayoutQueue::begin() const
+{
+  return list_.begin();
+}
+
+TransactionLayoutQueue::Iterator TransactionLayoutQueue::begin()
+{
+  return list_.begin();
+}
+
+TransactionLayoutQueue::ConstIterator TransactionLayoutQueue::cend() const
+{
+  return list_.cend();
+}
+
+TransactionLayoutQueue::ConstIterator TransactionLayoutQueue::end() const
+{
+  return list_.end();
+}
+
+TransactionLayoutQueue::Iterator TransactionLayoutQueue::end()
+{
+  return list_.end();
+}
+
+std::size_t TransactionLayoutQueue::size() const
+{
+  return digests_.size();
+}
+
+bool TransactionLayoutQueue::empty() const
+{
+  return digests_.empty();
+}
+
+TransactionLayoutQueue::DigestSet const &TransactionLayoutQueue::digests() const
+{
+  return digests_;
+}
+
 }  // namespace miner
 }  // namespace fetch

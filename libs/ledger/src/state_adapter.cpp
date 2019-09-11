@@ -21,9 +21,14 @@
 #include "storage/resource_mapper.hpp"
 
 using fetch::storage::ResourceAddress;
+using fetch::byte_array::ConstByteArray;
 
 namespace fetch {
 namespace ledger {
+
+namespace {
+constexpr char const *LOGGING_NAME = "StateAdapter";
+}
 
 /**
  * Constructs a state adapter from a storage interface and a scope

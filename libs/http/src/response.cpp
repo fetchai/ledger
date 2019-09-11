@@ -182,7 +182,7 @@ bool HTTPResponse::ParseHeaderLine(std::size_t line_idx, char const *begin, char
   {
     if (*current == ':')
     {
-      // located our seperator (saftey checks done afterwards)
+      // located our separator (safety checks done afterwards)
       key_end     = current - 1;
       value_start = current + 1;
       break;
@@ -199,7 +199,7 @@ bool HTTPResponse::ParseHeaderLine(std::size_t line_idx, char const *begin, char
     return false;
   }
 
-  // construct the stings
+  // construct the strings
   std::string key(key_start, static_cast<std::size_t>((key_end - key_start) + 1));
   std::string value(value_start, static_cast<std::size_t>((value_end - value_start) + 1));
 

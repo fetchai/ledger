@@ -41,18 +41,18 @@ public:
   MsgPackSerializer &operator=(MsgPackSerializer &&from) = default;
 
   /**
-   * @brief Contructting from MUTABLE ByteArray.
+   * @brief Constructing from MUTABLE ByteArray.
    *
    * DEEP copy is made here due to safety reasons to avoid later
-   * misshaps & missunderstrandings related to what hapens with reserved
+   * misshaps & misunderstandings related to what happens with reserved
    * memory of mutable @ref s instance passed in by caller of this
-   * constructor once this class starts to modify content of underlaying
+   * constructor once this class starts to modify content of underlying
    * internal @ref data_ ByteArray and then resize/reserve it.
    *
    * @param s Input mutable instance of ByteArray to copy content from (by
    *          value as explained above)
    */
-  MsgPackSerializer(byte_array::ByteArray s);
+  explicit MsgPackSerializer(byte_array::ByteArray s);
   MsgPackSerializer(MsgPackSerializer const &from);
 
   MsgPackSerializer &operator=(MsgPackSerializer const &from);

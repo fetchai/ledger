@@ -279,7 +279,7 @@ ByteArray TransactionSerializer::SerializePayload(Transaction const &tx)
       {
         // in this case the shard mask is small and therefore can be totally contained in the
         // contract header
-        uint8_t contract_header = static_cast<uint8_t>(shard_mask(0) & 0xFu);
+        auto contract_header = static_cast<uint8_t>(shard_mask(0) & 0xFu);
 
         // signal the bit to signal the the shard mask it 2 or 4 bits
         if (log2_shard_mask_size == 2)
@@ -314,7 +314,7 @@ ByteArray TransactionSerializer::SerializePayload(Transaction const &tx)
       break;
     case ContractMode::SYNERGETIC:
       buffer.Append(Encode(tx.contract_digest()));
-    default:
+    case ContractMode::NOT_PRESENT:
       break;
     }
 
