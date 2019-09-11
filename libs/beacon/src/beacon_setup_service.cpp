@@ -215,8 +215,8 @@ BeaconSetupService::State BeaconSetupService::OnReset()
   shares_received_.clear();
   dry_run_shares_.clear();
   dry_run_public_keys_.clear();
-  pre_dkg_rbc_.ResetCabinet({});
-  rbc_.ResetCabinet({});
+  pre_dkg_rbc_.Enable(false);
+  rbc_.Enable(false);
 
   if (beacon_->aeon.round_start < abort_below_)
   {
@@ -228,6 +228,8 @@ BeaconSetupService::State BeaconSetupService::OnReset()
   // before being reset with the cabinet
   if (timer_to_proceed_.HasExpired())
   {
+    pre_dkg_rbc_.Enable(true);
+    rbc_.Enable(true);
     pre_dkg_rbc_.ResetCabinet(cabinet);
     rbc_.ResetCabinet(cabinet);
 
@@ -433,7 +435,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
           " expect: ", require_connections, " Other ready peers: ", ready_connections_.size());
     }
 
-    state_machine_->Delay(std::chrono::milliseconds(500));
+    state_machine_->Delay(std::chrono::milliseconds(100));
   }
 
   return State::WAIT_FOR_READY_CONNECTIONS;

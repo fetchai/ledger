@@ -436,7 +436,7 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
     this_round.threshold_signatures[identity_.identifier()] = active_exe_unit_->member_share;
     signatures_being_built_[current_entropy_.round]         = this_round;
 
-    // TODO(HUT): clean old sigs here
+    // TODO(HUT): clean historically old sigs here
   }
 
   // Attempt to get signatures from a peer we do not have the signature of
@@ -472,6 +472,7 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
       qual_promise_identity_.identifier(), RPC_BEACON, BeaconServiceProtocol::GET_SIGNATURE_SHARES,
       current_entropy_.round);
 
+  // Note: this delay is effectively how long we wait for the network event to resolve
   state_machine_->Delay(std::chrono::milliseconds(50));
 
   return State::VERIFY_SIGNATURES;
@@ -496,7 +497,7 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
     FETCH_LOG_WARN(LOGGING_NAME, "Promise timed out and threw! This should not happen.");
   }
 
-  // Don't lock until the promise has resolved!
+  // Don't lock until the promise has resolved! Otherwise the system can deadlock.
   std::lock_guard<std::mutex> lock(mutex_);
 
   if (ret.threshold_signatures.empty())

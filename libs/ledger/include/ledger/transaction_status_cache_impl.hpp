@@ -89,6 +89,8 @@ typename TransactionStatusCacheImpl<CLOCK>::TxStatus TransactionStatusCacheImpl<
     }
   }
 
+  FETCH_LOG_WARN("query not found! ", digest.ToBase64());
+
   return {};
 }
 

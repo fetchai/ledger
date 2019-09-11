@@ -29,7 +29,7 @@ setup_conditions:
     node_connections: [[0, 1], [0, 2], [0,3], [0,4], [0,5], [0,6], [0,7], [0,8], [0,9]]
     mining_nodes: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     pos_mode: True
-    max_test_time: 440
+    max_test_time: 900
 
 steps:
     - sleep : 20
