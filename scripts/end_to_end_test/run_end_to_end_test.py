@@ -310,7 +310,8 @@ class TestInstance():
         if self._nodes:
             for n, node in enumerate(self._nodes):
                 print('Stopping Node {}...'.format(n))
-                node.stop()
+                if(node):
+                    node.stop()
                 print('Stopping Node {}...complete'.format(n))
 
         if self._watchdog:
@@ -535,6 +536,7 @@ def verify_txs(parameters, test_instance):
                 output("Waiting for TX to get executed (node {}). Found: {} Tx: {}".format(
                     node_index, status, tx_b64))
 
+            time.sleep(0.1)
             seen_balance = api.tokens.balance(identity)
             if balance != seen_balance:
                 output(
