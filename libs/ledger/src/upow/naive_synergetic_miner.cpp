@@ -200,7 +200,7 @@ WorkPtr NaiveSynergeticMiner::MineSolution(Digest const &     contract_digest,
   // if no contract can be loaded then simple return
   if (!contract)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup contract: 0x", contract_digest.ToHex());
+    FETCH_LOG_WARN(LOGGING_NAME, "Unable to look up contract: 0x", contract_digest.ToHex());
     return {};
   }
 

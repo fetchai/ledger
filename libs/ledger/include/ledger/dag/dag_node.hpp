@@ -66,12 +66,12 @@ struct DAGNode
   DigestList       previous;            ///< previous nodes.
   ConstByteArray   contents;            ///< payload to be deserialised.
   Digest           contract_digest;     ///< The contract which this node is associated with.
-  crypto::Identity identity;            ///< identity of the creator (empty for now)
+  crypto::Identity identity;            ///< identity of the creator
 
   /// Serialisable entries to verify state
   /// @{
   Digest    hash;       ///< DAG hash.
-  Signature signature;  ///< creators signature (empty for now).
+  Signature signature;  ///< creators signature
   /// }
 
   // bookkeeping
