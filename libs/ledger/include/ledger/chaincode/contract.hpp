@@ -139,7 +139,7 @@ protected:
   template <typename T>
   bool GetStateRecord(T &record, ConstByteArray const &key);
   template <typename T>
-  void SetStateRecord(T const &record, ConstByteArray const &key);
+  StateAdapter::Status SetStateRecord(T const &record, ConstByteArray const &key);
 
   ledger::StateAdapter &state();
   /// @}
@@ -275,7 +275,7 @@ bool Contract::GetStateRecord(T &record, ConstByteArray const &key)
  * @param key The key for the state record
  */
 template <typename T>
-void Contract::SetStateRecord(T const &record, ConstByteArray const &key)
+StateAdapter::Status Contract::SetStateRecord(T const &record, ConstByteArray const &key)
 {
   // serialize the record to the buffer
   serializers::MsgPackSerializer buffer;
@@ -285,7 +285,7 @@ void Contract::SetStateRecord(T const &record, ConstByteArray const &key)
   auto const &data = buffer.data();
 
   // store the buffer
-  state().Write(std::string{key}, data.pointer(), data.size());
+  return state().Write(std::string{key}, data.pointer(), data.size());
 }
 
 }  // namespace ledger

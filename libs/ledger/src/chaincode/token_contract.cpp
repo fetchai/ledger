@@ -101,9 +101,9 @@ bool TokenContract::AddTokens(Address const &address, uint64_t amount)
 
   record.balance += amount;
 
-  SetStateRecord(record, address.display());
+  auto const status = SetStateRecord(record, address.display());
 
-  return true;
+  return status == StateAdapter::Status::OK;
 }
 
 bool TokenContract::SubtractTokens(Address const &address, uint64_t amount)
@@ -118,9 +118,9 @@ bool TokenContract::SubtractTokens(Address const &address, uint64_t amount)
 
   record.balance -= amount;
 
-  SetStateRecord(record, address.display());
+  auto const status = SetStateRecord(record, address.display());
 
-  return true;
+  return status == StateAdapter::Status::OK;
 }
 
 bool TokenContract::TransferTokens(Transaction const &tx, Address const &to, uint64_t amount)
@@ -236,7 +236,11 @@ Contract::Result TokenContract::Deed(Transaction const &tx, BlockIndex)
     }
   }
 
-  SetStateRecord(record, tx.from().display());
+  auto const status = SetStateRecord(record, tx.from().display());
+  if (status != StateAdapter::Status::OK)
+  {
+    return {Status::FAILED};
+  }
 
   return {Status::OK};
 }
@@ -275,9 +279,11 @@ Contract::Result TokenContract::AddStake(Transaction const &tx, BlockIndex block
                 StakeUpdate{tx.from(), block + STAKE_WARM_UP_PERIOD, amount});
 
             // save the state
-            SetStateRecord(record, tx.from().display());
-
-            return {Status::OK};
+            auto const status = SetStateRecord(record, tx.from().display());
+            if (status == StateAdapter::Status::OK)
+            {
+              return {Status::OK};
+            }
           }
         }
       }
@@ -314,10 +320,11 @@ Contract::Result TokenContract::DeStake(Transaction const &tx, BlockIndex block)
             record.cooldown_stake[block + STAKE_COOL_DOWN_PERIOD] += amount;
 
             // save the state
-            SetStateRecord(record, tx.from().display());
-
-            FETCH_LOG_WARN(LOGGING_NAME, "Destaked!!!!");
-            return {Status::OK};
+            auto const status = SetStateRecord(record, tx.from().display());
+            if (status == StateAdapter::Status::OK)
+            {
+              return {Status::OK};
+            }
           }
         }
       }
@@ -338,9 +345,12 @@ Contract::Result TokenContract::CollectStake(Transaction const &tx, BlockIndex b
     {
       // Collect all cooled down stakes and put them back into the account
       record.CollectStake(block);
-      SetStateRecord(record, tx.from().display());
 
-      return {Status::OK};
+      auto const status = SetStateRecord(record, tx.from().display());
+      if (status == StateAdapter::Status::OK)
+      {
+        return {Status::OK};
+      }
     }
   }
 
