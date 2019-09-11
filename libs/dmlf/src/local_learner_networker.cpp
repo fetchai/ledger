@@ -42,8 +42,6 @@ LocalLearnerNetworker::~LocalLearnerNetworker()
 
 void LocalLearnerNetworker::pushUpdate( std::shared_ptr<IUpdate> update)
 {
-  std::cout << update << std::endl;
-
   std::vector<LocalLearnerNetworker*> targets;
   auto indexes = alg -> getNextOutputs();
 
