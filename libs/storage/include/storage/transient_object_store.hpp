@@ -126,7 +126,7 @@ private:
   RecentQueue     most_recent_seen_;  ///< The queue of elements to be stored
   Callback        set_callback_;      ///< The completion handler
   Flag            stop_{false};       ///< Flag to signal the stop of the worker
-  core::Tickets::Count recent_queue_last_size_{0};
+  core::Tickets::Count                  recent_queue_last_size_{0};
   static constexpr core::Tickets::Count recent_queue_alarm_threshold{RecentQueue::QUEUE_LENGTH >>
                                                                      1};
 };
@@ -422,16 +422,17 @@ void TransientObjectStore<O>::Set(ResourceID const &rid, O const &object, bool n
       // TODO(private issue #582): The queue became FULL - this information shall
       // be propagated out to caller, so it can make appropriate decision how to
       // proceed.
-      if (recent_queue_last_size_ < recent_queue_alarm_threshold && count >= recent_queue_alarm_threshold)
+      if (recent_queue_last_size_ < recent_queue_alarm_threshold &&
+          count >= recent_queue_alarm_threshold)
       {
         FETCH_LOG_WARN(LOGGING_NAME, " the `most_recent_seen_` queue size ", count,
                        " reached or is over threshold ", recent_queue_alarm_threshold, ").");
       }
-      else if (count < recent_queue_alarm_threshold && recent_queue_last_size_ >= recent_queue_alarm_threshold)
+      else if (count < recent_queue_alarm_threshold &&
+               recent_queue_last_size_ >= recent_queue_alarm_threshold)
       {
         FETCH_LOG_WARN(LOGGING_NAME, " the `most_recent_seen_` queue size ", count,
                        " dropped bellow threshold ", recent_queue_alarm_threshold, ").");
-
       }
       recent_queue_last_size_ = count;
     }
