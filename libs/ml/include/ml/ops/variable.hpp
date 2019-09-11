@@ -120,7 +120,7 @@ public:
     FETCH_UNUSED(inputs);
     assert(inputs.empty());
     gradient_accumulation_->InlineAdd(error_signal);
-    return {};
+    return {error_signal};
   }
 
   void AddToGradient(TensorType const &extern_grad)

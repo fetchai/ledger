@@ -63,20 +63,6 @@ public:
   }
 
   /**
-   * backward not callable for placeholder. placeholders are not trainable
-   * @param inputs
-   * @param error_signal
-   * @return
-   */
-  std::vector<TensorType> Backward(VecTensorType const &inputs,
-                                   TensorType const &   error_signal) override
-  {
-    FETCH_UNUSED(inputs);
-    FETCH_UNUSED(error_signal);
-    return {};
-  }
-
-  /**
    * Placeholders should not be shared, therefore a layer sharing its elements
    * with another node should use a new (unshared) placeholder op
    * @param me

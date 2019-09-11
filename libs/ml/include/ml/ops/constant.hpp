@@ -74,20 +74,6 @@ public:
   }
 
   /**
-   * backward not callable for constant. constant are not trainable
-   * @param inputs
-   * @param error_signal
-   * @return
-   */
-  std::vector<TensorType> Backward(VecTensorType const &inputs,
-                                   TensorType const &   error_signal) override
-  {
-    FETCH_UNUSED(inputs);
-    FETCH_UNUSED(error_signal);
-    throw std::runtime_error("backward called on constant, but constant is not trainable");
-  }
-
-  /**
    * sets the internally stored data
    * @param data
    * @return
@@ -96,7 +82,7 @@ public:
   {
     if (!data_set_once_)
     {
-      return this->SetData(data);
+      return DataHolder<TensorType>::SetData(data);
     }
     else
     {

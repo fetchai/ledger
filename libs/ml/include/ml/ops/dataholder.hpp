@@ -72,7 +72,7 @@ public:
   }
 
   /**
-   * backward should not be required for dataholders
+   * backward for non training dataholders should just pass back the error signal
    * @param inputs
    * @param error_signal
    * @return
@@ -81,9 +81,8 @@ public:
                                    TensorType const &   error_signal) override
   {
     FETCH_UNUSED(inputs);
-    FETCH_UNUSED(error_signal);
     assert(inputs.empty());
-    return {};
+    return {error_signal};
   }
 
   /**
