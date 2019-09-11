@@ -156,7 +156,7 @@ TYPED_TEST(SerializersTestNoInt, serialize_graph_saveable_params)
   g->BackPropagate(error_output);
   g->ApplyRegularisation();
   auto grads = g->GetGradients();
-  for (auto & grad : grads)
+  for (auto &grad : grads)
   {
     grad *= static_cast<DataType>(-0.1);
   }
@@ -168,7 +168,7 @@ TYPED_TEST(SerializersTestNoInt, serialize_graph_saveable_params)
   g2->BackPropagate(error_output);
   g2->ApplyRegularisation();
   auto grads2 = g2->GetGradients();
-  for (auto & grad : grads2)
+  for (auto &grad : grads2)
   {
     grad *= static_cast<DataType>(-0.1);
   }
