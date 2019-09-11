@@ -212,7 +212,7 @@ void BeaconService::StartNewCabinet(CabinetMemberList members, uint32_t threshol
 {
   auto diff_time = int64_t(static_cast<uint64_t>(std::time(nullptr))) - int64_t(start_time);
   FETCH_LOG_INFO(LOGGING_NAME, "Starting new cabinet from ", round_start, " to ", round_end,
-                 "at time: ", start_time, " (diff): ", diff_time);
+                 " at time: ", start_time, " (diff): ", diff_time);
   std::lock_guard<std::mutex> lock(mutex_);
 
   SharedAeonExecutionUnit beacon = std::make_shared<AeonExecutionUnit>();
@@ -484,7 +484,7 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
   try
   {
     // Attempt to resolve the promise and add it
-    if (!sig_share_promise_->As<SignatureInformation>(ret))
+    if(!sig_share_promise_->IsSuccessful() || !sig_share_promise_->As<SignatureInformation>(ret))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to resolve RPC promise from ",
                      qual_promise_identity_.identifier().ToBase64());
@@ -493,7 +493,7 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
   }
   catch(...)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Promise timed out and threw!");
+    FETCH_LOG_WARN(LOGGING_NAME, "Promise timed out and threw! This should not happen.");
   }
 
   // Don't lock until the promise has resolved!
@@ -527,7 +527,7 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
   }
 
   FETCH_LOG_INFO(LOGGING_NAME, "After adding, we have ",
-                 signatures_struct.threshold_signatures.size(), " signatures.");
+                 signatures_struct.threshold_signatures.size(), " signatures. Round: ", current_entropy_.round);
 
   if (active_exe_unit_->manager.can_verify() && active_exe_unit_->manager.Verify())
   {

@@ -381,9 +381,9 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
   beacon_dkg_all_connections_gauge_->set(connected_peers.size());
   beacon_dkg_connections_gauge_->set(can_see.size());
 
-  // If we get over threshold connections, send a message to all peers each time
-  // we increase over this threshold (note we won't advance if we ourselves don't get over)
-  if (can_see.size() > connections_.size() && can_see.size() >= require_connections)
+  // If we get over threshold connections, send a message to all peers with the info
+  // (note we won't advance if we ourselves don't get over)
+  if (can_see.size() > connections_.size() && can_see.size() >= require_connections && !condition_to_proceed_)
   {
     fetch::serializers::MsgPackSerializer serializer;
     serializer << connections_;
