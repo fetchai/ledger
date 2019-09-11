@@ -97,10 +97,10 @@ int main(int ac, char **av)
   SizeType number_of_rounds     = 100;
   coord_params.number_of_peers  = 2;
   coord_params.mode             = CoordinatorMode::SEMI_SYNCHRONOUS;
-  coord_params.iterations_count = 10;  //  Synchronization occurs after this number of batches
+  coord_params.iterations_count = 100;  //  Synchronization occurs after this number of batches
   // have been processed in total by the clients
 
-  client_params.batch_size    = 100000;
+  client_params.batch_size    = 10000;
   client_params.learning_rate = static_cast<DataType>(.001f);
 
   // Word2Vec parameters:

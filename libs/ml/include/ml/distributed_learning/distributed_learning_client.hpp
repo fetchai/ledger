@@ -97,8 +97,6 @@ public:
 
   void AddExportGradient(GradientType &gradient);
 
-  void ApplyGradient(VectorTensorType gradients);
-
   void SetWeights(VectorTensorType &new_weights);
 
   void SetParams(ClientParams<DataType> const &new_params);
@@ -359,26 +357,6 @@ void TrainingClient<TensorType>::AddExportGradient(GradientType &gradient)
     export_buffer_.push(gradient);
   }
   export_buffer_cv_.notify_all();
-}
-
-/**
- * Applies gradient multiplied by -LEARNING_RATE
- * @param gradients
- */
-template <class TensorType>
-void TrainingClient<TensorType>::ApplyGradient(VectorTensorType gradients)
-{
-  // Step of SGD optimiser
-  for (SizeType j{0}; j < gradients.size(); j++)
-  {
-    fetch::math::Multiply(gradients.at(j), -learning_rate_, gradients.at(j));
-  }
-
-  // Apply gradients to own model
-  {
-    std::lock_guard<std::mutex> l(model_mutex_);
-    g_ptr_->ApplyGradients(gradients);
-  }
 }
 
 /**
