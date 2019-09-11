@@ -186,11 +186,6 @@ public:
     size_t ST       = range.SIMDToLower<VectorRegisterType::E_BLOCK_COUNT>();
     size_t STU      = range.SIMDToUpper<VectorRegisterType::E_BLOCK_COUNT>();
 
-    // std::cout << "SF: " << SF << std::endl;
-    // std::cout << "ST: " << ST << std::endl;
-    // std::cout << "STU: " << STU << std::endl;
-    // std::cout << "range: (" << range.from() << ", " << range.to() << ")" << std::endl;
-
     VectorRegisterType         regs[sizeof...(args)];
     VectorRegisterIteratorType iters[sizeof...(args)];
     VectorRegisterIteratorType self_iter(this->pointer() + SF, ST);
@@ -290,11 +285,6 @@ public:
     size_t SF = range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>();
     size_t ST = range.SIMDToLower<VectorRegisterType::E_BLOCK_COUNT>();
     size_t STU = range.SIMDToUpper<VectorRegisterType::E_BLOCK_COUNT>();
-
-    // std::cout << "SF: " << SF << std::endl;
-    // std::cout << "ST: " << ST << std::endl;
-    // std::cout << "STU: " << STU << std::endl;
-    // std::cout << "range: (" << range.from() << ", " << range.to() << ")" << std::endl;
 
     VectorRegisterType         va, vc(initial_value);
     VectorRegisterIteratorType iter(this->pointer() + SF, range.to() - SF);
@@ -425,44 +415,22 @@ public:
     VectorRegisterType vc(type(0));
     ScalarRegisterType  c(type(0));
 
-    // std::cout << "SF: 0x" << std::hex << SF << std::endl;
-    // std::cout << "ST: 0x" << std::hex << ST << std::endl;
-    // std::cout << "range: (" << std::dec << range.from() << ", " << range.to() << ")" << std::endl;
-    // std::cout << "ptr: 0x" << std::hex << ptrdiff_t(this->pointer()) << std::endl;
-    // std::cout << "ptr + size: 0x" << std::hex << ptrdiff_t(this->pointer() + this->size()) << std::endl;
-
-    // std::cout << "ptr + range.from(): 0x" << std::hex << ptrdiff_t(this->pointer() + range.from()) << std::endl;
-    // std::cout << "ptr + range.to(): 0x" << std::hex << ptrdiff_t(this->pointer() + range.to()) << std::endl;
-
     for (size_t i = range.from(); i < SF; i += ScalarRegisterType::E_BLOCK_COUNT)
     {
-      // std::cout << "Scalar:" << std::endl;
-      // std::cout << "c[" << i << "] = " << c << std::endl;
       apply(c);
-      // std::cout << "c[" << i << "] = " << c << std::endl;
       c.Store(this->pointer() + i);
-      // std::cout << "store to " << std::hex << ptrdiff_t(this->pointer() + i) << std::endl;
     }
 
-    // std::cout << "VectorRegisterType::E_BLOCK_COUNT : " << VectorRegisterType::E_BLOCK_COUNT << std::endl;
     for (size_t i = SF; i < ST; i += VectorRegisterType::E_BLOCK_COUNT)
     {
-      // std::cout << "Vector:" << std::endl;
-      // std::cout << "vc[" << i << "] = " << vc << std::endl;
       apply(vc);
-      // std::cout << "vc[" << i << "] = " << vc << std::endl;
       vc.Store(this->pointer() + i);
-      // std::cout << "store to " << std::hex << ptrdiff_t(this->pointer() + i) << std::endl;
     }
 
     for (size_t i = ST; i < range.to(); i += ScalarRegisterType::E_BLOCK_COUNT)
     {
-      // std::cout << "Scalar:" << std::endl;
-      // std::cout << "c[" << i << "] = " << c << std::endl;
       apply(c);
-      // std::cout << "c[" << i << "] = " << c << std::endl;
       c.Store(this->pointer() + i);
-      // std::cout << "store to " << std::hex << ptrdiff_t(this->pointer() + i) << std::endl;
     }
   }
 
@@ -479,15 +447,6 @@ public:
     size_t SF = range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>();
     size_t ST = range.SIMDToLower<VectorRegisterType::E_BLOCK_COUNT>();
     size_t STU  = range.SIMDToUpper<VectorRegisterType::E_BLOCK_COUNT>();
-
-    // std::cout << "SF: 0x" << std::hex << SF << std::endl;
-    // std::cout << "ST: 0x" << std::hex << ST << std::endl;
-    // std::cout << "range: (" << std::dec << range.from() << ", " << range.to() << ")" << std::endl;
-    // std::cout << "ptr: 0x" << std::hex << ptrdiff_t(this->pointer()) << std::endl;
-    // std::cout << "ptr + size: 0x" << std::hex << ptrdiff_t(this->pointer() + this->size()) << std::endl;
-
-    // std::cout << "ptr + range.from(): 0x" << std::hex << ptrdiff_t(this->pointer() + range.from()) << std::endl;
-    // std::cout << "ptr + range.to(): 0x" << std::hex << ptrdiff_t(this->pointer() + range.to()) << std::endl;
 
     VectorRegisterType         regs[sizeof...(args)], vc(type(0));
     VectorRegisterIteratorType iters[sizeof...(args)];
