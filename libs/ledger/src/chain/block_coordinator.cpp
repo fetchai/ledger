@@ -64,6 +64,7 @@ const std::chrono::milliseconds EXEC_NOTIFY_INTERVAL{5000};
 const std::chrono::seconds      STATE_NOTIFY_INTERVAL{20};
 const std::chrono::seconds      NOTIFY_INTERVAL{5};
 const std::chrono::seconds      WAIT_BEFORE_ASKING_FOR_MISSING_TX_INTERVAL{5};
+const std::size_t               MIN_BLOCK_SYNC_SLIPPAGE_FOR_WAITLESS_SYNC_OF_MISSING_TXS{30};
 const std::chrono::seconds      WAIT_FOR_TX_TIMEOUT_INTERVAL{600};
 const uint32_t                  THRESHOLD_FOR_FAST_SYNCING{100u};
 const std::size_t               DIGEST_LENGTH_BYTES{32};
@@ -691,9 +692,19 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, S
     }
     else
     {
-      if (wait_before_asking_for_missing_tx_.HasExpired())
+      auto const distance_from_heaviest_block{chain_.GetHeaviestBlock()->body.block_number -
+                                              current_block_->body.block_number};
+
+      auto const is_waitless_syncing_enabled{
+          distance_from_heaviest_block > MIN_BLOCK_SYNC_SLIPPAGE_FOR_WAITLESS_SYNC_OF_MISSING_TXS};
+
+      if (is_waitless_syncing_enabled || wait_before_asking_for_missing_tx_.HasExpired())
       {
         request_tx_count_->increment();
+
+        FETCH_LOG_WARN(LOGGING_NAME, "OnWaitForTransactions: Calling IssueCallForMissingTxs for ",
+                       pending_txs_->size(), " TXs (for block: ", current_block_->body.block_number,
+                       ", heaviest block: ", chain_.GetHeaviestBlock()->body.block_number, ")");
 
         storage_unit_.IssueCallForMissingTxs(*pending_txs_);
         have_asked_for_missing_txs_ = true;

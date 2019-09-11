@@ -26,7 +26,7 @@
 using fetch::byte_array::ConstByteArray;
 
 // TODO(issue 7): Make cache configurable
-constexpr uint32_t MAX_CACHE_LIFETIME_MS = 20000;
+constexpr uint32_t MAX_CACHE_LIFETIME_MS = 30000;
 
 #ifdef FETCH_ENABLE_METRICS
 using fetch::metrics::Metrics;
@@ -157,6 +157,8 @@ TransactionStoreSyncProtocol::TxArray TransactionStoreSyncProtocol::PullObjects(
       }
     }
   }
+
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Lane ", id_, ": PullObjects: Sending back ", ret.size(), " TXs");
 
   return ret;
 }
