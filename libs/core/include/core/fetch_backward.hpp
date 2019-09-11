@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 
 #if defined(__GNUC__)
 #pragma GCC diagnostic push

@@ -19,7 +19,7 @@
 #include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "core/serializers/counter.hpp"
 #include "core/serializers/exception.hpp"
 #include "core/serializers/group_definitions.hpp"
@@ -31,8 +31,8 @@
 namespace fetch {
 namespace serializers {
 
-MsgPackSerializer::MsgPackSerializer(byte_array::ByteArray const &s)
-  : data_{s.Copy()}
+MsgPackSerializer::MsgPackSerializer(byte_array::ByteArray s)
+  : data_{std::move(s)}
 {}
 
 MsgPackSerializer::MsgPackSerializer(MsgPackSerializer const &from)

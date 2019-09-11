@@ -19,8 +19,6 @@
 
 #include "beacon/beacon_manager.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "crypto/bls_base.hpp"
-#include "crypto/bls_dkg.hpp"
 #include "crypto/prover.hpp"
 
 #include <atomic>
@@ -37,15 +35,12 @@ struct Aeon
   using Identity  = crypto::Identity;
   using TimeStamp = std::chrono::time_point<std::chrono::system_clock>;
 
-  std::unordered_set<Identity> members{};
-  uint64_t                     round_start{0};
-  uint64_t                     round_end{0};
+  std::set<Identity> members{};
+  uint64_t           round_start{0};
+  uint64_t           round_end{0};
 
   // Timeouts for waiting for other members
-  /// @{
-  uint64_t  setup_timeout_round{uint64_t(-1)};
-  TimeStamp setup_timeout;
-  /// @}
+  uint64_t start_reference_timepoint{uint64_t(-1)};
 };
 
 struct AeonExecutionUnit
@@ -59,8 +54,7 @@ struct AeonExecutionUnit
 
   Aeon aeon;
 
-  std::atomic<bool> ready{false};
-  std::atomic<bool> observe_only{false};
+  bool observe_only{false};
 };
 
 }  // namespace beacon

@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "block_configs.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "ledger/execution_manager.hpp"
 #include "ledger/transaction_status_cache.hpp"
 #include "mock_executor.hpp"

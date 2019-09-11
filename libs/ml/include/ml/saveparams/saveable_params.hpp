@@ -54,8 +54,7 @@ struct NodeSaveableParams
   OpType                             operation_type       = OpType::NONE;
   std::shared_ptr<OpsSaveableParams> op_save_params;
 
-  NodeSaveableParams()
-  {}
+  NodeSaveableParams() = default;
 };
 
 template <class TensorType>
@@ -207,7 +206,6 @@ template <class TensorType>
 struct OpEmbeddingsSaveableParams : public OpWeightsSaveableParams<TensorType>
 {
   fetch::ml::OpType                  op_type = OpType::OP_EMBEDDINGS;
-  std::shared_ptr<TensorType>        embeddings_output;
   std::vector<fetch::math::SizeType> updated_rows;
   std::vector<fetch::math::SizeType> trailing_indices1 = {0, 0};
   std::vector<fetch::math::SizeType> trailing_indices2 = {0};
@@ -275,7 +273,7 @@ struct LayerFullyConnectedSaveableParams : SubGraphSaveableParams<TensorType>
 };
 
 /**
- * Saveable parameters for LeakyRelu op
+ * Saveable parameters for LayerNorm op
  * @tparam TensorType
  */
 template <class TensorType>
@@ -291,6 +289,23 @@ struct OpLayerNormSaveableParams : public OpsSaveableParams
   TensorType prev_input;
   TensorType cached_inv_sqrt_var;
   TensorType cached_output;
+};
+
+/**
+ * Saveable parameters for Slice op
+ * @tparam TensorType
+ */
+template <class TensorType>
+struct OpSliceSaveableParams : public OpsSaveableParams
+{
+  using SizeType = typename TensorType::SizeType;
+
+  std::vector<SizeType> axes;
+  std::vector<SizeType> indices;
+  SizeType              axis;
+  SizeType              index;
+
+  fetch::ml::OpType op_type = OpType::OP_SLICE;
 };
 
 /**
@@ -441,7 +456,7 @@ struct OpMultiplySaveableParams : public OpsSaveableParams
 };
 
 /**
- * Saveable parameters for LeakyRelu op
+ * Saveable parameters for LayerNorm op
  * @tparam TensorType
  */
 template <class TensorType>
@@ -540,6 +555,7 @@ struct LayerScaledDotProductAttentionSaveableParams : SubGraphSaveableParams<Ten
 
   fetch::ml::OpType op_type = OpType::LAYER_SCALED_DOT_PRODUCT_ATTENTION;
   SizeType          key_dim = fetch::math::numeric_max<SizeType>();
+  DataType          dropout = fetch::math::numeric_max<DataType>();
 };
 
 /**
@@ -559,6 +575,7 @@ struct LayerSelfAttentionEncoderSaveableParams : SubGraphSaveableParams<TensorTy
   DataType          residual_dropout    = fetch::math::numeric_max<DataType>();
   DataType          attention_dropout   = fetch::math::numeric_max<DataType>();
   DataType          feedforward_dropout = fetch::math::numeric_max<DataType>();
+  DataType          epsilon             = fetch::math::function_tolerance<DataType>();
 };
 
 /**
@@ -579,11 +596,13 @@ struct OpSigmoidSaveableParams : public OpsSaveableParams
 template <class TensorType>
 struct LayerSkipGramSaveableParams : SubGraphSaveableParams<TensorType>
 {
-  using SizeType             = typename TensorType::SizeType;
-  fetch::ml::OpType op_type  = OpType::LAYER_SKIP_GRAM;
-  std::string       embed_in = "";
-  SizeType          in_size  = fetch::math::numeric_max<SizeType>();
-  SizeType          out_size = fetch::math::numeric_max<SizeType>();
+  using SizeType                   = typename TensorType::SizeType;
+  fetch::ml::OpType op_type        = OpType::LAYER_SKIP_GRAM;
+  std::string       embed_in       = "";
+  SizeType          in_size        = fetch::math::numeric_max<SizeType>();
+  SizeType          out_size       = fetch::math::numeric_max<SizeType>();
+  SizeType          vocab_size     = fetch::math::numeric_max<SizeType>();
+  SizeType          embedding_size = fetch::math::numeric_max<SizeType>();
 };
 
 template <class TensorType>
@@ -630,8 +649,7 @@ struct OpSubtractSaveableParams : public OpsSaveableParams
 template <class TensorType>
 struct OpSwitchSaveableParams : public OpsSaveableParams
 {
-  fetch::ml::OpType           op_type = OpType::OP_SWITCH;
-  std::shared_ptr<TensorType> output;
+  fetch::ml::OpType op_type = OpType::OP_SWITCH;
 };
 
 /**

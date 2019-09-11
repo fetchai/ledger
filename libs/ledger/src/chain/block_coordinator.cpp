@@ -19,7 +19,8 @@
 #include "core/byte_array/encoders.hpp"
 #include "core/feature_flags.hpp"
 #include "core/macros.hpp"
-#include "core/threading.hpp"
+#include "core/set_thread_name.hpp"
+#include "core/time/to_seconds.hpp"
 #include "ledger/block_packer_interface.hpp"
 #include "ledger/block_sink_interface.hpp"
 #include "ledger/chain/block_coordinator.hpp"
@@ -27,9 +28,6 @@
 #include "ledger/chain/constants.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/transaction.hpp"
-#include "ledger/consensus/stake_manager.hpp"
-#include "ledger/consensus/stake_manager_interface.hpp"
-#include "ledger/consensus/stake_snapshot.hpp"
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/execution_manager_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
@@ -37,14 +35,9 @@
 #include "ledger/upow/synergetic_execution_manager.hpp"
 #include "ledger/upow/synergetic_executor.hpp"
 #include "telemetry/counter.hpp"
+#include "telemetry/gauge.hpp"
+#include "telemetry/histogram.hpp"
 #include "telemetry/registry.hpp"
-
-#include "beacon/beacon_service.hpp"
-#include "beacon/beacon_setup_protocol.hpp"
-#include "beacon/beacon_setup_service.hpp"
-#include "beacon/cabinet_member_details.hpp"
-#include "beacon/entropy.hpp"
-#include "beacon/event_manager.hpp"
 
 #include <cassert>
 #include <chrono>
@@ -69,9 +62,10 @@ using DAGPtr               = std::shared_ptr<ledger::DAGInterface>;
 // Constants
 const std::chrono::milliseconds TX_SYNC_NOTIFY_INTERVAL{1000};
 const std::chrono::milliseconds EXEC_NOTIFY_INTERVAL{5000};
-const std::chrono::seconds      NOTIFY_INTERVAL{10};
-const std::chrono::seconds      WAIT_BEFORE_ASKING_FOR_MISSING_TX_INTERVAL{30};
-const std::chrono::seconds      WAIT_FOR_TX_TIMEOUT_INTERVAL{30};
+const std::chrono::seconds      STATE_NOTIFY_INTERVAL{20};
+const std::chrono::seconds      NOTIFY_INTERVAL{5};
+const std::chrono::seconds      WAIT_BEFORE_ASKING_FOR_MISSING_TX_INTERVAL{5};
+const std::chrono::seconds      WAIT_FOR_TX_TIMEOUT_INTERVAL{600};
 const uint32_t                  THRESHOLD_FOR_FAST_SYNCING{100u};
 const std::size_t               DIGEST_LENGTH_BYTES{32};
 
@@ -96,22 +90,21 @@ SynergeticExecMgrPtr CreateSynergeticExecutor(core::FeatureFlags const &features
  * @param chain The reference to the main change
  * @param execution_manager  The reference to the execution manager
  */
-BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr stake,
+BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
                                    ExecutionManagerInterface &execution_manager,
                                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
                                    BlockSinkInterface &      block_sink,
                                    core::FeatureFlags const &features, ProverPtr const &prover,
                                    std::size_t num_lanes, std::size_t num_slices,
-                                   std::size_t block_difficulty, BeaconServicePtr beacon)
+                                   std::size_t block_difficulty, ConsensusPtr consensus)
   : chain_{chain}
   , dag_{std::move(dag)}
-  , stake_{std::move(stake)}
-  , beacon_{std::move(beacon)}
+  , consensus_{std::move(consensus)}
   , execution_manager_{execution_manager}
   , storage_unit_{storage_unit}
   , block_packer_{packer}
   , block_sink_{block_sink}
-  , periodic_print_{NOTIFY_INTERVAL}
+  , periodic_print_{STATE_NOTIFY_INTERVAL}
   , miner_{std::make_shared<consensus::DummyMiner>()}
   , last_executed_block_{GENESIS_DIGEST}
   , mining_address_{prover->identity()}
@@ -123,7 +116,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr
   , tx_wait_periodic_{TX_SYNC_NOTIFY_INTERVAL}
   , exec_wait_periodic_{EXEC_NOTIFY_INTERVAL}
   , syncing_periodic_{NOTIFY_INTERVAL}
-  , synergetic_exec_mgr_{CreateSynergeticExecutor(features, dag, storage_unit_)}
+  , synergetic_exec_mgr_{CreateSynergeticExecutor(features, dag_, storage_unit_)}
   , reload_state_count_{telemetry::Registry::Instance().CreateCounter(
         "ledger_block_coordinator_reload_state_total",
         "The total number of times in the reload state")}
@@ -178,6 +171,23 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr
         "ledger_block_coordinator_mined_block_total", "The total number of mined blocks")}
   , executed_tx_count_{telemetry::Registry::Instance().CreateCounter(
         "ledger_block_coordinator_executed_tx_total", "The total number of executed transactions")}
+  , request_tx_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_request_tx_total",
+        "The total number of times an explicit request for transactions was made")}
+  , unable_to_find_tx_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_invalidated_tx_total",
+        "The total number of times a block was invalidated because transactions were not found")}
+  , tx_sync_times_{telemetry::Registry::Instance().CreateHistogram(
+        {0.001, 0.01, 0.1, 1, 10, 100}, "ledger_block_coordinator_tx_sync_times",
+        "The histogram of the time it takes to sync transactions")}
+  , current_block_num_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        "ledger_latest_block_num",
+        "The lastest block number that has been executed by the block coordinator")}
+  , next_block_num_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        "ledger_next_block_num",
+        "The number of the next block which is scheduled to be executed by the block coordinator")}
+  , block_hash_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        "block_hash", "The last seen block hash beginning")}
 {
   // configure the state machine
   // clang-format off
@@ -205,15 +215,13 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr
   // clang-format on
 
   state_machine_->OnStateChange([this](State current, State previous) {
+    FETCH_UNUSED(this);
     if (periodic_print_.Poll())
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Current state: ", ToString(current),
                      " (previous: ", ToString(previous), ")");
     }
   });
-
-  // Initialising the BLS library
-  crypto::bls::Init();
 
   // TODO(private issue 792): this shouldn't be here, but if it is, it locks the whole system on
   // startup. RecoverFromStartup();
@@ -264,7 +272,7 @@ BlockCoordinator::State BlockCoordinator::OnReloadState()
       // we need to update the execution manager state and also our locally cached state about the
       // last block that has been executed
       execution_manager_.SetLastProcessedBlock(current_block_->body.hash);
-      last_executed_block_.Set(current_block_->body.hash);
+      last_executed_block_.ApplyVoid([this](auto &digest) { digest = current_block_->body.hash; });
     }
   }
 
@@ -288,6 +296,9 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
     state_machine_->Delay(std::chrono::milliseconds{500});
     return State::RESET;
   }
+
+  // update the current block telemetry
+  current_block_num_->set(current_block_->body.block_number);
 
   // determine if extra debug is wanted or needed
   bool const extra_debug = syncing_periodic_.Poll();
@@ -379,6 +390,9 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
     BlockPtr common_parent = *block_path_it++;
     BlockPtr next_block    = *block_path_it++;
 
+    // update the telemetry
+    next_block_num_->set(next_block->body.block_number);
+
     if (extra_debug)
     {
       FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: Common Parent: 0x", common_parent->body.hash.ToHex());
@@ -465,6 +479,13 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
 
   FETCH_UNUSED(current);
 
+  if (State::SYNCHRONISING == previous)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Chain Sync complete on 0x", current_block_->body.hash.ToHex(),
+                   " (block: ", current_block_->body.block_number, " prev: 0x",
+                   current_block_->body.previous_hash.ToHex(), ")");
+  }
+
   // ensure the periodic print is not trigger once we have synced
   syncing_periodic_.Reset();
 
@@ -473,31 +494,32 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
   {
     return State::RESET;
   }
-  else if (mining_ && mining_enabled_ && (Clock::now() >= next_block_time_))
+  else if (mining_ && mining_enabled_ && ((Clock::now() >= next_block_time_) || consensus_))
   {
-    // POS: Additional check, are we able to mine?
-    if (stake_)
+    if (consensus_)
     {
-      if (!stake_->ShouldGenerateBlock(*current_block_, mining_address_))
-      {
-        // delay the invocation of this state machine
-        state_machine_->Delay(std::chrono::milliseconds{100});
-
-        // TODO(issue 1245): Refactor this stage, getting a little complicated
-        return State::SYNCHRONISED;
-      }
+      consensus_->UpdateCurrentBlock(*current_block_);
+      // Failure will set this to a nullptr
+      next_block_ = consensus_->GenerateNextBlock();
+    }
+    else
+    {
+      // create a new block
+      next_block_ = std::make_unique<Block>();
     }
 
-    // create a new block
-    next_block_                     = std::make_unique<Block>();
+    if (!next_block_)
+    {
+      state_machine_->Delay(std::chrono::milliseconds{100});
+      return State::SYNCHRONISED;
+    }
+
     next_block_->body.previous_hash = current_block_->body.hash;
     next_block_->body.block_number  = current_block_->body.block_number + 1;
     next_block_->body.miner         = mining_address_;
 
-    if (stake_)
-    {
-      next_block_->weight = stake_->GetBlockGenerationWeight(*current_block_, mining_address_);
-    }
+    FETCH_LOG_INFO(LOGGING_NAME, "Minting new block! Number: ", next_block_->body.block_number,
+                   " beacon: ", next_block_->body.entropy);
 
     // Attach current DAG state
     if (dag_)
@@ -516,9 +538,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
   }
   else if (State::SYNCHRONISING == previous)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Chain Sync complete on 0x", current_block_->body.hash.ToHex(),
-                   " (block: ", current_block_->body.block_number, " prev: 0x",
-                   current_block_->body.previous_hash.ToHex(), ")");
+    //
   }
   else
   {
@@ -539,6 +559,7 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
     FETCH_LOG_WARN(LOGGING_NAME, "Block validation failed: ", reason, " (",
                    ToBase64(current_block_->body.hash), ')');
     FETCH_UNUSED(reason);
+
     chain_.RemoveBlock(current_block_->body.hash);
     return State::RESET;
   }};
@@ -553,18 +574,15 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
       return fail("No previous block in chain");
     }
 
-    // Check that the weight as given by the proof is correct
-    if (stake_)
+    if (consensus_)
     {
-      if (!stake_->ValidMinerForBlock(*previous, current_block_->body.miner))
-      {
-        return fail("Block signed by miner deemed invalid by the staking mechanism");
-      }
+      consensus_->UpdateCurrentBlock(*previous);  // Only update with valid blocks
+      auto result = consensus_->ValidBlock(*previous, *current_block_);
 
-      if (current_block_->weight !=
-          stake_->GetBlockGenerationWeight(*previous, current_block_->body.miner))
+      if (!(result == ConsensusInterface::Status::YES ||
+            result == ConsensusInterface::Status::UNKNOWN))
       {
-        return fail("Incorrect stake weight found for block");
+        return fail("Consensus failed to verify block");
       }
     }
 
@@ -669,6 +687,8 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, S
       // FSM is stuck waiting for transactions - has timeout elapsed?
       if (wait_for_tx_timeout_.HasExpired())
       {
+        unable_to_find_tx_count_->increment();
+
         // Assume block was invalid and discard it
         chain_.RemoveBlock(current_block_->body.hash);
 
@@ -679,17 +699,20 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, S
     {
       if (wait_before_asking_for_missing_tx_.HasExpired())
       {
+        request_tx_count_->increment();
+
         storage_unit_.IssueCallForMissingTxs(*pending_txs_);
         have_asked_for_missing_txs_ = true;
         wait_for_tx_timeout_.Restart(WAIT_FOR_TX_TIMEOUT_INTERVAL);
       }
     }
   }
-  else
+  else  // this is the first time in this state
   {
     // Only just started waiting for transactions - reset countdown to issuing request to peers
     wait_before_asking_for_missing_tx_.Restart(WAIT_BEFORE_ASKING_FOR_MISSING_TX_INTERVAL);
     have_asked_for_missing_txs_ = false;
+    start_waiting_for_tx_       = Clock::now();  // cache the start time
   }
 
   // TODO(HUT): this might need to check that storage has whatever this dag epoch needs wrt
@@ -737,6 +760,9 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, S
   // much easier all around
   if (pending_txs_->empty() && dag_is_ready)
   {
+    // record the time this successful syncing took place
+    tx_sync_times_->Add(ToSeconds(Clock::now() - start_waiting_for_tx_));
+
     FETCH_LOG_DEBUG(LOGGING_NAME, "All transactions have been synchronised!");
 
     // clear the pending transaction set
@@ -897,7 +923,7 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
     }
 
     // signal the last block that has been executed
-    last_executed_block_.Set(current_block_->body.hash);
+    last_executed_block_.ApplyVoid([this](auto &digest) { digest = current_block_->body.hash; });
 
     // update the telemetry
     executed_block_count_->increment();
@@ -1070,7 +1096,7 @@ BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
                      " number: ", next_block_->body.block_number);
 
       // signal the last block that has been executed
-      last_executed_block_.Set(next_block_->body.hash);
+      last_executed_block_.ApplyVoid([this](auto &digest) { digest = next_block_->body.hash; });
 
       // dispatch the block that has been generated
       block_sink_.OnBlock(*next_block_);
@@ -1086,76 +1112,37 @@ BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
 
 BlockCoordinator::State BlockCoordinator::OnReset()
 {
+  Block const *block = nullptr;
+
+  if (next_block_)
+  {
+    block = next_block_.get();
+  }
+  else if (current_block_)
+  {
+    block = current_block_.get();
+  }
+  else
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Unable to find a previously executed block!");
+  }
+
   reset_state_count_->increment();
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Reset condition");
-
-  // trigger stake updates at the end of the block lifecycle
-  if (stake_ && beacon_)
+  if (block)
   {
-    Block const *block = nullptr;
+    block_hash_->set(*reinterpret_cast<uint64_t const *>(block->body.hash.pointer()));
+  }
 
-    if (next_block_)
-    {
-      block = next_block_.get();
-    }
-    else if (current_block_)
-    {
-      block = current_block_.get();
-    }
-    else
-    {
-      FETCH_LOG_ERROR(LOGGING_NAME,
-                      "Unable to find a previously executed block when updating staking!");
-    }
-
-    // If we are on the head of the main chain, and it is a 'committee triggering' block
-    if (block && (*chain_.GetHeaviestBlock() == *block))
-    {
-      auto const block_number = block->body.block_number;
-
-      if ((block_number % AEON_PERIOD) == 0)
-      {
-        std::unordered_set<fetch::crypto::Identity> cabinet_member_list;
-        auto                                        snapshot = (*stake_).GetCurrentStakeSnapshot();
-        auto const current_stakers = snapshot->BuildCommittee(0, MAX_COMMITTEE_SIZE);
-
-        // TODO(HUT): switch to set for stake manager
-        for (auto const &staker : *current_stakers)
-        {
-          FETCH_LOG_DEBUG(LOGGING_NAME, "Adding staker: ", staker.identifier().ToBase64());
-          cabinet_member_list.insert(staker);
-        }
-
-        uint32_t threshold = uint32_t((cabinet_member_list.size() / 2) + 1);
-
-        FETCH_LOG_INFO(LOGGING_NAME, "Block: ", block_number,
-                       " creating new aeon. Periodicity: ", AEON_PERIOD, " threshold: ", threshold,
-                       " cabinet size: ", cabinet_member_list.size());
-
-        // Disallow multiple invocations
-        static bool did_genesis_already = false;
-
-        if (block_number != 0 || !did_genesis_already)
-        {
-          beacon_->StartNewCabinet(cabinet_member_list, threshold, block_number,
-                                   block_number + AEON_PERIOD);
-          did_genesis_already = true;
-        }
-
-        // Finally update stake
-        if (block_number != 0)
-        {
-          stake_->UpdateCurrentBlock(*block);
-        }
-      }
-    }
+  if (consensus_)
+  {
+    consensus_->UpdateCurrentBlock(*block);
+    consensus_->Refresh();
   }
 
   current_block_.reset();
   next_block_.reset();
   pending_txs_.reset();
-  blocks_to_common_ancestor_.clear();
 
   // we should update the next block time
   UpdateNextBlockTime();
@@ -1340,9 +1327,14 @@ char const *BlockCoordinator::ToString(ExecutionStatus state)
 
 void BlockCoordinator::Reset()
 {
-  last_executed_block_.Set(GENESIS_DIGEST);
+  last_executed_block_.ApplyVoid([](auto &digest) { digest = GENESIS_DIGEST; });
   execution_manager_.SetLastProcessedBlock(GENESIS_DIGEST);
   chain_.Reset();
+}
+
+void BlockCoordinator::EnableMining(bool enable)
+{
+  mining_enabled_ = enable;
 }
 
 }  // namespace ledger

@@ -38,12 +38,13 @@ public:
   using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpMaskFillSaveableParams<TensorType>;
+  using MyType        = MaskFill<TensorType>;
 
-  MaskFill(DataType fill_value)
+  explicit MaskFill(DataType fill_value)
     : fill_value_(fill_value)
   {}
 
-  MaskFill(SPType const &sp)
+  explicit MaskFill(SPType const &sp)
     : Ops<T>(sp)
   {
     fill_value_ = sp.fill_value;
@@ -58,6 +59,16 @@ public:
     return sp;
   }
 
+  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
+  {
+    FETCH_UNUSED(me);
+    assert(me.get() == this);
+
+    auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
+
+    return copyshare;
+  }
   /**
    * based on boolean condition mask, decide if we need to fill the element with fill_value.
    * @param inputs - two inputs, first is mask, second is the array to be masked
@@ -98,6 +109,11 @@ public:
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     return inputs.at(1)->shape();
+  }
+
+  static constexpr OpType OpCode()
+  {
+    return OpType::OP_MASK_FILL;
   }
 
   static constexpr char const *DESCRIPTOR = "MaskFill";

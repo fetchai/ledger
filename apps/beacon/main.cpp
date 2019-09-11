@@ -25,27 +25,29 @@
 #include "crypto/bls_dkg.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
+#include "ledger/shards/manifest_cache_interface.hpp"
 
+#include "muddle/muddle_interface.hpp"
+#include "muddle/rpc/client.hpp"
+#include "muddle/rpc/server.hpp"
+#include "muddle/subscription.hpp"
 #include "network/generics/requesting_queue.hpp"
-#include "network/muddle/muddle.hpp"
-#include "network/muddle/rpc/client.hpp"
-#include "network/muddle/rpc/server.hpp"
-#include "network/muddle/subscription.hpp"
 
 #include "beacon/beacon_service.hpp"
-#include "beacon/beacon_setup_protocol.hpp"
 #include "beacon/beacon_setup_service.hpp"
 #include "beacon/cabinet_member_details.hpp"
 #include "beacon/entropy.hpp"
 #include "beacon/event_manager.hpp"
 
 #include <cstdint>
+#include <ctime>
 #include <deque>
 #include <iostream>
 #include <random>
 #include <stdexcept>
 #include <unordered_map>
 #include <vector>
+
 using namespace fetch;
 using namespace fetch::beacon;
 
@@ -67,19 +69,28 @@ ProverPtr CreateNewCertificate()
   return certificate;
 }
 
+struct DummyManifestCache : public ledger::ManifestCacheInterface
+{
+  bool QueryManifest(Address const &, ledger::Manifest &) override
+  {
+    return false;
+  }
+};
+
 struct CabinetNode
 {
   using Prover         = crypto::Prover;
   using ProverPtr      = std::shared_ptr<Prover>;
   using Certificate    = crypto::Prover;
   using CertificatePtr = std::shared_ptr<Certificate>;
-  using Muddle         = muddle::Muddle;
+  using Muddle         = muddle::MuddlePtr;
 
   uint16_t                muddle_port;
   network::NetworkManager network_manager;
   core::Reactor           reactor;
   ProverPtr               muddle_certificate;
   Muddle                  muddle;
+  DummyManifestCache      manifest_cache;
   BeaconService           beacon_service;
 
   CabinetNode(uint16_t port_number, uint16_t index, EventManager::SharedEventManager event_manager)
@@ -87,12 +98,21 @@ struct CabinetNode
     , network_manager{"NetworkManager" + std::to_string(index), 1}
     , reactor{"ReactorName" + std::to_string(index)}
     , muddle_certificate{CreateNewCertificate()}
-    , muddle{fetch::muddle::NetworkId{"TestNetwork"}, muddle_certificate, network_manager, true,
-             true}
-    , beacon_service{muddle.AsEndpoint(), muddle_certificate, event_manager}
+    , muddle{muddle::CreateMuddle("Test", muddle_certificate, network_manager, "127.0.0.1")}
+    , beacon_service{*muddle, manifest_cache, muddle_certificate, event_manager}
   {
     network_manager.Start();
-    muddle.Start({muddle_port});
+    muddle->Start({muddle_port});
+  }
+
+  muddle::Address GetMuddleAddress() const
+  {
+    return muddle->GetAddress();
+  }
+
+  network::Uri GetHint() const
+  {
+    return fetch::network::Uri{"tcp://127.0.0.1:" + std::to_string(muddle_port)};
   }
 };
 
@@ -120,8 +140,7 @@ int main()
   {
     for (uint32_t jj = ii + 1; jj < number_of_nodes; jj++)
     {
-      committee[ii]->muddle.AddPeer(
-          fetch::network::Uri{"tcp://127.0.0.1:" + std::to_string(committee[jj]->muddle_port)});
+      committee[ii]->muddle->ConnectTo(committee[jj]->GetMuddleAddress(), committee[jj]->GetHint());
     }
   }
 
@@ -160,7 +179,8 @@ int main()
       for (auto &member : committee)
       {
         member->beacon_service.StartNewCabinet(cabinet, static_cast<uint32_t>(cabinet.size() / 2),
-                                               block_number, block_number + aeon_length);
+                                               block_number, block_number + aeon_length,
+                                               static_cast<uint64_t>(std::time(nullptr)));
       }
     }
 

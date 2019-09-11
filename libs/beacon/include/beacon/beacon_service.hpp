@@ -20,20 +20,23 @@
 #include "core/state_machine.hpp"
 
 #include "ledger/consensus/entropy_generator_interface.hpp"
-#include "network/muddle/muddle.hpp"
-#include "network/muddle/rpc/client.hpp"
-#include "network/muddle/rpc/server.hpp"
-#include "network/muddle/subscription.hpp"
+#include "muddle/muddle_endpoint.hpp"
+#include "muddle/rpc/client.hpp"
+#include "muddle/rpc/server.hpp"
+#include "muddle/subscription.hpp"
 
 #include "beacon/aeon.hpp"
 #include "beacon/beacon_protocol.hpp"
-#include "beacon/beacon_setup_protocol.hpp"
 #include "beacon/beacon_setup_service.hpp"
 #include "beacon/cabinet_member_details.hpp"
 #include "beacon/entropy.hpp"
 #include "beacon/event_manager.hpp"
 #include "beacon/events.hpp"
-#include "beacon/verification_vector_message.hpp"
+#include "beacon/public_key_message.hpp"
+
+#include "telemetry/counter.hpp"
+#include "telemetry/gauge.hpp"
+#include "telemetry/registry.hpp"
 
 #include <cstdint>
 #include <deque>
@@ -61,7 +64,7 @@ public:
     COMPLETE,
     COMITEE_ROTATION,
 
-    WAIT_FOR_VERIFICATION_VECTORS,
+    WAIT_FOR_PUBLIC_KEYS,
     OBSERVE_ENTROPY_GENERATION
   };
 
@@ -74,10 +77,10 @@ public:
   using BeaconManager           = dkg::BeaconManager;
   using SharedAeonExecutionUnit = std::shared_ptr<AeonExecutionUnit>;
   using Endpoint                = muddle::MuddleEndpoint;
-  using Muddle                  = muddle::Muddle;
+  using MuddleInterface         = muddle::MuddleInterface;
   using Client                  = muddle::rpc::Client;
   using ClientPtr               = std::shared_ptr<Client>;
-  using CabinetMemberList       = std::unordered_set<Identity>;
+  using CabinetMemberList       = std::set<Identity>;
   using ConstByteArray          = byte_array::ConstByteArray;
   using Server                  = fetch::muddle::rpc::Server;
   using ServerPtr               = std::shared_ptr<Server>;
@@ -88,11 +91,13 @@ public:
   using Serializer              = serializers::MsgPackSerializer;
   using Digest                  = ledger::Digest;
   using SharedEventManager      = EventManager::SharedEventManager;
+  using BeaconSetupService      = beacon::BeaconSetupService;
 
   BeaconService()                      = delete;
   BeaconService(BeaconService const &) = delete;
 
-  BeaconService(Endpoint &endpoint, CertificatePtr certificate, SharedEventManager event_manager,
+  BeaconService(MuddleInterface &muddle, ledger::ManifestCacheInterface &manifest_cache,
+                CertificatePtr certificate, SharedEventManager event_manager,
                 uint64_t blocks_per_round = 1);
 
   /// @name Entropy Generator
@@ -104,7 +109,9 @@ public:
   /// @{
   /// @brief this function is called when the node is in the cabinet
   void StartNewCabinet(CabinetMemberList members, uint32_t threshold, uint64_t round_start,
-                       uint64_t round_end);
+                       uint64_t round_end, uint64_t start_time);
+
+  void AbortCabinet(uint64_t round_start);
   /// @}
 
   /// Beacon runnables
@@ -113,8 +120,6 @@ public:
   std::weak_ptr<core::Runnable> GetSetupRunnable();
   /// @}
 
-  template <typename T>
-  friend class core::StateMachine;
   friend class BeaconServiceProtocol;
 
 protected:
@@ -129,7 +134,7 @@ protected:
 
   State OnComiteeState();
 
-  State OnWaitForVerificationVectors();
+  State OnWaitForPublicKeys();
   State OnObserveEntropyGeneration();
   /// @}
 
@@ -139,35 +144,7 @@ protected:
   /// @}
 
 private:
-  bool AddSignature(SignatureShare share)
-  {
-    assert(active_exe_unit_ != nullptr);
-    auto ret = active_exe_unit_->manager.AddSignaturePart(share.identity, share.public_key,
-                                                          share.signature);
-
-    // Checking that the signature is valid
-    if (ret == BeaconManager::AddResult::INVALID_SIGNATURE)
-    {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Signature invalid.");
-
-      EventInvalidSignature event;
-      // TODO(tfr): Received invalid signature - fill event details
-      event_manager_->Dispatch(event);
-
-      return false;
-    }
-    else if (ret == BeaconManager::AddResult::NOT_MEMBER)
-    {  // And that it was sent by a member of the cabinet
-      FETCH_LOG_ERROR(LOGGING_NAME, "Signature from non-member.");
-
-      EventSignatureFromNonMember event;
-      // TODO(tfr): Received signature from non-member - deal with it.
-      event_manager_->Dispatch(event);
-
-      return false;
-    }
-    return true;
-  }
+  bool AddSignature(SignatureShare share);
 
   std::mutex      mutex_;
   CertificatePtr  certificate_;
@@ -178,6 +155,7 @@ private:
   /// General configuration
   /// @{
   uint64_t blocks_per_round_;
+  bool     broadcasting_ = false;
   /// @}
 
   /// Beacon and entropy control units
@@ -195,10 +173,10 @@ private:
 
   /// Observing beacon
   /// @{
-  SubscriptionPtr                                verification_vec_subscription_{nullptr};
-  std::priority_queue<VerificationVectorMessage> incoming_verification_vectors_{};
-  SubscriptionPtr                                entropy_subscription_{nullptr};
-  std::priority_queue<Entropy>                   incoming_entropy_{};
+  SubscriptionPtr                       group_public_key_subscription_{nullptr};
+  std::priority_queue<PublicKeyMessage> incoming_group_public_keys_{};
+  SubscriptionPtr                       entropy_subscription_{nullptr};
+  std::priority_queue<Entropy>          incoming_entropy_{};
   /// @}
 
   ServerPtr           rpc_server_{nullptr};
@@ -211,10 +189,13 @@ private:
 
   /// Distributed Key Generation
   /// @{
-  BeaconSetupService         cabinet_creator_;
-  BeaconSetupServiceProtocol cabinet_creator_protocol_;
-  BeaconServiceProtocol      beacon_protocol_;
+  BeaconSetupService    cabinet_creator_;
+  BeaconServiceProtocol beacon_protocol_;
   /// @}
+
+  telemetry::CounterPtr         beacon_entropy_generated_total_;
+  telemetry::CounterPtr         beacon_entropy_future_signature_seen_total_;
+  telemetry::GaugePtr<uint64_t> beacon_entropy_last_requested_;
 };
 
 }  // namespace beacon

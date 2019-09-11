@@ -49,6 +49,7 @@ public:
 };
 
 using WeakRunnable = std::weak_ptr<Runnable>;
+using RunnablePtr  = std::shared_ptr<Runnable>;
 
 }  // namespace core
 }  // namespace fetch

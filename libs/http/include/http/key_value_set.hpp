@@ -59,16 +59,12 @@ public:
 
   void Add(byte_array_type const &name, byte_array_type const &value)
   {
-    LOG_STACK_TRACE_POINT;
-
     insert({name, value});
   }
 
   template <typename T>
-  typename std::enable_if<std::is_integral<T>::value, void>::type Add(byte_array_type const &name,
-                                                                      T const &              n)
+  std::enable_if_t<std::is_integral<T>::value, void> Add(byte_array_type const &name, T const &n)
   {
-    LOG_STACK_TRACE_POINT;
     // TODO(issue 35): Can be improved.
     byte_array_type value(std::to_string(n));
     insert({name, value});
@@ -76,22 +72,16 @@ public:
 
   bool Has(byte_array_type const &key) const
   {
-    LOG_STACK_TRACE_POINT;
-
     return this->find(key) != this->end();
   }
 
   byte_array::ConstByteArray &operator[](byte_array::ConstByteArray const &name)
   {
-    LOG_STACK_TRACE_POINT;
-
     return super_type::operator[](name);
   }
 
   byte_array::ConstByteArray operator[](byte_array::ConstByteArray const &name) const
   {
-    LOG_STACK_TRACE_POINT;
-
     auto element = this->find(name);
 
     if (element == this->end())
@@ -106,8 +96,6 @@ public:
 
   void Clear()
   {
-    LOG_STACK_TRACE_POINT;
-
     this->clear();
   }
 

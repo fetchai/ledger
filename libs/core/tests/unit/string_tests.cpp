@@ -26,9 +26,10 @@
 
 #include <string>
 
-using namespace fetch::core;
-
 namespace {
+
+using namespace fetch::core;
+using namespace fetch::string;
 
 std::string Escape(std::string const &s)
 {
@@ -40,7 +41,7 @@ std::string Escape(std::string const &s)
     ret_val.append(s, i0, i - i0) += '\\';
     ret_val += (s[i] == '\n' ? 'n' : 't');
   }
-  return std::move(ret_val.append(s, i0) += '"');
+  return {std::move(ret_val.append(s, i0) += '"')};
 }
 
 TEST(StringTests, check_EndsWith)
@@ -69,8 +70,6 @@ TEST(StringTests, check_StartsWith)
   EXPECT_FALSE(StartsWith("Hello World", "...Hello World"));
 }
 
-using namespace fetch::string;
-
 TEST(StringTests, check_Replace)
 {
   auto s = Replace("Space shuttle ready to start", 's', 'z');
@@ -82,9 +81,35 @@ TEST(StringTests, check_Replace)
       << "Replace(\"Space shuttle ready to start\", 'z', 'm')";
 }
 
-TEST(StringTests, check_TrimFromRight)
+TEST(StringTests, check_TrimFromLeft_removes_leading_whitespace)
 {
   for (std::string s : {"    1234", " \t \n 1234", "1234"})
+  {
+    TrimFromLeft(s);
+    EXPECT_EQ(s, "1234") << Escape(s);
+  }
+
+  std::string s = "    ";
+  TrimFromLeft(s);
+  EXPECT_EQ(s, "");
+
+  s = " \t \n ";
+  TrimFromLeft(s);
+  EXPECT_EQ(s, "");
+}
+
+TEST(StringTests, check_TrimFromLeft_does_not_remove_trailing_whitespace)
+{
+  for (std::string s : {"    1234 \t \n ", " \t \n 1234 \t \n ", "1234 \t \n "})
+  {
+    TrimFromLeft(s);
+    EXPECT_EQ(s, "1234 \t \n ") << Escape(s);
+  }
+}
+
+TEST(StringTests, check_TrimFromRight_removes_trailing_whitespace)
+{
+  for (std::string s : {"1234    ", "1234 \t \n ", "1234"})
   {
     TrimFromRight(s);
     EXPECT_EQ(s, "1234") << Escape(s);
@@ -99,21 +124,13 @@ TEST(StringTests, check_TrimFromRight)
   EXPECT_EQ(s, "");
 }
 
-TEST(StringTests, check_TrimFromLeft)
+TEST(StringTests, check_TrimFromRight_does_not_remove_leading_whitespace)
 {
-  for (std::string s : {"1234    ", "1234 \t \n ", "1234"})
+  for (std::string s : {" \t \n 1234    ", " \t \n 1234 \t \n ", " \t \n 1234"})
   {
-    TrimFromLeft(s);
-    EXPECT_EQ(s, "1234") << Escape(s);
+    TrimFromRight(s);
+    EXPECT_EQ(s, " \t \n 1234") << Escape(s);
   }
-
-  std::string s = "    ";
-  TrimFromLeft(s);
-  EXPECT_EQ(s, "");
-
-  s = " \t \n ";
-  TrimFromLeft(s);
-  EXPECT_EQ(s, "");
 }
 
 TEST(StringTests, check_Trim)

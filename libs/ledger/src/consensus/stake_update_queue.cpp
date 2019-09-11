@@ -19,6 +19,8 @@
 #include "ledger/consensus/stake_snapshot.hpp"
 #include "ledger/consensus/stake_update_queue.hpp"
 
+#include <memory>
+
 namespace fetch {
 namespace ledger {
 
@@ -33,7 +35,7 @@ bool StakeUpdateQueue::ApplyUpdates(BlockIndex block_index, StakeSnapshotPtr con
 {
   bool new_snapshot{false};
 
-  updates_.Apply([&](BlockUpdates &updates) {
+  updates_.ApplyVoid([&](BlockUpdates &updates) {
     // ensure the output is empty (this should always be the case anyway)
     next.reset();
 
@@ -83,6 +85,29 @@ bool StakeUpdateQueue::ApplyUpdates(BlockIndex block_index, StakeSnapshotPtr con
   });
 
   return new_snapshot;
+}
+
+/**
+ * Gets the number of block updates currently pending in the queue
+
+ * @return The number of pending updates
+ */
+std::size_t StakeUpdateQueue::size() const
+{
+  return updates_.Apply([](BlockUpdates const &updates) -> std::size_t { return updates.size(); });
+}
+
+/**
+ * Adds / Updates the change of stake to be applied at a given block index
+ *
+ * @param block_index The block index at which to apply the update
+ * @param address The address of the stake holder
+ * @param stake The amount of tokens to be staked
+ */
+void StakeUpdateQueue::AddStakeUpdate(BlockIndex block_index, Identity const &identity,
+                                      StakeAmount stake)
+{
+  updates_.ApplyVoid([&](BlockUpdates &updates) { updates[block_index][identity] = stake; });
 }
 
 }  // namespace ledger

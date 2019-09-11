@@ -18,11 +18,11 @@
 //------------------------------------------------------------------------------
 
 #include "core/containers/queue.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "core/mutex.hpp"
 #include "core/runnable.hpp"
+#include "core/set_thread_name.hpp"
 #include "core/state_machine.hpp"
-#include "core/threading.hpp"
 #include "ledger/chain/transaction_layout.hpp"
 #include "storage/object_store.hpp"
 
@@ -96,7 +96,6 @@ private:
     Flushing
   };
 
-  using Mutex           = fetch::mutex::Mutex;
   using StateMachinePtr = std::shared_ptr<core::StateMachine<Phase>>;
   using Queue           = fetch::core::MPMCQueue<ResourceID, 1 << 15>;
   using RecentQueue     = fetch::core::MPMCQueue<ledger::TransactionLayout, 1 << 15>;
@@ -136,7 +135,7 @@ private:
  * @tparam O The type of the object being stored
  */
 template <typename O>
-inline TransientObjectStore<O>::TransientObjectStore(uint32_t log2_num_lanes)
+TransientObjectStore<O>::TransientObjectStore(uint32_t log2_num_lanes)
   : log2_num_lanes_(log2_num_lanes)
   , rids(batch_size_)
   , state_machine_{
@@ -506,8 +505,8 @@ bool TransientObjectStore<O>::GetFromCache(ResourceID const &rid, O &object)
 template <typename O>
 void TransientObjectStore<O>::SetInCache(ResourceID const &rid, O const &object)
 {
-  typename Cache ::iterator it;
-  bool                      inserted{false};
+  typename Cache::iterator it;
+  bool                     inserted{false};
 
   // attempt to insert the element into the map
   std::tie(it, inserted) = cache_.emplace(rid, object);

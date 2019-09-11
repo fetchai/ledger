@@ -16,10 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
+#include "core/assert.hpp"
+#include "core/logging.hpp"
 #include "core/reactor.hpp"
 #include "core/runnable.hpp"
-#include "core/threading.hpp"
+#include "core/set_thread_name.hpp"
 
 #include <chrono>
 #include <deque>
@@ -48,13 +49,13 @@ bool Reactor::Attach(WeakRunnable runnable)
   auto concrete_runnable = runnable.lock();
   if (concrete_runnable)
   {
-    FETCH_LOCK(work_map_mutex_);
+    success = work_map_.Apply([&concrete_runnable, &runnable](auto &work_map) -> bool {
+      // attempt to insert the element into the map
+      auto const result = work_map.insert(std::make_pair(concrete_runnable.get(), runnable));
 
-    // attempt to insert the element into the map
-    auto const result = work_map_.insert(std::make_pair(concrete_runnable.get(), runnable));
-
-    // signal success if the insertion was successful
-    success = result.second;
+      // signal success if the insertion was successful
+      return result.second;
+    });
   }
 
   return success;
@@ -62,14 +63,12 @@ bool Reactor::Attach(WeakRunnable runnable)
 
 bool Reactor::Detach(Runnable const &runnable)
 {
-  FETCH_LOCK(work_map_mutex_);
-  return (work_map_.erase(&runnable) > 0);
+  return work_map_.Apply(
+      [&runnable](auto &work_map) -> bool { return work_map.erase(&runnable) > 0; });
 }
 
 void Reactor::Start()
 {
-  FETCH_LOCK(worker_mutex_);
-
   // restart the work if called multiple times
   StopWorker();
   StartWorker();
@@ -77,25 +76,19 @@ void Reactor::Start()
 
 void Reactor::Stop()
 {
-  FETCH_LOCK(worker_mutex_);
-
   // stop the worker
   StopWorker();
 }
 
 void Reactor::StartWorker()
 {
-  if (worker_)
-  {
-    FETCH_LOG_ERROR(LOGGING_NAME, "Worker already started, logic start up error");
-    throw std::runtime_error("Worker already started");
-  }
+  detailed_assert(!worker_);
 
   // signal the reactor is running
   running_ = true;
 
   // create the worker routine
-  worker_ = std::make_unique<std::thread>(&Reactor::Monitor, this);
+  worker_ = std::make_unique<ProtectedThread>(&Reactor::Monitor, this);
 }
 
 void Reactor::StopWorker()
@@ -104,7 +97,7 @@ void Reactor::StopWorker()
 
   if (worker_)
   {
-    worker_->join();
+    worker_->ApplyVoid([](auto &worker) { worker.join(); });
     worker_.reset();
   }
 }
@@ -121,32 +114,33 @@ void Reactor::Monitor()
     // Step 1. If we have run out of work to execute then gather all the runnables that are ready
     if (work_queue.empty())
     {
-      FETCH_LOCK(work_map_mutex_);
-
-      // loop through and evaluate the map
-      auto it = work_map_.begin();
-      while (it != work_map_.end())
-      {
-        // attempt to lock the runnable
-        auto concrete_runnable = it->second.lock();
-
-        if (concrete_runnable)
+      work_map_.ApplyVoid([&work_queue](auto &work_map) {
+        // loop through and evaluate the map
+        auto it = work_map.begin();
+        while (it != work_map.end())
         {
-          // evaluate if the runnable is ready to execute, if it is then add it to the work queue
-          if (concrete_runnable->IsReadyToExecute())
+          // attempt to lock the runnable
+          auto concrete_runnable = it->second.lock();
+
+          if (concrete_runnable)
           {
-            work_queue.emplace_back(it->second);
-          }
+            // evaluate if the runnable is ready to execute, if it is then add it to the work queue
+            if (concrete_runnable->IsReadyToExecute())
+            {
+              work_queue.emplace_back(it->second);
+            }
 
-          // advance to the next element in the map
-          ++it;
+            // advance to the next element in the map
+            ++it;
+          }
+          else
+          {
+            // the lifetime of the runnable has expired, remove
+            // and advance to next element in the map
+            it = work_map.erase(it);
+          }
         }
-        else
-        {
-          // the lifetime of the runnable has expired, remove and advance to next element in the map
-          it = work_map_.erase(it);
-        }
-      }
+      });
     }
 
     // If the work queue is still empty then there is no work to do. Sleep the worker and try again
@@ -163,7 +157,19 @@ void Reactor::Monitor()
     // execute the item if it can be executed
     if (runnable)
     {
-      runnable->Execute();
+      try
+      {
+        runnable->Execute();
+      }
+      catch (std::exception const &ex)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "The reactor caught an exception! ", name_,
+                       " error: ", ex.what());
+      }
+      catch (...)
+      {
+        FETCH_LOG_INFO(LOGGING_NAME, "Unknown error generated in reactor: ", name_);
+      }
     }
   }
 }

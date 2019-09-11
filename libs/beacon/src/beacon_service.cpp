@@ -17,10 +17,12 @@
 //------------------------------------------------------------------------------
 
 #include "beacon/aeon.hpp"
-
 #include "beacon/beacon_service.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
+#include "muddle/muddle_interface.hpp"
+#include "telemetry/counter.hpp"
+#include "telemetry/gauge.hpp"
 
 #include <chrono>
 
@@ -54,30 +56,37 @@ char const *ToString(BeaconService::State state)
   case BeaconService::State::OBSERVE_ENTROPY_GENERATION:
     text = "Observe entropy generation";
     break;
-  case BeaconService::State::WAIT_FOR_VERIFICATION_VECTORS:
-    text = "Waiting for verification vectors.";
+  case BeaconService::State::WAIT_FOR_PUBLIC_KEYS:
+    text = "Waiting for public keys";
     break;
   }
 
   return text;
 }
 
-BeaconService::BeaconService(Endpoint &endpoint, CertificatePtr certificate,
-                             SharedEventManager event_manager, uint64_t blocks_per_round)
+BeaconService::BeaconService(MuddleInterface &               muddle,
+                             ledger::ManifestCacheInterface &manifest_cache,
+                             CertificatePtr certificate, SharedEventManager event_manager,
+                             uint64_t blocks_per_round)
   : certificate_{certificate}
   , identity_{certificate->identity()}
-  , endpoint_{endpoint}
+  , endpoint_{muddle.GetEndpoint()}
   , state_machine_{std::make_shared<StateMachine>("BeaconService", State::WAIT_FOR_SETUP_COMPLETION,
                                                   ToString)}
   , blocks_per_round_{blocks_per_round}
-  , verification_vec_subscription_{endpoint_.Subscribe(SERVICE_DKG, CHANNEL_VERIFICATION_VECTORS)}
+  , group_public_key_subscription_{endpoint_.Subscribe(SERVICE_DKG, CHANNEL_PUBLIC_KEY)}
   , entropy_subscription_{endpoint_.Subscribe(SERVICE_DKG, CHANNEL_ENTROPY_DISTRIBUTION)}
   , rpc_client_{"BeaconService", endpoint_, SERVICE_DKG, CHANNEL_RPC}
   , event_manager_{std::move(event_manager)}
-  , cabinet_creator_{endpoint_, identity_}  // TODO(tfr): Make shared
-  , cabinet_creator_protocol_{cabinet_creator_}
+  , cabinet_creator_{muddle, identity_, manifest_cache}  // TODO(tfr): Make shared
   , beacon_protocol_{*this}
-
+  , beacon_entropy_generated_total_{telemetry::Registry::Instance().CreateCounter(
+        "beacon_entropy_generated_total", "The total number of times entropy has been generated")}
+  , beacon_entropy_future_signature_seen_total_{telemetry::Registry::Instance().CreateCounter(
+        "beacon_entropy_future_signature_seen_total",
+        "The total number of times entropy has been generated")}
+  , beacon_entropy_last_requested_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        "beacon_entropy_last_requested", "The last entropy value requested from the beacon")}
 {
 
   // Attaching beacon ready callback handler
@@ -88,7 +97,6 @@ BeaconService::BeaconService(Endpoint &endpoint, CertificatePtr certificate,
 
   // Attaching the protocol
   rpc_server_ = std::make_shared<Server>(endpoint_, SERVICE_DKG, CHANNEL_RPC);
-  rpc_server_->Add(RPC_BEACON_SETUP, &cabinet_creator_protocol_);
   rpc_server_->Add(RPC_BEACON, &beacon_protocol_);
 
   // Subcribing to incoming entropy
@@ -104,22 +112,21 @@ BeaconService::BeaconService(Endpoint &endpoint, CertificatePtr certificate,
         serialiser >> result;
 
         std::lock_guard<std::mutex> lock(mutex_);
-
         this->incoming_entropy_.emplace(std::move(result));
       });
 
-  verification_vec_subscription_->SetMessageHandler(
+  group_public_key_subscription_->SetMessageHandler(
       [this](muddle::Packet::Address const &from, uint16_t, uint16_t, uint16_t,
              muddle::Packet::Payload const &payload, muddle::Packet::Address transmitter) {
         FETCH_UNUSED(from);
         FETCH_UNUSED(transmitter);
 
-        VerificationVectorMessage result;
-        Serializer                serialiser{payload};
+        PublicKeyMessage result;
+        Serializer       serialiser{payload};
         serialiser >> result;
 
         std::lock_guard<std::mutex> lock(mutex_);
-        this->incoming_verification_vectors_.emplace(std::move(result));
+        this->incoming_group_public_keys_.emplace(std::move(result));
       });
 
   // Pipe 1
@@ -135,16 +142,25 @@ BeaconService::BeaconService(Endpoint &endpoint, CertificatePtr certificate,
   state_machine_->RegisterHandler(State::COMITEE_ROTATION, this, &BeaconService::OnComiteeState);
 
   // Pipe 2
-  state_machine_->RegisterHandler(State::WAIT_FOR_VERIFICATION_VECTORS, this,
-                                  &BeaconService::OnWaitForVerificationVectors);
+  state_machine_->RegisterHandler(State::WAIT_FOR_PUBLIC_KEYS, this,
+                                  &BeaconService::OnWaitForPublicKeys);
   state_machine_->RegisterHandler(State::OBSERVE_ENTROPY_GENERATION, this,
                                   &BeaconService::OnObserveEntropyGeneration);
+
+  state_machine_->OnStateChange([this](State current, State previous) {
+    FETCH_UNUSED(this);
+    FETCH_UNUSED(current);
+    FETCH_UNUSED(previous);
+    FETCH_LOG_INFO(LOGGING_NAME, "Current state: ", ToString(current),
+                   " (previous: ", ToString(previous), ")");
+  });
 }
 
 BeaconService::Status BeaconService::GenerateEntropy(Digest /*block_digest*/, uint64_t block_number,
                                                      uint64_t &entropy)
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Generating entropy");
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Requesting entropy for block number: ", block_number);
+  beacon_entropy_last_requested_->set(block_number);
 
   uint64_t round = block_number / blocks_per_round_;
 
@@ -180,10 +196,17 @@ BeaconService::Status BeaconService::GenerateEntropy(Digest /*block_digest*/, ui
   return Status::OK;
 }
 
-void BeaconService::StartNewCabinet(CabinetMemberList members, uint32_t threshold,
-                                    uint64_t round_start, uint64_t round_end)
+void BeaconService::AbortCabinet(uint64_t round_start)
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Starting new cabinet from ", round_start, " to ", round_end);
+  cabinet_creator_.Abort(round_start);
+}
+
+void BeaconService::StartNewCabinet(CabinetMemberList members, uint32_t threshold,
+                                    uint64_t round_start, uint64_t round_end, uint64_t start_time)
+{
+  auto diff_time = int64_t(static_cast<uint64_t>(std::time(nullptr))) - int64_t(start_time);
+  FETCH_LOG_INFO(LOGGING_NAME, "Starting new cabinet from ", round_start, " to ", round_end,
+                 "at time: ", start_time, " (diff): ", diff_time);
   std::lock_guard<std::mutex> lock(mutex_);
 
   SharedAeonExecutionUnit beacon = std::make_shared<AeonExecutionUnit>();
@@ -197,13 +220,14 @@ void BeaconService::StartNewCabinet(CabinetMemberList members, uint32_t threshol
   else
   {
     beacon->manager.SetCertificate(certificate_);
-    beacon->manager.Reset(members.size(), threshold);
+    beacon->manager.Reset(members, threshold);
   }
 
   // Setting the aeon details
-  beacon->aeon.round_start = round_start;
-  beacon->aeon.round_end   = round_end;
-  beacon->aeon.members     = std::move(members);
+  beacon->aeon.round_start               = round_start;
+  beacon->aeon.round_end                 = round_end;
+  beacon->aeon.members                   = std::move(members);
+  beacon->aeon.start_reference_timepoint = start_time;
 
   // Even "observe only" details need to pass through the setup phase
   // to preserve order.
@@ -230,19 +254,19 @@ BeaconService::State BeaconService::OnWaitForSetupCompletionState()
     // observe the process
     if (active_exe_unit_->observe_only)
     {
-      return State::WAIT_FOR_VERIFICATION_VECTORS;
+      return State::WAIT_FOR_PUBLIC_KEYS;
     }
     else
     {
       // and those who run it.
-      Serializer                msgser;
-      VerificationVectorMessage vv;
+      Serializer       msgser;
+      PublicKeyMessage pk;
 
-      vv.round                = active_exe_unit_->aeon.round_start;
-      vv.verification_vectors = active_exe_unit_->manager.verification_vectors();
+      pk.round = active_exe_unit_->aeon.round_start;
+      pk.group_public_key.setStr(active_exe_unit_->manager.group_public_key());
 
-      msgser << vv;
-      endpoint_.Broadcast(SERVICE_DKG, CHANNEL_VERIFICATION_VECTORS, msgser.data());
+      msgser << pk;
+      endpoint_.Broadcast(SERVICE_DKG, CHANNEL_PUBLIC_KEY, msgser.data());
 
       return State::PREPARE_ENTROPY_GENERATION;
     }
@@ -252,30 +276,31 @@ BeaconService::State BeaconService::OnWaitForSetupCompletionState()
   return State::WAIT_FOR_SETUP_COMPLETION;
 }
 
-BeaconService::State BeaconService::OnWaitForVerificationVectors()
+BeaconService::State BeaconService::OnWaitForPublicKeys()
 {
   std::lock_guard<std::mutex> lock(mutex_);
 
-  while (incoming_verification_vectors_.size() > 0)
+  while (incoming_group_public_keys_.size() > 0)
   {
-    auto vv = incoming_verification_vectors_.top();
-    incoming_verification_vectors_.pop();
+    auto pk = incoming_group_public_keys_.top();
+    incoming_group_public_keys_.pop();
 
     // Skipping all which belong to previous ronds
-    if (vv.round < active_exe_unit_->aeon.round_start)
+    if (pk.round < active_exe_unit_->aeon.round_start)
     {
       continue;
     }
 
     // Creating the public key
-    if (vv.round == active_exe_unit_->aeon.round_start)
+    FETCH_LOG_INFO(LOGGING_NAME, "Received group key");
+    if (pk.round == active_exe_unit_->aeon.round_start)
     {
-      active_exe_unit_->manager.CreateGroupPublicKey(vv.verification_vectors);
+      active_exe_unit_->manager.SetGroupPublicKey(pk.group_public_key);
       return State::OBSERVE_ENTROPY_GENERATION;
     }
   }
 
-  return State::WAIT_FOR_VERIFICATION_VECTORS;
+  return State::WAIT_FOR_PUBLIC_KEYS;
 }
 
 BeaconService::State BeaconService::OnObserveEntropyGeneration()
@@ -300,9 +325,13 @@ BeaconService::State BeaconService::OnObserveEntropyGeneration()
       incoming_entropy_.pop();
 
       // ... the validity is verified
+      assert(next_entropy_.seed == current_entropy_.seed);
+      assert(active_exe_unit_->observe_only);
       active_exe_unit_->manager.SetMessage(next_entropy_.seed);
       if (!active_exe_unit_->manager.Verify(current_entropy_.signature))
       {
+        FETCH_LOG_WARN(LOGGING_NAME, "Verification of entropy for round ", current_entropy_.round,
+                       " failed");
         // Creating event for incorrect signature
         EventInvalidSignature event;
         // TODO(tfr): Received invalid signature - fill event details
@@ -312,6 +341,8 @@ BeaconService::State BeaconService::OnObserveEntropyGeneration()
       }
 
       // and we complete.
+      FETCH_LOG_INFO(LOGGING_NAME, "Verification of entropy for round ", current_entropy_.round,
+                     " completed");
       return State::COMPLETE;
     }
   }
@@ -398,6 +429,7 @@ void BeaconService::SubmitSignatureShare(uint64_t round, SignatureShare share)
   }
   else if (round > current_entropy_.round)
   {
+    beacon_entropy_future_signature_seen_total_->add(1);
     // Otherwise it is stored to be dealt with at a later point.
     signature_queue_.push_back({round, share});
   }
@@ -427,7 +459,10 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
   // Checking if we can verify
   if (!active_exe_unit_->manager.can_verify())
   {
-    state_machine_->Delay(std::chrono::milliseconds(200));
+    state_machine_->Delay(std::chrono::milliseconds(1000));
+    FETCH_LOG_INFO(LOGGING_NAME,
+                   "Failed to verify group signature. Rebroadcasting signature for round: ",
+                   current_entropy_.round);
     return State::BROADCAST_SIGNATURE;
   }
 
@@ -435,13 +470,16 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
   {
     // Storing the result of current entropy
     current_entropy_.signature = active_exe_unit_->manager.GroupSignature();
-    auto sign                  = crypto::bls::ToBinary(current_entropy_.signature);
+    auto sign                  = current_entropy_.signature.getStr();
     current_entropy_.entropy   = crypto::Hash<crypto::SHA256>(crypto::Hash<crypto::SHA256>(sign));
 
     // Broadcasting the entropy to those listening, but not participating
-    Serializer msgser;
-    msgser << current_entropy_;
-    endpoint_.Broadcast(SERVICE_DKG, CHANNEL_ENTROPY_DISTRIBUTION, msgser.data());
+    if (broadcasting_)
+    {
+      Serializer msgser;
+      msgser << current_entropy_;
+      endpoint_.Broadcast(SERVICE_DKG, CHANNEL_ENTROPY_DISTRIBUTION, msgser.data());
+    }
 
     return State::COMPLETE;
   }
@@ -459,6 +497,7 @@ BeaconService::State BeaconService::OnCompleteState()
 
   // Adding new entropy
   ready_entropy_queue_.push_back(current_entropy_);
+  beacon_entropy_generated_total_->add(1);
 
   // Preparing next
   next_entropy_       = Entropy();
@@ -490,6 +529,35 @@ BeaconService::State BeaconService::OnComiteeState()
   active_exe_unit_.reset();
 
   return State::WAIT_FOR_SETUP_COMPLETION;
+}
+
+bool BeaconService::AddSignature(SignatureShare share)
+{
+  assert(active_exe_unit_ != nullptr);
+  auto ret = active_exe_unit_->manager.AddSignaturePart(share.identity, share.signature);
+
+  // Checking that the signature is valid
+  if (ret == BeaconManager::AddResult::INVALID_SIGNATURE)
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Signature invalid.");
+
+    EventInvalidSignature event;
+    // TODO(tfr): Received invalid signature - fill event details
+    event_manager_->Dispatch(event);
+
+    return false;
+  }
+  else if (ret == BeaconManager::AddResult::NOT_MEMBER)
+  {  // And that it was sent by a member of the cabinet
+    FETCH_LOG_ERROR(LOGGING_NAME, "Signature from non-member.");
+
+    EventSignatureFromNonMember event;
+    // TODO(tfr): Received signature from non-member - deal with it.
+    event_manager_->Dispatch(event);
+
+    return false;
+  }
+  return true;
 }
 
 std::weak_ptr<core::Runnable> BeaconService::GetMainRunnable()

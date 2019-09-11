@@ -34,8 +34,6 @@ TCPServer::TCPServer(uint16_t port, network_manager_type const &network_manager)
   : network_manager_{network_manager}
   , port_{port}
 {
-  LOG_STACK_TRACE_POINT;
-
   FETCH_LOG_DEBUG(LOGGING_NAME, "Creating TCP server on tcp://0.0.0.0:", port);
 
   manager_ = std::make_shared<ClientManager>(*this);
@@ -88,8 +86,10 @@ void TCPServer::Start()
 
         acceptor_ = acceptor;
 
+        // always update the port with the "correct" listening port
+        port_ = acceptor->local_endpoint().port();
+
         FETCH_LOG_DEBUG(LOGGING_NAME, "Starting TCP server acceptor loop");
-        acceptor_ = acceptor;
 
         if (acceptor)
         {
@@ -117,71 +117,77 @@ void TCPServer::Start()
   }  // end of scope for closure which would hold closure_alive.use_count() at 2
 
   // Guarantee posted closure has either executed or will never execute
-  while (closure_alive.use_count() != 1)
+  for (std::size_t loop = 0; closure_alive.use_count() != 1; ++loop)
   {
-    FETCH_LOG_INFO(LOGGING_NAME,
-                   "TCP server is waiting to open. Use count: ", closure_alive.use_count(),
-                   " NM running: ", network_manager_.Running());
+    // allow start up time before showing warnings
+    if (loop > 5)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "TCP server is waiting to open. Use count: ", closure_alive.use_count(),
+                     " NM running: ", network_manager_.Running());
+    }
+
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Listening for incoming connections on tcp://0.0.0.0:", port_);
 }
 
 void TCPServer::Stop()
-{}
+{
+  // TODO(EJF): Hmmmmmm...???
+}
+
+uint16_t TCPServer::GetListeningPort() const
+{
+  return port_;
+}
 
 void TCPServer::PushRequest(connection_handle_type client, message_type const &msg)
 {
-  LOG_STACK_TRACE_POINT;
   FETCH_LOG_DEBUG(LOGGING_NAME, "Got request from ", client);
 
-  std::lock_guard<mutex_type> lock(request_mutex_);
+  FETCH_LOCK(request_mutex_);
   requests_.push_back({client, msg});
 }
 
 void TCPServer::Broadcast(message_type const &msg)
 {
-  LOG_STACK_TRACE_POINT;
   manager_->Broadcast(msg);
 }
 
 bool TCPServer::Send(connection_handle_type const &client, message_type const &msg)
 {
-  LOG_STACK_TRACE_POINT;
   return manager_->Send(client, msg);
 }
 
 bool TCPServer::has_requests()
 {
-  LOG_STACK_TRACE_POINT;
-  std::lock_guard<mutex_type> lock(request_mutex_);
-  bool                        ret = (requests_.size() != 0);
+  FETCH_LOCK(request_mutex_);
+  bool ret = (requests_.size() != 0);
   return ret;
 }
 
 TCPServer::Request TCPServer::Top()
 {
-  std::lock_guard<mutex_type> lock(request_mutex_);
-  Request                     top = requests_.front();
+  FETCH_LOCK(request_mutex_);
+  Request top = requests_.front();
   return top;
 }
 
 void TCPServer::Pop()
 {
-  LOG_STACK_TRACE_POINT;
-  std::lock_guard<mutex_type> lock(request_mutex_);
+  FETCH_LOCK(request_mutex_);
   requests_.pop_front();
 }
 
 std::string TCPServer::GetAddress(connection_handle_type const &client)
 {
-  LOG_STACK_TRACE_POINT;
   return manager_->GetAddress(client);
 }
 
 void TCPServer::Accept(std::shared_ptr<asio::ip::tcp::tcp::acceptor> acceptor)
 {
-  LOG_STACK_TRACE_POINT;
-
   auto strongSocket                = network_manager_.CreateIO<asio::ip::tcp::tcp::socket>();
   std::weak_ptr<ClientManager> man = manager_;
 
@@ -206,10 +212,13 @@ void TCPServer::Accept(std::shared_ptr<asio::ip::tcp::tcp::acceptor> acceptor)
       conn->Start();
       Accept(acceptor);
     }
+    else if (asio::error::operation_aborted == ec.value())
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Shutting down server on tcp://0.0.0.0:", port_);
+    }
     else
     {
-      FETCH_LOG_WARN(LOGGING_NAME,
-                     "Acceptor in TCP server received EC - acceptor will close: " + ec.message());
+      FETCH_LOG_WARN(LOGGING_NAME, "Error generated in acceptor: ", ec.message());
     }
   };
 

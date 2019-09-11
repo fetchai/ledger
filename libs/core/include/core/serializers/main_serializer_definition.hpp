@@ -20,11 +20,10 @@
 #include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 #include "core/serializers/counter.hpp"
 #include "core/serializers/exception.hpp"
 #include "core/serializers/group_definitions.hpp"
-
 #include "vectorise/platform.hpp"
 
 #include <type_traits>
@@ -55,7 +54,7 @@ public:
    * @param s Input mutable instance of ByteArray to copy content from (by
    *          value as explained above)
    */
-  MsgPackSerializer(byte_array::ByteArray const &s);
+  MsgPackSerializer(byte_array::ByteArray s);
   MsgPackSerializer(MsgPackSerializer const &from);
 
   MsgPackSerializer &operator=(MsgPackSerializer const &from);
@@ -64,11 +63,11 @@ public:
 
   void Resize(uint64_t const &      size,
               ResizeParadigm const &resize_paradigm     = ResizeParadigm::RELATIVE,
-              bool const            zero_reserved_space = true);
+              bool                  zero_reserved_space = true);
 
   void Reserve(uint64_t const &      size,
                ResizeParadigm const &resize_paradigm     = ResizeParadigm::RELATIVE,
-               bool const            zero_reserved_space = true);
+               bool                  zero_reserved_space = true);
   void WriteBytes(uint8_t const *arr, uint64_t const &size);
 
   void WriteByte(uint8_t const &val);

@@ -26,6 +26,7 @@
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chain/constants.hpp"
 #include "ledger/chaincode/wallet_record.hpp"
+#include "ledger/consensus/consensus.hpp"
 #include "ledger/consensus/stake_manager.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
 #include "ledger/genesis_loading/genesis_file_creator.hpp"
@@ -38,6 +39,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <utility>
 
 namespace fetch {
 namespace ledger {
@@ -125,6 +127,15 @@ bool LoadFromFile(JSONDocument &document, std::string const &file_path)
 
 }  // namespace
 
+using ConsensusPtr = std::shared_ptr<fetch::ledger::Consensus>;
+
+GenesisFileCreator::GenesisFileCreator(BlockCoordinator &    block_coordinator,
+                                       StorageUnitInterface &storage_unit, ConsensusPtr consensus)
+  : block_coordinator_{block_coordinator}
+  , storage_unit_{storage_unit}
+  , consensus_{std::move(consensus)}
+{}
+
 /**
  * Load a 'state file' with a given name
  *
@@ -144,16 +155,17 @@ void GenesisFileCreator::LoadFile(std::string const &name)
 
     if (is_correct_version)
     {
-      LoadState(doc["accounts"]);
-
-      if (stake_manager_)
+      // Note: consensus has to be loaded before the state since that generates the block
+      if (consensus_)
       {
-        LoadStake(doc["stake"]);
+        LoadConsensus(doc["consensus"]);
       }
       else
       {
         FETCH_LOG_WARN(LOGGING_NAME, "No stake manager provided when loading from stake file!");
       }
+
+      LoadState(doc["accounts"]);
     }
     else
     {
@@ -224,6 +236,7 @@ void GenesisFileCreator::LoadState(Variant const &object)
 
   ledger::Block genesis_block;
 
+  genesis_block.body.timestamp    = start_time_;
   genesis_block.body.merkle_hash  = merkle_commit_hash;
   genesis_block.body.block_number = 0;
   genesis_block.body.miner        = ledger::Address(crypto::Hash<crypto::SHA256>(""));
@@ -237,15 +250,28 @@ void GenesisFileCreator::LoadState(Variant const &object)
   block_coordinator_.Reset();
 }
 
-void GenesisFileCreator::LoadStake(Variant const &object)
+void GenesisFileCreator::LoadConsensus(Variant const &object)
 {
-  if (stake_manager_)
+  if (consensus_)
   {
-    std::size_t committee_size{1};
+    uint64_t parsed_value;
+    double   parsed_value_double;
 
-    if (!variant::Extract(object, "committeeSize", committee_size))
+    // Optionally overwrite default parameters
+    if (variant::Extract(object, "committeeSize", parsed_value))
     {
-      return;
+      consensus_->SetCommitteeSize(parsed_value);
+    }
+
+    if (variant::Extract(object, "startTime", parsed_value))
+    {
+      start_time_ = parsed_value;
+      consensus_->SetDefaultStartTime(parsed_value);
+    }
+
+    if (variant::Extract(object, "threshold", parsed_value_double))
+    {
+      consensus_->SetThreshold(parsed_value_double);
     }
 
     if (!object.Has("stakers"))
@@ -284,11 +310,11 @@ void GenesisFileCreator::LoadStake(Variant const &object)
       }
     }
 
-    stake_manager_->Reset(*snapshot, committee_size);
+    consensus_->stake()->Reset(*snapshot);
   }
   else
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "No stake manager!");
+    FETCH_LOG_WARN(LOGGING_NAME, "No consensus object!");
   }
 }
 

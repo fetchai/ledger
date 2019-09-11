@@ -36,6 +36,7 @@ public:
   using ArrayPtrType  = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpMaxPool2DSaveableParams<T>;
+  using MyType        = MaxPool2D<TensorType>;
 
   MaxPool2D(SizeType const kernel_size, SizeType const stride_size)
     : kernel_size_{kernel_size}
@@ -59,6 +60,16 @@ public:
     return std::make_shared<SPType>(sp);
   }
 
+  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
+  {
+    FETCH_UNUSED(me);
+    assert(me.get() == this);
+
+    auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
+
+    return copyshare;
+  }
   /**
    * Applies 2D max pooling of kernel_size_ x kernel_size_ for each channel described here:
    * http://ais.uni-bonn.de/papers/icann2010_maxpool.pdf

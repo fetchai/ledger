@@ -46,8 +46,7 @@ public:
 
   // Promise Accessors
   RESULT Get() const override;
-  bool   Wait(uint32_t timeout_ms      = std::numeric_limits<uint32_t>::max(),
-              bool     throw_exception = true) const;
+  bool   Wait(bool throw_exception = true) const;
 
   Promise const &GetInnerPromise() const
   {
@@ -66,7 +65,7 @@ public:
 
   State GetState() override
   {
-    return promise_->GetState();
+    return promise_->state();
   }
 
   PromiseCounter id() const override
@@ -74,12 +73,7 @@ public:
     return promise_->id();
   }
 
-  std::string &name()
-  {
-    return promise_->name();
-  }
-
-  const std::string &name() const
+  std::string const &name() const
   {
     return promise_->name();
   }
@@ -101,7 +95,7 @@ private:
  * @param promise The promise value
  */
 template <typename TYPE>
-inline PromiseOf<TYPE>::PromiseOf(Promise promise)
+PromiseOf<TYPE>::PromiseOf(Promise promise)
   : promise_(std::move(promise))
 {}
 
@@ -112,7 +106,7 @@ inline PromiseOf<TYPE>::PromiseOf(Promise promise)
  * @return Return the value from the promise, or throw an exception if not possible
  */
 template <typename TYPE>
-inline TYPE PromiseOf<TYPE>::Get() const
+TYPE PromiseOf<TYPE>::Get() const
 {
   return promise_->As<TYPE>();
 }
@@ -124,7 +118,7 @@ inline TYPE PromiseOf<TYPE>::Get() const
  * @return true if the promise has been fulfilled, otherwise false
  */
 template <typename TYPE>
-inline PromiseOf<TYPE>::operator bool() const
+PromiseOf<TYPE>::operator bool() const
 {
   return promise_ && promise_->IsSuccessful();
 }
@@ -133,14 +127,13 @@ inline PromiseOf<TYPE>::operator bool() const
  * Waits for the promise to complete
  *
  * @tparam TYPE The expected return type of the promise
- * @param timeout_ms The timeout in milliseconds to wait for this promise to conclude
  * @param throw_exception Signal if the function should throw an exception in the case of an error
  * @return true if the promise has been fulfilled (given the constraints), otherwise false
  */
 template <typename TYPE>
-inline bool PromiseOf<TYPE>::Wait(uint32_t timeout_ms, bool throw_exception) const
+bool PromiseOf<TYPE>::Wait(bool throw_exception) const
 {
-  promise_->Wait(timeout_ms, throw_exception);
+  promise_->Wait(throw_exception);
   return promise_->IsSuccessful();
 }
 

@@ -23,12 +23,12 @@
 #include "core/state_machine.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/protocols/main_chain_rpc_protocol.hpp"
+#include "muddle/rpc/client.hpp"
+#include "muddle/rpc/server.hpp"
+#include "muddle/subscription.hpp"
 #include "network/generics/backgrounded_work.hpp"
 #include "network/generics/has_worker_thread.hpp"
 #include "network/generics/requesting_queue.hpp"
-#include "network/muddle/rpc/client.hpp"
-#include "network/muddle/rpc/server.hpp"
-#include "network/muddle/subscription.hpp"
 #include "network/p2pservice/p2ptrust_interface.hpp"
 #include "telemetry/telemetry.hpp"
 
@@ -125,10 +125,10 @@ private:
 
   /// @name Utilities
   /// @{
-  static char const *ToString(State state);
-  Address            GetRandomTrustedPeer() const;
-  void               HandleChainResponse(Address const &peer, BlockList block_list);
-  bool               IsBlockValid(Block &block) const;
+  static constexpr char const *ToString(State state) noexcept;
+  Address                      GetRandomTrustedPeer() const;
+  void                         HandleChainResponse(Address const &peer, BlockList block_list);
+  bool                         IsBlockValid(Block &block) const;
   /// @}
 
   /// @name State Machine Handlers
@@ -175,9 +175,27 @@ private:
   telemetry::CounterPtr state_synchronising_;
   telemetry::CounterPtr state_wait_response_;
   telemetry::CounterPtr state_synchronised_;
-
   /// @}
 };
+
+constexpr char const *MainChainRpcService::ToString(State state) noexcept
+{
+  switch (state)
+  {
+  case State::REQUEST_HEAVIEST_CHAIN:
+    return "Requesting Heaviest Chain";
+  case State::WAIT_FOR_HEAVIEST_CHAIN:
+    return "Waiting for Heaviest Chain";
+  case State::SYNCHRONISING:
+    return "Synchronising";
+  case State::WAITING_FOR_RESPONSE:
+    return "Waiting for Sync Response";
+  case State::SYNCHRONISED:
+    return "Synchronised";
+  default:
+    return "unknown";
+  }
+}
 
 }  // namespace ledger
 }  // namespace fetch

@@ -18,12 +18,12 @@
 
 #include "core/serializers/counter.hpp"
 #include "core/serializers/main_serializer.hpp"
-#include "network/muddle/rbc_messages.hpp"
+#include "muddle/rbc_messages.hpp"
 
 #include "gtest/gtest.h"
 
 using namespace fetch;
-using namespace fetch::network;
+using namespace fetch::muddle;
 
 TEST(rbc_messages, broadcast)
 {

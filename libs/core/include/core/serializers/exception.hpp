@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logger.hpp"
+#include "core/logging.hpp"
 
 #include <cstdint>
 #include <exception>
@@ -42,23 +42,26 @@ public:
   SerializableException();
   explicit SerializableException(std::string explanation);
   explicit SerializableException(byte_array::ConstByteArray const &explanation);
+  SerializableException(error::error_type error_code, char const *explanation);
   SerializableException(error::error_type error_code, std::string explanation);
   SerializableException(error::error_type                 error_code,
                         byte_array::ConstByteArray const &explanation);
-  ~SerializableException() override;
+  SerializableException(SerializableException const &)     = default;
+  SerializableException(SerializableException &&) noexcept = default;
+  ~SerializableException() override                        = default;
   /// @}
 
   char const *what() const noexcept override;
   uint64_t    error_code() const;
   std::string explanation() const;
 
-  void StackTrace() const;
+  // Assignment Operators
+  SerializableException &operator=(SerializableException const &) = default;
+  SerializableException &operator=(SerializableException &&) noexcept = default;
 
 private:
   uint64_t    error_code_;
   std::string explanation_;
-
-  LOG_CONTEXT_VARIABLE(stack_trace_)
 };
 
 }  // namespace serializers

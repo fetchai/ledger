@@ -41,7 +41,7 @@ namespace fetch {
 class BootstrapMonitor
 {
 public:
-  using UriList   = Constellation::UriList;
+  using UriSet    = Constellation::UriSet;
   using Prover    = crypto::Prover;
   using ProverPtr = std::shared_ptr<Prover>;
   using Identity  = crypto::Identity;
@@ -53,17 +53,11 @@ public:
   BootstrapMonitor(BootstrapMonitor &&)      = delete;
   ~BootstrapMonitor()                        = default;
 
-  bool DiscoverPeers(UriList &peers, std::string const &external_address);
+  bool DiscoverPeers(UriSet &peers, std::string const &external_address);
 
-  std::string const &external_address() const
-  {
-    return external_address_;
-  }
+  std::string const &external_address() const;
 
-  core::WeakRunnable GetWeakRunnable() const
-  {
-    return state_machine_;
-  }
+  core::WeakRunnable GetWeakRunnable() const;
 
   // Operators
   BootstrapMonitor &operator=(BootstrapMonitor const &) = delete;
@@ -87,7 +81,7 @@ private:
   /// @name Actions
   /// @{
   bool UpdateExternalAddress();
-  bool RunDiscovery(UriList &peers);
+  bool RunDiscovery(UriSet &peers);
   bool NotifyNode();
   /// @}
 
@@ -102,19 +96,5 @@ private:
   std::string const token_;
   std::string       external_address_{};
 };
-
-inline char const *BootstrapMonitor::ToString(State state)
-{
-  char const *text = "Unknown";
-
-  switch (state)
-  {
-  case State::Notify:
-    text = "Notify";
-    break;
-  }
-
-  return text;
-}
 
 }  // namespace fetch

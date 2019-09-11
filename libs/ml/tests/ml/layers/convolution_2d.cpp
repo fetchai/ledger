@@ -27,6 +27,8 @@
 #include "gtest/gtest.h"
 #include "ml/serializers/ml_types.hpp"
 
+#include <memory>
+
 template <typename T>
 class Convolution2DTest : public ::testing::Test
 {
@@ -271,8 +273,9 @@ TYPED_TEST(Convolution2DTest, node_forward_test)  // Use the class as a Node
   }
 
   // Evaluate
-  auto placeholder_node =
-      std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::OP_PLACEHOLDER, "Input");
+  auto placeholder_node = std::make_shared<fetch::ml::Node<TypeParam>>(
+      fetch::ml::OpType::OP_PLACEHOLDER, "Input",
+      []() { return std::make_shared<fetch::ml::ops::PlaceHolder<TypeParam>>(); });
   std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder_node->GetOp())
       ->SetData(input);
 
@@ -349,8 +352,9 @@ TYPED_TEST(Convolution2DTest, node_backward_test)  // Use the class as a Node
   }
 
   // Evaluate
-  auto placeholder_node =
-      std::make_shared<fetch::ml::Node<TypeParam>>(fetch::ml::OpType::OP_PLACEHOLDER, "Input");
+  auto placeholder_node = std::make_shared<fetch::ml::Node<TypeParam>>(
+      fetch::ml::OpType::OP_PLACEHOLDER, "Input",
+      []() { return std::make_shared<fetch::ml::ops::PlaceHolder<TypeParam>>(); });
   std::dynamic_pointer_cast<fetch::ml::ops::PlaceHolder<TypeParam>>(placeholder_node->GetOp())
       ->SetData(input);
 
@@ -524,7 +528,7 @@ TYPED_TEST(Convolution2DTest, saveparams_test)
 {
   using DataType  = typename TypeParam::Type;
   using SizeType  = typename TypeParam::SizeType;
-  using LayerType = typename fetch::ml::layers::Convolution2D<TypeParam>;
+  using LayerType = fetch::ml::layers::Convolution2D<TypeParam>;
   using SPType    = typename LayerType::SPType;
 
   SizeType const input_channels  = 3;

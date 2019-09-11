@@ -17,16 +17,22 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/exception.hpp"
+
+#include <cstdint>
+#include <string>
+
 namespace fetch {
 namespace serializers {
 namespace interfaces {
+
 template <typename Driver>
 class BinaryInterface
 {
 public:
   BinaryInterface(Driver &serializer, uint64_t size)
     : serializer_{serializer}
-    , size_{std::move(size)}
+    , size_{size}
   {}
 
   void Write(uint8_t const *arr, uint64_t partial_size)
@@ -63,7 +69,7 @@ public:
     CODE32 = C32
   };
 
-  BinaryConstructorInterface(Driver &serializer)
+  explicit BinaryConstructorInterface(Driver &serializer)
     : serializer_{serializer}
   {}
 
@@ -74,36 +80,36 @@ public:
       throw SerializableException(std::string("Constructor is one time use only."));
     }
 
-    if (count < (1 << 8))
+    if (count < (1ull << 8u))
     {
-      uint8_t opcode = static_cast<uint8_t>(CODE8);
+      auto opcode = static_cast<uint8_t>(CODE8);
       serializer_.Allocate(sizeof(opcode));
       serializer_.WriteBytes(&opcode, sizeof(opcode));
 
-      uint8_t size = static_cast<uint8_t>(count);
-      size         = platform::ToBigEndian(size);
+      auto size = static_cast<uint8_t>(count);
+      size      = platform::ToBigEndian(size);
       serializer_.Allocate(sizeof(size));
       serializer_.WriteBytes(&size, sizeof(size));
     }
-    else if (count < (1 << 16))
+    else if (count < (1ull << 16u))
     {
-      uint8_t opcode = static_cast<uint8_t>(CODE16);
+      auto opcode = static_cast<uint8_t>(CODE16);
       serializer_.Allocate(sizeof(opcode));
       serializer_.WriteBytes(&opcode, sizeof(opcode));
 
-      uint16_t size = static_cast<uint16_t>(count);
-      size          = platform::ToBigEndian(size);
+      auto size = static_cast<uint16_t>(count);
+      size      = platform::ToBigEndian(size);
       serializer_.Allocate(sizeof(size));
       serializer_.WriteBytes(reinterpret_cast<uint8_t *>(&size), sizeof(size));
     }
-    else if (count < (1ull << 32))
+    else if (count < (1ull << 32u))
     {
-      uint8_t opcode = static_cast<uint8_t>(CODE32);
+      auto opcode = static_cast<uint8_t>(CODE32);
       serializer_.Allocate(sizeof(opcode));
       serializer_.WriteBytes(&opcode, sizeof(opcode));
 
-      uint32_t size = static_cast<uint32_t>(count);
-      size          = platform::ToBigEndian(size);
+      auto size = static_cast<uint32_t>(count);
+      size      = platform::ToBigEndian(size);
       serializer_.Allocate(sizeof(count));
       serializer_.WriteBytes(reinterpret_cast<uint8_t *>(&count), sizeof(count));
     }
@@ -141,12 +147,13 @@ public:
     CODE16 = TypeCodes::BINARY_CODE16,
     CODE32 = TypeCodes::BINARY_CODE32
   };
-  BinaryDeserializer(Driver &serializer)
+  explicit BinaryDeserializer(Driver &serializer)
     : serializer_{serializer}
   {
     uint8_t  opcode;
     uint32_t size;
     serializer_.ReadByte(opcode);
+
     switch (opcode)
     {
     case CODE8:
@@ -202,6 +209,7 @@ private:
   uint64_t size_{0};
   uint64_t pos_{0};
 };
+
 }  // namespace interfaces
 }  // namespace serializers
 }  // namespace fetch

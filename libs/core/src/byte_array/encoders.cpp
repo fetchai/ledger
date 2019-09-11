@@ -89,7 +89,7 @@ ConstByteArray ToBase64(ConstByteArray const &str)
     }
   }
 
-  return std::move(ret);
+  return {std::move(ret)};
 }
 
 ConstByteArray ToHex(ConstByteArray const &str)
@@ -105,7 +105,7 @@ ConstByteArray ToHex(ConstByteArray const &str)
     ret[j++]  = uint8_t(details::hexChars[(c >> 4u) & 0xF]);
     ret[j++]  = uint8_t(details::hexChars[c & 0xF]);
   }
-  return std::move(ret);
+  return {std::move(ret)};
 }
 
 // Reverse bits in byte
@@ -132,7 +132,7 @@ ConstByteArray ToHexReverse(ConstByteArray const &str)
     ret[j++]  = uint8_t(details::hexChars[(c >> 4u) & 0xF]);
     ret[j++]  = uint8_t(details::hexChars[c & 0xF]);
   }
-  return std::move(ret);
+  return {std::move(ret)};
 }
 
 ConstByteArray ToBin(ConstByteArray const &str)
@@ -154,7 +154,7 @@ ConstByteArray ToBin(ConstByteArray const &str)
     ret[j++]  = uint8_t(c & 0x02 ? '1' : '0');
     ret[j++]  = uint8_t(c & 0x01 ? '1' : '0');
   }
-  return std::move(ret);
+  return {std::move(ret)};
 }
 
 // To bin, but with the bits in the bytes reversed endianness
@@ -178,7 +178,7 @@ ConstByteArray ToBinReverse(ConstByteArray const &str)
     ret[j++]  = uint8_t(c & 0x02 ? '1' : '0');
     ret[j++]  = uint8_t(c & 0x01 ? '1' : '0');
   }
-  return std::move(ret);
+  return {std::move(ret)};
 }
 
 }  // namespace byte_array

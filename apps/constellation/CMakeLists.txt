@@ -1,7 +1,7 @@
 #
 # F E T C H   C O N S T E L L A T I O N
 #
-cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
 project(fetch-constellation)
 
 setup_compiler()
@@ -20,6 +20,8 @@ add_executable(constellation
                main.cpp
                manifest_builder.cpp
                manifest_builder.hpp
+               muddle_status_http_module.cpp
+               muddle_status_http_module.hpp
                open_api_http_module.cpp
                open_api_http_module.hpp
                settings.cpp

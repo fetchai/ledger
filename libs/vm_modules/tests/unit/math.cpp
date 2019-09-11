@@ -184,4 +184,179 @@ TEST_F(MathTests, tensor_state_test)
   EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
 }
 
+TEST_F(MathTests, tensor_set_and_at_one_test)
+{
+  static char const *tensor_serialiase_src = R"(
+    function main() : Tensor
+      var tensor_shape = Array<UInt64>(1);
+      tensor_shape[0] = 2u64;
+
+      var x = Tensor(tensor_shape);
+      var y = Tensor(tensor_shape);
+      x.fill(2.0fp64);
+
+      y.setAt(0u64,x.at(0u64));
+      y.setAt(1u64,x.at(1u64));
+
+     return y;
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(tensor_serialiase_src));
+  Variant res;
+  ASSERT_TRUE(toolkit.Run(&res));
+
+  auto const                    tensor = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  fetch::math::Tensor<DataType> gt({2});
+  gt.Fill(static_cast<DataType>(2.0));
+
+  EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
+}
+
+TEST_F(MathTests, tensor_set_and_at_two_test)
+{
+  static char const *tensor_serialiase_src = R"(
+    function main() : Tensor
+      var tensor_shape = Array<UInt64>(2);
+      tensor_shape[0] = 2u64;
+      tensor_shape[1] = 2u64;
+
+      var x = Tensor(tensor_shape);
+      var y = Tensor(tensor_shape);
+      x.fill(2.0fp64);
+
+      y.setAt(0u64,0u64,x.at(0u64,0u64));
+      y.setAt(0u64,1u64,x.at(0u64,1u64));
+      y.setAt(1u64,0u64,x.at(1u64,0u64));
+      y.setAt(1u64,1u64,x.at(1u64,1u64));
+
+     return y;
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(tensor_serialiase_src));
+  Variant res;
+  ASSERT_TRUE(toolkit.Run(&res));
+
+  auto const                    tensor = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  fetch::math::Tensor<DataType> gt({2, 2});
+  gt.Fill(static_cast<DataType>(2.0));
+
+  EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
+}
+
+TEST_F(MathTests, tensor_set_and_at_three_test)
+{
+  static char const *tensor_serialiase_src = R"(
+    function main() : Tensor
+      var tensor_shape = Array<UInt64>(3);
+      tensor_shape[0] = 2u64;
+      tensor_shape[1] = 2u64;
+      tensor_shape[2] = 2u64;
+
+      var x = Tensor(tensor_shape);
+      var y = Tensor(tensor_shape);
+      x.fill(2.0fp64);
+
+      y.setAt(0u64,0u64,0u64,x.at(0u64,0u64,0u64));
+      y.setAt(0u64,1u64,0u64,x.at(0u64,1u64,0u64));
+      y.setAt(1u64,0u64,0u64,x.at(1u64,0u64,0u64));
+      y.setAt(1u64,1u64,0u64,x.at(1u64,1u64,0u64));
+      y.setAt(0u64,0u64,1u64,x.at(0u64,0u64,1u64));
+      y.setAt(0u64,1u64,1u64,x.at(0u64,1u64,1u64));
+      y.setAt(1u64,0u64,1u64,x.at(1u64,0u64,1u64));
+      y.setAt(1u64,1u64,1u64,x.at(1u64,1u64,1u64));
+
+     return y;
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(tensor_serialiase_src));
+  Variant res;
+  ASSERT_TRUE(toolkit.Run(&res));
+
+  auto const                    tensor = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  fetch::math::Tensor<DataType> gt({2, 2, 2});
+  gt.Fill(static_cast<DataType>(2.0));
+
+  EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
+}
+
+TEST_F(MathTests, tensor_set_and_at_four_test)
+{
+  static char const *tensor_serialiase_src = R"(
+    function main() : Tensor
+      var tensor_shape = Array<UInt64>(4);
+      tensor_shape[0] = 2u64;
+      tensor_shape[1] = 2u64;
+      tensor_shape[2] = 2u64;
+      tensor_shape[3] = 2u64;
+
+      var x = Tensor(tensor_shape);
+      var y = Tensor(tensor_shape);
+      x.fill(2.0fp64);
+
+      y.setAt(0u64,0u64,0u64,0u64,x.at(0u64,0u64,0u64,0u64));
+      y.setAt(0u64,1u64,0u64,0u64,x.at(0u64,1u64,0u64,0u64));
+      y.setAt(1u64,0u64,0u64,0u64,x.at(1u64,0u64,0u64,0u64));
+      y.setAt(1u64,1u64,0u64,0u64,x.at(1u64,1u64,0u64,0u64));
+      y.setAt(0u64,0u64,1u64,0u64,x.at(0u64,0u64,1u64,0u64));
+      y.setAt(0u64,1u64,1u64,0u64,x.at(0u64,1u64,1u64,0u64));
+      y.setAt(1u64,0u64,1u64,0u64,x.at(1u64,0u64,1u64,0u64));
+      y.setAt(1u64,1u64,1u64,0u64,x.at(1u64,1u64,1u64,0u64));
+      y.setAt(0u64,0u64,0u64,1u64,x.at(0u64,0u64,0u64,1u64));
+      y.setAt(0u64,1u64,0u64,1u64,x.at(0u64,1u64,0u64,1u64));
+      y.setAt(1u64,0u64,0u64,1u64,x.at(1u64,0u64,0u64,1u64));
+      y.setAt(1u64,1u64,0u64,1u64,x.at(1u64,1u64,0u64,1u64));
+      y.setAt(0u64,0u64,1u64,1u64,x.at(0u64,0u64,1u64,1u64));
+      y.setAt(0u64,1u64,1u64,1u64,x.at(0u64,1u64,1u64,1u64));
+      y.setAt(1u64,0u64,1u64,1u64,x.at(1u64,0u64,1u64,1u64));
+      y.setAt(1u64,1u64,1u64,1u64,x.at(1u64,1u64,1u64,1u64));
+
+     return y;
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(tensor_serialiase_src));
+  Variant res;
+  ASSERT_TRUE(toolkit.Run(&res));
+
+  auto const                    tensor = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  fetch::math::Tensor<DataType> gt({2, 2, 2, 2});
+  gt.Fill(static_cast<DataType>(2.0));
+
+  EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
+}
+
+TEST_F(MathTests, tensor_set_from_string)
+{
+  static char const *tensor_from_string_src = R"(
+    function main() : Tensor
+      var tensor_shape = Array<UInt64>(3);
+      tensor_shape[0] = 4u64;
+      tensor_shape[1] = 1u64;
+      tensor_shape[2] = 1u64;
+
+      var x = Tensor(tensor_shape);
+      x.fill(2.0fp64);
+
+      var string_vals = "1.0, 1.0, 1.0, 1.0";
+      x.fromString(string_vals);
+
+      return x;
+
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(tensor_from_string_src));
+  Variant res;
+  ASSERT_TRUE(toolkit.Run(&res));
+
+  auto const                    tensor = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  fetch::math::Tensor<DataType> gt({4, 1, 1});
+  gt.Fill(static_cast<DataType>(1.0));
+
+  EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
+}
+
 }  // namespace

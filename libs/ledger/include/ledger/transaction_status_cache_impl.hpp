@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
-#include "core/threading/synchronised_state.hpp"
+#include "core/synchronisation/waitable.hpp"
 #include "ledger/chain/digest.hpp"
 #include "ledger/execution_result.hpp"
 #include "ledger/transaction_status_cache.hpp"
@@ -57,8 +57,6 @@ public:
   TransactionStatusCacheImpl &operator=(TransactionStatusCacheImpl &&) = delete;
 
 private:
-  using Mutex = mutex::Mutex;
-
   using Cache = DigestMap<TxStatusEx>;
 
   static constexpr std::chrono::hours   LIFETIME{24};

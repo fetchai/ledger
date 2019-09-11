@@ -1,7 +1,7 @@
 #
 # F E T C H   T E S T I N G   T E S T S
 #
-cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
 project(fetch-testing)
 
 # CMake configuration

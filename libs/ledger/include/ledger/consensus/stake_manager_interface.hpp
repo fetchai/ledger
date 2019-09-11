@@ -36,10 +36,10 @@ public:
 
   /// @name Stake Manager Interface
   /// @{
-  virtual void        UpdateCurrentBlock(Block const &current)                                = 0;
-  virtual std::size_t GetBlockGenerationWeight(Block const &previous, Address const &address) = 0;
-  virtual bool        ShouldGenerateBlock(Block const &previous, Address const &address)      = 0;
-  virtual bool        ValidMinerForBlock(Block const &previous, Address const &address)       = 0;
+  virtual void     UpdateCurrentBlock(Block const &current)                                = 0;
+  virtual uint64_t GetBlockGenerationWeight(Block const &previous, Address const &address) = 0;
+  virtual bool     ShouldGenerateBlock(Block const &previous, Address const &address)      = 0;
+  virtual bool     ValidMinerForBlock(Block const &previous, Address const &address)       = 0;
   /// @}
 
 private:

@@ -16,14 +16,18 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/base_types.hpp"
-
 #include "core/serializers/main_serializer_definition.hpp"
-#include "gtest/gtest.h"
+#include "math/base_types.hpp"
 #include "math/tensor.hpp"
 #include "ml/ops/convolution_2d.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+
+#include "gtest/gtest.h"
+
+#include <memory>
+#include <vector>
+
 template <typename T>
 class Convolution2DTest : public ::testing::Test
 {
@@ -115,7 +119,6 @@ TYPED_TEST(Convolution2DTest, forward_3x3x3x1_1x3x3x3x1)
 
 TYPED_TEST(Convolution2DTest, forward_3x3x3x1_5x3x3x3x1)
 {
-  // using DataType  = typename TypeParam::Type;
   using TensorType = TypeParam;
   using SizeType   = typename TypeParam::SizeType;
 
@@ -132,7 +135,6 @@ TYPED_TEST(Convolution2DTest, forward_3x3x3x1_5x3x3x3x1)
 
 TYPED_TEST(Convolution2DTest, forward_1x5x5x3_1x1x3x3x3)
 {
-  // using DataType  = typename TypeParam::Type;
   using TensorType = TypeParam;
   using SizeType   = typename TypeParam::SizeType;
 
@@ -149,7 +151,6 @@ TYPED_TEST(Convolution2DTest, forward_1x5x5x3_1x1x3x3x3)
 
 TYPED_TEST(Convolution2DTest, forward_1x5x5x3_1x1x3x3x3_stride_2)
 {
-  // using DataType  = typename TypeParam::Type;
   using TensorType = TypeParam;
   using SizeType   = typename TypeParam::SizeType;
 
@@ -256,7 +257,7 @@ TYPED_TEST(Convolution2DTest, saveparams_test)
   using DataType      = typename TypeParam::Type;
   using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
   using SPType        = typename fetch::ml::ops::Convolution2D<TensorType>::SPType;
-  using OpType        = typename fetch::ml::ops::Convolution2D<TensorType>;
+  using OpType        = fetch::ml::ops::Convolution2D<TensorType>;
   using SizeType      = typename TypeParam::SizeType;
 
   TensorType input({3, 3, 3, 1});
@@ -317,8 +318,8 @@ TYPED_TEST(Convolution2DTest, saveparams_backward_3x3x3x2_5x3x3x3x2)
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
   using SizeType   = typename TypeParam::SizeType;
-  using OpType     = typename fetch::ml::ops::Convolution2D<TensorType>;
-  using SPType     = typename OpType ::SPType;
+  using OpType     = fetch::ml::ops::Convolution2D<TensorType>;
+  using SPType     = typename OpType::SPType;
 
   SizeType const input_channels  = 3;
   SizeType const output_channels = 5;

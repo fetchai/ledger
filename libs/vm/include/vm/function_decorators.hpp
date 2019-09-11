@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logging.hpp"
 #include "vm/generator.hpp"
 
 namespace fetch {
@@ -38,38 +37,7 @@ enum class FunctionDecoratorKind
  * @param fn The reference to function entry
  * @return The type of the function
  */
-inline FunctionDecoratorKind DetermineKind(vm::Executable::Function const &fn)
-{
-  FunctionDecoratorKind kind{FunctionDecoratorKind::NORMAL};
-
-  // loop through all the function annotations
-  if (1u == fn.annotations.size())
-  {
-    // select the first annotation
-    auto const &annotation = fn.annotations.front();
-
-    if (annotation.name == "@query")
-    {
-      // only update the kind if one hasn't already been specified
-      kind = FunctionDecoratorKind::QUERY;
-    }
-    else if (annotation.name == "@action")
-    {
-      kind = FunctionDecoratorKind::ACTION;
-    }
-    else if (annotation.name == "@init")
-    {
-      kind = FunctionDecoratorKind::ON_INIT;
-    }
-    else
-    {
-      FETCH_LOG_WARN("function_decorators", "Invalid decorator: ", annotation.name);
-      kind = FunctionDecoratorKind::INVALID;
-    }
-  }
-
-  return kind;
-}
+FunctionDecoratorKind DetermineKind(vm::Executable::Function const &fn);
 
 }  // namespace vm
 }  // namespace fetch

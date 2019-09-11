@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/random/lcg.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/consensus/entropy_generator_interface.hpp"
 #include "ledger/consensus/stake_manager.hpp"
@@ -24,12 +25,14 @@
 #include <algorithm>
 #include <cstddef>
 #include <iterator>
+#include <random>
 
 namespace fetch {
 namespace ledger {
 namespace {
 
 constexpr char const *LOGGING_NAME = "StakeMgr";
+using DRNG                         = random::LinearCongruentialGenerator;
 
 std::size_t SafeDecrement(std::size_t value, std::size_t decrement)
 {
@@ -43,31 +46,74 @@ std::size_t SafeDecrement(std::size_t value, std::size_t decrement)
   }
 }
 
+template <typename T>
+void TrimToSize(T &container, uint64_t max_allowed)
+{
+  if (container.size() >= max_allowed)
+  {
+    auto const num_to_remove = container.size() - max_allowed;
+
+    if (num_to_remove > 0)
+    {
+      auto end = container.begin();
+      std::advance(end, static_cast<std::ptrdiff_t>(num_to_remove));
+
+      container.erase(container.begin(), end);
+    }
+  }
+}
+
+template <typename T>
+void DeterministicShuffle(T &container, uint64_t entropy)
+{
+  DRNG rng(entropy);
+  std::shuffle(container.begin(), container.end(), rng);
+}
+
 }  // namespace
 
-StakeManager::StakeManager(EntropyGeneratorInterface &entropy, uint32_t block_interval_ms)
-  : entropy_{&entropy}
+StakeManager::StakeManager(uint64_t committee_size, uint32_t block_interval_ms,
+                           uint64_t snapshot_validity_periodicity)
+  : committee_size_{committee_size}
+  , snapshot_validity_periodicity_{snapshot_validity_periodicity}
   , block_interval_ms_{block_interval_ms}
 {}
 
 void StakeManager::UpdateCurrentBlock(Block const &current)
 {
+  // The first stake can only be set through a reset event
+  if (current.body.block_number == 0)
+  {
+    return;
+  }
+
   // need to evaluate any of the updates from the update queue
   StakeSnapshotPtr next{};
   if (update_queue_.ApplyUpdates(current.body.block_number, current_, next))
   {
     // update the entry in the history
-    history_[current.body.block_number] = next;
+    stake_history_[current.body.block_number] = next;
 
     // the current stake snapshot has been replaced
     current_             = std::move(next);
     current_block_index_ = current.body.block_number;
   }
+
+  // If this would create a new committee save this snapshot
+  if (current.body.block_number % snapshot_validity_periodicity_ == 0)
+  {
+    auto snapshot = LookupStakeSnapshot(current.body.block_number);
+    committee_history_[current.body.block_number] =
+        snapshot->BuildCommittee(current.body.entropy, committee_size_);
+  }
+
+  TrimToSize(stake_history_, HISTORY_LENGTH);
+  TrimToSize(committee_history_, HISTORY_LENGTH);
 }
 
 bool StakeManager::ShouldGenerateBlock(Block const &previous, Address const &address)
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Should generate block? Prev: ", previous.body.block_number);
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Should generate block? Prev: ", previous.body.block_number);
 
   auto const committee = GetCommittee(previous);
 
@@ -83,18 +129,24 @@ bool StakeManager::ShouldGenerateBlock(Block const &previous, Address const &add
   uint32_t time_to_wait = block_interval_ms_;
   bool     in_committee = false;
 
+  bool found = false;
+
   for (std::size_t i = 0; i < (*committee).size(); ++i)
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME,
-                    "Saw committee member: ", Address((*committee)[i]).address().ToBase64(),
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Block: ", previous.body.block_number,
+                    " Saw committee member: ", Address((*committee)[i]).address().ToBase64(),
                     "we are: ", address.address().ToBase64());
 
     if (Address((*committee)[i]) == address)
     {
       in_committee = true;
-      break;
+      found        = true;
     }
-    time_to_wait += block_interval_ms_;
+
+    if (!found)
+    {
+      time_to_wait += block_interval_ms_;
+    }
   }
 
   uint64_t time_now_ms           = static_cast<uint64_t>(std::time(nullptr)) * 1000;
@@ -110,30 +162,40 @@ bool StakeManager::ShouldGenerateBlock(Block const &previous, Address const &add
 
 StakeManager::CommitteePtr StakeManager::GetCommittee(Block const &previous)
 {
-  assert(static_cast<bool>(current_));
+  // Calculate the last relevant snapshot
+  uint64_t const last_snapshot =
+      previous.body.block_number - (previous.body.block_number % snapshot_validity_periodicity_);
 
-  // generate the entropy for the previous block
-  uint64_t entropy{0};
-  if (!LookupEntropy(previous, entropy))
+  // Invalid to request a committee too far ahead in time
+  assert(committee_history_.find(last_snapshot) != committee_history_.end());
+
+  if (committee_history_.find(last_snapshot) == committee_history_.end())
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup committee for ", previous.body.block_number,
-                   " (entropy not ready)");
-    return {};
+    FETCH_LOG_INFO(LOGGING_NAME,
+                   "No committee history found for block: ", previous.body.block_number, " AKA ",
+                   last_snapshot);
   }
 
-  // lookup the snapshot associated
-  auto snapshot = LookupStakeSnapshot(previous.body.block_number);
-  if (!snapshot)
+  // If the last committee was the valid committee, return this. Otherwise, deterministically
+  // shuffle the committee using the random beacon
+  if (last_snapshot == previous.body.block_number)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup committee for ", previous.body.block_number);
-    return {};
+    return committee_history_.at(last_snapshot);
   }
+  else
+  {
+    CommitteePtr committee_ptr = committee_history_[last_snapshot];
+    assert(!committee_ptr->empty());
 
-  // TODO(EJF): Committees can be directly cached
-  return snapshot->BuildCommittee(entropy, committee_size_);
+    Committee committee_copy = *committee_ptr;
+
+    DeterministicShuffle(committee_copy, previous.body.entropy);
+
+    return std::make_shared<Committee>(committee_copy);
+  }
 }
 
-std::size_t StakeManager::GetBlockGenerationWeight(Block const &previous, Address const &address)
+uint64_t StakeManager::GetBlockGenerationWeight(Block const &previous, Address const &address)
 {
   auto const committee = GetCommittee(previous);
 
@@ -160,14 +222,32 @@ std::size_t StakeManager::GetBlockGenerationWeight(Block const &previous, Addres
   return weight;
 }
 
-void StakeManager::Reset(StakeSnapshot const &snapshot, std::size_t committee_size)
+void StakeManager::Reset(StakeSnapshot const &snapshot)
 {
-  ResetInternal(std::make_shared<StakeSnapshot>(snapshot), committee_size);
+  ResetInternal(std::make_shared<StakeSnapshot>(snapshot));
 }
 
-void StakeManager::Reset(StakeSnapshot &&snapshot, std::size_t committee_size)
+void StakeManager::Reset(StakeSnapshot &&snapshot)
 {
-  ResetInternal(std::make_shared<StakeSnapshot>(std::move(snapshot)), committee_size);
+  ResetInternal(std::make_shared<StakeSnapshot>(std::move(snapshot)));
+}
+
+void StakeManager::ResetInternal(StakeSnapshotPtr &&snapshot)
+{
+  // history
+  stake_history_.clear();
+  stake_history_[0] = snapshot;
+
+  committee_history_[0] = snapshot->BuildCommittee(0, committee_size_);
+
+  if (committee_history_.find(0) == committee_history_.end())
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "No committee history found for block when resetting.");
+  }
+
+  // current
+  current_             = std::move(snapshot);
+  current_block_index_ = 0;
 }
 
 StakeManager::StakeSnapshotPtr StakeManager::LookupStakeSnapshot(BlockIndex block)
@@ -180,86 +260,20 @@ StakeManager::StakeSnapshotPtr StakeManager::LookupStakeSnapshot(BlockIndex bloc
   else
   {
     // on catchup, or in the case of multiple forks historical entries will be used
-    auto upper_bound = history_.upper_bound(block);
+    auto upper_bound = stake_history_.upper_bound(block);
 
-    if (upper_bound == history_.begin())
+    if (upper_bound == stake_history_.begin())
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Update to lookup stake snapshot for block ", block);
       return {};
     }
     else
     {
-      // we are not interested in the upper bound, but the preceeding historical elemeent i.e.
+      // we are not interested in the upper bound, but the preceding historical element i.e.
       // the previous block change
       return (--upper_bound)->second;
     }
   }
-}
-
-void StakeManager::ResetInternal(StakeSnapshotPtr &&snapshot, std::size_t committee_size)
-{
-  // config
-  committee_size_ = committee_size;
-
-  // history
-  history_.clear();
-  history_[0] = snapshot;
-
-  // current
-  current_             = std::move(snapshot);
-  current_block_index_ = 0;
-}
-
-bool StakeManager::LookupEntropy(Block const &previous, uint64_t &entropy)
-{
-  bool success{false};
-
-  // Step 1. Lookup the entropy
-  auto const it = entropy_cache_.find(previous.body.block_number);
-
-  if (entropy_cache_.end() != it)
-  {
-    entropy = it->second;
-    success = true;
-  }
-  else
-  {
-    if (!entropy_)
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Entropy not set!");
-    }
-
-    // generate the entropy for the previous block
-    auto const status =
-        entropy_->GenerateEntropy(previous.body.hash, previous.body.block_number, entropy);
-
-    if (EntropyGeneratorInterface::Status::OK == status)
-    {
-      entropy_cache_[previous.body.block_number] = entropy;
-      success                                    = true;
-    }
-    else
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup entropy for block ",
-                     previous.body.block_number);
-    }
-  }
-
-  // Step 2. Clean up
-  if (entropy_cache_.size() >= HISTORY_LENGTH)
-  {
-    auto const num_to_remove = entropy_cache_.size() - HISTORY_LENGTH;
-
-    if (num_to_remove > 0)
-    {
-      auto end = entropy_cache_.begin();
-      std::advance(end, static_cast<std::ptrdiff_t>(num_to_remove));
-
-      entropy_cache_.erase(entropy_cache_.begin(), end);
-    }
-  }
-
-  return success;
 }
 
 bool StakeManager::ValidMinerForBlock(Block const &previous, Address const &address)
@@ -276,6 +290,11 @@ bool StakeManager::ValidMinerForBlock(Block const &previous, Address const &addr
                       [&address](Identity const &identity) {
                         return address == Address(identity);
                       }) != (*committee).end();
+}
+
+uint32_t StakeManager::BlockInterval()
+{
+  return block_interval_ms_;
 }
 
 }  // namespace ledger
