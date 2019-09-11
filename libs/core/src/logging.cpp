@@ -168,9 +168,6 @@ spdlog::level::level_enum ConvertFromLevel(LogLevel level)
 
 LogRegistry::LogRegistry()
 {
-  spdlog::set_level(
-      spdlog::level::trace);  // this should be kept in sync with the compilation level
-  spdlog::set_pattern("%^[%L]%$ %Y/%m/%d %T | %-30n : %v");
 }
 
 void LogRegistry::Log(LogLevel level, char const *name, std::string &&message)
@@ -246,18 +243,16 @@ LogRegistry::Logger &LogRegistry::GetLogger(char const *name)
   auto it = registry_.find(name);
   if (it == registry_.end())
   {
-    //auto logger = spdlog::stdout_color_mt(name, spdlog::color_mode::automatic);
-    //logger->set_level(ConvertFromLevel(DEFAULT_LEVEL));
-
     // create the new logger instance - note it suppresses duplicate messages
     auto dup_filter = std::make_shared<spdlog::sinks::dup_filter_sink_mt>(std::chrono::milliseconds(100));
     dup_filter->add_sink(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
 
     auto logger = std::make_shared<spdlog::logger>(name, dup_filter);
-    logger->set_level(ConvertFromLevel(DEFAULT_LEVEL));
 
-    //register it if you need to access it globally
-    //spdlog::register_logger(combined_logger);
+    logger->set_level(ConvertFromLevel(DEFAULT_LEVEL));
+    logger->set_pattern("%^[%L]%$ %Y/%m/%d %T | %-30n : %v");
+    logger->set_level(
+        spdlog::level::trace);  // this should be kept in sync with the compilation level
 
     // keep a reference of it
     registry_[name] = logger;
