@@ -222,6 +222,7 @@ BeaconSetupService::State BeaconSetupService::OnReset()
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Aborting DKG. Round start: ", beacon_->aeon.round_start,
                    " abort all below: ", abort_below_);
+    beacon_dkg_aborts_total_->add(1u);
     return State::IDLE;
   }
 
@@ -1344,7 +1345,6 @@ void BeaconSetupService::Abort(uint64_t abort_below)
 {
   std::lock_guard<std::mutex> lock(mutex_);
   abort_below_ = abort_below;
-  beacon_dkg_aborts_total_->add(1u);
 }
 
 void BeaconSetupService::SetBeaconReadyCallback(CallbackFunction callback)
