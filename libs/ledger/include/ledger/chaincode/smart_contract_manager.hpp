@@ -29,8 +29,7 @@ class Address;
 class SmartContractManager : public Contract
 {
 public:
-  static constexpr char const *NAME         = "fetch.contract";
-  static constexpr char const *LOGGING_NAME = "SmartContractManager";
+  static constexpr char const *NAME = "fetch.contract";
 
   static storage::ResourceAddress CreateAddressForContract(Identifier const &contract_id);
   static storage::ResourceAddress CreateAddressForSynergeticContract(Digest const &digest);

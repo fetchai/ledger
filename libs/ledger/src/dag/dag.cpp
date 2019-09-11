@@ -86,7 +86,7 @@ DAG::DAG(std::string db_name, bool load, CertificatePtr certificate)
       }
     }
 
-    assert(previous_epochs_.size() > 0);
+    assert(!previous_epochs_.empty());
 
     // Sanity check
     for (auto const &epoch : previous_epochs_)
@@ -349,7 +349,7 @@ std::set<fetch::byte_array::ConstByteArray> DAG::GetRecentlyMissing()
 }
 
 // Node is loose when not all references are found in the last N block periods
-bool DAG::IsLooseInternal(DAGNodePtr node)
+bool DAG::IsLooseInternal(DAGNodePtr node) const
 {
   for (auto const &dag_node_prev : node->previous)
   {
@@ -378,7 +378,7 @@ void DAG::AddLooseNodeInternal(DAGNodePtr node)
 }
 
 // Check whether the hash refers to anything considered valid that's not in the node pool
-bool DAG::HashInPrevEpochsInternal(ConstByteArray hash)
+bool DAG::HashInPrevEpochsInternal(ConstByteArray hash) const
 {
   // Check if hash is a node in epoch
   if (previous_epoch_.Contains(hash))
@@ -404,7 +404,7 @@ bool DAG::HashInPrevEpochsInternal(ConstByteArray hash)
 }
 
 // check whether the node has already been added for this period
-bool DAG::AlreadySeenInternal(DAGNodePtr node)
+bool DAG::AlreadySeenInternal(DAGNodePtr node) const
 {
   if (node_pool_.find(node->hash) != node_pool_.end() || HashInPrevEpochsInternal(node->hash))
   {
@@ -414,7 +414,7 @@ bool DAG::AlreadySeenInternal(DAGNodePtr node)
   return false;
 }
 
-bool DAG::TooOldInternal(uint64_t oldest_reference)
+bool DAG::TooOldInternal(uint64_t oldest_reference) const
 {
   if ((oldest_reference + EPOCH_VALIDITY_PERIOD) <= most_recent_epoch_)
   {

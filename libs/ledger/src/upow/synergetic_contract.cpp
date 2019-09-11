@@ -43,28 +43,25 @@ using vm_modules::math::UInt256Wrapper;
 using vm_modules::VMFactory;
 using vm_modules::StructuredData;
 using byte_array::ConstByteArray;
+using crypto::Hash;
+using crypto::SHA256;
 
 using Status                = SynergeticContract::Status;
 using ProblemData           = SynergeticContract::ProblemData;
 using VmStructuredData      = vm::Ptr<vm_modules::StructuredData>;
 using VmStructuredDataArray = vm::Ptr<vm::Array<VmStructuredData>>;
 
-constexpr char const *LOGGING_NAME = "SynContract";
+constexpr char const *LOGGING_NAME = "SynergeticContract";
 
 enum class FunctionKind
 {
-  NORMAL,     ///< Normal (undecorated) function
+  NONE,       ///< Normal (undecorated) function
   WORK,       ///< A function that is called to do some work
   OBJECTIVE,  ///< A function that is called to determine the quality of the work
   PROBLEM,    ///< The problem function
   CLEAR,      ///< The clear function
   INVALID,    ///< The function has an invalid decorator
 };
-
-Digest ComputeDigest(ConstByteArray const &source)
-{
-  return crypto::Hash<crypto::SHA256>(source);
-}
 
 std::string ErrorsToLog(std::vector<std::string> const &errors)
 {
@@ -80,7 +77,7 @@ std::string ErrorsToLog(std::vector<std::string> const &errors)
 
 FunctionKind DetermineKind(vm::Executable::Function const &fn)
 {
-  FunctionKind kind{FunctionKind::NORMAL};
+  FunctionKind kind{FunctionKind::NONE};
 
   // loop through all the function annotations
   if (1u == fn.annotations.size())
@@ -169,7 +166,7 @@ VmStructuredDataArray CreateProblemData(vm::VM *vm, ProblemData const &problem_d
 }  // namespace
 
 SynergeticContract::SynergeticContract(ConstByteArray const &source)
-  : digest_{ComputeDigest(source)}
+  : digest_{Hash<SHA256>(source)}
   , module_{VMFactory::GetModule(VMFactory::USE_SYNERGETIC)}
 {
   // ensure the source has size
@@ -229,7 +226,7 @@ SynergeticContract::SynergeticContract(ConstByteArray const &source)
       name     = "clear";
       function = &clear_function_;
       break;
-    case FunctionKind::NORMAL:
+    case FunctionKind::NONE:
     case FunctionKind::INVALID:
       break;
     }
