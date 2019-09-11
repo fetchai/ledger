@@ -34,7 +34,7 @@ namespace fetch {
 namespace ledger {
 
 namespace {
-static constexpr char const *LOGGING_NAME = "TransactionProcessor";
+constexpr char const *LOGGING_NAME = "TransactionProcessor";
 }
 
 /**

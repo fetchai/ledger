@@ -161,7 +161,7 @@ private:
   std::unordered_map<NodeHash, std::vector<DAGNodePtr>> loose_nodes_lookup_;  // nodes that are missing one or more references (waiting on NodeHash)
   // clang-format on
 
-  // TODO(HUT): loose nodes management scheme
+  // TODO(1642): loose nodes management scheme
   // std::unordered_map<NodeHash, uint64_t> loose_nodes_ttl_;
 
   // Used for sync purposes
