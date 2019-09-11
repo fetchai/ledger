@@ -103,7 +103,8 @@ public:
   {
     if (this->random_mode_)
     {
-      GetAtIndex(this->current_min_ + (static_cast<SizeType>(fetch::random::Random::generator()) % this->current_size_),
+      GetAtIndex(this->current_min_ + (static_cast<SizeType>(fetch::random::Random::generator()) %
+                                       this->current_size_),
                  buffer_);
       return buffer_;
     }
@@ -167,7 +168,8 @@ public:
       if (this->random_mode_)
       {
         *this->current_cursor_ =
-            this->current_min_ + (static_cast<SizeType>(fetch::random::Random::generator()) % this->current_size_);
+            this->current_min_ +
+            (static_cast<SizeType>(fetch::random::Random::generator()) % this->current_size_);
       }
       else
       {
