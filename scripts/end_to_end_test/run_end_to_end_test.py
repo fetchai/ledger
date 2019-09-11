@@ -388,6 +388,14 @@ def setup_test(test_yaml, test_instance):
     pos_mode = extract(test_yaml, 'pos_mode', expected=False,
                        expect_type=bool, default=False)
 
+    if node_connections[0] == "fully":
+        node_connections = []
+
+        for i in range(0, number_of_nodes):
+            for j in range(0, number_of_nodes):
+                if i != j:
+                    node_connections.append([i, j])
+
     test_instance._number_of_nodes = number_of_nodes
     test_instance._node_load_directory = node_load_directory
     test_instance._node_connections = node_connections
