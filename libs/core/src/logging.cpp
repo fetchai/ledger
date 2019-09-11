@@ -21,8 +21,27 @@
 #include "telemetry/counter.hpp"
 #include "telemetry/registry.hpp"
 
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#endif
+
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wsign-conversion"
+#endif
+
 #include "spdlog/sinks/stdout_color_sinks.h"
+#include "spdlog/sinks/dup_filter_sink.h"
 #include "spdlog/spdlog.h"
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 
 #include <unordered_map>
 
@@ -227,9 +246,18 @@ LogRegistry::Logger &LogRegistry::GetLogger(char const *name)
   auto it = registry_.find(name);
   if (it == registry_.end())
   {
-    // create the new logger instance
-    auto logger = spdlog::stdout_color_mt(name, spdlog::color_mode::automatic);
+    //auto logger = spdlog::stdout_color_mt(name, spdlog::color_mode::automatic);
+    //logger->set_level(ConvertFromLevel(DEFAULT_LEVEL));
+
+    // create the new logger instance - note it suppresses duplicate messages
+    auto dup_filter = std::make_shared<spdlog::sinks::dup_filter_sink_mt>(std::chrono::milliseconds(100));
+    dup_filter->add_sink(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
+
+    auto logger = std::make_shared<spdlog::logger>(name, dup_filter);
     logger->set_level(ConvertFromLevel(DEFAULT_LEVEL));
+
+    //register it if you need to access it globally
+    //spdlog::register_logger(combined_logger);
 
     // keep a reference of it
     registry_[name] = logger;
