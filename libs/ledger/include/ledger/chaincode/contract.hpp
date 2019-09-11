@@ -139,7 +139,7 @@ protected:
   template <typename T>
   bool GetStateRecord(T &record, ConstByteArray const &key);
   template <typename T>
-  void SetStateRecord(T const &record, ConstByteArray const &key);
+  StateAdapter::Status SetStateRecord(T const &record, ConstByteArray const &key);
 
   ledger::StateAdapter &state();
   /// @}
@@ -164,44 +164,6 @@ private:
   ledger::StateAdapter *state_ = nullptr;
   /// @}
 };
-
-/**
- * Attach the state interface to the contract instance
- *
- * @param state The reference
- */
-inline void Contract::Attach(ledger::StateAdapter &state)
-{
-  state_ = &state;
-}
-
-/**
- * Detach the state interface from the contract instance
- */
-inline void Contract::Detach()
-{
-  state_ = nullptr;
-}
-
-/**
- * Query Handler Map Accessor
- *
- * @return The query handler map
- */
-inline Contract::QueryHandlerMap const &Contract::query_handlers() const
-{
-  return query_handlers_;
-}
-
-/**
- * Transaction Handler Map Accessor
- *
- * @return The transaction handler map
- */
-inline Contract::TransactionHandlerMap const &Contract::transaction_handlers() const
-{
-  return transaction_handlers_;
-}
 
 /**
  * Register a class member function as an init handler
@@ -313,7 +275,7 @@ bool Contract::GetStateRecord(T &record, ConstByteArray const &key)
  * @param key The key for the state record
  */
 template <typename T>
-void Contract::SetStateRecord(T const &record, ConstByteArray const &key)
+StateAdapter::Status Contract::SetStateRecord(T const &record, ConstByteArray const &key)
 {
   // serialize the record to the buffer
   serializers::MsgPackSerializer buffer;
@@ -323,7 +285,7 @@ void Contract::SetStateRecord(T const &record, ConstByteArray const &key)
   auto const &data = buffer.data();
 
   // store the buffer
-  state().Write(std::string{key}, data.pointer(), data.size());
+  return state().Write(std::string{key}, data.pointer(), data.size());
 }
 
 }  // namespace ledger

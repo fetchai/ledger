@@ -38,10 +38,7 @@ class TransactionProcessor;
 
 class ContractHttpInterface : public http::HTTPModule
 {
-
 public:
-  static constexpr char const *LOGGING_NAME = "ContractHttpInterface";
-
   // Construction / Destruction
   ContractHttpInterface(StorageInterface &storage, TransactionProcessor &processor);
   ContractHttpInterface(ContractHttpInterface const &) = delete;
@@ -85,9 +82,8 @@ private:
   /// @name Transaction Handlers
   /// @{
   http::HTTPResponse OnTransaction(http::HTTPRequest const &req, ConstByteArray expected_contract);
-  SubmitTxStatus     SubmitJsonTx(http::HTTPRequest const &req, ConstByteArray expected_contract,
-                                  TxHashes &txs);
-  SubmitTxStatus     SubmitBulkTx(http::HTTPRequest const &req);
+  SubmitTxStatus     SubmitJsonTx(http::HTTPRequest const &req, TxHashes &txs);
+  SubmitTxStatus     SubmitBulkTx(http::HTTPRequest const &req, TxHashes &txs);
   /// @}
 
   /// @name Access Log
@@ -102,7 +98,7 @@ private:
   StorageInterface &    storage_;
   TransactionProcessor &processor_;
   ChainCodeCache        contract_cache_{};
-  Mutex                 access_log_lock_{__LINE__, __FILE__};
+  Mutex                 access_log_lock_;
   std::ofstream         access_log_;
 };
 

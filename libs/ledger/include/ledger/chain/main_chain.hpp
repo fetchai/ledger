@@ -76,22 +76,7 @@ enum class BlockStatus
  * @param status The status enumeration
  * @return The output text
  */
-inline constexpr char const *ToString(BlockStatus status)
-{
-  switch (status)
-  {
-  case BlockStatus::ADDED:
-    return "Added";
-  case BlockStatus::LOOSE:
-    return "Loose";
-  case BlockStatus::DUPLICATE:
-    return "Duplicate";
-  case BlockStatus::INVALID:
-    return "Invalid";
-  }
-
-  return "Unknown";
-}
+constexpr char const *ToString(BlockStatus status);
 
 class MainChain
 {

@@ -100,7 +100,7 @@ public:
    * @fnc is a pointer to the callable function.
    *
    * The pointer provided is used to invoke the callable when a call
-   * matching the identifier is recieved by a service.
+   * matching the identifier is received by a service.
    *
    * In the next implementation of this, one should use unique_ptr
    * rather than a raw pointer. This will have no impact on the rest of
@@ -263,7 +263,7 @@ private:
   std::vector<middleware_type>                          middleware_;
   std::map<function_handler_type, stored_type>          members_;
   std::vector<std::shared_ptr<FeedSubscriptionManager>> feeds_;
-  Mutex                                                 feeds_mutex_{__LINE__, __FILE__};
+  Mutex                                                 feeds_mutex_;
 };
 }  // namespace service
 }  // namespace fetch

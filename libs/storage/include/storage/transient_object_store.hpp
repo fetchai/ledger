@@ -117,7 +117,7 @@ private:
   std::size_t             extracted_count = 0;
   std::size_t             written_count   = 0;
 
-  mutable Mutex   cache_mutex_{__LINE__, __FILE__};  ///< The mutex for the cache
+  mutable Mutex   cache_mutex_;       ///< The mutex for the cache
   StateMachinePtr state_machine_;     ///< The state machine controlling the worker writing to disk
   Cache           cache_;             ///< The main object cache
   Archive         archive_;           ///< The persistent object store
@@ -125,8 +125,7 @@ private:
   RecentQueue     most_recent_seen_;  ///< The queue of elements to be stored
   Callback        set_callback_;      ///< The completion handler
   Flag            stop_{false};       ///< Flag to signal the stop of the worker
-  static constexpr core::Tickets::Count recent_queue_alarm_threshold{RecentQueue::QUEUE_LENGTH >>
-                                                                     1};
+  static constexpr std::size_t recent_queue_alarm_threshold{RecentQueue::QUEUE_LENGTH >> 1u};
 };
 
 /**
@@ -402,7 +401,7 @@ bool TransientObjectStore<O>::Has(ResourceID const &rid)
 template <typename O>
 void TransientObjectStore<O>::Set(ResourceID const &rid, O const &object, bool newly_seen)
 {
-  static core::Tickets::Count prev_count{0};
+  static std::size_t prev_count{0};
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Adding TX: ", byte_array::ToBase64(rid.id()));
 

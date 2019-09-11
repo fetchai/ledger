@@ -105,6 +105,7 @@ TensorType ReadCSV(std::string const &filename, math::SizeType const cols_to_ski
   {
     weights = weights.Transpose();
   }
+
   return weights;
 }
 }  // namespace dataloaders

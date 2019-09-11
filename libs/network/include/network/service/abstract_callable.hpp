@@ -25,6 +25,7 @@
 #include <cstdint>
 #include <string>
 #include <type_traits>
+#include <typeinfo>
 
 namespace fetch {
 namespace service {

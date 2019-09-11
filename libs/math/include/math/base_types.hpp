@@ -28,9 +28,10 @@
 namespace fetch {
 namespace math {
 
-using SizeType   = uint64_t;
-using SizeVector = std::vector<SizeType>;
-using SizeSet    = std::unordered_set<SizeType>;
+using SizeType    = uint64_t;
+using PtrDiffType = int64_t;
+using SizeVector  = std::vector<SizeType>;
+using SizeSet     = std::unordered_set<SizeType>;
 
 constexpr SizeType NO_AXIS = SizeType(-1);
 

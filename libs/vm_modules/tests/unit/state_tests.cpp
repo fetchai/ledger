@@ -251,8 +251,7 @@ std::enable_if_t<!IsPtr<T>::value> ArrayFromVariant(Variant const &array, int32_
 }
 
 template <typename T>
-std::enable_if_t<IsPtr<T>::value &&
-                 std::is_same<IArray, std::decay_t<typename GetManagedType<T>::type>>::value>
+std::enable_if_t<IsPtr<T>::value && std::is_same<IArray, std::decay_t<GetManagedType<T>>>::value>
 ArrayFromVariant(Variant const &array, int32_t expected_size, Ptr<Array<T>> &out)
 {
   out = array.Get<Ptr<Array<T>>>();

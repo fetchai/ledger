@@ -21,10 +21,11 @@
 #include "core/logging.hpp"
 #include "core/mutex.hpp"
 #include "network/details/network_manager_implementation.hpp"
-
 #include "network/fetch_asio.hpp"
+
 #include <functional>
 #include <map>
+#include <utility>
 
 namespace fetch {
 namespace network {
@@ -83,7 +84,7 @@ public:
     auto ptr = lock();
     if (ptr)
     {
-      return ptr->Post(f);
+      return ptr->Post(std::forward<F>(f));
     }
     else
     {
@@ -97,7 +98,7 @@ public:
     auto ptr = lock();
     if (ptr)
     {
-      return ptr->Post(f, milliseconds);
+      return ptr->Post(std::forward<F>(f), milliseconds);
     }
   }
 
@@ -143,5 +144,6 @@ private:
   weak_ref_type weak_pointer_;
   bool          is_copy_ = false;
 };
+
 }  // namespace network
 }  // namespace fetch

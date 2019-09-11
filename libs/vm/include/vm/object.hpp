@@ -79,13 +79,17 @@ using IsNonconstRef = std::is_same<T, std::decay_t<T> &>;
 template <typename T>
 using IsConstRef = std::is_same<T, std::decay_t<T> const &>;
 
+namespace internal {
 template <typename T>
-struct GetManagedType;
+struct GetManagedTypeImpl;
 template <typename T>
-struct GetManagedType<Ptr<T>>
+struct GetManagedTypeImpl<Ptr<T>>
 {
   using type = T;
 };
+}  // namespace internal
+template <typename T>
+using GetManagedType = typename internal::GetManagedTypeImpl<T>::type;
 
 template <typename T>
 using IsPrimitiveParameter =

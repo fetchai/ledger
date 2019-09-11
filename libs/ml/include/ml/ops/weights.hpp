@@ -72,11 +72,14 @@ public:
   explicit Weights(SPType const &sp)
     : PlaceHolder<T>(sp)
   {
+    if (sp.output)
+    {
+      this->output_ = std::make_shared<TensorType>(sp.output->Copy());
+    }
+
     if (sp.gradient_accumulation)
     {
-      gradient_accumulation_ = std::make_shared<TensorType>();
-      gradient_accumulation_->Resize(sp.gradient_accumulation->shape());
-      gradient_accumulation_->Copy(*(sp.gradient_accumulation));
+      gradient_accumulation_ = std::make_shared<TensorType>(sp.gradient_accumulation->Copy());
     }
 
     this->SetRegularisation(
@@ -93,6 +96,11 @@ public:
 
     auto cast_sp = std::static_pointer_cast<OpPlaceholderSaveableParams<TensorType>>(sp);
     *cast_sp     = *(std::static_pointer_cast<OpPlaceholderSaveableParams<TensorType>>(p_sp));
+
+    if (this->output_)
+    {
+      sp->output = std::make_shared<TensorType>(this->output_->Copy());
+    }
 
     if (gradient_accumulation_)
     {
@@ -149,13 +157,6 @@ public:
       return true;
     }
     return false;
-  }
-
-  void Step(typename T::Type learning_rate) override
-  {
-    this->gradient_accumulation_->InlineMultiply(-learning_rate);
-    this->output_->InlineAdd(*gradient_accumulation_);
-    ResetGradients();
   }
 
   void ApplyGradient(TensorType const &grad) override
@@ -382,6 +383,7 @@ template <class TensorType>
 struct OpWeightsSaveableParams : public OpPlaceholderSaveableParams<TensorType>
 {
   fetch::ml::OpType           op_type = OpType::OP_WEIGHTS;
+  std::shared_ptr<TensorType> output;
   std::shared_ptr<TensorType> gradient_accumulation;
   RegularisationType          regularisation_type;
   typename TensorType::Type   regularisation_rate;

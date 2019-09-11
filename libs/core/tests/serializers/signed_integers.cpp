@@ -34,7 +34,6 @@ namespace serializers {
 
 TEST(MsgPacker, signed_integers)
 {
-  // Setup
   MsgPackSerializer stream;
   int64_t           value;
 

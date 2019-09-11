@@ -48,7 +48,7 @@ public:
   {
     LockableDetails()
       : details_type()
-      , Mutex(__LINE__, __FILE__)
+      , Mutex{}
     {}
   };
   using details_map_type =
@@ -251,10 +251,10 @@ public:
   }
 
 private:
-  mutable Mutex       connections_lock_{__LINE__, __FILE__};
+  mutable Mutex       connections_lock_;
   connection_map_type connections_;
 
-  mutable Mutex    details_lock_{__LINE__, __FILE__};
+  mutable Mutex    details_lock_;
   details_map_type details_;
 
   void SignalClientLeave(connection_handle_type const &handle)

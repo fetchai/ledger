@@ -193,9 +193,9 @@ constexpr char const *MainChainRpcService::ToString(State state) noexcept
     return "Waiting for Sync Response";
   case State::SYNCHRONISED:
     return "Synchronised";
-  default:
-    return "unknown";
   }
+
+  return "unknown";
 }
 
 }  // namespace ledger

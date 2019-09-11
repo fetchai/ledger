@@ -91,7 +91,7 @@ public:
   ServiceServer(uint16_t port, network_manager_type network_manager)
     : super_type(port, network_manager)
     , network_manager_(network_manager)
-    , message_mutex_(__LINE__, __FILE__)
+    , message_mutex_{}
   {}
 
   ~ServiceServer()
@@ -199,9 +199,9 @@ private:
   network_manager_type network_manager_;
 
   std::deque<PendingMessage> messages_;
-  mutable Mutex              message_mutex_{__LINE__, __FILE__};
+  mutable Mutex              message_mutex_;
 
-  mutable Mutex                               client_rpcs_mutex_{__LINE__, __FILE__};
+  mutable Mutex                               client_rpcs_mutex_;
   std::map<handle_type, ClientRPCInterface *> client_rpcs_;
 };
 }  // namespace service

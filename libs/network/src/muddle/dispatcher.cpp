@@ -140,9 +140,9 @@ bool Dispatcher::Dispatch(PacketPtr packet)
       }
       else
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "Recieved response from wrong address");
+        FETCH_LOG_INFO(LOGGING_NAME, "Received response from wrong address");
         FETCH_LOG_INFO(LOGGING_NAME, "Expected : " + ToBase64(it->second.address));
-        FETCH_LOG_INFO(LOGGING_NAME, "Recieved : " + ToBase64(packet->GetSender()));
+        FETCH_LOG_INFO(LOGGING_NAME, "Received : " + ToBase64(packet->GetSender()));
       }
     }
   }

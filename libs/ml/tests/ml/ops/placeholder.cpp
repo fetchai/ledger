@@ -16,13 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/base_types.hpp"
-
 #include "core/serializers/main_serializer_definition.hpp"
-#include "gtest/gtest.h"
+#include "math/base_types.hpp"
 #include "math/tensor.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/serializers/ml_types.hpp"
+
+#include "gtest/gtest.h"
+
 template <typename T>
 class PlaceholderTest : public ::testing::Test
 {
@@ -111,6 +112,7 @@ TYPED_TEST(PlaceholderTest, saveparams_test)
 
   // rebuild node
   OpType new_op(*dsp2);
+  new_op.SetData(data);  // input data is no longer serialised
 
   // check that new predictions match the old
   TensorType new_prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));

@@ -67,7 +67,6 @@ std::shared_ptr<TrainingClient<TensorType>> MakeClient(std::string const &     i
       std::make_shared<fetch::ml::dataloaders::MNISTLoader<TensorType, TensorType>>(images, labels);
   dataloader_ptr->SetTestRatio(test_set_ratio);
   dataloader_ptr->SetRandomMode(true);
-
   // Initialise Optimiser
   std::shared_ptr<fetch::ml::optimisers::Optimiser<TensorType>> optimiser_ptr =
       std::make_shared<fetch::ml::optimisers::AdamOptimiser<TensorType>>(
@@ -94,12 +93,13 @@ int main(int ac, char **av)
   SizeType number_of_rounds     = 10;
   coord_params.mode             = CoordinatorMode::SEMI_SYNCHRONOUS;
   coord_params.iterations_count = 100;
+  coord_params.number_of_peers  = 3;
   client_params.batch_size      = 32;
   client_params.learning_rate   = static_cast<DataType>(.001f);
   float test_set_ratio          = 0.03f;
-  client_params.number_of_peers = 3;
 
-  std::shared_ptr<Coordinator> coordinator = std::make_shared<Coordinator>(coord_params);
+  std::shared_ptr<Coordinator<TensorType>> coordinator =
+      std::make_shared<Coordinator<TensorType>>(coord_params);
 
   std::cout << "FETCH Distributed MNIST Demo" << std::endl;
 
@@ -111,11 +111,11 @@ int main(int ac, char **av)
     // TODO(1597): Replace ID with something more sensible
   }
 
+  // Give list of clients to coordinator
+  coordinator->SetClientsList(clients);
+
   for (SizeType i{0}; i < number_of_clients; ++i)
   {
-    // Give every client the full list of other clients
-    clients[i]->AddPeers(clients);
-
     // Give each client pointer to coordinator
     clients[i]->SetCoordinator(coordinator);
   }
@@ -146,7 +146,7 @@ int main(int ac, char **av)
     // Synchronize weights by giving all clients average of all client's weights
     VectorTensorType new_weights = clients[0]->GetWeights();
 
-    // Sum all wights
+    // Sum all weights
     for (SizeType i{1}; i < number_of_clients; ++i)
     {
       VectorTensorType other_weights = clients[i]->GetWeights();

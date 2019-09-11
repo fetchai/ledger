@@ -79,7 +79,7 @@ public:
   /// @}
 
 private:
-  Mutex            identity_mutex_{__LINE__, __FILE__};
+  Mutex            identity_mutex_;
   crypto::Identity identity_;
 
   network_manager_type manager_;

@@ -166,7 +166,7 @@ void W2VLoader<T>::Reset()
   current_sentence_ = 0;
   current_word_     = 0;
   rng_.Seed(1337);
-  unigram_table_.Reset();
+  unigram_table_.ResetRNG();
 }
 
 template <typename T>
@@ -191,26 +191,23 @@ void W2VLoader<T>::SetValidationRatio(float new_validation_ratio)
 template <typename T>
 void W2VLoader<T>::RemoveInfrequent(SizeType min)
 {
-  W2VLoader                                            new_loader(window_size_, negative_samples_);
-  std::map<SizeType, std::pair<std::string, SizeType>> reverse_vocab;
-  for (auto const &kvp : vocab_.data)
-  {
-    reverse_vocab[kvp.second.first] = std::make_pair(kvp.first, kvp.second.second);
-  }
+  W2VLoader new_loader(window_size_, negative_samples_);
+
   for (auto const &sentence : data_)
   {
     std::string s;
     for (auto const &word : sentence)
     {
-      if (reverse_vocab[word].second >= min)
+      if (vocab_.counts[word] >= min)
       {
-        s += reverse_vocab[word].first + " ";
+        s += vocab_.reverse_vocab[word] + " ";
       }
     }
     new_loader.BuildVocab(s);
   }
-  data_       = std::move(new_loader.data_);
-  vocab_.data = std::move(new_loader.vocab_.data);
+
+  data_  = std::move(new_loader.data_);
+  vocab_ = std::move(new_loader.vocab_);
 }
 
 /**
@@ -220,12 +217,7 @@ void W2VLoader<T>::RemoveInfrequent(SizeType min)
 template <typename T>
 void W2VLoader<T>::InitUnigramTable()
 {
-  std::vector<SizeType> frequencies(vocab_size());
-  for (auto const &kvp : vocab_.data)
-  {
-    frequencies[kvp.second.first] = kvp.second.second;
-  }
-  unigram_table_.Reset(frequencies, 1e8);
+  unigram_table_.ResetTable(vocab_.counts, 1e8);
 }
 
 /**
@@ -358,7 +350,7 @@ void W2VLoader<T>::LoadVocab(std::string const &filename)
 template <typename T>
 math::SizeType W2VLoader<T>::vocab_size() const
 {
-  return vocab_.data.size();
+  return vocab_.vocab.size();
 }
 
 /**
@@ -414,14 +406,7 @@ std::vector<math::SizeType> W2VLoader<T>::StringsToIndices(std::vector<std::stri
   std::vector<SizeType> indexes;
   if (strings.size() >= 2 * window_size_ + 1)  // Don't bother processing too short inputs
   {
-    indexes.reserve(strings.size());
-    for (std::string const &s : strings)
-    {
-      auto value = vocab_.data.insert(
-          std::make_pair(s, std::make_pair((SizeType)(vocab_.data.size() + 1), 0)));
-      indexes.push_back((*value.first).second.first);
-      value.first->second.second++;
-    }
+    indexes = vocab_.PutSentenceInVocab(strings);
   }
   return indexes;
 }

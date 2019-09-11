@@ -1591,12 +1591,27 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &starting_hash,
 
   bloom_filter_false_positive_count_->add(false_positives);
 
-  if (!bloom_filter_->ReportFalsePositives(false_positives))
+  if (bloom_filter_->ReportFalsePositives(false_positives))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Bloom filter false positive rate exceeded threshold");
   }
 
   return duplicates;
+}
+
+constexpr char const *ToString(BlockStatus status)
+{
+  switch (status)
+  {
+  case BlockStatus::ADDED:
+    return "Added";
+  case BlockStatus::LOOSE:
+    return "Loose";
+  case BlockStatus::DUPLICATE:
+    return "Duplicate";
+  case BlockStatus::INVALID:
+    return "Invalid";
+  }
 }
 
 }  // namespace ledger

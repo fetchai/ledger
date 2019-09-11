@@ -23,8 +23,10 @@
 #include "http/validators.hpp"
 #include "http/view_parameters.hpp"
 
+#include <cstddef>
 #include <functional>
 #include <regex>
+#include <unordered_map>
 #include <vector>
 
 namespace fetch {

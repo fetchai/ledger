@@ -20,6 +20,7 @@
 #include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/logging.hpp"
+#include "core/macros.hpp"
 #include "core/mutex.hpp"
 #include "http/abstract_connection.hpp"
 #include "http/http_connection_manager.hpp"
@@ -48,7 +49,7 @@ public:
   HTTPConnection(asio::ip::tcp::tcp::socket socket, HTTPConnectionManager &manager)
     : socket_(std::move(socket))
     , manager_(manager)
-    , write_mutex_(__LINE__, __FILE__)
+    , write_mutex_{}
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "HTTP connection from ",
                     socket_.remote_endpoint().address().to_string());

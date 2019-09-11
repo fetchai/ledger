@@ -69,7 +69,6 @@ static const TestCase TEST_CASES[] = {
 
 class UriTests : public ::testing::TestWithParam<TestCase>
 {
-protected:
 };
 
 TEST_P(UriTests, CheckConstruction)

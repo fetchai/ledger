@@ -17,6 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/commandline/parameter_parser.hpp"
+#include "core/macros.hpp"
+
 #include <functional>
 #include <iostream>
 #include <list>
@@ -24,9 +27,6 @@
 #include <stdexcept>
 #include <string>
 #include <tuple>
-
-#include "core/commandline/parameter_parser.hpp"
-#include "core/macros.hpp"
 
 namespace fetch {
 namespace commandline {

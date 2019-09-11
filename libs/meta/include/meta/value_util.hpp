@@ -86,22 +86,5 @@ constexpr auto Accumulate(F &&f, A &&a, B &&b,
                     std::forward<Seq>(seq)...);
 }
 
-// Simple uses of Accumulate().
-// Since Accumulate() itself operates on packs rather than ranges,
-// there's no special overload to calculate simple sum, like in STL.
-template <typename H, typename... Ts>
-constexpr auto Sum(H &&h, Ts &&... ts) noexcept(
-    detail_::IsNothrowAccumulatableV<std::plus<void>, H, Ts...>)
-{
-  return Accumulate(std::plus<void>{}, std::forward<H>(h), std::forward<Ts>(ts)...);
-}
-
-template <typename H, typename... Ts>
-constexpr auto Product(H &&h, Ts &&... ts) noexcept(
-    detail_::IsNothrowAccumulatableV<std::multiplies<void>, H, Ts...>)
-{
-  return Accumulate(std::multiplies<void>{}, std::forward<H>(h), std::forward<Ts>(ts)...);
-}
-
 }  // namespace value_util
 }  // namespace fetch

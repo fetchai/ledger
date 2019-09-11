@@ -17,19 +17,17 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/serializable_exception.hpp"
-#include "network/service/callable_class_member.hpp"
-#include "network/service/message_types.hpp"
-#include "network/service/protocol.hpp"
-
-#include "network/service/client_interface.hpp"
-#include "network/service/error_codes.hpp"
-#include "network/service/promise.hpp"
-#include "network/service/server_interface.hpp"
-
 #include "core/assert.hpp"
 #include "core/logging.hpp"
 #include "core/mutex.hpp"
+#include "core/serializers/serializable_exception.hpp"
+#include "network/service/callable_class_member.hpp"
+#include "network/service/client_interface.hpp"
+#include "network/service/error_codes.hpp"
+#include "network/service/message_types.hpp"
+#include "network/service/promise.hpp"
+#include "network/service/protocol.hpp"
+#include "network/service/server_interface.hpp"
 #include "network/tcp/tcp_client.hpp"
 
 #include <map>
@@ -49,7 +47,7 @@ public:
                 const network_manager_type &                 network_manager)
     : connection_(connection)
     , network_manager_(network_manager)
-    , message_mutex_(__LINE__, __FILE__)
+    , message_mutex_{}
   {
     auto ptr = connection_.lock();
     if (ptr)

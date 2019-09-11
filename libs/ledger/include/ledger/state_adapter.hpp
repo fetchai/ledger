@@ -30,19 +30,14 @@ namespace ledger {
 
 /**
  * Adapter between the VM IO interface and the main ledger state database.
- *
  */
 class StateAdapter : public vm::IoObserverInterface
 {
 public:
-  using ConstByteArray  = byte_array::ConstByteArray;
-  using ResourceAddress = storage::ResourceAddress;
-
-  static constexpr char const *LOGGING_NAME = "StateAdapter";
-
   // Resource Mapping
-  static ResourceAddress CreateAddress(Identifier const &scope, ConstByteArray const &key);
-  static ResourceAddress CreateAddress(ConstByteArray const &key);
+  static storage::ResourceAddress CreateAddress(Identifier const &                scope,
+                                                byte_array::ConstByteArray const &key);
+  static storage::ResourceAddress CreateAddress(byte_array::ConstByteArray const &key);
 
   enum class Mode
   {
@@ -71,7 +66,7 @@ protected:
 
   StorageInterface &      storage_;
   std::vector<Identifier> scope_;
-  Mode                    mode_;
+  Mode const              mode_;
 };
 
 }  // namespace ledger
