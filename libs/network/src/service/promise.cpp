@@ -63,6 +63,16 @@ Counter PromiseImplementation::id() const
   return id_;
 }
 
+PromiseImplementation::Timepoint const &PromiseImplementation::created_at() const
+{
+  return created_;
+}
+
+PromiseImplementation::Timepoint const &PromiseImplementation::deadline() const
+{
+  return deadline_;
+}
+
 uint64_t PromiseImplementation::protocol() const
 {
   return protocol_;
@@ -125,6 +135,11 @@ void PromiseImplementation::Fail(SerializableException const &exception)
   exception_ = std::make_unique<SerializableException>(exception);
 
   UpdateState(State::FAILED);
+}
+
+void PromiseImplementation::Timeout()
+{
+  UpdateState(State::TIMEDOUT);
 }
 
 void PromiseImplementation::Fail()

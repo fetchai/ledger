@@ -20,16 +20,79 @@
 
 namespace fetch {
 namespace muddle {
+namespace {
 
-static constexpr char const *LOGGING_NAME = "PromiseTask";
+constexpr char const *LOGGING_NAME = "PromiseTask";
 
-PromiseTask::PromiseTask(service::Promise promise, Callback callback)
-  : promise_{std::move(promise)}
+using Clock     = PromiseTask::Clock;
+using Timepoint = PromiseTask::Timepoint;
+using Duration  = PromiseTask::Duration;
+using Promise   = service::Promise;
+using PromiseState = service::PromiseState;
+
+/**
+ * Compute the desired timeout or deadline for the monitored promise
+ *
+ * @param promise The promise to be monitored
+ * @param timeout The (optional) timeout to be imposed
+ * @return The desired deadline time
+ */
+Timepoint CalculateDeadline(Promise const &promise, Duration const *timeout = nullptr)
+{
+  Timepoint deadline = promise->deadline();
+
+  if (timeout)
+  {
+    deadline = std::min(deadline, promise->created_at() + *timeout);
+  }
+
+  return deadline;
+}
+
+}  // namespace
+
+PromiseTask::PromiseTask(Promise const &promise, Callback callback)
+  : PromiseTask(promise, CalculateDeadline(promise), std::move(callback))
+{}
+
+PromiseTask::PromiseTask(Promise const &promise, Duration const &timeout,
+                         Callback callback)
+  : PromiseTask(promise, CalculateDeadline(promise, &timeout), std::move(callback))
+{}
+
+PromiseTask::PromiseTask(Promise promise, Timepoint const &deadline, Callback callback)
+  : promise_(std::move(promise))
+  , deadline_{deadline}
   , callback_{std::move(callback)}
 {}
 
 bool PromiseTask::IsReadyToExecute() const
 {
+  bool ready{false};
+
+  if (!complete_)
+  {
+    if (promise_)
+    {
+      // normal promise resolution
+      ready = promise_->state() != PromiseState::WAITING;
+
+      // if still not ready then check the deadline
+      if (!ready)
+      {
+        if (Clock::now() >= deadline_)
+        {
+          // signal that the promise has timed out
+          promise_->Timeout();
+
+          FETCH_LOG_WARN(LOGGING_NAME, "Explicitly marking the transaction as timed out");
+          ready = true;
+        }
+      }
+    }
+  }
+
+  return ready;
   return (!complete_) && promise_ && (promise_->state() != service::PromiseState::WAITING);
 }
 

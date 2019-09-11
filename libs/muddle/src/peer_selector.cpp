@@ -32,17 +32,20 @@
 namespace fetch {
 namespace muddle {
 
+namespace {
+
 using namespace std::chrono;
 using namespace std::chrono_literals;
 
-static constexpr auto        MIN_ANNONCEMENT_INTERVAL = 15min;
-static constexpr auto        MAX_ANNONCEMENT_INTERVAL = 30min;
-static constexpr std::size_t MINIMUM_PEERS            = 3;
-static constexpr char const *BASE_NAME                = "PeerSelector";
-static constexpr std::size_t MAX_CACHE_KAD_NODES      = 20;
-static constexpr std::size_t MAX_CONNECTED_KAD_NODES  = 3;
+constexpr auto        MIN_ANNONCEMENT_INTERVAL = 15min;
+constexpr auto        MAX_ANNONCEMENT_INTERVAL = 30min;
+constexpr std::size_t MINIMUM_PEERS            = 3;
+constexpr char const *BASE_NAME                = "PeerSelector";
+constexpr std::size_t MAX_CACHE_KAD_NODES      = 20;
+constexpr std::size_t MAX_CONNECTED_KAD_NODES  = 3;
+constexpr std::size_t MAX_LOG2_BACKOFF         = 11;  // 2048
 
-static std::unordered_set<Address> operator+(std::unordered_set<Address>        input,
+std::unordered_set<Address> operator+(std::unordered_set<Address>        input,
                                              std::unordered_set<Address> const &other)
 {
   for (auto const &address : other)
@@ -52,6 +55,14 @@ static std::unordered_set<Address> operator+(std::unordered_set<Address>        
 
   return input;
 }
+
+PromiseTask::Duration CalculatePromiseTimeout(std::size_t consecutive_failures)
+{
+  std::size_t const log2_backoff_secs = std::min(consecutive_failures, MAX_LOG2_BACKOFF);
+  return duration_cast<PromiseTask::Duration>(seconds{1 << log2_backoff_secs});
+}
+
+} // namespace
 
 PeerSelector::PeerSelector(NetworkId const &network, Duration const &interval,
                            core::Reactor &reactor, MuddleRegister const &reg,
@@ -230,10 +241,13 @@ void PeerSelector::ResolveAddresses(Addresses const &addresses)
     // make the call to the remote service
     auto promise = rpc_client_.CallSpecificAddress(address, RPC_MUDDLE_DISCOVERY,
                                                    DiscoveryService::CONNECTION_INFORMATION);
+    // lookup the peer information
+    auto const &peer_data = peers_info_[address];
 
     // wrap the promise is a task
     auto task = std::make_shared<PromiseTask>(
         std::move(promise),
+        CalculatePromiseTimeout(peer_data.consecutive_failures),
         [this, address](service::Promise const &promise) { OnResolvedAddress(address, promise); });
 
     // add the task to the reactor
@@ -268,6 +282,10 @@ void PeerSelector::OnResolvedAddress(Address const &address, service::Promise co
   {
     FETCH_LOG_WARN(logging_name_, "Unable to resolve address for: ", address.ToBase64(),
                    " code: ", int(promise->state()));
+
+    // update the failure
+    auto &peer_data = peers_info_[address];
+    peer_data.consecutive_failures++;
   }
 
   // remove the entry from the pending list
