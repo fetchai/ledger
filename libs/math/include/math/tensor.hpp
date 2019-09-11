@@ -822,7 +822,7 @@ typename Tensor<T, C>::ViewType Tensor<T, C>::View()
   assert(shape_.size() >= 1);
 
   SizeType N     = shape_.size() - 1;
-  SizeType width = shape_[N] * stride_[N] / padded_height_;
+  SizeType width = std::max(shape_[N] * stride_[N] / padded_height_, static_cast<SizeType>(1));
   return TensorView<Type, ContainerType>(data_, height(), width);
 }
 
