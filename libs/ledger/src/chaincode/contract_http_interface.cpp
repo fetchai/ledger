@@ -17,8 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/decoders.hpp"
-#include "core/json/document.hpp"
-#include "core/logging.hpp"
+#include "json/document.hpp"
+#include "logging/logging.hpp"
 #include "core/serializers/base_types.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "core/string/replace.hpp"

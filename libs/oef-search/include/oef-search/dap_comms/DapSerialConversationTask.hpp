@@ -4,7 +4,7 @@
 #include <queue>
 #include <utility>
 
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 #include "oef-base/threading/StateMachineTask.hpp"
 
 #include "oef-base/conversation/OutboundConversations.hpp"

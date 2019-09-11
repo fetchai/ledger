@@ -19,7 +19,10 @@ target_link_libraries(fetch-vm-modules
                       PUBLIC fetch-vm
                              fetch-core
                              fetch-math
-                             fetch-ml)
+                             fetch-ml
+                             fetch-json
+                             fetch-variant
+                             fetch-logging)
 
 add_test_target()
 

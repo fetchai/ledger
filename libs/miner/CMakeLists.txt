@@ -15,7 +15,7 @@ setup_compiler()
 # ------------------------------------------------------------------------------
 
 setup_library(fetch-miner)
-target_link_libraries(fetch-miner PUBLIC fetch-core fetch-ledger)
+target_link_libraries(fetch-miner PUBLIC fetch-core fetch-ledger fetch-logging)
 
 # Unit tests
 add_test_target()

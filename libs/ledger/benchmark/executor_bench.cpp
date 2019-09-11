@@ -19,7 +19,7 @@
 #include "core/bitvector.hpp"
 #include "crypto/ecdsa.hpp"
 #include "in_memory_storage.hpp"
-#include "ledger/chain/address.hpp"
+#include "address/address.hpp"
 #include "ledger/chain/transaction_builder.hpp"
 #include "ledger/chaincode/token_contract.hpp"
 #include "ledger/executor.hpp"

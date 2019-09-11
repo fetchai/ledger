@@ -15,4 +15,4 @@ setup_compiler()
 # ------------------------------------------------------------------------------
 
 setup_library(fetch-metrics)
-target_link_libraries(fetch-metrics PUBLIC fetch-core)
+target_link_libraries(fetch-metrics PUBLIC fetch-core fetch-logging)

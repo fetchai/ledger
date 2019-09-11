@@ -17,8 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/decoders.hpp"
-#include "core/json/document.hpp"
-#include "core/json/exceptions.hpp"
+#include "json/document.hpp"
+#include "json/exceptions.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chaincode/contract.hpp"
 

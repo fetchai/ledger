@@ -19,6 +19,7 @@
 #include "core/bitvector.hpp"
 #include "ledger/chaincode/smart_contract_manager.hpp"
 #include "ledger/upow/synergetic_executor.hpp"
+#include "logging/logging.hpp"
 
 #include <limits>
 

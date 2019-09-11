@@ -19,6 +19,8 @@
 
 #include "ml/meta/ml_type_traits.hpp"
 
+#include <unordered_map>
+
 namespace fetch {
 namespace ml {
 

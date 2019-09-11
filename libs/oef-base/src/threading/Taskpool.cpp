@@ -1,5 +1,5 @@
 #include "oef-base/threading/Taskpool.hpp"
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 
 #include "oef-base/monitoring/Counter.hpp"
 #include "oef-base/monitoring/Gauge.hpp"

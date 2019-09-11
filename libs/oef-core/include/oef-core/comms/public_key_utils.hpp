@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 #include "network/fetch_asio.hpp"
 
 #include <cerrno>  // for fopen

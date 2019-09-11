@@ -45,6 +45,7 @@
 #include <stdexcept>
 #include <utility>
 #include <vector>
+#include <sstream>
 
 namespace fetch {
 namespace math {

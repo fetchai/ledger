@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 #include "oef-base/comms/ConstCharArrayBuffer.hpp"
 #include "oef-base/comms/Endianness.hpp"
 #include "oef-base/comms/IMessageReader.hpp"

@@ -19,7 +19,7 @@
 
 #include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 #include "core/macros.hpp"
 #include "core/mutex.hpp"
 #include "http/abstract_connection.hpp"

@@ -17,9 +17,10 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/chain/block.hpp"
-#include "ledger/consensus/entropy_generator_interface.hpp"
+#include "entropy/entropy_generator_interface.hpp"
 #include "ledger/consensus/stake_manager.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
+#include "logging/logging.hpp"
 
 #include <algorithm>
 #include <cstddef>

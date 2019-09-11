@@ -3,7 +3,7 @@
 #include <memory>
 #include <utility>
 
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 #include "oef-base/conversation/OutboundConversation.hpp"
 #include "oef-base/conversation/OutboundConversations.hpp"
 #include "oef-base/monitoring/Counter.hpp"

@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 #include "core/mutex.hpp"
 #include "network/details/network_manager_implementation.hpp"
 #include "network/fetch_asio.hpp"

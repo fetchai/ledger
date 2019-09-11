@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 #include "core/set_thread_name.hpp"
 #include "network/details/thread_pool.hpp"
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 #include "oef-core/karma/IKarmaPolicy.hpp"
 #include "oef-core/karma/KarmaAccount.hpp"
 

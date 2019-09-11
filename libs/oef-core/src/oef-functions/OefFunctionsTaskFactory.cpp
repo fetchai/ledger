@@ -1,7 +1,7 @@
 #include "oef-core/oef-functions/OefFunctionsTaskFactory.hpp"
 
 #include "agent.pb.h"
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 #include "oef-base/conversation/OutboundConversations.hpp"
 #include "oef-base/monitoring/Counter.hpp"
 #include "oef-base/utils/Uri.hpp"

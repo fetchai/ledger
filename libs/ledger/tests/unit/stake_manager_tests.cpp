@@ -22,6 +22,7 @@
 #include "ledger/consensus/stake_manager.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
 #include "random_address.hpp"
+#include "logging/logging.hpp"
 
 #include "gtest/gtest.h"
 

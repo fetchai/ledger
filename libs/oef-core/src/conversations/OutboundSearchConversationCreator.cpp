@@ -1,6 +1,6 @@
 #include "oef-core/conversations/OutboundSearchConversationCreator.hpp"
 
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 #include "oef-base/proto_comms/ProtoMessageEndpoint.hpp"
 #include "oef-base/threading/StateMachineTask.hpp"
 #include "oef-base/utils/Uri.hpp"

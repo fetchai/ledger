@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "core/logging.hpp"
 #include "core/mutex.hpp"
 #include "core/serializers/serializable_exception.hpp"
 #include "network/service/callable_class_member.hpp"
@@ -28,6 +27,10 @@
 #include "network/service/promise.hpp"
 #include "network/service/protocol.hpp"
 #include "network/service/server_interface.hpp"
+
+#include "core/assert.hpp"
+#include "core/mutex.hpp"
+#include "logging/logging.hpp"
 #include "network/tcp/tcp_client.hpp"
 
 #include <map>
@@ -71,8 +74,8 @@ public:
 
   ~ServiceClient()
   {
-    using std::this_thread::sleep_for;
     using std::chrono::milliseconds;
+    using std::this_thread::sleep_for;
 
     tearing_down_ = true;
 

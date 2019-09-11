@@ -4,7 +4,7 @@
 #include "oef-base/comms/ISocketOwner.hpp"
 #include "oef-base/comms/RingBuffer.hpp"
 
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 #include "oef-base/comms/Core.hpp"
 #include "oef-base/comms/IMessageReader.hpp"
 #include "oef-base/comms/IMessageWriter.hpp"

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 #include "oef-base/comms/EndpointBase.hpp"
 #include "oef-base/comms/RingBuffer.hpp"
 

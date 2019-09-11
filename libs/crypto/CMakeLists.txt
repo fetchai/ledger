@@ -21,7 +21,8 @@ target_link_libraries(fetch-crypto
                              fetch-math
                              fetch-vectorise
                              vendor-openssl2
-                             vendor-bls)
+                             vendor-bls
+                             fetch-logging)
 
 add_test_target()
 

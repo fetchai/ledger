@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 #include "oef-core/agents/Agent.hpp"
 #include "oef-core/agents/Agents.hpp"
 #include "oef-core/comms/OefAgentEndpoint.hpp"

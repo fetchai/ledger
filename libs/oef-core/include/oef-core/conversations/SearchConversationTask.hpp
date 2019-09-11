@@ -4,7 +4,7 @@
 #include <utility>
 
 #include "agent.pb.h"
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 #include "oef-base/conversation/OutboundConversation.hpp"
 #include "oef-base/conversation/OutboundConversations.hpp"
 #include "oef-base/threading/StateMachineTask.hpp"

@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 #include "core/mutex.hpp"
 #include "network/fetch_asio.hpp"
 

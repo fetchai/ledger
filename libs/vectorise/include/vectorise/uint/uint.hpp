@@ -29,6 +29,7 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <sstream>
 
 namespace fetch {
 namespace vectorise {

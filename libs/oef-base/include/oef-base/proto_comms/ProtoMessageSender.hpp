@@ -7,7 +7,7 @@
 #include "oef-base/comms/Endianness.hpp"
 #include "oef-base/comms/IMessageWriter.hpp"
 
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 
 template <typename TXType, typename Reader, typename Sender>
 class ProtoMessageEndpoint;

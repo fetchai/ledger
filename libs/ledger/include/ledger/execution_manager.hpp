@@ -21,7 +21,7 @@
 #include "core/mutex.hpp"
 #include "core/synchronisation/protected.hpp"
 #include "core/synchronisation/waitable.hpp"
-#include "ledger/chain/address.hpp"
+#include "address/address.hpp"
 #include "ledger/chain/constants.hpp"
 #include "ledger/execution_item.hpp"
 #include "ledger/execution_manager_interface.hpp"

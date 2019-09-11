@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/state_machine.hpp"
-#include "ledger/chain/address.hpp"
+#include "address/address.hpp"
 #include "ledger/protocols/executor_rpc_client.hpp"
 
 #include <chrono>

@@ -11,7 +11,7 @@
 #include "oef-base/conversation/OutboundConversation.hpp"
 #include "oef-base/conversation/OutboundTypedConversation.hpp"
 
-#include "core/logging.hpp"
+#include "logging/logging.hpp"
 #include "oef-base/utils/Uri.hpp"
 
 #define TNONBLOCKINGWORKERTASK_SIZE 5

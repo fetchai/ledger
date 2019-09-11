@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/address.hpp"
+#include "address/address.hpp"
 
 #include <type_traits>
 

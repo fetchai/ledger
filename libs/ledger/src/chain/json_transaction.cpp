@@ -23,6 +23,7 @@
 #include "ledger/chain/transaction_serializer.hpp"
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
+#include "logging/logging.hpp"
 
 namespace fetch {
 namespace ledger {
