@@ -10,18 +10,16 @@ namespace dmlf {
 class SimpleCyclingAlgorithm: public IShuffleAlgorithm
 {
 public:
-  SimpleCyclingAlgorithm(std::size_t count):IShuffleAlgorithm(count)
-  {
-    next = 0;
-  }
+  SimpleCyclingAlgorithm(std::size_t count, std::size_t number_of_outputs_per_cycle);
   virtual ~SimpleCyclingAlgorithm()
   {
   }
 
-  std::vector<std::size_t> getNextOutputs(std::size_t number_of_outputs);
+  std::vector<std::size_t> getNextOutputs();
 protected:
 private:
-  std::size_t next;
+  std::size_t next_output_index;
+  std::size_t number_of_outputs_per_cycle;
 
   SimpleCyclingAlgorithm(const SimpleCyclingAlgorithm &other) = delete;
   SimpleCyclingAlgorithm &operator=(const SimpleCyclingAlgorithm &other) = delete;

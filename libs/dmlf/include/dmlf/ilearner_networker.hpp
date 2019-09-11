@@ -30,8 +30,8 @@ public:
 
   virtual std::size_t getCount() = 0;
 protected:
+  std::shared_ptr<IShuffleAlgorithm> alg; // used by descendents
 private:
-  std::shared_ptr<IShuffleAlgorithm> alg;
 
   ILearnerNetworker(const ILearnerNetworker &other) = delete;
   ILearnerNetworker &operator=(const ILearnerNetworker &other) = delete;

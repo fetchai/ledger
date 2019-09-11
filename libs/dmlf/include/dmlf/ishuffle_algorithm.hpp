@@ -17,7 +17,7 @@ public:
   {
   }
 
-  virtual std::vector<std::size_t> getNextOutputs(std::size_t number_of_outputs) = 0;
+  virtual std::vector<std::size_t> getNextOutputs() = 0;
 
   std::size_t getCount() const { return count; }
 protected:
