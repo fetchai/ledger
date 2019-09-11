@@ -195,11 +195,8 @@ Contract::Result SmartContractManager::OnCreate(Transaction const &tx, BlockInde
     state().PopContext();
   }
 
-  // TODO(issue 767): Needs to check success for this operation
-  auto success = true;
-  SetStateRecord(contract_source, calculated_hash);
-
-  if (!success)
+  auto const status = SetStateRecord(contract_source, calculated_hash);
+  if (status != StateAdapter::Status::OK)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Failed to store smart contract to state DB!");
     return {Status::FAILED};
