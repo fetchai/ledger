@@ -28,6 +28,7 @@
 
 using namespace fetch::vectorise;
 
+#ifdef __AVX2__
 TEST(vectorise_sse_gtest, register_test1)
 {
   alignas(16) int a[4] = {1, 2, 3, 4};
@@ -79,6 +80,7 @@ TEST(vectorise_sse_gtest, register_test3)
   EXPECT_EQ(c[0], 5.4);
   EXPECT_EQ(c[1], 23.6);
 }
+#endif
 
 template <typename T>
 class VectorRegisterTest : public ::testing::Test
