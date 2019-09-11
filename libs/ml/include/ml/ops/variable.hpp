@@ -31,7 +31,7 @@
 namespace fetch {
 namespace ml {
 
-template <class TensorType>
+template <typename TensorType>
 struct OpVariableSaveableParams : public OpDataHolderSaveableParams<TensorType>
 {
   using DataType                      = typename TensorType::Type;
