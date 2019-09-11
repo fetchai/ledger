@@ -18,6 +18,8 @@
 
 #include "vectorise/memory/shared_array.hpp"
 
+#include <iostream>
+
 using type        = double;
 using array_type  = fetch::memory::SharedArray<type>;
 using vector_type = typename array_type::VectorRegisterType;
@@ -31,9 +33,6 @@ type InnerProduct(array_type const &A, array_type const &B)
         auto d = a - b;
         return d * d;
       },
-      [](vector_type const &a) -> type {
-        return reduce(a);
-      },
       B);
 
   return ret;
@@ -43,7 +42,8 @@ int main(int /*argc*/, char ** /*argv*/)
 {
   array_type A, B;
 
-  InnerProduct(A, B);
+  double product = InnerProduct(A, B);
+  std::cout << "product = " << product << std::endl;
 
   return 0;
 }
