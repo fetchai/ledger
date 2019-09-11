@@ -1,7 +1,7 @@
 #pragma once
 
-#include "mt-core/tasks-oef-base/IMtCoreTask.hpp"
 #include "oef-base/comms/EndpointBase.hpp"
+#include "oef-core/tasks-base/IMtCoreTask.hpp"
 
 #include <google/protobuf/message.h>
 

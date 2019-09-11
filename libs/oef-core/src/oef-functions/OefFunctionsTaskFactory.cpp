@@ -1,8 +1,7 @@
-#include "OefFunctionsTaskFactory.hpp"
+#include "oef-core/oef-functions/OefFunctionsTaskFactory.hpp"
 
 #include "agent.pb.h"
 #include "core/logging.hpp"
-#include "mt-core/tasks-oef-base/TSendProtoTask.hpp"
 #include "oef-base/conversation/OutboundConversations.hpp"
 #include "oef-base/monitoring/Counter.hpp"
 #include "oef-base/utils/Uri.hpp"
@@ -14,6 +13,7 @@
 #include "oef-core/karma/XDisconnect.hpp"
 #include "oef-core/karma/XError.hpp"
 #include "oef-core/karma/XKarma.hpp"
+#include "oef-core/tasks-base/TSendProtoTask.hpp"
 #include "oef-core/tasks/AgentToAgentMessageTask.hpp"
 #include "search_query.pb.h"
 #include "search_remove.pb.h"

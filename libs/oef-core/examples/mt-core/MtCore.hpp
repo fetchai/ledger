@@ -5,7 +5,6 @@
 #include <vector>
 
 #include "core/logging.hpp"
-#include "mt-core/secure/experimental/cpp/public_key_utils.hpp"
 #include "oef-base/comms/Core.hpp"
 #include "oef-base/comms/OefListenerSet.hpp"
 #include "oef-base/conversation/OutboundConversations.hpp"
@@ -13,6 +12,7 @@
 #include "oef-base/threading/Threadpool.hpp"
 #include "oef-core/agents/Agents.hpp"
 #include "oef-core/comms/OefListenerStarterTask.hpp"
+#include "oef-core/comms/public_key_utils.hpp"
 
 #include "config.pb.h"
 

@@ -20,7 +20,7 @@ target_link_libraries(fetch-crypto
                              fetch-meta
                              fetch-math
                              fetch-vectorise
-                             vendor-openssl
+                             vendor-openssl2
                              vendor-bls)
 
 add_test_target()

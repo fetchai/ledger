@@ -1,14 +1,14 @@
-#include "Oefv1Listener.hpp"
+#include "oef-search/comms/Oefv1Listener.hpp"
 
 #include <memory>
 
-#include "mt-search/comms/src/cpp/OefSearchEndpoint.hpp"
 #include "oef-base/comms/Core.hpp"
 #include "oef-base/comms/Endpoint.hpp"
 #include "oef-base/proto_comms/ProtoMessageEndpoint.hpp"
 #include "oef-base/proto_comms/ProtoPathMessageReader.hpp"
 #include "oef-base/proto_comms/ProtoPathMessageSender.hpp"
 #include "oef-base/utils/Uri.hpp"
+#include "oef-search/comms/OefSearchEndpoint.hpp"
 
 template <template <typename> class EndpointType>
 Oefv1Listener<EndpointType>::Oefv1Listener(std::shared_ptr<Core> core, int port,

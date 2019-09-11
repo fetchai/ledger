@@ -1,4 +1,4 @@
-#include "OutboundDapConversationCreator.hpp"
+#include "oef-search/dap_comms/OutboundDapConversationCreator.hpp"
 
 #include "core/logging.hpp"
 #include "oef-base/proto_comms/ProtoMessageEndpoint.hpp"
@@ -13,8 +13,9 @@ OutboundDapConversationCreator::OutboundDapConversationCreator(
     size_t thread_group_id, const Uri &dap_uri, Core &core,
     std::shared_ptr<OutboundConversations> outbounds)
 {
-  worker = std::make_shared<OutboundConversationWorkerTask>(core, dap_uri, outbounds,
-                                                            ident2conversation);
+  // TODO: Does not work
+  // worker = std::make_shared<OutboundConversationWorkerTask>(core, dap_uri, outbounds,
+  //                                                            ident2conversation);
 
   worker->setThreadGroupId(thread_group_id);
 

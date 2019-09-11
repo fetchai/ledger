@@ -1,7 +1,7 @@
 #pragma once
 
-#include "core/experimental/crypto/ecdsa.hpp"
 #include "core/logging.hpp"
+#include "crypto/ecdsa.hpp"
 #include "oef-base/comms/Endianness.hpp"
 #include "oef-base/comms/IOefTaskFactory.hpp"
 #include "oef-core/agents/Agents.hpp"

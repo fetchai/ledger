@@ -4,8 +4,8 @@
 #include <iostream>
 #include <string>
 
-#include "mt-core/tasks-oef-base/TSendProtoTask.hpp"
 #include "oef-core/comms/OefAgentEndpoint.hpp"
+#include "oef-core/tasks-base/TSendProtoTask.hpp"
 
 ExitState OefHeartbeatTask::run(void)
 {

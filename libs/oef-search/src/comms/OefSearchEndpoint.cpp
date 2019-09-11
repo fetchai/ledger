@@ -1,6 +1,5 @@
-#include "OefSearchEndpoint.hpp"
+#include "oef-search/comms/OefSearchEndpoint.hpp"
 
-#include "mt-search/comms/src/cpp/SearchTaskFactory.hpp"
 #include "oef-base/comms/Endianness.hpp"
 #include "oef-base/monitoring/Counter.hpp"
 #include "oef-base/monitoring/Gauge.hpp"
@@ -9,6 +8,7 @@
 #include "oef-base/threading/Task.hpp"
 #include "oef-base/threading/Taskpool.hpp"
 #include "oef-base/utils/Uri.hpp"
+#include "oef-search/comms/SearchTaskFactory.hpp"
 
 static Gauge count("mt-search.network.OefSearchEndpoint");
 
@@ -61,7 +61,7 @@ void OefSearchEndpoint::setup()
     }
   });
 
-  endpoint->setOnErrorHandler([myGroupId, myself_wp](const system::error_code &ec) {
+  endpoint->setOnErrorHandler([myGroupId, myself_wp](std::error_code const &ec) {
     if (auto myself_sp = myself_wp.lock())
     {
       // myself_sp -> factory -> endpointClosed();

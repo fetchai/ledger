@@ -6,7 +6,7 @@ KarmaPolicyNone::KarmaPolicyNone()
   : IKarmaPolicy()
 {
   FETCH_LOG_INFO(LOGGING_NAME, "KarmaPolicyNone created");
-  std::cout << "KarmaPolicyNone created" << std::endl;
+  //  std::cout << "KarmaPolicyNone created" << std::endl;
   sleep(2);
 }
 

@@ -1,10 +1,9 @@
-#include "OefListenerStarterTask.hpp"
-
 #include <iostream>
 
-#include "mt-search/comms/src/cpp/Oefv1Listener.hpp"
 #include "oef-base/comms/Endpoint.hpp"
 #include "oef-base/comms/OefListenerSet.hpp"
+#include "oef-search/comms/OefListenerStarterTask.hpp"
+#include "oef-search/comms/Oefv1Listener.hpp"
 
 template <template <typename> class EndpointType>
 ExitState OefListenerStarterTask<EndpointType>::run(void)

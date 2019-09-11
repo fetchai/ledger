@@ -1,6 +1,5 @@
 #include "oef-core/comms/OefAgentEndpoint.hpp"
 #include "agent.pb.h"
-#include "mt-core/tasks-oef-base/TSendProtoTask.hpp"
 #include "oef-base/comms/Endianness.hpp"
 #include "oef-base/comms/IOefTaskFactory.hpp"
 #include "oef-base/monitoring/Counter.hpp"
@@ -11,6 +10,7 @@
 #include "oef-base/threading/Taskpool.hpp"
 #include "oef-core/karma/IKarmaPolicy.hpp"
 #include "oef-core/karma/XKarma.hpp"
+#include "oef-core/tasks-base/TSendProtoTask.hpp"
 
 static Gauge   count("mt-core.network.OefAgentEndpoint");
 static Counter hb_sent("mt-core.network.OefAgentEndpoint.heartbeats.sent");
@@ -76,7 +76,7 @@ void OefAgentEndpoint::setup(IKarmaPolicy *karmaPolicy)
     }
   });
 
-  endpoint->setOnErrorHandler([myGroupId, myself_wp](const system::error_code &ec) {
+  endpoint->setOnErrorHandler([myGroupId, myself_wp](std::error_code const &ec) {
     if (auto myself_sp = myself_wp.lock())
     {
       myself_sp->karma.perform("error.comms");

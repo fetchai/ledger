@@ -1,6 +1,5 @@
 #include "main.hpp"
-
-#include "mt-core/main/src/cpp/MtCore.hpp"
+#include "MtCore.hpp"
 
 #include <boost/program_options.hpp>
 

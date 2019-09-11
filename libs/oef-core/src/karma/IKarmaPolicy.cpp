@@ -2,8 +2,8 @@
 
 #include <memory>
 
-#include "KarmaAccount.hpp"
 #include "oef-base/threading/Task.hpp"
+#include "oef-core/karma/KarmaAccount.hpp"
 
 IKarmaPolicy::IKarmaPolicy()
 {}

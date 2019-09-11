@@ -38,8 +38,7 @@ public:
     , core_key(core_key)
   {}
 
-  virtual ~OutboundSearchConversationWorkerTask()
-  {}
+  virtual ~OutboundSearchConversationWorkerTask() = default;
 
 protected:
   std::shared_ptr<OutboundConversations> outbounds_;
@@ -75,8 +74,9 @@ OutboundSearchConversationCreator::OutboundSearchConversationCreator(
     const std::string &core_key, const Uri &core_uri, const Uri &search_uri, Core &core,
     std::shared_ptr<OutboundConversations> outbounds)
 {
-  worker = std::make_shared<OutboundSearchConversationWorkerTask>(search_uri, outbounds,
-                                                                  ident2conversation);
+  // TODO: Not working
+  //  worker = std::make_shared<OutboundSearchConversationWorkerTask>(search_uri, outbounds,
+  //                                                                  ident2conversation);
 
   worker->setThreadGroupId(0);
 

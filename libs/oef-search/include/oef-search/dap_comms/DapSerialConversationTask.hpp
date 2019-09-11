@@ -7,9 +7,9 @@
 #include "core/logging.hpp"
 #include "oef-base/threading/StateMachineTask.hpp"
 
-#include "mt-search/comms/src/cpp/OefSearchEndpoint.hpp"
-#include "mt-search/dap_comms/src/cpp/DapConversationTask.hpp"
 #include "oef-base/conversation/OutboundConversations.hpp"
+#include "oef-search/comms/OefSearchEndpoint.hpp"
+#include "oef-search/dap_comms/DapConversationTask.hpp"
 
 template <typename IN_PROTO, typename OUT_PROTO, typename MIDDLE_PROTO>
 class DapSerialConversationTask

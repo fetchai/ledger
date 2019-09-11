@@ -4,12 +4,12 @@
 #include <utility>
 
 #include "core/logging.hpp"
-#include "mt-search/comms/src/cpp/OefSearchEndpoint.hpp"
 #include "oef-base/conversation/OutboundConversation.hpp"
 #include "oef-base/conversation/OutboundConversations.hpp"
 #include "oef-base/monitoring/Counter.hpp"
 #include "oef-base/threading/StateMachineTask.hpp"
 #include "oef-base/utils/Uri.hpp"
+#include "oef-search/comms/OefSearchEndpoint.hpp"
 
 template <typename IN_PROTO, typename OUT_PROTO>
 class DapConversationTask : public StateMachineTask<DapConversationTask<IN_PROTO, OUT_PROTO>>,

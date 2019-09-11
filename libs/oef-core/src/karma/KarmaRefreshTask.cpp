@@ -3,7 +3,7 @@
 #include <iostream>
 #include <string>
 
-#include "IKarmaPolicy.hpp"
+#include "oef-core/karma/IKarmaPolicy.hpp"
 
 ExitState KarmaRefreshTask::run(void)
 {

@@ -2,9 +2,9 @@
 
 #include <memory>
 
-#include "mt-core/secure/experimental/cpp/EndpointSSL.hpp"
 #include "oef-base/comms/Core.hpp"
 #include "oef-base/comms/EndpointWebSocket.hpp"
+#include "oef-core/comms/EndpointSSL.hpp"
 #include "oef-core/comms/OefAgentEndpoint.hpp"
 
 template <template <typename> class EndpointType>

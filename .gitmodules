@@ -28,3 +28,6 @@
 [submodule "vendor/utfcpp"]
 	path = vendor/utfcpp
 	url = https://github.com/pbukva/utfcpp.git
+[submodule "vendor/openssl"]
+	path = vendor/openssl
+	url = git@github.com:janbar/openssl-cmake.git

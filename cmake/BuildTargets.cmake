@@ -252,6 +252,14 @@ function (configure_vendor_targets)
     target_compile_definitions(vendor-asio INTERFACE ASIO_HAS_STD_STRING_VIEW)
   endif (APPLE)
 
+
+  # OpenSSL
+  add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/openssl)
+  add_library(vendor-openssl2 INTERFACE)
+  message(STATUS "OpenSSL include ${CMAKE_BINARY_DIR}/vendor/openssl/include")
+  target_link_libraries(vendor-openssl2 INTERFACE ssl crypto)
+  target_include_directories(vendor-openssl2 INTERFACE ${CMAKE_BINARY_DIR}/vendor/openssl/include)
+
   # Google Test
   add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/googletest)
 

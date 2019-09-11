@@ -23,7 +23,7 @@
 
 #include <ctype.h>
 
-#include "mt-core/secure/experimental/cpp/EndpointSSL.hpp"
+#include "oef-core/comms/EndpointSSL.hpp"
 #include "oef-core/oef-functions/InitialSecureHandshakeTaskFactory.hpp"
 #include "oef-core/oef-functions/InitialSslHandshakeTaskFactory.hpp"
 #include "oef-core/tasks/OefLoginTimeoutTask.hpp"

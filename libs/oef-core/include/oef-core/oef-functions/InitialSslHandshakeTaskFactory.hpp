@@ -5,7 +5,7 @@
 #include "oef-base/comms/IOefTaskFactory.hpp"
 #include "oef-core/agents/Agents.hpp"
 //#include "core/crypto/ecdsa.hpp"
-#include "mt-core/secure/experimental/cpp/public_key_utils.hpp"
+#include "oef-core/comms/public_key_utils.hpp"
 #include "oef-core/oef-functions/OefFunctionsTaskFactory.hpp"
 
 #include <set>
