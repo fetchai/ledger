@@ -80,27 +80,6 @@ TEST(MclTests, BaseMcl)
     EXPECT_EQ(e1, e2);
   }
 
-  // Miller and Finel exp
-  {
-    mcl::bn::Fp12 e1, e2;
-    mcl::bn::pairing(e1, P, Q);
-
-    mcl::bn::millerLoop(e2, P, Q);
-    mcl::bn::finalExp(e2, e2);
-    EXPECT_EQ(e1, e2);
-  }
-
-  // Precomputed
-  {
-    mcl::bn::Fp12 e1, e2;
-    mcl::bn::pairing(e1, P, Q);
-    std::vector<mcl::bn::Fp6> Qcoeff;
-    mcl::bn::precomputeG2(Qcoeff, Q);
-    mcl::bn::precomputedMillerLoop(e2, P, Qcoeff);
-    mcl::bn::finalExp(e2, e2);
-    EXPECT_EQ(e1, e2);
-  }
-
   // opsize
   EXPECT_EQ(sizeof(mcl::fp::Unit), 8);
 }
