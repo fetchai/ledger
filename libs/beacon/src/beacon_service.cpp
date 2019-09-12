@@ -400,7 +400,7 @@ BeaconService::State BeaconService::OnPrepareEntropyGeneration()
  * Peers can call this function (RPC endpoint) to get threshold signatures that
  * this peer has collected
  */
-BeaconService::SignatureInformation BeaconService::GetSignatureShares(uint64_t round)
+BeaconService::SignatureInformation BeaconService::GetSignatureShares(uint64_t round) const
 {
   std::lock_guard<std::mutex> lock(mutex_);
 
@@ -410,7 +410,7 @@ BeaconService::SignatureInformation BeaconService::GetSignatureShares(uint64_t r
     return {};
   }
 
-  return signatures_being_built_[round];
+  return signatures_being_built_.at(round);
 }
 
 BeaconService::State BeaconService::OnCollectSignaturesState()
