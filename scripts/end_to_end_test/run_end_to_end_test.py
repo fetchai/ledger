@@ -530,7 +530,13 @@ def verify_txs(parameters, test_instance):
 
                 if status == "Executed" or expect_mined:
                     output("found executed TX")
-                    break
+
+                    # There is an unavoidable race that can cause you to see a balance of 0
+                    # since the TX hasn't changed the state yet
+                    if api.tokens.balance(identity) == 0 and balance is not 0:
+                        pass
+                    else:
+                        break
 
                 tx_b64 = codecs.encode(codecs.decode(
                     tx, 'hex'), 'base64').decode()
