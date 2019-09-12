@@ -29,31 +29,27 @@ namespace dmlf {
 class LocalLearnerNetworker: public ILearnerNetworker
 {
 public:
+  using PeerP = std::shared_ptr<LocalLearnerNetworker>;
+  using Peers = std::vector<PeerP>;
+
   LocalLearnerNetworker();
   virtual ~LocalLearnerNetworker();
   virtual void pushUpdate( std::shared_ptr<IUpdate> update);
   virtual std::size_t getUpdateCount() const;
   virtual std::shared_ptr<IUpdate> getUpdate();
 
-  virtual std::size_t getCount();
-
-  static void resetAll(void);
+  void addPeers(Peers new_peers);
+  void clearPeers();
 protected:
 private:
-  using LocalLearnerNetworkerIndex = std::map<std::size_t, LocalLearnerNetworker*>;
   using Mutex = fetch::Mutex;
   using Lock = std::unique_lock<Mutex>;
   using IUpdateP = std::shared_ptr<IUpdate>;
   using UpdateList = std::list<IUpdateP>;
 
-  std::size_t ident;
-
-  static std::size_t &getCounter();
-  static Mutex index_mutex;
-  static LocalLearnerNetworkerIndex index;
-
   UpdateList updates;
   mutable Mutex mutex;
+  Peers peers;
 
   LocalLearnerNetworker(const LocalLearnerNetworker &other) = delete;
   LocalLearnerNetworker &operator=(const LocalLearnerNetworker &other) = delete;

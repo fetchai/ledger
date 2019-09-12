@@ -25,46 +25,35 @@
 namespace fetch {
 namespace dmlf {
 
-Mutex LocalLearnerNetworker::index_mutex;
-LocalLearnerNetworker::LocalLearnerNetworkerIndex LocalLearnerNetworker::index;
-
 LocalLearnerNetworker::LocalLearnerNetworker()
 {
-  this -> ident = getCounter()++;
-
-  Lock lock(index_mutex);
-  index[ident] = this;
 }
 
 LocalLearnerNetworker::~LocalLearnerNetworker()
 {
 }
 
-void LocalLearnerNetworker::resetAll(void)
+void LocalLearnerNetworker::addPeers(std::vector<std::shared_ptr<LocalLearnerNetworker>> new_peers)
 {
-  index.clear();
-  getCounter() = 0;
+  for(auto peer : new_peers)
+  {
+    peers.push_back(peer);
+  }
+}
+
+void LocalLearnerNetworker::clearPeers()
+{
+  peers.clear();
 }
 
 void LocalLearnerNetworker::pushUpdate( std::shared_ptr<IUpdate> update)
 {
-  std::vector<LocalLearnerNetworker*> targets;
+  std::vector<std::shared_ptr<LocalLearnerNetworker>> targets;
   auto indexes = alg -> getNextOutputs();
 
+  for(auto ind : indexes)
   {
-    Lock lock(index_mutex);
-    for(auto ind : indexes)
-    {
-      auto mapping = index.find(ind);
-      if (mapping != index.end())
-      {
-        targets.push_back(mapping->second);
-      }
-    }
-  }
-
-  for(auto t : targets)
-  {
+    auto t = peers[ind];
     Lock lock(t -> mutex);
     t -> updates.push_back(update);
   }
@@ -88,17 +77,6 @@ std::shared_ptr<IUpdate> LocalLearnerNetworker::getUpdate()
   }
 
   return std::shared_ptr<IUpdate>();
-}
-
-std::size_t LocalLearnerNetworker::getCount()
-{
-  return getCounter();
-}
-
-std::size_t &LocalLearnerNetworker::getCounter()
-{
-  static std::size_t counter = 0;
-  return counter;
 }
 
 }

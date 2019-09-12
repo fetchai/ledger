@@ -42,6 +42,8 @@ public:
   using TimeStampType    = IUpdate::TimeStampType; 
   using FingerprintType  = IUpdate::FingerprintType;
 
+  using PayloadType      = VectorTensorType;
+
   explicit Update()
     : stamp_{CurrentTime()}
   {

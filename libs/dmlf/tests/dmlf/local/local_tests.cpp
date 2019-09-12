@@ -22,6 +22,8 @@
 #include "dmlf/local_learner_networker.hpp"
 #include "dmlf/simple_cycling_algorithm.hpp"
 #include "dmlf/update.hpp"
+#include "math/matrix_operations.hpp"
+#include "math/tensor.hpp"
 
 #include <thread>
 #include <ostream>
@@ -29,39 +31,12 @@
 
 namespace {
 
+  using DataType         = fetch::fixed_point::FixedPoint<32, 32>;
+  using TensorType       = fetch::math::Tensor<DataType>;
   using NetP = std::shared_ptr<fetch::dmlf::ILearnerNetworker>;
 
-  class DummyUpdate:public fetch::dmlf::IUpdate
-  {
-  public:
-    std::string s;
-    TimeStampType stamp_;
-    using TimeStampType    = fetch::dmlf::IUpdate::TimeStampType;
-
-    DummyUpdate(const std::string &s)
-      : stamp_(static_cast<TimeStampType>
-               (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()))
-    {
-      this -> s = s;
-    }
-    virtual fetch::byte_array::ByteArray serialise()
-    {
-      fetch::byte_array::ByteArray req{s.c_str()};
-      return req;
-    }
-    virtual void deserialise(fetch::byte_array::ByteArray&a)
-    {
-      s = std::string(a);
-    }
-    virtual TimeStampType TimeStamp() const
-    {
-      return stamp_;
-    }
-    virtual FingerprintType Fingerprint() const
-    {
-      return fetch::byte_array::ByteArray{};
-    }
-  };
+  using UpdateTypeForTesting = fetch::dmlf::Update<TensorType>;
+  using UpdatePayloadType = UpdateTypeForTesting::PayloadType;
 
   class LocalLearnerInstance
   {
@@ -85,14 +60,23 @@ namespace {
       this -> produced = 0;
     }
 
+    std::vector<TensorType> generateFakeWorkOutput(std::size_t instance_number, std::size_t sequence_number)
+    {
+      auto t = TensorType(TensorType::SizeType(instance_number+2));
+      t.Fill(DataType(sequence_number));
+      auto r = std::vector<TensorType>(1);
+      r.push_back(t);
+      return r;
+    }
+
     bool work(void)
     {
       bool result = false;
       while(produced < 10)
       {
-        auto output = std::to_string(number) + ":" + std::to_string(produced);
         produced++;
-        auto upd =std::make_shared<DummyUpdate>(output);
+        auto output = generateFakeWorkOutput(number, produced);
+        auto upd =std::make_shared<UpdateTypeForTesting>(output);
         net -> pushUpdate(upd);
         result = true;
       }
@@ -126,9 +110,9 @@ namespace {
 
         if (produced < 10)
         {
-          auto output = std::to_string(number) + ":" + std::to_string(produced);
           produced++;
-          auto upd =std::make_shared<DummyUpdate>(output);
+          auto output = generateFakeWorkOutput(number, produced);
+          auto upd =std::make_shared<UpdateTypeForTesting>(output);
           net -> pushUpdate(upd);
           continue;
         }
@@ -155,20 +139,26 @@ namespace {
 
     void SetUp() override
     {
-      fetch::dmlf::LocalLearnerNetworker::resetAll();
     }
 
     void DoWork()
     {
-      for(std::size_t i = 0;i< 20; i++)
+      const std::size_t peercount = 20;
+      fetch::dmlf::LocalLearnerNetworker::Peers peers;
+      for(std::size_t i = 0;i< peercount; i++)
       {
         auto local = std::make_shared<fetch::dmlf::LocalLearnerNetworker>();
-        auto alg = std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(20, 5);
+        peers.push_back(local);
+        auto alg = std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(peercount, 5);
         std::shared_ptr<fetch::dmlf::ILearnerNetworker> interf = local;
         interf -> setShuffleAlgorithm(alg);
         insts.push_back(std::make_shared<LocalLearnerInstance>(interf, i));
       }
-
+      for(std::size_t i = 0;i< peercount; i++)
+      {
+        peers[i] -> addPeers(peers);
+      }
+     
       bool working = true;
       while(working)
       {
@@ -184,13 +174,21 @@ namespace {
     }
     void DoMtWork()
     {
-      for(std::size_t i = 0;i< 20; i++)
+      const std::size_t peercount = 20;
+      fetch::dmlf::LocalLearnerNetworker::Peers peers;
+      for(std::size_t i = 0;i< peercount; i++)
       {
         auto local = std::make_shared<fetch::dmlf::LocalLearnerNetworker>();
-        auto alg = std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(20, 5);
+        peers.push_back(local);
+        auto alg = std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(peercount, 5);
         std::shared_ptr<fetch::dmlf::ILearnerNetworker> interf = local;
         interf -> setShuffleAlgorithm(alg);
         insts.push_back(std::make_shared<LocalLearnerInstance>(interf, i));
+      }
+
+      for(std::size_t i = 0;i< peercount; i++)
+      {
+        peers[i] -> addPeers(peers);
       }
 
       using Thread = std::thread;
@@ -260,11 +258,6 @@ namespace {
     }
 
   };
-
-  TEST_F(LocalLearnerNetworkerTests, basicPass)
-  {
-    EXPECT_EQ(1,1);
-  }
 
   TEST_F(UpdateSerialisationTests, basicPass)
   {

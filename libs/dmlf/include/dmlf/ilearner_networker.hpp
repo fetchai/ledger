@@ -45,7 +45,6 @@ public:
     this -> alg = alg;
   }
 
-  virtual std::size_t getCount() = 0;
 protected:
   std::shared_ptr<IShuffleAlgorithm> alg; // used by descendents
 private:
