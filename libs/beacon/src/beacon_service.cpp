@@ -616,12 +616,6 @@ bool BeaconService::AddSignature(SignatureShare share)
     FETCH_LOG_INFO(LOGGING_NAME, "Accidental duplicate signature added!");
   }
 
-  if (ret == BeaconManager::AddResult::INVALID_SIGNATURE)
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "Invalid signature found!");
-    return false;
-  }
-
   return true;
 }
 
