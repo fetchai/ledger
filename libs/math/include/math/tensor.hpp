@@ -1624,9 +1624,26 @@ template <typename T, typename C>
 Tensor<T, C> &Tensor<T, C>::Squeeze()
 {
   auto shape = shape_;
-  shape.erase(shape.end() - 1);
-  Reshape(shape);
 
+  bool     not_found = true;
+  SizeType cur_dim   = shape.size() - 1;
+  while (not_found)
+  {
+    if (shape.at(cur_dim) == static_cast<SizeType>(1))
+    {
+      shape.erase(shape.begin() + static_cast<int32_t>(cur_dim));
+      Reshape(shape);
+      not_found = false;
+    }
+    else
+    {
+      if (cur_dim == 0)
+      {
+        throw std::runtime_error("cannot squeeze tensor, no dimensions of size 1");
+      }
+      --cur_dim;
+    }
+  }
   return *this;
 }
 
