@@ -42,8 +42,10 @@ enum class OpType : uint16_t
   OP_ABS,
   OP_ADD,
   OP_CONCATENATE,
+  OP_CONSTANT,
   OP_CONVOLUTION_1D,
   OP_CONVOLUTION_2D,
+  OP_DATAHOLDER,
   OP_DIVIDE,
   OP_DROPOUT,
   OP_ELU,
@@ -75,6 +77,7 @@ enum class OpType : uint16_t
   OP_SWITCH,
   OP_TANH,
   OP_TRANSPOSE,
+  OP_VARIABLE,
   OP_WEIGHTS,
   OP_SLICE,
 
@@ -115,6 +118,8 @@ namespace ops {
 template <typename T>
 class Trainable;
 
+template <typename T>
+class Constant;
 }  // namespace ops
 
 namespace meta {
@@ -122,6 +127,13 @@ namespace meta {
 //////////////////////////////////////////////////////////
 ///  GRAPH & TRAINABLE / NOT-TRAINABLE NOT TYPE SFINAE ///
 //////////////////////////////////////////////////////////
+
+template <typename T, typename OperationType>
+constexpr bool IsFullyConneted =
+    std::is_base_of<fetch::ml::layers::FullyConnected<T>, OperationType>::value;
+
+template <typename T, typename OperationType>
+constexpr bool IsConstant = std::is_base_of<fetch::ml::ops::Constant<T>, OperationType>::value;
 
 template <typename T, typename OperationType>
 constexpr bool IsTrainable = std::is_base_of<fetch::ml::ops::Trainable<T>, OperationType>::value;
@@ -133,8 +145,7 @@ template <typename T, typename OperationType>
 constexpr bool IsGraph = std::is_base_of<fetch::ml::Graph<T>, OperationType>::value;
 
 template <typename T, typename OperationType>
-constexpr bool IsShareable =
-    std::is_base_of<fetch::ml::layers::FullyConnected<T>, OperationType>::value;
+constexpr bool IsShareable = IsFullyConneted<T, OperationType> || IsConstant<T, OperationType>;
 
 template <typename T, typename OperationType>
 constexpr bool IsNotShareable = !IsShareable<T, OperationType>;
