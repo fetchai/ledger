@@ -104,7 +104,8 @@ private:
 
 constexpr LogLevel DEFAULT_LEVEL = LogLevel::INFO;
 
-LogRegistry registry_;
+LogRegistry                                          registry_;
+std::shared_ptr<spdlog::sinks::stdout_color_sink_mt> COLOUR_SINK;
 
 LogLevel ConvertToLevel(spdlog::level::level_enum level)
 {
@@ -245,7 +246,13 @@ LogRegistry::Logger &LogRegistry::GetLogger(char const *name)
     // create the new logger instance - note it suppresses duplicate messages
     auto dup_filter =
         std::make_shared<spdlog::sinks::dup_filter_sink_mt>(std::chrono::milliseconds(100));
-    dup_filter->add_sink(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
+
+    if (!COLOUR_SINK)
+    {
+      COLOUR_SINK = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+    }
+
+    dup_filter->add_sink(COLOUR_SINK);
 
     auto logger = std::make_shared<spdlog::logger>(name, dup_filter);
 
