@@ -471,8 +471,6 @@ void StorageUnitClient::IssueCallForMissingTxs(DigestSet const &tx_set)
 
 StorageUnitClient::Document StorageUnitClient::GetOrCreate(ResourceAddress const &key)
 {
-  FETCH_LOG_WARN(LOGGING_NAME, "??? GetOrCreate: ", key.address());
-
   Document doc;
 
   try
@@ -497,7 +495,6 @@ StorageUnitClient::Document StorageUnitClient::GetOrCreate(ResourceAddress const
 StorageUnitClient::Document StorageUnitClient::Get(ResourceAddress const &key)
 {
   Document doc;
-  FETCH_LOG_WARN(LOGGING_NAME, "??? Get: ", key.address());
 
   try
   {
@@ -522,8 +519,6 @@ StorageUnitClient::Document StorageUnitClient::Get(ResourceAddress const &key)
 
 void StorageUnitClient::Set(ResourceAddress const &key, StateValue const &value)
 {
-  FETCH_LOG_WARN(LOGGING_NAME, "??? Set: ", key.address(), " value: ", value.ToBase64());
-
   try
   {
     // make the request to the RPC server

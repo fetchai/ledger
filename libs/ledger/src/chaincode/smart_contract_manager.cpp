@@ -134,8 +134,6 @@ Contract::Result SmartContractManager::OnCreate(Transaction const &tx, BlockInde
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to parse scope for smart contract");
       return {Status::FAILED};
     }
-    FETCH_LOG_WARN(LOGGING_NAME, "??? ", scope.full_name());
-
     state().PushContext(scope);
 
     // construct a smart contract - this can throw for various reasons, need to catch this

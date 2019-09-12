@@ -163,8 +163,6 @@ SynergeticContractPtr NaiveSynergeticMiner::LoadContract(Digest const &contract_
 {
   SynergeticContractPtr contract{};
 
-  //  FETCH_LOG_WARN(LOGGING_NAME, "???LoadContract contract_digest 0x", contract_digest.ToHex());
-
   // attempt to retrieve the document stored in the database
   auto const resource_document =
       storage_.Get(SmartContractManager::CreateAddressForContract(contract_digest.ToHex()));

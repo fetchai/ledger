@@ -16,6 +16,7 @@
 #
 # ------------------------------------------------------------------------------
 
+import random
 import time
 
 from fetchai.ledger.api import LedgerApi
@@ -69,27 +70,20 @@ def run(options):
     contract = Contract(CONTRACT_TEXT, 'synergetic')
 
     # deploy the contract to the network
-    print('*' * 50, 'Create contract')
-    print('*' * 50, 'Create contract')
-    print('*' * 50, 'Create contract')
     api.sync(api.contracts.create(entity1, contract, 2000))
 
+    DATA_MIN = 0
+    DATA_MAX = 200
+
     # create a whole series of random data to submit to the DAG
-    # random_ints = [random.randint(0, 200) for _ in range(10)]
-    print('*' * 50, 'Submit data')
-    print('*' * 50, 'Submit data')
-    print('*' * 50, 'Submit data')
-    api.sync(api.contracts.submit_data(entity1, contract.digest, value=123))
-    # api.sync([api.contracts.submit_data(entity1, contract.digest, value=value)
-    #           for value in random_ints])
+    random_ints = [random.randint(DATA_MIN, DATA_MAX) for _ in range(10)]
+    api.sync([api.contracts.submit_data(entity1, contract.digest, value=value)
+              for value in random_ints])
 
     print('Waiting...')
+    time.sleep(15)
 
-    time.sleep(30)
-
-    print('*' * 50, 'Submit query')
-
-    result = contract.query(api, 'query_result')
-    print('*' * 50, 'Query result:', result)
-
-    assert result != -1  # ???desired value?
+    assert DATA_MIN > -1 and DATA_MAX > -1
+    assert contract.query(api, 'query_result') > -1, \
+        'Expected query to return result between {} and {}'.format(
+            DATA_MIN, DATA_MAX)
