@@ -30,66 +30,86 @@ namespace ml {
 namespace ops {
 
 /**
- * A PlaceHolder is a DataHolder intended to store input data.
+ * A Constant is a DataHolder intended to store an immutable value.
  * It has the following features:
  * 1. trainable: no
- * 2. mutable: yes, the data can be repeatedly overwritten
- * 3. shareable: no, shared layers should have their own placeholders
- * 4. saveable: no, the data is not stored upon serialisation
+ * 2. mutable: no, the data can be only written once
+ * 3. shareable: yes, shared layers can re-use constants
+ * 4. saveable: yes, the data is stored upon serialisation
  * @tparam T
  */
 template <class T>
-class PlaceHolder : public DataHolder<T>
+class Constant : public DataHolder<T>
 {
 public:
   using TensorType    = T;
   using SizeType      = typename TensorType::SizeType;
-  using ArrayPtrType  = std::shared_ptr<TensorType>;
+  using TensorPtrType = std::shared_ptr<TensorType>;
   using VecTensorType = typename Ops<T>::VecTensorType;
-  using SPType        = OpPlaceholderSaveableParams<TensorType>;
-  using MyType        = PlaceHolder<TensorType>;
+  using SPType        = OpConstantSaveableParams<TensorType>;
+  using MyType        = Constant<TensorType>;
 
-  PlaceHolder() = default;
+  Constant() = default;
 
-  explicit PlaceHolder(SPType const &sp)
+  explicit Constant(SPType const &sp)
     : DataHolder<T>(sp)
-  {}
+  {
+    if (sp.data)
+    {
+      this->data_ = std::make_shared<TensorType>(sp.data->Copy());
+    }
+  }
 
-  ~PlaceHolder() override = default;
+  ~Constant() override = default;
 
   std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
   {
-    return std::make_shared<SPType>();
+    auto sp = std::make_shared<SPType>();
+    if (this->data_)
+    {
+      sp->data = std::make_shared<TensorType>(this->data_->Copy());
+    }
+    return sp;
   }
 
   /**
-   * Placeholders should not be shared, therefore a layer sharing its elements
-   * with another node should use a new (unshared) placeholder op
+   * shares the constant
    * @param me
    * @return
    */
-  std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
-      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
+  std::shared_ptr<Ops<TensorType>> MakeSharedCopy(std::shared_ptr<Ops<TensorType>> me) override
   {
-    FETCH_UNUSED(me);
     assert(me.get() == this);
+    return me;
+  }
 
-    auto copyshare = std::make_shared<MyType>(*this);
-
-    if (this->data_)
+  /**
+   * sets the internally stored data
+   * @param data
+   * @return
+   */
+  bool SetData(TensorType const &data) override
+  {
+    if (!data_set_once_)
     {
-      copyshare->data_ = std::make_shared<TensorType>(this->data_->Copy());
+      data_set_once_ = true;
+      return DataHolder<TensorType>::SetData(data);
     }
-
-    return copyshare;
+    else
+    {
+      throw std::runtime_error("cannot set data in constant more than once");
+    }
   }
 
   static constexpr OpType OpCode()
   {
-    return OpType::OP_PLACEHOLDER;
+    return OpType::OP_CONSTANT;
   }
 
-  static constexpr char const *DESCRIPTOR = "PlaceHolder";
+  static constexpr char const *DESCRIPTOR = "CONSTANT";
+
+protected:
+  bool data_set_once_ = false;
 };
 
 }  // namespace ops

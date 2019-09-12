@@ -648,7 +648,7 @@ typename Graph<TensorType>::NodePtrType Graph<TensorType>::GetNode(
 }
 
 /**
- * Assigns data to a placeholder if the node can be found in the graph.
+ * Assigns data to a dataholder if the node can be found in the graph.
  * Also resets the graph cache to avoid erroneous leftover outputs
  * @param node_name name of the placeholder node in the graph (must be unique)
  * @param data the pointer to a tensor to assign to the placeholder
@@ -656,11 +656,12 @@ typename Graph<TensorType>::NodePtrType Graph<TensorType>::GetNode(
 template <typename TensorType>
 void Graph<TensorType>::SetInput(std::string const &node_name, TensorType data)
 {
-  auto placeholder = std::dynamic_pointer_cast<PlaceholderType>(nodes_.at(node_name)->GetOp());
+  auto dataholder =
+      std::dynamic_pointer_cast<ops::DataHolder<TensorType>>(nodes_.at(node_name)->GetOp());
 
-  if (placeholder)
+  if (dataholder)
   {
-    bool input_size_changed = placeholder->SetData(data);
+    bool input_size_changed = dataholder->SetData(data);
     ResetGraphCache(input_size_changed, nodes_[node_name]);
   }
   else
