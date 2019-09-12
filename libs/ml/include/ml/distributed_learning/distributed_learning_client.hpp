@@ -108,7 +108,8 @@ protected:
   std::string id_;
 
   // Latest loss
-  DataType loss_ = fetch::math::numeric_max<DataType>();
+  DataType train_loss_ = fetch::math::numeric_max<DataType>();
+  DataType test_loss_  = fetch::math::numeric_max<DataType>();
 
   // Client's own graph and mutex to protect its weights
   std::shared_ptr<fetch::ml::Graph<TensorType>> g_ptr_;
@@ -272,7 +273,7 @@ void TrainingClient<TensorType>::Train()
     g_ptr_->SetInput(label_name_, input.first);
 
     TensorType loss_tensor = g_ptr_->ForwardPropagate(error_name_);
-    loss_                  = *(loss_tensor.begin());
+    train_loss_            = *(loss_tensor.begin());
     g_ptr_->BackPropagate(error_name_);
   }
 }
@@ -309,7 +310,7 @@ void TrainingClient<TensorType>::Test()
     }
     g_ptr_->SetInput(label_name_, test_pair.first);
 
-    loss_ = *(g_ptr_->Evaluate(error_name_).begin());
+    test_loss_ = *(g_ptr_->Evaluate(error_name_).begin());
   }
 }
 
@@ -423,7 +424,8 @@ void TrainingClient<TensorType>::TrainOnce()
   // Upload to https://plot.ly/create/#/ for visualisation
   if (lossfile)
   {
-    lossfile << GetStrTimestamp() << ", " << static_cast<double>(loss_) << "\n";
+    lossfile << GetStrTimestamp() << ", " << static_cast<double>(train_loss_)
+             << static_cast<double>(test_loss_) << "\n";
   }
 
   opti_ptr_->IncrementEpochCounter();
@@ -456,7 +458,8 @@ void TrainingClient<TensorType>::TrainWithCoordinator()
 
     if (lossfile)
     {
-      lossfile << GetStrTimestamp() << ", " << static_cast<double>(this->loss_) << "\n";
+      lossfile << GetStrTimestamp() << ", " << static_cast<double>(train_loss_)
+               << static_cast<double>(test_loss_) << "\n";
     }
   }
 

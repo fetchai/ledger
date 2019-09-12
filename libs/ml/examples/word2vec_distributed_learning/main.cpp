@@ -36,8 +36,7 @@ using namespace fetch::ml;
 using namespace fetch::ml::dataloaders;
 using namespace fetch::ml::distributed_learning;
 
-// using DataType         = fetch::fixed_point::FixedPoint<32, 32>;
-using DataType         = double;
+using DataType         = fetch::fixed_point::FixedPoint<32, 32>;
 using TensorType       = fetch::math::Tensor<DataType>;
 using VectorTensorType = std::vector<TensorType>;
 using SizeType         = typename TensorType::SizeType;
@@ -86,9 +85,9 @@ int main(int ac, char **av)
   W2VTrainingParams<DataType> client_params;
 
   // Distributed learning parameters:
-  SizeType number_of_clients    = 4;
-  SizeType number_of_rounds     = 100;
-  coord_params.number_of_peers  = 2;
+  SizeType number_of_clients    = 10;
+  SizeType number_of_rounds     = 10;
+  coord_params.number_of_peers  = 3;
   coord_params.mode             = CoordinatorMode::SEMI_SYNCHRONOUS;
   coord_params.iterations_count = 100;  //  Synchronization occurs after this number of batches
   // have been processed in total by the clients
