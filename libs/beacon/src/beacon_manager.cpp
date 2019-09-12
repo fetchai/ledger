@@ -158,13 +158,7 @@ std::unordered_set<BeaconManager::MuddleAddress> BeaconManager::ComputeComplaint
 bool BeaconManager::VerifyComplaintAnswer(MuddleAddress const &from, ComplaintAnswer const &answer)
 {
   CabinetIndex from_index = identity_to_index_[from];
-  if (identity_to_index_.find(answer.first) == identity_to_index_.end())
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
-                   " received complaint answer with unknown reporter index");
-    return true;
-  }
-
+  assert(identity_to_index_.find(answer.first) != identity_to_index_.end());
   CabinetIndex reporter_index = identity_to_index_[answer.first];
   // Verify shares received
   PrivateKey s;
@@ -267,7 +261,7 @@ BeaconManager::SharesExposedMap BeaconManager::ComputeQualComplaints(
       else
       {
         FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
-                       "received vanishing qual coefficients from node ", i);
+                       "did not receive qual coefficients from node ", i);
         qual_complaints.insert(
             {miner, {s_ij[i][cabinet_index_].getStr(), sprime_ij[i][cabinet_index_].getStr()}});
       }
