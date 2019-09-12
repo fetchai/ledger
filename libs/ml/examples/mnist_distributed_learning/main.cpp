@@ -16,6 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "dmlf/local_learner_networker.hpp"
+#include "dmlf/simple_cycling_algorithm.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
 #include "ml/distributed_learning/coordinator.hpp"
@@ -101,7 +103,22 @@ int main(int ac, char **av)
   std::shared_ptr<Coordinator<TensorType>> coordinator =
       std::make_shared<Coordinator<TensorType>>(coord_params);
 
+  std::vector<std::shared_ptr<fetch::dmlf::LocalLearnerNetworker>> networkers(number_of_clients);
+
   std::cout << "FETCH Distributed MNIST Demo" << std::endl;
+
+  // Create networkers
+  for (SizeType i(0); i < number_of_clients; ++i)
+  {
+    networkers[i] = std::make_shared<fetch::dmlf::LocalLearnerNetworker>();
+  }
+
+  for (SizeType i(0); i < number_of_clients; ++i)
+  {
+    networkers[i]->addPeers(networkers);
+    networkers[i]->setShuffleAlgorithm(std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(
+        networkers[i]->getPeerCount(), coord_params.number_of_peers));
+  }
 
   std::vector<std::shared_ptr<TrainingClient<TensorType>>> clients(number_of_clients);
   for (SizeType i{0}; i < number_of_clients; ++i)
@@ -118,6 +135,7 @@ int main(int ac, char **av)
   {
     // Give each client pointer to coordinator
     clients[i]->SetCoordinator(coordinator);
+    clients[i]->SetNetworker(networkers[i]);
   }
 
   // Main loop
