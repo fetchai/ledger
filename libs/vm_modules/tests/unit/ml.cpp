@@ -492,4 +492,43 @@ TEST_F(MLTests, optimiser_set_graph_test)
   ASSERT_TRUE(toolkit.Run());
 }
 
+TEST_F(MLTests, graph_step_test)
+{
+  static char const *src = R"(
+    function main() : Fixed64
+
+      var tensor_shape = Array<UInt64>(2);
+      tensor_shape[0] = 2u64;
+      tensor_shape[1] = 10u64;
+      var data_tensor = Tensor(tensor_shape);
+      var label_tensor = Tensor(tensor_shape);
+      data_tensor.fill(7.0fp64);
+      label_tensor.fill(7.0fp64);
+
+      var graph = Graph();
+      graph.addPlaceholder("Input");
+      graph.addPlaceholder("Label");
+      graph.addFullyConnected("FC1", "Input", 2, 2);
+      graph.addMeanSquareErrorLoss("Error", "FC1", "Label");
+
+      graph.setInput("Input", data_tensor);
+      graph.setInput("Label", label_tensor);
+
+      var loss = graph.evaluate("Error");
+      graph.backPropagate("Error");
+      graph.step(0.01fp64);
+
+      var loss_after_training = graph.evaluate("Error");
+      return loss.at(0u64, 0u64) - loss_after_training.at(0u64, 0u64);
+    endfunction
+  )";
+
+  Variant           res;
+  ASSERT_TRUE(toolkit.Compile(src));
+  ASSERT_TRUE(toolkit.Run(&res));
+
+  auto const loss_difference = res.Get<fetch::fixed_point::fp64_t>();
+
+  EXPECT_GT(loss_difference, 0);
+}
 }  // namespace
