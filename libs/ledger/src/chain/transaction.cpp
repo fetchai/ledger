@@ -27,9 +27,9 @@ namespace fetch {
 namespace ledger {
 
 /**
- * Compute the total amount being transfered in this transaction
+ * Compute the total amount being transferred in this transaction
  *
- * @return The total amount being transfered
+ * @return The total amount being transferred
  */
 uint64_t Transaction::GetTotalTransferAmount() const
 {
