@@ -240,10 +240,13 @@ TYPED_TEST(VectorReduceTest, reduce_tests)
     EXPECT_EQ(C[i], A[i] + B[i]);
   }
 
-  type                 beta(4);
+  type const           beta(4.0f);
   fetch::memory::Range small_range(6, 15);
   C.in_parallel().RangedApplyMultiple(
-      small_range, [beta](auto const &a, auto const &b, auto &c) { c = a * decltype(a)(beta) + b; },
+      small_range,
+      [beta](auto const &a, auto const &b, auto &c) {
+        c = a * static_cast<std::remove_reference_t<decltype(a)>>(beta) + b;
+      },
       A, B);
 
   for (std::size_t i = 6; i < 15; ++i)
