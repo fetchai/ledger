@@ -57,16 +57,8 @@ std::vector<std::string> SplitTrainingData(std::string const &train_file,
     old_pos = pos;
     pos     = (i + 1) * chars_per_client;
 
-    if (i == number_of_clients - 1)
-    {
-      // Last client gets the rest
-      pos = input_data.size();
-    }
-    else
-    {
-      // find next instance of space character
-      pos = input_data.find(" ", pos, 1);
-    }
+    // find next instance of space character
+    pos = input_data.find(" ", pos, 1);
 
     client_data.push_back(input_data.substr(old_pos, pos - old_pos));
   }

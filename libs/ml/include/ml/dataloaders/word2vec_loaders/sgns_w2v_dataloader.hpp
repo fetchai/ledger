@@ -178,15 +178,25 @@ math::SizeType GraphW2VLoader<T>::Size() const
 template <typename T>
 bool GraphW2VLoader<T>::IsDone() const
 {
+  // Loader is done when current sentence is out of range
+  if (current_sentence_ >= data_.size())
+  {
+    return true;
+  }
+
+  // Loader can't be done if current sentence is not last
   if (current_sentence_ < data_.size() - 1)
   {
     return false;
   }
+
   // check if the buffer is drained
   if (labels_.At(buffer_pos_) != BufferPositionUnused)
   {
     return false;
   }
+
+  // Check if is last word of last sentence
   return !((current_sentence_ == data_.size() - 1) &&
            (current_word_ < data_.at(current_sentence_).size() - window_size_));
 }
