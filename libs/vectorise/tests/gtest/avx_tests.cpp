@@ -132,9 +132,9 @@ TYPED_TEST(VectorRegisterTest, basic_tests)
     // We don't want to check overflows right now, so we pick random numbers, but well within the
     // type's limits
     a[i]     = type((double(random()) / (double)(RAND_MAX)) *
-                (double)(fetch::math::numeric_max<type>() / 2));
+                (double)(fetch::math::numeric_max<type>()) / 2.0);
     b[i]     = type((double(random()) / (double)(RAND_MAX)) *
-                (double)(fetch::math::numeric_max<type>() / 2));
+                (double)(fetch::math::numeric_max<type>()) / 2.0);
     sum[i]   = a[i] + b[i];
     diff[i]  = a[i] - b[i];
     prod[i]  = a[i] * b[i];
