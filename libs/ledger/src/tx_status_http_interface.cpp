@@ -128,9 +128,7 @@ TxStatusHttpInterface::TxStatusHttpInterface(TxStatusCachePtr status_cache)
           // convert the digest back to binary
           auto const digest = FromHex(params["digest"]);
 
-          FETCH_LOG_INFO(LOGGING_NAME, "thing thing thingaab");
-          std::this_thread::sleep_for(std::chrono::milliseconds(100));
-          FETCH_LOG_INFO(LOGGING_NAME, "Querying status of: ", digest.ToBase64());
+          FETCH_LOG_DEBUG(LOGGING_NAME, "Querying status of: ", digest.ToBase64());
 
           // prepare the response
           auto const response{ToVariant(digest, status_cache_->Query(digest))};

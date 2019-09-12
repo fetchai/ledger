@@ -59,7 +59,6 @@ public:
   {
     WAIT_FOR_SETUP_COMPLETION,
     PREPARE_ENTROPY_GENERATION,
-    // BROADCAST_SIGNATURE,
     COLLECT_SIGNATURES,
     VERIFY_SIGNATURES,
     COMPLETE,
@@ -135,7 +134,6 @@ protected:
   State OnWaitForSetupCompletionState();
   State OnPrepareEntropyGeneration();
 
-  /*State OnBroadcastSignatureState();*/
   State OnCollectSignaturesState();
   State OnVerifySignaturesState();
   State OnCompleteState();
@@ -148,17 +146,17 @@ protected:
 
   /// Protocol endpoints
   /// @{
-  SignatureInformation GetSignatureShares(uint64_t round) /*const*/;
+  SignatureInformation GetSignatureShares(uint64_t round);
   /// @}
 
 private:
   bool AddSignature(SignatureShare share);
 
-  std::mutex      mutex_;
-  CertificatePtr  certificate_;
-  Identity        identity_;
-  Endpoint &      endpoint_;
-  StateMachinePtr state_machine_;
+  mutable std::mutex mutex_;
+  CertificatePtr     certificate_;
+  Identity           identity_;
+  Endpoint &         endpoint_;
+  StateMachinePtr    state_machine_;
 
   /// General configuration
   /// @{
@@ -180,8 +178,6 @@ private:
 
   /// Variables relating to getting threshold signatures of the seed
   /// @{
-  // std::deque<std::pair<uint64_t, SignatureShare>> signature_queue_;
-
   std::map<uint64_t, SignatureInformation> signatures_being_built_;
   std::size_t                              random_number_{0};
   Identity                                 qual_promise_identity_;

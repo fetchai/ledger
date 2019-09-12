@@ -42,9 +42,6 @@ char const *ToString(BeaconService::State state)
   case BeaconService::State::PREPARE_ENTROPY_GENERATION:
     text = "Preparing entropy generation";
     break;
-  // case BeaconService::State::BROADCAST_SIGNATURE:
-  //  text = "Broadcasting signatures";
-  //  break;
   case BeaconService::State::COLLECT_SIGNATURES:
     text = "Collecting signatures";
     break;
@@ -138,8 +135,6 @@ BeaconService::BeaconService(MuddleInterface &               muddle,
                                   &BeaconService::OnWaitForSetupCompletionState);
   state_machine_->RegisterHandler(State::PREPARE_ENTROPY_GENERATION, this,
                                   &BeaconService::OnPrepareEntropyGeneration);
-  // state_machine_->RegisterHandler(State::BROADCAST_SIGNATURE, this,
-  //                                &BeaconService::OnBroadcastSignatureState);
   state_machine_->RegisterHandler(State::COLLECT_SIGNATURES, this,
                                   &BeaconService::OnCollectSignaturesState);
   state_machine_->RegisterHandler(State::VERIFY_SIGNATURES, this,
@@ -157,8 +152,8 @@ BeaconService::BeaconService(MuddleInterface &               muddle,
     FETCH_UNUSED(this);
     FETCH_UNUSED(current);
     FETCH_UNUSED(previous);
-    FETCH_LOG_INFO(LOGGING_NAME, "Current state: ", ToString(current),
-                   " (previous: ", ToString(previous), ")");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Current state: ", ToString(current),
+                    " (previous: ", ToString(previous), ")");
   });
 }
 
@@ -401,34 +396,11 @@ BeaconService::State BeaconService::OnPrepareEntropyGeneration()
   return State::COLLECT_SIGNATURES;
 }
 
-// BeaconService::State BeaconService::OnBroadcastSignatureState()
-//{
-//  std::lock_guard<std::mutex> lock(mutex_);
-//
-//  for (auto &member : active_exe_unit_->aeon.members)
-//  {
-//    if (member == identity_)
-//    {
-//      signature_queue_.push_back({current_entropy_.round, active_exe_unit_->member_share});
-//    }
-//    else
-//    {
-//      // Communicating signatures
-//      rpc_client_.CallSpecificAddress(member.identifier(), RPC_BEACON,
-//                                      BeaconServiceProtocol::SUBMIT_SIGNATURE_SHARE,
-//                                      current_entropy_.round, active_exe_unit_->member_share);
-//      // TODO(tfr): Handle events that time out?
-//    }
-//  }
-//
-//  return State::COLLECT_SIGNATURES;
-//}
-
 /**
  * Peers can call this function (RPC endpoint) to get threshold signatures that
  * this peer has collected
  */
-BeaconService::SignatureInformation BeaconService::GetSignatureShares(uint64_t round) /*const*/
+BeaconService::SignatureInformation BeaconService::GetSignatureShares(uint64_t round)
 {
   std::lock_guard<std::mutex> lock(mutex_);
 
@@ -662,57 +634,6 @@ std::weak_ptr<core::Runnable> BeaconService::GetSetupRunnable()
 {
   return cabinet_creator_.GetWeakRunnable();
 }
-
-// // Adding signatures from the queue
-// std::deque<std::pair<uint64_t, SignatureShare>> remaining_shares;
-// while (!signature_queue_.empty())
-// {
-//   auto f = signature_queue_.front();
-//   signature_queue_.pop_front();
-//   if (f.first == current_entropy_.round)
-//   {
-//     AddSignature(f.second);
-//   }
-//   else if (f.first > current_entropy_.round)
-//   {
-//     remaining_shares.push_back(f);
-//   }
-// }
-// signature_queue_ = remaining_shares;
-
-// // Checking if we can verify
-// if (!active_exe_unit_->manager.can_verify())
-// {
-//   state_machine_->Delay(std::chrono::milliseconds(1000));
-//   FETCH_LOG_INFO(LOGGING_NAME,
-//                  "Failed to verify group signature. Rebroadcasting signature for round: ",
-//                  current_entropy_.round);
-//   return State::BROADCAST_SIGNATURE;
-// }
-
-// if (active_exe_unit_->manager.Verify())
-// {
-//   // Storing the result of current entropy
-//   current_entropy_.signature = active_exe_unit_->manager.GroupSignature();
-//   auto sign                  = current_entropy_.signature.getStr();
-//   current_entropy_.entropy   = crypto::Hash<crypto::SHA256>(crypto::Hash<crypto::SHA256>(sign));
-
-//   // Broadcasting the entropy to those listening, but not participating
-//   if (broadcasting_)
-//   {
-//     Serializer msgser;
-//     msgser << current_entropy_;
-//     endpoint_.Broadcast(SERVICE_DKG, CHANNEL_ENTROPY_DISTRIBUTION, msgser.data());
-//   }
-
-//   return State::COMPLETE;
-// }
-
-// FETCH_LOG_CRITICAL(
-//     LOGGING_NAME,
-//     "Valid signatures have generated an invalid group signature - this should not happen.");
-// // TODO(tfr): Work out how this should be dealt with
-// return State::COMPLETE;
 
 }  // namespace beacon
 }  // namespace fetch
