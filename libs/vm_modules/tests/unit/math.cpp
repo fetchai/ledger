@@ -144,7 +144,7 @@ TEST_F(MathTests, sqrt_test)
 
 TEST_F(MathTests, tensor_squeeze_test)
 {
-    static char const *tensor_serialiase_src = R"(
+  static char const *tensor_serialiase_src = R"(
     function main() : Tensor
       var tensor_shape = Array<UInt64>(3);
       tensor_shape[0] = 4u64;
@@ -160,12 +160,11 @@ TEST_F(MathTests, tensor_squeeze_test)
   ASSERT_TRUE(toolkit.Compile(tensor_serialiase_src));
   ASSERT_TRUE(toolkit.Run(&res));
 
-  auto const tensor = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  auto const                    tensor = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
   fetch::math::Tensor<DataType> gt({4, 4});
 
   EXPECT_TRUE(tensor->GetTensor().shape() == gt.shape());
 }
-
 
 TEST_F(MathTests, tensor_state_test)
 {

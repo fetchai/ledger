@@ -1651,9 +1651,9 @@ Tensor<T, C> &Tensor<T, C>::Squeeze()
 {
   auto shape = shape_;
 
-  bool not_found = true;
-  SizeType cur_dim = shape.size() - 1;
-  while(not_found)
+  bool     not_found = true;
+  SizeType cur_dim   = shape.size() - 1;
+  while (not_found)
   {
     if (shape.at(cur_dim) == static_cast<SizeType>(1))
     {
