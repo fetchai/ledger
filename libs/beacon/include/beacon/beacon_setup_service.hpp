@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "beacon/beacon_complaints_manager.hpp"
 #include "core/service_ids.hpp"
 #include "core/state_machine.hpp"
-#include "dkg/dkg_complaints_manager.hpp"
 #include "dkg/dkg_messages.hpp"
 #include "moment/clocks.hpp"
 #include "moment/deadline_timer.hpp"
@@ -91,9 +91,9 @@ public:
   using SharedAeonExecutionUnit = std::shared_ptr<AeonExecutionUnit>;
   using CallbackFunction        = std::function<void(SharedAeonExecutionUnit)>;
   using DKGMessage              = dkg::DKGMessage;
-  using ComplaintsManager       = dkg::ComplaintsManager;
-  using ComplaintsAnswerManager = dkg::ComplaintsAnswerManager;
-  using QualComplaintsManager   = dkg::QualComplaintsManager;
+  using ComplaintsManager       = beacon::ComplaintsManager;
+  using ComplaintAnswersManager = beacon::ComplaintAnswersManager;
+  using QualComplaintsManager   = beacon::QualComplaintsManager;
   using DKGEnvelope             = dkg::DKGEnvelope;
   using ComplaintsMessage       = dkg::ComplaintsMessage;
   using CoefficientsMessage     = dkg::CoefficientsMessage;
@@ -103,6 +103,7 @@ public:
   using SharesExposedMap = std::unordered_map<MuddleAddress, std::pair<MessageShare, MessageShare>>;
   using DeadlineTimer    = fetch::moment::DeadlineTimer;
   using SignatureShare   = AeonExecutionUnit::SignatureShare;
+  using BeaconManager    = dkg::BeaconManager;
   using GroupPubKeyPlusSigShare = std::pair<std::string, SignatureShare>;
 
   BeaconSetupService(MuddleInterface &muddle, Identity identity,
@@ -155,7 +156,7 @@ protected:
 
   // Managing complaints
   ComplaintsManager       complaints_manager_;
-  ComplaintsAnswerManager complaints_answer_manager_;
+  ComplaintAnswersManager complaint_answers_manager_;
   QualComplaintsManager   qual_complaints_manager_;
 
   // Counters for types of messages received
@@ -169,7 +170,7 @@ protected:
   void         SendBroadcast(DKGEnvelope const &env);
   virtual void BroadcastShares();
   virtual void BroadcastComplaints();
-  virtual void BroadcastComplaintsAnswer();
+  virtual void BroadcastComplaintAnswers();
   virtual void BroadcastQualCoefficients();
   virtual void BroadcastQualComplaints();
   virtual void BroadcastReconstructionShares();
@@ -180,7 +181,7 @@ protected:
   void OnNewCoefficients(CoefficientsMessage const &coefficients, MuddleAddress const &from_id);
   void OnComplaints(ComplaintsMessage const &complaint, MuddleAddress const &from_id);
   void OnExposedShares(SharesMessage const &shares, MuddleAddress const &from_id);
-  void OnComplaintsAnswer(SharesMessage const &answer, MuddleAddress const &from_id);
+  void OnComplaintAnswers(SharesMessage const &answer, MuddleAddress const &from_id);
   void OnQualComplaints(SharesMessage const &shares, MuddleAddress const &from_id);
   void OnReconstructionShares(SharesMessage const &shares, MuddleAddress const &from_id);
   /// @}
@@ -188,13 +189,14 @@ protected:
   /// @name Helper methods
   /// @{
   bool BasicMsgCheck(MuddleAddress const &from, std::shared_ptr<DKGMessage> const &msg_ptr);
-  void CheckComplaintAnswer(SharesMessage const &answer, MuddleAddress const &from_id);
+  void CheckComplaintAnswers();
   bool BuildQual();
   void CheckQualComplaints();
   /// @}
 
   // Helper functions
   uint64_t PreDKGThreshold();
+  uint32_t QualSize();
 
   // Telemetry
   telemetry::GaugePtr<uint64_t> beacon_dkg_state_gauge_;

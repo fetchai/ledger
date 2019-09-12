@@ -207,6 +207,23 @@ void BeaconService::StartNewCabinet(CabinetMemberList members, uint32_t threshol
   auto diff_time = int64_t(static_cast<uint64_t>(std::time(nullptr))) - int64_t(start_time);
   FETCH_LOG_INFO(LOGGING_NAME, "Starting new cabinet from ", round_start, " to ", round_end,
                  "at time: ", start_time, " (diff): ", diff_time);
+
+  // Check threshold meets the requirements for the RBC
+  uint32_t rbc_threshold{0};
+  if (members.size() % 3 == 0)
+  {
+    rbc_threshold = static_cast<uint32_t>(members.size() / 3 - 1);
+  }
+  else
+  {
+    rbc_threshold = static_cast<uint32_t>(members.size() / 3);
+  }
+  if (threshold < rbc_threshold)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Threshold is below RBC threshold. Reset to rbc threshold");
+    threshold = rbc_threshold;
+  }
+
   std::lock_guard<std::mutex> lock(mutex_);
 
   SharedAeonExecutionUnit beacon = std::make_shared<AeonExecutionUnit>();

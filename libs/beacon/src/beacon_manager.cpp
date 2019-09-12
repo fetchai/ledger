@@ -130,37 +130,27 @@ void BeaconManager::AddShares(MuddleAddress const &from, std::pair<Share, Share>
  *
  * @return Set of muddle addresses of nodes we complain against
  */
-std::unordered_set<BeaconManager::MuddleAddress> BeaconManager::ComputeComplaints()
+std::unordered_set<BeaconManager::MuddleAddress> BeaconManager::ComputeComplaints(
+    std::set<MuddleAddress> const &coeff_received)
 {
   std::unordered_set<MuddleAddress> complaints_local;
-  for (auto &cab : identity_to_index_)
+  for (auto &cab : coeff_received)
   {
-    CabinetIndex i = cab.second;
+    CabinetIndex i = identity_to_index_[cab];
     if (i != cabinet_index_)
     {
-      // Can only require this if group_g_, group_h_ do not take the default values from clear()
-      if (C_ik[i][0] != zeroG2_ && s_ij[i][cabinet_index_] != zeroFr_)
-      {
-        PublicKey rhs;
-        PublicKey lhs;
-        lhs = crypto::mcl::ComputeLHS(g__s_ij[i][cabinet_index_], group_g_, group_h_,
-                                      s_ij[i][cabinet_index_], sprime_ij[i][cabinet_index_]);
-        rhs = crypto::mcl::ComputeRHS(cabinet_index_, C_ik[i]);
-        if (lhs != rhs)
-        {
-          FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
-                         " received bad coefficients/shares from node ", i);
-          complaints_local.insert(cab.first);
-        }
-      }
-      else
+      PublicKey rhs;
+      PublicKey lhs;
+      lhs = crypto::mcl::ComputeLHS(g__s_ij[i][cabinet_index_], group_g_, group_h_,
+                                    s_ij[i][cabinet_index_], sprime_ij[i][cabinet_index_]);
+      rhs = crypto::mcl::ComputeRHS(cabinet_index_, C_ik[i]);
+      if (lhs != rhs)
       {
         FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
-                       " received vanishing coefficients/shares from ", i);
-        complaints_local.insert(cab.first);
+                       " received bad coefficients/shares from node ", i);
+        complaints_local.insert(cab);
       }
     }
-    ++i;
   }
   return complaints_local;
 }
@@ -250,7 +240,8 @@ void BeaconManager::AddQualCoefficients(MuddleAddress const &           from,
  *
  * @return Map of address and pair of secret shares for each qual member we wish to complain against
  */
-BeaconManager::SharesExposedMap BeaconManager::ComputeQualComplaints()
+BeaconManager::SharesExposedMap BeaconManager::ComputeQualComplaints(
+    std::set<MuddleAddress> const &coeff_received)
 {
   SharesExposedMap qual_complaints;
 
@@ -259,8 +250,7 @@ BeaconManager::SharesExposedMap BeaconManager::ComputeQualComplaints()
     CabinetIndex i = identity_to_index_[miner];
     if (i != cabinet_index_)
     {
-      // Can only require this if G, H do not take the default values from clear()
-      if (A_ik[i][0] != zeroG2_)
+      if (coeff_received.find(miner) != coeff_received.end())
       {
         PublicKey rhs;
         PublicKey lhs;
@@ -541,9 +531,9 @@ BeaconManager::AddResult BeaconManager::AddSignaturePart(Identity const & from,
                                                          Signature const &signature)
 {
   auto it = identity_to_index_.find(from.identifier());
-  assert(it != identity_to_index_.end());
+  auto iq = qual_.find(from.identifier());
 
-  if (it == identity_to_index_.end())
+  if (it == identity_to_index_.end() || iq == qual_.end())
   {
     return AddResult::NOT_MEMBER;
   }
@@ -607,12 +597,6 @@ void BeaconManager::SetMessage(MessagePayload next_message)
 BeaconManager::SignedMessage BeaconManager::Sign()
 {
   Signature signature = crypto::mcl::SignShare(current_message_, secret_share_);
-
-  if (!crypto::mcl::VerifySign(public_key_shares_[cabinet_index_], current_message_, signature,
-                               group_g_))
-  {
-    throw std::runtime_error("Failed to sign the current message.");
-  }
 
   SignedMessage smsg;
   smsg.identity  = certificate_->identity();
