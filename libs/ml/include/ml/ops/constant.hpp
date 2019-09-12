@@ -34,7 +34,7 @@ namespace ops {
  * It has the following features:
  * 1. trainable: no
  * 2. mutable: no, the data can be only written once
- * 3. shareable: yes, shared layers can re-used constants
+ * 3. shareable: yes, shared layers can re-use constants
  * 4. saveable: yes, the data is stored upon serialisation
  * @tparam T
  */
@@ -53,7 +53,12 @@ public:
 
   explicit Constant(SPType const &sp)
     : DataHolder<T>(sp)
-  {}
+  {
+    if (sp.data)
+    {
+      this->data_ = std::make_shared<TensorType>(sp.data->Copy());
+    }
+  }
 
   ~Constant() override = default;
 
@@ -87,6 +92,7 @@ public:
   {
     if (!data_set_once_)
     {
+      data_set_once_ = true;
       return DataHolder<TensorType>::SetData(data);
     }
     else

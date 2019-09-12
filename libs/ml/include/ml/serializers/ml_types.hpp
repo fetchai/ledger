@@ -1074,18 +1074,30 @@ struct MapSerializer<ml::OpConstantSaveableParams<TensorType>, D>
   using Type       = ml::OpConstantSaveableParams<TensorType>;
   using DriverType = D;
 
-  static uint8_t const BASE_OPS = 1;
-  static uint8_t const OP_CODE  = 2;
+  static uint8_t const BASE_OPS     = 1;
+  static uint8_t const OP_CODE      = 2;
+  static uint8_t const DATA         = 3;
+  static uint8_t const DATA_PRESENT = 4;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(2);
+    auto map = map_constructor(4);
 
     // serialize parent class first
     auto ops_pointer = static_cast<ml::OpDataHolderSaveableParams<TensorType> const *>(&sp);
     map.Append(BASE_OPS, *(ops_pointer));
     map.Append(OP_CODE, sp.op_type);
+
+    if (sp.data)
+    {
+      map.Append(DATA_PRESENT, true);
+      map.Append(DATA, *(sp.data));
+    }
+    else
+    {
+      map.Append(DATA_PRESENT, false);
+    }
   }
 
   template <typename MapDeserializer>
@@ -1094,6 +1106,15 @@ struct MapSerializer<ml::OpConstantSaveableParams<TensorType>, D>
     auto ops_pointer = static_cast<ml::OpDataHolderSaveableParams<TensorType> *>(&sp);
     map.ExpectKeyGetValue(BASE_OPS, (*ops_pointer));
     map.ExpectKeyGetValue(OP_CODE, sp.op_type);
+
+    bool has_data = true;
+    map.ExpectKeyGetValue(DATA_PRESENT, has_data);
+    if (has_data)
+    {
+      TensorType data;
+      map.ExpectKeyGetValue(DATA, data);
+      sp.data = std::make_shared<TensorType>(data);
+    }
   }
 };
 
@@ -2531,8 +2552,8 @@ struct MapSerializer<ml::OpVariableSaveableParams<TensorType>, D>
   static uint8_t const OP_CODE    = 1;
   static uint8_t const BASE_CLASS = 2;
 
-  static uint8_t const OUTPUT_PRESENT = 3;
-  static uint8_t const OUTPUT         = 4;
+  static uint8_t const DATA         = 3;
+  static uint8_t const DATA_PRESENT = 4;
 
   static uint8_t const REGULARISATION_TYPE = 5;
   static uint8_t const REGULARISATION_RATE = 6;
@@ -2553,12 +2574,12 @@ struct MapSerializer<ml::OpVariableSaveableParams<TensorType>, D>
 
     if (sp.data)
     {
-      map.Append(OUTPUT_PRESENT, true);
-      map.Append(OUTPUT, *(sp.data));
+      map.Append(DATA_PRESENT, true);
+      map.Append(DATA, *(sp.data));
     }
     else
     {
-      map.Append(OUTPUT_PRESENT, false);
+      map.Append(DATA_PRESENT, false);
     }
 
     // first set the regulariser type
@@ -2581,15 +2602,14 @@ struct MapSerializer<ml::OpVariableSaveableParams<TensorType>, D>
   {
     auto base_pointer = static_cast<ml::OpDataHolderSaveableParams<TensorType> *>(&sp);
     map.ExpectKeyGetValue(BASE_CLASS, *base_pointer);
-
     map.ExpectKeyGetValue(OP_CODE, sp.op_type);
 
-    bool has_weights = true;
-    map.ExpectKeyGetValue(OUTPUT_PRESENT, has_weights);
-    if (has_weights)
+    bool has_data = true;
+    map.ExpectKeyGetValue(DATA_PRESENT, has_data);
+    if (has_data)
     {
       TensorType data;
-      map.ExpectKeyGetValue(OUTPUT, data);
+      map.ExpectKeyGetValue(DATA, data);
       sp.data = std::make_shared<TensorType>(data);
     }
 
