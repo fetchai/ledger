@@ -39,6 +39,7 @@ public:
 
   static constexpr char const *LOGGING_NAME = "OefListenerStarterTask";
 
+  /// @{
   OefListenerStarterTask(
       int p, std::shared_ptr<OefListenerSet<SearchTaskFactory, OefSearchEndpoint>> listeners,
       std::shared_ptr<Core> core, FactoryCreator initialFactoryCreator, ConfigMap endpointConfig)
@@ -49,8 +50,16 @@ public:
     this->initialFactoryCreator = initialFactoryCreator;
     this->endpointConfig        = std::move(endpointConfig);
   }
-  virtual ~OefListenerStarterTask()
-  {}
+
+  OefListenerStarterTask(OefListenerStarterTask const &other) = delete;
+  virtual ~OefListenerStarterTask()                           = default;
+  /// @}
+
+  /// @{
+  OefListenerStarterTask &operator=(OefListenerStarterTask const &other)  = delete;
+  bool                    operator==(OefListenerStarterTask const &other) = delete;
+  bool                    operator<(OefListenerStarterTask const &other)  = delete;
+  /// @}
 
   virtual bool isRunnable(void) const
   {
@@ -58,16 +67,10 @@ public:
   }
   virtual ExitState run(void);
 
-protected:
 private:
   std::shared_ptr<OefListenerSet<SearchTaskFactory, OefSearchEndpoint>> listeners;
   std::shared_ptr<Core>                                                 core;
   int                                                                   p;
   FactoryCreator                                                        initialFactoryCreator;
   ConfigMap                                                             endpointConfig;
-
-  OefListenerStarterTask(const OefListenerStarterTask &other) = delete;
-  OefListenerStarterTask &operator=(const OefListenerStarterTask &other)  = delete;
-  bool                    operator==(const OefListenerStarterTask &other) = delete;
-  bool                    operator<(const OefListenerStarterTask &other)  = delete;
 };

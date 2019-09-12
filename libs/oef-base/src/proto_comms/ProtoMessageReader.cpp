@@ -47,7 +47,8 @@ ProtoMessageReader::consumed_needed_pair ProtoMessageReader::checkForMessage(con
 
     if (chars.remainingData() < head_size)
     {
-      needed = head_size - chars.remainingData();
+      needed =
+          static_cast<std::size_t>(head_size) - static_cast<std::size_t>(chars.remainingData());
       break;
     }
 
@@ -93,9 +94,10 @@ ProtoMessageReader::consumed_needed_pair ProtoMessageReader::checkForMessage(con
       break;
     }
 
-    if (chars.remainingData() < body_size)
+    if (static_cast<std::size_t>(chars.remainingData()) < static_cast<std::size_t>(body_size))
     {
-      needed = body_size - chars.remainingData();
+      needed =
+          static_cast<std::size_t>(body_size) - static_cast<std::size_t>(chars.remainingData());
       break;
     }
 
@@ -105,13 +107,14 @@ ProtoMessageReader::consumed_needed_pair ProtoMessageReader::checkForMessage(con
     if (onComplete)
     {
       // std::cout << "MESSAGE = " << head_size << "+" << body_size << " bytes" << std::endl;
-      onComplete(ConstCharArrayBuffer(chars, chars.current + body_size));
+      onComplete(ConstCharArrayBuffer(
+          chars, static_cast<std::size_t>(chars.current) + static_cast<std::size_t>(body_size)));
     }
     else
     {
       FETCH_LOG_WARN(LOGGING_NAME, "No onComplete handler set.");
     }
-    chars.advance(body_size);
+    chars.advance(static_cast<int32_t>(body_size));
   }
   return consumed_needed_pair(consumed, needed);
 }
