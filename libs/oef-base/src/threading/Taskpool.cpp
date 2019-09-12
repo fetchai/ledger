@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "logging/logging.hpp"
 #include "oef-base/threading/Taskpool.hpp"
+#include "logging/logging.hpp"
 
 #include "oef-base/monitoring/Counter.hpp"
 #include "oef-base/monitoring/Gauge.hpp"

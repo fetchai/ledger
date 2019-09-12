@@ -31,7 +31,7 @@ public:
   int                                      current;
   int                                      size;
 
-  CharArrayBuffer(const std::vector<asio::mutable_buffer> &thebuffers)
+  CharArrayBuffer(std::vector<asio::mutable_buffer> const &thebuffers)
     : buffers(thebuffers)
   {
     current = 0;
@@ -42,7 +42,7 @@ public:
     }
   }
 
-  CharArrayBuffer &write(const uint32_t &i)
+  CharArrayBuffer &write(uint32_t const &i)
   {
     union
     {
@@ -60,7 +60,7 @@ public:
     return *this;
   }
 
-  CharArrayBuffer &write_little_endian(const uint32_t &i)
+  CharArrayBuffer &write_little_endian(uint32_t const &i)
   {
     union
     {
@@ -96,7 +96,7 @@ public:
     return *this;
   }
 
-  CharArrayBuffer &write(const int32_t &i)
+  CharArrayBuffer &write(int32_t const &i)
   {
     union
     {
@@ -132,7 +132,7 @@ public:
     return *this;
   }
 
-  CharArrayBuffer &write(const std::string &s)
+  CharArrayBuffer &write(std::string const &s)
   {
     for (uint32_t i = 0; i < s.size(); i++)  // Using a "<=" ensures we also write a zero terminator
     {
@@ -360,8 +360,8 @@ public:
   }
 
 private:
-  // copy ctor and assignment not implemented;
-  // copying not allowed
-  CharArrayBuffer(const CharArrayBuffer &);
-  CharArrayBuffer &operator=(const CharArrayBuffer &);
+  // TODO: copy ctor and assignment not implemented;
+  // TODO: copying not allowed - should be marked delete
+  CharArrayBuffer(CharArrayBuffer const &);
+  CharArrayBuffer &operator=(CharArrayBuffer const &);
 };

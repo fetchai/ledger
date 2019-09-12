@@ -46,7 +46,7 @@ public:
   using ErrorNotification      = std::function<void(std::error_code const &ec)>;
   using EofNotification        = std::function<void()>;
   using StartNotification      = std::function<void()>;
-  using ProtoErrorNotification = std::function<void(const std::string &message)>;
+  using ProtoErrorNotification = std::function<void(std::string const &message)>;
 
   using StateType  = std::atomic<int>;
   using StateTypeP = std::shared_ptr<StateType>;
@@ -61,10 +61,10 @@ public:
   static constexpr std::size_t BUFFER_SIZE_LIMIT = 50;
   static constexpr char const *LOGGING_NAME      = "EndpointBase";
 
-  EndpointBase(const EndpointBase &other) = delete;
-  EndpointBase &operator=(const EndpointBase &other)  = delete;
-  bool          operator==(const EndpointBase &other) = delete;
-  bool          operator<(const EndpointBase &other)  = delete;
+  EndpointBase(EndpointBase const &other) = delete;
+  EndpointBase &operator=(EndpointBase const &other)  = delete;
+  bool          operator==(EndpointBase const &other) = delete;
+  bool          operator<(EndpointBase const &other)  = delete;
 
   EndpointBase(std::size_t sendBufferSize, std::size_t readBufferSize, ConfigMap configMap);
   virtual ~EndpointBase();
@@ -108,13 +108,13 @@ public:
     return *state == RUNNING_ENDPOINT;
   }
 
-  std::size_t getIdent(void) const
+  std::size_t getIdent() const
   {
     return ident;
   }
 
 protected:
-  virtual void async_read(const std::size_t &bytes_needed) = 0;
+  virtual void async_read(std::size_t const &bytes_needed) = 0;
   virtual void async_write()                               = 0;
 
   virtual bool is_eof(std::error_code const &ec) const = 0;
@@ -141,9 +141,11 @@ protected:
   virtual void proto_error(const std::string &msg);
   virtual void eof();
 
-  virtual void complete_sending(StateTypeP state, std::error_code const &ec, const size_t &bytes);
+  virtual void complete_sending(StateTypeP state, std::error_code const &ec,
+                                const std::size_t &bytes);
   virtual void create_messages();
-  virtual void complete_reading(StateTypeP state, std::error_code const &ec, const size_t &bytes);
+  virtual void complete_reading(StateTypeP state, std::error_code const &ec,
+                                const std::size_t &bytes);
 
 private:
   std::vector<Notification::Notification> waiting;

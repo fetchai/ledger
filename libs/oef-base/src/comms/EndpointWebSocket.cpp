@@ -90,8 +90,8 @@ void EndpointWebSocket<TXType>::async_write()
 
   auto my_state = state;
 
-  web_socket_.async_write(data, [this, my_state](std::error_code const &ec, const size_t &bytes) {
-    this->complete_sending(my_state, ec, bytes);
+  web_socket_.async_write(data, [this, my_state](std::error_code const &ec, const std::size_t
+  &bytes) { this->complete_sending(my_state, ec, bytes);
   });
   */
 }
@@ -123,7 +123,7 @@ void EndpointWebSocket<TXType>::async_read_at_least(const std::size_t &bytes_nee
   }
 
   web_socket_.async_read_some(space, [this, my_state, &bytes_read, bytes_needed, &space](
-                                         std::error_code const &ec, const size_t &bytes) {
+                                         std::error_code const &ec, const std::size_t &bytes) {
     bytes_read += bytes;
     if (bytes_read >= bytes_needed)
     {

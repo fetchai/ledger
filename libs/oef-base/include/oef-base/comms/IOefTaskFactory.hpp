@@ -34,6 +34,7 @@ public:
   using buffer  = asio::const_buffer;
   using buffers = std::vector<buffer>;
 
+  /// @{
   IOefTaskFactory(std::shared_ptr<OefEndpoint>           the_endpoint,
                   std::shared_ptr<OutboundConversations> outbounds)
     : outbounds(outbounds)
@@ -42,8 +43,15 @@ public:
   IOefTaskFactory(std::shared_ptr<OutboundConversations> outbounds)
     : outbounds(outbounds)
   {}
-  virtual ~IOefTaskFactory()
-  {}
+  IOefTaskFactory(IOefTaskFactory const &other) = delete;
+  virtual ~IOefTaskFactory()                    = default;
+  /// @}
+
+  /// @{
+  IOefTaskFactory &operator=(IOefTaskFactory const &other)  = delete;
+  bool             operator==(IOefTaskFactory const &other) = delete;
+  bool             operator<(IOefTaskFactory const &other)  = delete;
+  /// @}
 
   virtual void processMessage(ConstCharArrayBuffer &data) = 0;
   // Process the message, throw exceptions if they're bad.
@@ -70,7 +78,7 @@ protected:
   }
 
   template <class PROTO>
-  void read(PROTO &proto, const std::string &s)
+  void read(PROTO &proto, std::string const &s)
   {
     auto result = proto.ParseFromString(s);
     if (!result)
@@ -108,9 +116,4 @@ protected:
 
 private:
   std::shared_ptr<OefEndpoint> endpoint;
-
-  IOefTaskFactory(const IOefTaskFactory &other) = delete;
-  IOefTaskFactory &operator=(const IOefTaskFactory &other)  = delete;
-  bool             operator==(const IOefTaskFactory &other) = delete;
-  bool             operator<(const IOefTaskFactory &other)  = delete;
 };

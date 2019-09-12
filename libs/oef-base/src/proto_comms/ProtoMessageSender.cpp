@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "oef-base/proto_comms/ProtoMessageEndpoint.hpp"
 #include "oef-base/proto_comms/ProtoMessageSender.hpp"
+#include "oef-base/proto_comms/ProtoMessageEndpoint.hpp"
 
-#include <google/protobuf/message.h>
+#include "oef-messages/fetch_protobuf.hpp"
 
 ProtoMessageSender::consumed_needed_pair ProtoMessageSender::checkForSpace(
     const mutable_buffers &data, IMessageWriter<TXType>::TXQ &txq)

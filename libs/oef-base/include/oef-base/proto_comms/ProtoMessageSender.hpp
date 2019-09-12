@@ -45,10 +45,16 @@ public:
   {
     this->endpoint = endpoint;
   }
-  virtual ~ProtoMessageSender()
-  {}
+  ProtoMessageSender(ProtoMessageSender const &other) = delete;
+  virtual ~ProtoMessageSender()                       = default;
 
-  virtual consumed_needed_pair checkForSpace(const mutable_buffers &      data,
+  /// @{
+  ProtoMessageSender &operator=(ProtoMessageSender const &other)  = delete;
+  bool                operator==(ProtoMessageSender const &other) = delete;
+  bool                operator<(ProtoMessageSender const &other)  = delete;
+  /// @}
+
+  virtual consumed_needed_pair checkForSpace(mutable_buffers const &      data,
                                              IMessageWriter<TXType>::TXQ &txq);
   void                         setEndianness(Endianness newstate)
   {
@@ -60,9 +66,4 @@ private:
   Mutex      mutex;
   Endianness endianness = DUNNO;
   std::weak_ptr<ProtoMessageEndpoint<TXType, ProtoMessageReader, ProtoMessageSender>> endpoint;
-
-  ProtoMessageSender(const ProtoMessageSender &other) = delete;
-  ProtoMessageSender &operator=(const ProtoMessageSender &other)  = delete;
-  bool                operator==(const ProtoMessageSender &other) = delete;
-  bool                operator<(const ProtoMessageSender &other)  = delete;
 };

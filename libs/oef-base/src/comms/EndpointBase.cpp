@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "logging/logging.hpp"
 #include "oef-base/comms/EndpointBase.hpp"
+#include "logging/logging.hpp"
 
 // TODO: Replace beast #include "boost/beast/websocket/error.hpp"
 #include "oef-base/monitoring/Gauge.hpp"
@@ -285,7 +285,7 @@ void EndpointBase<TXType>::go()
 
 template <typename TXType>
 void EndpointBase<TXType>::complete_sending(StateTypeP state, std::error_code const &ec,
-                                            const size_t &bytes)
+                                            const std::size_t &bytes)
 {
   try
   {
@@ -338,7 +338,7 @@ void EndpointBase<TXType>::create_messages()
 
 template <typename TXType>
 void EndpointBase<TXType>::complete_reading(StateTypeP state, std::error_code const &ec,
-                                            const size_t &bytes)
+                                            const std::size_t &bytes)
 {
   try
   {

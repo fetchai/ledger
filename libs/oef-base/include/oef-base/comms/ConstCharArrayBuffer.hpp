@@ -31,7 +31,7 @@ public:
   int                                    current;
   int                                    size;
 
-  ConstCharArrayBuffer(const std::vector<asio::const_buffer> &thebuffers)
+  ConstCharArrayBuffer(std::vector<asio::const_buffer> const &thebuffers)
     : buffers(thebuffers)
   {
     current = 0;
@@ -68,6 +68,7 @@ public:
       uint8_t  c[4];
     } buffer;
 
+    // TODO: Use platform ToLittleEndian
     buffer.c[3] = (uint8_t)uflow();
     buffer.c[2] = (uint8_t)uflow();
     buffer.c[1] = (uint8_t)uflow();
@@ -249,26 +250,25 @@ public:
     return traits_type::to_int_type(get_char_at(current));
   }
 
-  ConstCharArrayBuffer(const ConstCharArrayBuffer &other)
+  ConstCharArrayBuffer(ConstCharArrayBuffer const &other)
     : buffers(other.buffers)
     , current(other.current)
     , size(other.size)
   {}
 
-  ConstCharArrayBuffer(const ConstCharArrayBuffer &other, std::size_t sizelimit)
+  ConstCharArrayBuffer(ConstCharArrayBuffer const &other, std::size_t sizelimit)
     : buffers(other.buffers)
     , current(other.current)
-    , size(sizelimit)
+    , size(static_cast<int>(sizelimit))
   {}
 
   std::size_t tell() const
   {
-    return current;
+    return static_cast<std::size_t>(current);
   }
 
   std::string copyOut()
   {
-    std::cout << "copyOut" << current << "," << size << std::endl;
     std::string r = "";
     while (current < size)
     {

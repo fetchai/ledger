@@ -25,7 +25,7 @@
 
 #include "oef-base/conversation/OutboundConversationWorkerTask.hpp"
 
-#include <google/protobuf/message.h>
+#include "oef-messages/fetch_protobuf.hpp"
 
 OutboundDapConversationCreator::OutboundDapConversationCreator(
     size_t thread_group_id, const Uri &dap_uri, Core &core,

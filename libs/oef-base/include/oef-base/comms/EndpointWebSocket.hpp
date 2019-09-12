@@ -51,10 +51,10 @@ public:
 
   virtual ~EndpointWebSocket();
 
-  EndpointWebSocket(const EndpointWebSocket &other) = delete;
-  EndpointWebSocket &operator=(const EndpointWebSocket &other)  = delete;
-  bool               operator==(const EndpointWebSocket &other) = delete;
-  bool               operator<(const EndpointWebSocket &other)  = delete;
+  EndpointWebSocket(EndpointWebSocket const &other) = delete;
+  EndpointWebSocket &operator=(EndpointWebSocket const &other)  = delete;
+  bool               operator==(EndpointWebSocket const &other) = delete;
+  bool               operator<(EndpointWebSocket const &other)  = delete;
 
   virtual Socket &socket() override
   {
@@ -65,11 +65,11 @@ public:
   virtual void go() override;
 
 protected:
-  virtual void async_read(const std::size_t &bytes_needed) override;
+  virtual void async_read(std::size_t const &bytes_needed) override;
   virtual void async_write() override;
   virtual bool is_eof(std::error_code const &ec) const override;
 
-  void async_read_at_least(const std::size_t &bytes_needed, std::size_t bytes_read,
+  void async_read_at_least(std::size_t const &bytes_needed, std::size_t bytes_read,
                            std::vector<RingBuffer::mutable_buffer> &space,
                            std::shared_ptr<StateType>               my_state);
 

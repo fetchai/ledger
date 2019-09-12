@@ -36,24 +36,24 @@ public:
   using consumed_needed_pair = std::pair<std::size_t, std::size_t>;
   using TXQ                  = std::list<TXType>;
 
-  IMessageWriter()
-  {}
-  virtual ~IMessageWriter()
-  {}
+  /// @{
+  IMessageWriter()                            = default;
+  IMessageWriter(IMessageWriter const &other) = delete;
+  virtual ~IMessageWriter()                   = default;
+  /// @}
+
+  /// @{
+  IMessageWriter &operator=(IMessageWriter const &other)  = delete;
+  bool            operator==(IMessageWriter const &other) = delete;
+  bool            operator<(IMessageWriter const &other)  = delete;
+  /// @}
 
   virtual consumed_needed_pair initial()
   {
     return consumed_needed_pair(0, 0);
   }
 
-  virtual consumed_needed_pair checkForSpace(const mutable_buffers &space, TXQ &txq) = 0;
-
-protected:
-private:
-  IMessageWriter(const IMessageWriter &other) = delete;
-  IMessageWriter &operator=(const IMessageWriter &other)  = delete;
-  bool            operator==(const IMessageWriter &other) = delete;
-  bool            operator<(const IMessageWriter &other)  = delete;
+  virtual consumed_needed_pair checkForSpace(mutable_buffers const &space, TXQ &txq) = 0;
 };
 
 // namespace std { template<> void swap(IMessageWriter& lhs, IMessageWriter& rhs) { lhs.swap(rhs); }

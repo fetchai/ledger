@@ -19,7 +19,7 @@
 
 #include "oef-base/conversation/OutboundConversation.hpp"
 
-#include <google/protobuf/message.h>
+#include "oef-messages/fetch_protobuf.hpp"
 #include <istream>
 #include <memory>
 

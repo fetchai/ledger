@@ -54,15 +54,23 @@ public:
 
   static constexpr char const *LOGGING_NAME = "ProtoPathMessageSender";
 
+  /// @{
   ProtoPathMessageSender(std::weak_ptr<EndpointType> endpoint)
   {
     this->endpoint = endpoint;
   }
-  virtual ~ProtoPathMessageSender()
-  {}
+  ProtoPathMessageSender(ProtoPathMessageSender const &other) = delete;
+  virtual ~ProtoPathMessageSender()                           = default;
+  /// @}
 
-  void setEndianness(Endianness newstate)
-  {}
+  /// @{
+  ProtoPathMessageSender &operator=(ProtoPathMessageSender const &other)  = delete;
+  bool                    operator==(ProtoPathMessageSender const &other) = delete;
+  bool                    operator<(ProtoPathMessageSender const &other)  = delete;
+  /// @}
+
+  void setEndianness(Endianness /*newstate*/)
+  {}  // TODO: Useless function
 
   virtual consumed_needed_pair checkForSpace(const mutable_buffers &data, IMessageWriter::TXQ &txq);
 
@@ -70,9 +78,4 @@ protected:
 private:
   Mutex                       mutex;
   std::weak_ptr<EndpointType> endpoint;
-
-  ProtoPathMessageSender(const ProtoPathMessageSender &other) = delete;
-  ProtoPathMessageSender &operator=(const ProtoPathMessageSender &other)  = delete;
-  bool                    operator==(const ProtoPathMessageSender &other) = delete;
-  bool                    operator<(const ProtoPathMessageSender &other)  = delete;
 };

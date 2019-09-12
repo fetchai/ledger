@@ -33,7 +33,7 @@
 #include "search_transport.pb.h"
 #include "search_update.pb.h"
 
-#include <google/protobuf/message.h>
+#include "oef-messages/fetch_protobuf.hpp"
 
 std::map<unsigned long, std::shared_ptr<OutboundConversation>> ident2conversation;
 

@@ -27,17 +27,20 @@ public:
   using FactoryCreator =
       std::function<std::shared_ptr<IOefTaskFactory>(std::shared_ptr<OefEndpoint>)>;
 
-  IOefListener()
-  {}
-  virtual ~IOefListener()
-  {}
+  /// @{
+  IOefListener()                          = default;
+  IOefListener(IOefListener const &other) = delete;
+  virtual ~IOefListener()                 = default;
+  /// @}
 
+  /// @{
+  IOefListener &operator=(IOefListener const &other)  = delete;
+  bool          operator==(IOefListener const &other) = delete;
+  bool          operator<(IOefListener const &other)  = delete;
+  /// @}
+
+  // TODO: Should be private variable with accessor function
   FactoryCreator factoryCreator;
 
-protected:
 private:
-  IOefListener(const IOefListener &other) = delete;
-  IOefListener &operator=(const IOefListener &other)  = delete;
-  bool          operator==(const IOefListener &other) = delete;
-  bool          operator<(const IOefListener &other)  = delete;
 };

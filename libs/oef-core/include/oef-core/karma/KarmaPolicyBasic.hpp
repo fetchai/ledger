@@ -24,7 +24,7 @@
 #include "oef-core/karma/IKarmaPolicy.hpp"
 #include "oef-core/karma/KarmaAccount.hpp"
 
-#include "google/protobuf/map.h"
+#include "oef-messages/fetch_protobuf.hpp"
 
 class KarmaPolicyBasic : public IKarmaPolicy
 {

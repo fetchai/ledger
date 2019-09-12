@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "logging/logging.hpp"
 #include "oef-base/comms/Endpoint.hpp"
+#include "logging/logging.hpp"
 #include "oef-base/monitoring/Gauge.hpp"
 #include "oef-base/utils/Uri.hpp"
 
@@ -56,9 +56,10 @@ void Endpoint<TXType>::async_write()
   FETCH_LOG_DEBUG(LOGGING_NAME, "run_sending: START");
 
   auto my_state = state;
-  asio::async_write(sock, data, [this, my_state](std::error_code const &ec, const size_t &bytes) {
-    this->complete_sending(my_state, ec, bytes);
-  });
+  asio::async_write(sock, data,
+                    [this, my_state](std::error_code const &ec, const std::size_t &bytes) {
+                      this->complete_sending(my_state, ec, bytes);
+                    });
 }
 
 template <typename TXType>
@@ -68,7 +69,7 @@ void Endpoint<TXType>::async_read(const std::size_t &bytes_needed)
   auto my_state = state;
 
   asio::async_read(sock, space, asio::transfer_at_least(bytes_needed),
-                   [this, my_state](std::error_code const &ec, const size_t &bytes) {
+                   [this, my_state](std::error_code const &ec, const std::size_t &bytes) {
                      this->complete_reading(my_state, ec, bytes);
                    });
 }

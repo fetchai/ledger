@@ -31,10 +31,10 @@
 
 #include "oef-base/utils/Uri.hpp"
 
-#include "google/protobuf/util/json_util.h"
 #include "mt-search/comms/src/cpp/OefListenerStarterTask.hpp"
 #include "mt-search/comms/src/cpp/OefSearchEndpoint.hpp"
 #include "mt-search/dap_comms/src/cpp/OutboundDapConversationCreator.hpp"
+#include "oef-messages/fetch_protobuf.hpp"
 #include <stdio.h>
 
 #include <ctype.h>

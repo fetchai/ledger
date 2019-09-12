@@ -27,22 +27,21 @@ public:
   using buffers              = std::vector<buffer>;
   using consumed_needed_pair = std::pair<std::size_t, std::size_t>;
 
-  IMessageReader()
-  {}
-  virtual ~IMessageReader()
-  {}
+  /// @{
+  IMessageReader()                            = default;
+  IMessageReader(IMessageReader const &other) = delete;
+  virtual ~IMessageReader()                   = default;
+  /// @}
 
+  /// @{
+  IMessageReader &operator=(IMessageReader const &other)  = delete;
+  bool            operator==(IMessageReader const &other) = delete;
+  bool            operator<(IMessageReader const &other)  = delete;
+  /// @}
+
+  virtual consumed_needed_pair checkForMessage(buffers const &data) = 0;
   virtual consumed_needed_pair initial()
   {
     return consumed_needed_pair(0, 4);
   }
-
-  virtual consumed_needed_pair checkForMessage(const buffers &data) = 0;
-
-protected:
-private:
-  IMessageReader(const IMessageReader &other) = delete;
-  IMessageReader &operator=(const IMessageReader &other)  = delete;
-  bool            operator==(const IMessageReader &other) = delete;
-  bool            operator<(const IMessageReader &other)  = delete;
 };

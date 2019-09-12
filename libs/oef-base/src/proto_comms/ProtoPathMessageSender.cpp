@@ -23,7 +23,7 @@
 #include "oef-base/utils/Uri.hpp"
 #include "transport.pb.h"
 
-#include <google/protobuf/message.h>
+#include "oef-messages/fetch_protobuf.hpp"
 
 static Counter bytes_produced_counter("mt-core.comms.protopath.send.bytes_produced");
 static Counter bytes_requested_counter("mt-core.comms.protopath.send.bytes_requested");

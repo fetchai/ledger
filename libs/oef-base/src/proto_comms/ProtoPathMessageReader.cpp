@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "oef-base/proto_comms/ProtoPathMessageReader.hpp"
 #include "oef-base/comms/Endpoint.hpp"
 #include "oef-base/monitoring/Counter.hpp"
 #include "oef-base/proto_comms/ProtoMessageEndpoint.hpp"
-#include "oef-base/proto_comms/ProtoPathMessageReader.hpp"
 #include "transport.pb.h"
 
 static Counter bytes_consumed_counter("mt-core.comms.protopath.read.bytes_consumed");

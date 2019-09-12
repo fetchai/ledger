@@ -32,15 +32,19 @@ public:
     : endpoint(std::move(endpoint))
   {}
 
-  virtual ~EndpointPipe()
-  {}
+  EndpointPipe(EndpointPipe const &other) = delete;
+  EndpointPipe &operator=(EndpointPipe const &other)  = delete;
+  bool          operator==(EndpointPipe const &other) = delete;
+  bool          operator<(EndpointPipe const &other)  = delete;
+
+  virtual ~EndpointPipe() = default;
 
   virtual Notification::NotificationBuilder send(SendType s)
   {
     return endpoint->send(s);
   }
 
-  virtual bool connect(const Uri &uri, Core &core)
+  virtual bool connect(Uri const &uri, Core &core)
   {
     return endpoint->connect(uri, core);
   }
@@ -75,12 +79,12 @@ public:
     endpoint->wake();
   }
 
-  std::size_t getIdent(void) const
+  std::size_t getIdent() const
   {
     return endpoint->getIdent();
   }
 
-  virtual const std::string &getRemoteId(void) const
+  virtual const std::string &getRemoteId() const
   {
     return endpoint->getRemoteId();
   }
@@ -92,10 +96,4 @@ public:
 
 protected:
   std::shared_ptr<EndpointType> endpoint;
-
-private:
-  EndpointPipe(const EndpointPipe &other) = delete;
-  EndpointPipe &operator=(const EndpointPipe &other)  = delete;
-  bool          operator==(const EndpointPipe &other) = delete;
-  bool          operator<(const EndpointPipe &other)  = delete;
 };

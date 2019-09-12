@@ -20,7 +20,7 @@
 #include "oef-base/comms/EndpointBase.hpp"
 #include "oef-core/tasks-base/IMtCoreTask.hpp"
 
-#include <google/protobuf/message.h>
+#include "oef-messages/fetch_protobuf.hpp"
 
 class IMtCoreCommsTask : public IMtCoreTask
 {

@@ -42,10 +42,10 @@ public:
 
   static constexpr char const *LOGGING_NAME = "Endpoint";
 
-  Endpoint(const Endpoint &other) = delete;
-  Endpoint &operator=(const Endpoint &other)  = delete;
-  bool      operator==(const Endpoint &other) = delete;
-  bool      operator<(const Endpoint &other)  = delete;
+  Endpoint(Endpoint const &other) = delete;
+  Endpoint &operator=(Endpoint const &other)  = delete;
+  bool      operator==(Endpoint const &other) = delete;
+  bool      operator<(Endpoint const &other)  = delete;
 
   Endpoint(Core &core, std::size_t sendBufferSize, std::size_t readBufferSize, ConfigMap configMap);
 
@@ -57,7 +57,7 @@ public:
   }
 
 protected:
-  virtual void async_read(const std::size_t &bytes_needed) override;
+  virtual void async_read(std::size_t const &bytes_needed) override;
   virtual void async_write() override;
   virtual bool is_eof(std::error_code const &ec) const override;
 

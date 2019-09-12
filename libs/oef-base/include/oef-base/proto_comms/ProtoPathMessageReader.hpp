@@ -47,15 +47,23 @@ public:
 
   static constexpr char const *LOGGING_NAME = "ProtoPathMessageReader";
 
+  /// @{
   ProtoPathMessageReader(std::weak_ptr<EndpointType> endpoint)
   {
     this->endpoint = endpoint;
   }
-  virtual ~ProtoPathMessageReader()
-  {}
+  ProtoPathMessageReader(const ProtoPathMessageReader &other) = delete;
+  virtual ~ProtoPathMessageReader()                           = default;
+  /// @}
 
-  void setEndianness(Endianness newstate)
-  {}
+  /// @{
+  ProtoPathMessageReader &operator=(const ProtoPathMessageReader &other)  = delete;
+  bool                    operator==(const ProtoPathMessageReader &other) = delete;
+  bool                    operator<(const ProtoPathMessageReader &other)  = delete;
+  /// @}
+
+  void setEndianness(Endianness /*newstate*/)
+  {}  // TODO: Useless function
 
   consumed_needed_pair initial();
   consumed_needed_pair checkForMessage(const buffers &data);
@@ -66,9 +74,4 @@ public:
 protected:
 private:
   std::weak_ptr<EndpointType> endpoint;
-
-  ProtoPathMessageReader(const ProtoPathMessageReader &other) = delete;
-  ProtoPathMessageReader &operator=(const ProtoPathMessageReader &other)  = delete;
-  bool                    operator==(const ProtoPathMessageReader &other) = delete;
-  bool                    operator<(const ProtoPathMessageReader &other)  = delete;
 };
