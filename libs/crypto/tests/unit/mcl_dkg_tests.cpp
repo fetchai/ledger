@@ -140,7 +140,7 @@ TEST(MclDkgTests, ComputeLhsRhs)
   {
     bn::G2 tmpG;
     tmpG.clear();
-    bn::G2::mul(tmpG, coefficients[jj], static_cast<int64_t>(pow(rank + 1, jj)));
+    bn::G2::mul(tmpG, coefficients[jj], static_cast<int64_t>(pow(rank + 1.0, 1.0 * jj)));
     bn::G2::add(rhs_test, rhs_test, tmpG);
   }
 

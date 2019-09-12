@@ -38,7 +38,7 @@ struct DkgOutput
   std::set<MuddleAddress> qual;
 };
 
-TEST(beacon_manager, test1)
+TEST(beacon_manager, dkg_and_threshold_signing)
 {
   bn::initPairing();
   PublicKey zero;
@@ -103,7 +103,7 @@ TEST(beacon_manager, test1)
   {
     BeaconManager *          manager      = beacon_managers[index];
     std::vector<std::string> coefficients = manager->GetCoefficients();
-    for (std::size_t elem = 0; elem < coefficients.size(); ++elem)
+    for (uint32_t elem = 0; elem < threshold; ++elem)
     {
       // Coefficients generated should be non-zero
       EXPECT_NE(coefficients[elem], zero.getStr());
@@ -307,15 +307,14 @@ TEST(beacon_manager, test1)
   }
 
   // Check outputs agree
-  for (std::size_t index = 0; index < outputs.size(); ++index)
+  for (uint32_t index = 0; index < cabinet_size; ++index)
   {
-    for (std::size_t index1 = index + 1; index1 < outputs.size(); ++index1)
+    for (uint32_t index1 = index + 1; index1 < cabinet_size; ++index1)
     {
       EXPECT_EQ(outputs[index].group_public_key.getStr(),
                 outputs[index1].group_public_key.getStr());
       EXPECT_EQ(outputs[index].qual, outputs[index1].qual);
-      for (std::size_t shares_index = 0; shares_index < outputs[index].public_key_shares.size();
-           ++shares_index)
+      for (uint32_t shares_index = 0; shares_index < cabinet_size; ++shares_index)
       {
         EXPECT_EQ(outputs[index].public_key_shares[shares_index],
                   outputs[index1].public_key_shares[shares_index]);
