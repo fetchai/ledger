@@ -523,7 +523,7 @@ TEST_F(MLTests, graph_step_test)
     endfunction
   )";
 
-  Variant           res;
+  Variant res;
   ASSERT_TRUE(toolkit.Compile(src));
   ASSERT_TRUE(toolkit.Run(&res));
 

@@ -70,14 +70,14 @@ void VMGraph::BackPropagate(VMPtrString const &name)
   graph_.BackPropagate(name->str);
 }
 
-void VMGraph::Step(DataType const & lr)
+void VMGraph::Step(DataType const &lr)
 {
-   auto grads = graph_.GetGradients();
+  auto grads = graph_.GetGradients();
   for (auto &grad : grads)
   {
     grad *= DataType{-lr};
   }
-   graph_.ApplyGradients(grads);
+  graph_.ApplyGradients(grads);
 }
 
 void VMGraph::AddPlaceholder(VMPtrString const &name)
