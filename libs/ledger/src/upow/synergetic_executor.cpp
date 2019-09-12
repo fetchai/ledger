@@ -34,7 +34,7 @@ SynergeticExecutor::SynergeticExecutor(StorageInterface &storage)
 {}
 
 void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem_data,
-                                uint64_t block, std::size_t num_lanes)
+                                std::size_t num_lanes)
 {
   SynergeticContractPtr contract{};
 
@@ -51,7 +51,7 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem
       auto const &contract_address = solution->contract_digest();
 
       // create the contract
-      contract = factory_.Create(contract_address);
+      contract = factory_.Create(contract_address.ToHex());
       if (!contract)
       {
         FETCH_LOG_WARN(LOGGING_NAME, "Failed to create contract: 0x", contract_address.ToHex());
@@ -79,7 +79,7 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem
 
       // complete the work and resolve the work queue
       contract->Attach(storage_);
-      status = contract->Complete(block, shard_mask);
+      status = contract->Complete(shard_mask);
       contract->Detach();
 
       if (SynergeticContract::Status::SUCCESS != status)

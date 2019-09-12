@@ -80,20 +80,14 @@ Contract::Result SmartContractManager::OnCreate(Transaction const &tx, BlockInde
 
   // extract the fields from the contract
   bool const extract_success = Extract(data, CONTRACT_HASH, contract_hash) &&
+                               Extract(data, CONTRACT_TYPE, contract_type) &&
                                Extract(data, CONTRACT_SOURCE, contract_source);
-
-  bool const extract_type_success = Extract(data, CONTRACT_TYPE, contract_type);
-
-  if (!extract_type_success)
-  {
-    contract_type = "smart";
-  }
 
   // fail if the extraction fails
   if (!extract_success)
   {
     FETCH_LOG_WARN(LOGGING_NAME,
-                   "Failed to parse contract source from transaction body. Debug: ", contract_hash,
+                   "Failed to extract contract data from transaction body. Debug: ", contract_hash,
                    " - ", contract_type, " : ", contract_source);
     return {Status::FAILED};
   }
@@ -132,7 +126,7 @@ Contract::Result SmartContractManager::OnCreate(Transaction const &tx, BlockInde
     return {Status::FAILED};
   }
 
-  if (contract_type == ConstByteArray{"smart"})
+  if (contract_type == ConstByteArray{"smart"} or contract_type == ConstByteArray{"synergetic"})
   {
     Identifier scope;
     if (!scope.Parse(calculated_hash + "." + tx.from().display()))
@@ -140,6 +134,8 @@ Contract::Result SmartContractManager::OnCreate(Transaction const &tx, BlockInde
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to parse scope for smart contract");
       return {Status::FAILED};
     }
+    FETCH_LOG_WARN(LOGGING_NAME, "??? ", scope.full_name());
+
     state().PushContext(scope);
 
     // construct a smart contract - this can throw for various reasons, need to catch this
@@ -165,13 +161,17 @@ Contract::Result SmartContractManager::OnCreate(Transaction const &tx, BlockInde
         on_init_function = fn.name;
         break;
 
-      case vm::FunctionDecoratorKind::INVALID:
+      case FunctionDecoratorKind::INVALID:
         FETCH_LOG_WARN(LOGGING_NAME, "Invalid function decorator found when adding SC");
         return {Status::FAILED};
 
       case FunctionDecoratorKind::ACTION:
       case FunctionDecoratorKind::NONE:
       case FunctionDecoratorKind::QUERY:
+      case FunctionDecoratorKind::CLEAR:
+      case FunctionDecoratorKind::OBJECTIVE:
+      case FunctionDecoratorKind::PROBLEM:
+      case FunctionDecoratorKind::WORK:
         break;
       }
     }
@@ -212,20 +212,10 @@ Contract::Result SmartContractManager::OnCreate(Transaction const &tx, BlockInde
  * @param contract_id The identifier for the smart contract being stored
  * @return The generated address
  */
-storage::ResourceAddress SmartContractManager::CreateAddressForContract(
-    Identifier const &contract_id)
+storage::ResourceAddress SmartContractManager::CreateAddressForContract(Digest const &digest)
 {
-  // this function is only really applicable to the storage of smart contracts
-  assert(contract_id.type() == Identifier::Type::SMART_CONTRACT);
-
   // create the resource address in the form fetch.contract.state.<digest of contract>
-  return StateAdapter::CreateAddress(Identifier{NAME}, contract_id.qualifier());
-}
-
-storage::ResourceAddress SmartContractManager::CreateAddressForSynergeticContract(
-    Digest const &contract_digest)
-{
-  return StateAdapter::CreateAddress(Identifier{NAME}, contract_digest.ToHex());
+  return StateAdapter::CreateAddress(Identifier{NAME}, digest);
 }
 
 }  // namespace ledger

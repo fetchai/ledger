@@ -111,16 +111,10 @@ uint16_t LookupLocalPort(Manifest const &manifest, ServiceType service, uint16_t
   return manifest.GetLocalPort(identifier);
 }
 
-std::shared_ptr<ledger::DAGInterface> GenerateDAG(bool generate, std::string const &db_name,
-                                                  bool                          load_on_start,
+std::shared_ptr<ledger::DAGInterface> GenerateDAG(std::string const &db_name, bool load_on_start,
                                                   Constellation::CertificatePtr certificate)
 {
-  if (generate)
-  {
-    return std::make_shared<ledger::DAG>(db_name, load_on_start, certificate);
-  }
-
-  return nullptr;
+  return std::make_shared<ledger::DAG>(db_name, load_on_start, certificate);
 }
 
 ledger::ShardConfigs GenerateShardsConfig(Config const &cfg, uint16_t start_port)
@@ -222,7 +216,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   , storage_(std::make_shared<StorageUnitClient>(internal_muddle_.AsEndpoint(), shard_cfgs_,
                                                  cfg_.log2_num_lanes))
   , lane_control_(internal_muddle_.AsEndpoint(), shard_cfgs_, cfg_.log2_num_lanes)
-  , dag_{GenerateDAG(cfg_.features.IsEnabled("synergetic"), "dag_db_", true, certificate)}
+  , dag_{GenerateDAG("dag_db_", true, certificate)}
   , dkg_{CreateDkgService(cfg_, certificate->identity().identifier(), muddle_.AsEndpoint())}
   , entropy_{CreateEntropy()}
   , stake_{CreateStakeManager(cfg_, *entropy_)}
@@ -235,12 +229,17 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   , chain_{cfg_.features.IsEnabled(FeatureFlags::MAIN_CHAIN_BLOOM_FILTER),
            ledger::MainChain::Mode::LOAD_PERSISTENT_DB}
   , block_packer_{cfg_.log2_num_lanes}
-  , block_coordinator_{chain_,          dag_,
-                       stake_,          *execution_manager_,
-                       *storage_,       block_packer_,
-                       *this,           cfg_.features,
-                       certificate,     cfg_.num_lanes(),
-                       cfg_.num_slices, cfg_.block_difficulty}
+  , block_coordinator_{chain_,
+                       dag_,
+                       stake_,
+                       *execution_manager_,
+                       *storage_,
+                       block_packer_,
+                       *this,
+                       certificate,
+                       cfg_.num_lanes(),
+                       cfg_.num_slices,
+                       cfg_.block_difficulty}
   , main_chain_service_{std::make_shared<MainChainRpcService>(p2p_.AsEndpoint(), chain_, trust_,
                                                               cfg_.network_mode)}
   , tx_processor_{dag_, *storage_, block_packer_, tx_status_cache_, cfg_.processor_threads}
@@ -272,20 +271,17 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   FETCH_LOG_INFO(LOGGING_NAME, "");
 
   // Enable experimental features
-  if (cfg_.features.IsEnabled("synergetic"))
-  {
-    assert(dag_);
-    dag_service_ = std::make_shared<ledger::DAGService>(muddle_.AsEndpoint(), dag_);
-    reactor_.Attach(dag_service_->GetWeakRunnable());
+  assert(dag_);
+  dag_service_ = std::make_shared<ledger::DAGService>(muddle_.AsEndpoint(), dag_);
+  reactor_.Attach(dag_service_->GetWeakRunnable());
 
-    auto syn_miner = std::make_unique<NaiveSynergeticMiner>(dag_, *storage_, certificate);
-    if (!reactor_.Attach(syn_miner->GetWeakRunnable()))
-    {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to attach synergetic miner to reactor.");
-      throw std::runtime_error("Failed to attach synergetic miner to reactor.");
-    }
-    synergetic_miner_ = std::move(syn_miner);
+  auto syn_miner = std::make_unique<NaiveSynergeticMiner>(dag_, *storage_, certificate);
+  if (!reactor_.Attach(syn_miner->GetWeakRunnable()))
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Failed to attach synergetic miner to reactor.");
+    throw std::runtime_error("Failed to attach synergetic miner to reactor.");
   }
+  synergetic_miner_ = std::move(syn_miner);
 
   // attach the services to the reactor
   reactor_.Attach(main_chain_service_->GetWeakRunnable());

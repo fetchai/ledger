@@ -78,10 +78,11 @@ ChainCodeFactory::ContractPtr ChainCodeFactory::Create(Identifier const &contrac
 
   // determine based on the identifier is the requested contract a VM based smart contract or is it
   // referencing a hard coded "chain code"
-  if (Identifier::Type::SMART_CONTRACT == contract_id.type())
+  if (Identifier::Type::SMART_OR_SYNERGETIC_CONTRACT == contract_id.type())
   {
+    auto const digest = contract_id.qualifier();
     // create the resource address for the contract
-    auto const resource = SmartContractManager::CreateAddressForContract(contract_id);
+    auto const resource = SmartContractManager::CreateAddressForContract(digest);
 
     // query the contents of the address
     auto const result = storage.Get(resource);

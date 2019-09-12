@@ -115,7 +115,6 @@ void NaiveSynergeticMiner::Mine()
       // lookup the problem data
       auto &problem_data = problem_spaces[node.contract_digest];
 
-      // add the problem data to the
       problem_data.emplace_back(node.contents);
     }
   }
@@ -164,9 +163,11 @@ SynergeticContractPtr NaiveSynergeticMiner::LoadContract(Digest const &contract_
 {
   SynergeticContractPtr contract{};
 
+  //  FETCH_LOG_WARN(LOGGING_NAME, "???LoadContract contract_digest 0x", contract_digest.ToHex());
+
   // attempt to retrieve the document stored in the database
   auto const resource_document =
-      storage_.Get(SmartContractManager::CreateAddressForSynergeticContract(contract_digest));
+      storage_.Get(SmartContractManager::CreateAddressForContract(contract_digest.ToHex()));
 
   if (!resource_document.failed)
   {

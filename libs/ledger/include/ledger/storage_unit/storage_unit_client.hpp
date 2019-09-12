@@ -56,8 +56,6 @@ public:
   using MuddleEndpoint = muddle::MuddleEndpoint;
   using Address        = MuddleEndpoint::Address;
 
-  static constexpr char const *LOGGING_NAME = "StorageUnitClient";
-
   // Construction / Destruction
   StorageUnitClient(MuddleEndpoint &muddle, ShardConfigs const &shards, uint32_t log2_num_lanes);
   StorageUnitClient(StorageUnitClient const &) = delete;
@@ -66,6 +64,17 @@ public:
 
   // Helpers
   uint32_t num_lanes() const;
+
+  StorageUnitClient &operator=(StorageUnitClient const &) = delete;
+  StorageUnitClient &operator=(StorageUnitClient &&) = delete;
+
+private:
+  using Client               = muddle::rpc::Client;
+  using ClientPtr            = std::shared_ptr<Client>;
+  using LaneIndex            = LaneIdentity::lane_type;
+  using AddressList          = std::vector<MuddleEndpoint::Address>;
+  using MerkleTree           = crypto::MerkleTree;
+  using PermanentMerkleStack = fetch::storage::ObjectStack<crypto::MerkleTree>;
 
   /// @name Storage Unit Interface
   /// @{
@@ -91,20 +100,6 @@ public:
   bool                       Lock(ShardIndex index) override;
   bool                       Unlock(ShardIndex index) override;
   /// @}
-
-  StorageUnitClient &operator=(StorageUnitClient const &) = delete;
-  StorageUnitClient &operator=(StorageUnitClient &&) = delete;
-
-private:
-  using Client               = muddle::rpc::Client;
-  using ClientPtr            = std::shared_ptr<Client>;
-  using LaneIndex            = LaneIdentity::lane_type;
-  using AddressList          = std::vector<MuddleEndpoint::Address>;
-  using MerkleTree           = crypto::MerkleTree;
-  using PermanentMerkleStack = fetch::storage::ObjectStack<crypto::MerkleTree>;
-
-  static constexpr char const *MERKLE_FILENAME_DOC   = "merkle_stack.db";
-  static constexpr char const *MERKLE_FILENAME_INDEX = "merkle_stack_index.db";
 
   Address const &LookupAddress(ShardIndex shard) const;
   Address const &LookupAddress(storage::ResourceID const &resource) const;

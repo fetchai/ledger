@@ -50,6 +50,22 @@ FunctionDecoratorKind DetermineKind(vm::Executable::Function const &fn)
     {
       kind = FunctionDecoratorKind::ON_INIT;
     }
+    else if (annotation.name == "@work")
+    {
+      kind = FunctionDecoratorKind::WORK;
+    }
+    else if (annotation.name == "@objective")
+    {
+      kind = FunctionDecoratorKind::OBJECTIVE;
+    }
+    else if (annotation.name == "@problem")
+    {
+      kind = FunctionDecoratorKind::PROBLEM;
+    }
+    else if (annotation.name == "@clear")
+    {
+      kind = FunctionDecoratorKind::CLEAR;
+    }
     else
     {
       FETCH_LOG_WARN("function_decorators", "Invalid decorator: ", annotation.name);

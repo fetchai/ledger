@@ -185,8 +185,15 @@ void DAG::AddTransaction(Transaction const &tx, DAGTypes type)
 
   new_node->type = DAGNode::DATA;
   new_node->SetContents(tx);
-  new_node->contract_digest = tx.contract_digest().address();
-  new_node->contents        = tx.data();
+  new_node->contract_digest  = tx.contract_digest().address();
+  new_node->contract_address = tx.contract_address().address();
+  new_node->contents         = tx.data();
+
+  //  FETCH_LOG_WARN(LOGGING_NAME, "??? new_node->contract_address 0x",
+  //                 new_node->contract_address.ToHex());
+  //  FETCH_LOG_WARN(LOGGING_NAME, "??? new_node->contract_digest 0x",
+  //                 new_node->contract_digest.ToHex());
+
   SetReferencesInternal(new_node);
 
   new_node->identity = certificate_->identity();

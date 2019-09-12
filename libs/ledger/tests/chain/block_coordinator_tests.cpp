@@ -96,7 +96,7 @@ protected:
     block_sink_        = std::make_unique<FakeBlockSink>();
     block_coordinator_ = std::make_unique<BlockCoordinator>(
         *main_chain_, DAGPtr{}, StakeManagerPtr{}, *execution_manager_, *storage_unit_, *packer_,
-        *block_sink_, FeatureFlags{}, signer, NUM_LANES, NUM_SLICES, 1u);
+        *block_sink_, signer, NUM_LANES, NUM_SLICES, 1u);
 
     block_coordinator_->SetBlockPeriod(std::chrono::seconds{10});
     block_coordinator_->EnableMining(true);
@@ -993,7 +993,7 @@ protected:
     block_sink_        = std::make_unique<FakeBlockSink>();
     block_coordinator_ = std::make_unique<BlockCoordinator>(
         *main_chain_, DAGPtr{}, StakeManagerPtr{}, *execution_manager_, *storage_unit_, *packer_,
-        *block_sink_, FeatureFlags{}, signer, NUM_LANES, NUM_SLICES, 1u);
+        *block_sink_, signer, NUM_LANES, NUM_SLICES, 1u);
 
     block_coordinator_->SetBlockPeriod(std::chrono::seconds{10});
     block_coordinator_->EnableMining(true);

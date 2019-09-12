@@ -70,7 +70,8 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
     }
 
     // lookup (or create) the solution queue
-    auto &work_item = work_map[work->contract_digest()];
+    auto &work_item = work_map[work->contract_digest().ToHex()];
+
     if (!work_item)
     {
       work_item = std::make_shared<WorkItem>();
@@ -80,7 +81,7 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
     work_item->work_queue.push(std::move(work));
   }
 
-  // Step 2. Loop through previous epochs data in order form the problem data
+  // Step 2. Loop through previous epochs data in order to form the problem data
   DAGNode node{};
   for (auto const &digest : previous_epoch.data_nodes)
   {
@@ -99,7 +100,7 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
     }
 
     // attempt to lookup the contract being referenced
-    auto it = work_map.find(node.contract_digest);
+    auto it = work_map.find(node.contract_digest.ToHex());
     if (it == work_map.end())
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup references contract: 0x",
@@ -129,7 +130,7 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
   return SUCCESS;
 }
 
-bool SynergeticExecutionManager::ValidateWorkAndUpdateState(uint64_t block, std::size_t num_lanes)
+bool SynergeticExecutionManager::ValidateWorkAndUpdateState(std::size_t num_lanes)
 {
   // get the current solution stack
   WorkQueueStack solution_stack;
@@ -146,8 +147,8 @@ bool SynergeticExecutionManager::ValidateWorkAndUpdateState(uint64_t block, std:
     solution_stack.pop_back();
 
     // dispatch the work
-    threads_.Dispatch([this, work_item, block, num_lanes] {
-      ExecuteItem(work_item->work_queue, work_item->problem_data, block, num_lanes);
+    threads_.Dispatch([this, work_item, num_lanes] {
+      ExecuteItem(work_item->work_queue, work_item->problem_data, num_lanes);
     });
   }
 
@@ -158,7 +159,7 @@ bool SynergeticExecutionManager::ValidateWorkAndUpdateState(uint64_t block, std:
 }
 
 void SynergeticExecutionManager::ExecuteItem(WorkQueue &queue, ProblemData const &problem_data,
-                                             uint64_t block, std::size_t num_lanes)
+                                             std::size_t num_lanes)
 {
   ExecutorPtr executor;
 
@@ -170,7 +171,7 @@ void SynergeticExecutionManager::ExecuteItem(WorkQueue &queue, ProblemData const
   }
 
   assert(static_cast<bool>(executor));
-  executor->Verify(queue, problem_data, block, num_lanes);
+  executor->Verify(queue, problem_data, num_lanes);
 
   // return the executor to the stack
   FETCH_LOCK(lock_);

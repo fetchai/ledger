@@ -218,7 +218,7 @@ void Identifier::UpdateType()
 
     if (is_smart_contract)
     {
-      type_ = Type::SMART_CONTRACT;
+      type_ = Type::SMART_OR_SYNERGETIC_CONTRACT;
     }
   }
 }
@@ -363,7 +363,7 @@ Identifier::ConstByteArray Identifier::qualifier() const
   case Type::NORMAL:
     identifier = full_name();
     break;
-  case Type::SMART_CONTRACT:
+  case Type::SMART_OR_SYNERGETIC_CONTRACT:
     identifier = tokens_[0];
     break;
   }

@@ -187,8 +187,8 @@ public:
   BlockCoordinator(MainChain &chain, DAGPtr dag, StakeManagerPtr stake_mgr,
                    ExecutionManagerInterface &execution_manager, StorageUnitInterface &storage_unit,
                    BlockPackerInterface &packer, BlockSinkInterface &block_sink,
-                   core::FeatureFlags const &features, ProverPtr const &prover,
-                   std::size_t num_lanes, std::size_t num_slices, std::size_t block_difficulty);
+                   ProverPtr const &prover, std::size_t num_lanes, std::size_t num_slices,
+                   std::size_t block_difficulty);
   BlockCoordinator(BlockCoordinator const &) = delete;
   BlockCoordinator(BlockCoordinator &&)      = delete;
   ~BlockCoordinator()                        = default;
