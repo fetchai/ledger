@@ -18,9 +18,7 @@
 
 #include "core/bloom_filter.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/feature_flags.hpp"
 #include "crypto/ecdsa.hpp"
-#include "crypto/sha256.hpp"
 #include "fake_block_sink.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/block_coordinator.hpp"
@@ -29,7 +27,6 @@
 #include "ledger/chain/transaction_layout.hpp"
 #include "ledger/consensus/stake_manager_interface.hpp"
 #include "ledger/testing/block_generator.hpp"
-#include "ledger/transaction_status_cache.hpp"
 #include "mock_block_packer.hpp"
 #include "mock_execution_manager.hpp"
 #include "mock_storage_unit.hpp"
@@ -49,13 +46,6 @@ using namespace fetch::ledger;
 
 using fetch::crypto::ECDSASigner;
 using fetch::ledger::testing::BlockGenerator;
-using fetch::core::FeatureFlags;
-
-using ::testing::_;
-using ::testing::AnyNumber;
-using ::testing::InSequence;
-using ::testing::NiceMock;
-using ::testing::StrictMock;
 
 using BlockCoordinatorPtr = std::unique_ptr<BlockCoordinator>;
 using MainChainPtr        = std::unique_ptr<MainChain>;
@@ -69,6 +59,12 @@ using State               = fetch::ledger::BlockCoordinator::State;
 using AddressPtr          = std::unique_ptr<Address>;
 using DAGPtr              = BlockCoordinator::DAGPtr;
 using StakeManagerPtr     = std::shared_ptr<fetch::ledger::StakeManagerInterface>;
+
+using ::testing::_;
+using ::testing::AnyNumber;
+using ::testing::InSequence;
+using ::testing::NiceMock;
+using ::testing::StrictMock;
 
 Digest GENESIS_DIGEST =
     fetch::byte_array::FromBase64("0+++++++++++++++++Genesis+++++++++++++++++0=");
