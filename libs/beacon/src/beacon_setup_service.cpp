@@ -227,7 +227,8 @@ BeaconSetupService::State BeaconSetupService::OnReset()
   }
   else
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Not aborting DKG. Round: ", beacon_->aeon.round_start, " abort level: ", abort_below_);
+    FETCH_LOG_INFO(LOGGING_NAME, "Not aborting DKG. Round: ", beacon_->aeon.round_start,
+                   " abort level: ", abort_below_);
   }
 
   // The dkg has to be reset to 0 to clear old messages,
@@ -339,7 +340,14 @@ uint64_t BeaconSetupService::PreDKGThreshold()
 uint32_t BeaconSetupService::QualSize()
 {
   // Set to 2/3n for now
-  return static_cast<uint32_t>(beacon_->aeon.members.size() - beacon_->aeon.members.size() / 3);
+  uint32_t proposed_qual_size =
+      static_cast<uint32_t>(beacon_->aeon.members.size() - beacon_->aeon.members.size() / 3);
+  if (proposed_qual_size <= beacon_->manager.polynomial_degree())
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Default minimum qual size below threshold. Set to threshold");
+    proposed_qual_size = beacon_->manager.polynomial_degree() + 1;
+  }
+  return proposed_qual_size;
 }
 
 template <typename T>

@@ -310,7 +310,7 @@ void GenesisFileCreator::LoadConsensus(Variant const &object)
       }
     }
 
-    consensus_->stake()->Reset(*snapshot);
+    consensus_->Reset(*snapshot);
   }
   else
   {
