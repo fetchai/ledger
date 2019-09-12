@@ -142,6 +142,31 @@ TEST_F(MathTests, sqrt_test)
   ASSERT_EQ(result, gt);
 }
 
+TEST_F(MathTests, tensor_squeeze_test)
+{
+    static char const *tensor_serialiase_src = R"(
+    function main() : Tensor
+      var tensor_shape = Array<UInt64>(3);
+      tensor_shape[0] = 4u64;
+      tensor_shape[1] = 1u64;
+      tensor_shape[2] = 4u64;
+      var x = Tensor(tensor_shape);
+      var squeezed_x = x.squeeze();
+      return squeezed_x;
+    endfunction
+  )";
+
+  Variant res;
+  ASSERT_TRUE(toolkit.Compile(tensor_serialiase_src));
+  ASSERT_TRUE(toolkit.Run(&res));
+
+  auto const tensor = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  fetch::math::Tensor<DataType> gt({4, 4});
+
+  EXPECT_TRUE(tensor->GetTensor().shape() == gt.shape());
+}
+
+
 TEST_F(MathTests, tensor_state_test)
 {
   static char const *tensor_serialiase_src = R"(
