@@ -20,6 +20,11 @@
 #ifdef __AVX2__
 
 #include "vectorise/arch/avx2/info.hpp"
+
+#if !defined(__clang) && (__GNUC__ < 8)
+#define _mm256_set_m128i(v0, v1) _mm256_insertf128_si256(_mm256_castsi128_si256(v1), (v0), 1)
+#endif
+
 #include "vectorise/arch/avx2/register_double.hpp"
 #include "vectorise/arch/avx2/register_fixed32.hpp"
 #include "vectorise/arch/avx2/register_fixed64.hpp"
