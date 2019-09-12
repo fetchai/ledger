@@ -20,8 +20,7 @@
 #include "logging/logging.hpp"
 #include "oef-base/comms/IOefTaskFactory.hpp"
 #include "oef-core/agents/Agents.hpp"
-
-#include "agent.pb.h"
+#include "oef-messages/agent.hpp"
 
 namespace google {
 namespace protobuf {

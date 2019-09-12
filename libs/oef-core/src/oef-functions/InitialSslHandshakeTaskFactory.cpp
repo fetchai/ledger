@@ -16,15 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include "oef-core/oef-functions/InitialSslHandshakeTaskFactory.hpp"
 #include "oef-core/agents/Agent.hpp"
 #include "oef-core/comms/EndpointSSL.hpp"
 #include "oef-core/comms/OefAgentEndpoint.hpp"
-#include "oef-core/oef-functions/InitialSslHandshakeTaskFactory.hpp"
 #include "oef-core/oef-functions/OefFunctionsTaskFactory.hpp"
 #include "oef-core/oef-functions/OefHeartbeatTask.hpp"
 #include "oef-core/tasks-base/TSendProtoTask.hpp"
-
-#include "agent.pb.h"
+#include "oef-messages/agent.hpp"
 
 #include <fstream>
 #include <string>

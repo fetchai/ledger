@@ -19,10 +19,10 @@
 #include "oef-core/oef-functions/InitialHandshakeTaskFactory.hpp"
 #include "oef-core/oef-functions/OefHeartbeatTask.hpp"
 
-#include "agent.pb.h"
 #include "oef-core/comms/OefAgentEndpoint.hpp"
 #include "oef-core/oef-functions/OefFunctionsTaskFactory.hpp"
 #include "oef-core/tasks-base/TSendProtoTask.hpp"
+#include "oef-messages/agent.hpp"
 
 void InitialHandshakeTaskFactory::processMessage(ConstCharArrayBuffer &data)
 {

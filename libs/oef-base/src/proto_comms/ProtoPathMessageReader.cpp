@@ -20,7 +20,7 @@
 #include "oef-base/comms/Endpoint.hpp"
 #include "oef-base/monitoring/Counter.hpp"
 #include "oef-base/proto_comms/ProtoMessageEndpoint.hpp"
-#include "transport.pb.h"
+#include "oef-messages/transport.hpp"
 
 static Counter bytes_consumed_counter("mt-core.comms.protopath.read.bytes_consumed");
 static Counter bytes_requested_counter("mt-core.comms.protopath.read.bytes_requested");
@@ -57,7 +57,8 @@ ProtoPathMessageReader::consumed_needed_pair ProtoPathMessageReader::checkForMes
 
     if (chars.remainingData() < head_size)
     {
-      needed = head_size - chars.remainingData();
+      needed =
+          static_cast<std::size_t>(head_size) - static_cast<std::size_t>(chars.remainingData());
       break;
     }
 
@@ -79,22 +80,24 @@ ProtoPathMessageReader::consumed_needed_pair ProtoPathMessageReader::checkForMes
       break;
     }
 
-    if (chars.remainingData() < body_size)
+    if (static_cast<std::size_t>(chars.remainingData()) < body_size)
     {
-      needed = body_size - chars.remainingData();
+      needed =
+          static_cast<std::size_t>(body_size) - static_cast<std::size_t>(chars.remainingData());
       break;
     }
 
     TransportHeader leader;
 
-    auto         header_chars = ConstCharArrayBuffer(chars, chars.current + leader_size);
+    auto header_chars = ConstCharArrayBuffer(
+        chars, static_cast<std::size_t>(chars.current) + static_cast<std::size_t>(leader_size));
     std::istream h_is(&header_chars);
     if (!leader.ParseFromIstream(&h_is))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to parse header!");
       throw std::invalid_argument("Proto deserialization refuses incoming invalid leader message!");
     }
-    chars.advance(leader_size);
+    chars.advance(static_cast<int32_t>(leader_size));
 
     consumed += head_size;
     consumed += body_size;
@@ -130,7 +133,8 @@ ProtoPathMessageReader::consumed_needed_pair ProtoPathMessageReader::checkForMes
         messages_handled_counter++;
         Uri uri(leader.uri());
         onComplete(leader.status().success(), leader.id(), std::move(uri),
-                   ConstCharArrayBuffer(chars, chars.current + payload_size));
+                   ConstCharArrayBuffer(chars, static_cast<uint32_t>(chars.current) +
+                                                   static_cast<uint32_t>(payload_size)));
       }
       else
       {
@@ -138,7 +142,7 @@ ProtoPathMessageReader::consumed_needed_pair ProtoPathMessageReader::checkForMes
       }
     }
 
-    chars.advance(payload_size);
+    chars.advance(static_cast<int32_t>(payload_size));
   }
   bytes_requested_counter += needed;
   return consumed_needed_pair(consumed, needed);

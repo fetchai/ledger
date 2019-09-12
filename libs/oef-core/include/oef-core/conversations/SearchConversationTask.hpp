@@ -20,7 +20,6 @@
 #include <memory>
 #include <utility>
 
-#include "agent.pb.h"
 #include "logging/logging.hpp"
 #include "oef-base/conversation/OutboundConversation.hpp"
 #include "oef-base/conversation/OutboundConversations.hpp"
@@ -29,6 +28,7 @@
 #include "oef-core/comms/OefAgentEndpoint.hpp"
 #include "oef-core/conversations/SearchConversationTypes.hpp"
 #include "oef-core/tasks-base/TSendProtoTask.hpp"
+#include "oef-messages/agent.hpp"
 
 template <typename IN_PROTO, typename OUT_PROTO, typename REQUEST_PROTO, typename IMPL_CLASS>
 class SearchConversationTask : public StateMachineTask<IMPL_CLASS>

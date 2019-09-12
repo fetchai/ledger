@@ -96,9 +96,9 @@ public:
     }
     std::cerr << "GOT: " << uri << std::endl;
     std::cerr << "SIZE: " << vec.size() << std::endl;
-    for (int i = 0; i < vec.size(); ++i)
+    for (std::size_t i = 0; i < vec.size(); ++i)
     {
-      std::cerr << i << ": " << vec[i] << std::endl;
+      std::cerr << i << ": " << vec[static_cast<std::size_t>(i)] << std::endl;
     }
     empty      = false;
     protocol   = vec[0].substr(0, vec[0].size() - 1);

@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "oef-core/conversations/SearchQueryTask.hpp"
 #include "oef-base/conversation/OutboundConversation.hpp"
 #include "oef-base/conversation/OutboundConversations.hpp"
 #include "oef-base/monitoring/Counter.hpp"
-#include "oef-core/conversations/SearchQueryTask.hpp"
 #include "oef-core/tasks/utils.hpp"
-#include "search_response.pb.h"
+#include "oef-messages/search_response.hpp"
 
 static Counter tasks_created("mt-core.search.query.tasks_created");
 static Counter tasks_resolved("mt-core.search.query.tasks_resolved");
@@ -77,7 +77,7 @@ SearchQueryTask::StateResult SearchQueryTask::handleResponse(void)
       std::static_pointer_cast<fetch::oef::pb::SearchResponse>(conversation->getReply(0));
 
   auto answer = std::make_shared<OUT_PROTO>();
-  answer->set_answer_id(msg_id_);
+  answer->set_answer_id(static_cast<int32_t>(msg_id_));
 
   if (ttl_ == 1)
   {

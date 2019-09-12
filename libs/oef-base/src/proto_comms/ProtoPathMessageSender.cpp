@@ -21,9 +21,8 @@
 #include "oef-base/monitoring/Counter.hpp"
 #include "oef-base/proto_comms/ProtoMessageEndpoint.hpp"
 #include "oef-base/utils/Uri.hpp"
-#include "transport.pb.h"
-
 #include "oef-messages/fetch_protobuf.hpp"
+#include "oef-messages/transport.hpp"
 
 static Counter bytes_produced_counter("mt-core.comms.protopath.send.bytes_produced");
 static Counter bytes_requested_counter("mt-core.comms.protopath.send.bytes_requested");

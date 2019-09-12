@@ -33,7 +33,7 @@ public:
   virtual bool        perform(const KarmaAccount &identifier, const std::string &action,
                               bool force = false);
   virtual bool        couldPerform(const KarmaAccount &identifier, const std::string &action);
-  virtual std::string getBalance(const KarmaAccount &identifier)
+  virtual std::string getBalance(const KarmaAccount & /*identifier*/)
   {
     return "ACCEPT ALL";
   }

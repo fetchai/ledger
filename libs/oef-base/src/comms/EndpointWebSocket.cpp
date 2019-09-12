@@ -28,7 +28,7 @@
 static Gauge wsep_count("mt-core.network.EndpointWebSocket");
 
 template <typename TXType>
-EndpointWebSocket<TXType>::EndpointWebSocket(asio::io_context &io_context,
+EndpointWebSocket<TXType>::EndpointWebSocket(asio::io_context & /*io_context*/,
                                              std::size_t sendBufferSize, std::size_t readBufferSize,
                                              ConfigMap configMap)
   : EndpointBase<TXType>(sendBufferSize, readBufferSize, configMap)
@@ -97,7 +97,7 @@ void EndpointWebSocket<TXType>::async_write()
 }
 
 template <typename TXType>
-void EndpointWebSocket<TXType>::async_read(const std::size_t &bytes_needed)
+void EndpointWebSocket<TXType>::async_read(const std::size_t & /*bytes_needed*/)
 {
   /*
   auto space    = readBuffer.getSpaceBuffers();
@@ -107,10 +107,9 @@ void EndpointWebSocket<TXType>::async_read(const std::size_t &bytes_needed)
 }
 
 template <typename TXType>
-void EndpointWebSocket<TXType>::async_read_at_least(const std::size_t &bytes_needed,
-                                                    std::size_t        bytes_read,
-                                                    std::vector<RingBuffer::mutable_buffer> &space,
-                                                    std::shared_ptr<StateType> my_state)
+void EndpointWebSocket<TXType>::async_read_at_least(
+    const std::size_t & /*bytes_needed*/, std::size_t /*bytes_read*/,
+    std::vector<RingBuffer::mutable_buffer> & /*space*/, std::shared_ptr<StateType> /*my_state*/)
 {
   /*
   if (*state != this->RUNNING_ENDPOINT)
@@ -140,7 +139,7 @@ void EndpointWebSocket<TXType>::async_read_at_least(const std::size_t &bytes_nee
 }
 
 template <typename TXType>
-void EndpointWebSocket<TXType>::on_accept(std::error_code const &ec)
+void EndpointWebSocket<TXType>::on_accept(std::error_code const & /*ec*/)
 {
   /*
   FETCH_LOG_WARN(LOGGING_NAME, "WebSocket accepted");
@@ -187,11 +186,12 @@ void EndpointWebSocket<TXType>::on_accept(std::error_code const &ec)
 }
 
 template <typename TXType>
-bool EndpointWebSocket<TXType>::is_eof(std::error_code const &ec) const
+bool EndpointWebSocket<TXType>::is_eof(std::error_code const & /*ec*/) const
 {
   /*
   return ec == beast::websocket::error::closed;
   */
+  return false;
 }
 
 template class EndpointWebSocket<std::shared_ptr<google::protobuf::Message>>;

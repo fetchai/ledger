@@ -26,14 +26,13 @@
 #include "oef-core/conversations/SearchAddressUpdateTask.hpp"
 
 #include "oef-base/conversation/OutboundConversationWorkerTask.hpp"
-#include "search_message.pb.h"
-#include "search_query.pb.h"
-#include "search_remove.pb.h"
-#include "search_response.pb.h"
-#include "search_transport.pb.h"
-#include "search_update.pb.h"
-
 #include "oef-messages/fetch_protobuf.hpp"
+#include "oef-messages/search_message.hpp"
+#include "oef-messages/search_query.hpp"
+#include "oef-messages/search_remove.hpp"
+#include "oef-messages/search_response.hpp"
+#include "oef-messages/search_transport.hpp"
+#include "oef-messages/search_update.hpp"
 
 std::map<unsigned long, std::shared_ptr<OutboundConversation>> ident2conversation;
 
@@ -89,8 +88,8 @@ protected:
 // ------------------------------------------------------------------------------------------
 
 OutboundSearchConversationCreator::OutboundSearchConversationCreator(
-    const std::string &core_key, const Uri &core_uri, const Uri &search_uri, Core &core,
-    std::shared_ptr<OutboundConversations> outbounds)
+    const std::string & /*core_key*/, const Uri & /*core_uri*/, const Uri & /*search_uri*/,
+    Core & /*core*/, std::shared_ptr<OutboundConversations> /*outbounds*/)
 {
   // TODO: Not working
   //  worker = std::make_shared<OutboundSearchConversationWorkerTask>(search_uri, outbounds,

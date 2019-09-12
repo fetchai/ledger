@@ -18,7 +18,6 @@
 
 #include "oef-core/oef-functions/OefFunctionsTaskFactory.hpp"
 
-#include "agent.pb.h"
 #include "logging/logging.hpp"
 #include "oef-base/conversation/OutboundConversations.hpp"
 #include "oef-base/monitoring/Counter.hpp"
@@ -33,11 +32,12 @@
 #include "oef-core/karma/XKarma.hpp"
 #include "oef-core/tasks-base/TSendProtoTask.hpp"
 #include "oef-core/tasks/AgentToAgentMessageTask.hpp"
-#include "search_query.pb.h"
-#include "search_remove.pb.h"
-#include "search_response.pb.h"
-#include "search_update.pb.h"
-#include <boost/smart_ptr/intrusive_ptr.hpp>
+#include "oef-messages/agent.hpp"
+#include "oef-messages/search_query.hpp"
+#include "oef-messages/search_remove.hpp"
+#include "oef-messages/search_response.hpp"
+#include "oef-messages/search_update.hpp"
+#include <boost/smart_ptr/intrusive_ptr.hpp>  // TODO: Get rid of this
 #include <random>
 #include <stdexcept>
 
@@ -63,7 +63,8 @@ void OefFunctionsTaskFactory::endpointClosed()
 void OefFunctionsTaskFactory::processMessage(ConstCharArrayBuffer &data)
 {
   auto envelope = fetch::oef::pb::Envelope();
-  IOefTaskFactory::read(envelope, data, data.size - data.current);
+  IOefTaskFactory::read(
+      envelope, data, static_cast<std::size_t>(data.size) - static_cast<std::size_t>(data.current));
 
   auto    payload_case = envelope.payload_case();
   int32_t msg_id       = envelope.msg_id();

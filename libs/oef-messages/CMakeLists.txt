@@ -21,6 +21,8 @@ include_directories(${Protobuf_INCLUDE_DIRS})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 # TODO: Work out how to add dependencies between each other
+set(CMAKE_CXX_FLAGS "")
+set(CMAKE_CXX_STANDARD 14)
 protobuf_generate_cpp(PROTO_SRCS
                       PROTO_HDRS
                       protos/search_message.proto

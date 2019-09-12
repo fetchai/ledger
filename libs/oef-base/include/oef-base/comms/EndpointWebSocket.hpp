@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/macros.hpp"
 #include "logging/logging.hpp"
 #include "oef-base/comms/EndpointBase.hpp"
 #include "oef-base/comms/RingBuffer.hpp"
@@ -58,7 +59,9 @@ public:
 
   virtual Socket &socket() override
   {
-    return *static_cast<Socket *>(nullptr);  // TODO: web_socket_.next_layer();
+    Socket *ptr = nullptr;
+    FETCH_UNUSED(ptr);
+    return *ptr;  // TODO: web_socket_.next_layer();
   }
 
   virtual void close() override;

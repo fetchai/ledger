@@ -69,8 +69,8 @@ void OefSearchEndpoint::setup()
 
   auto myGroupId = getIdent();
 
-  endpoint->setOnCompleteHandler([myGroupId, myself_wp](bool success, unsigned long id, Uri uri,
-                                                        ConstCharArrayBuffer buffers) {
+  endpoint->setOnCompleteHandler([myGroupId, myself_wp](bool /*success*/, unsigned long /*id*/,
+                                                        Uri uri, ConstCharArrayBuffer buffers) {
     if (auto myself_sp = myself_wp.lock())
     {
       Task::setThreadGroupId(myGroupId);
@@ -79,7 +79,7 @@ void OefSearchEndpoint::setup()
     }
   });
 
-  endpoint->setOnErrorHandler([myGroupId, myself_wp](std::error_code const &ec) {
+  endpoint->setOnErrorHandler([myGroupId, myself_wp](std::error_code const & /*ec*/) {
     if (auto myself_sp = myself_wp.lock())
     {
       // myself_sp -> factory -> endpointClosed();
@@ -97,7 +97,7 @@ void OefSearchEndpoint::setup()
     }
   });
 
-  endpoint->setOnProtoErrorHandler([myGroupId, myself_wp](const std::string &message) {
+  endpoint->setOnProtoErrorHandler([myGroupId, myself_wp](const std::string & /*message*/) {
     if (auto myself_sp = myself_wp.lock())
     {
       // myself_sp -> factory -> endpointClosed();

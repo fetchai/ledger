@@ -69,8 +69,8 @@ void Monitoring::report(ReportFunc func)
   }
 }
 
-void Monitoring::max(IdType id, CountType value)
-{}
+void Monitoring::max(IdType /*id*/, CountType /*value*/)
+{}  // TODO: Useless function
 
 Monitoring::CountType Monitoring::get(IdType id)
 {

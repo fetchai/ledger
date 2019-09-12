@@ -69,7 +69,7 @@ protected:
     {
       throw std::invalid_argument("Failed proto deserialisation.");
     }
-    if (eaten != expected_size)
+    if (static_cast<std::size_t>(eaten) != expected_size)
     {
       throw std::invalid_argument(std::string("Proto deserialisation used ") +
                                   std::to_string(eaten) + " bytes instead of " +

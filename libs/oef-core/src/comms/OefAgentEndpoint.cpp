@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "agent.pb.h"
+#include "oef-core/comms/OefAgentEndpoint.hpp"
 #include "oef-base/comms/Endianness.hpp"
 #include "oef-base/comms/IOefTaskFactory.hpp"
 #include "oef-base/monitoring/Counter.hpp"
@@ -25,10 +25,10 @@
 #include "oef-base/proto_comms/ProtoMessageSender.hpp"
 #include "oef-base/threading/Task.hpp"
 #include "oef-base/threading/Taskpool.hpp"
-#include "oef-core/comms/OefAgentEndpoint.hpp"
 #include "oef-core/karma/IKarmaPolicy.hpp"
 #include "oef-core/karma/XKarma.hpp"
 #include "oef-core/tasks-base/TSendProtoTask.hpp"
+#include "oef-messages/agent.hpp"
 
 static Gauge   count("mt-core.network.OefAgentEndpoint");
 static Counter hb_sent("mt-core.network.OefAgentEndpoint.heartbeats.sent");
@@ -94,7 +94,7 @@ void OefAgentEndpoint::setup(IKarmaPolicy *karmaPolicy)
     }
   });
 
-  endpoint->setOnErrorHandler([myGroupId, myself_wp](std::error_code const &ec) {
+  endpoint->setOnErrorHandler([myGroupId, myself_wp](std::error_code const & /*ec*/) {
     if (auto myself_sp = myself_wp.lock())
     {
       myself_sp->karma.perform("error.comms");
@@ -114,7 +114,7 @@ void OefAgentEndpoint::setup(IKarmaPolicy *karmaPolicy)
     }
   });
 
-  endpoint->setOnProtoErrorHandler([myGroupId, myself_wp](const std::string &message) {
+  endpoint->setOnProtoErrorHandler([myGroupId, myself_wp](const std::string & /*message*/) {
     if (auto myself_sp = myself_wp.lock())
     {
       myself_sp->karma.perform("error.proto");

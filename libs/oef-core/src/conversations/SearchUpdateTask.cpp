@@ -16,13 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "oef-core/conversations/SearchUpdateTask.hpp"
 #include "oef-base/conversation/OutboundConversation.hpp"
 #include "oef-base/conversation/OutboundConversations.hpp"
 #include "oef-base/monitoring/Counter.hpp"
 #include "oef-base/utils/Uri.hpp"
-#include "oef-core/conversations/SearchUpdateTask.hpp"
 #include "oef-core/tasks/utils.hpp"
-#include "search_response.pb.h"
+#include "oef-messages/search_response.hpp"
 
 static Counter update_task_created("mt-core.search.update.tasks_created");
 static Counter update_task_errored("mt-core.search.update.tasks_errored");
@@ -75,7 +75,7 @@ SearchUpdateTask::StateResult SearchUpdateTask::handleResponse(void)
   if (response->status() != fetch::oef::pb::UpdateResponse_ResponseType_SUCCESS)
   {
     auto answer = std::make_shared<OUT_PROTO>();
-    answer->set_answer_id(msg_id_);
+    answer->set_answer_id(static_cast<int32_t>(msg_id_));
     auto error = answer->mutable_oef_error();
     error->set_operation(fetch::oef::pb::Server_AgentMessage_OEFError::REGISTER_SERVICE);
     FETCH_LOG_WARN(LOGGING_NAME, "Sending error ", error, " ", agent_uri_);

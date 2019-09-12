@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "oef-core/conversations/SearchRemoveTask.hpp"
 #include "oef-base/conversation/OutboundConversation.hpp"
 #include "oef-base/conversation/OutboundConversations.hpp"
 #include "oef-base/monitoring/Counter.hpp"
-#include "oef-core/conversations/SearchRemoveTask.hpp"
 #include "oef-core/tasks/utils.hpp"
-#include "search_response.pb.h"
+#include "oef-messages/search_response.hpp"
 
 static Counter remove_task_created("mt-core.search.remove.tasks_created");
 static Counter remove_task_errored("mt-core.search.remove.tasks_errored");
@@ -69,7 +69,7 @@ SearchRemoveTask::StateResult SearchRemoveTask::handleResponse(void)
   if (response->status() != fetch::oef::pb::RemoveResponse_ResponseType_SUCCESS)
   {
     std::shared_ptr<OUT_PROTO> answer = std::make_shared<OUT_PROTO>();
-    answer->set_answer_id(msg_id_);
+    answer->set_answer_id(static_cast<int32_t>(msg_id_));
     auto error = answer->mutable_oef_error();
     error->set_operation(fetch::oef::pb::Server_AgentMessage_OEFError::UNREGISTER_SERVICE);
     FETCH_LOG_WARN(LOGGING_NAME, "Sending error ", error, " to ", agent_uri_);

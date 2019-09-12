@@ -67,8 +67,8 @@ public:
 
   void create_message(int32_t message_id, OEFURI::URI uri, const std::string &public_key)
   {
-    message_pb_  = std::make_shared<Message>();
-    uint32_t did = pb_->dialogue_id();
+    message_pb_ = std::make_shared<Message>();
+    int32_t did = pb_->dialogue_id();
     message_pb_->set_answer_id(message_id);
     message_pb_->set_source_uri(pb_->source_uri());
     message_pb_->set_target_uri(pb_->target_uri());
@@ -77,7 +77,7 @@ public:
       message_pb_->set_target_uri(uri.toString());
     }
     auto content = message_pb_->mutable_content();
-    content->set_dialogue_id(did);
+    content->set_dialogue_id(static_cast<int32_t>(did));
     content->set_origin(public_key);
     if (pb_->has_content())
     {

@@ -128,7 +128,7 @@ bool OutboundConversationWorkerTask::connect()
 }
 
 OutboundConversationWorkerTask::WorkloadProcessed OutboundConversationWorkerTask::process(
-    WorkloadP workload, WorkloadState state)
+    WorkloadP workload, WorkloadState /*state*/)
 {
   FETCH_LOG_WARN(LOGGING_NAME, "process search conversation...");
   if (!ep || !ep->connected())

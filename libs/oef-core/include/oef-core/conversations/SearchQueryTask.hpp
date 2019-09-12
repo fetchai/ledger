@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "agent.pb.h"
 #include "oef-core/conversations/SearchConversationTask.hpp"
-#include "search_query.pb.h"
+#include "oef-messages/agent.hpp"
+#include "oef-messages/search_query.hpp"
 
 class OutboundConversations;
 class OutboundConversation;

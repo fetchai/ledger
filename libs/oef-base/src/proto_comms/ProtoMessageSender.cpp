@@ -47,7 +47,7 @@ ProtoMessageSender::consumed_needed_pair ProtoMessageSender::checkForSpace(
       }
       Lock lock(mutex);
 
-      uint32_t body_size = txq.front()->ByteSize();
+      uint32_t body_size = static_cast<uint32_t>(txq.front()->ByteSize());
       uint32_t head_size = sizeof(uint32_t);
       uint32_t mesg_size = body_size + head_size;
       if (chars.remainingSpace() < mesg_size)

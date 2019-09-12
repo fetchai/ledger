@@ -29,7 +29,7 @@
 #include "oef-base/threading/Threadpool.hpp"
 
 #include "mt-search/comms/src/cpp/SearchTaskFactory.hpp"
-#include "search_config.pb.h"
+#include "oef-messages/search_config.hpp"
 
 class Core;
 class OefSearchEndpoint;

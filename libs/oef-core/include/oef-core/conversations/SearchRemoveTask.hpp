@@ -17,10 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "agent.pb.h"
 #include "oef-core/conversations/SearchConversationTask.hpp"
-#include "search_remove.pb.h"
-#include "search_response.pb.h"
+#include "oef-messages/agent.hpp"
+#include "oef-messages/search_remove.hpp"
+#include "oef-messages/search_response.hpp"
 
 class OutboundConversations;
 class OutboundConversation;

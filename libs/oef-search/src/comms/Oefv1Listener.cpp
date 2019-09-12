@@ -31,7 +31,7 @@
 template <template <typename> class EndpointType>
 Oefv1Listener<EndpointType>::Oefv1Listener(std::shared_ptr<Core> core, int port,
                                            ConfigMap endpointConfig)
-  : listener(*core, port)
+  : listener(*core, static_cast<uint16_t>(port))
 {
   this->port           = port;
   this->endpointConfig = std::move(endpointConfig);

@@ -30,8 +30,7 @@
 #include "oef-core/agents/Agents.hpp"
 #include "oef-core/comms/OefListenerStarterTask.hpp"
 #include "oef-core/comms/public_key_utils.hpp"
-
-#include "config.pb.h"
+#include "oef-messages/config.hpp"
 
 class Core;
 class IKarmaPolicy;

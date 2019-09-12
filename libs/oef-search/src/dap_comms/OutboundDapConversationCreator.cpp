@@ -28,8 +28,8 @@
 #include "oef-messages/fetch_protobuf.hpp"
 
 OutboundDapConversationCreator::OutboundDapConversationCreator(
-    size_t thread_group_id, const Uri &dap_uri, Core &core,
-    std::shared_ptr<OutboundConversations> outbounds)
+    size_t thread_group_id, const Uri & /*dap_uri*/, Core & /*core*/,
+    std::shared_ptr<OutboundConversations> /*outbounds*/)
 {
   // TODO: Does not work
   // worker = std::make_shared<OutboundConversationWorkerTask>(core, dap_uri, outbounds,
@@ -46,7 +46,7 @@ OutboundDapConversationCreator::~OutboundDapConversationCreator()
 }
 
 std::shared_ptr<OutboundConversation> OutboundDapConversationCreator::start(
-    const Uri &target_path, std::shared_ptr<google::protobuf::Message> initiator)
+    const Uri & /*target_path*/, std::shared_ptr<google::protobuf::Message> /*initiator*/)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Starting search conversation...");
   auto this_id = ident++;

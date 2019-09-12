@@ -18,7 +18,7 @@
 
 #include "oef-core/oef-functions/OefHeartbeatTask.hpp"
 
-#include "agent.pb.h"
+#include "oef-messages/agent.hpp"
 #include <iostream>
 #include <string>
 

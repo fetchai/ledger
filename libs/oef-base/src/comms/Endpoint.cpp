@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "oef-base/comms/Endpoint.hpp"
+#include "core/macros.hpp"
 #include "logging/logging.hpp"
 #include "oef-base/monitoring/Gauge.hpp"
 #include "oef-base/utils/Uri.hpp"
@@ -48,6 +49,7 @@ void Endpoint<TXType>::async_write()
   int i = 0;
   for (auto &d : data)
   {
+    FETCH_UNUSED(d);
     FETCH_LOG_DEBUG(LOGGING_NAME, "Send buffer ", i, "=", d.size(),
                     " bytes on thr=", std::this_thread::get_id());
     ++i;

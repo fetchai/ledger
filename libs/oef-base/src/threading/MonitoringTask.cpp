@@ -16,16 +16,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "oef-base/threading/MonitoringTask.hpp"
-
-#include <fstream>
-#include <ios>
-#include <iostream>
-#include <string>
-#include <unistd.h>
-
 #include "oef-base/monitoring/Counter.hpp"
 #include "oef-base/monitoring/Gauge.hpp"
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+//#pragma GCC diagnostic ignored "-Werror"
+#pragma GCC diagnostic ignored "-W#warnings"
+#pragma GCC diagnostic ignored "-Wfloat-conversion"
+#endif
+
+#if defined(__clang__)
+#pragma clang diagnostic push
+//#pragma clang diagnostic ignored "-Werror"
+#pragma clang diagnostic ignored "-W#warnings"
+#pragma clang diagnostic ignored "-Wfloat-conversion"
+#endif
+#include "oef-base/threading/MonitoringTask.hpp"
 
 struct mem_usage_result
 {
@@ -34,7 +41,14 @@ struct mem_usage_result
   bool   ok    = false;
 };
 
+#include <fstream>
+#include <ios>
+#include <iostream>
+#include <string>
+#include <unistd.h>
+
 #ifdef __APPLE__
+// TODO: Linux / Windows implementation?
 
 #include <mach/mach_host.h>
 #include <mach/mach_init.h>
@@ -93,7 +107,7 @@ mem_usage_result run_get_dynamic_proc_info(pid_t pid)
 }
 #endif
 
-mem_usage_result process_mem_usage(const std::string filename)
+mem_usage_result process_mem_usage(const std::string /*filename*/)
 {
   using std::ifstream;
   using std::ios_base;
@@ -171,3 +185,11 @@ ExitState MonitoringTask::run(void)
   submit(std::chrono::milliseconds(10000));
   return COMPLETE;
 }
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif

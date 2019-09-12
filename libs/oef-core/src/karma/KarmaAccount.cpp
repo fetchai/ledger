@@ -16,16 +16,16 @@
 //
 //------------------------------------------------------------------------------
 
+#include "oef-core/karma/KarmaAccount.hpp"
 #include "logging/logging.hpp"
 #include "oef-core/karma/IKarmaPolicy.hpp"
-#include "oef-core/karma/KarmaAccount.hpp"
 
 void swap(KarmaAccount &v1, KarmaAccount &v2)
 {
   v1.swap(v2);
 }
 
-bool KarmaAccount::perform(const std::string &action, bool force)
+bool KarmaAccount::perform(const std::string &action, bool /*force*/)
 {
   if (!policy)
   {
