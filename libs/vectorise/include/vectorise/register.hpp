@@ -104,7 +104,10 @@ public:
   explicit VectorRegister(type const *d)
     : data_(*d)
   {}
-  explicit VectorRegister(type const d)
+  explicit VectorRegister(type const &d)
+    : data_(d)
+  {}
+  explicit VectorRegister(type &&d)
     : data_(d)
   {}
 
