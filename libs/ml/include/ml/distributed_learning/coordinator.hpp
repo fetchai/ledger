@@ -47,7 +47,6 @@ struct CoordinatorParams
 
   CoordinatorMode mode;
   SizeType        iterations_count;
-  SizeType        number_of_peers;
 };
 
 template <typename TensorType>

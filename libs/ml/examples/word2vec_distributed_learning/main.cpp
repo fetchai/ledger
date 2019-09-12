@@ -87,7 +87,7 @@ int main(int ac, char **av)
   // Distributed learning parameters:
   SizeType number_of_clients    = 10;
   SizeType number_of_rounds     = 10;
-  coord_params.number_of_peers  = 3;
+  SizeType number_of_peers      = 3;
   coord_params.mode             = CoordinatorMode::SEMI_SYNCHRONOUS;
   coord_params.iterations_count = 100;  //  Synchronization occurs after this number of batches
   // have been processed in total by the clients
@@ -141,7 +141,7 @@ int main(int ac, char **av)
   {
     networkers[i]->addPeers(networkers);
     networkers[i]->setShuffleAlgorithm(std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(
-        networkers[i]->getPeerCount(), coord_params.number_of_peers));
+        networkers[i]->getPeerCount(), number_of_peers));
   }
 
   for (SizeType i(0); i < number_of_clients; ++i)

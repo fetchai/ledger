@@ -95,10 +95,10 @@ int main(int ac, char **av)
   SizeType number_of_rounds     = 10;
   coord_params.mode             = CoordinatorMode::SEMI_SYNCHRONOUS;
   coord_params.iterations_count = 100;
-  coord_params.number_of_peers  = 3;
   client_params.batch_size      = 32;
   client_params.learning_rate   = static_cast<DataType>(.001f);
-  float test_set_ratio          = 0.03f;
+  float    test_set_ratio       = 0.03f;
+  SizeType number_of_peers      = 3;
 
   std::shared_ptr<Coordinator<TensorType>> coordinator =
       std::make_shared<Coordinator<TensorType>>(coord_params);
@@ -117,7 +117,7 @@ int main(int ac, char **av)
   {
     networkers[i]->addPeers(networkers);
     networkers[i]->setShuffleAlgorithm(std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(
-        networkers[i]->getPeerCount(), coord_params.number_of_peers));
+        networkers[i]->getPeerCount(), number_of_peers));
   }
 
   std::vector<std::shared_ptr<TrainingClient<TensorType>>> clients(number_of_clients);
