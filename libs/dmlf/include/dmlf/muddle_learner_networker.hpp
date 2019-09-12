@@ -26,6 +26,8 @@ namespace dmlf {
 class MuddleLearnerNetworker: public ILearnerNetworker
 {
 public:
+  using Intermediate = byte_array::ByteArray;
+
   MuddleLearnerNetworker()
   {
   }
@@ -35,8 +37,8 @@ public:
 
   virtual void pushUpdate( std::shared_ptr<IUpdate> update);
   virtual std::size_t getUpdateCount() const;
-  virtual std::shared_ptr<IUpdate> getUpdate();
 protected:
+  virtual Intermediate getUpdateIntermediate();
 private:
   MuddleLearnerNetworker(const MuddleLearnerNetworker &other) = delete;
   MuddleLearnerNetworker &operator=(const MuddleLearnerNetworker &other) = delete;

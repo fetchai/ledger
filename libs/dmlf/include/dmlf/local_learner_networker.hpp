@@ -38,6 +38,7 @@ public:
   virtual void pushUpdate( std::shared_ptr<IUpdate> update);
   virtual std::size_t getUpdateCount() const;
 
+  virtual std::size_t getPeerCount() const { return peers.size(); }
   void addPeers(Peers new_peers);
   void clearPeers();
 protected:

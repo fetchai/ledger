@@ -149,16 +149,20 @@ namespace {
       {
         auto local = std::make_shared<fetch::dmlf::LocalLearnerNetworker>();
         peers.push_back(local);
-        auto alg = std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(peercount, 5);
         std::shared_ptr<fetch::dmlf::ILearnerNetworker> interf = local;
-        interf -> setShuffleAlgorithm(alg);
         insts.push_back(std::make_shared<LocalLearnerInstance>(interf, i));
       }
-      for(std::size_t i = 0;i< peercount; i++)
+      for(auto peer : peers)
       {
-        peers[i] -> addPeers(peers);
+        peer -> addPeers(peers);
       }
-     
+
+      for(auto peer : peers)
+      {
+        auto alg = std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(peer -> getPeerCount(), 5);
+        peer -> setShuffleAlgorithm(alg);
+      }
+
       bool working = true;
       while(working)
       {
@@ -180,15 +184,19 @@ namespace {
       {
         auto local = std::make_shared<fetch::dmlf::LocalLearnerNetworker>();
         peers.push_back(local);
-        auto alg = std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(peercount, 5);
         std::shared_ptr<fetch::dmlf::ILearnerNetworker> interf = local;
-        interf -> setShuffleAlgorithm(alg);
         insts.push_back(std::make_shared<LocalLearnerInstance>(interf, i));
       }
 
-      for(std::size_t i = 0;i< peercount; i++)
+      for(auto peer : peers)
       {
-        peers[i] -> addPeers(peers);
+        peer -> addPeers(peers);
+      }
+
+      for(auto peer : peers)
+      {
+        auto alg = std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(peer -> getPeerCount(), 5);
+        peer -> setShuffleAlgorithm(alg);
       }
 
       using Thread = std::thread;

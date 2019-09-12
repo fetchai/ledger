@@ -41,6 +41,7 @@ public:
 
   virtual void pushUpdate( std::shared_ptr<IUpdate> update) = 0;
   virtual std::size_t getUpdateCount() const = 0;
+  virtual std::size_t getPeerCount() const = 0;
 
   template<class UPDATE_TYPE>
   std::shared_ptr<UPDATE_TYPE> getUpdate()
