@@ -178,12 +178,6 @@ math::SizeType GraphW2VLoader<T>::Size() const
 template <typename T>
 bool GraphW2VLoader<T>::IsDone() const
 {
-  // Loader is done when current sentence is out of range
-  if (current_sentence_ >= data_.size())
-  {
-    return true;
-  }
-
   // Loader can't be done if current sentence is not last
   if (current_sentence_ < data_.size() - 1)
   {
@@ -194,6 +188,12 @@ bool GraphW2VLoader<T>::IsDone() const
   if (labels_.At(buffer_pos_) != BufferPositionUnused)
   {
     return false;
+  }
+
+  // Loader is done when current sentence is out of range
+  if (current_sentence_ >= data_.size())
+  {
+    return true;
   }
 
   // Check if is last word of last sentence
@@ -362,7 +362,6 @@ void GraphW2VLoader<T>::InitUnigramTable(SizeType size, bool use_vocab_frequenci
 template <typename T>
 void GraphW2VLoader<T>::BufferNextSamples()
 {
-
   // reset the index to buffer
   buffer_pos_ = 0;
 
@@ -396,7 +395,7 @@ void GraphW2VLoader<T>::BufferNextSamples()
             window_size_;  // the current word start from position that allows full context window
         current_sentence_++;
       }
-      if (IsDone())
+      if (IsDone() || current_sentence_ >= data_.size())
       {  // revert to the previous word if this is the last word
         current_word_     = prev_word;
         current_sentence_ = prev_sentence;
