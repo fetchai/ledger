@@ -22,6 +22,7 @@
 #include <list>
 #include "dmlf/ilearner_networker.hpp"
 #include "core/mutex.hpp"
+#include "core/serializers/base_types.hpp"
 
 namespace fetch {
 namespace dmlf {
@@ -36,7 +37,6 @@ public:
   virtual ~LocalLearnerNetworker();
   virtual void pushUpdate( std::shared_ptr<IUpdate> update);
   virtual std::size_t getUpdateCount() const;
-  virtual std::shared_ptr<IUpdate> getUpdate();
 
   void addPeers(Peers new_peers);
   void clearPeers();
@@ -44,12 +44,15 @@ protected:
 private:
   using Mutex = fetch::Mutex;
   using Lock = std::unique_lock<Mutex>;
-  using IUpdateP = std::shared_ptr<IUpdate>;
-  using UpdateList = std::list<IUpdateP>;
+  using Intermediate = ILearnerNetworker::Intermediate;
+  using IntermediateList = std::list<Intermediate>;
 
-  UpdateList updates;
+  IntermediateList updates;
   mutable Mutex mutex;
   Peers peers;
+
+  virtual Intermediate getUpdateIntermediate();
+  void rx(const Intermediate &data);
 
   LocalLearnerNetworker(const LocalLearnerNetworker &other) = delete;
   LocalLearnerNetworker &operator=(const LocalLearnerNetworker &other) = delete;

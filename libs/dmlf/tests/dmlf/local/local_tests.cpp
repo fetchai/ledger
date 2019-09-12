@@ -83,7 +83,7 @@ namespace {
 
       while(net -> getUpdateCount() > 0)
       {
-        net -> getUpdate();
+        net -> getUpdate<UpdateTypeForTesting>();
         integrations++;
         result = true;
       }
@@ -119,7 +119,7 @@ namespace {
 
         if (net -> getUpdateCount() > 0)
         {
-          net -> getUpdate();
+          net -> getUpdate<UpdateTypeForTesting>();
           integrations++;
           continue;
         }

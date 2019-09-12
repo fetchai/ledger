@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "dmlf/local_learner_networker.hpp"
+#include "core/serializers/base_types.hpp"
 
 #include <iostream>
 
@@ -50,13 +51,19 @@ void LocalLearnerNetworker::pushUpdate( std::shared_ptr<IUpdate> update)
 {
   std::vector<std::shared_ptr<LocalLearnerNetworker>> targets;
   auto indexes = alg -> getNextOutputs();
+  auto data = update -> serialise();
 
   for(auto ind : indexes)
   {
     auto t = peers[ind];
-    Lock lock(t -> mutex);
-    t -> updates.push_back(update);
+    t -> rx(data);
   }
+}
+
+void LocalLearnerNetworker::rx(const Intermediate &data)
+{
+  Lock lock(mutex);
+  updates.push_back(data);
 }
 
 std::size_t LocalLearnerNetworker::getUpdateCount() const
@@ -65,18 +72,16 @@ std::size_t LocalLearnerNetworker::getUpdateCount() const
   return updates.size();
 }
 
-std::shared_ptr<IUpdate> LocalLearnerNetworker::getUpdate()
+LocalLearnerNetworker::Intermediate LocalLearnerNetworker::getUpdateIntermediate()
 {
   Lock lock(mutex);
-
   if (!updates.empty())
   {
     auto x = updates.front();
     updates.pop_front();
     return x;
   }
-
-  return std::shared_ptr<IUpdate>();
+  throw std::length_error("Updates list is already empty.");
 }
 
 }

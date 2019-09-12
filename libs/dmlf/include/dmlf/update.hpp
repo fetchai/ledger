@@ -61,7 +61,7 @@ public:
     serializer << *this;
     return serializer.data();
   }
-  virtual void deserialise(byte_array::ByteArray& map) override
+  virtual void deserialise(const byte_array::ByteArray& map) override
   {
     serializers::MsgPackSerializer serializer{map};
     serializer >> *this;

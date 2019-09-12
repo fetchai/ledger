@@ -29,18 +29,18 @@ namespace dmlf {
 class IUpdate
 {
 public:
-  using TimeStampType    = std::uint64_t; 
+  using TimeStampType    = std::uint64_t;
   using FingerprintType  = byte_array::ByteArray;
 
   IUpdate()
   {
   }
-  
+
   // API
   virtual byte_array::ByteArray serialise()        = 0;
-  virtual void deserialise(byte_array::ByteArray&) = 0;
-  virtual TimeStampType TimeStamp() const          = 0; 
-  virtual FingerprintType Fingerprint() const      = 0; 
+  virtual void deserialise(const byte_array::ByteArray&) = 0;
+  virtual TimeStampType TimeStamp() const          = 0;
+  virtual FingerprintType Fingerprint() const      = 0;
   virtual std::string debug() const
   {
     return static_cast<std::string>(byte_array::ToBase64(Fingerprint()))+"@"+std::to_string(TimeStamp());

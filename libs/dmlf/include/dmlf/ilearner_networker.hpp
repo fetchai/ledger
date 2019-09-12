@@ -20,6 +20,7 @@
 #include <memory>
 
 #include "dmlf/ishuffle_algorithm.hpp"
+#include "core/byte_array/byte_array.hpp"
 
 namespace fetch {
 namespace dmlf {
@@ -29,6 +30,8 @@ class IUpdate;
 class ILearnerNetworker
 {
 public:
+  using Intermediate = byte_array::ByteArray;
+
   ILearnerNetworker()
   {
   }
@@ -38,7 +41,14 @@ public:
 
   virtual void pushUpdate( std::shared_ptr<IUpdate> update) = 0;
   virtual std::size_t getUpdateCount() const = 0;
-  virtual std::shared_ptr<IUpdate> getUpdate() = 0;
+
+  template<class UPDATE_TYPE>
+  std::shared_ptr<UPDATE_TYPE> getUpdate()
+  {
+    auto r = std::make_shared<UPDATE_TYPE>();
+    r -> deserialise(getUpdateIntermediate());
+    return r;
+  }
 
   virtual void setShuffleAlgorithm(std::shared_ptr<IShuffleAlgorithm> alg)
   {
@@ -47,6 +57,7 @@ public:
 
 protected:
   std::shared_ptr<IShuffleAlgorithm> alg; // used by descendents
+  virtual Intermediate getUpdateIntermediate() = 0; // implemented by descendents
 private:
 
   ILearnerNetworker(const ILearnerNetworker &other) = delete;
