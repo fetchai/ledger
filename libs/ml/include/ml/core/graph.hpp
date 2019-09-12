@@ -107,12 +107,11 @@ public:
   /// graph training functions ///
   ////////////////////////////////
 
-  void         SetInput(std::string const &node_name, TensorType data);
-  TensorType   Evaluate(std::string const &node_name, bool is_training = true);
-  void         BackPropagate(std::string const &node_name, TensorType const &error_signal = {});
-  void         ApplyRegularisation();
-  virtual void Step(DataType learning_rate);
-  void         ApplyGradients(std::vector<TensorType> &grad);
+  void       SetInput(std::string const &node_name, TensorType data);
+  TensorType Evaluate(std::string const &node_name, bool is_training = true);
+  void       BackPropagate(std::string const &node_name, TensorType const &error_signal = {});
+  void       ApplyRegularisation();
+  void       ApplyGradients(std::vector<TensorType> &grad);
 
   /////////////////////////////////////
   /// graph serialisation functions ///
@@ -491,51 +490,6 @@ bool Graph<TensorType>::SetRegularisation(std::string node_name, RegPtrType regu
   trainable_ptr->SetRegularisation(regulariser, regularisation_rate);
 
   return true;
-}
-
-/**
- * takes a training step
- * @param learning_rate the learning rate (alpha) hyperparameter
- */
-template <typename TensorType>
-void Graph<TensorType>::Step(DataType learning_rate)
-{
-  Compile();
-
-  switch (graph_state_)
-  {
-  case GraphState::INVALID:
-  case GraphState::NOT_COMPILED:
-  case GraphState::COMPILED:
-  case GraphState::EVALUATED:
-  {
-    throw std::runtime_error(
-        "error: graph step called but backpropagate not previously called on graph");
-  }
-  case GraphState::BACKWARD:
-  {
-    for (auto &t : trainable_nodes_)
-    {
-      auto trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
-      trainable_ptr->Step(learning_rate);
-    }
-
-    graph_state_ = GraphState::UPDATED;
-
-    // TODO(#1554) - we should only reset the cache for trained nodes, not all nodes
-    ResetGraphCache(false);
-    return;
-  }
-  case GraphState::UPDATED:
-  {
-    // no gradients to apply - nothing to do
-    return;
-  }
-  default:
-  {
-    throw std::runtime_error("cannot step: unrecognised graph state");
-  }
-  }
 }
 
 /**
