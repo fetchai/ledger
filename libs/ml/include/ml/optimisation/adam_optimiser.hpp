@@ -129,7 +129,6 @@ AdamOptimiser<T>::AdamOptimiser(
 template <class T>
 void AdamOptimiser<T>::ApplyGradients(SizeType batch_size)
 {
-  std::cout << "LR: " << this->learning_rate_ << std::endl;
   // Do operation with gradient
   auto cached_weight_it = cache_.begin();
   auto momentum_it      = momentum_.begin();

@@ -142,7 +142,6 @@ template <class TensorType>
 void Word2VecClient<TensorType>::Test()
 {
   // TODO(issue 1595): Implement loss mechanism
-  // this->loss = static_cast<DataType>(0);
 
   if (this->batch_counter_ % tp_.test_frequency == 1)
   {
