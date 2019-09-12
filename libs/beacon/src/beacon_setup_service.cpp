@@ -225,11 +225,6 @@ BeaconSetupService::State BeaconSetupService::OnReset()
     beacon_dkg_aborts_total_->add(1u);
     return State::IDLE;
   }
-  else
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "Not aborting DKG. Round: ", beacon_->aeon.round_start,
-                   " abort level: ", abort_below_);
-  }
 
   // The dkg has to be reset to 0 to clear old messages,
   // before being reset with the cabinet
