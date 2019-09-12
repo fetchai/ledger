@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
 
@@ -29,38 +28,38 @@ namespace dmlf {
 class IUpdate
 {
 public:
-  using TimeStampType    = std::uint64_t;
-  using FingerprintType  = byte_array::ByteArray;
+  using TimeStampType   = std::uint64_t;
+  using FingerprintType = byte_array::ByteArray;
 
   IUpdate()
-  {
-  }
+  {}
 
   // API
-  virtual byte_array::ByteArray serialise()        = 0;
-  virtual void deserialise(const byte_array::ByteArray&) = 0;
-  virtual TimeStampType TimeStamp() const          = 0;
-  virtual FingerprintType Fingerprint() const      = 0;
-  virtual std::string debug() const
+  virtual byte_array::ByteArray serialise()                                = 0;
+  virtual void                  deserialise(const byte_array::ByteArray &) = 0;
+  virtual TimeStampType         TimeStamp() const                          = 0;
+  virtual FingerprintType       Fingerprint() const                        = 0;
+  virtual std::string           debug() const
   {
-    return static_cast<std::string>(byte_array::ToBase64(Fingerprint()))+"@"+std::to_string(TimeStamp());
+    return static_cast<std::string>(byte_array::ToBase64(Fingerprint())) + "@" +
+           std::to_string(TimeStamp());
   }
 
   // Queue ordering
-  bool operator>(const IUpdate& other) const
+  bool operator>(const IUpdate &other) const
   {
     return TimeStamp() > other.TimeStamp();
   }
 
   virtual ~IUpdate()
-  {
-  }
+  {}
+
 protected:
 private:
   IUpdate(const IUpdate &other) = delete;
-  IUpdate &operator=(const IUpdate &other) = delete;
-  bool operator==(const IUpdate &other) = delete;
-  bool operator<(const IUpdate &other) = delete;
+  IUpdate &operator=(const IUpdate &other)  = delete;
+  bool     operator==(const IUpdate &other) = delete;
+  bool     operator<(const IUpdate &other)  = delete;
 };
 
 }  // namespace dmlf

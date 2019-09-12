@@ -18,6 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "coordinator.hpp"
+#include "dmlf/ilearner_networker.hpp"
+#include "dmlf/update.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
 #include "ml/core/graph.hpp"
@@ -77,6 +79,11 @@ public:
   {
     export_stopped_ = true;
     export_buffer_cv_.notify_all();
+  }
+
+  void SetNetworker(std::shared_ptr<fetch::dmlf::ILearnerNetworker> i_learner_ptr)
+  {
+    i_learner_ptr_ = i_learner_ptr;
   }
 
   void SetCoordinator(std::shared_ptr<Coordinator<TensorType>> coordinator_ptr);
@@ -147,6 +154,8 @@ protected:
 
   // Count for number of batches
   SizeType batch_counter_ = 0;
+
+  std::shared_ptr<fetch::dmlf::ILearnerNetworker> i_learner_ptr_;
 
   void GetNewGradients(VectorTensorType &new_gradients);
 
@@ -502,19 +511,18 @@ void TrainingClient<TensorType>::DoBatch()
     peers_ = coordinator_ptr_->NextPeersList(id_);
 
     // Load own gradient
-    GradientType current_gradient = std::make_pair(g_ptr_->GetGradients(), GetTimestamp());
+    GradientType current_gradients = std::make_pair(g_ptr_->GetGradients(), GetTimestamp());
 
     // Add gradient to export queue
-    AddExportGradient(current_gradient);
+    i_learner_ptr_->pushUpdate(
+        std::make_shared<fetch::dmlf::Update<TensorType>>(current_gradients.first));
 
-    // Load own gradient
     VectorTensorType new_gradients;
 
     // Sum all gradient in queue
-    while (!gradient_queue_.empty())
+    while (i_learner_ptr_->getUpdateCount())
     {
-      GetNewGradients(new_gradients);
-
+      new_gradients = i_learner_ptr_->getUpdate<fetch::dmlf::Update<TensorType>>()->GetGradients();
       g_ptr_->AddGradients(new_gradients);
     }
   }

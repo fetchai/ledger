@@ -28,24 +28,27 @@ class IShuffleAlgorithm
 public:
   IShuffleAlgorithm(std::size_t count)
   {
-    this -> count = count;
+    this->count = count;
   }
   virtual ~IShuffleAlgorithm()
-  {
-  }
+  {}
 
   virtual std::vector<std::size_t> getNextOutputs() = 0;
 
-  std::size_t getCount() const { return count; }
+  std::size_t getCount() const
+  {
+    return count;
+  }
+
 protected:
 private:
   IShuffleAlgorithm(const IShuffleAlgorithm &other) = delete;
-  IShuffleAlgorithm &operator=(const IShuffleAlgorithm &other) = delete;
-  bool operator==(const IShuffleAlgorithm &other) = delete;
-  bool operator<(const IShuffleAlgorithm &other) = delete;
+  IShuffleAlgorithm &operator=(const IShuffleAlgorithm &other)  = delete;
+  bool               operator==(const IShuffleAlgorithm &other) = delete;
+  bool               operator<(const IShuffleAlgorithm &other)  = delete;
 
   std::size_t count;
 };
 
-}
-}
+}  // namespace dmlf
+}  // namespace fetch

@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dmlf/local_learner_networker.hpp"
 #include "core/serializers/base_types.hpp"
+#include "dmlf/local_learner_networker.hpp"
 
 #include <iostream>
 
@@ -27,16 +27,14 @@ namespace fetch {
 namespace dmlf {
 
 LocalLearnerNetworker::LocalLearnerNetworker()
-{
-}
+{}
 
 LocalLearnerNetworker::~LocalLearnerNetworker()
-{
-}
+{}
 
 void LocalLearnerNetworker::addPeers(std::vector<std::shared_ptr<LocalLearnerNetworker>> new_peers)
 {
-  for(auto peer : new_peers)
+  for (auto peer : new_peers)
   {
     if (peer.get() != this)
     {
@@ -50,16 +48,16 @@ void LocalLearnerNetworker::clearPeers()
   peers.clear();
 }
 
-void LocalLearnerNetworker::pushUpdate( std::shared_ptr<IUpdate> update)
+void LocalLearnerNetworker::pushUpdate(std::shared_ptr<IUpdate> update)
 {
   std::vector<std::shared_ptr<LocalLearnerNetworker>> targets;
-  auto indexes = alg -> getNextOutputs();
-  auto data = update -> serialise();
+  auto                                                indexes = alg->getNextOutputs();
+  auto                                                data    = update->serialise();
 
-  for(auto ind : indexes)
+  for (auto ind : indexes)
   {
     auto t = peers[ind];
-    t -> rx(data);
+    t->rx(data);
   }
 }
 
@@ -87,5 +85,5 @@ LocalLearnerNetworker::Intermediate LocalLearnerNetworker::getUpdateIntermediate
   throw std::length_error("Updates list is already empty.");
 }
 
-}
-}
+}  // namespace dmlf
+}  // namespace fetch

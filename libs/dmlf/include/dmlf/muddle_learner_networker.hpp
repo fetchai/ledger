@@ -17,34 +17,34 @@
 //
 //------------------------------------------------------------------------------
 
-#include <memory>
 #include "dmlf/ilearner_networker.hpp"
+#include <memory>
 
 namespace fetch {
 namespace dmlf {
 
-class MuddleLearnerNetworker: public ILearnerNetworker
+class MuddleLearnerNetworker : public ILearnerNetworker
 {
 public:
   using Intermediate = byte_array::ByteArray;
 
   MuddleLearnerNetworker()
-  {
-  }
+  {}
   virtual ~MuddleLearnerNetworker()
-  {
-  }
+  {}
 
-  virtual void pushUpdate( std::shared_ptr<IUpdate> update);
+  virtual void        pushUpdate(std::shared_ptr<IUpdate> update);
   virtual std::size_t getUpdateCount() const;
+
 protected:
   virtual Intermediate getUpdateIntermediate();
+
 private:
   MuddleLearnerNetworker(const MuddleLearnerNetworker &other) = delete;
-  MuddleLearnerNetworker &operator=(const MuddleLearnerNetworker &other) = delete;
-  bool operator==(const MuddleLearnerNetworker &other) = delete;
-  bool operator<(const MuddleLearnerNetworker &other) = delete;
+  MuddleLearnerNetworker &operator=(const MuddleLearnerNetworker &other)  = delete;
+  bool                    operator==(const MuddleLearnerNetworker &other) = delete;
+  bool                    operator<(const MuddleLearnerNetworker &other)  = delete;
 };
 
-}
-}
+}  // namespace dmlf
+}  // namespace fetch

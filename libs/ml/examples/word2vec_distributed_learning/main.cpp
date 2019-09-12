@@ -16,6 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "dmlf/local_learner_networker.hpp"
+#include "dmlf/simple_cycling_algorithm.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
 #include "ml/core/graph.hpp"
@@ -126,7 +128,21 @@ int main(int ac, char **av)
 
   std::vector<std::string> client_data = SplitTrainingData(train_file, number_of_clients);
 
-  std::vector<std::shared_ptr<TrainingClient<TensorType>>> clients(number_of_clients);
+  std::vector<std::shared_ptr<TrainingClient<TensorType>>>         clients(number_of_clients);
+  std::vector<std::shared_ptr<fetch::dmlf::LocalLearnerNetworker>> networkers(number_of_clients);
+
+  // Create networkers
+  for (SizeType i(0); i < number_of_clients; ++i)
+  {
+    networkers[i] = std::make_shared<fetch::dmlf::LocalLearnerNetworker>();
+  }
+
+  for (SizeType i(0); i < number_of_clients; ++i)
+  {
+    networkers[i]->addPeers(networkers);
+    networkers[i]->setShuffleAlgorithm(std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(
+        networkers[i]->getPeerCount(), coord_params.number_of_peers));
+  }
 
   for (SizeType i(0); i < number_of_clients; ++i)
   {
@@ -145,6 +161,7 @@ int main(int ac, char **av)
   {
     // Give each client pointer to coordinator
     clients[i]->SetCoordinator(coordinator);
+    clients[i]->SetNetworker(networkers[i]);
   }
 
   // Main loop

@@ -25,263 +25,258 @@
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
 
-#include <thread>
-#include <ostream>
 #include <chrono>
+#include <ostream>
+#include <thread>
 
 namespace {
 
-  using DataType         = fetch::fixed_point::FixedPoint<32, 32>;
-  using TensorType       = fetch::math::Tensor<DataType>;
-  using NetP = std::shared_ptr<fetch::dmlf::ILearnerNetworker>;
+using DataType   = fetch::fixed_point::FixedPoint<32, 32>;
+using TensorType = fetch::math::Tensor<DataType>;
+using NetP       = std::shared_ptr<fetch::dmlf::ILearnerNetworker>;
 
-  using UpdateTypeForTesting = fetch::dmlf::Update<TensorType>;
-  using UpdatePayloadType = UpdateTypeForTesting::PayloadType;
+using UpdateTypeForTesting = fetch::dmlf::Update<TensorType>;
+using UpdatePayloadType    = UpdateTypeForTesting::PayloadType;
 
-  class LocalLearnerInstance
+class LocalLearnerInstance
+{
+public:
+  // using Mutex = fetch::Mutex;
+  using Mutex = std::mutex;
+  using Lock  = std::unique_lock<Mutex>;
+
+  NetP          net;
+  std::size_t   number;
+  std::size_t   integrations;
+  std::size_t   produced;
+  mutable Mutex mut;
+  bool          quitflag = false;
+
+  LocalLearnerInstance(NetP net, std::size_t number)
   {
-  public:
-    //using Mutex = fetch::Mutex;
-    using Mutex = std::mutex;
-    using Lock = std::unique_lock<Mutex>;
+    this->integrations = 0;
+    this->number       = number;
+    this->net          = net;
+    this->produced     = 0;
+  }
 
-    NetP net;
-    std::size_t number;
-    std::size_t integrations;
-    std::size_t produced;
-    mutable Mutex mut;
-    bool quitflag = false;
+  std::vector<TensorType> generateFakeWorkOutput(std::size_t instance_number,
+                                                 std::size_t sequence_number)
+  {
+    auto t = TensorType(TensorType::SizeType(instance_number + 2));
+    t.Fill(DataType(sequence_number));
+    auto r = std::vector<TensorType>(1);
+    r.push_back(t);
+    return r;
+  }
 
-    LocalLearnerInstance(NetP net, std::size_t number)
+  bool work(void)
+  {
+    bool result = false;
+    while (produced < 10)
     {
-      this -> integrations = 0;
-      this -> number = number;
-      this -> net = net;
-      this -> produced = 0;
+      produced++;
+      auto output = generateFakeWorkOutput(number, produced);
+      auto upd    = std::make_shared<UpdateTypeForTesting>(output);
+      net->pushUpdate(upd);
+      result = true;
     }
 
-    std::vector<TensorType> generateFakeWorkOutput(std::size_t instance_number, std::size_t sequence_number)
+    while (net->getUpdateCount() > 0)
     {
-      auto t = TensorType(TensorType::SizeType(instance_number+2));
-      t.Fill(DataType(sequence_number));
-      auto r = std::vector<TensorType>(1);
-      r.push_back(t);
-      return r;
+      net->getUpdate<UpdateTypeForTesting>();
+      integrations++;
+      result = true;
     }
+    return result;
+  }
 
-    bool work(void)
+  void quit(void)
+  {
+    Lock lock(mut);
+    quitflag = true;
+  }
+
+  void mt_work(void)
+  {
+    while (true)
     {
-      bool result = false;
-      while(produced < 10)
+      {
+        Lock lock(mut);
+        if (quitflag)
+        {
+          return;
+        }
+      }
+
+      if (produced < 10)
       {
         produced++;
         auto output = generateFakeWorkOutput(number, produced);
-        auto upd =std::make_shared<UpdateTypeForTesting>(output);
-        net -> pushUpdate(upd);
-        result = true;
+        auto upd    = std::make_shared<UpdateTypeForTesting>(output);
+        net->pushUpdate(upd);
+        continue;
       }
 
-      while(net -> getUpdateCount() > 0)
+      if (net->getUpdateCount() > 0)
       {
-        net -> getUpdate<UpdateTypeForTesting>();
+        net->getUpdate<UpdateTypeForTesting>();
         integrations++;
-        result = true;
+        continue;
       }
-      return result;
+
+      sleep(1);
     }
+  }
+};
 
-    void quit(void)
-    {
-      Lock lock(mut);
-      quitflag = true;
-    }
+class LocalLearnerNetworkerTests : public ::testing::Test
+{
+public:
+  using Inst  = std::shared_ptr<LocalLearnerInstance>;
+  using Insts = std::vector<Inst>;
 
-    void mt_work(void)
-    {
-      while(true)
-      {
-        {
-          Lock lock(mut);
-          if (quitflag)
-          {
-            return;
-          }
-        }
+  Insts insts;
 
-        if (produced < 10)
-        {
-          produced++;
-          auto output = generateFakeWorkOutput(number, produced);
-          auto upd =std::make_shared<UpdateTypeForTesting>(output);
-          net -> pushUpdate(upd);
-          continue;
-        }
+  void SetUp() override
+  {}
 
-        if (net -> getUpdateCount() > 0)
-        {
-          net -> getUpdate<UpdateTypeForTesting>();
-          integrations++;
-          continue;
-        }
-
-        sleep(1);
-      }
-    }
-  };
-
-  class LocalLearnerNetworkerTests : public ::testing::Test
+  void DoWork()
   {
-  public:
-    using Inst = std::shared_ptr<LocalLearnerInstance>;
-    using Insts = std::vector<Inst>;
-
-    Insts insts;
-
-    void SetUp() override
+    const std::size_t                         peercount = 20;
+    fetch::dmlf::LocalLearnerNetworker::Peers peers;
+    for (std::size_t i = 0; i < peercount; i++)
     {
+      auto local = std::make_shared<fetch::dmlf::LocalLearnerNetworker>();
+      peers.push_back(local);
+      std::shared_ptr<fetch::dmlf::ILearnerNetworker> interf = local;
+      insts.push_back(std::make_shared<LocalLearnerInstance>(interf, i));
+    }
+    for (auto peer : peers)
+    {
+      peer->addPeers(peers);
     }
 
-    void DoWork()
+    for (auto peer : peers)
     {
-      const std::size_t peercount = 20;
-      fetch::dmlf::LocalLearnerNetworker::Peers peers;
-      for(std::size_t i = 0;i< peercount; i++)
-      {
-        auto local = std::make_shared<fetch::dmlf::LocalLearnerNetworker>();
-        peers.push_back(local);
-        std::shared_ptr<fetch::dmlf::ILearnerNetworker> interf = local;
-        insts.push_back(std::make_shared<LocalLearnerInstance>(interf, i));
-      }
-      for(auto peer : peers)
-      {
-        peer -> addPeers(peers);
-      }
-
-      for(auto peer : peers)
-      {
-        auto alg = std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(peer -> getPeerCount(), 5);
-        peer -> setShuffleAlgorithm(alg);
-      }
-
-      bool working = true;
-      while(working)
-      {
-        working = false;
-        for(auto inst : insts)
-        {
-          if (inst -> work())
-          {
-            working = true;
-          }
-        }
-      }
+      auto alg = std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(peer->getPeerCount(), 5);
+      peer->setShuffleAlgorithm(alg);
     }
-    void DoMtWork()
+
+    bool working = true;
+    while (working)
     {
-      const std::size_t peercount = 20;
-      fetch::dmlf::LocalLearnerNetworker::Peers peers;
-      for(std::size_t i = 0;i< peercount; i++)
-      {
-        auto local = std::make_shared<fetch::dmlf::LocalLearnerNetworker>();
-        peers.push_back(local);
-        std::shared_ptr<fetch::dmlf::ILearnerNetworker> interf = local;
-        insts.push_back(std::make_shared<LocalLearnerInstance>(interf, i));
-      }
-
-      for(auto peer : peers)
-      {
-        peer -> addPeers(peers);
-      }
-
-      for(auto peer : peers)
-      {
-        auto alg = std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(peer -> getPeerCount(), 5);
-        peer -> setShuffleAlgorithm(alg);
-      }
-
-      using Thread = std::thread;
-      using ThreadP = std::shared_ptr<Thread>;
-      using Threads = std::list<ThreadP>;
-
-      Threads threads;
-
+      working = false;
       for (auto inst : insts)
       {
-        auto func = [inst](){
-          inst->mt_work();
-        };
-
-        auto t = std::make_shared<std::thread>(func);
-        threads.push_back(t);
-      }
-      sleep(3);
-
-      for (auto inst : insts)
-      {
-        inst->quit();
-      }
-
-      for (auto &t : threads)
-      {
-        t -> join();
+        if (inst->work())
+        {
+          working = true;
+        }
       }
     }
-  };
-
-  TEST_F(LocalLearnerNetworkerTests, singleThreadedVersion)
+  }
+  void DoMtWork()
   {
-    DoWork();
-
-    std::size_t total_integrations = 0;
-    for(auto inst : insts)
+    const std::size_t                         peercount = 20;
+    fetch::dmlf::LocalLearnerNetworker::Peers peers;
+    for (std::size_t i = 0; i < peercount; i++)
     {
-      total_integrations += inst -> integrations;
+      auto local = std::make_shared<fetch::dmlf::LocalLearnerNetworker>();
+      peers.push_back(local);
+      std::shared_ptr<fetch::dmlf::ILearnerNetworker> interf = local;
+      insts.push_back(std::make_shared<LocalLearnerInstance>(interf, i));
     }
 
-    EXPECT_EQ(insts.size(),20);
-    EXPECT_EQ(total_integrations, 20 * 10 * 5);
+    for (auto peer : peers)
+    {
+      peer->addPeers(peers);
+    }
+
+    for (auto peer : peers)
+    {
+      auto alg = std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(peer->getPeerCount(), 5);
+      peer->setShuffleAlgorithm(alg);
+    }
+
+    using Thread  = std::thread;
+    using ThreadP = std::shared_ptr<Thread>;
+    using Threads = std::list<ThreadP>;
+
+    Threads threads;
+
+    for (auto inst : insts)
+    {
+      auto func = [inst]() { inst->mt_work(); };
+
+      auto t = std::make_shared<std::thread>(func);
+      threads.push_back(t);
+    }
+    sleep(3);
+
+    for (auto inst : insts)
+    {
+      inst->quit();
+    }
+
+    for (auto &t : threads)
+    {
+      t->join();
+    }
+  }
+};
+
+TEST_F(LocalLearnerNetworkerTests, singleThreadedVersion)
+{
+  DoWork();
+
+  std::size_t total_integrations = 0;
+  for (auto inst : insts)
+  {
+    total_integrations += inst->integrations;
   }
 
-  TEST_F(LocalLearnerNetworkerTests, multiThreadedVersion)
+  EXPECT_EQ(insts.size(), 20);
+  EXPECT_EQ(total_integrations, 20 * 10 * 5);
+}
+
+TEST_F(LocalLearnerNetworkerTests, multiThreadedVersion)
+{
+  DoMtWork();
+
+  std::size_t total_integrations = 0;
+  for (auto inst : insts)
   {
-    DoMtWork();
-
-    std::size_t total_integrations = 0;
-    for(auto inst : insts)
-    {
-      total_integrations += inst -> integrations;
-    }
-
-    EXPECT_EQ(insts.size(),20);
-    EXPECT_EQ(total_integrations, 20 * 10 * 5);
-    }
-  
-  using namespace std::chrono_literals;
-  class UpdateSerialisationTests : public ::testing::Test
-  {
-  protected:
-    
-    void SetUp() override
-    {
-    }
-
-  };
-
-  TEST_F(UpdateSerialisationTests, basicPass)
-  {
-    std::shared_ptr<fetch::dmlf::IUpdate> update_1 = std::make_shared<fetch::dmlf::Update<int>>(std::vector<int>{1,2,4});
-    std::this_thread::sleep_for(1.54321s);
-    std::shared_ptr<fetch::dmlf::IUpdate> update_2 = std::make_shared<fetch::dmlf::Update<int>>();
-    
-    EXPECT_NE(update_1->TimeStamp(), update_2->TimeStamp());
-    EXPECT_NE(update_1->Fingerprint(), update_2->Fingerprint());
-    
-    auto update_1_bytes = update_1->serialise();
-    update_2->deserialise(update_1_bytes);
-
-    EXPECT_EQ(update_1->TimeStamp(), update_2->TimeStamp());
-    EXPECT_EQ(update_1->Fingerprint(), update_2->Fingerprint());
+    total_integrations += inst->integrations;
   }
-  
+
+  EXPECT_EQ(insts.size(), 20);
+  EXPECT_EQ(total_integrations, 20 * 10 * 5);
+}
+
+using namespace std::chrono_literals;
+class UpdateSerialisationTests : public ::testing::Test
+{
+protected:
+  void SetUp() override
+  {}
+};
+
+TEST_F(UpdateSerialisationTests, basicPass)
+{
+  std::shared_ptr<fetch::dmlf::IUpdate> update_1 =
+      std::make_shared<fetch::dmlf::Update<int>>(std::vector<int>{1, 2, 4});
+  std::this_thread::sleep_for(1.54321s);
+  std::shared_ptr<fetch::dmlf::IUpdate> update_2 = std::make_shared<fetch::dmlf::Update<int>>();
+
+  EXPECT_NE(update_1->TimeStamp(), update_2->TimeStamp());
+  EXPECT_NE(update_1->Fingerprint(), update_2->Fingerprint());
+
+  auto update_1_bytes = update_1->serialise();
+  update_2->deserialise(update_1_bytes);
+
+  EXPECT_EQ(update_1->TimeStamp(), update_2->TimeStamp());
+  EXPECT_EQ(update_1->Fingerprint(), update_2->Fingerprint());
+}
+
 }  // namespace
-

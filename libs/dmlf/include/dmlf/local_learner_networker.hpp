@@ -17,17 +17,17 @@
 //
 //------------------------------------------------------------------------------
 
-#include <map>
-#include <memory>
-#include <list>
-#include "dmlf/ilearner_networker.hpp"
 #include "core/mutex.hpp"
 #include "core/serializers/base_types.hpp"
+#include "dmlf/ilearner_networker.hpp"
+#include <list>
+#include <map>
+#include <memory>
 
 namespace fetch {
 namespace dmlf {
 
-class LocalLearnerNetworker: public ILearnerNetworker
+class LocalLearnerNetworker : public ILearnerNetworker
 {
 public:
   using PeerP = std::shared_ptr<LocalLearnerNetworker>;
@@ -35,31 +35,35 @@ public:
 
   LocalLearnerNetworker();
   virtual ~LocalLearnerNetworker();
-  virtual void pushUpdate( std::shared_ptr<IUpdate> update);
+  virtual void        pushUpdate(std::shared_ptr<IUpdate> update);
   virtual std::size_t getUpdateCount() const;
 
-  virtual std::size_t getPeerCount() const { return peers.size(); }
+  virtual std::size_t getPeerCount() const
+  {
+    return peers.size();
+  }
   void addPeers(Peers new_peers);
   void clearPeers();
+
 protected:
 private:
-  using Mutex = fetch::Mutex;
-  using Lock = std::unique_lock<Mutex>;
-  using Intermediate = ILearnerNetworker::Intermediate;
+  using Mutex            = fetch::Mutex;
+  using Lock             = std::unique_lock<Mutex>;
+  using Intermediate     = ILearnerNetworker::Intermediate;
   using IntermediateList = std::list<Intermediate>;
 
   IntermediateList updates;
-  mutable Mutex mutex;
-  Peers peers;
+  mutable Mutex    mutex;
+  Peers            peers;
 
   virtual Intermediate getUpdateIntermediate();
-  void rx(const Intermediate &data);
+  void                 rx(const Intermediate &data);
 
   LocalLearnerNetworker(const LocalLearnerNetworker &other) = delete;
-  LocalLearnerNetworker &operator=(const LocalLearnerNetworker &other) = delete;
-  bool operator==(const LocalLearnerNetworker &other) = delete;
-  bool operator<(const LocalLearnerNetworker &other) = delete;
+  LocalLearnerNetworker &operator=(const LocalLearnerNetworker &other)  = delete;
+  bool                   operator==(const LocalLearnerNetworker &other) = delete;
+  bool                   operator<(const LocalLearnerNetworker &other)  = delete;
 };
 
-}
-}
+}  // namespace dmlf
+}  // namespace fetch

@@ -19,8 +19,8 @@
 
 #include <memory>
 
-#include "dmlf/ishuffle_algorithm.hpp"
 #include "core/byte_array/byte_array.hpp"
+#include "dmlf/ishuffle_algorithm.hpp"
 
 namespace fetch {
 namespace dmlf {
@@ -33,39 +33,36 @@ public:
   using Intermediate = byte_array::ByteArray;
 
   ILearnerNetworker()
-  {
-  }
+  {}
   virtual ~ILearnerNetworker()
-  {
-  }
+  {}
 
-  virtual void pushUpdate( std::shared_ptr<IUpdate> update) = 0;
-  virtual std::size_t getUpdateCount() const = 0;
-  virtual std::size_t getPeerCount() const = 0;
+  virtual void        pushUpdate(std::shared_ptr<IUpdate> update) = 0;
+  virtual std::size_t getUpdateCount() const                      = 0;
+  virtual std::size_t getPeerCount() const                        = 0;
 
-  template<class UPDATE_TYPE>
+  template <class UPDATE_TYPE>
   std::shared_ptr<UPDATE_TYPE> getUpdate()
   {
     auto r = std::make_shared<UPDATE_TYPE>();
-    r -> deserialise(getUpdateIntermediate());
+    r->deserialise(getUpdateIntermediate());
     return r;
   }
 
   virtual void setShuffleAlgorithm(std::shared_ptr<IShuffleAlgorithm> alg)
   {
-    this -> alg = alg;
+    this->alg = alg;
   }
 
 protected:
-  std::shared_ptr<IShuffleAlgorithm> alg; // used by descendents
-  virtual Intermediate getUpdateIntermediate() = 0; // implemented by descendents
+  std::shared_ptr<IShuffleAlgorithm> alg;                          // used by descendents
+  virtual Intermediate               getUpdateIntermediate() = 0;  // implemented by descendents
 private:
-
   ILearnerNetworker(const ILearnerNetworker &other) = delete;
-  ILearnerNetworker &operator=(const ILearnerNetworker &other) = delete;
-  bool operator==(const ILearnerNetworker &other) = delete;
-  bool operator<(const ILearnerNetworker &other) = delete;
+  ILearnerNetworker &operator=(const ILearnerNetworker &other)  = delete;
+  bool               operator==(const ILearnerNetworker &other) = delete;
+  bool               operator<(const ILearnerNetworker &other)  = delete;
 };
 
-}
-}
+}  // namespace dmlf
+}  // namespace fetch

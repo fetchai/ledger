@@ -17,15 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dmlf/iupdate.hpp"
-#include "crypto/hash.hpp"
-#include "crypto/sha256.hpp" 
-#include "core/serializers/main_serializer.hpp"
 #include "core/serializers/base_types.hpp"
+#include "core/serializers/main_serializer.hpp"
+#include "crypto/hash.hpp"
+#include "crypto/sha256.hpp"
+#include "dmlf/iupdate.hpp"
 
-#include <vector>
-#include <cstdint>
 #include <chrono>
+#include <cstdint>
+#include <vector>
 
 namespace fetch {
 namespace dmlf {
@@ -33,40 +33,38 @@ namespace dmlf {
 template <typename T>
 class Update : public IUpdate
 {
-template <typename TT, typename D>
-friend struct serializers::MapSerializer;
+  template <typename TT, typename D>
+  friend struct serializers::MapSerializer;
 
 public:
   using TensorType       = T;
   using VectorTensorType = std::vector<TensorType>;
-  using TimeStampType    = IUpdate::TimeStampType; 
+  using TimeStampType    = IUpdate::TimeStampType;
   using FingerprintType  = IUpdate::FingerprintType;
 
-  using PayloadType      = VectorTensorType;
+  using PayloadType = VectorTensorType;
 
   explicit Update()
     : stamp_{CurrentTime()}
-  {
-  }
+  {}
   explicit Update(VectorTensorType gradients)
     : stamp_{CurrentTime()}
     , gradients_{gradients}
     , fingerprint_{ComputeFingerprint()}
-  {
-  }
-  
+  {}
+
   virtual byte_array::ByteArray serialise() override
   {
     serializers::MsgPackSerializer serializer;
     serializer << *this;
     return serializer.data();
   }
-  virtual void deserialise(const byte_array::ByteArray& map) override
+  virtual void deserialise(const byte_array::ByteArray &map) override
   {
     serializers::MsgPackSerializer serializer{map};
     serializer >> *this;
   }
-  virtual TimeStampType TimeStamp() const override 
+  virtual TimeStampType TimeStamp() const override
   {
     return stamp_;
   }
@@ -75,22 +73,28 @@ public:
     return fingerprint_;
   }
 
-  virtual ~Update()
+  virtual const VectorTensorType &GetGradients() const
   {
+    return gradients_;
   }
+
+  virtual ~Update()
+  {}
+
 protected:
 private:
   Update(const Update &other) = delete;
-  Update &operator=(const Update &other) = delete;
-  bool operator==(const Update &other) = delete;
-  bool operator<(const Update &other) = delete;
-  
-  static TimeStampType CurrentTime() 
+  Update &operator=(const Update &other)  = delete;
+  bool    operator==(const Update &other) = delete;
+  bool    operator<(const Update &other)  = delete;
+
+  static TimeStampType CurrentTime()
   {
-    return static_cast<TimeStampType>
-      (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count());
+    return static_cast<TimeStampType>(std::chrono::duration_cast<std::chrono::milliseconds>(
+                                          std::chrono::system_clock::now().time_since_epoch())
+                                          .count());
   }
-  
+
   FingerprintType ComputeFingerprint()
   {
     serializers::MsgPackSerializer serializer;
@@ -98,9 +102,9 @@ private:
     return crypto::Hash<crypto::SHA256>(serializer.data());
   }
 
-  TimeStampType stamp_;
+  TimeStampType    stamp_;
   VectorTensorType gradients_;
-  FingerprintType fingerprint_;
+  FingerprintType  fingerprint_;
 };
 
 }  // namespace dmlf
@@ -111,8 +115,8 @@ template <typename T, typename D>
 struct MapSerializer<fetch::dmlf::Update<T>, D>
 {
 public:
-  using Type        = fetch::dmlf::Update<T>;
-  using DriverType  = D;
+  using Type       = fetch::dmlf::Update<T>;
+  using DriverType = D;
 
   static uint8_t const TIME_STAMP  = 1;
   static uint8_t const GRADIENTS   = 2;
@@ -122,20 +126,19 @@ public:
   static void Serialize(Constructor &map_constructor, Type const &update)
   {
     auto map = map_constructor(3);
-    map.Append(TIME_STAMP , update.stamp_);
-    map.Append(GRADIENTS  , update.gradients_);
+    map.Append(TIME_STAMP, update.stamp_);
+    map.Append(GRADIENTS, update.gradients_);
     map.Append(FINGERPRINT, update.fingerprint_);
   }
 
   template <typename MapDeserializer>
   static void Deserialize(MapDeserializer &map, Type &update)
   {
-    map.ExpectKeyGetValue(TIME_STAMP , update.stamp_);
-    map.ExpectKeyGetValue(GRADIENTS  , update.gradients_);
+    map.ExpectKeyGetValue(TIME_STAMP, update.stamp_);
+    map.ExpectKeyGetValue(GRADIENTS, update.gradients_);
     map.ExpectKeyGetValue(FINGERPRINT, update.fingerprint_);
   }
 };
-
 
 }  // namespace serializers
 }  // namespace fetch
