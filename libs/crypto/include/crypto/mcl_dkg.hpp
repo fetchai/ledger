@@ -37,13 +37,15 @@ namespace mcl {
 using PrivateKey     = bn::Fr;
 using PublicKey      = bn::G2;
 using Signature      = bn::G1;
-using Group          = bn::G2;
+using Generator      = bn::G2;
 using MessagePayload = byte_array::ConstByteArray;
 using CabinetIndex   = uint32_t;
 
 /**
  * Helper functions for computations used in the DKG
  */
+void   SetGenerator(Generator &group_g);
+void   SetGenerators(Generator &group_g, Generator &group_h);
 bn::G2 ComputeLHS(bn::G2 &tmpG, bn::G2 const &G, bn::G2 const &H, bn::Fr const &share1,
                   bn::Fr const &share2);
 
@@ -64,7 +66,7 @@ std::vector<bn::Fr> InterpolatePolynom(std::vector<bn::Fr> const &a, std::vector
 Signature SignShare(MessagePayload const &message, PrivateKey const &x_i);
 
 bool VerifySign(PublicKey const &y, MessagePayload const &message, Signature const &sign,
-                Group const &G);
+                Generator const &G);
 
 Signature LagrangeInterpolation(std::unordered_map<CabinetIndex, Signature> const &shares);
 

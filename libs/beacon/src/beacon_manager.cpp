@@ -45,18 +45,7 @@ BeaconManager::BeaconManager(CertificatePtr certificate)
     bn::initPairing();
     zeroG2_.clear();
     zeroFr_.clear();
-    group_g_.clear();
-    group_h_.clear();
-
-    // Values taken from TMCG main.cpp
-    const bn::Fp2 g(
-        "1380305877306098957770911920312855400078250832364663138573638818396353623780",
-        "14633108267626422569982187812838828838622813723380760182609272619611213638781");
-    const bn::Fp2 h(
-        "6798148801244076840612542066317482178930767218436703568023723199603978874964",
-        "12726557692714943631796519264243881146330337674186001442981874079441363994424");
-    bn::mapToG2(group_g_, g);
-    bn::mapToG2(group_h_, h);
+    crypto::mcl::SetGenerators(group_g_, group_h_);
   });
 }
 
