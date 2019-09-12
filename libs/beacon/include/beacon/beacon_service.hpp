@@ -146,7 +146,7 @@ protected:
 
   /// Protocol endpoints
   /// @{
-  SignatureInformation GetSignatureShares(uint64_t round) const;
+  SignatureInformation GetSignatureShares(uint64_t round);
   /// @}
 
 private:
