@@ -239,7 +239,7 @@ inline VectorRegister<int64_t, 128> operator*(VectorRegister<int64_t, 128> const
   alignas(16) int64_t d2[2];
   _mm_store_si128(reinterpret_cast<__m128i *>(d2), b.data());
 
-  int64_t ret[2];
+  alignas(16) int64_t ret[2];
 
   ret[0] = d1[0] * d2[0];
   ret[1] = d1[1] * d2[1];
@@ -257,7 +257,7 @@ inline VectorRegister<int64_t, 256> operator*(VectorRegister<int64_t, 256> const
   alignas(32) int64_t d2[4];
   _mm256_store_si256(reinterpret_cast<__m256i *>(d2), b.data());
 
-  int64_t ret[4];
+  alignas(32) int64_t ret[4];
 
   ret[0] = d1[0] * d2[0];
   ret[1] = d1[1] * d2[1];
@@ -277,7 +277,7 @@ inline VectorRegister<int64_t, 128> operator/(VectorRegister<int64_t, 128> const
   alignas(16) int64_t d2[2];
   _mm_store_si128(reinterpret_cast<__m128i *>(d2), b.data());
 
-  int64_t ret[2];
+  alignas(16) int64_t ret[2];
 
   // don't divide by zero
   // set each of the 4 values in the vector register to either the solution of the division or 0
@@ -297,7 +297,7 @@ inline VectorRegister<int64_t, 256> operator/(VectorRegister<int64_t, 256> const
   alignas(32) int64_t d2[4];
   _mm256_store_si256(reinterpret_cast<__m256i *>(d2), b.data());
 
-  int64_t ret[4];
+  alignas(32) int64_t ret[4];
 
   // don't divide by zero
   // set each of the 4 values in the vector register to either the solution of the division or 0

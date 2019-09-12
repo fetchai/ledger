@@ -252,7 +252,7 @@ inline VectorRegister<int32_t, 128> operator/(VectorRegister<int32_t, 128> const
   alignas(16) int32_t d2[4];
   _mm_store_si128(reinterpret_cast<__m128i *>(d2), b.data());
 
-  int32_t ret[4];
+  alignas(16) int32_t ret[4];
 
   // don't divide by zero
   // set each of the 4 values in the vector register to either the solution of the division or 0
@@ -275,7 +275,7 @@ inline VectorRegister<int32_t, 256> operator/(VectorRegister<int32_t, 256> const
   alignas(32) int32_t d2[8];
   _mm256_store_si256(reinterpret_cast<__m256i *>(d2), b.data());
 
-  int32_t ret[8];
+  alignas(32) int32_t ret[8];
 
   // don't divide by zero
   // set each of the 4 values in the vector register to either the solution of the division or 0
