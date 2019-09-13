@@ -32,7 +32,6 @@ FunctionDecoratorKind DetermineKind(vm::Executable::Function const &fn)
 
   FunctionDecoratorKind kind{FunctionDecoratorKind::NONE};
 
-  // loop through all the function annotations
   if (1u == fn.annotations.size())
   {
     // select the first annotation
