@@ -71,17 +71,11 @@ public:
   enum class Failures : uint8_t
   {
     BAD_COEFFICIENT,
-    SEND_MULTIPLE_COEFFICIENTS,
+    SEND_MULTIPLE_MESSAGES,
     SEND_BAD_SHARE,
-    SEND_MULTIPLE_SHARES,
-    SEND_MULTIPLE_COMPLAINTS,
     SEND_EMPTY_COMPLAINT_ANSWER,
-    SEND_MULTIPLE_COMPLAINT_ANSWERS,
     BAD_QUAL_COEFFICIENTS,
-    SEND_MULTIPLE_QUAL_COEFFICIENTS,
     SEND_FALSE_QUAL_COMPLAINT,
-    SEND_MULTIPLE_QUAL_COMPLAINTS,
-    SEND_MULTIPLE_RECONSTRUCTION_SHARES,
     WITHOLD_RECONSTRUCTION_SHARES
   };
 
@@ -135,7 +129,7 @@ private:
         std::pair<MessageShare, MessageShare> shares{
             beacon_->manager.GetOwnShares(cab_i.identifier())};
         SendShares(cab_i.identifier(), shares);
-        if (Failure(Failures::SEND_MULTIPLE_SHARES))
+        if (Failure(Failures::SEND_MULTIPLE_MESSAGES))
         {
           SendShares(cab_i.identifier(), shares);
         }
@@ -149,7 +143,7 @@ private:
     {
       SendBroadcast(DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_SHARES),
                                                     beacon_->manager.GetCoefficients()}});
-      if (Failure(Failures::SEND_MULTIPLE_COEFFICIENTS))
+      if (Failure(Failures::SEND_MULTIPLE_MESSAGES))
       {
         SendBroadcast(DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_SHARES),
                                                       beacon_->manager.GetCoefficients()}});
@@ -208,7 +202,7 @@ private:
       complaints_manager_.AddComplaintAgainst(cab);
     }
     SendBroadcast(DKGEnvelope{ComplaintsMessage{complaints_local}});
-    if (Failure(Failures::SEND_MULTIPLE_COMPLAINTS))
+    if (Failure(Failures::SEND_MULTIPLE_MESSAGES))
     {
       SendBroadcast(DKGEnvelope{ComplaintsMessage{complaints_local}});
     }
@@ -226,7 +220,7 @@ private:
     }
     SendBroadcast(DKGEnvelope{SharesMessage{
         static_cast<uint64_t>(State::WAIT_FOR_COMPLAINT_ANSWERS), complaint_answers}});
-    if (Failure(Failures::SEND_MULTIPLE_COMPLAINT_ANSWERS))
+    if (Failure(Failures::SEND_MULTIPLE_MESSAGES))
     {
       SendBroadcast(DKGEnvelope{SharesMessage{
           static_cast<uint64_t>(State::WAIT_FOR_COMPLAINT_ANSWERS), complaint_answers}});
@@ -252,7 +246,7 @@ private:
       SendBroadcast(
           DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_QUAL_SHARES),
                                           beacon_->manager.GetQualCoefficients()}});
-      if (Failure(Failures::SEND_MULTIPLE_QUAL_COEFFICIENTS))
+      if (Failure(Failures::SEND_MULTIPLE_MESSAGES))
       {
         SendBroadcast(
             DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_QUAL_SHARES),
@@ -286,7 +280,7 @@ private:
       SendBroadcast(DKGEnvelope{
           SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS),
                         beacon_->manager.ComputeQualComplaints(qual_coefficients_received_)}});
-      if (Failure(Failures::SEND_MULTIPLE_QUAL_COMPLAINTS))
+      if (Failure(Failures::SEND_MULTIPLE_MESSAGES))
       {
         SendBroadcast(DKGEnvelope{
             SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS),
@@ -313,7 +307,7 @@ private:
       }
       SendBroadcast(DKGEnvelope{SharesMessage{
           static_cast<uint64_t>(State::WAIT_FOR_RECONSTRUCTION_SHARES), complaint_shares}});
-      if (Failure(Failures::SEND_MULTIPLE_RECONSTRUCTION_SHARES))
+      if (Failure(Failures::SEND_MULTIPLE_MESSAGES))
       {
         SendBroadcast(DKGEnvelope{SharesMessage{
             static_cast<uint64_t>(State::WAIT_FOR_RECONSTRUCTION_SHARES), complaint_shares}});
@@ -615,13 +609,7 @@ TEST(dkg_setup, send_multiple_messages)
   // reconstruction computes the correct thing.
   GenerateTest(5, 3, 4, 4,
                {{FaultySetupService::Failures::BAD_COEFFICIENT},
-                {FaultySetupService::Failures::SEND_MULTIPLE_SHARES,
-                 FaultySetupService::Failures::SEND_MULTIPLE_COEFFICIENTS,
-                 FaultySetupService::Failures::SEND_MULTIPLE_COMPLAINTS,
-                 FaultySetupService::Failures::SEND_MULTIPLE_COMPLAINT_ANSWERS,
-                 FaultySetupService::Failures::SEND_MULTIPLE_QUAL_COEFFICIENTS,
-                 FaultySetupService::Failures::SEND_MULTIPLE_QUAL_COMPLAINTS,
-                 FaultySetupService::Failures::SEND_MULTIPLE_RECONSTRUCTION_SHARES},
+                {FaultySetupService::Failures::SEND_MULTIPLE_MESSAGES},
                 {FaultySetupService::Failures::SEND_FALSE_QUAL_COMPLAINT}});
 }
 
