@@ -426,8 +426,8 @@ public:
   /// @}
 
   template <typename... Args>
-  type ProductReduce(typename details::MatrixReduceFreeFunction<VectorRegisterType>::
-                         template Unroll<Args...>::signature_type const &kernel,
+  type ProductReduce(typename details::MatrixReduceFreeFunction<
+                         VectorRegisterType>::template Unroll<Args...>::SignatureType const &kernel,
                      Args &&... args)
   {
     VectorRegisterType         regs[sizeof...(args)];
@@ -629,7 +629,7 @@ public:
   // TODO (issue 1113): This function is potentially slow
   template <typename... Args>
   void Apply(typename details::MatrixApplyFreeFunction<VectorRegisterType, void>::template Unroll<
-                 Args...>::signature_type &&apply,
+                 Args...>::SignatureType &&apply,
              Args &&... args)
   {
     VectorRegisterType         regs[sizeof...(args)], c;
@@ -766,7 +766,7 @@ public:
   template <class C, typename... Args>
   void Apply(C const &cls,
              typename details::MatrixApplyClassMember<C, VectorRegisterType, void>::template Unroll<
-                 Args...>::signature_type const &fnc,
+                 Args...>::SignatureType const &fnc,
              Args &&... args)
   {
     VectorRegisterType         regs[sizeof...(args)];
@@ -788,8 +788,8 @@ public:
 
   template <class C, typename... Args>
   std::enable_if_t<std::is_same<decltype(&C::operator()),
-                                typename details::MatrixApplyClassMember<C, type, void>::
-                                    template Unroll<Args...>::signature_type>::value,
+                                typename details::MatrixApplyClassMember<
+                                    C, type, void>::template Unroll<Args...>::SignatureType>::value,
                    void>
   Apply(C const &cls, Args &&... args)
   {
@@ -800,7 +800,7 @@ public:
   std::enable_if_t<
       std::is_same<decltype(&C::operator()),
                    typename details::MatrixApplyClassMember<C, VectorRegisterType, void>::
-                       template Unroll<Args...>::signature_type>::value,
+                       template Unroll<Args...>::SignatureType>::value,
       void>
   Apply(C const &cls, Args &&... args)
   {

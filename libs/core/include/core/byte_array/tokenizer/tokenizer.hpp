@@ -34,7 +34,7 @@ class Tokenizer : public std::vector<Token>
 public:
   using byte_array_type        = ConstByteArray;
   using consumer_function_type = std::function<int(byte_array_type const &, uint64_t &)>;
-  using indexer_function_type  = std::function<int(byte_array_type const &, uint64_t, int const &)>;
+  using IndexerFunctionType    = std::function<int(byte_array_type const &, uint64_t, int const &)>;
 
   std::size_t AddConsumer(consumer_function_type function)
   {
@@ -177,7 +177,7 @@ public:
 
 private:
   std::vector<consumer_function_type> consumers_;
-  indexer_function_type               indexer_;
+  IndexerFunctionType                 indexer_;
 };
 }  // namespace byte_array
 }  // namespace fetch

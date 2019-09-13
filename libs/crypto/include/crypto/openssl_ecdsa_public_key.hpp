@@ -112,7 +112,7 @@ public:
   }
 
 private:
-  using affine_coord_conversion_type = ECDSAAffineCoordinatesConversion<P_ECDSA_Curve_NID>;
+  using AffineCoordConversionType = ECDSAAffineCoordinatesConversion<P_ECDSA_Curve_NID>;
 
   static byte_array::ByteArray Convert(EC_POINT const *const           public_key,
                                        EC_GROUP const *const           group,
@@ -184,7 +184,7 @@ private:
     shrd_ptr_type<BIGNUM> y{BN_new()};
     EC_POINT_get_affine_coordinates_GFp(group, public_key, x.get(), y.get(),
                                         session.context().get());
-    return affine_coord_conversion_type::Convert2Canonical(x.get(), y.get());
+    return AffineCoordConversionType::Convert2Canonical(x.get(), y.get());
   }
 
   static byte_array::ByteArray Convert2Bin(EC_POINT const *const           public_key,
@@ -220,7 +220,7 @@ private:
     shrd_ptr_type<BIGNUM> x{BN_new()};
     shrd_ptr_type<BIGNUM> y{BN_new()};
 
-    affine_coord_conversion_type::ConvertFromCanonical(key_data, x.get(), y.get());
+    AffineCoordConversionType::ConvertFromCanonical(key_data, x.get(), y.get());
 
     if (!EC_POINT_set_affine_coordinates_GFp(group.get(), public_key.get(), x.get(), y.get(),
                                              session.context().get()))

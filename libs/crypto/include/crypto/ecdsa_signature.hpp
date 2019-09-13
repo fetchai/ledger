@@ -58,14 +58,14 @@ public:
   {}
 
   template <eECDSAEncoding BIN_FORMAT>
-  using ecdsa_signature_type = ECDSASignature<BIN_FORMAT, T_Hasher, P_ECDSA_Curve_NID>;
+  using ecdsa_SignatureType = ECDSASignature<BIN_FORMAT, T_Hasher, P_ECDSA_Curve_NID>;
 
   template <eECDSAEncoding P_ECDSASignatureBinaryDataFormat2, typename T_Hasher2,
             int            P_ECDSA_Curve_NID2>
   friend class ECDSASignature;
 
   template <eECDSAEncoding BIN_FORMAT>
-  ECDSASignature(ecdsa_signature_type<BIN_FORMAT> const &from)
+  ECDSASignature(ecdsa_SignatureType<BIN_FORMAT> const &from)
     : hash_{from.hash_}
     , signature_ECDSA_SIG_{from.signature_ECDSA_SIG_}
     , signature_{BIN_FORMAT == signatureBinaryDataFormat
@@ -76,21 +76,21 @@ public:
   // ECDSASignature(ECDSASignature&& from) = default;
 
   template <eECDSAEncoding BIN_FORMAT>
-  ECDSASignature(ecdsa_signature_type<BIN_FORMAT> &&from)
+  ECDSASignature(ecdsa_SignatureType<BIN_FORMAT> &&from)
     : ECDSASignature{safeMoveConstruct(std::move(from))}
   {}
 
   // ECDSASignature& operator = (ECDSASignature const & from) = default;
 
   template <eECDSAEncoding BIN_FORMAT>
-  ECDSASignature operator=(ecdsa_signature_type<BIN_FORMAT> const &from)
+  ECDSASignature operator=(ecdsa_SignatureType<BIN_FORMAT> const &from)
   {
     *this = ECDSASignature(from);
     return *this;
   }
 
   template <eECDSAEncoding BIN_FORMAT>
-  ECDSASignature operator=(ecdsa_signature_type<BIN_FORMAT> &&from)
+  ECDSASignature operator=(ecdsa_SignatureType<BIN_FORMAT> &&from)
   {
     *this = safeMoveConstruct(std::move(from));
     return *this;
@@ -156,7 +156,7 @@ public:
   }
 
 private:
-  using affine_coord_conversion_type = ECDSAAffineCoordinatesConversion<P_ECDSA_Curve_NID>;
+  using AffineCoordConversionType = ECDSAAffineCoordinatesConversion<P_ECDSA_Curve_NID>;
 
   enum class eBinaryDataType : int
   {
@@ -173,7 +173,7 @@ private:
   {}
 
   template <eECDSAEncoding BIN_FORMAT>
-  static ECDSASignature safeMoveConstruct(ecdsa_signature_type<BIN_FORMAT> &&from)
+  static ECDSASignature safeMoveConstruct(ecdsa_SignatureType<BIN_FORMAT> &&from)
   {
     byte_array::ConstByteArray signature{
         Convert(from.signature_ECDSA_SIG_, signatureBinaryDataFormat)};
@@ -266,7 +266,7 @@ private:
     BIGNUM const *s;
     ECDSA_SIG_get0(signature.get(), &r, &s);
 
-    return affine_coord_conversion_type::Convert2Canonical(r, s);
+    return AffineCoordConversionType::Convert2Canonical(r, s);
   }
 
   static uniq_ptr_type<ECDSA_SIG> ConvertCanonical(const byte_array::ConstByteArray &bin_sig)
@@ -274,7 +274,7 @@ private:
     uniq_ptr_type<BIGNUM, memory::eDeleteStrategy::clearing> r{BN_new()};
     uniq_ptr_type<BIGNUM, memory::eDeleteStrategy::clearing> s{BN_new()};
 
-    affine_coord_conversion_type::ConvertFromCanonical(bin_sig, r.get(), s.get());
+    AffineCoordConversionType::ConvertFromCanonical(bin_sig, r.get(), s.get());
 
     uniq_ptr_type<ECDSA_SIG> signature{ECDSA_SIG_new()};
     if (!ECDSA_SIG_set0(signature.get(), r.get(), s.get()))
