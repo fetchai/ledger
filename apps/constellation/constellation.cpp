@@ -74,8 +74,6 @@ using ExecutorPtr = std::shared_ptr<Executor>;
 namespace fetch {
 namespace {
 
-constexpr char const *LOGGING_NAME = "constellation";
-
 using BeaconServicePtr = std::shared_ptr<fetch::beacon::BeaconService>;
 using CertificatePtr   = Constellation::CertificatePtr;
 using Config           = Constellation::Config;
@@ -86,6 +84,8 @@ using Identity         = crypto::Identity;
 using LaneIndex        = uint32_t;
 using MainChain        = ledger::MainChain;
 using StakeManagerPtr  = std::shared_ptr<ledger::StakeManager>;
+
+constexpr char const *LOGGING_NAME = "constellation";
 
 static const std::size_t HTTP_THREADS{4};
 static char const *      GENESIS_FILENAME = "genesis_file.json";
