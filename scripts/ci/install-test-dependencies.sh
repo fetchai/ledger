@@ -1,8 +1,6 @@
 #!/bin/bash
 set -e
 
-echo "??? changes"
-
 pip3 uninstall --yes wheel pyyaml requests fetchai-ledger-api fetchai-netutils
 
 pip3 install --ignore-installed --force-reinstall wheel pyyaml requests
