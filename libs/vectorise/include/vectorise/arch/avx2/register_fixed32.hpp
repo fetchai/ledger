@@ -312,47 +312,6 @@ inline VectorRegister<fixed_point::fp32_t, 256> operator/(
   return VectorRegister<fixed_point::fp32_t, 256>(ret);
 }
 
-/*
-  AVX2 Version of division that uses a cast to doubles, needs revisiting because performance gain is
-significant inline VectorRegister<fixed_point::fp32_t, 128>
-operator/(VectorRegister<fixed_point::fp32_t, 128> const &a, VectorRegister<fixed_point::fp32_t,
-128> const &b)
-{
-  std::cout << "a = " << a << std::endl;
-  std::cout << "b = " << b << std::endl;
-  __m256d scaler = _mm256_set1_pd(0x10000U);
-  std::cout << "scaler = " << VectorRegister<double, 256>(scaler) << std::endl;
-  // Convert the elements to double, and divide by the max fractional 0xffff
-  __m256d va = _mm256_cvtepi32_pd(a.data());
-  std::cout << "a = " << VectorRegister<double, 256>(va) << std::endl;
-  __m256d vb = _mm256_cvtepi32_pd(b.data());
-  std::cout << "b = " << VectorRegister<double, 256>(vb) << std::endl;
-  __m256d div256 = _mm256_div_pd(va, vb);
-  std::cout << "div256 = " << VectorRegister<double, 256>(div256) << std::endl;
-  div256 = _mm256_mul_pd(div256, scaler);
-  std::cout << "div256 = " << VectorRegister<double, 256>(div256) << std::endl;
-  VectorRegister<int32_t, 128> div = VectorRegister<int32_t, 128>(_mm256_cvtpd_epi32(div256));
-  std::cout << "div256 = " << std::hex << div << std::dec << std::endl;
-  return VectorRegister<fixed_point::fp32_t, 128>(div.data());
-}
-
-inline VectorRegister<fixed_point::fp32_t, 256> operator/(VectorRegister<fixed_point::fp32_t, 256>
-const &a, VectorRegister<fixed_point::fp32_t, 256> const &b)
-{
-  // Use the above division in 2 steps, for each 128bit lane
-  VectorRegister<fixed_point::fp32_t, 128> a_lo(_mm256_extractf128_si256(a.data(), 0));
-  VectorRegister<fixed_point::fp32_t, 128> a_hi(_mm256_extractf128_si256(a.data(), 1));
-  VectorRegister<fixed_point::fp32_t, 128> b_lo(_mm256_extractf128_si256(b.data(), 0));
-  VectorRegister<fixed_point::fp32_t, 128> b_hi(_mm256_extractf128_si256(b.data(), 1));
-
-  VectorRegister<fixed_point::fp32_t, 128> div_lo = a_lo / b_lo;
-  VectorRegister<fixed_point::fp32_t, 128> div_hi = a_hi / b_hi;
-
-  VectorRegister<fixed_point::fp32_t, 256> div(_mm256_set_m128i(div_hi.data(), div_lo.data()));
-  std::cout << "div = " << std::hex << div << std::dec << std::endl;
-  return div;
-}*/
-
 inline VectorRegister<fixed_point::fp32_t, 128> vector_zero_below_element(
     VectorRegister<fixed_point::fp32_t, 128> const & /*a*/, int const & /*n*/)
 {
