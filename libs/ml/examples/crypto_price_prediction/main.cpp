@@ -50,9 +50,9 @@ using DataLoaderType   = fetch::ml::dataloaders::TensorDataLoader<TensorType, Te
 
 struct TrainingParams
 {
-  SizeType epochs{5};
-  SizeType batch_size{1000};
-  bool     normalise = false;
+  SizeType epochs{1};
+  SizeType batch_size{128};
+  bool     normalise = true;
 };
 
 std::shared_ptr<GraphType> BuildModel(std::string &input_name, std::string &output_name,
@@ -77,7 +77,8 @@ std::shared_ptr<GraphType> BuildModel(std::string &input_name, std::string &outp
 
   std::string layer_1 = g->AddNode<fetch::ml::layers::Convolution1D<TensorType>>(
       "Conv1D_1", {input_name}, conv1D_1_filters, conv1D_1_input_channels, conv1D_1_kernel_size,
-      conv1D_1_stride, fetch::ml::details::ActivationType::RELU);
+      conv1D_1_stride, fetch::ml::details::ActivationType::LEAKY_RELU);
+
   std::string layer_2 = g->AddNode<Dropout<TensorType>>("Dropout_1", {layer_1}, keep_prob_1);
 
   output_name = g->AddNode<fetch::ml::layers::Convolution1D<TensorType>>(
@@ -178,6 +179,7 @@ int main(int ac, char **av)
   }
 
   DataLoaderType loader(train_label.shape(), {train_data.shape()});
+  loader.SetRandomMode(true);
   loader.AddData(train_data, train_label);
 
   std::cout << "Build model & optimiser... " << std::endl;

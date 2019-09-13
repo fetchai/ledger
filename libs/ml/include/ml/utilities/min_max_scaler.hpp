@@ -39,11 +39,9 @@ public:
   void DeNormalise(TensorType const &input_tensor, TensorType &output_tensor) override;
 
 private:
-  TensorType x_min_;
-  TensorType x_max_;
-  TensorType x_range_;
-
-  void InitialiseStatistics(SizeType tensor_shape);
+  DataType x_min_ = fetch::math::numeric_max<DataType>();
+  DataType x_max_ = fetch::math::numeric_lowest<DataType>();
+  DataType x_range_ = fetch::math::numeric_max<DataType>();
 };
 
 /**
@@ -55,47 +53,32 @@ template <typename TensorType>
 void MinMaxScaler<TensorType>::SetScale(TensorType const &reference_tensor)
 {
   SizeType batch_dim = reference_tensor.shape().size() - 1;
-  InitialiseStatistics(reference_tensor.size() / reference_tensor.shape(batch_dim));
 
   // first loop computes min and max
   for (std::size_t i = 0; i < reference_tensor.shape(batch_dim); ++i)
   {
-    auto x_min_it = x_min_.begin();
-    auto x_max_it = x_max_.begin();
     auto ref_it   = reference_tensor.View(i).cbegin();
-    while (x_min_it.is_valid())
+    while (ref_it.is_valid())
     {
-      if (*x_min_it > *ref_it)
+      if (x_min_ > *ref_it)
       {
-        *x_min_it = *ref_it;
+        x_min_ = *ref_it;
       }
 
-      if (*x_max_it < *ref_it)
+      if (x_max_ < *ref_it)
       {
-        *x_max_it = *ref_it;
+        x_max_ = *ref_it;
       }
-
       ++ref_it;
-      ++x_min_it;
-      ++x_max_it;
     }
   }
 
-  // second loop computes ranges
-  auto x_min_it   = x_min_.begin();
-  auto x_max_it   = x_max_.begin();
-  auto x_range_it = x_range_.begin();
-  while (x_min_it.is_valid())
-  {
-    if (*x_range_it < (*x_max_it - *x_min_it))
-    {
-      *x_range_it = (*x_max_it - *x_min_it);
-    }
-
-    ++x_min_it;
-    ++x_max_it;
-    ++x_range_it;
-  }
+  x_range_ = x_max_ - x_min_;
+  
+  std::cout << "x_range_: " << x_range_ << std::endl;
+  std::cout << "x_max_: " << x_max_ << std::endl;
+  std::cout << "x_min_: " << x_min_ << std::endl;
+  
 }
 
 /**
@@ -110,21 +93,16 @@ void MinMaxScaler<TensorType>::Normalise(TensorType const &input_tensor, TensorT
   output_tensor.Reshape(input_tensor.shape());
   SizeType batch_dim = input_tensor.shape().size() - 1;
 
-  // apply normalisation to each feature according to scale -1, 1
+  // apply normalisation to all data according to scale -1, 1
   for (std::size_t i = 0; i < input_tensor.shape(batch_dim); ++i)
   {
-    auto x_min_it   = x_min_.begin();
-    auto x_range_it = x_range_.begin();
     auto in_it      = input_tensor.View(i).cbegin();
     auto ret_it     = output_tensor.View(i).begin();
     while (ret_it.is_valid())
     {
-      *ret_it = (*in_it - *x_min_it) / (*x_range_it);
-
+      *ret_it = (*in_it - x_min_) / (x_range_);
       ++in_it;
       ++ret_it;
-      ++x_min_it;
-      ++x_range_it;
     }
   }
 }
@@ -145,42 +123,15 @@ void MinMaxScaler<TensorType>::DeNormalise(TensorType const &input_tensor,
   // apply normalisation to each feature according to scale -1, 1
   for (std::size_t i = 0; i < input_tensor.shape(batch_dim); ++i)
   {
-    auto x_min_it   = x_min_.begin();
-    auto x_range_it = x_range_.begin();
     auto in_it      = input_tensor.View(i).cbegin();
     auto ret_it     = output_tensor.View(i).begin();
     while (ret_it.is_valid())
     {
-      *ret_it = ((*in_it) * (*x_range_it)) + *x_min_it;
-
+      *ret_it = ((*in_it) * x_range_) + x_min_;
       ++in_it;
       ++ret_it;
-      ++x_min_it;
-      ++x_range_it;
     }
   }
-}
-
-/**
- * Initialise min, max, and range
- * @tparam TensorType
- * @param tensor_shape
- */
-template <typename TensorType>
-void MinMaxScaler<TensorType>::InitialiseStatistics(SizeType tensor_size)
-{
-  x_min_   = TensorType(tensor_size);
-  x_max_   = TensorType(tensor_size);
-  x_range_ = TensorType(tensor_size);
-
-  // set min default to max
-  x_min_.Fill(fetch::math::numeric_max<DataType>());
-
-  // set max default to min
-  x_max_.Fill(fetch::math::numeric_lowest<DataType>());
-
-  // set range default to lowest
-  x_range_.Fill(fetch::math::numeric_lowest<DataType>());
 }
 
 }  // namespace utilities

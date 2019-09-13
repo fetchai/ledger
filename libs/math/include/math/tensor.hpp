@@ -2350,9 +2350,15 @@ std::string Tensor<T, C>::ToString() const
     {
       for (SizeType j(0); j < shape_[1]; ++j)
       {
-        ss << At(i, j) << ", ";
+        if (j == (shape_[1] - 1))
+        {
+          ss << At(i, j) << ";";
+        }
+        else
+        {
+          ss << At(i, j) << ", ";
+        }
       }
-      ss << "; ";
     }
   }
   else
