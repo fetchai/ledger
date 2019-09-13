@@ -67,6 +67,7 @@ public:
   /// @{
   bool ResetCabinet(CabinetMembers const &cabinet);
   void Broadcast(SerialisedMessage const &msg);
+  void Enable(bool enable);
   /// @}
 
 protected:
@@ -158,6 +159,7 @@ private:
   /// Variable Declarations
   /// @{
   uint16_t channel_{CHANNEL_RBC_BROADCAST};
+  bool     enabled_ = true;
 
   std::atomic<uint32_t> id_{0};  ///< Rank used in RBC (derived from position in current_cabinet_)
   std::atomic<uint8_t>  msg_counter_{0};  ///< Counter for messages we have broadcasted

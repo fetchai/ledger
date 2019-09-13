@@ -29,7 +29,7 @@ class BeaconServiceProtocol : public service::Protocol
 public:
   enum
   {
-    SUBMIT_SIGNATURE_SHARE = 1
+    GET_SIGNATURE_SHARES = 1
   };
 
   // Construction / Destruction

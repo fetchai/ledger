@@ -215,12 +215,14 @@ BeaconSetupService::State BeaconSetupService::OnReset()
   shares_received_.clear();
   dry_run_shares_.clear();
   dry_run_public_keys_.clear();
-  pre_dkg_rbc_.ResetCabinet({});
-  rbc_.ResetCabinet({});
+  pre_dkg_rbc_.Enable(false);
+  rbc_.Enable(false);
 
   if (beacon_->aeon.round_start < abort_below_)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Aborting DKG");
+    FETCH_LOG_INFO(LOGGING_NAME, "Aborting DKG. Round start: ", beacon_->aeon.round_start,
+                   " abort all below: ", abort_below_);
+    beacon_dkg_aborts_total_->add(1u);
     return State::IDLE;
   }
 
@@ -228,6 +230,8 @@ BeaconSetupService::State BeaconSetupService::OnReset()
   // before being reset with the cabinet
   if (timer_to_proceed_.HasExpired())
   {
+    pre_dkg_rbc_.Enable(true);
+    rbc_.Enable(true);
     pre_dkg_rbc_.ResetCabinet(cabinet);
     rbc_.ResetCabinet(cabinet);
 
@@ -285,20 +289,20 @@ BeaconSetupService::State BeaconSetupService::OnConnectToAll()
     {
       // tell muddle to connect to the address with the specified hint
       muddle_.ConnectTo(address, *hint);
-      FETCH_LOG_WARN(LOGGING_NAME, "Added peer with hint");
     }
     else
     {
       // tell muddle to connect to the address using normal service discovery
       muddle_.ConnectTo(address);
-      FETCH_LOG_WARN(LOGGING_NAME, "Added peer without hint");
     }
   }
 
   // request removal of unwanted connections
   auto unwanted_connections = muddle_.GetRequestedPeers() - aeon_members;
-  FETCH_LOG_INFO(LOGGING_NAME, "Removing unwanted connections: ", unwanted_connections.size());
   muddle_.DisconnectFrom(unwanted_connections);
+
+  // Update telemetry
+  beacon_dkg_all_connections_gauge_->set(muddle_.GetDirectlyConnectedPeers().size());
 
   if (timer_to_proceed_.HasExpired())
   {
@@ -388,9 +392,10 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
   beacon_dkg_all_connections_gauge_->set(connected_peers.size());
   beacon_dkg_connections_gauge_->set(can_see.size());
 
-  // If we get over threshold connections, send a message to all peers each time
-  // we increase over this threshold (note we won't advance if we ourselves don't get over)
-  if (can_see.size() > connections_.size() && can_see.size() >= require_connections)
+  // If we get over threshold connections, send a message to all peers with the info
+  // (note we won't advance if we ourselves don't get over)
+  if (can_see.size() > connections_.size() && can_see.size() >= require_connections &&
+      !condition_to_proceed_)
   {
     fetch::serializers::MsgPackSerializer serializer;
     serializer << connections_;
@@ -439,7 +444,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
           " expect: ", require_connections, " Other ready peers: ", ready_connections_.size());
     }
 
-    state_machine_->Delay(std::chrono::milliseconds(500));
+    state_machine_->Delay(std::chrono::milliseconds(100));
   }
 
   return State::WAIT_FOR_READY_CONNECTIONS;
@@ -1347,7 +1352,6 @@ void BeaconSetupService::Abort(uint64_t abort_below)
 {
   std::lock_guard<std::mutex> lock(mutex_);
   abort_below_ = abort_below;
-  beacon_dkg_aborts_total_->add(1u);
 }
 
 void BeaconSetupService::SetBeaconReadyCallback(CallbackFunction callback)
@@ -1400,15 +1404,15 @@ void SetTimeBySlots(BeaconSetupService::State state, uint64_t &time_slots_total,
   std::map<BeaconSetupService::State, uint64_t> time_slot_map;
 
   time_slot_map[BeaconSetupService::State::RESET]                          = 0;
-  time_slot_map[BeaconSetupService::State::CONNECT_TO_ALL]                 = 10;
-  time_slot_map[BeaconSetupService::State::WAIT_FOR_READY_CONNECTIONS]     = 10;
+  time_slot_map[BeaconSetupService::State::CONNECT_TO_ALL]                 = 15;
+  time_slot_map[BeaconSetupService::State::WAIT_FOR_READY_CONNECTIONS]     = 15;
   time_slot_map[BeaconSetupService::State::WAIT_FOR_SHARES]                = 10;
   time_slot_map[BeaconSetupService::State::WAIT_FOR_COMPLAINTS]            = 10;
   time_slot_map[BeaconSetupService::State::WAIT_FOR_COMPLAINT_ANSWERS]     = 10;
   time_slot_map[BeaconSetupService::State::WAIT_FOR_QUAL_SHARES]           = 10;
   time_slot_map[BeaconSetupService::State::WAIT_FOR_QUAL_COMPLAINTS]       = 10;
   time_slot_map[BeaconSetupService::State::WAIT_FOR_RECONSTRUCTION_SHARES] = 10;
-  time_slot_map[BeaconSetupService::State::DRY_RUN_SIGNING]                = 20;
+  time_slot_map[BeaconSetupService::State::DRY_RUN_SIGNING]                = 10;
 
   time_slot_for_state = time_slot_map[state];
 
@@ -1428,8 +1432,8 @@ void SetTimeBySlots(BeaconSetupService::State state, uint64_t &time_slots_total,
 void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
 {
   uint64_t current_time = GetTime();
-  FETCH_LOG_INFO(LOGGING_NAME, "Determining time allowed to move on from state: ", ToString(state),
-                 " at ", current_time);
+  FETCH_LOG_INFO(LOGGING_NAME, "Determining time allowed to move on from state: \"",
+                 ToString(state), "\" at ", current_time);
   condition_to_proceed_ = false;
 
   uint64_t cabinet_size        = beacon_->aeon.members.size();
