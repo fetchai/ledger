@@ -2855,7 +2855,7 @@ Tensor<T, C> Tensor<T, C>::TensorSliceImplementation<STensor>::Copy() const
   {
     shape.emplace_back(this->range_[i][1] - this->range_[i][0] / this->range_[i][2]);
   }
-  ::fetch::math::Tensor<T, C> ret{shape};
+  fetch::math::Tensor<T, C> ret{shape};
   ret.Assign(*this);
   return ret;
 }

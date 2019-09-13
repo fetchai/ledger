@@ -18,11 +18,11 @@
 
 #include "core/serializers/main_serializer.hpp"
 #include "ml/layers/skip_gram.hpp"
+#include "ml/serializers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
-#include "ml/serializers/ml_types.hpp"
 
 template <typename T>
 class SkipGramTest : public ::testing::Test
