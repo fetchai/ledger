@@ -172,7 +172,6 @@ struct OpDropoutSaveableParams : public OpsSaveableParams
   using SizeType                = typename TensorType::SizeType;
   fetch::ml::OpType     op_type = OpType::OP_DROPOUT;
   DataType              probability{};
-  TensorType            drop_values;
   SizeType              random_seed{};
   std::vector<uint64_t> buffer{};
   uint64_t              index = fetch::math::numeric_max<uint64_t>();
@@ -287,11 +286,8 @@ struct OpLayerNormSaveableParams : public OpsSaveableParams
 
   fetch::ml::OpType op_type = OpType::OP_LAYER_NORM;
 
-  DataType   epsilon;
-  SizeType   axis;
-  TensorType prev_input;
-  TensorType cached_inv_sqrt_var;
-  TensorType cached_output;
+  DataType epsilon;
+  SizeType axis;
 };
 
 /**
@@ -387,25 +383,6 @@ struct OpMatrixMultiplySaveableParams : public OpsSaveableParams
   using SizeVector = std::vector<SizeType>;
 
   fetch::ml::OpType op_type = OpType::OP_MATRIX_MULTIPLY;
-
-  TensorType error_signal_1;
-  TensorType error_signal_2;
-
-  // forward pass
-  SizeVector fwd_input_shape_1{};
-  SizeVector fwd_input_shape_2{};
-  TensorType output_view_tensor;
-  TensorType fwd_in1_view_tensor;
-  TensorType fwd_in2_view_tensor;
-
-  // backward pass
-  SizeVector back_input_shape_1{};
-  SizeVector back_input_shape_2{};
-  TensorType back_in1_view_tensor;
-  TensorType back_in2_view_tensor;
-  TensorType err_sig_view_tensor;
-  TensorType err1;
-  TensorType err2;
 };
 
 template <typename TensorType>
