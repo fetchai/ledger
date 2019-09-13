@@ -96,7 +96,7 @@ TEST(MclDkgTests, ComputeLhsRhs)
   Init(vec_b, threshold + 1);
 
   // Randomly initialise the values of a but leave b uninitialised
-  for (std::size_t ii = 0; ii <= threshold; ++ii)
+  for (uint32_t ii = 0; ii <= threshold; ++ii)
   {
     vec_a[ii].setRand();
     vec_b[ii].setRand();
@@ -108,7 +108,7 @@ TEST(MclDkgTests, ComputeLhsRhs)
   bn::G2 group_g, group_h;
   SetGenerators(group_g, group_h);
 
-  for (std::size_t ii = 0; ii <= threshold; ++ii)
+  for (uint32_t ii = 0; ii <= threshold; ++ii)
   {
     coefficients[ii] = ComputeLHS(group_g, group_h, vec_a[ii], vec_b[ii]);
   }
@@ -116,7 +116,7 @@ TEST(MclDkgTests, ComputeLhsRhs)
   // Check compute LHS with direct computation
   std::vector<bn::G2> coefficients_test;
   Init(coefficients_test, threshold + 1);
-  for (std::size_t jj = 0; jj <= threshold; ++jj)
+  for (uint32_t jj = 0; jj <= threshold; ++jj)
   {
     bn::G2 tmpG, tmp2G;
     tmpG.clear();
@@ -136,11 +136,12 @@ TEST(MclDkgTests, ComputeLhsRhs)
   // Check compute RHS with direct computation (increment rank as not allowed to be 0)
   bn::G2 rhs_test;
   rhs_test.clear();
-  for (std::size_t jj = 0; jj <= threshold; ++jj)
+  for (uint32_t jj = 0; jj <= threshold; ++jj)
   {
     bn::G2 tmpG;
     tmpG.clear();
-    bn::G2::mul(tmpG, coefficients[jj], static_cast<int64_t>(pow(rank + 1.0, 1.0 * jj)));
+    bn::G2::mul(tmpG, coefficients[jj],
+                static_cast<int64_t>(pow(static_cast<double>(rank + 1), static_cast<double>(jj))));
     bn::G2::add(rhs_test, rhs_test, tmpG);
   }
 
@@ -156,7 +157,7 @@ TEST(MclDkgTests, Interpolation)
   std::vector<bn::Fr> vec_a;
   Init(vec_a, degree + 1);
 
-  for (std::size_t ii = 0; ii <= degree; ++ii)
+  for (uint32_t ii = 0; ii <= degree; ++ii)
   {
     vec_a[ii].setRand();
   }
@@ -210,7 +211,7 @@ TEST(MclDkgTests, Signing)
   // Construct polynomial of degree threshold - 1
   std::vector<bn::Fr> vec_a;
   Init(vec_a, threshold);
-  for (std::size_t ii = 0; ii <= threshold; ++ii)
+  for (uint32_t ii = 0; ii <= threshold; ++ii)
   {
     vec_a[ii].setRand();
   }
