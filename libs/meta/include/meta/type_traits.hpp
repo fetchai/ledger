@@ -154,7 +154,7 @@ template <typename T, typename R = void>
 using IfIsNullPtr = EnableIf<IsNullPtr<T>, R>;
 
 template <typename T, typename R = void>
-using IfIsPod = EnableIf<std::is_pod<T>::value, R>;
+using IfIsPod = EnableIf<IsPOD<T>, R>;
 
 }  // namespace meta
 }  // namespace fetch

@@ -75,7 +75,7 @@ using IfIsNonFixedPointUnsignedArithmetic =
     fetch::meta::EnableIf<IsNonFixedPointUnsignedArithmetic<DataType>, ReturnType>;
 
 template <typename T>
-constexpr bool IsPodOrFixedPoint = std::is_pod<T>::value || IsFixedPoint<T>;
+constexpr bool IsPodOrFixedPoint = fetch::meta::IsPOD<T> || IsFixedPoint<T>;
 
 template <typename T, typename R = void>
 using IfIsPodOrFixedPoint = fetch::meta::EnableIf<IsPodOrFixedPoint<T>, R>;
