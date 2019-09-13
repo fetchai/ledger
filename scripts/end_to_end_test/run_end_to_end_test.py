@@ -545,7 +545,7 @@ def verify_txs(parameters, test_instance):
                 next_error_message = "Waiting for TX to get executed (node {}). Found: {} Tx: {}".format(
                     node_index, status, tx_b64)
 
-                sleep(0.5)
+                time.sleep(0.5)
 
                 if next_error_message != error_message:
                     output(next_error_message)
