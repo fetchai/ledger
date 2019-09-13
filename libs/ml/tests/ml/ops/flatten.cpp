@@ -29,6 +29,8 @@
 #include <memory>
 #include <vector>
 
+namespace {
+
 template <typename T>
 class FlattenTest : public ::testing::Test
 {
@@ -243,3 +245,5 @@ TYPED_TEST(FlattenTest, saveparams_backward_test)
       new_gradients.at(0), fetch::math::function_tolerance<typename TypeParam::Type>(),
       fetch::math::function_tolerance<typename TypeParam::Type>()));
 }
+
+}  // namespace

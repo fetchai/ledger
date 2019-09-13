@@ -34,7 +34,7 @@ TYPED_TEST_CASE(L2LossTest, MyTypes);
 
 TYPED_TEST(L2LossTest, value_test)
 {
-  TypeParam test_array = TypeParam ::FromString("1, -2, 3, -4, 5, -6, 7, -8");
+  TypeParam test_array = TypeParam::FromString("1, -2, 3, -4, 5, -6, 7, -8");
 
   // initialise to non-zero just to avoid correct value at initialisation
   typename TypeParam::Type score(0);

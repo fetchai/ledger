@@ -17,10 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include <condition_variable>
-
 #include "core/future_timepoint.hpp"
 #include "core/logging.hpp"
+
+#include <condition_variable>
 
 namespace fetch {
 namespace network {
