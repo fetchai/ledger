@@ -75,7 +75,7 @@ void VMGraph::Step(DataType const &lr)
   auto grads = graph_.GetGradients();
   for (auto &grad : grads)
   {
-    grad *= DataType{-lr};
+    grad *= static_cast<DataType>(-lr);
   }
   graph_.ApplyGradients(grads);
 }
