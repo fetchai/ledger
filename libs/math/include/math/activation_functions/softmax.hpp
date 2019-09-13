@@ -24,7 +24,6 @@
 
 #include <cassert>
 #include <cstddef>
-#include <stdexcept>
 
 namespace fetch {
 namespace math {

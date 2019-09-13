@@ -102,12 +102,13 @@ void Word2VecClient<TensorType>::PrepareModel()
       this->g_ptr_->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
   std::string context_name =
       this->g_ptr_->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Context", {});
-  this->label_name_ = this->g_ptr_->template AddNode<PlaceHolder<TensorType>>("Label", {});
-  skipgram_         = this->g_ptr_->template AddNode<fetch::ml::layers::SkipGram<TensorType>>(
+  this->label_name_ =
+      this->g_ptr_->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Label", {});
+  skipgram_ = this->g_ptr_->template AddNode<fetch::ml::layers::SkipGram<TensorType>>(
       "SkipGram", {input_name, context_name}, SizeType(1), SizeType(1), tp_.embedding_size,
       w2v_data_loader_ptr_->vocab_size());
 
-  this->error_name_ = this->g_ptr_->template AddNode<CrossEntropyLoss<TensorType>>(
+  this->error_name_ = this->g_ptr_->template AddNode<fetch::ml::ops::CrossEntropyLoss<TensorType>>(
       "Error", {skipgram_, this->label_name_});
 
   this->inputs_names_ = {input_name, context_name};
@@ -116,7 +117,6 @@ void Word2VecClient<TensorType>::PrepareModel()
 template <class TensorType>
 void Word2VecClient<TensorType>::PrepareDataLoader()
 {
-
   w2v_data_loader_ptr_ = std::make_shared<fetch::ml::dataloaders::GraphW2VLoader<DataType>>(
       tp_.window_size, tp_.negative_sample_size, tp_.freq_thresh, tp_.max_word_count);
   w2v_data_loader_ptr_->LoadVocab(tp_.vocab_file);
@@ -156,7 +156,6 @@ void Word2VecClient<TensorType>::PrintWordAnalogy(TensorType const & embeddings,
                                                   std::string const &word2,
                                                   std::string const &word3, SizeType k)
 {
-
   if (!w2v_data_loader_ptr_->WordKnown(word1) || !w2v_data_loader_ptr_->WordKnown(word2) ||
       !w2v_data_loader_ptr_->WordKnown(word3))
   {

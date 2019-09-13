@@ -37,7 +37,6 @@ namespace dataloaders {
 template <typename T>
 class W2VLoader : public DataLoader<fetch::math::Tensor<T>, fetch::math::Tensor<T>>
 {
-
 public:
   static_assert(meta::IsFloat<T> || math::meta::IsFixedPoint<T>,
                 "The intended T is the typename for the data input to the neural network, which "

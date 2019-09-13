@@ -18,21 +18,20 @@
 //------------------------------------------------------------------------------
 
 #include "core/logging.hpp"
-#include "ml/ops/ops.hpp"
-#include "ml/saveparams/saveable_params.hpp"
-
 #include "ml/ops/abs.hpp"
+#include "ml/ops/embeddings.hpp"
+#include "ml/ops/layer_norm.hpp"
+#include "ml/ops/leaky_relu_op.hpp"
+#include "ml/ops/ops.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/ops/weights.hpp"
+#include "ml/saveparams/saveable_params.hpp"
 
 #include <algorithm>
 #include <cassert>
 #include <cstdint>
 #include <functional>
 #include <memory>
-#include <ml/ops/embeddings.hpp>
-#include <ml/ops/layer_norm.hpp>
-#include <ml/ops/leaky_relu_op.hpp>
 #include <string>
 #include <utility>
 #include <vector>
