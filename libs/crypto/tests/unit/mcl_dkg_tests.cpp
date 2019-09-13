@@ -211,7 +211,7 @@ TEST(MclDkgTests, Signing)
   // Construct polynomial of degree threshold - 1
   std::vector<bn::Fr> vec_a;
   Init(vec_a, threshold);
-  for (uint32_t ii = 0; ii <= threshold; ++ii)
+  for (uint32_t ii = 0; ii < threshold; ++ii)
   {
     vec_a[ii].setRand();
   }

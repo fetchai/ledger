@@ -46,22 +46,22 @@ TEST(beacon_manager, dkg_and_threshold_signing)
   Generator generator_g, generator_h;
   SetGenerators(generator_g, generator_h);
 
-  uint32_t                   cabinet_size = 3;
-  uint32_t                   threshold    = 2;
-  std::vector<ECDSASigner *> member_ptrs;
+  uint32_t                             cabinet_size = 3;
+  uint32_t                             threshold    = 2;
+  std::vector<std::shared_ptr<Prover>> member_ptrs;
   for (uint32_t index = 0; index < cabinet_size; ++index)
   {
-    member_ptrs.emplace_back(new ECDSASigner());
+    std::shared_ptr<ECDSASigner> certificate = std::make_shared<ECDSASigner>();
+    certificate->GenerateKeys();
+    member_ptrs.emplace_back(certificate);
   }
 
   // Set up two honest beacon managers
-  std::vector<BeaconManager *> beacon_managers;
-  std::vector<MuddleAddress>   addresses;
+  std::vector<std::shared_ptr<BeaconManager>> beacon_managers;
+  std::vector<MuddleAddress>                  addresses;
   for (uint32_t index = 0; index < cabinet_size; ++index)
   {
-    CertificatePtr certificate;
-    certificate.reset(member_ptrs[index]);
-    beacon_managers.emplace_back(new BeaconManager(certificate));
+    beacon_managers.emplace_back(new BeaconManager(member_ptrs[index]));
     addresses.push_back(member_ptrs[index]->identity().identifier());
   }
 
@@ -81,7 +81,7 @@ TEST(beacon_manager, dkg_and_threshold_signing)
   // Check reset for one manager
   for (uint32_t index = 0; index < cabinet_size; ++index)
   {
-    BeaconManager *manager = beacon_managers[index];
+    std::shared_ptr<BeaconManager> manager = beacon_managers[index];
     EXPECT_EQ(manager->cabinet_index(),
               std::distance(cabinet.begin(), cabinet.find(member_ptrs[index]->identity())));
     for (auto &mem : member_ptrs)
@@ -101,8 +101,8 @@ TEST(beacon_manager, dkg_and_threshold_signing)
   // Checks
   for (uint32_t index = 0; index < cabinet_size; ++index)
   {
-    BeaconManager *          manager      = beacon_managers[index];
-    std::vector<std::string> coefficients = manager->GetCoefficients();
+    std::shared_ptr<BeaconManager> manager      = beacon_managers[index];
+    std::vector<std::string>       coefficients = manager->GetCoefficients();
     for (uint32_t elem = 0; elem < threshold; ++elem)
     {
       // Coefficients generated should be non-zero
@@ -111,8 +111,8 @@ TEST(beacon_manager, dkg_and_threshold_signing)
       {
         if (index1 != index)
         {
-          BeaconManager *          another_manager = beacon_managers[index1];
-          std::vector<std::string> coefficients1   = another_manager->GetCoefficients();
+          std::shared_ptr<BeaconManager> another_manager = beacon_managers[index1];
+          std::vector<std::string>       coefficients1   = another_manager->GetCoefficients();
           // Coefficients should be different
           EXPECT_NE(coefficients, coefficients1);
           // Shares generated ourself are non-zero
@@ -327,7 +327,7 @@ TEST(beacon_manager, dkg_and_threshold_signing)
   std::vector<BeaconManager::SignedMessage> signed_msgs;
   for (uint32_t index = 0; index < cabinet_size; ++index)
   {
-    BeaconManager *manager = beacon_managers[index];
+    std::shared_ptr<BeaconManager> manager = beacon_managers[index];
     manager->SetMessage(message);
     BeaconManager::SignedMessage signed_msg = manager->Sign();
     signed_msgs.push_back(signed_msg);
@@ -336,7 +336,7 @@ TEST(beacon_manager, dkg_and_threshold_signing)
   }
 
   // Add signature from unknown sender
-  auto unknown_sender = new ECDSASigner();
+  std::shared_ptr<ECDSASigner> unknown_sender = std::make_shared<ECDSASigner>();
   EXPECT_EQ(
       beacon_managers[0]->AddSignaturePart(unknown_sender->identity(), signed_msgs[1].signature),
       BeaconManager::AddResult::NOT_MEMBER);
