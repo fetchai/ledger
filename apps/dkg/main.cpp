@@ -18,13 +18,10 @@
 
 #include "core/macros.hpp"
 #include "core/reactor.hpp"
+#include "crypto/key_generator.hpp"
 #include "dkg/dkg_service.hpp"
 #include "network/management/network_manager.hpp"
 #include "network/muddle/muddle.hpp"
-
-// TODO(WK) Extract to library: .cpp file include == ++ungood
-#include "../../apps/constellation/key_generator.cpp"
-#include "../../apps/constellation/key_generator.hpp"
 
 #include <iostream>
 
@@ -35,7 +32,7 @@ int main(int argc, char **argv)
 {
   // Create (or load from file) this node's identity (pub/private key)
   // and print it out for external tool to use
-  auto p2p_key = fetch::GenerateP2PKey();
+  auto p2p_key = GenerateP2PKey();
 
   // External tool needs this
   std::cout << p2p_key->identity().identifier().ToBase64() << std::endl;
