@@ -94,9 +94,9 @@ private:
   };
 #pragma pack(pop)
 public:
-  using header_extra_type  = D;
-  using type               = T;
-  using event_handler_type = std::function<void()>;
+  using header_extra_type = D;
+  using type              = T;
+  using EventHandlerType  = std::function<void()>;
 
   MMapRandomAccessStack()
   {
@@ -126,12 +126,12 @@ public:
     on_before_flush_ = nullptr;
   }
 
-  void OnFileLoaded(event_handler_type const &f)
+  void OnFileLoaded(EventHandlerType const &f)
   {
     on_file_loaded_ = f;
   }
 
-  void OnBeforeFlush(event_handler_type const &f)
+  void OnBeforeFlush(EventHandlerType const &f)
   {
     on_before_flush_ = f;
   }
@@ -586,8 +586,8 @@ private:
     header_ = reinterpret_cast<Header *>(mapped_header_.data());
   }
 
-  event_handler_type on_file_loaded_;
-  event_handler_type on_before_flush_;
+  EventHandlerType   on_file_loaded_;
+  EventHandlerType   on_before_flush_;
   mio::mmap_sink     mapped_data_;    // This map handles read/write objects from/to file
   mio::mmap_sink     mapped_header_;  // This map handles header part in the file
   std::fstream       file_handle_;

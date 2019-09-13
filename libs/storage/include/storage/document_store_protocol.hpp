@@ -36,9 +36,9 @@ namespace storage {
 class RevertibleDocumentStoreProtocol : public fetch::service::Protocol
 {
 public:
-  using connection_handle_type = network::AbstractConnection::connection_handle_type;
-  using lane_type              = uint32_t;  // TODO(issue 12): Fetch from some other palce
-  using CallContext            = service::CallContext;
+  using ConnectionHandleType = network::AbstractConnection::ConnectionHandleType;
+  using lane_type            = uint32_t;  // TODO(issue 12): Fetch from some other palce
+  using CallContext          = service::CallContext;
 
   using Identifier = byte_array::ConstByteArray;
 

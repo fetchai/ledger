@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/service/abstract_publication_feed.hpp"
 #include "network/service/feed_subscription_manager.hpp"
+#include "network/service/abstract_publication_feed.hpp"
 #include "network/service/server_interface.hpp"
 
 #include <cstddef>
@@ -33,12 +33,12 @@ void FeedSubscriptionManager::PublishingProcessor()
 {
   std::vector<publishing_workload_type> my_work;
   publishing_workload_.Get(my_work, 16);
-  std::list<std::tuple<service_type *, connection_handle_type>> dead_connections;
+  std::list<std::tuple<service_type *, ConnectionHandleType>> dead_connections;
   for (auto &w : my_work)
   {
-    service_type *         service       = std::get<0>(w);
-    connection_handle_type client_number = std::get<1>(w);
-    network::message_type  msg           = std::get<2>(w);
+    service_type *        service       = std::get<0>(w);
+    ConnectionHandleType  client_number = std::get<1>(w);
+    network::message_type msg           = std::get<2>(w);
     if (!service->DeliverResponse(client_number, msg.Copy()))
     {
       dead_connections.push_back(std::make_tuple(service, client_number));
@@ -48,8 +48,8 @@ void FeedSubscriptionManager::PublishingProcessor()
   {
     for (auto &w : dead_connections)
     {
-      service_type *         service       = std::get<0>(w);
-      connection_handle_type client_number = std::get<1>(w);
+      service_type *       service       = std::get<0>(w);
+      ConnectionHandleType client_number = std::get<1>(w);
       service->ConnectionDropped(client_number);
     }
   }

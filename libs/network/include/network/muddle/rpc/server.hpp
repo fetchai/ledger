@@ -36,7 +36,7 @@ namespace rpc {
 class Server : public service::ServiceServerInterface
 {
 public:
-  using ConnectionHandle = service::ServiceServerInterface::connection_handle_type;
+  using ConnectionHandle = service::ServiceServerInterface::ConnectionHandleType;
   using ProtocolId       = service::protocol_handler_type;
   using Protocol         = service::Protocol;
   using Address          = MuddleEndpoint::Address;
@@ -65,7 +65,7 @@ public:
   }
 
 protected:
-  bool DeliverResponse(connection_handle_type       handle_type,
+  bool DeliverResponse(ConnectionHandleType         handle_type,
                        network::message_type const &message_type) override
   {
     Address  target;

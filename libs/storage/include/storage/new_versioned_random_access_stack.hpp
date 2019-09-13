@@ -256,8 +256,8 @@ private:
   };
 
 public:
-  using type               = T;
-  using event_handler_type = std::function<void()>;
+  using type             = T;
+  using EventHandlerType = std::function<void()>;
 
   NewVersionedRandomAccessStack()
   {
@@ -276,12 +276,12 @@ public:
     on_before_flush_ = nullptr;
   }
 
-  void OnFileLoaded(event_handler_type const &f)
+  void OnFileLoaded(EventHandlerType const &f)
   {
     on_file_loaded_ = f;
   }
 
-  void OnBeforeFlush(event_handler_type const &f)
+  void OnBeforeFlush(EventHandlerType const &f)
   {
     on_before_flush_ = f;
   }
@@ -525,8 +525,8 @@ private:
   RandomAccessStack<HistoryBookmark> hash_history_;
   uint64_t                           internal_bookmark_index_{0};
 
-  event_handler_type on_file_loaded_;
-  event_handler_type on_before_flush_;
+  EventHandlerType on_file_loaded_;
+  EventHandlerType on_before_flush_;
 
   stack_type stack_;
 

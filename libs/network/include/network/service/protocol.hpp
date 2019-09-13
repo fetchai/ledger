@@ -55,12 +55,12 @@ class FeedSubscriptionManager;
 class Protocol
 {
 public:
-  using callable_type          = AbstractCallable *;
-  using stored_type            = std::shared_ptr<AbstractCallable>;
-  using byte_array_type        = byte_array::ConstByteArray;
-  using connection_handle_type = typename network::AbstractConnection::connection_handle_type;
+  using callable_type        = AbstractCallable *;
+  using stored_type          = std::shared_ptr<AbstractCallable>;
+  using byte_array_type      = byte_array::ConstByteArray;
+  using ConnectionHandleType = typename network::AbstractConnection::ConnectionHandleType;
   using middleware_type =
-      std::function<void(connection_handle_type const &, byte_array::ByteArray const &)>;
+      std::function<void(ConnectionHandleType const &, byte_array::ByteArray const &)>;
 
   static constexpr char const *LOGGING_NAME = "Protocol";
 
@@ -156,7 +156,7 @@ public:
     members_[n] = fnc;
   }
 
-  virtual void ConnectionDropped(connection_handle_type /*connection_handle*/)
+  virtual void ConnectionDropped(ConnectionHandleType /*connection_handle*/)
   {}
 
   /* Registers a feed from an implementation.
@@ -241,7 +241,7 @@ public:
     middleware_.push_back(m);
   }
 
-  void ApplyMiddleware(connection_handle_type const &id, byte_array::ByteArray const &msg)
+  void ApplyMiddleware(ConnectionHandleType const &id, byte_array::ByteArray const &msg)
   {
     for (auto &m : middleware_)
     {

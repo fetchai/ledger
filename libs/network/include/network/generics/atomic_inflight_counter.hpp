@@ -21,6 +21,7 @@
 
 #include "core/future_timepoint.hpp"
 #include "core/logging.hpp"
+#include "core/mutex.hpp"
 
 namespace fetch {
 namespace network {

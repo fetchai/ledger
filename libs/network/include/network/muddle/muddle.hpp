@@ -117,7 +117,7 @@ public:
   using Address         = Router::Address;
   using ConnectionState = PeerConnectionList::ConnectionState;
 
-  using Handle = network::AbstractConnection::connection_handle_type;
+  using Handle = network::AbstractConnection::ConnectionHandleType;
 
   struct ConnectionData
   {

@@ -44,7 +44,7 @@ public:
 
   using connection_type = typename AbstractConnection::shared_type;
 
-  using handle_type      = typename AbstractConnection::connection_handle_type;
+  using handle_type      = typename AbstractConnection::ConnectionHandleType;
   using Strand           = asio::io_service::strand;
   using StrongStrand     = std::shared_ptr<asio::io_service::strand>;
   using Socket           = asio::ip::tcp::tcp::socket;

@@ -44,7 +44,7 @@ public:
   using self_type  = ServiceServer<T>;
 
   using network_manager_type = typename super_type::network_manager_type;
-  using handle_type          = typename T::connection_handle_type;
+  using handle_type          = typename T::ConnectionHandleType;
 
   static constexpr char const *LOGGING_NAME = "ServiceServer";
 

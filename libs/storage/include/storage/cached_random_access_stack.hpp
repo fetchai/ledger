@@ -50,10 +50,10 @@ template <typename T, typename D = uint64_t, typename STACK = RandomAccessStack<
 class CachedRandomAccessStack
 {
 public:
-  using event_handler_type = std::function<void()>;
-  using stack_type         = STACK;
-  using header_extra_type  = D;
-  using type               = T;
+  using EventHandlerType  = std::function<void()>;
+  using stack_type        = STACK;
+  using header_extra_type = D;
+  using type              = T;
 
   CachedRandomAccessStack()
   {
@@ -75,12 +75,12 @@ public:
     on_before_flush_ = nullptr;
   }
 
-  void OnFileLoaded(event_handler_type const &f)
+  void OnFileLoaded(EventHandlerType const &f)
   {
     on_file_loaded_ = f;
   }
 
-  void OnBeforeFlush(event_handler_type const &f)
+  void OnBeforeFlush(EventHandlerType const &f)
   {
     on_before_flush_ = f;
   }
@@ -282,8 +282,8 @@ public:
 
 private:
   static constexpr std::size_t MAX_SIZE_BYTES = 10000;
-  event_handler_type           on_file_loaded_;
-  event_handler_type           on_before_flush_;
+  EventHandlerType             on_file_loaded_;
+  EventHandlerType             on_before_flush_;
 
   // Underlying stack
   stack_type stack_;

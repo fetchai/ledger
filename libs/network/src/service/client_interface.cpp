@@ -146,7 +146,7 @@ bool ServiceClientInterface::ProcessServerMessage(network::message_type const &m
 
   serializer_type params(msg);
 
-  service_classification_type type;
+  ServiceClassificationType type;
   params >> type;
 
   if ((type == SERVICE_RESULT) || (type == 0))

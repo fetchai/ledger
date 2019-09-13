@@ -248,9 +248,9 @@ private:
   };
 
 public:
-  using type               = T;
-  using bookmark_type      = B;
-  using event_handler_type = std::function<void()>;
+  using type             = T;
+  using bookmark_type    = B;
+  using EventHandlerType = std::function<void()>;
 
   VersionedRandomAccessStack()
   {
@@ -269,12 +269,12 @@ public:
     on_before_flush_ = nullptr;
   }
 
-  void OnFileLoaded(event_handler_type const &f)
+  void OnFileLoaded(EventHandlerType const &f)
   {
     on_file_loaded_ = f;
   }
 
-  void OnBeforeFlush(event_handler_type const &f)
+  void OnBeforeFlush(EventHandlerType const &f)
   {
     on_before_flush_ = f;
   }
@@ -510,8 +510,8 @@ private:
   VariantStack  history_;
   bookmark_type bookmark_;
 
-  event_handler_type on_file_loaded_;
-  event_handler_type on_before_flush_;
+  EventHandlerType on_file_loaded_;
+  EventHandlerType on_before_flush_;
 
   stack_type stack_;
 

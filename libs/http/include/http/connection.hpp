@@ -41,7 +41,7 @@ public:
   using response_queue_type = std::deque<HTTPResponse>;
   using connection_type     = typename AbstractHTTPConnection::shared_type;
   using handle_type         = HTTPConnectionManager::handle_type;
-  using shared_request_type = std::shared_ptr<HTTPRequest>;
+  using SharedRequestType   = std::shared_ptr<HTTPRequest>;
   using buffer_ptr_type     = std::shared_ptr<asio::streambuf>;
 
   static constexpr char const *LOGGING_NAME = "HTTPConnection";
@@ -100,7 +100,7 @@ public:
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Ready to ready HTTP header");
 
-    shared_request_type request = std::make_shared<HTTPRequest>();
+    SharedRequestType request = std::make_shared<HTTPRequest>();
     if (!buffer_ptr)
     {
       buffer_ptr = std::make_shared<asio::streambuf>(std::numeric_limits<std::size_t>::max());
@@ -136,7 +136,7 @@ public:
     asio::async_read_until(socket_, *buffer_ptr, "\r\n\r\n", cb);
   }
 
-  void ReadBody(buffer_ptr_type buffer_ptr, shared_request_type request)
+  void ReadBody(buffer_ptr_type buffer_ptr, SharedRequestType request)
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Read HTTP body");
     // Check if we got all the body
@@ -183,7 +183,7 @@ public:
                      asio::transfer_exactly(request->content_length() - buffer_ptr->size()), cb);
   }
 
-  void HandleError(std::error_code const &ec, shared_request_type /*req*/)
+  void HandleError(std::error_code const &ec, SharedRequestType /*req*/)
   {
     std::stringstream ss;
     ss << ec << ":" << ec.message();

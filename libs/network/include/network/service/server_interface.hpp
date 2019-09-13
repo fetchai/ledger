@@ -32,8 +32,8 @@ namespace service {
 class ServiceServerInterface
 {
 public:
-  using connection_handle_type = network::AbstractConnection::connection_handle_type;
-  using byte_array_type        = byte_array::ConstByteArray;
+  using ConnectionHandleType = network::AbstractConnection::ConnectionHandleType;
+  using byte_array_type      = byte_array::ConstByteArray;
 
   static constexpr char const *LOGGING_NAME = "ServiceServerInterface";
 
@@ -60,13 +60,13 @@ public:
   }
 
 protected:
-  virtual bool DeliverResponse(connection_handle_type, network::message_type const &) = 0;
+  virtual bool DeliverResponse(ConnectionHandleType, network::message_type const &) = 0;
 
-  bool PushProtocolRequest(connection_handle_type client, network::message_type const &msg,
+  bool PushProtocolRequest(ConnectionHandleType client, network::message_type const &msg,
                            CallContext const &context = CallContext())
   {
-    serializer_type             params(msg);
-    service_classification_type type;
+    serializer_type           params(msg);
+    ServiceClassificationType type;
     params >> type;
 
     FETCH_LOG_DEBUG(LOGGING_NAME, "PushProtocolRequest type=", type);
@@ -92,7 +92,7 @@ protected:
     return success;
   }
 
-  bool HandleRPCCallRequest(connection_handle_type client, serializer_type params,
+  bool HandleRPCCallRequest(ConnectionHandleType client, serializer_type params,
                             CallContext context = CallContext())
   {
     bool            ret = true;
@@ -122,7 +122,7 @@ protected:
     }
     return ret;
   }
-  bool HandleSubscribeRequest(connection_handle_type client, serializer_type params)
+  bool HandleSubscribeRequest(ConnectionHandleType client, serializer_type params)
   {
     bool                      ret = true;
     protocol_handler_type     protocol;
@@ -147,7 +147,7 @@ protected:
     return ret;
   }
 
-  bool HandleUnsubscribeRequest(connection_handle_type client, serializer_type params)
+  bool HandleUnsubscribeRequest(ConnectionHandleType client, serializer_type params)
   {
     bool                      ret = true;
     protocol_handler_type     protocol;
@@ -172,7 +172,7 @@ protected:
     return ret;
   }
 
-  virtual void ConnectionDropped(connection_handle_type connection_handle)
+  virtual void ConnectionDropped(ConnectionHandleType connection_handle)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "ConnectionDropped: ", connection_handle);
     for (int protocol_number = 0; protocol_number < 256; protocol_number++)
@@ -188,7 +188,7 @@ protected:
   }
 
 private:
-  void ExecuteCall(serializer_type &result, connection_handle_type const &connection_handle,
+  void ExecuteCall(serializer_type &result, ConnectionHandleType const &connection_handle,
                    serializer_type params, CallContext const &context = CallContext())
   {
     protocol_handler_type protocol_number;

@@ -26,9 +26,9 @@ namespace network {
 class AbstractNetworkServer
 {
 public:
-  using connection_handle_type = typename AbstractConnection::connection_handle_type;
+  using ConnectionHandleType = typename AbstractConnection::ConnectionHandleType;
 
-  virtual void PushRequest(connection_handle_type client, message_type const &msg) = 0;
+  virtual void PushRequest(ConnectionHandleType client, message_type const &msg) = 0;
 
   virtual ~AbstractNetworkServer() = default;
 };

@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/tcp/client_connection.hpp"
 #include "network/tcp/tcp_server.hpp"
+#include "network/tcp/client_connection.hpp"
 
 #include <chrono>
 #include <exception>
@@ -127,7 +127,7 @@ void TCPServer::Start()
 void TCPServer::Stop()
 {}
 
-void TCPServer::PushRequest(connection_handle_type client, message_type const &msg)
+void TCPServer::PushRequest(ConnectionHandleType client, message_type const &msg)
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Got request from ", client);
 
@@ -140,7 +140,7 @@ void TCPServer::Broadcast(message_type const &msg)
   manager_->Broadcast(msg);
 }
 
-bool TCPServer::Send(connection_handle_type const &client, message_type const &msg)
+bool TCPServer::Send(ConnectionHandleType const &client, message_type const &msg)
 {
   return manager_->Send(client, msg);
 }
@@ -165,7 +165,7 @@ void TCPServer::Pop()
   requests_.pop_front();
 }
 
-std::string TCPServer::GetAddress(connection_handle_type const &client)
+std::string TCPServer::GetAddress(ConnectionHandleType const &client)
 {
   return manager_->GetAddress(client);
 }

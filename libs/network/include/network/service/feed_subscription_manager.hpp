@@ -52,10 +52,10 @@ class AbstractPublicationFeed;
 class FeedSubscriptionManager
 {
 public:
-  using service_type           = fetch::service::ServiceServerInterface;
-  using connection_handle_type = uint64_t;
+  using service_type         = fetch::service::ServiceServerInterface;
+  using ConnectionHandleType = uint64_t;
   using publishing_workload_type =
-      std::tuple<service_type *, connection_handle_type, network::message_type const>;
+      std::tuple<service_type *, ConnectionHandleType, network::message_type const>;
 
   static constexpr char const *LOGGING_NAME = "FeedSubscriptionManager";
 

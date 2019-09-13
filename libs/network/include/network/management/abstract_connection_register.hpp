@@ -36,10 +36,10 @@ class AbstractConnection;
 class AbstractConnectionRegister : public std::enable_shared_from_this<AbstractConnectionRegister>
 {
 public:
-  using connection_handle_type     = uint64_t;
+  using ConnectionHandleType       = uint64_t;
   using weak_service_client_type   = std::weak_ptr<service::ServiceClient>;
   using shared_service_client_type = std::shared_ptr<service::ServiceClient>;
-  using service_map_type = std::unordered_map<connection_handle_type, weak_service_client_type>;
+  using service_map_type = std::unordered_map<ConnectionHandleType, weak_service_client_type>;
 
   static constexpr char const *LOGGING_NAME = "AbstractConnectionRegister";
 
@@ -54,10 +54,10 @@ public:
 
   virtual ~AbstractConnectionRegister() = default;
 
-  virtual void Leave(connection_handle_type id)                 = 0;
+  virtual void Leave(ConnectionHandleType id)                   = 0;
   virtual void Enter(std::weak_ptr<AbstractConnection> const &) = 0;
 
-  shared_service_client_type GetService(connection_handle_type const &i)
+  shared_service_client_type GetService(ConnectionHandleType const &i)
   {
     FETCH_LOCK(service_lock_);
     if (services_.find(i) == services_.end())
@@ -98,7 +98,7 @@ public:
   }
 
   void VisitServiceClients(
-      std::function<void(connection_handle_type const &, shared_service_client_type)> f) const
+      std::function<void(ConnectionHandleType const &, shared_service_client_type)> f) const
   {
     FETCH_LOG_WARN(LOGGING_NAME, "About to visit ", services_.size(), " service clients");
     std::list<service_map_type::value_type> keys;
@@ -132,7 +132,7 @@ public:
   }
 
 protected:
-  void RemoveService(connection_handle_type const &n)
+  void RemoveService(ConnectionHandleType const &n)
   {
     --number_of_services_;
     FETCH_LOCK(service_lock_);
@@ -143,7 +143,7 @@ protected:
     }
   }
 
-  void AddService(connection_handle_type const &n, weak_service_client_type const &ptr)
+  void AddService(ConnectionHandleType const &n, weak_service_client_type const &ptr)
   {
     ++number_of_services_;
 

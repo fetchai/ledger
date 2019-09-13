@@ -47,7 +47,7 @@ public:
 
   ~Server() override = default;
 
-  void PushRequest(connection_handle_type /*client*/, message_type const &msg) override
+  void PushRequest(ConnectionHandleType /*client*/, message_type const &msg) override
   {
     FETCH_LOCK(messages_);
     globalMessagesFromServer_.push_back(msg);
@@ -205,8 +205,7 @@ void TestCase3(std::string host, uint16_t port)
         auto           i           = std::make_shared<Client>(host, port, managerCopy);
         i->Send("test");
         threadCount++;
-      })
-          .detach();
+      }).detach();
     }
 
     server.reset();
@@ -248,8 +247,7 @@ void TestCase4(std::string host, uint16_t port)
         auto           i           = std::make_shared<Client>(host, port, managerCopy);
         i->Send("test");
         threadCount++;
-      })
-          .detach();
+      }).detach();
     }
 
     if (index % 2)

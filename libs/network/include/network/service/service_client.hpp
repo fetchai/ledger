@@ -71,8 +71,8 @@ public:
 
   ~ServiceClient()
   {
-    using std::this_thread::sleep_for;
     using std::chrono::milliseconds;
+    using std::this_thread::sleep_for;
 
     tearing_down_ = true;
 
@@ -105,7 +105,7 @@ public:
     }
   }
 
-  connection_handle_type handle() const
+  ConnectionHandleType handle() const
   {
     auto ptr = connection_.lock();
     if (ptr)
@@ -177,7 +177,7 @@ protected:
     return false;
   }
 
-  bool DeliverResponse(connection_handle_type, network::message_type const &msg) override
+  bool DeliverResponse(ConnectionHandleType, network::message_type const &msg) override
   {
     auto ptr = connection_.lock();
     if (ptr)
@@ -230,7 +230,7 @@ private:
         {
           FETCH_LOG_DEBUG(LOGGING_NAME, "Looking for RPC functionality");
 
-          if (!PushProtocolRequest(connection_handle_type(-1), msg))
+          if (!PushProtocolRequest(ConnectionHandleType(-1), msg))
           {
             throw serializers::SerializableException(error::UNKNOWN_MESSAGE,
                                                      byte_array::ConstByteArray("Unknown message"));

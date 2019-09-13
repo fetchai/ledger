@@ -36,10 +36,10 @@ namespace network {
 class AbstractConnection : public std::enable_shared_from_this<AbstractConnection>
 {
 public:
-  using shared_type            = std::shared_ptr<AbstractConnection>;
-  using connection_handle_type = typename AbstractConnectionRegister::connection_handle_type;
-  using weak_ptr_type          = std::weak_ptr<AbstractConnection>;
-  using weak_register_type     = std::weak_ptr<AbstractConnectionRegister>;
+  using shared_type          = std::shared_ptr<AbstractConnection>;
+  using ConnectionHandleType = typename AbstractConnectionRegister::ConnectionHandleType;
+  using weak_ptr_type        = std::weak_ptr<AbstractConnection>;
+  using weak_register_type   = std::weak_ptr<AbstractConnectionRegister>;
 
   static constexpr char const *LOGGING_NAME = "AbstractConnection";
 
@@ -94,7 +94,7 @@ public:
     return port_;
   }
 
-  connection_handle_type handle() const noexcept
+  ConnectionHandleType handle() const noexcept
   {
     return handle_;
   }
@@ -235,9 +235,9 @@ private:
 
   mutable Mutex address_mutex_;
 
-  static connection_handle_type next_handle()
+  static ConnectionHandleType next_handle()
   {
-    connection_handle_type ret = 0;
+    ConnectionHandleType ret = 0;
 
     {
       FETCH_LOCK(global_handle_mutex_);
@@ -251,12 +251,12 @@ private:
     return ret;
   }
 
-  weak_register_type                        connection_register_;
-  std::atomic<connection_handle_type> const handle_;
+  weak_register_type                      connection_register_;
+  std::atomic<ConnectionHandleType> const handle_;
 
-  static connection_handle_type global_handle_counter_;
-  static Mutex                  global_handle_mutex_;
-  mutable Mutex                 callback_mutex_;
+  static ConnectionHandleType global_handle_counter_;
+  static Mutex                global_handle_mutex_;
+  mutable Mutex               callback_mutex_;
 
   shared_type self_;
 

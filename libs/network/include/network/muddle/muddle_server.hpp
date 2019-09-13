@@ -40,9 +40,9 @@ template <typename NETWORK_SERVER>
 class MuddleServer final : public NETWORK_SERVER
 {
 public:
-  using connection_handle_type = network::AbstractNetworkServer::connection_handle_type;
-  using message_type           = network::message_type;
-  using MsgPackSerializer      = serializers::MsgPackSerializer;
+  using ConnectionHandleType = network::AbstractNetworkServer::ConnectionHandleType;
+  using message_type         = network::message_type;
+  using MsgPackSerializer    = serializers::MsgPackSerializer;
 
   // ensure the NETWORK_SERVER type that we are using is actually what we where expecting
   static_assert(std::is_base_of<network::AbstractNetworkServer, NETWORK_SERVER>::value,
@@ -81,7 +81,7 @@ private:
    * @param client The handle to connection which generated this message
    * @param msg The payload of the message
    */
-  void PushRequest(connection_handle_type client, message_type const &msg) override
+  void PushRequest(ConnectionHandleType client, message_type const &msg) override
   {
     try
     {

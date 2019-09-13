@@ -45,17 +45,17 @@ class ClientManager;
 class TCPServer : public AbstractNetworkServer
 {
 public:
-  using connection_handle_type = typename AbstractConnection::connection_handle_type;
-  using network_manager_type   = NetworkManager;
-  using acceptor_type          = asio::ip::tcp::tcp::acceptor;
-  using mutex_type             = std::mutex;
+  using ConnectionHandleType = typename AbstractConnection::ConnectionHandleType;
+  using network_manager_type = NetworkManager;
+  using acceptor_type        = asio::ip::tcp::tcp::acceptor;
+  using mutex_type           = std::mutex;
 
   static constexpr char const *LOGGING_NAME = "TCPServer";
 
   struct Request
   {
-    connection_handle_type handle;
-    message_type           message;
+    ConnectionHandleType handle;
+    message_type         message;
   };
 
   TCPServer(uint16_t port, network_manager_type const &network_manager);
@@ -65,17 +65,17 @@ public:
   virtual void Start();
   virtual void Stop();
 
-  void PushRequest(connection_handle_type client, message_type const &msg) override;
+  void PushRequest(ConnectionHandleType client, message_type const &msg) override;
 
   void Broadcast(message_type const &msg);
-  bool Send(connection_handle_type const &client, message_type const &msg);
+  bool Send(ConnectionHandleType const &client, message_type const &msg);
 
   bool has_requests();
 
   Request Top();
   void    Pop();
 
-  std::string GetAddress(connection_handle_type const &client);
+  std::string GetAddress(ConnectionHandleType const &client);
 
   template <typename X>
   void SetConnectionRegister(X &reg)
