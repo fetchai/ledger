@@ -66,8 +66,6 @@ public:
 
   CoordinatorState GetState() const;
 
-  std::vector<std::shared_ptr<TrainingClient<TensorType>>> NextPeersList(std::string &client_id);
-
   void AddClient(ClientPtrType const &new_client);
   void SetClientsList(std::vector<ClientPtrType> const &new_client);
 
@@ -88,7 +86,6 @@ template <typename TensorType>
 Coordinator<TensorType>::Coordinator(CoordinatorParams const &params)
   : mode_(params.mode)
   , iterations_count_(params.iterations_count)
-  , number_of_peers_(params.number_of_peers)
 {}
 
 template <typename TensorType>
@@ -142,35 +139,6 @@ void Coordinator<TensorType>::SetClientsList(
     std::vector<std::shared_ptr<TrainingClient<TensorType>>> const &new_clients)
 {
   clients_ = new_clients;
-}
-
-/**
- * Get list of new peers
- */
-template <typename TensorType>
-std::vector<std::shared_ptr<TrainingClient<TensorType>>> Coordinator<TensorType>::NextPeersList(
-    std::string &client_id)
-{
-  std::vector<std::shared_ptr<TrainingClient<TensorType>>> shuffled_clients;
-
-  for (auto &cl : clients_)
-  {
-    if (cl->GetId() == client_id)
-    {
-      continue;
-    }
-    shuffled_clients.push_back(cl);
-  }
-
-  // Shuffle the peers list to get new contact for next update
-  fetch::random::Shuffle(gen_, shuffled_clients, shuffled_clients);
-
-  // Create vector subset
-  std::vector<std::shared_ptr<TrainingClient<TensorType>>> new_peers(
-      shuffled_clients.begin(),
-      shuffled_clients.begin() + static_cast<fetch::math::PtrDiffType>(number_of_peers_));
-
-  return std::move(new_peers);
 }
 
 }  // namespace distributed_learning

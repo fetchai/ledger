@@ -120,9 +120,6 @@ protected:
   std::string              label_name_;
   std::string              error_name_;
 
-  // Connection to other nodes
-  std::vector<std::shared_ptr<TrainingClient>> peers_;
-
   // Access to coordinator
   std::shared_ptr<Coordinator<TensorType>> coordinator_ptr_;
 
@@ -256,6 +253,7 @@ typename TensorType::Type TrainingClient<TensorType>::Train()
     loss                   = *(loss_tensor.begin());
     g_ptr_->BackPropagate(error_name_);
   }
+  std::cout << id_ << " Batch loss: " << loss << std::endl;
 
   return loss;
 }
@@ -445,8 +443,6 @@ void TrainingClient<TensorType>::DoBatch()
   // Interaction with peers is skipped in synchronous mode
   if (coordinator_ptr_->GetMode() != CoordinatorMode::SYNCHRONOUS)
   {
-    peers_ = coordinator_ptr_->NextPeersList(id_);
-
     // Load own gradient
     GradientType current_gradients = std::make_pair(g_ptr_->GetGradients(), GetTimestamp());
 
@@ -456,12 +452,16 @@ void TrainingClient<TensorType>::DoBatch()
 
     VectorTensorType new_gradients;
 
+    SizeType ucnt = 0;
+
     // Sum all gradient in queue
     while (i_learner_ptr_->getUpdateCount())
     {
+      ucnt++;
       new_gradients = i_learner_ptr_->getUpdate<fetch::dmlf::Update<TensorType>>()->GetGradients();
       g_ptr_->AddGradients(new_gradients);
     }
+    std::cout << id_ << "Got " << ucnt << " updates" << std::endl;
   }
 
   // Apply sum of all gradients from queue along with own gradient

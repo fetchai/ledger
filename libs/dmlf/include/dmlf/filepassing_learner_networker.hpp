@@ -27,8 +27,8 @@ class FilepassingLearnerNetworker : public ILearnerNetworker
 {
 public:
   using Intermediate = byte_array::ByteArray;
-  using Peer = std::string;
-  using Peers = std::vector<Peer>;
+  using Peer         = std::string;
+  using Peers        = std::vector<Peer>;
 
   FilepassingLearnerNetworker();
   virtual ~FilepassingLearnerNetworker();
@@ -36,26 +36,31 @@ public:
   virtual void        pushUpdate(std::shared_ptr<IUpdate> update);
   virtual std::size_t getUpdateCount() const;
 
-  virtual std::size_t getPeerCount() const { return peers_.size(); }
+  virtual std::size_t getPeerCount() const
+  {
+    return peers_.size();
+  }
 
   void setName(const std::string &name);
   void addPeers(Peers new_peers);
   void clearPeers();
+
 protected:
-  virtual Intermediate getUpdateIntermediate();
-  static std::string processNameToTargetDir(const std::string name);
-  void tx(const std::string &target, const Intermediate &data);
+  virtual Intermediate     getUpdateIntermediate();
+  static std::string       processNameToTargetDir(const std::string name);
+  void                     tx(const std::string &target, const Intermediate &data);
   std::vector<std::string> getUpdateNames() const;
+
 private:
   FilepassingLearnerNetworker(const FilepassingLearnerNetworker &other) = delete;
   FilepassingLearnerNetworker &operator=(const FilepassingLearnerNetworker &other)  = delete;
-  bool                    operator==(const FilepassingLearnerNetworker &other) = delete;
-  bool                    operator<(const FilepassingLearnerNetworker &other)  = delete;
+  bool                         operator==(const FilepassingLearnerNetworker &other) = delete;
+  bool                         operator<(const FilepassingLearnerNetworker &other)  = delete;
 
-  std::set<std::string> processed_updates_;
+  std::set<std::string>    processed_updates_;
   std::vector<std::string> peers_;
-  std::string name_;
-  std::string dir_;
+  std::string              name_;
+  std::string              dir_;
 };
 
 }  // namespace dmlf

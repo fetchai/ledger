@@ -19,41 +19,43 @@
 #include "core/serializers/base_types.hpp"
 #include "dmlf/filepassing_learner_networker.hpp"
 
-#include <iostream>
-#include <fstream>
-#include <sys/types.h>
 #include <dirent.h>
+#include <fstream>
+#include <iostream>
+#include <sys/types.h>
 #include <unistd.h>
 
 #include "dmlf/iupdate.hpp"
-#include<stdio.h>     //for remove( ) and rename( )
+#include <stdio.h>  //for remove( ) and rename( )
 
 namespace fetch {
 namespace dmlf {
 
 FilepassingLearnerNetworker::FilepassingLearnerNetworker()
-{
-}
+{}
 
 void FilepassingLearnerNetworker::setName(const std::string &name)
 {
-  name_ = name;
-  dir_ = processNameToTargetDir(name);
-  system((std::string("mkdir -vp ") + dir_).c_str());
+  name_  = name;
+  dir_   = processNameToTargetDir(name);
+  auto r = system((std::string("mkdir -vp ") + dir_).c_str());
+  if (r)
+  {
+    std::cerr << "mkdir failed" << std::endl;
+  }
 
   auto names = getUpdateNames();
-  for(auto name : names)
+  for (auto name : names)
   {
-    //std::cout << "UNLINK:: "<< name << std::endl;
+    // std::cout << "UNLINK:: "<< name << std::endl;
     ::unlink(name.c_str());
   }
 }
 
 FilepassingLearnerNetworker::~FilepassingLearnerNetworker()
-{
-}
+{}
 
-std::string  FilepassingLearnerNetworker::processNameToTargetDir(const std::string n)
+std::string FilepassingLearnerNetworker::processNameToTargetDir(const std::string n)
 {
   return std::string("/tmp/FilepassingLearnerNetworker/") + n + "/";
 }
@@ -76,8 +78,8 @@ void FilepassingLearnerNetworker::clearPeers()
 
 void FilepassingLearnerNetworker::pushUpdate(std::shared_ptr<IUpdate> update)
 {
-  auto                                                indexes = alg->getNextOutputs();
-  auto                                                data    = update->serialise();
+  auto indexes = alg->getNextOutputs();
+  auto data    = update->serialise();
 
   for (auto ind : indexes)
   {
@@ -89,11 +91,11 @@ void FilepassingLearnerNetworker::pushUpdate(std::shared_ptr<IUpdate> update)
 void FilepassingLearnerNetworker::tx(const std::string &target, const Intermediate &data)
 {
   static int filecounter = 0;
-  auto target_dir = processNameToTargetDir(target);
-  auto filename = name_ + "-" + std::to_string(filecounter++);
-  auto tmpfilename = std::string("tmp_") + name_ + "-" + std::to_string(filecounter++);
+  auto       target_dir  = processNameToTargetDir(target);
+  auto       filename    = name_ + "-" + std::to_string(filecounter++);
+  auto       tmpfilename = std::string("tmp_") + name_ + "-" + std::to_string(filecounter++);
 
-  auto filepath = target_dir + filename;
+  auto filepath    = target_dir + filename;
   auto tmpfilepath = target_dir + tmpfilename;
 
   std::ofstream outp(tmpfilepath.c_str());
@@ -112,18 +114,22 @@ std::vector<std::string> FilepassingLearnerNetworker::getUpdateNames() const
 {
   std::vector<std::string> r;
 
-  DIR *dir;
+  DIR *          dir;
   struct dirent *ent;
-  if ((dir = ::opendir (dir_.c_str())) != NULL) {
+  if ((dir = ::opendir(dir_.c_str())) != NULL)
+  {
     /* print all the files and directories within directory */
-    while ((ent = readdir (dir)) != NULL) {
+    while ((ent = readdir(dir)) != NULL)
+    {
 
       std::string f(ent->d_name);
 
-      if (f == ".") continue;
-      if (f == "..") continue;
+      if (f == ".")
+        continue;
+      if (f == "..")
+        continue;
 
-      if (f.substr(0,4) == "tmp_")
+      if (f.substr(0, 4) == "tmp_")
       {
         continue;
       }
@@ -134,8 +140,10 @@ std::vector<std::string> FilepassingLearnerNetworker::getUpdateNames() const
       }
       r.push_back(fp);
     }
-    closedir (dir);
-  } else {
+    closedir(dir);
+  }
+  else
+  {
     /* could not open directory */
     throw std::length_error("Updates list failed.");
   }
@@ -153,10 +161,9 @@ FilepassingLearnerNetworker::Intermediate FilepassingLearnerNetworker::getUpdate
   }
   auto filename = pendings[0];
   processed_updates_.insert(filename);
-  Intermediate b;
+  Intermediate  b;
   std::ifstream inp(filename.c_str());
-  std::string str((std::istreambuf_iterator<char>(inp)),
-                  std::istreambuf_iterator<char>());
+  std::string   str((std::istreambuf_iterator<char>(inp)), std::istreambuf_iterator<char>());
   inp.close();
   return Intermediate(str);
 }

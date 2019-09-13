@@ -18,9 +18,9 @@
 
 #include "gtest/gtest.h"
 
+#include "dmlf/filepassing_learner_networker.hpp"
 #include "dmlf/iupdate.hpp"
 #include "dmlf/local_learner_networker.hpp"
-#include "dmlf/filepassing_learner_networker.hpp"
 #include "dmlf/simple_cycling_algorithm.hpp"
 #include "dmlf/update.hpp"
 #include "math/matrix_operations.hpp"
@@ -227,15 +227,15 @@ public:
   }
   void DoMtFilepassingWork()
   {
-    const std::size_t                         peercount = 20;
+    const std::size_t                                                      peercount = 20;
     std::vector<std::shared_ptr<fetch::dmlf::FilepassingLearnerNetworker>> peers;
-    fetch::dmlf::FilepassingLearnerNetworker::Peers names;
-    
+    fetch::dmlf::FilepassingLearnerNetworker::Peers                        names;
+
     for (std::size_t i = 0; i < peercount; i++)
     {
-      std::string name = std::string("foo-")+std::to_string(i);
-      auto peer = std::make_shared<fetch::dmlf::FilepassingLearnerNetworker>();
-      peer -> setName(name);
+      std::string name = std::string("foo-") + std::to_string(i);
+      auto        peer = std::make_shared<fetch::dmlf::FilepassingLearnerNetworker>();
+      peer->setName(name);
       peers.push_back(peer);
       names.push_back(name);
       std::shared_ptr<fetch::dmlf::ILearnerNetworker> interf = peer;
@@ -277,7 +277,8 @@ public:
     {
       t->join();
     }
-  }};
+  }
+};
 
 TEST_F(LocalLearnerNetworkerTests, singleThreadedVersion)
 {
