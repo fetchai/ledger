@@ -195,10 +195,9 @@ bool GraphW2VLoader<T>::IsDone() const
   {
     return true;
   }
-
+w
   // Check if is last word of last sentence
-  return !((current_sentence_ == data_.size() - 1) &&
-           (current_word_ < data_.at(current_sentence_).size() - window_size_));
+  return !(current_word_ < data_.at(current_sentence_).size() - window_size_);
 }
 
 /**
