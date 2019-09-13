@@ -825,7 +825,7 @@ void BeaconSetupService::BroadcastShares()
 {
   beacon_->manager.GenerateCoefficients();
   SendBroadcast(DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_SHARES),
-                                                beacon_->manager.GetCoefficients(), "signature"}});
+                                                beacon_->manager.GetCoefficients()}});
   for (auto &cab_i : beacon_->aeon.members)
   {
     if (cab_i == identity_)
@@ -882,7 +882,7 @@ void BeaconSetupService::BroadcastComplaints()
 
   FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                  " broadcasts complaints size ", complaints_local.size());
-  SendBroadcast(DKGEnvelope{ComplaintsMessage{complaints_local, "signature"}});
+  SendBroadcast(DKGEnvelope{ComplaintsMessage{complaints_local}});
 }
 
 /**
@@ -900,8 +900,8 @@ void BeaconSetupService::BroadcastComplaintAnswers()
                    " received complaints from ", beacon_->manager.cabinet_index(reporter));
     complaint_answer.insert({reporter, beacon_->manager.GetOwnShares(reporter)});
   }
-  SendBroadcast(DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_COMPLAINT_ANSWERS),
-                                          complaint_answer, "signature"}});
+  SendBroadcast(DKGEnvelope{
+      SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_COMPLAINT_ANSWERS), complaint_answer}});
 }
 
 /**
@@ -909,9 +909,8 @@ void BeaconSetupService::BroadcastComplaintAnswers()
  */
 void BeaconSetupService::BroadcastQualCoefficients()
 {
-  SendBroadcast(
-      DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_QUAL_SHARES),
-                                      beacon_->manager.GetQualCoefficients(), "signature"}});
+  SendBroadcast(DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_QUAL_SHARES),
+                                                beacon_->manager.GetQualCoefficients()}});
 }
 
 /**
@@ -923,9 +922,9 @@ void BeaconSetupService::BroadcastQualComplaints()
 {
   // Qual complaints consist of all nodes from which we did not receive qual shares, or verification
   // of qual shares failed
-  SendBroadcast(DKGEnvelope{SharesMessage{
-      static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS),
-      beacon_->manager.ComputeQualComplaints(qual_coefficients_received_), "signature"}});
+  SendBroadcast(DKGEnvelope{
+      SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS),
+                    beacon_->manager.ComputeQualComplaints(qual_coefficients_received_)}});
 }
 
 /**
@@ -942,9 +941,8 @@ void BeaconSetupService::BroadcastReconstructionShares()
     beacon_->manager.AddReconstructionShare(in);
     complaint_shares.insert({in, beacon_->manager.GetReceivedShares(in)});
   }
-  SendBroadcast(
-      DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_RECONSTRUCTION_SHARES),
-                                complaint_shares, "signature"}});
+  SendBroadcast(DKGEnvelope{SharesMessage{
+      static_cast<uint64_t>(State::WAIT_FOR_RECONSTRUCTION_SHARES), complaint_shares}});
 }
 
 /**
