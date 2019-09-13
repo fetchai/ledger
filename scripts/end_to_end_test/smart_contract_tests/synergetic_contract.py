@@ -93,3 +93,4 @@ def run(options):
 # ???check mining fees
 # ???check what nonces are being submitted
 # ???inherently unstable test-different results if submission caught between epochs
+# ???sharded state
