@@ -284,9 +284,12 @@ function (configure_vendor_targets)
   target_link_libraries(vendor-bls INTERFACE vendor-bls-internal)
   target_compile_definitions(vendor-bls INTERFACE -DMCLBN_FP_UNIT_SIZE=4)
 
-  # Google Benchmark Do not build the google benchmark library tests
   if (FETCH_ENABLE_BENCHMARKS)
-    set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "Suppress google benchmark default tests" FORCE)
+    set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "Suppress google benchmark tests" FORCE)
+    set(BENCHMARK_ENABLE_INSTALL OFF CACHE BOOL "Disable installation of benchmark" FORCE)
+    set(BENCHMARK_ENABLE_GTEST_TESTS
+        OFF
+        CACHE BOOL "Enable building the unit tests which depend on gtest" FORCE)
     add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/benchmark)
   endif (FETCH_ENABLE_BENCHMARKS)
 
