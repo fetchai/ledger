@@ -68,6 +68,8 @@ public:
                SizeType subset_size = SIZE_NOT_SET);
 
   void     UpdateLearningRate();
+  void     IncrementEpochCounter();
+  void     IncrementBatchCounters(SizeType batch_size);
   SizeType UpdateBatchSize(SizeType const &batch_size, SizeType const &data_size,
                            SizeType const &subset_size = SIZE_NOT_SET);
 
@@ -261,7 +263,7 @@ typename T::Type Optimiser<T>::Run(std::vector<TensorType> const &data, TensorTy
 
     UpdateLearningRate();
   }
-  epoch_++;
+  IncrementEpochCounter();
 
   return loss_sum_ / static_cast<DataType>(k);
 }
@@ -440,6 +442,27 @@ void Optimiser<T>::UpdateLearningRate()
     throw std::runtime_error("Please specify learning rate schedule method");
   }
   }
+}
+
+/**
+ * Increments epoch counter
+ * @tparam T
+ */
+template <class T>
+void Optimiser<T>::IncrementEpochCounter()
+{
+  epoch_++;
+}
+
+/**
+ * Increments batch counters
+ * @tparam T
+ */
+template <class T>
+void Optimiser<T>::IncrementBatchCounters(SizeType batch_size)
+{
+  step_ += batch_size;
+  cumulative_step_ += batch_size;
 }
 
 /**

@@ -55,9 +55,10 @@ std::vector<std::string> SplitTrainingData(std::string const &train_file,
   {
     old_pos = pos;
     pos     = (i + 1) * chars_per_client;
+
     // find next instance of space character
     pos = input_data.find(" ", pos, 1);
-    client_data.push_back(input_data.substr(old_pos, pos));
+    client_data.push_back(input_data.substr(old_pos, pos - old_pos));
   }
   return client_data;
 }
@@ -90,7 +91,7 @@ int main(int ac, char **av)
   coord_params.iterations_count = 100;  //  Synchronization occurs after this number of batches
   // have been processed in total by the clients
 
-  client_params.batch_size    = 100000;
+  client_params.batch_size    = 10000;
   client_params.learning_rate = static_cast<DataType>(.001f);
 
   // Word2Vec parameters:
