@@ -510,6 +510,30 @@ public:
     return RangedApplyMultiple(range, std::move(apply), std::forward<Args>(args)...);
   }
 
+  void Assign(Range const &range, type const &a)
+  {
+    return RangedApply(range, [a](auto &c) { c = static_cast<std::remove_reference_t<decltype(c)>>(a); });
+  }
+
+  template <class Array>
+  void Assign(Range const &range, Array const &A)
+  {
+    return RangedApplyMultiple(range, [](auto const &b, auto &a) { a = b; }, A);
+  }
+
+  void Assign(type const &a)
+  {
+    Range range(0, this->size());
+    return Assign(range, a);
+  }
+
+  template <class Array>
+  void Assign(Array const &A)
+  {
+    Range range(0, this->size());
+    return Assign(range, A);
+  }
+
   type *pointer()
   {
     return super_type::pointer();

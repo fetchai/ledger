@@ -187,7 +187,7 @@ TYPED_TEST(VectorReduceTest, reduce_tests)
   using array_type = fetch::memory::SharedArray<type>;
 
   std::size_t                                    N = 20, offset = 2;
-  alignas(TypeParam::E_REGISTER_SIZE) array_type A(N), B(N), C(N);
+  alignas(TypeParam::E_REGISTER_SIZE) array_type A(N), B(N), C(N), D(N), E(N);
   type sum{0}, partial_sum{0}, max_a{type(0)}, min_a{type(N)}, partial_max{0}, partial_min{type(N)};
 
   for (std::size_t i = 0; i < N; ++i)
@@ -268,5 +268,17 @@ TYPED_TEST(VectorReduceTest, reduce_tests)
   for (std::size_t i = 6; i < 15; ++i)
   {
     EXPECT_EQ(C[i], A[i]);
+  }
+
+  D.in_parallel().Assign(beta);
+  for (std::size_t i = 0; i < N; ++i)
+  {
+    EXPECT_EQ(D[i], beta);
+  }
+
+  E.in_parallel().Assign(C);
+  for (std::size_t i = 0; i < N; ++i)
+  {
+    EXPECT_EQ(E[i], C[i]);
   }
 }
