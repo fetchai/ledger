@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include <limits>
+
 namespace fetch {
 namespace memory {
 
@@ -25,7 +27,8 @@ class Range
 public:
   using SizeType = std::size_t;
 
-  Range(SizeType const &from = 0, SizeType const &to = SizeType(-1), SizeType const &step = 1)
+  Range(SizeType const &from = 0, SizeType const &to = std::numeric_limits<SizeType>::max(),
+        SizeType const &step = 1)
     : from_(from)
     , to_(to)
     , step_(step)
