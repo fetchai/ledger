@@ -826,7 +826,7 @@ typename Tensor<T, C>::ViewType Tensor<T, C>::View()
 {
   assert(shape_.size() >= 1);
 
-  SizeType N     = shape_.size() - 1;
+  SizeType N = shape_.size() - 1;
   // padded_height can be 32 bytes on AVX2, set width to 1 to avoid zero-width tensors
   SizeType width = std::max(shape_[N] * stride_[N] / padded_height_, static_cast<SizeType>(1));
   assert(width > 0);
@@ -844,7 +844,7 @@ typename Tensor<T, C>::ViewType const Tensor<T, C>::View() const
 {
   assert(shape_.size() >= 1);
 
-  SizeType N     = shape_.size() - 1;
+  SizeType N = shape_.size() - 1;
   // padded_height can be 32 bytes on AVX2, set width to 1 to avoid zero-width tensors
   SizeType width = std::max(shape_[N] * stride_[N] / padded_height_, static_cast<SizeType>(1));
   assert(width > 0);
