@@ -41,9 +41,6 @@ class Array : public VectorSlice<T, type_size>
 {
 public:
   static_assert(sizeof(T) >= type_size, "Invalid object size");
-
-  // TODO(issue 1424): check IfIsPodOrFixedPoint memory safe and reinstante appropriate static
-  // asserts
   static_assert(fetch::math::meta::IsPodOrFixedPoint<T>, "can only be used with POD or FixedPoint");
   using SizeType   = std::size_t;
   using data_type  = std::shared_ptr<T>;
