@@ -75,7 +75,7 @@ int main(int argc, char **argv)
   auto muddle = std::make_shared<fetch::muddle::Muddle>(fetch::muddle::NetworkId{"TestDKGNetwork"},
                                                         p2p_key, network_manager, true, true);
 
-  std::shared_ptr<dkg::DkgService> dkg =
+  auto dkg =
       std::make_unique<dkg::DkgService>(muddle->AsEndpoint(), p2p_key->identity().identifier());
 
   // Start networking etc.
@@ -118,7 +118,7 @@ int main(int argc, char **argv)
   reactor.Attach(dkg->GetWeakRunnable());
   reactor.Start();
 
-  std::this_thread::sleep_for(std::chrono::seconds(1000));  // 1 min
+  std::this_thread::sleep_for(std::chrono::seconds(1000));
 
   FETCH_LOG_INFO(LOGGING_NAME, "Finished. Quitting");
 
