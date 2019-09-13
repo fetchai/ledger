@@ -103,7 +103,6 @@ void Reduce(SizeType axis, F function, const Tensor<T, C> &array, Tensor<T, C> &
 template <typename F, typename T, typename C>
 void Reduce(std::vector<SizeType> axes, F function, const Tensor<T, C> &array, Tensor<T, C> &ret)
 {
-
   for (SizeType i{0}; i < axes.size(); i++)
   {
     assert(ret.shape().at(axes.at(i)) == 1);

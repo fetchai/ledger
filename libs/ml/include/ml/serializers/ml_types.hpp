@@ -17,12 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/saveparams/saveable_params.hpp"
-
 #include "core/serializers/base_types.hpp"
 #include "core/serializers/main_serializer.hpp"
-
 #include "ml/regularisers/reg_types.hpp"
+#include "ml/saveparams/saveable_params.hpp"
 
 namespace fetch {
 namespace ml {

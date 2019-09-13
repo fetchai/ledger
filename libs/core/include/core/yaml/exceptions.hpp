@@ -33,7 +33,7 @@ class UnrecognisedYamlSymbolException : public std::exception
   std::string str_;
 
 public:
-  UnrecognisedYamlSymbolException(byte_array::Token const &token)
+  explicit UnrecognisedYamlSymbolException(byte_array::Token const &token)
   {
     std::stringstream msg;
     msg << "Unrecognised symbol '";
@@ -42,7 +42,7 @@ public:
     str_ = msg.str();
   }
 
-  virtual char const *what() const throw()
+  char const *what() const noexcept override
   {
     return str_.c_str();
   }
@@ -51,12 +51,12 @@ public:
 class YamlParseException : public std::exception
 {
 public:
-  YamlParseException(std::string err)
+  explicit YamlParseException(std::string err)
     : error_(std::move(err))
   {}
-  virtual ~YamlParseException()
-  {}
-  virtual char const *what() const throw()
+  ~YamlParseException() override = default;
+
+  char const *what() const noexcept override
   {
     return error_.c_str();
   }
@@ -64,5 +64,6 @@ public:
 private:
   std::string error_;
 };
+
 }  // namespace yaml
 }  // namespace fetch

@@ -23,6 +23,7 @@
 #include "ml/ops/placeholder.hpp"
 
 #include "gtest/gtest.h"
+
 template <typename T>
 class NodeTest : public ::testing::Test
 {
