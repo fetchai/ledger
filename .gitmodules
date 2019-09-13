@@ -27,4 +27,4 @@
 	url = https://github.com/herumi/bls.git
 [submodule "vendor/utfcpp"]
 	path = vendor/utfcpp
-	url = https://github.com/nemtrif/utfcpp.git
+	url = https://github.com/pbukva/utfcpp.git
