@@ -34,16 +34,6 @@ inline VectorRegister<double, 64> approx_exp(VectorRegister<double, 64> const &x
   return VectorRegister<double, 64>(std::exp(x.data()));
 }
 
-// inline VectorRegister<int32_t, 32> approx_exp(VectorRegister<int32_t, 32> const &x)
-// {
-//   return VectorRegister<int32_t, 32>(std::exp(x.data()));
-// }
-
-// inline VectorRegister<int64_t, 64> approx_exp(VectorRegister<int64_t, 64> const &x)
-// {
-//   return VectorRegister<int64_t, 64>(std::exp(x.data()));
-// }
-
 inline VectorRegister<fixed_point::fp32_t, 32> approx_exp(
     VectorRegister<fixed_point::fp32_t, 32> const &x)
 {
