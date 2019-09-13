@@ -69,6 +69,16 @@ void VMGraph::BackPropagate(VMPtrString const &name)
   graph_.BackPropagate(name->str);
 }
 
+void VMGraph::Step(DataType const &lr)
+{
+  auto grads = graph_.GetGradients();
+  for (auto &grad : grads)
+  {
+    grad *= static_cast<DataType>(-lr);
+  }
+  graph_.ApplyGradients(grads);
+}
+
 void VMGraph::AddPlaceholder(VMPtrString const &name)
 {
   graph_.AddNode<fetch::ml::ops::PlaceHolder<MathTensorType>>(name->str, {});
@@ -141,6 +151,7 @@ void VMGraph::Bind(Module &module)
       .CreateMemberFunction("setInput", &VMGraph::SetInput)
       .CreateMemberFunction("evaluate", &VMGraph::Evaluate)
       .CreateMemberFunction("backPropagate", &VMGraph::BackPropagate)
+      .CreateMemberFunction("step", &VMGraph::Step)
       .CreateMemberFunction("addPlaceholder", &VMGraph::AddPlaceholder)
       .CreateMemberFunction("addFullyConnected", &VMGraph::AddFullyConnected)
       .CreateMemberFunction("addConv1D", &VMGraph::AddConv1D)
