@@ -21,8 +21,27 @@
 #include "telemetry/counter.hpp"
 #include "telemetry/registry.hpp"
 
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#endif
+
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wsign-conversion"
+#endif
+
+#include "spdlog/sinks/dup_filter_sink.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/spdlog.h"
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 
 #include <unordered_map>
 
@@ -85,7 +104,8 @@ private:
 
 constexpr LogLevel DEFAULT_LEVEL = LogLevel::INFO;
 
-LogRegistry registry_;
+LogRegistry                                          registry_;
+std::shared_ptr<spdlog::sinks::stdout_color_sink_mt> COLOUR_SINK;
 
 LogLevel ConvertToLevel(spdlog::level::level_enum level)
 {
@@ -148,11 +168,7 @@ spdlog::level::level_enum ConvertFromLevel(LogLevel level)
 }
 
 LogRegistry::LogRegistry()
-{
-  spdlog::set_level(
-      spdlog::level::trace);  // this should be kept in sync with the compilation level
-  spdlog::set_pattern("%^[%L]%$ %Y/%m/%d %T | %-30n : %v");
-}
+{}
 
 void LogRegistry::Log(LogLevel level, char const *name, std::string &&message)
 {
@@ -227,9 +243,23 @@ LogRegistry::Logger &LogRegistry::GetLogger(char const *name)
   auto it = registry_.find(name);
   if (it == registry_.end())
   {
-    // create the new logger instance
-    auto logger = spdlog::stdout_color_mt(name, spdlog::color_mode::automatic);
+    // create the new logger instance - note it suppresses duplicate messages
+    auto dup_filter =
+        std::make_shared<spdlog::sinks::dup_filter_sink_mt>(std::chrono::milliseconds(100));
+
+    if (!COLOUR_SINK)
+    {
+      COLOUR_SINK = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+    }
+
+    dup_filter->add_sink(COLOUR_SINK);
+
+    auto logger = std::make_shared<spdlog::logger>(name, dup_filter);
+
     logger->set_level(ConvertFromLevel(DEFAULT_LEVEL));
+    logger->set_pattern("%^[%L]%$ %Y/%m/%d %T | %-30n : %v");
+    logger->set_level(
+        spdlog::level::trace);  // this should be kept in sync with the compilation level
 
     // keep a reference of it
     registry_[name] = logger;

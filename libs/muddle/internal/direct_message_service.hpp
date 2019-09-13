@@ -108,7 +108,7 @@ private:
   MuddleRegister &    register_;
   PeerConnectionList &peers_;
 
-  Mutex        lock_{__LINE__, __FILE__};
+  Mutex        lock_;
   Reservations reservations_;
 };
 

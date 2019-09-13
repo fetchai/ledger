@@ -34,7 +34,6 @@ namespace serializers {
 
 TEST(MsgPacker, short_strings)
 {
-  // Setup
   MsgPackSerializer stream;
   ConstByteArray    value;
 

@@ -27,7 +27,7 @@
 #include <unordered_map>
 #include <utility>
 
-#define MAX_CONTEXTS 20
+constexpr std::size_t MAX_CONTEXTS = 20;
 
 using DataType    = uint64_t;
 using TensorType  = fetch::math::Tensor<DataType>;

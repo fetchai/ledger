@@ -67,51 +67,6 @@ private:
   friend struct serializers::MapSerializer;
 };
 
-inline MerkleTree::Digest const &MerkleTree::root() const
-{
-  return root_;
-}
-
-inline MerkleTree::Container const &MerkleTree::leaf_nodes() const
-{
-  return leaf_nodes_;
-}
-
-inline std::size_t MerkleTree::size() const
-{
-  return leaf_nodes_.size();
-}
-
-inline MerkleTree::Iterator MerkleTree::begin()
-{
-  return leaf_nodes_.begin();
-}
-
-inline MerkleTree::ConstIterator MerkleTree::begin() const
-{
-  return leaf_nodes_.begin();
-}
-
-inline MerkleTree::ConstIterator MerkleTree::cbegin()
-{
-  return leaf_nodes_.cbegin();
-}
-
-inline MerkleTree::Iterator MerkleTree::end()
-{
-  return leaf_nodes_.end();
-}
-
-inline MerkleTree::ConstIterator MerkleTree::end() const
-{
-  return leaf_nodes_.end();
-}
-
-inline MerkleTree::ConstIterator MerkleTree::cend() const
-{
-  return leaf_nodes_.cend();
-}
-
 }  // namespace crypto
 
 namespace serializers {

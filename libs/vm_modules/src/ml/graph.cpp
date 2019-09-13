@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/decoders.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/layers/convolution_1d.hpp"
 #include "ml/layers/fully_connected.hpp"
@@ -28,8 +29,6 @@
 #include "vm_modules/math/tensor.hpp"
 #include "vm_modules/ml/graph.hpp"
 #include "vm_modules/ml/state_dict.hpp"
-
-#include "core/byte_array/decoders.hpp"
 
 using namespace fetch::vm;
 
@@ -59,20 +58,15 @@ void VMGraph::SetInput(VMPtrString const &name, Ptr<VMTensorType> const &input)
 
 Ptr<VMTensorType> VMGraph::Evaluate(VMPtrString const &name)
 {
-  MathTensorType    t   = graph_.ForwardPropagate(name->str);
+  MathTensorType    t   = graph_.Evaluate(name->str);
   Ptr<VMTensorType> ret = this->vm_->CreateNewObject<math::VMTensor>(t.shape());
   (*ret).Copy(t);
   return ret;
 }
 
-void VMGraph::BackPropagateError(VMPtrString const &name)
+void VMGraph::BackPropagate(VMPtrString const &name)
 {
-  graph_.BackPropagateError(name->str);
-}
-
-void VMGraph::Step(DataType lr)
-{
-  graph_.Step(lr);
+  graph_.BackPropagate(name->str);
 }
 
 void VMGraph::AddPlaceholder(VMPtrString const &name)
@@ -146,8 +140,7 @@ void VMGraph::Bind(Module &module)
           [](VM *vm, TypeId type_id) -> Ptr<VMGraph> { return new VMGraph(vm, type_id); })
       .CreateMemberFunction("setInput", &VMGraph::SetInput)
       .CreateMemberFunction("evaluate", &VMGraph::Evaluate)
-      .CreateMemberFunction("backPropagate", &VMGraph::BackPropagateError)
-      .CreateMemberFunction("step", &VMGraph::Step)
+      .CreateMemberFunction("backPropagate", &VMGraph::BackPropagate)
       .CreateMemberFunction("addPlaceholder", &VMGraph::AddPlaceholder)
       .CreateMemberFunction("addFullyConnected", &VMGraph::AddFullyConnected)
       .CreateMemberFunction("addConv1D", &VMGraph::AddConv1D)

@@ -91,6 +91,7 @@ public:
     this->AddInputNode(input);
     this->AddInputNode(context);
     this->SetOutputNode(output);
+    this->Compile();
   }
 
   std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override

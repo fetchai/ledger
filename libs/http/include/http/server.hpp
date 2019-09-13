@@ -95,9 +95,6 @@ public:
         acceptor->close(dummy);
       }
     });
-
-    // TODO (issue 1220): This appears to cause a double free due to a race
-    /* manager_.reset(); */
   }
 
   void Start(uint16_t port)
@@ -196,18 +193,18 @@ public:
     }
     catch (std::exception const &e)
     {
-      HTTPResponse res("internal error: " + std::string(e.what()),
-                       fetch::http::mime_types::GetMimeTypeFromExtension(".html"),
-                       Status::SERVER_ERROR_INTERNAL_SERVER_ERROR);
-      manager_->Send(client, res);
+      HTTPResponse response("internal error: " + std::string(e.what()),
+                            fetch::http::mime_types::GetMimeTypeFromExtension(".html"),
+                            Status::SERVER_ERROR_INTERNAL_SERVER_ERROR);
+      manager_->Send(client, response);
       return;
     }
     catch (...)
     {
-      HTTPResponse res("unknown internal error",
-                       fetch::http::mime_types::GetMimeTypeFromExtension(".html"),
-                       Status::SERVER_ERROR_INTERNAL_SERVER_ERROR);
-      manager_->Send(client, res);
+      HTTPResponse response("unknown internal error",
+                            fetch::http::mime_types::GetMimeTypeFromExtension(".html"),
+                            Status::SERVER_ERROR_INTERNAL_SERVER_ERROR);
+      manager_->Send(client, response);
       return;
     }
 

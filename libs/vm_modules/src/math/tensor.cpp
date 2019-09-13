@@ -148,9 +148,11 @@ void VMTensor::FillRandom()
   tensor_.FillUniformRandom();
 }
 
-void VMTensor::Squeeze()
+Ptr<VMTensor> VMTensor::Squeeze()
 {
-  tensor_.Squeeze();
+  auto squeezed_tensor = tensor_.Copy();
+  squeezed_tensor.Squeeze();
+  return fetch::vm::Ptr<VMTensor>(new VMTensor(vm_, type_id_, squeezed_tensor));
 }
 
 bool VMTensor::Reshape(Ptr<Array<SizeType>> const &new_shape)
@@ -164,8 +166,7 @@ bool VMTensor::Reshape(Ptr<Array<SizeType>> const &new_shape)
 
 void VMTensor::FromString(fetch::vm::Ptr<fetch::vm::String> const &string)
 {
-  auto tmp = fetch::math::Tensor<DataType>::FromString(string->str);
-  tensor_.Assign(tmp);
+  tensor_.Assign(fetch::math::Tensor<DataType>::FromString(string->str));
 }
 
 Ptr<String> VMTensor::ToString() const

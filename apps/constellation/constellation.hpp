@@ -106,9 +106,6 @@ public:
     }
   };
 
-  static constexpr char const *LOGGING_NAME = "constellation";
-
-  // Construction / Destructionp
   Constellation(CertificatePtr certificate, Config config);
   ~Constellation() override = default;
 

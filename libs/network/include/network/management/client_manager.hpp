@@ -44,7 +44,7 @@ public:
 
   ClientManager(AbstractNetworkServer &server)
     : server_(server)
-    , clients_mutex_(__LINE__, __FILE__)
+    , clients_mutex_{}
   {}
 
   connection_handle_type Join(connection_type client)

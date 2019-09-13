@@ -20,6 +20,7 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "variant/variant.hpp"
 
+#include <cstdint>
 #include <functional>
 
 namespace fetch {

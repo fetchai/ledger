@@ -81,13 +81,13 @@ public:
 
   void Forward(VecTensorType const &inputs, TensorType &output) override
   {
-    assert(this->output_);
+    assert(this->data_);
     assert(inputs.size() == 1);
     assert(inputs.front()->shape().size() == 2);
 
     SizeType batch_size = inputs.front()->shape().at(1);
 
-    assert(output.shape().at(0) == this->output_->shape().at(0));
+    assert(output.shape().at(0) == this->data_->shape().at(0));
     assert(output.shape().at(1) == inputs.front()->shape().at(0));
     assert(output.shape().at(2) == batch_size);
 
@@ -102,7 +102,7 @@ public:
         trailing_indices1_.at(1) = n;
         auto embedding_view      = output.View(trailing_indices1_);
         trailing_indices2_.at(0) = static_cast<SizeType>(*e_it);
-        auto output_view         = this->output_->View(trailing_indices2_);
+        auto output_view         = this->data_->View(trailing_indices2_);
 
         embedding_view.Assign(output_view);
         ++e_it;
@@ -147,32 +147,10 @@ public:
     return {TensorType(error_signal.shape())};
   }
 
-  void Step(typename T::Type learning_rate) override
-  {
-    for (auto const &r : updated_rows_)
-    {
-      // get the relevant view from gradients and embeddings
-      auto grad_view = this->gradient_accumulation_->View(r);
-      auto out_view  = this->output_->View(r);
-
-      auto out_it  = out_view.begin();
-      auto grad_it = grad_view.begin();
-
-      while (out_it.is_valid())
-      {
-        *out_it  = *out_it - (*grad_it * learning_rate);
-        *grad_it = 0;
-        ++out_it;
-        ++grad_it;
-      }
-    }
-    updated_rows_.clear();
-  }
-
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    std::vector<SizeType> output_shape = {
-        this->output_->shape().at(0), inputs.front()->shape().at(0), inputs.front()->shape().at(1)};
+    std::vector<SizeType> output_shape = {this->data_->shape().at(0), inputs.front()->shape().at(0),
+                                          inputs.front()->shape().at(1)};
     return output_shape;
   }
 

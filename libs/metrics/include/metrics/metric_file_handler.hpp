@@ -70,7 +70,7 @@ private:
   void ThreadEntryPoint();
 
   std::string const       filename_;  ///< The filename for the output file
-  Mutex                   stack_lock_{__LINE__, __FILE__};
+  Mutex                   stack_lock_;
   std::condition_variable stack_notify_;  ///< The notification variable for
   EntryStack              stack_;         ///< The stack of events that need to be generated
   std::atomic<bool>       active_;        ///< Active monitor thread

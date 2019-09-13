@@ -31,7 +31,7 @@ class TelemetryHttpModule : public http::HTTPModule
 public:
   TelemetryHttpModule()
   {
-    Get("/api/telemetry", "Telementry feed.",
+    Get("/api/telemetry", "Telemetry feed.",
         [](http::ViewParameters const &, http::HTTPRequest const &) {
           static auto const TXT_MIME_TYPE = http::mime_types::GetMimeTypeFromExtension(".txt");
 

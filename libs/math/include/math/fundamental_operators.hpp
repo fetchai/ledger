@@ -434,8 +434,8 @@ meta::IfIsMathArray<ArrayType, void> Subtract(ArrayType const &array1, ArrayType
 }
 
 template <typename ArrayType>
-::fetch::math::meta::IfIsMathArray<ArrayType, void> Multiply(ArrayType const &obj1,
-                                                             ArrayType const &obj2, ArrayType &ret)
+fetch::math::meta::IfIsMathArray<ArrayType, void> Multiply(ArrayType const &obj1,
+                                                           ArrayType const &obj2, ArrayType &ret)
 {
   if (obj1.shape() == obj2.shape())
   {

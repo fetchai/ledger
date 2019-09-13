@@ -1650,9 +1650,26 @@ template <typename T, typename C>
 Tensor<T, C> &Tensor<T, C>::Squeeze()
 {
   auto shape = shape_;
-  shape.erase(shape.end() - 1);
-  Reshape(shape);
 
+  bool     not_found = true;
+  SizeType cur_dim   = shape.size() - 1;
+  while (not_found)
+  {
+    if (shape.at(cur_dim) == static_cast<SizeType>(1))
+    {
+      shape.erase(shape.begin() + static_cast<int32_t>(cur_dim));
+      Reshape(shape);
+      not_found = false;
+    }
+    else
+    {
+      if (cur_dim == 0)
+      {
+        throw std::runtime_error("cannot squeeze tensor, no dimensions of size 1");
+      }
+      --cur_dim;
+    }
+  }
   return *this;
 }
 
@@ -2324,7 +2341,7 @@ std::string Tensor<T, C>::ToString() const
   {
     for (SizeType i(0); i < shape_[0]; ++i)
     {
-      ss << At(i) << "\t";
+      ss << At(i) << ", ";
     }
   }
   else if (shape_.size() == 2)
@@ -2333,9 +2350,9 @@ std::string Tensor<T, C>::ToString() const
     {
       for (SizeType j(0); j < shape_[1]; ++j)
       {
-        ss << At(i, j) << "\t";
+        ss << At(i, j) << ", ";
       }
-      ss << "\n";
+      ss << "; ";
     }
   }
   else
@@ -2864,7 +2881,7 @@ Tensor<T, C> Tensor<T, C>::TensorSliceImplementation<STensor>::Copy() const
   {
     shape.emplace_back(this->range_[i][1] - this->range_[i][0] / this->range_[i][2]);
   }
-  ::fetch::math::Tensor<T, C> ret{shape};
+  fetch::math::Tensor<T, C> ret{shape};
   ret.Assign(*this);
   return ret;
 }

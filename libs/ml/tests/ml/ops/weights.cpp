@@ -24,6 +24,7 @@
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
+
 #include <memory>
 
 template <typename T>

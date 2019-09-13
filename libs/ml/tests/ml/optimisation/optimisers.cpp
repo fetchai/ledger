@@ -27,7 +27,6 @@
 #include "ml/optimisation/momentum_optimiser.hpp"
 #include "ml/optimisation/rmsprop_optimiser.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
-
 #include "ml/saveparams/saveable_params.hpp"
 #include "ml/serializers/ml_types.hpp"
 

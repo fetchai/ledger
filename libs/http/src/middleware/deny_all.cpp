@@ -16,11 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/logging.hpp"
 #include "http/authentication_level.hpp"
 #include "http/middleware/token_auth.hpp"
-
-#include <memory>
 
 namespace fetch {
 namespace http {

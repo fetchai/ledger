@@ -29,6 +29,8 @@
 #include "ml/utilities/min_max_scaler.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
+#include "ml/serializers/ml_types.hpp"
+
 #include <iostream>
 #include <memory>
 #include <string>
@@ -48,9 +50,9 @@ using DataLoaderType   = fetch::ml::dataloaders::TensorDataLoader<TensorType, Te
 
 struct TrainingParams
 {
-  SizeType epochs{10};
+  SizeType epochs{5};
   SizeType batch_size{1000};
-  bool     normalise = true;
+  bool     normalise = false;
 };
 
 std::shared_ptr<GraphType> BuildModel(std::string &input_name, std::string &output_name,
@@ -58,24 +60,17 @@ std::shared_ptr<GraphType> BuildModel(std::string &input_name, std::string &outp
 {
   auto g = std::make_shared<GraphType>();
 
-  SizeType conv1D_1_filters        = 16;
+  SizeType conv1D_1_filters        = 8;
   SizeType conv1D_1_input_channels = 1;
-  SizeType conv1D_1_kernel_size    = 96;
-  SizeType conv1D_1_stride         = 3;
+  SizeType conv1D_1_kernel_size    = 32;
+  SizeType conv1D_1_stride         = 2;
 
-  typename TensorType::Type keep_prob_1{0.9};
+  typename TensorType::Type keep_prob_1{0.5};
 
-  SizeType conv1D_2_filters        = 8;
+  SizeType conv1D_2_filters        = 1;
   SizeType conv1D_2_input_channels = conv1D_1_filters;
-  SizeType conv1D_2_kernel_size    = 48;
+  SizeType conv1D_2_kernel_size    = 51;
   SizeType conv1D_2_stride         = 2;
-
-  typename TensorType::Type keep_prob_2{0.9};
-
-  SizeType conv1D_3_filters        = 1;
-  SizeType conv1D_3_input_channels = conv1D_2_filters;
-  SizeType conv1D_3_kernel_size    = 47;
-  SizeType conv1D_3_stride         = 1;
 
   input_name = g->AddNode<PlaceHolder<TensorType>>("Input", {});
   label_name = g->AddNode<PlaceHolder<TensorType>>("Label", {});
@@ -85,17 +80,12 @@ std::shared_ptr<GraphType> BuildModel(std::string &input_name, std::string &outp
       conv1D_1_stride, fetch::ml::details::ActivationType::RELU);
   std::string layer_2 = g->AddNode<Dropout<TensorType>>("Dropout_1", {layer_1}, keep_prob_1);
 
-  std::string layer_3 = g->AddNode<fetch::ml::layers::Convolution1D<TensorType>>(
-      "Conv1D_2", {layer_2}, conv1D_2_filters, conv1D_2_input_channels, conv1D_2_kernel_size,
-      conv1D_2_stride, fetch::ml::details::ActivationType::RELU);
-  std::string layer_4 = g->AddNode<Dropout<TensorType>>("Dropout_2", {layer_3}, keep_prob_2);
-
   output_name = g->AddNode<fetch::ml::layers::Convolution1D<TensorType>>(
-      "Conv1D_3", {layer_4}, conv1D_3_filters, conv1D_3_input_channels, conv1D_3_kernel_size,
-      conv1D_3_stride);
+      "Output", {layer_2}, conv1D_2_filters, conv1D_2_input_channels, conv1D_2_kernel_size,
+      conv1D_2_stride);
 
   error_name = g->AddNode<fetch::ml::ops::MeanSquareErrorLoss<TensorType>>(
-      "error_name", {output_name, label_name});
+      "Error", {output_name, label_name});
   return g;
 }
 
@@ -128,6 +118,25 @@ std::vector<TensorType> LoadData(std::string const &train_data_filename,
   test_labels_tensor.Reshape(
       {1, test_labels_tensor.shape().at(0), test_labels_tensor.shape().at(1)});
   return {train_data_tensor, train_labels_tensor, test_data_tensor, test_labels_tensor};
+}
+
+void SaveGraphToFile(GraphType &g, std::string const file_name)
+{
+
+  // start serializing and writing to file
+  fetch::ml::GraphSaveableParams<TensorType> gsp1 = g.GetGraphSaveableParams();
+  std::cout << "got saveable params" << std::endl;
+
+  fetch::serializers::LargeObjectSerializeHelper losh;
+
+  losh << gsp1;
+  std::cout << "finish serializing" << std::endl;
+
+  std::ofstream outFile(file_name, std::ios::out | std::ios::binary);
+  outFile.write(losh.buffer.data().char_pointer(), std::streamsize(losh.buffer.size()));
+  outFile.close();
+  std::cout << losh.buffer.size() << std::endl;
+  std::cout << "finish writing to file" << std::endl;
 }
 
 int main(int ac, char **av)
@@ -186,7 +195,7 @@ int main(int ac, char **av)
     optimiser.Run(loader, tp.batch_size);
 
     g->SetInput(input_name, test_data);
-    auto prediction = g->ForwardPropagate(output_name, false);
+    auto prediction = g->Evaluate(output_name, false);
     prediction.Reshape({prediction.shape().at(1), prediction.shape().at(2)});
 
     if (tp.normalise)
@@ -194,9 +203,13 @@ int main(int ac, char **av)
       scaler.DeNormalise(prediction, prediction);
     }
 
+    SaveGraphToFile(*g, "./bitcoin_price_prediction_graph" + std::to_string(i) + ".bin");
+
     auto result = fetch::math::MeanAbsoluteError(prediction, orig_test_label);
     std::cout << "mean absolute validation error: " << result << std::endl;
   }
+
+  SaveGraphToFile(*g, "./bitcoin_price_prediction_graph.bin");
 
   return 0;
 }

@@ -17,18 +17,16 @@
 //------------------------------------------------------------------------------
 
 #include "http/module.hpp"
+#include "http/request.hpp"
+
+#include <vector>
 
 namespace fetch {
 namespace http {
 
 bool NormalAccessAuthentication(HTTPRequest const &req)
 {
-  if (req.authentication_level() < AuthenticationLevel::DEFAULT_LEVEL)
-  {
-    return false;
-  }
-
-  return true;
+  return req.authentication_level() >= AuthenticationLevel::DEFAULT_LEVEL;
 }
 
 /// Post methods

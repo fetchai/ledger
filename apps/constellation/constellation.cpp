@@ -74,16 +74,18 @@ using ExecutorPtr = std::shared_ptr<Executor>;
 namespace fetch {
 namespace {
 
-using LaneIndex        = uint32_t;
-using StakeManagerPtr  = std::shared_ptr<ledger::StakeManager>;
-using EntropyPtr       = std::unique_ptr<ledger::EntropyGeneratorInterface>;
-using ConstByteArray   = byte_array::ConstByteArray;
+constexpr char const *LOGGING_NAME = "constellation";
+
 using BeaconServicePtr = std::shared_ptr<fetch::beacon::BeaconService>;
-using ConsensusPtr     = Constellation::ConsensusPtr;
 using CertificatePtr   = Constellation::CertificatePtr;
-using MainChain        = ledger::MainChain;
-using Identity         = crypto::Identity;
 using Config           = Constellation::Config;
+using ConsensusPtr     = Constellation::ConsensusPtr;
+using ConstByteArray   = byte_array::ConstByteArray;
+using EntropyPtr       = std::unique_ptr<ledger::EntropyGeneratorInterface>;
+using Identity         = crypto::Identity;
+using LaneIndex        = uint32_t;
+using MainChain        = ledger::MainChain;
+using StakeManagerPtr  = std::shared_ptr<ledger::StakeManager>;
 
 static const std::size_t HTTP_THREADS{4};
 static char const *      GENESIS_FILENAME = "genesis_file.json";
@@ -166,10 +168,10 @@ ledger::ShardConfigs GenerateShardsConfig(Config &cfg, uint16_t start_port)
     auto const ext_identity = shard.external_identity->identity().identifier();
     auto const int_identity = shard.internal_identity->identity().identifier();
 
-    FETCH_LOG_INFO(Constellation::LOGGING_NAME, "Shard ", i + 1);
-    FETCH_LOG_INFO(Constellation::LOGGING_NAME, " - Internal ", ToBase64(int_identity), " - ",
+    FETCH_LOG_INFO(LOGGING_NAME, "Shard ", i + 1);
+    FETCH_LOG_INFO(LOGGING_NAME, " - Internal ", ToBase64(int_identity), " - ",
                    shard.internal_network_id.ToString(), " - tcp://0.0.0.0:", shard.internal_port);
-    FETCH_LOG_INFO(Constellation::LOGGING_NAME, " - External ", ToBase64(ext_identity), " - ",
+    FETCH_LOG_INFO(LOGGING_NAME, " - External ", ToBase64(ext_identity), " - ",
                    shard.external_network_id.ToString(), " - tcp://0.0.0.0:", shard.external_port);
 
     // update the manifest with the generated identity

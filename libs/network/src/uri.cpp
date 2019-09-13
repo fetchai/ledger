@@ -18,6 +18,8 @@
 
 #include "network/uri.hpp"
 
+#include <istream>
+#include <ostream>
 #include <regex>
 #include <stdexcept>
 

@@ -94,5 +94,66 @@ TransactionLayout::TransactionLayout(Digest digest, BitVector const &mask, Token
   , valid_until_{valid_until}
 {}
 
+/**
+ * Get the associated transaction digest
+ *
+ * @return The transaction digest
+ */
+TransactionLayout::ConstByteArray const &TransactionLayout::digest() const
+{
+  return digest_;
+}
+
+/**
+ * Get the shard mask usage for this transaction
+ *
+ * @return The shard mask
+ */
+BitVector const &TransactionLayout::mask() const
+{
+  return mask_;
+}
+
+/**
+ * Get the charge (fee) associated with the transaction
+ *
+ * @return The charge amount
+ */
+TransactionLayout::TokenAmount TransactionLayout::charge() const
+{
+  return charge_;
+}
+
+/**
+ * The block index from which point the transaction is valid
+ *
+ * @return The block index from when the block is valid
+ */
+TransactionLayout::BlockIndex TransactionLayout::valid_from() const
+{
+  return valid_from_;
+}
+
+/**
+ * The block index until which the transaction is valid
+ *
+ * @return THe block index from which the transaction becomes invalid
+ */
+TransactionLayout::BlockIndex TransactionLayout::valid_until() const
+{
+  return valid_until_;
+}
+
+/**
+ * Determine if the two objects are equal
+ *
+ * @param other THe other layout to compare against
+ * @return true if equal, otherwise false
+ */
+bool TransactionLayout::operator==(TransactionLayout const &other) const
+{
+  return digest_ == other.digest_;
+}
+
 }  // namespace ledger
 }  // namespace fetch

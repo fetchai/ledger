@@ -134,7 +134,7 @@ std::vector<T> SubGraph<T>::Backward(VecTensorType const &inputs, TensorType con
   FETCH_UNUSED(inputs);
 
   std::vector<std::pair<Node<T> *, TensorType>> non_back_prop_err_signal =
-      this->nodes_[output_node_name_]->BackPropagateSignal(error_signal);
+      this->nodes_[output_node_name_]->BackPropagate(error_signal);
   std::vector<TensorType> back_prop_err_signal;
 
   // aggregate the error to each input, if there are more than one error signal for one input

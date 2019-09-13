@@ -130,7 +130,7 @@ protected:
   NetworkManagerPtr network_manager_;
 };
 
-TEST_F(RouterTests, CheckExchange)
+TEST_F(RouterTests, DISABLED_CheckExchange)
 {
   static constexpr uint16_t SERVICE = 1;
   static constexpr uint16_t CHANNEL = 2;

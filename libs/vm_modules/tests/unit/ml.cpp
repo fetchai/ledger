@@ -220,8 +220,19 @@ TEST_F(MLTests, graph_serialisation_test)
 
   static char const *graph_deserialise_src = R"(
     function main() : Tensor
+      var tensor_shape = Array<UInt64>(2);
+      tensor_shape[0] = 2u64;
+      tensor_shape[1] = 10u64;
+      var data_tensor = Tensor(tensor_shape);
+      var label_tensor = Tensor(tensor_shape);
+      data_tensor.fill(7.0fp64);
+      label_tensor.fill(7.0fp64);
+
       var state = State<Graph>("graph");
       var graph = state.get();
+
+      graph.setInput("Input", data_tensor);
+      graph.setInput("Label", label_tensor);
       var loss = graph.evaluate("Error");
       return loss;
     endfunction
@@ -286,6 +297,18 @@ TEST_F(MLTests, graph_string_serialisation_test)
 
       var graph = Graph();
       graph = graph.deserializeFromString(graph_string);
+
+      var tensor_shape = Array<UInt64>(2);
+      tensor_shape[0] = 2u64;
+      tensor_shape[1] = 10u64;
+      var data_tensor = Tensor(tensor_shape);
+      var label_tensor = Tensor(tensor_shape);
+      data_tensor.fill(7.0fp64);
+      label_tensor.fill(7.0fp64);
+
+      graph.setInput("Input", data_tensor);
+      graph.setInput("Label", label_tensor);
+
       return graph.evaluate("Error");
     endfunction
   )";
@@ -332,26 +355,7 @@ TEST_F(MLTests, sgd_optimiser_serialisation_test)
       var state = State<Optimiser>("optimiser");
       state.set(optimiser);
 
-      ////////////
-      // TODO (1533) - this is necessary due to a bug
-      // now make a totally new optimiser, graph and dataloader with identical properties
-      // this is necessary because the optimiser data is not written at state.set time
-      // therefore the internal states of the optimser after calling run will be saved
-      // to the state
-      ////////////
-
-      var graph2 = Graph();
-      graph2.addPlaceholder("Input");
-      graph2.addPlaceholder("Label");
-      graph2.addFullyConnected("FC1", "Input", 2, 2);
-      graph2.addRelu("Output", "FC1");
-      graph2.addMeanSquareErrorLoss("Error", "Output", "Label");
-
-      var dataloader2 = DataLoader("tensor");
-      dataloader2.addData(data_tensor, label_tensor);
-
-      var optimiser2 = Optimiser("sgd", graph2, dataloader2, "Input", "Label", "Error");
-      var loss = optimiser2.run(batch_size);
+      var loss = optimiser.run(batch_size);
       return loss;
 
     endfunction

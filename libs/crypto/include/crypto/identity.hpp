@@ -113,11 +113,6 @@ private:
   byte_array::ConstByteArray identifier_;
 };
 
-static inline Identity InvalidIdentity()
-{
-  return Identity::CreateInvalid();
-}
-
 }  // namespace crypto
 
 namespace serializers {
@@ -152,7 +147,7 @@ public:
     data.SetIdentifier(id);
     if (!data)
     {
-      data = crypto::InvalidIdentity();
+      data = crypto::Identity::CreateInvalid();
     }
   }
 };

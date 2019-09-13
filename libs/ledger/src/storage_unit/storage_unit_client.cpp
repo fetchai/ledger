@@ -451,6 +451,7 @@ bool StorageUnitClient::HasTransaction(ConstByteArray const &digest)
 
 void StorageUnitClient::IssueCallForMissingTxs(DigestSet const &tx_set)
 {
+  FETCH_LOG_WARN(LOGGING_NAME, "IssueCallForMissingTxs: ", tx_set.size(), " Tx digests");
   std::map<Address, std::unordered_set<ResourceID>> lanes_of_interest;
   for (auto const &hash : tx_set)
   {
