@@ -20,6 +20,7 @@
 
 #include "dmlf/iupdate.hpp"
 #include "dmlf/local_learner_networker.hpp"
+#include "dmlf/filepassing_learner_networker.hpp"
 #include "dmlf/simple_cycling_algorithm.hpp"
 #include "dmlf/update.hpp"
 #include "math/matrix_operations.hpp"
@@ -224,7 +225,59 @@ public:
       t->join();
     }
   }
-};
+  void DoMtFilepassingWork()
+  {
+    const std::size_t                         peercount = 20;
+    std::vector<std::shared_ptr<fetch::dmlf::FilepassingLearnerNetworker>> peers;
+    fetch::dmlf::FilepassingLearnerNetworker::Peers names;
+    
+    for (std::size_t i = 0; i < peercount; i++)
+    {
+      std::string name = std::string("foo-")+std::to_string(i);
+      auto peer = std::make_shared<fetch::dmlf::FilepassingLearnerNetworker>();
+      peer -> setName(name);
+      peers.push_back(peer);
+      names.push_back(name);
+      std::shared_ptr<fetch::dmlf::ILearnerNetworker> interf = peer;
+      insts.push_back(std::make_shared<LocalLearnerInstance>(interf, i));
+    }
+
+    for (auto peer : peers)
+    {
+      peer->addPeers(names);
+    }
+
+    for (auto peer : peers)
+    {
+      auto alg = std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(peer->getPeerCount(), 5);
+      peer->setShuffleAlgorithm(alg);
+    }
+
+    using Thread  = std::thread;
+    using ThreadP = std::shared_ptr<Thread>;
+    using Threads = std::list<ThreadP>;
+
+    Threads threads;
+
+    for (auto inst : insts)
+    {
+      auto func = [inst]() { inst->mt_work(); };
+
+      auto t = std::make_shared<std::thread>(func);
+      threads.push_back(t);
+    }
+    sleep(3);
+
+    for (auto inst : insts)
+    {
+      inst->quit();
+    }
+
+    for (auto &t : threads)
+    {
+      t->join();
+    }
+  }};
 
 TEST_F(LocalLearnerNetworkerTests, singleThreadedVersion)
 {
@@ -243,6 +296,20 @@ TEST_F(LocalLearnerNetworkerTests, singleThreadedVersion)
 TEST_F(LocalLearnerNetworkerTests, multiThreadedVersion)
 {
   DoMtWork();
+
+  std::size_t total_integrations = 0;
+  for (auto inst : insts)
+  {
+    total_integrations += inst->integrations;
+  }
+
+  EXPECT_EQ(insts.size(), 20);
+  EXPECT_EQ(total_integrations, 20 * 10 * 5);
+}
+
+TEST_F(LocalLearnerNetworkerTests, multiThreadedFilePassingVersion)
+{
+  DoMtFilepassingWork();
 
   std::size_t total_integrations = 0;
   for (auto inst : insts)
