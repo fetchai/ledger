@@ -117,7 +117,7 @@ private:
 
   std::atomic<Router *> router_{nullptr};
 
-  mutable Mutex lock_{__LINE__, __FILE__};
+  mutable Mutex lock_;
   HandleIndex   handle_index_;
   AddressIndex  address_index_;
 };

@@ -40,7 +40,7 @@ HttpClient::HttpClient(std::string host, uint16_t port)
 {}
 
 /**
- * Send a requests and recieve a response from the server
+ * Send a requests and receive a response from the server
  *
  * @param request The request to be sent
  * @param response The response to be populated

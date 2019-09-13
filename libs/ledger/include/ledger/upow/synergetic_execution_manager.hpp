@@ -81,7 +81,7 @@ private:
 
   /// @name Protected State
   /// @{
-  Mutex          lock_{__LINE__, __FILE__};
+  Mutex          lock_;
   WorkQueueStack solution_stack_;
   Executors      executors_;
   ThreadPool     threads_;

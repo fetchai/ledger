@@ -17,6 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/filesystem/read_file_contents.hpp"
+#include "core/serializers/base_types.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "math/tensor.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
@@ -25,10 +28,6 @@
 #include "ml/ops/add.hpp"
 #include "ml/ops/embeddings.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
-
-#include "core/filesystem/read_file_contents.hpp"
-#include "core/serializers/base_types.hpp"
-#include "core/serializers/main_serializer.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"
 

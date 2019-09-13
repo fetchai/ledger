@@ -260,7 +260,7 @@ public:
 
   static constexpr OpType OpCode()
   {
-    return OpType::OP_MEAN_SQUARE_ERROR_LOSS;
+    return OpType::LOSS_MEAN_SQUARE_ERROR;
   }
   static constexpr char const *DESCRIPTOR = "MeanSquareErrorLoss";
 

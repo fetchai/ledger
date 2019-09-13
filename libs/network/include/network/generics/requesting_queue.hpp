@@ -95,7 +95,7 @@ public:
   RequestingQueueOf &operator=(RequestingQueueOf &&) = delete;
 
 private:
-  mutable Mutex     mutex_{__LINE__, __FILE__};
+  mutable Mutex     mutex_;
   PromiseMap        requests_;   ///< The map of currently monitored promises
   SuccessfulResults completed_;  ///< The map of completed promises
   FailedResults     failed_;     ///< The set of failed keys

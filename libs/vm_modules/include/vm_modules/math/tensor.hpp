@@ -90,7 +90,7 @@ public:
   /// RESHAPING ///
   /////////////////
 
-  void Squeeze();
+  fetch::vm::Ptr<VMTensor> Squeeze();
 
   bool Reshape(
       fetch::vm::Ptr<fetch::vm::Array<fetch::math::Tensor<DataType>::SizeType>> const &new_shape);

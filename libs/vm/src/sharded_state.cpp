@@ -163,7 +163,7 @@ Ptr<IShardedState> IShardedState::ConstructorFromString(VM *vm, TypeId type_id,
     return new ShardedState(vm, type_id, name, value_type_id);
   }
 
-  vm->RuntimeError("Failed to construct ShardedState instance: the `name` is null reference.");
+  vm->RuntimeError("Failed to construct ShardedState instance: the 'name' is null reference.");
   return nullptr;
 }
 

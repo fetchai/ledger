@@ -17,7 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include <istream>
+#include <ostream>
 #include <sstream>
+#include <string>
 #include <vector>
 
 namespace fetch {

@@ -59,12 +59,12 @@ struct Getter<T, IfIsPtr<T>>
 {
   static TypeId GetTypeId(RegisteredTypes const &types, T const & /* parameter */)
   {
-    using ManagedType = typename GetManagedType<std::decay_t<T>>::type;
+    using ManagedType = GetManagedType<std::decay_t<T>>;
     return types.GetTypeId(TypeIndex(typeid(ManagedType)));
   }
 };
 template <typename T>
-struct Getter<T, typename std::enable_if_t<IsVariant<T>::value>>
+struct Getter<T, std::enable_if_t<IsVariant<T>::value>>
 {
   static TypeId GetTypeId(RegisteredTypes const & /* types */, T const &parameter)
   {

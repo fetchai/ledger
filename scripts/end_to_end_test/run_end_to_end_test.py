@@ -310,7 +310,8 @@ class TestInstance():
         if self._nodes:
             for n, node in enumerate(self._nodes):
                 print('Stopping Node {}...'.format(n))
-                node.stop()
+                if(node):
+                    node.stop()
                 print('Stopping Node {}...complete'.format(n))
 
         if self._watchdog:
@@ -400,7 +401,7 @@ def setup_test(test_yaml, test_instance):
         output(
             "***** Shutting down test due to failure!. Debug YAML: {} *****\n".format(test_yaml))
         test_instance.stop()
-        test_instance.dump_debug()
+        # test_instance.dump_debug()
         os._exit(1)
 
     watchdog = TimerWatchdog(
@@ -521,20 +522,34 @@ def verify_txs(parameters, test_instance):
         # Verify TXs - will block until they have executed
         for tx, identity, balance in tx_and_identity:
 
+            error_message = ""
+
             # Check TX has executed, unless we expect it should already have been mined
             while True:
                 status = api.tx.status(tx)
 
                 if status == "Executed" or expect_mined:
                     output("found executed TX")
-                    break
+
+                    # There is an unavoidable race that can cause you to see a balance of 0
+                    # since the TX hasn't changed the state yet
+                    if api.tokens.balance(identity) == 0 and balance is not 0:
+                        pass
+                    else:
+                        break
 
                 tx_b64 = codecs.encode(codecs.decode(
                     tx, 'hex'), 'base64').decode()
                 time.sleep(1)
-                output("Waiting for TX to get executed (node {}). Found: {} Tx: {}".format(
-                    node_index, status, tx_b64))
 
+                next_error_message = "Waiting for TX to get executed (node {}). Found: {} Tx: {}".format(
+                    node_index, status, tx_b64)
+
+                if next_error_message != error_message:
+                    output(next_error_message)
+                    error_message = next_error_message
+
+            time.sleep(0.1)
             seen_balance = api.tokens.balance(identity)
             if balance != seen_balance:
                 output(
@@ -686,7 +701,7 @@ def run_test(build_directory, yaml_file, constellation_exe):
             print('Failed to parse yaml or to run test! Error: "{}"'.format(str(e)))
             traceback.print_exc()
             test_instance.stop()
-            test_instance.dump_debug()
+            # test_instance.dump_debug()
             sys.exit(1)
 
     output("\nAll end to end tests have passed")

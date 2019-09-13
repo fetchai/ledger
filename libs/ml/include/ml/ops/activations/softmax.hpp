@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/activation_functions/softmax.hpp"
+#include "math/standard_functions/clamp.hpp"
 #include "ml/ops/ops.hpp"
 
 #include <cassert>
@@ -80,7 +81,7 @@ public:
     assert(output.shape() == ComputeOutputShape(inputs));
     assert(inputs.size() == 1);
 
-    if (axes_.size() == 0)
+    if (axes_.empty())
     {
       fetch::math::Softmax((*inputs.at(0)), output, axis_);
     }
@@ -88,6 +89,9 @@ public:
     {
       fetch::math::Softmax((*inputs.at(0)), output, axes_);
     }
+
+    // Clamping ensures numerical stability
+    math::Clamp(epsilon_, one_minus_epsilon_, output);
   }
 
   std::vector<TensorType> Backward(VecTensorType const &inputs,
@@ -142,6 +146,8 @@ public:
 private:
   SizeType              axis_;
   std::vector<SizeType> axes_;
+  DataType              epsilon_           = fetch::math::numeric_min<DataType>();
+  DataType              one_minus_epsilon_ = static_cast<DataType>(1) - epsilon_;
 };
 
 }  // namespace ops

@@ -72,7 +72,8 @@ public:
   using ConstByteArray = byte_array::ConstByteArray;
   using ConsensusPtr   = std::shared_ptr<ledger::Consensus>;
 
-  static constexpr uint32_t DEFAULT_BLOCK_DIFFICULTY = 6;
+  static constexpr uint32_t    DEFAULT_BLOCK_DIFFICULTY = 6;
+  static constexpr char const *LOGGING_NAME             = "constellation";
 
   struct Config
   {
@@ -106,9 +107,6 @@ public:
     }
   };
 
-  static constexpr char const *LOGGING_NAME = "constellation";
-
-  // Construction / Destructionp
   Constellation(CertificatePtr certificate, Config config);
   ~Constellation() override = default;
 

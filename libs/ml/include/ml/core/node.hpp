@@ -18,21 +18,20 @@
 //------------------------------------------------------------------------------
 
 #include "core/logging.hpp"
-#include "ml/ops/ops.hpp"
-#include "ml/saveparams/saveable_params.hpp"
-
 #include "ml/ops/abs.hpp"
+#include "ml/ops/embeddings.hpp"
+#include "ml/ops/layer_norm.hpp"
+#include "ml/ops/leaky_relu_op.hpp"
+#include "ml/ops/ops.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/ops/weights.hpp"
+#include "ml/saveparams/saveable_params.hpp"
 
 #include <algorithm>
 #include <cassert>
 #include <cstdint>
 #include <functional>
 #include <memory>
-#include <ml/ops/embeddings.hpp>
-#include <ml/ops/layer_norm.hpp>
-#include <ml/ops/leaky_relu_op.hpp>
 #include <string>
 #include <utility>
 #include <vector>
@@ -110,13 +109,14 @@ public:
 
   VecTensorType                                 GatherInputs() const;
   std::shared_ptr<T>                            Evaluate(bool is_training);
-  std::vector<std::pair<Node<T> *, TensorType>> BackPropagateSignal(TensorType const &error_signal);
+  std::vector<std::pair<Node<T> *, TensorType>> BackPropagate(TensorType const &error_signal);
 
   void                            AddInput(NodePtrType const &i);
   std::vector<std::string>        GetInputNames();
   void                            AddOutput(NodePtrType const &o);
   std::vector<NodePtrType> const &GetOutputs() const;
   void                            ResetCache(bool input_size_changed);
+  void                            ResetInputsAndOutputs();
 
   std::string const &GetNodeName()
   {
@@ -135,6 +135,15 @@ public:
   OpType const &get_op_type()
   {
     return operation_type_;
+  }
+
+  bool HasValidCache()
+  {
+    if (cached_output_status_ == CachedOutputState::VALID_CACHE)
+    {
+      return true;
+    }
+    return false;
   }
 
 private:
@@ -159,11 +168,9 @@ std::shared_ptr<typename Node<T>::SPType> Node<T>::GetNodeSaveableParams() const
 {
   auto sp_ptr = std::make_shared<SPType>();
 
-  sp_ptr->name                 = name_;
-  sp_ptr->cached_output        = cached_output_;
-  sp_ptr->cached_output_status = static_cast<uint8_t>(cached_output_status_);
-  sp_ptr->operation_type       = operation_type_;
-  sp_ptr->op_save_params       = op_ptr_->GetOpSaveableParams();
+  sp_ptr->name           = name_;
+  sp_ptr->operation_type = operation_type_;
+  sp_ptr->op_save_params = op_ptr_->GetOpSaveableParams();
 
   return sp_ptr;
 }
@@ -227,7 +234,7 @@ std::shared_ptr<T> Node<T>::Evaluate(bool is_training)
  * @return
  */
 template <typename T>
-std::vector<std::pair<Node<T> *, T>> Node<T>::BackPropagateSignal(TensorType const &error_signal)
+std::vector<std::pair<Node<T> *, T>> Node<T>::BackPropagate(TensorType const &error_signal)
 {
   VecTensorType           inputs                        = GatherInputs();
   std::vector<TensorType> back_propagated_error_signals = op_ptr_->Backward(inputs, error_signal);
@@ -237,7 +244,7 @@ std::vector<std::pair<Node<T> *, T>> Node<T>::BackPropagateSignal(TensorType con
   auto bp_it = back_propagated_error_signals.begin();
   for (auto &i : input_nodes_)
   {
-    auto ret = i->BackPropagateSignal(*bp_it);
+    auto ret = i->BackPropagate(*bp_it);
     non_back_propagated_error_signals.insert(non_back_propagated_error_signals.end(), ret.begin(),
                                              ret.end());
     ++bp_it;
@@ -255,6 +262,17 @@ std::vector<std::pair<Node<T> *, T>> Node<T>::BackPropagateSignal(TensorType con
     }
   }
   return non_back_propagated_error_signals;
+}
+
+/**
+ * Resets input and output node ptr containers. Useful for graph decompiling.
+ * @tparam T
+ */
+template <typename T>
+void Node<T>::ResetInputsAndOutputs()
+{
+  input_nodes_.clear();
+  outputs_.clear();
 }
 
 /**
@@ -338,8 +356,7 @@ void Node<TensorType>::SetNodeSaveableParams(NodeSaveableParams<TensorType> cons
                                              std::shared_ptr<ops::Ops<TensorType>> op_ptr)
 {
   name_                 = nsp.name;
-  cached_output_        = nsp.cached_output;
-  cached_output_status_ = static_cast<CachedOutputState>(nsp.cached_output_status);
+  cached_output_status_ = CachedOutputState::CHANGED_SIZE;
   operation_type_       = nsp.operation_type;
   op_ptr_               = op_ptr;
 }

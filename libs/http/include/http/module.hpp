@@ -25,7 +25,10 @@
 #include "http/validators.hpp"
 #include "http/view_parameters.hpp"
 
+#include <functional>
+#include <string>
 #include <vector>
+
 namespace fetch {
 namespace http {
 

@@ -25,12 +25,29 @@ namespace byte_array {
 
 ConstByteArray ConstByteArray::ToBase64() const
 {
-  return ::fetch::byte_array::ToBase64(*this);
+  return fetch::byte_array::ToBase64(*this);
 }
 
 ConstByteArray ConstByteArray::ToHex() const
 {
-  return ::fetch::byte_array::ToHex(*this);
+  return fetch::byte_array::ToHex(*this);
+}
+
+std::ostream &operator<<(std::ostream &os, ConstByteArray const &str)
+{
+  char const *arr = reinterpret_cast<char const *>(str.pointer());
+  for (std::size_t i = 0; i < str.size(); ++i)
+  {
+    os << arr[i];
+  }
+  return os;
+}
+
+ConstByteArray operator+(char const *a, ConstByteArray const &b)
+{
+  ConstByteArray s(a);
+  s = s + b;
+  return s;
 }
 
 ConstByteArray ConstByteArray::FromBase64() const

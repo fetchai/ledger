@@ -78,6 +78,24 @@ RBC::RBC(Endpoint &endpoint, MuddleAddress address, CallbackFunction call_back, 
 }
 
 /**
+ * Enables or disables the RBC. Disabling will clear all state that
+ * would continue the protocol
+ */
+void RBC::Enable(bool enable)
+{
+  FETCH_LOCK(lock_);
+  enabled_ = enable;
+
+  if (!enabled_)
+  {
+    parties_.clear();
+    parties_.resize(current_cabinet_.size());
+    broadcasts_.clear();
+    msg_counter_ = 0;
+  }
+}
+
+/**
  * Resets the RBC for a new cabinet
  */
 bool RBC::ResetCabinet(CabinetMembers const &cabinet)
@@ -552,6 +570,11 @@ void RBC::Deliver(SerialisedMessage const &msg, uint32_t sender_index)
  */
 bool RBC::BasicMessageCheck(MuddleAddress const &from, RBCMessage const &msg)
 {
+  if (!enabled_)
+  {
+    return false;
+  }
+
   if ((current_cabinet_.find(from) == current_cabinet_.end()) || (msg.channel() != channel_))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Received message from unknown sender/wrong channel");

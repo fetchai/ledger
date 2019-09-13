@@ -29,12 +29,10 @@
 using namespace fetch::byte_array;
 
 namespace fetch {
-
 namespace serializers {
 
 TEST(MsgPacker, unsigned_integers)
 {
-  // Setup
   MsgPackSerializer stream;
   uint64_t          value;
 

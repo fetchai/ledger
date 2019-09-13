@@ -45,7 +45,7 @@ public:
   MuddleMap GetMap() const;
 
 private:
-  mutable Mutex lock_{__LINE__, __FILE__};
+  mutable Mutex lock_;
   MuddleMap     map_;
 };
 

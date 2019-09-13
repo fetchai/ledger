@@ -39,10 +39,9 @@ namespace http {
 class HTTPRequest
 {
 public:
-  using byte_array_type = byte_array::ConstByteArray;
-  using Clock           = std::chrono::high_resolution_clock;
-  using Timepoint       = Clock::time_point;
-  using Duration        = Clock::duration;
+  using Clock     = std::chrono::high_resolution_clock;
+  using Timepoint = Clock::time_point;
+  using Duration  = Clock::duration;
 
   static constexpr char const *LOGGING_NAME = "HTTPRequest";
 
@@ -56,12 +55,12 @@ public:
     return method_;
   }
 
-  byte_array_type const &uri() const
+  byte_array::ConstByteArray const &uri() const
   {
     return uri_;
   }
 
-  byte_array_type const &protocol() const
+  byte_array::ConstByteArray const &protocol() const
   {
     return protocol_;
   }
@@ -106,7 +105,7 @@ public:
     method_ = method;
   }
 
-  void SetURI(byte_array_type const &uri)
+  void SetURI(byte_array::ConstByteArray const &uri)
   {
     uri_ = uri;
   }
@@ -185,10 +184,10 @@ private:
   Header   header_;
   QuerySet query_;
 
-  Method          method_{Method::GET};
-  byte_array_type full_uri_;
-  byte_array_type uri_;
-  byte_array_type protocol_;
+  Method                     method_{Method::GET};
+  byte_array::ConstByteArray full_uri_;
+  byte_array::ConstByteArray uri_;
+  byte_array::ConstByteArray protocol_;
 
   bool is_valid_ = true;
 

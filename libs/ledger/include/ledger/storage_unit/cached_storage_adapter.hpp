@@ -78,7 +78,7 @@ private:
 
   /// @name Cache Data
   /// @{
-  mutable Mutex lock_{__LINE__, __FILE__};
+  mutable Mutex lock_;
   Cache         cache_{};                ///< The local cache
   bool          flush_required_{false};  ///< Top level cache flush flag
   /// @}
