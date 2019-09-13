@@ -512,7 +512,8 @@ public:
 
   void Assign(Range const &range, type const &a)
   {
-    return RangedApply(range, [a](auto &c) { c = static_cast<std::remove_reference_t<decltype(c)>>(a); });
+    return RangedApply(range,
+                       [a](auto &c) { c = static_cast<std::remove_reference_t<decltype(c)>>(a); });
   }
 
   template <class Array>
