@@ -25,8 +25,14 @@
 
 #include <iostream>
 
+namespace {
+
 using namespace fetch;
 using namespace fetch::crypto;
+
+char const *LOGGING_NAME = "KeyGenerator_app";
+
+}  // namespace
 
 int main(int argc, char **argv)
 {
