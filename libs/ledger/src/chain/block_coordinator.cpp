@@ -537,10 +537,6 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
     // trigger packing state
     return State::NEW_SYNERGETIC_EXECUTION;
   }
-  else if (State::SYNCHRONISING == previous)
-  {
-    //
-  }
   else
   {
     // delay the invocation of this state machine
