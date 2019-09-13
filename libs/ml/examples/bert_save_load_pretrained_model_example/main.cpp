@@ -16,13 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "bert_utilities.hpp"
 #include "math/tensor.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/embeddings.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
-
-#include "bert_utilities.hpp"
 #include "ml/serializers/ml_types.hpp"
 
 #include <iostream>

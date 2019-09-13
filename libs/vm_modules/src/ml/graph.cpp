@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/decoders.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/layers/convolution_1d.hpp"
 #include "ml/layers/fully_connected.hpp"
@@ -28,8 +29,6 @@
 #include "vm_modules/math/tensor.hpp"
 #include "vm_modules/ml/graph.hpp"
 #include "vm_modules/ml/state_dict.hpp"
-
-#include "core/byte_array/decoders.hpp"
 
 using namespace fetch::vm;
 

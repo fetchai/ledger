@@ -24,12 +24,12 @@ namespace byte_array {
 
 ConstByteArray ConstByteArray::ToBase64() const
 {
-  return ::fetch::byte_array::ToBase64(*this);
+  return fetch::byte_array::ToBase64(*this);
 }
 
 ConstByteArray ConstByteArray::ToHex() const
 {
-  return ::fetch::byte_array::ToHex(*this);
+  return fetch::byte_array::ToHex(*this);
 }
 
 std::ostream &operator<<(std::ostream &os, ConstByteArray const &str)
