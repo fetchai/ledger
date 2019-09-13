@@ -43,7 +43,7 @@ def run(options):
     api.sync(api.tokens.wealth(entity1, 100000))
 
     # ???remove need for type param
-    contract = Contract(CONTRACT_TEXT, 'smart')
+    contract = Contract(CONTRACT_TEXT)
 
     # deploy the contract to the network
     api.sync(api.contracts.create(entity1, contract, 2000))

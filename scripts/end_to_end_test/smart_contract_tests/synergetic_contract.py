@@ -16,7 +16,6 @@
 #
 # ------------------------------------------------------------------------------
 
-import random
 import time
 
 from fetchai.ledger.api import LedgerApi
@@ -27,7 +26,7 @@ CONTRACT_TEXT = """
 @problem
 function createProblem(data : Array<StructuredData>) : Int32
   var value = 0;
-  for (i in 0:data.count() - 1)
+  for (i in 0:data.count())
     value += data[i].getInt32("value");
   endfor
   return value;
@@ -35,12 +34,13 @@ endfunction
 
 @objective
 function evaluateWork(problem : Int32, solution : Int32 ) : Int64
-  return abs(toInt64(problem) - toInt64(solution));
+  return abs(toInt64(problem));
+//  return abs(toInt64(problem) - toInt64(solution));
 endfunction
 
 @work
 function doWork(problem : Int32, nonce : UInt256) :  Int32
-  return nonce.toInt32();
+  return problem;//nonce.toInt32();
 endfunction
 
 @clear
@@ -57,6 +57,19 @@ endfunction
 """
 
 
+def submit_synergetic_data(api, contract, data, entity):
+    api.sync([api.contracts.submit_data(entity, contract.digest, value=value)
+              for value in data])
+
+    print('Submitted:', sorted(data))
+    print('Waiting...')
+    time.sleep(10)
+
+    result = contract.query(api, 'query_result')
+    print('Result:', result)
+    assert result == sum(data)
+
+
 def run(options):
     entity1 = Entity()
 
@@ -67,23 +80,16 @@ def run(options):
     api.sync(api.tokens.wealth(entity1, 100000000))
 
     # ???remove need for type param
-    contract = Contract(CONTRACT_TEXT, 'synergetic')
+    contract = Contract(CONTRACT_TEXT)
 
     # deploy the contract to the network
     api.sync(api.contracts.create(entity1, contract, 2000))
 
-    DATA_MIN = 0
-    DATA_MAX = 200
+    submit_synergetic_data(api, contract, [100, 20, 3], entity1)
+    submit_synergetic_data(api, contract, [11, 22, 33], entity1)
 
-    # create a whole series of random data to submit to the DAG
-    random_ints = [random.randint(DATA_MIN, DATA_MAX) for _ in range(10)]
-    api.sync([api.contracts.submit_data(entity1, contract.digest, value=value)
-              for value in random_ints])
-
-    print('Waiting...')
-    time.sleep(15)
-
-    assert DATA_MIN > -1 and DATA_MAX > -1
-    assert contract.query(api, 'query_result') > -1, \
-        'Expected query to return result between {} and {}'.format(
-            DATA_MIN, DATA_MAX)
+# ???submit solutions from more than one pubkey
+# ???check action and init
+# ???check mining fees
+# ???check what nonces are being submitted
+# ???inherently unstable test-different results if submission caught between epochs
