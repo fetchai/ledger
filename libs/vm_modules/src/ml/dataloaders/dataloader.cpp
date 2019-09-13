@@ -69,11 +69,35 @@ VMDataLoader::VMDataLoader(VM *vm, TypeId type_id, fetch::vm::Ptr<fetch::vm::Str
   else if (mode->str == "mnist")
   {
     mode_   = DataLoaderMode::MNIST;
-    loader_ = std::make_shared<CommodityLoaderType>();
+    loader_ = std::make_shared<MnistLoaderType>();
   }
   else
   {
     throw std::runtime_error("unknown dataloader mode");
+  }
+}
+
+VMDataLoader::VMDataLoader(VM *vm, TypeId type_id, DataLoaderMode const &mode)
+  : Object(vm, type_id)
+{
+  switch (mode)
+  {
+  case DataLoaderMode::TENSOR:
+  {
+    loader_ = std::make_shared<TensorLoaderType>();
+  }
+  case DataLoaderMode::COMMODITY:
+  {
+    loader_ = std::make_shared<CommodityLoaderType>();
+  }
+  case DataLoaderMode::MNIST:
+  {
+    loader_ = std::make_shared<MnistLoaderType>();
+  }
+  default:
+  {
+    throw std::runtime_error("unknown dataloader mode");
+  }
   }
 }
 
@@ -95,18 +119,21 @@ void VMDataLoader::Bind(Module &module)
       .CreateMemberFunction("isDone", &VMDataLoader::IsDone);
 }
 
-void VMDataLoader::AddDataByFiles(Ptr<String> const &xfilename, Ptr<String> const &yfilename)
+fetch::vm::Ptr<VMDataLoader> VMDataLoader::AddDataByFiles(Ptr<String> const &xfilename,
+                                                          Ptr<String> const &yfilename)
 {
+  auto add_data_loader = fetch::vm::Ptr<VMDataLoader>(new VMDataLoader(vm_, type_id_, mode_));
+
   switch (mode_)
   {
   case DataLoaderMode::COMMODITY:
   {
-    AddCommodityData(xfilename, yfilename);
+    add_data_loader->AddCommodityData(xfilename, yfilename);
     break;
   }
   case DataLoaderMode::MNIST:
   {
-    AddMnistData(xfilename, yfilename);
+    add_data_loader->AddMnistData(xfilename, yfilename);
     break;
   }
   default:
@@ -114,15 +141,20 @@ void VMDataLoader::AddDataByFiles(Ptr<String> const &xfilename, Ptr<String> cons
     throw std::runtime_error("current dataloader mode does not support AddDataByFiles");
   }
   }
+
+  return add_data_loader;
 }
 
-void VMDataLoader::AddDataByData(Ptr<VMTensorType> const &data, Ptr<VMTensorType> const &labels)
+fetch::vm::Ptr<VMDataLoader> VMDataLoader::AddDataByData(Ptr<VMTensorType> const &data,
+                                                         Ptr<VMTensorType> const &labels)
 {
+  auto add_data_loader = fetch::vm::Ptr<VMDataLoader>(new VMDataLoader(vm_, type_id_, mode_));
+
   switch (mode_)
   {
   case DataLoaderMode::TENSOR:
   {
-    AddTensorData(data, labels);
+    add_data_loader->AddTensorData(data, labels);
     break;
   }
   default:
@@ -130,6 +162,8 @@ void VMDataLoader::AddDataByData(Ptr<VMTensorType> const &data, Ptr<VMTensorType
     throw std::runtime_error("current dataloader mode does not support AddDataByData");
   }
   }
+
+  return add_data_loader;
 }
 
 void VMDataLoader::AddCommodityData(Ptr<String> const &xfilename, Ptr<String> const &yfilename)

@@ -1309,12 +1309,11 @@ struct MapSerializer<ml::OpDropoutSaveableParams<TensorType>, D>
   static uint8_t const PROBABILITY = 4;
   static uint8_t const BUFFER      = 5;
   static uint8_t const INDEX       = 6;
-  static uint8_t const DROP_VALUES = 7;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(7);
+    auto map = map_constructor(6);
     // serialize parent class first
     auto ops_pointer = static_cast<ml::OpsSaveableParams const *>(&sp);
     map.Append(BASE_OPS, *(ops_pointer));
@@ -1324,7 +1323,6 @@ struct MapSerializer<ml::OpDropoutSaveableParams<TensorType>, D>
     map.Append(PROBABILITY, sp.probability);
     map.Append(BUFFER, sp.buffer);
     map.Append(INDEX, sp.index);
-    map.Append(DROP_VALUES, sp.drop_values);
   }
 
   template <typename MapDeserializer>
@@ -1337,7 +1335,6 @@ struct MapSerializer<ml::OpDropoutSaveableParams<TensorType>, D>
     map.ExpectKeyGetValue(PROBABILITY, sp.probability);
     map.ExpectKeyGetValue(BUFFER, sp.buffer);
     map.ExpectKeyGetValue(INDEX, sp.index);
-    map.ExpectKeyGetValue(DROP_VALUES, sp.drop_values);
   }
 };
 

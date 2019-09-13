@@ -53,6 +53,7 @@ public:
   VMDataLoader(fetch::vm::VM *vm, fetch::vm::TypeId type_id);
   VMDataLoader(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
                fetch::vm::Ptr<fetch::vm::String> const &mode);
+  VMDataLoader(fetch::vm::VM *vm, fetch::vm::TypeId type_id, DataLoaderMode const &mode);
 
   static fetch::vm::Ptr<VMDataLoader> Constructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
                                                   fetch::vm::Ptr<fetch::vm::String> const &mode);
@@ -65,8 +66,8 @@ public:
    * @param xfilename
    * @param yfilename
    */
-  void AddDataByFiles(fetch::vm::Ptr<fetch::vm::String> const &xfilename,
-                      fetch::vm::Ptr<fetch::vm::String> const &yfilename);
+  fetch::vm::Ptr<VMDataLoader> AddDataByFiles(fetch::vm::Ptr<fetch::vm::String> const &xfilename,
+                                              fetch::vm::Ptr<fetch::vm::String> const &yfilename);
 
   /**
    * Add data to a data loader by passing in the data and labels
@@ -74,8 +75,9 @@ public:
    * @param data
    * @param labels
    */
-  void AddDataByData(fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &data,
-                     fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &labels);
+  fetch::vm::Ptr<VMDataLoader> AddDataByData(
+      fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &data,
+      fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &labels);
 
   /**
    * Add data to commodity data loader
