@@ -173,8 +173,9 @@ private:
 
   void ResetGraphCache(bool input_size_changed, std::shared_ptr<Node<T>> n = {});
 
-  void AddTrainableImplementation(std::string const & node_name, NodePtrType node_ptr, std::vector<NodePtrType> & trainable_nodes, std::unordered_map<std::string, SizeType> & trainable_lookup);
-
+  void AddTrainableImplementation(std::string const &node_name, NodePtrType node_ptr,
+                                  std::vector<NodePtrType> &                 trainable_nodes,
+                                  std::unordered_map<std::string, SizeType> &trainable_lookup);
 };
 
 //////////////////////
@@ -910,9 +911,9 @@ void Graph<T>::InsertSharedCopy(std::shared_ptr<Graph<TensorType>> output_ptr)
   // copy all the nodes, sharing the weights using MakeSharedCopy
   for (auto const &n : nodes_)
   {
-    std::string   node_name = n.first;
-    NodePtrType   node_ptr  = n.second;
-    OpPtrType     op_ptr    = node_ptr->GetOp();
+    std::string node_name = n.first;
+    NodePtrType node_ptr  = n.second;
+    OpPtrType   op_ptr    = node_ptr->GetOp();
 
     OpPtrType op_copyshare = op_ptr->MakeSharedCopy(op_ptr);
 
@@ -921,7 +922,8 @@ void Graph<T>::InsertSharedCopy(std::shared_ptr<Graph<TensorType>> output_ptr)
     copyshare->nodes_[node_name] =
         std::make_shared<Node<TensorType>>(*node_ptr, node_name, op_copyshare);
 
-    AddTrainableImplementation(node_name, node_ptr, copyshare->trainable_nodes_, copyshare->trainable_lookup_);
+    AddTrainableImplementation(node_name, node_ptr, copyshare->trainable_nodes_,
+                               copyshare->trainable_lookup_);
   }
 
   for (auto const &n : this->nodes_)
@@ -958,7 +960,9 @@ Graph<TensorType>::MakeDuplicateNode(std::string const &node_name, std::string &
 }
 
 template <typename TensorType>
-void Graph<TensorType>::AddTrainableImplementation(std::string const & node_name, NodePtrType node_ptr, std::vector<NodePtrType> & trainable_nodes, std::unordered_map<std::string, SizeType> & trainable_lookup)
+void Graph<TensorType>::AddTrainableImplementation(
+    std::string const &node_name, NodePtrType node_ptr, std::vector<NodePtrType> &trainable_nodes,
+    std::unordered_map<std::string, SizeType> &trainable_lookup)
 {
   auto op_ptr        = node_ptr->GetOp();
   auto trainable_ptr = std::dynamic_pointer_cast<fetch::ml::ops::Trainable<TensorType>>(op_ptr);
