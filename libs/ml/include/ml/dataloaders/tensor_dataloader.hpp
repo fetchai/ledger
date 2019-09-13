@@ -87,7 +87,7 @@ protected:
   SizeType batch_data_dim_  = fetch::math::numeric_max<SizeType>();
 
   random::Random rand;
-  SizeType count_ = 0;
+  SizeType       count_ = 0;
 
   void UpdateRanges();
   void UpdateCursor() override;
@@ -167,7 +167,7 @@ bool TensorDataLoader<LabelType, InputType>::IsDone() const
 template <typename LabelType, typename InputType>
 void TensorDataLoader<LabelType, InputType>::Reset()
 {
-  count_ = 0;
+  count_                   = 0;
   *(this->current_cursor_) = this->current_min_;
 }
 

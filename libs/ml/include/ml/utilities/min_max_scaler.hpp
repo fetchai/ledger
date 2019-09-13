@@ -39,8 +39,8 @@ public:
   void DeNormalise(TensorType const &input_tensor, TensorType &output_tensor) override;
 
 private:
-  DataType x_min_ = fetch::math::numeric_max<DataType>();
-  DataType x_max_ = fetch::math::numeric_lowest<DataType>();
+  DataType x_min_   = fetch::math::numeric_max<DataType>();
+  DataType x_max_   = fetch::math::numeric_lowest<DataType>();
   DataType x_range_ = fetch::math::numeric_max<DataType>();
 };
 
@@ -57,7 +57,7 @@ void MinMaxScaler<TensorType>::SetScale(TensorType const &reference_tensor)
   // first loop computes min and max
   for (std::size_t i = 0; i < reference_tensor.shape(batch_dim); ++i)
   {
-    auto ref_it   = reference_tensor.View(i).cbegin();
+    auto ref_it = reference_tensor.View(i).cbegin();
     while (ref_it.is_valid())
     {
       if (x_min_ > *ref_it)
@@ -74,11 +74,10 @@ void MinMaxScaler<TensorType>::SetScale(TensorType const &reference_tensor)
   }
 
   x_range_ = x_max_ - x_min_;
-  
+
   std::cout << "x_range_: " << x_range_ << std::endl;
   std::cout << "x_max_: " << x_max_ << std::endl;
   std::cout << "x_min_: " << x_min_ << std::endl;
-  
 }
 
 /**
@@ -96,8 +95,8 @@ void MinMaxScaler<TensorType>::Normalise(TensorType const &input_tensor, TensorT
   // apply normalisation to all data according to scale -1, 1
   for (std::size_t i = 0; i < input_tensor.shape(batch_dim); ++i)
   {
-    auto in_it      = input_tensor.View(i).cbegin();
-    auto ret_it     = output_tensor.View(i).begin();
+    auto in_it  = input_tensor.View(i).cbegin();
+    auto ret_it = output_tensor.View(i).begin();
     while (ret_it.is_valid())
     {
       *ret_it = (*in_it - x_min_) / (x_range_);
@@ -123,8 +122,8 @@ void MinMaxScaler<TensorType>::DeNormalise(TensorType const &input_tensor,
   // apply normalisation to each feature according to scale -1, 1
   for (std::size_t i = 0; i < input_tensor.shape(batch_dim); ++i)
   {
-    auto in_it      = input_tensor.View(i).cbegin();
-    auto ret_it     = output_tensor.View(i).begin();
+    auto in_it  = input_tensor.View(i).cbegin();
+    auto ret_it = output_tensor.View(i).begin();
     while (ret_it.is_valid())
     {
       *ret_it = ((*in_it) * x_range_) + x_min_;
