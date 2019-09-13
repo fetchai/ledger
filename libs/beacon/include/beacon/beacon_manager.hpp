@@ -86,7 +86,7 @@ public:
                                 std::vector<PublicKey> &public_key_shares, std::set<MuddleAddress> &qual);
   void             SetQual(std::set<MuddleAddress> qual);
   void             SetGroupPublicKey(PublicKey const &public_key);
-  void             Reset(std::set<Identity> const &cabinet, uint32_t threshold);
+  void             Reset(std::set<MuddleAddress> const &cabinet, uint32_t threshold);
 
   AddResult     AddSignaturePart(Identity const &from, Signature const &signature);
   bool          Verify();

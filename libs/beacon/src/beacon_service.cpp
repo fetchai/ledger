@@ -229,7 +229,7 @@ void BeaconService::StartNewCabinet(CabinetMemberList members, uint32_t threshol
   SharedAeonExecutionUnit beacon = std::make_shared<AeonExecutionUnit>();
 
   // Determines if we are observing or actively participating
-  if (members.find(identity_) == members.end())
+  if (members.find(identity_.identifier()) == members.end())
   {
     beacon->observe_only = true;
     FETCH_LOG_INFO(LOGGING_NAME, "Beacon in observe only mode. Members: ", members.size());
@@ -401,14 +401,14 @@ BeaconService::State BeaconService::OnBroadcastSignatureState()
 
   for (auto &member : active_exe_unit_->aeon.members)
   {
-    if (member == identity_)
+    if (member == identity_.identifier())
     {
       signature_queue_.push_back({current_entropy_.round, active_exe_unit_->member_share});
     }
     else
     {
       // Communicating signatures
-      rpc_client_.CallSpecificAddress(member.identifier(), RPC_BEACON,
+      rpc_client_.CallSpecificAddress(member, RPC_BEACON,
                                       BeaconServiceProtocol::SUBMIT_SIGNATURE_SHARE,
                                       current_entropy_.round, active_exe_unit_->member_share);
       // TODO(tfr): Handle events that time out?

@@ -197,12 +197,6 @@ BeaconSetupService::State BeaconSetupService::OnReset()
   assert(beacon_);
 
   // Initiating setup
-  std::set<MuddleAddress> cabinet;
-  for (auto &m : beacon_->aeon.members)
-  {
-    cabinet.insert(m.identifier());
-  }
-
   coefficients_received_.clear();
   complaint_answers_manager_.ResetCabinet();
   complaints_manager_.ResetCabinet(identity_.identifier(),
@@ -228,8 +222,8 @@ BeaconSetupService::State BeaconSetupService::OnReset()
   // before being reset with the cabinet
   if (timer_to_proceed_.HasExpired())
   {
-    pre_dkg_rbc_.ResetCabinet(cabinet);
-    rbc_.ResetCabinet(cabinet);
+    pre_dkg_rbc_.ResetCabinet(beacon_->aeon.members);
+    rbc_.ResetCabinet(beacon_->aeon.members);
 
     SetTimeToProceed(State::CONNECT_TO_ALL);
     return State::CONNECT_TO_ALL;
@@ -253,12 +247,12 @@ BeaconSetupService::State BeaconSetupService::OnConnectToAll()
   for (auto &m : beacon_->aeon.members)
   {
     // Skipping own address
-    if (m == identity_)
+    if (m == identity_.identifier())
     {
       continue;
     }
 
-    aeon_members.emplace(m.identifier());
+    aeon_members.emplace(m);
   }
 
   // add the outstanding peers
@@ -371,12 +365,12 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
   for (auto &m : beacon_->aeon.members)
   {
     // Skipping own address
-    if (m == identity_)
+    if (m == identity_.identifier())
     {
       continue;
     }
 
-    aeon_members.emplace(m.identifier());
+    aeon_members.emplace(m);
   }
 
   auto       can_see             = (connected_peers & aeon_members);
@@ -522,7 +516,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForComplaintAnswers()
 
   if (timer_to_proceed_.HasExpired())
   {
-    complaint_answers_manager_.Finish(beacon_->aeon.members, identity_);
+    complaint_answers_manager_.Finish(beacon_->aeon.members, identity_.identifier());
     CheckComplaintAnswers();
     if (BuildQual())
     {
@@ -828,11 +822,11 @@ void BeaconSetupService::BroadcastShares()
                                                 beacon_->manager.GetCoefficients()}});
   for (auto &cab_i : beacon_->aeon.members)
   {
-    if (cab_i == identity_)
+    if (cab_i == identity_.identifier())
     {
       continue;
     }
-    std::pair<MessageShare, MessageShare> shares{beacon_->manager.GetOwnShares(cab_i.identifier())};
+    std::pair<MessageShare, MessageShare> shares{beacon_->manager.GetOwnShares(cab_i)};
 
     fetch::serializers::SizeCounter counter;
     counter << shares;
@@ -840,7 +834,7 @@ void BeaconSetupService::BroadcastShares()
     fetch::serializers::MsgPackSerializer serializer;
     serializer.Reserve(counter.size());
     serializer << shares;
-    endpoint_.Send(cab_i.identifier(), SERVICE_DKG, CHANNEL_SECRET_KEY, serializer.data(),
+    endpoint_.Send(cab_i, SERVICE_DKG, CHANNEL_SECRET_KEY, serializer.data(),
                    MuddleEndpoint::OPTION_ENCRYPTED);
   }
   FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
@@ -859,14 +853,14 @@ void BeaconSetupService::BroadcastComplaints()
   // Add nodes who did not send both coefficients and shares to complaints
   for (auto const &m : beacon_->aeon.members)
   {
-    if (m == identity_)
+    if (m == identity_.identifier())
     {
       continue;
     }
-    if (coefficients_received_.find(m.identifier()) == coefficients_received_.end() ||
-        shares_received_.find(m.identifier()) == shares_received_.end())
+    if (coefficients_received_.find(m) == coefficients_received_.end() ||
+        shares_received_.find(m) == shares_received_.end())
     {
-      complaints_local.insert(m.identifier());
+      complaints_local.insert(m);
     }
   }
 
@@ -1081,7 +1075,7 @@ void BeaconSetupService::OnNewShares(MuddleAddress                              
   bool in_cabinet{false};
   for (auto &m : beacon_->aeon.members)
   {
-    if (m.identifier() == from)
+    if (m == from)
     {
       in_cabinet = true;
     }
@@ -1161,7 +1155,7 @@ void BeaconSetupService::OnComplaints(ComplaintsMessage const &msg, MuddleAddres
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                   " received complaints from node ", beacon_->manager.cabinet_index(from));
-  complaints_manager_.AddComplaintsFrom(msg, from);
+  complaints_manager_.AddComplaintsFrom(from, msg.complaints(), beacon_->aeon.members);
 }
 
 /**
@@ -1260,7 +1254,7 @@ bool BeaconSetupService::BuildQual()
   std::set<MuddleAddress> cabinet;
   for (auto &m : beacon_->aeon.members)
   {
-    cabinet.insert(m.identifier());
+    cabinet.insert(m);
   }
   beacon_->manager.SetQual(complaint_answers_manager_.BuildQual(cabinet));
   std::set<MuddleAddress> qual = beacon_->manager.qual();
@@ -1314,7 +1308,7 @@ bool BeaconSetupService::BasicMsgCheck(MuddleAddress const &              from,
   bool in_cabinet{false};
   for (auto &m : beacon_->aeon.members)
   {
-    if (m.identifier() == from)
+    if (m == from)
     {
       in_cabinet = true;
     }

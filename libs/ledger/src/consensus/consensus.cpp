@@ -237,7 +237,7 @@ void Consensus::UpdateCurrentBlock(Block const &current)
     for (auto const &staker : *committee_history_[current.body.block_number])
     {
       FETCH_LOG_DEBUG(LOGGING_NAME, "Adding staker: ", staker.identifier().ToBase64());
-      cabinet_member_list.insert(staker);
+      cabinet_member_list.insert(staker.identifier());
     }
 
     uint32_t threshold = static_cast<uint32_t>(

@@ -47,6 +47,7 @@ using Certificate    = fetch::crypto::Prover;
 using CertificatePtr = std::shared_ptr<Certificate>;
 using Address        = fetch::muddle::Packet::Address;
 using ConstByteArray = fetch::byte_array::ConstByteArray;
+using MuddleAddress  = ConstByteArray;
 
 struct DummyManifestCache : public ManifestCacheInterface
 {
@@ -73,6 +74,7 @@ public:
     BAD_COEFFICIENT,
     SEND_MULTIPLE_MESSAGES,
     SEND_BAD_SHARE,
+    SEND_BAD_COMPLAINT,
     SEND_EMPTY_COMPLAINT_ANSWER,
     BAD_QUAL_COEFFICIENTS,
     SEND_FALSE_QUAL_COMPLAINT,
@@ -122,16 +124,15 @@ private:
       beacon_->manager.GenerateCoefficients();
       for (auto &cab_i : beacon_->aeon.members)
       {
-        if (cab_i == identity_)
+        if (cab_i == identity_.identifier())
         {
           continue;
         }
-        std::pair<MessageShare, MessageShare> shares{
-            beacon_->manager.GetOwnShares(cab_i.identifier())};
-        SendShares(cab_i.identifier(), shares);
+        std::pair<MessageShare, MessageShare> shares{beacon_->manager.GetOwnShares(cab_i)};
+        SendShares(cab_i, shares);
         if (Failure(Failures::SEND_MULTIPLE_MESSAGES))
         {
-          SendShares(cab_i.identifier(), shares);
+          SendShares(cab_i, shares);
         }
       }
     }
@@ -170,7 +171,7 @@ private:
     bool sent_bad{false};
     for (auto &cab_i : beacon_->aeon.members)
     {
-      if (cab_i == identity_)
+      if (cab_i == identity_.identifier())
       {
         continue;
       }
@@ -181,14 +182,13 @@ private:
         trivial_share.clear();
         std::pair<MessageShare, MessageShare> shares{trivial_share.getStr(),
                                                      trivial_share.getStr()};
-        SendShares(cab_i.identifier(), shares);
+        SendShares(cab_i, shares);
         sent_bad = true;
       }
       else
       {
-        std::pair<MessageShare, MessageShare> shares{
-            beacon_->manager.GetOwnShares(cab_i.identifier())};
-        SendShares(cab_i.identifier(), shares);
+        std::pair<MessageShare, MessageShare> shares{beacon_->manager.GetOwnShares(cab_i)};
+        SendShares(cab_i, shares);
       }
     }
   }
@@ -201,7 +201,15 @@ private:
     {
       complaints_manager_.AddComplaintAgainst(cab);
     }
-    SendBroadcast(DKGEnvelope{ComplaintsMessage{complaints_local}});
+    if (Failure(Failures::SEND_BAD_COMPLAINT))
+    {
+      complaints_local.insert("Unknown sender");
+      SendBroadcast(DKGEnvelope{ComplaintsMessage{complaints_local}});
+    }
+    else
+    {
+      SendBroadcast(DKGEnvelope{ComplaintsMessage{complaints_local}});
+    }
     if (Failure(Failures::SEND_MULTIPLE_MESSAGES))
     {
       SendBroadcast(DKGEnvelope{ComplaintsMessage{complaints_local}});
@@ -262,13 +270,13 @@ private:
     if (Failure(Failures::SEND_FALSE_QUAL_COMPLAINT))
     {
       auto victim = beacon_->aeon.members.begin();
-      if (*victim == identity_)
+      if (*victim == identity_.identifier())
       {
         ++victim;
       }
-      SendBroadcast(DKGEnvelope{SharesMessage{
-          static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS),
-          {{victim->identifier(), beacon_->manager.GetReceivedShares(victim->identifier())}}}});
+      SendBroadcast(
+          DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS),
+                                    {{*victim, beacon_->manager.GetReceivedShares(*victim)}}}});
     }
     else if (Failure(Failures::WITHOLD_RECONSTRUCTION_SHARES))
     {
@@ -351,9 +359,9 @@ struct DkgMember
     network_manager.Stop();
   }
 
-  virtual void QueueCabinet(std::set<Identity> cabinet, uint32_t threshold) = 0;
-  virtual std::weak_ptr<core::Runnable> GetWeakRunnable()                   = 0;
-  virtual bool                          DkgFinished()                       = 0;
+  virtual void QueueCabinet(std::set<MuddleAddress> cabinet, uint32_t threshold) = 0;
+  virtual std::weak_ptr<core::Runnable> GetWeakRunnable()                        = 0;
+  virtual bool                          DkgFinished()                            = 0;
 
   static ProverPtr CreateNewCertificate()
   {
@@ -387,12 +395,12 @@ struct FaultyDkgMember : DkgMember
 
   ~FaultyDkgMember() override = default;
 
-  void QueueCabinet(std::set<Identity> cabinet, uint32_t threshold) override
+  void QueueCabinet(std::set<MuddleAddress> cabinet, uint32_t threshold) override
   {
     SharedAeonExecutionUnit beacon = std::make_shared<AeonExecutionUnit>();
 
     // Determines if we are observing or actively participating
-    if (cabinet.find(muddle_certificate->identity()) == cabinet.end())
+    if (cabinet.find(muddle_certificate->identity().identifier()) == cabinet.end())
     {
       beacon->observe_only = true;
     }
@@ -442,12 +450,12 @@ struct HonestDkgMember : DkgMember
 
   ~HonestDkgMember() override = default;
 
-  void QueueCabinet(std::set<Identity> cabinet, uint32_t threshold) override
+  void QueueCabinet(std::set<MuddleAddress> cabinet, uint32_t threshold) override
   {
     SharedAeonExecutionUnit beacon = std::make_shared<AeonExecutionUnit>();
 
     // Determines if we are observing or actively participating
-    if (cabinet.find(muddle_certificate->identity()) == cabinet.end())
+    if (cabinet.find(muddle_certificate->identity().identifier()) == cabinet.end())
     {
       beacon->observe_only = true;
     }
@@ -484,7 +492,7 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
                   const std::vector<std::vector<FaultySetupService::Failures>> &failures    = {},
                   uint16_t                                                      setup_delay = 0)
 {
-  std::set<Identity>                                                  cabinet_identities;
+  std::set<MuddleAddress>                                             cabinet;
   std::vector<std::unique_ptr<DkgMember>>                             committee;
   std::set<RBC::MuddleAddress>                                        expected_qual;
   std::unordered_map<byte_array::ConstByteArray, fetch::network::Uri> peers_list;
@@ -507,14 +515,14 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
     }
     peers_list.insert({committee[ii]->muddle_certificate->identity().identifier(),
                        fetch::network::Uri{"tcp://127.0.0.1:" + std::to_string(port_number)}});
-    cabinet_identities.insert(committee[ii]->muddle_certificate->identity());
+    cabinet.insert(committee[ii]->muddle_certificate->identity().identifier());
   }
 
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
   // Reset cabinet for rbc in pre-dkg sync
   for (uint32_t ii = 0; ii < cabinet_size; ii++)
   {
-    committee[ii]->QueueCabinet(cabinet_identities, threshold);
+    committee[ii]->QueueCabinet(cabinet, threshold);
   }
 
   // Start off some connections until everyone else has connected
@@ -611,6 +619,12 @@ TEST(dkg_setup, send_multiple_messages)
                {{FaultySetupService::Failures::BAD_COEFFICIENT},
                 {FaultySetupService::Failures::SEND_MULTIPLE_MESSAGES},
                 {FaultySetupService::Failures::SEND_FALSE_QUAL_COMPLAINT}});
+}
+
+TEST(dkg_setup, send_bad_complaint)
+{
+  // Node 0 sends a complaint with unknown member in it
+  GenerateTest(4, 3, 4, 4, {{FaultySetupService::Failures::SEND_BAD_COMPLAINT}});
 }
 
 // TODO(jmw): The tests below are for now disabled as failure to complete DKG means everyone runs

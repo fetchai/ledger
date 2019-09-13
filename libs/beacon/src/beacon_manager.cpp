@@ -495,7 +495,7 @@ void BeaconManager::SetGroupPublicKey(PublicKey const &public_key)
  * @param cabinet_size is the size of the cabinet.
  * @param threshold is the threshold to be able to generate a signature.
  */
-void BeaconManager::Reset(std::set<Identity> const &cabinet, uint32_t threshold)
+void BeaconManager::Reset(std::set<MuddleAddress> const &cabinet, uint32_t threshold)
 {
   assert(threshold > 0);
   auto cabinet_size{static_cast<uint32_t>(cabinet.size())};
@@ -506,11 +506,11 @@ void BeaconManager::Reset(std::set<Identity> const &cabinet, uint32_t threshold)
   CabinetIndex index = 0;
   for (auto const &cab : cabinet)
   {
-    if (cab.identifier() == certificate_->identity().identifier())
+    if (cab == certificate_->identity().identifier())
     {
       cabinet_index_ = index;
     }
-    identity_to_index_.insert({cab.identifier(), index});
+    identity_to_index_.insert({cab, index});
     ++index;
   }
 

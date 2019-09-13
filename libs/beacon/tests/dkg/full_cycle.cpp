@@ -185,7 +185,8 @@ void RunHonestComitteeRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
   uint64_t i = 0;
   for (auto &member : committee)
   {
-    all_cabinets[i % number_of_cabinets].insert(member->muddle_certificate->identity());
+    all_cabinets[i % number_of_cabinets].insert(
+        member->muddle_certificate->identity().identifier());
     ++i;
   }
 
