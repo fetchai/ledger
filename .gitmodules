@@ -6,7 +6,7 @@
 	url = https://github.com/google/googletest.git
 [submodule "vendor/benchmark"]
 	path = vendor/benchmark
-	url = https://github.com/ejfitzgerald/benchmark.git
+	url = https://github.com/google/benchmark.git
 [submodule "vendor/mio"]
 	path = vendor/mio
 	url = https://github.com/mandreyel/mio.git
@@ -15,7 +15,7 @@
 	url = https://github.com/msgpack/msgpack-c.git
 [submodule "vendor/backward-cpp"]
 	path = vendor/backward-cpp
-	url = https://github.com/n-hutton/backward-cpp.git
+	url = https://github.com/bombela/backward-cpp.git
 [submodule "vendor/spdlog"]
 	path = vendor/spdlog
 	url = https://github.com/gabime/spdlog.git
@@ -27,4 +27,4 @@
 	url = https://github.com/herumi/bls.git
 [submodule "vendor/utfcpp"]
 	path = vendor/utfcpp
-	url = https://github.com/pbukva/utfcpp.git
+	url = https://github.com/nemtrif/utfcpp.git
