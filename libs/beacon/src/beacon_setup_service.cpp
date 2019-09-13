@@ -195,6 +195,7 @@ BeaconSetupService::State BeaconSetupService::OnReset()
   }
 
   assert(beacon_);
+  beacon_->manager.Reset();
 
   // Initiating setup
   coefficients_received_.clear();
@@ -492,8 +493,8 @@ BeaconSetupService::State BeaconSetupService::OnWaitForComplaints()
   {
     complaints_manager_.Finish(beacon_->aeon.members);
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(), " complaints size ",
-                   complaints_manager_.Complaints().size());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(), " complaints size ",
+                    complaints_manager_.Complaints().size());
     complaint_answers_manager_.Init(complaints_manager_.Complaints());
 
     BroadcastComplaintAnswers();
@@ -659,7 +660,12 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReconstructionShares()
       }
       for (auto const &elem : share.second)
       {
-        beacon_->manager.VerifyReconstructionShare(from, elem);
+        // If address of node who's shares is being exposed is not in qual then
+        // do not process
+        if (qual.find(elem.first) != qual.end())
+        {
+          beacon_->manager.VerifyReconstructionShare(from, elem);
+        }
       }
     }
 
@@ -842,8 +848,8 @@ void BeaconSetupService::BroadcastShares()
     endpoint_.Send(cab_i, SERVICE_DKG, CHANNEL_SECRET_KEY, serializer.data(),
                    MuddleEndpoint::OPTION_ENCRYPTED);
   }
-  FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-                 " broadcasts coefficients ");
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                  " broadcasts coefficients ");
 }
 
 /**
@@ -879,8 +885,8 @@ void BeaconSetupService::BroadcastComplaints()
     complaints_manager_.AddComplaintAgainst(cab);
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-                 " broadcasts complaints size ", complaints_local.size());
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                  " broadcasts complaints size ", complaints_local.size());
   SendBroadcast(DKGEnvelope{ComplaintsMessage{complaints_local}});
 }
 
@@ -895,8 +901,8 @@ void BeaconSetupService::BroadcastComplaintAnswers()
   std::unordered_map<MuddleAddress, std::pair<MessageShare, MessageShare>> complaint_answer;
   for (auto const &reporter : complaints_manager_.ComplaintsAgainstSelf())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-                   " received complaints from ", beacon_->manager.cabinet_index(reporter));
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                    " received complaints from ", beacon_->manager.cabinet_index(reporter));
     complaint_answer.insert({reporter, beacon_->manager.GetOwnShares(reporter)});
   }
   SendBroadcast(DKGEnvelope{
@@ -1094,10 +1100,12 @@ void BeaconSetupService::OnNewShares(MuddleAddress                              
 
   if (shares_received_.find(from) == shares_received_.end())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-                   " received shares from node  ", beacon_->manager.cabinet_index(from));
-    beacon_->manager.AddShares(from, shares);
-    shares_received_.insert(from);
+    if (beacon_->manager.AddShares(from, shares))
+    {
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                      " received shares from node  ", beacon_->manager.cabinet_index(from));
+      shares_received_.insert(from);
+    }
   }
   else
   {
@@ -1119,10 +1127,12 @@ void BeaconSetupService::OnNewCoefficients(CoefficientsMessage const &msg,
   {
     if (coefficients_received_.find(from) == coefficients_received_.end())
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-                     " received coefficients from node  ", beacon_->manager.cabinet_index(from));
-      beacon_->manager.AddCoefficients(from, msg.coefficients());
-      coefficients_received_.insert(from);
+      if (beacon_->manager.AddCoefficients(from, msg.coefficients()))
+      {
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                        " received coefficients from node  ", beacon_->manager.cabinet_index(from));
+        coefficients_received_.insert(from);
+      }
     }
     else
     {
@@ -1135,11 +1145,13 @@ void BeaconSetupService::OnNewCoefficients(CoefficientsMessage const &msg,
   {
     if (qual_coefficients_received_.find(from) == qual_coefficients_received_.end())
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-                     " received qual coefficients from node  ",
-                     beacon_->manager.cabinet_index(from));
-      beacon_->manager.AddQualCoefficients(from, msg.coefficients());
-      qual_coefficients_received_.insert(from);
+      if (beacon_->manager.AddQualCoefficients(from, msg.coefficients()))
+      {
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                        " received qual coefficients from node  ",
+                        beacon_->manager.cabinet_index(from));
+        qual_coefficients_received_.insert(from);
+      }
     }
     else
     {

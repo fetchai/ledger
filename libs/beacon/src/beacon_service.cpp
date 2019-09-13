@@ -238,7 +238,7 @@ void BeaconService::StartNewCabinet(CabinetMemberList members, uint32_t threshol
   else
   {
     beacon->manager.SetCertificate(certificate_);
-    beacon->manager.Reset(members, threshold);
+    beacon->manager.NewCabinet(members, threshold);
   }
 
   // Setting the aeon details

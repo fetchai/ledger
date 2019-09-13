@@ -73,8 +73,10 @@ public:
   {
     BAD_COEFFICIENT,
     SEND_MULTIPLE_MESSAGES,
+    MESSAGES_WITH_UNKNOWN_ADDRESSES,
+    MESSAGES_WITH_INVALID_CRYPTO,
+    QUAL_MESSAGES_WITH_INVALID_CRYPTO,
     SEND_BAD_SHARE,
-    SEND_BAD_COMPLAINT,
     SEND_EMPTY_COMPLAINT_ANSWER,
     BAD_QUAL_COEFFICIENTS,
     SEND_FALSE_QUAL_COMPLAINT,
@@ -119,6 +121,18 @@ private:
       beacon_->manager.GenerateCoefficients();
       SendBadShares();
     }
+    else if (Failure(Failures::MESSAGES_WITH_INVALID_CRYPTO))
+    {
+      beacon_->manager.GenerateCoefficients();
+      for (auto &cab_i : beacon_->aeon.members)
+      {
+        if (cab_i == identity_.identifier())
+        {
+          continue;
+        }
+        SendShares(cab_i, {"fake share", "fake share"});
+      }
+    }
     else
     {
       beacon_->manager.GenerateCoefficients();
@@ -139,6 +153,11 @@ private:
     if (Failure(Failures::BAD_COEFFICIENT))
     {
       SendBadCoefficients();
+    }
+    else if (Failure(Failures::MESSAGES_WITH_INVALID_CRYPTO))
+    {
+      SendBroadcast(DKGEnvelope{
+          CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_SHARES), {"fake coefficient"}}});
     }
     else
     {
@@ -201,7 +220,7 @@ private:
     {
       complaints_manager_.AddComplaintAgainst(cab);
     }
-    if (Failure(Failures::SEND_BAD_COMPLAINT))
+    if (Failure(Failures::MESSAGES_WITH_UNKNOWN_ADDRESSES))
     {
       complaints_local.insert("Unknown sender");
       SendBroadcast(DKGEnvelope{ComplaintsMessage{complaints_local}});
@@ -219,7 +238,18 @@ private:
   void BroadcastComplaintAnswers() override
   {
     std::unordered_map<MuddleAddress, std::pair<MessageShare, MessageShare>> complaint_answers;
-    if (!Failure(Failures::SEND_EMPTY_COMPLAINT_ANSWER))
+    if (Failure(Failures::MESSAGES_WITH_UNKNOWN_ADDRESSES))
+    {
+      complaint_answers.insert({"unknown reporter", {"fake share", "fake share2"}});
+    }
+    else if (Failure(Failures::MESSAGES_WITH_INVALID_CRYPTO))
+    {
+      for (auto const &reporter : complaints_manager_.ComplaintsAgainstSelf())
+      {
+        complaint_answers.insert({reporter, {"fake share", "fake share"}});
+      }
+    }
+    else if (!Failure(Failures::SEND_EMPTY_COMPLAINT_ANSWER))
     {
       for (auto const &reporter : complaints_manager_.ComplaintsAgainstSelf())
       {
@@ -248,6 +278,12 @@ private:
       }
       SendBroadcast(DKGEnvelope{
           CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_QUAL_SHARES), coefficients}});
+    }
+    else if (Failure(Failures::QUAL_MESSAGES_WITH_INVALID_CRYPTO))
+    {
+      beacon_->manager.GetQualCoefficients();
+      SendBroadcast(DKGEnvelope{CoefficientsMessage{
+          static_cast<uint8_t>(State::WAIT_FOR_QUAL_SHARES), {"fake coefficients"}}});
     }
     else
     {
@@ -278,10 +314,27 @@ private:
           DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS),
                                     {{*victim, beacon_->manager.GetReceivedShares(*victim)}}}});
     }
+    else if (Failure(Failures::MESSAGES_WITH_UNKNOWN_ADDRESSES))
+    {
+      SendBroadcast(
+          DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS),
+                                    {{"unknown sender", {"fake share", "fake share"}}}}});
+    }
     else if (Failure(Failures::WITHOLD_RECONSTRUCTION_SHARES))
     {
       SendBroadcast(
           DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS), {}}});
+    }
+    else if (Failure(Failures::QUAL_MESSAGES_WITH_INVALID_CRYPTO))
+    {
+      auto victim = beacon_->aeon.members.begin();
+      if (*victim == identity_.identifier())
+      {
+        ++victim;
+      }
+      SendBroadcast(
+          DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS),
+                                    {{*victim, {"fake share", "fake share"}}}}});
     }
     else
     {
@@ -305,9 +358,24 @@ private:
       SendBroadcast(DKGEnvelope{SharesMessage{
           static_cast<uint64_t>(State::WAIT_FOR_RECONSTRUCTION_SHARES), complaint_shares}});
     }
+    else if (Failure(Failures::MESSAGES_WITH_UNKNOWN_ADDRESSES))
+    {
+      complaint_shares.insert({"unknown address", {"fake share", "fake share1"}});
+      SendBroadcast(DKGEnvelope{SharesMessage{
+          static_cast<uint64_t>(State::WAIT_FOR_RECONSTRUCTION_SHARES), complaint_shares}});
+    }
+    else if (Failure(Failures::QUAL_MESSAGES_WITH_INVALID_CRYPTO))
+    {
+      for (auto const &in : qual_complaints_manager_.Complaints())
+      {
+        beacon_->manager.AddReconstructionShare(in);
+        complaint_shares.insert({in, {"fake share", "fake share"}});
+      }
+      SendBroadcast(DKGEnvelope{SharesMessage{
+          static_cast<uint64_t>(State::WAIT_FOR_RECONSTRUCTION_SHARES), complaint_shares}});
+    }
     else
     {
-
       for (auto const &in : qual_complaints_manager_.Complaints())
       {
         beacon_->manager.AddReconstructionShare(in);
@@ -407,7 +475,7 @@ struct FaultyDkgMember : DkgMember
     else
     {
       beacon->manager.SetCertificate(muddle_certificate);
-      beacon->manager.Reset(cabinet, threshold);
+      beacon->manager.NewCabinet(cabinet, threshold);
     }
 
     // Setting the aeon details
@@ -462,7 +530,7 @@ struct HonestDkgMember : DkgMember
     else
     {
       beacon->manager.SetCertificate(muddle_certificate);
-      beacon->manager.Reset(cabinet, threshold);
+      beacon->manager.NewCabinet(cabinet, threshold);
     }
 
     // Setting the aeon details
@@ -590,10 +658,16 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
   }
 }
 
-TEST(dkg_setup, small_scale_test)
+TEST(dkg_setup, bad_messages)
 {
-  // Put delay (ms) between node start times
-  GenerateTest(4, 3, 4, 4, {}, 1000);
+  // Node 0 sends pre-qual messages with invalid crypto - is excluded from qual.
+  // Another node sends certain messages with unknown member in it. Ignored and not excluded.
+  // Finally, a third node enters qual but then sends qual messages with incorrect crypto -
+  // fails the dkg as it receives threshold number of complaints
+  GenerateTest(7, 4, 6, 5,
+               {{FaultySetupService::Failures::MESSAGES_WITH_INVALID_CRYPTO},
+                {FaultySetupService::Failures::QUAL_MESSAGES_WITH_INVALID_CRYPTO},
+                {FaultySetupService::Failures::MESSAGES_WITH_UNKNOWN_ADDRESSES}});
 }
 
 TEST(dkg_setup, send_empty_complaint_answer)
@@ -619,38 +693,4 @@ TEST(dkg_setup, send_multiple_messages)
                {{FaultySetupService::Failures::BAD_COEFFICIENT},
                 {FaultySetupService::Failures::SEND_MULTIPLE_MESSAGES},
                 {FaultySetupService::Failures::SEND_FALSE_QUAL_COMPLAINT}});
-}
-
-TEST(dkg_setup, send_bad_complaint)
-{
-  // Node 0 sends a complaint with unknown member in it
-  GenerateTest(4, 3, 4, 4, {{FaultySetupService::Failures::SEND_BAD_COMPLAINT}});
-}
-
-// TODO(jmw): The tests below are for now disabled as failure to complete DKG means everyone runs
-//  forever. To be fixed later when we have termination
-TEST(dkg_setup, DISABLED_qual_below_threshold)
-{
-  GenerateTest(4, 3, 2, 0,
-               {{FaultySetupService::Failures::BAD_COEFFICIENT},
-                {FaultySetupService::Failures::BAD_COEFFICIENT}});
-}
-
-TEST(dkg_setup, DISABLED_too_many_bad_qual_coefficients)
-{
-  // Three nodes send bad qual coefficients which means that there are
-  // not enough parties not in complaints. DKG fails
-  GenerateTest(4, 2, 4, 0,
-               {{FaultySetupService::Failures::BAD_QUAL_COEFFICIENTS},
-                {FaultySetupService::Failures::BAD_QUAL_COEFFICIENTS},
-                {FaultySetupService::Failures::BAD_QUAL_COEFFICIENTS}});
-}
-
-TEST(dkg_setup, DISABLED_withold_reconstruction_shares)
-{
-  // Node 0 sends bad qual coefficients and another in collusion does not broadcast node 0's shares
-  // so there are not enough shares to run reconstruction
-  GenerateTest(4, 3, 4, 0,
-               {{FaultySetupService::Failures::BAD_QUAL_COEFFICIENTS},
-                {FaultySetupService::Failures::WITHOLD_RECONSTRUCTION_SHARES}});
 }
