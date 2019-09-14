@@ -18,24 +18,27 @@
 
 #include "core/macros.hpp"
 #include "core/reactor.hpp"
+#include "crypto/key_generator.hpp"
 #include "dkg/dkg_service.hpp"
 #include "network/management/network_manager.hpp"
 #include "network/muddle/muddle.hpp"
 
-// TODO(WK) Extract to library: .cpp file include == ++ungood
-#include "../../apps/constellation/key_generator.cpp"
-#include "../../apps/constellation/key_generator.hpp"
-
 #include <iostream>
+
+namespace {
 
 using namespace fetch;
 using namespace fetch::crypto;
+
+char const *LOGGING_NAME = "KeyGenerator_app";
+
+}  // namespace
 
 int main(int argc, char **argv)
 {
   // Create (or load from file) this node's identity (pub/private key)
   // and print it out for external tool to use
-  auto p2p_key = fetch::GenerateP2PKey();
+  auto p2p_key = GenerateP2PKey();
 
   // External tool needs this
   std::cout << p2p_key->identity().identifier().ToBase64() << std::endl;
@@ -72,7 +75,7 @@ int main(int argc, char **argv)
   auto muddle = std::make_shared<fetch::muddle::Muddle>(fetch::muddle::NetworkId{"TestDKGNetwork"},
                                                         p2p_key, network_manager, true, true);
 
-  std::shared_ptr<dkg::DkgService> dkg =
+  auto dkg =
       std::make_unique<dkg::DkgService>(muddle->AsEndpoint(), p2p_key->identity().identifier());
 
   // Start networking etc.
@@ -115,7 +118,7 @@ int main(int argc, char **argv)
   reactor.Attach(dkg->GetWeakRunnable());
   reactor.Start();
 
-  std::this_thread::sleep_for(std::chrono::seconds(1000));  // 1 min
+  std::this_thread::sleep_for(std::chrono::seconds(1000));
 
   FETCH_LOG_INFO(LOGGING_NAME, "Finished. Quitting");
 
