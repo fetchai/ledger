@@ -546,10 +546,6 @@ private:
     : size_counter_{size_counter}
   {}
 
-  SizeCounterGuard(SizeCounterGuard const &) = delete;
-  SizeCounterGuard &operator=(SizeCounterGuard const &) = delete;
-  SizeCounterGuard &operator=(SizeCounterGuard &&) = delete;
-
 public:
   SizeCounterGuard(SizeCounterGuard &&) = default;
 
@@ -568,6 +564,10 @@ public:
       *size_counter_ = size_counter_type{};
     }
   }
+
+  SizeCounterGuard(SizeCounterGuard const &) = delete;
+  SizeCounterGuard &operator=(SizeCounterGuard const &) = delete;
+  SizeCounterGuard &operator=(SizeCounterGuard &&) = delete;
 
   /**
    * @brief Indicates whether we are already in size counting process

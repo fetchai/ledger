@@ -128,12 +128,12 @@ FETCH_ADD_OPERATOR(+, float, __m128, _mm_add_ps)
     return VectorRegister<type, 128>(_mm_castsi128_ps(ret));                       \
   }
 
-FETCH_ADD_OPERATOR(==, float, __m128, _mm_cmpeq_ps)   // NOLINT
-FETCH_ADD_OPERATOR(!=, float, __m128, _mm_cmpneq_ps)  // NOLINT
-FETCH_ADD_OPERATOR(>=, float, __m128, _mm_cmpge_ps)   // NOLINT
-FETCH_ADD_OPERATOR(>, float, __m128, _mm_cmpgt_ps)    // NOLINT
-FETCH_ADD_OPERATOR(<=, float, __m128, _mm_cmple_ps)   // NOLINT
-FETCH_ADD_OPERATOR(<, float, __m128, _mm_cmplt_ps)    // NOLINT
+FETCH_ADD_OPERATOR(==, float, __m128, _mm_cmpeq_ps)
+FETCH_ADD_OPERATOR(!=, float, __m128, _mm_cmpneq_ps)
+FETCH_ADD_OPERATOR(>=, float, __m128, _mm_cmpge_ps)
+FETCH_ADD_OPERATOR(>, float, __m128, _mm_cmpgt_ps)
+FETCH_ADD_OPERATOR(<=, float, __m128, _mm_cmple_ps)
+FETCH_ADD_OPERATOR(<, float, __m128, _mm_cmplt_ps)
 
 #undef FETCH_ADD_OPERATOR
 
