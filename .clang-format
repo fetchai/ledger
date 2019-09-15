@@ -10,8 +10,8 @@ ConstructorInitializerIndentWidth: 2
 ContinuationIndentWidth: 4
 Language: Cpp
 NamespaceIndentation: None
-SpaceInEmptyParentheses: 'false'
-SpacesInAngles: 'false'
+SpaceInEmptyParentheses: false
+SpacesInAngles: false
 Standard: Cpp11
 UseTab: Never
 ColumnLimit: 100
@@ -42,12 +42,12 @@ BraceWrapping:
   AfterControlStatement: true
   SplitEmptyFunction: false
 IncludeCategories:
-  - Regex:           '^<ext/.*\.h>'
-    Priority:        2
-  - Regex:           '^<.*\.h>'
-    Priority:        2
-  - Regex:           '^<.*'
-    Priority:        2
-  - Regex:           '.*'
-    Priority:        1
+  - Regex: '^<ext/.*\.h>'
+    Priority: 2
+  - Regex: '^<.*\.h>'
+    Priority: 2
+  - Regex: '^<.*'
+    Priority: 2
+  - Regex: '.*'
+    Priority: 1
 ...
