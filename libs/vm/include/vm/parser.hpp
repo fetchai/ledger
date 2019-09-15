@@ -53,7 +53,6 @@ private:
   struct OpInfo
   {
     OpInfo() = default;
-
     OpInfo(int precedence__, Association association__, int arity__)
     {
       precedence  = precedence__;

@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "coordinator.hpp"
+#include "core/mutex.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
 #include "ml/core/graph.hpp"
@@ -63,7 +64,7 @@ class TrainingClient
   using GradientType     = std::pair<VectorTensorType, TimestampType>;
 
 public:
-  TrainingClient(std::string const &id, ClientParams<DataType> const &client_params);
+  TrainingClient(std::string id, ClientParams<DataType> const &client_params);
 
   TrainingClient(
       std::string id, std::shared_ptr<fetch::ml::Graph<TensorType>> graph_ptr,
@@ -109,7 +110,7 @@ protected:
 
   // Client's own graph and mutex to protect its weights
   std::shared_ptr<fetch::ml::Graph<TensorType>> g_ptr_;
-  std::mutex                                    model_mutex_;
+  mutable std::mutex                            model_mutex_;
 
   // Client's own dataloader
   std::shared_ptr<fetch::ml::dataloaders::DataLoader<TensorType, TensorType>> dataloader_ptr_;
@@ -129,13 +130,13 @@ protected:
 
   // Gradient queue access and mutex to protect it
   std::queue<GradientType> gradient_queue_;
-  std::mutex               queue_mutex_;
+  mutable std::mutex       queue_mutex_;
 
   // Export buffer logic
   std::queue<GradientType>     export_buffer_;
-  std::mutex                   export_buffer_mutex_;
+  mutable std::mutex           export_buffer_mutex_;
   std::condition_variable      export_buffer_cv_;
-  std::mutex                   export_buffer_cv_mutex_;
+  mutable std::mutex           export_buffer_cv_mutex_;
   std::shared_ptr<std::thread> export_buffer_thread_;
   bool                         export_stopped_ = false;
 
@@ -181,7 +182,7 @@ TrainingClient<TensorType>::TrainingClient(
 }
 
 template <class TensorType>
-TrainingClient<TensorType>::TrainingClient(std::string const &           id,
+TrainingClient<TensorType>::TrainingClient(std::string                   id,
                                            ClientParams<DataType> const &client_params)
   : id_(std::move(id))
 {
@@ -254,7 +255,7 @@ void TrainingClient<TensorType>::Train()
   std::pair<TensorType, std::vector<TensorType>> input;
   input = dataloader_ptr_->PrepareBatch(batch_size_, is_done_set);
   {
-    std::lock_guard<std::mutex> l(model_mutex_);
+    FETCH_LOCK(model_mutex_);
 
     // Set inputs and label
     auto input_data_it = input.second.begin();
@@ -292,7 +293,7 @@ void TrainingClient<TensorType>::Test()
   bool is_done_set;
   auto test_pair = dataloader_ptr_->PrepareBatch(test_set_size, is_done_set);
   {
-    std::lock_guard<std::mutex> l(model_mutex_);
+    FETCH_LOCK(model_mutex_);
 
     // Set inputs and label
     auto input_data_it = test_pair.second.begin();
@@ -316,7 +317,7 @@ void TrainingClient<TensorType>::Test()
 template <class TensorType>
 std::vector<TensorType> TrainingClient<TensorType>::GetGradients() const
 {
-  std::lock_guard<std::mutex> l(const_cast<std::mutex &>(model_mutex_));
+  FETCH_LOCK(model_mutex_);
   return g_ptr_->GetGradients();
 }
 
@@ -326,7 +327,7 @@ std::vector<TensorType> TrainingClient<TensorType>::GetGradients() const
 template <class TensorType>
 std::vector<TensorType> TrainingClient<TensorType>::GetWeights() const
 {
-  std::lock_guard<std::mutex> l(const_cast<std::mutex &>(model_mutex_));
+  FETCH_LOCK(model_mutex_);
   return g_ptr_->get_weights();
 }
 
@@ -337,7 +338,7 @@ std::vector<TensorType> TrainingClient<TensorType>::GetWeights() const
 template <class TensorType>
 void TrainingClient<TensorType>::AddGradient(GradientType &gradient)
 {
-  std::lock_guard<std::mutex> l(queue_mutex_);
+  FETCH_LOCK(queue_mutex_);
   gradient_queue_.push(gradient);
 }
 
@@ -348,9 +349,9 @@ void TrainingClient<TensorType>::AddGradient(GradientType &gradient)
 template <class TensorType>
 void TrainingClient<TensorType>::AddExportGradient(GradientType &gradient)
 {
-  std::unique_lock<std::mutex> l(export_buffer_cv_mutex_);
+  std::unique_lock<std::mutex> lock(export_buffer_cv_mutex_);
   {
-    std::lock_guard<std::mutex> l(export_buffer_mutex_);
+    FETCH_LOCK(export_buffer_mutex_);
     export_buffer_.push(gradient);
   }
   export_buffer_cv_.notify_all();
@@ -363,14 +364,14 @@ void TrainingClient<TensorType>::AddExportGradient(GradientType &gradient)
 template <class TensorType>
 void TrainingClient<TensorType>::SetWeights(VectorTensorType &new_weights)
 {
-  std::lock_guard<std::mutex> l(const_cast<std::mutex &>(model_mutex_));
+  FETCH_LOCK(model_mutex_);
   g_ptr_->SetWeights(new_weights);
 }
 
 template <class TensorType>
 void TrainingClient<TensorType>::GetNewGradients(VectorTensorType &new_gradients)
 {
-  std::lock_guard<std::mutex> l(queue_mutex_);
+  FETCH_LOCK(queue_mutex_);
   new_gradients = gradient_queue_.front().first;
   gradient_queue_.pop();
 }
@@ -505,7 +506,7 @@ void TrainingClient<TensorType>::DoBatch()
 
   // Apply sum of all gradients from queue along with own gradient
   {
-    std::lock_guard<std::mutex> l(model_mutex_);
+    FETCH_LOCK(model_mutex_);
     opti_ptr_->ApplyGradients(batch_size_);
     opti_ptr_->IncrementBatchCounters(batch_size_);
     opti_ptr_->UpdateLearningRate();
@@ -529,7 +530,7 @@ void TrainingClient<TensorType>::ExportBufferLoop()
 
     if (!export_buffer_.empty())
     {
-      std::lock_guard<std::mutex> l(export_buffer_mutex_);
+      FETCH_LOCK(export_buffer_mutex_);
       {
         gradient = export_buffer_.front();
         export_buffer_.pop();

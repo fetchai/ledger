@@ -77,8 +77,8 @@ def static_analysis(project_root, build_root, fix, concurrency):
         # through run-clang-tidy-6.0.py (which we cannot do, as it would alter vendor
         # libraries). Unfortunately, run-clang-tidy will refuse to function unless it
         # thinks that clang-apply-replacements is installed on the system. We pass
-        # a valid path to an executable here to placate it.
-        f'-clang-apply-replacements-binary={clang_apply_replacements_path if fix else clang_tidy_path}',
+        # a valid path to an arbitrary executable here to placate it.
+        f'-clang-apply-replacements-binary={clang_tidy_path}',
         f'-export-fixes={output_file}',
         '.']
 
@@ -104,6 +104,17 @@ def static_analysis(project_root, build_root, fix, concurrency):
         project_root, build_root, output_file)
 
     if len(files_diagnostics):
+        for file, data in files_diagnostics.items():
+            print('\n' + (10 * '-'))
+            print(f'Static analysis check(s) failed in:\n  {file}\n')
+            for d in data['diagnostics']:
+                print(f'  Line: {d["line"]}')
+                print(f'  Message: {d["message"]}')
+                print(f'  Check: {d["check"]}')
+
+        print(
+            f'\nStatic analysis found {sum([len(d["diagnostics"]) for f, d in files_diagnostics.items()])} violation(s) in {len(files_diagnostics)} file(s)')
+
         if fix:
             print('Applying fixes...')
             subprocess.call(['clang-apply-replacements-6.0',
@@ -112,17 +123,7 @@ def static_analysis(project_root, build_root, fix, concurrency):
                 'Done. Note that the automated fix feature of clang-tidy is unreliable:')
             print('  * not all checks are supported,')
             print('  * applying fixes may result in invalid code.')
-        else:
-            for file, data in files_diagnostics.items():
-                print('\n' + (10 * '-'))
-                print(f'Static analysis check(s) failed in:\n  {file}\n')
-                for d in data['diagnostics']:
-                    print(f'  Line: {d["line"]}')
-                    print(f'  Message: {d["message"]}')
-                    print(f'  Check: {d["check"]}')
 
-        print(
-            f'\nStatic analysis found {sum([len(d["diagnostics"]) for f, d in files_diagnostics.items()])} violation(s) in {len(files_diagnostics)} file(s)')
         sys.exit(1)
     else:
         print('No violations found.')

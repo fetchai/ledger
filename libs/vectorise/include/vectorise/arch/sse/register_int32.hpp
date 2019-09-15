@@ -165,7 +165,7 @@ inline VectorRegister<int32_t, 128> operator<(VectorRegister<int32_t, 128> const
 
 inline int32_t first_element(VectorRegister<int32_t, 128> const &x)
 {
-  return _mm_extract_epi32(x.data(), 0);
+  return static_cast<int32_t>(_mm_extract_epi32(x.data(), 0));  // NOLINT
 }
 
 inline VectorRegister<int32_t, 128> shift_elements_left(VectorRegister<int32_t, 128> const &x)
