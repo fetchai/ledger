@@ -59,13 +59,13 @@ public:
    * @param args The arguments for the underlying network server
    */
   template <typename... Args>
-  MuddleServer(Router &router, Args... args)
+  explicit MuddleServer(Router &router, Args... args)
     : NETWORK_SERVER(args...)
     , router_(router)
   {}
   MuddleServer(MuddleServer const &) = delete;
   MuddleServer(MuddleServer &&)      = delete;
-  ~MuddleServer()                    = default;
+  ~MuddleServer() override           = default;
 
   // Operators
   MuddleServer &operator=(MuddleServer const &) = delete;

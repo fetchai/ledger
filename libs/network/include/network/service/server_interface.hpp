@@ -182,7 +182,7 @@ protected:
         FETCH_LOG_WARN(LOGGING_NAME, "ConnectionDropped removing handler for protocol ",
                        protocol_number, " from connection handle ", connection_handle);
         members_[protocol_number]->ConnectionDropped(connection_handle);
-        members_[protocol_number] = 0;
+        members_[protocol_number] = nullptr;
       }
     }
   }

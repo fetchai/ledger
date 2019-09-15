@@ -148,66 +148,66 @@ inline VectorRegister<double, 128> operator+(VectorRegister<double, 128> const &
 inline VectorRegister<double, 128> operator==(VectorRegister<double, 128> const &a,
                                               VectorRegister<double, 128> const &b)
 {
-  __m128d          imm  = _mm_cmpeq_pd(a.data(), b.data());
-  __m128i          ival = _mm_castpd_si128(imm);
-  constexpr double done = double(1);
-  const __m128i    one  = _mm_castpd_si128(_mm_load_pd1(&done));
-  __m128i          ret  = _mm_and_si128(ival, one);
+  __m128d        imm  = _mm_cmpeq_pd(a.data(), b.data());
+  __m128i        ival = _mm_castpd_si128(imm);
+  constexpr auto done = double(1);
+  const __m128i  one  = _mm_castpd_si128(_mm_load_pd1(&done));
+  __m128i        ret  = _mm_and_si128(ival, one);
   return VectorRegister<double, 128>(_mm_castsi128_pd(ret));
 }
 
 inline VectorRegister<double, 128> operator!=(VectorRegister<double, 128> const &a,
                                               VectorRegister<double, 128> const &b)
 {
-  __m128d          imm  = _mm_cmpneq_pd(a.data(), b.data());
-  __m128i          ival = _mm_castpd_si128(imm);
-  constexpr double done = double(1);
-  const __m128i    one  = _mm_castpd_si128(_mm_load_pd1(&done));
-  __m128i          ret  = _mm_and_si128(ival, one);
+  __m128d        imm  = _mm_cmpneq_pd(a.data(), b.data());
+  __m128i        ival = _mm_castpd_si128(imm);
+  constexpr auto done = double(1);
+  const __m128i  one  = _mm_castpd_si128(_mm_load_pd1(&done));
+  __m128i        ret  = _mm_and_si128(ival, one);
   return VectorRegister<double, 128>(_mm_castsi128_pd(ret));
 }
 
 inline VectorRegister<double, 128> operator>=(VectorRegister<double, 128> const &a,
                                               VectorRegister<double, 128> const &b)
 {
-  __m128d          imm  = _mm_cmpge_pd(a.data(), b.data());
-  __m128i          ival = _mm_castpd_si128(imm);
-  constexpr double done = double(1);
-  const __m128i    one  = _mm_castpd_si128(_mm_load_pd1(&done));
-  __m128i          ret  = _mm_and_si128(ival, one);
+  __m128d        imm  = _mm_cmpge_pd(a.data(), b.data());
+  __m128i        ival = _mm_castpd_si128(imm);
+  constexpr auto done = double(1);
+  const __m128i  one  = _mm_castpd_si128(_mm_load_pd1(&done));
+  __m128i        ret  = _mm_and_si128(ival, one);
   return VectorRegister<double, 128>(_mm_castsi128_pd(ret));
 }
 
 inline VectorRegister<double, 128> operator>(VectorRegister<double, 128> const &a,
                                              VectorRegister<double, 128> const &b)
 {
-  __m128d          imm  = _mm_cmpgt_pd(a.data(), b.data());
-  __m128i          ival = _mm_castpd_si128(imm);
-  constexpr double done = double(1);
-  const __m128i    one  = _mm_castpd_si128(_mm_load_pd1(&done));
-  __m128i          ret  = _mm_and_si128(ival, one);
+  __m128d        imm  = _mm_cmpgt_pd(a.data(), b.data());
+  __m128i        ival = _mm_castpd_si128(imm);
+  constexpr auto done = double(1);
+  const __m128i  one  = _mm_castpd_si128(_mm_load_pd1(&done));
+  __m128i        ret  = _mm_and_si128(ival, one);
   return VectorRegister<double, 128>(_mm_castsi128_pd(ret));
 }
 
 inline VectorRegister<double, 128> operator<=(VectorRegister<double, 128> const &a,
                                               VectorRegister<double, 128> const &b)
 {
-  __m128d          imm  = _mm_cmple_pd(a.data(), b.data());
-  __m128i          ival = _mm_castpd_si128(imm);
-  constexpr double done = double(1);
-  const __m128i    one  = _mm_castpd_si128(_mm_load_pd1(&done));
-  __m128i          ret  = _mm_and_si128(ival, one);
+  __m128d        imm  = _mm_cmple_pd(a.data(), b.data());
+  __m128i        ival = _mm_castpd_si128(imm);
+  constexpr auto done = double(1);
+  const __m128i  one  = _mm_castpd_si128(_mm_load_pd1(&done));
+  __m128i        ret  = _mm_and_si128(ival, one);
   return VectorRegister<double, 128>(_mm_castsi128_pd(ret));
 }
 
 inline VectorRegister<double, 128> operator<(VectorRegister<double, 128> const &a,
                                              VectorRegister<double, 128> const &b)
 {
-  __m128d          imm  = _mm_cmplt_pd(a.data(), b.data());
-  __m128i          ival = _mm_castpd_si128(imm);
-  constexpr double done = double(1);
-  const __m128i    one  = _mm_castpd_si128(_mm_load_pd1(&done));
-  __m128i          ret  = _mm_and_si128(ival, one);
+  __m128d        imm  = _mm_cmplt_pd(a.data(), b.data());
+  __m128i        ival = _mm_castpd_si128(imm);
+  constexpr auto done = double(1);
+  const __m128i  one  = _mm_castpd_si128(_mm_load_pd1(&done));
+  __m128i        ret  = _mm_and_si128(ival, one);
   return VectorRegister<double, 128>(_mm_castsi128_pd(ret));
 }
 

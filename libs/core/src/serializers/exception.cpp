@@ -51,8 +51,7 @@ SerializableException::SerializableException(error::error_type                 e
   , explanation_(std::string(explanation))
 {}
 
-SerializableException::~SerializableException()
-{}
+SerializableException::~SerializableException() = default;
 
 char const *SerializableException::what() const noexcept
 {

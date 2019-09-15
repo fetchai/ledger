@@ -1111,7 +1111,7 @@ private:
     }
 
     // To verify, do a depth first search of the tree
-    while (nodes_stack.size() > 0)
+    while (!nodes_stack.empty())
     {
       // Get node of stack
       auto &stack_end = nodes_stack.back();
@@ -1220,7 +1220,7 @@ private:
     key_value_pair kv_dummy;
 
     // To verify, do a depth first search of the tree
-    while (nodes_stack.size() > 0)
+    while (!nodes_stack.empty())
     {
       // Get node of stack
       auto &stack_end = nodes_stack.back();

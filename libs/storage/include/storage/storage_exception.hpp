@@ -69,7 +69,7 @@ public:
     , explanation_(std::string(explanation))
   {}
 
-  virtual ~StorageException() = default;
+  ~StorageException() override = default;
 
   char const *what() const noexcept override
   {

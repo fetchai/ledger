@@ -53,7 +53,7 @@ public:
   type operator()(type x)
   {
     float_type z = (x - range_from_) * range_to_index_;
-    uint32_t   i = uint32_t(z);
+    auto       i = uint32_t(z);
     z -= float_type(i);
     return (data_[i + 1] - data_[i]) * z + data_[i];
   }

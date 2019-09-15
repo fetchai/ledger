@@ -96,7 +96,7 @@ TYPED_TEST(MultiheadAttention, backward_test)  // Use the class as an Ops
   {
     auto error = backprop_error.at(i);
     auto shape = error.shape();
-    if (prev_shape.size() == 0)
+    if (prev_shape.empty())
     {
       prev_shape = shape;
       continue;

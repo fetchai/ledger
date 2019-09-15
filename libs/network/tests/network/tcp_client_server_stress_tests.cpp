@@ -290,11 +290,11 @@ void TestCase5(std::string host, uint16_t port)
 
     for (std::size_t i = 0; i < 5; ++i)
     {
-      char to_fill = char(0x41 + (i & 0xFF));  // 0x41 = 'A'
+      auto to_fill = char(0x41 + (i & 0xFF));  // 0x41 = 'A'
 
       std::string send_me(1 << (i + 14), to_fill);
 
-      to_send.push_back(send_me);
+      to_send.emplace_back(send_me);
     }
 
     // This will be over a single connection
@@ -380,10 +380,10 @@ void TestCase6(std::string host, uint16_t port)
 
     for (std::size_t i = 0; i < 5; ++i)
     {
-      char to_fill = char(0x41 + (i & 0xFF));  // 0x41 = 'A'
+      auto to_fill = char(0x41 + (i & 0xFF));  // 0x41 = 'A'
 
       std::string send_me(1 << (i + 14), to_fill);
-      to_send.push_back(send_me);
+      to_send.emplace_back(send_me);
     }
 
     FETCH_LOG_INFO(LOGGING_NAME, "*** Open connection. ***");
@@ -485,18 +485,18 @@ void TestCase7(std::string host, uint16_t port)
 
     for (std::size_t i = 0; i < 5; ++i)
     {
-      char to_fill = char(0x41 + (i & 0xFF));  // 0x41 = 'A'
+      auto to_fill = char(0x41 + (i & 0xFF));  // 0x41 = 'A'
 
       std::string send_me(1 << (i + 14), to_fill);
-      to_send_from_client.push_back(send_me);
+      to_send_from_client.emplace_back(send_me);
     }
 
     for (std::size_t i = 0; i < 5; ++i)
     {
-      char to_fill = char(0x49 + (i & 0xFF));
+      auto to_fill = char(0x49 + (i & 0xFF));
 
       std::string send_me(1 << (i + 14), to_fill);
-      to_send_from_server.push_back(send_me);
+      to_send_from_server.emplace_back(send_me);
     }
 
     FETCH_LOG_INFO(LOGGING_NAME, "*** Open connection. ***");

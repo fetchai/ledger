@@ -44,7 +44,7 @@ public:
     , lane_management_(lane_management)
   {}
 
-  virtual void Refresh()
+  void Refresh() override
   {
     try
     {

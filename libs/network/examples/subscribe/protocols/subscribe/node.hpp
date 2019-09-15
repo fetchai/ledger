@@ -26,10 +26,8 @@ namespace subscribe {
 class Node : public fetch::service::HasPublicationFeed
 {
 public:
-  Node()
-  {}
-  ~Node()
-  {}
+  Node()           = default;
+  ~Node() override = default;
 
   void SendMessage(std::string const &mess)
   {

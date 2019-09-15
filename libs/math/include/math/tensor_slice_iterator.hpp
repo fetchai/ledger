@@ -234,7 +234,9 @@ public:
       }
       // Add axis if wasn't added at beginning
       if (!add_axis)
+      {
         continue;
+      }
       new_ranges.push_back(ranges_[i]);
     }
     std::swap(new_ranges, ranges_);
@@ -360,7 +362,7 @@ private:
     assert(array_.shape().size() == step.size());
     SizeType volume = 1;
 
-    if (step.size() == 0)
+    if (step.empty())
     {
       size_     = 0;
       position_ = 0;

@@ -56,9 +56,9 @@ TYPED_TEST(TensorIndexingTest, two_dimentional_tensor_test)
 
 TYPED_TEST(TensorIndexingTest, index_op_vs_iterator)
 {
-  TypeParam                      from      = TypeParam(20);
-  TypeParam                      to        = TypeParam(29);
-  TypeParam                      step_size = TypeParam(1);
+  auto                           from      = TypeParam(20);
+  auto                           to        = TypeParam(29);
+  auto                           step_size = TypeParam(1);
   fetch::math::Tensor<TypeParam> a = fetch::math::Tensor<TypeParam>::Arange(from, to, step_size);
   EXPECT_EQ(a.size(), 9);
   a.Reshape({3, 3});

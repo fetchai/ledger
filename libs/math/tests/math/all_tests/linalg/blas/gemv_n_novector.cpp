@@ -34,8 +34,8 @@ TEST(blas_gemv, blas_gemv_n_novector1)
       gemv_n_novector;
   // Compuing _y <= _alpha * _A * _x + _beta * _y
   using Type = double;
-  Type alpha = Type(1);
-  Type beta  = Type(1);
+  auto alpha = Type(1);
+  auto beta  = Type(1);
   int  n     = 1;
   int  m     = 1;
 
@@ -70,8 +70,8 @@ TEST(blas_gemv, blas_gemv_n_novector2)
       gemv_n_novector;
   // Compuing _y <= _alpha * _A * _x + _beta * _y
   using Type = double;
-  Type alpha = Type(0);
-  Type beta  = Type(1);
+  auto alpha = Type(0);
+  auto beta  = Type(1);
   int  n     = 1;
   int  m     = 1;
 
@@ -106,8 +106,8 @@ TEST(blas_gemv, blas_gemv_n_novector3)
       gemv_n_novector;
   // Compuing _y <= _alpha * _A * _x + _beta * _y
   using Type = double;
-  Type alpha = Type(0.5192124475613537);
-  Type beta  = Type(0.7727136267182124);
+  auto alpha = Type(0.5192124475613537);
+  auto beta  = Type(0.7727136267182124);
   int  n     = 1;
   int  m     = 1;
 
@@ -142,8 +142,8 @@ TEST(blas_gemv, blas_gemv_n_novector4)
       gemv_n_novector;
   // Compuing _y <= _alpha * _A * _x + _beta * _y
   using Type = double;
-  Type alpha = Type(0);
-  Type beta  = Type(1);
+  auto alpha = Type(0);
+  auto beta  = Type(1);
   int  n     = 2;
   int  m     = 3;
 
@@ -178,8 +178,8 @@ TEST(blas_gemv, blas_gemv_n_novector5)
       gemv_n_novector;
   // Compuing _y <= _alpha * _A * _x + _beta * _y
   using Type = double;
-  Type alpha = Type(0.7094521590949134);
-  Type beta  = Type(0.7141735359225003);
+  auto alpha = Type(0.7094521590949134);
+  auto beta  = Type(0.7141735359225003);
   int  n     = 2;
   int  m     = 3;
 
@@ -214,8 +214,8 @@ TEST(blas_gemv, blas_gemv_n_novector6)
       gemv_n_novector;
   // Compuing _y <= _alpha * _A * _x + _beta * _y
   using Type = double;
-  Type alpha = Type(0.002437994991828951);
-  Type beta  = Type(0.8836680888019255);
+  auto alpha = Type(0.002437994991828951);
+  auto beta  = Type(0.8836680888019255);
   int  n     = -2;
   int  m     = -3;
 

@@ -83,7 +83,7 @@ bool LoadManifestFromFile(char const *filename, Manifest &manifest)
   ConstByteArray buffer = core::ReadContentsOfFile(filename);
 
   // check to see if the read failed
-  if (buffer.size() == 0)
+  if (buffer.empty())
   {
     return false;
   }

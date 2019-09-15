@@ -66,7 +66,7 @@ struct BERTInterface
   BERTInterface(BERTConfig const &config)
   {
     outputs.emplace_back("norm_embed");
-    for (SizeType i = static_cast<SizeType>(0); i < config.n_encoder_layers; i++)
+    for (SizeType i = 0; i < config.n_encoder_layers; i++)
     {
       outputs.emplace_back("SelfAttentionEncoder_No_" + std::to_string(i));
     }
@@ -141,7 +141,7 @@ void EvaluateGraph(GraphType &g, std::vector<std::string> input_nodes, std::stri
     std::cout << "correct label | guessed label | sample loss" << std::endl;
   }
   DataType total_val_loss  = 0;
-  DataType correct_counter = static_cast<DataType>(0);
+  auto     correct_counter = static_cast<DataType>(0);
   for (SizeType b = 0; b < static_cast<SizeType>(output_data.shape(1)); b++)
   {
     for (SizeType i = 0; i < static_cast<SizeType>(4); i++)

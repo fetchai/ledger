@@ -906,7 +906,7 @@ bool DistributedKeyGeneration::RunReconstruction()
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, " run reconstruction for node ",
                      victim_index, " with shares from node ", index);
-      points.push_back(index + 1);  // adjust index in computation
+      points.emplace_back(index + 1);  // adjust index in computation
       shares_f.push_back(shares[index]);
     }
     a_ik[victim_index] = InterpolatePolynom(points, shares_f);

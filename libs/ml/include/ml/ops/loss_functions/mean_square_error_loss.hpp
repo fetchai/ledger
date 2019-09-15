@@ -44,8 +44,8 @@ public:
     , weightings_(sp.weightings)
   {}
 
-  explicit MeanSquareErrorLoss(TensorType const &weightings = TensorType())
-    : weightings_(weightings)
+  explicit MeanSquareErrorLoss(TensorType weightings = TensorType())
+    : weightings_(std::move(weightings))
   {}
 
   ~MeanSquareErrorLoss() override = default;

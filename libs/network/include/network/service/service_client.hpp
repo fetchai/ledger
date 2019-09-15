@@ -69,7 +69,7 @@ public:
     : ServiceClient(connection.connection_pointer().lock(), thread_manager)
   {}
 
-  ~ServiceClient()
+  ~ServiceClient() override
   {
     using std::this_thread::sleep_for;
     using std::chrono::milliseconds;

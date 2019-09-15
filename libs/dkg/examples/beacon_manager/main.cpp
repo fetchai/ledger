@@ -61,7 +61,7 @@ int main(int argc, char **argv)
   for (auto &m : nodes)
   {
     auto &n = *m.second;
-    participants.push_back({n.identity(), n.id()});
+    participants.emplace_back(n.identity(), n.id());
   }
 
   // Propagating identities

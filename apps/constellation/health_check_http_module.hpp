@@ -20,6 +20,8 @@
 #include "http/json_response.hpp"
 #include "http/module.hpp"
 
+#include <utility>
+
 namespace fetch {
 
 class HealthCheckHttpModule : public http::HTTPModule
@@ -35,7 +37,7 @@ public:
     : chain_{chain}
     , chain_service_{chain_service}
     , block_coordinator_{block_coordinator}
-    , dkg_{dkg}
+    , dkg_{std::move(dkg)}
   {
     Get("/api/health/alive", "Endpoint to check if the server is alive.",
         [](http::ViewParameters const &, http::HTTPRequest const &) {

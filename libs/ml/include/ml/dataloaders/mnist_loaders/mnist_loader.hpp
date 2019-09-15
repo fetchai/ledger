@@ -232,7 +232,7 @@ public:
 
       image_size = n_rows * n_cols;
 
-      uchar **_dataset = new uchar *[number_of_images];
+      auto **_dataset = new uchar *[number_of_images];
       for (unsigned int i = 0; i < number_of_images; i++)
       {
         _dataset[i] = new uchar[image_size];
@@ -273,7 +273,7 @@ public:
       file.read((char *)&number_of_labels, sizeof(number_of_labels)),
           number_of_labels = reverseInt(number_of_labels);
 
-      uchar *_dataset = new uchar[number_of_labels];
+      auto *_dataset = new uchar[number_of_labels];
       for (unsigned int i = 0; i < number_of_labels; i++)
       {
         file.read((char *)&_dataset[i], 1);

@@ -137,7 +137,7 @@ int main(int argc, char **argv)
   SizeType                 min_count       = 5;
   SizeType                 embeddings_size = 200;  // embeddings size
   SizeType                 iter            = 15;   // training epochs
-  FloatType                alpha           = static_cast<FloatType>(0.025);
+  auto                     alpha           = static_cast<FloatType>(0.025);
   SizeType                 print_frequency = 10000;
 
   /// INPUT ARGUMENTS ///

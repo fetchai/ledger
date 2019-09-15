@@ -47,21 +47,14 @@ public:
   using Clock          = std::chrono::steady_clock;
   using Timepoint      = Clock::time_point;
 
-  ResolvableTo()  = default;
-  ~ResolvableTo() = default;
+  ResolvableTo()           = default;
+  ~ResolvableTo() override = default;
 
   ResolvableTo(ResolvableTo const &rhs) = default;
 
   // Operators
   ResolvableTo &operator=(ResolvableTo const &rhs) = default;
   ResolvableTo &operator=(ResolvableTo &&rhs) noexcept = default;
-
-  virtual State GetState(Timepoint const & /*tp*/)
-  {
-    return GetState();
-  }
-  virtual State          GetState() = 0;
-  virtual PromiseCounter id() const = 0;
 
   virtual RESULT Get() const = 0;
 };

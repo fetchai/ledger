@@ -49,13 +49,13 @@ Uri::Uri(ConstByteArray const &uri)
 
 bool Uri::Parse(ConstByteArray const &uri)
 {
-  if (uri.size() == 0)
+  if (uri.empty())
   {
     return false;
   }
   bool success = false;
 
-  std::string const data = static_cast<std::string>(uri);
+  auto const data = static_cast<std::string>(uri);
 
   std::smatch matches;
   std::regex_match(data, matches, URI_FORMAT);

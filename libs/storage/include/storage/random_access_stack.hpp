@@ -225,10 +225,10 @@ public:
    */
   void Get(std::size_t i, type &object) const
   {
-    assert(filename_ != "");
+    assert(!filename_.empty());
     assert(i < size());
 
-    int64_t n = int64_t(i * sizeof(type) + header_.size());
+    auto n = int64_t(i * sizeof(type) + header_.size());
 
     file_handle_.seekg(n);
     file_handle_.read(reinterpret_cast<char *>(&object), sizeof(type));
@@ -243,9 +243,9 @@ public:
    */
   void Set(std::size_t i, type const &object)
   {
-    assert(filename_ != "");
+    assert(!filename_.empty());
     assert(i < size());
-    int64_t start = int64_t(i * sizeof(type) + header_.size());
+    auto start = int64_t(i * sizeof(type) + header_.size());
 
     file_handle_.seekg(start, file_handle_.beg);
     file_handle_.write(reinterpret_cast<char const *>(&object), sizeof(type));
@@ -281,9 +281,9 @@ public:
    */
   bool LazySetBulk(std::size_t i, std::size_t elements, type const *objects)
   {
-    assert(filename_ != "");
+    assert(!filename_.empty());
 
-    int64_t start = int64_t((i * sizeof(type)) + header_.size());
+    auto start = int64_t((i * sizeof(type)) + header_.size());
 
     file_handle_.seekg(start, file_handle_.beg);
     file_handle_.write(reinterpret_cast<char const *>(objects),
@@ -309,9 +309,9 @@ public:
    */
   void GetBulk(std::size_t i, std::size_t elements, type *objects)
   {
-    assert(filename_ != "");
+    assert(!filename_.empty());
 
-    int64_t start = int64_t((i * sizeof(type)) + header_.size());
+    auto start = int64_t((i * sizeof(type)) + header_.size());
 
     // Figure out how many elements are valid to get, only get those
     if (i >= header_.objects)
@@ -331,7 +331,7 @@ public:
 
   void SetExtraHeader(header_extra_type const &he)
   {
-    assert(filename_ != "");
+    assert(!filename_.empty());
 
     header_.extra = he;
     StoreHeader();
@@ -378,7 +378,7 @@ public:
   {
     assert(header_.objects > 0);
 
-    int64_t n = int64_t((header_.objects - 1) * sizeof(type) + header_.size());
+    auto n = int64_t((header_.objects - 1) * sizeof(type) + header_.size());
 
     file_handle_.seekg(n, file_handle_.beg);
     type object;
@@ -401,10 +401,10 @@ public:
       return;
     }
     type a, b;
-    assert(filename_ != "");
+    assert(!filename_.empty());
 
-    int64_t n1 = int64_t(i * sizeof(type) + header_.size());
-    int64_t n2 = int64_t(j * sizeof(type) + header_.size());
+    auto n1 = int64_t(i * sizeof(type) + header_.size());
+    auto n2 = int64_t(j * sizeof(type) + header_.size());
 
     file_handle_.seekg(n1);
     file_handle_.read(reinterpret_cast<char *>(&a), sizeof(type));
@@ -432,7 +432,7 @@ public:
    */
   void Clear()
   {
-    assert(filename_ != "");
+    assert(!filename_.empty());
     std::fstream fin(filename_, std::ios::out | std::ios::binary);
     header_ = Header();
 
@@ -474,7 +474,7 @@ public:
   uint64_t LazyPush(type const &object)
   {
     uint64_t ret = header_.objects;
-    int64_t  n   = int64_t(ret * sizeof(type) + header_.size());
+    auto     n   = int64_t(ret * sizeof(type) + header_.size());
 
     file_handle_.seekg(n, file_handle_.beg);
     file_handle_.write(reinterpret_cast<char const *>(&object), sizeof(type));
@@ -504,7 +504,7 @@ private:
    */
   void StoreHeader()
   {
-    assert(filename_ != "");
+    assert(!filename_.empty());
 
     if (!header_.Write(file_handle_))
     {

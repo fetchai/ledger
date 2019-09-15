@@ -38,7 +38,7 @@ public:
   using MyType        = Transpose<TensorType>;
 
   explicit Transpose(std::vector<SizeType> transpose_vector = {1, 0, 2})
-    : transpose_vector_(transpose_vector)
+    : transpose_vector_(std::move(transpose_vector))
   {}
 
   explicit Transpose(SPType const &sp)

@@ -34,7 +34,7 @@ TEST(blas_A_withA, blas_scal_all1)
       scal_all;
   // Compuing _x <= _alpha * _x
   using Type = double;
-  Type alpha = Type(-1.4049016056886963);
+  auto alpha = Type(-1.4049016056886963);
 
   int n = 20;
   int m = 1;
@@ -60,7 +60,7 @@ TEST(blas_A_withA, blas_scal_all2)
       scal_all;
   // Compuing _x <= _alpha * _x
   using Type = double;
-  Type alpha = Type(1.43787987191034);
+  auto alpha = Type(1.43787987191034);
 
   int n = 10;
   int m = 2;
@@ -86,7 +86,7 @@ TEST(blas_A_withA, blas_scal_all3)
       scal_all;
   // Compuing _x <= _alpha * _x
   using Type = double;
-  Type alpha = Type(-4.622009168745431);
+  auto alpha = Type(-4.622009168745431);
 
   int n = 6;
   int m = 3;
@@ -112,7 +112,7 @@ TEST(blas_A_withA, blas_scal_all4)
       scal_all;
   // Compuing _x <= _alpha * _x
   using Type = double;
-  Type alpha = Type(-0.7895519240261688);
+  auto alpha = Type(-0.7895519240261688);
 
   int n = 10;
   int m = -2;

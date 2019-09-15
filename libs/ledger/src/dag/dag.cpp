@@ -324,7 +324,7 @@ void DAG::SetReferencesInternal(DAGNodePtr node)
 
 bool DAG::AddDAGNode(DAGNode node)
 {
-  assert(node.hash.size() > 0);
+  assert(!node.hash.empty());
   FETCH_LOCK(mutex_);
 
   missing_.erase(node.hash);
@@ -406,22 +406,12 @@ bool DAG::HashInPrevEpochsInternal(ConstByteArray hash) const
 // check whether the node has already been added for this period
 bool DAG::AlreadySeenInternal(DAGNodePtr node) const
 {
-  if (node_pool_.find(node->hash) != node_pool_.end() || HashInPrevEpochsInternal(node->hash))
-  {
-    return true;
-  }
-
-  return false;
+  return node_pool_.find(node->hash) != node_pool_.end() || HashInPrevEpochsInternal(node->hash);
 }
 
 bool DAG::TooOldInternal(uint64_t oldest_reference) const
 {
-  if ((oldest_reference + EPOCH_VALIDITY_PERIOD) <= most_recent_epoch_)
-  {
-    return true;
-  }
-
-  return false;
+  return (oldest_reference + EPOCH_VALIDITY_PERIOD) <= most_recent_epoch_;
 }
 
 bool DAG::GetDAGNode(ConstByteArray const &hash, DAGNode &node)
@@ -762,7 +752,7 @@ bool DAG::CommitEpoch(DAGEpoch new_epoch)
     if (previous_epochs_.size() > (EPOCH_VALIDITY_PERIOD - 1))
     {
       auto &front_epoch = previous_epochs_.front();
-      assert(front_epoch.hash.size() > 0);
+      assert(!front_epoch.hash.empty());
       SetEpochInStorage(std::to_string(front_epoch.block_number), front_epoch, true);
       previous_epochs_.pop_front();
     }
@@ -811,7 +801,7 @@ void DAG::TraverseFromTips(std::set<ConstByteArray> const &tip_hashes,
 
     // Depth first search of the dag until reaching a finalised node/hash
     // Warning: If the dag is circular this will not terminate
-    while (switch_choices.size() > 0)
+    while (!switch_choices.empty())
     {
       start = switch_hashes.back();  // Hash under evaluation
 
@@ -958,7 +948,7 @@ void DAG::AdvanceTipsInternal(DAGNodePtr node)
 // TODO(HUT): this
 bool DAG::NodeInvalidInternal(DAGNodePtr node)
 {
-  if (node->previous.size() == 0)
+  if (node->previous.empty())
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Invalid dag node seen : no prev references");
     return true;
@@ -988,7 +978,7 @@ bool DAG::SatisfyEpoch(DAGEpoch const &epoch)
   }
 
   auto IsInvalid = [this](DAGNodePtr node) {
-    if (node->previous.size() == 0)
+    if (node->previous.empty())
     {
       return true;
     }

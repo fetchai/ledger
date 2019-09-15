@@ -83,7 +83,7 @@ protected:
 
     byte_array::ByteArray inv_sig_enc{signature.signature()};
 
-    ASSERT_TRUE(inv_sig_enc.size() > 0);
+    ASSERT_TRUE(!inv_sig_enc.empty());
 
     //* Modify the correct signature to invalidate it
     ++inv_sig_enc[inv_sig_enc.size() - 1u];
@@ -131,7 +131,7 @@ protected:
     //* Invalidating signature by modifying it's first byte of it's format
     byte_array::ByteArray inv_sig_enc{signature.signature().Copy()};
 
-    ASSERT_TRUE(inv_sig_enc.size() > 0);
+    ASSERT_TRUE(!inv_sig_enc.empty());
 
     //* Modify the correct signature to invalidate it
     ++inv_sig_enc[0];
@@ -165,7 +165,7 @@ protected:
     ASSERT_TRUE(signature.Verify(priv_key.publicKey(), test_data_));
 
     byte_array::ByteArray modified_data = test_data_.Copy();
-    ASSERT_TRUE(modified_data.size() > 0);
+    ASSERT_TRUE(!modified_data.empty());
 
     //* Modify original data to make verification fail
     ++modified_data[0];

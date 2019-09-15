@@ -128,7 +128,7 @@ public:
     // 1.0 / N * ivar * (N * dxhat - np.sum(dxhat, axis=0) - xhat * np.sum(dxhat * xhat, axis=0))
     // where N = feature_length, dxhat = error_signal, xhat = cached_output_
     TensorType output_error_signal;
-    DataType   feature_length = static_cast<DataType>(inputs.front()->shape()[axis_]);
+    auto       feature_length = static_cast<DataType>(inputs.front()->shape()[axis_]);
     TensorType dmu_dx         = fetch::math::Multiply(error_signal, feature_length);
     TensorType dout_dx        = fetch::math::ReduceSum(error_signal, axis_);
     TensorType dvar_dx =

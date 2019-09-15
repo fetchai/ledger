@@ -28,7 +28,7 @@ inline VectorRegister<float, 128> approx_log(VectorRegister<float, 128> const &x
     exponent = 8,
   };
 
-  constexpr float                  multiplier      = float(1ull << mantissa);
+  constexpr auto                   multiplier      = float(1ull << mantissa);
   constexpr float                  exponent_offset = (float(((1ull << (exponent - 1)) - 1)));
   const VectorRegister<float, 128> a(float(M_LN2 / multiplier));
   const VectorRegister<float, 128> b(float(exponent_offset * multiplier - 60801));
@@ -49,7 +49,7 @@ inline VectorRegister<double, 128> approx_log(VectorRegister<double, 128> const 
   };
 
   alignas(16) constexpr uint64_t    mask[2]         = {uint64_t(-1), 0};
-  constexpr double                  multiplier      = double(1ull << mantissa);
+  constexpr auto                    multiplier      = double(1ull << mantissa);
   constexpr double                  exponent_offset = (double(((1ull << (exponent - 1)) - 1)));
   const VectorRegister<double, 128> a(double(M_LN2 / multiplier));
   const VectorRegister<double, 128> b(double(exponent_offset * multiplier - 60801));

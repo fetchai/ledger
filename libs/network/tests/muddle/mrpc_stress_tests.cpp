@@ -168,7 +168,7 @@ protected:
     for (std::size_t loop = 0; loop < NUM_MESSAGES; ++loop)
     {
       // generate a big load of data
-      uint8_t const        fill = static_cast<uint8_t>(loop);
+      auto const           fill = static_cast<uint8_t>(loop);
       ConstByteArray const data = GenerateData(PAYLOAD_LENGTH, fill);
 
       Promise promise =

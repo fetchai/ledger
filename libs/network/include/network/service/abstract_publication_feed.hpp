@@ -24,7 +24,8 @@
 
 namespace fetch {
 namespace service {
-/* Super class for publishers.
+/*
+ * Super class for publishers.
  * This class is the super class abstraction for the publisher
  * classes. It defines the core functionality for integrating with the
  * rest of the service framework. A subclass of this class can then
@@ -42,8 +43,7 @@ public:
    */
   using function_type = std::function<void(fetch::byte_array::ConstByteArray)>;
 
-  virtual ~AbstractPublicationFeed()
-  {}
+  virtual ~AbstractPublicationFeed() = default;
 
   /* Creates publication function.
    * @feed is the feed handler.

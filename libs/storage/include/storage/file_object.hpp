@@ -111,8 +111,10 @@ public:
   FileObject(FileObject &&other)                = default;
   FileObject &operator=(FileObject &&other) = default;
 
-  FileObject();
-  virtual ~FileObject();
+  FileObject() = default;
+  // TODO(private 1067): consistency in storage : don't flush in destructors, except the highest
+  // level storage code.
+  virtual ~FileObject() = default;
 
   // TODO(private 1067): Unify this new/load methodology to avoid templates
   template <typename... Args>
@@ -213,16 +215,6 @@ private:
 };
 
 template <typename S>
-FileObject<S>::FileObject() = default;
-
-template <typename S>
-FileObject<S>::~FileObject()
-{
-  // TODO(private 1067): consistency in storage : don't flush in destructors, except the highest
-  // level storage code.
-}
-
-template <typename S>
 void FileObject<S>::Flush(bool lazy)
 {
   stack_.Flush(lazy);
@@ -287,7 +279,7 @@ void FileObject<S>::Resize(uint64_t size)
   }
 
   // Traverse the blocks until the target blocks criteria is fulfilled.
-  uint64_t target_blocks = platform::DivideCeil<uint64_t>(size, block_type::CAPACITY);
+  auto target_blocks = platform::DivideCeil<uint64_t>(size, block_type::CAPACITY);
 
   // corner case when size is 0 - we need at least one block per file
   target_blocks = target_blocks == 0 ? 1 : target_blocks;
@@ -474,11 +466,11 @@ bool FileObject<S>::SeekFile(std::size_t position)
 template <typename S>
 void FileObject<S>::CreateNewFile(uint64_t size)
 {
-  block_number_          = 0;
-  byte_index_            = 0;
-  byte_index_global_     = 0;
-  length_                = size;
-  uint64_t target_blocks = platform::DivideCeil<uint64_t>(size, block_type::CAPACITY);
+  block_number_      = 0;
+  byte_index_        = 0;
+  byte_index_global_ = 0;
+  length_            = size;
+  auto target_blocks = platform::DivideCeil<uint64_t>(size, block_type::CAPACITY);
 
   // corner case when size is 0 - we need at least one block per file
   target_blocks = target_blocks == 0 ? 1 : target_blocks;
@@ -784,9 +776,9 @@ void FileObject<S>::FreeBlocksInList(uint64_t remove_index)
 template <typename S>
 bool FileObject<S>::VerifyConsistency(std::vector<uint64_t> const &ids)
 {
-  if (stack_.size() == 0)
+  if (stack_.empty())
   {
-    if (ids.size() != 0)
+    if (!ids.empty())
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Stack size is 0 but attempting to verify with ids");
       return false;
@@ -897,7 +889,7 @@ bool FileObject<S>::VerifyConsistency(std::vector<uint64_t> const &ids)
     Get(index, block);
 
     uint64_t file_bytes      = block.file_object_size;
-    uint64_t expected_blocks = platform::DivideCeil<uint64_t>(file_bytes, block_type::CAPACITY);
+    auto     expected_blocks = platform::DivideCeil<uint64_t>(file_bytes, block_type::CAPACITY);
     expected_blocks          = expected_blocks == 0 ? 1 : expected_blocks;
 
     for (uint64_t i = 0; i < expected_blocks; ++i)

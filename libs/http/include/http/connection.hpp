@@ -55,7 +55,7 @@ public:
                     socket_.remote_endpoint().address().to_string());
   }
 
-  ~HTTPConnection()
+  ~HTTPConnection() override
   {
     manager_.Leave(handle_);
   }

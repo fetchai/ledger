@@ -239,7 +239,7 @@ public:
    */
   void Get(std::size_t i, type &object)
   {
-    assert(filename_ != "");
+    assert(!filename_.empty());
     assert(i < size());
     if (!IsMapped(i))
     {
@@ -247,7 +247,7 @@ public:
     }
 
     std::size_t index          = i - mapped_index_;
-    type *      mapped_objects = reinterpret_cast<type *>(mapped_data_.data());
+    auto *      mapped_objects = reinterpret_cast<type *>(mapped_data_.data());
     memcpy((&object), &(mapped_objects[index]), sizeof(object));
   }
 
@@ -260,7 +260,7 @@ public:
    */
   void Set(std::size_t i, type const &object)
   {
-    assert(filename_ != "");
+    assert(!filename_.empty());
     assert(i <= size());
     if (!IsMapped(i))
     {
@@ -268,7 +268,7 @@ public:
     }
 
     std::size_t index          = i - mapped_index_;
-    type *      mapped_objects = reinterpret_cast<type *>(mapped_data_.data());
+    auto *      mapped_objects = reinterpret_cast<type *>(mapped_data_.data());
     memcpy(&(mapped_objects[index]), &object, sizeof(type));
   }
 
@@ -283,7 +283,7 @@ public:
    */
   void SetBulk(std::size_t i, std::size_t elements, type *objects)
   {
-    assert(filename_ != "");
+    assert(!filename_.empty());
     if ((i + elements) > header_->objects)
     {
       ResizeFile(i, elements);  // Resize file if needed
@@ -316,7 +316,7 @@ public:
    */
   void GetBulk(std::size_t i, std::size_t &elements, type *objects)
   {
-    assert(filename_ != "");
+    assert(!filename_.empty());
     assert(header_->objects > i);
     assert(objects != nullptr);
 
@@ -339,7 +339,7 @@ public:
 
   void SetExtraHeader(header_extra_type const &he)
   {
-    assert(filename_ != "");
+    assert(!filename_.empty());
 
     header_->extra = he;
   }
@@ -385,7 +385,7 @@ public:
       return;
     }
 
-    assert(filename_ != "");
+    assert(!filename_.empty());
 
     // If both indexes lies in already mapped area
     if (IsMapped(i) && IsMapped(j))
@@ -435,7 +435,7 @@ public:
   void Clear()
   {
     Header empty_header;
-    assert(filename_ != "");
+    assert(!filename_.empty());
     std::fstream fin(filename_, std::ios::out | std::ios::binary);
     if (!empty_header.Write(fin))
     {
@@ -524,7 +524,7 @@ private:
   {
     file_handle_.clear();
     file_handle_.seekg(0, file_handle_.end);
-    std::size_t pos = std::size_t(file_handle_.tellg());
+    auto pos = std::size_t(file_handle_.tellg());
     return pos;
   }
   /*
@@ -535,7 +535,7 @@ private:
   void ResizeFile()
   {
     int64_t resize_length = sizeof(type) * MAX;
-    int64_t total_length  = int64_t(header_->size() + (sizeof(type) * (MAX + mapped_index_)));
+    auto    total_length  = int64_t(header_->size() + (sizeof(type) * (MAX + mapped_index_)));
     file_handle_.seekg(total_length, std::ios::beg);
     std::fill_n((std::ostreambuf_iterator<char>(file_handle_)), resize_length, '\0');
     file_handle_.flush();

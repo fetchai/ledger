@@ -93,7 +93,7 @@ ConstByteArray FromBase58(ConstByteArray const &str)
   }
 
   // Allocate enough space in big-endian base256 representation.
-  int size = static_cast<int>((raw_end - raw_start) * 733 /1000 + 1); // log(58) / log(256), rounded up.
+  auto size = static_cast<int>((raw_end - raw_start) * 733 /1000 + 1); // log(58) / log(256), rounded up.
   std::vector<unsigned char> b256(static_cast<std::size_t>(size));
 
   // Process the characters.
@@ -149,7 +149,7 @@ ConstByteArray ToBase58(ConstByteArray const &str)
     zeroes++;
   }
   // Allocate enough space in big-endian base58 representation.
-  int size = static_cast<int>((pend - pbegin) * 138 / 100 + 1); // log(256) / log(58), rounded up.
+  auto size = static_cast<int>((pend - pbegin) * 138 / 100 + 1); // log(256) / log(58), rounded up.
   std::vector<unsigned char> b58(static_cast<std::size_t>(size));
   // Process the bytes.
   while (pbegin != pend) {

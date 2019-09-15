@@ -34,8 +34,8 @@ TEST(blas_gemm_vectorised, blas_gemm_nt_vector1)
       gemm_nt_vector;
   // Compuing _C <= _alpha * _A * T(_B) + _beta * _C
   using Type = double;
-  Type alpha = Type(1);
-  Type beta  = Type(0);
+  auto alpha = Type(1);
+  auto beta  = Type(0);
 
   Tensor<Type>     tensor_A = Tensor<Type>::FromString(R"(
   	0.3745401188473625 0.9507143064099162;
@@ -74,8 +74,8 @@ TEST(blas_gemm_vectorised, blas_gemm_nt_vector2)
       gemm_nt_vector;
   // Compuing _C <= _alpha * _A * T(_B) + _beta * _C
   using Type = double;
-  Type alpha = Type(0);
-  Type beta  = Type(1);
+  auto alpha = Type(0);
+  auto beta  = Type(1);
 
   Tensor<Type>     tensor_A = Tensor<Type>::FromString(R"(
   	0.13949386065204183 0.29214464853521815;
@@ -114,8 +114,8 @@ TEST(blas_gemm_vectorised, blas_gemm_nt_vector3)
       gemm_nt_vector;
   // Compuing _C <= _alpha * _A * T(_B) + _beta * _C
   using Type = double;
-  Type alpha = Type(1);
-  Type beta  = Type(1);
+  auto alpha = Type(1);
+  auto beta  = Type(1);
 
   Tensor<Type>     tensor_A = Tensor<Type>::FromString(R"(
   	0.034388521115218396 0.9093204020787821;
@@ -154,8 +154,8 @@ TEST(blas_gemm_vectorised, blas_gemm_nt_vector4)
       gemm_nt_vector;
   // Compuing _C <= _alpha * _A * T(_B) + _beta * _C
   using Type = double;
-  Type alpha = Type(0.09234332059409012);
-  Type beta  = Type(0.028637277319250032);
+  auto alpha = Type(0.09234332059409012);
+  auto beta  = Type(0.028637277319250032);
 
   Tensor<Type>     tensor_A = Tensor<Type>::FromString(R"(
   	0.3567533266935893 0.28093450968738076;
@@ -194,8 +194,8 @@ TEST(blas_gemm_vectorised, blas_gemm_nt_vector5)
       gemm_nt_vector;
   // Compuing _C <= _alpha * _A * T(_B) + _beta * _C
   using Type = double;
-  Type alpha = Type(0.7330742759599637);
-  Type beta  = Type(0.1720994888236329);
+  auto alpha = Type(0.7330742759599637);
+  auto beta  = Type(0.1720994888236329);
 
   Tensor<Type>     tensor_A = Tensor<Type>::FromString(R"(
   	0.3109823217156622 0.32518332202674705 0.7296061783380641 0.6375574713552131 0.8872127425763265 0.4722149251619493 0.1195942459383017 0.713244787222995 0.7607850486168974 0.5612771975694962 0.770967179954561 0.49379559636439074;
@@ -251,8 +251,8 @@ TEST(blas_gemm_vectorised, blas_gemm_nt_vector6)
       gemm_nt_vector;
   // Compuing _C <= _alpha * _A * T(_B) + _beta * _C
   using Type = double;
-  Type alpha = Type(0.4662198317704147);
-  Type beta  = Type(0.1783627309418686);
+  auto alpha = Type(0.4662198317704147);
+  auto beta  = Type(0.1783627309418686);
 
   Tensor<Type>     tensor_A = Tensor<Type>::FromString(R"(
   	0.1952429877980445 0.7224521152615053 0.2807723624408558 0.02431596643145384 0.6454722959071678 0.17711067940704894 0.9404585843529143 0.9539285770025874;
@@ -307,8 +307,8 @@ TEST(blas_gemm_vectorised, blas_gemm_nt_vector7)
       gemm_nt_vector;
   // Compuing _C <= _alpha * _A * T(_B) + _beta * _C
   using Type = double;
-  Type alpha = Type(0.2578602246055949);
-  Type beta  = Type(0.028060648362342677);
+  auto alpha = Type(0.2578602246055949);
+  auto beta  = Type(0.028060648362342677);
 
   Tensor<Type>     tensor_A = Tensor<Type>::FromString(R"(
   	0.9307573256035647 0.8584127518430118

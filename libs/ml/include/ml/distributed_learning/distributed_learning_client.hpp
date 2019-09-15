@@ -33,6 +33,7 @@
 #include <queue>
 #include <string>
 #include <thread>
+#include <utility>
 #include <vector>
 
 namespace fetch {
@@ -65,10 +66,10 @@ public:
   TrainingClient(std::string const &id, ClientParams<DataType> const &client_params);
 
   TrainingClient(
-      std::string const &id, std::shared_ptr<fetch::ml::Graph<TensorType>> const &graph_ptr,
-      std::shared_ptr<fetch::ml::dataloaders::DataLoader<TensorType, TensorType>> const &loader_ptr,
-      std::shared_ptr<fetch::ml::optimisers::Optimiser<TensorType>> const &optimiser_ptr,
-      ClientParams<DataType> const &                                       client_params);
+      std::string id, std::shared_ptr<fetch::ml::Graph<TensorType>> graph_ptr,
+      std::shared_ptr<fetch::ml::dataloaders::DataLoader<TensorType, TensorType>> loader_ptr,
+      std::shared_ptr<fetch::ml::optimisers::Optimiser<TensorType>>               optimiser_ptr,
+      ClientParams<DataType> const &                                              client_params);
 
   virtual ~TrainingClient()
   {
@@ -87,8 +88,6 @@ public:
   VectorTensorType GetGradients() const;
 
   VectorTensorType GetWeights() const;
-
-  void AddPeers(std::vector<std::shared_ptr<TrainingClient>> const &clients);
 
   void AddGradient(GradientType &gradient);
 
@@ -167,14 +166,14 @@ protected:
 
 template <class TensorType>
 TrainingClient<TensorType>::TrainingClient(
-    std::string const &id, std::shared_ptr<fetch::ml::Graph<TensorType>> const &graph_ptr,
-    std::shared_ptr<fetch::ml::dataloaders::DataLoader<TensorType, TensorType>> const &loader_ptr,
-    std::shared_ptr<fetch::ml::optimisers::Optimiser<TensorType>> const &optimiser_ptr,
-    ClientParams<DataType> const &                                       client_params)
+    std::string id, std::shared_ptr<fetch::ml::Graph<TensorType>> graph_ptr,
+    std::shared_ptr<fetch::ml::dataloaders::DataLoader<TensorType, TensorType>> loader_ptr,
+    std::shared_ptr<fetch::ml::optimisers::Optimiser<TensorType>>               optimiser_ptr,
+    ClientParams<DataType> const &                                              client_params)
   : id_(std::move(id))
-  , g_ptr_(graph_ptr)
-  , dataloader_ptr_(loader_ptr)
-  , opti_ptr_(optimiser_ptr)
+  , g_ptr_(std::move(graph_ptr))
+  , dataloader_ptr_(std::move(loader_ptr))
+  , opti_ptr_(std::move(optimiser_ptr))
 {
   SetParams(client_params);
   ClearLossFile();
@@ -524,7 +523,9 @@ void TrainingClient<TensorType>::ExportBufferLoop()
   {
     export_buffer_cv_.wait(l);
     if (export_stopped_)
+    {
       break;
+    }
 
     if (!export_buffer_.empty())
     {

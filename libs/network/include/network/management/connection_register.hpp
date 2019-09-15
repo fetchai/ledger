@@ -63,7 +63,7 @@ public:
   ConnectionRegisterImpl &operator=(ConnectionRegisterImpl const &other) = delete;
   ConnectionRegisterImpl &operator=(ConnectionRegisterImpl &&other) = default;
 
-  virtual ~ConnectionRegisterImpl() = default;
+  ~ConnectionRegisterImpl() override = default;
 
   template <typename T, typename... Args>
   shared_service_client_type CreateServiceClient(NetworkManager const &tm, Args &&... args)
@@ -146,7 +146,7 @@ public:
 
   void Enter(weak_connection_type const &wptr) override
   {
-    connection_handle_type handle = connection_handle_type(-1);
+    auto handle = connection_handle_type(-1);
 
     {
       auto ptr = wptr.lock();

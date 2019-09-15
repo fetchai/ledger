@@ -308,11 +308,11 @@ public:
   template <typename F, typename V>
   type SumReduce(TrivialRange const &range, F &&vector_reduce, V const &a)
   {
-    int SFL      = int(range.SIMDFromLower<VectorRegisterType::E_BLOCK_COUNT>());
-    int SF       = int(range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>());
-    int ST       = int(range.SIMDToLower<VectorRegisterType::E_BLOCK_COUNT>());
-    int STU      = int(range.SIMDToUpper<VectorRegisterType::E_BLOCK_COUNT>());
-    int SIMDSize = STU - SFL;
+    auto SFL      = int(range.SIMDFromLower<VectorRegisterType::E_BLOCK_COUNT>());
+    auto SF       = int(range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>());
+    auto ST       = int(range.SIMDToLower<VectorRegisterType::E_BLOCK_COUNT>());
+    auto STU      = int(range.SIMDToUpper<VectorRegisterType::E_BLOCK_COUNT>());
+    int  SIMDSize = STU - SFL;
 
     VectorRegisterIteratorType self_iter(this->pointer(), std::size_t(SIMDSize));
     VectorRegisterIteratorType a_iter(a.pointer(), std::size_t(SIMDSize));
@@ -371,11 +371,11 @@ public:
   template <typename F>
   type SumReduce(TrivialRange const &range, F &&vector_reduce)
   {
-    int SFL      = int(range.SIMDFromLower<VectorRegisterType::E_BLOCK_COUNT>());
-    int SF       = int(range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>());
-    int ST       = int(range.SIMDToLower<VectorRegisterType::E_BLOCK_COUNT>());
-    int STU      = int(range.SIMDToUpper<VectorRegisterType::E_BLOCK_COUNT>());
-    int SIMDSize = STU - SFL;
+    auto SFL      = int(range.SIMDFromLower<VectorRegisterType::E_BLOCK_COUNT>());
+    auto SF       = int(range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>());
+    auto ST       = int(range.SIMDToLower<VectorRegisterType::E_BLOCK_COUNT>());
+    auto STU      = int(range.SIMDToUpper<VectorRegisterType::E_BLOCK_COUNT>());
+    int  SIMDSize = STU - SFL;
 
     type                       ret = 0;
     VectorRegisterIteratorType self_iter(this->pointer(), std::size_t(SIMDSize));
@@ -653,12 +653,12 @@ public:
   template <typename F>
   void Apply(TrivialRange const &range, F &&apply)
   {
-    int SFL = int(range.SIMDFromLower<VectorRegisterType::E_BLOCK_COUNT>());
+    auto SFL = int(range.SIMDFromLower<VectorRegisterType::E_BLOCK_COUNT>());
 
-    int SF = int(range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>());
-    int ST = int(range.SIMDToLower<VectorRegisterType::E_BLOCK_COUNT>());
+    auto SF = int(range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>());
+    auto ST = int(range.SIMDToLower<VectorRegisterType::E_BLOCK_COUNT>());
 
-    int STU = int(range.SIMDToUpper<VectorRegisterType::E_BLOCK_COUNT>());
+    auto STU = int(range.SIMDToUpper<VectorRegisterType::E_BLOCK_COUNT>());
 
     VectorRegisterType c;
 
@@ -701,13 +701,13 @@ public:
   template <typename F, typename... Args>
   void Apply(TrivialRange const &range, F &&apply, Args &&... args)
   {
-    int SFL = int(range.SIMDFromLower<VectorRegisterType::E_BLOCK_COUNT>());
+    auto SFL = int(range.SIMDFromLower<VectorRegisterType::E_BLOCK_COUNT>());
 
-    int SF = int(range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>());
-    int ST = int(range.SIMDToLower<VectorRegisterType::E_BLOCK_COUNT>());
+    auto SF = int(range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>());
+    auto ST = int(range.SIMDToLower<VectorRegisterType::E_BLOCK_COUNT>());
 
-    int STU      = int(range.SIMDToUpper<VectorRegisterType::E_BLOCK_COUNT>());
-    int SIMDSize = STU - SFL;
+    auto STU      = int(range.SIMDToUpper<VectorRegisterType::E_BLOCK_COUNT>());
+    int  SIMDSize = STU - SFL;
 
     VectorRegisterType         regs[sizeof...(args)], c;
     VectorRegisterIteratorType iters[sizeof...(args)];

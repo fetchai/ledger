@@ -117,8 +117,7 @@ protected:
 class RMessage : public RBCMessage
 {
 public:
-  // Destruction
-  virtual ~RMessage() = default;
+  ~RMessage() override = default;
 
   RBCSerializer Serialize() const override
   {
@@ -147,8 +146,7 @@ protected:
 class RHash : public RBCMessage
 {
 public:
-  // Destruction
-  virtual ~RHash() = default;
+  ~RHash() override = default;
 
   RBCSerializer Serialize() const override
   {

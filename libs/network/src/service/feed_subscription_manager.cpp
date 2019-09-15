@@ -41,7 +41,7 @@ void FeedSubscriptionManager::PublishingProcessor()
     network::message_type  msg           = std::get<2>(w);
     if (!service->DeliverResponse(client_number, msg.Copy()))
     {
-      dead_connections.push_back(std::make_tuple(service, client_number));
+      dead_connections.emplace_back(service, client_number);
     }
   }
   if (!dead_connections.empty())

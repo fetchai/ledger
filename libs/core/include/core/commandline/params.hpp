@@ -61,7 +61,7 @@ public:
     for (int i = 0; i < argc; i++)
     {
       auto s = std::string(argv[i]);
-      if (s.size() > 0 && s[0] == '-')
+      if (!s.empty() && s[0] == '-')
       {
         if (s.size() > 1 && s[1] == '-')
         {
@@ -100,8 +100,7 @@ public:
     }
   }
 
-  virtual ~Params()
-  {}
+  virtual ~Params() = default;
 
   template <class TYPE>
   void add(TYPE &assignee, const std::string &name, const std::string &help, TYPE deflt)

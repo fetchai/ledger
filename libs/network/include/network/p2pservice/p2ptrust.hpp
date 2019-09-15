@@ -57,8 +57,7 @@ public:
   }
   double delta, min, max;
 
-  ~TrustModifier2()
-  {}
+  ~TrustModifier2() = default;
 };
 
 using trust_modifiers_type = std::array<std::array<TrustModifier, 4>, 3>;

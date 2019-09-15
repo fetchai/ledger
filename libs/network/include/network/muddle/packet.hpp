@@ -249,7 +249,7 @@ inline Packet::RawAddress const &Packet::GetSenderRaw() const noexcept
 
 inline Packet::Address const &Packet::GetTarget() const
 {
-  if (target_.size() == 0)
+  if (target_.empty())
   {
     byte_array::ByteArray target;
     target.Resize(std::size_t{ADDRESS_SIZE});
@@ -263,7 +263,7 @@ inline Packet::Address const &Packet::GetTarget() const
 
 inline Packet::Address const &Packet::GetSender() const
 {
-  if (sender_.size() == 0)
+  if (sender_.empty())
   {
     byte_array::ByteArray sender;
     sender.Resize(std::size_t{ADDRESS_SIZE});

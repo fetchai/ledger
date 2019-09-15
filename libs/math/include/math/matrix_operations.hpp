@@ -255,7 +255,7 @@ meta::IfIsMathArray<Tensor<T, C>, T> Product(Tensor<T, C> const &array1)
 template <typename T>
 void Product(std::vector<T> const &obj1, T &ret)
 {
-  if (obj1.size() == 0)
+  if (obj1.empty())
   {
     ret = 0;
   }
@@ -643,7 +643,7 @@ meta::IfIsMathArray<ArrayType, void> ReduceMean(ArrayType const &               
 {
   using Type = typename ArrayType::Type;
 
-  Type n = static_cast<Type>(obj1.shape().at(axis));
+  auto n = static_cast<Type>(obj1.shape().at(axis));
   ReduceSum(obj1, axis, ret);
   Divide(ret, n, ret);
 }
@@ -661,7 +661,7 @@ meta::IfIsMathArray<ArrayType, ArrayType> ReduceMean(ArrayType const &          
 {
   using Type = typename ArrayType::Type;
 
-  Type      n   = static_cast<Type>(obj1.shape().at(axis));
+  auto      n   = static_cast<Type>(obj1.shape().at(axis));
   ArrayType ret = ReduceSum(obj1, axis);
   Divide(ret, n, ret);
   return ret;
@@ -948,7 +948,7 @@ meta::IfIsMathArray<ArrayType, void> ArgMax(ArrayType const &array, ArrayType &r
     auto     it       = array.begin();
     Type     value    = numeric_lowest<Type>();
 
-    SizeType counter = SizeType{0};
+    auto counter = SizeType{0};
     while (it.is_valid())
     {
       if (*it > value)

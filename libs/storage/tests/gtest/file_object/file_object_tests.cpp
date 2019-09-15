@@ -49,7 +49,7 @@ protected:
 
   char NewChar()
   {
-    char a = char(rng_());
+    auto a = char(rng_());
     return a == '\0' ? '0' : a;
   }
 
@@ -96,9 +96,9 @@ TEST_F(FileObjectTests, CreateAndWriteFilesConfirmUniqueIDs)
   std::vector<std::string>                  strings_to_set;
   std::unordered_map<uint64_t, std::string> file_ids;
 
-  strings_to_set.push_back("whoooo, hoo");
-  strings_to_set.push_back("");
-  strings_to_set.push_back("1");
+  strings_to_set.emplace_back("whoooo, hoo");
+  strings_to_set.emplace_back("");
+  strings_to_set.emplace_back("1");
 
   for (std::size_t i = 0; i < 100; ++i)
   {
@@ -128,9 +128,9 @@ TEST_F(FileObjectTests, CreateAndWriteFilesConfirmRecovery)
   std::vector<std::string>                  strings_to_set;
   std::unordered_map<uint64_t, std::string> file_ids;
 
-  strings_to_set.push_back("whoooo, hoo");
-  strings_to_set.push_back("");
-  strings_to_set.push_back("1");
+  strings_to_set.emplace_back("whoooo, hoo");
+  strings_to_set.emplace_back("");
+  strings_to_set.emplace_back("1");
 
   for (std::size_t i = 0; i < 100; ++i)
   {
@@ -171,9 +171,9 @@ TEST_F(FileObjectTests, ResizeAndWriteFiles)
   std::vector<std::string>                  strings_to_set;
   std::unordered_map<uint64_t, std::string> file_ids;
 
-  strings_to_set.push_back("whoooo, hoo");
-  strings_to_set.push_back("");
-  strings_to_set.push_back("1");
+  strings_to_set.emplace_back("whoooo, hoo");
+  strings_to_set.emplace_back("");
+  strings_to_set.emplace_back("1");
 
   for (std::size_t i = 0; i < 100; ++i)
   {

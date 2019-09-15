@@ -453,11 +453,11 @@ void Analyser::BuildFunctionDefinition(BlockNodePtr const &parent_block_node,
   ExpressionNodePtr identifier_node =
       ConvertToExpressionNodePtr(function_definition_node->children[1]);
   std::string const &    name  = identifier_node->text;
-  int const              count = static_cast<int>(function_definition_node->children.size());
+  auto const             count = static_cast<int>(function_definition_node->children.size());
   VariablePtrArray       parameter_variables;
   TypePtrArray           parameter_types;
   ExpressionNodePtrArray parameter_nodes;
-  int const              num_parameters = int((count - 3) / 2);
+  auto const             num_parameters = int((count - 3) / 2);
   int                    problems       = 0;
   for (int i = 0; i < num_parameters; ++i)
   {
@@ -720,7 +720,7 @@ void Analyser::AnnotateFunctionDefinitionStatement(BlockNodePtr const &function_
   function_     = identifier_node->function;
   use_any_node_ = nullptr;
   AnnotateBlock(function_definition_node);
-  if (errors_.size() == 0)
+  if (errors_.empty())
   {
     if (!function_->return_type->IsVoid())
     {

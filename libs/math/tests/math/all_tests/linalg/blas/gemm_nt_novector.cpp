@@ -34,8 +34,8 @@ TEST(blas_DGEMM, blas_gemm_nt_novector1)
       gemm_nt_novector;
   // Compuing _C <= _alpha * _A * T(_B) + _beta * _C
   using Type = double;
-  Type alpha = Type(1);
-  Type beta  = Type(0);
+  auto alpha = Type(1);
+  auto beta  = Type(0);
 
   Tensor<Type>     tensor_A = Tensor<Type>::FromString(R"(
   	0.3745401188473625 0.9507143064099162;
@@ -74,8 +74,8 @@ TEST(blas_DGEMM, blas_gemm_nt_novector2)
       gemm_nt_novector;
   // Compuing _C <= _alpha * _A * T(_B) + _beta * _C
   using Type = double;
-  Type alpha = Type(0);
-  Type beta  = Type(1);
+  auto alpha = Type(0);
+  auto beta  = Type(1);
 
   Tensor<Type>     tensor_A = Tensor<Type>::FromString(R"(
   	0.13949386065204183 0.29214464853521815;
@@ -114,8 +114,8 @@ TEST(blas_DGEMM, blas_gemm_nt_novector3)
       gemm_nt_novector;
   // Compuing _C <= _alpha * _A * T(_B) + _beta * _C
   using Type = double;
-  Type alpha = Type(1);
-  Type beta  = Type(1);
+  auto alpha = Type(1);
+  auto beta  = Type(1);
 
   Tensor<Type>     tensor_A = Tensor<Type>::FromString(R"(
   	0.034388521115218396 0.9093204020787821;
@@ -154,8 +154,8 @@ TEST(blas_DGEMM, blas_gemm_nt_novector4)
       gemm_nt_novector;
   // Compuing _C <= _alpha * _A * T(_B) + _beta * _C
   using Type = double;
-  Type alpha = Type(0.1381892215704098);
-  Type beta  = Type(0.7309489064136471);
+  auto alpha = Type(0.1381892215704098);
+  auto beta  = Type(0.7309489064136471);
 
   Tensor<Type>     tensor_A = Tensor<Type>::FromString(R"(
   	0.3567533266935893 0.28093450968738076;
@@ -194,8 +194,8 @@ TEST(blas_DGEMM, blas_gemm_nt_novector5)
       gemm_nt_novector;
   // Compuing _C <= _alpha * _A * T(_B) + _beta * _C
   using Type = double;
-  Type alpha = Type(0.521912677868785);
-  Type beta  = Type(0.8448690612373446);
+  auto alpha = Type(0.521912677868785);
+  auto beta  = Type(0.8448690612373446);
 
   Tensor<Type>     tensor_A = Tensor<Type>::FromString(R"(
   	0.3109823217156622;
@@ -238,8 +238,8 @@ TEST(blas_DGEMM, blas_gemm_nt_novector6)
       gemm_nt_novector;
   // Compuing _C <= _alpha * _A * T(_B) + _beta * _C
   using Type = double;
-  Type alpha = Type(0.7949598267764906);
-  Type beta  = Type(0.21881849703806533);
+  auto alpha = Type(0.7949598267764906);
+  auto beta  = Type(0.21881849703806533);
 
   Tensor<Type>     tensor_A = Tensor<Type>::FromString(R"(
   	0.22879816549162246 0.07697990982879299 0.289751452913768 0.16122128725400442;

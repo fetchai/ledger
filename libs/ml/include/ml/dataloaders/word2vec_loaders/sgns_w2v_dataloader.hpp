@@ -139,9 +139,10 @@ GraphW2VLoader<T>::GraphW2VLoader(SizeType window_size, SizeType negative_sample
 template <typename T>
 T GraphW2VLoader<T>::EstimatedSampleNumber()
 {
-  T estimated_sample_number = T{0};
-  T word_freq;
-  T estimated_sample_number_per_word = static_cast<T>((window_size_ + 1) * (1 + negative_samples_));
+  auto estimated_sample_number = T{0};
+  T    word_freq;
+  auto estimated_sample_number_per_word =
+      static_cast<T>((window_size_ + 1) * (1 + negative_samples_));
 
   for (auto word_count : word_id_counts_)
   {
@@ -411,7 +412,7 @@ void GraphW2VLoader<T>::BufferNextSamples()
   SizeType dynamic_size = lfg_() % window_size_ + 1;
 
   // for the interested one word
-  T cur_word_id = T(data_.at(current_sentence_).at(current_word_));
+  auto cur_word_id = T(data_.at(current_sentence_).at(current_word_));
 
   // set up a counter to add samples to buffer
   SizeType counter = 0;

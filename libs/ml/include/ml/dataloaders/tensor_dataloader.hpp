@@ -42,7 +42,7 @@ class TensorDataLoader : public DataLoader<LabelType, InputType>
 
 public:
   TensorDataLoader() = default;
-  TensorDataLoader(SizeVector const &label_shape, std::vector<SizeVector> const &data_shapes);
+  TensorDataLoader(SizeVector label_shape, std::vector<SizeVector> data_shapes);
 
   ~TensorDataLoader() override = default;
 
@@ -93,11 +93,11 @@ protected:
 };
 
 template <typename LabelType, typename InputType>
-TensorDataLoader<LabelType, InputType>::TensorDataLoader(SizeVector const &             label_shape,
-                                                         std::vector<SizeVector> const &data_shapes)
+TensorDataLoader<LabelType, InputType>::TensorDataLoader(SizeVector              label_shape,
+                                                         std::vector<SizeVector> data_shapes)
   : DataLoader<LabelType, TensorType>()
-  , label_shape_(label_shape)
-  , data_shapes_(data_shapes)
+  , label_shape_(std::move(label_shape))
+  , data_shapes_(std::move(data_shapes))
 {
   UpdateCursor();
 }
