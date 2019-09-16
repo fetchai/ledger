@@ -50,8 +50,8 @@ public:
   using transaction_map_type    = std::unordered_map<digest_type, transaction_type>;
   using transaction_list_type   = std::vector<transaction_type>;
   using transaction_matrix_type = std::vector<transaction_list_type>;
-  using annealer_type           = fetch::optimisers::BinaryAnnealer;
-  using state_type              = annealer_type::state_type;
+  using AnnealerType            = fetch::optimisers::BinaryAnnealer;
+  using state_type              = AnnealerType::state_type;
 
   enum class Strategy : uint8_t
   {
@@ -444,9 +444,9 @@ private:
   double      best_solution_energy_ = 0;
   double      state_energy_         = 0;
 
-  state_type    state_;
-  state_type    best_solution_;
-  annealer_type annealer_;
+  state_type   state_;
+  state_type   best_solution_;
+  AnnealerType annealer_;
 
   transaction_map_type    all_;
   transaction_list_type   unspent_;

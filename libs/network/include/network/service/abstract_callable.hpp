@@ -136,7 +136,7 @@ struct Packer<T>
  * The serializer is is always left at position 0.
  */
 template <typename S, typename... arguments>
-void PackCall(S &serializer, protocol_handler_type const &protocol,
+void PackCall(S &serializer, ProtocolHandlerType const &protocol,
               FunctionHandlerType const &function, arguments &&... args)
 {
   serializer << protocol;
@@ -154,7 +154,7 @@ void PackCall(S &serializer, protocol_handler_type const &protocol,
  * serializer is is always left at position 0.
  */
 template <typename S>
-void PackCall(S &serializer, protocol_handler_type const &protocol,
+void PackCall(S &serializer, ProtocolHandlerType const &protocol,
               FunctionHandlerType const &function)
 {
   serializer << protocol;
@@ -174,7 +174,7 @@ void PackCall(S &serializer, protocol_handler_type const &protocol,
  * The serializer is left at position 0.
  */
 template <typename S>
-void PackCallWithPackedArguments(S &serializer, protocol_handler_type const &protocol,
+void PackCallWithPackedArguments(S &serializer, ProtocolHandlerType const &protocol,
                                  FunctionHandlerType const &  function,
                                  byte_array::ByteArray const &args)
 {
@@ -258,9 +258,9 @@ public:
    * @result is a serializer used to serialize the result.
    * @params is a serializer that is used to deserialize the arguments.
    */
-  virtual void operator()(serializer_type &result, serializer_type &params) = 0;
-  virtual void operator()(serializer_type &result, CallableArgumentList const &additional_args,
-                          serializer_type &params)                          = 0;
+  virtual void operator()(SerializerType &result, SerializerType &params) = 0;
+  virtual void operator()(SerializerType &result, CallableArgumentList const &additional_args,
+                          SerializerType &params)                         = 0;
 
   uint64_t meta_data() const
   {

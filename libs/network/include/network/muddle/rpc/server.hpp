@@ -37,7 +37,7 @@ class Server : public service::ServiceServerInterface
 {
 public:
   using ConnectionHandle = service::ServiceServerInterface::ConnectionHandleType;
-  using ProtocolId       = service::protocol_handler_type;
+  using ProtocolId       = service::ProtocolHandlerType;
   using Protocol         = service::Protocol;
   using Address          = MuddleEndpoint::Address;
   using SubscriptionPtr  = MuddleEndpoint::SubscriptionPtr;

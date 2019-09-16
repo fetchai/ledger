@@ -39,8 +39,8 @@ public:
 
   virtual ~ServiceServerInterface() = default;
 
-  void Add(protocol_handler_type const &name,
-           Protocol *                   protocol)  // TODO(issue 19): Rename to AddProtocol
+  void Add(ProtocolHandlerType const &name,
+           Protocol *                 protocol)  // TODO(issue 19): Rename to AddProtocol
   {
     if (name < 1 || name > 255)
     {
@@ -65,7 +65,7 @@ protected:
   bool PushProtocolRequest(ConnectionHandleType client, network::message_type const &msg,
                            CallContext const &context = CallContext())
   {
-    serializer_type           params(msg);
+    SerializerType            params(msg);
     ServiceClassificationType type;
     params >> type;
 
@@ -92,12 +92,12 @@ protected:
     return success;
   }
 
-  bool HandleRPCCallRequest(ConnectionHandleType client, serializer_type params,
+  bool HandleRPCCallRequest(ConnectionHandleType client, SerializerType params,
                             CallContext context = CallContext())
   {
-    bool            ret = true;
-    serializer_type result;
-    PromiseCounter  id;
+    bool           ret = true;
+    SerializerType result;
+    PromiseCounter id;
 
     try
     {
@@ -110,7 +110,7 @@ protected:
     catch (serializers::SerializableException const &e)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Serialization error (Function Call): ", e.what());
-      result = serializer_type();
+      result = SerializerType();
       result << SERVICE_ERROR << id << e;
     }
 
@@ -122,12 +122,12 @@ protected:
     }
     return ret;
   }
-  bool HandleSubscribeRequest(ConnectionHandleType client, serializer_type params)
+  bool HandleSubscribeRequest(ConnectionHandleType client, SerializerType params)
   {
-    bool                      ret = true;
-    protocol_handler_type     protocol;
-    feed_handler_type         feed;
-    subscription_handler_type subid;
+    bool                    ret = true;
+    ProtocolHandlerType     protocol;
+    feed_handler_type       feed;
+    SubscriptionHandlerType subid;
 
     try
     {
@@ -139,7 +139,7 @@ protected:
     catch (serializers::SerializableException const &e)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Serialization error (Subscribe): ", e.what());
-      // result = serializer_type();
+      // result = SerializerType();
       // result << SERVICE_ERROR << id << e;
       throw e;  // TODO(ed): propagate error other other size
     }
@@ -147,12 +147,12 @@ protected:
     return ret;
   }
 
-  bool HandleUnsubscribeRequest(ConnectionHandleType client, serializer_type params)
+  bool HandleUnsubscribeRequest(ConnectionHandleType client, SerializerType params)
   {
-    bool                      ret = true;
-    protocol_handler_type     protocol;
-    feed_handler_type         feed;
-    subscription_handler_type subid;
+    bool                    ret = true;
+    ProtocolHandlerType     protocol;
+    feed_handler_type       feed;
+    SubscriptionHandlerType subid;
 
     try
     {
@@ -164,7 +164,7 @@ protected:
     catch (serializers::SerializableException const &e)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Serialization error (Unsubscribe): ", e.what());
-      // result = serializer_type();
+      // result = SerializerType();
       // result << SERVICE_ERROR << id << e;
       throw e;  // TODO(ed): propagate error other other size
     }
@@ -188,11 +188,11 @@ protected:
   }
 
 private:
-  void ExecuteCall(serializer_type &result, ConnectionHandleType const &connection_handle,
-                   serializer_type params, CallContext const &context = CallContext())
+  void ExecuteCall(SerializerType &result, ConnectionHandleType const &connection_handle,
+                   SerializerType params, CallContext const &context = CallContext())
   {
-    protocol_handler_type protocol_number;
-    FunctionHandlerType   function_number;
+    ProtocolHandlerType protocol_number;
+    FunctionHandlerType function_number;
     params >> protocol_number >> function_number;
 
     auto identifier = std::to_string(protocol_number) + ":" + std::to_string(function_number) +

@@ -114,7 +114,7 @@ public:
   template <typename... Args>
   void Publish(feed_handler_type feed, Args &&... args)
   {
-    serializer_type params;
+    SerializerType params;
 
     // TODO(issue 21): we should benchmark subscription too
     PackArgs(params, std::forward<Args>(args)...);

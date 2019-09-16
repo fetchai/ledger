@@ -39,7 +39,7 @@ public:
   using shared_type          = std::shared_ptr<AbstractConnection>;
   using ConnectionHandleType = typename AbstractConnectionRegister::ConnectionHandleType;
   using weak_ptr_type        = std::weak_ptr<AbstractConnection>;
-  using weak_register_type   = std::weak_ptr<AbstractConnectionRegister>;
+  using WeakRegisterType     = std::weak_ptr<AbstractConnectionRegister>;
 
   static constexpr char const *LOGGING_NAME = "AbstractConnection";
 
@@ -98,7 +98,7 @@ public:
   {
     return handle_;
   }
-  void SetConnectionManager(weak_register_type const &reg)
+  void SetConnectionManager(WeakRegisterType const &reg)
   {
     connection_register_ = reg;
   }
@@ -251,7 +251,7 @@ private:
     return ret;
   }
 
-  weak_register_type                      connection_register_;
+  WeakRegisterType                        connection_register_;
   std::atomic<ConnectionHandleType> const handle_;
 
   static ConnectionHandleType global_handle_counter_;

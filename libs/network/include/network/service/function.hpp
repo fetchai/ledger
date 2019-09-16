@@ -55,7 +55,7 @@ private:
   template <typename U, typename... used_args>
   struct Invoke
   {
-    static void MemberFunction(serializer_type &result, function_type &m, used_args &... args)
+    static void MemberFunction(SerializerType &result, function_type &m, used_args &... args)
     {
       result << return_type(m(args...));
     };
@@ -70,7 +70,7 @@ private:
   template <typename... used_args>
   struct Invoke<void, used_args...>
   {
-    static void MemberFunction(serializer_type &result, function_type &m, used_args &... args)
+    static void MemberFunction(SerializerType &result, function_type &m, used_args &... args)
     {
       m(args...);
       result << uint8_t(0);
@@ -90,7 +90,7 @@ private:
     template <typename T, typename... remaining_args>
     struct LoopOver
     {
-      static void Unroll(serializer_type &result, function_type &m, serializer_type &s,
+      static void Unroll(SerializerType &result, function_type &m, SerializerType &s,
                          used_args &... used)
       {
         T l;
@@ -106,7 +106,7 @@ private:
     template <typename T>
     struct LoopOver<T>
     {
-      static void Unroll(serializer_type &result, function_type &m, serializer_type &s,
+      static void Unroll(SerializerType &result, function_type &m, SerializerType &s,
                          used_args &... used)
       {
         T l;
@@ -133,12 +133,12 @@ public:
    * that the serializer is positioned at the beginning of the argument
    * list.
    */
-  void operator()(serializer_type &result, serializer_type &params) override
+  void operator()(SerializerType &result, SerializerType &params) override
   {
     UnrollArguments<>::template LoopOver<Args...>::Unroll(result, function_, params);
   }
-  void operator()(serializer_type & /*result*/, CallableArgumentList const & /*additional_args*/,
-                  serializer_type & /*params*/) override
+  void operator()(SerializerType & /*result*/, CallableArgumentList const & /*additional_args*/,
+                  SerializerType & /*params*/) override
   {
     TODO_FAIL("No support for custom added args yet");
   }
@@ -162,13 +162,13 @@ public:
     : function_{std::move(value)}
   {}
 
-  void operator()(serializer_type &result, serializer_type & /*params*/) override
+  void operator()(SerializerType &result, SerializerType & /*params*/) override
   {
     result << R(function_());
   }
 
-  void operator()(serializer_type & /*result*/, CallableArgumentList const & /*additional_args*/,
-                  serializer_type & /*params*/) override
+  void operator()(SerializerType & /*result*/, CallableArgumentList const & /*additional_args*/,
+                  SerializerType & /*params*/) override
   {
     TODO_FAIL("No support for custom added args yet");
   }
@@ -192,13 +192,13 @@ public:
     : function_{std::move(value)}
   {}
 
-  void operator()(serializer_type &result, serializer_type & /*params*/) override
+  void operator()(SerializerType &result, SerializerType & /*params*/) override
   {
     function_();
     result << uint8_t(0);
   }
-  void operator()(serializer_type & /*result*/, CallableArgumentList const & /*additional_args*/,
-                  serializer_type & /*params*/) override
+  void operator()(SerializerType & /*result*/, CallableArgumentList const & /*additional_args*/,
+                  SerializerType & /*params*/) override
   {
     TODO_FAIL("No support for custom added args yet");
   }

@@ -65,11 +65,11 @@ void FeedSubscriptionManager::AttachToService(ServiceServerInterface *service)
   auto feed = feed_;
   publisher_->create_publisher(feed_, [service, feed,
                                        this](fetch::byte_array::ConstByteArray const &msg) {
-    serializer_type params;
+    SerializerType params;
     params << SERVICE_FEED << feed;
 
     uint64_t p = params.tell();
-    params << subscription_handler_type(0);  // placeholder
+    params << SubscriptionHandlerType(0);  // placeholder
 
     params.Allocate(msg.size());
     params.WriteBytes(msg.pointer(), msg.size());

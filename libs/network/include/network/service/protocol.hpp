@@ -177,7 +177,7 @@ public:
    * its clients to the feed.
    */
   void Subscribe(uint64_t client,  // TODO(issue 21): Standardize client type over the code.
-                 feed_handler_type const &feed, subscription_handler_type const &id)
+                 feed_handler_type const &feed, SubscriptionHandlerType const &id)
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Making subscription for ", client, " ", feed, " ", id);
 
@@ -207,7 +207,7 @@ public:
    * its clients to the feed.
    */
   void Unsubscribe(uint64_t client,  // TODO(issue 21): Standardize client type over the code.
-                   feed_handler_type const &feed, subscription_handler_type const &id)
+                   feed_handler_type const &feed, SubscriptionHandlerType const &id)
   {
     FETCH_LOCK(feeds_mutex_);
 

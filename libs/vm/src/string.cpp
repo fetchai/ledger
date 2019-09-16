@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/array.hpp"
 #include "vm/string.hpp"
+#include "vm/array.hpp"
 
 #include "utf8.h"
 

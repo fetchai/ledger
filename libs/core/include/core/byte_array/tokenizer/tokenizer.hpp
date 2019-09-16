@@ -32,11 +32,11 @@ namespace byte_array {
 class Tokenizer : public std::vector<Token>
 {
 public:
-  using ByteArrayType          = ConstByteArray;
-  using consumer_function_type = std::function<int(ByteArrayType const &, uint64_t &)>;
-  using IndexerFunctionType    = std::function<int(ByteArrayType const &, uint64_t, int const &)>;
+  using ByteArrayType        = ConstByteArray;
+  using ConsumerFunctionType = std::function<int(ByteArrayType const &, uint64_t &)>;
+  using IndexerFunctionType  = std::function<int(ByteArrayType const &, uint64_t, int const &)>;
 
-  std::size_t AddConsumer(consumer_function_type function)
+  std::size_t AddConsumer(ConsumerFunctionType function)
   {
     std::size_t ret = consumers_.size();
     consumers_.push_back(function);
@@ -176,8 +176,8 @@ public:
   }
 
 private:
-  std::vector<consumer_function_type> consumers_;
-  IndexerFunctionType                 indexer_;
+  std::vector<ConsumerFunctionType> consumers_;
+  IndexerFunctionType               indexer_;
 };
 }  // namespace byte_array
 }  // namespace fetch

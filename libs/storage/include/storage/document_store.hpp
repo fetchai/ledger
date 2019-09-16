@@ -51,13 +51,13 @@ public:
   using self_type     = DocumentStore<BLOCK_SIZE, A, B, C, D>;
   using ByteArrayType = byte_array::ByteArray;
 
-  using FileBlockType        = A;
-  using key_value_index_type = B;
-  using file_object_type     = D;
+  using FileBlockType     = A;
+  using KeyValueIndexType = B;
+  using file_object_type  = D;
 
   using hash_type = byte_array::ConstByteArray;
 
-  using index_type = typename key_value_index_type::index_type;
+  using index_type = typename KeyValueIndexType::index_type;
 
   using ByteArray = byte_array::ByteArray;
 
@@ -202,7 +202,7 @@ public:
   class Iterator
   {
   public:
-    Iterator(self_type *self, typename key_value_index_type::Iterator it)
+    Iterator(self_type *self, typename KeyValueIndexType::Iterator it)
       : wrapped_iterator_{it}
       , self_{self}
     {}
@@ -246,8 +246,8 @@ public:
     }
 
   protected:
-    typename key_value_index_type::Iterator wrapped_iterator_;
-    self_type *                             self_;
+    typename KeyValueIndexType::Iterator wrapped_iterator_;
+    self_type *                          self_;
   };
 
   self_type::Iterator Find(ResourceID const &rid)
@@ -341,9 +341,9 @@ public:
   }
 
 protected:
-  Mutex                mutex_;
-  key_value_index_type key_index_;
-  file_object_type     file_object_;
+  Mutex             mutex_;
+  KeyValueIndexType key_index_;
+  file_object_type  file_object_;
 };
 
 }  // namespace storage

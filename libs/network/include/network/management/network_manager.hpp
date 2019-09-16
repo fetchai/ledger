@@ -33,7 +33,7 @@ namespace network {
 class NetworkManager
 {
 public:
-  using event_function_type = std::function<void()>;
+  using EventFunctionType = std::function<void()>;
 
   using ImplementationType = details::NetworkManagerImplementation;
   using PointerType        = std::shared_ptr<ImplementationType>;

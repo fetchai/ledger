@@ -58,14 +58,14 @@ public:
   {}
 
   template <eECDSAEncoding BIN_FORMAT>
-  using ecdsa_SignatureType = ECDSASignature<BIN_FORMAT, T_Hasher, P_ECDSA_Curve_NID>;
+  using EcdsaSignatureType = ECDSASignature<BIN_FORMAT, T_Hasher, P_ECDSA_Curve_NID>;
 
   template <eECDSAEncoding P_ECDSASignatureBinaryDataFormat2, typename T_Hasher2,
             int            P_ECDSA_Curve_NID2>
   friend class ECDSASignature;
 
   template <eECDSAEncoding BIN_FORMAT>
-  ECDSASignature(ecdsa_SignatureType<BIN_FORMAT> const &from)
+  ECDSASignature(EcdsaSignatureType<BIN_FORMAT> const &from)
     : hash_{from.hash_}
     , signature_ECDSA_SIG_{from.signature_ECDSA_SIG_}
     , signature_{BIN_FORMAT == signatureBinaryDataFormat
@@ -76,21 +76,21 @@ public:
   // ECDSASignature(ECDSASignature&& from) = default;
 
   template <eECDSAEncoding BIN_FORMAT>
-  ECDSASignature(ecdsa_SignatureType<BIN_FORMAT> &&from)
+  ECDSASignature(EcdsaSignatureType<BIN_FORMAT> &&from)
     : ECDSASignature{safeMoveConstruct(std::move(from))}
   {}
 
   // ECDSASignature& operator = (ECDSASignature const & from) = default;
 
   template <eECDSAEncoding BIN_FORMAT>
-  ECDSASignature operator=(ecdsa_SignatureType<BIN_FORMAT> const &from)
+  ECDSASignature operator=(EcdsaSignatureType<BIN_FORMAT> const &from)
   {
     *this = ECDSASignature(from);
     return *this;
   }
 
   template <eECDSAEncoding BIN_FORMAT>
-  ECDSASignature operator=(ecdsa_SignatureType<BIN_FORMAT> &&from)
+  ECDSASignature operator=(EcdsaSignatureType<BIN_FORMAT> &&from)
   {
     *this = safeMoveConstruct(std::move(from));
     return *this;
@@ -173,7 +173,7 @@ private:
   {}
 
   template <eECDSAEncoding BIN_FORMAT>
-  static ECDSASignature safeMoveConstruct(ecdsa_SignatureType<BIN_FORMAT> &&from)
+  static ECDSASignature safeMoveConstruct(EcdsaSignatureType<BIN_FORMAT> &&from)
   {
     byte_array::ConstByteArray signature{
         Convert(from.signature_ECDSA_SIG_, signatureBinaryDataFormat)};

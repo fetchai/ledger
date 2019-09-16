@@ -34,13 +34,13 @@ template <typename G>
 class ConnectionRegisterImpl final : public AbstractConnectionRegister
 {
 public:
-  using ConnectionHandleType       = typename AbstractConnection::ConnectionHandleType;
-  using weak_ConnectionType        = std::weak_ptr<AbstractConnection>;
-  using SharedConnectionType       = std::shared_ptr<AbstractConnection>;
-  using service_client_type        = service::ServiceClient;
-  using shared_service_client_type = std::shared_ptr<service::ServiceClient>;
-  using weak_service_client_type   = std::weak_ptr<service::ServiceClient>;
-  using details_type               = G;
+  using ConnectionHandleType    = typename AbstractConnection::ConnectionHandleType;
+  using WeakConnectionType      = std::weak_ptr<AbstractConnection>;
+  using SharedConnectionType    = std::shared_ptr<AbstractConnection>;
+  using service_client_type     = service::ServiceClient;
+  using SharedServiceClientType = std::shared_ptr<service::ServiceClient>;
+  using WeakServiceClientType   = std::weak_ptr<service::ServiceClient>;
+  using details_type            = G;
 
   static constexpr char const *LOGGING_NAME = "ConnectionRegisterImpl";
 
@@ -52,9 +52,9 @@ public:
     {}
   };
   using DetailsMapType = std::unordered_map<ConnectionHandleType, std::shared_ptr<LockableDetails>>;
-  using callback_client_enter_type = std::function<void(ConnectionHandleType)>;
-  using CallbackClientLeaveType    = std::function<void(ConnectionHandleType)>;
-  using connection_map_type        = std::unordered_map<ConnectionHandleType, weak_ConnectionType>;
+  using CallbackClientEnterType = std::function<void(ConnectionHandleType)>;
+  using CallbackClientLeaveType = std::function<void(ConnectionHandleType)>;
+  using connection_map_type     = std::unordered_map<ConnectionHandleType, WeakConnectionType>;
 
   ConnectionRegisterImpl()                                    = default;
   ConnectionRegisterImpl(ConnectionRegisterImpl const &other) = delete;
@@ -65,7 +65,7 @@ public:
   virtual ~ConnectionRegisterImpl() = default;
 
   template <typename T, typename... Args>
-  shared_service_client_type CreateServiceClient(NetworkManager const &tm, Args &&... args)
+  SharedServiceClientType CreateServiceClient(NetworkManager const &tm, Args &&... args)
   {
     using Clock     = std::chrono::high_resolution_clock;
     using Timepoint = Clock::time_point;
@@ -87,7 +87,7 @@ public:
       std::this_thread::sleep_for(std::chrono::milliseconds{10});
     }
 
-    shared_service_client_type service =
+    SharedServiceClientType service =
         std::make_shared<service_client_type>(connection.connection_pointer().lock(), tm);
 
     auto wptr = connection.connection_pointer();
@@ -111,11 +111,11 @@ public:
     return connections_.size();
   }
 
-  void OnClientEnter(callback_client_enter_type const &f)
+  void OnClientEnter(CallbackClientEnterType const &f)
   {
     on_client_enter_ = f;
   }
-  void OnClientLeave(callback_client_enter_type const &f)
+  void OnClientLeave(CallbackClientEnterType const &f)
   {
     on_client_leave_ = f;
   }
@@ -143,7 +143,7 @@ public:
     SignalClientLeave(id);
   }
 
-  void Enter(weak_ConnectionType const &wptr) override
+  void Enter(WeakConnectionType const &wptr) override
   {
     ConnectionHandleType handle = ConnectionHandleType(-1);
 
@@ -272,33 +272,33 @@ private:
     }
   }
 
-  generics::Callbacks<callback_client_enter_type> on_client_leave_;
-  generics::Callbacks<callback_client_enter_type> on_client_enter_;
+  generics::Callbacks<CallbackClientEnterType> on_client_leave_;
+  generics::Callbacks<CallbackClientEnterType> on_client_enter_;
 };
 
 template <typename G>
 class ConnectionRegister
 {
 public:
-  using ConnectionHandleType               = typename AbstractConnection::ConnectionHandleType;
-  using weak_ConnectionType                = std::weak_ptr<AbstractConnection>;
-  using SharedConnectionType               = std::shared_ptr<AbstractConnection>;
-  using shared_implementation_pointer_type = std::shared_ptr<ConnectionRegisterImpl<G>>;
-  using LockableDetailsType                = typename ConnectionRegisterImpl<G>::LockableDetails;
-  using shared_service_client_type         = std::shared_ptr<service::ServiceClient>;
-  using weak_service_client_type           = std::weak_ptr<service::ServiceClient>;
-  using service_map_type                   = AbstractConnectionRegister::service_map_type;
-  using DetailsMapType                     = typename ConnectionRegisterImpl<G>::DetailsMapType;
-  using callback_client_enter_type         = std::function<void(ConnectionHandleType)>;
-  using CallbackClientLeaveType            = std::function<void(ConnectionHandleType)>;
-  using connection_map_type = std::unordered_map<ConnectionHandleType, weak_ConnectionType>;
+  using ConnectionHandleType            = typename AbstractConnection::ConnectionHandleType;
+  using WeakConnectionType              = std::weak_ptr<AbstractConnection>;
+  using SharedConnectionType            = std::shared_ptr<AbstractConnection>;
+  using SharedImplementationPointerType = std::shared_ptr<ConnectionRegisterImpl<G>>;
+  using LockableDetailsType             = typename ConnectionRegisterImpl<G>::LockableDetails;
+  using SharedServiceClientType         = std::shared_ptr<service::ServiceClient>;
+  using WeakServiceClientType           = std::weak_ptr<service::ServiceClient>;
+  using service_map_type                = AbstractConnectionRegister::service_map_type;
+  using DetailsMapType                  = typename ConnectionRegisterImpl<G>::DetailsMapType;
+  using CallbackClientEnterType         = std::function<void(ConnectionHandleType)>;
+  using CallbackClientLeaveType         = std::function<void(ConnectionHandleType)>;
+  using connection_map_type = std::unordered_map<ConnectionHandleType, WeakConnectionType>;
   ConnectionRegister()
   {
     ptr_ = std::make_shared<ConnectionRegisterImpl<G>>();
   }
 
   template <typename T, typename... Args>
-  shared_service_client_type CreateServiceClient(NetworkManager const &tm, Args &&... args)
+  SharedServiceClientType CreateServiceClient(NetworkManager const &tm, Args &&... args)
   {
     return ptr_->template CreateServiceClient<T, Args...>(tm, std::forward<Args>(args)...);
   }
@@ -308,12 +308,12 @@ public:
     return ptr_->size();
   }
 
-  void OnClientEnter(callback_client_enter_type const &f)
+  void OnClientEnter(CallbackClientEnterType const &f)
   {
     return ptr_->OnClientEnter(f);
   }
 
-  void OnClientLeave(callback_client_enter_type const &f)
+  void OnClientLeave(CallbackClientEnterType const &f)
   {
     return ptr_->OnClientLeave(f);
   }
@@ -323,12 +323,12 @@ public:
     return ptr_->GetDetails(i);
   }
 
-  shared_service_client_type GetService(ConnectionHandleType &&i)
+  SharedServiceClientType GetService(ConnectionHandleType &&i)
   {
     return ptr_->GetService(std::move(i));
   }
 
-  shared_service_client_type GetService(ConnectionHandleType const &i)
+  SharedServiceClientType GetService(ConnectionHandleType const &i)
   {
     return ptr_->GetService(i);
   }
@@ -344,7 +344,7 @@ public:
   }
 
   void VisitServiceClients(
-      std::function<void(ConnectionHandleType const &, shared_service_client_type)> f) const
+      std::function<void(ConnectionHandleType const &, SharedServiceClientType)> f) const
   {
     ptr_->VisitServiceClients(f);
   }
@@ -385,13 +385,13 @@ public:
     return ptr_->number_of_services();
   }
 
-  shared_implementation_pointer_type pointer()
+  SharedImplementationPointerType pointer()
   {
     return ptr_;
   }
 
 private:
-  shared_implementation_pointer_type ptr_;
+  SharedImplementationPointerType ptr_;
 };
 
 }  // namespace network

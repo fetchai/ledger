@@ -29,10 +29,10 @@ namespace ledger {
 class LaneIdentity
 {
 public:
-  using connectivity_details_type = LaneConnectivityDetails;
-  using NetworkManagerType        = fetch::network::NetworkManager;
-  using ping_type                 = uint32_t;
-  using lane_type                 = uint32_t;
+  using ConnectivityDetailsType = LaneConnectivityDetails;
+  using NetworkManagerType      = fetch::network::NetworkManager;
+  using ping_type               = uint32_t;
+  using lane_type               = uint32_t;
 
   static constexpr char const *LOGGING_NAME = "LaneIdentity";
 

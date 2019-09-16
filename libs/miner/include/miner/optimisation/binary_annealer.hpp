@@ -34,18 +34,18 @@ public:
   using spin_type  = int16_t;
   using state_type = std::vector<spin_type>;
 
-  using exp_type        = math::ApproxExpImplementation<0>;
-  using bit_data_type   = uint64_t;
-  using bit_vector_type = BitVector;
-  using cost_type       = double;
+  using exp_type      = math::ApproxExpImplementation<0>;
+  using bit_data_type = uint64_t;
+  using BitVectorType = BitVector;
+  using cost_type     = double;
 
   void Anneal()
   {
     Initialise();
     SetBeta(beta0_);
 
-    double          db = (beta1_ - beta0_) / double(sweeps_ - 1);
-    bit_vector_type B;
+    double        db = (beta1_ - beta0_) / double(sweeps_ - 1);
+    BitVectorType B;
     B.Resize(size_);
 
     for (std::size_t k = 0; k < sweeps_; ++k)
@@ -181,8 +181,8 @@ public:
       assert(i == (block * 8 * sizeof(bit_data_type) + bit));
       Site const &s = sites_[i];
 
-      bit_vector_type B    = s.couplings & state_;
-      cost_type       sign = cost_type(state_.bit(block, bit));
+      BitVectorType B    = s.couplings & state_;
+      cost_type     sign = cost_type(state_.bit(block, bit));
 
       ret += sign * (2 * s.local_field + coupling_magnitude_ * static_cast<int>(B.PopCount()));
       ++bit;
@@ -274,7 +274,7 @@ public:
     }
   }
 
-  bit_vector_type state()
+  BitVectorType state()
   {
     return state_;
   }
@@ -298,11 +298,11 @@ private:
 
   struct Site
   {
-    bit_vector_type couplings;
-    cost_type       local_field;
+    BitVectorType couplings;
+    cost_type     local_field;
   };
 
-  bit_vector_type   state_;
+  BitVectorType     state_;
   std::vector<Site> sites_;
   double            beta_, beta0_ = 0.1, beta1_ = 3;
 
