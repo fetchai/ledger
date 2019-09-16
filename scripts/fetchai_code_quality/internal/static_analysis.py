@@ -68,24 +68,26 @@ def static_analysis(project_root, build_root, fix, concurrency):
     cmd = [
         'python3', '-u',
         runner_script_path,
-        f'-j{concurrency}',
-        f'-p={abspath(build_root)}',
+        '-j{concurrency}'.format(concurrency=concurrency),
+        '-p={path}'.format(path=abspath(build_root)),
         '-header-filter=.*(apps|libs).*\\.hpp$',
         '-quiet',
-        f'-clang-tidy-binary={clang_tidy_path}',
+        '-clang-tidy-binary={clang_tidy_path}'.format(
+            clang_tidy_path=clang_tidy_path),
         # Hacky workaround: we do not need clang-apply-replacements unless applying fixes
         # through run-clang-tidy-6.0.py (which we cannot do, as it would alter vendor
         # libraries). Unfortunately, run-clang-tidy will refuse to function unless it
         # thinks that clang-apply-replacements is installed on the system. We pass
         # a valid path to an arbitrary executable here to placate it.
-        f'-clang-apply-replacements-binary={clang_tidy_path}',
-        f'-export-fixes={output_file}',
+        '-clang-apply-replacements-binary={clang_tidy_path}'.format(
+            clang_tidy_path=clang_tidy_path),
+        '-export-fixes={output_file}'.format(output_file=output_file),
         '.']
 
     print('\nPerform static analysis')
     print(subprocess.check_output(['clang-tidy-6.0', '-list-checks']).decode())
     print('\nCommand:')
-    print(f'  {" ".join(cmd)}\n')
+    print('  {cmd}\n'.format(cmd=" ".join(cmd)))
 
     print('Working...')
     with tempfile.SpooledTemporaryFile() as f:
@@ -94,7 +96,7 @@ def static_analysis(project_root, build_root, fix, concurrency):
         if exit_code != 0:
             print('clang-tidy reported an error')
             f.seek(0)
-            print(f'\n{f.read().decode()}\n')
+            print('\n{text}\n'.format(text=f.read().decode()))
             sys.exit(1)
 
     print('Done.')
@@ -106,14 +108,18 @@ def static_analysis(project_root, build_root, fix, concurrency):
     if len(files_diagnostics):
         for file, data in files_diagnostics.items():
             print('\n' + (10 * '-'))
-            print(f'Static analysis check(s) failed in:\n  {file}\n')
+            print(
+                'Static analysis check(s) failed in:\n  {file}\n'.format(file=file))
             for d in data['diagnostics']:
-                print(f'  Line: {d["line"]}')
-                print(f'  Message: {d["message"]}')
-                print(f'  Check: {d["check"]}')
+                print('  Line: {line}'.format(line=d["line"]))
+                print('  Message: {message}'.format(message=d["message"]))
+                print('  Check: {check}'.format(check=d["check"]))
 
         print(
-            f'\nStatic analysis found {sum([len(d["diagnostics"]) for f, d in files_diagnostics.items()])} violation(s) in {len(files_diagnostics)} file(s)')
+            '\nStatic analysis found {total_violations} violation(s) in {total_files} file(s)'.format(
+                total_violations=sum([len(d["diagnostics"])
+                                      for f, d in files_diagnostics.items()]),
+                total_files=len(files_diagnostics)))
 
         if fix:
             print('Applying fixes...')
