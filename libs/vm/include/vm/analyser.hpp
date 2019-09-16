@@ -206,8 +206,8 @@ private:
   TypePtr        matrix_type_;
   TypePtr        array_type_;
   TypePtr        MapType_;
-  TypePtr        sharded_state_type_;
-  TypePtr        state_type_;
+  TypePtr        sharded_StateType_;
+  TypePtr        StateType_;
   TypePtr        initialiser_list_type_;
 
   BlockNodePtr             root_;

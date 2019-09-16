@@ -162,10 +162,9 @@ void Analyser::Initialise()
                      array_type_);
   CreateTemplateType("Map", TypeIndex(typeid(IMap)), {any_type_, any_type_}, TypeIds::Unknown,
                      MapType_);
-  CreateTemplateType("State", TypeIndex(typeid(IState)), {any_type_}, TypeIds::Unknown,
-                     state_type_);
+  CreateTemplateType("State", TypeIndex(typeid(IState)), {any_type_}, TypeIds::Unknown, StateType_);
   CreateTemplateType("ShardedState", TypeIndex(typeid(IShardedState)), {any_type_},
-                     TypeIds::Unknown, sharded_state_type_);
+                     TypeIds::Unknown, sharded_StateType_);
 }
 
 void Analyser::UnInitialise()
@@ -210,9 +209,9 @@ void Analyser::UnInitialise()
   matrix_type_              = nullptr;
   array_type_               = nullptr;
   MapType_                  = nullptr;
-  state_type_               = nullptr;
+  StateType_                = nullptr;
   address_type_             = nullptr;
-  sharded_state_type_       = nullptr;
+  sharded_StateType_        = nullptr;
   initialiser_list_type_    = nullptr;
 }
 
@@ -286,9 +285,9 @@ bool Analyser::Analyse(BlockNodePtr const &root, std::vector<std::string> &error
   blocks_.clear();
   loops_.clear();
   state_constructor_ =
-      function_map_.Find(BuildUniqueId(state_type_, CONSTRUCTOR, {string_type_}, state_type_));
+      function_map_.Find(BuildUniqueId(StateType_, CONSTRUCTOR, {string_type_}, StateType_));
   sharded_state_constructor_ = function_map_.Find(
-      BuildUniqueId(sharded_state_type_, CONSTRUCTOR, {string_type_}, sharded_state_type_));
+      BuildUniqueId(sharded_StateType_, CONSTRUCTOR, {string_type_}, sharded_StateType_));
   assert(state_constructor_ && sharded_state_constructor_);
   state_definitions_.Clear();
   function_     = nullptr;
@@ -422,11 +421,11 @@ void Analyser::BuildPersistentStatement(NodePtr const &node)
   TypePtr template_type;
   if (modifier_node && (modifier_node->text == "sharded"))
   {
-    template_type = sharded_state_type_;
+    template_type = sharded_StateType_;
   }
   else
   {
-    template_type = state_type_;
+    template_type = StateType_;
   }
   std::string instantation_name = template_type->name + "<" + managed_type->name + ">";
   TypePtr     instantation_type;
@@ -692,7 +691,7 @@ void Analyser::AnnotateBlock(BlockNodePtr const &block_node)
         ExpressionNodePtr child =
             CreateExpressionNode(NodeKind::Identifier, variable->name, use_any_node_->line);
         child->variable         = variable;
-        FunctionPtr constructor = (variable->type->template_type == sharded_state_type_)
+        FunctionPtr constructor = (variable->type->template_type == sharded_StateType_)
                                       ? sharded_state_constructor_
                                       : state_constructor_;
         child->function = constructor;
@@ -823,7 +822,7 @@ void Analyser::AnnotateUseStatement(BlockNodePtr const &parent_block_node, NodeP
   }
   if (list_node)
   {
-    if (type->template_type != sharded_state_type_)
+    if (type->template_type != sharded_StateType_)
     {
       AddError(list_node->line, "key list can only be used with a sharded state");
       return;
@@ -852,9 +851,8 @@ void Analyser::AnnotateUseStatement(BlockNodePtr const &parent_block_node, NodeP
   VariablePtr variable = CreateVariable(VariableKind::Use, variable_name);
   variable->type       = type;
   parent_block_node->symbols->Add(variable);
-  FunctionPtr constructor = (type->template_type == sharded_state_type_)
-                                ? sharded_state_constructor_
-                                : state_constructor_;
+  FunctionPtr constructor =
+      (type->template_type == sharded_StateType_) ? sharded_state_constructor_ : state_constructor_;
   name_node->variable = variable;
   name_node->function = constructor;
 }

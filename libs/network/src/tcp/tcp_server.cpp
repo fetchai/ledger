@@ -41,7 +41,7 @@ TCPServer::TCPServer(uint16_t port, NetworkManagerType const &network_manager)
 
 TCPServer::~TCPServer()
 {
-  std::weak_ptr<acceptor_type> acceptorWeak = acceptor_;
+  std::weak_ptr<AcceptorType> acceptorWeak = acceptor_;
 
   network_manager_.Post([acceptorWeak] {
     auto acceptorStrong = acceptorWeak.lock();
@@ -76,12 +76,12 @@ void TCPServer::Start()
     auto closure = [this, closure_alive] {
       std::shared_ptr<int> closure_alive_copy = closure_alive;
 
-      std::shared_ptr<acceptor_type> acceptor;
+      std::shared_ptr<AcceptorType> acceptor;
       FETCH_LOG_DEBUG(LOGGING_NAME, "Opening TCP server");
 
       try
       {
-        acceptor = network_manager_.CreateIO<acceptor_type>(
+        acceptor = network_manager_.CreateIO<AcceptorType>(
             asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port_));
 
         acceptor_ = acceptor;

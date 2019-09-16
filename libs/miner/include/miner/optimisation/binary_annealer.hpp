@@ -31,8 +31,8 @@ class BinaryAnnealer
 public:
   static constexpr char const *LOGGING_NAME = "BinaryAnnealer";
 
-  using SpinType   = int16_t;
-  using state_type = std::vector<SpinType>;
+  using SpinType  = int16_t;
+  using StateType = std::vector<SpinType>;
 
   using exp_type      = math::ApproxExpImplementation<0>;
   using BitDataType   = uint64_t;
@@ -149,11 +149,11 @@ public:
 
   CostType FindMinimum()
   {
-    state_type ret;
+    StateType ret;
     return FindMinimum(ret);
   }
 
-  CostType FindMinimum(state_type &state, bool /*binary*/ = true)
+  CostType FindMinimum(StateType &state, bool /*binary*/ = true)
   {
     Anneal();
     CostType ret = Energy();

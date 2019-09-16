@@ -43,9 +43,9 @@ public:
 
   using ActionFunctionType =
       std::function<void(const std::set<std::string> &, std::list<std::string> &)>;
-  using HelpTextType    = std::tuple<std::string, std::string>;
-  using assigners_type  = std::map<std::string, ActionFunctionType>;
-  using help_texts_type = std::list<HelpTextType>;
+  using HelpTextType  = std::tuple<std::string, std::string>;
+  using AssignersType = std::map<std::string, ActionFunctionType>;
+  using HelpTextsType = std::list<HelpTextType>;
 
   Params()
     : paramsParser_()
@@ -171,8 +171,8 @@ public:
 private:
   fetch::commandline::ParamsParser paramsParser_;
   std::string                      desc_;
-  help_texts_type                  helpTexts_;
-  assigners_type                   assigners_;
+  HelpTextsType                    helpTexts_;
+  AssignersType                    assigners_;
 };
 
 }  // namespace commandline

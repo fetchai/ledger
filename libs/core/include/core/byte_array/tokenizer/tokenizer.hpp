@@ -39,16 +39,16 @@ public:
   std::size_t AddConsumer(ConsumerFunctionType function)
   {
     std::size_t ret = consumers_.size();
-    consumers_.push_back(function);
+    consumers_.emplace_back(std::move(function));
     return ret;
   }
 
   bool Parse(ByteArrayType const &contents, bool clear = true)
   {
-    uint64_t                         pos        = 0;
-    int                              line       = 0;
-    uint64_t                         char_index = 0;
-    ByteArrayType::value_type const *str        = contents.pointer();
+    uint64_t                        pos        = 0;
+    int                             line       = 0;
+    uint64_t                        char_index = 0;
+    ByteArrayType::ValueType const *str        = contents.pointer();
     if (clear)
     {
       this->clear();

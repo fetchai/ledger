@@ -30,9 +30,9 @@ namespace generics {
 template <class TYPE>
 class WorkItemsQueue
 {
-  using MutexType  = std::mutex;
-  using cv_type    = std::condition_variable;
-  using store_type = std::list<TYPE>;
+  using MutexType = std::mutex;
+  using CVType    = std::condition_variable;
+  using StoreType = std::list<TYPE>;
 
 public:
   WorkItemsQueue(const WorkItemsQueue &rhs) = delete;
@@ -121,8 +121,8 @@ private:
   // members here.
 
   MutexType                mutex_;
-  store_type               q_;
-  cv_type                  cv_;
+  StoreType                q_;
+  CVType                   cv_;
   std::atomic<bool>        quit_{false};
   std::atomic<std::size_t> count_{0};
 };

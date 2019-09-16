@@ -47,7 +47,7 @@ class TCPServer : public AbstractNetworkServer
 public:
   using ConnectionHandleType = typename AbstractConnection::ConnectionHandleType;
   using NetworkManagerType   = NetworkManager;
-  using acceptor_type        = asio::ip::tcp::tcp::acceptor;
+  using AcceptorType         = asio::ip::tcp::tcp::acceptor;
   using MutexType            = std::mutex;
 
   static constexpr char const *LOGGING_NAME = "TCPServer";
@@ -104,7 +104,7 @@ private:
   MutexType                                 request_mutex_;
   std::weak_ptr<AbstractConnectionRegister> connection_register_;
   std::shared_ptr<ClientManager>            manager_;
-  std::weak_ptr<acceptor_type>              acceptor_;
+  std::weak_ptr<AcceptorType>               acceptor_;
   std::mutex                                start_mutex_;
 
   // Use this class to keep track of whether we are ready to accept connections

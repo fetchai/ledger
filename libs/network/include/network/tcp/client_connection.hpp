@@ -184,10 +184,10 @@ private:
   // bool                  posted_close_ = false;
   std::weak_ptr<Strand> strand_;
 
-  message_queue_type write_queue_;
-  mutable MutexType  can_write_mutex_;
-  bool               can_write_{true};
-  mutable MutexType  queue_mutex_;
+  MessageQueueType  write_queue_;
+  mutable MutexType can_write_mutex_;
+  bool              can_write_{true};
+  mutable MutexType queue_mutex_;
 
   // TODO(issue 17): put this in shared class
   static const uint64_t networkMagic_ = 0xFE7C80A1FE7C80A1;

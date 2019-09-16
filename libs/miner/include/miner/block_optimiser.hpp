@@ -43,15 +43,15 @@ namespace ledger {
 class BlockGenerator
 {
 public:
-  using TransactionType         = std::shared_ptr<miner::TransactionItem>;
-  using block_index_MapType     = std::vector<std::vector<uint64_t>>;
-  using block_fees_list_type    = std::vector<uint64_t>;
-  using digest_type             = TransactionSummary::TxDigest;
-  using transaction_MapType     = std::unordered_map<digest_type, TransactionType>;
-  using transaction_list_type   = std::vector<TransactionType>;
-  using transaction_matrix_type = std::vector<transaction_list_type>;
-  using AnnealerType            = fetch::optimisers::BinaryAnnealer;
-  using state_type              = AnnealerType::state_type;
+  using TransactionType       = std::shared_ptr<miner::TransactionItem>;
+  using block_index_MapType   = std::vector<std::vector<uint64_t>>;
+  using BlockFeesListType     = std::vector<uint64_t>;
+  using DigestType            = TransactionSummary::TxDigest;
+  using transaction_MapType   = std::unordered_map<DigestType, TransactionType>;
+  using transaction_list_type = std::vector<TransactionType>;
+  using TransactionMatrixType = std::vector<transaction_list_type>;
+  using AnnealerType          = fetch::optimisers::BinaryAnnealer;
+  using StateType             = AnnealerType::StateType;
 
   enum class Strategy : uint8_t
   {
@@ -217,12 +217,12 @@ public:
     return unspent_;
   }
 
-  transaction_matrix_type const &staged() const
+  TransactionMatrixType const &staged() const
   {
     return staged_;
   }
 
-  transaction_matrix_type &staged()
+  TransactionMatrixType &staged()
   {
     return staged_;
   }
@@ -260,7 +260,7 @@ public:
   /* Returns a constant reference to a vector with the fees earned from
    * each slice.
    */
-  block_fees_list_type const &block_fees() const
+  BlockFeesListType const &block_fees() const
   {
     return block_fees_;
   }
@@ -434,8 +434,8 @@ private:
     }
   }
 
-  block_index_MapType  block_;
-  block_fees_list_type block_fees_;
+  block_index_MapType block_;
+  BlockFeesListType   block_fees_;
 
   std::size_t occupancy_            = 0;
   std::size_t lane_count_           = 0;
@@ -444,13 +444,13 @@ private:
   double      best_solution_energy_ = 0;
   double      state_energy_         = 0;
 
-  state_type   state_;
-  state_type   best_solution_;
+  StateType    state_;
+  StateType    best_solution_;
   AnnealerType annealer_;
 
-  transaction_MapType     all_;
-  transaction_list_type   unspent_;
-  transaction_matrix_type staged_;
+  transaction_MapType   all_;
+  transaction_list_type unspent_;
+  TransactionMatrixType staged_;
 };
 
 }  // namespace ledger

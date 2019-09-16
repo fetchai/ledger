@@ -63,11 +63,11 @@ namespace {
 
 constexpr char const *LOGGING_NAME = "main";
 
-using fetch::Settings;
-using fetch::crypto::Prover;
-using fetch::Constellation;
 using fetch::BootstrapMonitor;
+using fetch::Constellation;
+using fetch::Settings;
 using fetch::core::WeakRunnable;
+using fetch::crypto::Prover;
 
 using BootstrapPtr = std::unique_ptr<BootstrapMonitor>;
 using ProverPtr    = std::shared_ptr<Prover>;

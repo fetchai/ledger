@@ -47,7 +47,7 @@ using NonVoid = std::string;
                                                                                           \
     using Traits = CallableTraits<Callable>;                                              \
     static_assert(Same<return_type, Traits::ReturnType>,                                  \
-                  "Test assertion failed: Same<ReturnType, Traits::ReturnType>");         \
+                  "Test assertion failed: Same<return_type, Traits::ReturnType>");        \
     static_assert(Same<args_tuple_type, Traits::ArgsTupleType>,                           \
                   "Test assertion failed: Same<args_tuple_type, Traits::ArgsTupleType>"); \
                                                                                           \
@@ -58,9 +58,9 @@ using NonVoid = std::string;
   }
 
 // Adds assertions specific to non-static member functions
-#define MEMBER_ASSERTIONS(callable, ReturnType, args_tuple_type, owning_type)    \
+#define MEMBER_ASSERTIONS(callable, return_type, args_tuple_type, owning_type)   \
   {                                                                              \
-    ASSERTIONS(callable, ReturnType, args_tuple_type);                           \
+    ASSERTIONS(callable, return_type, args_tuple_type);                          \
                                                                                  \
     using ClassType = owning_type;                                               \
     using Callable  = decltype(callable);                                        \

@@ -36,7 +36,7 @@ template <eECDSAEncoding P_ECDSASignatureBinaryDataFormat = eECDSAEncoding::cano
 class ECDSASignature
 {
   byte_array::ConstByteArray   hash_;
-  SharedPointerType<ECDSA_SIG> SignatureECDSAPtr_;
+  SharedPointerType<ECDSA_SIG> signature_ecdsa_ptr_;
   byte_array::ConstByteArray   signature_;
 
 public:
@@ -53,44 +53,44 @@ public:
 
   ECDSASignature(byte_array::ConstByteArray binary_signature)
     : hash_{}
-    , SignatureECDSAPtr_{Convert(binary_signature, signatureBinaryDataFormat)}
+    , signature_ecdsa_ptr_{Convert(binary_signature, signatureBinaryDataFormat)}
     , signature_{std::move(binary_signature)}
   {}
 
   template <eECDSAEncoding BIN_FORMAT>
-  using EcdsaSignatureType = ECDSASignature<BIN_FORMAT, T_Hasher, P_ECDSA_Curve_NID>;
+  using ECDSASignatureType = ECDSASignature<BIN_FORMAT, T_Hasher, P_ECDSA_Curve_NID>;
 
   template <eECDSAEncoding P_ECDSASignatureBinaryDataFormat2, typename T_Hasher2,
             int            P_ECDSA_Curve_NID2>
   friend class ECDSASignature;
 
   template <eECDSAEncoding BIN_FORMAT>
-  ECDSASignature(EcdsaSignatureType<BIN_FORMAT> const &from)
+  ECDSASignature(ECDSASignatureType<BIN_FORMAT> const &from)
     : hash_{from.hash_}
-    , SignatureECDSAPtr_{from.SignatureECDSAPtr_}
+    , signature_ecdsa_ptr_{from.signature_ecdsa_ptr_}
     , signature_{BIN_FORMAT == signatureBinaryDataFormat
                      ? from.signature_
-                     : Convert(SignatureECDSAPtr_, signatureBinaryDataFormat)}
+                     : Convert(signature_ecdsa_ptr_, signatureBinaryDataFormat)}
   {}
 
   // ECDSASignature(ECDSASignature&& from) = default;
 
   template <eECDSAEncoding BIN_FORMAT>
-  ECDSASignature(EcdsaSignatureType<BIN_FORMAT> &&from)
+  ECDSASignature(ECDSASignatureType<BIN_FORMAT> &&from)
     : ECDSASignature{safeMoveConstruct(std::move(from))}
   {}
 
   // ECDSASignature& operator = (ECDSASignature const & from) = default;
 
   template <eECDSAEncoding BIN_FORMAT>
-  ECDSASignature operator=(EcdsaSignatureType<BIN_FORMAT> const &from)
+  ECDSASignature operator=(ECDSASignatureType<BIN_FORMAT> const &from)
   {
     *this = ECDSASignature(from);
     return *this;
   }
 
   template <eECDSAEncoding BIN_FORMAT>
-  ECDSASignature operator=(EcdsaSignatureType<BIN_FORMAT> &&from)
+  ECDSASignature operator=(ECDSASignatureType<BIN_FORMAT> &&from)
   {
     *this = safeMoveConstruct(std::move(from));
     return *this;
@@ -103,7 +103,7 @@ public:
 
   SharedPointerType<const ECDSA_SIG> SignatureECDSAPtr() const
   {
-    return SignatureECDSAPtr_;
+    return signature_ecdsa_ptr_;
   }
 
   const byte_array::ConstByteArray &signature() const
@@ -131,7 +131,7 @@ public:
   {
     const int res =
         ECDSA_do_verify(static_cast<const uint8_t *>(hash_to_verify.pointer()),
-                        static_cast<int>(hash_to_verify.size()), SignatureECDSAPtr_.get(),
+                        static_cast<int>(hash_to_verify.size()), signature_ecdsa_ptr_.get(),
                         const_cast<EC_KEY *>(public_key.key().get()));
 
     switch (res)
@@ -169,17 +169,17 @@ private:
                  SharedPointerType<ECDSA_SIG> &&SignatureECDSAPtr,
                  byte_array::ConstByteArray &&  signature)
     : hash_{std::move(hash)}
-    , SignatureECDSAPtr_{std::move(SignatureECDSAPtr)}
+    , signature_ecdsa_ptr_{std::move(SignatureECDSAPtr)}
     , signature_{std::move(signature)}
   {}
 
   template <eECDSAEncoding BIN_FORMAT>
-  static ECDSASignature safeMoveConstruct(EcdsaSignatureType<BIN_FORMAT> &&from)
+  static ECDSASignature safeMoveConstruct(ECDSASignatureType<BIN_FORMAT> &&from)
   {
     byte_array::ConstByteArray signature{
-        Convert(from.SignatureECDSAPtr_, signatureBinaryDataFormat)};
+        Convert(from.signature_ecdsa_ptr_, signatureBinaryDataFormat)};
 
-    return ECDSASignature{std::move(from.hash_), std::move(from.SignatureECDSAPtr_),
+    return ECDSASignature{std::move(from.hash_), std::move(from.signature_ecdsa_ptr_),
                           std::move(signature)};
   }
 
@@ -188,8 +188,8 @@ private:
                  byte_array::ConstByteArray const &              data_to_sign,
                  const eBinaryDataType                           DataType = eBinaryDataType::data)
     : hash_{DataType == eBinaryDataType::data ? Hash<HasherType>(data_to_sign) : data_to_sign}
-    , SignatureECDSAPtr_{CreateSignature(private_key, hash_)}
-    , signature_{Convert(SignatureECDSAPtr_, signatureBinaryDataFormat)}
+    , signature_ecdsa_ptr_{CreateSignature(private_key, hash_)}
+    , signature_{Convert(signature_ecdsa_ptr_, signatureBinaryDataFormat)}
   {}
 
   template <eECDSAEncoding BIN_ENC, point_conversion_form_t POINT_CONV_FORM>
@@ -293,9 +293,9 @@ private:
   }
 
   static byte_array::ByteArray Convert(SharedPointerType<const ECDSA_SIG> &&signature,
-                                       eECDSAEncoding ouput_signature_binary_DataType)
+                                       eECDSAEncoding ouput_signature_binary_data_dype)
   {
-    switch (ouput_signature_binary_DataType)
+    switch (ouput_signature_binary_data_dype)
     {
     case eECDSAEncoding::canonical:
     case eECDSAEncoding::bin:
@@ -309,9 +309,9 @@ private:
   }
 
   static UniquePointerType<ECDSA_SIG> Convert(const byte_array::ConstByteArray &bin_sig,
-                                              eECDSAEncoding input_signature_binary_DataType)
+                                              eECDSAEncoding input_signature_binary_data_type)
   {
-    switch (input_signature_binary_DataType)
+    switch (input_signature_binary_data_type)
     {
     case eECDSAEncoding::canonical:
     case eECDSAEncoding::bin:
