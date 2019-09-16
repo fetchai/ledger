@@ -139,11 +139,7 @@ public:
 
   bool HasValidCache()
   {
-    if (cached_output_status_ == CachedOutputState::VALID_CACHE)
-    {
-      return true;
-    }
-    return false;
+    return static_cast<bool>(cached_output_status_ == CachedOutputState::VALID_CACHE);
   }
 
 private:

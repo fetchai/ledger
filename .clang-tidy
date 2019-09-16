@@ -1,6 +1,7 @@
 Checks: "-*,\
 bugprone-*,\
 google-readability-todo,\
+misc-suspicious-*,\
 misc-unused-*,\
 modernize-make-shared,\
 modernize-make-unique,\
@@ -8,7 +9,8 @@ modernize-pass-by-value,\
 modernize-use-*,\
 readability-braces-around-statements,\
 readability-container-size-empty,\
--readability-identifier-naming"
+-readability-identifier-naming,\
+readability-simplify-boolean-expr"
 
 CheckOptions:
   - key:             readability-identifier-naming.FunctionCase

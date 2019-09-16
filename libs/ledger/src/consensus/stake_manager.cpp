@@ -98,12 +98,7 @@ bool StakeManager::ShouldGenerateBlock(Block const &previous, Address const &add
   uint64_t time_now_ms           = static_cast<uint64_t>(std::time(nullptr)) * 1000;
   uint64_t desired_time_for_next = (previous.first_seen_timestamp * 1000) + time_to_wait;
 
-  if (in_committee && desired_time_for_next <= time_now_ms)
-  {
-    return true;
-  }
-
-  return false;
+  return in_committee && desired_time_for_next <= time_now_ms;
 }
 
 StakeManager::CommitteePtr StakeManager::GetCommittee(Block const &previous)

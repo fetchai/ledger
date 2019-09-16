@@ -354,7 +354,7 @@ bool DAG::IsLooseInternal(DAGNodePtr node) const
   for (auto const &dag_node_prev : node->previous)
   {
     if (node_pool_.find(dag_node_prev) == node_pool_.end() &&
-        HashInPrevEpochsInternal(dag_node_prev) == false)
+        !HashInPrevEpochsInternal(dag_node_prev))
     {
       return true;
     }
@@ -369,7 +369,7 @@ void DAG::AddLooseNodeInternal(DAGNodePtr node)
   for (auto const &dag_node_prev : node->previous)
   {
     if (node_pool_.find(dag_node_prev) == node_pool_.end() &&
-        HashInPrevEpochsInternal(dag_node_prev) == false)
+        !HashInPrevEpochsInternal(dag_node_prev))
     {
       loose_nodes_lookup_[dag_node_prev].push_back(node);
       loose_nodes_[node->hash] = node;
@@ -644,11 +644,7 @@ DAGEpoch DAG::CreateEpoch(uint64_t block_number)
 
   auto terminating_condition = [&all_nodes_to_add](NodeHash current) -> bool {
     // Terminate when already seen node for efficiency reasons
-    if (all_nodes_to_add.find(current) != all_nodes_to_add.end())
-    {
-      return true;
-    }
-    return false;
+    return all_nodes_to_add.find(current) != all_nodes_to_add.end();
   };
 
   // Traverse down from the tips (for unaccounted for dagnodes), adding

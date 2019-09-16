@@ -332,12 +332,7 @@ bool StorageUnitClient::HashInStack(Hash const &hash, uint64_t index)
   assert(result);
   FETCH_UNUSED(result);
 
-  if (tree.root() == hash)
-  {
-    return true;
-  }
-
-  return false;
+  return tree.root() == hash;
 }
 
 StorageUnitClient::Address const &StorageUnitClient::LookupAddress(ShardIndex shard) const
