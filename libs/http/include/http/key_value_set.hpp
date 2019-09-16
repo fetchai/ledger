@@ -28,33 +28,33 @@ class KeyValueSet : private std::map<byte_array::ConstByteArray, byte_array::Con
 public:
   using SuperType      = std::map<byte_array::ConstByteArray, byte_array::ConstByteArray>;
   using ByteArrayType  = byte_array::ConstByteArray;
-  using map_type       = std::map<ByteArrayType, ByteArrayType>;
-  using iterator       = map_type::iterator;
-  using const_iterator = map_type::const_iterator;
+  using MapType        = std::map<ByteArrayType, ByteArrayType>;
+  using iterator       = MapType::iterator;
+  using const_iterator = MapType::const_iterator;
 
   iterator begin() noexcept
   {
-    return map_type::begin();
+    return MapType::begin();
   }
   iterator end() noexcept
   {
-    return map_type::end();
+    return MapType::end();
   }
   const_iterator begin() const noexcept
   {
-    return map_type::begin();
+    return MapType::begin();
   }
   const_iterator end() const noexcept
   {
-    return map_type::end();
+    return MapType::end();
   }
   const_iterator cbegin() const noexcept
   {
-    return map_type::cbegin();
+    return MapType::cbegin();
   }
   const_iterator cend() const noexcept
   {
-    return map_type::cend();
+    return MapType::cend();
   }
 
   void Add(ByteArrayType const &name, ByteArrayType const &value)
@@ -98,8 +98,6 @@ public:
   {
     this->clear();
   }
-
-private:
 };
 }  // namespace http
 }  // namespace fetch

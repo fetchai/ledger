@@ -32,15 +32,15 @@
 class FakeStorageUnit final : public fetch::ledger::StorageUnitInterface
 {
 public:
-  using transaction_store_type =
+  using TransactionStoreType =
       std::unordered_map<fetch::byte_array::ConstByteArray, fetch::ledger::Transaction>;
-  using state_store_type =
+  using StateStoreType =
       std::unordered_map<fetch::byte_array::ConstByteArray, fetch::byte_array::ConstByteArray>;
-  /*using state_archive_type = std::unordered_map<BookmarkType, state_store_type>; */
-  using lock_store_type = std::unordered_set<ShardIndex>;
-  using MutexType       = std::mutex;
-  using HashType        = fetch::byte_array::ConstByteArray;
-  using ResourceID      = fetch::storage::ResourceID;
+  /*using state_archive_type = std::unordered_map<BookmarkType, StateStoreType>; */
+  using LockStoreType = std::unordered_set<ShardIndex>;
+  using MutexType     = std::mutex;
+  using HashType      = fetch::byte_array::ConstByteArray;
+  using ResourceID    = fetch::storage::ResourceID;
 
   Document GetOrCreate(ResourceAddress const &key) override
   {
@@ -195,9 +195,9 @@ public:
   }
 
 private:
-  MutexType              mutex_;
-  transaction_store_type transactions_;
-  state_store_type       state_;
-  lock_store_type        locks_;
+  MutexType            mutex_;
+  TransactionStoreType transactions_;
+  StateStoreType       state_;
+  LockStoreType        locks_;
   /* state_archive_type     state_archive_; */
 };

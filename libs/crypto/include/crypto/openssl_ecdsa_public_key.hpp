@@ -140,8 +140,8 @@ private:
   static byte_array::ByteArray Convert(EC_POINT const *const public_key,
                                        eECDSAEncoding const  binaryDataFormat)
   {
-    uniq_ptr_type<EC_GROUP>  group{createGroup()};
-    context::Session<BN_CTX> session;
+    UniquePointerType<EC_GROUP> group{createGroup()};
+    context::Session<BN_CTX>    session;
 
     switch (binaryDataFormat)
     {
@@ -156,8 +156,8 @@ private:
     return {};
   }
 
-  static uniq_ptr_type<EC_POINT> Convert(byte_array::ConstByteArray const &key_data,
-                                         eECDSAEncoding const              binaryDataFormat)
+  static UniquePointerType<EC_POINT> Convert(byte_array::ConstByteArray const &key_data,
+                                             eECDSAEncoding const              binaryDataFormat)
   {
     switch (binaryDataFormat)
     {
@@ -211,11 +211,12 @@ private:
     return pub_key_as_bin;
   }
 
-  static uniq_ptr_type<EC_POINT> ConvertFromCanonical(byte_array::ConstByteArray const &key_data)
+  static UniquePointerType<EC_POINT> ConvertFromCanonical(
+      byte_array::ConstByteArray const &key_data)
   {
-    uniq_ptr_type<EC_GROUP>  group{createGroup()};
-    uniq_ptr_type<EC_POINT>  public_key{EC_POINT_new(group.get())};
-    context::Session<BN_CTX> session;
+    UniquePointerType<EC_GROUP> group{createGroup()};
+    UniquePointerType<EC_POINT> public_key{EC_POINT_new(group.get())};
+    context::Session<BN_CTX>    session;
 
     SharedPointerType<BIGNUM> x{BN_new()};
     SharedPointerType<BIGNUM> y{BN_new()};
@@ -233,7 +234,7 @@ private:
     return public_key;
   }
 
-  static uniq_ptr_type<EC_POINT> ConvertFromBin(byte_array::ConstByteArray const &key_data)
+  static UniquePointerType<EC_POINT> ConvertFromBin(byte_array::ConstByteArray const &key_data)
   {
     SharedPointerType<BIGNUM> pub_key_as_BN{BN_new()};
     if (!BN_bin2bn(static_cast<const uint8_t *>(key_data.pointer()), int(key_data.size()),
@@ -242,9 +243,9 @@ private:
       throw std::runtime_error("ECDSAPublicKey::ConvertToECPOINT(...): BN_bin2bn(...) failed.");
     }
 
-    uniq_ptr_type<EC_GROUP>  group{createGroup()};
-    uniq_ptr_type<EC_POINT>  public_key{EC_POINT_new(group.get())};
-    context::Session<BN_CTX> session;
+    UniquePointerType<EC_GROUP> group{createGroup()};
+    UniquePointerType<EC_POINT> public_key{EC_POINT_new(group.get())};
+    context::Session<BN_CTX>    session;
 
     if (!EC_POINT_bn2point(group.get(), pub_key_as_BN.get(), public_key.get(),
                            session.context().get()))
@@ -257,9 +258,9 @@ private:
     return public_key;
   }
 
-  static uniq_ptr_type<EC_KEY> ConvertToECKEY(const EC_POINT *key_EC_POINT)
+  static UniquePointerType<EC_KEY> ConvertToECKEY(const EC_POINT *key_EC_POINT)
   {
-    uniq_ptr_type<EC_KEY> key{EC_KEY_new_by_curve_name(EcdsaCurveType::nid)};
+    UniquePointerType<EC_KEY> key{EC_KEY_new_by_curve_name(EcdsaCurveType::nid)};
     // TODO(issue 36): setting conv. form might not be really necessary (stuff
     // works
     // without it)
@@ -275,9 +276,9 @@ private:
     return key;
   }
 
-  static uniq_ptr_type<EC_GROUP> createGroup()
+  static UniquePointerType<EC_GROUP> createGroup()
   {
-    uniq_ptr_type<EC_GROUP> group{EC_GROUP_new_by_curve_name(EcdsaCurveType::nid)};
+    UniquePointerType<EC_GROUP> group{EC_GROUP_new_by_curve_name(EcdsaCurveType::nid)};
     EC_GROUP_set_point_conversion_form(group.get(), conversionForm);
     return group;
   }

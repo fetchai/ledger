@@ -54,7 +54,7 @@ public:
   using DetailsMapType = std::unordered_map<ConnectionHandleType, std::shared_ptr<LockableDetails>>;
   using CallbackClientEnterType = std::function<void(ConnectionHandleType)>;
   using CallbackClientLeaveType = std::function<void(ConnectionHandleType)>;
-  using connection_map_type     = std::unordered_map<ConnectionHandleType, WeakConnectionType>;
+  using connection_MapType      = std::unordered_map<ConnectionHandleType, WeakConnectionType>;
 
   ConnectionRegisterImpl()                                    = default;
   ConnectionRegisterImpl(ConnectionRegisterImpl const &other) = delete;
@@ -193,15 +193,15 @@ public:
     fnc(details_);
   }
 
-  void WithConnections(std::function<void(connection_map_type const &)> fnc)
+  void WithConnections(std::function<void(connection_MapType const &)> fnc)
   {
     FETCH_LOCK(connections_lock_);
     fnc(connections_);
   }
 
-  void VisitConnections(std::function<void(connection_map_type::value_type const &)> f) const
+  void VisitConnections(std::function<void(connection_MapType::value_type const &)> f) const
   {
-    std::list<connection_map_type::value_type> keys;
+    std::list<connection_MapType::value_type> keys;
     {
       FETCH_LOCK(connections_lock_);
       for (auto &item : connections_)
@@ -225,7 +225,7 @@ public:
       std::function<void(ConnectionHandleType const &, SharedConnectionType)> f) const
   {
     FETCH_LOG_WARN(LOGGING_NAME, "About to visit ", connections_.size(), " connections");
-    std::list<connection_map_type::value_type> keys;
+    std::list<connection_MapType::value_type> keys;
     {
       FETCH_LOCK(connections_lock_);
       for (auto &item : connections_)
@@ -250,8 +250,8 @@ public:
   }
 
 private:
-  mutable Mutex       connections_lock_;
-  connection_map_type connections_;
+  mutable Mutex      connections_lock_;
+  connection_MapType connections_;
 
   mutable Mutex  details_lock_;
   DetailsMapType details_;
@@ -287,11 +287,11 @@ public:
   using LockableDetailsType             = typename ConnectionRegisterImpl<G>::LockableDetails;
   using SharedServiceClientType         = std::shared_ptr<service::ServiceClient>;
   using WeakServiceClientType           = std::weak_ptr<service::ServiceClient>;
-  using service_map_type                = AbstractConnectionRegister::service_map_type;
+  using service_MapType                 = AbstractConnectionRegister::service_MapType;
   using DetailsMapType                  = typename ConnectionRegisterImpl<G>::DetailsMapType;
   using CallbackClientEnterType         = std::function<void(ConnectionHandleType)>;
   using CallbackClientLeaveType         = std::function<void(ConnectionHandleType)>;
-  using connection_map_type = std::unordered_map<ConnectionHandleType, WeakConnectionType>;
+  using connection_MapType = std::unordered_map<ConnectionHandleType, WeakConnectionType>;
   ConnectionRegister()
   {
     ptr_ = std::make_shared<ConnectionRegisterImpl<G>>();
@@ -338,7 +338,7 @@ public:
     return ptr_->GetClient(i);
   }
 
-  void WithServices(std::function<void(service_map_type const &)> const &f) const
+  void WithServices(std::function<void(service_MapType const &)> const &f) const
   {
     ptr_->WithServices(f);
   }
@@ -349,7 +349,7 @@ public:
     ptr_->VisitServiceClients(f);
   }
 
-  void VisitServiceClients(std::function<void(service_map_type::value_type const &)> f) const
+  void VisitServiceClients(std::function<void(service_MapType::value_type const &)> f) const
   {
     ptr_->VisitServiceClients(f);
   }
@@ -360,7 +360,7 @@ public:
     ptr_->VisitConnections(f);
   }
 
-  void VisitConnections(std::function<void(connection_map_type::value_type const &)> f) const
+  void VisitConnections(std::function<void(connection_MapType::value_type const &)> f) const
   {
     ptr_->VisitConnections(f);
   }
@@ -375,7 +375,7 @@ public:
     ptr_->WithClientDetails(fnc);
   }
 
-  void WithConnections(std::function<void(connection_map_type const &)> fnc)
+  void WithConnections(std::function<void(connection_MapType const &)> fnc)
   {
     ptr_->WithConnections(fnc);
   }

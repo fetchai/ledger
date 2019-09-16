@@ -245,11 +245,11 @@ private:
     return der_sig;
   }
 
-  static uniq_ptr_type<ECDSA_SIG> ConvertDER(const byte_array::ConstByteArray &bin_sig)
+  static UniquePointerType<ECDSA_SIG> ConvertDER(const byte_array::ConstByteArray &bin_sig)
   {
     const uint8_t *der_sig_ptr = static_cast<const uint8_t *>(bin_sig.pointer());
 
-    uniq_ptr_type<ECDSA_SIG> signature{
+    UniquePointerType<ECDSA_SIG> signature{
         d2i_ECDSA_SIG(nullptr, &der_sig_ptr, static_cast<long>(bin_sig.size()))};
     if (!signature)
     {
@@ -270,14 +270,14 @@ private:
     return AffineCoordConversionType::Convert2Canonical(r, s);
   }
 
-  static uniq_ptr_type<ECDSA_SIG> ConvertCanonical(const byte_array::ConstByteArray &bin_sig)
+  static UniquePointerType<ECDSA_SIG> ConvertCanonical(const byte_array::ConstByteArray &bin_sig)
   {
-    uniq_ptr_type<BIGNUM, memory::eDeleteStrategy::clearing> r{BN_new()};
-    uniq_ptr_type<BIGNUM, memory::eDeleteStrategy::clearing> s{BN_new()};
+    UniquePointerType<BIGNUM, memory::eDeleteStrategy::clearing> r{BN_new()};
+    UniquePointerType<BIGNUM, memory::eDeleteStrategy::clearing> s{BN_new()};
 
     AffineCoordConversionType::ConvertFromCanonical(bin_sig, r.get(), s.get());
 
-    uniq_ptr_type<ECDSA_SIG> signature{ECDSA_SIG_new()};
+    UniquePointerType<ECDSA_SIG> signature{ECDSA_SIG_new()};
     if (!ECDSA_SIG_set0(signature.get(), r.get(), s.get()))
     {
       throw std::runtime_error(
@@ -308,8 +308,8 @@ private:
     return {};
   }
 
-  static uniq_ptr_type<ECDSA_SIG> Convert(const byte_array::ConstByteArray &bin_sig,
-                                          eECDSAEncoding input_signature_binary_DataType)
+  static UniquePointerType<ECDSA_SIG> Convert(const byte_array::ConstByteArray &bin_sig,
+                                              eECDSAEncoding input_signature_binary_DataType)
   {
     switch (input_signature_binary_DataType)
     {

@@ -31,8 +31,8 @@
 #include "crypto/ecdsa.hpp"
 #include "crypto/fetch_identity.hpp"
 #include "crypto/identity.hpp"
+#include "crypto/key_generator.hpp"
 #include "crypto/prover.hpp"
-#include "key_generator.hpp"
 #include "ledger/chain/address.hpp"
 #include "network/adapters.hpp"
 #include "network/p2pservice/manifest.hpp"
@@ -211,7 +211,7 @@ int main(int argc, char **argv)
       FETCH_LOG_INFO(LOGGING_NAME, "Input Configuration:\n", settings);
 
       // create and load the main certificate for the bootstrapper
-      auto p2p_key = fetch::GenerateP2PKey();
+      auto p2p_key = fetch::crypto::GenerateP2PKey();
 
       // create the bootrap monitor (if configued to do so)
       auto initial_peers = settings.peers.value();

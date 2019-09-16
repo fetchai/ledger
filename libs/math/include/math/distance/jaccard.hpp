@@ -19,6 +19,7 @@
 
 #include "core/assert.hpp"
 #include "math/correlation/jaccard.hpp"
+
 #include <cmath>
 
 namespace fetch {

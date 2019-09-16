@@ -21,14 +21,14 @@ namespace fetch {
 namespace math {
 namespace kernels {
 
-template <typename vector_RegisterType>
+template <typename VectorRegisterType>
 struct Sign
 {
-  void operator()(vector_RegisterType const &x, vector_RegisterType &y) const
+  void operator()(VectorRegisterType const &x, VectorRegisterType &y) const
   {
-    const vector_RegisterType zero(typename vector_RegisterType::type(0));
-    const vector_RegisterType one(typename vector_RegisterType::type(1));
-    const vector_RegisterType min_one(typename vector_RegisterType::type(-1));
+    const VectorRegisterType zero(typename VectorRegisterType::type(0));
+    const VectorRegisterType one(typename VectorRegisterType::type(1));
+    const VectorRegisterType min_one(typename VectorRegisterType::type(-1));
 
     y = ((x == zero) * (zero)) + ((x > zero) * (one)) + ((x < zero) * (min_one));
   }

@@ -205,7 +205,7 @@ private:
   TypePtr        any_floating_point_type_;
   TypePtr        matrix_type_;
   TypePtr        array_type_;
-  TypePtr        map_type_;
+  TypePtr        MapType_;
   TypePtr        sharded_state_type_;
   TypePtr        state_type_;
   TypePtr        initialiser_list_type_;

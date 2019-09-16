@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "core/logging.hpp"
 #include "http/abstract_connection.hpp"
 #include "http/abstract_server.hpp"
 

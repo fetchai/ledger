@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/byte_array/decoders.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/layers/convolution_1d.hpp"
 #include "ml/layers/fully_connected.hpp"
@@ -28,8 +29,6 @@
 #include "vm_modules/math/tensor.hpp"
 #include "vm_modules/ml/graph.hpp"
 #include "vm_modules/ml/state_dict.hpp"
-
-#include "core/byte_array/decoders.hpp"
 
 using namespace fetch::vm;
 
@@ -68,6 +67,16 @@ Ptr<VMTensorType> VMGraph::Evaluate(VMPtrString const &name)
 void VMGraph::BackPropagate(VMPtrString const &name)
 {
   graph_.BackPropagate(name->str);
+}
+
+void VMGraph::Step(DataType const &lr)
+{
+  auto grads = graph_.GetGradients();
+  for (auto &grad : grads)
+  {
+    grad *= static_cast<DataType>(-lr);
+  }
+  graph_.ApplyGradients(grads);
 }
 
 void VMGraph::AddPlaceholder(VMPtrString const &name)
@@ -142,6 +151,7 @@ void VMGraph::Bind(Module &module)
       .CreateMemberFunction("setInput", &VMGraph::SetInput)
       .CreateMemberFunction("evaluate", &VMGraph::Evaluate)
       .CreateMemberFunction("backPropagate", &VMGraph::BackPropagate)
+      .CreateMemberFunction("step", &VMGraph::Step)
       .CreateMemberFunction("addPlaceholder", &VMGraph::AddPlaceholder)
       .CreateMemberFunction("addFullyConnected", &VMGraph::AddFullyConnected)
       .CreateMemberFunction("addConv1D", &VMGraph::AddConv1D)

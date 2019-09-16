@@ -32,7 +32,7 @@ template <typename T, typename T_SessionPrimitive = detail::SessionPrimitive<T>,
 class Session
 {
 public:
-  using type                 = T;
+  using Type                 = T;
   using ContextSmartPtr      = T_ContextSmartPtr;
   using SessionPrimitiveType = T_SessionPrimitive;
 

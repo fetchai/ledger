@@ -161,7 +161,7 @@ void Analyser::Initialise()
   CreateTemplateType("Array", TypeIndex(typeid(IArray)), {any_type_}, TypeIds::Unknown,
                      array_type_);
   CreateTemplateType("Map", TypeIndex(typeid(IMap)), {any_type_, any_type_}, TypeIds::Unknown,
-                     map_type_);
+                     MapType_);
   CreateTemplateType("State", TypeIndex(typeid(IState)), {any_type_}, TypeIds::Unknown,
                      state_type_);
   CreateTemplateType("ShardedState", TypeIndex(typeid(IShardedState)), {any_type_},
@@ -209,7 +209,7 @@ void Analyser::UnInitialise()
   any_floating_point_type_  = nullptr;
   matrix_type_              = nullptr;
   array_type_               = nullptr;
-  map_type_                 = nullptr;
+  MapType_                  = nullptr;
   state_type_               = nullptr;
   address_type_             = nullptr;
   sharded_state_type_       = nullptr;

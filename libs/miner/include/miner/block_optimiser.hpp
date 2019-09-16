@@ -44,10 +44,10 @@ class BlockGenerator
 {
 public:
   using TransactionType         = std::shared_ptr<miner::TransactionItem>;
-  using block_index_map_type    = std::vector<std::vector<uint64_t>>;
+  using block_index_MapType     = std::vector<std::vector<uint64_t>>;
   using block_fees_list_type    = std::vector<uint64_t>;
   using digest_type             = TransactionSummary::TxDigest;
-  using transaction_map_type    = std::unordered_map<digest_type, TransactionType>;
+  using transaction_MapType     = std::unordered_map<digest_type, TransactionType>;
   using transaction_list_type   = std::vector<TransactionType>;
   using transaction_matrix_type = std::vector<transaction_list_type>;
   using AnnealerType            = fetch::optimisers::BinaryAnnealer;
@@ -252,7 +252,7 @@ public:
    *
    * TODO(issue 30): change to system block
    */
-  block_index_map_type const &block() const
+  block_index_MapType const &block() const
   {
     return block_;
   }
@@ -434,7 +434,7 @@ private:
     }
   }
 
-  block_index_map_type block_;
+  block_index_MapType  block_;
   block_fees_list_type block_fees_;
 
   std::size_t occupancy_            = 0;
@@ -448,7 +448,7 @@ private:
   state_type   best_solution_;
   AnnealerType annealer_;
 
-  transaction_map_type    all_;
+  transaction_MapType     all_;
   transaction_list_type   unspent_;
   transaction_matrix_type staged_;
 };

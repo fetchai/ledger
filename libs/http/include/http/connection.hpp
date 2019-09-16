@@ -38,11 +38,11 @@ class HTTPConnection : public AbstractHTTPConnection,
                        public std::enable_shared_from_this<HTTPConnection>
 {
 public:
-  using response_queue_type = std::deque<HTTPResponse>;
-  using ConnectionType      = typename AbstractHTTPConnection::SharedType;
-  using HandleType          = HTTPConnectionManager::HandleType;
-  using SharedRequestType   = std::shared_ptr<HTTPRequest>;
-  using buffer_ptr_type     = std::shared_ptr<asio::streambuf>;
+  using ResponseQueueType = std::deque<HTTPResponse>;
+  using ConnectionType    = typename AbstractHTTPConnection::SharedType;
+  using HandleType        = HTTPConnectionManager::HandleType;
+  using SharedRequestType = std::shared_ptr<HTTPRequest>;
+  using BufferPointerType = std::shared_ptr<asio::streambuf>;
 
   static constexpr char const *LOGGING_NAME = "HTTPConnection";
 
@@ -96,7 +96,7 @@ public:
   }
 
 public:
-  void ReadHeader(buffer_ptr_type buffer_ptr = nullptr)
+  void ReadHeader(BufferPointerType buffer_ptr = nullptr)
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Ready to ready HTTP header");
 
@@ -136,7 +136,7 @@ public:
     asio::async_read_until(socket_, *buffer_ptr, "\r\n\r\n", cb);
   }
 
-  void ReadBody(buffer_ptr_type buffer_ptr, SharedRequestType request)
+  void ReadBody(BufferPointerType buffer_ptr, SharedRequestType request)
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Read HTTP body");
     // Check if we got all the body
@@ -194,7 +194,7 @@ public:
 
   void Write()
   {
-    buffer_ptr_type buffer_ptr =
+    BufferPointerType buffer_ptr =
         std::make_shared<asio::streambuf>(std::numeric_limits<std::size_t>::max());
     {
       FETCH_LOCK(write_mutex_);
@@ -236,7 +236,7 @@ public:
 private:
   asio::ip::tcp::tcp::socket socket_;
   HTTPConnectionManager &    manager_;
-  response_queue_type        write_queue_;
+  ResponseQueueType          write_queue_;
   Mutex                      write_mutex_;
 
   HandleType handle_;

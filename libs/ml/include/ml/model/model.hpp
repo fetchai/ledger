@@ -19,6 +19,7 @@
 
 #include "ml/model/model_config.hpp"
 #include "ml/model/model_interface.hpp"
+
 #include <vector>
 
 namespace fetch {

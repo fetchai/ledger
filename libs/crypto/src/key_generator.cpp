@@ -22,9 +22,9 @@
 #include <fstream>
 
 namespace fetch {
+namespace crypto {
 
-using fetch::crypto::ECDSASigner;
-using fetch::crypto::Prover;
+namespace {
 
 using SignerPtr = std::shared_ptr<ECDSASigner>;
 using ProverPtr = std::shared_ptr<Prover>;
@@ -48,6 +48,8 @@ char const *GetKeyPath()
 
   return path;
 }
+
+}  // namespace
 
 /**
  * Attempt to load a previous key key file
@@ -105,4 +107,5 @@ ProverPtr GenerateP2PKey()
   return certificate;
 }
 
+}  // namespace crypto
 }  // namespace fetch

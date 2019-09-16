@@ -59,7 +59,7 @@ template <typename T, DeleteStrategyType P_DeleteStrategy = DeleteStrategyType::
 using SharedPointerType = memory::OsslSharedPtr<T, P_DeleteStrategy>;
 
 template <typename T, DeleteStrategyType P_DeleteStrategy = DeleteStrategyType::canonical>
-using uniq_ptr_type = memory::ossl_unique_ptr<T, P_DeleteStrategy>;
+using UniquePointerType = memory::ossl_unique_ptr<T, P_DeleteStrategy>;
 
 enum eECDSAEncoding : int
 {

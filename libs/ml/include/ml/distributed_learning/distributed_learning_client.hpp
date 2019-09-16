@@ -39,9 +39,6 @@ namespace fetch {
 namespace ml {
 namespace distributed_learning {
 
-using namespace fetch::ml::ops;
-using namespace fetch::ml::layers;
-
 template <typename DataType>
 struct ClientParams
 {
@@ -83,9 +80,9 @@ public:
 
   void Run();
 
-  DataType Train();
+  void Train();
 
-  virtual void Test(DataType &test_loss);
+  virtual void Test();
 
   VectorTensorType GetGradients() const;
 
@@ -97,8 +94,6 @@ public:
 
   void AddExportGradient(GradientType &gradient);
 
-  void ApplyGradient(VectorTensorType gradients);
-
   void SetWeights(VectorTensorType &new_weights);
 
   void SetParams(ClientParams<DataType> const &new_params);
@@ -108,6 +103,10 @@ public:
 protected:
   // Client id (identification name)
   std::string id_;
+
+  // Latest loss
+  DataType train_loss_ = fetch::math::numeric_max<DataType>();
+  DataType test_loss_  = fetch::math::numeric_max<DataType>();
 
   // Client's own graph and mutex to protect its weights
   std::shared_ptr<fetch::ml::Graph<TensorType>> g_ptr_;
@@ -246,17 +245,15 @@ void TrainingClient<TensorType>::Run()
  * @return training batch loss
  */
 template <class TensorType>
-typename TensorType::Type TrainingClient<TensorType>::Train()
+void TrainingClient<TensorType>::Train()
 {
   dataloader_ptr_->SetMode(fetch::ml::dataloaders::DataLoaderMode::TRAIN);
   dataloader_ptr_->SetRandomMode(true);
 
-  DataType loss        = static_cast<DataType>(0);
-  bool     is_done_set = false;
+  bool is_done_set = false;
 
   std::pair<TensorType, std::vector<TensorType>> input;
   input = dataloader_ptr_->PrepareBatch(batch_size_, is_done_set);
-
   {
     std::lock_guard<std::mutex> l(model_mutex_);
 
@@ -273,11 +270,9 @@ typename TensorType::Type TrainingClient<TensorType>::Train()
     g_ptr_->SetInput(label_name_, input.first);
 
     TensorType loss_tensor = g_ptr_->ForwardPropagate(error_name_);
-    loss                   = *(loss_tensor.begin());
+    train_loss_            = *(loss_tensor.begin());
     g_ptr_->BackPropagate(error_name_);
   }
-
-  return loss;
 }
 
 /**
@@ -285,7 +280,7 @@ typename TensorType::Type TrainingClient<TensorType>::Train()
  * @param test_loss
  */
 template <class TensorType>
-void TrainingClient<TensorType>::Test(DataType &test_loss)
+void TrainingClient<TensorType>::Test()
 {
   dataloader_ptr_->SetMode(fetch::ml::dataloaders::DataLoaderMode::TEST);
 
@@ -312,7 +307,7 @@ void TrainingClient<TensorType>::Test(DataType &test_loss)
     }
     g_ptr_->SetInput(label_name_, test_pair.first);
 
-    test_loss = *(g_ptr_->Evaluate(error_name_).begin());
+    test_loss_ = *(g_ptr_->Evaluate(error_name_).begin());
   }
 }
 
@@ -360,26 +355,6 @@ void TrainingClient<TensorType>::AddExportGradient(GradientType &gradient)
     export_buffer_.push(gradient);
   }
   export_buffer_cv_.notify_all();
-}
-
-/**
- * Applies gradient multiplied by -LEARNING_RATE
- * @param gradients
- */
-template <class TensorType>
-void TrainingClient<TensorType>::ApplyGradient(VectorTensorType gradients)
-{
-  // Step of SGD optimiser
-  for (SizeType j{0}; j < gradients.size(); j++)
-  {
-    fetch::math::Multiply(gradients.at(j), -learning_rate_, gradients.at(j));
-  }
-
-  // Apply gradients to own model
-  {
-    std::lock_guard<std::mutex> l(model_mutex_);
-    g_ptr_->ApplyGradients(gradients);
-  }
 }
 
 /**
@@ -436,19 +411,22 @@ template <class TensorType>
 void TrainingClient<TensorType>::TrainOnce()
 {
   std::ofstream lossfile("losses_" + id_ + ".csv", std::ofstream::out | std::ofstream::app);
-  DataType      loss;
 
   DoBatch();
 
   // Validate loss for logging purpose
-  Test(loss);
+  Test();
 
   // Save loss variation data
   // Upload to https://plot.ly/create/#/ for visualisation
   if (lossfile)
   {
-    lossfile << GetStrTimestamp() << ", " << static_cast<double>(loss) << "\n";
+    lossfile << GetStrTimestamp() << ", " << static_cast<double>(train_loss_)
+             << static_cast<double>(test_loss_) << "\n";
   }
+
+  opti_ptr_->IncrementEpochCounter();
+  opti_ptr_->UpdateLearningRate();
 
   lossfile << GetStrTimestamp() << ", "
            << "STOPPED"
@@ -463,7 +441,6 @@ template <class TensorType>
 void TrainingClient<TensorType>::TrainWithCoordinator()
 {
   std::ofstream lossfile("losses_" + id_ + ".csv", std::ofstream::out | std::ofstream::app);
-  DataType      loss;
 
   while (coordinator_ptr_->GetState() == CoordinatorState::RUN)
   {
@@ -471,20 +448,28 @@ void TrainingClient<TensorType>::TrainWithCoordinator()
     coordinator_ptr_->IncrementIterationsCounter();
 
     // Validate loss for logging purpose
-    Test(loss);
+    Test();
 
     // Save loss variation data
     // Upload to https://plot.ly/create/#/ for visualisation
+
     if (lossfile)
     {
-      lossfile << GetStrTimestamp() << ", " << static_cast<double>(loss) << "\n";
+      lossfile << GetStrTimestamp() << ", " << static_cast<double>(train_loss_)
+               << static_cast<double>(test_loss_) << "\n";
     }
   }
 
-  lossfile << GetStrTimestamp() << ", "
-           << "STOPPED"
-           << "\n";
-  lossfile.close();
+  opti_ptr_->IncrementEpochCounter();
+  opti_ptr_->UpdateLearningRate();
+
+  if (lossfile)
+  {
+    lossfile << GetStrTimestamp() << ", "
+             << "STOPPED"
+             << "\n";
+    lossfile.close();
+  }
 }
 
 /**
@@ -523,6 +508,8 @@ void TrainingClient<TensorType>::DoBatch()
   {
     std::lock_guard<std::mutex> l(model_mutex_);
     opti_ptr_->ApplyGradients(batch_size_);
+    opti_ptr_->IncrementBatchCounters(batch_size_);
+    opti_ptr_->UpdateLearningRate();
   }
   batch_counter_++;
 }
