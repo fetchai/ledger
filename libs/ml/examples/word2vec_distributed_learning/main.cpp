@@ -23,7 +23,7 @@
 #include "ml/core/graph.hpp"
 #include "ml/dataloaders/word2vec_loaders/sgns_w2v_dataloader.hpp"
 #include "ml/distributed_learning/coordinator.hpp"
-#include "word2vec_client.hpp"
+#include "ml/distributed_learning/word2vec_client.hpp"
 
 #include <iostream>
 #include <mutex>
