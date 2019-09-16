@@ -20,6 +20,7 @@
 #include "math/meta/math_type_traits.hpp"
 #include "math/tensor_declaration.hpp"
 
+#include <cfenv>
 #include <cstdint>
 #include <limits>
 #include <unordered_set>
@@ -111,6 +112,54 @@ template <typename T>
 fetch::meta::IfIsFloat<T, T> static function_tolerance()
 {
   return T(1e-6);
+}
+
+template <typename T>
+static constexpr meta::IfIsNonFixedPointArithmetic<T, T> is_nan()
+{
+  return std::fetestexcept(FE_INVALID);
+}
+
+template <typename T>
+static constexpr meta::IfIsFixedPoint<T, T> is_nan()
+{
+  return T::Type::IsStateNaN();
+}
+
+template <typename T>
+static constexpr meta::IfIsNonFixedPointArithmetic<T, T> is_division_by_zero()
+{
+  return std::fetestexcept(FE_DIVBYZERO);
+}
+
+template <typename T>
+static constexpr meta::IfIsFixedPoint<T, T> is_division_by_zero()
+{
+  return T::Type::IsStateDivisionByZero();
+}
+
+template <typename T>
+static constexpr meta::IfIsNonFixedPointArithmetic<T, T> is_overflow()
+{
+  return std::fetestexcept(FE_OVERFLOW);
+}
+
+template <typename T>
+static constexpr meta::IfIsFixedPoint<T, T> is_overflow()
+{
+  return T::Type::IsStateOverflow();
+}
+
+template <typename T>
+static constexpr meta::IfIsNonFixedPointArithmetic<T, T> is_infinity()
+{
+  return std::fetestexcept(FE_DIVBYZERO);
+}
+
+template <typename T>
+static constexpr meta::IfIsFixedPoint<T, T> is_infinity()
+{
+  return T::Type::IsStateInfinity();
 }
 
 }  // namespace math
