@@ -86,8 +86,8 @@ using StakeManagerPtr  = std::shared_ptr<ledger::StakeManager>;
 
 constexpr char const *LOGGING_NAME = "constellation";
 
-static const std::size_t HTTP_THREADS{4};
-static char const *      GENESIS_FILENAME = "genesis_file.json";
+const std::size_t HTTP_THREADS{4};
+char const *      GENESIS_FILENAME = "genesis_file.json";
 
 bool WaitForLaneServersToStart()
 {

@@ -21,7 +21,7 @@
 namespace fetch {
 namespace commandline {
 
-void ParamsParser::Parse(int argc, const char *const argv[])
+void ParamsParser::Parse(int argc, char const *const argv[])
 {
   auto sargs = std::size_t(argc);
   params_.clear();

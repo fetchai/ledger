@@ -69,7 +69,7 @@ BeaconService::BeaconService(MuddleInterface &               muddle,
                              ledger::ManifestCacheInterface &manifest_cache,
                              CertificatePtr certificate, SharedEventManager event_manager,
                              uint64_t blocks_per_round)
-  : certificate_{certificate}
+  : certificate_{std::move(certificate)}
   , identity_{certificate->identity()}
   , endpoint_{muddle.GetEndpoint()}
   , state_machine_{std::make_shared<StateMachine>("BeaconService", State::WAIT_FOR_SETUP_COMPLETION,
@@ -174,7 +174,7 @@ BeaconService::Status BeaconService::GenerateEntropy(Digest /*block_digest*/, ui
   // Searches for the next entropy
   do
   {
-    if (ready_entropy_queue_.size() == 0)
+    if (ready_entropy_queue_.empty())
     {
       return Status::NOT_READY;
     }
@@ -263,7 +263,7 @@ BeaconService::State BeaconService::OnWaitForSetupCompletionState()
 
   // Checking whether the next committee is ready
   // to produce random numbers.
-  if (aeon_exe_queue_.size() > 0)
+  if (!aeon_exe_queue_.empty())
   {
     active_exe_unit_ = aeon_exe_queue_.front();
     aeon_exe_queue_.pop_front();
@@ -298,7 +298,7 @@ BeaconService::State BeaconService::OnWaitForPublicKeys()
 {
   std::lock_guard<std::mutex> lock(mutex_);
 
-  while (incoming_group_public_keys_.size() > 0)
+  while (!incoming_group_public_keys_.empty())
   {
     auto pk = incoming_group_public_keys_.top();
     incoming_group_public_keys_.pop();
@@ -326,7 +326,7 @@ BeaconService::State BeaconService::OnObserveEntropyGeneration()
   std::lock_guard<std::mutex> lock(mutex_);
 
   // Iterating through incoming
-  while (incoming_entropy_.size() > 0)
+  while (!incoming_entropy_.empty())
   {
     current_entropy_ = incoming_entropy_.top();
 
@@ -454,7 +454,7 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
 
   // semi randomly select a qual member we haven't got the signature information from to query
   std::size_t random_member_index = random_number_++ % missing_signatures_from.size();
-  auto        it = std::next(missing_signatures_from.begin(), long(random_member_index));
+  auto        it = std::next(missing_signatures_from.begin(), int64_t(random_member_index));
 
   qual_promise_identity_ = Identity(*it);
   sig_share_promise_     = rpc_client_.CallSpecificAddress(

@@ -335,7 +335,7 @@ uint64_t BeaconSetupService::PreDKGThreshold()
 uint32_t BeaconSetupService::QualSize()
 {
   // Set to 2/3n for now
-  uint32_t proposed_qual_size =
+  auto proposed_qual_size =
       static_cast<uint32_t>(beacon_->aeon.members.size() - beacon_->aeon.members.size() / 3);
   if (proposed_qual_size <= beacon_->manager.polynomial_degree())
   {
@@ -1292,7 +1292,7 @@ bool BeaconSetupService::BuildQual()
 void BeaconSetupService::CheckQualComplaints()
 {
   std::set<MuddleAddress> qual{beacon_->manager.qual()};
-  for (const auto &complaint : qual_complaints_manager_.ComplaintsReceived(qual))
+  for (auto const &complaint : qual_complaints_manager_.ComplaintsReceived(qual))
   {
     MuddleAddress sender = complaint.first;
     for (auto const &share : complaint.second)

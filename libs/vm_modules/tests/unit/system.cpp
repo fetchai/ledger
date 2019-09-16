@@ -37,7 +37,7 @@ public:
 TEST_F(SystemTests, no_args)
 {
   std::vector<std::string>  args = {"executable", "scriptname"};
-  std::vector<const char *> argv;
+  std::vector<char const *> argv;
   argv.reserve(args.size());
   for (auto const &s : args)
   {
@@ -68,7 +68,7 @@ TEST_F(SystemTests, some_args)
 {
   std::vector<std::string>  args = {"executable", "scriptname", "etch_arg1",
                                    "--",         "prog_arg1",  "prog_arg2"};
-  std::vector<const char *> argv;
+  std::vector<char const *> argv;
   argv.reserve(args.size());
   for (auto const &s : args)
   {
@@ -104,7 +104,7 @@ TEST_F(SystemTests, some_args)
 TEST_F(SystemTests, only_etch_args)
 {
   std::vector<std::string>  args = {"executable", "scriptname", "etch_arg1", "--"};
-  std::vector<const char *> argv;
+  std::vector<char const *> argv;
   argv.reserve(args.size());
   for (auto const &s : args)
   {
@@ -140,7 +140,7 @@ TEST_F(SystemTests, only_etch_args)
 TEST_F(SystemTests, only_program_args)
 {
   std::vector<std::string>  args = {"executable", "scriptname", "--", "prog_arg1", "prog_arg2"};
-  std::vector<const char *> argv;
+  std::vector<char const *> argv;
   argv.reserve(args.size());
   for (auto const &s : args)
   {
