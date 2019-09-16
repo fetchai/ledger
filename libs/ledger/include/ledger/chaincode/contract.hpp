@@ -41,6 +41,7 @@ namespace ledger {
 
 class Transaction;
 class Address;
+class Identity;
 
 /**
  * Contract - Base class for all smart contract and chain code instances
