@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/muddle/router.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/logging.hpp"
 #include "core/serializers/base_types.hpp"
@@ -26,6 +25,7 @@
 #include "network/muddle/dispatcher.hpp"
 #include "network/muddle/muddle_register.hpp"
 #include "network/muddle/packet.hpp"
+#include "network/muddle/router.hpp"
 
 #include <algorithm>
 #include <array>

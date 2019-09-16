@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/consensus/proof_of_work.hpp"
 #include "crypto/sha256.hpp"
+#include "ledger/chain/consensus/proof_of_work.hpp"
 
 #include <cassert>
 #include <cstddef>

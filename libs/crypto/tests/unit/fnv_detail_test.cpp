@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/fnv_detail.hpp"
 #include "core/byte_array/encoders.hpp"
+#include "crypto/fnv_detail.hpp"
 
 #include "gmock/gmock.h"
 

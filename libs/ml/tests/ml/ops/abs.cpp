@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/abs.hpp"
 #include "math/base_types.hpp"
 #include "math/tensor.hpp"
+#include "ml/ops/abs.hpp"
 
 #include "vectorise/fixed_point/fixed_point.hpp"
 

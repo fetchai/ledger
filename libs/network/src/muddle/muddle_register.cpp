@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/muddle/muddle_register.hpp"
 #include "network/management/abstract_connection.hpp"
 #include "network/muddle/dispatcher.hpp"
+#include "network/muddle/muddle_register.hpp"
 
 namespace fetch {
 namespace muddle {

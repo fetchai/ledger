@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "http/http_connection_manager.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/logging.hpp"
 #include "http/abstract_connection.hpp"
 #include "http/abstract_server.hpp"
+#include "http/http_connection_manager.hpp"
 #include "http/request.hpp"
 
 namespace fetch {

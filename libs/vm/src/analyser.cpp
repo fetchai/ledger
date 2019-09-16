@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/analyser.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+#include "vm/analyser.hpp"
 #include "vm/array.hpp"
 #include "vm/map.hpp"
 #include "vm/matrix.hpp"

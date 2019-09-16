@@ -586,14 +586,14 @@ private:
     header_ = reinterpret_cast<Header *>(mapped_header_.data());
   }
 
-  EventHandlerType   on_file_loaded_;
-  EventHandlerType   on_before_flush_;
-  mio::mmap_sink     mapped_data_;    // This map handles read/write objects from/to file
-  mio::mmap_sink     mapped_header_;  // This map handles header part in the file
-  std::fstream       file_handle_;
-  std::string        filename_ = "";
-  Header *           header_;
-  std::size_t        mapped_index_ = 0;  // It holds the mapped index value
+  EventHandlerType on_file_loaded_;
+  EventHandlerType on_before_flush_;
+  mio::mmap_sink   mapped_data_;    // This map handles read/write objects from/to file
+  mio::mmap_sink   mapped_header_;  // This map handles header part in the file
+  std::fstream     file_handle_;
+  std::string      filename_ = "";
+  Header *         header_;
+  std::size_t      mapped_index_ = 0;  // It holds the mapped index value
 };
 }  // namespace storage
 }  // namespace fetch

@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/muddle/muddle.hpp"
 #include "core/logging.hpp"
 #include "core/serializers/base_types.hpp"
 #include "core/serializers/main_serializer.hpp"
+#include "network/muddle/muddle.hpp"
 #include "network/muddle/muddle_register.hpp"
 #include "network/muddle/muddle_server.hpp"
 #include "network/tcp/tcp_client.hpp"

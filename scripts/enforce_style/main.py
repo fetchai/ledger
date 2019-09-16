@@ -5,7 +5,7 @@ from style_checker import StyleChecker
 import os
 import sys
 import re
-import glob 
+import glob
 
 libclangs = [
     '/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libclang.dylib',
@@ -22,25 +22,28 @@ if not found:
     print("Could not find clang")
     exit(-1)
 
+
 class CustomChecker(StyleChecker):
-    member_function_style = re.compile(r"^(([A-Z][a-z0-9_]*)+|[a-z][a-z0-9_]*)$")
-    type_style    = re.compile(r"^([A-Z][a-z0-9_]*)+$")
-    any    = re.compile(r"^.+$")    
-    operators     = ["=", "==", "!=", "()", "^", "^=", "&", "&=", "|", "|=", "<", "<=", ">", ">=", ">>", "<<", "[]",
-        "+","+=","-","-=","*","*=","++", "--", "/", "/=", "->", "<<=", ">>=", "~","!", "%", "%="]
+    member_function_style = re.compile(
+        r"^(([A-Z][a-z0-9_]*)+|[a-z][a-z0-9_]*)$")
+    type_style = re.compile(r"^([A-Z][a-z0-9_]*)+$")
+    any = re.compile(r"^.+$")
+    operators = ["=", "==", "!=", "()", "^", "^=", "&", "&=", "|", "|=", "<", "<=", ">", ">=", ">>", "<<", "[]",
+                 "+", "+=", "-", "-=", "*", "*=", "++", "--", "/", "/=", "->", "<<=", ">>=", "~", "!", "%", "%="]
 
     allowed_types = ["int", "uint8_t", "uint16_t", "uint32_t", "uint64_t",
                      "int8_t", "int16_t", "int32_t", "int64_t",
                      "char", "bool", "void", "double", "float"]
 
-    incorrect_type_names =[]
+    incorrect_type_names = []
     incorrect_function_names = []
 
     def ValidateType(self, type_node):
         name = type_node.spelling
-        name = name.replace("&", "").replace("*","").replace("const","").replace("typename","").strip()
+        name = name.replace("&", "").replace(
+            "*", "").replace("const", "").replace("typename", "").strip()
 
-        if name in self.allowed_types: 
+        if name in self.allowed_types:
             return True
 
         if name.startswith("std::"):
@@ -53,7 +56,7 @@ class CustomChecker(StyleChecker):
         if name.endswith(">") and "<" in name:
             name, _ = name.split("<", 1)
 
-        # Stripping namespace - must be done 
+        # Stripping namespace - must be done
         # after stripping templates
         if "::" in name:
             _, name = name.rsplit("::", 1)
@@ -67,9 +70,9 @@ class CustomChecker(StyleChecker):
 
         return True
 
-    def CheckPublicMemberFunction(self,node):
+    def CheckPublicMemberFunction(self, node):
         if "operator" in node.spelling:
-            op = node.spelling.replace("operator","")
+            op = node.spelling.replace("operator", "")
             if op in self.operators:
                 return
 
@@ -83,13 +86,14 @@ class CustomChecker(StyleChecker):
     def CheckArgument(self, node):
         return
 
-        ## TODO: Does not work as clang rearranges with const first
+        # TODO: Does not work as clang rearranges with const first
         if node.type.spelling.startswith("const "):
             self.Error(node, "Incorrect placement of keyword 'const'")
 
     def CheckReturnType(self, node):
         if not self.ValidateType(node.result_type):
-            self.Error(node, "Return type name '"+node.result_type.spelling+"' does not follow style guide.")            
+            self.Error(node, "Return type name '" +
+                       node.result_type.spelling+"' does not follow style guide.")
 
     def CheckClass(self, node):
         pass
@@ -99,14 +103,15 @@ class CustomChecker(StyleChecker):
 
     def CheckUsingTypeAlias(self, node):
         if not self.ValidateType(node):
-            self.Error(node, "Type alias '"+node.spelling+"' does not follow style guide.")            
+            self.Error(node, "Type alias '"+node.spelling +
+                       "' does not follow style guide.")
 
 
 if __name__ == "__main__":
     ignores = ["vm/tokeniser.hpp"]
 
     includes = sys.argv[2:]
-    for f in glob.glob(os.path.join(sys.argv[1], "*","include")):
+    for f in glob.glob(os.path.join(sys.argv[1], "*", "include")):
         includes.append(f)
 
     checker = CustomChecker(includes)

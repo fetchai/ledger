@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/add.hpp"
 #include "core/serializers/main_serializer_definition.hpp"
 #include "math/base_types.hpp"
 #include "math/tensor.hpp"
+#include "ml/ops/add.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 

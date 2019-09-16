@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/muddle/rpc/client.hpp"
 #include "core/set_thread_name.hpp"
+#include "network/muddle/rpc/client.hpp"
 
 #include <chrono>
 #include <cstddef>

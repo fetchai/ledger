@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/state.hpp"
 #include "vm/io_observer_interface.hpp"
+#include "vm/state.hpp"
 
 namespace fetch {
 namespace vm {
