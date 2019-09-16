@@ -27,6 +27,65 @@
 using namespace fetch::crypto::mcl;
 using namespace fetch::byte_array;
 
+TEST(MclTests, BaseMcl)
+{
+  mcl::bn::initPairing();
+  mcl::bn::G2 generator;
+  SetGenerator(generator);
+  mcl::bn::G1 P(-1, 1);
+
+  // Checking clear operation resets to 0
+  {
+    mcl::bn::G2 Q0;
+    Q0.clear();
+    EXPECT_TRUE(Q0.isZero());
+    mcl::bn::G1 P0;
+    P0.clear();
+    EXPECT_TRUE(P0.isZero());
+    mcl::bn::Fr F0;
+    F0.clear();
+    EXPECT_TRUE(F0.isZero());
+  }
+
+  // Serialization to string
+  {
+    std::string s = generator.getStr();
+    mcl::bn::G2 Q2;
+    Q2.setStr(s);
+    std::string s2 = Q2.getStr();
+    EXPECT_EQ(s2, s);
+    EXPECT_EQ(Q2, generator);
+  }
+
+  // Testing basic operations for types G1, G2 and Fp used in DKG
+  {
+    mcl::bn::Fr power = 2;
+    mcl::bn::G2 gen_mult;
+    mcl::bn::G2 gen_add;
+    gen_mult.clear();
+    gen_add.clear();
+    mcl::bn::G2::mul(gen_mult, generator, power);
+    mcl::bn::G2::add(gen_add, generator, generator);
+    EXPECT_EQ(gen_mult, gen_add);
+
+    mcl::bn::G1 P_mul;
+    mcl::bn::G1 P_add;
+    P_mul.clear();
+    P_add.clear();
+    mcl::bn::G1::mul(P_mul, P, power);
+    mcl::bn::G1::add(P_add, P, P);
+    EXPECT_EQ(P_mul, P_add);
+
+    mcl::bn::Fr fr_pow;
+    mcl::bn::Fr fr_mul;
+    fr_pow.clear();
+    fr_mul.clear();
+    mcl::bn::Fr::pow(fr_pow, power, 2);
+    mcl::bn::Fr::mul(fr_mul, power, power);
+    EXPECT_EQ(fr_mul, fr_pow);
+  }
+}
+
 TEST(MclDkgTests, ComputeLhsRhs)
 {
   mcl::bn::initPairing();
