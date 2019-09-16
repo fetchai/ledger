@@ -77,7 +77,7 @@ bool Client::DeliverRequest(network::message_type const &data)
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Please send this packet to the server  ", service_, ",", channel_);
 
-  unsigned long long int ident = 0;
+  uint64_t ident = 0;
 
   try
   {

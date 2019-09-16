@@ -25,7 +25,7 @@
 
 using namespace fetch::memory;
 
-template <typename type, unsigned long N = 100000>
+template <typename type, uint64_t N = 100000>
 class ParallelDispatcherKernelBench : public ::benchmark::Fixture
 {
 public:

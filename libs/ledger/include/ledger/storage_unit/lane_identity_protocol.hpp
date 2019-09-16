@@ -31,7 +31,7 @@ public:
     GET_TOTAL_LANES,
   };
 
-  LaneIdentityProtocol(LaneIdentity &ctrl)
+  explicit LaneIdentityProtocol(LaneIdentity &ctrl)
   {
     this->Expose(GET_IDENTITY, &ctrl, &LaneIdentity::Identity);
     this->Expose(GET_LANE_NUMBER, &ctrl, &LaneIdentity::GetLaneNumber);

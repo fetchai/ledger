@@ -63,7 +63,7 @@ private:
   static constexpr std::uint32_t LABEL_SIZE    = 10;
 
 public:
-  MNISTLoader(bool random_mode = false)
+  explicit MNISTLoader(bool random_mode = false)
     : DataLoader<LabelType, InputType>(random_mode)
   {
     // Prepare return buffer
@@ -215,7 +215,7 @@ public:
 
     if (file.is_open())
     {
-      unsigned int magic_number = 0, n_rows = 0, n_cols = 0;
+      uint32_t magic_number = 0, n_rows = 0, n_cols = 0;
 
       file.read((char *)&magic_number, sizeof(magic_number));
       magic_number = reverseInt(magic_number);
@@ -233,7 +233,7 @@ public:
       image_size = n_rows * n_cols;
 
       auto **_dataset = new uchar *[number_of_images];
-      for (unsigned int i = 0; i < number_of_images; i++)
+      for (uint32_t i = 0; i < number_of_images; i++)
       {
         _dataset[i] = new uchar[image_size];
         file.read((char *)_dataset[i], std::streamsize(image_size));
@@ -274,7 +274,7 @@ public:
           number_of_labels = reverseInt(number_of_labels);
 
       auto *_dataset = new uchar[number_of_labels];
-      for (unsigned int i = 0; i < number_of_labels; i++)
+      for (uint32_t i = 0; i < number_of_labels; i++)
       {
         file.read((char *)&_dataset[i], 1);
       }

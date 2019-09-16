@@ -51,7 +51,7 @@ public:
 
   ECDSASignature() = default;
 
-  ECDSASignature(byte_array::ConstByteArray binary_signature)
+  explicit ECDSASignature(byte_array::ConstByteArray binary_signature)
     : hash_{}
     , signature_ECDSA_SIG_{Convert(binary_signature, signatureBinaryDataFormat)}
     , signature_{std::move(binary_signature)}
@@ -65,7 +65,7 @@ public:
   friend class ECDSASignature;
 
   template <eECDSAEncoding BIN_FORMAT>
-  ECDSASignature(ecdsa_signature_type<BIN_FORMAT> const &from)
+  explicit ECDSASignature(ecdsa_signature_type<BIN_FORMAT> const &from)
     : hash_{from.hash_}
     , signature_ECDSA_SIG_{from.signature_ECDSA_SIG_}
     , signature_{BIN_FORMAT == signatureBinaryDataFormat
@@ -76,7 +76,7 @@ public:
   // ECDSASignature(ECDSASignature&& from) = default;
 
   template <eECDSAEncoding BIN_FORMAT>
-  ECDSASignature(ecdsa_signature_type<BIN_FORMAT> &&from)
+  explicit ECDSASignature(ecdsa_signature_type<BIN_FORMAT> &&from)
     : ECDSASignature{safeMoveConstruct(std::move(from))}
   {}
 
@@ -248,7 +248,7 @@ private:
     auto const *der_sig_ptr = static_cast<const unsigned char *>(bin_sig.pointer());
 
     uniq_ptr_type<ECDSA_SIG> signature{
-        d2i_ECDSA_SIG(nullptr, &der_sig_ptr, static_cast<long>(bin_sig.size()))};
+        d2i_ECDSA_SIG(nullptr, &der_sig_ptr, static_cast<int64_t>(bin_sig.size()))};
     if (!signature)
     {
       throw std::runtime_error(

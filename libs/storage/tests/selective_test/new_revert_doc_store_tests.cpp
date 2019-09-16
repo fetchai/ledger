@@ -412,9 +412,9 @@ TEST(new_revertible_store_test, DISABLED_hashing_correct_basic)
     reference_tree = crypto::MerkleTree{current_state.size()};
 
     std::size_t counter = 0;
-    for (auto it = current_state.begin(); it != current_state.end(); ++it)
+    for (auto &it : current_state)
     {
-      reference_tree[counter++] = Hash<crypto::SHA256>(it->second);
+      reference_tree[counter++] = Hash<crypto::SHA256>(it.second);
     }
 
     reference_tree.CalculateRoot();

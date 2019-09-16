@@ -1,16 +1,23 @@
 Checks: "-*,\
 bugprone-*,\
+google-build-namespaces,\
+-google-explicit-constructor,\
 google-readability-todo,\
+google-runtime-int,\
+google-runtime-operator,\
 misc-suspicious-*,\
 misc-unused-*,\
+modernize-loop-convert,\
 modernize-make-shared,\
 modernize-make-unique,\
 modernize-pass-by-value,\
 modernize-use-*,\
+-performance-*,\
 readability-braces-around-statements,\
 readability-container-size-empty,\
 -readability-identifier-naming,\
-readability-simplify-boolean-expr"
+readability-simplify-boolean-expr,\
+readability-static-definition-in-anonymous-namespace"
 
 CheckOptions:
   - key:             readability-identifier-naming.FunctionCase

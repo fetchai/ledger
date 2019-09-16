@@ -55,11 +55,11 @@ void PeerConnectionList::RemovePersistentPeer(Uri const &peer)
 void PeerConnectionList::RemovePersistentPeer(Handle handle)
 {
   FETCH_LOCK(lock_);
-  for (auto it = peer_connections_.begin(); it != peer_connections_.end(); ++it)
+  for (auto &peer_connection : peer_connections_)
   {
-    if (it->second->handle() == handle)
+    if (peer_connection.second->handle() == handle)
     {
-      persistent_peers_.erase(it->first);
+      persistent_peers_.erase(peer_connection.first);
       break;
     }
   }

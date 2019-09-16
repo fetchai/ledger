@@ -34,7 +34,7 @@ public:
     USE_THESE_PEERS,
   };
 
-  LaneControllerProtocol(LaneController *ctrl)
+  explicit LaneControllerProtocol(LaneController *ctrl)
   {
     this->Expose(SHUTDOWN, ctrl, &LaneController::Shutdown);
     this->Expose(USE_THESE_PEERS, ctrl, &LaneController::UseThesePeers);

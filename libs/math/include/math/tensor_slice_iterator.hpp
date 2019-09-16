@@ -55,7 +55,7 @@ public:
    * default range assumes step 1 over whole array - useful for trivial cases
    * @param array
    */
-  TensorSliceIterator(TensorType &array)
+  explicit TensorSliceIterator(TensorType &array)
     : array_(array)
   {
     std::vector<std::vector<SizeType>> step{};
@@ -114,7 +114,7 @@ public:
    * same as is_valid
    * @return
    */
-  operator bool() const
+  explicit operator bool() const
   {
     return is_valid();
   }
@@ -215,18 +215,18 @@ public:
     new_ranges.reserve(ranges_.size());
 
     // Insert axes at beginning
-    for (SizeType i = 0; i < axes.size(); ++i)
+    for (uint64_t axe : axes)
     {
-      new_ranges.push_back(ranges_[axes[i]]);
+      new_ranges.push_back(ranges_[axe]);
     }
 
     for (SizeType i = 0; i < ranges_.size(); ++i)
     {
       // Search for axis
       bool add_axis = true;
-      for (SizeType j = 0; j < axes.size(); ++j)
+      for (uint64_t axe : axes)
       {
-        if (i == axes[j])
+        if (i == axe)
         {
           add_axis = false;
           break;

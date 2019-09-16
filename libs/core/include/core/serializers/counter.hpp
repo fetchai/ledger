@@ -542,7 +542,7 @@ private:
 
   T *size_counter_;
 
-  SizeCounterGuard(T *size_counter)
+  explicit SizeCounterGuard(T *size_counter)
     : size_counter_{size_counter}
   {}
 

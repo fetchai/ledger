@@ -417,9 +417,9 @@ struct hash<fetch::muddle::Packet::RawAddress>
   std::size_t operator()(fetch::muddle::Packet::RawAddress const &address) const noexcept
   {
     uint32_t hash = 2166136261;
-    for (std::size_t i = 0; i < address.size(); ++i)
+    for (uint8_t part : address)
     {
-      hash = (hash * 16777619) ^ address[i];
+      hash = (hash * 16777619) ^ part;
     }
     return hash;
   }

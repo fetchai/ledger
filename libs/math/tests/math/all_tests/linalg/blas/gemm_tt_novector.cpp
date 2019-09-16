@@ -32,7 +32,7 @@ TEST(blas_DGEMM, blas_gemm_tt_novector1)
   Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C <= _alpha * T(_A) * T(_B) + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
       gemm_tt_novector;
-  // Compuing _C <= _alpha * T(_A) * T(_B) + _beta * _C
+  // Computing _C <= _alpha * T(_A) * T(_B) + _beta * _C
   using Type = double;
   auto alpha = Type(1);
   auto beta  = Type(0);
@@ -71,7 +71,7 @@ TEST(blas_DGEMM, blas_gemm_tt_novector2)
   Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C <= _alpha * T(_A) * T(_B) + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
       gemm_tt_novector;
-  // Compuing _C <= _alpha * T(_A) * T(_B) + _beta * _C
+  // Computing _C <= _alpha * T(_A) * T(_B) + _beta * _C
   using Type = double;
   auto alpha = Type(0);
   auto beta  = Type(1);
@@ -110,7 +110,7 @@ TEST(blas_DGEMM, blas_gemm_tt_novector3)
   Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C <= _alpha * T(_A) * T(_B) + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
       gemm_tt_novector;
-  // Compuing _C <= _alpha * T(_A) * T(_B) + _beta * _C
+  // Computing _C <= _alpha * T(_A) * T(_B) + _beta * _C
   using Type = double;
   auto alpha = Type(1);
   auto beta  = Type(1);
@@ -149,7 +149,7 @@ TEST(blas_DGEMM, blas_gemm_tt_novector4)
   Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C <= _alpha * T(_A) * T(_B) + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
       gemm_tt_novector;
-  // Compuing _C <= _alpha * T(_A) * T(_B) + _beta * _C
+  // Computing _C <= _alpha * T(_A) * T(_B) + _beta * _C
   using Type = double;
   auto alpha = Type(0.6662050112833283);
   auto beta  = Type(0.041808725635822386);

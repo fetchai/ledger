@@ -32,7 +32,7 @@ TEST(blas_gemv, blas_gemv_n_novector1)
   Blas<double, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
        Computes(_y <= _alpha * _A * _x + _beta * _y), platform::Parallelisation::NOT_PARALLEL>
       gemv_n_novector;
-  // Compuing _y <= _alpha * _A * _x + _beta * _y
+  // Computing _y <= _alpha * _A * _x + _beta * _y
   using Type = double;
   auto alpha = Type(1);
   auto beta  = Type(1);
@@ -68,7 +68,7 @@ TEST(blas_gemv, blas_gemv_n_novector2)
   Blas<double, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
        Computes(_y <= _alpha * _A * _x + _beta * _y), platform::Parallelisation::NOT_PARALLEL>
       gemv_n_novector;
-  // Compuing _y <= _alpha * _A * _x + _beta * _y
+  // Computing _y <= _alpha * _A * _x + _beta * _y
   using Type = double;
   auto alpha = Type(0);
   auto beta  = Type(1);
@@ -104,7 +104,7 @@ TEST(blas_gemv, blas_gemv_n_novector3)
   Blas<double, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
        Computes(_y <= _alpha * _A * _x + _beta * _y), platform::Parallelisation::NOT_PARALLEL>
       gemv_n_novector;
-  // Compuing _y <= _alpha * _A * _x + _beta * _y
+  // Computing _y <= _alpha * _A * _x + _beta * _y
   using Type = double;
   auto alpha = Type(0.5192124475613537);
   auto beta  = Type(0.7727136267182124);
@@ -140,7 +140,7 @@ TEST(blas_gemv, blas_gemv_n_novector4)
   Blas<double, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
        Computes(_y <= _alpha * _A * _x + _beta * _y), platform::Parallelisation::NOT_PARALLEL>
       gemv_n_novector;
-  // Compuing _y <= _alpha * _A * _x + _beta * _y
+  // Computing _y <= _alpha * _A * _x + _beta * _y
   using Type = double;
   auto alpha = Type(0);
   auto beta  = Type(1);
@@ -176,7 +176,7 @@ TEST(blas_gemv, blas_gemv_n_novector5)
   Blas<double, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
        Computes(_y <= _alpha * _A * _x + _beta * _y), platform::Parallelisation::NOT_PARALLEL>
       gemv_n_novector;
-  // Compuing _y <= _alpha * _A * _x + _beta * _y
+  // Computing _y <= _alpha * _A * _x + _beta * _y
   using Type = double;
   auto alpha = Type(0.7094521590949134);
   auto beta  = Type(0.7141735359225003);
@@ -212,7 +212,7 @@ TEST(blas_gemv, blas_gemv_n_novector6)
   Blas<double, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
        Computes(_y <= _alpha * _A * _x + _beta * _y), platform::Parallelisation::NOT_PARALLEL>
       gemv_n_novector;
-  // Compuing _y <= _alpha * _A * _x + _beta * _y
+  // Computing _y <= _alpha * _A * _x + _beta * _y
   using Type = double;
   auto alpha = Type(0.002437994991828951);
   auto beta  = Type(0.8836680888019255);

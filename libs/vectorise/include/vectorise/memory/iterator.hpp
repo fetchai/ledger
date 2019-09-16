@@ -36,7 +36,7 @@ public:
   constexpr ForwardIterator &operator=(ForwardIterator const &other) = default;
   constexpr ForwardIterator &operator=(ForwardIterator &&other) = default;
 
-  constexpr ForwardIterator(T *pos) noexcept
+  constexpr explicit ForwardIterator(T *pos) noexcept
     : pos_(pos)
   {}
   constexpr ForwardIterator(T *pos, T *end) noexcept
@@ -82,7 +82,7 @@ public:
   constexpr BackwardIterator &operator=(BackwardIterator const &other) = default;
   constexpr BackwardIterator &operator=(BackwardIterator &&other) = default;
 
-  constexpr BackwardIterator(T *pos) noexcept
+  constexpr explicit BackwardIterator(T *pos) noexcept
     : pos_(pos)
   {}
   constexpr BackwardIterator(T *pos, T *begin) noexcept

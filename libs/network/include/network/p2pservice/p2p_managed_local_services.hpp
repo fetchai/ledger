@@ -41,7 +41,7 @@ class P2PManagedLocalServices
   static constexpr char const *LOGGING_NAME = "P2PManagedLocalServices";
 
 public:
-  P2PManagedLocalServices(LaneManagement &lane_management)
+  explicit P2PManagedLocalServices(LaneManagement &lane_management)
     : lane_management_(lane_management)
   {}
 

@@ -1387,9 +1387,8 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
   }
   // rpn_ holds the Reverse Polish Notation (aka postfix) expression
   // Here we convert the RPN to an infix expression tree
-  for (std::size_t i = 0; i < rpn_.size(); ++i)
+  for (auto &expr : rpn_)
   {
-    Expr &expr = rpn_[i];
     if ((expr.node->node_kind == NodeKind::ParenthesisGroup) ||
         (expr.node->node_kind == NodeKind::UnaryPlus))
     {

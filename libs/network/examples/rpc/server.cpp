@@ -52,7 +52,7 @@ public:
     return a + b;
   }
 
-  std::string Greet(std::string name)
+  std::string Greet(std::string const &name)
   {
     return "Hello, " + name;
   }

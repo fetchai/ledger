@@ -430,9 +430,9 @@ Contract::Status TokenContract::CooldownStake(Query const &query, Query &respons
       response  = Variant::Object();
       auto keys = Variant::Object();
 
-      for (auto it = record.cooldown_stake.begin(); it != record.cooldown_stake.end(); ++it)
+      for (auto const &it : record.cooldown_stake)
       {
-        keys[std::to_string(it->first)] = it->second;
+        keys[std::to_string(it.first)] = it.second;
       }
 
       response["cooldownStake"] = keys;

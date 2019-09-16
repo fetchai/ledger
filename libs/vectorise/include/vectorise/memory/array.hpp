@@ -50,7 +50,7 @@ public:
   using self_type  = Array<T, type_size>;
   using type       = T;
 
-  Array(std::size_t n)
+  explicit Array(std::size_t n)
   {
     this->size_ = n;
 

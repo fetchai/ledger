@@ -43,7 +43,7 @@ using TransientStore   = fetch::storage::TransientObjectStore<Transaction>;
 using TransactionStore = fetch::storage::ObjectStore<Transaction>;
 using TransactionList  = std::vector<TransactionBuilder::TransactionPtr>;
 
-static constexpr uint32_t LOG2_NUM_LANES = 2;
+constexpr uint32_t LOG2_NUM_LANES = 2;
 
 TransactionList GenerateTransactions(std::size_t count, bool large_packets)
 {

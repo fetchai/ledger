@@ -326,7 +326,7 @@ public:
 
   shared_service_client_type GetService(connection_handle_type &&i)
   {
-    return ptr_->GetService(std::move(i));
+    return ptr_->GetService(i);
   }
 
   shared_service_client_type GetService(connection_handle_type const &i)

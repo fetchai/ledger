@@ -1072,7 +1072,7 @@ typename Tensor<T, C>::Type Tensor<T, C>::At(Indices... indices) const
 {
   assert(sizeof...(indices) == stride_.size());
   SizeType N = UnrollComputeColIndex<0>(std::forward<Indices>(indices)...);
-  return this->data()[std::move(N)];
+  return this->data()[N];
 }
 
 /**
@@ -1295,7 +1295,7 @@ void Tensor<T, C>::Set(Args... args)
   uint64_t index = TensorSetter<0, Args...>::IndexOf(stride_, shape_, std::forward<Args>(args)...);
   Type     value = TensorSetter<0, Args...>::ValueOf(std::forward<Args>(args)...);
 
-  data_[std::move(index)] = std::move(value);
+  data_[index] = std::move(value);
 }
 
 /**
@@ -2798,9 +2798,9 @@ typename Tensor<T, C>::TensorSlice Tensor<T, C>::TensorSlice::Slice(SizeType ind
   assert(axis < this->tensor_.shape().size());
   assert(new_axes.size() < this->tensor_.shape().size());
   assert(index < this->tensor_.shape().at(axis));
-  for (SizeType i = 0; i < new_axes.size(); i++)
+  for (SizeType new_axe : new_axes)
   {
-    assert(new_axes.at(i) != axis);
+    assert(new_axe != axis);
   }
 
   std::vector<SizeVector> new_range(this->range_);
@@ -2910,9 +2910,9 @@ typename Tensor<T, C>::ConstSliceType Tensor<T, C>::TensorSliceImplementation<ST
   assert(axis < tensor_.shape().size());
   assert(new_axes.size() < tensor_.shape().size());
   assert(i < tensor_.shape().at(axis));
-  for (SizeType i = 0; i < new_axes.size(); i++)
+  for (SizeType new_axe : new_axes)
   {
-    assert(new_axes.at(i) != axis);
+    assert(new_axe != axis);
   }
 
   std::vector<SizeVector> new_range(range_);

@@ -67,7 +67,7 @@ public:
 class SampleProtocol : public fetch::service::Protocol
 {
 public:
-  SampleProtocol(Sample &sample)
+  explicit SampleProtocol(Sample &sample)
   {
     Expose(1, &sample, &Sample::Add);
   }

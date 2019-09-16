@@ -23,6 +23,8 @@
 #include "http/http_connection_manager.hpp"
 #include "http/request.hpp"
 
+#include <utility>
+
 namespace fetch {
 namespace http {
 
@@ -37,7 +39,7 @@ HTTPConnectionManager::handle_type HTTPConnectionManager::Join(connection_type c
   FETCH_LOG_DEBUG(LOGGING_NAME, "Client joining with handle ", handle);
 
   FETCH_LOCK(clients_mutex_);
-  clients_[handle] = client;
+  clients_[handle] = std::move(client);
   return handle;
 }
 

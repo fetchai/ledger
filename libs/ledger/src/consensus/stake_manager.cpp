@@ -82,12 +82,12 @@ bool StakeManager::ShouldGenerateBlock(Block const &previous, Address const &add
   uint32_t time_to_wait = block_interval_ms_;
   bool     in_committee = false;
 
-  for (std::size_t i = 0; i < (*committee).size(); ++i)
+  for (auto const &i : *committee)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Saw committee member: ", (*committee)[i].address().ToBase64(),
+    FETCH_LOG_INFO(LOGGING_NAME, "Saw committee member: ", i.address().ToBase64(),
                    "we are: ", address.address().ToBase64());
 
-    if ((*committee)[i] == address)
+    if (i == address)
     {
       in_committee = true;
       break;

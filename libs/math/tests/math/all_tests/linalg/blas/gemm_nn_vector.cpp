@@ -32,7 +32,7 @@ TEST(blas_gemm_vectorised, blas_gemm_nn_vector1)
   Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C <= _alpha * _A * _B + _beta * _C), platform::Parallelisation::VECTORISE>
       gemm_nn_vector;
-  // Compuing _C <= _alpha * _A * _B + _beta * _C
+  // Computing _C <= _alpha * _A * _B + _beta * _C
   using Type = double;
   auto alpha = Type(1);
   auto beta  = Type(0);
@@ -71,7 +71,7 @@ TEST(blas_gemm_vectorised, blas_gemm_nn_vector2)
   Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C <= _alpha * _A * _B + _beta * _C), platform::Parallelisation::VECTORISE>
       gemm_nn_vector;
-  // Compuing _C <= _alpha * _A * _B + _beta * _C
+  // Computing _C <= _alpha * _A * _B + _beta * _C
   using Type = double;
   auto alpha = Type(0);
   auto beta  = Type(1);
@@ -110,7 +110,7 @@ TEST(blas_gemm_vectorised, blas_gemm_nn_vector3)
   Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C <= _alpha * _A * _B + _beta * _C), platform::Parallelisation::VECTORISE>
       gemm_nn_vector;
-  // Compuing _C <= _alpha * _A * _B + _beta * _C
+  // Computing _C <= _alpha * _A * _B + _beta * _C
   using Type = double;
   auto alpha = Type(1);
   auto beta  = Type(1);
@@ -149,7 +149,7 @@ TEST(blas_gemm_vectorised, blas_gemm_nn_vector4)
   Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C <= _alpha * _A * _B + _beta * _C), platform::Parallelisation::VECTORISE>
       gemm_nn_vector;
-  // Compuing _C <= _alpha * _A * _B + _beta * _C
+  // Computing _C <= _alpha * _A * _B + _beta * _C
   using Type = double;
   auto alpha = Type(0.6012041358597094);
   auto beta  = Type(0.477710663835637);
@@ -188,7 +188,7 @@ TEST(blas_gemm_vectorised, blas_gemm_nn_vector5)
   Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C <= _alpha * _A * _B + _beta * _C), platform::Parallelisation::VECTORISE>
       gemm_nn_vector;
-  // Compuing _C <= _alpha * _A * _B + _beta * _C
+  // Computing _C <= _alpha * _A * _B + _beta * _C
   using Type = double;
   auto alpha = Type(1);
   auto beta  = Type(0);
@@ -229,7 +229,7 @@ TEST(blas_gemm_vectorised, blas_gemm_nn_vector6)
   Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C <= _alpha * _A * _B + _beta * _C), platform::Parallelisation::VECTORISE>
       gemm_nn_vector;
-  // Compuing _C <= _alpha * _A * _B + _beta * _C
+  // Computing _C <= _alpha * _A * _B + _beta * _C
   using Type = double;
   auto alpha = Type(0);
   auto beta  = Type(1);
@@ -271,7 +271,7 @@ TEST(blas_gemm_vectorised, blas_gemm_nn_vector7)
   Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C <= _alpha * _A * _B + _beta * _C), platform::Parallelisation::VECTORISE>
       gemm_nn_vector;
-  // Compuing _C <= _alpha * _A * _B + _beta * _C
+  // Computing _C <= _alpha * _A * _B + _beta * _C
   using Type = double;
   auto alpha = Type(0.9028918261999498);
   auto beta  = Type(0.0020078087837498426);

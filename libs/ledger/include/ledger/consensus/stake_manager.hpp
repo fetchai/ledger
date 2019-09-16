@@ -36,7 +36,7 @@ public:
   using CommitteePtr = std::shared_ptr<Committee const>;
 
   // Construction / Destruction
-  StakeManager(EntropyGeneratorInterface &entropy, uint32_t block_interval_ms = 1000);
+  explicit StakeManager(EntropyGeneratorInterface &entropy, uint32_t block_interval_ms = 1000);
   StakeManager(StakeManager const &) = delete;
   StakeManager(StakeManager &&)      = delete;
   ~StakeManager() override           = default;

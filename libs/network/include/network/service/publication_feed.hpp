@@ -80,7 +80,7 @@ public:
   /* Constructor for HasPublicationFeed.
    * @n is the maximum number of support feeds.
    */
-  HasPublicationFeed(std::size_t n = 256)
+  explicit HasPublicationFeed(std::size_t n = 256)
   {
     publisher_.resize(n);
   }

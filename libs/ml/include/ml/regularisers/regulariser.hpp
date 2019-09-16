@@ -37,7 +37,7 @@ public:
 
   Regulariser() = default;
 
-  Regulariser(RegularisationType reg_type)
+  explicit Regulariser(RegularisationType reg_type)
     : reg_type(reg_type)
   {}
 

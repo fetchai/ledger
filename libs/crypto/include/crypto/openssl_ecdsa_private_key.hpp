@@ -72,7 +72,7 @@ public:
     : ECDSAPrivateKey(Generate())
   {}
 
-  ECDSAPrivateKey(const byte_array::ConstByteArray &key_data)
+  explicit ECDSAPrivateKey(const byte_array::ConstByteArray &key_data)
     : ECDSAPrivateKey(Convert(key_data))
   {}
 
@@ -84,13 +84,13 @@ public:
   using private_key_type = ECDSAPrivateKey<BINARY_DATA_FORMAT, P_ECDSA_Curve_NID, P_ConversionForm>;
 
   template <eECDSAEncoding BINARY_DATA_FORMAT>
-  ECDSAPrivateKey(private_key_type<BINARY_DATA_FORMAT> const &from)
+  explicit ECDSAPrivateKey(private_key_type<BINARY_DATA_FORMAT> const &from)
     : private_key_(from.private_key_)
     , public_key_(from.public_key_)
   {}
 
   template <eECDSAEncoding BINARY_DATA_FORMAT>
-  ECDSAPrivateKey(private_key_type<BINARY_DATA_FORMAT> &&from)
+  explicit ECDSAPrivateKey(private_key_type<BINARY_DATA_FORMAT> &&from)
     : private_key_(std::move(from.private_key_))
     , public_key_(std::move(from.public_key_))
   {}
@@ -344,7 +344,7 @@ private:
 
     EC_KEY *    key_ptr      = key.get();
     auto const *key_data_ptr = static_cast<const unsigned char *>(key_data.pointer());
-    if (!d2i_ECPrivateKey(&key_ptr, &key_data_ptr, static_cast<long>(key_data.size())))
+    if (!d2i_ECPrivateKey(&key_ptr, &key_data_ptr, static_cast<int64_t>(key_data.size())))
     {
       throw std::runtime_error(
           "ECDSAPrivateKey::ConvertFromDER(...): "

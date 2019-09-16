@@ -144,10 +144,8 @@ void JSONDocument::Parse(ConstByteArray const &document)
   VariantStack   variant_stack = {};
 
   // process all the token
-  for (std::size_t idx = 0, end = tokens_.size(); idx < end; ++idx)
+  for (auto const &token : tokens_)
   {
-    JSONToken const &token = tokens_[idx];
-
     // determine if this is a primitive type
     bool const is_primitive = (token.type == KEYWORD_TRUE) || (token.type == KEYWORD_FALSE) ||
                               (token.type == KEYWORD_NULL) || (token.type == STRING) ||

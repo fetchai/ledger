@@ -46,7 +46,7 @@ TYPED_TEST(EmbeddingsTest, forward_shape)
   using SizeType = typename TypeParam::SizeType;
   fetch::ml::ops::Embeddings<TypeParam> e(SizeType(60), SizeType(100));
   TypeParam                             input(std::vector<uint64_t>({10, 1}));
-  for (unsigned int i(0); i < 10; ++i)
+  for (uint32_t i(0); i < 10; ++i)
   {
     input.At(i, 0) = typename TypeParam::Type(i);
   }
@@ -63,9 +63,9 @@ TYPED_TEST(EmbeddingsTest, forward)
 
   TypeParam weights(std::vector<uint64_t>({6, 10}));
 
-  for (unsigned int i(0); i < 10; ++i)
+  for (uint32_t i(0); i < 10; ++i)
   {
-    for (unsigned int j(0); j < 6; ++j)
+    for (uint32_t j(0); j < 6; ++j)
     {
       weights(j, i) = typename TypeParam::Type(i * 10 + j);
     }
@@ -84,9 +84,9 @@ TYPED_TEST(EmbeddingsTest, forward)
 
   std::vector<int> gt{30, 31, 32, 33, 34, 35, 50, 51, 52, 53, 54, 55};
 
-  for (unsigned int i{0}; i < 2; ++i)
+  for (uint32_t i{0}; i < 2; ++i)
   {
-    for (unsigned int j{0}; j < 6; ++j)
+    for (uint32_t j{0}; j < 6; ++j)
     {
       EXPECT_EQ(output.At(j, i, 0), typename TypeParam::Type(gt[(i * 6) + j]));
     }
@@ -162,9 +162,9 @@ TYPED_TEST(EmbeddingsTest, saveparams_test)
 
   TypeParam weights(std::vector<uint64_t>({6, 10}));
 
-  for (unsigned int i(0); i < 10; ++i)
+  for (uint32_t i(0); i < 10; ++i)
   {
-    for (unsigned int j(0); j < 6; ++j)
+    for (uint32_t j(0); j < 6; ++j)
     {
       weights(j, i) = typename TypeParam::Type(i * 10 + j);
     }

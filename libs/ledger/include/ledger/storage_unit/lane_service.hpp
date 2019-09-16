@@ -119,7 +119,7 @@ private:
   using LaneIdentityProtocolPtr   = std::shared_ptr<LaneIdentityProtocol>;
   using TxFinderProtocolPtr       = std::unique_ptr<TxFinderProtocol>;
 
-  static constexpr unsigned int SYNC_PERIOD_MS = 500;
+  static constexpr uint32_t SYNC_PERIOD_MS = 500;
 
   TxStorePtr tx_store_;
 

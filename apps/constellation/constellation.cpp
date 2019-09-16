@@ -79,8 +79,8 @@ using DkgServicePtr   = std::unique_ptr<dkg::DkgService>;
 using ConstByteArray  = byte_array::ConstByteArray;
 using Config          = Constellation::Config;
 
-static const std::size_t HTTP_THREADS{4};
-static char const *      SNAPSHOT_FILENAME = "snapshot.json";
+const std::size_t HTTP_THREADS{4};
+char const *      SNAPSHOT_FILENAME = "snapshot.json";
 
 bool WaitForLaneServersToStart()
 {

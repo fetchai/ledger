@@ -36,7 +36,6 @@ namespace serializers {
 /// OP SPECIFIC SERIALISATION FUNCTIONS ///
 ///////////////////////////////////////////
 
-namespace {
 template <class TensorType, typename D, class SP, typename MapType>
 void SerializeImplementation(MapType &map, uint8_t code,
                              std::shared_ptr<fetch::ml::OpsSaveableParams> op)
@@ -53,7 +52,6 @@ std::shared_ptr<SP> DeserializeImplementation(MapType &map, uint8_t code)
   map.ExpectKeyGetValue(code, *sp_ptr);
   return sp_ptr;
 }
-}  // namespace
 
 template <class TensorType, typename D, typename MapType>
 void SerializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_type,
@@ -827,7 +825,7 @@ struct MapSerializer<ml::GraphSaveableParams<TensorType>, D>
     map.Append(CONNECTIONS_SECOND, connections_second);
 
     std::vector<ml::NodeSaveableParams<TensorType>> nodevec;
-    for (auto node_name : connections_first)
+    for (auto const &node_name : connections_first)
     {
       auto nsp =
           std::dynamic_pointer_cast<ml::NodeSaveableParams<TensorType>>(sp.nodes.at(node_name));

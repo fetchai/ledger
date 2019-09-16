@@ -18,6 +18,8 @@
 
 #include "dkg/beacon_manager.hpp"
 
+#include <utility>
+
 namespace fetch {
 namespace dkg {
 
@@ -115,7 +117,7 @@ void BeaconManager::CreateKeyPair()
 
 void BeaconManager::SetMessage(BeaconManager::ConstByteArray next_message)
 {
-  current_message_ = next_message;
+  current_message_ = std::move(next_message);
   signature_buffer_.clear();
   signer_ids_.clear();
 }

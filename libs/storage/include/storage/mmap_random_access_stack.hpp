@@ -56,7 +56,7 @@ namespace storage {
  * MAX is the count of map-able Objects at one time
  */
 
-template <typename T, typename D = uint64_t, unsigned long MAX = 256>
+template <typename T, typename D = uint64_t, uint64_t MAX = 256>
 class MMapRandomAccessStack
 {
 private:
@@ -104,7 +104,7 @@ public:
   }
 
   // Enable constructor for unit tests
-  MMapRandomAccessStack(char const *is_testing)
+  explicit MMapRandomAccessStack(char const *is_testing)
   {
     if (!(std::string(is_testing).compare(std::string("test")) == 0))
     {
@@ -565,7 +565,7 @@ private:
     total_length = GetFileLength() + adjusted_obj_count * sizeof(type);
     try
     {
-      file_handle_.seekg((long)total_length, std::ios::beg);
+      file_handle_.seekg((int64_t)total_length, std::ios::beg);
       std::fill_n((std::ostreambuf_iterator<char>(file_handle_)), adjusted_obj_count * sizeof(type),
                   '\0');
       file_handle_.flush();

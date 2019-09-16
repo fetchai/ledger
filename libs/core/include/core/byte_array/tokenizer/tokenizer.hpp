@@ -24,6 +24,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <utility>
 #include <vector>
 
 namespace fetch {
@@ -39,7 +40,7 @@ public:
   std::size_t AddConsumer(consumer_function_type function)
   {
     std::size_t ret = consumers_.size();
-    consumers_.push_back(function);
+    consumers_.push_back(std::move(function));
     return ret;
   }
 

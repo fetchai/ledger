@@ -30,7 +30,7 @@ void ParamsParser::Parse(int argc, const char *const argv[])
   for (std::size_t i = 0; i < sargs; ++i)
   {
     std::string name(argv[i]);
-    if (name.find("-") == 0)
+    if (name.find('-') == 0)
     {
       name = name.substr(1);
       ++i;
@@ -42,7 +42,7 @@ void ParamsParser::Parse(int argc, const char *const argv[])
 
       std::string value(argv[i]);
 
-      if (value.find("-") == 0)
+      if (value.find('-') == 0)
       {
         params_[name] = "1";
         --i;

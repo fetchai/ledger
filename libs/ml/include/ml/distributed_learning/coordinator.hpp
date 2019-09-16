@@ -59,7 +59,7 @@ public:
   using SizeType      = fetch::math::SizeType;
   using ClientPtrType = std::shared_ptr<TrainingClient<TensorType>>;
 
-  Coordinator(CoordinatorParams const &params);
+  explicit Coordinator(CoordinatorParams const &params);
 
   void IncrementIterationsCounter();
 

@@ -1308,7 +1308,7 @@ void Generator::HandleInitialiserList(IRExpressionNodePtr const &node)
   assert(node->children.size() <= static_cast<std::size_t>(std::numeric_limits<uint16_t>::max()) &&
          !node_type->parameter_types.empty() && bool(node_type->parameter_types.front()));
 
-  for (auto expr : node->children)
+  for (auto const &expr : node->children)
   {
     HandleExpression(ConvertToIRExpressionNodePtr(expr));
   }

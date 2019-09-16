@@ -35,6 +35,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <utility>
 
 using DataType      = float;
 using TensorType    = fetch::math::Tensor<DataType>;
@@ -63,7 +64,7 @@ struct BERTInterface
   std::vector<std::string> inputs = {"Segment", "Position", "Tokens", "Mask"};
   std::vector<std::string> outputs;
 
-  BERTInterface(BERTConfig const &config)
+  explicit BERTInterface(BERTConfig const &config)
   {
     outputs.emplace_back("norm_embed");
     for (SizeType i = 0; i < config.n_encoder_layers; i++)
@@ -195,8 +196,8 @@ void PutWeightInLayerNorm(StateDictType &state_dict, SizeType model_dims,
                           std::string gamma_weight_name, std::string beta_weight_name)
 {
   // load embedding layernorm gamma beta weights
-  TensorType layernorm_gamma = LoadTensorFromFile(gamma_file_name);
-  TensorType layernorm_beta  = LoadTensorFromFile(beta_file_name);
+  TensorType layernorm_gamma = LoadTensorFromFile(std::move(gamma_file_name));
+  TensorType layernorm_beta  = LoadTensorFromFile(std::move(beta_file_name));
   assert(layernorm_beta.size() == model_dims);
   assert(layernorm_gamma.size() == model_dims);
   layernorm_beta.Reshape({model_dims, 1, 1});
@@ -212,8 +213,8 @@ void PutWeightInFullyConnected(StateDictType &state_dict, SizeType in_size, Size
                                std::string weights_name, std::string bias_name)
 {
   // load embedding layernorm gamma beta weights
-  TensorType weights = LoadTensorFromFile(weights_file_name);
-  TensorType bias    = LoadTensorFromFile(bias_file_name);
+  TensorType weights = LoadTensorFromFile(std::move(weights_file_name));
+  TensorType bias    = LoadTensorFromFile(std::move(bias_file_name));
   FETCH_UNUSED(in_size);
   assert(weights.shape() == SizeVector({out_size, in_size}));
   assert(bias.size() == out_size);
@@ -236,14 +237,14 @@ void PutWeightInMultiheadAttention(StateDictType &state_dict, SizeType n_heads, 
                                    std::string value_bias_name, std::string mattn_prefix)
 {
   // get weight arrays from file
-  TensorType query_weights = LoadTensorFromFile(query_weights_file_name);
-  TensorType query_bias    = LoadTensorFromFile(query_bias_file_name);
+  TensorType query_weights = LoadTensorFromFile(std::move(query_weights_file_name));
+  TensorType query_bias    = LoadTensorFromFile(std::move(query_bias_file_name));
   query_bias.Reshape({model_dims, 1, 1});
-  TensorType key_weights = LoadTensorFromFile(key_weights_file_name);
-  TensorType key_bias    = LoadTensorFromFile(key_bias_file_name);
+  TensorType key_weights = LoadTensorFromFile(std::move(key_weights_file_name));
+  TensorType key_bias    = LoadTensorFromFile(std::move(key_bias_file_name));
   key_bias.Reshape({model_dims, 1, 1});
-  TensorType value_weights = LoadTensorFromFile(value_weights_file_name);
-  TensorType value_bias    = LoadTensorFromFile(value_bias_file_name);
+  TensorType value_weights = LoadTensorFromFile(std::move(value_weights_file_name));
+  TensorType value_bias    = LoadTensorFromFile(std::move(value_bias_file_name));
   value_bias.Reshape({model_dims, 1, 1});
 
   // put weights into each head
@@ -434,11 +435,11 @@ TensorType RunPseudoForwardPass(std::vector<std::string> input_nodes, std::strin
                                 BERTConfig const &config, GraphType g, SizeType batch_size,
                                 bool verbose)
 {
-  std::string segment      = input_nodes[0];
-  std::string position     = input_nodes[1];
-  std::string tokens       = input_nodes[2];
-  std::string mask         = input_nodes[3];
-  std::string layer_output = output_node;
+  std::string segment      = std::move(input_nodes[0]);
+  std::string position     = std::move(input_nodes[1]);
+  std::string tokens       = std::move(input_nodes[2]);
+  std::string mask         = std::move(input_nodes[3]);
+  std::string layer_output = std::move(output_node);
 
   SizeType max_seq_len = config.max_seq_len;
   SizeType seq_len     = 256u;
@@ -538,7 +539,7 @@ std::vector<TensorType> PrepareTensorForBert(TensorType const &data, BERTConfig 
   // check that data shape is proper for bert input
   if (data.shape().size() != 2 || data.shape(0) != max_seq_len)
   {
-    std::runtime_error("Incorrect data shape for given bert config");
+    throw std::runtime_error("Incorrect data shape for given bert config");
   }
 
   // build segment, mask and pos data for each sentence in the data

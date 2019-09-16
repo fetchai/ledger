@@ -263,9 +263,9 @@ void DAG::SetReferencesInternal(DAGNodePtr node)
   {
     std::vector<uint64_t> dag_ids;
 
-    for (auto it = all_tips_.begin(); it != all_tips_.end(); ++it)
+    for (auto const &all_tip : all_tips_)
     {
-      dag_ids.push_back(it->first);
+      dag_ids.push_back(all_tip.first);
     }
 
     // TODO (1223) probably not the best place to instantiate/store the random device
@@ -778,14 +778,14 @@ void DAG::TraverseFromTips(std::set<ConstByteArray> const &tip_hashes,
                            std::function<void(NodeHash)>   on_node,
                            std::function<bool(NodeHash)>   terminating_condition)
 {
-  for (auto it = tip_hashes.begin(); it != tip_hashes.end(); ++it)
+  for (auto const &tip_hash : tip_hashes)
   {
-    if (node_pool_.find(*it) == node_pool_.end())
+    if (node_pool_.find(tip_hash) == node_pool_.end())
     {
       throw std::runtime_error("Tip found in DAG that refers nowhere");
     }
 
-    NodeHash              start = node_pool_[*it]->hash;
+    NodeHash              start = node_pool_[tip_hash]->hash;
     DAGNodePtr            dag_node_to_add;
     std::vector<uint64_t> switch_choices{0};
     std::vector<NodeHash> switch_hashes{start};

@@ -40,7 +40,7 @@ public:
     return *this;
   }
 
-  operator bool() const
+  explicit operator bool() const
   {
     return !callbacks_.empty();
   }

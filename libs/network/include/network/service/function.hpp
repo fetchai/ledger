@@ -120,7 +120,7 @@ public:
   /* Creates a function with serialized arguments.
    * @function is the member function.
    */
-  Function(function_type value)
+  explicit Function(function_type value)
     : function_{std::move(value)}
   {}
 
@@ -158,7 +158,7 @@ private:
 public:
   static constexpr char const *LOGGING_NAME = "Function<R()>";
 
-  Function(function_type value)
+  explicit Function(function_type value)
     : function_{std::move(value)}
   {}
 
@@ -188,7 +188,7 @@ private:
 public:
   static constexpr char const *LOGGING_NAME = "Function<void()>";
 
-  Function(function_type value)
+  explicit Function(function_type value)
     : function_{std::move(value)}
   {}
 

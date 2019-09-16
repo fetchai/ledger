@@ -42,7 +42,7 @@ public:
 
   static constexpr char const *LOGGING_NAME = "ClientManager";
 
-  ClientManager(AbstractNetworkServer &server)
+  explicit ClientManager(AbstractNetworkServer &server)
     : server_(server)
     , clients_mutex_{}
   {}

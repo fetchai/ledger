@@ -74,7 +74,7 @@ public:
       }
     }
 
-    for (auto action : assigners_)
+    for (auto const &action : assigners_)
     {
       action_func_type func = action.second;
       func(args, errs);
@@ -92,7 +92,7 @@ public:
 
     if (!errs.empty())
     {
-      for (auto err : errs)
+      for (auto const &err : errs)
       {
         std::cerr << err << std::endl;
       }

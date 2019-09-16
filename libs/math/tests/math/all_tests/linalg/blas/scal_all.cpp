@@ -32,7 +32,7 @@ TEST(blas_A_withA, blas_scal_all1)
   Blas<double, Signature(_x <= _n, _alpha, _x, _m), Computes(_x <= _alpha * _x),
        platform::Parallelisation::NOT_PARALLEL>
       scal_all;
-  // Compuing _x <= _alpha * _x
+  // Computing _x <= _alpha * _x
   using Type = double;
   auto alpha = Type(-1.4049016056886963);
 
@@ -58,7 +58,7 @@ TEST(blas_A_withA, blas_scal_all2)
   Blas<double, Signature(_x <= _n, _alpha, _x, _m), Computes(_x <= _alpha * _x),
        platform::Parallelisation::NOT_PARALLEL>
       scal_all;
-  // Compuing _x <= _alpha * _x
+  // Computing _x <= _alpha * _x
   using Type = double;
   auto alpha = Type(1.43787987191034);
 
@@ -84,7 +84,7 @@ TEST(blas_A_withA, blas_scal_all3)
   Blas<double, Signature(_x <= _n, _alpha, _x, _m), Computes(_x <= _alpha * _x),
        platform::Parallelisation::NOT_PARALLEL>
       scal_all;
-  // Compuing _x <= _alpha * _x
+  // Computing _x <= _alpha * _x
   using Type = double;
   auto alpha = Type(-4.622009168745431);
 
@@ -110,7 +110,7 @@ TEST(blas_A_withA, blas_scal_all4)
   Blas<double, Signature(_x <= _n, _alpha, _x, _m), Computes(_x <= _alpha * _x),
        platform::Parallelisation::NOT_PARALLEL>
       scal_all;
-  // Compuing _x <= _alpha * _x
+  // Computing _x <= _alpha * _x
   using Type = double;
   auto alpha = Type(-0.7895519240261688);
 
