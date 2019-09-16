@@ -2798,9 +2798,10 @@ typename Tensor<T, C>::TensorSlice Tensor<T, C>::TensorSlice::Slice(SizeType ind
   assert(axis < this->tensor_.shape().size());
   assert(new_axes.size() < this->tensor_.shape().size());
   assert(index < this->tensor_.shape().at(axis));
-  for (SizeType new_axe : new_axes)
+  for (SizeType new_axis : new_axes)
   {
-    assert(new_axe != axis);
+    FETCH_UNUSED(new_axis);
+    assert(new_axis != axis);
   }
 
   std::vector<SizeVector> new_range(this->range_);
@@ -2910,9 +2911,10 @@ typename Tensor<T, C>::ConstSliceType Tensor<T, C>::TensorSliceImplementation<ST
   assert(axis < tensor_.shape().size());
   assert(new_axes.size() < tensor_.shape().size());
   assert(i < tensor_.shape().at(axis));
-  for (SizeType new_axe : new_axes)
+  for (SizeType new_axis : new_axes)
   {
-    assert(new_axe != axis);
+    FETCH_UNUSED(new_axis);
+    assert(new_axis != axis);
   }
 
   std::vector<SizeVector> new_range(range_);
