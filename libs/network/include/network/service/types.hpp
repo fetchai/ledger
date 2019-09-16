@@ -29,7 +29,7 @@ using SerializerType = serializers::MsgPackSerializer;
 
 using ProtocolHandlerType       = uint64_t;
 using FunctionHandlerType       = uint64_t;
-using feed_handler_type         = uint8_t;
+using FeedHandlerType           = uint8_t;
 using SubscriptionHandlerType   = uint8_t;
 using ServiceClassificationType = uint64_t;
 

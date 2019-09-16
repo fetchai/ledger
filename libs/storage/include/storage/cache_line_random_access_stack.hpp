@@ -47,7 +47,7 @@ class CacheLineRandomAccessStack
 {
 public:
   using EventHandlerType = std::function<void()>;
-  using stack_type       = RandomAccessStack<T, D>;
+  using StackType        = RandomAccessStack<T, D>;
   using HeaderExtraType  = D;
   using type             = T;
 
@@ -304,7 +304,7 @@ private:
   EventHandlerType on_before_flush_;
 
   // Underlying stack
-  mutable stack_type stack_;
+  mutable StackType stack_;
 
   struct CachedDataItem
   {

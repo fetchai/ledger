@@ -33,14 +33,14 @@ namespace service {
 namespace details {
 
 template <typename T>
-using base_type = std::remove_cv_t<std::remove_reference_t<T>>;
+using BaseType = std::remove_cv_t<std::remove_reference_t<T>>;
 
 template <typename R, typename F, typename... Args>
 struct ArgsToString
 {
   static std::string Value()
   {
-    return serializers::TypeRegister<base_type<F>>::name() + std::string(", ") +
+    return serializers::TypeRegister<BaseType<F>>::name() + std::string(", ") +
            ArgsToString<R, Args...>::Value();
   }
 };
@@ -50,7 +50,7 @@ struct ArgsToString<R, F>
 {
   static std::string Value()
   {
-    return serializers::TypeRegister<base_type<F>>::name();
+    return serializers::TypeRegister<BaseType<F>>::name();
   }
 };
 
@@ -68,8 +68,8 @@ struct SignatureToString
 {
   static std::string Signature()
   {
-    return std::string(serializers::TypeRegister<base_type<R>>::name()) + std::string(" ") +
-           std::string(serializers::TypeRegister<base_type<C>>::name()) +
+    return std::string(serializers::TypeRegister<BaseType<R>>::name()) + std::string(" ") +
+           std::string(serializers::TypeRegister<BaseType<C>>::name()) +
            std::string("::function_pointer") + std::string("(") +
            ArgsToString<R, Args...>::Value() + std::string(")");
   }

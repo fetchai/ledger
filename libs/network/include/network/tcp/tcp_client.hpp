@@ -37,9 +37,9 @@ class TCPClient
 {
 public:
   using NetworkManagerType = NetworkManager;
-  using handle_type        = uint64_t;
+  using HandleType         = uint64_t;
   using ImplementationType = TCPClientImplementation;
-  using pointer_type       = std::shared_ptr<ImplementationType>;
+  using PointerType        = std::shared_ptr<ImplementationType>;
 
   explicit TCPClient(NetworkManagerType network_manager)
     : pointer_{std::make_shared<ImplementationType>(network_manager)}
@@ -78,7 +78,7 @@ public:
     }
   }
 
-  void OnMessage(std::function<void(network::message_type const &msg)> const &f)
+  void OnMessage(std::function<void(network::MessageType const &msg)> const &f)
   {
     if (pointer_)
     {
@@ -104,12 +104,12 @@ public:
     return pointer_->Closed();
   }
 
-  void Send(message_type const &msg) noexcept
+  void Send(MessageType const &msg) noexcept
   {
     pointer_->Send(msg);
   }
 
-  handle_type handle() const noexcept
+  HandleType handle() const noexcept
   {
     return pointer_->handle();
   }
@@ -146,7 +146,7 @@ public:
   }
 
 protected:
-  pointer_type pointer_;
+  PointerType pointer_;
 };
 
 }  // namespace network

@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/ops/mask_fill.hpp"
 #include "math/base_types.hpp"
 #include "math/tensor.hpp"
-#include "ml/ops/mask_fill.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 

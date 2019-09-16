@@ -55,8 +55,8 @@ class FeedSubscriptionManager;
 class Protocol
 {
 public:
-  using callable_type        = AbstractCallable *;
-  using stored_type          = std::shared_ptr<AbstractCallable>;
+  using CallableType         = AbstractCallable *;
+  using StoredType           = std::shared_ptr<AbstractCallable>;
   using ByteArrayType        = byte_array::ConstByteArray;
   using ConnectionHandleType = typename network::AbstractConnection::ConnectionHandleType;
   using MiddlewareType =
@@ -70,7 +70,7 @@ public:
   /* Operator to access the different functions in the protocol.
    * @n is the idnex of callable in the protocol.
    *
-   * The result of this operator is a <callable_type> that can be
+   * The result of this operator is a <CallableType> that can be
    * invoked in accodance with the definition of an
    * <service::AbstractCallable>.
    *
@@ -79,7 +79,7 @@ public:
    *
    * @return a reference to the call.
    */
-  callable_type operator[](FunctionHandlerType const &n)
+  CallableType operator[](FunctionHandlerType const &n)
   {
     auto iter = members_.find(n);
     if (iter == members_.end())
@@ -111,7 +111,7 @@ public:
   template <typename C, typename R, typename... Args>
   void Expose(FunctionHandlerType const &n, C *instance, R (C::*function)(Args...))
   {
-    stored_type fnc(new service::CallableClassMember<C, R(Args...)>(instance, function));
+    StoredType fnc(new service::CallableClassMember<C, R(Args...)>(instance, function));
 
     auto iter = members_.find(n);
     if (iter != members_.end())
@@ -126,8 +126,8 @@ public:
   template <typename C, typename R, typename... Args>
   void ExposeWithClientArg(FunctionHandlerType const &n, C *instance, R (C::*function)(Args...))
   {
-    stored_type fnc(new service::CallableClassMember<C, R(Args...), 1>(Callable::CLIENT_ID_ARG,
-                                                                       instance, function));
+    StoredType fnc(new service::CallableClassMember<C, R(Args...), 1>(Callable::CLIENT_ID_ARG,
+                                                                      instance, function));
 
     auto iter = members_.find(n);
     if (iter != members_.end())
@@ -142,8 +142,8 @@ public:
   template <typename C, typename R, typename... Args>
   void ExposeWithClientContext(FunctionHandlerType const &n, C *instance, R (C::*function)(Args...))
   {
-    stored_type fnc(new service::CallableClassMember<C, R(Args...), 1>(Callable::CLIENT_CONTEXT_ARG,
-                                                                       instance, function));
+    StoredType fnc(new service::CallableClassMember<C, R(Args...), 1>(Callable::CLIENT_CONTEXT_ARG,
+                                                                      instance, function));
 
     auto iter = members_.find(n);
     if (iter != members_.end())
@@ -163,7 +163,7 @@ public:
    * @publisher is a class that subclasses <AbstractPublicationFeed>.
    *
    */
-  void RegisterFeed(feed_handler_type const &feed, AbstractPublicationFeed *publisher)
+  void RegisterFeed(FeedHandlerType const &feed, AbstractPublicationFeed *publisher)
   {
     feeds_.push_back(std::make_shared<FeedSubscriptionManager>(feed, publisher));
   }
@@ -177,7 +177,7 @@ public:
    * its clients to the feed.
    */
   void Subscribe(uint64_t client,  // TODO(issue 21): Standardize client type over the code.
-                 feed_handler_type const &feed, SubscriptionHandlerType const &id)
+                 FeedHandlerType const &feed, SubscriptionHandlerType const &id)
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Making subscription for ", client, " ", feed, " ", id);
 
@@ -207,7 +207,7 @@ public:
    * its clients to the feed.
    */
   void Unsubscribe(uint64_t client,  // TODO(issue 21): Standardize client type over the code.
-                   feed_handler_type const &feed, SubscriptionHandlerType const &id)
+                   FeedHandlerType const &feed, SubscriptionHandlerType const &id)
   {
     FETCH_LOCK(feeds_mutex_);
 
@@ -260,7 +260,7 @@ public:
 
 private:
   std::vector<MiddlewareType>                           middleware_;
-  std::map<FunctionHandlerType, stored_type>            members_;
+  std::map<FunctionHandlerType, StoredType>             members_;
   std::vector<std::shared_ptr<FeedSubscriptionManager>> feeds_;
   Mutex                                                 feeds_mutex_;
 };

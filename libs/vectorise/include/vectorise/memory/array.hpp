@@ -44,11 +44,11 @@ public:
   // asserts
   //  static_assert(std::is_pod<T>::value, "Can only be used with POD types");
   //  static_assert(meta::IfIsPodOrFixedPoint<T>::value, "can only be used with POD or FixedPoint");
-  using SizeType   = std::size_t;
-  using data_type  = std::shared_ptr<T>;
-  using super_type = VectorSlice<T, type_size>;
-  using self_type  = Array<T, type_size>;
-  using type       = T;
+  using SizeType  = std::size_t;
+  using DataType  = std::shared_ptr<T>;
+  using SuperType = VectorSlice<T, type_size>;
+  using SelfType  = Array<T, type_size>;
+  using type      = T;
 
   Array(std::size_t n)
   {
@@ -85,12 +85,12 @@ public:
   }
 
   Array(Array const &other)
-    : super_type()
+    : SuperType()
   {
     this->operator=(other);
   }
 
-  self_type &operator=(Array const &other)
+  SelfType &operator=(Array const &other)
   {
     if (this->pointer_ != nullptr)
     {
@@ -110,9 +110,9 @@ public:
     return *this;
   }
 
-  self_type Copy() const
+  SelfType Copy() const
   {
-    self_type ret = *this;
+    SelfType ret = *this;
     return ret;
   }
 };

@@ -36,7 +36,7 @@ public:
     : TCPClient(tmanager)
   {
     Connect(host, port);
-    this->OnMessage([](message_type const &value) { std::cout << value << std::endl; });
+    this->OnMessage([](MessageType const &value) { std::cout << value << std::endl; });
     this->OnConnectionFailed([]() { std::cerr << "Connection failed" << std::endl; });
   }
 };

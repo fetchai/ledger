@@ -48,14 +48,14 @@ public:
   using ConnectionHandleType = typename AbstractConnection::ConnectionHandleType;
   using NetworkManagerType   = NetworkManager;
   using acceptor_type        = asio::ip::tcp::tcp::acceptor;
-  using mutex_type           = std::mutex;
+  using MutexType            = std::mutex;
 
   static constexpr char const *LOGGING_NAME = "TCPServer";
 
   struct Request
   {
     ConnectionHandleType handle;
-    message_type         message;
+    MessageType          message;
   };
 
   TCPServer(uint16_t port, NetworkManagerType const &network_manager);
@@ -65,10 +65,10 @@ public:
   virtual void Start();
   virtual void Stop();
 
-  void PushRequest(ConnectionHandleType client, message_type const &msg) override;
+  void PushRequest(ConnectionHandleType client, MessageType const &msg) override;
 
-  void Broadcast(message_type const &msg);
-  bool Send(ConnectionHandleType const &client, message_type const &msg);
+  void Broadcast(MessageType const &msg);
+  bool Send(ConnectionHandleType const &client, MessageType const &msg);
 
   bool has_requests();
 
@@ -101,7 +101,7 @@ private:
   NetworkManagerType                        network_manager_;
   uint16_t                                  port_;
   std::deque<Request>                       requests_;
-  mutex_type                                request_mutex_;
+  MutexType                                 request_mutex_;
   std::weak_ptr<AbstractConnectionRegister> connection_register_;
   std::shared_ptr<ClientManager>            manager_;
   std::weak_ptr<acceptor_type>              acceptor_;

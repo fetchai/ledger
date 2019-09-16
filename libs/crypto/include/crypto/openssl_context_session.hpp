@@ -84,7 +84,7 @@ public:
     return context_;
   }
 
-  bool isStarted() const
+  bool IsStarted() const
   {
     return is_started_;
   }

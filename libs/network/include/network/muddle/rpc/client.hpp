@@ -71,7 +71,7 @@ public:
   Client &operator=(Client &&) = delete;
 
 protected:
-  bool DeliverRequest(network::message_type const &data) override;
+  bool DeliverRequest(network::MessageType const &data) override;
 
 private:
   using Flag         = std::atomic<bool>;

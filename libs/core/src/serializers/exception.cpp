@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/const_byte_array.hpp"
 #include "core/serializers/exception.hpp"
+#include "core/byte_array/const_byte_array.hpp"
 
 #include <string>
 #include <utility>
@@ -40,12 +40,12 @@ SerializableException::SerializableException(byte_array::ConstByteArray const &e
   , explanation_(std::string(explanation))
 {}
 
-SerializableException::SerializableException(error::error_type error_code, std::string explanation)
+SerializableException::SerializableException(error::ErrorType error_code, std::string explanation)
   : error_code_(error_code)
   , explanation_(std::move(explanation))
 {}
 
-SerializableException::SerializableException(error::error_type                 error_code,
+SerializableException::SerializableException(error::ErrorType                  error_code,
                                              byte_array::ConstByteArray const &explanation)
   : error_code_(error_code)
   , explanation_(std::string(explanation))

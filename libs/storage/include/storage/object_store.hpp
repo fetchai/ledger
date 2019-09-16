@@ -49,7 +49,7 @@ class ObjectStore
 {
 public:
   using type           = T;
-  using self_type      = ObjectStore<T, S>;
+  using SelfType       = ObjectStore<T, S>;
   using SerializerType = serializers::MsgPackSerializer;
 
   class Iterator;
@@ -275,7 +275,7 @@ public:
     typename KeyByteArrayStore<S>::Iterator wrapped_iterator_;
   };
 
-  self_type::Iterator Find(ResourceID const &rid)
+  SelfType::Iterator Find(ResourceID const &rid)
   {
     auto it = store_.Find(rid);
 
@@ -292,19 +292,19 @@ public:
    *
    * @return: an iterator to the first element of that tree
    */
-  self_type::Iterator GetSubtree(ResourceID const &rid, uint64_t bits)
+  SelfType::Iterator GetSubtree(ResourceID const &rid, uint64_t bits)
   {
     auto it = store_.GetSubtree(rid, bits);
 
     return Iterator(it);
   }
 
-  self_type::Iterator begin()
+  SelfType::Iterator begin()
   {
     return Iterator(store_.begin());
   }
 
-  self_type::Iterator end()
+  SelfType::Iterator end()
   {
     return Iterator(store_.end());
   }

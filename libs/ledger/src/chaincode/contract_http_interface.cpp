@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/chaincode/contract_http_interface.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/json/document.hpp"
 #include "core/logging.hpp"
@@ -26,7 +27,6 @@
 #include "ledger/chain/json_transaction.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chaincode/contract.hpp"
-#include "ledger/chaincode/contract_http_interface.hpp"
 #include "ledger/state_adapter.hpp"
 #include "ledger/transaction_processor.hpp"
 #include "variant/variant.hpp"
@@ -45,10 +45,10 @@ namespace fetch {
 namespace ledger {
 namespace {
 
-using fetch::variant::Variant;
 using fetch::byte_array::ByteArray;
 using fetch::byte_array::ConstByteArray;
 using fetch::ledger::FromJsonTransaction;
+using fetch::variant::Variant;
 
 ConstByteArray const API_PATH_CONTRACT_PREFIX("/api/contract/");
 ConstByteArray const CONTRACT_NAME_SEPARATOR(".");

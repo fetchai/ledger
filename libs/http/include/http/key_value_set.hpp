@@ -26,7 +26,7 @@ namespace http {
 class KeyValueSet : private std::map<byte_array::ConstByteArray, byte_array::ConstByteArray>
 {
 public:
-  using super_type     = std::map<byte_array::ConstByteArray, byte_array::ConstByteArray>;
+  using SuperType      = std::map<byte_array::ConstByteArray, byte_array::ConstByteArray>;
   using ByteArrayType  = byte_array::ConstByteArray;
   using map_type       = std::map<ByteArrayType, ByteArrayType>;
   using iterator       = map_type::iterator;
@@ -77,7 +77,7 @@ public:
 
   byte_array::ConstByteArray &operator[](byte_array::ConstByteArray const &name)
   {
-    return super_type::operator[](name);
+    return SuperType::operator[](name);
   }
 
   byte_array::ConstByteArray operator[](byte_array::ConstByteArray const &name) const

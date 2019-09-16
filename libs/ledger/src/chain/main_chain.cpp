@@ -16,13 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/chain/main_chain.hpp"
 #include "core/assert.hpp"
 #include "core/bloom_filter.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
-#include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/transaction_layout_rpc_serializers.hpp"
 #include "network/generics/milli_timer.hpp"
 #include "telemetry/counter.hpp"

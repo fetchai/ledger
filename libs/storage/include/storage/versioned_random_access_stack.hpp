@@ -70,9 +70,9 @@ template <typename T, typename B = uint64_t, typename S = RandomAccessStack<T, B
 class VersionedRandomAccessStack
 {
 private:
-  using stack_type      = S;
+  using StackType       = S;
   using HeaderExtraType = B;
-  using header_type     = BookmarkHeader<B>;
+  using HeaderType      = BookmarkHeader<B>;
 
   static constexpr char const *LOGGING_NAME = "VersionedRandomAccessStack";
 
@@ -302,7 +302,7 @@ public:
    */
   static constexpr bool DirectWrite()
   {
-    return stack_type::DirectWrite();
+    return StackType::DirectWrite();
   }
 
   void Load(std::string const &filename, std::string const &history,
@@ -427,8 +427,8 @@ public:
       }
     }
 
-    header_type h = stack_.header_extra();
-    h.bookmark    = bookmark_;
+    HeaderType h = stack_.header_extra();
+    h.bookmark   = bookmark_;
     stack_.SetExtraHeader(h);
 
     NextBookmark();
@@ -436,7 +436,7 @@ public:
 
   void SetExtraHeader(HeaderExtraType const &b)
   {
-    header_type h = stack_.header_extra();
+    HeaderType h = stack_.header_extra();
     history_.Push(HistoryHeader{h.header}, HistoryHeader::value);
 
     h.header = b;
@@ -464,7 +464,7 @@ public:
 
     history_.Push(HistoryBookmark{b}, HistoryBookmark::value);
 
-    header_type h = stack_.header_extra();
+    HeaderType h = stack_.header_extra();
     h.bookmark = bookmark_ = b;
     stack_.SetExtraHeader(h);
     NextBookmark();
@@ -513,7 +513,7 @@ private:
   EventHandlerType on_file_loaded_;
   EventHandlerType on_before_flush_;
 
-  stack_type stack_;
+  StackType stack_;
 
   void RevertBookmark()
   {
@@ -556,7 +556,7 @@ private:
     HistoryHeader header;
     history_.Top(header);
 
-    header_type h = stack_.header_extra();
+    HeaderType h = stack_.header_extra();
 
     h.header = header.data;
     stack_.SetExtraHeader(h);

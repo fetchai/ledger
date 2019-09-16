@@ -48,16 +48,16 @@ template <std::size_t BLOCK_SIZE = 2048, typename A = FileBlockType<BLOCK_SIZE>,
 class DocumentStore
 {
 public:
-  using self_type     = DocumentStore<BLOCK_SIZE, A, B, C, D>;
+  using SelfType      = DocumentStore<BLOCK_SIZE, A, B, C, D>;
   using ByteArrayType = byte_array::ByteArray;
 
   using FileBlockType     = A;
   using KeyValueIndexType = B;
-  using file_object_type  = D;
+  using FileObjectType    = D;
 
-  using hash_type = byte_array::ConstByteArray;
+  using HashType = byte_array::ConstByteArray;
 
-  using index_type = typename KeyValueIndexType::index_type;
+  using IndexType = typename KeyValueIndexType::IndexType;
 
   using ByteArray = byte_array::ByteArray;
 
@@ -102,7 +102,7 @@ public:
   Document GetOrCreate(ResourceID const &rid, bool create = true)
   {
     byte_array::ConstByteArray const &address = rid.id();
-    index_type                        index   = 0;
+    IndexType                         index   = 0;
 
     FETCH_LOCK(mutex_);
 
@@ -134,7 +134,7 @@ public:
   void Set(ResourceID const &rid, byte_array::ConstByteArray const &value)
   {
     byte_array::ConstByteArray const &address = rid.id();
-    index_type                        index   = 0;
+    IndexType                         index   = 0;
 
     FETCH_LOCK(mutex_);
 
@@ -161,7 +161,7 @@ public:
   void Erase(ResourceID const &rid)
   {
     byte_array::ConstByteArray const &address = rid.id();
-    index_type                        index   = 0;
+    IndexType                         index   = 0;
 
     FETCH_LOCK(mutex_);
 
@@ -202,7 +202,7 @@ public:
   class Iterator
   {
   public:
-    Iterator(self_type *self, typename KeyValueIndexType::Iterator it)
+    Iterator(SelfType *self, typename KeyValueIndexType::Iterator it)
       : wrapped_iterator_{it}
       , self_{self}
     {}
@@ -247,10 +247,10 @@ public:
 
   protected:
     typename KeyValueIndexType::Iterator wrapped_iterator_;
-    self_type *                          self_;
+    SelfType *                           self_;
   };
 
-  self_type::Iterator Find(ResourceID const &rid)
+  SelfType::Iterator Find(ResourceID const &rid)
   {
     byte_array::ConstByteArray const &address = rid.id();
     auto                              it      = key_index_.Find(address);
@@ -268,7 +268,7 @@ public:
    *
    * @return: an iterator to the first element of that tree
    */
-  self_type::Iterator GetSubtree(ResourceID const &rid, uint64_t bits)
+  SelfType::Iterator GetSubtree(ResourceID const &rid, uint64_t bits)
   {
     byte_array::ConstByteArray const &address = rid.id();
     auto                              it      = key_index_.GetSubtree(address, bits);
@@ -276,12 +276,12 @@ public:
     return Iterator(this, it);
   }
 
-  self_type::Iterator begin()
+  SelfType::Iterator begin()
   {
     return Iterator(this, key_index_.begin());
   }
 
-  self_type::Iterator end()
+  SelfType::Iterator end()
   {
     return Iterator(this, key_index_.end());
   }
@@ -334,7 +334,7 @@ public:
            file_object_.underlying_stack().HashExists(hash);
   }
 
-  hash_type CurrentHash()
+  HashType CurrentHash()
   {
     FETCH_LOCK(mutex_);
     return key_index_.Hash();
@@ -343,7 +343,7 @@ public:
 protected:
   Mutex             mutex_;
   KeyValueIndexType key_index_;
-  file_object_type  file_object_;
+  FileObjectType    file_object_;
 };
 
 }  // namespace storage

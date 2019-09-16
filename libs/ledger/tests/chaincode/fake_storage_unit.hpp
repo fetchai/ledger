@@ -38,8 +38,8 @@ public:
       std::unordered_map<fetch::byte_array::ConstByteArray, fetch::byte_array::ConstByteArray>;
   /*using state_archive_type = std::unordered_map<BookmarkType, state_store_type>; */
   using lock_store_type = std::unordered_set<ShardIndex>;
-  using mutex_type      = std::mutex;
-  using hash_type       = fetch::byte_array::ConstByteArray;
+  using MutexType       = std::mutex;
+  using HashType        = fetch::byte_array::ConstByteArray;
   using ResourceID      = fetch::storage::ResourceID;
 
   Document GetOrCreate(ResourceAddress const &key) override
@@ -195,7 +195,7 @@ public:
   }
 
 private:
-  mutex_type             mutex_;
+  MutexType              mutex_;
   transaction_store_type transactions_;
   state_store_type       state_;
   lock_store_type        locks_;

@@ -52,10 +52,10 @@ class AbstractPublicationFeed;
 class FeedSubscriptionManager
 {
 public:
-  using service_type         = fetch::service::ServiceServerInterface;
+  using ServiceObjectType    = fetch::service::ServiceServerInterface;
   using ConnectionHandleType = uint64_t;
   using PublishingWorkloadType =
-      std::tuple<service_type *, ConnectionHandleType, network::message_type const>;
+      std::tuple<ServiceObjectType *, ConnectionHandleType, network::MessageType const>;
 
   static constexpr char const *LOGGING_NAME = "FeedSubscriptionManager";
 
@@ -71,7 +71,7 @@ public:
    * must implement a Send function that fulfills the concept given for
    * a service.
    */
-  FeedSubscriptionManager(feed_handler_type const &feed, AbstractPublicationFeed *publisher)
+  FeedSubscriptionManager(FeedHandlerType const &feed, AbstractPublicationFeed *publisher)
     : subscribe_mutex_{}
     , feed_(feed)
     , publisher_(publisher)
@@ -142,7 +142,7 @@ public:
    *
    * @return the feed type.
    */
-  feed_handler_type const &feed() const
+  FeedHandlerType const &feed() const
   {
     return feed_;
   }
@@ -165,7 +165,7 @@ private:
 
   std::vector<ClientSubscription> subscribers_;
   Mutex                           subscribe_mutex_;
-  feed_handler_type               feed_;
+  FeedHandlerType                 feed_;
 
   fetch::service::AbstractPublicationFeed *publisher_ = nullptr;
 

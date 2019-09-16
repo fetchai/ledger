@@ -218,27 +218,27 @@ struct Function
 {
   Function(FunctionKind function_kind__, std::string const &name__, std::string const &unique_id__,
            TypePtrArray const &parameter_types__, VariablePtrArray const &parameter_variables__,
-           TypePtr const &return_type__)
+           TypePtr const &ReturnType__)
   {
     function_kind       = function_kind__;
     name                = name__;
     unique_id           = unique_id__;
     parameter_types     = parameter_types__;
     parameter_variables = parameter_variables__;
-    return_type         = return_type__;
+    ReturnType          = ReturnType__;
   }
   void Reset()
   {
     parameter_types.clear();
     parameter_variables.clear();
-    return_type = nullptr;
+    ReturnType = nullptr;
   }
   FunctionKind     function_kind;
   std::string      name;
   std::string      unique_id;
   TypePtrArray     parameter_types;
   VariablePtrArray parameter_variables;
-  TypePtr          return_type;
+  TypePtr          ReturnType;
 };
 using FunctionPtr      = std::shared_ptr<Function>;
 using FunctionPtrArray = std::vector<FunctionPtr>;
@@ -246,10 +246,10 @@ using FunctionPtrArray = std::vector<FunctionPtr>;
 inline FunctionPtr CreateFunction(FunctionKind function_kind, std::string const &name,
                                   std::string const &unique_id, TypePtrArray const &parameter_types,
                                   VariablePtrArray const &parameter_variables,
-                                  TypePtr const &         return_type)
+                                  TypePtr const &         ReturnType)
 {
   return std::make_shared<Function>(
-      Function(function_kind, name, unique_id, parameter_types, parameter_variables, return_type));
+      Function(function_kind, name, unique_id, parameter_types, parameter_variables, ReturnType));
 }
 
 struct FunctionGroup : public Symbol

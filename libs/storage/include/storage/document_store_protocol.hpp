@@ -37,7 +37,7 @@ class RevertibleDocumentStoreProtocol : public fetch::service::Protocol
 {
 public:
   using ConnectionHandleType = network::AbstractConnection::ConnectionHandleType;
-  using lane_type            = uint32_t;  // TODO(issue 12): Fetch from some other palce
+  using LaneType             = uint32_t;  // TODO(issue 12): Fetch from some other palce
   using CallContext          = service::CallContext;
 
   using Identifier = byte_array::ConstByteArray;
@@ -63,7 +63,7 @@ public:
     HAS_LOCK
   };
 
-  explicit RevertibleDocumentStoreProtocol(NewRevertibleDocumentStore *doc_store, lane_type lane)
+  explicit RevertibleDocumentStoreProtocol(NewRevertibleDocumentStore *doc_store, LaneType lane)
     : fetch::service::Protocol()
     , doc_store_(doc_store)
     , get_count_(CreateCounter(lane, "ledger_statedb_get_total", "The total no. get ops"))
@@ -109,8 +109,8 @@ public:
     this->ExposeWithClientContext(HAS_LOCK, this, &RevertibleDocumentStoreProtocol::HasLock);
   }
 
-  RevertibleDocumentStoreProtocol(NewRevertibleDocumentStore *doc_store, lane_type const &lane,
-                                  lane_type const &maxlanes)
+  RevertibleDocumentStoreProtocol(NewRevertibleDocumentStore *doc_store, LaneType const &lane,
+                                  LaneType const &maxlanes)
     : RevertibleDocumentStoreProtocol(doc_store, lane)
   {
     SetLaneLog2(maxlanes);
@@ -198,14 +198,14 @@ public:
   }
 
 private:
-  static telemetry::CounterPtr CreateCounter(lane_type lane, char const *name,
+  static telemetry::CounterPtr CreateCounter(LaneType lane, char const *name,
                                              char const *description)
   {
     return telemetry::Registry::Instance().CreateCounter(name, description,
                                                          {{"lane", std::to_string(lane)}});
   }
 
-  static telemetry::HistogramPtr CreateHistogram(lane_type lane, char const *name,
+  static telemetry::HistogramPtr CreateHistogram(LaneType lane, char const *name,
                                                  char const *description)
   {
     return telemetry::Registry::Instance().CreateHistogram(
@@ -283,7 +283,7 @@ private:
     reset_count_->increment();
   }
 
-  void SetLaneLog2(lane_type const &count)
+  void SetLaneLog2(LaneType const &count)
   {
     log2_lanes_ = uint32_t((sizeof(uint32_t) << 3) - uint32_t(__builtin_clz(uint32_t(count)) + 1));
   }

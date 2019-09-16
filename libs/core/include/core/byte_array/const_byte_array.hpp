@@ -41,7 +41,7 @@ class ConstByteArray
 {
 public:
   using value_type        = std::uint8_t;
-  using self_type         = ConstByteArray;
+  using SelfType          = ConstByteArray;
   using shared_array_type = memory::SharedArray<value_type>;
 
   enum
@@ -138,7 +138,7 @@ public:
     return arr_pointer_[n];
   }
 
-  bool operator<=(self_type const &other) const
+  bool operator<=(SelfType const &other) const
   {
     std::size_t n = std::min(length_, other.length_);
     std::size_t i = 0;
@@ -156,7 +156,7 @@ public:
     return length_ <= other.length_;
   }
 
-  bool operator<(self_type const &other) const
+  bool operator<(SelfType const &other) const
   {
     if (length_ == 0)
     {
@@ -173,23 +173,23 @@ public:
     return std::memcmp(arr_pointer_, other.arr_pointer_, other.length_) < 0;
   }
 
-  bool operator>(self_type const &other) const
+  bool operator>(SelfType const &other) const
   {
     return other < (*this);
   }
 
-  bool operator>=(self_type const &other) const
+  bool operator>=(SelfType const &other) const
   {
     return other <= (*this);
   }
 
-  bool operator==(self_type const &other) const
+  bool operator==(SelfType const &other) const
   {
     return length_ == other.length_ &&
            (length_ == 0 || std::memcmp(arr_pointer_, other.arr_pointer_, length_) == 0);
   }
 
-  bool operator!=(self_type const &other) const
+  bool operator!=(SelfType const &other) const
   {
     return !(*this == other);
   }
@@ -225,12 +225,12 @@ public:
   }
 
 public:
-  self_type SubArray(std::size_t start, std::size_t length = std::size_t(-1)) const noexcept
+  SelfType SubArray(std::size_t start, std::size_t length = std::size_t(-1)) const noexcept
   {
-    return SubArrayInternal<self_type>(start, length);
+    return SubArrayInternal<SelfType>(start, length);
   }
 
-  constexpr bool Match(self_type const &str, std::size_t pos = 0) const noexcept
+  constexpr bool Match(SelfType const &str, std::size_t pos = 0) const noexcept
   {
     return pos + str.length_ <= length_ &&
            std::memcmp(arr_pointer_ + pos, str.arr_pointer_, str.length_) == 0;
@@ -273,9 +273,9 @@ public:
     return reinterpret_cast<char const *>(arr_pointer_);
   }
 
-  self_type operator+(self_type const &other) const
+  SelfType operator+(SelfType const &other) const
   {
-    self_type ret = this->Copy();
+    SelfType ret = this->Copy();
     ret.Resize(other.size() + size());
     std::memcpy(ret.pointer() + size(), other.pointer(), other.size());
     return ret;
@@ -317,7 +317,7 @@ public:
   ConstByteArray ToHex() const;
 
   // Non-const functions go here
-  void FromByteArray(self_type const &other, std::size_t start, std::size_t length) noexcept
+  void FromByteArray(SelfType const &other, std::size_t start, std::size_t length) noexcept
   {
     data_        = other.data_;
     start_       = other.start_ + start;
@@ -336,7 +336,7 @@ public:
   }
 
 protected:
-  template <typename ReturnType = self_type>
+  template <typename ReturnType = SelfType>
   ReturnType SubArrayInternal(std::size_t start, std::size_t length = std::size_t(-1)) const
       noexcept
   {
@@ -457,7 +457,7 @@ protected:
   }
 
   template <typename... Arg>
-  self_type &Append(Arg &&... others)
+  SelfType &Append(Arg &&... others)
   {
     AppendInternal<AppendedType<Arg>...>(static_cast<AppendedType<Arg>>(others)...);
     return *this;
@@ -528,10 +528,10 @@ private:
    */
   class AddBytes
   {
-    self_type &self_;
+    SelfType &self_;
 
   public:
-    AddBytes(self_type &self)
+    AddBytes(SelfType &self)
       : self_(self)
     {}
 
@@ -566,7 +566,7 @@ private:
   template <typename T>
   using AppendedType =
       std::conditional_t<type_util::IsAnyOfV<std::decay_t<T>, std::uint8_t, char, std::int8_t>,
-                         std::decay_t<T>, self_type const &>;
+                         std::decay_t<T>, SelfType const &>;
 
   /**
    * Appends args to this array in left-to-right order.

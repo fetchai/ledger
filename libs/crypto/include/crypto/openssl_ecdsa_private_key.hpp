@@ -62,7 +62,7 @@ public:
 
 private:
   // TODO(issue 36): Keep key encrypted
-  shrd_ptr_type<EC_KEY> private_key_;
+  SharedPointerType<EC_KEY> private_key_;
   // TODO(issue 36): Do lazy initialisation of the public key to minimize impact
   // at construction time of this class
   PublicKeyType public_key_;
@@ -81,22 +81,22 @@ public:
   friend class ECDSAPrivateKey;
 
   template <eECDSAEncoding BINARY_DATA_FORMAT>
-  using private_key_type = ECDSAPrivateKey<BINARY_DATA_FORMAT, P_ECDSA_Curve_NID, P_ConversionForm>;
+  using PrivateKeyType = ECDSAPrivateKey<BINARY_DATA_FORMAT, P_ECDSA_Curve_NID, P_ConversionForm>;
 
   template <eECDSAEncoding BINARY_DATA_FORMAT>
-  ECDSAPrivateKey(private_key_type<BINARY_DATA_FORMAT> const &from)
+  ECDSAPrivateKey(PrivateKeyType<BINARY_DATA_FORMAT> const &from)
     : private_key_(from.private_key_)
     , public_key_(from.public_key_)
   {}
 
   template <eECDSAEncoding BINARY_DATA_FORMAT>
-  ECDSAPrivateKey(private_key_type<BINARY_DATA_FORMAT> &&from)
+  ECDSAPrivateKey(PrivateKeyType<BINARY_DATA_FORMAT> &&from)
     : private_key_(std::move(from.private_key_))
     , public_key_(std::move(from.public_key_))
   {}
 
   template <eECDSAEncoding BINARY_DATA_FORMAT>
-  ECDSAPrivateKey &operator=(private_key_type<BINARY_DATA_FORMAT> const &from)
+  ECDSAPrivateKey &operator=(PrivateKeyType<BINARY_DATA_FORMAT> const &from)
   {
     private_key_ = from.private_key_;
     public_key_  = from.public_key_;
@@ -104,14 +104,14 @@ public:
   }
 
   template <eECDSAEncoding BINARY_DATA_FORMAT>
-  ECDSAPrivateKey &operator=(private_key_type<BINARY_DATA_FORMAT> &&from)
+  ECDSAPrivateKey &operator=(PrivateKeyType<BINARY_DATA_FORMAT> &&from)
   {
     private_key_ = std::move(from.private_key_);
     public_key_  = std::move(from.public_key_);
     return *this;
   }
 
-  shrd_ptr_type<const EC_KEY> key() const
+  SharedPointerType<const EC_KEY> key() const
   {
     return private_key_;
   }
@@ -129,13 +129,13 @@ public:
     }
   }
 
-  const PublicKeyType &publicKey() const
+  const PublicKeyType &PublicKey() const
   {
     return public_key_;
   }
 
 private:
-  ECDSAPrivateKey(shrd_ptr_type<EC_KEY> &&key, PublicKeyType &&public_key)
+  ECDSAPrivateKey(SharedPointerType<EC_KEY> &&key, PublicKeyType &&public_key)
     : private_key_{std::move(key)}
     , public_key_{std::move(public_key)}
   {}
@@ -153,7 +153,7 @@ private:
     }
   }
 
-  static uniq_ptr_type<BIGNUM, del_strat_type::clearing> Convert2BIGNUM(
+  static uniq_ptr_type<BIGNUM, DeleteStrategyType::clearing> Convert2BIGNUM(
       byte_array::ConstByteArray const &key_data)
   {
     if (EcdsaCurveType::privateKeySize < key_data.size())
@@ -166,7 +166,7 @@ private:
           "length for selected elliptic curve");
     }
 
-    uniq_ptr_type<BIGNUM, del_strat_type::clearing> private_key_as_BN(BN_new());
+    uniq_ptr_type<BIGNUM, DeleteStrategyType::clearing> private_key_as_BN(BN_new());
     BN_bin2bn(key_data.pointer(), static_cast<int>(EcdsaCurveType::privateKeySize),
               private_key_as_BN.get());
 
@@ -288,15 +288,15 @@ private:
     const BIGNUM *key_as_BN = EC_KEY_get0_private_key(key);
     if (!key_as_BN)
     {
-      throw std::runtime_error("ECDSAPrivateKey::keyAsBin(): EC_KEY_get0_private_key(...) failed.");
+      throw std::runtime_error("ECDSAPrivateKey::KeyAsBin(): EC_KEY_get0_private_key(...) failed.");
     }
 
     byte_array::ByteArray key_as_bin;
     key_as_bin.Resize(static_cast<std::size_t>(BN_num_bytes(key_as_BN)));
 
-    if (!BN_bn2bin(key_as_BN, static_cast<unsigned char *>(key_as_bin.pointer())))
+    if (!BN_bn2bin(key_as_BN, static_cast<uint8_t *>(key_as_bin.pointer())))
     {
-      throw std::runtime_error("ECDSAPrivateKey::keyAsBin(...): BN_bn2bin(...) failed.");
+      throw std::runtime_error("ECDSAPrivateKey::KeyAsBin(...): BN_bn2bin(...) failed.");
     }
 
     return key_as_bin;
@@ -315,8 +315,8 @@ private:
     byte_array::ByteArray key_as_bin;
     key_as_bin.Resize(static_cast<std::size_t>(est_size));
 
-    unsigned char *key_as_bin_ptr = static_cast<unsigned char *>(key_as_bin.pointer());
-    const int      res_size       = i2d_ECPrivateKey(key, &key_as_bin_ptr);
+    uint8_t * key_as_bin_ptr = static_cast<uint8_t *>(key_as_bin.pointer());
+    const int res_size       = i2d_ECPrivateKey(key, &key_as_bin_ptr);
     if (res_size < 1 || res_size > est_size)
     {
       throw std::runtime_error("ECDSAPrivateKey::Convert2DER(...): i2d_ECPrivateKey(...) failed.");
@@ -329,7 +329,7 @@ private:
 
   static ECDSAPrivateKey ConvertFromBin(byte_array::ConstByteArray const &key_data)
   {
-    uniq_ptr_type<BIGNUM, del_strat_type::clearing> priv_key_as_BN{Convert2BIGNUM(key_data)};
+    uniq_ptr_type<BIGNUM, DeleteStrategyType::clearing> priv_key_as_BN{Convert2BIGNUM(key_data)};
 
     uniq_ptr_type<EC_KEY> private_key{ConvertPrivateKeyBN2ECKEY(priv_key_as_BN.get())};
     PublicKeyType         public_key{DerivePublicKey(priv_key_as_BN.get(), private_key.get())};
@@ -342,8 +342,8 @@ private:
     uniq_ptr_type<EC_KEY> key{EC_KEY_new_by_curve_name(EcdsaCurveType::nid)};
     EC_KEY_set_conv_form(key.get(), conversionForm);
 
-    EC_KEY *             key_ptr      = key.get();
-    const unsigned char *key_data_ptr = static_cast<const unsigned char *>(key_data.pointer());
+    EC_KEY *       key_ptr      = key.get();
+    const uint8_t *key_data_ptr = static_cast<const uint8_t *>(key_data.pointer());
     if (!d2i_ECPrivateKey(&key_ptr, &key_data_ptr, static_cast<long>(key_data.size())))
     {
       throw std::runtime_error(

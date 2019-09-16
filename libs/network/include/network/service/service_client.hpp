@@ -54,7 +54,7 @@ public:
     {
       ptr->ActivateSelfManage();
 
-      ptr->OnMessage([this](network::message_type const &msg) {
+      ptr->OnMessage([this](network::MessageType const &msg) {
         {
           FETCH_LOCK(message_mutex_);
           messages_.push_back(msg);
@@ -160,7 +160,7 @@ public:
   }
 
 protected:
-  bool DeliverRequest(network::message_type const &msg) override
+  bool DeliverRequest(network::MessageType const &msg) override
   {
     auto ptr = connection_.lock();
     if (ptr)
@@ -177,7 +177,7 @@ protected:
     return false;
   }
 
-  bool DeliverResponse(ConnectionHandleType, network::message_type const &msg) override
+  bool DeliverResponse(ConnectionHandleType, network::MessageType const &msg) override
   {
     auto ptr = connection_.lock();
     if (ptr)
@@ -203,8 +203,8 @@ private:
 
     while (!tearing_down_)
     {
-      network::message_type msg;
-      bool                  message_found = false;
+      network::MessageType msg;
+      bool                 message_found = false;
 
       // extract the next message
       {
@@ -242,9 +242,9 @@ private:
     --active_count_;
   }
 
-  NetworkManagerType                network_manager_;
-  std::deque<network::message_type> messages_;
-  mutable Mutex                     message_mutex_;
+  NetworkManagerType               network_manager_;
+  std::deque<network::MessageType> messages_;
+  mutable Mutex                    message_mutex_;
 
   std::atomic<bool>        tearing_down_{false};
   std::atomic<std::size_t> active_count_{0};

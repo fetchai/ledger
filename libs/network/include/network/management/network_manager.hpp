@@ -37,7 +37,7 @@ public:
 
   using ImplementationType = details::NetworkManagerImplementation;
   using PointerType        = std::shared_ptr<ImplementationType>;
-  using weak_ref_type      = std::weak_ptr<ImplementationType>;
+  using WeakRefType        = std::weak_ptr<ImplementationType>;
 
   static constexpr char const *LOGGING_NAME = "NetworkManager";
 
@@ -140,9 +140,9 @@ public:
   }
 
 private:
-  PointerType   pointer_;
-  weak_ref_type weak_pointer_;
-  bool          is_copy_ = false;
+  PointerType pointer_;
+  WeakRefType weak_pointer_;
+  bool        is_copy_ = false;
 };
 
 }  // namespace network

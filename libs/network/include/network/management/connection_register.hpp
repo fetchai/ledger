@@ -37,17 +37,17 @@ public:
   using ConnectionHandleType    = typename AbstractConnection::ConnectionHandleType;
   using WeakConnectionType      = std::weak_ptr<AbstractConnection>;
   using SharedConnectionType    = std::shared_ptr<AbstractConnection>;
-  using service_client_type     = service::ServiceClient;
+  using ServiceClientType       = service::ServiceClient;
   using SharedServiceClientType = std::shared_ptr<service::ServiceClient>;
   using WeakServiceClientType   = std::weak_ptr<service::ServiceClient>;
-  using details_type            = G;
+  using DetailsType             = G;
 
   static constexpr char const *LOGGING_NAME = "ConnectionRegisterImpl";
 
-  struct LockableDetails final : public details_type, public Mutex
+  struct LockableDetails final : public DetailsType, public Mutex
   {
     LockableDetails()
-      : details_type()
+      : DetailsType()
       , Mutex{}
     {}
   };
@@ -88,7 +88,7 @@ public:
     }
 
     SharedServiceClientType service =
-        std::make_shared<service_client_type>(connection.connection_pointer().lock(), tm);
+        std::make_shared<ServiceClientType>(connection.connection_pointer().lock(), tm);
 
     auto wptr = connection.connection_pointer();
     auto ptr  = wptr.lock();

@@ -175,7 +175,7 @@ public:
 
   bool UriToDirectAddress(const Uri &uri, Address &address) const;
 
-  PeerConnectionList &useClients();
+  PeerConnectionList &UseClients();
 
   /// @name Peer control
   /// @{

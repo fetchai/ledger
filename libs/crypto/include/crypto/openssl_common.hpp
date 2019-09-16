@@ -53,12 +53,12 @@ const std::size_t ECDSACurve<NID_secp256k1>::publicKeySize;
 template <>
 const std::size_t ECDSACurve<NID_secp256k1>::signatureSize;
 
-using del_strat_type = memory::eDeleteStrategy;
+using DeleteStrategyType = memory::eDeleteStrategy;
 
-template <typename T, del_strat_type P_DeleteStrategy = del_strat_type::canonical>
-using shrd_ptr_type = memory::OsslSharedPtr<T, P_DeleteStrategy>;
+template <typename T, DeleteStrategyType P_DeleteStrategy = DeleteStrategyType::canonical>
+using SharedPointerType = memory::OsslSharedPtr<T, P_DeleteStrategy>;
 
-template <typename T, del_strat_type P_DeleteStrategy = del_strat_type::canonical>
+template <typename T, DeleteStrategyType P_DeleteStrategy = DeleteStrategyType::canonical>
 using uniq_ptr_type = memory::ossl_unique_ptr<T, P_DeleteStrategy>;
 
 enum eECDSAEncoding : int
@@ -91,7 +91,7 @@ public:
       canonical_data[i] = 0;
     }
 
-    if (!BN_bn2bin(x, static_cast<unsigned char *>(canonical_data.pointer()) + x_data_start_index))
+    if (!BN_bn2bin(x, static_cast<uint8_t *>(canonical_data.pointer()) + x_data_start_index))
     {
       throw std::runtime_error(
           "Convert2Bin<...,"
@@ -107,7 +107,7 @@ public:
       canonical_data[i] = 0;
     }
 
-    if (!BN_bn2bin(y, static_cast<unsigned char *>(canonical_data.pointer()) + y_data_start_index))
+    if (!BN_bn2bin(y, static_cast<uint8_t *>(canonical_data.pointer()) + y_data_start_index))
     {
       throw std::runtime_error(
           "Convert2Bin<...,"

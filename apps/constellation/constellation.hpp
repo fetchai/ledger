@@ -130,7 +130,7 @@ private:
   using MainChainRpcServicePtr = std::shared_ptr<MainChainRpcService>;
   using LaneServices           = ledger::StorageUnitBundledService;
   using StorageUnitClient      = ledger::StorageUnitClient;
-  using LaneIndex              = ledger::LaneIdentity::lane_type;
+  using LaneIndex              = ledger::LaneIdentity::LaneType;
   using StorageUnitClientPtr   = std::shared_ptr<StorageUnitClient>;
   using Flag                   = std::atomic<bool>;
   using ExecutionManager       = ledger::ExecutionManager;

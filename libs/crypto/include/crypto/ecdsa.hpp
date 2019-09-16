@@ -105,7 +105,7 @@ public:
 
   ConstByteArray public_key() const
   {
-    return private_key_.Apply([](PrivateKey const &key) { return key.publicKey().keyAsBin(); });
+    return private_key_.Apply([](PrivateKey const &key) { return key.PublicKey().KeyAsBin(); });
   }
 
   ConstByteArray private_key()

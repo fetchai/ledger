@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "network/muddle/router.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/logging.hpp"
 #include "core/serializers/base_types.hpp"
@@ -25,7 +26,6 @@
 #include "network/muddle/dispatcher.hpp"
 #include "network/muddle/muddle_register.hpp"
 #include "network/muddle/packet.hpp"
-#include "network/muddle/router.hpp"
 
 #include <algorithm>
 #include <array>
@@ -42,9 +42,9 @@
 
 static constexpr uint8_t DEFAULT_TTL = 40;
 
-using fetch::byte_array::ToBase64;
 using fetch::byte_array::ByteArray;
 using fetch::byte_array::ConstByteArray;
+using fetch::byte_array::ToBase64;
 
 namespace fetch {
 namespace muddle {

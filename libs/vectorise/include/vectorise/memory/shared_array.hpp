@@ -45,14 +45,14 @@ public:
   // TODO(check IfIsPodOrFixedPoint memory safe)
   //  static_assert(std::is_pod<T>::value, "Can only be used with POD types");
   //  static_assert(meta::IfIsPodOrFixedPoint<T>::value, "can only be used with POD or FixedPoint");
-  using size_type  = std::size_t;
-  using data_type  = std::shared_ptr<T>;
-  using super_type = VectorSlice<T, type_size>;
-  using self_type  = SharedArray<T, type_size>;
-  using type       = T;
+  using size_type = std::size_t;
+  using DataType  = std::shared_ptr<T>;
+  using SuperType = VectorSlice<T, type_size>;
+  using SelfType  = SharedArray<T, type_size>;
+  using type      = T;
 
   explicit SharedArray(std::size_t n)
-    : super_type()
+    : SuperType()
   {
     this->size_ = n;
 
@@ -68,12 +68,12 @@ public:
   constexpr SharedArray() = default;
 
   SharedArray(SharedArray const &other) noexcept
-    : super_type(other.pointer_, other.size())
+    : SuperType(other.pointer_, other.size())
     , data_(other.data_)
   {}
 
   SharedArray(SharedArray const &other, uint64_t offset, uint64_t size) noexcept
-    : super_type(other.data_.get() + offset, size)
+    : SuperType(other.data_.get() + offset, size)
     , data_(other.data_)
   {}
 
@@ -92,7 +92,7 @@ public:
     return *this;
   }
 
-  self_type &operator=(SharedArray const &other) noexcept
+  SelfType &operator=(SharedArray const &other) noexcept
   {
     if (&other == this)
     {
@@ -117,10 +117,10 @@ public:
 
   ~SharedArray() = default;
 
-  self_type Copy() const
+  SelfType Copy() const
   {
     // TODO(issue 2): Use memcopy
-    self_type ret(this->size_);
+    SelfType ret(this->size_);
     for (std::size_t i = 0; i < this->size_; ++i)
     {
       ret[i] = this->At(i);
@@ -141,7 +141,7 @@ public:
   }
 
 private:
-  data_type data_ = nullptr;
+  DataType data_ = nullptr;
 };
 
 }  // namespace memory

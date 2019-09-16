@@ -37,7 +37,7 @@ namespace network {
 class ClientManager
 {
 public:
-  using ConnectionType       = typename AbstractConnection::shared_type;
+  using ConnectionType       = typename AbstractConnection::SharedType;
   using ConnectionHandleType = typename AbstractConnection::ConnectionHandleType;
 
   static constexpr char const *LOGGING_NAME = "ClientManager";
@@ -70,7 +70,7 @@ public:
     }
   }
 
-  bool Send(ConnectionHandleType client, message_type const &msg)
+  bool Send(ConnectionHandleType client, MessageType const &msg)
   {
     bool ret = true;
     clients_mutex_.lock();
@@ -93,7 +93,7 @@ public:
     return ret;
   }
 
-  void Broadcast(message_type const &msg)
+  void Broadcast(MessageType const &msg)
   {
     clients_mutex_.lock();
     for (auto &client : clients_)
@@ -106,7 +106,7 @@ public:
     clients_mutex_.unlock();
   }
 
-  void PushRequest(ConnectionHandleType client, message_type const &msg)
+  void PushRequest(ConnectionHandleType client, MessageType const &msg)
   {
     try
     {

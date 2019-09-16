@@ -54,8 +54,8 @@ TEST_F(ECDSACurveTest, test_ECDSACurve_for_NID_secp256k1)
 class ECDSAAffineCoordinatesConversionTest : public testing::Test
 {
 protected:
-  void test_convert_canonical_with_padding(shrd_ptr_type<BIGNUM const> const x,
-                                           shrd_ptr_type<BIGNUM const> const y)
+  void test_convert_canonical_with_padding(SharedPointerType<BIGNUM const> const x,
+                                           SharedPointerType<BIGNUM const> const y)
   {
     ASSERT_GT(ECDSAAffineCoordinatesConversion<>::x_size,
               static_cast<std::size_t>(BN_num_bytes(x.get())));
@@ -66,8 +66,8 @@ protected:
     EXPECT_EQ(ECDSAAffineCoordinatesConversion<>::EcdsaCurveType::publicKeySize,
               serialized_to_ba.size());
 
-    shrd_ptr_type<BIGNUM> x2{BN_new()};
-    shrd_ptr_type<BIGNUM> y2{BN_new()};
+    SharedPointerType<BIGNUM> x2{BN_new()};
+    SharedPointerType<BIGNUM> y2{BN_new()};
 
     ECDSAAffineCoordinatesConversion<>::ConvertFromCanonical(serialized_to_ba, x2.get(), y2.get());
 
@@ -78,8 +78,8 @@ protected:
 
 TEST_F(ECDSAAffineCoordinatesConversionTest, test_convert_canonical_with_padding)
 {
-  shrd_ptr_type<BIGNUM> x{BN_new()};
-  shrd_ptr_type<BIGNUM> y{BN_new()};
+  SharedPointerType<BIGNUM> x{BN_new()};
+  SharedPointerType<BIGNUM> y{BN_new()};
 
   byte_array::ConstByteArray const x_ba({1, 2, 3, 4, 5});
   byte_array::ConstByteArray const y_ba({6, 7, 8, 9, 10});
@@ -98,8 +98,8 @@ TEST_F(ECDSAAffineCoordinatesConversionTest, test_convert_canonical_with_padding
 {
   for (std::size_t j = 0; j < 100; ++j)
   {
-    shrd_ptr_type<BIGNUM> x{BN_new()};
-    shrd_ptr_type<BIGNUM> y{BN_new()};
+    SharedPointerType<BIGNUM> x{BN_new()};
+    SharedPointerType<BIGNUM> y{BN_new()};
 
     constexpr int bn_size_in_bites = 8 * 5;
 

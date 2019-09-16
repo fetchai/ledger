@@ -39,8 +39,8 @@ class HTTPConnection : public AbstractHTTPConnection,
 {
 public:
   using response_queue_type = std::deque<HTTPResponse>;
-  using ConnectionType      = typename AbstractHTTPConnection::shared_type;
-  using handle_type         = HTTPConnectionManager::handle_type;
+  using ConnectionType      = typename AbstractHTTPConnection::SharedType;
+  using HandleType          = HTTPConnectionManager::HandleType;
   using SharedRequestType   = std::shared_ptr<HTTPRequest>;
   using buffer_ptr_type     = std::shared_ptr<asio::streambuf>;
 
@@ -239,8 +239,8 @@ private:
   response_queue_type        write_queue_;
   Mutex                      write_mutex_;
 
-  handle_type handle_;
-  bool        is_open_ = false;
+  HandleType handle_;
+  bool       is_open_ = false;
 };
 }  // namespace http
 }  // namespace fetch

@@ -52,18 +52,17 @@
 #include <utility>
 
 using fetch::byte_array::ToBase64;
-using fetch::ledger::Executor;
-using fetch::network::Manifest;
-using fetch::network::ServiceType;
-using fetch::network::Uri;
-using fetch::network::ServiceIdentifier;
-using fetch::network::AtomicInFlightCounter;
-using fetch::network::AtomicCounterName;
-using fetch::network::Uri;
-using fetch::network::Peer;
 using fetch::ledger::Address;
+using fetch::ledger::Executor;
 using fetch::ledger::GenesisFileCreator;
 using fetch::muddle::MuddleEndpoint;
+using fetch::network::AtomicCounterName;
+using fetch::network::AtomicInFlightCounter;
+using fetch::network::Manifest;
+using fetch::network::Peer;
+using fetch::network::ServiceIdentifier;
+using fetch::network::ServiceType;
+using fetch::network::Uri;
 
 using ExecutorPtr = std::shared_ptr<Executor>;
 
@@ -72,7 +71,7 @@ namespace {
 
 constexpr char const *LOGGING_NAME = "constellation";
 
-using LaneIndex       = fetch::ledger::LaneIdentity::lane_type;
+using LaneIndex       = fetch::ledger::LaneIdentity::LaneType;
 using StakeManagerPtr = std::shared_ptr<ledger::StakeManager>;
 using EntropyPtr      = std::unique_ptr<ledger::EntropyGeneratorInterface>;
 using DkgServicePtr   = std::unique_ptr<dkg::DkgService>;

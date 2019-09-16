@@ -60,9 +60,9 @@ public:
   }
 
 protected:
-  virtual bool DeliverResponse(ConnectionHandleType, network::message_type const &) = 0;
+  virtual bool DeliverResponse(ConnectionHandleType, network::MessageType const &) = 0;
 
-  bool PushProtocolRequest(ConnectionHandleType client, network::message_type const &msg,
+  bool PushProtocolRequest(ConnectionHandleType client, network::MessageType const &msg,
                            CallContext const &context = CallContext())
   {
     SerializerType            params(msg);
@@ -126,7 +126,7 @@ protected:
   {
     bool                    ret = true;
     ProtocolHandlerType     protocol;
-    feed_handler_type       feed;
+    FeedHandlerType         feed;
     SubscriptionHandlerType subid;
 
     try
@@ -151,7 +151,7 @@ protected:
   {
     bool                    ret = true;
     ProtocolHandlerType     protocol;
-    feed_handler_type       feed;
+    FeedHandlerType         feed;
     SubscriptionHandlerType subid;
 
     try

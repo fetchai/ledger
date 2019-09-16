@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/fundamental_operators.hpp"
 #include "core/random/lcg.hpp"
 #include "math/base_types.hpp"
-#include "math/fundamental_operators.hpp"
 #include "math/tensor.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 

@@ -101,19 +101,19 @@ public:
   /// @name Subscriptions
   /// @{
   SubscriptionHandlerType Subscribe(ProtocolHandlerType const &protocol,
-                                    feed_handler_type const &feed, AbstractCallable *callback);
+                                    FeedHandlerType const &feed, AbstractCallable *callback);
   void                    Unsubscribe(SubscriptionHandlerType id);
   /// @}
 
 protected:
-  virtual bool DeliverRequest(network::message_type const &request) = 0;
+  virtual bool DeliverRequest(network::MessageType const &request) = 0;
 
-  bool ProcessServerMessage(network::message_type const &msg);
-  void ProcessRPCResult(network::message_type const &msg, service::SerializerType &params);
+  bool ProcessServerMessage(network::MessageType const &msg);
+  void ProcessRPCResult(network::MessageType const &msg, service::SerializerType &params);
 
 private:
   SubscriptionHandlerType CreateSubscription(ProtocolHandlerType const &protocol,
-                                             feed_handler_type const &feed, AbstractCallable *cb);
+                                             FeedHandlerType const &feed, AbstractCallable *cb);
 
   class Subscription
   {
@@ -124,7 +124,7 @@ private:
       feed     = 0;
       callback = nullptr;
     }
-    Subscription(ProtocolHandlerType protocol, feed_handler_type feed, AbstractCallable *callback)
+    Subscription(ProtocolHandlerType protocol, FeedHandlerType feed, AbstractCallable *callback)
     {
       this->protocol = protocol;
       this->feed     = feed;
@@ -146,7 +146,7 @@ private:
     }
 
     ProtocolHandlerType protocol = 0;
-    feed_handler_type   feed     = 0;
+    FeedHandlerType     feed     = 0;
     AbstractCallable *  callback = nullptr;
   };
 

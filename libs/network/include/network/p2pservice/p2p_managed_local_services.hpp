@@ -48,7 +48,7 @@ public:
   void MakeFromManifest(const Manifest &manifest)
   {
     manifest.ForEach([this](const ServiceIdentifier &ident, const Uri &uri) {
-      switch (ident.service_type)
+      switch (ident.ServiceObjectType)
       {
       case ServiceType::LANE:
       {

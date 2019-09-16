@@ -70,11 +70,11 @@ void Product(ArrayType const &obj1, typename ArrayType::Type &ret)
   // TODO(private issue 994): Create test for this function
   if (obj1.padding() == 1)
   {
-    ret =
-        obj1.data().in_parallel().Reduce(memory::TrivialRange(0, obj1.size()),
-                                         [](typename ArrayType::VectorRegisterType const &a,
-                                            typename ArrayType::VectorRegisterType const &b) ->
-                                         typename ArrayType::VectorRegisterType { return a * b; });
+    ret = obj1.data().in_parallel().Reduce(
+        memory::TrivialRange(0, obj1.size()),
+        [](typename ArrayType::VectorRegisterType const &a,
+           typename ArrayType::VectorRegisterType const &b) ->
+        typename ArrayType::VectorRegisterType { return a * b; });
   }
   else
   {
@@ -98,10 +98,11 @@ void Product(ArrayType const &obj1, typename ArrayType::Type &ret)
 template <typename ArrayType>
 void Sum(ArrayType const &obj1, typename ArrayType::Type &ret)
 {
-  ret = obj1.data().in_parallel().Reduce(memory::TrivialRange(0, obj1.size()),
-                                         [](typename ArrayType::VectorRegisterType const &a,
-                                            typename ArrayType::VectorRegisterType const &b) ->
-                                         typename ArrayType::VectorRegisterType { return a + b; });
+  ret = obj1.data().in_parallel().Reduce(
+      memory::TrivialRange(0, obj1.size()),
+      [](typename ArrayType::VectorRegisterType const &a,
+         typename ArrayType::VectorRegisterType const &b) ->
+      typename ArrayType::VectorRegisterType { return a + b; });
 }
 
 }  // namespace details_vectorisation
@@ -570,7 +571,8 @@ void ReduceSum(ArrayType const &obj1, SizeType axis, ArrayType &ret)
   using DataType = typename ArrayType::Type;
   ret.Fill(static_cast<DataType>(0));
 
-  Reduce(axis, [](const DataType &x, DataType &y) { y += x; }, obj1, ret);
+  Reduce(
+      axis, [](const DataType &x, DataType &y) { y += x; }, obj1, ret);
 }
 
 /**
@@ -604,7 +606,8 @@ void ReduceSum(ArrayType const &obj1, std::vector<SizeType> axes, ArrayType &ret
   using DataType = typename ArrayType::Type;
   ret.Fill(static_cast<DataType>(0));
 
-  Reduce(axes, [](const DataType &x, DataType &y) { y += x; }, obj1, ret);
+  Reduce(
+      axes, [](const DataType &x, DataType &y) { y += x; }, obj1, ret);
 }
 
 /**
@@ -869,7 +872,8 @@ void ReduceMax(ArrayType const &obj1, SizeType axis, ArrayType &ret)
   using DataType = typename ArrayType::Type;
   ret.Fill(std::numeric_limits<DataType>::lowest());
 
-  Reduce(axis, [](const DataType &x, DataType &y) { y = (x < y) ? y : x; }, obj1, ret);
+  Reduce(
+      axis, [](const DataType &x, DataType &y) { y = (x < y) ? y : x; }, obj1, ret);
 }
 
 /**
@@ -903,7 +907,8 @@ void ReduceMax(ArrayType const &obj1, std::vector<SizeType> axes, ArrayType &ret
   using DataType = typename ArrayType::Type;
   ret.Fill(std::numeric_limits<DataType>::min());
 
-  Reduce(axes, [](const DataType &x, DataType &y) { y = (x < y) ? y : x; }, obj1, ret);
+  Reduce(
+      axes, [](const DataType &x, DataType &y) { y = (x < y) ? y : x; }, obj1, ret);
 }
 
 /**

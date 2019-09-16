@@ -140,9 +140,9 @@ IRFunctionPtr IRBuilder::BuildFunction(FunctionPtr const &function)
   }
   IRTypePtrArray     ir_parameter_types     = BuildTypes(function->parameter_types);
   IRVariablePtrArray ir_parameter_variables = BuildVariables(function->parameter_variables);
-  IRTypePtr          ir_return_type         = BuildType(function->return_type);
+  IRTypePtr          ir_ReturnType          = BuildType(function->ReturnType);
   ir_function = CreateIRFunction(function->function_kind, function->name, function->unique_id,
-                                 ir_parameter_types, ir_parameter_variables, ir_return_type);
+                                 ir_parameter_types, ir_parameter_variables, ir_ReturnType);
   function_map_.AddPair(function, ir_function);
   ir_->AddFunction(ir_function);
   return ir_function;

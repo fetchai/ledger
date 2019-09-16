@@ -41,7 +41,7 @@ class MuddleServer final : public NETWORK_SERVER
 {
 public:
   using ConnectionHandleType = network::AbstractNetworkServer::ConnectionHandleType;
-  using message_type         = network::message_type;
+  using MessageType          = network::MessageType;
   using MsgPackSerializer    = serializers::MsgPackSerializer;
 
   // ensure the NETWORK_SERVER type that we are using is actually what we where expecting
@@ -81,7 +81,7 @@ private:
    * @param client The handle to connection which generated this message
    * @param msg The payload of the message
    */
-  void PushRequest(ConnectionHandleType client, message_type const &msg) override
+  void PushRequest(ConnectionHandleType client, MessageType const &msg) override
   {
     try
     {

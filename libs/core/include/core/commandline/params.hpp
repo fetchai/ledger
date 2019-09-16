@@ -41,10 +41,10 @@ public:
   bool   operator==(const Params &rhs) const = delete;
   bool   operator<(const Params &rhs) const  = delete;
 
-  using action_func_type =
+  using ActionFunctionType =
       std::function<void(const std::set<std::string> &, std::list<std::string> &)>;
   using HelpTextType    = std::tuple<std::string, std::string>;
-  using assigners_type  = std::map<std::string, action_func_type>;
+  using assigners_type  = std::map<std::string, ActionFunctionType>;
   using help_texts_type = std::list<HelpTextType>;
 
   Params()
@@ -76,7 +76,7 @@ public:
 
     for (auto action : assigners_)
     {
-      action_func_type func = action.second;
+      ActionFunctionType func = action.second;
       func(args, errs);
     }
 

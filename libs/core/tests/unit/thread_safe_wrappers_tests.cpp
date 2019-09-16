@@ -180,7 +180,7 @@ public:
   }
 
   template <template <typename, typename> class Wrapper>
-  void wrapper_may_be_used_with_arbitrary_mutex_type()
+  void wrapper_may_be_used_with_arbitrary_MutexType()
   {
     auto const iterations = 5;
 
@@ -274,10 +274,10 @@ TEST_F(ThreadSafeWrapperTests, handler_return_value_is_passed_to_Apply)
   handler_return_value_is_passed_to_Apply<Waitable>();
 }
 
-TEST_F(ThreadSafeWrapperTests, wrapper_may_be_used_with_arbitrary_mutex_type)
+TEST_F(ThreadSafeWrapperTests, wrapper_may_be_used_with_arbitrary_MutexType)
 {
-  wrapper_may_be_used_with_arbitrary_mutex_type<Protected>();
-  wrapper_may_be_used_with_arbitrary_mutex_type<Waitable>();
+  wrapper_may_be_used_with_arbitrary_MutexType<Protected>();
+  wrapper_may_be_used_with_arbitrary_MutexType<Waitable>();
 }
 
 TEST_F(ThreadSafeWrapperTests, call_to_Apply_locks_and_then_releases_the_mutex)

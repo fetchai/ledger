@@ -76,9 +76,9 @@ template <typename T, typename S = RandomAccessStack<T, NewBookmarkHeader>>
 class NewVersionedRandomAccessStack
 {
 private:
-  using stack_type      = S;
+  using StackType       = S;
   using HeaderExtraType = uint64_t;
-  using header_type     = NewBookmarkHeader;
+  using HeaderType      = NewBookmarkHeader;
 
   static constexpr char const *LOGGING_NAME = "NewVersionedRandomAccessStack";
 
@@ -309,7 +309,7 @@ public:
    */
   static constexpr bool DirectWrite()
   {
-    return stack_type::DirectWrite();
+    return StackType::DirectWrite();
   }
 
   void Load(std::string const &filename, std::string const &history,
@@ -385,7 +385,7 @@ public:
 
   void SetExtraHeader(HeaderExtraType const &b)
   {
-    header_type h = stack_.header_extra();
+    HeaderType h = stack_.header_extra();
     history_.Push(HistoryHeader{h.header}, HistoryHeader::value);
 
     h.header = b;
@@ -411,8 +411,8 @@ public:
     hash_history_.Push(history_bookmark);
 
     // Update our header with this information (the bookmark index)
-    header_type h = stack_.header_extra();
-    h.bookmark    = internal_bookmark_index_;
+    HeaderType h = stack_.header_extra();
+    h.bookmark   = internal_bookmark_index_;
     stack_.SetExtraHeader(h);
 
     internal_bookmark_index_++;
@@ -528,7 +528,7 @@ private:
   EventHandlerType on_file_loaded_;
   EventHandlerType on_before_flush_;
 
-  stack_type stack_;
+  StackType stack_;
 
   bool RevertBookmark(DefaultKey const &key_to_compare)
   {
@@ -539,8 +539,8 @@ private:
     internal_bookmark_index_ = book.bookmark;
 
     // Update header
-    header_type h = stack_.header_extra();
-    h.bookmark    = internal_bookmark_index_;
+    HeaderType h = stack_.header_extra();
+    h.bookmark   = internal_bookmark_index_;
     stack_.SetExtraHeader(h);
 
     // If we are reverting to a state, we want this bookmark to stay - this
@@ -598,7 +598,7 @@ private:
     HistoryHeader header;
     history_.Top(header);
 
-    header_type h = stack_.header_extra();
+    HeaderType h = stack_.header_extra();
 
     h.header = header.data;
     stack_.SetExtraHeader(h);

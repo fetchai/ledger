@@ -65,7 +65,7 @@ Promise ServiceClientInterface::CallWithPackedArguments(ProtocolHandlerType cons
 }
 
 SubscriptionHandlerType ServiceClientInterface::Subscribe(ProtocolHandlerType const &protocol,
-                                                          feed_handler_type const &  feed,
+                                                          FeedHandlerType const &    feed,
                                                           AbstractCallable *         callback)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "PubSub: SUBSCRIBE ", int(protocol), ":", int(feed));
@@ -125,8 +125,8 @@ void ServiceClientInterface::Unsubscribe(SubscriptionHandlerType id)
   }
 }
 
-void ServiceClientInterface::ProcessRPCResult(network::message_type const &msg,
-                                              service::SerializerType &    params)
+void ServiceClientInterface::ProcessRPCResult(network::MessageType const &msg,
+                                              service::SerializerType &   params)
 {
   PromiseCounter id;
   params >> id;
@@ -140,7 +140,7 @@ void ServiceClientInterface::ProcessRPCResult(network::message_type const &msg,
                   " due to finishing delivering the response");
 }
 
-bool ServiceClientInterface::ProcessServerMessage(network::message_type const &msg)
+bool ServiceClientInterface::ProcessServerMessage(network::MessageType const &msg)
 {
   bool ret = true;
 
@@ -170,7 +170,7 @@ bool ServiceClientInterface::ProcessServerMessage(network::message_type const &m
   }
   else if (type == SERVICE_FEED)
   {
-    feed_handler_type       feed;
+    FeedHandlerType         feed;
     SubscriptionHandlerType sub;
     params >> feed >> sub;
 
@@ -285,7 +285,7 @@ void ServiceClientInterface::RemovePromise(PromiseCounter id)
 }
 
 SubscriptionHandlerType ServiceClientInterface::CreateSubscription(
-    ProtocolHandlerType const &protocol, feed_handler_type const &feed, AbstractCallable *cb)
+    ProtocolHandlerType const &protocol, FeedHandlerType const &feed, AbstractCallable *cb)
 {
   FETCH_LOCK(subscription_mutex_);
   subscription_index_counter_++;

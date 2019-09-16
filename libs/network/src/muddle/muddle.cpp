@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "network/muddle/muddle.hpp"
 #include "core/logging.hpp"
 #include "core/serializers/base_types.hpp"
 #include "core/serializers/main_serializer.hpp"
-#include "network/muddle/muddle.hpp"
 #include "network/muddle/muddle_register.hpp"
 #include "network/muddle/muddle_server.hpp"
 #include "network/tcp/tcp_client.hpp"
@@ -325,7 +325,7 @@ void Muddle::CreateTcpClient(Uri const &peer)
     clients_.Disconnect(peer);
   });
 
-  strong_conn->OnMessage([this, peer, conn_handle](network::message_type const &msg) {
+  strong_conn->OnMessage([this, peer, conn_handle](network::MessageType const &msg) {
     try
     {
       auto packet = std::make_shared<Packet>();

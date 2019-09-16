@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/set_thread_name.hpp"
 #include "network/muddle/rpc/client.hpp"
+#include "core/set_thread_name.hpp"
 
 #include <chrono>
 #include <cstddef>
@@ -73,7 +73,7 @@ Client::~Client()
   FETCH_LOG_WARN(LOGGING_NAME, "Threadpool stopped, client destructor end");
 }
 
-bool Client::DeliverRequest(network::message_type const &data)
+bool Client::DeliverRequest(network::MessageType const &data)
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Please send this packet to the server  ", service_, ",", channel_);
 

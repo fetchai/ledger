@@ -598,7 +598,7 @@ class ParallelDispatcher : public ConstParallelDispatcher<T>
 public:
   using type = T;
 
-  using super_type = ConstParallelDispatcher<T>;
+  using SuperType = ConstParallelDispatcher<T>;
 
   enum
   {
@@ -608,7 +608,7 @@ public:
   using VectorRegisterIteratorType = vectorize::VectorRegisterIterator<type, vector_size>;
 
   ParallelDispatcher(type *ptr, std::size_t size)
-    : super_type(ptr, size)
+    : SuperType(ptr, size)
   {}
 
   template <typename F>
@@ -772,7 +772,7 @@ public:
     VectorRegisterType         regs[sizeof...(args)];
     VectorRegisterType         c;
     VectorRegisterIteratorType iters[sizeof...(args)];
-    std::size_t                N = super_type::size();
+    std::size_t                N = SuperType::size();
     ConstParallelDispatcher<T>::InitialiseVectorIterators(0, N, iters, std::forward<Args>(args)...);
 
     for (std::size_t i = 0; i < N; i += VectorRegisterType::E_BLOCK_COUNT)
@@ -809,7 +809,7 @@ public:
 
   type *pointer()
   {
-    return super_type::pointer();
+    return SuperType::pointer();
   }
 };
 

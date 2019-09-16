@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/base_types.hpp"
 #include "math/distance/cosine.hpp"
+#include "math/base_types.hpp"
 #include "math/tensor.hpp"
 
 #include "gtest/gtest.h"

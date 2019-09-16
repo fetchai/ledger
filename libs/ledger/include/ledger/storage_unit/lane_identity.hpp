@@ -31,8 +31,8 @@ class LaneIdentity
 public:
   using ConnectivityDetailsType = LaneConnectivityDetails;
   using NetworkManagerType      = fetch::network::NetworkManager;
-  using ping_type               = uint32_t;
-  using lane_type               = uint32_t;
+  using PingType                = uint32_t;
+  using LaneType                = uint32_t;
 
   static constexpr char const *LOGGING_NAME = "LaneIdentity";
 
@@ -53,12 +53,12 @@ public:
     return identity_;
   }
 
-  lane_type GetLaneNumber()
+  LaneType GetLaneNumber()
   {
     return lane_;
   }
 
-  lane_type GetTotalLanes()
+  LaneType GetTotalLanes()
   {
     return total_lanes_;
   }
@@ -67,12 +67,12 @@ public:
 
   /// Internal controls
   /// @{
-  void SetLaneNumber(lane_type const &lane)
+  void SetLaneNumber(LaneType const &lane)
   {
     lane_ = lane;
   }
 
-  void SetTotalLanes(lane_type const &t)
+  void SetTotalLanes(LaneType const &t)
   {
     total_lanes_ = t;
   }
@@ -84,8 +84,8 @@ private:
 
   NetworkManagerType manager_;
 
-  std::atomic<lane_type> lane_;
-  std::atomic<lane_type> total_lanes_;
+  std::atomic<LaneType> lane_;
+  std::atomic<LaneType> total_lanes_;
 };
 
 }  // namespace ledger

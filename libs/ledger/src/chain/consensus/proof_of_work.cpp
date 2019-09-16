@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/sha256.hpp"
 #include "ledger/chain/consensus/proof_of_work.hpp"
+#include "crypto/sha256.hpp"
 
 #include <cassert>
 #include <cstddef>
@@ -28,7 +28,7 @@ namespace fetch {
 namespace ledger {
 namespace consensus {
 
-ProofOfWork::ProofOfWork(header_type header)
+ProofOfWork::ProofOfWork(HeaderType header)
   : header_{std::move(header)}
 {}
 

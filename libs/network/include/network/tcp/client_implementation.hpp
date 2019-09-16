@@ -40,12 +40,12 @@ class TCPClientImplementation final : public AbstractConnection
 {
 public:
   using NetworkManagerType = NetworkManager;
-  using self_type          = std::weak_ptr<AbstractConnection>;
+  using SelfType           = std::weak_ptr<AbstractConnection>;
   using SharedSelfType     = std::shared_ptr<AbstractConnection>;
   using socket_type        = asio::ip::tcp::tcp::socket;
   using strand_type        = asio::io_service::strand;
   using resolver_type      = asio::ip::tcp::resolver;
-  using mutex_type         = std::mutex;
+  using MutexType          = std::mutex;
 
   static constexpr char const *LOGGING_NAME = "TCPClientImpl";
 
@@ -74,7 +74,7 @@ public:
 
   void Connect(byte_array::ConstByteArray const &host, byte_array::ConstByteArray const &port)
   {
-    self_type self = shared_from_this();
+    SelfType self = shared_from_this();
 
     FETCH_LOG_DEBUG(LOGGING_NAME, "Client posting connect");
 
@@ -174,9 +174,9 @@ public:
     return !socket_.expired() && connected_;
   }
 
-  void Send(message_type const &omsg) override
+  void Send(MessageType const &omsg) override
   {
-    message_type msg = omsg.Copy();
+    MessageType msg = omsg.Copy();
     if (!connected_)
     {
       return;
@@ -187,7 +187,7 @@ public:
       write_queue_.push_back(msg);
     }
 
-    self_type                  self   = shared_from_this();
+    SelfType                   self   = shared_from_this();
     std::weak_ptr<strand_type> strand = strand_;
 
     networkManager_.Post([this, self, strand] {
@@ -245,15 +245,15 @@ private:
   std::weak_ptr<strand_type> strand_;
 
   message_queue_type write_queue_;
-  mutable mutex_type queue_mutex_;
-  mutable mutex_type io_creation_mutex_;
+  mutable MutexType  queue_mutex_;
+  mutable MutexType  io_creation_mutex_;
 
-  mutable mutex_type can_write_mutex_;
-  bool               can_write_{true};
-  bool               posted_close_ = false;
+  mutable MutexType can_write_mutex_;
+  bool              can_write_{true};
+  bool              posted_close_ = false;
 
-  mutable mutex_type callback_mutex_;
-  std::atomic<bool>  connected_{false};
+  mutable MutexType callback_mutex_;
+  std::atomic<bool> connected_{false};
 
   void ReadHeader() noexcept
   {
@@ -264,7 +264,7 @@ private:
     }
     assert(strand->running_in_this_thread());
 
-    self_type             self   = shared_from_this();
+    SelfType              self   = shared_from_this();
     auto                  socket = socket_.lock();
     byte_array::ByteArray header;
     header.Resize(2 * sizeof(uint64_t));
@@ -333,9 +333,9 @@ private:
     byte_array::ByteArray message;
     message.Resize(size);
 
-    self_type self   = shared_from_this();
-    auto      socket = socket_.lock();
-    auto      cb     = [this, self, message, socket, strand](std::error_code ec, std::size_t len) {
+    SelfType self   = shared_from_this();
+    auto     socket = socket_.lock();
+    auto     cb     = [this, self, message, socket, strand](std::error_code ec, std::size_t len) {
       FETCH_UNUSED(len);
 
       SharedSelfType selfLock = self.lock();
@@ -400,7 +400,7 @@ private:
       }
     }
 
-    message_type buffer;
+    MessageType buffer;
     {
       FETCH_LOCK(queue_mutex_);
       if (write_queue_.empty())

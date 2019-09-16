@@ -50,23 +50,23 @@ inline char const *ToString(ServiceType s)
 
 struct ServiceIdentifier
 {
-  ServiceType service_type    = ServiceType::INVALID;
-  uint16_t    instance_number = 0;
+  ServiceType ServiceObjectType = ServiceType::INVALID;
+  uint16_t    instance_number   = 0;
 
   ServiceIdentifier() = default;
 
   explicit ServiceIdentifier(ServiceType type, uint16_t instance = 0)
-    : service_type(type)
+    : ServiceObjectType(type)
     , instance_number(instance)
   {}
 
   bool operator<(const ServiceIdentifier &other) const
   {
-    if (service_type < other.service_type)
+    if (ServiceObjectType < other.ServiceObjectType)
     {
       return true;
     }
-    if (service_type > other.service_type)
+    if (ServiceObjectType > other.ServiceObjectType)
     {
       return false;
     }
@@ -79,12 +79,14 @@ struct ServiceIdentifier
 
   std::string ToString(std::string const &divider = "/") const
   {
-    return std::string{network::ToString(service_type)} + divider + std::to_string(instance_number);
+    return std::string{network::ToString(ServiceObjectType)} + divider +
+           std::to_string(instance_number);
   }
 
   bool operator==(ServiceIdentifier const &other) const
   {
-    return (service_type == other.service_type) && (instance_number == other.instance_number);
+    return (ServiceObjectType == other.ServiceObjectType) &&
+           (instance_number == other.instance_number);
   }
 };
 }  // namespace network
@@ -98,14 +100,14 @@ public:
   using DriverType = D;
   using Type       = network::ServiceIdentifier;
 
-  static const uint8_t SERVICE_TYPE    = 1;
-  static const uint8_t INSTANCE_NUMBER = 2;
+  static const uint8_t ServiceObjectType = 1;
+  static const uint8_t INSTANCE_NUMBER   = 2;
 
   template <typename T>
   static void Serialize(T &map_constructor, Type const &x)
   {
     auto map = map_constructor(2);
-    map.Append(SERVICE_TYPE, static_cast<uint16_t>(x.service_type));
+    map.Append(ServiceObjectType, static_cast<uint16_t>(x.ServiceObjectType));
     map.Append(INSTANCE_NUMBER, x.instance_number);
   }
 
@@ -114,10 +116,10 @@ public:
   {
     byte_array::ConstByteArray uri;
     uint8_t                    key;
-    uint16_t                   service_type;
-    map.GetNextKeyPair(key, service_type);
+    uint16_t                   ServiceObjectType;
+    map.GetNextKeyPair(key, ServiceObjectType);
     map.GetNextKeyPair(key, x.instance_number);
-    x.service_type = static_cast<network::ServiceType>(service_type);
+    x.ServiceObjectType = static_cast<network::ServiceType>(ServiceObjectType);
     // TODO(EJF): This still needs validation
   }
 };
@@ -132,7 +134,7 @@ struct hash<fetch::network::ServiceIdentifier>
 {
   std::size_t operator()(fetch::network::ServiceIdentifier const &id) const
   {
-    std::size_t const combined = (static_cast<std::size_t>(id.service_type) << 16) |
+    std::size_t const combined = (static_cast<std::size_t>(id.ServiceObjectType) << 16) |
                                  static_cast<std::size_t>(id.instance_number);
 
     return hash<std::size_t>()(combined);

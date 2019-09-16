@@ -43,12 +43,12 @@ namespace ledger {
 class BlockGenerator
 {
 public:
-  using transaction_type        = std::shared_ptr<miner::TransactionItem>;
+  using TransactionType         = std::shared_ptr<miner::TransactionItem>;
   using block_index_map_type    = std::vector<std::vector<uint64_t>>;
   using block_fees_list_type    = std::vector<uint64_t>;
   using digest_type             = TransactionSummary::TxDigest;
-  using transaction_map_type    = std::unordered_map<digest_type, transaction_type>;
-  using transaction_list_type   = std::vector<transaction_type>;
+  using transaction_map_type    = std::unordered_map<digest_type, TransactionType>;
+  using transaction_list_type   = std::vector<TransactionType>;
   using transaction_matrix_type = std::vector<transaction_list_type>;
   using AnnealerType            = fetch::optimisers::BinaryAnnealer;
   using state_type              = AnnealerType::state_type;
@@ -72,7 +72,7 @@ public:
    * unspent. It will only appear once in the register with all
    * transactions.
    */
-  void PushTransactionSummary(transaction_type const &tx, bool check = true)
+  void PushTransactionSummary(TransactionType const &tx, bool check = true)
   {
     // TODO(issue 30):  The size of the `all_` make grows forever!
     if (check)

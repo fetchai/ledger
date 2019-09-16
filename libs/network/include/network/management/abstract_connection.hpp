@@ -36,7 +36,7 @@ namespace network {
 class AbstractConnection : public std::enable_shared_from_this<AbstractConnection>
 {
 public:
-  using shared_type          = std::shared_ptr<AbstractConnection>;
+  using SharedType           = std::shared_ptr<AbstractConnection>;
   using ConnectionHandleType = typename AbstractConnectionRegister::ConnectionHandleType;
   using weak_ptr_type        = std::weak_ptr<AbstractConnection>;
   using WeakRegisterType     = std::weak_ptr<AbstractConnectionRegister>;
@@ -76,11 +76,11 @@ public:
     FETCH_LOG_DEBUG(LOGGING_NAME, "Connection destroyed for handle ", h);
   }
 
-  virtual void     Send(message_type const &) = 0;
-  virtual uint16_t Type() const               = 0;
-  virtual void     Close()                    = 0;
-  virtual bool     Closed() const             = 0;
-  virtual bool     is_alive() const           = 0;
+  virtual void     Send(MessageType const &) = 0;
+  virtual uint16_t Type() const              = 0;
+  virtual void     Close()                   = 0;
+  virtual bool     Closed() const            = 0;
+  virtual bool     is_alive() const          = 0;
 
   // Common to all
   std::string Address() const
@@ -108,7 +108,7 @@ public:
     return shared_from_this();
   }
 
-  void OnMessage(std::function<void(network::message_type const &msg)> const &f)
+  void OnMessage(std::function<void(network::MessageType const &msg)> const &f)
   {
     FETCH_LOCK(callback_mutex_);
     on_message_ = f;
@@ -180,9 +180,9 @@ protected:
     FETCH_LOG_DEBUG(LOGGING_NAME, "SignalLeave is done");
   }
 
-  void SignalMessage(network::message_type const &msg)
+  void SignalMessage(network::MessageType const &msg)
   {
-    std::function<void(network::message_type const &)> cb;
+    std::function<void(network::MessageType const &)> cb;
     {
       FETCH_LOCK(callback_mutex_);
       cb = on_message_;
@@ -225,10 +225,10 @@ protected:
   }
 
 private:
-  std::function<void(network::message_type const &msg)> on_message_;
-  std::function<void()>                                 on_connection_success_;
-  std::function<void()>                                 on_connection_failed_;
-  std::function<void()>                                 on_leave_;
+  std::function<void(network::MessageType const &msg)> on_message_;
+  std::function<void()>                                on_connection_success_;
+  std::function<void()>                                on_connection_failed_;
+  std::function<void()>                                on_leave_;
 
   std::string           address_;
   std::atomic<uint16_t> port_;
@@ -258,7 +258,7 @@ private:
   static Mutex                global_handle_mutex_;
   mutable Mutex               callback_mutex_;
 
-  shared_type self_;
+  SharedType self_;
 
   friend class AbstractConnectionRegister;
 };
