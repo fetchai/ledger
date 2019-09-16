@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/base_types.hpp"
 #include "math/base_types.hpp"
 #include "ml/utilities/scaler.hpp"
 
@@ -35,10 +36,10 @@ public:
   MinMaxScaler() = default;
 
   void SetScale(TensorType const &reference_tensor) override;
+  void SetScale(DataType const &min_val, DataType const &max_val) override;
   void Normalise(TensorType const &input_tensor, TensorType &output_tensor) override;
   void DeNormalise(TensorType const &input_tensor, TensorType &output_tensor) override;
 
-private:
   DataType x_min_   = fetch::math::numeric_max<DataType>();
   DataType x_max_   = fetch::math::numeric_lowest<DataType>();
   DataType x_range_ = fetch::math::numeric_max<DataType>();
@@ -133,6 +134,52 @@ void MinMaxScaler<TensorType>::DeNormalise(TensorType const &input_tensor,
   }
 }
 
+template <typename TensorType>
+void MinMaxScaler<TensorType>::SetScale(DataType const &min_val, DataType const &max_val)
+{
+  assert(min_val <= max_val);
+  x_min_   = min_val;
+  x_max_   = max_val;
+  x_range_ = x_max_ - x_min_;
+}
+
 }  // namespace utilities
 }  // namespace ml
+
+namespace serializers {
+
+/**
+ * serializer for OpLayerNormSaveableParams saveable params
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::utilities::MinMaxScaler<TensorType>, D>
+{
+  using Type       = ml::utilities::MinMaxScaler<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const MIN_VAL = 1;
+  static uint8_t const MAX_VAL = 2;
+  static uint8_t const RANGE   = 3;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(3);
+
+    map.Append(MIN_VAL, sp.x_min_);
+    map.Append(MAX_VAL, sp.x_max_);
+    map.Append(RANGE, sp.x_range_);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(MIN_VAL, sp.x_min_);
+    map.ExpectKeyGetValue(MAX_VAL, sp.x_max_);
+    map.ExpectKeyGetValue(RANGE, sp.x_range_);
+  }
+};
+
+}  // namespace serializers
 }  // namespace fetch

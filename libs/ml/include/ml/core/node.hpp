@@ -18,12 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/logging.hpp"
-#include "ml/ops/abs.hpp"
-#include "ml/ops/embeddings.hpp"
-#include "ml/ops/layer_norm.hpp"
-#include "ml/ops/leaky_relu_op.hpp"
 #include "ml/ops/ops.hpp"
-#include "ml/ops/placeholder.hpp"
 #include "ml/ops/weights.hpp"
 #include "ml/saveparams/saveable_params.hpp"
 
@@ -52,6 +47,7 @@ private:
 
 public:
   using TensorType    = T;
+  using DataType      = typename TensorType::Type;
   using NodePtrType   = std::shared_ptr<Node<T>>;
   using VecTensorType = typename fetch::ml::ops::Ops<T>::VecTensorType;
   using SPType        = fetch::ml::NodeSaveableParams<T>;
@@ -222,10 +218,10 @@ std::shared_ptr<T> Node<T>::Evaluate(bool is_training)
     op_ptr_->Forward(inputs, cached_output_);
     cached_output_status_ = CachedOutputState::VALID_CACHE;
 
-    assert(math::is_division_by_zero() == false);
-    assert(math::is_overflow() == false);
-    assert(math::is_infinity() == false);
-    assert(math::is_nan() == false);
+    assert(math::is_division_by_zero<DataType>() == false);
+    assert(math::is_overflow<DataType>() == false);
+    assert(math::is_infinity<DataType>() == false);
+    assert(math::is_nan<DataType>() == false);
   }
 
   return std::make_shared<T>(cached_output_);

@@ -79,7 +79,6 @@ public:
   using DataType         = typename TensorType::Type;
   using NodePtrType      = typename std::shared_ptr<fetch::ml::Node<TensorType>>;
   using TrainablePtrType = typename std::shared_ptr<fetch::ml::ops::Trainable<TensorType>>;
-  using PlaceholderType  = typename fetch::ml::ops::PlaceHolder<TensorType>;
   using RegPtrType       = std::shared_ptr<fetch::ml::regularisers::Regulariser<T>>;
   using SPType           = GraphSaveableParams<TensorType>;
   using OpPtrType        = std::shared_ptr<fetch::ml::ops::Ops<TensorType>>;

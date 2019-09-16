@@ -115,51 +115,51 @@ fetch::meta::IfIsFloat<T, T> static function_tolerance()
 }
 
 template <typename T>
-static constexpr meta::IfIsNonFixedPointArithmetic<T, T> is_nan()
+static constexpr meta::IfIsNonFixedPointArithmetic<T, bool> is_nan()
 {
   return std::fetestexcept(FE_INVALID);
 }
 
 template <typename T>
-static constexpr meta::IfIsFixedPoint<T, T> is_nan()
+static constexpr meta::IfIsFixedPoint<T, bool> is_nan()
 {
-  return T::Type::IsStateNaN();
+  return T::IsStateNaN();
 }
 
 template <typename T>
-static constexpr meta::IfIsNonFixedPointArithmetic<T, T> is_division_by_zero()
+static constexpr meta::IfIsNonFixedPointArithmetic<T, bool> is_division_by_zero()
 {
   return std::fetestexcept(FE_DIVBYZERO);
 }
 
 template <typename T>
-static constexpr meta::IfIsFixedPoint<T, T> is_division_by_zero()
+static constexpr meta::IfIsFixedPoint<T, bool> is_division_by_zero()
 {
-  return T::Type::IsStateDivisionByZero();
+  return T::IsStateDivisionByZero();
 }
 
 template <typename T>
-static constexpr meta::IfIsNonFixedPointArithmetic<T, T> is_overflow()
+static constexpr meta::IfIsNonFixedPointArithmetic<T, bool> is_overflow()
 {
   return std::fetestexcept(FE_OVERFLOW);
 }
 
 template <typename T>
-static constexpr meta::IfIsFixedPoint<T, T> is_overflow()
+static constexpr meta::IfIsFixedPoint<T, bool> is_overflow()
 {
-  return T::Type::IsStateOverflow();
+  return T::IsStateOverflow();
 }
 
 template <typename T>
-static constexpr meta::IfIsNonFixedPointArithmetic<T, T> is_infinity()
+static constexpr meta::IfIsNonFixedPointArithmetic<T, bool> is_infinity()
 {
   return std::fetestexcept(FE_DIVBYZERO);
 }
 
 template <typename T>
-static constexpr meta::IfIsFixedPoint<T, T> is_infinity()
+static constexpr meta::IfIsFixedPoint<T, bool> is_infinity()
 {
-  return T::Type::IsStateInfinity();
+  return T::IsStateInfinity();
 }
 
 }  // namespace math
