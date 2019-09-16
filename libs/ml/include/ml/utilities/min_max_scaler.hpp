@@ -75,10 +75,6 @@ void MinMaxScaler<TensorType>::SetScale(TensorType const &reference_tensor)
   }
 
   x_range_ = x_max_ - x_min_;
-
-  std::cout << "x_range_: " << x_range_ << std::endl;
-  std::cout << "x_max_: " << x_max_ << std::endl;
-  std::cout << "x_min_: " << x_min_ << std::endl;
 }
 
 /**
@@ -149,7 +145,7 @@ void MinMaxScaler<TensorType>::SetScale(DataType const &min_val, DataType const 
 namespace serializers {
 
 /**
- * serializer for OpLayerNormSaveableParams saveable params
+ * serializer for MinMaxScaler
  * @tparam TensorType
  */
 template <typename TensorType, typename D>

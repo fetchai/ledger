@@ -12,7 +12,6 @@ function main()
     var scaler = Scaler();
     scaler.setScale(data_tensor.At(0, 0), data_tensor.At(0, 0));
     scaler.setScale(data_tensor, "min_max");
-
     var norm_data_tensor = scaler.normalise(data_tensor);
     var denorm_data_tensor = scaler.deNormalise(norm_data_tensor);
 

@@ -100,7 +100,6 @@ bool VMScaler::SerializeTo(serializers::MsgPackSerializer &buffer)
 
 bool VMScaler::DeserializeFrom(serializers::MsgPackSerializer &buffer)
 {
-  buffer.seek(0);
   auto scaler = std::make_shared<VMScaler>(this->vm_, this->type_id_);
   buffer >> *scaler;
   *this = *scaler;

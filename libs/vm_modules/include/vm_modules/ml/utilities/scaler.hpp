@@ -81,7 +81,7 @@ public:
 namespace serializers {
 
 /**
- * serializer for VMOptimiser
+ * serializer for VMScaler
  * @tparam TensorType
  */
 template <typename D>
