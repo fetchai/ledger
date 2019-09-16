@@ -44,12 +44,12 @@ public:
 
   using connection_type = typename AbstractConnection::shared_type;
 
-  using handle_type      = typename AbstractConnection::ConnectionHandleType;
-  using Strand           = asio::io_service::strand;
-  using StrongStrand     = std::shared_ptr<asio::io_service::strand>;
-  using Socket           = asio::ip::tcp::tcp::socket;
-  using shared_self_type = std::shared_ptr<AbstractConnection>;
-  using mutex_type       = std::mutex;
+  using handle_type    = typename AbstractConnection::ConnectionHandleType;
+  using Strand         = asio::io_service::strand;
+  using StrongStrand   = std::shared_ptr<asio::io_service::strand>;
+  using Socket         = asio::ip::tcp::tcp::socket;
+  using SharedSelfType = std::shared_ptr<AbstractConnection>;
+  using mutex_type     = std::mutex;
 
   ClientConnection(std::weak_ptr<asio::ip::tcp::tcp::socket> socket,
                    std::weak_ptr<ClientManager> manager, NetworkManager network_manager)
@@ -131,8 +131,8 @@ public:
     std::weak_ptr<Strand>             strand = strand_;
 
     network_manager_.Post([this, self, strand] {
-      shared_self_type selfLock   = self.lock();
-      auto             strandLock = strand_.lock();
+      SharedSelfType selfLock   = self.lock();
+      auto           strandLock = strand_.lock();
       if (!selfLock || !strandLock)
       {
         FETCH_LOG_WARN(LOGGING_NAME, "Failed to lock. Strand: ", bool(selfLock),
@@ -312,7 +312,7 @@ private:
   }
 
   // Always executed in a run(), in a strand
-  void WriteNext(shared_self_type selfLock)
+  void WriteNext(SharedSelfType selfLock)
   {
     // Only one thread can get past here at a time. Effectively a try_lock
     // except that we can't unlock a mutex in the callback (undefined behaviour)

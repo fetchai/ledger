@@ -59,7 +59,7 @@ public:
   using stored_type          = std::shared_ptr<AbstractCallable>;
   using byte_array_type      = byte_array::ConstByteArray;
   using ConnectionHandleType = typename network::AbstractConnection::ConnectionHandleType;
-  using middleware_type =
+  using MiddlewareType =
       std::function<void(ConnectionHandleType const &, byte_array::ByteArray const &)>;
 
   static constexpr char const *LOGGING_NAME = "Protocol";
@@ -236,7 +236,7 @@ public:
     return feeds_;
   }
 
-  void AddMiddleware(middleware_type const &m)
+  void AddMiddleware(MiddlewareType const &m)
   {
     middleware_.push_back(m);
   }
@@ -260,7 +260,7 @@ public:
   }
 
 private:
-  std::vector<middleware_type>                          middleware_;
+  std::vector<MiddlewareType>                           middleware_;
   std::map<function_handler_type, stored_type>          members_;
   std::vector<std::shared_ptr<FeedSubscriptionManager>> feeds_;
   Mutex                                                 feeds_mutex_;

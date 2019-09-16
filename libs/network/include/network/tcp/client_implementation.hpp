@@ -41,7 +41,7 @@ class TCPClientImplementation final : public AbstractConnection
 public:
   using network_manager_type = NetworkManager;
   using self_type            = std::weak_ptr<AbstractConnection>;
-  using shared_self_type     = std::shared_ptr<AbstractConnection>;
+  using SharedSelfType       = std::shared_ptr<AbstractConnection>;
   using socket_type          = asio::ip::tcp::tcp::socket;
   using strand_type          = asio::io_service::strand;
   using resolver_type        = asio::ip::tcp::resolver;
@@ -79,7 +79,7 @@ public:
     FETCH_LOG_DEBUG(LOGGING_NAME, "Client posting connect");
 
     networkManager_.Post([this, self, host, port] {
-      shared_self_type selfLock = self.lock();
+      SharedSelfType selfLock = self.lock();
       if (!selfLock)
       {
         return;
@@ -98,7 +98,7 @@ public:
       }
 
       strand->post([this, self, host, port, strand] {
-        shared_self_type selfLock = self.lock();
+        SharedSelfType selfLock = self.lock();
         if (!selfLock)
         {
           return;
@@ -118,7 +118,7 @@ public:
 
         auto cb = [this, self, res, socket, strand, port](std::error_code ec,
                                                           resolver_type::iterator) {
-          shared_self_type selfLock = self.lock();
+          SharedSelfType selfLock = self.lock();
           if (!selfLock)
           {
             return;
@@ -191,8 +191,8 @@ public:
     std::weak_ptr<strand_type> strand = strand_;
 
     networkManager_.Post([this, self, strand] {
-      shared_self_type selfLock   = self.lock();
-      auto             strandLock = strand_.lock();
+      SharedSelfType selfLock   = self.lock();
+      auto           strandLock = strand_.lock();
       if (!selfLock || !strandLock)
       {
         return;
@@ -270,7 +270,7 @@ private:
     header.Resize(2 * sizeof(uint64_t));
 
     auto cb = [this, self, socket, header, strand](std::error_code ec, std::size_t) {
-      shared_self_type selfLock = self.lock();
+      SharedSelfType selfLock = self.lock();
       if (!selfLock)
       {
         return;
@@ -338,7 +338,7 @@ private:
     auto      cb     = [this, self, message, socket, strand](std::error_code ec, std::size_t len) {
       FETCH_UNUSED(len);
 
-      shared_self_type selfLock = self.lock();
+      SharedSelfType selfLock = self.lock();
       if (!selfLock)
       {
         return;
@@ -384,7 +384,7 @@ private:
   }
 
   // Always executed in a run(), in a strand
-  void WriteNext(shared_self_type selfLock)
+  void WriteNext(SharedSelfType selfLock)
   {
     // Only one thread can get past here at a time. Effectively a try_lock
     // except that we can't unlock a mutex in the callback (undefined behaviour)
