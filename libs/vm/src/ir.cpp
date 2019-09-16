@@ -190,10 +190,10 @@ IRFunctionPtr IR::CloneFunction(IRFunctionPtr const &function)
   }
   IRTypePtrArray     clone_parameter_types     = CloneTypes(function->parameter_types);
   IRVariablePtrArray clone_parameter_variables = CloneVariables(function->parameter_variables);
-  IRTypePtr          clone_return_type         = CloneType(function->return_type);
+  IRTypePtr          clone_ReturnType          = CloneType(function->ReturnType);
   clone_function =
       CreateIRFunction(function->function_kind, function->name, function->unique_id,
-                       clone_parameter_types, clone_parameter_variables, clone_return_type);
+                       clone_parameter_types, clone_parameter_variables, clone_ReturnType);
   function_map_.AddPair(function, clone_function);
   AddFunction(clone_function);
   return clone_function;
@@ -234,11 +234,11 @@ IRVariablePtr CreateIRVariable(VariableKind variable_kind, std::string name, IRT
 
 IRFunctionPtr CreateIRFunction(FunctionKind function_kind, std::string name, std::string unique_id,
                                IRTypePtrArray     parameter_types,
-                               IRVariablePtrArray parameter_variables, IRTypePtr return_type)
+                               IRVariablePtrArray parameter_variables, IRTypePtr ReturnType)
 {
   return std::make_shared<IRFunction>(function_kind, std::move(name), std::move(unique_id),
                                       std::move(parameter_types), std::move(parameter_variables),
-                                      std::move(return_type));
+                                      std::move(ReturnType));
 }
 
 IRNodePtr CreateIRBasicNode(NodeKind node_kind, std::string text, uint16_t line,

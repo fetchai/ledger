@@ -41,10 +41,10 @@ struct VmMemberFunctionInvoker
     Ptr<OwningType> object = v.object;
     if (object)
     {
-      ReturnType result         = meta::Apply(std::forward<Callable>(callable), *object,
+      ReturnType result        = meta::Apply(std::forward<Callable>(callable), *object,
                                       std::forward<ArgsTuple>(arguments));
-      auto const return_type_id = vm->instruction_->type_id;
-      StackSetter<ReturnType>::Set(vm, offset, std::move(result), return_type_id);
+      auto const ReturnType_id = vm->instruction_->type_id;
+      StackSetter<ReturnType>::Set(vm, offset, std::move(result), ReturnType_id);
       vm->sp_ -= offset;
       return;
     }

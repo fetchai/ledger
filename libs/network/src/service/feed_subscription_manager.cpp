@@ -31,14 +31,14 @@ namespace service {
 
 void FeedSubscriptionManager::PublishingProcessor()
 {
-  std::vector<publishing_workload_type> my_work;
+  std::vector<PublishingWorkloadType> my_work;
   publishing_workload_.Get(my_work, 16);
-  std::list<std::tuple<service_type *, connection_handle_type>> dead_connections;
+  std::list<std::tuple<ServiceObjectType *, ConnectionHandleType>> dead_connections;
   for (auto &w : my_work)
   {
-    service_type *         service       = std::get<0>(w);
-    connection_handle_type client_number = std::get<1>(w);
-    network::message_type  msg           = std::get<2>(w);
+    ServiceObjectType *  service       = std::get<0>(w);
+    ConnectionHandleType client_number = std::get<1>(w);
+    network::MessageType msg           = std::get<2>(w);
     if (!service->DeliverResponse(client_number, msg.Copy()))
     {
       dead_connections.push_back(std::make_tuple(service, client_number));
@@ -48,8 +48,8 @@ void FeedSubscriptionManager::PublishingProcessor()
   {
     for (auto &w : dead_connections)
     {
-      service_type *         service       = std::get<0>(w);
-      connection_handle_type client_number = std::get<1>(w);
+      ServiceObjectType *  service       = std::get<0>(w);
+      ConnectionHandleType client_number = std::get<1>(w);
       service->ConnectionDropped(client_number);
     }
   }
@@ -63,41 +63,40 @@ void FeedSubscriptionManager::PublishingProcessor()
 void FeedSubscriptionManager::AttachToService(ServiceServerInterface *service)
 {
   auto feed = feed_;
-  publisher_->create_publisher(feed_,
-                               [service, feed, this](fetch::byte_array::ConstByteArray const &msg) {
-                                 serializer_type params;
-                                 params << SERVICE_FEED << feed;
+  publisher_->create_publisher(feed_, [service, feed,
+                                       this](fetch::byte_array::ConstByteArray const &msg) {
+    SerializerType params;
+    params << SERVICE_FEED << feed;
 
-                                 uint64_t p = params.tell();
-                                 params << subscription_handler_type(0);  // placeholder
+    uint64_t p = params.tell();
+    params << SubscriptionHandlerType(0);  // placeholder
 
-                                 params.Allocate(msg.size());
-                                 params.WriteBytes(msg.pointer(), msg.size());
+    params.Allocate(msg.size());
+    params.WriteBytes(msg.pointer(), msg.size());
 
-                                 FETCH_LOCK(subscribe_mutex_);
+    FETCH_LOCK(subscribe_mutex_);
 
-                                 std::vector<publishing_workload_type> notifications_to_send;
-                                 notifications_to_send.reserve(16);
-                                 std::size_t i = 0;
+    std::vector<PublishingWorkloadType> notifications_to_send;
+    notifications_to_send.reserve(16);
+    std::size_t i = 0;
 
-                                 while (i < subscribers_.size())
-                                 {
-                                   auto &s = subscribers_[i];
-                                   params.seek(p);
-                                   params << s.id;
+    while (i < subscribers_.size())
+    {
+      auto &s = subscribers_[i];
+      params.seek(p);
+      params << s.id;
 
-                                   publishing_workload_type new_notification =
-                                       std::make_tuple<>(service, s.client, params.data());
-                                   notifications_to_send.push_back(new_notification);
+      PublishingWorkloadType new_notification = std::make_tuple<>(service, s.client, params.data());
+      notifications_to_send.push_back(new_notification);
 
-                                   i++;
-                                   if ((i & 0xF) == 0)
-                                   {
-                                     PublishAll(notifications_to_send);
-                                   }
-                                 }
-                                 PublishAll(notifications_to_send);
-                               });
+      i++;
+      if ((i & 0xF) == 0)
+      {
+        PublishAll(notifications_to_send);
+      }
+    }
+    PublishAll(notifications_to_send);
+  });
 }
 
 }  // namespace service

@@ -55,12 +55,12 @@ class FeedSubscriptionManager;
 class Protocol
 {
 public:
-  using callable_type          = AbstractCallable *;
-  using stored_type            = std::shared_ptr<AbstractCallable>;
-  using byte_array_type        = byte_array::ConstByteArray;
-  using connection_handle_type = typename network::AbstractConnection::connection_handle_type;
-  using middleware_type =
-      std::function<void(connection_handle_type const &, byte_array::ByteArray const &)>;
+  using CallableType         = AbstractCallable *;
+  using StoredType           = std::shared_ptr<AbstractCallable>;
+  using ByteArrayType        = byte_array::ConstByteArray;
+  using ConnectionHandleType = typename network::AbstractConnection::ConnectionHandleType;
+  using MiddlewareType =
+      std::function<void(ConnectionHandleType const &, byte_array::ByteArray const &)>;
 
   static constexpr char const *LOGGING_NAME = "Protocol";
 
@@ -70,7 +70,7 @@ public:
   /* Operator to access the different functions in the protocol.
    * @n is the idnex of callable in the protocol.
    *
-   * The result of this operator is a <callable_type> that can be
+   * The result of this operator is a <CallableType> that can be
    * invoked in accodance with the definition of an
    * <service::AbstractCallable>.
    *
@@ -79,7 +79,7 @@ public:
    *
    * @return a reference to the call.
    */
-  callable_type operator[](function_handler_type const &n)
+  CallableType operator[](FunctionHandlerType const &n)
   {
     auto iter = members_.find(n);
     if (iter == members_.end())
@@ -89,7 +89,7 @@ public:
       FETCH_LOG_ERROR(LOGGING_NAME, "Failed to lookup function handler: ", n);
 
       throw serializers::SerializableException(
-          error::MEMBER_NOT_FOUND, byte_array_type("Could not find protocol member function"));
+          error::MEMBER_NOT_FOUND, ByteArrayType("Could not find protocol member function"));
     }
     return iter->second.get();
   }
@@ -109,54 +109,53 @@ public:
    * TODO(issue 21):
    */
   template <typename C, typename R, typename... Args>
-  void Expose(function_handler_type const &n, C *instance, R (C::*function)(Args...))
+  void Expose(FunctionHandlerType const &n, C *instance, R (C::*function)(Args...))
   {
-    stored_type fnc(new service::CallableClassMember<C, R(Args...)>(instance, function));
+    StoredType fnc(new service::CallableClassMember<C, R(Args...)>(instance, function));
 
     auto iter = members_.find(n);
     if (iter != members_.end())
     {
       throw serializers::SerializableException(
-          error::MEMBER_EXISTS, byte_array_type("Protocol member function already exists: "));
+          error::MEMBER_EXISTS, ByteArrayType("Protocol member function already exists: "));
     }
 
     members_[n] = fnc;
   }
 
   template <typename C, typename R, typename... Args>
-  void ExposeWithClientArg(function_handler_type const &n, C *instance, R (C::*function)(Args...))
+  void ExposeWithClientArg(FunctionHandlerType const &n, C *instance, R (C::*function)(Args...))
   {
-    stored_type fnc(new service::CallableClassMember<C, R(Args...), 1>(Callable::CLIENT_ID_ARG,
-                                                                       instance, function));
+    StoredType fnc(new service::CallableClassMember<C, R(Args...), 1>(Callable::CLIENT_ID_ARG,
+                                                                      instance, function));
 
     auto iter = members_.find(n);
     if (iter != members_.end())
     {
       throw serializers::SerializableException(
-          error::MEMBER_EXISTS, byte_array_type("Protocol member function already exists: "));
+          error::MEMBER_EXISTS, ByteArrayType("Protocol member function already exists: "));
     }
 
     members_[n] = fnc;
   }
 
   template <typename C, typename R, typename... Args>
-  void ExposeWithClientContext(function_handler_type const &n, C *instance,
-                               R (C::*function)(Args...))
+  void ExposeWithClientContext(FunctionHandlerType const &n, C *instance, R (C::*function)(Args...))
   {
-    stored_type fnc(new service::CallableClassMember<C, R(Args...), 1>(Callable::CLIENT_CONTEXT_ARG,
-                                                                       instance, function));
+    StoredType fnc(new service::CallableClassMember<C, R(Args...), 1>(Callable::CLIENT_CONTEXT_ARG,
+                                                                      instance, function));
 
     auto iter = members_.find(n);
     if (iter != members_.end())
     {
       throw serializers::SerializableException(
-          error::MEMBER_EXISTS, byte_array_type("Protocol member function already exists: "));
+          error::MEMBER_EXISTS, ByteArrayType("Protocol member function already exists: "));
     }
 
     members_[n] = fnc;
   }
 
-  virtual void ConnectionDropped(connection_handle_type /*connection_handle*/)
+  virtual void ConnectionDropped(ConnectionHandleType /*connection_handle*/)
   {}
 
   /* Registers a feed from an implementation.
@@ -164,7 +163,7 @@ public:
    * @publisher is a class that subclasses <AbstractPublicationFeed>.
    *
    */
-  void RegisterFeed(feed_handler_type const &feed, AbstractPublicationFeed *publisher)
+  void RegisterFeed(FeedHandlerType const &feed, AbstractPublicationFeed *publisher)
   {
     feeds_.push_back(std::make_shared<FeedSubscriptionManager>(feed, publisher));
   }
@@ -178,7 +177,7 @@ public:
    * its clients to the feed.
    */
   void Subscribe(uint64_t client,  // TODO(issue 21): Standardize client type over the code.
-                 feed_handler_type const &feed, subscription_handler_type const &id)
+                 FeedHandlerType const &feed, SubscriptionHandlerType const &id)
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Making subscription for ", client, " ", feed, " ", id);
 
@@ -208,7 +207,7 @@ public:
    * its clients to the feed.
    */
   void Unsubscribe(uint64_t client,  // TODO(issue 21): Standardize client type over the code.
-                   feed_handler_type const &feed, subscription_handler_type const &id)
+                   FeedHandlerType const &feed, SubscriptionHandlerType const &id)
   {
     FETCH_LOCK(feeds_mutex_);
 
@@ -236,12 +235,12 @@ public:
     return feeds_;
   }
 
-  void AddMiddleware(middleware_type const &m)
+  void AddMiddleware(MiddlewareType const &m)
   {
     middleware_.push_back(m);
   }
 
-  void ApplyMiddleware(connection_handle_type const &id, byte_array::ByteArray const &msg)
+  void ApplyMiddleware(ConnectionHandleType const &id, byte_array::ByteArray const &msg)
   {
     for (auto &m : middleware_)
     {
@@ -260,8 +259,8 @@ public:
   }
 
 private:
-  std::vector<middleware_type>                          middleware_;
-  std::map<function_handler_type, stored_type>          members_;
+  std::vector<MiddlewareType>                           middleware_;
+  std::map<FunctionHandlerType, StoredType>             members_;
   std::vector<std::shared_ptr<FeedSubscriptionManager>> feeds_;
   Mutex                                                 feeds_mutex_;
 };

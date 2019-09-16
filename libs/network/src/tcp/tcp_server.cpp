@@ -30,7 +30,7 @@
 namespace fetch {
 namespace network {
 
-TCPServer::TCPServer(uint16_t port, network_manager_type const &network_manager)
+TCPServer::TCPServer(uint16_t port, NetworkManagerType const &network_manager)
   : network_manager_{network_manager}
   , port_{port}
 {
@@ -127,7 +127,7 @@ void TCPServer::Start()
 void TCPServer::Stop()
 {}
 
-void TCPServer::PushRequest(connection_handle_type client, message_type const &msg)
+void TCPServer::PushRequest(ConnectionHandleType client, MessageType const &msg)
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Got request from ", client);
 
@@ -135,12 +135,12 @@ void TCPServer::PushRequest(connection_handle_type client, message_type const &m
   requests_.push_back({client, msg});
 }
 
-void TCPServer::Broadcast(message_type const &msg)
+void TCPServer::Broadcast(MessageType const &msg)
 {
   manager_->Broadcast(msg);
 }
 
-bool TCPServer::Send(connection_handle_type const &client, message_type const &msg)
+bool TCPServer::Send(ConnectionHandleType const &client, MessageType const &msg)
 {
   return manager_->Send(client, msg);
 }
@@ -165,7 +165,7 @@ void TCPServer::Pop()
   requests_.pop_front();
 }
 
-std::string TCPServer::GetAddress(connection_handle_type const &client)
+std::string TCPServer::GetAddress(ConnectionHandleType const &client)
 {
   return manager_->GetAddress(client);
 }

@@ -40,7 +40,7 @@ public:
    * subsequently member functions from classes with (to this
    * implementation) unknown base class.
    */
-  using function_type = std::function<void(fetch::byte_array::ConstByteArray)>;
+  using FunctionType = std::function<void(fetch::byte_array::ConstByteArray)>;
 
   virtual ~AbstractPublicationFeed()
   {}
@@ -52,7 +52,7 @@ public:
    * This method can be invoked when defining the protocol using either
    * lambda or free functions.
    **/
-  virtual void create_publisher(feed_handler_type feed, function_type function) = 0;
+  virtual void create_publisher(FeedHandlerType feed, FunctionType function) = 0;
 
   /* Creates publication function.
    * @feed is the feed handler.
@@ -62,7 +62,7 @@ public:
    * member functions as publisher.
    **/
   template <typename C>
-  void create_publisher(feed_handler_type feed, C *cls,
+  void create_publisher(FeedHandlerType feed, C *cls,
                         void (C::*function)(fetch::byte_array::ConstByteArray const &))
   {
     this->create_publisher(

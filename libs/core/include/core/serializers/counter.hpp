@@ -42,7 +42,7 @@ namespace serializers {
 class SizeCounter
 {
 public:
-  using self_type = SizeCounter;
+  using SelfType = SizeCounter;
 
   void Allocate(std::size_t delta)
   {
@@ -161,13 +161,13 @@ public:
   typename MapSerializer<T, SizeCounter>::DriverType &operator>>(T &val);
 
   template <typename T>
-  self_type &Pack(T const *val)
+  SelfType &Pack(T const *val)
   {
     return this->operator<<(val);
   }
 
   template <typename T>
-  self_type &Pack(T const &val)
+  SelfType &Pack(T const &val)
   {
     return this->operator<<(val);
   }
@@ -198,7 +198,7 @@ public:
   }
 
   template <typename... ARGS>
-  self_type &Append(ARGS const &... args)
+  SelfType &Append(ARGS const &... args)
   {
     AppendInternal(args...);
     return *this;
@@ -534,7 +534,7 @@ template <typename T>
 class SizeCounterGuard
 {
 public:
-  using size_counter_type = T;
+  using SizeCounterType = T;
 
 private:
   friend auto sizeCounterGuardFactory<T>(T &size_counter);
@@ -564,7 +564,7 @@ public:
     if (size_counter_)
     {
       // Resetting size counter to zero size by reconstructing it
-      *size_counter_ = size_counter_type{};
+      *size_counter_ = SizeCounterType{};
     }
   }
 

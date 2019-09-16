@@ -44,7 +44,7 @@ class ServiceClientInterface
 {
   class Subscription;
 
-  using subscriptions_type = std::unordered_map<subscription_handler_type, Subscription>;
+  using subscriptions_type = std::unordered_map<SubscriptionHandlerType, Subscription>;
 
 public:
   static constexpr char const *LOGGING_NAME = "ServiceClientInterface";
@@ -54,14 +54,14 @@ public:
   virtual ~ServiceClientInterface() = default;
 
   template <typename... arguments>
-  Promise Call(uint32_t /*network_id*/, protocol_handler_type const &protocol,
-               function_handler_type const &function, arguments &&... args)
+  Promise Call(uint32_t /*network_id*/, ProtocolHandlerType const &protocol,
+               FunctionHandlerType const &function, arguments &&... args)
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Service Client Calling ", protocol, ":", function);
 
     Promise prom = MakePromise(protocol, function);
 
-    serializer_type params;
+    SerializerType params;
 
     serializers::SizeCounter counter;
     counter << SERVICE_FUNCTION_CALL << prom->id();
@@ -94,26 +94,26 @@ public:
     return prom;
   }
 
-  Promise CallWithPackedArguments(protocol_handler_type const &protocol,
-                                  function_handler_type const &function,
+  Promise CallWithPackedArguments(ProtocolHandlerType const &  protocol,
+                                  FunctionHandlerType const &  function,
                                   byte_array::ByteArray const &args);
 
   /// @name Subscriptions
   /// @{
-  subscription_handler_type Subscribe(protocol_handler_type const &protocol,
-                                      feed_handler_type const &feed, AbstractCallable *callback);
-  void                      Unsubscribe(subscription_handler_type id);
+  SubscriptionHandlerType Subscribe(ProtocolHandlerType const &protocol,
+                                    FeedHandlerType const &feed, AbstractCallable *callback);
+  void                    Unsubscribe(SubscriptionHandlerType id);
   /// @}
 
 protected:
-  virtual bool DeliverRequest(network::message_type const &request) = 0;
+  virtual bool DeliverRequest(network::MessageType const &request) = 0;
 
-  bool ProcessServerMessage(network::message_type const &msg);
-  void ProcessRPCResult(network::message_type const &msg, service::serializer_type &params);
+  bool ProcessServerMessage(network::MessageType const &msg);
+  void ProcessRPCResult(network::MessageType const &msg, service::SerializerType &params);
 
 private:
-  subscription_handler_type CreateSubscription(protocol_handler_type const &protocol,
-                                               feed_handler_type const &feed, AbstractCallable *cb);
+  SubscriptionHandlerType CreateSubscription(ProtocolHandlerType const &protocol,
+                                             FeedHandlerType const &feed, AbstractCallable *cb);
 
   class Subscription
   {
@@ -124,7 +124,7 @@ private:
       feed     = 0;
       callback = nullptr;
     }
-    Subscription(protocol_handler_type protocol, feed_handler_type feed, AbstractCallable *callback)
+    Subscription(ProtocolHandlerType protocol, FeedHandlerType feed, AbstractCallable *callback)
     {
       this->protocol = protocol;
       this->feed     = feed;
@@ -145,9 +145,9 @@ private:
       return std::string(buffer);
     }
 
-    protocol_handler_type protocol = 0;
-    feed_handler_type     feed     = 0;
-    AbstractCallable *    callback = nullptr;
+    ProtocolHandlerType protocol = 0;
+    FeedHandlerType     feed     = 0;
+    AbstractCallable *  callback = nullptr;
   };
 
   void    AddPromise(Promise const &promise);
@@ -155,10 +155,10 @@ private:
   Promise ExtractPromise(PromiseCounter id);
   void    RemovePromise(PromiseCounter id);
 
-  subscriptions_type                   subscriptions_;
-  std::list<subscription_handler_type> cancelled_subscriptions_;
-  Mutex                                subscription_mutex_;
-  subscription_handler_type            subscription_index_counter_;
+  subscriptions_type                 subscriptions_;
+  std::list<SubscriptionHandlerType> cancelled_subscriptions_;
+  Mutex                              subscription_mutex_;
+  SubscriptionHandlerType            subscription_index_counter_;
 
   std::map<PromiseCounter, Promise> promises_;
   Mutex                             promises_mutex_;

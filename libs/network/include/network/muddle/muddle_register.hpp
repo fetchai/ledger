@@ -39,7 +39,7 @@ class Dispatcher;
 class MuddleRegister : public network::AbstractConnectionRegister
 {
 public:
-  using ConnectionHandle      = connection_handle_type;
+  using ConnectionHandle      = ConnectionHandleType;
   using ConnectionPtr         = std::weak_ptr<network::AbstractConnection>;
   using ConnectionMap         = std::unordered_map<ConnectionHandle, ConnectionPtr>;
   using ConnectionMapCallback = std::function<void(ConnectionMap const &)>;
@@ -69,7 +69,7 @@ protected:
   /// @name Connection Event Handlers
   /// @{
   void Enter(ConnectionPtr const &ptr) override;
-  void Leave(connection_handle_type id) override;
+  void Leave(ConnectionHandleType id) override;
   /// @}
 
 private:

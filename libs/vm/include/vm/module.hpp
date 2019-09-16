@@ -256,7 +256,7 @@ public:
       TypeIndex const type_index__ = type_index_;
       TypeIndexArray  parameter_type_index_array;
       UnrollTupleParameterTypes<EtchParams>::Unroll(parameter_type_index_array);
-      TypeIndex const return_type_index = TypeGetter<ReturnType>::GetTypeIndex();
+      TypeIndex const ReturnType_index = TypeGetter<ReturnType>::GetTypeIndex();
 
       Handler handler = [callable, estimator](VM *vm) {
         using EstimatorType = meta::UnpackTuple<EtchParams, ChargeEstimator>;
@@ -264,10 +264,10 @@ public:
                                                         vm->instruction_->data);
       };
       auto compiler_setup_function = [type_index__, name, parameter_type_index_array,
-                                      return_type_index, handler,
+                                      ReturnType_index, handler,
                                       static_charge](Compiler *compiler) {
         compiler->CreateStaticMemberFunction(type_index__, name, parameter_type_index_array,
-                                             return_type_index, handler, static_charge);
+                                             ReturnType_index, handler, static_charge);
       };
       module_->AddCompilerSetupFunction(compiler_setup_function);
       return *this;
@@ -338,7 +338,7 @@ public:
       TypeIndex const type_index__ = type_index_;
       TypeIndexArray  parameter_type_index_array;
       UnrollTupleParameterTypes<EtchParams>::Unroll(parameter_type_index_array);
-      TypeIndex const return_type_index = TypeGetter<ReturnType>::GetTypeIndex();
+      TypeIndex const ReturnType_index = TypeGetter<ReturnType>::GetTypeIndex();
 
       Handler handler = [callable, estimator](VM *vm) {
         using EstimatorType = meta::UnpackTuple<EtchParams, ChargeEstimator>;
@@ -346,10 +346,10 @@ public:
       };
 
       auto compiler_setup_function = [type_index__, name, parameter_type_index_array,
-                                      return_type_index, handler,
+                                      ReturnType_index, handler,
                                       static_charge](Compiler *compiler) {
         compiler->CreateMemberFunction(type_index__, name, parameter_type_index_array,
-                                       return_type_index, handler, static_charge);
+                                       ReturnType_index, handler, static_charge);
       };
       module_->AddCompilerSetupFunction(compiler_setup_function);
 
@@ -411,16 +411,16 @@ private:
 
     TypeIndexArray parameter_type_index_array;
     UnrollTupleParameterTypes<EtchParams>::Unroll(parameter_type_index_array);
-    TypeIndex const return_type_index = TypeGetter<ReturnType>::GetTypeIndex();
+    TypeIndex const ReturnType_index = TypeGetter<ReturnType>::GetTypeIndex();
 
     Handler handler = [callable, estimator](VM *vm) {
       using EstimatorType = meta::UnpackTuple<EtchParams, ChargeEstimator>;
       FreeFunction<EtchParams>::InvokeHandler(vm, EstimatorType{estimator}, callable, vm);
     };
 
-    auto compiler_setup_function = [name, parameter_type_index_array, return_type_index, handler,
+    auto compiler_setup_function = [name, parameter_type_index_array, ReturnType_index, handler,
                                     static_charge](Compiler *compiler) {
-      compiler->CreateFreeFunction(name, parameter_type_index_array, return_type_index, handler,
+      compiler->CreateFreeFunction(name, parameter_type_index_array, ReturnType_index, handler,
                                    static_charge);
     };
     AddCompilerSetupFunction(compiler_setup_function);

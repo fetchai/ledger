@@ -31,21 +31,21 @@ class BinaryAnnealer
 public:
   static constexpr char const *LOGGING_NAME = "BinaryAnnealer";
 
-  using spin_type  = int16_t;
-  using state_type = std::vector<spin_type>;
+  using SpinType   = int16_t;
+  using state_type = std::vector<SpinType>;
 
-  using exp_type        = math::ApproxExpImplementation<0>;
-  using bit_data_type   = uint64_t;
-  using bit_vector_type = BitVector;
-  using cost_type       = double;
+  using exp_type      = math::ApproxExpImplementation<0>;
+  using BitDataType   = uint64_t;
+  using BitVectorType = BitVector;
+  using CostType      = double;
 
   void Anneal()
   {
     Initialise();
     SetBeta(beta0_);
 
-    double          db = (beta1_ - beta0_) / double(sweeps_ - 1);
-    bit_vector_type B;
+    double        db = (beta1_ - beta0_) / double(sweeps_ - 1);
+    BitVectorType B;
     B.Resize(size_);
 
     for (std::size_t k = 0; k < sweeps_; ++k)
@@ -55,13 +55,13 @@ public:
       std::size_t block = 0;
       std::size_t bit   = 0;
 
-      double    r           = sim_rng_.AsDouble();
-      double    TlogR       = std::log(r) / beta_ / 2. / normalisation_constant_;
-      cost_type approxTlogR = cost_type(TlogR);
+      double   r           = sim_rng_.AsDouble();
+      double   TlogR       = std::log(r) / beta_ / 2. / normalisation_constant_;
+      CostType approxTlogR = CostType(TlogR);
 
       for (std::size_t i = 0; i < size_; ++i)
       {
-        //        assert( i ==( block * 8*sizeof(bit_data_type) + bit ));
+        //        assert( i ==( block * 8*sizeof(BitDataType) + bit ));
         assert(i < sites_.size());
 
         Site const &s         = sites_[i];
@@ -97,8 +97,8 @@ public:
           break;
         }
 
-        cost_type C;
-        C      = -cost_type(p) - s.local_field;
+        CostType C;
+        C      = -CostType(p) - s.local_field;
         update = (approxTlogR <= C);
         //        update =
         switch (state_bit)
@@ -107,7 +107,7 @@ public:
 
           break;
         case 1:
-          C      = cost_type(p) + s.local_field;
+          C      = CostType(p) + s.local_field;
           update = (approxTlogR <= C);
           break;
         }
@@ -117,8 +117,8 @@ public:
           state_.conditional_flip(block, bit, update);
         }
         ++bit;
-        block += (bit >= 8 * sizeof(bit_data_type));
-        bit &= (8 * sizeof(bit_data_type) - 1);
+        block += (bit >= 8 * sizeof(BitDataType));
+        bit &= (8 * sizeof(BitDataType) - 1);
       }
 
       SetBeta(beta() + db);
@@ -147,16 +147,16 @@ public:
     coupling_magnitude_ = 1.0;
   }
 
-  cost_type FindMinimum()
+  CostType FindMinimum()
   {
     state_type ret;
     return FindMinimum(ret);
   }
 
-  cost_type FindMinimum(state_type &state, bool /*binary*/ = true)
+  CostType FindMinimum(state_type &state, bool /*binary*/ = true)
   {
     Anneal();
-    cost_type ret = Energy();
+    CostType ret = Energy();
 
     // TODO(issue 30): Optimise
 
@@ -164,32 +164,32 @@ public:
 
     for (std::size_t i = 0; i < size_; ++i)
     {
-      state.push_back(spin_type(state_.bit(i)));
+      state.push_back(SpinType(state_.bit(i)));
     }
 
     return ret;
   }
 
-  cost_type Energy() const
+  CostType Energy() const
   {
-    cost_type   ret   = 0;
+    CostType    ret   = 0;
     std::size_t block = 0;
     std::size_t bit   = 0;
 
     for (std::size_t i = 0; i < size_; ++i)
     {
-      assert(i == (block * 8 * sizeof(bit_data_type) + bit));
+      assert(i == (block * 8 * sizeof(BitDataType) + bit));
       Site const &s = sites_[i];
 
-      bit_vector_type B    = s.couplings & state_;
-      cost_type       sign = cost_type(state_.bit(block, bit));
+      BitVectorType B    = s.couplings & state_;
+      CostType      sign = CostType(state_.bit(block, bit));
 
       ret += sign * (2 * s.local_field + coupling_magnitude_ * static_cast<int>(B.PopCount()));
       ++bit;
-      block += (bit >= 8 * sizeof(bit_data_type));
-      bit &= (8 * sizeof(bit_data_type) - 1);
+      block += (bit >= 8 * sizeof(BitDataType));
+      bit &= (8 * sizeof(BitDataType) - 1);
     }
-    return cost_type(ret * 0.5 * normalisation_constant_);
+    return CostType(ret * 0.5 * normalisation_constant_);
   }
 
   void Resize(std::size_t n, std::size_t /*m*/ = std::size_t(-1))
@@ -210,7 +210,7 @@ public:
     coupling_magnitude_ = 0;
   }
 
-  void Insert(std::size_t i, std::size_t j, cost_type const &val)
+  void Insert(std::size_t i, std::size_t j, CostType const &val)
   {
     if (i == j)
     {
@@ -274,7 +274,7 @@ public:
     }
   }
 
-  bit_vector_type state()
+  BitVectorType state()
   {
     return state_;
   }
@@ -292,17 +292,17 @@ public:
   }
 
 private:
-  double    attempts_           = 0;
-  double    accepted_           = 0;
-  cost_type coupling_magnitude_ = 0, normalisation_constant_ = 1.0;
+  double   attempts_           = 0;
+  double   accepted_           = 0;
+  CostType coupling_magnitude_ = 0, normalisation_constant_ = 1.0;
 
   struct Site
   {
-    bit_vector_type couplings;
-    cost_type       local_field;
+    BitVectorType couplings;
+    CostType      local_field;
   };
 
-  bit_vector_type   state_;
+  BitVectorType     state_;
   std::vector<Site> sites_;
   double            beta_, beta0_ = 0.1, beta1_ = 3;
 

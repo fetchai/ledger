@@ -21,9 +21,6 @@
 #include "gtest/gtest.h"
 
 #include <cstddef>
-#include <iostream>
-#include <math.h>
-#include <sstream>
 #include <string>
 
 using fetch::yaml::YamlDocument;
@@ -480,9 +477,9 @@ not a number: .NaN)";
   auto const &fixed = root["fixed"];
   EXPECT_DOUBLE_EQ(1230.15, fixed.As<double>());
   auto const &inf = root["negative infinity"];
-  EXPECT_TRUE(isinf(inf.As<double>()));
+  EXPECT_TRUE(std::isinf(inf.As<double>()));
   auto const &nan = root["not a number"];
-  EXPECT_TRUE(isnan(nan.As<double>()));
+  EXPECT_TRUE(std::isnan(nan.As<double>()));
 }
 
 TEST(YamlTests, Example2_21Test)

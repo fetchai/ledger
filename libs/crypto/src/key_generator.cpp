@@ -23,9 +23,9 @@
 #include <fstream>
 
 namespace fetch {
+namespace crypto {
 
-using fetch::crypto::Prover;
-using fetch::crypto::ECDSASigner;
+namespace {
 
 using SignerPtr = std::shared_ptr<ECDSASigner>;
 using ProverPtr = std::shared_ptr<Prover>;
@@ -50,6 +50,8 @@ char const *GetKeyPath()
   return path;
 }
 
+}  // namespace
+
 /**
  * Attempt to load a previous key key file
  *
@@ -69,7 +71,7 @@ ProverPtr GenerateP2PKey()
     if (input_file.is_open())
     {
       fetch::byte_array::ByteArray private_key_data;
-      private_key_data.Resize(ECDSASigner::PrivateKey::ecdsa_curve_type::privateKeySize);
+      private_key_data.Resize(ECDSASigner::PrivateKey::EcdsaCurveType::privateKeySize);
 
       // attempt to read in the private key
       input_file.read(private_key_data.char_pointer(),
@@ -106,4 +108,5 @@ ProverPtr GenerateP2PKey()
   return certificate;
 }
 
+}  // namespace crypto
 }  // namespace fetch

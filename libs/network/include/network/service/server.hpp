@@ -40,11 +40,11 @@ template <typename T>
 class ServiceServer : public T, public ServiceServerInterface
 {
 public:
-  using super_type = T;
-  using self_type  = ServiceServer<T>;
+  using SuperType = T;
+  using SelfType  = ServiceServer<T>;
 
-  using network_manager_type = typename super_type::network_manager_type;
-  using handle_type          = typename T::connection_handle_type;
+  using NetworkManagerType = typename SuperType::NetworkManagerType;
+  using HandleType         = typename T::ConnectionHandleType;
 
   static constexpr char const *LOGGING_NAME = "ServiceServer";
 
@@ -57,39 +57,39 @@ public:
     ClientRPCInterface(ClientRPCInterface const &) = delete;
     ClientRPCInterface const &operator=(ClientRPCInterface const &) = delete;
 
-    ClientRPCInterface(self_type *server, handle_type client)
+    ClientRPCInterface(SelfType *server, HandleType client)
       : server_(server)
       , client_(client)
     {}
 
-    bool ProcessMessage(network::message_type const &msg)
+    bool ProcessMessage(network::MessageType const &msg)
     {
       return this->ProcessServerMessage(msg);
     }
 
   protected:
-    bool DeliverRequest(network::message_type const &msg) override
+    bool DeliverRequest(network::MessageType const &msg) override
     {
       server_->Send(client_, msg);
       return true;
     }
 
   private:
-    self_type *server_;  // TODO(issue 20): Change to shared ptr and add
-                         // enable_shared_from_this on service
-    handle_type client_;
+    SelfType *server_;  // TODO(issue 20): Change to shared ptr and add
+                        // enable_shared_from_this on service
+    HandleType client_;
   };
   // EN of ClientRPC
 
   struct PendingMessage
   {
-    handle_type           client;
-    network::message_type message;
+    HandleType           client;
+    network::MessageType message;
   };
-  using byte_array_type = byte_array::ConstByteArray;
+  using ByteArrayType = byte_array::ConstByteArray;
 
-  ServiceServer(uint16_t port, network_manager_type network_manager)
-    : super_type(port, network_manager)
+  ServiceServer(uint16_t port, NetworkManagerType network_manager)
+    : SuperType(port, network_manager)
     , network_manager_(network_manager)
     , message_mutex_{}
   {}
@@ -104,7 +104,7 @@ public:
     }
   }
 
-  ClientRPCInterface &ServiceInterfaceOf(handle_type const &i)
+  ClientRPCInterface &ServiceInterfaceOf(HandleType const &i)
   {
     FETCH_LOCK(client_rpcs_mutex_);
 
@@ -119,13 +119,13 @@ public:
   }
 
 protected:
-  bool DeliverResponse(handle_type client, network::message_type const &msg) override
+  bool DeliverResponse(HandleType client, network::MessageType const &msg) override
   {
-    return super_type::Send(client, msg);
+    return SuperType::Send(client, msg);
   }
 
 private:
-  void PushRequest(handle_type client, network::message_type const &msg) override
+  void PushRequest(HandleType client, network::MessageType const &msg) override
   {
     FETCH_LOCK(message_mutex_);
     FETCH_LOG_DEBUG(LOGGING_NAME, "RPC call from ", client);
@@ -196,13 +196,13 @@ private:
     }
   }
 
-  network_manager_type network_manager_;
+  NetworkManagerType network_manager_;
 
   std::deque<PendingMessage> messages_;
   mutable Mutex              message_mutex_;
 
-  mutable Mutex                               client_rpcs_mutex_;
-  std::map<handle_type, ClientRPCInterface *> client_rpcs_;
+  mutable Mutex                              client_rpcs_mutex_;
+  std::map<HandleType, ClientRPCInterface *> client_rpcs_;
 };
 }  // namespace service
 }  // namespace fetch

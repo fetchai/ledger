@@ -28,14 +28,14 @@ ServiceClientInterface::ServiceClientInterface()
   , promises_mutex_{}
 {}
 
-Promise ServiceClientInterface::CallWithPackedArguments(protocol_handler_type const &protocol,
-                                                        function_handler_type const &function,
+Promise ServiceClientInterface::CallWithPackedArguments(ProtocolHandlerType const &  protocol,
+                                                        FunctionHandlerType const &  function,
                                                         byte_array::ByteArray const &args)
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Service Client Calling (2) ", protocol, ":", function);
 
-  Promise         prom = MakePromise();
-  serializer_type params;
+  Promise        prom = MakePromise();
+  SerializerType params;
 
   serializers::SizeCounter counter;
   counter << SERVICE_FUNCTION_CALL << prom->id();
@@ -64,14 +64,14 @@ Promise ServiceClientInterface::CallWithPackedArguments(protocol_handler_type co
   return prom;
 }
 
-subscription_handler_type ServiceClientInterface::Subscribe(protocol_handler_type const &protocol,
-                                                            feed_handler_type const &    feed,
-                                                            AbstractCallable *           callback)
+SubscriptionHandlerType ServiceClientInterface::Subscribe(ProtocolHandlerType const &protocol,
+                                                          FeedHandlerType const &    feed,
+                                                          AbstractCallable *         callback)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "PubSub: SUBSCRIBE ", int(protocol), ":", int(feed));
 
-  subscription_handler_type subid = CreateSubscription(protocol, feed, callback);
-  serializer_type           params;
+  SubscriptionHandlerType subid = CreateSubscription(protocol, feed, callback);
+  SerializerType          params;
 
   serializers::SizeCounter counter;
   counter << SERVICE_SUBSCRIBE << protocol << feed << subid;
@@ -82,7 +82,7 @@ subscription_handler_type ServiceClientInterface::Subscribe(protocol_handler_typ
   return subid;
 }
 
-void ServiceClientInterface::Unsubscribe(subscription_handler_type id)
+void ServiceClientInterface::Unsubscribe(SubscriptionHandlerType id)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "PubSub: Unsub ", int(id));
   Subscription sub;
@@ -114,7 +114,7 @@ void ServiceClientInterface::Unsubscribe(subscription_handler_type id)
   }
   if (sub.callback)
   {
-    serializer_type params;
+    SerializerType params;
 
     serializers::SizeCounter counter;
     counter << SERVICE_UNSUBSCRIBE << sub.protocol << sub.feed << id;
@@ -125,8 +125,8 @@ void ServiceClientInterface::Unsubscribe(subscription_handler_type id)
   }
 }
 
-void ServiceClientInterface::ProcessRPCResult(network::message_type const &msg,
-                                              service::serializer_type &   params)
+void ServiceClientInterface::ProcessRPCResult(network::MessageType const &msg,
+                                              service::SerializerType &   params)
 {
   PromiseCounter id;
   params >> id;
@@ -140,13 +140,13 @@ void ServiceClientInterface::ProcessRPCResult(network::message_type const &msg,
                   " due to finishing delivering the response");
 }
 
-bool ServiceClientInterface::ProcessServerMessage(network::message_type const &msg)
+bool ServiceClientInterface::ProcessServerMessage(network::MessageType const &msg)
 {
   bool ret = true;
 
-  serializer_type params(msg);
+  SerializerType params(msg);
 
-  service_classification_type type;
+  ServiceClassificationType type;
   params >> type;
 
   if ((type == SERVICE_RESULT) || (type == 0))
@@ -170,8 +170,8 @@ bool ServiceClientInterface::ProcessServerMessage(network::message_type const &m
   }
   else if (type == SERVICE_FEED)
   {
-    feed_handler_type         feed;
-    subscription_handler_type sub;
+    FeedHandlerType         feed;
+    SubscriptionHandlerType sub;
     params >> feed >> sub;
 
     FETCH_LOG_INFO(LOGGING_NAME, "PubSub: message ", int(feed), ":", int(sub));
@@ -208,7 +208,7 @@ bool ServiceClientInterface::ProcessServerMessage(network::message_type const &m
 
     if (cb)
     {
-      serializer_type result;
+      SerializerType result;
       try
       {
         (*cb)(result, params);
@@ -284,14 +284,14 @@ void ServiceClientInterface::RemovePromise(PromiseCounter id)
   promises_.erase(id);
 }
 
-subscription_handler_type ServiceClientInterface::CreateSubscription(
-    protocol_handler_type const &protocol, feed_handler_type const &feed, AbstractCallable *cb)
+SubscriptionHandlerType ServiceClientInterface::CreateSubscription(
+    ProtocolHandlerType const &protocol, FeedHandlerType const &feed, AbstractCallable *cb)
 {
   FETCH_LOCK(subscription_mutex_);
   subscription_index_counter_++;
   subscriptions_[subscription_index_counter_] = Subscription(protocol, feed, cb);
 
-  return subscription_handler_type(subscription_index_counter_);
+  return SubscriptionHandlerType(subscription_index_counter_);
 }
 
 }  // namespace service

@@ -90,7 +90,7 @@ public:
    * See <AbstractPublicationFeed::create_publisher> for documentation
    * related to general purpose of this function.
    */
-  void create_publisher(feed_handler_type feed, function_type function) override
+  void create_publisher(FeedHandlerType feed, FunctionType function) override
   {
     if (publisher_[feed])
     {
@@ -112,9 +112,9 @@ public:
    * while having another protocol that would publish messages over TCP.
    */
   template <typename... Args>
-  void Publish(feed_handler_type feed, Args &&... args)
+  void Publish(FeedHandlerType feed, Args &&... args)
   {
-    serializer_type params;
+    SerializerType params;
 
     // TODO(issue 21): we should benchmark subscription too
     PackArgs(params, std::forward<Args>(args)...);
@@ -132,7 +132,7 @@ public:
   }
 
 private:
-  std::vector<function_type> publisher_;
+  std::vector<FunctionType> publisher_;
 };
 
 }  // namespace service

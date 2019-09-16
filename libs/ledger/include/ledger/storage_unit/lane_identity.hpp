@@ -17,11 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include <utility>
-
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
 #include "network/management/connection_register.hpp"
 #include "network/service/service_client.hpp"
+
+#include <atomic>
+#include <utility>
 
 namespace fetch {
 namespace ledger {
@@ -29,14 +30,14 @@ namespace ledger {
 class LaneIdentity
 {
 public:
-  using connectivity_details_type = LaneConnectivityDetails;
-  using network_manager_type      = fetch::network::NetworkManager;
-  using ping_type                 = uint32_t;
-  using lane_type                 = uint32_t;
+  using ConnectivityDetailsType = LaneConnectivityDetails;
+  using NetworkManagerType      = fetch::network::NetworkManager;
+  using PingType                = uint32_t;
+  using LaneType                = uint32_t;
 
   static constexpr char const *LOGGING_NAME = "LaneIdentity";
 
-  LaneIdentity(network_manager_type const &nm, crypto::Identity identity)
+  LaneIdentity(NetworkManagerType const &nm, crypto::Identity identity)
     : identity_(std::move(identity))
     , manager_(nm)
   {
@@ -53,12 +54,12 @@ public:
     return identity_;
   }
 
-  lane_type GetLaneNumber()
+  LaneType GetLaneNumber()
   {
     return lane_;
   }
 
-  lane_type GetTotalLanes()
+  LaneType GetTotalLanes()
   {
     return total_lanes_;
   }
@@ -67,12 +68,12 @@ public:
 
   /// Internal controls
   /// @{
-  void SetLaneNumber(lane_type const &lane)
+  void SetLaneNumber(LaneType const &lane)
   {
     lane_ = lane;
   }
 
-  void SetTotalLanes(lane_type const &t)
+  void SetTotalLanes(LaneType const &t)
   {
     total_lanes_ = t;
   }
@@ -82,10 +83,10 @@ private:
   Mutex            identity_mutex_;
   crypto::Identity identity_;
 
-  network_manager_type manager_;
+  NetworkManagerType manager_;
 
-  std::atomic<lane_type> lane_;
-  std::atomic<lane_type> total_lanes_;
+  std::atomic<LaneType> lane_;
+  std::atomic<LaneType> total_lanes_;
 };
 
 }  // namespace ledger

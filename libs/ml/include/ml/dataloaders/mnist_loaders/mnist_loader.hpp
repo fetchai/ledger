@@ -199,15 +199,15 @@ public:
     buffer_.second.push_back(InputType({FIGURE_WIDTH, FIGURE_HEIGHT, 1u}));
   }
 
-  static unsigned char **ReadMnistImages(std::string full_path, std::uint32_t &number_of_images,
-                                         unsigned int &image_size)
+  static uint8_t **ReadMnistImages(std::string full_path, std::uint32_t &number_of_images,
+                                   unsigned int &image_size)
   {
     auto reverseInt = [](std::uint32_t i) -> std::uint32_t {
-      unsigned char c1, c2, c3, c4;
-      c1 = (unsigned char)(i & 255);
-      c2 = (unsigned char)((i >> 8) & 255);
-      c3 = (unsigned char)((i >> 16) & 255);
-      c4 = (unsigned char)((i >> 24) & 255);
+      uint8_t c1, c2, c3, c4;
+      c1 = (uint8_t)(i & 255);
+      c2 = (uint8_t)((i >> 8) & 255);
+      c3 = (uint8_t)((i >> 16) & 255);
+      c4 = (uint8_t)((i >> 24) & 255);
       return (std::uint32_t)(((int)c1 << 24) + ((int)c2 << 16) + ((int)c3 << 8) + c4);
     };
 
@@ -246,14 +246,14 @@ public:
     }
   }
 
-  static unsigned char *ReadMNistLabels(std::string full_path, std::uint32_t &number_of_labels)
+  static uint8_t *ReadMNistLabels(std::string full_path, std::uint32_t &number_of_labels)
   {
     auto reverseInt = [](std::uint32_t i) {
-      unsigned char c1, c2, c3, c4;
-      c1 = (unsigned char)(i & 255);
-      c2 = (unsigned char)((i >> 8) & 255);
-      c3 = (unsigned char)((i >> 16) & 255);
-      c4 = (unsigned char)((i >> 24) & 255);
+      uint8_t c1, c2, c3, c4;
+      c1 = (uint8_t)(i & 255);
+      c2 = (uint8_t)((i >> 8) & 255);
+      c3 = (uint8_t)((i >> 16) & 255);
+      c4 = (uint8_t)((i >> 24) & 255);
       return (std::uint32_t)(((int)c1 << 24) + ((int)c2 << 16) + ((int)c3 << 8) + c4);
     };
 
@@ -287,7 +287,7 @@ public:
   }
 
 private:
-  using uchar = unsigned char;
+  using uchar = uint8_t;
 
   void UpdateCursor() override
   {
@@ -381,8 +381,8 @@ private:
 private:
   ReturnType buffer_;
 
-  unsigned char **data_;
-  unsigned char * labels_;
+  uint8_t **data_;
+  uint8_t * labels_;
 };
 }  // namespace dataloaders
 }  // namespace ml

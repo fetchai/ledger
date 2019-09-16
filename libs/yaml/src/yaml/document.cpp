@@ -29,8 +29,6 @@
 #include <map>
 #include <string>
 
-#include <stdio.h>
-
 namespace fetch {
 namespace yaml {
 

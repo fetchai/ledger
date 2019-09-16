@@ -30,7 +30,7 @@ namespace generics {
 template <class TYPE>
 class WorkItemsQueue
 {
-  using mutex_type = std::mutex;
+  using MutexType  = std::mutex;
   using cv_type    = std::condition_variable;
   using store_type = std::list<TYPE>;
 
@@ -99,7 +99,7 @@ public:
     {
       return true;
     }
-    std::unique_lock<mutex_type> lock(mutex_);
+    std::unique_lock<MutexType> lock(mutex_);
     cv_.wait(lock);
     return !quit_.load();
   }
@@ -120,7 +120,7 @@ public:
 private:
   // members here.
 
-  mutex_type               mutex_;
+  MutexType                mutex_;
   store_type               q_;
   cv_type                  cv_;
   std::atomic<bool>        quit_{false};

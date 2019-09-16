@@ -52,10 +52,10 @@ class AbstractPublicationFeed;
 class FeedSubscriptionManager
 {
 public:
-  using service_type           = fetch::service::ServiceServerInterface;
-  using connection_handle_type = uint64_t;
-  using publishing_workload_type =
-      std::tuple<service_type *, connection_handle_type, network::message_type const>;
+  using ServiceObjectType    = fetch::service::ServiceServerInterface;
+  using ConnectionHandleType = uint64_t;
+  using PublishingWorkloadType =
+      std::tuple<ServiceObjectType *, ConnectionHandleType, network::MessageType const>;
 
   static constexpr char const *LOGGING_NAME = "FeedSubscriptionManager";
 
@@ -71,7 +71,7 @@ public:
    * must implement a Send function that fulfills the concept given for
    * a service.
    */
-  FeedSubscriptionManager(feed_handler_type const &feed, AbstractPublicationFeed *publisher)
+  FeedSubscriptionManager(FeedHandlerType const &feed, AbstractPublicationFeed *publisher)
     : subscribe_mutex_{}
     , feed_(feed)
     , publisher_(publisher)
@@ -89,7 +89,7 @@ public:
    */
   void AttachToService(ServiceServerInterface *service);
 
-  void PublishAll(std::vector<publishing_workload_type> &workload)
+  void PublishAll(std::vector<PublishingWorkloadType> &workload)
   {
     publishing_workload_.Add(workload.begin(), workload.end());
     workload.clear();
@@ -105,7 +105,7 @@ public:
    * This function is intended to be used by the <Protocol> through
    * which services can subscribe their clients to the feed.
    */
-  void Subscribe(uint64_t client, subscription_handler_type const &id)
+  void Subscribe(uint64_t client, SubscriptionHandlerType const &id)
   {
     FETCH_LOCK(subscribe_mutex_);
     subscribers_.push_back({client, id});
@@ -118,7 +118,7 @@ public:
    * This function is intended to be used by the <Protocol> through
    * which services can unsubscribe their clients to the feed.
    */
-  void Unsubscribe(uint64_t client, subscription_handler_type const &id)
+  void Unsubscribe(uint64_t client, SubscriptionHandlerType const &id)
   {
     std::vector<std::size_t> ids;
     FETCH_LOCK(subscribe_mutex_);
@@ -142,7 +142,7 @@ public:
    *
    * @return the feed type.
    */
-  feed_handler_type const &feed() const
+  FeedHandlerType const &feed() const
   {
     return feed_;
   }
@@ -159,18 +159,18 @@ public:
 private:
   struct ClientSubscription
   {
-    uint64_t                  client;  // TODO(issue 21): change uint64_t to global client id.
-    subscription_handler_type id;
+    uint64_t                client;  // TODO(issue 21): change uint64_t to global client id.
+    SubscriptionHandlerType id;
   };
 
   std::vector<ClientSubscription> subscribers_;
   Mutex                           subscribe_mutex_;
-  feed_handler_type               feed_;
+  FeedHandlerType                 feed_;
 
   fetch::service::AbstractPublicationFeed *publisher_ = nullptr;
 
-  generics::WorkItemsQueue<publishing_workload_type> publishing_workload_;
-  network::ThreadPool                                workers_;
+  generics::WorkItemsQueue<PublishingWorkloadType> publishing_workload_;
+  network::ThreadPool                              workers_;
 };
 }  // namespace service
 }  // namespace fetch

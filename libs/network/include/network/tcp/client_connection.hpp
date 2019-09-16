@@ -42,14 +42,14 @@ class ClientConnection : public AbstractConnection
 public:
   static constexpr char const *LOGGING_NAME = "ClientConnection";
 
-  using connection_type = typename AbstractConnection::shared_type;
+  using ConnectionType = typename AbstractConnection::SharedType;
 
-  using handle_type      = typename AbstractConnection::connection_handle_type;
-  using Strand           = asio::io_service::strand;
-  using StrongStrand     = std::shared_ptr<asio::io_service::strand>;
-  using Socket           = asio::ip::tcp::tcp::socket;
-  using shared_self_type = std::shared_ptr<AbstractConnection>;
-  using mutex_type       = std::mutex;
+  using HandleType     = typename AbstractConnection::ConnectionHandleType;
+  using Strand         = asio::io_service::strand;
+  using StrongStrand   = std::shared_ptr<asio::io_service::strand>;
+  using Socket         = asio::ip::tcp::tcp::socket;
+  using SharedSelfType = std::shared_ptr<AbstractConnection>;
+  using MutexType      = std::mutex;
 
   ClientConnection(std::weak_ptr<asio::ip::tcp::tcp::socket> socket,
                    std::weak_ptr<ClientManager> manager, NetworkManager network_manager)
@@ -114,7 +114,7 @@ public:
     ReadHeader(strong_strand);
   }
 
-  void Send(message_type const &msg) override
+  void Send(MessageType const &msg) override
   {
     if (shutting_down_)
     {
@@ -131,8 +131,8 @@ public:
     std::weak_ptr<Strand>             strand = strand_;
 
     network_manager_.Post([this, self, strand] {
-      shared_self_type selfLock   = self.lock();
-      auto             strandLock = strand_.lock();
+      SharedSelfType selfLock   = self.lock();
+      auto           strandLock = strand_.lock();
       if (!selfLock || !strandLock)
       {
         FETCH_LOG_WARN(LOGGING_NAME, "Failed to lock. Strand: ", bool(selfLock),
@@ -185,9 +185,9 @@ private:
   std::weak_ptr<Strand> strand_;
 
   message_queue_type write_queue_;
-  mutable mutex_type can_write_mutex_;
+  mutable MutexType  can_write_mutex_;
   bool               can_write_{true};
-  mutable mutex_type queue_mutex_;
+  mutable MutexType  queue_mutex_;
 
   // TODO(issue 17): put this in shared class
   static const uint64_t networkMagic_ = 0xFE7C80A1FE7C80A1;
@@ -312,7 +312,7 @@ private:
   }
 
   // Always executed in a run(), in a strand
-  void WriteNext(shared_self_type selfLock)
+  void WriteNext(SharedSelfType selfLock)
   {
     // Only one thread can get past here at a time. Effectively a try_lock
     // except that we can't unlock a mutex in the callback (undefined behaviour)
@@ -328,7 +328,7 @@ private:
       }
     }
 
-    message_type buffer;
+    MessageType buffer;
     {
       FETCH_LOCK(queue_mutex_);
       if (write_queue_.empty())

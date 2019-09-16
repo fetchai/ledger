@@ -121,7 +121,7 @@ void MuddleRegister::Enter(ConnectionPtr const &ptr)
  *
  * @param id The handle of the dying connection
  */
-void MuddleRegister::Leave(connection_handle_type id)
+void MuddleRegister::Leave(ConnectionHandleType id)
 {
   {
     FETCH_LOCK(connection_map_lock_);

@@ -41,8 +41,8 @@ class Function<R(Args...)> : public AbstractCallable
   static constexpr char const *LOGGING_NAME = "Function<R(Args...)>";
 
 private:
-  using return_type   = R;
-  using function_type = std::function<R(Args...)>;
+  using ReturnType   = R;
+  using FunctionType = std::function<R(Args...)>;
 
   /* A struct for invoking the function once we have unpacked all
    * arguments.
@@ -55,9 +55,9 @@ private:
   template <typename U, typename... used_args>
   struct Invoke
   {
-    static void MemberFunction(serializer_type &result, function_type &m, used_args &... args)
+    static void MemberFunction(SerializerType &result, FunctionType &m, used_args &... args)
     {
-      result << return_type(m(args...));
+      result << ReturnType(m(args...));
     };
   };
 
@@ -70,7 +70,7 @@ private:
   template <typename... used_args>
   struct Invoke<void, used_args...>
   {
-    static void MemberFunction(serializer_type &result, function_type &m, used_args &... args)
+    static void MemberFunction(SerializerType &result, FunctionType &m, used_args &... args)
     {
       m(args...);
       result << uint8_t(0);
@@ -90,7 +90,7 @@ private:
     template <typename T, typename... remaining_args>
     struct LoopOver
     {
-      static void Unroll(serializer_type &result, function_type &m, serializer_type &s,
+      static void Unroll(SerializerType &result, FunctionType &m, SerializerType &s,
                          used_args &... used)
       {
         T l;
@@ -106,12 +106,12 @@ private:
     template <typename T>
     struct LoopOver<T>
     {
-      static void Unroll(serializer_type &result, function_type &m, serializer_type &s,
+      static void Unroll(SerializerType &result, FunctionType &m, SerializerType &s,
                          used_args &... used)
       {
         T l;
         s >> l;
-        Invoke<return_type, used_args..., T>::MemberFunction(result, m, used..., l);
+        Invoke<ReturnType, used_args..., T>::MemberFunction(result, m, used..., l);
       }
     };
   };
@@ -120,7 +120,7 @@ public:
   /* Creates a function with serialized arguments.
    * @function is the member function.
    */
-  Function(function_type value)
+  Function(FunctionType value)
     : function_{std::move(value)}
   {}
 
@@ -133,18 +133,18 @@ public:
    * that the serializer is positioned at the beginning of the argument
    * list.
    */
-  void operator()(serializer_type &result, serializer_type &params) override
+  void operator()(SerializerType &result, SerializerType &params) override
   {
     UnrollArguments<>::template LoopOver<Args...>::Unroll(result, function_, params);
   }
-  void operator()(serializer_type & /*result*/, CallableArgumentList const & /*additional_args*/,
-                  serializer_type & /*params*/) override
+  void operator()(SerializerType & /*result*/, CallableArgumentList const & /*additional_args*/,
+                  SerializerType & /*params*/) override
   {
     TODO_FAIL("No support for custom added args yet");
   }
 
 private:
-  function_type function_;
+  FunctionType function_;
 };
 
 // No function args
@@ -152,29 +152,29 @@ template <typename R>
 class Function<R()> : public AbstractCallable
 {
 private:
-  using return_type   = R;
-  using function_type = std::function<R()>;
+  using ReturnType   = R;
+  using FunctionType = std::function<R()>;
 
 public:
   static constexpr char const *LOGGING_NAME = "Function<R()>";
 
-  Function(function_type value)
+  Function(FunctionType value)
     : function_{std::move(value)}
   {}
 
-  void operator()(serializer_type &result, serializer_type & /*params*/) override
+  void operator()(SerializerType &result, SerializerType & /*params*/) override
   {
     result << R(function_());
   }
 
-  void operator()(serializer_type & /*result*/, CallableArgumentList const & /*additional_args*/,
-                  serializer_type & /*params*/) override
+  void operator()(SerializerType & /*result*/, CallableArgumentList const & /*additional_args*/,
+                  SerializerType & /*params*/) override
   {
     TODO_FAIL("No support for custom added args yet");
   }
 
 private:
-  function_type function_;
+  FunctionType function_;
 };
 
 // No function args, void return
@@ -182,29 +182,29 @@ template <>
 class Function<void()> : public AbstractCallable
 {
 private:
-  using return_type   = void;
-  using function_type = std::function<void()>;
+  using ReturnType   = void;
+  using FunctionType = std::function<void()>;
 
 public:
   static constexpr char const *LOGGING_NAME = "Function<void()>";
 
-  Function(function_type value)
+  Function(FunctionType value)
     : function_{std::move(value)}
   {}
 
-  void operator()(serializer_type &result, serializer_type & /*params*/) override
+  void operator()(SerializerType &result, SerializerType & /*params*/) override
   {
     function_();
     result << uint8_t(0);
   }
-  void operator()(serializer_type & /*result*/, CallableArgumentList const & /*additional_args*/,
-                  serializer_type & /*params*/) override
+  void operator()(SerializerType & /*result*/, CallableArgumentList const & /*additional_args*/,
+                  SerializerType & /*params*/) override
   {
     TODO_FAIL("No support for custom added args yet");
   }
 
 private:
-  function_type function_;
+  FunctionType function_;
 };
 }  // namespace service
 }  // namespace fetch

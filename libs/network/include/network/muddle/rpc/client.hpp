@@ -37,9 +37,9 @@ class Client : protected service::ServiceClientInterface
 {
 public:
   using Address       = MuddleEndpoint::Address;
-  using ProtocolId    = service::protocol_handler_type;
-  using FunctionId    = service::function_handler_type;
-  using Serializer    = service::serializer_type;
+  using ProtocolId    = service::ProtocolHandlerType;
+  using FunctionId    = service::FunctionHandlerType;
+  using Serializer    = service::SerializerType;
   using Promise       = service::Promise;
   using ThreadPool    = network::ThreadPool;
   using Handler       = std::function<void(Promise)>;
@@ -71,7 +71,7 @@ public:
   Client &operator=(Client &&) = delete;
 
 protected:
-  bool DeliverRequest(network::message_type const &data) override;
+  bool DeliverRequest(network::MessageType const &data) override;
 
 private:
   using Flag         = std::atomic<bool>;

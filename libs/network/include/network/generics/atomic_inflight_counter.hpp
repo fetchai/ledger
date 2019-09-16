@@ -17,10 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include <condition_variable>
-
 #include "core/future_timepoint.hpp"
 #include "logging/logging.hpp"
+#include "core/mutex.hpp"
+
+#include <condition_variable>
 
 namespace fetch {
 namespace network {

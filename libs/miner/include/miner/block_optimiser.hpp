@@ -43,15 +43,15 @@ namespace ledger {
 class BlockGenerator
 {
 public:
-  using transaction_type        = std::shared_ptr<miner::TransactionItem>;
-  using block_index_map_type    = std::vector<std::vector<uint64_t>>;
+  using TransactionType         = std::shared_ptr<miner::TransactionItem>;
+  using block_index_MapType     = std::vector<std::vector<uint64_t>>;
   using block_fees_list_type    = std::vector<uint64_t>;
   using digest_type             = TransactionSummary::TxDigest;
-  using transaction_map_type    = std::unordered_map<digest_type, transaction_type>;
-  using transaction_list_type   = std::vector<transaction_type>;
+  using transaction_MapType     = std::unordered_map<digest_type, TransactionType>;
+  using transaction_list_type   = std::vector<TransactionType>;
   using transaction_matrix_type = std::vector<transaction_list_type>;
-  using annealer_type           = fetch::optimisers::BinaryAnnealer;
-  using state_type              = annealer_type::state_type;
+  using AnnealerType            = fetch::optimisers::BinaryAnnealer;
+  using state_type              = AnnealerType::state_type;
 
   enum class Strategy : uint8_t
   {
@@ -72,7 +72,7 @@ public:
    * unspent. It will only appear once in the register with all
    * transactions.
    */
-  void PushTransactionSummary(transaction_type const &tx, bool check = true)
+  void PushTransactionSummary(TransactionType const &tx, bool check = true)
   {
     // TODO(issue 30):  The size of the `all_` make grows forever!
     if (check)
@@ -252,7 +252,7 @@ public:
    *
    * TODO(issue 30): change to system block
    */
-  block_index_map_type const &block() const
+  block_index_MapType const &block() const
   {
     return block_;
   }
@@ -434,7 +434,7 @@ private:
     }
   }
 
-  block_index_map_type block_;
+  block_index_MapType  block_;
   block_fees_list_type block_fees_;
 
   std::size_t occupancy_            = 0;
@@ -444,11 +444,11 @@ private:
   double      best_solution_energy_ = 0;
   double      state_energy_         = 0;
 
-  state_type    state_;
-  state_type    best_solution_;
-  annealer_type annealer_;
+  state_type   state_;
+  state_type   best_solution_;
+  AnnealerType annealer_;
 
-  transaction_map_type    all_;
+  transaction_MapType     all_;
   transaction_list_type   unspent_;
   transaction_matrix_type staged_;
 };

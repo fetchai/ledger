@@ -20,6 +20,7 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "logging/logging.hpp"
 #include "storage/storage_exception.hpp"
+
 #include <exception>
 #include <string>
 #include <utility>
@@ -28,8 +29,8 @@ namespace fetch {
 namespace storage {
 
 namespace error {
-using error_type            = uint64_t;
-error_type const TYPE_ERROR = 0;
+using ErrorType            = uint64_t;
+ErrorType const TYPE_ERROR = 0;
 }  // namespace error
 
 /**
@@ -58,12 +59,12 @@ public:
     , explanation_(std::string(explanation))
   {}
 
-  StorageException(error::error_type error_code, std::string explanation)
+  StorageException(error::ErrorType error_code, std::string explanation)
     : error_code_(error_code)
     , explanation_(std::move(explanation))
   {}
 
-  StorageException(error::error_type error_code, byte_array::ConstByteArray const &explanation)
+  StorageException(error::ErrorType error_code, byte_array::ConstByteArray const &explanation)
     : error_code_(error_code)
     , explanation_(std::string(explanation))
   {}

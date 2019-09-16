@@ -45,7 +45,7 @@ template <int T>
 struct TypeFromSize
 {
   static const bool is_valid = false;  // for template matches specialisation
-  using ValueType            = void;
+  using value_type           = void;
 };
 
 #if (__SIZEOF_INT128__ == 16)
@@ -55,7 +55,7 @@ struct TypeFromSize<128>
 {
   static constexpr bool          is_valid = true;
   static constexpr std::uint16_t size     = 128;
-  using ValueType                         = __int128_t;
+  using value_type                        = __int128_t;
   using UnsignedType                      = __uint128_t;
   using SignedType                        = __int128_t;
   // Commented out, when we need to implement FixedPoint<128,128> fully, we will deal with that
@@ -70,13 +70,13 @@ struct TypeFromSize<64>
 {
   static constexpr bool          is_valid  = true;
   static constexpr std::uint16_t size      = 64;
-  using ValueType                          = int64_t;
+  using value_type                         = int64_t;
   using UnsignedType                       = uint64_t;
   using SignedType                         = int64_t;
   using NextSize                           = TypeFromSize<128>;
   static constexpr std::uint16_t decimals  = 9;
-  static constexpr ValueType     tolerance = 0x200;                 // 0.00000012
-  static constexpr ValueType     max_exp   = 0x000000157cd0e714LL;  // 21.48756260
+  static constexpr value_type    tolerance = 0x200;                 // 0.00000012
+  static constexpr value_type    max_exp   = 0x000000157cd0e714LL;  // 21.48756260
 };
 
 // 32 bit implementation
@@ -85,13 +85,13 @@ struct TypeFromSize<32>
 {
   static constexpr bool          is_valid  = true;
   static constexpr std::uint16_t size      = 32;
-  using ValueType                          = int32_t;
+  using value_type                         = int32_t;
   using UnsignedType                       = uint32_t;
   using SignedType                         = int32_t;
   using NextSize                           = TypeFromSize<64>;
   static constexpr std::uint16_t decimals  = 4;
-  static constexpr ValueType     tolerance = 0x15;         // 0.0003
-  static constexpr ValueType     max_exp   = 0x000a65b9L;  // 10.3974
+  static constexpr value_type    tolerance = 0x15;         // 0.0003
+  static constexpr value_type    max_exp   = 0x000a65b9L;  // 10.3974
 };
 
 // 16 bit implementation
@@ -100,7 +100,7 @@ struct TypeFromSize<16>
 {
   static constexpr bool          is_valid = true;
   static constexpr std::uint16_t size     = 16;
-  using ValueType                         = int16_t;
+  using value_type                        = int16_t;
   using UnsignedType                      = uint16_t;
   using SignedType                        = int16_t;
   using NextSize                          = TypeFromSize<32>;
@@ -112,7 +112,7 @@ struct TypeFromSize<8>
 {
   static constexpr bool          is_valid = true;
   static constexpr std::uint16_t size     = 8;
-  using ValueType                         = int8_t;
+  using value_type                        = int8_t;
   using UnsignedType                      = uint8_t;
   using SignedType                        = int8_t;
   using NextSize                          = TypeFromSize<16>;
@@ -135,8 +135,8 @@ public:
   };
 
   using BaseTypeInfo = TypeFromSize<TOTAL_BITS>;
-  using Type         = typename BaseTypeInfo::ValueType;
-  using NextType     = typename BaseTypeInfo::NextSize::ValueType;
+  using Type         = typename BaseTypeInfo::value_type;
+  using NextType     = typename BaseTypeInfo::NextSize::value_type;
   using UnsignedType = typename BaseTypeInfo::UnsignedType;
 
   enum

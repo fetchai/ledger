@@ -109,26 +109,26 @@ struct IRFunction
 {
   IRFunction(FunctionKind function_kind__, std::string name__, std::string unique_id__,
              IRTypePtrArray parameter_types__, IRVariablePtrArray parameter_variables__,
-             IRTypePtr return_type__)
+             IRTypePtr ReturnType__)
     : function_kind{function_kind__}
     , name{std::move(name__)}
     , unique_id{std::move(unique_id__)}
     , parameter_types{std::move(parameter_types__)}
     , parameter_variables{std::move(parameter_variables__)}
-    , return_type{std::move(return_type__)}
+    , ReturnType{std::move(ReturnType__)}
   {}
   void Reset()
   {
     parameter_types.clear();
     parameter_variables.clear();
-    return_type = nullptr;
+    ReturnType = nullptr;
   }
   FunctionKind       function_kind;
   std::string        name;
   std::string        unique_id;
   IRTypePtrArray     parameter_types;
   IRVariablePtrArray parameter_variables;
-  IRTypePtr          return_type;
+  IRTypePtr          ReturnType;
   uint16_t           index           = 0;
   uint16_t           resolved_opcode = Opcodes::Unknown;
 };
@@ -137,7 +137,7 @@ using IRFunctionPtrArray = std::vector<IRFunctionPtr>;
 
 IRFunctionPtr CreateIRFunction(FunctionKind function_kind, std::string name, std::string unique_id,
                                IRTypePtrArray     parameter_types,
-                               IRVariablePtrArray parameter_variables, IRTypePtr return_type);
+                               IRVariablePtrArray parameter_variables, IRTypePtr ReturnType);
 
 struct IRNode;
 using IRNodePtr      = std::shared_ptr<IRNode>;

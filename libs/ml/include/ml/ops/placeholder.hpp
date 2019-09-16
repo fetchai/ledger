@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "ml/ops/ops.hpp"
+#include "ml/ops/dataholder.hpp"
 #include "ml/saveparams/saveable_params.hpp"
 
 #include <cassert>
@@ -29,8 +29,17 @@ namespace fetch {
 namespace ml {
 namespace ops {
 
+/**
+ * A PlaceHolder is a DataHolder intended to store input data.
+ * It has the following features:
+ * 1. trainable: no
+ * 2. mutable: yes, the data can be repeatedly overwritten
+ * 3. shareable: no, shared layers should have their own placeholders
+ * 4. saveable: no, the data is not stored upon serialisation
+ * @tparam T
+ */
 template <class T>
-class PlaceHolder : public fetch::ml::ops::Ops<T>
+class PlaceHolder : public DataHolder<T>
 {
 public:
   using TensorType    = T;
@@ -43,19 +52,18 @@ public:
   PlaceHolder() = default;
 
   explicit PlaceHolder(SPType const &sp)
-    : Ops<T>(sp)
+    : DataHolder<T>(sp)
   {}
 
   ~PlaceHolder() override = default;
 
   std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
   {
-    SPType tp{};
-    return std::make_shared<SPType>(tp);
+    return std::make_shared<SPType>();
   }
 
   /**
-   * For placeholders should not be shared, therefore a layer sharing its elements
+   * Placeholders should not be shared, therefore a layer sharing its elements
    * with another node should use a new (unshared) placeholder op
    * @param me
    * @return
@@ -68,46 +76,12 @@ public:
 
     auto copyshare = std::make_shared<MyType>(*this);
 
-    if (this->output_)
+    if (this->data_)
     {
-      copyshare->output_ = std::make_shared<TensorType>(this->output_->Copy());
+      copyshare->data_ = std::make_shared<TensorType>(this->data_->Copy());
     }
 
     return copyshare;
-  }
-
-  void Forward(VecTensorType const &inputs, TensorType &output) override
-  {
-    FETCH_UNUSED(inputs);
-    assert(inputs.empty());
-    assert(output_);
-    output = *(output_);
-  }
-
-  std::vector<TensorType> Backward(VecTensorType const &inputs,
-                                   TensorType const &   error_signal) override
-  {
-    FETCH_UNUSED(inputs);
-    assert(inputs.empty());
-    return {error_signal};
-  }
-
-  virtual bool SetData(TensorType const &data)
-  {
-    bool shape_changed = true;
-    if (output_)
-    {
-      shape_changed = (output_->shape() != data.shape());
-    }
-    output_ = std::make_shared<TensorType>(data);
-    return shape_changed;
-  }
-
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
-  {
-    FETCH_UNUSED(inputs);
-    assert(output_);
-    return output_->shape();
   }
 
   static constexpr OpType OpCode()
@@ -116,9 +90,6 @@ public:
   }
 
   static constexpr char const *DESCRIPTOR = "PlaceHolder";
-
-protected:
-  ArrayPtrType output_;
 };
 
 }  // namespace ops

@@ -48,7 +48,7 @@ namespace http {
 class HTTPServer : public AbstractHTTPServer
 {
 public:
-  using handle_type = uint64_t;
+  using HandleType = uint64_t;
 
   using NetworkManager    = network::NetworkManager;
   using Socket            = asio::ip::tcp::tcp::socket;
@@ -123,7 +123,7 @@ public:
   void Stop()
   {}
 
-  void PushRequest(handle_type client, HTTPRequest req) override
+  void PushRequest(HandleType client, HTTPRequest req) override
   {
     // TODO(issue 35): Need to actually add better support for the options here
     if (req.method() == Method::OPTIONS)
