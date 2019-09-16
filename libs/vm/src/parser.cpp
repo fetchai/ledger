@@ -407,12 +407,12 @@ BlockNodePtr Parser::ParseFunctionDefinition()
       }
     }
     // Scan for optional return type
-    ExpressionNodePtr ReturnType_node;
+    ExpressionNodePtr return_type_node;
     Next();
     if (token_->kind == Token::Kind::Colon)
     {
-      ReturnType_node = ParseType();
-      if (ReturnType_node == nullptr)
+      return_type_node = ParseType();
+      if (return_type_node == nullptr)
       {
         break;
       }
@@ -422,7 +422,7 @@ BlockNodePtr Parser::ParseFunctionDefinition()
       Undo();
     }
     // NOTE: the return type node is legitimately null if no return type ia supplied
-    function_definition_node->children.push_back(ReturnType_node);
+    function_definition_node->children.push_back(return_type_node);
     ok = true;
   } while (false);
   if (!ok)

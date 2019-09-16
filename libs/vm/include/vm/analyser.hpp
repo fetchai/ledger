@@ -52,19 +52,19 @@ public:
                                TypeIndexArray const &parameter_type_index_array);
 
   void CreateFreeFunction(std::string const &name, TypeIndexArray const &parameter_type_index_array,
-                          TypeIndex ReturnType_index, Handler const &handler, ChargeAmount charge);
+                          TypeIndex return_type_index, Handler const &handler, ChargeAmount charge);
 
   void CreateConstructor(TypeIndex type_index, TypeIndexArray const &parameter_type_index_array,
                          Handler const &handler, ChargeAmount charge);
 
   void CreateStaticMemberFunction(TypeIndex type_index, std::string const &function_name,
                                   TypeIndexArray const &parameter_type_index_array,
-                                  TypeIndex ReturnType_index, Handler const &handler,
+                                  TypeIndex return_type_index, Handler const &handler,
                                   ChargeAmount charge);
 
   void CreateMemberFunction(TypeIndex type_index, std::string const &function_name,
                             TypeIndexArray const &parameter_type_index_array,
-                            TypeIndex ReturnType_index, Handler const &handler,
+                            TypeIndex return_type_index, Handler const &handler,
                             ChargeAmount charge);
 
   void EnableOperator(TypeIndex type_index, Operator op);
@@ -205,7 +205,7 @@ private:
   TypePtr        any_floating_point_type_;
   TypePtr        matrix_type_;
   TypePtr        array_type_;
-  TypePtr        MapType_;
+  TypePtr        map_type_;
   TypePtr        sharded_StateType_;
   TypePtr        StateType_;
   TypePtr        initialiser_list_type_;
@@ -298,20 +298,20 @@ private:
   TypePtr     InternalCreateInstantiationType(TypeKind type_kind, TypePtr const &template_type,
                                               TypePtrArray const &parameter_types);
   void        CreateFreeFunction(std::string const &name, TypePtrArray const &parameter_types,
-                                 TypePtr const &ReturnType, Handler const &handler, ChargeAmount charge);
+                                 TypePtr const &return_type, Handler const &handler, ChargeAmount charge);
   void        CreateConstructor(TypePtr const &type, TypePtrArray const &parameter_types,
                                 Handler const &handler, ChargeAmount charge);
 
   void        CreateStaticMemberFunction(TypePtr const &type, std::string const &name,
-                                         TypePtrArray const &parameter_types, TypePtr const &ReturnType,
+                                         TypePtrArray const &parameter_types, TypePtr const &return_type,
                                          Handler const &handler, ChargeAmount charge);
   void        CreateMemberFunction(TypePtr const &type, std::string const &name,
-                                   TypePtrArray const &parameter_types, TypePtr const &ReturnType,
+                                   TypePtrArray const &parameter_types, TypePtr const &return_type,
                                    Handler const &handler, ChargeAmount charge);
   FunctionPtr CreateUserDefinedFreeFunction(std::string const &     name,
                                             TypePtrArray const &    parameter_types,
                                             VariablePtrArray const &parameter_variables,
-                                            TypePtr const &         ReturnType);
+                                            TypePtr const &         return_type);
   void        EnableIndexOperator(TypePtr const &type, TypePtrArray const &input_types,
                                   TypePtr const &output_type, Handler const &get_handler,
                                   Handler const &set_handler, ChargeAmount get_charge,
@@ -320,7 +320,7 @@ private:
   void        AddFunctionInfo(FunctionPtr const &function, Handler const &handler,
                               ChargeAmount static_charge);
   std::string BuildUniqueId(TypePtr const &type, std::string const &function_name,
-                            TypePtrArray const &parameter_types, TypePtr const &ReturnType);
+                            TypePtrArray const &parameter_types, TypePtr const &return_type);
   void        AddFunctionToSymbolTable(SymbolTablePtr const &symbols, FunctionPtr const &function);
 
   TypePtr GetType(TypeIndex type_index)

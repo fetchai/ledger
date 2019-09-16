@@ -176,8 +176,8 @@ void Generator::CreateFunctions(IRBlockNodePtr const &block_node)
       IRFunctionPtr        f              = identifier_node->function;
       std::string const &  name           = f->name;
       int const            num_parameters = (int)f->parameter_variables.size();
-      uint16_t const       ReturnType_id  = f->ReturnType->resolved_id;
-      Executable::Function function(name, annotations, num_parameters, ReturnType_id);
+      uint16_t const       return_type_id = f->return_type->resolved_id;
+      Executable::Function function(name, annotations, num_parameters, return_type_id);
       for (IRVariablePtr const &variable : f->parameter_variables)
       {
         uint16_t variable_type_id = variable->type->resolved_id;
@@ -387,7 +387,7 @@ void Generator::HandleFunctionDefinitionStatement(IRBlockNodePtr const &block_no
   HandleBlock(block_node);
   ScopeLeave(block_node);
 
-  if (f->ReturnType->IsVoid())
+  if (f->return_type->IsVoid())
   {
     Executable::Instruction instruction(Opcodes::Return);
     uint16_t                pc = function_->AddInstruction(instruction);
