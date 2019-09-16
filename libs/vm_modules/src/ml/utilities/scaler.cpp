@@ -40,7 +40,9 @@ using MinMaxScalerType = fetch::ml::utilities::MinMaxScaler<MathTensorType>;
 
 VMScaler::VMScaler(VM *vm, TypeId type_id)
   : Object(vm, type_id)
-{}
+{
+  scaler_ = std::make_shared<MinMaxScalerType>();
+}
 
 Ptr<VMScaler> VMScaler::Constructor(VM *vm, TypeId type_id)
 {
