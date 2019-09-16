@@ -43,8 +43,8 @@ public:
   using super_type = T;
   using self_type  = ServiceServer<T>;
 
-  using network_manager_type = typename super_type::network_manager_type;
-  using handle_type          = typename T::ConnectionHandleType;
+  using NetworkManagerType = typename super_type::NetworkManagerType;
+  using handle_type        = typename T::ConnectionHandleType;
 
   static constexpr char const *LOGGING_NAME = "ServiceServer";
 
@@ -86,9 +86,9 @@ public:
     handle_type           client;
     network::message_type message;
   };
-  using byte_array_type = byte_array::ConstByteArray;
+  using ByteArrayType = byte_array::ConstByteArray;
 
-  ServiceServer(uint16_t port, network_manager_type network_manager)
+  ServiceServer(uint16_t port, NetworkManagerType network_manager)
     : super_type(port, network_manager)
     , network_manager_(network_manager)
     , message_mutex_{}
@@ -196,7 +196,7 @@ private:
     }
   }
 
-  network_manager_type network_manager_;
+  NetworkManagerType network_manager_;
 
   std::deque<PendingMessage> messages_;
   mutable Mutex              message_mutex_;

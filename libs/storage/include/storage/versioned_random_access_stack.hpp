@@ -70,9 +70,9 @@ template <typename T, typename B = uint64_t, typename S = RandomAccessStack<T, B
 class VersionedRandomAccessStack
 {
 private:
-  using stack_type        = S;
-  using header_extra_type = B;
-  using header_type       = BookmarkHeader<B>;
+  using stack_type      = S;
+  using HeaderExtraType = B;
+  using header_type     = BookmarkHeader<B>;
 
   static constexpr char const *LOGGING_NAME = "VersionedRandomAccessStack";
 
@@ -249,7 +249,7 @@ private:
 
 public:
   using type             = T;
-  using bookmark_type    = B;
+  using BookmarkType     = B;
   using EventHandlerType = std::function<void()>;
 
   VersionedRandomAccessStack()
@@ -379,7 +379,7 @@ public:
    * @param: b The bookmark to revert to
    *
    */
-  void Revert(bookmark_type const &b)
+  void Revert(BookmarkType const &b)
   {
     while ((!empty()) && (b != bookmark_))
     {
@@ -434,7 +434,7 @@ public:
     NextBookmark();
   }
 
-  void SetExtraHeader(header_extra_type const &b)
+  void SetExtraHeader(HeaderExtraType const &b)
   {
     header_type h = stack_.header_extra();
     history_.Push(HistoryHeader{h.header}, HistoryHeader::value);
@@ -443,19 +443,19 @@ public:
     stack_.SetExtraHeader(h);
   }
 
-  header_extra_type const &header_extra() const
+  HeaderExtraType const &header_extra() const
   {
     return stack_.header_extra().header;
   }
 
-  bookmark_type Commit()
+  BookmarkType Commit()
   {
-    bookmark_type b = bookmark_;
+    BookmarkType b = bookmark_;
 
     return Commit(b);
   }
 
-  bookmark_type Commit(bookmark_type const &b)
+  BookmarkType Commit(BookmarkType const &b)
   {
     // The flush here is vitally important since we must ensure the all flush handlers successfully
     // execute. Failure to do this results in an incorrectly ordered difference / history stack
@@ -507,8 +507,8 @@ public:
   }
 
 private:
-  VariantStack  history_;
-  bookmark_type bookmark_;
+  VariantStack history_;
+  BookmarkType bookmark_;
 
   EventHandlerType on_file_loaded_;
   EventHandlerType on_before_flush_;

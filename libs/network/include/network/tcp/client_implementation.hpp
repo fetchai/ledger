@@ -39,17 +39,17 @@ namespace network {
 class TCPClientImplementation final : public AbstractConnection
 {
 public:
-  using network_manager_type = NetworkManager;
-  using self_type            = std::weak_ptr<AbstractConnection>;
-  using SharedSelfType       = std::shared_ptr<AbstractConnection>;
-  using socket_type          = asio::ip::tcp::tcp::socket;
-  using strand_type          = asio::io_service::strand;
-  using resolver_type        = asio::ip::tcp::resolver;
-  using mutex_type           = std::mutex;
+  using NetworkManagerType = NetworkManager;
+  using self_type          = std::weak_ptr<AbstractConnection>;
+  using SharedSelfType     = std::shared_ptr<AbstractConnection>;
+  using socket_type        = asio::ip::tcp::tcp::socket;
+  using strand_type        = asio::io_service::strand;
+  using resolver_type      = asio::ip::tcp::resolver;
+  using mutex_type         = std::mutex;
 
   static constexpr char const *LOGGING_NAME = "TCPClientImpl";
 
-  explicit TCPClientImplementation(network_manager_type const &network_manager) noexcept
+  explicit TCPClientImplementation(NetworkManagerType const &network_manager) noexcept
     : networkManager_(network_manager)
   {}
 
@@ -238,7 +238,7 @@ public:
 private:
   static const uint64_t networkMagic_ = 0xFE7C80A1FE7C80A1;
 
-  network_manager_type networkManager_;
+  NetworkManagerType networkManager_;
   // IO objects should be guaranteed to have lifetime less than the
   // io_service/networkManager
   std::weak_ptr<socket_type> socket_;

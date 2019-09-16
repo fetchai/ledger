@@ -38,7 +38,7 @@ class Client : protected service::ServiceClientInterface
 public:
   using Address       = MuddleEndpoint::Address;
   using ProtocolId    = service::protocol_handler_type;
-  using FunctionId    = service::function_handler_type;
+  using FunctionId    = service::FunctionHandlerType;
   using Serializer    = service::serializer_type;
   using Promise       = service::Promise;
   using ThreadPool    = network::ThreadPool;

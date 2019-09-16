@@ -37,12 +37,12 @@ protected:
                        const std::size_t expected_publicKeySize,
                        const std::size_t expected_signatureSize)
   {
-    using ecdsa_curve_type = ECDSACurve<P_ECDSA_Curve_NID>;
-    EXPECT_EQ(ecdsa_curve_type::nid, P_ECDSA_Curve_NID);
-    ASSERT_EQ(expected_sn, ecdsa_curve_type::sn);
-    EXPECT_EQ(expected_privateKeySize, ecdsa_curve_type::privateKeySize);
-    EXPECT_EQ(expected_publicKeySize, ecdsa_curve_type::publicKeySize);
-    EXPECT_EQ(expected_signatureSize, ecdsa_curve_type::signatureSize);
+    using EcdsaCurveType = ECDSACurve<P_ECDSA_Curve_NID>;
+    EXPECT_EQ(EcdsaCurveType::nid, P_ECDSA_Curve_NID);
+    ASSERT_EQ(expected_sn, EcdsaCurveType::sn);
+    EXPECT_EQ(expected_privateKeySize, EcdsaCurveType::privateKeySize);
+    EXPECT_EQ(expected_publicKeySize, EcdsaCurveType::publicKeySize);
+    EXPECT_EQ(expected_signatureSize, EcdsaCurveType::signatureSize);
   }
 };
 
@@ -63,7 +63,7 @@ protected:
               static_cast<std::size_t>(BN_num_bytes(y.get())));
 
     auto serialized_to_ba = ECDSAAffineCoordinatesConversion<>::Convert2Canonical(x.get(), y.get());
-    EXPECT_EQ(ECDSAAffineCoordinatesConversion<>::ecdsa_curve_type::publicKeySize,
+    EXPECT_EQ(ECDSAAffineCoordinatesConversion<>::EcdsaCurveType::publicKeySize,
               serialized_to_ba.size());
 
     shrd_ptr_type<BIGNUM> x2{BN_new()};

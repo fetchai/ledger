@@ -76,9 +76,9 @@ template <typename T, typename S = RandomAccessStack<T, NewBookmarkHeader>>
 class NewVersionedRandomAccessStack
 {
 private:
-  using stack_type        = S;
-  using header_extra_type = uint64_t;
-  using header_type       = NewBookmarkHeader;
+  using stack_type      = S;
+  using HeaderExtraType = uint64_t;
+  using header_type     = NewBookmarkHeader;
 
   static constexpr char const *LOGGING_NAME = "NewVersionedRandomAccessStack";
 
@@ -383,7 +383,7 @@ public:
     stack_.Swap(i, j);
   }
 
-  void SetExtraHeader(header_extra_type const &b)
+  void SetExtraHeader(HeaderExtraType const &b)
   {
     header_type h = stack_.header_extra();
     history_.Push(HistoryHeader{h.header}, HistoryHeader::value);
@@ -392,7 +392,7 @@ public:
     stack_.SetExtraHeader(h);
   }
 
-  header_extra_type const &header_extra() const
+  HeaderExtraType const &header_extra() const
   {
     return stack_.header_extra().header;
   }

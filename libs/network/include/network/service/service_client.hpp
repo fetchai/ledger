@@ -39,12 +39,12 @@ namespace service {
 class ServiceClient : public ServiceClientInterface, public ServiceServerInterface
 {
 public:
-  using network_manager_type = fetch::network::NetworkManager;
+  using NetworkManagerType = fetch::network::NetworkManager;
 
   static constexpr char const *LOGGING_NAME = "ServiceClient";
 
   ServiceClient(std::shared_ptr<network::AbstractConnection> connection,
-                const network_manager_type &                 network_manager)
+                const NetworkManagerType &                   network_manager)
     : connection_(connection)
     , network_manager_(network_manager)
     , message_mutex_{}
@@ -65,7 +65,7 @@ public:
     }
   }
 
-  ServiceClient(network::TCPClient &connection, network_manager_type thread_manager)
+  ServiceClient(network::TCPClient &connection, NetworkManagerType thread_manager)
     : ServiceClient(connection.connection_pointer().lock(), thread_manager)
   {}
 
@@ -242,7 +242,7 @@ private:
     --active_count_;
   }
 
-  network_manager_type              network_manager_;
+  NetworkManagerType                network_manager_;
   std::deque<network::message_type> messages_;
   mutable Mutex                     message_mutex_;
 

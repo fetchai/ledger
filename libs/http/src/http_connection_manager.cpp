@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "http/http_connection_manager.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/logging.hpp"
 #include "http/abstract_connection.hpp"
 #include "http/abstract_server.hpp"
-#include "http/http_connection_manager.hpp"
 #include "http/request.hpp"
 
 namespace fetch {
@@ -31,7 +31,7 @@ HTTPConnectionManager::HTTPConnectionManager(AbstractHTTPServer &server)
   , clients_mutex_{}
 {}
 
-HTTPConnectionManager::handle_type HTTPConnectionManager::Join(connection_type client)
+HTTPConnectionManager::handle_type HTTPConnectionManager::Join(ConnectionType client)
 {
   handle_type handle = server_.next_handle();
   FETCH_LOG_DEBUG(LOGGING_NAME, "Client joining with handle ", handle);

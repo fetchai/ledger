@@ -36,13 +36,13 @@ namespace network {
 class TCPClient
 {
 public:
-  using network_manager_type = NetworkManager;
-  using handle_type          = uint64_t;
-  using implementation_type  = TCPClientImplementation;
-  using pointer_type         = std::shared_ptr<implementation_type>;
+  using NetworkManagerType = NetworkManager;
+  using handle_type        = uint64_t;
+  using ImplementationType = TCPClientImplementation;
+  using pointer_type       = std::shared_ptr<ImplementationType>;
 
-  explicit TCPClient(network_manager_type network_manager)
-    : pointer_{std::make_shared<implementation_type>(network_manager)}
+  explicit TCPClient(NetworkManagerType network_manager)
+    : pointer_{std::make_shared<ImplementationType>(network_manager)}
   {
     // Note we register handles here, but do not connect until the base class
     // constructed
@@ -124,7 +124,7 @@ public:
     return pointer_->is_alive();
   }
 
-  typename implementation_type::weak_ptr_type connection_pointer()
+  typename ImplementationType::weak_ptr_type connection_pointer()
   {
     return pointer_->connection_pointer();
   }

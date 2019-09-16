@@ -36,7 +36,7 @@ class ECDSAPublicKey
   byte_array::ConstByteArray key_binary_;
 
 public:
-  using ecdsa_curve_type = ECDSACurve<P_ECDSA_Curve_NID>;
+  using EcdsaCurveType = ECDSACurve<P_ECDSA_Curve_NID>;
 
   static constexpr eECDSAEncoding          binaryDataFormat = P_ECDSABinaryDataFormat;
   static constexpr point_conversion_form_t conversionForm   = P_ConversionForm;
@@ -61,11 +61,11 @@ public:
   {}
 
   template <eECDSAEncoding BINARY_DATA_FORMAT>
-  using ecdsa_public_key_type =
+  using EcdsaPublicKeyType =
       ECDSAPublicKey<BINARY_DATA_FORMAT, P_ECDSA_Curve_NID, P_ConversionForm>;
 
   template <eECDSAEncoding BINARY_DATA_FORMAT>
-  ECDSAPublicKey(ecdsa_public_key_type<BINARY_DATA_FORMAT> const &from)
+  ECDSAPublicKey(EcdsaPublicKeyType<BINARY_DATA_FORMAT> const &from)
     : key_EC_POINT_{from.key_EC_POINT_}
     , key_EC_KEY_{from.key_EC_KEY_}
     , key_binary_{BINARY_DATA_FORMAT == binaryDataFormat
@@ -74,7 +74,7 @@ public:
   {}
 
   template <eECDSAEncoding BINARY_DATA_FORMAT>
-  ECDSAPublicKey(ecdsa_public_key_type<BINARY_DATA_FORMAT> &&from)
+  ECDSAPublicKey(EcdsaPublicKeyType<BINARY_DATA_FORMAT> &&from)
     : key_EC_POINT_{std::move(from.key_EC_POINT_)}
     , key_EC_KEY_{std::move(from.key_EC_KEY_)}
     , key_binary_{BINARY_DATA_FORMAT == binaryDataFormat
@@ -83,14 +83,14 @@ public:
   {}
 
   template <eECDSAEncoding BINARY_DATA_FORMAT>
-  ECDSAPublicKey &operator=(ecdsa_public_key_type<BINARY_DATA_FORMAT> const &from)
+  ECDSAPublicKey &operator=(EcdsaPublicKeyType<BINARY_DATA_FORMAT> const &from)
   {
     *this = ECDSAPublicKey(from);
     return *this;
   }
 
   template <eECDSAEncoding BINARY_DATA_FORMAT>
-  ECDSAPublicKey &operator=(ecdsa_public_key_type<BINARY_DATA_FORMAT> &&from)
+  ECDSAPublicKey &operator=(EcdsaPublicKeyType<BINARY_DATA_FORMAT> &&from)
   {
     *this = ECDSAPublicKey(from);
     return *this;
@@ -259,7 +259,7 @@ private:
 
   static uniq_ptr_type<EC_KEY> ConvertToECKEY(const EC_POINT *key_EC_POINT)
   {
-    uniq_ptr_type<EC_KEY> key{EC_KEY_new_by_curve_name(ecdsa_curve_type::nid)};
+    uniq_ptr_type<EC_KEY> key{EC_KEY_new_by_curve_name(EcdsaCurveType::nid)};
     // TODO(issue 36): setting conv. form might not be really necessary (stuff
     // works
     // without it)
@@ -277,7 +277,7 @@ private:
 
   static uniq_ptr_type<EC_GROUP> createGroup()
   {
-    uniq_ptr_type<EC_GROUP> group{EC_GROUP_new_by_curve_name(ecdsa_curve_type::nid)};
+    uniq_ptr_type<EC_GROUP> group{EC_GROUP_new_by_curve_name(EcdsaCurveType::nid)};
     EC_GROUP_set_point_conversion_form(group.get(), conversionForm);
     return group;
   }

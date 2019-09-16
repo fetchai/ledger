@@ -46,10 +46,10 @@ template <typename T, typename D = uint64_t>
 class CacheLineRandomAccessStack
 {
 public:
-  using EventHandlerType  = std::function<void()>;
-  using stack_type        = RandomAccessStack<T, D>;
-  using header_extra_type = D;
-  using type              = T;
+  using EventHandlerType = std::function<void()>;
+  using stack_type       = RandomAccessStack<T, D>;
+  using HeaderExtraType  = D;
+  using type             = T;
 
   CacheLineRandomAccessStack() = default;
 
@@ -162,12 +162,12 @@ public:
     stack_.Close(false);
   }
 
-  void SetExtraHeader(header_extra_type const &he)
+  void SetExtraHeader(HeaderExtraType const &he)
   {
     stack_.SetExtraHeader(he);
   }
 
-  header_extra_type const &header_extra() const
+  HeaderExtraType const &header_extra() const
   {
     return stack_.header_extra();
   }

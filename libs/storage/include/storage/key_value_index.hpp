@@ -513,18 +513,18 @@ public:
   }
 
   // TODO(private 1067): this will be removed when updating the versioned stack
-  using bookmark_type = uint64_t;
-  bookmark_type Commit()
+  using BookmarkType = uint64_t;
+  BookmarkType Commit()
   {
     return stack_.Commit();
   }
 
-  bookmark_type Commit(bookmark_type const &b)
+  BookmarkType Commit(BookmarkType const &b)
   {
     return stack_.Commit(b);
   }
 
-  void Revert(bookmark_type const &b)
+  void Revert(BookmarkType const &b)
   {
     stack_.Revert(b);
 

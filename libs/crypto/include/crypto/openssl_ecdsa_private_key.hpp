@@ -44,17 +44,17 @@ public:
   static constexpr eECDSAEncoding          binaryDataFormat = P_ECDSABinaryDataFormat;
   static constexpr point_conversion_form_t conversionForm   = P_ConversionForm;
 
-  // using public_key_type = ECDSAPublicKey<binaryDataFormat, P_ECDSA_Curve_NID,
+  // using PublicKeyType = ECDSAPublicKey<binaryDataFormat, P_ECDSA_Curve_NID,
   // P_ConversionForm>;
   // TODO(issue 36): Implement DER encoding. It mis missing now so defaulting to
   // canonical
   // encoding to void
   // failures when constructing this class (ECDSAPrivateKey) with DER encoding.
-  using public_key_type =
+  using PublicKeyType =
       ECDSAPublicKey<SupportedEncodingForPublicKey<P_ECDSABinaryDataFormat>::value,
                      P_ECDSA_Curve_NID, P_ConversionForm>;
 
-  using ecdsa_curve_type = ECDSACurve<P_ECDSA_Curve_NID>;
+  using EcdsaCurveType = ECDSACurve<P_ECDSA_Curve_NID>;
 
   template <eECDSAEncoding P_ECDSABinaryDataFormat2, int P_ECDSA_Curve_NID2,
             point_conversion_form_t P_ConversionForm2>
@@ -65,7 +65,7 @@ private:
   shrd_ptr_type<EC_KEY> private_key_;
   // TODO(issue 36): Do lazy initialisation of the public key to minimize impact
   // at construction time of this class
-  public_key_type public_key_;
+  PublicKeyType public_key_;
 
 public:
   ECDSAPrivateKey()
@@ -129,13 +129,13 @@ public:
     }
   }
 
-  const public_key_type &publicKey() const
+  const PublicKeyType &publicKey() const
   {
     return public_key_;
   }
 
 private:
-  ECDSAPrivateKey(shrd_ptr_type<EC_KEY> &&key, public_key_type &&public_key)
+  ECDSAPrivateKey(shrd_ptr_type<EC_KEY> &&key, PublicKeyType &&public_key)
     : private_key_{std::move(key)}
     , public_key_{std::move(public_key)}
   {}
@@ -156,7 +156,7 @@ private:
   static uniq_ptr_type<BIGNUM, del_strat_type::clearing> Convert2BIGNUM(
       byte_array::ConstByteArray const &key_data)
   {
-    if (ecdsa_curve_type::privateKeySize < key_data.size())
+    if (EcdsaCurveType::privateKeySize < key_data.size())
     {
       throw std::runtime_error(
           "ECDSAPrivateKey::Convert2BIGNUM(const "
@@ -167,7 +167,7 @@ private:
     }
 
     uniq_ptr_type<BIGNUM, del_strat_type::clearing> private_key_as_BN(BN_new());
-    BN_bin2bn(key_data.pointer(), static_cast<int>(ecdsa_curve_type::privateKeySize),
+    BN_bin2bn(key_data.pointer(), static_cast<int>(EcdsaCurveType::privateKeySize),
               private_key_as_BN.get());
 
     if (!private_key_as_BN)
@@ -183,7 +183,7 @@ private:
 
   static uniq_ptr_type<EC_KEY> ConvertPrivateKeyBN2ECKEY(BIGNUM const *private_key_as_BN)
   {
-    uniq_ptr_type<EC_KEY> private_key{EC_KEY_new_by_curve_name(ecdsa_curve_type::nid)};
+    uniq_ptr_type<EC_KEY> private_key{EC_KEY_new_by_curve_name(EcdsaCurveType::nid)};
     EC_KEY_set_conv_form(private_key.get(), conversionForm);
 
     if (!EC_KEY_set_private_key(private_key.get(), private_key_as_BN))
@@ -196,9 +196,9 @@ private:
     return private_key;
   }
 
-  static public_key_type DerivePublicKey(BIGNUM const *const private_key_as_BN,
-                                         EC_KEY *const       private_key,
-                                         bool const regenerate_even_if_already_exists = false)
+  static PublicKeyType DerivePublicKey(BIGNUM const *const private_key_as_BN,
+                                       EC_KEY *const       private_key,
+                                       bool const regenerate_even_if_already_exists = false)
   {
     EC_GROUP const *const    group = EC_KEY_get0_group(private_key);
     context::Session<BN_CTX> session;
@@ -237,17 +237,17 @@ private:
           "EC_KEY_set_public_key(...) failed.");
     }
 
-    return public_key_type{std::move(public_key), group, session};
+    return PublicKeyType{std::move(public_key), group, session};
   }
 
   static ECDSAPrivateKey Generate()
   {
     uniq_ptr_type<EC_KEY> key{GenerateKeyPair()};
-    public_key_type       public_key{ExtractPublicKey(key.get())};
+    PublicKeyType         public_key{ExtractPublicKey(key.get())};
     return ECDSAPrivateKey{std::move(key), std::move(public_key)};
   }
 
-  static public_key_type ExtractPublicKey(const EC_KEY *private_key)
+  static PublicKeyType ExtractPublicKey(const EC_KEY *private_key)
   {
     EC_GROUP const *group             = EC_KEY_get0_group(private_key);
     EC_POINT const *pub_key_reference = EC_KEY_get0_public_key(private_key);
@@ -258,12 +258,12 @@ private:
       throw std::runtime_error("ECDSAPrivateKey::ExtractPublicKey(...): EC_POINT_dup(...) failed.");
     }
 
-    return public_key_type{std::move(public_key), group, context::Session<BN_CTX>{}};
+    return PublicKeyType{std::move(public_key), group, context::Session<BN_CTX>{}};
   }
 
   static uniq_ptr_type<EC_KEY> GenerateKeyPair()
   {
-    uniq_ptr_type<EC_KEY> key_pair{EC_KEY_new_by_curve_name(ecdsa_curve_type::nid)};
+    uniq_ptr_type<EC_KEY> key_pair{EC_KEY_new_by_curve_name(EcdsaCurveType::nid)};
     EC_KEY_set_conv_form(key_pair.get(), conversionForm);
 
     if (!key_pair)
@@ -332,14 +332,14 @@ private:
     uniq_ptr_type<BIGNUM, del_strat_type::clearing> priv_key_as_BN{Convert2BIGNUM(key_data)};
 
     uniq_ptr_type<EC_KEY> private_key{ConvertPrivateKeyBN2ECKEY(priv_key_as_BN.get())};
-    public_key_type       public_key{DerivePublicKey(priv_key_as_BN.get(), private_key.get())};
+    PublicKeyType         public_key{DerivePublicKey(priv_key_as_BN.get(), private_key.get())};
 
     return ECDSAPrivateKey{std::move(private_key), std::move(public_key)};
   }
 
   static ECDSAPrivateKey ConvertFromDER(byte_array::ConstByteArray const &key_data)
   {
-    uniq_ptr_type<EC_KEY> key{EC_KEY_new_by_curve_name(ecdsa_curve_type::nid)};
+    uniq_ptr_type<EC_KEY> key{EC_KEY_new_by_curve_name(EcdsaCurveType::nid)};
     EC_KEY_set_conv_form(key.get(), conversionForm);
 
     EC_KEY *             key_ptr      = key.get();
@@ -353,14 +353,14 @@ private:
 
     BIGNUM const *const private_key_as_BN = EC_KEY_get0_private_key(key_ptr);
 
-    public_key_type public_key{DerivePublicKey(private_key_as_BN, key_ptr)};
+    PublicKeyType public_key{DerivePublicKey(private_key_as_BN, key_ptr)};
 
     return ECDSAPrivateKey{std::move(key), std::move(public_key)};
   }
 
   static uniq_ptr_type<EC_GROUP> createGroup()
   {
-    uniq_ptr_type<EC_GROUP> group{EC_GROUP_new_by_curve_name(ecdsa_curve_type::nid)};
+    uniq_ptr_type<EC_GROUP> group{EC_GROUP_new_by_curve_name(EcdsaCurveType::nid)};
     EC_GROUP_set_point_conversion_form(group.get(), conversionForm);
     return group;
   }

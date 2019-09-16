@@ -72,7 +72,7 @@ template <int P_ECDSA_Curve_NID = NID_secp256k1>
 class ECDSAAffineCoordinatesConversion
 {
 public:
-  using ecdsa_curve_type = ECDSACurve<P_ECDSA_Curve_NID>;
+  using EcdsaCurveType = ECDSACurve<P_ECDSA_Curve_NID>;
   static const std::size_t x_size;
   static const std::size_t y_size;
 
@@ -141,7 +141,7 @@ public:
 
 template <int P_ECDSA_Curve_NID>
 const std::size_t ECDSAAffineCoordinatesConversion<P_ECDSA_Curve_NID>::x_size =
-    ECDSAAffineCoordinatesConversion<P_ECDSA_Curve_NID>::ecdsa_curve_type::publicKeySize >> 1;
+    ECDSAAffineCoordinatesConversion<P_ECDSA_Curve_NID>::EcdsaCurveType::publicKeySize >> 1;
 
 template <int P_ECDSA_Curve_NID>
 const std::size_t ECDSAAffineCoordinatesConversion<P_ECDSA_Curve_NID>::y_size =

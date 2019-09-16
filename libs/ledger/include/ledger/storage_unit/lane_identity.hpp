@@ -30,13 +30,13 @@ class LaneIdentity
 {
 public:
   using connectivity_details_type = LaneConnectivityDetails;
-  using network_manager_type      = fetch::network::NetworkManager;
+  using NetworkManagerType        = fetch::network::NetworkManager;
   using ping_type                 = uint32_t;
   using lane_type                 = uint32_t;
 
   static constexpr char const *LOGGING_NAME = "LaneIdentity";
 
-  LaneIdentity(network_manager_type const &nm, crypto::Identity identity)
+  LaneIdentity(NetworkManagerType const &nm, crypto::Identity identity)
     : identity_(std::move(identity))
     , manager_(nm)
   {
@@ -82,7 +82,7 @@ private:
   Mutex            identity_mutex_;
   crypto::Identity identity_;
 
-  network_manager_type manager_;
+  NetworkManagerType manager_;
 
   std::atomic<lane_type> lane_;
   std::atomic<lane_type> total_lanes_;

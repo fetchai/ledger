@@ -29,7 +29,7 @@ ServiceClientInterface::ServiceClientInterface()
 {}
 
 Promise ServiceClientInterface::CallWithPackedArguments(protocol_handler_type const &protocol,
-                                                        function_handler_type const &function,
+                                                        FunctionHandlerType const &  function,
                                                         byte_array::ByteArray const &args)
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Service Client Calling (2) ", protocol, ":", function);

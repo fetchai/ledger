@@ -42,7 +42,7 @@ class ClientConnection : public AbstractConnection
 public:
   static constexpr char const *LOGGING_NAME = "ClientConnection";
 
-  using connection_type = typename AbstractConnection::shared_type;
+  using ConnectionType = typename AbstractConnection::shared_type;
 
   using handle_type    = typename AbstractConnection::ConnectionHandleType;
   using Strand         = asio::io_service::strand;

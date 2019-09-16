@@ -32,9 +32,9 @@ namespace byte_array {
 class Tokenizer : public std::vector<Token>
 {
 public:
-  using byte_array_type        = ConstByteArray;
-  using consumer_function_type = std::function<int(byte_array_type const &, uint64_t &)>;
-  using IndexerFunctionType    = std::function<int(byte_array_type const &, uint64_t, int const &)>;
+  using ByteArrayType          = ConstByteArray;
+  using consumer_function_type = std::function<int(ByteArrayType const &, uint64_t &)>;
+  using IndexerFunctionType    = std::function<int(ByteArrayType const &, uint64_t, int const &)>;
 
   std::size_t AddConsumer(consumer_function_type function)
   {
@@ -43,12 +43,12 @@ public:
     return ret;
   }
 
-  bool Parse(byte_array_type const &contents, bool clear = true)
+  bool Parse(ByteArrayType const &contents, bool clear = true)
   {
-    uint64_t                           pos        = 0;
-    int                                line       = 0;
-    uint64_t                           char_index = 0;
-    byte_array_type::value_type const *str        = contents.pointer();
+    uint64_t                         pos        = 0;
+    int                              line       = 0;
+    uint64_t                         char_index = 0;
+    ByteArrayType::value_type const *str        = contents.pointer();
     if (clear)
     {
       this->clear();

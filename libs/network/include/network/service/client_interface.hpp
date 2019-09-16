@@ -55,7 +55,7 @@ public:
 
   template <typename... arguments>
   Promise Call(uint32_t /*network_id*/, protocol_handler_type const &protocol,
-               function_handler_type const &function, arguments &&... args)
+               FunctionHandlerType const &function, arguments &&... args)
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Service Client Calling ", protocol, ":", function);
 
@@ -95,7 +95,7 @@ public:
   }
 
   Promise CallWithPackedArguments(protocol_handler_type const &protocol,
-                                  function_handler_type const &function,
+                                  FunctionHandlerType const &  function,
                                   byte_array::ByteArray const &args);
 
   /// @name Subscriptions

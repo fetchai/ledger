@@ -26,11 +26,11 @@ namespace http {
 class KeyValueSet : private std::map<byte_array::ConstByteArray, byte_array::ConstByteArray>
 {
 public:
-  using super_type      = std::map<byte_array::ConstByteArray, byte_array::ConstByteArray>;
-  using byte_array_type = byte_array::ConstByteArray;
-  using map_type        = std::map<byte_array_type, byte_array_type>;
-  using iterator        = map_type::iterator;
-  using const_iterator  = map_type::const_iterator;
+  using super_type     = std::map<byte_array::ConstByteArray, byte_array::ConstByteArray>;
+  using ByteArrayType  = byte_array::ConstByteArray;
+  using map_type       = std::map<ByteArrayType, ByteArrayType>;
+  using iterator       = map_type::iterator;
+  using const_iterator = map_type::const_iterator;
 
   iterator begin() noexcept
   {
@@ -57,20 +57,20 @@ public:
     return map_type::cend();
   }
 
-  void Add(byte_array_type const &name, byte_array_type const &value)
+  void Add(ByteArrayType const &name, ByteArrayType const &value)
   {
     insert({name, value});
   }
 
   template <typename T>
-  std::enable_if_t<std::is_integral<T>::value, void> Add(byte_array_type const &name, T const &n)
+  std::enable_if_t<std::is_integral<T>::value, void> Add(ByteArrayType const &name, T const &n)
   {
     // TODO(issue 35): Can be improved.
-    byte_array_type value(std::to_string(n));
+    ByteArrayType value(std::to_string(n));
     insert({name, value});
   }
 
-  bool Has(byte_array_type const &key) const
+  bool Has(ByteArrayType const &key) const
   {
     return this->find(key) != this->end();
   }

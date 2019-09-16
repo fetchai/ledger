@@ -43,9 +43,9 @@ public:
 
   using action_func_type =
       std::function<void(const std::set<std::string> &, std::list<std::string> &)>;
-  using help_text_type  = std::tuple<std::string, std::string>;
+  using HelpTextType    = std::tuple<std::string, std::string>;
   using assigners_type  = std::map<std::string, action_func_type>;
-  using help_texts_type = std::list<help_text_type>;
+  using help_texts_type = std::list<HelpTextType>;
 
   Params()
     : paramsParser_()
@@ -117,7 +117,7 @@ public:
       assignee = this->paramsParser_.GetParam(name_local, deflt_local);
     };
 
-    helpTexts_.push_back(help_text_type{name, help});
+    helpTexts_.push_back(HelpTextType{name, help});
   }
 
   template <class TYPE>
@@ -134,7 +134,7 @@ public:
       assignee = this->paramsParser_.GetParam(name_local, TYPE());
     };
 
-    helpTexts_.push_back(help_text_type{name, help});
+    helpTexts_.push_back(HelpTextType{name, help});
   }
 
   void description(const std::string &desc)

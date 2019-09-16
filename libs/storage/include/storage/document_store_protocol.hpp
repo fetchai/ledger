@@ -122,7 +122,7 @@ public:
     if (!context.is_valid())
     {
       throw serializers::SerializableException(  // TODO(issue 11): set exception number
-          0, byte_array_type(std::string("No context for HasLock.")));
+          0, ByteArrayType(std::string("No context for HasLock.")));
     }
 
     bool has_lock = false;
@@ -141,7 +141,7 @@ public:
     if (!context.is_valid())
     {
       // TODO(issue 11): set exception number
-      throw serializers::SerializableException(0, byte_array_type{"No context for HasLock."});
+      throw serializers::SerializableException(0, ByteArrayType{"No context for HasLock."});
     }
 
     // attempt to lock this shard
@@ -172,7 +172,7 @@ public:
     if (!context.is_valid())
     {
       throw serializers::SerializableException(  // TODO(issue 11): set exception number
-          0, byte_array_type(std::string("No context for HasLock.")));
+          0, ByteArrayType(std::string("No context for HasLock.")));
     }
 
     // attempt to unlock this shard

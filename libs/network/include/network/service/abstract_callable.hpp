@@ -137,7 +137,7 @@ struct Packer<T>
  */
 template <typename S, typename... arguments>
 void PackCall(S &serializer, protocol_handler_type const &protocol,
-              function_handler_type const &function, arguments &&... args)
+              FunctionHandlerType const &function, arguments &&... args)
 {
   serializer << protocol;
   serializer << function;
@@ -155,7 +155,7 @@ void PackCall(S &serializer, protocol_handler_type const &protocol,
  */
 template <typename S>
 void PackCall(S &serializer, protocol_handler_type const &protocol,
-              function_handler_type const &function)
+              FunctionHandlerType const &function)
 {
   serializer << protocol;
   serializer << function;
@@ -175,7 +175,7 @@ void PackCall(S &serializer, protocol_handler_type const &protocol,
  */
 template <typename S>
 void PackCallWithPackedArguments(S &serializer, protocol_handler_type const &protocol,
-                                 function_handler_type const &function,
+                                 FunctionHandlerType const &  function,
                                  byte_array::ByteArray const &args)
 {
   serializer << protocol;

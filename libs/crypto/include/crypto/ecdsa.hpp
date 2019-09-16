@@ -100,7 +100,7 @@ public:
 
   Identity identity() const final
   {
-    return Identity(PrivateKey::ecdsa_curve_type::sn, public_key());
+    return Identity(PrivateKey::EcdsaCurveType::sn, public_key());
   }
 
   ConstByteArray public_key() const

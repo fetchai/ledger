@@ -39,7 +39,7 @@ class HTTPConnection : public AbstractHTTPConnection,
 {
 public:
   using response_queue_type = std::deque<HTTPResponse>;
-  using connection_type     = typename AbstractHTTPConnection::shared_type;
+  using ConnectionType      = typename AbstractHTTPConnection::shared_type;
   using handle_type         = HTTPConnectionManager::handle_type;
   using SharedRequestType   = std::shared_ptr<HTTPRequest>;
   using buffer_ptr_type     = std::shared_ptr<asio::streambuf>;

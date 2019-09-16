@@ -28,7 +28,7 @@ namespace service {
 using serializer_type = serializers::MsgPackSerializer;
 
 using protocol_handler_type     = uint64_t;
-using function_handler_type     = uint64_t;
+using FunctionHandlerType       = uint64_t;
 using feed_handler_type         = uint8_t;
 using subscription_handler_type = uint8_t;
 using ServiceClassificationType = uint64_t;

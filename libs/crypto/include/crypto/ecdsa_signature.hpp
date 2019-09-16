@@ -40,10 +40,10 @@ class ECDSASignature
   byte_array::ConstByteArray signature_;
 
 public:
-  using hasher_type      = T_Hasher;
-  using ecdsa_curve_type = ECDSACurve<P_ECDSA_Curve_NID>;
+  using hasher_type    = T_Hasher;
+  using EcdsaCurveType = ECDSACurve<P_ECDSA_Curve_NID>;
   template <eECDSAEncoding BIN_ENC, point_conversion_form_t POINT_CONV_FORM>
-  using public_key_type = ECDSAPublicKey<BIN_ENC, P_ECDSA_Curve_NID, POINT_CONV_FORM>;
+  using PublicKeyType = ECDSAPublicKey<BIN_ENC, P_ECDSA_Curve_NID, POINT_CONV_FORM>;
   template <eECDSAEncoding BIN_ENC, point_conversion_form_t POINT_CONV_FORM>
   using private_key_type = ECDSAPrivateKey<BIN_ENC, P_ECDSA_Curve_NID, POINT_CONV_FORM>;
 
@@ -126,8 +126,8 @@ public:
   }
 
   template <eECDSAEncoding BIN_ENC, point_conversion_form_t POINT_CONV_FORM>
-  bool VerifyHash(public_key_type<BIN_ENC, POINT_CONV_FORM> const &public_key,
-                  byte_array::ConstByteArray const &               hash_to_verify) const
+  bool VerifyHash(PublicKeyType<BIN_ENC, POINT_CONV_FORM> const &public_key,
+                  byte_array::ConstByteArray const &             hash_to_verify) const
   {
     const int res =
         ECDSA_do_verify(static_cast<const unsigned char *>(hash_to_verify.pointer()),
@@ -149,8 +149,8 @@ public:
   }
 
   template <eECDSAEncoding BIN_ENC, point_conversion_form_t POINT_CONV_FORM>
-  bool Verify(public_key_type<BIN_ENC, POINT_CONV_FORM> const &public_key,
-              byte_array::ConstByteArray const &               data_to_verify) const
+  bool Verify(PublicKeyType<BIN_ENC, POINT_CONV_FORM> const &public_key,
+              byte_array::ConstByteArray const &             data_to_verify) const
   {
     return VerifyHash(public_key, Hash<hasher_type>(data_to_verify));
   }

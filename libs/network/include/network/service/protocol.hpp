@@ -57,7 +57,7 @@ class Protocol
 public:
   using callable_type        = AbstractCallable *;
   using stored_type          = std::shared_ptr<AbstractCallable>;
-  using byte_array_type      = byte_array::ConstByteArray;
+  using ByteArrayType        = byte_array::ConstByteArray;
   using ConnectionHandleType = typename network::AbstractConnection::ConnectionHandleType;
   using MiddlewareType =
       std::function<void(ConnectionHandleType const &, byte_array::ByteArray const &)>;
@@ -79,7 +79,7 @@ public:
    *
    * @return a reference to the call.
    */
-  callable_type operator[](function_handler_type const &n)
+  callable_type operator[](FunctionHandlerType const &n)
   {
     auto iter = members_.find(n);
     if (iter == members_.end())
@@ -89,7 +89,7 @@ public:
       FETCH_LOG_ERROR(LOGGING_NAME, "Failed to lookup function handler: ", n);
 
       throw serializers::SerializableException(
-          error::MEMBER_NOT_FOUND, byte_array_type("Could not find protocol member function"));
+          error::MEMBER_NOT_FOUND, ByteArrayType("Could not find protocol member function"));
     }
     return iter->second.get();
   }
@@ -109,7 +109,7 @@ public:
    * TODO(issue 21):
    */
   template <typename C, typename R, typename... Args>
-  void Expose(function_handler_type const &n, C *instance, R (C::*function)(Args...))
+  void Expose(FunctionHandlerType const &n, C *instance, R (C::*function)(Args...))
   {
     stored_type fnc(new service::CallableClassMember<C, R(Args...)>(instance, function));
 
@@ -117,14 +117,14 @@ public:
     if (iter != members_.end())
     {
       throw serializers::SerializableException(
-          error::MEMBER_EXISTS, byte_array_type("Protocol member function already exists: "));
+          error::MEMBER_EXISTS, ByteArrayType("Protocol member function already exists: "));
     }
 
     members_[n] = fnc;
   }
 
   template <typename C, typename R, typename... Args>
-  void ExposeWithClientArg(function_handler_type const &n, C *instance, R (C::*function)(Args...))
+  void ExposeWithClientArg(FunctionHandlerType const &n, C *instance, R (C::*function)(Args...))
   {
     stored_type fnc(new service::CallableClassMember<C, R(Args...), 1>(Callable::CLIENT_ID_ARG,
                                                                        instance, function));
@@ -133,15 +133,14 @@ public:
     if (iter != members_.end())
     {
       throw serializers::SerializableException(
-          error::MEMBER_EXISTS, byte_array_type("Protocol member function already exists: "));
+          error::MEMBER_EXISTS, ByteArrayType("Protocol member function already exists: "));
     }
 
     members_[n] = fnc;
   }
 
   template <typename C, typename R, typename... Args>
-  void ExposeWithClientContext(function_handler_type const &n, C *instance,
-                               R (C::*function)(Args...))
+  void ExposeWithClientContext(FunctionHandlerType const &n, C *instance, R (C::*function)(Args...))
   {
     stored_type fnc(new service::CallableClassMember<C, R(Args...), 1>(Callable::CLIENT_CONTEXT_ARG,
                                                                        instance, function));
@@ -150,7 +149,7 @@ public:
     if (iter != members_.end())
     {
       throw serializers::SerializableException(
-          error::MEMBER_EXISTS, byte_array_type("Protocol member function already exists: "));
+          error::MEMBER_EXISTS, ByteArrayType("Protocol member function already exists: "));
     }
 
     members_[n] = fnc;
@@ -261,7 +260,7 @@ public:
 
 private:
   std::vector<MiddlewareType>                           middleware_;
-  std::map<function_handler_type, stored_type>          members_;
+  std::map<FunctionHandlerType, stored_type>            members_;
   std::vector<std::shared_ptr<FeedSubscriptionManager>> feeds_;
   Mutex                                                 feeds_mutex_;
 };

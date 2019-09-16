@@ -48,10 +48,10 @@ template <std::size_t BLOCK_SIZE = 2048, typename A = FileBlockType<BLOCK_SIZE>,
 class DocumentStore
 {
 public:
-  using self_type       = DocumentStore<BLOCK_SIZE, A, B, C, D>;
-  using byte_array_type = byte_array::ByteArray;
+  using self_type     = DocumentStore<BLOCK_SIZE, A, B, C, D>;
+  using ByteArrayType = byte_array::ByteArray;
 
-  using file_block_type      = A;
+  using FileBlockType        = A;
   using key_value_index_type = B;
   using file_object_type     = D;
 
@@ -288,10 +288,10 @@ public:
 
   // Hash based functionality - note this will only work if both underlying files
   // have commit functionality
-  byte_array_type Commit()
+  ByteArrayType Commit()
   {
     FETCH_LOCK(mutex_);
-    byte_array_type hash = key_index_.Hash();
+    ByteArrayType hash = key_index_.Hash();
 
     if (key_index_.underlying_stack().HashExists(hash) ||
         file_object_.underlying_stack().HashExists(hash))
@@ -306,7 +306,7 @@ public:
     return hash;
   }
 
-  bool RevertToHash(byte_array_type const &hash)
+  bool RevertToHash(ByteArrayType const &hash)
   {
     FETCH_LOCK(mutex_);
 
@@ -327,7 +327,7 @@ public:
     return true;
   }
 
-  bool HashExists(byte_array_type const &hash)
+  bool HashExists(ByteArrayType const &hash)
   {
     FETCH_LOCK(mutex_);
     return key_index_.underlying_stack().HashExists(hash) &&

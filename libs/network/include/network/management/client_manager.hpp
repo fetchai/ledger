@@ -37,7 +37,7 @@ namespace network {
 class ClientManager
 {
 public:
-  using connection_type      = typename AbstractConnection::shared_type;
+  using ConnectionType       = typename AbstractConnection::shared_type;
   using ConnectionHandleType = typename AbstractConnection::ConnectionHandleType;
 
   static constexpr char const *LOGGING_NAME = "ClientManager";
@@ -47,7 +47,7 @@ public:
     , clients_mutex_{}
   {}
 
-  ConnectionHandleType Join(connection_type client)
+  ConnectionHandleType Join(ConnectionType client)
   {
     ConnectionHandleType handle = client->handle();
     FETCH_LOG_DEBUG(LOGGING_NAME, "Client ", handle, " is joining");
@@ -130,9 +130,9 @@ public:
   }
 
 private:
-  AbstractNetworkServer &                         server_;
-  std::map<ConnectionHandleType, connection_type> clients_;
-  Mutex                                           clients_mutex_;
+  AbstractNetworkServer &                        server_;
+  std::map<ConnectionHandleType, ConnectionType> clients_;
+  Mutex                                          clients_mutex_;
 };
 }  // namespace network
 }  // namespace fetch

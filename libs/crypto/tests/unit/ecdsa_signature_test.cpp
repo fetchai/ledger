@@ -276,7 +276,7 @@ TEST_F(ECDCSASignatureTest, test_canonical_signature_binary_representation_has_e
   ASSERT_TRUE(signature_from_canonical_bin.Verify(priv_key.publicKey(), test_data_));
 
   //* Expectations:
-  EXPECT_EQ(ecdsa_SignatureType::ecdsa_curve_type::signatureSize, signature.signature().size());
+  EXPECT_EQ(ecdsa_SignatureType::EcdsaCurveType::signatureSize, signature.signature().size());
 }
 
 TEST_F(ECDCSASignatureTest, test_moving_semantics_constructor)

@@ -94,9 +94,9 @@ private:
   };
 #pragma pack(pop)
 public:
-  using header_extra_type = D;
-  using type              = T;
-  using EventHandlerType  = std::function<void()>;
+  using HeaderExtraType  = D;
+  using type             = T;
+  using EventHandlerType = std::function<void()>;
 
   MMapRandomAccessStack()
   {
@@ -337,14 +337,14 @@ public:
     }
   }
 
-  void SetExtraHeader(header_extra_type const &he)
+  void SetExtraHeader(HeaderExtraType const &he)
   {
     assert(filename_ != "");
 
     header_->extra = he;
   }
 
-  header_extra_type const &header_extra() const
+  HeaderExtraType const &header_extra() const
   {
     return header_->extra;
   }

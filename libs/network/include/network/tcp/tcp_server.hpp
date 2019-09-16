@@ -46,7 +46,7 @@ class TCPServer : public AbstractNetworkServer
 {
 public:
   using ConnectionHandleType = typename AbstractConnection::ConnectionHandleType;
-  using network_manager_type = NetworkManager;
+  using NetworkManagerType   = NetworkManager;
   using acceptor_type        = asio::ip::tcp::tcp::acceptor;
   using mutex_type           = std::mutex;
 
@@ -58,7 +58,7 @@ public:
     message_type         message;
   };
 
-  TCPServer(uint16_t port, network_manager_type const &network_manager);
+  TCPServer(uint16_t port, NetworkManagerType const &network_manager);
   ~TCPServer() override;
 
   // Start will block until the server has started
@@ -98,7 +98,7 @@ private:
 
   void Accept(std::shared_ptr<asio::ip::tcp::tcp::acceptor> acceptor);
 
-  network_manager_type                      network_manager_;
+  NetworkManagerType                        network_manager_;
   uint16_t                                  port_;
   std::deque<Request>                       requests_;
   mutex_type                                request_mutex_;
