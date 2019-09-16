@@ -535,6 +535,8 @@ def verify_txs(parameters, test_instance):
                     # There is an unavoidable race that can cause you to see a balance of 0
                     # since the TX hasn't changed the state yet
                     if api.tokens.balance(identity) == 0 and balance is not 0:
+                        output(
+                            f"Note: found a balance of 0 when expecting {balance}. Retrying.")
                         pass
                     else:
                         break
