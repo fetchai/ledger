@@ -45,7 +45,6 @@ public:
   using DataType     = typename TensorType::Type;
   using RegPtrType   = std::shared_ptr<fetch::ml::regularisers::Regulariser<T>>;
 
-  virtual void                           Step(typename T::Type learning_rate)         = 0;
   virtual struct fetch::ml::StateDict<T> StateDict() const                            = 0;
   virtual void              LoadStateDict(struct fetch::ml::StateDict<T> const &dict) = 0;
   virtual TensorType const &get_weights() const                                       = 0;

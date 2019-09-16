@@ -25,7 +25,12 @@ namespace vm {
 
 FunctionDecoratorKind DetermineKind(vm::Executable::Function const &fn)
 {
-  FunctionDecoratorKind kind{FunctionDecoratorKind::NORMAL};
+  if (fn.annotations.empty())
+  {
+    return FunctionDecoratorKind::NONE;
+  }
+
+  FunctionDecoratorKind kind{FunctionDecoratorKind::NONE};
 
   // loop through all the function annotations
   if (1u == fn.annotations.size())
@@ -35,7 +40,6 @@ FunctionDecoratorKind DetermineKind(vm::Executable::Function const &fn)
 
     if (annotation.name == "@query")
     {
-      // only update the kind if one hasn't already been specified
       kind = FunctionDecoratorKind::QUERY;
     }
     else if (annotation.name == "@action")
@@ -51,6 +55,16 @@ FunctionDecoratorKind DetermineKind(vm::Executable::Function const &fn)
       FETCH_LOG_WARN("function_decorators", "Invalid decorator: ", annotation.name);
       kind = FunctionDecoratorKind::INVALID;
     }
+  }
+  else
+  {
+    std::ostringstream oss;
+    for (auto const &annotation : fn.annotations)
+    {
+      oss << " " << annotation.name;
+    }
+    FETCH_LOG_WARN("function_decorators", "Multiple decorators found:", oss.str());
+    kind = FunctionDecoratorKind::INVALID;
   }
 
   return kind;

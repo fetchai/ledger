@@ -125,7 +125,7 @@ public:
   // Make sure that the dag has all nodes for a certain epoch
   bool SatisfyEpoch(DAGEpoch const &) override;
 
-  std::vector<DAGNode> GetLatest(bool previous_epoch_only = false) override;
+  std::vector<DAGNode> GetLatest(bool previous_epoch_only) override;
 
   ///////////////////////////////////////
   // Fns used for syncing
@@ -150,8 +150,7 @@ private:
   EpochStackStore      epochs_;  // Past less-relevant epochs as a stack (key = index, value = hash)
   EpochStore all_stored_epochs_;  // All epochs, including from non-winning forks (key = epoch hash,
                                   // val = epoch)
-  DAGNodeStore finalised_dag_nodes_;  // Once an epoch arrives, all dag nodes inbetween go here
-  DAGEpoch     temp_recently_created_epoch_;  // Most recent epoch, not in deque for convenience
+  DAGNodeStore finalised_dag_nodes_;  // Once an epoch arrives, all dag nodes in between go here
 
   // clang-format off
   // volatile state
@@ -162,8 +161,8 @@ private:
   std::unordered_map<NodeHash, std::vector<DAGNodePtr>> loose_nodes_lookup_;  // nodes that are missing one or more references (waiting on NodeHash)
   // clang-format on
 
-  // std::unordered_map<NodeHash, uint64_t>                loose_nodes_ttl_;   // TODO(HUT): loose
-  // nodes management scheme
+  // TODO(1642): loose nodes management scheme
+  // std::unordered_map<NodeHash, uint64_t> loose_nodes_ttl_;
 
   // Used for sync purposes
   std::vector<DAGNode> recently_added_;  // nodes that have been recently added
@@ -171,12 +170,12 @@ private:
 
   // Internal functions don't need locking and can recursively call themselves etc.
   bool       PushInternal(DAGNodePtr node);
-  bool       AlreadySeenInternal(DAGNodePtr node);    // const
-  bool       TooOldInternal(uint64_t);                // const
-  bool       IsLooseInternal(DAGNodePtr node);        // const
-  void       SetReferencesInternal(DAGNodePtr node);  // const
+  bool       AlreadySeenInternal(DAGNodePtr node) const;
+  bool       TooOldInternal(uint64_t) const;
+  bool       IsLooseInternal(DAGNodePtr node) const;
+  void       SetReferencesInternal(DAGNodePtr node);
   void       AdvanceTipsInternal(DAGNodePtr node);
-  bool       HashInPrevEpochsInternal(ConstByteArray hash);  // const
+  bool       HashInPrevEpochsInternal(ConstByteArray hash) const;
   void       AddLooseNodeInternal(DAGNodePtr node);
   void       HealLooseBlocksInternal(ConstByteArray added_hash);
   void       UpdateStaleTipsInternal();
@@ -187,7 +186,6 @@ private:
   bool       GetEpochFromStorage(std::string const &, DAGEpoch &);
   bool       SetEpochInStorage(std::string const &, DAGEpoch const &, bool);
   void       Flush();
-  void       PrintLoose();
 
   void DeleteTip(DAGTipID tip);
   void DeleteTip(NodeHash hash);

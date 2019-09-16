@@ -19,6 +19,7 @@
 
 #include "dmlf/ilearner_networker.hpp"
 #include <memory>
+#include <set>
 
 namespace fetch {
 namespace dmlf {

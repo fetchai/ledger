@@ -20,11 +20,9 @@
 #include "ml/layers/scaled_dot_product_attention.hpp"
 #include "ml/ops/loss_functions.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
-
+#include "ml/regularisers/regulariser.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"
-
-#include "ml/regularisers/regulariser.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
@@ -339,11 +337,6 @@ TYPED_TEST(ScaledDotProductAttention, saveparams_test)
   layer2.SetInput("ScaledDotProductAttention_Value", value_data);
   layer2.SetInput("ScaledDotProductAttention_Mask", mask_data);
 
-  // todo(#1628): temporary fix because placeholders are discarded in serialisation
-  TypeParam sqrt_dk_tensor = std::vector<SizeType>({1, 1, 1});
-  sqrt_dk_tensor(0, 0, 0)  = fetch::math::Sqrt(static_cast<DataType>(key_dim));
-  layer2.SetInput("ScaledDotProductAttention_Sqrt_Key_Dim", sqrt_dk_tensor);
-
   TypeParam prediction2 = layer2.Evaluate(output_name, true);
 
   ASSERT_TRUE(prediction.AllClose(prediction2, fetch::math::function_tolerance<DataType>(),
@@ -354,14 +347,24 @@ TYPED_TEST(ScaledDotProductAttention, saveparams_test)
   TypeParam loss = layer.Evaluate(error_output);
   layer.BackPropagate(error_output);
   layer.ApplyRegularisation();
-  layer.Step(DataType{0.1f});
+  auto grads = layer.GetGradients();
+  for (auto &grad : grads)
+  {
+    grad *= static_cast<DataType>(-0.1);
+  }
+  layer.ApplyGradients(grads);
 
   // train g2
   layer2.SetInput(label_name, labels);
   TypeParam loss2 = layer2.Evaluate(error_output);
   layer2.BackPropagate(error_output);
   layer2.ApplyRegularisation();
-  layer2.Step(DataType{0.1f});
+  auto grads2 = layer2.GetGradients();
+  for (auto &grad : grads2)
+  {
+    grad *= static_cast<DataType>(-0.1);
+  }
+  layer2.ApplyGradients(grads2);
 
   EXPECT_TRUE(loss.AllClose(loss2, fetch::math::function_tolerance<DataType>(),
                             fetch::math::function_tolerance<DataType>()));

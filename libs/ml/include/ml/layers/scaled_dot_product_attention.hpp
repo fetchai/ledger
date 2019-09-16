@@ -22,6 +22,7 @@
 #include "ml/ops/activations/dropout.hpp"
 #include "ml/ops/activations/softmax.hpp"
 #include "ml/ops/add.hpp"
+#include "ml/ops/constant.hpp"
 #include "ml/ops/divide.hpp"
 #include "ml/ops/mask_fill.hpp"
 #include "ml/ops/matrix_multiply.hpp"
@@ -78,7 +79,7 @@ public:
     TensorType sqrt_dk_tensor = std::vector<SizeType>({1, 1, 1});
     sqrt_dk_tensor(0, 0, 0)   = fetch::math::Sqrt(static_cast<DataType>(key_dim_));
     std::string sqrt_dk_ph =
-        this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Sqrt_Key_Dim", {});
+        this->template AddNode<fetch::ml::ops::Constant<TensorType>>(name + "_Sqrt_Key_Dim", {});
     this->SetInput(sqrt_dk_ph, sqrt_dk_tensor);
 
     // scale the QK matrix multiplication

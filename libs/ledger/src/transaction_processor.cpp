@@ -33,6 +33,10 @@
 namespace fetch {
 namespace ledger {
 
+namespace {
+constexpr char const *LOGGING_NAME = "TransactionProcessor";
+}
+
 /**
  * Transaction Processor constructor
  *

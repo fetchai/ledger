@@ -54,7 +54,7 @@ public:
 
   void PrepareOptimiser();
 
-  void Test(DataType &test_loss) override;
+  void Test() override;
 
 private:
   W2VTrainingParams<DataType>                                       tp_;
@@ -102,12 +102,13 @@ void Word2VecClient<TensorType>::PrepareModel()
       this->g_ptr_->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
   std::string context_name =
       this->g_ptr_->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Context", {});
-  this->label_name_ = this->g_ptr_->template AddNode<PlaceHolder<TensorType>>("Label", {});
-  skipgram_         = this->g_ptr_->template AddNode<fetch::ml::layers::SkipGram<TensorType>>(
+  this->label_name_ =
+      this->g_ptr_->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Label", {});
+  skipgram_ = this->g_ptr_->template AddNode<fetch::ml::layers::SkipGram<TensorType>>(
       "SkipGram", {input_name, context_name}, SizeType(1), SizeType(1), tp_.embedding_size,
       w2v_data_loader_ptr_->vocab_size());
 
-  this->error_name_ = this->g_ptr_->template AddNode<CrossEntropyLoss<TensorType>>(
+  this->error_name_ = this->g_ptr_->template AddNode<fetch::ml::ops::CrossEntropyLoss<TensorType>>(
       "Error", {skipgram_, this->label_name_});
 
   this->inputs_names_ = {input_name, context_name};
@@ -116,7 +117,6 @@ void Word2VecClient<TensorType>::PrepareModel()
 template <class TensorType>
 void Word2VecClient<TensorType>::PrepareDataLoader()
 {
-
   w2v_data_loader_ptr_ = std::make_shared<fetch::ml::dataloaders::GraphW2VLoader<DataType>>(
       tp_.window_size, tp_.negative_sample_size, tp_.freq_thresh, tp_.max_word_count);
   w2v_data_loader_ptr_->LoadVocab(tp_.vocab_file);
@@ -129,7 +129,7 @@ template <class TensorType>
 void Word2VecClient<TensorType>::PrepareOptimiser()
 {
   // Initialise Optimiser
-  this->opti_ptr_ = std::make_shared<fetch::ml::optimisers::SGDOptimiser<TensorType>>(
+  this->opti_ptr_ = std::make_shared<fetch::ml::optimisers::AdamOptimiser<TensorType>>(
       this->g_ptr_, this->inputs_names_, this->label_name_, this->error_name_,
       tp_.learning_rate_param);
 }
@@ -139,10 +139,9 @@ void Word2VecClient<TensorType>::PrepareOptimiser()
  * @param test_loss
  */
 template <class TensorType>
-void Word2VecClient<TensorType>::Test(DataType &test_loss)
+void Word2VecClient<TensorType>::Test()
 {
   // TODO(issue 1595): Implement loss mechanism
-  test_loss = static_cast<DataType>(0);
 
   if (this->batch_counter_ % tp_.test_frequency == 1)
   {
@@ -156,7 +155,6 @@ void Word2VecClient<TensorType>::PrintWordAnalogy(TensorType const & embeddings,
                                                   std::string const &word2,
                                                   std::string const &word3, SizeType k)
 {
-
   if (!w2v_data_loader_ptr_->WordKnown(word1) || !w2v_data_loader_ptr_->WordKnown(word2) ||
       !w2v_data_loader_ptr_->WordKnown(word3))
   {

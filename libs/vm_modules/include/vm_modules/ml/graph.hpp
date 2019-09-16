@@ -50,7 +50,7 @@ public:
 
   void BackPropagate(fetch::vm::Ptr<fetch::vm::String> const &name);
 
-  void Step(DataType lr);
+  void Step(DataType const &lr);
 
   void AddPlaceholder(fetch::vm::Ptr<fetch::vm::String> const &name);
 

@@ -24,7 +24,7 @@ namespace vm {
 
 enum class FunctionDecoratorKind
 {
-  NORMAL,   ///< Normal (undecorated) function
+  NONE,     ///< Normal (undecorated) function
   ACTION,   ///< A Transaction handler
   QUERY,    ///< A Query handler
   ON_INIT,  ///< A function to be called on smart contract construction
