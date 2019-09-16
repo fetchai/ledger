@@ -249,15 +249,15 @@ BeaconSetupService::State BeaconSetupService::OnConnectToAll()
   beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::CONNECT_TO_ALL));
 
   std::unordered_set<MuddleAddress> aeon_members;
-  for (auto &m : beacon_->aeon.members)
+  for (auto &member : beacon_->aeon.members)
   {
     // Skipping own address
-    if (m == identity_.identifier())
+    if (member == identity_.identifier())
     {
       continue;
     }
 
-    aeon_members.emplace(m);
+    aeon_members.emplace(member);
   }
 
   // add the outstanding peers
@@ -367,15 +367,15 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
   auto const connected_peers = muddle_.GetDirectlyConnectedPeers();
 
   std::unordered_set<MuddleAddress> aeon_members;
-  for (auto &m : beacon_->aeon.members)
+  for (auto &member : beacon_->aeon.members)
   {
     // Skipping own address
-    if (m == identity_.identifier())
+    if (member == identity_.identifier())
     {
       continue;
     }
 
-    aeon_members.emplace(m);
+    aeon_members.emplace(member);
   }
 
   auto       can_see             = (connected_peers & aeon_members);
@@ -862,16 +862,16 @@ void BeaconSetupService::BroadcastComplaints()
   std::unordered_set<MuddleAddress> complaints_local;
 
   // Add nodes who did not send both coefficients and shares to complaints
-  for (auto const &m : beacon_->aeon.members)
+  for (auto const &member : beacon_->aeon.members)
   {
-    if (m == identity_.identifier())
+    if (member == identity_.identifier())
     {
       continue;
     }
-    if (coefficients_received_.find(m) == coefficients_received_.end() ||
-        shares_received_.find(m) == shares_received_.end())
+    if (coefficients_received_.find(member) == coefficients_received_.end() ||
+        shares_received_.find(member) == shares_received_.end())
     {
-      complaints_local.insert(m);
+      complaints_local.insert(member);
     }
   }
 
@@ -1084,9 +1084,9 @@ void BeaconSetupService::OnNewShares(MuddleAddress                              
   std::lock_guard<std::mutex> lock(mutex_);
   // Check if sender is in cabinet
   bool in_cabinet{false};
-  for (auto &m : beacon_->aeon.members)
+  for (auto &member : beacon_->aeon.members)
   {
-    if (m == from)
+    if (member == from)
     {
       in_cabinet = true;
     }
@@ -1269,9 +1269,9 @@ bool BeaconSetupService::BuildQual()
 {
   // Create set of muddle addresses
   std::set<MuddleAddress> cabinet;
-  for (auto &m : beacon_->aeon.members)
+  for (auto &member : beacon_->aeon.members)
   {
-    cabinet.insert(m);
+    cabinet.insert(member);
   }
   beacon_->manager.SetQual(complaint_answers_manager_.BuildQual(cabinet));
   std::set<MuddleAddress> qual = beacon_->manager.qual();
@@ -1323,9 +1323,9 @@ bool BeaconSetupService::BasicMsgCheck(MuddleAddress const &              from,
 {
   // Check if sender is in cabinet
   bool in_cabinet{false};
-  for (auto &m : beacon_->aeon.members)
+  for (auto &member : beacon_->aeon.members)
   {
-    if (m == from)
+    if (member == from)
     {
       in_cabinet = true;
     }

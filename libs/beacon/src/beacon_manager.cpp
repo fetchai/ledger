@@ -124,10 +124,10 @@ bool BeaconManager::AddCoefficients(MuddleAddress const &           from,
 {
   if (coefficients.size() == polynomial_degree_ + 1)
   {
-    for (uint32_t ii = 0; ii <= polynomial_degree_; ++ii)
+    for (uint32_t i = 0; i <= polynomial_degree_; ++i)
     {
       bool c_set{false};
-      C_ik[identity_to_index_[from]][ii].setStr(&c_set, coefficients[ii].data());
+      C_ik[identity_to_index_[from]][i].setStr(&c_set, coefficients[i].data());
       if (!c_set)
       {
         FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
@@ -272,10 +272,10 @@ bool BeaconManager::AddQualCoefficients(MuddleAddress const &           from,
   CabinetIndex from_index = identity_to_index_[from];
   if (coefficients.size() == polynomial_degree_ + 1)
   {
-    for (uint32_t ii = 0; ii <= polynomial_degree_; ++ii)
+    for (uint32_t i = 0; i <= polynomial_degree_; ++i)
     {
       bool a_set{false};
-      A_ik[from_index][ii].setStr(&a_set, coefficients[ii].data());
+      A_ik[from_index][i].setStr(&a_set, coefficients[i].data());
       if (!a_set)
       {
         FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
@@ -339,7 +339,7 @@ BeaconManager::MuddleAddress BeaconManager::VerifyQualComplaint(MuddleAddress co
 {
   CabinetIndex from_index   = identity_to_index_[from];
   CabinetIndex victim_index = identity_to_index_[answer.first];
-  // verify complaint, i.e. (4) holds (5) not
+
   PublicKey  lhs;
   PublicKey  rhs;
   PrivateKey s;
@@ -348,7 +348,7 @@ BeaconManager::MuddleAddress BeaconManager::VerifyQualComplaint(MuddleAddress co
   bool       sprime_set{false};
   s.setStr(&s_set, answer.second.first.data());
   sprime.setStr(&sprime_set, answer.second.second.data());
-  // check equation (4)
+
   if (s_set && sprime_set)
   {
     lhs = crypto::mcl::ComputeLHS(group_g_, group_h_, s, sprime);
@@ -362,7 +362,6 @@ BeaconManager::MuddleAddress BeaconManager::VerifyQualComplaint(MuddleAddress co
     }
     else
     {
-      // check equation (5)
       bn::G2::mul(lhs, group_g_, s);  // G^s
       rhs = crypto::mcl::ComputeRHS(from_index, A_ik[victim_index]);
       if (lhs != rhs)
@@ -471,7 +470,7 @@ void BeaconManager::VerifyReconstructionShare(MuddleAddress const &from, Exposed
   {
     lhs = crypto::mcl::ComputeLHS(group_g_, group_h_, s, sprime);
     rhs = crypto::mcl::ComputeRHS(identity_to_index_[from], C_ik[victim_index]);
-    // check equation (4)
+
     if (lhs == rhs)
     {
       AddReconstructionShare(from, {share.first, share.second.first});
