@@ -98,7 +98,7 @@ TEST(beacon_manager, dkg_and_threshold_signing)
     manager->GenerateCoefficients();
   }
 
-  // Checks
+  // Checks on coefficients and shares
   for (uint32_t index = 0; index < cabinet_size; ++index)
   {
     std::shared_ptr<BeaconManager> manager      = beacon_managers[index];
@@ -143,9 +143,10 @@ TEST(beacon_manager, dkg_and_threshold_signing)
             beacon_managers[1]->GetOwnShares(my_address));
 
   // Add shares and coefficients failing verification from malicious party
-  PrivateKey s_i;
-  PrivateKey sprime_i;
-  s_i.setStr(beacon_managers[2]->GetOwnShares(my_address).first);
+  PrivateKey  s_i;
+  PrivateKey  sprime_i;
+  std::string malicious_share1 = beacon_managers[2]->GetOwnShares(my_address).first;
+  s_i.setStr(malicious_share1);
   // Modify one shares
   PrivateKey tmp;
   tmp.setRand();

@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "crypto/mcl_dkg.hpp"
-#define MCLBN_FP_UNIT_SIZE 4
 
 #include "gtest/gtest.h"
 
@@ -27,62 +26,6 @@
 
 using namespace fetch::crypto::mcl;
 using namespace fetch::byte_array;
-
-TEST(MclTests, BaseMcl)
-{
-  const char *aa = "12723517038133731887338407189719511622662176727675373276651903807414909099441";
-  const char *ab = "4168783608814932154536427934509895782246573715297911553964171371032945126671";
-  const char *ba = "13891744915211034074451795021214165905772212241412891944830863846330766296736";
-  const char *bb = "7937318970632701341203597196594272556916396164729705624521405069090520231616";
-
-  mcl::bn::initPairing();
-  mcl::bn::G2 Q(mcl::bn::Fp2(aa, ab), mcl::bn::Fp2(ba, bb));
-  mcl::bn::G1 P(-1, 1);
-
-  // Comparison
-  {
-    mcl::bn::G2 Q0;
-    Q0.clear();
-    EXPECT_NE(Q0, Q);
-    mcl::bn::G2 Q1;
-    Q1.clear();
-    EXPECT_EQ(Q1, Q0);
-    mcl::bn::G1 P0;
-    P0.clear();
-    EXPECT_NE(P0, P);
-    mcl::bn::G1 P1;
-    P1.clear();
-    EXPECT_EQ(P1, P0);
-  }
-
-  // Serialization to string
-  {
-    std::string s = Q.getStr();
-    mcl::bn::G2 Q2;
-    Q2.setStr(s);
-    std::string s2 = Q2.getStr();
-    EXPECT_EQ(s2, s);
-    EXPECT_EQ(Q2, Q);
-  }
-
-  // Minimum sample
-  {
-    const mpz_class a = 123;
-    const mpz_class b = 456;
-    mcl::bn::Fp12   e1, e2;
-    mcl::bn::pairing(e1, P, Q);
-    mcl::bn::G2 aQ;
-    mcl::bn::G1 bP;
-    mcl::bn::G2::mul(aQ, Q, a);
-    mcl::bn::G1::mul(bP, P, b);
-    mcl::bn::pairing(e2, bP, aQ);
-    mcl::bn::Fp12::pow(e1, e1, a * b);
-    EXPECT_EQ(e1, e2);
-  }
-
-  // opsize
-  EXPECT_EQ(sizeof(mcl::fp::Unit), 8);
-}
 
 TEST(MclDkgTests, ComputeLhsRhs)
 {
