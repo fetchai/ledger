@@ -3,7 +3,6 @@ bugprone-*,\
 google-build-namespaces,\
 -google-explicit-constructor,\
 google-readability-todo,\
-google-runtime-int,\
 google-runtime-operator,\
 misc-suspicious-*,\
 misc-unused-*,\

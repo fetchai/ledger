@@ -24,15 +24,15 @@
 //  │      │           │           │           │           │
 //  └──────┴───────────┴───────────┴───────────┴───────────┘
 
+#include "core/assert.hpp"
+#include "storage/fetch_mmap.hpp"
+#include "storage/storage_exception.hpp"
+
 #include <algorithm>
 #include <cassert>
 #include <fstream>
 #include <functional>
 #include <string>
-
-#include "core/assert.hpp"
-#include "storage/fetch_mmap.hpp"
-#include "storage/storage_exception.hpp"
 
 namespace fetch {
 namespace platform {
@@ -55,8 +55,7 @@ namespace storage {
  *
  * MAX is the count of map-able Objects at one time
  */
-
-template <typename T, typename D = uint64_t, uint64_t MAX = 256>
+template <typename T, typename D = uint64_t, unsigned long MAX = 256>  // NOLINT
 class MMapRandomAccessStack
 {
 private:
