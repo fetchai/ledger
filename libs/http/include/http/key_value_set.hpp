@@ -98,8 +98,6 @@ public:
   {
     this->clear();
   }
-
-private:
 };
 }  // namespace http
 }  // namespace fetch

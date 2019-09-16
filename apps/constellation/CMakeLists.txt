@@ -14,8 +14,6 @@ add_executable(constellation
                constellation.cpp
                constellation.hpp
                health_check_http_module.hpp
-               key_generator.cpp
-               key_generator.hpp
                logging_http_module.hpp
                main.cpp
                manifest_builder.cpp

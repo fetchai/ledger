@@ -160,6 +160,13 @@ void BuildNodeAndInsertTrainables(NodeSaveableParams<T> const &nsp, std::string 
     g->AddTrainable(node, name);
     break;
   }
+  case ops::Constant<T>::OpCode():
+  {
+    op_ptr = GetOp<ops::Constant<T>>(nsp.op_save_params);
+    node->SetNodeSaveableParams(nsp, op_ptr);
+    g->AddTrainable(node, name);
+    break;
+  }
   case ops::Convolution1D<T>::OpCode():
   {
     op_ptr = GetOp<ops::Convolution1D<T>>(nsp.op_save_params);

@@ -17,11 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include <utility>
-
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
 #include "network/management/connection_register.hpp"
 #include "network/service/service_client.hpp"
+
+#include <atomic>
+#include <utility>
 
 namespace fetch {
 namespace ledger {

@@ -81,13 +81,13 @@ public:
 
   void Forward(VecTensorType const &inputs, TensorType &output) override
   {
-    assert(this->output_);
+    assert(this->data_);
     assert(inputs.size() == 1);
     assert(inputs.front()->shape().size() == 2);
 
     SizeType batch_size = inputs.front()->shape().at(1);
 
-    assert(output.shape().at(0) == this->output_->shape().at(0));
+    assert(output.shape().at(0) == this->data_->shape().at(0));
     assert(output.shape().at(1) == inputs.front()->shape().at(0));
     assert(output.shape().at(2) == batch_size);
 
@@ -102,7 +102,7 @@ public:
         trailing_indices1_.at(1) = n;
         auto embedding_view      = output.View(trailing_indices1_);
         trailing_indices2_.at(0) = static_cast<SizeType>(*e_it);
-        auto output_view         = this->output_->View(trailing_indices2_);
+        auto output_view         = this->data_->View(trailing_indices2_);
 
         embedding_view.Assign(output_view);
         ++e_it;
@@ -149,8 +149,8 @@ public:
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
-    std::vector<SizeType> output_shape = {
-        this->output_->shape().at(0), inputs.front()->shape().at(0), inputs.front()->shape().at(1)};
+    std::vector<SizeType> output_shape = {this->data_->shape().at(0), inputs.front()->shape().at(0),
+                                          inputs.front()->shape().at(1)};
     return output_shape;
   }
 

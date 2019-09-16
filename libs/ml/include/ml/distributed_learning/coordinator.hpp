@@ -19,6 +19,7 @@
 
 #include "core/random.hpp"
 #include "math/base_types.hpp"
+
 #include <mutex>
 
 namespace fetch {

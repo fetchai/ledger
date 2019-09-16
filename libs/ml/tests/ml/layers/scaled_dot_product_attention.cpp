@@ -20,11 +20,9 @@
 #include "ml/layers/scaled_dot_product_attention.hpp"
 #include "ml/ops/loss_functions.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
-
+#include "ml/regularisers/regulariser.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"
-
-#include "ml/regularisers/regulariser.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
@@ -338,11 +336,6 @@ TYPED_TEST(ScaledDotProductAttention, saveparams_test)
   layer2.SetInput("ScaledDotProductAttention_Key", key_data);
   layer2.SetInput("ScaledDotProductAttention_Value", value_data);
   layer2.SetInput("ScaledDotProductAttention_Mask", mask_data);
-
-  // todo(#1628): temporary fix because placeholders are discarded in serialisation
-  TypeParam sqrt_dk_tensor = std::vector<SizeType>({1, 1, 1});
-  sqrt_dk_tensor(0, 0, 0)  = fetch::math::Sqrt(static_cast<DataType>(key_dim));
-  layer2.SetInput("ScaledDotProductAttention_Sqrt_Key_Dim", sqrt_dk_tensor);
 
   TypeParam prediction2 = layer2.Evaluate(output_name, true);
 

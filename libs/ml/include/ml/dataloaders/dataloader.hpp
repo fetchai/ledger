@@ -44,14 +44,7 @@ public:
   using SizeVector = fetch::math::SizeVector;
   using ReturnType = std::pair<LabelType, std::vector<InputType>>;
 
-  /**
-   * Dataloaders are required to provide label and InputType shapes to the parent Dataloader
-   * @param random_mode
-   * @param label_shape
-   * @param data_shapes
-   */
-  explicit DataLoader()
-  {}
+  explicit DataLoader() = default;
 
   virtual ~DataLoader() = default;
 
