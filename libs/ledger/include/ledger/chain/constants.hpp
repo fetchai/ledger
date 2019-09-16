@@ -26,6 +26,10 @@ namespace ledger {
 
 constexpr uint64_t FINALITY_PERIOD = 10;
 
+// consensus related
+extern uint64_t STAKE_WARM_UP_PERIOD;
+extern uint64_t STAKE_COOL_DOWN_PERIOD;
+
 extern Digest GENESIS_DIGEST;
 extern Digest GENESIS_MERKLE_ROOT;
 

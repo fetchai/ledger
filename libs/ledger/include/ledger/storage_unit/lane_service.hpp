@@ -19,9 +19,9 @@
 
 #include "core/reactor.hpp"
 #include "ledger/shard_config.hpp"
+#include "muddle/muddle_interface.hpp"
 #include "network/generics/backgrounded_work.hpp"
 #include "network/generics/has_worker_thread.hpp"
-#include "network/muddle/muddle.hpp"
 #include "storage/object_store_protocol.hpp"
 #include "storage/transient_object_store.hpp"
 
@@ -52,11 +52,8 @@ namespace ledger {
 class TxFinderProtocol;
 class TransactionStoreSyncProtocol;
 class TransactionStoreSyncService;
-class LaneIdentityProtocol;
 class LaneController;
 class LaneControllerProtocol;
-class LaneIdentity;
-class LaneIdentityProtocol;
 class Transaction;
 
 class LaneService
@@ -64,8 +61,8 @@ class LaneService
 public:
   static constexpr char const *LOGGING_NAME = "LaneService";
 
-  using Muddle         = muddle::Muddle;
-  using CertificatePtr = Muddle::CertificatePtr;
+  using MuddlePtr      = muddle::MuddlePtr;
+  using CertificatePtr = muddle::ProverPtr;
   using NetworkManager = network::NetworkManager;
 
   enum class Mode
@@ -74,9 +71,8 @@ public:
     LOAD_DATABASE
   };
 
-  // TODO(issue 7): Make config JSON
   // Construction / Destruction
-  explicit LaneService(NetworkManager nm, ShardConfig config, bool sign_packets, Mode mode);
+  explicit LaneService(NetworkManager const &nm, ShardConfig config, Mode mode);
   LaneService(LaneService const &) = delete;
   LaneService(LaneService &&)      = delete;
   ~LaneService();
@@ -97,7 +93,6 @@ public:
 
 private:
   using Reactor                   = core::Reactor;
-  using MuddlePtr                 = std::shared_ptr<Muddle>;
   using Server                    = fetch::muddle::rpc::Server;
   using ServerPtr                 = std::shared_ptr<Server>;
   using StateDb                   = storage::NewRevertibleDocumentStore;
@@ -115,8 +110,6 @@ private:
   using TxStoreProtoPtr           = std::shared_ptr<TxStoreProto>;
   using TxSyncProtoPtr            = std::shared_ptr<TransactionStoreSyncProtocol>;
   using TxSyncServicePtr          = std::shared_ptr<TransactionStoreSyncService>;
-  using LaneIdentityPtr           = std::shared_ptr<LaneIdentity>;
-  using LaneIdentityProtocolPtr   = std::shared_ptr<LaneIdentityProtocol>;
   using TxFinderProtocolPtr       = std::unique_ptr<TxFinderProtocol>;
 
   static constexpr uint32_t SYNC_PERIOD_MS = 500;
@@ -139,12 +132,6 @@ private:
   /// @{
   ServerPtr internal_rpc_server_;
   MuddlePtr internal_muddle_;
-  /// @}
-
-  /// @name Lane Identity Service
-  /// @{
-  LaneIdentityPtr         lane_identity_;
-  LaneIdentityProtocolPtr lane_identity_protocol_;
   /// @}
 
   /// @name Lane Controller

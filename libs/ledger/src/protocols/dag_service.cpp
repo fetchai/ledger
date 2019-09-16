@@ -18,8 +18,8 @@
 
 #include "core/service_ids.hpp"
 #include "ledger/protocols/dag_service.hpp"
-#include "network/muddle/muddle.hpp"
-#include "network/muddle/rpc/server.hpp"
+#include "muddle/muddle_endpoint.hpp"
+#include "muddle/rpc/server.hpp"
 
 #include <memory>
 #include <utility>

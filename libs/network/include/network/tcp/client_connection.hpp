@@ -151,6 +151,8 @@ public:
 
   void Close() override
   {
+    DeactivateSelfManage();
+
     shutting_down_ = true;
     auto socket    = socket_.lock();
     if (socket)
@@ -382,7 +384,11 @@ private:
     }
     else
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to lock socket in WriteNext!");
+      if (!shutting_down_)
+      {
+        FETCH_LOG_ERROR(LOGGING_NAME, "Failed to lock socket in WriteNext!");
+      }
+
       SignalLeave();
     }
   }
