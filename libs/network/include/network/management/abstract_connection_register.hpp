@@ -40,7 +40,7 @@ public:
   using ConnectionHandleType    = uint64_t;
   using WeakServiceClientType   = std::weak_ptr<service::ServiceClient>;
   using SharedServiceClientType = std::shared_ptr<service::ServiceClient>;
-  using service_MapType         = std::unordered_map<ConnectionHandleType, WeakServiceClientType>;
+  using ServiceMapType          = std::unordered_map<ConnectionHandleType, WeakServiceClientType>;
 
   static constexpr char const *LOGGING_NAME = "AbstractConnectionRegister";
 
@@ -69,15 +69,15 @@ public:
   }
 
   // TODO(kll): Rename this to match ServiceClients below.
-  void WithServices(std::function<void(service_MapType const &)> f) const
+  void WithServices(std::function<void(ServiceMapType const &)> f) const
   {
     FETCH_LOCK(service_lock_);
     f(services_);
   }
 
-  void VisitServiceClients(std::function<void(service_MapType::value_type const &)> f) const
+  void VisitServiceClients(std::function<void(ServiceMapType ::value_type const &)> f) const
   {
-    std::list<service_MapType::value_type> keys;
+    std::list<ServiceMapType ::value_type> keys;
 
     {
       FETCH_LOCK(service_lock_);
@@ -102,7 +102,7 @@ public:
       std::function<void(ConnectionHandleType const &, SharedServiceClientType)> f) const
   {
     FETCH_LOG_WARN(LOGGING_NAME, "About to visit ", services_.size(), " service clients");
-    std::list<service_MapType::value_type> keys;
+    std::list<ServiceMapType ::value_type> keys;
 
     {
       FETCH_LOCK(service_lock_);
@@ -154,7 +154,7 @@ protected:
 
 private:
   mutable Mutex         service_lock_;
-  service_MapType       services_;
+  ServiceMapType        services_;
   std::atomic<uint64_t> number_of_services_;
 };
 

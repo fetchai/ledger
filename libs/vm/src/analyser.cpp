@@ -113,10 +113,10 @@ void Analyser::Initialise()
 
   TypePtrArray const integer_types = {int8_type_,  uint8_type_,  int16_type_, uint16_type_,
                                       int32_type_, uint32_type_, int64_type_, uint64_type_};
-  TypePtrArray const NumberTypes   = {int8_type_,    uint8_type_,   int16_type_,   uint16_type_,
-                                    int32_type_,   uint32_type_,  int64_type_,   uint64_type_,
-                                    float32_type_, float64_type_, fixed32_type_, fixed64_type_};
-  for (auto const &type : NumberTypes)
+  TypePtrArray const number_types  = {int8_type_,    uint8_type_,   int16_type_,   uint16_type_,
+                                     int32_type_,   uint32_type_,  int64_type_,   uint64_type_,
+                                     float32_type_, float64_type_, fixed32_type_, fixed64_type_};
+  for (auto const &type : number_types)
   {
     EnableOperator(type, Operator::Equal);
     EnableOperator(type, Operator::NotEqual);
@@ -161,11 +161,10 @@ void Analyser::Initialise()
   CreateTemplateType("Array", TypeIndex(typeid(IArray)), {any_type_}, TypeIds::Unknown,
                      array_type_);
   CreateTemplateType("Map", TypeIndex(typeid(IMap)), {any_type_, any_type_}, TypeIds::Unknown,
-                     MapType_);
-  CreateTemplateType("State", TypeIndex(typeid(IState)), {any_type_}, TypeIds::Unknown,
-                     state_type_);
+                     map_type_);
+  CreateTemplateType("State", TypeIndex(typeid(IState)), {any_type_}, TypeIds::Unknown, StateType_);
   CreateTemplateType("ShardedState", TypeIndex(typeid(IShardedState)), {any_type_},
-                     TypeIds::Unknown, sharded_state_type_);
+                     TypeIds::Unknown, sharded_StateType_);
 }
 
 void Analyser::UnInitialise()
@@ -209,10 +208,10 @@ void Analyser::UnInitialise()
   any_floating_point_type_  = nullptr;
   matrix_type_              = nullptr;
   array_type_               = nullptr;
-  MapType_                  = nullptr;
-  state_type_               = nullptr;
+  map_type_                 = nullptr;
+  StateType_                = nullptr;
   address_type_             = nullptr;
-  sharded_state_type_       = nullptr;
+  sharded_StateType_        = nullptr;
   initialiser_list_type_    = nullptr;
 }
 
@@ -232,11 +231,11 @@ void Analyser::CreateInstantiationType(TypeIndex type_index, TypeIndex template_
 
 void Analyser::CreateFreeFunction(std::string const &   name,
                                   TypeIndexArray const &parameter_type_index_array,
-                                  TypeIndex ReturnType_index, Handler const &handler,
+                                  TypeIndex return_type_index, Handler const &handler,
                                   ChargeAmount charge)
 {
-  CreateFreeFunction(name, GetTypes(parameter_type_index_array), GetType(ReturnType_index), handler,
-                     charge);
+  CreateFreeFunction(name, GetTypes(parameter_type_index_array), GetType(return_type_index),
+                     handler, charge);
 }
 
 void Analyser::CreateConstructor(TypeIndex             type_index,
@@ -248,21 +247,21 @@ void Analyser::CreateConstructor(TypeIndex             type_index,
 
 void Analyser::CreateStaticMemberFunction(TypeIndex type_index, std::string const &function_name,
                                           TypeIndexArray const &parameter_type_index_array,
-                                          TypeIndex ReturnType_index, Handler const &handler,
+                                          TypeIndex return_type_index, Handler const &handler,
                                           ChargeAmount charge)
 {
   CreateStaticMemberFunction(GetType(type_index), function_name,
-                             GetTypes(parameter_type_index_array), GetType(ReturnType_index),
+                             GetTypes(parameter_type_index_array), GetType(return_type_index),
                              handler, charge);
 }
 
 void Analyser::CreateMemberFunction(TypeIndex type_index, std::string const &function_name,
                                     TypeIndexArray const &parameter_type_index_array,
-                                    TypeIndex ReturnType_index, Handler const &handler,
+                                    TypeIndex return_type_index, Handler const &handler,
                                     ChargeAmount charge)
 {
   CreateMemberFunction(GetType(type_index), function_name, GetTypes(parameter_type_index_array),
-                       GetType(ReturnType_index), handler, charge);
+                       GetType(return_type_index), handler, charge);
 }
 
 void Analyser::EnableOperator(TypeIndex type_index, Operator op)
@@ -286,9 +285,9 @@ bool Analyser::Analyse(BlockNodePtr const &root, std::vector<std::string> &error
   blocks_.clear();
   loops_.clear();
   state_constructor_ =
-      function_map_.Find(BuildUniqueId(state_type_, CONSTRUCTOR, {string_type_}, state_type_));
+      function_map_.Find(BuildUniqueId(StateType_, CONSTRUCTOR, {string_type_}, StateType_));
   sharded_state_constructor_ = function_map_.Find(
-      BuildUniqueId(sharded_state_type_, CONSTRUCTOR, {string_type_}, sharded_state_type_));
+      BuildUniqueId(sharded_StateType_, CONSTRUCTOR, {string_type_}, sharded_StateType_));
   assert(state_constructor_ && sharded_state_constructor_);
   state_definitions_.Clear();
   function_     = nullptr;
@@ -422,11 +421,11 @@ void Analyser::BuildPersistentStatement(NodePtr const &node)
   TypePtr template_type;
   if (modifier_node && (modifier_node->text == "sharded"))
   {
-    template_type = sharded_state_type_;
+    template_type = sharded_StateType_;
   }
   else
   {
-    template_type = state_type_;
+    template_type = StateType_;
   }
   std::string instantation_name = template_type->name + "<" + managed_type->name + ">";
   TypePtr     instantation_type;
@@ -489,21 +488,21 @@ void Analyser::BuildFunctionDefinition(BlockNodePtr const &parent_block_node,
     parameter_types.push_back(parameter_type);
     parameter_nodes.push_back(parameter_node);
   }
-  TypePtr           ReturnType;
-  ExpressionNodePtr ReturnType_node =
+  TypePtr           return_type;
+  ExpressionNodePtr return_type_node =
       ConvertToExpressionNodePtr(function_definition_node->children[std::size_t(count - 1)]);
-  if (ReturnType_node)
+  if (return_type_node)
   {
-    ReturnType = FindType(ReturnType_node);
-    if (ReturnType == nullptr)
+    return_type = FindType(return_type_node);
+    if (return_type == nullptr)
     {
-      AddError(ReturnType_node->line, "unknown type '" + ReturnType_node->text + "'");
+      AddError(return_type_node->line, "unknown type '" + return_type_node->text + "'");
       ++problems;
     }
   }
   else
   {
-    ReturnType = void_type_;
+    return_type = void_type_;
   }
   if (problems)
   {
@@ -528,7 +527,7 @@ void Analyser::BuildFunctionDefinition(BlockNodePtr const &parent_block_node,
     parent_block_node->symbols->Add(fg);
   }
   FunctionPtr function =
-      CreateUserDefinedFreeFunction(name, parameter_types, parameter_variables, ReturnType);
+      CreateUserDefinedFreeFunction(name, parameter_types, parameter_variables, return_type);
   fg->functions.push_back(function);
   identifier_node->function = function;
   BuildBlock(function_definition_node);
@@ -692,7 +691,7 @@ void Analyser::AnnotateBlock(BlockNodePtr const &block_node)
         ExpressionNodePtr child =
             CreateExpressionNode(NodeKind::Identifier, variable->name, use_any_node_->line);
         child->variable         = variable;
-        FunctionPtr constructor = (variable->type->template_type == sharded_state_type_)
+        FunctionPtr constructor = (variable->type->template_type == sharded_StateType_)
                                       ? sharded_state_constructor_
                                       : state_constructor_;
         child->function = constructor;
@@ -722,7 +721,7 @@ void Analyser::AnnotateFunctionDefinitionStatement(BlockNodePtr const &function_
   AnnotateBlock(function_definition_node);
   if (errors_.size() == 0)
   {
-    if (!function_->ReturnType->IsVoid())
+    if (!function_->return_type->IsVoid())
     {
       if (TestBlock(function_definition_node))
       {
@@ -823,7 +822,7 @@ void Analyser::AnnotateUseStatement(BlockNodePtr const &parent_block_node, NodeP
   }
   if (list_node)
   {
-    if (type->template_type != sharded_state_type_)
+    if (type->template_type != sharded_StateType_)
     {
       AddError(list_node->line, "key list can only be used with a sharded state");
       return;
@@ -852,9 +851,8 @@ void Analyser::AnnotateUseStatement(BlockNodePtr const &parent_block_node, NodeP
   VariablePtr variable = CreateVariable(VariableKind::Use, variable_name);
   variable->type       = type;
   parent_block_node->symbols->Add(variable);
-  FunctionPtr constructor = (type->template_type == sharded_state_type_)
-                                ? sharded_state_constructor_
-                                : state_constructor_;
+  FunctionPtr constructor =
+      (type->template_type == sharded_StateType_) ? sharded_state_constructor_ : state_constructor_;
   name_node->variable = variable;
   name_node->function = constructor;
 }
@@ -977,7 +975,7 @@ void Analyser::AnnotateReturnStatement(NodePtr const &return_statement_node)
     }
     if (expression_node->node_kind == NodeKind::InitialiserList)
     {
-      if (!ConvertInitialiserList(expression_node, function_->ReturnType))
+      if (!ConvertInitialiserList(expression_node, function_->return_type))
       {
         AddError(expression_node->line, "incompatible types");
         return;
@@ -985,8 +983,8 @@ void Analyser::AnnotateReturnStatement(NodePtr const &return_statement_node)
     }
     else if (!expression_node->type->IsNull())
     {
-      // note: function_->ReturnType can be Void
-      if (expression_node->type != function_->ReturnType)
+      // note: function_->return_type can be Void
+      if (expression_node->type != function_->return_type)
       {
         AddError(expression_node->line, "type does not match function return type");
         return;
@@ -994,19 +992,19 @@ void Analyser::AnnotateReturnStatement(NodePtr const &return_statement_node)
     }
     else
     {
-      // note: function_->ReturnType can be Void
-      if (function_->ReturnType->IsPrimitive())
+      // note: function_->return_type can be Void
+      if (function_->return_type->IsPrimitive())
       {
         AddError(expression_node->line, "unable to return null");
         return;
       }
       // Convert the null type to the known return type of the function
-      expression_node->type = function_->ReturnType;
+      expression_node->type = function_->return_type;
     }
   }
   else
   {
-    if (!function_->ReturnType->IsVoid())
+    if (!function_->return_type->IsVoid())
     {
       AddError(return_statement_node->line, "return does not supply a value");
       return;
@@ -1788,7 +1786,7 @@ bool Analyser::AnnotateIndexOp(ExpressionNodePtr const &node)
     supplied_index_node->type             = actual_IndexTypes[i - 1];
   }
 
-  TypePtr output_type = ResolveType(f->ReturnType, lhs->type);
+  TypePtr output_type = ResolveType(f->return_type, lhs->type);
   SetLVExpression(node, output_type);
   node->function = f;
   return true;
@@ -1981,8 +1979,8 @@ bool Analyser::AnnotateInvokeOp(ExpressionNodePtr const &node)
       supplied_parameter_node->type             = actual_parameter_types[i - 1];
     }
 
-    TypePtr ReturnType = ResolveType(f->ReturnType, lhs->type);
-    SetRVExpression(node, ReturnType);
+    TypePtr return_type = ResolveType(f->return_type, lhs->type);
+    SetRVExpression(node, return_type);
     node->function = f;
     return true;
   }
@@ -2601,17 +2599,17 @@ TypePtr Analyser::InternalCreateInstantiationType(TypeKind type_kind, TypePtr co
 }
 
 void Analyser::CreateFreeFunction(std::string const &name, TypePtrArray const &parameter_types,
-                                  TypePtr const &ReturnType, Handler const &handler,
+                                  TypePtr const &return_type, Handler const &handler,
                                   ChargeAmount charge)
 {
-  std::string unique_id = BuildUniqueId(nullptr, name, parameter_types, ReturnType);
+  std::string unique_id = BuildUniqueId(nullptr, name, parameter_types, return_type);
   if (function_map_.Find(unique_id))
   {
     // Already created
     return;
   }
   FunctionPtr f = CreateFunction(FunctionKind::FreeFunction, name, unique_id, parameter_types,
-                                 VariablePtrArray(), ReturnType);
+                                 VariablePtrArray(), return_type);
   AddFunctionToSymbolTable(symbols_, f);
   AddFunctionInfo(f, handler, charge);
   function_map_.Add(unique_id, f);
@@ -2635,34 +2633,34 @@ void Analyser::CreateConstructor(TypePtr const &type, TypePtrArray const &parame
 
 void Analyser::CreateStaticMemberFunction(TypePtr const &type, std::string const &name,
                                           TypePtrArray const &parameter_types,
-                                          TypePtr const &ReturnType, Handler const &handler,
+                                          TypePtr const &return_type, Handler const &handler,
                                           ChargeAmount charge)
 {
-  std::string unique_id = BuildUniqueId(type, name, parameter_types, ReturnType);
+  std::string unique_id = BuildUniqueId(type, name, parameter_types, return_type);
   if (function_map_.Find(unique_id))
   {
     // Already created
     return;
   }
   FunctionPtr f = CreateFunction(FunctionKind::StaticMemberFunction, name, unique_id,
-                                 parameter_types, VariablePtrArray(), ReturnType);
+                                 parameter_types, VariablePtrArray(), return_type);
   AddFunctionToSymbolTable(type->symbols, f);
   AddFunctionInfo(f, handler, charge);
   function_map_.Add(unique_id, f);
 }
 
 void Analyser::CreateMemberFunction(TypePtr const &type, std::string const &name,
-                                    TypePtrArray const &parameter_types, TypePtr const &ReturnType,
+                                    TypePtrArray const &parameter_types, TypePtr const &return_type,
                                     Handler const &handler, ChargeAmount charge)
 {
-  std::string unique_id = BuildUniqueId(type, name, parameter_types, ReturnType);
+  std::string unique_id = BuildUniqueId(type, name, parameter_types, return_type);
   if (function_map_.Find(unique_id))
   {
     // Already created
     return;
   }
   FunctionPtr f = CreateFunction(FunctionKind::MemberFunction, name, unique_id, parameter_types,
-                                 VariablePtrArray(), ReturnType);
+                                 VariablePtrArray(), return_type);
   AddFunctionToSymbolTable(type->symbols, f);
   AddFunctionInfo(f, handler, charge);
   function_map_.Add(unique_id, f);
@@ -2671,10 +2669,10 @@ void Analyser::CreateMemberFunction(TypePtr const &type, std::string const &name
 FunctionPtr Analyser::CreateUserDefinedFreeFunction(std::string const &     name,
                                                     TypePtrArray const &    parameter_types,
                                                     VariablePtrArray const &parameter_variables,
-                                                    TypePtr const &         ReturnType)
+                                                    TypePtr const &         return_type)
 {
   return CreateFunction(FunctionKind::UserDefinedFreeFunction, name, name, parameter_types,
-                        parameter_variables, ReturnType);
+                        parameter_variables, return_type);
 }
 
 void Analyser::EnableIndexOperator(TypePtr const &type, TypePtrArray const &input_types,
@@ -2734,7 +2732,7 @@ void Analyser::AddFunctionInfo(FunctionPtr const &function, Handler const &handl
 }
 
 std::string Analyser::BuildUniqueId(TypePtr const &type, std::string const &function_name,
-                                    TypePtrArray const &parameter_types, TypePtr const &ReturnType)
+                                    TypePtrArray const &parameter_types, TypePtr const &return_type)
 {
   std::stringstream stream;
   if (type)
@@ -2751,7 +2749,7 @@ std::string Analyser::BuildUniqueId(TypePtr const &type, std::string const &func
       stream << ",";
     }
   }
-  stream << "^" << ReturnType->name;
+  stream << "^" << return_type->name;
   std::string unique_id = stream.str();
   return unique_id;
 }

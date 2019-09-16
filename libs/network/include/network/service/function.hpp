@@ -47,30 +47,30 @@ private:
   /* A struct for invoking the function once we have unpacked all
    * arguments.
    * @U is the return type.
-   * @used_args are the types of the function arguments.
+   * @UsedArgs are the types of the function arguments.
    *
    * This implementation invokes the function with unpacked arguments
    * and packs the result using the supplied serializer.
    */
-  template <typename U, typename... used_args>
+  template <typename U, typename... UsedArgs>
   struct Invoke
   {
-    static void MemberFunction(SerializerType &result, FunctionType &m, used_args &... args)
+    static void MemberFunction(SerializerType &result, FunctionType &m, UsedArgs &... args)
     {
       result << ReturnType(m(args...));
     };
   };
 
   /* Special case for invocation with return type void.
-   * @used_args are the types of the function arguments.
+   * @UsedArgs are the types of the function arguments.
    *
    * In case of void as return type, the result is always 0 packed in a
    * uint8_t.
    */
-  template <typename... used_args>
-  struct Invoke<void, used_args...>
+  template <typename... UsedArgs>
+  struct Invoke<void, UsedArgs...>
   {
-    static void MemberFunction(SerializerType &result, FunctionType &m, used_args &... args)
+    static void MemberFunction(SerializerType &result, FunctionType &m, UsedArgs &... args)
     {
       m(args...);
       result << uint8_t(0);
@@ -78,9 +78,9 @@ private:
   };
 
   /* Struct used for unrolling arguments in a function signature.
-   * @used_args are the unpacked arguments.
+   * @UsedArgs are the unpacked arguments.
    */
-  template <typename... used_args>
+  template <typename... UsedArgs>
   struct UnrollArguments
   {
     /* Struct for loop definition.
@@ -91,12 +91,12 @@ private:
     struct LoopOver
     {
       static void Unroll(SerializerType &result, FunctionType &m, SerializerType &s,
-                         used_args &... used)
+                         UsedArgs &... used)
       {
         T l;
         s >> l;
-        UnrollArguments<used_args..., T>::template LoopOver<remaining_args...>::Unroll(result, m, s,
-                                                                                       used..., l);
+        UnrollArguments<UsedArgs..., T>::template LoopOver<remaining_args...>::Unroll(result, m, s,
+                                                                                      used..., l);
       }
     };
 
@@ -107,11 +107,11 @@ private:
     struct LoopOver<T>
     {
       static void Unroll(SerializerType &result, FunctionType &m, SerializerType &s,
-                         used_args &... used)
+                         UsedArgs &... used)
       {
         T l;
         s >> l;
-        Invoke<ReturnType, used_args..., T>::MemberFunction(result, m, used..., l);
+        Invoke<ReturnType, UsedArgs..., T>::MemberFunction(result, m, used..., l);
       }
     };
   };

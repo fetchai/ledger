@@ -65,8 +65,7 @@ public:
   }
 
 protected:
-  bool DeliverResponse(ConnectionHandleType        HandleType,
-                       network::MessageType const &MessageType) override
+  bool DeliverResponse(ConnectionHandleType handle, network::MessageType const &msg_type) override
   {
     Address  target;
     uint16_t service        = 0;
@@ -77,10 +76,10 @@ protected:
     // lookup the metadata
     {
       FETCH_LOCK(metadata_lock_);
-      auto it = metadata_.find(HandleType);
+      auto it = metadata_.find(handle);
       if (it != metadata_.end())
       {
-        std::tie(target, service, channel, counter) = metadata_[HandleType];
+        std::tie(target, service, channel, counter) = metadata_[handle];
         metadata_.erase(it);
         lookup_success = true;
       }
@@ -93,7 +92,7 @@ protected:
                       " on: ", service, ':', channel, ':', counter);
 
       // send the message back to the server
-      endpoint_.Send(target, service, channel, counter, MessageType);
+      endpoint_.Send(target, service, channel, counter, msg_type);
     }
     else
     {

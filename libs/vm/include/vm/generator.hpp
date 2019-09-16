@@ -148,11 +148,11 @@ struct Executable
   struct Function
   {
     Function(std::string name__, AnnotationArray annotations__, int num_parameters__,
-             TypeId ReturnType_id__)
+             TypeId return_type_id__)
       : name{std::move(name__)}
       , annotations{std::move(annotations__)}
       , num_parameters{num_parameters__}
-      , ReturnType_id{ReturnType_id__}
+      , return_type_id{return_type_id__}
     {}
 
     uint16_t AddVariable(std::string name, TypeId type_id, uint16_t scope_number)
@@ -177,7 +177,7 @@ struct Executable
     AnnotationArray  annotations;
     int              num_variables = 0;  // parameters + locals
     int              num_parameters;
-    TypeId           ReturnType_id;
+    TypeId           return_type_id;
     VariableArray    variables;  // parameters + locals
     InstructionArray instructions;
     PcToLineMap      pc_to_line_map_;

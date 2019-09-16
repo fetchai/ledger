@@ -39,9 +39,9 @@ namespace byte_array {
 class ConstByteArray
 {
 public:
-  using value_type        = std::uint8_t;
-  using SelfType          = ConstByteArray;
-  using shared_array_type = memory::SharedArray<value_type>;
+  using ValueType       = std::uint8_t;
+  using SelfType        = ConstByteArray;
+  using SharedArrayType = memory::SharedArray<ValueType>;
 
   enum
   {
@@ -59,7 +59,7 @@ public:
     : ConstByteArray{reinterpret_cast<std::uint8_t const *>(str), str ? std::strlen(str) : 0}
   {}
 
-  ConstByteArray(value_type const *const data, std::size_t size)
+  ConstByteArray(ValueType const *const data, std::size_t size)
   {
     if (size > 0)
     {
@@ -70,7 +70,7 @@ public:
     }
   }
 
-  ConstByteArray(std::initializer_list<value_type> l)
+  ConstByteArray(std::initializer_list<ValueType> l)
   {
     Resize(l.size());
     std::size_t i = 0;
@@ -105,13 +105,13 @@ public:
     return ConstByteArray{pointer(), size()};
   }
 
-  void WriteBytes(value_type const *const src, std::size_t src_size, std::size_t dest_offset = 0)
+  void WriteBytes(ValueType const *const src, std::size_t src_size, std::size_t dest_offset = 0)
   {
     assert(dest_offset + src_size <= size());
     std::memcpy(pointer() + dest_offset, src, src_size);
   }
 
-  void ReadBytes(value_type *const dest, std::size_t dest_size, std::size_t src_offset = 0) const
+  void ReadBytes(ValueType *const dest, std::size_t dest_size, std::size_t src_offset = 0) const
   {
     if (src_offset + dest_size > size())
     {
@@ -127,7 +127,7 @@ public:
     return {char_pointer(), length_};
   }
 
-  constexpr value_type const &operator[](std::size_t n) const noexcept
+  constexpr ValueType const &operator[](std::size_t n) const noexcept
   {
     assert(n < length_);
     return arr_pointer_[n];
@@ -231,7 +231,7 @@ public:
            std::memcmp(arr_pointer_ + pos, str.arr_pointer_, str.length_) == 0;
   }
 
-  constexpr bool Match(value_type const *str, std::size_t pos = 0) const noexcept
+  constexpr bool Match(ValueType const *str, std::size_t pos = 0) const noexcept
   {
     std::size_t p = 0;
     while ((pos < length_) && (str[p] != '\0') && (str[p] == arr_pointer_[pos]))
@@ -244,7 +244,7 @@ public:
   std::size_t Find(char c, std::size_t pos) const
   {
     auto position =
-        static_cast<value_type const *>(std::memchr(arr_pointer_ + pos, c, length_ - pos));
+        static_cast<ValueType const *>(std::memchr(arr_pointer_ + pos, c, length_ - pos));
     return position ? static_cast<std::size_t>(position - arr_pointer_) : NPOS;
   }
 
@@ -258,7 +258,7 @@ public:
     return 0 == length_;
   }
 
-  constexpr value_type const *pointer() const noexcept
+  constexpr ValueType const *pointer() const noexcept
   {
     return arr_pointer_;
   }
@@ -336,7 +336,7 @@ protected:
     return ReturnType(*this, start + start_, length);
   }
 
-  constexpr value_type &operator[](std::size_t n) noexcept
+  constexpr ValueType &operator[](std::size_t n) noexcept
   {
     assert(n < length_);
     return arr_pointer_[n];
@@ -426,7 +426,7 @@ protected:
 
     assert(new_capacity_for_reserve != 0);
 
-    shared_array_type newdata(new_capacity_for_reserve);
+    SharedArrayType newdata(new_capacity_for_reserve);
     std::memcpy(newdata.pointer(), data_.pointer(), data_.size());
     if (zero_reserved_space)
     {
@@ -437,7 +437,7 @@ protected:
     arr_pointer_ = data_.pointer() + start_;
   }
 
-  constexpr value_type *pointer() noexcept
+  constexpr ValueType *pointer() noexcept
   {
     return arr_pointer_;
   }
@@ -466,7 +466,7 @@ protected:
         break;
       }
 
-      (*this)[pos] = static_cast<value_type>(with);
+      (*this)[pos] = static_cast<ValueType>(with);
       ++num_of_replacements;
     }
     return num_of_replacements;
@@ -572,9 +572,9 @@ private:
     value_util::Accumulate(AddBytes{*this}, old_size, args...);
   }
 
-  shared_array_type data_;
-  std::size_t       start_{0}, length_{0};
-  value_type *      arr_pointer_{nullptr};
+  SharedArrayType data_;
+  std::size_t     start_{0}, length_{0};
+  ValueType *     arr_pointer_{nullptr};
 };
 
 std::ostream & operator<<(std::ostream &os, ConstByteArray const &str);

@@ -36,8 +36,8 @@ struct VmFreeFunctionInvoker
   {
     ReturnType result =
         meta::Apply(std::forward<Callable>(callable), std::forward<ArgsTuple>(arguments));
-    auto const ReturnType_id = vm->instruction_->type_id;
-    StackSetter<ReturnType>::Set(vm, sp_offset, std::move(result), ReturnType_id);
+    auto const return_type_id = vm->instruction_->type_id;
+    StackSetter<ReturnType>::Set(vm, sp_offset, std::move(result), return_type_id);
     vm->sp_ -= sp_offset;
   }
 };

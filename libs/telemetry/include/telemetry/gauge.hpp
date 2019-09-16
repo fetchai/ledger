@@ -34,9 +34,9 @@ namespace telemetry {
  *
  * The gauge value stores a metric value that is expected to go up and down
  *
- * @tparam value_type
+ * @tparam ValueType
  */
-template <typename value_type>
+template <typename ValueType>
 class Gauge : public Measurement
 {
 public:
@@ -49,11 +49,11 @@ public:
 
   /// @name Accessors
   /// @{
-  value_type get() const;
-  void       set(value_type const &value);
-  void       increment(value_type const &value = value_type{1});
-  void       decrement(value_type const &value = value_type{1});
-  void       max(value_type const &value);
+  ValueType get() const;
+  void      set(ValueType const &value);
+  void      increment(ValueType const &value = ValueType{1});
+  void      decrement(ValueType const &value = ValueType{1});
+  void      max(ValueType const &value);
   /// @}
 
   /// @name Metric Interface
@@ -69,9 +69,9 @@ private:
   using Mutex = std::mutex;
 
   mutable Mutex lock_{};
-  value_type    value_{0};
+  ValueType     value_{0};
 
-  static_assert(std::is_arithmetic<value_type>::value, "");
+  static_assert(std::is_arithmetic<ValueType>::value, "");
 };
 
 /**

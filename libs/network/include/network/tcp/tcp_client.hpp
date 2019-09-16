@@ -124,7 +124,7 @@ public:
     return pointer_->is_alive();
   }
 
-  typename ImplementationType::weak_ptr_type connection_pointer()
+  typename ImplementationType::WeakPointerType connection_pointer()
   {
     return pointer_->connection_pointer();
   }

@@ -42,22 +42,22 @@ struct CountArguments
 /* A struct for invoking the member function once we have
  * unpacked all arguments.
  * @U is the return type.
- * @used_args are the types of the function arguments.
+ * @UsedArgs are the types of the function arguments.
  *
  * This implementation invokes the member function with unpacked
  * arguments and packs the result using the supplied serializer.
  */
-template <typename ClassType, typename MemberFunctionPointer, typename U, typename... used_args>
+template <typename ClassType, typename MemberFunctionPointer, typename U, typename... UsedArgs>
 struct Invoke
 {
   /* Calls a member function with unpacked arguments.
    * @result is a serializer for storing the result.
    * @cls is the class instance.
    * @m is a pointer to the member function.
-   * @used_args are the unpacked arguments.
+   * @UsedArgs are the unpacked arguments.
    */
   static void MemberFunction(SerializerType &result, ClassType &cls, MemberFunctionPointer &m,
-                             used_args &... args)
+                             UsedArgs &... args)
   {
     auto                     ret = (cls.*m)(args...);
     serializers::SizeCounter counter;
@@ -69,16 +69,16 @@ struct Invoke
 };
 
 /* Special case for invocation with return type void.
- * @used_args are the types of the function arguments.
+ * @UsedArgs are the types of the function arguments.
  *
  * In case of void as return type, the result is always 0 packed in a
  * uint8_t.
  */
-template <typename ClassType, typename MemberFunctionPointer, typename... used_args>
-struct Invoke<ClassType, MemberFunctionPointer, void, used_args...>
+template <typename ClassType, typename MemberFunctionPointer, typename... UsedArgs>
+struct Invoke<ClassType, MemberFunctionPointer, void, UsedArgs...>
 {
   static void MemberFunction(SerializerType &result, ClassType &cls, MemberFunctionPointer &m,
-                             used_args &... args)
+                             UsedArgs &... args)
   {
     result << uint8_t(0);
     (cls.*m)(args...);
@@ -86,10 +86,10 @@ struct Invoke<ClassType, MemberFunctionPointer, void, used_args...>
 };
 
 /* Struct used for unrolling arguments in a function signature.
- * @used_args are the unpacked arguments.
+ * @UsedArgs are the unpacked arguments.
  */
 template <typename ClassType, typename MemberFunctionPointer, typename ReturnType,
-          typename... used_args>
+          typename... UsedArgs>
 struct UnrollArguments
 {
   /* Struct for loop definition.
@@ -103,12 +103,12 @@ struct UnrollArguments
   struct LoopOver<R, T, remaining_args...>
   {
     static void Unroll(SerializerType &result, ClassType &cls, MemberFunctionPointer &m,
-                       SerializerType &s, used_args &... used)
+                       SerializerType &s, UsedArgs &... used)
     {
       std::decay_t<T> l;
 
       s >> l;
-      UnrollArguments<ClassType, MemberFunctionPointer, ReturnType, used_args..., T>::
+      UnrollArguments<ClassType, MemberFunctionPointer, ReturnType, UsedArgs..., T>::
           template LoopOver<CountArguments<remaining_args...>::value, remaining_args...>::Unroll(
               result, cls, m, s, used..., l);
     }
@@ -121,12 +121,12 @@ struct UnrollArguments
   struct LoopOver<R, T>
   {
     static void Unroll(SerializerType &result, ClassType &cls, MemberFunctionPointer &m,
-                       SerializerType &s, used_args &... used)
+                       SerializerType &s, UsedArgs &... used)
     {
       std::decay_t<T> l;
 
       s >> l;
-      Invoke<ClassType, MemberFunctionPointer, ReturnType, used_args..., T>::MemberFunction(
+      Invoke<ClassType, MemberFunctionPointer, ReturnType, UsedArgs..., T>::MemberFunction(
           result, cls, m, used..., l);
     }
   };
@@ -135,18 +135,18 @@ struct UnrollArguments
   struct LoopOver<R>
   {
     static void Unroll(SerializerType &result, ClassType &cls, MemberFunctionPointer &m,
-                       SerializerType & /*s*/, used_args &... used)
+                       SerializerType & /*s*/, UsedArgs &... used)
     {
       assert(R == 0);
 
-      Invoke<ClassType, MemberFunctionPointer, ReturnType, used_args...>::MemberFunction(
-          result, cls, m, used...);
+      Invoke<ClassType, MemberFunctionPointer, ReturnType, UsedArgs...>::MemberFunction(result, cls,
+                                                                                        m, used...);
     }
   };
 };
 
 template <std::size_t COUNTER, typename ClassType, typename MemberFunctionPointer,
-          typename ReturnType, typename... used_args>
+          typename ReturnType, typename... UsedArgs>
 struct UnrollPointers
 {
   template <typename T, typename... remaining_args>
@@ -154,7 +154,7 @@ struct UnrollPointers
   {
     static void Unroll(SerializerType &result, ClassType &cls, MemberFunctionPointer &m,
                        CallableArgumentList const &additional_args, SerializerType &s,
-                       used_args &... used)
+                       UsedArgs &... used)
     {
       assert(COUNTER - 1 < additional_args.size());
       auto const &arg = additional_args[COUNTER - 1];
@@ -168,7 +168,7 @@ struct UnrollPointers
       }
 
       auto ptr = static_cast<std::decay_t<T> *>(arg.pointer);
-      UnrollPointers<COUNTER - 1, ClassType, MemberFunctionPointer, ReturnType, used_args...,
+      UnrollPointers<COUNTER - 1, ClassType, MemberFunctionPointer, ReturnType, UsedArgs...,
                      T>::template LoopOver<remaining_args...>::Unroll(result, cls, m,
                                                                       additional_args, s, used...,
                                                                       *ptr);
@@ -177,19 +177,19 @@ struct UnrollPointers
 };
 
 template <typename ClassType, typename MemberFunctionPointer, typename ReturnType,
-          typename... used_args>
-struct UnrollPointers<0, ClassType, MemberFunctionPointer, ReturnType, used_args...>
+          typename... UsedArgs>
+struct UnrollPointers<0, ClassType, MemberFunctionPointer, ReturnType, UsedArgs...>
 {
   template <typename... remaining_args>
   struct LoopOver
   {
     static void Unroll(SerializerType &result, ClassType &cls, MemberFunctionPointer &m,
                        CallableArgumentList const & /*additional_args*/, SerializerType &s,
-                       used_args &... used)
+                       UsedArgs &... used)
     {
-      UnrollArguments<ClassType, MemberFunctionPointer, ReturnType, used_args...>::
-          template LoopOver<CountArguments<remaining_args...>::value, remaining_args...>::Unroll(
-              result, cls, m, s, used...);
+      UnrollArguments<ClassType, MemberFunctionPointer, ReturnType, UsedArgs...>::template LoopOver<
+          CountArguments<remaining_args...>::value, remaining_args...>::Unroll(result, cls, m, s,
+                                                                               used...);
     }
   };
 };

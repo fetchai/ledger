@@ -38,7 +38,7 @@ class AbstractConnection : public std::enable_shared_from_this<AbstractConnectio
 public:
   using SharedType           = std::shared_ptr<AbstractConnection>;
   using ConnectionHandleType = typename AbstractConnectionRegister::ConnectionHandleType;
-  using weak_ptr_type        = std::weak_ptr<AbstractConnection>;
+  using WeakPointerType      = std::weak_ptr<AbstractConnection>;
   using WeakRegisterType     = std::weak_ptr<AbstractConnectionRegister>;
 
   static constexpr char const *LOGGING_NAME = "AbstractConnection";
@@ -103,7 +103,7 @@ public:
     connection_register_ = reg;
   }
 
-  weak_ptr_type connection_pointer()
+  WeakPointerType connection_pointer()
   {
     return shared_from_this();
   }

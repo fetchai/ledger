@@ -42,9 +42,9 @@ public:
   using NetworkManagerType = NetworkManager;
   using SelfType           = std::weak_ptr<AbstractConnection>;
   using SharedSelfType     = std::shared_ptr<AbstractConnection>;
-  using socket_type        = asio::ip::tcp::tcp::socket;
-  using strand_type        = asio::io_service::strand;
-  using resolver_type      = asio::ip::tcp::resolver;
+  using SocketType         = asio::ip::tcp::tcp::socket;
+  using StrandType         = asio::io_service::strand;
+  using ResolverType       = asio::ip::tcp::resolver;
   using MutexType          = std::mutex;
 
   static constexpr char const *LOGGING_NAME = "TCPClientImpl";
@@ -87,7 +87,7 @@ public:
 
       // We get IO objects from the network manager, they will only be strong
       // while in the post
-      auto strand = networkManager_.CreateIO<strand_type>();
+      auto strand = networkManager_.CreateIO<StrandType>();
       if (!strand)
       {
         return;
@@ -104,7 +104,7 @@ public:
           return;
         }
 
-        std::shared_ptr<socket_type> socket = networkManager_.CreateIO<socket_type>();
+        std::shared_ptr<SocketType> socket = networkManager_.CreateIO<SocketType>();
 
         {
           FETCH_LOCK(io_creation_mutex_);
@@ -114,10 +114,10 @@ public:
           }
         }
 
-        std::shared_ptr<resolver_type> res = networkManager_.CreateIO<resolver_type>();
+        std::shared_ptr<ResolverType> res = networkManager_.CreateIO<ResolverType>();
 
         auto cb = [this, self, res, socket, strand, port](std::error_code ec,
-                                                          resolver_type::iterator) {
+                                                          ResolverType::iterator) {
           SharedSelfType selfLock = self.lock();
           if (!selfLock)
           {
@@ -154,7 +154,7 @@ public:
 
         if (socket && res)
         {
-          resolver_type::iterator it(res->resolve({std::string(host), std::string(port)}));
+          ResolverType::iterator it(res->resolve({std::string(host), std::string(port)}));
 
           assert(strand->running_in_this_thread());
           asio::async_connect(*socket, it, strand->wrap(cb));
@@ -187,8 +187,8 @@ public:
       write_queue_.push_back(msg);
     }
 
-    SelfType                   self   = shared_from_this();
-    std::weak_ptr<strand_type> strand = strand_;
+    SelfType                  self   = shared_from_this();
+    std::weak_ptr<StrandType> strand = strand_;
 
     networkManager_.Post([this, self, strand] {
       SharedSelfType selfLock   = self.lock();
@@ -211,9 +211,9 @@ public:
   void Close() override
   {
     FETCH_LOCK(io_creation_mutex_);
-    posted_close_                         = true;
-    std::weak_ptr<socket_type> socketWeak = socket_;
-    std::weak_ptr<strand_type> strandWeak = strand_;
+    posted_close_                        = true;
+    std::weak_ptr<SocketType> socketWeak = socket_;
+    std::weak_ptr<StrandType> strandWeak = strand_;
 
     networkManager_.Post([socketWeak, strandWeak] {
       auto socket = socketWeak.lock();
@@ -241,12 +241,12 @@ private:
   NetworkManagerType networkManager_;
   // IO objects should be guaranteed to have lifetime less than the
   // io_service/networkManager
-  std::weak_ptr<socket_type> socket_;
-  std::weak_ptr<strand_type> strand_;
+  std::weak_ptr<SocketType> socket_;
+  std::weak_ptr<StrandType> strand_;
 
-  message_queue_type write_queue_;
-  mutable MutexType  queue_mutex_;
-  mutable MutexType  io_creation_mutex_;
+  MessageQueueType  write_queue_;
+  mutable MutexType queue_mutex_;
+  mutable MutexType io_creation_mutex_;
 
   mutable MutexType can_write_mutex_;
   bool              can_write_{true};
