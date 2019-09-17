@@ -33,6 +33,12 @@ Block::Block()
   : first_seen_timestamp{static_cast<uint64_t>(std::time(nullptr))}
 {}
 
+bool Block::operator==(Block const &rhs) const
+{
+  // Invalid to compare blocks with no block hash
+  return (!this->body.hash.empty()) && (this->body.hash == rhs.body.hash);
+}
+
 /**
  * Get the number of transactions present in the block
  *

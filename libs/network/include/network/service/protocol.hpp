@@ -22,7 +22,6 @@
 #include "network/management/abstract_connection.hpp"
 #include "network/service/callable_class_member.hpp"
 #include "network/service/error_codes.hpp"
-#include "network/service/feed_subscription_manager.hpp"
 #include "network/service/types.hpp"
 
 #include <functional>
@@ -32,8 +31,6 @@
 
 namespace fetch {
 namespace service {
-
-class FeedSubscriptionManager;
 
 /* A class that defines a generic protocol.
  *
@@ -124,26 +121,11 @@ public:
   }
 
   template <typename C, typename R, typename... Args>
-  void ExposeWithClientArg(FunctionHandlerType const &n, C *instance, R (C::*function)(Args...))
+  void ExposeWithClientContext(FunctionHandlerType const &n, C *instance,
+                               R (C::*function)(Args...))
   {
-    StoredType fnc(new service::CallableClassMember<C, R(Args...), 1>(Callable::CLIENT_ID_ARG,
-                                                                      instance, function));
-
-    auto iter = members_.find(n);
-    if (iter != members_.end())
-    {
-      throw serializers::SerializableException(
-          error::MEMBER_EXISTS, ByteArrayType("Protocol member function already exists: "));
-    }
-
-    members_[n] = fnc;
-  }
-
-  template <typename C, typename R, typename... Args>
-  void ExposeWithClientContext(FunctionHandlerType const &n, C *instance, R (C::*function)(Args...))
-  {
-    StoredType fnc(new service::CallableClassMember<C, R(Args...), 1>(Callable::CLIENT_CONTEXT_ARG,
-                                                                      instance, function));
+    stored_type fnc(new service::CallableClassMember<C, R(Args...), 1>(Callable::CLIENT_CONTEXT_ARG,
+                                                                       instance, function));
 
     auto iter = members_.find(n);
     if (iter != members_.end())
@@ -158,96 +140,6 @@ public:
   virtual void ConnectionDropped(ConnectionHandleType /*connection_handle*/)
   {}
 
-  /* Registers a feed from an implementation.
-   * @feed is the unique feed identifier.
-   * @publisher is a class that subclasses <AbstractPublicationFeed>.
-   *
-   */
-  void RegisterFeed(FeedHandlerType const &feed, AbstractPublicationFeed *publisher)
-  {
-    feeds_.push_back(std::make_shared<FeedSubscriptionManager>(feed, publisher));
-  }
-
-  /* Subscribe client to feed.
-   * @client is the client id.
-   * @feed is the feed identifier.
-   * @id is the subscription id allocated on the client side.
-   *
-   * This function is intended to be used by the service to subscribe
-   * its clients to the feed.
-   */
-  void Subscribe(uint64_t client,  // TODO(issue 21): Standardize client type over the code.
-                 FeedHandlerType const &feed, SubscriptionHandlerType const &id)
-  {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Making subscription for ", client, " ", feed, " ", id);
-
-    FETCH_LOCK(feeds_mutex_);
-    std::size_t i = 0;
-    for (; i < feeds_.size(); ++i)
-    {
-      if (feeds_[i]->feed() == feed)
-      {
-        break;
-      }
-    }
-    if (i == feeds_.size())
-    {
-      TODO_FAIL("make serializable error, feed not found");
-    }
-
-    feeds_[i]->Subscribe(client, id);
-  }
-
-  /* Unsubscribe client to feed.
-   * @client is the client id.
-   * @feed is the feed identifier.
-   * @id is the subscription id allocated on the client side.
-   *
-   * This function is intended to be used by the service to unsubscribe
-   * its clients to the feed.
-   */
-  void Unsubscribe(uint64_t client,  // TODO(issue 21): Standardize client type over the code.
-                   FeedHandlerType const &feed, SubscriptionHandlerType const &id)
-  {
-    FETCH_LOCK(feeds_mutex_);
-
-    std::size_t i = 0;
-    for (; i < feeds_.size(); ++i)
-    {
-      if (feeds_[i]->feed() == feed)
-      {
-        break;
-      }
-    }
-    if (i == feeds_.size())
-    {
-      TODO_FAIL("make serializable error, feed not found");
-    }
-    feeds_[i]->Unsubscribe(client, id);
-  }
-
-  /* Access memeber to the feeds in the protocol.
-   *
-   * @return a reference to the feeds.
-   */
-  std::vector<std::shared_ptr<FeedSubscriptionManager>> &feeds()
-  {
-    return feeds_;
-  }
-
-  void AddMiddleware(MiddlewareType const &m)
-  {
-    middleware_.push_back(m);
-  }
-
-  void ApplyMiddleware(ConnectionHandleType const &id, byte_array::ByteArray const &msg)
-  {
-    for (auto &m : middleware_)
-    {
-      m(id, msg);
-    }
-  }
-
   void DumpMemberTable()
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Contents of function table");
@@ -259,10 +151,7 @@ public:
   }
 
 private:
-  std::vector<MiddlewareType>                           middleware_;
-  std::map<FunctionHandlerType, StoredType>             members_;
-  std::vector<std::shared_ptr<FeedSubscriptionManager>> feeds_;
-  Mutex                                                 feeds_mutex_;
+  std::map<FunctionHandlerType, StoredType> members_;
 };
 }  // namespace service
 }  // namespace fetch

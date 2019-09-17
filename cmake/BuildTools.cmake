@@ -10,6 +10,8 @@ function (setup_library name)
   list(LENGTH headers headers_length)
   list(LENGTH srcs srcs_length)
 
+  set(internal_headers_path ${CMAKE_CURRENT_SOURCE_DIR}/internal)
+
   # main library configuration
   if (srcs_length EQUAL 0)
 
@@ -23,6 +25,11 @@ function (setup_library name)
     # define the normal library
     add_library(${name} ${headers} ${srcs})
     target_include_directories(${name} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+    # add internal headers if one exists
+    if (EXISTS ${internal_headers_path})
+      target_include_directories(${name} PRIVATE ${internal_headers_path})
+    endif ()
 
     # CoreFoundation Support on MacOS
     if (APPLE)
@@ -142,6 +149,11 @@ function (_internal_add_fetch_test
                                PRIVATE ${FETCH_ROOT_VENDOR_DIR}/googletest/googletest/include)
     target_include_directories(${name}
                                PRIVATE ${FETCH_ROOT_VENDOR_DIR}/googletest/googlemock/include)
+
+    get_filename_component(internal_headers_path "${CMAKE_CURRENT_SOURCE_DIR}/../internal" ABSOLUTE)
+    if (EXISTS ${internal_headers_path})
+      target_include_directories(${name} PRIVATE ${internal_headers_path})
+    endif ()
 
     # CoreFoundation Support on MacOS
     if (APPLE)
