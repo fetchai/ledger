@@ -87,13 +87,13 @@ template <typename T, std::size_t N = 8 * sizeof(T)>
 class VectorRegister : public BaseVectorRegisterType
 {
 public:
-  using type             = T;
-  using mm_register_type = T;
+  using type           = T;
+  using MMRegisterType = T;
 
   enum
   {
-    E_VECTOR_SIZE   = sizeof(mm_register_type),
-    E_REGISTER_SIZE = sizeof(mm_register_type),
+    E_VECTOR_SIZE   = sizeof(MMRegisterType),
+    E_REGISTER_SIZE = sizeof(MMRegisterType),
     E_BLOCK_COUNT   = E_REGISTER_SIZE / sizeof(type)
   };
 

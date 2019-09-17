@@ -289,11 +289,11 @@ private:
 };
 
 template <typename... Args>
-Ptr<IState> Construct(VM *vm, TypeId state_type_id, Args &&... args)
+Ptr<IState> Construct(VM *vm, TypeId StateType_id, Args &&... args)
 {
-  TypeInfo const &state_type_info = vm->GetTypeInfo(state_type_id);
-  TypeId const    value_type_id   = state_type_info.parameter_type_ids[0];
-  return IState::ConstructIntrinsic(vm, state_type_id, value_type_id, std::forward<Args>(args)...);
+  TypeInfo const &StateType_info = vm->GetTypeInfo(StateType_id);
+  TypeId const    value_type_id  = StateType_info.parameter_type_ids[0];
+  return IState::ConstructIntrinsic(vm, StateType_id, value_type_id, std::forward<Args>(args)...);
 }
 
 template <typename T, typename R = void>

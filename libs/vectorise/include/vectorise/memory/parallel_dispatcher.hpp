@@ -392,7 +392,7 @@ class ParallelDispatcher : public ConstParallelDispatcher<T>
 public:
   using type = T;
 
-  using super_type = ConstParallelDispatcher<T>;
+  using SuperType = ConstParallelDispatcher<T>;
 
   enum
   {
@@ -405,7 +405,7 @@ public:
   using VectorRegisterIteratorType = vectorise::VectorRegisterIterator<type, vector_size>;
 
   ParallelDispatcher(type *ptr, std::size_t size)
-    : super_type(ptr, size)
+    : SuperType(ptr, size)
   {}
 
   template <class F>
@@ -451,16 +451,16 @@ public:
 
     VectorRegisterType         regs[sizeof...(args)], vc(type(0));
     VectorRegisterIteratorType iters[sizeof...(args)];
-    super_type::template InitializeVectorIterators<vector_size>(SF, ST - SF, iters,
-                                                                std::forward<Args>(args)...);
+    SuperType::template InitializeVectorIterators<vector_size>(SF, ST - SF, iters,
+                                                               std::forward<Args>(args)...);
 
     if (SF != range.from())
     {
       ScalarRegisterType         c(type(0));
       ScalarRegisterType         scalar_regs[sizeof...(args)];
       ScalarRegisterIteratorType scalar_iters[sizeof...(args)];
-      super_type::template InitializeVectorIterators<scalar_size>(range.from(), SF, scalar_iters,
-                                                                  std::forward<Args>(args)...);
+      SuperType::template InitializeVectorIterators<scalar_size>(range.from(), SF, scalar_iters,
+                                                                 std::forward<Args>(args)...);
 
       for (size_t i = range.from(); i < SF; i += ScalarRegisterType::E_BLOCK_COUNT)
       {
@@ -489,8 +489,8 @@ public:
       ScalarRegisterType         c{type(0)};
       ScalarRegisterType         scalar_regs[sizeof...(args)];
       ScalarRegisterIteratorType scalar_iters[sizeof...(args)];
-      super_type::template InitializeVectorIterators<scalar_size>(ST, range.to() - ST, scalar_iters,
-                                                                  std::forward<Args>(args)...);
+      SuperType::template InitializeVectorIterators<scalar_size>(ST, range.to() - ST, scalar_iters,
+                                                                 std::forward<Args>(args)...);
 
       for (size_t i = ST; i < range.to(); i += ScalarRegisterType::E_BLOCK_COUNT)
       {
@@ -537,7 +537,7 @@ public:
 
   type *pointer()
   {
-    return super_type::pointer();
+    return SuperType::pointer();
   }
 };
 

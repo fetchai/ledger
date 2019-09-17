@@ -24,10 +24,10 @@ namespace byte_array {
 namespace details {
 // After
 // https://en.wikibooks.org/wiki/Algorithm_Implementation/Miscellaneous/Base64
-extern char const          base64chars[];
-extern char const          base64pad;
-extern char const          hexChars[];
-extern unsigned char const base64decode[];
+extern char const    base64chars[];
+extern char const    base64pad;
+extern char const    hexChars[];
+extern uint8_t const base64decode[];
 
 enum
 {

@@ -38,13 +38,13 @@ template <>
 class VectorRegister<float, 128> : public BaseVectorRegisterType
 {
 public:
-  using type             = float;
-  using mm_register_type = __m128;
+  using type           = float;
+  using MMRegisterType = __m128;
 
   enum
   {
     E_VECTOR_SIZE   = 128,
-    E_REGISTER_SIZE = sizeof(mm_register_type),
+    E_REGISTER_SIZE = sizeof(MMRegisterType),
     E_BLOCK_COUNT   = E_REGISTER_SIZE / sizeof(type)
   };
 
@@ -61,10 +61,10 @@ public:
     data_ = _mm_load_ps(reinterpret_cast<type const *>(list.begin()));
   }
 
-  VectorRegister(mm_register_type const &d)
+  VectorRegister(MMRegisterType const &d)
     : data_(d)
   {}
-  VectorRegister(mm_register_type &&d)
+  VectorRegister(MMRegisterType &&d)
     : data_(d)
   {}
   VectorRegister(type const &c)
@@ -72,7 +72,7 @@ public:
     data_ = _mm_set1_ps(c);
   }
 
-  explicit operator mm_register_type()
+  explicit operator MMRegisterType()
   {
     return data_;
   }
@@ -86,30 +86,30 @@ public:
     _mm_stream_ps(ptr, data_);
   }
 
-  mm_register_type const &data() const
+  MMRegisterType const &data() const
   {
     return data_;
   }
-  mm_register_type &data()
+  MMRegisterType &data()
   {
     return data_;
   }
 
 private:
-  mm_register_type data_;
+  MMRegisterType data_;
 };
 
 template <>
 class VectorRegister<float, 256> : public BaseVectorRegisterType
 {
 public:
-  using type             = float;
-  using mm_register_type = __m256;
+  using type           = float;
+  using MMRegisterType = __m256;
 
   enum
   {
     E_VECTOR_SIZE   = 256,
-    E_REGISTER_SIZE = sizeof(mm_register_type),
+    E_REGISTER_SIZE = sizeof(MMRegisterType),
     E_BLOCK_COUNT   = E_REGISTER_SIZE / sizeof(type)
   };
 
@@ -125,10 +125,10 @@ public:
   {
     data_ = _mm256_load_ps(reinterpret_cast<type const *>(list.begin()));
   }
-  VectorRegister(mm_register_type const &d)
+  VectorRegister(MMRegisterType const &d)
     : data_(d)
   {}
-  VectorRegister(mm_register_type &&d)
+  VectorRegister(MMRegisterType &&d)
     : data_(d)
   {}
   VectorRegister(type const &c)
@@ -136,7 +136,7 @@ public:
     data_ = _mm256_set1_ps(c);
   }
 
-  explicit operator mm_register_type()
+  explicit operator MMRegisterType()
   {
     return data_;
   }
@@ -150,17 +150,17 @@ public:
     _mm256_stream_ps(ptr, data_);
   }
 
-  mm_register_type const &data() const
+  MMRegisterType const &data() const
   {
     return data_;
   }
-  mm_register_type &data()
+  MMRegisterType &data()
   {
     return data_;
   }
 
 private:
-  mm_register_type data_;
+  MMRegisterType data_;
 };
 
 template <>

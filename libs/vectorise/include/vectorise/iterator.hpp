@@ -30,7 +30,7 @@ class VectorRegisterIterator
 public:
   using type               = T;
   using VectorRegisterType = VectorRegister<T, N>;
-  using mm_register_type   = typename VectorRegisterType::mm_register_type;
+  using MMRegisterType     = typename VectorRegisterType::MMRegisterType;
 
   VectorRegisterIterator()
     : ptr_(nullptr)
@@ -39,15 +39,15 @@ public:
 
   template <typename Y, std::size_t M>
   VectorRegisterIterator(VectorRegisterIterator<Y, M> &o, std::size_t const offset)
-    : ptr_(reinterpret_cast<mm_register_type *>(o.pointer()))
-    , end_(reinterpret_cast<mm_register_type *>(o.end()))
+    : ptr_(reinterpret_cast<MMRegisterType *>(o.pointer()))
+    , end_(reinterpret_cast<MMRegisterType *>(o.end()))
   {
     ptr_ += offset;
   }
 
   VectorRegisterIterator(type const *d, std::size_t size)
-    : ptr_((mm_register_type *)d)
-    , end_((mm_register_type *)(d + size))
+    : ptr_((MMRegisterType *)d)
+    , end_((MMRegisterType *)(d + size))
   {}
 
   void Next(VectorRegisterType &m)
@@ -58,19 +58,19 @@ public:
     ++ptr_;
   }
 
-  mm_register_type *pointer() const
+  MMRegisterType *pointer() const
   {
     return ptr_;
   }
 
-  mm_register_type *end() const
+  MMRegisterType *end() const
   {
     return end_;
   }
 
 private:
-  mm_register_type *ptr_;
-  mm_register_type *end_;
+  MMRegisterType *ptr_;
+  MMRegisterType *end_;
 };
 }  // namespace vectorise
 }  // namespace fetch

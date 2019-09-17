@@ -36,13 +36,13 @@ template <>
 class VectorRegister<fixed_point::fp64_t, 128> : public BaseVectorRegisterType
 {
 public:
-  using type             = fixed_point::fp64_t;
-  using mm_register_type = __m128i;
+  using type           = fixed_point::fp64_t;
+  using MMRegisterType = __m128i;
 
   enum
   {
     E_VECTOR_SIZE   = 128,
-    E_REGISTER_SIZE = sizeof(mm_register_type),
+    E_REGISTER_SIZE = sizeof(MMRegisterType),
     E_BLOCK_COUNT   = E_REGISTER_SIZE / sizeof(type)
   };
 
@@ -52,16 +52,16 @@ public:
   VectorRegister() = default;
   VectorRegister(type const *d)
   {
-    data_ = _mm_load_si128(reinterpret_cast<mm_register_type const *>(d->pointer()));
+    data_ = _mm_load_si128(reinterpret_cast<MMRegisterType const *>(d->pointer()));
   }
   VectorRegister(std::initializer_list<type> const &list)
   {
-    data_ = _mm_load_si128(reinterpret_cast<mm_register_type const *>(list.begin()));
+    data_ = _mm_load_si128(reinterpret_cast<MMRegisterType const *>(list.begin()));
   }
-  VectorRegister(mm_register_type const &d)
+  VectorRegister(MMRegisterType const &d)
     : data_(d)
   {}
-  VectorRegister(mm_register_type &&d)
+  VectorRegister(MMRegisterType &&d)
     : data_(d)
   {}
   VectorRegister(type const &c)
@@ -69,45 +69,45 @@ public:
     data_ = _mm_set1_epi64x(c.Data());
   }
 
-  explicit operator mm_register_type()
+  explicit operator MMRegisterType()
   {
     return data_;
   }
 
   void Store(type *ptr) const
   {
-    _mm_store_si128(reinterpret_cast<mm_register_type *>(ptr), data_);
+    _mm_store_si128(reinterpret_cast<MMRegisterType *>(ptr), data_);
   }
 
   void Stream(type *ptr) const
   {
-    _mm_stream_si128(reinterpret_cast<mm_register_type *>(ptr), data_);
+    _mm_stream_si128(reinterpret_cast<MMRegisterType *>(ptr), data_);
   }
 
-  mm_register_type const &data() const
+  MMRegisterType const &data() const
   {
     return data_;
   }
-  mm_register_type &data()
+  MMRegisterType &data()
   {
     return data_;
   }
 
 private:
-  mm_register_type data_;
+  MMRegisterType data_;
 };
 
 template <>
 class VectorRegister<fixed_point::fp64_t, 256> : public BaseVectorRegisterType
 {
 public:
-  using type             = fixed_point::fp64_t;
-  using mm_register_type = __m256i;
+  using type           = fixed_point::fp64_t;
+  using MMRegisterType = __m256i;
 
   enum
   {
     E_VECTOR_SIZE   = 256,
-    E_REGISTER_SIZE = sizeof(mm_register_type),
+    E_REGISTER_SIZE = sizeof(MMRegisterType),
     E_BLOCK_COUNT   = E_REGISTER_SIZE / sizeof(type)
   };
 
@@ -117,16 +117,16 @@ public:
   VectorRegister() = default;
   VectorRegister(type const *d)
   {
-    data_ = _mm256_load_si256(reinterpret_cast<mm_register_type const *>(d->pointer()));
+    data_ = _mm256_load_si256(reinterpret_cast<MMRegisterType const *>(d->pointer()));
   }
   VectorRegister(std::initializer_list<type> const &list)
   {
-    data_ = _mm256_load_si256(reinterpret_cast<mm_register_type const *>(list.begin()));
+    data_ = _mm256_load_si256(reinterpret_cast<MMRegisterType const *>(list.begin()));
   }
-  VectorRegister(mm_register_type const &d)
+  VectorRegister(MMRegisterType const &d)
     : data_(d)
   {}
-  VectorRegister(mm_register_type &&d)
+  VectorRegister(MMRegisterType &&d)
     : data_(d)
   {}
   VectorRegister(type const &c)
@@ -134,32 +134,32 @@ public:
     data_ = _mm256_set1_epi64x(c.Data());
   }
 
-  explicit operator mm_register_type()
+  explicit operator MMRegisterType()
   {
     return data_;
   }
 
   void Store(type *ptr) const
   {
-    _mm256_store_si256(reinterpret_cast<mm_register_type *>(ptr), data_);
+    _mm256_store_si256(reinterpret_cast<MMRegisterType *>(ptr), data_);
   }
 
   void Stream(type *ptr) const
   {
-    _mm256_stream_si256(reinterpret_cast<mm_register_type *>(ptr), data_);
+    _mm256_stream_si256(reinterpret_cast<MMRegisterType *>(ptr), data_);
   }
 
-  mm_register_type const &data() const
+  MMRegisterType const &data() const
   {
     return data_;
   }
-  mm_register_type &data()
+  MMRegisterType &data()
   {
     return data_;
   }
 
 private:
-  mm_register_type data_;
+  MMRegisterType data_;
 };
 
 template <>

@@ -29,7 +29,7 @@ namespace optimisers {
 class BinaryProblem
 {
 public:
-  using cost_type = double;
+  using CostType = double;
   void Reset()
   {
     for (std::size_t i = 0; i < couplings_.size(); ++i)
@@ -54,7 +54,7 @@ public:
   void Resize(std::size_t n, std::size_t max_connectivity = std::size_t(-1))
   {
     couplings_.Resize(n, n);
-    coupling_sum_ = memory::SharedArray<cost_type>(n);
+    coupling_sum_ = memory::SharedArray<CostType>(n);
 
     couples_to_.resize(n);
 
@@ -63,7 +63,7 @@ public:
     Reset();
   }
 
-  bool Insert(std::size_t i, std::size_t j, cost_type c)
+  bool Insert(std::size_t i, std::size_t j, CostType c)
   {
     std::size_t A = i;
     std::size_t B = j;
@@ -119,8 +119,8 @@ public:
 
     for (std::size_t i = 0; i < size_; ++i)
     {
-      cost_type field = -0.5 * (couplings_(i, i) + 0.5 * coupling_sum_[i]);
-      cost_type ff    = field < 0 ? -field : field;
+      CostType field = -0.5 * (couplings_(i, i) + 0.5 * coupling_sum_[i]);
+      CostType ff    = field < 0 ? -field : field;
       if (ff > max_abs_coupling_)
       {
         max_abs_coupling_ = ff;
@@ -135,7 +135,7 @@ public:
 
     for (std::size_t i = 0; i < size_; ++i)
     {
-      cost_type field = -0.5 * (couplings_(i, i) + 0.5 * coupling_sum_[i]);
+      CostType field = -0.5 * (couplings_(i, i) + 0.5 * coupling_sum_[i]);
 
       annealer.Insert(i, i, normalisation_constant_ * field);
 
@@ -163,11 +163,11 @@ public:
     return max_connectivity;
   }
 
-  cost_type energy_offset() const
+  CostType energy_offset() const
   {
     return energy_offset_;
   }
-  math::Tensor<cost_type> const &couplings() const
+  math::Tensor<CostType> const &couplings() const
   {
     return couplings_;
   }
@@ -176,26 +176,26 @@ public:
     return size_;
   }
 
-  cost_type max_abs_coupling() const
+  CostType max_abs_coupling() const
   {
     return max_abs_coupling_;
   }
 
-  cost_type normalisation_constant() const
+  CostType normalisation_constant() const
   {
     return normalisation_constant_;
   }
 
 private:
   std::size_t size_          = 0;
-  cost_type   energy_offset_ = 0;
+  CostType    energy_offset_ = 0;
 
-  cost_type max_abs_coupling_       = 0.0;
-  cost_type normalisation_constant_ = 1.0;
+  CostType max_abs_coupling_       = 0.0;
+  CostType normalisation_constant_ = 1.0;
 
   std::vector<std::unordered_set<uint64_t>> couples_to_;
-  Tensor<cost_type>                         couplings_;
-  memory::SharedArray<cost_type>            coupling_sum_;
+  Tensor<CostType>                          couplings_;
+  memory::SharedArray<CostType>             coupling_sum_;
 };
 }  // namespace optimisers
 }  // namespace fetch

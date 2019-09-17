@@ -123,23 +123,23 @@ private:
 namespace std {
 
 template <typename T>
-struct iterator_traits<fetch::memory::ForwardIterator<T>>
+struct iterator_traits<fetch::memory::ForwardIterator<T>>  // NOLINT
 {
-  using difference_type   = std::ptrdiff_t;
-  using value_type        = std::remove_cv_t<T>;
-  using pointer           = T *;
-  using reference         = T &;
-  using iterator_category = std::forward_iterator_tag;
+  using difference_type   = std::ptrdiff_t;             // NOLINT
+  using value_type        = std::remove_cv_t<T>;        // NOLINT
+  using pointer           = T *;                        // NOLINT
+  using reference         = T &;                        // NOLINT
+  using iterator_category = std::forward_iterator_tag;  // NOLINT
 };
 
 template <typename T>
-struct iterator_traits<fetch::memory::BackwardIterator<T>>
+struct iterator_traits<fetch::memory::BackwardIterator<T>>  // NOLINT
 {
-  using difference_type   = std::ptrdiff_t;
-  using value_type        = std::remove_cv_t<T>;
-  using pointer           = T *;
-  using reference         = T &;
-  using iterator_category = std::forward_iterator_tag;
+  using difference_type   = std::ptrdiff_t;             // NOLINT
+  using value_type        = std::remove_cv_t<T>;        // NOLINT
+  using pointer           = T *;                        // NOLINT
+  using reference         = T &;                        // NOLINT
+  using iterator_category = std::forward_iterator_tag;  // NOLINT
 };
 
 }  // namespace std
