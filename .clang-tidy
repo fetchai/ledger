@@ -1,5 +1,6 @@
 Checks: "-*,\
 bugprone-*,\
+clang-analyzer-security.FloatLoopCounter,\
 google-build-namespaces,\
 -google-explicit-constructor,\
 google-readability-todo,\
