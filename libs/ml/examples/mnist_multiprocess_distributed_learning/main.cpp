@@ -99,7 +99,6 @@ int main(int ac, char **av)
   std::vector<std::string> peers_names;
 
   std::string word;
-https:  // www.seznam.cz/
   std::string peers_str = std::string(av[4]);
 
   std::stringstream stream(peers_str);
