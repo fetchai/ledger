@@ -24,27 +24,23 @@ namespace variant {
 class Variant;
 }
 
-namespace dkg {
-class DkgService;
-}
-
 namespace ledger {
 
-class StakeManager;
 class BlockCoordinator;
 class StorageUnitInterface;
 
 class GenesisFileCreator
 {
 public:
+  using ConsensusPtr = std::shared_ptr<fetch::ledger::Consensus>;
+
   // Construction / Destruction
   GenesisFileCreator(BlockCoordinator &block_coordinator, StorageUnitInterface &storage_unit,
-                     StakeManager *stake_manager, dkg::DkgService *dkg);
+                     ConsensusPtr consensus);
   GenesisFileCreator(GenesisFileCreator const &) = delete;
   GenesisFileCreator(GenesisFileCreator &&)      = delete;
   ~GenesisFileCreator()                          = default;
 
-  void CreateFile(std::string const &name);
   void LoadFile(std::string const &name);
 
   // Operators
@@ -52,16 +48,13 @@ public:
   GenesisFileCreator &operator=(GenesisFileCreator &&) = delete;
 
 private:
-  void DumpState(variant::Variant &object);
-  void DumpStake(variant::Variant &object);
   void LoadState(variant::Variant const &object);
-  void LoadStake(variant::Variant const &object);
-  void LoadDKG(variant::Variant const &object);
+  void LoadConsensus(variant::Variant const &object);
 
   BlockCoordinator &    block_coordinator_;
   StorageUnitInterface &storage_unit_;
-  StakeManager *        stake_manager_{nullptr};
-  dkg::DkgService *     dkg_{nullptr};
+  ConsensusPtr          consensus_;
+  uint64_t              start_time_ = 0;
 };
 
 }  // namespace ledger

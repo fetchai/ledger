@@ -102,9 +102,9 @@ private:
   };
 
 public:
-  using header_extra_type  = D;
-  using type               = T;
-  using event_handler_type = std::function<void()>;
+  using HeaderExtraType  = D;
+  using type             = T;
+  using EventHandlerType = std::function<void()>;
 
   void ClearEventHandlers()
   {
@@ -112,12 +112,12 @@ public:
     on_before_flush_ = nullptr;
   }
 
-  void OnFileLoaded(event_handler_type const &f)
+  void OnFileLoaded(EventHandlerType const &f)
   {
     on_file_loaded_ = f;
   }
 
-  void OnBeforeFlush(event_handler_type const &f)
+  void OnBeforeFlush(EventHandlerType const &f)
   {
     on_before_flush_ = f;
   }
@@ -329,7 +329,7 @@ public:
                       std::streamsize(sizeof(type)) * std::streamsize(elements));
   }
 
-  void SetExtraHeader(header_extra_type const &he)
+  void SetExtraHeader(HeaderExtraType const &he)
   {
     assert(filename_ != "");
 
@@ -337,7 +337,7 @@ public:
     StoreHeader();
   }
 
-  header_extra_type const &header_extra() const
+  HeaderExtraType const &header_extra() const
   {
     return header_.extra;
   }
@@ -489,8 +489,8 @@ public:
   }
 
 private:
-  event_handler_type   on_file_loaded_;
-  event_handler_type   on_before_flush_;
+  EventHandlerType     on_file_loaded_;
+  EventHandlerType     on_before_flush_;
   mutable std::fstream file_handle_;
   std::string          filename_ = "";
   Header               header_;

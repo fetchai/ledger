@@ -19,6 +19,7 @@ target_link_libraries(fetch-dmlf
                       PUBLIC fetch-core
                              fetch-ml
                              fetch-network
+                             fetch-muddle
                              fetch-crypto
                              fetch-math
                              pthread)

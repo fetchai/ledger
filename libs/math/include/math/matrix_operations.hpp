@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "math/base_types.hpp"
-#include "math/comparison.hpp"
 #include "math/fundamental_operators.hpp"
 #include "math/linalg/blas/base.hpp"
 #include "math/linalg/blas/gemm_nn_novector.hpp"
@@ -30,6 +29,7 @@
 #include "math/linalg/prototype.hpp"
 #include "math/meta/math_type_traits.hpp"
 #include "math/tensor_reduce.hpp"
+#include "vectorise/math/standard_functions.hpp"
 
 #include <cassert>
 #include <numeric>
@@ -50,11 +50,8 @@ namespace details_vectorisation {
 template <typename ArrayType>
 void Min(ArrayType const &array, typename ArrayType::Type &ret)
 {
-  using VectorRegisterType = typename ArrayType::VectorRegisterType;
-
-  ret = array.data().in_parallel().Reduce(
-      memory::TrivialRange(0, array.size()),
-      [](VectorRegisterType const &a, VectorRegisterType const &b) { return min(a, b); });
+  ret = array.data().in_parallel().Reduce(memory::Range(0, array.size()),
+                                          [](auto const &a, auto const &b) { return min(a, b); });
 }
 
 /**
@@ -70,11 +67,8 @@ void Product(ArrayType const &obj1, typename ArrayType::Type &ret)
   // TODO(private issue 994): Create test for this function
   if (obj1.padding() == 1)
   {
-    ret =
-        obj1.data().in_parallel().Reduce(memory::TrivialRange(0, obj1.size()),
-                                         [](typename ArrayType::VectorRegisterType const &a,
-                                            typename ArrayType::VectorRegisterType const &b) ->
-                                         typename ArrayType::VectorRegisterType { return a * b; });
+    ret = obj1.data().in_parallel().Reduce(memory::Range(0, obj1.size()),
+                                           [](auto const &a, auto const &b) { return a * b; });
   }
   else
   {
@@ -98,10 +92,8 @@ void Product(ArrayType const &obj1, typename ArrayType::Type &ret)
 template <typename ArrayType>
 void Sum(ArrayType const &obj1, typename ArrayType::Type &ret)
 {
-  ret = obj1.data().in_parallel().Reduce(memory::TrivialRange(0, obj1.size()),
-                                         [](typename ArrayType::VectorRegisterType const &a,
-                                            typename ArrayType::VectorRegisterType const &b) ->
-                                         typename ArrayType::VectorRegisterType { return a + b; });
+  ret = obj1.data().in_parallel().Reduce(memory::Range(0, obj1.size()),
+                                         [](auto const &a, auto const &b) { return a + b; });
 }
 
 }  // namespace details_vectorisation

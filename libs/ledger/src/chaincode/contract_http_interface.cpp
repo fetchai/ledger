@@ -45,10 +45,10 @@ namespace fetch {
 namespace ledger {
 namespace {
 
-using fetch::variant::Variant;
 using fetch::byte_array::ByteArray;
 using fetch::byte_array::ConstByteArray;
 using fetch::ledger::FromJsonTransaction;
+using fetch::variant::Variant;
 
 ConstByteArray const API_PATH_CONTRACT_PREFIX("/api/contract/");
 ConstByteArray const CONTRACT_NAME_SEPARATOR(".");

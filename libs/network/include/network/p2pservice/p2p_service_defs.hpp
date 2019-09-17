@@ -118,7 +118,7 @@ public:
     map.GetNextKeyPair(key, service_type);
     map.GetNextKeyPair(key, x.instance_number);
     x.service_type = static_cast<network::ServiceType>(service_type);
-    // TODO(EJF): This still needs validation
+    // TODO(issue 1672): This still needs validation
   }
 };
 

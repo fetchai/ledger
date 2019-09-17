@@ -172,7 +172,6 @@ public:
   Tensor &operator=(TensorSlice const &slice);
 
   void Fill(Type const &value, memory::Range const &range);
-  void Fill(Type const &value, memory::TrivialRange const &range);
   void Fill(Type const &value);
   void SetAllZero();
   void SetAllOne();
@@ -318,7 +317,7 @@ public:
                                    SizeType const axis);
 
   void Sort();
-  void Sort(memory::TrivialRange const &range);
+  void Sort(memory::Range const &range);
 
   static Tensor Arange(Type const &from, Type const &to, Type const &delta);
 
@@ -827,8 +826,10 @@ typename Tensor<T, C>::ViewType Tensor<T, C>::View()
 {
   assert(shape_.size() >= 1);
 
-  SizeType N     = shape_.size() - 1;
-  SizeType width = shape_[N] * stride_[N] / padded_height_;
+  SizeType N = shape_.size() - 1;
+  // padded_height can be 32 bytes on AVX2, set width to 1 to avoid zero-width tensors
+  SizeType width = std::max(shape_[N] * stride_[N] / padded_height_, static_cast<SizeType>(1));
+  assert(width > 0);
   return TensorView<Type, ContainerType>(data_, height(), width);
 }
 
@@ -843,8 +844,10 @@ typename Tensor<T, C>::ViewType const Tensor<T, C>::View() const
 {
   assert(shape_.size() >= 1);
 
-  SizeType N     = shape_.size() - 1;
-  SizeType width = shape_[N] * stride_[N] / padded_height_;
+  SizeType N = shape_.size() - 1;
+  // padded_height can be 32 bytes on AVX2, set width to 1 to avoid zero-width tensors
+  SizeType width = std::max(shape_[N] * stride_[N] / padded_height_, static_cast<SizeType>(1));
+  assert(width > 0);
   return TensorView<Type, ContainerType>(data_, height(), width);
 }
 
@@ -1299,37 +1302,12 @@ void Tensor<T, C>::Set(Args... args)
 }
 
 /**
- * Fill tensor with specified value over pre-specified range
- * @tparam T Type
- * @tparam C Container
- * @param value value to fill tensor with
- * @param range memory range over which to fill
- */
-template <typename T, typename C>
-void Tensor<T, C>::Fill(Type const &value, memory::Range const &range)
-{
-
-  if (range.is_undefined())
-  {
-    Fill(value);
-  }
-  else if (range.is_trivial())
-  {
-    Fill(value, range.ToTrivialRange(this->size()));
-  }
-  else
-  {
-    TODO_FAIL("Support for general range is not implmenented yet");
-  }
-}
-
-/**
  * Fills entire tensor with value
  * @param value
  * @param range
  */
 template <typename T, typename C>
-void Tensor<T, C>::Fill(Type const &value, memory::TrivialRange const &range)
+void Tensor<T, C>::Fill(Type const &value, memory::Range const &range)
 {
   VectorRegisterType val(value);
 
@@ -2570,7 +2548,7 @@ void Tensor<T, C>::Sort()
  * @param range
  */
 template <typename T, typename C>
-void Tensor<T, C>::Sort(memory::TrivialRange const &range)
+void Tensor<T, C>::Sort(memory::Range const &range)
 {
   std::sort(data_.pointer() + range.from(), data_.pointer() + range.to());
 }

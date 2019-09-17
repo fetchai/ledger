@@ -47,8 +47,8 @@ public:
   using Clock          = std::chrono::steady_clock;
   using Timepoint      = Clock::time_point;
 
-  ResolvableTo()  = default;
-  ~ResolvableTo() = default;
+  ResolvableTo()           = default;
+  ~ResolvableTo() override = default;
 
   ResolvableTo(ResolvableTo const &rhs) = default;
 
@@ -60,8 +60,8 @@ public:
   {
     return GetState();
   }
-  virtual State          GetState() = 0;
-  virtual PromiseCounter id() const = 0;
+  State          GetState() override = 0;
+  PromiseCounter id() const override = 0;
 
   virtual RESULT Get() const = 0;
 };

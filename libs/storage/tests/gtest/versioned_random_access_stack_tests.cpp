@@ -43,7 +43,7 @@ TEST(versioned_random_access_stack_gtest, creation_and_manipulation)
 {
   VersionedRandomAccessStack<TYPE> stack;
   stack.New("versioned_random_access_stack_test_1.db", "versioned_random_access_stack_diff.db");
-  VersionedRandomAccessStack<TYPE>::bookmark_type cp1, cp2, cp3;
+  VersionedRandomAccessStack<TYPE>::BookmarkType cp1, cp2, cp3;
 
   // testing basic manipulation)
   cp1 = stack.Commit();
