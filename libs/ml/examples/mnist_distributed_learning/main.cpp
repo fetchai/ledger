@@ -20,7 +20,6 @@
 #include "dmlf/simple_cycling_algorithm.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
-#include "ml/distributed_learning/coordinator.hpp"
 #include "ml/distributed_learning/distributed_learning_client.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
@@ -88,20 +87,15 @@ int main(int ac, char **av)
     return 1;
   }
 
-  CoordinatorParams      coord_params;
   ClientParams<DataType> client_params;
 
-  SizeType number_of_clients    = 10;
-  SizeType number_of_rounds     = 10;
-  coord_params.mode             = CoordinatorMode::SEMI_SYNCHRONOUS;
-  coord_params.iterations_count = 100;
-  client_params.batch_size      = 32;
-  client_params.learning_rate   = static_cast<DataType>(.001f);
-  float    test_set_ratio       = 0.03f;
-  SizeType number_of_peers      = 3;
-
-  std::shared_ptr<Coordinator<TensorType>> coordinator =
-      std::make_shared<Coordinator<TensorType>>(coord_params);
+  SizeType number_of_clients     = 5;
+  SizeType number_of_rounds      = 10;
+  client_params.iterations_count = 20;
+  client_params.batch_size       = 32;
+  client_params.learning_rate    = static_cast<DataType>(.001f);
+  float    test_set_ratio        = 0.03f;
+  SizeType number_of_peers       = 3;
 
   std::vector<std::shared_ptr<fetch::dmlf::LocalLearnerNetworker>> networkers(number_of_clients);
 
@@ -131,7 +125,6 @@ int main(int ac, char **av)
   for (SizeType i{0}; i < number_of_clients; ++i)
   {
     // Give each client pointer to coordinator
-    clients[i]->SetCoordinator(coordinator);
     clients[i]->SetNetworker(networkers[i]);
   }
 
@@ -139,7 +132,6 @@ int main(int ac, char **av)
   for (SizeType it{0}; it < number_of_rounds; ++it)
   {
     // Start all clients
-    coordinator->Reset();
     std::cout << "================= ROUND : " << it << " =================" << std::endl;
     std::list<std::thread> threads;
     for (auto &c : clients)
@@ -151,38 +143,6 @@ int main(int ac, char **av)
     for (auto &t : threads)
     {
       t.join();
-    }
-
-    if (coordinator->GetMode() == CoordinatorMode::ASYNCHRONOUS)
-    {
-      continue;
-    }
-
-    // Synchronize weights by giving all clients average of all client's weights
-    VectorTensorType new_weights = clients[0]->GetWeights();
-
-    // Sum all weights
-    for (SizeType i{1}; i < number_of_clients; ++i)
-    {
-      VectorTensorType other_weights = clients[i]->GetWeights();
-
-      for (SizeType j{0}; j < other_weights.size(); j++)
-      {
-        fetch::math::Add(new_weights.at(j), other_weights.at(j), new_weights.at(j));
-      }
-    }
-
-    // Divide weights by number of clients to calculate the average
-    for (SizeType j{0}; j < new_weights.size(); j++)
-    {
-      fetch::math::Divide(new_weights.at(j), static_cast<DataType>(number_of_clients),
-                          new_weights.at(j));
-    }
-
-    // Update models of all clients by average model
-    for (unsigned int i(0); i < number_of_clients; ++i)
-    {
-      clients[i]->SetWeights(new_weights);
     }
   }
 
