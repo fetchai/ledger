@@ -212,7 +212,7 @@ private:
   static byte_array::ByteArray ConvertDER(SharedPointerType<const ECDSA_SIG> &&signature)
   {
     byte_array::ByteArray der_sig;
-    const std::size_t est_size = static_cast<std::size_t>(i2d_ECDSA_SIG(signature.get(), nullptr));
+    auto const est_size = static_cast<std::size_t>(i2d_ECDSA_SIG(signature.get(), nullptr));
     der_sig.Resize(est_size);
 
     if (est_size < 1)
@@ -222,9 +222,8 @@ private:
           "i2d_ECDSA_SIG(..., nullptr) failed.");
     }
 
-    uint8_t *         der_sig_ptr = static_cast<uint8_t *>(der_sig.pointer());
-    const std::size_t res_size =
-        static_cast<std::size_t>(i2d_ECDSA_SIG(signature.get(), &der_sig_ptr));
+    auto *     der_sig_ptr = static_cast<uint8_t *>(der_sig.pointer());
+    auto const res_size    = static_cast<std::size_t>(i2d_ECDSA_SIG(signature.get(), &der_sig_ptr));
 
     if (res_size < 1)
     {
@@ -247,7 +246,7 @@ private:
 
   static UniquePointerType<ECDSA_SIG> ConvertDER(const byte_array::ConstByteArray &bin_sig)
   {
-    const uint8_t *der_sig_ptr = static_cast<const uint8_t *>(bin_sig.pointer());
+    auto const *der_sig_ptr = static_cast<const uint8_t *>(bin_sig.pointer());
 
     UniquePointerType<ECDSA_SIG> signature{
         d2i_ECDSA_SIG(nullptr, &der_sig_ptr, static_cast<long>(bin_sig.size()))};
