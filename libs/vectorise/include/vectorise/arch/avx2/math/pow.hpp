@@ -18,19 +18,30 @@
 //------------------------------------------------------------------------------
 
 namespace fetch {
-namespace vectorize {
+namespace vectorise {
 
-inline VectorRegister<float, 128> min(VectorRegister<float, 128> const &a,
-                                      VectorRegister<float, 128> const &b)
+template <typename T, std::size_t S>
+VectorRegister<T, S> pow(VectorRegister<T, S> base, int p)
 {
-  return VectorRegister<float, 128>(_mm_min_ps(a.data(), b.data()));
+  VectorRegister<T, S> result = VectorRegister<T, S>(1);
+  if (p & 1)
+  {
+    result *= base;
+  }
+  p >>= 1;
+
+  while (p != 0)
+  {
+    base = base * base;
+    if (p & 1)
+    {
+      result *= base;
+    }
+    p >>= 1;
+  }
+
+  return result;
 }
 
-inline VectorRegister<double, 128> min(VectorRegister<double, 128> const &a,
-                                       VectorRegister<double, 128> const &b)
-{
-  return VectorRegister<double, 128>(_mm_min_pd(a.data(), b.data()));
-}
-
-}  // namespace vectorize
+}  // namespace vectorise
 }  // namespace fetch

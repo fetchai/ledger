@@ -16,8 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vectorise/math/standard_functions.hpp"
 #include "vectorise/memory/array.hpp"
 #include "vectorise/memory/shared_array.hpp"
+#include "vectorise/vectorise.hpp"
 
 #include "gtest/gtest.h"
 
@@ -30,8 +32,7 @@ using vector_type = typename array_type::VectorRegisterType;
 
 void Exponentials(array_type const &A, array_type &C)
 {
-  C.in_parallel().Apply(
-      [](vector_type const &x, vector_type &y) { y = fetch::vectorize::approx_exp(x); }, A);
+  C.in_parallel().Apply([](auto const &x, auto &y) { y = fetch::vectorise::approx_exp(x); }, A);
 }
 
 TEST(vectorise_approx_exp_gtest, exp_test)

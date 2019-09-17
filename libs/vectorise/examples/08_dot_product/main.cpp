@@ -36,9 +36,8 @@ void Dot(array_type const &mA, array_type const &mB, array_type &mC)
     {
 
       auto B   = mB.slice(j * mB.padded_width(), mA.padded_height());
-      type ele = A.in_parallel()
-                     .SumReduce([](vector_type const &a, vector_type const &b) { return a * b; }, B)
-                         mC.Set(i, j, ele);
+      type ele = A.in_parallel().SumReduce([](auto const &a, auto const &b) { return a * b; }, B)
+                     mC.Set(i, j, ele);
     }
   }
 }

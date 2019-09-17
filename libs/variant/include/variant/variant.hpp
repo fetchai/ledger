@@ -22,6 +22,7 @@
 #include "meta/type_traits.hpp"
 #include "variant/detail/element_pool.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+#include "vectorise/meta/math_type_traits.hpp"
 
 #include <cassert>
 #include <cstddef>
@@ -88,7 +89,7 @@ public:
   template <typename T>
   explicit Variant(T const &value, meta::IfIsFloat<T> * = nullptr);
   template <typename T>
-  explicit Variant(T const &value, meta::IfIsFixedPoint<T> * = nullptr);
+  explicit Variant(T const &value, math::meta::IfIsFixedPoint<T> * = nullptr);
   template <typename T>
   explicit Variant(T &&value, meta::IfIsString<T> * = nullptr);
   explicit Variant(char const *value);
@@ -117,7 +118,7 @@ public:
   template <typename T>
   meta::IfIsFloat<T, bool> Is() const;
   template <typename T>
-  meta::IfIsFixedPoint<T, bool> Is() const;
+  math::meta::IfIsFixedPoint<T, bool> Is() const;
   template <typename T>
   meta::IfIsString<T, bool> Is() const;
   /// @}
@@ -131,7 +132,7 @@ public:
   template <typename T>
   meta::IfIsFloat<T, T> As() const;
   template <typename T>
-  meta::IfIsFixedPoint<T, T> As() const;
+  math::meta::IfIsFixedPoint<T, T> As() const;
   template <typename T>
   meta::IfIsConstByteArray<T, ConstByteArray const &> As() const;
   template <typename T>
@@ -163,7 +164,7 @@ public:
   template <typename T>
   meta::IfIsFloat<T, Variant &> operator=(T const &value);
   template <typename T>
-  meta::IfIsFixedPoint<T, Variant &> operator=(T const &value);
+  math::meta::IfIsFixedPoint<T, Variant &> operator=(T const &value);
   template <typename T>
   meta::IfIsAByteArray<T, Variant &> operator=(T const &value);
   template <typename T>
@@ -253,7 +254,7 @@ Variant::Variant(T const &value, meta::IfIsFloat<T> *)
  * @param value The value to be set
  */
 template <typename T>
-Variant::Variant(T const &value, meta::IfIsFixedPoint<T> *)
+Variant::Variant(T const &value, math::meta::IfIsFixedPoint<T> *)
   : Variant()
 {
   type_              = Type::FIXED_POINT;
@@ -317,7 +318,7 @@ meta::IfIsFloat<T, bool> Variant::Is() const
  * @return true if the value is compatible fixed point, otherwise false
  */
 template <typename T>
-meta::IfIsFixedPoint<T, bool> Variant::Is() const
+math::meta::IfIsFixedPoint<T, bool> Variant::Is() const
 {
   return type() == Type::FIXED_POINT;
 }
@@ -396,7 +397,7 @@ meta::IfIsFloat<T, T> Variant::As() const
  * @throws std::runtime_error in the case where the conversion is not possible
  */
 template <typename T>
-meta::IfIsFixedPoint<T, T> Variant::As() const
+math::meta::IfIsFixedPoint<T, T> Variant::As() const
 {
   if (type() != Type::FIXED_POINT)
   {
@@ -498,7 +499,7 @@ meta::IfIsFloat<T, Variant &> Variant::operator=(T const &value)
  * @return The reference to the updated variant
  */
 template <typename T>
-meta::IfIsFixedPoint<T, Variant &> Variant::operator=(T const &value)
+math::meta::IfIsFixedPoint<T, Variant &> Variant::operator=(T const &value)
 {
   type_              = Type::FIXED_POINT;
   primitive_.integer = value.Data();
