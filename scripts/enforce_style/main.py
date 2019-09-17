@@ -86,10 +86,6 @@ class CustomChecker(StyleChecker):
     def CheckArgument(self, node):
         return
 
-        # TODO: Does not work as clang rearranges with const first
-        if node.type.spelling.startswith("const "):
-            self.Error(node, "Incorrect placement of keyword 'const'")
-
     def CheckReturnType(self, node):
         if not self.ValidateType(node.result_type):
             self.Error(node, "Return type name '" +
@@ -110,6 +106,13 @@ class CustomChecker(StyleChecker):
 if __name__ == "__main__":
     ignores = ["vm/tokeniser.hpp"]
 
+    if len(sys.argv) == 1:
+        print("usage", sys.argv[0], "[input directory/file] [c++ include dir1] [c++ include dir2]")
+        print("") 
+        print("example", sys.argv[0], "../../libs/ /usr/local/include") 
+        print("")
+        exit(-1)
+
     includes = sys.argv[2:]
     for f in glob.glob(os.path.join(sys.argv[1], "*", "include")):
         includes.append(f)
@@ -124,7 +127,7 @@ if __name__ == "__main__":
                     should_ignore = True
 
             if should_ignore:
-                print("SHOULD IGNORE:", f)
+                print("Ignoring:", f)
                 continue
 
             if f.endswith(".hpp"):

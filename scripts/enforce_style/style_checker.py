@@ -94,7 +94,6 @@ class StyleChecker(object):
             if ns == "std":
                 return
 
-#    print("KIND:",kind, node.spelling)
         if kind == "TYPEDEF_DECL":
             self.CheckTypedef(node)
         elif kind == "TYPE_ALIAS_DECL":
@@ -110,13 +109,10 @@ class StyleChecker(object):
                 self.CheckPublicMemberFunction(node)
 
             self.CheckReturnType(node)
-            # TODO:
         elif kind == "CLASS_DECL":
             self.CheckClass(node)
         elif kind == "CLASS_TEMPLATE":
             self.CheckClass(node)
-
-#        self.CheckReturnType(x.result_type)
 
         for x in node.get_children():
             self.Traverse(x)
