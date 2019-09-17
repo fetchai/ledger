@@ -74,10 +74,7 @@ public:
 
   virtual ~TrainingClient() = default;
 
-  void SetNetworker(std::shared_ptr<fetch::dmlf::ILearnerNetworker> i_learner_ptr)
-  {
-    i_learner_ptr_ = i_learner_ptr;
-  }
+  void SetNetworker(std::shared_ptr<fetch::dmlf::ILearnerNetworker> i_learner_ptr);
 
   void Run();
 
@@ -118,8 +115,7 @@ protected:
   std::string              error_name_;
 
   // Learning hyperparameters
-  SizeType batch_size_    = 0;
-  DataType learning_rate_ = static_cast<DataType>(0);
+  SizeType batch_size_ = 0;
 
   // Count for number of batches
   SizeType batch_counter_    = 0;
@@ -131,10 +127,7 @@ protected:
   std::string   GetStrTimestamp();
   TimestampType GetTimestamp();
 
-  void TrainWithCoordinator();
-
   void DoBatch();
-
   void ClearLossFile();
 };
 
@@ -177,7 +170,6 @@ void TrainingClient<TensorType>::SetParams(
   label_name_       = new_params.label_name;
   error_name_       = new_params.error_name;
   batch_size_       = new_params.batch_size;
-  learning_rate_    = new_params.learning_rate;
   iterations_count_ = new_params.iterations_count;
 }
 
@@ -188,13 +180,51 @@ std::string TrainingClient<TensorType>::GetId() const
 }
 
 /**
+ * Set pointer to client's iLearner
+ * @tparam TensorType
+ * @param i_learner_ptr
+ */
+template <class TensorType>
+void TrainingClient<TensorType>::SetNetworker(
+    std::shared_ptr<fetch::dmlf::ILearnerNetworker> i_learner_ptr)
+{
+  i_learner_ptr_ = i_learner_ptr;
+}
+
+/**
  * Main loop that runs in thread
  */
 template <class TensorType>
 void TrainingClient<TensorType>::Run()
 {
-  // Train batches until coordinator will tell clients to stop
-  TrainWithCoordinator();
+  std::ofstream lossfile("losses_" + id_ + ".csv", std::ofstream::out | std::ofstream::app);
+
+  for (SizeType n{0}; n < iterations_count_; n++)
+  {
+    DoBatch();
+
+    // Validate loss for logging purpose
+    Test();
+
+    // Save loss variation data
+    // Upload to https://plot.ly/create/#/ for visualisation
+    if (lossfile)
+    {
+      lossfile << GetStrTimestamp() << ", " << static_cast<double>(train_loss_)
+               << static_cast<double>(test_loss_) << "\n";
+    }
+  }
+
+  opti_ptr_->IncrementEpochCounter();
+  opti_ptr_->UpdateLearningRate();
+
+  if (lossfile)
+  {
+    lossfile << GetStrTimestamp() << ", "
+             << "STOPPED"
+             << "\n";
+    lossfile.close();
+  }
 }
 
 /**
@@ -325,42 +355,6 @@ int64_t TrainingClient<TensorType>::GetTimestamp()
   return std::chrono::duration_cast<std::chrono::milliseconds>(
              std::chrono::system_clock::now().time_since_epoch())
       .count();
-}
-
-/**
- * Do batch training repeatedly while coordinator state is set to RUN
- */
-template <class TensorType>
-void TrainingClient<TensorType>::TrainWithCoordinator()
-{
-  std::ofstream lossfile("losses_" + id_ + ".csv", std::ofstream::out | std::ofstream::app);
-
-  for (SizeType n{0}; n < iterations_count_; n++)
-  {
-    DoBatch();
-
-    // Validate loss for logging purpose
-    Test();
-
-    // Save loss variation data
-    // Upload to https://plot.ly/create/#/ for visualisation
-    if (lossfile)
-    {
-      lossfile << GetStrTimestamp() << ", " << static_cast<double>(train_loss_)
-               << static_cast<double>(test_loss_) << "\n";
-    }
-  }
-
-  opti_ptr_->IncrementEpochCounter();
-  opti_ptr_->UpdateLearningRate();
-
-  if (lossfile)
-  {
-    lossfile << GetStrTimestamp() << ", "
-             << "STOPPED"
-             << "\n";
-    lossfile.close();
-  }
 }
 
 /**
