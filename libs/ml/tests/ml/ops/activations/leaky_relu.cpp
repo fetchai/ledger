@@ -41,6 +41,11 @@ TYPED_TEST(LeakyReluTest, forward_test)
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
 
+  //  fetch::fixed_point::fp32_t::StateClear();
+  DataType x = DataType(1);
+  FETCH_UNUSED(x);
+  assert(fetch::math::state_overflow<DataType>() == false);
+
   TensorType data = TensorType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
   TensorType gt   = TensorType::FromString("1, -0.02, 3, -0.04, 5, -0.06, 7, -0.08");
 

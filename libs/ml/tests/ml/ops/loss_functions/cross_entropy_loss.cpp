@@ -38,6 +38,7 @@ TYPED_TEST_CASE(CrossEntropyTest, MyTypes);
 TYPED_TEST(CrossEntropyTest, perfect_match_forward_test)
 {
   using DataType = typename TypeParam::Type;
+  assert(fetch::math::state_division_by_zero<DataType>() == false);
 
   std::uint64_t n_classes     = 4;
   std::uint64_t n_data_points = 8;

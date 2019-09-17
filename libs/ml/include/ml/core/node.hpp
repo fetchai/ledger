@@ -218,10 +218,10 @@ std::shared_ptr<T> Node<T>::Evaluate(bool is_training)
     op_ptr_->Forward(inputs, cached_output_);
     cached_output_status_ = CachedOutputState::VALID_CACHE;
 
-    assert(math::is_division_by_zero<DataType>() == false);
-    assert(math::is_overflow<DataType>() == false);
-    assert(math::is_infinity<DataType>() == false);
-    assert(math::is_nan<DataType>() == false);
+    assert(!math::state_division_by_zero<DataType>());
+    assert(!math::state_overflow<DataType>());
+    assert(!math::state_infinity<DataType>());
+    assert(!math::state_nan<DataType>());
   }
 
   return std::make_shared<T>(cached_output_);
