@@ -17,18 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-namespace fetch {
-namespace vectorize {
-
-inline VectorRegister<float, 128> sqrt(VectorRegister<float, 128> const &a)
-{
-  return VectorRegister<float, 128>(_mm_sqrt_ps(a.data()));
-}
-
-inline VectorRegister<double, 128> sqrt(VectorRegister<double, 128> const &a)
-{
-  return VectorRegister<double, 128>(_mm_sqrt_pd(a.data()));
-}
-
-}  // namespace vectorize
-}  // namespace fetch
+#include "vectorise/arch/avx2/math/abs.hpp"
+#include "vectorise/arch/avx2/math/approx_exp.hpp"
+#include "vectorise/arch/avx2/math/approx_log.hpp"
+#include "vectorise/arch/avx2/math/pow.hpp"
+#include "vectorise/arch/avx2/math/sqrt.hpp"

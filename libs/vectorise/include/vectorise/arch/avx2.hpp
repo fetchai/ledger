@@ -17,20 +17,21 @@
 //
 //------------------------------------------------------------------------------
 
-namespace fetch {
-namespace vectorize {
+#ifdef __AVX2__
 
-inline VectorRegister<float, 128> approx_reciprocal(VectorRegister<float, 128> const &x)
-{
+#include "vectorise/arch/avx2/info.hpp"
 
-  return VectorRegister<float, 128>(_mm_rcp_ps(x.data()));
-}
+#if !defined(__clang) && (__GNUC__ < 8)
+#define _mm256_set_m128i(v0, v1) _mm256_insertf128_si256(_mm256_castsi128_si256(v1), (v0), 1)
+#endif
 
-inline VectorRegister<double, 128> approx_reciprocal(VectorRegister<double, 128> const &x)
-{
-  // TODO(issue 3): Test this function
-  return VectorRegister<double, 128>(_mm_cvtps_pd(_mm_rcp_ps(_mm_cvtpd_ps(x.data()))));
-}
+#include "vectorise/arch/avx2/register_double.hpp"
+#include "vectorise/arch/avx2/register_fixed32.hpp"
+#include "vectorise/arch/avx2/register_fixed64.hpp"
+#include "vectorise/arch/avx2/register_float.hpp"
+#include "vectorise/arch/avx2/register_int32.hpp"
+#include "vectorise/arch/avx2/register_int64.hpp"
 
-}  // namespace vectorize
-}  // namespace fetch
+#undef ADD_REGISTER_SIZE
+
+#endif

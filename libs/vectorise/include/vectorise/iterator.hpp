@@ -22,7 +22,7 @@
 #include <cassert>
 
 namespace fetch {
-namespace vectorize {
+namespace vectorise {
 
 template <typename T, std::size_t N = sizeof(T)>
 class VectorRegisterIterator
@@ -36,6 +36,15 @@ public:
     : ptr_(nullptr)
     , end_(nullptr)
   {}
+
+  template <typename Y, std::size_t M>
+  VectorRegisterIterator(VectorRegisterIterator<Y, M> &o, std::size_t const offset)
+    : ptr_(reinterpret_cast<MMRegisterType *>(o.pointer()))
+    , end_(reinterpret_cast<MMRegisterType *>(o.end()))
+  {
+    ptr_ += offset;
+  }
+
   VectorRegisterIterator(type const *d, std::size_t size)
     : ptr_((MMRegisterType *)d)
     , end_((MMRegisterType *)(d + size))
@@ -49,9 +58,19 @@ public:
     ++ptr_;
   }
 
+  MMRegisterType *pointer() const
+  {
+    return ptr_;
+  }
+
+  MMRegisterType *end() const
+  {
+    return end_;
+  }
+
 private:
   MMRegisterType *ptr_;
   MMRegisterType *end_;
 };
-}  // namespace vectorize
+}  // namespace vectorise
 }  // namespace fetch
