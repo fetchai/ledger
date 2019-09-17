@@ -19,7 +19,7 @@
 
 #include "core/state_machine.hpp"
 
-#include "ledger/consensus/entropy_generator_interface.hpp"
+#include "entropy/entropy_generator_interface.hpp"
 #include "muddle/muddle_endpoint.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
@@ -88,7 +88,6 @@ public:
   using StateMachinePtr         = std::shared_ptr<StateMachine>;
   using SignatureShare          = AeonExecutionUnit::SignatureShare;
   using Serializer              = serializers::MsgPackSerializer;
-  using Digest                  = ledger::Digest;
   using SharedEventManager      = EventManager::SharedEventManager;
   using BeaconSetupService      = beacon::BeaconSetupService;
 

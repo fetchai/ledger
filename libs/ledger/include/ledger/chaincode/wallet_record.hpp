@@ -19,15 +19,16 @@
 
 #include "core/byte_array/decoders.hpp"
 #include "ledger/chaincode/deed.hpp"
+#include "logging/logging.hpp"
 
 #include <cstdint>
 #include <map>
 #include <memory>
 
 // TODO(HUT): doesn't putting this here pollute the namespace?
-using fetch::variant::Variant;
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::FromBase64;
+using fetch::variant::Variant;
 
 namespace fetch {
 namespace ledger {

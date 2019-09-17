@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "address/address.hpp"
+#include "crypto/identity.hpp"
 
 #include <type_traits>
 
