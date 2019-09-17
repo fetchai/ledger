@@ -21,7 +21,6 @@
 #include "dmlf/simple_cycling_algorithm.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
-#include "ml/distributed_learning/coordinator.hpp"
 #include "ml/distributed_learning/distributed_learning_client.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
@@ -108,19 +107,14 @@ int main(int ac, char **av)
     peers_names.push_back(word);
   }
 
-  CoordinatorParams      coord_params;
   ClientParams<DataType> client_params;
 
-  SizeType number_of_rounds     = 10;
-  coord_params.mode             = CoordinatorMode::SEMI_SYNCHRONOUS;
-  coord_params.iterations_count = 100;
-  client_params.batch_size      = 32;
-  client_params.learning_rate   = static_cast<DataType>(.001f);
-  float    test_set_ratio       = 0.03f;
-  SizeType number_of_peers      = 3;
-
-  std::shared_ptr<Coordinator<TensorType>> coordinator =
-      std::make_shared<Coordinator<TensorType>>(coord_params);
+  SizeType number_of_rounds      = 10;
+  client_params.iterations_count = 100;
+  client_params.batch_size       = 32;
+  client_params.learning_rate    = static_cast<DataType>(.001f);
+  float    test_set_ratio        = 0.03f;
+  SizeType number_of_peers       = 3;
 
   // Create networker
   auto networker = std::make_shared<fetch::dmlf::FilepassingLearnerNetworker>();
@@ -136,15 +130,12 @@ int main(int ac, char **av)
       MakeClient(my_name, client_params, av[1], av[2], test_set_ratio);
 
   // Give list of clients to coordinator
-  coordinator->SetClientsList({client});
-  client->SetCoordinator(coordinator);
   client->SetNetworker(networker);
 
   // Main loop
   for (SizeType it{0}; it < number_of_rounds; ++it)
   {
-    // Start all clients
-    coordinator->Reset();
+    // Start the client
     std::cout << "================= ROUND : " << it << " =================" << std::endl;
 
     client->Run();

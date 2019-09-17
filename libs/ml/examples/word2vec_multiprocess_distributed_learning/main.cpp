@@ -22,7 +22,6 @@
 #include "math/tensor.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/dataloaders/word2vec_loaders/sgns_w2v_dataloader.hpp"
-#include "ml/distributed_learning/coordinator.hpp"
 #include "ml/distributed_learning/word2vec_client.hpp"
 
 #include <iostream>
@@ -97,19 +96,17 @@ int main(int ac, char **av)
     peers_names.push_back(word);
   }
 
-  CoordinatorParams           coord_params{};
   W2VTrainingParams<DataType> client_params;
 
   // Distributed learning parameters:
-  SizeType number_of_clients    = 5;
-  SizeType number_of_rounds     = 50;
-  SizeType number_of_peers      = 2;
-  coord_params.mode             = CoordinatorMode::SEMI_SYNCHRONOUS;
-  coord_params.iterations_count = 100;  //  Synchronization occurs after this number of batches
-  // have been processed in total by the clients
+  SizeType number_of_clients = 5;
+  SizeType number_of_rounds  = 50;
+  SizeType number_of_peers   = 2;
 
-  client_params.batch_size    = 10000;
-  client_params.learning_rate = static_cast<DataType>(.001f);
+  // Synchronization occurs after this number of batches have been processed in total by the clients
+  client_params.iterations_count = 100;
+  client_params.batch_size       = 10000;
+  client_params.learning_rate    = static_cast<DataType>(.001f);
 
   // Word2Vec parameters:
   client_params.vocab_file           = "/tmp/vocab.txt";
@@ -135,9 +132,7 @@ int main(int ac, char **av)
   client_params.learning_rate_param.starting_learning_rate = client_params.starting_learning_rate;
   client_params.learning_rate_param.ending_learning_rate   = client_params.ending_learning_rate;
 
-  std::shared_ptr<std::mutex>              console_mutex_ptr_ = std::make_shared<std::mutex>();
-  std::shared_ptr<Coordinator<TensorType>> coordinator =
-      std::make_shared<Coordinator<TensorType>>(coord_params);
+  std::shared_ptr<std::mutex> console_mutex_ptr_ = std::make_shared<std::mutex>();
   std::cout << "FETCH Distributed Word2vec Demo -- Asynchronous" << std::endl;
 
   std::string train_file = av[1];
@@ -162,17 +157,14 @@ int main(int ac, char **av)
       std::make_shared<Word2VecClient<TensorType>>(my_name, cp, console_mutex_ptr_);
 
   // Give list of clients to coordinator
-  coordinator->SetClientsList({client});
-  client->SetCoordinator(coordinator);
   client->SetNetworker(networker);
 
   // Main loop
   for (SizeType it{0}; it < number_of_rounds; ++it)
   {
-    // Start all clients
-    coordinator->Reset();
     std::cout << "================= ROUND : " << it << " =================" << std::endl;
 
+    // Start the client
     client->Run();
     ::sleep(1);
   }

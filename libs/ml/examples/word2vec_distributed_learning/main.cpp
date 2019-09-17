@@ -22,7 +22,6 @@
 #include "math/tensor.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/dataloaders/word2vec_loaders/sgns_w2v_dataloader.hpp"
-#include "ml/distributed_learning/coordinator.hpp"
 #include "ml/distributed_learning/word2vec_client.hpp"
 
 #include <iostream>
@@ -81,19 +80,18 @@ int main(int ac, char **av)
     return 1;
   }
 
-  CoordinatorParams           coord_params{};
   W2VTrainingParams<DataType> client_params;
 
   // Distributed learning parameters:
-  SizeType number_of_clients    = 5;
-  SizeType number_of_rounds     = 50;
-  SizeType number_of_peers      = 2;
-  coord_params.mode             = CoordinatorMode::SEMI_SYNCHRONOUS;
-  coord_params.iterations_count = 100;  //  Synchronization occurs after this number of batches
-  // have been processed in total by the clients
+  SizeType number_of_clients = 5;
+  SizeType number_of_rounds  = 50;
+  SizeType number_of_peers   = 2;
 
-  client_params.batch_size    = 10000;
-  client_params.learning_rate = static_cast<DataType>(.001f);
+  //  Synchronization occurs after this number of batches have been processed in total by the
+  //  clients
+  client_params.iterations_count = 100;
+  client_params.batch_size       = 10000;
+  client_params.learning_rate    = static_cast<DataType>(.001f);
 
   // Word2Vec parameters:
   client_params.vocab_file           = "/tmp/vocab.txt";
@@ -119,9 +117,7 @@ int main(int ac, char **av)
   client_params.learning_rate_param.starting_learning_rate = client_params.starting_learning_rate;
   client_params.learning_rate_param.ending_learning_rate   = client_params.ending_learning_rate;
 
-  std::shared_ptr<std::mutex>              console_mutex_ptr_ = std::make_shared<std::mutex>();
-  std::shared_ptr<Coordinator<TensorType>> coordinator =
-      std::make_shared<Coordinator<TensorType>>(coord_params);
+  std::shared_ptr<std::mutex> console_mutex_ptr_ = std::make_shared<std::mutex>();
   std::cout << "FETCH Distributed Word2vec Demo -- Asynchronous" << std::endl;
 
   std::string train_file = av[1];
@@ -156,13 +152,9 @@ int main(int ac, char **av)
     // TODO(1597): Replace ID with something more sensible
   }
 
-  // Give list of clients to coordinator
-  coordinator->SetClientsList(clients);
-
   for (SizeType i(0); i < number_of_clients; ++i)
   {
     // Give each client pointer to coordinator
-    clients[i]->SetCoordinator(coordinator);
     clients[i]->SetNetworker(networkers[i]);
   }
 
@@ -171,7 +163,6 @@ int main(int ac, char **av)
   {
 
     // Start all clients
-    coordinator->Reset();
     std::cout << "================= ROUND : " << it << " =================" << std::endl;
     std::list<std::thread> threads;
     for (auto &c : clients)
@@ -183,38 +174,6 @@ int main(int ac, char **av)
     for (auto &t : threads)
     {
       t.join();
-    }
-
-    if (coordinator->GetMode() == CoordinatorMode::ASYNCHRONOUS)
-    {
-      continue;
-    }
-
-    // Synchronize weights by giving all clients average of all client's weights
-    VectorTensorType new_weights = clients[0]->GetWeights();
-
-    // Sum all weights
-    for (SizeType i{1}; i < number_of_clients; ++i)
-    {
-      VectorTensorType other_weights = clients[i]->GetWeights();
-
-      for (SizeType j{0}; j < other_weights.size(); j++)
-      {
-        fetch::math::Add(new_weights.at(j), other_weights.at(j), new_weights.at(j));
-      }
-    }
-
-    // Divide weights by number of clients to calculate the average
-    for (SizeType j{0}; j < new_weights.size(); j++)
-    {
-      fetch::math::Divide(new_weights.at(j), static_cast<DataType>(number_of_clients),
-                          new_weights.at(j));
-    }
-
-    // Update models of all clients by average model
-    for (SizeType i(0); i < number_of_clients; ++i)
-    {
-      clients[i]->SetWeights(new_weights);
     }
   }
 

@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "coordinator.hpp"
 #include "dmlf/ilearner_networker.hpp"
 #include "dmlf/update.hpp"
 #include "math/matrix_operations.hpp"
@@ -47,6 +46,7 @@ struct ClientParams
   using SizeType = fetch::math::SizeType;
 
   SizeType batch_size;
+  SizeType iterations_count;
   DataType learning_rate;
 
   std::vector<std::string> inputs_names = {"Input"};
@@ -78,8 +78,6 @@ public:
   {
     i_learner_ptr_ = i_learner_ptr;
   }
-
-  void SetCoordinator(std::shared_ptr<Coordinator<TensorType>> coordinator_ptr);
 
   void Run();
 
@@ -119,23 +117,19 @@ protected:
   std::string              label_name_;
   std::string              error_name_;
 
-  // Access to coordinator
-  std::shared_ptr<Coordinator<TensorType>> coordinator_ptr_;
-
   // Learning hyperparameters
   SizeType batch_size_    = 0;
   DataType learning_rate_ = static_cast<DataType>(0);
 
   // Count for number of batches
-  SizeType batch_counter_ = 0;
+  SizeType batch_counter_    = 0;
+  SizeType iterations_count_ = 0;
 
   // Pointer to client's own iLearnerNetworker
   std::shared_ptr<fetch::dmlf::ILearnerNetworker> i_learner_ptr_;
 
   std::string   GetStrTimestamp();
   TimestampType GetTimestamp();
-
-  void TrainOnce();
 
   void TrainWithCoordinator();
 
@@ -179,18 +173,12 @@ template <class TensorType>
 void TrainingClient<TensorType>::SetParams(
     ClientParams<typename TensorType::Type> const &new_params)
 {
-  inputs_names_  = new_params.inputs_names;
-  label_name_    = new_params.label_name;
-  error_name_    = new_params.error_name;
-  batch_size_    = new_params.batch_size;
-  learning_rate_ = new_params.learning_rate;
-}
-
-template <class TensorType>
-void TrainingClient<TensorType>::SetCoordinator(
-    std::shared_ptr<Coordinator<TensorType>> coordinator_ptr)
-{
-  coordinator_ptr_ = coordinator_ptr;
+  inputs_names_     = new_params.inputs_names;
+  label_name_       = new_params.label_name;
+  error_name_       = new_params.error_name;
+  batch_size_       = new_params.batch_size;
+  learning_rate_    = new_params.learning_rate;
+  iterations_count_ = new_params.iterations_count;
 }
 
 template <class TensorType>
@@ -205,16 +193,8 @@ std::string TrainingClient<TensorType>::GetId() const
 template <class TensorType>
 void TrainingClient<TensorType>::Run()
 {
-  if (coordinator_ptr_->GetMode() == CoordinatorMode::SYNCHRONOUS)
-  {
-    // Do one batch and end
-    TrainOnce();
-  }
-  else
-  {
-    // Train batches until coordinator will tell clients to stop
-    TrainWithCoordinator();
-  }
+  // Train batches until coordinator will tell clients to stop
+  TrainWithCoordinator();
 }
 
 /**
@@ -348,36 +328,6 @@ int64_t TrainingClient<TensorType>::GetTimestamp()
 }
 
 /**
- * Do one batch training, run model on test set and write loss to csv file
- */
-template <class TensorType>
-void TrainingClient<TensorType>::TrainOnce()
-{
-  std::ofstream lossfile("losses_" + id_ + ".csv", std::ofstream::out | std::ofstream::app);
-
-  DoBatch();
-
-  // Validate loss for logging purpose
-  Test();
-
-  // Save loss variation data
-  // Upload to https://plot.ly/create/#/ for visualisation
-  if (lossfile)
-  {
-    lossfile << GetStrTimestamp() << ", " << static_cast<double>(train_loss_)
-             << static_cast<double>(test_loss_) << "\n";
-  }
-
-  opti_ptr_->IncrementEpochCounter();
-  opti_ptr_->UpdateLearningRate();
-
-  lossfile << GetStrTimestamp() << ", "
-           << "STOPPED"
-           << "\n";
-  lossfile.close();
-}
-
-/**
  * Do batch training repeatedly while coordinator state is set to RUN
  */
 template <class TensorType>
@@ -385,17 +335,15 @@ void TrainingClient<TensorType>::TrainWithCoordinator()
 {
   std::ofstream lossfile("losses_" + id_ + ".csv", std::ofstream::out | std::ofstream::app);
 
-  while (coordinator_ptr_->GetState() == CoordinatorState::RUN)
+  for (SizeType n{0}; n < iterations_count_; n++)
   {
     DoBatch();
-    coordinator_ptr_->IncrementIterationsCounter();
 
     // Validate loss for logging purpose
     Test();
 
     // Save loss variation data
     // Upload to https://plot.ly/create/#/ for visualisation
-
     if (lossfile)
     {
       lossfile << GetStrTimestamp() << ", " << static_cast<double>(train_loss_)
@@ -424,31 +372,26 @@ void TrainingClient<TensorType>::DoBatch()
   // Train one batch to create own gradient
   Train();
 
-  // Interaction with peers is skipped in synchronous mode
-  if (coordinator_ptr_->GetMode() != CoordinatorMode::SYNCHRONOUS)
+  // Load own gradient
+  GradientType current_gradients = std::make_pair(g_ptr_->GetGradients(), GetTimestamp());
+
+  // Push own gradient to iLearner
+  i_learner_ptr_->pushUpdate(
+      std::make_shared<fetch::dmlf::Update<TensorType>>(current_gradients.first));
+
+  VectorTensorType new_gradients;
+
+  SizeType ucnt = 0;
+
+  // Sum all gradient from iLearner
+  while (i_learner_ptr_->getUpdateCount())
   {
-    // Load own gradient
-    GradientType current_gradients = std::make_pair(g_ptr_->GetGradients(), GetTimestamp());
-
-    // Add gradient to export queue
-    i_learner_ptr_->pushUpdate(
-        std::make_shared<fetch::dmlf::Update<TensorType>>(current_gradients.first));
-
-    VectorTensorType new_gradients;
-
-    SizeType ucnt = 0;
-
-    // Sum all gradient in queue
-    while (i_learner_ptr_->getUpdateCount())
-    {
-      ucnt++;
-      new_gradients = i_learner_ptr_->getUpdate<fetch::dmlf::Update<TensorType>>()->GetGradients();
-      g_ptr_->AddGradients(new_gradients);
-    }
-    std::cout << id_ << "Got " << ucnt << " updates" << std::endl;
+    ucnt++;
+    new_gradients = i_learner_ptr_->getUpdate<fetch::dmlf::Update<TensorType>>()->GetGradients();
+    g_ptr_->AddGradients(new_gradients);
   }
 
-  // Apply sum of all gradients from queue along with own gradient
+  // Apply sum of all gradients from iLearner along with own gradient
   {
     std::lock_guard<std::mutex> l(model_mutex_);
     opti_ptr_->ApplyGradients(batch_size_);
