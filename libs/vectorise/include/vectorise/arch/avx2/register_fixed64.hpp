@@ -295,7 +295,6 @@ inline VectorRegister<fixed_point::fp64_t, 256> operator/(
     VectorRegister<fixed_point::fp64_t, 256> const &a,
     VectorRegister<fixed_point::fp64_t, 256> const &b)
 {
-
   // TODO(private 440): SSE implementation required
   alignas(VectorRegister<fixed_point::fp64_t, 256>::E_REGISTER_SIZE) fixed_point::fp64_t d1[4];
   a.Store(d1);
@@ -403,8 +402,8 @@ inline bool all_equal_to(VectorRegister<fixed_point::fp64_t, 128> const &x,
 inline bool all_equal_to(VectorRegister<fixed_point::fp64_t, 256> const &x,
                          VectorRegister<fixed_point::fp64_t, 256> const &y)
 {
-  __m256i  r    = (x == y).data();
-  uint64_t mask = static_cast<uint64_t>(_mm256_movemask_epi8(r));
+  __m256i r    = (x == y).data();
+  auto    mask = static_cast<uint64_t>(_mm256_movemask_epi8(r));
   return mask == 0xffffffffffffffffULL;
 }
 

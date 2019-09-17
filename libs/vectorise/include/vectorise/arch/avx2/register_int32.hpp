@@ -456,8 +456,8 @@ inline bool all_equal_to(VectorRegister<int32_t, 128> const &x,
 inline bool all_equal_to(VectorRegister<int32_t, 256> const &x,
                          VectorRegister<int32_t, 256> const &y)
 {
-  __m256i  r    = (x == y).data();
-  uint32_t mask = static_cast<uint32_t>(_mm256_movemask_epi8(r));
+  __m256i r    = (x == y).data();
+  auto    mask = static_cast<uint32_t>(_mm256_movemask_epi8(r));
   return mask == 0xFFFFFFFFUL;
 }
 
