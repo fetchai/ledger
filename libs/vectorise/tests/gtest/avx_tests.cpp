@@ -122,7 +122,7 @@ TYPED_TEST(VectorRegisterTest, basic_tests)
 {
   using type = typename TypeParam::type;
 
-  alignas(TypeParam::E_REGISTER_SIZE) type a[TypeParam::E_BLOCK_COUNT], b[TypeParam::E_BLOCK_COUNT],
+  alignas(32) type a[TypeParam::E_BLOCK_COUNT], b[TypeParam::E_BLOCK_COUNT],
       sum[TypeParam::E_BLOCK_COUNT], diff[TypeParam::E_BLOCK_COUNT], prod[TypeParam::E_BLOCK_COUNT],
       div[TypeParam::E_BLOCK_COUNT];
 
