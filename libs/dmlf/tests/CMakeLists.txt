@@ -10,4 +10,5 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 # Compiler Configuration
 setup_compiler()
 
-fetch_add_test(dmlf_local_gtest fetch-dmlf dmlf/local)
+fetch_add_test(dmlf_local_gtest fetch-dmlf local)
+fetch_add_test(dmlf_muddle_gtest fetch-dmlf muddle)
