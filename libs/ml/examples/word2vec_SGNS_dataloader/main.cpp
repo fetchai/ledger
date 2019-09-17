@@ -96,9 +96,9 @@ void PrintWordAnalogy(GraphW2VLoader<DataType> const &dl, TensorType const &embe
 
   for (std::size_t l = 0; l < output.size(); ++l)
   {
-    HE std::cout << "rank: " << l << ", "
-                 << "distance, " << output.at(l).second << ": "
-                 << dl.WordFromIndex(output.at(l).first) << std::endl;
+    std::cout << "rank: " << l << ", "
+              << "distance, " << output.at(l).second << ": " << dl.WordFromIndex(output.at(l).first)
+              << std::endl;
   }
 }
 

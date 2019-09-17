@@ -156,9 +156,6 @@ int main(int ac, char **av)
     // TODO(1597): Replace ID with something more sensible
   }
 
-  // Give list of clients to coordinator
-  coordinator->SetClientsList(clients);
-
   for (SizeType i(0); i < number_of_clients; ++i)
   {
     // Give each client pointer to coordinator

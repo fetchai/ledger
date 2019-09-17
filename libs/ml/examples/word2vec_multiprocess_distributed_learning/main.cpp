@@ -162,7 +162,6 @@ int main(int ac, char **av)
       std::make_shared<Word2VecClient<TensorType>>(my_name, cp, console_mutex_ptr_);
 
   // Give list of clients to coordinator
-  coordinator->SetClientsList({client});
   client->SetCoordinator(coordinator);
   client->SetNetworker(networker);
 

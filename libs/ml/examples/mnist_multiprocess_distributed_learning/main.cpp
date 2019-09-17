@@ -136,7 +136,6 @@ int main(int ac, char **av)
       MakeClient(my_name, client_params, av[1], av[2], test_set_ratio);
 
   // Give list of clients to coordinator
-  coordinator->SetClientsList({client});
   client->SetCoordinator(coordinator);
   client->SetNetworker(networker);
 

@@ -67,17 +67,12 @@ public:
 
   CoordinatorState GetState() const;
 
-  void AddClient(ClientPtrType const &new_client);
-  void SetClientsList(std::vector<ClientPtrType> const &new_client);
-
 private:
-  CoordinatorMode                                          mode_;
-  CoordinatorState                                         state_           = CoordinatorState::RUN;
-  SizeType                                                 iterations_done_ = 0;
-  SizeType                                                 iterations_count_;
-  std::mutex                                               iterations_mutex_;
-  std::vector<std::shared_ptr<TrainingClient<TensorType>>> clients_;
-  SizeType                                                 number_of_peers_;
+  CoordinatorMode  mode_;
+  CoordinatorState state_           = CoordinatorState::RUN;
+  SizeType         iterations_done_ = 0;
+  SizeType         iterations_count_;
+  std::mutex       iterations_mutex_;
 
   // random number generator for shuffling peers
   fetch::random::LaggedFibonacciGenerator<> gen_;
@@ -118,28 +113,6 @@ template <typename TensorType>
 CoordinatorState Coordinator<TensorType>::GetState() const
 {
   return state_;
-}
-
-/**
- * Add pointer to client
- * @param clients
- */
-template <typename TensorType>
-void Coordinator<TensorType>::AddClient(
-    std::shared_ptr<TrainingClient<TensorType>> const &new_client)
-{
-  clients_.push_back(new_client);
-}
-
-/**
- * Add pointer to client
- * @param clients
- */
-template <typename TensorType>
-void Coordinator<TensorType>::SetClientsList(
-    std::vector<std::shared_ptr<TrainingClient<TensorType>>> const &new_clients)
-{
-  clients_ = new_clients;
 }
 
 }  // namespace distributed_learning
