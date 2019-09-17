@@ -51,7 +51,7 @@ public:
   using SPType        = LayerScaledDotProductAttentionSaveableParams<T>;
 
   ScaledDotProductAttention() = default;
-  ScaledDotProductAttention(SizeType dk, DataType dropout = static_cast<DataType>(0.9))
+  explicit ScaledDotProductAttention(SizeType dk, DataType dropout = static_cast<DataType>(0.9))
     : key_dim_(dk)
     , dropout_(dropout)
   {

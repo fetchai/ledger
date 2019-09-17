@@ -51,36 +51,36 @@ TYPED_TEST_CASE(ExpTests, MyTypes);
 
 TYPED_TEST(ExpTests, exp_0_0)
 {
-  TypeParam x = TypeParam(7);
+  auto x = TypeParam(7);
   test1<0, 0>(x);
 }
 
 TYPED_TEST(ExpTests, exp_0_60801)
 {
-  TypeParam x = TypeParam{5};
+  auto x = TypeParam{5};
   test1<0, 60801>(x);
 }
 
 TYPED_TEST(ExpTests, exp_8_60801)
 {
-  TypeParam x = TypeParam(0.08);
+  auto x = TypeParam(0.08);
   test1<8, 60801>(x);
 }
 
 TYPED_TEST(ExpTests, exp_20_60801)
 {
-  TypeParam x = TypeParam(0.00004);
+  auto x = TypeParam(0.00004);
   test1<20, 60801>(x);
 }
 
 TYPED_TEST(ExpTests, exp_8_0)
 {
-  TypeParam x = TypeParam(0.08);
+  auto x = TypeParam(0.08);
   test1<8, 0>(x);
 }
 
 TYPED_TEST(ExpTests, exp_20_0)
 {
-  TypeParam x = TypeParam(0.00004);
+  auto x = TypeParam(0.00004);
   test1<20, 0>(x);
 }

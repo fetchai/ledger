@@ -75,7 +75,7 @@ public:
     : name_(std::move(name))
     , cached_output_status_(CachedOutputState::CHANGED_SIZE)
     , operation_type_(operation_type)
-    , op_ptr_(op_ptr)
+    , op_ptr_(std::move(op_ptr))
   {}
 
   /**
@@ -88,7 +88,7 @@ public:
     : name_(std::move(name))
     , cached_output_status_(CachedOutputState::CHANGED_SIZE)
     , operation_type_(old_node.get_op_type())
-    , op_ptr_(op_ptr)
+    , op_ptr_(std::move(op_ptr))
   {
     cached_output_ = old_node.cached_output_.Copy();
   }
@@ -139,11 +139,7 @@ public:
 
   bool HasValidCache()
   {
-    if (cached_output_status_ == CachedOutputState::VALID_CACHE)
-    {
-      return true;
-    }
-    return false;
+    return static_cast<bool>(cached_output_status_ == CachedOutputState::VALID_CACHE);
   }
 
 private:

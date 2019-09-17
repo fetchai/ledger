@@ -255,7 +255,7 @@ inline Packet::RawAddress const &Packet::GetSenderRaw() const noexcept
 
 inline Packet::Address const &Packet::GetTarget() const
 {
-  if (target_.size() == 0)
+  if (target_.empty())
   {
     byte_array::ByteArray target;
     target.Resize(std::size_t{ADDRESS_SIZE});
@@ -269,7 +269,7 @@ inline Packet::Address const &Packet::GetTarget() const
 
 inline Packet::Address const &Packet::GetSender() const
 {
-  if (sender_.size() == 0)
+  if (sender_.empty())
   {
     byte_array::ByteArray sender;
     sender.Resize(std::size_t{ADDRESS_SIZE});
@@ -423,9 +423,9 @@ struct hash<fetch::muddle::Packet::RawAddress>
   std::size_t operator()(fetch::muddle::Packet::RawAddress const &address) const noexcept
   {
     uint32_t hash = 2166136261;
-    for (std::size_t i = 0; i < address.size(); ++i)
+    for (uint8_t part : address)
     {
-      hash = (hash * 16777619) ^ address[i];
+      hash = (hash * 16777619) ^ part;
     }
     return hash;
   }

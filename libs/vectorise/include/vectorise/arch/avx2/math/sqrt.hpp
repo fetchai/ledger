@@ -17,31 +17,28 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vectorise/sse.hpp"
-
-#include <cstddef>
-
 namespace fetch {
-namespace vectorize {
+namespace vectorise {
 
-template <typename T, std::size_t S>
-VectorRegister<T, S> exp(VectorRegister<T, S> x, T const &precision = 0.00001)
+inline VectorRegister<float, 128> sqrt(VectorRegister<float, 128> const &a)
 {
-  VectorRegister<T, S> ret(T(0)), xserie(T(1));
-  VectorRegister<T, S> p(precision);
-  std::size_t          n = 0;
-
-  while (any_less_than(p, abs(xserie)))
-  {
-    ret = ret + xserie;
-    ++n;
-
-    VectorRegister<T, S> vecn((T(n)));
-    xserie = xserie * (x / vecn);
-  }
-
-  return ret;
+  return VectorRegister<float, 128>(_mm_sqrt_ps(a.data()));
 }
 
-}  // namespace vectorize
+inline VectorRegister<float, 256> sqrt(VectorRegister<float, 256> const &a)
+{
+  return VectorRegister<float, 256>(_mm256_sqrt_ps(a.data()));
+}
+
+inline VectorRegister<double, 128> sqrt(VectorRegister<double, 128> const &a)
+{
+  return VectorRegister<double, 128>(_mm_sqrt_pd(a.data()));
+}
+
+inline VectorRegister<double, 256> sqrt(VectorRegister<double, 256> const &a)
+{
+  return VectorRegister<double, 256>(_mm256_sqrt_pd(a.data()));
+}
+
+}  // namespace vectorise
 }  // namespace fetch

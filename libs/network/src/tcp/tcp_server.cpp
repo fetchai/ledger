@@ -164,8 +164,7 @@ bool TCPServer::Send(ConnectionHandleType const &client, MessageType const &msg)
 bool TCPServer::has_requests()
 {
   FETCH_LOCK(request_mutex_);
-  bool ret = (requests_.size() != 0);
-  return ret;
+  return !requests_.empty();
 }
 
 TCPServer::Request TCPServer::Top()

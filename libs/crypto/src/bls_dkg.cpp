@@ -48,7 +48,7 @@ Contribution GenerateContribution(ParticipantVector const &participants, uint32_
 
 bls::PrivateKey AccumulateContributionShares(bls::PrivateKeyList list)
 {
-  if (list.size() == 0)
+  if (list.empty())
   {
     throw std::runtime_error("Cannot accumulate empty list");
   }

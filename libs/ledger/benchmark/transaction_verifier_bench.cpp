@@ -105,7 +105,7 @@ void TransactionVerifierBench(benchmark::State &state)
 
 void CreateRanges(benchmark::internal::Benchmark *b)
 {
-  int const max_threads = static_cast<int>(std::thread::hardware_concurrency());
+  auto const max_threads = static_cast<int>(std::thread::hardware_concurrency());
 
   for (int i = 1; i <= max_threads; ++i)
   {

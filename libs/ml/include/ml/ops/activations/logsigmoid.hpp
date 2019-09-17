@@ -77,7 +77,7 @@ public:
     // ensures numerical stability
     for (auto &val : output)
     {
-      fetch::math::Min(val, epsilon_, val);
+      val = fetch::vectorise::Min(val, epsilon_);
     }
   }
 

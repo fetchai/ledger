@@ -18,17 +18,31 @@
 //------------------------------------------------------------------------------
 
 namespace fetch {
-namespace vectorize {
+namespace vectorise {
 
-inline VectorRegister<float, 128> sqrt(VectorRegister<float, 128> const &a)
+inline VectorRegister<float, 128> approx_reciprocal(VectorRegister<float, 128> const &x)
 {
-  return VectorRegister<float, 128>(_mm_sqrt_ps(a.data()));
+
+  return VectorRegister<float, 128>(_mm_rcp_ps(x.data()));
 }
 
-inline VectorRegister<double, 128> sqrt(VectorRegister<double, 128> const &a)
+inline VectorRegister<float, 256> approx_reciprocal(VectorRegister<float, 256> const &x)
 {
-  return VectorRegister<double, 128>(_mm_sqrt_pd(a.data()));
+
+  return VectorRegister<float, 256>(_mm256_rcp_ps(x.data()));
 }
 
-}  // namespace vectorize
+inline VectorRegister<double, 128> approx_reciprocal(VectorRegister<double, 128> const &x)
+{
+  // TODO(issue 3): Test this function
+  return VectorRegister<double, 128>(_mm_cvtps_pd(_mm_rcp_ps(_mm_cvtpd_ps(x.data()))));
+}
+
+inline VectorRegister<double, 256> approx_reciprocal(VectorRegister<double, 256> const &x)
+{
+  // TODO(issue 3): Test this function
+  return VectorRegister<double, 256>(_mm256_cvtps_pd(_mm256_rcp_ps(_mm256_cvtpd_ps(x.data()))));
+}
+
+}  // namespace vectorise
 }  // namespace fetch

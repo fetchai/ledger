@@ -453,11 +453,11 @@ bool BeaconManager::RunReconstruction()
     z_i[victim_index] = crypto::mcl::ComputeZi(in.second.first, in.second.second);
     std::vector<PrivateKey> points;
     std::vector<PrivateKey> shares_f;
-    for (const auto &index : parties)
+    for (auto const &index : parties)
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, " run reconstruction for node ",
                      victim_index, " with shares from node ", index);
-      points.push_back(index + 1);  // adjust index in computation
+      points.emplace_back(index + 1);  // adjust index in computation
       shares_f.push_back(shares[index]);
     }
     a_ik[victim_index] = crypto::mcl::InterpolatePolynom(points, shares_f);

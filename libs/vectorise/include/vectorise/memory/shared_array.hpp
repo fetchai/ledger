@@ -19,7 +19,6 @@
 
 #include "meta/log2.hpp"
 #include "vectorise/memory/iterator.hpp"
-#include "vectorise/memory/parallel_dispatcher.hpp"
 #include "vectorise/memory/vector_slice.hpp"
 
 #include <mm_malloc.h>

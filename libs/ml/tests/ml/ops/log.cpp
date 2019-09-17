@@ -108,7 +108,7 @@ TYPED_TEST(LogFixedTest, forward_all_negative_test)
   op.Forward({std::make_shared<const TensorType>(data)}, pred);
 
   // gives NaN because log of a negative number is undefined
-  for (auto p_it : pred)
+  for (auto const &p_it : pred)
   {
     EXPECT_TRUE(TensorType::Type::IsNaN(p_it));
   }
