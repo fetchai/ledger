@@ -371,7 +371,7 @@ inline VectorRegister<int32_t, 256> operator>=(VectorRegister<int32_t, 256> cons
 
 inline int32_t first_element(VectorRegister<int32_t, 128> const &x)
 {
-  return static_cast<int32_t>(_mm_extract_epi32(x.data(), 0));
+  return static_cast<int32_t>(_mm_extract_epi32(x.data(), 0));  // NOLINT
 }
 
 inline int32_t first_element(VectorRegister<int32_t, 256> const &x)
@@ -407,7 +407,7 @@ inline int32_t reduce(VectorRegister<int32_t, 128> const &x)
 {
   __m128i r = _mm_hadd_epi32(x.data(), _mm_setzero_si128());
   r         = _mm_hadd_epi32(r, _mm_setzero_si128());
-  return static_cast<int32_t>(_mm_extract_epi32(r, 0));
+  return static_cast<int32_t>(_mm_extract_epi32(r, 0));  // NOLINT
 }
 
 inline int32_t reduce(VectorRegister<int32_t, 256> const &x)

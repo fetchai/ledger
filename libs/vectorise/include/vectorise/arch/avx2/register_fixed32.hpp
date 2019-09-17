@@ -354,7 +354,7 @@ inline fixed_point::fp32_t reduce(VectorRegister<fixed_point::fp32_t, 128> const
 {
   __m128i r = _mm_hadd_epi32(x.data(), _mm_setzero_si128());
   r         = _mm_hadd_epi32(r, _mm_setzero_si128());
-  return fixed_point::fp32_t::FromBase(_mm_extract_epi32(r, 0));
+  return fixed_point::fp32_t::FromBase(_mm_extract_epi32(r, 0));  // NOLINT
 }
 
 inline fixed_point::fp32_t reduce(VectorRegister<fixed_point::fp32_t, 256> const &x)

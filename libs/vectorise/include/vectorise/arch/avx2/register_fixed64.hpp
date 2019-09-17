@@ -243,10 +243,10 @@ inline VectorRegister<fixed_point::fp64_t, 128> operator*(
     VectorRegister<fixed_point::fp64_t, 128> const &b)
 {
   alignas(32) fixed_point::fp64_t::NextType a128[2], b128[2], prod[2];
-  a128[0]       = _mm_extract_epi64(a.data(), 0);
-  a128[1]       = _mm_extract_epi64(a.data(), 1);
-  b128[0]       = _mm_extract_epi64(b.data(), 0);
-  b128[1]       = _mm_extract_epi64(b.data(), 1);
+  a128[0]       = _mm_extract_epi64(a.data(), 0);  // NOLINT
+  a128[1]       = _mm_extract_epi64(a.data(), 1);  // NOLINT
+  b128[0]       = _mm_extract_epi64(b.data(), 0);  // NOLINT
+  b128[1]       = _mm_extract_epi64(b.data(), 1);  // NOLINT
   prod[0]       = a128[0] * b128[0];
   prod[1]       = a128[1] * b128[1];
   __m256i vprod = _mm256_load_si256(reinterpret_cast<__m256i const *>(prod));
