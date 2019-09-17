@@ -33,12 +33,14 @@
 // that any problems must be in the NM or the client. In this way we can test
 // transmit and receive functionality by looping back
 
+namespace {
+
 using namespace fetch::network;
 using namespace fetch::byte_array;
 
-static constexpr std::size_t MANY_CYCLES = 200;
-static constexpr std::size_t MID_CYCLES  = 50;
-static constexpr std::size_t FEW_CYCLES  = 10;
+constexpr std::size_t MANY_CYCLES = 200;
+constexpr std::size_t MID_CYCLES  = 50;
+constexpr std::size_t FEW_CYCLES  = 10;
 
 std::string host       = "localhost";
 uint16_t    portNumber = 8080;
@@ -666,3 +668,5 @@ TEST(tcp_client_stress_gtest, killing_during_transmission)
     }
   }
 }
+
+}  // namespace

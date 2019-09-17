@@ -46,7 +46,7 @@ class Word2VecClient : public TrainingClient<TensorType>
 
 public:
   Word2VecClient(std::string const &id, W2VTrainingParams<DataType> const &tp,
-                 std::shared_ptr<std::mutex> const &console_mutex_ptr);
+                 std::shared_ptr<std::mutex> console_mutex_ptr);
 
   void PrepareModel();
 
@@ -74,10 +74,10 @@ private:
 template <class TensorType>
 Word2VecClient<TensorType>::Word2VecClient(std::string const &                id,
                                            W2VTrainingParams<DataType> const &tp,
-                                           std::shared_ptr<std::mutex> const &console_mutex_ptr)
+                                           std::shared_ptr<std::mutex>        console_mutex_ptr)
   : TrainingClient<TensorType>(id, tp)
   , tp_(tp)
-  , console_mutex_ptr_(console_mutex_ptr)
+  , console_mutex_ptr_(std::move(console_mutex_ptr))
 {
   PrepareDataLoader();
   PrepareModel();
@@ -221,7 +221,7 @@ void Word2VecClient<TensorType>::TestEmbeddings(std::string const &word0, std::s
                                                 SizeType K)
 {
   // Lock model
-  std::lock_guard<std::mutex> l(this->model_mutex_);
+  FETCH_LOCK(this->model_mutex_);
 
   // first get hold of the skipgram layer by searching the return name in the graph
   std::shared_ptr<fetch::ml::layers::SkipGram<TensorType>> sg_layer =
@@ -234,7 +234,7 @@ void Word2VecClient<TensorType>::TestEmbeddings(std::string const &word0, std::s
 
   {
     // Lock console
-    std::lock_guard<std::mutex> l2(*console_mutex_ptr_);
+    FETCH_LOCK(*console_mutex_ptr_);
 
     std::cout << std::endl;
     std::cout << "Client " << this->id_ << ", batches done = " << this->batch_counter_ << std::endl;

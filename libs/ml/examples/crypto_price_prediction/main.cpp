@@ -120,7 +120,7 @@ std::vector<TensorType> LoadData(std::string const &train_data_filename,
   return {train_data_tensor, train_labels_tensor, test_data_tensor, test_labels_tensor};
 }
 
-void SaveGraphToFile(GraphType &g, std::string const file_name)
+void SaveGraphToFile(GraphType &g, std::string const &file_name)
 {
 
   // start serializing and writing to file

@@ -24,7 +24,7 @@
 namespace fetch {
 
 namespace {
-static constexpr std::size_t MAX_THREAD_NAME_LEN = 16;  // posix limit
+constexpr std::size_t MAX_THREAD_NAME_LEN = 16;  // posix limit
 }
 
 void SetThreadName(std::string name)

@@ -38,7 +38,7 @@ std::string NetworkId::ToString() const
 {
   static constexpr std::size_t BYTE_SIZE = sizeof(UnderlyingType);
 
-  char const *id_raw = reinterpret_cast<char const *>(&value_);
+  auto const *id_raw = reinterpret_cast<char const *>(&value_);
 
 #if 1
 

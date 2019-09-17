@@ -32,10 +32,10 @@ TEST(blas_DGEMM, blas_gemm_nn_novector1)
   Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C <= _alpha * _A * _B + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
       gemm_nn_novector;
-  // Compuing _C <= _alpha * _A * _B + _beta * _C
+  // Computing _C <= _alpha * _A * _B + _beta * _C
   using Type = double;
-  Type alpha = Type(1);
-  Type beta  = Type(0);
+  auto alpha = Type(1);
+  auto beta  = Type(0);
 
   Tensor<Type>     tensor_A = Tensor<Type>::FromString(R"(
   	0.3745401188473625 0.9507143064099162;
@@ -71,10 +71,10 @@ TEST(blas_DGEMM, blas_gemm_nn_novector2)
   Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C <= _alpha * _A * _B + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
       gemm_nn_novector;
-  // Compuing _C <= _alpha * _A * _B + _beta * _C
+  // Computing _C <= _alpha * _A * _B + _beta * _C
   using Type = double;
-  Type alpha = Type(0);
-  Type beta  = Type(1);
+  auto alpha = Type(0);
+  auto beta  = Type(1);
 
   Tensor<Type>     tensor_A = Tensor<Type>::FromString(R"(
   	0.13949386065204183 0.29214464853521815;
@@ -110,10 +110,10 @@ TEST(blas_DGEMM, blas_gemm_nn_novector3)
   Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C <= _alpha * _A * _B + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
       gemm_nn_novector;
-  // Compuing _C <= _alpha * _A * _B + _beta * _C
+  // Computing _C <= _alpha * _A * _B + _beta * _C
   using Type = double;
-  Type alpha = Type(1);
-  Type beta  = Type(1);
+  auto alpha = Type(1);
+  auto beta  = Type(1);
 
   Tensor<Type>     tensor_A = Tensor<Type>::FromString(R"(
   	0.034388521115218396 0.9093204020787821;
@@ -149,10 +149,10 @@ TEST(blas_DGEMM, blas_gemm_nn_novector4)
   Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C <= _alpha * _A * _B + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
       gemm_nn_novector;
-  // Compuing _C <= _alpha * _A * _B + _beta * _C
+  // Computing _C <= _alpha * _A * _B + _beta * _C
   using Type = double;
-  Type alpha = Type(0.03350148733328795);
-  Type beta  = Type(0.5745327257561297);
+  auto alpha = Type(0.03350148733328795);
+  auto beta  = Type(0.5745327257561297);
 
   Tensor<Type>     tensor_A = Tensor<Type>::FromString(R"(
   	0.3567533266935893 0.28093450968738076;
@@ -188,10 +188,10 @@ TEST(blas_DGEMM, blas_gemm_nn_novector5)
   Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C <= _alpha * _A * _B + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
       gemm_nn_novector;
-  // Compuing _C <= _alpha * _A * _B + _beta * _C
+  // Computing _C <= _alpha * _A * _B + _beta * _C
   using Type = double;
-  Type alpha = Type(3.2);
-  Type beta  = Type(0);
+  auto alpha = Type(3.2);
+  auto beta  = Type(0);
 
   Tensor<Type>     tensor_A = Tensor<Type>::FromString(R"(
   	0.3109823217156622;
@@ -229,10 +229,10 @@ TEST(blas_DGEMM, blas_gemm_nn_novector6)
   Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C <= _alpha * _A * _B + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
       gemm_nn_novector;
-  // Compuing _C <= _alpha * _A * _B + _beta * _C
+  // Computing _C <= _alpha * _A * _B + _beta * _C
   using Type = double;
-  Type alpha = Type(0);
-  Type beta  = Type(1.9);
+  auto alpha = Type(0);
+  auto beta  = Type(1.9);
 
   Tensor<Type>     tensor_A = Tensor<Type>::FromString(R"(
   	0.22879816549162246 0.07697990982879299;
@@ -274,10 +274,10 @@ TEST(blas_DGEMM, blas_gemm_nn_novector7)
   Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C <= _alpha * _A * _B + _beta * _C), platform::Parallelisation::NOT_PARALLEL>
       gemm_nn_novector;
-  // Compuing _C <= _alpha * _A * _B + _beta * _C
+  // Computing _C <= _alpha * _A * _B + _beta * _C
   using Type = double;
-  Type alpha = Type(1.8006387209765764);
-  Type beta  = Type(-0.9940099838232666);
+  auto alpha = Type(1.8006387209765764);
+  auto beta  = Type(-0.9940099838232666);
 
   Tensor<Type>     tensor_A = Tensor<Type>::FromString(R"(
   	0.489452760277563 0.9856504541106007;

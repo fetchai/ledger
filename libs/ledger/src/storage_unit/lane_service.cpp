@@ -137,8 +137,7 @@ LaneService::LaneService(NetworkManager const &nm, ShardConfig config, Mode mode
   reactor_.Start();
 }
 
-LaneService::~LaneService()
-{}
+LaneService::~LaneService() = default;
 
 void LaneService::Start()
 {

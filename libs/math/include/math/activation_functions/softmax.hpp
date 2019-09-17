@@ -47,7 +47,7 @@ void Softmax1DImplementation(ArrayType1 const &array, ArrayType2 &ret)
 
   auto it1 = array.begin();
   auto it2 = ret.begin();
-  Type sum = Type(0);
+  auto sum = Type(0);
   while (it1.is_valid())
   {
     *it2 = Exp(*it1 - array_max);

@@ -116,7 +116,7 @@ Deed::Deed(Signees signees, OperationTresholds thresholds)
  */
 bool Deed::IsSane() const
 {
-  if (operation_thresholds_.size() == 0 || signees_.size() == 0)
+  if (operation_thresholds_.empty() || signees_.empty())
   {
     return false;
   }

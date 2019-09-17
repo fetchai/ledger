@@ -29,7 +29,7 @@ namespace byte_array {
 
 ConstByteArray ToBase64(ConstByteArray const &str)
 {
-  if (str.size() == 0)
+  if (str.empty())
   {
     return {};
   }
@@ -41,10 +41,10 @@ ConstByteArray ToBase64(ConstByteArray const &str)
   std::size_t idx  = 0;
 
   std::size_t invPadCount = N % 3;
-  std::size_t size        = ((N + (3 - invPadCount)) << 2) / 3;
+  std::size_t size        = ((N + (3 - invPadCount)) << 2u) / 3;
   if (invPadCount == 0)
   {
-    size = (N << 2) / 3;
+    size = (N << 2u) / 3;
   }
 
   ByteArray ret;

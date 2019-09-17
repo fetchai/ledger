@@ -246,7 +246,7 @@ public:
     return GetTrustRatingOfPeer(peer_ident) > threshold_;
   }
 
-  virtual void Debug() const override
+  void Debug() const override
   {
     FETCH_LOCK(mutex_);
     for (std::size_t pos = 0; pos < trust_store_.size(); ++pos)

@@ -354,7 +354,7 @@ inline fixed_point::fp32_t reduce(VectorRegister<fixed_point::fp32_t, 128> const
 {
   __m128i r = _mm_hadd_epi32(x.data(), _mm_setzero_si128());
   r         = _mm_hadd_epi32(r, _mm_setzero_si128());
-  return fixed_point::fp32_t::FromBase(_mm_extract_epi32(r, 0));
+  return fixed_point::fp32_t::FromBase(_mm_extract_epi32(r, 0));  // NOLINT
 }
 
 inline fixed_point::fp32_t reduce(VectorRegister<fixed_point::fp32_t, 256> const &x)
@@ -403,8 +403,8 @@ inline bool all_equal_to(VectorRegister<fixed_point::fp32_t, 128> const &x,
 inline bool all_equal_to(VectorRegister<fixed_point::fp32_t, 256> const &x,
                          VectorRegister<fixed_point::fp32_t, 256> const &y)
 {
-  __m256i  r    = (x == y).data();
-  uint32_t mask = static_cast<uint32_t>(_mm256_movemask_epi8(r));
+  __m256i r    = (x == y).data();
+  auto    mask = static_cast<uint32_t>(_mm256_movemask_epi8(r));
   return mask == 0xFFFFFFFFUL;
 }
 

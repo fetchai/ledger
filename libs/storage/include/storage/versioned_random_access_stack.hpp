@@ -231,7 +231,7 @@ private:
       memset(this, 0, sizeof(decltype(*this)));
     }
 
-    HistoryHeader(B const &d)
+    explicit HistoryHeader(B const &d)
     {
       // Clear the whole structure (including padded regions) are zeroed
       memset(this, 0, sizeof(decltype(*this)));

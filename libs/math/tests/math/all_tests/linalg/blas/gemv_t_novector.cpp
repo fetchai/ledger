@@ -32,10 +32,10 @@ TEST(blas_gemv, blas_gemv_t_novector1)
   Blas<double, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
        Computes(_y <= _alpha * T(_A) * _x + _beta * _y), platform::Parallelisation::NOT_PARALLEL>
       gemv_t_novector;
-  // Compuing _y <= _alpha * T(_A) * _x + _beta * _y
+  // Computing _y <= _alpha * T(_A) * _x + _beta * _y
   using Type = double;
-  Type alpha = Type(1);
-  Type beta  = Type(1);
+  auto alpha = Type(1);
+  auto beta  = Type(1);
   int  n     = 1;
   int  m     = 1;
 
@@ -67,10 +67,10 @@ TEST(blas_gemv, blas_gemv_t_novector2)
   Blas<double, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
        Computes(_y <= _alpha * T(_A) * _x + _beta * _y), platform::Parallelisation::NOT_PARALLEL>
       gemv_t_novector;
-  // Compuing _y <= _alpha * T(_A) * _x + _beta * _y
+  // Computing _y <= _alpha * T(_A) * _x + _beta * _y
   using Type = double;
-  Type alpha = Type(0);
-  Type beta  = Type(1);
+  auto alpha = Type(0);
+  auto beta  = Type(1);
   int  n     = 1;
   int  m     = 1;
 
@@ -102,10 +102,10 @@ TEST(blas_gemv, blas_gemv_t_novector3)
   Blas<double, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
        Computes(_y <= _alpha * T(_A) * _x + _beta * _y), platform::Parallelisation::NOT_PARALLEL>
       gemv_t_novector;
-  // Compuing _y <= _alpha * T(_A) * _x + _beta * _y
+  // Computing _y <= _alpha * T(_A) * _x + _beta * _y
   using Type = double;
-  Type alpha = Type(0.31216756908813925);
-  Type beta  = Type(0.0253237195414151);
+  auto alpha = Type(0.31216756908813925);
+  auto beta  = Type(0.0253237195414151);
   int  n     = 1;
   int  m     = 1;
 
@@ -139,10 +139,10 @@ TEST(blas_gemv, blas_gemv_t_novector4)
   Blas<double, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
        Computes(_y <= _alpha * T(_A) * _x + _beta * _y), platform::Parallelisation::NOT_PARALLEL>
       gemv_t_novector;
-  // Compuing _y <= _alpha * T(_A) * _x + _beta * _y
+  // Computing _y <= _alpha * T(_A) * _x + _beta * _y
   using Type = double;
-  Type alpha = Type(0);
-  Type beta  = Type(1);
+  auto alpha = Type(0);
+  auto beta  = Type(1);
   int  n     = 2;
   int  m     = 3;
 
@@ -176,10 +176,10 @@ TEST(blas_gemv, blas_gemv_t_novector5)
   Blas<double, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
        Computes(_y <= _alpha * T(_A) * _x + _beta * _y), platform::Parallelisation::NOT_PARALLEL>
       gemv_t_novector;
-  // Compuing _y <= _alpha * T(_A) * _x + _beta * _y
+  // Computing _y <= _alpha * T(_A) * _x + _beta * _y
   using Type = double;
-  Type alpha = Type(0.20298452139806278);
-  Type beta  = Type(0.5379205962698249);
+  auto alpha = Type(0.20298452139806278);
+  auto beta  = Type(0.5379205962698249);
   int  n     = 2;
   int  m     = 3;
 
@@ -213,10 +213,10 @@ TEST(blas_gemv, blas_gemv_t_novector6)
   Blas<double, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
        Computes(_y <= _alpha * T(_A) * _x + _beta * _y), platform::Parallelisation::NOT_PARALLEL>
       gemv_t_novector;
-  // Compuing _y <= _alpha * T(_A) * _x + _beta * _y
+  // Computing _y <= _alpha * T(_A) * _x + _beta * _y
   using Type = double;
-  Type alpha = Type(0.2959022906314299);
-  Type beta  = Type(0.1453466667024338);
+  auto alpha = Type(0.2959022906314299);
+  auto beta  = Type(0.1453466667024338);
   int  n     = -2;
   int  m     = -3;
 
