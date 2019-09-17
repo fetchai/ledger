@@ -75,8 +75,6 @@ void MinMaxScaler<TensorType>::SetScale(TensorType const &reference_tensor)
   }
 
   x_range_ = x_max_ - x_min_;
-  std::cout << "x_min_: " << x_min_ << std::endl;
-  std::cout << "x_max_: " << x_max_ << std::endl;
 }
 
 /**
