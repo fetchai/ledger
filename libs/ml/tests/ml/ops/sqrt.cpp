@@ -80,6 +80,7 @@ TYPED_TEST(SqrtTest, backward_all_positive_test)
 TYPED_TEST(SqrtTest, forward_all_negative_test)
 {
   using TensorType = TypeParam;
+  using DataType   = typename TensorType::Type;
 
   TensorType data = TensorType::FromString("-1, -2, -4, -10, -100");
 
@@ -93,11 +94,13 @@ TYPED_TEST(SqrtTest, forward_all_negative_test)
   {
     EXPECT_TRUE(fetch::math::is_nan(p_it));
   }
+  fetch::math::state_clear<DataType>();
 }
 
 TYPED_TEST(SqrtTest, backward_all_negative_test)
 {
   using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
 
   TensorType data  = TensorType::FromString("-1, -2, -4, -10, -100");
   TensorType error = TensorType::FromString("1,   1,  1,   2,    0");
@@ -110,6 +113,7 @@ TYPED_TEST(SqrtTest, backward_all_negative_test)
   {
     EXPECT_TRUE(fetch::math::is_nan(p_it));
   }
+  fetch::math::state_clear<DataType>();
 }
 
 TYPED_TEST(SqrtTest, backward_zero_test)
