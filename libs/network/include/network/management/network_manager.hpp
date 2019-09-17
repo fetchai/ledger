@@ -33,16 +33,16 @@ namespace network {
 class NetworkManager
 {
 public:
-  using event_function_type = std::function<void()>;
+  using EventFunctionType = std::function<void()>;
 
-  using implementation_type = details::NetworkManagerImplementation;
-  using PointerType         = std::shared_ptr<implementation_type>;
-  using weak_ref_type       = std::weak_ptr<implementation_type>;
+  using ImplementationType = details::NetworkManagerImplementation;
+  using PointerType        = std::shared_ptr<ImplementationType>;
+  using WeakRefType        = std::weak_ptr<ImplementationType>;
 
   static constexpr char const *LOGGING_NAME = "NetworkManager";
 
   NetworkManager(std::string name, std::size_t threads)
-    : pointer_{std::make_shared<implementation_type>(std::move(name), threads)}
+    : pointer_{std::make_shared<ImplementationType>(std::move(name), threads)}
   {}
 
   NetworkManager(NetworkManager const &other)
@@ -140,9 +140,9 @@ public:
   }
 
 private:
-  PointerType   pointer_;
-  weak_ref_type weak_pointer_;
-  bool          is_copy_ = false;
+  PointerType pointer_;
+  WeakRefType weak_pointer_;
+  bool        is_copy_ = false;
 };
 
 }  // namespace network

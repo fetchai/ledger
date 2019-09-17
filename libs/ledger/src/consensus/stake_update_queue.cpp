@@ -104,10 +104,10 @@ std::size_t StakeUpdateQueue::size() const
  * @param address The address of the stake holder
  * @param stake The amount of tokens to be staked
  */
-void StakeUpdateQueue::AddStakeUpdate(BlockIndex block_index, Address const &address,
+void StakeUpdateQueue::AddStakeUpdate(BlockIndex block_index, Identity const &identity,
                                       StakeAmount stake)
 {
-  updates_.ApplyVoid([&](BlockUpdates &updates) { updates[block_index][address] = stake; });
+  updates_.ApplyVoid([&](BlockUpdates &updates) { updates[block_index][identity] = stake; });
 }
 
 }  // namespace ledger

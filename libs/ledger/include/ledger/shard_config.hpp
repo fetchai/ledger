@@ -18,9 +18,10 @@
 //------------------------------------------------------------------------------
 
 #include "crypto/prover.hpp"
-#include "network/muddle/network_id.hpp"
+#include "muddle/network_id.hpp"
 
 #include <chrono>
+#include <string>
 #include <vector>
 
 namespace fetch {
@@ -41,6 +42,7 @@ struct ShardConfig
 
   /// @name External Network
   /// @{
+  std::string    external_name;        ///< The host or ip that corresponds to muddle adapter
   CertificatePtr external_identity;    ///< The identity for the external network
   uint16_t       external_port;        ///< The server port for the external network
   NetworkId      external_network_id;  ///< The ID of the external network
@@ -48,6 +50,7 @@ struct ShardConfig
 
   /// @name Internal Network
   /// @{
+  std::string    internal_name;        ///< The host or ip that corresponds to the public name
   CertificatePtr internal_identity;    ///< The identity for the internal network
   uint16_t       internal_port;        ///< The server port for the internal network
   NetworkId      internal_network_id;  ///< The ID of the internal network

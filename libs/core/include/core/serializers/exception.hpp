@@ -28,8 +28,8 @@ class ConstByteArray;
 namespace serializers {
 
 namespace error {
-using error_type            = uint64_t;
-error_type const TYPE_ERROR = 0;
+using ErrorType            = uint64_t;
+ErrorType const TYPE_ERROR = 0;
 }  // namespace error
 
 class SerializableException : public std::exception
@@ -40,17 +40,21 @@ public:
   SerializableException();
   explicit SerializableException(std::string explanation);
   explicit SerializableException(byte_array::ConstByteArray const &explanation);
-  SerializableException(error::error_type error_code, std::string explanation);
-  SerializableException(error::error_type                 error_code,
-                        byte_array::ConstByteArray const &explanation);
-  ~SerializableException() override;
+  SerializableException(error::ErrorType error_code, char const *explanation);
+  SerializableException(error::ErrorType error_code, std::string explanation);
+  SerializableException(error::ErrorType error_code, byte_array::ConstByteArray const &explanation);
+  SerializableException(SerializableException const &)     = default;
+  SerializableException(SerializableException &&) noexcept = default;
+  ~SerializableException() override                        = default;
   /// @}
 
   char const *what() const noexcept override;
   uint64_t    error_code() const;
   std::string explanation() const;
 
-  void StackTrace() const;
+  // Assignment Operators
+  SerializableException &operator=(SerializableException const &) = default;
+  SerializableException &operator=(SerializableException &&) noexcept = default;
 
 private:
   uint64_t    error_code_;

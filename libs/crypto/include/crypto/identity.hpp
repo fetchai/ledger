@@ -38,8 +38,8 @@ public:
   Identity() = default;
 
   Identity(Identity const &other) = default;
+  Identity(Identity &&other)      = default;
   Identity &operator=(Identity const &other) = default;
-  Identity(Identity &&other)                 = default;
   Identity &operator=(Identity &&other) = default;
 
   // Fully relying on caller that it will behave = will NOT modify value passed
