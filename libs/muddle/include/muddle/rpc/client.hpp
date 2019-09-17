@@ -69,7 +69,7 @@ public:
     service::PackCall(counter, protocol, function, args...);
 
     // pack the mesage into a buffer
-    service::serializer_type params;
+    service::SerializerType params;
     params.Reserve(counter.size());
     params << service::SERVICE_FUNCTION_CALL << prom->id();
     service::PackCall(params, protocol, function, std::forward<Args>(args)...);

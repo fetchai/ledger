@@ -32,7 +32,7 @@ namespace service {
 class ServiceServerInterface
 {
 public:
-  using Handle         = network::AbstractConnection::connection_handle_type;
+  using Handle         = network::AbstractConnection::ConnectionHandleType;
   using ConstByteArray = byte_array::ConstByteArray;
 
   static constexpr char const *LOGGING_NAME = "ServiceServerInterface";

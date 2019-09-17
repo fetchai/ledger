@@ -94,7 +94,7 @@ public:
 private:
   using Client               = muddle::rpc::Client;
   using ClientPtr            = std::shared_ptr<Client>;
-  using LaneIndex            = LaneIdentity::LaneType;
+  using LaneIndex            = uint32_t;
   using AddressList          = std::vector<muddle::Address>;
   using MerkleTree           = crypto::MerkleTree;
   using PermanentMerkleStack = fetch::storage::ObjectStack<crypto::MerkleTree>;

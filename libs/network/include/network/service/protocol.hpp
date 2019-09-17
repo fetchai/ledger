@@ -121,11 +121,10 @@ public:
   }
 
   template <typename C, typename R, typename... Args>
-  void ExposeWithClientContext(FunctionHandlerType const &n, C *instance,
-                               R (C::*function)(Args...))
+  void ExposeWithClientContext(FunctionHandlerType const &n, C *instance, R (C::*function)(Args...))
   {
-    stored_type fnc(new service::CallableClassMember<C, R(Args...), 1>(Callable::CLIENT_CONTEXT_ARG,
-                                                                       instance, function));
+    StoredType fnc(new service::CallableClassMember<C, R(Args...), 1>(Callable::CLIENT_CONTEXT_ARG,
+                                                                      instance, function));
 
     auto iter = members_.find(n);
     if (iter != members_.end())

@@ -63,10 +63,10 @@ public:
   virtual bool     is_alive() const          = 0;
 
   // Common to allx
-  std::string            Address() const;
-  uint16_t               port() const;
+  std::string          Address() const;
+  uint16_t             port() const;
   ConnectionHandleType handle() const noexcept;
-  void                   SetConnectionManager(WeakRegisterType const &reg);
+  void                 SetConnectionManager(WeakRegisterType const &reg);
 
   WeakPointerType connection_pointer();
 
@@ -86,7 +86,7 @@ protected:
   void SetPort(uint16_t p);
 
   void SignalLeave();
-  void SignalMessage(network::message_type const &msg);
+  void SignalMessage(network::MessageType const &msg);
   void SignalConnectionFailed();
   void SignalConnectionSuccess();
 
@@ -101,7 +101,7 @@ private:
 
   mutable Mutex address_mutex_;
 
-  static connection_handle_type next_handle();
+  static ConnectionHandleType next_handle();
 
   WeakRegisterType                        connection_register_;
   std::atomic<ConnectionHandleType> const handle_;

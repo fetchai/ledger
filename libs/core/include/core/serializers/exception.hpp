@@ -42,8 +42,7 @@ public:
   explicit SerializableException(byte_array::ConstByteArray const &explanation);
   SerializableException(error::ErrorType error_code, char const *explanation);
   SerializableException(error::ErrorType error_code, std::string explanation);
-  SerializableException(error::ErrorType                 error_code,
-                        byte_array::ConstByteArray const &explanation);
+  SerializableException(error::ErrorType error_code, byte_array::ConstByteArray const &explanation);
   SerializableException(SerializableException const &)     = default;
   SerializableException(SerializableException &&) noexcept = default;
   ~SerializableException() override                        = default;

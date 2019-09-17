@@ -52,7 +52,7 @@ public:
   using ConnectionMap         = std::unordered_map<ConnectionHandle, WeakConnectionPtr>;
   using ConnectionMapCallback = std::function<void(ConnectionMap const &)>;
   using ConstByteArray        = byte_array::ConstByteArray;
-  using Handle                = connection_handle_type;
+  using Handle                = ConnectionHandleType;
 
   enum class UpdateStatus
   {

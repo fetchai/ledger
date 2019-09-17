@@ -107,9 +107,10 @@ if __name__ == "__main__":
     ignores = ["vm/tokeniser.hpp"]
 
     if len(sys.argv) == 1:
-        print("usage", sys.argv[0], "[input directory/file] [c++ include dir1] [c++ include dir2]")
-        print("") 
-        print("example", sys.argv[0], "../../libs/ /usr/local/include") 
+        print(
+            "usage", sys.argv[0], "[input directory/file] [c++ include dir1] [c++ include dir2]")
+        print("")
+        print("example", sys.argv[0], "../../libs/ /usr/local/include")
         print("")
         exit(-1)
 
