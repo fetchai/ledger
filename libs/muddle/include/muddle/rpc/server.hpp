@@ -36,7 +36,7 @@ namespace rpc {
 class Server : public service::ServiceServerInterface
 {
 public:
-  using ProtocolId      = service::protocol_handler_type;
+  using ProtocolId      = service::ProtocolHandlerType;
   using Protocol        = service::Protocol;
   using SubscriptionPtr = MuddleEndpoint::SubscriptionPtr;
   using SubscriptionMap = std::unordered_map<ProtocolId, SubscriptionPtr>;
@@ -54,7 +54,7 @@ public:
   Server &operator=(Server &&) = delete;
 
 protected:
-  bool DeliverResponse(ConstByteArray const &address, network::message_type const &data) override;
+  bool DeliverResponse(ConstByteArray const &address, network::MessageType const &data) override;
 
 private:
   void OnMessage(Packet const &packet, Address const &last_hop);

@@ -39,8 +39,8 @@ using UnorderedSetBitset = std::unordered_set<DefaultBitset>;
 class NewKeyTest : public Test
 {
 protected:
-  template <typename CONTAINER_TYPE>
-  void test_correlated_keys_are_unique(CONTAINER_TYPE &&unique_hashes)
+  template <typename ContainerType>
+  void test_correlated_keys_are_unique(ContainerType &&unique_hashes)
   {
     std::vector<DefaultKey> seen_keys;
     seen_keys.reserve(unique_hashes.size());

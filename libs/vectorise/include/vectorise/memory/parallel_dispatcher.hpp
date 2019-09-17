@@ -426,8 +426,8 @@ public:
   /// @}
 
   template <typename... Args>
-  type ProductReduce(typename details::MatrixReduceFreeFunction<VectorRegisterType>::
-                         template Unroll<Args...>::signature_type const &kernel,
+  type ProductReduce(typename details::MatrixReduceFreeFunction<
+                         VectorRegisterType>::template Unroll<Args...>::SignatureType const &kernel,
                      Args &&... args)
   {
     VectorRegisterType         regs[sizeof...(args)];
@@ -598,7 +598,7 @@ class ParallelDispatcher : public ConstParallelDispatcher<T>
 public:
   using type = T;
 
-  using super_type = ConstParallelDispatcher<T>;
+  using SuperType = ConstParallelDispatcher<T>;
 
   enum
   {
@@ -608,7 +608,7 @@ public:
   using VectorRegisterIteratorType = vectorize::VectorRegisterIterator<type, vector_size>;
 
   ParallelDispatcher(type *ptr, std::size_t size)
-    : super_type(ptr, size)
+    : SuperType(ptr, size)
   {}
 
   template <typename F>
@@ -629,7 +629,7 @@ public:
   // TODO (issue 1113): This function is potentially slow
   template <typename... Args>
   void Apply(typename details::MatrixApplyFreeFunction<VectorRegisterType, void>::template Unroll<
-                 Args...>::signature_type &&apply,
+                 Args...>::SignatureType &&apply,
              Args &&... args)
   {
     VectorRegisterType         regs[sizeof...(args)], c;
@@ -766,13 +766,13 @@ public:
   template <class C, typename... Args>
   void Apply(C const &cls,
              typename details::MatrixApplyClassMember<C, VectorRegisterType, void>::template Unroll<
-                 Args...>::signature_type const &fnc,
+                 Args...>::SignatureType const &fnc,
              Args &&... args)
   {
     VectorRegisterType         regs[sizeof...(args)];
     VectorRegisterType         c;
     VectorRegisterIteratorType iters[sizeof...(args)];
-    std::size_t                N = super_type::size();
+    std::size_t                N = SuperType::size();
     ConstParallelDispatcher<T>::InitialiseVectorIterators(0, N, iters, std::forward<Args>(args)...);
 
     for (std::size_t i = 0; i < N; i += VectorRegisterType::E_BLOCK_COUNT)
@@ -788,8 +788,8 @@ public:
 
   template <class C, typename... Args>
   std::enable_if_t<std::is_same<decltype(&C::operator()),
-                                typename details::MatrixApplyClassMember<C, type, void>::
-                                    template Unroll<Args...>::signature_type>::value,
+                                typename details::MatrixApplyClassMember<
+                                    C, type, void>::template Unroll<Args...>::SignatureType>::value,
                    void>
   Apply(C const &cls, Args &&... args)
   {
@@ -800,7 +800,7 @@ public:
   std::enable_if_t<
       std::is_same<decltype(&C::operator()),
                    typename details::MatrixApplyClassMember<C, VectorRegisterType, void>::
-                       template Unroll<Args...>::signature_type>::value,
+                       template Unroll<Args...>::SignatureType>::value,
       void>
   Apply(C const &cls, Args &&... args)
   {
@@ -809,7 +809,7 @@ public:
 
   type *pointer()
   {
-    return super_type::pointer();
+    return SuperType::pointer();
   }
 };
 

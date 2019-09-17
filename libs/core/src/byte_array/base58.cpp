@@ -94,7 +94,7 @@ ConstByteArray FromBase58(ConstByteArray const &str)
 
   // Allocate enough space in big-endian base256 representation.
   int size = static_cast<int>((raw_end - raw_start) * 733 /1000 + 1); // log(58) / log(256), rounded up.
-  std::vector<unsigned char> b256(static_cast<std::size_t>(size));
+  std::vector<uint8_t> b256(static_cast<std::size_t>(size));
 
   // Process the characters.
   static_assert(sizeof(mapBase58)/sizeof(mapBase58[0]) == 256, "mapBase58.size() should be 256"); // guarantee not out of range
@@ -109,7 +109,7 @@ ConstByteArray FromBase58(ConstByteArray const &str)
     int i = 0;
     for (auto it = b256.rbegin(); (carry != 0 || i < length) && (it != b256.rend()); ++it, ++i) {
       carry += 58 * (*it);
-      *it = static_cast<unsigned char>(carry % 256);
+      *it = static_cast<uint8_t>(carry % 256);
       carry /= 256;
     }
     assert(carry == 0);
@@ -150,7 +150,7 @@ ConstByteArray ToBase58(ConstByteArray const &str)
   }
   // Allocate enough space in big-endian base58 representation.
   int size = static_cast<int>((pend - pbegin) * 138 / 100 + 1); // log(256) / log(58), rounded up.
-  std::vector<unsigned char> b58(static_cast<std::size_t>(size));
+  std::vector<uint8_t> b58(static_cast<std::size_t>(size));
   // Process the bytes.
   while (pbegin != pend) {
     int carry = *pbegin;
@@ -158,7 +158,7 @@ ConstByteArray ToBase58(ConstByteArray const &str)
     // Apply "b58 = b58 * 256 + ch".
     for (auto it = b58.rbegin(); (carry != 0 || i < length) && (it != b58.rend()); it++, i++) {
       carry += 256 * (*it);
-      *it = static_cast<unsigned char>(carry % 58);
+      *it = static_cast<uint8_t>(carry % 58);
       carry /= 58;
     }
 

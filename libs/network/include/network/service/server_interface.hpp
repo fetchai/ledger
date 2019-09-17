@@ -32,7 +32,7 @@ namespace service {
 class ServiceServerInterface
 {
 public:
-  using Handle         = network::AbstractConnection::connection_handle_type;
+  using Handle         = network::AbstractConnection::ConnectionHandleType;
   using ConstByteArray = byte_array::ConstByteArray;
 
   static constexpr char const *LOGGING_NAME = "ServiceServerInterface";
@@ -40,8 +40,8 @@ public:
   ServiceServerInterface()          = default;
   virtual ~ServiceServerInterface() = default;
 
-  void Add(protocol_handler_type const &name,
-           Protocol *                   protocol)  // TODO(issue 19): Rename to AddProtocol
+  void Add(ProtocolHandlerType const &name,
+           Protocol *                 protocol)  // TODO(issue 19): Rename to AddProtocol
   {
     if (name < 1 || name > 255)
     {
@@ -60,13 +60,13 @@ public:
   }
 
 protected:
-  virtual bool DeliverResponse(ConstByteArray const &address, network::message_type const &) = 0;
+  virtual bool DeliverResponse(ConstByteArray const &address, network::MessageType const &) = 0;
 
-  bool PushProtocolRequest(ConstByteArray const &address, network::message_type const &msg,
+  bool PushProtocolRequest(ConstByteArray const &address, network::MessageType const &msg,
                            CallContext const &context = CallContext())
   {
-    serializer_type             params(msg);
-    service_classification_type type;
+    SerializerType            params(msg);
+    ServiceClassificationType type;
     params >> type;
 
     FETCH_LOG_DEBUG(LOGGING_NAME, "PushProtocolRequest type=", type);
@@ -86,12 +86,12 @@ protected:
     return success;
   }
 
-  bool HandleRPCCallRequest(ConstByteArray const &address, serializer_type params,
+  bool HandleRPCCallRequest(ConstByteArray const &address, SerializerType params,
                             CallContext const &context = CallContext())
   {
-    bool            ret = true;
-    serializer_type result;
-    PromiseCounter  id;
+    bool           ret = true;
+    SerializerType result;
+    PromiseCounter id;
 
     try
     {
@@ -104,7 +104,7 @@ protected:
     catch (serializers::SerializableException const &e)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Serialization error (Function Call): ", e.what());
-      result = serializer_type();
+      result = SerializerType();
       result << SERVICE_ERROR << id << e;
     }
 
@@ -118,11 +118,11 @@ protected:
   }
 
 private:
-  void ExecuteCall(serializer_type &result, serializer_type params,
+  void ExecuteCall(SerializerType &result, SerializerType params,
                    CallContext const &context = CallContext())
   {
-    protocol_handler_type protocol_number;
-    function_handler_type function_number;
+    ProtocolHandlerType protocol_number;
+    FunctionHandlerType function_number;
     params >> protocol_number >> function_number;
 
     auto protocol_pointer = members_[protocol_number];

@@ -47,12 +47,12 @@ class NetworkId;
 class MuddleRegister : public network::AbstractConnectionRegister
 {
 public:
-  using ConnectionHandle      = connection_handle_type;
+  using ConnectionHandle      = ConnectionHandleType;
   using WeakConnectionPtr     = std::weak_ptr<network::AbstractConnection>;
   using ConnectionMap         = std::unordered_map<ConnectionHandle, WeakConnectionPtr>;
   using ConnectionMapCallback = std::function<void(ConnectionMap const &)>;
   using ConstByteArray        = byte_array::ConstByteArray;
-  using Handle                = connection_handle_type;
+  using Handle                = ConnectionHandleType;
 
   enum class UpdateStatus
   {
@@ -108,7 +108,7 @@ protected:
   /// @name Connection Event Handlers
   /// @{
   void Enter(WeakConnectionPtr const &ptr) override;
-  void Leave(connection_handle_type id) override;
+  void Leave(ConnectionHandleType id) override;
   /// @}
 
 private:

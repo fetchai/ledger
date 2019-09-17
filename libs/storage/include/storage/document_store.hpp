@@ -48,16 +48,16 @@ template <std::size_t BLOCK_SIZE = 2048, typename A = FileBlockType<BLOCK_SIZE>,
 class DocumentStore
 {
 public:
-  using self_type       = DocumentStore<BLOCK_SIZE, A, B, C, D>;
-  using byte_array_type = byte_array::ByteArray;
+  using SelfType      = DocumentStore<BLOCK_SIZE, A, B, C, D>;
+  using ByteArrayType = byte_array::ByteArray;
 
-  using file_block_type      = A;
-  using key_value_index_type = B;
-  using file_object_type     = D;
+  using FileBlockType     = A;
+  using KeyValueIndexType = B;
+  using FileObjectType    = D;
 
-  using hash_type = byte_array::ConstByteArray;
+  using HashType = byte_array::ConstByteArray;
 
-  using index_type = typename key_value_index_type::index_type;
+  using IndexType = typename KeyValueIndexType::IndexType;
 
   using ByteArray = byte_array::ByteArray;
 
@@ -102,7 +102,7 @@ public:
   Document GetOrCreate(ResourceID const &rid, bool create = true)
   {
     byte_array::ConstByteArray const &address = rid.id();
-    index_type                        index   = 0;
+    IndexType                         index   = 0;
 
     FETCH_LOCK(mutex_);
 
@@ -134,7 +134,7 @@ public:
   void Set(ResourceID const &rid, byte_array::ConstByteArray const &value)
   {
     byte_array::ConstByteArray const &address = rid.id();
-    index_type                        index   = 0;
+    IndexType                         index   = 0;
 
     FETCH_LOCK(mutex_);
 
@@ -161,7 +161,7 @@ public:
   void Erase(ResourceID const &rid)
   {
     byte_array::ConstByteArray const &address = rid.id();
-    index_type                        index   = 0;
+    IndexType                         index   = 0;
 
     FETCH_LOCK(mutex_);
 
@@ -202,7 +202,7 @@ public:
   class Iterator
   {
   public:
-    Iterator(self_type *self, typename key_value_index_type::Iterator it)
+    Iterator(SelfType *self, typename KeyValueIndexType::Iterator it)
       : wrapped_iterator_{it}
       , self_{self}
     {}
@@ -246,11 +246,11 @@ public:
     }
 
   protected:
-    typename key_value_index_type::Iterator wrapped_iterator_;
-    self_type *                             self_;
+    typename KeyValueIndexType::Iterator wrapped_iterator_;
+    SelfType *                           self_;
   };
 
-  self_type::Iterator Find(ResourceID const &rid)
+  SelfType::Iterator Find(ResourceID const &rid)
   {
     byte_array::ConstByteArray const &address = rid.id();
     auto                              it      = key_index_.Find(address);
@@ -268,7 +268,7 @@ public:
    *
    * @return: an iterator to the first element of that tree
    */
-  self_type::Iterator GetSubtree(ResourceID const &rid, uint64_t bits)
+  SelfType::Iterator GetSubtree(ResourceID const &rid, uint64_t bits)
   {
     byte_array::ConstByteArray const &address = rid.id();
     auto                              it      = key_index_.GetSubtree(address, bits);
@@ -276,22 +276,22 @@ public:
     return Iterator(this, it);
   }
 
-  self_type::Iterator begin()
+  SelfType::Iterator begin()
   {
     return Iterator(this, key_index_.begin());
   }
 
-  self_type::Iterator end()
+  SelfType::Iterator end()
   {
     return Iterator(this, key_index_.end());
   }
 
   // Hash based functionality - note this will only work if both underlying files
   // have commit functionality
-  byte_array_type Commit()
+  ByteArrayType Commit()
   {
     FETCH_LOCK(mutex_);
-    byte_array_type hash = key_index_.Hash();
+    ByteArrayType hash = key_index_.Hash();
 
     if (key_index_.underlying_stack().HashExists(hash) ||
         file_object_.underlying_stack().HashExists(hash))
@@ -306,7 +306,7 @@ public:
     return hash;
   }
 
-  bool RevertToHash(byte_array_type const &hash)
+  bool RevertToHash(ByteArrayType const &hash)
   {
     FETCH_LOCK(mutex_);
 
@@ -327,23 +327,23 @@ public:
     return true;
   }
 
-  bool HashExists(byte_array_type const &hash)
+  bool HashExists(ByteArrayType const &hash)
   {
     FETCH_LOCK(mutex_);
     return key_index_.underlying_stack().HashExists(hash) &&
            file_object_.underlying_stack().HashExists(hash);
   }
 
-  hash_type CurrentHash()
+  HashType CurrentHash()
   {
     FETCH_LOCK(mutex_);
     return key_index_.Hash();
   }
 
 protected:
-  Mutex                mutex_;
-  key_value_index_type key_index_;
-  file_object_type     file_object_;
+  Mutex             mutex_;
+  KeyValueIndexType key_index_;
+  FileObjectType    file_object_;
 };
 
 }  // namespace storage
