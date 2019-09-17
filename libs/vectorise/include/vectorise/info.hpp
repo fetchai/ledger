@@ -21,7 +21,7 @@
 #include <cstdint>
 
 namespace fetch {
-namespace vectorize {
+namespace vectorise {
 
 template <typename T, std::size_t>
 struct VectorInfo
@@ -29,5 +29,6 @@ struct VectorInfo
   using NativeType   = T;
   using RegisterType = T;
 };
-}  // namespace vectorize
+
+}  // namespace vectorise
 }  // namespace fetch
