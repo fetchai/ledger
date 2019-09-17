@@ -126,7 +126,7 @@ public:
       return false;
     }
 
-    serializer_type ser(value_);
+    SerializerType ser(value_);
     ser >> ret;
 
     return true;

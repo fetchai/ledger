@@ -600,7 +600,7 @@ void Muddle::CreateTcpClient(Uri const &peer)
     clients_.RemoveConnection(peer);
   });
 
-  strong_conn->OnMessage([this, peer, conn_handle](network::message_type const &msg) {
+  strong_conn->OnMessage([this, peer, conn_handle](network::MessageType const &msg) {
     try
     {
       auto packet = std::make_shared<Packet>();

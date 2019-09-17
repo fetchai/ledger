@@ -93,9 +93,9 @@ private:
   };
 #pragma pack(pop)
 public:
-  using header_extra_type  = D;
-  using type               = T;
-  using event_handler_type = std::function<void()>;
+  using HeaderExtraType  = D;
+  using type             = T;
+  using EventHandlerType = std::function<void()>;
 
   MMapRandomAccessStack()
   {
@@ -125,12 +125,12 @@ public:
     on_before_flush_ = nullptr;
   }
 
-  void OnFileLoaded(event_handler_type const &f)
+  void OnFileLoaded(EventHandlerType const &f)
   {
     on_file_loaded_ = f;
   }
 
-  void OnBeforeFlush(event_handler_type const &f)
+  void OnBeforeFlush(EventHandlerType const &f)
   {
     on_before_flush_ = f;
   }
@@ -336,14 +336,14 @@ public:
     }
   }
 
-  void SetExtraHeader(header_extra_type const &he)
+  void SetExtraHeader(HeaderExtraType const &he)
   {
     assert(!filename_.empty());
 
     header_->extra = he;
   }
 
-  header_extra_type const &header_extra() const
+  HeaderExtraType const &header_extra() const
   {
     return header_->extra;
   }
@@ -585,14 +585,14 @@ private:
     header_ = reinterpret_cast<Header *>(mapped_header_.data());
   }
 
-  event_handler_type on_file_loaded_;
-  event_handler_type on_before_flush_;
-  mio::mmap_sink     mapped_data_;    // This map handles read/write objects from/to file
-  mio::mmap_sink     mapped_header_;  // This map handles header part in the file
-  std::fstream       file_handle_;
-  std::string        filename_ = "";
-  Header *           header_;
-  std::size_t        mapped_index_ = 0;  // It holds the mapped index value
+  EventHandlerType on_file_loaded_;
+  EventHandlerType on_before_flush_;
+  mio::mmap_sink   mapped_data_;    // This map handles read/write objects from/to file
+  mio::mmap_sink   mapped_header_;  // This map handles header part in the file
+  std::fstream     file_handle_;
+  std::string      filename_ = "";
+  Header *         header_;
+  std::size_t      mapped_index_ = 0;  // It holds the mapped index value
 };
 }  // namespace storage
 }  // namespace fetch

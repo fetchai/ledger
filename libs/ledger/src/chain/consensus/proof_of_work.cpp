@@ -28,7 +28,7 @@ namespace fetch {
 namespace ledger {
 namespace consensus {
 
-ProofOfWork::ProofOfWork(header_type header)
+ProofOfWork::ProofOfWork(HeaderType header)
   : header_{std::move(header)}
 {}
 

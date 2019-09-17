@@ -35,12 +35,12 @@ using ::testing::_;
 using ::testing::InSequence;
 using ::testing::Return;
 
-using fetch::core::IsIn;
-using fetch::ledger::SmartContract;
 using fetch::byte_array::ConstByteArray;
+using fetch::core::IsIn;
+using fetch::ledger::Address;
+using fetch::ledger::SmartContract;
 using fetch::storage::ResourceAddress;
 using fetch::variant::Variant;
-using fetch::ledger::Address;
 using ContractDigest = ConstByteArray;
 
 template <typename T>

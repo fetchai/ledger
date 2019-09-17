@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -16,13 +17,50 @@
 //
 //------------------------------------------------------------------------------
 
-#include "http/abstract_server.hpp"
+#include <iostream>
 
 namespace fetch {
-namespace http {
+namespace useless_namespace {
+}
 
-AbstractHTTPServer::HandleType AbstractHTTPServer::global_handle_counter_ = 0;
-Mutex                          AbstractHTTPServer::global_handle_mutex_;
+class helloWorld
+{
+public:
+  using Xtype = int;
+  typedef qqq = int;
 
-}  // namespace http
+  void WrongConstPosition(const &int x)
+  {
+    std::cout << x << std::endl;
+  }
+
+  void CorrectConstPosition(int const &x)
+  {
+    std::cout << x << std::endl;
+  }
+
+  void wrongName(int const &x)
+  {
+    std::cout << x << std::endl;
+  }
+
+  void wrong_nAme(int const &x)
+  {
+    std::cout << x << std::endl;
+  }
+
+  qqq test()
+  {}
+  Xtype test2()
+  {}
+
+  void correct_name(int const &x)
+  {
+    std::cout << x << std::endl;
+  }
+
+private:
+  int var;
+};
+
 }  // namespace fetch

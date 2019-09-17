@@ -47,9 +47,9 @@
 
 static constexpr uint8_t DEFAULT_TTL = 40;
 
-using fetch::byte_array::ToBase64;
 using fetch::byte_array::ByteArray;
 using fetch::byte_array::ConstByteArray;
+using fetch::byte_array::ToBase64;
 
 namespace fetch {
 namespace muddle {

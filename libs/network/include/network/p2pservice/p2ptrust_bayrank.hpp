@@ -37,8 +37,8 @@
 namespace fetch {
 namespace p2p {
 
-using reference_players_type = std::array<math::statistics::Gaussian<double>, 4>;
-extern const reference_players_type reference_players_;
+using ReferencePlayersType = std::array<math::statistics::Gaussian<double>, 4>;
+extern const ReferencePlayersType reference_players_;
 
 inline math::statistics::Gaussian<double> const &LookupReferencePlayer(TrustQuality quality)
 {

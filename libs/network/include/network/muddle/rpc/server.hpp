@@ -36,8 +36,8 @@ namespace rpc {
 class Server : public service::ServiceServerInterface
 {
 public:
-  using ConnectionHandle = service::ServiceServerInterface::connection_handle_type;
-  using ProtocolId       = service::protocol_handler_type;
+  using ConnectionHandle = service::ServiceServerInterface::ConnectionHandleType;
+  using ProtocolId       = service::ProtocolHandlerType;
   using Protocol         = service::Protocol;
   using Address          = MuddleEndpoint::Address;
   using SubscriptionPtr  = MuddleEndpoint::SubscriptionPtr;
@@ -65,8 +65,7 @@ public:
   }
 
 protected:
-  bool DeliverResponse(connection_handle_type       handle_type,
-                       network::message_type const &message_type) override
+  bool DeliverResponse(ConnectionHandleType handle, network::MessageType const &msg_type) override
   {
     Address  target;
     uint16_t service        = 0;
@@ -77,10 +76,10 @@ protected:
     // lookup the metadata
     {
       FETCH_LOCK(metadata_lock_);
-      auto it = metadata_.find(handle_type);
+      auto it = metadata_.find(handle);
       if (it != metadata_.end())
       {
-        std::tie(target, service, channel, counter) = metadata_[handle_type];
+        std::tie(target, service, channel, counter) = metadata_[handle];
         metadata_.erase(it);
         lookup_success = true;
       }
@@ -93,7 +92,7 @@ protected:
                       " on: ", service, ':', channel, ':', counter);
 
       // send the message back to the server
-      endpoint_.Send(target, service, channel, counter, message_type);
+      endpoint_.Send(target, service, channel, counter, msg_type);
     }
     else
     {

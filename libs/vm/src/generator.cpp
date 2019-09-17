@@ -886,12 +886,12 @@ void Generator::HandleIndexedAssignmentStatement(IRExpressionNodePtr const &node
     HandleExpression(ConvertToIRExpressionNodePtr(lhs->children[i]));
   }
   HandleExpression(rhs);
-  uint16_t                container_type_id = container_node->type->resolved_id;
-  uint16_t                type_id           = lhs->type->resolved_id;
-  uint16_t                opcode            = node->function->resolved_opcode;
+  uint16_t                ContainerType_id = container_node->type->resolved_id;
+  uint16_t                type_id          = lhs->type->resolved_id;
+  uint16_t                opcode           = node->function->resolved_opcode;
   Executable::Instruction instruction(opcode);
   instruction.type_id = type_id;
-  instruction.data    = container_type_id;
+  instruction.data    = ContainerType_id;
   uint16_t pc         = function_->AddInstruction(instruction);
   AddLineNumber(lhs->line, pc);
 }
@@ -910,9 +910,9 @@ void Generator::HandleIndexedInplaceAssignmentStatement(IRExpressionNodePtr cons
     HandleExpression(ConvertToIRExpressionNodePtr(lhs->children[i]));
   }
 
-  uint16_t container_type_id = container_node->type->resolved_id;
-  uint16_t type_id           = lhs->type->resolved_id;
-  uint16_t rhs_type_id       = rhs->type->resolved_id;
+  uint16_t ContainerType_id = container_node->type->resolved_id;
+  uint16_t type_id          = lhs->type->resolved_id;
+  uint16_t rhs_type_id      = rhs->type->resolved_id;
 
   Executable::Instruction duplicate_instruction(Opcodes::Duplicate);
   duplicate_instruction.data = uint16_t(1 + num_indices);
@@ -922,7 +922,7 @@ void Generator::HandleIndexedInplaceAssignmentStatement(IRExpressionNodePtr cons
   uint16_t                get_indexed_value_opcode = lhs->function->resolved_opcode;
   Executable::Instruction get_indexed_value_instruction(get_indexed_value_opcode);
   get_indexed_value_instruction.type_id = type_id;
-  get_indexed_value_instruction.data    = container_type_id;
+  get_indexed_value_instruction.data    = ContainerType_id;
   uint16_t get_indexed_value_pc         = function_->AddInstruction(get_indexed_value_instruction);
   AddLineNumber(lhs->line, get_indexed_value_pc);
 
@@ -981,7 +981,7 @@ void Generator::HandleIndexedInplaceAssignmentStatement(IRExpressionNodePtr cons
   uint16_t                set_indexed_value_opcode = node->function->resolved_opcode;
   Executable::Instruction set_indexed_value_instruction(set_indexed_value_opcode);
   set_indexed_value_instruction.type_id = type_id;
-  set_indexed_value_instruction.data    = container_type_id;
+  set_indexed_value_instruction.data    = ContainerType_id;
   uint16_t set_indexed_value_pc         = function_->AddInstruction(set_indexed_value_instruction);
   AddLineNumber(lhs->line, set_indexed_value_pc);
 }
@@ -1586,12 +1586,12 @@ void Generator::HandleIndexOp(IRExpressionNodePtr const &node)
   {
     HandleExpression(ConvertToIRExpressionNodePtr(node->children[i]));
   }
-  uint16_t                container_type_id        = container_node->type->resolved_id;
+  uint16_t                ContainerType_id         = container_node->type->resolved_id;
   uint16_t                type_id                  = node->type->resolved_id;
   uint16_t                get_indexed_value_opcode = node->function->resolved_opcode;
   Executable::Instruction instruction(get_indexed_value_opcode);
   instruction.type_id = type_id;
-  instruction.data    = container_type_id;
+  instruction.data    = ContainerType_id;
   uint16_t pc         = function_->AddInstruction(instruction);
   AddLineNumber(node->line, pc);
 }
@@ -1698,8 +1698,8 @@ void Generator::HandleIndexedPrefixPostfixOp(IRExpressionNodePtr const &node,
   {
     HandleExpression(ConvertToIRExpressionNodePtr(operand->children[i]));
   }
-  uint16_t                container_type_id = container_node->type->resolved_id;
-  uint16_t                type_id           = operand->type->resolved_id;
+  uint16_t                ContainerType_id = container_node->type->resolved_id;
+  uint16_t                type_id          = operand->type->resolved_id;
   Executable::Instruction duplicate_instruction(Opcodes::Duplicate);
   duplicate_instruction.data = uint16_t(1 + num_indices);
   uint16_t duplicate_pc      = function_->AddInstruction(duplicate_instruction);
@@ -1707,7 +1707,7 @@ void Generator::HandleIndexedPrefixPostfixOp(IRExpressionNodePtr const &node,
   uint16_t                get_indexed_value_opcode = operand->function->resolved_opcode;
   Executable::Instruction get_indexed_value_instruction(get_indexed_value_opcode);
   get_indexed_value_instruction.type_id = type_id;
-  get_indexed_value_instruction.data    = container_type_id;
+  get_indexed_value_instruction.data    = ContainerType_id;
   uint16_t get_indexed_value_pc         = function_->AddInstruction(get_indexed_value_instruction);
   AddLineNumber(operand->line, get_indexed_value_pc);
 
@@ -1767,7 +1767,7 @@ void Generator::HandleIndexedPrefixPostfixOp(IRExpressionNodePtr const &node,
   uint16_t                set_indexed_value_opcode = node->function->resolved_opcode;
   Executable::Instruction set_indexed_value_instruction(set_indexed_value_opcode);
   set_indexed_value_instruction.type_id = type_id;
-  set_indexed_value_instruction.data    = container_type_id;
+  set_indexed_value_instruction.data    = ContainerType_id;
   uint16_t set_indexed_value_instruction_pc =
       function_->AddInstruction(set_indexed_value_instruction);
   AddLineNumber(operand->line, set_indexed_value_instruction_pc);

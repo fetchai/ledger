@@ -41,11 +41,11 @@ public:
   bool   operator==(const Params &rhs) const = delete;
   bool   operator<(const Params &rhs) const  = delete;
 
-  using action_func_type =
+  using ActionFunctionType =
       std::function<void(const std::set<std::string> &, std::list<std::string> &)>;
-  using help_text_type  = std::tuple<std::string, std::string>;
-  using assigners_type  = std::map<std::string, action_func_type>;
-  using help_texts_type = std::list<help_text_type>;
+  using HelpTextType  = std::tuple<std::string, std::string>;
+  using AssignersType = std::map<std::string, ActionFunctionType>;
+  using HelpTextsType = std::list<HelpTextType>;
 
   Params()
     : paramsParser_()
@@ -76,7 +76,7 @@ public:
 
     for (auto const &action : assigners_)
     {
-      action_func_type func = action.second;
+      ActionFunctionType func = action.second;
       func(args, errs);
     }
 
@@ -116,7 +116,7 @@ public:
       assignee = this->paramsParser_.GetParam(name_local, deflt_local);
     };
 
-    helpTexts_.push_back(help_text_type{name, help});
+    helpTexts_.push_back(HelpTextType{name, help});
   }
 
   template <class TYPE>
@@ -133,7 +133,7 @@ public:
       assignee = this->paramsParser_.GetParam(name_local, TYPE());
     };
 
-    helpTexts_.push_back(help_text_type{name, help});
+    helpTexts_.push_back(HelpTextType{name, help});
   }
 
   void description(const std::string &desc)
@@ -170,8 +170,8 @@ public:
 private:
   fetch::commandline::ParamsParser paramsParser_;
   std::string                      desc_;
-  help_texts_type                  helpTexts_;
-  assigners_type                   assigners_;
+  HelpTextsType                    helpTexts_;
+  AssignersType                    assigners_;
 };
 
 }  // namespace commandline

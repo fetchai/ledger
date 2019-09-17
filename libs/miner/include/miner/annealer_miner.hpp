@@ -29,9 +29,9 @@ namespace miner {
 class AnnealerMiner : public MinerInterface
 {
 public:
-  using transaction_type       = std::shared_ptr<TransactionItem>;
-  using transaction_queue_type = std::vector<transaction_type>;
-  using generator_type         = ledger::BlockGenerator;
+  using TransactionType        = std::shared_ptr<TransactionItem>;
+  using transaction_queue_type = std::vector<TransactionType>;
+  using GeneratorType          = ledger::BlockGenerator;
 
   static constexpr char const *LOGGING_NAME = "AnnealerMiner";
 
@@ -96,7 +96,7 @@ private:
 
   void PopulateBlock(ledger::BlockBody &block, std::size_t num_lanes, std::size_t num_slices)
   {
-    using Strategy = generator_type::Strategy;
+    using Strategy = GeneratorType::Strategy;
 
     // configure the solver
     generator_.ConfigureAnnealer(100, 0.1, 3.0);
@@ -155,7 +155,7 @@ private:
   transaction_queue_type pending_queue_;
   std::size_t            transaction_index_{0};
 
-  generator_type generator_;
+  GeneratorType generator_;
 };
 
 }  // namespace miner
