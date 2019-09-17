@@ -63,69 +63,69 @@ public:
 
   bool empty(void) const
   {
-    return getFreeSpace() == size;
+    return GetFreeSpace() == size;
   }
 
-  mutable_buffer getSpaceBuffer()
+  mutable_buffer GetSpaceBuffer()
   {
     Lock lock(mut);
-    if (getFreeSpace() == 0)
+    if (GetFreeSpace() == 0)
       return mutable_buffer(0, 0);
-    return mutable_buffer(addressOf(writep % size),
-                          std::min(writep + lockless_getFreeSpace(), size) - writep);
+    return mutable_buffer(AddressOf(writep % size),
+                          std::min(writep + lockless_GetFreeSpace(), size) - writep);
   }
 
-  buffer getDataBuffer()
+  buffer GetDataBuffer()
   {
     Lock lock(mut);
-    if (getFreeSpace() == size)
+    if (GetFreeSpace() == size)
       return buffer(0, 0);
-    return buffer(addressOf(readp % size),
-                  std::min(readp + lockless_getDataAvailable(), size) - readp);
+    return buffer(AddressOf(readp % size),
+                  std::min(readp + lockless_GetDataAvailable(), size) - readp);
   }
 
-  std::vector<mutable_buffer> getSpaceBuffers()
+  std::vector<mutable_buffer> GetSpaceBuffers()
   {
     Lock                        lock(mut);
     std::vector<mutable_buffer> r;
-    if (lockless_getFreeSpace() > 0)
+    if (lockless_GetFreeSpace() > 0)
     {
-      std::size_t buffer1size = std::min(writep + lockless_getFreeSpace(), size) - writep;
-      std::size_t buffer2size = lockless_getFreeSpace() - buffer1size;
-      r.push_back(mutable_buffer(addressOf(writep), buffer1size));
+      std::size_t buffer1size = std::min(writep + lockless_GetFreeSpace(), size) - writep;
+      std::size_t buffer2size = lockless_GetFreeSpace() - buffer1size;
+      r.push_back(mutable_buffer(AddressOf(writep), buffer1size));
       if (buffer2size)
       {
-        r.push_back(mutable_buffer(addressOf(0), buffer2size));
+        r.push_back(mutable_buffer(AddressOf(0), buffer2size));
       }
     }
     return r;
   }
 
-  std::vector<buffer> getDataBuffers()
+  std::vector<buffer> GetDataBuffers()
   {
     Lock                lock(mut);
     std::vector<buffer> r;
-    if (lockless_getDataAvailable() < size)
+    if (lockless_GetDataAvailable() < size)
     {
-      std::size_t buffer1size = std::min(readp + lockless_getDataAvailable(), size) - readp;
-      std::size_t buffer2size = lockless_getDataAvailable() - buffer1size;
-      r.push_back(buffer(addressOf(readp), buffer1size));
+      std::size_t buffer1size = std::min(readp + lockless_GetDataAvailable(), size) - readp;
+      std::size_t buffer2size = lockless_GetDataAvailable() - buffer1size;
+      r.push_back(buffer(AddressOf(readp), buffer1size));
       if (buffer2size)
       {
-        r.push_back(buffer(addressOf(0), buffer2size));
+        r.push_back(buffer(AddressOf(0), buffer2size));
       }
     }
     return r;
   }
 
-  void markSpaceUsed(std::size_t amount)
+  void MarkSpaceUsed(std::size_t amount)
   {
     std::size_t prevAvail = 0;
     {
       Lock lock(mut);
       writep += amount;
       writep %= size;
-      prevAvail = lockless_getDataAvailable();
+      prevAvail = lockless_GetDataAvailable();
       freeSpace -= amount;
     }
     if (!prevAvail)
@@ -134,14 +134,14 @@ public:
     }
   }
 
-  void markDataUsed(std::size_t amount)
+  void MarkDataUsed(std::size_t amount)
   {
     std::size_t prevSpace = 0;
     {
       Lock lock(mut);
       readp += amount;
       readp %= size;
-      prevSpace = lockless_getFreeSpace();
+      prevSpace = lockless_GetFreeSpace();
       freeSpace += amount;
     }
     if (!prevSpace)
@@ -150,35 +150,35 @@ public:
     }
   }
 
-  const void *addressOf(std::size_t index) const
+  const void *AddressOf(std::size_t index) const
   {
     return (byte *)store + index;
   }
-  void *addressOf(std::size_t index)
+  void *AddressOf(std::size_t index)
   {
     return (byte *)store + index;
   }
 
-  std::size_t getFreeSpace() const
+  std::size_t GetFreeSpace() const
   {
     Lock lock(mut);
-    return lockless_getFreeSpace();
+    return lockless_GetFreeSpace();
   }
-  std::size_t getDataAvailable() const
+  std::size_t GetDataAvailable() const
   {
     Lock lock(mut);
-    return lockless_getDataAvailable();
+    return lockless_GetDataAvailable();
   }
 
-  bool hasFreeSpace() const
+  bool HasFreeSpace() const
   {
     Lock lock(mut);
-    return lockless_getFreeSpace() > 0;
+    return lockless_GetFreeSpace() > 0;
   }
-  bool hasDataAvailable() const
+  bool HasDataAvailable() const
   {
     Lock lock(mut);
-    return lockless_getDataAvailable() > 0;
+    return lockless_GetDataAvailable() > 0;
   }
 
 protected:
@@ -191,11 +191,11 @@ protected:
   SignalReady signalSpaceReady = []() {};
   SignalReady signalDataReady  = []() {};
 
-  std::size_t lockless_getFreeSpace() const
+  std::size_t lockless_GetFreeSpace() const
   {
     return freeSpace;
   }
-  std::size_t lockless_getDataAvailable() const
+  std::size_t lockless_GetDataAvailable() const
   {
     return size - freeSpace;
   }

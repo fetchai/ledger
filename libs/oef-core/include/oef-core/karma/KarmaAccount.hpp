@@ -61,12 +61,12 @@ public:
   virtual ~KarmaAccount()
   {}
 
-  std::string getBalance();
+  std::string GetBalance();
 
   virtual void upgrade(const std::string &pubkey = "", const std::string &ip = "");
 
   virtual bool perform(const std::string &action, bool force = false);
-  virtual bool couldPerform(const std::string &action);
+  virtual bool CouldPerform(const std::string &action);
 
   friend void swap(KarmaAccount &a, KarmaAccount &b);
   std::size_t operator*() const
@@ -74,7 +74,7 @@ public:
     return id;
   }
 
-  const std::string &getName(void) const
+  const std::string &GetName(void) const
   {
     return name;
   }

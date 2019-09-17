@@ -46,7 +46,7 @@ void Task::cancel(void)  // try and cancel running task.
   }
 }
 
-std::size_t Task::setGroupId(std::size_t new_group_id)
+std::size_t Task::SetGroupId(std::size_t new_group_id)
 {
   auto g = group_id;
   if (group_id != new_group_id)
@@ -58,12 +58,12 @@ std::size_t Task::setGroupId(std::size_t new_group_id)
   return g;
 }
 
-void Task::setThreadGroupId(std::size_t new_group_id)
+void Task::SetThreadGroupId(std::size_t new_group_id)
 {
   thread_group_id = new_group_id;
 }
 
-ExitState Task::runThunk(void)
+ExitState Task::RunThunk(void)
 {
   thread_group_id = group_id;
   return run();
@@ -96,7 +96,7 @@ bool Task::submit(std::shared_ptr<Taskpool> pool)
 
 bool Task::submit()
 {
-  auto x = Taskpool::getDefaultTaskpool().lock();
+  auto x = Taskpool::GetDefaultTaskpool().lock();
   if (this->pool == x)
   {
     Counter("mt-core.tasks.submit().not-submitted.aleady-in-pool")++;
@@ -113,15 +113,15 @@ bool Task::submit()
   return false;
 }
 
-void Task::makeRunnable()
+void Task::MakeRunnable()
 {
   if (this->pool)
   {
-    this->pool->makeRunnable(shared_from_this());
+    this->pool->MakeRunnable(shared_from_this());
   }
   else
   {
-    Counter("mt-core.tasks.makeRunnable.no-taskpool")++;
+    Counter("mt-core.tasks.MakeRunnable.no-taskpool")++;
   }
 }
 
@@ -144,7 +144,7 @@ bool Task::submit(std::shared_ptr<Taskpool> pool, const std::chrono::millisecond
 
 bool Task::submit(const std::chrono::milliseconds &delay)
 {
-  auto x = Taskpool::getDefaultTaskpool().lock();
+  auto x = Taskpool::GetDefaultTaskpool().lock();
   if (x)
   {
     return this->submit(x, delay);

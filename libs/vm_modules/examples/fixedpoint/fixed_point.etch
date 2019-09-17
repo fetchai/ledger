@@ -32,12 +32,12 @@ function main()
 
   var mymap = Map<Fixed32, Fixed32>();
   mymap[a] = b;
-  print("mymap[" + toString(a) + "] = ");
+  print("mymap[" + ToString(a) + "] = ");
   printLn(mymap[a]);
 
   var pi : Fixed64 = 3.1415fp64;
-  printLn("exp(" + toString(d) + ") = " + toString(exp(d)));
-  printLn("sin(" + toString(pi) + ") = " + toString(sin(pi)));
+  printLn("exp(" + ToString(d) + ") = " + ToString(exp(d)));
+  printLn("sin(" + ToString(pi) + ") = " + ToString(sin(pi)));
 
-  printLn("pow(" + toString(d) + ", " + toString(d) + ") = " + toString(pow(d, d)));
+  printLn("pow(" + ToString(d) + ", " + ToString(d) + ") = " + ToString(pow(d, d)));
 endfunction

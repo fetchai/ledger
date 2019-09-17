@@ -69,10 +69,10 @@ public:
   bool                    operator<(ProtoPathMessageSender const &other)  = delete;
   /// @}
 
-  void setEndianness(Endianness /*newstate*/)
+  void SetEndianness(Endianness /*newstate*/)
   {}  // TODO: Useless function
 
-  virtual consumed_needed_pair checkForSpace(const mutable_buffers &data, IMessageWriter::TXQ &txq);
+  virtual consumed_needed_pair CheckForSpace(const mutable_buffers &data, IMessageWriter::TXQ &txq);
 
 protected:
 private:

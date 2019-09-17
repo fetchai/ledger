@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
 #include "ml/core/graph.hpp"
+#include "math/tensor.hpp"
 #include "ml/layers/convolution_1d.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activations/relu.hpp"
@@ -373,7 +373,7 @@ TYPED_TEST(GraphTest, diamond_graph_backward)  // output=(input1*input2)-(input1
                                      fetch::math::function_tolerance<DataType>()));
 }
 
-TYPED_TEST(GraphTest, diamond_graph_getStateDict)
+TYPED_TEST(GraphTest, diamond_graph_GetStateDict)
 {
   using TensorType = TypeParam;
 

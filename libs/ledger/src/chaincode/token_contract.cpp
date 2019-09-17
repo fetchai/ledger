@@ -16,13 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/chaincode/token_contract.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "crypto/fnv.hpp"
 #include "crypto/identity.hpp"
 #include "ledger/chain/constants.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chaincode/deed.hpp"
-#include "ledger/chaincode/token_contract.hpp"
 #include "ledger/chaincode/wallet_record.hpp"
 #include "logging/logging.hpp"
 #include "variant/variant.hpp"

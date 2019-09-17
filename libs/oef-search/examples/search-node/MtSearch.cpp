@@ -116,7 +116,7 @@ int MtSearch::run()
 
   core       = std::make_shared<Core>();
   auto tasks = std::make_shared<Taskpool>();
-  tasks->setDefault();
+  tasks->SetDefault();
   outbounds = std::make_shared<OutboundConversations>();
   listeners = std::make_shared<OefListenerSet<SearchTaskFactory, OefSearchEndpoint>>();
 
@@ -125,7 +125,7 @@ int MtSearch::run()
   {
     ++thread_group_id;
     Uri uri(dap_config.uri());
-    outbounds->addConversationCreator(
+    outbounds->AddConversationCreator(
         dap_config.name(),
         std::make_shared<OutboundDapConversationCreator>(thread_group_id, uri, *core, outbounds));
   }
@@ -147,7 +147,7 @@ int MtSearch::run()
 
   while (1)
   {
-    tasks->updateStatus();
+    tasks->UpdateStatus();
 
     unsigned int snooze = 3;
 

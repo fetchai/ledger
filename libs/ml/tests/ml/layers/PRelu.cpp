@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
 #include "ml/layers/PRelu.hpp"
+#include "math/tensor.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"
@@ -154,7 +154,7 @@ TYPED_TEST(PReluTest, graph_forward_test)  // Use the class as a Node
   ASSERT_EQ(prediction.shape()[2], 2);
 }
 
-TYPED_TEST(PReluTest, getStateDict)
+TYPED_TEST(PReluTest, GetStateDict)
 {
   fetch::ml::layers::PRelu<TypeParam> fc(50, "PReluTest");
   fetch::ml::StateDict<TypeParam>     sd = fc.StateDict();

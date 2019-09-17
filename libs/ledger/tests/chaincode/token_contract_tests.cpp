@@ -36,10 +36,10 @@ namespace fetch {
 namespace ledger {
 namespace {
 
-using ::testing::_;
-using fetch::variant::Variant;
-using fetch::ledger::TransactionBuilder;
 using fetch::ledger::Address;
+using fetch::ledger::TransactionBuilder;
+using fetch::variant::Variant;
+using ::testing::_;
 
 struct Entity
 {

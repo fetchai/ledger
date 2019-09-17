@@ -42,7 +42,7 @@ public:
   EntryPoint const *           entrypoints;
   static constexpr char const *LOGGING_NAME = "StateMachineTask";
 
-  virtual bool isRunnable(void) const
+  virtual bool IsRunnable(void) const
   {
     return runnable;
   }

@@ -62,11 +62,11 @@ public:
   bool                    operator<(const ProtoPathMessageReader &other)  = delete;
   /// @}
 
-  void setEndianness(Endianness /*newstate*/)
+  void SetEndianness(Endianness /*newstate*/)
   {}  // TODO: Useless function
 
   consumed_needed_pair initial();
-  consumed_needed_pair checkForMessage(const buffers &data);
+  consumed_needed_pair CheckForMessage(const buffers &data);
 
   CompleteNotification onComplete;
   ErrorNotification    onError;

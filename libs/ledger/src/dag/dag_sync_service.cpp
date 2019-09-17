@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/dag/dag_sync_service.hpp"
 #include "core/service_ids.hpp"
 #include "ledger/dag/dag_sync_protocol.hpp"
-#include "ledger/dag/dag_sync_service.hpp"
 
 #include <cstdint>
 #include <memory>

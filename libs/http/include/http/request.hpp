@@ -105,7 +105,7 @@ public:
     method_ = method;
   }
 
-  void SetURI(byte_array::ConstByteArray const &uri)
+  void SetUri(byte_array::ConstByteArray const &uri)
   {
     uri_ = uri;
   }

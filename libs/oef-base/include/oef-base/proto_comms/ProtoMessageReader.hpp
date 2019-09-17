@@ -56,13 +56,13 @@ public:
   /// @}
 
   consumed_needed_pair initial();
-  consumed_needed_pair checkForMessage(const buffers &data);
+  consumed_needed_pair CheckForMessage(const buffers &data);
 
   // TODO: Should be private variable with forward functions
   CompleteNotification onComplete;
   ErrorNotification    onError;
 
-  void setEndianness(Endianness newstate);
+  void SetEndianness(Endianness newstate);
 
 private:
   std::weak_ptr<ProtoMessageEndpoint<TXType, ProtoMessageReader, ProtoMessageSender>> endpoint;

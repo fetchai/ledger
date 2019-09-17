@@ -54,9 +54,9 @@ public:
   bool                operator<(ProtoMessageSender const &other)  = delete;
   /// @}
 
-  virtual consumed_needed_pair checkForSpace(mutable_buffers const &      data,
+  virtual consumed_needed_pair CheckForSpace(mutable_buffers const &      data,
                                              IMessageWriter<TXType>::TXQ &txq);
-  void                         setEndianness(Endianness newstate)
+  void                         SetEndianness(Endianness newstate)
   {
     endianness = newstate;
   }

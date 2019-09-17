@@ -39,7 +39,7 @@ public:
   virtual ~TSendProtoTask()
   {}
 
-  virtual bool isRunnable(void) const
+  virtual bool IsRunnable(void) const
   {
     return true;
   }
@@ -47,7 +47,7 @@ public:
   virtual ExitState run(void)
   {
     // TODO(kll): it's possible there's a race hazard here. Need to think about this.
-    if (endpoint->send(pb).Then([this]() { this->makeRunnable(); }).Waiting())
+    if (endpoint->send(pb).Then([this]() { this->MakeRunnable(); }).Waiting())
     {
       return ExitState::DEFER;
     }

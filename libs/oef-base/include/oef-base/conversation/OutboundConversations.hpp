@@ -38,11 +38,11 @@ public:
   virtual ~OutboundConversations();
 
   // This is used to configure the system.
-  void addConversationCreator(const std::string &                           target,
+  void AddConversationCreator(const std::string &                           target,
                               std::shared_ptr<IOutboundConversationCreator> creator);
-  void delConversationCreator(const std::string &target);
+  void DeleteConversationCreator(const std::string &target);
 
-  std::shared_ptr<OutboundConversation> startConversation(
+  std::shared_ptr<OutboundConversation> StartConversation(
       const Uri &target, std::shared_ptr<google::protobuf::Message> initiator);
 
 protected:

@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "oef-base/proto_comms/ProtoPathMessageReader.hpp"
 #include "oef-base/comms/Endpoint.hpp"
 #include "oef-base/monitoring/Counter.hpp"
 #include "oef-base/proto_comms/ProtoMessageEndpoint.hpp"
-#include "oef-base/proto_comms/ProtoPathMessageReader.hpp"
 #include "oef-messages/transport.hpp"
 
 static Counter bytes_consumed_counter("mt-core.comms.protopath.read.bytes_consumed");
@@ -31,10 +31,10 @@ ProtoPathMessageReader::consumed_needed_pair ProtoPathMessageReader::initial()
   return consumed_needed_pair(0, 1);
 }
 
-ProtoPathMessageReader::consumed_needed_pair ProtoPathMessageReader::checkForMessage(
+ProtoPathMessageReader::consumed_needed_pair ProtoPathMessageReader::CheckForMessage(
     const buffers &data)
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "checkForMessage");
+  FETCH_LOG_INFO(LOGGING_NAME, "CheckForMessage");
 
   std::string s;
 
@@ -46,7 +46,7 @@ ProtoPathMessageReader::consumed_needed_pair ProtoPathMessageReader::checkForMes
 
   while (true)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "checkForMessage in ", chars.remainingData(),
+    FETCH_LOG_INFO(LOGGING_NAME, "CheckForMessage in ", chars.RemainingData(),
                    " bytes. Current: ", chars.current, ", size:", chars.size);
     // chars.diagnostic();
 
@@ -55,10 +55,10 @@ ProtoPathMessageReader::consumed_needed_pair ProtoPathMessageReader::checkForMes
 
     uint32_t head_size = leader_head_size + payload_head_size;
 
-    if (chars.remainingData() < head_size)
+    if (chars.RemainingData() < head_size)
     {
       needed =
-          static_cast<std::size_t>(head_size) - static_cast<std::size_t>(chars.remainingData());
+          static_cast<std::size_t>(head_size) - static_cast<std::size_t>(chars.RemainingData());
       break;
     }
 
@@ -80,10 +80,10 @@ ProtoPathMessageReader::consumed_needed_pair ProtoPathMessageReader::checkForMes
       break;
     }
 
-    if (static_cast<std::size_t>(chars.remainingData()) < body_size)
+    if (static_cast<std::size_t>(chars.RemainingData()) < body_size)
     {
       needed =
-          static_cast<std::size_t>(body_size) - static_cast<std::size_t>(chars.remainingData());
+          static_cast<std::size_t>(body_size) - static_cast<std::size_t>(chars.RemainingData());
       break;
     }
 

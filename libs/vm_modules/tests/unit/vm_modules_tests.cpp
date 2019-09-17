@@ -48,13 +48,13 @@ TEST_F(VMTests, CheckRandom)
 {
   static char const *TEXT = R"(
     function main()
-      printLn('rnd = ' + toString(rand(0u64, 1000u64)));
-      printLn('rnd = ' + toString(rand(0u64, 1000u64)));
-      printLn('rnd = ' + toString(rand(0u64, 1000u64)));
-      printLn('rnd = ' + toString(rand(0u64, 1000u64)));
-      printLn('rnd = ' + toString(rand(0u64, 1000u64)));
-      printLn('rnd = ' + toString(rand(0.0f, 1000.0f)));
-      printLn('rnd = ' + toString(rand(0.0, 1000.0)));
+      printLn('rnd = ' + ToString(rand(0u64, 1000u64)));
+      printLn('rnd = ' + ToString(rand(0u64, 1000u64)));
+      printLn('rnd = ' + ToString(rand(0u64, 1000u64)));
+      printLn('rnd = ' + ToString(rand(0u64, 1000u64)));
+      printLn('rnd = ' + ToString(rand(0u64, 1000u64)));
+      printLn('rnd = ' + ToString(rand(0.0f, 1000.0f)));
+      printLn('rnd = ' + ToString(rand(0.0, 1000.0)));
     endfunction
   )";
 

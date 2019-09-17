@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "http/json_client.hpp"
 #include "http/http_client.hpp"
 #include "http/https_client.hpp"
-#include "http/json_client.hpp"
 #include "http/request.hpp"
 #include "http/response.hpp"
 #include "json/document.hpp"
@@ -175,7 +175,7 @@ bool JsonClient::Request(Method method, ConstByteArray const &endpoint, Headers 
     // make the request
     HTTPRequest http_request;
     http_request.SetMethod(method);
-    http_request.SetURI(endpoint);
+    http_request.SetUri(endpoint);
 
     if (headers)
     {

@@ -48,9 +48,9 @@ namespace {
 
 using namespace fetch::ledger;
 
+using fetch::core::FeatureFlags;
 using fetch::crypto::ECDSASigner;
 using fetch::ledger::testing::BlockGenerator;
-using fetch::core::FeatureFlags;
 
 using ::testing::_;
 using ::testing::AnyNumber;

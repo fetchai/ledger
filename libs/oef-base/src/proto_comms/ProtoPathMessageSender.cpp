@@ -28,7 +28,7 @@ static Counter bytes_produced_counter("mt-core.comms.protopath.send.bytes_produc
 static Counter bytes_requested_counter("mt-core.comms.protopath.send.bytes_requested");
 static Counter messages_handled_counter("mt-core.comms.protopath.send.messages_handled");
 
-ProtoPathMessageSender::consumed_needed_pair ProtoPathMessageSender::checkForSpace(
+ProtoPathMessageSender::consumed_needed_pair ProtoPathMessageSender::CheckForSpace(
     const mutable_buffers &data, IMessageWriter::TXQ &txq)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "search message tx...");
@@ -71,7 +71,7 @@ ProtoPathMessageSender::consumed_needed_pair ProtoPathMessageSender::checkForSpa
       uint32_t leader_size  = static_cast<uint32_t>(leader.ByteSize());
 
       uint32_t mesg_size = leader_head_size + leader_size + payload_head_size + payload_size;
-      if (chars.remainingSpace() < mesg_size)
+      if (chars.RemainingSpace() < mesg_size)
       {
         FETCH_LOG_WARN(LOGGING_NAME, "out of space on write buffer.");
         break;

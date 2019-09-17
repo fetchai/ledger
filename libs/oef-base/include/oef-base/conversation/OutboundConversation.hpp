@@ -46,25 +46,25 @@ public:
   virtual ~OutboundConversation()
   {}
 
-  virtual void        handleMessage(ConstCharArrayBuffer buffer)                       = 0;
-  virtual void        handleError(int status_code, const std::string &message)         = 0;
-  virtual std::size_t getAvailableReplyCount() const                                   = 0;
-  virtual std::shared_ptr<google::protobuf::Message> getReply(std::size_t replynumber) = 0;
+  virtual void        HandleMessage(ConstCharArrayBuffer buffer)                       = 0;
+  virtual void        HandleError(int status_code, const std::string &message)         = 0;
+  virtual std::size_t GetAvailableReplyCount() const                                   = 0;
+  virtual std::shared_ptr<google::protobuf::Message> GetReply(std::size_t replynumber) = 0;
   virtual bool                                       success() const                   = 0;
-  virtual int                                        getErrorCode() const              = 0;
-  virtual const std::string &                        getErrorMessage() const           = 0;
+  virtual int                                        GetErrorCode() const              = 0;
+  virtual const std::string &                        GetErrorMessage() const           = 0;
 
-  virtual void setUri(Uri &uri)
+  virtual void SetUri(Uri &uri)
   {
     uri_ = uri;
   }
 
-  virtual void setProto(ProtoP proto)
+  virtual void SetProto(ProtoP proto)
   {
     proto_ = proto;
   }
 
-  virtual void setIdent(unsigned long ident)
+  virtual void SetIdent(unsigned long ident)
   {
     ident_ = ident;
   }

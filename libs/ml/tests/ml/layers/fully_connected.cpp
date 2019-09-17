@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
 #include "ml/layers/fully_connected.hpp"
+#include "math/tensor.hpp"
 #include "ml/ops/loss_functions.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
 #include "ml/serializers/ml_types.hpp"
@@ -493,7 +493,7 @@ TYPED_TEST(FullyConnectedTest, graph_forward_test)  // Use the class as a Node
   ASSERT_EQ(prediction.shape()[1], 2);
 }
 
-TYPED_TEST(FullyConnectedTest, getStateDict)
+TYPED_TEST(FullyConnectedTest, GetStateDict)
 {
   using DataType = typename TypeParam::Type;
   using RegType  = fetch::ml::RegularisationType;
@@ -514,7 +514,7 @@ TYPED_TEST(FullyConnectedTest, getStateDict)
             std::vector<typename TypeParam::SizeType>({10, 1}));
 }
 
-TYPED_TEST(FullyConnectedTest, getStateDict_time_distributed)
+TYPED_TEST(FullyConnectedTest, GetStateDict_time_distributed)
 {
   using DataType        = typename TypeParam::Type;
   using RegType         = fetch::ml::RegularisationType;

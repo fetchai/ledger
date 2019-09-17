@@ -42,9 +42,9 @@ using MuddlePtr         = std::shared_ptr<Muddle>;
 using Certificate       = fetch::crypto::Prover;
 using CertificatePtr    = std::unique_ptr<Certificate>;
 
-using std::this_thread::sleep_for;
-using std::chrono::milliseconds;
 using fetch::muddle::NetworkId;
+using std::chrono::milliseconds;
+using std::this_thread::sleep_for;
 
 struct Message
 {

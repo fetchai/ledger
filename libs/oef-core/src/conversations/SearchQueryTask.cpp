@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "oef-core/conversations/SearchQueryTask.hpp"
 #include "oef-base/conversation/OutboundConversation.hpp"
 #include "oef-base/conversation/OutboundConversations.hpp"
 #include "oef-base/monitoring/Counter.hpp"
-#include "oef-core/conversations/SearchQueryTask.hpp"
 #include "oef-core/tasks/utils.hpp"
 #include "oef-messages/search_response.hpp"
 
@@ -30,8 +30,8 @@ static Counter tasks_unreplied("mt-core.search.query.tasks_unreplied");
 static Counter tasks_succeeded("mt-core.search.query.tasks_succeeded");
 
 SearchQueryTask::EntryPoint searchQueryTaskEntryPoints[] = {
-    &SearchQueryTask::createConv,
-    &SearchQueryTask::handleResponse,
+    &SearchQueryTask::CreateConv,
+    &SearchQueryTask::HandleResponse,
 };
 
 SearchQueryTask::SearchQueryTask(std::shared_ptr<SearchQueryTask::IN_PROTO> initiator,
@@ -51,12 +51,12 @@ SearchQueryTask::~SearchQueryTask()
   tasks_resolved++;
 }
 
-SearchQueryTask::StateResult SearchQueryTask::handleResponse(void)
+SearchQueryTask::StateResult SearchQueryTask::HandleResponse(void)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Woken ");
-  FETCH_LOG_INFO(LOGGING_NAME, "Response.. ", conversation->getAvailableReplyCount());
+  FETCH_LOG_INFO(LOGGING_NAME, "Response.. ", conversation->GetAvailableReplyCount());
 
-  if (conversation->getAvailableReplyCount() == 0)
+  if (conversation->GetAvailableReplyCount() == 0)
   {
     return SearchQueryTask::StateResult(0, ERRORED);
   }
@@ -67,14 +67,14 @@ SearchQueryTask::StateResult SearchQueryTask::handleResponse(void)
     return SearchQueryTask::StateResult(0, ERRORED);
   }
 
-  if (conversation->getAvailableReplyCount() == 0)
+  if (conversation->GetAvailableReplyCount() == 0)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "No available reply for search query, waiting more...");
     return SearchQueryTask::StateResult(0, DEFER);
   }
 
   auto response =
-      std::static_pointer_cast<fetch::oef::pb::SearchResponse>(conversation->getReply(0));
+      std::static_pointer_cast<fetch::oef::pb::SearchResponse>(conversation->GetReply(0));
 
   auto answer = std::make_shared<OUT_PROTO>();
   answer->set_answer_id(static_cast<int32_t>(msg_id_));
@@ -97,8 +97,8 @@ SearchQueryTask::StateResult SearchQueryTask::handleResponse(void)
         for (auto &a : agts)
         {
           OEFURI::URI uri;
-          uri.parseAgent(a.key());
-          answer_agents->add_agents(uri.agentPartAsString());
+          uri.ParseAgent(a.key());
+          answer_agents->add_agents(uri.AgentPartAsString());
         }
       }
       FETCH_LOG_INFO(LOGGING_NAME, "Sending ", answer_agents->agents().size(), "agents to ",

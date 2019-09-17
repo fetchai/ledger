@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/chain/block_coordinator.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/feature_flags.hpp"
 #include "core/macros.hpp"
@@ -23,7 +24,6 @@
 #include "core/time/to_seconds.hpp"
 #include "ledger/block_packer_interface.hpp"
 #include "ledger/block_sink_interface.hpp"
-#include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
 #include "ledger/chain/constants.hpp"
 #include "ledger/chain/main_chain.hpp"

@@ -45,7 +45,7 @@ public:
 
   void run_sending();
 
-  std::string getPublicKey()
+  std::string GetPublicKey()
   {
     return key;
   }

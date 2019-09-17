@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "core/serializers/main_serializer_definition.hpp"
 #include "math/tensor.hpp"
-#include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 

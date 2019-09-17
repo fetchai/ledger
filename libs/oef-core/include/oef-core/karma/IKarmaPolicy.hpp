@@ -30,20 +30,20 @@ public:
   IKarmaPolicy();
   virtual ~IKarmaPolicy();
 
-  virtual KarmaAccount getAccount(const std::string &pubkey = "", const std::string &ip = "") = 0;
+  virtual KarmaAccount GetAccount(const std::string &pubkey = "", const std::string &ip = "") = 0;
   virtual void         upgrade(KarmaAccount & /*account*/, const std::string & /*ubkey*/ = "",
                                const std::string & /*ip*/ = "")
   {}
 
-  virtual std::string getBalance(const KarmaAccount &identifier) = 0;
+  virtual std::string GetBalance(const KarmaAccount &identifier) = 0;
 
   // Returns True or throws
   virtual bool perform(const KarmaAccount &identifier, const std::string &action,
                        bool force = false) = 0;
 
-  virtual bool couldPerform(const KarmaAccount &identifier, const std::string &action) = 0;
+  virtual bool CouldPerform(const KarmaAccount &identifier, const std::string &action) = 0;
 
-  virtual void refreshCycle(const std::chrono::milliseconds /*delta */)
+  virtual void RefreshCycle(const std::chrono::milliseconds /*delta */)
   {}
 
 protected:

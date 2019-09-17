@@ -39,7 +39,7 @@ public:
   bool            operator<(IMessageReader const &other)  = delete;
   /// @}
 
-  virtual consumed_needed_pair checkForMessage(buffers const &data) = 0;
+  virtual consumed_needed_pair CheckForMessage(buffers const &data) = 0;
   virtual consumed_needed_pair initial()
   {
     return consumed_needed_pair(0, 4);

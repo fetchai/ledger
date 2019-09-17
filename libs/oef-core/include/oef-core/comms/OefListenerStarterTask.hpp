@@ -54,7 +54,7 @@ public:
   virtual ~OefListenerStarterTask()
   {}
 
-  virtual bool isRunnable(void) const
+  virtual bool IsRunnable(void) const
   {
     return true;
   }

@@ -86,7 +86,7 @@ public:
   virtual void close();
   virtual bool connect(const Uri &uri, Core &core);
 
-  virtual const std::string &getRemoteId() const
+  virtual const std::string &GetRemoteId() const
   {
     return remote_id;
   }
@@ -108,7 +108,7 @@ public:
     return *state == RUNNING_ENDPOINT;
   }
 
-  std::size_t getIdent() const
+  std::size_t GetIdent() const
   {
     return ident;
   }

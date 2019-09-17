@@ -63,7 +63,7 @@ void Monitoring::sub(IdType id, CountType delta)
 
 void Monitoring::report(ReportFunc func)
 {
-  for (const auto &name2id : inner->getNames())
+  for (const auto &name2id : inner->GetNames())
   {
     func(name2id.first, inner->access(name2id.second));
   }

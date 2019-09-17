@@ -53,7 +53,7 @@ public:
   bool             operator<(IOefTaskFactory const &other)  = delete;
   /// @}
 
-  virtual void processMessage(ConstCharArrayBuffer &data) = 0;
+  virtual void ProcessMessage(ConstCharArrayBuffer &data) = 0;
   // Process the message, throw exceptions if they're bad.
 protected:
   std::shared_ptr<OutboundConversations> outbounds;
@@ -62,9 +62,9 @@ protected:
   void read(PROTO &proto, ConstCharArrayBuffer &chars, std::size_t expected_size)
   {
     std::istream is(&chars);
-    auto         current = chars.remainingData();
+    auto         current = chars.RemainingData();
     auto         result  = proto.ParseFromIstream(&is);
-    auto         eaten   = current - chars.remainingData();
+    auto         eaten   = current - chars.RemainingData();
     if (!result)
     {
       throw std::invalid_argument("Failed proto deserialisation.");
@@ -96,23 +96,23 @@ protected:
     {
       throw std::invalid_argument("Failed proto deserialisation.");
     }
-    if (chars.remainingData() != 0)
+    if (chars.RemainingData() != 0)
     {
       throw std::invalid_argument(std::string("Proto deserialisation left used ") +
-                                  std::to_string(chars.remainingData()) + "unused bytes.");
+                                  std::to_string(chars.RemainingData()) + "unused bytes.");
     }
   }
 
   void successor(std::shared_ptr<IOefTaskFactory> factory)
   {
-    endpoint->setFactory(factory);
+    endpoint->SetFactory(factory);
   }
 
-  std::shared_ptr<OefEndpoint> getEndpoint()
+  std::shared_ptr<OefEndpoint> GetEndpoint()
   {
     return endpoint;
   }
-  virtual void endpointClosed(void) = 0;
+  virtual void EndpointClosed(void) = 0;
 
 private:
   std::shared_ptr<OefEndpoint> endpoint;

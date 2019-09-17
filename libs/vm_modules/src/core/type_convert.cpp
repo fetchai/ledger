@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vm_modules/core/type_convert.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include "vectorise/fixed_point/type_traits.hpp"
 #include "vm/module.hpp"
-#include "vm_modules/core/type_convert.hpp"
 
 #include <cstdint>
 #include <sstream>
@@ -69,19 +69,19 @@ bool ToBool(VM * /*vm*/, T const &a)
 
 void CreateToString(Module &module)
 {
-  module.CreateFreeFunction("toString", &ToString<int8_t>);
-  module.CreateFreeFunction("toString", &ToString<uint8_t>);
-  module.CreateFreeFunction("toString", &ToString<int16_t>);
-  module.CreateFreeFunction("toString", &ToString<uint16_t>);
-  module.CreateFreeFunction("toString", &ToString<int32_t>);
-  module.CreateFreeFunction("toString", &ToString<uint32_t>);
-  module.CreateFreeFunction("toString", &ToString<int64_t>);
-  module.CreateFreeFunction("toString", &ToString<uint64_t>);
-  module.CreateFreeFunction("toString", &ToString<float_t>);
-  module.CreateFreeFunction("toString", &ToString<double_t>);
-  module.CreateFreeFunction("toString", &ToString<bool>);
-  module.CreateFreeFunction("toString", &ToString<fixed_point::fp32_t>);
-  module.CreateFreeFunction("toString", &ToString<fixed_point::fp64_t>);
+  module.CreateFreeFunction("ToString", &ToString<int8_t>);
+  module.CreateFreeFunction("ToString", &ToString<uint8_t>);
+  module.CreateFreeFunction("ToString", &ToString<int16_t>);
+  module.CreateFreeFunction("ToString", &ToString<uint16_t>);
+  module.CreateFreeFunction("ToString", &ToString<int32_t>);
+  module.CreateFreeFunction("ToString", &ToString<uint32_t>);
+  module.CreateFreeFunction("ToString", &ToString<int64_t>);
+  module.CreateFreeFunction("ToString", &ToString<uint64_t>);
+  module.CreateFreeFunction("ToString", &ToString<float_t>);
+  module.CreateFreeFunction("ToString", &ToString<double_t>);
+  module.CreateFreeFunction("ToString", &ToString<bool>);
+  module.CreateFreeFunction("ToString", &ToString<fixed_point::fp32_t>);
+  module.CreateFreeFunction("ToString", &ToString<fixed_point::fp64_t>);
 }
 
 void CreateToBool(Module &module)

@@ -56,9 +56,9 @@ protected:
     executors_.clear();
 
     // create the manager
-    manager_ =
-        std::make_shared<ExecutionManager>(config.executors, config.log2_lanes, mock_storage_,
-                                           [this]() { return CreateExecutor(); }, tx_status_cache_);
+    manager_ = std::make_shared<ExecutionManager>(
+        config.executors, config.log2_lanes, mock_storage_, [this]() { return CreateExecutor(); },
+        tx_status_cache_);
   }
 
   bool IsManagerIdle() const

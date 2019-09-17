@@ -67,12 +67,12 @@ public:
     FETCH_LOG_INFO(LOGGING_NAME, "Task gone.");
   }
 
-  void setPipeBuilder(ProtoPipeBuilder func)
+  void SetPipeBuilder(ProtoPipeBuilder func)
   {
     protoPipeBuilder = func;
   }
 
-  void initPipe(std::shared_ptr<OUT_PROTO> init = nullptr)
+  void InitPipe(std::shared_ptr<OUT_PROTO> init = nullptr)
   {
     if (init)
     {
@@ -145,12 +145,12 @@ public:
 
     pipe_.pop();
 
-    if (dapTask->makeNotification()
+    if (dapTask->MakeNotification()
             .Then([this_wp]() {
               auto sp = this_wp.lock();
               if (sp)
               {
-                sp->makeRunnable();
+                sp->MakeRunnable();
               }
             })
             .Waiting())
@@ -163,7 +163,7 @@ public:
     return StateResult(1, COMPLETE);
   }
 
-  std::shared_ptr<OUT_PROTO> getOutput()
+  std::shared_ptr<OUT_PROTO> GetOutput()
   {
     return last_output;
   }

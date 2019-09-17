@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/layers/normalisation/layer_norm.hpp"
 #include "math/fundamental_operators.hpp"
 #include "math/tensor.hpp"
-#include "ml/layers/normalisation/layer_norm.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"
@@ -166,7 +166,7 @@ TYPED_TEST(LayerNormTest, graph_forward_test_exact_value_2D)  // Use the class a
 // TODO (#1458) enable large dimension test once Add and Multiply layers can handle input of more
 // than 3 dims
 
-TYPED_TEST(LayerNormTest, getStateDict)
+TYPED_TEST(LayerNormTest, GetStateDict)
 {
   fetch::ml::layers::LayerNorm<TypeParam> ln({50, 10});
   fetch::ml::StateDict<TypeParam>         sd = ln.StateDict();

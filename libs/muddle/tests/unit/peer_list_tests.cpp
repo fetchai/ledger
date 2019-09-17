@@ -25,10 +25,10 @@
 #include <memory>
 #include <thread>
 
+using fetch::muddle::NetworkId;
 using fetch::muddle::PeerConnectionList;
 using fetch::network::Peer;
 using fetch::network::Uri;
-using fetch::muddle::NetworkId;
 
 namespace fetch {
 namespace muddle {

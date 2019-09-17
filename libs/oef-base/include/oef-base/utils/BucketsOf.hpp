@@ -68,7 +68,7 @@ public:
     return IDENT_TYPE(r);
   }
 
-  std::vector<std::pair<NAME_TYPE, IDENT_TYPE>> getNames()
+  std::vector<std::pair<NAME_TYPE, IDENT_TYPE>> GetNames()
   {
     std::vector<std::pair<NAME_TYPE, IDENT_TYPE>> result;
     Lock                                          lock(mutex);

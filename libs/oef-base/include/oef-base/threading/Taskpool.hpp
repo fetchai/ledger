@@ -55,13 +55,13 @@ public:
   virtual void after(TaskP task, const Milliseconds &delay);
 
   virtual void run(std::size_t thread_number);
-  virtual void setDefault();
+  virtual void SetDefault();
   virtual void stop(void);
 
-  static std::weak_ptr<Taskpool> getDefaultTaskpool();
+  static std::weak_ptr<Taskpool> GetDefaultTaskpool();
 
   virtual void remove(TaskP task);
-  virtual void makeRunnable(TaskP task);
+  virtual void MakeRunnable(TaskP task);
 
   struct TaskpoolStatus
   {
@@ -71,9 +71,9 @@ public:
     std::size_t future_tasks;
   };
 
-  void updateStatus() const;
+  void UpdateStatus() const;
 
-  void cancelTaskGroup(std::size_t group_id);
+  void CancelTaskGroup(std::size_t group_id);
 
 protected:
 private:

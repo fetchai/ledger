@@ -35,9 +35,9 @@ public:
                             std::shared_ptr<google::protobuf::Message> initiator)
     : OutboundConversation()
   {
-    this->setIdent(ident);
-    this->setUri(uri);
-    this->setProto(initiator);
+    this->SetIdent(ident);
+    this->SetUri(uri);
+    this->SetProto(initiator);
   }
 
   virtual ~OutboundTypedConversation() = default;
@@ -46,7 +46,7 @@ public:
   int                                      status_code;
   std::string                              error_message;
 
-  virtual void handleMessage(ConstCharArrayBuffer buffer) override
+  virtual void HandleMessage(ConstCharArrayBuffer buffer) override
   {
     status_code    = 0;
     auto         r = std::make_shared<PROTOCLASS>();
@@ -62,17 +62,17 @@ public:
     wake();
   }
 
-  virtual void handleError(int status_code, const std::string &message) override
+  virtual void HandleError(int status_code, const std::string &message) override
   {
     this->status_code = status_code;
     error_message     = message;
   }
 
-  virtual std::size_t getAvailableReplyCount() const override
+  virtual std::size_t GetAvailableReplyCount() const override
   {
     return responses.size();
   }
-  virtual std::shared_ptr<google::protobuf::Message> getReply(std::size_t replynumber) override
+  virtual std::shared_ptr<google::protobuf::Message> GetReply(std::size_t replynumber) override
   {
     if (responses.size() == 0)
     {
@@ -86,12 +86,12 @@ public:
     return status_code == 0;
   }
 
-  virtual int getErrorCode() const override
+  virtual int GetErrorCode() const override
   {
     return status_code;
   }
 
-  virtual const std::string &getErrorMessage() const override
+  virtual const std::string &GetErrorMessage() const override
   {
     return error_message;
   }

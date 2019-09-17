@@ -268,7 +268,7 @@ public:
     return traits_type::eof();
   }
 
-  std::streamsize remainingSpace()
+  std::streamsize RemainingSpace()
   {
     return size - current;
   }

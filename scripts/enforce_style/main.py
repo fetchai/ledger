@@ -77,6 +77,7 @@ class CustomChecker(StyleChecker):
                 return
 
         if self.member_function_style.match(node.spelling) is None:
+            self.incorrect_function_names.append(node.spelling)
             self.Error(node, "Function name does not follow style guide.")
 
     def CheckPrivateMemberVariable(self, node):
@@ -136,5 +137,6 @@ if __name__ == "__main__":
                 checker(filename)
 
     if checker.has_error:
-        print(set(checker.incorrect_type_names))
+        print("Types:", set(checker.incorrect_type_names))
+        print("Functions:", set(checker.incorrect_function_names))        
         exit(-1)

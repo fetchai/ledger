@@ -45,12 +45,12 @@ void OefSearchEndpoint::close(const std::string &reason)
   socket().close();
 }
 
-void OefSearchEndpoint::setState(const std::string &stateName, bool value)
+void OefSearchEndpoint::SetState(const std::string &stateName, bool value)
 {
   states[stateName] = value;
 }
 
-bool OefSearchEndpoint::getState(const std::string &stateName) const
+bool OefSearchEndpoint::GetState(const std::string &stateName) const
 {
   auto entry = states.find(stateName);
   if (entry == states.end())
@@ -65,49 +65,49 @@ void OefSearchEndpoint::setup()
   // can't do this in the constructor because shared_from_this doesn't work in there.
   std::weak_ptr<OefSearchEndpoint> myself_wp = shared_from_this();
 
-  endpoint->setOnStartHandler([myself_wp]() {});
+  endpoint->SetOnStartHandler([myself_wp]() {});
 
-  auto myGroupId = getIdent();
+  auto myGroupId = GetIdent();
 
-  endpoint->setOnCompleteHandler([myGroupId, myself_wp](bool /*success*/, unsigned long /*id*/,
+  endpoint->SetOnCompleteHandler([myGroupId, myself_wp](bool /*success*/, unsigned long /*id*/,
                                                         Uri uri, ConstCharArrayBuffer buffers) {
     if (auto myself_sp = myself_wp.lock())
     {
-      Task::setThreadGroupId(myGroupId);
+      Task::SetThreadGroupId(myGroupId);
       myself_sp->factory->current_uri_ = uri;
-      myself_sp->factory->processMessage(buffers);
+      myself_sp->factory->ProcessMessage(buffers);
     }
   });
 
-  endpoint->setOnErrorHandler([myGroupId, myself_wp](std::error_code const & /*ec*/) {
+  endpoint->SetOnErrorHandler([myGroupId, myself_wp](std::error_code const & /*ec*/) {
     if (auto myself_sp = myself_wp.lock())
     {
-      // myself_sp -> factory -> endpointClosed();
+      // myself_sp -> factory -> EndpointClosed();
       // myself_sp -> factory.reset();
-      Taskpool::getDefaultTaskpool().lock()->cancelTaskGroup(myGroupId);
+      Taskpool::GetDefaultTaskpool().lock()->CancelTaskGroup(myGroupId);
     }
   });
 
-  endpoint->setOnEofHandler([myGroupId, myself_wp]() {
+  endpoint->SetOnEofHandler([myGroupId, myself_wp]() {
     if (auto myself_sp = myself_wp.lock())
     {
-      // myself_sp -> factory -> endpointClosed();
+      // myself_sp -> factory -> EndpointClosed();
       // myself_sp -> factory.reset();
-      Taskpool::getDefaultTaskpool().lock()->cancelTaskGroup(myGroupId);
+      Taskpool::GetDefaultTaskpool().lock()->CancelTaskGroup(myGroupId);
     }
   });
 
-  endpoint->setOnProtoErrorHandler([myGroupId, myself_wp](const std::string & /*message*/) {
+  endpoint->SetOnProtoErrorHandler([myGroupId, myself_wp](const std::string & /*message*/) {
     if (auto myself_sp = myself_wp.lock())
     {
-      // myself_sp -> factory -> endpointClosed();
+      // myself_sp -> factory -> EndpointClosed();
       // myself_sp -> factory.reset();
-      Taskpool::getDefaultTaskpool().lock()->cancelTaskGroup(myGroupId);
+      Taskpool::GetDefaultTaskpool().lock()->CancelTaskGroup(myGroupId);
     }
   });
 }
 
-void OefSearchEndpoint::setFactory(std::shared_ptr<SearchTaskFactory> new_factory)
+void OefSearchEndpoint::SetFactory(std::shared_ptr<SearchTaskFactory> new_factory)
 {
   if (factory)
   {
@@ -118,10 +118,10 @@ void OefSearchEndpoint::setFactory(std::shared_ptr<SearchTaskFactory> new_factor
 
 OefSearchEndpoint::~OefSearchEndpoint()
 {
-  endpoint->setOnCompleteHandler(nullptr);
-  endpoint->setOnErrorHandler(nullptr);
-  endpoint->setOnEofHandler(nullptr);
-  endpoint->setOnProtoErrorHandler(nullptr);
+  endpoint->SetOnCompleteHandler(nullptr);
+  endpoint->SetOnErrorHandler(nullptr);
+  endpoint->SetOnEofHandler(nullptr);
+  endpoint->SetOnProtoErrorHandler(nullptr);
   FETCH_LOG_INFO(LOGGING_NAME, "~OefSearchEndpoint");
   count--;
 }

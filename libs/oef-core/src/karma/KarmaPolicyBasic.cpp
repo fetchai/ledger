@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "logging/logging.hpp"
 #include "oef-core/karma/KarmaPolicyBasic.hpp"
+#include "logging/logging.hpp"
 
 #include "oef-core/karma/XDisconnect.hpp"
 #include "oef-core/karma/XKarma.hpp"
@@ -32,7 +32,7 @@ KarmaPolicyBasic::Account::Account()
   , when(0)
 {}
 
-void KarmaPolicyBasic::Account::bringUpToDate()
+void KarmaPolicyBasic::Account::BringUpToDate()
 {
   while (true)
   {
@@ -53,9 +53,9 @@ void KarmaPolicyBasic::Account::bringUpToDate()
   }
 }
 
-std::string KarmaPolicyBasic::getBalance(const KarmaAccount &identifier)
+std::string KarmaPolicyBasic::GetBalance(const KarmaAccount &identifier)
 {
-  return std::string("account=") + identifier.getName() +
+  return std::string("account=") + identifier.GetName() +
          "  karma=" + std::to_string(accounts.access(*identifier).karma) + "/" +
          std::to_string(MAX_KARMA);
 }
@@ -73,7 +73,7 @@ KarmaPolicyBasic::KarmaPolicyBasic(const google::protobuf::Map<std::string, std:
 KarmaPolicyBasic::~KarmaPolicyBasic()
 {}
 
-void KarmaPolicyBasic::refreshCycle(const std::chrono::milliseconds /*delta*/)
+void KarmaPolicyBasic::RefreshCycle(const std::chrono::milliseconds /*delta*/)
 {
   auto policies = getPolicies("refresh");
   tick_amounts  = static_cast<uint32_t>(parseEffect(0, policies[0]));
@@ -81,20 +81,20 @@ void KarmaPolicyBasic::refreshCycle(const std::chrono::milliseconds /*delta*/)
   tick_counter++;
 }
 
-std::size_t KarmaPolicyBasic::getAccountNumber(const std::string &s)
+std::size_t KarmaPolicyBasic::GetAccountNumber(const std::string &s)
 {
   return accounts.get(s);
 }
 
-KarmaAccount KarmaPolicyBasic::getAccount(const std::string &pubkey, const std::string &ip)
+KarmaAccount KarmaPolicyBasic::GetAccount(const std::string &pubkey, const std::string &ip)
 {
   if (pubkey.length() > 0)
   {
-    return mkAccount(getAccountNumber(pubkey), pubkey);
+    return mkAccount(GetAccountNumber(pubkey), pubkey);
   }
   else if (ip.length() > 0)
   {
-    return mkAccount(getAccountNumber(ip), ip);
+    return mkAccount(GetAccountNumber(ip), ip);
   }
   else
   {
@@ -105,7 +105,7 @@ KarmaAccount KarmaPolicyBasic::getAccount(const std::string &pubkey, const std::
 void KarmaPolicyBasic::upgrade(KarmaAccount &account, const std::string &pubkey,
                                const std::string &ip)
 {
-  auto k = getAccount(pubkey, ip);
+  auto k = GetAccount(pubkey, ip);
   std::swap(account, k);
 }
 
@@ -250,26 +250,26 @@ KarmaPolicyBasic::KARMA KarmaPolicyBasic::parseEffect(KARMA              current
 
 bool KarmaPolicyBasic::perform(const KarmaAccount &identifier, const std::string &event, bool force)
 {
-  accounts.access(*identifier).bringUpToDate();
+  accounts.access(*identifier).BringUpToDate();
   KARMA prev = accounts.access(*identifier).karma;
   KARMA next = afterwards(prev, event);
 
   if (next >= 0 || force)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "KARMA: Event ", event, " for ", identifier.getName(),
+    FETCH_LOG_INFO(LOGGING_NAME, "KARMA: Event ", event, " for ", identifier.GetName(),
                    " karma change ", prev, " => ", next);
     accounts.access(*identifier).karma = next;
     return true;
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "KARMA: Event ", event, " for ", identifier.getName(),
+  FETCH_LOG_INFO(LOGGING_NAME, "KARMA: Event ", event, " for ", identifier.GetName(),
                  " rejected because result karma = ", next);
   throw XKarma(event);
 }
 
-bool KarmaPolicyBasic::couldPerform(const KarmaAccount &identifier, const std::string &action)
+bool KarmaPolicyBasic::CouldPerform(const KarmaAccount &identifier, const std::string &action)
 {
-  accounts.access(*identifier).bringUpToDate();
+  accounts.access(*identifier).BringUpToDate();
   KARMA prev = accounts.access(*identifier).karma;
   KARMA next = afterwards(prev, getPolicy(action));
   return (next >= 0);

@@ -55,10 +55,10 @@ public:
   virtual ~InitialSecureHandshakeTaskFactory()
   {}
 
-  virtual void processMessage(ConstCharArrayBuffer &data);
+  virtual void ProcessMessage(ConstCharArrayBuffer &data);
   // Process the message, throw exceptions if they're bad.
 
-  virtual void endpointClosed(void)
+  virtual void EndpointClosed(void)
   {}
 
 protected:

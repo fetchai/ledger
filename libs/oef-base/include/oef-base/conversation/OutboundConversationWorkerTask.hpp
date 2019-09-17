@@ -83,7 +83,7 @@ bool OutboundConversationWorkerTask::connect()
     ep->setup(ep);
     ep->connect(uri, core);
 
-    ep->setOnCompleteHandler(
+    ep->SetOnCompleteHandler(
         [this](bool /*success*/, unsigned long id, Uri /*uri_*/, ConstCharArrayBuffer buffer) {
           FETCH_LOG_INFO(LOGGING_NAME, "complete message ", id);
 
@@ -92,7 +92,7 @@ bool OutboundConversationWorkerTask::connect()
           if (iter != conversationMap.end())
           {
             FETCH_LOG_INFO(LOGGING_NAME, "wakeup!!");
-            iter->second->handleMessage(buffer);
+            iter->second->HandleMessage(buffer);
           }
           else
           {
@@ -100,7 +100,7 @@ bool OutboundConversationWorkerTask::connect()
           }
         });
 
-    ep->setOnPeerErrorHandler(
+    ep->SetOnPeerErrorHandler(
         [this](unsigned long id, int status_code, const std::string &message) {
           FETCH_LOG_INFO(LOGGING_NAME, "error message ", id);
           auto iter = conversationMap.find(id);
@@ -108,7 +108,7 @@ bool OutboundConversationWorkerTask::connect()
           if (iter != conversationMap.end())
           {
             FETCH_LOG_INFO(LOGGING_NAME, "wakeup!!");
-            iter->second->handleError(status_code, message);
+            iter->second->HandleError(status_code, message);
           }
           else
           {

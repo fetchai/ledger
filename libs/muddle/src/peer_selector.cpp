@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "peer_selector.hpp"
 #include "direct_message_service.hpp"
 #include "discovery_service.hpp"
 #include "muddle_logging_name.hpp"
 #include "muddle_register.hpp"
 #include "peer_list.hpp"
-#include "peer_selector.hpp"
 #include "xor_metric.hpp"
 
 #include "core/containers/set_difference.hpp"

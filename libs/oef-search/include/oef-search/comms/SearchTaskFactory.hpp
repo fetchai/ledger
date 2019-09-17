@@ -34,7 +34,7 @@ public:
   virtual ~SearchTaskFactory()
   {}
 
-  virtual void processMessage(ConstCharArrayBuffer &data)
+  virtual void ProcessMessage(ConstCharArrayBuffer &data)
   {
     current_uri_.diagnostic();
     data.diagnostic();
@@ -44,7 +44,7 @@ public:
   Uri current_uri_;
 
 protected:
-  virtual void endpointClosed(void)
+  virtual void EndpointClosed(void)
   {}
 
 private:

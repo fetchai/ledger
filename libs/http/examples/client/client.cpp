@@ -25,8 +25,8 @@
 #include <iostream>
 #include <memory>
 
-using fetch::http::HttpClientInterface;
 using fetch::http::HttpClient;
+using fetch::http::HttpClientInterface;
 using fetch::http::HttpsClient;
 
 using ClientPtr = std::unique_ptr<HttpClientInterface>;
@@ -68,7 +68,7 @@ int main(int argc, char **argv)
   // make the request
   fetch::http::HTTPRequest req;
   req.SetMethod(fetch::http::Method::GET);
-  req.SetURI(endpoint);
+  req.SetUri(endpoint);
 
   fetch::http::HTTPResponse response;
   if (client->Request(req, response))

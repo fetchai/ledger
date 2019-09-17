@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/layers/convolution_1d.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "math/tensor.hpp"
-#include "ml/layers/convolution_1d.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
@@ -380,7 +380,7 @@ TYPED_TEST(Convolution1DTest, graph_forward_test)  // Use the class as a Node
   ASSERT_TRUE(prediction.AllClose(gt, static_cast<DataType>(1e-5f), static_cast<DataType>(1e-5f)));
 }
 
-TYPED_TEST(Convolution1DTest, getStateDict)
+TYPED_TEST(Convolution1DTest, GetStateDict)
 {
   using TensorType = TypeParam;
   using SizeType   = typename TypeParam::SizeType;

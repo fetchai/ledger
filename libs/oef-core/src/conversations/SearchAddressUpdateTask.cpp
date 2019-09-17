@@ -16,14 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include "oef-core/conversations/SearchAddressUpdateTask.hpp"
 #include "oef-base/conversation/OutboundConversation.hpp"
 #include "oef-base/conversation/OutboundConversations.hpp"
-#include "oef-core/conversations/SearchAddressUpdateTask.hpp"
 #include "oef-messages/search_response.hpp"
 
 SearchAddressUpdateTask::EntryPoint searchAddressUpdateTaskEntryPoints[] = {
-    &SearchAddressUpdateTask::createConv,
-    &SearchAddressUpdateTask::handleResponse,
+    &SearchAddressUpdateTask::CreateConv,
+    &SearchAddressUpdateTask::HandleResponse,
 };
 
 SearchAddressUpdateTask::SearchAddressUpdateTask(
@@ -40,13 +40,13 @@ SearchAddressUpdateTask::~SearchAddressUpdateTask()
   FETCH_LOG_INFO(LOGGING_NAME, "Task gone.");
 }
 
-SearchAddressUpdateTask::StateResult SearchAddressUpdateTask::handleResponse(void)
+SearchAddressUpdateTask::StateResult SearchAddressUpdateTask::HandleResponse(void)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Woken ");
-  FETCH_LOG_INFO(LOGGING_NAME, "Response.. ", conversation->getAvailableReplyCount());
+  FETCH_LOG_INFO(LOGGING_NAME, "Response.. ", conversation->GetAvailableReplyCount());
 
   auto response =
-      std::static_pointer_cast<fetch::oef::pb::UpdateResponse>(conversation->getReply(0));
+      std::static_pointer_cast<fetch::oef::pb::UpdateResponse>(conversation->GetReply(0));
 
   if (sendReply)
   {

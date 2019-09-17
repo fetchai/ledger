@@ -23,7 +23,7 @@
 #include "oef-core/tasks-base/TSendProtoTask.hpp"
 #include "oef-messages/agent.hpp"
 
-void InitialSecureHandshakeTaskFactory::processMessage(ConstCharArrayBuffer & /*data*/)
+void InitialSecureHandshakeTaskFactory::ProcessMessage(ConstCharArrayBuffer & /*data*/)
 {
   // TODO(LR)
 }

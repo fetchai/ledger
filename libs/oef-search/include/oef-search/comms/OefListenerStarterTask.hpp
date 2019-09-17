@@ -61,7 +61,7 @@ public:
   bool                    operator<(OefListenerStarterTask const &other)  = delete;
   /// @}
 
-  virtual bool isRunnable(void) const
+  virtual bool IsRunnable(void) const
   {
     return true;
   }

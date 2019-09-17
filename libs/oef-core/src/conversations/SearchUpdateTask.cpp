@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "oef-core/conversations/SearchUpdateTask.hpp"
 #include "oef-base/conversation/OutboundConversation.hpp"
 #include "oef-base/conversation/OutboundConversations.hpp"
 #include "oef-base/monitoring/Counter.hpp"
 #include "oef-base/utils/Uri.hpp"
-#include "oef-core/conversations/SearchUpdateTask.hpp"
 #include "oef-core/tasks/utils.hpp"
 #include "oef-messages/search_response.hpp"
 
@@ -29,8 +29,8 @@ static Counter update_task_errored("mt-core.search.update.tasks_errored");
 static Counter update_task_succeeded("mt-core.search.update.tasks_succeeded");
 
 SearchUpdateTask::EntryPoint searchUpdateTaskEntryPoints[] = {
-    &SearchUpdateTask::createConv,
-    &SearchUpdateTask::handleResponse,
+    &SearchUpdateTask::CreateConv,
+    &SearchUpdateTask::HandleResponse,
 };
 
 SearchUpdateTask::SearchUpdateTask(std::shared_ptr<SearchUpdateTask::IN_PROTO> initiator,
@@ -50,18 +50,18 @@ SearchUpdateTask::~SearchUpdateTask()
   FETCH_LOG_INFO(LOGGING_NAME, "Task gone.");
 }
 
-SearchUpdateTask::StateResult SearchUpdateTask::handleResponse(void)
+SearchUpdateTask::StateResult SearchUpdateTask::HandleResponse(void)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Woken ");
-  FETCH_LOG_INFO(LOGGING_NAME, "Response.. ", conversation->getAvailableReplyCount());
+  FETCH_LOG_INFO(LOGGING_NAME, "Response.. ", conversation->GetAvailableReplyCount());
 
-  if (conversation->getAvailableReplyCount() == 0)
+  if (conversation->GetAvailableReplyCount() == 0)
   {
     update_task_errored++;
     return SearchUpdateTask::StateResult(0, ERRORED);
   }
 
-  auto resp = conversation->getReply(0);
+  auto resp = conversation->GetReply(0);
   if (!resp)
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Got nullptr as reply");
@@ -111,10 +111,10 @@ std::shared_ptr<SearchUpdateTask::REQUEST_PROTO> SearchUpdateTask::make_request_
   }
   dm->mutable_values()->CopyFrom(initiator->description().values());
   OEFURI::URI uri;
-  uri.coreKey = core_key_;
-  uri.parseAgent(agent_uri_);
+  uri.CoreKey = core_key_;
+  uri.ParseAgent(agent_uri_);
   uri.empty           = false;
-  std::string row_key = uri.toString();
+  std::string row_key = uri.ToString();
   dm->mutable_service_description()->CopyFrom(initiator->description_v2());
   for (auto &cqo : *(dm->mutable_service_description()->mutable_actions()))
   {

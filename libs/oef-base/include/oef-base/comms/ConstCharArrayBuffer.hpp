@@ -201,7 +201,7 @@ public:
     return traits_type::eof();
   }
 
-  std::streamsize remainingData()
+  std::streamsize RemainingData()
   {
     return size - current;
   }
@@ -267,7 +267,7 @@ public:
     return static_cast<std::size_t>(current);
   }
 
-  std::string copyOut()
+  std::string CopyOut()
   {
     std::string r = "";
     while (current < size)

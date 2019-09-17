@@ -422,9 +422,9 @@ TEST_F(StateTests,
       var b = State<Int32>("account");
       a.set(1);
       b.set(2);
-      print(toString(a.get()));
+      print(ToString(a.get()));
       print(".");
-      print(toString(b.get()));
+      print(ToString(b.get()));
     endfunction
   )";
 
@@ -473,9 +473,9 @@ TEST_F(
       var b = ShardedState<Int32>("account");
       a.set("balance", 1);
       b.set("balance", 2);
-      print(toString(a.get("balance")));
+      print(ToString(a.get("balance")));
       print(".");
-      print(toString(b.get("balance")));
+      print(ToString(b.get("balance")));
     endfunction
   )";
 

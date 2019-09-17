@@ -43,8 +43,8 @@ public:
     : pb_{std::move(pb)}
   {
     OEFURI::URI uri;
-    uri.parseAgent(pb_->destination());
-    agent_ = agents->find(uri.agentKey);
+    uri.ParseAgent(pb_->destination());
+    agent_ = agents->find(uri.AgentKey);
 
     if (agent_ == nullptr)
     {
@@ -53,12 +53,12 @@ public:
     }
     else
     {
-      create_message(message_id, std::move(uri), sourceAgent->getPublicKey());
+      create_message(message_id, std::move(uri), sourceAgent->GetPublicKey());
     }
 
-    source_key_ = sourceAgent->getPublicKey();
+    source_key_ = sourceAgent->GetPublicKey();
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Message to ", agent_->getPublicKey(), " from ", source_key_, ": ",
+    FETCH_LOG_INFO(LOGGING_NAME, "Message to ", agent_->GetPublicKey(), " from ", source_key_, ": ",
                    message_pb_->DebugString());
   }
 
@@ -74,7 +74,7 @@ public:
     message_pb_->set_target_uri(pb_->target_uri());
     if (message_pb_->target_uri().size() == 0)
     {
-      message_pb_->set_target_uri(uri.toString());
+      message_pb_->set_target_uri(uri.ToString());
     }
     auto content = message_pb_->mutable_content();
     content->set_dialogue_id(static_cast<int32_t>(did));
@@ -98,7 +98,7 @@ public:
     error->set_origin(pb_->destination());
   }
 
-  virtual bool isRunnable(void) const
+  virtual bool IsRunnable(void) const
   {
     return true;
   }
@@ -106,14 +106,14 @@ public:
   virtual ExitState run(void)
   {
     // TODO(kll): it's possible there's a race hazard here. Need to think about this.
-    if (agent_->send(message_pb_).Then([this]() { this->makeRunnable(); }).Waiting())
+    if (agent_->send(message_pb_).Then([this]() { this->MakeRunnable(); }).Waiting())
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Defer message send...");
       return ExitState::DEFER;
     }
 
     agent_->run_sending();
-    FETCH_LOG_INFO(LOGGING_NAME, "Message sent to: ", agent_->getPublicKey(),
+    FETCH_LOG_INFO(LOGGING_NAME, "Message sent to: ", agent_->GetPublicKey(),
                    " from: ", source_key_);
     pb_.reset();
     message_pb_.reset();

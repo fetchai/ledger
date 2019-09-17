@@ -69,20 +69,20 @@ public:
 
     // now make this task runnable.
 
-    this->makeRunnable();
+    this->MakeRunnable();
 
-    return waitable->makeNotification();
+    return waitable->MakeNotification();
   }
 
   virtual WorkloadProcessed process(WorkloadP workload, WorkloadState state) = 0;
 
-  virtual bool isRunnable(void) const
+  virtual bool IsRunnable(void) const
   {
     Lock lock(mutex);
     return !queue.empty();
   }
 
-  bool hasCurrentTask(void) const
+  bool HasCurrentTask(void) const
   {
     Lock lock(mutex);
     return bool(current.first);

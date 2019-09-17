@@ -45,7 +45,7 @@ public:
   explicit OefSearchEndpoint(std::shared_ptr<ProtoEndpoint> endpoint);
   virtual ~OefSearchEndpoint();
 
-  void setFactory(std::shared_ptr<SearchTaskFactory> new_factory);
+  void SetFactory(std::shared_ptr<SearchTaskFactory> new_factory);
   void setup();
 
   virtual void go(void) override
@@ -63,15 +63,15 @@ public:
   }
 
   void close(const std::string &reason);
-  void setState(const std::string &stateName, bool value);
-  bool getState(const std::string &stateName) const;
+  void SetState(const std::string &stateName, bool value);
+  bool GetState(const std::string &stateName) const;
 
-  std::size_t getIdent() const
+  std::size_t GetIdent() const
   {
     return ident;
   }
 
-  void addGoFunction(std::function<void(SELF_P)> func)
+  void AddGoFunction(std::function<void(SELF_P)> func)
   {
     go_functions.push_back(func);
   }

@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/upow/synergetic_contract.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "json/document.hpp"
 #include "ledger/state_sentinel_adapter.hpp"
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
-#include "ledger/upow/synergetic_contract.hpp"
 #include "logging/logging.hpp"
 #include "vectorise/uint/uint.hpp"
 #include "vm/array.hpp"
@@ -39,12 +39,12 @@ namespace fetch {
 namespace ledger {
 namespace {
 
-using vm_modules::math::UInt256Wrapper;
-using vm_modules::VMFactory;
-using vm_modules::StructuredData;
 using byte_array::ConstByteArray;
 using crypto::Hash;
 using crypto::SHA256;
+using vm_modules::StructuredData;
+using vm_modules::VMFactory;
+using vm_modules::math::UInt256Wrapper;
 
 using Status                = SynergeticContract::Status;
 using ProblemData           = SynergeticContract::ProblemData;

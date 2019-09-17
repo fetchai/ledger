@@ -31,7 +31,7 @@ KarmaPolicyNone::KarmaPolicyNone()
 KarmaPolicyNone::~KarmaPolicyNone()
 {}
 
-KarmaAccount KarmaPolicyNone::getAccount(const std::string & /*pubkey*/, const std::string & /*ip*/)
+KarmaAccount KarmaPolicyNone::GetAccount(const std::string & /*pubkey*/, const std::string & /*ip*/)
 {
   return mkAccount(0, "NO_KARMA_POLICY");
 }
@@ -42,7 +42,7 @@ bool KarmaPolicyNone::perform(const KarmaAccount & /*identifier*/, const std::st
   return true;
 }
 
-bool KarmaPolicyNone::couldPerform(const KarmaAccount & /*identifier*/,
+bool KarmaPolicyNone::CouldPerform(const KarmaAccount & /*identifier*/,
                                    const std::string & /*action*/)
 {
   return true;

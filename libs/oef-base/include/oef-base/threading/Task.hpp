@@ -32,12 +32,12 @@ class Task : public std::enable_shared_from_this<Task>
 public:
   static constexpr char const *LOGGING_NAME = "Task";
 
-  virtual bool      isRunnable(void) const = 0;
-  virtual ExitState runThunk(void);
+  virtual bool      IsRunnable(void) const = 0;
+  virtual ExitState RunThunk(void);
   virtual ExitState run(void) = 0;
   virtual void      cancel(void);
 
-  bool isCancelled(void) const
+  bool IsCancelled(void) const
   {
     return cancelled;
   }
@@ -50,15 +50,15 @@ public:
   bool submit(std::shared_ptr<Taskpool> pool);
   bool submit();
 
-  virtual void makeRunnable();
+  virtual void MakeRunnable();
 
-  std::size_t getTaskId()
+  std::size_t GetTaskId()
   {
     return task_id;
   }
 
-  std::size_t setGroupId(std::size_t new_group_id);
-  static void setThreadGroupId(std::size_t new_group_id);
+  std::size_t SetGroupId(std::size_t new_group_id);
+  static void SetThreadGroupId(std::size_t new_group_id);
 
 private:
   std::shared_ptr<Taskpool> pool;

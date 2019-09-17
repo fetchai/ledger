@@ -42,7 +42,7 @@ Oefv1Listener<EndpointType>::Oefv1Listener(std::shared_ptr<Core> core, int port,
     ep1->setup(ep1);
     auto ep2     = std::make_shared<OefAgentEndpoint>(std::move(ep1));
     auto factory = this->factoryCreator(ep2);
-    ep2->setFactory(factory);
+    ep2->SetFactory(factory);
     ep2->setup(this->karmaPolicy);
 
     return ep2;

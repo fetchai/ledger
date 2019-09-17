@@ -46,7 +46,7 @@ public:
                       std::shared_ptr<OutboundConversations> outbounds,
                       std::shared_ptr<OefSearchEndpoint>     endpoint)
     : StateMachineTask<DapConversationTask>(
-          this, {&DapConversationTask::createConv, &DapConversationTask::handleResponse})
+          this, {&DapConversationTask::CreateConv, &DapConversationTask::HandleResponse})
     , initiator(std::move(initiator))
     , outbounds(std::move(outbounds))
     , endpoint(std::move(endpoint))
@@ -70,21 +70,21 @@ public:
     FETCH_LOG_INFO(LOGGING_NAME, "Task gone.");
   }
 
-  StateResult createConv(void)
+  StateResult CreateConv(void)
   {
     auto                this_sp = this->shared_from_this();
     std::weak_ptr<Task> this_wp = this_sp;
     FETCH_LOG_INFO(LOGGING_NAME, "Start: DapName: ", dap_name_);
     FETCH_LOG_INFO(LOGGING_NAME, "***PATH: ", path_);
     conversation =
-        outbounds->startConversation(Uri("outbound://" + dap_name_ + "/" + path_), initiator);
+        outbounds->StartConversation(Uri("outbound://" + dap_name_ + "/" + path_), initiator);
 
-    if (conversation->makeNotification()
+    if (conversation->MakeNotification()
             .Then([this_wp]() {
               auto sp = this_wp.lock();
               if (sp)
               {
-                sp->makeRunnable();
+                sp->MakeRunnable();
               }
             })
             .Waiting())
@@ -96,12 +96,12 @@ public:
     return DapConversationTask::StateResult(1, COMPLETE);
   }
 
-  virtual StateResult handleResponse(void)
+  virtual StateResult HandleResponse(void)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Woken ");
-    FETCH_LOG_INFO(LOGGING_NAME, "Response.. ", conversation->getAvailableReplyCount());
+    FETCH_LOG_INFO(LOGGING_NAME, "Response.. ", conversation->GetAvailableReplyCount());
 
-    if (conversation->getAvailableReplyCount() == 0)
+    if (conversation->GetAvailableReplyCount() == 0)
     {
       (*task_errored)++;
       if (errorHandler)
@@ -112,7 +112,7 @@ public:
       return DapConversationTask::StateResult(0, ERRORED);
     }
 
-    auto resp = conversation->getReply(0);
+    auto resp = conversation->GetReply(0);
     if (!resp)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Got nullptr as reply");

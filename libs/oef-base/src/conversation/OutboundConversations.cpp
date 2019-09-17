@@ -27,18 +27,18 @@ OutboundConversations::OutboundConversations()
 OutboundConversations::~OutboundConversations()
 {}
 
-void OutboundConversations::delConversationCreator(const std::string &target)
+void OutboundConversations::DeleteConversationCreator(const std::string &target)
 {
   creators.erase(target);
 }
 
-void OutboundConversations::addConversationCreator(
+void OutboundConversations::AddConversationCreator(
     const std::string &target, std::shared_ptr<IOutboundConversationCreator> creator)
 {
   creators[target] = creator;
 }
 
-std::shared_ptr<OutboundConversation> OutboundConversations::startConversation(
+std::shared_ptr<OutboundConversation> OutboundConversations::StartConversation(
     const Uri &target_path, std::shared_ptr<google::protobuf::Message> initiator)
 {
   auto iter = creators.find(target_path.host);

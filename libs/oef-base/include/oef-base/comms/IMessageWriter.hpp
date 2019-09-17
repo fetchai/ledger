@@ -53,7 +53,7 @@ public:
     return consumed_needed_pair(0, 0);
   }
 
-  virtual consumed_needed_pair checkForSpace(mutable_buffers const &space, TXQ &txq) = 0;
+  virtual consumed_needed_pair CheckForSpace(mutable_buffers const &space, TXQ &txq) = 0;
 };
 
 // namespace std { template<> void swap(IMessageWriter& lhs, IMessageWriter& rhs) { lhs.swap(rhs); }

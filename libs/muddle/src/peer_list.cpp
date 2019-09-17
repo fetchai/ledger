@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "peer_list.hpp"
 #include "logging/logging.hpp"
 #include "muddle_logging_name.hpp"
-#include "peer_list.hpp"
 #include "router.hpp"
 
 #include <algorithm>

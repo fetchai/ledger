@@ -79,7 +79,7 @@ public:
   void     SetValidationRatio(float new_validation_ratio) override;
 
   void AddDataAsString(std::string const &text);
-  void createIdxUMaps();
+  void CreateIdxUMaps();
 
   umap_int_str umap_idx_to_functionname();
   umap_int_str umap_idx_to_path();
@@ -115,14 +115,14 @@ private:
 
   void UpdateCursor() override;
 
-  static void createIdxUMapsFromCounter(umap_str_int &counter, umap_str_int &name_to_idx,
+  static void CreateIdxUMapsFromCounter(umap_str_int &counter, umap_str_int &name_to_idx,
                                         umap_int_str &idx_to_name);
 
-  static void addValueToCounter(umap_str_int &umap, std::string word);
+  static void AddValueToCounter(umap_str_int &umap, std::string word);
 
-  static std::vector<std::string> splitStringByChar(std::stringstream input, char const *sep);
+  static std::vector<std::string> SplitStringByChar(std::stringstream input, char const *sep);
 
-  SizeType addToIdxUMaps(std::string const &input, umap_str_int &name_to_idx,
+  SizeType AddToIdxUMaps(std::string const &input, umap_str_int &name_to_idx,
                          umap_int_str &idx_to_name);
 };
 
@@ -148,9 +148,9 @@ void C2VLoader<LabelType, InputType>::AddDataAsString(std::string const &c2v_inp
   std::string       function_name;
   std::string       context;
 
-  addToIdxUMaps(EMPTY_CONTEXT_STRING, function_name_to_idx_, idx_to_function_name_);
-  addToIdxUMaps(EMPTY_CONTEXT_STRING, word_to_idx_, idx_to_word_);
-  addToIdxUMaps(EMPTY_CONTEXT_STRING, path_to_idx_, idx_to_path_);
+  AddToIdxUMaps(EMPTY_CONTEXT_STRING, function_name_to_idx_, idx_to_function_name_);
+  AddToIdxUMaps(EMPTY_CONTEXT_STRING, word_to_idx_, idx_to_word_);
+  AddToIdxUMaps(EMPTY_CONTEXT_STRING, path_to_idx_, idx_to_path_);
 
   while (std::getline(c2v_input_ss, c2v_input_line, '\n'))
   {
@@ -159,24 +159,24 @@ void C2VLoader<LabelType, InputType>::AddDataAsString(std::string const &c2v_inp
 
     c2v_input_line_ss >> function_name;
 
-    addValueToCounter(function_name_counter_, function_name);
+    AddValueToCounter(function_name_counter_, function_name);
     SizeType function_name_idx =
-        addToIdxUMaps(function_name, function_name_to_idx_, idx_to_function_name_);
+        AddToIdxUMaps(function_name, function_name_to_idx_, idx_to_function_name_);
 
     while (c2v_input_line_ss >> context)
     {
       std::vector<std::string> context_string_splitted =
-          splitStringByChar(std::stringstream(context), sep);
+          SplitStringByChar(std::stringstream(context), sep);
 
-      addValueToCounter(word_counter_, context_string_splitted[0]);
-      addValueToCounter(path_counter_, context_string_splitted[1]);
-      addValueToCounter(word_counter_, context_string_splitted[2]);
+      AddValueToCounter(word_counter_, context_string_splitted[0]);
+      AddValueToCounter(path_counter_, context_string_splitted[1]);
+      AddValueToCounter(word_counter_, context_string_splitted[2]);
 
       SizeType source_word_idx =
-          addToIdxUMaps(context_string_splitted[0], word_to_idx_, idx_to_word_);
-      SizeType path_idx = addToIdxUMaps(context_string_splitted[1], path_to_idx_, idx_to_path_);
+          AddToIdxUMaps(context_string_splitted[0], word_to_idx_, idx_to_word_);
+      SizeType path_idx = AddToIdxUMaps(context_string_splitted[1], path_to_idx_, idx_to_path_);
       SizeType target_word_idx =
-          addToIdxUMaps(context_string_splitted[2], word_to_idx_, idx_to_word_);
+          AddToIdxUMaps(context_string_splitted[2], word_to_idx_, idx_to_word_);
 
       std::pair<SizeType, std::tuple<SizeType, SizeType, SizeType>> input_data_pair(
           function_name_idx, std::make_tuple(source_word_idx, path_idx, target_word_idx));
@@ -343,7 +343,7 @@ void C2VLoader<LabelType, DataType>::SetValidationRatio(float new_validation_rat
  * @param word the string to be counted.
  */
 template <typename LabelType, typename InputType>
-void C2VLoader<LabelType, InputType>::addValueToCounter(
+void C2VLoader<LabelType, InputType>::AddValueToCounter(
     typename C2VLoader<LabelType, InputType>::umap_str_int &umap, std::string word)
 {
   if (umap.find(word) == umap.end())
@@ -364,7 +364,7 @@ void C2VLoader<LabelType, InputType>::addValueToCounter(
  * @return std::vector<std::string> A vector of substrings
  */
 template <typename LabelType, typename InputType>
-std::vector<std::string> C2VLoader<LabelType, InputType>::splitStringByChar(std::stringstream input,
+std::vector<std::string> C2VLoader<LabelType, InputType>::SplitStringByChar(std::stringstream input,
                                                                             char const *      sep)
 {
   std::vector<std::string> splitted_string;
@@ -385,7 +385,7 @@ std::vector<std::string> C2VLoader<LabelType, InputType>::splitStringByChar(std:
  * @return SizeType index of the string in the unordered maps
  */
 template <typename LabelType, typename InputType>
-typename C2VLoader<LabelType, InputType>::SizeType C2VLoader<LabelType, InputType>::addToIdxUMaps(
+typename C2VLoader<LabelType, InputType>::SizeType C2VLoader<LabelType, InputType>::AddToIdxUMaps(
     std::string const &input, typename C2VLoader<LabelType, InputType>::umap_str_int &name_to_idx,
     typename C2VLoader<LabelType, InputType>::umap_int_str &idx_to_name)
 {
@@ -412,7 +412,7 @@ typename C2VLoader<LabelType, InputType>::SizeType C2VLoader<LabelType, InputTyp
  * @param idx_to_name unordered map for storing the mapping numeric->string
  */
 template <typename LabelType, typename InputType>
-void C2VLoader<LabelType, InputType>::createIdxUMapsFromCounter(
+void C2VLoader<LabelType, InputType>::CreateIdxUMapsFromCounter(
     typename C2VLoader<LabelType, InputType>::umap_str_int &counter,
     typename C2VLoader<LabelType, InputType>::umap_str_int &name_to_idx,
     typename C2VLoader<LabelType, InputType>::umap_int_str &idx_to_name)
@@ -430,11 +430,11 @@ void C2VLoader<LabelType, InputType>::createIdxUMapsFromCounter(
  * @brief Creates umaps mapping strings to indices from the counter
  */
 template <typename LabelType, typename InputType>
-void C2VLoader<LabelType, InputType>::createIdxUMaps()
+void C2VLoader<LabelType, InputType>::CreateIdxUMaps()
 {
-  createIdxUMapsFromCounter(function_name_counter_, function_name_to_idx_, idx_to_function_name_);
-  createIdxUMapsFromCounter(path_counter_, path_to_idx_, idx_to_path_);
-  createIdxUMapsFromCounter(word_counter_, word_to_idx_, idx_to_word_);
+  CreateIdxUMapsFromCounter(function_name_counter_, function_name_to_idx_, idx_to_function_name_);
+  CreateIdxUMapsFromCounter(path_counter_, path_to_idx_, idx_to_path_);
+  CreateIdxUMapsFromCounter(word_counter_, word_to_idx_, idx_to_word_);
 }
 
 template <typename LabelType, typename InputType>

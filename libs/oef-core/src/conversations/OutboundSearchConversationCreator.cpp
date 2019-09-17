@@ -95,7 +95,7 @@ OutboundSearchConversationCreator::OutboundSearchConversationCreator(
   //  worker = std::make_shared<OutboundSearchConversationWorkerTask>(search_uri, outbounds,
   //                                                                  ident2conversation);
 
-  worker->setThreadGroupId(0);
+  worker->SetThreadGroupId(0);
 
   worker->submit();
 }
