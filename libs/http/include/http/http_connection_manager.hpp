@@ -29,23 +29,23 @@ namespace http {
 class HTTPConnectionManager
 {
 public:
-  using connection_type = typename AbstractHTTPConnection::shared_type;
-  using handle_type     = uint64_t;
+  using ConnectionType = typename AbstractHTTPConnection::SharedType;
+  using HandleType     = uint64_t;
 
   static constexpr char const *LOGGING_NAME = "HTTPConnectionManager";
 
   explicit HTTPConnectionManager(AbstractHTTPServer &server);
 
-  handle_type Join(connection_type client);
-  void        Leave(handle_type handle);
-  bool        Send(handle_type client, HTTPResponse const &res);
-  void        PushRequest(handle_type client, HTTPRequest const &req);
-  std::string GetAddress(handle_type client);
+  HandleType  Join(ConnectionType client);
+  void        Leave(HandleType handle);
+  bool        Send(HandleType client, HTTPResponse const &res);
+  void        PushRequest(HandleType client, HTTPRequest const &req);
+  std::string GetAddress(HandleType client);
 
 private:
-  AbstractHTTPServer &                   server_;
-  std::map<handle_type, connection_type> clients_;
-  Mutex                                  clients_mutex_;
+  AbstractHTTPServer &                 server_;
+  std::map<HandleType, ConnectionType> clients_;
+  Mutex                                clients_mutex_;
 };
 
 }  // namespace http

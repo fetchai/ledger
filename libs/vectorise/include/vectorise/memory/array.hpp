@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "meta/log2.hpp"
+#include "vectorise/fixed_point/type_traits.hpp"
 #include "vectorise/memory/iterator.hpp"
 #include "vectorise/memory/parallel_dispatcher.hpp"
 #include "vectorise/memory/vector_slice.hpp"
@@ -40,15 +41,12 @@ class Array : public VectorSlice<T, type_size>
 {
 public:
   static_assert(sizeof(T) >= type_size, "Invalid object size");
-  // TODO(issue 1424): check IfIsPodOrFixedPoint memory safe and reinstante appropriate static
-  // asserts
-  //  static_assert(std::is_pod<T>::value, "Can only be used with POD types");
-  //  static_assert(meta::IfIsPodOrFixedPoint<T>::value, "can only be used with POD or FixedPoint");
-  using SizeType   = std::size_t;
-  using data_type  = std::shared_ptr<T>;
-  using super_type = VectorSlice<T, type_size>;
-  using self_type  = Array<T, type_size>;
-  using type       = T;
+  static_assert(fetch::math::meta::IsPodOrFixedPoint<T>, "can only be used with POD or FixedPoint");
+  using SizeType  = std::size_t;
+  using DataType  = std::shared_ptr<T>;
+  using SuperType = VectorSlice<T, type_size>;
+  using SelfType  = Array<T, type_size>;
+  using type      = T;
 
   Array(std::size_t n)
   {
@@ -56,7 +54,7 @@ public:
 
     if (n > 0)
     {
-      this->pointer_ = (type *)_mm_malloc(this->padded_size() * sizeof(type), 16);
+      this->pointer_ = (type *)_mm_malloc(this->padded_size() * sizeof(type), 32);
     }
   }
 
@@ -85,12 +83,12 @@ public:
   }
 
   Array(Array const &other)
-    : super_type()
+    : SuperType()
   {
     this->operator=(other);
   }
 
-  self_type &operator=(Array const &other)
+  SelfType &operator=(Array const &other)
   {
     if (this->pointer_ != nullptr)
     {
@@ -100,7 +98,7 @@ public:
 
     if (this->size_ > 0)
     {
-      this->pointer_ = (type *)_mm_malloc(this->padded_size() * sizeof(type), 16);
+      this->pointer_ = (type *)_mm_malloc(this->padded_size() * sizeof(type), 32);
     }
 
     for (std::size_t i = 0; i < this->size_; ++i)
@@ -110,9 +108,9 @@ public:
     return *this;
   }
 
-  self_type Copy() const
+  SelfType Copy() const
   {
-    self_type ret = *this;
+    SelfType ret = *this;
     return ret;
   }
 };

@@ -17,28 +17,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/storage_unit/lane_controller.hpp"
+#include "network/service/protocol.hpp"
+
 namespace fetch {
 namespace ledger {
+
+class LaneController;
 
 class LaneControllerProtocol : public service::Protocol
 {
 public:
   enum
   {
-    SHUTDOWN = 1,
-    START_SYNC,
-    STOP_SYNC,
-    INCOMING_PEERS,
-    OUTGOING_PEERS,
-    USE_THESE_PEERS,
+    USE_THESE_PEERS = 1
   };
 
-  LaneControllerProtocol(LaneController *ctrl)
-  {
-    this->Expose(SHUTDOWN, ctrl, &LaneController::Shutdown);
-    this->Expose(USE_THESE_PEERS, ctrl, &LaneController::UseThesePeers);
-  }
+  explicit LaneControllerProtocol(LaneController &ctrl);
+  ~LaneControllerProtocol() override = default;
 };
 
 }  // namespace ledger

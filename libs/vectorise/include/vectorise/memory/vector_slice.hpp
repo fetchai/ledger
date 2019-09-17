@@ -65,7 +65,7 @@ public:
   enum
   {
     E_TYPE_SIZE     = type_size,
-    E_SIMD_SIZE     = (platform::VectorRegisterSize<Type>::value >> 3),
+    E_SIMD_SIZE     = (vectorise::VectorRegisterSize<Type>::value >> 3),
     E_SIMD_COUNT_IM = E_SIMD_SIZE / type_size,
     E_SIMD_COUNT =
         (E_SIMD_COUNT_IM > 0 ? E_SIMD_COUNT_IM
@@ -79,7 +79,9 @@ public:
   explicit constexpr VectorSlice(PointerType ptr = nullptr, std::size_t n = 0) noexcept
     : pointer_(ptr)
     , size_(n)
-  {}
+  {
+    assert(ptrdiff_t(ptr) % E_SIMD_SIZE == 0);
+  }
 
   ConstParallelDispatcher<Type> in_parallel() const
   {
@@ -198,7 +200,7 @@ public:
     std::size_t padded = std::size_t((size_) >> E_LOG_SIMD_COUNT) << E_LOG_SIMD_COUNT;
     if (padded < size_)
     {
-      padded += E_SIMD_COUNT;
+      padded += E_SIMD_SIZE;
     }
     return padded;
   }
