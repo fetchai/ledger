@@ -41,4 +41,4 @@ for f in glob.glob("libs/oef-messages/protos/*.proto"):
     name = name.replace(".proto", "")
 
     with open("libs/oef-messages/include/oef-messages/%s.hpp" % name, "w") as fb:
-      fb.write(BASE % (name))
+        fb.write(BASE % (name))

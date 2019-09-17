@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/random/lcg.hpp"
+#include "crypto/identity.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
 #include "random_address.hpp"
 
@@ -29,12 +30,12 @@
 namespace {
 
 using fetch::ledger::StakeSnapshot;
-using fetch::ledger::Address;
+using fetch::crypto::Identity;
 
 using RNG              = fetch::random::LinearCongruentialGenerator;
 using StakeSnapshotPtr = std::unique_ptr<StakeSnapshot>;
-using StakeMap         = std::unordered_map<Address, uint64_t>;
-using AddressSet       = std::unordered_set<Address>;
+using StakeMap         = std::unordered_map<Identity, uint64_t>;
+using IdentitySet      = std::unordered_set<Identity>;
 
 class StakeSnapshotTests : public ::testing::Test
 {
@@ -58,20 +59,20 @@ protected:
 
     for (std::size_t i = 0; i < count; ++i)
     {
-      auto const address = GenerateRandomAddress(rng_);
-      uint64_t   stake   = rng_() % MAXIMUM_SINGLE_STAKE;
+      auto const identity = GenerateRandomIdentity(rng_);
+      uint64_t   stake    = rng_() % MAXIMUM_SINGLE_STAKE;
 
       // randomness is not random enough
-      if (map.find(address) != map.end())
+      if (map.find(identity) != map.end())
       {
         return {};
       }
 
       // update our record
-      map[address] = stake;
+      map[identity] = stake;
 
       // update the stake tracker
-      snapshot_->UpdateStake(address, stake);
+      snapshot_->UpdateStake(identity, stake);
     }
 
     return map;
@@ -113,45 +114,45 @@ TEST_F(StakeSnapshotTests, CheckStakeGenerate)
   }
 
   // check that the reference sample is unique
-  AddressSet address_set{};
-  for (auto const &address : *reference)
+  IdentitySet identity_set{};
+  for (auto const &identity : *reference)
   {
-    address_set.emplace(address);
+    identity_set.emplace(identity);
   }
-  EXPECT_EQ(address_set.size(), reference->size());
+  EXPECT_EQ(identity_set.size(), reference->size());
 }
 
 TEST_F(StakeSnapshotTests, CheckStateModifications)
 {
-  auto const address1 = GenerateRandomAddress(rng_);
-  auto const address2 = GenerateRandomAddress(rng_);
-  auto const address3 = GenerateRandomAddress(rng_);
-  auto const address4 = GenerateRandomAddress(rng_);
+  auto const identity1 = GenerateRandomIdentity(rng_);
+  auto const identity2 = GenerateRandomIdentity(rng_);
+  auto const identity3 = GenerateRandomIdentity(rng_);
+  auto const identity4 = GenerateRandomIdentity(rng_);
 
   // uniform staking
-  snapshot_->UpdateStake(address1, 500);
-  snapshot_->UpdateStake(address2, 500);
-  snapshot_->UpdateStake(address3, 500);
-  snapshot_->UpdateStake(address4, 500);
+  snapshot_->UpdateStake(identity1, 500);
+  snapshot_->UpdateStake(identity2, 500);
+  snapshot_->UpdateStake(identity3, 500);
+  snapshot_->UpdateStake(identity4, 500);
 
   ASSERT_EQ(2000, snapshot_->total_stake());
   ASSERT_EQ(4, snapshot_->size());
 
-  snapshot_->UpdateStake(address1, 1000);
+  snapshot_->UpdateStake(identity1, 1000);
   ASSERT_EQ(2500, snapshot_->total_stake());
   ASSERT_EQ(4, snapshot_->size());
 
-  snapshot_->UpdateStake(address2, 250);
+  snapshot_->UpdateStake(identity2, 250);
   ASSERT_EQ(2250, snapshot_->total_stake());
   ASSERT_EQ(4, snapshot_->size());
 
   // no change
-  snapshot_->UpdateStake(address3, 500);
+  snapshot_->UpdateStake(identity3, 500);
   ASSERT_EQ(2250, snapshot_->total_stake());
   ASSERT_EQ(4, snapshot_->size());
 
   // removing stake
-  snapshot_->UpdateStake(address4, 0);
+  snapshot_->UpdateStake(identity4, 0);
   ASSERT_EQ(1750, snapshot_->total_stake());
   ASSERT_EQ(3, snapshot_->size());
 }

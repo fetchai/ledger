@@ -65,7 +65,8 @@ public:
   virtual void Start();
   virtual void Stop();
 
-  void PushRequest(ConnectionHandleType client, MessageType const &msg) override;
+  uint16_t GetListeningPort() const override;
+  void     PushRequest(ConnectionHandleType client, MessageType const &msg) override;
 
   void Broadcast(MessageType const &msg);
   bool Send(ConnectionHandleType const &client, MessageType const &msg);

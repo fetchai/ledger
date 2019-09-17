@@ -85,6 +85,8 @@ using LogLevelMap = std::unordered_map<std::string, LogLevel>;
  */
 void SetLogLevel(char const *name, LogLevel level);
 
+void SetGlobalLogLevel(LogLevel level);
+
 /**
  * Log a simple message
  *

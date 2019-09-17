@@ -68,7 +68,7 @@ public:
     return services_[i].lock();
   }
 
-  // TODO(kll): Rename this to match ServiceClients below.
+  // TODO(issue 1673): Rename this to match ServiceClients below.
   void WithServices(std::function<void(ServiceMapType const &)> f) const
   {
     FETCH_LOCK(service_lock_);

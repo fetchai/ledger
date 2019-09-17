@@ -28,6 +28,7 @@ target_link_libraries(fetch-ledger
                              fetch-metrics
                              fetch-moment
                              fetch-dkg
+                             fetch-beacon
                              fetch-bloomfilter
                              fetch-logging
                              fetch-entropy

@@ -306,6 +306,8 @@ public:
 
   ConstByteArray ToBase64() const;
   ConstByteArray ToHex() const;
+  ConstByteArray FromBase64() const;
+  ConstByteArray FromHex() const;
 
   // Non-const functions go here
   void FromByteArray(SelfType const &other, std::size_t start, std::size_t length) noexcept

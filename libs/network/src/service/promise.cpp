@@ -21,8 +21,14 @@
 namespace fetch {
 namespace service {
 namespace details {
-
 namespace {
+
+using byte_array::ConstByteArray;
+using serializers::SerializableException;
+
+using Counter = PromiseImplementation::Counter;
+using State   = PromiseImplementation::State;
+
 template <typename NAME, typename ID>
 void LogTimout(NAME const &name, ID const &id)
 {
@@ -40,36 +46,113 @@ void LogTimout(NAME const &name, ID const &id)
 PromiseImplementation::Counter PromiseImplementation::counter_{0};
 Mutex                          PromiseImplementation::counter_lock_;
 
+std::chrono::seconds const PromiseImplementation::DEFAULT_TIMEOUT{30};
+
+PromiseImplementation::PromiseImplementation(uint64_t pro, uint64_t func)
+  : protocol_{pro}
+  , function_{func}
+{}
+
+ConstByteArray const &PromiseImplementation::value() const
+{
+  return value_;
+}
+
+Counter PromiseImplementation::id() const
+{
+  return id_;
+}
+
+uint64_t PromiseImplementation::protocol() const
+{
+  return protocol_;
+}
+
+uint64_t PromiseImplementation::function() const
+{
+  return function_;
+}
+
+State PromiseImplementation::state() const
+{
+  if (Clock::now() >= deadline_)
+  {
+    UpdateState(State::TIMEDOUT);
+  }
+
+  return state_;
+}
+
+SerializableException const &PromiseImplementation::exception() const
+{
+  return (*exception_);
+}
+
+const std::string &PromiseImplementation::name() const
+{
+  return name_;
+}
+
+bool PromiseImplementation::IsWaiting() const
+{
+  return (State::WAITING == state());
+}
+
+bool PromiseImplementation::IsSuccessful() const
+{
+  return (State::SUCCESS == state());
+}
+
+bool PromiseImplementation::IsFailed() const
+{
+  return (State::FAILED == state());
+}
+
 PromiseBuilder PromiseImplementation::WithHandlers()
 {
   return PromiseBuilder{*this};
 }
 
-/**
- * Wait for the promise to conclude.
- *
- * @param timeout_ms The timeout (in milliseconds) to wait for the promise to be available
- * @param throw_exception Signal if the promise has failed, if it should throw the associated
- * exception
- * @return true if the promise was fulfilled, otherwise false
- */
-bool PromiseImplementation::Wait(uint32_t timeout_ms, bool throw_exception) const
+void PromiseImplementation::Fulfill(ConstByteArray const &value)
 {
-  bool const has_timeout = timeout_ms > 0;
-  State      state_copy{state_};
-  if (has_timeout)
+  value_ = value;
+
+  UpdateState(State::SUCCESS);
+}
+
+void PromiseImplementation::Fail(SerializableException const &exception)
+{
+  exception_ = std::make_unique<SerializableException>(exception);
+
+  UpdateState(State::FAILED);
+}
+
+void PromiseImplementation::Fail()
+{
+  UpdateState(State::FAILED);
+}
+
+bool PromiseImplementation::Wait(bool throw_exception) const
+{
+  State state_copy{state()};
+
+  if (Clock::now() >= deadline_)
   {
-    Timepoint const timeout_deadline = Clock::now() + std::chrono::milliseconds{timeout_ms};
+    LogTimout(name_, id_);
+    return false;
+  }
+  else
+  {
     std::unique_lock<std::mutex> lock(notify_lock_);
-    while (State::WAITING == state_)
+    while (State::WAITING == state())
     {
-      if (std::cv_status::timeout == notify_.wait_until(lock, timeout_deadline))
+      if (std::cv_status::timeout == notify_.wait_until(lock, deadline_))
       {
         LogTimout(name_, id_);
         return false;
       }
     }
-    state_copy = state_;
+    state_copy = state();
   }
 
   if (State::FAILED == state_copy)
@@ -87,7 +170,25 @@ bool PromiseImplementation::Wait(uint32_t timeout_ms, bool throw_exception) cons
   return true;
 }
 
-void PromiseImplementation::UpdateState(State state)
+void PromiseImplementation::SetSuccessCallback(Callback const &cb)
+{
+  FETCH_LOCK(callback_lock_);
+  callback_success_ = cb;
+}
+
+void PromiseImplementation::SetFailureCallback(Callback const &cb)
+{
+  FETCH_LOCK(callback_lock_);
+  callback_failure_ = cb;
+}
+
+void PromiseImplementation::SetCompletionCallback(Callback const &cb)
+{
+  FETCH_LOCK(callback_lock_);
+  callback_completion_ = cb;
+}
+
+void PromiseImplementation::UpdateState(State state) const
 {
   assert(state != State::WAITING);
 
@@ -110,13 +211,13 @@ void PromiseImplementation::UpdateState(State state)
   }
 }
 
-void PromiseImplementation::DispatchCallbacks()
+void PromiseImplementation::DispatchCallbacks() const
 {
   FETCH_LOCK(callback_lock_);
 
-  Callback *handler = nullptr;
+  Callback const *handler = nullptr;
 
-  switch (state_.load())
+  switch (state())
   {
   case State::SUCCESS:
     handler = &callback_success_;
@@ -153,112 +254,7 @@ PromiseImplementation::Counter PromiseImplementation::GetNextId()
   return counter_++;
 }
 
-PromiseImplementation::PromiseImplementation(uint64_t pro, uint64_t func)
-  : protocol_(pro)
-  , function_(func)
-{}
-
-PromiseImplementation::ConstByteArray const &PromiseImplementation::value() const
-{
-  return value_;
-}
-
-PromiseImplementation::Counter PromiseImplementation::id() const
-{
-  return id_;
-}
-
-uint64_t PromiseImplementation::protocol() const
-{
-  return protocol_;
-}
-
-uint64_t PromiseImplementation::function() const
-{
-  return function_;
-}
-
-PromiseImplementation::State PromiseImplementation::state() const
-{
-  return state_;
-}
-
-PromiseImplementation::SerializableException const &PromiseImplementation::exception() const
-{
-  return (*exception_);
-}
-
-bool PromiseImplementation::IsWaiting() const
-{
-  return (State::WAITING == state_);
-}
-
-bool PromiseImplementation::IsSuccessful() const
-{
-  return (State::SUCCESS == state_);
-}
-
-bool PromiseImplementation::IsFailed() const
-{
-  return (State::FAILED == state_);
-}
-
-void PromiseImplementation::SetSuccessCallback(Callback const &cb)
-{
-  FETCH_LOCK(callback_lock_);
-  callback_success_ = cb;
-}
-
-void PromiseImplementation::SetFailureCallback(Callback const &cb)
-{
-  FETCH_LOCK(callback_lock_);
-  callback_failure_ = cb;
-}
-
-void PromiseImplementation::SetCompletionCallback(Callback const &cb)
-{
-  FETCH_LOCK(callback_lock_);
-  callback_completion_ = cb;
-}
-
-void PromiseImplementation::Fulfill(ConstByteArray const &value)
-{
-  value_ = value;
-
-  UpdateState(State::SUCCESS);
-}
-
-void PromiseImplementation::Fail(SerializableException const &exception)
-{
-  exception_ = std::make_unique<SerializableException>(exception);
-
-  UpdateState(State::FAILED);
-}
-
-void PromiseImplementation::Fail()
-{
-  UpdateState(State::FAILED);
-}
-
-std::string &PromiseImplementation::name()
-{
-  return name_;
-}
-
-const std::string &PromiseImplementation::name() const
-{
-  return name_;
-}
-
-PromiseImplementation::State PromiseImplementation::GetState() const
-{
-  return state_;
-}
-
-bool PromiseImplementation::Wait(bool throw_exception) const
-{
-  return Wait(FOREVER, throw_exception);
-}
+// promise builder
 
 PromiseBuilder::PromiseBuilder(PromiseImplementation &promise)
   : promise_(promise)

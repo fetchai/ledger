@@ -35,6 +35,7 @@ class StakeUpdateQueue : public StakeUpdateInterface
 {
 public:
   using StakeSnapshotPtr = std::shared_ptr<StakeSnapshot>;
+  using Identity         = crypto::Identity;
 
   // Construction / Destruction
   StakeUpdateQueue()                         = default;
@@ -44,7 +45,8 @@ public:
 
   /// @name Stake Update Interface
   /// @{
-  void AddStakeUpdate(BlockIndex block_index, Address const &address, StakeAmount stake) override;
+  void AddStakeUpdate(BlockIndex block_index, crypto::Identity const &identity,
+                      StakeAmount stake) override;
   /// @}
 
   bool ApplyUpdates(BlockIndex block_index, StakeSnapshotPtr const &reference,
@@ -63,7 +65,7 @@ public:
   StakeUpdateQueue &operator=(StakeUpdateQueue &&) = delete;
 
 private:
-  using StakeMap     = std::unordered_map<Address, StakeAmount>;
+  using StakeMap     = std::unordered_map<Identity, StakeAmount>;
   using BlockUpdates = std::map<BlockIndex, StakeMap>;
 
   Protected<BlockUpdates> updates_{};  ///< The update queue

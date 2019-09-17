@@ -203,6 +203,7 @@ public:
                                    unsigned int &image_size)
   {
     auto reverseInt = [](std::uint32_t i) -> std::uint32_t {
+      // TODO(issue 1674): Change to use platform tools
       uint8_t c1, c2, c3, c4;
       c1 = (uint8_t)(i & 255);
       c2 = (uint8_t)((i >> 8) & 255);
@@ -232,10 +233,10 @@ public:
 
       image_size = n_rows * n_cols;
 
-      uchar **_dataset = new uchar *[number_of_images];
+      UnsignedChar **_dataset = new UnsignedChar *[number_of_images];
       for (unsigned int i = 0; i < number_of_images; i++)
       {
-        _dataset[i] = new uchar[image_size];
+        _dataset[i] = new UnsignedChar[image_size];
         file.read((char *)_dataset[i], std::streamsize(image_size));
       }
       return _dataset;
@@ -249,6 +250,7 @@ public:
   static uint8_t *ReadMNistLabels(std::string full_path, std::uint32_t &number_of_labels)
   {
     auto reverseInt = [](std::uint32_t i) {
+      // TODO(issue 1674): Change to use platform tools
       uint8_t c1, c2, c3, c4;
       c1 = (uint8_t)(i & 255);
       c2 = (uint8_t)((i >> 8) & 255);
@@ -273,7 +275,7 @@ public:
       file.read((char *)&number_of_labels, sizeof(number_of_labels)),
           number_of_labels = reverseInt(number_of_labels);
 
-      uchar *_dataset = new uchar[number_of_labels];
+      UnsignedChar *_dataset = new UnsignedChar[number_of_labels];
       for (unsigned int i = 0; i < number_of_labels; i++)
       {
         file.read((char *)&_dataset[i], 1);
@@ -287,7 +289,7 @@ public:
   }
 
 private:
-  using uchar = uint8_t;
+  using UnsignedChar = uint8_t;
 
   void UpdateCursor() override
   {

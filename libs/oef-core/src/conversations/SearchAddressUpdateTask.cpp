@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "oef-core/conversations/SearchAddressUpdateTask.hpp"
 #include "oef-base/conversation/OutboundConversation.hpp"
 #include "oef-base/conversation/OutboundConversations.hpp"
+#include "oef-core/conversations/SearchAddressUpdateTask.hpp"
 #include "oef-messages/search_response.hpp"
 
 SearchAddressUpdateTask::EntryPoint searchAddressUpdateTaskEntryPoints[] = {

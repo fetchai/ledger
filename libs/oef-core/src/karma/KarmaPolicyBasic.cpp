@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "oef-core/karma/KarmaPolicyBasic.hpp"
 #include "logging/logging.hpp"
+#include "oef-core/karma/KarmaPolicyBasic.hpp"
 
 #include "oef-core/karma/XDisconnect.hpp"
 #include "oef-core/karma/XKarma.hpp"
