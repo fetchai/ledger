@@ -24,17 +24,17 @@
 #include "oef-search/comms/Oefv1Listener.hpp"
 
 template <template <typename> class EndpointType>
-ExitState OefListenerStarterTask<EndpointType>::run(void)
+ExitState OefListenerStarterTask<EndpointType>::run()
 {
   // open port here.
-  auto result = std::make_shared<Oefv1Listener<EndpointType>>(core, p, endpointConfig);
+  auto result = std::make_shared<Oefv1Listener<EndpointType>>(core_, p_, endpointConfig_);
 
-  result->factoryCreator = initialFactoryCreator;
+  result->factoryCreator = initialFactoryCreator_;
 
   result->start();
 
   // when done add to the listeners
-  listeners->add(p, result);
+  listeners_->add(p_, result);
   return ExitState::COMPLETE;
 }
 

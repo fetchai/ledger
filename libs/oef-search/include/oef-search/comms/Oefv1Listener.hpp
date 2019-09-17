@@ -32,27 +32,28 @@ template <template <typename> class EndpointType>
 class Oefv1Listener : public IOefListener<SearchTaskFactory, OefSearchEndpoint>
 {
 public:
-  using ConfigMap = std::unordered_map<std::string, std::string>;
+  using ConfigMap  = std::unordered_map<std::string, std::string>;
+  using SharedCore = std::shared_ptr<Core>;
 
   static constexpr char const *LOGGING_NAME = "Oefv1Listener";
 
-  Oefv1Listener(std::shared_ptr<Core> core, int port, ConfigMap endpointConfig);
-  virtual ~Oefv1Listener()
-  {
-    std::cout << "Listener on " << port << " GONE" << std::endl;
-  }
-
-  void start(void);
-
-protected:
-private:
-  Listener listener;
-  int      port;
-
-  ConfigMap endpointConfig;
-
+  /// @{
+  Oefv1Listener(SharedCore core, int port, ConfigMap endpointConfig);
   Oefv1Listener(const Oefv1Listener &other) = delete;
+  virtual ~Oefv1Listener()                  = default;
+  /// @}
+
+  /// @{
   Oefv1Listener &operator=(const Oefv1Listener &other)  = delete;
   bool           operator==(const Oefv1Listener &other) = delete;
   bool           operator<(const Oefv1Listener &other)  = delete;
+  /// @}
+
+  void start(void);
+
+private:
+  Listener listener_;
+  int      port_;
+
+  ConfigMap endpointConfig_;
 };

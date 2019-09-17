@@ -61,20 +61,24 @@ public:
   static constexpr std::size_t BUFFER_SIZE_LIMIT = 50;
   static constexpr char const *LOGGING_NAME      = "EndpointBase";
 
+  /// @{
+  EndpointBase(std::size_t sendBufferSize, std::size_t readBufferSize, ConfigMap configMap);
+  virtual ~EndpointBase();
   EndpointBase(EndpointBase const &other) = delete;
+  /// @}
+
+  /// @{
   EndpointBase &operator=(EndpointBase const &other)  = delete;
   bool          operator==(EndpointBase const &other) = delete;
   bool          operator<(EndpointBase const &other)  = delete;
-
-  EndpointBase(std::size_t sendBufferSize, std::size_t readBufferSize, ConfigMap configMap);
-  virtual ~EndpointBase();
+  /// @}
 
   virtual Socket &socket() = 0;
 
   virtual void go();
 
-  std::shared_ptr<IMessageReader>         reader;
-  std::shared_ptr<IMessageWriter<TXType>> writer;
+  std::shared_ptr<IMessageReader>         reader_;
+  std::shared_ptr<IMessageWriter<TXType>> writer_;
 
   ErrorNotification      onError;
   EofNotification        onEof;
@@ -88,29 +92,29 @@ public:
 
   virtual const std::string &GetRemoteId() const
   {
-    return remote_id;
+    return remote_id_;
   }
 
   virtual Notification::NotificationBuilder send(TXType s);
 
   virtual bool IsTXQFull()
   {
-    Lock lock(txq_mutex);
-    return txq.size() >= BUFFER_SIZE_LIMIT;
+    Lock lock(txq_mutex_);
+    return txq_.size() >= BUFFER_SIZE_LIMIT;
   }
 
   virtual bool connected()
   {
-    if (*state > RUNNING_ENDPOINT)
+    if (*state_ > RUNNING_ENDPOINT)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "STATE: ", state);
+      FETCH_LOG_INFO(LOGGING_NAME, "STATE: ", state_);
     }
-    return *state == RUNNING_ENDPOINT;
+    return *state_ == RUNNING_ENDPOINT;
   }
 
   std::size_t GetIdent() const
   {
-    return ident;
+    return ident_;
   }
 
 protected:
@@ -120,22 +124,22 @@ protected:
   virtual bool is_eof(std::error_code const &ec) const = 0;
 
 protected:
-  RingBuffer sendBuffer;
-  RingBuffer readBuffer;
+  RingBuffer sendBuffer_;
+  RingBuffer readBuffer_;
 
   ConfigMap configMap_;
 
-  Mutex       mutex;
-  Mutex       txq_mutex;
-  std::size_t read_needed = 0;
-  std::size_t ident;
+  Mutex       mutex_;
+  Mutex       txq_mutex_;
+  std::size_t read_needed_ = 0;
+  std::size_t ident_;
 
-  std::string remote_id;
+  std::string remote_id_;
 
-  std::atomic<bool> asio_sending;
-  std::atomic<bool> asio_reading;
+  std::atomic<bool> asio_sending_;
+  std::atomic<bool> asio_reading_;
 
-  std::shared_ptr<StateType> state;
+  std::shared_ptr<StateType> state_;
 
   virtual void error(std::error_code const &ec);
   virtual void proto_error(const std::string &msg);
@@ -148,6 +152,6 @@ protected:
                                 const std::size_t &bytes);
 
 private:
-  std::vector<Notification::Notification> waiting;
-  std::list<TXType>                       txq;
+  std::vector<Notification::Notification> waiting_;
+  std::list<TXType>                       txq_;
 };

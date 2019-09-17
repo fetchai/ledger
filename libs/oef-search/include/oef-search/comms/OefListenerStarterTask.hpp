@@ -34,22 +34,22 @@ template <template <typename> class EndpointType>
 class OefListenerStarterTask : public Task
 {
 public:
-  using FactoryCreator = IOefListener<SearchTaskFactory, OefSearchEndpoint>::FactoryCreator;
-  using ConfigMap      = std::unordered_map<std::string, std::string>;
+  using FactoryCreator    = IOefListener<SearchTaskFactory, OefSearchEndpoint>::FactoryCreator;
+  using ConfigMap         = std::unordered_map<std::string, std::string>;
+  using SharedListenerSet = std::shared_ptr<OefListenerSet<SearchTaskFactory, OefSearchEndpoint>>;
+  using SharedCore        = std::shared_ptr<Core>;
 
   static constexpr char const *LOGGING_NAME = "OefListenerStarterTask";
 
   /// @{
-  OefListenerStarterTask(
-      int p, std::shared_ptr<OefListenerSet<SearchTaskFactory, OefSearchEndpoint>> listeners,
-      std::shared_ptr<Core> core, FactoryCreator initialFactoryCreator, ConfigMap endpointConfig)
-  {
-    this->p                     = p;
-    this->listeners             = listeners;
-    this->core                  = core;
-    this->initialFactoryCreator = initialFactoryCreator;
-    this->endpointConfig        = std::move(endpointConfig);
-  }
+  OefListenerStarterTask(int p, SharedListenerSet listeners, SharedCore core,
+                         FactoryCreator initialFactoryCreator, ConfigMap endpointConfig)
+    : listeners_{listeners}
+    , core_{core}
+    , p_{p}
+    , initialFactoryCreator_{initialFactoryCreator}
+    , endpointConfig_{endpointConfig}
+  {}
 
   OefListenerStarterTask(OefListenerStarterTask const &other) = delete;
   virtual ~OefListenerStarterTask()                           = default;
@@ -68,9 +68,9 @@ public:
   virtual ExitState run(void);
 
 private:
-  std::shared_ptr<OefListenerSet<SearchTaskFactory, OefSearchEndpoint>> listeners;
-  std::shared_ptr<Core>                                                 core;
-  int                                                                   p;
-  FactoryCreator                                                        initialFactoryCreator;
-  ConfigMap                                                             endpointConfig;
+  SharedListenerSet     listeners_;
+  std::shared_ptr<Core> core_;
+  int                   p_;  // TODO: rename variable
+  FactoryCreator        initialFactoryCreator_;
+  ConfigMap             endpointConfig_;
 };

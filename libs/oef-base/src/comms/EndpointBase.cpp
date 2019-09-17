@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "logging/logging.hpp"
 #include "oef-base/comms/EndpointBase.hpp"
+#include "logging/logging.hpp"
 
 // TODO: Replace beast #include "boost/beast/websocket/error.hpp"
 #include "oef-base/monitoring/Gauge.hpp"
@@ -45,26 +45,26 @@ bool EndpointBase<TXType>::connect(const Uri &uri, Core &core)
     }
     else
     {
-      *state = RUNNING_ENDPOINT;
+      *state_ = RUNNING_ENDPOINT;
       return true;
     }
   }
-  ident = endpoint_ident++;
+  ident_ = endpoint_ident++;
   return false;
 }
 
 template <typename TXType>
 EndpointBase<TXType>::EndpointBase(std::size_t sendBufferSize, std::size_t readBufferSize,
                                    ConfigMap configMap)
-  : sendBuffer(sendBufferSize)
-  , readBuffer(readBufferSize)
+  : sendBuffer_(sendBufferSize)
+  , readBuffer_(readBufferSize)
   , configMap_(std::move(configMap))
-  , asio_sending(false)
-  , asio_reading(false)
+  , asio_sending_(false)
+  , asio_reading_(false)
 {
-  state = std::make_shared<StateType>(0);
+  state_ = std::make_shared<StateType>(0);
   count++;
-  ident = endpoint_ident++;
+  ident_ = endpoint_ident++;
 }
 
 template <typename TXType>
@@ -77,22 +77,22 @@ template <typename TXType>
 void EndpointBase<TXType>::run_sending()
 {
   {
-    Lock lock(mutex);
-    if (asio_sending || *state != RUNNING_ENDPOINT)
+    Lock lock(mutex_);
+    if (asio_sending_ || *state_ != RUNNING_ENDPOINT)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "early exit 1 sending=", asio_sending, " state=", *state);
+      FETCH_LOG_INFO(LOGGING_NAME, "early exit 1 sending=", asio_sending_, " state=", *state_);
       return;
     }
-    if (sendBuffer.GetDataAvailable() == 0)
+    if (sendBuffer_.GetDataAvailable() == 0)
     {
       FETCH_LOG_DEBUG(LOGGING_NAME, "create messages");
       create_messages();
     }
-    if (sendBuffer.GetDataAvailable() == 0)
+    if (sendBuffer_.GetDataAvailable() == 0)
     {
       return;
     }
-    asio_sending = true;
+    asio_sending_ = true;
   }
   FETCH_LOG_DEBUG(LOGGING_NAME, "ok data available");
 
@@ -104,29 +104,29 @@ void EndpointBase<TXType>::run_reading()
 {
   std::size_t read_needed_local = 0;
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, reader.get(), "::run_reading");
+  FETCH_LOG_DEBUG(LOGGING_NAME, reader_.get(), "::run_reading");
   {
-    Lock lock(mutex);
-    if (asio_reading || *state != RUNNING_ENDPOINT)
+    Lock lock(mutex_);
+    if (asio_reading_ || *state_ != RUNNING_ENDPOINT)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, reader.get(), ":early exit 1 reading=", asio_sending,
-                     " state=", *state);
+      FETCH_LOG_INFO(LOGGING_NAME, reader_.get(), ":early exit 1 reading=", asio_sending_,
+                     " state=", *state_);
       return;
     }
-    if (read_needed == 0)
+    if (read_needed_ == 0)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, reader.get(), ":early exit 1 read_needed=", read_needed,
-                     " state=", *state);
+      FETCH_LOG_INFO(LOGGING_NAME, reader_.get(), ":early exit 1 read_needed=", read_needed_,
+                     " state=", *state_);
       return;
     }
-    read_needed_local = read_needed;
-    if (read_needed_local > readBuffer.GetFreeSpace())
+    read_needed_local = read_needed_;
+    if (read_needed_local > readBuffer_.GetFreeSpace())
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "********** READ BUFFER FULL!");
-      read_needed_local = readBuffer.GetFreeSpace();
+      read_needed_local = readBuffer_.GetFreeSpace();
     }
-    read_needed  = 0;
-    asio_reading = true;
+    read_needed_  = 0;
+    asio_reading_ = true;
   }
 
   if (read_needed_local == 0)
@@ -140,24 +140,24 @@ void EndpointBase<TXType>::run_reading()
 template <typename TXType>
 void EndpointBase<TXType>::close()
 {
-  Lock lock(mutex);
-  *state |= CLOSED_ENDPOINT;
+  Lock lock(mutex_);
+  *state_ |= CLOSED_ENDPOINT;
   socket().close();
 }
 
 template <typename TXType>
 void EndpointBase<TXType>::eof()
 {
-  if (*state & EOF_ENDPOINT)
+  if (*state_ & EOF_ENDPOINT)
   {
     return;
   }
 
   EofNotification local_handler_copy;
   {
-    Lock lock(mutex);
-    *state |= EOF_ENDPOINT;
-    *state |= CLOSED_ENDPOINT;
+    Lock lock(mutex_);
+    *state_ |= EOF_ENDPOINT;
+    *state_ |= CLOSED_ENDPOINT;
     socket().close();
 
     local_handler_copy = onEof;
@@ -181,7 +181,7 @@ void EndpointBase<TXType>::eof()
 template <typename TXType>
 void EndpointBase<TXType>::error(std::error_code const &ec)
 {
-  if (*state & ERRORED_ENDPOINT)
+  if (*state_ & ERRORED_ENDPOINT)
   {
     return;
   }
@@ -189,9 +189,9 @@ void EndpointBase<TXType>::error(std::error_code const &ec)
   ErrorNotification local_handler_copy;
 
   {
-    Lock lock(mutex);
-    *state |= ERRORED_ENDPOINT;
-    *state |= CLOSED_ENDPOINT;
+    Lock lock(mutex_);
+    *state_ |= ERRORED_ENDPOINT;
+    *state_ |= CLOSED_ENDPOINT;
     socket().close();
 
     local_handler_copy = onError;
@@ -217,7 +217,7 @@ void EndpointBase<TXType>::proto_error(const std::string &msg)
 {
   // std::cout << "proto error: " << msg << std::endl;
 
-  if (*state & ERRORED_ENDPOINT)
+  if (*state_ & ERRORED_ENDPOINT)
   {
     return;
   }
@@ -226,8 +226,8 @@ void EndpointBase<TXType>::proto_error(const std::string &msg)
 
   {
     Lock lock(mutex);
-    *state |= ERRORED_ENDPOINT;
-    *state |= CLOSED_ENDPOINT;
+    *state_ |= ERRORED_ENDPOINT;
+    *state_ |= CLOSED_ENDPOINT;
     socket().close();
 
     local_handler_copy = onProtoError;
@@ -251,8 +251,8 @@ void EndpointBase<TXType>::proto_error(const std::string &msg)
 template <typename TXType>
 void EndpointBase<TXType>::go()
 {
-  remote_id = socket().remote_endpoint().address().to_string();
-  FETCH_LOG_INFO(LOGGING_NAME, "remote_id detected as: ", remote_id);
+  remote_id_ = socket().remote_endpoint().address().to_string();
+  FETCH_LOG_INFO(LOGGING_NAME, "remote_id detected as: ", remote_id_);
   asio::socket_base::linger option(false, 0);
   socket().set_option(option);
 
@@ -266,18 +266,18 @@ void EndpointBase<TXType>::go()
     }
     catch (...)
     {
-      Lock lock(mutex);
-      *state |= ERRORED_ENDPOINT;
-      *state |= CLOSED_ENDPOINT;
+      Lock lock(mutex_);
+      *state_ |= ERRORED_ENDPOINT;
+      *state_ |= CLOSED_ENDPOINT;
       socket().close();
     }
   }
 
-  *state |= RUNNING_ENDPOINT;
+  *state_ |= RUNNING_ENDPOINT;
 
   {
-    Lock lock(mutex);
-    read_needed++;
+    Lock lock(mutex_);
+    read_needed_++;
   }
 
   run_reading();
@@ -311,11 +311,11 @@ void EndpointBase<TXType>::complete_sending(StateTypeP state, std::error_code co
     }
 
     // std::cout << "complete_sending OK:  " << bytes << std::endl;
-    sendBuffer.MarkDataUsed(bytes);
+    sendBuffer_.MarkDataUsed(bytes);
     create_messages();
     {
-      Lock lock(mutex);
-      asio_sending = false;
+      Lock lock(mutex_);
+      asio_sending_ = false;
     }
     // std::cout << "complete_sending: kick" << std::endl;
     run_sending();
@@ -331,9 +331,9 @@ void EndpointBase<TXType>::complete_sending(StateTypeP state, std::error_code co
 template <typename TXType>
 void EndpointBase<TXType>::create_messages()
 {
-  auto consumed_needed = writer->CheckForSpace(sendBuffer.GetSpaceBuffers(), txq);
+  auto consumed_needed = writer_->CheckForSpace(sendBuffer_.GetSpaceBuffers(), txq_);
   auto consumed        = consumed_needed.first;
-  sendBuffer.MarkSpaceUsed(consumed);
+  sendBuffer_.MarkSpaceUsed(consumed);
 }
 
 template <typename TXType>
@@ -368,7 +368,7 @@ void EndpointBase<TXType>::complete_reading(StateTypeP state, std::error_code co
     }
 
     // std::cout << reader.get() << ":complete_reading: 1 " << std::endl;
-    readBuffer.MarkSpaceUsed(bytes);
+    readBuffer_.MarkSpaceUsed(bytes);
 
     // std::cout << reader.get() << ":complete_reading: 2" << std::endl;
     IMessageReader::consumed_needed_pair consumed_needed;
@@ -379,7 +379,7 @@ void EndpointBase<TXType>::complete_reading(StateTypeP state, std::error_code co
       // std::cout << reader.get() << ":complete_reading: 4" << std::endl;
       // std::cout << reader.get() << ": @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ " <<
       // reader.get() << std::endl;
-      consumed_needed = reader->CheckForMessage(readBuffer.GetDataBuffers());
+      consumed_needed = reader_->CheckForMessage(readBuffer_.GetDataBuffers());
       // std::cout << "     DONE." << std::endl;
     }
     catch (std::exception &ex)
@@ -399,16 +399,16 @@ void EndpointBase<TXType>::complete_reading(StateTypeP state, std::error_code co
     auto consumed = consumed_needed.first;
     auto needed   = consumed_needed.second;
 
-    readBuffer.MarkDataUsed(consumed);
+    readBuffer_.MarkDataUsed(consumed);
 
     {
-      Lock lock(mutex);
-      read_needed = needed;
+      Lock lock(mutex_);
+      read_needed_ = needed;
     }
 
     {
-      Lock lock(mutex);
-      asio_reading = false;
+      Lock lock(mutex_);
+      asio_reading_ = false;
     }
     run_reading();
   }
@@ -422,10 +422,10 @@ void EndpointBase<TXType>::complete_reading(StateTypeP state, std::error_code co
 template <typename TXType>
 Notification::NotificationBuilder EndpointBase<TXType>::send(TXType s)
 {
-  Lock lock(txq_mutex);
-  if (txq.size() < BUFFER_SIZE_LIMIT)
+  Lock lock(txq_mutex_);
+  if (txq_.size() < BUFFER_SIZE_LIMIT)
   {
-    txq.push_back(s);
+    txq_.push_back(s);
     return Notification::NotificationBuilder();
   }
   else

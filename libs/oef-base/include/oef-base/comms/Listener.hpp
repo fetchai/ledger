@@ -32,7 +32,7 @@ class Listener
 public:
   using CONN_CREATOR = std::function<std::shared_ptr<ISocketOwner>(Core &core)>;
 
-  Listener(Core &core, unsigned short int port);
+  Listener(Core &core, uint16_t port);
   virtual ~Listener();
 
   void start_accept();

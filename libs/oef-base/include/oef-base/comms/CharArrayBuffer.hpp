@@ -27,18 +27,12 @@
 class CharArrayBuffer : public std::streambuf
 {
 public:
-  const std::vector<asio::mutable_buffer> &buffers;
-  int                                      current;
-  int                                      size;
-
-  CharArrayBuffer(std::vector<asio::mutable_buffer> const &thebuffers)
-    : buffers(thebuffers)
+  CharArrayBuffer(std::vector<asio::mutable_buffer> buffers)
+    : buffers_{std::move(buffers)}
   {
-    current = 0;
-    size    = 0;
-    for (auto &b : buffers)
+    for (auto &b : buffers_)
     {
-      size += asio::buffer_size(b);
+      size_ += asio::buffer_size(b);
     }
   }
 
@@ -187,7 +181,7 @@ public:
 
   void diagnostic()
   {
-    for (int i = 0; i < size; i++)
+    for (int i = 0; i < size_; i++)
     {
       char c = get_char_at(i);
 
@@ -221,11 +215,11 @@ public:
 
   bool put_char_at(int pos, char character)
   {
-    if (pos >= size)
+    if (pos >= size_)
     {
       return false;
     }
-    for (auto &b : buffers)
+    for (auto &b : buffers_)
     {
       int c = static_cast<int>(asio::buffer_size(b));
       if (pos >= c)
@@ -246,12 +240,12 @@ public:
   {
     int buf = 0;
 
-    if (pos >= size)
+    if (pos >= size_)
     {
       return traits_type::eof();
     }
 
-    for (auto &b : buffers)
+    for (auto &b : buffers_)
     {
       int c = static_cast<int>(asio::buffer_size(b));
       if (pos >= c)
@@ -270,7 +264,7 @@ public:
 
   std::streamsize RemainingSpace()
   {
-    return size - current;
+    return size_ - current_;
   }
 
   std::streamsize xsputn(const char_type *s, std::streamsize n)
@@ -278,8 +272,8 @@ public:
     // std::cout << "xsputn:" << s << std::endl;
     for (int i = 0; i < n; i++)
     {
-      put_char_at(current, s[i]);
-      current += 1;
+      put_char_at(current_, s[i]);
+      current_ += 1;
     }
     return n;
   };
@@ -287,76 +281,90 @@ public:
   CharArrayBuffer::int_type sputc(CharArrayBuffer::int_type c)
   {
     // std::cout << "sputc" << std::endl;
-    if (current >= size)
+    if (current_ >= size_)
     {
       return traits_type::eof();
     }
-    put_char_at(current, traits_type::to_char_type(c));
-    current += 1;
+    put_char_at(current_, traits_type::to_char_type(c));
+    current_ += 1;
     return c;
   }
 
   CharArrayBuffer::int_type oflow(CharArrayBuffer::int_type c)
   {
     // std::cout << "oflow: cur=" << current << "  size=" << size << std::endl;
-    if (current >= size)
+    if (current_ >= size_)
     {
       return traits_type::eof();
     }
-    put_char_at(current, traits_type::to_char_type(c));
-    current += 1;
+    put_char_at(current_, traits_type::to_char_type(c));
+    current_ += 1;
     return c;
   }
 
   CharArrayBuffer::int_type overflow(CharArrayBuffer::int_type ch)
   {
     // std::cout << "overflow" << std::endl;
-    put_char_at(current, traits_type::to_char_type(ch));
+    put_char_at(current_, traits_type::to_char_type(ch));
     return 1;
   }
 
   CharArrayBuffer::int_type underflow()
   {
     // std::cout << "underflow" << std::endl;
-    if (current >= size)
+    if (current_ >= size_)
     {
       return traits_type::eof();
     }
-    return traits_type::to_int_type(get_char_at(current));
+    return traits_type::to_int_type(get_char_at(current_));
   }
 
   CharArrayBuffer::int_type uflow()
   {
     // std::cout << "uflow" << std::endl;
-    if (current >= size)
+    if (current_ >= size_)
     {
       return traits_type::eof();
     }
-    auto r = traits_type::to_int_type(get_char_at(current));
-    current += 1;
+    auto r = traits_type::to_int_type(get_char_at(current_));
+    current_ += 1;
     return r;
   }
 
   void advance(int amount = 1)
   {
-    // std::cout << "advance: cur=" << current << "  amount=" << amount << std::endl;
-    current += amount;
+    // std::cout << "advance: cur=" << current_ << "  amount=" << amount << std::endl;
+    current_ += amount;
   }
 
   std::streamsize showmanyc()
   {
     // std::cout << "showmanyc" << std::endl;
-    return (std::streamsize)size;
+    return static_cast<std::streamsize>(size_);
   }
+
   int_type pbackfail(int_type ch)
   {
     // std::cout << "pbackfail" << std::endl;
-    if ((current == 0) || (ch != traits_type::eof() && ch != get_char_at(current - 1)))
+    if ((current_ == 0) || (ch != traits_type::eof() && ch != get_char_at(current_ - 1)))
     {
       return traits_type::eof();
     }
-    current--;
-    return traits_type::to_int_type(get_char_at(current));
+    current_--;
+    return traits_type::to_int_type(get_char_at(current_));
+  }
+
+  std::vector<asio::mutable_buffer> const &buffers() const
+  {
+    return buffers_;
+  }
+  int32_t current() const
+  {
+    return current_;
+  }
+  int32_t size() const
+  {
+    return size_;
   }
 
 private:
@@ -364,4 +372,8 @@ private:
   // TODO: copying not allowed - should be marked delete
   CharArrayBuffer(CharArrayBuffer const &);
   CharArrayBuffer &operator=(CharArrayBuffer const &);
+
+  std::vector<asio::mutable_buffer> const &buffers_;
+  int32_t                                  current_{0};
+  int32_t                                  size_{0};
 };

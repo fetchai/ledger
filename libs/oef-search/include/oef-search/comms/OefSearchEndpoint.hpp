@@ -38,21 +38,30 @@ public:
   using TXType = std::pair<Uri, std::shared_ptr<google::protobuf::Message>>;
   using ProtoEndpoint =
       ProtoMessageEndpoint<TXType, ProtoPathMessageReader, ProtoPathMessageSender>;
-  using Parent = EndpointPipe<ProtoEndpoint>;
-  using SELF_P = std::shared_ptr<OefSearchEndpoint>;
+  using Parent     = EndpointPipe<ProtoEndpoint>;
+  using SharedSelf = std::shared_ptr<OefSearchEndpoint>;
   using Parent::endpoint;
 
+  /// @(
   explicit OefSearchEndpoint(std::shared_ptr<ProtoEndpoint> endpoint);
   virtual ~OefSearchEndpoint();
+  /// @}
+
+  /// @{
+  OefSearchEndpoint(const OefSearchEndpoint &other) = delete;
+  OefSearchEndpoint &operator=(const OefSearchEndpoint &other)  = delete;
+  bool               operator==(const OefSearchEndpoint &other) = delete;
+  bool               operator<(const OefSearchEndpoint &other)  = delete;
+  /// @}
 
   void SetFactory(std::shared_ptr<SearchTaskFactory> new_factory);
   void setup();
 
   virtual void go(void) override
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "------------------> OefSearchEndpoint::go");
+    FETCH_LOG_INFO(LOGGING_NAME, "OefSearchEndpoint::go");
 
-    SELF_P self = shared_from_this();
+    SharedSelf self = shared_from_this();
     while (!go_functions.empty())
     {
       go_functions.front()(self);
@@ -71,20 +80,15 @@ public:
     return ident;
   }
 
-  void AddGoFunction(std::function<void(SELF_P)> func)
+  void AddGoFunction(std::function<void(SharedSelf)> func)
   {
     go_functions.push_back(func);
   }
 
 protected:
 private:
-  std::map<std::string, bool>            states;
-  std::size_t                            ident;
-  std::shared_ptr<SearchTaskFactory>     factory;
-  std::list<std::function<void(SELF_P)>> go_functions;
-
-  OefSearchEndpoint(const OefSearchEndpoint &other) = delete;
-  OefSearchEndpoint &operator=(const OefSearchEndpoint &other)  = delete;
-  bool               operator==(const OefSearchEndpoint &other) = delete;
-  bool               operator<(const OefSearchEndpoint &other)  = delete;
+  std::map<std::string, bool>                states;
+  std::size_t                                ident;
+  std::shared_ptr<SearchTaskFactory>         factory;
+  std::list<std::function<void(SharedSelf)>> go_functions;
 };

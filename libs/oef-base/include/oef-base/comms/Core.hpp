@@ -37,16 +37,17 @@ public:
 
   operator asio::io_context *()
   {
-    return context.get();
+    return context_.get();
   }
+
   operator asio::io_context &()
   {
-    return *context;
+    return *context_;
   }
 
-  std::shared_ptr<tcp::acceptor> makeAcceptor(unsigned short int port);
+  std::shared_ptr<tcp::acceptor> makeAcceptor(uint16_t port);
 
 private:
-  std::shared_ptr<asio::io_context> context;
-  asio::io_context::work *          work;
+  std::shared_ptr<asio::io_context> context_;
+  asio::io_context::work *          work_;
 };

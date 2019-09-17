@@ -27,7 +27,7 @@ static Counter accepting("mt-core.network.accept");
 static Counter errored("mt-core.network.accepterror");
 static Counter accepted("mt-core.network.accepted");
 
-Listener::Listener(Core &thecore, unsigned short int port)
+Listener::Listener(Core &thecore, uint16_t port)
   : core(thecore)
 {
   acceptor = thecore.makeAcceptor(port);

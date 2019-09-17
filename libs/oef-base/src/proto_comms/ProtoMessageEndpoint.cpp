@@ -37,10 +37,10 @@ void ProtoMessageEndpoint<TXType, Reader, Sender>::setup(
   std::weak_ptr<ProtoMessageEndpoint> myself_wp = myself;
 
   protoMessageSender = std::make_shared<Sender>(myself_wp);
-  endpoint->writer   = protoMessageSender;
+  endpoint->writer_  = protoMessageSender;
 
   protoMessageReader = std::make_shared<Reader>(myself_wp);
-  endpoint->reader   = protoMessageReader;
+  endpoint->reader_  = protoMessageReader;
 }
 
 template <typename TXType, typename Reader, typename Sender>

@@ -24,10 +24,12 @@
 #include <list>
 #include <vector>
 
+// TODO: Fix formatting
+
 class ConstCharArrayBuffer : public std::streambuf
 {
 public:
-  const std::vector<asio::const_buffer> &buffers;
+  std::vector<asio::const_buffer> const &buffers;
   int                                    current;
   int                                    size;
 

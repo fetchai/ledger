@@ -84,7 +84,7 @@ typedef signed char flex_int8_t;
 typedef short int flex_int16_t;
 typedef int flex_int32_t;
 typedef unsigned char flex_uint8_t;
-typedef unsigned short int flex_uint16_t;
+typedef uint16_t flex_uint16_t;
 typedef unsigned int flex_uint32_t;
 
 /* Limits of integral types. */

@@ -26,8 +26,8 @@ static Counter loopstop("mt-core.network.asio.ended");
 
 Core::Core()
 {
-  context = std::make_shared<asio::io_context>();
-  work    = new asio::io_context::work(*context);
+  context_ = std::make_shared<asio::io_context>();
+  work_    = new asio::io_context::work(*context_);
 }
 
 Core::~Core()
@@ -38,17 +38,18 @@ Core::~Core()
 void Core::run()
 {
   loopstart++;
-  context->run();
+  context_->run();
   loopstop++;
 }
 
 void Core::stop()
 {
-  delete work;
-  context->stop();
+  // TODO: work life-cycle is assymetric to context
+  delete work_;
+  context_->stop();
 }
 
-std::shared_ptr<tcp::acceptor> Core::makeAcceptor(unsigned short int port)
+std::shared_ptr<tcp::acceptor> Core::makeAcceptor(uint16_t port)
 {
-  return std::make_shared<tcp::acceptor>(*context, tcp::endpoint(tcp::v4(), port));
+  return std::make_shared<tcp::acceptor>(*context_, tcp::endpoint(tcp::v4(), port));
 }

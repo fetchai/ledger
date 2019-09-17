@@ -32,9 +32,9 @@ template <typename TXType>
 class Endpoint : public EndpointBase<TXType>, public std::enable_shared_from_this<Endpoint<TXType>>
 {
 public:
-  using EndpointBase<TXType>::state;
-  using EndpointBase<TXType>::readBuffer;
-  using EndpointBase<TXType>::sendBuffer;
+  using EndpointBase<TXType>::state_;
+  using EndpointBase<TXType>::readBuffer_;
+  using EndpointBase<TXType>::sendBuffer_;
   using typename EndpointBase<TXType>::message_type;
 
   using ConfigMap = typename EndpointBase<TXType>::ConfigMap;

@@ -31,20 +31,24 @@
 template <template <typename> class EndpointType>
 Oefv1Listener<EndpointType>::Oefv1Listener(std::shared_ptr<Core> core, int port,
                                            ConfigMap endpointConfig)
-  : listener(*core, static_cast<uint16_t>(port))
+  : listener_(*core, static_cast<uint16_t>(port))
+  , port_{port}
+  , endpointConfig_{std::move(endpointConfig)}
 {
-  this->port           = port;
-  this->endpointConfig = std::move(endpointConfig);
-  listener.creator     = [this](Core &core) {
-    std::cout << "Create endpoint...." << std::endl;
+
+  listener_.creator = [this](Core &core) {
     using TXType = std::pair<Uri, std::shared_ptr<google::protobuf::Message>>;
-    auto ep0 = std::make_shared<EndpointType<TXType>>(core, 1000000, 1000000, this->endpointConfig);
+
+    auto ep0 =
+        std::make_shared<EndpointType<TXType>>(core, 1000000, 1000000, this->endpointConfig_);
     auto ep1 = std::make_shared<
         ProtoMessageEndpoint<TXType, ProtoPathMessageReader, ProtoPathMessageSender>>(
         std::move(ep0));
+
     ep1->setup(ep1);
 
-    auto ep2     = std::make_shared<OefSearchEndpoint>(std::move(ep1));
+    auto ep2 = std::make_shared<OefSearchEndpoint>(std::move(ep1));
+
     auto factory = this->factoryCreator(ep2);
     ep2->SetFactory(factory);
     return ep2;
@@ -54,7 +58,7 @@ Oefv1Listener<EndpointType>::Oefv1Listener(std::shared_ptr<Core> core, int port,
 template <template <typename> class EndpointType>
 void Oefv1Listener<EndpointType>::start(void)
 {
-  listener.start_accept();
+  listener_.start_accept();
 }
 
 template class Oefv1Listener<Endpoint>;

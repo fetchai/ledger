@@ -36,9 +36,9 @@ class EndpointSSL : public EndpointBase<TXType>,
                     public std::enable_shared_from_this<EndpointSSL<TXType>>
 {
 public:
-  using EndpointBase<TXType>::state;
-  using EndpointBase<TXType>::readBuffer;
-  using EndpointBase<TXType>::sendBuffer;
+  using EndpointBase<TXType>::state_;
+  using EndpointBase<TXType>::readBuffer_;
+  using EndpointBase<TXType>::sendBuffer_;
   using EndpointBase<TXType>::configMap_;
   using typename EndpointBase<TXType>::message_type;
   using std::enable_shared_from_this<EndpointSSL<TXType>>::shared_from_this;
@@ -64,9 +64,13 @@ public:
   virtual Socket &socket() override
   {
     if (ssl_setup)
+    {
       return ssl_sock_p->next_layer();
+    }
     else
+    {
       return sock;
+    }
   }
 
   virtual void close() override;
@@ -74,10 +78,14 @@ public:
 
   std::string agent_key()
   {
-    if (*state == this->RUNNING_ENDPOINT)
+    if (*state_ == this->RUNNING_ENDPOINT)
+    {
       return agent_key_;
+    }
     else
+    {
       return "";
+    }
   }
 
   std::shared_ptr<EvpPublicKey> get_peer_ssl_key();
