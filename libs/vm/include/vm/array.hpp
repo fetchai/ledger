@@ -284,7 +284,7 @@ private:
     }
 
     buffer << GetUniqueId() << static_cast<uint64_t>(elements.size());
-    for (Ptr<Object> v : data)
+    for (Ptr<Object> const &v : data)
     {
       if (!v)
       {
@@ -297,6 +297,7 @@ private:
         return false;
       }
     }
+
     return true;
   }
 

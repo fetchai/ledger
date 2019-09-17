@@ -165,7 +165,7 @@ int main(int ac, char **av)
     }
 
     // Update models of all clients by average model
-    for (unsigned int i(0); i < number_of_clients; ++i)
+    for (uint32_t i(0); i < number_of_clients; ++i)
     {
       clients[i]->SetWeights(new_weights);
     }

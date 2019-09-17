@@ -72,11 +72,11 @@ TYPED_TEST(CombinatoricsTest, test_num_combinations_standard_input)
 
   ASSERT_EQ(fetch_output, 126);
 
-  n                     = (1 << 24) + 1;
-  SizeType matrixHeight = static_cast<SizeType>(calculateNumCombinations(n, SizeType(1)));
+  n                 = (1 << 24) + 1;
+  auto matrixHeight = static_cast<SizeType>(calculateNumCombinations(n, SizeType(1)));
   EXPECT_EQ(matrixHeight, n);
 
-  if (sizeof(n) > 7)
+  if (sizeof(n) > 7u)
   {
     n            = (1llu << 63) - 1;
     matrixHeight = static_cast<SizeType>(calculateNumCombinations(n, SizeType(1)));

@@ -71,7 +71,7 @@ protected:
   {
   public:
     template <typename... Args>
-    PayloadPacker(Args... args)
+    explicit PayloadPacker(Args... args)
     {
       // initialise the array
       packer_.pack_array(sizeof...(args));

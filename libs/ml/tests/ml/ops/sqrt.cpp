@@ -90,7 +90,7 @@ TYPED_TEST(SqrtTest, forward_all_negative_test)
   op.Forward({std::make_shared<const TensorType>(data)}, pred);
 
   // gives NaN because sqrt of a negative number is undefined
-  for (auto p_it : pred)
+  for (auto const &p_it : pred)
   {
     EXPECT_TRUE(fetch::math::is_nan(p_it));
   }
@@ -128,7 +128,7 @@ TYPED_TEST(SqrtTest, backward_zero_test)
 
   std::vector<TensorType> pred = op.Backward({std::make_shared<const TensorType>(data)}, error);
   // gives NaN because of division by zero
-  for (auto p_it : pred.at(0))
+  for (auto const &p_it : pred.at(0))
   {
     EXPECT_TRUE(fetch::math::is_inf(p_it) || fetch::math::is_nan(p_it));
   }

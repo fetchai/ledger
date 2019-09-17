@@ -29,6 +29,7 @@
 #include <functional>
 #include <random>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace fetch {
@@ -48,10 +49,9 @@ public:
 
   LayerNorm() = default;
 
-  explicit LayerNorm(std::vector<SizeType> const &data_shape,
-                     SizeType                     axis = static_cast<SizeType>(0),
+  explicit LayerNorm(std::vector<SizeType> data_shape, SizeType axis = static_cast<SizeType>(0),
                      DataType epsilon = fetch::math::function_tolerance<DataType>())
-    : data_shape_(data_shape)
+    : data_shape_(std::move(data_shape))
     , axis_(axis)
     , epsilon_(epsilon)
   {

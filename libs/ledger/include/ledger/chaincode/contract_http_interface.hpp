@@ -43,7 +43,7 @@ public:
   ContractHttpInterface(StorageInterface &storage, TransactionProcessor &processor);
   ContractHttpInterface(ContractHttpInterface const &) = delete;
   ContractHttpInterface(ContractHttpInterface &&)      = delete;
-  ~ContractHttpInterface()                             = default;
+  ~ContractHttpInterface() override                    = default;
 
   // Operators
   ContractHttpInterface &operator=(ContractHttpInterface const &) = delete;

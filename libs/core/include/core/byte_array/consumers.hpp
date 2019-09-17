@@ -75,7 +75,7 @@ int NumberConsumer(byte_array::ConstByteArray const &str, uint64_t &pos)
   }
   if (pos != oldpos)
   {
-    int ret = int(NUMBER_INT);
+    auto ret = int(NUMBER_INT);
 
     if ((pos < str.size()) && (str[pos] == '.'))
     {
@@ -141,10 +141,10 @@ int StringConsumerSSE(byte_array::ConstByteArray const &str, uint64_t &pos)
   alignas(16) uint8_t compare[16] = {'"', '"', '"', '"', '"', '"', '"', '"',
                                      '"', '"', '"', '"', '"', '"', '"', '"'};
 
-  __m128i  comp  = _mm_load_si128((__m128i *)compare);
-  __m128i  mptr  = _mm_loadu_si128((__m128i *)ptr);  // TODO(issue 37): Optimise to follow alignment
-  __m128i  mret  = _mm_cmpeq_epi8(comp, mptr);
-  uint16_t found = uint16_t(_mm_movemask_epi8(mret));
+  __m128i comp  = _mm_load_si128((__m128i *)compare);
+  __m128i mptr  = _mm_loadu_si128((__m128i *)ptr);  // TODO(issue 37): Optimise to follow alignment
+  __m128i mret  = _mm_cmpeq_epi8(comp, mptr);
+  auto    found = uint16_t(_mm_movemask_epi8(mret));
 
   while ((pos < str.size()) && (!found))
   {

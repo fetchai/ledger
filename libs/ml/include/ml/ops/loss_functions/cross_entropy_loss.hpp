@@ -83,8 +83,8 @@ public:
     assert(inputs.at(0)->size() == inputs.at(1)->size());
     assert(inputs.at(0)->shape().size() == 2);
 
-    bool     is_binary  = (inputs.at(0)->shape(0) == 1);
-    DataType batch_size = static_cast<DataType>(inputs.at(0)->shape(1));
+    bool is_binary  = (inputs.at(0)->shape(0) == 1);
+    auto batch_size = static_cast<DataType>(inputs.at(0)->shape(1));
 
     TensorType ret({inputs.at(0)->shape()});
 

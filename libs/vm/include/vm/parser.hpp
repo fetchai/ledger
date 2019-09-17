@@ -52,8 +52,7 @@ private:
 
   struct OpInfo
   {
-    OpInfo()
-    {}
+    OpInfo() = default;
     OpInfo(int precedence__, Association association__, int arity__)
     {
       precedence  = precedence__;
@@ -135,7 +134,7 @@ private:
 
   void IncrementGroupMembers()
   {
-    if (groups_.size())
+    if (!groups_.empty())
     {
       Expr &groupop = operators_[groups_.back()];
       ++(groupop.num_members);

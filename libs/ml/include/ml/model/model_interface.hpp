@@ -22,6 +22,8 @@
 #include "ml/optimisation/optimiser.hpp"
 #include "ml/optimisation/types.hpp"
 
+#include <utility>
+
 namespace fetch {
 namespace ml {
 namespace model {
@@ -46,10 +48,11 @@ public:
   virtual bool Predict(TensorType &input, TensorType &output);
 
   explicit ModelInterface(DataLoaderPtrType dataloader_ptr, OptimiserTypeType optimiser_type,
-                          ModelConfig<DataType> const &model_config = ModelConfig<DataType>())
-    : model_config_(model_config)
-    , dataloader_ptr_(dataloader_ptr)
-    , optimiser_type_(optimiser_type){};
+                          ModelConfig<DataType> model_config = ModelConfig<DataType>())
+    : model_config_(std::move(model_config))
+    , dataloader_ptr_(std::move(dataloader_ptr))
+    , optimiser_type_(optimiser_type)
+  {}
 
 protected:
   ModelConfig<DataType> model_config_;

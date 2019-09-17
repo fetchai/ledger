@@ -48,7 +48,7 @@ ConstByteArray GenerateRandomData()
   ByteArray buffer;
   buffer.Resize(LENGTH);
 
-  RNG::RandomType *words = reinterpret_cast<RNG::RandomType *>(buffer.pointer());
+  auto *words = reinterpret_cast<RNG::RandomType *>(buffer.pointer());
   for (std::size_t i = 0; i < NUM_WORDS; ++i)
   {
     *words++ = rng();

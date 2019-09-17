@@ -393,7 +393,7 @@ inline VectorRegister<int64_t, 256> operator>=(VectorRegister<int64_t, 256> cons
 
 inline int64_t first_element(VectorRegister<int64_t, 128> const &x)
 {
-  return static_cast<int64_t>(_mm_extract_epi64(x.data(), 0));
+  return static_cast<int64_t>(_mm_extract_epi64(x.data(), 0));  // NOLINT
 }
 
 inline int64_t first_element(VectorRegister<int64_t, 256> const &x)
@@ -428,7 +428,7 @@ inline VectorRegister<int64_t, 256> shift_elements_right(VectorRegister<int64_t,
 inline int64_t reduce(VectorRegister<int64_t, 128> const &x)
 {
   __m128i r = _mm_add_epi64(x.data(), _mm_bsrli_si128(x.data(), 8));
-  return static_cast<int64_t>(_mm_extract_epi64(r, 0));
+  return static_cast<int64_t>(_mm_extract_epi64(r, 0));  // NOLINT
 }
 
 inline int64_t reduce(VectorRegister<int64_t, 256> const &x)
@@ -477,8 +477,8 @@ inline bool all_equal_to(VectorRegister<int64_t, 128> const &x,
 inline bool all_equal_to(VectorRegister<int64_t, 256> const &x,
                          VectorRegister<int64_t, 256> const &y)
 {
-  __m256i  r    = (x == y).data();
-  uint32_t mask = static_cast<uint32_t>(_mm256_movemask_epi8(r));
+  __m256i r    = (x == y).data();
+  auto    mask = static_cast<uint32_t>(_mm256_movemask_epi8(r));
   return mask == 0xFFFFFFFFUL;
 }
 

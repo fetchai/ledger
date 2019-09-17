@@ -61,7 +61,7 @@ public:
     for (int i = 0; i < argc; i++)
     {
       auto s = std::string(argv[i]);
-      if (s.size() > 0 && s[0] == '-')
+      if (!s.empty() && s[0] == '-')
       {
         if (s.size() > 1 && s[1] == '-')
         {
@@ -74,7 +74,7 @@ public:
       }
     }
 
-    for (auto action : assigners_)
+    for (auto const &action : assigners_)
     {
       ActionFunctionType func = action.second;
       func(args, errs);
@@ -92,7 +92,7 @@ public:
 
     if (!errs.empty())
     {
-      for (auto err : errs)
+      for (auto const &err : errs)
       {
         std::cerr << err << std::endl;
       }
@@ -100,8 +100,7 @@ public:
     }
   }
 
-  virtual ~Params()
-  {}
+  virtual ~Params() = default;
 
   template <class TYPE>
   void add(TYPE &assignee, const std::string &name, const std::string &help, TYPE deflt)

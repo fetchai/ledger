@@ -129,8 +129,8 @@ TEST_F(VariantTests, CheckPrimitiveIsValue)
     Variant v{1};
 
     EXPECT_FALSE(v.Is<bool>());
-    EXPECT_TRUE(v.Is<unsigned int>());
-    EXPECT_TRUE(v.Is<int>());
+    EXPECT_TRUE(v.Is<uint32_t>());
+    EXPECT_TRUE(v.Is<int32_t>());
     EXPECT_FALSE(v.Is<float>());
     EXPECT_FALSE(v.Is<double>());
     EXPECT_FALSE(v.Is<std::string>());
@@ -141,8 +141,8 @@ TEST_F(VariantTests, CheckPrimitiveIsValue)
     Variant v{20u};
 
     EXPECT_FALSE(v.Is<bool>());
-    EXPECT_TRUE(v.Is<unsigned int>());
-    EXPECT_TRUE(v.Is<int>());
+    EXPECT_TRUE(v.Is<uint32_t>());
+    EXPECT_TRUE(v.Is<int32_t>());
     EXPECT_FALSE(v.Is<float>());
     EXPECT_FALSE(v.Is<double>());
     EXPECT_FALSE(v.Is<std::string>());
@@ -153,8 +153,8 @@ TEST_F(VariantTests, CheckPrimitiveIsValue)
     Variant v{true};
 
     EXPECT_TRUE(v.Is<bool>());
-    EXPECT_FALSE(v.Is<unsigned int>());
-    EXPECT_FALSE(v.Is<int>());
+    EXPECT_FALSE(v.Is<uint32_t>());
+    EXPECT_FALSE(v.Is<int32_t>());
     EXPECT_FALSE(v.Is<float>());
     EXPECT_FALSE(v.Is<double>());
     EXPECT_FALSE(v.Is<std::string>());
@@ -165,8 +165,8 @@ TEST_F(VariantTests, CheckPrimitiveIsValue)
     Variant v{3.14f};
 
     EXPECT_FALSE(v.Is<bool>());
-    EXPECT_FALSE(v.Is<unsigned int>());
-    EXPECT_FALSE(v.Is<int>());
+    EXPECT_FALSE(v.Is<uint32_t>());
+    EXPECT_FALSE(v.Is<int32_t>());
     EXPECT_TRUE(v.Is<float>());
     EXPECT_TRUE(v.Is<double>());
     EXPECT_FALSE(v.Is<std::string>());
@@ -177,8 +177,8 @@ TEST_F(VariantTests, CheckPrimitiveIsValue)
     Variant v{2.71828};
 
     EXPECT_FALSE(v.Is<bool>());
-    EXPECT_FALSE(v.Is<unsigned int>());
-    EXPECT_FALSE(v.Is<int>());
+    EXPECT_FALSE(v.Is<uint32_t>());
+    EXPECT_FALSE(v.Is<int32_t>());
     EXPECT_TRUE(v.Is<float>());
     EXPECT_TRUE(v.Is<double>());
     EXPECT_FALSE(v.Is<std::string>());
@@ -251,8 +251,8 @@ TEST_F(VariantTests, CheckElementAccess)
     EXPECT_TRUE(v.IsInteger());
 
     EXPECT_THROW(v.As<bool>(), std::runtime_error);
-    EXPECT_EQ(1u, v.As<unsigned int>());
-    EXPECT_EQ(1, v.As<int>());
+    EXPECT_EQ(1u, v.As<uint32_t>());
+    EXPECT_EQ(1, v.As<int32_t>());
     EXPECT_THROW(v.As<float>(), std::runtime_error);
     EXPECT_THROW(v.As<double>(), std::runtime_error);
     // EXPECT_THROW(v.As<std::string>(), std::runtime_error);
@@ -265,8 +265,8 @@ TEST_F(VariantTests, CheckElementAccess)
     EXPECT_TRUE(v.IsInteger());
 
     EXPECT_THROW(v.As<bool>(), std::runtime_error);
-    EXPECT_EQ(20u, v.As<unsigned int>());
-    EXPECT_EQ(20, v.As<int>());
+    EXPECT_EQ(20u, v.As<uint32_t>());
+    EXPECT_EQ(20, v.As<int32_t>());
     EXPECT_THROW(v.As<float>(), std::runtime_error);
     EXPECT_THROW(v.As<double>(), std::runtime_error);
     // EXPECT_THROW(v.As<std::string>(), std::runtime_error);
@@ -279,8 +279,8 @@ TEST_F(VariantTests, CheckElementAccess)
     EXPECT_TRUE(v.IsBoolean());
 
     EXPECT_TRUE(v.As<bool>());
-    EXPECT_THROW(v.As<unsigned int>(), std::runtime_error);
-    EXPECT_THROW(v.As<int>(), std::runtime_error);
+    EXPECT_THROW(v.As<uint32_t>(), std::runtime_error);
+    EXPECT_THROW(v.As<int32_t>(), std::runtime_error);
     EXPECT_THROW(v.As<float>(), std::runtime_error);
     EXPECT_THROW(v.As<double>(), std::runtime_error);
     // EXPECT_THROW(v.As<std::string>(), std::runtime_error);
@@ -293,8 +293,8 @@ TEST_F(VariantTests, CheckElementAccess)
     EXPECT_TRUE(v.IsFloatingPoint());
 
     EXPECT_THROW(v.As<bool>(), std::runtime_error);
-    EXPECT_THROW(v.As<unsigned int>(), std::runtime_error);
-    EXPECT_THROW(v.As<int>(), std::runtime_error);
+    EXPECT_THROW(v.As<uint32_t>(), std::runtime_error);
+    EXPECT_THROW(v.As<int32_t>(), std::runtime_error);
     EXPECT_FLOAT_EQ(3.14f, v.As<float>());
     EXPECT_FLOAT_EQ(3.14f, static_cast<float>(v.As<double>()));
     // EXPECT_THROW(v.As<std::string>(), std::runtime_error);
@@ -307,8 +307,8 @@ TEST_F(VariantTests, CheckElementAccess)
     EXPECT_TRUE(v.IsFloatingPoint());
 
     EXPECT_THROW(v.As<bool>(), std::runtime_error);
-    EXPECT_THROW(v.As<unsigned int>(), std::runtime_error);
-    EXPECT_THROW(v.As<int>(), std::runtime_error);
+    EXPECT_THROW(v.As<uint32_t>(), std::runtime_error);
+    EXPECT_THROW(v.As<int32_t>(), std::runtime_error);
     EXPECT_FLOAT_EQ(2.71828f, v.As<float>());
     EXPECT_DOUBLE_EQ(2.71828, v.As<double>());
     // EXPECT_THROW(v.As<std::string>(), std::runtime_error);
@@ -321,8 +321,8 @@ TEST_F(VariantTests, CheckElementAccess)
     EXPECT_TRUE(v.IsString());
 
     EXPECT_THROW(v.As<bool>(), std::runtime_error);
-    EXPECT_THROW(v.As<unsigned int>(), std::runtime_error);
-    EXPECT_THROW(v.As<int>(), std::runtime_error);
+    EXPECT_THROW(v.As<uint32_t>(), std::runtime_error);
+    EXPECT_THROW(v.As<int32_t>(), std::runtime_error);
     EXPECT_THROW(v.As<float>(), std::runtime_error);
     EXPECT_THROW(v.As<double>(), std::runtime_error);
     // EXPECT_THROW(v.As<std::string>(), std::runtime_error);
@@ -335,8 +335,8 @@ TEST_F(VariantTests, CheckElementAccess)
     EXPECT_TRUE(v.IsString());
 
     EXPECT_THROW(v.As<bool>(), std::runtime_error);
-    EXPECT_THROW(v.As<unsigned int>(), std::runtime_error);
-    EXPECT_THROW(v.As<int>(), std::runtime_error);
+    EXPECT_THROW(v.As<uint32_t>(), std::runtime_error);
+    EXPECT_THROW(v.As<int32_t>(), std::runtime_error);
     EXPECT_THROW(v.As<float>(), std::runtime_error);
     EXPECT_THROW(v.As<double>(), std::runtime_error);
     // EXPECT_THROW(v.As<std::string>(), std::runtime_error);
@@ -349,8 +349,8 @@ TEST_F(VariantTests, CheckElementAccess)
     EXPECT_TRUE(v.IsString());
 
     EXPECT_THROW(v.As<bool>(), std::runtime_error);
-    EXPECT_THROW(v.As<unsigned int>(), std::runtime_error);
-    EXPECT_THROW(v.As<int>(), std::runtime_error);
+    EXPECT_THROW(v.As<uint32_t>(), std::runtime_error);
+    EXPECT_THROW(v.As<int32_t>(), std::runtime_error);
     EXPECT_THROW(v.As<float>(), std::runtime_error);
     EXPECT_THROW(v.As<double>(), std::runtime_error);
     // EXPECT_THROW(v.As<std::string>(), std::runtime_error);
@@ -372,7 +372,7 @@ TEST_F(VariantTests, CheckCopyAssignment)
     ASSERT_TRUE(v.IsInteger());
     ASSERT_TRUE(other.IsInteger());
 
-    EXPECT_EQ(1, v.As<int>());
+    EXPECT_EQ(1, v.As<int32_t>());
   }
 
   {
@@ -387,7 +387,7 @@ TEST_F(VariantTests, CheckCopyAssignment)
     ASSERT_TRUE(v.IsInteger());
     ASSERT_TRUE(other.IsInteger());
 
-    EXPECT_EQ(20, v.As<int>());
+    EXPECT_EQ(20, v.As<int32_t>());
   }
 
   {
@@ -483,7 +483,7 @@ TEST_F(VariantTests, IndexBasedArrayInit)
   v[4] = "variant";
 
   EXPECT_TRUE(v[0].IsBoolean());
-  EXPECT_TRUE(v[1].Is<int>());
+  EXPECT_TRUE(v[1].Is<int32_t>());
   EXPECT_TRUE(v[2].Is<float>());
   EXPECT_TRUE(v[3].Is<double>());
   EXPECT_TRUE(v[4].IsString());
@@ -536,7 +536,7 @@ TEST_F(VariantTests, BasicObject)
 
   ASSERT_TRUE(v.Has("number"));
   EXPECT_TRUE(v["number"].IsInteger());
-  EXPECT_EQ(v["number"].As<int>(), 42);
+  EXPECT_EQ(v["number"].As<int32_t>(), 42);
 
   ASSERT_TRUE(v.Has("obj"));
   ASSERT_TRUE(v["obj"].IsObject());
@@ -547,7 +547,7 @@ TEST_F(VariantTests, BasicObject)
 
   ASSERT_TRUE(v["obj"].Has("size"));
   EXPECT_TRUE(v["obj"]["size"].IsInteger());
-  EXPECT_EQ(v["obj"]["size"].As<int>(), 1);
+  EXPECT_EQ(v["obj"]["size"].As<int32_t>(), 1);
 
   {
     Variant const &w(v);
@@ -584,7 +584,7 @@ TEST_F(VariantTests, ConstArrayAccess)
   {
     Variant const &w{v};
 
-    EXPECT_EQ(w[0].As<int>(), 42);
+    EXPECT_EQ(w[0].As<int32_t>(), 42);
   }
 }
 
