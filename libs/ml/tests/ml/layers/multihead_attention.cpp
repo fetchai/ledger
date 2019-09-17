@@ -28,8 +28,7 @@ class MultiheadAttention : public ::testing::Test
 {
 };
 using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>,
-                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<16, 16>>>;
+                                 fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 TYPED_TEST_CASE(MultiheadAttention, MyTypes);
 
 TYPED_TEST(MultiheadAttention, input_output_dimension_check)  // Use the class as a subgraph
@@ -46,7 +45,8 @@ TYPED_TEST(MultiheadAttention, input_output_dimension_check)  // Use the class a
   g.template AddNode<fetch::ml::layers::MultiheadAttention<TypeParam>>(
       "MultiheadAttention", {query, key, value, mask}, static_cast<SizeType>(4),
       static_cast<SizeType>(12), DataType(0.1));
-  TypeParam query_data = TypeParam({12, 25, 4});  // todo - values not initialised?
+  TypeParam query_data = TypeParam({12, 25, 4});
+  query_data.Fill(static_cast<DataType>(0));
   TypeParam key_data   = query_data;
   TypeParam value_data = query_data;
   TypeParam mask_data  = TypeParam({25, 25, 4});
