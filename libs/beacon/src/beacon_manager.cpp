@@ -349,7 +349,10 @@ void BeaconManager::ComputePublicKeys()
 void BeaconManager::AddReconstructionShare(MuddleAddress const &address)
 {
   CabinetIndex index = identity_to_index_[address];
-  reconstruction_shares.insert({address, {{}, std::vector<PrivateKey>(cabinet_size_, zeroFr_)}});
+  if (reconstruction_shares.find(address) == reconstruction_shares.end())
+  {
+    reconstruction_shares.insert({address, {{}, std::vector<PrivateKey>(cabinet_size_, zeroFr_)}});
+  }
   reconstruction_shares.at(address).first.insert(cabinet_index_);
   reconstruction_shares.at(address).second[cabinet_index_] = s_ij[index][cabinet_index_];
 }
