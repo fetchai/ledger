@@ -115,6 +115,7 @@ TYPED_TEST(SqrtTest, backward_all_negative_test)
 TYPED_TEST(SqrtTest, backward_zero_test)
 {
   using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
 
   TensorType data  = TensorType::FromString("0,  0,    0,    0,        0");
   TensorType error = TensorType::FromString("1,  1,    1,    2,        0");
@@ -125,8 +126,9 @@ TYPED_TEST(SqrtTest, backward_zero_test)
   // gives NaN because of division by zero
   for (auto p_it : pred.at(0))
   {
-    EXPECT_TRUE(fetch::math::is_inf(p_it));
+    EXPECT_TRUE(fetch::math::is_inf(p_it) || fetch::math::is_nan(p_it));
   }
+  fetch::math::state_clear<DataType>();
 }
 
 TYPED_TEST(SqrtTest, saveparams_test)

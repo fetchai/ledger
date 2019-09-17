@@ -96,7 +96,12 @@ TYPED_TEST(LogTest, backward_test)
 
   ASSERT_TRUE(prediction.at(0).AllClose(gt, fetch::math::function_tolerance<DataType>(),
                                         fetch::math::function_tolerance<DataType>()));
+  fetch::math::state_clear<DataType>();
 }
+
+//// TODO(1195): fixed point and floating point tests should be unified.
+//  using DataType = typename TypeParam::Type;
+//  assert(fetch::math::state_division_by_zero<DataType>() == false);
 
 TYPED_TEST(LogTest, saveparams_test)
 {
@@ -143,11 +148,13 @@ TYPED_TEST(LogTest, saveparams_test)
   // test correct values
   EXPECT_TRUE(
       new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
+  fetch::math::state_clear<DataType>();
 }
 
 TYPED_TEST(LogTest, saveparams_backward_test)
 {
   using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
   using OpType     = fetch::ml::ops::Log<TensorType>;
   using SPType     = typename OpType::SPType;
 
@@ -188,4 +195,5 @@ TYPED_TEST(LogTest, saveparams_backward_test)
   EXPECT_TRUE(prediction.at(0).AllClose(
       new_prediction.at(0), fetch::math::function_tolerance<typename TypeParam::Type>(),
       fetch::math::function_tolerance<typename TypeParam::Type>()));
+  fetch::math::state_clear<DataType>();
 }

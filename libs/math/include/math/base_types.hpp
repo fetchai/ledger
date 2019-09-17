@@ -115,27 +115,30 @@ fetch::meta::IfIsFloat<T, T> static function_tolerance()
 }
 
 template <typename T>
-static constexpr meta::IfIsNonFixedPointArithmetic<T, bool> is_nan(T const & val)
+static constexpr meta::IfIsNonFixedPointArithmetic<T, bool> is_nan(T const &val)
 {
   return std::isnan(val);
 }
 
 template <typename T>
-static constexpr meta::IfIsFixedPoint<T, bool> is_nan(T const & val)
+static constexpr meta::IfIsFixedPoint<T, bool> is_nan(T const &val)
 {
   return T::IsNaN(val);
 }
 
 template <typename T>
-static constexpr meta::IfIsNonFixedPointArithmetic<T, bool> is_inf(T const & val)
+static constexpr meta::IfIsNonFixedPointArithmetic<T, bool> is_div_by_zero(T const &val)
 {
   return std::isinf(val);
 }
 
 template <typename T>
-static constexpr meta::IfIsFixedPoint<T, bool> is_inf(T const & val)
+static constexpr meta::IfIsFixedPoint<T, bool> is_div_by_zero(T const &val)
 {
-  return (T::IsNegInfinity(val) || (T::IsPosInfinity(val)));
+  auto tmp     = T::IsNegInfinity(val);
+  auto tmp_pos = T::IsPosInfinity(val);
+  auto ret     = (tmp || tmp_pos);
+  return ret;
 }
 
 template <typename T>
@@ -196,6 +199,18 @@ template <typename T>
 static constexpr meta::IfIsFixedPoint<T, void> state_clear()
 {
   T::StateClear();
+}
+
+template <typename T>
+static constexpr meta::IfIsNonFixedPointArithmetic<T, bool> is_inf(T const &val)
+{
+  return std::isinf(val);
+}
+
+template <typename T>
+static constexpr meta::IfIsFixedPoint<T, bool> is_inf(T const &val)
+{
+  return (T::IsNegInfinity(val) || T::IsPosInfinity(val) || state_division_by_zero<T>());
 }
 
 }  // namespace math
