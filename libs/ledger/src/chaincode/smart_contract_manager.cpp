@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chaincode/smart_contract_manager.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "crypto/fnv.hpp"
@@ -25,6 +24,7 @@
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chaincode/contract.hpp"
 #include "ledger/chaincode/smart_contract.hpp"
+#include "ledger/chaincode/smart_contract_manager.hpp"
 #include "logging/logging.hpp"
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"

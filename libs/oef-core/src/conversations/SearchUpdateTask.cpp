@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "oef-core/conversations/SearchUpdateTask.hpp"
 #include "oef-base/conversation/OutboundConversation.hpp"
 #include "oef-base/conversation/OutboundConversations.hpp"
 #include "oef-base/monitoring/Counter.hpp"
 #include "oef-base/utils/Uri.hpp"
+#include "oef-core/conversations/SearchUpdateTask.hpp"
 #include "oef-core/tasks/utils.hpp"
 #include "oef-messages/search_response.hpp"
 

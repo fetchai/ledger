@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "oef-base/proto_comms/ProtoMessageSender.hpp"
 #include "oef-base/proto_comms/ProtoMessageEndpoint.hpp"
+#include "oef-base/proto_comms/ProtoMessageSender.hpp"
 
 #include "oef-messages/fetch_protobuf.hpp"
 

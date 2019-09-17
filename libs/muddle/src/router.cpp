@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "router.hpp"
 #include "dispatcher.hpp"
 #include "muddle_logging_name.hpp"
 #include "muddle_register.hpp"
+#include "router.hpp"
 #include "routing_message.hpp"
 #include "xor_metric.hpp"
 

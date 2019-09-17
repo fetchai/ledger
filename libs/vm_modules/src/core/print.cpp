@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm_modules/core/print.hpp"
 #include "meta/type_traits.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm/array.hpp"
 #include "vm/module.hpp"
 #include "vm/vm.hpp"
+#include "vm_modules/core/print.hpp"
 
 #include <ostream>
 

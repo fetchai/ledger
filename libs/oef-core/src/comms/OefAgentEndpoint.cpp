@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "oef-core/comms/OefAgentEndpoint.hpp"
 #include "oef-base/comms/Endianness.hpp"
 #include "oef-base/comms/IOefTaskFactory.hpp"
 #include "oef-base/monitoring/Counter.hpp"
@@ -25,6 +24,7 @@
 #include "oef-base/proto_comms/ProtoMessageSender.hpp"
 #include "oef-base/threading/Task.hpp"
 #include "oef-base/threading/Taskpool.hpp"
+#include "oef-core/comms/OefAgentEndpoint.hpp"
 #include "oef-core/karma/IKarmaPolicy.hpp"
 #include "oef-core/karma/XKarma.hpp"
 #include "oef-core/tasks-base/TSendProtoTask.hpp"

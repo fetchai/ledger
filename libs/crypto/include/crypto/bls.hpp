@@ -119,13 +119,13 @@ public:
   {
     std::stringstream buffer(static_cast<std::string>(private_key));
     buffer >> private_key_;
-    private_key_.GetPublicKey(public_key_);
+    private_key_.getPublicKey(public_key_);
   }
 
   void GenerateKeys()
   {
     private_key_.init();
-    private_key_.GetPublicKey(public_key_);
+    private_key_.getPublicKey(public_key_);
   }
 
   ConstByteArray Sign(ConstByteArray const &text) const final

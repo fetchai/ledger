@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "http/request.hpp"
 #include "core/assert.hpp"
+#include "http/request.hpp"
 
 #include <algorithm>
 #include <iostream>

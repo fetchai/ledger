@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/layers/PRelu.hpp"
 #include "math/tensor.hpp"
+#include "ml/layers/PRelu.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"

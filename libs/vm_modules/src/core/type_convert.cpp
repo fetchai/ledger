@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm_modules/core/type_convert.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include "vectorise/fixed_point/type_traits.hpp"
 #include "vm/module.hpp"
+#include "vm_modules/core/type_convert.hpp"
 
 #include <cstdint>
 #include <sstream>

@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/layers/normalisation/layer_norm.hpp"
 #include "math/fundamental_operators.hpp"
 #include "math/tensor.hpp"
+#include "ml/layers/normalisation/layer_norm.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"

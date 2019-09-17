@@ -138,5 +138,5 @@ if __name__ == "__main__":
 
     if checker.has_error:
         print("Types:", set(checker.incorrect_type_names))
-        print("Functions:", set(checker.incorrect_function_names))        
+        print("Functions:", set(checker.incorrect_function_names))
         exit(-1)
