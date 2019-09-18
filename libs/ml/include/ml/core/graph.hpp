@@ -142,7 +142,6 @@ protected:
   std::unordered_map<std::string, NodePtrType>                  nodes_;
   std::vector<std::pair<std::string, std::vector<std::string>>> connections_;
   std::unordered_map<std::string, SizeType>                     trainable_lookup_;
-  std::vector<NodePtrType>                                      trainable_nodes_;
 
   void       InsertSharedCopy(std::shared_ptr<Graph<TensorType>> output_ptr);
   TensorType ForwardPropagate(std::string const &node_name, bool is_training = true);
@@ -175,6 +174,9 @@ private:
   void AddTrainableImplementation(std::string const &node_name, NodePtrType node_ptr,
                                   std::vector<NodePtrType> &                 trainable_nodes,
                                   std::unordered_map<std::string, SizeType> &trainable_lookup);
+
+  void GetTrainablesImplementation(std::vector<TrainablePtrType> & ret);
+
 };
 
 //////////////////////
@@ -880,15 +882,36 @@ bool Graph<TensorType>::UpdateVariableName(std::string const &name, std::string 
  * Assigns all trainable pointers to vector for optimiser purpose
  * @return ret is vector containing pointers to all trainables
  */
+
 template <typename TensorType>
 std::vector<typename Graph<TensorType>::TrainablePtrType> Graph<TensorType>::GetTrainables()
 {
   std::vector<TrainablePtrType> ret;
-  for (auto &t : trainable_nodes_)
+  GetTrainablesImplementation(ret);
+}
+
+template <typename TensorType>
+void Graph<TensorType>::GetTrainablesImplementation(std::vector<TrainablePtrType> & ret)
+{
+//  std::vector<NodePtrType>                                      trainable_nodes_;
+
+  // get trainables in this graph
+  for (auto & trainable_idx : trainable_lookup_)
   {
-    auto trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
+    auto trainable_node = nodes_.at(trainable_idx.second);
+    auto trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(trainable_node->GetOp());
+//    auto trainable_ptr = std::static_pointer_cast<ops::Trainable<TensorType>>(trainable_node->GetOp());
     ret.emplace_back(trainable_ptr);
   }
+
+  // get trainables from sub graphs
+  for (auto & cur_node : subgraph_lookup_)
+  {
+    auto subgraph_node = nodes_.at(cur_node.second);
+    auto graph_ptr = std::dynamic_pointer_cast<Graph<TensorType>>(subgraph_node->GetOp());
+    graph_ptr->GetTrainablesImplementation(ret);
+  }
+
   return ret;
 }
 
