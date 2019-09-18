@@ -16,6 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/trigonometry.hpp"
+#include "vectorise/memory/array.hpp"
+#include "vectorise/memory/shared_array.hpp"
+
 #include <chrono>
 #include <cmath>
 #include <cstddef>
@@ -23,12 +27,12 @@
 #include <iostream>
 #include <vector>
 
-using type       = double;
+using type       = fetch::fixed_point::fp64_t;
 using array_type = std::vector<type>;
 
 type InnerProduct(array_type const &A, array_type const &B)
 {
-  type ret = 0;
+  type ret{0};
 
   for (std::size_t i = 0; i < A.size(); ++i)
   {
@@ -58,8 +62,8 @@ int main(int argc, char const **argv)
 
   for (std::size_t i = 0; i < N; ++i)
   {
-    A[i] = type(0.001 * std::sin(-0.1 * type(i)));
-    B[i] = type(0.001 * std::cos(-0.1 * type(i)));
+    A[i] = type(fetch::math::Sin(type(i) * (-0.1)));
+    B[i] = type(fetch::math::Cos(type(i) * (-0.1)));
   }
 
   std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();

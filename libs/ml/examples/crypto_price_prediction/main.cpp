@@ -50,9 +50,9 @@ using DataLoaderType   = fetch::ml::dataloaders::TensorDataLoader<TensorType, Te
 
 struct TrainingParams
 {
-  SizeType epochs{5};
-  SizeType batch_size{1000};
-  bool     normalise = false;
+  SizeType epochs{3};
+  SizeType batch_size{128};
+  bool     normalise = true;
 };
 
 std::shared_ptr<GraphType> BuildModel(std::string &input_name, std::string &output_name,
@@ -77,7 +77,8 @@ std::shared_ptr<GraphType> BuildModel(std::string &input_name, std::string &outp
 
   std::string layer_1 = g->AddNode<fetch::ml::layers::Convolution1D<TensorType>>(
       "Conv1D_1", {input_name}, conv1D_1_filters, conv1D_1_input_channels, conv1D_1_kernel_size,
-      conv1D_1_stride, fetch::ml::details::ActivationType::RELU);
+      conv1D_1_stride, fetch::ml::details::ActivationType::LEAKY_RELU);
+
   std::string layer_2 = g->AddNode<Dropout<TensorType>>("Dropout_1", {layer_1}, keep_prob_1);
 
   output_name = g->AddNode<fetch::ml::layers::Convolution1D<TensorType>>(
@@ -120,7 +121,7 @@ std::vector<TensorType> LoadData(std::string const &train_data_filename,
   return {train_data_tensor, train_labels_tensor, test_data_tensor, test_labels_tensor};
 }
 
-void SaveGraphToFile(GraphType &g, std::string const file_name)
+void SaveGraphToFile(GraphType &g, std::string const &file_name)
 {
 
   // start serializing and writing to file
@@ -178,6 +179,7 @@ int main(int ac, char **av)
   }
 
   DataLoaderType loader(train_label.shape(), {train_data.shape()});
+  loader.SetRandomMode(true);
   loader.AddData(train_data, train_label);
 
   std::cout << "Build model & optimiser... " << std::endl;
@@ -203,13 +205,13 @@ int main(int ac, char **av)
       scaler.DeNormalise(prediction, prediction);
     }
 
-    SaveGraphToFile(*g, "./bitcoin_price_prediction_graph" + std::to_string(i) + ".bin");
+    SaveGraphToFile(*g, "./ethereum_price_prediction_graph" + std::to_string(i) + ".bin");
 
     auto result = fetch::math::MeanAbsoluteError(prediction, orig_test_label);
     std::cout << "mean absolute validation error: " << result << std::endl;
   }
 
-  SaveGraphToFile(*g, "./bitcoin_price_prediction_graph.bin");
+  SaveGraphToFile(*g, "./ethereum_price_prediction_graph.bin");
 
   return 0;
 }

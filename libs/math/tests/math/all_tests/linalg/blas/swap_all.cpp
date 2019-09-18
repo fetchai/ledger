@@ -32,7 +32,7 @@ TEST(blas_A_withA, blas_swap_all1)
   Blas<double, Signature(_x, _y <= _n, _x, _m, _y, _p), Computes(_x, _y <= _y, _x),
        platform::Parallelisation::NOT_PARALLEL>
       swap_all;
-  // Compuing _x, _y <= _y, _x
+  // Computing _x, _y <= _y, _x
   using Type = double;
 
   int n = 20;
@@ -69,7 +69,7 @@ TEST(blas_A_withA, blas_swap_all2)
   Blas<double, Signature(_x, _y <= _n, _x, _m, _y, _p), Computes(_x, _y <= _y, _x),
        platform::Parallelisation::NOT_PARALLEL>
       swap_all;
-  // Compuing _x, _y <= _y, _x
+  // Computing _x, _y <= _y, _x
   using Type = double;
 
   int n = 10;
@@ -106,7 +106,7 @@ TEST(blas_A_withA, blas_swap_all3)
   Blas<double, Signature(_x, _y <= _n, _x, _m, _y, _p), Computes(_x, _y <= _y, _x),
        platform::Parallelisation::NOT_PARALLEL>
       swap_all;
-  // Compuing _x, _y <= _y, _x
+  // Computing _x, _y <= _y, _x
   using Type = double;
 
   int n = 10;
@@ -143,7 +143,7 @@ TEST(blas_A_withA, blas_swap_all4)
   Blas<double, Signature(_x, _y <= _n, _x, _m, _y, _p), Computes(_x, _y <= _y, _x),
        platform::Parallelisation::NOT_PARALLEL>
       swap_all;
-  // Compuing _x, _y <= _y, _x
+  // Computing _x, _y <= _y, _x
   using Type = double;
 
   int n = 10;
@@ -180,7 +180,7 @@ TEST(blas_A_withA, blas_swap_all5)
   Blas<double, Signature(_x, _y <= _n, _x, _m, _y, _p), Computes(_x, _y <= _y, _x),
        platform::Parallelisation::NOT_PARALLEL>
       swap_all;
-  // Compuing _x, _y <= _y, _x
+  // Computing _x, _y <= _y, _x
   using Type = double;
 
   int n = 20;
@@ -217,7 +217,7 @@ TEST(blas_A_withA, blas_swap_all6)
   Blas<double, Signature(_x, _y <= _n, _x, _m, _y, _p), Computes(_x, _y <= _y, _x),
        platform::Parallelisation::NOT_PARALLEL>
       swap_all;
-  // Compuing _x, _y <= _y, _x
+  // Computing _x, _y <= _y, _x
   using Type = double;
 
   int n = 10;
@@ -254,7 +254,7 @@ TEST(blas_A_withA, blas_swap_all7)
   Blas<double, Signature(_x, _y <= _n, _x, _m, _y, _p), Computes(_x, _y <= _y, _x),
        platform::Parallelisation::NOT_PARALLEL>
       swap_all;
-  // Compuing _x, _y <= _y, _x
+  // Computing _x, _y <= _y, _x
   using Type = double;
 
   int n = 5;

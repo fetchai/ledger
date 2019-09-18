@@ -25,7 +25,7 @@ class TensorIndexingTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<int, unsigned int, long, unsigned long, float, double>;
+using MyTypes = ::testing::Types<int32_t, uint32_t, int64_t, uint64_t, float, double>;
 TYPED_TEST_CASE(TensorIndexingTest, MyTypes);
 
 TYPED_TEST(TensorIndexingTest, empty_tensor_test)
@@ -56,9 +56,9 @@ TYPED_TEST(TensorIndexingTest, two_dimentional_tensor_test)
 
 TYPED_TEST(TensorIndexingTest, index_op_vs_iterator)
 {
-  TypeParam                      from      = TypeParam(20);
-  TypeParam                      to        = TypeParam(29);
-  TypeParam                      step_size = TypeParam(1);
+  auto                           from      = TypeParam(20);
+  auto                           to        = TypeParam(29);
+  auto                           step_size = TypeParam(1);
   fetch::math::Tensor<TypeParam> a = fetch::math::Tensor<TypeParam>::Arange(from, to, step_size);
   EXPECT_EQ(a.size(), 9);
   a.Reshape({3, 3});

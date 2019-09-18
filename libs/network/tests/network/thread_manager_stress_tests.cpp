@@ -70,9 +70,9 @@ void TestCase3()
       std::vector<int> ints{0, 0, 0, 0};
       int              testRunning = 0;
 
-      for (std::size_t k = 0; k < ints.size(); ++k)
+      for (int32_t &k : ints)
       {
-        tmanager.Post([&ints, &testRunning, k]() {
+        tmanager.Post([&testRunning, &k]() {
           // while(testRunning < 1) {} // this never stops for some reason
           while (testRunning < 1)
           {
@@ -81,7 +81,7 @@ void TestCase3()
 
           while (testRunning == 1)
           {
-            ints[k]++;
+            k++;
           }
         });
       }

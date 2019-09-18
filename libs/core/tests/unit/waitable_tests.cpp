@@ -33,7 +33,7 @@ using namespace testing;
 class Semaphore
 {
 public:
-  Semaphore(uint32_t count)
+  explicit Semaphore(uint32_t count)
     : count_{count}
   {}
 

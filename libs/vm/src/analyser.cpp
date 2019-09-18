@@ -162,10 +162,9 @@ void Analyser::Initialise()
                      array_type_);
   CreateTemplateType("Map", TypeIndex(typeid(IMap)), {any_type_, any_type_}, TypeIds::Unknown,
                      map_type_);
-  CreateTemplateType("State", TypeIndex(typeid(IState)), {any_type_}, TypeIds::Unknown,
-                     state_type_);
+  CreateTemplateType("State", TypeIndex(typeid(IState)), {any_type_}, TypeIds::Unknown, StateType_);
   CreateTemplateType("ShardedState", TypeIndex(typeid(IShardedState)), {any_type_},
-                     TypeIds::Unknown, sharded_state_type_);
+                     TypeIds::Unknown, sharded_StateType_);
 }
 
 void Analyser::UnInitialise()
@@ -210,9 +209,9 @@ void Analyser::UnInitialise()
   matrix_type_              = nullptr;
   array_type_               = nullptr;
   map_type_                 = nullptr;
-  state_type_               = nullptr;
+  StateType_                = nullptr;
   address_type_             = nullptr;
-  sharded_state_type_       = nullptr;
+  sharded_StateType_        = nullptr;
   initialiser_list_type_    = nullptr;
 }
 
@@ -286,9 +285,9 @@ bool Analyser::Analyse(BlockNodePtr const &root, std::vector<std::string> &error
   blocks_.clear();
   loops_.clear();
   state_constructor_ =
-      function_map_.Find(BuildUniqueId(state_type_, CONSTRUCTOR, {string_type_}, state_type_));
+      function_map_.Find(BuildUniqueId(StateType_, CONSTRUCTOR, {string_type_}, StateType_));
   sharded_state_constructor_ = function_map_.Find(
-      BuildUniqueId(sharded_state_type_, CONSTRUCTOR, {string_type_}, sharded_state_type_));
+      BuildUniqueId(sharded_StateType_, CONSTRUCTOR, {string_type_}, sharded_StateType_));
   assert(state_constructor_ && sharded_state_constructor_);
   state_definitions_.Clear();
   function_     = nullptr;
@@ -422,11 +421,11 @@ void Analyser::BuildPersistentStatement(NodePtr const &node)
   TypePtr template_type;
   if (modifier_node && (modifier_node->text == "sharded"))
   {
-    template_type = sharded_state_type_;
+    template_type = sharded_StateType_;
   }
   else
   {
-    template_type = state_type_;
+    template_type = StateType_;
   }
   std::string instantation_name = template_type->name + "<" + managed_type->name + ">";
   TypePtr     instantation_type;
@@ -453,11 +452,11 @@ void Analyser::BuildFunctionDefinition(BlockNodePtr const &parent_block_node,
   ExpressionNodePtr identifier_node =
       ConvertToExpressionNodePtr(function_definition_node->children[1]);
   std::string const &    name  = identifier_node->text;
-  int const              count = static_cast<int>(function_definition_node->children.size());
+  auto const             count = static_cast<int>(function_definition_node->children.size());
   VariablePtrArray       parameter_variables;
   TypePtrArray           parameter_types;
   ExpressionNodePtrArray parameter_nodes;
-  int const              num_parameters = int((count - 3) / 2);
+  auto const             num_parameters = int((count - 3) / 2);
   int                    problems       = 0;
   for (int i = 0; i < num_parameters; ++i)
   {
@@ -692,7 +691,7 @@ void Analyser::AnnotateBlock(BlockNodePtr const &block_node)
         ExpressionNodePtr child =
             CreateExpressionNode(NodeKind::Identifier, variable->name, use_any_node_->line);
         child->variable         = variable;
-        FunctionPtr constructor = (variable->type->template_type == sharded_state_type_)
+        FunctionPtr constructor = (variable->type->template_type == sharded_StateType_)
                                       ? sharded_state_constructor_
                                       : state_constructor_;
         child->function = constructor;
@@ -720,7 +719,7 @@ void Analyser::AnnotateFunctionDefinitionStatement(BlockNodePtr const &function_
   function_     = identifier_node->function;
   use_any_node_ = nullptr;
   AnnotateBlock(function_definition_node);
-  if (errors_.size() == 0)
+  if (errors_.empty())
   {
     if (!function_->return_type->IsVoid())
     {
@@ -823,7 +822,7 @@ void Analyser::AnnotateUseStatement(BlockNodePtr const &parent_block_node, NodeP
   }
   if (list_node)
   {
-    if (type->template_type != sharded_state_type_)
+    if (type->template_type != sharded_StateType_)
     {
       AddError(list_node->line, "key list can only be used with a sharded state");
       return;
@@ -852,9 +851,8 @@ void Analyser::AnnotateUseStatement(BlockNodePtr const &parent_block_node, NodeP
   VariablePtr variable = CreateVariable(VariableKind::Use, variable_name);
   variable->type       = type;
   parent_block_node->symbols->Add(variable);
-  FunctionPtr constructor = (type->template_type == sharded_state_type_)
-                                ? sharded_state_constructor_
-                                : state_constructor_;
+  FunctionPtr constructor =
+      (type->template_type == sharded_StateType_) ? sharded_state_constructor_ : state_constructor_;
   name_node->variable = variable;
   name_node->function = constructor;
 }
@@ -1772,8 +1770,8 @@ bool Analyser::AnnotateIndexOp(ExpressionNodePtr const &node)
 
   FunctionGroupPtr fg = ConvertToFunctionGroupPtr(symbol);
 
-  TypePtrArray actual_index_types;
-  FunctionPtr  f = FindFunction(lhs->type, fg, supplied_index_nodes, actual_index_types);
+  TypePtrArray actual_IndexTypes;
+  FunctionPtr  f = FindFunction(lhs->type, fg, supplied_index_nodes, actual_IndexTypes);
   if (f == nullptr)
   {
     AddError(lhs->line,
@@ -1785,7 +1783,7 @@ bool Analyser::AnnotateIndexOp(ExpressionNodePtr const &node)
   {
     NodePtr const &   supplied_index      = node->children[i];
     ExpressionNodePtr supplied_index_node = ConvertToExpressionNodePtr(supplied_index);
-    supplied_index_node->type             = actual_index_types[i - 1];
+    supplied_index_node->type             = actual_IndexTypes[i - 1];
   }
 
   TypePtr output_type = ResolveType(f->return_type, lhs->type);

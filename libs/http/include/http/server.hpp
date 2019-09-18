@@ -48,7 +48,7 @@ namespace http {
 class HTTPServer : public AbstractHTTPServer
 {
 public:
-  using handle_type = uint64_t;
+  using HandleType = uint64_t;
 
   using NetworkManager    = network::NetworkManager;
   using Socket            = asio::ip::tcp::tcp::socket;
@@ -105,11 +105,11 @@ public:
     NetworkManager &                   threadMan = networkManager_;
 
     networkManager_.Post([&socRef, &accepRef, manager, &threadMan, port] {
-      FETCH_LOG_INFO(LOGGING_NAME, "Starting HTTPServer on http://127.0.0.1:", port);
-
-      auto soc = threadMan.CreateIO<Socket>();
-
+      auto soc   = threadMan.CreateIO<Socket>();
       auto accep = threadMan.CreateIO<Acceptor>(asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port));
+
+      FETCH_LOG_INFO(LOGGING_NAME,
+                     "Starting HTTPServer on http://127.0.0.1:", accep->local_endpoint().port());
 
       // allow initiating class to post closes to these
       socRef   = soc;
@@ -123,7 +123,7 @@ public:
   void Stop()
   {}
 
-  void PushRequest(handle_type client, HTTPRequest req) override
+  void PushRequest(HandleType client, HTTPRequest req) override
   {
     // TODO(issue 35): Need to actually add better support for the options here
     if (req.method() == Method::OPTIONS)

@@ -41,9 +41,8 @@ TYPED_TEST_CASE(MaximumTest, MyTypes);
 
 TYPED_TEST(MaximumTest, forward_test)
 {
-  using TensorType = TypeParam;
-  using DataType   = typename TypeParam::Type;
-
+  using TensorType  = TypeParam;
+  using DataType    = typename TypeParam::Type;
   TensorType data_1 = TensorType::FromString(
       "1, -2, 3,-4, 5,-6, 7,-8;"
       "1,  2, 3, 4, 5, 6, 7, 8");

@@ -68,11 +68,11 @@ void PlusOneTest()
   using SizeType = typename TypeParam::SizeType;
   using DataType = typename TypeParam::Type;
 
-  DataType alpha       = DataType(0.005);
-  SizeType input_size  = SizeType(1);
-  SizeType output_size = SizeType(1);
-  SizeType n_batches   = SizeType(300);
-  SizeType hidden_size = SizeType(100);
+  auto alpha       = DataType(0.005);
+  auto input_size  = SizeType(1);
+  auto output_size = SizeType(1);
+  auto n_batches   = SizeType(300);
+  auto hidden_size = SizeType(100);
 
   fetch::ml::Graph<TypeParam> g;
 
@@ -109,7 +109,7 @@ void PlusOneTest()
 
   TypeParam cur_gt{{1, 1}};
   TypeParam cur_input{{1, 1}};
-  DataType  loss = static_cast<DataType>(0);
+  auto      loss = static_cast<DataType>(0);
 
   for (SizeType step{0}; step < 4; ++step)
   {
@@ -177,11 +177,11 @@ void CategoricalPlusOneTest(bool add_softmax = false)
   TypeParam n_classes{1};
   n_classes.At(0) = DataType(4);
 
-  DataType alpha       = DataType(0.01);
-  SizeType input_size  = SizeType(n_classes.At(0));
-  SizeType output_size = SizeType(n_classes.At(0));
-  SizeType n_batches   = SizeType(300);
-  SizeType hidden_size = SizeType(100);
+  auto alpha       = DataType(0.01);
+  auto input_size  = SizeType(n_classes.At(0));
+  auto output_size = SizeType(n_classes.At(0));
+  auto n_batches   = SizeType(300);
+  auto hidden_size = SizeType(100);
 
   fetch::ml::Graph<TypeParam> g;
 
@@ -222,7 +222,7 @@ void CategoricalPlusOneTest(bool add_softmax = false)
   /// ONE TRAINING STEP ///
   /////////////////////////
 
-  DataType loss = static_cast<DataType>(0);
+  auto loss = static_cast<DataType>(0);
 
   for (SizeType step{0}; step < n_data; ++step)
   {
@@ -290,11 +290,11 @@ void CategoricalXorTest(bool add_softmax = false)
   TypeParam n_classes{1};
   n_classes.At(0) = DataType(2);
 
-  DataType alpha       = DataType(0.01);
-  SizeType input_size  = SizeType(n_classes.At(0));
-  SizeType output_size = SizeType(n_classes.At(0));
-  SizeType n_batches   = SizeType(300);
-  SizeType hidden_size = SizeType(100);
+  auto alpha       = DataType(0.01);
+  auto input_size  = SizeType(n_classes.At(0));
+  auto output_size = SizeType(n_classes.At(0));
+  auto n_batches   = SizeType(300);
+  auto hidden_size = SizeType(100);
 
   fetch::ml::Graph<TypeParam> g;
 
@@ -326,7 +326,7 @@ void CategoricalXorTest(bool add_softmax = false)
 
   TypeParam cur_gt{{SizeType(1), SizeType(n_classes.At(0))}};
   TypeParam cur_input{{SizeType(1), SizeType(n_classes.At(0))}};
-  DataType  loss = static_cast<DataType>(0);
+  auto      loss = static_cast<DataType>(0);
 
   for (SizeType step{0}; step < n_data; ++step)
   {
