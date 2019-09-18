@@ -22,14 +22,7 @@
 
 namespace fetch {
 namespace byte_array {
-/*
-fetch::byte_array::ConstByteArray BytesToFetchBytes(py::bytes const &b)
-{
-  std::string s{b};
-  using ConstByteArray = fetch::byte_array::ConstByteArray;
-  return ConstByteArray(reinterpret_cast<ConstByteArray::ValueType const *>(s.c_str()), s.size());
-}
-*/
+
 void BuildConstByteArray(pybind11::module &module)
 {
   namespace py = pybind11;
@@ -65,8 +58,6 @@ void BuildConstByteArray(pybind11::module &module)
       .def("size", &ConstByteArray::size)
       .def("AsBytes",
            [](ConstByteArray const &a) { return py::bytes(a.char_pointer(), a.size()); });
-
-  //  module.def("BytesToFetchBytes", &BytesToFetchBytes, "Convertion utility");
 }
 
 }  // namespace byte_array
