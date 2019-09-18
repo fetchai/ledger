@@ -714,7 +714,8 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
       else
       {
         std::string cur_elem((c.char_pointer() + last), static_cast<std::size_t>(i - last));
-        elems.push_back(Type(std::atof(cur_elem.c_str())));
+        auto        float_val = std::atof(cur_elem.c_str());
+        elems.push_back(Type(float_val));
       }
       break;
     }
@@ -2326,9 +2327,15 @@ std::string Tensor<T, C>::ToString() const
     {
       for (SizeType j(0); j < shape_[1]; ++j)
       {
-        ss << At(i, j) << ", ";
+        if (j == (shape_[1] - 1))
+        {
+          ss << At(i, j) << ";";
+        }
+        else
+        {
+          ss << At(i, j) << ", ";
+        }
       }
-      ss << "; ";
     }
   }
   else
