@@ -46,7 +46,7 @@ constexpr std::size_t MAX_CONNECTED_KAD_NODES  = 3;
 constexpr std::size_t MAX_LOG2_BACKOFF         = 11;  // 2048
 
 std::unordered_set<Address> operator+(std::unordered_set<Address>        input,
-                                             std::unordered_set<Address> const &other)
+                                      std::unordered_set<Address> const &other)
 {
   for (auto const &address : other)
   {
@@ -62,7 +62,7 @@ PromiseTask::Duration CalculatePromiseTimeout(std::size_t consecutive_failures)
   return duration_cast<PromiseTask::Duration>(seconds{1 << log2_backoff_secs});
 }
 
-} // namespace
+}  // namespace
 
 PeerSelector::PeerSelector(NetworkId const &network, Duration const &interval,
                            core::Reactor &reactor, MuddleRegister const &reg,
@@ -246,8 +246,7 @@ void PeerSelector::ResolveAddresses(Addresses const &addresses)
 
     // wrap the promise is a task
     auto task = std::make_shared<PromiseTask>(
-        std::move(promise),
-        CalculatePromiseTimeout(peer_data.consecutive_failures),
+        std::move(promise), CalculatePromiseTimeout(peer_data.consecutive_failures),
         [this, address](service::Promise const &promise) { OnResolvedAddress(address, promise); });
 
     // add the task to the reactor

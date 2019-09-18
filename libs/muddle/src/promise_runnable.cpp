@@ -24,10 +24,10 @@ namespace {
 
 constexpr char const *LOGGING_NAME = "PromiseTask";
 
-using Clock     = PromiseTask::Clock;
-using Timepoint = PromiseTask::Timepoint;
-using Duration  = PromiseTask::Duration;
-using Promise   = service::Promise;
+using Clock        = PromiseTask::Clock;
+using Timepoint    = PromiseTask::Timepoint;
+using Duration     = PromiseTask::Duration;
+using Promise      = service::Promise;
 using PromiseState = service::PromiseState;
 
 /**
@@ -55,8 +55,7 @@ PromiseTask::PromiseTask(Promise const &promise, Callback callback)
   : PromiseTask(promise, CalculateDeadline(promise), std::move(callback))
 {}
 
-PromiseTask::PromiseTask(Promise const &promise, Duration const &timeout,
-                         Callback callback)
+PromiseTask::PromiseTask(Promise const &promise, Duration const &timeout, Callback callback)
   : PromiseTask(promise, CalculateDeadline(promise, &timeout), std::move(callback))
 {}
 

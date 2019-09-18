@@ -57,7 +57,6 @@ public:
   PromiseTask &operator=(PromiseTask &&) = delete;
 
 private:
-
   PromiseTask(service::Promise promise, Timepoint const &deadline, Callback callback);
 
   service::Promise promise_;
