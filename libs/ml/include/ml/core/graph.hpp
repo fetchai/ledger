@@ -41,20 +41,26 @@
 namespace fetch {
 namespace ml {
 
+///////////////
+/// FRIENDS ///
+///////////////
+
 namespace optimisers {
 template <typename TensorType>
 class Optimiser;
 }  // namespace optimisers
-
 namespace model {
 template <typename TensorType>
 class ModelInterface;
 }  // namespace model
-
 namespace distributed_learning {
 template <typename TensorType>
 class TrainingClient;
 }  // namespace distributed_learning
+
+///////////////////
+/// GRAPH STATE ///
+///////////////////
 
 enum class GraphState : uint8_t
 {
@@ -66,9 +72,10 @@ enum class GraphState : uint8_t
   UPDATED        // gradients have been applied
 };
 
-/**
- * The full graph on which to run the computation
- */
+/////////////
+/// GRAPH ///
+/////////////
+
 template <class T>
 class Graph
 {
@@ -178,6 +185,17 @@ private:
 /// PUBLIC METHODS ///
 //////////////////////
 
+/**
+ * the interface for adding nodes to the graph.
+ * The parameters are node name, names of input nodes, and any op parameters
+ * @tparam TensorType
+ * @tparam OperationType Type of Op node will compute
+ * @tparam Params parameters for the Op construction
+ * @param node_name name of the new node to add
+ * @param inputs names of other nodes that feed input to this node
+ * @param params input parameters for the op construction
+ * @return the updated name of the node that was added. this may differ from that specified by the user
+ */
 template <typename TensorType>
 template <class OperationType, typename... Params>
 std::string Graph<TensorType>::AddNode(std::string const &             node_name,
@@ -214,7 +232,7 @@ std::string Graph<TensorType>::AddNode(std::string const &             node_name
 /**
  * Undoes the work of a previous Compile call.
  * Since compilation could be called multiple times during graph construction, this is
- * necessary to avoid duplication connections/trainables
+ * necessary to avoid duplicate connections/trainables
  * @tparam TensorType
  */
 template <typename TensorType>
