@@ -91,6 +91,7 @@ void BuildGraph(GraphSaveableParams<T> const &sp, std::shared_ptr<Graph<T>> ret)
       throw std::runtime_error("Cannot currently deserialize shared-weights graph");
     }
 
+    // TODO - rework to just use addNode? since compilation step is separate?
     BuildNodeAndInsertTrainables(*(std::dynamic_pointer_cast<NodeSaveableParams<T>>(node.second)),
                                  node_name, ret);
   }

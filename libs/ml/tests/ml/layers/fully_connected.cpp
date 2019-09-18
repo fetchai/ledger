@@ -61,60 +61,6 @@ std::shared_ptr<GraphType> BuildGraph(bool shared = false, bool time_distributed
   return g;
 }
 
-template <typename TensorType, typename GraphType>
-std::vector<TensorType> GetWeights(GraphType g, bool shared = false, bool time_distributed = false)
-{
-  auto                    state_dict = g->StateDict();
-  std::vector<TensorType> weights;
-
-  // check the naming is as expected
-  if (time_distributed)
-  {
-    weights.emplace_back(
-        state_dict.dict_["FC1_TimeDistributed_FullyConnected_Weights"].weights_->Copy());
-    weights.emplace_back(
-        state_dict.dict_["FC1_TimeDistributed_FullyConnected_Bias"].weights_->Copy());
-  }
-  else
-  {
-    weights.emplace_back(state_dict.dict_["FC1_FullyConnected_Weights"].weights_->Copy());
-    weights.emplace_back(state_dict.dict_["FC1_FullyConnected_Bias"].weights_->Copy());
-  }
-
-  if (time_distributed)
-  {
-    if (shared)
-    {
-      weights.emplace_back(
-          state_dict.dict_["FC1_TimeDistributed_FullyConnected_Weights"].weights_->Copy());
-      weights.emplace_back(
-          state_dict.dict_["FC1_TimeDistributed_FullyConnected_Bias"].weights_->Copy());
-    }
-    else
-    {
-      weights.emplace_back(
-          state_dict.dict_["FC2_TimeDistributed_FullyConnected_Weights"].weights_->Copy());
-      weights.emplace_back(
-          state_dict.dict_["FC2_TimeDistributed_FullyConnected_Bias"].weights_->Copy());
-    }
-  }
-  else
-  {
-    if (shared)
-    {
-      weights.emplace_back(state_dict.dict_["FC1_FullyConnected_Weights"].weights_->Copy());
-      weights.emplace_back(state_dict.dict_["FC1_FullyConnected_Bias"].weights_->Copy());
-    }
-    else
-    {
-      weights.emplace_back(state_dict.dict_["FC2_FullyConnected_Weights"].weights_->Copy());
-      weights.emplace_back(state_dict.dict_["FC2_FullyConnected_Bias"].weights_->Copy());
-    }
-  }
-
-  return weights;
-}
-
 template <typename T>
 class FullyConnectedTest : public ::testing::Test
 {
@@ -232,11 +178,11 @@ TYPED_TEST(FullyConnectedTest, ops_backward_test_time_distributed)  // Use the c
 
 TYPED_TEST(FullyConnectedTest, share_weight_backward_test)
 {
-  using TensorType   = TypeParam;
-  using DataType     = typename TensorType::Type;
-  using SizeType     = typename TensorType::SizeType;
-  using GraphType    = fetch::ml::Graph<TensorType>;
-  using GraphPtrType = std::shared_ptr<GraphType>;
+  using TensorType = TypeParam;
+  using DataType   = typename TensorType::Type;
+  using SizeType   = typename TensorType::SizeType;
+  using GraphType  = fetch::ml::Graph<TensorType>;
+  //  using GraphPtrType = std::shared_ptr<GraphType>;
 
   // create an auto encoder of two dense layers, both share same weights
   auto g_shared = BuildGraph<GraphType, TensorType, DataType>(true);
@@ -245,8 +191,8 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test)
   auto g_not_shared = BuildGraph<GraphType, TensorType, DataType>();
 
   // check that all weights are equal and create compare list
-  auto g_shared_weights_before     = GetWeights<TensorType, GraphPtrType>(g_shared, true);
-  auto g_not_shared_weights_before = GetWeights<TensorType, GraphPtrType>(g_not_shared, false);
+  auto g_shared_weights_before     = g_shared->GetWeights();
+  auto g_not_shared_weights_before = g_not_shared->GetWeights();
 
   for (size_t i = 0; i < 4; i++)
   {
@@ -290,8 +236,8 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test)
   g_not_shared_optimiser.Run({data}, data, 1);
 
   // check that all weights are equal
-  auto g_shared_weights_after     = GetWeights<TensorType, GraphPtrType>(g_shared, true);
-  auto g_not_shared_weights_after = GetWeights<TensorType, GraphPtrType>(g_not_shared, false);
+  auto g_shared_weights_after     = g_shared->GetWeights();
+  auto g_not_shared_weights_after = g_not_shared->GetWeights();
 
   // check the weights are equal after training for shared weights
   for (size_t i = 0; i < 2; i++)
@@ -326,12 +272,12 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test)
 
 TYPED_TEST(FullyConnectedTest, share_weight_backward_test_time_distributed)
 {
-  using TensorType   = TypeParam;
-  using DataType     = typename TensorType::Type;
-  using SizeType     = typename TensorType::SizeType;
-  using GraphType    = fetch::ml::Graph<TensorType>;
-  using GraphPtrType = std::shared_ptr<GraphType>;
-  using FCType       = fetch::ml::layers::FullyConnected<TensorType>;
+  using TensorType = TypeParam;
+  using DataType   = typename TensorType::Type;
+  using SizeType   = typename TensorType::SizeType;
+  using GraphType  = fetch::ml::Graph<TensorType>;
+  //  using GraphPtrType = std::shared_ptr<GraphType>;
+  using FCType = fetch::ml::layers::FullyConnected<TensorType>;
 
   std::string descriptor = FCType::DESCRIPTOR;
 
@@ -342,9 +288,9 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test_time_distributed)
   auto g_not_shared = BuildGraph<GraphType, TensorType, DataType>(false, true);
 
   // check that all weights are equal and create compare list
-  auto g_shared_weights_before = GetWeights<TensorType, GraphPtrType>(g_shared, true, true);
-  auto g_not_shared_weights_before =
-      GetWeights<TensorType, GraphPtrType>(g_not_shared, false, true);
+
+  auto g_shared_weights_before     = g_shared->GetWeights();
+  auto g_not_shared_weights_before = g_not_shared->GetWeights();
 
   for (size_t i = 0; i < 4; i++)
   {
@@ -384,8 +330,13 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test_time_distributed)
   EXPECT_EQ(shared_loss, not_shared_loss);
 
   // check that all weights are equal
-  auto g_shared_weights_after     = GetWeights<TensorType, GraphPtrType>(g_shared, true, true);
-  auto g_not_shared_weights_after = GetWeights<TensorType, GraphPtrType>(g_not_shared, false, true);
+
+  auto g_shared_weights_after     = g_shared->GetWeights();
+  auto g_not_shared_weights_after = g_not_shared->GetWeights();
+
+  //  auto g_shared_weights_after     = GetWeights<TensorType, GraphPtrType>(g_shared, true, true);
+  //  auto g_not_shared_weights_after = GetWeights<TensorType, GraphPtrType>(g_not_shared, false,
+  //  true);
 
   // check the all weights are initialized to be the same
   for (size_t i = 0; i < 2; i++)
