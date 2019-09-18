@@ -45,18 +45,7 @@ BeaconManager::BeaconManager(CertificatePtr certificate)
     bn::initPairing();
     zeroG2_.clear();
     zeroFr_.clear();
-    group_g_.clear();
-    group_h_.clear();
-
-    // Values taken from TMCG main.cpp
-    const bn::Fp2 g(
-        "1380305877306098957770911920312855400078250832364663138573638818396353623780",
-        "14633108267626422569982187812838828838622813723380760182609272619611213638781");
-    const bn::Fp2 h(
-        "6798148801244076840612542066317482178930767218436703568023723199603978874964",
-        "12726557692714943631796519264243881146330337674186001442981874079441363994424");
-    bn::mapToG2(group_g_, g);
-    bn::mapToG2(group_h_, h);
+    crypto::mcl::SetGenerators(group_g_, group_h_);
   });
 }
 
@@ -169,13 +158,7 @@ std::unordered_set<BeaconManager::MuddleAddress> BeaconManager::ComputeComplaint
 bool BeaconManager::VerifyComplaintAnswer(MuddleAddress const &from, ComplaintAnswer const &answer)
 {
   CabinetIndex from_index = identity_to_index_[from];
-  if (identity_to_index_.find(answer.first) == identity_to_index_.end())
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
-                   " received complaint answer with unknown reporter index");
-    return true;
-  }
-
+  assert(identity_to_index_.find(answer.first) != identity_to_index_.end());
   CabinetIndex reporter_index = identity_to_index_[answer.first];
   // Verify shares received
   PrivateKey s;
@@ -188,17 +171,17 @@ bool BeaconManager::VerifyComplaintAnswer(MuddleAddress const &from, ComplaintAn
   lhsG = crypto::mcl::ComputeLHS(group_g_, group_h_, s, sprime);
   if (lhsG != rhsG)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Node: ", cabinet_index_, " verification for node ", from_index,
+    FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_, " verification for node ", from_index,
                    " complaint answer failed");
     return false;
   }
   else
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Node: ", cabinet_index_, " verification for node ", from_index,
+    FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, " verification for node ", from_index,
                    " complaint answer succeeded");
     if (reporter_index == cabinet_index_)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Node: ", cabinet_index_, " reset shares for ", from_index);
+      FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, " reset shares for ", from_index);
       s_ij[from_index][cabinet_index_]      = s;
       sprime_ij[from_index][cabinet_index_] = sprime;
       g__s_ij[from_index][cabinet_index_].clear();
@@ -278,7 +261,7 @@ BeaconManager::SharesExposedMap BeaconManager::ComputeQualComplaints(
       else
       {
         FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
-                       "received vanishing qual coefficients from node ", i);
+                       " did not receive qual coefficients from node ", i);
         qual_complaints.insert(
             {miner, {s_ij[i][cabinet_index_].getStr(), sprime_ij[i][cabinet_index_].getStr()}});
       }
@@ -336,7 +319,7 @@ BeaconManager::MuddleAddress BeaconManager::VerifyQualComplaint(MuddleAddress co
 void BeaconManager::ComputePublicKeys()
 {
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Node: ", cabinet_index_, " compute public keys");
+  FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, " compute public keys");
   // For all parties in $QUAL$, set $y_i = A_{i0} = g^{z_i} \bmod p$.
   for (auto const &iq : qual_)
   {
@@ -366,7 +349,10 @@ void BeaconManager::ComputePublicKeys()
 void BeaconManager::AddReconstructionShare(MuddleAddress const &address)
 {
   CabinetIndex index = identity_to_index_[address];
-  reconstruction_shares.insert({address, {{}, std::vector<PrivateKey>(cabinet_size_, zeroFr_)}});
+  if (reconstruction_shares.find(address) == reconstruction_shares.end())
+  {
+    reconstruction_shares.insert({address, {{}, std::vector<PrivateKey>(cabinet_size_, zeroFr_)}});
+  }
   reconstruction_shares.at(address).first.insert(cabinet_index_);
   reconstruction_shares.at(address).second[cabinet_index_] = s_ij[index][cabinet_index_];
 }
@@ -376,7 +362,7 @@ void BeaconManager::AddReconstructionShare(MuddleAddress const &                
 {
   CabinetIndex from_index = identity_to_index_[from];
   CabinetIndex index      = identity_to_index_[share.first];
-  FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, "received good share from node ",
+  FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, " received good share from node ",
                  from_index, "for reconstructing node ", index);
   if (reconstruction_shares.find(share.first) == reconstruction_shares.end())
   {
@@ -415,7 +401,7 @@ void BeaconManager::VerifyReconstructionShare(MuddleAddress const &from, Exposed
   }
   else
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, "received bad share from node ",
+    FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, " received bad share from node ",
                    identity_to_index_[from], "for reconstructing node ", victim_index);
   }
 }
@@ -439,14 +425,14 @@ bool BeaconManager::RunReconstruction()
     if (parties.size() <= polynomial_degree_)
     {
       // Do not have enough good shares to be able to do reconstruction
-      FETCH_LOG_WARN(LOGGING_NAME, "Node: ", cabinet_index_, " reconstruction for ", victim_index,
+      FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_, " reconstruction for ", victim_index,
                      " failed with party size ", parties.size());
       return false;
     }
     else if (in.first == certificate_->identity().identifier())
     {
       // Do not run reconstruction for myself
-      FETCH_LOG_WARN(LOGGING_NAME, "Node: ", cabinet_index_, " polynomial being reconstructed.");
+      FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_, " polynomial being reconstructed.");
       continue;
     }
     // compute $z_i$ using Lagrange interpolation (without corrupted parties)

@@ -62,6 +62,7 @@ void ComplaintsManager::AddComplaintsFrom(ComplaintsMessage const &msg,
 
   for (auto const &bad_node : msg.complaints())
   {
+    // TODO(jmw): Add check that bad_node is in cabinet
     complaints_counter_[bad_node].insert(from_id);
     // If a node receives complaint against itself then store in complaints from
     // for answering later

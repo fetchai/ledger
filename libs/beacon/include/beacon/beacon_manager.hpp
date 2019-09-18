@@ -78,8 +78,6 @@ public:
   MuddleAddress    VerifyQualComplaint(MuddleAddress const &from, ComplaintAnswer const &answer);
   void             ComputePublicKeys();
   void             AddReconstructionShare(MuddleAddress const &address);
-  void             AddReconstructionShare(MuddleAddress const &                  from,
-                                          std::pair<MuddleAddress, Share> const &share);
   void             VerifyReconstructionShare(MuddleAddress const &from, ExposedShare const &share);
   bool             RunReconstruction();
   void             SetDkgOutput(PublicKey &public_key, PrivateKey &secret_share,
@@ -148,6 +146,9 @@ private:
   MessagePayload                              current_message_;
   Signature                                   group_signature_;
   /// }
+
+  void AddReconstructionShare(MuddleAddress const &                  from,
+                              std::pair<MuddleAddress, Share> const &share);
 };
 }  // namespace dkg
 
