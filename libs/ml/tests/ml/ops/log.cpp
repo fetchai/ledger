@@ -99,10 +99,6 @@ TYPED_TEST(LogTest, backward_test)
   fetch::math::state_clear<DataType>();
 }
 
-//// TODO(1195): fixed point and floating point tests should be unified.
-//  using DataType = typename TypeParam::Type;
-//  assert(fetch::math::state_division_by_zero<DataType>() == false);
-
 TYPED_TEST(LogTest, saveparams_test)
 {
   using TensorType    = TypeParam;
