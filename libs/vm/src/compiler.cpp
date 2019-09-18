@@ -36,13 +36,11 @@ Compiler::~Compiler()
   analyser_.UnInitialise();
 }
 
-bool Compiler::Compile(std::string const &source, std::string const &name, IR &ir,
+bool Compiler::Compile(SourceFiles const &files, std::string const &ir_name, IR &ir,
                        std::vector<std::string> &errors)
 {
-  std::string  filename;
-  BlockNodePtr root = parser_.Parse(filename, source, errors);
-
-  if (root == nullptr)
+  BlockNodePtr root = parser_.Parse(files, errors);
+  if (!root)
   {
     return false;
   }
@@ -50,7 +48,7 @@ bool Compiler::Compile(std::string const &source, std::string const &name, IR &i
   bool success = analyser_.Analyse(root, errors);
   if (success)
   {
-    builder_.Build(name, root, ir);
+    builder_.Build(ir_name, root, ir);
   }
 
   root->Reset();
