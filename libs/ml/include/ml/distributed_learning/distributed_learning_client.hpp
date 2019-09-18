@@ -62,12 +62,13 @@ class TrainingClient
   using VectorTensorType = std::vector<TensorType>;
   using TimestampType    = int64_t;
   using GradientType     = std::pair<VectorTensorType, TimestampType>;
+  using GraphPtrType     = std::shared_ptr<fetch::ml::Graph<TensorType>>;
 
 public:
   TrainingClient(std::string id, ClientParams<DataType> const &client_params);
 
   TrainingClient(
-      std::string id, std::shared_ptr<fetch::ml::Graph<TensorType>> graph_ptr,
+      std::string id, GraphPtrType graph_ptr,
       std::shared_ptr<fetch::ml::dataloaders::DataLoader<TensorType, TensorType>> loader_ptr,
       std::shared_ptr<fetch::ml::optimisers::Optimiser<TensorType>>               optimiser_ptr,
       ClientParams<DataType> const &                                              client_params);
@@ -90,11 +91,9 @@ public:
 
   VectorTensorType GetWeights() const;
 
-  void AddGradient(GradientType &gradient);
-
   void AddExportGradient(GradientType &gradient);
 
-  void SetWeights(VectorTensorType &new_weights);
+  void SetWeights(VectorTensorType const &new_weights);
 
   void SetParams(ClientParams<DataType> const &new_params);
 
@@ -109,8 +108,8 @@ protected:
   DataType test_loss_  = fetch::math::numeric_max<DataType>();
 
   // Client's own graph and mutex to protect its weights
-  std::shared_ptr<fetch::ml::Graph<TensorType>> g_ptr_;
-  mutable std::mutex                            model_mutex_;
+  GraphPtrType       g_ptr_;
+  mutable std::mutex model_mutex_;
 
   // Client's own dataloader
   std::shared_ptr<fetch::ml::dataloaders::DataLoader<TensorType, TensorType>> dataloader_ptr_;
@@ -163,11 +162,15 @@ protected:
   void ExportBufferLoop();
 
   void Initialise();
+
+private:
+  void QueueAddGradient(GradientType &gradient);
+  void GraphAddGradients(GraphPtrType g_ptr, VectorTensorType const &gradients);
 };
 
 template <class TensorType>
 TrainingClient<TensorType>::TrainingClient(
-    std::string id, std::shared_ptr<fetch::ml::Graph<TensorType>> graph_ptr,
+    std::string id, GraphPtrType graph_ptr,
     std::shared_ptr<fetch::ml::dataloaders::DataLoader<TensorType, TensorType>> loader_ptr,
     std::shared_ptr<fetch::ml::optimisers::Optimiser<TensorType>>               optimiser_ptr,
     ClientParams<DataType> const &                                              client_params)
@@ -332,17 +335,6 @@ std::vector<TensorType> TrainingClient<TensorType>::GetWeights() const
 }
 
 /**
- * Adds gradient to own gradient queue
- * @param gradient
- */
-template <class TensorType>
-void TrainingClient<TensorType>::AddGradient(GradientType &gradient)
-{
-  FETCH_LOCK(queue_mutex_);
-  gradient_queue_.push(gradient);
-}
-
-/**
  * Adds gradient to export queue
  * @param gradient
  */
@@ -362,10 +354,18 @@ void TrainingClient<TensorType>::AddExportGradient(GradientType &gradient)
  * @param new_weights Vector of weights that represent model
  */
 template <class TensorType>
-void TrainingClient<TensorType>::SetWeights(VectorTensorType &new_weights)
+void TrainingClient<TensorType>::SetWeights(VectorTensorType const &new_weights)
 {
   FETCH_LOCK(model_mutex_);
-  g_ptr_->SetWeights(new_weights);
+
+  auto weights_it = new_weights.cbegin();
+  for (auto &trainable_node : g_ptr_->trainable_nodes_)
+  {
+    auto trainable_ptr =
+        std::dynamic_pointer_cast<ops::Trainable<TensorType>>(trainable_node->GetOp());
+    trainable_ptr->SetWeights(*weights_it);
+    ++weights_it;
+  }
 }
 
 template <class TensorType>
@@ -499,8 +499,7 @@ void TrainingClient<TensorType>::DoBatch()
     while (!gradient_queue_.empty())
     {
       GetNewGradients(new_gradients);
-
-      g_ptr_->AddGradients(new_gradients);
+      GraphAddGradients(g_ptr_, new_gradients);
     }
   }
 
@@ -539,7 +538,7 @@ void TrainingClient<TensorType>::ExportBufferLoop()
       // Give gradients to peers
       for (SizeType i{0}; i < peers_.size(); ++i)
       {
-        peers_[i]->AddGradient(gradient);
+        peers_[i]->QueueAddGradient(gradient);
       }
     }
   }
@@ -550,6 +549,39 @@ void TrainingClient<TensorType>::Initialise()
 {
   // Start export buffer thread
   export_buffer_thread_ = std::make_shared<std::thread>(&TrainingClient::ExportBufferLoop, this);
+}
+
+///////////////////////
+/// private methods ///
+///////////////////////
+
+/**
+ * Adds gradient to own gradient queue
+ * @param gradient
+ */
+template <class TensorType>
+void TrainingClient<TensorType>::QueueAddGradient(GradientType &gradient)
+{
+  FETCH_LOCK(queue_mutex_);
+  gradient_queue_.push(gradient);
+}
+
+/**
+ * Adds a vector of Tensors to the gradient accumulation of all the trainable pointers in the graph.
+ * @param gradient
+ */
+template <class TensorType>
+void TrainingClient<TensorType>::GraphAddGradients(GraphPtrType            g_ptr,
+                                                   VectorTensorType const &gradients)
+{
+  assert(gradients.size() == g_ptr->trainable_nodes_.size());
+  auto gt_it = g_ptr->trainable_nodes_.begin();
+  for (auto const &grad : gradients)
+  {
+    auto weights_ptr = std::dynamic_pointer_cast<ops::Weights<TensorType>>((*gt_it)->GetOp());
+    weights_ptr->AddToGradient(grad);
+    ++gt_it;
+  }
 }
 
 }  // namespace distributed_learning
