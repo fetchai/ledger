@@ -62,7 +62,6 @@ std::pair<std::string, std::string> Model(fetch::ml::Graph<TensorType> &g, SizeT
   return std::pair<std::string, std::string>(error, skipgram);
 }
 
-
 void TestEmbeddings(Graph<TensorType> const &g, std::string const &skip_gram_name,
                     GraphW2VLoader<DataType> const &dl, std::string word0, std::string word1,
                     std::string word2, std::string word3, SizeType K)

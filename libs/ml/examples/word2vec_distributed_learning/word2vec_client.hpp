@@ -170,7 +170,8 @@ void Word2VecClient<TensorType>::TestEmbeddings(std::string const &word0, std::s
     std::cout << "Client " << this->id_ << ", batches done = " << this->batch_counter_ << std::endl;
     fetch::ml::examples::PrintKNN(*w2v_data_loader_ptr_, embeddings->get_weights(), word0, K);
     std::cout << std::endl;
-    fetch::ml::examples::PrintWordAnalogy(*w2v_data_loader_ptr_, embeddings->get_weights(), word1, word2, word3, K);
+    fetch::ml::examples::PrintWordAnalogy(*w2v_data_loader_ptr_, embeddings->get_weights(), word1,
+                                          word2, word3, K);
   }
 }
 

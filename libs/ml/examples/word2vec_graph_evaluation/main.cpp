@@ -16,15 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "word2vec_utilities.hpp"
 #include "math/tensor.hpp"
-#include "ml/layers/skip_gram.hpp"
-#include "ml/dataloaders/word2vec_loaders/sgns_w2v_dataloader.hpp"
 #include "ml/core/graph.hpp"
+#include "ml/dataloaders/word2vec_loaders/sgns_w2v_dataloader.hpp"
+#include "ml/layers/skip_gram.hpp"
+#include "word2vec_utilities.hpp"
 
-#include <string>
-#include <stdexcept>
 #include <model_saver.hpp>
+#include <stdexcept>
+#include <string>
 
 using namespace fetch::ml;
 using namespace fetch::ml::examples;
@@ -32,7 +32,7 @@ using namespace fetch::ml::dataloaders;
 
 using DataType   = double;
 using TensorType = fetch::math::Tensor<DataType>;
-using SizeType = TensorType ::SizeType ;
+using SizeType   = TensorType ::SizeType;
 
 int main(int argc, char **argv)
 {
@@ -42,15 +42,15 @@ int main(int argc, char **argv)
   DataType freq_thresh          = 1e-3;  // frequency threshold for subsampling
   SizeType min_count            = 5;     // infrequent word removal threshold
 
-
   std::string graph_file;
   std::string dataloader_file;
   std::string analogy_file;
 
-  if (argc == 4) {
-    graph_file = argv[1];
+  if (argc == 4)
+  {
+    graph_file      = argv[1];
     dataloader_file = argv[2];
-    analogy_file = argv[3];
+    analogy_file    = argv[3];
   }
   else
   {
@@ -71,7 +71,7 @@ int main(int argc, char **argv)
 
   // first get hold of the skipgram layer by searching the return name in the graph
   auto sg_layer = std::dynamic_pointer_cast<fetch::ml::layers::SkipGram<TensorType>>(
-          g_ptr->GetNode(skip_gram_name)->GetOp());
+      g_ptr->GetNode(skip_gram_name)->GetOp());
 
   // next get hold of the embeddings
   std::shared_ptr<fetch::ml::ops::Embeddings<TensorType>> embeddings =
@@ -80,5 +80,4 @@ int main(int argc, char **argv)
   TestWithAnalogies<TensorType>(data_loader, embeddings->get_weights(), analogy_file);
   PrintKNN(data_loader, embeddings->get_weights(), "three", 20);
   PrintWordAnalogy(data_loader, embeddings->get_weights(), "king", "queen", "father", 20);
-
 }

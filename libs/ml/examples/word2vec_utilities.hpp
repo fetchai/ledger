@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor.hpp"
 #include "math/clustering/knn.hpp"
+#include "math/tensor.hpp"
 #include "ml/dataloaders/word2vec_loaders/sgns_w2v_dataloader.hpp"
 
 #include <cstring>
@@ -45,11 +45,11 @@ std::vector<std::pair<typename TensorType::SizeType, typename TensorType::Type>>
   TensorType word2_vec = embeddings.Slice(word2, 1).Copy();
   TensorType word3_vec = embeddings.Slice(word3, 1).Copy();
 
-//  word1_vec /= fetch::math::L2Norm(word1_vec);
-//  word2_vec /= fetch::math::L2Norm(word2_vec);
-//  word3_vec /= fetch::math::L2Norm(word3_vec);
+  //  word1_vec /= fetch::math::L2Norm(word1_vec);
+  //  word2_vec /= fetch::math::L2Norm(word2_vec);
+  //  word3_vec /= fetch::math::L2Norm(word3_vec);
 
-  TensorType word4_vec = word2_vec - word1_vec + word3_vec;
+  TensorType                                 word4_vec = word2_vec - word1_vec + word3_vec;
   std::vector<std::pair<SizeType, DataType>> output;
   output = fetch::math::clustering::KNNCosine(embeddings, word4_vec, k);
 
@@ -58,15 +58,15 @@ std::vector<std::pair<typename TensorType::SizeType, typename TensorType::Type>>
 
 template <class TensorType>
 void PrintWordAnalogy(dataloaders::GraphW2VLoader<typename TensorType::Type> const &dl,
-                      TensorType const &embeddings,
-                      std::string const &word1, std::string const &word2, std::string const &word3,
+                      TensorType const &embeddings, std::string const &word1,
+                      std::string const &word2, std::string const &word3,
                       typename TensorType::SizeType k)
 {
-  using SizeType   = typename TensorType::SizeType;
+  using SizeType = typename TensorType::SizeType;
   using DataType = typename TensorType::Type;
 
-    std::cout << "Find word that is to " << word3 << " what " << word2 << " is to " << word1
-              << std::endl;
+  std::cout << "Find word that is to " << word3 << " what " << word2 << " is to " << word1
+            << std::endl;
 
   if (!dl.WordKnown(word1) || !dl.WordKnown(word2) || !dl.WordKnown(word3))
   {
@@ -80,7 +80,7 @@ void PrintWordAnalogy(dataloaders::GraphW2VLoader<typename TensorType::Type> con
     SizeType word3_idx = dl.IndexFromWord(word3);
 
     std::vector<std::pair<SizeType, DataType>> output =
-          GetWordIDAnalogies<TensorType>(embeddings, word1_idx, word2_idx, word3_idx, k);
+        GetWordIDAnalogies<TensorType>(embeddings, word1_idx, word2_idx, word3_idx, k);
 
     for (SizeType l = 0; l < output.size(); ++l)
     {
@@ -91,14 +91,13 @@ void PrintWordAnalogy(dataloaders::GraphW2VLoader<typename TensorType::Type> con
   }
 }
 
-
 template <class TensorType>
 void PrintKNN(dataloaders::GraphW2VLoader<typename TensorType::Type> const &dl,
-              TensorType const &embeddings,
-              std::string const &word0, typename TensorType::SizeType k)
+              TensorType const &embeddings, std::string const &word0,
+              typename TensorType::SizeType k)
 {
-  using SizeType   = typename TensorType::SizeType;
-  using DataType   = typename TensorType::Type;
+  using SizeType = typename TensorType::SizeType;
+  using DataType = typename TensorType::Type;
 
   std::cout << "Find words that are closest to \"" << word0 << "\" by cosine distance" << std::endl;
 
@@ -108,23 +107,23 @@ void PrintKNN(dataloaders::GraphW2VLoader<typename TensorType::Type> const &dl,
   }
   else
   {
-    SizeType idx = dl.IndexFromWord(word0);
-    TensorType one_vector = embeddings.Slice(idx, 1).Copy();
+    SizeType                                   idx        = dl.IndexFromWord(word0);
+    TensorType                                 one_vector = embeddings.Slice(idx, 1).Copy();
     std::vector<std::pair<SizeType, DataType>> output =
         fetch::math::clustering::KNNCosine(embeddings, one_vector, k);
 
-    for (std::size_t l = 0; l < output.size(); ++l) {
+    for (std::size_t l = 0; l < output.size(); ++l)
+    {
       std::cout << "rank: " << l << ", "
-                << "distance, " << output.at(l).second << ": " << dl.WordFromIndex(output.at(l).first)
-                << std::endl;
+                << "distance, " << output.at(l).second << ": "
+                << dl.WordFromIndex(output.at(l).first) << std::endl;
     }
   }
 }
 
 template <class TensorType>
 void TestWithAnalogies(dataloaders::GraphW2VLoader<typename TensorType::Type> const &dl,
-                       TensorType const &                                            embeddings,
-                       std::string const &analogy_file)
+                       TensorType const &embeddings, std::string const &analogy_file)
 {
   using SizeType = typename TensorType::SizeType;
   using DataType = typename TensorType::Type;

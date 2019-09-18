@@ -17,11 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/main_serializer.hpp"
 #include "core/byte_array/decoders.hpp"
+#include "core/filesystem/read_file_contents.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"
-#include "core/filesystem/read_file_contents.hpp"
 
 #include <fstream>
 #include <iostream>
@@ -86,7 +86,8 @@ void SaveLargeModel(GraphType &g, std::string const &save_location)
 
   if (outFile)
   {
-    outFile.write(serializer.buffer.data().char_pointer(), std::streamsize(serializer.buffer.size()));
+    outFile.write(serializer.buffer.data().char_pointer(),
+                  std::streamsize(serializer.buffer.size()));
     outFile.close();
     std::cout << "Buffer size " << serializer.buffer.size() << std::endl;
     std::cout << "Finish writing to file " << save_location << std::endl;
@@ -96,7 +97,6 @@ void SaveLargeModel(GraphType &g, std::string const &save_location)
     std::cerr << "Can't open save file" << std::endl;
   }
 }
-
 
 template <typename GraphType>
 std::shared_ptr<GraphType> LoadModel(std::string const &save_location)
@@ -151,7 +151,6 @@ void SaveObject(MLType &g, std::string const &save_location)
   }
 }
 
-
 /**
  * Saves an object to a file location specified by user.
  * Is quicker than SaveModel for large graphs.
@@ -171,7 +170,8 @@ void SaveLargeObject(MLType &g, std::string const &save_location)
 
   if (outFile)
   {
-    outFile.write(serializer.buffer.data().char_pointer(), std::streamsize(serializer.buffer.size()));
+    outFile.write(serializer.buffer.data().char_pointer(),
+                  std::streamsize(serializer.buffer.size()));
     outFile.close();
     std::cout << "Buffer size " << serializer.buffer.size() << std::endl;
     std::cout << "Finish writing to file " << save_location << std::endl;
@@ -181,7 +181,6 @@ void SaveLargeObject(MLType &g, std::string const &save_location)
     std::cerr << "Can't open save file" << std::endl;
   }
 }
-
 
 template <typename MLType>
 std::shared_ptr<MLType> LoadObject(std::string const &save_location)
