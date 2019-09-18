@@ -287,9 +287,9 @@ struct InitialiserListPlaceholder
 
 struct SourceFile
 {
-  SourceFile(std::string const &filename__, std::string const &source__)
-    : filename(filename__)
-    , source(source__)
+  SourceFile(std::string filename__, std::string source__)
+    : filename{std::move(filename__)}
+    , source{std::move(source__)}
   {}
   std::string filename;
   std::string source;
