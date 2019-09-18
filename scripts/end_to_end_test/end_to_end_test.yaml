@@ -116,7 +116,7 @@ steps:
 ...
 ---
 test_description: >
-        Transactions sync and are executed across nodes when using POS
+        DISABLED - Transactions sync and are executed across nodes when using POS
 
 setup_conditions:
     test_name : "basic_multinode_POS"
@@ -124,7 +124,7 @@ setup_conditions:
     node_connections: [[0, 1], [0, 2], [1, 2]]
     mining_nodes: [0, 1, 2]
     pos_mode: True
-    max_test_time: 240
+    max_test_time: 600
 
 steps:
     - send_txs : { "name": "batch1", "amount": 10, "nodes" : [1] }

@@ -31,6 +31,31 @@ namespace fetch {
 namespace crypto {
 namespace mcl {
 
+void SetGenerator(Generator &group_g)
+{
+  group_g.clear();
+
+  const bn::Fp2 g("1380305877306098957770911920312855400078250832364663138573638818396353623780",
+                  "14633108267626422569982187812838828838622813723380760182609272619611213638781");
+
+  bn::mapToG2(group_g, g);
+}
+
+void SetGenerators(Generator &group_g, Generator &group_h)
+{
+  group_g.clear();
+  group_h.clear();
+
+  // Values taken from TMCG main.cpp
+  const bn::Fp2 g("1380305877306098957770911920312855400078250832364663138573638818396353623780",
+                  "14633108267626422569982187812838828838622813723380760182609272619611213638781");
+  const bn::Fp2 h("6798148801244076840612542066317482178930767218436703568023723199603978874964",
+                  "12726557692714943631796519264243881146330337674186001442981874079441363994424");
+
+  bn::mapToG2(group_g, g);
+  bn::mapToG2(group_h, h);
+}
+
 /**
  * LHS and RHS functions are used for checking consistency between publicly broadcasted coefficients
  * and secret shares distributed privately
@@ -239,11 +264,11 @@ Signature SignShare(MessagePayload const &message, PrivateKey const &x_i)
  * @param y The public key (can be the group public key, or public key share)
  * @param message Message that was signed
  * @param sign Signature to be verified
- * @param G Group used in DKG
+ * @param G Generator used in DKG
  * @return
  */
 bool VerifySign(PublicKey const &y, MessagePayload const &message, Signature const &sign,
-                Group const &G)
+                Generator const &G)
 {
   bn::Fp12 e1, e2;
   bn::Fp   Hm;

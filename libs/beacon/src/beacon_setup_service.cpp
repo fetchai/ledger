@@ -1239,6 +1239,7 @@ void BeaconSetupService::CheckComplaintAnswers()
     std::unordered_set<MuddleAddress> answered_complaints;
     for (auto const &share : sender_answers.second)
     {
+      // Check that the claimed submitter of the complaint actually did so
       if (complaints_manager_.FindComplaint(from, share.first))
       {
         answered_complaints.insert(share.first);

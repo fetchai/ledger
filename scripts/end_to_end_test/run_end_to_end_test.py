@@ -530,26 +530,29 @@ def verify_txs(parameters, test_instance):
 
                 if status == "Executed" or expect_mined:
                     output("found executed TX")
+                    error_message = ""
 
                     # There is an unavoidable race that can cause you to see a balance of 0
                     # since the TX hasn't changed the state yet
                     if api.tokens.balance(identity) == 0 and balance is not 0:
+                        output(
+                            f"Note: found a balance of 0 when expecting {balance}. Retrying.")
                         pass
                     else:
                         break
 
                 tx_b64 = codecs.encode(codecs.decode(
                     tx, 'hex'), 'base64').decode()
-                time.sleep(1)
 
                 next_error_message = "Waiting for TX to get executed (node {}). Found: {} Tx: {}".format(
                     node_index, status, tx_b64)
+
+                time.sleep(0.5)
 
                 if next_error_message != error_message:
                     output(next_error_message)
                     error_message = next_error_message
 
-            time.sleep(0.1)
             seen_balance = api.tokens.balance(identity)
             if balance != seen_balance:
                 output(

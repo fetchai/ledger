@@ -25,6 +25,11 @@ namespace vm {
 
 FunctionDecoratorKind DetermineKind(vm::Executable::Function const &fn)
 {
+  if (fn.annotations.empty())
+  {
+    return FunctionDecoratorKind::NONE;
+  }
+
   FunctionDecoratorKind kind{FunctionDecoratorKind::NONE};
 
   // loop through all the function annotations
