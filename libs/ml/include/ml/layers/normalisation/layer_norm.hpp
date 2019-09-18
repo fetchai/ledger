@@ -22,6 +22,7 @@
 #include "ml/ops/add.hpp"
 #include "ml/ops/layer_norm.hpp"
 #include "ml/ops/multiply.hpp"
+#include "ml/ops/placeholder.hpp"
 #include "ml/ops/weights.hpp"
 
 #include <cmath>
