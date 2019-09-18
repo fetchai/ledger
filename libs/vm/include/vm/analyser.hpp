@@ -211,6 +211,7 @@ private:
   TypePtr        initialiser_list_type_;
 
   BlockNodePtr             root_;
+  std::string              filename_;
   BlockNodePtrArray        blocks_;
   BlockNodePtrArray        loops_;
   FunctionPtr              state_constructor_;
@@ -224,8 +225,7 @@ private:
   void    BuildBlock(BlockNodePtr const &block_node);
   void    BuildFile(BlockNodePtr const &file_node);
   void    BuildPersistentStatement(NodePtr const &node);
-  void    BuildFunctionDefinition(BlockNodePtr const &parent_block_node,
-                                  BlockNodePtr const &function_definition_node);
+  void    BuildFunctionDefinition(BlockNodePtr const &function_definition_node);
   void    BuildWhileStatement(BlockNodePtr const &while_statement_node);
   void    BuildForStatement(BlockNodePtr const &for_statement_node);
   void    BuildIfStatement(NodePtr const &if_statement_node);

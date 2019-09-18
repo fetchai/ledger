@@ -110,7 +110,8 @@ SmartContract::SmartContract(std::string const &source)
                               [this](vm::VM *) -> BlockIndex { return block_index_; });
 
   // create and compile the executable
-  auto errors = vm_modules::VMFactory::Compile(module_, source_, *executable_);
+  fetch::vm::SourceFiles files = { {"default.etch", source} };
+  auto errors = vm_modules::VMFactory::Compile(module_, files, *executable_);
 
   // if there are any compilation errors
   if (!errors.empty())

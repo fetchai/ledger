@@ -340,8 +340,7 @@ bool Analyser::Analyse(BlockNodePtr const &root, std::vector<std::string> &error
 void Analyser::AddError(uint16_t line, std::string const &message)
 {
   std::ostringstream stream;
-  stream << "line " << line << ": "
-         << "error: " << message;
+  stream << filename_ << ": line " << line << ": error: " << message;
   errors_.push_back(stream.str());
 }
 
@@ -364,7 +363,7 @@ void Analyser::BuildBlock(BlockNodePtr const &block_node)
     }
     case NodeKind::FunctionDefinitionStatement:
     {
-      BuildFunctionDefinition(block_node, ConvertToBlockNodePtr(child));
+      BuildFunctionDefinition(ConvertToBlockNodePtr(child));
       break;
     }
     case NodeKind::WhileStatement:
@@ -393,6 +392,7 @@ void Analyser::BuildBlock(BlockNodePtr const &block_node)
 
 void Analyser::BuildFile(BlockNodePtr const &file_node)
 {
+  filename_ = file_node->text;
   file_node->symbols = CreateSymbolTable();
   BuildBlock(file_node);
 }
@@ -446,8 +446,7 @@ void Analyser::BuildPersistentStatement(NodePtr const &node)
   state_definitions_.Add(state_name, instantation_type);
 }
 
-void Analyser::BuildFunctionDefinition(BlockNodePtr const &parent_block_node,
-                                       BlockNodePtr const &function_definition_node)
+void Analyser::BuildFunctionDefinition(BlockNodePtr const &function_definition_node)
 {
   function_definition_node->symbols = CreateSymbolTable();
   ExpressionNodePtr identifier_node =
@@ -510,7 +509,7 @@ void Analyser::BuildFunctionDefinition(BlockNodePtr const &parent_block_node,
     return;
   }
   FunctionGroupPtr fg;
-  SymbolPtr        symbol = parent_block_node->symbols->Find(name);
+  SymbolPtr        symbol = root_->symbols->Find(name);
   if (symbol)
   {
     fg = ConvertToFunctionGroupPtr(symbol);
@@ -525,7 +524,7 @@ void Analyser::BuildFunctionDefinition(BlockNodePtr const &parent_block_node,
   else
   {
     fg = CreateFunctionGroup(name);
-    parent_block_node->symbols->Add(fg);
+    root_->symbols->Add(fg);
   }
   FunctionPtr function =
       CreateUserDefinedFreeFunction(name, parameter_types, parameter_variables, return_type);
@@ -710,6 +709,7 @@ void Analyser::AnnotateBlock(BlockNodePtr const &block_node)
 
 void Analyser::AnnotateFile(BlockNodePtr const &file_node)
 {
+  filename_ = file_node->text;
   AnnotateBlock(file_node);
 }
 
