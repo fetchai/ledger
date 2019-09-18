@@ -35,33 +35,38 @@ Parser::Parser()
   : template_names_{"Matrix", "Array", "Map", "State", "ShardedState"}
 {}
 
-BlockNodePtr Parser::Parse(std::string const &filename, std::string const &source,
-                           std::vector<std::string> &errors)
+BlockNodePtr Parser::Parse(SourceFiles const &files, std::vector<std::string> &errors)
 {
-  Tokenise(source);
-
-  index_ = -1;
-  token_ = nullptr;
   errors_.clear();
   blocks_.clear();
-  groups_.clear();
-  operators_.clear();
-  rpn_.clear();
-  infix_stack_.clear();
 
-  BlockNodePtr root      = CreateBlockNode(NodeKind::Root, "", 0);
-  BlockNodePtr file_node = CreateBlockNode(NodeKind::File, filename, 1);
-  root->block_children.push_back(file_node);
-  ParseBlock(*file_node);
+  BlockNodePtr root = CreateBlockNode(NodeKind::Root, "", 0);
+
+  for (auto const &file : files)
+  {
+    filename_ = file.filename;
+    Tokenise(file.source);
+    index_ = -1;
+    token_ = nullptr;
+    groups_.clear();
+    operators_.clear();
+    rpn_.clear();
+    infix_stack_.clear();
+    BlockNodePtr file_node = CreateBlockNode(NodeKind::File, filename_, 1);
+    root->block_children.push_back(file_node);
+    ParseBlock(*file_node);
+  }
+
   bool const ok = errors_.empty();
   errors        = std::move(errors_);
 
+  filename_.clear();
   tokens_.clear();
-  blocks_.clear();
   groups_.clear();
   operators_.clear();
   rpn_.clear();
   infix_stack_.clear();
+  blocks_.clear();
 
   return ok ? root : BlockNodePtr{};
 }
@@ -1790,7 +1795,7 @@ void Parser::AddOperand(NodeKind kind)
 void Parser::AddError(std::string const &message)
 {
   std::ostringstream stream;
-  stream << "line " << token_->line << ": ";
+  stream << filename_ << ": line " << token_->line << ": ";
   if (token_->kind != Token::Kind::EndOfInput)
   {
     stream << "error at '" << token_->text << "'";
