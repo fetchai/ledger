@@ -34,16 +34,53 @@ namespace examples {
  * @param save_location a string specifying save location
  */
 template <typename GraphType>
-void SaveModel(GraphType const &g, std::string const &save_location)
+void SaveModel(GraphType &g, std::string const &save_location)
 {
+  using TensorType = typename GraphType::TensorType;
+
+  std::cout << "Starting graph serialization" << std::endl;
+
+  fetch::ml::GraphSaveableParams<TensorType> gsp1 = g.GetGraphSaveableParams();
+
   fetch::serializers::MsgPackSerializer serializer;
-  serializer << g.StateDict();
+
+  serializer << gsp1;
 
   std::fstream file(save_location, std::fstream::out);  // fba = FetchByteArray
+
   if (file)
   {
     file << std::string(serializer.data());
     file.close();
+    std::cout << "Finish writing to file " << save_location << std::endl;
+  }
+  else
+  {
+    std::cerr << "Can't open save file" << std::endl;
+  }
+}
+
+template <typename GraphType>
+void SaveLargeModel(GraphType &g, std::string const &save_location)
+{
+  using TensorType = typename GraphType::TensorType;
+
+  std::cout << "Starting large graph serialization" << std::endl;
+
+  fetch::ml::GraphSaveableParams<TensorType> gsp1 = g.GetGraphSaveableParams();
+
+  fetch::serializers::LargeObjectSerializeHelper losh;
+
+  losh << gsp1;
+
+  std::ofstream outFile(save_location, std::ios::out | std::ios::binary);
+
+  if (outFile)
+  {
+    outFile.write(losh.buffer.data().char_pointer(), std::streamsize(losh.buffer.size()));
+    outFile.close();
+    std::cout << "Buffer size " << losh.buffer.size() << std::endl;
+    std::cout << "Finish writing to file " << save_location << std::endl;
   }
   else
   {

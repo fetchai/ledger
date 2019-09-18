@@ -36,6 +36,10 @@
 #include <iostream>
 #include <string>
 
+namespace fetch {
+namespace ml {
+namespace examples {
+
 using DataType      = float;
 using TensorType    = fetch::math::Tensor<DataType>;
 using SizeType      = typename TensorType::SizeType;
@@ -571,4 +575,7 @@ std::vector<TensorType> PrepareTensorForBert(TensorType const &data, BERTConfig 
     }
   }
   return {segment_data, position_data, data, mask_data};
+}
+}
+}
 }

@@ -27,6 +27,7 @@
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
 #include "model_saver.hpp"
+#include "word2vec_utilities.hpp"
 
 #include <iostream>
 #include <string>
@@ -37,6 +38,8 @@ using namespace fetch::ml;
 using namespace fetch::ml::dataloaders;
 using namespace fetch::ml::ops;
 using namespace fetch::ml::layers;
+using namespace fetch::ml::examples;
+
 using DataType   = double;
 using TensorType = fetch::math::Tensor<DataType>;
 using SizeType   = typename TensorType::SizeType;
@@ -67,38 +70,39 @@ void PrintWordAnalogy(GraphW2VLoader<DataType> const &dl, TensorType const &embe
 
   if (!dl.WordKnown(word1) || !dl.WordKnown(word2) || !dl.WordKnown(word3))
   {
-    throw std::runtime_error("WARNING! not all to-be-tested words are in vocabulary");
+    std::cout << "WARNING! not all to-be-tested words are in vocabulary: " << word1
+    << " " << word2 << " " << word3 << std::endl;
   }
   else
   {
-    std::cout << "Find word that to " << word3 << " is what " << word2 << " is to " << word1
+    std::cout << "Find word that is to " << word3 << " what " << word2 << " is to " << word1
               << std::endl;
-  }
 
-  // get id for words
-  SizeType word1_idx = dl.IndexFromWord(word1);
-  SizeType word2_idx = dl.IndexFromWord(word2);
-  SizeType word3_idx = dl.IndexFromWord(word3);
 
-  // get word vectors for words
-  TensorType word1_vec = embeddings.Slice(word1_idx, 1).Copy();
-  TensorType word2_vec = embeddings.Slice(word2_idx, 1).Copy();
-  TensorType word3_vec = embeddings.Slice(word3_idx, 1).Copy();
+    // get id for words
+    SizeType word1_idx = dl.IndexFromWord(word1);
+    SizeType word2_idx = dl.IndexFromWord(word2);
+    SizeType word3_idx = dl.IndexFromWord(word3);
 
-  word1_vec /= fetch::math::L2Norm(word1_vec);
-  word2_vec /= fetch::math::L2Norm(word2_vec);
-  word3_vec /= fetch::math::L2Norm(word3_vec);
+    // get word vectors for words
+    TensorType word1_vec = embeddings.Slice(word1_idx, 1).Copy();
+    TensorType word2_vec = embeddings.Slice(word2_idx, 1).Copy();
+    TensorType word3_vec = embeddings.Slice(word3_idx, 1).Copy();
 
-  TensorType word4_vec = word2_vec - word1_vec + word3_vec;
+    word1_vec /= fetch::math::L2Norm(word1_vec);
+    word2_vec /= fetch::math::L2Norm(word2_vec);
+    word3_vec /= fetch::math::L2Norm(word3_vec);
 
-  std::vector<std::pair<typename TensorType::SizeType, typename TensorType::Type>> output =
-      fetch::math::clustering::KNNCosine(arr, word4_vec, k);
+    TensorType word4_vec = word2_vec - word1_vec + word3_vec;
 
-  for (std::size_t l = 0; l < output.size(); ++l)
-  {
-    std::cout << "rank: " << l << ", "
-              << "distance, " << output.at(l).second << ": " << dl.WordFromIndex(output.at(l).first)
-              << std::endl;
+    std::vector<std::pair<typename TensorType::SizeType, typename TensorType::Type>> output =
+        fetch::math::clustering::KNNCosine(arr, word4_vec, k);
+
+    for (std::size_t l = 0; l < output.size(); ++l) {
+      std::cout << "rank: " << l << ", "
+                << "distance, " << output.at(l).second << ": " << dl.WordFromIndex(output.at(l).first)
+                << std::endl;
+    }
   }
 }
 
@@ -117,6 +121,7 @@ void PrintKNN(GraphW2VLoader<DataType> const &dl, TensorType const &embeddings,
   std::vector<std::pair<typename TensorType::SizeType, typename TensorType::Type>> output =
       fetch::math::clustering::KNNCosine(arr, one_vector, k);
 
+  std::cout << "Find words that are closest to " << word0 << " by cosine distance" << std::endl;
   for (std::size_t l = 0; l < output.size(); ++l)
   {
     std::cout << "rank: " << l << ", "
@@ -143,6 +148,8 @@ void TestEmbeddings(Graph<TensorType> const &g, std::string const &skip_gram_nam
   PrintKNN(dl, embeddings->get_weights(), word0, K);
   std::cout << std::endl;
   PrintWordAnalogy(dl, embeddings->get_weights(), word1, word2, word3, K);
+
+//  fetch::ml::examples::TestWithAnalogies<TensorType>(dl, embeddings->get_weights());
 }
 
 std::string ReadFile(std::string const &path)
@@ -157,7 +164,7 @@ std::string ReadFile(std::string const &path)
 
 struct TrainingParams
 {
-  // TODO (#1585) something is broken here. if u set max_word_count to sth smaller like 10000, there
+  // TODO (#1585) something is broken here. If you set max_word_count to something smaller like 10000, there
   // would be an error at the end of the sentence
   SizeType max_word_count = fetch::math::numeric_max<SizeType>();  // maximum number to be trained
   SizeType negative_sample_size = 5;     // number of negative sample per word-context pair
@@ -190,9 +197,11 @@ int main(int argc, char **argv)
 {
 
   std::string train_file;
-  if (argc == 2)
+  std::string save_file;
+  if (argc >= 2)
   {
     train_file = argv[1];
+    save_file = (argc > 2) ? argv[2] : "/tmp/word2vec_SGNS_dataloader_graph";
   }
   else
   {
@@ -261,14 +270,16 @@ int main(int argc, char **argv)
   // Training loop
   for (SizeType i{0}; i < tp.training_epochs; i++)
   {
-    std::cout << "start training for epoch no.: " << i << std::endl;
+    std::cout << "Start training for epoch no.: " << i << std::endl;
     optimiser.Run(data_loader, tp.batch_size);
-    std::cout << std::endl;
+
     // Test trained embeddings
     if (i % tp.test_frequency == 0)
     {
       TestEmbeddings(*g, skipgram_layer, data_loader, tp.word0, tp.word1, tp.word2, tp.word3, tp.k);
     }
+
+    SaveLargeModel(*g, save_file + std::to_string(i));
   }
 
   return 0;
