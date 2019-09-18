@@ -62,73 +62,6 @@ std::pair<std::string, std::string> Model(fetch::ml::Graph<TensorType> &g, SizeT
   return std::pair<std::string, std::string>(error, skipgram);
 }
 
-void PrintWordAnalogy(GraphW2VLoader<DataType> const &dl, TensorType const &embeddings,
-                      std::string const &word1, std::string const &word2, std::string const &word3,
-                      SizeType k)
-{
-  TensorType arr = embeddings;
-
-  if (!dl.WordKnown(word1) || !dl.WordKnown(word2) || !dl.WordKnown(word3))
-  {
-    std::cout << "WARNING! not all to-be-tested words are in vocabulary: " << word1
-    << " " << word2 << " " << word3 << std::endl;
-  }
-  else
-  {
-    std::cout << "Find word that is to " << word3 << " what " << word2 << " is to " << word1
-              << std::endl;
-
-
-    // get id for words
-    SizeType word1_idx = dl.IndexFromWord(word1);
-    SizeType word2_idx = dl.IndexFromWord(word2);
-    SizeType word3_idx = dl.IndexFromWord(word3);
-
-    // get word vectors for words
-    TensorType word1_vec = embeddings.Slice(word1_idx, 1).Copy();
-    TensorType word2_vec = embeddings.Slice(word2_idx, 1).Copy();
-    TensorType word3_vec = embeddings.Slice(word3_idx, 1).Copy();
-
-    word1_vec /= fetch::math::L2Norm(word1_vec);
-    word2_vec /= fetch::math::L2Norm(word2_vec);
-    word3_vec /= fetch::math::L2Norm(word3_vec);
-
-    TensorType word4_vec = word2_vec - word1_vec + word3_vec;
-
-    std::vector<std::pair<typename TensorType::SizeType, typename TensorType::Type>> output =
-        fetch::math::clustering::KNNCosine(arr, word4_vec, k);
-
-    for (std::size_t l = 0; l < output.size(); ++l) {
-      std::cout << "rank: " << l << ", "
-                << "distance, " << output.at(l).second << ": " << dl.WordFromIndex(output.at(l).first)
-                << std::endl;
-    }
-  }
-}
-
-void PrintKNN(GraphW2VLoader<DataType> const &dl, TensorType const &embeddings,
-              std::string const &word0, SizeType k)
-{
-  TensorType arr = embeddings;
-
-  if (dl.IndexFromWord(word0) == fetch::math::numeric_max<SizeType>())
-  {
-    throw std::runtime_error("WARNING! could not find [" + word0 + "] in vocabulary");
-  }
-
-  SizeType   idx        = dl.IndexFromWord(word0);
-  TensorType one_vector = embeddings.Slice(idx, 1).Copy();
-  std::vector<std::pair<typename TensorType::SizeType, typename TensorType::Type>> output =
-      fetch::math::clustering::KNNCosine(arr, one_vector, k);
-
-  std::cout << "Find words that are closest to " << word0 << " by cosine distance" << std::endl;
-  for (std::size_t l = 0; l < output.size(); ++l)
-  {
-    std::cout << "rank: " << l << ", "
-              << "distance, " << output.at(l).second << ": " << dl.WordFromIndex(output.at(l).first)
-              << std::endl;
-  }
-}
 
 void TestEmbeddings(Graph<TensorType> const &g, std::string const &skip_gram_name,
                     GraphW2VLoader<DataType> const &dl, std::string word0, std::string word1,
@@ -148,14 +81,6 @@ void TestEmbeddings(Graph<TensorType> const &g, std::string const &skip_gram_nam
   PrintKNN(dl, embeddings->get_weights(), word0, K);
   std::cout << std::endl;
   PrintWordAnalogy(dl, embeddings->get_weights(), word1, word2, word3, K);
-
-//  fetch::ml::examples::TestWithAnalogies<TensorType>(dl, embeddings->get_weights());
-}
-
-std::string ReadFile(std::string const &path)
-{
-  std::ifstream t(path);
-  return std::string((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
 }
 
 ////////////////////////////////
@@ -164,8 +89,8 @@ std::string ReadFile(std::string const &path)
 
 struct TrainingParams
 {
-  // TODO (#1585) something is broken here. If you set max_word_count to something smaller like 10000, there
-  // would be an error at the end of the sentence
+  // TODO (#1585) something is broken here. If you set max_word_count to something smaller like
+  // 10000, there would be an error at the end of the sentence
   SizeType max_word_count = fetch::math::numeric_max<SizeType>();  // maximum number to be trained
   SizeType negative_sample_size = 5;     // number of negative sample per word-context pair
   SizeType window_size          = 5;     // window size for context sampling
@@ -198,14 +123,14 @@ int main(int argc, char **argv)
 
   std::string train_file;
   std::string save_file;
-  if (argc >= 2)
+  if (argc == 3)
   {
     train_file = argv[1];
-    save_file = (argc > 2) ? argv[2] : "/tmp/word2vec_SGNS_dataloader_graph";
+    save_file  = argv[2];
   }
   else
   {
-    throw std::runtime_error("must specify filename as training text");
+    throw std::runtime_error("Args: data_file graph_save_file");
   }
 
   std::cout << "FETCH Word2Vec Demo" << std::endl;

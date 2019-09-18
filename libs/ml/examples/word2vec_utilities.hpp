@@ -17,6 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/tensor.hpp"
+#include "math/clustering/knn.hpp"
+#include "ml/dataloaders/word2vec_loaders/sgns_w2v_dataloader.hpp"
+
 #include <cstring>
 #include <dirent.h>
 #include <fstream>
@@ -31,7 +35,8 @@ template <class TensorType>
 std::vector<std::pair<typename TensorType::SizeType, typename TensorType::Type>> GetWordIDAnalogies(
     TensorType const &embeddings, typename TensorType::SizeType const &word1,
     typename TensorType::SizeType const &word2, typename TensorType::SizeType const &word3,
-    typename TensorType::SizeType k) {
+    typename TensorType::SizeType k)
+{
   using SizeType = typename TensorType::SizeType;
   using DataType = typename TensorType::Type;
 
@@ -40,54 +45,91 @@ std::vector<std::pair<typename TensorType::SizeType, typename TensorType::Type>>
   TensorType word2_vec = embeddings.Slice(word2, 1).Copy();
   TensorType word3_vec = embeddings.Slice(word3, 1).Copy();
 
-  word1_vec /= fetch::math::L2Norm(word1_vec);
-  word2_vec /= fetch::math::L2Norm(word2_vec);
-  word3_vec /= fetch::math::L2Norm(word3_vec);
+//  word1_vec /= fetch::math::L2Norm(word1_vec);
+//  word2_vec /= fetch::math::L2Norm(word2_vec);
+//  word3_vec /= fetch::math::L2Norm(word3_vec);
 
   TensorType word4_vec = word2_vec - word1_vec + word3_vec;
-  std::vector<std::pair<SizeType, typename TensorType::Type>> output;
-  if (k > 1)
+  std::vector<std::pair<SizeType, DataType>> output;
+  output = fetch::math::clustering::KNNCosine(embeddings, word4_vec, k);
+
+  return output;
+}
+
+template <class TensorType>
+void PrintWordAnalogy(dataloaders::GraphW2VLoader<typename TensorType::Type> const &dl,
+                      TensorType const &embeddings,
+                      std::string const &word1, std::string const &word2, std::string const &word3,
+                      typename TensorType::SizeType k)
+{
+  using SizeType   = typename TensorType::SizeType;
+  using DataType = typename TensorType::Type;
+
+    std::cout << "Find word that is to " << word3 << " what " << word2 << " is to " << word1
+              << std::endl;
+
+  if (!dl.WordKnown(word1) || !dl.WordKnown(word2) || !dl.WordKnown(word3))
   {
-    output = fetch::math::clustering::KNNCosine(embeddings, word4_vec, k);
+    std::cout << "Error: Not all to-be-tested words are in vocabulary." << std::endl;
   }
   else
   {
-    // compute distances
-    SizeType feature_axis;
-    SizeType data_axis;
-    if (word4_vec.shape().at(0) == 1)
-    {
-      feature_axis = 1;
-    }
-    else
-    {
-      feature_axis = 0;
-    }
+    // get id for words
+    SizeType word1_idx = dl.IndexFromWord(word1);
+    SizeType word2_idx = dl.IndexFromWord(word2);
+    SizeType word3_idx = dl.IndexFromWord(word3);
 
-    DataType min_dist = 100;
-    SizeType min_ind = 0;
-    data_axis = 1 - feature_axis;
-    for (SizeType i = 0; i < embeddings.shape().at(data_axis); ++i)
+    std::vector<std::pair<SizeType, DataType>> output =
+          GetWordIDAnalogies<TensorType>(embeddings, word1_idx, word2_idx, word3_idx, k);
+
+    for (SizeType l = 0; l < output.size(); ++l)
     {
-      DataType d = fetch::math::distance::Cosine(word4_vec, embeddings.Slice(i, data_axis).Copy());
-      if (d < min_dist)
-      {
-        min_dist = d;
-        min_ind = i;
-      }
+      std::cout << "rank: " << l << ", "
+                << "distance, " << output.at(l).second << ": "
+                << dl.WordFromIndex(output.at(l).first) << std::endl;
     }
-    output.push_back(std::make_pair(min_ind, min_dist));
   }
-  return output;
+}
+
+
+template <class TensorType>
+void PrintKNN(dataloaders::GraphW2VLoader<typename TensorType::Type> const &dl,
+              TensorType const &embeddings,
+              std::string const &word0, typename TensorType::SizeType k)
+{
+  using SizeType   = typename TensorType::SizeType;
+  using DataType   = typename TensorType::Type;
+
+  std::cout << "Find words that are closest to \"" << word0 << "\" by cosine distance" << std::endl;
+
+  if (!dl.WordKnown(word0))
+  {
+    std::cout << "Error: could not find \"" + word0 + "\" in vocabulary" << std::endl;
+  }
+  else
+  {
+    SizeType idx = dl.IndexFromWord(word0);
+    TensorType one_vector = embeddings.Slice(idx, 1).Copy();
+    std::vector<std::pair<SizeType, DataType>> output =
+        fetch::math::clustering::KNNCosine(embeddings, one_vector, k);
+
+    for (std::size_t l = 0; l < output.size(); ++l) {
+      std::cout << "rank: " << l << ", "
+                << "distance, " << output.at(l).second << ": " << dl.WordFromIndex(output.at(l).first)
+                << std::endl;
+    }
+  }
 }
 
 template <class TensorType>
 void TestWithAnalogies(dataloaders::GraphW2VLoader<typename TensorType::Type> const &dl,
                        TensorType const &                                            embeddings,
-                       std::string const &analogy_file = "./datasets/questions-words.txt")
+                       std::string const &analogy_file)
 {
   using SizeType = typename TensorType::SizeType;
   using DataType = typename TensorType::Type;
+
+  std::cout << "Testing with analogies" << std::endl;
 
   // read analogy file
   std::ifstream fp(analogy_file);
@@ -139,25 +181,15 @@ void TestWithAnalogies(dataloaders::GraphW2VLoader<typename TensorType::Type> co
       }
     }
   }
-  std::cout << "Unknown, success, fail " << unknown_count << ' ' << success_count << ' ' << fail_count
-            << std::endl;
+  std::cout << "Unknown, success, fail: " << unknown_count << ' ' << success_count << ' '
+            << fail_count << std::endl;
 }
 
-//
-//void SaveGraphToFile(GraphType &g, std::string const file_name)
-//{
-//  fetch::ml::GraphSaveableParams<TensorType> gsp1 = g.GetGraphSaveableParams();
-//
-//  fetch::serializers::LargeObjectSerializeHelper losh;
-//
-//  losh << gsp1;
-//
-//  std::ofstream outFile(file_name, std::ios::out | std::ios::binary);
-//  outFile.write(losh.buffer.data().char_pointer(), std::streamsize(losh.buffer.size()));
-//  outFile.close();
-//  std::cout << "Buffer size " << losh.buffer.size() << std::endl;
-//  std::cout << "Finished writing to file " << file_name << std::endl;
-//}
+std::string ReadFile(std::string const &path)
+{
+  std::ifstream t(path);
+  return std::string((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
+}
 
 }  // namespace examples
 }  // namespace ml
