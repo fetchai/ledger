@@ -20,6 +20,7 @@
 #include "math/meta/math_type_traits.hpp"
 #include "math/tensor_declaration.hpp"
 
+#include <cfenv>
 #include <cstdint>
 #include <limits>
 #include <unordered_set>
@@ -111,6 +112,105 @@ template <typename T>
 fetch::meta::IfIsFloat<T, T> static function_tolerance()
 {
   return T(1e-6);
+}
+
+template <typename T>
+static constexpr meta::IfIsNonFixedPointArithmetic<T, bool> is_nan(T const &val)
+{
+  return std::isnan(val);
+}
+
+template <typename T>
+static constexpr meta::IfIsFixedPoint<T, bool> is_nan(T const &val)
+{
+  return T::IsNaN(val);
+}
+
+template <typename T>
+static constexpr meta::IfIsNonFixedPointArithmetic<T, bool> is_div_by_zero(T const &val)
+{
+  return std::isinf(val);
+}
+
+template <typename T>
+static constexpr meta::IfIsFixedPoint<T, bool> is_div_by_zero(T const &val)
+{
+  auto tmp     = T::IsNegInfinity(val);
+  auto tmp_pos = T::IsPosInfinity(val);
+  auto ret     = (tmp || tmp_pos);
+  return ret;
+}
+
+template <typename T>
+static constexpr meta::IfIsNonFixedPointArithmetic<T, bool> state_nan()
+{
+  return std::fetestexcept(FE_INVALID);
+}
+
+template <typename T>
+static constexpr meta::IfIsFixedPoint<T, bool> state_nan()
+{
+  return T::IsStateNaN();
+}
+
+template <typename T>
+static constexpr meta::IfIsNonFixedPointArithmetic<T, bool> state_division_by_zero()
+{
+  return std::fetestexcept(FE_DIVBYZERO);
+}
+
+template <typename T>
+static constexpr meta::IfIsFixedPoint<T, bool> state_division_by_zero()
+{
+  return T::IsStateDivisionByZero();
+}
+
+template <typename T>
+static constexpr meta::IfIsNonFixedPointArithmetic<T, bool> state_overflow()
+{
+  return std::fetestexcept(FE_OVERFLOW);
+}
+
+template <typename T>
+static constexpr meta::IfIsFixedPoint<T, bool> state_overflow()
+{
+  return T::IsStateOverflow();
+}
+
+template <typename T>
+static constexpr meta::IfIsNonFixedPointArithmetic<T, bool> state_infinity()
+{
+  return std::fetestexcept(FE_DIVBYZERO);
+}
+
+template <typename T>
+static constexpr meta::IfIsFixedPoint<T, bool> state_infinity()
+{
+  return T::IsStateInfinity();
+}
+
+template <typename T>
+static constexpr meta::IfIsNonFixedPointArithmetic<T, void> state_clear()
+{
+  std::feclearexcept(FE_ALL_EXCEPT);
+}
+
+template <typename T>
+static constexpr meta::IfIsFixedPoint<T, void> state_clear()
+{
+  T::StateClear();
+}
+
+template <typename T>
+static constexpr meta::IfIsNonFixedPointArithmetic<T, bool> is_inf(T const &val)
+{
+  return std::isinf(val);
+}
+
+template <typename T>
+static constexpr meta::IfIsFixedPoint<T, bool> is_inf(T const &val)
+{
+  return (T::IsNegInfinity(val) || T::IsPosInfinity(val) || state_division_by_zero<T>());
 }
 
 }  // namespace math
