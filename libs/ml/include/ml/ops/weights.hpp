@@ -206,7 +206,7 @@ public:
     return *this->data_;
   }
 
-  void SetWeights(TensorType &new_value) override
+  void SetWeights(TensorType const &new_value) override
   {
     this->data_->Assign(new_value);
   }
