@@ -287,15 +287,14 @@ struct InitialiserListPlaceholder
 
 struct SourceFile
 {
-  SourceFile(std::string const &filename__, std::string const &source__):
-    filename(filename__),
-    source(source__)
+  SourceFile(std::string const &filename__, std::string const &source__)
+    : filename(filename__)
+    , source(source__)
   {}
   std::string filename;
   std::string source;
 };
 using SourceFiles = std::vector<SourceFile>;
-
 
 }  // namespace vm
 }  // namespace fetch

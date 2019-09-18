@@ -71,7 +71,7 @@ public:
     ir_       = std::make_unique<IR>();
 
     // compile the source code
-    fetch::vm::SourceFiles files = { {"default.etch", text} };
+    fetch::vm::SourceFiles files = {{"default.etch", text}};
     if (!compiler_->Compile(files, "default_ir", *ir_, errors))
     {
       PrintErrors(errors);

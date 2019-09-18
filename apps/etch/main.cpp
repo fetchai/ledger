@@ -296,7 +296,8 @@ int main(int argc, char **argv)
   size_t num_args = params.program().arg_size();
   if (2u > num_args)
   {
-    std::cerr << "Usage: " << argv[0] << " [options] [filename]... -- [script args]..." << std::endl;
+    std::cerr << "Usage: " << argv[0] << " [options] [filename]... -- [script args]..."
+              << std::endl;
     return 1;
   }
 
@@ -305,10 +306,10 @@ int main(int argc, char **argv)
 
   // load the contents of the script files
   fetch::vm::SourceFiles files;
-  for (size_t i=1; i<num_args; ++i)
+  for (size_t i = 1; i < num_args; ++i)
   {
     std::string filename = params.program().GetArg(i);
-    auto const source = ReadFileContents(filename);
+    auto const  source   = ReadFileContents(filename);
     files.push_back(fetch::vm::SourceFile(filename, source));
   }
 

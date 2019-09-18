@@ -186,7 +186,7 @@ SynergeticContract::SynergeticContract(ConstByteArray const &source)
 
   // compile the source to IR
   std::vector<std::string> errors{};
-  fetch::vm::SourceFiles files = { {"default.etch", static_cast<std::string>(source)} };
+  fetch::vm::SourceFiles   files = {{"default.etch", static_cast<std::string>(source)}};
   if (!compiler_->Compile(files, "default_ir", *ir_, errors))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to compile contract: ", ErrorsToLog(errors));

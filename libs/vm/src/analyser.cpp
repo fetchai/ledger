@@ -391,7 +391,7 @@ void Analyser::BuildBlock(BlockNodePtr const &block_node)
 
 void Analyser::BuildFile(BlockNodePtr const &file_node)
 {
-  filename_ = file_node->text;
+  filename_          = file_node->text;
   file_node->symbols = CreateSymbolTable();
   BuildBlock(file_node);
 }

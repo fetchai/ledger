@@ -57,8 +57,8 @@ int main(int argc, char **argv)
   std::vector<std::string> errors;
 
   // Compiling
-  fetch::vm::SourceFiles files = { {"default.etch", source} };
-  bool compiled = compiler->Compile(files, "default_ir", ir, errors);
+  fetch::vm::SourceFiles files    = {{"default.etch", source}};
+  bool                   compiled = compiler->Compile(files, "default_ir", ir, errors);
 
   if (!compiled)
   {

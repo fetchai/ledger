@@ -37,7 +37,7 @@ Parser::Parser()
 
 BlockNodePtr Parser::Parse(SourceFiles const &files, std::vector<std::string> &errors)
 {
- errors_.clear();
+  errors_.clear();
   blocks_.clear();
 
   BlockNodePtr root = CreateBlockNode(NodeKind::Root, "", 0);

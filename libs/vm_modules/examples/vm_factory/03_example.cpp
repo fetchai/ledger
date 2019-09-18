@@ -56,7 +56,7 @@ int main(int argc, char **argv)
 
   // Compile source, get runnable script
   fetch::vm::Executable    executable;
-  fetch::vm::SourceFiles files = { {"default.etch", source} };
+  fetch::vm::SourceFiles   files  = {{"default.etch", source}};
   std::vector<std::string> errors = VMFactory::Compile(module, files, executable);
 
   for (auto const &error : errors)

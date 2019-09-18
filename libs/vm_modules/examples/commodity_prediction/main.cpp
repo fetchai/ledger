@@ -206,8 +206,8 @@ int RunEtchScript(std::string const &filename, std::shared_ptr<fetch::vm::Module
   file.close();
 
   /// Compiling
-  fetch::vm::SourceFiles files = { {"default.etch", source} };
-  bool compiled = compiler->Compile(files, "default_ir", ir, errors);
+  fetch::vm::SourceFiles files    = {{"default.etch", source}};
+  bool                   compiled = compiler->Compile(files, "default_ir", ir, errors);
 
   if (!compiled)
   {
