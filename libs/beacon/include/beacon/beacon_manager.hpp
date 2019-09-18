@@ -66,14 +66,14 @@ public:
   std::vector<Coefficient> GetCoefficients();
   std::pair<Share, Share>  GetOwnShares(MuddleAddress const &share_receiver);
   std::pair<Share, Share>  GetReceivedShares(MuddleAddress const &share_owner);
-  void AddCoefficients(MuddleAddress const &from, std::vector<Coefficient> const &coefficients);
-  void AddShares(MuddleAddress const &from, std::pair<Share, Share> const &shares);
+  bool AddCoefficients(MuddleAddress const &from, std::vector<Coefficient> const &coefficients);
+  bool AddShares(MuddleAddress const &from, std::pair<Share, Share> const &shares);
   std::unordered_set<MuddleAddress> ComputeComplaints(
       std::set<MuddleAddress> const &coeff_received);
   bool VerifyComplaintAnswer(MuddleAddress const &from, ComplaintAnswer const &answer);
   void ComputeSecretShare();
   std::vector<Coefficient> GetQualCoefficients();
-  void AddQualCoefficients(MuddleAddress const &from, std::vector<Coefficient> const &coefficients);
+  bool AddQualCoefficients(MuddleAddress const &from, std::vector<Coefficient> const &coefficients);
   SharesExposedMap ComputeQualComplaints(std::set<MuddleAddress> const &coeff_received);
   MuddleAddress    VerifyQualComplaint(MuddleAddress const &from, ComplaintAnswer const &answer);
   void             ComputePublicKeys();
@@ -84,7 +84,8 @@ public:
                                 std::vector<PublicKey> &public_key_shares, std::set<MuddleAddress> &qual);
   void             SetQual(std::set<MuddleAddress> qual);
   void             SetGroupPublicKey(PublicKey const &public_key);
-  void             Reset(std::set<Identity> const &cabinet, uint32_t threshold);
+  void             NewCabinet(std::set<MuddleAddress> const &cabinet, uint32_t threshold);
+  void             Reset();
 
   AddResult     AddSignaturePart(Identity const &from, Signature const &signature);
   bool          Verify();

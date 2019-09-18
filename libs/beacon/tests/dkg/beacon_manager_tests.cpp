@@ -66,28 +66,29 @@ TEST(beacon_manager, dkg_and_threshold_signing)
   }
 
   // Create cabinet and reset the beacon managers
-  std::set<Identity> cabinet;
+  std::set<MuddleAddress> cabinet;
   for (auto &mem : member_ptrs)
   {
-    cabinet.insert(mem->identity());
+    cabinet.insert(mem->identity().identifier());
   }
 
   // Reset all managers
   for (auto &manager : beacon_managers)
   {
-    manager->Reset(cabinet, threshold);
+    manager->NewCabinet(cabinet, threshold);
   }
 
   // Check reset for one manager
   for (uint32_t index = 0; index < cabinet_size; ++index)
   {
     std::shared_ptr<BeaconManager> manager = beacon_managers[index];
-    EXPECT_EQ(manager->cabinet_index(),
-              std::distance(cabinet.begin(), cabinet.find(member_ptrs[index]->identity())));
+    EXPECT_EQ(
+        manager->cabinet_index(),
+        std::distance(cabinet.begin(), cabinet.find(member_ptrs[index]->identity().identifier())));
     for (auto &mem : member_ptrs)
     {
       EXPECT_EQ(manager->cabinet_index(mem->identity().identifier()),
-                std::distance(cabinet.begin(), cabinet.find(mem->identity())));
+                std::distance(cabinet.begin(), cabinet.find(mem->identity().identifier())));
     }
     EXPECT_TRUE(manager->qual().empty());
     EXPECT_TRUE(manager->group_public_key() == zero.getStr());

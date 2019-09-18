@@ -136,11 +136,6 @@ public:
 
   std::weak_ptr<core::Runnable> GetWeakRunnable();
 
-  void OnNewSharesPacket(muddle::Packet const &packet, MuddleAddress const &last_hop);
-  void OnNewShares(MuddleAddress from_id, std::pair<MessageShare, MessageShare> const &shares);
-  void OnDkgMessage(MuddleAddress const &from, std::shared_ptr<DKGMessage> msg_ptr);
-  void OnNewDryRunPacket(muddle::Packet const &packet, MuddleAddress const &last_hop);
-
 protected:
   Identity                identity_;
   ManifestCacheInterface &manifest_cache_;
@@ -176,28 +171,6 @@ protected:
   virtual void BroadcastReconstructionShares();
   /// @}
 
-  /// @name Handlers for messages
-  /// @{
-  void OnNewCoefficients(CoefficientsMessage const &coefficients, MuddleAddress const &from_id);
-  void OnComplaints(ComplaintsMessage const &complaint, MuddleAddress const &from_id);
-  void OnExposedShares(SharesMessage const &shares, MuddleAddress const &from_id);
-  void OnComplaintAnswers(SharesMessage const &answer, MuddleAddress const &from_id);
-  void OnQualComplaints(SharesMessage const &shares, MuddleAddress const &from_id);
-  void OnReconstructionShares(SharesMessage const &shares, MuddleAddress const &from_id);
-  /// @}
-
-  /// @name Helper methods
-  /// @{
-  bool BasicMsgCheck(MuddleAddress const &from, std::shared_ptr<DKGMessage> const &msg_ptr);
-  void CheckComplaintAnswers();
-  bool BuildQual();
-  void CheckQualComplaints();
-  /// @}
-
-  // Helper functions
-  uint64_t PreDKGThreshold();
-  uint32_t QualSize();
-
   // Telemetry
   telemetry::GaugePtr<uint64_t> beacon_dkg_state_gauge_;
   telemetry::GaugePtr<uint64_t> beacon_dkg_connections_gauge_;
@@ -227,6 +200,30 @@ private:
   uint64_t         seconds_for_state_     = 0;
   uint64_t         expected_dkg_timespan_ = 0;
   bool             condition_to_proceed_  = false;
+
+  /// @name Handlers for messages
+  /// @{
+  void OnDkgMessage(MuddleAddress const &from, std::shared_ptr<DKGMessage> msg_ptr);
+  void OnNewShares(MuddleAddress from_id, std::pair<MessageShare, MessageShare> const &shares);
+  void OnNewSharesPacket(muddle::Packet const &packet, MuddleAddress const &last_hop);
+  void OnNewDryRunPacket(muddle::Packet const &packet, MuddleAddress const &last_hop);
+  void OnNewCoefficients(CoefficientsMessage const &coefficients, MuddleAddress const &from_id);
+  void OnComplaints(ComplaintsMessage const &complaint, MuddleAddress const &from_id);
+  void OnExposedShares(SharesMessage const &shares, MuddleAddress const &from_id);
+  void OnComplaintAnswers(SharesMessage const &answer, MuddleAddress const &from_id);
+  void OnQualComplaints(SharesMessage const &shares, MuddleAddress const &from_id);
+  void OnReconstructionShares(SharesMessage const &shares, MuddleAddress const &from_id);
+  /// @}
+
+  /// @name Helper methods
+  /// @{
+  bool     BasicMsgCheck(MuddleAddress const &from, std::shared_ptr<DKGMessage> const &msg_ptr);
+  void     CheckComplaintAnswers();
+  bool     BuildQual();
+  void     CheckQualComplaints();
+  uint64_t PreDKGThreshold();
+  uint32_t QualSize();
+  /// @}
 };
 }  // namespace beacon
 
