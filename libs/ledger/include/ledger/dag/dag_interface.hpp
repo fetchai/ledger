@@ -20,13 +20,15 @@
 #include "ledger/dag/dag_epoch.hpp"
 #include "ledger/dag/dag_node.hpp"
 #include "ledger/upow/work.hpp"
-#include "network/p2pservice/p2p_service.hpp"
 
 #include <cstdint>
 #include <set>
 #include <vector>
 
 namespace fetch {
+namespace crypto {
+class Prover;
+}
 namespace ledger {
 
 /**
@@ -38,7 +40,7 @@ public:
   using ConstByteArray = byte_array::ConstByteArray;
   using NodeHash       = ConstByteArray;
   using EpochHash      = ConstByteArray;
-  using CertificatePtr = p2p::P2PService::CertificatePtr;
+  using CertificatePtr = std::shared_ptr<crypto::Prover>;
 
   // TODO(HUT): cleanly define things here
   using MissingTXs   = std::set<NodeHash>;

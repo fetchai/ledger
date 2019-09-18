@@ -207,7 +207,7 @@ public:
     Separator separator;
 
     file_handle_.read(reinterpret_cast<char *>(&separator), sizeof(Separator));
-    int64_t offset = int64_t(sizeof(Separator) + separator.object_size);
+    auto offset = int64_t(sizeof(Separator) + separator.object_size);
 
     if (separator.object_size != sizeof(T))
     {
@@ -246,7 +246,7 @@ public:
    */
   void Clear()
   {
-    assert(filename_ != "");
+    assert(!filename_.empty());
     std::fstream fin(filename_, std::ios::out | std::ios::binary);
     fin.seekg(0, fin.beg);
 

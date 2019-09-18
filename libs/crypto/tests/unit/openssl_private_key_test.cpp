@@ -53,10 +53,10 @@ TEST_F(ECDCSAPrivateKeyTest, test_instantiation_of_private_key_gives_corect_publ
 
   //* Expectations:
   EXPECT_TRUE(x.key());
-  EXPECT_TRUE(x.publicKey().key());
+  EXPECT_TRUE(x.PublicKey().key());
 
   EXPECT_EQ(priv_key_data__bin_, x.KeyAsBin());
-  EXPECT_EQ(public_key_data__bin_, x.publicKey().keyAsBin());
+  EXPECT_EQ(public_key_data__bin_, x.PublicKey().KeyAsBin());
 }
 
 // TODO(issue 36): A bit lame test, needs to be tested rather with & against hardcoded DER
@@ -68,27 +68,27 @@ TEST_F(ECDCSAPrivateKeyTest, test_instantiation_of_private_key_gives_corect_publ
 
   //* Mandatory validity checks:
   ASSERT_TRUE(x.key());
-  ASSERT_TRUE(x.publicKey().key());
+  ASSERT_TRUE(x.PublicKey().key());
 
   //* Conv. binary data from bin to DER encoding
   ECDSAPrivateKey<eECDSAEncoding::DER> x_der(x);
 
   //* Mandatory validity checks:
   ASSERT_TRUE(x_der.key());
-  ASSERT_TRUE(x_der.publicKey().key());
+  ASSERT_TRUE(x_der.PublicKey().key());
   ASSERT_EQ(x.key(), x_der.key());
   ASSERT_NE(x.KeyAsBin(), x_der.KeyAsBin());
-  ASSERT_EQ(x.publicKey().key(), x_der.publicKey().key());
+  ASSERT_EQ(x.PublicKey().key(), x_der.PublicKey().key());
   // TODO(issue 36): Public key does not support `DER` enc. yet so it defaults to `bin`
   // enc. in when set to
-  // DER. ASSERT_NE(x.publicKey().KeyAsBin(), x_der.publicKey().KeyAsBin());
+  // DER. ASSERT_NE(x.PublicKey().KeyAsBin(), x_der.PublicKey().KeyAsBin());
 
   //* Conv. binary data back from DER to bin encoding
   ECDSAPrivateKey<eECDSAEncoding::bin> x_2(x_der);
 
   //* Expectations:
   EXPECT_EQ(priv_key_data__bin_, x_2.KeyAsBin());
-  EXPECT_EQ(public_key_data__bin_, x_2.publicKey().keyAsBin());
+  EXPECT_EQ(public_key_data__bin_, x_2.PublicKey().KeyAsBin());
 }
 
 TEST_F(ECDCSAPrivateKeyTest, test_convert_from_bin_to_canonical)
@@ -98,33 +98,33 @@ TEST_F(ECDCSAPrivateKeyTest, test_convert_from_bin_to_canonical)
 
   //* Mandatory validity checks:
   ASSERT_TRUE(x.key());
-  ASSERT_TRUE(x.publicKey().key());
+  ASSERT_TRUE(x.PublicKey().key());
 
   //* Production code:
   ECDSAPrivateKey<eECDSAEncoding::canonical> x_can(x);
 
   //* Mandatory validity checks:
   ASSERT_TRUE(x_can.key());
-  ASSERT_TRUE(x_can.publicKey().key());
+  ASSERT_TRUE(x_can.PublicKey().key());
   ASSERT_EQ(x.key(), x_can.key());
   //* bin & canonical encodings are the same for PRIVATE Key
   ASSERT_EQ(x.KeyAsBin(), x_can.KeyAsBin());
-  ASSERT_EQ(x.publicKey().key(), x_can.publicKey().key());
+  ASSERT_EQ(x.PublicKey().key(), x_can.PublicKey().key());
   //* bin & canonical encodings DIFFER for PUBLIC Key (0x04 z component at the
   // beginning)
-  ASSERT_NE(x.publicKey().keyAsBin(), x_can.publicKey().keyAsBin());
+  ASSERT_NE(x.PublicKey().KeyAsBin(), x_can.PublicKey().KeyAsBin());
 
   //* Converting back to original bin encoding
   ECDSAPrivateKey<eECDSAEncoding::bin> x_bin_2(x_can);
 
   //* Mandatory validity checks:
   ASSERT_TRUE(x_bin_2.key());
-  ASSERT_TRUE(x_bin_2.publicKey().key());
+  ASSERT_TRUE(x_bin_2.PublicKey().key());
   ASSERT_EQ(x.key(), x_bin_2.key());
-  ASSERT_EQ(x.publicKey().key(), x_bin_2.publicKey().key());
+  ASSERT_EQ(x.PublicKey().key(), x_bin_2.PublicKey().key());
 
   EXPECT_EQ(priv_key_data__bin_, x_bin_2.KeyAsBin());
-  EXPECT_EQ(public_key_data__bin_, x_bin_2.publicKey().keyAsBin());
+  EXPECT_EQ(public_key_data__bin_, x_bin_2.PublicKey().KeyAsBin());
 }
 
 TEST_F(ECDCSAPrivateKeyTest, test_each_generated_key_is_different)
@@ -135,13 +135,13 @@ TEST_F(ECDCSAPrivateKeyTest, test_each_generated_key_is_different)
 
   //* Expectations:
   EXPECT_TRUE(x.key());
-  EXPECT_TRUE(x.publicKey().keyAsEC_POINT());
+  EXPECT_TRUE(x.PublicKey().KeyAsECPoint());
 
   EXPECT_TRUE(y.key());
-  EXPECT_TRUE(y.publicKey().keyAsEC_POINT());
+  EXPECT_TRUE(y.PublicKey().KeyAsECPoint());
 
   EXPECT_NE(x.KeyAsBin(), y.KeyAsBin());
-  EXPECT_NE(x.publicKey().keyAsBin(), y.publicKey().keyAsBin());
+  EXPECT_NE(x.PublicKey().KeyAsBin(), y.PublicKey().KeyAsBin());
 }
 
 TEST_F(ECDCSAPrivateKeyTest, test_key_conversion_to_byte_array)
@@ -162,12 +162,12 @@ TEST_F(ECDCSAPrivateKeyTest, public_key_conversion_cycle)
     ECDSAPrivateKey<> const priv_key;
 
     //* Production code:
-    auto const                          serialized_pub_key = priv_key.publicKey().keyAsBin();
-    decltype(priv_key)::public_key_type pub_key{serialized_pub_key};
+    auto const                        serialized_pub_key = priv_key.PublicKey().KeyAsBin();
+    decltype(priv_key)::PublicKeyType pub_key{serialized_pub_key};
 
     //* Expectations:
-    EXPECT_EQ(ECDSAPrivateKey<>::ecdsa_curve_type::publicKeySize, serialized_pub_key.size());
-    EXPECT_EQ(priv_key.publicKey().keyAsBin(), pub_key.keyAsBin());
+    EXPECT_EQ(ECDSAPrivateKey<>::EcdsaCurveType::publicKeySize, serialized_pub_key.size());
+    EXPECT_EQ(priv_key.PublicKey().KeyAsBin(), pub_key.KeyAsBin());
   }
 }
 

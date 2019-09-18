@@ -100,12 +100,12 @@ public:
 
   Identity identity() const final
   {
-    return Identity(PrivateKey::ecdsa_curve_type::sn, public_key());
+    return Identity(PrivateKey::EcdsaCurveType::sn, public_key());
   }
 
   ConstByteArray public_key() const
   {
-    return private_key_.Apply([](PrivateKey const &key) { return key.publicKey().keyAsBin(); });
+    return private_key_.Apply([](PrivateKey const &key) { return key.PublicKey().KeyAsBin(); });
   }
 
   ConstByteArray private_key()

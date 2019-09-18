@@ -207,7 +207,7 @@ void Identifier::UpdateType()
   type_ = Type::NORMAL;
 
   // once the parse is complete decide if this identifier matches that of a smart contract
-  if ((1u <= tokens_.size()) && (3u >= tokens_.size()))
+  if (!tokens_.empty() && 3u >= tokens_.size())
   {
     bool is_smart_contract = IsDigest(tokens_[0]);
 

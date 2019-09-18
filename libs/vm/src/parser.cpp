@@ -37,7 +37,7 @@ Parser::Parser()
 
 BlockNodePtr Parser::Parse(SourceFiles const &files, std::vector<std::string> &errors)
 {
-  errors_.clear();
+ errors_.clear();
   blocks_.clear();
 
   BlockNodePtr root = CreateBlockNode(NodeKind::Root, "", 0);
@@ -57,7 +57,7 @@ BlockNodePtr Parser::Parse(SourceFiles const &files, std::vector<std::string> &e
     ParseBlock(*file_node);
   }
 
-  bool const ok = errors_.size() == 0;
+  bool const ok = errors_.empty();
   errors        = std::move(errors_);
 
   filename_.clear();
@@ -1376,7 +1376,7 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
       return nullptr;
     }
   } while (!found_expression_terminator_);
-  if (groups_.size())
+  if (!groups_.empty())
   {
     Expr const &groupop = operators_[groups_.back()];
     AddError("expected '" + groupop.closer_token_text + "'");
@@ -1384,7 +1384,7 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
   }
   // Roll back so token_ is pointing at the last token of the expression
   Undo();
-  while (operators_.size())
+  while (!operators_.empty())
   {
     Expr &topop = operators_.back();
     rpn_.push_back(std::move(topop));
@@ -1392,9 +1392,8 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
   }
   // rpn_ holds the Reverse Polish Notation (aka postfix) expression
   // Here we convert the RPN to an infix expression tree
-  for (std::size_t i = 0; i < rpn_.size(); ++i)
+  for (auto &expr : rpn_)
   {
-    Expr &expr = rpn_[i];
     if ((expr.node->node_kind == NodeKind::ParenthesisGroup) ||
         (expr.node->node_kind == NodeKind::UnaryPlus))
     {
@@ -1403,7 +1402,7 @@ ExpressionNodePtr Parser::ParseExpression(bool is_conditional_expression)
     }
     if (expr.is_operator)
     {
-      std::size_t const arity = std::size_t(expr.op_info.arity);
+      auto const        arity = std::size_t(expr.op_info.arity);
       std::size_t const size  = infix_stack_.size();
       for (std::size_t j = size - arity; j < size; ++j)
       {
@@ -1641,7 +1640,7 @@ bool Parser::HandleCloser(bool is_conditional_expression)
     AddError("expected '" + groupop.closer_token_text + "'");
     return false;
   }
-  while (operators_.size())
+  while (!operators_.empty())
   {
     Expr &topop = operators_.back();
     if (topop.node->node_kind != groupop.node->node_kind)
@@ -1706,7 +1705,7 @@ bool Parser::HandleComma()
     AddError("");
     return false;
   }
-  while (operators_.size())
+  while (!operators_.empty())
   {
     Expr &topop = operators_.back();
     if (topop.node->node_kind == groupop.node->node_kind)
@@ -1725,13 +1724,13 @@ void Parser::HandleOp(NodeKind kind, OpInfo const &op_info)
 {
   NodeKind group_kind;
   bool     check_if_group_opener = false;
-  if (groups_.size())
+  if (!groups_.empty())
   {
     Expr const &groupop   = operators_[groups_.back()];
     group_kind            = groupop.node->node_kind;
     check_if_group_opener = true;
   }
-  while (operators_.size())
+  while (!operators_.empty())
   {
     Expr &topop = operators_.back();
     if ((check_if_group_opener) && (topop.node->node_kind == group_kind))
@@ -1805,7 +1804,7 @@ void Parser::AddError(std::string const &message)
   {
     stream << "reached end-of-input";
   }
-  if (message.length())
+  if (!message.empty())
   {
     stream << ", " << message;
   }

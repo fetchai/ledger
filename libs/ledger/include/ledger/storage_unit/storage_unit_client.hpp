@@ -23,17 +23,13 @@
 #include "crypto/merkle_tree.hpp"
 #include "ledger/shard_config.hpp"
 #include "ledger/storage_unit/lane_connectivity_details.hpp"
-#include "ledger/storage_unit/lane_identity.hpp"
-#include "ledger/storage_unit/lane_identity_protocol.hpp"
 #include "ledger/storage_unit/lane_service.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
+#include "muddle/muddle_endpoint.hpp"
+#include "muddle/rpc/client.hpp"
+#include "muddle/rpc/server.hpp"
 #include "network/generics/backgrounded_work.hpp"
 #include "network/generics/has_worker_thread.hpp"
-#include "network/management/connection_register.hpp"
-#include "network/muddle/muddle.hpp"
-#include "network/muddle/rpc/client.hpp"
-#include "network/muddle/rpc/server.hpp"
-#include "network/service/service_client.hpp"
 #include "storage/document_store_protocol.hpp"
 #include "storage/object_stack.hpp"
 #include "storage/object_store_protocol.hpp"
@@ -54,7 +50,7 @@ class StorageUnitClient final : public StorageUnitInterface
 {
 public:
   using MuddleEndpoint = muddle::MuddleEndpoint;
-  using Address        = MuddleEndpoint::Address;
+  using Address        = muddle::Address;
 
   static constexpr char const *LOGGING_NAME = "StorageUnitClient";
 
@@ -98,8 +94,8 @@ public:
 private:
   using Client               = muddle::rpc::Client;
   using ClientPtr            = std::shared_ptr<Client>;
-  using LaneIndex            = LaneIdentity::lane_type;
-  using AddressList          = std::vector<MuddleEndpoint::Address>;
+  using LaneIndex            = uint32_t;
+  using AddressList          = std::vector<muddle::Address>;
   using MerkleTree           = crypto::MerkleTree;
   using PermanentMerkleStack = fetch::storage::ObjectStack<crypto::MerkleTree>;
 

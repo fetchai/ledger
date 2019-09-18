@@ -56,8 +56,8 @@ public:
   bool       IsDone() const override;
   void       Reset() override;
 
-  virtual void SetTestRatio(float new_test_ratio) override;
-  virtual void SetValidationRatio(float new_validation_ratio) override;
+  void SetTestRatio(float new_test_ratio) override;
+  void SetValidationRatio(float new_validation_ratio) override;
 
   bool AddData(InputType const &data, LabelType const &label) override;
 

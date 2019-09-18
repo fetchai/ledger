@@ -21,7 +21,6 @@
 #include "ml/core/graph.hpp"
 #include "ml/dataloaders/word2vec_loaders/sgns_w2v_dataloader.hpp"
 #include "ml/distributed_learning/coordinator.hpp"
-#include "ml/optimisation/sgd_optimiser.hpp"
 #include "word2vec_client.hpp"
 
 #include <iostream>
@@ -55,9 +54,10 @@ std::vector<std::string> SplitTrainingData(std::string const &train_file,
   {
     old_pos = pos;
     pos     = (i + 1) * chars_per_client;
+
     // find next instance of space character
     pos = input_data.find(" ", pos, 1);
-    client_data.push_back(input_data.substr(old_pos, pos));
+    client_data.push_back(input_data.substr(old_pos, pos - old_pos));
   }
   return client_data;
 }
@@ -83,14 +83,14 @@ int main(int ac, char **av)
   W2VTrainingParams<DataType> client_params;
 
   // Distributed learning parameters:
-  SizeType number_of_clients    = 10;
-  SizeType number_of_rounds     = 10;
-  coord_params.number_of_peers  = 3;
+  SizeType number_of_clients    = 5;
+  SizeType number_of_rounds     = 50;
+  coord_params.number_of_peers  = 2;
   coord_params.mode             = CoordinatorMode::SEMI_SYNCHRONOUS;
   coord_params.iterations_count = 100;  //  Synchronization occurs after this number of batches
   // have been processed in total by the clients
 
-  client_params.batch_size    = 100000;
+  client_params.batch_size    = 10000;
   client_params.learning_rate = static_cast<DataType>(.001f);
 
   // Word2Vec parameters:
@@ -100,6 +100,8 @@ int main(int ac, char **av)
   client_params.freq_thresh          = DataType{0.001f};  // frequency threshold for subsampling
   client_params.min_count            = 5;                 // infrequent word removal threshold
   client_params.embedding_size       = 100;               // dimension of embedding vec
+  client_params.starting_learning_rate_per_sample =
+      0.0025;  // these are the learning rates we have for each sample
 
   client_params.k     = 20;       // how many nearest neighbours to compare against
   client_params.word0 = "three";  // test word to consider

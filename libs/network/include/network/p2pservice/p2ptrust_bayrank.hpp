@@ -37,8 +37,8 @@
 namespace fetch {
 namespace p2p {
 
-using reference_players_type = std::array<math::statistics::Gaussian<double>, 4>;
-extern const reference_players_type reference_players_;
+using ReferencePlayersType = std::array<math::statistics::Gaussian<double>, 4>;
+extern const ReferencePlayersType reference_players_;
 
 inline math::statistics::Gaussian<double> const &LookupReferencePlayer(TrustQuality quality)
 {
@@ -246,7 +246,7 @@ public:
     return GetTrustRatingOfPeer(peer_ident) > threshold_;
   }
 
-  virtual void Debug() const override
+  void Debug() const override
   {
     FETCH_LOCK(mutex_);
     for (std::size_t pos = 0; pos < trust_store_.size(); ++pos)

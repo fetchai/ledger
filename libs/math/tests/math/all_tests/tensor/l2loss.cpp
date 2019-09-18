@@ -23,16 +23,16 @@
 #include <cstddef>
 
 using namespace fetch::math;
-using data_type      = double;
-using container_type = fetch::memory::SharedArray<data_type>;
+using DataType      = double;
+using ContainerType = fetch::memory::SharedArray<DataType>;
 
-inline Tensor<data_type, container_type> RandomArray(std::size_t n, data_type adj)
+inline Tensor<DataType, ContainerType> RandomArray(std::size_t n, DataType adj)
 {
   static fetch::random::LinearCongruentialGenerator gen;
-  Tensor<data_type, container_type>                 a1(n);
+  Tensor<DataType, ContainerType>                   a1(n);
   for (std::size_t i = 0; i < n; ++i)
   {
-    a1.At(i) = data_type(gen.AsDouble()) + adj;
+    a1.At(i) = DataType(gen.AsDouble()) + adj;
   }
   return a1;
 }
@@ -41,10 +41,10 @@ TEST(ndarray, l2_basic)
 {
   double epsilon = 1e-12;
 
-  std::size_t                       n                = 10000;
-  Tensor<data_type, container_type> test_array       = RandomArray(n, -0.5);
-  double                            test_loss        = 0;
-  double                            manual_test_loss = 0;
+  std::size_t                     n                = 10000;
+  Tensor<DataType, ContainerType> test_array       = RandomArray(n, -0.5);
+  double                          test_loss        = 0;
+  double                          manual_test_loss = 0;
 
   // check that sign(0) = 0
   test_loss = test_array.L2Loss();

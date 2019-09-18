@@ -40,7 +40,7 @@ template <typename T>
 class ObjectStoreProtocol : public fetch::service::Protocol
 {
 public:
-  using self_type = ObjectStoreProtocol<T>;
+  using SelfType = ObjectStoreProtocol<T>;
 
   static constexpr char const *LOGGING_NAME = "ObjectStoreProto";
 
@@ -67,9 +67,9 @@ public:
     , get_durations_{CreateHistogram(lane, "ledger_tx_store_get_duration",
                                      "The histogram of get operation durations in seconds")}
   {
-    this->Expose(GET, this, &self_type::Get);
-    this->Expose(SET, this, &self_type::Set);
-    this->Expose(SET_BULK, this, &self_type::SetBulk);
+    this->Expose(GET, this, &SelfType::Get);
+    this->Expose(SET, this, &SelfType::Set);
+    this->Expose(SET_BULK, this, &SelfType::SetBulk);
     this->Expose(HAS, obj_store, &TransientObjectStore<T>::Has);
     this->Expose(GET_RECENT, obj_store, &TransientObjectStore<T>::GetRecent);
   }

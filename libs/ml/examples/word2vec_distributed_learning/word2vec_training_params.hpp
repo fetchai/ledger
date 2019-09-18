@@ -39,7 +39,7 @@ struct W2VTrainingParams : public ClientParams<DataType>
   SizeType min_count            = 5;                 // infrequent word removal threshold
 
   SizeType embedding_size = 100;  // dimension of embedding vec
-  SizeType test_frequency = 5;
+  SizeType test_frequency = 50;   // After how many batches we want to test our embeddings
   DataType starting_learning_rate_per_sample =
       DataType{0.025f};  // these are the learning rates we have for each sample
   DataType    ending_learning_rate_per_sample = DataType{0.0001f};

@@ -130,7 +130,7 @@ private:
       }
     }
 
-    if (axes_.size() == 0)
+    if (axes_.empty())
     {
       axes_changed = true;
     }

@@ -110,14 +110,14 @@ using AnnotationArray = std::vector<Annotation>;
 struct Executable
 {
   Executable() = default;
-  Executable(std::string name__)
+  explicit Executable(std::string name__)
     : name{std::move(name__)}
   {}
   ~Executable() = default;
 
   struct Instruction
   {
-    Instruction(uint16_t opcode__)
+    explicit Instruction(uint16_t opcode__)
       : opcode{opcode__}
     {}
 
@@ -241,7 +241,7 @@ private:
   struct Chain
   {
     Chain() = default;
-    Chain(NodeKind kind__)
+    explicit Chain(NodeKind kind__)
       : kind{kind__}
     {}
 

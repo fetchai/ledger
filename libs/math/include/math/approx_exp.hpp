@@ -123,7 +123,7 @@ private:
       double r2 = fexp(l);
 
       double   z    = l * a_ + b_;
-      uint64_t v    = static_cast<uint64_t>(z);
+      auto     v    = static_cast<uint64_t>(z);
       uint64_t idx  = (v >> E_BIN_SIZE) & (E_ENTRIES - 1);
       double   corr = r1 / r2;
 

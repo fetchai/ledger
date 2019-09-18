@@ -38,7 +38,6 @@ TYPED_TEST_CASE(GeluTest, MyTypes);
 
 TYPED_TEST(GeluTest, forward_test_3d)
 {
-
   using TensorType = TypeParam;
   using DataType   = typename TensorType::Type;
 
@@ -56,6 +55,9 @@ TYPED_TEST(GeluTest, forward_test_3d)
   ASSERT_TRUE(prediction.AllClose(
       gt, fetch::math::function_tolerance<DataType>(),
       static_cast<DataType>(2.8) * fetch::math::function_tolerance<DataType>()));
+
+  // gelu can overflow for some fixed point types for these data
+  fetch::math::state_clear<DataType>();
 }
 
 TYPED_TEST(GeluTest, backward_3d_test)
@@ -80,6 +82,9 @@ TYPED_TEST(GeluTest, backward_3d_test)
   ASSERT_TRUE(prediction[0].AllClose(
       gt, fetch::math::function_tolerance<DataType>(),
       static_cast<DataType>(100) * fetch::math::function_tolerance<DataType>()));
+
+  // gelu can overflow for some fixed point types for these data
+  fetch::math::state_clear<DataType>();
 }
 
 TYPED_TEST(GeluTest, saveparams_test)
@@ -125,10 +130,14 @@ TYPED_TEST(GeluTest, saveparams_test)
   // test correct values
   EXPECT_TRUE(
       new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
+
+  // gelu can overflow for some fixed point types for these data
+  fetch::math::state_clear<DataType>();
 }
 
 TYPED_TEST(GeluTest, saveparams_backward_3d_test)
 {
+  using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
   using OpType     = fetch::ml::ops::Gelu<TensorType>;
   using SPType     = typename fetch::ml::ops::Gelu<TensorType>::SPType;
@@ -177,4 +186,7 @@ TYPED_TEST(GeluTest, saveparams_backward_3d_test)
   EXPECT_TRUE(prediction.at(0).AllClose(
       new_prediction.at(0), fetch::math::function_tolerance<typename TypeParam::Type>(),
       fetch::math::function_tolerance<typename TypeParam::Type>()));
+
+  // gelu can overflow for some fixed point types for these data
+  fetch::math::state_clear<DataType>();
 }
