@@ -48,13 +48,13 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem
     // in the case of the first iteration we need to create the contract and define the problem
     if (!contract)
     {
-      auto const &contract_address = solution->contract_digest();
+      auto const &digest = solution->contract_digest();
 
       // create the contract
-      contract = factory_.Create(contract_address.ToHex());
+      contract = factory_.Create(digest);
       if (!contract)
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Failed to create contract: 0x", contract_address.ToHex());
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to create contract: 0x", digest.ToHex());
         return;
       }
 

@@ -116,7 +116,7 @@ TEST_F(SmartContractTests, CheckSimpleContract)
   EXPECT_TRUE(IsIn(query_handlers, "value"));
 
   // define our what we expect the values to be in our storage requests
-  auto const expected_key      = contract_name_->qualifier() + ".state.value";
+  auto const expected_key      = contract_name_->full_name() + ".state.value";
   auto const expected_resource = ResourceAddress{expected_key};
   auto const expected_value    = RawBytes<int32_t>(11);
 
@@ -283,7 +283,7 @@ TEST_F(SmartContractTests, CheckParameterizedActionAndQuery)
   EXPECT_TRUE(IsIn(query_handlers, "offset"));
 
   // define our what we expect the values to be in our storage requests
-  auto const expected_key      = contract_name_->qualifier() + ".state.value";
+  auto const expected_key      = contract_name_->full_name() + ".state.value";
   auto const expected_resource = ResourceAddress{expected_key};
   auto const expected_value    = RawBytes<int32_t>(30);
 
@@ -359,8 +359,8 @@ TEST_F(SmartContractTests, CheckBasicTokenContract)
   fetch::crypto::ECDSASigner target{};
   fetch::ledger::Address     target_address{target.identity()};
 
-  auto const owner_key  = contract_name_->qualifier() + ".state." + owner_address_->display();
-  auto const target_key = contract_name_->qualifier() + ".state." + target_address.display();
+  auto const owner_key  = contract_name_->full_name() + ".state." + owner_address_->display();
+  auto const target_key = contract_name_->full_name() + ".state." + target_address.display();
 
   auto const owner_resource   = ResourceAddress{owner_key};
   auto const target_resource  = ResourceAddress{target_key};
@@ -462,8 +462,8 @@ TEST_F(SmartContractTests, CheckShardedStateSetAndQuery)
   ASSERT_EQ(2, query_handlers.size());
 
   // define expected values
-  auto const       expected_key1      = contract_name_->qualifier() + ".state.value.foo";
-  auto const       expected_key2      = contract_name_->qualifier() + ".state.value.bar";
+  auto const       expected_key1      = contract_name_->full_name() + ".state.value.foo";
+  auto const       expected_key2      = contract_name_->full_name() + ".state.value.bar";
   auto const       expected_resource1 = ResourceAddress{expected_key1};
   auto const       expected_resource2 = ResourceAddress{expected_key2};
   auto const       expected_value1    = RawBytes<int32_t>(20);
@@ -541,7 +541,7 @@ TEST_F(SmartContractTests, CheckShardedStateSetWithAddressAsName)
 
   // define expected values
   auto const expected_key1 =
-      contract_name_->qualifier() + ".state." + address_as_name.display() + ".foo";
+      contract_name_->full_name() + ".state." + address_as_name.display() + ".foo";
   auto const       expected_resource1 = ResourceAddress{expected_key1};
   auto const       expected_value1    = RawBytes<int32_t>(20);
   fetch::BitVector mask{1ull << 4u};

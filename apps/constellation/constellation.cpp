@@ -270,18 +270,20 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   FETCH_LOG_INFO(LOGGING_NAME, "              :: ", ToBase64(p2p_.identity().identifier()));
   FETCH_LOG_INFO(LOGGING_NAME, "");
 
-  // Enable experimental features
   assert(dag_);
   dag_service_ = std::make_shared<ledger::DAGService>(muddle_.AsEndpoint(), dag_);
   reactor_.Attach(dag_service_->GetWeakRunnable());
 
-  auto syn_miner = std::make_unique<NaiveSynergeticMiner>(dag_, *storage_, certificate);
-  if (!reactor_.Attach(syn_miner->GetWeakRunnable()))
+  if (cfg_.features.IsEnabled("synergetic"))
   {
-    FETCH_LOG_ERROR(LOGGING_NAME, "Failed to attach synergetic miner to reactor.");
-    throw std::runtime_error("Failed to attach synergetic miner to reactor.");
+    auto syn_miner = std::make_unique<NaiveSynergeticMiner>(dag_, *storage_, certificate);
+    if (!reactor_.Attach(syn_miner->GetWeakRunnable()))
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to attach synergetic miner to reactor.");
+      throw std::runtime_error("Failed to attach synergetic miner to reactor.");
+    }
+    synergetic_miner_ = std::move(syn_miner);
   }
-  synergetic_miner_ = std::move(syn_miner);
 
   // attach the services to the reactor
   reactor_.Attach(main_chain_service_->GetWeakRunnable());

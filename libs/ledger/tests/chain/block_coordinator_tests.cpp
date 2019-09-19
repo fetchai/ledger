@@ -47,6 +47,12 @@ using namespace fetch::ledger;
 using fetch::crypto::ECDSASigner;
 using fetch::ledger::testing::BlockGenerator;
 
+using ::testing::_;
+using ::testing::AnyNumber;
+using ::testing::InSequence;
+using ::testing::NiceMock;
+using ::testing::StrictMock;
+
 using BlockCoordinatorPtr = std::unique_ptr<BlockCoordinator>;
 using MainChainPtr        = std::unique_ptr<MainChain>;
 using ExecutionMgrPtr     = std::unique_ptr<MockExecutionManager>;
@@ -59,12 +65,6 @@ using State               = fetch::ledger::BlockCoordinator::State;
 using AddressPtr          = std::unique_ptr<Address>;
 using DAGPtr              = BlockCoordinator::DAGPtr;
 using StakeManagerPtr     = std::shared_ptr<fetch::ledger::StakeManagerInterface>;
-
-using ::testing::_;
-using ::testing::AnyNumber;
-using ::testing::InSequence;
-using ::testing::NiceMock;
-using ::testing::StrictMock;
 
 Digest GENESIS_DIGEST =
     fetch::byte_array::FromBase64("0+++++++++++++++++Genesis+++++++++++++++++0=");
