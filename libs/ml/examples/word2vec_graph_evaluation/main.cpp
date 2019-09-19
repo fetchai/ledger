@@ -30,17 +30,17 @@ using namespace fetch::ml;
 using namespace fetch::ml::examples;
 using namespace fetch::ml::dataloaders;
 
-using DataType   = double;
+using DataType   = float;
 using TensorType = fetch::math::Tensor<DataType>;
 using SizeType   = TensorType ::SizeType;
 
 int main(int argc, char **argv)
 {
   SizeType max_word_count = fetch::math::numeric_max<SizeType>();  // maximum number to be trained
-  SizeType negative_sample_size = 5;     // number of negative sample per word-context pair
-  SizeType window_size          = 5;     // window size for context sampling
-  DataType freq_thresh          = 1e-3;  // frequency threshold for subsampling
-  SizeType min_count            = 5;     // infrequent word removal threshold
+  SizeType negative_sample_size = 5;      // number of negative sample per word-context pair
+  SizeType window_size          = 5;      // window size for context sampling
+  DataType freq_thresh          = 1e-3f;  // frequency threshold for subsampling
+  SizeType min_count            = 5;      // infrequent word removal threshold
 
   std::string graph_file;
   std::string dataloader_file;
