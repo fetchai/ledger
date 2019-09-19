@@ -6,6 +6,7 @@ project(fetch-apps)
 
 add_subdirectory(constellation)
 add_subdirectory(etch)
+add_subdirectory(muddle-dmlf-chatter)
 add_subdirectory(tx-generator)
 add_subdirectory(beacon)
 add_subdirectory(muddle-node)
