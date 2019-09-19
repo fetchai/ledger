@@ -199,7 +199,7 @@ void RBC::InternalBroadcast(RBCMessage const &msg)
   msg_serializer << msg;
 
   // Broadcast without echo
-  for (const auto &address : current_cabinet_)
+  for (auto const &address : current_cabinet_)
   {
     if (address != address_)
     {

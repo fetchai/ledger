@@ -42,7 +42,7 @@ public:
   PromiseOf() = default;
   explicit PromiseOf(Promise promise);
   PromiseOf(PromiseOf const &rhs) = default;
-  ~PromiseOf()                    = default;
+  ~PromiseOf() override           = default;
 
   // Promise Accessors
   RESULT Get() const override;
@@ -58,7 +58,7 @@ public:
     return promise_->WithHandlers();
   }
 
-  bool empty()
+  bool empty() const
   {
     return !promise_;
   }

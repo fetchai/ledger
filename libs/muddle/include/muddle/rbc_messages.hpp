@@ -144,7 +144,7 @@ public:
   template <typename T, typename D>
   friend struct serializers::MapSerializer;
 
-  RBCMessage(RBCMessage const &) = default;  // TODO: make protected
+  RBCMessage(RBCMessage const &) = default;  // TODO(?): make protected
 
   /// @{ // TODO: Mkae protected
   SerialisedMessage const &message() const;
@@ -223,7 +223,7 @@ public:
     auto map = map_constructor(5);
     map.Append(TYPE, static_cast<uint8_t>(msg.type_));
     map.Append(CHANNEL, msg.channel_);
-    map.Append(ADDRESS, msg.id_);  // TODO: Remove and deduce from network connection
+    map.Append(ADDRESS, msg.id_);  // TODO(?): Remove and deduce from network connection
     map.Append(COUNTER, msg.counter_);
     map.Append(PAYLOAD, msg.payload_);
   }
@@ -234,7 +234,8 @@ public:
     uint8_t type;
     map.ExpectKeyGetValue(TYPE, type);
     map.ExpectKeyGetValue(CHANNEL, msg.channel_);
-    map.ExpectKeyGetValue(ADDRESS, msg.id_);  // TODO: Remove and deduce from network connection
+    // TODO(?): Remove and deduce from network connection
+    map.ExpectKeyGetValue(ADDRESS, msg.id_);
     map.ExpectKeyGetValue(COUNTER, msg.counter_);
     map.ExpectKeyGetValue(PAYLOAD, msg.payload_);
 

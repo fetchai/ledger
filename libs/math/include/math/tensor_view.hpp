@@ -46,8 +46,8 @@ public:
   };
 
   TensorView(ContainerType data, SizeType height, SizeType width, SizeType offset = 0)
-    : height_{std::move(height)}
-    , width_{std::move(width)}
+    : height_{height}
+    , width_{width}
     , padded_height_{PadValue(height_)}
     , data_{std::move(data), offset, padded_height_ * width_}
   {}

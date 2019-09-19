@@ -222,7 +222,7 @@ private:
           "EC_POINT_(new/dup)(...) failed.");
     }
 
-    if (!EC_POINT_mul(group, public_key.get(), private_key_as_BN, NULL, NULL,
+    if (!EC_POINT_mul(group, public_key.get(), private_key_as_BN, nullptr, nullptr,
                       session.context().get()))
     {
       throw std::runtime_error("ECDSAPrivateKey::DerivePublicKey(...): EC_POINT_mul(...) failed.");
@@ -315,7 +315,7 @@ private:
     byte_array::ByteArray key_as_bin;
     key_as_bin.Resize(static_cast<std::size_t>(est_size));
 
-    uint8_t * key_as_bin_ptr = static_cast<uint8_t *>(key_as_bin.pointer());
+    auto *    key_as_bin_ptr = static_cast<uint8_t *>(key_as_bin.pointer());
     const int res_size       = i2d_ECPrivateKey(key, &key_as_bin_ptr);
     if (res_size < 1 || res_size > est_size)
     {
@@ -343,8 +343,8 @@ private:
     UniquePointerType<EC_KEY> key{EC_KEY_new_by_curve_name(EcdsaCurveType::nid)};
     EC_KEY_set_conv_form(key.get(), conversionForm);
 
-    EC_KEY *       key_ptr      = key.get();
-    const uint8_t *key_data_ptr = static_cast<const uint8_t *>(key_data.pointer());
+    EC_KEY *    key_ptr      = key.get();
+    auto const *key_data_ptr = static_cast<const uint8_t *>(key_data.pointer());
     if (!d2i_ECPrivateKey(&key_ptr, &key_data_ptr, static_cast<long>(key_data.size())))
     {
       throw std::runtime_error(

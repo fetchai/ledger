@@ -34,6 +34,7 @@
 #include <queue>
 #include <string>
 #include <thread>
+#include <utility>
 #include <vector>
 
 namespace fetch {
@@ -62,15 +63,16 @@ class TrainingClient
   using VectorTensorType = std::vector<TensorType>;
   using TimestampType    = int64_t;
   using GradientType     = std::pair<VectorTensorType, TimestampType>;
+  using GraphPtrType     = std::shared_ptr<fetch::ml::Graph<TensorType>>;
 
 public:
-  TrainingClient(std::string const &id, ClientParams<DataType> const &client_params);
+  TrainingClient(std::string id, ClientParams<DataType> const &client_params);
 
   TrainingClient(
-      std::string const &id, std::shared_ptr<fetch::ml::Graph<TensorType>> const &graph_ptr,
-      std::shared_ptr<fetch::ml::dataloaders::DataLoader<TensorType, TensorType>> const &loader_ptr,
-      std::shared_ptr<fetch::ml::optimisers::Optimiser<TensorType>> const &optimiser_ptr,
-      ClientParams<DataType> const &                                       client_params);
+      std::string id, GraphPtrType graph_ptr,
+      std::shared_ptr<fetch::ml::dataloaders::DataLoader<TensorType, TensorType>> loader_ptr,
+      std::shared_ptr<fetch::ml::optimisers::Optimiser<TensorType>>               optimiser_ptr,
+      ClientParams<DataType> const &                                              client_params);
 
   virtual ~TrainingClient() = default;
 
@@ -86,7 +88,7 @@ public:
 
   VectorTensorType GetWeights() const;
 
-  void SetWeights(VectorTensorType &new_weights);
+  void SetWeights(VectorTensorType const &new_weights);
 
   void SetParams(ClientParams<DataType> const &new_params);
 
@@ -101,8 +103,8 @@ protected:
   DataType test_loss_  = fetch::math::numeric_max<DataType>();
 
   // Client's own graph and mutex to protect its weights
-  std::shared_ptr<fetch::ml::Graph<TensorType>> g_ptr_;
-  std::mutex                                    model_mutex_;
+  GraphPtrType       g_ptr_;
+  mutable std::mutex model_mutex_;
 
   // Client's own dataloader
   std::shared_ptr<fetch::ml::dataloaders::DataLoader<TensorType, TensorType>> dataloader_ptr_;
@@ -129,25 +131,26 @@ protected:
 
   void DoBatch();
   void ClearLossFile();
+
 };
 
 template <class TensorType>
 TrainingClient<TensorType>::TrainingClient(
-    std::string const &id, std::shared_ptr<fetch::ml::Graph<TensorType>> const &graph_ptr,
-    std::shared_ptr<fetch::ml::dataloaders::DataLoader<TensorType, TensorType>> const &loader_ptr,
-    std::shared_ptr<fetch::ml::optimisers::Optimiser<TensorType>> const &optimiser_ptr,
-    ClientParams<DataType> const &                                       client_params)
+    std::string id, GraphPtrType graph_ptr,
+    std::shared_ptr<fetch::ml::dataloaders::DataLoader<TensorType, TensorType>> loader_ptr,
+    std::shared_ptr<fetch::ml::optimisers::Optimiser<TensorType>>               optimiser_ptr,
+    ClientParams<DataType> const &                                              client_params)
   : id_(std::move(id))
-  , g_ptr_(graph_ptr)
-  , dataloader_ptr_(loader_ptr)
-  , opti_ptr_(optimiser_ptr)
+  , g_ptr_(std::move(graph_ptr))
+  , dataloader_ptr_(std::move(loader_ptr))
+  , opti_ptr_(std::move(optimiser_ptr))
 {
   SetParams(client_params);
   ClearLossFile();
 }
 
 template <class TensorType>
-TrainingClient<TensorType>::TrainingClient(std::string const &           id,
+TrainingClient<TensorType>::TrainingClient(std::string                   id,
                                            ClientParams<DataType> const &client_params)
   : id_(std::move(id))
 {
@@ -242,7 +245,7 @@ void TrainingClient<TensorType>::Train()
   std::pair<TensorType, std::vector<TensorType>> input;
   input = dataloader_ptr_->PrepareBatch(batch_size_, is_done_set);
   {
-    std::lock_guard<std::mutex> l(model_mutex_);
+    FETCH_LOCK(model_mutex_);
 
     // Set inputs and label
     auto input_data_it = input.second.begin();
@@ -280,7 +283,7 @@ void TrainingClient<TensorType>::Test()
   bool is_done_set;
   auto test_pair = dataloader_ptr_->PrepareBatch(test_set_size, is_done_set);
   {
-    std::lock_guard<std::mutex> l(model_mutex_);
+    FETCH_LOCK(model_mutex_);
 
     // Set inputs and label
     auto input_data_it = test_pair.second.begin();
@@ -304,7 +307,7 @@ void TrainingClient<TensorType>::Test()
 template <class TensorType>
 std::vector<TensorType> TrainingClient<TensorType>::GetGradients() const
 {
-  std::lock_guard<std::mutex> l(const_cast<std::mutex &>(model_mutex_));
+  FETCH_LOCK(model_mutex_);
   return g_ptr_->GetGradients();
 }
 
@@ -314,7 +317,7 @@ std::vector<TensorType> TrainingClient<TensorType>::GetGradients() const
 template <class TensorType>
 std::vector<TensorType> TrainingClient<TensorType>::GetWeights() const
 {
-  std::lock_guard<std::mutex> l(const_cast<std::mutex &>(model_mutex_));
+  FETCH_LOCK(model_mutex_);
   return g_ptr_->get_weights();
 }
 
@@ -323,10 +326,18 @@ std::vector<TensorType> TrainingClient<TensorType>::GetWeights() const
  * @param new_weights Vector of weights that represent model
  */
 template <class TensorType>
-void TrainingClient<TensorType>::SetWeights(VectorTensorType &new_weights)
+void TrainingClient<TensorType>::SetWeights(VectorTensorType const &new_weights)
 {
-  std::lock_guard<std::mutex> l(const_cast<std::mutex &>(model_mutex_));
-  g_ptr_->SetWeights(new_weights);
+  FETCH_LOCK(model_mutex_);
+
+  auto weights_it = new_weights.cbegin();
+  for (auto &trainable_node : g_ptr_->trainable_nodes_)
+  {
+    auto trainable_ptr =
+        std::dynamic_pointer_cast<ops::Trainable<TensorType>>(trainable_node->GetOp());
+    trainable_ptr->SetWeights(*weights_it);
+    ++weights_it;
+  }
 }
 
 // Timestamp for logging
@@ -387,7 +398,7 @@ void TrainingClient<TensorType>::DoBatch()
 
   // Apply sum of all gradients from iLearner along with own gradient
   {
-    std::lock_guard<std::mutex> l(model_mutex_);
+    FETCH_LOCK(model_mutex_);
     opti_ptr_->ApplyGradients(batch_size_);
     opti_ptr_->IncrementBatchCounters(batch_size_);
     opti_ptr_->UpdateLearningRate();

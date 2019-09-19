@@ -25,7 +25,7 @@
 
 using namespace fetch::memory;
 
-template <typename type, unsigned long N = 100000>
+template <typename type, uint64_t N = 100000>
 class ParallelDispatcherSSEBench : public ::benchmark::Fixture
 {
 public:
@@ -46,8 +46,8 @@ protected:
   void TearDown(const ::benchmark::State &) override
   {}
 
-  ndarray_type        a_, b_;
-  const unsigned long MAX_ = N;
+  ndarray_type   a_, b_;
+  const uint64_t MAX_ = N;
 };
 BENCHMARK_TEMPLATE_F(ParallelDispatcherSSEBench, Standard_implementation, double)
 (benchmark::State &st)

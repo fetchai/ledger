@@ -44,17 +44,17 @@ public:
     , explanation_("unknown")
   {}
 
-  StorageException(char const *explanation)
+  explicit StorageException(char const *explanation)
     : error_code_(error::TYPE_ERROR)
     , explanation_(std::string(explanation))
   {}
 
-  StorageException(std::string explanation)
+  explicit StorageException(std::string explanation)
     : error_code_(error::TYPE_ERROR)
     , explanation_(std::move(explanation))
   {}
 
-  StorageException(byte_array::ConstByteArray const &explanation)
+  explicit StorageException(byte_array::ConstByteArray const &explanation)
     : error_code_(error::TYPE_ERROR)
     , explanation_(std::string(explanation))
   {}
@@ -69,7 +69,7 @@ public:
     , explanation_(std::string(explanation))
   {}
 
-  virtual ~StorageException() = default;
+  ~StorageException() override = default;
 
   char const *what() const noexcept override
   {

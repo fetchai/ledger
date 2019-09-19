@@ -52,7 +52,7 @@ std::shared_ptr<fetch::ml::Graph<TypeParam>> PrepareTestGraph(
 {
   using SizeType = typename TypeParam::SizeType;
 
-  SizeType hidden_size = SizeType(10);
+  auto hidden_size = SizeType(10);
 
   std::shared_ptr<fetch::ml::Graph<TypeParam>> g(std::make_shared<fetch::ml::Graph<TypeParam>>());
 
@@ -130,7 +130,7 @@ TYPED_TEST(OptimisersTest, sgd_optimiser_training)
 {
   using DataType = typename TypeParam::Type;
 
-  DataType learning_rate = DataType{0.4f};
+  auto learning_rate = DataType{0.4f};
 
   // Prepare model
   std::string                                  input_name;
@@ -176,7 +176,7 @@ TYPED_TEST(OptimisersTest, sgd_optimiser_training_2D)
 {
   using DataType = typename TypeParam::Type;
 
-  DataType learning_rate = DataType{0.06f};
+  auto learning_rate = DataType{0.06f};
 
   // Prepare model
   std::string                                  input_name;
@@ -222,7 +222,7 @@ TYPED_TEST(OptimisersTest, sgd_optimiser_serialisation)
 {
   using DataType = typename TypeParam::Type;
 
-  DataType learning_rate = DataType{0.06f};
+  auto learning_rate = DataType{0.06f};
 
   // Prepare model
   std::string                                  input_name;
@@ -269,7 +269,7 @@ TYPED_TEST(OptimisersTest, momentum_optimiser_training)
 {
   using DataType = typename TypeParam::Type;
 
-  DataType learning_rate = DataType{0.16f};
+  auto learning_rate = DataType{0.16f};
 
   // Prepare model
   std::string                                  input_name;
@@ -315,7 +315,7 @@ TYPED_TEST(OptimisersTest, momentum_optimiser_training_2D)
 {
   using DataType = typename TypeParam::Type;
 
-  DataType learning_rate = DataType{0.06f};
+  auto learning_rate = DataType{0.06f};
 
   // Prepare model
   std::string                                  input_name;
@@ -361,7 +361,7 @@ TYPED_TEST(OptimisersTest, adagrad_optimiser_training)
 {
   using DataType = typename TypeParam::Type;
 
-  DataType learning_rate = DataType{0.04f};
+  auto learning_rate = DataType{0.04f};
 
   // Prepare model
   std::string                                  input_name;
@@ -407,7 +407,7 @@ TYPED_TEST(OptimisersTest, adagrad_optimiser_training_2D)
 {
   using DataType = typename TypeParam::Type;
 
-  DataType learning_rate = DataType{0.04f};
+  auto learning_rate = DataType{0.04f};
 
   // Prepare model
   std::string                                  input_name;
@@ -453,7 +453,7 @@ TYPED_TEST(OptimisersTest, rmsprop_optimiser_training)
 {
   using DataType = typename TypeParam::Type;
 
-  DataType learning_rate = DataType{0.01f};
+  auto learning_rate = DataType{0.01f};
 
   // Prepare model
   std::string                                  input_name;
@@ -499,7 +499,7 @@ TYPED_TEST(OptimisersTest, rmsprop_optimiser_training_2D)
 {
   using DataType = typename TypeParam::Type;
 
-  DataType learning_rate = DataType{0.01f};
+  auto learning_rate = DataType{0.01f};
 
   // Prepare model
   std::string                                  input_name;
@@ -545,7 +545,7 @@ TYPED_TEST(OptimisersTest, adam_optimiser_training)
 {
   using DataType = typename TypeParam::Type;
 
-  DataType learning_rate = DataType{0.01f};
+  auto learning_rate = DataType{0.01f};
 
   // Prepare model
   std::string                                  input_name;
@@ -590,7 +590,7 @@ TYPED_TEST(OptimisersTest, adam_optimiser_training_2D)
 {
   using DataType = typename TypeParam::Type;
 
-  DataType learning_rate = DataType{0.01f};
+  auto learning_rate = DataType{0.01f};
 
   // Prepare model
   std::string                                  input_name;
@@ -635,7 +635,7 @@ TYPED_TEST(OptimisersTest, adam_optimiser_minibatch_training)
 {
   using DataType = typename TypeParam::Type;
 
-  DataType learning_rate = DataType{0.01f};
+  auto learning_rate = DataType{0.01f};
 
   // Prepare model
   std::string                                  input_name;

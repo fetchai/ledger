@@ -132,7 +132,7 @@ def main():
 
         return proc.wait() != 0
 
-    def project_source_files(only_these_files=None):
+    def project_source_files(only_these_files):
         otf = [os.path.abspath(
             item) for item in only_these_files] if only_these_files else None
 

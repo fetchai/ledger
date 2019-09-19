@@ -22,7 +22,6 @@
 namespace fetch {
 namespace ledger {
 
-class Identity;
 class StakeSnapshot;
 
 class StakeUpdateInterface

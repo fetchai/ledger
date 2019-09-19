@@ -79,7 +79,7 @@ public:
     }
   }
 
-  ~ClientConnection()
+  ~ClientConnection() override
   {
     auto ptr = manager_.lock();
     if (!ptr)

@@ -94,7 +94,7 @@ public:
     , message_mutex_{}
   {}
 
-  ~ServiceServer()
+  ~ServiceServer() override
   {
     FETCH_LOCK(client_rpcs_mutex_);
 

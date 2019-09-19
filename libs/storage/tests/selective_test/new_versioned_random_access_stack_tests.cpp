@@ -30,6 +30,8 @@
 #include <utility>
 #include <vector>
 
+namespace {
+
 using namespace fetch;
 using namespace fetch::storage;
 using namespace fetch::crypto;
@@ -202,3 +204,5 @@ TEST(versioned_random_access_stack_gtest, loading_file)
     }
   }
 }
+
+}  // namespace

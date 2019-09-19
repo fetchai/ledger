@@ -1408,7 +1408,7 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator*=(FixedPoint<I, F> const 
     {
       fp_state |= STATE_OVERFLOW;
     }
-    Type fp = Type(prod >> FRACTIONAL_BITS);
+    auto fp = Type(prod >> FRACTIONAL_BITS);
     *this   = FromBase(fp);
   }
   return *this;

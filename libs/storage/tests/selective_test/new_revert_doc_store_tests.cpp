@@ -47,7 +47,7 @@ using ConstByteArray = fetch::byte_array::ConstByteArray;
 
 char NewChar(LinearCongruentialGenerator &rng)
 {
-  char a = char(rng());
+  auto a = char(rng());
   return a == '\0' ? '0' : a;
 }
 
@@ -106,7 +106,7 @@ TEST(new_revertible_store_test, basic_example_of_commit_revert1)
   }
 
   // *** Commit this ***
-  hashes.push_back(store.Commit());
+  hashes.emplace_back(store.Commit());
 
   // Verify state is the same
   for (std::size_t i = 0; i < 17; ++i)
@@ -224,7 +224,7 @@ TEST(new_revertible_store_test, basic_example_of_commit_revert_with_load)
     }
 
     // *** Commit this ***
-    hashes.push_back(store.Commit());
+    hashes.emplace_back(store.Commit());
 
     // Verify state is the same
     for (std::size_t i = 0; i < 17; ++i)
@@ -412,9 +412,9 @@ TEST(new_revertible_store_test, DISABLED_hashing_correct_basic)
     reference_tree = crypto::MerkleTree{current_state.size()};
 
     std::size_t counter = 0;
-    for (auto it = current_state.begin(); it != current_state.end(); ++it)
+    for (auto &it : current_state)
     {
-      reference_tree[counter++] = Hash<crypto::SHA256>(it->second);
+      reference_tree[counter++] = Hash<crypto::SHA256>(it.second);
     }
 
     reference_tree.CalculateRoot();

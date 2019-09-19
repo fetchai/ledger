@@ -119,14 +119,12 @@ std::shared_ptr<OperationType> BuildLayer(std::shared_ptr<OpsSaveableParams> op_
   return ret;
 }
 
-namespace {
 template <class OperationType>
 std::shared_ptr<OperationType> GetOp(std::shared_ptr<OpsSaveableParams> op_save_params)
 {
   return std::make_shared<OperationType>(
       *(std::dynamic_pointer_cast<typename OperationType::SPType>(op_save_params)));
 }
-}  // namespace
 
 template <typename T>
 void BuildNodeAndInsertTrainables(NodeSaveableParams<T> const &nsp, std::string const &name,

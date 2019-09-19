@@ -167,8 +167,7 @@ spdlog::level::level_enum ConvertFromLevel(LogLevel level)
   return new_level;
 }
 
-LogRegistry::LogRegistry()
-{}
+LogRegistry::LogRegistry() = default;
 
 void LogRegistry::Log(LogLevel level, char const *name, std::string &&message)
 {

@@ -58,7 +58,7 @@ protected:
     packet->SetService(service);
     packet->SetChannel(channel);
 
-    if (address.size() > 0)
+    if (!address.empty())
     {
       packet->SetTarget(address);
     }

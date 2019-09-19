@@ -42,10 +42,10 @@ namespace byte_array {
 namespace {
 
 /** All alphanumeric characters except for "0", "I", "O", and "l" */
-static char const *pszBase58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+char const *pszBase58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
 // clang-format off
-static const int8_t mapBase58[256] = {
+const int8_t mapBase58[256] = {
   -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
   -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
   -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
@@ -93,7 +93,7 @@ ConstByteArray FromBase58(ConstByteArray const &str)
   }
 
   // Allocate enough space in big-endian base256 representation.
-  int size = static_cast<int>((raw_end - raw_start) * 733 /1000 + 1); // log(58) / log(256), rounded up.
+  auto size = static_cast<int>((raw_end - raw_start) * 733 /1000 + 1); // log(58) / log(256), rounded up.
   std::vector<uint8_t> b256(static_cast<std::size_t>(size));
 
   // Process the characters.
@@ -149,7 +149,7 @@ ConstByteArray ToBase58(ConstByteArray const &str)
     zeroes++;
   }
   // Allocate enough space in big-endian base58 representation.
-  int size = static_cast<int>((pend - pbegin) * 138 / 100 + 1); // log(256) / log(58), rounded up.
+  auto size = static_cast<int>((pend - pbegin) * 138 / 100 + 1); // log(256) / log(58), rounded up.
   std::vector<uint8_t> b58(static_cast<std::size_t>(size));
   // Process the bytes.
   while (pbegin != pend) {
