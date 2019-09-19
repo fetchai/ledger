@@ -43,6 +43,7 @@ class Word2VecClient : public TrainingClient<TensorType>
   using DataType         = typename TensorType::Type;
   using SizeType         = typename TensorType::SizeType;
   using VectorTensorType = std::vector<TensorType>;
+  using GradientType     = GradientUpdate<TensorType>;
 
 public:
   Word2VecClient(std::string const &id, W2VTrainingParams<DataType> const &tp,
@@ -55,6 +56,8 @@ public:
   void PrepareOptimiser();
 
   void Test() override;
+
+  VectorTensorType TranslateGradients(GradientType &new_gradients) override;
 
 private:
   W2VTrainingParams<DataType>                                       tp_;
@@ -243,6 +246,16 @@ void Word2VecClient<TensorType>::TestEmbeddings(std::string const &word0, std::s
     PrintWordAnalogy(embeddings->get_weights(), word1, word2, word3, K);
   }
 }
+
+template<class TensorType>
+typename Word2VecClient<TensorType>::VectorTensorType
+Word2VecClient<TensorType>::TranslateGradients(Word2VecClient::GradientType &new_gradients)
+{
+  VectorTensorType ret = TrainingClient<TensorType>::TranslateGradients(new_gradients);
+  // todo: implement me!
+  return ret;
+}
+
 
 }  // namespace distributed_learning
 }  // namespace ml

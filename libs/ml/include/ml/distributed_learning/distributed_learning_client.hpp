@@ -46,13 +46,34 @@ struct ClientParams
 {
   using SizeType = fetch::math::SizeType;
 
-  SizeType batch_size;
+  SizeType batch_size{};
   DataType learning_rate;
 
   std::vector<std::string> inputs_names = {"Input"};
   std::string              label_name   = "Label";
   std::string              error_name   = "Error";
 };
+
+template <typename TensorType>
+struct GradientUpdate
+{
+  using VectorTensorType = std::vector<TensorType>;
+  using TimestampType    = int64_t;
+  VectorTensorType grads;
+  TimestampType timestamp{};
+  std::string client_id;
+  std::string hash;
+
+  GradientUpdate(VectorTensorType grad, TimestampType second, std::string client_id, std::string hash = "")
+    : grads{grad},
+    timestamp{second},
+    client_id{std::move(client_id)},
+    hash{std::move(hash)}
+  {}
+
+  GradientUpdate() = default;
+};
+
 
 template <class TensorType>
 class TrainingClient
@@ -61,7 +82,7 @@ class TrainingClient
   using SizeType         = typename TensorType::SizeType;
   using VectorTensorType = std::vector<TensorType>;
   using TimestampType    = int64_t;
-  using GradientType     = std::pair<VectorTensorType, TimestampType>;
+  using GradientType     = GradientUpdate<TensorType>;
   using GraphPtrType     = std::shared_ptr<fetch::ml::Graph<TensorType>>;
 
 public:
@@ -146,7 +167,12 @@ protected:
   // Count for number of batches
   SizeType batch_counter_ = 0;
 
-  void GetNewGradients(VectorTensorType &new_gradients);
+  GradientType GetNewGradients();
+
+  virtual VectorTensorType TranslateGradients(GradientType &new_gradients)
+  {
+    return new_gradients.grads;
+  }
 
   std::string   GetStrTimestamp();
   TimestampType GetTimestamp();
@@ -369,11 +395,13 @@ void TrainingClient<TensorType>::SetWeights(VectorTensorType const &new_weights)
 }
 
 template <class TensorType>
-void TrainingClient<TensorType>::GetNewGradients(VectorTensorType &new_gradients)
+typename TrainingClient<TensorType>::GradientType
+TrainingClient<TensorType>::GetNewGradients()
 {
   FETCH_LOCK(queue_mutex_);
-  new_gradients = gradient_queue_.front().first;
+  GradientType new_gradients = gradient_queue_.front();
   gradient_queue_.pop();
+  return new_gradients;
 }
 
 // Timestamp for logging
@@ -486,19 +514,16 @@ void TrainingClient<TensorType>::DoBatch()
   {
     peers_ = coordinator_ptr_->NextPeersList(id_);
 
-    // Load own gradient
-    GradientType current_gradient = std::make_pair(g_ptr_->GetGradients(), GetTimestamp());
+    GradientType current_gradient = GradientType(g_ptr_->GetGradients(), GetTimestamp(), id_);
 
     // Add gradient to export queue
     AddExportGradient(current_gradient);
 
-    // Load own gradient
-    VectorTensorType new_gradients;
-
     // Sum all gradient in queue
     while (!gradient_queue_.empty())
     {
-      GetNewGradients(new_gradients);
+      GradientType gt = GetNewGradients();
+      VectorTensorType new_gradients = TranslateGradients(gt);
       GraphAddGradients(g_ptr_, new_gradients);
     }
   }
