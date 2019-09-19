@@ -53,6 +53,7 @@ class ConstellationInstance(Instance):
         self._peers = []
         self._mining = False
         self._block_interval = 1000
+        self._feature_flags = []
         self._standalone = False
         self._lanes = None
         self._slices = None
@@ -114,6 +115,15 @@ class ConstellationInstance(Instance):
         self._update_cmd()
 
     @property
+    def feature_flags(self):
+        return self._feature_flags
+
+    @feature_flags.setter
+    def feature_flags(self, feature_flags):
+        self._feature_flags = feature_flags
+        self._update_cmd()
+
+    @property
     def lanes(self):
         return self._lanes
 
@@ -161,6 +171,9 @@ class ConstellationInstance(Instance):
 
         if self._slices:
             cmd += ['-slices', self._slices]
+
+        if self._feature_flags:
+            cmd += ['-experimental', ','.join(self._feature_flags)]
 
         self._cmd = list(map(str, cmd))
 
