@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dmlf/filepassing_learner_networker.hpp"
+#include "dmlf/muddle2_learner_networker.hpp"
 #include "dmlf/simple_cycling_algorithm.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
@@ -83,7 +83,8 @@ int main(int ac, char **av)
 
   std::cout << std::string(av[3]) << " " << std::string(av[4]) << std::endl;
 
-  std::string my_name = std::string(av[3]);
+  std::string config          = std::string(av[3]);
+  int         instance_number = std::atoi(av[4]);
 
   std::vector<std::string> peers_names;
 
@@ -142,10 +143,8 @@ int main(int ac, char **av)
   std::vector<std::string> client_data = SplitTrainingData(train_file, number_of_clients);
 
   // Create networker
-  auto networker = std::make_shared<fetch::dmlf::FilepassingLearnerNetworker>();
+  auto networker = std::make_shared<fetch::dmlf::Muddle2LearnerNetworker>(config, instance_number);
 
-  networker->setName(my_name);
-  networker->addPeers(peers_names);
   networker->setShuffleAlgorithm(std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(
       networker->getPeerCount(), number_of_peers));
 
@@ -153,8 +152,8 @@ int main(int ac, char **av)
   cp.data                        = {client_data};
   // Instantiate NUMBER_OF_CLIENTS clients
 
-  std::shared_ptr<TrainingClient<TensorType>> client =
-      std::make_shared<Word2VecClient<TensorType>>(my_name, cp, console_mutex_ptr_);
+  std::shared_ptr<TrainingClient<TensorType>> client = std::make_shared<Word2VecClient<TensorType>>(
+      std::to_string(instance_number), cp, console_mutex_ptr_);
 
   // Give list of clients to coordinator
   client->SetNetworker(networker);
