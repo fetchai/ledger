@@ -417,11 +417,7 @@ void GraphW2VLoader<T>::BufferNextSamples()
   // set up a counter to add samples to buffer
   SizeType counter = 0;
 
-  // reset all three buffers
   input_words_.Fill(cur_word_id);
-  labels_.Fill(BufferPositionUnused);
-  output_words_.Fill(BufferPositionUnused);
-  output_words_buffer_.Fill(static_cast<SizeType>(BufferPositionUnused));
 
   // set the context samples
   for (SizeType i = 0; i < dynamic_size; ++i)
