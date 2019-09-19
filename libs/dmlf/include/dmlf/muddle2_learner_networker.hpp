@@ -49,12 +49,14 @@ public:
   using Response          = MuddleEndpoint::Response;
   using Server = fetch::muddle::rpc::Server;
   using CertificatePtr    = muddle::ProverPtr;
+  using Uri = fetch::network::Uri;
+  
+  using Mutex = fetch::Mutex;
+  using Lock = std::unique_lock<Mutex>;
 
-  Muddle2LearnerNetworker(unsigned short port,
-                          const char *const ident,
-                          std::unordered_set<std::string> tcp_peers,
-                          std::shared_ptr<NetworkManager> netm= std::make_shared<NetworkManager>("NetMgrA", 4)
-                          );
+  Muddle2LearnerNetworker(const std::string cloud_config,
+                          std::size_t instance_number,
+                          std::shared_ptr<NetworkManager> netm= std::shared_ptr<NetworkManager>());
   virtual ~Muddle2LearnerNetworker();
 
   virtual void        pushUpdate(std::shared_ptr<IUpdate> update);
@@ -65,10 +67,13 @@ public:
 
   using Peer         = std::string;
   using Peers        = std::vector<Peer>;
-  void addPeers(Peers new_peers);
+  using PeerUris     = std::unordered_set<std::string>;
 protected:
   virtual Intermediate getUpdateIntermediate();
-  CertificatePtr LoadIdentity(char const *private_key);
+  CertificatePtr CreateIdentity();
+  CertificatePtr LoadIdentity(const std::string &privkey);
+
+  CertificatePtr ident;
 
   class Muddle2LearnerNetworkerProtocol : public fetch::service::Protocol
   {
@@ -81,6 +86,7 @@ protected:
   std::shared_ptr<Server> server;
   std::shared_ptr<Muddle2LearnerNetworkerProtocol> proto;
 
+  mutable Mutex mutex;
   IntermediateList updates;
   Peers peers;
 private:

@@ -22,6 +22,7 @@
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
 #include "core/byte_array/decoders.hpp"
+#include "core/json/document.hpp"
 
 namespace fetch {
 namespace dmlf {
@@ -35,34 +36,75 @@ using fetch::network::NetworkManager;
 using fetch::muddle::NetworkId;
 using fetch::service::Promise;
 using PromiseList = std::vector<Promise>;
+using SignerPtr = std::shared_ptr<crypto::ECDSASigner>;
+  
+Muddle2LearnerNetworker::Muddle2LearnerNetworkerProtocol::Muddle2LearnerNetworkerProtocol(Muddle2LearnerNetworker &sample)
+{
+  Expose(1, &sample, &Muddle2LearnerNetworker::RecvBytes);
+}
 
-  Muddle2LearnerNetworker::Muddle2LearnerNetworkerProtocol::Muddle2LearnerNetworkerProtocol(Muddle2LearnerNetworker &sample)
+Muddle2LearnerNetworker::Muddle2LearnerNetworker(const std::string cloud_config,
+                                                 std::size_t instance_number,
+                                                 std::shared_ptr<NetworkManager> netm)
+{
+  json::JSONDocument doc{cloud_config};
+
+
+  FETCH_LOG_INFO("Muddle2LearnerNetworker", "here 1");
+  if (netm)
   {
-    Expose(1, &sample, &Muddle2LearnerNetworker::RecvBytes);
+    this -> netm = netm;
+  }
+  else
+  {
+    this -> netm = std::make_shared<NetworkManager>("NetMgrA", 4);
+  }
+  this -> netm -> Start();
+
+
+  auto my_config = doc.root()["peers"][instance_number];
+  auto self_uri = Uri(my_config["uri"].As<std::string>());
+  auto port = self_uri.GetTcpPeer().port();
+  auto privkey = my_config["key"].As<std::string>();
+
+  //ident = CreateIdentity();
+  ident = LoadIdentity(privkey);
+
+  auto addr = self_uri.GetTcpPeer().address();
+
+  mud = muddle::CreateMuddle("Test", ident, *(this -> netm), addr);
+  mud -> SetPeerSelectionMode(muddle::PeerSelectionMode::KADEMLIA);
+
+  std::unordered_set<std::string> initial_peers;
+  if (instance_number > 0)
+  {
+    initial_peers.insert(doc.root()["peers"][0]["uri"].As<std::string>());
   }
 
-Muddle2LearnerNetworker::Muddle2LearnerNetworker(unsigned short port,
-                                                 const char *const identity,
-                                                 std::unordered_set<std::string> tcp_peers,
-                                                 std::shared_ptr<NetworkManager> netm )
-{
-  netm -> Start();
-  this -> netm = netm;
-  //TODO(kll) sotr address properly
-  mud = muddle::CreateMuddle("Test", LoadIdentity(identity), *netm, "127.0.0.1");
-  mud -> Start(std::move(tcp_peers), {port});
+  mud -> Start(initial_peers, {port});
 
   server = std::make_shared<Server>(mud -> GetEndpoint(), 1, 1);
   proto = std::make_shared<Muddle2LearnerNetworkerProtocol>(*this);
-  
+
   server -> Add(1, proto.get());
+
+  auto config_peers = doc.root()["peers"];
+  
+  for(std::size_t peer_number = 0; peer_number < config_peers.size(); peer_number++)
+  {
+    if (peer_number != instance_number)
+    {
+      peers.push_back(config_peers[peer_number]["pub"].As<std::string>());
+    }
+  }
 }
 
 #pragma clang diagnostic ignored "-Wunused-parameter"
 uint64_t Muddle2LearnerNetworker::RecvBytes(const byte_array::ByteArray &b)
 {
+  Lock lock(mutex);
   updates.push_back(b);
-  return 125;
+  return updates.size();
 }
 
 Muddle2LearnerNetworker::~Muddle2LearnerNetworker()
@@ -71,8 +113,14 @@ Muddle2LearnerNetworker::~Muddle2LearnerNetworker()
 
 Muddle2LearnerNetworker::Intermediate Muddle2LearnerNetworker::getUpdateIntermediate()
 {
-    //TODO(kll)
-  return Intermediate();
+  Lock lock(mutex);
+  if (!updates.empty())
+  {
+    auto x = updates.front();
+    updates.pop_front();
+    return x;
+  }
+  throw std::length_error("Updates list is already empty.");
 }
 
 void Muddle2LearnerNetworker::pushUpdate(std::shared_ptr<IUpdate> update)
@@ -86,6 +134,7 @@ void Muddle2LearnerNetworker::pushUpdate(std::shared_ptr<IUpdate> update)
 #pragma clang diagnostic ignored "-Wunused-variable"
   for (const auto &target_peer : peers)
   {
+    FETCH_LOG_INFO("FUCK to ", target_peer);
     promises.push_back(
       client->CallSpecificAddress(
         fetch::byte_array::FromBase64(
@@ -108,25 +157,23 @@ std::size_t Muddle2LearnerNetworker::getPeerCount() const
   return peers.size();
 }
 
-void Muddle2LearnerNetworker::addPeers(Muddle2LearnerNetworker::Peers new_peers)
+Muddle2LearnerNetworker::CertificatePtr Muddle2LearnerNetworker::CreateIdentity()
 {
-  for(const auto &new_peer : new_peers)
-  {
-    peers.push_back(new_peer);
-  }
+  SignerPtr certificate        = std::make_shared<crypto::ECDSASigner>();
+  certificate->GenerateKeys();
+  return certificate;
 }
 
-
-Muddle2LearnerNetworker::CertificatePtr Muddle2LearnerNetworker::LoadIdentity(char const *private_key)
+Muddle2LearnerNetworker::CertificatePtr Muddle2LearnerNetworker::LoadIdentity(const std::string &privkey)
 {
   using Signer = fetch::crypto::ECDSASigner;
-
   // load the key
   auto signer = std::make_unique<Signer>();
-  signer->Load(FromBase64(private_key));
+  signer->Load(FromBase64(privkey));
 
   return signer;
 }
+
 
 }
 }
