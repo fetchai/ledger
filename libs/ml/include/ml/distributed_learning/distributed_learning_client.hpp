@@ -60,20 +60,20 @@ struct GradientUpdate
   using VectorTensorType = std::vector<TensorType>;
   using TimestampType    = int64_t;
   VectorTensorType grads;
-  TimestampType timestamp{};
-  std::string client_id;
-  std::string hash;
+  TimestampType    timestamp{};
+  std::string      client_id;
+  std::string      hash;
 
-  GradientUpdate(VectorTensorType grad, TimestampType second, std::string client_id, std::string hash = "")
-    : grads{grad},
-    timestamp{second},
-    client_id{std::move(client_id)},
-    hash{std::move(hash)}
+  GradientUpdate(VectorTensorType grad, TimestampType second, std::string client_id,
+                 std::string hash = "")
+    : grads{grad}
+    , timestamp{second}
+    , client_id{std::move(client_id)}
+    , hash{std::move(hash)}
   {}
 
   GradientUpdate() = default;
 };
-
 
 template <class TensorType>
 class TrainingClient
@@ -395,8 +395,7 @@ void TrainingClient<TensorType>::SetWeights(VectorTensorType const &new_weights)
 }
 
 template <class TensorType>
-typename TrainingClient<TensorType>::GradientType
-TrainingClient<TensorType>::GetNewGradients()
+typename TrainingClient<TensorType>::GradientType TrainingClient<TensorType>::GetNewGradients()
 {
   FETCH_LOCK(queue_mutex_);
   GradientType new_gradients = gradient_queue_.front();
@@ -522,7 +521,7 @@ void TrainingClient<TensorType>::DoBatch()
     // Sum all gradient in queue
     while (!gradient_queue_.empty())
     {
-      GradientType gt = GetNewGradients();
+      GradientType     gt            = GetNewGradients();
       VectorTensorType new_gradients = TranslateGradients(gt);
       GraphAddGradients(g_ptr_, new_gradients);
     }

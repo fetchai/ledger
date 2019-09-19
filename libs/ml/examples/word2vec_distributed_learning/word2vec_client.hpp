@@ -247,7 +247,7 @@ void Word2VecClient<TensorType>::TestEmbeddings(std::string const &word0, std::s
   }
 }
 
-template<class TensorType>
+template <class TensorType>
 typename Word2VecClient<TensorType>::VectorTensorType
 Word2VecClient<TensorType>::TranslateGradients(Word2VecClient::GradientType &new_gradients)
 {
@@ -255,7 +255,6 @@ Word2VecClient<TensorType>::TranslateGradients(Word2VecClient::GradientType &new
   // todo: implement me!
   return ret;
 }
-
 
 }  // namespace distributed_learning
 }  // namespace ml
