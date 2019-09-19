@@ -1,0 +1,321 @@
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018-2019 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
+#include "muddle/rbc.hpp"
+#include "muddle/punishment_broadcast_channel.hpp"
+
+#include "muddle/muddle_interface.hpp"
+#include "muddle/rpc/client.hpp"
+#include "muddle/rpc/server.hpp"
+#include "muddle/subscription.hpp"
+#include "core/reactor.hpp"
+#include "core/byte_array/const_byte_array.hpp"
+#include "crypto/ecdsa.hpp"
+
+#include "benchmark/benchmark.h"
+
+#include <vector>
+#include <type_traits>
+
+using namespace fetch;
+using namespace fetch::muddle;
+using namespace fetch::core;
+using namespace fetch::crypto;
+
+using fetch::crypto::Prover;
+
+ProverPtr CreateNewCertificate()
+{
+  using Signer    = fetch::crypto::ECDSASigner;
+  using SignerPtr = std::shared_ptr<Signer>;
+
+  SignerPtr certificate = std::make_shared<Signer>();
+
+  certificate->GenerateKeys();
+
+  return certificate;
+}
+
+struct AbstractRBCNode
+{
+  using CertificatePtr = std::shared_ptr<Prover>;
+  using Muddle         = fetch::muddle::MuddlePtr;
+  using ConstByteArray  = byte_array::ConstByteArray;
+  using MuddleAddress  = byte_array::ConstByteArray;
+  using MessageType    = byte_array::ConstByteArray;
+
+  AbstractRBCNode(uint16_t port_number, uint16_t index)
+    : muddle_port{port_number}
+    , network_manager{"NetworkManager" + std::to_string(index), 2}
+    , reactor{"ReactorName" + std::to_string(index)}
+    , muddle_certificate{CreateNewCertificate()}
+    , muddle{muddle::CreateMuddle("Test", muddle_certificate, network_manager, "127.0.0.1")}
+  {
+    network_manager.Start();
+    muddle->Start({muddle_port});
+  }
+
+  virtual ~AbstractRBCNode()
+  {
+    reactor.Stop();
+    muddle->Stop();
+    network_manager.Stop();
+  }
+
+  muddle::Address GetMuddleAddress() const
+  {
+    return muddle->GetAddress();
+  }
+
+  network::Uri GetHint() const
+  {
+    return fetch::network::Uri{"tcp://127.0.0.1:" + std::to_string(muddle_port)};
+  }
+
+  uint64_t MessagesReceived()
+  {
+   std::lock_guard<std::mutex> lock(mutex);
+   return answers.size();
+  }
+
+  void Clear()
+  {
+   std::lock_guard<std::mutex> lock(mutex);
+   answers.clear();
+  }
+
+  virtual void ResetCabinet(RBC::CabinetMembers const & members) = 0;
+  virtual void SendMessage() = 0;
+  virtual void Enable(bool enable) = 0;
+
+  uint16_t                muddle_port;
+  network::NetworkManager network_manager;
+  core::Reactor           reactor;
+  ProverPtr               muddle_certificate;
+  Muddle                  muddle;
+  std::mutex                           mutex;
+  std::map<MuddleAddress, MessageType> answers;
+};
+
+struct RBCNode : public AbstractRBCNode
+{
+  using RBC                            = fetch::muddle::RBC;
+  static constexpr const char *LOGGING_NAME = "RBCNode";
+
+  RBCNode(uint16_t port_number, uint16_t index)
+    : AbstractRBCNode(port_number, index)
+    , rbc{muddle->GetEndpoint(), muddle_certificate->identity().identifier(),
+      [this](MuddleAddress const &from, ConstByteArray const &payload) -> void {
+                   std::lock_guard<std::mutex> lock(mutex);
+                   answers[from] = payload;
+   }, 0}
+  {
+  }
+
+  void ResetCabinet(RBC::CabinetMembers const &members) override
+  {
+    rbc.ResetCabinet(members);
+  }
+
+  void SendMessage() override
+  {
+    rbc.Broadcast(MessageType(std::to_string(muddle_port)));
+  }
+
+  void Enable(bool enable) override
+  {
+    rbc.Enable(enable);
+  }
+
+  RBC rbc;
+};
+
+struct PBCNode : public AbstractRBCNode
+{
+  using PBC = fetch::muddle::PunishmentBroadcastChannel;
+  static constexpr const char *LOGGING_NAME = "PBCNode";
+
+  PBCNode(uint16_t port_number, uint16_t index)
+    : AbstractRBCNode(port_number, index)
+    , punishment_broadcast_channel{muddle->GetEndpoint(), muddle_certificate->identity().identifier(),
+      [this](MuddleAddress const &from, ConstByteArray const &payload) -> void {
+                   std::lock_guard<std::mutex> lock(mutex);
+                   answers[from] = payload;
+    }, muddle_certificate, 0}
+  {
+  }
+
+  void ResetCabinet(RBC::CabinetMembers const &/*members*/) override
+  {
+    //rbc.ResetCabinet(members);
+  }
+
+  void SendMessage() override
+  {
+    //rbc.Broadcast(MessageType(std::to_string(muddle_port)));
+  }
+
+  void Enable(bool /*enable*/) override
+  {
+    //rbc.Enable(enable);
+  }
+
+  PBC punishment_broadcast_channel;
+};
+
+template <class RBC_TYPE> void DKGWithEcho(benchmark::State &state)
+{
+  char const *LOGGING_NAME = RBC_TYPE::LOGGING_NAME;
+  bool REUSING_MUDDLES = true;
+
+  if(std::is_same<RBC_TYPE, RBCNode>::value)
+  {
+    REUSING_MUDDLES = false;
+  }
+
+  SetGlobalLogLevel(LogLevel::ERROR);
+  uint16_t unique_port = 8000;
+
+  std::vector<std::unique_ptr<AbstractRBCNode>> nodes;
+
+  for (auto _ : state)
+  {
+    RBC::CabinetMembers cabinet;
+
+    uint64_t nodes_in_test = uint64_t(state.range(0));
+
+    FETCH_LOG_INFO(LOGGING_NAME, "===============================");
+    FETCH_LOG_INFO(LOGGING_NAME, "Starting test: ", nodes_in_test);
+
+    // Setup here - not included in test timing
+    {
+      state.PauseTiming();
+
+      if(!REUSING_MUDDLES)
+      {
+        nodes.clear();
+      }
+
+      nodes.resize(nodes_in_test);
+
+      for (uint16_t i = 0; i < nodes_in_test; ++i)
+      {
+        auto &node = nodes[i];
+        if(!node)
+        {
+          node = std::make_unique<RBC_TYPE>(unique_port+i, i);
+        }
+        node->Clear();
+        cabinet.insert(node->muddle_certificate->identity().identifier());
+
+        for (uint16_t j = 0; j < i; j++)
+        {
+          node->muddle->ConnectTo(nodes[j]->GetMuddleAddress(), nodes[j]->GetHint());
+        }
+      }
+
+      for(auto const &member : cabinet)
+      {
+        FETCH_LOG_INFO(LOGGING_NAME, "Cabinet member: ", member.ToBase64());
+      }
+
+      for(auto const &node : nodes)
+      {
+        node->ResetCabinet(cabinet);
+      }
+
+      // Wait until fully connected
+      while(true)
+      {
+        bool connected = true;
+
+        for(auto const &node : nodes)
+        {
+          if(node->muddle->GetNumDirectlyConnectedPeers() != nodes_in_test - 1)
+          {
+            connected = false;
+          }
+        }
+
+        if(connected)
+        {
+          break;
+        }
+      }
+
+      state.ResumeTiming();
+    }
+
+    // Send all messages
+    for(auto const &node : nodes)
+    {
+      node->SendMessage();
+    }
+
+    // Wait until all have seen all messages
+    while(true)
+    {
+      bool all_seen = true;
+
+      for(auto const &node : nodes)
+      {
+        if(node->MessagesReceived() != nodes_in_test - 1)
+        {
+          all_seen = false;
+        }
+      }
+
+      if(all_seen)
+      {
+        break;
+      }
+
+      std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    }
+
+    if(REUSING_MUDDLES)
+    {
+      state.PauseTiming();
+
+      for(auto const &node : nodes)
+      {
+        node->Enable(false);
+      }
+      FETCH_LOG_INFO(LOGGING_NAME, "Disabled comms.");
+
+      std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+      for(auto const &node : nodes)
+      {
+        node->Enable(true);
+      }
+      FETCH_LOG_INFO(LOGGING_NAME, "Enabled comms");
+
+      state.ResumeTiming();
+    }
+
+    SetGlobalLogLevel(LogLevel::INFO);
+    FETCH_LOG_INFO(LOGGING_NAME, "Finished test: ", nodes_in_test);
+    FETCH_LOG_INFO(LOGGING_NAME, "");
+    SetGlobalLogLevel(LogLevel::ERROR);
+  }
+}
+
+// TODO(HUT): kill dkg refs
+BENCHMARK_TEMPLATE(DKGWithEcho, RBCNode)->Range(7, 20)->Unit(benchmark::kMicrosecond);
+//BENCHMARK_TEMPLATE(DKGWithEcho, PBCNode)->Range(3, 20)->Unit(benchmark::kMillisecond);

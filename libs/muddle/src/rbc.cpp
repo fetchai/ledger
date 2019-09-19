@@ -69,6 +69,11 @@ RBC::RBC(Endpoint &endpoint, MuddleAddress address, CallbackFunction call_back, 
     {
       OnRBC(from, msg);
     }
+    catch (std::exception &e)
+    {
+      FETCH_LOG_CRITICAL(LOGGING_NAME, "Node ", id_,
+                         ": critical failure in RBC, possibly due to malformed message: ", e.what());
+    }
     catch (...)
     {
       FETCH_LOG_CRITICAL(LOGGING_NAME, "Node ", id_,
@@ -198,8 +203,13 @@ void RBC::InternalBroadcast(RBCMessage const &msg)
   msg_serializer.Reserve(msg_counter.size());
   msg_serializer << msg;
 
+  auto copy = current_cabinet_;
+  auto sizeit = copy.size();
+
+  FETCH_UNUSED(sizeit);
+
   // Broadcast without echo
-  for (const auto &address : current_cabinet_)
+  for (const auto &address : copy)
   {
     if (address != address_)
     {
@@ -308,7 +318,7 @@ void RBC::OnRBroadcast(MessageBroadcast const &msg, uint32_t sender_index)
     return;
   }
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "onRBroadcast: Node ", id_, " received msg ", tag, " from node ",
+  FETCH_LOG_INFO(LOGGING_NAME, "onRBroadcast: Node ", id_, " received msg ", tag, " from node ",
                   sender_index, " with counter ", std::to_string(msg->counter()), " and id ",
                   msg->id());
   if (sender_index == msg->id())
@@ -423,7 +433,7 @@ void RBC::OnRReady(MessageReady const &msg, uint32_t sender_index)
     }
     else if (msg->id() != id_ && CheckTag(*msg))
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", id_, " delivered msg ", tag, " with counter ",
+      FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, " delivered msg ", tag, " with counter ",
                       std::to_string(msg->counter()), " and id ", msg->id());
 
       Deliver(broadcasts_[tag].original_message, msg->id());
@@ -510,7 +520,7 @@ void RBC::OnRAnswer(MessageAnswer const &msg, uint32_t sender_index)
 
   if (msg->id() != id_ && CheckTag(*msg))
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", id_, " delivered msg ", tag, " with counter ",
+    FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, " delivered msg ", tag, " with counter ",
                     std::to_string(msg->counter()), " and id ", msg->id());
 
     Deliver(broadcasts_[tag].original_message, msg->id());
@@ -547,7 +557,7 @@ void RBC::Deliver(SerialisedMessage const &msg, uint32_t sender_index)
     {
       TagType old_tag = old_tag_msg->second;
       assert(!broadcasts_[old_tag].original_message.empty());
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", id_, " delivered msg ", old_tag, " with counter ",
+      FETCH_LOG_INFO(LOGGING_NAME, "Node ", id_, " delivered msg ", old_tag, " with counter ",
                       old_tag_msg->first, " and id ", sender_index);
 
       // Unlock and lock here to allow the callback funtion to use the RBC
@@ -643,6 +653,12 @@ uint32_t RBC::CabinetIndex(MuddleAddress const &other_address) const
 {
   auto iter = current_cabinet_.find(other_address);
   assert(iter != current_cabinet_.end());
+
+  if(iter == current_cabinet_.end())
+  {
+    return 0;
+  }
+
   return static_cast<uint32_t>(std::distance(current_cabinet_.begin(), iter));
 }
 
@@ -703,8 +719,12 @@ bool RBC::CheckTag(RBCMessage const &msg)
  */
 bool RBC::SetPartyFlag(uint32_t sender_index, TagType tag, MessageType msg_type)
 {
-  assert(parties_.size() == current_cabinet_.size());
+  if(parties_.size() != current_cabinet_.size())
+  {
+      return false;
+  }
 
+  // TODO(HUT): this can segfault when it receives a message before parties_/cabinet_ is set.
   auto &iter  = parties_[sender_index].flags[tag];
   auto  index = static_cast<uint32_t>(msg_type);
   if (iter[index])
