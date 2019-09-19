@@ -24,4 +24,3 @@ target_link_libraries(fetch-python
 # make the name match the bindings
 set_target_properties(fetch-python PROPERTIES OUTPUT_NAME "fetch")
 
-# endif (FETCH_ENABLE_PYTHON_BINDINGS)
