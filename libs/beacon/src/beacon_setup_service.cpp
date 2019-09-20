@@ -113,7 +113,6 @@ BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identit
   , rbc_{new CHANNEL_TYPE(endpoint_, identity_.identifier(),
          [this](MuddleAddress const &from, ConstByteArray const &payload) -> void {
 
-           FETCH_LOG_INFO(LOGGING_NAME, "From: ", from.ToBase64(), " self: ", identity_.identifier().ToBase64(), "PAYL: ", payload.ToBase64());
            DKGEnvelope   env;
            DKGSerializer serializer{payload};
            serializer >> env;

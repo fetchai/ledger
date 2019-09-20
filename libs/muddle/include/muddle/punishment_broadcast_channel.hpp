@@ -417,6 +417,8 @@ public:
       if(!network_promises_.empty())
       {
         FETCH_LOG_WARN(LOGGING_NAME, "Failed to resolve promises: ", network_promises_.size());
+
+        network_promises_.clear();
       }
 
       return State::INIT;
