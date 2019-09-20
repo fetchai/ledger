@@ -654,44 +654,51 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReconstructionShares()
     FETCH_LOG_INFO(LOGGING_NAME, "State: ", ToString(state_machine_->state()),
                    " Ready. Seconds to spare: ", state_deadline_ - GetTime(), " of ",
                    seconds_for_state_);
+
+    // Reconstruction can take some time - best to do it ASAP
+    {
+      // Process reconstruction shares. Reconstruction shares from non-qual members
+      // or people in qual complaints should not be considered
+      for (auto const &share : reconstruction_shares_received_)
+      {
+        MuddleAddress from = share.first;
+        if (qual_complaints_manager_.FindComplaint(from) ||
+            beacon_->manager.qual().find(from) == beacon_->manager.qual().end())
+        {
+          FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                         " received message from invalid sender. Discarding.");
+          continue;
+        }
+        for (auto const &elem : share.second)
+        {
+          beacon_->manager.VerifyReconstructionShare(from, elem);
+        }
+      }
+
+      // Reset if reconstruction fails as this breaks the initial assumption on the
+      // number of Byzantine nodes
+      if (!beacon_->manager.RunReconstruction())
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Node: ", beacon_->manager.cabinet_index(),
+                       " DKG failed due to reconstruction failure. Resetting.");
+        SetTimeToProceed(State::RESET);
+        return State::RESET;
+      }
+      else
+      {
+        beacon_->manager.ComputePublicKeys();
+      }
+
+      SetTimeToProceed(State::DRY_RUN_SIGNING);
+      return State::DRY_RUN_SIGNING;
+      }
   }
 
   if (timer_to_proceed_.HasExpired())
   {
-    // Process reconstruction shares. Reconstruction shares from non-qual members
-    // or people in qual complaints should not be considered
-    for (auto const &share : reconstruction_shares_received_)
-    {
-      MuddleAddress from = share.first;
-      if (qual_complaints_manager_.FindComplaint(from) ||
-          beacon_->manager.qual().find(from) == beacon_->manager.qual().end())
-      {
-        FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-                       " received message from invalid sender. Discarding.");
-        continue;
-      }
-      for (auto const &elem : share.second)
-      {
-        beacon_->manager.VerifyReconstructionShare(from, elem);
-      }
-    }
-
-    // Reset if reconstruction fails as this breaks the initial assumption on the
-    // number of Byzantine nodes
-    if (!beacon_->manager.RunReconstruction())
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Node: ", beacon_->manager.cabinet_index(),
-                     " DKG failed due to reconstruction failure. Resetting.");
-      SetTimeToProceed(State::RESET);
-      return State::RESET;
-    }
-    else
-    {
-      beacon_->manager.ComputePublicKeys();
-    }
-
-    SetTimeToProceed(State::DRY_RUN_SIGNING);
-    return State::DRY_RUN_SIGNING;
+    FETCH_LOG_INFO(LOGGING_NAME, "Timed out during reconstruction.");
+    SetTimeToProceed(State::RESET);
+    return State::RESET;
   }
 
   state_machine_->Delay(std::chrono::milliseconds(10));
