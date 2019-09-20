@@ -20,6 +20,7 @@
 #include "math/clustering/knn.hpp"
 #include "ml/distributed_learning/distributed_learning_client.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
+#include "translator.hpp"
 #include "word2vec_training_params.hpp"
 
 namespace fetch {
@@ -57,6 +58,8 @@ public:
 
   void Test() override;
 
+  GradientType GetGradients() override;
+
   VectorTensorType TranslateGradients(GradientType &new_gradients) override;
 
 private:
@@ -64,6 +67,7 @@ private:
   std::string                                                       skipgram_;
   std::shared_ptr<fetch::ml::dataloaders::GraphW2VLoader<DataType>> w2v_data_loader_ptr_;
   std::shared_ptr<std::mutex>                                       console_mutex_ptr_;
+  Translator                                                        translator_;
 
   void PrintWordAnalogy(TensorType const &embeddings, std::string const &word1,
                         std::string const &word2, std::string const &word3, SizeType k);
@@ -94,6 +98,8 @@ Word2VecClient<TensorType>::Word2VecClient(std::string const &                id
             << std::endl;
 
   PrepareOptimiser();
+
+  translator_.SetMyVocab(w2v_data_loader_ptr_->GetVocab());
 }
 
 template <class TensorType>
@@ -122,8 +128,7 @@ void Word2VecClient<TensorType>::PrepareDataLoader()
 {
   w2v_data_loader_ptr_ = std::make_shared<fetch::ml::dataloaders::GraphW2VLoader<DataType>>(
       tp_.window_size, tp_.negative_sample_size, tp_.freq_thresh, tp_.max_word_count);
-  w2v_data_loader_ptr_->LoadVocab(tp_.vocab_file);
-  w2v_data_loader_ptr_->BuildData({tp_.data}, tp_.min_count);
+  w2v_data_loader_ptr_->BuildVocabAndData({tp_.data}, tp_.min_count);
 
   this->dataloader_ptr_ = w2v_data_loader_ptr_;
 }
@@ -247,12 +252,27 @@ void Word2VecClient<TensorType>::TestEmbeddings(std::string const &word0, std::s
   }
 }
 
+/**
+ * @return vector of gradient update values
+ */
+template <class TensorType>
+typename Word2VecClient<TensorType>::GradientType
+Word2VecClient<TensorType>::GetGradients()
+{
+  FETCH_LOCK(this->model_mutex_);
+  return GradientType(this->g_ptr_->GetGradients(), this->GetTimestamp(), this->id_,
+      w2v_data_loader_ptr_->GetVocabHash());
+}
+
 template <class TensorType>
 typename Word2VecClient<TensorType>::VectorTensorType
 Word2VecClient<TensorType>::TranslateGradients(Word2VecClient::GradientType &new_gradients)
 {
-  VectorTensorType ret = TrainingClient<TensorType>::TranslateGradients(new_gradients);
-  // todo: implement me!
+  assert(new_gradients.grads.size() == 2);
+  // todo: need to get vocabs from other clients
+  VectorTensorType ret;
+  ret.push_back(translator_.Translate<TensorType>(new_gradients.grads[0], new_gradients.hash));
+  ret.push_back(translator_.Translate<TensorType>(new_gradients.grads[1], new_gradients.hash));
   return ret;
 }
 

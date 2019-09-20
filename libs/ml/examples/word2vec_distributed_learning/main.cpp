@@ -83,7 +83,7 @@ int main(int ac, char **av)
   W2VTrainingParams<DataType> client_params;
 
   // Distributed learning parameters:
-  SizeType number_of_clients    = 5;
+  SizeType number_of_clients    = 3;
   SizeType number_of_rounds     = 50;
   coord_params.number_of_peers  = 2;
   coord_params.mode             = CoordinatorMode::SEMI_SYNCHRONOUS;

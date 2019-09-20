@@ -62,10 +62,10 @@ struct GradientUpdate
   VectorTensorType grads;
   TimestampType    timestamp{};
   std::string      client_id;
-  std::string      hash;
+  byte_array::ConstByteArray      hash;
 
   GradientUpdate(VectorTensorType grad, TimestampType second, std::string client_id,
-                 std::string hash = "")
+                 byte_array::ConstByteArray hash = "")
     : grads{grad}
     , timestamp{second}
     , client_id{std::move(client_id)}
@@ -108,7 +108,7 @@ public:
 
   virtual void Test();
 
-  VectorTensorType GetGradients() const;
+  virtual GradientType GetGradients();
 
   VectorTensorType GetWeights() const;
 
@@ -344,10 +344,11 @@ void TrainingClient<TensorType>::Test()
  * @return vector of gradient update values
  */
 template <class TensorType>
-std::vector<TensorType> TrainingClient<TensorType>::GetGradients() const
+typename TrainingClient<TensorType>::GradientType
+TrainingClient<TensorType>::GetGradients()
 {
   FETCH_LOCK(model_mutex_);
-  return g_ptr_->GetGradients();
+  return GradientType(g_ptr_->GetGradients(), GetTimestamp(), id_);
 }
 
 /**
@@ -513,7 +514,7 @@ void TrainingClient<TensorType>::DoBatch()
   {
     peers_ = coordinator_ptr_->NextPeersList(id_);
 
-    GradientType current_gradient = GradientType(g_ptr_->GetGradients(), GetTimestamp(), id_);
+    GradientType current_gradient = GetGradients();
 
     // Add gradient to export queue
     AddExportGradient(current_gradient);

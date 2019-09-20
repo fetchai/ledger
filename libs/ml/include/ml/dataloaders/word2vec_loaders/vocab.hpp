@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "crypto/sha256.hpp"
+
 #include <fstream>
 #include <map>
 #include <string>
@@ -55,6 +57,8 @@ public:
   std::vector<SizeType> PutSentenceInVocab(const std::vector<std::string> &sentence);
 
   void RemoveSentenceFromVocab(const std::vector<SizeType> &sentence);
+
+  byte_array::ConstByteArray GetVocabHash();
 };
 
 std::vector<math::SizeType> Vocab::PutSentenceInVocab(std::vector<std::string> const &sentence)
@@ -231,6 +235,16 @@ math::SizeType Vocab::IndexFromWord(std::string const &word) const
     return word_it->second;
   }
   return UNKNOWN_WORD;
+}
+
+byte_array::ConstByteArray Vocab::GetVocabHash()
+{
+  crypto::SHA256 hasher{};
+  for (auto const &item : reverse_vocab)
+  {
+    hasher.Update(item);
+  }
+  return hasher.Final();
 }
 
 }  // namespace dataloaders
