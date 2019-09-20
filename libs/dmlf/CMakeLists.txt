@@ -22,6 +22,8 @@ target_link_libraries(fetch-dmlf
                              fetch-muddle
                              fetch-crypto
                              fetch-math
+                             fetch-vm
+                             fetch-vm-modules
                              pthread)
 
 # Test targets
