@@ -17,11 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/digest.hpp"
 #include "crypto/fnv.hpp"
 #include "crypto/identity.hpp"
 #include "crypto/sha256.hpp"
 #include "ledger/chain/common_types.hpp"
-#include "core/digest.hpp"
 #include "ledger/upow/synergetic_base_types.hpp"
 #include "vectorise/uint/uint.hpp"
 

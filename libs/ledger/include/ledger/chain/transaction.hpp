@@ -19,9 +19,9 @@
 
 #include "core/bitvector.hpp"
 #include "core/byte_array/const_byte_array.hpp"
+#include "core/digest.hpp"
 #include "crypto/identity.hpp"
 #include "ledger/chain/address.hpp"
-#include "core/digest.hpp"
 
 #include <cstdint>
 #include <vector>
