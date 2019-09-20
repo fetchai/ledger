@@ -481,7 +481,7 @@ MainChain::Blocks MainChain::TimeTravel(BlockHash start, int64_t limit) const
        // check for returned subchain size
        result.size() < lim
        // genesis as the next hash designates the tip of the chain
-       && current_hash != GENESIS_DIGEST
+       && current_hash != GENESIS_DIGEST;
        // walk the stack
        current_hash = std::move(next_hash))
   {
@@ -517,7 +517,7 @@ MainChain::Blocks MainChain::TimeTravelPast(BlockHash start, int64_t limit) cons
     auto block = GetBlock(start);
     if (!block)
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: ", ToBase64(current_hash));
+      FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: ", ToBase64(start));
       throw std::runtime_error("Failed to lookup block");
     }
     return GetChainPreceding(std::move(block->body.previous_hash), static_cast<uint64_t>(-limit));
@@ -528,7 +528,7 @@ MainChain::Blocks MainChain::TimeTravelPast(BlockHash start, int64_t limit) cons
     auto block = GetBlock(start, &start);
     if (!block)
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: ", ToBase64(current_hash));
+      FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: ", ToBase64(start));
       throw std::runtime_error("Failed to lookup block");
     }
     return TimeTravel(std::move(start), limit);
@@ -1338,8 +1338,6 @@ bool MainChain::LookupBlockFromCache(BlockHash const &hash, IntBlockPtr &block, 
  */
 bool MainChain::LookupBlockFromStorage(BlockHash const &hash, IntBlockPtr &block, BlockHash *next_hash) const
 {
-  bool success{false};
-
   if (block_store_)
   {
     // create the output block
@@ -1352,7 +1350,7 @@ bool MainChain::LookupBlockFromStorage(BlockHash const &hash, IntBlockPtr &block
       output_block.UpdateDigest();
 
       // update the returned shared pointer
-      block = std::make_shared(std::move(output_block));
+      block = std::make_shared<Block>(std::move(output_block));
 
       return true;
     }
