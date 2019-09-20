@@ -134,7 +134,6 @@ void Muddle2LearnerNetworker::pushUpdate(std::shared_ptr<IUpdate> update)
 #pragma clang diagnostic ignored "-Wunused-variable"
   for (const auto &target_peer : peers)
   {
-    FETCH_LOG_INFO("FUCK to ", target_peer);
     promises.push_back(
       client->CallSpecificAddress(
         fetch::byte_array::FromBase64(
@@ -145,7 +144,7 @@ void Muddle2LearnerNetworker::pushUpdate(std::shared_ptr<IUpdate> update)
 
   for (auto &prom : promises)
   {
-    FETCH_LOG_INFO("FUCK", "WAS ",prom->Wait());
+    prom->Wait();
   }
 }
 std::size_t Muddle2LearnerNetworker::getUpdateCount() const
