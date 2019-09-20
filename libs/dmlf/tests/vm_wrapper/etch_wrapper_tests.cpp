@@ -18,7 +18,7 @@
 
 #include "gtest/gtest.h"
 
-#include "dmlf/vm_wrapper.hpp"
+#include "dmlf/vm_wrapper_etch.hpp"
 
 #include "variant/variant.hpp"
 #include "vm/vm.hpp"

@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dmlf/vm_wrapper.hpp"
+#include "dmlf/vm_wrapper_interface.hpp"
 
 namespace fetch {
 namespace dmlf {
