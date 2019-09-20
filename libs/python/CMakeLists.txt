@@ -2,7 +2,6 @@
 # F E T C H   P Y T H O N   B I N D I N G S   L I B R A R Y
 #
 cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
-cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 project(fetch-python)
 
 # CMake Configuration
