@@ -152,10 +152,10 @@ public:
 
   static constexpr Type          SMALLEST_FRACTION{1};
   static constexpr Type          LARGEST_FRACTION{FRACTIONAL_MASK};
-  static constexpr Type          MAX_INT{Type(FRACTIONAL_MASK >> 1) << FRACTIONAL_BITS};
-  static constexpr Type          MIN_INT{INTEGER_MASK & ((Type(1) << (TOTAL_BITS - 1)))};
+  static constexpr Type          MAX_INT{((Type(FRACTIONAL_MASK >> 1) -1) << FRACTIONAL_BITS)};
+  static constexpr Type          MIN_INT{-MAX_INT};
   static constexpr Type          MAX{MAX_INT | LARGEST_FRACTION};
-  static constexpr Type          MIN{MIN_INT | LARGEST_FRACTION};
+  static constexpr Type          MIN{MIN_INT - LARGEST_FRACTION};
   static constexpr std::uint16_t DECIMAL_DIGITS{BaseTypeInfo::decimals};
 
   static FixedPoint const TOLERANCE;
@@ -560,17 +560,11 @@ FixedPoint<I, F> const FixedPoint<I, F>::FP_MAX{FixedPoint<I, F>::FromBase(Fixed
 template <std::uint16_t I, std::uint16_t F>
 FixedPoint<I, F> const FixedPoint<I, F>::FP_MIN{FixedPoint<I, F>::FromBase(FixedPoint<I, F>::MIN)};
 template <std::uint16_t I, std::uint16_t F>
-FixedPoint<I, F> const FixedPoint<I, F>::NaN{FixedPoint<I, F>::FromBase(
-    (typename FixedPoint<I, F>::Type)(1) << (FixedPoint<I, F>::TOTAL_BITS - 1) |
-    (typename FixedPoint<I, F>::Type)(1))};
+FixedPoint<I, F> const FixedPoint<I, F>::NaN{FixedPoint<I, F>::FromBase(Type(1) << (TOTAL_BITS -1) | FRACTIONAL_MASK)};
 template <std::uint16_t I, std::uint16_t F>
-FixedPoint<I, F> const FixedPoint<I, F>::POSITIVE_INFINITY{
-    FixedPoint<I, F>::NaN | FixedPoint<I, F>::FromBase((typename FixedPoint<I, F>::Type)(1)
-                                                       << (FixedPoint<I, F>::FRACTIONAL_BITS - 1))};
+FixedPoint<I, F> const FixedPoint<I, F>::POSITIVE_INFINITY{FixedPoint<I, F>::FromBase(FixedPoint<I, F>::MAX + FixedPoint<I, F>::_1.Data())};
 template <std::uint16_t I, std::uint16_t F>
-FixedPoint<I, F> const FixedPoint<I, F>::NEGATIVE_INFINITY{
-    FixedPoint<I, F>::NaN | FixedPoint<I, F>::FromBase((typename FixedPoint<I, F>::Type)(3)
-                                                       << (FixedPoint<I, F>::FRACTIONAL_BITS - 2))};
+FixedPoint<I, F> const FixedPoint<I, F>::NEGATIVE_INFINITY{FixedPoint<I, F>::FromBase(FixedPoint<I, F>::MIN - FixedPoint<I, F>::_1.Data())};
 
 template <std::uint16_t I, std::uint16_t F>
 std::ostream &operator<<(std::ostream &s, FixedPoint<I, F> const &n)
@@ -662,11 +656,14 @@ constexpr FixedPoint<I, F>::FixedPoint(T n, meta::IfIsInteger<T> *)
   if (CheckOverflow(static_cast<NextType>(n)))
   {
     fp_state |= STATE_OVERFLOW;
+    data_ = MAX;
+  } else
+  {
+    Type s    = (data_ < 0) - (data_ > 0);
+    Type abs_ = s * data_;
+    abs_ <<= FRACTIONAL_BITS;
+    data_ = s * abs_;
   }
-  Type s    = (data_ < 0) - (data_ > 0);
-  Type abs_ = s * data_;
-  abs_ <<= FRACTIONAL_BITS;
-  data_ = s * abs_;
 }
 
 /**
@@ -682,6 +679,7 @@ constexpr FixedPoint<I, F>::FixedPoint(T n, meta::IfIsFloat<T> *)
   if (CheckOverflow(static_cast<NextType>(n) * static_cast<NextType>(ONE_MASK)))
   {
     fp_state |= STATE_OVERFLOW;
+    data_ = MAX;
   }
 }
 
@@ -844,10 +842,14 @@ template <std::uint16_t I, std::uint16_t F>
 template <typename T>
 constexpr meta::IfIsInteger<T, FixedPoint<I, F>> &FixedPoint<I, F>::operator=(T const &n)
 {
-  data_ = {static_cast<Type>(n) << static_cast<Type>(FRACTIONAL_BITS)};
   if (CheckOverflow(static_cast<NextType>(n)))
   {
     fp_state |= STATE_OVERFLOW;
+    data_ = MAX;
+  }
+  else
+  {
+    data_ = {static_cast<Type>(n) << static_cast<Type>(FRACTIONAL_BITS)};
   }
   return *this;
 }
@@ -861,10 +863,14 @@ template <std::uint16_t I, std::uint16_t F>
 template <typename T>
 constexpr meta::IfIsFloat<T, FixedPoint<I, F>> &FixedPoint<I, F>::operator=(T const &n)
 {
-  data_ = static_cast<typename FixedPoint<I, F>::Type>(n * ONE_MASK);
   if (CheckOverflow(static_cast<NextType>(n) * static_cast<NextType>(ONE_MASK)))
   {
     fp_state |= STATE_OVERFLOW;
+    data_ = MAX;
+  }
+  else
+  {
+    data_ = static_cast<typename FixedPoint<I, F>::Type>(n * ONE_MASK);
   }
   return *this;
 }
@@ -1120,8 +1126,12 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator++()
   if (CheckOverflow(static_cast<NextType>(data_) + static_cast<NextType>(_1.Data())))
   {
     fp_state |= STATE_OVERFLOW;
+    data_ = MAX;
   }
-  data_ += ONE_MASK;
+  else
+  {
+    data_ += ONE_MASK;
+  }
   return *this;
 }
 
@@ -1135,8 +1145,12 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator--()
   if (CheckOverflow(static_cast<NextType>(data_) - static_cast<NextType>(_1.Data())))
   {
     fp_state |= STATE_OVERFLOW;
+    data_ = MAX;
   }
-  data_ -= ONE_MASK;
+  else
+  {
+    data_ -= ONE_MASK;
+  }
   return *this;
 }
 
@@ -1281,9 +1295,13 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator+=(FixedPoint<I, F> const 
     if (CheckOverflow(static_cast<NextType>(data_) + static_cast<NextType>(n.Data())))
     {
       fp_state |= STATE_OVERFLOW;
+      data_ = MAX;
     }
-    Type fp = data_ + n.Data();
-    *this   = FromBase(fp);
+    else
+    {
+      Type fp = data_ + n.Data();
+      *this   = FromBase(fp);
+    }
   }
   return *this;
 }
@@ -1345,9 +1363,13 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator-=(FixedPoint<I, F> const 
     if (CheckOverflow(static_cast<NextType>(data_) - static_cast<NextType>(n.Data())))
     {
       fp_state |= STATE_OVERFLOW;
+      data_ = MAX;
     }
-    Type fp = data_ - n.Data();
-    *this   = FromBase(fp);
+    else
+    {
+      Type fp = data_ - n.Data();
+      *this   = FromBase(fp);
+    }
   }
   return *this;
 }
@@ -1407,9 +1429,13 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator*=(FixedPoint<I, F> const 
     if (CheckOverflow(static_cast<NextType>(prod >> FRACTIONAL_BITS)))
     {
       fp_state |= STATE_OVERFLOW;
+      data_ = MAX;
     }
-    auto fp = Type(prod >> FRACTIONAL_BITS);
-    *this   = FromBase(fp);
+    else
+    {
+      auto fp = Type(prod >> FRACTIONAL_BITS);
+      *this   = FromBase(fp);
+    }
   }
   return *this;
 }
@@ -2003,7 +2029,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Log2(FixedPoint<I, F> const &x)
     y = _1 / x;
   }
   Type       k = platform::HighestSetBit(y.Data()) - Type(FRACTIONAL_BITS);
-  FixedPoint k_shifted{Type(1) << k};
+  FixedPoint k_shifted{FixedPoint::FromBase((_1.Data()) << k)};
   FixedPoint r = y / k_shifted;
 
   FixedPoint P00{137};

@@ -19,6 +19,7 @@
 #include "math/base_types.hpp"
 #include "math/trigonometry.hpp"
 #include "vectorise/math/standard_functions.hpp"
+#include "math/standard_functions/log.hpp"
 #include "vectorise/vectorise.hpp"
 
 #include "gtest/gtest.h"
@@ -186,7 +187,7 @@ TYPED_TEST(VectorReduceTest, reduce_tests)
   using type       = typename TypeParam::type;
   using array_type = fetch::memory::SharedArray<type>;
 
-  std::size_t            N = 20, offset = 2;
+  std::size_t N = 20, offset = 2;
   alignas(32) array_type A(N), B(N), C(N), D(N), E(N);
   type sum{0}, partial_sum{0}, max_a{type(0)}, min_a{type(N)}, partial_max{0}, partial_min{type(N)};
 
@@ -281,4 +282,41 @@ TYPED_TEST(VectorReduceTest, reduce_tests)
   {
     EXPECT_EQ(E[i], C[i]);
   }
+}
+
+template <typename T>
+class VectorNaNInfTest : public ::testing::Test
+{
+};
+TYPED_TEST_CASE(VectorNaNInfTest, MyFPTypes);
+TYPED_TEST(VectorNaNInfTest, nan_tests)
+{
+  using type       = typename TypeParam::type;
+
+  alignas(32) type A[TypeParam::E_BLOCK_COUNT], B[TypeParam::E_BLOCK_COUNT];
+  type sign{1};
+  for (std::size_t i = 0; i < TypeParam::E_BLOCK_COUNT; ++i)
+  {
+    sign = -sign;
+    A[i] = fetch::math::Log(sign * type(i));
+    B[i] = fetch::math::Sin(type(0.1) * type(i + 1));
+    std::cout << "A[" << i << "] = " << A[i] << std::endl;
+    std::cout << "B[" << i << "] = " << B[i] << std::endl;
+  }
+  TypeParam va{A};
+  TypeParam vb{B};
+  std::cout << "va = " << va << std::endl;
+  std::cout << "vb = " << vb << std::endl;
+
+  va = -va;
+  std::cout << "-va = " << va << std::endl;
+
+  auto vsum  = va + vb;
+  auto vdiff = va - vb;
+  auto vprod = va * vb;
+  auto vdiv  = va / vb;
+  std::cout << "vsum = " << vsum << std::endl;
+  std::cout << "vdiff = " << vdiff << std::endl;
+  std::cout << "vprod = " << vprod << std::endl;
+  std::cout << "vdiv = " << vdiv << std::endl;
 }

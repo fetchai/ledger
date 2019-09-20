@@ -23,6 +23,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <iostream>
 #include <emmintrin.h>
 #include <immintrin.h>
 #include <smmintrin.h>
@@ -93,6 +94,18 @@ public:
     return data_;
   }
 
+  static VectorRegister MaskNAN()
+  {
+    return VectorRegister(type::NaN);
+  }
+  static VectorRegister MaskPosInf()
+  {
+    return VectorRegister(type::POSITIVE_INFINITY);
+  }
+  static VectorRegister MaskNegInf()
+  {
+    return VectorRegister(type::NEGATIVE_INFINITY);
+  }
 private:
   MMRegisterType data_;
 };
@@ -158,6 +171,18 @@ public:
     return data_;
   }
 
+  static VectorRegister MaskNAN()
+  {
+    return VectorRegister(type::NaN);
+  }
+  static VectorRegister MaskPosInf()
+  {
+    return VectorRegister(type::POSITIVE_INFINITY);
+  }
+  static VectorRegister MaskNegInf()
+  {
+    return VectorRegister(type::NEGATIVE_INFINITY);
+  }
 private:
   MMRegisterType data_;
 };
@@ -186,17 +211,6 @@ inline std::ostream &operator<<(std::ostream &s, VectorRegister<fixed_point::fp3
 
   return s;
 }
-
-#define FETCH_ADD_OPERATOR(op, type, size, base_type)                                             \
-  inline VectorRegister<type, size> operator op(VectorRegister<type, size> const &x)              \
-  {                                                                                               \
-    VectorRegister<base_type, size> ret = operator op(VectorRegister<base_type, size>(x.data())); \
-    return VectorRegister<type, size>(ret.data());                                                \
-  }
-
-FETCH_ADD_OPERATOR(-, fixed_point::fp32_t, 128, int32_t)
-FETCH_ADD_OPERATOR(-, fixed_point::fp32_t, 256, int32_t)
-#undef FETCH_ADD_OPERATOR
 
 #define FETCH_ADD_OPERATOR(op, type, size, base_type)                                             \
   inline VectorRegister<type, size> operator op(VectorRegister<type, size> const &a,              \
@@ -228,6 +242,24 @@ FETCH_ADD_OPERATOR(<=, fixed_point::fp32_t, 256, int32_t)
 FETCH_ADD_OPERATOR(<, fixed_point::fp32_t, 256, int32_t)
 
 #undef FETCH_ADD_OPERATOR
+
+inline VectorRegister<fixed_point::fp32_t, 128> operator-(VectorRegister<fixed_point::fp32_t, 128> const &x)
+{
+  VectorRegister<fixed_point::fp32_t, 128> mask = (x == VectorRegister<fixed_point::fp32_t, 128>::MaskNAN());
+  std::cout << "mask_nan = " << mask << std::endl;
+  VectorRegister<int32_t, 128> ret = operator-(VectorRegister<int32_t, 128>(x.data()));
+  ret.data() = _mm_blendv_epi8(ret.data(), VectorRegister<fixed_point::fp32_t, 128>::MaskNAN().data(), mask.data());
+  return VectorRegister<fixed_point::fp32_t, 128>(ret.data());
+}
+
+inline VectorRegister<fixed_point::fp32_t, 256> operator-(VectorRegister<fixed_point::fp32_t, 256> const &x)
+{
+  VectorRegister<fixed_point::fp32_t, 256> mask = (x == VectorRegister<fixed_point::fp32_t, 256>::MaskNAN());
+  std::cout << "mask_nan = " << mask << std::endl;
+  VectorRegister<int32_t, 256> ret = -(VectorRegister<int32_t, 256>(x.data()));
+  ret.data() = _mm256_blendv_epi8(ret.data(), VectorRegister<fixed_point::fp32_t, 256>::MaskNAN().data(), mask.data());
+  return VectorRegister<fixed_point::fp32_t, 256>(ret.data());
+}
 
 inline VectorRegister<fixed_point::fp32_t, 128> operator*(
     VectorRegister<fixed_point::fp32_t, 128> const &a,
