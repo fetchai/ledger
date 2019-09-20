@@ -202,7 +202,7 @@ struct PBCNode : public AbstractRBCNode
   void SendMessage() override
   {
     std::string question = "What is your answer to: " + std::to_string(iteration);
-    std::string answer   = "Answer: " + std::to_string(muddle_port) + " rnd: " ++ std::to_string(iteration);
+    std::string answer   = "Answer: " + std::to_string(muddle_port) + " rnd: " + std::to_string(iteration);
     punishment_broadcast_channel.SetQuestion(question, answer);
   }
 

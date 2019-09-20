@@ -1419,14 +1419,14 @@ void SetTimeBySlots(BeaconSetupService::State state, uint64_t &time_slots_total,
   std::map<BeaconSetupService::State, uint64_t> time_slot_map;
 
   time_slot_map[BeaconSetupService::State::RESET]                          = 0;
-  time_slot_map[BeaconSetupService::State::CONNECT_TO_ALL]                 = 15;
-  time_slot_map[BeaconSetupService::State::WAIT_FOR_READY_CONNECTIONS]     = 15;
+  time_slot_map[BeaconSetupService::State::CONNECT_TO_ALL]                 = 10;
+  time_slot_map[BeaconSetupService::State::WAIT_FOR_READY_CONNECTIONS]     = 10;
   time_slot_map[BeaconSetupService::State::WAIT_FOR_SHARES]                = 10;
   time_slot_map[BeaconSetupService::State::WAIT_FOR_COMPLAINTS]            = 10;
   time_slot_map[BeaconSetupService::State::WAIT_FOR_COMPLAINT_ANSWERS]     = 10;
   time_slot_map[BeaconSetupService::State::WAIT_FOR_QUAL_SHARES]           = 10;
   time_slot_map[BeaconSetupService::State::WAIT_FOR_QUAL_COMPLAINTS]       = 10;
-  time_slot_map[BeaconSetupService::State::WAIT_FOR_RECONSTRUCTION_SHARES] = 10;
+  time_slot_map[BeaconSetupService::State::WAIT_FOR_RECONSTRUCTION_SHARES] = 20;
   time_slot_map[BeaconSetupService::State::DRY_RUN_SIGNING]                = 10;
 
   time_slot_for_state = time_slot_map[state];
