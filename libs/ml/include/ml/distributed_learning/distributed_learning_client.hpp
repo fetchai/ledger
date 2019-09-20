@@ -89,6 +89,7 @@ public:
   VectorTensorType GetWeights() const;
 
   void SetWeights(VectorTensorType const &new_weights);
+    void AddGradients(VectorTensorType const &grads);
 
   void SetParams(ClientParams<DataType> const &new_params);
 
@@ -340,6 +341,28 @@ void TrainingClient<TensorType>::SetWeights(VectorTensorType const &new_weights)
   }
 }
 
+/**
+ * Adds a vector of Tensors to the gradient accumulation of all the trainable pointers in the graph.
+ * Typical use case is injecting external gradients e.g when doing distributed learning.
+ * @tparam T
+ * @param grads The vector of gradients - needs to have the same length as the number of trainables
+ */
+    template <class TensorType>
+    void TrainingClient<TensorType>::AddGradients(VectorTensorType const &grads)
+    {
+      FETCH_LOCK(model_mutex_);
+
+        assert(grads.size() == trainable_nodes_.size());
+        auto gt_it =  g_ptr_->trainable_nodes_.begin();
+        for (auto const &grad : grads)
+        {
+          auto weights_ptr = std::dynamic_pointer_cast<ops::Weights<TensorType>>((*gt_it)->GetOp());
+          weights_ptr->AddToGradient(grad);
+          ++gt_it;
+        }
+    }
+
+
 // Timestamp for logging
 template <class TensorType>
 std::string TrainingClient<TensorType>::GetStrTimestamp()
@@ -393,7 +416,7 @@ void TrainingClient<TensorType>::DoBatch()
   {
     ucnt++;
     new_gradients = i_learner_ptr_->getUpdate<fetch::dmlf::Update<TensorType>>()->GetGradients();
-    g_ptr_->AddGradients(new_gradients);
+    AddGradients(new_gradients);
   }
 
   // Apply sum of all gradients from iLearner along with own gradient

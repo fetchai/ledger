@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dmlf/filepassing_learner_networker.hpp"
 #include "dmlf/local_learner_networker.hpp"
+#include "dmlf/muddle2_learner_networker.hpp"
 #include "dmlf/simple_cycling_algorithm.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
@@ -94,18 +94,8 @@ int main(int ac, char **av)
 
   std::cout << std::string(av[3]) << " " << std::string(av[4]) << std::endl;
 
-  std::string my_name = std::string(av[3]);
-
-  std::vector<std::string> peers_names;
-
-  std::string word;
-  std::string peers_str = std::string(av[4]);
-
-  std::stringstream stream(peers_str);
-  while (std::getline(stream, word, ','))
-  {
-    peers_names.push_back(word);
-  }
+  std::string config          = std::string(av[3]);
+  int         instance_number = std::atoi(av[4]);
 
   ClientParams<DataType> client_params;
 
@@ -117,17 +107,15 @@ int main(int ac, char **av)
   SizeType number_of_peers       = 3;
 
   // Create networker
-  auto networker = std::make_shared<fetch::dmlf::FilepassingLearnerNetworker>();
+  auto networker = std::make_shared<fetch::dmlf::Muddle2LearnerNetworker>(config, instance_number);
 
   std::cout << "FETCH Distributed MNIST Demo" << std::endl;
 
-  networker->setName(my_name);
-  networker->addPeers(peers_names);
   networker->setShuffleAlgorithm(std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(
       networker->getPeerCount(), number_of_peers));
 
   std::shared_ptr<TrainingClient<TensorType>> client =
-      MakeClient(my_name, client_params, av[1], av[2], test_set_ratio);
+      MakeClient(std::to_string(instance_number), client_params, av[1], av[2], test_set_ratio);
 
   // Give list of clients to coordinator
   client->SetNetworker(networker);
