@@ -50,7 +50,7 @@ namespace distributed_learning {
 
 struct Translator
 {
-//  using TensorType = fetch::math::Tensor<float>;  // todo: temporary
+  //  using TensorType = fetch::math::Tensor<float>;  // todo: temporary
 
   template <typename TensorType>
   TensorType Translate(TensorType gradient_update, const byte_array::ConstByteArray &vocab_hash)

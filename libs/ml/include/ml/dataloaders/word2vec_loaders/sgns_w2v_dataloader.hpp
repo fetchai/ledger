@@ -83,7 +83,7 @@ private:
   SizeType                                  window_size_;
   SizeType                                  negative_samples_;
   T                                         freq_thresh_;
-  std::shared_ptr<VocabType>                vocab_ = std::make_shared<VocabType >();
+  std::shared_ptr<VocabType>                vocab_ = std::make_shared<VocabType>();
   std::vector<std::vector<SizeType>>        data_;
   std::vector<SizeType>                     word_id_counts_;
   UnigramTable                              unigram_table_;

@@ -256,12 +256,11 @@ void Word2VecClient<TensorType>::TestEmbeddings(std::string const &word0, std::s
  * @return vector of gradient update values
  */
 template <class TensorType>
-typename Word2VecClient<TensorType>::GradientType
-Word2VecClient<TensorType>::GetGradients()
+typename Word2VecClient<TensorType>::GradientType Word2VecClient<TensorType>::GetGradients()
 {
   FETCH_LOCK(this->model_mutex_);
   return GradientType(this->g_ptr_->GetGradients(), this->GetTimestamp(), this->id_,
-      w2v_data_loader_ptr_->GetVocabHash());
+                      w2v_data_loader_ptr_->GetVocabHash());
 }
 
 template <class TensorType>

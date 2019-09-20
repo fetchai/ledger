@@ -59,10 +59,10 @@ struct GradientUpdate
 {
   using VectorTensorType = std::vector<TensorType>;
   using TimestampType    = int64_t;
-  VectorTensorType grads;
-  TimestampType    timestamp{};
-  std::string      client_id;
-  byte_array::ConstByteArray      hash;
+  VectorTensorType           grads;
+  TimestampType              timestamp{};
+  std::string                client_id;
+  byte_array::ConstByteArray hash;
 
   GradientUpdate(VectorTensorType grad, TimestampType second, std::string client_id,
                  byte_array::ConstByteArray hash = "")
@@ -344,8 +344,7 @@ void TrainingClient<TensorType>::Test()
  * @return vector of gradient update values
  */
 template <class TensorType>
-typename TrainingClient<TensorType>::GradientType
-TrainingClient<TensorType>::GetGradients()
+typename TrainingClient<TensorType>::GradientType TrainingClient<TensorType>::GetGradients()
 {
   FETCH_LOCK(model_mutex_);
   return GradientType(g_ptr_->GetGradients(), GetTimestamp(), id_);
