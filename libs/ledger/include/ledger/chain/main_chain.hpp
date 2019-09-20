@@ -25,7 +25,7 @@
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/consensus/proof_of_work.hpp"
 #include "ledger/chain/constants.hpp"
-#include "ledger/chain/digest.hpp"
+#include "core/digest.hpp"
 #include "ledger/chain/transaction_layout.hpp"
 #include "network/generics/milli_timer.hpp"
 #include "storage/object_store.hpp"

@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/main_serializer.hpp"
-#include "ledger/chain/digest.hpp"
+#include "core/digest.hpp"
 #include "ledger/chaincode/smart_contract_manager.hpp"
 #include "ledger/upow/naive_synergetic_miner.hpp"
 #include "ledger/upow/synergetic_base_types.hpp"

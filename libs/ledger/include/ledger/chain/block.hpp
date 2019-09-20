@@ -21,7 +21,7 @@
 #include "core/serializers/base_types.hpp"
 #include "ledger/chain/address.hpp"
 #include "ledger/chain/consensus/proof_of_work.hpp"
-#include "ledger/chain/digest.hpp"
+#include "core/digest.hpp"
 #include "ledger/chain/transaction_layout.hpp"
 #include "ledger/chain/transaction_layout_rpc_serializers.hpp"
 #include "ledger/dag/dag_epoch.hpp"

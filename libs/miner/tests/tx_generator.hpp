@@ -19,7 +19,7 @@
 
 #include "core/byte_array/byte_array.hpp"
 #include "core/random/lcg.hpp"
-#include "ledger/chain/digest.hpp"
+#include "core/digest.hpp"
 #include "ledger/chain/transaction_layout.hpp"
 
 class TransactionGenerator

@@ -21,7 +21,7 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "crypto/identity.hpp"
 #include "ledger/chain/address.hpp"
-#include "ledger/chain/digest.hpp"
+#include "core/digest.hpp"
 
 #include <cstdint>
 #include <vector>
