@@ -56,11 +56,6 @@ protected:
     chain_ = std::make_unique<MainChain>(false, MainChain::Mode::IN_MEMORY_DB);
   }
 
-  void TearDown() override
-  {
-    chain_.reset();
-  }
-
   BlockGenerator block_generator_{NUM_LANES, NUM_SLICES};
   MainChainPtr   chain_;
 
@@ -79,7 +74,7 @@ public:
   }
 };
 
-static Blocks Extract(Blocks const &input, std::initializer_list<std::size_t> const &indexes)
+Blocks Extract(Blocks const &input, std::initializer_list<std::size_t> const &indexes)
 {
   Blocks output;
   output.reserve(indexes.size());
@@ -92,7 +87,7 @@ static Blocks Extract(Blocks const &input, std::initializer_list<std::size_t> co
   return output;
 }
 
-static bool AreEqual(MainChain::Blocks const &actual, Blocks const &expected)
+bool AreEqual(MainChain::Blocks const &actual, Blocks const &expected)
 {
   return std::equal(actual.begin(), actual.end(), expected.begin(), expected.end(),
                     [](auto const &a, auto const &b) { return a->body.hash == b->body.hash; });

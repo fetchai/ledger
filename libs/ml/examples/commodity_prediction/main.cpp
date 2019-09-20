@@ -305,7 +305,7 @@ int main(int argc, char **argv)
         std::vector<std::string> dir_list =
             fetch::ml::examples::GetAllTextFiles(weights_dir + "/" + name, "");
         std::vector<std::string> actual_dirs;
-        for (auto dir : dir_list)
+        for (auto const &dir : dir_list)
         {
           if (dir != "." && dir != "..")
           {

@@ -64,9 +64,9 @@ std::size_t PopulateData(std::vector<uint32_t> &s)
 {
   s.resize(16 * 100000);
 
-  for (std::size_t i = 0; i < s.size(); ++i)
+  for (uint32_t &i : s)
   {
-    s[i] = uint32_t(lfg());
+    i = uint32_t(lfg());
   }
 
   return sizeof(uint32_t) * s.size();
@@ -76,9 +76,9 @@ std::size_t PopulateData(std::vector<uint64_t> &s)
 {
   s.resize(16 * 100000);
 
-  for (std::size_t i = 0; i < s.size(); ++i)
+  for (uint64_t &i : s)
   {
-    s[i] = lfg();
+    i = lfg();
   }
 
   return sizeof(uint64_t) * s.size();

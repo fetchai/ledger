@@ -38,9 +38,9 @@ using namespace fetch::math;
 
 TYPED_TEST(TensorViewTests, size_test)
 {
-  TypeParam         from   = static_cast<TypeParam>(2);
-  TypeParam         to     = static_cast<TypeParam>(50);
-  TypeParam         step   = static_cast<TypeParam>(1);
+  auto              from   = static_cast<TypeParam>(2);
+  auto              to     = static_cast<TypeParam>(50);
+  auto              step   = static_cast<TypeParam>(1);
   Tensor<TypeParam> tensor = Tensor<TypeParam>::Arange(from, to, step);
   tensor.Reshape({3, 16});
 
@@ -127,9 +127,9 @@ TYPED_TEST(TensorViewTests, size_test)
 
 TYPED_TEST(TensorViewTests, data_layout)
 {
-  TypeParam         from   = static_cast<TypeParam>(2);
-  TypeParam         to     = static_cast<TypeParam>(50);
-  TypeParam         step   = static_cast<TypeParam>(1);
+  auto              from   = static_cast<TypeParam>(2);
+  auto              to     = static_cast<TypeParam>(50);
+  auto              step   = static_cast<TypeParam>(1);
   Tensor<TypeParam> tensor = Tensor<TypeParam>::Arange(from, to, step);
   tensor.Reshape({3, 16});
 

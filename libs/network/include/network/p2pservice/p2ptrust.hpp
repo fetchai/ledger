@@ -57,12 +57,11 @@ public:
   }
   double delta, min, max;
 
-  ~TrustModifier2()
-  {}
+  ~TrustModifier2() = default;
 };
 
-using trust_modifiers_type = std::array<std::array<TrustModifier, 4>, 3>;
-extern const trust_modifiers_type trust_modifiers_;
+using TrustModifiersType = std::array<std::array<TrustModifier, 4>, 3>;
+extern const TrustModifiersType trust_modifiers_;
 
 inline TrustModifier const &LookupTrustModifier(TrustSubject subject, TrustQuality quality)
 {

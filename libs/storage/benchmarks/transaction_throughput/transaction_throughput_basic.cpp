@@ -67,7 +67,7 @@ TransactionList GenerateTransactions(std::size_t count, bool large_packets)
     if (large_packets)
     {
       ByteArray tx_data(TX_SIZE);
-      uint64_t *tx_data_raw = reinterpret_cast<uint64_t *>(tx_data.pointer());
+      auto *    tx_data_raw = reinterpret_cast<uint64_t *>(tx_data.pointer());
 
       for (std::size_t j = 0; j < TX_WORD_SIZE; ++j)
       {

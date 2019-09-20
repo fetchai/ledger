@@ -77,7 +77,7 @@ auto Generate(BlockGeneratorPtr &gen, BlockPtr genesis, std::size_t amount)
 std::ostream &Print(std::ostream &s, fetch::ledger::Digest const &hash)
 {
   s << '#' << std::hex;
-  if (!hash.size())
+  if (hash.empty())
   {
     return s << "<nil>";
   }

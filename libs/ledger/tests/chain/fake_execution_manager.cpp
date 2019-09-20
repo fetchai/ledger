@@ -32,7 +32,7 @@ FakeExecutionManager::FakeExecutionManager(FakeStorageUnit &storage)
 
 FakeExecutionManager::ScheduleStatus FakeExecutionManager::Execute(Block::Body const &block)
 {
-  if (current_hash_.size())
+  if (!current_hash_.empty())
   {
     return ScheduleStatus::ALREADY_RUNNING;
   }

@@ -46,11 +46,11 @@ enum class Hasher
   FNV
 };
 
-std::size_t hash_size(Hasher hasher_type)
+std::size_t hash_size(Hasher hash_type)
 {
   std::size_t hash_size = 0u;
 
-  switch (hasher_type)
+  switch (hash_type)
   {
   case Hasher::MD5:
     hash_size = crypto::MD5::size_in_bytes;
