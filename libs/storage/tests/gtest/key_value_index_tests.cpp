@@ -77,9 +77,8 @@ bool ValueConsistency(KeyValueIndexTests &fixture)
   }
 
   fixture.cached_kv_index.New("test1.db");
-  for (std::size_t i = 0; i < values.size(); ++i)
+  for (auto const &val : values)
   {
-    auto const &val = values[i];
     fixture.cached_kv_index.Set(val.key, val.value, val.key);
   }
 
@@ -124,9 +123,8 @@ bool LoadSaveValueConsistency(KeyValueIndexTests &fixture)
 
   T1 index1;
   index1.New("test1.db");
-  for (std::size_t i = 0; i < values.size(); ++i)
+  for (auto const &val : values)
   {
-    auto const &val = values[i];
     index1.Set(val.key, val.value, val.key);
   }
 
@@ -198,9 +196,8 @@ TEST_F(KeyValueIndexTests, random_insert_hash_consistency)
   }
 
   cached_kv_index.New("test1.db");
-  for (std::size_t i = 0; i < values.size(); ++i)
+  for (auto const &val : values)
   {
-    auto const &val = values[i];
     cached_kv_index.Set(val.key, val.value, val.key);
   }
 
@@ -212,18 +209,16 @@ TEST_F(KeyValueIndexTests, random_insert_hash_consistency)
   std::random_device rd;
   std::mt19937       g(rd());
   std::shuffle(values.begin(), values.end(), g);
-  for (std::size_t i = 0; i < values.size(); ++i)
+  for (auto const &val : values)
   {
-    auto const &val = values[i];
     cached_kv_index.Set(val.key, val.value, val.key);
   }
   auto hash2 = cached_kv_index.Hash();
 
   // REF
   kv_index.New("test1.db");
-  for (std::size_t i = 0; i < values.size(); ++i)
+  for (auto const &val : values)
   {
-    auto const &val = values[i];
     kv_index.Set(val.key, val.value, val.key);
   }
 
@@ -256,9 +251,8 @@ TEST_F(KeyValueIndexTests, intermediate_flush_hash_consistency)
 
   cached_kv_index.New("test1.db");
 
-  for (std::size_t i = 0; i < values.size(); ++i)
+  for (auto const &val : values)
   {
-    auto const &val = values[i];
     cached_kv_index.Set(val.key, val.value, val.key);
   }
 
@@ -286,9 +280,8 @@ TEST_F(KeyValueIndexTests, intermediate_flush_hash_consistency)
 
   // REF
   kv_index.New("test1.db");
-  for (std::size_t i = 0; i < values.size(); ++i)
+  for (auto const &val : values)
   {
-    auto const &val = values[i];
     kv_index.Set(val.key, val.value, val.key);
   }
 
@@ -320,9 +313,8 @@ TEST_F(KeyValueIndexTests, double_insertion_hash_consistency)
   }
 
   cached_kv_index.New("test1.db");
-  for (std::size_t i = 0; i < values.size(); ++i)
+  for (auto const &val : values)
   {
-    auto const &val = values[i];
     cached_kv_index.Set(val.key, val.value, val.key);
   }
 
@@ -371,9 +363,8 @@ TEST_F(KeyValueIndexTests, batched_vs_bulk_load_save_consistency)
   }
 
   cached_kv_index.New("test1.db");
-  for (std::size_t z = 0; z < values.size(); ++z)
+  for (auto const &val : values)
   {
-    auto const &val = values[z];
     cached_kv_index.Set(val.key, val.value, val.key);
   }
   std::size_t bulk_size = cached_kv_index.size();

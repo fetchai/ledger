@@ -137,7 +137,7 @@ int main(int argc, char **argv)
   SizeType                 min_count       = 5;
   SizeType                 embeddings_size = 200;  // embeddings size
   SizeType                 iter            = 15;   // training epochs
-  FloatType                alpha           = static_cast<FloatType>(0.025);
+  auto                     alpha           = static_cast<FloatType>(0.025);
   SizeType                 print_frequency = 10000;
 
   /// INPUT ARGUMENTS ///
@@ -148,14 +148,7 @@ int main(int argc, char **argv)
   if ((i = ArgPos((char *)"-mode", argc, argv)) > 0)
   {
     assert((std::string(argv[i + 1]) == "cbow") || (std::string(argv[i + 1]) == "sgns"));
-    if (std::string(argv[i + 1]) == "cbow")
-    {
-      mode = true;
-    }
-    else
-    {
-      mode = false;
-    }
+    mode = std::string(argv[i + 1]) == "cbow";
   }
   if ((i = ArgPos((char *)"-output", argc, argv)) > 0)
   {

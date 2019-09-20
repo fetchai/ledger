@@ -17,16 +17,17 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/address.hpp"
+#include "crypto/identity.hpp"
 
 #include <memory>
+#include <vector>
 
 namespace fetch {
 namespace ledger {
 
 /**
- * Object for keeping track of the current addresses which have stakes. Also facilitates the
- * selection of addresses based on an entropy source.
+ * Object for keeping track of the current identities which have stakes. Also facilitates the
+ * selection of identities based on an entropy source.
  *
  * Conceptually this object represents a stake information for a single point of time, however, in
  * general the stake snapshots will be reused for the entire period of a stake period.
@@ -34,8 +35,11 @@ namespace ledger {
 class StakeSnapshot
 {
 public:
-  using Committee    = std::vector<Address>;
+  using Identity     = crypto::Identity;
+  using Committee    = std::vector<Identity>;
   using CommitteePtr = std::shared_ptr<Committee>;
+
+  static constexpr char const *LOGGING_NAME = "StakeSnapshot";
 
   // Construction / Destruction
   StakeSnapshot()                      = default;
@@ -43,12 +47,12 @@ public:
   StakeSnapshot(StakeSnapshot &&)      = default;
   ~StakeSnapshot()                     = default;
 
-  CommitteePtr BuildCommittee(uint64_t entropy, std::size_t count);
+  CommitteePtr BuildCommittee(uint64_t entropy, std::size_t count) const;
 
   /// @name Stake Updates
   /// @{
-  uint64_t LookupStake(Address const &address) const;
-  void     UpdateStake(Address const &address, uint64_t stake);
+  uint64_t LookupStake(Identity const &identity) const;
+  void     UpdateStake(Identity const &identity, uint64_t stake);
   /// @}
 
   /// @name Basic Accessors
@@ -67,17 +71,17 @@ public:
 private:
   struct Record
   {
-    Address  address;
+    Identity identity;
     uint64_t stake;
   };
 
-  using RecordPtr    = std::shared_ptr<Record>;
-  using AddressIndex = std::unordered_map<Address, RecordPtr>;
-  using StakeIndex   = std::vector<RecordPtr>;
+  using RecordPtr     = std::shared_ptr<Record>;
+  using IdentityIndex = std::unordered_map<Identity, RecordPtr>;
+  using StakeIndex    = std::vector<RecordPtr>;
 
-  AddressIndex address_index_{};  ///< Map of Address to Record
-  StakeIndex   stake_index_;      ///< Array of Records
-  uint64_t     total_stake_{0};   ///< Total stake cache
+  IdentityIndex identity_index_{};  ///< Map of Identity to Record
+  StakeIndex    stake_index_;       ///< Array of Records
+  uint64_t      total_stake_{0};    ///< Total stake cache
 };
 
 /**
@@ -91,13 +95,13 @@ inline uint64_t StakeSnapshot::total_stake() const
 }
 
 /**
- * Get the number of addresses that have staked
+ * Get the number of identities that have staked
  *
- * @return The number of unique addresses that have staked
+ * @return The number of unique identities that have staked
  */
 inline std::size_t StakeSnapshot::size() const
 {
-  return address_index_.size();
+  return identity_index_.size();
 }
 
 /**
@@ -109,7 +113,7 @@ inline std::size_t StakeSnapshot::size() const
 template <typename Functor>
 void StakeSnapshot::IterateOver(Functor &&functor) const
 {
-  for (auto const &element : address_index_)
+  for (auto const &element : identity_index_)
   {
     functor(element.first, element.second->stake);
   }

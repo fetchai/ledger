@@ -21,8 +21,8 @@
 namespace fetch {
 namespace http {
 
-AbstractHTTPServer::handle_type AbstractHTTPServer::global_handle_counter_ = 0;
-Mutex                           AbstractHTTPServer::global_handle_mutex_;
+AbstractHTTPServer::HandleType AbstractHTTPServer::global_handle_counter_ = 0;
+Mutex                          AbstractHTTPServer::global_handle_mutex_;
 
 }  // namespace http
 }  // namespace fetch

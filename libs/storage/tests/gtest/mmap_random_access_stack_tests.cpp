@@ -196,7 +196,7 @@ TEST(mmap_random_access_stack, get_bulk)
     elements = lfg() % testSize + 1;  // +1 is to ensure elements should always be >0
     uint64_t expected_elements = std::min(elements, (stack.size() - index));
 
-    TestClass *objects = new TestClass[elements];
+    auto *objects = new TestClass[elements];
     stack.GetBulk(index, elements, objects);
     EXPECT_EQ(expected_elements, elements);
     for (uint64_t j = 0; j < elements; j++)
@@ -240,8 +240,8 @@ TEST(DISABLED_mmap_random_access_stack, set_bulk)
 
   // Setting bulk at the end of the stack. Size should be updated
   {
-    elements           = lfg() % testSize;
-    TestClass *objects = new TestClass[elements];
+    elements      = lfg() % testSize;
+    auto *objects = new TestClass[elements];
     stack.GetBulk(index, elements, objects);
     index     = stack.size();
     temp_size = stack.size();
@@ -260,8 +260,8 @@ TEST(DISABLED_mmap_random_access_stack, set_bulk)
   // Setting bulk at the edge of the stack where half elements would be overwritten
   // so size should be incremented by half of elements
   {
-    elements           = lfg() % testSize;
-    TestClass *objects = new TestClass[elements];
+    elements      = lfg() % testSize;
+    auto *objects = new TestClass[elements];
     stack.GetBulk(index, elements, objects);
     index     = stack.size() - elements / 2;
     temp_size = stack.size();

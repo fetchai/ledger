@@ -25,7 +25,7 @@ class TensorConstructorTest : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<int, unsigned int, long, unsigned long, float, double>;
+using MyTypes = ::testing::Types<int32_t, uint32_t, int64_t, uint64_t, float, double>;
 TYPED_TEST_CASE(TensorConstructorTest, MyTypes);
 
 TYPED_TEST(TensorConstructorTest, string_construction)

@@ -28,7 +28,8 @@
 namespace bn = mcl::bn256;
 
 namespace fetch {
-namespace dkg {
+namespace crypto {
+namespace mcl {
 
 /**
  * LHS and RHS functions are used for checking consistency between publicly broadcasted coefficients
@@ -140,7 +141,7 @@ bn::Fr ComputeZi(std::set<uint32_t> const &parties, std::vector<bn::Fr> const &s
         bn::Fr::mul(lhsF, lhsF, tmpF);
       }
     }
-    bn::Fr::neg(lhsF, lhsF);
+    bn::Fr::inv(lhsF, lhsF);
 
     bn::Fr::mul(rhsF, rhsF, lhsF);
     bn::Fr::mul(tmpF, rhsF, shares[jt]);  // use the provided shares (interpolation points)
@@ -158,7 +159,7 @@ bn::Fr ComputeZi(std::set<uint32_t> const &parties, std::vector<bn::Fr> const &s
  */
 std::vector<bn::Fr> InterpolatePolynom(std::vector<bn::Fr> const &a, std::vector<bn::Fr> const &b)
 {
-  size_t m = a.size();
+  auto const m = a.size();
   if ((b.size() != m) || (m == 0))
   {
     throw std::invalid_argument("mcl_interpolate_polynom: bad m");
@@ -168,19 +169,19 @@ std::vector<bn::Fr> InterpolatePolynom(std::vector<bn::Fr> const &a, std::vector
   for (size_t k = 0; k < m; k++)
   {
     t1 = 1;
-    for (long i = static_cast<long>(k - 1); i >= 0; i--)
+    for (auto i = static_cast<int64_t>(k - 1); i >= 0; i--)
     {
       bn::Fr::mul(t1, t1, a[k]);
-      bn::Fr::add(t1, t1, prod[static_cast<size_t>(i)]);
+      bn::Fr::add(t1, t1, prod[static_cast<std::size_t>(i)]);
     }
 
     t2 = 0;
-    for (long i = static_cast<long>(k - 1); i >= 0; i--)
+    for (auto i = static_cast<int64_t>(k - 1); i >= 0; i--)
     {
       bn::Fr::mul(t2, t2, a[k]);
-      bn::Fr::add(t2, t2, res[static_cast<size_t>(i)]);
+      bn::Fr::add(t2, t2, res[static_cast<std::size_t>(i)]);
     }
-    bn::Fr::neg(t1, t1);
+    bn::Fr::inv(t1, t1);
 
     bn::Fr::sub(t2, b[k], t2);
     bn::Fr::mul(t1, t1, t2);
@@ -201,10 +202,10 @@ std::vector<bn::Fr> InterpolatePolynom(std::vector<bn::Fr> const &a, std::vector
       {
         bn::Fr::neg(t1, a[k]);
         bn::Fr::add(prod[k], t1, prod[k - 1]);
-        for (long i = static_cast<long>(k - 1); i >= 1; i--)
+        for (auto i = static_cast<int64_t>(k - 1); i >= 1; i--)
         {
-          bn::Fr::mul(t2, prod[static_cast<size_t>(i)], t1);
-          bn::Fr::add(prod[static_cast<size_t>(i)], t2, prod[static_cast<size_t>(i - 1)]);
+          bn::Fr::mul(t2, prod[static_cast<std::size_t>(i)], t1);
+          bn::Fr::add(prod[static_cast<std::size_t>(i)], t2, prod[static_cast<std::size_t>(i - 1)]);
         }
         bn::Fr::mul(prod[0], prod[0], t1);
       }
@@ -220,7 +221,7 @@ std::vector<bn::Fr> InterpolatePolynom(std::vector<bn::Fr> const &a, std::vector
  * @param x_i Secret key share
  * @return Signature share
  */
-bn::G1 SignShare(byte_array::ConstByteArray const &message, bn::Fr const &x_i)
+Signature SignShare(MessagePayload const &message, PrivateKey const &x_i)
 {
   bn::Fp Hm;
   bn::G1 PH;
@@ -241,8 +242,8 @@ bn::G1 SignShare(byte_array::ConstByteArray const &message, bn::Fr const &x_i)
  * @param G Group used in DKG
  * @return
  */
-bool VerifySign(bn::G2 const &y, byte_array::ConstByteArray const &message, bn::G1 const &sign,
-                bn::G2 const &G)
+bool VerifySign(PublicKey const &y, MessagePayload const &message, Signature const &sign,
+                Group const &G)
 {
   bn::Fp12 e1, e2;
   bn::Fp   Hm;
@@ -263,7 +264,7 @@ bool VerifySign(bn::G2 const &y, byte_array::ConstByteArray const &message, bn::
  * @param shares Unordered map of indices and their corresponding signature shares
  * @return Group signature
  */
-bn::G1 LagrangeInterpolation(std::unordered_map<uint32_t, bn::G1> const &shares)
+Signature LagrangeInterpolation(std::unordered_map<CabinetIndex, Signature> const &shares)
 {
   assert(!shares.empty());
   if (shares.size() == 1)
@@ -296,5 +297,6 @@ bn::G1 LagrangeInterpolation(std::unordered_map<uint32_t, bn::G1> const &shares)
   return res;
 }
 
-}  // namespace dkg
+}  // namespace mcl
+}  // namespace crypto
 }  // namespace fetch

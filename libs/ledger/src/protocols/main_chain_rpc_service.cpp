@@ -26,7 +26,7 @@
 #include "ledger/chain/transaction_layout_rpc_serializers.hpp"
 #include "ledger/protocols/main_chain_rpc_service.hpp"
 #include "metrics/metrics.hpp"
-#include "network/muddle/packet.hpp"
+#include "muddle/packet.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/registry.hpp"
 
@@ -352,6 +352,7 @@ MainChainRpcService::State MainChainRpcService::OnRequestHeaviestChain()
     next_state = State::WAIT_FOR_HEAVIEST_CHAIN;
   }
 
+  state_machine_->Delay(std::chrono::milliseconds{500});
   return next_state;
 }
 
@@ -369,7 +370,7 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
   else
   {
     // determine the status of the request that is in flight
-    auto const status = current_request_->GetState();
+    auto const status = current_request_->state();
 
     if (PromiseState::WAITING != status)
     {
@@ -444,7 +445,7 @@ MainChainRpcService::State MainChainRpcService::OnWaitingForResponse()
   else
   {
     // determine the status of the request that is in flight
-    auto const status = current_request_->GetState();
+    auto const status = current_request_->state();
 
     if (PromiseState::WAITING != status)
     {
@@ -457,12 +458,20 @@ MainChainRpcService::State MainChainRpcService::OnWaitingForResponse()
       {
         FETCH_LOG_INFO(LOGGING_NAME, "Chain request to: ", ToBase64(current_peer_address_),
                        " failed. Reason: ", service::ToString(status));
+
+        state_machine_->Delay(std::chrono::seconds{1});
+        return State::REQUEST_HEAVIEST_CHAIN;
       }
 
       // clear the state
       current_peer_address_  = Address{};
       current_missing_block_ = BlockHash{};
       next_state             = State::SYNCHRONISED;
+    }
+    else
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Still waiting for heaviest chain response");
+      state_machine_->Delay(std::chrono::seconds{1});
     }
   }
 

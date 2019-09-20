@@ -464,7 +464,7 @@ MainChain::Blocks MainChain::TimeTravel(BlockHash start, int64_t limit) const
     return GetChainPreceding(std::move(start), static_cast<uint64_t>(-limit));
   }
 
-  const auto lim =
+  auto const lim =
       static_cast<std::size_t>(std::min(limit, static_cast<int64_t>(MainChain::UPPER_BOUND)));
   MilliTimer myTimer("MainChain::ChainPreceding");
 
@@ -679,7 +679,7 @@ MainChain::BlockPtr MainChain::GetBlock(BlockHash const &hash, BlockHash *next_h
   }
   else
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "main chain failed to lookup block!");
+    FETCH_LOG_WARN(LOGGING_NAME, "main chain failed to lookup block! Hash: ", hash.ToBase64());
     return {};
   }
 }
@@ -1648,7 +1648,7 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &starting_hash,
 
   if (bloom_filter_->ReportFalsePositives(false_positives))
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Bloom filter false positive rate exceeded threshold");
+    FETCH_LOG_INFO(LOGGING_NAME, "Bloom filter false positive rate exceeded threshold");
   }
 
   return duplicates;

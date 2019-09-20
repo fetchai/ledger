@@ -56,7 +56,7 @@ bool FNV::Update(uint8_t const *const data_to_hash, std::size_t size)
 
 void FNV::Final(uint8_t *const hash)
 {
-  auto hash_ptr = reinterpret_cast<internal::FnvHasherInternals::ImplType::number_type *>(hash);
+  auto hash_ptr = reinterpret_cast<internal::FnvHasherInternals::ImplType::NumberType *>(hash);
   *hash_ptr     = impl_->ctx.context();
 }
 

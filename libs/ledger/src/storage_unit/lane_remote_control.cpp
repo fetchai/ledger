@@ -18,21 +18,19 @@
 
 #include "core/service_ids.hpp"
 #include "ledger/storage_unit/lane_controller_protocol.hpp"
-#include "ledger/storage_unit/lane_identity_protocol.hpp"
 #include "ledger/storage_unit/lane_remote_control.hpp"
 
+#include <chrono>
 #include <exception>
 #include <memory>
 #include <stdexcept>
 #include <string>
 
-using fetch::muddle::MuddleEndpoint;
-
 namespace fetch {
 namespace ledger {
 namespace {
 
-using AddressList = std::vector<MuddleEndpoint::Address>;
+using AddressList = std::vector<muddle::Address>;
 
 AddressList GenerateAddressList(ShardConfigs const &shards)
 {
@@ -62,13 +60,13 @@ LaneRemoteControl::LaneRemoteControl(MuddleEndpoint &endpoint, ShardConfigs cons
   }
 }
 
-void LaneRemoteControl::UseThesePeers(LaneIndex lane, std::unordered_set<Uri> const &uris)
+void LaneRemoteControl::UseThesePeers(LaneIndex lane, AddressMap const &addresses)
 {
   try
   {
     // make the request to the RPC server
     auto p = rpc_client_.CallSpecificAddress(LookupAddress(lane), RPC_CONTROLLER,
-                                             LaneControllerProtocol::USE_THESE_PEERS, uris);
+                                             LaneControllerProtocol::USE_THESE_PEERS, addresses);
 
     // wait for the response
     p->Wait();
@@ -77,69 +75,6 @@ void LaneRemoteControl::UseThesePeers(LaneIndex lane, std::unordered_set<Uri> co
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to execute UserThesePeers");
   }
-}
-
-void LaneRemoteControl::Shutdown(LaneIndex lane)
-{
-  try
-  {
-    auto p = rpc_client_.CallSpecificAddress(LookupAddress(lane), RPC_CONTROLLER,
-                                             LaneControllerProtocol::SHUTDOWN);
-
-    p->Wait();
-  }
-  catch (std::exception const &ex)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Failed to execute Shutdown");
-  }
-}
-
-uint32_t LaneRemoteControl::GetLaneNumber(LaneIndex lane)
-{
-  auto p = rpc_client_.CallSpecificAddress(LookupAddress(lane), RPC_IDENTITY,
-                                           LaneIdentityProtocol::GET_LANE_NUMBER);
-  return p->As<uint32_t>();
-}
-
-int LaneRemoteControl::IncomingPeers(LaneIndex lane)
-{
-  int peers{-1};
-
-  try
-  {
-    auto p = rpc_client_.CallSpecificAddress(LookupAddress(lane), RPC_CONTROLLER,
-                                             LaneControllerProtocol::INCOMING_PEERS);
-    peers  = p->As<int>();
-  }
-  catch (std::exception const &ex)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Failed to execute IncomingPeers");
-  }
-
-  return peers;
-}
-
-int LaneRemoteControl::OutgoingPeers(LaneIndex lane)
-{
-  int peers{-1};
-
-  try
-  {
-    auto p = rpc_client_.CallSpecificAddress(LookupAddress(lane), RPC_CONTROLLER,
-                                             LaneControllerProtocol::OUTGOING_PEERS);
-    peers  = p->As<int>();
-  }
-  catch (std::exception const &ex)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Failed to execute IncomingPeers: ", ex.what());
-  }
-
-  return peers;
-}
-
-bool LaneRemoteControl::IsAlive(LaneIndex)
-{
-  return true;
 }
 
 LaneRemoteControl::Address const &LaneRemoteControl::LookupAddress(LaneIndex lane) const

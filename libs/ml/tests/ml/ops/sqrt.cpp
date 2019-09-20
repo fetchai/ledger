@@ -31,35 +31,17 @@
 #include <vector>
 
 template <typename T>
-class SqrtFloatTest : public ::testing::Test
+class SqrtTest : public ::testing::Test
 {
 };
 
-template <typename T>
-class SqrtFixedTest : public ::testing::Test
-{
-};
-
-template <typename T>
-class SqrtBothTest : public ::testing::Test
-{
-};
-
-using FloatingPointTypes =
-    ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>>;
-
-using FixedPointTypes = ::testing::Types<fetch::math::Tensor<fetch::fixed_point::fp32_t>,
-                                         fetch::math::Tensor<fetch::fixed_point::fp64_t>>;
-
-using BothTypes = ::testing::Types<fetch::math::Tensor<fetch::fixed_point::fp32_t>,
+using SqrtTypes = ::testing::Types<fetch::math::Tensor<fetch::fixed_point::fp32_t>,
                                    fetch::math::Tensor<fetch::fixed_point::fp64_t>,
                                    fetch::math::Tensor<float>, fetch::math::Tensor<double>>;
 
-TYPED_TEST_CASE(SqrtFloatTest, FloatingPointTypes);
-TYPED_TEST_CASE(SqrtFixedTest, FixedPointTypes);
-TYPED_TEST_CASE(SqrtBothTest, BothTypes);
+TYPED_TEST_CASE(SqrtTest, SqrtTypes);
 
-TYPED_TEST(SqrtBothTest, forward_all_positive_test)
+TYPED_TEST(SqrtTest, forward_all_positive_test)
 {
   using TensorType = TypeParam;
   using DataType   = typename TensorType::Type;
@@ -76,7 +58,7 @@ TYPED_TEST(SqrtBothTest, forward_all_positive_test)
                                   fetch::math::function_tolerance<DataType>()));
 }
 
-TYPED_TEST(SqrtBothTest, backward_all_positive_test)
+TYPED_TEST(SqrtTest, backward_all_positive_test)
 {
   using TensorType = TypeParam;
   using DataType   = typename TensorType::Type;
@@ -95,10 +77,10 @@ TYPED_TEST(SqrtBothTest, backward_all_positive_test)
                                         fetch::math::function_tolerance<DataType>()));
 }
 
-// TODO(1195): fixed point and floating point tests should be unified.
-TYPED_TEST(SqrtFloatTest, forward_all_negative_test)
+TYPED_TEST(SqrtTest, forward_all_negative_test)
 {
   using TensorType = TypeParam;
+  using DataType   = typename TensorType::Type;
 
   TensorType data = TensorType::FromString("-1, -2, -4, -10, -100");
 
@@ -108,33 +90,17 @@ TYPED_TEST(SqrtFloatTest, forward_all_negative_test)
   op.Forward({std::make_shared<const TensorType>(data)}, pred);
 
   // gives NaN because sqrt of a negative number is undefined
-  for (auto p_it : pred)
+  for (auto const &p_it : pred)
   {
-    EXPECT_TRUE(std::isnan(p_it));
+    EXPECT_TRUE(fetch::math::is_nan(p_it));
   }
+  fetch::math::state_clear<DataType>();
 }
 
-TYPED_TEST(SqrtFixedTest, forward_all_negative_test)
+TYPED_TEST(SqrtTest, backward_all_negative_test)
 {
   using TensorType = TypeParam;
-
-  TensorType data = TensorType::FromString("-1, -2, -4, -10, -100");
-
-  fetch::ml::ops::Sqrt<TypeParam> op;
-
-  TypeParam pred(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
-  op.Forward({std::make_shared<const TensorType>(data)}, pred);
-
-  // gives NaN because sqrt of a negative number is undefined
-  for (auto p_it : pred)
-  {
-    EXPECT_TRUE(TensorType::Type::IsNaN(p_it));
-  }
-}
-
-TYPED_TEST(SqrtFloatTest, backward_all_negative_test)
-{
-  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
 
   TensorType data  = TensorType::FromString("-1, -2, -4, -10, -100");
   TensorType error = TensorType::FromString("1,   1,  1,   2,    0");
@@ -145,47 +111,15 @@ TYPED_TEST(SqrtFloatTest, backward_all_negative_test)
   // gives NaN because sqrt of a negative number is undefined
   for (auto p_it : pred.at(0))
   {
-    EXPECT_TRUE(std::isnan(p_it));
+    EXPECT_TRUE(fetch::math::is_nan(p_it));
   }
+  fetch::math::state_clear<DataType>();
 }
 
-TYPED_TEST(SqrtFixedTest, backward_all_negative_test)
+TYPED_TEST(SqrtTest, backward_zero_test)
 {
   using TensorType = TypeParam;
-
-  TensorType data  = TensorType::FromString("-1, -2, -4, -10, -100");
-  TensorType error = TensorType::FromString("1,   1,  1,   2,    0");
-
-  fetch::ml::ops::Sqrt<TypeParam> op;
-
-  std::vector<TensorType> pred = op.Backward({std::make_shared<const TensorType>(data)}, error);
-  // gives NaN because sqrt of a negative number is undefined
-  for (auto p_it : pred.at(0))
-  {
-    EXPECT_TRUE(TensorType::Type::IsNaN(p_it));
-  }
-}
-
-TYPED_TEST(SqrtFloatTest, backward_zero_test)
-{
-  using TensorType = TypeParam;
-
-  TensorType data  = TensorType::FromString("0,  0,    0,    0,       -0");
-  TensorType error = TensorType::FromString("1,100,   -1,    2,        1");
-
-  fetch::ml::ops::Sqrt<TypeParam> op;
-
-  std::vector<TensorType> pred = op.Backward({std::make_shared<const TensorType>(data)}, error);
-  // gives NaN because of division by zero
-  for (auto p_it : pred.at(0))
-  {
-    EXPECT_TRUE(std::isinf(p_it));
-  }
-}
-
-TYPED_TEST(SqrtFixedTest, backward_zero_test)
-{
-  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
 
   TensorType data  = TensorType::FromString("0,  0,    0,    0,        0");
   TensorType error = TensorType::FromString("1,  1,    1,    2,        0");
@@ -194,13 +128,14 @@ TYPED_TEST(SqrtFixedTest, backward_zero_test)
 
   std::vector<TensorType> pred = op.Backward({std::make_shared<const TensorType>(data)}, error);
   // gives NaN because of division by zero
-  for (auto p_it : pred.at(0))
+  for (auto const &p_it : pred.at(0))
   {
-    EXPECT_TRUE(TensorType::Type::IsNaN(p_it));
+    EXPECT_TRUE(fetch::math::is_inf(p_it) || fetch::math::is_nan(p_it));
   }
+  fetch::math::state_clear<DataType>();
 }
 
-TYPED_TEST(SqrtBothTest, saveparams_test)
+TYPED_TEST(SqrtTest, saveparams_test)
 {
   using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
@@ -245,7 +180,7 @@ TYPED_TEST(SqrtBothTest, saveparams_test)
       new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
 }
 
-TYPED_TEST(SqrtBothTest, saveparams_backward_all_positive_test)
+TYPED_TEST(SqrtTest, saveparams_backward_all_positive_test)
 {
   using TensorType = TypeParam;
   using OpType     = typename fetch::ml::ops::Sqrt<TensorType>;
