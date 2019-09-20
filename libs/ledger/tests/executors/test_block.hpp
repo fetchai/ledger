@@ -28,7 +28,7 @@ struct TestBlock
 {
   using ResourceIdMap = std::vector<std::string>;
   using BlockBody     = fetch::ledger::Block::Body;
-  using Digest        = fetch::ledger::Digest;
+  using Digest        = fetch::Digest;
 
   static constexpr uint64_t    IV          = uint64_t(-1);
   static constexpr std::size_t HASH_LENGTH = 32;

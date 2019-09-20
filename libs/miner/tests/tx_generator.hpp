@@ -45,10 +45,9 @@ public:
 private:
   using Rng       = fetch::random::LinearCongruentialGenerator;
   using RngWord   = Rng::RandomType;
-  using Digest    = fetch::ledger::Digest;
   using ByteArray = fetch::byte_array::ByteArray;
 
-  Digest GenerateDigest()
+  fetch::Digest GenerateDigest()
   {
     static constexpr std::size_t DIGEST_SIZE   = 32;
     static constexpr std::size_t RNG_WORD_SIZE = sizeof(RngWord);

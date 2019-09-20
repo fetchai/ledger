@@ -32,8 +32,6 @@ class TransactionLayoutQueue
 {
 public:
   using TransactionLayout = ledger::TransactionLayout;
-  using Digest            = ledger::Digest;
-  using DigestSet         = ledger::DigestSet;
   using UnderlyingList    = std::list<TransactionLayout>;
   using Iterator          = UnderlyingList::iterator;
   using ConstIterator     = UnderlyingList::const_iterator;

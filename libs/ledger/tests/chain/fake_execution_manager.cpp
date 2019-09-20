@@ -22,7 +22,7 @@
 #include "fake_execution_manager.hpp"
 #include "fake_storage_unit.hpp"
 
-using fetch::ledger::Digest;
+using fetch::Digest;
 
 FakeExecutionManager::FakeExecutionManager(FakeStorageUnit &storage)
   : storage_{storage}

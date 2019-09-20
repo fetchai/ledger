@@ -88,7 +88,6 @@ public:
   using StateMachinePtr         = std::shared_ptr<StateMachine>;
   using SignatureShare          = AeonExecutionUnit::SignatureShare;
   using Serializer              = serializers::MsgPackSerializer;
-  using Digest                  = ledger::Digest;
   using SharedEventManager      = EventManager::SharedEventManager;
   using BeaconSetupService      = beacon::BeaconSetupService;
 

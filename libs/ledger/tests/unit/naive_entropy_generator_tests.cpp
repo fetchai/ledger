@@ -34,7 +34,7 @@ using fetch::crypto::SHA256;
 using fetch::crypto::Hash;
 using fetch::random::LinearCongruentialGenerator;
 using fetch::ledger::NaiveEntropyGenerator;
-using fetch::ledger::Digest;
+using fetch::Digest;
 using fetch::ledger::EntropyGeneratorInterface;
 
 using RNG                      = LinearCongruentialGenerator;
