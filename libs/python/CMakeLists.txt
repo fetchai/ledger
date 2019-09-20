@@ -11,7 +11,6 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 # Compiler Configuration
 setup_compiler()
 
-
 # define the python module
 pybind11_add_module(fetch-python src/main.cpp)
 target_include_directories(fetch-python PRIVATE include)
@@ -23,4 +22,3 @@ target_link_libraries(fetch-python
 
 # make the name match the bindings
 set_target_properties(fetch-python PROPERTIES OUTPUT_NAME "fetch")
-
