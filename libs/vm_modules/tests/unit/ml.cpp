@@ -171,8 +171,13 @@ TEST_F(MLTests, dataloader_serialisation_test)
   auto const initial_training_pair = first_res.Get<Ptr<fetch::vm_modules::ml::VMTrainingPair>>();
   auto const training_pair         = res.Get<Ptr<fetch::vm_modules::ml::VMTrainingPair>>();
 
-  auto data1 = initial_training_pair->data()->GetTensor();
-  auto data2 = training_pair->data()->GetTensor();
+  AnyInteger index(0, TypeIds::UInt16);
+
+  auto array1 = initial_training_pair->data()->GetIndexedValue(index);
+  auto array2 = training_pair->data()->GetIndexedValue(index);
+
+  auto data1 = array1.Get<fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>>()->GetTensor();
+  auto data2 = array2.Get<fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>>()->GetTensor();
 
   auto label1 = initial_training_pair->label()->GetTensor();
   auto label2 = training_pair->label()->GetTensor();

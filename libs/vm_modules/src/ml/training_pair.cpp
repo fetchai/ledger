@@ -26,7 +26,7 @@ namespace vm_modules {
 namespace ml {
 
 VMTrainingPair::VMTrainingPair(VM *vm, TypeId type_id, Ptr<fetch::vm_modules::math::VMTensor> ta,
-                               Ptr<fetch::vm_modules::math::VMTensor> tb)
+                               fetch::vm::Ptr<fetch::vm::IArray> tb)
   : Object(vm, type_id)
 {
   this->first  = ta;
@@ -43,12 +43,12 @@ void VMTrainingPair::Bind(Module &module)
 
 Ptr<VMTrainingPair> VMTrainingPair::Constructor(VM *vm, TypeId type_id,
                                                 Ptr<fetch::vm_modules::math::VMTensor> const &ta,
-                                                Ptr<fetch::vm_modules::math::VMTensor> const &tb)
+                                                fetch::vm::Ptr<fetch::vm::IArray> const &     tb)
 {
   return new VMTrainingPair(vm, type_id, ta, tb);
 }
 
-Ptr<fetch::vm_modules::math::VMTensor> VMTrainingPair::data() const
+fetch::vm::Ptr<fetch::vm::IArray> VMTrainingPair::data() const
 {
   return this->second;
 }

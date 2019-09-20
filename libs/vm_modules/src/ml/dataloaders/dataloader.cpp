@@ -22,6 +22,7 @@
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/dataloaders/mnist_loaders/mnist_loader.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
+#include "vm/array.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/ml/dataloaders/dataloader.hpp"
 #include "vm_modules/ml/training_pair.hpp"
@@ -157,9 +158,30 @@ Ptr<VMTrainingPair> VMDataLoader::GetNext()
   std::pair<fetch::math::Tensor<DataType>, std::vector<fetch::math::Tensor<DataType>>> next =
       loader_->GetNext();
 
-  auto first      = this->vm_->CreateNewObject<math::VMTensor>(next.first);
-  auto second     = this->vm_->CreateNewObject<math::VMTensor>(next.second.at(0));
-  auto dataHolder = this->vm_->CreateNewObject<VMTrainingPair>(first, second);
+  auto first = this->vm_->CreateNewObject<math::VMTensor>(next.first);
+
+  auto second = this->vm_->CreateNewObject<math::VMTensor>(next.second.at(0));
+
+  auto second_vector =
+      this->vm_->CreateNewObject<fetch::vm::Array<Ptr<fetch::vm_modules::math::VMTensor>>>(
+          second->GetTypeId(), static_cast<int32_t>(next.second.size()));
+
+  TemplateParameter1 element;
+  element.Assign(second, second->GetTypeId());
+
+  AnyInteger index(0, TypeIds::UInt16);
+  second_vector->SetIndexedValue(index, element);
+
+  for (fetch::math::SizeType i{1}; i < next.second.size(); i++)
+  {
+    TemplateParameter1 element;
+    element.Assign(second, second->GetTypeId());
+
+    index = AnyInteger(i, TypeIds::UInt16);
+    second_vector->SetIndexedValue(index, element);
+  }
+
+  auto dataHolder = this->vm_->CreateNewObject<VMTrainingPair>(first, second_vector);
 
   return dataHolder;
 }
