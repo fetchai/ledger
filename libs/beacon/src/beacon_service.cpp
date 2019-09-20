@@ -79,7 +79,7 @@ BeaconService::BeaconService(MuddleInterface &               muddle,
   , entropy_subscription_{endpoint_.Subscribe(SERVICE_DKG, CHANNEL_ENTROPY_DISTRIBUTION)}
   , rpc_client_{"BeaconService", endpoint_, SERVICE_DKG, CHANNEL_RPC}
   , event_manager_{std::move(event_manager)}
-  , cabinet_creator_{muddle, identity_, manifest_cache}  // TODO(tfr): Make shared
+  , cabinet_creator_{muddle, identity_, manifest_cache, certificate_}  // TODO(tfr): Make shared
   , beacon_protocol_{*this}
   , beacon_entropy_generated_total_{telemetry::Registry::Instance().CreateCounter(
         "beacon_entropy_generated_total", "The total number of times entropy has been generated")}
@@ -619,14 +619,18 @@ bool BeaconService::AddSignature(SignatureShare share)
   return true;
 }
 
-std::weak_ptr<core::Runnable> BeaconService::GetMainRunnable()
+std::vector<std::weak_ptr<core::Runnable>> BeaconService::GetWeakRunnables()
 {
-  return state_machine_;
-}
+  std::vector<std::weak_ptr<core::Runnable>> ret = {state_machine_};
 
-std::weak_ptr<core::Runnable> BeaconService::GetSetupRunnable()
-{
-  return cabinet_creator_.GetWeakRunnable();
+  auto setup_runnables = cabinet_creator_.GetWeakRunnables();
+
+  for(auto const &i : setup_runnables)
+  {
+    ret.push_back(i);
+  }
+
+  return ret;
 }
 
 }  // namespace beacon

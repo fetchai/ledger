@@ -302,7 +302,7 @@ PeerSelector::UriSet PeerSelector::GenerateUriSet(Addresses const &addresses)
         {
           // if we have not been able to establish a connection then we should give up after the
           // specified number of attempts
-          if ((!connection_metadata.connected) && (connection_metadata.consecutive_failures >= 6))
+          if ((!connection_metadata.connected) && (connection_metadata.consecutive_failures >= 1000))
           {
             FETCH_LOG_CRITICAL(logging_name_, "Marking ", current_uri.ToString(),
                                " as unreachable");

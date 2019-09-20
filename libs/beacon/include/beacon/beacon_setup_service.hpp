@@ -24,11 +24,13 @@
 #include "moment/clocks.hpp"
 #include "moment/deadline_timer.hpp"
 #include "muddle/muddle_endpoint.hpp"
-#include "muddle/rbc.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/subscription.hpp"
 #include "telemetry/gauge.hpp"
 #include "telemetry/telemetry.hpp"
+
+#include "muddle/rbc.hpp"
+#include "muddle/punishment_broadcast_channel.hpp"
 
 #include "beacon/aeon.hpp"
 
@@ -85,6 +87,7 @@ public:
   using MuddleEndpoint          = muddle::MuddleEndpoint;
   using MuddleInterface         = muddle::MuddleInterface;
   using RBC                     = muddle::RBC;
+  using ReliableChannelPtr         = std::unique_ptr<muddle::BroadcastChannelInterface>;
   using SubscriptionPtr         = muddle::MuddleEndpoint::SubscriptionPtr;
   using MessageCoefficient      = std::string;
   using MessageShare            = std::string;
@@ -105,9 +108,10 @@ public:
   using SignatureShare   = AeonExecutionUnit::SignatureShare;
   using BeaconManager    = dkg::BeaconManager;
   using GroupPubKeyPlusSigShare = std::pair<std::string, SignatureShare>;
+  using CertificatePtr          = std::shared_ptr<dkg::BeaconManager::Certificate>;
 
   BeaconSetupService(MuddleInterface &muddle, Identity identity,
-                     ManifestCacheInterface &manifest_cache);
+                     ManifestCacheInterface &manifest_cache, CertificatePtr certificate);
   BeaconSetupService(BeaconSetupService const &) = delete;
   BeaconSetupService(BeaconSetupService &&)      = delete;
 
@@ -134,7 +138,7 @@ public:
   void SetBeaconReadyCallback(CallbackFunction callback);
   /// @}
 
-  std::weak_ptr<core::Runnable> GetWeakRunnable();
+  std::vector<std::weak_ptr<core::Runnable>> GetWeakRunnables();
 
   void OnNewSharesPacket(muddle::Packet const &packet, MuddleAddress const &last_hop);
   void OnNewShares(MuddleAddress from_id, std::pair<MessageShare, MessageShare> const &shares);
@@ -148,8 +152,8 @@ protected:
   MuddleEndpoint &        endpoint_;
   SubscriptionPtr         shares_subscription_;
   SubscriptionPtr         dry_run_subscription_;
-  RBC                     pre_dkg_rbc_;
-  RBC                     rbc_;
+  ReliableChannelPtr         pre_dkg_rbc_;
+  ReliableChannelPtr         rbc_;
 
   std::shared_ptr<StateMachine> state_machine_;
   std::set<MuddleAddress>       connections_;

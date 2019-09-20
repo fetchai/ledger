@@ -22,6 +22,7 @@
 #include "crypto/sha256.hpp"
 #include "muddle/muddle_endpoint.hpp"
 #include "muddle/rbc_messages.hpp"
+#include "core/runnable.hpp"
 
 #include <atomic>
 #include <bitset>
@@ -30,12 +31,30 @@
 namespace fetch {
 namespace muddle {
 
+class BroadcastChannelInterface
+{
+public:
+  using ConstByteArray  = byte_array::ConstByteArray;
+  using MuddleAddress   = ConstByteArray;
+  using CabinetMembers  = std::set<MuddleAddress>;
+  using WeakRunnable        = std::weak_ptr<core::Runnable>;
+
+  BroadcastChannelInterface()          = default;
+  virtual ~BroadcastChannelInterface() = default;
+
+  virtual bool ResetCabinet(CabinetMembers const &cabinet) = 0;
+  /*virtual void Broadcast(SerialisedMessage const &msg) = 0;*/
+  virtual void Enable(bool enable) = 0;
+  virtual void SetQuestion(ConstByteArray const &question, ConstByteArray const &answer) = 0;
+  virtual WeakRunnable GetRunnable() = 0;
+};
+
 /**
  * Reliable broadcast channel (RBC) is a protocol which ensures all honest
  * parties receive the same message in the presence of a threshold number of
  * Byzantine adversaries
  */
-class RBC
+class RBC : public BroadcastChannelInterface
 {
 protected:
   struct MessageCount;
@@ -59,15 +78,27 @@ public:
   using PartyList      = std::vector<Party>;
   using IdType         = uint32_t;
   using CounterType    = uint8_t;
+  using CertificatePtr   = std::shared_ptr<fetch::crypto::Prover>;
 
-  RBC(Endpoint &endpoint, MuddleAddress address, CallbackFunction call_back,
+  RBC(Endpoint &endpoint, MuddleAddress address, CallbackFunction call_back, CertificatePtr certificate,
       uint16_t channel = CHANNEL_RBC_BROADCAST, bool ordered_delivery = true);
+
+  ~RBC();
 
   /// RBC Operation
   /// @{
-  bool ResetCabinet(CabinetMembers const &cabinet);
   void Broadcast(SerialisedMessage const &msg);
-  void Enable(bool enable);
+  bool ResetCabinet(CabinetMembers const &cabinet) override;
+  void Enable(bool enable) override;
+  void SetQuestion(ConstByteArray const &, ConstByteArray const &answer) override
+  {
+    Broadcast(answer);
+  };
+
+  std::weak_ptr<core::Runnable> GetRunnable() override
+  {
+    return {};
+  }
   /// @}
 
 protected:

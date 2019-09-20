@@ -34,7 +34,7 @@ constexpr char const *LOGGING_NAME = "RBC";
  * @param threshold Threshold number of Byzantine peers
  * @param dkg
  */
-RBC::RBC(Endpoint &endpoint, MuddleAddress address, CallbackFunction call_back, uint16_t channel,
+RBC::RBC(Endpoint &endpoint, MuddleAddress address, CallbackFunction call_back, CertificatePtr, uint16_t channel,
          bool ordered_delivery)
   : channel_{channel}
   , ordered_delivery_{ordered_delivery}
@@ -81,6 +81,8 @@ RBC::RBC(Endpoint &endpoint, MuddleAddress address, CallbackFunction call_back, 
     }
   });
 }
+
+RBC::~RBC() {}
 
 /**
  * Enables or disables the RBC. Disabling will clear all state that
@@ -240,6 +242,7 @@ bool RBC::ReceivedEcho(TagType tag, MessageEcho const &msg)
  */
 struct RBC::MessageCount RBC::ReceivedReady(TagType tag, MessageHash const &msg)
 {
+  // note: this can segfault.
   auto &msg_count = broadcasts_[tag].msgs_count[msg->hash()];
   msg_count.ready_count++;
   MessageCount res = msg_count;

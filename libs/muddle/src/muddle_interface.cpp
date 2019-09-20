@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "muddle.hpp"
+#include "muddle_fake.hpp"
 
 #include "crypto/ecdsa.hpp"
 #include "muddle/muddle_interface.hpp"
@@ -50,6 +51,19 @@ MuddlePtr CreateMuddle(char const network[4], network::NetworkManager const &nm,
 {
   return CreateMuddle(NetworkId{network}, nm, external_address);
 }
+
+MuddlePtr CreateMuddleFake(NetworkId const &network, ProverPtr certificate,
+                       network::NetworkManager const &nm, std::string const &external_address)
+{
+  return std::make_shared<MuddleFake>(network, certificate, nm, true, true, external_address);
+}
+
+MuddlePtr CreateMuddleFake(char const network[4], ProverPtr certificate,
+                       network::NetworkManager const &nm, std::string const &external_address)
+{
+  return CreateMuddleFake(NetworkId{network}, std::move(certificate), nm, external_address);
+}
+
 
 }  // namespace muddle
 }  // namespace fetch

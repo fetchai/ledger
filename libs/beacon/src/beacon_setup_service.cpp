@@ -85,15 +85,18 @@ uint64_t GetTime()
   return static_cast<uint64_t>(std::time(nullptr));
 }
 
+//#define CHANNEL_TYPE RBC
+#define CHANNEL_TYPE muddle::PunishmentBroadcastChannel
+
 BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identity,
-                                       ManifestCacheInterface &manifest_cache)
+                                       ManifestCacheInterface &manifest_cache, CertificatePtr certificate)
   : identity_{std::move(identity)}
   , manifest_cache_{manifest_cache}
   , muddle_{muddle}
   , endpoint_{muddle_.GetEndpoint()}
   , shares_subscription_(endpoint_.Subscribe(SERVICE_DKG, CHANNEL_SECRET_KEY))
   , dry_run_subscription_(endpoint_.Subscribe(SERVICE_DKG, CHANNEL_SIGN_DRY_RUN))
-  , pre_dkg_rbc_{endpoint_, identity_.identifier(),
+  , pre_dkg_rbc_{new CHANNEL_TYPE(endpoint_, identity_.identifier(),
                  [this](MuddleAddress const &from, ConstByteArray const &payload) -> void {
                    std::set<MuddleAddress>               connections;
                    fetch::serializers::MsgPackSerializer serializer{payload};
@@ -105,15 +108,19 @@ BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identit
                      ready_connections_.insert({from, connections});
                    }
                  },
-                 CHANNEL_CONNECTIONS_SETUP, false}
-  , rbc_{endpoint_, identity_.identifier(),
+                 certificate,
+                 CHANNEL_CONNECTIONS_SETUP, false)}
+  , rbc_{new CHANNEL_TYPE(endpoint_, identity_.identifier(),
          [this](MuddleAddress const &from, ConstByteArray const &payload) -> void {
+
+           FETCH_LOG_INFO(LOGGING_NAME, "From: ", from.ToBase64(), " self: ", identity_.identifier().ToBase64(), "PAYL: ", payload.ToBase64());
            DKGEnvelope   env;
            DKGSerializer serializer{payload};
            serializer >> env;
            OnDkgMessage(from, env.Message());
          },
-         CHANNEL_RBC_BROADCAST, false}
+         certificate,
+         CHANNEL_RBC_BROADCAST, false)}
   , state_machine_{std::make_shared<StateMachine>("BeaconSetupService", State::IDLE, ToString)}
   , beacon_dkg_state_gauge_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
         "beacon_dkg_state_gauge", "State the DKG is in as integer in [0, 10]")}
@@ -215,8 +222,8 @@ BeaconSetupService::State BeaconSetupService::OnReset()
   shares_received_.clear();
   dry_run_shares_.clear();
   dry_run_public_keys_.clear();
-  pre_dkg_rbc_.Enable(false);
-  rbc_.Enable(false);
+  pre_dkg_rbc_->Enable(false);
+  rbc_->Enable(false);
 
   if (beacon_->aeon.round_start < abort_below_)
   {
@@ -230,10 +237,10 @@ BeaconSetupService::State BeaconSetupService::OnReset()
   // before being reset with the cabinet
   if (timer_to_proceed_.HasExpired())
   {
-    pre_dkg_rbc_.Enable(true);
-    rbc_.Enable(true);
-    pre_dkg_rbc_.ResetCabinet(cabinet);
-    rbc_.ResetCabinet(cabinet);
+    pre_dkg_rbc_->Enable(true);
+    rbc_->Enable(true);
+    pre_dkg_rbc_->ResetCabinet(cabinet);
+    rbc_->ResetCabinet(cabinet);
 
     SetTimeToProceed(State::CONNECT_TO_ALL);
     return State::CONNECT_TO_ALL;
@@ -399,7 +406,8 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
   {
     fetch::serializers::MsgPackSerializer serializer;
     serializer << connections_;
-    pre_dkg_rbc_.Broadcast(serializer.data());
+
+    //pre_dkg_rbc_->SetQuestion(ConstByteArray(ToString(State::WAIT_FOR_SHARES)), serializer.data());
 
     FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                    " Minimum peer threshold requirement met for DKG");
@@ -409,12 +417,12 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
 
   // Whether to proceed (if threshold peers have also met this condition)
   const bool is_ok = (ready_connections_.size() >= require_connections &&
-                      connections_.size() >= require_connections);
+                      connections_.size() >= require_connections) || true;
 
   if (!condition_to_proceed_ && is_ok)
   {
     condition_to_proceed_ = true;
-    FETCH_LOG_TRACE(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+    FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                     " State: ", ToString(state_machine_->state()),
                     " Ready. Seconds to spare: ", state_deadline_ - GetTime(), " of ",
                     seconds_for_state_);
@@ -819,7 +827,7 @@ void BeaconSetupService::SendBroadcast(DKGEnvelope const &env)
 {
   DKGSerializer serialiser;
   serialiser << env;
-  rbc_.Broadcast(serialiser.data());
+  rbc_->SetQuestion(ConstByteArray(ToString(state_machine_->state())), serialiser.data());
 }
 
 /**
@@ -1361,9 +1369,9 @@ void BeaconSetupService::SetBeaconReadyCallback(CallbackFunction callback)
   callback_function_ = callback;
 }
 
-std::weak_ptr<core::Runnable> BeaconSetupService::GetWeakRunnable()
+std::vector<std::weak_ptr<core::Runnable>> BeaconSetupService::GetWeakRunnables()
 {
-  return state_machine_;
+  return {state_machine_, pre_dkg_rbc_->GetRunnable(), rbc_->GetRunnable()};
 }
 
 uint64_t GetExpectedDKGTime(uint64_t cabinet_size)
