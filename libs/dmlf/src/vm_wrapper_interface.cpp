@@ -1,4 +1,4 @@
-#include "vm_wrapper_interface.hpp"
+#include "dmlf/vm_wrapper_interface.hpp"
 
 
 namespace fetch {
