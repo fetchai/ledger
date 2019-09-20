@@ -127,8 +127,9 @@ private:
   /// @{
   static constexpr char const *ToString(State state) noexcept;
   Address                      GetRandomTrustedPeer() const;
-  void                         HandleChainResponse(Address const &peer, BlockList block_list);
+  State                        HandleChainResponse(Address const &peer, BlockList block_list);
   bool                         IsBlockValid(Block &block) const;
+  bool                         NoKnownChain() const;
   /// @}
 
   /// @name State Machine Handlers
@@ -161,6 +162,7 @@ private:
   Address         current_peer_address_;
   BlockHash       current_missing_block_;
   Promise         current_request_;
+  BlockHash       most_recent_tip_ = GENESIS_DIGEST;
   /// @}
 
   /// @name Telemetry

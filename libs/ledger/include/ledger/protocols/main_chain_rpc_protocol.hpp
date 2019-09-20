@@ -33,8 +33,9 @@ public:
   enum
   {
     HEAVIEST_CHAIN   = 1,
-    TIME_TRAVEL      = 2,
-    COMMON_SUB_CHAIN = 3
+    COMMON_SUB_CHAIN = 3,
+    TIME_TRAVEL      = 4,
+    TIME_TRAVEL_PAST = 5,
   };
 
   explicit MainChainProtocol(MainChain &chain)
@@ -43,6 +44,7 @@ public:
     Expose(HEAVIEST_CHAIN, this, &MainChainProtocol::GetHeaviestChain);
     Expose(COMMON_SUB_CHAIN, this, &MainChainProtocol::GetCommonSubChain);
     Expose(TIME_TRAVEL, this, &MainChainProtocol::TimeTravel);
+    Expose(TIME_TRAVEL_PAST, this, &MainChainProtocol::TimeTravelPast);
   }
 
 private:
@@ -65,6 +67,11 @@ private:
   Blocks TimeTravel(Digest start, int64_t limit)
   {
     return Copy(chain_.TimeTravel(std::move(start), limit));
+  }
+
+  Blocks TimeTravelPast(Digest start, int64_t limit)
+  {
+    return Copy(chain_.TimeTravelPast(std::move(start), limit));
   }
 
   static Blocks Copy(MainChain::Blocks const &blocks)

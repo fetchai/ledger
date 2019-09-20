@@ -118,7 +118,7 @@ public:
   /// @name Block Management
   /// @{
   BlockStatus AddBlock(Block const &block);
-  BlockPtr    GetBlock(BlockHash const &hash) const;
+  BlockPtr    GetBlock(BlockHash const &hash, BlockHash *next_hash = nullptr) const;
   bool        RemoveBlock(BlockHash const &hash);
   /// @}
 
@@ -130,6 +130,8 @@ public:
   Blocks    GetChainPreceding(BlockHash at, uint64_t limit = UPPER_BOUND) const;
   Blocks    TimeTravel(BlockHash starting_point,
                        int64_t   limit = static_cast<int64_t>(UPPER_BOUND)) const;
+  Blocks    TimeTravelPast(BlockHash starting_point,
+                           int64_t   limit = static_cast<int64_t>(UPPER_BOUND)) const;
   bool      GetPathToCommonAncestor(
            Blocks &blocks, BlockHash tip, BlockHash node, uint64_t limit = UPPER_BOUND,
            BehaviourWhenLimit behaviour = BehaviourWhenLimit::RETURN_MOST_RECENT) const;
@@ -208,9 +210,9 @@ private:
   /// @name Block Lookup
   /// @{
   BlockStatus InsertBlock(IntBlockPtr const &block, bool evaluate_loose_blocks = true);
-  bool LookupBlock(BlockHash const &hash, IntBlockPtr &block, bool add_to_cache = false) const;
-  bool LookupBlockFromCache(BlockHash const &hash, IntBlockPtr &block) const;
-  bool LookupBlockFromStorage(BlockHash const &hash, IntBlockPtr &block, bool add_to_cache) const;
+  bool LookupBlock(BlockHash const &hash, IntBlockPtr &block, BlockHash *next_hash = nullptr) const;
+  bool LookupBlockFromCache(BlockHash const &hash, IntBlockPtr &block, BlockHash *next_hash = nullptr) const;
+  bool LookupBlockFromStorage(BlockHash const &hash, IntBlockPtr &block, BlockHash *next_hash = nullptr) const;
   bool IsBlockInCache(BlockHash const &hash) const;
   void AddBlockToCache(IntBlockPtr const &) const;
   void AddBlockToBloomFilter(Block const &block) const;

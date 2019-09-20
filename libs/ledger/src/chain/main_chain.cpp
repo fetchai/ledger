@@ -226,6 +226,7 @@ void MainChain::KeepBlock(IntBlockPtr const &block) const
  *
  * @param[in]  hash The hash of the block to be loaded
  * @param[out] block The location of block
+ * @param[out] next_hash When non-null, pointer to a hash object to put block's next into
  * @return True iff the block is found in the storage
  */
 bool MainChain::LoadBlock(BlockHash const &hash, Block &block, BlockHash *next_hash) const
@@ -240,6 +241,11 @@ bool MainChain::LoadBlock(BlockHash const &hash, Block &block, BlockHash *next_h
     if (next_hash)
     {
       *next_hash = record.next_hash;
+    }
+    if (record.next_hash != GENESIS_DIGEST)
+    {
+      // What you hear is not a tip.
+      references_.emplace(hash, record.next_hash);
     }
 
     return true;
@@ -476,16 +482,59 @@ MainChain::Blocks MainChain::TimeTravel(BlockHash start, int64_t limit) const
        result.size() < lim
        // genesis as the next hash designates the tip of the chain
        && current_hash != GENESIS_DIGEST
-       // lookup the block in storage
-       && LoadBlock(current_hash, block, &next_hash);
        // walk the stack
        current_hash = std::move(next_hash))
   {
+    // lookup the block in storage
+    auto block{GetBlock(current_hash, &next_hash)};
+    if (!block)
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: ", ToBase64(current_hash));
+      throw std::runtime_error("Failed to lookup block");
+    }
     // update the results
-    result.push_back(std::make_unique<Block>(block));
+    result.push_back(std::move(block));
   }
 
   return result;
+}
+
+/**
+ * Walk the block history collecting blocks until either genesis or the block limit is reached.
+ * Unlike in GetChainPreceding, positive value in limit indicates forward-travel.
+ * The starting block is not included in the answer.
+ *
+ * @param start The hash of the starting point block
+ * @param limit The maximum number of blocks to be returned, negative for towards genesis, positive
+ * for towards tip
+ * @return The array of blocks
+ * @throws std::runtime_error if a block lookup occurs
+ */
+MainChain::Blocks MainChain::TimeTravelPast(BlockHash start, int64_t limit) const
+{
+  if (limit < 0)
+  {
+    auto block = GetBlock(start);
+    if (!block)
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: ", ToBase64(current_hash));
+      throw std::runtime_error("Failed to lookup block");
+    }
+    return GetChainPreceding(std::move(block->body.previous_hash), static_cast<uint64_t>(-limit));
+  }
+
+  if (limit > 0)
+  {
+    auto block = GetBlock(start, &start);
+    if (!block)
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: ", ToBase64(current_hash));
+      throw std::runtime_error("Failed to lookup block");
+    }
+    return TimeTravel(std::move(start), limit);
+  }
+
+  return {};
 }
 
 /**
@@ -614,27 +663,25 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash
  * Retrieve a block with a specific hash
  *
  * @param hash The hash being queried
+ * @param[out] next_hash When non-null, pointer to a hash object to put block's next into
  * @return The a valid shared pointer to the block if found, otherwise an empty pointer
  */
-MainChain::BlockPtr MainChain::GetBlock(BlockHash const &hash) const
+MainChain::BlockPtr MainChain::GetBlock(BlockHash const &hash, BlockHash *next_hash) const
 {
   FETCH_LOCK(lock_);
 
-  BlockPtr output_block{};
-
   // attempt to lookup the block
   auto internal_block = std::make_shared<Block>();
-  if (LookupBlock(hash, internal_block))
+  if (LookupBlock(hash, internal_block, next_hash))
   {
     // convert the pointer type to per const
-    output_block = std::static_pointer_cast<Block const>(internal_block);
+    return std::static_pointer_cast<Block const>(std::move(internal_block));
   }
   else
   {
     FETCH_LOG_WARN(LOGGING_NAME, "main chain failed to lookup block!");
+    return {};
   }
-
-  return output_block;
 }
 
 /**
@@ -1115,8 +1162,6 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
 
   MilliTimer myTimer("MainChain::InsertBlock", 500);
 
-  FETCH_LOCK(lock_);
-
   if (block->body.hash.empty())
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Block discard due to lack of digest");
@@ -1134,6 +1179,8 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
   block->is_loose = false;
 
   IntBlockPtr prev_block{};
+  FETCH_LOCK(lock_);
+
   if (evaluate_loose_blocks)  // normal case - not being called from inside CompleteLooseBlocks
   {
     // First check if block already exists (not checking in object store)
@@ -1234,13 +1281,12 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
  *
  * @param hash The hash of the block to search for
  * @param block The output block to be populated
- * @param add_to_cache Whether to add to the cache as it is recent
- *
+ * @param[out] next_hash When non-null, pointer to a hash object to put block's next into
  * @return true if successful, otherwise false
  */
-bool MainChain::LookupBlock(BlockHash const &hash, IntBlockPtr &block, bool add_to_cache) const
+bool MainChain::LookupBlock(BlockHash const &hash, IntBlockPtr &block, BlockHash *next_hash) const
 {
-  return LookupBlockFromCache(hash, block) || LookupBlockFromStorage(hash, block, add_to_cache);
+  return LookupBlockFromCache(hash, block, next_hash) || LookupBlockFromStorage(hash, block, next_hash);
 }
 
 /**
@@ -1248,23 +1294,38 @@ bool MainChain::LookupBlock(BlockHash const &hash, IntBlockPtr &block, bool add_
  *
  * @param hash The hash of the block to search for
  * @param block The output block to be populated
+ * @param[out] next_hash When non-null, pointer to a hash object to put block's next into
  * @return true if successful, otherwise false
  */
-bool MainChain::LookupBlockFromCache(BlockHash const &hash, IntBlockPtr &block) const
+bool MainChain::LookupBlockFromCache(BlockHash const &hash, IntBlockPtr &block, BlockHash *next_hash) const
 {
-  bool success{false};
-
   FETCH_LOCK(lock_);
 
   // perform the lookup
   auto const it = block_chain_.find(hash);
   if ((block_chain_.end() != it))
   {
-    block   = it->second;
-    success = true;
+    if (next_hash)
+    {
+      // We'll need to check if there is a unique block next to this one.
+      switch (references_.count(hash))
+      {
+        case 0: *next_hash = GENESIS_DIGEST;
+		break;
+	case 1: *next_hash = references_.find(hash)->second;
+		break;
+	default:
+		// ambiguous forward references need to be resolved from storage
+		// TODO (bipll): when this function is called from LookupBlock(), storage lookup
+		// is performed next; we'll probably need to cleanup forward references there
+		return false;
+      }
+    }
+    block = it->second;
+    return true;
   }
 
-  return success;
+  return false;
 }
 
 /**
@@ -1272,38 +1333,32 @@ bool MainChain::LookupBlockFromCache(BlockHash const &hash, IntBlockPtr &block) 
  *
  * @param hash The hash of the block to search for
  * @param block The output block to be populated
+ * @param[out] next_hash When non-null, pointer to a hash object to put block's next into
  * @return true if successful, otherwise false
  */
-bool MainChain::LookupBlockFromStorage(BlockHash const &hash, IntBlockPtr &block,
-                                       bool add_to_cache) const
+bool MainChain::LookupBlockFromStorage(BlockHash const &hash, IntBlockPtr &block, BlockHash *next_hash) const
 {
   bool success{false};
 
   if (block_store_)
   {
     // create the output block
-    auto output_block = std::make_shared<Block>();
+    Block output_block;
 
     // attempt to read the block from the storage engine
-    success = LoadBlock(hash, *output_block);
-
-    if (success)
+    if (LoadBlock(hash, output_block, next_hash))
     {
       // hash not serialised, needs to be recomputed
-      output_block->UpdateDigest();
-
-      // add the newly loaded block to the cache (if required)
-      if (add_to_cache)
-      {
-        AddBlockToCache(output_block);
-      }
+      output_block.UpdateDigest();
 
       // update the returned shared pointer
-      block = output_block;
+      block = std::make_shared(std::move(output_block));
+
+      return true;
     }
   }
 
-  return success;
+  return false;
 }
 
 /**
@@ -1531,7 +1586,7 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &starting_hash,
   FETCH_LOG_DEBUG(LOGGING_NAME, "Starting TX uniqueness verify");
 
   IntBlockPtr block;
-  if (!LookupBlock(starting_hash, block, false) || block->is_loose)
+  if (!LookupBlock(starting_hash, block) || block->is_loose)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "TX uniqueness verify on bad block hash");
     return {};
@@ -1575,7 +1630,7 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &starting_hash,
       }
 
       // exit the loop once we can no longer find the block
-      if (!LookupBlock(block->body.previous_hash, block, false))
+      if (!LookupBlock(block->body.previous_hash, block))
       {
         break;
       }
