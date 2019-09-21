@@ -158,6 +158,7 @@ BeaconSetupService::State BeaconSetupService::OnIdle()
 {
   std::lock_guard<std::mutex> lock(mutex_);
   beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::IDLE));
+  beacon_dkg_all_connections_gauge_->set(muddle_.GetDirectlyConnectedPeers().size());
 
   beacon_.reset();
 
