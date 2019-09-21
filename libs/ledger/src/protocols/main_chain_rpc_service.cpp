@@ -232,9 +232,6 @@ MainChainRpcService::Address MainChainRpcService::GetRandomTrustedPeer() const
 {
   static random::LinearCongruentialGenerator rng;
 
-  static Address address{};
-  static std::size_t index;
-
   auto const direct_peers = endpoint_.GetDirectlyConnectedPeers();
 
   if (!direct_peers.empty())
@@ -243,10 +240,10 @@ MainChainRpcService::Address MainChainRpcService::GetRandomTrustedPeer() const
     std::size_t const index = rng() % direct_peers.size();
 
     // select the address
-    address = direct_peers[index];
+    return direct_peers[index];
   }
 
-  return address;
+  return Address{};
 }
 
 MainChainRpcService::State MainChainRpcService::HandleChainResponse(Address const &address, BlockList block_list)
