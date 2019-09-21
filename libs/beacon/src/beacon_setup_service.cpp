@@ -85,8 +85,8 @@ uint64_t GetTime()
   return static_cast<uint64_t>(std::time(nullptr));
 }
 
-//#define CHANNEL_TYPE RBC
-#define CHANNEL_TYPE muddle::PunishmentBroadcastChannel
+#define CHANNEL_TYPE RBC
+//#define CHANNEL_TYPE muddle::PunishmentBroadcastChannel
 
 BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identity,
                                        ManifestCacheInterface &manifest_cache, CertificatePtr certificate)
