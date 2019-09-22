@@ -85,8 +85,8 @@ uint64_t GetTime()
   return static_cast<uint64_t>(std::time(nullptr));
 }
 
-#define CHANNEL_TYPE RBC
-//#define CHANNEL_TYPE muddle::PunishmentBroadcastChannel
+//#define CHANNEL_TYPE RBC
+#define CHANNEL_TYPE muddle::PunishmentBroadcastChannel
 
 BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identity,
                                        ManifestCacheInterface &manifest_cache, CertificatePtr certificate)
@@ -1398,6 +1398,10 @@ uint64_t GetExpectedDKGTime(uint64_t cabinet_size)
   if (cabinet_size < 60)
   {
     expected_dkg_time_s = 305;
+  }
+  if (cabinet_size < 51)
+  {
+    expected_dkg_time_s = 1369;
   }
   if (cabinet_size < 30)
   {
