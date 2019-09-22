@@ -23,7 +23,14 @@ def read_static_analysis_yaml(project_root, build_root, yaml_file_path):
             assert isfile(absolute_path)
 
             relative_path = relpath(absolute_path, project_root)
-            if not commonprefix([vendor_path, absolute_path]) == vendor_path and relative_path not in EXCLUSIONS:
+
+            is_excluded = commonprefix(
+                [vendor_path, absolute_path]) == vendor_path or relative_path in EXCLUSIONS
+            is_gtest_or_gbench_problem = d['DiagnosticName'] == 'cert-err58-cpp' and any([
+                d['Message'].startswith('initialization of \'{}'.format(prefix)) for prefix in
+                ('gtest_', '_benchmark_', 'test_info_\'')])
+
+            if not (is_excluded or is_gtest_or_gbench_problem):
                 new_diagnostics.append(d)
                 if relative_path not in out:
                     out[relative_path] = {

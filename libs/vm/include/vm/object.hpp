@@ -259,7 +259,7 @@ public:
     return *this;
   }
 
-  Ptr &operator=(Ptr &&other)
+  Ptr &operator=(Ptr &&other) noexcept
   {
     if (this != &other)
     {

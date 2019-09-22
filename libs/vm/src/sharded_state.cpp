@@ -89,8 +89,8 @@ private:
     return state->Get();
   }
 
-  TemplateParameter1 GetIndexedValueInternal(Ptr<String> const &      index,
-                                             TemplateParameter1 const default_value)
+  TemplateParameter1 GetIndexedValueInternal(Ptr<String> const &       index,
+                                             TemplateParameter1 const &default_value)
   {
     auto state{
         IState::ConstructIntrinsic(vm_, TypeIds::Unknown, value_type_id_, ComposeFullKey(index))};

@@ -444,7 +444,7 @@ Contract::Result SmartContract::InvokeAction(std::string const &name, Transactio
   // Important to keep the handle alive as long as the msgpack::object is needed to avoid segfault!
   msgpack::object_handle       h;
   std::vector<msgpack::object> input_params;
-  auto const                   parameter_data = tx.data();
+  decltype(auto)               parameter_data = tx.data();
 
   block_index_ = index;
 

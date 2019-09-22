@@ -110,7 +110,7 @@ SubscriptionRegistrar::SubscriptionPtr SubscriptionRegistrar::Register(uint16_t 
  * @param packet The packet
  * @return true if successfully dispatched, otherwise false
  */
-bool SubscriptionRegistrar::Dispatch(PacketPtr packet, Address transmitter)
+bool SubscriptionRegistrar::Dispatch(PacketPtr const &packet, Address const &transmitter)
 {
   bool success = false;
 

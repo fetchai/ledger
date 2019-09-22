@@ -497,7 +497,7 @@ public:
   };
 
   ChargeAmount GetChargeTotal() const;
-  void         IncreaseChargeTotal(ChargeAmount const amount);
+  void         IncreaseChargeTotal(ChargeAmount amount);
   ChargeAmount GetChargeLimit() const;
   void         SetChargeLimit(ChargeAmount limit);
 

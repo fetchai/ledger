@@ -72,7 +72,7 @@ public:
     : ECDSAPrivateKey(Generate())
   {}
 
-  ECDSAPrivateKey(const byte_array::ConstByteArray &key_data)
+  ECDSAPrivateKey(byte_array::ConstByteArray const &key_data)
     : ECDSAPrivateKey(Convert(key_data))
   {}
 

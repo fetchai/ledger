@@ -52,7 +52,7 @@ protected:
 
       EXPECT_EQ(seen_keys.cend(), itr);  // Expected *NOT* to be found
 
-      seen_keys.emplace_back(std::move(key));
+      seen_keys.emplace_back(key);
     }
   }
 };
@@ -343,6 +343,6 @@ TEST_F(NewKeyTest, test_comparison_using_last_bit_value_triangular_formation)
       }
     }
 
-    prev_key = std::move(key);
+    prev_key = key;
   }
 }

@@ -54,8 +54,8 @@ TEST_F(ECDSACurveTest, test_ECDSACurve_for_NID_secp256k1)
 class ECDSAAffineCoordinatesConversionTest : public testing::Test
 {
 protected:
-  void test_convert_canonical_with_padding(SharedPointerType<BIGNUM const> const x,
-                                           SharedPointerType<BIGNUM const> const y)
+  void test_convert_canonical_with_padding(SharedPointerType<BIGNUM const> const &x,
+                                           SharedPointerType<BIGNUM const> const &y)
   {
     ASSERT_GT(ECDSAAffineCoordinatesConversion<>::x_size,
               static_cast<std::size_t>(BN_num_bytes(x.get())));

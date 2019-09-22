@@ -113,22 +113,23 @@ DataType VMTensor::AtFour(uint64_t idx1, uint64_t idx2, uint64_t idx3, uint64_t 
   return tensor_.At(idx1, idx2, idx3, idx4);
 }
 
-void VMTensor::SetAtOne(uint64_t idx1, DataType value)
+void VMTensor::SetAtOne(uint64_t idx1, DataType const &value)
 {
   tensor_.At(idx1) = value;
 }
 
-void VMTensor::SetAtTwo(uint64_t idx1, uint64_t idx2, DataType value)
+void VMTensor::SetAtTwo(uint64_t idx1, uint64_t idx2, DataType const &value)
 {
   tensor_.At(idx1, idx2) = value;
 }
 
-void VMTensor::SetAtThree(uint64_t idx1, uint64_t idx2, uint64_t idx3, DataType value)
+void VMTensor::SetAtThree(uint64_t idx1, uint64_t idx2, uint64_t idx3, DataType const &value)
 {
   tensor_.At(idx1, idx2, idx3) = value;
 }
 
-void VMTensor::SetAtFour(uint64_t idx1, uint64_t idx2, uint64_t idx3, uint64_t idx4, DataType value)
+void VMTensor::SetAtFour(uint64_t idx1, uint64_t idx2, uint64_t idx3, uint64_t idx4,
+                         DataType const &value)
 {
   tensor_.At(idx1, idx2, idx3, idx4) = value;
 }

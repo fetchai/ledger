@@ -201,7 +201,7 @@ public:
   static uint32_t fp_state;
 
   static constexpr void StateClear();
-  static constexpr bool IsState(const uint32_t state);
+  static constexpr bool IsState(uint32_t state);
   static constexpr bool IsStateNaN();
   static constexpr bool IsStateUnderflow();
   static constexpr bool IsStateOverflow();
@@ -352,7 +352,7 @@ public:
   static constexpr bool       IsPosInfinity(FixedPoint const &x);
   static constexpr bool       IsNegInfinity(FixedPoint const &x);
   static constexpr bool       IsInfinity(FixedPoint const &x);
-  static constexpr FixedPoint infinity(bool const isPositive);
+  static constexpr FixedPoint infinity(bool isPositive);
 
   ////////////
   /// swap ///

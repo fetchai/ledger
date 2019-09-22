@@ -81,7 +81,8 @@ private:
 
   /// @name Transaction Handlers
   /// @{
-  http::HTTPResponse OnTransaction(http::HTTPRequest const &req, ConstByteArray expected_contract);
+  http::HTTPResponse OnTransaction(http::HTTPRequest const &req,
+                                   ConstByteArray const &   expected_contract);
   SubmitTxStatus     SubmitJsonTx(http::HTTPRequest const &req, TxHashes &txs);
   SubmitTxStatus     SubmitBulkTx(http::HTTPRequest const &req, TxHashes &txs);
   /// @}
@@ -89,7 +90,7 @@ private:
   /// @name Access Log
   /// @{
   void RecordTransaction(SubmitTxStatus const &status, http::HTTPRequest const &request,
-                         ConstByteArray expected_contract);
+                         ConstByteArray const &expected_contract);
   void RecordQuery(ConstByteArray const &contract_name, ConstByteArray const &query,
                    http::HTTPRequest const &request);
   void WriteToAccessLog(variant::Variant const &entry);

@@ -106,7 +106,7 @@ public:
     return key_EC_KEY_;
   }
 
-  const byte_array::ConstByteArray &KeyAsBin() const
+  byte_array::ConstByteArray const &KeyAsBin() const
   {
     return key_binary_;
   }

@@ -60,7 +60,7 @@ void ProofOfWork::SetTarget(vectorise::UInt<256> &&target)
   target_ = target;
 }
 
-void ProofOfWork::SetHeader(byte_array::ByteArray header)
+void ProofOfWork::SetHeader(byte_array::ByteArray const &header)
 {
   header_ = header;
   assert(header_ == header);

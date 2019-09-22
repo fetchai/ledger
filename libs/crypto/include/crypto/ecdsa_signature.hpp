@@ -96,7 +96,7 @@ public:
     return *this;
   }
 
-  const byte_array::ConstByteArray &hash() const
+  byte_array::ConstByteArray const &hash() const
   {
     return hash_;
   }
@@ -106,7 +106,7 @@ public:
     return signature_ecdsa_ptr_;
   }
 
-  const byte_array::ConstByteArray &signature() const
+  byte_array::ConstByteArray const &signature() const
   {
     return signature_;
   }
@@ -244,7 +244,7 @@ private:
     return der_sig;
   }
 
-  static UniquePointerType<ECDSA_SIG> ConvertDER(const byte_array::ConstByteArray &bin_sig)
+  static UniquePointerType<ECDSA_SIG> ConvertDER(byte_array::ConstByteArray const &bin_sig)
   {
     auto const *der_sig_ptr = static_cast<const uint8_t *>(bin_sig.pointer());
 
@@ -269,7 +269,7 @@ private:
     return AffineCoordConversionType::Convert2Canonical(r, s);
   }
 
-  static UniquePointerType<ECDSA_SIG> ConvertCanonical(const byte_array::ConstByteArray &bin_sig)
+  static UniquePointerType<ECDSA_SIG> ConvertCanonical(byte_array::ConstByteArray const &bin_sig)
   {
     UniquePointerType<BIGNUM, memory::eDeleteStrategy::clearing> r{BN_new()};
     UniquePointerType<BIGNUM, memory::eDeleteStrategy::clearing> s{BN_new()};
@@ -307,7 +307,7 @@ private:
     return {};
   }
 
-  static UniquePointerType<ECDSA_SIG> Convert(const byte_array::ConstByteArray &bin_sig,
+  static UniquePointerType<ECDSA_SIG> Convert(byte_array::ConstByteArray const &bin_sig,
                                               eECDSAEncoding input_signature_binary_data_type)
   {
     switch (input_signature_binary_data_type)

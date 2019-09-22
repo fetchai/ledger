@@ -74,8 +74,6 @@ void TCPServer::Start()
 
   {
     auto closure = [this, closure_alive] {
-      std::shared_ptr<int> closure_alive_copy = closure_alive;
-
       std::shared_ptr<AcceptorType> acceptor;
       FETCH_LOG_DEBUG(LOGGING_NAME, "Opening TCP server");
 
@@ -185,7 +183,7 @@ std::string TCPServer::GetAddress(ConnectionHandleType const &client)
   return manager_->GetAddress(client);
 }
 
-void TCPServer::Accept(std::shared_ptr<asio::ip::tcp::tcp::acceptor> acceptor)
+void TCPServer::Accept(std::shared_ptr<asio::ip::tcp::tcp::acceptor> const &acceptor)
 {
   auto strongSocket                = network_manager_.CreateIO<asio::ip::tcp::tcp::socket>();
   std::weak_ptr<ClientManager> man = manager_;

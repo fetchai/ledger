@@ -1,42 +1,32 @@
 Checks: "-*,\
 bugprone-*,\
+cert-dcl21-cpp,\
+cert-dcl50-cpp,\
+cert-env33-c,\
+-cert-err34-c,\
+cert-err52-cpp,\
+-cert-err58-cpp,\
+cert-err60-cpp,\
+-cert-flp30-c,\
 -clang-analyzer-security.FloatLoopCounter,\
 google-build-namespaces,\
 -google-explicit-constructor,\
 google-readability-todo,\
 google-runtime-operator,\
+misc-new-delete-overloads,\
+misc-non-copyable-objects,\
+misc-static-assert,\
 misc-suspicious-*,\
+misc-throw-by-value-catch-by-reference,\
 misc-unused-*,\
 modernize-loop-convert,\
 modernize-make-shared,\
 modernize-make-unique,\
 modernize-pass-by-value,\
 modernize-use-*,\
--performance-*,\
+performance-*,\
+readability-avoid-const-params-in-decls,\
 readability-braces-around-statements,\
 readability-container-size-empty,\
--readability-identifier-naming,\
 readability-simplify-boolean-expr,\
 readability-static-definition-in-anonymous-namespace"
-
-CheckOptions:
-  - key:             readability-identifier-naming.FunctionCase
-    value:           aNy_CasE
-  - key:             readability-identifier-naming.MemberCase
-    value:           lower_case
-  - key:             readability-identifier-naming.PublicMemberSuffix
-    value:           ''
-  - key:             readability-identifier-naming.ProtectedMemberSuffix
-    value:           '_'
-  - key:             readability-identifier-naming.PrivateMemberSuffix
-    value:           '_'
-  - key:             readability-identifier-naming.ClassCase
-    value:           CamelCase
-  - key:             readability-identifier-naming.EnumCase
-    value:           CamelCase
-  - key:             readability-identifier-naming.ParameterCase
-    value:           lower_case
-  - key:             readability-identifier-naming.UnionCase
-    value:           CamelCase
-  - key:             readability-identifier-naming.VariableCase
-    value:           lower_case

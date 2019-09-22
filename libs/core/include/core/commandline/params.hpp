@@ -103,11 +103,11 @@ public:
   virtual ~Params() = default;
 
   template <class TYPE>
-  void add(TYPE &assignee, const std::string &name, const std::string &help, TYPE deflt)
+  void add(TYPE &assignee, std::string const &name, std::string const &help, TYPE deflt)
   {
-    std::string name_local(name);
-    TYPE        deflt_local = deflt;
-    assigners_[name]        = [name_local, &assignee, deflt_local, this](
+    std::string const &name_local(name);
+    TYPE const &       deflt_local = deflt;
+    assigners_[name]               = [name_local, &assignee, deflt_local, this](
                            const std::set<std::string> &args,
                            std::list<std::string> &     errs) mutable {
       FETCH_UNUSED(args);
@@ -120,9 +120,9 @@ public:
   }
 
   template <class TYPE>
-  void add(TYPE &assignee, const std::string &name, const std::string &help)
+  void add(TYPE &assignee, std::string const &name, std::string const &help)
   {
-    std::string name_local(name);
+    std::string const &name_local(name);
     assigners_[name] = [name_local, &assignee, this](const std::set<std::string> &args,
                                                      std::list<std::string> &     errs) mutable {
       if (args.find(name_local) == args.end())
@@ -136,7 +136,7 @@ public:
     helpTexts_.push_back(HelpTextType{name, help});
   }
 
-  void description(const std::string &desc)
+  void description(std::string const &desc)
   {
     desc_ = desc;
   }

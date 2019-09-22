@@ -43,11 +43,8 @@ protected:
     }
   }
 
-  void TearDown(const ::benchmark::State &) override
-  {}
-
   ndarray_type   a_, b_;
-  const uint64_t MAX_ = N;
+  const uint64_t max_ = N;
 };
 BENCHMARK_TEMPLATE_F(ParallelDispatcherSSEBench, Standard_implementation, double)
 (benchmark::State &st)
@@ -55,7 +52,7 @@ BENCHMARK_TEMPLATE_F(ParallelDispatcherSSEBench, Standard_implementation, double
   // Standard implementation
   for (auto _ : st)
   {
-    for (std::size_t j = 0; j < MAX_; j += 4)
+    for (std::size_t j = 0; j < max_; j += 4)
     {
 
       // We write it out such that the compiler might use SSE
