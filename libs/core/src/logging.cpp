@@ -171,9 +171,12 @@ LogRegistry::LogRegistry() = default;
 
 void LogRegistry::Log(LogLevel level, char const *name, std::string &&message)
 {
-  if (level < global_level_)
   {
-    return;
+    FETCH_LOCK(lock_);
+    if (level < global_level_)
+    {
+      return;
+    }
   }
 
   {
@@ -219,6 +222,7 @@ void LogRegistry::SetLevel(char const *name, LogLevel level)
 
 void LogRegistry::SetGlobalLevel(LogLevel level)
 {
+  FETCH_LOCK(lock_);
   global_level_ = level;
 }
 
