@@ -41,7 +41,6 @@ using fetch::ledger::MainChain;
 using fetch::ledger::BlockStatus;
 using fetch::ledger::testing::BlockGenerator;
 using fetch::ledger::Address;
-using fetch::byte_array::ToBase64;  // NOLINT - needed for debug messages
 
 using Rng               = std::mt19937_64;
 using MainChainPtr      = std::unique_ptr<MainChain>;
@@ -214,7 +213,7 @@ TEST_P(MainChainTests, CheckChainBlockInvalidation)
   auto const branch6{Generate(generator_, genesis, 6)};
 
 #ifdef FETCH_LOG_DEBUG_ENABLED
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Genesis : ", ToBase64(genesis->body.hash));
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Genesis : ", fetch::byte_array::ToBase64(genesis->body.hash));
   for (auto const &branch : {branch3, branch5, branch9, branch7, branch6})
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Branch", branch.size(), ": ", Hashes(branch));
