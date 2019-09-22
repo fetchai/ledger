@@ -99,8 +99,6 @@ BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identit
   , rbc_{new CHANNEL_TYPE(endpoint_, identity_.identifier(),
          [this](MuddleAddress const &from, ConstByteArray const &payload) -> void {
 
-           FETCH_LOG_INFO(LOGGING_NAME, "Deser!!");
-
            DKGEnvelope   env;
            DKGSerializer serializer{payload};
            serializer >> env;
@@ -988,8 +986,6 @@ void BeaconSetupService::OnDkgMessage(MuddleAddress const &       from,
   case DKGMessage::MessageType::CONNECTIONS:
   {
     auto connections_ptr = std::dynamic_pointer_cast<ConnectionsMessage>(msg_ptr);
-
-    FETCH_LOG_INFO(LOGGING_NAME, "Seen new connections: ", connections_ptr->connections_.size());
 
     ready_connections_.insert({from, connections_ptr->connections_});
     break;
