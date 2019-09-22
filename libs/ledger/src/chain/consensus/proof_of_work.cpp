@@ -62,7 +62,6 @@ void ProofOfWork::SetTarget(vectorise::UInt<256> target)
 void ProofOfWork::SetHeader(byte_array::ByteArray header)
 {
   header_ = std::move(header);
-  assert(header_ == header);
 }
 
 byte_array::ConstByteArray const &ProofOfWork::header() const
