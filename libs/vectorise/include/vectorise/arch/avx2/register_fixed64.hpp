@@ -50,7 +50,7 @@ public:
                 "type cannot be contained in the given register size.");
 
   VectorRegister() = default;
-  VectorRegister(type const *d)
+  explicit VectorRegister(type const *d)
   {
     data_ = _mm_load_si128(reinterpret_cast<MMRegisterType const *>(d->pointer()));
   }
@@ -58,13 +58,13 @@ public:
   {
     data_ = _mm_load_si128(reinterpret_cast<MMRegisterType const *>(list.begin()));
   }
-  VectorRegister(MMRegisterType const &d)
+  explicit VectorRegister(MMRegisterType const &d)
     : data_(d)
   {}
-  VectorRegister(MMRegisterType &&d)
+  explicit VectorRegister(MMRegisterType &&d)
     : data_(d)
   {}
-  VectorRegister(type const &c)
+  explicit VectorRegister(type const &c)
   {
     data_ = _mm_set1_epi64x(c.Data());
   }
@@ -115,7 +115,7 @@ public:
                 "type cannot be contained in the given register size.");
 
   VectorRegister() = default;
-  VectorRegister(type const *d)
+  explicit VectorRegister(type const *d)
   {
     data_ = _mm256_load_si256(reinterpret_cast<MMRegisterType const *>(d->pointer()));
   }
@@ -123,13 +123,13 @@ public:
   {
     data_ = _mm256_load_si256(reinterpret_cast<MMRegisterType const *>(list.begin()));
   }
-  VectorRegister(MMRegisterType const &d)
+  explicit VectorRegister(MMRegisterType const &d)
     : data_(d)
   {}
-  VectorRegister(MMRegisterType &&d)
+  explicit VectorRegister(MMRegisterType &&d)
     : data_(d)
   {}
-  VectorRegister(type const &c)
+  explicit VectorRegister(type const &c)
   {
     data_ = _mm256_set1_epi64x(c.Data());
   }
