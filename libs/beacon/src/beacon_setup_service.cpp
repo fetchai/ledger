@@ -99,8 +99,6 @@ BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identit
   , rbc_{new CHANNEL_TYPE(endpoint_, identity_.identifier(),
          [this](MuddleAddress const &from, ConstByteArray const &payload) -> void {
 
-           FETCH_LOG_INFO(LOGGING_NAME, "got thing. ");
-
            DKGEnvelope   env;
            DKGSerializer serializer{payload};
            serializer >> env;
@@ -992,15 +990,12 @@ void BeaconSetupService::OnDkgMessage(MuddleAddress const &       from,
   {
     auto connections_ptr = std::dynamic_pointer_cast<ConnectionsMessage>(msg_ptr);
 
-    FETCH_LOG_INFO(LOGGING_NAME, "got thing 1 (connections message). size: ", connections_ptr->connections_.size(), " from: ", from.ToBase64(), "state: ", ToString(state_machine_->state()));
-
     ready_connections_.insert({from, connections_ptr->connections_});
     break;
   }
   case DKGMessage::MessageType::COEFFICIENT:
   {
     auto coefficients_ptr = std::dynamic_pointer_cast<CoefficientsMessage>(msg_ptr);
-    FETCH_LOG_INFO(LOGGING_NAME, "got thing 2");
     if (coefficients_ptr != nullptr)
     {
       OnNewCoefficients(*coefficients_ptr, from);
@@ -1010,7 +1005,6 @@ void BeaconSetupService::OnDkgMessage(MuddleAddress const &       from,
   case DKGMessage::MessageType::SHARE:
   {
     auto share_ptr = std::dynamic_pointer_cast<SharesMessage>(msg_ptr);
-    FETCH_LOG_INFO(LOGGING_NAME, "got thing 3");
     if (share_ptr != nullptr)
     {
       OnExposedShares(*share_ptr, from);
@@ -1020,7 +1014,6 @@ void BeaconSetupService::OnDkgMessage(MuddleAddress const &       from,
   case DKGMessage::MessageType::COMPLAINT:
   {
     auto complaint_ptr = std::dynamic_pointer_cast<ComplaintsMessage>(msg_ptr);
-    FETCH_LOG_INFO(LOGGING_NAME, "got thing 4");
     if (complaint_ptr != nullptr)
     {
       OnComplaints(*complaint_ptr, from);
@@ -1134,7 +1127,7 @@ void BeaconSetupService::OnNewShares(MuddleAddress                              
 
   if (shares_received_.find(from) == shares_received_.end())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                    " received shares from node  ", beacon_->manager.cabinet_index(from));
     beacon_->manager.AddShares(from, shares);
     shares_received_.insert(from);
@@ -1159,7 +1152,7 @@ void BeaconSetupService::OnNewCoefficients(CoefficientsMessage const &msg,
   {
     if (coefficients_received_.find(from) == coefficients_received_.end())
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                      " received coefficients from node  ", beacon_->manager.cabinet_index(from));
       beacon_->manager.AddCoefficients(from, msg.coefficients());
       coefficients_received_.insert(from);
@@ -1175,7 +1168,7 @@ void BeaconSetupService::OnNewCoefficients(CoefficientsMessage const &msg,
   {
     if (qual_coefficients_received_.find(from) == qual_coefficients_received_.end())
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                      " received qual coefficients from node  ",
                      beacon_->manager.cabinet_index(from));
       beacon_->manager.AddQualCoefficients(from, msg.coefficients());
