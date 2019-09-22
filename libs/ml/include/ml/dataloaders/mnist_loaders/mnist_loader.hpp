@@ -64,9 +64,10 @@ private:
 
 public:
   MNISTLoader(bool random_mode = false)
-    : DataLoader<LabelType, InputType>(random_mode)
+    : DataLoader<LabelType, InputType>()
   {
     // Prepare return buffer
+    this->SetRandomMode(random_mode);
     buffer_.second.push_back(InputType({FIGURE_WIDTH, FIGURE_HEIGHT, 1u}));
     buffer_.first = LabelType({LABEL_SIZE, 1u});
 
