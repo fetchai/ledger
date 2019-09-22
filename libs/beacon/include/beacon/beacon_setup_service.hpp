@@ -206,6 +206,9 @@ protected:
   telemetry::GaugePtr<uint64_t> beacon_dkg_state_gauge_;
   telemetry::GaugePtr<uint64_t> beacon_dkg_connections_gauge_;
   telemetry::GaugePtr<uint64_t> beacon_dkg_all_connections_gauge_;
+  telemetry::GaugePtr<uint64_t> beacon_dkg_failures_required_to_complete_;
+  telemetry::GaugePtr<uint64_t> beacon_dkg_state_failed_on_;
+  telemetry::GaugePtr<uint64_t> beacon_dkg_time_allocated_;
   telemetry::CounterPtr         beacon_dkg_failures_total_;
   telemetry::CounterPtr         beacon_dkg_dry_run_failures_total_;
   telemetry::CounterPtr         beacon_dkg_aborts_total_;
@@ -231,6 +234,7 @@ private:
   uint64_t         seconds_for_state_     = 0;
   uint64_t         expected_dkg_timespan_ = 0;
   bool             condition_to_proceed_  = false;
+  uint16_t         failures_{0};
 };
 }  // namespace beacon
 

@@ -127,6 +127,12 @@ BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identit
         "beacon_dkg_connections_gauge", "Connections the network has made as a prerequisite")}
   , beacon_dkg_all_connections_gauge_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
         "beacon_dkg_all_connections_gauge", "Connections the network has made in general")}
+  , beacon_dkg_failures_required_to_complete_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        "beacon_dkg_failures_required_to_complete", "Failures before the DKG was successful")}
+  , beacon_dkg_state_failed_on_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        "beacon_dkg_state_failed_on", "Last state the DKG failed on")}
+  , beacon_dkg_time_allocated_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        "beacon_dkg_time_allocated", "Time allocated for the DKG to complete")}
   , beacon_dkg_failures_total_{telemetry::Registry::Instance().CreateCounter(
         "beacon_dkg_failures_total", "The total number of DKG failures")}
   , beacon_dkg_dry_run_failures_total_{telemetry::Registry::Instance().CreateCounter(
@@ -434,6 +440,8 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                      " Failed to guarantee peers were ready for DKG!");
+
+      beacon_dkg_state_failed_on_->set(static_cast<uint64_t>(state_machine_->state()));
       SetTimeToProceed(State::RESET);
       return State::RESET;
     }
@@ -551,6 +559,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForComplaintAnswers()
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                      " Failed to build qualified set! Resetting.");
+      beacon_dkg_state_failed_on_->set(static_cast<uint64_t>(state_machine_->state()));
       SetTimeToProceed(State::RESET);
       return State::RESET;
     }
@@ -612,6 +621,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForQualComplaints()
       FETCH_LOG_WARN(LOGGING_NAME, "Node: ", beacon_->manager.cabinet_index(),
                      " DKG has failed: complaints size ", size, " greater than threshold.");
       SetTimeToProceed(State::RESET);
+      beacon_dkg_state_failed_on_->set(static_cast<uint64_t>(state_machine_->state()));
       return State::RESET;
     }
     else if (qual_complaints_manager_.FindComplaint(identity_.identifier()))
@@ -683,6 +693,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReconstructionShares()
         FETCH_LOG_WARN(LOGGING_NAME, "Node: ", beacon_->manager.cabinet_index(),
                        " DKG failed due to reconstruction failure. Resetting.");
         SetTimeToProceed(State::RESET);
+        beacon_dkg_state_failed_on_->set(static_cast<uint64_t>(state_machine_->state()));
         return State::RESET;
       }
       else
@@ -699,6 +710,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReconstructionShares()
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Timed out during reconstruction.");
     SetTimeToProceed(State::RESET);
+    beacon_dkg_state_failed_on_->set(static_cast<uint64_t>(state_machine_->state()));
     return State::RESET;
   }
 
@@ -727,6 +739,7 @@ BeaconSetupService::State BeaconSetupService::OnDryRun()
       FETCH_LOG_ERROR(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                       ": Failed to sign current message.");
       SetTimeToProceed(State::RESET);
+      beacon_dkg_state_failed_on_->set(static_cast<uint64_t>(state_machine_->state()));
       return State::RESET;
     }
 
@@ -767,6 +780,7 @@ BeaconSetupService::State BeaconSetupService::OnDryRun()
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to reach consensus on group public key!");
       SetTimeToProceed(State::RESET);
+      beacon_dkg_state_failed_on_->set(static_cast<uint64_t>(state_machine_->state()));
       return State::RESET;
     }
 
@@ -774,6 +788,7 @@ BeaconSetupService::State BeaconSetupService::OnDryRun()
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Other nodes didn't agree with our computed group public key!");
       SetTimeToProceed(State::RESET);
+      beacon_dkg_state_failed_on_->set(static_cast<uint64_t>(state_machine_->state()));
       return State::RESET;
     }
 
@@ -801,6 +816,7 @@ BeaconSetupService::State BeaconSetupService::OnDryRun()
       FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                      " Failed to complete dry run for signature signing!");
       SetTimeToProceed(State::RESET);
+      beacon_dkg_state_failed_on_->set(static_cast<uint64_t>(state_machine_->state()));
       return State::RESET;
     }
   }
@@ -834,7 +850,7 @@ void BeaconSetupService::SendBroadcast(DKGEnvelope const &env)
 {
   DKGSerializer serialiser;
   serialiser << env;
-  rbc_->SetQuestion(ConstByteArray(ToString(state_machine_->state())), serialiser.data());
+  rbc_->SetQuestion(ConstByteArray(ToString(state_machine_->state()) + std::to_string(failures_)), serialiser.data());
 }
 
 /**
@@ -1459,6 +1475,8 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
   uint64_t cabinet_size        = beacon_->aeon.members.size();
   uint64_t expected_dkg_time_s = GetExpectedDKGTime(cabinet_size);
 
+  expected_dkg_time_s = expected_dkg_time_s - beacon_->aeon.round_start;
+
   // RESET state will delay DKG until the start point (or next start point)
   if (state == BeaconSetupService::State::RESET)
   {
@@ -1481,6 +1499,10 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
 
     FETCH_LOG_INFO(LOGGING_NAME, "DKG: ", beacon_->aeon.round_start, " failures so far: ", failures,
                    " allotted time: ", expected_dkg_timespan_, " base time: ", expected_dkg_time_s);
+
+    beacon_dkg_time_allocated_->set(expected_dkg_timespan_);
+    beacon_dkg_failures_required_to_complete_->set(failures);
+    failures_ = failures;
   }
 
   // No timeout for these states
