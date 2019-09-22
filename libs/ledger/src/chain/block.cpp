@@ -22,6 +22,7 @@
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/constants.hpp"
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <ctime>
@@ -35,8 +36,8 @@ Block::Block()
 
 bool Block::operator==(Block const &rhs) const
 {
-  // Invalid to compare blocks with no block hash
-  return (!this->body.hash.empty()) && (this->body.hash == rhs.body.hash);
+  // It is invalid to compare blocks with no block hash.
+  return !body.hash.empty() && body.hash == rhs.body.hash;
 }
 
 /**
@@ -46,14 +47,8 @@ bool Block::operator==(Block const &rhs) const
  */
 std::size_t Block::GetTransactionCount() const
 {
-  std::size_t count{0};
-
-  for (auto const &slice : body.slices)
-  {
-    count += slice.size();
-  }
-
-  return count;
+  return std::accumulate(body.slices.begin(), body.slices.end(), 0,
+	  [](auto sum, auto &&slice) { return sum + slice.size(); });
 }
 
 /**
@@ -83,7 +78,6 @@ void Block::UpdateDigest()
 
   // Generate the hash
   crypto::SHA256 hash;
-  hash.Reset();
   hash.Update(buf.data());
   body.hash = hash.Final();
 

@@ -35,9 +35,8 @@ ProofOfWork::ProofOfWork(HeaderType header)
 bool ProofOfWork::operator()()
 {
   crypto::SHA256 hasher;
-  hasher.Reset();
   hasher.Update(header_);
-  hasher.Update(this->pointer(), this->size());
+  hasher.Update(pointer(), size());
 
   digest_ = hasher.Final();
 
@@ -55,14 +54,14 @@ void ProofOfWork::SetTarget(std::size_t zeros)
   target_ <<= 8 * sizeof(uint8_t) * UInt256::size() - 1 - zeros;
 }
 
-void ProofOfWork::SetTarget(vectorise::UInt<256> &&target)
+void ProofOfWork::SetTarget(vectorise::UInt<256> target)
 {
-  target_ = target;
+  target_ = std::move(target);
 }
 
 void ProofOfWork::SetHeader(byte_array::ByteArray header)
 {
-  header_ = header;
+  header_ = std::move(header);
   assert(header_ == header);
 }
 

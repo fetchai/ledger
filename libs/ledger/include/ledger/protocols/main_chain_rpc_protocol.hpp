@@ -50,7 +50,7 @@ public:
 private:
   Blocks GetHeaviestChain(uint64_t maxsize)
   {
-    return Copy(chain_.GetHeaviestChain(maxsize));
+    return InverseCopy(chain_.GetHeaviestChain(maxsize));
   }
 
   Blocks GetCommonSubChain(Digest start, Digest last_seen, uint64_t limit)
@@ -61,7 +61,7 @@ private:
     {
       return Blocks{};
     }
-    return Copy(blocks);
+    return InverseCopy(blocks);
   }
 
   Blocks TimeTravel(Digest start, int64_t limit)
@@ -81,7 +81,20 @@ private:
 
     for (auto const &block : blocks)
     {
-      output.emplace_back(*block);
+      output.push_back(*block);
+    }
+
+    return output;
+  }
+
+  static Blocks InverseCopy(MainChain::Blocks const &blocks)
+  {
+    Blocks output{};
+    output.reserve(blocks.size());
+
+    for (auto block_it = blocks.rbegin(); block_it != blocks.rend(); ++block_it)
+    {
+      output.push_back(**block_it);
     }
 
     return output;

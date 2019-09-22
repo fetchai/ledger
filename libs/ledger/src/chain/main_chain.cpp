@@ -476,11 +476,27 @@ MainChain::Blocks MainChain::TimeTravel(BlockHash start, int64_t limit) const
   Block     block;
   BlockHash next_hash;
 
-  // exit once we have gathered enough blocks or reached genesis
+  if (start == GENESIS_DIGEST)
+  {
+    // The very start of the chain is requested, we need to start past the genesis block.
+    auto ref_it{references_.find(GENESIS_DIGEST)};
+    if (ref_it == references_.end())
+    {
+	    // Perhaps there aren't any blocks on this chain.
+	    return Blocks{};
+    }
+    // Skip the very genesis block.
+    if (!GetBlock(ref_it->second, &start))
+    {
+	    return Blocks{};
+    }
+    // Now start points to the block right next to genesis.
+  }
+
   for (BlockHash current_hash{std::move(start)};
-       // check for returned subchain size
+       // stop once we have gathered enough blocks 
        result.size() < lim
-       // genesis as the next hash designates the tip of the chain
+       // genesis as the next hash indicates the tip of the chain
        && current_hash != GENESIS_DIGEST;
        // walk the stack
        current_hash = std::move(next_hash))
@@ -494,6 +510,15 @@ MainChain::Blocks MainChain::TimeTravel(BlockHash start, int64_t limit) const
     }
     // update the results
     result.push_back(std::move(block));
+  }
+
+  if (result.size() == lim && current_hash == GENESIS_DIGEST)
+  {
+    // Both conditions break the loop, but when they're both are true it indicates that we've found
+    // exactly lim blocks and thus reached chain's end.
+    // To notify requester of such a rare situation, we add one more terminating dummy block.
+    // Note that result's size is thus greater than lim in this one case.
+    result.push_back(Block{});
   }
 
   return result;

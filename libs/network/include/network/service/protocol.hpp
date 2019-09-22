@@ -76,7 +76,7 @@ public:
    *
    * @return a reference to the call.
    */
-  CallableType operator[](FunctionHandlerType const &n)
+  CallableType operator[](FunctionHandlerType n) const
   {
     auto iter = members_.find(n);
     if (iter == members_.end())
@@ -106,34 +106,16 @@ public:
    * TODO(issue 21):
    */
   template <typename C, typename R, typename... Args>
-  void Expose(FunctionHandlerType const &n, C *instance, R (C::*function)(Args...))
+  void Expose(FunctionHandlerType n, C *instance, R (C::*function)(Args...))
   {
-    StoredType fnc(new service::CallableClassMember<C, R(Args...)>(instance, function));
-
-    auto iter = members_.find(n);
-    if (iter != members_.end())
-    {
-      throw serializers::SerializableException(
-          error::MEMBER_EXISTS, ByteArrayType("Protocol member function already exists: "));
-    }
-
-    members_[n] = fnc;
+    ExposeCallable<service::CallableClassMember<C, R(Args...)>>(n, instance, function);
   }
 
   template <typename C, typename R, typename... Args>
-  void ExposeWithClientContext(FunctionHandlerType const &n, C *instance, R (C::*function)(Args...))
+  void ExposeWithClientContext(FunctionHandlerType n, C *instance, R (C::*function)(Args...))
   {
-    StoredType fnc(new service::CallableClassMember<C, R(Args...), 1>(Callable::CLIENT_CONTEXT_ARG,
-                                                                      instance, function));
-
-    auto iter = members_.find(n);
-    if (iter != members_.end())
-    {
-      throw serializers::SerializableException(
-          error::MEMBER_EXISTS, ByteArrayType("Protocol member function already exists: "));
-    }
-
-    members_[n] = fnc;
+    ExposeCallable<service::CallableClassMember<C, R(Args...), 1>>(
+      n, Callable::CLIENT_CONTEXT_ARG, instance, function);
   }
 
   virtual void ConnectionDropped(ConnectionHandleType /*connection_handle*/)
@@ -150,6 +132,19 @@ public:
   }
 
 private:
+  template <class Callable, class... Args>
+  void ExposeCallable(FunctionHandlerType n, Args... args)
+  {
+    if (members_.find(n) != members_.end())
+    {
+      throw serializers::SerializableException(
+          error::MEMBER_EXISTS, ByteArrayType("Protocol member function already exists: "));
+    }
+
+    StoredType fnc = std::make_shared<Callable>(args...);
+    members_.emplace(n, std::move(fnc));
+  }
+
   std::map<FunctionHandlerType, StoredType> members_;
 };
 }  // namespace service

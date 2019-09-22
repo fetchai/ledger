@@ -43,7 +43,7 @@ public:
   bool operator()();
 
   void SetTarget(std::size_t zeros);
-  void SetTarget(UInt256 &&target);
+  void SetTarget(UInt256 target);
   void SetHeader(byte_array::ByteArray header);
 
   HeaderType const &header() const;

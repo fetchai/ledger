@@ -252,42 +252,51 @@ MainChainRpcService::State MainChainRpcService::HandleChainResponse(Address cons
   std::size_t loose{0};
   std::size_t duplicate{0};
   std::size_t invalid{0};
+  
+  // When the heaviest chain is longer than MCRS blocks, exactly MCRS blocks are returned.
+  const bool chain_ends{block_list.size() != MAX_CHAIN_REQUEST_SIZE};
+  // When the heaviest chain is exactly MCRS blocks, the returned list consists of those blocks
+  // plus one trailing dummy block.
+  if (block_list.size() > MAX_CHAIN_REQUST_SIZE)
+  {
+    block_list.pop_back();
+  }
 
-  for (auto it = block_list.begin(), end = block_list.end(); it != end; ++it)
+  for (auto &block: block_list)
   {
     // skip the genesis block
-    if (it->body.previous_hash == GENESIS_DIGEST)
+    if (block.body.previous_hash == GENESIS_DIGEST)
     {
       continue;
     }
 
     // recompute the digest
-    it->UpdateDigest();
+    block.UpdateDigest();
 
     // add the block
-    if (it->proof())
+    if (block.proof())
     {
-      auto const status = chain_.AddBlock(*it);
+      auto const status = chain_.AddBlock(block);
 
       switch (status)
       {
       case BlockStatus::ADDED:
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced new block: 0x", it->body.hash.ToHex(),
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced new block: 0x", block.body.hash.ToHex(),
                         " from: muddle://", ToBase64(address));
         ++added;
         break;
       case BlockStatus::LOOSE:
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced loose block: 0x", it->body.hash.ToHex(),
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced loose block: 0x", block.body.hash.ToHex(),
                         " from: muddle://", ToBase64(address));
         ++loose;
         break;
       case BlockStatus::DUPLICATE:
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced duplicate block: 0x", it->body.hash.ToHex(),
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced duplicate block: 0x", block.body.hash.ToHex(),
                         " from: muddle://", ToBase64(address));
         ++duplicate;
         break;
       case BlockStatus::INVALID:
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced invalid block: 0x", it->body.hash.ToHex(),
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Synced invalid block: 0x", block.body.hash.ToHex(),
                         " from: muddle://", ToBase64(address));
         ++invalid;
         break;
@@ -295,7 +304,7 @@ MainChainRpcService::State MainChainRpcService::HandleChainResponse(Address cons
     }
     else
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Synced bad proof block: 0x", it->body.hash.ToHex(),
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Synced bad proof block: 0x", block.body.hash.ToHex(),
                       " from: muddle://", ToBase64(address));
       ++invalid;
     }
@@ -313,16 +322,17 @@ MainChainRpcService::State MainChainRpcService::HandleChainResponse(Address cons
                    " Duplicate: ", duplicate, " from: muddle://", ToBase64(address));
   }
 
-  if (block_list.size() == MAX_CHAIN_REQUEST_SIZE)
+  if (chain_ends)
   {
-	  // Maximum amount of blocks returned, might indicate that more blocks are pending.
-	  // Set the starting point for the next HC request.
-	  most_recent_tip_ = block_list.back().body.hash;
-	  // We get back to RHC state to get more main chain blocks.
-	  return State::REQUEST_HEAVIEST_CHAIN;
+    // Current heaviest chain has been fully delivered.
+    return State::SYNCHRONISING;
   }
-  // We've received less than MCRS blocks which means current heaviest chain's been fully delivered.
-  return State::SYNCHRONISING;
+
+  // Exactly the maximum amount of blocks returned, this indicates that more blocks are pending.
+  // Set the starting point for the next HC request.
+  most_recent_tip_ = block_list.back().body.hash;
+  // We get back to RHC state to get more main chain blocks.
+  return State::REQUEST_HEAVIEST_CHAIN;
 }
 
 /**
@@ -449,7 +459,7 @@ MainChainRpcService::State MainChainRpcService::OnWaitingForResponse()
       if (PromiseState::SUCCESS == status)
       {
         // the request was successful, simply hand off the blocks to be added to the chain
-        next_state = HandleChainResponse(current_peer_address_, current_request_->As<BlockList>());
+        HandleChainResponse(current_peer_address_, current_request_->As<BlockList>());
       }
       else
       {
