@@ -117,11 +117,6 @@ protected:
     generator_ = std::make_unique<BlockGenerator>(NUM_LANES, NUM_SLICES);
   }
 
-  void TearDown() override
-  {
-    chain_.reset();
-  }
-
   MainChainPtr      chain_;
   BlockGeneratorPtr generator_;
 };
