@@ -368,9 +368,6 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
     {
       reactor_.Attach(i);
     }
-
-    //reactor_.Attach(beacon_->GetMainRunnable());
-    //reactor_.Attach(beacon_->GetSetupRunnable());
   }
 
   // attach the services to the reactor

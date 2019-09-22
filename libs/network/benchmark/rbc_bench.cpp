@@ -377,5 +377,5 @@ template <class RBC_TYPE> void DKGWithEcho(benchmark::State &state)
 }
 
 // TODO(HUT): kill dkg refs
-BENCHMARK_TEMPLATE(DKGWithEcho, PBCNode)->Range(4, 200)->Unit(benchmark::kMillisecond);
-//BENCHMARK_TEMPLATE(DKGWithEcho, RBCNode)->Range(4, 200)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(DKGWithEcho, PBCNode)->Range(4, 100)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(DKGWithEcho, RBCNode)->Range(4, 64)->Unit(benchmark::kMillisecond);

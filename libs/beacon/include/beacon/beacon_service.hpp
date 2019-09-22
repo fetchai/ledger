@@ -116,8 +116,6 @@ public:
   /// Beacon runnables
   /// @{
   std::vector<std::weak_ptr<core::Runnable>> GetWeakRunnables();
-  //std::weak_ptr<core::Runnable> GetMainRunnable();
-  //std::weak_ptr<core::Runnable> GetSetupRunnable();
   /// @}
 
   friend class BeaconServiceProtocol;

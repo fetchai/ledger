@@ -119,7 +119,12 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnInitial()
     return State::INITIAL;
   }
 
-  return State::QUERY_OBJECT_COUNTS;
+  std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Notice: peers connected: ", muddle_.GetDirectlyConnectedPeers().empty());
+
+  return State::INITIAL;
+  //return State::QUERY_OBJECT_COUNTS;
 }
 
 TransactionStoreSyncService::State TransactionStoreSyncService::OnQueryObjectCounts()

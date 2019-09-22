@@ -96,20 +96,6 @@ BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identit
   , endpoint_{muddle_.GetEndpoint()}
   , shares_subscription_(endpoint_.Subscribe(SERVICE_DKG, CHANNEL_SECRET_KEY))
   , dry_run_subscription_(endpoint_.Subscribe(SERVICE_DKG, CHANNEL_SIGN_DRY_RUN))
-  , pre_dkg_rbc_{new CHANNEL_TYPE(endpoint_, identity_.identifier(),
-                 [this](MuddleAddress const &from, ConstByteArray const &payload) -> void {
-                   std::set<MuddleAddress>               connections;
-                   fetch::serializers::MsgPackSerializer serializer{payload};
-                   serializer >> connections;
-
-                   std::lock_guard<std::mutex> lock(mutex_);
-                   if (ready_connections_.find(from) == ready_connections_.end())
-                   {
-                     ready_connections_.insert({from, connections});
-                   }
-                 },
-                 certificate,
-                 CHANNEL_CONNECTIONS_SETUP, false)}
   , rbc_{new CHANNEL_TYPE(endpoint_, identity_.identifier(),
          [this](MuddleAddress const &from, ConstByteArray const &payload) -> void {
 
@@ -133,6 +119,8 @@ BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identit
         "beacon_dkg_state_failed_on", "Last state the DKG failed on")}
   , beacon_dkg_time_allocated_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
         "beacon_dkg_time_allocated", "Time allocated for the DKG to complete")}
+  , beacon_dkg_aeon_setting_up_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        "beacon_dkg_aeon_setting_up", "The aeon currently under setup.")}
   , beacon_dkg_failures_total_{telemetry::Registry::Instance().CreateCounter(
         "beacon_dkg_failures_total", "The total number of DKG failures")}
   , beacon_dkg_dry_run_failures_total_{telemetry::Registry::Instance().CreateCounter(
@@ -165,6 +153,7 @@ BeaconSetupService::State BeaconSetupService::OnIdle()
   std::lock_guard<std::mutex> lock(mutex_);
   beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::IDLE));
   beacon_dkg_all_connections_gauge_->set(muddle_.GetDirectlyConnectedPeers().size());
+  beacon_dkg_aeon_setting_up_->set(0);
 
   beacon_.reset();
 
@@ -200,6 +189,8 @@ BeaconSetupService::State BeaconSetupService::OnReset()
 {
   std::lock_guard<std::mutex> lock(mutex_);
   beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::RESET));
+  beacon_dkg_all_connections_gauge_->set(muddle_.GetDirectlyConnectedPeers().size());
+  beacon_dkg_aeon_setting_up_->set(beacon_->aeon.round_start);
 
   if (state_machine_->previous_state() != State::RESET &&
       state_machine_->previous_state() != State::IDLE)
@@ -228,7 +219,6 @@ BeaconSetupService::State BeaconSetupService::OnReset()
   shares_received_.clear();
   dry_run_shares_.clear();
   dry_run_public_keys_.clear();
-  pre_dkg_rbc_->Enable(false);
   rbc_->Enable(false);
 
   if (beacon_->aeon.round_start < abort_below_)
@@ -243,9 +233,7 @@ BeaconSetupService::State BeaconSetupService::OnReset()
   // before being reset with the cabinet
   if (timer_to_proceed_.HasExpired())
   {
-    pre_dkg_rbc_->Enable(true);
     rbc_->Enable(true);
-    pre_dkg_rbc_->ResetCabinet(cabinet);
     rbc_->ResetCabinet(cabinet);
 
     SetTimeToProceed(State::CONNECT_TO_ALL);
@@ -410,20 +398,16 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
   if (can_see.size() > connections_.size() && can_see.size() >= require_connections &&
       !condition_to_proceed_)
   {
-    fetch::serializers::MsgPackSerializer serializer;
-    serializer << connections_;
-
-    //pre_dkg_rbc_->SetQuestion(ConstByteArray(ToString(State::WAIT_FOR_SHARES)), serializer.data());
-
     FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                    " Minimum peer threshold requirement met for DKG");
 
     connections_ = ConvertToSet(can_see);
+    SendBroadcast(DKGEnvelope{ConnectionsMessage{connections_}});
   }
 
   // Whether to proceed (if threshold peers have also met this condition)
   const bool is_ok = (ready_connections_.size() >= require_connections &&
-                      connections_.size() >= require_connections) || true;
+                      connections_.size() >= require_connections);
 
   if (!condition_to_proceed_ && is_ok)
   {
@@ -999,6 +983,13 @@ void BeaconSetupService::OnDkgMessage(MuddleAddress const &       from,
   }
   switch (msg_ptr->type())
   {
+  case DKGMessage::MessageType::CONNECTIONS:
+  {
+    auto connections_ptr = std::dynamic_pointer_cast<ConnectionsMessage>(msg_ptr);
+
+    ready_connections_.insert({from, connections_ptr->connections_});
+    break;
+  }
   case DKGMessage::MessageType::COEFFICIENT:
   {
     auto coefficients_ptr = std::dynamic_pointer_cast<CoefficientsMessage>(msg_ptr);
@@ -1394,7 +1385,7 @@ void BeaconSetupService::SetBeaconReadyCallback(CallbackFunction callback)
 
 std::vector<std::weak_ptr<core::Runnable>> BeaconSetupService::GetWeakRunnables()
 {
-  return {state_machine_, pre_dkg_rbc_->GetRunnable(), rbc_->GetRunnable()};
+  return {state_machine_, rbc_->GetRunnable()};
 }
 
 uint64_t GetExpectedDKGTime(uint64_t cabinet_size)

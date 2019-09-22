@@ -48,14 +48,6 @@ ConstByteArray ToBase64(ConstByteArray const &str)
   }
 
   ByteArray ret;
-  if(size > 10000)
-  {
-    std::cerr << "isNULLP" << bool(str.pointer() == nullptr) << std::endl; // DELETEME_NH
-    std::cerr << "original size: " << str.size() << std::endl; // DELETEME_NH
-    std::cerr << "N: "             << N << std::endl; // DELETEME_NH
-    std::cerr << "invPadCount: "   << invPadCount << std::endl; // DELETEME_NH
-    std::cerr << "size is: "       << size << std::endl; // DELETEME_NH
-  }
   ret.Resize(size);
 
   uint8_t n0, n1, n2, n3;

@@ -87,7 +87,8 @@ public:
   using MuddleEndpoint          = muddle::MuddleEndpoint;
   using MuddleInterface         = muddle::MuddleInterface;
   using RBC                     = muddle::RBC;
-  using ReliableChannelPtr         = std::unique_ptr<muddle::BroadcastChannelInterface>;
+  using ReliableChannel         = muddle::BroadcastChannelInterface;
+  using ReliableChannelPtr      = std::unique_ptr<ReliableChannel>;
   using SubscriptionPtr         = muddle::MuddleEndpoint::SubscriptionPtr;
   using MessageCoefficient      = std::string;
   using MessageShare            = std::string;
@@ -100,13 +101,14 @@ public:
   using DKGEnvelope             = dkg::DKGEnvelope;
   using ComplaintsMessage       = dkg::ComplaintsMessage;
   using CoefficientsMessage     = dkg::CoefficientsMessage;
+  using ConnectionsMessage      = dkg::ConnectionsMessage;
   using SharesMessage           = dkg::SharesMessage;
   using DKGSerializer           = dkg::DKGSerializer;
   using ManifestCacheInterface  = ledger::ManifestCacheInterface;
-  using SharesExposedMap = std::unordered_map<MuddleAddress, std::pair<MessageShare, MessageShare>>;
-  using DeadlineTimer    = fetch::moment::DeadlineTimer;
-  using SignatureShare   = AeonExecutionUnit::SignatureShare;
-  using BeaconManager    = dkg::BeaconManager;
+  using SharesExposedMap        = std::unordered_map<MuddleAddress, std::pair<MessageShare, MessageShare>>;
+  using DeadlineTimer           = fetch::moment::DeadlineTimer;
+  using SignatureShare          = AeonExecutionUnit::SignatureShare;
+  using BeaconManager           = dkg::BeaconManager;
   using GroupPubKeyPlusSigShare = std::pair<std::string, SignatureShare>;
   using CertificatePtr          = std::shared_ptr<dkg::BeaconManager::Certificate>;
 
@@ -152,8 +154,7 @@ protected:
   MuddleEndpoint &        endpoint_;
   SubscriptionPtr         shares_subscription_;
   SubscriptionPtr         dry_run_subscription_;
-  ReliableChannelPtr         pre_dkg_rbc_;
-  ReliableChannelPtr         rbc_;
+  ReliableChannelPtr      rbc_;
 
   std::shared_ptr<StateMachine> state_machine_;
   std::set<MuddleAddress>       connections_;
@@ -209,6 +210,7 @@ protected:
   telemetry::GaugePtr<uint64_t> beacon_dkg_failures_required_to_complete_;
   telemetry::GaugePtr<uint64_t> beacon_dkg_state_failed_on_;
   telemetry::GaugePtr<uint64_t> beacon_dkg_time_allocated_;
+  telemetry::GaugePtr<uint64_t> beacon_dkg_aeon_setting_up_;
   telemetry::CounterPtr         beacon_dkg_failures_total_;
   telemetry::CounterPtr         beacon_dkg_dry_run_failures_total_;
   telemetry::CounterPtr         beacon_dkg_aborts_total_;

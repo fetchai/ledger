@@ -1,4 +1,5 @@
-#pragma once//------------------------------------------------------------------------------
+#pragma once
+//------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
 //
@@ -84,9 +85,6 @@ struct QuestionStruct
     {
       table_[member];
     }
-
-    //FETCH_LOG_INFO(LOGGING_NAME, "Table size: ", );
-
     // TODO(HUT): signing
   }
 
@@ -282,11 +280,6 @@ public:
     FETCH_LOCK(lock_);
     previous_question_ = std::move(question_);
     question_ = QuestionStruct(question, answer, certificate_, current_cabinet_);
-
-    if(!question_)
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "bad things");
-    }
   }
 
   void SetQuestion(std::string const &question, std::string const &answer) /* override */
@@ -297,6 +290,8 @@ public:
   void Enable(bool enable) override
   {
     FETCH_LOCK(lock_);
+    // for now this also has to be protected, since it is not a
+    // bottleneck
     enabled_ = enable;
   }
 
@@ -319,9 +314,8 @@ public:
       }
     }
 
+    // TODO(HUT): work on this a bit
     bool const answered_question = messages_confirmed == question_.cabinet_.size() - 1;
-
-    //FETCH_LOG_INFO(LOGGING_NAME, "Answered qn: ", answered_question, " confirmed: ", messages_confirmed);
 
     return answered_question;
   }
@@ -333,26 +327,25 @@ public:
 
       if(!question_ || !enabled_ || AnsweredQuestion())
       {
-        //FETCH_LOG_INFO(LOGGING_NAME, "Held at idle: ", question_, enabled_, AnsweredQuestion(), " thre: ", threshold_);
         state_machine_->Delay(std::chrono::milliseconds(50));
         network_promises_.clear();
         return State::INIT;
       }
+    }
 
-      if(current_cabinet_vector_.size() < concurrent_promises_allowed)
+    if(current_cabinet_vector_.size() < concurrent_promises_allowed)
+    {
+      current_cabinet_vector_.clear();
+
+      for(auto const &member : current_cabinet_)
       {
-        current_cabinet_vector_.clear();
-
-        for(auto const &member : current_cabinet_)
-        {
-          current_cabinet_vector_.push_back(member);
-        }
-
-        // Make N requests for the other peer's answer
-        std::random_device rd;
-        std::mt19937       g(rd());
-        std::shuffle(current_cabinet_vector_.begin(), current_cabinet_vector_.end(), g);
+        current_cabinet_vector_.push_back(member);
       }
+
+      // Make N requests for the other peer's answer
+      std::random_device rd;
+      std::mt19937       g(rd());
+      std::shuffle(current_cabinet_vector_.begin(), current_cabinet_vector_.end(), g);
     }
 
     for (std::size_t i = 0; i < concurrent_promises_allowed; ++i)
@@ -391,15 +384,12 @@ public:
 
           {
             FETCH_LOCK(lock_);
-            //FETCH_LOG_INFO(LOGGING_NAME, "Has messages: ", recvd_question.UnconfirmedMsgs(), " We have: ", question_.UnconfirmedMsgs());
-
             answers = question_.Update(threshold_, recvd_question);
           }
 
 
           for(auto const &answer : answers)
           {
-            //FETCH_LOG_INFO(LOGGING_NAME, "Delivering messages!");
             deliver_msg_callback_(answer.first, answer.second);
           }
         }
@@ -428,18 +418,11 @@ public:
     return State::RESOLVE_PROMISES;
   }
 
-  // TODO(HUT): use mutable aspect
-  mutable Mutex lock_;
-
-  QuestionStruct question_;
-  QuestionStruct previous_question_;
-
-  // don't need to lock these.
   Endpoint &          endpoint_;              ///< The muddle endpoint to communicate on
   MuddleAddress const address_;               ///< Our muddle address
   CallbackFunction    deliver_msg_callback_;  ///< Callback for messages which have succeeded
-  uint16_t            channel_;
-  CertificatePtr      certificate_; // TODO(HUT): check if can be const
+  const uint16_t            channel_;
+  CertificatePtr      certificate_;
 
   ServerPtr           rpc_server_{nullptr};
   muddle::rpc::Client rpc_client_;
@@ -448,12 +431,12 @@ public:
 
   // For broadcast
   CabinetMembers            current_cabinet_;    ///< The set of muddle addresses of the
-                                           ///< cabinet (including our own)
-  CabinetMembersVector      current_cabinet_vector_;    ///< The set of muddle addresses of the
+                                                 ///< cabinet (including our own)
+  CabinetMembersVector      current_cabinet_vector_;    ///< The current cabinet shuffled into a vector.
+                                                        ///< Used to randomly select cabinet members without replacement
   uint32_t threshold_;                     ///< Number of byzantine nodes (this is assumed
-                                           ///< to take the maximum allowed value satisying
+                                           ///< to take the maximum allowed value satisfying
                                            ///< threshold_ < current_cabinet_.size()
-                                           //
 
 
   moment::ClockPtr clock_ = moment::GetClock("muddle:pbc", moment::ClockType::STEADY);
@@ -465,6 +448,12 @@ public:
 
   /// @}
   StateMachinePtr    state_machine_;
+
+  // ONLY the question (and previous question if this is enabled) needs to be locked
+  mutable Mutex lock_;
+  QuestionStruct question_;
+  QuestionStruct previous_question_;
+
 };
 }  // namespace muddle
 
