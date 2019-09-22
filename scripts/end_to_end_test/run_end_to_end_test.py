@@ -186,7 +186,7 @@ class TestInstance():
         self._nodes[index].start()
         print('Starting Node {}...complete'.format(index))
 
-        time.sleep(0.5)
+        time.sleep(1)
 
     def setup_pos_for_nodes(self):
 
