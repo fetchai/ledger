@@ -76,10 +76,10 @@ private:
     if (!key)
     {
       RuntimeError("Key is null reference.");
-      return nullptr;
+      return {};
     }
 
-    return new String{vm_, name_ + "." + key->str};
+    return Ptr<String>{new String{vm_, name_ + "." + key->str}};
   }
 
   TemplateParameter1 GetIndexedValueInternal(Ptr<String> const &index)
@@ -160,17 +160,17 @@ Ptr<IShardedState> IShardedState::ConstructorFromString(VM *vm, TypeId type_id,
   {
     TypeInfo const &type_info     = vm->GetTypeInfo(type_id);
     TypeId const    value_type_id = type_info.parameter_type_ids[0];
-    return new ShardedState(vm, type_id, name, value_type_id);
+    return Ptr<IShardedState>{new ShardedState(vm, type_id, name, value_type_id)};
   }
 
   vm->RuntimeError("Failed to construct ShardedState instance: the 'name' is null reference.");
-  return nullptr;
+  return {};
 }
 
 Ptr<IShardedState> IShardedState::ConstructorFromAddress(VM *vm, TypeId type_id,
                                                          Ptr<Address> const &name)
 {
-  return ConstructorFromString(vm, type_id, name ? name->AsString() : nullptr);
+  return ConstructorFromString(vm, type_id, name ? name->AsString() : Ptr<String>{});
 }
 
 }  // namespace vm

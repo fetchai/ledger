@@ -72,7 +72,7 @@ public:
     : ECDSAPrivateKey(Generate())
   {}
 
-  ECDSAPrivateKey(byte_array::ConstByteArray const &key_data)
+  explicit ECDSAPrivateKey(byte_array::ConstByteArray const &key_data)
     : ECDSAPrivateKey(Convert(key_data))
   {}
 
@@ -84,13 +84,13 @@ public:
   using PrivateKeyType = ECDSAPrivateKey<BINARY_DATA_FORMAT, P_ECDSA_Curve_NID, P_ConversionForm>;
 
   template <eECDSAEncoding BINARY_DATA_FORMAT>
-  ECDSAPrivateKey(PrivateKeyType<BINARY_DATA_FORMAT> const &from)
+  explicit ECDSAPrivateKey(PrivateKeyType<BINARY_DATA_FORMAT> const &from)
     : private_key_(from.private_key_)
     , public_key_(from.public_key_)
   {}
 
   template <eECDSAEncoding BINARY_DATA_FORMAT>
-  ECDSAPrivateKey(PrivateKeyType<BINARY_DATA_FORMAT> &&from)
+  explicit ECDSAPrivateKey(PrivateKeyType<BINARY_DATA_FORMAT> &&from)
     : private_key_(std::move(from.private_key_))
     , public_key_(std::move(from.public_key_))
   {}

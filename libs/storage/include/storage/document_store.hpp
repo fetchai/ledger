@@ -293,15 +293,15 @@ public:
     FETCH_LOCK(mutex_);
     ByteArrayType hash = key_index_.Hash();
 
-    if (key_index_.underlying_stack().HashExists(hash) ||
-        file_object_.underlying_stack().HashExists(hash))
+    if (key_index_.underlying_stack().HashExists(DefaultKey(hash)) ||
+        file_object_.underlying_stack().HashExists(DefaultKey(hash)))
     {
       FETCH_LOG_DEBUG(LOGGING_NAME, "Attempted to commit an already committed hash");
       return hash;
     }
 
-    key_index_.underlying_stack().Commit(hash);
-    file_object_.underlying_stack().Commit(hash);
+    key_index_.underlying_stack().Commit(DefaultKey(hash));
+    file_object_.underlying_stack().Commit(DefaultKey(hash));
 
     return hash;
   }
@@ -311,15 +311,15 @@ public:
     FETCH_LOCK(mutex_);
 
     // TODO(private issue 615): HashExists implement
-    if (!(key_index_.underlying_stack().HashExists(hash) &&
-          file_object_.underlying_stack().HashExists(hash)))
+    if (!(key_index_.underlying_stack().HashExists(DefaultKey(hash)) &&
+          file_object_.underlying_stack().HashExists(DefaultKey(hash))))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Attempted to revert to a hash that doesn't exist");
       return false;
     }
 
-    key_index_.underlying_stack().RevertToHash(hash);
-    file_object_.underlying_stack().RevertToHash(hash);
+    key_index_.underlying_stack().RevertToHash(DefaultKey(hash));
+    file_object_.underlying_stack().RevertToHash(DefaultKey(hash));
 
     key_index_.UpdateVariables();
     file_object_.UpdateVariables();
@@ -330,8 +330,8 @@ public:
   bool HashExists(ByteArrayType const &hash)
   {
     FETCH_LOCK(mutex_);
-    return key_index_.underlying_stack().HashExists(hash) &&
-           file_object_.underlying_stack().HashExists(hash);
+    return key_index_.underlying_stack().HashExists(DefaultKey(hash)) &&
+           file_object_.underlying_stack().HashExists(DefaultKey(hash));
   }
 
   HashType CurrentHash()

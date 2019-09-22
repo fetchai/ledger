@@ -10,7 +10,7 @@ cert-err60-cpp,\
 -cert-flp30-c,\
 -clang-analyzer-security.FloatLoopCounter,\
 google-build-namespaces,\
--google-explicit-constructor,\
+google-explicit-constructor,\
 google-readability-todo,\
 google-runtime-operator,\
 misc-new-delete-overloads,\

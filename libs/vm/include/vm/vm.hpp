@@ -332,7 +332,7 @@ public:
   template <typename T, typename... Ts>
   Ptr<T> CreateNewObject(Ts &&... args)
   {
-    return new T(this, GetTypeId<T>(), std::forward<Ts>(args)...);
+    return Ptr<T>{new T(this, GetTypeId<T>(), std::forward<Ts>(args)...)};
   }
 
   void SetIOObserver(IoObserverInterface &observer)
@@ -474,7 +474,7 @@ public:
     if (it == deserialization_constructors_.end())
     {
       RuntimeError("object is not default constructible.");
-      return nullptr;
+      return {};
     }
 
     auto &constructor = it->second;

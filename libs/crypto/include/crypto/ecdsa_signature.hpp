@@ -51,7 +51,7 @@ public:
 
   ECDSASignature() = default;
 
-  ECDSASignature(byte_array::ConstByteArray binary_signature)
+  explicit ECDSASignature(byte_array::ConstByteArray binary_signature)
     : hash_{}
     , signature_ecdsa_ptr_{Convert(binary_signature, signatureBinaryDataFormat)}
     , signature_{std::move(binary_signature)}
@@ -65,7 +65,7 @@ public:
   friend class ECDSASignature;
 
   template <eECDSAEncoding BIN_FORMAT>
-  ECDSASignature(ECDSASignatureType<BIN_FORMAT> const &from)
+  explicit ECDSASignature(ECDSASignatureType<BIN_FORMAT> const &from)
     : hash_{from.hash_}
     , signature_ecdsa_ptr_{from.signature_ecdsa_ptr_}
     , signature_{BIN_FORMAT == signatureBinaryDataFormat
@@ -76,7 +76,7 @@ public:
   // ECDSASignature(ECDSASignature&& from) = default;
 
   template <eECDSAEncoding BIN_FORMAT>
-  ECDSASignature(ECDSASignatureType<BIN_FORMAT> &&from)
+  explicit ECDSASignature(ECDSASignatureType<BIN_FORMAT> &&from)
     : ECDSASignature{safeMoveConstruct(std::move(from))}
   {}
 

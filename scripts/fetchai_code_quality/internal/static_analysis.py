@@ -120,7 +120,7 @@ def static_analysis(project_root, build_root, fix, concurrency):
             for d in data['diagnostics']:
                 print('  Line: {line}'.format(line=d["line"]))
                 print('  Message: {message}'.format(message=d["message"]))
-                print('  Check: {check}'.format(check=d["check"]))
+                print('  Check: {check}\n'.format(check=d["check"]))
 
         print(
             '\nStatic analysis found {total_violations} violation(s) in {total_files} file(s)'.format(

@@ -124,7 +124,7 @@ public:
   explicit Tensor(SizeType const &n);
   Tensor(Tensor &&other) noexcept = default;
   Tensor(Tensor const &other)     = default;
-  Tensor(SizeVector const &dims);
+  explicit Tensor(SizeVector const &dims);
   virtual ~Tensor() = default;
 
   Tensor &operator=(Tensor const &other) = default;

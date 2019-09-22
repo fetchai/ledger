@@ -63,7 +63,7 @@ private:
   static constexpr std::uint32_t LABEL_SIZE    = 10;
 
 public:
-  MNISTLoader(bool random_mode = false)
+  explicit MNISTLoader(bool random_mode = false)
     : DataLoader<LabelType, InputType>()
   {
     // Prepare return buffer

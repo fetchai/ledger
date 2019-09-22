@@ -206,7 +206,7 @@ class Ptr
 public:
   Ptr() = default;
 
-  Ptr(T *other) noexcept
+  explicit Ptr(T *other) noexcept
     : ptr_{other}
   {}
 
@@ -235,14 +235,14 @@ public:
   }
 
   template <typename U>
-  Ptr(Ptr<U> const &other)
+  Ptr(Ptr<U> const &other)  // NOLINT
   {
     ptr_ = static_cast<T *>(other.ptr_);
     AddRef();
   }
 
   template <typename U>
-  Ptr(Ptr<U> &&other)
+  Ptr(Ptr<U> &&other)  // NOLINT
   {
     ptr_       = static_cast<T *>(other.ptr_);
     other.ptr_ = nullptr;

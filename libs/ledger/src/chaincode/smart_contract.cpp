@@ -265,7 +265,7 @@ void AddStringToParameterPack(vm::VM *vm, vm::ParameterPack &pack, msgpack::obje
 
   if (msgpack::type::STR == obj.type)
   {
-    vm::Ptr<vm::String> string = new vm::String(vm, {obj.via.str.ptr, obj.via.str.size});
+    vm::Ptr<vm::String> string{new vm::String(vm, {obj.via.str.ptr, obj.via.str.size})};
     pack.Add(std::move(string));
     valid = true;
   }
@@ -317,7 +317,7 @@ void AddStringToParameterPack(vm::VM *vm, vm::ParameterPack &pack, variant::Vari
   }
 
   // create the instance of the address
-  vm::Ptr<vm::String> vm_string = new vm::String(vm, obj.As<std::string>());
+  vm::Ptr<vm::String> vm_string(new vm::String(vm, obj.As<std::string>()));
   pack.Add(std::move(vm_string));
 }
 

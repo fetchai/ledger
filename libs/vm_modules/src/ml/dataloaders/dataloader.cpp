@@ -53,7 +53,7 @@ VMDataLoader::VMDataLoader(VM *vm, TypeId type_id)
   : Object(vm, type_id)
 {}
 
-VMDataLoader::VMDataLoader(VM *vm, TypeId type_id, fetch::vm::Ptr<fetch::vm::String> const &mode)
+VMDataLoader::VMDataLoader(VM *vm, TypeId type_id, Ptr<String> const &mode)
   : Object(vm, type_id)
 {
   if (mode->str == "tensor")
@@ -77,18 +77,18 @@ VMDataLoader::VMDataLoader(VM *vm, TypeId type_id, fetch::vm::Ptr<fetch::vm::Str
   }
 }
 
-fetch::vm::Ptr<VMDataLoader> VMDataLoader::Constructor(
-    fetch::vm::VM *vm, fetch::vm::TypeId type_id, fetch::vm::Ptr<fetch::vm::String> const &mode)
+Ptr<VMDataLoader> VMDataLoader::Constructor(VM *vm, TypeId type_id, Ptr<String> const &mode)
 {
-  return new VMDataLoader(vm, type_id, mode);
+  return Ptr<VMDataLoader>{new VMDataLoader(vm, type_id, mode)};
 }
 
 void VMDataLoader::Bind(Module &module)
 {
   module.CreateClassType<VMDataLoader>("DataLoader")
       .CreateConstructor(&VMDataLoader::Constructor)
-      .CreateSerializeDefaultConstructor(
-          [](VM *vm, TypeId type_id) -> Ptr<VMDataLoader> { return new VMDataLoader(vm, type_id); })
+      .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMDataLoader> {
+        return Ptr<VMDataLoader>{new VMDataLoader(vm, type_id)};
+      })
       .CreateMemberFunction("addData", &VMDataLoader::AddDataByFiles)
       .CreateMemberFunction("addData", &VMDataLoader::AddDataByData)
       .CreateMemberFunction("getNext", &VMDataLoader::GetNext)
