@@ -1470,9 +1470,16 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
   uint64_t expected_dkg_time_s = GetExpectedDKGTime(cabinet_size);
 
   // TODO(HUT): remove this!!!
-  if(expected_dkg_time_s > 1000 && beacon_->aeon.round_start < expected_dkg_time_s)
+  if(expected_dkg_time_s > 1000)
   {
-    expected_dkg_time_s = expected_dkg_time_s - beacon_->aeon.round_start;
+    if(beacon_->aeon.round_start < expected_dkg_time_s)
+    {
+      expected_dkg_time_s = expected_dkg_time_s - beacon_->aeon.round_start;
+    }
+    else
+    {
+      expected_dkg_time_s = beacon_->aeon.round_start - (beacon_->aeon.round_start / 10);
+    }
   }
 
   // RESET state will delay DKG until the start point (or next start point)
