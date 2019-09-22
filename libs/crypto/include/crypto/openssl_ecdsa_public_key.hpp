@@ -258,7 +258,7 @@ private:
     return public_key;
   }
 
-  static UniquePointerType<EC_KEY> ConvertToECKEY(const EC_POINT *key_EC_POINT)
+  static UniquePointerType<EC_KEY> ConvertToECKEY(EC_POINT const *key_EC_POINT)
   {
     UniquePointerType<EC_KEY> key{EC_KEY_new_by_curve_name(EcdsaCurveType::nid)};
     // TODO(issue 36): setting conv. form might not be really necessary (stuff

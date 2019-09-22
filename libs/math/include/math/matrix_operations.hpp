@@ -562,7 +562,7 @@ void ReduceSum(ArrayType const &obj1, SizeType axis, ArrayType &ret)
   using DataType = typename ArrayType::Type;
   ret.Fill(static_cast<DataType>(0));
 
-  Reduce(axis, [](const DataType &x, DataType &y) { y += x; }, obj1, ret);
+  Reduce(axis, [](DataType const &x, DataType &y) { y += x; }, obj1, ret);
 }
 
 /**
@@ -596,7 +596,7 @@ void ReduceSum(ArrayType const &obj1, std::vector<SizeType> axes, ArrayType &ret
   using DataType = typename ArrayType::Type;
   ret.Fill(static_cast<DataType>(0));
 
-  Reduce(axes, [](const DataType &x, DataType &y) { y += x; }, obj1, ret);
+  Reduce(axes, [](DataType const &x, DataType &y) { y += x; }, obj1, ret);
 }
 
 /**
@@ -861,7 +861,7 @@ void ReduceMax(ArrayType const &obj1, SizeType axis, ArrayType &ret)
   using DataType = typename ArrayType::Type;
   ret.Fill(std::numeric_limits<DataType>::lowest());
 
-  Reduce(axis, [](const DataType &x, DataType &y) { y = (x < y) ? y : x; }, obj1, ret);
+  Reduce(axis, [](DataType const &x, DataType &y) { y = (x < y) ? y : x; }, obj1, ret);
 }
 
 /**
@@ -895,7 +895,7 @@ void ReduceMax(ArrayType const &obj1, std::vector<SizeType> axes, ArrayType &ret
   using DataType = typename ArrayType::Type;
   ret.Fill(std::numeric_limits<DataType>::min());
 
-  Reduce(axes, [](const DataType &x, DataType &y) { y = (x < y) ? y : x; }, obj1, ret);
+  Reduce(axes, [](DataType const &x, DataType &y) { y = (x < y) ? y : x; }, obj1, ret);
 }
 
 /**

@@ -324,7 +324,7 @@ private:
   }
 
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
-  static void ECDSA_SIG_get0(const ECDSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps)
+  static void ECDSA_SIG_get0(ECDSA_SIG const *sig, BIGNUM const **pr, BIGNUM const **ps)
   {
     if (pr != nullptr)
     {

@@ -205,7 +205,7 @@ struct Array : public IArray
     elements.insert(elements.cend(), other_elements.cbegin(), other_elements.cend());
   }
 
-  void Erase(const int32_t index) override
+  void Erase(int32_t const index) override
   {
     if (index < 0)
     {

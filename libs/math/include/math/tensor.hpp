@@ -1022,7 +1022,7 @@ void Tensor<T, C>::Assign(Tensor const &other)
   else
   {
     if (!(Broadcast(
-            [](const T &x, const T &y, T &z) {
+            [](T const &x, T const &y, T &z) {
               FETCH_UNUSED(x);
               z = y;
             },

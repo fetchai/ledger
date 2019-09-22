@@ -247,7 +247,7 @@ private:
     return ECDSAPrivateKey{std::move(key), std::move(public_key)};
   }
 
-  static PublicKeyType ExtractPublicKey(const EC_KEY *private_key)
+  static PublicKeyType ExtractPublicKey(EC_KEY const *private_key)
   {
     EC_GROUP const *group             = EC_KEY_get0_group(private_key);
     EC_POINT const *pub_key_reference = EC_KEY_get0_public_key(private_key);

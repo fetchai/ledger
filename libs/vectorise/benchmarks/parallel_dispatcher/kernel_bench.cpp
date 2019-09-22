@@ -34,7 +34,7 @@ public:
   using VectorRegisterType = typename ndarray_type::VectorRegisterType;
 
 protected:
-  void SetUp(const ::benchmark::State & /*st*/) override
+  void SetUp(::benchmark::State const & /*st*/) override
   {
     a_ = ndarray_type(N);
     b_ = ndarray_type(N);
@@ -43,9 +43,6 @@ protected:
       b_[i] = type(i);
     }
   }
-
-  void TearDown(const ::benchmark::State &) override
-  {}
 
   ndarray_type a_, b_;
 };

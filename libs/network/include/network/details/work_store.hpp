@@ -37,7 +37,7 @@ public:
   using WorkItem = std::function<void()>;
 
   WorkStore()                     = default;
-  WorkStore(const WorkStore &rhs) = delete;
+  WorkStore(WorkStore const &rhs) = delete;
   WorkStore(WorkStore &&rhs)      = delete;
 
   ~WorkStore()
@@ -125,7 +125,7 @@ public:
     queue_.emplace_back(std::move(work));
   }
 
-  WorkStore operator=(const WorkStore &rhs) = delete;
+  WorkStore operator=(WorkStore const &rhs) = delete;
   WorkStore operator=(WorkStore &&rhs) = delete;
 
 private:

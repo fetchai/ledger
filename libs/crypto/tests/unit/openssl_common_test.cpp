@@ -33,9 +33,9 @@ class ECDSACurveTest : public testing::Test
 {
 protected:
   template <int P_ECDSA_Curve_NID>
-  void test_ECDSACurve(const uint8_t expected_sn, const std::size_t expected_privateKeySize,
-                       const std::size_t expected_publicKeySize,
-                       const std::size_t expected_signatureSize)
+  void test_ECDSACurve(uint8_t const expected_sn, std::size_t const expected_privateKeySize,
+                       std::size_t const expected_publicKeySize,
+                       std::size_t const expected_signatureSize)
   {
     using EcdsaCurveType = ECDSACurve<P_ECDSA_Curve_NID>;
     EXPECT_EQ(EcdsaCurveType::nid, P_ECDSA_Curve_NID);
