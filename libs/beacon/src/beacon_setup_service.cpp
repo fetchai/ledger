@@ -987,6 +987,8 @@ void BeaconSetupService::OnDkgMessage(MuddleAddress const &       from,
   {
     auto connections_ptr = std::dynamic_pointer_cast<ConnectionsMessage>(msg_ptr);
 
+    FETCH_LOG_INFO(LOGGING_NAME, "Seen new connections: ", connections_ptr->connections_.size());
+
     ready_connections_.insert({from, connections_ptr->connections_});
     break;
   }

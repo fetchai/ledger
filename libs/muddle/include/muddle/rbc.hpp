@@ -80,7 +80,7 @@ public:
   using CounterType    = uint8_t;
   using CertificatePtr   = std::shared_ptr<fetch::crypto::Prover>;
 
-  RBC(Endpoint &endpoint, MuddleAddress address, CallbackFunction call_back, CertificatePtr certificate,
+  RBC(Endpoint &endpoint, MuddleAddress address, CallbackFunction call_back, CertificatePtr certificate = nullptr,
       uint16_t channel = CHANNEL_RBC_BROADCAST, bool ordered_delivery = true);
 
   ~RBC();

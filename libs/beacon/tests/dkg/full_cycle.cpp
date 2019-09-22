@@ -191,8 +191,8 @@ void RunHonestComitteeRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
   // Attaching the cabinet logic
   for (auto &member : committee)
   {
-    member->reactor.Attach(member->beacon_service.GetMainRunnable());
-    member->reactor.Attach(member->beacon_service.GetSetupRunnable());
+    member->reactor.Attach(member->beacon_service.GetWeakRunnables()[0]);
+    member->reactor.Attach(member->beacon_service.GetWeakRunnables()[1]);
   }
 
   // Starting the beacon

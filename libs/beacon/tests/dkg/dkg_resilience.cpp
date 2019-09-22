@@ -61,7 +61,7 @@ class HonestSetupService : public BeaconSetupService
 public:
   HonestSetupService(MuddleInterface &endpoint, Identity identity,
                      ManifestCacheInterface &manifest_cache)
-    : BeaconSetupService{endpoint, std::move(identity), manifest_cache}
+    : BeaconSetupService{endpoint, std::move(identity), manifest_cache, nullptr}
   {}
 };
 
@@ -88,7 +88,7 @@ public:
   FaultySetupService(MuddleInterface &endpoint, Identity identity,
                      ManifestCacheInterface &     manifest_cache,
                      const std::vector<Failures> &failures = {})
-    : BeaconSetupService{endpoint, std::move(identity), manifest_cache}
+    : BeaconSetupService{endpoint, std::move(identity), manifest_cache, nullptr}
   {
     for (auto f : failures)
     {
@@ -365,7 +365,7 @@ struct DkgMember
   }
 
   virtual void QueueCabinet(std::set<Identity> cabinet, uint32_t threshold) = 0;
-  virtual std::weak_ptr<core::Runnable> GetWeakRunnable()                   = 0;
+  virtual std::vector<std::weak_ptr<core::Runnable>> GetWeakRunnables()                   = 0;
   virtual bool                          DkgFinished()                       = 0;
 
   static ProverPtr CreateNewCertificate()
@@ -427,9 +427,9 @@ struct FaultyDkgMember : DkgMember
     dkg.QueueSetup(beacon);
   }
 
-  std::weak_ptr<core::Runnable> GetWeakRunnable() override
+  std::vector<std::weak_ptr<core::Runnable>> GetWeakRunnables() override
   {
-    return dkg.GetWeakRunnable();
+    return dkg.GetWeakRunnables();
   }
   bool DkgFinished() override
   {
@@ -482,9 +482,9 @@ struct HonestDkgMember : DkgMember
     dkg.QueueSetup(beacon);
   }
 
-  std::weak_ptr<core::Runnable> GetWeakRunnable() override
+  std::vector<std::weak_ptr<core::Runnable>> GetWeakRunnables() override
   {
-    return dkg.GetWeakRunnable();
+    return dkg.GetWeakRunnables();
   }
   bool DkgFinished() override
   {
@@ -544,7 +544,12 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
   {
     for (auto &member : committee)
     {
-      member->reactor.Attach(member->GetWeakRunnable());
+      auto all_runnables = member->GetWeakRunnables();
+
+      for(auto const &i : all_runnables)
+      {
+        member->reactor.Attach(i);
+      }
     }
 
     for (auto &member : committee)
