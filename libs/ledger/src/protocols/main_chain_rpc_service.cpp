@@ -25,6 +25,7 @@
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chain/transaction_layout_rpc_serializers.hpp"
 #include "ledger/protocols/main_chain_rpc_service.hpp"
+#include "meta/value_util.hpp"
 #include "metrics/metrics.hpp"
 #include "muddle/packet.hpp"
 #include "telemetry/counter.hpp"
@@ -225,7 +226,7 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
 
 bool MainChainRpcService::NoKnownChain() const
 {
-	return most_recent_tip_ == GENESIS_DIGEST;
+  return most_recent_tip_ == GENESIS_DIGEST;
 }
 
 MainChainRpcService::Address MainChainRpcService::GetRandomTrustedPeer() const
@@ -246,23 +247,24 @@ MainChainRpcService::Address MainChainRpcService::GetRandomTrustedPeer() const
   return Address{};
 }
 
-MainChainRpcService::State MainChainRpcService::HandleChainResponse(Address const &address, BlockList block_list)
+MainChainRpcService::State MainChainRpcService::HandleChainResponse(Address const &address,
+                                                                    BlockList      block_list)
 {
   std::size_t added{0};
   std::size_t loose{0};
   std::size_t duplicate{0};
   std::size_t invalid{0};
-  
+
   // When the heaviest chain is longer than MCRS blocks, exactly MCRS blocks are returned.
   const bool chain_ends{block_list.size() != MAX_CHAIN_REQUEST_SIZE};
   // When the heaviest chain is exactly MCRS blocks, the returned list consists of those blocks
   // plus one trailing dummy block.
-  if (block_list.size() > MAX_CHAIN_REQUST_SIZE)
+  if (block_list.size() > MAX_CHAIN_REQUEST_SIZE)
   {
     block_list.pop_back();
   }
 
-  for (auto &block: block_list)
+  for (auto &block : block_list)
   {
     // skip the genesis block
     if (block.body.previous_hash == GENESIS_DIGEST)
@@ -351,10 +353,9 @@ MainChainRpcService::State MainChainRpcService::OnRequestHeaviestChain()
   if (!peer.empty())
   {
     current_peer_address_ = peer;
-    current_request_ =
-        rpc_client_.CallSpecificAddress(current_peer_address_, RPC_MAIN_CHAIN,
-					MainChainProtocol::TIME_TRAVEL_PAST,
-					most_recent_tip_, MAX_CHAIN_REQUEST_SIZE);
+    current_request_      = rpc_client_.CallSpecificAddress(current_peer_address_, RPC_MAIN_CHAIN,
+                                                       MainChainProtocol::TIME_TRAVEL_PAST,
+                                                       most_recent_tip_, MAX_CHAIN_REQUEST_SIZE);
 
     next_state = State::WAIT_FOR_HEAVIEST_CHAIN;
   }
@@ -397,8 +398,7 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
       }
 
       // clear the state
-      current_peer_address_  = Address{};
-      current_missing_block_ = BlockHash{};
+      value_util::ZeroAll(current_peer_address_, current_missing_block_);
     }
   }
 
@@ -471,9 +471,8 @@ MainChainRpcService::State MainChainRpcService::OnWaitingForResponse()
       }
 
       // clear the state
-      current_peer_address_  = Address{};
-      current_missing_block_ = BlockHash{};
-      next_state             = State::SYNCHRONISED;
+      value_util::ZeroAll(current_peer_address_, current_missing_block_);
+      next_state = State::SYNCHRONISED;
     }
     else
     {

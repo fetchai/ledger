@@ -22,10 +22,10 @@
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/constants.hpp"
 
-#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <ctime>
+#include <numeric>
 
 namespace fetch {
 namespace ledger {
@@ -47,8 +47,8 @@ bool Block::operator==(Block const &rhs) const
  */
 std::size_t Block::GetTransactionCount() const
 {
-  return std::accumulate(body.slices.begin(), body.slices.end(), 0,
-	  [](auto sum, auto &&slice) { return sum + slice.size(); });
+  return std::accumulate(body.slices.begin(), body.slices.end(), std::size_t{0},
+                         [](auto sum, auto &&slice) { return sum + slice.size(); });
 }
 
 /**

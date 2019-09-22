@@ -24,6 +24,7 @@
 #include "crypto/sha256.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/transaction_layout_rpc_serializers.hpp"
+#include "meta/value_util.hpp"
 #include "network/generics/milli_timer.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/gauge.hpp"
@@ -96,11 +97,8 @@ void MainChain::Reset()
 {
   FETCH_LOCK(lock_);
 
-  tips_.clear();
+  value_util::ClearAll(tips_, loose_blocks_, block_chain_, references_);
   heaviest_ = HeaviestTip{};
-  loose_blocks_.clear();
-  block_chain_.clear();
-  references_.clear();
 
   if (block_store_)
   {
@@ -482,24 +480,24 @@ MainChain::Blocks MainChain::TimeTravel(BlockHash start, int64_t limit) const
     auto ref_it{references_.find(GENESIS_DIGEST)};
     if (ref_it == references_.end())
     {
-	    // Perhaps there aren't any blocks on this chain.
-	    return Blocks{};
+      // Perhaps there aren't any blocks on this chain.
+      return Blocks{};
     }
     // Skip the very genesis block.
     if (!GetBlock(ref_it->second, &start))
     {
-	    return Blocks{};
+      return Blocks{};
     }
     // Now start points to the block right next to genesis.
   }
 
-  for (BlockHash current_hash{std::move(start)};
-       // stop once we have gathered enough blocks 
-       result.size() < lim
-       // genesis as the next hash indicates the tip of the chain
-       && current_hash != GENESIS_DIGEST;
-       // walk the stack
-       current_hash = std::move(next_hash))
+  BlockHash current_hash{std::move(start)};
+
+  while (
+      // stop once we have gathered enough blocks
+      result.size() < lim
+      // genesis as the next hash indicates the tip of the chain
+      && current_hash != GENESIS_DIGEST)
   {
     // lookup the block in storage
     auto block{GetBlock(current_hash, &next_hash)};
@@ -510,6 +508,8 @@ MainChain::Blocks MainChain::TimeTravel(BlockHash start, int64_t limit) const
     }
     // update the results
     result.push_back(std::move(block));
+    // walk the stack
+    current_hash = std::move(next_hash);
   }
 
   if (result.size() == lim && current_hash == GENESIS_DIGEST)
@@ -518,7 +518,7 @@ MainChain::Blocks MainChain::TimeTravel(BlockHash start, int64_t limit) const
     // exactly lim blocks and thus reached chain's end.
     // To notify requester of such a rare situation, we add one more terminating dummy block.
     // Note that result's size is thus greater than lim in this one case.
-    result.push_back(Block{});
+    result.push_back(std::make_shared<Block>());
   }
 
   return result;
@@ -1311,7 +1311,8 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
  */
 bool MainChain::LookupBlock(BlockHash const &hash, IntBlockPtr &block, BlockHash *next_hash) const
 {
-  return LookupBlockFromCache(hash, block, next_hash) || LookupBlockFromStorage(hash, block, next_hash);
+  return LookupBlockFromCache(hash, block, next_hash) ||
+         LookupBlockFromStorage(hash, block, next_hash);
 }
 
 /**
@@ -1322,7 +1323,8 @@ bool MainChain::LookupBlock(BlockHash const &hash, IntBlockPtr &block, BlockHash
  * @param[out] next_hash When non-null, pointer to a hash object to put block's next into
  * @return true if successful, otherwise false
  */
-bool MainChain::LookupBlockFromCache(BlockHash const &hash, IntBlockPtr &block, BlockHash *next_hash) const
+bool MainChain::LookupBlockFromCache(BlockHash const &hash, IntBlockPtr &block,
+                                     BlockHash *next_hash) const
 {
   FETCH_LOCK(lock_);
 
@@ -1335,15 +1337,17 @@ bool MainChain::LookupBlockFromCache(BlockHash const &hash, IntBlockPtr &block, 
       // We'll need to check if there is a unique block next to this one.
       switch (references_.count(hash))
       {
-        case 0: *next_hash = GENESIS_DIGEST;
-		break;
-	case 1: *next_hash = references_.find(hash)->second;
-		break;
-	default:
-		// ambiguous forward references need to be resolved from storage
-		// TODO (bipll): when this function is called from LookupBlock(), storage lookup
-		// is performed next; we'll probably need to cleanup forward references there
-		return false;
+      case 0:
+        *next_hash = GENESIS_DIGEST;
+        break;
+      case 1:
+        *next_hash = references_.find(hash)->second;
+        break;
+      default:
+        // ambiguous forward references need to be resolved from storage
+        // TODO (bipll): when this function is called from LookupBlock(), storage lookup
+        // is performed next; we'll probably need to cleanup forward references there
+        return false;
       }
     }
     block = it->second;
@@ -1361,7 +1365,8 @@ bool MainChain::LookupBlockFromCache(BlockHash const &hash, IntBlockPtr &block, 
  * @param[out] next_hash When non-null, pointer to a hash object to put block's next into
  * @return true if successful, otherwise false
  */
-bool MainChain::LookupBlockFromStorage(BlockHash const &hash, IntBlockPtr &block, BlockHash *next_hash) const
+bool MainChain::LookupBlockFromStorage(BlockHash const &hash, IntBlockPtr &block,
+                                       BlockHash *next_hash) const
 {
   if (block_store_)
   {

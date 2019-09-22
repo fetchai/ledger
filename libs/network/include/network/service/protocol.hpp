@@ -114,14 +114,14 @@ public:
   template <typename C, typename R, typename... Args>
   void ExposeWithClientContext(FunctionHandlerType n, C *instance, R (C::*function)(Args...))
   {
-    ExposeCallable<service::CallableClassMember<C, R(Args...), 1>>(
-      n, Callable::CLIENT_CONTEXT_ARG, instance, function);
+    ExposeCallable<service::CallableClassMember<C, R(Args...), 1>>(n, Callable::CLIENT_CONTEXT_ARG,
+                                                                   instance, function);
   }
 
   virtual void ConnectionDropped(ConnectionHandleType /*connection_handle*/)
   {}
 
-  void DumpMemberTable()
+  void DumpMemberTable() const
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Contents of function table");
     for (auto const &entry : members_)

@@ -86,5 +86,61 @@ constexpr auto Accumulate(F &&f, A &&a, B &&b,
                     std::forward<Seq>(seq)...);
 }
 
+template <class F>
+constexpr void ForEach(F &&) noexcept
+{}
+
+template <class F, class T>
+constexpr void ForEach(F &&f, T &&t)
+{
+  std::forward<F>(f)(std::forward<T>(t));
+}
+
+template <class F, class T, class... Ts>
+constexpr void ForEach(F &&f, T &&t, Ts &&... ts);
+
+template <class F, class T, class... Ts>
+constexpr void ForEach(F &&f, T &&t, Ts &&... ts)
+{
+  f(std::forward<T>(t));
+  ForEach(std::forward<F>(f), std::forward<Ts>(ts)...);
+}
+
+struct ZeroOne
+{
+  template <class T>
+  constexpr void operator()(T &&t) const
+  {
+    std::forward<T>(t) = std::decay_t<T>{};
+  }
+};
+
+template <class... Ts>
+constexpr void ZeroAll(Ts &&... ts)
+{
+  ForEach(ZeroOne{}, std::forward<Ts>(ts)...);
+}
+
+struct ClearOne
+{
+  template <class T>
+  constexpr decltype(std::declval<T>().clear()) operator()(T &&t) const
+  {
+    return std::forward<T>(t).clear();
+  }
+
+  template <class T>
+  constexpr decltype(std::declval<T>().Clear()) operator()(T &&t) const
+  {
+    return std::forward<T>(t).Clear();
+  }
+};
+
+template <class... Ts>
+constexpr void ClearAll(Ts &&... ts)
+{
+  ForEach(ClearOne{}, std::forward<Ts>(ts)...);
+}
+
 }  // namespace value_util
 }  // namespace fetch
