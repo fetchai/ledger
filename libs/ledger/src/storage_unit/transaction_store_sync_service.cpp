@@ -121,8 +121,8 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnInitial()
 
   //std::this_thread::sleep_for(std::chrono::milliseconds(10000));
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Notice: peers connected: ", muddle_.GetDirectlyConnectedPeers().empty());
-  state_machine_->Delay(std::chrono::milliseconds{1000});
+  //FETCH_LOG_INFO(LOGGING_NAME, "Notice: peers connected: ", muddle_.GetDirectlyConnectedPeers().empty());
+  //state_machine_->Delay(std::chrono::milliseconds{1000});
 
   return State::INITIAL;
   //return State::QUERY_OBJECT_COUNTS;

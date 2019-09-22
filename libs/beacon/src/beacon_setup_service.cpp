@@ -99,6 +99,8 @@ BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identit
   , rbc_{new CHANNEL_TYPE(endpoint_, identity_.identifier(),
          [this](MuddleAddress const &from, ConstByteArray const &payload) -> void {
 
+           FETCH_LOG_INFO(LOGGING_NAME, "got thing. ");
+
            DKGEnvelope   env;
            DKGSerializer serializer{payload};
            serializer >> env;
@@ -402,7 +404,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
                    " Minimum peer threshold requirement met for DKG");
 
     connections_ = ConvertToSet(can_see);
-    SendBroadcast(DKGEnvelope{ConnectionsMessage{connections_}});
+    SendBroadcast(0, DKGEnvelope{ConnectionsMessage{connections_}});
   }
 
   // Whether to proceed (if threshold peers have also met this condition)
@@ -830,11 +832,13 @@ BeaconSetupService::State BeaconSetupService::OnBeaconReady()
  *
  * @param env DKGEnvelope containing message to the broadcasted
  */
-void BeaconSetupService::SendBroadcast(DKGEnvelope const &env)
+void BeaconSetupService::SendBroadcast(uint16_t rnd, DKGEnvelope const &env)
 {
   DKGSerializer serialiser;
   serialiser << env;
-  rbc_->SetQuestion(ConstByteArray(ToString(state_machine_->state()) + std::to_string(failures_)), serialiser.data());
+  std::string question = std::to_string(rnd) + ToString(state_machine_->state()) + std::to_string(failures_);
+  FETCH_LOG_INFO(LOGGING_NAME, "Broadcast with qn: ", question);
+  rbc_->SetQuestion(ConstByteArray(question), serialiser.data());
 }
 
 /**
@@ -844,7 +848,8 @@ void BeaconSetupService::SendBroadcast(DKGEnvelope const &env)
 void BeaconSetupService::BroadcastShares()
 {
   beacon_->manager.GenerateCoefficients();
-  SendBroadcast(DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_SHARES),
+  FETCH_LOG_INFO(LOGGING_NAME, "B shares");
+  SendBroadcast(1, DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_SHARES),
                                                 beacon_->manager.GetCoefficients(), "signature"}});
   for (auto &cab_i : beacon_->aeon.members)
   {
@@ -902,7 +907,7 @@ void BeaconSetupService::BroadcastComplaints()
 
   FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                  " broadcasts complaints size ", complaints_local.size());
-  SendBroadcast(DKGEnvelope{ComplaintsMessage{complaints_local, "signature"}});
+  SendBroadcast(2, DKGEnvelope{ComplaintsMessage{complaints_local, "signature"}});
 }
 
 /**
@@ -920,7 +925,7 @@ void BeaconSetupService::BroadcastComplaintAnswers()
                    " received complaints from ", beacon_->manager.cabinet_index(reporter));
     complaint_answer.insert({reporter, beacon_->manager.GetOwnShares(reporter)});
   }
-  SendBroadcast(DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_COMPLAINT_ANSWERS),
+  SendBroadcast(3, DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_COMPLAINT_ANSWERS),
                                           complaint_answer, "signature"}});
 }
 
@@ -929,7 +934,7 @@ void BeaconSetupService::BroadcastComplaintAnswers()
  */
 void BeaconSetupService::BroadcastQualCoefficients()
 {
-  SendBroadcast(
+  SendBroadcast(4, 
       DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_QUAL_SHARES),
                                       beacon_->manager.GetQualCoefficients(), "signature"}});
 }
@@ -943,7 +948,7 @@ void BeaconSetupService::BroadcastQualComplaints()
 {
   // Qual complaints consist of all nodes from which we did not receive qual shares, or verification
   // of qual shares failed
-  SendBroadcast(DKGEnvelope{SharesMessage{
+  SendBroadcast(5, DKGEnvelope{SharesMessage{
       static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS),
       beacon_->manager.ComputeQualComplaints(qual_coefficients_received_), "signature"}});
 }
@@ -962,7 +967,7 @@ void BeaconSetupService::BroadcastReconstructionShares()
     beacon_->manager.AddReconstructionShare(in);
     complaint_shares.insert({in, beacon_->manager.GetReceivedShares(in)});
   }
-  SendBroadcast(
+  SendBroadcast(6, 
       DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_RECONSTRUCTION_SHARES),
                                 complaint_shares, "signature"}});
 }
@@ -987,12 +992,15 @@ void BeaconSetupService::OnDkgMessage(MuddleAddress const &       from,
   {
     auto connections_ptr = std::dynamic_pointer_cast<ConnectionsMessage>(msg_ptr);
 
+    FETCH_LOG_INFO(LOGGING_NAME, "got thing 1 (connections message). size: ", connections_ptr->connections_.size(), " from: ", from.ToBase64(), "state: ", ToString(state_machine_->state()));
+
     ready_connections_.insert({from, connections_ptr->connections_});
     break;
   }
   case DKGMessage::MessageType::COEFFICIENT:
   {
     auto coefficients_ptr = std::dynamic_pointer_cast<CoefficientsMessage>(msg_ptr);
+    FETCH_LOG_INFO(LOGGING_NAME, "got thing 2");
     if (coefficients_ptr != nullptr)
     {
       OnNewCoefficients(*coefficients_ptr, from);
@@ -1002,6 +1010,7 @@ void BeaconSetupService::OnDkgMessage(MuddleAddress const &       from,
   case DKGMessage::MessageType::SHARE:
   {
     auto share_ptr = std::dynamic_pointer_cast<SharesMessage>(msg_ptr);
+    FETCH_LOG_INFO(LOGGING_NAME, "got thing 3");
     if (share_ptr != nullptr)
     {
       OnExposedShares(*share_ptr, from);
@@ -1011,6 +1020,7 @@ void BeaconSetupService::OnDkgMessage(MuddleAddress const &       from,
   case DKGMessage::MessageType::COMPLAINT:
   {
     auto complaint_ptr = std::dynamic_pointer_cast<ComplaintsMessage>(msg_ptr);
+    FETCH_LOG_INFO(LOGGING_NAME, "got thing 4");
     if (complaint_ptr != nullptr)
     {
       OnComplaints(*complaint_ptr, from);
@@ -1297,7 +1307,7 @@ bool BeaconSetupService::BuildQual()
   if (qual.find(identity_.identifier()) == qual.end())
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Node: ", beacon_->manager.cabinet_index(),
-                   " build QUAL failed as not in QUAL");
+                   " build QUAL failed as not in QUAL. Qual size: ", qual.size());
     return false;
   }
   else if (qual.size() < QualSize())

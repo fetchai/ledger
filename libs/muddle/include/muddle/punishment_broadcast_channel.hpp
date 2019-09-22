@@ -290,9 +290,11 @@ public:
   void Enable(bool enable) override
   {
     FETCH_LOCK(lock_);
-    // for now this also has to be protected, since it is not a
-    // bottleneck
     enabled_ = enable;
+    //if(!enabled_)
+    //{
+    //  question_ = 
+    //}
   }
 
   std::weak_ptr<core::Runnable> GetRunnable() override
@@ -384,7 +386,15 @@ public:
 
           {
             FETCH_LOCK(lock_);
-            answers = question_.Update(threshold_, recvd_question);
+
+            if(recvd_question.question_ != question_.question_)
+            {
+              FETCH_LOG_DEBUG(LOGGING_NAME, "Note: ignoring non matching question");
+            }
+            else
+            {
+              answers = question_.Update(threshold_, recvd_question);
+            }
           }
 
 
