@@ -207,7 +207,9 @@ private:
 
   telemetry::CounterPtr         beacon_entropy_generated_total_;
   telemetry::CounterPtr         beacon_entropy_future_signature_seen_total_;
+  telemetry::CounterPtr         beacon_entropy_forced_to_time_out_total_;
   telemetry::GaugePtr<uint64_t> beacon_entropy_last_requested_;
+  telemetry::GaugePtr<uint64_t> beacon_entropy_last_generated_;
 };
 
 }  // namespace beacon

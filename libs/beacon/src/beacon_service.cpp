@@ -86,8 +86,13 @@ BeaconService::BeaconService(MuddleInterface &               muddle,
   , beacon_entropy_future_signature_seen_total_{telemetry::Registry::Instance().CreateCounter(
         "beacon_entropy_future_signature_seen_total",
         "The total number of times entropy has been generated")}
+  , beacon_entropy_forced_to_time_out_total_{telemetry::Registry::Instance().CreateCounter(
+        "beacon_entropy_forced_to_time_out_total",
+        "The total number of times entropy failed and timed out")}
   , beacon_entropy_last_requested_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
         "beacon_entropy_last_requested", "The last entropy value requested from the beacon")}
+  , beacon_entropy_last_generated_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        "beacon_entropy_last_generated", "The last entropy value able to be generated")}
 {
 
   // Attaching beacon ready callback handler
@@ -499,6 +504,7 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Forced to abort entropy generation. Peers not responding! Round: ", current_entropy_.round);
       add_signature_failures_ = 0;
+      beacon_entropy_forced_to_time_out_total_->add(1);
       return State::COMPLETE;
     }
 
@@ -537,6 +543,8 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
     current_entropy_.signature = active_exe_unit_->manager.GroupSignature();
     auto sign                  = current_entropy_.signature.getStr();
     current_entropy_.entropy   = crypto::Hash<crypto::SHA256>(crypto::Hash<crypto::SHA256>(sign));
+
+    beacon_entropy_last_generated_->set(current_entropy_.round);
 
     // Broadcasting the entropy to those listening, but not participating
     if (broadcasting_)
