@@ -51,9 +51,9 @@ public:
   virtual std::vector<std::string> Setup(const Flags &flags);
   virtual std::vector<std::string> Load(std::string source);
   virtual void Execute(std::string entrypoint, const Params params);
-  virtual void SetStdout(OutputHandler) = 0;
-  virtual void SetStdin(InputHandler) = 0;
-  virtual void SetStderr(OutputHandler) = 0;
+  virtual void SetStdout(OutputHandler) {}
+  virtual void SetStdin(InputHandler) {}
+  virtual void SetStderr(OutputHandler) {}
 
   virtual Status status(void) const { return status_; }
 protected:

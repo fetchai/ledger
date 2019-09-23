@@ -42,69 +42,23 @@ using namespace fetch::vm;
 TEST(VmDmlfTests, directHelloWorld)
 {
   // load the contents of the script file
-  /*
   auto const source = R"(
 function main()
 
-    printLn("Hello world!!");
+  printLn("Hello world!!");
 
 endfunction)";
-  */
 
-//  //auto executable = std::make_unique<Executable>();
-//  //auto module     = VMFactory::GetModule(VMFactory::USE_SMART_CONTRACTS);
-//
-//
-//
-//
-//    VM_Wrapper wrapper(VMFactory::USE_SMART_CONTRACTS);
-//
-//  // attempt to compile the program
-//  auto errors = wrapper.Load(source);
-//  //auto errors = VMFactory::Compile(module, source, *executable);
-//
-//  // detect compilation errors
-//  EXPECT_TRUE(errors.empty());
-//  //if (!errors.empty())
-//  //{
-//  //  std::cerr << "Failed to compile:\n";
-//
-//  //  for (auto const &line : errors)
-//  //  {
-//  //    std::cerr << line << '\n';
-//  //  }
-//
-//  //  return 1;
-//  //}
-//
-//  auto& vm = wrapper.vm_;
-//
-//  // create the VM instance
-//  //auto vm = std::make_unique<VM>(module.get()); 
-//  //vm->AttachOutputDevice(VM::STDOUT, std::cout);
-//
-//  // Execute the requested function
-//  bool const success = wrapper.Execute();
-//  //std::string error;
-//  //std::string console;
-//  //Variant     output;
-//  //bool const  success =
-//  //    vm->Execute(*wrapper.executable_, "main", error, output);
-//
-//  EXPECT_TRUE(success);
-//  //if (!success)
-//  //{
-//  //  std::cerr << error << std::endl;
-//  //  return 1;
-//  //}
-//  // if there is any console output print it
-//  if (!console.empty())
-//  {
-//    std::cout << console << std::endl;
-//  }
-//
+  fetch::dmlf::vm_wrapper_etch vm;
 
-  EXPECT_EQ(1, 1);
+  vm.Setup(fetch::dmlf::VmWrapperInterface::Flags());
+
+  auto errors = vm.Load(source);
+
+  EXPECT_TRUE(errors.empty());
+
+  vm.Execute("main", fetch::dmlf::VmWrapperInterface::Params());
+
 }
 
 
