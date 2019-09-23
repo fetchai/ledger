@@ -173,6 +173,7 @@ Ptr<VMTrainingPair> VMDataLoader::GetNext()
 
   for (fetch::math::SizeType i{1}; i < next.second.size(); i++)
   {
+    second = this->vm_->CreateNewObject<math::VMTensor>(next.second.at(i));
     TemplateParameter1 element(second, second->GetTypeId());
 
     AnyInteger index = AnyInteger(i, TypeIds::UInt16);
