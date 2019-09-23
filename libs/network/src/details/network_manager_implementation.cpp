@@ -56,7 +56,7 @@ void NetworkManagerImplementation::Start()
     }
   }
 
-  while(started_threads != number_of_threads_)
+  while (started_threads != number_of_threads_)
   {
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
   }

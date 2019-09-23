@@ -147,14 +147,14 @@ private:
     }
     else
     {
-      SendBroadcast(0, 
-          DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_SHARES),
-                                          beacon_->manager.GetCoefficients(), "signature"}});
+      SendBroadcast(
+          0, DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_SHARES),
+                                             beacon_->manager.GetCoefficients(), "signature"}});
       if (Failure(Failures::SEND_MULTIPLE_COEFFICIENTS))
       {
-        SendBroadcast(0, 
-            DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_SHARES),
-                                            beacon_->manager.GetCoefficients(), "signature"}});
+        SendBroadcast(
+            0, DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_SHARES),
+                                               beacon_->manager.GetCoefficients(), "signature"}});
       }
     }
   }
@@ -170,7 +170,7 @@ private:
     }
     // Send empty coefficients to everyone
     SendBroadcast(0, DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_SHARES),
-                                                  coefficients, "signature"}});
+                                                     coefficients, "signature"}});
   }
 
   void SendBadShares()
@@ -226,13 +226,14 @@ private:
         complaint_answers.insert({reporter, beacon_->manager.GetOwnShares(reporter)});
       }
     }
-    SendBroadcast(0, DKGEnvelope{SharesMessage{
-        static_cast<uint64_t>(State::WAIT_FOR_COMPLAINT_ANSWERS), complaint_answers, "signature"}});
+    SendBroadcast(
+        0, DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_COMPLAINT_ANSWERS),
+                                     complaint_answers, "signature"}});
     if (Failure(Failures::SEND_MULTIPLE_COMPLAINT_ANSWERS))
     {
-      SendBroadcast(0, 
-          DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_COMPLAINT_ANSWERS),
-                                    complaint_answers, "signature"}});
+      SendBroadcast(
+          0, DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_COMPLAINT_ANSWERS),
+                                       complaint_answers, "signature"}});
     }
   }
 
@@ -247,19 +248,20 @@ private:
       {
         coefficients.push_back(fake.getStr());
       }
-      SendBroadcast(0, DKGEnvelope{CoefficientsMessage{
-          static_cast<uint8_t>(State::WAIT_FOR_QUAL_SHARES), coefficients, "signature"}});
+      SendBroadcast(
+          0, DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_QUAL_SHARES),
+                                             coefficients, "signature"}});
     }
     else
     {
-      SendBroadcast(0, 
-          DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_QUAL_SHARES),
-                                          beacon_->manager.GetQualCoefficients(), "signature"}});
+      SendBroadcast(
+          0, DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_QUAL_SHARES),
+                                             beacon_->manager.GetQualCoefficients(), "signature"}});
       if (Failure(Failures::SEND_MULTIPLE_QUAL_COEFFICIENTS))
       {
-        SendBroadcast(0, 
-            DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_QUAL_SHARES),
-                                            beacon_->manager.GetQualCoefficients(), "signature"}});
+        SendBroadcast(0, DKGEnvelope{CoefficientsMessage{
+                             static_cast<uint8_t>(State::WAIT_FOR_QUAL_SHARES),
+                             beacon_->manager.GetQualCoefficients(), "signature"}});
       }
     }
 
@@ -275,26 +277,30 @@ private:
       {
         ++victim;
       }
-      SendBroadcast(0, DKGEnvelope{SharesMessage{
-          static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS),
-          {{victim->identifier(), beacon_->manager.GetReceivedShares(victim->identifier())}},
-          "signature"}});
+      SendBroadcast(
+          0, DKGEnvelope{SharesMessage{
+                 static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS),
+                 {{victim->identifier(), beacon_->manager.GetReceivedShares(victim->identifier())}},
+                 "signature"}});
     }
     else if (Failure(Failures::WITHOLD_RECONSTRUCTION_SHARES))
     {
-      SendBroadcast(0, DKGEnvelope{
-          SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS), {}, "signature"}});
+      SendBroadcast(0,
+                    DKGEnvelope{SharesMessage{
+                        static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS), {}, "signature"}});
     }
     else
     {
       SendBroadcast(0, DKGEnvelope{SharesMessage{
-          static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS),
-          beacon_->manager.ComputeQualComplaints(qual_coefficients_received_), "signature"}});
+                           static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS),
+                           beacon_->manager.ComputeQualComplaints(qual_coefficients_received_),
+                           "signature"}});
       if (Failure(Failures::SEND_MULTIPLE_QUAL_COMPLAINTS))
       {
         SendBroadcast(0, DKGEnvelope{SharesMessage{
-            static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS),
-            beacon_->manager.ComputeQualComplaints(qual_coefficients_received_), "signature"}});
+                             static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS),
+                             beacon_->manager.ComputeQualComplaints(qual_coefficients_received_),
+                             "signature"}});
       }
     }
   }
@@ -304,9 +310,9 @@ private:
     SharesExposedMap complaint_shares;
     if (Failure(Failures::WITHOLD_RECONSTRUCTION_SHARES))
     {
-      SendBroadcast(0, 
-          DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_RECONSTRUCTION_SHARES),
-                                    complaint_shares, "signature"}});
+      SendBroadcast(
+          0, DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_RECONSTRUCTION_SHARES),
+                                       complaint_shares, "signature"}});
     }
     else
     {
@@ -316,14 +322,14 @@ private:
         beacon_->manager.AddReconstructionShare(in);
         complaint_shares.insert({in, beacon_->manager.GetReceivedShares(in)});
       }
-      SendBroadcast(0,
-          DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_RECONSTRUCTION_SHARES),
-                                    complaint_shares, "signature"}});
+      SendBroadcast(
+          0, DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_RECONSTRUCTION_SHARES),
+                                       complaint_shares, "signature"}});
       if (Failure(Failures::SEND_MULTIPLE_RECONSTRUCTION_SHARES))
       {
-        SendBroadcast(0,
-            DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_RECONSTRUCTION_SHARES),
-                                      complaint_shares, "signature"}});
+        SendBroadcast(0, DKGEnvelope{SharesMessage{
+                             static_cast<uint64_t>(State::WAIT_FOR_RECONSTRUCTION_SHARES),
+                             complaint_shares, "signature"}});
       }
     }
   }
@@ -365,8 +371,8 @@ struct DkgMember
   }
 
   virtual void QueueCabinet(std::set<Identity> cabinet, uint32_t threshold) = 0;
-  virtual std::vector<std::weak_ptr<core::Runnable>> GetWeakRunnables()                   = 0;
-  virtual bool                          DkgFinished()                       = 0;
+  virtual std::vector<std::weak_ptr<core::Runnable>> GetWeakRunnables()     = 0;
+  virtual bool                                       DkgFinished()          = 0;
 
   static ProverPtr CreateNewCertificate()
   {
@@ -546,7 +552,7 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
     {
       auto all_runnables = member->GetWeakRunnables();
 
-      for(auto const &i : all_runnables)
+      for (auto const &i : all_runnables)
       {
         member->reactor.Attach(i);
       }

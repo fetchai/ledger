@@ -836,7 +836,8 @@ void Router::RoutePacket(PacketPtr packet, bool external)
     handle = LookupRandomHandle(packet->GetTargetRaw());
     if (handle)
     {
-      /* FETCH_LOG_WARN(logging_name_, "Speculative routing to peer: ", ToBase64(packet->GetTarget())); */
+      /* FETCH_LOG_WARN(logging_name_, "Speculative routing to peer: ",
+       * ToBase64(packet->GetTarget())); */
       SendToConnection(handle, packet);
     }
   }

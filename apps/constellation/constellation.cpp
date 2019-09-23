@@ -364,7 +364,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   {
     auto runnables = beacon_->GetWeakRunnables();
 
-    for(auto const &i : runnables)
+    for (auto const &i : runnables)
     {
       reactor_.Attach(i);
     }

@@ -276,10 +276,10 @@ MuddlePtr CreateMuddle(char const network[4], network::NetworkManager const &nm,
                        std::string const &external_address);
 
 MuddlePtr CreateMuddleFake(NetworkId const &network, ProverPtr certificate,
-                       network::NetworkManager const &nm, std::string const &external_address);
+                           network::NetworkManager const &nm, std::string const &external_address);
 
 MuddlePtr CreateMuddleFake(char const network[4], ProverPtr certificate,
-                       network::NetworkManager const &nm, std::string const &external_address);
+                           network::NetworkManager const &nm, std::string const &external_address);
 
 }  // namespace muddle
 }  // namespace fetch

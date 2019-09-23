@@ -34,8 +34,8 @@ constexpr char const *LOGGING_NAME = "RBC";
  * @param threshold Threshold number of Byzantine peers
  * @param dkg
  */
-RBC::RBC(Endpoint &endpoint, MuddleAddress address, CallbackFunction call_back, CertificatePtr, uint16_t channel,
-         bool ordered_delivery)
+RBC::RBC(Endpoint &endpoint, MuddleAddress address, CallbackFunction call_back, CertificatePtr,
+         uint16_t channel, bool ordered_delivery)
   : channel_{channel}
   , ordered_delivery_{ordered_delivery}
   , address_{std::move(address)}
@@ -77,7 +77,8 @@ RBC::RBC(Endpoint &endpoint, MuddleAddress address, CallbackFunction call_back, 
   });
 }
 
-RBC::~RBC(){}
+RBC::~RBC()
+{}
 
 /**
  * Enables or disables the RBC. Disabling will clear all state that
@@ -536,7 +537,7 @@ void RBC::Deliver(SerialisedMessage const &msg, uint32_t sender_index)
   deliver_msg_callback_(miner_id, msg);
   lock_.lock();
 
-  if(sender_index >= parties_.size())
+  if (sender_index >= parties_.size())
   {
     return;
   }
@@ -710,9 +711,9 @@ bool RBC::CheckTag(RBCMessage const &msg)
  */
 bool RBC::SetPartyFlag(uint32_t sender_index, TagType tag, MessageType msg_type)
 {
-  if(sender_index >= parties_.size())
+  if (sender_index >= parties_.size())
   {
-      return false;
+    return false;
   }
 
   auto &iter  = parties_[sender_index].flags[tag];
@@ -729,4 +730,3 @@ bool RBC::SetPartyFlag(uint32_t sender_index, TagType tag, MessageType msg_type)
 
 }  // namespace muddle
 }  // namespace fetch
-

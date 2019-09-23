@@ -30,12 +30,12 @@ class FakeNetwork
 public:
   struct PacketQueueAndConnections;
 
-  using Address              = Packet::Address;  // == a crypto::Identity.identifier_
-  using Addresses            = MuddleInterface::Addresses;
+  using Address                      = Packet::Address;  // == a crypto::Identity.identifier_
+  using Addresses                    = MuddleInterface::Addresses;
   using PacketQueueAndConnectionsPtr = std::shared_ptr<PacketQueueAndConnections>;
-  using FakeNetworkImpl          = std::unordered_map<Address, PacketQueueAndConnectionsPtr>;
-  using PacketPtr              = fetch::muddle::SubscriptionRegistrar::PacketPtr;
-  //using Payload              = Packet::Payload;
+  using FakeNetworkImpl              = std::unordered_map<Address, PacketQueueAndConnectionsPtr>;
+  using PacketPtr                    = fetch::muddle::SubscriptionRegistrar::PacketPtr;
+  // using Payload              = Packet::Payload;
 
   static Addresses GetConnections(Address const &of)
   {
@@ -46,7 +46,7 @@ public:
   static void Register(Address const &of)
   {
     std::lock_guard<std::mutex> lock(network_lock_);
-    if(!network_[of])
+    if (!network_[of])
     {
       network_[of] = std::make_shared<PacketQueueAndConnections>();
     }
@@ -69,12 +69,12 @@ public:
   {
     std::lock_guard<std::mutex> lock(network_lock_);
 
-    if(network_.find(from) != network_.end())
+    if (network_.find(from) != network_.end())
     {
       network_[from]->Connect(to);
     }
 
-    if(network_.find(to) != network_.end())
+    if (network_.find(to) != network_.end())
     {
       network_[to]->Connect(from);
     }
@@ -92,13 +92,13 @@ public:
 
     {
       std::lock_guard<std::mutex> lock(network_lock_);
-      if(network_.find(to) != network_.end())
+      if (network_.find(to) != network_.end())
       {
         queue = network_[to];
       }
     }
 
-    if(queue)
+    if (queue)
     {
       queue->Push(std::move(packet));
     }
@@ -110,15 +110,15 @@ public:
 
     {
       std::lock_guard<std::mutex> lock(network_lock_);
-      if(network_.find(to) != network_.end())
+      if (network_.find(to) != network_.end())
       {
         queue = network_[to];
       }
     }
 
-    if(queue)
+    if (queue)
     {
-      return(queue->Pop(packet));
+      return (queue->Pop(packet));
     }
 
     return false;
@@ -137,7 +137,7 @@ public:
     {
       std::lock_guard<std::mutex> lock(lock_);
 
-      if(!packets_.empty())
+      if (!packets_.empty())
       {
         ret = std::move(packets_.back());
         packets_.pop_back();
@@ -159,25 +159,24 @@ public:
       connections_.insert(address);
     }
 
-    //void Diso(Address const &address)
+    // void Diso(Address const &address)
     //{
     //  std::lock_guard<std::mutex> lock(lock_);
     //  connections_.insert(address);
     //}
 
-    std::mutex         lock_;
+    std::mutex            lock_;
     std::deque<PacketPtr> packets_;
-    Addresses          connections_;
+    Addresses             connections_;
   };
 
-  static std::mutex network_lock_;
+  static std::mutex      network_lock_;
   static FakeNetworkImpl network_;
 };
 
 class FakeMuddleEndpoint : public MuddleEndpoint
 {
 public:
-
   using Address              = Packet::Address;  // == a crypto::Identity.identifier_
   using PacketPtr            = std::shared_ptr<Packet>;
   using Payload              = Packet::Payload;
@@ -188,15 +187,16 @@ public:
   using Prover               = crypto::Prover;
   using DirectMessageHandler = std::function<void(Handle, PacketPtr)>;
 
-  //using RoutingTable = std::unordered_map<Packet::RawAddress, RoutingData>;
+  // using RoutingTable = std::unordered_map<Packet::RawAddress, RoutingData>;
 
   //// Helper functions
-  //static Packet::RawAddress ConvertAddress(Packet::Address const &address);
-  //static Packet::Address    ConvertAddress(Packet::RawAddress const &address);
+  // static Packet::RawAddress ConvertAddress(Packet::Address const &address);
+  // static Packet::Address    ConvertAddress(Packet::RawAddress const &address);
 
   // Construction / Destruction
-  FakeMuddleEndpoint(NetworkId network_id, Address address, /*MuddleRegister &reg, Dispatcher &dispatcher,*/
-         Prover *certificate = nullptr, bool sign_broadcasts = false)
+  FakeMuddleEndpoint(NetworkId network_id,
+                     Address   address, /*MuddleRegister &reg, Dispatcher &dispatcher,*/
+                     Prover *certificate = nullptr, bool sign_broadcasts = false)
     : network_id_{network_id}
     , address_{address}
     , certificate_{certificate}
@@ -207,19 +207,19 @@ public:
     FETCH_UNUSED(sign_broadcasts_);
 
     thread_ = std::make_shared<std::thread>([this]() {
-        PacketPtr next_packet;
+      PacketPtr next_packet;
 
-        while(running_)
+      while (running_)
+      {
+        if (FakeNetwork::GetNextPacket(address_, next_packet))
         {
-          if(FakeNetwork::GetNextPacket(address_, next_packet))
-          {
-            registrar_.Dispatch(next_packet, next_packet->GetSender());
-          }
-          else
-          {
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
-          }
+          registrar_.Dispatch(next_packet, next_packet->GetSender());
         }
+        else
+        {
+          std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+      }
     });
   }
 
@@ -239,19 +239,21 @@ public:
     return Send(address, service, channel, msg_counter_++, message, MuddleEndpoint::OPTION_DEFAULT);
   }
 
-  void Send(Address const &address, uint16_t service, uint16_t channel, Payload const &message, Options options)
+  void Send(Address const &address, uint16_t service, uint16_t channel, Payload const &message,
+            Options options)
   {
     return Send(address, service, channel, msg_counter_++, message, options);
   }
 
-  void Send(Address const &address, uint16_t service, uint16_t channel, uint16_t message_num, Payload const &payload)
+  void Send(Address const &address, uint16_t service, uint16_t channel, uint16_t message_num,
+            Payload const &payload)
   {
     return Send(address, service, channel, message_num, payload, MuddleEndpoint::OPTION_DEFAULT);
   }
 
-  PacketPtr FormatPacket(Packet::Address const &from, NetworkId const &network,
-                                 uint16_t service, uint16_t channel, uint16_t counter, uint8_t ttl,
-                                 Packet::Payload const &payload)
+  PacketPtr FormatPacket(Packet::Address const &from, NetworkId const &network, uint16_t service,
+                         uint16_t channel, uint16_t counter, uint8_t ttl,
+                         Packet::Payload const &payload)
   {
     auto packet = std::make_shared<Packet>(from, network.value());
     packet->SetService(service);
@@ -272,11 +274,11 @@ public:
     return p;
   }
 
-  void Send(Address const &address, uint16_t service, uint16_t channel, uint16_t message_num, Payload const &payload, Options options)
+  void Send(Address const &address, uint16_t service, uint16_t channel, uint16_t message_num,
+            Payload const &payload, Options options)
   {
     // format the packet
-    auto packet =
-        FormatPacket(address_, network_id_, service, channel, message_num, 40, payload);
+    auto packet = FormatPacket(address_, network_id_, service, channel, message_num, 40, payload);
     packet->SetTarget(address);
 
     if (options & OPTION_EXCHANGE)
@@ -289,40 +291,41 @@ public:
     FakeNetwork::DeployPacket(address, packet);
   }
 
-  void Broadcast(uint16_t /*service*/, uint16_t /*channel*/, Payload const &/*payload*/) 
+  void Broadcast(uint16_t /*service*/, uint16_t /*channel*/, Payload const & /*payload*/)
   {
     throw 1;
     return;
   }
 
-  Response Exchange(Address const &/*address*/, uint16_t /*service*/, uint16_t /*channel*/, Payload const &/*request*/) 
+  Response Exchange(Address const & /*address*/, uint16_t /*service*/, uint16_t /*channel*/,
+                    Payload const & /*request*/)
   {
-      throw 1;
-      return {};
+    throw 1;
+    return {};
   }
 
-  SubscriptionPtr Subscribe(uint16_t service, uint16_t channel) 
+  SubscriptionPtr Subscribe(uint16_t service, uint16_t channel)
   {
-      return registrar_.Register(service, channel);
+    return registrar_.Register(service, channel);
   }
 
-  SubscriptionPtr Subscribe(Address const &address, uint16_t service, uint16_t channel) 
+  SubscriptionPtr Subscribe(Address const &address, uint16_t service, uint16_t channel)
   {
-      return registrar_.Register(address, service, channel);
+    return registrar_.Register(address, service, channel);
   }
 
-  NetworkId const &network_id() const 
+  NetworkId const &network_id() const
   {
-      return network_id_;
+    return network_id_;
   }
 
-  AddressList GetDirectlyConnectedPeers() const 
+  AddressList GetDirectlyConnectedPeers() const
   {
     auto set_peers = GetDirectlyConnectedPeerSet();
 
     AddressList ret;
 
-    for(auto const &peer : set_peers)
+    for (auto const &peer : set_peers)
     {
       ret.push_back(peer);
     }
@@ -336,110 +339,201 @@ public:
   }
 
 private:
-  NetworkId network_id_;
-  Address address_;
-  Prover *certificate_;
-  bool sign_broadcasts_;
-  SubscriptionRegistrar registrar_;
-  std::atomic<bool>     running_{true};
-  std::atomic<uint16_t> msg_counter_{0};
+  NetworkId                    network_id_;
+  Address                      address_;
+  Prover *                     certificate_;
+  bool                         sign_broadcasts_;
+  SubscriptionRegistrar        registrar_;
+  std::atomic<bool>            running_{true};
+  std::atomic<uint16_t>        msg_counter_{0};
   std::shared_ptr<std::thread> thread_;
 };
 
 class MuddleFake final : public MuddleInterface, public std::enable_shared_from_this<MuddleFake>
 {
 public:
-  using CertificatePtr      = std::shared_ptr<crypto::Prover>;
-  using Uri                 = network::Uri;
-  using UriList             = std::vector<Uri>;
-  using NetworkManager      = network::NetworkManager;
-  using FakeMuddleEndpoint  = muddle::FakeMuddleEndpoint;
-  using Promise             = service::Promise;
-  using Identity            = crypto::Identity;
-  using Address             = Router::Address;
-  using ConnectionState     = PeerConnectionList::ConnectionState;
-  using Handle              = network::AbstractConnection::connection_handle_type;
-  using Server              = std::shared_ptr<network::AbstractNetworkServer>;
-  using ServerList          = std::vector<Server>;
-  //using ConnectionDataList = std::vector<ConnectionData>;
-  //using ConnectionMap      = std::unordered_map<Address, Uri>;
+  using CertificatePtr     = std::shared_ptr<crypto::Prover>;
+  using Uri                = network::Uri;
+  using UriList            = std::vector<Uri>;
+  using NetworkManager     = network::NetworkManager;
+  using FakeMuddleEndpoint = muddle::FakeMuddleEndpoint;
+  using Promise            = service::Promise;
+  using Identity           = crypto::Identity;
+  using Address            = Router::Address;
+  using ConnectionState    = PeerConnectionList::ConnectionState;
+  using Handle             = network::AbstractConnection::connection_handle_type;
+  using Server             = std::shared_ptr<network::AbstractNetworkServer>;
+  using ServerList         = std::vector<Server>;
+  // using ConnectionDataList = std::vector<ConnectionData>;
+  // using ConnectionMap      = std::unordered_map<Address, Uri>;
 
   // Construction / Destruction
   MuddleFake(NetworkId network_id, CertificatePtr certificate, NetworkManager const &nm,
-         bool sign_packets = false, bool sign_broadcasts = false,
-         std::string external_address = "127.0.0.1")
-  : name_{GenerateLoggingName("Muddle", network_id)}
-  , certificate_(std::move(certificate))
-  , external_address_(std::move(external_address))
-  , node_address_(certificate_->identity().identifier())
-  , network_manager_(nm)
-  , sign_packets_{sign_packets}
-  , sign_broadcasts_{sign_broadcasts}
-  , network_id_{network_id}
-  , fake_muddle_endpoint_{network_id_, node_address_, certificate_.get(), sign_broadcasts_}
+             bool sign_packets = false, bool sign_broadcasts = false,
+             std::string external_address = "127.0.0.1")
+    : name_{GenerateLoggingName("Muddle", network_id)}
+    , certificate_(std::move(certificate))
+    , external_address_(std::move(external_address))
+    , node_address_(certificate_->identity().identifier())
+    , network_manager_(nm)
+    , sign_packets_{sign_packets}
+    , sign_broadcasts_{sign_broadcasts}
+    , network_id_{network_id}
+    , fake_muddle_endpoint_{network_id_, node_address_, certificate_.get(), sign_broadcasts_}
   {
     FETCH_UNUSED(certificate_);
     FETCH_UNUSED(sign_broadcasts_);
     FETCH_UNUSED(sign_packets_);
-
   }
 
   MuddleFake(MuddleFake const &) = delete;
   MuddleFake(MuddleFake &&)      = delete;
-  ~MuddleFake() = default;
+  ~MuddleFake()                  = default;
 
   //// Operators
-  //Muddle &operator=(Muddle const &) = delete;
-  //Muddle &operator=(Muddle &&) = delete;
+  // Muddle &operator=(Muddle const &) = delete;
+  // Muddle &operator=(Muddle &&) = delete;
 
   /// @name Muddle Setup
   /// @{
-  bool            Start(Peers const &/*peers*/, Ports const &/*ports*/) override {FakeNetwork::Register(node_address_); return true;};
-  bool            Start(Uris const &/*peers*/, Ports const &/*ports*/) override {FakeNetwork::Register(node_address_); return true;};
-  bool            Start(Ports const &/*ports*/) override {FakeNetwork::Register(node_address_); return true;};
-  void            Stop() override { FakeNetwork::Deregister(node_address_); };
-  MuddleEndpoint &GetEndpoint() override {return fake_muddle_endpoint_;};
+  bool Start(Peers const & /*peers*/, Ports const & /*ports*/) override
+  {
+    FakeNetwork::Register(node_address_);
+    return true;
+  };
+  bool Start(Uris const & /*peers*/, Ports const & /*ports*/) override
+  {
+    FakeNetwork::Register(node_address_);
+    return true;
+  };
+  bool Start(Ports const & /*ports*/) override
+  {
+    FakeNetwork::Register(node_address_);
+    return true;
+  };
+  void Stop() override
+  {
+    FakeNetwork::Deregister(node_address_);
+  };
+  MuddleEndpoint &GetEndpoint() override
+  {
+    return fake_muddle_endpoint_;
+  };
   /// @}
 
   /// @name Muddle Status
   /// @{
-  NetworkId const &GetNetwork() const override {return network_id_;};
-  Address const &  GetAddress() const override {return node_address_;};
-  Ports            GetListeningPorts()         const override {throw 1; return {};};
-  Addresses        GetDirectlyConnectedPeers() const override { return FakeNetwork::GetConnections(node_address_); };
-  Addresses        GetIncomingConnectedPeers() const override {throw 1; return {};};
-  Addresses        GetOutgoingConnectedPeers() const override {throw 1; return {};};
+  NetworkId const &GetNetwork() const override
+  {
+    return network_id_;
+  };
+  Address const &GetAddress() const override
+  {
+    return node_address_;
+  };
+  Ports GetListeningPorts() const override
+  {
+    throw 1;
+    return {};
+  };
+  Addresses GetDirectlyConnectedPeers() const override
+  {
+    return FakeNetwork::GetConnections(node_address_);
+  };
+  Addresses GetIncomingConnectedPeers() const override
+  {
+    throw 1;
+    return {};
+  };
+  Addresses GetOutgoingConnectedPeers() const override
+  {
+    throw 1;
+    return {};
+  };
 
-  std::size_t GetNumDirectlyConnectedPeers() const override { return GetDirectlyConnectedPeers().size();};
-  bool        IsDirectlyConnected(Address const &/*address*/) const override {throw 1; return {};};
+  std::size_t GetNumDirectlyConnectedPeers() const override
+  {
+    return GetDirectlyConnectedPeers().size();
+  };
+  bool IsDirectlyConnected(Address const & /*address*/) const override
+  {
+    throw 1;
+    return {};
+  };
   /// @}
 
   /// @name Peer Control
   /// @{
-  PeerSelectionMode GetPeerSelectionMode() const override {throw 1; return {};};
-  void              SetPeerSelectionMode(PeerSelectionMode /*mode*/) override {throw 1; return;};
-  Addresses         GetRequestedPeers() const override { throw 1; return {}; };
-  void              ConnectTo(Address const &address) override { FakeNetwork::Connect(node_address_, address); };
-  void              ConnectTo(Addresses const &/*addresses*/) override {throw 1; return;};
-  void              ConnectTo(Address const &address, network::Uri const &/*uri_hint*/) override {FakeNetwork::Connect(node_address_, address);};
-  void              ConnectTo(AddressHints const &/*address_hints*/) override {throw 1; return;};
-  void              DisconnectFrom(Address const &/*address*/) override {throw 1; return;};
-  void              DisconnectFrom(Addresses const &/*addresses*/) override {throw 1; return;};
-  void              SetConfidence(Address const &/*address*/, Confidence /*confidence*/) override {throw 1; return;};
-  void              SetConfidence(Addresses const &/*addresses*/, Confidence /*confidence*/) override {throw 1; return;};
-  void              SetConfidence(ConfidenceMap const &/*map*/) override {throw 1; return;};
+  PeerSelectionMode GetPeerSelectionMode() const override
+  {
+    throw 1;
+    return {};
+  };
+  void SetPeerSelectionMode(PeerSelectionMode /*mode*/) override
+  {
+    throw 1;
+    return;
+  };
+  Addresses GetRequestedPeers() const override
+  {
+    throw 1;
+    return {};
+  };
+  void ConnectTo(Address const &address) override
+  {
+    FakeNetwork::Connect(node_address_, address);
+  };
+  void ConnectTo(Addresses const & /*addresses*/) override
+  {
+    throw 1;
+    return;
+  };
+  void ConnectTo(Address const &address, network::Uri const & /*uri_hint*/) override
+  {
+    FakeNetwork::Connect(node_address_, address);
+  };
+  void ConnectTo(AddressHints const & /*address_hints*/) override
+  {
+    throw 1;
+    return;
+  };
+  void DisconnectFrom(Address const & /*address*/) override
+  {
+    throw 1;
+    return;
+  };
+  void DisconnectFrom(Addresses const & /*addresses*/) override
+  {
+    throw 1;
+    return;
+  };
+  void SetConfidence(Address const & /*address*/, Confidence /*confidence*/) override
+  {
+    throw 1;
+    return;
+  };
+  void SetConfidence(Addresses const & /*addresses*/, Confidence /*confidence*/) override
+  {
+    throw 1;
+    return;
+  };
+  void SetConfidence(ConfidenceMap const & /*map*/) override
+  {
+    throw 1;
+    return;
+  };
   /// @}
 
-//  /// @name Internal Accessors
-//  /// @{
-//  Dispatcher const &          dispatcher() const;
-//  Router const &              router() const;
-//  MuddleRegister const &      connection_register() const;
-//  PeerConnectionList const &  connection_list() const;
-//  DirectMessageService const &direct_message_service() const;
-//  PeerSelector const &        peer_selector() const;
-//  ServerList const &          servers() const;
-//  /// @}
+  //  /// @name Internal Accessors
+  //  /// @{
+  //  Dispatcher const &          dispatcher() const;
+  //  Router const &              router() const;
+  //  MuddleRegister const &      connection_register() const;
+  //  PeerConnectionList const &  connection_list() const;
+  //  DirectMessageService const &direct_message_service() const;
+  //  PeerSelector const &        peer_selector() const;
+  //  ServerList const &          servers() const;
+  //  /// @}
 
 private:
   using Client          = std::shared_ptr<network::AbstractConnection>;
@@ -450,9 +544,9 @@ private:
   using Duration        = Clock::duration;
   using PeerSelectorPtr = std::shared_ptr<PeerSelector>;
 
-  //void RunPeriodicMaintenance();
-  //void CreateTcpServer(uint16_t port);
-  //void CreateTcpClient(Uri const &peer);
+  // void RunPeriodicMaintenance();
+  // void CreateTcpServer(uint16_t port);
+  // void CreateTcpClient(Uri const &peer);
 
   std::string const    name_;
   char const *const    logging_name_{name_.c_str()};

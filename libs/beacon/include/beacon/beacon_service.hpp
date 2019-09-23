@@ -149,6 +149,7 @@ protected:
 
 private:
   bool AddSignature(SignatureShare share);
+  uint16_t add_signature_failures_{0};
 
   mutable std::mutex mutex_;
   CertificatePtr     certificate_;

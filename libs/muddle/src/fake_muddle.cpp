@@ -26,4 +26,3 @@ FakeNetwork::FakeNetworkImpl FakeNetwork::network_{};
 
 }  // namespace muddle
 }  // namespace fetch
-

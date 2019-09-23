@@ -29,8 +29,8 @@
 #include "telemetry/gauge.hpp"
 #include "telemetry/telemetry.hpp"
 
-#include "muddle/rbc.hpp"
 #include "muddle/punishment_broadcast_channel.hpp"
+#include "muddle/rbc.hpp"
 
 #include "beacon/aeon.hpp"
 
@@ -105,10 +105,10 @@ public:
   using SharesMessage           = dkg::SharesMessage;
   using DKGSerializer           = dkg::DKGSerializer;
   using ManifestCacheInterface  = ledger::ManifestCacheInterface;
-  using SharesExposedMap        = std::unordered_map<MuddleAddress, std::pair<MessageShare, MessageShare>>;
-  using DeadlineTimer           = fetch::moment::DeadlineTimer;
-  using SignatureShare          = AeonExecutionUnit::SignatureShare;
-  using BeaconManager           = dkg::BeaconManager;
+  using SharesExposedMap = std::unordered_map<MuddleAddress, std::pair<MessageShare, MessageShare>>;
+  using DeadlineTimer    = fetch::moment::DeadlineTimer;
+  using SignatureShare   = AeonExecutionUnit::SignatureShare;
+  using BeaconManager    = dkg::BeaconManager;
   using GroupPubKeyPlusSigShare = std::pair<std::string, SignatureShare>;
   using CertificatePtr          = std::shared_ptr<dkg::BeaconManager::Certificate>;
 

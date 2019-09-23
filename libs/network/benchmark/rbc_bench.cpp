@@ -16,21 +16,21 @@
 //
 //------------------------------------------------------------------------------
 
-#include "muddle/rbc.hpp"
 #include "muddle/punishment_broadcast_channel.hpp"
+#include "muddle/rbc.hpp"
 
+#include "core/byte_array/const_byte_array.hpp"
+#include "core/reactor.hpp"
+#include "crypto/ecdsa.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
 #include "muddle/subscription.hpp"
-#include "core/reactor.hpp"
-#include "core/byte_array/const_byte_array.hpp"
-#include "crypto/ecdsa.hpp"
 
 #include "benchmark/benchmark.h"
 
-#include <vector>
 #include <type_traits>
+#include <vector>
 
 using namespace fetch;
 using namespace fetch::muddle;
@@ -57,7 +57,7 @@ struct AbstractRBCNode
 {
   using CertificatePtr = std::shared_ptr<Prover>;
   using Muddle         = fetch::muddle::MuddlePtr;
-  using ConstByteArray  = byte_array::ConstByteArray;
+  using ConstByteArray = byte_array::ConstByteArray;
   using MuddleAddress  = byte_array::ConstByteArray;
   using MessageType    = byte_array::ConstByteArray;
 
@@ -67,19 +67,19 @@ struct AbstractRBCNode
     , reactor{"ReactorName" + std::to_string(index)}
     , muddle_certificate{CreateNewCertificate()}
   {
-    if(USING_FAKE_MUDDLES)
+    if (USING_FAKE_MUDDLES)
     {
-     muddle = muddle::CreateMuddleFake("Test", muddle_certificate, network_manager, "127.0.0.1");
+      muddle = muddle::CreateMuddleFake("Test", muddle_certificate, network_manager, "127.0.0.1");
     }
     else
     {
-     muddle = muddle::CreateMuddle("Test", muddle_certificate, network_manager, "127.0.0.1");
+      muddle = muddle::CreateMuddle("Test", muddle_certificate, network_manager, "127.0.0.1");
     }
   }
 
   void Start()
   {
-    if(!USING_FAKE_MUDDLES)
+    if (!USING_FAKE_MUDDLES)
     {
       network_manager.Start();
     }
@@ -105,45 +105,45 @@ struct AbstractRBCNode
 
   uint64_t MessagesReceived()
   {
-   std::lock_guard<std::mutex> lock(mutex);
-   return answers.size();
+    std::lock_guard<std::mutex> lock(mutex);
+    return answers.size();
   }
 
   void Clear()
   {
-   std::lock_guard<std::mutex> lock(mutex);
-   answers.clear();
+    std::lock_guard<std::mutex> lock(mutex);
+    answers.clear();
   }
 
-  virtual void ResetCabinet(RBC::CabinetMembers const & members) = 0;
-  virtual void SendMessage() = 0;
-  virtual void Enable(bool enable) = 0;
-  virtual void PrepareForTest(uint16_t test) = 0;
+  virtual void ResetCabinet(RBC::CabinetMembers const &members) = 0;
+  virtual void SendMessage()                                    = 0;
+  virtual void Enable(bool enable)                              = 0;
+  virtual void PrepareForTest(uint16_t test)                    = 0;
 
-  uint16_t                muddle_port;
-  network::NetworkManager network_manager;
-  core::Reactor           reactor;
-  ProverPtr               muddle_certificate;
-  Muddle                  muddle;
+  uint16_t                             muddle_port;
+  network::NetworkManager              network_manager;
+  core::Reactor                        reactor;
+  ProverPtr                            muddle_certificate;
+  Muddle                               muddle;
   std::mutex                           mutex;
   std::map<MuddleAddress, MessageType> answers;
-  bool muddle_is_fake{true};
+  bool                                 muddle_is_fake{true};
 };
 
 struct RBCNode : public AbstractRBCNode
 {
-  using RBC                            = fetch::muddle::RBC;
+  using RBC                                 = fetch::muddle::RBC;
   static constexpr const char *LOGGING_NAME = "RBCNode";
 
   RBCNode(uint16_t port_number, uint16_t index)
     : AbstractRBCNode(port_number, index)
     , rbc{muddle->GetEndpoint(), muddle_certificate->identity().identifier(),
-      [this](MuddleAddress const &from, ConstByteArray const &payload) -> void {
-                   std::lock_guard<std::mutex> lock(mutex);
-                   answers[from] = payload;
-   }, 0}
-  {
-  }
+          [this](MuddleAddress const &from, ConstByteArray const &payload) -> void {
+            std::lock_guard<std::mutex> lock(mutex);
+            answers[from] = payload;
+          },
+          0}
+  {}
 
   ~RBCNode()
   {
@@ -166,24 +166,25 @@ struct RBCNode : public AbstractRBCNode
   }
 
   void PrepareForTest(uint16_t) override
-  {
-  }
+  {}
 
   RBC rbc;
 };
 
 struct PBCNode : public AbstractRBCNode
 {
-  using PBC = fetch::muddle::PunishmentBroadcastChannel;
+  using PBC                                 = fetch::muddle::PunishmentBroadcastChannel;
   static constexpr const char *LOGGING_NAME = "PBCNode";
 
   PBCNode(uint16_t port_number, uint16_t index)
     : AbstractRBCNode(port_number, index)
-    , punishment_broadcast_channel{muddle->GetEndpoint(), muddle_certificate->identity().identifier(),
-      [this](MuddleAddress const &from, ConstByteArray const &payload) -> void {
-                   std::lock_guard<std::mutex> lock(mutex);
-                   answers[from] = payload;
-    }, muddle_certificate, 0}
+    , punishment_broadcast_channel{
+          muddle->GetEndpoint(), muddle_certificate->identity().identifier(),
+          [this](MuddleAddress const &from, ConstByteArray const &payload) -> void {
+            std::lock_guard<std::mutex> lock(mutex);
+            answers[from] = payload;
+          },
+          muddle_certificate, 0}
   {
     reactor.Attach(punishment_broadcast_channel.GetRunnable());
     reactor.Start();
@@ -202,7 +203,8 @@ struct PBCNode : public AbstractRBCNode
   void SendMessage() override
   {
     std::string question = "What is your answer to: " + std::to_string(iteration);
-    std::string answer   = "Answer: " + std::to_string(muddle_port) + " rnd: " + std::to_string(iteration);
+    std::string answer =
+        "Answer: " + std::to_string(muddle_port) + " rnd: " + std::to_string(iteration);
     punishment_broadcast_channel.SetQuestion(question, answer);
   }
 
@@ -217,15 +219,16 @@ struct PBCNode : public AbstractRBCNode
   }
 
   uint16_t iteration = 0;
-  PBC punishment_broadcast_channel;
+  PBC      punishment_broadcast_channel;
 };
 
-template <class RBC_TYPE> void DKGWithEcho(benchmark::State &state)
+template <class RBC_TYPE>
+void DKGWithEcho(benchmark::State &state)
 {
-  char const *LOGGING_NAME = RBC_TYPE::LOGGING_NAME;
-  bool REUSING_MUDDLES = true;
+  char const *LOGGING_NAME    = RBC_TYPE::LOGGING_NAME;
+  bool        REUSING_MUDDLES = true;
 
-  if(std::is_same<RBC_TYPE, RBCNode>::value || USING_FAKE_MUDDLES)
+  if (std::is_same<RBC_TYPE, RBCNode>::value || USING_FAKE_MUDDLES)
   {
     REUSING_MUDDLES = false;
   }
@@ -249,7 +252,7 @@ template <class RBC_TYPE> void DKGWithEcho(benchmark::State &state)
     {
       state.PauseTiming();
 
-      if(!REUSING_MUDDLES)
+      if (!REUSING_MUDDLES)
       {
         nodes.clear();
       }
@@ -260,9 +263,9 @@ template <class RBC_TYPE> void DKGWithEcho(benchmark::State &state)
       for (uint16_t i = 0; i < nodes_in_test; ++i)
       {
         auto &node = nodes[i];
-        if(!node)
+        if (!node)
         {
-          node = std::make_unique<RBC_TYPE>(unique_port+i, i);
+          node = std::make_unique<RBC_TYPE>(unique_port + i, i);
           node->Start();
         }
         node->Clear();
@@ -275,30 +278,30 @@ template <class RBC_TYPE> void DKGWithEcho(benchmark::State &state)
         }
       }
 
-      for(auto const &member : cabinet)
+      for (auto const &member : cabinet)
       {
         FETCH_LOG_INFO(LOGGING_NAME, "Cabinet member: ", member.ToBase64());
       }
 
-      for(auto const &node : nodes)
+      for (auto const &node : nodes)
       {
         node->ResetCabinet(cabinet);
       }
 
       // Wait until fully connected
-      while(true)
+      while (true)
       {
         bool connected = true;
 
-        for(auto const &node : nodes)
+        for (auto const &node : nodes)
         {
-          if(node->muddle->GetNumDirectlyConnectedPeers() != nodes_in_test - 1)
+          if (node->muddle->GetNumDirectlyConnectedPeers() != nodes_in_test - 1)
           {
             connected = false;
           }
         }
 
-        if(connected)
+        if (connected)
         {
           break;
         }
@@ -310,7 +313,7 @@ template <class RBC_TYPE> void DKGWithEcho(benchmark::State &state)
     FETCH_LOG_INFO(LOGGING_NAME, "Sending messages");
 
     // Send all messages
-    for(auto const &node : nodes)
+    for (auto const &node : nodes)
     {
       node->SendMessage();
     }
@@ -318,19 +321,19 @@ template <class RBC_TYPE> void DKGWithEcho(benchmark::State &state)
     FETCH_LOG_INFO(LOGGING_NAME, "Sent messages");
 
     // Wait until all have seen all messages
-    while(true)
+    while (true)
     {
       bool all_seen = true;
 
-      for(auto const &node : nodes)
+      for (auto const &node : nodes)
       {
-        if(node->MessagesReceived() != nodes_in_test - 1)
+        if (node->MessagesReceived() != nodes_in_test - 1)
         {
           all_seen = false;
         }
       }
 
-      if(all_seen)
+      if (all_seen)
       {
         break;
       }
@@ -338,11 +341,11 @@ template <class RBC_TYPE> void DKGWithEcho(benchmark::State &state)
       std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
 
-    if(REUSING_MUDDLES)
+    if (REUSING_MUDDLES)
     {
       state.PauseTiming();
 
-      for(auto const &node : nodes)
+      for (auto const &node : nodes)
       {
         node->Enable(false);
       }
@@ -350,7 +353,7 @@ template <class RBC_TYPE> void DKGWithEcho(benchmark::State &state)
 
       std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
-      for(auto const &node : nodes)
+      for (auto const &node : nodes)
       {
         node->Enable(true);
       }
@@ -362,17 +365,17 @@ template <class RBC_TYPE> void DKGWithEcho(benchmark::State &state)
     {
       state.PauseTiming();
       nodes.clear();
-      if(!USING_FAKE_MUDDLES)
+      if (!USING_FAKE_MUDDLES)
       {
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
       }
       state.ResumeTiming();
     }
 
-    //SetGlobalLogLevel(LogLevel::INFO);
-    //FETCH_LOG_INFO(LOGGING_NAME, "Finished test: ", nodes_in_test);
-    //FETCH_LOG_INFO(LOGGING_NAME, "");
-    //SetGlobalLogLevel(LogLevel::ERROR);
+    // SetGlobalLogLevel(LogLevel::INFO);
+    // FETCH_LOG_INFO(LOGGING_NAME, "Finished test: ", nodes_in_test);
+    // FETCH_LOG_INFO(LOGGING_NAME, "");
+    // SetGlobalLogLevel(LogLevel::ERROR);
   }
 }
 

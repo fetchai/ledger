@@ -31,9 +31,12 @@
 #include "moment/clocks.hpp"
 #include "moment/deadline_timer.hpp"
 
+// TODO(HUT): not needed with reworking
+#include "muddle/rbc.hpp"
+
 #include <map>
-#include <set>
 #include <random>
+#include <set>
 
 namespace fetch {
 namespace muddle {
@@ -61,13 +64,14 @@ struct QuestionStruct
     SEEN = 2,
   };
 
-  QuestionStruct()                                     = default;
-  QuestionStruct(QuestionStruct const &rhs)            = default;
-  QuestionStruct(QuestionStruct &&rhs)                 = default;
+  QuestionStruct()                          = default;
+  QuestionStruct(QuestionStruct const &rhs) = default;
+  QuestionStruct(QuestionStruct &&rhs)      = default;
   QuestionStruct &operator=(QuestionStruct const &rhs) = default;
-  QuestionStruct &operator=(QuestionStruct&& rhs)      = default;
+  QuestionStruct &operator=(QuestionStruct &&rhs) = default;
 
-  QuestionStruct(Digest const &question, Answer const &answer, CertificatePtr certificate, CabinetMembers const &current_cabinet)
+  QuestionStruct(Digest const &question, Answer const &answer, CertificatePtr certificate,
+                 CabinetMembers const &current_cabinet)
     : certificate_{certificate}
     , self_{certificate_->identity().identifier()}
     , question_{question}
@@ -81,7 +85,7 @@ struct QuestionStruct
     std::get<SEEN>(cabinet_answer)[self_] = Digest("have seen!");
 
     // Create entries for all desired cabinet members
-    for(auto const &member : cabinet_)
+    for (auto const &member : cabinet_)
     {
       table_[member];
     }
@@ -92,11 +96,11 @@ struct QuestionStruct
   {
     uint64_t ret = 0;
 
-    for(auto const &entry : table_)
+    for (auto const &entry : table_)
     {
       AnswerAndSeen const &answer_and_seen = entry.second;
 
-      if(!GetSeen(answer_and_seen).empty())
+      if (!GetSeen(answer_and_seen).empty())
       {
         ret++;
       }
@@ -124,49 +128,49 @@ struct QuestionStruct
   {
     ConfirmedAnswers ret;
 
-    if(rhs.question_ != question_)
+    if (rhs.question_ != question_)
     {
       return ret;
     }
 
-    for(auto &entry : table_)
+    for (auto &entry : table_)
     {
-      MuddleAddress const &address         = entry.first;
-      AnswerAndSeen &answer_and_seen = entry.second;
-      Answer        &answer    = std::get<ANSW>(answer_and_seen);
-      Signature     &signature = std::get<SIG>(answer_and_seen);
-      Seen          &seen      = std::get<SEEN>(answer_and_seen);
-      bool          msg_was_below_threshold = false;
+      MuddleAddress const &address                 = entry.first;
+      AnswerAndSeen &      answer_and_seen         = entry.second;
+      Answer &             answer                  = std::get<ANSW>(answer_and_seen);
+      Signature &          signature               = std::get<SIG>(answer_and_seen);
+      Seen &               seen                    = std::get<SEEN>(answer_and_seen);
+      bool                 msg_was_below_threshold = false;
 
-      if(seen.size() < threshold)
+      if (seen.size() < threshold)
       {
         msg_was_below_threshold = true;
       }
 
       // Add info from other table to ours
-      AnswerAndSeen &rhs_answer_and_seen = rhs.table_[address];
-      Answer        const &rhs_answer          = GetAnswer(rhs_answer_and_seen);
-      Signature     const &rhs_signature       = GetSignature(rhs_answer_and_seen);
-      Seen          const &rhs_seen            = GetSeen(rhs_answer_and_seen);
+      AnswerAndSeen &  rhs_answer_and_seen = rhs.table_[address];
+      Answer const &   rhs_answer          = GetAnswer(rhs_answer_and_seen);
+      Signature const &rhs_signature       = GetSignature(rhs_answer_and_seen);
+      Seen const &     rhs_seen            = GetSeen(rhs_answer_and_seen);
 
-      if(!rhs_answer.empty())
+      if (!rhs_answer.empty())
       {
         answer = rhs_answer;
 
         seen.insert(std::make_pair(self_, Digest("temp")));
       }
 
-      if(!rhs_signature.empty())
+      if (!rhs_signature.empty())
       {
         signature = rhs_signature;
       }
 
-      for(auto const &rhs_seen_pair : rhs_seen)
+      for (auto const &rhs_seen_pair : rhs_seen)
       {
         seen.insert(rhs_seen_pair);
       }
 
-      if(seen.size() >= threshold && msg_was_below_threshold && address != self_)
+      if (seen.size() >= threshold && msg_was_below_threshold && address != self_)
       {
         ret.emplace_back(std::make_pair(address, answer));
       }
@@ -181,11 +185,11 @@ struct QuestionStruct
     return !cabinet_.empty();
   }
 
-  CertificatePtr       certificate_;
-  MuddleAddress        self_;
-  Digest               question_;
-  SyncTable            table_;
-  CabinetMembers       cabinet_;
+  CertificatePtr certificate_;
+  MuddleAddress  self_;
+  Digest         question_;
+  SyncTable      table_;
+  CabinetMembers cabinet_;
 };
 
 /**
@@ -193,29 +197,28 @@ struct QuestionStruct
 class PunishmentBroadcastChannel : public service::Protocol, public BroadcastChannelInterface
 {
 public:
-
   enum class State
   {
     INIT,
     RESOLVE_PROMISES,
   };
 
-  using CertificatePtr = std::shared_ptr<fetch::crypto::Prover>;
-  using Endpoint        = muddle::MuddleEndpoint;
-  using ConstByteArray  = byte_array::ConstByteArray;
-  using MuddleAddress   = ConstByteArray;
-  using CabinetMembers  = std::set<MuddleAddress>;
-  using CabinetMembersVector  = std::vector<MuddleAddress>;
-  using Subscription    = muddle::Subscription;
-  using SubscriptionPtr = std::shared_ptr<muddle::Subscription>;
-  using HashFunction    = crypto::SHA256;
-  using HashDigest      = byte_array::ByteArray;
+  using CertificatePtr       = std::shared_ptr<fetch::crypto::Prover>;
+  using Endpoint             = muddle::MuddleEndpoint;
+  using ConstByteArray       = byte_array::ConstByteArray;
+  using MuddleAddress        = ConstByteArray;
+  using CabinetMembers       = std::set<MuddleAddress>;
+  using CabinetMembersVector = std::vector<MuddleAddress>;
+  using Subscription         = muddle::Subscription;
+  using SubscriptionPtr      = std::shared_ptr<muddle::Subscription>;
+  using HashFunction         = crypto::SHA256;
+  using HashDigest           = byte_array::ByteArray;
   using CallbackFunction =
       std::function<void(MuddleAddress const &, byte_array::ConstByteArray const &)>;
-  using Server                  = fetch::muddle::rpc::Server;
-  using ServerPtr               = std::shared_ptr<Server>;
-  using StateMachine            = core::StateMachine<State>;
-  using StateMachinePtr         = std::shared_ptr<StateMachine>;
+  using Server          = fetch::muddle::rpc::Server;
+  using ServerPtr       = std::shared_ptr<Server>;
+  using StateMachine    = core::StateMachine<State>;
+  using StateMachinePtr = std::shared_ptr<StateMachine>;
 
   // The only RPC function exposed
   enum
@@ -230,7 +233,8 @@ public:
   }
 
   PunishmentBroadcastChannel(Endpoint &endpoint, MuddleAddress address, CallbackFunction call_back,
-      CertificatePtr certificate, uint16_t channel = CHANNEL_RBC_BROADCAST, bool ordered_delivery = true)
+                             CertificatePtr certificate, uint16_t channel = CHANNEL_RBC_BROADCAST,
+                             bool ordered_delivery = true)
     : endpoint_{endpoint}
     , address_{address}
     , deliver_msg_callback_{call_back}
@@ -248,10 +252,9 @@ public:
     rpc_server_->Add(RPC_BEACON, this);
 
     // Connect states to the state machine
-    state_machine_->RegisterHandler(State::INIT, this,
-                                  &PunishmentBroadcastChannel::OnInit);
+    state_machine_->RegisterHandler(State::INIT, this, &PunishmentBroadcastChannel::OnInit);
     state_machine_->RegisterHandler(State::RESOLVE_PROMISES, this,
-                                  &PunishmentBroadcastChannel::OnResolvePromises);
+                                    &PunishmentBroadcastChannel::OnResolvePromises);
   }
 
   // Interface methods
@@ -279,7 +282,7 @@ public:
   {
     FETCH_LOCK(lock_);
     previous_question_ = std::move(question_);
-    question_ = QuestionStruct(question, answer, certificate_, current_cabinet_);
+    question_          = QuestionStruct(question, answer, certificate_, current_cabinet_);
   }
 
   void SetQuestion(std::string const &question, std::string const &answer) /* override */
@@ -291,9 +294,9 @@ public:
   {
     FETCH_LOCK(lock_);
     enabled_ = enable;
-    //if(!enabled_)
+    // if(!enabled_)
     //{
-    //  question_ = 
+    //  question_ =
     //}
   }
 
@@ -308,9 +311,10 @@ public:
   {
     uint32_t messages_confirmed = 0;
 
-    for(auto const &node_plus_answers : question_.table_)
+    for (auto const &node_plus_answers : question_.table_)
     {
-      if(QuestionStruct::GetSeen(node_plus_answers.second).size() >= threshold_ && node_plus_answers.first != question_.self_)
+      if (QuestionStruct::GetSeen(node_plus_answers.second).size() >= threshold_ &&
+          node_plus_answers.first != question_.self_)
       {
         messages_confirmed++;
       }
@@ -327,7 +331,7 @@ public:
     {
       FETCH_LOCK(lock_);
 
-      if(!question_ || !enabled_ || AnsweredQuestion())
+      if (!question_ || !enabled_ || AnsweredQuestion())
       {
         state_machine_->Delay(std::chrono::milliseconds(50));
         network_promises_.clear();
@@ -335,11 +339,11 @@ public:
       }
     }
 
-    if(current_cabinet_vector_.size() < concurrent_promises_allowed)
+    if (current_cabinet_vector_.size() < concurrent_promises_allowed)
     {
       current_cabinet_vector_.clear();
 
-      for(auto const &member : current_cabinet_)
+      for (auto const &member : current_cabinet_)
       {
         current_cabinet_vector_.push_back(member);
       }
@@ -355,7 +359,7 @@ public:
       MuddleAddress send_to = current_cabinet_vector_.back();
       current_cabinet_vector_.pop_back();
 
-      auto promise     = rpc_client_.CallSpecificAddress(
+      auto promise = rpc_client_.CallSpecificAddress(
           send_to, RPC_BEACON, PunishmentBroadcastChannel::PULL_INFO_FROM_PEER);
 
       network_promises_.emplace_back(std::make_pair(send_to, promise));
@@ -370,13 +374,13 @@ public:
     for (auto it = network_promises_.begin(); it != network_promises_.end();)
     {
       MuddleAddress &address = (*it).first;
-      auto &promise          = (*it).second;
+      auto &         promise = (*it).second;
 
-      if(promise->IsSuccessful())
+      if (promise->IsSuccessful())
       {
         QuestionStruct recvd_question;
 
-        if(!promise->As<QuestionStruct>(recvd_question))
+        if (!promise->As<QuestionStruct>(recvd_question))
         {
           FETCH_LOG_WARN(LOGGING_NAME, "Failed to deserialize response from: ", address.ToBase64());
         }
@@ -387,7 +391,7 @@ public:
           {
             FETCH_LOCK(lock_);
 
-            if(recvd_question.question_ != question_.question_)
+            if (recvd_question.question_ != question_.question_)
             {
               FETCH_LOG_DEBUG(LOGGING_NAME, "Note: ignoring non matching question");
             }
@@ -397,8 +401,7 @@ public:
             }
           }
 
-
-          for(auto const &answer : answers)
+          for (auto const &answer : answers)
           {
             deliver_msg_callback_(answer.first, answer.second);
           }
@@ -412,9 +415,9 @@ public:
       }
     }
 
-    if(network_promises_.empty() || time_to_wait_.HasExpired())
+    if (network_promises_.empty() || time_to_wait_.HasExpired())
     {
-      if(!network_promises_.empty())
+      if (!network_promises_.empty())
       {
         FETCH_LOG_WARN(LOGGING_NAME, "Failed to resolve promises: ", network_promises_.size());
 
@@ -431,7 +434,7 @@ public:
   Endpoint &          endpoint_;              ///< The muddle endpoint to communicate on
   MuddleAddress const address_;               ///< Our muddle address
   CallbackFunction    deliver_msg_callback_;  ///< Callback for messages which have succeeded
-  const uint16_t            channel_;
+  const uint16_t      channel_;
   CertificatePtr      certificate_;
 
   ServerPtr           rpc_server_{nullptr};
@@ -440,30 +443,29 @@ public:
   bool enabled_ = true;
 
   // For broadcast
-  CabinetMembers            current_cabinet_;    ///< The set of muddle addresses of the
-                                                 ///< cabinet (including our own)
-  CabinetMembersVector      current_cabinet_vector_;    ///< The current cabinet shuffled into a vector.
-                                                        ///< Used to randomly select cabinet members without replacement
-  uint32_t threshold_;                     ///< Number of byzantine nodes (this is assumed
-                                           ///< to take the maximum allowed value satisfying
-                                           ///< threshold_ < current_cabinet_.size()
+  CabinetMembers current_cabinet_;  ///< The set of muddle addresses of the
+                                    ///< cabinet (including our own)
+  CabinetMembersVector
+      current_cabinet_vector_;  ///< The current cabinet shuffled into a vector.
+                                ///< Used to randomly select cabinet members without replacement
+  uint32_t threshold_;          ///< Number of byzantine nodes (this is assumed
+                                ///< to take the maximum allowed value satisfying
+                                ///< threshold_ < current_cabinet_.size()
 
+  moment::ClockPtr      clock_ = moment::GetClock("muddle:pbc", moment::ClockType::STEADY);
+  moment::DeadlineTimer time_to_wait_{"muddle:pbc"};
 
-  moment::ClockPtr clock_ = moment::GetClock("muddle:pbc", moment::ClockType::STEADY);
-  moment::DeadlineTimer    time_to_wait_{"muddle:pbc"};
-
-  const uint8_t concurrent_promises_allowed = 2;
-  const uint16_t REASONABLE_NETWORK_DELAY_MS = 500;
+  const uint8_t                                           concurrent_promises_allowed = 2;
+  const uint16_t                                          REASONABLE_NETWORK_DELAY_MS = 500;
   std::vector<std::pair<MuddleAddress, service::Promise>> network_promises_;
 
   /// @}
-  StateMachinePtr    state_machine_;
+  StateMachinePtr state_machine_;
 
   // ONLY the question (and previous question if this is enabled) needs to be locked
-  mutable Mutex lock_;
+  mutable Mutex  lock_;
   QuestionStruct question_;
   QuestionStruct previous_question_;
-
 };
 }  // namespace muddle
 
@@ -476,9 +478,9 @@ public:
   using Type       = muddle::QuestionStruct;
   using DriverType = D;
 
-  static uint8_t const TABLE            = 1;
-  static uint8_t const QUESTION         = 2;
-  static uint8_t const CABINET          = 3;
+  static uint8_t const TABLE    = 1;
+  static uint8_t const QUESTION = 2;
+  static uint8_t const CABINET  = 3;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &table)
@@ -513,21 +515,20 @@ public:
   static void Serialize(Constructor &map_constructor, Type const &tuple)
   {
     auto map = map_constructor(3);
-    map.Append(ANSWER,    std::get<0>(tuple));
+    map.Append(ANSWER, std::get<0>(tuple));
     map.Append(SIGNATURE, std::get<1>(tuple));
-    map.Append(SEEN,      std::get<2>(tuple));
+    map.Append(SEEN, std::get<2>(tuple));
   }
 
   template <typename MapDeserializer>
   static void Deserialize(MapDeserializer &map, Type &tuple)
   {
-    map.ExpectKeyGetValue(ANSWER,    std::get<0>(tuple));
+    map.ExpectKeyGetValue(ANSWER, std::get<0>(tuple));
     map.ExpectKeyGetValue(SIGNATURE, std::get<1>(tuple));
-    map.ExpectKeyGetValue(SEEN,  std::get<2>(tuple));
+    map.ExpectKeyGetValue(SEEN, std::get<2>(tuple));
   }
 };
 
 }  // namespace serializers
 
 }  // namespace fetch
-

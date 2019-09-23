@@ -18,11 +18,11 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
+#include "core/runnable.hpp"
 #include "core/service_ids.hpp"
 #include "crypto/sha256.hpp"
 #include "muddle/muddle_endpoint.hpp"
 #include "muddle/rbc_messages.hpp"
-#include "core/runnable.hpp"
 
 #include <atomic>
 #include <bitset>
@@ -34,19 +34,19 @@ namespace muddle {
 class BroadcastChannelInterface
 {
 public:
-  using ConstByteArray  = byte_array::ConstByteArray;
-  using MuddleAddress   = ConstByteArray;
-  using CabinetMembers  = std::set<MuddleAddress>;
-  using WeakRunnable        = std::weak_ptr<core::Runnable>;
+  using ConstByteArray = byte_array::ConstByteArray;
+  using MuddleAddress  = ConstByteArray;
+  using CabinetMembers = std::set<MuddleAddress>;
+  using WeakRunnable   = std::weak_ptr<core::Runnable>;
 
   BroadcastChannelInterface()          = default;
   virtual ~BroadcastChannelInterface() = default;
 
   virtual bool ResetCabinet(CabinetMembers const &cabinet) = 0;
   /*virtual void Broadcast(SerialisedMessage const &msg) = 0;*/
-  virtual void Enable(bool enable) = 0;
+  virtual void Enable(bool enable)                                                       = 0;
   virtual void SetQuestion(ConstByteArray const &question, ConstByteArray const &answer) = 0;
-  virtual WeakRunnable GetRunnable() = 0;
+  virtual WeakRunnable GetRunnable()                                                     = 0;
 };
 
 /**
@@ -78,10 +78,11 @@ public:
   using PartyList      = std::vector<Party>;
   using IdType         = uint32_t;
   using CounterType    = uint8_t;
-  using CertificatePtr   = std::shared_ptr<fetch::crypto::Prover>;
+  using CertificatePtr = std::shared_ptr<fetch::crypto::Prover>;
 
-  RBC(Endpoint &endpoint, MuddleAddress address, CallbackFunction call_back, CertificatePtr certificate = nullptr,
-      uint16_t channel = CHANNEL_RBC_BROADCAST, bool ordered_delivery = true);
+  RBC(Endpoint &endpoint, MuddleAddress address, CallbackFunction call_back,
+      CertificatePtr certificate = nullptr, uint16_t channel = CHANNEL_RBC_BROADCAST,
+      bool ordered_delivery = true);
 
   ~RBC();
 

@@ -89,7 +89,8 @@ uint64_t GetTime()
 #define CHANNEL_TYPE muddle::PunishmentBroadcastChannel
 
 BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identity,
-                                       ManifestCacheInterface &manifest_cache, CertificatePtr certificate)
+                                       ManifestCacheInterface &manifest_cache,
+                                       CertificatePtr          certificate)
   : identity_{std::move(identity)}
   , manifest_cache_{manifest_cache}
   , muddle_{muddle}
@@ -97,15 +98,13 @@ BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identit
   , shares_subscription_(endpoint_.Subscribe(SERVICE_DKG, CHANNEL_SECRET_KEY))
   , dry_run_subscription_(endpoint_.Subscribe(SERVICE_DKG, CHANNEL_SIGN_DRY_RUN))
   , rbc_{new CHANNEL_TYPE(endpoint_, identity_.identifier(),
-         [this](MuddleAddress const &from, ConstByteArray const &payload) -> void {
-
-           DKGEnvelope   env;
-           DKGSerializer serializer{payload};
-           serializer >> env;
-           OnDkgMessage(from, env.Message());
-         },
-         certificate,
-         CHANNEL_RBC_BROADCAST, false)}
+                          [this](MuddleAddress const &from, ConstByteArray const &payload) -> void {
+                            DKGEnvelope   env;
+                            DKGSerializer serializer{payload};
+                            serializer >> env;
+                            OnDkgMessage(from, env.Message());
+                          },
+                          certificate, CHANNEL_RBC_BROADCAST, false)}
   , state_machine_{std::make_shared<StateMachine>("BeaconSetupService", State::IDLE, ToString)}
   , beacon_dkg_state_gauge_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
         "beacon_dkg_state_gauge", "State the DKG is in as integer in [0, 10]")}
@@ -413,9 +412,9 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
   {
     condition_to_proceed_ = true;
     FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-                    " State: ", ToString(state_machine_->state()),
-                    " Ready. Seconds to spare: ", state_deadline_ - GetTime(), " of ",
-                    seconds_for_state_);
+                   " State: ", ToString(state_machine_->state()),
+                   " Ready. Seconds to spare: ", state_deadline_ - GetTime(), " of ",
+                   seconds_for_state_);
   }
 
   if (timer_to_proceed_.HasExpired())
@@ -687,7 +686,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReconstructionShares()
 
       SetTimeToProceed(State::DRY_RUN_SIGNING);
       return State::DRY_RUN_SIGNING;
-      }
+    }
   }
 
   if (timer_to_proceed_.HasExpired())
@@ -834,7 +833,8 @@ void BeaconSetupService::SendBroadcast(uint16_t rnd, DKGEnvelope const &env)
 {
   DKGSerializer serialiser;
   serialiser << env;
-  std::string question = std::to_string(rnd) + ToString(state_machine_->state()) + std::to_string(failures_);
+  std::string question =
+      std::to_string(rnd) + ToString(state_machine_->state()) + std::to_string(failures_);
   FETCH_LOG_INFO(LOGGING_NAME, "Broadcast with qn: ", question);
   rbc_->SetQuestion(ConstByteArray(question), serialiser.data());
 }
@@ -847,7 +847,8 @@ void BeaconSetupService::BroadcastShares()
 {
   beacon_->manager.GenerateCoefficients();
   FETCH_LOG_INFO(LOGGING_NAME, "B shares");
-  SendBroadcast(1, DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_SHARES),
+  SendBroadcast(1,
+                DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_SHARES),
                                                 beacon_->manager.GetCoefficients(), "signature"}});
   for (auto &cab_i : beacon_->aeon.members)
   {
@@ -923,7 +924,8 @@ void BeaconSetupService::BroadcastComplaintAnswers()
                    " received complaints from ", beacon_->manager.cabinet_index(reporter));
     complaint_answer.insert({reporter, beacon_->manager.GetOwnShares(reporter)});
   }
-  SendBroadcast(3, DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_COMPLAINT_ANSWERS),
+  SendBroadcast(3,
+                DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_COMPLAINT_ANSWERS),
                                           complaint_answer, "signature"}});
 }
 
@@ -932,9 +934,9 @@ void BeaconSetupService::BroadcastComplaintAnswers()
  */
 void BeaconSetupService::BroadcastQualCoefficients()
 {
-  SendBroadcast(4, 
-      DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_QUAL_SHARES),
-                                      beacon_->manager.GetQualCoefficients(), "signature"}});
+  SendBroadcast(
+      4, DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_QUAL_SHARES),
+                                         beacon_->manager.GetQualCoefficients(), "signature"}});
 }
 
 /**
@@ -946,9 +948,10 @@ void BeaconSetupService::BroadcastQualComplaints()
 {
   // Qual complaints consist of all nodes from which we did not receive qual shares, or verification
   // of qual shares failed
-  SendBroadcast(5, DKGEnvelope{SharesMessage{
-      static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS),
-      beacon_->manager.ComputeQualComplaints(qual_coefficients_received_), "signature"}});
+  SendBroadcast(
+      5, DKGEnvelope{SharesMessage{
+             static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS),
+             beacon_->manager.ComputeQualComplaints(qual_coefficients_received_), "signature"}});
 }
 
 /**
@@ -965,9 +968,9 @@ void BeaconSetupService::BroadcastReconstructionShares()
     beacon_->manager.AddReconstructionShare(in);
     complaint_shares.insert({in, beacon_->manager.GetReceivedShares(in)});
   }
-  SendBroadcast(6, 
-      DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_RECONSTRUCTION_SHARES),
-                                complaint_shares, "signature"}});
+  SendBroadcast(
+      6, DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_RECONSTRUCTION_SHARES),
+                                   complaint_shares, "signature"}});
 }
 
 /**
@@ -1128,7 +1131,7 @@ void BeaconSetupService::OnNewShares(MuddleAddress                              
   if (shares_received_.find(from) == shares_received_.end())
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-                   " received shares from node  ", beacon_->manager.cabinet_index(from));
+                    " received shares from node  ", beacon_->manager.cabinet_index(from));
     beacon_->manager.AddShares(from, shares);
     shares_received_.insert(from);
   }
@@ -1153,7 +1156,7 @@ void BeaconSetupService::OnNewCoefficients(CoefficientsMessage const &msg,
     if (coefficients_received_.find(from) == coefficients_received_.end())
     {
       FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-                     " received coefficients from node  ", beacon_->manager.cabinet_index(from));
+                      " received coefficients from node  ", beacon_->manager.cabinet_index(from));
       beacon_->manager.AddCoefficients(from, msg.coefficients());
       coefficients_received_.insert(from);
     }
@@ -1169,8 +1172,8 @@ void BeaconSetupService::OnNewCoefficients(CoefficientsMessage const &msg,
     if (qual_coefficients_received_.find(from) == qual_coefficients_received_.end())
     {
       FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-                     " received qual coefficients from node  ",
-                     beacon_->manager.cabinet_index(from));
+                      " received qual coefficients from node  ",
+                      beacon_->manager.cabinet_index(from));
       beacon_->manager.AddQualCoefficients(from, msg.coefficients());
       qual_coefficients_received_.insert(from);
     }
@@ -1411,7 +1414,7 @@ uint64_t GetExpectedDKGTime(uint64_t cabinet_size)
   }
   if (cabinet_size < 51)
   {
-    expected_dkg_time_s = 1001;
+    expected_dkg_time_s = 400;
   }
   if (cabinet_size < 30)
   {
@@ -1470,9 +1473,9 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
   uint64_t expected_dkg_time_s = GetExpectedDKGTime(cabinet_size);
 
   // TODO(HUT): remove this!!!
-  if(expected_dkg_time_s > 1000)
+  if (expected_dkg_time_s > 1000)
   {
-    if(beacon_->aeon.round_start < expected_dkg_time_s)
+    if (beacon_->aeon.round_start < expected_dkg_time_s)
     {
       expected_dkg_time_s = expected_dkg_time_s - beacon_->aeon.round_start;
     }

@@ -494,7 +494,19 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
     FETCH_LOG_INFO(LOGGING_NAME, "Peer wasn't ready when asking for signatures: ",
                    qual_promise_identity_.identifier().ToBase64());
     state_machine_->Delay(std::chrono::milliseconds(10));
+
+    if(add_signature_failures_++ > 100)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Forced to abort entropy generation. Peers not responding!");
+      add_signature_failures_ = 0;
+      return State::COMPLETE;
+    }
+
     return State::COLLECT_SIGNATURES;
+  }
+  else
+  {
+    add_signature_failures_ = 0;
   }
 
   if (ret.round != current_entropy_.round)
@@ -625,7 +637,7 @@ std::vector<std::weak_ptr<core::Runnable>> BeaconService::GetWeakRunnables()
 
   auto setup_runnables = cabinet_creator_.GetWeakRunnables();
 
-  for(auto const &i : setup_runnables)
+  for (auto const &i : setup_runnables)
   {
     ret.push_back(i);
   }
