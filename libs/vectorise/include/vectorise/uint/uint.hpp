@@ -108,9 +108,9 @@ public:
 
   constexpr UInt &operator=(UInt const &v);
   template <typename ArrayType>
-  meta::IfHasIndex<ArrayType, UInt> &operator=(ArrayType const &v);
+  meta::IfHasIndex<ArrayType, UInt> &operator=(ArrayType const &v);  // NOLINT
   template <typename T>
-  constexpr meta::IfHasNoIndex<T, UInt> &operator=(T const &v);
+  constexpr meta::IfHasNoIndex<T, UInt> &operator=(T const &v);  // NOLINT
 
   /////////////////////////////////////////////
   /// comparison operators for UInt objects ///
@@ -323,9 +323,9 @@ constexpr UInt<S> &UInt<S>::operator=(UInt const &v)
   return *this;
 }
 
-template <uint16_t S>
+template <uint16_t S>  // NOLINT
 template <typename ArrayType>
-meta::IfHasIndex<ArrayType, UInt<S>> &UInt<S>::operator=(ArrayType const &v)
+meta::IfHasIndex<ArrayType, UInt<S>> &UInt<S>::operator=(ArrayType const &v)  // NOLINT
 {
   wide_.fill(0);
   std::copy(v.pointer(), v.pointer() + v.capacity(), base());
@@ -333,9 +333,9 @@ meta::IfHasIndex<ArrayType, UInt<S>> &UInt<S>::operator=(ArrayType const &v)
   return *this;
 }
 
-template <uint16_t S>
+template <uint16_t S>  // NOLINT
 template <typename T>
-constexpr meta::IfHasNoIndex<T, UInt<S>> &UInt<S>::operator=(T const &v)
+constexpr meta::IfHasNoIndex<T, UInt<S>> &UInt<S>::operator=(T const &v)  // NOLINT
 {
   wide_.fill(0);
   wide_[0] = static_cast<WideType>(v);
@@ -375,10 +375,8 @@ constexpr bool UInt<S>::operator<(UInt const &other) const
     {
       continue;
     }
-    else
-    {
-      return wide_[WIDE_ELEMENTS - 1 - i] < other.ElementAt(WIDE_ELEMENTS - 1 - i);
-    }
+
+    return wide_[WIDE_ELEMENTS - 1 - i] < other.ElementAt(WIDE_ELEMENTS - 1 - i);
   }
   return false;
 }
@@ -914,7 +912,7 @@ constexpr UInt<S> &UInt<S>::operator<<=(std::size_t bits)
   std::size_t real_bits  = bits - full_words * sizeof(uint64_t) * 8;
   std::size_t nbits      = WIDE_ELEMENT_SIZE - real_bits;
   // No actual shifting involved, just move the elements
-  if (full_words)
+  if (full_words != 0u)
   {
     for (std::size_t i = WIDE_ELEMENTS - 1; i >= full_words; i--)
     {
@@ -926,7 +924,7 @@ constexpr UInt<S> &UInt<S>::operator<<=(std::size_t bits)
     }
   }
   // If real_bits == 0, nothing to do
-  if (real_bits)
+  if (real_bits != 0u)
   {
     WideType carry = 0;
     for (std::size_t i = 0; i < WIDE_ELEMENTS; i++)
@@ -947,7 +945,7 @@ constexpr UInt<S> &UInt<S>::operator>>=(std::size_t bits)
   std::size_t real_bits  = bits - full_words * sizeof(uint64_t) * 8;
   std::size_t nbits      = WIDE_ELEMENT_SIZE - real_bits;
   // No actual shifting involved, just move the elements
-  if (full_words)
+  if (full_words != 0u)
   {
     for (std::size_t i = 0; i < WIDE_ELEMENTS - full_words; i++)
     {
@@ -960,7 +958,7 @@ constexpr UInt<S> &UInt<S>::operator>>=(std::size_t bits)
   }
 
   // If real_bits == 0, nothing to do
-  if (real_bits)
+  if (real_bits != 0u)
   {
     WideType carry = 0;
     for (std::size_t i = 0; i < WIDE_ELEMENTS; i++)

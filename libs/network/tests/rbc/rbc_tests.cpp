@@ -164,7 +164,7 @@ private:
     {
       return;
     }
-    else if (Failure(Failures::DOUBLE_SEND))
+    if (Failure(Failures::DOUBLE_SEND))
     {
       endpoint().Broadcast(SERVICE_RBC, CHANNEL_RBC_BROADCAST, msg_serializer.data());
     }
@@ -389,10 +389,8 @@ void GenerateRbcTest(uint32_t cabinet_size, uint32_t expected_completion_size,
       {
         break;
       }
-      else
-      {
-        ++kk;
-      }
+
+      ++kk;
     }
   }
 

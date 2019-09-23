@@ -175,7 +175,6 @@ private:
 
 inline Packet::Packet(Address const &source_address, uint32_t network_id)
   : header_()
-  , payload_()
 {
   std::memset(&header_, 0, sizeof(header_));
 
@@ -210,7 +209,7 @@ inline bool Packet::IsExchange() const noexcept
 
 inline bool Packet::IsStamped() const noexcept
 {
-  return header_.stamped;
+  return header_.stamped != 0u;
 }
 
 inline bool Packet::IsEncrypted() const noexcept
@@ -360,7 +359,7 @@ inline void Packet::SetPayload(Payload const &payload)
 
 inline void Packet::SetStamped(bool set) noexcept
 {
-  header_.stamped = set;
+  header_.stamped = static_cast<uint32_t>(set);
 }
 
 inline Packet::BinaryHeader Packet::StaticHeader() const noexcept

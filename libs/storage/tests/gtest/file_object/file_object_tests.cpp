@@ -243,7 +243,7 @@ TEST_F(FileObjectTests, EraseFiles)
     consistency_check_.push_back(file_object_->id());
 
     // Erase elements half of the time
-    if (i % 2)
+    if ((i % 2) != 0u)
     {
       std::swap(consistency_check_[rng_() % consistency_check_.size()],
                 consistency_check_[consistency_check_.size() - 1]);

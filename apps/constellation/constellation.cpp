@@ -262,9 +262,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   , internal_muddle_{muddle::CreateMuddle(
         "ISRD", internal_identity_, network_manager_,
         cfg_.manifest.FindExternalAddress(ServiceIdentifier::Type::CORE))}
-  , trust_{}
   , tx_status_cache_(TxStatusCache::factory())
-  , lane_services_()
   , storage_(std::make_shared<StorageUnitClient>(internal_muddle_->GetEndpoint(), shard_cfgs_,
                                                  cfg_.log2_num_lanes))
   , lane_control_(internal_muddle_->GetEndpoint(), shard_cfgs_, cfg_.log2_num_lanes)
@@ -472,11 +470,8 @@ void Constellation::Run(UriSet const &initial_peers, core::WeakRunnable bootstra
         FETCH_LOG_INFO(LOGGING_NAME, "Internal muddle network established between shards");
         break;
       }
-      else
-      {
-        FETCH_LOG_DEBUG(LOGGING_NAME,
-                        "Waiting for internal muddle connection to be established...");
-      }
+
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Waiting for internal muddle connection to be established...");
 
       std::this_thread::sleep_for(std::chrono::milliseconds{500});
     }

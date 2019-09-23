@@ -48,7 +48,6 @@ VMTensor::VMTensor(VM *vm, TypeId type_id, ArrayType tensor)
 
 VMTensor::VMTensor(VM *vm, TypeId type_id)
   : Object(vm, type_id)
-  , tensor_{}
 {}
 
 Ptr<VMTensor> VMTensor::Constructor(VM *vm, TypeId type_id, Ptr<Array<SizeType>> const &shape)

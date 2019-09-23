@@ -30,7 +30,6 @@ namespace http {
 
 HTTPConnectionManager::HTTPConnectionManager(AbstractHTTPServer &server)
   : server_(server)
-  , clients_mutex_{}
 {}
 
 HTTPConnectionManager::HandleType HTTPConnectionManager::Join(ConnectionType client)

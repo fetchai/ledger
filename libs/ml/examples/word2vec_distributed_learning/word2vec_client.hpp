@@ -26,7 +26,7 @@ namespace fetch {
 namespace ml {
 namespace distributed_learning {
 
-std::string ReadFile(std::string const &path)
+inline std::string ReadFile(std::string const &path)
 {
   std::ifstream t(path);
   if (t.fail())
@@ -160,11 +160,9 @@ void Word2VecClient<TensorType>::PrintWordAnalogy(TensorType const & embeddings,
   {
     throw std::runtime_error("WARNING! not all to-be-tested words are in vocabulary");
   }
-  else
-  {
-    std::cout << "Find word that is to " << word3 << " what " << word2 << " is to " << word1
-              << std::endl;
-  }
+
+  std::cout << "Find word that is to " << word3 << " what " << word2 << " is to " << word1
+            << std::endl;
 
   // get id for words
   SizeType word1_idx = w2v_data_loader_ptr_->IndexFromWord(word1);

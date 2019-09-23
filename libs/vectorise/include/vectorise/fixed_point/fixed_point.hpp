@@ -251,9 +251,9 @@ public:
 
   constexpr FixedPoint &operator=(FixedPoint const &o);
   template <typename T>
-  constexpr meta::IfIsInteger<T, FixedPoint> &operator=(T const &n);
+  constexpr meta::IfIsInteger<T, FixedPoint> &operator=(T const &n);  // NOLINT
   template <typename T>
-  constexpr meta::IfIsFloat<T, FixedPoint> &operator=(T const &n);
+  constexpr meta::IfIsFloat<T, FixedPoint> &operator=(T const &n);  // NOLINT
 
   ///////////////////////////////////////////////////
   /// comparison operators for FixedPoint objects ///
@@ -612,7 +612,7 @@ constexpr void FixedPoint<I, F>::StateClear()
 template <std::uint16_t I, std::uint16_t F>
 constexpr bool FixedPoint<I, F>::IsState(uint32_t const state)
 {
-  return fp_state & state;
+  return (fp_state & state) != 0u;
 }
 
 template <std::uint16_t I, std::uint16_t F>
@@ -840,9 +840,9 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator=(FixedPoint<I, F> const &
  * @param the primitive to assign the FixedPoint object from
  * @return copies the given primitive integer n
  */
-template <std::uint16_t I, std::uint16_t F>
+template <std::uint16_t I, std::uint16_t F>  // NOLINT
 template <typename T>
-constexpr meta::IfIsInteger<T, FixedPoint<I, F>> &FixedPoint<I, F>::operator=(T const &n)
+constexpr meta::IfIsInteger<T, FixedPoint<I, F>> &FixedPoint<I, F>::operator=(T const &n)  // NOLINT
 {
   data_ = {static_cast<Type>(n) << static_cast<Type>(FRACTIONAL_BITS)};
   if (CheckOverflow(static_cast<NextType>(n)))
@@ -857,9 +857,9 @@ constexpr meta::IfIsInteger<T, FixedPoint<I, F>> &FixedPoint<I, F>::operator=(T 
  * @param the primitive to assign the FixedPoint object from
  * @return copies the given primitive float n
  */
-template <std::uint16_t I, std::uint16_t F>
+template <std::uint16_t I, std::uint16_t F>  // NOLINT
 template <typename T>
-constexpr meta::IfIsFloat<T, FixedPoint<I, F>> &FixedPoint<I, F>::operator=(T const &n)
+constexpr meta::IfIsFloat<T, FixedPoint<I, F>> &FixedPoint<I, F>::operator=(T const &n)  // NOLINT
 {
   data_ = static_cast<typename FixedPoint<I, F>::Type>(n * ONE_MASK);
   if (CheckOverflow(static_cast<NextType>(n) * static_cast<NextType>(ONE_MASK)))
@@ -885,10 +885,8 @@ constexpr bool FixedPoint<I, F>::operator==(FixedPoint const &o) const
   {
     return false;
   }
-  else
-  {
-    return (data_ == o.Data());
-  }
+
+  return (data_ == o.Data());
 }
 
 /**
@@ -903,10 +901,8 @@ constexpr bool FixedPoint<I, F>::operator!=(FixedPoint const &o) const
   {
     return true;
   }
-  else
-  {
-    return (data_ != o.Data());
-  }
+
+  return (data_ != o.Data());
 }
 
 /**
@@ -921,31 +917,27 @@ constexpr bool FixedPoint<I, F>::operator<(FixedPoint const &o) const
   {
     return false;
   }
-  else if (IsNegInfinity(*this))
+  if (IsNegInfinity(*this))
   {
     // Negative infinity is always smaller than all other quantities except itself
     return !IsNegInfinity(o);
   }
-  else if (IsPosInfinity(*this))
+  if (IsPosInfinity(*this))
   {
     // Positive infinity is never smaller than any other quantity
     return false;
   }
-  else
+
+  if (IsNegInfinity(o))
   {
-    if (IsNegInfinity(o))
-    {
-      return false;
-    }
-    else if (IsPosInfinity(o))
-    {
-      return true;
-    }
-    else
-    {
-      return (data_ < o.Data());
-    }
+    return false;
   }
+  if (IsPosInfinity(o))
+  {
+    return true;
+  }
+
+  return (data_ < o.Data());
 }
 
 /**
@@ -1073,12 +1065,12 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::operator-() const
     fp_state |= STATE_NAN;
     return NaN;
   }
-  else if (IsPosInfinity(*this))
+  if (IsPosInfinity(*this))
   {
     fp_state |= STATE_INFINITY;
     return NEGATIVE_INFINITY;
   }
-  else if (IsNegInfinity(*this))
+  if (IsNegInfinity(*this))
   {
     fp_state |= STATE_INFINITY;
     return POSITIVE_INFINITY;
@@ -1808,7 +1800,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Abs(FixedPoint<I, F> const &x)
     fp_state |= STATE_NAN;
     return NaN;
   }
-  else if (IsInfinity(x))
+  if (IsInfinity(x))
   {
     fp_state |= STATE_INFINITY;
     return POSITIVE_INFINITY;
@@ -1872,33 +1864,33 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Exp(FixedPoint<I, F> const &x)
     fp_state |= STATE_NAN;
     return NaN;
   }
-  else if (IsNegInfinity(x))
+  if (IsNegInfinity(x))
   {
     return _0;
   }
-  else if (IsPosInfinity(x))
+  if (IsPosInfinity(x))
   {
     fp_state |= STATE_INFINITY;
     return POSITIVE_INFINITY;
   }
-  else if (x < MIN_EXP)
+  if (x < MIN_EXP)
   {
     return _0;
   }
-  else if (x > MAX_EXP)
+  if (x > MAX_EXP)
   {
     fp_state |= STATE_OVERFLOW;
     return FP_MAX;
   }
-  else if (x == _1)
+  if (x == _1)
   {
     return CONST_E;
   }
-  else if (x == _0)
+  if (x == _0)
   {
     return _1;
   }
-  else if (x < _0)
+  if (x < _0)
   {
     return _1 / Exp(-x);
   }
@@ -1966,26 +1958,26 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Log2(FixedPoint<I, F> const &x)
   {
     return _0;
   }
-  else if (x == _0)
+  if (x == _0)
   {
     fp_state |= STATE_INFINITY;
     return NEGATIVE_INFINITY;
   }
-  else if (x == CONST_SMALLEST_FRACTION)
+  if (x == CONST_SMALLEST_FRACTION)
   {
     return FixedPoint{-FRACTIONAL_BITS};
   }
-  else if (IsNaN(x))
+  if (IsNaN(x))
   {
     fp_state |= STATE_NAN;
     return NaN;
   }
-  else if (IsPosInfinity(x))
+  if (IsPosInfinity(x))
   {
     fp_state |= STATE_INFINITY;
     return POSITIVE_INFINITY;
   }
-  else if (x < _0)
+  if (x < _0)
   {
     fp_state |= STATE_NAN;
     return NaN;
@@ -2083,16 +2075,16 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Sqrt(FixedPoint<I, F> const &x)
   {
     return _1;
   }
-  else if (x == _0)
+  if (x == _0)
   {
     return _0;
   }
-  else if (x < _0)
+  if (x < _0)
   {
     fp_state |= STATE_NAN;
     return NaN;
   }
-  else if (IsPosInfinity(x))
+  if (IsPosInfinity(x))
   {
     fp_state |= STATE_INFINITY;
     return POSITIVE_INFINITY;
@@ -2181,11 +2173,11 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Pow(FixedPoint<I, F> const &x,
     fp_state |= STATE_NAN;
     return NaN;
   }
-  else if (y == _0)
+  if (y == _0)
   {
     return _1;
   }
-  else if (y == _1)
+  if (y == _1)
   {
     if (IsInfinity(x))
     {
@@ -2193,23 +2185,21 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Pow(FixedPoint<I, F> const &x,
     }
     return x;
   }
-  else if (IsPosInfinity(x))
+  if (IsPosInfinity(x))
   {
     if (y > _0)
     {
       fp_state |= STATE_INFINITY;
       return POSITIVE_INFINITY;
     }
-    else
-    {
-      return _0;
-    }
+
+    return _0;
   }
-  else if (IsNegInfinity(x))
+  if (IsNegInfinity(x))
   {
     return Pow(_0, -y);
   }
-  else if (x == _0)
+  if (x == _0)
   {
     if (y < _0)
     {
@@ -2217,44 +2207,38 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Pow(FixedPoint<I, F> const &x,
 
       return NaN;
     }
-    else
-    {
-      return _0;
-    }
+
+    return _0;
   }
-  else if (IsPosInfinity(y))
+  if (IsPosInfinity(y))
   {
     if (Abs(x) > _1)
     {
       fp_state |= STATE_INFINITY;
       return POSITIVE_INFINITY;
     }
-    else if (Abs(x) == _1)
+    if (Abs(x) == _1)
     {
       return _1;
     }
-    else
-    {
-      return _0;
-    }
+
+    return _0;
   }
-  else if (IsNegInfinity(y))
+  if (IsNegInfinity(y))
   {
     if (Abs(x) > _1)
     {
       return _0;
     }
-    else if (Abs(x) == _1)
+    if (Abs(x) == _1)
     {
       return _1;
     }
-    else
-    {
-      fp_state |= STATE_INFINITY;
-      return POSITIVE_INFINITY;
-    }
+
+    fp_state |= STATE_INFINITY;
+    return POSITIVE_INFINITY;
   }
-  else if (y.Fraction() == 0)
+  if (y.Fraction() == 0)
   {
     FixedPoint pow{x};
     FixedPoint t{Abs(y)};
@@ -2266,12 +2250,10 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Pow(FixedPoint<I, F> const &x,
     {
       return pow;
     }
-    else
-    {
-      return _1 / pow;
-    }
+
+    return _1 / pow;
   }
-  else if (x < _0)
+  if (x < _0)
   {
     // Already checked the case for integer y
     fp_state |= STATE_NAN;
@@ -2388,7 +2370,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Sin(FixedPoint<I, F> const &x)
     fp_state |= STATE_NAN;
     return NaN;
   }
-  else if (x < _0)
+  if (x < _0)
   {
     return -Sin(-x);
   }
@@ -2495,17 +2477,17 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Tan(FixedPoint<I, F> const &x)
     fp_state |= STATE_NAN;
     return NaN;
   }
-  else if (x == CONST_PI_2)
+  if (x == CONST_PI_2)
   {
     fp_state |= STATE_INFINITY;
     return POSITIVE_INFINITY;
   }
-  else if (x == -CONST_PI_2)
+  if (x == -CONST_PI_2)
   {
     fp_state |= STATE_INFINITY;
     return NEGATIVE_INFINITY;
   }
-  else if (x < _0)
+  if (x < _0)
   {
     return -Tan(-x);
   }
@@ -2523,7 +2505,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Tan(FixedPoint<I, F> const &x)
     FixedPoint Q  = _1 + r2 * (Q01 + r2 * (Q02 + r2 * Q03));
     return P / Q;
   }
-  else if (r < CONST_PI_2)
+  if (r < CONST_PI_2)
   {
     FixedPoint y  = r - CONST_PI_2;
     FixedPoint y2 = y * y;
@@ -2531,10 +2513,8 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Tan(FixedPoint<I, F> const &x)
     FixedPoint Q  = -CONST_PI_2 + r + y2 * y * (P01 + y2 * P02);
     return P / Q;
   }
-  else
-  {
-    return Tan(r - CONST_PI);
-  }
+
+  return Tan(r - CONST_PI);
 }
 
 /**
@@ -2562,11 +2542,11 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::ASin(FixedPoint<I, F> const &x)
     fp_state |= STATE_NAN;
     return NaN;
   }
-  else if (x < _0)
+  if (x < _0)
   {
     return -ASin(-x);
   }
-  else if (x > _1)
+  if (x > _1)
   {
     fp_state |= STATE_NAN;
     return NaN;
@@ -2591,30 +2571,26 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::ASin(FixedPoint<I, F> const &x)
     FixedPoint R = P / Q;
     return x + x * R;
   }
-  else
+
+  FixedPoint w = _1 - x;
+  FixedPoint t = w * 0.5;
+  FixedPoint P = t * (P00 + t * (P01 + t * (P02 + t * (P03 + t * (P04 + t * P05)))));
+  FixedPoint Q = _1 + t * (Q01 + t * (Q02 + t * (Q03 + t * Q04)));
+  FixedPoint s = Sqrt(t);
+  FixedPoint R = P / Q;
+  if (x < 0.975)
   {
-    FixedPoint w = _1 - x;
-    FixedPoint t = w * 0.5;
-    FixedPoint P = t * (P00 + t * (P01 + t * (P02 + t * (P03 + t * (P04 + t * P05)))));
-    FixedPoint Q = _1 + t * (Q01 + t * (Q02 + t * (Q03 + t * Q04)));
-    FixedPoint s = Sqrt(t);
-    FixedPoint R = P / Q;
-    if (x < 0.975)
-    {
-      w = s;
-      c = (t - w * w) / (s + w);
-      P = s * R * 2.0 + c * 2.0;
-      Q = CONST_PI_4 - w * 2.0;
-      t = CONST_PI_4 - (P - Q);
-      return t;
-    }
-    else
-    {
-      w = P / Q;
-      t = CONST_PI_2 - ((s + s * R) * 2.0);
-      return t;
-    }
+    w = s;
+    c = (t - w * w) / (s + w);
+    P = s * R * 2.0 + c * 2.0;
+    Q = CONST_PI_4 - w * 2.0;
+    t = CONST_PI_4 - (P - Q);
+    return t;
   }
+
+  w = P / Q;
+  t = CONST_PI_2 - ((s + s * R) * 2.0);
+  return t;
 }
 
 /**
@@ -2677,19 +2653,19 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::ATan(FixedPoint<I, F> const &x)
     fp_state |= STATE_NAN;
     return NaN;
   }
-  else if (IsPosInfinity(x))
+  if (IsPosInfinity(x))
   {
     return CONST_PI_2;
   }
-  else if (IsNegInfinity(x))
+  if (IsNegInfinity(x))
   {
     return -CONST_PI_2;
   }
-  else if (x < _0)
+  if (x < _0)
   {
     return -ATan(-x);
   }
-  else if (x > _1)
+  if (x > _1)
   {
     return CONST_PI_2 - ATan(_1 / x);
   }
@@ -2744,41 +2720,37 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::ATan2(FixedPoint<I, F> const &y,
     fp_state |= STATE_NAN;
     return NaN;
   }
-  else if (IsPosInfinity(y))
+  if (IsPosInfinity(y))
   {
     if (IsPosInfinity(x))
     {
       return CONST_PI_4;
     }
-    else if (IsNegInfinity(x))
+    if (IsNegInfinity(x))
     {
       return CONST_PI_4 * 3;
     }
-    else
-    {
-      return CONST_PI_2;
-    }
+
+    return CONST_PI_2;
   }
-  else if (IsNegInfinity(y))
+  if (IsNegInfinity(y))
   {
     if (IsPosInfinity(x))
     {
       return -CONST_PI_4;
     }
-    else if (IsNegInfinity(x))
+    if (IsNegInfinity(x))
     {
       return -CONST_PI_4 * 3;
     }
-    else
-    {
-      return -CONST_PI_2;
-    }
+
+    return -CONST_PI_2;
   }
-  else if (IsPosInfinity(x))
+  if (IsPosInfinity(x))
   {
     return _0;
   }
-  else if (IsNegInfinity(x))
+  if (IsNegInfinity(x))
   {
     return Sign(y) * CONST_PI;
   }
@@ -2799,10 +2771,8 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::ATan2(FixedPoint<I, F> const &y,
   {
     return CONST_PI - atan;
   }
-  else
-  {
-    return atan;
-  }
+
+  return atan;
 }
 
 /**
@@ -2833,12 +2803,12 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::SinH(FixedPoint<I, F> const &x)
     fp_state |= STATE_NAN;
     return NaN;
   }
-  else if (IsPosInfinity(x))
+  if (IsPosInfinity(x))
   {
     fp_state |= STATE_INFINITY;
     return POSITIVE_INFINITY;
   }
-  else if (IsNegInfinity(x))
+  if (IsNegInfinity(x))
   {
     fp_state |= STATE_INFINITY;
     return NEGATIVE_INFINITY;
@@ -2876,7 +2846,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::CosH(FixedPoint<I, F> const &x)
     fp_state |= STATE_NAN;
     return NaN;
   }
-  else if (IsInfinity(x))
+  if (IsInfinity(x))
   {
     fp_state |= STATE_INFINITY;
     return POSITIVE_INFINITY;
@@ -2913,12 +2883,12 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::TanH(FixedPoint<I, F> const &x)
     fp_state |= STATE_NAN;
     return NaN;
   }
-  else if (IsPosInfinity(x))
+  if (IsPosInfinity(x))
   {
     fp_state |= STATE_INFINITY;
     return POSITIVE_INFINITY;
   }
-  else if (IsNegInfinity(x))
+  if (IsNegInfinity(x))
   {
     fp_state |= STATE_INFINITY;
     return NEGATIVE_INFINITY;
@@ -2954,12 +2924,12 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::ASinH(FixedPoint<I, F> const &x)
     fp_state |= STATE_NAN;
     return NaN;
   }
-  else if (IsPosInfinity(x))
+  if (IsPosInfinity(x))
   {
     fp_state |= STATE_INFINITY;
     return POSITIVE_INFINITY;
   }
-  else if (IsNegInfinity(x))
+  if (IsNegInfinity(x))
   {
     fp_state |= STATE_INFINITY;
     return NEGATIVE_INFINITY;
@@ -2995,12 +2965,12 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::ACosH(FixedPoint<I, F> const &x)
     fp_state |= STATE_NAN;
     return NaN;
   }
-  else if (IsPosInfinity(x))
+  if (IsPosInfinity(x))
   {
     fp_state |= STATE_INFINITY;
     return POSITIVE_INFINITY;
   }
-  else if (IsNegInfinity(x))
+  if (IsNegInfinity(x))
   {
     fp_state |= STATE_NAN;
     return NaN;
@@ -3041,7 +3011,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::ATanH(FixedPoint<I, F> const &x)
     fp_state |= STATE_NAN;
     return NaN;
   }
-  else if (IsInfinity(x))
+  if (IsInfinity(x))
   {
     fp_state |= STATE_NAN;
     return NaN;

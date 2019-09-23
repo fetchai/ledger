@@ -257,7 +257,7 @@ constexpr int32_t HighestSetBit(T n_input)
 inline uint64_t Log2Ceil(uint64_t x)
 {
   uint64_t count = 0;
-  while (x >>= 1)
+  while (x >>= 1)  // NOLINT
   {
     count++;
   }
@@ -272,21 +272,21 @@ inline uint64_t Log2Ceil(uint64_t x)
 
 inline uint32_t ToLog2(uint32_t value)
 {
-  static constexpr uint32_t VALUE_SIZE_IN_BITS = sizeof(value) << 3;
+  static constexpr uint32_t VALUE_SIZE_IN_BITS = sizeof(value) << 3u;
   return static_cast<uint32_t>(VALUE_SIZE_IN_BITS -
                                static_cast<uint32_t>(__builtin_clz(value) + 1));
 }
 
 inline uint64_t ToLog2(uint64_t value)
 {
-  static constexpr uint64_t VALUE_SIZE_IN_BITS = sizeof(value) << 3;
+  static constexpr uint64_t VALUE_SIZE_IN_BITS = sizeof(value) << 3u;
   return VALUE_SIZE_IN_BITS - static_cast<uint64_t>(__builtin_clzll(value) + 1);
 }
 
 // https://graphics.stanford.edu/~seander/bithacks.html
 inline bool IsLog2(uint64_t value)
 {
-  return value && !(value & (value - 1));
+  return (value != 0u) && ((value & (value - 1)) == 0u);
 }
 
 template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>

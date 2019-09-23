@@ -168,11 +168,9 @@ BeaconSetupService::State BeaconSetupService::OnIdle()
     {
       return State::BEACON_READY;
     }
-    else
-    {
-      SetTimeToProceed(State::RESET);
-      return State::RESET;
-    }
+
+    SetTimeToProceed(State::RESET);
+    return State::RESET;
   }
 
   state_machine_->Delay(std::chrono::milliseconds(100));
@@ -435,18 +433,15 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
     SetTimeToProceed(State::WAIT_FOR_SHARES);
     return State::WAIT_FOR_SHARES;
   }
-  else
-  {
-    if (!condition_to_proceed_)
-    {
-      FETCH_LOG_INFO(
-          LOGGING_NAME,
-          "Waiting for all peers to be ready before starting DKG. We have: ", can_see.size(),
-          " expect: ", require_connections, " Other ready peers: ", ready_connections_.size());
-    }
 
-    state_machine_->Delay(std::chrono::milliseconds(100));
+  if (!condition_to_proceed_)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Waiting for all peers to be ready before starting DKG. We have: ",
+                   can_see.size(), " expect: ", require_connections,
+                   " Other ready peers: ", ready_connections_.size());
   }
+
+  state_machine_->Delay(std::chrono::milliseconds(100));
 
   return State::WAIT_FOR_READY_CONNECTIONS;
 }
@@ -540,13 +535,11 @@ BeaconSetupService::State BeaconSetupService::OnWaitForComplaintAnswers()
       SetTimeToProceed(State::WAIT_FOR_QUAL_SHARES);
       return State::WAIT_FOR_QUAL_SHARES;
     }
-    else
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-                     " Failed to build qualified set! Resetting.");
-      SetTimeToProceed(State::RESET);
-      return State::RESET;
-    }
+
+    FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                   " Failed to build qualified set! Resetting.");
+    SetTimeToProceed(State::RESET);
+    return State::RESET;
   }
   state_machine_->Delay(std::chrono::milliseconds(10));
   return State::WAIT_FOR_COMPLAINT_ANSWERS;
@@ -607,7 +600,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForQualComplaints()
       SetTimeToProceed(State::RESET);
       return State::RESET;
     }
-    else if (qual_complaints_manager_.FindComplaint(identity_.identifier()))
+    if (qual_complaints_manager_.FindComplaint(identity_.identifier()))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Node: ", beacon_->manager.cabinet_index(),
                      " is in qual complaints");
@@ -679,10 +672,8 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReconstructionShares()
       SetTimeToProceed(State::RESET);
       return State::RESET;
     }
-    else
-    {
-      beacon_->manager.ComputePublicKeys();
-    }
+
+    beacon_->manager.ComputePublicKeys();
 
     SetTimeToProceed(State::DRY_RUN_SIGNING);
     return State::DRY_RUN_SIGNING;
@@ -782,13 +773,11 @@ BeaconSetupService::State BeaconSetupService::OnDryRun()
       SetTimeToProceed(State::BEACON_READY);
       return State::BEACON_READY;
     }
-    else
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-                     " Failed to complete dry run for signature signing!");
-      SetTimeToProceed(State::RESET);
-      return State::RESET;
-    }
+
+    FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                   " Failed to complete dry run for signature signing!");
+    SetTimeToProceed(State::RESET);
+    return State::RESET;
   }
 
   state_machine_->Delay(std::chrono::milliseconds(10));
@@ -1278,7 +1267,7 @@ bool BeaconSetupService::BuildQual()
                    " build QUAL failed as not in QUAL");
     return false;
   }
-  else if (qual.size() < QualSize())
+  if (qual.size() < QualSize())
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Node: ", beacon_->manager.cabinet_index(),
                    " build QUAL failed as size ", qual.size(), " less than required ", QualSize());
@@ -1332,7 +1321,7 @@ bool BeaconSetupService::BasicMsgCheck(MuddleAddress const &              from,
   {
     return false;
   }
-  else if (!in_cabinet)
+  if (!in_cabinet)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                    " received message from unknown sender");

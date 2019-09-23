@@ -23,7 +23,7 @@
 namespace fetch {
 namespace random {
 
-void BuildLinearCongruentialGenerator(pybind11::module &module)
+inline void BuildLinearCongruentialGenerator(pybind11::module &module)
 {
   namespace py = pybind11;
   py::class_<LinearCongruentialGenerator>(module, "LinearCongruentialGenerator")

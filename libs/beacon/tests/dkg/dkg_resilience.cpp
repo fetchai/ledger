@@ -564,10 +564,8 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
         {
           break;
         }
-        else
-        {
-          ++pp;
-        }
+
+        ++pp;
       }
     }
 

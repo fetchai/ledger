@@ -430,11 +430,9 @@ bool DAG::GetDAGNode(ConstByteArray const &hash, DAGNode &node)
     FETCH_LOG_DEBUG(LOGGING_NAME, "DAG node hash: ", node.hash.ToBase64());
     return true;
   }
-  else
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "Request for dag node", hash.ToBase64(), " lose");
-    return false;
-  }
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Request for dag node", hash.ToBase64(), " lose");
+  return false;
 }
 
 bool DAG::GetWork(ConstByteArray const &hash, Work &work)
@@ -1104,7 +1102,7 @@ bool DAG::SatisfyEpoch(DAGEpoch const &epoch)
     }
   }
 
-  if (missing_count || loose_count)
+  if ((missing_count != 0u) || (loose_count != 0u))
   {
     FETCH_LOG_INFO(LOGGING_NAME, "When satisfying, epoch ", epoch.block_number,
                    " AKA: ", epoch.hash.ToBase64(), " is missing : ", missing_count, " of ",

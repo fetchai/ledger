@@ -274,20 +274,18 @@ BeaconService::State BeaconService::OnWaitForSetupCompletionState()
     {
       return State::WAIT_FOR_PUBLIC_KEYS;
     }
-    else
-    {
-      // and those who run it.
-      Serializer       msgser;
-      PublicKeyMessage pk;
 
-      pk.round = active_exe_unit_->aeon.round_start;
-      pk.group_public_key.setStr(active_exe_unit_->manager.group_public_key());
+    // and those who run it.
+    Serializer       msgser;
+    PublicKeyMessage pk;
 
-      msgser << pk;
-      endpoint_.Broadcast(SERVICE_DKG, CHANNEL_PUBLIC_KEY, msgser.data());
+    pk.round = active_exe_unit_->aeon.round_start;
+    pk.group_public_key.setStr(active_exe_unit_->manager.group_public_key());
 
-      return State::PREPARE_ENTROPY_GENERATION;
-    }
+    msgser << pk;
+    endpoint_.Broadcast(SERVICE_DKG, CHANNEL_PUBLIC_KEY, msgser.data());
+
+    return State::PREPARE_ENTROPY_GENERATION;
   }
 
   state_machine_->Delay(std::chrono::milliseconds(500));
@@ -538,10 +536,8 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
 
     return State::COMPLETE;
   }
-  else
-  {
-    return State::COLLECT_SIGNATURES;
-  }
+
+  return State::COLLECT_SIGNATURES;
 }
 
 BeaconService::State BeaconService::OnCompleteState()
@@ -600,7 +596,7 @@ bool BeaconService::AddSignature(SignatureShare share)
 
     return false;
   }
-  else if (ret == BeaconManager::AddResult::NOT_MEMBER)
+  if (ret == BeaconManager::AddResult::NOT_MEMBER)
   {  // And that it was sent by a member of the cabinet
     FETCH_LOG_ERROR(LOGGING_NAME, "Signature from non-member.");
 

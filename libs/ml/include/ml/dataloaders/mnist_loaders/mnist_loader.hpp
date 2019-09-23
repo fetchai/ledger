@@ -107,11 +107,9 @@ public:
                  buffer_);
       return buffer_;
     }
-    else
-    {
-      GetAtIndex((*(this->current_cursor_))++, buffer_);
-      return buffer_;
-    }
+
+    GetAtIndex((*(this->current_cursor_))++, buffer_);
+    return buffer_;
   }
 
   void SetTestRatio(float new_test_ratio) override
@@ -241,10 +239,8 @@ public:
       }
       return _dataset;
     }
-    else
-    {
-      throw std::runtime_error("Cannot open file `" + full_path + "`!");
-    }
+
+    throw std::runtime_error("Cannot open file `" + full_path + "`!");
   }
 
   static uint8_t *ReadMNistLabels(std::string const &full_path, std::uint32_t &number_of_labels)
@@ -282,10 +278,8 @@ public:
       }
       return _dataset;
     }
-    else
-    {
-      throw std::runtime_error("Unable to open file `" + full_path + "`!");
-    }
+
+    throw std::runtime_error("Unable to open file `" + full_path + "`!");
   }
 
 private:

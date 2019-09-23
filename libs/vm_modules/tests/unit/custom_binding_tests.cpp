@@ -36,7 +36,6 @@ class CustomBindingTests : public ::testing::Test
 {
 public:
   CustomBindingTests()
-    : toolkit{}
   {
     fixture = this;
   }

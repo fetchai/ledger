@@ -88,7 +88,7 @@ public:
     this->operator=(other);
   }
 
-  SelfType &operator=(Array const &other)
+  SelfType &operator=(Array const &other)  // NOLINT
   {
     if (this->pointer_ != nullptr)
     {

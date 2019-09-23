@@ -132,11 +132,9 @@ CommodityDataLoader<LabelType, InputType>::GetNext()
     GetAtIndex(this->current_min_ + (static_cast<SizeType>(decltype(rand_)::generator()) % Size()));
     return buffer_;
   }
-  else
-  {
-    GetAtIndex((*this->current_cursor_)++);
-    return buffer_;
-  }
+
+  GetAtIndex((*this->current_cursor_)++);
+  return buffer_;
 }
 
 /**

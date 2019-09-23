@@ -182,13 +182,11 @@ public:
       assert(total_in_size == this->in_size_);
       return {this->out_size_, inputs.front()->shape(inputs.front()->shape().size() - 1)};
     }
-    else
-    {
-      assert(inputs.front()->shape().size() == 3);
-      assert(inputs.front()->shape(0) == in_size_);
-      return {this->out_size_, inputs.front()->shape(inputs.front()->shape().size() - 2),
-              inputs.front()->shape(inputs.front()->shape().size() - 1)};
-    }
+
+    assert(inputs.front()->shape().size() == 3);
+    assert(inputs.front()->shape(0) == in_size_);
+    return {this->out_size_, inputs.front()->shape(inputs.front()->shape().size() - 2),
+            inputs.front()->shape(inputs.front()->shape().size() - 1)};
   }
 
   static constexpr OpType OpCode()

@@ -213,78 +213,76 @@ C2VLoader<LabelType, InputType>::GetNext()
   {
     throw std::runtime_error("Random sampling not implemented for C2VLoader");
   }
-  else
-  {
-    std::vector<SizeType> context_positions;
-    SizeType              old_function_index{0};
-    bool                  iteration_start = true;
 
-    while (true)
+  std::vector<SizeType> context_positions;
+  SizeType              old_function_index{0};
+  bool                  iteration_start = true;
+
+  while (true)
+  {
+    auto             current_context_position = this->iterator_position_get_next_context_;
+    ContextLabelPair input                    = this->GetNextContext();
+    if ((iteration_start || (input.first == old_function_index)) && !this->IsDone())
     {
-      auto             current_context_position = this->iterator_position_get_next_context_;
-      ContextLabelPair input                    = this->GetNextContext();
-      if ((iteration_start || (input.first == old_function_index)) && !this->IsDone())
+      old_function_index = input.first;
+      context_positions.push_back(current_context_position);
+    }
+    else
+    {
+      if (!this->IsDone())
       {
-        old_function_index = input.first;
-        context_positions.push_back(current_context_position);
+        this->iterator_position_get_next_context_--;
       }
       else
       {
-        if (!this->IsDone())
-        {
-          this->iterator_position_get_next_context_--;
-        }
-        else
-        {
-          context_positions.push_back(current_context_position);
-        }
-
-        TensorType source_word_tensor({this->max_contexts_, 1});
-        TensorType path_tensor({this->max_contexts_, 1});
-        TensorType target_word_tensor({this->max_contexts_, 1});
-
-        if (context_positions.size() <= this->max_contexts_)
-        {
-          for (SizeType i{0}; i < context_positions.size(); i++)
-          {
-
-            source_word_tensor(i, 0) =
-                static_cast<Type>(std::get<0>(data_[context_positions[i]].second));
-            path_tensor(i, 0) = static_cast<Type>(std::get<1>(data_[context_positions[i]].second));
-            target_word_tensor(i, 0) =
-                static_cast<Type>(std::get<2>(data_[context_positions[i]].second));
-          }
-          for (SizeType i{context_positions.size()}; i < this->max_contexts_; i++)
-          {
-            source_word_tensor(i, 0) = static_cast<Type>(this->word_to_idx_[EMPTY_CONTEXT_STRING]);
-            path_tensor(i, 0)        = static_cast<Type>(this->path_to_idx_[EMPTY_CONTEXT_STRING]);
-            target_word_tensor(i, 0) = static_cast<Type>(this->word_to_idx_[EMPTY_CONTEXT_STRING]);
-          }
-        }
-        else
-        {
-          for (SizeType i{0}; i < this->max_contexts_; i++)
-          {
-            source_word_tensor(i, 0) =
-                static_cast<Type>(std::get<0>(data_[context_positions[i]].second));
-            path_tensor(i, 0) = static_cast<Type>(std::get<1>(data_[context_positions[i]].second));
-            target_word_tensor(i, 0) =
-                static_cast<Type>(std::get<2>(data_[context_positions[i]].second));
-          }
-        }
-        ContextVector context_tensor_tuple = {source_word_tensor, path_tensor, target_word_tensor};
-
-        TensorType y_true_vec({function_name_counter().size() + 1, 1});
-        y_true_vec.Fill(Type{0});
-        // Preparing the y_true vector (one-hot-encoded)
-        y_true_vec.Set(old_function_index, Type{0}, Type{1});
-
-        ContextTensorsLabelPair return_pair{y_true_vec, context_tensor_tuple};
-
-        return return_pair;
+        context_positions.push_back(current_context_position);
       }
-      iteration_start = false;
+
+      TensorType source_word_tensor({this->max_contexts_, 1});
+      TensorType path_tensor({this->max_contexts_, 1});
+      TensorType target_word_tensor({this->max_contexts_, 1});
+
+      if (context_positions.size() <= this->max_contexts_)
+      {
+        for (SizeType i{0}; i < context_positions.size(); i++)
+        {
+
+          source_word_tensor(i, 0) =
+              static_cast<Type>(std::get<0>(data_[context_positions[i]].second));
+          path_tensor(i, 0) = static_cast<Type>(std::get<1>(data_[context_positions[i]].second));
+          target_word_tensor(i, 0) =
+              static_cast<Type>(std::get<2>(data_[context_positions[i]].second));
+        }
+        for (SizeType i{context_positions.size()}; i < this->max_contexts_; i++)
+        {
+          source_word_tensor(i, 0) = static_cast<Type>(this->word_to_idx_[EMPTY_CONTEXT_STRING]);
+          path_tensor(i, 0)        = static_cast<Type>(this->path_to_idx_[EMPTY_CONTEXT_STRING]);
+          target_word_tensor(i, 0) = static_cast<Type>(this->word_to_idx_[EMPTY_CONTEXT_STRING]);
+        }
+      }
+      else
+      {
+        for (SizeType i{0}; i < this->max_contexts_; i++)
+        {
+          source_word_tensor(i, 0) =
+              static_cast<Type>(std::get<0>(data_[context_positions[i]].second));
+          path_tensor(i, 0) = static_cast<Type>(std::get<1>(data_[context_positions[i]].second));
+          target_word_tensor(i, 0) =
+              static_cast<Type>(std::get<2>(data_[context_positions[i]].second));
+        }
+      }
+      ContextVector context_tensor_tuple = {source_word_tensor, path_tensor, target_word_tensor};
+
+      TensorType y_true_vec({function_name_counter().size() + 1, 1});
+      y_true_vec.Fill(Type{0});
+      // Preparing the y_true vector (one-hot-encoded)
+      y_true_vec.Set(old_function_index, Type{0}, Type{1});
+
+      ContextTensorsLabelPair return_pair{y_true_vec, context_tensor_tuple};
+
+      return return_pair;
     }
+    iteration_start = false;
   }
 }
 
@@ -397,10 +395,8 @@ typename C2VLoader<LabelType, InputType>::SizeType C2VLoader<LabelType, InputTyp
     idx_to_name[index_of_new_word] = input;
     return index_of_new_word;
   }
-  else
-  {
-    return name_to_idx[input];
-  }
+
+  return name_to_idx[input];
 }
 
 /**

@@ -233,10 +233,8 @@ public:
     {
       return trust_store_.size() + 1;
     }
-    else
-    {
-      return ranking_it->second;
-    }
+
+    return ranking_it->second;
   }
 
   double GetTrustRatingOfPeer(IDENTITY const &peer_ident) const override

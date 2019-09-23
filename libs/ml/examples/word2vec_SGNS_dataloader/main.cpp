@@ -69,11 +69,9 @@ void PrintWordAnalogy(GraphW2VLoader<DataType> const &dl, TensorType const &embe
   {
     throw std::runtime_error("WARNING! not all to-be-tested words are in vocabulary");
   }
-  else
-  {
-    std::cout << "Find word that to " << word3 << " is what " << word2 << " is to " << word1
-              << std::endl;
-  }
+
+  std::cout << "Find word that to " << word3 << " is what " << word2 << " is to " << word1
+            << std::endl;
 
   // get id for words
   SizeType word1_idx = dl.IndexFromWord(word1);

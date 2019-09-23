@@ -110,7 +110,7 @@ int ArgPos(char *str, int argc, char **argv)
   int a;
   for (a = 1; a < argc; a++)
   {
-    if (!strcmp(str, argv[a]))
+    if (strcmp(str, argv[a]) == 0)
     {
       if (a == argc - 1)
       {
@@ -126,10 +126,10 @@ int ArgPos(char *str, int argc, char **argv)
 int main(int argc, char **argv)
 {
   int                      i;
-  std::string              train_file      = "";
-  bool                     load            = false;  // whether to load or train new embeddings
-  bool                     mode            = true;   // true for cbow, false for sgns
-  std::string              output_file     = "";
+  std::string              train_file;
+  bool                     load = false;  // whether to load or train new embeddings
+  bool                     mode = true;   // true for cbow, false for sgns
+  std::string              output_file;
   SizeType                 top_k           = 10;
   std::vector<std::string> test_words      = {"france", "paris", "italy"};
   SizeType                 window_size     = 8;
@@ -200,7 +200,7 @@ int main(int argc, char **argv)
   }
   if ((i = ArgPos((char *)"-load", argc, argv)) > 0)
   {
-    load = std::stoull(argv[i + 1]);
+    load = (std::stoull(argv[i + 1]) != 0u);
   }
 
   // if no train file specified - we just run analogy example
@@ -222,7 +222,7 @@ int main(int argc, char **argv)
     data_loader.SaveVocab("vocab_" + output_file);
 
     /// TRAIN EMBEDDINGS ///
-    if (mode == 1)
+    if (static_cast<int>(mode) == 1)
     {
       std::cout << "Training CBOW" << std::endl;
     }

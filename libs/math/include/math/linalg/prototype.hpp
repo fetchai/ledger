@@ -89,7 +89,7 @@ struct Prototype
   }
 
   template <typename O>
-  TwoOpReturnType<O, EQ> constexpr operator=(O const & /*other*/) const
+  TwoOpReturnType<O, EQ> constexpr operator=(O const & /*other*/) const  // NOLINT
   {
     return TwoOpReturnType<O, EQ>();
   }

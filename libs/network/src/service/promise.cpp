@@ -139,19 +139,17 @@ bool PromiseImplementation::Wait(bool throw_exception) const
     LogTimout(name_, id_);
     return false;
   }
-  else
+
+  std::unique_lock<std::mutex> lock(notify_lock_);
+  while (State::WAITING == state())
   {
-    std::unique_lock<std::mutex> lock(notify_lock_);
-    while (State::WAITING == state())
+    if (std::cv_status::timeout == notify_.wait_until(lock, deadline_))
     {
-      if (std::cv_status::timeout == notify_.wait_until(lock, deadline_))
-      {
-        LogTimout(name_, id_);
-        return false;
-      }
+      LogTimout(name_, id_);
+      return false;
     }
-    state_copy = state();
   }
+  state_copy = state();
 
   if (State::FAILED == state_copy)
   {
@@ -228,7 +226,7 @@ void PromiseImplementation::DispatchCallbacks() const
   }
 
   // dispatch the event
-  if (handler && *handler)
+  if ((handler != nullptr) && *handler)
   {
     // call the success or failure handler
     (*handler)();

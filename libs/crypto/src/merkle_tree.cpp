@@ -33,7 +33,6 @@ using Container = MerkleTree::Container;
 
 MerkleTree::MerkleTree(std::size_t count)
   : leaf_nodes_{count}
-  , root_{}
 {}
 
 HashArray &MerkleTree::operator[](std::size_t n)
@@ -48,7 +47,7 @@ void MerkleTree::CalculateRoot() const
     root_ = Hash<crypto::SHA256>(Digest{});
     return;
   }
-  else if (leaf_nodes_.size() == 1)
+  if (leaf_nodes_.size() == 1)
   {
     // special case if there is only one node in the tree it is its own merkle root
     root_ = leaf_nodes_[0];

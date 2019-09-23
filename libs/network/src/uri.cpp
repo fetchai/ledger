@@ -29,7 +29,7 @@ namespace network {
 static const std::regex URI_FORMAT("^([a-z]+)://(.*)$");
 static const std::regex IDENTITY_FORMAT("^[a-zA-Z0-9/+]{86}==$");
 
-static const std::regex PEER_FORMAT("^[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+:[0-9]+$");
+static const std::regex PEER_FORMAT(R"(^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+:[0-9]+$)");
 static const std::regex TCP_FORMAT("^tcp://([^:]+):([0-9]+)$");
 
 Uri::Uri(Peer const &peer)

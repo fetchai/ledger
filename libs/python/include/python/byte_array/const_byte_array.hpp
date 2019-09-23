@@ -23,7 +23,7 @@
 namespace fetch {
 namespace byte_array {
 
-void BuildConstByteArray(pybind11::module &module)
+inline void BuildConstByteArray(pybind11::module &module)
 {
   namespace py = pybind11;
   py::class_<ConstByteArray>(module, "ConstByteArray")

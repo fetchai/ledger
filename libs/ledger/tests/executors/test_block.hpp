@@ -86,9 +86,8 @@ struct TestBlock
         std::size_t remaining_lanes = num_lanes;
         std::size_t lane_offset     = 0;
 
-        while (remaining_lanes)
+        while (remaining_lanes != 0u)
         {
-
           // decide how many lanes will be consumed this round
           std::size_t const consumed_lanes =
               std::min(std::max<std::size_t>(rng() % remaining_lanes, 1u), remaining_lanes);

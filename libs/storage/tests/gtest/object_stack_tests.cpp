@@ -115,7 +115,7 @@ TEST(storage_object_stack_basic_functionality, pushing_and_popping)
 
     CheckIdentical(test_stack, ref_stack);
 
-    if (lfg() & 0x1)
+    if ((lfg() & 0x1) != 0u)
     {
       test_stack.Pop();
       ref_stack.pop_back();

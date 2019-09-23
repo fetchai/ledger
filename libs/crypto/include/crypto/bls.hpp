@@ -41,7 +41,8 @@ struct BLSInitialiser
 {
   BLSInitialiser()
   {
-    bool a{true};
+    static std::atomic<bool> was_initialised{false};
+    bool                     a{true};
     a = was_initialised.exchange(a);
     if (!a)
     {
@@ -49,11 +50,8 @@ struct BLSInitialiser
       bls::init();
     }
   }
-
-  static std::atomic<bool> was_initialised;
 };
 
-std::atomic<bool> BLSInitialiser::was_initialised{false};
 }  // namespace details
 
 class BLSVerifier : public Verifier
@@ -132,7 +130,7 @@ public:
   {
     auto const     m = static_cast<std::string>(text);
     bls::Signature s;
-    private_key_.sign(s, m.c_str());
+    private_key_.sign(s, m);
     std::stringstream signature;
     signature << s;
     return static_cast<ConstByteArray>(signature.str());

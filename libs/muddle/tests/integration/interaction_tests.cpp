@@ -150,7 +150,7 @@ protected:
         }
 
         // exit the outer loop when we have a non-zero port
-        if (port)
+        if (port != 0u)
         {
           break;
         }

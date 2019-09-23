@@ -64,8 +64,7 @@ public:
   };
 
   explicit RevertibleDocumentStoreProtocol(NewRevertibleDocumentStore *doc_store, LaneType lane)
-    : fetch::service::Protocol()
-    , doc_store_(doc_store)
+    : doc_store_(doc_store)
     , get_count_(CreateCounter(lane, "ledger_statedb_get_total", "The total no. get ops"))
     , get_create_count_(
           CreateCounter(lane, "ledger_statedb_get_create_total", "The total no. get/create ops"))

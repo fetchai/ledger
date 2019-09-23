@@ -1490,11 +1490,9 @@ Generator::Chain Generator::HandleConditionExpression(IRBlockNodePtr const &    
   {
     return HandleShortCircuitOp(block_node, node);
   }
-  else
-  {
-    HandleExpression(node);
-    return Chain();
-  }
+
+  HandleExpression(node);
+  return Chain();
 }
 
 Generator::Chain Generator::HandleShortCircuitOp(IRNodePtr const &          parent,

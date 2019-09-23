@@ -267,7 +267,7 @@ public:
       return it->second;
     }
 
-    return TypeIndex(typeid(void ***));
+    return {typeid(void ***)};
   }
 
 private:

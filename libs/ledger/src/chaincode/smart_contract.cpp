@@ -491,7 +491,7 @@ Contract::Result SmartContract::InvokeAction(std::string const &name, Transactio
 
   // lookup the function / entry point which will be executed
   Executable::Function const *target_function = executable_->FindFunction(name);
-  if (!target_function ||
+  if ((target_function == nullptr) ||
       (input_params.size() != static_cast<std::size_t>(target_function->num_parameters)))
   {
     FETCH_LOG_WARN(LOGGING_NAME,
@@ -622,7 +622,7 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
 
   // lookup the executable
   auto const target_function = executable_->FindFunction(name);
-  if (!target_function)
+  if (target_function == nullptr)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup target function");
     return Status::FAILED;

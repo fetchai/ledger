@@ -105,7 +105,7 @@ public:
   // Enable constructor for unit tests
   explicit MMapRandomAccessStack(char const *is_testing)
   {
-    if (!(std::string(is_testing).compare(std::string("test")) == 0))
+    if (std::string(is_testing) != std::string("test"))
     {
       throw std::runtime_error("This class hasn't been fully tested for production code");
     }

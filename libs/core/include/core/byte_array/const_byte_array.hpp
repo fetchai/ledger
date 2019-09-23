@@ -57,7 +57,8 @@ public:
   }
 
   ConstByteArray(char const *str)  // NOLINT
-    : ConstByteArray{reinterpret_cast<std::uint8_t const *>(str), str ? std::strlen(str) : 0}
+    : ConstByteArray{reinterpret_cast<std::uint8_t const *>(str),
+                     str != nullptr ? std::strlen(str) : 0}
   {}
 
   ConstByteArray(ValueType const *const data, std::size_t size)
@@ -250,7 +251,7 @@ public:
   {
     auto position =
         static_cast<ValueType const *>(std::memchr(arr_pointer_ + pos, c, length_ - pos));
-    return position ? static_cast<std::size_t>(position - arr_pointer_) : NPOS;
+    return position != nullptr ? static_cast<std::size_t>(position - arr_pointer_) : NPOS;
   }
 
   constexpr std::size_t size() const noexcept

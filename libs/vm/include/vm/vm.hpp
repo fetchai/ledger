@@ -266,7 +266,7 @@ public:
     bool success{false};
 
     Executable::Function const *f = executable.FindFunction(name);
-    if (f)
+    if (f != nullptr)
     {
       auto const num_parameters = static_cast<std::size_t>(f->num_parameters);
 

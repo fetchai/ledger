@@ -158,10 +158,8 @@ bool TensorDataLoader<LabelType, InputType>::IsDone() const
   {
     return (count_ > (this->current_max_ - this->current_min_));
   }
-  else
-  {
-    return *(this->current_cursor_) >= this->current_max_;
-  }
+
+  return *(this->current_cursor_) >= this->current_max_;
 }
 
 template <typename LabelType, typename InputType>

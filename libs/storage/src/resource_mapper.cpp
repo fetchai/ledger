@@ -103,7 +103,6 @@ ResourceAddress::ResourceAddress(byte_array::ConstByteArray const &address)
 
 ResourceAddress::ResourceAddress(ResourceID const &rid)
   : ResourceID(rid)
-  , address_{}
 {}
 
 byte_array::ConstByteArray ResourceAddress::address() const

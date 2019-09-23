@@ -144,7 +144,7 @@ private:
     {
       CallableArgumentList extra_args;
 
-      if (function->meta_data() & Callable::CLIENT_CONTEXT_ARG)
+      if ((function->meta_data() & Callable::CLIENT_CONTEXT_ARG) != 0u)
       {
         FETCH_LOG_DEBUG(LOGGING_NAME, "Adding call context meta data to ", identifier);
         extra_args.PushArgument(&context);
