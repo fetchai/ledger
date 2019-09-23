@@ -70,7 +70,7 @@ VMDataLoader::VMDataLoader(VM *vm, TypeId type_id, fetch::vm::Ptr<fetch::vm::Str
   else if (mode->str == "mnist")
   {
     mode_   = DataLoaderMode::MNIST;
-    loader_ = std::make_shared<CommodityLoaderType>();
+    loader_ = std::make_shared<MnistLoaderType>();
   }
   else
   {
