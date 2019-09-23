@@ -34,19 +34,23 @@ using PromiseState = service::PromiseState;
  * Compute the desired timeout or deadline for the monitored promise
  *
  * @param promise The promise to be monitored
- * @param timeout The (optional) timeout to be imposed
  * @return The desired deadline time
  */
-Timepoint CalculateDeadline(Promise const &promise, Duration const *timeout = nullptr)
+Timepoint CalculateDeadline(Promise const &promise)
 {
-  Timepoint deadline = promise->deadline();
+  return promise->deadline();
+}
 
-  if (timeout)
-  {
-    deadline = std::min(deadline, promise->created_at() + *timeout);
-  }
-
-  return deadline;
+/**
+ * Compute the desired timeout or deadline for the monitored promise
+ *
+ * @param promise The promise to be monitored
+ * @param timeout The timeout to be imposed
+ * @return The desired deadline time
+ */
+Timepoint CalculateDeadline(Promise const &promise, Duration const &timeout)
+{
+  return std::min(CalculateDeadline(promise), promise->created_at() + timeout);
 }
 
 }  // namespace
@@ -56,7 +60,7 @@ PromiseTask::PromiseTask(Promise const &promise, Callback callback)
 {}
 
 PromiseTask::PromiseTask(Promise const &promise, Duration const &timeout, Callback callback)
-  : PromiseTask(promise, CalculateDeadline(promise, &timeout), std::move(callback))
+  : PromiseTask(promise, CalculateDeadline(promise, timeout), std::move(callback))
 {}
 
 PromiseTask::PromiseTask(Promise promise, Timepoint const &deadline, Callback callback)
@@ -92,7 +96,6 @@ bool PromiseTask::IsReadyToExecute() const
   }
 
   return ready;
-  return (!complete_) && promise_ && (promise_->state() != service::PromiseState::WAITING);
 }
 
 void PromiseTask::Execute()
