@@ -166,10 +166,10 @@ Ptr<VMTrainingPair> VMDataLoader::GetNext()
       this->vm_->CreateNewObject<fetch::vm::Array<Ptr<fetch::vm_modules::math::VMTensor>>>(
           second->GetTypeId(), static_cast<int32_t>(next.second.size()));
 
-  TemplateParameter1 firt_element(second, second->GetTypeId());
+  TemplateParameter1 first_element(second, second->GetTypeId());
 
   AnyInteger first_index(0, TypeIds::UInt16);
-  second_vector->SetIndexedValue(first_index, firt_element);
+  second_vector->SetIndexedValue(first_index, first_element);
 
   for (fetch::math::SizeType i{1}; i < next.second.size(); i++)
   {

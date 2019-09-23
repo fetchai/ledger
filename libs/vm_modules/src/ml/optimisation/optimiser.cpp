@@ -121,9 +121,9 @@ Ptr<VMOptimiser> VMOptimiser::Constructor(
   AnyInteger         first_index(0, TypeIds::UInt16);
   TemplateParameter1 element = input_node_names->GetIndexedValue(first_index);
   input_names.push_back(element.Get<fetch::vm::Ptr<fetch::vm::String>>()->str);
-  fetch::math::SizeType cnt = input_names.size();
+  fetch::math::SizeType len = static_cast<fetch::math::SizeType>(input_node_names->Count());
 
-  for (fetch::math::SizeType i{1}; i < cnt; i++)
+  for (fetch::math::SizeType i{1}; i < len; i++)
   {
     AnyInteger         index(i, TypeIds::UInt16);
     TemplateParameter1 element = input_node_names->GetIndexedValue(index);
