@@ -67,6 +67,10 @@ protected:
   int stdin_pipe[2];
   int stderr_pipe[2];
   int stdout_pipe[2];
+
+  OutputHandler oh_;
+  OutputHandler eh_;
+  InputHandler ih_;
 private:
   VmWrapperSystemcommand(const VmWrapperSystemcommand &other) = delete;
   VmWrapperSystemcommand &operator=(const VmWrapperSystemcommand &other) = delete;

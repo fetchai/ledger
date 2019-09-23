@@ -30,6 +30,8 @@ public:
 
 TEST_F(VMWrapperTests, noop)
 {
+  VmWrapperSystemcommand
+
   EXPECT_EQ(1,1);
 }
 
