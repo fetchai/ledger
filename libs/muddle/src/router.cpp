@@ -654,8 +654,8 @@ void Router::SetKademliaRouting(bool enable)
  */
 Router::Handle Router::LookupRandomHandle(Packet::RawAddress const & /*address*/) const
 {
-  static std::random_device rd;
-  static std::mt19937       rng(rd());
+  thread_local std::random_device rd;
+  thread_local std::mt19937       rng(rd());
 
   {
     FETCH_LOCK(routing_table_lock_);
