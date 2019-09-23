@@ -108,6 +108,7 @@ void VMOptimiser::Bind(Module &module)
       .CreateMemberFunction("setDataloader", &VMOptimiser::SetDataloader);
 }
 
+// TODO(issue 1692): Simplify Array<String> conversion to std::vector<std::string>
 Ptr<VMOptimiser> VMOptimiser::Constructor(
     VM *vm, TypeId type_id, Ptr<String> const &mode, Ptr<VMGraph> const &graph,
     Ptr<VMDataLoader> const &                            loader,

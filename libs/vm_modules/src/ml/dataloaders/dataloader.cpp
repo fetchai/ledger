@@ -153,6 +153,7 @@ void VMDataLoader::AddTensorData(Ptr<VMTensorType> const &data, Ptr<VMTensorType
                                                                labels->GetTensor());
 }
 
+// TODO(issue 1692): Simplify Array<Tensor> construction
 Ptr<VMTrainingPair> VMDataLoader::GetNext()
 {
   std::pair<fetch::math::Tensor<DataType>, std::vector<fetch::math::Tensor<DataType>>> next =
