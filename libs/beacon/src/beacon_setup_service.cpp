@@ -1483,7 +1483,7 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
     }
     else
     {
-      expected_dkg_time_s = beacon_->aeon.round_start - (beacon_->aeon.round_start / 10);
+      expected_dkg_time_s = expected_dkg_time_s - (beacon_->aeon.round_start / 10);
     }
   }
 
