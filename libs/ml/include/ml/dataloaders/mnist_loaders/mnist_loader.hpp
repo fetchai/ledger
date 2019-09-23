@@ -70,7 +70,6 @@ public:
     this->SetRandomMode(random_mode);
     buffer_.second.push_back(InputType({FIGURE_WIDTH, FIGURE_HEIGHT, 1u}));
     buffer_.first = LabelType({LABEL_SIZE, 1u});
-
     UpdateRanges();
   }
 
@@ -78,7 +77,6 @@ public:
     : DataLoader<LabelType, InputType>()
   {
     SetupWithDataFiles(images_file, labels_file);
-    UpdateRanges();
   }
 
   SizeType Size() const override
@@ -198,6 +196,7 @@ public:
     buffer_.first = LabelType({LABEL_SIZE, 1u});
     buffer_.second.clear();
     buffer_.second.push_back(InputType({FIGURE_WIDTH, FIGURE_HEIGHT, 1u}));
+    UpdateRanges();
   }
 
   static uint8_t **ReadMnistImages(std::string const &full_path, std::uint32_t &number_of_images,

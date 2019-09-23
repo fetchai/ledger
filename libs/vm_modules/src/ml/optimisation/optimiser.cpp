@@ -109,15 +109,26 @@ void VMOptimiser::Bind(Module &module)
       .CreateMemberFunction("setDataloader", &VMOptimiser::SetDataloader);
 }
 
-Ptr<VMOptimiser> VMOptimiser::Constructor(VM *vm, TypeId type_id, Ptr<String> const &mode,
-                                          Ptr<VMGraph> const &     graph,
-                                          Ptr<VMDataLoader> const &loader,
-                                          Ptr<String> const &      input_node_names,
-                                          Ptr<String> const &      label_node_name,
-                                          Ptr<String> const &      output_node_names)
+// TODO(issue 1692): Simplify Array<String> conversion to std::vector<std::string>
+Ptr<VMOptimiser> VMOptimiser::Constructor(
+    VM *vm, TypeId type_id, Ptr<String> const &mode, Ptr<VMGraph> const &graph,
+    Ptr<VMDataLoader> const &                            loader,
+    Ptr<fetch::vm::Array<Ptr<fetch::vm::String>>> const &input_node_names,
+    Ptr<String> const &label_node_name, Ptr<String> const &output_node_names)
 {
+  std::vector<std::string> input_names;
+
+  auto len = static_cast<fetch::math::SizeType>(input_node_names->Count());
+
+  for (fetch::math::SizeType i{0}; i < len; i++)
+  {
+    AnyInteger         index(i, TypeIds::UInt16);
+    TemplateParameter1 element = input_node_names->GetIndexedValue(index);
+    input_names.push_back(element.Get<fetch::vm::Ptr<fetch::vm::String>>()->str);
+  }
+
   return Ptr<VMOptimiser>{new VMOptimiser(vm, type_id, mode->str, graph->GetGraph(), loader,
-                                          {input_node_names->str}, label_node_name->str,
+                                          input_names, label_node_name->str,
                                           output_node_names->str)};
 }
 
