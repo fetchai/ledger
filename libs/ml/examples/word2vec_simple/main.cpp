@@ -42,7 +42,7 @@ std::string ReadFile(std::string const &path)
   return std::string((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
 }
 
-void SaveEmbeddings(W2VLoader<FloatType> const &data_loader, std::string output_filename,
+void SaveEmbeddings(W2VLoader<FloatType> const &data_loader, std::string const &output_filename,
                     TensorType &embeddings)
 {
   std::ofstream outfile(output_filename, std::ios::binary);
@@ -62,7 +62,7 @@ void SaveEmbeddings(W2VLoader<FloatType> const &data_loader, std::string output_
   }
 }
 
-TensorType LoadEmbeddings(std::string filename)
+TensorType LoadEmbeddings(std::string const &filename)
 {
 
   std::ifstream input(filename, std::ios::binary);

@@ -160,7 +160,7 @@ VmStructuredDataArray CreateProblemData(vm::VM *vm, ProblemData const &problem_d
   // move the constructed elements over to the array
   ret->elements = std::move(elements);
 
-  return {ret};
+  return VmStructuredDataArray{ret};
 }
 
 }  // namespace

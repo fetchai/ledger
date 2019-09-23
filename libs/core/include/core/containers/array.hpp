@@ -192,9 +192,8 @@ struct Array
     return const_reverse_iterator{cbegin()};
   }
 
-  constexpr void fill(const T &value)
+  constexpr void fill(T const &value)
   {
-
     std::fill(begin(), end(), value);
   }
 

@@ -16,7 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/exception.hpp"
 #include "network/service/promise.hpp"
+
+#include <chrono>
 
 namespace fetch {
 namespace service {
@@ -93,12 +96,7 @@ State PromiseImplementation::state() const
   return state_;
 }
 
-SerializableException const &PromiseImplementation::exception() const
-{
-  return (*exception_);
-}
-
-const std::string &PromiseImplementation::name() const
+std::string const &PromiseImplementation::name() const
 {
   return name_;
 }
@@ -176,7 +174,7 @@ bool PromiseImplementation::Wait(bool throw_exception) const
 
     if (throw_exception && exception_)
     {
-      throw *exception_;
+      throw SerializableException{*exception_};
     }
 
     return false;

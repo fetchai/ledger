@@ -20,7 +20,6 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/logging.hpp"
 #include "core/mutex.hpp"
-#include "core/serializers/exception.hpp"
 #include "network/service/types.hpp"
 
 #include <array>
@@ -36,6 +35,11 @@
 #include <utility>
 
 namespace fetch {
+
+namespace serializers {
+class SerializableException;
+}
+
 namespace service {
 
 namespace details {
@@ -47,14 +51,13 @@ class PromiseImplementation
   friend PromiseBuilder;
 
 public:
-  using Counter               = uint64_t;
-  using ConstByteArray        = byte_array::ConstByteArray;
-  using SerializableException = serializers::SerializableException;
-  using ExceptionPtr          = std::unique_ptr<SerializableException>;
-  using Callback              = std::function<void()>;
-  using Clock                 = std::chrono::steady_clock;
-  using Timepoint             = Clock::time_point;
-  using Duration              = Clock::duration;
+  using Counter        = uint64_t;
+  using ConstByteArray = byte_array::ConstByteArray;
+  using ExceptionPtr   = std::unique_ptr<serializers::SerializableException>;
+  using Callback       = std::function<void()>;
+  using Clock          = std::chrono::steady_clock;
+  using Timepoint      = Clock::time_point;
+  using Duration       = Clock::duration;
 
   enum class State
   {
@@ -76,15 +79,14 @@ public:
 
   /// @name Accessors
   /// @{
-  ConstByteArray const &       value() const;
-  Counter                      id() const;
-  Timepoint const &            created_at() const;
-  Timepoint const &            deadline() const;
-  uint64_t                     protocol() const;
-  uint64_t                     function() const;
-  State                        state() const;
-  SerializableException const &exception() const;
-  const std::string &          name() const;
+  ConstByteArray const &value() const;
+  Counter               id() const;
+  Timepoint const &     created_at() const;
+  Timepoint const &     deadline() const;
+  uint64_t              protocol() const;
+  uint64_t              function() const;
+  State                 state() const;
+  std::string const &   name() const;
   /// @}
 
   /// @name Basic State Helpers
@@ -100,7 +102,7 @@ public:
   /// @name Promise Results
   /// @{
   void Fulfill(ConstByteArray const &value);
-  void Fail(SerializableException const &exception);
+  void Fail(serializers::SerializableException const &exception);
   void Timeout();
   void Fail();
   /// @}

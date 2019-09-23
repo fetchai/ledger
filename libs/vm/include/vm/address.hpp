@@ -36,12 +36,12 @@ public:
 
   static Ptr<Address> Constructor(VM *vm, TypeId type_id)
   {
-    return new Address{vm, type_id};
+    return Ptr<Address>{new Address{vm, type_id}};
   }
 
   static Ptr<Address> ConstructorFromString(VM *vm, TypeId type_id, Ptr<String> const &address)
   {
-    return new Address{vm, type_id, address};
+    return Ptr<Address>{new Address{vm, type_id, address}};
   }
 
   static Ptr<String> ToString(VM *, Ptr<Address> const &address)
@@ -75,7 +75,7 @@ public:
 
   Ptr<String> AsString()
   {
-    return new String{vm_, std::string{address_.display()}};
+    return Ptr<String>{new String{vm_, std::string{address_.display()}}};
   }
 
   std::vector<uint8_t> ToBytes() const

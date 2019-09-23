@@ -122,13 +122,13 @@ public:
 
   static Tensor FromString(byte_array::ConstByteArray const &c);
   explicit Tensor(SizeType const &n);
-  Tensor(Tensor &&other)      = default;
-  Tensor(Tensor const &other) = default;
-  Tensor(SizeVector const &dims);
+  Tensor(Tensor &&other) noexcept = default;
+  Tensor(Tensor const &other)     = default;
+  explicit Tensor(SizeVector const &dims);
   virtual ~Tensor() = default;
 
   Tensor &operator=(Tensor const &other) = default;
-  Tensor &operator=(Tensor &&other) = default;
+  Tensor &operator=(Tensor &&other) noexcept = default;
 
   IteratorType      begin();
   IteratorType      end();
@@ -314,7 +314,7 @@ public:
   static Tensor              Stack(std::vector<TensorType> const &tensors);
   static Tensor              Concat(std::vector<Tensor> const &tensors, SizeType axis);
   static std::vector<Tensor> Split(Tensor const &tensor, SizeVector const &concat_points,
-                                   SizeType const axis);
+                                   SizeType axis);
 
   void Sort();
   void Sort(memory::Range const &range);
@@ -1022,7 +1022,7 @@ void Tensor<T, C>::Assign(Tensor const &other)
   else
   {
     if (!(Broadcast(
-            [](const T &x, const T &y, T &z) {
+            [](T const &x, T const &y, T &z) {
               FETCH_UNUSED(x);
               z = y;
             },

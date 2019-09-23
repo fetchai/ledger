@@ -34,24 +34,24 @@ public:
   Blacklist()  = default;
   ~Blacklist() = default;
 
-  void Add(const Address &address)
+  void Add(Address const &address)
   {
     FETCH_LOCK(mutex_);
     contents_.insert(address);
   }
 
-  void Remove(const Address &address)
+  void Remove(Address const &address)
   {
     FETCH_LOCK(mutex_);
     contents_.erase(address);
   }
 
-  bool Contains(const Address &address) const
+  bool Contains(Address const &address) const
   {
     FETCH_LOCK(mutex_);
     return contents_.find(address) != contents_.end();
   }
-  bool Contains(const RawAddress &raw_address) const
+  bool Contains(RawAddress const &raw_address) const
   {
     Packet::Address       address;
     byte_array::ByteArray buffer;

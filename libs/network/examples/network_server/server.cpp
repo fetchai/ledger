@@ -31,7 +31,7 @@ using namespace fetch::network;
 class Server : public TCPServer
 {
 public:
-  Server(uint16_t p, NetworkManager tmanager)
+  Server(uint16_t p, NetworkManager const &tmanager)
     : TCPServer(p, tmanager)
   {}
 

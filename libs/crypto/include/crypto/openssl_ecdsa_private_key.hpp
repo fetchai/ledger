@@ -72,7 +72,7 @@ public:
     : ECDSAPrivateKey(Generate())
   {}
 
-  ECDSAPrivateKey(const byte_array::ConstByteArray &key_data)
+  explicit ECDSAPrivateKey(byte_array::ConstByteArray const &key_data)
     : ECDSAPrivateKey(Convert(key_data))
   {}
 
@@ -84,13 +84,13 @@ public:
   using PrivateKeyType = ECDSAPrivateKey<BINARY_DATA_FORMAT, P_ECDSA_Curve_NID, P_ConversionForm>;
 
   template <eECDSAEncoding BINARY_DATA_FORMAT>
-  ECDSAPrivateKey(PrivateKeyType<BINARY_DATA_FORMAT> const &from)
+  explicit ECDSAPrivateKey(PrivateKeyType<BINARY_DATA_FORMAT> const &from)
     : private_key_(from.private_key_)
     , public_key_(from.public_key_)
   {}
 
   template <eECDSAEncoding BINARY_DATA_FORMAT>
-  ECDSAPrivateKey(PrivateKeyType<BINARY_DATA_FORMAT> &&from)
+  explicit ECDSAPrivateKey(PrivateKeyType<BINARY_DATA_FORMAT> &&from)
     : private_key_(std::move(from.private_key_))
     , public_key_(std::move(from.public_key_))
   {}
@@ -247,7 +247,7 @@ private:
     return ECDSAPrivateKey{std::move(key), std::move(public_key)};
   }
 
-  static PublicKeyType ExtractPublicKey(const EC_KEY *private_key)
+  static PublicKeyType ExtractPublicKey(EC_KEY const *private_key)
   {
     EC_GROUP const *group             = EC_KEY_get0_group(private_key);
     EC_POINT const *pub_key_reference = EC_KEY_get0_public_key(private_key);

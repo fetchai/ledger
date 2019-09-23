@@ -547,7 +547,7 @@ private:
   {}
 
 public:
-  SizeCounterGuard(SizeCounterGuard &&) = default;
+  SizeCounterGuard(SizeCounterGuard &&) noexcept = default;
 
   /**
    * @brief Destructor ensures that size counting instance is reset to zero at the end

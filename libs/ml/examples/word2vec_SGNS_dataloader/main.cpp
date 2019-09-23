@@ -63,7 +63,7 @@ void PrintWordAnalogy(GraphW2VLoader<DataType> const &dl, TensorType const &embe
                       std::string const &word1, std::string const &word2, std::string const &word3,
                       SizeType k)
 {
-  TensorType arr = embeddings;
+  TensorType const &arr = embeddings;
 
   if (!dl.WordKnown(word1) || !dl.WordKnown(word2) || !dl.WordKnown(word3))
   {
@@ -105,7 +105,7 @@ void PrintWordAnalogy(GraphW2VLoader<DataType> const &dl, TensorType const &embe
 void PrintKNN(GraphW2VLoader<DataType> const &dl, TensorType const &embeddings,
               std::string const &word0, SizeType k)
 {
-  TensorType arr = embeddings;
+  TensorType const &arr = embeddings;
 
   if (dl.IndexFromWord(word0) == fetch::math::numeric_max<SizeType>())
   {
@@ -126,10 +126,10 @@ void PrintKNN(GraphW2VLoader<DataType> const &dl, TensorType const &embeddings,
 }
 
 void TestEmbeddings(Graph<TensorType> const &g, std::string const &skip_gram_name,
-                    GraphW2VLoader<DataType> const &dl, std::string word0, std::string word1,
-                    std::string word2, std::string word3, SizeType K)
+                    GraphW2VLoader<DataType> const &dl, std::string const &word0,
+                    std::string const &word1, std::string const &word2, std::string const &word3,
+                    SizeType K)
 {
-
   // first get hold of the skipgram layer by searching the return name in the graph
   std::shared_ptr<fetch::ml::layers::SkipGram<TensorType>> sg_layer =
       std::dynamic_pointer_cast<fetch::ml::layers::SkipGram<TensorType>>(

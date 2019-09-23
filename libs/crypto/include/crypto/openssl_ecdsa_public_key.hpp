@@ -54,7 +54,7 @@ public:
     , key_binary_{Convert(public_key.get(), group, session, binaryDataFormat)}
   {}
 
-  ECDSAPublicKey(byte_array::ConstByteArray key_data)
+  explicit ECDSAPublicKey(byte_array::ConstByteArray key_data)
     : key_EC_POINT_{Convert(key_data, binaryDataFormat)}
     , key_EC_KEY_{ConvertToECKEY(key_EC_POINT_.get())}
     , key_binary_{std::move(key_data)}
@@ -65,7 +65,7 @@ public:
       ECDSAPublicKey<BINARY_DATA_FORMAT, P_ECDSA_Curve_NID, P_ConversionForm>;
 
   template <eECDSAEncoding BINARY_DATA_FORMAT>
-  ECDSAPublicKey(EcdsaPublicKeyType<BINARY_DATA_FORMAT> const &from)
+  explicit ECDSAPublicKey(EcdsaPublicKeyType<BINARY_DATA_FORMAT> const &from)
     : key_EC_POINT_{from.key_EC_POINT_}
     , key_EC_KEY_{from.key_EC_KEY_}
     , key_binary_{BINARY_DATA_FORMAT == binaryDataFormat
@@ -74,7 +74,7 @@ public:
   {}
 
   template <eECDSAEncoding BINARY_DATA_FORMAT>
-  ECDSAPublicKey(EcdsaPublicKeyType<BINARY_DATA_FORMAT> &&from)
+  explicit ECDSAPublicKey(EcdsaPublicKeyType<BINARY_DATA_FORMAT> &&from)
     : key_EC_POINT_{std::move(from.key_EC_POINT_)}
     , key_EC_KEY_{std::move(from.key_EC_KEY_)}
     , key_binary_{BINARY_DATA_FORMAT == binaryDataFormat
@@ -106,7 +106,7 @@ public:
     return key_EC_KEY_;
   }
 
-  const byte_array::ConstByteArray &KeyAsBin() const
+  byte_array::ConstByteArray const &KeyAsBin() const
   {
     return key_binary_;
   }
@@ -258,7 +258,7 @@ private:
     return public_key;
   }
 
-  static UniquePointerType<EC_KEY> ConvertToECKEY(const EC_POINT *key_EC_POINT)
+  static UniquePointerType<EC_KEY> ConvertToECKEY(EC_POINT const *key_EC_POINT)
   {
     UniquePointerType<EC_KEY> key{EC_KEY_new_by_curve_name(EcdsaCurveType::nid)};
     // TODO(issue 36): setting conv. form might not be really necessary (stuff

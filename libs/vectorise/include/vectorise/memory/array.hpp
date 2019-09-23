@@ -68,17 +68,17 @@ public:
 
   Array() = default;
 
-  Array(Array &&other)
+  Array(Array &&other) noexcept
   {
     std::swap(this->size_, other.size_);
     std::swap(this->pointer_, other.pointer_);
   }
 
-  Array &operator=(Array &&other)
+  Array &operator=(Array &&other) noexcept
   {
     std::swap(this->size_, other.size_);
-
     std::swap(this->pointer_, other.pointer_);
+
     return *this;
   }
 

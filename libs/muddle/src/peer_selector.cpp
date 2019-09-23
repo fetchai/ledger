@@ -16,6 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/containers/set_difference.hpp"
+#include "core/containers/set_intersection.hpp"
+#include "core/mutex.hpp"
+#include "core/reactor.hpp"
+#include "core/service_ids.hpp"
 #include "direct_message_service.hpp"
 #include "discovery_service.hpp"
 #include "muddle_logging_name.hpp"
@@ -24,10 +29,8 @@
 #include "peer_selector.hpp"
 #include "xor_metric.hpp"
 
-#include "core/containers/set_difference.hpp"
-#include "core/containers/set_intersection.hpp"
-#include "core/reactor.hpp"
-#include "core/service_ids.hpp"
+#include <cstddef>
+#include <unordered_set>
 
 namespace fetch {
 namespace muddle {
@@ -37,13 +40,13 @@ namespace {
 using namespace std::chrono;
 using namespace std::chrono_literals;
 
-constexpr auto        MIN_ANNONCEMENT_INTERVAL = 15min;
-constexpr auto        MAX_ANNONCEMENT_INTERVAL = 30min;
-constexpr std::size_t MINIMUM_PEERS            = 3;
-constexpr char const *BASE_NAME                = "PeerSelector";
-constexpr std::size_t MAX_CACHE_KAD_NODES      = 20;
-constexpr std::size_t MAX_CONNECTED_KAD_NODES  = 3;
-constexpr std::size_t MAX_LOG2_BACKOFF         = 11;  // 2048
+constexpr auto        MIN_ANNOUNCEMENT_INTERVAL = 15min;
+constexpr auto        MAX_ANNOUNCEMENT_INTERVAL = 30min;
+constexpr std::size_t MINIMUM_PEERS             = 3;
+constexpr char const *BASE_NAME                 = "PeerSelector";
+constexpr std::size_t MAX_CACHE_KAD_NODES       = 20;
+constexpr std::size_t MAX_CONNECTED_KAD_NODES   = 3;
+constexpr std::size_t MAX_LOG2_BACKOFF          = 11;  // 2048
 
 std::unordered_set<Address> operator+(std::unordered_set<Address>        input,
                                       std::unordered_set<Address> const &other)
@@ -344,7 +347,7 @@ PeerSelector::UriSet PeerSelector::GenerateUriSet(Addresses const &addresses)
 
 void PeerSelector::OnAnnouncement(Address const &from, byte_array::ConstByteArray const &payload)
 {
-  static constexpr auto CACHE_LIFETIME = MAX_ANNONCEMENT_INTERVAL + MIN_ANNONCEMENT_INTERVAL;
+  static constexpr auto CACHE_LIFETIME = MAX_ANNOUNCEMENT_INTERVAL + MIN_ANNOUNCEMENT_INTERVAL;
   FETCH_UNUSED(payload);
 
   FETCH_LOG_INFO(logging_name_, "Received announcement from: ", from.ToBase64());
@@ -391,9 +394,9 @@ void PeerSelector::OnAnnouncement(Address const &from, byte_array::ConstByteArra
 void PeerSelector::ScheduleNextAnnouncement()
 {
   static constexpr uint64_t MIN_ANNOUNCE_TIME_MS =
-      duration_cast<milliseconds>(MIN_ANNONCEMENT_INTERVAL).count();
+      duration_cast<milliseconds>(MIN_ANNOUNCEMENT_INTERVAL).count();
   static constexpr uint64_t MAX_ANNOUNCE_TIME_MS =
-      duration_cast<milliseconds>(MAX_ANNONCEMENT_INTERVAL).count();
+      duration_cast<milliseconds>(MAX_ANNOUNCEMENT_INTERVAL).count();
   static constexpr uint64_t DELTA_ANNOUNCE_TIME_MS = MAX_ANNOUNCE_TIME_MS - MIN_ANNOUNCE_TIME_MS;
   static_assert(MIN_ANNOUNCE_TIME_MS < MAX_ANNOUNCE_TIME_MS, "Min must be smaller than max");
   static_assert(DELTA_ANNOUNCE_TIME_MS != 0, "Delta can't be zero");
