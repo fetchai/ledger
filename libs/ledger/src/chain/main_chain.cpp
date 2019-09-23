@@ -452,14 +452,21 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) 
  * @param start The hash of the first block
  * @param limit The maximum number of blocks to be returned, negative for towards genesis, positive
  * for towards tip
- * @return The array of blocks
+ * @return A pair made of an array of blocks, and the next hash in the chain in this direction
  * @throws std::runtime_error if a block lookup occurs
  */
-MainChain::Blocks MainChain::TimeTravel(BlockHash start, int64_t limit) const
+std::pair<MainChain::Blocks, MainChain::BlockHash> MainChain::TimeTravel(BlockHash current_hash,
+                                                                         int64_t   limit) const
 {
   if (limit <= 0)
   {
-    return GetChainPreceding(std::move(start), static_cast<uint64_t>(-limit));
+    auto ret_blocks{GetChainPreceding(current_hash, static_cast<uint64_t>(-limit))};
+    if (ret_blocks.empty())
+    {
+      return {Blocks{}, std::move(current_hash)};
+    }
+    auto next_hash{ret_blocks.back()->body.previous_hash};  // when next is previous
+    return {std::move(ret_blocks), std::move(next_hash)};
   }
 
   auto const lim =
@@ -470,28 +477,25 @@ MainChain::Blocks MainChain::TimeTravel(BlockHash start, int64_t limit) const
 
   Blocks result;
 
-  // lookup the heaviest block hash
   Block     block;
   BlockHash next_hash;
 
-  if (start == GENESIS_DIGEST)
+  if (current_hash == GENESIS_DIGEST)
   {
-    // The very start of the chain is requested, we need to start past the genesis block.
+    // The very beginning of the chain is requested, we need to start past the genesis block.
     auto ref_it{references_.find(GENESIS_DIGEST)};
     if (ref_it == references_.end())
     {
       // Perhaps there aren't any blocks on this chain.
-      return Blocks{};
+      return {Blocks{}, std::move(current_hash)};
     }
     // Skip the very genesis block.
-    if (!GetBlock(ref_it->second, &start))
+    if (!GetBlock(ref_it->second, &current_hash))
     {
-      return Blocks{};
+      return {Blocks{}, std::move(current_hash)};
     }
-    // Now start points to the block right next to genesis.
+    // Now current_hash points to the block right next to genesis.
   }
-
-  BlockHash current_hash{std::move(start)};
 
   while (
       // stop once we have gathered enough blocks
@@ -512,54 +516,7 @@ MainChain::Blocks MainChain::TimeTravel(BlockHash start, int64_t limit) const
     current_hash = std::move(next_hash);
   }
 
-  if (result.size() == lim && current_hash == GENESIS_DIGEST)
-  {
-    // Both conditions break the loop, but when they're both are true it indicates that we've found
-    // exactly lim blocks and thus reached chain's end.
-    // To notify requester of such a rare situation, we add one more terminating dummy block.
-    // Note that result's size is thus greater than lim in this one case.
-    result.push_back(std::make_shared<Block>());
-  }
-
-  return result;
-}
-
-/**
- * Walk the block history collecting blocks until either genesis or the block limit is reached.
- * Unlike in GetChainPreceding, positive value in limit indicates forward-travel.
- * The starting block is not included in the answer.
- *
- * @param start The hash of the starting point block
- * @param limit The maximum number of blocks to be returned, negative for towards genesis, positive
- * for towards tip
- * @return The array of blocks
- * @throws std::runtime_error if a block lookup occurs
- */
-MainChain::Blocks MainChain::TimeTravelPast(BlockHash start, int64_t limit) const
-{
-  if (limit < 0)
-  {
-    auto block = GetBlock(start);
-    if (!block)
-    {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: ", ToBase64(start));
-      throw std::runtime_error("Failed to lookup block");
-    }
-    return GetChainPreceding(std::move(block->body.previous_hash), static_cast<uint64_t>(-limit));
-  }
-
-  if (limit > 0)
-  {
-    auto block = GetBlock(start, &start);
-    if (!block)
-    {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: ", ToBase64(start));
-      throw std::runtime_error("Failed to lookup block");
-    }
-    return TimeTravel(std::move(start), limit);
-  }
-
-  return {};
+  return {std::move(result), std::move(current_hash)};
 }
 
 /**

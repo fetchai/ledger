@@ -22,20 +22,29 @@
 #include "ledger/chain/main_chain.hpp"
 #include "network/service/protocol.hpp"
 
+#include <utility>
+
 namespace fetch {
 namespace ledger {
+
+struct TimeTravelogue
+{
+  using Blocks = std::vector<Block>;
+
+  Blocks blocks;
+  Digest next_hash;
+};
 
 class MainChainProtocol : public service::Protocol
 {
 public:
-  using Blocks = std::vector<Block>;
+  using Blocks = TimeTravelogue::Blocks;
 
   enum
   {
     HEAVIEST_CHAIN   = 1,
+    TIME_TRAVEL      = 2,
     COMMON_SUB_CHAIN = 3,
-    TIME_TRAVEL      = 4,
-    TIME_TRAVEL_PAST = 5,
   };
 
   explicit MainChainProtocol(MainChain &chain)
@@ -44,7 +53,6 @@ public:
     Expose(HEAVIEST_CHAIN, this, &MainChainProtocol::GetHeaviestChain);
     Expose(COMMON_SUB_CHAIN, this, &MainChainProtocol::GetCommonSubChain);
     Expose(TIME_TRAVEL, this, &MainChainProtocol::TimeTravel);
-    Expose(TIME_TRAVEL_PAST, this, &MainChainProtocol::TimeTravelPast);
   }
 
 private:
@@ -64,14 +72,10 @@ private:
     return InverseCopy(blocks);
   }
 
-  Blocks TimeTravel(Digest start, int64_t limit)
+  TimeTravelogue TimeTravel(Digest start, int64_t limit)
   {
-    return Copy(chain_.TimeTravel(std::move(start), limit));
-  }
-
-  Blocks TimeTravelPast(Digest start, int64_t limit)
-  {
-    return Copy(chain_.TimeTravelPast(std::move(start), limit));
+    auto ret_pair = chain_.TimeTravel(std::move(start), limit);
+    return TimeTravelogue{Copy(ret_pair.first), std::move(ret_pair.second)};
   }
 
   static Blocks Copy(MainChain::Blocks const &blocks)
@@ -104,4 +108,32 @@ private:
 };
 
 }  // namespace ledger
+
+namespace serializers {
+
+template <class D>
+struct MapSerializer<ledger::TimeTravelogue, D>
+{
+  using Type       = ledger::TimeTravelogue;
+  using DriverType = D;
+
+  static constexpr uint8_t BLOCKS    = 1;
+  static constexpr uint8_t NEXT_HASH = 2;
+
+  template <class Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &travel_log)
+  {
+    auto map = map_constructor(2);
+    map.Append(BLOCKS, travel_log.blocks);
+    map.Append(NEXT_HASH, travel_log.next_hash);
+  }
+  template <class Deserializer>
+  static void Deserialize(Deserializer &map, Type &travel_log)
+  {
+    map.ExpectKeyGetValue(BLOCKS, travel_log.blocks);
+    map.ExpectKeyGetValue(NEXT_HASH, travel_log.next_hash);
+  }
+};
+
+}  // namespace serializers
 }  // namespace fetch

@@ -39,6 +39,7 @@
 #include <mutex>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 namespace fetch {
@@ -124,17 +125,15 @@ public:
 
   /// @name Chain Queries
   /// @{
-  BlockPtr  GetHeaviestBlock() const;
-  BlockHash GetHeaviestBlockHash() const;
-  Blocks    GetHeaviestChain(uint64_t limit = UPPER_BOUND) const;
-  Blocks    GetChainPreceding(BlockHash at, uint64_t limit = UPPER_BOUND) const;
-  Blocks    TimeTravel(BlockHash starting_point,
-                       int64_t   limit = static_cast<int64_t>(UPPER_BOUND)) const;
-  Blocks    TimeTravelPast(BlockHash starting_point,
-                           int64_t   limit = static_cast<int64_t>(UPPER_BOUND)) const;
-  bool      GetPathToCommonAncestor(
-           Blocks &blocks, BlockHash tip, BlockHash node, uint64_t limit = UPPER_BOUND,
-           BehaviourWhenLimit behaviour = BehaviourWhenLimit::RETURN_MOST_RECENT) const;
+  BlockPtr                     GetHeaviestBlock() const;
+  BlockHash                    GetHeaviestBlockHash() const;
+  Blocks                       GetHeaviestChain(uint64_t limit = UPPER_BOUND) const;
+  Blocks                       GetChainPreceding(BlockHash at, uint64_t limit = UPPER_BOUND) const;
+  std::pair<Blocks, BlockHash> TimeTravel(BlockHash starting_point,
+                                          int64_t limit = static_cast<int64_t>(UPPER_BOUND)) const;
+  bool                         GetPathToCommonAncestor(
+                              Blocks &blocks, BlockHash tip, BlockHash node, uint64_t limit = UPPER_BOUND,
+                              BehaviourWhenLimit behaviour = BehaviourWhenLimit::RETURN_MOST_RECENT) const;
   /// @}
 
   /// @name Tips

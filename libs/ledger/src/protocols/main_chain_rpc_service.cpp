@@ -224,11 +224,6 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
   }
 }
 
-bool MainChainRpcService::NoKnownChain() const
-{
-  return most_recent_tip_ == GENESIS_DIGEST;
-}
-
 MainChainRpcService::Address MainChainRpcService::GetRandomTrustedPeer() const
 {
   static random::LinearCongruentialGenerator rng;
@@ -247,22 +242,12 @@ MainChainRpcService::Address MainChainRpcService::GetRandomTrustedPeer() const
   return Address{};
 }
 
-MainChainRpcService::State MainChainRpcService::HandleChainResponse(Address const &address,
-                                                                    BlockList      block_list)
+void MainChainRpcService::HandleChainResponse(Address const &address, BlockList block_list)
 {
   std::size_t added{0};
   std::size_t loose{0};
   std::size_t duplicate{0};
   std::size_t invalid{0};
-
-  // When the heaviest chain is longer than MCRS blocks, exactly MCRS blocks are returned.
-  const bool chain_ends{block_list.size() != MAX_CHAIN_REQUEST_SIZE};
-  // When the heaviest chain is exactly MCRS blocks, the returned list consists of those blocks
-  // plus one trailing dummy block.
-  if (block_list.size() > MAX_CHAIN_REQUEST_SIZE)
-  {
-    block_list.pop_back();
-  }
 
   for (auto &block : block_list)
   {
@@ -323,18 +308,6 @@ MainChainRpcService::State MainChainRpcService::HandleChainResponse(Address cons
     FETCH_LOG_INFO(LOGGING_NAME, "Synced Summary: Added: ", added, " Loose: ", loose,
                    " Duplicate: ", duplicate, " from: muddle://", ToBase64(address));
   }
-
-  if (chain_ends)
-  {
-    // Current heaviest chain has been fully delivered.
-    return State::SYNCHRONISING;
-  }
-
-  // Exactly the maximum amount of blocks returned, this indicates that more blocks are pending.
-  // Set the starting point for the next HC request.
-  most_recent_tip_ = block_list.back().body.hash;
-  // We get back to RHC state to get more main chain blocks.
-  return State::REQUEST_HEAVIEST_CHAIN;
 }
 
 /**
@@ -354,8 +327,8 @@ MainChainRpcService::State MainChainRpcService::OnRequestHeaviestChain()
   {
     current_peer_address_ = peer;
     current_request_      = rpc_client_.CallSpecificAddress(current_peer_address_, RPC_MAIN_CHAIN,
-                                                       MainChainProtocol::TIME_TRAVEL_PAST,
-                                                       most_recent_tip_, MAX_CHAIN_REQUEST_SIZE);
+                                                       MainChainProtocol::TIME_TRAVEL,
+                                                       past_recent_tip_, MAX_CHAIN_REQUEST_SIZE);
 
     next_state = State::WAIT_FOR_HEAVIEST_CHAIN;
   }
@@ -385,7 +358,22 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
       if (PromiseState::SUCCESS == status)
       {
         // the request was successful, simply hand off the blocks to be added to the chain
-        next_state = HandleChainResponse(current_peer_address_, current_request_->As<BlockList>());
+        auto peer_response = current_request_->As<TimeTravelogue>();
+        HandleChainResponse(current_peer_address_, std::move(peer_response.blocks));
+        past_recent_tip_ = std::move(peer_response.next_hash);
+
+        // Genesis as next tip to retrieve indicates the whole chain has been received
+        // and we can start synchronising.
+        if (past_recent_tip_ == GENESIS_DIGEST)
+        {
+          next_state = State::SYNCHRONISING;
+          // clear the state
+          value_util::ZeroAll(current_peer_address_, current_missing_block_);
+        }
+        else
+        {
+          next_state = State::REQUEST_HEAVIEST_CHAIN;
+        }
       }
       else
       {
@@ -396,9 +384,6 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
         // machine back to the requesting
         next_state = State::REQUEST_HEAVIEST_CHAIN;
       }
-
-      // clear the state
-      value_util::ZeroAll(current_peer_address_, current_missing_block_);
     }
   }
 
