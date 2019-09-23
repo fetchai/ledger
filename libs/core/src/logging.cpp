@@ -81,8 +81,8 @@ private:
 
   Logger &GetLogger(char const *name);
 
-  Mutex    lock_;
-  Registry registry_;
+  Mutex                 lock_;
+  Registry              registry_;
   std::atomic<LogLevel> global_level_{LogLevel::TRACE};
 
   // Telemetry
