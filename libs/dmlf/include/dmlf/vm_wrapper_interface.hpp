@@ -40,6 +40,7 @@ public:
   using Params = std::vector<std::string>;
   using Flags = std::vector<std::string>;
   using Status = enum {
+    UNCONFIGURED,
     WAITING,
     COMPILING,
     COMPILED,
@@ -64,5 +65,5 @@ private:
   bool operator<(const VmWrapperInterface &other) = delete;
 };
 
-}
-}
+}  // namespace dmlf
+}  // namespace fetch

@@ -19,11 +19,16 @@
 
 #include "dmlf/vm_wrapper_interface.hpp"
 
+//#include "vm/generator.hpp"
+#include "vm/vm.hpp"
+#include "vm_modules/vm_factory.hpp"
+
+#include <memory>
+
 namespace fetch {
 namespace dmlf {
 
-
-class VmWrapperSystemcommand: public VmWrapperInterface
+class vm_wrapper_etch: public VmWrapperInterface
 {
 public:
   using OutputHandler = VmWrapperInterface::OutputHandler;
@@ -32,47 +37,39 @@ public:
   using Flags         = VmWrapperInterface::Flags;
   using Status        = VmWrapperInterface::Status;
 
-  VmWrapperSystemcommand()
+  using VmFactory = fetch::vm_modules::VMFactory;
+  using VM = fetch::vm::VM;
+  using Executable = fetch::vm::Executable;
+
+  vm_wrapper_etch()
   {
   }
-  virtual ~VmWrapperSystemcommand()
+  virtual ~vm_wrapper_etch()
   {
   }
 
-  std::vector<std::string> Setup(const Flags &/*flags*/)
-  {
-    return std::vector<std::string>();
-  }
-  std::vector<std::string> Load(std::string source)
-  {
-    status_ = VmWrapperInterface::COMPILING;
-    command_ = source;
-    status_ = VmWrapperInterface::COMPILED;
-    return std::vector<std::string>();
-  }
+  virtual std::vector<std::string> Setup(const Flags &flags);
+  virtual std::vector<std::string> Load(std::string source);
   virtual void Execute(std::string entrypoint, const Params params);
-  virtual void SetStdout(OutputHandler);
-  virtual void SetStdin(InputHandler);
-  virtual void SetStderr(OutputHandler);
+  virtual void SetStdout(OutputHandler) = 0;
+  virtual void SetStdin(InputHandler) = 0;
+  virtual void SetStderr(OutputHandler) = 0;
 
   virtual Status status(void) const { return status_; }
 protected:
-  Status status_ = VmWrapperInterface::WAITING;
-  std::string command_ = "";
-
-  enum {
-    WRITE_SIDE = 1,
-    READ_SIDE = 0,
-  };
-  int stdin_pipe[2];
-  int stderr_pipe[2];
-  int stdout_pipe[2];
 private:
-  VmWrapperSystemcommand(const VmWrapperSystemcommand &other) = delete;
-  VmWrapperSystemcommand &operator=(const VmWrapperSystemcommand &other) = delete;
-  bool operator==(const VmWrapperSystemcommand &other) = delete;
-  bool operator<(const VmWrapperSystemcommand &other) = delete;
+  Status status_ = VmWrapperInterface::UNCONFIGURED;
+  
+  std::string command_ = "";
+  std::unique_ptr<Executable> executable_ = std::make_unique<Executable>();
+  std::shared_ptr<fetch::vm::Module> module_ = nullptr;
+  std::unique_ptr<VM> vm_ = nullptr;
+
+  vm_wrapper_etch(const vm_wrapper_etch &other) = delete;
+  vm_wrapper_etch &operator=(const vm_wrapper_etch &other) = delete;
+  bool operator==(const vm_wrapper_etch &other) = delete;
+  bool operator<(const vm_wrapper_etch &other) = delete;
 };
 
-}  // namespace dmlf
-}  // namespace fetch
+} // namespace dmlf
+} // namespace fetch
