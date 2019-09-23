@@ -210,6 +210,7 @@ private:
   telemetry::CounterPtr         beacon_entropy_forced_to_time_out_total_;
   telemetry::GaugePtr<uint64_t> beacon_entropy_last_requested_;
   telemetry::GaugePtr<uint64_t> beacon_entropy_last_generated_;
+  telemetry::GaugePtr<uint64_t> beacon_entropy_current_round_;
 };
 
 }  // namespace beacon

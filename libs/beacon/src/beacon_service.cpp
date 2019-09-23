@@ -24,8 +24,12 @@
 #include "telemetry/counter.hpp"
 #include "telemetry/gauge.hpp"
 
+#include "network/generics/milli_timer.hpp"
+
 #include <chrono>
 #include <iterator>
+
+using fetch::generics::MilliTimer;
 
 namespace fetch {
 namespace beacon {
@@ -93,6 +97,8 @@ BeaconService::BeaconService(MuddleInterface &               muddle,
         "beacon_entropy_last_requested", "The last entropy value requested from the beacon")}
   , beacon_entropy_last_generated_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
         "beacon_entropy_last_generated", "The last entropy value able to be generated")}
+  , beacon_entropy_current_round_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        "beacon_entropy_current_round", "The current round attempting to generate for.")}
 {
 
   // Attaching beacon ready callback handler
@@ -420,6 +426,8 @@ BeaconService::SignatureInformation BeaconService::GetSignatureShares(uint64_t r
 
 BeaconService::State BeaconService::OnCollectSignaturesState()
 {
+  beacon_entropy_current_round_->set(current_entropy_.round);
+
   std::lock_guard<std::mutex> lock(mutex_);
 
   // On first entry to function, populate with our info
@@ -492,50 +500,54 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
   }
 
   // Don't lock until the promise has resolved! Otherwise the system can deadlock.
-  std::lock_guard<std::mutex> lock(mutex_);
-
-  if (ret.threshold_signatures.empty())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Peer wasn't ready when asking for signatures: ",
-                   qual_promise_identity_.identifier().ToBase64());
-    state_machine_->Delay(std::chrono::milliseconds(100));
+    std::lock_guard<std::mutex> lock(mutex_);
 
-    if(add_signature_failures_++ > 1000)
+    if (ret.threshold_signatures.empty())
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Forced to abort entropy generation. Peers not responding! Round: ", current_entropy_.round);
+      FETCH_LOG_INFO(LOGGING_NAME, "Peer wasn't ready when asking for signatures: ",
+                     qual_promise_identity_.identifier().ToBase64());
+      state_machine_->Delay(std::chrono::milliseconds(100));
+
+      if(add_signature_failures_++ > 1000)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Forced to abort entropy generation. Peers not responding! Round: ", current_entropy_.round);
+        add_signature_failures_ = 0;
+        beacon_entropy_forced_to_time_out_total_->add(1);
+        return State::WAIT_FOR_SETUP_COMPLETION;
+      }
+
+      return State::COLLECT_SIGNATURES;
+    }
+    else
+    {
       add_signature_failures_ = 0;
-      beacon_entropy_forced_to_time_out_total_->add(1);
-      return State::COMPLETE;
     }
 
-    return State::COLLECT_SIGNATURES;
-  }
-  else
-  {
-    add_signature_failures_ = 0;
-  }
+    if (ret.round != current_entropy_.round)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Peer returned the wrong round when asked for signatures. Peer: ",
+                     qual_promise_identity_.identifier().ToBase64(), " returned: ", ret.round,
+                     " expected: ", current_entropy_.round);
+      return State::COLLECT_SIGNATURES;
+    }
 
-  if (ret.round != current_entropy_.round)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Peer returned the wrong round when asked for signatures. Peer: ",
-                   qual_promise_identity_.identifier().ToBase64(), " returned: ", ret.round,
-                   " expected: ", current_entropy_.round);
-    return State::COLLECT_SIGNATURES;
-  }
+    // Success - Add relevant info
+    auto &signatures_struct = signatures_being_built_[current_entropy_.round];
+    auto &all_sigs_map      = signatures_struct.threshold_signatures;
 
-  // Success - Add relevant info
-  auto &signatures_struct = signatures_being_built_[current_entropy_.round];
-  auto &all_sigs_map      = signatures_struct.threshold_signatures;
+    for (auto const &address_sig_pair : ret.threshold_signatures)
+    {
+      all_sigs_map[address_sig_pair.first] = address_sig_pair.second;
+      // Let the manager know
+      AddSignature(address_sig_pair.second);
+    }
 
-  for (auto const &address_sig_pair : ret.threshold_signatures)
-  {
-    all_sigs_map[address_sig_pair.first] = address_sig_pair.second;
-    // Let the manager know
-    AddSignature(address_sig_pair.second);
-  }
+    FETCH_LOG_INFO(LOGGING_NAME, "After adding, we have ", all_sigs_map.size(),
+                   " signatures. Round: ", current_entropy_.round);
+  } // Mutex unlocks here since verification can take some time
 
-  FETCH_LOG_INFO(LOGGING_NAME, "After adding, we have ", all_sigs_map.size(),
-                 " signatures. Round: ", current_entropy_.round);
+  MilliTimer const timer{"Verify threshold signature", 100};
 
   if (active_exe_unit_->manager.can_verify() && active_exe_unit_->manager.Verify())
   {
