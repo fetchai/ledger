@@ -24,6 +24,7 @@
 #include "vm_modules/vm_factory.hpp"
 
 #include <memory>
+#include <sstream>
 
 namespace fetch {
 namespace dmlf {
@@ -51,19 +52,24 @@ public:
   virtual std::vector<std::string> Setup(const Flags &flags);
   virtual std::vector<std::string> Load(std::string source);
   virtual void Execute(std::string entrypoint, const Params params);
-  virtual void SetStdout(OutputHandler) {}
+  virtual void SetStdout(OutputHandler);
   virtual void SetStdin(InputHandler) {}
   virtual void SetStderr(OutputHandler) {}
 
   virtual Status status(void) const { return status_; }
 protected:
 private:
+  void DoOutput();
+  
   Status status_ = VmWrapperInterface::UNCONFIGURED;
+  std::stringstream outputStream_;
+  OutputHandler outputHandler_ = nullptr;
   
   std::string command_ = "";
   std::unique_ptr<Executable> executable_ = std::make_unique<Executable>();
   std::shared_ptr<fetch::vm::Module> module_ = nullptr;
   std::unique_ptr<VM> vm_ = nullptr;
+
 
   VmWrapperEtch(const VmWrapperEtch &other) = delete;
   VmWrapperEtch &operator=(const VmWrapperEtch &other) = delete;
