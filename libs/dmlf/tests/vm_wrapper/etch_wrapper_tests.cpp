@@ -49,7 +49,7 @@ function main()
 
 endfunction)";
 
-  fetch::dmlf::vm_wrapper_etch vm;
+  fetch::dmlf::VmWrapperEtch vm;
 
   vm.Setup(fetch::dmlf::VmWrapperInterface::Flags());
 

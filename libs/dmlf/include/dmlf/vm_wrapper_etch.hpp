@@ -28,7 +28,7 @@
 namespace fetch {
 namespace dmlf {
 
-class vm_wrapper_etch: public VmWrapperInterface
+class VmWrapperEtch: public VmWrapperInterface
 {
 public:
   using OutputHandler = VmWrapperInterface::OutputHandler;
@@ -41,10 +41,10 @@ public:
   using VM = fetch::vm::VM;
   using Executable = fetch::vm::Executable;
 
-  vm_wrapper_etch()
+  VmWrapperEtch()
   {
   }
-  virtual ~vm_wrapper_etch()
+  virtual ~VmWrapperEtch()
   {
   }
 
@@ -65,10 +65,10 @@ private:
   std::shared_ptr<fetch::vm::Module> module_ = nullptr;
   std::unique_ptr<VM> vm_ = nullptr;
 
-  vm_wrapper_etch(const vm_wrapper_etch &other) = delete;
-  vm_wrapper_etch &operator=(const vm_wrapper_etch &other) = delete;
-  bool operator==(const vm_wrapper_etch &other) = delete;
-  bool operator<(const vm_wrapper_etch &other) = delete;
+  VmWrapperEtch(const VmWrapperEtch &other) = delete;
+  VmWrapperEtch &operator=(const VmWrapperEtch &other) = delete;
+  bool operator==(const VmWrapperEtch &other) = delete;
+  bool operator<(const VmWrapperEtch &other) = delete;
 };
 
 } // namespace dmlf
