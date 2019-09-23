@@ -118,7 +118,7 @@ Ptr<VMOptimiser> VMOptimiser::Constructor(
 {
   std::vector<std::string> input_names;
 
-  fetch::math::SizeType len = static_cast<fetch::math::SizeType>(input_node_names->Count());
+  auto len = static_cast<fetch::math::SizeType>(input_node_names->Count());
 
   for (fetch::math::SizeType i{0}; i < len; i++)
   {
