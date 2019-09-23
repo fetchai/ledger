@@ -17,6 +17,8 @@
 
 #include "gtest/gtest.h"
 
+namespace {
+
 class VMWrapperTests : public ::testing::Test
 {
 public:

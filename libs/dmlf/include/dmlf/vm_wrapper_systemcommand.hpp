@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "dmlf/vm_wrapper_interface.hpp"
 
 namespace fetch {
 namespace dmlf {
@@ -38,15 +39,16 @@ public:
   {
   }
 
+#pragma clang diagnostic ignored "-Wunused-parameter"
   std::vector<std::string> Setup(const Flags &flags)
   {
     return std::vector<std::string>();
   }
   std::vector<std::string> Load(std::string source)
   {
-    status = VmWrapperInterface::COMPILING;
-    commmand_ = source;
-    status = VmWrapperInterface::COMPILED;
+    status_ = VmWrapperInterface::COMPILING;
+    command_ = source;
+    status_ = VmWrapperInterface::COMPILED;
     return std::vector<std::string>();
   }
   virtual void Execute(std::string entrypoint, const Params params);
@@ -57,6 +59,7 @@ public:
   virtual Status status(void) const { return status_; }
 protected:
   Status status_ = VmWrapperInterface::WAITING;
+  std::string command_;
 
   enum {
     WRITE_SIDE = 1,
