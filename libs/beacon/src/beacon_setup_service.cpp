@@ -1472,6 +1472,8 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
   uint64_t cabinet_size        = beacon_->aeon.members.size();
   uint64_t expected_dkg_time_s = GetExpectedDKGTime(cabinet_size);
 
+  FETCH_LOG_INFO(LOGGING_NAME, "Original time: ", expected_dkg_time_s);
+
   // TODO(HUT): remove this!!!
   //if (expected_dkg_time_s > 1000)
   {
@@ -1484,6 +1486,8 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
       expected_dkg_time_s = beacon_->aeon.round_start - (beacon_->aeon.round_start / 10);
     }
   }
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Recalculated time: ", expected_dkg_time_s, " Note: round start is :", beacon_->aeon.round_start);
 
   // RESET state will delay DKG until the start point (or next start point)
   if (state == BeaconSetupService::State::RESET)
