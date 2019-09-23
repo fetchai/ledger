@@ -17,6 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
+
+namespace fetch {
+namespace dmlf {
+
+
 class VmWrapperSystemcommand: public VmWrapperInterface
 {
 public:
@@ -35,6 +40,7 @@ public:
 
   std::vector<std::string> Setup(const Flags &flags)
   {
+    return std::vector<std::string>();
   }
   std::vector<std::string> Load(std::string source)
   {
@@ -43,20 +49,18 @@ public:
     status = VmWrapperInterface::COMPILED;
     return std::vector<std::string>();
   }
-  virtual void Execute(std::string entrypoint, const Params params)
-  {
-  }
-  virtual void SetStdout(OutputHandler) = 0;
-  virtual void SetStdin(InputHandler) = 0;
-  virtual void SetStderr(OutputHandler) = 0;
+  virtual void Execute(std::string entrypoint, const Params params);
+  virtual void SetStdout(OutputHandler);
+  virtual void SetStdin(InputHandler);
+  virtual void SetStderr(OutputHandler);
 
   virtual Status status(void) const { return status_; }
 protected:
   Status status_ = VmWrapperInterface::WAITING;
 
   enum {
-    WRAPPER_SIDE = 1,
-    COMMAND_SIDE = 0,
+    WRITE_SIDE = 1,
+    READ_SIDE = 0,
   };
   int stdin_pipe[2];
   int stderr_pipe[2];
@@ -67,3 +71,6 @@ private:
   bool operator==(const VmWrapperSystemcommand &other) = delete;
   bool operator<(const VmWrapperSystemcommand &other) = delete;
 };
+
+}
+}
