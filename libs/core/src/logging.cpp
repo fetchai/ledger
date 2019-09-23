@@ -81,9 +81,9 @@ private:
 
   Logger &GetLogger(char const *name);
 
-  Mutex    lock_;
-  Registry registry_;
-  LogLevel global_level_{LogLevel::TRACE};
+  Mutex                 lock_;
+  Registry              registry_;
+  std::atomic<LogLevel> global_level_{LogLevel::TRACE};
 
   // Telemetry
   CounterPtr log_messages_{telemetry::Registry::Instance().CreateCounter(
