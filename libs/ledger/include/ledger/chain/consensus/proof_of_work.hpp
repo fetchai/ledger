@@ -44,7 +44,7 @@ public:
 
   void SetTarget(std::size_t zeros);
   void SetTarget(UInt256 &&target);
-  void SetHeader(byte_array::ByteArray header);
+  void SetHeader(byte_array::ByteArray const &header);
 
   HeaderType const &header() const;
   UInt256 const &   digest() const;

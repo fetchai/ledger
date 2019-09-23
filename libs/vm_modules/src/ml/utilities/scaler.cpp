@@ -46,7 +46,7 @@ VMScaler::VMScaler(VM *vm, TypeId type_id)
 
 Ptr<VMScaler> VMScaler::Constructor(VM *vm, TypeId type_id)
 {
-  return new VMScaler(vm, type_id);
+  return Ptr<VMScaler>{new VMScaler(vm, type_id)};
 }
 
 void VMScaler::SetScaleByData(Ptr<VMTensorType> const &reference_tensor, Ptr<String> const &mode)

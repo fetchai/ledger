@@ -329,7 +329,7 @@ void TCPClientImplementation::SetHeader(byte_array::ByteArray &header, uint64_t 
 }
 
 // Always executed in a run(), in a strand
-void TCPClientImplementation::WriteNext(SharedSelfType selfLock)
+void TCPClientImplementation::WriteNext(SharedSelfType const &selfLock)
 {
   // Only one thread can get past here at a time. Effectively a try_lock
   // except that we can't unlock a mutex in the callback (undefined behaviour)

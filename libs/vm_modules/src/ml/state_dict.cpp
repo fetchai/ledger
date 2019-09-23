@@ -47,7 +47,7 @@ VMStateDict::VMStateDict(VM *vm, TypeId type_id, fetch::ml::StateDict<MathTensor
 
 Ptr<VMStateDict> VMStateDict::Constructor(VM *vm, TypeId type_id)
 {
-  return new VMStateDict(vm, type_id);
+  return Ptr<VMStateDict>{new VMStateDict(vm, type_id)};
 }
 
 void VMStateDict::SetWeights(Ptr<String> const &nodename, Ptr<math::VMTensor> const &weights)

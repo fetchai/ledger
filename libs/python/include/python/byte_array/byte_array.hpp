@@ -29,7 +29,7 @@ void BuildByteArray(pybind11::module &module)
   py::class_<ByteArray, ConstByteArray>(module, "ByteArray")
       .def(py::init<>())
       .def(py::init<const char *>())
-      .def(py::init<const std::string &>())
+      .def(py::init<std::string const &>())
       .def(py::init<const fetch::byte_array::ByteArray &>())
       .def(py::init<std::initializer_list<ByteArray::ValueType>>())
       .def(py::init<const fetch::byte_array::ByteArray &, const std::size_t &,

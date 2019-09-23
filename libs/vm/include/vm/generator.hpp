@@ -164,7 +164,7 @@ struct Executable
     uint16_t AddInstruction(Instruction instruction)
     {
       auto const pc = static_cast<uint16_t>(instructions.size());
-      instructions.push_back(std::move(instruction));
+      instructions.push_back(instruction);
       return pc;
     }
     uint16_t FindLineNumber(uint16_t pc) const

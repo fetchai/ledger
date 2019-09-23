@@ -32,7 +32,7 @@ void BuildConstByteArray(pybind11::module &module)
       .def(py::init<const char *>())
       .def(py::init<const unsigned char *const, std::size_t>())
       .def(py::init<std::initializer_list<ConstByteArray::ValueType>>())
-      .def(py::init<const std::string &>())
+      .def(py::init<std::string const &>())
       .def(py::init<const fetch::byte_array::ConstByteArray::SelfType &>())
       .def(py::init<const fetch::byte_array::ConstByteArray::SelfType &, const std::size_t &,
                     const std::size_t &>())

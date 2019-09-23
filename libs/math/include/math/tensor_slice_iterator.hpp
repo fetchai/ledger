@@ -68,8 +68,8 @@ public:
 
   TensorSliceIterator(TensorSliceIterator const &other) = default;
   TensorSliceIterator &operator=(TensorSliceIterator const &other) = default;
-  TensorSliceIterator(TensorSliceIterator &&other)                 = default;
-  TensorSliceIterator &operator=(TensorSliceIterator &&other) = default;
+  TensorSliceIterator(TensorSliceIterator &&other) noexcept        = default;
+  TensorSliceIterator &operator=(TensorSliceIterator &&other) noexcept = default;
 
   /**
    * Iterator for more interesting ranges

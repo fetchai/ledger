@@ -80,7 +80,7 @@ bool Generator::GenerateExecutable(IR const &ir, std::string const &name, Execut
   CreateFunctions(ir.root_);
   HandleBlock(ir.root_);
 
-  executable = std::move(executable_);
+  executable = executable_;
   scopes_.clear();
   loops_.clear();
   strings_map_.clear();
