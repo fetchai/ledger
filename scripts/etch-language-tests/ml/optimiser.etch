@@ -26,7 +26,7 @@ function main()
 
     // test that every optimiser can be constructed and that running reduces loss
 
-    var optimiser1 = Optimiser("adagrad", graph, dataloader, {Input"}, "Label", "Error");
+    var optimiser1 = Optimiser("adagrad", graph, dataloader, {"Input"}, "Label", "Error");
     var loss = optimiser1.run(batch_size);
 
     var optimiser2 = Optimiser("adam", graph, dataloader, {"Input"}, "Label", "Error");
