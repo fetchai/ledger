@@ -355,7 +355,7 @@ TEST_F(MLTests, sgd_optimiser_serialisation_test)
       dataloader.addData(data_tensor, label_tensor);
 
       var batch_size = 8u64;
-      var optimiser = Optimiser("sgd", graph, dataloader, "Input", "Label", "Error");
+      var optimiser = Optimiser("sgd", graph, dataloader, {"Input"}, "Label", "Error");
 
       var state = State<Optimiser>("optimiser");
       state.set(optimiser);
@@ -422,7 +422,7 @@ TEST_F(MLTests, serialisation_several_components_test)
         dataloader_state.set(dataloader);
 
         var batch_size = 8u64;
-        var optimiser = Optimiser("sgd", graph, dataloader, "Input", "Label", "Error");
+        var optimiser = Optimiser("sgd", graph, dataloader, {"Input"}, "Label", "Error");
         var optimiser_state = State<Optimiser>("optimiser");
         optimiser_state.set(optimiser);
 
@@ -485,7 +485,7 @@ TEST_F(MLTests, optimiser_set_graph_test)
         dataloader.addData(data_tensor, label_tensor);
 
         var batch_size = 8u64;
-        var optimiser = Optimiser("sgd", graph, dataloader, "Input", "Label", "Error");
+        var optimiser = Optimiser("sgd", graph, dataloader, {"Input"}, "Label", "Error");
 
         optimiser.setGraph(graph);
         optimiser.setDataloader(dataloader);
