@@ -15,6 +15,7 @@
 //   limitations under the License.
 //
 //------------------------------------------------------------------------------
+
 #include "core/containers/is_in.hpp"
 #include "core/containers/set_join.hpp"
 
@@ -42,4 +43,4 @@ TEST(SetJoinTests, BasicSetCheck)
   EXPECT_TRUE(core::IsIn(c, 8));
 }
 
-}
+}  // namespace

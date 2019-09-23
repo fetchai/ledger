@@ -43,4 +43,4 @@ std::unordered_set<K, H, E> operator+(std::unordered_set<K, H, E>        input,
   return input;
 }
 
-} // namespace fetch
+}  // namespace fetch
