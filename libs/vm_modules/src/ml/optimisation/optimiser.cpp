@@ -108,14 +108,28 @@ void VMOptimiser::Bind(Module &module)
       .CreateMemberFunction("setDataloader", &VMOptimiser::SetDataloader);
 }
 
-Ptr<VMOptimiser> VMOptimiser::Constructor(VM *vm, TypeId type_id, Ptr<String> const &mode,
-                                          Ptr<VMGraph> const &     graph,
-                                          Ptr<VMDataLoader> const &loader,
-                                          Ptr<String> const &      input_node_names,
-                                          Ptr<String> const &      label_node_name,
-                                          Ptr<String> const &      output_node_names)
+Ptr<VMOptimiser> VMOptimiser::Constructor(
+    VM *vm, TypeId type_id, Ptr<String> const &mode, Ptr<VMGraph> const &graph,
+    Ptr<VMDataLoader> const &                            loader,
+    Ptr<fetch::vm::Array<Ptr<fetch::vm::String>>> const &input_node_names,
+    Ptr<String> const &label_node_name, Ptr<String> const &output_node_names)
 {
-  return new VMOptimiser(vm, type_id, mode->str, graph->GetGraph(), loader, {input_node_names->str},
+
+  std::vector<std::string> input_names;
+
+  AnyInteger         first_index(0, TypeIds::UInt16);
+  TemplateParameter1 element = input_node_names->GetIndexedValue(first_index);
+  input_names.push_back(element.Get<fetch::vm::Ptr<fetch::vm::String>>()->str);
+  fetch::math::SizeType cnt = input_names.size();
+
+  for (fetch::math::SizeType i{1}; i < cnt; i++)
+  {
+    AnyInteger         index(i, TypeIds::UInt16);
+    TemplateParameter1 element = input_node_names->GetIndexedValue(index);
+    input_names.push_back(element.Get<fetch::vm::Ptr<fetch::vm::String>>()->str);
+  }
+
+  return new VMOptimiser(vm, type_id, mode->str, graph->GetGraph(), loader, input_names,
                          label_node_name->str, output_node_names->str);
 }
 
