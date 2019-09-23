@@ -1414,7 +1414,7 @@ uint64_t GetExpectedDKGTime(uint64_t cabinet_size)
   }
   if (cabinet_size < 51)
   {
-    expected_dkg_time_s = 1001;
+    expected_dkg_time_s = 400;
   }
   if (cabinet_size < 30)
   {
@@ -1473,7 +1473,7 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
   uint64_t expected_dkg_time_s = GetExpectedDKGTime(cabinet_size);
 
   // TODO(HUT): remove this!!!
-  if (expected_dkg_time_s > 1000)
+  //if (expected_dkg_time_s > 1000)
   {
     if (beacon_->aeon.round_start < expected_dkg_time_s)
     {
