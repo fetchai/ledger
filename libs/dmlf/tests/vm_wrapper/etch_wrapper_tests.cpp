@@ -29,6 +29,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 namespace {
 
@@ -37,75 +38,95 @@ namespace {
 using fetch::vm_modules::VMFactory;
 using namespace fetch::vm;
 
+using Params = fetch::dmlf::VmWrapperInterface::Params;
+using Status = fetch::dmlf::VmWrapperInterface::Status;
+
 }  // namespace
 
-TEST(VmDmlfTests, directHelloWorld)
+TEST(VmDmlfTests, etch_simpleHelloWorld)
 {
   // load the contents of the script file
-  /*
   auto const source = R"(
 function main()
 
-    printLn("Hello world!!");
+  printLn("Hello world!!");
 
 endfunction)";
-  */
 
-//  //auto executable = std::make_unique<Executable>();
-//  //auto module     = VMFactory::GetModule(VMFactory::USE_SMART_CONTRACTS);
-//
-//
-//
-//
-//    VM_Wrapper wrapper(VMFactory::USE_SMART_CONTRACTS);
-//
-//  // attempt to compile the program
-//  auto errors = wrapper.Load(source);
-//  //auto errors = VMFactory::Compile(module, source, *executable);
-//
-//  // detect compilation errors
-//  EXPECT_TRUE(errors.empty());
-//  //if (!errors.empty())
-//  //{
-//  //  std::cerr << "Failed to compile:\n";
-//
-//  //  for (auto const &line : errors)
-//  //  {
-//  //    std::cerr << line << '\n';
-//  //  }
-//
-//  //  return 1;
-//  //}
-//
-//  auto& vm = wrapper.vm_;
-//
-//  // create the VM instance
-//  //auto vm = std::make_unique<VM>(module.get()); 
-//  //vm->AttachOutputDevice(VM::STDOUT, std::cout);
-//
-//  // Execute the requested function
-//  bool const success = wrapper.Execute();
-//  //std::string error;
-//  //std::string console;
-//  //Variant     output;
-//  //bool const  success =
-//  //    vm->Execute(*wrapper.executable_, "main", error, output);
-//
-//  EXPECT_TRUE(success);
-//  //if (!success)
-//  //{
-//  //  std::cerr << error << std::endl;
-//  //  return 1;
-//  //}
-//  // if there is any console output print it
-//  if (!console.empty())
-//  {
-//    std::cout << console << std::endl;
-//  }
-//
+  fetch::dmlf::VmWrapperEtch vm;
+  EXPECT_EQ(vm.status(), Status::UNCONFIGURED);
 
-  EXPECT_EQ(1, 1);
+  vm.Setup(fetch::dmlf::VmWrapperInterface::Flags());
+  EXPECT_EQ(vm.status(), Status::WAITING);
+
+  std::vector<std::string> result;
+  auto outputTest = [&result] (std::string line) {
+    result.emplace_back(std::move(line));
+  };
+  vm.SetStdout(outputTest);
+
+  auto errors = vm.Load(source);
+  EXPECT_EQ(vm.status(), Status::COMPILED);
+  EXPECT_TRUE(errors.empty());
+
+
+  vm.Execute("main", Params());
+  EXPECT_EQ(vm.status(), Status::COMPLETED);
+
+  EXPECT_EQ(result.size(), 1);
+  EXPECT_EQ(result[0], "Hello world!!");
 }
+
+TEST(VmDmlfTests, etch_doubleHelloWorld)
+{
+  // load the contents of the script file
+  auto const source = R"(
+function main()
+
+  printLn("Hello world!!");
+
+endfunction)";
+
+  fetch::dmlf::VmWrapperEtch vm;
+  EXPECT_EQ(vm.status(), Status::UNCONFIGURED);
+
+  vm.Setup(fetch::dmlf::VmWrapperInterface::Flags());
+  EXPECT_EQ(vm.status(), Status::WAITING);
+
+  std::vector<std::string> result;
+  auto outputTest = [&result] (std::string line) {
+    result.emplace_back(std::move(line));
+  };
+  vm.SetStdout(outputTest);
+
+  auto errors = vm.Load(source);
+  EXPECT_EQ(vm.status(), Status::COMPILED);
+  EXPECT_TRUE(errors.empty());
+
+
+  vm.Execute("main", Params());
+  EXPECT_EQ(vm.status(), Status::COMPLETED);
+
+  auto const source2 = R"(
+function main()
+
+  printLn("Hello world again!!!");
+
+endfunction)";
+
+  errors = vm.Load(source2);
+  EXPECT_EQ(vm.status(), Status::COMPILED);
+  EXPECT_TRUE(errors.empty());
+
+  vm.Execute("main", Params());
+  EXPECT_EQ(vm.status(), Status::COMPLETED);
+
+  EXPECT_EQ(result.size(), 2);
+  EXPECT_EQ(result[0], "Hello world!!");
+  EXPECT_EQ(result[1], "Hello world again!!!");
+
+}
+
 
 
 
