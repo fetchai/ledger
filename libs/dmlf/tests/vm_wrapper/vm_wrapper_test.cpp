@@ -16,6 +16,20 @@
 //------------------------------------------------------------------------------
 
 #include "gtest/gtest.h"
+#include "gtest/gtest.h"
+
+#include "dmlf/vm_wrapper_systemcommand.hpp"
+
+#include "variant/variant.hpp"
+#include "vm/vm.hpp"
+#include "vm_modules/vm_factory.hpp"
+
+#include <fstream>
+#include <iostream>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <vector>
 
 namespace {
 
@@ -30,9 +44,12 @@ public:
 
 TEST_F(VMWrapperTests, noop)
 {
-  VmWrapperSystemcommand
+  fetch::dmlf::VmWrapperSystemcommand vm;
 
-  EXPECT_EQ(1,1);
+  vm.Setup(fetch::dmlf::VmWrapperInterface::Flags());
+  vm.Execute("/bin/ls", fetch::dmlf::VmWrapperSystemcommand::Params());
+
+  EXPECT_EQ(1,2);
 }
 
 

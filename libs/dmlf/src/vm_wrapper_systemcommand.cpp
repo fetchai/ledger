@@ -24,7 +24,7 @@ namespace dmlf {
     return output;
   }
 
-void VmWrapperSystemcommand::Execute(std::string entrypoint, const Params params)
+  void VmWrapperSystemcommand::Execute(std::string entrypoint, const Params /*params*/)
 {
   ::pipe(stdin_pipe); // 0 = read end, 1 = write end.
   ::pipe(stderr_pipe);
@@ -51,6 +51,7 @@ void VmWrapperSystemcommand::Execute(std::string entrypoint, const Params params
 
   case 0:
     {
+      std::cout << "FORK=0" << std::endl;
       //we are the child.
       ::close(stdin_pipe[0]);
       ::close(stderr_pipe[0]);
@@ -59,7 +60,7 @@ void VmWrapperSystemcommand::Execute(std::string entrypoint, const Params params
       auto argv = splitString(entrypoint);
       std::vector<char *> vec_cp;
       vec_cp.reserve(argv.size() + 2);
-      vec_cp.push_back(strdup(entrypoint.c_str()));
+      //vec_cp.push_back(strdup(entrypoint.c_str()));
       for (auto s : argv)
       {
         vec_cp.push_back(strdup(s.c_str()));
@@ -74,6 +75,7 @@ void VmWrapperSystemcommand::Execute(std::string entrypoint, const Params params
   default:
     {
       // we are the parent.
+      std::cout << "FORK=" << p<< std::endl;
       ::close(stdin_pipe[1]);
       ::close(stderr_pipe[1]);
       ::close(stdout_pipe[1]);
