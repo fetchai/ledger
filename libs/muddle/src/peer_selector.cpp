@@ -18,6 +18,7 @@
 
 #include "core/containers/set_difference.hpp"
 #include "core/containers/set_intersection.hpp"
+#include "core/containers/set_join.hpp"
 #include "core/mutex.hpp"
 #include "core/reactor.hpp"
 #include "core/service_ids.hpp"
@@ -47,17 +48,6 @@ constexpr char const *BASE_NAME                 = "PeerSelector";
 constexpr std::size_t MAX_CACHE_KAD_NODES       = 20;
 constexpr std::size_t MAX_CONNECTED_KAD_NODES   = 3;
 constexpr std::size_t MAX_LOG2_BACKOFF          = 11;  // 2048
-
-std::unordered_set<Address> operator+(std::unordered_set<Address>        input,
-                                      std::unordered_set<Address> const &other)
-{
-  for (auto const &address : other)
-  {
-    input.emplace(address);
-  }
-
-  return input;
-}
 
 PromiseTask::Duration CalculatePromiseTimeout(std::size_t consecutive_failures)
 {
