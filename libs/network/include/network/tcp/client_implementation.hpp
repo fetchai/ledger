@@ -97,7 +97,7 @@ private:
   static void SetHeader(byte_array::ByteArray &header, uint64_t bufSize);
 
   // Always executed in a run(), in a strand
-  void WriteNext(SharedSelfType selfLock);
+  void WriteNext(SharedSelfType const &selfLock);
 };
 
 }  // namespace network

@@ -105,7 +105,7 @@ public:
 
   // Construction / Destruction
   P2PTrust()                    = default;
-  P2PTrust(const P2PTrust &rhs) = delete;
+  P2PTrust(P2PTrust const &rhs) = delete;
   P2PTrust(P2PTrust &&rhs)      = delete;
   ~P2PTrust() override          = default;
 
@@ -263,7 +263,7 @@ public:
   }
 
   // Operators
-  P2PTrust operator=(const P2PTrust &rhs) = delete;
+  P2PTrust operator=(P2PTrust const &rhs) = delete;
   P2PTrust operator=(P2PTrust &&rhs) = delete;
 
 protected:
@@ -283,7 +283,7 @@ protected:
     }
 
     std::sort(trust_store_.begin(), trust_store_.end(),
-              [](const PeerTrustRating &a, const PeerTrustRating &b) {
+              [](PeerTrustRating const &a, PeerTrustRating const &b) {
                 if (a.trust < b.trust)
                 {
                   return true;

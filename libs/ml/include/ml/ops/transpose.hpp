@@ -122,13 +122,14 @@ public:
     }
   }
 
-  std::vector<SizeType> transpose_vector_;
-
   static constexpr OpType OpCode()
   {
     return OpType::OP_TRANSPOSE;
   }
   static constexpr char const *DESCRIPTOR = "Transpose";
+
+private:
+  std::vector<SizeType> transpose_vector_;
 };
 
 }  // namespace ops

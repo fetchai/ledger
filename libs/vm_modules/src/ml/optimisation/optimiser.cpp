@@ -99,8 +99,9 @@ void VMOptimiser::Bind(Module &module)
 {
   module.CreateClassType<VMOptimiser>("Optimiser")
       .CreateConstructor(&VMOptimiser::Constructor)
-      .CreateSerializeDefaultConstructor(
-          [](VM *vm, TypeId type_id) -> Ptr<VMOptimiser> { return new VMOptimiser(vm, type_id); })
+      .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMOptimiser> {
+        return Ptr<VMOptimiser>{new VMOptimiser(vm, type_id)};
+      })
       .CreateMemberFunction("run", &VMOptimiser::RunData)
       .CreateMemberFunction("run", &VMOptimiser::RunLoader)
       .CreateMemberFunction("run", &VMOptimiser::RunLoaderNoSubset)
@@ -115,7 +116,6 @@ Ptr<VMOptimiser> VMOptimiser::Constructor(
     Ptr<fetch::vm::Array<Ptr<fetch::vm::String>>> const &input_node_names,
     Ptr<String> const &label_node_name, Ptr<String> const &output_node_names)
 {
-
   std::vector<std::string> input_names;
 
   AnyInteger         first_index(0, TypeIds::UInt16);
@@ -130,8 +130,9 @@ Ptr<VMOptimiser> VMOptimiser::Constructor(
     input_names.push_back(element.Get<fetch::vm::Ptr<fetch::vm::String>>()->str);
   }
 
-  return new VMOptimiser(vm, type_id, mode->str, graph->GetGraph(), loader, input_names,
-                         label_node_name->str, output_node_names->str);
+  return Ptr<VMOptimiser>{new VMOptimiser(vm, type_id, mode->str, graph->GetGraph(), loader,
+                                          input_names, label_node_name->str,
+                                          output_node_names->str)};
 }
 
 VMOptimiser::DataType VMOptimiser::RunData(Ptr<fetch::vm_modules::math::VMTensor> const &data,

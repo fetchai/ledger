@@ -199,7 +199,7 @@ IRFunctionPtr IR::CloneFunction(IRFunctionPtr const &function)
   return clone_function;
 }
 
-IRTypePtrArray IR::CloneTypes(const IRTypePtrArray &types)
+IRTypePtrArray IR::CloneTypes(IRTypePtrArray const &types)
 {
   IRTypePtrArray array;
   for (auto const &type : types)
@@ -209,7 +209,7 @@ IRTypePtrArray IR::CloneTypes(const IRTypePtrArray &types)
   return array;
 }
 
-IRVariablePtrArray IR::CloneVariables(const IRVariablePtrArray &variables)
+IRVariablePtrArray IR::CloneVariables(IRVariablePtrArray const &variables)
 {
   IRVariablePtrArray array;
   for (auto const &variable : variables)

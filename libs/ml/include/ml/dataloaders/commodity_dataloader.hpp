@@ -43,7 +43,7 @@ public:
   using ReturnType = std::pair<LabelType, std::vector<InputType>>;
   using SizeType   = math::SizeType;
 
-  explicit CommodityDataLoader()
+  CommodityDataLoader()
     : DataLoader<LabelType, InputType>()
   {
     UpdateRanges();
@@ -87,7 +87,7 @@ private:
   float test_to_train_ratio_       = 0.0f;
   float validation_to_train_ratio_ = 0.0f;
 
-  random::Random rand;
+  random::Random rand_;
 
   void GetAtIndex(SizeType index);
   void UpdateCursor() override;
@@ -129,7 +129,7 @@ CommodityDataLoader<LabelType, InputType>::GetNext()
 {
   if (this->random_mode_)
   {
-    GetAtIndex(this->current_min_ + (static_cast<SizeType>(decltype(rand)::generator()) % Size()));
+    GetAtIndex(this->current_min_ + (static_cast<SizeType>(decltype(rand_)::generator()) % Size()));
     return buffer_;
   }
   else
