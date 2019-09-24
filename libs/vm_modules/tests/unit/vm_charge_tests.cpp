@@ -40,7 +40,7 @@ auto expensive_estimator = [](uint8_t x, uint16_t y) -> ChargeAmount {
   return static_cast<ChargeAmount>(high_charge_limit + x * y);
 };
 
-auto const handler = [](VM * /*unused*/, uint8_t /*unused*/, uint16_t /*unused*/) -> bool {
+auto const handler = [](VM * /*vm*/, uint8_t /*unused*/, uint16_t /*unused*/) -> bool {
   return true;
 };
 
@@ -62,11 +62,11 @@ public:
     return Ptr<CustomType>{new CustomType{vm, type_id, x, y}};
   }
 
-  static void AffordableStatic(VM * /*unused*/, TypeId /*unused*/, uint8_t /*unused*/,
+  static void AffordableStatic(VM * /*vm*/, TypeId /*type_id*/, uint8_t /*unused*/,
                                uint16_t /*unused*/)
   {}
 
-  static void TooExpensiveStatic(VM * /*unused*/, TypeId /*unused*/, uint8_t /*unused*/,
+  static void TooExpensiveStatic(VM * /*vm*/, TypeId /*type_id*/, uint8_t /*unused*/,
                                  uint16_t /*unused*/)
   {}
 

@@ -42,7 +42,8 @@ struct BLSInitialiser
   BLSInitialiser()
   {
     static std::atomic<bool> was_initialised{false};
-    bool                     a{true};
+
+    bool a{true};
     a = was_initialised.exchange(a);
     if (!a)
     {

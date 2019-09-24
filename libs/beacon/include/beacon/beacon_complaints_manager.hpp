@@ -45,14 +45,16 @@ class ComplaintsManager
 
   uint32_t      threshold_{0};  ///< DKG threshold
   MuddleAddress address_;       ///< Address of node
-  std::unordered_map<MuddleAddress, std::unordered_set<MuddleAddress>>
-                          complaints_counter_;  ///< Counter for number complaints received by a cabinet member
-  std::set<MuddleAddress> complaints_from_;  ///< Set of members who complaints against self
-  std::set<MuddleAddress> complaints_;       ///< Set of members who we are complaining against
-  std::set<MuddleAddress>
-       complaints_received_;  ///< Set of members whom we have received a complaint message from
-  bool finished_{
-      false};  ///< Bool denoting whether we have collected complaint messages from everyone
+  /// Counter for number complaints received by a cabinet member
+  std::unordered_map<MuddleAddress, std::unordered_set<MuddleAddress>> complaints_counter_;
+  /// Set of members who complaints against self
+  std::set<MuddleAddress> complaints_from_;
+  /// Set of members who we are complaining against
+  std::set<MuddleAddress> complaints_;
+  /// Set of members whom we have received a complaint message from
+  std::set<MuddleAddress> complaints_received_;
+  /// Bool denoting whether we have collected complaint messages from everyone
+  bool               finished_{false};
   mutable std::mutex mutex_;
 
 public:
@@ -116,15 +118,14 @@ class QualComplaintsManager
   bool                    finished_{false};
   std::set<MuddleAddress> complaints_;           ///< Cabinet members we complain against
   QualComplaints          complaints_received_;  ///< Set of cabinet members we have received a qual
-  ///< complaint message from
-  mutable std::mutex mutex_;
+  mutable std::mutex      mutex_;
 
 public:
   QualComplaintsManager() = default;
 
   void Reset();
-  void AddComplaintAgainst(MuddleAddress const &id);
-  void AddComplaintsFrom(MuddleAddress const &                                   id,
+  void AddComplaintAgainst(MuddleAddress const &complainer_address);
+  void AddComplaintsFrom(MuddleAddress const &                                   from,
                          std::unordered_map<MuddleAddress, ExposedShares> const &complaints);
   void Finish(std::set<MuddleAddress> const &qual, MuddleAddress const &node_id);
 
@@ -134,5 +135,6 @@ public:
   bool           FindComplaint(MuddleAddress const &id) const;
   std::set<QualComplaintsManager::MuddleAddress> Complaints() const;
 };
+
 }  // namespace beacon
 }  // namespace fetch

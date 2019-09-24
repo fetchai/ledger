@@ -37,7 +37,7 @@ namespace {
  * method for taking the absolute of a value
  */
 template <typename T>
-fetch::math::meta::IfIsMath<T, T> Abs(VM * /*unused*/, T const &a)
+fetch::math::meta::IfIsMath<T, T> Abs(VM * /*vm*/, T const &a)
 {
   T x;
   fetch::math::Abs(a, x);
@@ -57,19 +57,19 @@ meta::EnableIf<sizeof(T) < 4, int32_t> ToAtLeastInt(T const &value)
 }
 
 template <typename T>
-IfIsSmallSignedInteger<T, T> IntegerAbs(VM * /*unused*/, T const &value)
+IfIsSmallSignedInteger<T, T> IntegerAbs(VM * /*vm*/, T const &value)
 {
   return static_cast<T>(std::abs(value));
 }
 
 template <typename T>
-IfIsNormalSignedInteger<T, T> IntegerAbs(VM * /*unused*/, T const &value)
+IfIsNormalSignedInteger<T, T> IntegerAbs(VM * /*vm*/, T const &value)
 {
   return std::abs(value);
 }
 
 template <typename T>
-meta::IfIsUnsignedInteger<T, T> IntegerAbs(VM * /*unused*/, T const &value)
+meta::IfIsUnsignedInteger<T, T> IntegerAbs(VM * /*vm*/, T const &value)
 {
   return value;
 }

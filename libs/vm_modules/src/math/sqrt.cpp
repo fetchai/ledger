@@ -31,7 +31,7 @@ namespace math {
 namespace {
 
 template <typename T>
-fetch::math::meta::IfIsMath<T, T> Sqrt(VM * /*unused*/, T const &a)
+fetch::math::meta::IfIsMath<T, T> Sqrt(VM * /*vm*/, T const &a)
 {
   T x;
   fetch::math::Sqrt(a, x);

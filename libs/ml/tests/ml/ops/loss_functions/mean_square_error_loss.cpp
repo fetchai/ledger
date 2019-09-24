@@ -37,9 +37,9 @@ TYPED_TEST_CASE(MeanSquareErrorTest, MyTypes);
 
 TYPED_TEST(MeanSquareErrorTest, perfect_match_forward_test)
 {
-  TypeParam     data1({8, 1});
-  TypeParam     data2({8, 1});
-  std::uint64_t i(0);
+  TypeParam data1({8, 1});
+  TypeParam data2({8, 1});
+  uint64_t  i(0);
   for (int e : {1, -2, 3, -4, 5, -6, 7, -8})
   {
     data1.Set(i, 0, typename TypeParam::Type(e));

@@ -37,7 +37,7 @@ namespace fetch {
 namespace math {
 namespace clustering {
 
-using ClusteringType = Tensor<std::int64_t>;
+using ClusteringType = Tensor<int64_t>;
 
 enum class InitMode
 {

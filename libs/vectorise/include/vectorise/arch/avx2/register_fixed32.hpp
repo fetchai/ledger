@@ -292,7 +292,6 @@ inline VectorRegister<fixed_point::fp32_t, 256> operator/(
     VectorRegister<fixed_point::fp32_t, 256> const &a,
     VectorRegister<fixed_point::fp32_t, 256> const &b)
 {
-
   // TODO(private 440): SSE implementation required
   alignas(VectorRegister<fixed_point::fp32_t, 256>::E_REGISTER_SIZE) fixed_point::fp32_t d1[8];
   a.Store(d1);
@@ -304,7 +303,7 @@ inline VectorRegister<fixed_point::fp32_t, 256> operator/(
 
   // don't divide by zero
   // set each of the 4 values in the vector register to either the solution of the division or 0
-  for (size_t i = 0; i < 8; i++)
+  for (std::size_t i = 0; i < 8; i++)
   {
     ret[i] = d1[i] / d2[i];
   }

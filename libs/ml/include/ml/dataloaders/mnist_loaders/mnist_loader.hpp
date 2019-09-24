@@ -46,21 +46,21 @@ private:
   std::shared_ptr<SizeType> test_cursor_       = std::make_shared<SizeType>(0);
   std::shared_ptr<SizeType> validation_cursor_ = std::make_shared<SizeType>(0);
 
-  std::uint32_t train_size_{};
-  std::uint32_t test_size_{};
-  std::uint32_t validation_size_{};
+  uint32_t train_size_{};
+  uint32_t test_size_{};
+  uint32_t validation_size_{};
 
-  std::uint32_t total_size_{};
-  std::uint32_t test_offset_{};
-  std::uint32_t validation_offset_{};
+  uint32_t total_size_{};
+  uint32_t test_offset_{};
+  uint32_t validation_offset_{};
 
   float test_to_train_ratio_       = 0.0f;
   float validation_to_train_ratio_ = 0.0f;
 
-  static constexpr std::uint32_t FIGURE_WIDTH  = 28;
-  static constexpr std::uint32_t FIGURE_HEIGHT = 28;
-  static constexpr std::uint32_t FIGURE_SIZE   = 28 * 28;
-  static constexpr std::uint32_t LABEL_SIZE    = 10;
+  static constexpr uint32_t FIGURE_WIDTH  = 28;
+  static constexpr uint32_t FIGURE_HEIGHT = 28;
+  static constexpr uint32_t FIGURE_SIZE   = 28 * 28;
+  static constexpr uint32_t LABEL_SIZE    = 10;
 
 public:
   explicit MNISTLoader(bool random_mode = false)
@@ -185,7 +185,7 @@ public:
 
   void SetupWithDataFiles(std::string const &images_file, std::string const &labels_file)
   {
-    std::uint32_t record_length(0);
+    uint32_t record_length(0);
     data_   = ReadMnistImages(images_file, total_size_, record_length);
     labels_ = ReadMNistLabels(labels_file, total_size_);
     assert(record_length == FIGURE_SIZE);
@@ -197,19 +197,19 @@ public:
     UpdateRanges();
   }
 
-  static uint8_t **ReadMnistImages(std::string const &full_path, std::uint32_t &number_of_images,
+  static uint8_t **ReadMnistImages(std::string const &full_path, uint32_t &number_of_images,
                                    unsigned int &image_size)
   {
-    auto reverseInt = [](std::uint32_t i) -> std::uint32_t {
+    auto reverseInt = [](uint32_t i) -> uint32_t {
       // TODO(issue 1674): Change to use platform tools
       uint8_t c1, c2, c3, c4;
-      c1 = static_cast<uint8_t>(i & 255);
-      c2 = static_cast<uint8_t>((i >> 8) & 255);
-      c3 = static_cast<uint8_t>((i >> 16) & 255);
-      c4 = static_cast<uint8_t>((i >> 24) & 255);
-      return static_cast<std::uint32_t>((static_cast<int>(c1) << 24) +
-                                        (static_cast<int>(c2) << 16) + (static_cast<int>(c3) << 8) +
-                                        c4);
+      c1 = static_cast<uint8_t>(i & 255u);
+      c2 = static_cast<uint8_t>((i >> 8u) & 255u);
+      c3 = static_cast<uint8_t>((i >> 16u) & 255u);
+      c4 = static_cast<uint8_t>((i >> 24u) & 255u);
+      return static_cast<uint32_t>((static_cast<uint32_t>(c1) << 24u) +
+                                   (static_cast<uint32_t>(c2) << 16u) +
+                                   (static_cast<uint32_t>(c3) << 8u) + c4);
     };
 
     std::ifstream file(full_path, std::ios::binary);
@@ -245,25 +245,25 @@ public:
     throw std::runtime_error("Cannot open file `" + full_path + "`!");
   }
 
-  static uint8_t *ReadMNistLabels(std::string const &full_path, std::uint32_t &number_of_labels)
+  static uint8_t *ReadMNistLabels(std::string const &full_path, uint32_t &number_of_labels)
   {
-    auto reverseInt = [](std::uint32_t i) {
+    auto reverseInt = [](uint32_t i) {
       // TODO(issue 1674): Change to use platform tools
       uint8_t c1, c2, c3, c4;
-      c1 = static_cast<uint8_t>(i & 255);
-      c2 = static_cast<uint8_t>((i >> 8) & 255);
-      c3 = static_cast<uint8_t>((i >> 16) & 255);
-      c4 = static_cast<uint8_t>((i >> 24) & 255);
-      return static_cast<std::uint32_t>((static_cast<int>(c1) << 24) +
-                                        (static_cast<int>(c2) << 16) + (static_cast<int>(c3) << 8) +
-                                        c4);
+      c1 = static_cast<uint8_t>(i & 255u);
+      c2 = static_cast<uint8_t>((i >> 8u) & 255u);
+      c3 = static_cast<uint8_t>((i >> 16u) & 255u);
+      c4 = static_cast<uint8_t>((i >> 24u) & 255u);
+      return static_cast<uint32_t>((static_cast<uint32_t>(c1) << 24u) +
+                                   (static_cast<uint32_t>(c2) << 16u) +
+                                   (static_cast<uint32_t>(c3) << 8u) + c4);
     };
 
     std::ifstream file(full_path, std::ios::binary);
 
     if (file.is_open())
     {
-      std::uint32_t magic_number = 0;
+      uint32_t magic_number = 0;
       file.read(reinterpret_cast<char *>(&magic_number), sizeof(magic_number));
       magic_number = reverseInt(magic_number);
 
@@ -324,7 +324,7 @@ private:
     float validation_percentage = test_percentage + test_to_train_ratio_;
 
     // Define where test set starts
-    test_offset_ = static_cast<std::uint32_t>(test_percentage * static_cast<float>(total_size_));
+    test_offset_ = static_cast<uint32_t>(test_percentage * static_cast<float>(total_size_));
 
     if (test_offset_ == static_cast<SizeType>(0))
     {
@@ -333,7 +333,7 @@ private:
 
     // Define where validation set starts
     validation_offset_ =
-        static_cast<std::uint32_t>(validation_percentage * static_cast<float>(total_size_));
+        static_cast<uint32_t>(validation_percentage * static_cast<float>(total_size_));
 
     if (validation_offset_ <= test_offset_)
     {

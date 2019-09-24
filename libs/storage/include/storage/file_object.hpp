@@ -372,7 +372,8 @@ void FileObject<S>::ReadWriteHelper(uint8_t const *bytes, uint64_t num, Action a
     switch (action)
     {
     case Action::READ:
-      memcpy(const_cast<uint8_t *>(bytes + bytes_offset), block_being_written.data + byte_index,
+      // NOLINTNEXTLINE
+      memcpy((uint8_t *)(bytes + bytes_offset), block_being_written.data + byte_index,
              bytes_to_write_in_block);
       break;
     case Action::WRITE:

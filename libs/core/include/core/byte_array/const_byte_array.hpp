@@ -40,7 +40,7 @@ namespace byte_array {
 class ConstByteArray
 {
 public:
-  using ValueType       = std::uint8_t;
+  using ValueType       = uint8_t;
   using SelfType        = ConstByteArray;
   using SharedArrayType = memory::SharedArray<ValueType>;
 
@@ -57,8 +57,7 @@ public:
   }
 
   ConstByteArray(char const *str)  // NOLINT
-    : ConstByteArray{reinterpret_cast<std::uint8_t const *>(str),
-                     str != nullptr ? std::strlen(str) : 0}
+    : ConstByteArray{reinterpret_cast<uint8_t const *>(str), str != nullptr ? std::strlen(str) : 0}
   {}
 
   ConstByteArray(ValueType const *const data, std::size_t size)
@@ -83,7 +82,7 @@ public:
   }
 
   ConstByteArray(std::string const &s)  // NOLINT
-    : ConstByteArray(reinterpret_cast<std::uint8_t const *>(s.data()), s.size())
+    : ConstByteArray(reinterpret_cast<uint8_t const *>(s.data()), s.size())
   {}
 
   ConstByteArray(ConstByteArray const &other) = default;
@@ -504,12 +503,12 @@ private:
       return counter + static_cast<std::size_t>(std::forward<Arg>(arg).size());
     }
 
-    constexpr std::size_t operator()(std::size_t counter, std::uint8_t /*unused*/) noexcept
+    constexpr std::size_t operator()(std::size_t counter, uint8_t /*unused*/) noexcept
     {
       return counter + 1;
     }
 
-    constexpr std::size_t operator()(std::size_t counter, std::int8_t /*unused*/) noexcept
+    constexpr std::size_t operator()(std::size_t counter, int8_t /*unused*/) noexcept
     {
       return counter + 1;
     }
@@ -547,28 +546,28 @@ private:
       return counter + std::forward<Arg>(arg).size();
     }
 
-    constexpr std::size_t operator()(std::size_t counter, std::uint8_t arg) noexcept
+    constexpr std::size_t operator()(std::size_t counter, uint8_t arg) noexcept
     {
       self_.pointer()[counter] = arg;
       return counter + 1;
     }
 
-    constexpr std::size_t operator()(std::size_t counter, std::int8_t arg) noexcept
+    constexpr std::size_t operator()(std::size_t counter, int8_t arg) noexcept
     {
-      self_.pointer()[counter] = static_cast<std::uint8_t>(arg);
+      self_.pointer()[counter] = static_cast<uint8_t>(arg);
       return counter + 1;
     }
 
     constexpr std::size_t operator()(std::size_t counter, char arg) noexcept
     {
-      self_.pointer()[counter] = static_cast<std::uint8_t>(arg);
+      self_.pointer()[counter] = static_cast<uint8_t>(arg);
       return counter + 1;
     }
   };
 
   template <typename T>
   using AppendedType =
-      std::conditional_t<type_util::IsAnyOfV<std::decay_t<T>, std::uint8_t, char, std::int8_t>,
+      std::conditional_t<type_util::IsAnyOfV<std::decay_t<T>, uint8_t, char, int8_t>,
                          std::decay_t<T>, SelfType const &>;
 
   /**

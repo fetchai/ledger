@@ -267,7 +267,6 @@ inline VectorRegister<int32_t, 128> operator/(VectorRegister<int32_t, 128> const
 inline VectorRegister<int32_t, 256> operator/(VectorRegister<int32_t, 256> const &a,
                                               VectorRegister<int32_t, 256> const &b)
 {
-
   // TODO(private 440): SSE implementation required
   alignas(32) int32_t d1[8];
   _mm256_store_si256(reinterpret_cast<__m256i *>(d1), a.data());
@@ -279,7 +278,7 @@ inline VectorRegister<int32_t, 256> operator/(VectorRegister<int32_t, 256> const
 
   // don't divide by zero
   // set each of the 4 values in the vector register to either the solution of the division or 0
-  for (size_t i = 0; i < 8; i++)
+  for (std::size_t i = 0; i < 8; i++)
   {
     ret[i] = d2[i] != 0 ? d1[i] / d2[i] : 0;
   }

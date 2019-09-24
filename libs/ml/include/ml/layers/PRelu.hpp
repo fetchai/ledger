@@ -45,7 +45,7 @@ public:
 
   PRelu() = default;
 
-  explicit PRelu(std::uint64_t in, std::string const &name = "PRelu",
+  explicit PRelu(uint64_t in, std::string const &name = "PRelu",
                  WeightsInit init_mode = WeightsInit::XAVIER_GLOROT)
   {
     std::string input =

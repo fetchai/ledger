@@ -36,7 +36,7 @@ using ArrayType  = fetch::math::Tensor<VMTensor::DataType>;
 using SizeType   = ArrayType::SizeType;
 using SizeVector = ArrayType::SizeVector;
 
-VMTensor::VMTensor(VM *vm, TypeId type_id, std::vector<std::uint64_t> const &shape)
+VMTensor::VMTensor(VM *vm, TypeId type_id, std::vector<uint64_t> const &shape)
   : Object(vm, type_id)
   , tensor_(shape)
 {}

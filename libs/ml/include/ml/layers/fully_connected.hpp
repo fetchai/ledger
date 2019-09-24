@@ -175,7 +175,7 @@ public:
     if (!time_distributed_)
     {
       SizeType total_in_size = 1;
-      for (size_t i = 0; i < inputs.front()->shape().size() - 1; i++)
+      for (std::size_t i = 0; i < inputs.front()->shape().size() - 1; i++)
       {
         total_in_size *= inputs.front()->shape(i);
       }

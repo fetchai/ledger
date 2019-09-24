@@ -85,24 +85,24 @@ public:
   } call_counter;
 };
 
-void CustomBinding_void_no_args(VM * /*unused*/)
+void CustomBinding_void_no_args(VM * /*vm*/)
 {
   fixture->call_counter.increment();
 }
 
-void CustomBinding_void_with_args(VM * /*unused*/, uint32_t a, int64_t b)
+void CustomBinding_void_with_args(VM * /*vm*/, uint32_t a, int64_t b)
 {
   fixture->call_counter.increment_with_args(a, b);
 }
 
-int8_t CustomBinding_nonvoid_no_args(VM * /*unused*/)
+int8_t CustomBinding_nonvoid_no_args(VM * /*vm*/)
 {
   fixture->call_counter.increment();
 
   return 42u;
 }
 
-uint16_t CustomBinding_nonvoid_with_args(VM * /*unused*/, uint32_t a, int64_t b)
+uint16_t CustomBinding_nonvoid_with_args(VM * /*vm*/, uint32_t a, int64_t b)
 {
   fixture->call_counter.increment_with_args(a, b);
 

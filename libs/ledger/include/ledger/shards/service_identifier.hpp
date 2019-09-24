@@ -118,7 +118,7 @@ struct hash<fetch::ledger::ServiceIdentifier>
 {
   std::size_t operator()(fetch::ledger::ServiceIdentifier const &id) const
   {
-    static_assert(sizeof(std::size_t) == 8, "Assumed size of size_t");
+    static_assert(sizeof(std::size_t) == 8, "Assumed size of std::size_t");
 
     std::size_t result{0};
 

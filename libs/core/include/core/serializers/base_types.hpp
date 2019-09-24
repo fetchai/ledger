@@ -787,7 +787,7 @@ public:
   }
 };
 
-template <std::uint16_t I, std::uint16_t F, typename D>
+template <uint16_t I, uint16_t F, typename D>
 struct ForwardSerializer<fixed_point::FixedPoint<I, F>, D>
 {
   using Type       = fixed_point::FixedPoint<I, F>;

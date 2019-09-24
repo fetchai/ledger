@@ -27,13 +27,13 @@ void fetch::vm_modules::System::Bind(fetch::vm::Module &module)
       .CreateStaticMemberFunction("Argv", &System::Argv);
 }
 
-int32_t fetch::vm_modules::System::Argc(fetch::vm::VM * /*unused*/, fetch::vm::TypeId /*unused*/)
+int32_t fetch::vm_modules::System::Argc(fetch::vm::VM * /*vm*/, fetch::vm::TypeId /*type_id*/)
 {
   return static_cast<int32_t>(params.script().size());
 }
 
 fetch::vm::Ptr<fetch::vm::String> fetch::vm_modules::System::Argv(fetch::vm::VM *vm,
-                                                                  fetch::vm::TypeId /*unused*/,
+                                                                  fetch::vm::TypeId /*type_id*/,
                                                                   int32_t index)
 {
   return fetch::vm::Ptr<fetch::vm::String>{

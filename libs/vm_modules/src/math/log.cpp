@@ -32,7 +32,7 @@ namespace math {
 namespace {
 
 template <typename T>
-fetch::math::meta::IfIsMath<T, T> Log(VM * /*unused*/, T const &a)
+fetch::math::meta::IfIsMath<T, T> Log(VM * /*vm*/, T const &a)
 {
   T x;
   fetch::math::Log(a, x);
@@ -40,7 +40,7 @@ fetch::math::meta::IfIsMath<T, T> Log(VM * /*unused*/, T const &a)
 }
 
 template <typename T>
-fetch::math::meta::IfIsMath<T, T> Log2(VM * /*unused*/, T const &a)
+fetch::math::meta::IfIsMath<T, T> Log2(VM * /*vm*/, T const &a)
 {
   T x;
   fetch::math::Log2(a, x);
@@ -48,7 +48,7 @@ fetch::math::meta::IfIsMath<T, T> Log2(VM * /*unused*/, T const &a)
 }
 
 template <typename T>
-fetch::math::meta::IfIsMath<T, T> Log10(VM * /*unused*/, T const &a)
+fetch::math::meta::IfIsMath<T, T> Log10(VM * /*vm*/, T const &a)
 {
   T x;
   fetch::math::Log10(a, x);

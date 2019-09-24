@@ -289,7 +289,7 @@ C2VLoader<LabelType, InputType>::GetNext()
 /**
  * @brief Gets the number of feature/target pairs
  *
- * @return std::uint64_t
+ * @return uint64_t
  */
 template <typename LabelType, typename InputType>
 typename InputType::SizeType C2VLoader<LabelType, InputType>::Size() const
@@ -357,21 +357,21 @@ void C2VLoader<LabelType, InputType>::addValueToCounter(
 /**
  * @brief method splitting a string(stream) by a separator character
  *
- * @param input the stringstream which should be splitted
- * @param sep the seprator character
+ * @param input the stringstream which should be split
+ * @param sep the separator character
  * @return std::vector<std::string> A vector of substrings
  */
 template <typename LabelType, typename InputType>
 std::vector<std::string> C2VLoader<LabelType, InputType>::splitStringByChar(std::stringstream input,
                                                                             char const *      sep)
 {
-  std::vector<std::string> splitted_string;
+  std::vector<std::string> split_string;
   std::string              segment;
   while (std::getline(input, segment, *sep))
   {
-    splitted_string.push_back(segment);
+    split_string.push_back(segment);
   }
-  return splitted_string;
+  return split_string;
 }
 
 /**
@@ -401,7 +401,7 @@ typename C2VLoader<LabelType, InputType>::SizeType C2VLoader<LabelType, InputTyp
 
 /**
  * @brief Creates an unordered map for hashing strings from a counter (unordered map counting the
- * occurences of words in the input)
+ * occurrences of words in the input)
  *
  * @param counter unordered map with counts of words
  * @param name_to_idx unordered map for storing the mapping string->numeric

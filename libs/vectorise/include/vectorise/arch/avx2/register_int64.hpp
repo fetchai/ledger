@@ -301,7 +301,7 @@ inline VectorRegister<int64_t, 256> operator/(VectorRegister<int64_t, 256> const
 
   // don't divide by zero
   // set each of the 4 values in the vector register to either the solution of the division or 0
-  for (size_t i = 0; i < 4; i++)
+  for (std::size_t i = 0; i < 4; i++)
   {
     ret[i] = d2[i] != 0 ? d1[i] / d2[i] : 0;
   }

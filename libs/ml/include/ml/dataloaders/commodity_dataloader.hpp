@@ -225,7 +225,7 @@ void CommodityDataLoader<LabelType, InputType>::UpdateRanges()
   float validation_percentage = test_percentage + test_to_train_ratio_;
 
   // Define where test set starts
-  test_offset_ = static_cast<std::uint32_t>(test_percentage * static_cast<float>(size_));
+  test_offset_ = static_cast<uint32_t>(test_percentage * static_cast<float>(size_));
 
   if (test_offset_ == static_cast<SizeType>(0))
   {
@@ -233,8 +233,7 @@ void CommodityDataLoader<LabelType, InputType>::UpdateRanges()
   }
 
   // Define where validation set starts
-  validation_offset_ =
-      static_cast<std::uint32_t>(validation_percentage * static_cast<float>(size_));
+  validation_offset_ = static_cast<uint32_t>(validation_percentage * static_cast<float>(size_));
 
   if (validation_offset_ <= test_offset_)
   {

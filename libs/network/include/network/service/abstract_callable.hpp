@@ -227,8 +227,8 @@ public:
   template <typename T>
   void PushArgument(T *value)
   {
-    std::vector<CallableArgumentType>::push_back(
-        CallableArgumentType{typeid(T), (void *)value});  // NOLINT
+    auto void_value = (void *)value;  // NOLINT
+    std::vector<CallableArgumentType>::push_back(CallableArgumentType{typeid(T), void_value});
   }
 
   CallableArgumentType const &operator[](std::size_t n) const

@@ -227,7 +227,7 @@ void BeaconManager::ComputeSecretShare()
 std::vector<BeaconManager::Coefficient> BeaconManager::GetQualCoefficients()
 {
   std::vector<Coefficient> coefficients;
-  for (size_t k = 0; k <= polynomial_degree_; k++)
+  for (std::size_t k = 0; k <= polynomial_degree_; k++)
   {
     A_ik[cabinet_index_][k] = g__a_i[k];
     coefficients.push_back(A_ik[cabinet_index_][k].getStr());
@@ -457,7 +457,7 @@ bool BeaconManager::RunReconstruction()
       shares_f.push_back(shares[index]);
     }
     a_ik[victim_index] = crypto::mcl::InterpolatePolynom(points, shares_f);
-    for (size_t k = 0; k <= polynomial_degree_; k++)
+    for (std::size_t k = 0; k <= polynomial_degree_; k++)
     {
       bn::G2::mul(A_ik[victim_index][k], group_g_, a_ik[victim_index][k]);
     }

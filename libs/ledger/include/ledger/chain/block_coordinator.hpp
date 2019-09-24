@@ -342,11 +342,12 @@ private:
   PeriodicAction  exec_wait_periodic_;      ///< Periodic print for execution
   PeriodicAction  syncing_periodic_;        ///< Periodic print for synchronisation
   Timepoint       start_waiting_for_tx_{};  ///< The time at which we started waiting for txs
-  DeadlineTimer   wait_for_tx_timeout_{"bc:deadline"};  ///< Timeout when waiting for transactions
-  DeadlineTimer   wait_before_asking_for_missing_tx_{
-      "bc:deadline"};                ///< Time to wait before asking peers for any missing txs
-  bool have_asked_for_missing_txs_{};  ///< true if a request for missing Txs has been issued for
-                                       ///< the current block
+  /// Timeout when waiting for transactions
+  DeadlineTimer wait_for_tx_timeout_{"bc:deadline"};
+  /// Time to wait before asking peers for any missing txs
+  DeadlineTimer wait_before_asking_for_missing_tx_{"bc:deadline"};
+  /// true if a request for missing Txs has been issued for the current block
+  bool have_asked_for_missing_txs_{};
   /// @}
 
   /// @name Synergetic Contracts

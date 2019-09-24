@@ -42,8 +42,8 @@ public:
 private:
   using Counter = std::atomic<std::size_t>;
 
-  Result Wait(Transaction const &tx, BlockIndex /*unused*/);
-  Result Run(Transaction const &tx, BlockIndex /*unused*/);
+  Result Wait(Transaction const &tx, BlockIndex /*index*/);
+  Result Run(Transaction const &tx, BlockIndex /*index*/);
 
   Counter counter_{0};
 };

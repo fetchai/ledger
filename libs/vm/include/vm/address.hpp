@@ -44,7 +44,7 @@ public:
     return Ptr<Address>{new Address{vm, type_id, address}};
   }
 
-  static Ptr<String> ToString(VM * /*unused*/, Ptr<Address> const &address)
+  static Ptr<String> ToString(VM * /*vm*/, Ptr<Address> const &address)
   {
     return address->AsString();
   }

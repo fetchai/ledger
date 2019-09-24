@@ -77,6 +77,40 @@ def read_static_analysis_yaml(project_root, build_root, yaml_file_path):
     return out
 
 
+def parse_checks_list(output):
+    lines = output.split('\n')
+    checks = []
+    for line in lines:
+        stripped = line.strip()
+        if '-' in stripped:
+            checks.append(stripped)
+
+    return checks
+
+
+def get_enabled_checks_list():
+    enabled_checks_output = subprocess.check_output(
+        ['clang-tidy-6.0', '-list-checks']).decode()
+
+    enabled_checks = parse_checks_list(enabled_checks_output)
+
+    return sorted(enabled_checks)
+
+
+def get_disabled_checks_list():
+    all_checks_output = subprocess.check_output(
+        ['clang-tidy-6.0', '-list-checks', '-checks=*']).decode()
+    enabled_checks_output = subprocess.check_output(
+        ['clang-tidy-6.0', '-list-checks']).decode()
+
+    all_checks = parse_checks_list(all_checks_output)
+    enabled_checks = parse_checks_list(enabled_checks_output)
+
+    disabled_checks = list(set(all_checks).difference(set(enabled_checks)))
+
+    return sorted(disabled_checks)
+
+
 def static_analysis(project_root, build_root, fix, concurrency):
     output_file = abspath(join(build_root, 'clang_tidy_fixes.yaml'))
     runner_script_path = shutil.which('run-clang-tidy-6.0.py')
@@ -109,7 +143,15 @@ def static_analysis(project_root, build_root, fix, concurrency):
         '.']
 
     print('\nPerform static analysis')
-    print(subprocess.check_output(['clang-tidy-6.0', '-list-checks']).decode())
+
+    enabled_checks = get_enabled_checks_list()
+    print('\nEnabled checks ({}):'.format(len(enabled_checks)))
+    print('  ' + '\n  '.join(enabled_checks))
+
+    disabled_checks = get_disabled_checks_list()
+    print('\nDisabled checks ({}):'.format(len(disabled_checks)))
+    print('  ' + '\n  '.join(disabled_checks))
+
     print('\nCommand:')
     print('  {cmd}\n'.format(cmd=" ".join(cmd)))
 

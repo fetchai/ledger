@@ -127,7 +127,7 @@ TYPED_TEST(VectorRegisterTest, basic_tests)
       div[TypeParam::E_BLOCK_COUNT];
 
   type real_max{type(0)}, real_min{fetch::math::numeric_max<type>()};
-  for (size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
+  for (std::size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
   {
     // We don't want to check overflows right now, so we pick random numbers, but well within the
     // type's limits
@@ -160,7 +160,7 @@ TYPED_TEST(VectorRegisterTest, basic_tests)
 
   type reduce1 = reduce(vsum);
   type hsum{0};
-  for (size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
+  for (std::size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
   {
     hsum += sum[i];
   }
