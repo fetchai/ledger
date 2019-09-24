@@ -427,9 +427,9 @@ struct DkgMember
     network_manager.Stop();
   }
 
-  virtual void QueueCabinet(std::set<Identity> cabinet, uint32_t threshold) = 0;
-  virtual std::vector<std::weak_ptr<core::Runnable>> GetWeakRunnables()     = 0;
-  virtual bool                          DkgFinished()                       = 0;
+  virtual void QueueCabinet(std::set<MuddleAddress> cabinet, uint32_t threshold) = 0;
+  virtual std::vector<std::weak_ptr<core::Runnable>> GetWeakRunnables()          = 0;
+  virtual bool                                       DkgFinished()               = 0;
 
   static ProverPtr CreateNewCertificate()
   {

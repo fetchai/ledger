@@ -85,7 +85,7 @@ public:
     serialiser >> connections_;
   }
   ConnectionsMessage(std::set<MuddleAddress> const &connections)
-    : DKGMessage{MessageType::CONNECTIONS, "nothing"}
+    : DKGMessage{MessageType::CONNECTIONS}
     , connections_{connections}
   {}
   ~ConnectionsMessage() override = default;

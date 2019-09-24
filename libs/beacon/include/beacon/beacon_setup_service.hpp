@@ -211,8 +211,7 @@ private:
   uint64_t         expected_dkg_timespan_ = 0;
   bool             condition_to_proceed_  = false;
 
-  uint16_t         failures_{0};
-
+  uint16_t failures_{0};
 
   /// @name Handlers for messages
   /// @{
@@ -237,7 +236,6 @@ private:
   uint64_t PreDKGThreshold();
   uint32_t QualSize();
   /// @}
-
 };
 }  // namespace beacon
 

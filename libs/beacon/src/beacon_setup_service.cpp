@@ -229,8 +229,8 @@ BeaconSetupService::State BeaconSetupService::OnReset()
   // before being reset with the cabinet
   if (timer_to_proceed_.HasExpired())
   {
-    rbc_.Enable(true);
-    rbc_.ResetCabinet(beacon_->aeon.members);
+    rbc_->Enable(true);
+    rbc_->ResetCabinet(beacon_->aeon.members);
 
     SetTimeToProceed(State::CONNECT_TO_ALL);
     return State::CONNECT_TO_ALL;
