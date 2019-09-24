@@ -98,7 +98,7 @@ TYPED_TEST(TensorBasicTests, equals)
 {
   std::size_t       n            = 10000;
   Tensor<TypeParam> test_array   = RandomArray(n, TypeParam(0));
-  Tensor<TypeParam> result_array = test_array;
+  Tensor<TypeParam> result_array = test_array;  // NOLINT
 
   ASSERT_TRUE(result_array.AllClose(test_array));
 }

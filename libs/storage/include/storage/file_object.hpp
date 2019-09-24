@@ -108,8 +108,8 @@ public:
 
   FileObject(FileObject const &other) = delete;
   FileObject operator=(FileObject const &other) = delete;
-  FileObject(FileObject &&other)                = default;
-  FileObject &operator=(FileObject &&other) = default;
+  FileObject(FileObject &&other)                = default;  // NOLINT
+  FileObject &operator=(FileObject &&other) = default;      // NOLINT
 
   FileObject();
   virtual ~FileObject();

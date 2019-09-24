@@ -154,7 +154,6 @@ TYPED_TEST(SerializersTestNoInt, serialize_graph_saveable_params)
   g->SetInput(label_name, labels);
   g->Evaluate(error_output);
   g->BackPropagate(error_output);
-  g->ApplyRegularisation();
   auto grads = g->GetGradients();
   for (auto &grad : grads)
   {
@@ -166,7 +165,6 @@ TYPED_TEST(SerializersTestNoInt, serialize_graph_saveable_params)
   g2->SetInput(label_name, labels);
   g2->Evaluate(error_output);
   g2->BackPropagate(error_output);
-  g2->ApplyRegularisation();
   auto grads2 = g2->GetGradients();
   for (auto &grad : grads2)
   {

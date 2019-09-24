@@ -171,8 +171,13 @@ TEST_F(MLTests, dataloader_serialisation_test)
   auto const initial_training_pair = first_res.Get<Ptr<fetch::vm_modules::ml::VMTrainingPair>>();
   auto const training_pair         = res.Get<Ptr<fetch::vm_modules::ml::VMTrainingPair>>();
 
-  auto data1 = initial_training_pair->data()->GetTensor();
-  auto data2 = training_pair->data()->GetTensor();
+  AnyInteger index(0, TypeIds::UInt16);
+
+  auto array1 = initial_training_pair->data()->GetIndexedValue(index);
+  auto array2 = training_pair->data()->GetIndexedValue(index);
+
+  auto data1 = array1.Get<fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>>()->GetTensor();
+  auto data2 = array2.Get<fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>>()->GetTensor();
 
   auto label1 = initial_training_pair->label()->GetTensor();
   auto label2 = training_pair->label()->GetTensor();
@@ -350,7 +355,7 @@ TEST_F(MLTests, sgd_optimiser_serialisation_test)
       dataloader.addData(data_tensor, label_tensor);
 
       var batch_size = 8u64;
-      var optimiser = Optimiser("sgd", graph, dataloader, "Input", "Label", "Error");
+      var optimiser = Optimiser("sgd", graph, dataloader, {"Input"}, "Label", "Error");
 
       var state = State<Optimiser>("optimiser");
       state.set(optimiser);
@@ -417,7 +422,7 @@ TEST_F(MLTests, serialisation_several_components_test)
         dataloader_state.set(dataloader);
 
         var batch_size = 8u64;
-        var optimiser = Optimiser("sgd", graph, dataloader, "Input", "Label", "Error");
+        var optimiser = Optimiser("sgd", graph, dataloader, {"Input"}, "Label", "Error");
         var optimiser_state = State<Optimiser>("optimiser");
         optimiser_state.set(optimiser);
 
@@ -480,7 +485,7 @@ TEST_F(MLTests, optimiser_set_graph_test)
         dataloader.addData(data_tensor, label_tensor);
 
         var batch_size = 8u64;
-        var optimiser = Optimiser("sgd", graph, dataloader, "Input", "Label", "Error");
+        var optimiser = Optimiser("sgd", graph, dataloader, {"Input"}, "Label", "Error");
 
         optimiser.setGraph(graph);
         optimiser.setDataloader(dataloader);

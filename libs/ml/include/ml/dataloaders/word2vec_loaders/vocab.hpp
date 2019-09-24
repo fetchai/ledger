@@ -48,9 +48,9 @@ public:
 
   SizeType IndexFromWord(std::string const &word) const;
 
-  std::vector<SizeType> PutSentenceInVocab(const std::vector<std::string> &sentence);
+  std::vector<SizeType> PutSentenceInVocab(std::vector<std::string> const &sentence);
 
-  void RemoveSentenceFromVocab(const std::vector<SizeType> &sentence);
+  void RemoveSentenceFromVocab(std::vector<SizeType> const &sentence);
 
   std::vector<SizeType>      GetCounts();
   std::vector<std::string>   GetReverseVocab();

@@ -108,7 +108,7 @@ int main(int ac, char **av)
   client_params.learning_rate_param.starting_learning_rate = client_params.starting_learning_rate;
   client_params.learning_rate_param.ending_learning_rate   = client_params.ending_learning_rate;
 
-  std::shared_ptr<std::mutex>              console_mutex_ptr_ = std::make_shared<std::mutex>();
+  std::shared_ptr<std::mutex>              console_mutex_ptr = std::make_shared<std::mutex>();
   std::shared_ptr<Coordinator<TensorType>> coordinator =
       std::make_shared<Coordinator<TensorType>>(coord_params);
   std::cout << "FETCH Distributed Word2vec Demo" << std::endl;
@@ -127,7 +127,7 @@ int main(int ac, char **av)
     W2VTrainingParams<DataType> cp = client_params;
     cp.data                        = {client_data[i]};
     auto client =
-        std::make_shared<Word2VecClient<TensorType>>(std::to_string(i), cp, console_mutex_ptr_);
+        std::make_shared<Word2VecClient<TensorType>>(std::to_string(i), cp, console_mutex_ptr);
     // TODO(1597): Replace ID with something more sensible
     clients[i] = client;
     vocabs.push_back(client->GetVocab());

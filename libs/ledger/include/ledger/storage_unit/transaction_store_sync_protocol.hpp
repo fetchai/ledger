@@ -72,7 +72,8 @@ public:
   TransactionStoreSyncProtocol &operator=(TransactionStoreSyncProtocol &&) = delete;
 
 private:
-  static constexpr uint64_t PULL_LIMIT_ = 10000;  // Limit the amount a single rpc call will provide
+  // Limit the amount a single rpc call will provide
+  static constexpr uint64_t PULL_LIMIT_ = 10000u;
 
   struct CachedObject
   {

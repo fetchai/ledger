@@ -56,7 +56,7 @@ public:
     Resize(n);
   }
 
-  ConstByteArray(char const *str)
+  ConstByteArray(char const *str)  // NOLINT
     : ConstByteArray{reinterpret_cast<std::uint8_t const *>(str), str ? std::strlen(str) : 0}
   {}
 
@@ -81,7 +81,7 @@ public:
     }
   }
 
-  ConstByteArray(std::string const &s)
+  ConstByteArray(std::string const &s)  // NOLINT
     : ConstByteArray(reinterpret_cast<std::uint8_t const *>(s.data()), s.size())
   {}
 
@@ -533,7 +533,7 @@ private:
     SelfType &self_;
 
   public:
-    AddBytes(SelfType &self)
+    explicit AddBytes(SelfType &self)
       : self_(self)
     {}
 

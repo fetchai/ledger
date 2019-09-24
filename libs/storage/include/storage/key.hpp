@@ -70,9 +70,7 @@ struct Key
 
   Key() = default;
 
-  // TODO(private issue 957): There are a number of implicit conversions for this key, in many
-  //                          places it might be a bug.
-  /*explicit*/ Key(byte_array::ConstByteArray const &key)
+  explicit Key(byte_array::ConstByteArray const &key)
   {
     assert(key.size() == BYTES);
 

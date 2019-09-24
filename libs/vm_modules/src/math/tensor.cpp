@@ -53,15 +53,16 @@ VMTensor::VMTensor(VM *vm, TypeId type_id)
 
 Ptr<VMTensor> VMTensor::Constructor(VM *vm, TypeId type_id, Ptr<Array<SizeType>> const &shape)
 {
-  return new VMTensor(vm, type_id, shape->elements);
+  return Ptr<VMTensor>{new VMTensor(vm, type_id, shape->elements)};
 }
 
 void VMTensor::Bind(Module &module)
 {
   module.CreateClassType<VMTensor>("Tensor")
       .CreateConstructor(&VMTensor::Constructor)
-      .CreateSerializeDefaultConstructor(
-          [](VM *vm, TypeId type_id) -> Ptr<VMTensor> { return new VMTensor(vm, type_id); })
+      .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMTensor> {
+        return Ptr<VMTensor>{new VMTensor(vm, type_id)};
+      })
       .CreateMemberFunction("at", &VMTensor::AtOne)
       .CreateMemberFunction("at", &VMTensor::AtTwo)
       .CreateMemberFunction("at", &VMTensor::AtThree)
@@ -113,22 +114,23 @@ DataType VMTensor::AtFour(uint64_t idx1, uint64_t idx2, uint64_t idx3, uint64_t 
   return tensor_.At(idx1, idx2, idx3, idx4);
 }
 
-void VMTensor::SetAtOne(uint64_t idx1, DataType value)
+void VMTensor::SetAtOne(uint64_t idx1, DataType const &value)
 {
   tensor_.At(idx1) = value;
 }
 
-void VMTensor::SetAtTwo(uint64_t idx1, uint64_t idx2, DataType value)
+void VMTensor::SetAtTwo(uint64_t idx1, uint64_t idx2, DataType const &value)
 {
   tensor_.At(idx1, idx2) = value;
 }
 
-void VMTensor::SetAtThree(uint64_t idx1, uint64_t idx2, uint64_t idx3, DataType value)
+void VMTensor::SetAtThree(uint64_t idx1, uint64_t idx2, uint64_t idx3, DataType const &value)
 {
   tensor_.At(idx1, idx2, idx3) = value;
 }
 
-void VMTensor::SetAtFour(uint64_t idx1, uint64_t idx2, uint64_t idx3, uint64_t idx4, DataType value)
+void VMTensor::SetAtFour(uint64_t idx1, uint64_t idx2, uint64_t idx3, uint64_t idx4,
+                         DataType const &value)
 {
   tensor_.At(idx1, idx2, idx3, idx4) = value;
 }
@@ -171,7 +173,7 @@ void VMTensor::FromString(fetch::vm::Ptr<fetch::vm::String> const &string)
 
 Ptr<String> VMTensor::ToString() const
 {
-  return new String(vm_, tensor_.ToString());
+  return Ptr<String>{new String(vm_, tensor_.ToString())};
 }
 
 ArrayType &VMTensor::GetTensor()

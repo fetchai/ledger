@@ -63,13 +63,13 @@ private:
   static constexpr std::uint32_t LABEL_SIZE    = 10;
 
 public:
-  MNISTLoader(bool random_mode = false)
-    : DataLoader<LabelType, InputType>(random_mode)
+  explicit MNISTLoader(bool random_mode = false)
+    : DataLoader<LabelType, InputType>()
   {
     // Prepare return buffer
+    this->SetRandomMode(random_mode);
     buffer_.second.push_back(InputType({FIGURE_WIDTH, FIGURE_HEIGHT, 1u}));
     buffer_.first = LabelType({LABEL_SIZE, 1u});
-
     UpdateRanges();
   }
 
@@ -77,7 +77,6 @@ public:
     : DataLoader<LabelType, InputType>()
   {
     SetupWithDataFiles(images_file, labels_file);
-    UpdateRanges();
   }
 
   SizeType Size() const override
@@ -197,9 +196,10 @@ public:
     buffer_.first = LabelType({LABEL_SIZE, 1u});
     buffer_.second.clear();
     buffer_.second.push_back(InputType({FIGURE_WIDTH, FIGURE_HEIGHT, 1u}));
+    UpdateRanges();
   }
 
-  static uint8_t **ReadMnistImages(std::string full_path, std::uint32_t &number_of_images,
+  static uint8_t **ReadMnistImages(std::string const &full_path, std::uint32_t &number_of_images,
                                    unsigned int &image_size)
   {
     auto reverseInt = [](std::uint32_t i) -> std::uint32_t {
@@ -247,7 +247,7 @@ public:
     }
   }
 
-  static uint8_t *ReadMNistLabels(std::string full_path, std::uint32_t &number_of_labels)
+  static uint8_t *ReadMNistLabels(std::string const &full_path, std::uint32_t &number_of_labels)
   {
     auto reverseInt = [](std::uint32_t i) {
       // TODO(issue 1674): Change to use platform tools

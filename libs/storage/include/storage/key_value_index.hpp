@@ -553,11 +553,11 @@ public:
       }
     }
 
-    Iterator()                    = default;
-    Iterator(Iterator const &rhs) = default;
-    Iterator(Iterator &&rhs)      = default;
+    Iterator()                        = default;
+    Iterator(Iterator const &rhs)     = default;
+    Iterator(Iterator &&rhs) noexcept = default;
     Iterator &operator=(Iterator const &rhs) = default;
-    Iterator &operator=(Iterator &&rhs) = default;
+    Iterator &operator=(Iterator &&rhs) noexcept = default;
 
     bool operator==(Iterator const &rhs) const
     {

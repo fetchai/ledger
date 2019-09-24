@@ -60,7 +60,7 @@ public:
 
   void BuildVocabAndData(std::vector<std::string> const &sents, SizeType min_count = 0,
                          bool build_data = true);
-  void BuildData(const std::vector<std::string> &sents, SizeType min_count = 0);
+  void BuildData(std::vector<std::string> const &sents, SizeType min_count = 0);
   void SaveVocab(std::string const &filename);
   void LoadVocab(std::string const &filename);
   T    EstimatedSampleNumber();

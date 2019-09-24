@@ -24,7 +24,7 @@ namespace fetch {
 namespace telemetry {
 
 CounterMap::CounterMap(std::string name, std::string description, Labels const &labels)
-  : Measurement(std::move(name), std::move(description), std::move(labels))
+  : Measurement(std::move(name), std::move(description), labels)
 {}
 
 void CounterMap::Increment(Labels const &keys)

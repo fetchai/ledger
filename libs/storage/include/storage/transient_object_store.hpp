@@ -111,7 +111,7 @@ private:
   Phase OnFlushing();
 
   uint32_t const    log2_num_lanes_;
-  const std::size_t batch_size_ = 100;
+  std::size_t const batch_size_ = 100;
 
   std::vector<ResourceID> rids;
   std::size_t             extracted_count = 0;
@@ -413,7 +413,7 @@ void TransientObjectStore<O>::Set(ResourceID const &rid, O const &object, bool n
 
   if (newly_seen)
   {
-    std::size_t count{most_recent_seen_.QUEUE_LENGTH};
+    std::size_t count{decltype(most_recent_seen_)::QUEUE_LENGTH};
     bool const inserted = most_recent_seen_.Push(ledger::TransactionLayout{object, log2_num_lanes_},
                                                  count, std::chrono::milliseconds{100});
     if (inserted && recent_queue_last_size_ != count)
