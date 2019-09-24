@@ -145,7 +145,7 @@ struct RBCNode : public AbstractRBCNode
           0}
   {}
 
-  ~RBCNode()
+  ~RBCNode() override
   {
     reactor.Stop();
   }
@@ -190,7 +190,7 @@ struct PBCNode : public AbstractRBCNode
     reactor.Start();
   }
 
-  ~PBCNode()
+  ~PBCNode() override
   {
     reactor.Stop();
   }

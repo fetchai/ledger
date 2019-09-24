@@ -60,9 +60,9 @@ struct DummyManifestCache : public ManifestCacheInterface
 class HonestSetupService : public BeaconSetupService
 {
 public:
-  HonestSetupService(MuddleInterface &endpoint, Identity identity,
+  HonestSetupService(MuddleInterface &endpoint, ProverPtr prover,
                      ManifestCacheInterface &manifest_cache)
-    : BeaconSetupService{endpoint, std::move(identity), manifest_cache, nullptr}
+    : BeaconSetupService{endpoint, prover->identity(), manifest_cache, prover}
   {}
 };
 
@@ -83,10 +83,10 @@ public:
     WITHOLD_RECONSTRUCTION_SHARES
   };
 
-  FaultySetupService(MuddleInterface &endpoint, Identity identity,
+  FaultySetupService(MuddleInterface &endpoint, ProverPtr prover,
                      ManifestCacheInterface &     manifest_cache,
                      const std::vector<Failures> &failures = {})
-    : BeaconSetupService{endpoint, std::move(identity), manifest_cache, nullptr}
+    : BeaconSetupService{endpoint, prover->identity(), manifest_cache, prover}
   {
     for (auto f : failures)
     {
@@ -453,7 +453,7 @@ struct FaultyDkgMember : DkgMember
   FaultyDkgMember(uint16_t port_number, uint16_t index,
                   const std::vector<FaultySetupService::Failures> &failures = {})
     : DkgMember{port_number, index}
-    , dkg{*muddle, muddle_certificate->identity(), manifest_cache, failures}
+    , dkg{*muddle, muddle_certificate, manifest_cache, failures}
   {
     dkg.SetBeaconReadyCallback([this](SharedAeonExecutionUnit beacon) -> void {
       finished = true;
@@ -508,7 +508,7 @@ struct HonestDkgMember : DkgMember
 
   HonestDkgMember(uint16_t port_number, uint16_t index)
     : DkgMember{port_number, index}
-    , dkg{*muddle, muddle_certificate->identity(), manifest_cache}
+    , dkg{*muddle, muddle_certificate, manifest_cache}
   {
     dkg.SetBeaconReadyCallback([this](SharedAeonExecutionUnit beacon) -> void {
       finished = true;
