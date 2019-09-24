@@ -149,7 +149,8 @@ int main()
   uint64_t i = 0;
   for (auto &member : committee)
   {
-    all_cabinets[i % number_of_cabinets].insert(member->muddle_certificate->identity());
+    all_cabinets[i % number_of_cabinets].insert(
+        member->muddle_certificate->identity().identifier());
     ++i;
   }
 

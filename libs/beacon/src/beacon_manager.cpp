@@ -108,20 +108,43 @@ std::pair<BeaconManager::Share, BeaconManager::Share> BeaconManager::GetReceived
   return shares_j;
 }
 
-void BeaconManager::AddCoefficients(MuddleAddress const &           from,
+bool BeaconManager::AddCoefficients(MuddleAddress const &           from,
                                     std::vector<Coefficient> const &coefficients)
 {
-  for (uint32_t ii = 0; ii <= polynomial_degree_; ++ii)
+  if (coefficients.size() == polynomial_degree_ + 1)
   {
-    C_ik[identity_to_index_[from]][ii].setStr(coefficients[ii]);
+    for (uint32_t i = 0; i <= polynomial_degree_; ++i)
+    {
+      bool c_set{false};
+      C_ik[identity_to_index_[from]][i].setStr(&c_set, coefficients[i].data());
+      if (!c_set)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
+                       " could not deserialise coefficients from node ", identity_to_index_[from]);
+        return false;
+      }
+    }
+    return true;
   }
+  FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
+                 " received coefficients of incorrect size from node ", identity_to_index_[from]);
+  return false;
 }
 
-void BeaconManager::AddShares(MuddleAddress const &from, std::pair<Share, Share> const &shares)
+bool BeaconManager::AddShares(MuddleAddress const &from, std::pair<Share, Share> const &shares)
 {
   CabinetIndex from_index = identity_to_index_[from];
-  s_ij[from_index][cabinet_index_].setStr(shares.first);
-  sprime_ij[from_index][cabinet_index_].setStr(shares.second);
+  bool         s_set{false};
+  bool         sprime_set{false};
+  s_ij[from_index][cabinet_index_].setStr(&s_set, shares.first.data());
+  sprime_ij[from_index][cabinet_index_].setStr(&sprime_set, shares.second.data());
+  if (s_set && sprime_set)
+  {
+    return true;
+  }
+  FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_, " could not deserialise shares from node ",
+                 identity_to_index_[from]);
+  return false;
 }
 
 /**
@@ -165,8 +188,16 @@ bool BeaconManager::VerifyComplaintAnswer(MuddleAddress const &from, ComplaintAn
   PrivateKey sprime;
   PublicKey  lhsG;
   PublicKey  rhsG;
-  s.setStr(answer.second.first);
-  sprime.setStr(answer.second.second);
+  bool       s_set{false};
+  bool       sprime_set{false};
+  s.setStr(&s_set, answer.second.first.data());
+  sprime.setStr(&sprime_set, answer.second.second.data());
+  if (!(s_set && sprime_set))
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
+                   " could not deserialise complaint answer from node ", identity_to_index_[from]);
+    return false;
+  }
   rhsG = crypto::mcl::ComputeRHS(reporter_index, C_ik[from_index]);
   lhsG = crypto::mcl::ComputeLHS(group_g_, group_h_, s, sprime);
   if (lhsG != rhsG)
@@ -218,14 +249,30 @@ std::vector<BeaconManager::Coefficient> BeaconManager::GetQualCoefficients()
   return coefficients;
 }
 
-void BeaconManager::AddQualCoefficients(MuddleAddress const &           from,
+bool BeaconManager::AddQualCoefficients(MuddleAddress const &           from,
                                         std::vector<Coefficient> const &coefficients)
 {
   CabinetIndex from_index = identity_to_index_[from];
-  for (uint32_t ii = 0; ii <= polynomial_degree_; ++ii)
+  if (coefficients.size() == polynomial_degree_ + 1)
   {
-    A_ik[from_index][ii].setStr(coefficients[ii]);
+    for (uint32_t i = 0; i <= polynomial_degree_; ++i)
+    {
+      bool a_set{false};
+      A_ik[from_index][i].setStr(&a_set, coefficients[i].data());
+      if (!a_set)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
+                       " could not deserialise qual coefficients from node ",
+                       identity_to_index_[from]);
+        return false;
+      }
+    }
+    return true;
   }
+  FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
+                 " received qual coefficients of incorrect size from node ",
+                 identity_to_index_[from]);
+  return false;
 }
 
 /**
@@ -275,41 +322,51 @@ BeaconManager::MuddleAddress BeaconManager::VerifyQualComplaint(MuddleAddress co
 {
   CabinetIndex from_index   = identity_to_index_[from];
   CabinetIndex victim_index = identity_to_index_[answer.first];
-  // verify complaint, i.e. (4) holds (5) not
+
   PublicKey  lhs;
   PublicKey  rhs;
   PrivateKey s;
   PrivateKey sprime;
-  s.setStr(answer.second.first);
-  sprime.setStr(answer.second.second);
-  // check equation (4)
-  lhs = crypto::mcl::ComputeLHS(group_g_, group_h_, s, sprime);
-  rhs = crypto::mcl::ComputeRHS(from_index, C_ik[victim_index]);
-  if (lhs != rhs)
+  bool       s_set{false};
+  bool       sprime_set{false};
+  s.setStr(&s_set, answer.second.first.data());
+  sprime.setStr(&sprime_set, answer.second.second.data());
+
+  if (s_set && sprime_set)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
-                   " received shares failing initial coefficients verification from node ",
-                   from_index, " for node ", victim_index);
-    return from;
-  }
-  else
-  {
-    // check equation (5)
-    bn::G2::mul(lhs, group_g_, s);  // G^s
-    rhs = crypto::mcl::ComputeRHS(from_index, A_ik[victim_index]);
+    lhs = crypto::mcl::ComputeLHS(group_g_, group_h_, s, sprime);
+    rhs = crypto::mcl::ComputeRHS(from_index, C_ik[victim_index]);
     if (lhs != rhs)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
-                     " received shares failing qual coefficients verification from node ",
+                     " received shares failing initial coefficients verification from node ",
                      from_index, " for node ", victim_index);
-      return answer.first;
+      return from;
     }
     else
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_, " received incorrect complaint from ",
-                     from_index);
-      return from;
+      bn::G2::mul(lhs, group_g_, s);  // G^s
+      rhs = crypto::mcl::ComputeRHS(from_index, A_ik[victim_index]);
+      if (lhs != rhs)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
+                       " received shares failing qual coefficients verification from node ",
+                       from_index, " for node ", victim_index);
+        return answer.first;
+      }
+      else
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_, " received incorrect complaint from ",
+                       from_index);
+        return from;
+      }
     }
+  }
+  else
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Node ", cabinet_index_,
+                   " could not deserialise qual complaint from ", from_index);
+    return from;
   }
 }
 
@@ -363,9 +420,8 @@ void BeaconManager::AddReconstructionShare(MuddleAddress const &                
                                            std::pair<MuddleAddress, Share> const &share)
 {
   CabinetIndex from_index = identity_to_index_[from];
-  CabinetIndex index      = identity_to_index_[share.first];
-  FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, " received good share from node ",
-                 from_index, "for reconstructing node ", index);
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", cabinet_index_, "received good share from node ",
+                  from_index, "for reconstructing node ", identity_to_index_[share.first]);
   if (reconstruction_shares.find(share.first) == reconstruction_shares.end())
   {
     reconstruction_shares.insert(
@@ -378,33 +434,40 @@ void BeaconManager::AddReconstructionShare(MuddleAddress const &                
     return;
   }
   PrivateKey s;
-  s.setStr(share.second);
-  reconstruction_shares.at(share.first).first.insert(from_index);
-  reconstruction_shares.at(share.first).second[from_index] = s;
+  bool       s_set{false};
+  s.setStr(&s_set, share.second.data());
+  if (s_set)
+  {
+    reconstruction_shares.at(share.first).first.insert(from_index);
+    reconstruction_shares.at(share.first).second[from_index] = s;
+  }
 }
 
 void BeaconManager::VerifyReconstructionShare(MuddleAddress const &from, ExposedShare const &share)
 {
   CabinetIndex victim_index = identity_to_index_[share.first];
-  // assert(qual_complaints_manager_.ComplaintsFind(share.first)); // Fails for nodes who receive
-  // shares for themselves when they don't know they are being complained against
-  PublicKey  lhs;
-  PublicKey  rhs;
-  PrivateKey s;
-  PrivateKey sprime;
-  s.setStr(share.second.first);
-  sprime.setStr(share.second.second);
-  lhs = crypto::mcl::ComputeLHS(group_g_, group_h_, s, sprime);
-  rhs = crypto::mcl::ComputeRHS(identity_to_index_[from], C_ik[victim_index]);
-  // check equation (4)
-  if (lhs == rhs)
+  PublicKey    lhs;
+  PublicKey    rhs;
+  PrivateKey   s;
+  PrivateKey   sprime;
+  bool         s_set{false};
+  bool         sprime_set{false};
+  s.setStr(&s_set, share.second.first.data());
+  sprime.setStr(&sprime_set, share.second.second.data());
+  if (s_set && sprime_set)
   {
-    AddReconstructionShare(from, {share.first, share.second.first});
-  }
-  else
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, " received bad share from node ",
-                   identity_to_index_[from], "for reconstructing node ", victim_index);
+    lhs = crypto::mcl::ComputeLHS(group_g_, group_h_, s, sprime);
+    rhs = crypto::mcl::ComputeRHS(identity_to_index_[from], C_ik[victim_index]);
+
+    if (lhs == rhs)
+    {
+      AddReconstructionShare(from, {share.first, share.second.first});
+    }
+    else
+    {
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", cabinet_index_, "received bad share from node ",
+                      identity_to_index_[from], "for reconstructing node ", victim_index);
+    }
   }
 }
 
@@ -443,8 +506,8 @@ bool BeaconManager::RunReconstruction()
     std::vector<PrivateKey> shares_f;
     for (const auto &index : parties)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, " run reconstruction for node ",
-                     victim_index, " with shares from node ", index);
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Node ", cabinet_index_, " run reconstruction for node ",
+                      victim_index, " with shares from node ", index);
       points.push_back(index + 1);  // adjust index in computation
       shares_f.push_back(shares[index]);
     }
@@ -483,7 +546,7 @@ void BeaconManager::SetGroupPublicKey(PublicKey const &public_key)
  * @param cabinet_size is the size of the cabinet.
  * @param threshold is the threshold to be able to generate a signature.
  */
-void BeaconManager::Reset(std::set<Identity> const &cabinet, uint32_t threshold)
+void BeaconManager::NewCabinet(std::set<MuddleAddress> const &cabinet, uint32_t threshold)
 {
   assert(threshold > 0);
   auto cabinet_size{static_cast<uint32_t>(cabinet.size())};
@@ -494,14 +557,19 @@ void BeaconManager::Reset(std::set<Identity> const &cabinet, uint32_t threshold)
   CabinetIndex index = 0;
   for (auto const &cab : cabinet)
   {
-    if (cab.identifier() == certificate_->identity().identifier())
+    if (cab == certificate_->identity().identifier())
     {
       cabinet_index_ = index;
     }
-    identity_to_index_.insert({cab.identifier(), index});
+    identity_to_index_.insert({cab, index});
     ++index;
   }
 
+  Reset();
+}
+
+void BeaconManager::Reset()
+{
   secret_share_.clear();
   public_key_.clear();
   xprime_i.clear();
@@ -510,10 +578,10 @@ void BeaconManager::Reset(std::set<Identity> const &cabinet, uint32_t threshold)
   crypto::mcl::Init(s_ij, cabinet_size_, cabinet_size_);
   crypto::mcl::Init(sprime_ij, cabinet_size_, cabinet_size_);
   crypto::mcl::Init(z_i, cabinet_size_);
-  crypto::mcl::Init(C_ik, cabinet_size_, threshold);
-  crypto::mcl::Init(A_ik, cabinet_size_, threshold);
+  crypto::mcl::Init(C_ik, cabinet_size_, polynomial_degree_ + 1);
+  crypto::mcl::Init(A_ik, cabinet_size_, polynomial_degree_ + 1);
   crypto::mcl::Init(g__s_ij, cabinet_size_, cabinet_size_);
-  crypto::mcl::Init(g__a_i, threshold);
+  crypto::mcl::Init(g__a_i, polynomial_degree_ + 1);
 
   qual_.clear();
   reconstruction_shares.clear();

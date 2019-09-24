@@ -241,7 +241,7 @@ void BeaconService::StartNewCabinet(CabinetMemberList members, uint32_t threshol
   SharedAeonExecutionUnit beacon = std::make_shared<AeonExecutionUnit>();
 
   // Determines if we are observing or actively participating
-  if (members.find(identity_) == members.end())
+  if (members.find(identity_.identifier()) == members.end())
   {
     beacon->observe_only = true;
     FETCH_LOG_INFO(LOGGING_NAME, "Beacon in observe only mode. Members: ", members.size());
@@ -249,7 +249,7 @@ void BeaconService::StartNewCabinet(CabinetMemberList members, uint32_t threshol
   else
   {
     beacon->manager.SetCertificate(certificate_);
-    beacon->manager.Reset(members, threshold);
+    beacon->manager.NewCabinet(members, threshold);
   }
 
   // Setting the aeon details

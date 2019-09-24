@@ -40,7 +40,6 @@ namespace beacon {
 class ComplaintsManager
 {
   using MuddleAddress     = byte_array::ConstByteArray;
-  using Identity          = crypto::Identity;
   using ComplaintsMessage = dkg::ComplaintsMessage;
 
   uint32_t      threshold_{0};  ///< DKG threshold
@@ -60,8 +59,10 @@ public:
 
   void ResetCabinet(MuddleAddress const &address, uint32_t threshold);
   void AddComplaintAgainst(MuddleAddress const &address);
-  void AddComplaintsFrom(ComplaintsMessage const &msg, MuddleAddress const &from_id);
-  void Finish(std::set<Identity> const &committee);
+  void AddComplaintsFrom(MuddleAddress const &                    from,
+                         std::unordered_set<MuddleAddress> const &complaints,
+                         std::set<MuddleAddress> const &          committee);
+  void Finish(std::set<MuddleAddress> const &committee);
 
   uint32_t                NumComplaintsReceived() const;
   std::set<MuddleAddress> ComplaintsAgainstSelf() const;
@@ -77,7 +78,6 @@ public:
 class ComplaintAnswersManager
 {
   using MuddleAddress    = byte_array::ConstByteArray;
-  using Identity         = crypto::Identity;
   using Share            = std::string;
   using ExposedShares    = std::pair<Share, Share>;
   using Answer           = std::unordered_map<MuddleAddress, ExposedShares>;
@@ -95,7 +95,7 @@ public:
   void     ResetCabinet();
   void     AddComplaintAgainst(MuddleAddress const &miner);
   void     AddComplaintAnswerFrom(MuddleAddress const &from, Answer const &complaint_answer);
-  void     Finish(std::set<Identity> const &cabinet, Identity const &node_id);
+  void     Finish(std::set<MuddleAddress> const &cabinet, MuddleAddress const &node_id);
   uint32_t NumComplaintAnswersReceived() const;
   ComplaintAnswers        ComplaintAnswersReceived() const;
   std::set<MuddleAddress> BuildQual(std::set<MuddleAddress> const &miners) const;

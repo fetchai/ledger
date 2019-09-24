@@ -32,12 +32,12 @@ namespace beacon {
 
 struct Aeon
 {
-  using Identity  = crypto::Identity;
-  using TimeStamp = std::chrono::time_point<std::chrono::system_clock>;
+  using MuddleAddress = byte_array::ConstByteArray;
+  using TimeStamp     = std::chrono::time_point<std::chrono::system_clock>;
 
-  std::set<Identity> members{};
-  uint64_t           round_start{0};
-  uint64_t           round_end{0};
+  std::set<MuddleAddress> members{};
+  uint64_t                round_start{0};
+  uint64_t                round_end{0};
 
   // Timeouts for waiting for other members
   uint64_t start_reference_timepoint{uint64_t(-1)};
