@@ -19,6 +19,7 @@
 #include "gtest/gtest.h"
 
 #include "dmlf/vm_wrapper_systemcommand.hpp"
+#include "dmlf/vm_wrapper_python3.hpp"
 
 #include "variant/variant.hpp"
 #include "vm/vm.hpp"
@@ -42,7 +43,7 @@ public:
 
 };
 
-TEST_F(VMWrapperTests, noop)
+TEST_F(VMWrapperTests, sys_run)
 {
   fetch::dmlf::VmWrapperSystemcommand vm;
 
@@ -63,9 +64,9 @@ TEST_F(VMWrapperTests, noop)
   EXPECT_GT(outputs.size(), 1);
 }
 
-TEST_F(VMWrapperTests, noop)
+TEST_F(VMWrapperTests, py_run)
 {
-  fetch::dmlf::VmWrapperPython vm;
+  fetch::dmlf::VmWrapperPython3 vm;
 
   std::vector<std::string> outputs;
   std::vector<std::string> errors;
@@ -76,12 +77,9 @@ TEST_F(VMWrapperTests, noop)
   vm.Setup(fetch::dmlf::VmWrapperInterface::Flags());
   EXPECT_EQ(vm.status(), fetch::dmlf::VmWrapperInterface::WAITING);
 
-  //EXPECT_EQ(vm.status(), fetch::dmlf::VmWrapperInterface::COMPILED);
-  //vm.Execute("", fetch::dmlf::VmWrapperSystemcommand::Params());
-  //
-  //EXPECT_EQ(vm.status(), fetch::dmlf::VmWrapperInterface::COMPLETED);
-  //EXPECT_EQ(errors.size(), 0);
-  //EXPECT_GT(outputs.size(), 1);
+  vm.Load("print('hello')");
+  EXPECT_EQ(vm.status(), fetch::dmlf::VmWrapperInterface::COMPILED);
+
 }
 
 

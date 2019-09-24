@@ -22,8 +22,9 @@
 namespace fetch {
 namespace dmlf {
 
+class PyEnvInner;
 
-class vm_wrapper_python3: public VmWrapperInterface
+class VmWrapperPython3: public VmWrapperInterface
 {
 public:
   using OutputHandler = VmWrapperInterface::OutputHandler;
@@ -32,25 +33,43 @@ public:
   using Flags         = VmWrapperInterface::Flags;
   using Status        = VmWrapperInterface::Status;
 
-  vm_wrapper_python3()
+
+  VmWrapperPython3();
+  virtual ~VmWrapperPython3();
+
+  void Execute(std::string /*entrypoint*/, const Params /*params*/)
   {
+    status_ = VmWrapperInterface::FAILED_RUN;
   }
-  virtual ~vm_wrapper_python3()
+
+  std::vector<std::string> Setup(const Flags &/*flags*/)
   {
+    return std::vector<std::string>();
   }
+
+  std::vector<std::string> Load(std::string /*source*/)
+  {
+    status_ = VmWrapperInterface::COMPILED;
+    return std::vector<std::string>();
+  }
+
   virtual void SetStdout(OutputHandler oh)   { oh_ = oh; }
   virtual void SetStdin(InputHandler ih)     { ih_ = ih; }
   virtual void SetStderr(OutputHandler eh)   { eh_ = eh; }
+  virtual Status status(void) const { return status_; }
 protected:
-  OutputHandler oh_;
+  std::shared_ptr<PyEnvInner> py_;
+
   Status status_ = VmWrapperInterface::WAITING;
+
+  OutputHandler oh_;
   OutputHandler eh_;
   InputHandler ih_;
 private:
-  vm_wrapper_python3(const vm_wrapper_python3 &other) = delete;
-  vm_wrapper_python3 &operator=(const vm_wrapper_python3 &other) = delete;
-  bool operator==(const vm_wrapper_python3 &other) = delete;
-  bool operator<(const vm_wrapper_python3 &other) = delete;
+  VmWrapperPython3(const VmWrapperPython3 &other) = delete;
+  VmWrapperPython3 &operator=(const VmWrapperPython3 &other) = delete;
+  bool operator==(const VmWrapperPython3 &other) = delete;
+  bool operator<(const VmWrapperPython3 &other) = delete;
 };
 
 }
