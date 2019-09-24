@@ -148,6 +148,10 @@ protected:
   SignatureInformation GetSignatureShares(uint64_t round);
   /// @}
 
+  /// Beacon and entropy control units
+  /// @{
+  std::deque<SharedAeonExecutionUnit> aeon_exe_queue_;
+
 private:
   bool AddSignature(SignatureShare share);
 
@@ -162,10 +166,6 @@ private:
   uint64_t blocks_per_round_;
   bool     broadcasting_ = false;
   /// @}
-
-  /// Beacon and entropy control units
-  /// @{
-  std::deque<SharedAeonExecutionUnit> aeon_exe_queue_;
 
   std::deque<Entropy> ready_entropy_queue_;
   Entropy             latest_entropy_;
