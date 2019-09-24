@@ -160,14 +160,6 @@ public:
     gradient_accumulation_->Fill(typename T::Type(0));
   }
 
-  void ApplyRegularisation()
-  {
-    if (this->regulariser_)
-    {
-      this->regulariser_->ApplyRegularisation(*this->data_, this->regularisation_rate_);
-    }
-  }
-
   /**
    * shares the variable
    * @param me
@@ -190,6 +182,14 @@ protected:
   TensorPtrType      gradient_accumulation_;
   RegularisationType regularisation_type = RegularisationType::NONE;
   DataType           regularisation_rate = fetch::math::numeric_max<DataType>();
+
+  void ApplyRegularisation()
+  {
+    if (this->regulariser_)
+    {
+      this->regulariser_->ApplyRegularisation(*this->data_, this->regularisation_rate_);
+    }
+  }
 };
 }  // namespace ops
 }  // namespace ml
