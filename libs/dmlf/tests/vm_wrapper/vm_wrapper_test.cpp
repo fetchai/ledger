@@ -60,6 +60,28 @@ TEST_F(VMWrapperTests, noop)
   EXPECT_GT(outputs.size(), 1);
 }
 
+  
+TEST_F(VMWrapperTests, noop)
+{
+  fetch::dmlf::VmWrapperPython vm;
+
+  std::vector<std::string> outputs;
+  std::vector<std::string> errors;
+
+  vm.SetStdout([&outputs](const std::string &s){ outputs.push_back(s); });
+  vm.SetStderr([&errors](const std::string &s){ errors.push_back(s); });
+
+  vm.Setup(fetch::dmlf::VmWrapperInterface::Flags());
+  EXPECT_EQ(vm.status(), fetch::dmlf::VmWrapperInterface::WAITING);
+  vm.Load("/bin/ls");
+  EXPECT_EQ(vm.status(), fetch::dmlf::VmWrapperInterface::COMPILED);
+  vm.Execute("", fetch::dmlf::VmWrapperSystemcommand::Params());
+
+  EXPECT_EQ(vm.status(), fetch::dmlf::VmWrapperInterface::COMPLETED);
+  EXPECT_EQ(errors.size(), 0);
+  EXPECT_GT(outputs.size(), 1);
+}
+
 
 
 }  // namespace

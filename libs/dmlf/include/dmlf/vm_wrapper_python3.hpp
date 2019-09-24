@@ -9,32 +9,29 @@
 class vm_wrapper_python3
 {
 public:
+  using OutputHandler = VmWrapperInterface::OutputHandler;
+  using InputHandler  = VmWrapperInterface::InputHandler;
+  using Params        = VmWrapperInterface::Params;
+  using Flags         = VmWrapperInterface::Flags;
+  using Status        = VmWrapperInterface::Status;
+
   vm_wrapper_python3()
   {
   }
   virtual ~vm_wrapper_python3()
   {
   }
-
-  //friend std::ostream& operator<<(std::ostream& os, const vm_wrapper_python3 &output);
-  //friend void swap(vm_wrapper_python3 &a, vm_wrapper_python3 &b);
+  virtual void SetStdout(OutputHandler oh)   { oh+ = oh; }
+  virtual void SetStdin(InputHandler ih)     { oi+ = ih; }
+  virtual void SetStderr(OutputHandler eh)   { oe+ = eh; }
 protected:
-  // int compare(const vm_wrapper_python3 &other) const { ... }
-  // void copy(const vm_wrapper_python3 &other) { ... }
-  // void clear(void) { ... }
-  // bool empty(void) const { ... }
-  // void swap(vm_wrapper_python3 &other) { ... }
+  OutputHandler oh_;
+  Status status_ = VmWrapperInterface::WAITING;
+  OutputHandler eh_;
+  InputHandler ih_;
 private:
-  vm_wrapper_python3(const vm_wrapper_python3 &other) = delete; // { copy(other); }
-  vm_wrapper_python3 &operator=(const vm_wrapper_python3 &other) = delete; // { copy(other); return *this; }
-  bool operator==(const vm_wrapper_python3 &other) = delete; // const { return compare(other)==0; }
-  bool operator<(const vm_wrapper_python3 &other) = delete; // const { return compare(other)==-1; }
-
-  //bool operator!=(const vm_wrapper_python3 &other) const { return compare(other)!=0; }
-  //bool operator>(const vm_wrapper_python3 &other) const { return compare(other)==1; }
-  //bool operator<=(const vm_wrapper_python3 &other) const { return compare(other)!=1; }
-  //bool operator>=(const vm_wrapper_python3 &other) const { return compare(other)!=-1; }
+  vm_wrapper_python3(const vm_wrapper_python3 &other) = delete;
+  vm_wrapper_python3 &operator=(const vm_wrapper_python3 &other) = delete;
+  bool operator==(const vm_wrapper_python3 &other) = delete;
+  bool operator<(const vm_wrapper_python3 &other) = delete;
 };
-
-//std::ostream& operator<<(std::ostream& os, const vm_wrapper_python3 &output) {}
-//void swap(vm_wrapper_python3& v1, vm_wrapper_python3& v2);
