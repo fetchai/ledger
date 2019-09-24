@@ -53,6 +53,7 @@ public:
   virtual TensorType        GetGradients() const                                      = 0;
   virtual void              ResetGradients()                                          = 0;
   virtual void              ApplyGradient(TensorType const &grad)                     = 0;
+  virtual void              ApplyRegularisation()                                     = 0;
 
   void SetRegularisation(RegPtrType regulariser, DataType regularisation_rate = DataType{0.0})
   {

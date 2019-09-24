@@ -183,7 +183,7 @@ protected:
   RegularisationType regularisation_type = RegularisationType::NONE;
   DataType           regularisation_rate = fetch::math::numeric_max<DataType>();
 
-  void ApplyRegularisation()
+  void ApplyRegularisation() override
   {
     if (this->regulariser_)
     {
