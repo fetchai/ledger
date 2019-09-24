@@ -94,7 +94,7 @@ namespace dmlf {
     }
   }
 
-void VmWrapperSystemcommand::Execute(std::string entrypoint, const Params /*params*/)
+  void VmWrapperSystemcommand::Execute(std::string /*entrypoint*/, const Params /*params*/)
 {
   status_ = VmWrapperInterface::RUNNING;
 
@@ -145,10 +145,11 @@ void VmWrapperSystemcommand::Execute(std::string entrypoint, const Params /*para
         vec_cp.push_back(strdup(s.c_str()));
       }
       vec_cp.push_back(NULL);
-      ::execv(entrypoint.c_str(), vec_cp.data());
+      ::execv(vec_cp[0], vec_cp.data());
 
       // OMG! That failed then...
       std::cerr << "exec - Error:" << strerror(errno) << std::endl;
+      status_ = VmWrapperInterface::FAILED_RUN;
       return;
     }
   default:
@@ -260,8 +261,6 @@ void VmWrapperSystemcommand::SetStderr(OutputHandler eh)
 {
   eh_ = eh;
 }
-
-
 
 }
 }

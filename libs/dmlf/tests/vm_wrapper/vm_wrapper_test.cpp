@@ -53,7 +53,10 @@ TEST_F(VMWrapperTests, noop)
   vm.SetStderr([&errors](const std::string &s){ errors.push_back(s); });
 
   vm.Setup(fetch::dmlf::VmWrapperInterface::Flags());
-  vm.Execute("/bin/ls", fetch::dmlf::VmWrapperSystemcommand::Params());
+  EXPECT_EQ(vm.status(), fetch::dmlf::VmWrapperInterface::WAITING);
+  vm.Load("/bin/ls");
+  EXPECT_EQ(vm.status(), fetch::dmlf::VmWrapperInterface::COMPILED);
+  vm.Execute("", fetch::dmlf::VmWrapperSystemcommand::Params());
 
   EXPECT_EQ(vm.status(), fetch::dmlf::VmWrapperInterface::COMPLETED);
   EXPECT_EQ(errors.size(), 0);
@@ -61,6 +64,7 @@ TEST_F(VMWrapperTests, noop)
 }
 
   
+  /*
 TEST_F(VMWrapperTests, noop)
 {
   fetch::dmlf::VmWrapperPython vm;
@@ -73,7 +77,6 @@ TEST_F(VMWrapperTests, noop)
 
   vm.Setup(fetch::dmlf::VmWrapperInterface::Flags());
   EXPECT_EQ(vm.status(), fetch::dmlf::VmWrapperInterface::WAITING);
-  vm.Load("/bin/ls");
   EXPECT_EQ(vm.status(), fetch::dmlf::VmWrapperInterface::COMPILED);
   vm.Execute("", fetch::dmlf::VmWrapperSystemcommand::Params());
 
@@ -81,7 +84,7 @@ TEST_F(VMWrapperTests, noop)
   EXPECT_EQ(errors.size(), 0);
   EXPECT_GT(outputs.size(), 1);
 }
-
+  */
 
 
 }  // namespace
