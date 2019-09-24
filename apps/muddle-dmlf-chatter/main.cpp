@@ -64,13 +64,14 @@ class Learner
   {
   public:
     std::shared_ptr<fetch::dmlf::Muddle2LearnerNetworker> actual;
-    std::shared_ptr<fetch::dmlf::ILearnerNetworker> interface;
+    std::shared_ptr<fetch::dmlf::AbstractLearnerNetworker> interface;
 
     Learner(const std::string cloud_config,
             std::size_t instance_number)
     {
       actual = std::make_shared<fetch::dmlf::Muddle2LearnerNetworker>(cloud_config, instance_number);
       interface = actual;
+      interface -> Initialize<UpdateTypeForTesting>();
     }
 
     void PretendToLearn()
