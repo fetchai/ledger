@@ -266,7 +266,7 @@ public:
       }
     }
 
-    UpdateTask task;
+    UpdateTask task{};
     while (!q.empty())
     {
       task = q.top();

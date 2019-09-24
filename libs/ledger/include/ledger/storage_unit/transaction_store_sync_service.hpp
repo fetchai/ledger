@@ -57,7 +57,7 @@ enum class State
   RESOLVING_OBJECTS,
   TRIM_CACHE
 };
-}
+}  // namespace tx_sync
 
 class TransactionStoreSyncService : public TransactionSink
 {

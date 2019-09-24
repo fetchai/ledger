@@ -78,7 +78,7 @@ struct FileBlockType
   };
 
   // Data
-  uint8_t data[CAPACITY];
+  uint8_t data[CAPACITY]{};
 };
 
 /**
