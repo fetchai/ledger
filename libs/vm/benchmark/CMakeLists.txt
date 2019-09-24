@@ -1,0 +1,14 @@
+#
+# F E T C H   M A T H   B E N C H M A R K S
+#
+cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
+project(fetch-vm)
+
+# CMake configuration
+include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
+
+# Compiler Configuration
+setup_compiler()
+
+add_fetch_gbench(benchmark_add_object fetch-vm add_object)
+
