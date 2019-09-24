@@ -17,31 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include <utility>
-
-#pragma once
-//------------------------------------------------------------------------------
-//
-//   Copyright 2018-2019 Fetch.AI Limited
-//
-//   Licensed under the Apache License, Version 2.0 (the "License");
-//   you may not use this file except in compliance with the License.
-//   You may obtain a copy of the License at
-//
-//       http://www.apache.org/licenses/LICENSE-2.0
-//
-//   Unless required by applicable law or agreed to in writing, software
-//   distributed under the License is distributed on an "AS IS" BASIS,
-//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//   See the License for the specific language governing permissions and
-//   limitations under the License.
-//
-//------------------------------------------------------------------------------
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/digest.hpp"
 #include "math/tensor.hpp"
 #include "ml/dataloaders/word2vec_loaders/vocab.hpp"
 
+#include <utility>
 #include <vector>
 
 namespace fetch {
@@ -50,36 +31,84 @@ namespace distributed_learning {
 
 struct Translator
 {
-  //  using TensorType = fetch::math::Tensor<float>;  // todo: temporary
+  using SizeType = fetch::math::SizeType;
 
   template <typename TensorType>
-  TensorType Translate(TensorType gradient_update, const byte_array::ConstByteArray &vocab_hash)
+  std::pair<TensorType, TensorType> Translate(TensorType                        gradient_update,
+                                              const byte_array::ConstByteArray &vocab_hash)
   {
-    if (vocab_hash == my_vocab_hash)
+    using DataType = typename TensorType::Type;
+
+    TensorType mask = TensorType({MyVocabSize()});
+
+    if (vocab_hash == MyVocabHash())  // no need to translate
     {
-      // no need to translate!
-      return gradient_update;
+      mask.Fill(DataType{1});
+      return std::make_pair(gradient_update, mask);
     }
+
     assert(VocabKnown(vocab_hash));
 
     std::vector<std::string> other_vocab = known_vocabs[vocab_hash];
-    TensorType trans_gu = TensorType({my_vocab->reverse_vocab.size(), gradient_update.shape()[1]});
-    for (std::size_t i = 0; i < other_vocab.size(); i++)
+
+    // figure out which way around the matrix is
+    bool       first_dim_embedding;
+    SizeType   embedding_size;
+    TensorType transl_gu;
+
+    if (gradient_update.shape()[0] == other_vocab.size())
     {
-      std::string word    = other_vocab[i];
-      std::size_t trans_i = my_vocab->IndexFromWord(word);
-      if (trans_i != dataloaders::Vocab::UNKNOWN_WORD)
+      first_dim_embedding = false;
+      embedding_size      = gradient_update.shape()[1];
+      transl_gu           = TensorType({MyVocabSize(), embedding_size});
+    }
+    else
+    {
+      first_dim_embedding = true;
+      embedding_size      = gradient_update.shape()[0];
+      transl_gu           = TensorType({embedding_size, MyVocabSize()});
+    }
+
+    for (SizeType i = 0; i < other_vocab.size(); i++)
+    {
+      std::string word     = other_vocab[i];
+      std::size_t transl_i = my_vocab->IndexFromWord(word);
+
+      if (transl_i != dataloaders::Vocab::UNKNOWN_WORD)
       {
-        trans_gu.At(trans_i) = gradient_update.At(i);  // todo: check tensor slice syntax
+        if (first_dim_embedding)
+        {
+          for (SizeType j = 0; j < embedding_size; j++)
+          {
+            transl_gu.At(j, transl_i) = gradient_update.At(j, i);
+          }
+        }
+        else
+        {
+          for (SizeType j = 0; j < embedding_size; j++)
+          {
+            transl_gu.Slice(transl_i).Assign(gradient_update.Slice(i));
+          }
+        }
+        mask.At(transl_i) += DataType{1};
       }
     }
-    return trans_gu;
+    return std::make_pair(transl_gu, mask);
   }
 
   void SetMyVocab(std::shared_ptr<dataloaders::Vocab> vocab_ptr)
   {
-    my_vocab      = std::move(vocab_ptr);
-    my_vocab_hash = my_vocab->GetVocabHash();
+    my_vocab = std::move(vocab_ptr);
+  }
+
+  SizeType MyVocabSize()
+  {
+    return my_vocab->GetVocabCount();
+  }
+
+  byte_array::ConstByteArray MyVocabHash()
+  {
+    return my_vocab->GetVocabHash();
   }
 
   void AddVocab(const byte_array::ConstByteArray &vocab_hash, const std::vector<std::string> &vocab)
@@ -94,7 +123,6 @@ struct Translator
 
 private:
   fetch::DigestMap<std::vector<std::string>> known_vocabs{};
-  byte_array::ConstByteArray                 my_vocab_hash;
   std::shared_ptr<dataloaders::Vocab>        my_vocab;
 };
 }  // namespace distributed_learning

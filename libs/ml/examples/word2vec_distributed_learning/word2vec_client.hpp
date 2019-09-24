@@ -62,12 +62,19 @@ public:
 
   VectorTensorType TranslateGradients(GradientType &new_gradients) override;
 
+  std::pair<std::vector<std::string>, byte_array::ConstByteArray> GetVocab();
+  void AddVocab(const std::pair<std::vector<std::string>, byte_array::ConstByteArray> &vocab_info);
+
+  std::pair<TensorType, TensorType> TranslateWeights(TensorType &                      new_weights,
+                                                     const byte_array::ConstByteArray &vocab_hash);
+
 private:
   W2VTrainingParams<DataType>                                       tp_;
   std::string                                                       skipgram_;
   std::shared_ptr<fetch::ml::dataloaders::GraphW2VLoader<DataType>> w2v_data_loader_ptr_;
   std::shared_ptr<std::mutex>                                       console_mutex_ptr_;
-  Translator                                                        translator_;
+
+  Translator translator_;
 
   void PrintWordAnalogy(TensorType const &embeddings, std::string const &word1,
                         std::string const &word2, std::string const &word3, SizeType k);
@@ -263,15 +270,50 @@ typename Word2VecClient<TensorType>::GradientType Word2VecClient<TensorType>::Ge
                       w2v_data_loader_ptr_->GetVocabHash());
 }
 
+/**
+ * @return pair of vocab strings and vocab hash
+ */
+template <class TensorType>
+std::pair<std::vector<std::string>, byte_array::ConstByteArray>
+Word2VecClient<TensorType>::GetVocab()
+{
+  auto vocab      = w2v_data_loader_ptr_->GetVocab();
+  auto vocab_hash = w2v_data_loader_ptr_->GetVocabHash();
+  return std::make_pair(vocab->GetReverseVocab(), vocab->GetVocabHash());
+}
+
+/**
+ * Add a vocab to the translator_
+ * @param vocab_info pair of vocab strings and vocab hash
+ */
+template <class TensorType>
+void Word2VecClient<TensorType>::AddVocab(
+    std::pair<std::vector<std::string>, byte_array::ConstByteArray> const &vocab_info)
+{
+  translator_.AddVocab(vocab_info.second, vocab_info.first);
+}
+
 template <class TensorType>
 typename Word2VecClient<TensorType>::VectorTensorType
 Word2VecClient<TensorType>::TranslateGradients(Word2VecClient::GradientType &new_gradients)
 {
-  assert(new_gradients.grads.size() == 2);
-  // todo: need to get vocabs from other clients
+  assert(new_gradients.grads.size() == 2);  // Translation unit is only defined for word2vec
+
   VectorTensorType ret;
-  ret.push_back(translator_.Translate<TensorType>(new_gradients.grads[0], new_gradients.hash));
-  ret.push_back(translator_.Translate<TensorType>(new_gradients.grads[1], new_gradients.hash));
+  ret.push_back(
+      translator_.Translate<TensorType>(new_gradients.grads[0], new_gradients.hash).first);
+  ret.push_back(
+      translator_.Translate<TensorType>(new_gradients.grads[1], new_gradients.hash).first);
+  return ret;
+}
+
+template <class TensorType>
+std::pair<TensorType, TensorType> Word2VecClient<TensorType>::TranslateWeights(
+    TensorType &new_weights, const byte_array::ConstByteArray &vocab_hash)
+{
+  std::pair<TensorType, TensorType> ret =
+      translator_.Translate<TensorType>(new_weights, vocab_hash);
+
   return ret;
 }
 

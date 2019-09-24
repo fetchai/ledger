@@ -48,17 +48,23 @@ public:
 
   SizeType IndexFromWord(std::string const &word) const;
 
-  SizeType total_count = 0;
-
-  std::map<std::string, SizeType> vocab;          // word -> id
-  std::vector<std::string>        reverse_vocab;  // id -> word
-  std::vector<SizeType>           counts;         // id -> count
-
   std::vector<SizeType> PutSentenceInVocab(const std::vector<std::string> &sentence);
 
   void RemoveSentenceFromVocab(const std::vector<SizeType> &sentence);
 
+  std::vector<SizeType>      GetCounts();
+  std::vector<std::string>   GetReverseVocab();
+  SizeType                   GetWordCount();
+  SizeType                   GetVocabCount();
   byte_array::ConstByteArray GetVocabHash();
+
+private:
+  void                            SetVocabHash();
+  SizeType                        total_count = 0;
+  std::map<std::string, SizeType> vocab;          // word -> id
+  std::vector<std::string>        reverse_vocab;  // id -> word
+  std::vector<SizeType>           counts;         // id -> count
+  byte_array::ConstByteArray      vocab_hash;
 };
 
 std::vector<math::SizeType> Vocab::PutSentenceInVocab(std::vector<std::string> const &sentence)
@@ -98,6 +104,7 @@ std::vector<math::SizeType> Vocab::PutSentenceInVocab(std::vector<std::string> c
 
   reverse_vocab.resize(vocab.size());
   counts.resize(vocab.size());
+  SetVocabHash();
 
   return indices;
 }
@@ -141,6 +148,7 @@ std::map<Vocab::SizeType, Vocab::SizeType> Vocab::RemoveInfrequentWord(Vocab::Si
 
   reverse_vocab.resize(vocab.size());
   counts.resize(vocab.size());
+  SetVocabHash();
 
   return old2new;
 }
@@ -201,6 +209,7 @@ void Vocab::Load(std::string const &filename)
       counts[idx]        = count;
     }
   }
+  SetVocabHash();
 }
 
 /**
@@ -237,14 +246,39 @@ math::SizeType Vocab::IndexFromWord(std::string const &word) const
   return UNKNOWN_WORD;
 }
 
-byte_array::ConstByteArray Vocab::GetVocabHash()
+void Vocab::SetVocabHash()
 {
   crypto::SHA256 hasher{};
   for (auto const &item : reverse_vocab)
   {
     hasher.Update(item);
   }
-  return hasher.Final();
+  vocab_hash = hasher.Final();
+}
+
+std::vector<Vocab::SizeType> Vocab::GetCounts()
+{
+  return counts;
+}
+
+Vocab::SizeType Vocab::GetWordCount()
+{
+  return total_count;
+}
+
+Vocab::SizeType Vocab::GetVocabCount()
+{
+  return reverse_vocab.size();
+}
+
+byte_array::ConstByteArray Vocab::GetVocabHash()
+{
+  return vocab_hash;
+}
+
+std::vector<std::string> Vocab::GetReverseVocab()
+{
+  return reverse_vocab;
 }
 
 }  // namespace dataloaders

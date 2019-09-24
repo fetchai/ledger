@@ -215,7 +215,7 @@ std::shared_ptr<T> Node<T>::Evaluate(bool is_training)
     cached_output_status_ = CachedOutputState::VALID_CACHE;
 
     assert(!math::state_division_by_zero<DataType>());
-    //    assert(!math::state_overflow<DataType>());
+    assert(!math::state_overflow<DataType>());
     assert(!math::state_infinity<DataType>());
     assert(!math::state_nan<DataType>());
   }

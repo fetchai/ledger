@@ -242,7 +242,7 @@ void GraphW2VLoader<T>::SetValidationRatio(float new_validation_ratio)
 template <typename T>
 bool GraphW2VLoader<T>::WordKnown(std::string const &word) const
 {
-  return vocab_->vocab.find(word) != vocab_->vocab.end();
+  return vocab_->IndexFromWord(word) != Vocab::UNKNOWN_WORD;
 }
 
 /**
@@ -351,7 +351,7 @@ void GraphW2VLoader<T>::InitUnigramTable(SizeType size, bool use_vocab_frequenci
 {
   if (use_vocab_frequencies)
   {
-    unigram_table_.ResetTable(vocab_->counts, size);
+    unigram_table_.ResetTable(vocab_->GetCounts(), size);
   }
   else  // use counts from data
   {
@@ -575,7 +575,7 @@ void GraphW2VLoader<T>::BuildVocabAndData(std::vector<std::string> const &sents,
 template <typename T>
 void GraphW2VLoader<T>::BuildData(std::vector<std::string> const &sents, SizeType min_count)
 {
-  assert(vocab_->total_count >= 0);
+  assert(vocab_->GetWordCount() >= 0);
 
   // build vocab from sentences
   std::cout << "building data " << std::endl;
@@ -600,10 +600,10 @@ void GraphW2VLoader<T>::BuildData(std::vector<std::string> const &sents, SizeTyp
     for (std::string const &word : preprocessed_string)
     {
       // some words will be missing from the vocab because of infrequency
-      auto word_it = vocab_->vocab.find(word);
-      if (word_it != vocab_->vocab.end())
+      SizeType word_ind = vocab_->IndexFromWord(word);
+      if (word_ind != Vocab::UNKNOWN_WORD)
       {
-        indices.push_back(word_it->second);  // update the word in the sentence to index
+        indices.push_back(word_ind);  // update the word in the sentence to index
       }
     }
 
@@ -658,7 +658,7 @@ void GraphW2VLoader<T>::LoadVocab(std::string const &filename)
 template <typename T>
 math::SizeType GraphW2VLoader<T>::vocab_size() const
 {
-  return vocab_->vocab.size();
+  return vocab_->GetVocabCount();
 }
 
 /**
