@@ -265,7 +265,7 @@ void AddStringToParameterPack(vm::VM *vm, vm::ParameterPack &pack, msgpack::obje
 
   if (msgpack::type::STR == obj.type)
   {
-    vm::Ptr<vm::String> string = new vm::String(vm, {obj.via.str.ptr, obj.via.str.size});
+    vm::Ptr<vm::String> string{new vm::String(vm, {obj.via.str.ptr, obj.via.str.size})};
     pack.Add(std::move(string));
     valid = true;
   }
@@ -317,7 +317,7 @@ void AddStringToParameterPack(vm::VM *vm, vm::ParameterPack &pack, variant::Vari
   }
 
   // create the instance of the address
-  vm::Ptr<vm::String> vm_string = new vm::String(vm, obj.As<std::string>());
+  vm::Ptr<vm::String> vm_string(new vm::String(vm, obj.As<std::string>()));
   pack.Add(std::move(vm_string));
 }
 
@@ -444,7 +444,7 @@ Contract::Result SmartContract::InvokeAction(std::string const &name, Transactio
   // Important to keep the handle alive as long as the msgpack::object is needed to avoid segfault!
   msgpack::object_handle       h;
   std::vector<msgpack::object> input_params;
-  auto const                   parameter_data = tx.data();
+  decltype(auto)               parameter_data = tx.data();
 
   block_index_ = index;
 

@@ -38,7 +38,7 @@ ProofOfWork Test1(ByteArray tx, uint64_t diff)
   return proof;
 }
 
-bool TestCompare(ByteArray tx, uint64_t diff1, uint64_t diff2)
+bool TestCompare(ByteArray const &tx, uint64_t diff1, uint64_t diff2)
 {
   ProofOfWork proof1(tx), proof2(tx);
   proof1.SetTarget(diff1);

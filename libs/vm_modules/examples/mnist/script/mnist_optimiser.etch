@@ -22,17 +22,17 @@ g.addCrossEntropyLoss("Error", "Softmax", "Label");
 // Set up the dataloader
 printLn(System.Argv(1));
 printLn(System.Argv(2));
-var data_loader = DataLoader();
-data_loader.addData("mnist", System.Argv(1), System.Argv(2));
+var data_loader = DataLoader("mnist");
+data_loader.addData(System.Argv(1), System.Argv(2));
 
 // Set up the optimiser
-var optimiser = Optimiser("adam", g, "Input", "Label", "Error");
+var optimiser = Optimiser("adam", g, data_loader, {"Input"}, "Label", "Error");
 
 // Begin the training loop
 var batch_size = 64u64;
 var subset_size = (100u64 * 64u64);
 for(i in 0:training_iterations)
-    var loss = optimiser.run(data_loader, batch_size, subset_size);
+    var loss = optimiser.run(batch_size, subset_size);
     print("Current Loss: ");
     printLn(loss);
 endfor

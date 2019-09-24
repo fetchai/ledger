@@ -129,7 +129,7 @@ public:
 
   /// Setup management
   /// @{
-  void QueueSetup(SharedAeonExecutionUnit beacon);
+  void QueueSetup(SharedAeonExecutionUnit const &beacon);
   void Abort(uint64_t round_start);
   void SetBeaconReadyCallback(CallbackFunction callback);
   /// @}
@@ -137,8 +137,9 @@ public:
   std::weak_ptr<core::Runnable> GetWeakRunnable();
 
   void OnNewSharesPacket(muddle::Packet const &packet, MuddleAddress const &last_hop);
-  void OnNewShares(MuddleAddress from_id, std::pair<MessageShare, MessageShare> const &shares);
-  void OnDkgMessage(MuddleAddress const &from, std::shared_ptr<DKGMessage> msg_ptr);
+  void OnNewShares(MuddleAddress const &                        from_id,
+                   std::pair<MessageShare, MessageShare> const &shares);
+  void OnDkgMessage(MuddleAddress const &from, std::shared_ptr<DKGMessage> const &msg_ptr);
   void OnNewDryRunPacket(muddle::Packet const &packet, MuddleAddress const &last_hop);
 
 protected:

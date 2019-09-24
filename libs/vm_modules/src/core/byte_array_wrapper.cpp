@@ -42,7 +42,8 @@ ByteArrayWrapper::ByteArrayWrapper(VM *vm, TypeId type_id, byte_array::ByteArray
 
 Ptr<ByteArrayWrapper> ByteArrayWrapper::Constructor(VM *vm, TypeId type_id, int32_t n)
 {
-  return new ByteArrayWrapper(vm, type_id, byte_array::ByteArray(std::size_t(n)));
+  return Ptr<ByteArrayWrapper>{
+      new ByteArrayWrapper(vm, type_id, byte_array::ByteArray(std::size_t(n)))};
 }
 
 Ptr<ByteArrayWrapper> ByteArrayWrapper::Copy()
