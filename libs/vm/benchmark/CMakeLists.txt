@@ -10,5 +10,5 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 # Compiler Configuration
 setup_compiler()
 
-add_fetch_gbench(benchmark_add_object fetch-vm add_object)
+add_fetch_gbench(vm-benchmarks fetch-vm .)
 

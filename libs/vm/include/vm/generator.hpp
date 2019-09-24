@@ -169,6 +169,11 @@ struct Executable
     }
     uint16_t FindLineNumber(uint16_t pc) const
     {
+      if (pc_to_line_map_.empty())
+      {
+        return 0;
+      }
+
       auto it = pc_to_line_map_.lower_bound(uint16_t(pc + 1));
       return (--it)->second;
     }
