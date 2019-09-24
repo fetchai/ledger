@@ -46,10 +46,18 @@ TEST_F(VMWrapperTests, noop)
 {
   fetch::dmlf::VmWrapperSystemcommand vm;
 
+  std::vector<std::string> outputs;
+  std::vector<std::string> errors;
+
+  vm.SetStdout([&outputs](const std::string &s){ outputs.push_back(s); });
+  vm.SetStderr([&errors](const std::string &s){ errors.push_back(s); });
+
   vm.Setup(fetch::dmlf::VmWrapperInterface::Flags());
   vm.Execute("/bin/ls", fetch::dmlf::VmWrapperSystemcommand::Params());
 
-  EXPECT_EQ(1,2);
+  EXPECT_EQ(vm.status(), fetch::dmlf::VmWrapperInterface::COMPLETED);
+  EXPECT_EQ(errors.size(), 0);
+  EXPECT_GT(outputs.size(), 1);
 }
 
 

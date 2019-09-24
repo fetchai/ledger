@@ -68,6 +68,8 @@ protected:
   int stderr_pipe[2];
   int stdout_pipe[2];
 
+  int result;
+
   OutputHandler oh_;
   OutputHandler eh_;
   InputHandler ih_;
