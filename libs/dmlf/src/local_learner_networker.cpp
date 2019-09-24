@@ -61,28 +61,9 @@ void LocalLearnerNetworker::pushUpdate(std::shared_ptr<IUpdate> update)
   }
 }
 
-void LocalLearnerNetworker::rx(const Intermediate &data)
+void LocalLearnerNetworker::rx(const Bytes &data)
 {
-  Lock lock(mutex);
-  updates.push_back(data);
-}
-
-std::size_t LocalLearnerNetworker::getUpdateCount() const
-{
-  Lock lock(mutex);
-  return updates.size();
-}
-
-LocalLearnerNetworker::Intermediate LocalLearnerNetworker::getUpdateIntermediate()
-{
-  Lock lock(mutex);
-  if (!updates.empty())
-  {
-    auto x = updates.front();
-    updates.pop_front();
-    return x;
-  }
-  throw std::length_error("Updates list is already empty.");
+  AbstractLearnerNetworker::NewMessage(data);
 }
 
 }  // namespace dmlf

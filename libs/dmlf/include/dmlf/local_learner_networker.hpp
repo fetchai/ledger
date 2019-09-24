@@ -19,7 +19,7 @@
 
 #include "core/mutex.hpp"
 #include "core/serializers/base_types.hpp"
-#include "dmlf/ilearner_networker.hpp"
+#include "dmlf/abstract_learner_networker.hpp"
 #include <list>
 #include <map>
 #include <memory>
@@ -27,7 +27,7 @@
 namespace fetch {
 namespace dmlf {
 
-class LocalLearnerNetworker : public ILearnerNetworker
+class LocalLearnerNetworker : public AbstractLearnerNetworker
 {
 public:
   using PeerP = std::shared_ptr<LocalLearnerNetworker>;
@@ -35,10 +35,9 @@ public:
 
   LocalLearnerNetworker();
   virtual ~LocalLearnerNetworker();
-  virtual void        pushUpdate(std::shared_ptr<IUpdate> update);
-  virtual std::size_t getUpdateCount() const;
+  virtual void        pushUpdate(std::shared_ptr<IUpdate> update) override;
 
-  virtual std::size_t getPeerCount() const
+  virtual std::size_t getPeerCount() const override
   {
     return peers.size();
   }
@@ -47,17 +46,14 @@ public:
 
 protected:
 private:
-  using Mutex            = fetch::Mutex;
-  using Lock             = std::unique_lock<Mutex>;
-  using Intermediate     = ILearnerNetworker::Intermediate;
-  using IntermediateList = std::list<Intermediate>;
+  using Mutex  = fetch::Mutex;
+  using Lock  = std::unique_lock<Mutex>;
+  using Bytes = AbstractLearnerNetworker::Bytes;
 
-  IntermediateList updates;
   mutable Mutex    mutex;
   Peers            peers;
 
-  virtual Intermediate getUpdateIntermediate();
-  void                 rx(const Intermediate &data);
+  void                 rx(const Bytes &data);
 
   LocalLearnerNetworker(const LocalLearnerNetworker &other) = delete;
   LocalLearnerNetworker &operator=(const LocalLearnerNetworker &other)  = delete;

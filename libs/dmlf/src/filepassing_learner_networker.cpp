@@ -28,6 +28,10 @@
 #include "dmlf/iupdate.hpp"
 #include <stdio.h>  //for remove( ) and rename( )
 
+#include <chrono>
+
+using namespace std::chrono_literals;
+
 namespace fetch {
 namespace dmlf {
 
@@ -50,10 +54,39 @@ void FilepassingLearnerNetworker::setName(const std::string &name)
     // std::cout << "UNLINK:: "<< name << std::endl;
     ::unlink(name.c_str());
   }
+  running_ = true;
+  watcher_ = std::make_shared<std::thread>(&FilepassingLearnerNetworker::checkUpdates,this);
+}
+
+void FilepassingLearnerNetworker::checkUpdates()
+{
+  while(running_)
+  {
+    std::this_thread::sleep_for(100ms); 
+    auto pendings = getUpdateNames();
+
+    if (pendings.empty())
+    {
+      continue;
+    }
+
+    for(auto& filename : pendings)
+    {
+      processed_updates_.insert(filename);
+      Bytes  b;
+      std::ifstream inp(filename.c_str());
+      std::string   str((std::istreambuf_iterator<char>(inp)), std::istreambuf_iterator<char>());
+      inp.close();
+      AbstractLearnerNetworker::NewMessage(Bytes{str});
+    }
+  }
 }
 
 FilepassingLearnerNetworker::~FilepassingLearnerNetworker()
-{}
+{
+  running_ = false;
+  watcher_->join();
+}
 
 std::string FilepassingLearnerNetworker::processNameToTargetDir(const std::string n)
 {
@@ -88,7 +121,7 @@ void FilepassingLearnerNetworker::pushUpdate(std::shared_ptr<IUpdate> update)
   }
 }
 
-void FilepassingLearnerNetworker::tx(const std::string &target, const Intermediate &data)
+void FilepassingLearnerNetworker::tx(const std::string &target, const Bytes &data)
 {
   static int filecounter = 0;
   auto       target_dir  = processNameToTargetDir(target);
@@ -103,11 +136,6 @@ void FilepassingLearnerNetworker::tx(const std::string &target, const Intermedia
   outp.close();
 
   ::rename(tmpfilepath.c_str(), filepath.c_str());
-}
-
-std::size_t FilepassingLearnerNetworker::getUpdateCount() const
-{
-  return getUpdateNames().size();
 }
 
 std::vector<std::string> FilepassingLearnerNetworker::getUpdateNames() const
@@ -149,23 +177,6 @@ std::vector<std::string> FilepassingLearnerNetworker::getUpdateNames() const
   }
 
   return r;
-}
-
-FilepassingLearnerNetworker::Intermediate FilepassingLearnerNetworker::getUpdateIntermediate()
-{
-  auto pendings = getUpdateNames();
-
-  if (pendings.empty())
-  {
-    throw std::length_error("Updates list is already empty.");
-  }
-  auto filename = pendings[0];
-  processed_updates_.insert(filename);
-  Intermediate  b;
-  std::ifstream inp(filename.c_str());
-  std::string   str((std::istreambuf_iterator<char>(inp)), std::istreambuf_iterator<char>());
-  inp.close();
-  return Intermediate(str);
 }
 
 }  // namespace dmlf

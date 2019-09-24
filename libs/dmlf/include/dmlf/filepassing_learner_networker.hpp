@@ -17,27 +17,26 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dmlf/ilearner_networker.hpp"
+#include "dmlf/abstract_learner_networker.hpp"
 #include <memory>
 #include <set>
+#include <thread>
 
 namespace fetch {
 namespace dmlf {
 
-class FilepassingLearnerNetworker : public ILearnerNetworker
+class FilepassingLearnerNetworker : public AbstractLearnerNetworker
 {
 public:
-  using Intermediate = byte_array::ByteArray;
-  using Peer         = std::string;
-  using Peers        = std::vector<Peer>;
+  using Bytes = AbstractLearnerNetworker::Bytes;
+  using Peer  = std::string;
+  using Peers = std::vector<Peer>;
 
   FilepassingLearnerNetworker();
   virtual ~FilepassingLearnerNetworker();
 
-  virtual void        pushUpdate(std::shared_ptr<IUpdate> update);
-  virtual std::size_t getUpdateCount() const;
-
-  virtual std::size_t getPeerCount() const
+  virtual void        pushUpdate(std::shared_ptr<IUpdate> update) override;
+  virtual std::size_t getPeerCount() const override
   {
     return peers_.size();
   }
@@ -47,10 +46,10 @@ public:
   void clearPeers();
 
 protected:
-  virtual Intermediate     getUpdateIntermediate();
   static std::string       processNameToTargetDir(const std::string name);
-  void                     tx(const std::string &target, const Intermediate &data);
+  void                     tx(const std::string &target, const Bytes &data);
   std::vector<std::string> getUpdateNames() const;
+  void checkUpdates();
 
 private:
   FilepassingLearnerNetworker(const FilepassingLearnerNetworker &other) = delete;
@@ -62,6 +61,9 @@ private:
   std::vector<std::string> peers_;
   std::string              name_;
   std::string              dir_;
+
+  std::shared_ptr<std::thread> watcher_;
+  bool running_;
 };
 
 }  // namespace dmlf

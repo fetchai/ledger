@@ -34,7 +34,7 @@ namespace {
 
 using DataType   = fetch::fixed_point::FixedPoint<32, 32>;
 using TensorType = fetch::math::Tensor<DataType>;
-using NetP       = std::shared_ptr<fetch::dmlf::ILearnerNetworker>;
+using NetP       = std::shared_ptr<fetch::dmlf::AbstractLearnerNetworker>;
 
 using UpdateTypeForTesting = fetch::dmlf::Update<TensorType>;
 using UpdatePayloadType    = UpdateTypeForTesting::PayloadType;
@@ -59,6 +59,7 @@ public:
     this->number       = number;
     this->net          = net;
     this->produced     = 0;
+    this->net->Initialize<UpdateTypeForTesting>();
   }
 
   std::vector<TensorType> generateFakeWorkOutput(std::size_t instance_number,
@@ -150,7 +151,7 @@ public:
     {
       auto local = std::make_shared<fetch::dmlf::LocalLearnerNetworker>();
       peers.push_back(local);
-      std::shared_ptr<fetch::dmlf::ILearnerNetworker> interf = local;
+      std::shared_ptr<fetch::dmlf::AbstractLearnerNetworker> interf = local;
       insts.push_back(std::make_shared<LocalLearnerInstance>(interf, i));
     }
     for (auto peer : peers)
@@ -185,7 +186,7 @@ public:
     {
       auto local = std::make_shared<fetch::dmlf::LocalLearnerNetworker>();
       peers.push_back(local);
-      std::shared_ptr<fetch::dmlf::ILearnerNetworker> interf = local;
+      std::shared_ptr<fetch::dmlf::AbstractLearnerNetworker> interf = local;
       insts.push_back(std::make_shared<LocalLearnerInstance>(interf, i));
     }
 
@@ -238,7 +239,7 @@ public:
       peer->setName(name);
       peers.push_back(peer);
       names.push_back(name);
-      std::shared_ptr<fetch::dmlf::ILearnerNetworker> interf = peer;
+      std::shared_ptr<fetch::dmlf::AbstractLearnerNetworker> interf = peer;
       insts.push_back(std::make_shared<LocalLearnerInstance>(interf, i));
     }
 
