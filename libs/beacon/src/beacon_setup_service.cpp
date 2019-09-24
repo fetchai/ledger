@@ -126,6 +126,8 @@ BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identit
         "beacon_dkg_dry_run_failures_total", "The total number of DKG dry run failures")}
   , beacon_dkg_aborts_total_{telemetry::Registry::Instance().CreateCounter(
         "beacon_dkg_aborts_total", "The total number of DKG forced aborts")}
+  , beacon_dkg_successes_total_{telemetry::Registry::Instance().CreateCounter(
+        "beacon_dkg_successes_total", "The total number of DKG successes")}
 {
   // clang-format off
   state_machine_->RegisterHandler(State::IDLE, this, &BeaconSetupService::OnIdle);
@@ -812,6 +814,7 @@ BeaconSetupService::State BeaconSetupService::OnBeaconReady()
 {
   std::lock_guard<std::mutex> lock(mutex_);
   beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::BEACON_READY));
+  beacon_dkg_successes_total_->add(1);
 
   FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                  " *** New beacon generated! ***");
