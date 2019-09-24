@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dmlf/ilearner_networker.hpp"
+#include "dmlf/abstract_learner_networker.hpp"
 #include "dmlf/iupdate.hpp"
 #include "dmlf/update.hpp"
 
@@ -38,7 +38,7 @@ namespace dmlf {
 
 uint16_t ephem_port_();
 
-class TcpLearnerNetworker: public ILearnerNetworker
+class TcpLearnerNetworker: public AbstractLearnerNetworker
 {
   class DmlfTCPServer : public fetch::network::TCPServer 
   {
@@ -62,6 +62,7 @@ public:
   using IUpdatePtr   = std::shared_ptr<IUpdate>;
   using QueueUpdates = std::priority_queue<IUpdatePtr, std::vector<IUpdatePtr>, std::greater<IUpdatePtr>>;
   using Uri          = fetch::network::Uri;
+  using Bytes     = AbstractLearnerNetworker::Bytes;
   
   TcpLearnerNetworker(std::vector<Uri> peers, std::shared_ptr<network::NetworkManager> nnmm = nullptr)
   : TcpLearnerNetworker(ephem_port_(), peers, nnmm)
@@ -97,27 +98,18 @@ public:
   }
 
   virtual void pushUpdate( std::shared_ptr<IUpdate> update) override;
-  virtual std::size_t getUpdateCount() const override;
   virtual std::size_t getPeerCount() const override;
   
   //virtual std::size_t getUpdateCount() const override;
   //virtual std::shared_ptr<IUpdate> getUpdate() override;
   //virtual std::size_t getCount() override;
 
-protected:
-  using Intermediate     = ILearnerNetworker::Intermediate;
-  using IntermediateList = std::list<Intermediate>;
 
-  virtual Intermediate               getUpdateIntermediate() override;
 private:
   using Mutex     = fetch::Mutex;
   using Lock      = std::unique_lock<Mutex>;
   using TCPClient = fetch::network::TCPClient;
   using TCPServer = fetch::network::TCPServer;
-
-  QueueUpdates  updates_;
-  mutable Mutex updates_m_; 
-  IntermediateList updates_bytes_;
 
   std::shared_ptr<network::NetworkManager> nm_;
   bool nm_mine_;
@@ -147,14 +139,8 @@ private:
 
   void on_new_update_(network::MessageType const &serialized_update)
   {
-    //auto update = std::make_shared<fetch::dmlf::Update<std::string>>();
-    //update->deserialise(serialized_update);
-    //std::cout << "Got update: " << update->TimeStamp() << std::endl;
-    std::cout << "Got update: " << serialized_update << std::endl;
-    {
-      Lock lock{updates_m_};
-      updates_bytes_.push_back(serialized_update);
-    }
+    std::cout << "[tcp-learner] Got update: " << serialized_update << std::endl;
+    AbstractLearnerNetworker::NewMessage(serialized_update);
   }
 
   void broadcast_update_(std::shared_ptr<IUpdate> update)

@@ -58,25 +58,6 @@ void TcpLearnerNetworker::pushUpdate( std::shared_ptr<IUpdate> update)
   broadcast_update_(update);
 }
 
-std::size_t TcpLearnerNetworker::getUpdateCount() const 
-{
-  Lock lock{updates_m_};
-  return updates_bytes_.size();
-}
-
-//std::shared_ptr<IUpdate> TcpLearnerNetworker::getUpdate()
-TcpLearnerNetworker::Intermediate TcpLearnerNetworker::getUpdateIntermediate()
-{
-  Lock lock{updates_m_};
-  if(!updates_bytes_.empty())
-  {
-    auto upd = updates_bytes_.front();
-    updates_bytes_.pop_front();
-    return upd;
-  }
-  throw std::length_error("Updates list is already empty.");
-  //return std::shared_ptr<IUpdate>{nullptr}; 
-}
 
 std::size_t TcpLearnerNetworker::getPeerCount() const
 {
