@@ -309,7 +309,7 @@ struct StateFactory<T, std::enable_if_t<!IsMetatype<T>>>
   template <typename... Args>
   Ptr<IState> operator()(Args &&... args)
   {
-    return new State<T>{std::forward<Args>(args)...};
+    return Ptr<IState>{new State<T>{std::forward<Args>(args)...}};
   }
 };
 
@@ -333,7 +333,7 @@ Ptr<IState> IState::ConstructorFromString(VM *vm, TypeId type_id, Ptr<String> co
   }
 
   vm->RuntimeError("Failed to construct State: the `name` is null reference");
-  return nullptr;
+  return {};
 }
 
 Ptr<IState> IState::ConstructorFromAddress(VM *vm, TypeId type_id, Ptr<Address> const &name)
@@ -344,7 +344,7 @@ Ptr<IState> IState::ConstructorFromAddress(VM *vm, TypeId type_id, Ptr<Address> 
   }
 
   vm->RuntimeError("Failed to construct State: the `name` is null reference");
-  return nullptr;
+  return {};
 }
 
 Ptr<IState> IState::ConstructIntrinsic(VM *vm, TypeId type_id, TypeId template_param_type_id,

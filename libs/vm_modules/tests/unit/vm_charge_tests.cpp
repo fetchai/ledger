@@ -52,12 +52,12 @@ public:
 
   static Ptr<CustomType> Constructor(VM *vm, TypeId type_id)
   {
-    return new CustomType{vm, type_id, 0, 0};
+    return Ptr<CustomType>{new CustomType{vm, type_id, 0, 0}};
   }
 
   static Ptr<CustomType> ConstructorTwoArgs(VM *vm, TypeId type_id, uint8_t x, uint16_t y)
   {
-    return new CustomType{vm, type_id, x, y};
+    return Ptr<CustomType>{new CustomType{vm, type_id, x, y}};
   }
 
   static void AffordableStatic(VM *, TypeId, uint8_t, uint16_t)

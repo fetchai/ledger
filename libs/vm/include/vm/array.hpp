@@ -135,7 +135,7 @@ struct Array : public IArray
 
     elements.resize(elements.size() - static_cast<std::size_t>(num_to_pop));
 
-    return array;
+    return Ptr<IArray>{array};
   }
 
   TemplateParameter1 PopFrontOne() override
@@ -187,7 +187,7 @@ struct Array : public IArray
 
     elements.resize(elements.size() - popped_size);
 
-    return array;
+    return Ptr<IArray>{array};
   }
 
   void Reverse() override
@@ -205,7 +205,7 @@ struct Array : public IArray
     elements.insert(elements.cend(), other_elements.cbegin(), other_elements.cend());
   }
 
-  void Erase(const int32_t index) override
+  void Erase(int32_t const index) override
   {
     if (index < 0)
     {
@@ -379,61 +379,72 @@ Ptr<IArray> IArray::Construct(VM *vm, TypeId type_id, Args &&... args)
   {
   case TypeIds::Bool:
   {
-    return new Array<uint8_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
+    return Ptr<IArray>{
+        new Array<uint8_t>(vm, type_id, element_type_id, std::forward<Args>(args)...)};
   }
   case TypeIds::Int8:
   {
-    return new Array<int8_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
+    return Ptr<IArray>{
+        new Array<int8_t>(vm, type_id, element_type_id, std::forward<Args>(args)...)};
   }
   case TypeIds::UInt8:
   {
-    return new Array<uint8_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
+    return Ptr<IArray>{
+        new Array<uint8_t>(vm, type_id, element_type_id, std::forward<Args>(args)...)};
   }
   case TypeIds::Int16:
   {
-    return new Array<int16_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
+    return Ptr<IArray>{
+        new Array<int16_t>(vm, type_id, element_type_id, std::forward<Args>(args)...)};
   }
   case TypeIds::UInt16:
   {
-    return new Array<uint16_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
+    return Ptr<IArray>{
+        new Array<uint16_t>(vm, type_id, element_type_id, std::forward<Args>(args)...)};
   }
   case TypeIds::Int32:
   {
-    return new Array<int32_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
+    return Ptr<IArray>{
+        new Array<int32_t>(vm, type_id, element_type_id, std::forward<Args>(args)...)};
   }
   case TypeIds::UInt32:
   {
-    return new Array<uint32_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
+    return Ptr<IArray>{
+        new Array<uint32_t>(vm, type_id, element_type_id, std::forward<Args>(args)...)};
   }
   case TypeIds::Int64:
   {
-    return new Array<int64_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
+    return Ptr<IArray>{
+        new Array<int64_t>(vm, type_id, element_type_id, std::forward<Args>(args)...)};
   }
   case TypeIds::UInt64:
   {
-    return new Array<uint64_t>(vm, type_id, element_type_id, std::forward<Args>(args)...);
+    return Ptr<IArray>{
+        new Array<uint64_t>(vm, type_id, element_type_id, std::forward<Args>(args)...)};
   }
   case TypeIds::Float32:
   {
-    return new Array<float>(vm, type_id, element_type_id, std::forward<Args>(args)...);
+    return Ptr<IArray>{new Array<float>(vm, type_id, element_type_id, std::forward<Args>(args)...)};
   }
   case TypeIds::Float64:
   {
-    return new Array<double>(vm, type_id, element_type_id, std::forward<Args>(args)...);
+    return Ptr<IArray>{
+        new Array<double>(vm, type_id, element_type_id, std::forward<Args>(args)...)};
   }
   case TypeIds::Fixed32:
   {
-    return new Array<fixed_point::fp32_t>(vm, type_id, element_type_id,
-                                          std::forward<Args>(args)...);
+    return Ptr<IArray>{
+        new Array<fixed_point::fp32_t>(vm, type_id, element_type_id, std::forward<Args>(args)...)};
   }
   case TypeIds::Fixed64:
   {
-    return new Array<fixed_point::fp64_t>(vm, type_id, element_type_id,
-                                          std::forward<Args>(args)...);
+    return Ptr<IArray>{
+        new Array<fixed_point::fp64_t>(vm, type_id, element_type_id, std::forward<Args>(args)...)};
   }
   default:
   {
-    return new Array<Ptr<Object>>(vm, type_id, element_type_id, std::forward<Args>(args)...);
+    return Ptr<IArray>{
+        new Array<Ptr<Object>>(vm, type_id, element_type_id, std::forward<Args>(args)...)};
   }
   }  // switch
 }

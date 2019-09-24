@@ -94,8 +94,8 @@ TYPED_TEST(MultiheadAttention, backward_test)  // Use the class as an Ops
   std::vector<SizeType> prev_shape;
   for (SizeType i = 0; i < backprop_error.size() - 1; i++)
   {
-    auto error = backprop_error.at(i);
-    auto shape = error.shape();
+    auto           error = backprop_error.at(i);
+    decltype(auto) shape = error.shape();
     if (prev_shape.empty())
     {
       prev_shape = shape;

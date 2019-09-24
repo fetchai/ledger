@@ -60,7 +60,7 @@ struct ServiceIdentifier
     , instance_number(instance)
   {}
 
-  bool operator<(const ServiceIdentifier &other) const
+  bool operator<(ServiceIdentifier const &other) const
   {
     if (service_type < other.service_type)
     {
@@ -70,11 +70,8 @@ struct ServiceIdentifier
     {
       return false;
     }
-    if (instance_number < other.instance_number)
-    {
-      return true;
-    }
-    return false;
+
+    return instance_number < other.instance_number;
   }
 
   std::string ToString(std::string const &divider = "/") const

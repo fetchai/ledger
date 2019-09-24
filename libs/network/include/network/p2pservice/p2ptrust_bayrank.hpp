@@ -75,7 +75,7 @@ public:
 
   // Construction / Destruction
   P2PTrustBayRank()                           = default;
-  P2PTrustBayRank(const P2PTrustBayRank &rhs) = delete;
+  P2PTrustBayRank(P2PTrustBayRank const &rhs) = delete;
   P2PTrustBayRank(P2PTrustBayRank &&rhs)      = delete;
   ~P2PTrustBayRank() override                 = default;
 
@@ -258,7 +258,7 @@ public:
   }
 
   // Operators
-  P2PTrustBayRank operator=(const P2PTrustBayRank &rhs) = delete;
+  P2PTrustBayRank operator=(P2PTrustBayRank const &rhs) = delete;
   P2PTrustBayRank operator=(P2PTrustBayRank &&rhs) = delete;
 
 protected:
@@ -313,7 +313,7 @@ protected:
     dirty_ = false;
 
     std::sort(trust_store_.begin(), trust_store_.end(),
-              [](const PeerTrustRating &a, const PeerTrustRating &b) {
+              [](PeerTrustRating const &a, PeerTrustRating const &b) {
                 if (a.score < b.score)
                 {
                   return true;
@@ -322,6 +322,7 @@ protected:
                 {
                   return false;
                 }
+
                 return a.peer_identity < b.peer_identity;
               });
 

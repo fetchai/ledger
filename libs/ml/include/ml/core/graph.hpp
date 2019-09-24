@@ -117,7 +117,6 @@ public:
   void       SetInput(std::string const &node_name, TensorType data);
   TensorType Evaluate(std::string const &node_name, bool is_training = true);
   void       BackPropagate(std::string const &node_name, TensorType const &error_signal = {});
-  void       ApplyRegularisation();
   void       ApplyGradients(std::vector<TensorType> &grad);
 
   //////////////////////////////////////////////////////
@@ -537,21 +536,6 @@ void Graph<TensorType>::ApplyGradients(std::vector<TensorType> &grad)
   }
 }
 
-template <typename TensorType>
-void Graph<TensorType>::ApplyRegularisation()
-{
-  Compile();
-
-  for (auto &t : trainable_nodes_)
-  {
-    auto trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
-    trainable_ptr->ApplyRegularisation();
-  }
-
-  // TODO(#1554) - we should only reset the cache for trained nodes, not all nodes
-  ResetGraphCache(false);
-}
-
 /**
  * Method for directly inserting nodes to graph - used for serialisation
  * @tparam T
@@ -893,7 +877,7 @@ void Graph<T>::InsertSharedCopy(std::shared_ptr<Graph<TensorType>> output_ptr)
     throw std::runtime_error("This needs to be called with a separate ptr.");
   }
 
-  std::shared_ptr<Graph<TensorType>> copyshare = output_ptr;
+  std::shared_ptr<Graph<TensorType>> const &copyshare = output_ptr;
 
   // copy all the nodes, sharing the weights using MakeSharedCopy
   for (auto const &n : nodes_)

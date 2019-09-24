@@ -63,8 +63,7 @@ public:
   using Type               = S;
   using VectorRegisterType = typename TensorView<Type>::VectorRegisterType;
 
-  void operator()(int const n, TensorView<Type> dx, int const incx, TensorView<Type> dy,
-                  int const incy) const;
+  void operator()(int n, TensorView<Type> dx, int incx, TensorView<Type> dy, int incy) const;
 };
 
 }  // namespace linalg

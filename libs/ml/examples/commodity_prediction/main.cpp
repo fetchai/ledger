@@ -303,7 +303,7 @@ int main(int argc, char **argv)
       {
         // if it is a dense layer there will be weights and bias files
         std::vector<std::string> dir_list =
-            fetch::ml::examples::GetAllTextFiles(weights_dir + "/" + name, "");
+            fetch::ml::examples::GetAllTextFiles(weights_dir.append("/").append(name), "");
         std::vector<std::string> actual_dirs;
         for (auto const &dir : dir_list)
         {
@@ -314,7 +314,9 @@ int main(int argc, char **argv)
         }
         assert(actual_dirs.size() == 1);
 
-        std::string node_weights_dir = weights_dir + "/" + name + "/" + actual_dirs[0];
+        std::string node_weights_dir =
+            weights_dir.append("/").append(name).append("/").append(actual_dirs[0]);
+
         // the weights array for the node has number of columns = number of features
         TensorType weights = fetch::ml::dataloaders::ReadCSV<TensorType>(
             node_weights_dir + "/kernel:0.csv", 0, 0, true);

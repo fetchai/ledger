@@ -43,7 +43,7 @@ protected:
     stream << text;
   }
 
-  void VerifyHeaderValue(ConstByteArray key, ConstByteArray value)
+  void VerifyHeaderValue(ConstByteArray const &key, ConstByteArray const &value)
   {
     ASSERT_TRUE(response_->header().Has(key));
     EXPECT_EQ(response_->header()[key], value);

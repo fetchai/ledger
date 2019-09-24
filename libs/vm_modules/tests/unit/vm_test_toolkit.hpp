@@ -141,6 +141,7 @@ public:
     return *observer_;
   }
 
+private:
   std::ostream *stdout_ = &std::cout;
   ObserverPtr   observer_;
   ModulePtr     module_;
