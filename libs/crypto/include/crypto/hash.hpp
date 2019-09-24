@@ -35,7 +35,6 @@ byte_array::ByteArray Hash(byte_array::ConstByteArray const &input)
                 "Use a type derived from fetch::crypto::Hasher:Interface");
   T hasher;
 
-  hasher.Reset();
   hasher.Update(input);
   return hasher.Final();
 }
@@ -47,7 +46,6 @@ void Hash(uint8_t const *const input, std::size_t const input_size, uint8_t *con
                 "Use a type derived from fetch::crypto::Hasher:Interface");
   T hasher;
 
-  hasher.Reset();
   hasher.Update(input, input_size);
   hasher.Final(output);
 }

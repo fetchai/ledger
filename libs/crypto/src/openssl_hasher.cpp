@@ -35,54 +35,46 @@ namespace internal {
 
 namespace {
 
-EVP_MD const *to_evp_type(OpenSslDigestType const type)
+EVP_MD const *EvpType(OpenSslDigestType const type)
 {
-  EVP_MD const *openssl_type = nullptr;
-
   switch (type)
   {
   case OpenSslDigestType::MD5:
-    openssl_type = EVP_md5();
-    break;
+    return EVP_md5();
+
   case OpenSslDigestType::SHA1:
-    openssl_type = EVP_sha1();
-    break;
+    return EVP_sha1();
+
   case OpenSslDigestType::SHA2_256:
-    openssl_type = EVP_sha256();
-    break;
+    return EVP_sha256();
+
   case OpenSslDigestType::SHA2_512:
-    openssl_type = EVP_sha512();
-    break;
+    return EVP_sha512();
   }
 
-  assert(openssl_type);
-
-  return openssl_type;
+  assert(false);
+  return nullptr;
 }
 
-std::size_t to_digest_size(OpenSslDigestType const type)
+std::size_t DigestSize(OpenSslDigestType const type)
 {
-  std::size_t digest_size = 0u;
-
   switch (type)
   {
   case OpenSslDigestType::MD5:
-    digest_size = MD5_DIGEST_LENGTH;
-    break;
+    return MD5_DIGEST_LENGTH;
+
   case OpenSslDigestType::SHA1:
-    digest_size = SHA_DIGEST_LENGTH;
-    break;
+    return SHA_DIGEST_LENGTH;
+
   case OpenSslDigestType::SHA2_256:
-    digest_size = SHA256_DIGEST_LENGTH;
-    break;
+    return SHA256_DIGEST_LENGTH;
+
   case OpenSslDigestType::SHA2_512:
-    digest_size = SHA512_DIGEST_LENGTH;
-    break;
+    return SHA512_DIGEST_LENGTH;
   }
 
-  assert(digest_size);
-
-  return digest_size;
+  assert(false);
+  return 0;
 }
 
 }  // namespace
@@ -99,8 +91,8 @@ public:
 };
 
 OpenSslHasherImpl::OpenSslHasherImpl(OpenSslDigestType type)
-  : digest_size_bytes{to_digest_size(type)}
-  , evp_type{to_evp_type(type)}
+  : digest_size_bytes{DigestSize(type)}
+  , evp_type{EvpType(type)}
   , evp_ctx{EVP_MD_CTX_create()}
 {}
 
@@ -111,7 +103,7 @@ OpenSslHasherImpl::~OpenSslHasherImpl()
 
 bool OpenSslHasher::Reset()
 {
-  auto const success = EVP_DigestInit_ex(impl_->evp_ctx, impl_->evp_type, nullptr) != 0;
+  bool const success = EVP_DigestInit_ex(impl_->evp_ctx, impl_->evp_type, nullptr);
   assert(success);
 
   return success;
@@ -119,7 +111,7 @@ bool OpenSslHasher::Reset()
 
 bool OpenSslHasher::Update(uint8_t const *const data_to_hash, std::size_t const size)
 {
-  auto const success = EVP_DigestUpdate(impl_->evp_ctx, data_to_hash, size) != 0;
+  bool const success = EVP_DigestUpdate(impl_->evp_ctx, data_to_hash, size);
   assert(success);
 
   return success;
@@ -127,17 +119,19 @@ bool OpenSslHasher::Update(uint8_t const *const data_to_hash, std::size_t const 
 
 bool OpenSslHasher::Final(uint8_t *const hash)
 {
-  auto const success = EVP_DigestFinal_ex(impl_->evp_ctx, hash, nullptr) != 0;
+  bool const success = EVP_DigestFinal_ex(impl_->evp_ctx, hash, nullptr);
   assert(success);
 
   return success;
 }
 
 OpenSslHasher::OpenSslHasher(OpenSslDigestType const type)
-  : impl_(std::make_shared<OpenSslHasherImpl>(type))
+  : impl_(std::make_unique<OpenSslHasherImpl>(type))
 {
   Reset();
 }
+
+OpenSslHasher::~OpenSslHasher() = default;
 
 std::size_t OpenSslHasher::HashSize() const
 {

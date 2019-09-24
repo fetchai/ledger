@@ -77,7 +77,20 @@ enum class BlockStatus
  * @param status The status enumeration
  * @return The output text
  */
-constexpr char const *ToString(BlockStatus status);
+constexpr char const *ToString(BlockStatus status) noexcept
+{
+  switch (status)
+  {
+  case BlockStatus::ADDED:
+    return "Added";
+  case BlockStatus::LOOSE:
+    return "Loose";
+  case BlockStatus::DUPLICATE:
+    return "Duplicate";
+  case BlockStatus::INVALID:
+    return "Invalid";
+  }
+}
 
 class MainChain
 {
@@ -127,6 +140,7 @@ public:
   /// @{
   BlockPtr                     GetHeaviestBlock() const;
   BlockHash                    GetHeaviestBlockHash() const;
+  BlockHash                    GetGenesisBlockHash() const;
   Blocks                       GetHeaviestChain(uint64_t limit = UPPER_BOUND) const;
   Blocks                       GetChainPreceding(BlockHash at, uint64_t limit = UPPER_BOUND) const;
   std::pair<Blocks, BlockHash> TimeTravel(BlockHash starting_point,
@@ -170,6 +184,9 @@ public:
       return block.body.hash;
     }
   };
+
+  // Keep track of root genesis block.
+  void SetRemoteGenesis(BlockHash hash = GENESIS_DIGEST);
 
 private:
   using IntBlockPtr   = std::shared_ptr<Block>;
@@ -251,38 +268,13 @@ private:
   TipsMap                           tips_;          ///< Keep track of the tips
   HeaviestTip                       heaviest_;      ///< Heaviest block/tip
   LooseBlockMap                     loose_blocks_;  ///< Waiting (loose) blocks
+  BlockHash                         remote_genesis_ = GENESIS_DIGEST;
   std::unique_ptr<BasicBloomFilter> bloom_filter_;
   bool const                        enable_bloom_filter_;
   telemetry::GaugePtr<std::size_t>  bloom_filter_queried_bit_count_;
   telemetry::CounterPtr             bloom_filter_query_count_;
   telemetry::CounterPtr             bloom_filter_positive_count_;
   telemetry::CounterPtr             bloom_filter_false_positive_count_;
-
-  /**
-   * Serializer for the DbRecord
-   *
-   * @tparam T The serializer type
-   * @param serializer The reference to hte serializer
-   * @param dbRecord The reference to the DbRecord to be serialised
-   */
-  template <typename T>
-  friend void Serialize(T &serializer, DbRecord const &dbRecord)
-  {
-    serializer << dbRecord.block << dbRecord.next_hash;
-  }
-
-  /**
-   * Deserializer for the DbRecord
-   *
-   * @tparam T The serializer type
-   * @param serializer The reference to the serializer
-   * @param dbRecord The reference to the output dbRecord to be populated
-   */
-  template <typename T>
-  friend void Deserialize(T &serializer, DbRecord &dbRecord)
-  {
-    serializer >> dbRecord.block >> dbRecord.next_hash;
-  }
 };
 
 }  // namespace ledger
@@ -314,6 +306,6 @@ public:
     map.ExpectKeyGetValue(NEXT_HASH, dbRecord.next_hash);
   }
 };
-}  // namespace serializers
 
+}  // namespace serializers
 }  // namespace fetch

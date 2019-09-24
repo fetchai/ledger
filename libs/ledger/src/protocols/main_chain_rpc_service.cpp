@@ -242,7 +242,7 @@ MainChainRpcService::Address MainChainRpcService::GetRandomTrustedPeer() const
   return Address{};
 }
 
-void MainChainRpcService::HandleChainResponse(Address const &address, BlockList block_list)
+bool MainChainRpcService::HandleChainResponse(Address const &address, BlockList block_list)
 {
   std::size_t added{0};
   std::size_t loose{0};
@@ -254,7 +254,13 @@ void MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
     // skip the genesis block
     if (block.body.previous_hash == GENESIS_DIGEST)
     {
-      continue;
+      if (block.body.hash != chain_.GetGenesisBlockHash())
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Genesis hash mismatch: actual 0x", block.body.hash.ToHex(),
+                       ", expected 0x", chain_.GetGenesisBlockHash(),
+                       ", skipping the whole alien chain");
+        return false;
+      }
     }
 
     // recompute the digest
@@ -308,6 +314,8 @@ void MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
     FETCH_LOG_INFO(LOGGING_NAME, "Synced Summary: Added: ", added, " Loose: ", loose,
                    " Duplicate: ", duplicate, " from: muddle://", ToBase64(address));
   }
+
+  return true;
 }
 
 /**
@@ -357,22 +365,23 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
     {
       if (PromiseState::SUCCESS == status)
       {
-        // the request was successful, simply hand off the blocks to be added to the chain
-        auto peer_response = current_request_->As<TimeTravelogue>();
-        HandleChainResponse(current_peer_address_, std::move(peer_response.blocks));
-        past_recent_tip_ = std::move(peer_response.next_hash);
+        // The request was successful, simply hand off the blocks to be added to the chain.
+        // Quite likely, we'll need more main chain blocks so preset the state.
+        next_state = State::REQUEST_HEAVIEST_CHAIN;
 
-        // Genesis as next tip to retrieve indicates the whole chain has been received
-        // and we can start synchronising.
-        if (past_recent_tip_ == GENESIS_DIGEST)
+        auto peer_response = current_request_->As<TimeTravelogue>();
+        if (HandleChainResponse(current_peer_address_, std::move(peer_response.blocks)))
         {
-          next_state = State::SYNCHRONISING;
-          // clear the state
-          value_util::ZeroAll(current_peer_address_, current_missing_block_);
-        }
-        else
-        {
-          next_state = State::REQUEST_HEAVIEST_CHAIN;
+          past_recent_tip_ = std::move(peer_response.next_hash);
+
+          // Genesis as next tip to retrieve indicates the whole chain has been received
+          // and we can start synchronising.
+          if (past_recent_tip_ == GENESIS_DIGEST)
+          {
+            next_state = State::SYNCHRONISING;
+            // clear the state
+            value_util::ZeroAll(current_peer_address_, current_missing_block_);
+          }
         }
       }
       else

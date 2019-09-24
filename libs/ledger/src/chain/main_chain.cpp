@@ -75,13 +75,9 @@ MainChain::MainChain(bool const enable_bloom_filter, Mode mode)
     RecoverFromFile(mode);
   }
 
-  // create the genesis block and add it to the cache
+  // create the genesis block, add it to the cache and add the tip for it
   auto genesis = CreateGenesisBlock();
-
-  // add the block to the cache
   AddBlockToCache(genesis);
-
-  // add the tip for this block
   AddTip(genesis);
 }
 
@@ -97,8 +93,7 @@ void MainChain::Reset()
 {
   FETCH_LOCK(lock_);
 
-  value_util::ClearAll(tips_, loose_blocks_, block_chain_, references_);
-  heaviest_ = HeaviestTip{};
+  value_util::ClearAll(tips_, loose_blocks_, block_chain_, references_, heaviest_);
 
   if (block_store_)
   {
@@ -108,13 +103,19 @@ void MainChain::Reset()
                      std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc);
   }
 
+  // create the genesis block, add it to the cache and add the tip for it
   auto genesis = CreateGenesisBlock();
-
-  // add the block to the cache
   AddBlockToCache(genesis);
-
-  // add the tip for this block
   AddTip(genesis);
+}
+
+/** Keeps root remote genesis somewhere in this muddle.
+ *
+ * @param hash Remote genesis hash, GENESIS_DIGEST for undefined
+ */
+void MainChain::SetRemoteGenesis(BlockHash hash)
+{
+  remote_genesis_ = std::move(hash);
 }
 
 /**
@@ -234,7 +235,7 @@ bool MainChain::LoadBlock(BlockHash const &hash, Block &block, BlockHash *next_h
   DbRecord record;
   if (block_store_->Get(storage::ResourceID(hash), record))
   {
-    block = record.block;
+    block = std::move(record.block);
     AddBlockToBloomFilter(block);
     if (next_hash)
     {
@@ -473,28 +474,17 @@ std::pair<MainChain::Blocks, MainChain::BlockHash> MainChain::TimeTravel(BlockHa
       static_cast<std::size_t>(std::min(limit, static_cast<int64_t>(MainChain::UPPER_BOUND)));
   MilliTimer myTimer("MainChain::ChainPreceding");
 
-  FETCH_LOCK(lock_);
-
   Blocks result;
 
   Block     block;
   BlockHash next_hash;
 
+  FETCH_LOCK(lock_);
   if (current_hash == GENESIS_DIGEST)
   {
-    // The very beginning of the chain is requested, we need to start past the genesis block.
-    auto ref_it{references_.find(GENESIS_DIGEST)};
-    if (ref_it == references_.end())
-    {
-      // Perhaps there aren't any blocks on this chain.
-      return {Blocks{}, std::move(current_hash)};
-    }
-    // Skip the very genesis block.
-    if (!GetBlock(ref_it->second, &current_hash))
-    {
-      return {Blocks{}, std::move(current_hash)};
-    }
-    // Now current_hash points to the block right next to genesis.
+    // The very beginning of the chain is requested, we need to start with the genesis block.
+    current_hash = GetGenesisBlockHash();
+    assert(current_hash != GENESIS_DIGEST);
   }
 
   while (
@@ -1276,9 +1266,9 @@ bool MainChain::LookupBlock(BlockHash const &hash, IntBlockPtr &block, BlockHash
  * Attempt to locate a block stored in the im memory cache
  *
  * @param hash The hash of the block to search for
- * @param block The output block to be populated
+ * @param[out] block The output block to be populated
  * @param[out] next_hash When non-null, pointer to a hash object to put block's next into
- * @return true if successful, otherwise false
+ * @return true iff successful
  */
 bool MainChain::LookupBlockFromCache(BlockHash const &hash, IntBlockPtr &block,
                                      BlockHash *next_hash) const
@@ -1318,9 +1308,9 @@ bool MainChain::LookupBlockFromCache(BlockHash const &hash, IntBlockPtr &block,
  * Attempt to locate a block stored in the persistent object store
  *
  * @param hash The hash of the block to search for
- * @param block The output block to be populated
+ * @param[out] block The output block to be populated
  * @param[out] next_hash When non-null, pointer to a hash object to put block's next into
- * @return true if successful, otherwise false
+ * @return true iff successful
  */
 bool MainChain::LookupBlockFromStorage(BlockHash const &hash, IntBlockPtr &block,
                                        BlockHash *next_hash) const
@@ -1503,6 +1493,20 @@ MainChain::BlockHash MainChain::GetHeaviestBlockHash() const
 }
 
 /**
+ * Gets the hash of the genesis block
+ *
+ * @return
+ */
+MainChain::BlockHash MainChain::GetGenesisBlockHash() const
+{
+  FETCH_LOCK(lock_);
+  assert(references_.count(GENESIS_DIGEST) == 1);
+
+  auto ref_itr{references_.find(GENESIS_DIGEST)};
+  return ref_itr->second;
+}
+
+/**
  * Determines if the new block is the heaviest and if so updates its internal state
  *
  * @param block The candidate block being evaluated
@@ -1637,21 +1641,6 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &starting_hash,
   }
 
   return duplicates;
-}
-
-constexpr char const *ToString(BlockStatus status)
-{
-  switch (status)
-  {
-  case BlockStatus::ADDED:
-    return "Added";
-  case BlockStatus::LOOSE:
-    return "Loose";
-  case BlockStatus::DUPLICATE:
-    return "Duplicate";
-  case BlockStatus::INVALID:
-    return "Invalid";
-  }
 }
 
 }  // namespace ledger

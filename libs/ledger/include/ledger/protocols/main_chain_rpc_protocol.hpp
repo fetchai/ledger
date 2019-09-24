@@ -20,6 +20,7 @@
 #include "core/serializers/base_types.hpp"
 #include "core/service_ids.hpp"
 #include "ledger/chain/main_chain.hpp"
+#include "meta/value_util.hpp"
 #include "network/service/protocol.hpp"
 
 #include <utility>
@@ -111,28 +112,52 @@ private:
 
 namespace serializers {
 
-template <class D>
-struct MapSerializer<ledger::TimeTravelogue, D>
+template <class F, F f>
+struct StructField
 {
-  using Type       = ledger::TimeTravelogue;
+  template <class T>
+  static constexpr auto &&Ref(T &&t)
+  {
+    return t.*f;
+  }
+};
+
+#define STRUCT_FIELD(struct_field) StructField<decltype(&struct_field), &struct_field>
+
+template <class T, class D, class... Fields>
+struct MapSerializerTemplate
+{
+  using Type       = T;
   using DriverType = D;
 
-  static constexpr uint8_t BLOCKS    = 1;
-  static constexpr uint8_t NEXT_HASH = 2;
-
   template <class Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &travel_log)
+  static void Serialize(Constructor &map_constructor, Type const &t)
   {
-    auto map = map_constructor(2);
-    map.Append(BLOCKS, travel_log.blocks);
-    map.Append(NEXT_HASH, travel_log.next_hash);
+    value_util::Accumulate(
+        [&t, map = map_constructor(sizeof...(Fields))](uint8_t key, auto field) mutable -> uint8_t {
+          map.Append(key, field.Ref(t));
+          return key + 1;
+        },
+        uint8_t(1), Fields{}...);
   }
-  template <class Deserializer>
-  static void Deserialize(Deserializer &map, Type &travel_log)
+
+  template <class MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &t)
   {
-    map.ExpectKeyGetValue(BLOCKS, travel_log.blocks);
-    map.ExpectKeyGetValue(NEXT_HASH, travel_log.next_hash);
+    value_util::Accumulate(
+        [&t, &map](uint8_t key, auto field) -> uint8_t {
+          map.ExpectKeyGetValue(key, field.Ref(t));
+          return key + 1;
+        },
+        uint8_t(1), Fields{}...);
   }
+};
+
+template <class D>
+struct MapSerializer<ledger::TimeTravelogue, D>
+  : MapSerializerTemplate<ledger::TimeTravelogue, D, STRUCT_FIELD(ledger::TimeTravelogue::blocks),
+                          STRUCT_FIELD(ledger::TimeTravelogue::next_hash)>
+{
 };
 
 }  // namespace serializers
