@@ -56,7 +56,9 @@ TYPED_TEST(WeightsTest, l1_regulariser_test)
 
   // Apply regularisation
   w.SetRegularisation(regulariser, regularisation_rate);
-  w.ApplyRegularisation();
+  TensorType grad = w.GetGradients();
+  grad.Fill(static_cast<DataType>(0.0));
+  w.ApplyGradient(grad);
 
   // Evaluate weight
   TensorType prediction(w.ComputeOutputShape({}));
@@ -84,7 +86,9 @@ TYPED_TEST(WeightsTest, l2_regulariser_test)
 
   // Apply regularisation
   w.SetRegularisation(regulariser, regularisation_rate);
-  w.ApplyRegularisation();
+  TensorType grad = w.GetGradients();
+  grad.Fill(static_cast<DataType>(0.0));
+  w.ApplyGradient(grad);
 
   // Evaluate weight
   TensorType prediction(w.ComputeOutputShape({}));
