@@ -138,7 +138,7 @@ struct MapSerializerTemplate
           map.Append(key, field.Ref(t));
           return key + 1;
         },
-        uint8_t(1), Fields{}...);
+        1, Fields{}...);
   }
 
   template <class MapDeserializer>
@@ -149,7 +149,7 @@ struct MapSerializerTemplate
           map.ExpectKeyGetValue(key, field.Ref(t));
           return key + 1;
         },
-        uint8_t(1), Fields{}...);
+        1, Fields{}...);
   }
 };
 
