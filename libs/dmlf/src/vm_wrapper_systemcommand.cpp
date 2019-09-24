@@ -136,7 +136,7 @@ void VmWrapperSystemcommand::Execute(std::string entrypoint, const Params /*para
       ::close(stderr_pipe[1]);
       ::close(stdout_pipe[1]);
 
-      auto argv = splitString(entrypoint);
+      auto argv = splitString(command_);
       std::vector<char *> vec_cp;
       vec_cp.reserve(argv.size() + 2);
       //vec_cp.push_back(strdup(entrypoint.c_str()));
