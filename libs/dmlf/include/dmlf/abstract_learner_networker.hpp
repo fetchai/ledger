@@ -21,26 +21,27 @@
 
 #include "core/mutex.hpp"
 
-//#include "core/byte_array/byte_array.hpp"
-//#include "dmlf/ishuffle_algorithm.hpp"
-#include "dmlf/ilearner_networker.hpp"
+#include "core/byte_array/byte_array.hpp"
+#include "dmlf/ishuffle_algorithm.hpp"
 #include "dmlf/iqueue.hpp"
 #include "dmlf/queue.hpp"
 
 namespace fetch {
 namespace dmlf {
 
-//class AbstractLearnerNetworker: public ILearnerNetworker
 class AbstractLearnerNetworker
 {
 public:
-  using Intermediate = ILearnerNetworker::Intermediate;
-
+  using Bytes = byte_array::ByteArray;
 
   AbstractLearnerNetworker()
   {}
   virtual ~AbstractLearnerNetworker()
   {}
+  
+  // To implement
+  virtual void        pushUpdate(std::shared_ptr<IUpdate> update) = 0;
+  virtual std::size_t getPeerCount() const                        = 0;
   
   template <typename T>
   void Initialize()
@@ -68,31 +69,18 @@ public:
     return que->getUpdate();
   }
 
-  virtual void        pushUpdate(std::shared_ptr<IUpdate> update) = 0;
-  virtual std::size_t getPeerCount() const                        = 0;
-
-  /*
-
-  virtual void        pushUpdate(std::shared_ptr<IUpdate> update) = 0;
-  virtual std::size_t getUpdateCount() const                      = 0;
-  virtual std::size_t getPeerCount() const                        = 0;
-
-  template <class UPDATE_TYPE>
-  std::shared_ptr<UPDATE_TYPE> getUpdate()
+  virtual void setShuffleAlgorithm(std::shared_ptr<IShuffleAlgorithm> alg)
   {
-    auto r = std::make_shared<UPDATE_TYPE>();
-    r->deserialise(getUpdateIntermediate());
-    return r;
+    this->alg = alg;
   }
-
-  */
 
 protected:
   /*
   std::shared_ptr<IShuffleAlgorithm> alg;                          // used by descendents
   virtual Intermediate               getUpdateIntermediate() = 0;  // implemented by descendents
   */
-  void NewMessage(const Intermediate& msg)
+  std::shared_ptr<IShuffleAlgorithm> alg;  // used by descendents
+  void NewMessage(const Bytes& msg) // called by descendents
   {
     Lock l{queue_m_};
     queue_->PushNewMessage(msg);

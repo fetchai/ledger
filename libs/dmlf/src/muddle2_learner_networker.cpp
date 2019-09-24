@@ -35,8 +35,9 @@ using fetch::byte_array::FromBase64;
 using fetch::network::NetworkManager;
 using fetch::muddle::NetworkId;
 using fetch::service::Promise;
+
 using PromiseList = std::vector<Promise>;
-using SignerPtr = std::shared_ptr<crypto::ECDSASigner>;
+using SignerPtr   = std::shared_ptr<crypto::ECDSASigner>;
   
 Muddle2LearnerNetworker::Muddle2LearnerNetworkerProtocol::Muddle2LearnerNetworkerProtocol(Muddle2LearnerNetworker &sample)
 {
@@ -99,28 +100,15 @@ Muddle2LearnerNetworker::Muddle2LearnerNetworker(const std::string cloud_config,
   }
 }
 
-#pragma clang diagnostic ignored "-Wunused-parameter"
+// TOFIX remove return value
 uint64_t Muddle2LearnerNetworker::RecvBytes(const byte_array::ByteArray &b)
 {
-  Lock lock(mutex);
-  updates.push_back(b);
-  return updates.size();
+  AbstractLearnerNetworker::NewMessage(b);
+  return 0;
 }
 
 Muddle2LearnerNetworker::~Muddle2LearnerNetworker()
 {
-}
-
-Muddle2LearnerNetworker::Intermediate Muddle2LearnerNetworker::getUpdateIntermediate()
-{
-  Lock lock(mutex);
-  if (!updates.empty())
-  {
-    auto x = updates.front();
-    updates.pop_front();
-    return x;
-  }
-  throw std::length_error("Updates list is already empty.");
 }
 
 void Muddle2LearnerNetworker::pushUpdate(std::shared_ptr<IUpdate> update)
@@ -146,10 +134,6 @@ void Muddle2LearnerNetworker::pushUpdate(std::shared_ptr<IUpdate> update)
   {
     prom->Wait();
   }
-}
-std::size_t Muddle2LearnerNetworker::getUpdateCount() const
-{
-  return updates.size();
 }
 std::size_t Muddle2LearnerNetworker::getPeerCount() const
 {

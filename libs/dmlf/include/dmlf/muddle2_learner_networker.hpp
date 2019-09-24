@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dmlf/ilearner_networker.hpp"
+#include "dmlf/abstract_learner_networker.hpp"
 #include <memory>
 #include "core/byte_array/decoders.hpp"
 #include "core/macros.hpp"
@@ -32,11 +32,9 @@
 namespace fetch {
 namespace dmlf {
 
-class Muddle2LearnerNetworker : public ILearnerNetworker
+class Muddle2LearnerNetworker : public AbstractLearnerNetworker
 {
 public:
-  using Intermediate = byte_array::ByteArray;
-  using IntermediateList = std::list<Intermediate>;
   using NetworkManager    = fetch::network::NetworkManager;
   using NetworkManagerPtr = std::shared_ptr<NetworkManager>;
   using MuddlePtr         = muddle::MuddlePtr;
@@ -47,21 +45,20 @@ public:
   using Promise           = fetch::service::Promise;
   using Payload           = fetch::muddle::Packet::Payload;
   using Response          = MuddleEndpoint::Response;
-  using Server = fetch::muddle::rpc::Server;
+  using Server            = fetch::muddle::rpc::Server;
   using CertificatePtr    = muddle::ProverPtr;
-  using Uri = fetch::network::Uri;
+  using Uri               = fetch::network::Uri;
   
   using Mutex = fetch::Mutex;
-  using Lock = std::unique_lock<Mutex>;
+  using Lock  = std::unique_lock<Mutex>;
 
   Muddle2LearnerNetworker(const std::string cloud_config,
                           std::size_t instance_number,
                           std::shared_ptr<NetworkManager> netm= std::shared_ptr<NetworkManager>());
   virtual ~Muddle2LearnerNetworker();
 
-  virtual void        pushUpdate(std::shared_ptr<IUpdate> update);
-  virtual std::size_t getUpdateCount() const;
-  virtual std::size_t getPeerCount() const;
+  virtual void        pushUpdate(std::shared_ptr<IUpdate> update) override;
+  virtual std::size_t getPeerCount() const override;
 
   uint64_t RecvBytes(const byte_array::ByteArray &b);
 
@@ -69,7 +66,6 @@ public:
   using Peers        = std::vector<Peer>;
   using PeerUris     = std::unordered_set<std::string>;
 protected:
-  virtual Intermediate getUpdateIntermediate();
   CertificatePtr CreateIdentity();
   CertificatePtr LoadIdentity(const std::string &privkey);
 
@@ -87,7 +83,6 @@ protected:
   std::shared_ptr<Muddle2LearnerNetworkerProtocol> proto;
 
   mutable Mutex mutex;
-  IntermediateList updates;
   Peers peers;
 private:
   Muddle2LearnerNetworker(const Muddle2LearnerNetworker &other) = delete;

@@ -37,7 +37,7 @@ namespace {
 using DataType   = fetch::fixed_point::FixedPoint<32, 32>;
 using TensorType = fetch::math::Tensor<DataType>;
 
-using LNBase     = fetch::dmlf::ILearnerNetworker;
+using LNBase     = fetch::dmlf::AbstractLearnerNetworker;
 using LN         = fetch::dmlf::Muddle2LearnerNetworker;
 using LNBaseP    = std::shared_ptr<LNBase>;
 using LNP        = std::shared_ptr<LN>;
@@ -59,13 +59,14 @@ class Learner
   {
   public:
     std::shared_ptr<fetch::dmlf::Muddle2LearnerNetworker> actual;
-    std::shared_ptr<fetch::dmlf::ILearnerNetworker> interface;
+    std::shared_ptr<fetch::dmlf::AbstractLearnerNetworker> interface;
 
     Learner(const std::string cloud_config,
             std::size_t instance_number)
     {
       actual = std::make_shared<fetch::dmlf::Muddle2LearnerNetworker>(cloud_config, instance_number);
       interface = actual;
+      interface->Initialize<UpdateTypeForTesting>();
     }
 
     void PretendToLearn()
