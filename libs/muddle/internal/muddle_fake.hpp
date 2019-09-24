@@ -35,7 +35,6 @@ public:
   using PacketQueueAndConnectionsPtr = std::shared_ptr<PacketQueueAndConnections>;
   using FakeNetworkImpl              = std::unordered_map<Address, PacketQueueAndConnectionsPtr>;
   using PacketPtr                    = fetch::muddle::SubscriptionRegistrar::PacketPtr;
-  // using Payload              = Packet::Payload;
 
   static Addresses GetConnections(Address const &of)
   {
@@ -159,12 +158,6 @@ public:
       connections_.insert(address);
     }
 
-    // void Diso(Address const &address)
-    //{
-    //  std::lock_guard<std::mutex> lock(lock_);
-    //  connections_.insert(address);
-    //}
-
     std::mutex            lock_;
     std::deque<PacketPtr> packets_;
     Addresses             connections_;
@@ -177,7 +170,7 @@ public:
 class FakeMuddleEndpoint : public MuddleEndpoint
 {
 public:
-  using Address              = Packet::Address;  // == a crypto::Identity.identifier_
+  using Address              = Packet::Address;
   using PacketPtr            = std::shared_ptr<Packet>;
   using Payload              = Packet::Payload;
   using ConnectionPtr        = std::weak_ptr<network::AbstractConnection>;
@@ -187,16 +180,9 @@ public:
   using Prover               = crypto::Prover;
   using DirectMessageHandler = std::function<void(Handle, PacketPtr)>;
 
-  // using RoutingTable = std::unordered_map<Packet::RawAddress, RoutingData>;
-
-  //// Helper functions
-  // static Packet::RawAddress ConvertAddress(Packet::Address const &address);
-  // static Packet::Address    ConvertAddress(Packet::RawAddress const &address);
-
   // Construction / Destruction
-  FakeMuddleEndpoint(NetworkId network_id,
-                     Address   address, /*MuddleRegister &reg, Dispatcher &dispatcher,*/
-                     Prover *certificate = nullptr, bool sign_broadcasts = false)
+  FakeMuddleEndpoint(NetworkId network_id, Address address, Prover *certificate = nullptr,
+                     bool sign_broadcasts = false)
     : network_id_{network_id}
     , address_{address}
     , certificate_{certificate}
@@ -364,8 +350,6 @@ public:
   using Handle             = network::AbstractConnection::connection_handle_type;
   using Server             = std::shared_ptr<network::AbstractNetworkServer>;
   using ServerList         = std::vector<Server>;
-  // using ConnectionDataList = std::vector<ConnectionData>;
-  // using ConnectionMap      = std::unordered_map<Address, Uri>;
 
   // Construction / Destruction
   MuddleFake(NetworkId network_id, CertificatePtr certificate, NetworkManager const &nm,
@@ -389,10 +373,6 @@ public:
   MuddleFake(MuddleFake const &) = delete;
   MuddleFake(MuddleFake &&)      = delete;
   ~MuddleFake()                  = default;
-
-  //// Operators
-  // Muddle &operator=(Muddle const &) = delete;
-  // Muddle &operator=(Muddle &&) = delete;
 
   /// @name Muddle Setup
   /// @{
@@ -524,17 +504,6 @@ public:
   };
   /// @}
 
-  //  /// @name Internal Accessors
-  //  /// @{
-  //  Dispatcher const &          dispatcher() const;
-  //  Router const &              router() const;
-  //  MuddleRegister const &      connection_register() const;
-  //  PeerConnectionList const &  connection_list() const;
-  //  DirectMessageService const &direct_message_service() const;
-  //  PeerSelector const &        peer_selector() const;
-  //  ServerList const &          servers() const;
-  //  /// @}
-
 private:
   using Client          = std::shared_ptr<network::AbstractConnection>;
   using ThreadPool      = network::ThreadPool;
@@ -543,10 +512,6 @@ private:
   using Timepoint       = Clock::time_point;
   using Duration        = Clock::duration;
   using PeerSelectorPtr = std::shared_ptr<PeerSelector>;
-
-  // void RunPeriodicMaintenance();
-  // void CreateTcpServer(uint16_t port);
-  // void CreateTcpClient(Uri const &peer);
 
   std::string const    name_;
   char const *const    logging_name_{name_.c_str()};

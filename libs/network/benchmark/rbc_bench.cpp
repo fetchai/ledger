@@ -373,12 +373,11 @@ void DKGWithEcho(benchmark::State &state)
     }
 
     // SetGlobalLogLevel(LogLevel::INFO);
-    // FETCH_LOG_INFO(LOGGING_NAME, "Finished test: ", nodes_in_test);
-    // FETCH_LOG_INFO(LOGGING_NAME, "");
+    FETCH_LOG_INFO(LOGGING_NAME, "Finished test: ", nodes_in_test);
+    FETCH_LOG_INFO(LOGGING_NAME, "");
     // SetGlobalLogLevel(LogLevel::ERROR);
   }
 }
 
-// TODO(HUT): kill dkg refs
 BENCHMARK_TEMPLATE(DKGWithEcho, PBCNode)->Range(4, 100)->Unit(benchmark::kMillisecond);
 BENCHMARK_TEMPLATE(DKGWithEcho, RBCNode)->Range(4, 64)->Unit(benchmark::kMillisecond);

@@ -654,8 +654,8 @@ void Router::SetKademliaRouting(bool enable)
  */
 Router::Handle Router::LookupRandomHandle(Packet::RawAddress const & /*address*/) const
 {
-  thread_local std::random_device rd;
-  thread_local std::mt19937       rng(rd());
+  static std::random_device rd;
+  static std::mt19937       rng(rd());
 
   {
     FETCH_LOCK(routing_table_lock_);
@@ -836,8 +836,7 @@ void Router::RoutePacket(PacketPtr packet, bool external)
     handle = LookupRandomHandle(packet->GetTargetRaw());
     if (handle)
     {
-      /* FETCH_LOG_WARN(logging_name_, "Speculative routing to peer: ",
-       * ToBase64(packet->GetTarget())); */
+      FETCH_LOG_WARN(logging_name_, "Speculative routing to peer: ", ToBase64(packet->GetTarget()));
       SendToConnection(handle, packet);
     }
   }

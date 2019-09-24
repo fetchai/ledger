@@ -156,8 +156,12 @@ int main()
   // Attaching the cabinet logic
   for (auto &member : committee)
   {
-    member->reactor.Attach(member->beacon_service.GetWeakRunnables()[0]);
-    member->reactor.Attach(member->beacon_service.GetWeakRunnables()[1]);
+    auto runnables = member->beacon_service.GetWeakRunnables();
+
+    for (auto const &i : runnables)
+    {
+      member->reactor.Attach(i);
+    }
   }
 
   // Starting the beacon

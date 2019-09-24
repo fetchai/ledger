@@ -509,24 +509,13 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
                      qual_promise_identity_.identifier().ToBase64());
       state_machine_->Delay(std::chrono::milliseconds(100));
 
-      if(add_signature_failures_++ > 1000)
-      {
-        FETCH_LOG_WARN(LOGGING_NAME, "Forced to abort entropy generation. Peers not responding! Round: ", current_entropy_.round);
-        add_signature_failures_ = 0;
-        beacon_entropy_forced_to_time_out_total_->add(1);
-        return State::WAIT_FOR_SETUP_COMPLETION;
-      }
-
       return State::COLLECT_SIGNATURES;
-    }
-    else
-    {
-      add_signature_failures_ = 0;
     }
 
     if (ret.round != current_entropy_.round)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Peer returned the wrong round when asked for signatures. Peer: ",
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "Peer returned the wrong round when asked for signatures. Peer: ",
                      qual_promise_identity_.identifier().ToBase64(), " returned: ", ret.round,
                      " expected: ", current_entropy_.round);
       return State::COLLECT_SIGNATURES;
@@ -545,7 +534,7 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
 
     FETCH_LOG_INFO(LOGGING_NAME, "After adding, we have ", all_sigs_map.size(),
                    " signatures. Round: ", current_entropy_.round);
-  } // Mutex unlocks here since verification can take some time
+  }  // Mutex unlocks here since verification can take some time
 
   MilliTimer const timer{"Verify threshold signature", 100};
 

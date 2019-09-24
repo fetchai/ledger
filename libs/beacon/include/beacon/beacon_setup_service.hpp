@@ -172,7 +172,7 @@ protected:
 
   /// @name Methods to send messages
   /// @{
-  void         SendBroadcast(uint16_t rnd, DKGEnvelope const &env);
+  void         SendBroadcast(DKGEnvelope const &env);
   virtual void BroadcastShares();
   virtual void BroadcastComplaints();
   virtual void BroadcastComplaintAnswers();

@@ -294,10 +294,6 @@ public:
   {
     FETCH_LOCK(lock_);
     enabled_ = enable;
-    // if(!enabled_)
-    //{
-    //  question_ =
-    //}
   }
 
   std::weak_ptr<core::Runnable> GetRunnable() override

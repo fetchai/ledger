@@ -403,7 +403,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReadyConnections()
                    " Minimum peer threshold requirement met for DKG");
 
     connections_ = ConvertToSet(can_see);
-    SendBroadcast(0, DKGEnvelope{ConnectionsMessage{connections_}});
+    SendBroadcast(DKGEnvelope{ConnectionsMessage{connections_}});
   }
 
   // Whether to proceed (if threshold peers have also met this condition)
@@ -832,13 +832,12 @@ BeaconSetupService::State BeaconSetupService::OnBeaconReady()
  *
  * @param env DKGEnvelope containing message to the broadcasted
  */
-void BeaconSetupService::SendBroadcast(uint16_t rnd, DKGEnvelope const &env)
+void BeaconSetupService::SendBroadcast(DKGEnvelope const &env)
 {
   DKGSerializer serialiser;
   serialiser << env;
-  std::string question =
-      std::to_string(rnd) + ToString(state_machine_->state()) + std::to_string(failures_);
-  FETCH_LOG_INFO(LOGGING_NAME, "Broadcast with qn: ", question);
+  std::string question = std::to_string(uint8_t(env.Message()->type())) +
+                         ToString(state_machine_->state()) + std::to_string(failures_);
   rbc_->SetQuestion(ConstByteArray(question), serialiser.data());
 }
 
@@ -849,9 +848,7 @@ void BeaconSetupService::SendBroadcast(uint16_t rnd, DKGEnvelope const &env)
 void BeaconSetupService::BroadcastShares()
 {
   beacon_->manager.GenerateCoefficients();
-  FETCH_LOG_INFO(LOGGING_NAME, "B shares");
-  SendBroadcast(1,
-                DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_SHARES),
+  SendBroadcast(DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_SHARES),
                                                 beacon_->manager.GetCoefficients(), "signature"}});
   for (auto &cab_i : beacon_->aeon.members)
   {
@@ -909,7 +906,7 @@ void BeaconSetupService::BroadcastComplaints()
 
   FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                  " broadcasts complaints size ", complaints_local.size());
-  SendBroadcast(2, DKGEnvelope{ComplaintsMessage{complaints_local, "signature"}});
+  SendBroadcast(DKGEnvelope{ComplaintsMessage{complaints_local, "signature"}});
 }
 
 /**
@@ -927,8 +924,7 @@ void BeaconSetupService::BroadcastComplaintAnswers()
                    " received complaints from ", beacon_->manager.cabinet_index(reporter));
     complaint_answer.insert({reporter, beacon_->manager.GetOwnShares(reporter)});
   }
-  SendBroadcast(3,
-                DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_COMPLAINT_ANSWERS),
+  SendBroadcast(DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_COMPLAINT_ANSWERS),
                                           complaint_answer, "signature"}});
 }
 
@@ -938,8 +934,8 @@ void BeaconSetupService::BroadcastComplaintAnswers()
 void BeaconSetupService::BroadcastQualCoefficients()
 {
   SendBroadcast(
-      4, DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_QUAL_SHARES),
-                                         beacon_->manager.GetQualCoefficients(), "signature"}});
+      DKGEnvelope{CoefficientsMessage{static_cast<uint8_t>(State::WAIT_FOR_QUAL_SHARES),
+                                      beacon_->manager.GetQualCoefficients(), "signature"}});
 }
 
 /**
@@ -951,10 +947,9 @@ void BeaconSetupService::BroadcastQualComplaints()
 {
   // Qual complaints consist of all nodes from which we did not receive qual shares, or verification
   // of qual shares failed
-  SendBroadcast(
-      5, DKGEnvelope{SharesMessage{
-             static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS),
-             beacon_->manager.ComputeQualComplaints(qual_coefficients_received_), "signature"}});
+  SendBroadcast(DKGEnvelope{SharesMessage{
+      static_cast<uint64_t>(State::WAIT_FOR_QUAL_COMPLAINTS),
+      beacon_->manager.ComputeQualComplaints(qual_coefficients_received_), "signature"}});
 }
 
 /**
@@ -972,8 +967,8 @@ void BeaconSetupService::BroadcastReconstructionShares()
     complaint_shares.insert({in, beacon_->manager.GetReceivedShares(in)});
   }
   SendBroadcast(
-      6, DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_RECONSTRUCTION_SHARES),
-                                   complaint_shares, "signature"}});
+      DKGEnvelope{SharesMessage{static_cast<uint64_t>(State::WAIT_FOR_RECONSTRUCTION_SHARES),
+                                complaint_shares, "signature"}});
 }
 
 /**
@@ -1417,7 +1412,7 @@ uint64_t GetExpectedDKGTime(uint64_t cabinet_size)
   }
   if (cabinet_size < 51)
   {
-    expected_dkg_time_s = 400;
+    expected_dkg_time_s = 250;
   }
   if (cabinet_size < 30)
   {
@@ -1474,23 +1469,6 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
 
   uint64_t cabinet_size        = beacon_->aeon.members.size();
   uint64_t expected_dkg_time_s = GetExpectedDKGTime(cabinet_size);
-
-  FETCH_LOG_INFO(LOGGING_NAME, "Original time: ", expected_dkg_time_s);
-
-  // TODO(HUT): remove this!!!
-  //if (expected_dkg_time_s > 1000)
-  {
-    if (beacon_->aeon.round_start < expected_dkg_time_s)
-    {
-      expected_dkg_time_s = expected_dkg_time_s - beacon_->aeon.round_start;
-    }
-    else
-    {
-      expected_dkg_time_s = expected_dkg_time_s - (beacon_->aeon.round_start / 10);
-    }
-  }
-
-  FETCH_LOG_INFO(LOGGING_NAME, "Recalculated time: ", expected_dkg_time_s, " Note: round start is :", beacon_->aeon.round_start);
 
   // RESET state will delay DKG until the start point (or next start point)
   if (state == BeaconSetupService::State::RESET)

@@ -34,8 +34,6 @@ void NetworkManagerImplementation::Start()
   FETCH_LOCK(thread_mutex_);
   running_ = true;
 
-  std::atomic<uint64_t> started_threads{0};
-
   if (threads_.empty())
   {
     owning_thread_ = std::this_thread::get_id();
@@ -43,22 +41,13 @@ void NetworkManagerImplementation::Start()
 
     for (std::size_t i = 0; i < number_of_threads_; ++i)
     {
-      auto thread = std::make_shared<std::thread>([this, i, &started_threads]() {
+      auto thread = std::make_shared<std::thread>([this, i]() {
         SetThreadName(name_, i);
-
-        io_service_->run_until(std::chrono::high_resolution_clock::now());
-
-        started_threads++;
 
         this->Work();
       });
       threads_.push_back(thread);
     }
-  }
-
-  while (started_threads != number_of_threads_)
-  {
-    std::this_thread::sleep_for(std::chrono::milliseconds(5));
   }
 }
 

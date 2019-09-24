@@ -42,8 +42,7 @@ public:
   BroadcastChannelInterface()          = default;
   virtual ~BroadcastChannelInterface() = default;
 
-  virtual bool ResetCabinet(CabinetMembers const &cabinet) = 0;
-  /*virtual void Broadcast(SerialisedMessage const &msg) = 0;*/
+  virtual bool ResetCabinet(CabinetMembers const &cabinet)                               = 0;
   virtual void Enable(bool enable)                                                       = 0;
   virtual void SetQuestion(ConstByteArray const &question, ConstByteArray const &answer) = 0;
   virtual WeakRunnable GetRunnable()                                                     = 0;
