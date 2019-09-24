@@ -48,7 +48,7 @@ public:
 
   ReturnType GetNext() override;
 
-  bool AddData(InputType const &data, LabelType const &label) override;
+  bool AddData(InputType const &data, LabelType const &labels) override;
 
   SizeType Size() const override;
   bool     IsDone() const override;

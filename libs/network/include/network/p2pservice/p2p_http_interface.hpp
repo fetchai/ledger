@@ -77,7 +77,8 @@ public:
 private:
   using Variant = variant::Variant;
 
-  http::HTTPResponse GetGeneralStatus(http::ViewParameters const &, http::HTTPRequest const &)
+  http::HTTPResponse GetGeneralStatus(http::ViewParameters const & /*unused*/,
+                                      http::HTTPRequest const & /*unused*/)
   {
     // create the system response
     Variant response    = Variant::Object();

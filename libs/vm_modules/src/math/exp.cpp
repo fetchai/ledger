@@ -32,7 +32,7 @@ namespace math {
 namespace {
 
 template <typename T>
-fetch::math::meta::IfIsMath<T, T> Exp(VM *, T const &a)
+fetch::math::meta::IfIsMath<T, T> Exp(VM * /*unused*/, T const &a)
 {
   T x;
   fetch::math::Exp(a, x);

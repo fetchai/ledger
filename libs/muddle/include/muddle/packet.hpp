@@ -142,8 +142,8 @@ public:
   void SetBroadcast(bool set = true) noexcept;
   void SetExchange(bool set = true) noexcept;
   void SetTTL(uint8_t ttl) noexcept;
-  void SetService(uint16_t service) noexcept;
-  void SetChannel(uint16_t channel) noexcept;
+  void SetService(uint16_t service_num) noexcept;
+  void SetChannel(uint16_t protocol_num) noexcept;
   void SetMessageNum(uint16_t message_num) noexcept;
   void SetNetworkId(uint32_t network_id) noexcept;
   void SetTarget(RawAddress const &address);
@@ -158,9 +158,9 @@ public:
   bool Verify() const;
 
 private:
-  RoutingHeader header_;   ///< The header containing primarily routing information
-  Payload       payload_;  ///< The payload of the message
-  Stamp         stamp_;    ///< Signature when stamped
+  RoutingHeader header_{};  ///< The header containing primarily routing information
+  Payload       payload_;   ///< The payload of the message
+  Stamp         stamp_;     ///< Signature when stamped
 
   ///< Cached versions of the addresses
   mutable Address target_;

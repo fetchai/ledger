@@ -180,7 +180,6 @@ BeaconSetupService::State BeaconSetupService::OnIdle()
 /**
  * Reset and initial state for the DKG. It should return to this state in the
  * case of total DKG failure
- *
  */
 BeaconSetupService::State BeaconSetupService::OnReset()
 {
@@ -1358,7 +1357,7 @@ std::weak_ptr<core::Runnable> BeaconSetupService::GetWeakRunnable()
 uint64_t GetExpectedDKGTime(uint64_t cabinet_size)
 {
   // Default
-  uint64_t expected_dkg_time_s = 10 * (cabinet_size << 1);
+  uint64_t expected_dkg_time_s = 10 * (cabinet_size << 1u);
 
   // empirical times observed - the base time you expect it to take based on cabinet size
   if (cabinet_size < 200)

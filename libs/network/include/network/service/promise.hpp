@@ -72,7 +72,7 @@ public:
 
   // Construction / Destruction
   PromiseImplementation() = default;
-  PromiseImplementation(uint64_t protocol, uint64_t function);
+  PromiseImplementation(uint64_t pro, uint64_t func);
   PromiseImplementation(PromiseImplementation const &) = delete;
   PromiseImplementation(PromiseImplementation &&)      = delete;
   ~PromiseImplementation()                             = default;

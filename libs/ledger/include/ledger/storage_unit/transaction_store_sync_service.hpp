@@ -158,7 +158,7 @@ private:
   FutureTimepoint fetch_object_wait_timeout_;
 
   RequestingObjectCount pending_object_count_;
-  uint64_t              max_object_count_;
+  uint64_t              max_object_count_{};
   TxStoredTxCounterPtr  stored_transactions_;
 
   RequestingSubTreeList pending_subtree_;

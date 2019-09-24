@@ -78,7 +78,7 @@ public:
       return false;
     }
 
-    bls::Signature    sign;
+    bls::Signature    sign{};
     std::stringstream ssig{static_cast<std::string>(signature)};
     ssig >> sign;
 
@@ -97,7 +97,7 @@ public:
 
 private:
   Identity       identity_;
-  bls::PublicKey public_key_;
+  bls::PublicKey public_key_{};
 };
 
 class BLSSigner : public Prover
@@ -129,7 +129,7 @@ public:
   ConstByteArray Sign(ConstByteArray const &text) const final
   {
     auto const     m = static_cast<std::string>(text);
-    bls::Signature s;
+    bls::Signature s{};
     private_key_.sign(s, m);
     std::stringstream signature;
     signature << s;
@@ -156,8 +156,8 @@ public:
   }
 
 private:
-  bls::SecretKey private_key_;
-  bls::PublicKey public_key_;
+  bls::SecretKey private_key_{};
+  bls::PublicKey public_key_{};
 };
 
 }  // namespace crypto

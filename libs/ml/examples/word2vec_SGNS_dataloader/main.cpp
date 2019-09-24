@@ -170,8 +170,8 @@ struct TrainingParams
   DataType starting_learning_rate_per_sample =
       0.025;  // these are the learning rates we have for each sample
   DataType ending_learning_rate_per_sample = 0.0001;
-  DataType starting_learning_rate;  // this is the true learning rate set for the graph training
-  DataType ending_learning_rate;
+  DataType starting_learning_rate{};  // this is the true learning rate set for the graph training
+  DataType ending_learning_rate{};
 
   fetch::ml::optimisers::LearningRateParam<DataType> learning_rate_param{
       fetch::ml::optimisers::LearningRateParam<DataType>::LearningRateDecay::LINEAR};

@@ -34,7 +34,7 @@ namespace {
  * method for taking the sine of a value
  */
 template <typename T>
-fetch::math::meta::IfIsMath<T, T> Sin(VM *, T const &a)
+fetch::math::meta::IfIsMath<T, T> Sin(VM * /*unused*/, T const &a)
 {
   T x;
   fetch::math::Sin(a, x);
@@ -45,7 +45,7 @@ fetch::math::meta::IfIsMath<T, T> Sin(VM *, T const &a)
  * method for taking the cosine of a value
  */
 template <typename T>
-fetch::math::meta::IfIsMath<T, T> Cos(VM *, T const &a)
+fetch::math::meta::IfIsMath<T, T> Cos(VM * /*unused*/, T const &a)
 {
   T x;
   fetch::math::Cos(a, x);
@@ -56,7 +56,7 @@ fetch::math::meta::IfIsMath<T, T> Cos(VM *, T const &a)
  * method for taking the tangent of a value
  */
 template <typename T>
-fetch::math::meta::IfIsMath<T, T> Tan(VM *, T const &a)
+fetch::math::meta::IfIsMath<T, T> Tan(VM * /*unused*/, T const &a)
 {
   T x;
   fetch::math::Tan(a, x);
@@ -67,7 +67,7 @@ fetch::math::meta::IfIsMath<T, T> Tan(VM *, T const &a)
  * method for taking the sine of a value
  */
 template <typename T>
-fetch::math::meta::IfIsMath<T, T> ASin(VM *, T const &a)
+fetch::math::meta::IfIsMath<T, T> ASin(VM * /*unused*/, T const &a)
 {
   T x;
   fetch::math::ASin(a, x);
@@ -78,7 +78,7 @@ fetch::math::meta::IfIsMath<T, T> ASin(VM *, T const &a)
  * method for taking the cosine of a value
  */
 template <typename T>
-fetch::math::meta::IfIsMath<T, T> ACos(VM *, T const &a)
+fetch::math::meta::IfIsMath<T, T> ACos(VM * /*unused*/, T const &a)
 {
   T x;
   fetch::math::ACos(a, x);
@@ -89,7 +89,7 @@ fetch::math::meta::IfIsMath<T, T> ACos(VM *, T const &a)
  * method for taking the tangent of a value
  */
 template <typename T>
-fetch::math::meta::IfIsMath<T, T> ATan(VM *, T const &a)
+fetch::math::meta::IfIsMath<T, T> ATan(VM * /*unused*/, T const &a)
 {
   T x;
   fetch::math::ATan(a, x);
@@ -100,7 +100,7 @@ fetch::math::meta::IfIsMath<T, T> ATan(VM *, T const &a)
  * method for taking the tangent of a value
  */
 template <typename T>
-fetch::math::meta::IfIsMath<T, T> ATan2(VM *, T const &a, T const &b)
+fetch::math::meta::IfIsMath<T, T> ATan2(VM * /*unused*/, T const &a, T const &b)
 {
   T x;
   fetch::math::ATan2(a, b, x);
@@ -111,7 +111,7 @@ fetch::math::meta::IfIsMath<T, T> ATan2(VM *, T const &a, T const &b)
  * method for taking the sine of a value
  */
 template <typename T>
-fetch::math::meta::IfIsMath<T, T> SinH(VM *, T const &a)
+fetch::math::meta::IfIsMath<T, T> SinH(VM * /*unused*/, T const &a)
 {
   T x;
   fetch::math::SinH(a, x);
@@ -122,7 +122,7 @@ fetch::math::meta::IfIsMath<T, T> SinH(VM *, T const &a)
  * method for taking the cosine of a value
  */
 template <typename T>
-fetch::math::meta::IfIsMath<T, T> CosH(VM *, T const &a)
+fetch::math::meta::IfIsMath<T, T> CosH(VM * /*unused*/, T const &a)
 {
   T x;
   fetch::math::CosH(a, x);
@@ -133,7 +133,7 @@ fetch::math::meta::IfIsMath<T, T> CosH(VM *, T const &a)
  * method for taking the tangent of a value
  */
 template <typename T>
-fetch::math::meta::IfIsMath<T, T> TanH(VM *, T const &a)
+fetch::math::meta::IfIsMath<T, T> TanH(VM * /*unused*/, T const &a)
 {
   T x;
   fetch::math::TanH(a, x);
@@ -144,7 +144,7 @@ fetch::math::meta::IfIsMath<T, T> TanH(VM *, T const &a)
  * method for taking the sine of a value
  */
 template <typename T>
-fetch::math::meta::IfIsMath<T, T> ASinH(VM *, T const &a)
+fetch::math::meta::IfIsMath<T, T> ASinH(VM * /*unused*/, T const &a)
 {
   T x;
   fetch::math::ASinH(a, x);
@@ -155,7 +155,7 @@ fetch::math::meta::IfIsMath<T, T> ASinH(VM *, T const &a)
  * method for taking the cosine of a value
  */
 template <typename T>
-fetch::math::meta::IfIsMath<T, T> ACosH(VM *, T const &a)
+fetch::math::meta::IfIsMath<T, T> ACosH(VM * /*unused*/, T const &a)
 {
   T x;
   fetch::math::ACosH(a, x);
@@ -166,7 +166,7 @@ fetch::math::meta::IfIsMath<T, T> ACosH(VM *, T const &a)
  * method for taking the tangent of a value
  */
 template <typename T>
-fetch::math::meta::IfIsMath<T, T> ATanH(VM *, T const &a)
+fetch::math::meta::IfIsMath<T, T> ATanH(VM * /*unused*/, T const &a)
 {
   T x;
   fetch::math::ATanH(a, x);

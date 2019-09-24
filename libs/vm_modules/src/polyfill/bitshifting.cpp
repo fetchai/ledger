@@ -29,13 +29,13 @@ namespace vm_modules {
 namespace {
 
 template <typename T>
-T LeftShift(VM *, T x, T s)
+T LeftShift(VM * /*unused*/, T x, T s)
 {
   return T(x << s);
 }
 
 template <typename T>
-T RightShift(VM *, T x, T s)
+T RightShift(VM * /*unused*/, T x, T s)
 {
   return T(x >> s);
 }

@@ -175,7 +175,7 @@ void Generator::CreateFunctions(IRBlockNodePtr const &block_node)
           ConvertToIRExpressionNodePtr(function_definition_node->children[1]);
       IRFunctionPtr        f              = identifier_node->function;
       std::string const &  name           = f->name;
-      auto const           num_parameters = (int)f->parameter_variables.size();
+      auto const           num_parameters = static_cast<int>(f->parameter_variables.size());
       uint16_t const       return_type_id = f->return_type->resolved_id;
       Executable::Function function(name, annotations, num_parameters, return_type_id);
       for (IRVariablePtr const &variable : f->parameter_variables)

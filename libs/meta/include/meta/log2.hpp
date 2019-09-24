@@ -31,7 +31,7 @@ constexpr IfIsInteger<T, bool> IsLog2(T val) noexcept
 template <typename T>
 constexpr IfIsInteger<T, T> Log2(T val) noexcept
 {
-  return ((val > 1) ? (1 + Log2(val >> 1)) : 0);
+  return ((val > 1) ? (1 + Log2(val >> 1u)) : 0);
 }
 
 }  // namespace meta

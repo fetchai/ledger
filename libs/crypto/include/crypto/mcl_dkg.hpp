@@ -54,7 +54,7 @@ void UpdateRHS(uint32_t rank, bn::G2 &rhsG, std::vector<bn::G2> const &input);
 bn::G2 ComputeRHS(uint32_t rank, std::vector<bn::G2> const &input);
 
 void ComputeShares(bn::Fr &s_i, bn::Fr &sprime_i, std::vector<bn::Fr> const &a_i,
-                   std::vector<bn::Fr> const &b_i, uint32_t rank);
+                   std::vector<bn::Fr> const &b_i, uint32_t index);
 
 bn::Fr ComputeZi(std::set<uint32_t> const &parties, std::vector<bn::Fr> const &shares);
 

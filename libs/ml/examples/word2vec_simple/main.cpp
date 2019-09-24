@@ -105,7 +105,7 @@ TensorType LoadEmbeddings(std::string const &filename)
   return embeddings;
 }
 
-int ArgPos(char *str, int argc, char **argv)
+int ArgPos(char const *str, int argc, char **argv)
 {
   int a;
   for (a = 1; a < argc; a++)
@@ -141,64 +141,64 @@ int main(int argc, char **argv)
   SizeType                 print_frequency = 10000;
 
   /// INPUT ARGUMENTS ///
-  if ((i = ArgPos((char *)"-train", argc, argv)) > 0)
+  if ((i = ArgPos("-train", argc, argv)) > 0)
   {
     train_file = argv[i + 1];
   }
-  if ((i = ArgPos((char *)"-mode", argc, argv)) > 0)
+  if ((i = ArgPos("-mode", argc, argv)) > 0)
   {
     assert((std::string(argv[i + 1]) == "cbow") || (std::string(argv[i + 1]) == "sgns"));
     mode = std::string(argv[i + 1]) == "cbow";
   }
-  if ((i = ArgPos((char *)"-output", argc, argv)) > 0)
+  if ((i = ArgPos("-output", argc, argv)) > 0)
   {
     output_file = argv[i + 1];
   }
-  if ((i = ArgPos((char *)"-k", argc, argv)) > 0)
+  if ((i = ArgPos("-k", argc, argv)) > 0)
   {
     top_k = std::stoull(argv[i + 1]);
   }
-  if ((i = ArgPos((char *)"-word1", argc, argv)) > 0)
+  if ((i = ArgPos("-word1", argc, argv)) > 0)
   {
     test_words[0] = argv[i + 1];
   }
-  if ((i = ArgPos((char *)"-word2", argc, argv)) > 0)
+  if ((i = ArgPos("-word2", argc, argv)) > 0)
   {
     test_words[1] = argv[i + 1];
   }
-  if ((i = ArgPos((char *)"-word3", argc, argv)) > 0)
+  if ((i = ArgPos("-word3", argc, argv)) > 0)
   {
     test_words[2] = argv[i + 1];
   }
-  if ((i = ArgPos((char *)"-window", argc, argv)) > 0)
+  if ((i = ArgPos("-window", argc, argv)) > 0)
   {
     window_size = std::stoull(argv[i + 1]);
   }
-  if ((i = ArgPos((char *)"-negative", argc, argv)) > 0)
+  if ((i = ArgPos("-negative", argc, argv)) > 0)
   {
     negative = std::stoull(argv[i + 1]);
   }
-  if ((i = ArgPos((char *)"-min", argc, argv)) > 0)
+  if ((i = ArgPos("-min", argc, argv)) > 0)
   {
     min_count = std::stoull(argv[i + 1]);
   }
-  if ((i = ArgPos((char *)"-embedding", argc, argv)) > 0)
+  if ((i = ArgPos("-embedding", argc, argv)) > 0)
   {
     embeddings_size = std::stoull(argv[i + 1]);
   }
-  if ((i = ArgPos((char *)"-epochs", argc, argv)) > 0)
+  if ((i = ArgPos("-epochs", argc, argv)) > 0)
   {
     iter = std::stoull(argv[i + 1]);
   }
-  if ((i = ArgPos((char *)"-lr", argc, argv)) > 0)
+  if ((i = ArgPos("-lr", argc, argv)) > 0)
   {
     alpha = std::stof(argv[i + 1]);
   }
-  if ((i = ArgPos((char *)"-print", argc, argv)) > 0)
+  if ((i = ArgPos("-print", argc, argv)) > 0)
   {
     print_frequency = std::stoull(argv[i + 1]);
   }
-  if ((i = ArgPos((char *)"-load", argc, argv)) > 0)
+  if ((i = ArgPos("-load", argc, argv)) > 0)
   {
     load = (std::stoull(argv[i + 1]) != 0u);
   }

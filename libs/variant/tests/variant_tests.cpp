@@ -243,7 +243,7 @@ TEST_F(VariantTests, CheckNullAndUndefined)
   EXPECT_TRUE(v.IsUndefined());
 }
 
-TEST_F(VariantTests, CheckElementAccess)
+TEST_F(VariantTests, CheckElementAccess)  // NOLINT
 {
   {
     Variant v{1};

@@ -318,7 +318,7 @@ template <typename T>
 struct StateFactory<T, std::enable_if_t<IsMetatype<T>>>
 {
   template <typename... Args>
-  Ptr<IState> operator()(Args &&...)
+  Ptr<IState> operator()(Args &&... /*unused*/)
   {
     return {};
   }

@@ -100,7 +100,7 @@ inline PrivateKey HashToPrivateKey(byte_array::ConstByteArray const &seed)
 template <typename KeyType>
 KeyType PrivateKeyShare(std::vector<KeyType> &kl, Id const &id)
 {
-  KeyType ret;
+  KeyType ret{};
   int32_t error = blsSecretKeyShare(&ret, kl.data(), kl.size(), &id);
 
   if (error != 0)

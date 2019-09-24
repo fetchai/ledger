@@ -117,7 +117,7 @@ public:
 
   /// @name Block Management
   /// @{
-  BlockStatus AddBlock(Block const &block);
+  BlockStatus AddBlock(Block const &blk);
   BlockPtr    GetBlock(BlockHash const &hash) const;
   bool        RemoveBlock(BlockHash const &hash);
   /// @}
@@ -127,9 +127,8 @@ public:
   BlockPtr  GetHeaviestBlock() const;
   BlockHash GetHeaviestBlockHash() const;
   Blocks    GetHeaviestChain(uint64_t limit = UPPER_BOUND) const;
-  Blocks    GetChainPreceding(BlockHash at, uint64_t limit = UPPER_BOUND) const;
-  Blocks    TimeTravel(BlockHash starting_point,
-                       int64_t   limit = static_cast<int64_t>(UPPER_BOUND)) const;
+  Blocks    GetChainPreceding(BlockHash start, uint64_t limit = UPPER_BOUND) const;
+  Blocks    TimeTravel(BlockHash start, int64_t limit = static_cast<int64_t>(UPPER_BOUND)) const;
   bool      GetPathToCommonAncestor(
            Blocks &blocks, BlockHash tip, BlockHash node, uint64_t limit = UPPER_BOUND,
            BehaviourWhenLimit behaviour = BehaviourWhenLimit::RETURN_MOST_RECENT) const;
@@ -188,7 +187,7 @@ private:
     uint64_t  weight{0};
     BlockHash hash{GENESIS_DIGEST};
 
-    bool Update(Block const &);
+    bool Update(Block const &block);
   };
 
   /// @name Persistence Management
@@ -212,7 +211,7 @@ private:
   bool LookupBlockFromCache(BlockHash const &hash, IntBlockPtr &block) const;
   bool LookupBlockFromStorage(BlockHash const &hash, IntBlockPtr &block, bool add_to_cache) const;
   bool IsBlockInCache(BlockHash const &hash) const;
-  void AddBlockToCache(IntBlockPtr const &) const;
+  void AddBlockToCache(IntBlockPtr const &block) const;
   void AddBlockToBloomFilter(Block const &block) const;
   /// @}
 
@@ -236,7 +235,7 @@ private:
   BlockHash GetHeadHash();
   void      SetHeadHash(BlockHash const &hash);
 
-  bool RemoveTree(BlockHash const &hash, BlockHashSet &invalidated_blocks);
+  bool RemoveTree(BlockHash const &removed_hash, BlockHashSet &invalidated_blocks);
 
   BlockStorePtr block_store_;  /// < Long term storage and backup
   std::fstream  head_store_;

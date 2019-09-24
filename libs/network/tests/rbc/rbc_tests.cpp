@@ -332,7 +332,7 @@ public:
   {
     rbc_.ResetCabinet(new_cabinet);
   }
-  void Broadcast(SerialisedMessage const &msg, uint8_t) override
+  void Broadcast(SerialisedMessage const &msg, uint8_t /*num_messages*/) override
   {
     rbc_.Broadcast(msg);
   }

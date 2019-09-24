@@ -118,27 +118,27 @@ public:
 
   constexpr bool operator==(UInt const &other) const;
   constexpr bool operator!=(UInt const &other) const;
-  constexpr bool operator<(UInt const &o) const;
-  constexpr bool operator>(UInt const &o) const;
-  constexpr bool operator<=(UInt const &o) const;
-  constexpr bool operator>=(UInt const &o) const;
+  constexpr bool operator<(UInt const &other) const;
+  constexpr bool operator>(UInt const &other) const;
+  constexpr bool operator<=(UInt const &other) const;
+  constexpr bool operator>=(UInt const &other) const;
 
   ////////////////////////////////////////////////
   /// comparison operators against other types ///
   ////////////////////////////////////////////////
 
   template <typename T>
-  constexpr meta::IfIsUnsignedInteger<T, bool> operator==(T o) const;
+  constexpr meta::IfIsUnsignedInteger<T, bool> operator==(T other) const;
   template <typename T>
-  constexpr meta::IfIsUnsignedInteger<T, bool> operator!=(T o) const;
+  constexpr meta::IfIsUnsignedInteger<T, bool> operator!=(T other) const;
   template <typename T>
-  constexpr meta::IfIsUnsignedInteger<T, bool> operator<(T o) const;
+  constexpr meta::IfIsUnsignedInteger<T, bool> operator<(T other) const;
   template <typename T>
-  constexpr meta::IfIsUnsignedInteger<T, bool> operator>(T o) const;
+  constexpr meta::IfIsUnsignedInteger<T, bool> operator>(T other) const;
   template <typename T>
-  constexpr meta::IfIsUnsignedInteger<T, bool> operator<=(T o) const;
+  constexpr meta::IfIsUnsignedInteger<T, bool> operator<=(T other) const;
   template <typename T>
-  constexpr meta::IfIsUnsignedInteger<T, bool> operator>=(T o) const;
+  constexpr meta::IfIsUnsignedInteger<T, bool> operator>=(T other) const;
 
   ///////////////////////
   /// unary operators ///
@@ -201,8 +201,8 @@ public:
   template <typename T>
   constexpr meta::IfIsUnsignedInteger<T, UInt> &operator^=(T n);
 
-  constexpr UInt &operator<<=(std::size_t n);
-  constexpr UInt &operator>>=(std::size_t n);
+  constexpr UInt &operator<<=(std::size_t bits);
+  constexpr UInt &operator>>=(std::size_t bits);
 
   constexpr std::size_t msb() const;
   constexpr std::size_t lsb() const;
@@ -254,7 +254,7 @@ private:
   struct MaxValueConstructorEnabler
   {
   };
-  constexpr explicit UInt(MaxValueConstructorEnabler)
+  constexpr explicit UInt(MaxValueConstructorEnabler /*unused*/)
   {
     for (auto &itm : wide_)
     {
@@ -1098,7 +1098,7 @@ inline double ToDouble(UInt<256> const &x)
   {
     double   value;
     uint64_t bits;
-  } conv;
+  } conv{};
 
   conv.bits = 0;
   conv.bits |= uint64_t(uint64_t(exponent & ((1u << 12u) - 1)) << 52u);

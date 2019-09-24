@@ -234,7 +234,7 @@ private:
   ResponseQueueType          write_queue_;
   Mutex                      write_mutex_;
 
-  HandleType handle_;
+  HandleType handle_{};
   bool       is_open_ = false;
 };
 }  // namespace http

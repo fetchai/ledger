@@ -128,7 +128,7 @@ protected:
     return index;
   }
 
-  void OnMessage(Packet const &packet, MuddleAddress const &)
+  void OnMessage(Packet const &packet, MuddleAddress const & /*unused*/)
   {
     counters_.ApplyVoid([this, &packet](Counters &counters) {
       ++(counters[NodeIndex(packet.GetSender())][NodeIndex(packet.GetTarget())]);

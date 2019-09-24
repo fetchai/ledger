@@ -504,17 +504,17 @@ private:
       return counter + static_cast<std::size_t>(std::forward<Arg>(arg).size());
     }
 
-    constexpr std::size_t operator()(std::size_t counter, std::uint8_t) noexcept
+    constexpr std::size_t operator()(std::size_t counter, std::uint8_t /*unused*/) noexcept
     {
       return counter + 1;
     }
 
-    constexpr std::size_t operator()(std::size_t counter, std::int8_t) noexcept
+    constexpr std::size_t operator()(std::size_t counter, std::int8_t /*unused*/) noexcept
     {
       return counter + 1;
     }
 
-    constexpr std::size_t operator()(std::size_t counter, char) noexcept
+    constexpr std::size_t operator()(std::size_t counter, char /*unused*/) noexcept
     {
       return counter + 1;
     }

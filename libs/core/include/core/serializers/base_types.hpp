@@ -226,7 +226,7 @@ struct SignedIntegerSerializerImplementation
       {
         uint8_t code;
         int8_t  value;
-      } conversion;
+      } conversion{};
       conversion.code = code;
 
       if (conversion.value < -0x20 || conversion.value >= 0x80)

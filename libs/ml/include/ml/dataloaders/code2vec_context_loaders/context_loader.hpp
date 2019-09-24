@@ -78,7 +78,7 @@ public:
   void     SetTestRatio(float new_test_ratio) override;
   void     SetValidationRatio(float new_validation_ratio) override;
 
-  void AddDataAsString(std::string const &text);
+  void AddDataAsString(std::string const &c2v_input);
   void createIdxUMaps();
 
   umap_int_str umap_idx_to_functionname();

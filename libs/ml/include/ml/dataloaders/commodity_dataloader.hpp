@@ -76,13 +76,13 @@ private:
   std::shared_ptr<SizeType> test_cursor_       = std::make_shared<SizeType>(0);
   std::shared_ptr<SizeType> validation_cursor_ = std::make_shared<SizeType>(0);
 
-  SizeType train_size_;
-  SizeType test_size_;
-  SizeType validation_size_;
+  SizeType train_size_{};
+  SizeType test_size_{};
+  SizeType validation_size_{};
 
-  SizeType total_size_;
-  SizeType test_offset_;
-  SizeType validation_offset_;
+  SizeType total_size_{};
+  SizeType test_offset_{};
+  SizeType validation_offset_{};
 
   float test_to_train_ratio_       = 0.0f;
   float validation_to_train_ratio_ = 0.0f;

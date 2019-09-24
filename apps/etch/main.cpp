@@ -145,12 +145,12 @@ std::string ReadFileContents(std::string const &path)
 // data
 Parameters params;
 
-int32_t Argc(VM *, TypeId)
+int32_t Argc(VM * /*unused*/, TypeId /*unused*/)
 {
   return static_cast<int32_t>(params.script().size());
 }
 
-Ptr<String> Argv(VM *vm, TypeId, int32_t index)
+Ptr<String> Argv(VM *vm, TypeId /*unused*/, int32_t index)
 {
   return Ptr<String>{new String{vm, params.script().at(static_cast<std::size_t>(index))}};
 }

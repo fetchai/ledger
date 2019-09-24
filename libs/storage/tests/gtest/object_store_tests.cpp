@@ -36,8 +36,8 @@ using namespace fetch::testing;
  */
 struct TestSerDeser
 {
-  int         first;
-  uint64_t    second;
+  int         first{};
+  uint64_t    second{};
   std::string third;
 
   /**

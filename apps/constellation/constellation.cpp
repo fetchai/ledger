@@ -107,7 +107,7 @@ std::size_t CalcNetworkManagerThreads(std::size_t num_lanes)
 }
 
 uint16_t LookupLocalPort(Manifest const &manifest, ServiceIdentifier::Type service,
-                         int32_t instance = -1)
+                         uint32_t instance = ServiceIdentifier::INVALID_SERVICE_IDENTIFIER)
 {
   ServiceIdentifier const identifier{service, instance};
 
@@ -133,8 +133,7 @@ ledger::ShardConfigs GenerateShardsConfig(Config &cfg, uint16_t start_port)
   for (uint32_t i = 0; i < cfg.num_lanes(); ++i)
   {
     // lookup the service in the provided manifest
-    auto it = cfg.manifest.FindService(
-        ServiceIdentifier{ServiceIdentifier::Type::LANE, static_cast<int32_t>(i)});
+    auto it = cfg.manifest.FindService(ServiceIdentifier{ServiceIdentifier::Type::LANE, i});
 
     if (it == cfg.manifest.end())
     {

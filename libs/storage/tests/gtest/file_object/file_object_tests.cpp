@@ -277,7 +277,7 @@ TEST_F(FileObjectTests, DISABLED_SeekAndTellFiles)
       std::string new_chars(length_of_chars, NewChar());
 
       file_object_->Seek(index_to_change);
-      file_object_->Write((uint8_t const *)(new_chars.c_str()), new_chars.size());
+      file_object_->Write(reinterpret_cast<uint8_t const *>(new_chars.c_str()), new_chars.size());
 
       for (std::size_t k = 0; k < length_of_chars; ++k)
       {

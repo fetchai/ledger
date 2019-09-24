@@ -57,7 +57,7 @@ public:
 
   bool Parse(char const *uri);
   bool Parse(ConstByteArray const &uri);
-  bool Parse(std::string const &uri);
+  bool Parse(std::string const &data);
 
   /// @name Basic Accessors
   /// @{

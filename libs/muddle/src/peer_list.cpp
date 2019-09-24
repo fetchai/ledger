@@ -227,7 +227,7 @@ bool PeerConnectionList::ReadyForRetry(PeerMetadata const &metadata) const
 {
   std::size_t const log2_backoff = std::min(metadata.consecutive_failures, MAX_LOG2_BACKOFF);
   Timepoint const   backoff_deadline =
-      metadata.last_failed_connection + std::chrono::seconds{1 << log2_backoff};
+      metadata.last_failed_connection + std::chrono::seconds{1u << log2_backoff};
   return (Clock::now() >= backoff_deadline);
 }
 

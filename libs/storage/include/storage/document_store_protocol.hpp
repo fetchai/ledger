@@ -284,7 +284,7 @@ private:
 
   void SetLaneLog2(LaneType const &count)
   {
-    log2_lanes_ = uint32_t((sizeof(uint32_t) << 3) - uint32_t(__builtin_clz(uint32_t(count)) + 1));
+    log2_lanes_ = uint32_t((sizeof(uint32_t) << 3u) - uint32_t(__builtin_clz(uint32_t(count)) + 1));
   }
 
   NewRevertibleDocumentStore *doc_store_;

@@ -29,13 +29,13 @@ namespace vm_modules {
 namespace {
 
 template <typename T>
-T And(VM *, T x, T s)
+T And(VM * /*unused*/, T x, T s)
 {
   return T(x & s);
 }
 
 template <typename T>
-T Or(VM *, T x, T s)
+T Or(VM * /*unused*/, T x, T s)
 {
   return T(x | s);
 }

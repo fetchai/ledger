@@ -3,28 +3,24 @@ bugprone-*,\
 cert-dcl21-cpp,\
 cert-dcl50-cpp,\
 cert-env33-c,\
--cert-err34-c,\
 cert-err52-cpp,\
--cert-err58-cpp,\
 cert-err60-cpp,\
--cert-flp30-c,\
--clang-analyzer-security.FloatLoopCounter,\
 google-build-namespaces,\
 google-explicit-constructor,\
+google-readability-casting,\
 google-readability-todo,\
 google-runtime-operator,\
+hicpp-exception-baseclass,\
 misc-*,\
 modernize-*,\
 performance-*,\
-readability-avoid-const-params-in-decls,\
-readability-braces-around-statements,\
-readability-container-size-empty,\
-readability-delete-null-pointer,\
-readability-deleted-default,\
-readability-else-after-return,\
-readability-implicit-bool-conversion,\
-readability-misplaced-array-index,\
-readability-non-const-parameter,\
-readability-redundant-*,\
-readability-simplify-boolean-expr,\
-readability-static-definition-in-anonymous-namespace"
+readability-*,\
+-readability-identifier-naming"
+
+# To be enabled:
+#   cert-err34-c
+#   cert-err58-cpp
+#   cert-flp30-c
+#   clang-analyzer-* (undocumented for clang-tidy-6 - use build stdout to determine subset of available/desired checks)
+#   cppcoreguidelines-special-member-functions
+#   hicpp-signed-bitwise

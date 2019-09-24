@@ -46,8 +46,8 @@ public:
   }
 
   VectorRegisterIterator(type const *d, std::size_t size)
-    : ptr_((MMRegisterType *)d)
-    , end_((MMRegisterType *)(d + size))
+    : ptr_((MMRegisterType *)(d))         // NOLINT
+    , end_((MMRegisterType *)(d + size))  // NOLINT
   {}
 
   void Next(VectorRegisterType &m)

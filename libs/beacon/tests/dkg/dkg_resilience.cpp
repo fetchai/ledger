@@ -50,7 +50,7 @@ using ConstByteArray = fetch::byte_array::ConstByteArray;
 
 struct DummyManifestCache : public ManifestCacheInterface
 {
-  bool QueryManifest(Address const &, Manifest &) override
+  bool QueryManifest(Address const & /*address*/, Manifest & /*manifest*/) override
   {
     return false;
   }

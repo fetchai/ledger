@@ -220,9 +220,9 @@ public:
    * @param n integer value to set FixedPoint to
    */
   template <typename T>
-  constexpr explicit FixedPoint(T n, meta::IfIsInteger<T> * = nullptr);
+  constexpr explicit FixedPoint(T n, meta::IfIsInteger<T> * /*unused*/ = nullptr);
   template <typename T>
-  constexpr explicit FixedPoint(T n, meta::IfIsFloat<T> * = nullptr);
+  constexpr explicit FixedPoint(T n, meta::IfIsFloat<T> * /*unused*/ = nullptr);
   constexpr FixedPoint(FixedPoint const &o);
   constexpr FixedPoint(Type const &integer, UnsignedType const &fraction);
 
@@ -409,7 +409,7 @@ private:
   {
   };
 
-  constexpr FixedPoint(Type n, const NoScale &)
+  constexpr FixedPoint(Type n, const NoScale & /*unused*/)
     : data_(n)
   {}
 
@@ -560,17 +560,20 @@ FixedPoint<I, F> const FixedPoint<I, F>::FP_MAX{FixedPoint<I, F>::FromBase(Fixed
 template <std::uint16_t I, std::uint16_t F>
 FixedPoint<I, F> const FixedPoint<I, F>::FP_MIN{FixedPoint<I, F>::FromBase(FixedPoint<I, F>::MIN)};
 template <std::uint16_t I, std::uint16_t F>
-FixedPoint<I, F> const FixedPoint<I, F>::NaN{FixedPoint<I, F>::FromBase(
-    (typename FixedPoint<I, F>::Type)(1) << (FixedPoint<I, F>::TOTAL_BITS - 1) |
-    (typename FixedPoint<I, F>::Type)(1))};
+FixedPoint<I, F> const FixedPoint<I, F>::NaN{
+    FixedPoint<I, F>::FromBase(static_cast<typename FixedPoint<I, F>::Type>(1)
+                                   << static_cast<uint32_t>(FixedPoint<I, F>::TOTAL_BITS - 1) |
+                               static_cast<typename FixedPoint<I, F>::Type>(1))};
 template <std::uint16_t I, std::uint16_t F>
 FixedPoint<I, F> const FixedPoint<I, F>::POSITIVE_INFINITY{
-    FixedPoint<I, F>::NaN | FixedPoint<I, F>::FromBase((typename FixedPoint<I, F>::Type)(1)
-                                                       << (FixedPoint<I, F>::FRACTIONAL_BITS - 1))};
+    FixedPoint<I, F>::NaN |
+    FixedPoint<I, F>::FromBase(static_cast<typename FixedPoint<I, F>::Type>(1)
+                               << static_cast<uint32_t>(FixedPoint<I, F>::FRACTIONAL_BITS - 1))};
 template <std::uint16_t I, std::uint16_t F>
 FixedPoint<I, F> const FixedPoint<I, F>::NEGATIVE_INFINITY{
-    FixedPoint<I, F>::NaN | FixedPoint<I, F>::FromBase((typename FixedPoint<I, F>::Type)(3)
-                                                       << (FixedPoint<I, F>::FRACTIONAL_BITS - 2))};
+    FixedPoint<I, F>::NaN |
+    FixedPoint<I, F>::FromBase(static_cast<typename FixedPoint<I, F>::Type>(3)
+                               << static_cast<uint32_t>(FixedPoint<I, F>::FRACTIONAL_BITS - 2))};
 
 template <std::uint16_t I, std::uint16_t F>
 std::ostream &operator<<(std::ostream &s, FixedPoint<I, F> const &n)
@@ -656,7 +659,7 @@ constexpr bool FixedPoint<I, F>::IsStateDivisionByZero()
  */
 template <std::uint16_t I, std::uint16_t F>
 template <typename T>
-constexpr FixedPoint<I, F>::FixedPoint(T n, meta::IfIsInteger<T> *)
+constexpr FixedPoint<I, F>::FixedPoint(T n, meta::IfIsInteger<T> * /*unused*/)
   : data_{static_cast<typename FixedPoint<I, F>::Type>(n)}
 {
   if (CheckOverflow(static_cast<NextType>(n)))
@@ -676,7 +679,7 @@ constexpr FixedPoint<I, F>::FixedPoint(T n, meta::IfIsInteger<T> *)
  */
 template <std::uint16_t I, std::uint16_t F>
 template <typename T>
-constexpr FixedPoint<I, F>::FixedPoint(T n, meta::IfIsFloat<T> *)
+constexpr FixedPoint<I, F>::FixedPoint(T n, meta::IfIsFloat<T> * /*unused*/)
   : data_(static_cast<typename FixedPoint<I, F>::Type>(n * ONE_MASK))
 {
   if (CheckOverflow(static_cast<NextType>(n) * static_cast<NextType>(ONE_MASK)))

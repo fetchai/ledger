@@ -49,7 +49,7 @@ char const *ToString(ServiceIdentifier::Type type)
   return text;
 }
 
-ServiceIdentifier::ServiceIdentifier(Type type, int32_t instance)
+ServiceIdentifier::ServiceIdentifier(Type type, uint32_t instance)
   : type_{type}
   , instance_{instance}
 {}

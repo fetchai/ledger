@@ -55,7 +55,7 @@ public:
     this->min   = min;
     this->max   = max;
   }
-  double delta, min, max;
+  double delta, min{}, max{};
 
   ~TrustModifier2() = default;
 };

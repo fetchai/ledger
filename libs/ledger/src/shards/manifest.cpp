@@ -93,7 +93,7 @@ void Manifest::AddService(ServiceIdentifier const &id, ManifestEntry &&entry)
 
 std::string Manifest::FindExternalAddress(ServiceIdentifier::Type type, int32_t index) const
 {
-  auto it = FindService(ServiceIdentifier{type, index});
+  auto it = FindService(ServiceIdentifier{type, static_cast<uint32_t>(index)});
   if (it == end())
   {
     throw std::runtime_error(std::string{"Unable to lookup external address for "} +
@@ -136,7 +136,7 @@ bool Manifest::Parse(ConstByteArray const &text)
           {
             // create the lane service id
             ServiceIdentifier const lane_service{ServiceIdentifier::Type::LANE,
-                                                 static_cast<int32_t>(i)};
+                                                 static_cast<uint32_t>(i)};
 
             // attempt to extract the section of the config
             if (!ExtractSection(lanes[i], lane_service))

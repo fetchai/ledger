@@ -1,3 +1,4 @@
+import re
 import shutil
 import subprocess
 import sys
@@ -7,11 +8,33 @@ from os.path import abspath, commonprefix, isabs, isfile, join, relpath
 import yaml
 
 
-def read_static_analysis_yaml(project_root, build_root, yaml_file_path):
-    out = {}
+def excluded_diagnostic(d, absolute_path, project_root, relative_path):
     vendor_path = abspath(join(project_root, 'vendor'))
     EXCLUSIONS = ('libs/vm/include/vm/tokeniser.hpp',
                   'libs/vm/src/tokeniser.cpp')
+    is_excluded_path = commonprefix([vendor_path, absolute_path]) == vendor_path or \
+        relative_path in EXCLUSIONS
+
+    is_gtest_or_gbench_cert_err58_cpp_problem = \
+        d['DiagnosticName'] == 'cert-err58-cpp' and \
+        any([d['Message'].startswith('initialization of \'{}'.format(prefix))
+             for prefix in ('gtest_', '_benchmark_', 'test_info_\'')])
+
+    special_member_fns_pattern = re.compile(
+        "^class '.+_Test' defines a copy constructor and a copy assignment operator but "
+        "does not define a destructor, a move constructor or a move assignment operator$")
+    is_gtest_special_member_functions_problem = \
+        d['DiagnosticName'] in ('cppcoreguidelines-special-member-functions',
+                                'hicpp-special-member-functions') and \
+        special_member_fns_pattern.match(d['Message'])
+
+    return is_excluded_path or \
+        is_gtest_or_gbench_cert_err58_cpp_problem or \
+        is_gtest_special_member_functions_problem
+
+
+def read_static_analysis_yaml(project_root, build_root, yaml_file_path):
+    out = {}
 
     with open(yaml_file_path, 'r') as f:
         document = yaml.safe_load(f)
@@ -21,16 +44,9 @@ def read_static_analysis_yaml(project_root, build_root, yaml_file_path):
             absolute_path = file_path if isabs(
                 file_path) else abspath(join(build_root, file_path))
             assert isfile(absolute_path)
-
             relative_path = relpath(absolute_path, project_root)
 
-            is_excluded = commonprefix(
-                [vendor_path, absolute_path]) == vendor_path or relative_path in EXCLUSIONS
-            is_gtest_or_gbench_problem = d['DiagnosticName'] == 'cert-err58-cpp' and any([
-                d['Message'].startswith('initialization of \'{}'.format(prefix)) for prefix in
-                ('gtest_', '_benchmark_', 'test_info_\'')])
-
-            if not (is_excluded or is_gtest_or_gbench_problem):
+            if not excluded_diagnostic(d, absolute_path, project_root, relative_path):
                 new_diagnostics.append(d)
                 if relative_path not in out:
                     out[relative_path] = {
@@ -70,7 +86,8 @@ def static_analysis(project_root, build_root, fix, concurrency):
         'clang-apply-replacements-6.0')
     if fix:
         assert clang_apply_replacements_path is not None, \
-            'clang-apply-replacements-6.0 must be installed and found in the path (install clang-tools-6.0)'
+            'clang-apply-replacements-6.0 must be installed and ' \
+            'found in the path (install clang-tools-6.0)'
 
     cmd = [
         'python3', '-u',
@@ -123,7 +140,8 @@ def static_analysis(project_root, build_root, fix, concurrency):
                 print('  Check: {check}\n'.format(check=d["check"]))
 
         print(
-            '\nStatic analysis found {total_violations} violation(s) in {total_files} file(s)'.format(
+            '\nStatic analysis found {total_violations} violation(s) '
+            'in {total_files} file(s)'.format(
                 total_violations=sum([len(d["diagnostics"])
                                       for f, d in files_diagnostics.items()]),
                 total_files=len(files_diagnostics)))

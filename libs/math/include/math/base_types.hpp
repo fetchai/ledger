@@ -192,7 +192,7 @@ static constexpr meta::IfIsFixedPoint<T, bool> state_infinity()
 template <typename T>
 static constexpr meta::IfIsNonFixedPointArithmetic<T, void> state_clear()
 {
-  std::feclearexcept(FE_ALL_EXCEPT);
+  std::feclearexcept(FE_ALL_EXCEPT);  // NOLINT
 }
 
 template <typename T>

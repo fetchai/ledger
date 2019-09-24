@@ -141,7 +141,7 @@ public:
 
 template <int P_ECDSA_Curve_NID>
 const std::size_t ECDSAAffineCoordinatesConversion<P_ECDSA_Curve_NID>::x_size =
-    ECDSAAffineCoordinatesConversion<P_ECDSA_Curve_NID>::EcdsaCurveType::publicKeySize >> 1;
+    ECDSAAffineCoordinatesConversion<P_ECDSA_Curve_NID>::EcdsaCurveType::publicKeySize >> 1u;
 
 template <int P_ECDSA_Curve_NID>
 const std::size_t ECDSAAffineCoordinatesConversion<P_ECDSA_Curve_NID>::y_size =

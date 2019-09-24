@@ -65,11 +65,10 @@ public:
   enum
   {
     E_TYPE_SIZE     = type_size,
-    E_SIMD_SIZE     = (vectorise::VectorRegisterSize<Type>::value >> 3),
+    E_SIMD_SIZE     = (vectorise::VectorRegisterSize<Type>::value >> 3u),
     E_SIMD_COUNT_IM = E_SIMD_SIZE / type_size,
-    E_SIMD_COUNT =
-        (E_SIMD_COUNT_IM > 0 ? E_SIMD_COUNT_IM
-                             : 1),  // Note that if a type is too big to fit, we pretend it can
+    // Note that if a type is too big to fit, we pretend it can
+    E_SIMD_COUNT     = (E_SIMD_COUNT_IM > 0 ? E_SIMD_COUNT_IM : 1),
     E_LOG_SIMD_COUNT = meta::Log2(E_SIMD_COUNT),
     IS_SHARED        = 0
   };

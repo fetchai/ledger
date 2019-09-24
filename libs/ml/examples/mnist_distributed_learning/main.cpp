@@ -86,7 +86,7 @@ int main(int ac, char **av)
     return 1;
   }
 
-  CoordinatorParams      coord_params;
+  CoordinatorParams      coord_params{};
   ClientParams<DataType> client_params;
 
   SizeType number_of_clients    = 10;

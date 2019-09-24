@@ -94,13 +94,14 @@ void MsgPackSerializer::ReadPrimitive(FinalType &val)
 
 template <typename T>
 typename IgnoredSerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::operator<<(
-    T const &)
+    T const & /*unused*/)
 {
   return *this;
 }
 
 template <typename T>
-typename IgnoredSerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::operator>>(T &)
+typename IgnoredSerializer<T, MsgPackSerializer>::DriverType &MsgPackSerializer::operator>>(
+    T & /*unused*/)
 {
   return *this;
 }

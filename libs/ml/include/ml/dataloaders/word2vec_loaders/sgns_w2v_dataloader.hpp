@@ -711,7 +711,7 @@ std::vector<std::string> GraphW2VLoader<T>::PreprocessString(std::string const &
   result.reserve(s.size());
   for (auto const &c : s)
   {
-    result.push_back(std::isalpha(c) != 0 ? (char)std::tolower(c) : ' ');
+    result.push_back(std::isalpha(c) != 0 ? static_cast<char>(std::tolower(c)) : ' ');
   }
 
   std::string              word;

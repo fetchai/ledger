@@ -40,12 +40,14 @@ auto expensive_estimator = [](uint8_t x, uint16_t y) -> ChargeAmount {
   return static_cast<ChargeAmount>(high_charge_limit + x * y);
 };
 
-auto const handler = [](VM *, uint8_t, uint16_t) -> bool { return true; };
+auto const handler = [](VM * /*unused*/, uint8_t /*unused*/, uint16_t /*unused*/) -> bool {
+  return true;
+};
 
 class CustomType : public Object
 {
 public:
-  CustomType(VM *vm, TypeId type_id, uint8_t, uint16_t)
+  CustomType(VM *vm, TypeId type_id, uint8_t /*unused*/, uint16_t /*unused*/)
     : Object{vm, type_id}
   {}
   ~CustomType() override = default;
@@ -60,24 +62,26 @@ public:
     return Ptr<CustomType>{new CustomType{vm, type_id, x, y}};
   }
 
-  static void AffordableStatic(VM *, TypeId, uint8_t, uint16_t)
+  static void AffordableStatic(VM * /*unused*/, TypeId /*unused*/, uint8_t /*unused*/,
+                               uint16_t /*unused*/)
   {}
 
-  static void TooExpensiveStatic(VM *, TypeId, uint8_t, uint16_t)
+  static void TooExpensiveStatic(VM * /*unused*/, TypeId /*unused*/, uint8_t /*unused*/,
+                                 uint16_t /*unused*/)
   {}
 
-  void Affordable(uint8_t, uint16_t)
+  void Affordable(uint8_t /*unused*/, uint16_t /*unused*/)
   {}
 
-  void TooExpensive(uint8_t, uint16_t)
+  void TooExpensive(uint8_t /*unused*/, uint16_t /*unused*/)
   {}
 
-  int16_t GetIndexedValue(AnyInteger const &)
+  int16_t GetIndexedValue(AnyInteger const & /*unused*/)
   {
     return 0;
   }
 
-  void SetIndexedValue(AnyInteger const &, int16_t)
+  void SetIndexedValue(AnyInteger const & /*unused*/, int16_t /*unused*/)
   {}
 };
 

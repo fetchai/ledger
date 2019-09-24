@@ -55,7 +55,7 @@ public:
     Identity  identity;
   };
 
-  explicit BeaconManager(CertificatePtr = nullptr);
+  explicit BeaconManager(CertificatePtr certificate = nullptr);
 
   BeaconManager(BeaconManager const &) = delete;
   BeaconManager &operator=(BeaconManager const &) = delete;
@@ -64,8 +64,8 @@ public:
 
   void                     GenerateCoefficients();
   std::vector<Coefficient> GetCoefficients();
-  std::pair<Share, Share>  GetOwnShares(MuddleAddress const &share_receiver);
-  std::pair<Share, Share>  GetReceivedShares(MuddleAddress const &share_owner);
+  std::pair<Share, Share>  GetOwnShares(MuddleAddress const &receiver);
+  std::pair<Share, Share>  GetReceivedShares(MuddleAddress const &owner);
   void AddCoefficients(MuddleAddress const &from, std::vector<Coefficient> const &coefficients);
   void AddShares(MuddleAddress const &from, std::pair<Share, Share> const &shares);
   std::unordered_set<MuddleAddress> ComputeComplaints(
@@ -90,7 +90,7 @@ public:
 
   AddResult     AddSignaturePart(Identity const &from, Signature const &signature);
   bool          Verify();
-  bool          Verify(Signature const &);
+  bool          Verify(Signature const &signature);
   Signature     GroupSignature() const;
   void          SetMessage(MessagePayload next_message);
   SignedMessage Sign();
@@ -112,9 +112,9 @@ private:
   static bn::G2 group_h_;  ///< Generator of subgroup used in DKG
 
   CertificatePtr certificate_;
-  uint32_t       cabinet_size_;       ///< Size of committee
-  uint32_t       polynomial_degree_;  ///< Degree of polynomial in DKG
-  CabinetIndex   cabinet_index_;      ///< Index of our address in cabinet_
+  uint32_t       cabinet_size_{};       ///< Size of committee
+  uint32_t       polynomial_degree_{};  ///< Degree of polynomial in DKG
+  CabinetIndex   cabinet_index_{};      ///< Index of our address in cabinet_
 
   /// Member details
   /// @{

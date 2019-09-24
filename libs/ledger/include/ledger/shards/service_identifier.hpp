@@ -20,6 +20,7 @@
 #include "core/serializers/group_definitions.hpp"
 
 #include <cstdint>
+#include <limits>
 #include <string>
 
 namespace fetch {
@@ -28,6 +29,8 @@ namespace ledger {
 class ServiceIdentifier
 {
 public:
+  constexpr static uint32_t INVALID_SERVICE_IDENTIFIER{std::numeric_limits<uint32_t>::max()};
+
   enum class Type : uint8_t
   {
     INVALID = 0,
@@ -39,12 +42,12 @@ public:
 
   // Construction / Destruction
   ServiceIdentifier() = default;
-  explicit ServiceIdentifier(Type type, int32_t instance = -1);
+  explicit ServiceIdentifier(Type type, uint32_t instance = INVALID_SERVICE_IDENTIFIER);
   ServiceIdentifier(ServiceIdentifier const &) = default;
   ~ServiceIdentifier()                         = default;
 
   Type        type() const;
-  int32_t     instance() const;
+  uint32_t    instance() const;
   std::string ToString() const;
 
   // Operators
@@ -52,8 +55,8 @@ public:
   ServiceIdentifier &operator=(ServiceIdentifier const &) = default;
 
 private:
-  Type    type_{Type::INVALID};
-  int32_t instance_{-1};
+  Type     type_{Type::INVALID};
+  uint32_t instance_{INVALID_SERVICE_IDENTIFIER};
 
   template <typename T, typename D>
   friend struct serializers::MapSerializer;
@@ -64,7 +67,7 @@ inline ServiceIdentifier::Type ServiceIdentifier::type() const
   return type_;
 }
 
-inline int32_t ServiceIdentifier::instance() const
+inline uint32_t ServiceIdentifier::instance() const
 {
   return instance_;
 }

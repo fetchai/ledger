@@ -32,7 +32,7 @@ namespace fetch {
 
 namespace serializers {
 
-TEST(MsgPacker, signed_integers)
+TEST(MsgPacker, signed_integers)  // NOLINT
 {
   MsgPackSerializer stream;
   int64_t           value;

@@ -165,7 +165,7 @@ public:
   void Push(T const &object, uint64_t type = uint64_t(-1))
   {
     assert(bool(file_handle_));
-    file_handle_.seekg(header_.end, file_handle_.beg);
+    file_handle_.seekg(header_.end, decltype(file_handle_)::beg);
     Separator separator = {type, sizeof(T), header_.end};
 
     file_handle_.write(reinterpret_cast<char const *>(&object), sizeof(T));
@@ -181,7 +181,7 @@ public:
   void Pop()
   {
     assert(header_.object_count != 0);
-    file_handle_.seekg(header_.end - int64_t(sizeof(Separator)), file_handle_.beg);
+    file_handle_.seekg(header_.end - int64_t(sizeof(Separator)), decltype(file_handle_)::beg);
     Separator separator;
 
     file_handle_.read(reinterpret_cast<char *>(&separator), sizeof(Separator));
@@ -203,7 +203,7 @@ public:
   {
     assert(bool(file_handle_));
 
-    file_handle_.seekg(header_.end - int64_t(sizeof(Separator)), file_handle_.beg);
+    file_handle_.seekg(header_.end - int64_t(sizeof(Separator)), decltype(file_handle_)::beg);
     Separator separator;
 
     file_handle_.read(reinterpret_cast<char *>(&separator), sizeof(Separator));
@@ -219,7 +219,7 @@ public:
       throw StorageException(ret.str());
     }
 
-    file_handle_.seekg(header_.end - offset, file_handle_.beg);
+    file_handle_.seekg(header_.end - offset, decltype(file_handle_)::beg);
     file_handle_.read(reinterpret_cast<char *>(&object), sizeof(T));
     return separator.type;
   }
@@ -231,7 +231,7 @@ public:
    */
   uint64_t Type()
   {
-    file_handle_.seekg(header_.end - int64_t(sizeof(Separator)), file_handle_.beg);
+    file_handle_.seekg(header_.end - int64_t(sizeof(Separator)), decltype(file_handle_)::beg);
     Separator separator;
 
     file_handle_.read(reinterpret_cast<char *>(&separator), sizeof(Separator));
@@ -248,7 +248,7 @@ public:
   {
     assert(!filename_.empty());
     std::fstream fin(filename_, std::ios::out | std::ios::binary);
-    fin.seekg(0, fin.beg);
+    fin.seekg(0, decltype(fin)::beg);
 
     Separator separator = {HEADER_OBJECT, 0, UNDEFINED_POSITION};
 
@@ -281,13 +281,13 @@ public:
 protected:
   void ReadHeader()
   {
-    file_handle_.seekg(0, file_handle_.beg);
+    file_handle_.seekg(0, decltype(file_handle_)::beg);
     file_handle_.read(reinterpret_cast<char *>(&header_), sizeof(Header));
   }
 
   void WriteHeader()
   {
-    file_handle_.seekg(0, file_handle_.beg);
+    file_handle_.seekg(0, decltype(file_handle_)::beg);
     file_handle_.write(reinterpret_cast<char const *>(&header_), sizeof(Header));
   }
 

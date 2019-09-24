@@ -84,7 +84,7 @@ protected:
 
 class CoefficientsMessage : public DKGMessage
 {
-  uint8_t                  phase_;         ///< Phase of state machine that this message is for
+  uint8_t                  phase_{};       ///< Phase of state machine that this message is for
   std::vector<Coefficient> coefficients_;  ///< Coefficients as strings
 
 public:
@@ -122,7 +122,7 @@ public:
 
 class SharesMessage : public DKGMessage
 {
-  uint8_t phase_;  ///< Phase of state machine that this message is for
+  uint8_t phase_{};  ///< Phase of state machine that this message is for
   std::unordered_map<CabinetId, std::pair<Share, Share>>
       shares_;  ///< Exposed secret shares for a particular committee member
 public:

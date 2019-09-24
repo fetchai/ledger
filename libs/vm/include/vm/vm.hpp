@@ -492,7 +492,7 @@ public:
 
     std::string  name;
     Handler      handler;
-    ChargeAmount static_charge;
+    ChargeAmount static_charge{};
   };
 
   ChargeAmount GetChargeTotal() const;
@@ -500,7 +500,7 @@ public:
   ChargeAmount GetChargeLimit() const;
   void         SetChargeLimit(ChargeAmount limit);
 
-  void UpdateCharges(std::unordered_map<std::string, ChargeAmount> const &);
+  void UpdateCharges(std::unordered_map<std::string, ChargeAmount> const &opcode_charges);
 
 private:
   static const int FRAME_STACK_SIZE = 50;
@@ -552,22 +552,22 @@ private:
   OpcodeInfoArray                opcode_info_array_;
   OpcodeMap                      opcode_map_;
   Generator                      generator_;
-  Executable const *             executable_;
-  Executable::Function const *   function_;
+  Executable const *             executable_{};
+  Executable::Function const *   function_{};
   std::vector<Ptr<String>>       strings_;
-  Frame                          frame_stack_[FRAME_STACK_SIZE];
-  int                            frame_sp_;
-  int                            bsp_;
+  Frame                          frame_stack_[FRAME_STACK_SIZE]{};
+  int                            frame_sp_{};
+  int                            bsp_{};
   Variant                        stack_[STACK_SIZE];
-  int                            sp_;
-  ForRangeLoop                   range_loop_stack_[MAX_RANGE_LOOPS];
-  int                            range_loop_sp_;
-  LiveObjectInfo                 live_object_stack_[MAX_LIVE_OBJECTS];
-  int                            live_object_sp_;
-  uint16_t                       pc_;
-  uint16_t                       instruction_pc_;
-  Executable::Instruction const *instruction_;
-  bool                           stop_;
+  int                            sp_{};
+  ForRangeLoop                   range_loop_stack_[MAX_RANGE_LOOPS]{};
+  int                            range_loop_sp_{};
+  LiveObjectInfo                 live_object_stack_[MAX_LIVE_OBJECTS]{};
+  int                            live_object_sp_{};
+  uint16_t                       pc_{};
+  uint16_t                       instruction_pc_{};
+  Executable::Instruction const *instruction_{};
+  bool                           stop_{};
   std::string                    error_;
   std::ostringstream             output_buffer_;
   IoObserverInterface *          io_observer_{nullptr};

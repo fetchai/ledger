@@ -48,9 +48,9 @@ struct System : public fetch::vm::Object
 
   static void Bind(fetch::vm::Module &module);
 
-  static int32_t Argc(fetch::vm::VM *, fetch::vm::TypeId);
+  static int32_t Argc(fetch::vm::VM * /*unused*/, fetch::vm::TypeId /*unused*/);
 
-  static fetch::vm::Ptr<fetch::vm::String> Argv(fetch::vm::VM *vm, fetch::vm::TypeId,
+  static fetch::vm::Ptr<fetch::vm::String> Argv(fetch::vm::VM *vm, fetch::vm::TypeId /*unused*/,
                                                 int32_t        index);
 
   static void Parse(int argc, char const *const *argv);

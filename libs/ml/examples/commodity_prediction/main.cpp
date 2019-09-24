@@ -204,7 +204,7 @@ std::pair<std::string, std::vector<std::string>> ReadArchitecture(
   return std::make_pair(dataname, node_names);
 }
 
-int ArgPos(char *str, int argc, char **argv)
+int ArgPos(char const *str, int argc, char **argv)
 {
   int a;
   for (a = 1; a < argc; a++)
@@ -261,15 +261,15 @@ int main(int argc, char **argv)
   bool        testing             = false;
 
   /// READ ARGUMENTS
-  if ((i = ArgPos((char *)"-model_num", argc, argv)) > 0)
+  if ((i = ArgPos("-model_num", argc, argv)) > 0)
   {
     model_num = static_cast<SizeType>(std::stoul(argv[i + 1]));
   }
-  if ((i = ArgPos((char *)"-input_dir", argc, argv)) > 0)
+  if ((i = ArgPos("-input_dir", argc, argv)) > 0)
   {
     input_dir = argv[i + 1];
   }
-  if ((i = ArgPos((char *)"-testing", argc, argv)) > 0)
+  if ((i = ArgPos("-testing", argc, argv)) > 0)
   {
     testing = static_cast<bool>(std::stoi(argv[i + 1]));
   }

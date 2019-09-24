@@ -59,7 +59,7 @@ public:
 
   void       RemoveInfrequent(SizeType min);
   void       InitUnigramTable();
-  void       GetNext(ReturnType &t);
+  void       GetNext(ReturnType &ret);
   ReturnType GetNext() override;
 
   bool AddData(InputType const &input, LabelType const &label) override;
@@ -124,9 +124,9 @@ math::SizeType W2VLoader<T>::Size() const
   SizeType size(0);
   for (auto const &s : data_)
   {
-    if ((SizeType)s.size() > (2 * window_size_))
+    if (static_cast<SizeType>(s.size()) > (2 * window_size_))
     {
-      size += (SizeType)s.size() - (2 * window_size_);
+      size += static_cast<SizeType>(s.size()) - (2 * window_size_);
     }
   }
 
@@ -423,7 +423,7 @@ std::vector<std::string> W2VLoader<T>::PreprocessString(std::string const &s)
   result.reserve(s.size());
   for (auto const &c : s)
   {
-    result.push_back(std::isalpha(c) != 0 ? (char)std::tolower(c) : ' ');
+    result.push_back(std::isalpha(c) != 0 ? static_cast<char>(std::tolower(c)) : ' ');
   }
 
   std::string              word;

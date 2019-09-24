@@ -1242,7 +1242,7 @@ bool DAG::GetEpochFromStorage(std::string const &identifier, DAGEpoch &epoch)
   return all_stored_epochs_.Get(storage::ResourceID(getme), epoch);
 }
 
-bool DAG::SetEpochInStorage(std::string const &, DAGEpoch const &epoch, bool is_head)
+bool DAG::SetEpochInStorage(std::string const & /*unused*/, DAGEpoch const &epoch, bool is_head)
 {
   all_stored_epochs_.Set(storage::ResourceID(epoch.hash), epoch);  // Store of all epochs
   epochs_.Set(storage::ResourceAddress(std::to_string(epoch.block_number)),

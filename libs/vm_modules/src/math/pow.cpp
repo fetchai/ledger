@@ -32,7 +32,7 @@ namespace math {
 namespace {
 
 template <typename T>
-fetch::math::meta::IfIsMath<T, T> Pow(VM *, T const &a, T const &b)
+fetch::math::meta::IfIsMath<T, T> Pow(VM * /*unused*/, T const &a, T const &b)
 {
   T x;
   fetch::math::Pow(a, b, x);

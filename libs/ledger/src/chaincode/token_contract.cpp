@@ -158,7 +158,7 @@ bool TokenContract::TransferTokens(Transaction const &tx, Address const &to, uin
   return SubtractTokens(tx.from(), amount) && AddTokens(to, amount);
 }
 
-Contract::Result TokenContract::CreateWealth(Transaction const &tx, BlockIndex)
+Contract::Result TokenContract::CreateWealth(Transaction const &tx, BlockIndex /*unused*/)
 {
   // parse the payload as JSON
   Variant data;
@@ -190,7 +190,7 @@ Contract::Result TokenContract::CreateWealth(Transaction const &tx, BlockIndex)
  *
  * @return Status::OK if deed has been incorporated successfully.
  */
-Contract::Result TokenContract::Deed(Transaction const &tx, BlockIndex)
+Contract::Result TokenContract::Deed(Transaction const &tx, BlockIndex /*unused*/)
 {
   Variant data;
   if (!ParseAsJson(tx, data))
@@ -245,7 +245,7 @@ Contract::Result TokenContract::Deed(Transaction const &tx, BlockIndex)
   return {Status::OK};
 }
 
-Contract::Result TokenContract::Transfer(Transaction const &tx, BlockIndex)
+Contract::Result TokenContract::Transfer(Transaction const &tx, BlockIndex /*unused*/)
 {
   FETCH_UNUSED(tx);
   return {Status::FAILED};

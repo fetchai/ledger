@@ -483,7 +483,7 @@ void YamlDocument::Parse(ConstByteArray const &document)
         YamlToken const &prevToken = tokens_[idx - 1];
         if (prevToken.line == token.line && prevToken.type == NEW_MULTILINE_ENTRY)
         {
-          token.ident = prevToken.ident + (uint)(token.first - prevToken.second);
+          token.ident = prevToken.ident + static_cast<uint>(token.first - prevToken.second);
         }
         else if (prevToken.type == OPEN_OBJECT)
         {
@@ -1184,7 +1184,7 @@ void YamlDocument::Tokenise(ConstByteArray const &document)
 
       if (!tokens_.empty())
       {
-        lastType  = (Type)tokens_.back().type;
+        lastType  = static_cast<Type>(tokens_.back().type);
         lastLine  = tokens_.back().line;
         lastIdent = tokens_.back().ident;
       }

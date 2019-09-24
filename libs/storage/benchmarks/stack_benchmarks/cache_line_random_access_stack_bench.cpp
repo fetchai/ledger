@@ -29,10 +29,10 @@ static constexpr std::size_t cache_line_size = 13;
 template <class T>
 struct CachedDataItem
 {
-  uint64_t                            reads      = 0;
-  uint64_t                            writes     = 0;
-  uint32_t                            usage_flag = 0;
-  std::array<T, 1 << cache_line_size> elements;
+  uint64_t                             reads      = 0;
+  uint64_t                             writes     = 0;
+  uint32_t                             usage_flag = 0;
+  std::array<T, 1u << cache_line_size> elements;
 };
 
 template <class N>
