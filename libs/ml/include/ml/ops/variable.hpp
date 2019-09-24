@@ -147,6 +147,7 @@ public:
 
   void ApplyGradient(TensorType const &grad) override
   {
+    ApplyRegularisation();
     this->data_->InlineAdd(grad);
     ResetGradients();
   }
@@ -159,7 +160,7 @@ public:
     gradient_accumulation_->Fill(typename T::Type(0));
   }
 
-  void ApplyRegularisation() override
+  void ApplyRegularisation()
   {
     if (this->regulariser_)
     {

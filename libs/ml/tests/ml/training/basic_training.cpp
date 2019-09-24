@@ -121,7 +121,6 @@ void PlusOneTest()
     auto error_tensor = g.Evaluate(error_name);
     loss += error_tensor(0, 0);
     g.BackPropagate(error_name);
-    g.ApplyRegularisation();
   }
 
   for (auto &w : g.GetTrainables())
@@ -151,7 +150,6 @@ void PlusOneTest()
       auto error_tensor = g.Evaluate(error_name);
       loss += error_tensor(0, 0);
       g.BackPropagate(error_name);
-      g.ApplyRegularisation();
     }
 
     // This task is so easy the loss should fall on every training step
@@ -234,7 +232,6 @@ void CategoricalPlusOneTest(bool add_softmax = false)
     auto error_tensor = g.Evaluate(error_name);
     loss += error_tensor(0, 0);
     g.BackPropagate(error_name);
-    g.ApplyRegularisation();
   }
 
   for (auto &w : g.GetTrainables())
@@ -264,7 +261,6 @@ void CategoricalPlusOneTest(bool add_softmax = false)
       auto error_tensor = g.Evaluate(error_name);
       loss += error_tensor(0, 0);
       g.BackPropagate(error_name);
-      g.ApplyRegularisation();
     }
 
     // This task is so easy the loss should fall on every training step
@@ -338,7 +334,6 @@ void CategoricalXorTest(bool add_softmax = false)
     auto error_tensor = g.Evaluate(error_name);
     loss += error_tensor(0, 0);
     g.BackPropagate(error_name);
-    g.ApplyRegularisation();
   }
 
   for (auto &w : g.GetTrainables())
@@ -366,7 +361,6 @@ void CategoricalXorTest(bool add_softmax = false)
       auto error_tensor = g.Evaluate(error_name);
       loss += error_tensor(0, 0);
       g.BackPropagate(error_name);
-      g.ApplyRegularisation();
     }
 
     EXPECT_GE(current_loss, loss);
