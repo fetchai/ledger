@@ -118,7 +118,7 @@ public:
 };
 
 template <class T>
-static constexpr auto NonClearableV = NonClearable<T>::value;
+static constexpr auto NonClearableV = NonClearable<std::decay_t<T>>::value;
 
 }  // namespace detail_
 
@@ -137,7 +137,7 @@ struct ClearOne
   }
 
   template <class T>
-  constexpr std::enable_if_t<detail_::NonClearableV<std::decay_t<T>>> operator()(T &&t) const
+  constexpr std::enable_if_t<detail_::NonClearableV<T>> operator()(T &&t) const
   {
     ZeroOne{}(std::forward<T>(t));
   }
