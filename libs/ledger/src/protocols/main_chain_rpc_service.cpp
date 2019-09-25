@@ -242,7 +242,7 @@ MainChainRpcService::Address MainChainRpcService::GetRandomTrustedPeer() const
   return Address{};
 }
 
-bool MainChainRpcService::HandleChainResponse(Address const &address, BlockList block_list)
+bool MainChainRpcService::HandleChainResponse(Address const &address, BlockList const &block_list)
 {
   std::size_t added{0};
   std::size_t loose{0};
@@ -370,7 +370,7 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
         next_state = State::REQUEST_HEAVIEST_CHAIN;
 
         auto peer_response = current_request_->As<TimeTravelogue>();
-        if (HandleChainResponse(current_peer_address_, std::move(peer_response.blocks)))
+        if (HandleChainResponse(current_peer_address_, peer_response.blocks))
         {
           past_recent_tip_ = std::move(peer_response.next_hash);
 
