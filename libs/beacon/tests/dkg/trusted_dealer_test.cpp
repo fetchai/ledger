@@ -40,12 +40,9 @@ using namespace std::chrono_literals;
 using std::this_thread::sleep_for;
 using std::chrono::milliseconds;
 
-using Prover         = fetch::crypto::Prover;
-using ProverPtr      = std::shared_ptr<Prover>;
-using Certificate    = fetch::crypto::Prover;
-using CertificatePtr = std::shared_ptr<Certificate>;
-using Address        = fetch::muddle::Packet::Address;
-using MuddleAddress  = byte_array::ConstByteArray;
+using Prover        = crypto::Prover;
+using ProverPtr     = std::shared_ptr<Prover>;
+using MuddleAddress = byte_array::ConstByteArray;
 
 struct DummyManifesttCache : public ManifestCacheInterface
 {
@@ -69,11 +66,10 @@ struct CabinetNode
     return certificate;
   }
 
-  using Prover         = crypto::Prover;
-  using ProverPtr      = std::shared_ptr<Prover>;
   using Certificate    = crypto::Prover;
   using CertificatePtr = std::shared_ptr<Certificate>;
   using Muddle         = muddle::MuddlePtr;
+  using Address        = fetch::muddle::Packet::Address;
 
   EventManager::SharedEventManager event_manager;
   uint16_t                         muddle_port;
