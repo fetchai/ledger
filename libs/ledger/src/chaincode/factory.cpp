@@ -76,8 +76,8 @@ ChainCodeFactory::ContractPtr ChainCodeFactory::Create(Identifier const &contrac
 {
   ContractPtr contract{};
 
-  // determine based on the identifier is the requested contract a VM based smart contract or is it
-  // referencing a hard coded "chain code"
+  // determine based on the identifier is the requested contract a VM-based
+  // smart contract or is it referencing a hard coded "chain code"
   if (Identifier::Type::SMART_OR_SYNERGETIC_CONTRACT == contract_id.type())
   {
     auto const digest = contract_id.qualifier();

@@ -160,7 +160,7 @@ void StateAdapter::PopContext()
 
 Identifier StateAdapter::CurrentScope() const
 {
-  return Identifier{scope_.back().qualifier()};
+  return Identifier{scope_.back().full_name()};
 }
 
 }  // namespace ledger

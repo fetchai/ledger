@@ -79,7 +79,7 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem
 
       // complete the work and resolve the work queue
       contract->Attach(storage_);
-      status = contract->Complete(shard_mask);
+      status = contract->Complete(solution->address(), shard_mask);
       contract->Detach();
 
       if (SynergeticContract::Status::SUCCESS != status)

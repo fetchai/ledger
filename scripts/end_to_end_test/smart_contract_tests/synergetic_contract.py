@@ -23,6 +23,30 @@ from fetchai.ledger.contract import Contract
 from fetchai.ledger.crypto import Entity
 
 CONTRACT_TEXT = """
+@init
+function init_test()
+  var state = State<Int32>("init_test");
+  state.set(123);
+endfunction
+
+@query
+function query_init_test() : Int32
+  var state = State<Int32>("init_test");
+  return state.get(-1);
+endfunction
+
+@action
+function action_test()
+  var state = State<Int32>("action_test");
+  state.set(456);
+endfunction
+
+@query
+function query_action_test() : Int32
+  var state = State<Int32>("action_test");
+  return state.get(-1);
+endfunction
+
 @problem
 function createProblem(data : Array<StructuredData>) : Int32
   var value = 0;
@@ -35,12 +59,11 @@ endfunction
 @objective
 function evaluateWork(problem : Int32, solution : Int32 ) : Int64
   return abs(toInt64(problem));
-//  return abs(toInt64(problem) - toInt64(solution));
 endfunction
 
 @work
 function doWork(problem : Int32, nonce : UInt256) :  Int32
-  return problem;//nonce.toInt32();
+  return problem;
 endfunction
 
 @clear
@@ -79,18 +102,22 @@ def run(options):
     # create wealth so that we have the funds to be able to create contracts on the network
     api.sync(api.tokens.wealth(entity1, 100000000))
 
-    # ???remove need for type param
     contract = Contract(CONTRACT_TEXT)
 
     # deploy the contract to the network
-    api.sync(api.contracts.create(entity1, contract, 2000))
+    api.sync(api.contracts.create(entity1, contract, 1))
 
     submit_synergetic_data(api, contract, [100, 20, 3], entity1)
-    submit_synergetic_data(api, contract, [11, 22, 33], entity1)
 
-# ???submit solutions from more than one pubkey
-# ???check action and init
-# ???check mining fees
-# ???check what nonces are being submitted
-# ???inherently unstable test-different results if submission caught between epochs
-# ???sharded state
+    print('Query init state...')
+    init_result = contract.query(api, 'query_init_test')
+    print('Init state: ', init_result)
+    assert init_result == 123
+
+    print('Execute action...')
+    api.sync(contract.action(api, 'action_test', 1, [entity1]))
+
+    print('Query action state...')
+    action_result = contract.query(api, 'query_action_test')
+    print('Action state: ', action_result)
+    assert action_result == 456

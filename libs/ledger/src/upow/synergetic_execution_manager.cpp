@@ -19,6 +19,7 @@
 #include "core/macros.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chaincode/smart_contract_manager.hpp"
+#include "ledger/upow/problem_id.hpp"
 #include "ledger/upow/synergetic_execution_manager.hpp"
 #include "ledger/upow/synergetic_executor_interface.hpp"
 
@@ -50,7 +51,7 @@ SynergeticExecutionManager::SynergeticExecutionManager(DAGPtr dag, std::size_t n
 
 ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Block const &previous)
 {
-  using WorkMap = std::unordered_map<Digest, WorkItemPtr, DigestHashAdapter>;
+  using WorkMap = std::unordered_map<ProblemId, WorkItemPtr>;
 
   auto const &current_epoch  = current.body.dag_epoch;
   auto const &previous_epoch = previous.body.dag_epoch;
@@ -65,12 +66,12 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
     auto work = std::make_shared<Work>();
     if (!dag_->GetWork(digest, *work))
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Failed to get work from DAG. Node: 0x", digest.ToHex());
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to get work from DAG Node: 0x", digest.ToHex());
       continue;
     }
 
     // lookup (or create) the solution queue
-    auto &work_item = work_map[work->contract_digest().ToHex()];
+    auto &work_item = work_map[{work->address(), work->contract_digest()}];
 
     if (!work_item)
     {
@@ -100,11 +101,11 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
     }
 
     // attempt to lookup the contract being referenced
-    auto it = work_map.find(node.contract_digest.ToHex());
+    auto it = work_map.find({node.contract_address, node.contract_digest});
     if (it == work_map.end())
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup references contract: 0x",
-                     node.contract_digest.ToHex());
+      FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup references contract: address ",
+                     node.contract_address.display(), " digest 0x", node.contract_digest.ToHex());
       continue;
     }
 

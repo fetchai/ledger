@@ -267,7 +267,7 @@ Status SynergeticContract::Work(vectorise::UInt<256> const &nonce, WorkScore &sc
   // ensure the output of the objective function is "correct"
   if (vm::TypeIds::Int64 != objective_output.type_id)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Incorrect objective value from function");
+    FETCH_LOG_WARN(LOGGING_NAME, "Objective function must return Int64");
     return Status::VM_EXECUTION_ERROR;
   }
 
@@ -277,7 +277,7 @@ Status SynergeticContract::Work(vectorise::UInt<256> const &nonce, WorkScore &sc
   return Status::SUCCESS;
 }
 
-Status SynergeticContract::Complete(BitVector const &shards)
+Status SynergeticContract::Complete(Address const &address, BitVector const &shards)
 {
   if (!storage_)
   {
@@ -288,7 +288,8 @@ Status SynergeticContract::Complete(BitVector const &shards)
 
   // setup the storage infrastructure
   CachedStorageAdapter storage_cache(*storage_);
-  StateSentinelAdapter state_sentinel{storage_cache, Identifier{digest_.ToHex()}, shards};
+  StateSentinelAdapter state_sentinel{
+      storage_cache, Identifier{digest_.ToHex() + "." + address.display()}, shards};
 
   // attach the state to the VM
   vm->SetIOObserver(state_sentinel);
