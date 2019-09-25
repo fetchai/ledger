@@ -109,15 +109,6 @@ void MainChain::Reset()
   AddTip(genesis);
 }
 
-/** Keeps root remote genesis somewhere in this muddle.
- *
- * @param hash Remote genesis hash, GENESIS_DIGEST for undefined
- */
-void MainChain::SetRemoteGenesis(BlockHash hash)
-{
-  remote_genesis_ = std::move(hash);
-}
-
 /**
  * Adds a block to the chain
  *

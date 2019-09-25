@@ -185,9 +185,6 @@ public:
     }
   };
 
-  // Keep track of root genesis block.
-  void SetRemoteGenesis(BlockHash hash = GENESIS_DIGEST);
-
 private:
   using IntBlockPtr   = std::shared_ptr<Block>;
   using BlockMap      = std::unordered_map<BlockHash, IntBlockPtr>;
@@ -268,7 +265,6 @@ private:
   TipsMap                           tips_;          ///< Keep track of the tips
   HeaviestTip                       heaviest_;      ///< Heaviest block/tip
   LooseBlockMap                     loose_blocks_;  ///< Waiting (loose) blocks
-  BlockHash                         remote_genesis_ = GENESIS_DIGEST;
   std::unique_ptr<BasicBloomFilter> bloom_filter_;
   bool const                        enable_bloom_filter_;
   telemetry::GaugePtr<std::size_t>  bloom_filter_queried_bit_count_;
