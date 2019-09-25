@@ -475,7 +475,6 @@ TEST_F(SmartContractTests, CheckShardedStateSetAndQuery)
   mask.set(lane2, 1);
   shards(mask);
 
-  // expected calls
   EXPECT_CALL(*storage_, Lock(lane1)).WillOnce(Return(true));
   EXPECT_CALL(*storage_, Unlock(lane1)).WillOnce(Return(true));
   if (lane1 != lane2)
@@ -550,7 +549,6 @@ TEST_F(SmartContractTests, CheckShardedStateSetWithAddressAsName)
   mask.set(lane1, 1);
   shards(mask);
 
-  // expected calls
   EXPECT_CALL(*storage_, Lock(lane1)).WillOnce(Return(true));
   EXPECT_CALL(*storage_, Set(expected_resource1, expected_value1)).WillOnce(Return());
   EXPECT_CALL(*storage_, Unlock(lane1)).WillOnce(Return(true));
