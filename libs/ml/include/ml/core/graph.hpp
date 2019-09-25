@@ -114,7 +114,7 @@ public:
   /// public train/test functions ///
   ///////////////////////////////////
 
-  void       SetInput(std::string const &node_name, TensorType data);
+  void       SetInput(std::string const &node_name, TensorType const &data);
   TensorType Evaluate(std::string const &node_name, bool is_training = true);
   void       BackPropagate(std::string const &node_name, TensorType const &error_signal = {});
   void       ApplyRegularisation();
@@ -152,6 +152,7 @@ protected:
   std::unordered_map<std::string, SizeType>                     trainable_lookup_;
   std::vector<NodePtrType>                                      trainable_nodes_;
 
+  void       OptimisedSetInput(std::string const &node_name, TensorType const &data);
   void       InsertSharedCopy(std::shared_ptr<Graph<TensorType>> output_ptr);
   TensorType ForwardPropagate(std::string const &node_name, bool is_training = true);
 
@@ -657,7 +658,7 @@ typename Graph<TensorType>::NodePtrType Graph<TensorType>::GetNode(
  * @param data the pointer to a tensor to assign to the placeholder
  */
 template <typename TensorType>
-void Graph<TensorType>::SetInput(std::string const &node_name, TensorType data)
+void Graph<TensorType>::OptimisedSetInput(std::string const &node_name, const TensorType &data)
 {
   auto dataholder =
       std::dynamic_pointer_cast<ops::DataHolder<TensorType>>(nodes_.at(node_name)->GetOp());
@@ -671,6 +672,17 @@ void Graph<TensorType>::SetInput(std::string const &node_name, TensorType data)
   {
     throw std::runtime_error("No placeholder node with name [" + node_name + "] found in graph!");
   }
+}
+
+/**
+ * Assigns deep copy of data to a dataholder if the node can be found in the graph.
+ * @param node_name name of the placeholder node in the graph (must be unique)
+ * @param data the pointer to a tensor to assign to the placeholder
+ */
+template <typename TensorType>
+void Graph<TensorType>::SetInput(std::string const &node_name, const TensorType &data)
+{
+  OptimisedSetInput(node_name, data.Copy());
 }
 
 /**
