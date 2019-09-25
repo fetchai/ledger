@@ -627,7 +627,7 @@ bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip, BlockHash
  *
  * @param hash The hash being queried
  * @param[out] next_hash When non-null, pointer to a hash object to put block's next into
- * @return The a valid shared pointer to the block if found, otherwise an empty pointer
+ * @return a valid shared pointer to a block if found, otherwise an empty pointer
  */
 MainChain::BlockPtr MainChain::GetBlock(BlockHash const &hash, BlockHash *next_hash) const
 {
@@ -637,7 +637,8 @@ MainChain::BlockPtr MainChain::GetBlock(BlockHash const &hash, BlockHash *next_h
   auto internal_block = std::make_shared<Block>();
   if (LookupBlock(hash, internal_block, next_hash))
   {
-    // convert the pointer type to per const
+    // convert the pointee type to const
+    // NB: std::move is of no use here prior to C++20
     return std::static_pointer_cast<Block const>(std::move(internal_block));
   }
   else
