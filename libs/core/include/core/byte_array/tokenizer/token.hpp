@@ -29,18 +29,18 @@ public:
     : ConstByteArray()
   {}
 
-  Token(char const *str)
+  explicit Token(char const *str)
     : ConstByteArray(str)
   {}
 
-  Token(std::string const &str)
+  explicit Token(std::string const &str)
     : ConstByteArray(str.c_str())
   {}
 
-  Token(ConstByteArray const &other)
+  explicit Token(ConstByteArray const &other)
     : ConstByteArray(other)
   {}
-  Token(ConstByteArray &&other)
+  explicit Token(ConstByteArray &&other)
     : ConstByteArray(other)
   {}
 

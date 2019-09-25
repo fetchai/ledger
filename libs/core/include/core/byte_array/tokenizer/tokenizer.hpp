@@ -32,23 +32,23 @@ namespace byte_array {
 class Tokenizer : public std::vector<Token>
 {
 public:
-  using byte_array_type        = ConstByteArray;
-  using consumer_function_type = std::function<int(byte_array_type const &, uint64_t &)>;
-  using indexer_function_type  = std::function<int(byte_array_type const &, uint64_t, int const &)>;
+  using ByteArrayType        = ConstByteArray;
+  using ConsumerFunctionType = std::function<int(ByteArrayType const &, uint64_t &)>;
+  using IndexerFunctionType  = std::function<int(ByteArrayType const &, uint64_t, int const &)>;
 
-  std::size_t AddConsumer(consumer_function_type function)
+  std::size_t AddConsumer(ConsumerFunctionType function)
   {
     std::size_t ret = consumers_.size();
-    consumers_.push_back(function);
+    consumers_.emplace_back(std::move(function));
     return ret;
   }
 
-  bool Parse(byte_array_type const &contents, bool clear = true)
+  bool Parse(ByteArrayType const &contents, bool clear = true)
   {
-    uint64_t                           pos        = 0;
-    int                                line       = 0;
-    uint64_t                           char_index = 0;
-    byte_array_type::value_type const *str        = contents.pointer();
+    uint64_t                        pos        = 0;
+    int                             line       = 0;
+    uint64_t                        char_index = 0;
+    ByteArrayType::ValueType const *str        = contents.pointer();
     if (clear)
     {
       this->clear();
@@ -176,8 +176,8 @@ public:
   }
 
 private:
-  std::vector<consumer_function_type> consumers_;
-  indexer_function_type               indexer_;
+  std::vector<ConsumerFunctionType> consumers_;
+  IndexerFunctionType               indexer_;
 };
 }  // namespace byte_array
 }  // namespace fetch

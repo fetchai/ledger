@@ -52,9 +52,9 @@ public:
   std::vector<std::string>        reverse_vocab;  // id -> word
   std::vector<SizeType>           counts;         // id -> count
 
-  std::vector<SizeType> PutSentenceInVocab(const std::vector<std::string> &sentence);
+  std::vector<SizeType> PutSentenceInVocab(std::vector<std::string> const &sentence);
 
-  void RemoveSentenceFromVocab(const std::vector<SizeType> &sentence);
+  void RemoveSentenceFromVocab(std::vector<SizeType> const &sentence);
 };
 
 std::vector<math::SizeType> Vocab::PutSentenceInVocab(std::vector<std::string> const &sentence)

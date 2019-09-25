@@ -32,10 +32,10 @@ TEST(blas_gemm_vectorised, blas_gemm_tt_vector1)
   Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C <= _alpha * T(_A) * T(_B) + _beta * _C), platform::Parallelisation::VECTORISE>
       gemm_tt_vector;
-  // Compuing _C <= _alpha * T(_A) * T(_B) + _beta * _C
+  // Computing _C <= _alpha * T(_A) * T(_B) + _beta * _C
   using Type = double;
-  Type alpha = Type(1);
-  Type beta  = Type(0);
+  auto alpha = Type(1);
+  auto beta  = Type(0);
 
   Tensor<Type>     tensor_A = Tensor<Type>::FromString(R"(
   	0.3745401188473625 0.9507143064099162 0.7319939418114051;
@@ -71,10 +71,10 @@ TEST(blas_gemm_vectorised, blas_gemm_tt_vector2)
   Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C <= _alpha * T(_A) * T(_B) + _beta * _C), platform::Parallelisation::VECTORISE>
       gemm_tt_vector;
-  // Compuing _C <= _alpha * T(_A) * T(_B) + _beta * _C
+  // Computing _C <= _alpha * T(_A) * T(_B) + _beta * _C
   using Type = double;
-  Type alpha = Type(0);
-  Type beta  = Type(1);
+  auto alpha = Type(0);
+  auto beta  = Type(1);
 
   Tensor<Type>     tensor_A = Tensor<Type>::FromString(R"(
   	0.13949386065204183 0.29214464853521815 0.3663618432936917;
@@ -110,10 +110,10 @@ TEST(blas_gemm_vectorised, blas_gemm_tt_vector3)
   Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
        Computes(_C <= _alpha * T(_A) * T(_B) + _beta * _C), platform::Parallelisation::VECTORISE>
       gemm_tt_vector;
-  // Compuing _C <= _alpha * T(_A) * T(_B) + _beta * _C
+  // Computing _C <= _alpha * T(_A) * T(_B) + _beta * _C
   using Type = double;
-  Type alpha = Type(0.956385338577412);
-  Type beta  = Type(0.9213133398820812);
+  auto alpha = Type(0.956385338577412);
+  auto beta  = Type(0.9213133398820812);
 
   Tensor<Type>     tensor_A = Tensor<Type>::FromString(R"(
   	0.034388521115218396 0.9093204020787821 0.2587799816000169;

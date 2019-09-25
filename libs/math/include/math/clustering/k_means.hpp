@@ -302,7 +302,7 @@ private:
   void InferK(bool &sufficient_previous_assignment)
   {
     assert(k_inference_mode_ != KInferenceMode::Off);
-    assert(k_count_.size() == 0);
+    assert(k_count_.empty());
 
     if (k_inference_mode_ == KInferenceMode::HighestCluster)
     {

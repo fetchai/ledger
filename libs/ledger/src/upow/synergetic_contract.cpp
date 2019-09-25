@@ -115,7 +115,7 @@ VmStructuredDataArray CreateProblemData(vm::VM *vm, ProblemData const &problem_d
   // move the constructed elements over to the array
   ret->elements = std::move(elements);
 
-  return {ret};
+  return VmStructuredDataArray{ret};
 }
 
 }  // namespace
@@ -141,7 +141,8 @@ SynergeticContract::SynergeticContract(ConstByteArray const &source)
 
   // compile the source to IR
   std::vector<std::string> errors{};
-  if (!compiler_->Compile(static_cast<std::string>(source), "default", *ir_, errors))
+  fetch::vm::SourceFiles   files = {{"default.etch", static_cast<std::string>(source)}};
+  if (!compiler_->Compile(files, "default_ir", *ir_, errors))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to compile contract: ", ErrorsToLog(errors));
     throw std::runtime_error("Failed to compile synergetic contract");
@@ -149,7 +150,7 @@ SynergeticContract::SynergeticContract(ConstByteArray const &source)
 
   // generate the executable
   auto vm = std::make_unique<vm::VM>(module_.get());
-  if (!vm->GenerateExecutable(*ir_, "another", *executable_, errors))
+  if (!vm->GenerateExecutable(*ir_, "default_exe", *executable_, errors))
   {
     FETCH_LOG_WARN(LOGGING_NAME,
                    "Failed to generate executable for contract: ", ErrorsToLog(errors));

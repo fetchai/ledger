@@ -35,8 +35,8 @@ namespace {
 constexpr char const *LOGGING_NAME = "NaiveSynMiner";
 
 using UInt256 = vectorise::UInt<256>;
-using serializers::MsgPackSerializer;
 using byte_array::ConstByteArray;
+using serializers::MsgPackSerializer;
 
 using DagNodes = NaiveSynergeticMiner::DagNodes;
 

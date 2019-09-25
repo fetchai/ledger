@@ -30,7 +30,7 @@ typename ArrayType::Type SquareDistance(ArrayType const &A, ArrayType const &B)
   auto it1   = A.begin();
   auto it2   = B.begin();
   assert(it1.size() == it2.size());
-  Type ret = Type(0);
+  auto ret = Type(0);
 
   while (it1.is_valid())
   {

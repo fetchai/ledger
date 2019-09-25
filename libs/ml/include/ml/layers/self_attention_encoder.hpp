@@ -160,7 +160,7 @@ private:
   DataType       epsilon_;
   ActivationType activation_type_;
 
-  std::string positionwise_feedforward(std::string name, std::string const &input)
+  std::string positionwise_feedforward(std::string const &name, std::string const &input)
   {
     // position wise feedforward with gelu acitvation
     std::string ff_first_layer =
@@ -184,7 +184,7 @@ private:
     return ff_second_layer;
   }
 
-  std::string residual_connection(std::string name, std::string const &prev_layer_input,
+  std::string residual_connection(std::string const &name, std::string const &prev_layer_input,
                                   std::string const &prev_layer_output)
   {
     // do a dropout of prev output before doing residual connection

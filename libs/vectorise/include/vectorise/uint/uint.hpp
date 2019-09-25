@@ -83,14 +83,14 @@ public:
   constexpr UInt(UInt &&other) noexcept = default;
 
   template <typename... T, IfIsWideInitialiserList<T...> * = nullptr>
-  constexpr UInt(T &&... data)
+  constexpr explicit UInt(T &&... data)
     : wide_{{std::forward<T>(data)...}}
   {
     mask_residual_bits();
   }
 
   template <typename... T, IfIsBaseInitialiserList<T...> * = nullptr>
-  constexpr UInt(T &&... data)
+  constexpr explicit UInt(T &&... data)
     : wide_{reinterpret_cast<WideContainerType &&>(
           core::Array<BaseType, ELEMENTS>{{std::forward<T>(data)...}})}
   {
@@ -98,9 +98,9 @@ public:
   }
 
   template <typename T, meta::IfIsAByteArray<T> * = nullptr>
-  UInt(T const &other);
+  explicit UInt(T const &other);
   template <typename T, meta::IfIsUnsignedInteger<T> * = nullptr>
-  constexpr UInt(T number);
+  constexpr explicit UInt(T number);
 
   ////////////////////////////
   /// assignment operators ///
@@ -308,7 +308,7 @@ template <typename T, meta::IfIsUnsignedInteger<T> *>
 constexpr UInt<S>::UInt(T number)
 {
   // This will work properly only on LITTLE endian hardware.
-  char *d                   = reinterpret_cast<char *>(wide_.data());
+  auto *d                   = reinterpret_cast<char *>(wide_.data());
   *reinterpret_cast<T *>(d) = number;
 }
 
@@ -633,7 +633,7 @@ constexpr UInt<256> &UInt<256>::operator*=(UInt<256> const &n)
   carry    = static_cast<WideType>(terms[2] >> WIDE_ELEMENT_SIZE);
   terms[3] = products[0][3] + products[1][2] + products[2][1] + products[3][0] + carry;
   carry    = static_cast<WideType>(terms[3] >> WIDE_ELEMENT_SIZE);
-  // TODO: decide what to do with overflow if carry > 0
+  // TODO(?): decide what to do with overflow if carry > 0
 
   for (std::size_t i = 0; i < WIDE_ELEMENTS; ++i)
   {
@@ -679,7 +679,7 @@ constexpr UInt<S> &UInt<S>::operator/=(UInt<S> const &n)
   std::size_t lsb = std::min(N.lsb(), D.lsb());
   N >>= lsb;
   D >>= lsb;
-  UInt<S> multiple = 1u;
+  UInt<S> multiple(1u);
 
   // Find smallest multiple of divisor (D) that is larger than the dividend (N)
   while (N > D)
@@ -1081,8 +1081,8 @@ inline double Log(UInt<256> const &x)
 {
   uint64_t last_word = x.ElementAt(x.TrimmedSize() - 1);
 
-  uint64_t tz       = uint64_t(platform::CountTrailingZeroes64(last_word));
-  uint64_t exponent = (last_word << 3) - tz;
+  auto     tz       = uint64_t(platform::CountTrailingZeroes64(last_word));
+  uint64_t exponent = (last_word << 3u) - tz;
 
   return double(exponent) + std::log(double(last_word << tz) * (1. / double(uint32_t(-1))));
 }
@@ -1134,7 +1134,7 @@ public:
   {
     if (array.size() != u.elements())
     {
-      // TODO: Throw
+      // TODO(?): Throw
     }
     for (std::size_t i = 0; i < u.elements(); i++)
     {

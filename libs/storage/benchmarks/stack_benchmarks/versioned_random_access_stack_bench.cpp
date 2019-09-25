@@ -27,7 +27,7 @@ using fetch::storage::VersionedRandomAccessStack;
 class VersionedRandomAccessStackBench : public ::benchmark::Fixture
 {
 protected:
-  void SetUp(const ::benchmark::State & /*st*/) override
+  void SetUp(::benchmark::State const & /*st*/) override
   {
     stack_.New("VRAS_bench.db", "VRAS_diff_bench.db");
 
@@ -35,9 +35,6 @@ protected:
     EXPECT_TRUE(stack_.DirectWrite())
         << "Expected versioned random access stack to be direct write as default stack type is RAS";
   }
-
-  void TearDown(const ::benchmark::State &) override
-  {}
 
   VersionedRandomAccessStack<uint64_t>      stack_;
   fetch::random::LaggedFibonacciGenerator<> lfg_;

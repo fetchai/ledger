@@ -81,9 +81,9 @@ private:
 
   Logger &GetLogger(char const *name);
 
-  Mutex    lock_;
-  Registry registry_;
-  LogLevel global_level_{LogLevel::TRACE};
+  Mutex                 lock_;
+  Registry              registry_;
+  std::atomic<LogLevel> global_level_{LogLevel::TRACE};
 
   // Telemetry
   CounterPtr log_messages_{telemetry::Registry::Instance().CreateCounter(
@@ -104,7 +104,7 @@ private:
 
 constexpr LogLevel DEFAULT_LEVEL = LogLevel::INFO;
 
-LogRegistry                                          registry_;
+LogRegistry                                          registry;
 std::shared_ptr<spdlog::sinks::stdout_color_sink_mt> COLOUR_SINK;
 
 LogLevel ConvertToLevel(spdlog::level::level_enum level)
@@ -167,8 +167,7 @@ spdlog::level::level_enum ConvertFromLevel(LogLevel level)
   return new_level;
 }
 
-LogRegistry::LogRegistry()
-{}
+LogRegistry::LogRegistry() = default;
 
 void LogRegistry::Log(LogLevel level, char const *name, std::string &&message)
 {
@@ -276,22 +275,22 @@ LogRegistry::Logger &LogRegistry::GetLogger(char const *name)
 
 void SetLogLevel(char const *name, LogLevel level)
 {
-  registry_.SetLevel(name, level);
+  registry.SetLevel(name, level);
 }
 
 void SetGlobalLogLevel(LogLevel level)
 {
-  registry_.SetGlobalLevel(level);
+  registry.SetGlobalLevel(level);
 }
 
 void Log(LogLevel level, char const *name, std::string &&message)
 {
-  registry_.Log(level, name, std::move(message));
+  registry.Log(level, name, std::move(message));
 }
 
 LogLevelMap GetLogLevelMap()
 {
-  return registry_.GetLogLevelMap();
+  return registry.GetLogLevelMap();
 }
 
 }  // namespace fetch

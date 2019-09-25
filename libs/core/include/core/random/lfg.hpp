@@ -35,7 +35,7 @@ public:
   // Note, breaking naming convention for STL compatibility
   using result_type = RandomType;
 
-  LaggedFibonacciGenerator(RandomType seed = 42) noexcept
+  explicit LaggedFibonacciGenerator(RandomType seed = 42) noexcept
   {
     Seed(seed);
   }

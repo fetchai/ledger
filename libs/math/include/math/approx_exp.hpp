@@ -123,7 +123,7 @@ private:
       double r2 = fexp(l);
 
       double   z    = l * a_ + b_;
-      uint64_t v    = static_cast<uint64_t>(z);
+      auto     v    = static_cast<uint64_t>(z);
       uint64_t idx  = (v >> E_BIN_SIZE) & (E_ENTRIES - 1);
       double   corr = r1 / r2;
 
@@ -190,5 +190,6 @@ bool ApproxExpImplementation<N, C, OF>::initialised_ = false;
 
 template <uint8_t N, uint64_t C, bool OF>
 double ApproxExpImplementation<N, C, OF>::corrections_[E_ENTRIES] = {0};
+
 }  // namespace math
 }  // namespace fetch

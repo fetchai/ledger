@@ -62,7 +62,7 @@ int main(int ac, char **av)
   // load pretrained bert model and print its output of a toy input
   BERTConfig    config;
   BERTInterface interface(config);
-  GraphType *   g = new GraphType();
+  auto *        g = new GraphType();
 
   std::cout << "load pretrained pytorch bert model from folder: \n"
             << pretrained_model_dir << std::endl;

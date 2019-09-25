@@ -69,13 +69,13 @@ public:
    * Compile a source file, producing an executable
    *
    * @param: module The module which the user might have added various bindings/classes to etc.
-   * @param: source The raw source to compile
+   * @param: files The raw source to compile
    * @param: executable executable to fill
    *
    * @return: Vector of strings which represent errors found during compilation
    */
   static std::vector<std::string> Compile(std::shared_ptr<fetch::vm::Module> const &module,
-                                          std::string const &                       source,
+                                          fetch::vm::SourceFiles const &            files,
                                           fetch::vm::Executable &                   executable);
 };
 

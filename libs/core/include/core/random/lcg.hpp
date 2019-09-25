@@ -32,9 +32,9 @@ public:
   // Note, breaking naming convention for STL compatibility
   using result_type = RandomType;
 
-  LinearCongruentialGenerator(RandomType seed = 42) noexcept
+  explicit LinearCongruentialGenerator(RandomType seed = 42) noexcept
   {
-    Seed(std::move(seed));
+    Seed(seed);
   }
 
   RandomType Seed() const noexcept

@@ -94,7 +94,8 @@ TYPED_TEST(CrossEntropyTest, onehot_forward_test)
 
 TYPED_TEST(CrossEntropyTest, onehot_forward_log_zero_test)
 {
-  using Type = typename TypeParam::Type;
+  using Type     = typename TypeParam::Type;
+  using DataType = typename TypeParam::Type;
 
   std::uint64_t n_classes     = 3;
   std::uint64_t n_data_points = 2;
@@ -113,6 +114,7 @@ TYPED_TEST(CrossEntropyTest, onehot_forward_log_zero_test)
   op.Forward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, result);
 
   EXPECT_TRUE(result(0, 0) == fetch::math::numeric_inf<Type>());
+  fetch::math::state_clear<DataType>();
 }
 
 TYPED_TEST(CrossEntropyTest, binary_forward_test)

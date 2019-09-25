@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/comparison.hpp"
 #include "math/fundamental_operators.hpp"
 #include "math/standard_functions/exp.hpp"
+#include "vectorise/math/max.hpp"
 
 #include <cassert>
 
@@ -43,7 +43,7 @@ void LeakyRelu(ArrayType const &t, typename ArrayType::Type const &a, ArrayType 
   auto rit = ret.begin();
   while (it.is_valid())
   {
-    *rit = fetch::math::Max(*it, typename ArrayType::Type(0));
+    *rit = fetch::vectorise::Max(*it, typename ArrayType::Type(0));
     if (*it >= static_cast<DataType>(0))
     {
       // f(x)=x for x>=0
@@ -98,7 +98,7 @@ void LeakyRelu(ArrayType const &t, ArrayType const &a, ArrayType &ret)
 
     while (it.is_valid())
     {
-      *rit = fetch::math::Max(*it, typename ArrayType::Type(0));
+      *rit = fetch::vectorise::Max(*it, typename ArrayType::Type(0));
       if (*it >= static_cast<DataType>(0))
       {
         // f(x)=x for x>=0

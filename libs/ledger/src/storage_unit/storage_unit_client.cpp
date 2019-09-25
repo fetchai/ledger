@@ -33,7 +33,6 @@
 
 using fetch::storage::ResourceID;
 using fetch::storage::RevertibleDocumentStoreProtocol;
-using fetch::muddle::MuddleEndpoint;
 using fetch::service::Promise;
 using fetch::byte_array::ToBase64;
 
@@ -41,7 +40,7 @@ namespace fetch {
 namespace ledger {
 namespace {
 
-using AddressList = std::vector<MuddleEndpoint::Address>;
+using AddressList = std::vector<muddle::Address>;
 
 AddressList GenerateAddressList(ShardConfigs const &shards)
 {

@@ -30,8 +30,8 @@ typename ArrayType::Type Hamming(ArrayType const &a, ArrayType const &b)
   using Type     = typename ArrayType::Type;
   using SizeType = typename ArrayType::SizeType;
 
-  Type     result = Type(0);
-  SizeType count  = SizeType(0);
+  auto result = Type(0);
+  auto count  = SizeType(0);
   for (auto &val : a)
   {
     // TODO(private issue 193): implement boolean only array
