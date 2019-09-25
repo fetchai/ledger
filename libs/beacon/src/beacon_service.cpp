@@ -240,13 +240,13 @@ void BeaconService::StartNewCabinet(CabinetMemberList members, uint32_t threshol
 
   SharedAeonExecutionUnit beacon = std::make_shared<AeonExecutionUnit>();
 
-  // Determines if we are observing or actively participating
-  if (members.find(identity_.identifier()) == members.end())
-  {
-    beacon->observe_only = true;
-    FETCH_LOG_INFO(LOGGING_NAME, "Beacon in observe only mode. Members: ", members.size());
-  }
-  else
+  //// Determines if we are observing or actively participating
+  //if (members.find(identity_.identifier()) == members.end())
+  //{
+  //  beacon->observe_only = true;
+  //  FETCH_LOG_INFO(LOGGING_NAME, "Beacon in observe only mode. Members: ", members.size());
+  //}
+  //else
   {
     beacon->manager.SetCertificate(certificate_);
     beacon->manager.NewCabinet(members, threshold);
@@ -281,11 +281,11 @@ BeaconService::State BeaconService::OnWaitForSetupCompletionState()
 
     // We distinguish between those members that
     // observe the process
-    if (active_exe_unit_->observe_only)
-    {
-      return State::WAIT_FOR_PUBLIC_KEYS;
-    }
-    else
+    //if (active_exe_unit_->observe_only)
+    //{
+    //  return State::WAIT_FOR_PUBLIC_KEYS;
+    //}
+    //else
     {
       // and those who run it.
       Serializer       msgser;
@@ -355,7 +355,7 @@ BeaconService::State BeaconService::OnObserveEntropyGeneration()
 
       // ... the validity is verified
       assert(next_entropy_.seed == current_entropy_.seed);
-      assert(active_exe_unit_->observe_only);
+      //assert(active_exe_unit_->observe_only); // TODO(HUT): what??
       active_exe_unit_->manager.SetMessage(next_entropy_.seed);
       if (!active_exe_unit_->manager.Verify(current_entropy_.signature))
       {
@@ -586,10 +586,10 @@ BeaconService::State BeaconService::OnComiteeState()
   std::lock_guard<std::mutex> lock(mutex_);
   if (next_entropy_.round < active_exe_unit_->aeon.round_end)
   {
-    if (active_exe_unit_->observe_only)
-    {
-      return State::OBSERVE_ENTROPY_GENERATION;
-    }
+    //if (active_exe_unit_->observe_only)
+    //{
+    //  return State::OBSERVE_ENTROPY_GENERATION;
+    //}
 
     return State::PREPARE_ENTROPY_GENERATION;
   }

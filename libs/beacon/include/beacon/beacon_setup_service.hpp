@@ -100,6 +100,7 @@ public:
   using QualComplaintsManager   = beacon::QualComplaintsManager;
   using DKGEnvelope             = dkg::DKGEnvelope;
   using ComplaintsMessage       = dkg::ComplaintsMessage;
+  using FinalStateMessage       = dkg::FinalStateMessage;
   using CoefficientsMessage     = dkg::CoefficientsMessage;
   using ConnectionsMessage      = dkg::ConnectionsMessage;
   using SharesMessage           = dkg::SharesMessage;
@@ -149,6 +150,8 @@ protected:
   MuddleEndpoint &        endpoint_;
   SubscriptionPtr         shares_subscription_;
   SubscriptionPtr         dry_run_subscription_;
+
+  CertificatePtr          certificate_;
   ReliableChannelPtr      rbc_;
 
   std::shared_ptr<StateMachine> state_machine_;
@@ -195,6 +198,10 @@ protected:
   std::deque<SharedAeonExecutionUnit>                        aeon_exe_queue_;
   SharedAeonExecutionUnit                                    beacon_;
   std::unordered_map<MuddleAddress, std::set<MuddleAddress>> ready_connections_;
+
+  std::map<MuddleAddress, ConstByteArray>                    final_state_payload_;
+
+  // TODO(HUT): delete
   std::map<MuddleAddress, GroupPubKeyPlusSigShare>           dry_run_shares_;
   std::map<std::string, uint16_t>                            dry_run_public_keys_;
 

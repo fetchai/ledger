@@ -51,7 +51,8 @@ public:
     CONNECTIONS,
     COEFFICIENT,
     SHARE,
-    COMPLAINT
+    COMPLAINT,
+    FINAL_STATE
   };
 
   virtual ~DKGMessage() = default;
@@ -94,6 +95,32 @@ public:
   {
     DKGSerializer serializer;
     serializer << connections_;
+    return serializer;
+  }
+};
+
+class FinalStateMessage : public DKGMessage
+{
+public:
+  using Payload     = byte_array::ConstByteArray;
+
+  Payload payload_;
+
+  explicit FinalStateMessage(DKGSerializer &serialiser)
+    : DKGMessage{MessageType::FINAL_STATE}
+  {
+    serialiser >> payload_;
+  }
+  FinalStateMessage(Payload const &payload)
+    : DKGMessage{MessageType::FINAL_STATE}
+    , payload_{payload}
+  {}
+  ~FinalStateMessage() override = default;
+
+  DKGSerializer Serialize() const override
+  {
+    DKGSerializer serializer;
+    serializer << payload_;
     return serializer;
   }
 };
