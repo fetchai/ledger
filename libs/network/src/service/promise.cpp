@@ -132,8 +132,6 @@ void PromiseImplementation::Fail()
 
 bool PromiseImplementation::Wait(bool throw_exception) const
 {
-  State state_copy{state()};
-
   if (Clock::now() >= deadline_)
   {
     LogTimout(name_, id_);
@@ -149,7 +147,7 @@ bool PromiseImplementation::Wait(bool throw_exception) const
       return false;
     }
   }
-  state_copy = state();
+  State state_copy = state();
 
   if (State::FAILED == state_copy)
   {

@@ -630,8 +630,8 @@ constexpr UInt<256> &UInt<256>::operator*=(UInt<256> const &n)
   terms[2] = products[0][2] + products[1][1] + products[2][0] + carry;
   carry    = static_cast<WideType>(terms[2] >> WIDE_ELEMENT_SIZE);
   terms[3] = products[0][3] + products[1][2] + products[2][1] + products[3][0] + carry;
-  carry    = static_cast<WideType>(terms[3] >> WIDE_ELEMENT_SIZE);
   // TODO(?): decide what to do with overflow if carry > 0
+  // carry    = static_cast<WideType>(terms[3] >> WIDE_ELEMENT_SIZE);
 
   for (std::size_t i = 0; i < WIDE_ELEMENTS; ++i)
   {

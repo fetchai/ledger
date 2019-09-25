@@ -165,7 +165,7 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
   {
     GenerateSlices(mining_pool_, block.body, 0, 1, num_lanes);
   }
-  else
+  else if (num_threads > 1)
   {
     // split the main queue into a series of smaller queues that can be executed in parallel
     std::vector<Queue> transaction_lists(num_threads);

@@ -72,5 +72,6 @@ private:
   MMRegisterType *ptr_;
   MMRegisterType *end_;
 };
+
 }  // namespace vectorise
 }  // namespace fetch

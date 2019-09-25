@@ -827,7 +827,7 @@ void Router::RoutePacket(PacketPtr const &packet, bool external)
 
     if (kademlia_routing_)
     {
-      handle = LookupKademliaClosestHandle(packet->GetTarget());
+      LookupKademliaClosestHandle(packet->GetTarget());
       return;
     }
 
