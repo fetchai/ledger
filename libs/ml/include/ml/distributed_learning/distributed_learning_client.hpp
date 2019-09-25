@@ -421,7 +421,7 @@ void TrainingClient<TensorType>::TrainOnce()
   // Upload to https://plot.ly/create/#/ for visualisation
   if (lossfile)
   {
-    lossfile << GetStrTimestamp() << ", " << static_cast<double>(train_loss_)
+    lossfile << GetStrTimestamp() << ", " << static_cast<double>(train_loss_) << ", "
              << static_cast<double>(test_loss_) << "\n";
   }
 
@@ -455,7 +455,7 @@ void TrainingClient<TensorType>::TrainWithCoordinator()
 
     if (lossfile)
     {
-      lossfile << GetStrTimestamp() << ", " << static_cast<double>(train_loss_)
+      lossfile << GetStrTimestamp() << ", " << static_cast<double>(train_loss_) << ", "
                << static_cast<double>(test_loss_) << "\n";
     }
   }
