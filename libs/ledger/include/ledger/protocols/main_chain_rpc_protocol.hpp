@@ -116,7 +116,7 @@ template <class F, F f>
 struct StructField
 {
   template <class T>
-  static constexpr auto &&Ref(T &&t)
+  static constexpr auto &&Ref(T &&t) noexcept
   {
     return t.*f;
   }
