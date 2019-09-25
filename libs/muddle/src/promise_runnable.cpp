@@ -73,26 +73,24 @@ bool PromiseTask::IsReadyToExecute() const
 {
   bool ready{false};
 
-  if (!complete_)
+  if (complete_ || !promise_)
   {
-    if (promise_)
-    {
-      // normal promise resolution
-      ready = promise_->state() != PromiseState::WAITING;
+    // Case 1: The promise is complete or in an invalid state. In either case should not be run
+  }
+  else if (promise_->state() != PromiseState::WAITING)
+  {
+    // Case 2: The promise has already come to a conclusion of some kind
+    ready = true;
+  }
+  else if (Clock::now() >= deadline_)
+  {
+    // Case 3: The promise has not already come to a conclusion but we have exceeded the deadline
 
-      // if still not ready then check the deadline
-      if (!ready)
-      {
-        if (Clock::now() >= deadline_)
-        {
-          // signal that the promise has timed out
-          promise_->Timeout();
+    // signal that the promise has timed out
+    promise_->Timeout();
 
-          FETCH_LOG_WARN(LOGGING_NAME, "Explicitly marking the transaction as timed out");
-          ready = true;
-        }
-      }
-    }
+    FETCH_LOG_WARN(LOGGING_NAME, "Explicitly marking the promise as timed out");
+    ready = true;
   }
 
   return ready;

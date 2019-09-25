@@ -239,7 +239,7 @@ void PeerSelector::ResolveAddresses(Addresses const &addresses)
 
     // wrap the promise is a task
     auto task = std::make_shared<PromiseTask>(
-        std::move(promise), CalculatePromiseTimeout(peer_data.consecutive_failures),
+        promise, CalculatePromiseTimeout(peer_data.consecutive_failures),
         [this, address](service::Promise const &promise) { OnResolvedAddress(address, promise); });
 
     // add the task to the reactor
