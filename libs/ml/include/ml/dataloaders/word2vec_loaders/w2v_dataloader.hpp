@@ -70,7 +70,7 @@ public:
 
   /// accessors and helper functions ///
   SizeType         Size() const override;
-  SizeType         vocab_size() const;
+  SizeType         vocab_size();
   VocabType const &vocab() const;
   std::string      WordFromIndex(SizeType index) const;
   SizeType         IndexFromWord(std::string const &word) const;
@@ -195,11 +195,12 @@ void W2VLoader<T>::RemoveInfrequent(SizeType min)
   for (auto const &sentence : data_)
   {
     std::string s;
+    auto        counts = vocab_.GetCounts();
     for (auto const &word : sentence)
     {
-      if (vocab_.counts[word] >= min)
+      if (counts[word] >= min)
       {
-        s += vocab_.reverse_vocab[word] + " ";
+        s += vocab_.WordFromIndex(word) + " ";
       }
     }
     new_loader.BuildVocab(s);
@@ -216,7 +217,7 @@ void W2VLoader<T>::RemoveInfrequent(SizeType min)
 template <typename T>
 void W2VLoader<T>::InitUnigramTable()
 {
-  unigram_table_.ResetTable(vocab_.counts, 1e8);
+  unigram_table_.ResetTable(vocab_.GetCounts(), 1e8);
 }
 
 /**
@@ -347,9 +348,9 @@ void W2VLoader<T>::LoadVocab(std::string const &filename)
  * @return
  */
 template <typename T>
-math::SizeType W2VLoader<T>::vocab_size() const
+math::SizeType W2VLoader<T>::vocab_size()
 {
-  return vocab_.vocab.size();
+  return vocab_.GetVocabCount();
 }
 
 /**
