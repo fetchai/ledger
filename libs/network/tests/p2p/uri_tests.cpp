@@ -27,8 +27,8 @@ using fetch::network::Uri;
 struct TestCase
 {
   char const *text;
-  Uri::Scheme scheme;
   char const *authority;
+  Uri::Scheme scheme;
   bool        success;
 };
 
@@ -57,15 +57,14 @@ std::ostream &operator<<(std::ostream &s, TestCase const &config)
 }
 
 static const TestCase TEST_CASES[] = {
-    {"tcp://127.0.0.1:8000", Uri::Scheme::Tcp, "127.0.0.1:8000", true},
-    {"tcp://hostname:8000", Uri::Scheme::Tcp, "hostname:8000", true},
+    {"tcp://127.0.0.1:8000", "127.0.0.1:8000", Uri::Scheme::Tcp, true},
+    {"tcp://hostname:8000", "hostname:8000", Uri::Scheme::Tcp, true},
     {"muddle://rOA3MfBt0DdRtZRSo/gBFP2aD/YQTsd9lOh/Oc/Pzchrzz1wfhTUMpf9z8cc1kRltUpdlWznGzwroO8/"
      "rbdPXA==",
-     Uri::Scheme::Muddle,
      "rOA3MfBt0DdRtZRSo/gBFP2aD/YQTsd9lOh/Oc/Pzchrzz1wfhTUMpf9z8cc1kRltUpdlWznGzwroO8/rbdPXA==",
-     true},
-    {"tcp://foo:bar", Uri::Scheme::Muddle, "foo:bar", false},
-    {"muddle://badIdentityName", Uri::Scheme::Muddle, "badIdentityName", false}};
+     Uri::Scheme::Muddle, true},
+    {"tcp://foo:bar", "foo:bar", Uri::Scheme::Muddle, false},
+    {"muddle://badIdentityName", "badIdentityName", Uri::Scheme::Muddle, false}};
 
 class UriTests : public ::testing::TestWithParam<TestCase>
 {

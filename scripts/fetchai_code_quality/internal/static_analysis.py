@@ -13,6 +13,7 @@ def excluded_diagnostic(d, absolute_path, project_root, relative_path):
     EXCLUSIONS = ('libs/vm/include/vm/tokeniser.hpp',
                   'libs/vm/src/tokeniser.cpp')
     is_excluded_path = commonprefix([vendor_path, absolute_path]) == vendor_path or \
+        commonprefix([project_root, absolute_path]) != project_root or \
         relative_path in EXCLUSIONS
 
     is_gtest_or_gbench_cert_err58_cpp_problem = \

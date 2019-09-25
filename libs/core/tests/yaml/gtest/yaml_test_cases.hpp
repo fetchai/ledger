@@ -22,8 +22,8 @@
 struct TestCase
 {
   char const *input_text;
-  bool        expect_output;
   char const *output_text;
+  bool        expect_output;
   bool        expect_throw;
 };
 
@@ -32,51 +32,50 @@ static const TestCase TEST_CASES[] = {
     // Easy parsing
     // ====================================================================
     // basic one-line sequences
-    {R"([one, two,three])", true, R"(["one", "two", "three"])", false},
-    {R"([true, false])", true, "[true, false]", false},
-    {R"([1, 2, 3])", true, "[1, 2, 3]", false},
-    {R"(one: two)", true, R"({"one": "two"})", false},
+    {R"([one, two,three])", R"(["one", "two", "three"])", true, false},
+    {R"([true, false])", "[true, false]", true, false},
+    {R"([1, 2, 3])", "[1, 2, 3]", true, false},
+    {R"(one: two)", R"({"one": "two"})", true, false},
     // numeric data types
     // ====================================================================
     // Problems
     // ====================================================================
     // sequence in mapping
-    {R"(sequence: [one, two])", true, R"({"sequence": ["one", "two"]})", false},
+    {R"(sequence: [one, two])", R"({"sequence": ["one", "two"]})", true, false},
     {R"(sequence:
 - one
 - two)",
-     true, R"({"sequence": ["one", "two"]})", false},
+     R"({"sequence": ["one", "two"]})", true, false},
     // multiline compact sequence
     {R"(- key: value
 - key: another value)",
-     true, R"([{"key": "value"}, {"key": "another value"}])",
+     R"([{"key": "value"}, {"key": "another value"}])", true,
      false},                                     // Check for compact mappings in multiline sequence
-    {R"(one, two)", false, "", true},            // invalid single-line sequence
-    {R"(sequence: one, two)", false, "", true},  // invalid single-line sequence as a value
+    {R"(one, two)", "", false, true},            // invalid single-line sequence
+    {R"(sequence: one, two)", "", false, true},  // invalid single-line sequence as a value
     // ====================================================================
     // Spec examples
     // ====================================================================
     {R"(- Mark McGwire
 - Sammy Sosa
 - Ken Griffey)",
-     true, R"(["Mark McGwire", "Sammy Sosa", "Ken Griffey"])", false},  // Example 2.1
+     R"(["Mark McGwire", "Sammy Sosa", "Ken Griffey"])", true, false},  // Example 2.1
     {R"(- [name        , hr, avg  ]
 - [Mark McGwire, 65, 0.278]
 - [Sammy Sosa  , 63, 0.288])",
-     true,
-     R"([["name", "hr", "avg"], ["Mark McGwire", 65, 0.278], ["Sammy Sosa", 63, 0.288]])",
+     R"([["name", "hr", "avg"], ["Mark McGwire", 65, 0.278], ["Sammy Sosa", 63, 0.288]])", true,
      false},  // Example 2.5
     {R"(# ASCII Art
 --- |
   \//||\/||
   // ||  ||__)",
-     true, "\"\\\\//||\\\\/||\n// ||  ||__\"",
+     "\"\\\\//||\\\\/||\n// ||  ||__\"", true,
      false},  // Example 2.13.  In literals, newlines are preserved
     {R"(--- >
   Mark McGwire's
   year was crippled
   by a knee injury.)",
-     true, "\"Mark McGwire's year was crippled by a knee injury.\"",
+     "\"Mark McGwire's year was crippled by a knee injury.\"", true,
      false},  // Example 2.14.  In the folded scalars, newlines become spaces
     {R"(# Ordered maps are represented as
 # A sequence of mappings, with
@@ -85,8 +84,8 @@ static const TestCase TEST_CASES[] = {
 - Mark McGwire: 65
 - Sammy Sosa: 63
 - Ken Griffy: 58)",
-     true, R"([{"Mark McGwire": 65}, {"Sammy Sosa": 63}, {"Ken Griffy": 58}])",
+     R"([{"Mark McGwire": 65}, {"Sammy Sosa": 63}, {"Ken Griffy": 58}])", true,
      false},                                       // Example 2.26. Ordered Mappings
-    {R"(commercial-at: @text)", false, "", true},  // 5.10. Invalid use of reserved indicators
-    {R"(grave-accent: `text)", false, "", true},   // 5.10. Invalid use of reserved indicators
+    {R"(commercial-at: @text)", "", false, true},  // 5.10. Invalid use of reserved indicators
+    {R"(grave-accent: `text)", "", false, true},   // 5.10. Invalid use of reserved indicators
 };

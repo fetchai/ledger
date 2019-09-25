@@ -1,26 +1,25 @@
-Checks: "-*,\
+Checks: "\
 bugprone-*,\
-cert-dcl21-cpp,\
-cert-dcl50-cpp,\
-cert-env33-c,\
+cert-dcl*,\
+cert-env*,\
 cert-err52-cpp,\
 cert-err60-cpp,\
+google-build-explicit-make-pair,\
 google-build-namespaces,\
 google-explicit-constructor,\
-google-readability-casting,\
-google-readability-todo,\
+google-readability-*,\
 google-runtime-operator,\
 hicpp-exception-baseclass,\
+hicpp-explicit-conversions,\
+hicpp-use-*,\
 misc-*,\
 modernize-*,\
 performance-*,\
 readability-*,\
 -readability-identifier-naming"
 
-# To be enabled:
-#   cert-err34-c
-#   cert-err58-cpp
-#   cert-flp30-c
-#   clang-analyzer-* (undocumented for clang-tidy-6 - use build stdout to determine subset of available/desired checks)
-#   cppcoreguidelines-special-member-functions
+# TODO(WK):
+#   cert-*
+#   google-build-*
 #   hicpp-signed-bitwise
+#   hicpp-special-member-functions
