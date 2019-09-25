@@ -16,36 +16,21 @@
 //
 //------------------------------------------------------------------------------
 
+#include "beacon/beacon_service.hpp"
+#include "beacon/event_manager.hpp"
+#include "beacon/trusted_dealer.hpp"
 #include "core/reactor.hpp"
-#include "core/serializers/counter.hpp"
-#include "core/serializers/main_serializer.hpp"
 #include "core/service_ids.hpp"
 #include "core/state_machine.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
-
-#include "muddle/muddle_interface.hpp"
-#include "muddle/rpc/client.hpp"
-#include "muddle/rpc/server.hpp"
-#include "muddle/subscription.hpp"
-#include "network/generics/requesting_queue.hpp"
-
-#include "beacon/beacon_service.hpp"
-#include "beacon/beacon_setup_service.hpp"
-#include "beacon/entropy.hpp"
-#include "beacon/event_manager.hpp"
-#include "beacon/trusted_dealer.hpp"
 #include "ledger/shards/manifest.hpp"
 #include "ledger/shards/manifest_cache_interface.hpp"
+#include "muddle/muddle_interface.hpp"
 
-#include <cstdint>
-#include <ctime>
+#include "gtest/gtest.h"
 #include <deque>
 #include <iostream>
-#include <random>
-#include <stdexcept>
-#include <unordered_map>
-#include <vector>
 
 using namespace fetch;
 using namespace fetch::beacon;
@@ -55,14 +40,12 @@ using namespace std::chrono_literals;
 using std::this_thread::sleep_for;
 using std::chrono::milliseconds;
 
-#include "gtest/gtest.h"
-#include <iostream>
-
 using Prover         = fetch::crypto::Prover;
 using ProverPtr      = std::shared_ptr<Prover>;
 using Certificate    = fetch::crypto::Prover;
 using CertificatePtr = std::shared_ptr<Certificate>;
 using Address        = fetch::muddle::Packet::Address;
+using MuddleAddress  = byte_array::ConstByteArray;
 
 struct DummyManifesttCache : public ManifestCacheInterface
 {
@@ -127,47 +110,44 @@ struct CabinetNode
   }
 };
 
-void RunTrustedDealer(uint16_t total_renewals = 4, uint16_t number_of_cabinets = 4,
-                      uint16_t cabinet_size = 4, uint16_t numbers_per_aeon = 10,
-                      double threshold = 0.5)
+void RunTrustedDealer(uint16_t total_renewals = 4, uint16_t cabinet_size = 4,
+                      uint16_t numbers_per_aeon = 10, double threshold = 0.5)
 {
   std::cout << "- Setup" << std::endl;
-  uint16_t number_of_nodes = static_cast<uint16_t>(number_of_cabinets * cabinet_size);
 
-  std::vector<std::unique_ptr<CabinetNode>> committee;
-  for (uint16_t ii = 0; ii < number_of_nodes; ++ii)
+  std::vector<std::unique_ptr<CabinetNode>> cabinet;
+  for (uint16_t ii = 0; ii < cabinet_size; ++ii)
   {
     auto port_number = static_cast<uint16_t>(10000 + ii);
-    committee.emplace_back(new CabinetNode{port_number, ii});
+    cabinet.emplace_back(new CabinetNode{port_number, ii});
   }
   sleep_for(500ms);
 
   // Connect muddles together (localhost for this example)
-  for (uint32_t ii = 0; ii < number_of_nodes; ii++)
+  for (uint32_t ii = 0; ii < cabinet_size; ii++)
   {
-    for (uint32_t jj = ii + 1; jj < number_of_nodes; jj++)
+    for (uint32_t jj = ii + 1; jj < cabinet_size; jj++)
     {
-      committee[ii]->muddle->ConnectTo(committee[jj]->GetMuddleAddress(), committee[jj]->GetHint());
+      cabinet[ii]->muddle->ConnectTo(cabinet[jj]->GetMuddleAddress(), cabinet[jj]->GetHint());
     }
   }
 
   // wait for all the nodes to completely connect
   std::unordered_set<uint32_t> pending_nodes;
-  for (uint32_t ii = 0; ii < number_of_nodes; ++ii)
+  for (uint32_t ii = 0; ii < cabinet_size; ++ii)
   {
     pending_nodes.emplace(ii);
   }
 
-  const uint32_t EXPECTED_NUM_NODES = (number_of_cabinets * cabinet_size) - 1u;
   while (!pending_nodes.empty())
   {
     sleep_for(100ms);
 
     for (auto it = pending_nodes.begin(); it != pending_nodes.end();)
     {
-      auto &muddle = *(committee[*it]->muddle);
+      auto &muddle = *(cabinet[*it]->muddle);
 
-      if (EXPECTED_NUM_NODES <= muddle.GetNumDirectlyConnectedPeers())
+      if (cabinet_size - 1 <= muddle.GetNumDirectlyConnectedPeers())
       {
         it = pending_nodes.erase(it);
       }
@@ -178,92 +158,75 @@ void RunTrustedDealer(uint16_t total_renewals = 4, uint16_t number_of_cabinets =
     }
   }
 
-  // Creating n cabinets
-  std::vector<BeaconService::CabinetMemberList> all_cabinets;
-  all_cabinets.resize(number_of_cabinets);
-
-  uint64_t i = 0;
-  for (auto &member : committee)
+  std::set<MuddleAddress> cabinet_addresses;
+  for (auto &member : cabinet)
   {
-    all_cabinets[i % number_of_cabinets].insert(
-        member->muddle_certificate->identity().identifier());
-    ++i;
+    cabinet_addresses.insert(member->muddle_certificate->identity().identifier());
   }
 
   // Attaching the cabinet logic
-  for (auto &member : committee)
+  for (auto &member : cabinet)
   {
     member->reactor.Attach(member->beacon_service.GetMainRunnable());
     member->reactor.Attach(member->beacon_service.GetSetupRunnable());
   }
 
   // Starting the beacon
-  for (auto &member : committee)
+  for (auto &member : cabinet)
   {
     member->reactor.Start();
   }
 
-  // Stats
-  std::unordered_map<crypto::Identity, uint64_t> rounds_finished;
-  for (auto &member : committee)
-  {
-    rounds_finished[member->identity] = 0;
-  }
-
   // Ready
-  i = 0;
-  while (i < static_cast<uint64_t>(total_renewals + 1))
+  uint64_t i = 0;
+  while (i < total_renewals)
   {
-    auto cabinet = all_cabinets[i % number_of_cabinets];
-    if (i < total_renewals)
+    std::cout << "- Scheduling round " << i << std::endl;
+    TrustedDealer dealer(cabinet_addresses,
+                         static_cast<uint32_t>(static_cast<double>(cabinet.size()) * threshold));
+    for (auto &member : cabinet)
     {
-      std::cout << "- Scheduling round " << i << std::endl;
-      TrustedDealer dealer(cabinet,
-                           static_cast<uint32_t>(static_cast<double>(cabinet.size()) * threshold));
-      for (auto &member : committee)
-      {
-        member->beacon_service.StartNewCabinet(
-            cabinet, static_cast<uint32_t>(static_cast<double>(cabinet.size()) * threshold),
-            i * numbers_per_aeon, (i + 1) * numbers_per_aeon,
-            static_cast<uint64_t>(std::time(nullptr)),
-            dealer.GetKeys(member->identity.identifier()));
-      }
+      member->beacon_service.StartNewCabinet(
+          cabinet_addresses, static_cast<uint32_t>(static_cast<double>(cabinet.size()) * threshold),
+          i * numbers_per_aeon, (i + 1) * numbers_per_aeon,
+          static_cast<uint64_t>(std::time(nullptr)), dealer.GetKeys(member->identity.identifier()));
     }
 
     // Wait for everyone to finish
-    for (auto &member : committee)
+    pending_nodes.clear();
+    for (uint32_t ii = 0; ii < cabinet_size; ++ii)
     {
-      // Polling events about aeons completed work
-      fetch::beacon::EventCommitteeCompletedWork event;
-      while (member->event_manager->Poll(event))
+      pending_nodes.emplace(ii);
+    }
+    while (!pending_nodes.empty())
+    {
+      sleep_for(100ms);
+      for (auto it = pending_nodes.begin(); it != pending_nodes.end();)
       {
-        ++rounds_finished[member->identity];
+        fetch::beacon::EventCommitteeCompletedWork event;
+        if (cabinet[*it]->event_manager->Poll(event))
+        {
+          it = pending_nodes.erase(it);
+        }
+        else
+        {
+          ++it;
+        }
       }
     }
-
-    sleep_for(milliseconds{100});
-
     ++i;
   }
 
   std::cout << " - Stopping" << std::endl;
-  for (auto &member : committee)
+  for (auto &member : cabinet)
   {
     member->reactor.Stop();
     member->muddle->Stop();
     member->network_manager.Stop();
   }
-
-  std::cout << " - Testing" << std::endl;
-  // Verifying stats
-  // TODO(tfr): Check that the hashes are acutally the same
-  for (auto finish_stat : rounds_finished)
-  {
-    EXPECT_EQ(finish_stat.second, total_renewals);
-  }
 }
 
-TEST(beacon, trusted_dealer)
+TEST(beacon_service, trusted_dealer)
 {
-  RunTrustedDealer(4, 2, 2, 10, 0.5);
+  RunTrustedDealer(3, 4, 10, 0.5);
 }

@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/byte_array.hpp"
 #include "crypto/mcl_dkg.hpp"
 
 namespace fetch {
@@ -26,8 +25,7 @@ namespace beacon {
 class TrustedDealer
 {
   using MuddleAddress = byte_array::ConstByteArray;
-
-  using DkgOutput = crypto::mcl::DkgOutput;
+  using DkgOutput     = crypto::mcl::DkgOutput;
 
   std::unordered_map<MuddleAddress, uint32_t> cabinet_index_{};
   std::vector<DkgOutput>                      outputs_{};
@@ -44,7 +42,7 @@ public:
 
     auto cabinet_size = static_cast<uint32_t>(cabinet.size());
     bn::initPairing();
-    outputs_ = crypto::mcl::TrustedDealerKeys(cabinet_size, threshold);
+    outputs_ = crypto::mcl::TrustedDealerGenerateKeys(cabinet_size, threshold);
   }
 
   DkgOutput GetKeys(MuddleAddress const &address)
