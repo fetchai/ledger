@@ -460,7 +460,8 @@ std::pair<MainChain::Blocks, MainChain::BlockHash> MainChain::TimeTravel(BlockHa
     auto next_hash{ret_blocks.back()->body.previous_hash};  // when next is previous
     return {std::move(ret_blocks), std::move(next_hash)};
   }
-  FETCH_LOG_DEBUG(LOGGING_NAME, "TimeTravel request, start hash = 0x", current_hash.ToHex(), ", limit = ", limit);
+  FETCH_LOG_DEBUG(LOGGING_NAME, "TimeTravel request, start hash = 0x", current_hash.ToHex(),
+                  ", limit = ", limit);
 
   auto const lim =
       static_cast<std::size_t>(std::min(limit, static_cast<int64_t>(MainChain::UPPER_BOUND)));
@@ -487,7 +488,8 @@ std::pair<MainChain::Blocks, MainChain::BlockHash> MainChain::TimeTravel(BlockHa
       && current_hash != GENESIS_DIGEST)
   {
     // lookup the block in storage
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Block 0x", current_hash.ToHex(), ", result size of ", result.size());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Block 0x", current_hash.ToHex(), ", result size of ",
+                    result.size());
     auto block{GetBlock(current_hash, &next_hash)};
     if (!block)
     {
