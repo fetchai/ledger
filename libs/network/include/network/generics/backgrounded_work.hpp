@@ -238,7 +238,7 @@ public:
   }
 
   template <class KEY>
-  bool Cancel(const KEY &key)
+  bool Cancel(KEY const &key)
   {
     bool r = false;
 

@@ -183,7 +183,9 @@ TYPED_TEST(GraphTest, applying_regularisation_per_trainable)
   g.SetRegularisation(weights, regulariser, regularisation_rate);
   auto node_ptr = g.GetNode(weights);
   auto op_ptr   = std::dynamic_pointer_cast<fetch::ml::ops::Weights<TensorType>>(node_ptr->GetOp());
-  op_ptr->ApplyRegularisation();
+  TensorType grad = op_ptr->GetGradients();
+  grad.Fill(static_cast<DataType>(0.0));
+  op_ptr->ApplyGradient(grad);
 
   // Evaluate weights
   TensorType prediction(op_ptr->ComputeOutputShape({}));
@@ -218,7 +220,9 @@ TYPED_TEST(GraphTest, applying_regularisation_all_trainables)
   g.SetRegularisation(regulariser, regularisation_rate);
   auto node_ptr = g.GetNode(weights);
   auto op_ptr   = std::dynamic_pointer_cast<fetch::ml::ops::Weights<TensorType>>(node_ptr->GetOp());
-  op_ptr->ApplyRegularisation();
+  TensorType grad = op_ptr->GetGradients();
+  grad.Fill(static_cast<DataType>(0.0));
+  op_ptr->ApplyGradient(grad);
 
   // Evaluate weights
   TensorType prediction(op_ptr->ComputeOutputShape({}));

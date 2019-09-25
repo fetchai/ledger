@@ -72,13 +72,13 @@ public:
 
   DataType AtFour(uint64_t idx1, uint64_t idx2, uint64_t idx3, uint64_t idx4) const;
 
-  void SetAtOne(uint64_t idx1, DataType value);
+  void SetAtOne(uint64_t idx1, DataType const &value);
 
-  void SetAtTwo(uint64_t idx1, uint64_t idx2, DataType value);
+  void SetAtTwo(uint64_t idx1, uint64_t idx2, DataType const &value);
 
-  void SetAtThree(uint64_t idx1, uint64_t idx2, uint64_t idx3, DataType value);
+  void SetAtThree(uint64_t idx1, uint64_t idx2, uint64_t idx3, DataType const &value);
 
-  void SetAtFour(uint64_t idx1, uint64_t idx2, uint64_t idx3, uint64_t idx4, DataType value);
+  void SetAtFour(uint64_t idx1, uint64_t idx2, uint64_t idx3, uint64_t idx4, DataType const &value);
 
   void Copy(fetch::math::Tensor<DataType> const &other);
 

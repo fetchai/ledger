@@ -19,6 +19,8 @@
 #include "beacon/beacon_manager.hpp"
 #include "crypto/ecdsa.hpp"
 
+#include <utility>
+
 namespace fetch {
 namespace dkg {
 
@@ -62,7 +64,7 @@ BeaconManager::BeaconManager(CertificatePtr certificate)
 
 void BeaconManager::SetCertificate(CertificatePtr certificate)
 {
-  certificate_ = certificate;
+  certificate_ = std::move(certificate);
 }
 
 void BeaconManager::GenerateCoefficients()
@@ -596,7 +598,7 @@ BeaconManager::Signature BeaconManager::GroupSignature() const
  */
 void BeaconManager::SetMessage(MessagePayload next_message)
 {
-  current_message_ = next_message;
+  current_message_ = std::move(next_message);
   signature_buffer_.clear();
   already_signed_.clear();
   // TODO(jmw): Should group_signature_ be cleared here?

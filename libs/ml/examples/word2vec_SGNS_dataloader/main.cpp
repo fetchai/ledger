@@ -63,10 +63,10 @@ std::pair<std::string, std::string> Model(fetch::ml::Graph<TensorType> &g, SizeT
 }
 
 void TestEmbeddings(Graph<TensorType> const &g, std::string const &skip_gram_name,
-                    GraphW2VLoader<DataType> const &dl, std::string word0, std::string word1,
-                    std::string word2, std::string word3, SizeType K)
+                    GraphW2VLoader<DataType> const &dl, std::string const &word0,
+                    std::string const &word1, std::string const &word2, std::string const &word3,
+                    SizeType K)
 {
-
   // first get hold of the skipgram layer by searching the return name in the graph
   std::shared_ptr<fetch::ml::layers::SkipGram<TensorType>> sg_layer =
       std::dynamic_pointer_cast<fetch::ml::layers::SkipGram<TensorType>>(

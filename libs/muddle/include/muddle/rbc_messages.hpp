@@ -151,8 +151,8 @@ public:
   HashDigest               hash() const;
   /// @}
 protected:
-  RBCMessage(RBCMessageType type, uint16_t channel = 0, uint32_t id = 0, uint8_t counter = 0,
-             SerialisedMessage msg = "");
+  explicit RBCMessage(RBCMessageType type, uint16_t channel = 0, uint32_t id = 0,
+                      uint8_t counter = 0, SerialisedMessage msg = "");
 
 private:
   RBCMessageType    type_;
@@ -165,7 +165,7 @@ private:
 class RHash : public RBCMessage
 {
 public:
-  RHash(RBCMessage const &msg)
+  explicit RHash(RBCMessage const &msg)
     : RBCMessage(msg)
   {}
   using RBCMessage::hash;
@@ -175,7 +175,7 @@ public:
 class RMessage : public RBCMessage
 {
 public:
-  RMessage(RBCMessage const &msg)
+  explicit RMessage(RBCMessage const &msg)
     : RBCMessage(msg)
   {}
   using RBCMessage::message;
@@ -186,12 +186,12 @@ template <RBCMessageType TYPE, typename Parent>
 class RBCMessageImpl final : public Parent
 {
 public:
-  RBCMessageImpl(uint16_t channel = 0, uint32_t id = 0, uint8_t counter = 0,
-                 SerialisedMessage msg = "")
+  explicit RBCMessageImpl(uint16_t channel = 0, uint32_t id = 0, uint8_t counter = 0,
+                          SerialisedMessage msg = "")
     : Parent{TYPE, channel, id, counter, msg}
   {}
 
-  RBCMessageImpl(RBCMessage const &msg)
+  explicit RBCMessageImpl(RBCMessage const &msg)
     : Parent(msg)
   {}
 

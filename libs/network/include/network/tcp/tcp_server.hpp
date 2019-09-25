@@ -97,7 +97,7 @@ public:
 private:
   using InFlightCounter = AtomicInFlightCounter<network::AtomicCounterName::TCP_PORT_STARTUP>;
 
-  void Accept(std::shared_ptr<asio::ip::tcp::tcp::acceptor> acceptor);
+  void Accept(std::shared_ptr<asio::ip::tcp::tcp::acceptor> const &acceptor);
 
   NetworkManagerType                        network_manager_;
   uint16_t                                  port_;

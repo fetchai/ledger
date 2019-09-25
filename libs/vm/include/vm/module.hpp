@@ -109,7 +109,7 @@ public:
           return constructor(vm, type_id);
         }
 
-        return nullptr;
+        return {};
       };
 
       module_->deserialization_constructors_.insert({type_index__, std::move(h)});

@@ -78,7 +78,7 @@ struct MatrixReduceFreeFunction
   template <typename T>
   struct Unroll<T>
   {
-    using SignatureType = std::function<B(const B &, Args..., const B &)>;
+    using SignatureType = std::function<B(B const &, Args..., B const &)>;
     static B Apply(B const &self, B const *regs, SignatureType const &fnc, Args &&... args)
     {
       return fnc(self, std::forward<Args>(args)..., *regs);

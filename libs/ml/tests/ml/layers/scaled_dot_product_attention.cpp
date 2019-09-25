@@ -354,7 +354,6 @@ TYPED_TEST(ScaledDotProductAttention, saveparams_test)
   layer.SetInput(label_name, labels);
   TypeParam loss = layer.Evaluate(error_output);
   layer.BackPropagate(error_output);
-  layer.ApplyRegularisation();
   auto grads = layer.GetGradients();
   for (auto &grad : grads)
   {
@@ -366,7 +365,6 @@ TYPED_TEST(ScaledDotProductAttention, saveparams_test)
   layer2.SetInput(label_name, labels);
   TypeParam loss2 = layer2.Evaluate(error_output);
   layer2.BackPropagate(error_output);
-  layer2.ApplyRegularisation();
   auto grads2 = layer2.GetGradients();
   for (auto &grad : grads2)
   {

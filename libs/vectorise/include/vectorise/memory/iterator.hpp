@@ -31,10 +31,10 @@ class ForwardIterator : public std::iterator<std::forward_iterator_tag, T>
 public:
   ForwardIterator() = delete;
 
-  constexpr ForwardIterator(ForwardIterator const &other) = default;
-  constexpr ForwardIterator(ForwardIterator &&other)      = default;
+  constexpr ForwardIterator(ForwardIterator const &other)     = default;
+  constexpr ForwardIterator(ForwardIterator &&other) noexcept = default;
   constexpr ForwardIterator &operator=(ForwardIterator const &other) = default;
-  constexpr ForwardIterator &operator=(ForwardIterator &&other) = default;
+  constexpr ForwardIterator &operator=(ForwardIterator &&other) noexcept = default;
 
   constexpr explicit ForwardIterator(T *pos) noexcept
     : pos_(pos)
@@ -77,10 +77,10 @@ class BackwardIterator : public std::iterator<std::forward_iterator_tag, T>
 public:
   constexpr BackwardIterator() = delete;
 
-  constexpr BackwardIterator(BackwardIterator const &other) = default;
-  constexpr BackwardIterator(BackwardIterator &&other)      = default;
+  constexpr BackwardIterator(BackwardIterator const &other)     = default;
+  constexpr BackwardIterator(BackwardIterator &&other) noexcept = default;
   constexpr BackwardIterator &operator=(BackwardIterator const &other) = default;
-  constexpr BackwardIterator &operator=(BackwardIterator &&other) = default;
+  constexpr BackwardIterator &operator=(BackwardIterator &&other) noexcept = default;
 
   constexpr explicit BackwardIterator(T *pos) noexcept
     : pos_(pos)

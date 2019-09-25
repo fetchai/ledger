@@ -35,7 +35,6 @@ namespace {
 
 using fetch::ledger::MainChain;
 using fetch::ledger::BlockStatus;
-using fetch::byte_array::ToBase64;  // NOLINT - needed for debug messages
 using fetch::ledger::testing::BlockGenerator;
 
 using MainChainPtr    = std::unique_ptr<MainChain>;
@@ -61,7 +60,7 @@ protected:
 
 public:
   MainChain::Blocks GetAncestorInLimit(MainChain::BehaviourWhenLimit behaviour,
-                                       MainChain::BlockPtr b1, MainChain::BlockPtr b3)
+                                       MainChain::BlockPtr const &b1, MainChain::BlockPtr const &b3)
   {
     constexpr uint64_t subchain_length_limit = 2;
 

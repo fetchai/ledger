@@ -28,6 +28,7 @@
 
 #include <ctime>
 #include <mutex>
+#include <utility>
 
 namespace fetch {
 namespace beacon {
@@ -958,8 +959,8 @@ void BeaconSetupService::BroadcastReconstructionShares()
  * @param from Muddle address of sender
  * @param msg_ptr Pointer of DKGMessage
  */
-void BeaconSetupService::OnDkgMessage(MuddleAddress const &       from,
-                                      std::shared_ptr<DKGMessage> msg_ptr)
+void BeaconSetupService::OnDkgMessage(MuddleAddress const &              from,
+                                      std::shared_ptr<DKGMessage> const &msg_ptr)
 {
   std::lock_guard<std::mutex> lock(mutex_);
   if (state_machine_->state() == State::IDLE || !BasicMsgCheck(from, msg_ptr))
@@ -1080,7 +1081,7 @@ void BeaconSetupService::OnNewDryRunPacket(muddle::Packet const &packet,
  * @param from Muddle address of sender
  * @param shares Pair of secret shares
  */
-void BeaconSetupService::OnNewShares(MuddleAddress                                from,
+void BeaconSetupService::OnNewShares(MuddleAddress const &                        from,
                                      std::pair<MessageShare, MessageShare> const &shares)
 {
   std::lock_guard<std::mutex> lock(mutex_);
@@ -1340,7 +1341,7 @@ bool BeaconSetupService::BasicMsgCheck(MuddleAddress const &              from,
   return true;
 }
 
-void BeaconSetupService::QueueSetup(SharedAeonExecutionUnit beacon)
+void BeaconSetupService::QueueSetup(SharedAeonExecutionUnit const &beacon)
 {
   std::lock_guard<std::mutex> lock(mutex_);
   assert(beacon != nullptr);
@@ -1357,7 +1358,7 @@ void BeaconSetupService::Abort(uint64_t abort_below)
 void BeaconSetupService::SetBeaconReadyCallback(CallbackFunction callback)
 {
   std::lock_guard<std::mutex> lock(mutex_);
-  callback_function_ = callback;
+  callback_function_ = std::move(callback);
 }
 
 std::weak_ptr<core::Runnable> BeaconSetupService::GetWeakRunnable()

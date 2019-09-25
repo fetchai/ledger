@@ -246,13 +246,13 @@ private:
   {
     // TODO (665) this is a uniform distribution; in principle we should be using a guassian
     // distribution instead we use a unifrom from -std dev -> + std dev
-    fetch::random::LaggedFibonacciGenerator<> lfg_(seed);
+    fetch::random::LaggedFibonacciGenerator<> lfg(seed);
 
     // http://proceedings.mlr.press/v9/glorot10a/glorot10a.pdf
     auto it = array.begin();
     while (it.is_valid())
     {
-      auto ran_val = lfg_.AsDouble();  // random value in range 0 <-> 1
+      auto ran_val = lfg.AsDouble();  // random value in range 0 <-> 1
       ran_val -= 0.5;
       ran_val *= 2.0;                 // random value in range -1 <-> +1
       ran_val *= normalising_factor;  // random value in range -sigma <-> +sigma
@@ -267,13 +267,13 @@ private:
   {
     // TODO (#1562) this is based on uniform random generator, and it should be set to default
     // weight initialization method distribution instead we use a unifrom from -std dev -> + std dev
-    fetch::random::LaggedFibonacciGenerator<> lfg_(seed);
+    fetch::random::LaggedFibonacciGenerator<> lfg(seed);
 
     // http://proceedings.mlr.press/v9/glorot10a/glorot10a.pdf
     auto it = array.begin();
     while (it.is_valid())
     {
-      auto ran_val = lfg_.AsDouble();  // random value in range 0 <-> 1
+      auto ran_val = lfg.AsDouble();  // random value in range 0 <-> 1
       ran_val -= 0.5;
       ran_val *= 2.0;                 // random value in range -1 <-> +1
       ran_val *= normalising_factor;  // random value in range -sigma <-> +sigma

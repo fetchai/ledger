@@ -43,7 +43,7 @@ struct Entropy
     return *reinterpret_cast<uint64_t const *>(entropy.pointer());
   }
 
-  operator bool() const
+  explicit operator bool() const
   {
     return !entropy.empty();
   }

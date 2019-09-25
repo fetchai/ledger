@@ -27,14 +27,11 @@ using fetch::storage::MMapRandomAccessStack;
 class MMapRandomAccessStackBench : public ::benchmark::Fixture
 {
 protected:
-  void SetUp(const ::benchmark::State & /*st*/) override
+  void SetUp(::benchmark::State const & /*st*/) override
   {
     stack_.New("test_bench.db");
     EXPECT_TRUE(stack_.is_open());
   }
-
-  void TearDown(const ::benchmark::State &) override
-  {}
 
   MMapRandomAccessStack<uint64_t>           stack_;
   fetch::random::LaggedFibonacciGenerator<> lfg_;

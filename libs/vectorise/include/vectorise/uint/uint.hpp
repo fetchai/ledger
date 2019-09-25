@@ -83,14 +83,14 @@ public:
   constexpr UInt(UInt &&other) noexcept = default;
 
   template <typename... T, IfIsWideInitialiserList<T...> * = nullptr>
-  constexpr UInt(T &&... data)
+  constexpr explicit UInt(T &&... data)
     : wide_{{std::forward<T>(data)...}}
   {
     mask_residual_bits();
   }
 
   template <typename... T, IfIsBaseInitialiserList<T...> * = nullptr>
-  constexpr UInt(T &&... data)
+  constexpr explicit UInt(T &&... data)
     : wide_{reinterpret_cast<WideContainerType &&>(
           core::Array<BaseType, ELEMENTS>{{std::forward<T>(data)...}})}
   {
@@ -98,9 +98,9 @@ public:
   }
 
   template <typename T, meta::IfIsAByteArray<T> * = nullptr>
-  UInt(T const &other);
+  explicit UInt(T const &other);
   template <typename T, meta::IfIsUnsignedInteger<T> * = nullptr>
-  constexpr UInt(T number);
+  constexpr explicit UInt(T number);
 
   ////////////////////////////
   /// assignment operators ///
@@ -679,7 +679,7 @@ constexpr UInt<S> &UInt<S>::operator/=(UInt<S> const &n)
   std::size_t lsb = std::min(N.lsb(), D.lsb());
   N >>= lsb;
   D >>= lsb;
-  UInt<S> multiple = 1u;
+  UInt<S> multiple(1u);
 
   // Find smallest multiple of divisor (D) that is larger than the dividend (N)
   while (N > D)
