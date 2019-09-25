@@ -127,9 +127,9 @@ private:
   /// @{
   static constexpr char const *ToString(State state) noexcept;
   Address                      GetRandomTrustedPeer() const;
-  bool                         HandleChainResponse(Address const &peer, BlockList const &block_list);
-  bool                         IsBlockValid(Block &block) const;
-  bool                         NoKnownChain() const;
+  bool HandleChainResponse(Address const &peer, BlockList const &block_list);
+  bool IsBlockValid(Block &block) const;
+  bool NoKnownChain() const;
   /// @}
 
   /// @name State Machine Handlers
