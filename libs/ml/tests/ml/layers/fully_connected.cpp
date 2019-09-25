@@ -195,23 +195,24 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test)
   auto g_not_shared_weights_before = g_not_shared->GetWeights();
 
   std::cout << "g_shared_weights_before.size(): " << g_shared_weights_before.size() << std::endl;
-  std::cout << "g_not_shared_weights_before.size(): " << g_not_shared_weights_before.size() << std::endl;
-//
-//  for (std::size_t j = 0; j < g_shared_weights_before.size(); ++j)
-//  {
-//    std::cout << "g_shared_weights_before[j].size(): " << g_shared_weights_before[j].size() << std::endl;
-//    std::cout << "g_not_shared_weights_before[j].size(): " << g_not_shared_weights_before[j].size() << std::endl;
-//
-//    for (std::size_t i = 0; i < g_shared_weights_before[j].size(); ++i)
-//    {
-//
-//    }
-//
-//  }
-//
-//
+  std::cout << "g_not_shared_weights_before.size(): " << g_not_shared_weights_before.size()
+            << std::endl;
+  //
+  //  for (std::size_t j = 0; j < g_shared_weights_before.size(); ++j)
+  //  {
+  //    std::cout << "g_shared_weights_before[j].size(): " << g_shared_weights_before[j].size() <<
+  //    std::endl; std::cout << "g_not_shared_weights_before[j].size(): " <<
+  //    g_not_shared_weights_before[j].size() << std::endl;
+  //
+  //    for (std::size_t i = 0; i < g_shared_weights_before[j].size(); ++i)
+  //    {
+  //
+  //    }
+  //
+  //  }
+  //
+  //
 
-  
   for (size_t i = 0; i < 4; i++)
   {
     EXPECT_EQ(g_shared_weights_before[i], g_not_shared_weights_before[i]);
