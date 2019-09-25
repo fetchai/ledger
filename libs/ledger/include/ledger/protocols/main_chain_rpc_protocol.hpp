@@ -136,7 +136,7 @@ struct MapSerializerTemplate
     value_util::Accumulate(
         [&t, map = map_constructor(sizeof...(Fields))](uint8_t key, auto field) mutable -> uint8_t {
           map.Append(key, field.Ref(t));
-          return key + 1;
+          return uint8_t(key + 1);
         },
         uint8_t(1), Fields{}...);
   }
@@ -147,7 +147,7 @@ struct MapSerializerTemplate
     value_util::Accumulate(
         [&t, &map](uint8_t key, auto field) -> uint8_t {
           map.ExpectKeyGetValue(key, field.Ref(t));
-          return key + 1;
+          return uint8_t(key + 1);
         },
         uint8_t(1), Fields{}...);
   }

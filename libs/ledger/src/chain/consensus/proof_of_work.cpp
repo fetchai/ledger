@@ -54,9 +54,9 @@ void ProofOfWork::SetTarget(std::size_t zeros)
   target_ <<= 8 * sizeof(uint8_t) * UInt256::size() - 1 - zeros;
 }
 
-void ProofOfWork::SetTarget(vectorise::UInt<256> target)
+void ProofOfWork::SetTarget(vectorise::UInt<256> const &target)
 {
-  target_ = std::move(target);
+  target_ = target;
 }
 
 void ProofOfWork::SetHeader(byte_array::ByteArray header)

@@ -638,8 +638,7 @@ MainChain::BlockPtr MainChain::GetBlock(BlockHash const &hash, BlockHash *next_h
   if (LookupBlock(hash, internal_block, next_hash))
   {
     // convert the pointee type to const
-    // NB: std::move is of no use here prior to C++20
-    return std::static_pointer_cast<Block const>(std::move(internal_block));
+    return std::static_pointer_cast<Block const>(internal_block);
   }
   else
   {
