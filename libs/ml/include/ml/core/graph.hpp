@@ -117,7 +117,6 @@ public:
   void       SetInput(std::string const &node_name, TensorType const &data);
   TensorType Evaluate(std::string const &node_name, bool is_training = true);
   void       BackPropagate(std::string const &node_name, TensorType const &error_signal = {});
-  void       ApplyRegularisation();
   void       ApplyGradients(std::vector<TensorType> &grad);
 
   //////////////////////////////////////////////////////
@@ -536,21 +535,6 @@ void Graph<TensorType>::ApplyGradients(std::vector<TensorType> &grad)
     throw std::runtime_error("cannot apply gradients: unrecognised graph state");
   }
   }
-}
-
-template <typename TensorType>
-void Graph<TensorType>::ApplyRegularisation()
-{
-  Compile();
-
-  for (auto &t : trainable_nodes_)
-  {
-    auto trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
-    trainable_ptr->ApplyRegularisation();
-  }
-
-  // TODO(#1554) - we should only reset the cache for trained nodes, not all nodes
-  ResetGraphCache(false);
 }
 
 /**

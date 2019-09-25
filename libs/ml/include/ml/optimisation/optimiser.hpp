@@ -246,7 +246,6 @@ typename T::Type Optimiser<T>::Run(std::vector<TensorType> const &data, TensorTy
     auto loss_tensor = graph_->ForwardPropagate(output_node_name_);
     loss_ += *(loss_tensor.begin());
     graph_->BackPropagate(output_node_name_);
-    graph_->ApplyRegularisation();
 
     // Compute and apply gradient
     ApplyGradients(batch_size);
@@ -350,7 +349,6 @@ typename T::Type Optimiser<T>::RunImplementation(
     auto loss_tensor = graph_->ForwardPropagate(output_node_name_);
     loss_ += *(loss_tensor.begin());
     graph_->BackPropagate(output_node_name_);
-    graph_->ApplyRegularisation();
 
     // Compute and apply gradient
     ApplyGradients(batch_size);
