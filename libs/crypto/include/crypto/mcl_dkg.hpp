@@ -44,11 +44,16 @@ using CabinetIndex   = uint32_t;
 struct DkgOutput
 {
   bn::G2              group_public_key;
-  std::vector<bn::G2> public_key_shares;
+  std::vector<bn::G2> public_key_shares{};
   bn::Fr              secret_key_share;
 
-  DkgOutput(bn::G2 group_public_key1, std::vector<bn::G2> public_key_shares1,
-            bn::Fr secret_key_shares1)
+  DkgOutput()
+  {
+    group_public_key.clear();
+    secret_key_share.clear();
+  }
+  DkgOutput(PublicKey group_public_key1, std::vector<PublicKey> public_key_shares1,
+            PrivateKey secret_key_shares1)
     : group_public_key{std::move(group_public_key1)}
     , public_key_shares{std::move(public_key_shares1)}
     , secret_key_share{std::move(secret_key_shares1)}

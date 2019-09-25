@@ -518,7 +518,7 @@ bool BeaconManager::RunReconstruction()
   return true;
 }
 
-void BeaconManager::SetDkgOutput(PublicKey &public_key, PrivateKey &secret_share,
+void BeaconManager::GetDkgOutput(PublicKey &public_key, PrivateKey &secret_share,
                                  std::vector<PublicKey> & public_key_shares,
                                  std::set<MuddleAddress> &qual)
 {
@@ -526,6 +526,16 @@ void BeaconManager::SetDkgOutput(PublicKey &public_key, PrivateKey &secret_share
   secret_share      = secret_share_;
   public_key_shares = public_key_shares_;
   qual              = qual_;
+}
+
+void BeaconManager::SetDkgOutput(PublicKey const &public_key, PrivateKey const &secret_share,
+                                 std::vector<PublicKey> const & public_key_shares,
+                                 std::set<MuddleAddress> const &qual)
+{
+  public_key_        = public_key;
+  secret_share_      = secret_share;
+  public_key_shares_ = public_key_shares;
+  qual_              = qual;
 }
 
 void BeaconManager::SetQual(std::set<fetch::dkg::BeaconManager::MuddleAddress> qual)

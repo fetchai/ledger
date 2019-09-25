@@ -30,16 +30,16 @@ using Certificate    = Prover;
 using CertificatePtr = std::shared_ptr<Certificate>;
 using MuddleAddress  = byte_array::ConstByteArray;
 
-struct DkgOutput
-{
-  PrivateKey              private_key;
-  PublicKey               group_public_key;
-  std::vector<PublicKey>  public_key_shares;
-  std::set<MuddleAddress> qual;
-};
-
 TEST(beacon_manager, dkg_and_threshold_signing)
 {
+  struct DkgOutput
+  {
+    PrivateKey              private_key;
+    PublicKey               group_public_key;
+    std::vector<PublicKey>  public_key_shares;
+    std::set<MuddleAddress> qual;
+  };
+
   bn::initPairing();
   PublicKey zero;
   zero.clear();
@@ -224,7 +224,7 @@ TEST(beacon_manager, dkg_and_threshold_signing)
     PublicKey               dummy_public;
     std::vector<PublicKey>  dummy_public_shares;
     std::set<MuddleAddress> dummy_qual;
-    manager->SetDkgOutput(dummy_public, computed_secret_key, dummy_public_shares, dummy_qual);
+    manager->GetDkgOutput(dummy_public, computed_secret_key, dummy_public_shares, dummy_qual);
     EXPECT_EQ(computed_secret_key, secret_key_test);
   }
 
@@ -303,7 +303,7 @@ TEST(beacon_manager, dkg_and_threshold_signing)
   for (auto &manager : beacon_managers)
   {
     DkgOutput output;
-    manager->SetDkgOutput(output.group_public_key, output.private_key, output.public_key_shares,
+    manager->GetDkgOutput(output.group_public_key, output.private_key, output.public_key_shares,
                           output.qual);
     outputs.push_back(output);
   }

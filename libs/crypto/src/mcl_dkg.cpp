@@ -324,7 +324,8 @@ Signature LagrangeInterpolation(std::unordered_map<CabinetIndex, Signature> cons
 
 /**
  * Generates the group public key, public key shares and private key share for a number of
- * parties and a given signature threshold
+ * parties and a given signature threshold. Nodes must be allocated the outputs according
+ * to their index in the committee.
  *
  * @param committee_size Number of parties for which private key shares are generated
  * @param threshold Number of parties required to generate a group signature
@@ -333,32 +334,35 @@ Signature LagrangeInterpolation(std::unordered_map<CabinetIndex, Signature> cons
 std::vector<DkgOutput> TrustedDealer(uint32_t committee_size, uint32_t threshold)
 {
   std::vector<DkgOutput> output;
-  bn::G2                 generator;
+  Generator              generator;
   SetGenerator(generator);
 
   // Construct polynomial of degree threshold - 1
-  std::vector<bn::Fr> vec_a;
+  std::vector<PrivateKey> vec_a;
   Init(vec_a, threshold);
   for (uint32_t ii = 0; ii < threshold; ++ii)
   {
     vec_a[ii].setRand();
   }
 
-  std::vector<bn::G2> public_key_shares;
-  std::vector<bn::Fr> private_key_shares;
+  std::vector<PublicKey>  public_key_shares;
+  std::vector<PrivateKey> private_key_shares;
   Init(public_key_shares, committee_size);
   Init(private_key_shares, committee_size);
 
   // Group secret key is polynomial evaluated at 0
-  bn::G2 group_public_key;
+  PublicKey group_public_key;
   group_public_key.clear();
-  bn::Fr group_private_key = vec_a[0];
+  PrivateKey group_private_key = vec_a[0];
   bn::G2::mul(group_public_key, generator, group_private_key);
 
   // Generate committee public keys from their private key contributions
   for (uint32_t i = 0; i < committee_size; ++i)
   {
-    bn::Fr pow, tmpF, private_key;
+    PrivateKey pow;
+    PrivateKey tmpF;
+    PrivateKey private_key;
+    private_key.clear();
     // Private key is polynomial evaluated at index i
     private_key = vec_a[0];
     for (uint32_t k = 1; k < vec_a.size(); k++)
@@ -368,8 +372,7 @@ std::vector<DkgOutput> TrustedDealer(uint32_t committee_size, uint32_t threshold
       bn::Fr::add(private_key, private_key, tmpF);
     }
     // Public key from private
-    bn::G2 public_key;
-    public_key.clear();
+    PublicKey public_key;
     bn::G2::mul(public_key, generator, private_key);
     public_key_shares[i]  = public_key;
     private_key_shares[i] = private_key;

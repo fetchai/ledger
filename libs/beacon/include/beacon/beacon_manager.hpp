@@ -80,8 +80,11 @@ public:
   void             AddReconstructionShare(MuddleAddress const &address);
   void             VerifyReconstructionShare(MuddleAddress const &from, ExposedShare const &share);
   bool             RunReconstruction();
-  void             SetDkgOutput(PublicKey &public_key, PrivateKey &secret_share,
+  void             GetDkgOutput(PublicKey &public_key, PrivateKey &secret_share,
                                 std::vector<PublicKey> &public_key_shares, std::set<MuddleAddress> &qual);
+  void             SetDkgOutput(PublicKey const &public_key, PrivateKey const &secret_share,
+                                std::vector<PublicKey> const & public_key_shares,
+                                std::set<MuddleAddress> const &qual);
   void             SetQual(std::set<MuddleAddress> qual);
   void             SetGroupPublicKey(PublicKey const &public_key);
   void             NewCabinet(std::set<MuddleAddress> const &cabinet, uint32_t threshold);

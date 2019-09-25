@@ -457,7 +457,7 @@ struct FaultyDkgMember : DkgMember
   {
     dkg.SetBeaconReadyCallback([this](SharedAeonExecutionUnit beacon) -> void {
       finished = true;
-      beacon->manager.SetDkgOutput(public_key, secret_share, public_key_shares, qual_set);
+      beacon->manager.GetDkgOutput(public_key, secret_share, public_key_shares, qual_set);
     });
   }
 
@@ -512,7 +512,7 @@ struct HonestDkgMember : DkgMember
   {
     dkg.SetBeaconReadyCallback([this](SharedAeonExecutionUnit beacon) -> void {
       finished = true;
-      beacon->manager.SetDkgOutput(public_key, secret_share, public_key_shares, qual_set);
+      beacon->manager.GetDkgOutput(public_key, secret_share, public_key_shares, qual_set);
     });
   }
 

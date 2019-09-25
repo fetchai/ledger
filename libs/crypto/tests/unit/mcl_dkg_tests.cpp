@@ -208,6 +208,7 @@ TEST(MclDkgTests, Signing)
   uint32_t committee_size = 200;
   uint32_t threshold      = 101;
 
+  // outputs[i] is assigned to node with index i in the committee
   auto outputs = TrustedDealer(committee_size, threshold);
 
   bn::G2 group_g;

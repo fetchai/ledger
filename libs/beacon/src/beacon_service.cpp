@@ -252,6 +252,43 @@ void BeaconService::StartNewCabinet(CabinetMemberList members, uint32_t threshol
   cabinet_creator_.QueueSetup(beacon);
 }
 
+void BeaconService::StartNewCabinet(CabinetMemberList members, uint32_t threshold,
+                                    uint64_t round_start, uint64_t round_end, uint64_t start_time,
+                                    DkgOutput const &output)
+{
+  auto diff_time = int64_t(static_cast<uint64_t>(std::time(nullptr))) - int64_t(start_time);
+  FETCH_LOG_INFO(LOGGING_NAME, "Starting new cabinet from ", round_start, " to ", round_end,
+                 "at time: ", start_time, " (diff): ", diff_time);
+
+  std::lock_guard<std::mutex> lock(mutex_);
+
+  SharedAeonExecutionUnit beacon = std::make_shared<AeonExecutionUnit>();
+
+  // Determines if we are observing or actively participating
+  if (members.find(identity_.identifier()) == members.end())
+  {
+    beacon->observe_only = true;
+    // Should not be assigning non-trivial secret share to a non-cabinet member
+    assert(output.secret_key_share.isZero());
+    FETCH_LOG_INFO(LOGGING_NAME, "Beacon in observe only mode. Members: ", members.size());
+  }
+  else
+  {
+    beacon->manager.SetCertificate(certificate_);
+    beacon->manager.NewCabinet(members, threshold);
+    beacon->manager.SetDkgOutput(output.group_public_key, output.secret_key_share,
+                                 output.public_key_shares, members);
+  }
+
+  // Setting the aeon details
+  beacon->aeon.round_start               = round_start;
+  beacon->aeon.round_end                 = round_end;
+  beacon->aeon.members                   = std::move(members);
+  beacon->aeon.start_reference_timepoint = start_time;
+
+  aeon_exe_queue_.push_back(beacon);
+}
+
 BeaconService::State BeaconService::OnWaitForSetupCompletionState()
 {
   std::lock_guard<std::mutex> lock(mutex_);
