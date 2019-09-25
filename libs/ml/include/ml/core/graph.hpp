@@ -642,7 +642,7 @@ typename Graph<TensorType>::NodePtrType Graph<TensorType>::GetNode(
  * @param data the pointer to a tensor to assign to the placeholder
  */
 template <typename TensorType>
-void Graph<TensorType>::SetInputReference(std::string const &node_name, const TensorType &data)
+void Graph<TensorType>::SetInputReference(std::string const &node_name, TensorType const &data)
 {
   auto dataholder =
       std::dynamic_pointer_cast<ops::DataHolder<TensorType>>(nodes_.at(node_name)->GetOp());
@@ -664,7 +664,7 @@ void Graph<TensorType>::SetInputReference(std::string const &node_name, const Te
  * @param data the pointer to a tensor to assign to the placeholder
  */
 template <typename TensorType>
-void Graph<TensorType>::SetInput(std::string const &node_name, const TensorType &data)
+void Graph<TensorType>::SetInput(std::string const &node_name, TensorType const &data)
 {
   SetInputReference(node_name, data.Copy());
 }
