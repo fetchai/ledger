@@ -722,8 +722,8 @@ BeaconSetupService::State BeaconSetupService::OnDryRun()
   if (state_machine_->previous_state() != State::DRY_RUN_SIGNING)
   {
     //assert(beacon_->seed.size() > 0);
-    beacon_->manager.SetMessage(beacon_->aeon.seed);
-    beacon_->member_share = beacon_->manager.Sign();
+    //beacon_->manager.SetMessage(beacon_->aeon.seed);
+    //beacon_->member_share = beacon_->manager.Sign();
 
     // Start to create the block entropy for this attempt
     beacon_->block_entropy                  = BlockEntropy{};
@@ -732,15 +732,15 @@ BeaconSetupService::State BeaconSetupService::OnDryRun()
     beacon_->block_entropy.block_number     = beacon_->aeon.round_start;
     beacon_->block_entropy.HashSelf();
 
-    // Check own threshold signature is valid for sanity.
-    if (beacon_->manager.AddSignaturePart(identity_, beacon_->member_share.signature) !=
-        BeaconManager::AddResult::SUCCESS)
-    {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-                      ": Failed to sign current message during DKG final stage!");
-      SetTimeToProceed(State::RESET);
-      return State::RESET;
-    }
+    //// Check own threshold signature is valid for sanity.
+    //if (beacon_->manager.AddSignaturePart(identity_, beacon_->member_share.signature) !=
+    //    BeaconManager::AddResult::SUCCESS)
+    //{
+    //  FETCH_LOG_ERROR(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+    //                  ": Failed to sign current message during DKG final stage!");
+    //  SetTimeToProceed(State::RESET);
+    //  return State::RESET;
+    //}
 
     assert(beacon_->block_entropy.digest.size() > 0);
 

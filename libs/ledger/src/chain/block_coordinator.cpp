@@ -520,7 +520,7 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
     next_block_->body.miner         = mining_address_;
 
     FETCH_LOG_INFO(LOGGING_NAME, "Minting new block! Number: ", next_block_->body.block_number,
-                   " beacon: ", next_block_->body.entropy);
+                   " beacon: ", next_block_->body.block_entropy.EntropyAsU64());
 
     // Attach current DAG state
     if (dag_)

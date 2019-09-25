@@ -33,20 +33,21 @@ using Status = NaiveEntropyGenerator::Status;
  * @param block_number The block number
  * @return The generated entropy
  */
-Status NaiveEntropyGenerator::GenerateEntropy(Digest block_digest, uint64_t block_number,
-                                              uint64_t &entropy)
+Status NaiveEntropyGenerator::GenerateEntropy(uint64_t block_number,
+                                              BlockEntropy &entropy)
 {
   FETCH_UNUSED(block_number);
-
-  // perform repeated hashes of the block digest
-  for (std::size_t i = 0; i < ROUNDS; ++i)
-  {
-    block_digest = crypto::Hash<crypto::SHA256>(block_digest);
-  }
-
-  auto const &digest_ref = block_digest;
-  entropy                = *reinterpret_cast<uint64_t const *>(digest_ref.pointer());
-
+  FETCH_UNUSED(entropy);
+//
+//  // perform repeated hashes of the block digest
+//  for (std::size_t i = 0; i < ROUNDS; ++i)
+//  {
+//    block_digest = crypto::Hash<crypto::SHA256>(block_digest);
+//  }
+//
+//  auto const &digest_ref = block_digest;
+//  entropy                = *reinterpret_cast<uint64_t const *>(digest_ref.pointer());
+//
   return Status::OK;
 }
 

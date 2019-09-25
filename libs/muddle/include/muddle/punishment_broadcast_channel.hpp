@@ -214,7 +214,10 @@ public:
 
       for (auto const &member : current_cabinet_)
       {
-        current_cabinet_vector_.push_back(member);
+        if(member != certificate_->identity().identifier())
+        {
+          current_cabinet_vector_.push_back(member);
+        }
       }
 
       std::random_device rd;

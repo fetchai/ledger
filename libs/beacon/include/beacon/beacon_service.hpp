@@ -54,6 +54,8 @@ class BeaconService : public ledger::EntropyGeneratorInterface
 public:
   constexpr static char const *LOGGING_NAME = "BeaconService";
 
+
+
   enum class State
   {
     WAIT_FOR_SETUP_COMPLETION,
@@ -92,24 +94,25 @@ public:
   using Digest                  = ledger::Digest;
   using SharedEventManager      = EventManager::SharedEventManager;
   using BeaconSetupService      = beacon::BeaconSetupService;
+  using BlockEntropyPtr         = std::shared_ptr<beacon::BlockEntropy>;
 
   BeaconService()                      = delete;
   BeaconService(BeaconService const &) = delete;
 
   BeaconService(MuddleInterface &muddle, ledger::ManifestCacheInterface &manifest_cache,
-                CertificatePtr certificate, SharedEventManager event_manager,
-                uint64_t blocks_per_round = 1);
+                CertificatePtr certificate, SharedEventManager event_manager);
 
   /// @name Entropy Generator
   /// @{
-  Status GenerateEntropy(/*Digest block_digest,*/ uint64_t block_number, uint64_t &entropy) override;
+  //Status GenerateEntropy(/*Digest block_digest,*/ uint64_t block_number, uint64_t &entropy) override;
+  Status GenerateEntropy(/*Digest block_digest,*/uint64_t block_number, BlockEntropy &entropy) override;
   /// @}
 
   /// Maintainance logic
   /// @{
   /// @brief this function is called when the node is in the cabinet
   void StartNewCabinet(CabinetMemberList members, uint32_t threshold, uint64_t round_start,
-                       uint64_t round_end, uint64_t start_time);
+                       uint64_t round_end, uint64_t start_time, BlockEntropy const &prev_entropy);
 
   void AbortCabinet(uint64_t round_start);
   /// @}
@@ -159,7 +162,6 @@ private:
 
   /// General configuration
   /// @{
-  uint64_t blocks_per_round_;
   bool     broadcasting_ = false;
   /// @}
 
@@ -167,12 +169,13 @@ private:
   /// @{
   std::deque<SharedAeonExecutionUnit> aeon_exe_queue_;
 
+  // TODO(HUT): delete these
   std::deque<Entropy> ready_entropy_queue_;
   Entropy             latest_entropy_;
-
-  std::shared_ptr<AeonExecutionUnit> active_exe_unit_;
   Entropy                            next_entropy_{};
   Entropy                            current_entropy_;
+
+  std::shared_ptr<AeonExecutionUnit> active_exe_unit_;
   /// @}
 
   /// Variables relating to getting threshold signatures of the seed
@@ -181,8 +184,13 @@ private:
   std::size_t                              random_number_{0};
   Identity                                 qual_promise_identity_;
   service::Promise                         sig_share_promise_;
+
+  BlockEntropyPtr                     block_entropy_previous_;
+  BlockEntropyPtr                     block_entropy_being_created_;
+  std::map<uint64_t, BlockEntropyPtr> completed_block_entropy_;
   /// @}
 
+  // TODO(HUT): delete these.
   /// Observing beacon
   /// @{
   SubscriptionPtr                       group_public_key_subscription_{nullptr};

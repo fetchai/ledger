@@ -40,32 +40,47 @@ public:
 
 struct BlockEntropy : public BlockEntropyInterface
 {
-  using MuddleAddress   = byte_array::ConstByteArray;
-  using GroupPublicKey  = std::string;
-  using MemberPublicKey = byte_array::ConstByteArray;
-  using MemberSignature = byte_array::ConstByteArray;
-  using Confirmations   = std::map<MemberPublicKey, MemberSignature>;
-  using GroupSignature  = dkg::BeaconManager::Signature;
-  using Cabinet         = std::set<MuddleAddress>;
+  using MuddleAddress     = byte_array::ConstByteArray;
+  using GroupPublicKey    = std::string;
+  using MemberPublicKey   = byte_array::ConstByteArray;
+  using MemberSignature   = byte_array::ConstByteArray;
+  using Confirmations     = std::map<MemberPublicKey, MemberSignature>;
+  using GroupSignatureStr = std::string;
+  using Cabinet           = std::set<MuddleAddress>;
 
   BlockEntropy()
   {
     // Important this is cleared so the hash of it is consistent for the genesis block (?)
     //group_signature.init();
     // group_signature.clear();
+    //group_signature = GroupSignature{};
+    //group_signature = crypto::mcl::LagrangeInterpolation(signature_buffer_);
   }
+
+//  BlockEntropy  &operator=(BlockEntropy const &rhs)
+//  {
+//    this->qualified        = rhs.qualified;
+//    this->group_public_key = rhs.group_public_key;
+//    this->block_number     = rhs.block_number;
+//    this->digest           = rhs.digest;
+//    this->group_signature  = rhs.group_signature;
+//
+//    return *this;
+//  }
 
   Cabinet        qualified;             // The members who succeeded DKG and are qualified to produce blocks (when new committee)
   GroupPublicKey group_public_key;      // The group public key (when new committee)
   uint64_t       block_number = 0;      // The block this is relevant to
   Digest         digest;                // The hash of the above (when new committee) note, this could be implicit.
 
-  Confirmations  confirmations;         // In the case of a new cabinet, personal signatures of the hash from qual members
-  GroupSignature group_signature;       // Signature of the previous entropy, used as the entropy
+  Confirmations                   confirmations;        // In the case of a new cabinet, personal signatures of the hash from qual members
+  //std::shared_ptr<GroupSignature> group_signature;      // Signature of the previous entropy, used as the entropy
+  GroupSignatureStr group_signature;      // Signature of the previous entropy, used as the entropy
 
   Digest EntropyAsSHA256() const override
   {
-    return crypto::Hash<crypto::SHA256>(group_signature.getStr());
+    //assert(group_signature);
+    return crypto::Hash<crypto::SHA256>(group_signature);
   }
 
   // This will always be safe so long as the entropy function is properly sha256-ing
@@ -77,6 +92,7 @@ struct BlockEntropy : public BlockEntropyInterface
 
   void HashSelf()
   {
+    //assert(group_signature);
     fetch::serializers::MsgPackSerializer serializer;
     serializer << qualified;
     serializer << group_public_key;

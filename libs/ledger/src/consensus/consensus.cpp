@@ -102,7 +102,7 @@ Consensus::CommitteePtr Consensus::GetCommittee(Block const &previous)
 
     Committee committee_copy = *committee_ptr;
 
-    DeterministicShuffle(committee_copy, previous.body.entropy);
+    DeterministicShuffle(committee_copy, previous.body.block_entropy.EntropyAsU64());
 
     return std::make_shared<Committee>(committee_copy);
   }
@@ -265,7 +265,7 @@ void Consensus::UpdateCurrentBlock(Block const &current)
 
     beacon_->StartNewCabinet(cabinet_member_list, threshold, current_block_number_,
                              current_block_number_ + aeon_period_ + 1,
-                             last_block_time + block_interval);
+                             last_block_time + block_interval, current.body.block_entropy);
   }
   else if (!(current_block_number_ % aeon_period_ == 0))
   {
@@ -279,14 +279,15 @@ NextBlockPtr Consensus::GenerateNextBlock()
 
   // Number of block we want to generate
   uint64_t const block_number = current_block_number_ + 1;
-  uint64_t       entropy      = 0;
+
+  ret = std::make_unique<Block>();
 
   // Try to get entropy for the block we are generating - is allowed to fail if we request too
   // early
   if (EntropyGeneratorInterface::Status::OK !=
-      beacon_->GenerateEntropy(current_block_.body.hash, block_number, entropy))
+      beacon_->GenerateEntropy(block_number, ret->body.block_entropy))
   {
-    return ret;
+    return {};
   }
 
   // Note here the previous block's entropy determines miner selection
@@ -295,12 +296,9 @@ NextBlockPtr Consensus::GenerateNextBlock()
     return ret;
   }
 
-  ret = std::make_unique<Block>();
-
   ret->body.previous_hash = current_block_.body.hash;
   ret->body.block_number  = block_number;
   ret->body.miner         = mining_address_;
-  ret->body.entropy       = entropy;
   ret->weight             = GetBlockGenerationWeight(current_block_, mining_address_);
 
   return ret;
@@ -308,61 +306,68 @@ NextBlockPtr Consensus::GenerateNextBlock()
 
 Status Consensus::ValidBlock(Block const &previous, Block const &current)
 {
-  Status ret = Status::YES;
-
-  // Attempt to ascertain the beacon value within the block
-  uint64_t entropy = 0;
-
-  // Try to get entropy for the block we are generating - because of races it could be
-  // we have yet to receive it from the network.
-  auto result = beacon_->GenerateEntropy(current.body.hash, current.body.block_number, entropy);
-
-  switch (result)
-  {
-  case EntropyGeneratorInterface::Status::NOT_READY:
-    FETCH_LOG_INFO(LOGGING_NAME, "Too early for entropy for block: ", current.body.block_number);
-    ret = Status::UNKNOWN;
-    break;
-  case EntropyGeneratorInterface::Status::OK:
-    if (entropy == current.body.entropy)
-    {
-      ret = Status::YES;
-    }
-    else
-    {
-      ret = Status::NO;
-    }
-    break;
-  case EntropyGeneratorInterface::Status::FAILED:
-    ret = Status::NO;
-    break;
-  }
-
-  if (ret == Status::NO)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Saw incorrect random beacon from: ",
-                   current_block_.body.miner.address().ToBase64(),
-                   ".Block number: ", current_block_.body.block_number, " expected: ", entropy,
-                   " got: ", current_block_.body.entropy);
-    return Status::NO;
-  }
-
-  // Here we assume the entropy is correct and proceed to verify against the stake subsystem
-  if (!ValidMinerForBlock(previous, current.body.miner))
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Received block has incorrect miner identity set");
-    return Status::NO;
-  }
-
-  if (current.weight != GetBlockGenerationWeight(previous, current.body.miner) &&
-      current.weight != 0)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME,
-                   "Incorrect stake weight found for block. Weight: ", current.weight);
-    return Status::NO;
-  }
+  FETCH_UNUSED(previous);
+  FETCH_UNUSED(current);
+  // TODO(HUT): this.
 
   return Status::YES;
+//  Status ret = Status::YES;
+//  
+//  return 
+//
+//  // Attempt to ascertain the beacon value within the block
+//   entropy = 0;
+//
+//  // Try to get entropy for the block we are generating - because of races it could be
+//  // we have yet to receive it from the network.
+//  auto result = beacon_->GenerateEntropy(current.body.hash, current.body.block_number, entropy);
+//
+//  switch (result)
+//  {
+//  case EntropyGeneratorInterface::Status::NOT_READY:
+//    FETCH_LOG_INFO(LOGGING_NAME, "Too early for entropy for block: ", current.body.block_number);
+//    ret = Status::UNKNOWN;
+//    break;
+//  case EntropyGeneratorInterface::Status::OK:
+//    if (entropy == current.body.entropy)
+//    {
+//      ret = Status::YES;
+//    }
+//    else
+//    {
+//      ret = Status::NO;
+//    }
+//    break;
+//  case EntropyGeneratorInterface::Status::FAILED:
+//    ret = Status::NO;
+//    break;
+//  }
+//
+//  if (ret == Status::NO)
+//  {
+//    FETCH_LOG_WARN(LOGGING_NAME, "Saw incorrect random beacon from: ",
+//                   current_block_.body.miner.address().ToBase64(),
+//                   ".Block number: ", current_block_.body.block_number, " expected: ", entropy,
+//                   " got: ", current_block_.body.entropy);
+//    return Status::NO;
+//  }
+//
+//  // Here we assume the entropy is correct and proceed to verify against the stake subsystem
+//  if (!ValidMinerForBlock(previous, current.body.miner))
+//  {
+//    FETCH_LOG_WARN(LOGGING_NAME, "Received block has incorrect miner identity set");
+//    return Status::NO;
+//  }
+//
+//  if (current.weight != GetBlockGenerationWeight(previous, current.body.miner) &&
+//      current.weight != 0)
+//  {
+//    FETCH_LOG_WARN(LOGGING_NAME,
+//                   "Incorrect stake weight found for block. Weight: ", current.weight);
+//    return Status::NO;
+//  }
+//
+//  return Status::YES;
 }
 
 void Consensus::Reset(StakeSnapshot const &snapshot)
