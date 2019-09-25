@@ -322,6 +322,67 @@ Signature LagrangeInterpolation(std::unordered_map<CabinetIndex, Signature> cons
   return res;
 }
 
+/**
+ * Generates the group public key, public key shares and private key share for a number of
+ * parties and a given signature threshold
+ *
+ * @param committee_size Number of parties for which private key shares are generated
+ * @param threshold Number of parties required to generate a group signature
+ * @return Vector of DkgOutputs containing the data to be given to each party
+ */
+std::vector<DkgOutput> TrustedDealer(uint32_t committee_size, uint32_t threshold)
+{
+  std::vector<DkgOutput> output;
+  bn::G2                 generator;
+  SetGenerator(generator);
+
+  // Construct polynomial of degree threshold - 1
+  std::vector<bn::Fr> vec_a;
+  Init(vec_a, threshold);
+  for (uint32_t ii = 0; ii < threshold; ++ii)
+  {
+    vec_a[ii].setRand();
+  }
+
+  std::vector<bn::G2> public_key_shares;
+  std::vector<bn::Fr> private_key_shares;
+  Init(public_key_shares, committee_size);
+  Init(private_key_shares, committee_size);
+
+  // Group secret key is polynomial evaluated at 0
+  bn::G2 group_public_key;
+  group_public_key.clear();
+  bn::Fr group_private_key = vec_a[0];
+  bn::G2::mul(group_public_key, generator, group_private_key);
+
+  // Generate committee public keys from their private key contributions
+  for (uint32_t i = 0; i < committee_size; ++i)
+  {
+    bn::Fr pow, tmpF, private_key;
+    // Private key is polynomial evaluated at index i
+    private_key = vec_a[0];
+    for (uint32_t k = 1; k < vec_a.size(); k++)
+    {
+      bn::Fr::pow(pow, i + 1, k);        // adjust index in computation
+      bn::Fr::mul(tmpF, pow, vec_a[k]);  // j^k * a_i[k]
+      bn::Fr::add(private_key, private_key, tmpF);
+    }
+    // Public key from private
+    bn::G2 public_key;
+    public_key.clear();
+    bn::G2::mul(public_key, generator, private_key);
+    public_key_shares[i]  = public_key;
+    private_key_shares[i] = private_key;
+  }
+
+  // Compute outputs for each member
+  for (uint32_t i = 0; i < committee_size; ++i)
+  {
+    output.emplace_back(group_public_key, public_key_shares, private_key_shares[i]);
+  }
+  return output;
+}
+
 }  // namespace mcl
 }  // namespace crypto
 }  // namespace fetch
