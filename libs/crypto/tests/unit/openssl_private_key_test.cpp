@@ -30,15 +30,12 @@ namespace {
 class ECDCSAPrivateKeyTest : public testing::Test
 {
 protected:
-  const fetch::byte_array::ConstByteArray priv_key_data__bin_ = {
+  const fetch::byte_array::ConstByteArray priv_key_data_bin_ = {
       0x92, 0xad, 0x61, 0xcf, 0xfc, 0xb9, 0x2a, 0x17, 0x02, 0xa3, 0xd6,
       0x03, 0xa0, 0x0d, 0x6e, 0xb3, 0xad, 0x92, 0x0f, 0x8c, 0xec, 0x43,
       0xda, 0x41, 0x8f, 0x01, 0x04, 0xc6, 0xc6, 0xc9, 0xe0, 0x5e};
 
-  const std::string priv_key_hex_str__bin_ =
-      "92ad61cffcb92a1702a3d603a00d6eb3ad920f8cec43da418f0104c6c6c9e05e";
-
-  const fetch::byte_array::ConstByteArray public_key_data__bin_ = {
+  const fetch::byte_array::ConstByteArray public_key_data_bin_ = {
       0x04, 0x55, 0x5a, 0x38, 0xa4, 0x2d, 0xb2, 0x9d, 0x05, 0xcd, 0xe3, 0xea, 0xa0,
       0x93, 0x07, 0x89, 0x46, 0x16, 0xb5, 0xa2, 0xb5, 0xa3, 0x02, 0xe9, 0x13, 0xee,
       0xa2, 0x6d, 0x03, 0x48, 0xec, 0x5b, 0x5c, 0x07, 0x30, 0x2d, 0xfc, 0xdb, 0xd5,
@@ -49,14 +46,14 @@ protected:
 TEST_F(ECDCSAPrivateKeyTest, test_instantiation_of_private_key_gives_corect_public_key__bin)
 {
   //* Production code:
-  ECDSAPrivateKey<eECDSAEncoding::bin> x(priv_key_data__bin_);
+  ECDSAPrivateKey<eECDSAEncoding::bin> x(priv_key_data_bin_);
 
   //* Expectations:
   EXPECT_TRUE(x.key());
   EXPECT_TRUE(x.PublicKey().key());
 
-  EXPECT_EQ(priv_key_data__bin_, x.KeyAsBin());
-  EXPECT_EQ(public_key_data__bin_, x.PublicKey().KeyAsBin());
+  EXPECT_EQ(priv_key_data_bin_, x.KeyAsBin());
+  EXPECT_EQ(public_key_data_bin_, x.PublicKey().KeyAsBin());
 }
 
 // TODO(issue 36): A bit lame test, needs to be tested rather with & against hardcoded DER
@@ -64,7 +61,7 @@ TEST_F(ECDCSAPrivateKeyTest, test_instantiation_of_private_key_gives_corect_publ
 TEST_F(ECDCSAPrivateKeyTest, test_instantiation_of_private_key_gives_corect_public_key__DER)
 {
   //* Production code:
-  ECDSAPrivateKey<eECDSAEncoding::bin> x(priv_key_data__bin_);
+  ECDSAPrivateKey<eECDSAEncoding::bin> x(priv_key_data_bin_);
 
   //* Mandatory validity checks:
   ASSERT_TRUE(x.key());
@@ -87,14 +84,14 @@ TEST_F(ECDCSAPrivateKeyTest, test_instantiation_of_private_key_gives_corect_publ
   ECDSAPrivateKey<eECDSAEncoding::bin> x_2(x_der);
 
   //* Expectations:
-  EXPECT_EQ(priv_key_data__bin_, x_2.KeyAsBin());
-  EXPECT_EQ(public_key_data__bin_, x_2.PublicKey().KeyAsBin());
+  EXPECT_EQ(priv_key_data_bin_, x_2.KeyAsBin());
+  EXPECT_EQ(public_key_data_bin_, x_2.PublicKey().KeyAsBin());
 }
 
 TEST_F(ECDCSAPrivateKeyTest, test_convert_from_bin_to_canonical)
 {
   //* Production code:
-  ECDSAPrivateKey<eECDSAEncoding::bin> x(priv_key_data__bin_);
+  ECDSAPrivateKey<eECDSAEncoding::bin> x(priv_key_data_bin_);
 
   //* Mandatory validity checks:
   ASSERT_TRUE(x.key());
@@ -123,8 +120,8 @@ TEST_F(ECDCSAPrivateKeyTest, test_convert_from_bin_to_canonical)
   ASSERT_EQ(x.key(), x_bin_2.key());
   ASSERT_EQ(x.PublicKey().key(), x_bin_2.PublicKey().key());
 
-  EXPECT_EQ(priv_key_data__bin_, x_bin_2.KeyAsBin());
-  EXPECT_EQ(public_key_data__bin_, x_bin_2.PublicKey().KeyAsBin());
+  EXPECT_EQ(priv_key_data_bin_, x_bin_2.KeyAsBin());
+  EXPECT_EQ(public_key_data_bin_, x_bin_2.PublicKey().KeyAsBin());
 }
 
 TEST_F(ECDCSAPrivateKeyTest, test_each_generated_key_is_different)
@@ -147,11 +144,11 @@ TEST_F(ECDCSAPrivateKeyTest, test_each_generated_key_is_different)
 TEST_F(ECDCSAPrivateKeyTest, test_key_conversion_to_byte_array)
 {
   //* Production code:
-  ECDSAPrivateKey<> x(priv_key_data__bin_);
+  ECDSAPrivateKey<> x(priv_key_data_bin_);
 
   //* Expectations:
   EXPECT_TRUE(x.key());
-  EXPECT_EQ(priv_key_data__bin_, x.KeyAsBin());
+  EXPECT_EQ(priv_key_data_bin_, x.KeyAsBin());
 }
 
 TEST_F(ECDCSAPrivateKeyTest, public_key_conversion_cycle)

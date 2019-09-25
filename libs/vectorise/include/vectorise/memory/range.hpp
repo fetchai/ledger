@@ -27,8 +27,9 @@ class Range
 public:
   using SizeType = std::size_t;
 
-  Range(SizeType const &from = 0, SizeType const &to = std::numeric_limits<SizeType>::max(),
-        SizeType const &step = 1)
+  explicit Range(SizeType const &from = 0,
+                 SizeType const &to   = std::numeric_limits<SizeType>::max(),
+                 SizeType const &step = 1)
     : from_(from)
     , to_(to)
     , step_(step)

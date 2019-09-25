@@ -190,5 +190,6 @@ bool ApproxExpImplementation<N, C, OF>::initialised_ = false;
 
 template <uint8_t N, uint64_t C, bool OF>
 double ApproxExpImplementation<N, C, OF>::corrections_[E_ENTRIES] = {0};
+
 }  // namespace math
 }  // namespace fetch

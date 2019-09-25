@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vm/array.hpp"
 #include "vm/object.hpp"
 #include "vm_modules/math/tensor.hpp"
 
@@ -33,21 +34,21 @@ namespace ml {
 
 class VMTrainingPair : public fetch::vm::Object,
                        public std::pair<fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>,
-                                        fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>>
+                                        fetch::vm::Ptr<fetch::vm::IArray>>
 {
 public:
   VMTrainingPair(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
                  fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> ta,
-                 fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> tb);
+                 fetch::vm::Ptr<fetch::vm::IArray>                 tb);
 
   static void Bind(vm::Module &module);
 
   static fetch::vm::Ptr<VMTrainingPair> Constructor(
       fetch::vm::VM *vm, fetch::vm::TypeId type_id,
       fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &ta,
-      fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &tb);
+      fetch::vm::Ptr<fetch::vm::IArray> const &                tb);
 
-  fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> data() const;
+  fetch::vm::Ptr<fetch::vm::IArray> data() const;
 
   fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> label() const;
 };

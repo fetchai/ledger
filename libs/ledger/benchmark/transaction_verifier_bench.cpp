@@ -33,7 +33,6 @@ namespace {
 
 class DummySink : public fetch::ledger::TransactionSink
 {
-
   std::size_t const       threshold_;
   std::size_t             count_{0};
   std::mutex              lock_;

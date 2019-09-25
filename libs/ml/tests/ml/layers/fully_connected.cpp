@@ -194,6 +194,24 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test)
   auto g_shared_weights_before     = g_shared->GetWeights();
   auto g_not_shared_weights_before = g_not_shared->GetWeights();
 
+  std::cout << "g_shared_weights_before.size(): " << g_shared_weights_before.size() << std::endl;
+  std::cout << "g_not_shared_weights_before.size(): " << g_not_shared_weights_before.size() << std::endl;
+//
+//  for (std::size_t j = 0; j < g_shared_weights_before.size(); ++j)
+//  {
+//    std::cout << "g_shared_weights_before[j].size(): " << g_shared_weights_before[j].size() << std::endl;
+//    std::cout << "g_not_shared_weights_before[j].size(): " << g_not_shared_weights_before[j].size() << std::endl;
+//
+//    for (std::size_t i = 0; i < g_shared_weights_before[j].size(); ++i)
+//    {
+//
+//    }
+//
+//  }
+//
+//
+
+  
   for (size_t i = 0; i < 4; i++)
   {
     EXPECT_EQ(g_shared_weights_before[i], g_not_shared_weights_before[i]);
@@ -529,7 +547,6 @@ TYPED_TEST(FullyConnectedTest, training_should_change_output)
   layer.SetInput(label_name, labels);
   TypeParam loss = layer.Evaluate(error_output);
   layer.BackPropagate(error_output);
-  layer.ApplyRegularisation();
   auto grads = layer.GetGradients();
   for (auto &grad : grads)
   {
@@ -612,7 +629,6 @@ TYPED_TEST(FullyConnectedTest, saveparams_test)
   layer.SetInput(label_name, labels);
   TypeParam loss = layer.Evaluate(error_output);
   layer.BackPropagate(error_output);
-  layer.ApplyRegularisation();
   auto grads = layer.GetGradients();
   for (auto &grad : grads)
   {
@@ -624,7 +640,6 @@ TYPED_TEST(FullyConnectedTest, saveparams_test)
   layer2.SetInput(label_name, labels);
   TypeParam loss2 = layer2.Evaluate(error_output);
   layer2.BackPropagate(error_output);
-  layer2.ApplyRegularisation();
   auto grads2 = layer2.GetGradients();
   for (auto &grad : grads2)
   {

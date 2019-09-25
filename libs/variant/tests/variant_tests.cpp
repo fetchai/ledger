@@ -72,37 +72,37 @@ TEST_F(VariantTests, PrimitiveCopyConstruction)
 {
   {
     Variant orig;
-    Variant v{orig};
+    Variant v{orig};  // NOLINT
     EXPECT_EQ(v.type(), Variant::Type::UNDEFINED);
   }
 
   {
     Variant orig{1};
-    Variant v{orig};
+    Variant v{orig};  // NOLINT
     EXPECT_EQ(v.type(), Variant::Type::INTEGER);
   }
 
   {
     Variant orig{20u};
-    Variant v{orig};
+    Variant v{orig};  // NOLINT
     EXPECT_EQ(v.type(), Variant::Type::INTEGER);
   }
 
   {
     Variant orig{true};
-    Variant v{orig};
+    Variant v{orig};  // NOLINT
     EXPECT_EQ(v.type(), Variant::Type::BOOLEAN);
   }
 
   {
     Variant orig{3.14f};
-    Variant v{orig};
+    Variant v{orig};  // NOLINT
     EXPECT_EQ(v.type(), Variant::Type::FLOATING_POINT);
   }
 
   {
     Variant orig{2.71828};
-    Variant v{orig};
+    Variant v{orig};  // NOLINT
     EXPECT_EQ(v.type(), Variant::Type::FLOATING_POINT);
   }
 }

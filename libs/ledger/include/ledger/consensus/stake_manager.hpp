@@ -56,7 +56,7 @@ public:
   using CommitteePtr = std::shared_ptr<Committee const>;
 
   // Construction / Destruction
-  StakeManager(uint64_t committee_size);
+  explicit StakeManager(uint64_t committee_size);
   StakeManager(StakeManager const &) = delete;
   StakeManager(StakeManager &&)      = delete;
   ~StakeManager() override           = default;
@@ -66,8 +66,6 @@ public:
   void         UpdateCurrentBlock(Block const &current) override;
   CommitteePtr BuildCommittee(Block const &current);
   /// @}
-
-  uint32_t BlockInterval();
 
   // Accessors for the executor
   StakeUpdateQueue &      update_queue();

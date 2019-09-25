@@ -239,7 +239,7 @@ private:
       memset(this, 0, sizeof(decltype(*this)));
     }
 
-    HistoryHeader(uint64_t d)
+    explicit HistoryHeader(uint64_t d)
     {
       // Clear the whole structure (including padded regions) are zeroed
       memset(this, 0, sizeof(decltype(*this)));

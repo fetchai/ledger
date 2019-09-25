@@ -71,7 +71,8 @@ public:
     ir_       = std::make_unique<IR>();
 
     // compile the source code
-    if (!compiler_->Compile(text, "default", *ir_, errors))
+    fetch::vm::SourceFiles files = {{"default.etch", text}};
+    if (!compiler_->Compile(files, "default_ir", *ir_, errors))
     {
       PrintErrors(errors);
       return false;
@@ -83,7 +84,7 @@ public:
     vm_->SetIOObserver(*observer_);
     vm_->AttachOutputDevice(fetch::vm::VM::STDOUT, *stdout_);
 
-    if (!vm_->GenerateExecutable(*ir_, "default_ir", *executable_, errors))
+    if (!vm_->GenerateExecutable(*ir_, "default_exe", *executable_, errors))
     {
       PrintErrors(errors);
       return false;
@@ -140,6 +141,7 @@ public:
     return *observer_;
   }
 
+private:
   std::ostream *stdout_ = &std::cout;
   ObserverPtr   observer_;
   ModulePtr     module_;
