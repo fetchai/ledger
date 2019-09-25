@@ -25,12 +25,20 @@
 namespace fetch {
 namespace muddle {
 
+/**
+ * Construct a global in-memory network which can be used by fake muddles.
+ *
+ * To do this, create a map of address to a collection of packets. Peers can then 'send'
+ * packets by writing into this collection. If the receiving muddle is listening, it has
+ * a responsibility to collect the packets.
+ *
+ */
 class FakeNetwork
 {
 public:
   struct PacketQueueAndConnections;
 
-  using Address                      = Packet::Address;  // == a crypto::Identity.identifier_
+  using Address                      = Packet::Address;
   using Addresses                    = MuddleInterface::Addresses;
   using PacketQueueAndConnectionsPtr = std::shared_ptr<PacketQueueAndConnections>;
   using FakeNetworkImpl              = std::unordered_map<Address, PacketQueueAndConnectionsPtr>;
@@ -97,6 +105,7 @@ public:
       }
     }
 
+    // Note access without global lock for performance
     if (queue)
     {
       queue->Push(std::move(packet));
@@ -123,7 +132,10 @@ public:
     return false;
   }
 
-  // Get packet functionality
+  /**
+   * The struct that each address has. Basically a queue of packets
+   * with a mutex for access
+   */
   struct PacketQueueAndConnections
   {
     void Push(PacketPtr packet)
@@ -163,10 +175,18 @@ public:
     Addresses             connections_;
   };
 
+  // note there are two locks, a global lock on the map of address
+  // to the packet struct, and a lock in the packet struct itself.
+  // This avoids a bottleneck on the global lock
   static std::mutex      network_lock_;
   static FakeNetworkImpl network_;
 };
 
+/**
+ * Fake muddle endpoint implements all of the same behaviour as the muddle
+ * endpoint, but instead, it has a thread that pulls packets from the global
+ * network instance.
+ */
 class FakeMuddleEndpoint : public MuddleEndpoint
 {
 public:
@@ -279,14 +299,14 @@ public:
 
   void Broadcast(uint16_t /*service*/, uint16_t /*channel*/, Payload const & /*payload*/)
   {
-    throw 1;
+    throw std::runtime_error("functionality not implemented");
     return;
   }
 
   Response Exchange(Address const & /*address*/, uint16_t /*service*/, uint16_t /*channel*/,
                     Payload const & /*request*/)
   {
-    throw 1;
+    throw std::runtime_error("functionality not implemented");
     return {};
   }
 
@@ -335,6 +355,9 @@ private:
   std::shared_ptr<std::thread> thread_;
 };
 
+/**
+ * Fake muddle just tells the global network which connections to make
+ */
 class MuddleFake final : public MuddleInterface, public std::enable_shared_from_this<MuddleFake>
 {
 public:
@@ -413,7 +436,7 @@ public:
   };
   Ports GetListeningPorts() const override
   {
-    throw 1;
+    throw std::runtime_error("functionality not implemented");
     return {};
   };
   Addresses GetDirectlyConnectedPeers() const override
@@ -422,12 +445,12 @@ public:
   };
   Addresses GetIncomingConnectedPeers() const override
   {
-    throw 1;
+    throw std::runtime_error("functionality not implemented");
     return {};
   };
   Addresses GetOutgoingConnectedPeers() const override
   {
-    throw 1;
+    throw std::runtime_error("functionality not implemented");
     return {};
   };
 
@@ -437,7 +460,7 @@ public:
   };
   bool IsDirectlyConnected(Address const & /*address*/) const override
   {
-    throw 1;
+    throw std::runtime_error("functionality not implemented");
     return {};
   };
   /// @}
@@ -446,17 +469,17 @@ public:
   /// @{
   PeerSelectionMode GetPeerSelectionMode() const override
   {
-    throw 1;
+    throw std::runtime_error("functionality not implemented");
     return {};
   };
   void SetPeerSelectionMode(PeerSelectionMode /*mode*/) override
   {
-    throw 1;
+    throw std::runtime_error("functionality not implemented");
     return;
   };
   Addresses GetRequestedPeers() const override
   {
-    throw 1;
+    throw std::runtime_error("functionality not implemented");
     return {};
   };
   void ConnectTo(Address const &address) override
@@ -465,7 +488,7 @@ public:
   };
   void ConnectTo(Addresses const & /*addresses*/) override
   {
-    throw 1;
+    throw std::runtime_error("functionality not implemented");
     return;
   };
   void ConnectTo(Address const &address, network::Uri const & /*uri_hint*/) override
@@ -474,45 +497,37 @@ public:
   };
   void ConnectTo(AddressHints const & /*address_hints*/) override
   {
-    throw 1;
+    throw std::runtime_error("functionality not implemented");
     return;
   };
   void DisconnectFrom(Address const & /*address*/) override
   {
-    throw 1;
+    throw std::runtime_error("functionality not implemented");
     return;
   };
   void DisconnectFrom(Addresses const & /*addresses*/) override
   {
-    throw 1;
+    throw std::runtime_error("functionality not implemented");
     return;
   };
   void SetConfidence(Address const & /*address*/, Confidence /*confidence*/) override
   {
-    throw 1;
+    throw std::runtime_error("functionality not implemented");
     return;
   };
   void SetConfidence(Addresses const & /*addresses*/, Confidence /*confidence*/) override
   {
-    throw 1;
+    throw std::runtime_error("functionality not implemented");
     return;
   };
   void SetConfidence(ConfidenceMap const & /*map*/) override
   {
-    throw 1;
+    throw std::runtime_error("functionality not implemented");
     return;
   };
   /// @}
 
 private:
-  using Client          = std::shared_ptr<network::AbstractConnection>;
-  using ThreadPool      = network::ThreadPool;
-  using Register        = std::shared_ptr<MuddleRegister>;
-  using Clock           = std::chrono::system_clock;
-  using Timepoint       = Clock::time_point;
-  using Duration        = Clock::duration;
-  using PeerSelectorPtr = std::shared_ptr<PeerSelector>;
-
   std::string const    name_;
   char const *const    logging_name_{name_.c_str()};
   CertificatePtr const certificate_;  ///< The private and public keys for the node identity
@@ -523,8 +538,7 @@ private:
   bool sign_packets_;
   bool sign_broadcasts_;
 
-  NetworkId network_id_;
-
+  NetworkId          network_id_;
   FakeMuddleEndpoint fake_muddle_endpoint_;
 };
 

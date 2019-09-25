@@ -31,6 +31,15 @@
 namespace fetch {
 namespace muddle {
 
+/**
+ * Interface which classes implementing a reliable channel should respect.
+ *
+ * Given a certain cabinet, broadcast a message (the answer), as the answer
+ * to a certain question (some unique hash)
+ *
+ * TODO(HUT): put the callback method here too
+ *
+ */
 class BroadcastChannelInterface
 {
 public:
