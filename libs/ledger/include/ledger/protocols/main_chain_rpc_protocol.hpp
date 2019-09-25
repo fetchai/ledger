@@ -118,7 +118,7 @@ struct StructField
   template <class T>
   static constexpr auto &&Ref(T &&t) noexcept
   {
-    return t.*f;
+    return std::forward<T>(t).*f;
   }
 };
 
