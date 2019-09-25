@@ -46,7 +46,9 @@ Muddle2LearnerNetworker::Muddle2LearnerNetworkerProtocol::Muddle2LearnerNetworke
 
 Muddle2LearnerNetworker::Muddle2LearnerNetworker(const std::string cloud_config,
                                                  std::size_t instance_number,
-                                                 std::shared_ptr<NetworkManager> netm)
+                                                 std::shared_ptr<NetworkManager> netm,
+                                                 MuddleChannel channel_tmp)
+: channel_tmp_{channel_tmp}
 {
   json::JSONDocument doc{cloud_config};
 
@@ -103,7 +105,17 @@ Muddle2LearnerNetworker::Muddle2LearnerNetworker(const std::string cloud_config,
 // TOFIX remove return value
 uint64_t Muddle2LearnerNetworker::RecvBytes(const byte_array::ByteArray &b)
 {
-  AbstractLearnerNetworker::NewMessage(b);
+  switch(channel_tmp_) 
+  {
+    case MuddleChannel::DEFAULT:
+      AbstractLearnerNetworker::NewMessage(b);
+      break;
+    case MuddleChannel::MULTIPLEX:
+      AbstractLearnerNetworker::NewDmlfMessage(b);
+      break;
+    default:
+      ;
+  }
   return 0;
 }
 
@@ -115,6 +127,31 @@ void Muddle2LearnerNetworker::pushUpdate(std::shared_ptr<IUpdate> update)
 {
   auto client = std::make_shared<RpcClient>("Client", mud -> GetEndpoint(), 1, 1);
   auto                                                data    = update->serialise();
+
+  PromiseList promises;
+  promises.reserve(20);
+  
+#pragma clang diagnostic ignored "-Wunused-variable"
+  for (const auto &target_peer : peers)
+  {
+    promises.push_back(
+      client->CallSpecificAddress(
+        fetch::byte_array::FromBase64(
+                                  byte_array::ConstByteArray(target_peer)
+                                  )
+        , 1, 1, data));
+  }
+
+  for (auto &prom : promises)
+  {
+    prom->Wait();
+  }
+}
+
+void Muddle2LearnerNetworker::pushUpdateType(std::string type, std::shared_ptr<IUpdate> update)
+{
+  auto client = std::make_shared<RpcClient>("Client", mud -> GetEndpoint(), 1, 1);
+  auto                                                data    = update->serialise(type);
 
   PromiseList promises;
   promises.reserve(20);

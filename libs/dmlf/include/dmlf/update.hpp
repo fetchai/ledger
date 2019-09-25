@@ -59,6 +59,15 @@ public:
     serializer << *this;
     return serializer.data();
   }
+  virtual byte_array::ByteArray serialise(std::string type) override
+  {
+    serializers::MsgPackSerializer serializer;
+    serializers::MsgPackSerializer serializer_;
+    serializer_ << *this;
+    serializer << type;
+    serializer << serializer_.data();
+    return serializer.data();
+  }
   virtual void deserialise(const byte_array::ByteArray &map) override
   {
     serializers::MsgPackSerializer serializer{map};

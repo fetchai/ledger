@@ -32,6 +32,11 @@
 namespace fetch {
 namespace dmlf {
 
+enum class MuddleChannel : uint16_t {
+  DEFAULT   = 1,
+  MULTIPLEX = 2
+};
+
 class Muddle2LearnerNetworker : public AbstractLearnerNetworker
 {
 public:
@@ -54,10 +59,12 @@ public:
 
   Muddle2LearnerNetworker(const std::string cloud_config,
                           std::size_t instance_number,
-                          std::shared_ptr<NetworkManager> netm= std::shared_ptr<NetworkManager>());
+                          std::shared_ptr<NetworkManager> netm= std::shared_ptr<NetworkManager>(),
+                          MuddleChannel channel_tmp = MuddleChannel::DEFAULT);
   virtual ~Muddle2LearnerNetworker();
 
   virtual void        pushUpdate(std::shared_ptr<IUpdate> update) override;
+  virtual void        pushUpdateType(std::string type, std::shared_ptr<IUpdate> update) override;
   virtual std::size_t getPeerCount() const override;
 
   uint64_t RecvBytes(const byte_array::ByteArray &b);
@@ -84,6 +91,9 @@ protected:
 
   mutable Mutex mutex;
   Peers peers;
+  
+  // TOFIX 
+  MuddleChannel channel_tmp_;
 private:
   Muddle2LearnerNetworker(const Muddle2LearnerNetworker &other) = delete;
   Muddle2LearnerNetworker &operator=(const Muddle2LearnerNetworker &other)  = delete;

@@ -5,9 +5,11 @@
 #include <sstream>
 #include <iostream>
 #include <errno.h>
+#include <cstring>
 #include <fstream>
 #include <sys/select.h>
 #include <sys/fcntl.h>
+#include <sys/wait.h>
 
 namespace fetch {
 namespace dmlf {

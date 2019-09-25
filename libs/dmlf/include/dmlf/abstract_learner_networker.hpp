@@ -58,6 +58,8 @@ public:
   std::size_t getUpdateCount() const
   {
     Lock l{queue_m_};
+    //throw std::runtime_error{"Hello? I guess?"};
+    throw_ifnot_initialized_();
     return queue_->size(); 
   }
   
@@ -65,6 +67,7 @@ public:
   std::shared_ptr<T> getUpdate()
   {
     Lock l{queue_m_};
+    throw_ifnot_initialized_();
     auto que = std::dynamic_pointer_cast<Queue<T>>(queue_);
     return que->getUpdate();
   }
@@ -73,6 +76,48 @@ public:
   {
     this->alg = alg;
   }
+  
+  // To implement - TOFIX not pure at moment
+  virtual void        pushUpdateType(std::string /*key*/, std::shared_ptr<IUpdate> /*update*/) {};
+
+  template <typename T>
+  void RegisterUpdateType(std::string key)
+  {
+    Lock l{queue_map_m_};
+    auto iter = queue_map_.find(key);
+    if(iter==queue_map_.end())
+    {
+      queue_map_[key] = std::make_shared<Queue<T>>();
+      return;
+    }
+    throw std::runtime_error{"UpdateType already registered"};
+  }
+  
+  //template <typename T>
+  std::size_t getUpdateTypeCount(std::string key) const
+  {
+    Lock l{queue_map_m_};
+    auto iter = queue_map_.find(key);
+    if(iter!=queue_map_.end())
+    {
+      return iter->second->size();
+    }
+    throw std::runtime_error{"Requesting UpdateCount for unregistered type"};
+  }
+  
+  template <typename T>
+  std::shared_ptr<T> getUpdateType(std::string key)
+  {
+    Lock l{queue_map_m_};
+    auto iter = queue_map_.find(key);
+    if(iter!=queue_map_.end())
+    {
+      auto que = std::dynamic_pointer_cast<Queue<T>>(iter->second);
+      return que->getUpdate();
+    }
+    throw std::runtime_error{"Requesting Update for non registered type"};
+  }
+  
 
 protected:
   /*
@@ -83,15 +128,49 @@ protected:
   void NewMessage(const Bytes& msg) // called by descendents
   {
     Lock l{queue_m_};
+    throw_ifnot_initialized_();
     queue_->PushNewMessage(msg);
+  }
+  void NewDmlfMessage(const Bytes& msg) // called by descendents
+  {
+    serializers::MsgPackSerializer serializer{msg};
+    std::string key;
+    Bytes update;
+    
+    std::cout << "[abstract-learner] Got Dmlf message" << std::endl;
+
+    serializer >> key; 
+    std::cout << "[abstract-learner] message type " << key << std::endl;
+    serializer >> update;
+
+    Lock l{queue_map_m_};
+    auto iter = queue_map_.find(key);
+    if(iter!=queue_map_.end())
+    {
+      iter->second->PushNewMessage(update);
+      return;
+    }
+    throw std::runtime_error{"Received Update with a non registered type"};
   }
 
 private:
-  using Mutex            = fetch::Mutex;
-  using Lock             = std::unique_lock<Mutex>;
+  using Mutex     = fetch::Mutex;
+  using Lock      = std::unique_lock<Mutex>;
+  using IQueuePtr = std::shared_ptr<IQueue>;
+  using IQueueMap = std::unordered_map<std::string, IQueuePtr>;
   
-  std::shared_ptr<IQueue> queue_;
+  IQueuePtr queue_;
   mutable Mutex queue_m_;
+  IQueueMap queue_map_;
+  mutable Mutex queue_map_m_;
+
+  void throw_ifnot_initialized_() const
+  {
+    if(!queue_)
+    { 
+      throw std::runtime_error{"Learner is not initialized"};
+    }
+  }
   
   AbstractLearnerNetworker(const AbstractLearnerNetworker &other) = delete;
   AbstractLearnerNetworker &operator=(const AbstractLearnerNetworker &other)  = delete;

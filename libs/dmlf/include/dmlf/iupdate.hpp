@@ -36,6 +36,7 @@ public:
 
   // API
   virtual byte_array::ByteArray serialise()                                = 0;
+  virtual byte_array::ByteArray serialise(std::string type)                = 0;
   virtual void                  deserialise(const byte_array::ByteArray &) = 0;
   virtual TimeStampType         TimeStamp() const                          = 0;
   virtual FingerprintType       Fingerprint() const                        = 0;

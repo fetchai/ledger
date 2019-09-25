@@ -19,6 +19,8 @@
 
 #include "dmlf/vm_wrapper_interface.hpp"
 
+#include <memory>
+
 namespace fetch {
 namespace dmlf {
 
