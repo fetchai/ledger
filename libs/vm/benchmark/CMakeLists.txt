@@ -1,5 +1,5 @@
 #
-# F E T C H   M A T H   B E N C H M A R K S
+# F E T C H   V M   B E N C H M A R K S
 #
 cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
 project(fetch-vm)

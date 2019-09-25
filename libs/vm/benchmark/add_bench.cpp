@@ -18,6 +18,8 @@
 
 #include "vm/vm.hpp"
 #include "vm/module.hpp"
+#include "vm/compiler.hpp"
+#include "vm/ir.hpp"
 
 #include "benchmark/benchmark.h"
 
@@ -25,6 +27,8 @@ using fetch::vm::VM;
 using fetch::vm::Module;
 using fetch::vm::Executable;
 using fetch::vm::Variant;
+using fetch::vm::Compiler;
+using fetch::vm::IR;
 
 void AddInstruction(benchmark::State &state)
 {
@@ -47,4 +51,42 @@ void AddInstruction(benchmark::State &state)
   }
 }
 
-BENCHMARK(AddInstruction);
+void AddInstruction2(benchmark::State &state)
+{
+  Module module;
+  VM vm{&module};
+
+  Compiler compiler(&module);
+
+  IR ir;
+
+  static char const *TEXT = R"(
+    function main()
+    endfunction
+  )";
+
+  std::vector<std::string> errors;
+
+  // compile the source code
+  fetch::vm::SourceFiles files = {{"default.etch", TEXT}};
+  if (!compiler.Compile(files, "default_ir", ir, errors))
+  {
+    throw std::runtime_error("Unable to compile");
+  }
+
+  Executable executable;
+
+  if (!vm.GenerateExecutable(ir, "default_exe", executable, errors))
+  {
+    throw std::runtime_error("Unable to generate IR");
+  }
+
+  std::string error{};
+  Variant output{};
+  for (auto _ : state)
+  {
+    vm.Execute(executable, "main", error, output);
+  }
+}
+
+BENCHMARK(AddInstruction2);
