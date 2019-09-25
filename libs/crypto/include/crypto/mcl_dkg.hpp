@@ -128,7 +128,7 @@ bool VerifySign(PublicKey const &y, MessagePayload const &message, Signature con
 
 Signature LagrangeInterpolation(std::unordered_map<CabinetIndex, Signature> const &shares);
 
-std::vector<DkgOutput> TrustedDealer(uint32_t committee_size, uint32_t threshold);
+std::vector<DkgOutput> TrustedDealerGenerateKeys(uint32_t committee_size, uint32_t threshold);
 
 }  // namespace mcl
 }  // namespace crypto

@@ -331,7 +331,7 @@ Signature LagrangeInterpolation(std::unordered_map<CabinetIndex, Signature> cons
  * @param threshold Number of parties required to generate a group signature
  * @return Vector of DkgOutputs containing the data to be given to each party
  */
-std::vector<DkgOutput> TrustedDealer(uint32_t committee_size, uint32_t threshold)
+std::vector<DkgOutput> TrustedDealerGenerateKeys(uint32_t committee_size, uint32_t threshold)
 {
   std::vector<DkgOutput> output;
   Generator              generator;
