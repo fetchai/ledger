@@ -126,7 +126,7 @@ std::shared_ptr<ledger::DAGInterface> GenerateDAG(std::string const &db_name, bo
   return std::make_shared<ledger::DAG>(db_name, load_on_start, certificate);
 }
 
-ledger::ShardConfigs GenerateShardsConfig(Config const &cfg, uint16_t start_port)
+ledger::ShardConfigs GenerateShardsConfig(Config &cfg, uint16_t start_port)
 {
   ledger::ShardConfigs configs(cfg.num_lanes());
 

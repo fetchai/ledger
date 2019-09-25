@@ -16,8 +16,6 @@
 #
 # ------------------------------------------------------------------------------
 
-import time
-
 from fetchai.ledger.api import LedgerApi
 from fetchai.ledger.contract import Contract
 from fetchai.ledger.crypto import Entity
@@ -86,7 +84,7 @@ def submit_synergetic_data(api, contract, data, entity):
 
     print('Submitted:', sorted(data))
     print('Waiting...')
-    time.sleep(10)
+    api.wait_for_blocks(10)
 
     result = contract.query(api, 'query_result')
     print('Result:', result)
@@ -100,12 +98,14 @@ def run(options):
     api = LedgerApi(options['host'], options['port'])
 
     # create wealth so that we have the funds to be able to create contracts on the network
+    print('Create wealth...')
     api.sync(api.tokens.wealth(entity1, 100000000))
 
     contract = Contract(CONTRACT_TEXT)
 
     # deploy the contract to the network
-    api.sync(api.contracts.create(entity1, contract, 1))
+    print('Create contract...')
+    api.sync(api.contracts.create(entity1, contract, 10000))
 
     submit_synergetic_data(api, contract, [100, 20, 3], entity1)
 
@@ -115,7 +115,7 @@ def run(options):
     assert init_result == 123
 
     print('Execute action...')
-    api.sync(contract.action(api, 'action_test', 1, [entity1]))
+    api.sync(contract.action(api, 'action_test', 10000, [entity1]))
 
     print('Query action state...')
     action_result = contract.query(api, 'query_action_test')
