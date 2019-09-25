@@ -16,35 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm/module.hpp"
-#include "vm/vm.hpp"
-
 #include "benchmark/benchmark.h"
 
-#include <memory>
-
-namespace {
-
-void Add_Object_Benchmark(benchmark::State &state)
-{
-
-  auto module = std::make_shared<fetch::vm::Module>();
-
-  fetch::vm_modules::System::Bind(*module);
-  fetch::vm_modules::math::BindMath(*module);
-  fetch::vm_modules::ml::BindML(*module);
-  fetch::vm_modules::CreatePrint(*module);
-
-
-
-  fetch::vm::VM vm(module.get());
-
-  for (auto _ : state)
-  {
-    vm.
-  }
-}
-
-}  // namespace
-
-BENCHMARK(Add_Object_Benchmark);
+BENCHMARK_MAIN();
