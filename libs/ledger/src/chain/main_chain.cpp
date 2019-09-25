@@ -460,6 +460,7 @@ std::pair<MainChain::Blocks, MainChain::BlockHash> MainChain::TimeTravel(BlockHa
     auto next_hash{ret_blocks.back()->body.previous_hash};  // when next is previous
     return {std::move(ret_blocks), std::move(next_hash)};
   }
+  FETCH_LOG_DEBUG(LOGGING_NAME, "TimeTravel request, start hash = 0x", current_hash.ToHex(), ", limit = ", limit);
 
   auto const lim =
       static_cast<std::size_t>(std::min(limit, static_cast<int64_t>(MainChain::UPPER_BOUND)));
@@ -478,6 +479,7 @@ std::pair<MainChain::Blocks, MainChain::BlockHash> MainChain::TimeTravel(BlockHa
     assert(current_hash != GENESIS_DIGEST);
   }
 
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Starting TimeTravel, start hash = 0x", current_hash.ToHex());
   while (
       // stop once we have gathered enough blocks
       result.size() < lim
@@ -485,12 +487,14 @@ std::pair<MainChain::Blocks, MainChain::BlockHash> MainChain::TimeTravel(BlockHa
       && current_hash != GENESIS_DIGEST)
   {
     // lookup the block in storage
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Block 0x", current_hash.ToHex(), ", result size of ", result.size());
     auto block{GetBlock(current_hash, &next_hash)};
     if (!block)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: ", ToBase64(current_hash));
       throw std::runtime_error("Failed to lookup block");
     }
+    FETCH_LOG_DEBUG("Next hash is 0x", next_hash.ToHex());
     // update the results
     result.push_back(std::move(block));
     // walk the stack
