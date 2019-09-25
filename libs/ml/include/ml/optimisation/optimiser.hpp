@@ -236,12 +236,12 @@ typename T::Type Optimiser<T>::Run(std::vector<TensorType> const &data, TensorTy
     auto name_it = input_node_names_.begin();
     for (auto &input : batch_data_)
     {
-      graph_->OptimisedSetInput(*name_it, input);
+      graph_->SetInputReference(*name_it, input);
       ++name_it;
     }
 
     // Set Label
-    graph_->OptimisedSetInput(label_node_name_, batch_labels_);
+    graph_->SetInputReference(label_node_name_, batch_labels_);
 
     auto loss_tensor = graph_->ForwardPropagate(output_node_name_);
     loss_ += *(loss_tensor.begin());
@@ -339,12 +339,12 @@ typename T::Type Optimiser<T>::RunImplementation(
     auto name_it = input_node_names_.begin();
     for (auto &cur_input : input.second)
     {
-      graph_->OptimisedSetInput(*name_it, cur_input);
+      graph_->SetInputReference(*name_it, cur_input);
       ++name_it;
     }
 
     // Set Label
-    graph_->OptimisedSetInput(label_node_name_, input.first);
+    graph_->SetInputReference(label_node_name_, input.first);
 
     auto loss_tensor = graph_->ForwardPropagate(output_node_name_);
     loss_ += *(loss_tensor.begin());

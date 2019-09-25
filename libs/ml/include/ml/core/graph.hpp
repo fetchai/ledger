@@ -151,7 +151,7 @@ protected:
   std::unordered_map<std::string, SizeType>                     trainable_lookup_;
   std::vector<NodePtrType>                                      trainable_nodes_;
 
-  void       OptimisedSetInput(std::string const &node_name, TensorType const &data);
+  void       SetInputReference(std::string const &node_name, TensorType const &data);
   void       InsertSharedCopy(std::shared_ptr<Graph<TensorType>> output_ptr);
   TensorType ForwardPropagate(std::string const &node_name, bool is_training = true);
 
@@ -642,7 +642,7 @@ typename Graph<TensorType>::NodePtrType Graph<TensorType>::GetNode(
  * @param data the pointer to a tensor to assign to the placeholder
  */
 template <typename TensorType>
-void Graph<TensorType>::OptimisedSetInput(std::string const &node_name, const TensorType &data)
+void Graph<TensorType>::SetInputReference(std::string const &node_name, const TensorType &data)
 {
   auto dataholder =
       std::dynamic_pointer_cast<ops::DataHolder<TensorType>>(nodes_.at(node_name)->GetOp());
@@ -666,7 +666,7 @@ void Graph<TensorType>::OptimisedSetInput(std::string const &node_name, const Te
 template <typename TensorType>
 void Graph<TensorType>::SetInput(std::string const &node_name, const TensorType &data)
 {
-  OptimisedSetInput(node_name, data.Copy());
+  SetInputReference(node_name, data.Copy());
 }
 
 /**
