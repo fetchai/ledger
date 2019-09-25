@@ -102,7 +102,7 @@ public:
 
   /// @name Entropy Generator
   /// @{
-  Status GenerateEntropy(Digest block_digest, uint64_t block_number, uint64_t &entropy) override;
+  Status GenerateEntropy(/*Digest block_digest,*/ uint64_t block_number, uint64_t &entropy) override;
   /// @}
 
   /// Maintainance logic

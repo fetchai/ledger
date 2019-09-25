@@ -24,6 +24,8 @@
 
 #include "ledger/consensus/consensus.hpp"
 
+#include "ledger/consensus/consensus_verifier.hpp"
+
 constexpr char const *LOGGING_NAME = "Consensus";
 
 using Consensus       = fetch::ledger::Consensus;
