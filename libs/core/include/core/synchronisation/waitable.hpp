@@ -69,7 +69,7 @@ public:
       auto const result = handler(payload);
       condition_.notify_all();
 
-      return std::move(result);
+      return result;
     });
   }
 
@@ -81,7 +81,7 @@ public:
           auto const result = handler(payload);
           condition_.notify_all();
 
-          return std::move(result);
+          return result;
         });
   }
 
