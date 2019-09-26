@@ -30,63 +30,46 @@ using fetch::vm::Variant;
 using fetch::vm::Compiler;
 using fetch::vm::IR;
 
-void AddInstruction(benchmark::State &state)
-{
+namespace {
+
+void AddInstruction(benchmark::State &state) {
   Module module;
-  VM vm{&module};
-
-  Executable::Function func{"main", {}, 0, fetch::vm::TypeIds::Void};
-
-  Executable::Instruction instruction{fetch::vm::Opcodes::PushTrue};
-  func.AddInstruction(instruction);
-
-  Executable executable;
-  executable.AddFunction(func);
-
-  std::string error{};
-  Variant output{};
-  for (auto _ : state)
-  {
-    vm.Execute(executable, "main", error, output);
-  }
-}
-
-void AddInstruction2(benchmark::State &state)
-{
-  Module module;
-  VM vm{&module};
-
   Compiler compiler(&module);
-
   IR ir;
 
-  static char const *TEXT = R"(
+  static char const *ETCH_CODE = R"(
     function main()
+      var x = 1;
+      var y = 1;
+      var z = x + y;
     endfunction
   )";
 
-  std::vector<std::string> errors;
-
   // compile the source code
-  fetch::vm::SourceFiles files = {{"default.etch", TEXT}};
-  if (!compiler.Compile(files, "default_ir", ir, errors))
-  {
+  std::vector<std::string> errors;
+  fetch::vm::SourceFiles files = {{"default.etch", ETCH_CODE}};
+  if (!compiler.Compile(files, "default_ir", ir, errors)) {
     throw std::runtime_error("Unable to compile");
   }
 
+  // generate an IR
   Executable executable;
-
-  if (!vm.GenerateExecutable(ir, "default_exe", executable, errors))
-  {
+  VM vm{&module};
+  if (!vm.GenerateExecutable(ir, "default_exe", executable, errors)) {
     throw std::runtime_error("Unable to generate IR");
   }
 
+  // benchmark iterations
   std::string error{};
   Variant output{};
-  for (auto _ : state)
-  {
+  for (auto _ : state) {
     vm.Execute(executable, "main", error, output);
   }
+
+  // auto *function = executable.FindFunction("main");
+
 }
 
-BENCHMARK(AddInstruction2);
+} // namespace
+
+BENCHMARK(AddInstruction);
