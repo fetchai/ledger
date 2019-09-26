@@ -45,6 +45,7 @@
 #include "core/byte_array/encoders.hpp"
 
 #include <cstring>
+#include <type_traits>
 
 namespace fetch {
 namespace storage {
@@ -89,27 +90,13 @@ private:
    */
   struct HistoryBookmark
   {
-    HistoryBookmark()
-    {
-      // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
-    }
-
-    HistoryBookmark(uint64_t val, DefaultKey const &key_in)
-    {
-      // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
-      bookmark = val;
-      key      = key_in;
-    }
-
     enum
     {
       value = 0
     };
 
-    uint64_t   bookmark = 0;  // Internal index
-    DefaultKey key{};         // User supplied key
+    uint64_t   bookmark{};  // Internal index
+    DefaultKey key{};     // User supplied key
   };
 
   /**
@@ -119,21 +106,6 @@ private:
    */
   struct HistorySwap
   {
-    HistorySwap()
-    {
-      // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
-    }
-
-    HistorySwap(uint64_t i_, uint64_t j_)
-    {
-      // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
-
-      i = i_;
-      j = j_;
-    }
-
     enum
     {
       value = 1
@@ -150,20 +122,6 @@ private:
    */
   struct HistoryPop
   {
-    HistoryPop()
-    {
-      // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
-    }
-
-    explicit HistoryPop(T const &d)
-    {
-      // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
-
-      data = d;
-    }
-
     enum
     {
       value = 2
@@ -180,12 +138,6 @@ private:
    */
   struct HistoryPush
   {
-    HistoryPush()
-    {
-      // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
-    }
-
     enum
     {
       value = 3
@@ -203,21 +155,6 @@ private:
    */
   struct HistorySet
   {
-    HistorySet()
-    {
-      // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
-    }
-
-    HistorySet(uint64_t i_, T const &d)
-    {
-      // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
-
-      i    = i_;
-      data = d;
-    }
-
     enum
     {
       value = 4
@@ -233,20 +170,6 @@ private:
    */
   struct HistoryHeader
   {
-    HistoryHeader()
-    {
-      // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
-    }
-
-    explicit HistoryHeader(uint64_t d)
-    {
-      // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
-
-      data = d;
-    }
-
     enum
     {
       value = 5
@@ -272,18 +195,18 @@ public:
 
   void ClearEventHandlers()
   {
-    on_file_loaded_  = nullptr;
-    on_before_flush_ = nullptr;
+    on_file_loaded_  = EventHandlerType{};
+    on_before_flush_ = EventHandlerType{};
   }
 
-  void OnFileLoaded(EventHandlerType const &f)
+  void OnFileLoaded(EventHandlerType f)
   {
-    on_file_loaded_ = f;
+    on_file_loaded_ = std::move(f);
   }
 
-  void OnBeforeFlush(EventHandlerType const &f)
+  void OnBeforeFlush(EventHandlerType f)
   {
-    on_before_flush_ = f;
+    on_before_flush_ = std::move(f);
   }
 
   void SignalFileLoaded()
@@ -313,7 +236,7 @@ public:
   }
 
   void Load(std::string const &filename, std::string const &history,
-            bool const &create_if_not_exist = true)
+            bool create_if_not_exist = true)
   {
     stack_.Load(filename, create_if_not_exist);
     history_.Load(history, create_if_not_exist);
@@ -595,7 +518,7 @@ private:
 
   void RevertHeader()
   {
-    HistoryHeader header;
+    HistoryHeader header{};
     history_.Top(header);
 
     HeaderType h = stack_.header_extra();

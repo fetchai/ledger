@@ -31,6 +31,11 @@ BitVector::BitVector(BitVector const &other)
   , blocks_(other.blocks_)
 {}
 
+BitVector &BitVector::operator=(BitVector const &other)
+{
+  return operator=(BitVector(other));
+}
+
 /**
  * Resize the vector to n bits
  *

@@ -83,19 +83,6 @@ private:
    */
   struct HistoryBookmark
   {
-    HistoryBookmark()
-    {
-      // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
-    }
-
-    explicit HistoryBookmark(B const &val)
-    {
-      // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
-      bookmark = val;
-    }
-
     enum
     {
       value = 0
@@ -111,21 +98,6 @@ private:
    */
   struct HistorySwap
   {
-    HistorySwap()
-    {
-      // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
-    }
-
-    HistorySwap(uint64_t i_, uint64_t j_)
-    {
-      // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
-
-      i = i_;
-      j = j_;
-    }
-
     enum
     {
       value = 1
@@ -142,20 +114,6 @@ private:
    */
   struct HistoryPop
   {
-    HistoryPop()
-    {
-      // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
-    }
-
-    explicit HistoryPop(T const &d)
-    {
-      // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
-
-      data = d;
-    }
-
     enum
     {
       value = 2
@@ -172,12 +130,6 @@ private:
    */
   struct HistoryPush
   {
-    HistoryPush()
-    {
-      // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
-    }
-
     enum
     {
       value = 3
@@ -195,21 +147,6 @@ private:
    */
   struct HistorySet
   {
-    HistorySet()
-    {
-      // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
-    }
-
-    HistorySet(uint64_t i_, T const &d)
-    {
-      // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
-
-      i    = i_;
-      data = d;
-    }
-
     enum
     {
       value = 4
@@ -225,20 +162,6 @@ private:
    */
   struct HistoryHeader
   {
-    HistoryHeader()
-    {
-      // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
-    }
-
-    explicit HistoryHeader(B const &d)
-    {
-      // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
-
-      data = d;
-    }
-
     enum
     {
       value = 5

@@ -55,14 +55,7 @@ struct FileBlockType
   static_assert(BS > META_DATA_BYTES,
                 "Block size needs to exceed the min requirement for metadata");
 
-  FileBlockType()
-  {
-    // Ensures that padded bytes are not uninitialised.
-    memset(this, 0, sizeof(decltype(*this)));
-    previous         = UNDEFINED;
-    next             = UNDEFINED;
-    file_object_size = UNDEFINED;
-  }
+  FileBlockType() = default;
 
   // Metadata
   uint64_t next     = UNDEFINED;
@@ -78,7 +71,7 @@ struct FileBlockType
   };
 
   // Data
-  uint8_t data[CAPACITY];
+  uint8_t data[CAPACITY]{};
 };
 
 /**
