@@ -39,7 +39,7 @@ SynergeticContractPtr SynergeticContractFactory::Create(Digest const &digest)
 
   // attempt to retrieve the document stored in the database
   auto const resource =
-      storage_.Get(SmartContractManager::CreateAddressForSynergeticContract(digest));
+      storage_.Get(SmartContractManager::CreateAddressForContract(digest.ToHex()));
 
   if (!resource.failed)
   {
