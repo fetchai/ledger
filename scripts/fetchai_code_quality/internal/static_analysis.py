@@ -142,7 +142,8 @@ def static_analysis(project_root, build_root, fix, concurrency):
         # a valid path to an arbitrary executable here to placate it.
         '-clang-apply-replacements-binary={clang_tidy_path}'.format(
             clang_tidy_path=clang_tidy_path),
-        '-export-fixes={output_file}'.format(output_file=output_file)]
+        '-export-fixes={output_file}'.format(output_file=output_file),
+        '.']
 
     print('\nPerform static analysis')
 

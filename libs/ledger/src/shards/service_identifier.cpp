@@ -59,7 +59,7 @@ std::string ServiceIdentifier::ToString() const
   std::ostringstream oss;
   oss << ledger::ToString(type_);
 
-  if (instance_ >= 0)
+  if (instance_ != ServiceIdentifier::INVALID_SERVICE_IDENTIFIER)
   {
     oss << '/' << instance_;
   }

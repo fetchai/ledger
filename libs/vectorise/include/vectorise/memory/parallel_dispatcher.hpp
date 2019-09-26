@@ -117,7 +117,8 @@ public:
       ScalarRegisterIteratorType scalar_iter(this->pointer() + range.from(), SF);
       ScalarRegisterType         a, tmp;
 
-      while (static_cast<void *>(scalar_iter.pointer()) < static_cast<void *>(iter.pointer()))
+      while (static_cast<void const *>(scalar_iter.pointer()) <
+             static_cast<void const *>(iter.pointer()))
       {
         scalar_iter.Next(a);
         tmp = kernel(a);
@@ -143,7 +144,8 @@ public:
       ScalarRegisterIteratorType scalar_iter(this->pointer() + ST, range.to() - ST);
       ScalarRegisterType         a, tmp;
 
-      while (static_cast<void *>(scalar_iter.pointer()) < static_cast<void *>(scalar_iter.end()))
+      while (static_cast<void const *>(scalar_iter.pointer()) <
+             static_cast<void const *>(scalar_iter.end()))
       {
         scalar_iter.Next(a);
         tmp = kernel(a);
@@ -201,8 +203,8 @@ public:
       InitializeVectorIterators<scalar_size>(range.from(), SF, scalar_iters,
                                              std::forward<Args>(args)...);
 
-      while (static_cast<void *>(scalar_self_iter.pointer()) <
-             static_cast<void *>(self_iter.pointer()))
+      while (static_cast<void const *>(scalar_self_iter.pointer()) <
+             static_cast<void const *>(self_iter.pointer()))
       {
         details::UnrollNext<sizeof...(args), ScalarRegisterType, ScalarRegisterIteratorType>::Apply(
             scalar_regs, scalar_iters);
@@ -238,8 +240,8 @@ public:
       InitializeVectorIterators<scalar_size>(ST, range.to() - ST, scalar_iters,
                                              std::forward<Args>(args)...);
 
-      while (static_cast<void *>(scalar_self_iter.pointer()) <
-             static_cast<void *>(scalar_self_iter.end()))
+      while (static_cast<void const *>(scalar_self_iter.pointer()) <
+             static_cast<void const *>(scalar_self_iter.end()))
       {
         details::UnrollNext<sizeof...(args), ScalarRegisterType, ScalarRegisterIteratorType>::Apply(
             scalar_regs, scalar_iters);
@@ -297,7 +299,8 @@ public:
       ScalarRegisterIteratorType scalar_iter(this->pointer() + range.from(), SF);
       ScalarRegisterType         a;
 
-      while (static_cast<void *>(scalar_iter.pointer()) < static_cast<void *>(scalar_iter.end()))
+      while (static_cast<void const *>(scalar_iter.pointer()) <
+             static_cast<void const *>(scalar_iter.end()))
       {
         scalar_iter.Next(a);
         c = kernel(a, c);
@@ -321,7 +324,8 @@ public:
       ScalarRegisterIteratorType scalar_iter(this->pointer() + ST, range.to() - ST);
       ScalarRegisterType         a;
 
-      while (static_cast<void *>(scalar_iter.pointer()) < static_cast<void *>(scalar_iter.end()))
+      while (static_cast<void const *>(scalar_iter.pointer()) <
+             static_cast<void const *>(scalar_iter.end()))
       {
         scalar_iter.Next(a);
         c = kernel(a, c);
