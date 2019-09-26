@@ -105,7 +105,7 @@ int main(int ac, char **av)
   for (SizeType i(0); i < number_of_clients; ++i)
   {
     networkers[i] = std::make_shared<fetch::dmlf::LocalLearnerNetworker>();
-    networkers[i] -> Initialize<fetch::dmlf::Update<TensorType>>();
+    networkers[i]->Initialize<fetch::dmlf::Update<TensorType>>();
   }
 
   for (SizeType i(0); i < number_of_clients; ++i)

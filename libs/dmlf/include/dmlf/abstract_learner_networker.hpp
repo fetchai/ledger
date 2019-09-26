@@ -22,8 +22,8 @@
 #include "core/mutex.hpp"
 
 #include "core/byte_array/byte_array.hpp"
-#include "dmlf/ishuffle_algorithm.hpp"
 #include "dmlf/iqueue.hpp"
+#include "dmlf/ishuffle_algorithm.hpp"
 #include "dmlf/queue.hpp"
 #include "dmlf/type_map.hpp"
 
@@ -39,31 +39,31 @@ public:
   {}
   virtual ~AbstractLearnerNetworker()
   {}
-  
+
   // To implement
   virtual void        pushUpdate(std::shared_ptr<IUpdate> update) = 0;
   virtual std::size_t getPeerCount() const                        = 0;
-  
+
   template <typename T>
   void Initialize()
   {
     Lock l{queue_m_};
-    if(!queue_)
-    { 
+    if (!queue_)
+    {
       queue_ = std::make_shared<Queue<T>>();
       return;
     }
     throw std::runtime_error{"Learner already initialized"};
   }
-  
+
   std::size_t getUpdateCount() const
   {
     Lock l{queue_m_};
-    //throw std::runtime_error{"Hello? I guess?"};
+    // throw std::runtime_error{"Hello? I guess?"};
     throw_ifnot_initialized_();
-    return queue_->size(); 
+    return queue_->size();
   }
-  
+
   template <typename T>
   std::shared_ptr<T> getUpdate()
   {
@@ -77,9 +77,9 @@ public:
   {
     this->alg = alg;
   }
-  
+
   // To implement - TOFIX not pure at moment
-  virtual void        pushUpdateType(std::string /*key*/, std::shared_ptr<IUpdate> /*update*/) {};
+  virtual void pushUpdateType(std::string /*key*/, std::shared_ptr<IUpdate> /*update*/){};
 
   template <typename T>
   void RegisterUpdateType(std::string key)
@@ -88,7 +88,7 @@ public:
     update_types_.template put<T>(key);
     queue_map_[key] = std::make_shared<Queue<T>>();
   }
-  
+
   template <typename T>
   std::size_t getUpdateTypeCount() const
   {
@@ -96,56 +96,55 @@ public:
     auto key = update_types_.template find<T>();
     return queue_map_.at(key)->size();
   }
-  
+
   std::size_t getUpdateTypeCount(std::string key) const
   {
     Lock l{queue_map_m_};
     auto iter = queue_map_.find(key);
-    if(iter!=queue_map_.end())
+    if (iter != queue_map_.end())
     {
       return iter->second->size();
     }
     throw std::runtime_error{"Requesting UpdateCount for unregistered type"};
   }
-  
+
   template <typename T>
   std::shared_ptr<T> getUpdateType()
   {
     Lock l{queue_map_m_};
-    auto key = update_types_.template find<T>();
+    auto key  = update_types_.template find<T>();
     auto iter = queue_map_.find(key);
-    auto que = std::dynamic_pointer_cast<Queue<T>>(iter->second);
+    auto que  = std::dynamic_pointer_cast<Queue<T>>(iter->second);
     return que->getUpdate();
   }
-  
 
 protected:
   /*
   std::shared_ptr<IShuffleAlgorithm> alg;                          // used by descendents
   virtual Intermediate               getUpdateIntermediate() = 0;  // implemented by descendents
   */
-  std::shared_ptr<IShuffleAlgorithm> alg;  // used by descendents
-  void NewMessage(const Bytes& msg) // called by descendents
+  std::shared_ptr<IShuffleAlgorithm> alg;                          // used by descendents
+  void                               NewMessage(const Bytes &msg)  // called by descendents
   {
     Lock l{queue_m_};
     throw_ifnot_initialized_();
     queue_->PushNewMessage(msg);
   }
-  void NewDmlfMessage(const Bytes& msg) // called by descendents
+  void NewDmlfMessage(const Bytes &msg)  // called by descendents
   {
     serializers::MsgPackSerializer serializer{msg};
-    std::string key;
-    Bytes update;
-    
+    std::string                    key;
+    Bytes                          update;
+
     std::cout << "[abstract-learner] Got Dmlf message" << std::endl;
 
-    serializer >> key; 
+    serializer >> key;
     std::cout << "[abstract-learner] message type " << key << std::endl;
     serializer >> update;
 
     Lock l{queue_map_m_};
     auto iter = queue_map_.find(key);
-    if(iter!=queue_map_.end())
+    if (iter != queue_map_.end())
     {
       iter->second->PushNewMessage(update);
       return;
@@ -158,26 +157,26 @@ private:
   using Lock      = std::unique_lock<Mutex>;
   using IQueuePtr = std::shared_ptr<IQueue>;
   using IQueueMap = std::unordered_map<std::string, IQueuePtr>;
-  
-  IQueuePtr queue_;
+
+  IQueuePtr     queue_;
   mutable Mutex queue_m_;
-  IQueueMap queue_map_;
+  IQueueMap     queue_map_;
   mutable Mutex queue_map_m_;
-  
+
   TypeMap<> update_types_;
 
   void throw_ifnot_initialized_() const
   {
-    if(!queue_)
-    { 
+    if (!queue_)
+    {
       throw std::runtime_error{"Learner is not initialized"};
     }
   }
-  
+
   AbstractLearnerNetworker(const AbstractLearnerNetworker &other) = delete;
   AbstractLearnerNetworker &operator=(const AbstractLearnerNetworker &other)  = delete;
-  bool               operator==(const AbstractLearnerNetworker &other) = delete;
-  bool               operator<(const AbstractLearnerNetworker &other)  = delete;
+  bool                      operator==(const AbstractLearnerNetworker &other) = delete;
+  bool                      operator<(const AbstractLearnerNetworker &other)  = delete;
 };
 
 }  // namespace dmlf

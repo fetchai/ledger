@@ -89,7 +89,7 @@ public:
   VectorTensorType GetWeights() const;
 
   void SetWeights(VectorTensorType const &new_weights);
-    void AddGradients(VectorTensorType const &grads);
+  void AddGradients(VectorTensorType const &grads);
 
   void SetParams(ClientParams<DataType> const &new_params);
 
@@ -132,7 +132,6 @@ protected:
 
   void DoBatch();
   void ClearLossFile();
-
 };
 
 template <class TensorType>
@@ -347,21 +346,20 @@ void TrainingClient<TensorType>::SetWeights(VectorTensorType const &new_weights)
  * @tparam T
  * @param grads The vector of gradients - needs to have the same length as the number of trainables
  */
-    template <class TensorType>
-    void TrainingClient<TensorType>::AddGradients(VectorTensorType const &grads)
-    {
-      FETCH_LOCK(model_mutex_);
+template <class TensorType>
+void TrainingClient<TensorType>::AddGradients(VectorTensorType const &grads)
+{
+  FETCH_LOCK(model_mutex_);
 
-        assert(grads.size() == g_ptr_->trainable_nodes_.size());
-        auto gt_it =  g_ptr_->trainable_nodes_.begin();
-        for (auto const &grad : grads)
-        {
-          auto weights_ptr = std::dynamic_pointer_cast<ops::Weights<TensorType>>((*gt_it)->GetOp());
-          weights_ptr->AddToGradient(grad);
-          ++gt_it;
-        }
-    }
-
+  assert(grads.size() == g_ptr_->trainable_nodes_.size());
+  auto gt_it = g_ptr_->trainable_nodes_.begin();
+  for (auto const &grad : grads)
+  {
+    auto weights_ptr = std::dynamic_pointer_cast<ops::Weights<TensorType>>((*gt_it)->GetOp());
+    weights_ptr->AddToGradient(grad);
+    ++gt_it;
+  }
+}
 
 // Timestamp for logging
 template <class TensorType>

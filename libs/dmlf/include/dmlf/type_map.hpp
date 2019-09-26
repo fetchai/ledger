@@ -17,19 +17,20 @@
 //
 //------------------------------------------------------------------------------
 
-#include <iostream>
 #include <atomic>
-#include <unordered_map>
 #include <exception>
+#include <iostream>
+#include <unordered_map>
 
 namespace fetch {
-namespace dmlf  {
+namespace dmlf {
 
 template <typename ValueType = std::string>
-class TypeMap {
+class TypeMap
+{
 public:
   using IntToValueMap = std::unordered_map<int, ValueType>;
-  
+
   template <typename KeyType>
   ValueType find() const
   {
@@ -41,16 +42,16 @@ public:
     return iter->second;
   }
 
-  template<typename KeyType>
-  //void put(ValueType &&value)
+  template <typename KeyType>
+  // void put(ValueType &&value)
   void put(ValueType value)
   {
     auto iter = map.find(getTypeId<KeyType>());
     if (iter != map.end())
     {
-      throw std::runtime_error{"Type already registered with name '"+iter->second+"'"};
+      throw std::runtime_error{"Type already registered with name '" + iter->second + "'"};
     }
-    //map[getTypeId<KeyType>()] = std::forward<ValueType>(value);
+    // map[getTypeId<KeyType>()] = std::forward<ValueType>(value);
     map[getTypeId<KeyType>()] = value;
   }
 
@@ -63,12 +64,11 @@ public:
 
 private:
   static std::atomic_int LastTypeId;
-  IntToValueMap map;
+  IntToValueMap          map;
 };
 
-template<typename ValueType>
+template <typename ValueType>
 std::atomic_int TypeMap<ValueType>::LastTypeId(0);
 
 }  // namespace dmlf
 }  // namespace fetch
-
