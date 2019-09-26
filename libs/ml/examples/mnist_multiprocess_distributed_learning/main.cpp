@@ -108,6 +108,7 @@ int main(int ac, char **av)
 
   // Create networker
   auto networker = std::make_shared<fetch::dmlf::Muddle2LearnerNetworker>(config, instance_number);
+  networker -> Initialize<fetch::dmlf::Update<TensorType>>();
 
   std::cout << "FETCH Distributed MNIST Demo" << std::endl;
 

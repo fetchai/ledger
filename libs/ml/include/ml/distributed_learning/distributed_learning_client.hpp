@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dmlf/ilearner_networker.hpp"
+#include "dmlf/abstract_learner_networker.hpp"
 #include "dmlf/update.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
@@ -76,7 +76,7 @@ public:
 
   virtual ~TrainingClient() = default;
 
-  void SetNetworker(std::shared_ptr<fetch::dmlf::ILearnerNetworker> i_learner_ptr);
+  void SetNetworker(std::shared_ptr<fetch::dmlf::AbstractLearnerNetworker> i_learner_ptr);
 
   void Run();
 
@@ -125,7 +125,7 @@ protected:
   SizeType iterations_count_ = 0;
 
   // Pointer to client's own iLearnerNetworker
-  std::shared_ptr<fetch::dmlf::ILearnerNetworker> i_learner_ptr_;
+  std::shared_ptr<fetch::dmlf::AbstractLearnerNetworker> i_learner_ptr_;
 
   std::string   GetStrTimestamp();
   TimestampType GetTimestamp();
@@ -190,7 +190,7 @@ std::string TrainingClient<TensorType>::GetId() const
  */
 template <class TensorType>
 void TrainingClient<TensorType>::SetNetworker(
-    std::shared_ptr<fetch::dmlf::ILearnerNetworker> i_learner_ptr)
+    std::shared_ptr<fetch::dmlf::AbstractLearnerNetworker> i_learner_ptr)
 {
   i_learner_ptr_ = i_learner_ptr;
 }
