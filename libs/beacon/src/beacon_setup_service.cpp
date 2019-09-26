@@ -70,6 +70,9 @@ char const *ToString(BeaconSetupService::State state)
   case BeaconSetupService::State::WAIT_FOR_RECONSTRUCTION_SHARES:
     text = "Waiting for reconstruction shares";
     break;
+  case BeaconSetupService::State::COMPUTE_PUBLIC_SIGNATURE:
+    text = "Compute the group public signature";
+    break;
   case BeaconSetupService::State::DRY_RUN_SIGNING:
     text = "Dry run of signing a seed value";
     break;
@@ -140,6 +143,7 @@ BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identit
   state_machine_->RegisterHandler(State::WAIT_FOR_QUAL_SHARES, this, &BeaconSetupService::OnWaitForQualShares);
   state_machine_->RegisterHandler(State::WAIT_FOR_QUAL_COMPLAINTS, this, &BeaconSetupService::OnWaitForQualComplaints);
   state_machine_->RegisterHandler(State::WAIT_FOR_RECONSTRUCTION_SHARES, this, &BeaconSetupService::OnWaitForReconstructionShares);
+  state_machine_->RegisterHandler(State::COMPUTE_PUBLIC_SIGNATURE, this, &BeaconSetupService::OnComputePublicSignature);
   state_machine_->RegisterHandler(State::DRY_RUN_SIGNING, this, &BeaconSetupService::OnDryRun);
   state_machine_->RegisterHandler(State::BEACON_READY, this, &BeaconSetupService::OnBeaconReady);
   // clang-format on
@@ -639,63 +643,62 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReconstructionShares()
       received_count++;
     }
   }
-  if (!condition_to_proceed_ && received_count == remaining_honest.size() - 1)
+
+  if (timer_to_proceed_.HasExpired() || received_count == remaining_honest.size() - 1)
   {
-    condition_to_proceed_ = true;
     FETCH_LOG_INFO(LOGGING_NAME, "State: ", ToString(state_machine_->state()),
                    " Ready. Seconds to spare: ", state_deadline_ - GetTime(), " of ",
                    seconds_for_state_);
 
-    // Reconstruction can take some time - best to do it ASAP
+    // Process reconstruction shares. Reconstruction shares from non-qual members
+    // or people in qual complaints should not be considered
+    for (auto const &share : reconstruction_shares_received_)
     {
-      // Process reconstruction shares. Reconstruction shares from non-qual members
-      // or people in qual complaints should not be considered
-      for (auto const &share : reconstruction_shares_received_)
+      MuddleAddress from = share.first;
+      if (qual_complaints_manager_.FindComplaint(from) ||
+          beacon_->manager.qual().find(from) == beacon_->manager.qual().end())
       {
-        MuddleAddress from = share.first;
-        if (qual_complaints_manager_.FindComplaint(from) ||
-            beacon_->manager.qual().find(from) == beacon_->manager.qual().end())
-        {
-          FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-                         " received message from invalid sender. Discarding.");
-          continue;
-        }
-        for (auto const &elem : share.second)
-        {
-          beacon_->manager.VerifyReconstructionShare(from, elem);
-        }
+        FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                       " received message from invalid sender. Discarding.");
+        continue;
       }
-
-      // Reset if reconstruction fails as this breaks the initial assumption on the
-      // number of Byzantine nodes
-      if (!beacon_->manager.RunReconstruction())
+      for (auto const &elem : share.second)
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Node: ", beacon_->manager.cabinet_index(),
-                       " DKG failed due to reconstruction failure. Resetting.");
-        SetTimeToProceed(State::RESET);
-        beacon_dkg_state_failed_on_->set(static_cast<uint64_t>(state_machine_->state()));
-        return State::RESET;
+        beacon_->manager.VerifyReconstructionShare(from, elem);
       }
-      else
-      {
-        beacon_->manager.ComputePublicKeys();
-      }
-
-      SetTimeToProceed(State::DRY_RUN_SIGNING);
-      return State::DRY_RUN_SIGNING;
     }
-  }
 
-  if (timer_to_proceed_.HasExpired())
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "Timed out during reconstruction.");
-    SetTimeToProceed(State::RESET);
-    beacon_dkg_state_failed_on_->set(static_cast<uint64_t>(state_machine_->state()));
-    return State::RESET;
+    // Reset if reconstruction fails as this breaks the initial assumption on the
+    // number of Byzantine nodes
+    if (!beacon_->manager.RunReconstruction())
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Node: ", beacon_->manager.cabinet_index(),
+                     " DKG failed due to reconstruction failure. Resetting.");
+      SetTimeToProceed(State::RESET);
+      beacon_dkg_state_failed_on_->set(static_cast<uint64_t>(state_machine_->state()));
+      return State::RESET;
+    }
+    else
+    {
+    }
+
+    SetTimeToProceed(State::COMPUTE_PUBLIC_SIGNATURE);
+    return State::COMPUTE_PUBLIC_SIGNATURE;
   }
 
   state_machine_->Delay(std::chrono::milliseconds(10));
   return State::WAIT_FOR_RECONSTRUCTION_SHARES;
+}
+
+BeaconSetupService::State BeaconSetupService::OnComputePublicSignature()
+{
+  std::lock_guard<std::mutex> lock(mutex_);
+  beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::COMPUTE_PUBLIC_SIGNATURE));
+
+  beacon_->manager.ComputePublicKeys();
+
+  SetTimeToProceed(State::DRY_RUN_SIGNING);
+  return State::DRY_RUN_SIGNING;
 }
 
 /**
@@ -1441,7 +1444,8 @@ void SetTimeBySlots(BeaconSetupService::State state, uint64_t &time_slots_total,
   time_slot_map[BeaconSetupService::State::WAIT_FOR_COMPLAINT_ANSWERS]     = 10;
   time_slot_map[BeaconSetupService::State::WAIT_FOR_QUAL_SHARES]           = 10;
   time_slot_map[BeaconSetupService::State::WAIT_FOR_QUAL_COMPLAINTS]       = 10;
-  time_slot_map[BeaconSetupService::State::WAIT_FOR_RECONSTRUCTION_SHARES] = 20;
+  time_slot_map[BeaconSetupService::State::WAIT_FOR_RECONSTRUCTION_SHARES] = 10;
+  time_slot_map[BeaconSetupService::State::COMPUTE_PUBLIC_SIGNATURE]       = 10;
   time_slot_map[BeaconSetupService::State::DRY_RUN_SIGNING]                = 10;
 
   time_slot_for_state = time_slot_map[state];

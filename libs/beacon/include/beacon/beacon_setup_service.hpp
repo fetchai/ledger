@@ -73,6 +73,7 @@ public:
     WAIT_FOR_QUAL_SHARES,
     WAIT_FOR_QUAL_COMPLAINTS,
     WAIT_FOR_RECONSTRUCTION_SHARES,
+    COMPUTE_PUBLIC_SIGNATURE,
     DRY_RUN_SIGNING,
     BEACON_READY
   };
@@ -129,6 +130,7 @@ public:
   State OnWaitForQualShares();
   State OnWaitForQualComplaints();
   State OnWaitForReconstructionShares();
+  State OnComputePublicSignature();
   State OnDryRun();
   State OnBeaconReady();
   /// @}
