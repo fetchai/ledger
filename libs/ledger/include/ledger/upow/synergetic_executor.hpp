@@ -34,7 +34,7 @@ public:
 
   /// @name Synergetic Executor Interface
   /// @{
-  void Verify(WorkQueue &solutions, ProblemData const &problem_data, uint64_t block,
+  void Verify(WorkQueue &solutions, ProblemData const &problem_data,
               std::size_t num_lanes) override;
   /// @}
 

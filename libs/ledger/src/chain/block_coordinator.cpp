@@ -70,18 +70,10 @@ const std::chrono::seconds      WAIT_FOR_TX_TIMEOUT_INTERVAL{600};
 const uint32_t                  THRESHOLD_FOR_FAST_SYNCING{100u};
 const std::size_t               DIGEST_LENGTH_BYTES{32};
 
-SynergeticExecMgrPtr CreateSynergeticExecutor(core::FeatureFlags const &features, DAGPtr dag,
-                                              StorageUnitInterface &storage_unit)
+SynergeticExecMgrPtr CreateSynergeticExecutor(DAGPtr dag, StorageUnitInterface &storage_unit)
 {
-  SynergeticExecMgrPtr execution_mgr{};
-
-  if (features.IsEnabled("synergetic"))
-  {
-    execution_mgr = std::make_unique<SynergeticExecutionManager>(
-        dag, 1u, [&storage_unit]() { return std::make_shared<SynergeticExecutor>(storage_unit); });
-  }
-
-  return execution_mgr;
+  return std::make_unique<SynergeticExecutionManager>(
+      dag, 1u, [&storage_unit]() { return std::make_shared<SynergeticExecutor>(storage_unit); });
 }
 }  // namespace
 
@@ -94,8 +86,7 @@ SynergeticExecMgrPtr CreateSynergeticExecutor(core::FeatureFlags const &features
 BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
                                    ExecutionManagerInterface &execution_manager,
                                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
-                                   BlockSinkInterface &      block_sink,
-                                   core::FeatureFlags const &features, ProverPtr const &prover,
+                                   BlockSinkInterface &block_sink, ProverPtr const &prover,
                                    std::size_t num_lanes, std::size_t num_slices,
                                    std::size_t block_difficulty, ConsensusPtr consensus)
   : chain_{chain}
@@ -117,7 +108,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
   , tx_wait_periodic_{TX_SYNC_NOTIFY_INTERVAL}
   , exec_wait_periodic_{EXEC_NOTIFY_INTERVAL}
   , syncing_periodic_{NOTIFY_INTERVAL}
-  , synergetic_exec_mgr_{CreateSynergeticExecutor(features, dag_, storage_unit_)}
+  , synergetic_exec_mgr_{CreateSynergeticExecutor(dag_, storage_unit_)}
   , reload_state_count_{telemetry::Registry::Instance().CreateCounter(
         "ledger_block_coordinator_reload_state_total",
         "The total number of times in the reload state")}
@@ -659,8 +650,7 @@ BlockCoordinator::State BlockCoordinator::OnSynergeticExecution()
       return State::RESET;
     }
 
-    if (!synergetic_exec_mgr_->ValidateWorkAndUpdateState(current_block_->body.block_number,
-                                                          num_lanes_))
+    if (!synergetic_exec_mgr_->ValidateWorkAndUpdateState(num_lanes_))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Work did not execute (", ToBase64(current_block_->body.hash),
                      ")");
@@ -983,8 +973,7 @@ BlockCoordinator::State BlockCoordinator::OnNewSynergeticExecution()
       return State::RESET;
     }
 
-    if (!synergetic_exec_mgr_->ValidateWorkAndUpdateState(next_block_->body.block_number,
-                                                          num_lanes_))
+    if (!synergetic_exec_mgr_->ValidateWorkAndUpdateState(num_lanes_))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to valid work queue");
 

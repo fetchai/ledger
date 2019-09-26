@@ -131,6 +131,10 @@ SmartContract::SmartContract(std::string const &source)
     switch (kind)
     {
     case FunctionDecoratorKind::NONE:
+    case FunctionDecoratorKind::CLEAR:
+    case FunctionDecoratorKind::OBJECTIVE:
+    case FunctionDecoratorKind::PROBLEM:
+    case FunctionDecoratorKind::WORK:
       break;
     case FunctionDecoratorKind::ON_INIT:
       FETCH_LOG_DEBUG(LOGGING_NAME, "Registering on_init: ", fn.name,
@@ -617,7 +621,7 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
   vm->SetIOObserver(state());
 
   // lookup the executable
-  Executable::Function const *target_function = executable_->FindFunction(name);
+  auto const target_function = executable_->FindFunction(name);
   if (!target_function)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup target function");
