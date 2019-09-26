@@ -206,6 +206,7 @@ public:
     {
       // mark the variable as existed if we get a positive result back
       existed_ = eExisted::no;
+
       if (Status::OK == vm_->GetIOObserver().Exists(name_))
       {
         existed_ = eExisted::yes;

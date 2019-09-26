@@ -24,11 +24,15 @@ namespace vm {
 
 enum class FunctionDecoratorKind
 {
-  NONE,     ///< Normal (undecorated) function
-  ACTION,   ///< A Transaction handler
-  QUERY,    ///< A Query handler
-  ON_INIT,  ///< A function to be called on smart contract construction
-  INVALID,  ///< The function has an invalid decorator
+  NONE,       ///< Normal (undecorated) function
+  WORK,       ///< A function that is called to do synergetic work
+  OBJECTIVE,  ///< A function that is called to determine the quality of synergetic work
+  PROBLEM,    ///< The synergetic problem function
+  CLEAR,      ///< The synergetic clear function
+  ACTION,     ///< A Transaction handler
+  QUERY,      ///< A Query handler
+  ON_INIT,    ///< A function to be called on smart contract construction
+  INVALID,    ///< The function has an invalid decorator
 };
 
 /**

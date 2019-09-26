@@ -106,7 +106,7 @@ def slow_tests_stage(Platform platform, Configuration config)
     }
 
     stage("End-to-End Tests ${stage_name_suffix(platform, config)}") {
-      sh './scripts/ci/install-test-dependencies.sh'
+      sh './scripts/install-test-dependencies.sh'
       sh "./scripts/ci-tool.py -E ${config.label}"
     }
   }
