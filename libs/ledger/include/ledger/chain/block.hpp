@@ -79,12 +79,12 @@ public:
   /// @}
 
   // TODO(HUT): This should be part of body since it's no longer going to be metadata
-  Weight   weight = 1;
+  Weight weight = 1;
 
   /// @name Metadata for block management
   /// @{
-  Weight   total_weight = 1;
-  bool     is_loose     = false;
+  Weight total_weight = 1;
+  bool   is_loose     = false;
   /// Seconds since the block was first seen or created. Used to manage block interval
   uint64_t first_seen_timestamp{0u};
   /// @}

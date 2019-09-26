@@ -316,11 +316,11 @@ public:
     BlockChains chains;
     for (auto const &root_hash : metadata.roots)
     {
-      auto subchains {RecursionContext::Recurse(root_hash, *this)};
+      auto subchains{RecursionContext::Recurse(root_hash, *this)};
 
       if (!subchains.empty())
       {
-        chains.emplace(*subchains.rbegin()); // Picking HEAVIEST subchain.
+        chains.emplace(*subchains.rbegin());  // Picking HEAVIEST subchain.
       }
       else
       {
