@@ -1,4 +1,4 @@
-Checks: "\
+Checks: "-*,\
 bugprone-*,\
 cert-dcl*,\
 cert-env*,\
@@ -19,6 +19,7 @@ readability-*,\
 -readability-identifier-naming"
 
 # TODO(WK):
+#   remove -* exclusion
 #   cert-*
 #   google-build-*
 #   hicpp-signed-bitwise

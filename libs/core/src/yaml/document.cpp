@@ -83,8 +83,7 @@ void YamlDocument::ExtractPrimitive(Variant &variant, YamlToken const &token,
 
   case STRING:
   case STRING_MULTILINE:
-    pos      = token.first;
-    prev_pos = pos;
+    pos = token.first;
 
     while (pos <= token.second)
     {
@@ -319,7 +318,6 @@ void YamlDocument::Parse(ConstByteArray const &document)
       {
         ExtractPrimitive(variant_, token, document);
         variant_stack.push_back({&variant_, token.ident, token.line});
-        current = &variant_stack.back();
         continue;
       }
 
@@ -590,7 +588,6 @@ void YamlDocument::Parse(ConstByteArray const &document)
         }
         else
         {
-          state = ObjectState::KEY;
           assert(context->data->IsObject());
           context->ident = token.ident;  // For multiline
         }

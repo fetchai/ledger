@@ -39,6 +39,8 @@ def read_static_analysis_yaml(project_root, build_root, yaml_file_path):
 
     with open(yaml_file_path, 'r') as f:
         document = yaml.safe_load(f)
+
+    if document is not None:
         new_diagnostics = []
         for d in document['Diagnostics']:
             file_path = d['FilePath']
@@ -57,9 +59,9 @@ def read_static_analysis_yaml(project_root, build_root, yaml_file_path):
                     'check': d['DiagnosticName'],
                     'message': d['Message']}]
 
-    document['Diagnostics'] = new_diagnostics
-    with open(yaml_file_path, 'w') as f:
-        yaml.dump(document, f)
+        document['Diagnostics'] = new_diagnostics
+        with open(yaml_file_path, 'w') as f:
+            yaml.dump(document, f)
 
     for relative, diagnostic in out.items():
         # deduplicate
@@ -140,8 +142,7 @@ def static_analysis(project_root, build_root, fix, concurrency):
         # a valid path to an arbitrary executable here to placate it.
         '-clang-apply-replacements-binary={clang_tidy_path}'.format(
             clang_tidy_path=clang_tidy_path),
-        '-export-fixes={output_file}'.format(output_file=output_file),
-        '.']
+        '-export-fixes={output_file}'.format(output_file=output_file)]
 
     print('\nPerform static analysis')
 
