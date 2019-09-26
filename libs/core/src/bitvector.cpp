@@ -73,7 +73,7 @@ bool BitVector::RemapTo(BitVector &dst) const
     dst = *this;
     return true;
   }
-  else if (dst.size() > size())
+  if (dst.size() > size())
   {
     return Expand(*this, dst);
   }
