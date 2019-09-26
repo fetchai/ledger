@@ -173,7 +173,7 @@ std::vector<std::shared_ptr<TrainingClient<TensorType>>> Coordinator<TensorType>
       shuffled_clients.begin(),
       shuffled_clients.begin() + static_cast<fetch::math::PtrDiffType>(number_of_peers_));
 
-  return std::move(new_peers);
+  return new_peers;
 }
 
 }  // namespace distributed_learning

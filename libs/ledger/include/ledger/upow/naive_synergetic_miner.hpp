@@ -79,7 +79,8 @@ private:
   /// @name Utils
   /// @{
   SynergeticContractPtr LoadContract(Digest const &contract_digest);
-  WorkPtr MineSolution(Digest const &contract_digest, ProblemData const &problem_data);
+  WorkPtr               MineSolution(Digest const &contract_digest, Address const &contract_address,
+                                     ProblemData const &problem_data);
   /// @}
 
   DAGPtr                        dag_;
