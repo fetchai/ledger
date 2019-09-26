@@ -530,7 +530,7 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
       all_sigs_map[address_sig_pair.first] = address_sig_pair.second;
       // Let the manager know
       AddSignature(address_sig_pair.second);
-      
+
       // If we have collected enough signatures already then break
       if (active_exe_unit_->manager.can_verify())
       {
