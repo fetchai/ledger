@@ -114,6 +114,7 @@ private:
   umap_int_str idx_to_word_;
 
   void UpdateCursor() override;
+  bool IsModeAvailable(DataLoaderMode mode) override;
 
   static void createIdxUMapsFromCounter(umap_str_int &counter, umap_str_int &name_to_idx,
                                         umap_int_str &idx_to_name);
@@ -507,6 +508,12 @@ void C2VLoader<LabelType, DataType>::UpdateCursor()
   {
     throw std::runtime_error("Other mode than training not supported yet.");
   }
+}
+
+template <typename LabelType, typename DataType>
+bool C2VLoader<LabelType, DataType>::IsModeAvailable(DataLoaderMode mode)
+{
+  return mode == DataLoaderMode::TRAIN;
 }
 
 }  // namespace dataloaders

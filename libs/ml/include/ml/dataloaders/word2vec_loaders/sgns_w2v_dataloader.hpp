@@ -98,6 +98,7 @@ private:
   static std::vector<std::string> PreprocessString(std::string const &s, SizeType length_limit);
   void                            BufferNextSamples();
   void                            UpdateCursor() override;
+  bool                            IsModeAvailable(DataLoaderMode mode) override;
 };
 
 /**
@@ -738,6 +739,12 @@ void GraphW2VLoader<T>::UpdateCursor()
   {
     throw std::runtime_error("Other mode than training not supported.");
   }
+}
+
+template <typename T>
+bool GraphW2VLoader<T>::IsModeAvailable(DataLoaderMode mode)
+{
+  return mode == DataLoaderMode::TRAIN;
 }
 
 }  // namespace dataloaders
