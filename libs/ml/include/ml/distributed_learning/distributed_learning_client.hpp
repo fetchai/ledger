@@ -66,7 +66,7 @@ struct GradientUpdate
 
   GradientUpdate(VectorTensorType grad, TimestampType second, std::string client_id,
                  byte_array::ConstByteArray hash = "")
-    : grads{grad}
+    : grads{std::move(grad)}
     , timestamp{second}
     , client_id{std::move(client_id)}
     , hash{std::move(hash)}
