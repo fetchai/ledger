@@ -767,7 +767,7 @@ std::vector<TensorType> Graph<TensorType>::GetGradientsReferences() const
     auto trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
     ret.emplace_back(trainable_ptr->GetGradientsReferences());
   }
-  return std::move(ret);
+  return ret;
 }
 
 /**
