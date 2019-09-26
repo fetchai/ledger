@@ -25,6 +25,7 @@
 #include "dmlf/ishuffle_algorithm.hpp"
 #include "dmlf/iqueue.hpp"
 #include "dmlf/queue.hpp"
+#include "dmlf/type_map.hpp"
 
 namespace fetch {
 namespace dmlf {
@@ -84,16 +85,18 @@ public:
   void RegisterUpdateType(std::string key)
   {
     Lock l{queue_map_m_};
-    auto iter = queue_map_.find(key);
-    if(iter==queue_map_.end())
-    {
-      queue_map_[key] = std::make_shared<Queue<T>>();
-      return;
-    }
-    throw std::runtime_error{"UpdateType already registered"};
+    update_types_.template put<T>(key);
+    queue_map_[key] = std::make_shared<Queue<T>>();
   }
   
-  //template <typename T>
+  template <typename T>
+  std::size_t getUpdateTypeCount() const
+  {
+    Lock l{queue_map_m_};
+    auto key = update_types_.template find<T>();
+    return queue_map_.at(key)->size();
+  }
+  
   std::size_t getUpdateTypeCount(std::string key) const
   {
     Lock l{queue_map_m_};
@@ -106,16 +109,13 @@ public:
   }
   
   template <typename T>
-  std::shared_ptr<T> getUpdateType(std::string key)
+  std::shared_ptr<T> getUpdateType()
   {
     Lock l{queue_map_m_};
+    auto key = update_types_.template find<T>();
     auto iter = queue_map_.find(key);
-    if(iter!=queue_map_.end())
-    {
-      auto que = std::dynamic_pointer_cast<Queue<T>>(iter->second);
-      return que->getUpdate();
-    }
-    throw std::runtime_error{"Requesting Update for non registered type"};
+    auto que = std::dynamic_pointer_cast<Queue<T>>(iter->second);
+    return que->getUpdate();
   }
   
 
@@ -163,6 +163,8 @@ private:
   mutable Mutex queue_m_;
   IQueueMap queue_map_;
   mutable Mutex queue_map_m_;
+  
+  TypeMap<> update_types_;
 
   void throw_ifnot_initialized_() const
   {

@@ -183,11 +183,24 @@ TEST_F(Muddle2TypedUpdatesTests, singleThreadedVersion)
 
   sleep(1);
   EXPECT_GT(learners[1] -> actual -> getUpdateTypeCount("update"), 0);
+  EXPECT_GT(learners[1] -> actual -> getUpdateTypeCount<UpdateTypeForTesting>(), 0);
+  EXPECT_EQ(learners[1] -> actual -> getUpdateTypeCount<UpdateTypeForTesting>(), 
+            learners[1] -> actual -> getUpdateTypeCount("update"));
   EXPECT_GT(learners[1] -> actual -> getUpdateTypeCount("vocab"), 0);
 
   try 
   {
     learners[1] -> actual -> getUpdateTypeCount("weights");
+    EXPECT_NE(1,1);
+  } 
+  catch (std::exception& e)
+  {
+    EXPECT_EQ(1,1);
+  }
+  
+  try 
+  {
+    learners[1] -> actual -> getUpdateTypeCount<fetch::dmlf::Update<double>>();
     EXPECT_NE(1,1);
   } 
   catch (std::exception& e)
