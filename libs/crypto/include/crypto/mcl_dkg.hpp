@@ -49,6 +49,7 @@ struct DkgOutput
 
   DkgOutput()
   {
+    bn::initPairing();
     group_public_key.clear();
     secret_key_share.clear();
   }

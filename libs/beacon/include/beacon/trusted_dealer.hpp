@@ -29,6 +29,7 @@ class TrustedDealer
 
   std::unordered_map<MuddleAddress, uint32_t> cabinet_index_{};
   std::vector<DkgOutput>                      outputs_{};
+  DkgOutput                                   empty_output_;
 
 public:
   TrustedDealer(std::set<MuddleAddress> cabinet, uint32_t threshold)
@@ -45,15 +46,15 @@ public:
     outputs_ = crypto::mcl::TrustedDealerGenerateKeys(cabinet_size, threshold);
   }
 
-  DkgOutput GetKeys(MuddleAddress const &address)
+  DkgOutput const *GetKeys(MuddleAddress const &address) const
   {
     if (cabinet_index_.find(address) != cabinet_index_.end())
     {
-      return outputs_[cabinet_index_.at(address)];
+      return &outputs_[cabinet_index_.at(address)];
     }
     else
     {
-      return DkgOutput();
+      return &empty_output_;
     }
   }
 };
