@@ -53,6 +53,7 @@ public:
   SizeType Size() const override;
   bool     IsDone() const override;
   void     Reset() override;
+  bool     IsModeAvailable(DataLoaderMode mode) override;
 
   void SetTestRatio(float new_test_ratio) override;
   void SetValidationRatio(float new_validation_ratio) override;
@@ -91,7 +92,6 @@ protected:
 
   void UpdateRanges();
   void UpdateCursor() override;
-  bool IsModeAvailable(DataLoaderMode mode) override;
 };
 
 template <typename LabelType, typename InputType>

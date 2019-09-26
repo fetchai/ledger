@@ -293,7 +293,7 @@ private:
 
   void UpdateCursor() override
   {
-    switch (this->mode)
+    switch (this->mode_)
     {
     case DataLoaderMode::TRAIN:
       this->current_cursor_ = train_cursor_;

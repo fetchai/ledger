@@ -65,6 +65,7 @@ public:
   T    EstimatedSampleNumber();
 
   bool WordKnown(std::string const &word) const;
+  bool IsModeAvailable(DataLoaderMode mode) override;
 
   /// accessors and helper functions ///
   SizeType         Size() const override;
@@ -98,7 +99,6 @@ private:
   static std::vector<std::string> PreprocessString(std::string const &s, SizeType length_limit);
   void                            BufferNextSamples();
   void                            UpdateCursor() override;
-  bool                            IsModeAvailable(DataLoaderMode mode) override;
 };
 
 /**

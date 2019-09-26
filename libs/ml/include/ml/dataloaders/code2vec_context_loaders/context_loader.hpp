@@ -77,6 +77,7 @@ public:
   bool     AddData(InputType const &data, LabelType const &label) override;
   void     SetTestRatio(float new_test_ratio) override;
   void     SetValidationRatio(float new_validation_ratio) override;
+  bool     IsModeAvailable(DataLoaderMode mode) override;
 
   void AddDataAsString(std::string const &text);
   void createIdxUMaps();
@@ -114,7 +115,6 @@ private:
   umap_int_str idx_to_word_;
 
   void UpdateCursor() override;
-  bool IsModeAvailable(DataLoaderMode mode) override;
 
   static void createIdxUMapsFromCounter(umap_str_int &counter, umap_str_int &name_to_idx,
                                         umap_int_str &idx_to_name);

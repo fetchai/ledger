@@ -67,6 +67,7 @@ public:
   bool BuildVocab(std::string const &s);
   void SaveVocab(std::string const &filename);
   void LoadVocab(std::string const &filename);
+  bool IsModeAvailable(DataLoaderMode mode) override;
 
   /// accessors and helper functions ///
   SizeType         Size() const override;
@@ -442,6 +443,12 @@ void W2VLoader<T>::UpdateCursor()
   {
     throw std::runtime_error("Other mode than training not supported.");
   }
+}
+
+template <typename T>
+bool W2VLoader<T>::IsModeAvailable(DataLoaderMode mode)
+{
+  return mode == DataLoaderMode::TRAIN;
 }
 
 }  // namespace dataloaders
