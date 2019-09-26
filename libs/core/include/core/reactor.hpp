@@ -41,6 +41,7 @@ public:
   ~Reactor()               = default;
 
   bool Attach(WeakRunnable runnable);
+  bool Attach(WeakRunnables runnable);
   bool Detach(Runnable const &runnable);
 
   void Start();

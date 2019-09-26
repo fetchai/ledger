@@ -77,8 +77,7 @@ RBC::RBC(Endpoint &endpoint, MuddleAddress address, CallbackFunction call_back, 
   });
 }
 
-RBC::~RBC()
-{}
+RBC::~RBC() = default;
 
 /**
  * Enables or disables the RBC. Disabling will clear all state that

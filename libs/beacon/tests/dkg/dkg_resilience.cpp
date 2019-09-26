@@ -607,12 +607,7 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
   {
     for (auto &member : committee)
     {
-      auto all_runnables = member->GetWeakRunnables();
-
-      for (auto const &i : all_runnables)
-      {
-        member->reactor.Attach(i);
-      }
+      member->reactor.Attach(member->GetWeakRunnables());
     }
 
     for (auto &member : committee)

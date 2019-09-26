@@ -25,6 +25,12 @@
 namespace fetch {
 namespace muddle {
 
+MuddlePtr CreateMuddleFake(NetworkId const &network, ProverPtr certificate,
+                           network::NetworkManager const &nm, std::string const &external_address);
+
+MuddlePtr CreateMuddleFake(char const network[4], ProverPtr certificate,
+                           network::NetworkManager const &nm, std::string const &external_address);
+
 /**
  * Construct a global in-memory network which can be used by fake muddles.
  *

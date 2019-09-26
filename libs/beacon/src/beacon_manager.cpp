@@ -19,6 +19,8 @@
 #include "beacon/beacon_manager.hpp"
 #include "crypto/ecdsa.hpp"
 
+#include "network/generics/milli_timer.hpp"
+
 namespace fetch {
 namespace dkg {
 
@@ -377,6 +379,8 @@ void BeaconManager::ComputePublicKeys()
 {
 
   FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, " compute public keys begin.");
+  generics::MilliTimer myTimer("BeaconManager::ComputePublicKeys");
+
   // For all parties in $QUAL$, set $y_i = A_{i0} = g^{z_i} \bmod p$.
   for (auto const &iq : qual_)
   {
