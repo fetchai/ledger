@@ -106,7 +106,7 @@ struct CabinetNode
   }
 };
 
-void RunTrustedDealer(uint16_t total_renewals = 4, uint16_t cabinet_size = 4,
+void RunTrustedDealer(uint16_t total_renewals = 4, uint32_t cabinet_size = 4,
                       uint16_t numbers_per_aeon = 10, double threshold = 0.5)
 {
   std::cout << "- Setup" << std::endl;
@@ -143,7 +143,7 @@ void RunTrustedDealer(uint16_t total_renewals = 4, uint16_t cabinet_size = 4,
     {
       auto &muddle = *(cabinet[*it]->muddle);
 
-      if (cabinet_size - 1 <= muddle.GetNumDirectlyConnectedPeers())
+      if (static_cast<uint32_t>(muddle.GetNumDirectlyConnectedPeers() + 1) >= cabinet_size)
       {
         it = pending_nodes.erase(it);
       }
