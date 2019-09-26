@@ -59,7 +59,6 @@ public:
   std::size_t getUpdateCount() const
   {
     Lock l{queue_m_};
-    // throw std::runtime_error{"Hello? I guess?"};
     throw_ifnot_initialized_();
     return queue_->size();
   }
@@ -77,9 +76,6 @@ public:
   {
     this->alg = alg;
   }
-
-  // To implement - TOFIX not pure at moment
-  virtual void pushUpdateType(std::string /*key*/, std::shared_ptr<IUpdate> /*update*/){};
 
   template <typename T>
   void RegisterUpdateType(std::string key)
@@ -119,10 +115,6 @@ public:
   }
 
 protected:
-  /*
-  std::shared_ptr<IShuffleAlgorithm> alg;                          // used by descendents
-  virtual Intermediate               getUpdateIntermediate() = 0;  // implemented by descendents
-  */
   std::shared_ptr<IShuffleAlgorithm> alg;                          // used by descendents
   void                               NewMessage(const Bytes &msg)  // called by descendents
   {
