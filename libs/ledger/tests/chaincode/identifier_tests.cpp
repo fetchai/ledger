@@ -109,7 +109,7 @@ TEST(IdentifierTests, CheckSmartContractDigest)
 
   Identifier id{ToHex(digest)};
 
-  EXPECT_EQ(Identifier::Type::SMART_CONTRACT, id.type());
+  EXPECT_EQ(Identifier::Type::SMART_OR_SYNERGETIC_CONTRACT, id.type());
   EXPECT_EQ(ToHex(digest), id.qualifier());
 }
 
@@ -124,7 +124,7 @@ TEST(IdentifierTests, CheckContractName)
 
   Identifier id{ns + "." + "main"};
 
-  EXPECT_EQ(Identifier::Type::SMART_CONTRACT, id.type());
+  EXPECT_EQ(Identifier::Type::SMART_OR_SYNERGETIC_CONTRACT, id.type());
   EXPECT_EQ(ns, id.name_space());
   EXPECT_EQ(ConstByteArray{"main"}, id.name());
   EXPECT_EQ(ns + "." + "main", id.full_name());
