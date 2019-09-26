@@ -48,7 +48,7 @@ protected:
     signer_  = std::make_unique<ECDSASigner>();
     address_ = std::make_unique<Address>(signer_->identity());
 
-    fixed_signer_ = std::make_unique<ECDSASigner>(FromBase64(FIXED_IDENTITY));
+    fixed_signer_  = std::make_unique<ECDSASigner>(FromBase64(FIXED_IDENTITY));
     fixed_address_ = std::make_unique<Address>(fixed_signer_->identity());
   }
 
@@ -101,16 +101,16 @@ TEST_F(TransactionLayoutTests, FixedBasicTest)
 
   // build the complete transaction
   auto const tx = TransactionBuilder()
-      .From(*fixed_address_)
-      .TargetChainCode("foo.bar.baz", shard_mask)
-      .Action("action")
-      .ValidFrom(1000)
-      .ValidUntil(2000)
-      .ChargeLimit(500)
-      .Signer(fixed_signer_->identity())
-      .Seal()
-      .Sign(*fixed_signer_)
-      .Build();
+                      .From(*fixed_address_)
+                      .TargetChainCode("foo.bar.baz", shard_mask)
+                      .Action("action")
+                      .ValidFrom(1000)
+                      .ValidUntil(2000)
+                      .ChargeLimit(500)
+                      .Signer(fixed_signer_->identity())
+                      .Seal()
+                      .Sign(*fixed_signer_)
+                      .Build();
 
   // build the transaction layout from this transaction
   TransactionLayout const layout{*tx, 2};
