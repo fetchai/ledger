@@ -214,7 +214,7 @@ public:
 
       for (auto const &member : current_cabinet_)
       {
-        if(member != certificate_->identity().identifier())
+        if (member != certificate_->identity().identifier())
         {
           current_cabinet_vector_.push_back(member);
         }

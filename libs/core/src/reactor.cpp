@@ -69,7 +69,7 @@ bool Reactor::Attach(std::vector<WeakRunnable> runnables)
   {
     success = Attach(runnable);
 
-    if(!success)
+    if (!success)
     {
       return false;
     }
