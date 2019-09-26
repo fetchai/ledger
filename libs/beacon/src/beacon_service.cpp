@@ -70,7 +70,7 @@ BeaconService::BeaconService(MuddleInterface &               muddle,
                              CertificatePtr certificate, SharedEventManager event_manager,
                              uint64_t blocks_per_round)
   : certificate_{std::move(certificate)}
-  , identity_{certificate->identity()}
+  , identity_{certificate_->identity()}
   , endpoint_{muddle.GetEndpoint()}
   , state_machine_{std::make_shared<StateMachine>("BeaconService", State::WAIT_FOR_SETUP_COMPLETION,
                                                   ToString)}

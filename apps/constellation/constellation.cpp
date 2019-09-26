@@ -214,16 +214,18 @@ muddle::MuddlePtr CreateBeaconNetwork(Config const &cfg, CertificatePtr certific
   return network;
 }
 
-BeaconServicePtr CreateBeaconService(Constellation::Config const &cfg, MuddleInterface &muddle,
+BeaconServicePtr CreateBeaconService(Constellation::Config const &   cfg,
+                                     muddle::MuddlePtr const &       muddle,
                                      ledger::ShardManagementService &manifest_cache,
-                                     CertificatePtr                  certificate)
+                                     CertificatePtr const &          certificate)
 {
   BeaconServicePtr                         beacon{};
   beacon::EventManager::SharedEventManager event_manager = beacon::EventManager::New();
 
   if (cfg.proof_of_stake)
   {
-    beacon = std::make_unique<fetch::beacon::BeaconService>(muddle, manifest_cache, certificate,
+    assert(muddle);
+    beacon = std::make_unique<fetch::beacon::BeaconService>(*muddle, manifest_cache, certificate,
                                                             event_manager);
   }
 
@@ -269,7 +271,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
                                                                *muddle_, cfg_.log2_num_lanes))
   , dag_{GenerateDAG("dag_db_", true, certificate)}
   , beacon_network_{CreateBeaconNetwork(cfg_, certificate, network_manager_)}
-  , beacon_{CreateBeaconService(cfg_, *beacon_network_, *shard_management_, certificate)}
+  , beacon_{CreateBeaconService(cfg_, beacon_network_, *shard_management_, certificate)}
   , stake_{CreateStakeManager(cfg_)}
   , consensus_{CreateConsensus(cfg_, stake_, beacon_, chain_, certificate->identity())}
   , execution_manager_{std::make_shared<ExecutionManager>(
