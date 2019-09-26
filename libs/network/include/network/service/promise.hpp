@@ -81,6 +81,8 @@ public:
   /// @{
   ConstByteArray const &value() const;
   Counter               id() const;
+  Timepoint const &     created_at() const;
+  Timepoint const &     deadline() const;
   uint64_t              protocol() const;
   uint64_t              function() const;
   State                 state() const;
@@ -101,6 +103,7 @@ public:
   /// @{
   void Fulfill(ConstByteArray const &value);
   void Fail(serializers::SerializableException const &exception);
+  void Timeout();
   void Fail();
   /// @}
 
