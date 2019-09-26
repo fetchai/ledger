@@ -46,6 +46,40 @@ char const *ADD_STRING = R"(
   endfunction
 )";
 
+char const *DEF_UINT32 = R"(
+  function main()
+    var x : UInt32 = 1u32;
+    x;
+  endfunction
+)";
+
+char const *ADD_UINT32 = R"(
+  function main()
+    var x : UInt32 = 1u32;
+    x + x;
+  endfunction
+)";
+
+char const *SUB_UINT32 = R"(
+  function main()
+    var x : UInt32 = 1u32;
+    x - x;
+  endfunction
+)";
+
+char const *MUL_UINT32 = R"(
+  function main()
+    var x : UInt32 = 1u32;
+    x * x;
+  endfunction
+)";
+
+char const *DIV_UINT32 = R"(
+  function main()
+    var x : UInt32 = 1u32;
+    x / x;
+  endfunction
+)";
 
 void AddInstruction(benchmark::State &state, char const *ETCH_CODE) {
   Module module;
@@ -83,5 +117,8 @@ void AddInstruction(benchmark::State &state, char const *ETCH_CODE) {
 
 BENCHMARK_CAPTURE(AddInstruction,DefString,DEF_STRING);
 BENCHMARK_CAPTURE(AddInstruction,AddString,ADD_STRING);
-
-
+BENCHMARK_CAPTURE(AddInstruction,DefString,DEF_UINT32);
+BENCHMARK_CAPTURE(AddInstruction,AddString,ADD_UINT32);
+BENCHMARK_CAPTURE(AddInstruction,AddString,SUB_UINT32);
+BENCHMARK_CAPTURE(AddInstruction,AddString,MUL_UINT32);
+BENCHMARK_CAPTURE(AddInstruction,AddString,DIV_UINT32);
