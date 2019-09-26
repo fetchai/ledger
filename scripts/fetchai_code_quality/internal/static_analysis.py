@@ -3,9 +3,16 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import yaml
 from os.path import abspath, commonprefix, isabs, isfile, join, relpath
 
-import yaml
+
+def find_nth(text, substr, n):
+    augtext = b'\n' + text
+    occurrences = [i for i in range(
+        0, len(augtext)) if augtext[i:].startswith(substr)]
+    assert len(occurrences) > n
+    return occurrences[n]
 
 
 def excluded_diagnostic(d, absolute_path, project_root, relative_path):
@@ -71,11 +78,17 @@ def read_static_analysis_yaml(project_root, build_root, yaml_file_path):
         out[relative]['diagnostics'] = sorted(
             out[relative]['diagnostics'], key=lambda d: d['offset'])
 
-        # convert offsets to line numbers
+        # convert byte offsets to human-readable data
         with open(out[relative]['absolute_path'], 'rb') as cplusplus:
             text = cplusplus.read()
             for d in out[relative]['diagnostics']:
-                d['line'] = text[0:d['offset']].decode().count('\n') + 1
+                d['line_number'] = text[0:d['offset']].decode().count('\n') + 1
+                line1 = find_nth(text, b'\n', d['line_number'] - 1)
+                line2 = find_nth(text, b'\n', d['line_number']) - 1
+
+                d['char_number'] = len(text[line1:d['offset']].decode()) + 1
+                d['context'] = [text[line1:line2].decode(), ' ' *
+                                (d['char_number'] + 1) + '^']
 
     return out
 
@@ -180,7 +193,11 @@ def static_analysis(project_root, build_root, fix, concurrency):
             print(
                 'Static analysis check(s) failed in:\n  {file}\n'.format(file=file))
             for d in data['diagnostics']:
-                print('  Line: {line}'.format(line=d["line"]))
+                print('  Line: {line_number} @ {char_number}'.format(line_number=d["line_number"],
+                                                                     char_number=d["char_number"]))
+                print('  Context:')
+                print('    {context}'.format(
+                    context='\n  '.join(d["context"])))
                 print('  Message: {message}'.format(message=d["message"]))
                 print('  Check: {check}\n'.format(check=d["check"]))
 
