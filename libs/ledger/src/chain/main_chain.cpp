@@ -23,6 +23,7 @@
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "ledger/chain/main_chain.hpp"
+#include "ledger/chain/block_db_record.hpp"
 #include "ledger/chain/transaction_layout_rpc_serializers.hpp"
 #include "network/generics/milli_timer.hpp"
 #include "telemetry/counter.hpp"

@@ -863,6 +863,13 @@ private:
     do
     {
       ++depth;
+
+      if (depth > key_type::BITS)
+      {
+        throw StorageException(
+            "Depth of binary search reached higher value than size of key in bits");
+      }
+
       index = next;
 
       pos = int(key.size_in_bits());
