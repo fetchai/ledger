@@ -352,7 +352,7 @@ void TrainingClient<TensorType>::SetWeights(VectorTensorType const &new_weights)
     {
       FETCH_LOCK(model_mutex_);
 
-        assert(grads.size() == trainable_nodes_.size());
+        assert(grads.size() == g_ptr_->trainable_nodes_.size());
         auto gt_it =  g_ptr_->trainable_nodes_.begin();
         for (auto const &grad : grads)
         {
