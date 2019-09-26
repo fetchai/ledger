@@ -96,7 +96,7 @@ private:
     };
 
     uint64_t   bookmark{};  // Internal index
-    DefaultKey key{};     // User supplied key
+    DefaultKey key{};       // User supplied key
   };
 
   /**
