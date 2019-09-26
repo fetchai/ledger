@@ -32,18 +32,25 @@ using fetch::vm::IR;
 
 namespace {
 
-void AddInstruction(benchmark::State &state) {
+char const *DEF_STRING = R"(
+  function main()
+    var x : String = "x";
+    x;
+  endfunction
+)";
+
+char const *ADD_STRING = R"(
+  function main()
+    var x : String = "x";
+    x + x;
+  endfunction
+)";
+
+
+void AddInstruction(benchmark::State &state, char const *ETCH_CODE) {
   Module module;
   Compiler compiler(&module);
   IR ir;
-
-  static char const *ETCH_CODE = R"(
-    function main()
-      var x = 1;
-      var y = 1;
-      var z = x + y;
-    endfunction
-  )";
 
   // compile the source code
   std::vector<std::string> errors;
@@ -66,10 +73,15 @@ void AddInstruction(benchmark::State &state) {
     vm.Execute(executable, "main", error, output);
   }
 
-  // auto *function = executable.FindFunction("main");
+  auto *function = executable.FindFunction("main");
+
+  std::string name = function->name;
 
 }
 
 } // namespace
 
-BENCHMARK(AddInstruction);
+BENCHMARK_CAPTURE(AddInstruction,DefString,DEF_STRING);
+BENCHMARK_CAPTURE(AddInstruction,AddString,ADD_STRING);
+
+
