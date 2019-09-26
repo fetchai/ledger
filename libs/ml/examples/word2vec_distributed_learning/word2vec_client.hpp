@@ -137,8 +137,6 @@ void Word2VecClient<TensorType>::PrepareOptimiser()
 template <class TensorType>
 void Word2VecClient<TensorType>::Test()
 {
-  // TODO(issue 1595): Implement loss mechanism
-
   if (this->batch_counter_ % tp_.test_frequency == 1)
   {
     TestEmbeddings(tp_.word0, tp_.word1, tp_.word2, tp_.word3, tp_.k);
@@ -173,6 +171,10 @@ void Word2VecClient<TensorType>::TestEmbeddings(std::string const &word0, std::s
     fetch::ml::examples::PrintWordAnalogy(*w2v_data_loader_ptr_, embeddings->get_weights(), word1,
                                           word2, word3, K);
   }
+
+  DataType score = examples::TestWithAnalogies(*w2v_data_loader_ptr_, embeddings->get_weights(),
+                                               tp_.analogies_test_file);
+  std::cout << "Score on analogies task: " << score * 100 << "%" << std::endl;
 }
 
 }  // namespace distributed_learning

@@ -36,11 +36,12 @@ using SizeType   = TensorType ::SizeType;
 
 int main(int argc, char **argv)
 {
+  // Note: these paramters need to be the same as the ones that the graph was trained with.
   SizeType max_word_count = fetch::math::numeric_max<SizeType>();  // maximum number to be trained
   SizeType negative_sample_size = 5;      // number of negative sample per word-context pair
-  SizeType window_size          = 5;      // window size for context sampling
+  SizeType window_size          = 2;      // window size for context sampling
   DataType freq_thresh          = 1e-3f;  // frequency threshold for subsampling
-  SizeType min_count            = 5;      // infrequent word removal threshold
+  SizeType min_count            = 100;    // infrequent word removal threshold
 
   std::string graph_file;
   std::string dataloader_file;
@@ -77,7 +78,9 @@ int main(int argc, char **argv)
   std::shared_ptr<fetch::ml::ops::Embeddings<TensorType>> embeddings =
       sg_layer->GetEmbeddings(sg_layer);
 
-  TestWithAnalogies<TensorType>(data_loader, embeddings->get_weights(), analogy_file);
+  DataType score =
+      TestWithAnalogies<TensorType>(data_loader, embeddings->get_weights(), analogy_file);
+  std::cout << "Score on analogies task: " << score * 100 << "%" << std::endl;
   PrintKNN(data_loader, embeddings->get_weights(), "three", 20);
   PrintWordAnalogy(data_loader, embeddings->get_weights(), "king", "queen", "father", 20);
 }

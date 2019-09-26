@@ -122,8 +122,9 @@ void PrintKNN(dataloaders::GraphW2VLoader<typename TensorType::Type> const &dl,
 }
 
 template <class TensorType>
-void TestWithAnalogies(dataloaders::GraphW2VLoader<typename TensorType::Type> const &dl,
-                       TensorType const &embeddings, std::string const &analogy_file)
+typename TensorType::Type TestWithAnalogies(
+    dataloaders::GraphW2VLoader<typename TensorType::Type> const &dl, TensorType const &embeddings,
+    std::string const &analogy_file, bool verbose = false)
 {
   using SizeType = typename TensorType::SizeType;
   using DataType = typename TensorType::Type;
@@ -141,9 +142,9 @@ void TestWithAnalogies(dataloaders::GraphW2VLoader<typename TensorType::Type> co
   std::string word2;
   std::string word3;
   std::string word4;
-  SizeType    unknown_count = 0;
-  SizeType    success_count = 0;
-  SizeType    fail_count    = 0;
+  SizeType    unknown_count{0};
+  SizeType    success_count{0};
+  SizeType    fail_count{0};
 
   std::string buf;
   while (std::getline(fp, buf, '\n'))
@@ -157,8 +158,13 @@ void TestWithAnalogies(dataloaders::GraphW2VLoader<typename TensorType::Type> co
       if (!dl.WordKnown(word1) || !dl.WordKnown(word2) || !dl.WordKnown(word3) ||
           !dl.WordKnown(word4))
       {
-        unknown_count++;
+        unknown_count += 1;
         continue;
+      }
+
+      if (verbose)
+      {
+        std::cout << word1 << " " << word2 << " " << word3 << " " << word4 << std::endl;
       }
 
       // get id for words
@@ -167,21 +173,35 @@ void TestWithAnalogies(dataloaders::GraphW2VLoader<typename TensorType::Type> co
       SizeType word3_idx = dl.IndexFromWord(word3);
       SizeType word4_idx = dl.IndexFromWord(word4);
 
-      std::vector<std::pair<SizeType, DataType>> result =
-          GetWordIDAnalogies<TensorType>(embeddings, word1_idx, word2_idx, word3_idx, 1);
+      std::vector<std::pair<SizeType, DataType>> results =
+          GetWordIDAnalogies<TensorType>(embeddings, word1_idx, word2_idx, word3_idx, 4);
 
-      if (result[0].first == word4_idx)
+      for (auto result : results)
       {
-        success_count++;
-      }
-      else
-      {
-        fail_count++;
+        SizeType idx = result.first;
+        if (idx != word1_idx && idx != word2_idx && idx != word3_idx)
+        {
+          if (verbose)
+          {
+            std::cout << "Result: " << dl.WordFromIndex(result.first) << std::endl;
+          }
+          if (idx == word4_idx)
+          {
+            success_count += 1;
+          }
+          else
+          {
+            fail_count += 1;
+          }
+          break;
+        }
       }
     }
   }
   std::cout << "Unknown, success, fail: " << unknown_count << ' ' << success_count << ' '
             << fail_count << std::endl;
+
+  return static_cast<DataType>(success_count) / static_cast<DataType>(success_count + fail_count);
 }
 
 std::string ReadFile(std::string const &path)

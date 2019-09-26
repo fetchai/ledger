@@ -65,7 +65,7 @@ std::pair<std::string, std::string> Model(fetch::ml::Graph<TensorType> &g, SizeT
 void TestEmbeddings(Graph<TensorType> const &g, std::string const &skip_gram_name,
                     GraphW2VLoader<DataType> const &dl, std::string const &word0,
                     std::string const &word1, std::string const &word2, std::string const &word3,
-                    SizeType K)
+                    SizeType K, const std::string &analogies_test_file)
 {
   // first get hold of the skipgram layer by searching the return name in the graph
   std::shared_ptr<fetch::ml::layers::SkipGram<TensorType>> sg_layer =
@@ -80,6 +80,8 @@ void TestEmbeddings(Graph<TensorType> const &g, std::string const &skip_gram_nam
   PrintKNN(dl, embeddings->get_weights(), word0, K);
   std::cout << std::endl;
   PrintWordAnalogy(dl, embeddings->get_weights(), word1, word2, word3, K);
+
+  examples::TestWithAnalogies(dl, embeddings->get_weights(), analogies_test_file);
 }
 
 ////////////////////////////////
@@ -109,12 +111,11 @@ struct TrainingParams
   fetch::ml::optimisers::LearningRateParam<DataType> learning_rate_param{
       fetch::ml::optimisers::LearningRateParam<DataType>::LearningRateDecay::LINEAR};
 
-  SizeType    k        = 20;       // how many nearest neighbours to compare against
-  std::string word0    = "three";  // test word to consider
-  std::string word1    = "king";
-  std::string word2    = "queen";
-  std::string word3    = "father";
-  std::string save_loc = "./model.fba";  // save file location for exporting graph
+  SizeType    k     = 20;       // how many nearest neighbours to compare against
+  std::string word0 = "three";  // test word to consider
+  std::string word1 = "king";
+  std::string word2 = "queen";
+  std::string word3 = "father";
 };
 
 int main(int argc, char **argv)
@@ -122,14 +123,16 @@ int main(int argc, char **argv)
 
   std::string train_file;
   std::string save_file;
-  if (argc == 3)
+  std::string analogies_test_file;
+  if (argc == 4)
   {
-    train_file = argv[1];
-    save_file  = argv[2];
+    train_file          = argv[1];
+    save_file           = argv[2];
+    analogies_test_file = argv[3];
   }
   else
   {
-    throw std::runtime_error("Args: data_file graph_save_file");
+    throw std::runtime_error("Args: data_file graph_save_file analogies_test_file");
   }
 
   std::cout << "FETCH Word2Vec Demo" << std::endl;
@@ -191,16 +194,18 @@ int main(int argc, char **argv)
   fetch::ml::optimisers::AdamOptimiser<TensorType> optimiser(g, {"Input", "Context"}, "Label",
                                                              error, tp.learning_rate_param);
 
+  DataType est_samples = data_loader.EstimatedSampleNumber();
   // Training loop
   for (SizeType i{0}; i < tp.training_epochs; i++)
   {
     std::cout << "Start training for epoch no.: " << i << std::endl;
-    optimiser.Run(data_loader, tp.batch_size);
+    optimiser.Run(data_loader, tp.batch_size, static_cast<SizeType>(est_samples));
 
     // Test trained embeddings
     if (i % tp.test_frequency == 0)
     {
-      TestEmbeddings(*g, skipgram_layer, data_loader, tp.word0, tp.word1, tp.word2, tp.word3, tp.k);
+      TestEmbeddings(*g, skipgram_layer, data_loader, tp.word0, tp.word1, tp.word2, tp.word3, tp.k,
+                     analogies_test_file);
     }
 
     SaveLargeModel(*g, save_file + std::to_string(i));
