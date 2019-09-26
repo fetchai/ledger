@@ -64,8 +64,8 @@ std::shared_ptr<TrainingClient<TensorType>> MakeClient(
   // Initialise DataLoader
   std::shared_ptr<fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>> dataloader_ptr =
       std::make_shared<fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>>();
-  TensorType data_tensor  = fetch::ml::dataloaders::ReadCSV<TensorType>(data);
-  TensorType label_tensor = fetch::ml::dataloaders::ReadCSV<TensorType>(labels);
+  TensorType data_tensor  = fetch::ml::dataloaders::ReadCSV<TensorType>(data).Transpose();
+  TensorType label_tensor = fetch::ml::dataloaders::ReadCSV<TensorType>(labels).Transpose();
   dataloader_ptr->AddData(data_tensor, label_tensor);
 
   dataloader_ptr->SetTestRatio(test_set_ratio);
