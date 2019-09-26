@@ -163,8 +163,9 @@ class TestInstance():
             clear_path=False
         )
 
-        # Possibly soon to be depreciated functionality - set the block interval
-        instance._block_interval = self._block_interval
+        # Possibly soon to be deprecated functionality - set the block interval
+        instance.block_interval = self._block_interval
+        instance.feature_flags = ['synergetic']
 
         # configure the lanes and slices
         instance.lanes = self._lanes
