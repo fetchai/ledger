@@ -19,8 +19,6 @@
 #include "muddle/punishment_broadcast_channel.hpp"
 #include "muddle/rbc.hpp"
 
-#include "muddle/muddle_fake.hpp"
-
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/reactor.hpp"
 #include "crypto/ecdsa.hpp"
@@ -30,6 +28,8 @@
 #include "muddle/subscription.hpp"
 
 #include "benchmark/benchmark.h"
+
+#include "muddle/create_muddle_fake.hpp"
 
 #include <type_traits>
 #include <vector>
