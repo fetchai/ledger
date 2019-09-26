@@ -534,6 +534,11 @@ void RBC::Deliver(SerialisedMessage const &msg, uint32_t sender_index)
   deliver_msg_callback_(miner_id, msg);
   lock_.lock();
 
+  if (sender_index >= parties_.size())
+  {
+    return;
+  }
+
   ++parties_[sender_index].deliver_s;  // Increase counter
 
   // Try to deliver old messages
@@ -655,7 +660,7 @@ uint32_t RBC::CabinetIndex(MuddleAddress const &other_address) const
  */
 bool RBC::CheckTag(RBCMessage const &msg)
 {
-  if (msg.id() >= current_cabinet_.size())
+  if (msg.id() >= current_cabinet_.size() || msg.id() >= parties_.size())
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Node ", id_, " received message with unknown tag id");
     return false;
@@ -703,7 +708,10 @@ bool RBC::CheckTag(RBCMessage const &msg)
  */
 bool RBC::SetPartyFlag(uint32_t sender_index, TagType tag, MessageType msg_type)
 {
-  assert(parties_.size() == current_cabinet_.size());
+  if (sender_index >= parties_.size())
+  {
+    return false;
+  }
 
   auto &iter  = parties_[sender_index].flags[tag];
   auto  index = static_cast<uint32_t>(msg_type);

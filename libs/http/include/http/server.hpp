@@ -212,8 +212,8 @@ public:
   }
 
   // Accept static void to avoid having to create shared ptr to this class
-  static void Accept(std::shared_ptr<Socket> soc, std::shared_ptr<Acceptor> accep,
-                     std::shared_ptr<ConnectionManager> manager)
+  static void Accept(std::shared_ptr<Socket> const &soc, std::shared_ptr<Acceptor> const &accep,
+                     std::shared_ptr<ConnectionManager> const &manager)
   {
     auto cb = [soc, accep, manager](std::error_code ec) {
       if (!ec)
@@ -226,9 +226,9 @@ public:
         return;
       }
 
-      std::shared_ptr<Socket>            s = soc;
-      std::shared_ptr<Acceptor>          a = accep;
-      std::shared_ptr<ConnectionManager> m = manager;
+      std::shared_ptr<Socket> const &           s = soc;
+      std::shared_ptr<Acceptor> const &         a = accep;
+      std::shared_ptr<ConnectionManager> const &m = manager;
 
       HTTPServer::Accept(s, a, m);
     };
@@ -260,7 +260,8 @@ public:
       route.AddValidator(param.name, std::move(v));
     }
 
-    views_.push_back({std::move(description), method, std::move(route), view, authenticator});
+    views_.push_back(
+        {std::move(description), method, std::move(route), view, std::move(authenticator)});
   }
 
   void AddModule(HTTPModule const &module)

@@ -141,7 +141,7 @@ private:
   PeerMap       peer_connections_;
   MetadataMap   peer_metadata_;
 
-  bool ReadyForRetry(const PeerMetadata &metadata) const;
+  bool ReadyForRetry(PeerMetadata const &metadata) const;
 };
 
 }  // namespace muddle

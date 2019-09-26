@@ -33,6 +33,13 @@ public:
   explicit JSONParseException(std::string err)
     : error_(std::move(err))
   {}
+
+  JSONParseException(JSONParseException const &) = default;
+  JSONParseException &operator=(JSONParseException const &) = default;
+
+  JSONParseException(JSONParseException &&) noexcept = default;
+  JSONParseException &operator=(JSONParseException &&) noexcept = default;
+
   ~JSONParseException() override = default;
 
   char const *what() const noexcept override

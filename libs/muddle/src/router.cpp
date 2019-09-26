@@ -300,7 +300,7 @@ Router::PacketPtr const &Router::Sign(PacketPtr const &p) const
  * @param handle The handle of the receiving connection for the packet
  * @param packet The input packet to route
  */
-void Router::Route(Handle handle, PacketPtr packet)
+void Router::Route(Handle handle, PacketPtr const &packet)
 {
   FETCH_LOG_TRACE(logging_name_, "RX: (conn: ", handle, ") ", DescribePacket(*packet));
 
@@ -654,8 +654,8 @@ void Router::SetKademliaRouting(bool enable)
  */
 Router::Handle Router::LookupRandomHandle(Packet::RawAddress const & /*address*/) const
 {
-  static std::random_device rd;
-  static std::mt19937       rng(rd());
+  thread_local std::random_device rd;
+  thread_local std::mt19937       rng(rd());
 
   {
     FETCH_LOCK(routing_table_lock_);
@@ -717,7 +717,7 @@ Router::Handle Router::LookupKademliaClosestHandle(Address const &address) const
  * @param handle The handle to the network connection
  * @param packet The packet to be routed
  */
-void Router::SendToConnection(Handle handle, PacketPtr packet)
+void Router::SendToConnection(Handle handle, PacketPtr const &packet)
 {
   // internal method, we expect all inputs be valid at this stage
   assert(static_cast<bool>(packet));
@@ -763,7 +763,7 @@ void Router::SendToConnection(Handle handle, PacketPtr packet)
  * @param packet The packet to be routed
  * @param external Flag to signal that this packet originated from the network
  */
-void Router::RoutePacket(PacketPtr packet, bool external)
+void Router::RoutePacket(PacketPtr const &packet, bool external)
 {
 
   // black list support
@@ -855,7 +855,7 @@ void Router::DispatchDirect(Handle handle, PacketPtr packet)
   // dispatch to the direct message handler if needed
   if (direct_message_handler_)
   {
-    direct_message_handler_(handle, packet);
+    direct_message_handler_(handle, std::move(packet));
   }
 }
 
@@ -864,7 +864,7 @@ void Router::DispatchDirect(Handle handle, PacketPtr packet)
  *
  * @param packet The packet that was received
  */
-void Router::DispatchPacket(PacketPtr packet, Address transmitter)
+void Router::DispatchPacket(PacketPtr const &packet, Address const &transmitter)
 {
   dispatch_thread_pool_->Post([this, packet, transmitter]() {
     bool const isPossibleExchangeResponse = !packet->IsExchange();

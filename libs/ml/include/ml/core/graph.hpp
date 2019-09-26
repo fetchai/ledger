@@ -114,10 +114,9 @@ public:
   /// public train/test functions ///
   ///////////////////////////////////
 
-  void       SetInput(std::string const &node_name, TensorType data);
+  void       SetInput(std::string const &node_name, TensorType const &data);
   TensorType Evaluate(std::string const &node_name, bool is_training = true);
   void       BackPropagate(std::string const &node_name, TensorType const &error_signal = {});
-  void       ApplyRegularisation();
   void       ApplyGradients(std::vector<TensorType> &grad);
 
   //////////////////////////////////////////////////////
@@ -152,6 +151,7 @@ protected:
   std::unordered_map<std::string, SizeType>                     trainable_lookup_;
   std::vector<NodePtrType>                                      trainable_nodes_;
 
+  void       SetInputReference(std::string const &node_name, TensorType const &data);
   void       InsertSharedCopy(std::shared_ptr<Graph<TensorType>> output_ptr);
   TensorType ForwardPropagate(std::string const &node_name, bool is_training = true);
 
@@ -537,21 +537,6 @@ void Graph<TensorType>::ApplyGradients(std::vector<TensorType> &grad)
   }
 }
 
-template <typename TensorType>
-void Graph<TensorType>::ApplyRegularisation()
-{
-  Compile();
-
-  for (auto &t : trainable_nodes_)
-  {
-    auto trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
-    trainable_ptr->ApplyRegularisation();
-  }
-
-  // TODO(#1554) - we should only reset the cache for trained nodes, not all nodes
-  ResetGraphCache(false);
-}
-
 /**
  * Method for directly inserting nodes to graph - used for serialisation
  * @tparam T
@@ -657,7 +642,7 @@ typename Graph<TensorType>::NodePtrType Graph<TensorType>::GetNode(
  * @param data the pointer to a tensor to assign to the placeholder
  */
 template <typename TensorType>
-void Graph<TensorType>::SetInput(std::string const &node_name, TensorType data)
+void Graph<TensorType>::SetInputReference(std::string const &node_name, TensorType const &data)
 {
   auto dataholder =
       std::dynamic_pointer_cast<ops::DataHolder<TensorType>>(nodes_.at(node_name)->GetOp());
@@ -671,6 +656,17 @@ void Graph<TensorType>::SetInput(std::string const &node_name, TensorType data)
   {
     throw std::runtime_error("No placeholder node with name [" + node_name + "] found in graph!");
   }
+}
+
+/**
+ * Assigns deep copy of data to a dataholder if the node can be found in the graph.
+ * @param node_name name of the placeholder node in the graph (must be unique)
+ * @param data the pointer to a tensor to assign to the placeholder
+ */
+template <typename TensorType>
+void Graph<TensorType>::SetInput(std::string const &node_name, TensorType const &data)
+{
+  SetInputReference(node_name, data.Copy());
 }
 
 /**
@@ -771,7 +767,7 @@ std::vector<TensorType> Graph<TensorType>::GetGradientsReferences() const
     auto trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
     ret.emplace_back(trainable_ptr->GetGradientsReferences());
   }
-  return std::move(ret);
+  return ret;
 }
 
 /**
@@ -893,7 +889,7 @@ void Graph<T>::InsertSharedCopy(std::shared_ptr<Graph<TensorType>> output_ptr)
     throw std::runtime_error("This needs to be called with a separate ptr.");
   }
 
-  std::shared_ptr<Graph<TensorType>> copyshare = output_ptr;
+  std::shared_ptr<Graph<TensorType>> const &copyshare = output_ptr;
 
   // copy all the nodes, sharing the weights using MakeSharedCopy
   for (auto const &n : nodes_)

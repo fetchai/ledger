@@ -68,13 +68,13 @@ public:
   }
 
   // TODO(issue 1673): Rename this to match ServiceClients below.
-  void WithServices(std::function<void(ServiceMapType const &)> f) const
+  void WithServices(std::function<void(ServiceMapType const &)> const &f) const
   {
     FETCH_LOCK(service_lock_);
     f(services_);
   }
 
-  void VisitServiceClients(std::function<void(ServiceMapType ::value_type const &)> f) const
+  void VisitServiceClients(std::function<void(ServiceMapType::value_type const &)> const &f) const
   {
     std::list<ServiceMapType ::value_type> keys;
 
@@ -98,7 +98,7 @@ public:
   }
 
   void VisitServiceClients(
-      std::function<void(ConnectionHandleType const &, SharedServiceClientType)> f) const
+      std::function<void(ConnectionHandleType const &, SharedServiceClientType)> const &f) const
   {
     FETCH_LOG_WARN(LOGGING_NAME, "About to visit ", services_.size(), " service clients");
     std::list<ServiceMapType ::value_type> keys;

@@ -33,12 +33,12 @@ struct A
   using ba_type  = byte_array::ByteArray;
   using cba_type = byte_array::ConstByteArray;
 
-  A()          = default;
-  A(A const &) = default;
-  A(A &&)      = default;
+  A()              = default;
+  A(A const &)     = default;
+  A(A &&) noexcept = default;
 
   A &operator=(A const &) = default;
-  A &operator=(A &&) = default;
+  A &operator=(A &&) noexcept = default;
 
   A(cba_type const &_x, cba_type const &_y)
     : x{_x + " x"}

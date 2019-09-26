@@ -52,7 +52,7 @@ public:
                 "type cannot be contained in the given register size.");
 
   VectorRegister() = default;
-  VectorRegister(type const *d)
+  VectorRegister(type const *d)  // NOLINT
   {
     data_ = _mm_load_ps(d);
   }
@@ -61,13 +61,13 @@ public:
     data_ = _mm_load_ps(reinterpret_cast<type const *>(list.begin()));
   }
 
-  VectorRegister(MMRegisterType const &d)
+  VectorRegister(MMRegisterType const &d)  // NOLINT
     : data_(d)
   {}
-  VectorRegister(MMRegisterType &&d)
+  VectorRegister(MMRegisterType &&d)  // NOLINT
     : data_(d)
   {}
-  VectorRegister(type const &c)
+  VectorRegister(type const &c)  // NOLINT
   {
     data_ = _mm_set1_ps(c);
   }
@@ -117,7 +117,7 @@ public:
                 "type cannot be contained in the given register size.");
 
   VectorRegister() = default;
-  VectorRegister(type const *d)
+  VectorRegister(type const *d)  // NOLINT
   {
     data_ = _mm256_load_ps(d);
   }
@@ -125,13 +125,13 @@ public:
   {
     data_ = _mm256_load_ps(reinterpret_cast<type const *>(list.begin()));
   }
-  VectorRegister(MMRegisterType const &d)
+  VectorRegister(MMRegisterType const &d)  // NOLINT
     : data_(d)
   {}
-  VectorRegister(MMRegisterType &&d)
+  VectorRegister(MMRegisterType &&d)  // NOLINT
     : data_(d)
   {}
-  VectorRegister(type const &c)
+  VectorRegister(type const &c)  // NOLINT
   {
     data_ = _mm256_set1_ps(c);
   }

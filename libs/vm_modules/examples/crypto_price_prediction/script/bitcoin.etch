@@ -89,7 +89,7 @@ build_graph(graph);
 graph.addMeanSquareErrorLoss("Error", "Output", "Label");
 
 // SET UP THE OPTIMISER
-var optimiser = Optimiser("sgd", graph, "Input", "Label", "Error");
+var optimiser = Optimiser("sgd", graph, {"Input"}, "Label", "Error");
 
 // BEGIN TRAINING
 printLn("begin training...");

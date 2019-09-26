@@ -342,7 +342,7 @@ TEST_F(ECDCSASignatureTest, test_copy_constructor)
   ASSERT_TRUE(sig_0.Verify(priv_key.PublicKey(), test_data_));
 
   //* Production code:
-  ECDSASignature<eECDSAEncoding::canonical> sig_1{sig_0};
+  ECDSASignature<eECDSAEncoding::canonical> sig_1{sig_0};  // NOLINT
   //* Expectations:
   EXPECT_TRUE(sig_0.SignatureECDSAPtr());
   EXPECT_TRUE(sig_1.SignatureECDSAPtr());
@@ -350,7 +350,7 @@ TEST_F(ECDCSASignatureTest, test_copy_constructor)
   ASSERT_TRUE(sig_1.Verify(priv_key.PublicKey(), test_data_));
 
   //* Production code:
-  ECDSASignature<eECDSAEncoding::canonical> sig_2{sig_1};
+  ECDSASignature<eECDSAEncoding::canonical> &sig_2{sig_1};  // NOLINT
   //* Expectations:
   EXPECT_TRUE(sig_1.SignatureECDSAPtr());
   EXPECT_TRUE(sig_2.SignatureECDSAPtr());

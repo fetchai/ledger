@@ -54,6 +54,13 @@ public:
   explicit YamlParseException(std::string err)
     : error_(std::move(err))
   {}
+
+  YamlParseException(YamlParseException const &) = default;
+  YamlParseException &operator=(YamlParseException const &) = default;
+
+  YamlParseException(YamlParseException &&) noexcept = default;
+  YamlParseException &operator=(YamlParseException &&) noexcept = default;
+
   ~YamlParseException() override = default;
 
   char const *what() const noexcept override

@@ -248,7 +248,6 @@ public:
   template <typename... Ts>
   bool Execute(Executable const &executable, std::string const &name, std::string &error,
                Variant &output, Ts const &... parameters)
-
   {
     ParameterPack parameter_pack{registered_types_};
 
@@ -332,7 +331,7 @@ public:
   template <typename T, typename... Ts>
   Ptr<T> CreateNewObject(Ts &&... args)
   {
-    return new T(this, GetTypeId<T>(), std::forward<Ts>(args)...);
+    return Ptr<T>{new T(this, GetTypeId<T>(), std::forward<Ts>(args)...)};
   }
 
   void SetIOObserver(IoObserverInterface &observer)
@@ -474,7 +473,7 @@ public:
     if (it == deserialization_constructors_.end())
     {
       RuntimeError("object is not default constructible.");
-      return nullptr;
+      return {};
     }
 
     auto &constructor = it->second;
@@ -497,7 +496,7 @@ public:
   };
 
   ChargeAmount GetChargeTotal() const;
-  void         IncreaseChargeTotal(ChargeAmount const amount);
+  void         IncreaseChargeTotal(ChargeAmount amount);
   ChargeAmount GetChargeLimit() const;
   void         SetChargeLimit(ChargeAmount limit);
 

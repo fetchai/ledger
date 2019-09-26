@@ -117,7 +117,8 @@ int main(int ac, char **av)
   client_params.learning_rate_param.starting_learning_rate = client_params.starting_learning_rate;
   client_params.learning_rate_param.ending_learning_rate   = client_params.ending_learning_rate;
 
-  std::shared_ptr<std::mutex> console_mutex_ptr_ = std::make_shared<std::mutex>();
+  std::shared_ptr<std::mutex> console_mutex_ptr = std::make_shared<std::mutex>();
+
   std::cout << "FETCH Distributed Word2vec Demo -- Asynchronous" << std::endl;
 
   std::string train_file = av[1];
@@ -149,7 +150,7 @@ int main(int ac, char **av)
     cp.data                        = {client_data[i]};
     // Instantiate NUMBER_OF_CLIENTS clients
     clients[i] =
-        std::make_shared<Word2VecClient<TensorType>>(std::to_string(i), cp, console_mutex_ptr_);
+        std::make_shared<Word2VecClient<TensorType>>(std::to_string(i), cp, console_mutex_ptr);
     // TODO(1597): Replace ID with something more sensible
   }
 

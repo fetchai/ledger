@@ -34,15 +34,15 @@ namespace commandline {
 class Params
 {
 public:
-  Params(const Params &rhs) = delete;
+  Params(Params const &rhs) = delete;
   Params(Params &&rhs)      = delete;
-  Params operator=(const Params &rhs) = delete;
+  Params operator=(Params const &rhs) = delete;
   Params operator=(Params &&rhs)             = delete;
-  bool   operator==(const Params &rhs) const = delete;
-  bool   operator<(const Params &rhs) const  = delete;
+  bool   operator==(Params const &rhs) const = delete;
+  bool   operator<(Params const &rhs) const  = delete;
 
   using ActionFunctionType =
-      std::function<void(const std::set<std::string> &, std::list<std::string> &)>;
+      std::function<void(std::set<std::string> const &, std::list<std::string> &)>;
   using HelpTextType  = std::tuple<std::string, std::string>;
   using AssignersType = std::map<std::string, ActionFunctionType>;
   using HelpTextsType = std::list<HelpTextType>;
@@ -103,11 +103,11 @@ public:
   virtual ~Params() = default;
 
   template <class TYPE>
-  void add(TYPE &assignee, const std::string &name, const std::string &help, TYPE deflt)
+  void add(TYPE &assignee, std::string const &name, std::string const &help, TYPE deflt)
   {
-    std::string name_local(name);
-    TYPE        deflt_local = deflt;
-    assigners_[name]        = [name_local, &assignee, deflt_local, this](
+    std::string const &name_local(name);
+    TYPE const &       deflt_local = deflt;
+    assigners_[name]               = [name_local, &assignee, deflt_local, this](
                            const std::set<std::string> &args,
                            std::list<std::string> &     errs) mutable {
       FETCH_UNUSED(args);
@@ -120,10 +120,10 @@ public:
   }
 
   template <class TYPE>
-  void add(TYPE &assignee, const std::string &name, const std::string &help)
+  void add(TYPE &assignee, std::string const &name, std::string const &help)
   {
-    std::string name_local(name);
-    assigners_[name] = [name_local, &assignee, this](const std::set<std::string> &args,
+    std::string const &name_local(name);
+    assigners_[name] = [name_local, &assignee, this](std::set<std::string> const &args,
                                                      std::list<std::string> &     errs) mutable {
       if (args.find(name_local) == args.end())
       {
@@ -136,7 +136,7 @@ public:
     helpTexts_.push_back(HelpTextType{name, help});
   }
 
-  void description(const std::string &desc)
+  void description(std::string const &desc)
   {
     desc_ = desc;
   }

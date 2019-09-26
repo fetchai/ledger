@@ -223,7 +223,7 @@ void PeerConnectionList::DisconnectAll()
   persistent_peers_.clear();
 }
 
-bool PeerConnectionList::ReadyForRetry(const PeerMetadata &metadata) const
+bool PeerConnectionList::ReadyForRetry(PeerMetadata const &metadata) const
 {
   std::size_t const log2_backoff = std::min(metadata.consecutive_failures, MAX_LOG2_BACKOFF);
   Timepoint const   backoff_deadline =

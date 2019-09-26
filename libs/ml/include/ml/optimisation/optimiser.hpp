@@ -236,17 +236,16 @@ typename T::Type Optimiser<T>::Run(std::vector<TensorType> const &data, TensorTy
     auto name_it = input_node_names_.begin();
     for (auto &input : batch_data_)
     {
-      graph_->SetInput(*name_it, input);
+      graph_->SetInputReference(*name_it, input);
       ++name_it;
     }
 
     // Set Label
-    graph_->SetInput(label_node_name_, batch_labels_);
+    graph_->SetInputReference(label_node_name_, batch_labels_);
 
     auto loss_tensor = graph_->ForwardPropagate(output_node_name_);
     loss_ += *(loss_tensor.begin());
     graph_->BackPropagate(output_node_name_);
-    graph_->ApplyRegularisation();
 
     // Compute and apply gradient
     ApplyGradients(batch_size);
@@ -340,17 +339,16 @@ typename T::Type Optimiser<T>::RunImplementation(
     auto name_it = input_node_names_.begin();
     for (auto &cur_input : input.second)
     {
-      graph_->SetInput(*name_it, cur_input);
+      graph_->SetInputReference(*name_it, cur_input);
       ++name_it;
     }
 
     // Set Label
-    graph_->SetInput(label_node_name_, input.first);
+    graph_->SetInputReference(label_node_name_, input.first);
 
     auto loss_tensor = graph_->ForwardPropagate(output_node_name_);
     loss_ += *(loss_tensor.begin());
     graph_->BackPropagate(output_node_name_);
-    graph_->ApplyRegularisation();
 
     // Compute and apply gradient
     ApplyGradients(batch_size);
