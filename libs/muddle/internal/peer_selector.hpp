@@ -73,7 +73,7 @@ public:
   {
     PeerData    peer_data{};
     std::size_t peer_index{0};  // The current peer being evaluated
-    Timepoint   last_updated{Clock::now()};
+    std::size_t consecutive_failures{0};
   };
 
   using PeersInfo = std::unordered_map<Address, Metadata>;

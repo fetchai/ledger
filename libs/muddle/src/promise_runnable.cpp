@@ -20,17 +20,80 @@
 
 namespace fetch {
 namespace muddle {
+namespace {
 
-static constexpr char const *LOGGING_NAME = "PromiseTask";
+constexpr char const *LOGGING_NAME = "PromiseTask";
 
-PromiseTask::PromiseTask(service::Promise promise, Callback callback)
-  : promise_{std::move(promise)}
+using Clock        = PromiseTask::Clock;
+using Timepoint    = PromiseTask::Timepoint;
+using Duration     = PromiseTask::Duration;
+using Promise      = service::Promise;
+using PromiseState = service::PromiseState;
+
+/**
+ * Compute the desired timeout or deadline for the monitored promise
+ *
+ * @param promise The promise to be monitored
+ * @return The desired deadline time
+ */
+Timepoint CalculateDeadline(Promise const &promise)
+{
+  return promise->deadline();
+}
+
+/**
+ * Compute the desired timeout or deadline for the monitored promise
+ *
+ * @param promise The promise to be monitored
+ * @param timeout The timeout to be imposed
+ * @return The desired deadline time
+ */
+Timepoint CalculateDeadline(Promise const &promise, Duration const &timeout)
+{
+  return std::min(CalculateDeadline(promise), promise->created_at() + timeout);
+}
+
+}  // namespace
+
+PromiseTask::PromiseTask(Promise const &promise, Callback callback)
+  : PromiseTask(promise, CalculateDeadline(promise), std::move(callback))
+{}
+
+PromiseTask::PromiseTask(Promise const &promise, Duration const &timeout, Callback callback)
+  : PromiseTask(promise, CalculateDeadline(promise, timeout), std::move(callback))
+{}
+
+PromiseTask::PromiseTask(Promise promise, Timepoint const &deadline, Callback callback)
+  : promise_(std::move(promise))
+  , deadline_{deadline}
   , callback_{std::move(callback)}
 {}
 
 bool PromiseTask::IsReadyToExecute() const
 {
-  return (!complete_) && promise_ && (promise_->state() != service::PromiseState::WAITING);
+  bool ready{false};
+
+  if (complete_ || !promise_)
+  {
+    // Case 1: The promise is complete or in an invalid state. In either case should not be run
+  }
+  else if (promise_->state() != PromiseState::WAITING)
+  {
+    // Case 2: The promise has already come to a conclusion of some kind
+    ready = true;
+  }
+  else if (Clock::now() >= deadline_)
+  {
+    // Case 3: The promise has not already come to a conclusion but we have exceeded the deadline
+
+    // signal that the promise has timed out
+    promise_->Timeout();
+
+    FETCH_LOG_WARN(LOGGING_NAME, "Explicitly marking the promise as timed out");
+    ready = true;
+  }
+
+  return ready;
 }
 
 void PromiseTask::Execute()
