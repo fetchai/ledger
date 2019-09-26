@@ -388,8 +388,8 @@ inline VectorRegister<int64_t, 128> operator>=(VectorRegister<int64_t, 128> cons
 inline VectorRegister<int64_t, 256> operator>=(VectorRegister<int64_t, 256> const &a,
                                                VectorRegister<int64_t, 256> const &b)
 {
-  __m256i ret = _mm256_or_si256((a > b).data(), (a == b).data());
-  return VectorRegister<int64_t, 256>(ret);
+  auto const ret = VectorRegister<int64_t, 256>(_mm256_or_si256((a > b).data(), (a == b).data()));
+  return ret;
 }
 
 inline int64_t first_element(VectorRegister<int64_t, 128> const &x)
