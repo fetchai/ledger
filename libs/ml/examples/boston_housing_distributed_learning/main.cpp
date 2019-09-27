@@ -169,12 +169,12 @@ int main(int ac, char **av)
   ClientParams<DataType> client_params;
 
   SizeType number_of_clients                    = 5;
-  SizeType number_of_rounds                     = 500;
+  SizeType number_of_rounds                     = 50;
   coord_params.mode                             = CoordinatorMode::ASYNCHRONOUS;
   coord_params.iterations_count                 = 20;
   coord_params.number_of_peers                  = 3;
   client_params.batch_size                      = 32;
-  client_params.learning_rate                   = static_cast<DataType>(.0001f);
+  client_params.learning_rate                   = static_cast<DataType>(.001f);
   float                       test_set_ratio    = 0.00f;
   std::shared_ptr<std::mutex> console_mutex_ptr = std::make_shared<std::mutex>();
 
