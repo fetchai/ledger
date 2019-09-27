@@ -68,7 +68,12 @@ void BitVector::SetAllOne()
 
 bool BitVector::RemapTo(BitVector &dst) const
 {
-  if (dst.size() >= size())
+  if (dst.size() == size())
+  {
+    dst = *this;
+    return true;
+  }
+  else if (dst.size() > size())
   {
     return Expand(*this, dst);
   }
