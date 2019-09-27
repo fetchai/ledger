@@ -331,7 +331,7 @@ template <class TensorType>
 std::vector<TensorType> TrainingClient<TensorType>::GetWeights() const
 {
   FETCH_LOCK(model_mutex_);
-  return g_ptr_->GetWeights();
+  return g_ptr_->GetWeightsReferences();
 }
 
 /**

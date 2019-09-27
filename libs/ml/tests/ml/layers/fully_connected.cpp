@@ -194,35 +194,9 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test)
   auto g_shared_weights_before     = g_shared->GetWeights();
   auto g_not_shared_weights_before = g_not_shared->GetWeights();
 
-  std::cout << "g_shared_weights_before.size(): " << g_shared_weights_before.size() << std::endl;
-  std::cout << "g_not_shared_weights_before.size(): " << g_not_shared_weights_before.size()
-            << std::endl;
-  //
-  //  for (std::size_t j = 0; j < g_shared_weights_before.size(); ++j)
-  //  {
-  //    std::cout << "g_shared_weights_before[j].size(): " << g_shared_weights_before[j].size() <<
-  //    std::endl; std::cout << "g_not_shared_weights_before[j].size(): " <<
-  //    g_not_shared_weights_before[j].size() << std::endl;
-  //
-  //    for (std::size_t i = 0; i < g_shared_weights_before[j].size(); ++i)
-  //    {
-  //
-  //    }
-  //
-  //  }
-  //
-  //
-
   for (size_t i = 0; i < 4; i++)
   {
     EXPECT_EQ(g_shared_weights_before[i], g_not_shared_weights_before[i]);
-  }
-
-  // check the all weights are initialized to be the same
-  for (size_t i = 0; i < 2; i++)
-  {
-    EXPECT_TRUE(g_shared_weights_before[i] == g_shared_weights_before[i + 2]);
-    EXPECT_TRUE(g_not_shared_weights_before[i] == g_not_shared_weights_before[i + 2]);
   }
 
   // start training
@@ -258,30 +232,26 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test)
   auto g_shared_weights_after     = g_shared->GetWeights();
   auto g_not_shared_weights_after = g_not_shared->GetWeights();
 
-  // check the weights are equal after training for shared weights
+  // check the weights and biases are equal after training for shared weights
   for (size_t i = 0; i < 2; i++)
   {
     EXPECT_TRUE(g_shared_weights_after[i] == g_shared_weights_after[i + 2]);
   }
 
-  // check the weights are different after training for not shared weights
+  // check the weights and biases are different after training for not shared weights
   for (size_t i = 0; i < 2; i++)
   {
-    std::cout << "g_not_shared_weights_after[i].ToString(): "
-              << g_not_shared_weights_after[i].ToString() << std::endl;
-    std::cout << "g_not_shared_weights_after[i + 2].ToString(): "
-              << g_not_shared_weights_after[i + 2].ToString() << std::endl;
     EXPECT_FALSE(g_not_shared_weights_after[i] == g_not_shared_weights_after[i + 2]);
   }
 
-  // check the gradient of the shared weight matrices are the sum of individual weight matrice
+  // check the gradient of the shared weight matrices are the sum of individual weight matrix
   // gradients in not_shared_graph
   for (size_t i = 0; i < 2; i++)
   {
     TensorType shared_gradient = g_shared_weights_after[i] - g_shared_weights_before[i];
     TensorType not_shared_gradient =
-        g_not_shared_weights_after[i] + g_not_shared_weights_after[i + 2] -
-        g_not_shared_weights_before[i] - g_not_shared_weights_before[i + 2];
+        (g_not_shared_weights_after[i] + g_not_shared_weights_after[i + 2]) -
+        (g_not_shared_weights_before[i] + g_not_shared_weights_before[i + 2]);
 
     EXPECT_TRUE(shared_gradient.AllClose(
         not_shared_gradient,
@@ -307,7 +277,6 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test_time_distributed)
   auto g_not_shared = BuildGraph<GraphType, TensorType, DataType>(false, true);
 
   // check that all weights are equal and create compare list
-
   auto g_shared_weights_before     = g_shared->GetWeights();
   auto g_not_shared_weights_before = g_not_shared->GetWeights();
 
@@ -341,6 +310,7 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test_time_distributed)
   fetch::ml::optimisers::SGDOptimiser<TensorType> g_shared_optimiser(g_shared, {"Input"}, "Label",
                                                                      "Error", lr);
   DataType shared_loss = g_shared_optimiser.Run({data}, data, 1);
+
   //   Run 1 iteration of SGD to train on g not shared
   fetch::ml::optimisers::SGDOptimiser<TensorType> g_not_shared_optimiser(g_not_shared, {"Input"},
                                                                          "Label", "Error", lr);
@@ -349,13 +319,15 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test_time_distributed)
   EXPECT_EQ(shared_loss, not_shared_loss);
 
   // check that all weights are equal
-
   auto g_shared_weights_after     = g_shared->GetWeights();
   auto g_not_shared_weights_after = g_not_shared->GetWeights();
 
-  //  auto g_shared_weights_after     = GetWeights<TensorType, GraphPtrType>(g_shared, true, true);
-  //  auto g_not_shared_weights_after = GetWeights<TensorType, GraphPtrType>(g_not_shared, false,
-  //  true);
+  // check the all weights are initialized to be the same
+  for (size_t i = 0; i < 2; i++)
+  {
+    EXPECT_TRUE(g_shared_weights_before[i] == g_shared_weights_before[i + 2]);
+    EXPECT_TRUE(g_not_shared_weights_before[i] == g_not_shared_weights_before[i + 2]);
+  }
 
   // check the all weights are initialized to be the same
   for (size_t i = 0; i < 2; i++)
