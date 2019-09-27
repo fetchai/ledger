@@ -804,10 +804,10 @@ template <typename TensorType>
 std::vector<TensorType> Graph<TensorType>::GetWeights() const
 {
   std::vector<TensorType> shallow_copy = GetWeightsReferences();
-  std::vector<TensorType> ret;
-  for (auto &tensor : shallow_copy)
+  std::vector<TensorType> ret(shallow_copy.size());
+  for (std::size_t i = 0; i < ret.size(); ++i)
   {
-    ret.emplace_back(tensor.Copy());
+    ret[i] = shallow_copy[i].Copy();
   }
   return ret;
 }
@@ -834,10 +834,10 @@ template <typename TensorType>
 std::vector<TensorType> Graph<TensorType>::GetGradients() const
 {
   std::vector<TensorType> shallow_copy = GetGradientsReferences();
-  std::vector<TensorType> ret;
-  for (auto &tensor : shallow_copy)
+  std::vector<TensorType> ret(shallow_copy.size());
+  for (std::size_t i = 0; i < ret.size(); ++i)
   {
-    ret.emplace_back(tensor.Copy());
+    ret[i] = shallow_copy[i].Copy();
   }
   return ret;
 }
