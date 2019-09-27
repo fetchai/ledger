@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/bitvector.hpp"
+#include "core/byte_array/decoders.hpp"
 #include "crypto/ecdsa.hpp"
 #include "ledger/chain/address.hpp"
 #include "ledger/chain/transaction.hpp"
@@ -27,6 +28,7 @@
 
 #include <memory>
 
+using fetch::byte_array::FromBase64;
 using fetch::ledger::TransactionLayout;
 using fetch::ledger::TransactionBuilder;
 using fetch::ledger::Address;
@@ -36,6 +38,8 @@ using fetch::BitVector;
 using SignerPtr  = std::unique_ptr<ECDSASigner>;
 using AddressPtr = std::unique_ptr<Address>;
 
+static constexpr char const *FIXED_IDENTITY = "hTgbP/9IDrscsM122fEhP5FGjqiApnkyD6LAZS2bsx4=";
+
 class TransactionLayoutTests : public ::testing::Test
 {
 protected:
@@ -43,6 +47,9 @@ protected:
   {
     signer_  = std::make_unique<ECDSASigner>();
     address_ = std::make_unique<Address>(signer_->identity());
+
+    fixed_signer_  = std::make_unique<ECDSASigner>(FromBase64(FIXED_IDENTITY));
+    fixed_address_ = std::make_unique<Address>(fixed_signer_->identity());
   }
 
   void TearDown() override
@@ -53,6 +60,9 @@ protected:
 
   SignerPtr  signer_;
   AddressPtr address_;
+
+  SignerPtr  fixed_signer_;
+  AddressPtr fixed_address_;
 };
 
 TEST_F(TransactionLayoutTests, BasicTest)
@@ -81,4 +91,37 @@ TEST_F(TransactionLayoutTests, BasicTest)
   EXPECT_EQ(layout.charge(), tx->charge());
   EXPECT_EQ(layout.valid_from(), tx->valid_from());
   EXPECT_EQ(layout.valid_until(), tx->valid_until());
+}
+
+TEST_F(TransactionLayoutTests, FixedBasicTest)
+{
+  BitVector shard_mask{4};
+  shard_mask.set(1, 1);
+  shard_mask.set(2, 1);
+
+  // build the complete transaction
+  auto const tx = TransactionBuilder()
+                      .From(*fixed_address_)
+                      .TargetChainCode("foo.bar.baz", shard_mask)
+                      .Action("action")
+                      .ValidFrom(1000)
+                      .ValidUntil(2000)
+                      .ChargeLimit(500)
+                      .Signer(fixed_signer_->identity())
+                      .Seal()
+                      .Sign(*fixed_signer_)
+                      .Build();
+
+  // build the transaction layout from this transaction
+  TransactionLayout const layout{*tx, 2};
+
+  EXPECT_EQ(layout.digest(), tx->digest());
+  EXPECT_EQ(layout.charge(), tx->charge());
+  EXPECT_EQ(layout.valid_from(), tx->valid_from());
+  EXPECT_EQ(layout.valid_until(), tx->valid_until());
+
+  EXPECT_EQ(layout.mask().bit(0), 1);
+  EXPECT_EQ(layout.mask().bit(1), 1);
+  EXPECT_EQ(layout.mask().bit(2), 1);
+  EXPECT_EQ(layout.mask().bit(3), 0);
 }
