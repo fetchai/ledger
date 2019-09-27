@@ -155,8 +155,7 @@ def static_analysis(project_root, build_root, fix, concurrency):
         # a valid path to an arbitrary executable here to placate it.
         '-clang-apply-replacements-binary={clang_tidy_path}'.format(
             clang_tidy_path=clang_tidy_path),
-        '-export-fixes={output_file}'.format(output_file=output_file),
-        '.']
+        '-export-fixes={output_file}'.format(output_file=output_file)]
 
     print('\nPerform static analysis')
 
@@ -195,11 +194,11 @@ def static_analysis(project_root, build_root, fix, concurrency):
             for d in data['diagnostics']:
                 print('  Line: {line_number} @ {char_number}'.format(line_number=d["line_number"],
                                                                      char_number=d["char_number"]))
-                print('  Context:')
-                print('    {context}'.format(
-                    context='\n  '.join(d["context"])))
                 print('  Message: {message}'.format(message=d["message"]))
-                print('  Check: {check}\n'.format(check=d["check"]))
+                print('  Check: {check}'.format(check=d["check"]))
+                print('  Context:')
+                print('    {context}\n'.format(
+                    context='\n  '.join(d["context"])))
 
         print(
             '\nStatic analysis found {total_violations} violation(s) '
