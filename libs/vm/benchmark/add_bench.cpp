@@ -117,8 +117,8 @@ void AddInstruction(benchmark::State &state, char const *ETCH_CODE) {
 
 BENCHMARK_CAPTURE(AddInstruction,DefString,DEF_STRING);
 BENCHMARK_CAPTURE(AddInstruction,AddString,ADD_STRING);
-BENCHMARK_CAPTURE(AddInstruction,DefString,DEF_UINT32);
-BENCHMARK_CAPTURE(AddInstruction,AddString,ADD_UINT32);
-BENCHMARK_CAPTURE(AddInstruction,AddString,SUB_UINT32);
-BENCHMARK_CAPTURE(AddInstruction,AddString,MUL_UINT32);
-BENCHMARK_CAPTURE(AddInstruction,AddString,DIV_UINT32);
+BENCHMARK_CAPTURE(AddInstruction,DefUint32,DEF_UINT32);
+BENCHMARK_CAPTURE(AddInstruction,AddUint32,ADD_UINT32);
+BENCHMARK_CAPTURE(AddInstruction,SubUint32,SUB_UINT32);
+BENCHMARK_CAPTURE(AddInstruction,MulUint32,MUL_UINT32);
+BENCHMARK_CAPTURE(AddInstruction,DivUint32,DIV_UINT32);
