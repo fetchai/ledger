@@ -37,7 +37,6 @@ public:
   // Resource Mapping
   static storage::ResourceAddress CreateAddress(Identifier const &                scope,
                                                 byte_array::ConstByteArray const &key);
-  static storage::ResourceAddress CreateAddress(byte_array::ConstByteArray const &key);
 
   enum class Mode
   {
@@ -56,11 +55,12 @@ public:
   Status Exists(std::string const &key) override;
   /// @}
 
-  void        PushContext(Identifier const &scope);
-  void        PopContext();
-  std::string WrapKeyWithScope(std::string const &key);
+  void PushContext(Identifier const &scope);
+  void PopContext();
 
 protected:
+  Identifier CurrentScope() const;
+
   // Protected construction
   StateAdapter(StorageInterface &storage, Identifier scope, Mode mode);
 

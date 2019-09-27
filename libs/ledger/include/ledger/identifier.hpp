@@ -39,7 +39,7 @@ public:
   {
     INVALID,
     NORMAL,
-    SMART_CONTRACT
+    SMART_OR_SYNERGETIC_CONTRACT
   };
 
   using ConstByteArray = byte_array::ConstByteArray;

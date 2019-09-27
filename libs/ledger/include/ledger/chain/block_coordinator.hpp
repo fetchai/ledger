@@ -187,9 +187,8 @@ public:
   // Construction / Destruction
   BlockCoordinator(MainChain &chain, DAGPtr dag, ExecutionManagerInterface &execution_manager,
                    StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
-                   BlockSinkInterface &block_sink, core::FeatureFlags const &features,
-                   ProverPtr const &prover, std::size_t num_lanes, std::size_t num_slices,
-                   std::size_t block_difficulty, ConsensusPtr consensus);
+                   BlockSinkInterface &block_sink, ProverPtr const &prover, std::size_t num_lanes,
+                   std::size_t num_slices, std::size_t block_difficulty, ConsensusPtr consensus);
   BlockCoordinator(BlockCoordinator const &) = delete;
   BlockCoordinator(BlockCoordinator &&)      = delete;
   ~BlockCoordinator()                        = default;
