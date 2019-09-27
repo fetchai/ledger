@@ -24,11 +24,11 @@
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 
+#include "ml/dataloaders/tensor_dataloader.hpp"
 #include <algorithm>
 #include <chrono>
 #include <ctime>
 #include <iostream>
-#include <ml/dataloaders/tensor_dataloader.hpp>
 #include <string>
 #include <thread>
 #include <utility>
@@ -78,12 +78,82 @@ std::shared_ptr<TrainingClient<TensorType>> MakeClient(
       std::to_string(id), g_ptr, dataloader_ptr, optimiser_ptr, client_params, console_mutex_ptr);
 }
 
+/**
+ * Get loss of given model on given dataset
+ * @param g_ptr model
+ * @param data_tensor input
+ * @param label_tensor label
+ * @return
+ */
 DataType Test(std::shared_ptr<fetch::ml::Graph<TensorType>> g_ptr, TensorType &data_tensor,
               TensorType &label_tensor)
 {
   g_ptr->SetInput("Input", data_tensor);
   g_ptr->SetInput("Label", label_tensor);
   return *(g_ptr->Evaluate("Error").begin());
+}
+
+/**
+ * Split data to multiple parts
+ * @param data input data
+ * @param number_of_parts number of parts
+ * @return vector of tensors
+ */
+std::vector<TensorType> Split(TensorType &data, SizeType number_of_parts)
+{
+  SizeType axis      = data.shape().size() - 1;
+  SizeType data_size = data.shape().at(axis);
+
+  // Split data for each client
+  std::vector<SizeType> splitting_points;
+
+  SizeType client_data_size         = data_size / number_of_parts;
+  SizeType index                    = 0;
+  SizeType current_client_data_size = client_data_size;
+  for (SizeType i = 0; i < number_of_parts; i++)
+  {
+    if (i == number_of_parts - 1)
+    {
+      current_client_data_size = data_size - index;
+    }
+    splitting_points.push_back(current_client_data_size);
+    index += client_data_size;
+  }
+
+  return TensorType::Split(data, splitting_points, axis);
+}
+
+/**
+ * Averages weights between all clients
+ * @param clients
+ */
+void SynchroniseWeights(std::vector<std::shared_ptr<TrainingClient<TensorType>>> clients)
+{
+  VectorTensorType new_weights = clients[0]->GetWeights();
+
+  // Sum all weights
+  for (SizeType i{1}; i < clients.size(); ++i)
+  {
+    VectorTensorType other_weights = clients[i]->GetWeights();
+
+    for (SizeType j{0}; j < other_weights.size(); j++)
+    {
+      fetch::math::Add(new_weights.at(j), other_weights.at(j), new_weights.at(j));
+    }
+  }
+
+  // Divide weights by number of clients to calculate the average
+  for (SizeType j{0}; j < new_weights.size(); j++)
+  {
+    fetch::math::Divide(new_weights.at(j), static_cast<DataType>(clients.size()),
+                        new_weights.at(j));
+  }
+
+  // Update models of all clients by average model
+  for (uint32_t i(0); i < clients.size(); ++i)
+  {
+    clients[i]->SetWeights(new_weights);
+  }
 }
 
 int main(int ac, char **av)
@@ -112,26 +182,9 @@ int main(int ac, char **av)
   TensorType data_tensor  = fetch::ml::dataloaders::ReadCSV<TensorType>(av[1]).Transpose();
   TensorType label_tensor = fetch::ml::dataloaders::ReadCSV<TensorType>(av[2]).Transpose();
 
-  SizeType data_size = data_tensor.shape().at(1);
-
-  // Split data for each client
-  std::vector<SizeType> splitting_points;
-
-  SizeType client_data_size         = data_size / number_of_clients;
-  SizeType index                    = 0;
-  SizeType current_client_data_size = client_data_size;
-  for (SizeType i = 0; i < number_of_clients; i++)
-  {
-    if (i == number_of_clients - 1)
-    {
-      current_client_data_size = data_size - index;
-    }
-    splitting_points.push_back(current_client_data_size);
-    index += client_data_size;
-  }
-
-  std::vector<TensorType> data_tensors  = TensorType::Split(data_tensor, splitting_points, 1);
-  std::vector<TensorType> label_tensors = TensorType::Split(label_tensor, splitting_points, 1);
+  // Split data
+  std::vector<TensorType> data_tensors  = Split(data_tensor, number_of_clients);
+  std::vector<TensorType> label_tensors = Split(label_tensor, number_of_clients);
 
   // Create coordinator
   std::shared_ptr<Coordinator<TensorType>> coordinator =
@@ -142,7 +195,6 @@ int main(int ac, char **av)
   std::vector<std::shared_ptr<TrainingClient<TensorType>>> clients(number_of_clients);
   for (SizeType i{0}; i < number_of_clients; ++i)
   {
-
     // Instantiate NUMBER_OF_CLIENTS clients
     clients[i] = MakeClient(i, client_params, data_tensors.at(i), label_tensors.at(i),
                             test_set_ratio, console_mutex_ptr);
@@ -189,31 +241,7 @@ int main(int ac, char **av)
     }
 
     // Synchronize weights by giving all clients average of all client's weights
-    VectorTensorType new_weights = clients[0]->GetWeights();
-
-    // Sum all weights
-    for (SizeType i{1}; i < number_of_clients; ++i)
-    {
-      VectorTensorType other_weights = clients[i]->GetWeights();
-
-      for (SizeType j{0}; j < other_weights.size(); j++)
-      {
-        fetch::math::Add(new_weights.at(j), other_weights.at(j), new_weights.at(j));
-      }
-    }
-
-    // Divide weights by number of clients to calculate the average
-    for (SizeType j{0}; j < new_weights.size(); j++)
-    {
-      fetch::math::Divide(new_weights.at(j), static_cast<DataType>(number_of_clients),
-                          new_weights.at(j));
-    }
-
-    // Update models of all clients by average model
-    for (uint32_t i(0); i < number_of_clients; ++i)
-    {
-      clients[i]->SetWeights(new_weights);
-    }
+    SynchroniseWeights(clients);
   }
 
   return 0;

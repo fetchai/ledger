@@ -281,13 +281,21 @@ bool TensorDataLoader<LabelType, InputType>::IsModeAvailable(DataLoaderMode mode
   switch (mode)
   {
   case DataLoaderMode::TRAIN:
+  {
     return test_offset_ > 0;
+  }
   case DataLoaderMode::TEST:
+  {
     return test_offset_ < validation_offset_;
+  }
   case DataLoaderMode::VALIDATE:
+  {
     return validation_offset_ < n_samples_;
+  }
   default:
+  {
     throw std::runtime_error("Unsupported dataloader mode.");
+  }
   }
 }
 

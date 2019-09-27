@@ -227,13 +227,21 @@ bool CommodityDataLoader<LabelType, InputType>::IsModeAvailable(DataLoaderMode m
   switch (mode)
   {
   case DataLoaderMode::TRAIN:
+  {
     return test_offset_ > 0;
+  }
   case DataLoaderMode::TEST:
+  {
     return test_offset_ < validation_offset_;
+  }
   case DataLoaderMode::VALIDATE:
+  {
     return validation_offset_ < total_size_;
+  }
   default:
+  {
     throw std::runtime_error("Unsupported dataloader mode.");
+  }
   }
 }
 

@@ -299,6 +299,7 @@ void TrainingClient<TensorType>::Train()
 template <class TensorType>
 void TrainingClient<TensorType>::Test()
 {
+  // If test set is not available we run test on whole training set
   if (dataloader_ptr_->IsModeAvailable(fetch::ml::dataloaders::DataLoaderMode::TEST))
   {
     dataloader_ptr_->SetMode(fetch::ml::dataloaders::DataLoaderMode::TEST);
