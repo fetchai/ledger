@@ -40,9 +40,10 @@ public:
   using InputType = fetch::math::Tensor<T>;
   using LabelType = fetch::math::Tensor<T>;
 
-  using SizeType   = fetch::math::SizeType;
-  using VocabType  = Vocab;
-  using ReturnType = std::pair<LabelType, std::vector<InputType>>;
+  using SizeType     = fetch::math::SizeType;
+  using VocabType    = Vocab;
+  using VocabPtrType = std::shared_ptr<VocabType>;
+  using ReturnType   = std::pair<LabelType, std::vector<InputType>>;
 
   GraphW2VLoader(SizeType window_size, SizeType negative_samples, T freq_thresh,
                  SizeType max_word_count, SizeType seed = 1337);
@@ -68,12 +69,12 @@ public:
   bool WordKnown(std::string const &word) const;
 
   /// accessors and helper functions ///
-  SizeType                          Size() const override;
-  SizeType                          vocab_size() const;
-  std::shared_ptr<VocabType> const &GetVocab() const;
-  std::string                       WordFromIndex(SizeType index) const;
-  SizeType                          IndexFromWord(std::string const &word) const;
-  SizeType                          WindowSize();
+  SizeType            Size() const override;
+  SizeType            vocab_size() const;
+  VocabPtrType const &GetVocab() const;
+  std::string         WordFromIndex(SizeType index) const;
+  SizeType            IndexFromWord(std::string const &word) const;
+  SizeType            WindowSize();
 
   byte_array::ConstByteArray GetVocabHash();
 
@@ -83,7 +84,7 @@ private:
   SizeType                                  window_size_;
   SizeType                                  negative_samples_;
   T                                         freq_thresh_;
-  std::shared_ptr<VocabType>                vocab_ = std::make_shared<VocabType>();
+  VocabPtrType                              vocab_ = std::make_shared<VocabType>();
   std::vector<std::vector<SizeType>>        data_;
   std::vector<SizeType>                     word_id_counts_;
   UnigramTable                              unigram_table_;

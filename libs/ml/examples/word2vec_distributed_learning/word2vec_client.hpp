@@ -44,7 +44,7 @@ class Word2VecClient : public TrainingClient<TensorType>
   using DataType         = typename TensorType::Type;
   using SizeType         = typename TensorType::SizeType;
   using VectorTensorType = std::vector<TensorType>;
-  using GradientType     = GradientUpdate<TensorType>;
+  using GradientType     = Update<TensorType>;
 
 public:
   Word2VecClient(std::string const &id, W2VTrainingParams<DataType> const &tp,
@@ -297,13 +297,11 @@ template <class TensorType>
 typename Word2VecClient<TensorType>::VectorTensorType
 Word2VecClient<TensorType>::TranslateGradients(Word2VecClient::GradientType &new_gradients)
 {
-  assert(new_gradients.grads.size() == 2);  // Translation unit is only defined for word2vec
+  assert(new_gradients.data.size() == 2);  // Translation unit is only defined for word2vec
 
   VectorTensorType ret;
-  ret.push_back(
-      translator_.Translate<TensorType>(new_gradients.grads[0], new_gradients.hash).first);
-  ret.push_back(
-      translator_.Translate<TensorType>(new_gradients.grads[1], new_gradients.hash).first);
+  ret.push_back(translator_.Translate<TensorType>(new_gradients.data[0], new_gradients.hash).first);
+  ret.push_back(translator_.Translate<TensorType>(new_gradients.data[1], new_gradients.hash).first);
   return ret;
 }
 

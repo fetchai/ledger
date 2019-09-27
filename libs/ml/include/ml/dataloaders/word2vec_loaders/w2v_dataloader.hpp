@@ -70,7 +70,7 @@ public:
 
   /// accessors and helper functions ///
   SizeType         Size() const override;
-  SizeType         vocab_size();
+  SizeType         vocab_size() const;
   VocabType const &vocab() const;
   std::string      WordFromIndex(SizeType index) const;
   SizeType         IndexFromWord(std::string const &word) const;
@@ -348,7 +348,7 @@ void W2VLoader<T>::LoadVocab(std::string const &filename)
  * @return
  */
 template <typename T>
-math::SizeType W2VLoader<T>::vocab_size()
+math::SizeType W2VLoader<T>::vocab_size() const
 {
   return vocab_.GetVocabCount();
 }

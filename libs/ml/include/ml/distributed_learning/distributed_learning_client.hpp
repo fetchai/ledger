@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "coordinator.hpp"
+#include "core/byte_array/const_byte_array.hpp"
 #include "core/mutex.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
@@ -54,25 +55,37 @@ struct ClientParams
   std::string              error_name   = "Error";
 };
 
+enum class UpdateType : uint16_t
+{
+  GRADIENTS,
+  WEIGHTS,
+};
+
+/** Struct to store updates and information about the update
+ *
+ * @tparam TensorType
+ */
 template <typename TensorType>
-struct GradientUpdate
+struct Update
 {
   using VectorTensorType = std::vector<TensorType>;
   using TimestampType    = int64_t;
-  VectorTensorType           grads;
+  VectorTensorType           data;
+  UpdateType                 update_type = UpdateType::GRADIENTS;
   TimestampType              timestamp{};
   std::string                client_id;
   byte_array::ConstByteArray hash;
 
-  GradientUpdate(VectorTensorType grad, TimestampType second, std::string client_id,
-                 byte_array::ConstByteArray hash = "")
-    : grads{std::move(grad)}
+  Update(VectorTensorType grad, TimestampType second, std::string client_id,
+         byte_array::ConstByteArray hash, UpdateType uptype = UpdateType::GRADIENTS)
+    : data{std::move(grad)}
+    , update_type{std::move(uptype)}
     , timestamp{second}
     , client_id{std::move(client_id)}
     , hash{std::move(hash)}
   {}
 
-  GradientUpdate() = default;
+  Update() = default;
 };
 
 template <class TensorType>
@@ -82,7 +95,7 @@ class TrainingClient
   using SizeType         = typename TensorType::SizeType;
   using VectorTensorType = std::vector<TensorType>;
   using TimestampType    = int64_t;
-  using GradientType     = GradientUpdate<TensorType>;
+  using GradientType     = Update<TensorType>;
   using GraphPtrType     = std::shared_ptr<fetch::ml::Graph<TensorType>>;
 
 public:
@@ -171,7 +184,7 @@ protected:
 
   virtual VectorTensorType TranslateGradients(GradientType &new_gradients)
   {
-    return new_gradients.grads;
+    return new_gradients.data;
   }
 
   std::string   GetStrTimestamp();
@@ -347,7 +360,8 @@ template <class TensorType>
 typename TrainingClient<TensorType>::GradientType TrainingClient<TensorType>::GetGradients()
 {
   FETCH_LOCK(model_mutex_);
-  return GradientType(g_ptr_->GetGradients(), GetTimestamp(), id_);
+  return GradientType(g_ptr_->GetGradients(), GetTimestamp(), id_, byte_array::ConstByteArray(),
+                      UpdateType::GRADIENTS);
 }
 
 /**

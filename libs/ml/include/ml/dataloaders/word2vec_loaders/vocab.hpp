@@ -55,7 +55,7 @@ public:
   std::vector<SizeType>      GetCounts();
   std::vector<std::string>   GetReverseVocab();
   SizeType                   GetWordCount();
-  SizeType                   GetVocabCount();
+  SizeType                   GetVocabCount() const;
   byte_array::ConstByteArray GetVocabHash();
 
 private:
@@ -266,7 +266,7 @@ Vocab::SizeType Vocab::GetWordCount()
   return total_count;
 }
 
-Vocab::SizeType Vocab::GetVocabCount()
+Vocab::SizeType Vocab::GetVocabCount() const
 {
   return reverse_vocab.size();
 }
