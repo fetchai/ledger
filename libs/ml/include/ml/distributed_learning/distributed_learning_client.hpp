@@ -48,6 +48,7 @@ struct ClientParams
 
   SizeType batch_size;
   DataType learning_rate;
+  bool     print_loss = false;
 
   std::vector<std::string> inputs_names = {"Input"};
   std::string              label_name   = "Label";
@@ -97,6 +98,8 @@ public:
   void SetWeights(VectorTensorType const &new_weights);
 
   void SetParams(ClientParams<DataType> const &new_params);
+
+  GraphPtrType GetModel();
 
   std::string GetId() const;
 
@@ -149,6 +152,9 @@ protected:
 
   // Count for number of batches
   SizeType batch_counter_ = 0;
+
+  // Print to console flag
+  bool print_loss_;
 
   void GetNewGradients(VectorTensorType &new_gradients);
 
@@ -217,6 +223,7 @@ void TrainingClient<TensorType>::SetParams(
   error_name_    = new_params.error_name;
   batch_size_    = new_params.batch_size;
   learning_rate_ = new_params.learning_rate;
+  print_loss_    = new_params.print_loss;
 }
 
 template <class TensorType>
@@ -439,6 +446,8 @@ void TrainingClient<TensorType>::TrainOnce()
     lossfile << GetStrTimestamp() << ", " << static_cast<double>(train_loss_) << ", "
              << static_cast<double>(test_loss_) << "\n";
   }
+
+  if (print_loss_)
   {
     // Lock console
     FETCH_LOCK(*console_mutex_ptr_);
@@ -457,6 +466,7 @@ void TrainingClient<TensorType>::TrainOnce()
     lossfile.close();
   }
 
+  if (print_loss_)
   {
     // Lock console
     FETCH_LOCK(*console_mutex_ptr_);
@@ -488,6 +498,8 @@ void TrainingClient<TensorType>::TrainWithCoordinator()
       lossfile << GetStrTimestamp() << ", " << static_cast<double>(train_loss_) << ", "
                << static_cast<double>(test_loss_) << "\n";
     }
+
+    if (print_loss_)
     {
       // Lock console
       FETCH_LOCK(*console_mutex_ptr_);
@@ -507,6 +519,7 @@ void TrainingClient<TensorType>::TrainWithCoordinator()
     lossfile.close();
   }
 
+  if (print_loss_)
   {
     // Lock console
     FETCH_LOCK(*console_mutex_ptr_);
@@ -624,6 +637,12 @@ void TrainingClient<TensorType>::GraphAddGradients(GraphPtrType            g_ptr
     weights_ptr->AddToGradient(grad);
     ++gt_it;
   }
+}
+
+template <class TensorType>
+std::shared_ptr<fetch::ml::Graph<TensorType>> TrainingClient<TensorType>::GetModel()
+{
+  return g_ptr_;
 }
 
 }  // namespace distributed_learning

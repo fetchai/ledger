@@ -44,8 +44,8 @@ using VectorTensorType = std::vector<TensorType>;
 using SizeType         = fetch::math::SizeType;
 
 std::shared_ptr<TrainingClient<TensorType>> MakeClient(
-    std::string const &id, ClientParams<DataType> &client_params, std::string const &data,
-    std::string const &labels, float test_set_ratio, std::shared_ptr<std::mutex> console_mutex_ptr)
+    SizeType id, ClientParams<DataType> &client_params, TensorType &data_tensor,
+    TensorType &label_tensor, float test_set_ratio, std::shared_ptr<std::mutex> console_mutex_ptr)
 {
   // Initialise model
   std::shared_ptr<fetch::ml::Graph<TensorType>> g_ptr =
@@ -64,8 +64,6 @@ std::shared_ptr<TrainingClient<TensorType>> MakeClient(
   // Initialise DataLoader
   std::shared_ptr<fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>> dataloader_ptr =
       std::make_shared<fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>>();
-  TensorType data_tensor  = fetch::ml::dataloaders::ReadCSV<TensorType>(data).Transpose();
-  TensorType label_tensor = fetch::ml::dataloaders::ReadCSV<TensorType>(labels).Transpose();
   dataloader_ptr->AddData(data_tensor, label_tensor);
 
   dataloader_ptr->SetTestRatio(test_set_ratio);
@@ -76,8 +74,16 @@ std::shared_ptr<TrainingClient<TensorType>> MakeClient(
           std::shared_ptr<fetch::ml::Graph<TensorType>>(g_ptr), client_params.inputs_names,
           client_params.label_name, client_params.error_name, client_params.learning_rate);
 
-  return std::make_shared<TrainingClient<TensorType>>(id, g_ptr, dataloader_ptr, optimiser_ptr,
-                                                      client_params, console_mutex_ptr);
+  return std::make_shared<TrainingClient<TensorType>>(
+      std::to_string(id), g_ptr, dataloader_ptr, optimiser_ptr, client_params, console_mutex_ptr);
+}
+
+DataType Test(std::shared_ptr<fetch::ml::Graph<TensorType>> g_ptr, TensorType &data_tensor,
+              TensorType &label_tensor)
+{
+  g_ptr->SetInput("Input", data_tensor);
+  g_ptr->SetInput("Label", label_tensor);
+  return *(g_ptr->Evaluate("Error").begin());
 }
 
 int main(int ac, char **av)
@@ -92,16 +98,42 @@ int main(int ac, char **av)
   CoordinatorParams      coord_params;
   ClientParams<DataType> client_params;
 
-  SizeType number_of_clients                    = 4;
-  SizeType number_of_rounds                     = 10;
+  SizeType number_of_clients                    = 5;
+  SizeType number_of_rounds                     = 500;
   coord_params.mode                             = CoordinatorMode::ASYNCHRONOUS;
-  coord_params.iterations_count                 = 100;
+  coord_params.iterations_count                 = 20;
   coord_params.number_of_peers                  = 3;
   client_params.batch_size                      = 32;
-  client_params.learning_rate                   = static_cast<DataType>(.001f);
+  client_params.learning_rate                   = static_cast<DataType>(.0001f);
   float                       test_set_ratio    = 0.00f;
   std::shared_ptr<std::mutex> console_mutex_ptr = std::make_shared<std::mutex>();
 
+  // Load data
+  TensorType data_tensor  = fetch::ml::dataloaders::ReadCSV<TensorType>(av[1]).Transpose();
+  TensorType label_tensor = fetch::ml::dataloaders::ReadCSV<TensorType>(av[2]).Transpose();
+
+  SizeType data_size = data_tensor.shape().at(1);
+
+  // Split data for each client
+  std::vector<SizeType> splitting_points;
+
+  SizeType client_data_size         = data_size / number_of_clients;
+  SizeType index                    = 0;
+  SizeType current_client_data_size = client_data_size;
+  for (SizeType i = 0; i < number_of_clients; i++)
+  {
+    if (i == number_of_clients - 1)
+    {
+      current_client_data_size = data_size - index;
+    }
+    splitting_points.push_back(current_client_data_size);
+    index += client_data_size;
+  }
+
+  std::vector<TensorType> data_tensors  = TensorType::Split(data_tensor, splitting_points, 1);
+  std::vector<TensorType> label_tensors = TensorType::Split(label_tensor, splitting_points, 1);
+
+  // Create coordinator
   std::shared_ptr<Coordinator<TensorType>> coordinator =
       std::make_shared<Coordinator<TensorType>>(coord_params);
 
@@ -110,9 +142,10 @@ int main(int ac, char **av)
   std::vector<std::shared_ptr<TrainingClient<TensorType>>> clients(number_of_clients);
   for (SizeType i{0}; i < number_of_clients; ++i)
   {
+
     // Instantiate NUMBER_OF_CLIENTS clients
-    clients[i] = MakeClient(std::to_string(i), client_params, av[1], av[2], test_set_ratio,
-                            console_mutex_ptr);
+    clients[i] = MakeClient(i, client_params, data_tensors.at(i), label_tensors.at(i),
+                            test_set_ratio, console_mutex_ptr);
     // TODO(1597): Replace ID with something more sensible
   }
 
@@ -130,7 +163,7 @@ int main(int ac, char **av)
   {
     // Start all clients
     coordinator->Reset();
-    std::cout << "================= ROUND : " << it << " =================" << std::endl;
+    std::cout << "ROUND : " << it << "\t";
     std::list<std::thread> threads;
     for (auto &c : clients)
     {
@@ -142,6 +175,13 @@ int main(int ac, char **av)
     {
       t.join();
     }
+
+    std::cout << "Test losses:";
+    for (auto &c : clients)
+    {
+      std::cout << "\t" << static_cast<double>(Test(c->GetModel(), data_tensor, label_tensor));
+    }
+    std::cout << std::endl;
 
     if (coordinator->GetMode() == CoordinatorMode::ASYNCHRONOUS)
     {
