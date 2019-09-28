@@ -24,7 +24,7 @@
 #include "ledger/chain/consensus/bad_miner.hpp"
 #include "ledger/chain/consensus/dummy_miner.hpp"
 #include "ledger/chaincode/contract_http_interface.hpp"
-#include "ledger/consensus/naive_entropy_generator.hpp"
+/*#include "ledger/consensus/naive_entropy_generator.hpp"*/
 #include "ledger/consensus/stake_snapshot.hpp"
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/execution_manager.hpp"

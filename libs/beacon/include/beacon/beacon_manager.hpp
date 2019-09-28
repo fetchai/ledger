@@ -90,6 +90,7 @@ public:
   AddResult     AddSignaturePart(Identity const &from, Signature const &signature);
   bool          Verify();
   bool          Verify(Signature const &);
+  static bool   Verify(std::string const &, MessagePayload const &message, std::string const &);
   Signature     GroupSignature() const;
   void          SetMessage(MessagePayload next_message);
   SignedMessage Sign();

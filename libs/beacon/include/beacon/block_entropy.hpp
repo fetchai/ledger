@@ -71,11 +71,10 @@ struct BlockEntropy : public BlockEntropyInterface
   Cabinet        qualified;             // The members who succeeded DKG and are qualified to produce blocks (when new committee)
   GroupPublicKey group_public_key;      // The group public key (when new committee)
   uint64_t       block_number = 0;      // The block this is relevant to
-  Digest         digest;                // The hash of the above (when new committee) note, this could be implicit.
+  Digest         digest;                // The hash of the above (when new committee) note, this could be implicit. Is not serialized.
 
-  Confirmations                   confirmations;        // In the case of a new cabinet, personal signatures of the hash from qual members
-  //std::shared_ptr<GroupSignature> group_signature;      // Signature of the previous entropy, used as the entropy
-  GroupSignatureStr group_signature;      // Signature of the previous entropy, used as the entropy
+  Confirmations     confirmations;     // In the case of a new cabinet, personal signatures of the hash from qual members
+  GroupSignatureStr group_signature;   // Signature of the previous entropy, used as the entropy
 
   Digest EntropyAsSHA256() const override
   {
@@ -99,11 +98,15 @@ struct BlockEntropy : public BlockEntropyInterface
     serializer << block_number;
     digest = crypto::Hash<crypto::SHA256>(serializer.data());
   }
+
+  bool IsAeonBeginning() const
+  {
+    return !qualified.empty();
+  }
 };
 
 }  // namespace beacon
 
-/*
 namespace serializers {
 
 template <typename D>
@@ -113,60 +116,28 @@ public:
   using Type       = beacon::BlockEntropy;
   using DriverType = D;
 
-  static uint8_t const ROUND     = 0;
-  static uint8_t const SEED      = 1;
-  static uint8_t const ENTROPY   = 2;
-  static uint8_t const SIGNATURE = 3;
-
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &member)
   {
-    auto map = map_constructor(4);
+    auto map = map_constructor(5);
 
-    map.Append(ROUND, member.round);
-    map.Append(SEED, member.seed);
-    map.Append(ENTROPY, member.entropy);
-    map.Append(SIGNATURE, member.signature.getStr());
+    map.Append(5, member.qualified);
+    map.Append(4, member.group_public_key);
+    map.Append(3, member.block_number);
+    map.Append(2, member.confirmations);
+    map.Append(1, member.group_signature);
   }
 
   template <typename MapDeserializer>
   static void Deserialize(MapDeserializer &map, Type &member)
   {
-    map.ExpectKeyGetValue(ROUND, member.round);
-    map.ExpectKeyGetValue(SEED, member.seed);
-    map.ExpectKeyGetValue(ENTROPY, member.entropy);
-    std::string sig_str;
-    map.ExpectKeyGetValue(SIGNATURE, sig_str);
-    member.signature.setStr(sig_str);
+    map.ExpectKeyGetValue(5, member.qualified);
+    map.ExpectKeyGetValue(4, member.group_public_key);
+    map.ExpectKeyGetValue(3, member.block_number);
+    map.ExpectKeyGetValue(2, member.confirmations);
+    map.ExpectKeyGetValue(1, member.group_signature);
   }
 };
-*/
-
-//namespace serializers {
-//
-//template <typename D>
-//struct MapSerializer<BlockEntropy::GroupPublicKey, D>
-//{
-//public:
-//  using Type       = BlockEntropy::GroupPublicKey;
-//  using DriverType = D;
-//
-//  static uint8_t const DATA     = 0;
-//
-//  template <typename Constructor>
-//  static void Serialize(Constructor &map_constructor, Type const &member)
-//  {
-//    auto map = map_constructor(1);
-//
-//    map.Append(DATA, member.round);
-//  }
-//
-//  template <typename MapDeserializer>
-//  static void Deserialize(MapDeserializer &map, Type &member)
-//  {
-//    map.ExpectKeyGetValue(ROUND, member.round);
-//  }
-//};
-//} // namespace serializers
+} // namespace serializers
 
 }  // namespace fetch

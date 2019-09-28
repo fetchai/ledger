@@ -180,8 +180,15 @@ BeaconService::Status BeaconService::GenerateEntropy(uint64_t block_number,
   {
     entropy = *completed_block_entropy_[block_number];
 
+    FETCH_LOG_INFO(LOGGING_NAME, "Generated entropy for block number: ", block_number);
+    FETCH_LOG_INFO(LOGGING_NAME, "Generated entropy. Was first: ", entropy.IsAeonBeginning());
+
+    //FETCH_LOG_INFO(LOGGING_NAME, "OK to return entropy for block ", block_number);
+
     return Status::OK;
   }
+
+  //FETCH_LOG_INFO(LOGGING_NAME, "Failed to return entropy for block ", block_number);
 
   return Status::FAILED;
 }
@@ -226,9 +233,10 @@ void BeaconService::StartNewCabinet(CabinetMemberList members, uint32_t threshol
   //}
   //else
   {
-    beacon->manager.SetCertificate(certificate_);
-    beacon->manager.NewCabinet(members, threshold);
   }
+
+  beacon->manager.SetCertificate(certificate_);
+  beacon->manager.NewCabinet(members, threshold);
 
   // Setting the aeon details
   beacon->aeon.round_start               = round_start;
@@ -277,6 +285,8 @@ BeaconService::State BeaconService::OnWaitForSetupCompletionState()
       // Set the previous block entropy appropriately
       block_entropy_previous_.reset(new BlockEntropy(active_exe_unit_->aeon.block_entropy_previous)); // Previous saved from aeon
       block_entropy_being_created_.reset(new BlockEntropy(active_exe_unit_->block_entropy));          // Next partially filled by aeon
+
+      assert(block_entropy_being_created_->IsAeonBeginning());
 
       return State::PREPARE_ENTROPY_GENERATION;
     }
@@ -552,6 +562,9 @@ BeaconService::State BeaconService::OnCompleteState()
 
   // Save it for querying
   completed_block_entropy_[index] = block_entropy_being_created_;
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Created entropy: ", index);
+  FETCH_LOG_INFO(LOGGING_NAME, "Was first: ", completed_block_entropy_[index]->IsAeonBeginning());
 
   // If there is still entropy left to generate, set up and go around the loop
   if(block_entropy_being_created_->block_number < active_exe_unit_->aeon.round_end)

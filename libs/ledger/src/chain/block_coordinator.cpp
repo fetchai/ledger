@@ -574,7 +574,7 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
     if (consensus_)
     {
       consensus_->UpdateCurrentBlock(*previous);  // Only update with valid blocks
-      auto result = consensus_->ValidBlock(*previous, *current_block_);
+      auto result = consensus_->ValidBlock(*current_block_);
 
       if (!(result == ConsensusInterface::Status::YES ||
             result == ConsensusInterface::Status::UNKNOWN))

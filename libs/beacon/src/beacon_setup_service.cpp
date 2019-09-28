@@ -202,6 +202,20 @@ BeaconSetupService::State BeaconSetupService::OnReset()
     beacon_dkg_failures_total_->add(1u);
   }
 
+  // TODO(HUT): need to look at this when merged with Ed's changes for pre aeon setup.
+  bool const beacon_outdated = beacon_->aeon.round_start < abort_below_;
+  bool const beacon_updated  = (!aeon_exe_queue_.empty() && aeon_exe_queue_.front()->aeon.round_start == beacon_->aeon.round_start);
+
+  // abort if the current beacon is out of date
+  if (beacon_outdated || beacon_updated)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Aborting DKG. Round start: ", beacon_->aeon.round_start,
+                   " abort all below: ", abort_below_);
+    beacon_dkg_aborts_total_->add(1u);
+    return State::IDLE;
+  }
+
+
   assert(beacon_);
   beacon_->manager.Reset();
 
@@ -220,14 +234,6 @@ BeaconSetupService::State BeaconSetupService::OnReset()
   final_state_payload_.clear();
   dry_run_public_keys_.clear();
   rbc_->Enable(false);
-
-  if (beacon_->aeon.round_start < abort_below_)
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "Aborting DKG. Round start: ", beacon_->aeon.round_start,
-                   " abort all below: ", abort_below_);
-    beacon_dkg_aborts_total_->add(1u);
-    return State::IDLE;
-  }
 
   // The dkg has to be reset to 0 to clear old messages,
   // before being reset with the cabinet
@@ -751,6 +757,8 @@ BeaconSetupService::State BeaconSetupService::OnDryRun()
     SendBroadcast(DKGEnvelope{FinalStateMessage{own_signature}});
   }
 
+  auto desired_signatures_min = (beacon_->manager.qual().size() / 2)+1;
+
   // When the timer has expired, try to create the final structure
   if (timer_to_proceed_.HasExpired())
   {
@@ -768,13 +776,14 @@ BeaconSetupService::State BeaconSetupService::OnDryRun()
     }
 
     // Current requirement: collect all signatures from qual.
-    if(beacon_->block_entropy.confirmations.size() == beacon_->manager.qual().size())
+    if(beacon_->block_entropy.confirmations.size() >= desired_signatures_min)
     {
       SetTimeToProceed(State::BEACON_READY);
       return State::BEACON_READY;
     }
     else
     {
+      FETCH_LOG_INFO(LOGGING_NAME, "Failed to collect enough signatures. Collected: ", beacon_->block_entropy.confirmations.size(), " Desired: ", desired_signatures_min);
       SetTimeToProceed(State::RESET);
       return State::RESET;
     }
@@ -1412,6 +1421,10 @@ uint64_t GetExpectedDKGTime(uint64_t cabinet_size)
   if (cabinet_size < 10)
   {
     expected_dkg_time_s = 30;
+  }
+  if (cabinet_size < 5)
+  {
+    expected_dkg_time_s = 10;
   }
 
   FETCH_LOG_INFO(BeaconSetupService::LOGGING_NAME, "Note: Expect DKG time to be ",

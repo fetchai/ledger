@@ -71,6 +71,8 @@ public:
   /// @{
   Body body;  ///< The core fields that make up a block
   /// @}
+  //
+  /* Digest miner_signature; */
 
   /// @name Proof of Work specifics
   /// @{
@@ -129,7 +131,7 @@ public:
     map.Append(SLICES, body.slices);
     map.Append(DAG_EPOCH, body.dag_epoch);
     map.Append(TIMESTAMP, body.timestamp);
-    /* map.Append(ENTROPY, body.entropy); */
+    map.Append(ENTROPY, body.block_entropy);
   }
 
   template <typename MapDeserializer>
@@ -144,7 +146,7 @@ public:
     map.ExpectKeyGetValue(SLICES, body.slices);
     map.ExpectKeyGetValue(DAG_EPOCH, body.dag_epoch);
     map.ExpectKeyGetValue(TIMESTAMP, body.timestamp);
-    /* map.ExpectKeyGetValue(ENTROPY, body.entropy); */
+    map.ExpectKeyGetValue(ENTROPY, body.block_entropy);
   }
 };
 

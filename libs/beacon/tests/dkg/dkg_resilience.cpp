@@ -467,16 +467,16 @@ struct FaultyDkgMember : DkgMember
   {
     SharedAeonExecutionUnit beacon = std::make_shared<AeonExecutionUnit>();
 
-    // Determines if we are observing or actively participating
-    if (cabinet.find(muddle_certificate->identity().identifier()) == cabinet.end())
-    {
-      beacon->observe_only = true;
-    }
-    else
-    {
+    //// Determines if we are observing or actively participating
+    //if (cabinet.find(muddle_certificate->identity().identifier()) == cabinet.end())
+    //{
+    //  beacon->observe_only = true;
+    //}
+    //else
+    //{
       beacon->manager.SetCertificate(muddle_certificate);
       beacon->manager.NewCabinet(cabinet, threshold);
-    }
+    //}
 
     // Setting the aeon details
     beacon->aeon.round_start = 0;
@@ -522,12 +522,12 @@ struct HonestDkgMember : DkgMember
   {
     SharedAeonExecutionUnit beacon = std::make_shared<AeonExecutionUnit>();
 
-    // Determines if we are observing or actively participating
-    if (cabinet.find(muddle_certificate->identity().identifier()) == cabinet.end())
-    {
-      beacon->observe_only = true;
-    }
-    else
+    //// Determines if we are observing or actively participating
+    //if (cabinet.find(muddle_certificate->identity().identifier()) == cabinet.end())
+    //{
+    //  beacon->observe_only = true;
+    //}
+    //else
     {
       beacon->manager.SetCertificate(muddle_certificate);
       beacon->manager.NewCabinet(cabinet, threshold);

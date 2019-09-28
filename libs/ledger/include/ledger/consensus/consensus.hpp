@@ -51,9 +51,11 @@ public:
 
   void         UpdateCurrentBlock(Block const &current) override;
   NextBlockPtr GenerateNextBlock() override;
-  Status       ValidBlock(Block const &previous, Block const &current) override;
+  Status       ValidBlock(Block const &current) const override;
   void         Reset(StakeSnapshot const &snapshot);
   void         Refresh() override;
+
+  //void         SetGenesis(Block const &current) override;
 
   StakeManagerPtr stake();
   void            SetThreshold(double threshold);
@@ -63,9 +65,8 @@ public:
 private:
   static constexpr std::size_t HISTORY_LENGTH = 1000;
 
-  using Committee    = StakeManager::Committee;
-  using CommitteePtr = std::shared_ptr<Committee const>;
-
+  using Committee        = StakeManager::Committee;
+  using CommitteePtr     = std::shared_ptr<Committee const>;
   using BlockIndex       = uint64_t;
   using CommitteeHistory = std::map<BlockIndex, CommitteePtr>;
 
@@ -74,12 +75,18 @@ private:
   MainChain const &chain_;
   Identity         mining_identity_;
   Address          mining_address_;
+
+  // Global variables relating to consensus
   uint64_t         aeon_period_            = 0;
   uint64_t         max_committee_size_     = 0;
   double           threshold_              = 1.0;
-  uint64_t         current_block_number_   = 0;
-  int64_t          last_committee_created_ = -1;
+  //uint64_t         current_block_number_   = 0;
+
+  // Consensus' view on the heaviest block etc.
   Block            current_block_;
+  Block            previous_block_;
+  Block            beginning_of_aeon_;
+  Digest           last_triggered_committee_;
 
   uint64_t         default_start_time_ = 0;
   CommitteeHistory committee_history_{};  ///< Cache of historical committees
@@ -89,6 +96,7 @@ private:
   bool         ValidMinerForBlock(Block const &previous, Address const &address);
   uint64_t     GetBlockGenerationWeight(Block const &previous, Address const &address);
   bool         ShouldGenerateBlock(Block const &previous, Address const &address);
+  bool         ShouldTriggerNewCommittee(Block const &block);
 };
 
 }  // namespace ledger
