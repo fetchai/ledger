@@ -132,14 +132,14 @@ struct QuestionStruct
       Signature const &rhs_signature       = GetSignature(rhs_answer_and_seen);
       Seen const &     rhs_seen            = GetSeen(rhs_answer_and_seen);
 
-      if (!rhs_answer.empty())
+      if (!rhs_answer.empty() && !answer.empty())
       {
         answer = rhs_answer;
 
         seen.insert(std::make_pair(self_, Digest("temp")));
       }
 
-      if (!rhs_signature.empty())
+      if (!rhs_signature.empty() && !rhs_signature.empty())
       {
         signature = rhs_signature;
       }
