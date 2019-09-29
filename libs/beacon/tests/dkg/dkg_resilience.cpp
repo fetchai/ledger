@@ -25,6 +25,7 @@
 #include "crypto/prover.hpp"
 #include "ledger/shards/manifest.hpp"
 #include "ledger/shards/manifest_cache_interface.hpp"
+#include "muddle/create_muddle_fake.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rbc.hpp"
 #include "muddle/rpc/client.hpp"
@@ -414,7 +415,7 @@ struct DkgMember
     , network_manager{"NetworkManager" + std::to_string(index), 1}
     , reactor{"ReactorName" + std::to_string(index)}
     , muddle_certificate{CreateNewCertificate()}
-    , muddle{CreateMuddle("Test", muddle_certificate, network_manager, "127.0.0.1")}
+    , muddle{CreateMuddleFake("Test", muddle_certificate, network_manager, "127.0.0.1")}
   {
     network_manager.Start();
     muddle->Start({muddle_port});
@@ -461,7 +462,10 @@ struct FaultyDkgMember : DkgMember
     });
   }
 
-  ~FaultyDkgMember() override = default;
+  ~FaultyDkgMember() override
+  {
+    reactor.Stop();
+  }
 
   void QueueCabinet(std::set<MuddleAddress> cabinet, uint32_t threshold) override
   {
@@ -516,7 +520,10 @@ struct HonestDkgMember : DkgMember
     });
   }
 
-  ~HonestDkgMember() override = default;
+  ~HonestDkgMember() override
+  {
+    reactor.Stop();
+  }
 
   void QueueCabinet(std::set<MuddleAddress> cabinet, uint32_t threshold) override
   {
@@ -607,12 +614,7 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
   {
     for (auto &member : committee)
     {
-      auto all_runnables = member->GetWeakRunnables();
-
-      for (auto const &i : all_runnables)
-      {
-        member->reactor.Attach(i);
-      }
+      member->reactor.Attach(member->GetWeakRunnables());
     }
 
     for (auto &member : committee)

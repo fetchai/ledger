@@ -198,6 +198,10 @@ bool Consensus::ShouldGenerateBlock(Block const &previous, Address const &addres
   return false;
 }
 
+/**
+ * Update the current block that is believed to be the head of the chain.
+ * This block must have already passes consensus checks
+ */
 void Consensus::UpdateCurrentBlock(Block const &current)
 {
   if (current.body.block_number > current_block_number_ &&

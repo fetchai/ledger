@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,41 +16,25 @@
 //
 //------------------------------------------------------------------------------
 
-#include <memory>
-#include <vector>
+#include "muddle_fake.hpp"
 
 namespace fetch {
-namespace core {
+namespace muddle {
 
-/**
- * Interface class to represent
- */
-class Runnable
+std::mutex                   FakeNetwork::network_lock_{};
+FakeNetwork::FakeNetworkImpl FakeNetwork::network_{};
+
+MuddlePtr CreateMuddleFake(NetworkId const &network, ProverPtr certificate,
+                           network::NetworkManager const &nm, std::string const &external_address)
 {
-public:
-  // Construction / Destruction
-  Runnable()          = default;
-  virtual ~Runnable() = default;
+  return std::make_shared<MuddleFake>(network, certificate, nm, true, true, external_address);
+}
 
-  /// @name Runnable Interface
-  /// @{
-  virtual bool IsReadyToExecute() const
-  {
-    return true;
-  }
-  virtual void Execute() = 0;
-  /// @}
+MuddlePtr CreateMuddleFake(char const network[4], ProverPtr certificate,
+                           network::NetworkManager const &nm, std::string const &external_address)
+{
+  return CreateMuddleFake(NetworkId{network}, std::move(certificate), nm, external_address);
+}
 
-  // Helper operators
-  void operator()()
-  {
-    Execute();
-  }
-};
-
-using WeakRunnable  = std::weak_ptr<Runnable>;
-using WeakRunnables = std::vector<std::weak_ptr<Runnable>>;
-using RunnablePtr   = std::shared_ptr<Runnable>;
-
-}  // namespace core
+}  // namespace muddle
 }  // namespace fetch

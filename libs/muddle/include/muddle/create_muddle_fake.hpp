@@ -17,41 +17,19 @@
 //
 //------------------------------------------------------------------------------
 
-#include <memory>
-#include <vector>
+#include "muddle/muddle_interface.hpp"
 
 namespace fetch {
-namespace core {
+namespace muddle {
 
-/**
- * Interface class to represent
- */
-class Runnable
-{
-public:
-  // Construction / Destruction
-  Runnable()          = default;
-  virtual ~Runnable() = default;
+using MuddlePtr = std::shared_ptr<MuddleInterface>;
+using ProverPtr = std::shared_ptr<crypto::Prover>;
 
-  /// @name Runnable Interface
-  /// @{
-  virtual bool IsReadyToExecute() const
-  {
-    return true;
-  }
-  virtual void Execute() = 0;
-  /// @}
+MuddlePtr CreateMuddleFake(NetworkId const &network, ProverPtr certificate,
+                           network::NetworkManager const &nm, std::string const &external_address);
 
-  // Helper operators
-  void operator()()
-  {
-    Execute();
-  }
-};
+MuddlePtr CreateMuddleFake(char const network[4], ProverPtr certificate,
+                           network::NetworkManager const &nm, std::string const &external_address);
 
-using WeakRunnable  = std::weak_ptr<Runnable>;
-using WeakRunnables = std::vector<std::weak_ptr<Runnable>>;
-using RunnablePtr   = std::shared_ptr<Runnable>;
-
-}  // namespace core
+}  // namespace muddle
 }  // namespace fetch

@@ -77,8 +77,7 @@ RBC::RBC(Endpoint &endpoint, MuddleAddress address, CallbackFunction call_back, 
   });
 }
 
-RBC::~RBC()
-{}
+RBC::~RBC() = default;
 
 /**
  * Enables or disables the RBC. Disabling will clear all state that
@@ -562,6 +561,11 @@ void RBC::Deliver(SerialisedMessage const &msg, uint32_t sender_index)
       lock_.unlock();
       deliver_msg_callback_(miner_id, broadcasts_[old_tag].original_message);
       lock_.lock();
+
+      if (sender_index >= parties_.size())
+      {
+        return;
+      }
 
       ++parties_[sender_index].deliver_s;  // Increase counter
       old_tag_msg = parties_[sender_index].undelivered_msg.erase(old_tag_msg);

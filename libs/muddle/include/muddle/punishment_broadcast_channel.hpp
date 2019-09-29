@@ -34,6 +34,8 @@
 // TODO(HUT): not needed with reworking
 #include "muddle/rbc.hpp"
 
+#include "muddle/question_struct.hpp"
+
 #include <map>
 #include <random>
 #include <set>
@@ -41,158 +43,17 @@
 namespace fetch {
 namespace muddle {
 
-struct QuestionStruct
-{
-  using CertificatePtr   = std::shared_ptr<fetch::crypto::Prover>;
-  using MuddleAddress    = byte_array::ConstByteArray;
-  using CabinetMembers   = std::set<MuddleAddress>;
-  using Digest           = byte_array::ConstByteArray;
-  using Answer           = byte_array::ConstByteArray;
-  using Signature        = byte_array::ConstByteArray;
-  using SeenProof        = byte_array::ConstByteArray;
-  using Seen             = std::map<MuddleAddress, SeenProof>;
-  using AnswerAndSeen    = std::tuple<Answer, Signature, Seen>;
-  using SyncTable        = std::map<MuddleAddress, AnswerAndSeen>;
-  using ConfirmedAnswers = std::vector<std::pair<MuddleAddress, Answer>>;
-
-  static constexpr const char *LOGGING_NAME = "QuestionStruct";
-
-  enum : int
-  {
-    ANSW = 0,
-    SIG  = 1,
-    SEEN = 2,
-  };
-
-  QuestionStruct()                          = default;
-  QuestionStruct(QuestionStruct const &rhs) = default;
-  QuestionStruct(QuestionStruct &&rhs)      = default;
-  QuestionStruct &operator=(QuestionStruct const &rhs) = default;
-  QuestionStruct &operator=(QuestionStruct &&rhs) = default;
-
-  QuestionStruct(Digest const &question, Answer const &answer, CertificatePtr certificate,
-                 CabinetMembers const &current_cabinet)
-    : certificate_{certificate}
-    , self_{certificate_->identity().identifier()}
-    , question_{question}
-    , cabinet_{current_cabinet}
-  {
-    // Always populate the table with our answer before anything else
-    AnswerAndSeen &cabinet_answer = table_[self_];
-
-    std::get<ANSW>(cabinet_answer)        = answer;
-    std::get<SIG>(cabinet_answer)         = Digest("nothing");
-    std::get<SEEN>(cabinet_answer)[self_] = Digest("have seen!");
-
-    // Create entries for all desired cabinet members
-    for (auto const &member : cabinet_)
-    {
-      table_[member];
-    }
-    // TODO(HUT): signing
-  }
-
-  uint64_t UnconfirmedMsgs()
-  {
-    uint64_t ret = 0;
-
-    for (auto const &entry : table_)
-    {
-      AnswerAndSeen const &answer_and_seen = entry.second;
-
-      if (!GetSeen(answer_and_seen).empty())
-      {
-        ret++;
-      }
-    }
-
-    return ret;
-  }
-
-  static Answer const &GetAnswer(AnswerAndSeen const &ref)
-  {
-    return std::get<ANSW>(ref);
-  }
-
-  static Signature const &GetSignature(AnswerAndSeen const &ref)
-  {
-    return std::get<SIG>(ref);
-  }
-
-  static Seen const &GetSeen(AnswerAndSeen const &ref)
-  {
-    return std::get<SEEN>(ref);
-  }
-
-  ConfirmedAnswers Update(uint32_t threshold, QuestionStruct &rhs)
-  {
-    ConfirmedAnswers ret;
-
-    if (rhs.question_ != question_)
-    {
-      return ret;
-    }
-
-    for (auto &entry : table_)
-    {
-      MuddleAddress const &address                 = entry.first;
-      AnswerAndSeen &      answer_and_seen         = entry.second;
-      Answer &             answer                  = std::get<ANSW>(answer_and_seen);
-      Signature &          signature               = std::get<SIG>(answer_and_seen);
-      Seen &               seen                    = std::get<SEEN>(answer_and_seen);
-      bool                 msg_was_below_threshold = false;
-
-      if (seen.size() < threshold)
-      {
-        msg_was_below_threshold = true;
-      }
-
-      // Add info from other table to ours
-      AnswerAndSeen &  rhs_answer_and_seen = rhs.table_[address];
-      Answer const &   rhs_answer          = GetAnswer(rhs_answer_and_seen);
-      Signature const &rhs_signature       = GetSignature(rhs_answer_and_seen);
-      Seen const &     rhs_seen            = GetSeen(rhs_answer_and_seen);
-
-      if (!rhs_answer.empty())
-      {
-        answer = rhs_answer;
-
-        seen.insert(std::make_pair(self_, Digest("temp")));
-      }
-
-      if (!rhs_signature.empty())
-      {
-        signature = rhs_signature;
-      }
-
-      for (auto const &rhs_seen_pair : rhs_seen)
-      {
-        seen.insert(rhs_seen_pair);
-      }
-
-      if (seen.size() >= threshold && msg_was_below_threshold && address != self_)
-      {
-        ret.emplace_back(std::make_pair(address, answer));
-      }
-    }
-
-    return ret;
-  }
-
-  // Considered invalid if there is no cabinet
-  operator bool() const
-  {
-    return !cabinet_.empty();
-  }
-
-  CertificatePtr certificate_;
-  MuddleAddress  self_;
-  Digest         question_;
-  SyncTable      table_;
-  CabinetMembers cabinet_;
-};
-
 /**
+ * Punishment broadcast channel aims to answer a 'question' posed to peers. For a unique question
+ * hash, it will synchronise with predefined peers (the cabinet) by leveraging cryptographic
+ * signatures to trust that information about other peers is true.
+ *
+ * To do so, it constructs a table of 'answers' which it first populates with its own answers, then
+ * pulls from peers to populate with their answers. For peers to respond with two different answers
+ * to the same question (which is signed) is invalid and should result in punishment.
+ *
+ * Once the answers in the table have enough 'seen' signatures (threshold), it can be dispatched to
+ * the callback.
  */
 class PunishmentBroadcastChannel : public service::Protocol, public BroadcastChannelInterface
 {
@@ -220,7 +81,7 @@ public:
   using StateMachine    = core::StateMachine<State>;
   using StateMachinePtr = std::shared_ptr<StateMachine>;
 
-  // The only RPC function exposed
+  // The only RPC function exposed to peers
   enum
   {
     PULL_INFO_FROM_PEER = 1
@@ -257,6 +118,11 @@ public:
                                     &PunishmentBroadcastChannel::OnResolvePromises);
   }
 
+  ~PunishmentBroadcastChannel()
+  {
+    rpc_server_->Remove(RPC_BEACON);
+  }
+
   // Interface methods
   bool ResetCabinet(CabinetMembers const &cabinet) override
   {
@@ -278,6 +144,11 @@ public:
     return true;
   }
 
+  /**
+   * Set/reset the question, saving the old question, so that peer who have not yet
+   * reset can still access this information
+   *
+   */
   void SetQuestion(ConstByteArray const &question, ConstByteArray const &answer) override
   {
     FETCH_LOCK(lock_);
@@ -296,13 +167,18 @@ public:
     enabled_ = enable;
   }
 
+  /**
+   * The channel needs to be driven to resolve network events
+   */
   std::weak_ptr<core::Runnable> GetRunnable() override
   {
     return state_machine_;
   }
 
-  /// @}
-
+  /**
+   * Determine whether the current question has been answered by all peers.
+   * If not, continue to try to resolve answers
+   */
   bool AnsweredQuestion()
   {
     uint32_t messages_confirmed = 0;
@@ -316,7 +192,6 @@ public:
       }
     }
 
-    // TODO(HUT): work on this a bit
     bool const answered_question = messages_confirmed == question_.cabinet_.size() - 1;
 
     return answered_question;
@@ -324,6 +199,7 @@ public:
 
   PunishmentBroadcastChannel::State OnInit()
   {
+    // Determine whether to take action
     {
       FETCH_LOCK(lock_);
 
@@ -335,21 +211,26 @@ public:
       }
     }
 
+    // If so, populate a vector with random peer addresses to try
+    // (up to concurrent_promises_allowed at once)
     if (current_cabinet_vector_.size() < concurrent_promises_allowed)
     {
       current_cabinet_vector_.clear();
 
       for (auto const &member : current_cabinet_)
       {
-        current_cabinet_vector_.push_back(member);
+        if (member != certificate_->identity().identifier())
+        {
+          current_cabinet_vector_.push_back(member);
+        }
       }
 
-      // Make N requests for the other peer's answer
       std::random_device rd;
       std::mt19937       g(rd());
       std::shuffle(current_cabinet_vector_.begin(), current_cabinet_vector_.end(), g);
     }
 
+    // Dispatch requests for peers tables and set timer
     for (std::size_t i = 0; i < concurrent_promises_allowed; ++i)
     {
       MuddleAddress send_to = current_cabinet_vector_.back();
@@ -365,6 +246,10 @@ public:
     return State::RESOLVE_PROMISES;
   }
 
+  /**
+   * Attempt to resolve the network promises and add them to our table,
+   * eventually timing out.
+   */
   PunishmentBroadcastChannel::State OnResolvePromises()
   {
     for (auto it = network_promises_.begin(); it != network_promises_.end();)
@@ -387,6 +272,7 @@ public:
           {
             FETCH_LOCK(lock_);
 
+            // Guard against receiving a non-matching table
             if (recvd_question.question_ != question_.question_)
             {
               FETCH_LOG_DEBUG(LOGGING_NAME, "Note: ignoring non matching question");

@@ -29,6 +29,8 @@
 
 #include "benchmark/benchmark.h"
 
+#include "muddle/create_muddle_fake.hpp"
+
 #include <type_traits>
 #include <vector>
 
@@ -37,6 +39,7 @@ using namespace fetch::muddle;
 using namespace fetch::core;
 using namespace fetch::crypto;
 
+// Whether to use fake muddles for the benchmark
 constexpr bool USING_FAKE_MUDDLES{true};
 
 using fetch::crypto::Prover;
@@ -222,18 +225,23 @@ struct PBCNode : public AbstractRBCNode
   PBC      punishment_broadcast_channel;
 };
 
+// Test either the PBCNode or the RBCNode
 template <class RBC_TYPE>
 void DKGWithEcho(benchmark::State &state)
 {
   char const *LOGGING_NAME    = RBC_TYPE::LOGGING_NAME;
   bool        REUSING_MUDDLES = true;
 
+  // The reliable broadcast channel needs the network to be torn down since it's hard
+  // to guarantee messages aren't in flight between test iterations
   if (std::is_same<RBC_TYPE, RBCNode>::value || USING_FAKE_MUDDLES)
   {
     REUSING_MUDDLES = false;
   }
 
+  // Suppress logging
   SetGlobalLogLevel(LogLevel::ERROR);
+
   uint16_t unique_port  = 8000;
   uint16_t test_attempt = 0;
 
@@ -341,6 +349,7 @@ void DKGWithEcho(benchmark::State &state)
       std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
 
+    // Cleanup
     if (REUSING_MUDDLES)
     {
       state.PauseTiming();

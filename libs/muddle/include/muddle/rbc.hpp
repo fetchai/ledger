@@ -49,6 +49,32 @@ public:
 };
 
 /**
+ * Interface which classes implementing a reliable channel should respect.
+ *
+ * Given a certain cabinet, broadcast a message (the answer), as the answer
+ * to a certain question (some unique hash)
+ *
+ * TODO(HUT): put the callback method here too
+ *
+ */
+class BroadcastChannelInterface
+{
+public:
+  using ConstByteArray = byte_array::ConstByteArray;
+  using MuddleAddress  = ConstByteArray;
+  using CabinetMembers = std::set<MuddleAddress>;
+  using WeakRunnable   = std::weak_ptr<core::Runnable>;
+
+  BroadcastChannelInterface()          = default;
+  virtual ~BroadcastChannelInterface() = default;
+
+  virtual bool ResetCabinet(CabinetMembers const &cabinet)                               = 0;
+  virtual void Enable(bool enable)                                                       = 0;
+  virtual void SetQuestion(ConstByteArray const &question, ConstByteArray const &answer) = 0;
+  virtual WeakRunnable GetRunnable()                                                     = 0;
+};
+
+/**
  * Reliable broadcast channel (RBC) is a protocol which ensures all honest
  * parties receive the same message in the presence of a threshold number of
  * Byzantine adversaries
