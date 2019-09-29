@@ -186,7 +186,7 @@ class TestInstance():
         self._nodes[index].start()
         print('Starting Node {}...complete'.format(index))
 
-        time.sleep(0.5)
+        time.sleep(1)
 
     def setup_pos_for_nodes(self):
 
@@ -401,7 +401,7 @@ def setup_test(test_yaml, test_instance):
         output(
             "***** Shutting down test due to failure!. Debug YAML: {} *****\n".format(test_yaml))
         test_instance.stop()
-        # test_instance.dump_debug()
+        test_instance.dump_debug()
         os._exit(1)
 
     watchdog = TimerWatchdog(
@@ -704,7 +704,7 @@ def run_test(build_directory, yaml_file, constellation_exe):
             print('Failed to parse yaml or to run test! Error: "{}"'.format(str(e)))
             traceback.print_exc()
             test_instance.stop()
-            # test_instance.dump_debug()
+            test_instance.dump_debug()
             sys.exit(1)
 
     output("\nAll end to end tests have passed")

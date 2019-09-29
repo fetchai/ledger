@@ -35,6 +35,8 @@ std::shared_ptr<DKGMessage> DKGEnvelope::Message() const
   DKGSerializer serialiser{serialisedMessage_};
   switch (type_)
   {
+  case MessageType::CONNECTIONS:
+    return std::make_shared<ConnectionsMessage>(serialiser);
   case MessageType::COEFFICIENT:
     return std::make_shared<CoefficientsMessage>(serialiser);
   case MessageType::SHARE:

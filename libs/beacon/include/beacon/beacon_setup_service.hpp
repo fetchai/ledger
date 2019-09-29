@@ -24,11 +24,13 @@
 #include "moment/clocks.hpp"
 #include "moment/deadline_timer.hpp"
 #include "muddle/muddle_endpoint.hpp"
-#include "muddle/rbc.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/subscription.hpp"
 #include "telemetry/gauge.hpp"
 #include "telemetry/telemetry.hpp"
+
+#include "muddle/punishment_broadcast_channel.hpp"
+#include "muddle/rbc.hpp"
 
 #include "beacon/aeon.hpp"
 
@@ -71,6 +73,7 @@ public:
     WAIT_FOR_QUAL_SHARES,
     WAIT_FOR_QUAL_COMPLAINTS,
     WAIT_FOR_RECONSTRUCTION_SHARES,
+    COMPUTE_PUBLIC_SIGNATURE,
     DRY_RUN_SIGNING,
     BEACON_READY
   };
@@ -85,6 +88,8 @@ public:
   using MuddleEndpoint          = muddle::MuddleEndpoint;
   using MuddleInterface         = muddle::MuddleInterface;
   using RBC                     = muddle::RBC;
+  using ReliableChannel         = muddle::BroadcastChannelInterface;
+  using ReliableChannelPtr      = std::unique_ptr<ReliableChannel>;
   using SubscriptionPtr         = muddle::MuddleEndpoint::SubscriptionPtr;
   using MessageCoefficient      = std::string;
   using MessageShare            = std::string;
@@ -97,6 +102,7 @@ public:
   using DKGEnvelope             = dkg::DKGEnvelope;
   using ComplaintsMessage       = dkg::ComplaintsMessage;
   using CoefficientsMessage     = dkg::CoefficientsMessage;
+  using ConnectionsMessage      = dkg::ConnectionsMessage;
   using SharesMessage           = dkg::SharesMessage;
   using DKGSerializer           = dkg::DKGSerializer;
   using ManifestCacheInterface  = ledger::ManifestCacheInterface;
@@ -105,9 +111,10 @@ public:
   using SignatureShare   = AeonExecutionUnit::SignatureShare;
   using BeaconManager    = dkg::BeaconManager;
   using GroupPubKeyPlusSigShare = std::pair<std::string, SignatureShare>;
+  using CertificatePtr          = std::shared_ptr<dkg::BeaconManager::Certificate>;
 
   BeaconSetupService(MuddleInterface &muddle, Identity identity,
-                     ManifestCacheInterface &manifest_cache);
+                     ManifestCacheInterface &manifest_cache, CertificatePtr certificate);
   BeaconSetupService(BeaconSetupService const &) = delete;
   BeaconSetupService(BeaconSetupService &&)      = delete;
 
@@ -123,6 +130,7 @@ public:
   State OnWaitForQualShares();
   State OnWaitForQualComplaints();
   State OnWaitForReconstructionShares();
+  State OnComputePublicSignature();
   State OnDryRun();
   State OnBeaconReady();
   /// @}
@@ -134,7 +142,7 @@ public:
   void SetBeaconReadyCallback(CallbackFunction callback);
   /// @}
 
-  std::weak_ptr<core::Runnable> GetWeakRunnable();
+  std::vector<std::weak_ptr<core::Runnable>> GetWeakRunnables();
 
 protected:
   Identity                identity_;
@@ -143,8 +151,7 @@ protected:
   MuddleEndpoint &        endpoint_;
   SubscriptionPtr         shares_subscription_;
   SubscriptionPtr         dry_run_subscription_;
-  RBC                     pre_dkg_rbc_;
-  RBC                     rbc_;
+  ReliableChannelPtr      rbc_;
 
   std::shared_ptr<StateMachine> state_machine_;
   std::set<MuddleAddress>       connections_;
@@ -175,9 +182,14 @@ protected:
   telemetry::GaugePtr<uint64_t> beacon_dkg_state_gauge_;
   telemetry::GaugePtr<uint64_t> beacon_dkg_connections_gauge_;
   telemetry::GaugePtr<uint64_t> beacon_dkg_all_connections_gauge_;
+  telemetry::GaugePtr<uint64_t> beacon_dkg_failures_required_to_complete_;
+  telemetry::GaugePtr<uint64_t> beacon_dkg_state_failed_on_;
+  telemetry::GaugePtr<uint64_t> beacon_dkg_time_allocated_;
+  telemetry::GaugePtr<uint64_t> beacon_dkg_aeon_setting_up_;
   telemetry::CounterPtr         beacon_dkg_failures_total_;
   telemetry::CounterPtr         beacon_dkg_dry_run_failures_total_;
   telemetry::CounterPtr         beacon_dkg_aborts_total_;
+  telemetry::CounterPtr         beacon_dkg_successes_total_;
 
   // Members below protected by mutex
   std::mutex                                                 mutex_;
@@ -200,6 +212,8 @@ private:
   uint64_t         seconds_for_state_     = 0;
   uint64_t         expected_dkg_timespan_ = 0;
   bool             condition_to_proceed_  = false;
+
+  uint16_t failures_{0};
 
   /// @name Handlers for messages
   /// @{

@@ -24,8 +24,12 @@
 #include "telemetry/counter.hpp"
 #include "telemetry/gauge.hpp"
 
+#include "network/generics/milli_timer.hpp"
+
 #include <chrono>
 #include <iterator>
+
+using fetch::generics::MilliTimer;
 
 namespace fetch {
 namespace beacon {
@@ -79,15 +83,22 @@ BeaconService::BeaconService(MuddleInterface &               muddle,
   , entropy_subscription_{endpoint_.Subscribe(SERVICE_DKG, CHANNEL_ENTROPY_DISTRIBUTION)}
   , rpc_client_{"BeaconService", endpoint_, SERVICE_DKG, CHANNEL_RPC}
   , event_manager_{std::move(event_manager)}
-  , cabinet_creator_{muddle, identity_, manifest_cache}  // TODO(tfr): Make shared
+  , cabinet_creator_{muddle, identity_, manifest_cache, certificate_}  // TODO(tfr): Make shared
   , beacon_protocol_{*this}
   , beacon_entropy_generated_total_{telemetry::Registry::Instance().CreateCounter(
         "beacon_entropy_generated_total", "The total number of times entropy has been generated")}
   , beacon_entropy_future_signature_seen_total_{telemetry::Registry::Instance().CreateCounter(
         "beacon_entropy_future_signature_seen_total",
         "The total number of times entropy has been generated")}
+  , beacon_entropy_forced_to_time_out_total_{telemetry::Registry::Instance().CreateCounter(
+        "beacon_entropy_forced_to_time_out_total",
+        "The total number of times entropy failed and timed out")}
   , beacon_entropy_last_requested_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
         "beacon_entropy_last_requested", "The last entropy value requested from the beacon")}
+  , beacon_entropy_last_generated_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        "beacon_entropy_last_generated", "The last entropy value able to be generated")}
+  , beacon_entropy_current_round_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
+        "beacon_entropy_current_round", "The current round attempting to generate for.")}
 {
 
   // Attaching beacon ready callback handler
@@ -415,6 +426,8 @@ BeaconService::SignatureInformation BeaconService::GetSignatureShares(uint64_t r
 
 BeaconService::State BeaconService::OnCollectSignaturesState()
 {
+  beacon_entropy_current_round_->set(current_entropy_.round);
+
   std::lock_guard<std::mutex> lock(mutex_);
 
   // On first entry to function, populate with our info
@@ -487,43 +500,49 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
   }
 
   // Don't lock until the promise has resolved! Otherwise the system can deadlock.
-  std::lock_guard<std::mutex> lock(mutex_);
-
-  if (ret.threshold_signatures.empty())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Peer wasn't ready when asking for signatures: ",
-                   qual_promise_identity_.identifier().ToBase64());
-    state_machine_->Delay(std::chrono::milliseconds(10));
-    return State::COLLECT_SIGNATURES;
-  }
+    std::lock_guard<std::mutex> lock(mutex_);
 
-  if (ret.round != current_entropy_.round)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Peer returned the wrong round when asked for signatures. Peer: ",
-                   qual_promise_identity_.identifier().ToBase64(), " returned: ", ret.round,
-                   " expected: ", current_entropy_.round);
-    return State::COLLECT_SIGNATURES;
-  }
-
-  // Success - Add relevant info
-  auto &signatures_struct = signatures_being_built_[current_entropy_.round];
-  auto &all_sigs_map      = signatures_struct.threshold_signatures;
-
-  for (auto const &address_sig_pair : ret.threshold_signatures)
-  {
-    all_sigs_map[address_sig_pair.first] = address_sig_pair.second;
-    // Let the manager know
-    AddSignature(address_sig_pair.second);
-
-    // If we have collected enough signatures already then break
-    if (active_exe_unit_->manager.can_verify())
+    if (ret.threshold_signatures.empty())
     {
-      break;
-    }
-  }
+      FETCH_LOG_INFO(LOGGING_NAME, "Peer wasn't ready when asking for signatures: ",
+                     qual_promise_identity_.identifier().ToBase64());
+      state_machine_->Delay(std::chrono::milliseconds(100));
 
-  FETCH_LOG_INFO(LOGGING_NAME, "After adding, we have ", all_sigs_map.size(),
-                 " signatures. Round: ", current_entropy_.round);
+      return State::COLLECT_SIGNATURES;
+    }
+
+    if (ret.round != current_entropy_.round)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "Peer returned the wrong round when asked for signatures. Peer: ",
+                     qual_promise_identity_.identifier().ToBase64(), " returned: ", ret.round,
+                     " expected: ", current_entropy_.round);
+      return State::COLLECT_SIGNATURES;
+    }
+
+    // Success - Add relevant info
+    auto &signatures_struct = signatures_being_built_[current_entropy_.round];
+    auto &all_sigs_map      = signatures_struct.threshold_signatures;
+
+    for (auto const &address_sig_pair : ret.threshold_signatures)
+    {
+      all_sigs_map[address_sig_pair.first] = address_sig_pair.second;
+      // Let the manager know
+      AddSignature(address_sig_pair.second);
+
+      // If we have collected enough signatures already then break
+      if (active_exe_unit_->manager.can_verify())
+      {
+        break;
+      }
+    }
+
+    FETCH_LOG_INFO(LOGGING_NAME, "After adding, we have ", all_sigs_map.size(),
+                   " signatures. Round: ", current_entropy_.round);
+  }  // Mutex unlocks here since verification can take some time
+
+  MilliTimer const timer{"Verify threshold signature", 100};
 
   if (active_exe_unit_->manager.can_verify() && active_exe_unit_->manager.Verify())
   {
@@ -531,6 +550,8 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
     current_entropy_.signature = active_exe_unit_->manager.GroupSignature();
     auto sign                  = current_entropy_.signature.getStr();
     current_entropy_.entropy   = crypto::Hash<crypto::SHA256>(crypto::Hash<crypto::SHA256>(sign));
+
+    beacon_entropy_last_generated_->set(current_entropy_.round);
 
     // Broadcasting the entropy to those listening, but not participating
     if (broadcasting_)
@@ -625,14 +646,18 @@ bool BeaconService::AddSignature(SignatureShare share)
   return true;
 }
 
-std::weak_ptr<core::Runnable> BeaconService::GetMainRunnable()
+std::vector<std::weak_ptr<core::Runnable>> BeaconService::GetWeakRunnables()
 {
-  return state_machine_;
-}
+  std::vector<std::weak_ptr<core::Runnable>> ret = {state_machine_};
 
-std::weak_ptr<core::Runnable> BeaconService::GetSetupRunnable()
-{
-  return cabinet_creator_.GetWeakRunnable();
+  auto setup_runnables = cabinet_creator_.GetWeakRunnables();
+
+  for (auto const &i : setup_runnables)
+  {
+    ret.push_back(i);
+  }
+
+  return ret;
 }
 
 }  // namespace beacon
