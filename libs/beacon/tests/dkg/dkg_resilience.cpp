@@ -462,7 +462,10 @@ struct FaultyDkgMember : DkgMember
     });
   }
 
-  ~FaultyDkgMember() override = default;
+  ~FaultyDkgMember() override
+  {
+    reactor.Stop();
+  }
 
   void QueueCabinet(std::set<MuddleAddress> cabinet, uint32_t threshold) override
   {
@@ -517,7 +520,10 @@ struct HonestDkgMember : DkgMember
     });
   }
 
-  ~HonestDkgMember() override = default;
+  ~HonestDkgMember() override
+  {
+    reactor.Stop();
+  }
 
   void QueueCabinet(std::set<MuddleAddress> cabinet, uint32_t threshold) override
   {

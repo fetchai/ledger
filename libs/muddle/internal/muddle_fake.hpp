@@ -112,6 +112,24 @@ public:
     }
   }
 
+  static void BroadcastPacket(PacketPtr packet)
+  {
+    std::vector<PacketQueueAndConnectionsPtr> locations;
+
+    {
+      std::lock_guard<std::mutex> lock(network_lock_);
+      for (auto const &network_location : network_)
+      {
+        locations.push_back(network_location.second);
+      }
+    }
+
+    for (auto const &location : locations)
+    {
+      location->Push(packet);
+    }
+  }
+
   static bool GetNextPacket(Address const &to, PacketPtr &packet)
   {
     PacketQueueAndConnectionsPtr queue;
@@ -297,16 +315,20 @@ public:
     FakeNetwork::DeployPacket(address, packet);
   }
 
-  void Broadcast(uint16_t /*service*/, uint16_t /*channel*/, Payload const & /*payload*/)
+  void Broadcast(uint16_t service, uint16_t channel, Payload const &payload)
   {
-    throw std::runtime_error("functionality not implemented");
-    return;
+    auto packet =
+        FormatPacket(address_, network_id_, service, channel, msg_counter_++, 40, payload);
+    packet->SetBroadcast(true);
+    Sign(packet);
+
+    FakeNetwork::BroadcastPacket(packet);
   }
 
   Response Exchange(Address const & /*address*/, uint16_t /*service*/, uint16_t /*channel*/,
                     Payload const & /*request*/)
   {
-    throw std::runtime_error("functionality not implemented");
+    throw std::runtime_error("Exchange functionality not implemented");
     return {};
   }
 
@@ -436,7 +458,7 @@ public:
   };
   Ports GetListeningPorts() const override
   {
-    throw std::runtime_error("functionality not implemented");
+    throw std::runtime_error("Get listening ports functionality not implemented");
     return {};
   };
   Addresses GetDirectlyConnectedPeers() const override
@@ -445,12 +467,12 @@ public:
   };
   Addresses GetIncomingConnectedPeers() const override
   {
-    throw std::runtime_error("functionality not implemented");
+    throw std::runtime_error("GetIncomingConnectedPeers functionality not implemented");
     return {};
   };
   Addresses GetOutgoingConnectedPeers() const override
   {
-    throw std::runtime_error("functionality not implemented");
+    throw std::runtime_error("GetOutgoingConnectedPeers functionality not implemented");
     return {};
   };
 
@@ -460,7 +482,7 @@ public:
   };
   bool IsDirectlyConnected(Address const & /*address*/) const override
   {
-    throw std::runtime_error("functionality not implemented");
+    throw std::runtime_error("IsDirectlyConnected functionality not implemented");
     return {};
   };
   /// @}
@@ -469,18 +491,17 @@ public:
   /// @{
   PeerSelectionMode GetPeerSelectionMode() const override
   {
-    throw std::runtime_error("functionality not implemented");
+    throw std::runtime_error("GetPeerSelectionMode functionality not implemented");
     return {};
   };
   void SetPeerSelectionMode(PeerSelectionMode /*mode*/) override
   {
-    throw std::runtime_error("functionality not implemented");
+    throw std::runtime_error("SetPeerSelectionMode functionality not implemented");
     return;
   };
   Addresses GetRequestedPeers() const override
   {
-    throw std::runtime_error("functionality not implemented");
-    return {};
+    return FakeNetwork::GetConnections(node_address_);
   };
   void ConnectTo(Address const &address) override
   {
@@ -488,7 +509,7 @@ public:
   };
   void ConnectTo(Addresses const & /*addresses*/) override
   {
-    throw std::runtime_error("functionality not implemented");
+    throw std::runtime_error("ConnectTo x functionality not implemented");
     return;
   };
   void ConnectTo(Address const &address, network::Uri const & /*uri_hint*/) override
@@ -497,32 +518,33 @@ public:
   };
   void ConnectTo(AddressHints const & /*address_hints*/) override
   {
-    throw std::runtime_error("functionality not implemented");
+    throw std::runtime_error("ConnectTo y functionality not implemented");
     return;
   };
-  void DisconnectFrom(Address const & /*address*/) override
+  void DisconnectFrom(Address const &address) override
   {
-    throw std::runtime_error("functionality not implemented");
-    return;
+    FakeNetwork::Disconnect(node_address_, address);
   };
-  void DisconnectFrom(Addresses const & /*addresses*/) override
+  void DisconnectFrom(Addresses const &addresses) override
   {
-    throw std::runtime_error("functionality not implemented");
-    return;
+    for (auto const &address : addresses)
+    {
+      FakeNetwork::Disconnect(node_address_, address);
+    }
   };
   void SetConfidence(Address const & /*address*/, Confidence /*confidence*/) override
   {
-    throw std::runtime_error("functionality not implemented");
+    throw std::runtime_error("SetConfidence x functionality not implemented");
     return;
   };
   void SetConfidence(Addresses const & /*addresses*/, Confidence /*confidence*/) override
   {
-    throw std::runtime_error("functionality not implemented");
+    throw std::runtime_error("SetConfidence y functionality not implemented");
     return;
   };
   void SetConfidence(ConfidenceMap const & /*map*/) override
   {
-    throw std::runtime_error("functionality not implemented");
+    throw std::runtime_error("SetConfidence z functionality not implemented");
     return;
   };
   /// @}

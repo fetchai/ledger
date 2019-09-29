@@ -17,13 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
-//#include "muddle.hpp"
-//#include "muddle/muddle_endpoint.hpp"
-
-//#include "muddle_logging_name.hpp"
+#include "muddle/muddle_interface.hpp"
 
 namespace fetch {
 namespace muddle {
+
+using MuddlePtr = std::shared_ptr<MuddleInterface>;
+using ProverPtr = std::shared_ptr<crypto::Prover>;
 
 MuddlePtr CreateMuddleFake(NetworkId const &network, ProverPtr certificate,
                            network::NetworkManager const &nm, std::string const &external_address);
