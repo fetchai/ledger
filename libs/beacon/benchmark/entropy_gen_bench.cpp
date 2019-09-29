@@ -73,10 +73,10 @@ public:
 class ManifestCacheInterfaceDummy : public fetch::ledger::ManifestCacheInterface
 {
 public:
-  ManifestCacheInterfaceDummy()  = default;
-  ~ManifestCacheInterfaceDummy() = default;
+  ManifestCacheInterfaceDummy()           = default;
+  ~ManifestCacheInterfaceDummy() override = default;
 
-  bool QueryManifest(Address const &, fetch::ledger::Manifest &)
+  bool QueryManifest(Address const &, fetch::ledger::Manifest &) override
   {
     return true;
   }
