@@ -25,6 +25,7 @@
 #include "crypto/prover.hpp"
 #include "ledger/shards/manifest.hpp"
 #include "ledger/shards/manifest_cache_interface.hpp"
+#include "muddle/create_muddle_fake.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rbc.hpp"
 #include "muddle/rpc/client.hpp"
@@ -414,7 +415,7 @@ struct DkgMember
     , network_manager{"NetworkManager" + std::to_string(index), 1}
     , reactor{"ReactorName" + std::to_string(index)}
     , muddle_certificate{CreateNewCertificate()}
-    , muddle{CreateMuddle("Test", muddle_certificate, network_manager, "127.0.0.1")}
+    , muddle{CreateMuddleFake("Test", muddle_certificate, network_manager, "127.0.0.1")}
   {
     network_manager.Start();
     muddle->Start({muddle_port});
