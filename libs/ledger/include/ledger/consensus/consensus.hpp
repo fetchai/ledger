@@ -55,7 +55,7 @@ public:
   void         Reset(StakeSnapshot const &snapshot);
   void         Refresh() override;
 
-  //void         SetGenesis(Block const &current) override;
+  // void         SetGenesis(Block const &current) override;
 
   StakeManagerPtr stake();
   void            SetThreshold(double threshold);
@@ -77,16 +77,16 @@ private:
   Address          mining_address_;
 
   // Global variables relating to consensus
-  uint64_t         aeon_period_            = 0;
-  uint64_t         max_committee_size_     = 0;
-  double           threshold_              = 1.0;
-  //uint64_t         current_block_number_   = 0;
+  uint64_t aeon_period_        = 0;
+  uint64_t max_committee_size_ = 0;
+  double   threshold_          = 1.0;
+  // uint64_t         current_block_number_   = 0;
 
   // Consensus' view on the heaviest block etc.
-  Block            current_block_;
-  Block            previous_block_;
-  Block            beginning_of_aeon_;
-  Digest           last_triggered_committee_;
+  Block  current_block_;
+  Block  previous_block_;
+  Block  beginning_of_aeon_;
+  Digest last_triggered_committee_;
 
   uint64_t         default_start_time_ = 0;
   CommitteeHistory committee_history_{};  ///< Cache of historical committees

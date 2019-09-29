@@ -19,6 +19,8 @@
 #include "beacon/beacon_manager.hpp"
 #include "crypto/ecdsa.hpp"
 
+#include "network/generics/milli_timer.hpp"
+
 namespace fetch {
 namespace dkg {
 
@@ -377,6 +379,8 @@ void BeaconManager::ComputePublicKeys()
 {
 
   FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, " compute public keys begin.");
+  generics::MilliTimer myTimer("BeaconManager::ComputePublicKeys");
+
   // For all parties in $QUAL$, set $y_i = A_{i0} = g^{z_i} \bmod p$.
   for (auto const &iq : qual_)
   {
@@ -642,7 +646,8 @@ bool BeaconManager::Verify(Signature const &signature)
 /**
  * @brief verifies a signed message by the group signature, where all parameters are specified.
  */
-bool BeaconManager::Verify(std::string const &group_public_key, MessagePayload const &message, std::string const &signature)
+bool BeaconManager::Verify(std::string const &group_public_key, MessagePayload const &message,
+                           std::string const &signature)
 {
   PublicKey tmp;
   tmp.setStr(group_public_key);

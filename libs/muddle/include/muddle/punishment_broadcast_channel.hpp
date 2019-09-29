@@ -118,6 +118,11 @@ public:
                                     &PunishmentBroadcastChannel::OnResolvePromises);
   }
 
+  ~PunishmentBroadcastChannel()
+  {
+    rpc_server_->Remove(RPC_BEACON);
+  }
+
   // Interface methods
   bool ResetCabinet(CabinetMembers const &cabinet) override
   {
@@ -214,7 +219,7 @@ public:
 
       for (auto const &member : current_cabinet_)
       {
-        if(member != certificate_->identity().identifier())
+        if (member != certificate_->identity().identifier())
         {
           current_cabinet_vector_.push_back(member);
         }

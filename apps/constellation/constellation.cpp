@@ -362,12 +362,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   // Attach beacon runnables
   if (beacon_)
   {
-    auto runnables = beacon_->GetWeakRunnables();
-
-    for (auto const &i : runnables)
-    {
-      reactor_.Attach(i);
-    }
+    reactor_.Attach(beacon_->GetWeakRunnables());
   }
 
   // attach the services to the reactor

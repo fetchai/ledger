@@ -33,13 +33,13 @@ namespace {
 using fetch::ledger::Block;
 using fetch::ledger::StakeSnapshot;
 using fetch::ledger::StakeManager;
-//using fetch::ledger::NaiveEntropyGenerator;
+// using fetch::ledger::NaiveEntropyGenerator;
 using fetch::crypto::Identity;
 
 using RNG             = fetch::random::LinearCongruentialGenerator;
 using StakeManagerPtr = std::unique_ptr<StakeManager>;
-//using EntropyPtr      = std::unique_ptr<NaiveEntropyGenerator>;
-using RoundStats      = std::unordered_map<Identity, std::size_t>;
+// using EntropyPtr      = std::unique_ptr<NaiveEntropyGenerator>;
+using RoundStats = std::unordered_map<Identity, std::size_t>;
 
 constexpr uint64_t MAX_COMMITTEE_SIZE = 1;
 
@@ -90,7 +90,7 @@ protected:
     }
   }
 
-  RNG             rng_;
+  RNG rng_;
   /*EntropyPtr      entropy_;*/
   StakeManagerPtr stake_manager_;
 };

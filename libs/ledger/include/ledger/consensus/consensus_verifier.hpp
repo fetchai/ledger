@@ -31,4 +31,3 @@ class ConsensusVerifier
 
 }  // namespace ledger
 }  // namespace fetch
-

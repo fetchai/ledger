@@ -29,6 +29,8 @@
 
 #include "benchmark/benchmark.h"
 
+#include "muddle/create_muddle_fake.hpp"
+
 #include <type_traits>
 #include <vector>
 

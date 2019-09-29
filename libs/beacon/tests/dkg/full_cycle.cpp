@@ -16,54 +16,55 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/reactor.hpp"
-#include "core/serializers/counter.hpp"
-#include "core/serializers/main_serializer.hpp"
-#include "core/service_ids.hpp"
-#include "core/state_machine.hpp"
-#include "crypto/ecdsa.hpp"
-#include "crypto/prover.hpp"
-
-#include "muddle/muddle_interface.hpp"
-#include "muddle/rpc/client.hpp"
-#include "muddle/rpc/server.hpp"
-#include "muddle/subscription.hpp"
-#include "network/generics/requesting_queue.hpp"
-
-#include "beacon/beacon_service.hpp"
-#include "beacon/beacon_setup_service.hpp"
-#include "beacon/entropy.hpp"
-#include "beacon/event_manager.hpp"
-#include "ledger/shards/manifest.hpp"
-#include "ledger/shards/manifest_cache_interface.hpp"
-
-#include <cstdint>
-#include <ctime>
-#include <deque>
-#include <iostream>
-#include <random>
-#include <stdexcept>
-#include <unordered_map>
-#include <vector>
-
-using namespace fetch;
-using namespace fetch::beacon;
-using namespace fetch::ledger;
-using namespace std::chrono_literals;
-
-using std::this_thread::sleep_for;
-using std::chrono::milliseconds;
-
-#include "gtest/gtest.h"
-#include <iostream>
-
-using Prover         = fetch::crypto::Prover;
-using ProverPtr      = std::shared_ptr<Prover>;
-using Certificate    = fetch::crypto::Prover;
-using CertificatePtr = std::shared_ptr<Certificate>;
-using Address        = fetch::muddle::Packet::Address;
-
-//ProverPtr CreateNewCertificate()
+//#include "core/reactor.hpp"
+//#include "core/serializers/counter.hpp"
+//#include "core/serializers/main_serializer.hpp"
+//#include "core/service_ids.hpp"
+//#include "core/state_machine.hpp"
+//#include "crypto/ecdsa.hpp"
+//#include "crypto/prover.hpp"
+//
+//#include "muddle/create_muddle_fake.hpp"
+//#include "muddle/muddle_interface.hpp"
+//#include "muddle/rpc/client.hpp"
+//#include "muddle/rpc/server.hpp"
+//#include "muddle/subscription.hpp"
+//#include "network/generics/requesting_queue.hpp"
+//
+//#include "beacon/beacon_service.hpp"
+//#include "beacon/beacon_setup_service.hpp"
+//#include "beacon/entropy.hpp"
+//#include "beacon/event_manager.hpp"
+//#include "ledger/shards/manifest.hpp"
+//#include "ledger/shards/manifest_cache_interface.hpp"
+//
+//#include <cstdint>
+//#include <ctime>
+//#include <deque>
+//#include <iostream>
+//#include <random>
+//#include <stdexcept>
+//#include <unordered_map>
+//#include <vector>
+//
+// using namespace fetch;
+// using namespace fetch::beacon;
+// using namespace fetch::ledger;
+// using namespace std::chrono_literals;
+//
+// using std::this_thread::sleep_for;
+// using std::chrono::milliseconds;
+//
+//#include "gtest/gtest.h"
+//#include <iostream>
+//
+// using Prover         = fetch::crypto::Prover;
+// using ProverPtr      = std::shared_ptr<Prover>;
+// using Certificate    = fetch::crypto::Prover;
+// using CertificatePtr = std::shared_ptr<Certificate>;
+// using Address        = fetch::muddle::Packet::Address;
+//
+// ProverPtr CreateNewCertificate()
 //{
 //  using Signer    = fetch::crypto::ECDSASigner;
 //  using SignerPtr = std::shared_ptr<Signer>;
@@ -75,7 +76,7 @@ using Address        = fetch::muddle::Packet::Address;
 //  return certificate;
 //}
 //
-//struct DummyManifesttCache : public ManifestCacheInterface
+// struct DummyManifesttCache : public ManifestCacheInterface
 //{
 //  bool QueryManifest(Address const &, Manifest &) override
 //  {
@@ -83,7 +84,7 @@ using Address        = fetch::muddle::Packet::Address;
 //  }
 //};
 //
-//struct CabinetNode
+// struct CabinetNode
 //{
 //  using Prover         = crypto::Prover;
 //  using ProverPtr      = std::shared_ptr<Prover>;
@@ -107,7 +108,7 @@ using Address        = fetch::muddle::Packet::Address;
 //    , network_manager{"NetworkManager" + std::to_string(index), 1}
 //    , reactor{"ReactorName" + std::to_string(index)}
 //    , muddle_certificate{CreateNewCertificate()}
-//    , muddle{muddle::CreateMuddle("Test", muddle_certificate, network_manager, "127.0.0.1")}
+//    , muddle{muddle::CreateMuddleFake("Test", muddle_certificate, network_manager, "127.0.0.1")}
 //    , beacon_service{*muddle, manifest_cache, muddle_certificate, event_manager}
 //    , identity{muddle_certificate->identity()}
 //  {
@@ -126,7 +127,7 @@ using Address        = fetch::muddle::Packet::Address;
 //  }
 //};
 //
-//void RunHonestComitteeRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
+// void RunHonestComitteeRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
 //                              uint16_t number_of_cabinets = 4, uint16_t cabinet_size = 4,
 //                              uint16_t numbers_per_aeon = 10, double threshold = 0.5)
 //{
@@ -146,7 +147,8 @@ using Address        = fetch::muddle::Packet::Address;
 //  {
 //    for (uint32_t jj = ii + 1; jj < number_of_nodes; jj++)
 //    {
-//      committee[ii]->muddle->ConnectTo(committee[jj]->GetMuddleAddress(), committee[jj]->GetHint());
+//      committee[ii]->muddle->ConnectTo(committee[jj]->GetMuddleAddress(),
+//      committee[jj]->GetHint());
 //    }
 //  }
 //
@@ -267,7 +269,7 @@ using Address        = fetch::muddle::Packet::Address;
 //  }
 //}
 //
-//TEST(beacon, DISABLED_full_cycle)
+// TEST(beacon, DISABLED_full_cycle)
 //{
 //  //  SetGlobalLogLevel(LogLevel::CRITICAL);
 //  // TODO(tfr): Heuristically fails atm. RunHonestComitteeRenewal(100, 4, 4, 4, 10, 0.5);

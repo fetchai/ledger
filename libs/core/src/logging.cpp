@@ -43,8 +43,8 @@
 #pragma GCC diagnostic pop
 #endif
 
-#include <unordered_map>
 #include "core/fetch_backward.hpp"
+#include <unordered_map>
 
 // Add functionality to print a stack trace when program-terminating signals such as sigsegv are
 // found

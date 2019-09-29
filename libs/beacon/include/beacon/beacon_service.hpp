@@ -54,8 +54,6 @@ class BeaconService : public ledger::EntropyGeneratorInterface
 public:
   constexpr static char const *LOGGING_NAME = "BeaconService";
 
-
-
   enum class State
   {
     WAIT_FOR_SETUP_COMPLETION,
@@ -104,8 +102,10 @@ public:
 
   /// @name Entropy Generator
   /// @{
-  //Status GenerateEntropy(/*Digest block_digest,*/ uint64_t block_number, uint64_t &entropy) override;
-  Status GenerateEntropy(/*Digest block_digest,*/uint64_t block_number, BlockEntropy &entropy) override;
+  // Status GenerateEntropy(/*Digest block_digest,*/ uint64_t block_number, uint64_t &entropy)
+  // override;
+  Status GenerateEntropy(/*Digest block_digest,*/ uint64_t block_number,
+                         BlockEntropy &                    entropy) override;
   /// @}
 
   /// Maintainance logic
@@ -162,7 +162,7 @@ private:
 
   /// General configuration
   /// @{
-  bool     broadcasting_ = false;
+  bool broadcasting_ = false;
   /// @}
 
   /// Beacon and entropy control units
@@ -172,8 +172,8 @@ private:
   // TODO(HUT): delete these
   std::deque<Entropy> ready_entropy_queue_;
   Entropy             latest_entropy_;
-  Entropy                            next_entropy_{};
-  Entropy                            current_entropy_;
+  Entropy             next_entropy_{};
+  Entropy             current_entropy_;
 
   std::shared_ptr<AeonExecutionUnit> active_exe_unit_;
   /// @}

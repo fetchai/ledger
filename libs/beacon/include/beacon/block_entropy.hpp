@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/digest.hpp"
 #include "beacon/beacon_manager.hpp"
+#include "ledger/chain/digest.hpp"
 
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
@@ -29,13 +29,13 @@ namespace beacon {
 class BlockEntropyInterface
 {
 public:
-  using Digest          = byte_array::ConstByteArray;
+  using Digest = byte_array::ConstByteArray;
 
   BlockEntropyInterface()          = default;
   virtual ~BlockEntropyInterface() = default;
 
-  virtual Digest EntropyAsSHA256() const = 0;
-  virtual uint64_t EntropyAsU64() const = 0;
+  virtual Digest   EntropyAsSHA256() const = 0;
+  virtual uint64_t EntropyAsU64() const    = 0;
 };
 
 struct BlockEntropy : public BlockEntropyInterface
@@ -51,34 +51,37 @@ struct BlockEntropy : public BlockEntropyInterface
   BlockEntropy()
   {
     // Important this is cleared so the hash of it is consistent for the genesis block (?)
-    //group_signature.init();
+    // group_signature.init();
     // group_signature.clear();
-    //group_signature = GroupSignature{};
-    //group_signature = crypto::mcl::LagrangeInterpolation(signature_buffer_);
+    // group_signature = GroupSignature{};
+    // group_signature = crypto::mcl::LagrangeInterpolation(signature_buffer_);
   }
 
-//  BlockEntropy  &operator=(BlockEntropy const &rhs)
-//  {
-//    this->qualified        = rhs.qualified;
-//    this->group_public_key = rhs.group_public_key;
-//    this->block_number     = rhs.block_number;
-//    this->digest           = rhs.digest;
-//    this->group_signature  = rhs.group_signature;
-//
-//    return *this;
-//  }
+  //  BlockEntropy  &operator=(BlockEntropy const &rhs)
+  //  {
+  //    this->qualified        = rhs.qualified;
+  //    this->group_public_key = rhs.group_public_key;
+  //    this->block_number     = rhs.block_number;
+  //    this->digest           = rhs.digest;
+  //    this->group_signature  = rhs.group_signature;
+  //
+  //    return *this;
+  //  }
 
-  Cabinet        qualified;             // The members who succeeded DKG and are qualified to produce blocks (when new committee)
-  GroupPublicKey group_public_key;      // The group public key (when new committee)
-  uint64_t       block_number = 0;      // The block this is relevant to
-  Digest         digest;                // The hash of the above (when new committee) note, this could be implicit. Is not serialized.
+  Cabinet qualified;  // The members who succeeded DKG and are qualified to produce blocks (when new
+                      // committee)
+  GroupPublicKey group_public_key;  // The group public key (when new committee)
+  uint64_t       block_number = 0;  // The block this is relevant to
+  Digest digest;  // The hash of the above (when new committee) note, this could be implicit. Is not
+                  // serialized.
 
-  Confirmations     confirmations;     // In the case of a new cabinet, personal signatures of the hash from qual members
-  GroupSignatureStr group_signature;   // Signature of the previous entropy, used as the entropy
+  Confirmations confirmations;  // In the case of a new cabinet, personal signatures of the hash
+                                // from qual members
+  GroupSignatureStr group_signature;  // Signature of the previous entropy, used as the entropy
 
   Digest EntropyAsSHA256() const override
   {
-    //assert(group_signature);
+    // assert(group_signature);
     return crypto::Hash<crypto::SHA256>(group_signature);
   }
 
@@ -91,7 +94,7 @@ struct BlockEntropy : public BlockEntropyInterface
 
   void HashSelf()
   {
-    //assert(group_signature);
+    // assert(group_signature);
     fetch::serializers::MsgPackSerializer serializer;
     serializer << qualified;
     serializer << group_public_key;
@@ -138,6 +141,6 @@ public:
     map.ExpectKeyGetValue(1, member.group_signature);
   }
 };
-} // namespace serializers
+}  // namespace serializers
 
 }  // namespace fetch

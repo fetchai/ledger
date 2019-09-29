@@ -73,6 +73,7 @@ public:
     WAIT_FOR_QUAL_SHARES,
     WAIT_FOR_QUAL_COMPLAINTS,
     WAIT_FOR_RECONSTRUCTION_SHARES,
+    COMPUTE_PUBLIC_SIGNATURE,
     DRY_RUN_SIGNING,
     BEACON_READY
   };
@@ -130,6 +131,7 @@ public:
   State OnWaitForQualShares();
   State OnWaitForQualComplaints();
   State OnWaitForReconstructionShares();
+  State OnComputePublicSignature();
   State OnDryRun();
   State OnBeaconReady();
   /// @}
@@ -151,8 +153,8 @@ protected:
   SubscriptionPtr         shares_subscription_;
   SubscriptionPtr         dry_run_subscription_;
 
-  CertificatePtr          certificate_;
-  ReliableChannelPtr      rbc_;
+  CertificatePtr     certificate_;
+  ReliableChannelPtr rbc_;
 
   std::shared_ptr<StateMachine> state_machine_;
   std::set<MuddleAddress>       connections_;
@@ -199,11 +201,11 @@ protected:
   SharedAeonExecutionUnit                                    beacon_;
   std::unordered_map<MuddleAddress, std::set<MuddleAddress>> ready_connections_;
 
-  std::map<MuddleAddress, ConstByteArray>                    final_state_payload_;
+  std::map<MuddleAddress, ConstByteArray> final_state_payload_;
 
   // TODO(HUT): delete
-  std::map<MuddleAddress, GroupPubKeyPlusSigShare>           dry_run_shares_;
-  std::map<std::string, uint16_t>                            dry_run_public_keys_;
+  std::map<MuddleAddress, GroupPubKeyPlusSigShare> dry_run_shares_;
+  std::map<std::string, uint16_t>                  dry_run_public_keys_;
 
 private:
   uint64_t abort_below_ = 0;

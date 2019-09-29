@@ -17,16 +17,16 @@
 //------------------------------------------------------------------------------
 
 #include "beacon/beacon_setup_service.hpp"
+#include "beacon/block_entropy.hpp"
 #include "core/containers/set_difference.hpp"
 #include "core/containers/set_intersection.hpp"
+#include "crypto/verifier.hpp"
 #include "ledger/shards/shard_management_service.hpp"
 #include "muddle/muddle_endpoint.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/gauge.hpp"
 #include "telemetry/registry.hpp"
-#include "beacon/block_entropy.hpp"
-#include "crypto/verifier.hpp"
 
 #include <ctime>
 #include <mutex>
@@ -71,6 +71,9 @@ char const *ToString(BeaconSetupService::State state)
     break;
   case BeaconSetupService::State::WAIT_FOR_RECONSTRUCTION_SHARES:
     text = "Waiting for reconstruction shares";
+    break;
+  case BeaconSetupService::State::COMPUTE_PUBLIC_SIGNATURE:
+    text = "Compute the group public signature";
     break;
   case BeaconSetupService::State::DRY_RUN_SIGNING:
     text = "Dry run of signing a seed value";
@@ -143,6 +146,7 @@ BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identit
   state_machine_->RegisterHandler(State::WAIT_FOR_QUAL_SHARES, this, &BeaconSetupService::OnWaitForQualShares);
   state_machine_->RegisterHandler(State::WAIT_FOR_QUAL_COMPLAINTS, this, &BeaconSetupService::OnWaitForQualComplaints);
   state_machine_->RegisterHandler(State::WAIT_FOR_RECONSTRUCTION_SHARES, this, &BeaconSetupService::OnWaitForReconstructionShares);
+  state_machine_->RegisterHandler(State::COMPUTE_PUBLIC_SIGNATURE, this, &BeaconSetupService::OnComputePublicSignature);
   state_machine_->RegisterHandler(State::DRY_RUN_SIGNING, this, &BeaconSetupService::OnDryRun);
   state_machine_->RegisterHandler(State::BEACON_READY, this, &BeaconSetupService::OnBeaconReady);
   // clang-format on
@@ -169,11 +173,11 @@ BeaconSetupService::State BeaconSetupService::OnIdle()
     aeon_exe_queue_.pop_front();
 
     // Observe only does not require any setup
-    //if (beacon_->observe_only)
+    // if (beacon_->observe_only)
     //{
     //  return State::BEACON_READY;
     //}
-    //else
+    // else
     {
       SetTimeToProceed(State::RESET);
       return State::RESET;
@@ -204,7 +208,9 @@ BeaconSetupService::State BeaconSetupService::OnReset()
 
   // TODO(HUT): need to look at this when merged with Ed's changes for pre aeon setup.
   bool const beacon_outdated = beacon_->aeon.round_start < abort_below_;
-  bool const beacon_updated  = (!aeon_exe_queue_.empty() && aeon_exe_queue_.front()->aeon.round_start == beacon_->aeon.round_start);
+  bool const beacon_updated =
+      (!aeon_exe_queue_.empty() &&
+       aeon_exe_queue_.front()->aeon.round_start == beacon_->aeon.round_start);
 
   // abort if the current beacon is out of date
   if (beacon_outdated || beacon_updated)
@@ -214,7 +220,6 @@ BeaconSetupService::State BeaconSetupService::OnReset()
     beacon_dkg_aborts_total_->add(1u);
     return State::IDLE;
   }
-
 
   assert(beacon_);
   beacon_->manager.Reset();
@@ -649,63 +654,62 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReconstructionShares()
       received_count++;
     }
   }
-  if (!condition_to_proceed_ && received_count == remaining_honest.size() - 1)
+
+  if (timer_to_proceed_.HasExpired() || received_count == remaining_honest.size() - 1)
   {
-    condition_to_proceed_ = true;
     FETCH_LOG_INFO(LOGGING_NAME, "State: ", ToString(state_machine_->state()),
                    " Ready. Seconds to spare: ", state_deadline_ - GetTime(), " of ",
                    seconds_for_state_);
 
-    // Reconstruction can take some time - best to do it ASAP
+    // Process reconstruction shares. Reconstruction shares from non-qual members
+    // or people in qual complaints should not be considered
+    for (auto const &share : reconstruction_shares_received_)
     {
-      // Process reconstruction shares. Reconstruction shares from non-qual members
-      // or people in qual complaints should not be considered
-      for (auto const &share : reconstruction_shares_received_)
+      MuddleAddress from = share.first;
+      if (qual_complaints_manager_.FindComplaint(from) ||
+          beacon_->manager.qual().find(from) == beacon_->manager.qual().end())
       {
-        MuddleAddress from = share.first;
-        if (qual_complaints_manager_.FindComplaint(from) ||
-            beacon_->manager.qual().find(from) == beacon_->manager.qual().end())
-        {
-          FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-                         " received message from invalid sender. Discarding.");
-          continue;
-        }
-        for (auto const &elem : share.second)
-        {
-          beacon_->manager.VerifyReconstructionShare(from, elem);
-        }
+        FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
+                       " received message from invalid sender. Discarding.");
+        continue;
       }
-
-      // Reset if reconstruction fails as this breaks the initial assumption on the
-      // number of Byzantine nodes
-      if (!beacon_->manager.RunReconstruction())
+      for (auto const &elem : share.second)
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Node: ", beacon_->manager.cabinet_index(),
-                       " DKG failed due to reconstruction failure. Resetting.");
-        SetTimeToProceed(State::RESET);
-        beacon_dkg_state_failed_on_->set(static_cast<uint64_t>(state_machine_->state()));
-        return State::RESET;
+        beacon_->manager.VerifyReconstructionShare(from, elem);
       }
-      else
-      {
-        beacon_->manager.ComputePublicKeys();
-      }
-
-      SetTimeToProceed(State::DRY_RUN_SIGNING);
-      return State::DRY_RUN_SIGNING;
     }
-  }
 
-  if (timer_to_proceed_.HasExpired())
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "Timed out during reconstruction.");
-    SetTimeToProceed(State::RESET);
-    beacon_dkg_state_failed_on_->set(static_cast<uint64_t>(state_machine_->state()));
-    return State::RESET;
+    // Reset if reconstruction fails as this breaks the initial assumption on the
+    // number of Byzantine nodes
+    if (!beacon_->manager.RunReconstruction())
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Node: ", beacon_->manager.cabinet_index(),
+                     " DKG failed due to reconstruction failure. Resetting.");
+      SetTimeToProceed(State::RESET);
+      beacon_dkg_state_failed_on_->set(static_cast<uint64_t>(state_machine_->state()));
+      return State::RESET;
+    }
+    else
+    {
+    }
+
+    SetTimeToProceed(State::COMPUTE_PUBLIC_SIGNATURE);
+    return State::COMPUTE_PUBLIC_SIGNATURE;
   }
 
   state_machine_->Delay(std::chrono::milliseconds(10));
   return State::WAIT_FOR_RECONSTRUCTION_SHARES;
+}
+
+BeaconSetupService::State BeaconSetupService::OnComputePublicSignature()
+{
+  std::lock_guard<std::mutex> lock(mutex_);
+  beacon_dkg_state_gauge_->set(static_cast<uint64_t>(State::COMPUTE_PUBLIC_SIGNATURE));
+
+  beacon_->manager.ComputePublicKeys();
+
+  SetTimeToProceed(State::DRY_RUN_SIGNING);
+  return State::DRY_RUN_SIGNING;
 }
 
 /**
@@ -713,8 +717,9 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReconstructionShares()
  * group public signature. If successful, this should generate the first block entropy
  * structure.
  *
- * To do this, a block entropy struct specifying the qualified members, group signature etc. is created, and nodes try and
- * collect threshold signatures (personal) of that hash from members of the qualified set.
+ * To do this, a block entropy struct specifying the qualified members, group signature etc. is
+ * created, and nodes try and collect threshold signatures (personal) of that hash from members of
+ * the qualified set.
  *
  */
 // TODO(HUT): rename dry run to create first signature.
@@ -727,9 +732,9 @@ BeaconSetupService::State BeaconSetupService::OnDryRun()
   // Only on first entry to this function, construct the structure
   if (state_machine_->previous_state() != State::DRY_RUN_SIGNING)
   {
-    //assert(beacon_->seed.size() > 0);
-    //beacon_->manager.SetMessage(beacon_->aeon.seed);
-    //beacon_->member_share = beacon_->manager.Sign();
+    // assert(beacon_->seed.size() > 0);
+    // beacon_->manager.SetMessage(beacon_->aeon.seed);
+    // beacon_->member_share = beacon_->manager.Sign();
 
     // Start to create the block entropy for this attempt
     beacon_->block_entropy                  = BlockEntropy{};
@@ -739,7 +744,7 @@ BeaconSetupService::State BeaconSetupService::OnDryRun()
     beacon_->block_entropy.HashSelf();
 
     //// Check own threshold signature is valid for sanity.
-    //if (beacon_->manager.AddSignaturePart(identity_, beacon_->member_share.signature) !=
+    // if (beacon_->manager.AddSignaturePart(identity_, beacon_->member_share.signature) !=
     //    BeaconManager::AddResult::SUCCESS)
     //{
     //  FETCH_LOG_ERROR(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
@@ -752,39 +757,48 @@ BeaconSetupService::State BeaconSetupService::OnDryRun()
 
     // Add own signature to the structure
     auto own_signature = certificate_->Sign(beacon_->block_entropy.digest);
-    beacon_->block_entropy.confirmations.insert({certificate_->identity().identifier(), own_signature});
+    beacon_->block_entropy.confirmations.insert(
+        {certificate_->identity().identifier(), own_signature});
 
     SendBroadcast(DKGEnvelope{FinalStateMessage{own_signature}});
   }
 
-  auto desired_signatures_min = (beacon_->manager.qual().size() / 2)+1;
+  auto desired_signatures_min = (beacon_->manager.qual().size() / 2) + 1;
 
   // When the timer has expired, try to create the final structure
   if (timer_to_proceed_.HasExpired())
   {
     // For each sig, verify that it matches the hash
-    for(auto const &address_and_sig : final_state_payload_)
+    for (auto const &address_and_sig : final_state_payload_)
     {
-      if(crypto::Verifier::Verify(Identity(address_and_sig.first), beacon_->block_entropy.digest, address_and_sig.second))
+      if (crypto::Verifier::Verify(Identity(address_and_sig.first), beacon_->block_entropy.digest,
+                                   address_and_sig.second))
       {
-        beacon_->block_entropy.confirmations.insert({address_and_sig.first, address_and_sig.second});
+        beacon_->block_entropy.confirmations.insert(
+            {address_and_sig.first, address_and_sig.second});
       }
       else
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "Found a mismatching signature when constructing block entropy. Other's signatures: ", final_state_payload_.size());
+        FETCH_LOG_INFO(
+            LOGGING_NAME,
+            "Found a mismatching signature when constructing block entropy. Other's signatures: ",
+            final_state_payload_.size());
       }
     }
 
     // Current requirement: collect all signatures from qual.
-    if(beacon_->block_entropy.confirmations.size() >= desired_signatures_min)
+    if (beacon_->block_entropy.confirmations.size() >= desired_signatures_min)
     {
       SetTimeToProceed(State::BEACON_READY);
       return State::BEACON_READY;
     }
     else
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Failed to collect enough signatures. Collected: ", beacon_->block_entropy.confirmations.size(), " Desired: ", desired_signatures_min);
+      FETCH_LOG_INFO(LOGGING_NAME, "Failed to collect enough signatures. Collected: ",
+                     beacon_->block_entropy.confirmations.size(),
+                     " Desired: ", desired_signatures_min);
       SetTimeToProceed(State::RESET);
+      beacon_dkg_state_failed_on_->set(static_cast<uint64_t>(state_machine_->state()));
       return State::RESET;
     }
   }
@@ -800,7 +814,8 @@ BeaconSetupService::State BeaconSetupService::OnBeaconReady()
   beacon_dkg_successes_total_->add(1);
 
   FETCH_LOG_INFO(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-                 " ******* New beacon generated! ******* Qual: ", beacon_->manager.qual().size(), " of ", beacon_->aeon.members.size());
+                 " ******* New beacon generated! ******* Qual: ", beacon_->manager.qual().size(),
+                 " of ", beacon_->aeon.members.size());
 
   if (callback_function_)
   {
@@ -1008,7 +1023,7 @@ void BeaconSetupService::OnDkgMessage(MuddleAddress const &       from,
     if (ptr != nullptr)
     {
       // TODO(HUT): might be unnecessary to check given guarantee of reliable broadcast
-      if(final_state_payload_.find(from) == final_state_payload_.end())
+      if (final_state_payload_.find(from) == final_state_payload_.end())
       {
         final_state_payload_.insert({from, ptr->payload_});
       }
@@ -1447,6 +1462,8 @@ void SetTimeBySlots(BeaconSetupService::State state, uint64_t &time_slots_total,
   time_slot_map[BeaconSetupService::State::WAIT_FOR_QUAL_SHARES]           = 10;
   time_slot_map[BeaconSetupService::State::WAIT_FOR_QUAL_COMPLAINTS]       = 10;
   time_slot_map[BeaconSetupService::State::WAIT_FOR_RECONSTRUCTION_SHARES] = 20;
+  time_slot_map[BeaconSetupService::State::WAIT_FOR_RECONSTRUCTION_SHARES] = 10;
+  time_slot_map[BeaconSetupService::State::COMPUTE_PUBLIC_SIGNATURE]       = 10;
   time_slot_map[BeaconSetupService::State::DRY_RUN_SIGNING]                = 10;
 
   time_slot_for_state = time_slot_map[state];
@@ -1535,99 +1552,3 @@ void BeaconSetupService::SetTimeToProceed(BeaconSetupService::State state)
 
 }  // namespace beacon
 }  // namespace fetch
-
-
-//// Only on first entry to this function
-//if (state_machine_->previous_state() != State::DRY_RUN_SIGNING)
-//{
-//  beacon_->manager.SetMessage("test message");
-//  beacon_->member_share = beacon_->manager.Sign();
-//                                                                                                  
-//  // Check own signature
-//  if (beacon_->manager.AddSignaturePart(identity_, beacon_->member_share.signature) !=
-//      BeaconManager::AddResult::SUCCESS)
-//  {
-//    FETCH_LOG_ERROR(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-//                    ": Failed to sign current message.");
-//    SetTimeToProceed(State::RESET);
-//    beacon_dkg_state_failed_on_->set(static_cast<uint64_t>(state_machine_->state()));
-//    return State::RESET;
-//  }
-//                                                                                                  
-//  // insert ourselves - others will insert here also via gossip
-//  dry_run_public_keys_[beacon_->manager.group_public_key()]++;
-//  dry_run_shares_[identity_.identifier()] =
-//      GroupPubKeyPlusSigShare{beacon_->manager.group_public_key(), beacon_->member_share};
-//                                                                                                  
-//  DryRunInfo to_send{beacon_->manager.group_public_key(), beacon_->member_share};
-//                                                                                                  
-//  // Gossip this to everyone
-//  {
-//    fetch::serializers::SizeCounter counter;
-//    counter << to_send;
-//                                                                                                  
-//    fetch::serializers::MsgPackSerializer serializer;
-//    serializer.Reserve(counter.size());
-//    serializer << to_send;
-//    endpoint_.Broadcast(SERVICE_DKG, CHANNEL_SIGN_DRY_RUN, serializer.data());
-//  }
-//}
-//                                                                                                  
-//if (timer_to_proceed_.HasExpired())
-//{
-//  bool found_key     = false;
-//  bool found_our_key = false;
-//                                                                                                  
-//  for (auto const &key_and_count : dry_run_public_keys_)
-//  {
-//    if (key_and_count.second >= QualSize())
-//    {
-//      found_key     = true;
-//      found_our_key = beacon_->manager.group_public_key() == key_and_count.first;
-//    }
-//  }
-//                                                                                                  
-//  if (!found_key)
-//  {
-//    FETCH_LOG_WARN(LOGGING_NAME, "Failed to reach consensus on group public key!");
-//    SetTimeToProceed(State::RESET);
-//    beacon_dkg_state_failed_on_->set(static_cast<uint64_t>(state_machine_->state()));
-//    return State::RESET;
-//  }
-//                                                                                                  
-//  if (!found_our_key)
-//  {
-//    FETCH_LOG_WARN(LOGGING_NAME, "Other nodes didn't agree with our computed group public key!");
-//    SetTimeToProceed(State::RESET);
-//    beacon_dkg_state_failed_on_->set(static_cast<uint64_t>(state_machine_->state()));
-//    return State::RESET;
-//  }
-//                                                                                                  
-//  for (auto const &share : dry_run_shares_)
-//  {
-//    GroupPubKeyPlusSigShare const &shares_for_identity = share.second;
-//                                                                                                  
-//    // Note, only add signatures if it agrees with the group public key
-//    if (shares_for_identity.first == beacon_->manager.group_public_key())
-//    {
-//      beacon_->manager.AddSignaturePart(shares_for_identity.second.identity,
-//                                        shares_for_identity.second.signature);
-//    }
-//  }
-//                                                                                                  
-//  bool const could_sign = beacon_->manager.can_verify() && beacon_->manager.Verify();
-//                                                                                                  
-//  if (could_sign)
-//  {
-//    SetTimeToProceed(State::BEACON_READY);
-//    return State::BEACON_READY;
-//  }
-//  else
-//  {
-//    FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-//                   " Failed to complete dry run for signature signing!");
-//    SetTimeToProceed(State::RESET);
-//    beacon_dkg_state_failed_on_->set(static_cast<uint64_t>(state_machine_->state()));
-//    return State::RESET;
-//  }
-//}

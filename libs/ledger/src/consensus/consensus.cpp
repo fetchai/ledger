@@ -22,11 +22,14 @@
 #include <random>
 #include <utility>
 
+#include "beacon/block_entropy.hpp"
 #include "ledger/consensus/consensus.hpp"
 #include "ledger/consensus/consensus_verifier.hpp"
-#include "beacon/block_entropy.hpp"
 
-#define FETCH_SEGFAULT int *killme = nullptr; (void)killme; killme[1] = 1;
+#define FETCH_SEGFAULT   \
+  int *killme = nullptr; \
+  (void)killme;          \
+  killme[1] = 1;
 
 constexpr char const *LOGGING_NAME = "Consensus";
 
@@ -226,7 +229,7 @@ bool Consensus::ShouldTriggerNewCommittee(Block const &block)
 {
   bool const trigger_point = ShouldTriggerAeon(block.body.block_number, aeon_period_);
 
-  if(last_triggered_committee_ != block.body.hash && trigger_point)
+  if (last_triggered_committee_ != block.body.hash && trigger_point)
   {
     last_triggered_committee_ = block.body.hash;
     return true;
@@ -237,7 +240,7 @@ bool Consensus::ShouldTriggerNewCommittee(Block const &block)
 
 Block GetBlockPriorTo(Block const &current, MainChain const &chain)
 {
-  //std::cerr << "prior: " << current.body.block_number << std::endl; // DELETEME_NH
+  // std::cerr << "prior: " << current.body.block_number << std::endl; // DELETEME_NH
 
   return *chain.GetBlock(current.body.previous_hash);
 }
@@ -248,7 +251,7 @@ Block GetBeginningOfAeon(Block const &current, MainChain const &chain)
 
   // Walk back the chain until we see a block specifying an aeon beginning (corner
   // case for true genesis)
-  while(!ret.body.block_entropy.IsAeonBeginning() && !(current.body.block_number == 0))
+  while (!ret.body.block_entropy.IsAeonBeginning() && !(current.body.block_number == 0))
   {
     ret = GetBlockPriorTo(ret, chain);
   }
@@ -263,7 +266,8 @@ void Consensus::UpdateCurrentBlock(Block const &current)
   if (current.body.block_number > current_block_.body.block_number && !one_ahead)
   {
     FETCH_LOG_ERROR(LOGGING_NAME,
-                    "Updating the current block more than one block ahead is invalid! current: ", current_block_.body.block_number, " Attempt: ", current.body.block_number);
+                    "Updating the current block more than one block ahead is invalid! current: ",
+                    current_block_.body.block_number, " Attempt: ", current.body.block_number);
     FETCH_SEGFAULT;
     return;
   }
@@ -271,17 +275,17 @@ void Consensus::UpdateCurrentBlock(Block const &current)
   /* std::cerr << "udate with " << current.body.block_number << std::endl; // DELETEME_NH */
 
   // Don't try to set previous when we see genesis!
-  if(current.body.block_number == 0)
+  if (current.body.block_number == 0)
   {
     current_block_ = current;
   }
   else
   {
-    //FETCH_LOG_INFO(LOGGING_NAME, "UPDATE with ", current.body.block_number);
+    // FETCH_LOG_INFO(LOGGING_NAME, "UPDATE with ", current.body.block_number);
 
-    current_block_        = current;
-    previous_block_       = GetBlockPriorTo(current_block_, chain_);
-    beginning_of_aeon_    = GetBeginningOfAeon(current_block_, chain_);
+    current_block_     = current;
+    previous_block_    = GetBlockPriorTo(current_block_, chain_);
+    beginning_of_aeon_ = GetBeginningOfAeon(current_block_, chain_);
   }
 
   stake_->UpdateCurrentBlock(current_block_);
@@ -326,7 +330,7 @@ void Consensus::UpdateCurrentBlock(Block const &current)
                              current_block_.body.block_number + aeon_period_,
                              last_block_time + block_interval, current.body.block_entropy);
   }
-  //else if (!(current_block_.body.block_number % aeon_period_ == 0))
+  // else if (!(current_block_.body.block_number % aeon_period_ == 0))
   //{
   //  beacon_->AbortCabinet(current_block_.body.block_number);
   //}
@@ -347,14 +351,14 @@ NextBlockPtr Consensus::GenerateNextBlock()
   if (EntropyGeneratorInterface::Status::OK !=
       beacon_->GenerateEntropy(block_number, ret->body.block_entropy))
   {
-    //FETCH_LOG_INFO(LOGGING_NAME, "Should not gen block: ", block_number);
+    // FETCH_LOG_INFO(LOGGING_NAME, "Should not gen block: ", block_number);
     return {};
   }
 
   // Note here the previous block's entropy determines miner selection
   if (!ShouldGenerateBlock(current_block_, mining_address_))
   {
-    //FETCH_LOG_INFO(LOGGING_NAME, "should not gen blcok 1 ", block_number);
+    // FETCH_LOG_INFO(LOGGING_NAME, "should not gen blcok 1 ", block_number);
     return {};
   }
 
@@ -363,7 +367,7 @@ NextBlockPtr Consensus::GenerateNextBlock()
   ret->body.miner         = mining_address_;
   ret->weight             = GetBlockGenerationWeight(current_block_, mining_address_);
 
-  //FETCH_LOG_INFO(LOGGING_NAME, "Should gen block! ", block_number);
+  // FETCH_LOG_INFO(LOGGING_NAME, "Should gen block! ", block_number);
 
   return ret;
 }
@@ -373,24 +377,25 @@ Status Consensus::ValidBlock(Block const &current) const
   Status ret = Status::YES;
 
   // TODO(HUT): more thorough checks for genesis needed
-  if(current.body.block_number == 0)
+  if (current.body.block_number == 0)
   {
     return Status::YES;
   }
 
   auto const block_preceeding = GetBlockPriorTo(current, chain_);
 
-  BlockEntropy::Cabinet qualified_cabinet;
+  BlockEntropy::Cabinet        qualified_cabinet;
   BlockEntropy::GroupPublicKey group_pub_key;
 
   // If this block would be the start of a new aeon, need to check the stakers for the prev. block
-  if(ShouldTriggerAeon(block_preceeding.body.block_number, aeon_period_))
+  if (ShouldTriggerAeon(block_preceeding.body.block_number, aeon_period_))
   {
     auto const &block_entropy = current.body.block_entropy;
 
-    if(!block_entropy.IsAeonBeginning())
+    if (!block_entropy.IsAeonBeginning())
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Found block that didn't create a new aeon when it should have!");
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "Found block that didn't create a new aeon when it should have!");
       return Status::NO;
     }
 
@@ -401,7 +406,7 @@ Status Consensus::ValidBlock(Block const &current) const
     // Check that the members of qual meet threshold requirements
 
     qualified_cabinet = block_entropy.qualified;
-    group_pub_key = block_entropy.group_public_key;
+    group_pub_key     = block_entropy.group_public_key;
   }
   else
   {
@@ -411,7 +416,7 @@ Status Consensus::ValidBlock(Block const &current) const
   }
 
   //// TODO(HUT): check block itself is signed by a member of qual
-  //if(qualified_cabinet.find(current.body.miner) == qualified_cabinet.end())
+  // if(qualified_cabinet.find(current.body.miner) == qualified_cabinet.end())
   //{
   //  FETCH_LOG_WARN(LOGGING_NAME, "Received block from address not qualified to mine!");
   //  return Status::NO;
@@ -419,29 +424,32 @@ Status Consensus::ValidBlock(Block const &current) const
 
   //// TODO(HUT): this.
   //// Determine that the entropy is correct (a signature of the previous signature)
-  //if(!dkg::BeaconManager::Verify(group_pub_key, block_preceeding.body.block_entropy.group_signature, current.body.block_entropy.group_signature))
+  // if(!dkg::BeaconManager::Verify(group_pub_key,
+  // block_preceeding.body.block_entropy.group_signature,
+  // current.body.block_entropy.group_signature))
   //{
   //  FETCH_LOG_WARN(LOGGING_NAME, "Found block whose entropy isn't a signature of the previous!");
   //  return Status::NO;
   //}
 
   // Perform the time checks.
-  uint64_t current_time    = static_cast<uint64_t>(std::time(nullptr));
+  uint64_t current_time = static_cast<uint64_t>(std::time(nullptr));
 
-  if(current.body.timestamp < block_preceeding.body.timestamp)
+  if (current.body.timestamp < block_preceeding.body.timestamp)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Found block with a timestamp before the previous block in time!");
     return Status::NO;
   }
 
-  if(current.body.timestamp > current_time)
+  if (current.body.timestamp > current_time)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Found block with a timestamp ahead in time! Diff: ",  current.body.timestamp - current_time);
+    FETCH_LOG_WARN(LOGGING_NAME, "Found block with a timestamp ahead in time! Diff: ",
+                   current.body.timestamp - current_time);
     return Status::UNKNOWN;
   }
 
   // TODO(HUT): perform time checks according to block producing intervals.
-  //DeterministicShuffle(committee_copy, previous.body.block_entropy.EntropyAsU64());
+  // DeterministicShuffle(committee_copy, previous.body.block_entropy.EntropyAsU64());
 
   return ret;
 }
