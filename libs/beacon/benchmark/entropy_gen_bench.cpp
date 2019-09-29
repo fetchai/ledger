@@ -25,6 +25,8 @@
 #include "muddle/rpc/server.hpp"
 #include "muddle/subscription.hpp"
 
+#include "muddle/create_muddle_fake.hpp"
+
 #include "beacon/beacon_service.hpp"
 
 #include "benchmark/benchmark.h"
