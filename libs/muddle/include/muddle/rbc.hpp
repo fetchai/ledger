@@ -31,23 +31,6 @@
 namespace fetch {
 namespace muddle {
 
-class BroadcastChannelInterface
-{
-public:
-  using ConstByteArray = byte_array::ConstByteArray;
-  using MuddleAddress  = ConstByteArray;
-  using CabinetMembers = std::set<MuddleAddress>;
-  using WeakRunnable   = std::weak_ptr<core::Runnable>;
-
-  BroadcastChannelInterface()          = default;
-  virtual ~BroadcastChannelInterface() = default;
-
-  virtual bool ResetCabinet(CabinetMembers const &cabinet)                               = 0;
-  virtual void Enable(bool enable)                                                       = 0;
-  virtual void SetQuestion(ConstByteArray const &question, ConstByteArray const &answer) = 0;
-  virtual WeakRunnable GetRunnable()                                                     = 0;
-};
-
 /**
  * Interface which classes implementing a reliable channel should respect.
  *

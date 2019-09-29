@@ -19,11 +19,11 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/reactor.hpp"
 #include "crypto/ecdsa.hpp"
+#include "ledger/shards/manifest_cache_interface.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
 #include "muddle/subscription.hpp"
-#include "ledger/shards/manifest_cache_interface.hpp"
 
 #include "beacon/beacon_service.hpp"
 
@@ -54,14 +54,15 @@ ProverPtr CreateNewCertificate()
 class BeaconServiceInsertable : public fetch::beacon::BeaconService
 {
 public:
-
   BeaconServiceInsertable(MuddleInterface &muddle, ledger::ManifestCacheInterface &manifest_cache,
-                CertificatePtr certificate, SharedEventManager event_manager,
-                uint64_t blocks_per_round = 1) : BeaconService(muddle, manifest_cache, certificate, event_manager, blocks_per_round) {}
+                          CertificatePtr certificate, SharedEventManager event_manager,
+                          uint64_t blocks_per_round = 1)
+    : BeaconService(muddle, manifest_cache, certificate, event_manager, blocks_per_round)
+  {}
 
   void PushNewExecUnit(SharedAeonExecutionUnit beacon)
   {
-    //jkjkstd::lock_guard<std::mutex> lock(mutex_);
+    // jkjkstd::lock_guard<std::mutex> lock(mutex_);
     aeon_exe_queue_.push_back(beacon);
   }
 };
@@ -70,11 +71,13 @@ public:
 class ManifestCacheInterfaceDummy : public fetch::ledger::ManifestCacheInterface
 {
 public:
-
-  ManifestCacheInterfaceDummy()          = default;
+  ManifestCacheInterfaceDummy()  = default;
   ~ManifestCacheInterfaceDummy() = default;
 
-  bool QueryManifest(Address const &, fetch::ledger::Manifest &) { return true; }
+  bool QueryManifest(Address const &, fetch::ledger::Manifest &)
+  {
+    return true;
+  }
 };
 
 struct BeaconSelfContained
@@ -85,7 +88,7 @@ struct BeaconSelfContained
   using MuddleAddress  = byte_array::ConstByteArray;
   using MessageType    = byte_array::ConstByteArray;
 
-  ManifestCacheInterfaceDummy dummy_manifest_cache;
+  ManifestCacheInterfaceDummy                 dummy_manifest_cache;
   BeaconServiceInsertable::SharedEventManager event_manager = fetch::beacon::EventManager::New();
 
   BeaconSelfContained(uint16_t port_number, uint16_t index)
@@ -94,9 +97,9 @@ struct BeaconSelfContained
     , reactor{"ReactorName" + std::to_string(index)}
     , muddle_certificate{CreateNewCertificate()}
     , muddle{muddle::CreateMuddleFake("Test", muddle_certificate, network_manager, "127.0.0.1")}
-    , beacon_service_insertable{*muddle.get(), dummy_manifest_cache, muddle_certificate, event_manager}
-  {
-  }
+    , beacon_service_insertable{*muddle.get(), dummy_manifest_cache, muddle_certificate,
+                                event_manager}
+  {}
 
   void Start()
   {
@@ -124,22 +127,22 @@ struct BeaconSelfContained
   {
     // TODO(HUT): below code
     // Create static/global threshold signature
-    //beacon_service_insertable.PushNewExecUnit(beacon);
+    // beacon_service_insertable.PushNewExecUnit(beacon);
   }
 
-  uint16_t                             muddle_port;
-  network::NetworkManager              network_manager;
-  core::Reactor                        reactor;
-  ProverPtr                            muddle_certificate;
-  Muddle                               muddle;
-  std::mutex                           mutex;
-  bool                                 muddle_is_fake{true};
-  BeaconServiceInsertable              beacon_service_insertable;
+  uint16_t                muddle_port;
+  network::NetworkManager network_manager;
+  core::Reactor           reactor;
+  ProverPtr               muddle_certificate;
+  Muddle                  muddle;
+  std::mutex              mutex;
+  bool                    muddle_is_fake{true};
+  BeaconServiceInsertable beacon_service_insertable;
 };
 
 void EntropyGen(benchmark::State &state)
 {
-  char const *LOGGING_NAME    = "EntropyGen";
+  char const *LOGGING_NAME = "EntropyGen";
 
   SetGlobalLogLevel(LogLevel::ERROR);
 
@@ -218,30 +221,30 @@ void EntropyGen(benchmark::State &state)
       state.ResumeTiming();
     }
 
-
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-//    // Wait until all have seen all entropy
-//    while (true)
-//    {
-//      bool all_seen = true;
-//      uint64_t dummy_entropy;
-//
-//      for (auto const &node : nodes)
-//      {
-//        if (node->beacon_service_insertable.GenerateEntropy(ConstByteArray("none"), 99, dummy_entropy) != nodes_in_test - 1)
-//        {
-//          all_seen = false;
-//        }
-//      }
-//
-//      if (all_seen)
-//      {
-//        break;
-//      }
-//
-//      std::this_thread::sleep_for(std::chrono::milliseconds(5));
-//    }
+    //    // Wait until all have seen all entropy
+    //    while (true)
+    //    {
+    //      bool all_seen = true;
+    //      uint64_t dummy_entropy;
+    //
+    //      for (auto const &node : nodes)
+    //      {
+    //        if (node->beacon_service_insertable.GenerateEntropy(ConstByteArray("none"), 99,
+    //        dummy_entropy) != nodes_in_test - 1)
+    //        {
+    //          all_seen = false;
+    //        }
+    //      }
+    //
+    //      if (all_seen)
+    //      {
+    //        break;
+    //      }
+    //
+    //      std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    //    }
 
     // SetGlobalLogLevel(LogLevel::INFO);
     FETCH_LOG_INFO(LOGGING_NAME, "Finished test: ", nodes_in_test);

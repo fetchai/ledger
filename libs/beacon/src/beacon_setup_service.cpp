@@ -654,9 +654,9 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReconstructionShares()
     // or people in qual complaints should not be considered
     for (auto const &share : reconstruction_shares_received_)
     {
-      // Process reconstruction shares. Reconstruction shares from non-qual members
-      // or people in qual complaints should not be considered
-      for (auto const &share : reconstruction_shares_received_)
+      MuddleAddress from = share.first;
+      if (qual_complaints_manager_.FindComplaint(from) ||
+          beacon_->manager.qual().find(from) == beacon_->manager.qual().end())
       {
         FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                        " received message from invalid sender. Discarding.");
@@ -666,6 +666,7 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReconstructionShares()
       {
         beacon_->manager.VerifyReconstructionShare(from, elem);
       }
+    }
 
     // Reset if reconstruction fails as this breaks the initial assumption on the
     // number of Byzantine nodes
@@ -680,7 +681,6 @@ BeaconSetupService::State BeaconSetupService::OnWaitForReconstructionShares()
     else
     {
     }
-  }
 
     SetTimeToProceed(State::COMPUTE_PUBLIC_SIGNATURE);
     return State::COMPUTE_PUBLIC_SIGNATURE;
