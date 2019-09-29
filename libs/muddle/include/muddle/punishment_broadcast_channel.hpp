@@ -118,6 +118,11 @@ public:
                                     &PunishmentBroadcastChannel::OnResolvePromises);
   }
 
+  ~PunishmentBroadcastChannel()
+  {
+    rpc_server_->Remove(RPC_BEACON);
+  }
+
   // Interface methods
   bool ResetCabinet(CabinetMembers const &cabinet) override
   {

@@ -26,6 +26,8 @@
 #include "network/service/protocol.hpp"
 #include "network/service/types.hpp"
 
+#include <mutex>
+
 namespace fetch {
 namespace service {
 
@@ -43,6 +45,8 @@ public:
   void Add(protocol_handler_type const &name,
            Protocol *                   protocol)  // TODO(issue 19): Rename to AddProtocol
   {
+    std::lock_guard<std::mutex> lock(lock_);
+
     if (name < 1 || name > 255)
     {
       throw serializers::SerializableException(
@@ -57,6 +61,20 @@ public:
     }
 
     members_[name] = protocol;
+  }
+
+  void Remove(protocol_handler_type const &name)
+  {
+    std::lock_guard<std::mutex> lock(lock_);
+
+    if (name < 1 || name > 255)
+    {
+      throw serializers::SerializableException(
+          error::PROTOCOL_RANGE,
+          ConstByteArray(std::to_string(name) + " is out of protocol range (during removal)."));
+    }
+
+    members_[name] = nullptr;
   }
 
 protected:
@@ -125,6 +143,8 @@ private:
     function_handler_type function_number;
     params >> protocol_number >> function_number;
 
+    std::lock_guard<std::mutex> lock(lock_);
+
     auto protocol_pointer = members_[protocol_number];
     if (protocol_pointer == nullptr)
     {
@@ -175,7 +195,8 @@ private:
     }
   }
 
-  Protocol *members_[256] = {nullptr};  // TODO(issue 19): Not thread-safe
+  std::mutex lock_;
+  Protocol * members_[256] = {nullptr};  // TODO(issue 19): Not thread-safe
   friend class FeedSubscriptionManager;
 };
 }  // namespace service
