@@ -55,7 +55,7 @@ enum class OpType : uint16_t
   OP_GELU,
   OP_LAYER_NORM,
   OP_LEAKY_RELU,
-  OP_LEAKY_RELU_OP,
+  OP_PRELU_OP,
   OP_LOG,
   OP_LOGSIGMOID,
   OP_LOGSOFTMAX,
