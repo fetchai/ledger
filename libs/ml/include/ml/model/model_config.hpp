@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/loss_functions/types.hpp"
 #include "ml/optimisation/types.hpp"
 
 namespace fetch {
@@ -29,7 +28,6 @@ struct ModelConfig
 {
   using SizeType         = fetch::math::SizeType;
   using OptimiserType    = fetch::ml::optimisers::OptimiserType;
-  using CostFunctionType = fetch::ml::ops::CostFunctionType;
 
   bool     early_stopping = false;
   bool     test           = false;
@@ -41,7 +39,7 @@ struct ModelConfig
   SizeType batch_size  = SizeType(32);
   SizeType subset_size = fetch::ml::optimisers::SIZE_NOT_SET;
 
-  CostFunctionType cost = CostFunctionType::SOFTMAX_CROSS_ENTROPY;
+  OptimiserType    optimiser  = OptimiserType::ADAM;
 
   bool print_stats = false;
 

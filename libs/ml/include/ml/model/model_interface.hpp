@@ -18,9 +18,11 @@
 //------------------------------------------------------------------------------
 
 #include "ml/core/graph.hpp"
+#include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/ops/loss_functions/types.hpp"
 #include "ml/optimisation/optimiser.hpp"
 #include "ml/optimisation/types.hpp"
+#include "ml/model/model_config.hpp"
 
 #include <utility>
 
@@ -36,30 +38,29 @@ public:
   using SizeType          = fetch::math::SizeType;
   using GraphType         = Graph<TensorType>;
   using DataLoaderType    = dataloaders::DataLoader<TensorType, TensorType>;
-  using OptimiserType     = optimisers::Optimiser<TensorType>;
-  using OptimiserTypeType = optimisers::OptimiserType;
+  using OptimiserType     = typename ModelConfig<DataType>::OptimiserType;
   using GraphPtrType      = typename std::unique_ptr<GraphType>;
   using DataLoaderPtrType = typename std::unique_ptr<DataLoaderType>;
-  using OptimiserPtrType  = typename std::unique_ptr<OptimiserType>;
+  using OptimiserPtrType  = typename std::unique_ptr<optimisers::Optimiser<TensorType>>;
 
   virtual bool Train(SizeType n_steps);
   virtual bool Train(SizeType n_steps, DataType &loss);
   virtual bool Test(DataType &test_loss);
   virtual bool Predict(TensorType &input, TensorType &output);
 
-  explicit ModelInterface(DataLoaderPtrType dataloader_ptr, OptimiserTypeType optimiser_type,
-                          ModelConfig<DataType> model_config = ModelConfig<DataType>())
+  explicit ModelInterface(ModelConfig<DataType> model_config = ModelConfig<DataType>())
     : model_config_(std::move(model_config))
     , dataloader_ptr_(std::move(dataloader_ptr))
     , optimiser_type_(optimiser_type)
   {}
+
+  void Compile(OptimiserType optimiser_type, ops::LossType loss_type);
 
 protected:
   ModelConfig<DataType> model_config_;
   GraphPtrType          graph_ptr_ = std::make_unique<GraphType>();
   DataLoaderPtrType     dataloader_ptr_;
   OptimiserPtrType      optimiser_ptr_;
-  OptimiserTypeType     optimiser_type_;
 
   std::string input_;
   std::string label_;
@@ -74,6 +75,23 @@ protected:
 private:
   bool SetOptimiser();
 };
+
+template <typename TensorType>
+void ModelInterface<TensorType>::Compile(OptimiserType optimiser_type, ops::LossType loss_type)
+{
+  //
+
+  // set the optimiser
+  if (!optimiser_set_)
+  {
+    if (!(fetch::ml::optimisers::AddOptimiser<TensorType>(optimiser_type, std::move(this->optimiser_ptr_), this->graph_ptr_, std::vector<std::string>{this->input_}, this->label_, this->error_,
+            this->model_config_.learning_rate_param)))
+    {
+      throw std::runtime_error("DNNClassifier initialised with unrecognised optimiser");
+    }
+    optimiser_set_ = true;
+  }
+}
 
 /**
  * An interface to train that doesn't report loss
@@ -91,10 +109,6 @@ bool ModelInterface<TensorType>::Train(SizeType n_steps)
 template <typename TensorType>
 bool ModelInterface<TensorType>::Train(SizeType n_steps, DataType &loss)
 {
-  if (!SetOptimiser())
-  {
-    throw std::runtime_error("failed to set up  optimiser");
-  }
 
   dataloader_ptr_->SetMode(dataloaders::DataLoaderMode::TRAIN);
 
@@ -153,10 +167,6 @@ bool ModelInterface<TensorType>::Train(SizeType n_steps, DataType &loss)
 template <typename TensorType>
 bool ModelInterface<TensorType>::Test(DataType &test_loss)
 {
-  if (!SetOptimiser())
-  {
-    throw std::runtime_error("failed to set up  optimiser");
-  }
 
   dataloader_ptr_->SetMode(dataloaders::DataLoaderMode::TEST);
 
@@ -176,10 +186,6 @@ bool ModelInterface<TensorType>::Test(DataType &test_loss)
 template <typename TensorType>
 bool ModelInterface<TensorType>::Predict(TensorType &input, TensorType &output)
 {
-  if (!SetOptimiser())
-  {
-    throw std::runtime_error("failed to set up optimiser");
-  }
 
   this->graph_ptr_->SetInput(input_, input);
   output = this->graph_ptr_->Evaluate(output_);
@@ -199,31 +205,6 @@ void ModelInterface<TensorType>::PrintStats(SizeType epoch, DataType loss, DataT
   {
     std::cout << "epoch: " << epoch << ", loss: " << loss << std::endl;
   }
-}
-
-/**
- * The optimiser has to be set with a constructed graph. So this must be called after
- * the concrete model has finished set up. Since ModelInterface doesn't know when this
- * will occur; we just check for the flag before training or testing and set up if
- * needed
- * @return
- */
-template <typename TensorType>
-bool ModelInterface<TensorType>::SetOptimiser()
-{
-  if (!optimiser_set_)
-  {
-    // instantiate optimiser
-    if (!(fetch::ml::optimisers::AddOptimiser<TensorType>(
-            optimiser_type_, std::move(this->optimiser_ptr_), std::move(this->graph_ptr_),
-            std::vector<std::string>{this->input_}, this->label_, this->error_,
-            this->model_config_.learning_rate_param)))
-    {
-      throw std::runtime_error("DNNClassifier initialised with unrecognised optimiser");
-    }
-    optimiser_set_ = true;
-  }
-  return true;
 }
 
 }  // namespace model

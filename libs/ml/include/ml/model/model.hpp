@@ -43,8 +43,14 @@ public:
   /// Construct / Desctruct ///
   /////////////////////////////
 
-  Model(DataLoaderPtrType data_loader_ptr, OptimiserType optimiser_type,
-        ModelConfig<DataType> model_config, std::vector<SizeType> const &hidden_layers);
+//  Model(DataLoaderPtrType data_loader_ptr, OptimiserType optimiser_type,
+//        ModelConfig<DataType> model_config, std::vector<SizeType> const &hidden_layers);
+//
+//  explicit Model(ModelConfig<DataType> model_config = ModelConfig<DataType>())
+//    : ModelInterface<TensorType>(model_config)
+//  {}
+
+  Model(ModelConfig<DataType> model_config = new ModelConfig<DataType>);
 
   explicit Model(ModelConfig<DataType> model_config = ModelConfig<DataType>())
     : ModelInterface<TensorType>(model_config)
@@ -62,11 +68,10 @@ public:
  * @param optimiser_type type of optimiser to run
  */
 template <typename TensorType>
-Model<TensorType>::Model(DataLoaderPtrType data_loader_ptr, OptimiserType optimiser_type,
-                         ModelConfig<DataType>        model_config,
-                         std::vector<SizeType> const &hidden_layers)
-  : ModelInterface<TensorType>(data_loader_ptr, optimiser_type, model_config)
+Model<TensorType>::Model(ModelConfig<DataType> model_config) : ModelInterface<TensorType>(model_config)
 {
+
+
 
   assert(!hidden_layers.empty());
 
