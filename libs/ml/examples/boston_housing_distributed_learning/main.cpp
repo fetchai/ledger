@@ -194,9 +194,9 @@ void SynchroniseWeights(std::vector<std::shared_ptr<TrainingClient<TensorType>>>
   }
 
   // Update models of all clients by average model
-  for (uint32_t i(0); i < clients.size(); ++i)
+  for (auto &c : clients)
   {
-    clients[i]->SetWeights(new_weights);
+    c->SetWeights(new_weights);
   }
 }
 
