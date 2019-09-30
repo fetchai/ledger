@@ -16,10 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include <fstream>
+#include <cstring>
+
 #include "vm/vm.hpp"
 #include "vm/module.hpp"
 #include "vm/compiler.hpp"
 #include "vm/ir.hpp"
+#include "vm/opcodes.hpp"
 
 #include "benchmark/benchmark.h"
 
@@ -33,6 +37,7 @@ using fetch::vm::IR;
 namespace {
 
 char const *DEF_STRING = R"(
+  //DEF_STRING
   function main()
     var x : String = "x";
     x;
@@ -40,6 +45,7 @@ char const *DEF_STRING = R"(
 )";
 
 char const *ADD_STRING = R"(
+  //ADD_STRING
   function main()
     var x : String = "x";
     x + x;
@@ -47,6 +53,7 @@ char const *ADD_STRING = R"(
 )";
 
 char const *DEF_UINT32 = R"(
+  //DEF_UINT32
   function main()
     var x : UInt32 = 1u32;
     x;
@@ -54,6 +61,7 @@ char const *DEF_UINT32 = R"(
 )";
 
 char const *ADD_UINT32 = R"(
+  //ADD_UINT32
   function main()
     var x : UInt32 = 1u32;
     x + x;
@@ -61,6 +69,7 @@ char const *ADD_UINT32 = R"(
 )";
 
 char const *SUB_UINT32 = R"(
+  //SUB_UINT32
   function main()
     var x : UInt32 = 1u32;
     x - x;
@@ -68,6 +77,7 @@ char const *SUB_UINT32 = R"(
 )";
 
 char const *MUL_UINT32 = R"(
+  //MUL_UINT32
   function main()
     var x : UInt32 = 1u32;
     x * x;
@@ -75,11 +85,15 @@ char const *MUL_UINT32 = R"(
 )";
 
 char const *DIV_UINT32 = R"(
+  //DIV_UINT32
   function main()
     var x : UInt32 = 1u32;
     x / x;
   endfunction
 )";
+
+char const *DEF_STR = R"(DEF_STRING)";
+char const *DEF_U32 = R"(DEF_UINT32)";
 
 void AddInstruction(benchmark::State &state, char const *ETCH_CODE) {
   Module module;
@@ -100,6 +114,20 @@ void AddInstruction(benchmark::State &state, char const *ETCH_CODE) {
     throw std::runtime_error("Unable to generate IR");
   }
 
+  auto function = executable.functions.begin();
+
+  // Add a push operation to the baseline tests to isolate the arithmetic operations in the main opcode tests
+  if (!(strstr(ETCH_CODE,DEF_STR) == NULL))
+  {
+    Executable::Instruction instruction(fetch::vm::Opcodes::PushString);
+    function->AddInstruction(instruction);
+  }
+  else if (!(strstr(ETCH_CODE,DEF_U32) == NULL))
+  {
+    Executable::Instruction instruction(fetch::vm::Opcodes::PushVariable);
+    function->AddInstruction(instruction);
+  }
+
   // benchmark iterations
   std::string error{};
   Variant output{};
@@ -107,9 +135,15 @@ void AddInstruction(benchmark::State &state, char const *ETCH_CODE) {
     vm.Execute(executable, "main", error, output);
   }
 
-  auto *function = executable.FindFunction("main");
-
-  std::string name = function->name;
+  // write opcode lists to file
+  std::ofstream ofs("opcode_lists.csv", std::fstream::app);
+  std::vector<uint16_t> opcodes;
+  for (auto& it : function->instructions)
+  {
+    opcodes.push_back(it.opcode);
+    ofs << it.opcode << " ";
+  }
+  ofs << std::endl;
 
 }
 
