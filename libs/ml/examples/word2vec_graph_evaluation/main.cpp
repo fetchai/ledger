@@ -79,8 +79,8 @@ int main(int argc, char **argv)
       sg_layer->GetEmbeddings(sg_layer);
 
   DataType score =
-      TestWithAnalogies<TensorType>(data_loader, embeddings->get_weights(), analogy_file);
+      TestWithAnalogies<TensorType>(data_loader, embeddings->GetWeights(), analogy_file);
   std::cout << "Score on analogies task: " << score * 100 << "%" << std::endl;
-  PrintKNN(data_loader, embeddings->get_weights(), "three", 20);
-  PrintWordAnalogy(data_loader, embeddings->get_weights(), "king", "queen", "father", 20);
+  PrintKNN(data_loader, embeddings->GetWeights(), "three", 20);
+  PrintWordAnalogy(data_loader, embeddings->GetWeights(), "king", "queen", "father", 20);
 }
