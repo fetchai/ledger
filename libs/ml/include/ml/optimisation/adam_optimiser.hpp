@@ -83,10 +83,10 @@ void AdamOptimiser<T>::Init()
 {
   for (auto &train : this->graph_trainables_)
   {
-    this->cache_.emplace_back(TensorType(train->get_weights().shape()));
-    this->momentum_.emplace_back(TensorType(train->get_weights().shape()));
-    this->mt_.emplace_back(TensorType(train->get_weights().shape()));
-    this->vt_.emplace_back(TensorType(train->get_weights().shape()));
+    this->cache_.emplace_back(TensorType(train->GetWeights().shape()));
+    this->momentum_.emplace_back(TensorType(train->GetWeights().shape()));
+    this->mt_.emplace_back(TensorType(train->GetWeights().shape()));
+    this->vt_.emplace_back(TensorType(train->GetWeights().shape()));
   }
   ResetCache();
 }
