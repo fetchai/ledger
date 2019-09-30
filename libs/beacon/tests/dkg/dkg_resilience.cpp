@@ -471,16 +471,8 @@ struct FaultyDkgMember : DkgMember
   {
     SharedAeonExecutionUnit beacon = std::make_shared<AeonExecutionUnit>();
 
-    //// Determines if we are observing or actively participating
-    // if (cabinet.find(muddle_certificate->identity().identifier()) == cabinet.end())
-    //{
-    //  beacon->observe_only = true;
-    //}
-    // else
-    //{
     beacon->manager.SetCertificate(muddle_certificate);
     beacon->manager.NewCabinet(cabinet, threshold);
-    //}
 
     // Setting the aeon details
     beacon->aeon.round_start = 0;
@@ -489,8 +481,6 @@ struct FaultyDkgMember : DkgMember
     // Plus 5 so tests pass on first DKG attempt
     beacon->aeon.start_reference_timepoint = static_cast<uint64_t>(std::time(nullptr)) + 5;
 
-    // Even "observe only" details need to pass through the setup phase
-    // to preserve order.
     dkg.QueueSetup(beacon);
   }
 
@@ -529,16 +519,8 @@ struct HonestDkgMember : DkgMember
   {
     SharedAeonExecutionUnit beacon = std::make_shared<AeonExecutionUnit>();
 
-    //// Determines if we are observing or actively participating
-    // if (cabinet.find(muddle_certificate->identity().identifier()) == cabinet.end())
-    //{
-    //  beacon->observe_only = true;
-    //}
-    // else
-    {
-      beacon->manager.SetCertificate(muddle_certificate);
-      beacon->manager.NewCabinet(cabinet, threshold);
-    }
+    beacon->manager.SetCertificate(muddle_certificate);
+    beacon->manager.NewCabinet(cabinet, threshold);
 
     // Setting the aeon details
     beacon->aeon.round_start = 0;
@@ -547,8 +529,6 @@ struct HonestDkgMember : DkgMember
     // Plus 5 so tests pass on first DKG attempt
     beacon->aeon.start_reference_timepoint = static_cast<uint64_t>(std::time(nullptr)) + 5;
 
-    // Even "observe only" details need to pass through the setup phase
-    // to preserve order.
     dkg.QueueSetup(beacon);
   }
 

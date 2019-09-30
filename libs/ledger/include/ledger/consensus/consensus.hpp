@@ -55,8 +55,6 @@ public:
   void         Reset(StakeSnapshot const &snapshot);
   void         Refresh() override;
 
-  // void         SetGenesis(Block const &current) override;
-
   StakeManagerPtr stake();
   void            SetThreshold(double threshold);
   void            SetCommitteeSize(uint64_t size);

@@ -34,6 +34,8 @@ using fetch::generics::MilliTimer;
 namespace fetch {
 namespace beacon {
 
+char const *ToString(BeaconService::State state);
+
 BeaconService::BeaconService(MuddleInterface &               muddle,
                              ledger::ManifestCacheInterface &manifest_cache,
                              CertificatePtr certificate, SharedEventManager event_manager)
@@ -325,16 +327,6 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
     current_entropy_.entropy   = crypto::Hash<crypto::SHA256>(crypto::Hash<crypto::SHA256>(sign));
 
     beacon_entropy_last_generated_->set(current_entropy_.round);
-
-    // Broadcasting the entropy to those listening, but not participating
-    if (broadcasting_)
-    {
-      Serializer msgser;
-      msgser << current_entropy_;
-      endpoint_.Broadcast(SERVICE_DKG, CHANNEL_ENTROPY_DISTRIBUTION, msgser.data());
-    }
-
-    FETCH_LOG_INFO(LOGGING_NAME, "Generated new entropy value");
 
     return State::COMPLETE;
   }

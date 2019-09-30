@@ -172,16 +172,8 @@ BeaconSetupService::State BeaconSetupService::OnIdle()
 
     aeon_exe_queue_.pop_front();
 
-    // Observe only does not require any setup
-    // if (beacon_->observe_only)
-    //{
-    //  return State::BEACON_READY;
-    //}
-    // else
-    {
-      SetTimeToProceed(State::RESET);
-      return State::RESET;
-    }
+    SetTimeToProceed(State::RESET);
+    return State::RESET;
   }
 
   state_machine_->Delay(std::chrono::milliseconds(100));
@@ -742,16 +734,6 @@ BeaconSetupService::State BeaconSetupService::OnDryRun()
     beacon_->block_entropy.group_public_key = beacon_->manager.group_public_key();
     beacon_->block_entropy.block_number     = beacon_->aeon.round_start;
     beacon_->block_entropy.HashSelf();
-
-    //// Check own threshold signature is valid for sanity.
-    // if (beacon_->manager.AddSignaturePart(identity_, beacon_->member_share.signature) !=
-    //    BeaconManager::AddResult::SUCCESS)
-    //{
-    //  FETCH_LOG_ERROR(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
-    //                  ": Failed to sign current message during DKG final stage!");
-    //  SetTimeToProceed(State::RESET);
-    //  return State::RESET;
-    //}
 
     assert(beacon_->block_entropy.digest.size() > 0);
 

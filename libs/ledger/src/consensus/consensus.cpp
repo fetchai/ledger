@@ -26,11 +26,6 @@
 #include "ledger/consensus/consensus.hpp"
 #include "ledger/consensus/consensus_verifier.hpp"
 
-#define FETCH_SEGFAULT   \
-  int *killme = nullptr; \
-  (void)killme;          \
-  killme[1] = 1;
-
 constexpr char const *LOGGING_NAME = "Consensus";
 
 using Consensus       = fetch::ledger::Consensus;
@@ -240,8 +235,6 @@ bool Consensus::ShouldTriggerNewCommittee(Block const &block)
 
 Block GetBlockPriorTo(Block const &current, MainChain const &chain)
 {
-  // std::cerr << "prior: " << current.body.block_number << std::endl; // DELETEME_NH
-
   return *chain.GetBlock(current.body.previous_hash);
 }
 
@@ -272,8 +265,6 @@ void Consensus::UpdateCurrentBlock(Block const &current)
     return;
   }
 
-  /* std::cerr << "udate with " << current.body.block_number << std::endl; // DELETEME_NH */
-
   // Don't try to set previous when we see genesis!
   if (current.body.block_number == 0)
   {
@@ -281,15 +272,12 @@ void Consensus::UpdateCurrentBlock(Block const &current)
   }
   else
   {
-    // FETCH_LOG_INFO(LOGGING_NAME, "UPDATE with ", current.body.block_number);
-
     current_block_     = current;
     previous_block_    = GetBlockPriorTo(current_block_, chain_);
     beginning_of_aeon_ = GetBeginningOfAeon(current_block_, chain_);
   }
 
   stake_->UpdateCurrentBlock(current_block_);
-  //  beacon_->ExternallySeenBlockHeight(current_block_.body.block_number);
 
   if (ShouldTriggerNewCommittee(current_block_))
   {
@@ -330,10 +318,8 @@ void Consensus::UpdateCurrentBlock(Block const &current)
                              current_block_.body.block_number + aeon_period_,
                              last_block_time + block_interval, current.body.block_entropy);
   }
-  // else if (!(current_block_.body.block_number % aeon_period_ == 0))
-  //{
-  //  beacon_->AbortCabinet(current_block_.body.block_number);
-  //}
+
+  beacon_->AbortCabinet(current_block_.body.block_number);
 }
 
 // TODO(HUT): put block number confirmation/check here (?)
@@ -351,14 +337,12 @@ NextBlockPtr Consensus::GenerateNextBlock()
   if (EntropyGeneratorInterface::Status::OK !=
       beacon_->GenerateEntropy(block_number, ret->body.block_entropy))
   {
-    // FETCH_LOG_INFO(LOGGING_NAME, "Should not gen block: ", block_number);
     return {};
   }
 
   // Note here the previous block's entropy determines miner selection
   if (!ShouldGenerateBlock(current_block_, mining_address_))
   {
-    // FETCH_LOG_INFO(LOGGING_NAME, "should not gen blcok 1 ", block_number);
     return {};
   }
 
@@ -366,8 +350,6 @@ NextBlockPtr Consensus::GenerateNextBlock()
   ret->body.block_number  = block_number;
   ret->body.miner         = mining_address_;
   ret->weight             = GetBlockGenerationWeight(current_block_, mining_address_);
-
-  // FETCH_LOG_INFO(LOGGING_NAME, "Should gen block! ", block_number);
 
   return ret;
 }
@@ -422,7 +404,7 @@ Status Consensus::ValidBlock(Block const &current) const
   //  return Status::NO;
   //}
 
-  //// TODO(HUT): this.
+  //// TODO(HUT): check signatures are an unbroken chain.
   //// Determine that the entropy is correct (a signature of the previous signature)
   // if(!dkg::BeaconManager::Verify(group_pub_key,
   // block_preceeding.body.block_entropy.group_signature,
