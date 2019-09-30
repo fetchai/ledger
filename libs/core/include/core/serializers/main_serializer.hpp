@@ -46,6 +46,12 @@ namespace serializers {
 class LargeObjectSerializeHelper
 {
 public:
+  LargeObjectSerializeHelper() = default;
+
+  explicit LargeObjectSerializeHelper(fetch::byte_array::ConstByteArray buf)
+    : buffer{std::move(buf)}
+  {}
+
   template <typename T>
   void operator<<(T const &large_object)
   {
@@ -53,7 +59,7 @@ public:
   }
 
   template <typename T>
-  void operator>>(T const &large_object)
+  void operator>>(T &large_object)
   {
     Deserialize(large_object);
   }
