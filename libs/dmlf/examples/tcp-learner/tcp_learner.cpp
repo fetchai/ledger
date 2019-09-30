@@ -53,13 +53,12 @@ int main(int argc, char **argv)
   std::shared_ptr<fetch::dmlf::AbstractLearnerNetworker> tcp_learner =
       std::make_shared<fetch::dmlf::TcpLearnerNetworker>(uris);
   FETCH_LOG_INFO(LOGGING_NAME, "Proceeding to start ...");
-  
 
   // tcp_learner->start();
   std::this_thread::sleep_for(5s);
 
   tcp_learner->Initialize<Update<std::string>>();
-  
+
   int                      num_upds = 10;
   std::shared_ptr<IUpdate> upd;
   FETCH_LOG_INFO(LOGGING_NAME, "Updates to push:");

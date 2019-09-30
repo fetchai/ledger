@@ -49,7 +49,7 @@ protected:
   static std::string       processNameToTargetDir(const std::string name);
   void                     tx(const std::string &target, const Bytes &data);
   std::vector<std::string> getUpdateNames() const;
-  void checkUpdates();
+  void                     checkUpdates();
 
 private:
   FilepassingLearnerNetworker(const FilepassingLearnerNetworker &other) = delete;
@@ -63,7 +63,7 @@ private:
   std::string              dir_;
 
   std::shared_ptr<std::thread> watcher_;
-  bool running_;
+  bool                         running_;
 };
 
 }  // namespace dmlf

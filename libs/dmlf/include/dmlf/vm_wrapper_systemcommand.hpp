@@ -22,8 +22,7 @@
 namespace fetch {
 namespace dmlf {
 
-
-class VmWrapperSystemcommand: public VmWrapperInterface
+class VmWrapperSystemcommand : public VmWrapperInterface
 {
 public:
   using OutputHandler = VmWrapperInterface::OutputHandler;
@@ -33,21 +32,19 @@ public:
   using Status        = VmWrapperInterface::Status;
 
   VmWrapperSystemcommand()
-  {
-  }
+  {}
   virtual ~VmWrapperSystemcommand()
-  {
-  }
+  {}
 
-  std::vector<std::string> Setup(const Flags &/*flags*/)
+  std::vector<std::string> Setup(const Flags & /*flags*/)
   {
     return std::vector<std::string>();
   }
   std::vector<std::string> Load(std::string source)
   {
-    status_ = VmWrapperInterface::COMPILING;
+    status_  = VmWrapperInterface::COMPILING;
     command_ = source;
-    status_ = VmWrapperInterface::COMPILED;
+    status_  = VmWrapperInterface::COMPILED;
     return std::vector<std::string>();
   }
   virtual void Execute(std::string entrypoint, const Params params);
@@ -55,14 +52,19 @@ public:
   virtual void SetStdin(InputHandler);
   virtual void SetStderr(OutputHandler);
 
-  virtual Status status(void) const { return status_; }
+  virtual Status status(void) const
+  {
+    return status_;
+  }
+
 protected:
-  Status status_ = VmWrapperInterface::WAITING;
+  Status      status_  = VmWrapperInterface::WAITING;
   std::string command_ = "";
 
-  enum {
+  enum
+  {
     WRITE_SIDE = 1,
-    READ_SIDE = 0,
+    READ_SIDE  = 0,
   };
   int stdin_pipe[2];
   int stderr_pipe[2];
@@ -72,12 +74,13 @@ protected:
 
   OutputHandler oh_;
   OutputHandler eh_;
-  InputHandler ih_;
+  InputHandler  ih_;
+
 private:
   VmWrapperSystemcommand(const VmWrapperSystemcommand &other) = delete;
-  VmWrapperSystemcommand &operator=(const VmWrapperSystemcommand &other) = delete;
-  bool operator==(const VmWrapperSystemcommand &other) = delete;
-  bool operator<(const VmWrapperSystemcommand &other) = delete;
+  VmWrapperSystemcommand &operator=(const VmWrapperSystemcommand &other)  = delete;
+  bool                    operator==(const VmWrapperSystemcommand &other) = delete;
+  bool                    operator<(const VmWrapperSystemcommand &other)  = delete;
 };
 
 }  // namespace dmlf

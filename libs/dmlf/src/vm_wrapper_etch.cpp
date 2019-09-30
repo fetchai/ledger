@@ -25,20 +25,21 @@
 namespace fetch {
 namespace dmlf {
 
-std::vector<std::string> VmWrapperEtch::Setup(const Flags &/*flags*/)
+std::vector<std::string> VmWrapperEtch::Setup(const Flags & /*flags*/)
 {
-  module_ = VmFactory::GetModule(VmFactory::USE_SMART_CONTRACTS); // Set according to flags
+  module_ = VmFactory::GetModule(VmFactory::USE_SMART_CONTRACTS);  // Set according to flags
   status_ = VmWrapperInterface::WAITING;
   return std::vector<std::string>();
 }
 std::vector<std::string> VmWrapperEtch::Load(std::string source)
 {
-  status_ = VmWrapperInterface::COMPILING;
-  command_ = source;
-  fetch::vm::SourceFiles files = {{"default.etch", source}};  
-  auto errors =  VmFactory::Compile(module_, files, *executable_);
+  status_                       = VmWrapperInterface::COMPILING;
+  command_                      = source;
+  fetch::vm::SourceFiles files  = {{"default.etch", source}};
+  auto                   errors = VmFactory::Compile(module_, files, *executable_);
 
-  if (!errors.empty()) {
+  if (!errors.empty())
+  {
     status_ = VmWrapperInterface::FAILED_COMPILATION;
     return errors;
   }
@@ -52,9 +53,9 @@ std::vector<std::string> VmWrapperEtch::Load(std::string source)
 void VmWrapperEtch::Execute(std::string entrypoint, const Params /*params*/)
 {
   status_ = VmWrapperInterface::RUNNING;
-  std::string error;
-  fetch::vm::Variant     output;
-  outputStream_ = std::stringstream(); // Clear the output stream
+  std::string        error;
+  fetch::vm::Variant output;
+  outputStream_ = std::stringstream();  // Clear the output stream
   /*auto result = */ vm_->Execute(*executable_, entrypoint, error, output);
 
   DoOutput();
@@ -62,14 +63,17 @@ void VmWrapperEtch::Execute(std::string entrypoint, const Params /*params*/)
   status_ = VmWrapperInterface::COMPLETED;
 }
 
-void VmWrapperEtch::DoOutput() {
+void VmWrapperEtch::DoOutput()
+{
   std::string line;
-  while (std::getline(outputStream_, line)) {
+  while (std::getline(outputStream_, line))
+  {
     outputHandler_(line);
   }
 }
 
-void VmWrapperEtch::SetStdout(OutputHandler handler) {
+void VmWrapperEtch::SetStdout(OutputHandler handler)
+{
   outputHandler_ = handler;
 }
 

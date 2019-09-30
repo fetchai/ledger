@@ -26,7 +26,7 @@ namespace dmlf {
 
 class PyEnvInner;
 
-class VmWrapperPython3: public VmWrapperInterface
+class VmWrapperPython3 : public VmWrapperInterface
 {
 public:
   using OutputHandler = VmWrapperInterface::OutputHandler;
@@ -34,7 +34,6 @@ public:
   using Params        = VmWrapperInterface::Params;
   using Flags         = VmWrapperInterface::Flags;
   using Status        = VmWrapperInterface::Status;
-
 
   VmWrapperPython3();
   virtual ~VmWrapperPython3();
@@ -44,7 +43,7 @@ public:
     status_ = VmWrapperInterface::FAILED_RUN;
   }
 
-  std::vector<std::string> Setup(const Flags &/*flags*/)
+  std::vector<std::string> Setup(const Flags & /*flags*/)
   {
     return std::vector<std::string>();
   }
@@ -55,10 +54,23 @@ public:
     return std::vector<std::string>();
   }
 
-  virtual void SetStdout(OutputHandler oh)   { oh_ = oh; }
-  virtual void SetStdin(InputHandler ih)     { ih_ = ih; }
-  virtual void SetStderr(OutputHandler eh)   { eh_ = eh; }
-  virtual Status status(void) const { return status_; }
+  virtual void SetStdout(OutputHandler oh)
+  {
+    oh_ = oh;
+  }
+  virtual void SetStdin(InputHandler ih)
+  {
+    ih_ = ih;
+  }
+  virtual void SetStderr(OutputHandler eh)
+  {
+    eh_ = eh;
+  }
+  virtual Status status(void) const
+  {
+    return status_;
+  }
+
 protected:
   std::shared_ptr<PyEnvInner> py_;
 
@@ -66,13 +78,14 @@ protected:
 
   OutputHandler oh_;
   OutputHandler eh_;
-  InputHandler ih_;
+  InputHandler  ih_;
+
 private:
   VmWrapperPython3(const VmWrapperPython3 &other) = delete;
-  VmWrapperPython3 &operator=(const VmWrapperPython3 &other) = delete;
-  bool operator==(const VmWrapperPython3 &other) = delete;
-  bool operator<(const VmWrapperPython3 &other) = delete;
+  VmWrapperPython3 &operator=(const VmWrapperPython3 &other)  = delete;
+  bool              operator==(const VmWrapperPython3 &other) = delete;
+  bool              operator<(const VmWrapperPython3 &other)  = delete;
 };
 
-}
-}
+}  // namespace dmlf
+}  // namespace fetch

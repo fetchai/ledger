@@ -34,16 +34,15 @@ public:
   virtual ~IQueue()
   {}
 
-  virtual void PushNewMessage(Bytes msg) = 0;
-  virtual std::size_t size() const  = 0; 
-  
+  virtual void        PushNewMessage(Bytes msg) = 0;
+  virtual std::size_t size() const              = 0;
+
 private:
   IQueue(const IQueue &other) = delete;
   IQueue &operator=(const IQueue &other)  = delete;
-  bool               operator==(const IQueue &other) = delete;
-  bool               operator<(const IQueue &other)  = delete;
+  bool    operator==(const IQueue &other) = delete;
+  bool    operator<(const IQueue &other)  = delete;
 };
 
 }  // namespace dmlf
 }  // namespace fetch
-

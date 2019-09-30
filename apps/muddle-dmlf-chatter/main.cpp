@@ -32,65 +32,63 @@
 //#include "vm/variant.hpp"
 //#include "vm/vm.hpp"
 //#include "vm_modules/vm_factory.hpp"
+#include "dmlf/filepassing_learner_networker.hpp"
 #include "dmlf/iupdate.hpp"
 #include "dmlf/local_learner_networker.hpp"
-#include "dmlf/filepassing_learner_networker.hpp"
 #include "dmlf/muddle2_learner_networker.hpp"
 #include "dmlf/simple_cycling_algorithm.hpp"
 #include "dmlf/update.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
 
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <ostream>
 #include <stdexcept>
 #include <string>
-#include <unordered_map>
-#include <vector>
-#include <chrono>
-#include <ostream>
 #include <thread>
+#include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
-using DataType   = fetch::fixed_point::FixedPoint<32, 32>;
-using TensorType = fetch::math::Tensor<DataType>;
+using DataType             = fetch::fixed_point::FixedPoint<32, 32>;
+using TensorType           = fetch::math::Tensor<DataType>;
 using UpdateTypeForTesting = fetch::dmlf::Update<TensorType>;
 
 class Learner
+{
+public:
+  std::shared_ptr<fetch::dmlf::Muddle2LearnerNetworker>  actual;
+  std::shared_ptr<fetch::dmlf::AbstractLearnerNetworker> interface;
+
+  Learner(const std::string cloud_config, std::size_t instance_number)
   {
-  public:
-    std::shared_ptr<fetch::dmlf::Muddle2LearnerNetworker> actual;
-    std::shared_ptr<fetch::dmlf::AbstractLearnerNetworker> interface;
+    actual = std::make_shared<fetch::dmlf::Muddle2LearnerNetworker>(cloud_config, instance_number);
+    interface = actual;
+    interface->Initialize<UpdateTypeForTesting>();
+  }
 
-    Learner(const std::string cloud_config,
-            std::size_t instance_number)
-    {
-      actual = std::make_shared<fetch::dmlf::Muddle2LearnerNetworker>(cloud_config, instance_number);
-      interface = actual;
-      interface -> Initialize<UpdateTypeForTesting>();
-    }
-
-    void PretendToLearn()
-    {
-      static int sequence_number = 1;
-      auto t = TensorType(TensorType::SizeType(2));
-      t.Fill(DataType(sequence_number++));
-      auto r = std::vector<TensorType>();
-      r.push_back(t);
-      interface -> pushUpdate(std::make_shared<UpdateTypeForTesting>(r));
-    }
-
-  };
+  void PretendToLearn()
+  {
+    static int sequence_number = 1;
+    auto       t               = TensorType(TensorType::SizeType(2));
+    t.Fill(DataType(sequence_number++));
+    auto r = std::vector<TensorType>();
+    r.push_back(t);
+    interface->pushUpdate(std::make_shared<UpdateTypeForTesting>(r));
+  }
+};
 using Muddle2LearnerNetworker = fetch::dmlf::Muddle2LearnerNetworker;
 
 #pragma clang diagnostic ignored "-Wunused-parameter"
-int main(int argc, char **argv)
+int                      main(int argc, char **argv)
 {
-  auto config = std::string(argv[1]);
+  auto config          = std::string(argv[1]);
   auto instance_number = std::atoi(argv[2]);
 
   std::cout << "CONFIG:" << config << std::endl;
@@ -100,12 +98,12 @@ int main(int argc, char **argv)
   sleep(1);
   if (instance_number == 0)
   {
-    learner -> PretendToLearn();
+    learner->PretendToLearn();
   }
 
   sleep(1);
 
-  if (std::size_t(instance_number) == learner -> actual -> getUpdateCount())
+  if (std::size_t(instance_number) == learner->actual->getUpdateCount())
   {
     std::cout << "yes" << std::endl;
     return 0;

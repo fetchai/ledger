@@ -29,7 +29,7 @@
 namespace fetch {
 namespace dmlf {
 
-class VmWrapperEtch: public VmWrapperInterface
+class VmWrapperEtch : public VmWrapperInterface
 {
 public:
   using OutputHandler = VmWrapperInterface::OutputHandler;
@@ -38,44 +38,47 @@ public:
   using Flags         = VmWrapperInterface::Flags;
   using Status        = VmWrapperInterface::Status;
 
-  using VmFactory = fetch::vm_modules::VMFactory;
-  using VM = fetch::vm::VM;
+  using VmFactory  = fetch::vm_modules::VMFactory;
+  using VM         = fetch::vm::VM;
   using Executable = fetch::vm::Executable;
 
   VmWrapperEtch()
-  {
-  }
+  {}
   virtual ~VmWrapperEtch()
-  {
-  }
+  {}
 
   virtual std::vector<std::string> Setup(const Flags &flags);
   virtual std::vector<std::string> Load(std::string source);
-  virtual void Execute(std::string entrypoint, const Params params);
-  virtual void SetStdout(OutputHandler);
-  virtual void SetStdin(InputHandler) {}
-  virtual void SetStderr(OutputHandler) {}
+  virtual void                     Execute(std::string entrypoint, const Params params);
+  virtual void                     SetStdout(OutputHandler);
+  virtual void                     SetStdin(InputHandler)
+  {}
+  virtual void SetStderr(OutputHandler)
+  {}
 
-  virtual Status status(void) const { return status_; }
+  virtual Status status(void) const
+  {
+    return status_;
+  }
+
 protected:
 private:
   void DoOutput();
-  
-  Status status_ = VmWrapperInterface::UNCONFIGURED;
-  std::stringstream outputStream_;
-  OutputHandler outputHandler_ = nullptr;
-  
-  std::string command_ = "";
-  std::unique_ptr<Executable> executable_ = std::make_unique<Executable>();
-  std::shared_ptr<fetch::vm::Module> module_ = nullptr;
-  std::unique_ptr<VM> vm_ = nullptr;
 
+  Status            status_ = VmWrapperInterface::UNCONFIGURED;
+  std::stringstream outputStream_;
+  OutputHandler     outputHandler_ = nullptr;
+
+  std::string                        command_    = "";
+  std::unique_ptr<Executable>        executable_ = std::make_unique<Executable>();
+  std::shared_ptr<fetch::vm::Module> module_     = nullptr;
+  std::unique_ptr<VM>                vm_         = nullptr;
 
   VmWrapperEtch(const VmWrapperEtch &other) = delete;
-  VmWrapperEtch &operator=(const VmWrapperEtch &other) = delete;
-  bool operator==(const VmWrapperEtch &other) = delete;
-  bool operator<(const VmWrapperEtch &other) = delete;
+  VmWrapperEtch &operator=(const VmWrapperEtch &other)  = delete;
+  bool           operator==(const VmWrapperEtch &other) = delete;
+  bool           operator<(const VmWrapperEtch &other)  = delete;
 };
 
-} // namespace dmlf
-} // namespace fetch
+}  // namespace dmlf
+}  // namespace fetch

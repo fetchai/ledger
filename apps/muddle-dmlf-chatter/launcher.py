@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-## pip3 install fetchai-ledger-api
+# pip3 install fetchai-ledger-api
 
 import sys
 import json
@@ -55,11 +55,12 @@ def main():
         in processes
     ]
 
-    if all([ process.returncode == 0 for process in processes ]):
+    if all([process.returncode == 0 for process in processes]):
         print("ok")
     else:
         print("failed")
         exit(1)
+
 
 if __name__ == "__main__":
     main()

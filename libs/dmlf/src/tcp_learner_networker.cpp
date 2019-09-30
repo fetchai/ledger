@@ -28,22 +28,22 @@ namespace dmlf {
 
 uint16_t ephem_port_()
 {
-  uint16_t from = 50000;
-  uint16_t to   = 65000;
-  std::random_device                  rand_dev;
-  std::mt19937                        generator(rand_dev());
-  std::uniform_int_distribution<uint16_t>  distr(from, to);
+  uint16_t                                from = 50000;
+  uint16_t                                to   = 65000;
+  std::random_device                      rand_dev;
+  std::mt19937                            generator(rand_dev());
+  std::uniform_int_distribution<uint16_t> distr(from, to);
   return distr(generator);
 }
 
 void TcpLearnerNetworker::start()
 {
-  if(nm_mine_) 
+  if (nm_mine_)
     nm_->Start();
-  
+
   server_->Start();
-  
-  for (auto& upd_in : clients_)
+
+  for (auto &upd_in : clients_)
   {
     while (!upd_in->is_alive())
     {
@@ -53,16 +53,15 @@ void TcpLearnerNetworker::start()
   }
 }
 
-void TcpLearnerNetworker::pushUpdate( std::shared_ptr<IUpdate> update)
+void TcpLearnerNetworker::pushUpdate(std::shared_ptr<IUpdate> update)
 {
   broadcast_update_(update);
 }
 
-
 std::size_t TcpLearnerNetworker::getPeerCount() const
 {
-  return clients_.size()+0;
+  return clients_.size() + 0;
 }
 
-}  // namepsace dmlf
+}  // namespace dmlf
 }  // namespace fetch

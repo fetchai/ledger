@@ -35,7 +35,7 @@ public:
 
   LocalLearnerNetworker();
   virtual ~LocalLearnerNetworker();
-  virtual void        pushUpdate(std::shared_ptr<IUpdate> update) override;
+  virtual void pushUpdate(std::shared_ptr<IUpdate> update) override;
 
   virtual std::size_t getPeerCount() const override
   {
@@ -46,14 +46,14 @@ public:
 
 protected:
 private:
-  using Mutex  = fetch::Mutex;
+  using Mutex = fetch::Mutex;
   using Lock  = std::unique_lock<Mutex>;
   using Bytes = AbstractLearnerNetworker::Bytes;
 
-  mutable Mutex    mutex;
-  Peers            peers;
+  mutable Mutex mutex;
+  Peers         peers;
 
-  void                 rx(const Bytes &data);
+  void rx(const Bytes &data);
 
   LocalLearnerNetworker(const LocalLearnerNetworker &other) = delete;
   LocalLearnerNetworker &operator=(const LocalLearnerNetworker &other)  = delete;

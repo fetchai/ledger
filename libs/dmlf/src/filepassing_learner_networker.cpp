@@ -55,14 +55,14 @@ void FilepassingLearnerNetworker::setName(const std::string &name)
     ::unlink(name.c_str());
   }
   running_ = true;
-  watcher_ = std::make_shared<std::thread>(&FilepassingLearnerNetworker::checkUpdates,this);
+  watcher_ = std::make_shared<std::thread>(&FilepassingLearnerNetworker::checkUpdates, this);
 }
 
 void FilepassingLearnerNetworker::checkUpdates()
 {
-  while(running_)
+  while (running_)
   {
-    std::this_thread::sleep_for(100ms); 
+    std::this_thread::sleep_for(100ms);
     auto pendings = getUpdateNames();
 
     if (pendings.empty())
@@ -70,10 +70,10 @@ void FilepassingLearnerNetworker::checkUpdates()
       continue;
     }
 
-    for(auto& filename : pendings)
+    for (auto &filename : pendings)
     {
       processed_updates_.insert(filename);
-      Bytes  b;
+      Bytes         b;
       std::ifstream inp(filename.c_str());
       std::string   str((std::istreambuf_iterator<char>(inp)), std::istreambuf_iterator<char>());
       inp.close();

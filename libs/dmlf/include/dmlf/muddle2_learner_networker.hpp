@@ -17,22 +17,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "dmlf/abstract_learner_networker.hpp"
-#include <memory>
 #include "core/byte_array/decoders.hpp"
 #include "core/macros.hpp"
 #include "crypto/ecdsa.hpp"
+#include "dmlf/abstract_learner_networker.hpp"
 #include "muddle/muddle_interface.hpp"
-#include "network/management/network_manager.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
+#include "network/management/network_manager.hpp"
 #include "network/peer.hpp"
 #include "network/service/protocol.hpp"
+#include <memory>
 
 namespace fetch {
 namespace dmlf {
 
-enum class MuddleChannel : uint16_t {
+enum class MuddleChannel : uint16_t
+{
   DEFAULT   = 1,
   MULTIPLEX = 2
 };
@@ -53,14 +54,13 @@ public:
   using Server            = fetch::muddle::rpc::Server;
   using CertificatePtr    = muddle::ProverPtr;
   using Uri               = fetch::network::Uri;
-  
+
   using Mutex = fetch::Mutex;
   using Lock  = std::unique_lock<Mutex>;
 
-  Muddle2LearnerNetworker(const std::string cloud_config,
-                          std::size_t instance_number,
-                          std::shared_ptr<NetworkManager> netm= std::shared_ptr<NetworkManager>(),
-                          MuddleChannel channel_tmp = MuddleChannel::DEFAULT);
+  Muddle2LearnerNetworker(const std::string cloud_config, std::size_t instance_number,
+                          std::shared_ptr<NetworkManager> netm = std::shared_ptr<NetworkManager>(),
+                          MuddleChannel                   channel_tmp = MuddleChannel::DEFAULT);
   virtual ~Muddle2LearnerNetworker();
 
   virtual void        pushUpdate(std::shared_ptr<IUpdate> update) override;
@@ -69,9 +69,10 @@ public:
 
   uint64_t RecvBytes(const byte_array::ByteArray &b);
 
-  using Peer         = std::string;
-  using Peers        = std::vector<Peer>;
-  using PeerUris     = std::unordered_set<std::string>;
+  using Peer     = std::string;
+  using Peers    = std::vector<Peer>;
+  using PeerUris = std::unordered_set<std::string>;
+
 protected:
   CertificatePtr CreateIdentity();
   CertificatePtr LoadIdentity(const std::string &privkey);
@@ -84,21 +85,22 @@ protected:
     Muddle2LearnerNetworkerProtocol(Muddle2LearnerNetworker &sample);
   };
 
-  std::shared_ptr<NetworkManager> netm;
-  MuddlePtr mud;
-  std::shared_ptr<Server> server;
+  std::shared_ptr<NetworkManager>                  netm;
+  MuddlePtr                                        mud;
+  std::shared_ptr<Server>                          server;
   std::shared_ptr<Muddle2LearnerNetworkerProtocol> proto;
 
   mutable Mutex mutex;
-  Peers peers;
-  
-  // TOFIX 
+  Peers         peers;
+
+  // TOFIX
   MuddleChannel channel_tmp_;
+
 private:
   Muddle2LearnerNetworker(const Muddle2LearnerNetworker &other) = delete;
   Muddle2LearnerNetworker &operator=(const Muddle2LearnerNetworker &other)  = delete;
-  bool                    operator==(const Muddle2LearnerNetworker &other) = delete;
-  bool                    operator<(const Muddle2LearnerNetworker &other)  = delete;
+  bool                     operator==(const Muddle2LearnerNetworker &other) = delete;
+  bool                     operator<(const Muddle2LearnerNetworker &other)  = delete;
 };
 
 }  // namespace dmlf

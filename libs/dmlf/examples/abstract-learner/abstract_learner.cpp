@@ -41,16 +41,15 @@ using namespace std::chrono_literals;
 class FakeLearner : public fetch::dmlf::AbstractLearnerNetworker
 {
 public:
-
-  virtual void        pushUpdate(std::shared_ptr<IUpdate> update) override
+  virtual void pushUpdate(std::shared_ptr<IUpdate> update) override
   {
-   auto msg = update->serialise();
-   for (auto& peer : peers)
-   {
+    auto msg = update->serialise();
+    for (auto &peer : peers)
+    {
       SendMessage(msg, peer);
-   }
+    }
   }
-  virtual std::size_t getPeerCount() const  override
+  virtual std::size_t getPeerCount() const override
   {
     return peers.size();
   }
@@ -66,7 +65,7 @@ private:
 
   std::vector<std::shared_ptr<FakeLearner>> peers;
 
-  void SendMessage(Bytes msg,  std::shared_ptr<FakeLearner>& peer)
+  void SendMessage(Bytes msg, std::shared_ptr<FakeLearner> &peer)
   {
     peer->ReceiveMessage(msg);
   }
@@ -90,7 +89,7 @@ int main(int /*argc*/, char ** /*argv*/)
   learner1->Initialize<Update<std::string>>();
   learner2->Initialize<Update<std::string>>();
   learner3->Initialize<Update<std::string>>();
-  
+
   int                      num_upds = 10;
   std::shared_ptr<IUpdate> upd;
   FETCH_LOG_INFO(LOGGING_NAME, "Updates to push:");
@@ -110,7 +109,7 @@ int main(int /*argc*/, char ** /*argv*/)
   }
 
   FETCH_LOG_INFO(LOGGING_NAME, "[learner3] Updates from FakeLearner:");
-  
+
   while (learner3->getUpdateCount())
   {
     upd = learner3->getUpdate<Update<std::string>>();

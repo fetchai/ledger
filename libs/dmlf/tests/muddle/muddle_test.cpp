@@ -18,9 +18,9 @@
 
 #include "gtest/gtest.h"
 
+#include "dmlf/filepassing_learner_networker.hpp"
 #include "dmlf/iupdate.hpp"
 #include "dmlf/local_learner_networker.hpp"
-#include "dmlf/filepassing_learner_networker.hpp"
 #include "dmlf/muddle2_learner_networker.hpp"
 #include "dmlf/simple_cycling_algorithm.hpp"
 #include "dmlf/update.hpp"
@@ -37,177 +37,179 @@ namespace {
 using DataType   = fetch::fixed_point::FixedPoint<32, 32>;
 using TensorType = fetch::math::Tensor<DataType>;
 
-using LNBase     = fetch::dmlf::AbstractLearnerNetworker;
-using LN         = fetch::dmlf::Muddle2LearnerNetworker;
-using LNBaseP    = std::shared_ptr<LNBase>;
-using LNP        = std::shared_ptr<LN>;
+using LNBase  = fetch::dmlf::AbstractLearnerNetworker;
+using LN      = fetch::dmlf::Muddle2LearnerNetworker;
+using LNBaseP = std::shared_ptr<LNBase>;
+using LNP     = std::shared_ptr<LN>;
 
 using UpdateTypeForTesting = fetch::dmlf::Update<TensorType>;
 using UpdatePayloadType    = UpdateTypeForTesting::PayloadType;
 
-//static constexpr char const *NETWORK_A_PUBLIC_KEY =
+// static constexpr char const *NETWORK_A_PUBLIC_KEY =
 //    "rOA3MfBt0DdRtZRSo/gBFP2aD/YQTsd9lOh/Oc/Pzchrzz1wfhTUMpf9z8cc1kRltUpdlWznGzwroO8/rbdPXA==";
-//static constexpr char const *NETWORK_A_PRIVATE_KEY =
-  //    "BEb+rF65Dg+59XQyKcu9HLl5tJc9wAZDX+V0ud07iDQ=";
+// static constexpr char const *NETWORK_A_PRIVATE_KEY =
+//    "BEb+rF65Dg+59XQyKcu9HLl5tJc9wAZDX+V0ud07iDQ=";
 
-//static constexpr char const *NETWORK_B_PUBLIC_KEY =
+// static constexpr char const *NETWORK_B_PUBLIC_KEY =
 //    "646y3U97FbC8Q5MYTO+elrKOFWsMqwqpRGieAC7G0qZUeRhJN+xESV/PJ4NeDXtkp6KkVLzoqRmNKTXshBIftA==";
-//static constexpr char const *NETWORK_B_PRIVATE_KEY =
+// static constexpr char const *NETWORK_B_PRIVATE_KEY =
 //    "4DW/sW8JLey8Z9nqi2yJJHaGzkLXIqaYc/fwHfK0w0Y=";
 
 class Learner
+{
+public:
+  std::shared_ptr<fetch::dmlf::Muddle2LearnerNetworker>  actual;
+  std::shared_ptr<fetch::dmlf::AbstractLearnerNetworker> interface;
+
+  Learner(const std::string cloud_config, std::size_t instance_number)
   {
-  public:
-    std::shared_ptr<fetch::dmlf::Muddle2LearnerNetworker> actual;
-    std::shared_ptr<fetch::dmlf::AbstractLearnerNetworker> interface;
+    actual = std::make_shared<fetch::dmlf::Muddle2LearnerNetworker>(cloud_config, instance_number);
+    interface = actual;
+    interface->Initialize<UpdateTypeForTesting>();
+  }
 
-    Learner(const std::string cloud_config,
-            std::size_t instance_number)
-    {
-      actual = std::make_shared<fetch::dmlf::Muddle2LearnerNetworker>(cloud_config, instance_number);
-      interface = actual;
-      interface->Initialize<UpdateTypeForTesting>();
-    }
-
-    void PretendToLearn()
-    {
-      static int sequence_number = 1;
-      auto t = TensorType(TensorType::SizeType(2));
-      t.Fill(DataType(sequence_number++));
-      auto r = std::vector<TensorType>();
-      r.push_back(t);
-      interface -> pushUpdate(std::make_shared<UpdateTypeForTesting>(r));
-    }
-
-  };
+  void PretendToLearn()
+  {
+    static int sequence_number = 1;
+    auto       t               = TensorType(TensorType::SizeType(2));
+    t.Fill(DataType(sequence_number++));
+    auto r = std::vector<TensorType>();
+    r.push_back(t);
+    interface->pushUpdate(std::make_shared<UpdateTypeForTesting>(r));
+  }
+};
 
 class Muddle2LearnerNetworkerTests : public ::testing::Test
 {
 public:
-  using Inst  = LNP;
-  using Insts = std::vector<Inst>;
+  using Inst                    = LNP;
+  using Insts                   = std::vector<Inst>;
   using Muddle2LearnerNetworker = fetch::dmlf::Muddle2LearnerNetworker;
 
   Insts insts;
 
   std::vector<std::shared_ptr<Learner>> learners;
 
-  std::string json_config = std::string("{")
-    + "  \"peers\": [ "
-    + "  { \"uri\": \"tcp://127.0.0.1:8000\", \"key\": \"BEb+rF65Dg+59XQyKcu9HLl5tJc9wAZDX+V0ud07iDQ=\", \"pub\": \"rOA3MfBt0DdRtZRSo/gBFP2aD/YQTsd9lOh/Oc/Pzchrzz1wfhTUMpf9z8cc1kRltUpdlWznGzwroO8/rbdPXA==\" }, "
-    + "  { \"uri\": \"tcp://127.0.0.1:8001\", \"key\": \"4DW/sW8JLey8Z9nqi2yJJHaGzkLXIqaYc/fwHfK0w0Y=\",  \"pub\": \"646y3U97FbC8Q5MYTO+elrKOFWsMqwqpRGieAC7G0qZUeRhJN+xESV/PJ4NeDXtkp6KkVLzoqRmNKTXshBIftA==\" } "
-    + "]"
-    + "}";
+  std::string json_config = std::string("{") + "  \"peers\": [ " +
+                            "  { \"uri\": \"tcp://127.0.0.1:8000\", \"key\": "
+                            "\"BEb+rF65Dg+59XQyKcu9HLl5tJc9wAZDX+V0ud07iDQ=\", \"pub\": "
+                            "\"rOA3MfBt0DdRtZRSo/gBFP2aD/YQTsd9lOh/Oc/"
+                            "Pzchrzz1wfhTUMpf9z8cc1kRltUpdlWznGzwroO8/rbdPXA==\" }, " +
+                            "  { \"uri\": \"tcp://127.0.0.1:8001\", \"key\": "
+                            "\"4DW/sW8JLey8Z9nqi2yJJHaGzkLXIqaYc/fwHfK0w0Y=\",  \"pub\": "
+                            "\"646y3U97FbC8Q5MYTO+elrKOFWsMqwqpRGieAC7G0qZUeRhJN+xESV/"
+                            "PJ4NeDXtkp6KkVLzoqRmNKTXshBIftA==\" } " +
+                            "]" + "}";
 
   void SetUp() override
   {
-    for(std::size_t i = 0; i < 2; i++)
+    for (std::size_t i = 0; i < 2; i++)
     {
       learners.push_back(std::make_shared<Learner>(json_config, i));
     }
   }
-
 };
 
 TEST_F(Muddle2LearnerNetworkerTests, singleThreadedVersion)
 {
   sleep(1);
-  learners[0] -> PretendToLearn();
+  learners[0]->PretendToLearn();
 
   sleep(1);
-  EXPECT_GT(learners[1] -> actual -> getUpdateCount(), 0);
+  EXPECT_GT(learners[1]->actual->getUpdateCount(), 0);
 }
 
 class LearnerTypedUpdates
+{
+public:
+  std::shared_ptr<fetch::dmlf::Muddle2LearnerNetworker>  actual;
+  std::shared_ptr<fetch::dmlf::AbstractLearnerNetworker> interface;
+
+  LearnerTypedUpdates(const std::string cloud_config, std::size_t instance_number)
   {
-  public:
-    std::shared_ptr<fetch::dmlf::Muddle2LearnerNetworker> actual;
-    std::shared_ptr<fetch::dmlf::AbstractLearnerNetworker> interface;
+    actual = std::make_shared<fetch::dmlf::Muddle2LearnerNetworker>(
+        cloud_config, instance_number, std::shared_ptr<fetch::network::NetworkManager>{},
+        fetch::dmlf::MuddleChannel::MULTIPLEX);
+    interface = actual;
+    interface->RegisterUpdateType<UpdateTypeForTesting>("update");
+    interface->RegisterUpdateType<fetch::dmlf::Update<std::string>>("vocab");
+  }
 
-    LearnerTypedUpdates(const std::string cloud_config,
-            std::size_t instance_number)
-    {
-      actual = std::make_shared<fetch::dmlf::Muddle2LearnerNetworker>(cloud_config, instance_number, 
-                                                                      std::shared_ptr<fetch::network::NetworkManager>{}, 
-                                                                      fetch::dmlf::MuddleChannel::MULTIPLEX);
-      interface = actual;
-      interface->RegisterUpdateType<UpdateTypeForTesting>("update");
-      interface->RegisterUpdateType<fetch::dmlf::Update<std::string>>("vocab");
-    }
-
-    void PretendToLearn()
-    {
-      static int sequence_number = 1;
-      auto t = TensorType(TensorType::SizeType(2));
-      t.Fill(DataType(sequence_number++));
-      auto r = std::vector<TensorType>();
-      r.push_back(t);
-      interface -> pushUpdateType("update", std::make_shared<UpdateTypeForTesting>(r));
-      interface -> pushUpdateType("vocab", std::make_shared<fetch::dmlf::Update<std::string>>(std::vector<std::string>{"cat","dog"}));
-    }
-
-  };
+  void PretendToLearn()
+  {
+    static int sequence_number = 1;
+    auto       t               = TensorType(TensorType::SizeType(2));
+    t.Fill(DataType(sequence_number++));
+    auto r = std::vector<TensorType>();
+    r.push_back(t);
+    interface->pushUpdateType("update", std::make_shared<UpdateTypeForTesting>(r));
+    interface->pushUpdateType("vocab", std::make_shared<fetch::dmlf::Update<std::string>>(
+                                           std::vector<std::string>{"cat", "dog"}));
+  }
+};
 
 class Muddle2TypedUpdatesTests : public ::testing::Test
 {
 public:
-  using Inst  = LNP;
-  using Insts = std::vector<Inst>;
+  using Inst                    = LNP;
+  using Insts                   = std::vector<Inst>;
   using Muddle2LearnerNetworker = fetch::dmlf::Muddle2LearnerNetworker;
 
   Insts insts;
 
   std::vector<std::shared_ptr<LearnerTypedUpdates>> learners;
 
-  std::string json_config = std::string("{")
-    + "  \"peers\": [ "
-    + "  { \"uri\": \"tcp://127.0.0.1:8000\", \"key\": \"BEb+rF65Dg+59XQyKcu9HLl5tJc9wAZDX+V0ud07iDQ=\", \"pub\": \"rOA3MfBt0DdRtZRSo/gBFP2aD/YQTsd9lOh/Oc/Pzchrzz1wfhTUMpf9z8cc1kRltUpdlWznGzwroO8/rbdPXA==\" }, "
-    + "  { \"uri\": \"tcp://127.0.0.1:8001\", \"key\": \"4DW/sW8JLey8Z9nqi2yJJHaGzkLXIqaYc/fwHfK0w0Y=\",  \"pub\": \"646y3U97FbC8Q5MYTO+elrKOFWsMqwqpRGieAC7G0qZUeRhJN+xESV/PJ4NeDXtkp6KkVLzoqRmNKTXshBIftA==\" } "
-    + "]"
-    + "}";
+  std::string json_config = std::string("{") + "  \"peers\": [ " +
+                            "  { \"uri\": \"tcp://127.0.0.1:8000\", \"key\": "
+                            "\"BEb+rF65Dg+59XQyKcu9HLl5tJc9wAZDX+V0ud07iDQ=\", \"pub\": "
+                            "\"rOA3MfBt0DdRtZRSo/gBFP2aD/YQTsd9lOh/Oc/"
+                            "Pzchrzz1wfhTUMpf9z8cc1kRltUpdlWznGzwroO8/rbdPXA==\" }, " +
+                            "  { \"uri\": \"tcp://127.0.0.1:8001\", \"key\": "
+                            "\"4DW/sW8JLey8Z9nqi2yJJHaGzkLXIqaYc/fwHfK0w0Y=\",  \"pub\": "
+                            "\"646y3U97FbC8Q5MYTO+elrKOFWsMqwqpRGieAC7G0qZUeRhJN+xESV/"
+                            "PJ4NeDXtkp6KkVLzoqRmNKTXshBIftA==\" } " +
+                            "]" + "}";
 
   void SetUp() override
   {
-    for(std::size_t i = 0; i < 2; i++)
+    for (std::size_t i = 0; i < 2; i++)
     {
       learners.push_back(std::make_shared<LearnerTypedUpdates>(json_config, i));
     }
   }
-
 };
 
 TEST_F(Muddle2TypedUpdatesTests, singleThreadedVersion)
 {
   sleep(1);
-  learners[0] -> PretendToLearn();
+  learners[0]->PretendToLearn();
 
   sleep(1);
-  EXPECT_GT(learners[1] -> actual -> getUpdateTypeCount("update"), 0);
-  EXPECT_GT(learners[1] -> actual -> getUpdateTypeCount<UpdateTypeForTesting>(), 0);
-  EXPECT_EQ(learners[1] -> actual -> getUpdateTypeCount<UpdateTypeForTesting>(), 
-            learners[1] -> actual -> getUpdateTypeCount("update"));
-  EXPECT_GT(learners[1] -> actual -> getUpdateTypeCount("vocab"), 0);
+  EXPECT_GT(learners[1]->actual->getUpdateTypeCount("update"), 0);
+  EXPECT_GT(learners[1]->actual->getUpdateTypeCount<UpdateTypeForTesting>(), 0);
+  EXPECT_EQ(learners[1]->actual->getUpdateTypeCount<UpdateTypeForTesting>(),
+            learners[1]->actual->getUpdateTypeCount("update"));
+  EXPECT_GT(learners[1]->actual->getUpdateTypeCount("vocab"), 0);
 
-  try 
+  try
   {
-    learners[1] -> actual -> getUpdateTypeCount("weights");
-    EXPECT_NE(1,1);
-  } 
-  catch (std::exception& e)
-  {
-    EXPECT_EQ(1,1);
+    learners[1]->actual->getUpdateTypeCount("weights");
+    EXPECT_NE(1, 1);
   }
-  
-  try 
+  catch (std::exception &e)
   {
-    learners[1] -> actual -> getUpdateTypeCount<fetch::dmlf::Update<double>>();
-    EXPECT_NE(1,1);
-  } 
-  catch (std::exception& e)
+    EXPECT_EQ(1, 1);
+  }
+
+  try
   {
-    EXPECT_EQ(1,1);
+    learners[1]->actual->getUpdateTypeCount<fetch::dmlf::Update<double>>();
+    EXPECT_NE(1, 1);
+  }
+  catch (std::exception &e)
+  {
+    EXPECT_EQ(1, 1);
   }
 }
-
 
 }  // namespace

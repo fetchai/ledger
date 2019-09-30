@@ -144,7 +144,7 @@ int main(int ac, char **av)
 
   // Create networker
   auto networker = std::make_shared<fetch::dmlf::Muddle2LearnerNetworker>(config, instance_number);
-  networker -> Initialize<fetch::dmlf::Update<TensorType>>();
+  networker->Initialize<fetch::dmlf::Update<TensorType>>();
 
   networker->setShuffleAlgorithm(std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(
       networker->getPeerCount(), number_of_peers));

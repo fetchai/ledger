@@ -60,15 +60,12 @@ endfunction)";
   EXPECT_EQ(vm.status(), Status::WAITING);
 
   std::vector<std::string> result;
-  auto outputTest = [&result] (std::string line) {
-    result.emplace_back(std::move(line));
-  };
+  auto outputTest = [&result](std::string line) { result.emplace_back(std::move(line)); };
   vm.SetStdout(outputTest);
 
   auto errors = vm.Load(source);
   EXPECT_EQ(vm.status(), Status::COMPILED);
   EXPECT_TRUE(errors.empty());
-
 
   vm.Execute("main", Params());
   EXPECT_EQ(vm.status(), Status::COMPLETED);
@@ -94,15 +91,12 @@ endfunction)";
   EXPECT_EQ(vm.status(), Status::WAITING);
 
   std::vector<std::string> result;
-  auto outputTest = [&result] (std::string line) {
-    result.emplace_back(std::move(line));
-  };
+  auto outputTest = [&result](std::string line) { result.emplace_back(std::move(line)); };
   vm.SetStdout(outputTest);
 
   auto errors = vm.Load(source);
   EXPECT_EQ(vm.status(), Status::COMPILED);
   EXPECT_TRUE(errors.empty());
-
 
   vm.Execute("main", Params());
   EXPECT_EQ(vm.status(), Status::COMPLETED);
@@ -124,10 +118,6 @@ endfunction)";
   EXPECT_EQ(result.size(), 2);
   EXPECT_EQ(result[0], "Hello world!!");
   EXPECT_EQ(result[1], "Hello world again!!!");
-
 }
-
-
-
 
 }  // namespace
