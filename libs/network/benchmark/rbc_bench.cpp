@@ -381,8 +381,10 @@ void DKGWithEcho(benchmark::State &state)
       state.ResumeTiming();
     }
 
+    // SetGlobalLogLevel(LogLevel::INFO);
     FETCH_LOG_INFO(LOGGING_NAME, "Finished test: ", nodes_in_test);
     FETCH_LOG_INFO(LOGGING_NAME, "");
+    // SetGlobalLogLevel(LogLevel::ERROR);
   }
 }
 
