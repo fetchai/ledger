@@ -101,7 +101,6 @@ BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identit
   , muddle_{muddle}
   , endpoint_{muddle_.GetEndpoint()}
   , shares_subscription_(endpoint_.Subscribe(SERVICE_DKG, CHANNEL_SECRET_KEY))
-  , dry_run_subscription_(endpoint_.Subscribe(SERVICE_DKG, CHANNEL_SIGN_DRY_RUN))
   , certificate_{certificate}
   , rbc_{new CHANNEL_TYPE(endpoint_, identity_.identifier(),
                           [this](MuddleAddress const &from, ConstByteArray const &payload) -> void {
@@ -128,8 +127,6 @@ BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identit
         "beacon_dkg_aeon_setting_up", "The aeon currently under setup.")}
   , beacon_dkg_failures_total_{telemetry::Registry::Instance().CreateCounter(
         "beacon_dkg_failures_total", "The total number of DKG failures")}
-  , beacon_dkg_dry_run_failures_total_{telemetry::Registry::Instance().CreateCounter(
-        "beacon_dkg_dry_run_failures_total", "The total number of DKG dry run failures")}
   , beacon_dkg_aborts_total_{telemetry::Registry::Instance().CreateCounter(
         "beacon_dkg_aborts_total", "The total number of DKG forced aborts")}
   , beacon_dkg_successes_total_{telemetry::Registry::Instance().CreateCounter(
@@ -153,7 +150,6 @@ BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identit
 
   // Set subscription for receiving shares
   shares_subscription_->SetMessageHandler(this, &BeaconSetupService::OnNewSharesPacket);
-  dry_run_subscription_->SetMessageHandler(this, &BeaconSetupService::OnNewDryRunPacket);
 }
 
 BeaconSetupService::State BeaconSetupService::OnIdle()
@@ -227,9 +223,7 @@ BeaconSetupService::State BeaconSetupService::OnReset()
   ready_connections_.clear();
   reconstruction_shares_received_.clear();
   shares_received_.clear();
-  dry_run_shares_.clear();
   final_state_payload_.clear();
-  dry_run_public_keys_.clear();
   rbc_->Enable(false);
 
   // The dkg has to be reset to 0 to clear old messages,
@@ -719,15 +713,11 @@ BeaconSetupService::State BeaconSetupService::OnDryRun()
 {
   std::lock_guard<std::mutex> lock(mutex_);
 
-  // TODO(HUT): reset to qual here (?)
+  // TODO(HUT): reset to qual here for the networking (?)
 
   // Only on first entry to this function, construct the structure
   if (state_machine_->previous_state() != State::DRY_RUN_SIGNING)
   {
-    // assert(beacon_->seed.size() > 0);
-    // beacon_->manager.SetMessage(beacon_->aeon.seed);
-    // beacon_->member_share = beacon_->manager.Sign();
-
     // Start to create the block entropy for this attempt
     beacon_->block_entropy                  = BlockEntropy{};
     beacon_->block_entropy.qualified        = beacon_->manager.qual();
@@ -1071,23 +1061,6 @@ void BeaconSetupService::OnNewSharesPacket(muddle::Packet const &packet,
 
   // Dispatch the event
   OnNewShares(packet.GetSender(), shares);
-}
-
-void BeaconSetupService::OnNewDryRunPacket(muddle::Packet const &packet,
-                                           MuddleAddress const & last_hop)
-{
-  FETCH_UNUSED(last_hop);
-
-  fetch::serializers::MsgPackSerializer serialiser(packet.GetPayload());
-
-  DryRunInfo to_receive;
-  serialiser >> to_receive;
-
-  // TODO(HUT): cabinet check
-  std::lock_guard<std::mutex> lock(mutex_);
-  dry_run_public_keys_[to_receive.public_key]++;
-  dry_run_shares_[packet.GetSender()] =
-      GroupPubKeyPlusSigShare{to_receive.public_key, to_receive.sig_share};
 }
 
 /**

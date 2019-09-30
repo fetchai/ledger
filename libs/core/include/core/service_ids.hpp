@@ -57,7 +57,6 @@ static constexpr uint16_t CHANNEL_SECRET_KEY        = 400;
 static constexpr uint16_t CHANNEL_CONTRIBUTIONS     = 401;
 static constexpr uint16_t CHANNEL_RBC_BROADCAST     = 402;
 static constexpr uint16_t CHANNEL_CONNECTIONS_SETUP = 403;
-static constexpr uint16_t CHANNEL_SIGN_DRY_RUN      = 404;
 
 static constexpr uint16_t CHANNEL_ID_DISTRIBUTION = 450;
 

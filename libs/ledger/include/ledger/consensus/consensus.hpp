@@ -25,7 +25,6 @@
 
 #include "beacon/beacon_service.hpp"
 #include "beacon/beacon_setup_service.hpp"
-#include "beacon/entropy.hpp"
 #include "beacon/event_manager.hpp"
 
 #include "ledger/consensus/stake_manager.hpp"
@@ -78,7 +77,6 @@ private:
   uint64_t aeon_period_        = 0;
   uint64_t max_committee_size_ = 0;
   double   threshold_          = 1.0;
-  // uint64_t         current_block_number_   = 0;
 
   // Consensus' view on the heaviest block etc.
   Block  current_block_;

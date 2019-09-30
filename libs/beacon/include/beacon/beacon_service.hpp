@@ -28,7 +28,6 @@
 #include "beacon/aeon.hpp"
 #include "beacon/beacon_protocol.hpp"
 #include "beacon/beacon_setup_service.hpp"
-#include "beacon/entropy.hpp"
 #include "beacon/event_manager.hpp"
 #include "beacon/events.hpp"
 #include "beacon/public_key_message.hpp"
@@ -162,14 +161,7 @@ private:
   /// Beacon and entropy control units
   /// @{
   std::deque<SharedAeonExecutionUnit> aeon_exe_queue_;
-
-  // TODO(HUT): delete these
-  std::deque<Entropy> ready_entropy_queue_;
-  Entropy             latest_entropy_;
-  Entropy             next_entropy_{};
-  Entropy             current_entropy_;
-
-  std::shared_ptr<AeonExecutionUnit> active_exe_unit_;
+  std::shared_ptr<AeonExecutionUnit>  active_exe_unit_;
   /// @}
 
   /// Variables relating to getting threshold signatures of the seed
@@ -182,13 +174,6 @@ private:
   BlockEntropyPtr                     block_entropy_previous_;
   BlockEntropyPtr                     block_entropy_being_created_;
   std::map<uint64_t, BlockEntropyPtr> completed_block_entropy_;
-  /// @}
-
-  // TODO(HUT): delete these.
-  /// Observing beacon
-  /// @{
-  std::priority_queue<PublicKeyMessage> incoming_group_public_keys_{};
-  std::priority_queue<Entropy>          incoming_entropy_{};
   /// @}
 
   ServerPtr           rpc_server_{nullptr};

@@ -71,7 +71,8 @@ public:
   /// @{
   Body body;  ///< The core fields that make up a block
   /// @}
-  //
+
+  // TODO(HUT): Miners in qual must sign the block.
   /* Digest miner_signature; */
 
   /// @name Proof of Work specifics

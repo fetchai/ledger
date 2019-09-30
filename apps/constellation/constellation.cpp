@@ -44,7 +44,6 @@
 
 #include "beacon/beacon_service.hpp"
 #include "beacon/beacon_setup_service.hpp"
-#include "beacon/entropy.hpp"
 #include "beacon/event_manager.hpp"
 
 #include <chrono>

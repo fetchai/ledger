@@ -195,11 +195,11 @@ BeaconService::State BeaconService::OnPrepareEntropyGeneration()
 
 BeaconService::State BeaconService::OnCollectSignaturesState()
 {
-  beacon_entropy_current_round_->set(current_entropy_.round);
 
   std::lock_guard<std::mutex> lock(mutex_);
 
   uint64_t const index = block_entropy_being_created_->block_number;
+  beacon_entropy_current_round_->set(index);
 
   // On first entry to function, populate with our info (will go between collect and verify)
   if (state_machine_->previous_state() == State::PREPARE_ENTROPY_GENERATION)
@@ -313,7 +313,7 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
     }
 
     FETCH_LOG_INFO(LOGGING_NAME, "After adding, we have ", all_sigs_map.size(),
-                   " signatures. Round: ", current_entropy_.round);
+                   " signatures. Round: ", index);
   }  // Mutex unlocks here since verification can take some time
 
   MilliTimer const timer{"Verify threshold signature", 100};
@@ -321,13 +321,6 @@ BeaconService::State BeaconService::OnVerifySignaturesState()
   // TODO(HUT): possibility for infinite loop here I suspect.
   if (active_exe_unit_->manager.can_verify() && active_exe_unit_->manager.Verify())
   {
-    // Storing the result of current entropy
-    current_entropy_.signature = active_exe_unit_->manager.GroupSignature();
-    auto sign                  = current_entropy_.signature.getStr();
-    current_entropy_.entropy   = crypto::Hash<crypto::SHA256>(crypto::Hash<crypto::SHA256>(sign));
-
-    beacon_entropy_last_generated_->set(current_entropy_.round);
-
     return State::COMPLETE;
   }
   else
@@ -348,8 +341,7 @@ BeaconService::State BeaconService::OnCompleteState()
   beacon_entropy_generated_total_->add(1);
 
   // Populate the block entropy structure appropriately
-  block_entropy_being_created_->group_signature =
-      active_exe_unit_->manager.GroupSignature().getStr();
+  block_entropy_being_created_->group_signature = active_exe_unit_->manager.GroupSignature();
 
   // Save it for querying
   completed_block_entropy_[index] = block_entropy_being_created_;

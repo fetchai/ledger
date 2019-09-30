@@ -45,12 +45,15 @@ struct BlockEntropy : public BlockEntropyInterface
   using MemberPublicKey   = byte_array::ConstByteArray;
   using MemberSignature   = byte_array::ConstByteArray;
   using Confirmations     = std::map<MemberPublicKey, MemberSignature>;
+  using GroupSignature    = dkg::BeaconManager::Signature;
   using GroupSignatureStr = std::string;
   using Cabinet           = std::set<MuddleAddress>;
 
   BlockEntropy()
   {
     // Important this is cleared so the hash of it is consistent for the genesis block (?)
+    group_signature = GroupSignature{};
+    group_signature.clear();
   }
 
   Cabinet qualified;  // The members who succeeded DKG and are qualified to produce blocks (when new
@@ -60,14 +63,13 @@ struct BlockEntropy : public BlockEntropyInterface
   Digest digest;  // The hash of the above (when new committee) note, this could be implicit. Is not
                   // serialized.
 
-  Confirmations confirmations;  // In the case of a new cabinet, personal signatures of the hash
-                                // from qual members
-  GroupSignatureStr group_signature;  // Signature of the previous entropy, used as the entropy
+  Confirmations confirmations;     // In the case of a new cabinet, personal signatures of the hash
+                                   // from qual members
+  GroupSignature group_signature;  // Signature of the previous entropy, used as the entropy
 
   Digest EntropyAsSHA256() const override
   {
-    // assert(group_signature);
-    return crypto::Hash<crypto::SHA256>(group_signature);
+    return crypto::Hash<crypto::SHA256>(group_signature.getStr());
   }
 
   // This will always be safe so long as the entropy function is properly sha256-ing
@@ -79,7 +81,6 @@ struct BlockEntropy : public BlockEntropyInterface
 
   void HashSelf()
   {
-    // assert(group_signature);
     fetch::serializers::MsgPackSerializer serializer;
     serializer << qualified;
     serializer << group_public_key;
@@ -113,7 +114,9 @@ public:
     map.Append(4, member.group_public_key);
     map.Append(3, member.block_number);
     map.Append(2, member.confirmations);
-    map.Append(1, member.group_signature);
+
+    std::string set = member.group_signature.getStr();
+    map.Append(1, set);
   }
 
   template <typename MapDeserializer>
@@ -123,7 +126,10 @@ public:
     map.ExpectKeyGetValue(4, member.group_public_key);
     map.ExpectKeyGetValue(3, member.block_number);
     map.ExpectKeyGetValue(2, member.confirmations);
-    map.ExpectKeyGetValue(1, member.group_signature);
+
+    std::string get;
+    map.ExpectKeyGetValue(1, get);
+    member.group_signature.setStr(get);
   }
 };
 }  // namespace serializers
