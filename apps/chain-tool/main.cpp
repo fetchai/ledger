@@ -156,14 +156,9 @@ struct BlockChain
 {
   BlockHash   root{};
   BlockHash   leaf{};
-  BlockWeight total_weight{0ull};
-  std::size_t chain_length{0ull};
-  std::size_t num_of_all_txs{0ull};
-
-  BlockChain(BlockChain const &) = default;
-  BlockChain(BlockChain &&)      = default;
-  BlockChain &operator=(BlockChain const &) = default;
-  BlockChain &operator=(BlockChain &&) = default;
+  BlockWeight total_weight;
+  std::size_t chain_length;
+  std::size_t num_of_all_txs;
 
   explicit BlockChain(BlockNode const &leaf_)
     : root{leaf_.db_record.hash()}
