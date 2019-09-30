@@ -286,7 +286,7 @@ bool VerifySign(PublicKey const &y, MessagePayload const &message, Signature con
 {
   bn::G2 generator;
   SetGenerator(generator);
-  VerifySign(y, message, sign, generator);
+  return VerifySign(y, message, sign, generator);
 }
 
 /**
