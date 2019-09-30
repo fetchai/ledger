@@ -354,7 +354,7 @@ template <class TensorType>
 std::vector<TensorType> TrainingClient<TensorType>::GetWeights() const
 {
   FETCH_LOCK(model_mutex_);
-  return g_ptr_->get_weights();
+  return g_ptr_->GetWeightsReferences();
 }
 
 /**
@@ -382,10 +382,10 @@ void TrainingClient<TensorType>::SetWeights(VectorTensorType const &new_weights)
   FETCH_LOCK(model_mutex_);
 
   auto weights_it = new_weights.cbegin();
-  for (auto &trainable_node : g_ptr_->trainable_nodes_)
+  for (auto &trainable_lookup : g_ptr_->trainable_lookup_)
   {
     auto trainable_ptr =
-        std::dynamic_pointer_cast<ops::Trainable<TensorType>>(trainable_node->GetOp());
+        std::dynamic_pointer_cast<ops::Trainable<TensorType>>((trainable_lookup.second)->GetOp());
     trainable_ptr->SetWeights(*weights_it);
     ++weights_it;
   }
@@ -630,13 +630,14 @@ template <class TensorType>
 void TrainingClient<TensorType>::GraphAddGradients(GraphPtrType            g_ptr,
                                                    VectorTensorType const &gradients)
 {
-  assert(gradients.size() == g_ptr->trainable_nodes_.size());
-  auto gt_it = g_ptr->trainable_nodes_.begin();
-  for (auto const &grad : gradients)
+  assert(gradients.size() == g_ptr->trainable_lookup_.size());
+  auto grad_it = gradients.begin();
+  for (auto &trainable : g_ptr->trainable_lookup_)
   {
-    auto weights_ptr = std::dynamic_pointer_cast<ops::Weights<TensorType>>((*gt_it)->GetOp());
-    weights_ptr->AddToGradient(grad);
-    ++gt_it;
+    auto weights_ptr =
+        std::dynamic_pointer_cast<ops::Weights<TensorType>>((trainable.second)->GetOp());
+    weights_ptr->AddToGradient(*grad_it);
+    ++grad_it;
   }
 }
 

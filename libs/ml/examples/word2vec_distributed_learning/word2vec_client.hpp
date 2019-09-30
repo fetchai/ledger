@@ -236,9 +236,9 @@ void Word2VecClient<TensorType>::TestEmbeddings(std::string const &word0, std::s
 
     std::cout << std::endl;
     std::cout << "Client " << this->id_ << ", batches done = " << this->batch_counter_ << std::endl;
-    PrintKNN(embeddings->get_weights(), word0, K);
+    PrintKNN(embeddings->GetWeights(), word0, K);
     std::cout << std::endl;
-    PrintWordAnalogy(embeddings->get_weights(), word1, word2, word3, K);
+    PrintWordAnalogy(embeddings->GetWeights(), word1, word2, word3, K);
   }
 }
 
