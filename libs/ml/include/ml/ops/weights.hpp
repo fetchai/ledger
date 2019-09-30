@@ -201,7 +201,7 @@ public:
    * exports the weight values Array
    * @return const reference to internal values Array
    */
-  TensorType const &get_weights() const override
+  TensorType const &GetWeights() const override
   {
     return *this->data_;
   }

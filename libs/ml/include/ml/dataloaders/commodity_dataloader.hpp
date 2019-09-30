@@ -55,6 +55,7 @@ public:
   SizeType   Size() const override;
   bool       IsDone() const override;
   void       Reset() override;
+  bool       IsModeAvailable(DataLoaderMode mode) override;
 
   void SetTestRatio(float new_test_ratio) override;
   void SetValidationRatio(float new_validation_ratio) override;
@@ -215,6 +216,30 @@ void CommodityDataLoader<LabelType, InputType>::UpdateCursor()
   else
   {
     throw std::runtime_error("Unsupported dataloader mode.");
+  }
+}
+
+template <typename LabelType, typename InputType>
+bool CommodityDataLoader<LabelType, InputType>::IsModeAvailable(DataLoaderMode mode)
+{
+  switch (mode)
+  {
+  case DataLoaderMode::TRAIN:
+  {
+    return test_offset_ > 0;
+  }
+  case DataLoaderMode::TEST:
+  {
+    return test_offset_ < validation_offset_;
+  }
+  case DataLoaderMode::VALIDATE:
+  {
+    return validation_offset_ < total_size_;
+  }
+  default:
+  {
+    throw std::runtime_error("Unsupported dataloader mode.");
+  }
   }
 }
 

@@ -53,6 +53,7 @@ public:
   SizeType Size() const override;
   bool     IsDone() const override;
   void     Reset() override;
+  bool     IsModeAvailable(DataLoaderMode mode) override;
 
   void SetTestRatio(float new_test_ratio) override;
   void SetValidationRatio(float new_validation_ratio) override;
@@ -264,6 +265,30 @@ void TensorDataLoader<LabelType, InputType>::UpdateCursor()
     this->current_max_    = n_samples_;
     this->current_size_   = n_validation_samples_;
     break;
+  }
+  default:
+  {
+    throw std::runtime_error("Unsupported dataloader mode.");
+  }
+  }
+}
+
+template <typename LabelType, typename InputType>
+bool TensorDataLoader<LabelType, InputType>::IsModeAvailable(DataLoaderMode mode)
+{
+  switch (mode)
+  {
+  case DataLoaderMode::TRAIN:
+  {
+    return test_offset_ > 0;
+  }
+  case DataLoaderMode::TEST:
+  {
+    return test_offset_ < validation_offset_;
+  }
+  case DataLoaderMode::VALIDATE:
+  {
+    return validation_offset_ < n_samples_;
   }
   default:
   {
