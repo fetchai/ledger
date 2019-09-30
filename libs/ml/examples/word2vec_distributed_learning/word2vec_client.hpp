@@ -210,6 +210,7 @@ Word2VecClient<TensorType>::GetVocab()
 {
   auto vocab      = w2v_data_loader_ptr_->GetVocab();
   auto vocab_hash = w2v_data_loader_ptr_->GetVocabHash();
+  // "ReverseVocab" is a vector of strings, and is the most compact way of sending the vocab
   return std::make_pair(vocab->GetReverseVocab(), vocab->GetVocabHash());
 }
 

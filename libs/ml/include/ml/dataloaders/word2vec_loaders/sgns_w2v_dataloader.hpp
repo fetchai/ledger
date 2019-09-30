@@ -35,12 +35,12 @@ template <typename T>
 class GraphW2VLoader : public DataLoader<fetch::math::Tensor<T>, fetch::math::Tensor<T>>
 {
 public:
-  using InputType  = fetch::math::Tensor<T>;
-  using LabelType  = fetch::math::Tensor<T>;
-  using SizeType   = fetch::math::SizeType;
-  using VocabType  = Vocab;
+  using InputType    = fetch::math::Tensor<T>;
+  using LabelType    = fetch::math::Tensor<T>;
+  using SizeType     = fetch::math::SizeType;
+  using VocabType    = Vocab;
   using VocabPtrType = std::shared_ptr<VocabType>;
-  using ReturnType = std::pair<LabelType, std::vector<InputType>>;
+  using ReturnType   = std::pair<LabelType, std::vector<InputType>>;
 
   const T        BufferPositionUnusedDataType = fetch::math::numeric_max<T>();
   const SizeType BufferPositionUnusedSizeType = fetch::math::numeric_max<SizeType>();
