@@ -26,8 +26,7 @@ namespace model {
 template <typename DataType>
 struct ModelConfig
 {
-  using SizeType         = fetch::math::SizeType;
-  using OptimiserType    = fetch::ml::optimisers::OptimiserType;
+  using SizeType = fetch::math::SizeType;
 
   bool     early_stopping = false;
   bool     test           = false;
@@ -38,8 +37,6 @@ struct ModelConfig
 
   SizeType batch_size  = SizeType(32);
   SizeType subset_size = fetch::ml::optimisers::SIZE_NOT_SET;
-
-  OptimiserType    optimiser  = OptimiserType::ADAM;
 
   bool print_stats = false;
 

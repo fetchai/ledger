@@ -57,7 +57,11 @@ ModelType SetupModel(fetch::ml::optimisers::OptimiserType     optimiser_type,
   data_loader_ptr->AddData(data, gt);
 
   // run model in training mode
-  return ModelType(std::move(data_loader_ptr), optimiser_type, model_config, {3, 100, 100, 3});
+  auto model = ModelType(model_config, {3, 100, 100, 3});
+  model.SetDataloader(std::move(data_loader_ptr));
+  model.Compile(optimiser_type);
+
+  return model;
 }
 
 template <typename TypeParam>

@@ -38,8 +38,7 @@ enum class OptimiserType
 };
 
 template <class T, typename... Params>
-bool AddOptimiser(OptimiserType type, std::unique_ptr<Optimiser<T>> optimiser_ptr,
-                  Params... params)
+bool AddOptimiser(OptimiserType type, std::unique_ptr<Optimiser<T>> optimiser_ptr, Params... params)
 {
   switch (type)
   {
