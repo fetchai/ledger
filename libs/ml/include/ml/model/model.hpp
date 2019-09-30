@@ -124,8 +124,8 @@ void Model<TensorType>::Compile(OptimiserType optimiser_type, ops::LossType loss
   if (!optimiser_set_)
   {
     if (!(fetch::ml::optimisers::AddOptimiser<TensorType>(
-            optimiser_type, std::move(optimiser_ptr_), graph_ptr_, std::vector<std::string>{input_},
-            label_, error_, model_config_.learning_rate_param)))
+            optimiser_type, optimiser_ptr_, graph_ptr_, std::vector<std::string>{input_}, label_,
+            error_, model_config_.learning_rate_param)))
     {
       throw std::runtime_error("DNNClassifier initialised with unrecognised optimiser");
     }
@@ -178,8 +178,7 @@ bool Model<TensorType>::Train(SizeType n_steps, DataType &loss)
   bool     stop_early = false;
 
   // run for one epoch
-  loss     = optimiser_ptr_->Run(*dataloader_ptr_, this->model_config_.batch_size,
-                             this->model_config_.subset_size);
+  loss = optimiser_ptr_->Run(*dataloader_ptr_, model_config_.batch_size, model_config_.subset_size);
   min_loss = loss;
 
   // run for remaining epochs with early stopping
@@ -196,8 +195,8 @@ bool Model<TensorType>::Train(SizeType n_steps, DataType &loss)
     }
 
     // run optimiser for one epoch
-    loss = optimiser_ptr_->Run(*dataloader_ptr_, this->model_config_.batch_size,
-                               this->model_config_.subset_size);
+    loss =
+        optimiser_ptr_->Run(*dataloader_ptr_, model_config_.batch_size, model_config_.subset_size);
 
     // update early stopping
     if (this->model_config_.early_stopping)
