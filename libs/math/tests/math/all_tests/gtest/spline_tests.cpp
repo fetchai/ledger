@@ -42,14 +42,19 @@ double dexp(double x)
 {
   return exp(x);
 }
+
 template <std::size_t N, typename F>
 void test1(F &f, double from, double to, double max)
 {
   fetch::math::spline::Spline<> spline;
   spline.SetFunction(f, from, to, N);
   double me = 0;
-  for (double x = from; x < to; x += 0.0001)
+  
+  uint32_t x_int = static_cast<uint32_t>(from * 10000);
+  uint32_t to_int = static_cast<uint32_t>(to * 10000);
+  for (; x < y; x++)
   {
+    double x = static_cast<double>(x_int);
     double y0 = spline(x);
     double y1 = f(x);
     double r  = fabs(y0 - y1) / y1 * 100;
@@ -58,6 +63,7 @@ void test1(F &f, double from, double to, double max)
   std::cout << "Peak error: " << me << std::endl;
   ASSERT_LE(me, max) << "expected: " << max;
 }
+
 // TODO(private issue 332): Move to a benchmark
 TEST(spline_gtest, testing_spline)
 {
