@@ -106,9 +106,6 @@ public:
   VecTensorType               GatherInputs() const;
   std::shared_ptr<TensorType> Evaluate(bool is_training);
 
-  //  void BackPropagate(TensorType const & error_signal);
-  //  void BackPropagate(TensorType const & error_signal, std::vector<std::pair<Node<TensorType> *,
-  //  TensorType>> & ret);
   std::vector<std::pair<Node<TensorType> *, TensorType>> BackPropagate(
       TensorType const &error_signal);
 
@@ -227,44 +224,6 @@ std::shared_ptr<TensorType> Node<TensorType>::Evaluate(bool is_training)
 
   return std::make_shared<TensorType>(cached_output_);
 }
-//
-// template <typename TensorType>
-// void Node<TensorType>::BackPropagate(TensorType const & error_signal)
-//{
-//  std::vector<std::pair<Node<TensorType> *, TensorType>> ret;
-//  BackPropagate(error_signal, ret);
-//}
-//
-// template <typename TensorType>
-// void Node<TensorType>::BackPropagate(TensorType const & error_signal,
-// std::vector<std::pair<Node<TensorType> *, TensorType>> & ret)
-//{
-//  // gather inputs and compute backprop for this node
-//  VecTensorType inputs = GatherInputs();
-//  std::vector<TensorType> bp_error_signal = op_ptr_->Backward(inputs, error_signal);
-//  assert(bp_error_signal.size() == inputs.size() || inputs.empty());
-//
-//  // call backpropagate on the input nodes
-//  auto bp_it = bp_error_signal.begin();
-//  for (auto &i : input_nodes_)
-//  {
-//    auto other_node_ret = i->BackPropagate(*bp_it, ret);
-//    ret.insert(ret.end(), other_node_ret.begin(), other_node_ret.end());
-//    ++bp_it;
-//  }
-//
-//  // If no input to backprop, return gradient to caller
-//  // This is used to propagate outside of a SubGraph
-//  // The SubGraph has no knowledge of the rest of the network,
-//  // so it sends its unpropagated gradient to its wrapper node that will forward them out
-//  if (input_nodes_.empty())
-//  {
-//    for (auto g : bp_error_signal)
-//    {
-//      ret.push_back(std::make_pair(this, g));
-//    }
-//  }
-//}
 
 /**
  * Recursively backpropagates errorsignal through this node to all input nodes

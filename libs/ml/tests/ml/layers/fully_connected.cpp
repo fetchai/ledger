@@ -265,7 +265,6 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test_time_distributed)
   using DataType   = typename TensorType::Type;
   using SizeType   = typename TensorType::SizeType;
   using GraphType  = fetch::ml::Graph<TensorType>;
-  //  using GraphPtrType = std::shared_ptr<GraphType>;
   using FCType = fetch::ml::layers::FullyConnected<TensorType>;
 
   std::string descriptor = FCType::DESCRIPTOR;
