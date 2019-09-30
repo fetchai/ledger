@@ -105,6 +105,7 @@ public:
     , state_machine_{std::make_shared<StateMachine>("PBCStateMach", State::INIT)}
   {
     FETCH_UNUSED(ordered_delivery);
+    FETCH_UNUSED(unused_me);
     this->Expose(PULL_INFO_FROM_PEER, this, &PunishmentBroadcastChannel::AllowPeerPull);
 
     // TODO(HUT): rpc beacon rename.
@@ -321,6 +322,8 @@ public:
 
   ServerPtr           rpc_server_{nullptr};
   muddle::rpc::Client rpc_client_;
+
+  bool unused_me;
 
   bool enabled_ = true;
 
