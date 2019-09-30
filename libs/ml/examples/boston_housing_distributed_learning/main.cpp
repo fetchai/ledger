@@ -128,23 +128,23 @@ void Shuffle(TensorType &data, TensorType &labels)
   TensorType data_out   = data.Copy();
   TensorType labels_out = labels.Copy();
 
-  std::vector<SizeType> indicies;
+  std::vector<SizeType> indices;
   SizeType              axis = data.shape().size() - 1;
 
   for (SizeType i{0}; i < data.shape().at(axis); i++)
   {
-    indicies.push_back(i);
+    indices.push_back(i);
   }
 
   fetch::random::LaggedFibonacciGenerator<> lfg(54);
-  fetch::random::Shuffle(lfg, indicies, indicies);
+  fetch::random::Shuffle(lfg, indices, indices);
 
   for (SizeType i{0}; i < data.shape().at(axis); i++)
   {
     auto data_it       = data.View(i).begin();
-    auto data_out_it   = data_out.View(indicies.at(i)).begin();
+    auto data_out_it   = data_out.View(indices.at(i)).begin();
     auto labels_it     = labels.View(i).begin();
-    auto labels_out_it = labels_out.View(indicies.at(i)).begin();
+    auto labels_out_it = labels_out.View(indices.at(i)).begin();
 
     while (data_it.is_valid())
     {
