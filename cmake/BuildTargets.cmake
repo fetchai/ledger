@@ -133,10 +133,14 @@ macro (setup_compiler)
   if (FETCH_ENABLE_BACKTRACE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFETCH_ENABLE_BACKTRACE")
 
+    fetch_info("Compiling in backtrace")
+
     find_library(DW_LIB dw)
 
     if (DW_LIB)
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFETCH_ENABLE_BACKTRACE_WITH_DW")
+
+      fetch_info("Compiling in backtrace with DW")
 
       set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -ldw -ldl")
     endif (DW_LIB)
