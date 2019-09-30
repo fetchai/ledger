@@ -16,10 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "dmlf/local_learner_networker.hpp"
+#include "dmlf/simple_cycling_algorithm.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/tensor.hpp"
 #include "ml/dataloaders/ReadCSV.hpp"
-#include "ml/distributed_learning/coordinator.hpp"
 #include "ml/distributed_learning/distributed_learning_client.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
@@ -60,6 +61,7 @@ std::shared_ptr<TrainingClient<TensorType>> MakeClient(
   client_params.label_name = g_ptr->template AddNode<PlaceHolder<TensorType>>("Label", {});
   client_params.error_name =
       g_ptr->template AddNode<MeanSquareErrorLoss<TensorType>>("Error", {"FC3", "Label"});
+  g_ptr->Compile();
 
   // Initialise DataLoader
   std::shared_ptr<fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>> dataloader_ptr =
@@ -209,17 +211,16 @@ int main(int ac, char **av)
     return 1;
   }
 
-  CoordinatorParams      coord_params;
   ClientParams<DataType> client_params;
 
+  bool     synchronise                          = false;
   SizeType number_of_clients                    = 5;
   SizeType number_of_rounds                     = 50;
-  coord_params.mode                             = CoordinatorMode::ASYNCHRONOUS;
-  coord_params.iterations_count                 = 20;
-  coord_params.number_of_peers                  = 3;
+  client_params.iterations_count                = 20;
   client_params.batch_size                      = 32;
   client_params.learning_rate                   = static_cast<DataType>(.001f);
-  float                       test_set_ratio    = 0.00f;
+  float                       test_set_ratio    = 0.03f;
+  SizeType                    number_of_peers   = 3;
   std::shared_ptr<std::mutex> console_mutex_ptr = std::make_shared<std::mutex>();
 
   // Load data
@@ -233,11 +234,23 @@ int main(int ac, char **av)
   std::vector<TensorType> data_tensors  = Split(data_tensor, number_of_clients);
   std::vector<TensorType> label_tensors = Split(label_tensor, number_of_clients);
 
-  // Create coordinator
-  std::shared_ptr<Coordinator<TensorType>> coordinator =
-      std::make_shared<Coordinator<TensorType>>(coord_params);
-
   std::cout << "FETCH Distributed BOSTON HOUSING Demo" << std::endl;
+
+  std::vector<std::shared_ptr<fetch::dmlf::LocalLearnerNetworker>> networkers(number_of_clients);
+
+  // Create networkers
+  for (SizeType i(0); i < number_of_clients; ++i)
+  {
+    networkers[i] = std::make_shared<fetch::dmlf::LocalLearnerNetworker>();
+    networkers[i]->Initialize<fetch::dmlf::Update<TensorType>>();
+  }
+
+  for (SizeType i(0); i < number_of_clients; ++i)
+  {
+    networkers[i]->addPeers(networkers);
+    networkers[i]->setShuffleAlgorithm(std::make_shared<fetch::dmlf::SimpleCyclingAlgorithm>(
+        networkers[i]->getPeerCount(), number_of_peers));
+  }
 
   std::vector<std::shared_ptr<TrainingClient<TensorType>>> clients(number_of_clients);
   for (SizeType i{0}; i < number_of_clients; ++i)
@@ -248,21 +261,16 @@ int main(int ac, char **av)
     // TODO(1597): Replace ID with something more sensible
   }
 
-  // Give list of clients to coordinator
-  coordinator->SetClientsList(clients);
-
   for (SizeType i{0}; i < number_of_clients; ++i)
   {
     // Give each client pointer to coordinator
-    clients[i]->SetCoordinator(coordinator);
+    clients[i]->SetNetworker(networkers[i]);
   }
 
   // Main loop
   for (SizeType it{0}; it < number_of_rounds; ++it)
   {
     // Start all clients
-    coordinator->Reset();
-
     std::cout << "ROUND : " << it << "\t";
     std::list<std::thread> threads;
     for (auto &c : clients)
@@ -283,13 +291,11 @@ int main(int ac, char **av)
     }
     std::cout << std::endl;
 
-    if (coordinator->GetMode() == CoordinatorMode::ASYNCHRONOUS)
-    {
-      continue;
-    }
-
     // Synchronize weights by giving all clients average of all client's weights
-    SynchroniseWeights(clients);
+    if (synchronise)
+    {
+      SynchroniseWeights(clients);
+    }
   }
 
   return 0;
