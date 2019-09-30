@@ -166,13 +166,13 @@ void Word2VecClient<TensorType>::TestEmbeddings(std::string const &word0, std::s
 
     std::cout << std::endl;
     std::cout << "Client " << this->id_ << ", batches done = " << this->batch_counter_ << std::endl;
-    fetch::ml::examples::PrintKNN(*w2v_data_loader_ptr_, embeddings->get_weights(), word0, K);
+    fetch::ml::examples::PrintKNN(*w2v_data_loader_ptr_, embeddings->GetWeights(), word0, K);
     std::cout << std::endl;
-    fetch::ml::examples::PrintWordAnalogy(*w2v_data_loader_ptr_, embeddings->get_weights(), word1,
+    fetch::ml::examples::PrintWordAnalogy(*w2v_data_loader_ptr_, embeddings->GetWeights(), word1,
                                           word2, word3, K);
   }
 
-  DataType score = examples::TestWithAnalogies(*w2v_data_loader_ptr_, embeddings->get_weights(),
+  DataType score = examples::TestWithAnalogies(*w2v_data_loader_ptr_, embeddings->GetWeights(),
                                                tp_.analogies_test_file);
   std::cout << "Score on analogies task: " << score * 100 << "%" << std::endl;
 }

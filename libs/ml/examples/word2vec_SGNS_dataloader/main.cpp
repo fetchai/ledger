@@ -77,11 +77,11 @@ void TestEmbeddings(Graph<TensorType> const &g, std::string const &skip_gram_nam
       sg_layer->GetEmbeddings(sg_layer);
 
   std::cout << std::endl;
-  PrintKNN(dl, embeddings->get_weights(), word0, K);
+  PrintKNN(dl, embeddings->GetWeights(), word0, K);
   std::cout << std::endl;
-  PrintWordAnalogy(dl, embeddings->get_weights(), word1, word2, word3, K);
+  PrintWordAnalogy(dl, embeddings->GetWeights(), word1, word2, word3, K);
 
-  examples::TestWithAnalogies(dl, embeddings->get_weights(), analogies_test_file);
+  TestWithAnalogies(dl, embeddings->GetWeights(), analogies_test_file);
 }
 
 ////////////////////////////////
