@@ -282,6 +282,13 @@ bool VerifySign(PublicKey const &y, MessagePayload const &message, Signature con
   return e1 == e2;
 }
 
+bool VerifySign(PublicKey const &y, MessagePayload const &message, Signature const &sign)
+{
+  bn::G2 generator;
+  SetGenerator(generator);
+  VerifySign(y, message, sign, generator);
+}
+
 /**
  * Computes the group signature using the indices and signature shares of threshold_ + 1
  * parties

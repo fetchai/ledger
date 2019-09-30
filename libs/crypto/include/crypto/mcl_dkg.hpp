@@ -43,10 +43,6 @@ using CabinetIndex   = uint32_t;
 
 struct DkgOutput
 {
-  bn::G2              group_public_key;
-  std::vector<bn::G2> public_key_shares{};
-  bn::Fr              secret_key_share;
-
   DkgOutput()
   {
     bn::initPairing();
@@ -59,6 +55,10 @@ struct DkgOutput
     , public_key_shares{std::move(public_key_shares1)}
     , secret_key_share{std::move(secret_key_shares1)}
   {}
+
+  PublicKey              group_public_key;
+  std::vector<PublicKey> public_key_shares{};
+  PrivateKey             secret_key_share;
 };
 
 /**
@@ -126,6 +126,8 @@ Signature SignShare(MessagePayload const &message, PrivateKey const &x_i);
 
 bool VerifySign(PublicKey const &y, MessagePayload const &message, Signature const &sign,
                 Generator const &G);
+
+bool VerifySign(PublicKey const &y, MessagePayload const &message, Signature const &sign);
 
 Signature LagrangeInterpolation(std::unordered_map<CabinetIndex, Signature> const &shares);
 

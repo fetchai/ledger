@@ -32,14 +32,6 @@ using MuddleAddress  = byte_array::ConstByteArray;
 
 TEST(beacon_manager, dkg_and_threshold_signing)
 {
-  struct DkgOutput
-  {
-    PrivateKey              private_key;
-    PublicKey               group_public_key;
-    std::vector<PublicKey>  public_key_shares;
-    std::set<MuddleAddress> qual;
-  };
-
   bn::initPairing();
   PublicKey zero;
   zero.clear();
@@ -299,13 +291,16 @@ TEST(beacon_manager, dkg_and_threshold_signing)
     manager->ComputePublicKeys();
   }
 
-  std::vector<DkgOutput> outputs;
+  std::vector<DkgOutput>               outputs;
+  std::vector<std::set<MuddleAddress>> quals;
   for (auto &manager : beacon_managers)
   {
-    DkgOutput output;
-    manager->GetDkgOutput(output.group_public_key, output.private_key, output.public_key_shares,
-                          output.qual);
+    DkgOutput               output;
+    std::set<MuddleAddress> manager_qual;
+    manager->GetDkgOutput(output.group_public_key, output.secret_key_share,
+                          output.public_key_shares, manager_qual);
     outputs.push_back(output);
+    quals.push_back(manager_qual);
   }
 
   // Check outputs agree
@@ -315,7 +310,7 @@ TEST(beacon_manager, dkg_and_threshold_signing)
     {
       EXPECT_EQ(outputs[index].group_public_key.getStr(),
                 outputs[index1].group_public_key.getStr());
-      EXPECT_EQ(outputs[index].qual, outputs[index1].qual);
+      EXPECT_EQ(quals[index], quals[index1]);
       for (uint32_t shares_index = 0; shares_index < cabinet_size; ++shares_index)
       {
         EXPECT_EQ(outputs[index].public_key_shares[shares_index],

@@ -203,8 +203,7 @@ void BeaconService::AbortCabinet(uint64_t round_start)
 }
 
 void BeaconService::StartNewCabinet(CabinetMemberList members, uint32_t threshold,
-                                    uint64_t round_start, uint64_t round_end, uint64_t start_time,
-                                    DkgOutput const *const output)
+                                    uint64_t round_start, uint64_t round_end, uint64_t start_time)
 {
   auto diff_time = int64_t(static_cast<uint64_t>(std::time(nullptr))) - int64_t(start_time);
   FETCH_LOG_INFO(LOGGING_NAME, "Starting new cabinet from ", round_start, " to ", round_end,
@@ -240,11 +239,6 @@ void BeaconService::StartNewCabinet(CabinetMemberList members, uint32_t threshol
   {
     beacon->manager.SetCertificate(certificate_);
     beacon->manager.NewCabinet(members, threshold);
-    if (output)
-    {
-      beacon->manager.SetDkgOutput(output->group_public_key, output->secret_key_share,
-                                   output->public_key_shares, members);
-    }
   }
 
   // Setting the aeon details
@@ -255,14 +249,7 @@ void BeaconService::StartNewCabinet(CabinetMemberList members, uint32_t threshol
 
   // Even "observe only" details need to pass through the setup phase
   // to preserve order.
-  if (output)
-  {
-    aeon_exe_queue_.push_back(beacon);
-  }
-  else
-  {
-    cabinet_creator_.QueueSetup(beacon);
-  }
+  cabinet_creator_.QueueSetup(beacon);
 }
 
 BeaconService::State BeaconService::OnWaitForSetupCompletionState()

@@ -110,8 +110,7 @@ public:
   /// @{
   /// @brief this function is called when the node is in the cabinet
   void StartNewCabinet(CabinetMemberList members, uint32_t threshold, uint64_t round_start,
-                       uint64_t round_end, uint64_t start_time,
-                       DkgOutput const *const output = nullptr);
+                       uint64_t round_end, uint64_t start_time);
 
   void AbortCabinet(uint64_t round_start);
   /// @}
@@ -151,14 +150,16 @@ protected:
   SignatureInformation GetSignatureShares(uint64_t round);
   /// @}
 
+  mutable std::mutex                  mutex_;
+  CertificatePtr                      certificate_;
+  std::deque<SharedAeonExecutionUnit> aeon_exe_queue_;
+
 private:
   bool AddSignature(SignatureShare share);
 
-  mutable std::mutex mutex_;
-  CertificatePtr     certificate_;
-  Identity           identity_;
-  Endpoint &         endpoint_;
-  StateMachinePtr    state_machine_;
+  Identity        identity_;
+  Endpoint &      endpoint_;
+  StateMachinePtr state_machine_;
 
   /// General configuration
   /// @{
@@ -168,8 +169,6 @@ private:
 
   /// Beacon and entropy control units
   /// @{
-  std::deque<SharedAeonExecutionUnit> aeon_exe_queue_;
-
   std::deque<Entropy> ready_entropy_queue_;
   Entropy             latest_entropy_;
 
