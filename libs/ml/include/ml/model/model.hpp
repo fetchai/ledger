@@ -147,7 +147,6 @@ void Model<TensorType>::Compile(OptimiserType optimiser_type, ops::LossType loss
 template <typename TensorType>
 void Model<TensorType>::SetDataloader(std::unique_ptr<DataLoaderType> dataloader_ptr)
 {
-  //  dataloader_ptr_ = std::dynamic_pointer_cast<DataLoaderType>(dataloader_ptr);
   dataloader_ptr_ = std::move(dataloader_ptr);
 }
 
