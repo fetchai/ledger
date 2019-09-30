@@ -293,30 +293,59 @@ private:
 
   void UpdateCursor() override
   {
-    if (this->mode_ == DataLoaderMode::TRAIN)
+    switch (this->mode_)
+    {
+    case DataLoaderMode::TRAIN:
     {
       this->current_cursor_ = train_cursor_;
       this->current_min_    = 0;
       this->current_max_    = test_offset_;
       this->current_size_   = train_size_;
+      break;
     }
-    else if (this->mode_ == DataLoaderMode::TEST)
+    case DataLoaderMode::TEST:
     {
       this->current_cursor_ = test_cursor_;
       this->current_min_    = test_offset_;
       this->current_max_    = validation_offset_;
       this->current_size_   = test_size_;
+      break;
     }
-    else if (this->mode_ == DataLoaderMode::VALIDATE)
+    case DataLoaderMode::VALIDATE:
     {
       this->current_cursor_ = validation_cursor_;
       this->current_min_    = validation_offset_;
       this->current_max_    = total_size_;
       this->current_size_   = validation_size_;
+      break;
     }
-    else
+    default:
     {
       throw std::runtime_error("Unsupported dataloader mode.");
+    }
+    }
+  }
+
+  bool IsModeAvailable(DataLoaderMode mode) override
+  {
+    switch (mode)
+    {
+    case DataLoaderMode::TRAIN:
+    {
+      return test_offset_ > 0;
+    }
+    case DataLoaderMode::TEST:
+    {
+      return test_offset_ < validation_offset_;
+    }
+    case DataLoaderMode::VALIDATE:
+    {
+      return validation_offset_ < total_size_;
+    }
+    default:
+    {
+      throw std::runtime_error("Unsupported dataloader mode.");
+    }
     }
   }
 
