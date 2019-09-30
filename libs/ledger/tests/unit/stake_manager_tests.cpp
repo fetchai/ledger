@@ -90,7 +90,7 @@ protected:
   StakeManagerPtr stake_manager_;
 };
 
-TEST_F(StakeManagerTests, CheckBasicStakeChangeScenarios)
+TEST_F(StakeManagerTests, DISABLED_CheckBasicStakeChangeScenarios)
 {
   std::vector<Identity> identities = {
       GenerateRandomIdentity(rng_),
