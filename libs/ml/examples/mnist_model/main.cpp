@@ -56,7 +56,7 @@ int main(int ac, char **av)
   model_config.print_stats    = true;
 
   // setup dataloader
-  auto data_loader_ptr = std::make_shared<DataLoaderType>(av[1], av[2]);
+  auto data_loader_ptr = std::make_unique<DataLoaderType>(av[1], av[2]);
 
   // Allocate test set of size 20% of MNIST
   data_loader_ptr->SetTestRatio(0.2f);
@@ -64,7 +64,8 @@ int main(int ac, char **av)
   DataType loss;
 
   // run model in training mode
-  ModelType model(data_loader_ptr, OptimiserType::ADAM, model_config, {784, 100, 20, 10});
+  ModelType model(std::move(data_loader_ptr), OptimiserType::ADAM, model_config,
+                  {784, 100, 20, 10});
 
   // training loop - early stopping will prevent long training time
   model.Train(1000000, loss);

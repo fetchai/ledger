@@ -53,7 +53,7 @@ DNNClassifier<TensorType>::DNNClassifier(DataLoaderPtrType            data_loade
                                          OptimiserType                optimiser_type,
                                          ModelConfig<DataType>        model_config,
                                          std::vector<SizeType> const &hidden_layers)
-  : ModelInterface<TensorType>(data_loader_ptr, optimiser_type, model_config)
+  : ModelInterface<TensorType>(std::move(data_loader_ptr), optimiser_type, model_config)
 {
 
   assert(!hidden_layers.empty());

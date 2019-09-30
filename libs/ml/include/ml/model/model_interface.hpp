@@ -38,9 +38,9 @@ public:
   using DataLoaderType    = dataloaders::DataLoader<TensorType, TensorType>;
   using OptimiserType     = optimisers::Optimiser<TensorType>;
   using OptimiserTypeType = optimisers::OptimiserType;
-  using GraphPtrType      = typename std::shared_ptr<GraphType>;
-  using DataLoaderPtrType = typename std::shared_ptr<DataLoaderType>;
-  using OptimiserPtrType  = typename std::shared_ptr<OptimiserType>;
+  using GraphPtrType      = typename std::unique_ptr<GraphType>;
+  using DataLoaderPtrType = typename std::unique_ptr<DataLoaderType>;
+  using OptimiserPtrType  = typename std::unique_ptr<OptimiserType>;
 
   virtual bool Train(SizeType n_steps);
   virtual bool Train(SizeType n_steps, DataType &loss);
@@ -56,7 +56,7 @@ public:
 
 protected:
   ModelConfig<DataType> model_config_;
-  GraphPtrType          graph_ptr_ = std::make_shared<GraphType>();
+  GraphPtrType          graph_ptr_ = std::make_unique<GraphType>();
   DataLoaderPtrType     dataloader_ptr_;
   OptimiserPtrType      optimiser_ptr_;
   OptimiserTypeType     optimiser_type_;
@@ -215,7 +215,7 @@ bool ModelInterface<TensorType>::SetOptimiser()
   {
     // instantiate optimiser
     if (!(fetch::ml::optimisers::AddOptimiser<TensorType>(
-            optimiser_type_, this->optimiser_ptr_, this->graph_ptr_,
+            optimiser_type_, std::move(this->optimiser_ptr_), std::move(this->graph_ptr_),
             std::vector<std::string>{this->input_}, this->label_, this->error_,
             this->model_config_.learning_rate_param)))
     {

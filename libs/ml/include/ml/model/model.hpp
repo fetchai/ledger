@@ -35,9 +35,9 @@ public:
   using GraphType         = Graph<TensorType>;
   using DataLoaderType    = dataloaders::DataLoader<TensorType, TensorType>;
   using OptimiserType     = optimisers::Optimiser<TensorType>;
-  using GraphPtrType      = typename std::shared_ptr<GraphType>;
-  using DataLoaderPtrType = typename std::shared_ptr<DataLoaderType>;
-  using OptimiserPtrType  = typename std::shared_ptr<OptimiserType>;
+  using GraphPtrType      = typename ModelInterface<TensorType>::GraphPtrType;
+  using DataLoaderPtrType = typename ModelInterface<TensorType>::DataLoaderPtrType;
+  using OptimiserPtrType  = typename ModelInterface<TensorType>::OptimiserPtrType;
 
   /////////////////////////////
   /// Construct / Desctruct ///
