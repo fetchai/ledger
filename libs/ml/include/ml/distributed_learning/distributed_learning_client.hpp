@@ -48,6 +48,7 @@ struct ClientParams
 
   SizeType batch_size;
   DataType learning_rate;
+  bool     print_loss = false;
 
   std::vector<std::string> inputs_names = {"Input"};
   std::string              label_name   = "Label";
@@ -65,13 +66,14 @@ class TrainingClient
   using GraphPtrType     = std::shared_ptr<fetch::ml::Graph<TensorType>>;
 
 public:
-  TrainingClient(std::string id, ClientParams<DataType> const &client_params);
+  TrainingClient(std::string id, ClientParams<DataType> const &client_params,
+                 std::shared_ptr<std::mutex> console_mutex_ptr);
 
   TrainingClient(
       std::string id, GraphPtrType graph_ptr,
       std::shared_ptr<fetch::ml::dataloaders::DataLoader<TensorType, TensorType>> loader_ptr,
       std::shared_ptr<fetch::ml::optimisers::Optimiser<TensorType>>               optimiser_ptr,
-      ClientParams<DataType> const &                                              client_params);
+      ClientParams<DataType> const &client_params, std::shared_ptr<std::mutex> console_mutex_ptr);
 
   virtual ~TrainingClient()
   {
@@ -96,6 +98,8 @@ public:
   void SetWeights(VectorTensorType const &new_weights);
 
   void SetParams(ClientParams<DataType> const &new_params);
+
+  GraphPtrType GetModel();
 
   std::string GetId() const;
 
@@ -139,12 +143,18 @@ protected:
   std::shared_ptr<std::thread> export_buffer_thread_;
   bool                         export_stopped_ = false;
 
+  // Console mutex pointer
+  std::shared_ptr<std::mutex> console_mutex_ptr_;
+
   // Learning hyperparameters
   SizeType batch_size_    = 0;
   DataType learning_rate_ = static_cast<DataType>(0);
 
   // Count for number of batches
   SizeType batch_counter_ = 0;
+
+  // Print to console flag
+  bool print_loss_;
 
   void GetNewGradients(VectorTensorType &new_gradients);
 
@@ -173,11 +183,12 @@ TrainingClient<TensorType>::TrainingClient(
     std::string id, GraphPtrType graph_ptr,
     std::shared_ptr<fetch::ml::dataloaders::DataLoader<TensorType, TensorType>> loader_ptr,
     std::shared_ptr<fetch::ml::optimisers::Optimiser<TensorType>>               optimiser_ptr,
-    ClientParams<DataType> const &                                              client_params)
+    ClientParams<DataType> const &client_params, std::shared_ptr<std::mutex> console_mutex_ptr)
   : id_(std::move(id))
   , g_ptr_(std::move(graph_ptr))
   , dataloader_ptr_(std::move(loader_ptr))
   , opti_ptr_(std::move(optimiser_ptr))
+  , console_mutex_ptr_(std::move(console_mutex_ptr))
 {
   SetParams(client_params);
   ClearLossFile();
@@ -186,8 +197,10 @@ TrainingClient<TensorType>::TrainingClient(
 
 template <class TensorType>
 TrainingClient<TensorType>::TrainingClient(std::string                   id,
-                                           ClientParams<DataType> const &client_params)
+                                           ClientParams<DataType> const &client_params,
+                                           std::shared_ptr<std::mutex>   console_mutex_ptr)
   : id_(std::move(id))
+  , console_mutex_ptr_(std::move(console_mutex_ptr))
 {
   SetParams(client_params);
   ClearLossFile();
@@ -210,6 +223,7 @@ void TrainingClient<TensorType>::SetParams(
   error_name_    = new_params.error_name;
   batch_size_    = new_params.batch_size;
   learning_rate_ = new_params.learning_rate;
+  print_loss_    = new_params.print_loss;
 }
 
 template <class TensorType>
@@ -286,7 +300,15 @@ void TrainingClient<TensorType>::Train()
 template <class TensorType>
 void TrainingClient<TensorType>::Test()
 {
-  dataloader_ptr_->SetMode(fetch::ml::dataloaders::DataLoaderMode::TEST);
+  // If test set is not available we run test on whole training set
+  if (dataloader_ptr_->IsModeAvailable(fetch::ml::dataloaders::DataLoaderMode::TEST))
+  {
+    dataloader_ptr_->SetMode(fetch::ml::dataloaders::DataLoaderMode::TEST);
+  }
+  else
+  {
+    dataloader_ptr_->SetMode(fetch::ml::dataloaders::DataLoaderMode::TRAIN);
+  }
 
   // Disable random to run model on whole test set
   dataloader_ptr_->SetRandomMode(false);
@@ -313,6 +335,7 @@ void TrainingClient<TensorType>::Test()
 
     test_loss_ = *(g_ptr_->Evaluate(error_name_).begin());
   }
+  dataloader_ptr_->Reset();
 }
 
 /**
@@ -422,17 +445,35 @@ void TrainingClient<TensorType>::TrainOnce()
   // Upload to https://plot.ly/create/#/ for visualisation
   if (lossfile)
   {
-    lossfile << GetStrTimestamp() << ", " << static_cast<double>(train_loss_)
+    lossfile << GetStrTimestamp() << ", " << static_cast<double>(train_loss_) << ", "
              << static_cast<double>(test_loss_) << "\n";
+  }
+
+  if (print_loss_)
+  {
+    // Lock console
+    FETCH_LOCK(*console_mutex_ptr_);
+    std::cout << "Client " << id_ << "\tTraining loss: " << static_cast<double>(train_loss_)
+              << "\tTest loss: " << static_cast<double>(test_loss_) << std::endl;
   }
 
   opti_ptr_->IncrementEpochCounter();
   opti_ptr_->UpdateLearningRate();
 
-  lossfile << GetStrTimestamp() << ", "
-           << "STOPPED"
-           << "\n";
-  lossfile.close();
+  if (lossfile)
+  {
+    lossfile << GetStrTimestamp() << ", "
+             << "STOPPED"
+             << "\n";
+    lossfile.close();
+  }
+
+  if (print_loss_)
+  {
+    // Lock console
+    FETCH_LOCK(*console_mutex_ptr_);
+    std::cout << "Client " << id_ << " STOPPED" << std::endl;
+  }
 }
 
 /**
@@ -456,8 +497,16 @@ void TrainingClient<TensorType>::TrainWithCoordinator()
 
     if (lossfile)
     {
-      lossfile << GetStrTimestamp() << ", " << static_cast<double>(train_loss_)
+      lossfile << GetStrTimestamp() << ", " << static_cast<double>(train_loss_) << ", "
                << static_cast<double>(test_loss_) << "\n";
+    }
+
+    if (print_loss_)
+    {
+      // Lock console
+      FETCH_LOCK(*console_mutex_ptr_);
+      std::cout << "Client " << id_ << "\tTraining loss: " << static_cast<double>(train_loss_)
+                << "\tTest loss: " << static_cast<double>(test_loss_) << std::endl;
     }
   }
 
@@ -470,6 +519,13 @@ void TrainingClient<TensorType>::TrainWithCoordinator()
              << "STOPPED"
              << "\n";
     lossfile.close();
+  }
+
+  if (print_loss_)
+  {
+    // Lock console
+    FETCH_LOCK(*console_mutex_ptr_);
+    std::cout << "Client " << id_ << " STOPPED" << std::endl;
   }
 }
 
@@ -584,6 +640,12 @@ void TrainingClient<TensorType>::GraphAddGradients(GraphPtrType            g_ptr
     weights_ptr->AddToGradient(*grad_it);
     ++grad_it;
   }
+}
+
+template <class TensorType>
+std::shared_ptr<fetch::ml::Graph<TensorType>> TrainingClient<TensorType>::GetModel()
+{
+  return g_ptr_;
 }
 
 }  // namespace distributed_learning
