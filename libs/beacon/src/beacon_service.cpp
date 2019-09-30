@@ -340,8 +340,8 @@ BeaconService::State BeaconService::OnCompleteState()
   beacon_entropy_last_generated_->set(index);
   beacon_entropy_generated_total_->add(1);
 
-  // Populate the block entropy structure appropriately
-  block_entropy_being_created_->group_signature = active_exe_unit_->manager.GroupSignature();
+  // Populate the block entropy structure appropriately TODO(HUT): this.
+  // block_entropy_being_created_->group_signature = active_exe_unit_->manager.GroupSignature();
 
   // Save it for querying
   completed_block_entropy_[index] = block_entropy_being_created_;

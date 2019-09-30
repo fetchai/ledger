@@ -65,13 +65,13 @@ struct BlockEntropy : public BlockEntropyInterface
   Digest digest;  // The hash of the above (when new committee) note, this could be implicit. Is not
                   // serialized.
 
-  Confirmations confirmations;     // In the case of a new cabinet, personal signatures of the hash
-                                   // from qual members
-  GroupSignature group_signature;  // Signature of the previous entropy, used as the entropy
+  Confirmations confirmations;  // In the case of a new cabinet, personal signatures of the hash
+                                // from qual members
+  GroupSignatureStr group_signature;  // Signature of the previous entropy, used as the entropy
 
   Digest EntropyAsSHA256() const override
   {
-    return crypto::Hash<crypto::SHA256>(group_signature.getStr());
+    return crypto::Hash<crypto::SHA256>(group_signature /*.getStr()*/);
   }
 
   // This will always be safe so long as the entropy function is properly sha256-ing
@@ -117,8 +117,8 @@ public:
     map.Append(3, member.block_number);
     map.Append(2, member.confirmations);
 
-    std::string set = member.group_signature.getStr();
-    map.Append(1, set);
+    // std::string set = member.group_signature/*.getStr()*/;
+    map.Append(1, member.group_signature);
   }
 
   template <typename MapDeserializer>
@@ -129,9 +129,9 @@ public:
     map.ExpectKeyGetValue(3, member.block_number);
     map.ExpectKeyGetValue(2, member.confirmations);
 
-    std::string get;
-    map.ExpectKeyGetValue(1, get);
-    member.group_signature.setStr(get);
+    // std::string get;
+    map.ExpectKeyGetValue(1, member.group_signature);
+    // member.group_signature/*.setStr(get)*/;
   }
 };
 }  // namespace serializers
