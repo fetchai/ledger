@@ -1,8 +1,7 @@
 #
-# T X   G E N E R A T O R
+# CHAIN TOOL
 #
 cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
-cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 project(chain-tool)
 
 setup_compiler()

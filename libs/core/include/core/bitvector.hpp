@@ -55,7 +55,6 @@ public:
     bool       operator!=(Iterator const &right) const;
     value_type operator*() const;
     Iterator & operator++();
-    Iterator   operator++(int);
 
   private:
     BitVector::Iterator &Next(bool is_begin = false);

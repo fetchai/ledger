@@ -17,6 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/commandline/params.hpp"
+#include "core/filesystem/read_file_contents.hpp"
+#include "core/filesystem/write_to_file.hpp"
 #include "ledger/chain/block_db_record.hpp"
 #include "ledger/chain/transaction.hpp"
 #include "ledger/chain/transaction_layout.hpp"
@@ -35,6 +37,7 @@ namespace {
 using namespace fetch;
 using namespace fetch::storage;
 using namespace fetch::ledger;
+using namespace fetch::core;
 
 struct DIRDeleter;
 struct BlockNode;
@@ -50,7 +53,7 @@ using BlockHash       = Block::Hash;
 using BlockWeight     = Block::Weight;
 using Blocks          = std::unordered_set<BlockHash>;
 using BlockStoreCache = std::vector<BlockDbRecord>;
-using BlockChains     = std::set<BlockChain>;
+using BlockChains     = std::multiset<BlockChain>;
 
 struct DIRDeleter
 {
@@ -80,8 +83,8 @@ std::string ComposeTxDbFileName(T const &lane_idx, std::string const &suffix = s
 
 struct ChainHeadStore
 {
-  static constexpr char const *DEFAULT_FILE_NAME{"chain.head.db"};
-  static constexpr std::size_t EXPECTED_HASH_SIZE{32ull};
+  static constexpr char const *    DEFAULT_FILE_NAME{"chain.head.db"};
+  static constexpr std::streamsize EXPECTED_HASH_SIZE{32ll};
 
   std::string const file_name;
 
@@ -91,24 +94,13 @@ struct ChainHeadStore
 
   BlockHash GetHead() const
   {
-    std::fstream head_store;
-    head_store.open(file_name, std::ios::binary | std::ios::in);
-
-    byte_array::ByteArray buffer;
-
-    head_store.seekg(0, std::ios::end);
-    auto const file_size = head_store.tellg();
-
-    if (file_size == EXPECTED_HASH_SIZE)
+    auto file_content{core::ReadContentsOfFile(file_name.c_str(), EXPECTED_HASH_SIZE + 1ll)};
+    if (file_content.size() != EXPECTED_HASH_SIZE)
     {
-      buffer.Resize(EXPECTED_HASH_SIZE);
-
-      head_store.seekg(0);
-      head_store.read(reinterpret_cast<char *>(buffer.pointer()),
-                      static_cast<std::streamsize>(buffer.size()));
+      return {};
     }
 
-    return std::move(buffer);
+    return file_content.SubArray(0ull, EXPECTED_HASH_SIZE);
   }
 
   void SetHead(BlockHash const &head) const
@@ -118,30 +110,17 @@ struct ChainHeadStore
       std::ostringstream s;
       s << "Size of block hash " << head.size() << " differs to expected size "
         << EXPECTED_HASH_SIZE;
-      throw std::runtime_error(s.str().c_str());
+      throw std::runtime_error(s.str());
     }
 
-    std::fstream head_store;
-    head_store.open(file_name, std::ios::binary | std::ios::out | std::ios::trunc);
-    head_store.seekg(0, std::ios::beg);
-    head_store.write(reinterpret_cast<char const *>(head.pointer()),
-                     static_cast<std::streamsize>(head.size()));
+    if (!WriteToFile(file_name.c_str(), head))
+    {
+      std::ostringstream s;
+      s << "Error occured when writing " << head.ToHex() << " to " << file_name;
+      throw std::runtime_error(s.str());
+    }
   }
 };
-
-// struct MnimalisticBlockDBMetadata
-//{
-//  BlockHash   hash;
-//  BlockHash   parent;
-//  BlockWeight weight;
-//
-//  MnimalisticBlockDBMetadata(BlockDbRecord &&record)
-//    : hash{std::move(record.block.body.hash)}
-//    , parent{std::move(record.block.body.previous_hash)}
-//    , weight{record.block.weight}
-//  {
-//  }
-//};
 
 struct BlockNode
 {
@@ -175,11 +154,16 @@ struct BlockNode
 
 struct BlockChain
 {
-  BlockHash   root;
-  BlockHash   leaf;
-  BlockWeight total_weight;
-  std::size_t chain_length;
-  std::size_t num_of_all_txs;
+  BlockHash   root{};
+  BlockHash   leaf{};
+  BlockWeight total_weight{0ull};
+  std::size_t chain_length{0ull};
+  std::size_t num_of_all_txs{0ull};
+
+  BlockChain(BlockChain const &) = default;
+  BlockChain(BlockChain &&)      = default;
+  BlockChain &operator=(BlockChain const &) = default;
+  BlockChain &operator=(BlockChain &&) = default;
 
   explicit BlockChain(BlockNode const &leaf_)
     : root{leaf_.db_record.hash()}
@@ -320,7 +304,11 @@ public:
 
       if (!subchains.empty())
       {
-        chains.emplace(*subchains.rbegin());  // Picking HEAVIEST subchain.
+        for (auto &chain : subchains)
+        {
+          chains.insert(chain);
+        }
+        // chains.insert(subchains.begin(), chains.end());
       }
       else
       {
@@ -333,6 +321,105 @@ public:
     }
 
     return chains;
+  }
+
+  std::tuple<BlockChain, int, std::string> GetHeaviestChain(
+      BlockChains const &chains, ChainHeadStore const &chain_head_store) const
+  {
+    std::ostringstream s;
+
+    if (chains.empty())
+    {
+      return {BlockChain{BlockHash{}}, -10, "ERROR: No chains found in block db. Exiting."};
+    }
+
+    auto const one_of_heaviest_chains{chains.crbegin()};
+    auto const num_of_heaviest_chains{chains.count(*one_of_heaviest_chains)};
+    if (num_of_heaviest_chains > 1)
+    {
+      s << "INCONSISTENCY: Found multiple heaviest chains (multiple chains with weight equal to "
+           "max. chain weight)."
+        << std::endl;
+    }
+
+    auto heaviest_chain{chains.cend()};
+
+    auto const chain_head_from_file{chain_head_store.GetHead()};
+    auto const block_node_chff{tree.find(chain_head_from_file)};
+
+    BlockChains::const_iterator block_chain_chff{chains.cend()};
+    if (block_node_chff == tree.end() || !block_node_chff->second.is_block_set)
+    {
+      s << "INCONSISTENCY: No corresponding block data found for block hash "
+        << chain_head_from_file.ToHex() << " stored in the \"" << chain_head_store.file_name
+        << "\" file containing assumed chain head." << std::endl;
+    }
+    else
+    {
+      for (auto chain{chains.cbegin()}; chain != chains.cend(); ++chain)
+      {
+        if (chain->leaf == chain_head_from_file)
+        {
+          block_chain_chff = chain;
+          break;
+        }
+      }
+    }
+
+    if (block_chain_chff == chains.cend())
+    {
+      s << "INCONSISTENCY: *NO* corresponding CHAIN found for the HEAD block "
+        << chain_head_from_file.ToHex() << " stored in the \"" << chain_head_store.file_name
+        << "\" file." << std::endl;
+    }
+    else
+    {
+      if (block_chain_chff->total_weight == one_of_heaviest_chains->total_weight)
+      {
+        heaviest_chain = block_chain_chff;
+        s << "Heaviest chain corresponds to the HEAD block " << chain_head_from_file.ToHex()
+          << " stored in the \"" << chain_head_store.file_name << "\" file." << std::endl;
+      }
+      else
+      {
+        s << "INCONSISTENCY: CHAIN corresponding to the HEAD block " << chain_head_from_file.ToHex()
+          << " stored in the \"" << chain_head_store.file_name
+          << "\" file is *NOT* the heaviest chain." << std::endl;
+      }
+    }
+
+    if (heaviest_chain == chains.cend())
+    {
+      // We haven't find the heaviest chain yet.
+      if (num_of_heaviest_chains == 1ull)
+      {
+        heaviest_chain = chains.find(*one_of_heaviest_chains);
+      }
+      else
+      {
+        // Trying to recover if possible
+        if (block_chain_chff != chains.cend())
+        {
+          s << "RECOVERY: Picking the heaviest chain using the assumed HEAD block "
+            << chain_head_from_file.ToHex() << " stored in the \"" << chain_head_store.file_name
+            << "\" file EVEN if it *NOT* the heaviest chain, because there exist *MULTIPLE* "
+               "heavier chains which ."
+            << std::endl;
+          heaviest_chain = block_chain_chff;
+        }
+        else
+        {
+          s << "ERROR: *UNABLE* to recover while selecting heviest chain: Assumed HEAD block "
+            << chain_head_from_file.ToHex() << " stored in the \"" << chain_head_store.file_name
+            << "\" file does *NOT* correspond to any of existing blocks in chain store db, and "
+               "there exist multiple heaviest chains."
+            << std::endl;
+          return {BlockChain{BlockHash{}}, -11, s.str()};
+        }
+      }
+    }
+
+    return {*heaviest_chain, 0, s.str()};
   }
 
   std::tuple<int, std::string> ValidateChain(BlockChain const &chain) const
@@ -461,8 +548,7 @@ private:
       }
 
       // TODO(pb): This check is supposed to be compiled in, but it can't, since ledger node sets
-      // the `next_hash`
-      // to genesis hash for all blocks (at least in release/v0.6.x).
+      // the `next_hash` to genesis hash for all blocks (at least in release/v0.6.x).
       // if (parent_it->second.db_record.next_hash != new_node_hash)
       //{
       //  std::cerr << "INCONSISTENCE: Parent block (" << parent_it->first.ToHex() << ") NEXT hash "
@@ -680,8 +766,11 @@ void ProcessTransactions(BlockChainForwardTree const &bch, BlockChain const &hea
   {
     count_of_all_tx_in_db += tx_lane_store.second.size();
     std::cout << "Lane" << tx_lane_store.first
-              << ": Tx Count reported by Tx db store: " << tx_lane_store.second.size() << std::endl;
+              << ": Tx Count reported by index file of lane source TX db: "
+              << tx_lane_store.second.size() << " TXs" << std::endl;
   }
+  std::cout << "Number of ALL transactions stored in source TX db: " << count_of_all_tx_in_db
+            << " TXs" << std::endl;
 
   std::cout << "INFO: Checking Transactions from all blocks ... " << std::endl;
   bch.IterateChainBackward(
@@ -693,11 +782,6 @@ void ProcessTransactions(BlockChainForwardTree const &bch, BlockChain const &hea
         uint64_t slice_idx{0};
         for (auto const &slice : node.db_record.block.body.slices)
         {
-          if (!node.is_block_set)
-          {
-            return false;
-          }
-
           tx_count_in_blockchain += slice.size();
 
           uint64_t tx_idx_in_slice{0};
@@ -760,8 +844,8 @@ void ProcessTransactions(BlockChainForwardTree const &bch, BlockChain const &hea
                   ? 100ull
                   : ((tx_count_in_blockchain / progress_step) * 100ull) / num_of_progress_steps};
           std::cout << progress_percent << "%"
-                    << " (processed " << node.db_record.block.body.block_number + 1
-                    << " blocks going backward from tip,"
+                    << " (processed up to " << node.db_record.block.body.block_number
+                    << " block INDEX going backwards from tip,"
                     << " missing/failed TX count " << tx_count_missing_accumulated << " (from "
                     << tx_count_processed << " TXs processed so far)." << std::endl;
         }
@@ -774,19 +858,22 @@ void ProcessTransactions(BlockChainForwardTree const &bch, BlockChain const &hea
     for (auto &store : *trimmed_tx_stores)
     {
       store.second.Flush(false);
+      std::cout << "Lane" << store.first
+                << ": Number of transactions stored in trimmed lane Tx db: "
+                << tx_count_stored_in_trimmed_db << " TXs" << std::endl;
     }
 
-    std::cout << "Number of transactions stored in trimmed db: " << tx_count_stored_in_trimmed_db
-              << " TXs" << std::endl;
+    std::cout << "Number of ALL transactions stored in trimmed Tx db: "
+              << tx_count_stored_in_trimmed_db << " TXs" << std::endl;
   }
 
   std::cout << "done." << std::endl;
 
   if (tx_count_in_blockchain > count_of_all_tx_in_db)
   {
-    std::cerr << "INCONSISTENCY: Less transactions present in db store " << count_of_all_tx_in_db
-              << " than transactions required by block-chain " << tx_count_in_blockchain
-              << std::endl;
+    std::cerr << "INCONSISTENCY: Less transactions present in source db store "
+              << count_of_all_tx_in_db << " than transactions required by blockchain "
+              << tx_count_in_blockchain << std::endl;
   }
 
   std::size_t lane{0};
@@ -842,18 +929,35 @@ int main(int argc, char **argv)
   auto const chains{bch.FindChains()};
   std::cout << "No. of chains found in reconstructed blockchain tree: " << chains.size()
             << std::endl;
-  for (auto const &chain : chains)
+
+  if (!chains.empty())
   {
-    std::cout << "Chain: " << chain << std::endl;
+    std::cout << "List of chains found in reconstructed blockchain tree:" << std::endl;
+    for (auto const &chain : chains)
+    {
+      std::cout << "Chain: " << chain << std::endl;
+    }
+    std::cout << "End of the list." << std::endl;
   }
 
-  auto &heaviest_chain{*chains.crbegin()};
+  int         err{0};
+  std::string err_msg;
+  BlockChain  heaviest_chain{BlockHash{}};
+  std::tie(heaviest_chain, err, err_msg) = bch.GetHeaviestChain(chains, ChainHeadStore{});
+
+  if (err < 0)
+  {
+    std::cerr << err_msg;
+    return err;
+  }
+  std::cout << err_msg;
+
   std::cout << "Heaviest Chain: " << heaviest_chain << std::endl;
 
-  auto const val_res{bch.ValidateChain(heaviest_chain)};
-  if (std::get<0>(val_res) > 0)
+  std::tie(err, err_msg) = bch.ValidateChain(heaviest_chain);
+  if (err < 0)
   {
-    std::cerr << std::get<1>(val_res) << std::endl;
+    std::cerr << err_msg << std::endl;
     return -6;
   }
 
@@ -862,11 +966,9 @@ int main(int argc, char **argv)
     bch.SaveChainToDbStore(heaviest_chain, "repaired");
   }
 
-  TxStores    tx_stores;
-  int         err{0};
-  std::string err_msg;
+  TxStores tx_stores;
   std::tie(tx_stores, err, err_msg) = open_tx_db_stores();
-  if (err != 0)
+  if (err < 0)
   {
     std::cerr << err_msg << std::endl;
     return err;

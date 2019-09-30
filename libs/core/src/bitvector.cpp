@@ -488,13 +488,6 @@ BitVector::Iterator &BitVector::Iterator::operator++()
   return Next();
 }
 
-BitVector::Iterator BitVector::Iterator::operator++(int)
-{
-  auto retval{*this};
-  Next();
-  return retval;
-}
-
 BitVector::Iterator &BitVector::Iterator::Next(bool is_begin)
 {
   if (!is_begin && index_ >= end_)
