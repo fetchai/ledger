@@ -26,6 +26,7 @@
 namespace fetch {
 namespace beacon {
 
+// TODO(HUT): delete this.
 struct Entropy
 {
   using ConstByteArray = byte_array::ConstByteArray;

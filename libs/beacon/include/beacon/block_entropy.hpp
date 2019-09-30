@@ -51,22 +51,7 @@ struct BlockEntropy : public BlockEntropyInterface
   BlockEntropy()
   {
     // Important this is cleared so the hash of it is consistent for the genesis block (?)
-    // group_signature.init();
-    // group_signature.clear();
-    // group_signature = GroupSignature{};
-    // group_signature = crypto::mcl::LagrangeInterpolation(signature_buffer_);
   }
-
-  //  BlockEntropy  &operator=(BlockEntropy const &rhs)
-  //  {
-  //    this->qualified        = rhs.qualified;
-  //    this->group_public_key = rhs.group_public_key;
-  //    this->block_number     = rhs.block_number;
-  //    this->digest           = rhs.digest;
-  //    this->group_signature  = rhs.group_signature;
-  //
-  //    return *this;
-  //  }
 
   Cabinet qualified;  // The members who succeeded DKG and are qualified to produce blocks (when new
                       // committee)

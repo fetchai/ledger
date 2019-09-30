@@ -36,21 +36,19 @@ struct Aeon
 {
   using MuddleAddress = byte_array::ConstByteArray;
   using Identity      = crypto::Identity;
-  // using Digest        = ledger::Digest;
   using TimeStamp    = std::chrono::time_point<std::chrono::system_clock>;
   using BlockEntropy = beacon::BlockEntropy;
 
   std::set<MuddleAddress> members{};
   uint64_t                round_start{0};
   uint64_t                round_end{0};
-  // Digest                  seed;
   BlockEntropy block_entropy_previous;
 
   // Timeouts for waiting for other members
   uint64_t start_reference_timepoint{uint64_t(-1)};
 };
 
-// TODO(HUT): mereg these into just Aeon
+// TODO(HUT): merge these into just Aeon
 struct AeonExecutionUnit
 {
   using BeaconManager  = dkg::BeaconManager;

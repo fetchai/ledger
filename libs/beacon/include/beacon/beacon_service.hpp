@@ -102,8 +102,6 @@ public:
 
   /// @name Entropy Generator
   /// @{
-  // Status GenerateEntropy(/*Digest block_digest,*/ uint64_t block_number, uint64_t &entropy)
-  // override;
   Status GenerateEntropy(/*Digest block_digest,*/ uint64_t block_number,
                          BlockEntropy &                    entropy) override;
   /// @}
@@ -141,9 +139,6 @@ protected:
   State OnCompleteState();
 
   State OnComiteeState();
-
-  State OnWaitForPublicKeys();
-  State OnObserveEntropyGeneration();
   /// @}
 
   /// Protocol endpoints
@@ -193,9 +188,7 @@ private:
   // TODO(HUT): delete these.
   /// Observing beacon
   /// @{
-  SubscriptionPtr                       group_public_key_subscription_{nullptr};
   std::priority_queue<PublicKeyMessage> incoming_group_public_keys_{};
-  SubscriptionPtr                       entropy_subscription_{nullptr};
   std::priority_queue<Entropy>          incoming_entropy_{};
   /// @}
 
