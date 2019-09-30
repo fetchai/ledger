@@ -51,6 +51,8 @@ struct BlockEntropy : public BlockEntropyInterface
 
   BlockEntropy()
   {
+    bn::initPairing();
+
     // Important this is cleared so the hash of it is consistent for the genesis block (?)
     group_signature = GroupSignature{};
     group_signature.clear();
