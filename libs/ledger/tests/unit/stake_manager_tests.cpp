@@ -37,7 +37,7 @@ using fetch::crypto::Identity;
 
 using RNG             = fetch::random::LinearCongruentialGenerator;
 using StakeManagerPtr = std::unique_ptr<StakeManager>;
-using RoundStats = std::unordered_map<Identity, std::size_t>;
+using RoundStats      = std::unordered_map<Identity, std::size_t>;
 
 constexpr uint64_t MAX_COMMITTEE_SIZE = 1;
 
@@ -86,7 +86,7 @@ protected:
     }
   }
 
-  RNG rng_;
+  RNG             rng_;
   StakeManagerPtr stake_manager_;
 };
 

@@ -36,13 +36,13 @@ struct Aeon
 {
   using MuddleAddress = byte_array::ConstByteArray;
   using Identity      = crypto::Identity;
-  using TimeStamp    = std::chrono::time_point<std::chrono::system_clock>;
-  using BlockEntropy = beacon::BlockEntropy;
+  using TimeStamp     = std::chrono::time_point<std::chrono::system_clock>;
+  using BlockEntropy  = beacon::BlockEntropy;
 
   std::set<MuddleAddress> members{};
   uint64_t                round_start{0};
   uint64_t                round_end{0};
-  BlockEntropy block_entropy_previous;
+  BlockEntropy            block_entropy_previous;
 
   // Timeouts for waiting for other members
   uint64_t start_reference_timepoint{uint64_t(-1)};

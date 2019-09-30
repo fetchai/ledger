@@ -47,24 +47,24 @@
 #include <unordered_map>
 #include <vector>
 
- using namespace fetch;
- using namespace fetch::beacon;
- using namespace fetch::ledger;
- using namespace std::chrono_literals;
+using namespace fetch;
+using namespace fetch::beacon;
+using namespace fetch::ledger;
+using namespace std::chrono_literals;
 
- using std::this_thread::sleep_for;
- using std::chrono::milliseconds;
+using std::this_thread::sleep_for;
+using std::chrono::milliseconds;
 
 #include "gtest/gtest.h"
 #include <iostream>
 
- using Prover         = fetch::crypto::Prover;
- using ProverPtr      = std::shared_ptr<Prover>;
- using Certificate    = fetch::crypto::Prover;
- using CertificatePtr = std::shared_ptr<Certificate>;
- using Address        = fetch::muddle::Packet::Address;
+using Prover         = fetch::crypto::Prover;
+using ProverPtr      = std::shared_ptr<Prover>;
+using Certificate    = fetch::crypto::Prover;
+using CertificatePtr = std::shared_ptr<Certificate>;
+using Address        = fetch::muddle::Packet::Address;
 
- ProverPtr CreateNewCertificate()
+ProverPtr CreateNewCertificate()
 {
   using Signer    = fetch::crypto::ECDSASigner;
   using SignerPtr = std::shared_ptr<Signer>;
@@ -76,7 +76,7 @@
   return certificate;
 }
 
- struct DummyManifesttCache : public ManifestCacheInterface
+struct DummyManifesttCache : public ManifestCacheInterface
 {
   bool QueryManifest(Address const &, Manifest &) override
   {
@@ -84,7 +84,7 @@
   }
 };
 
- struct CabinetNode
+struct CabinetNode
 {
   using Prover         = crypto::Prover;
   using ProverPtr      = std::shared_ptr<Prover>;
@@ -128,7 +128,7 @@
   }
 };
 
- void RunHonestComitteeRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
+void RunHonestComitteeRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
                               uint16_t number_of_cabinets = 4, uint16_t cabinet_size = 4,
                               uint16_t numbers_per_aeon = 10, double threshold = 0.5)
 {
@@ -148,8 +148,7 @@
   {
     for (uint32_t jj = ii + 1; jj < number_of_nodes; jj++)
     {
-      committee[ii]->muddle->ConnectTo(committee[jj]->GetMuddleAddress(),
-      committee[jj]->GetHint());
+      committee[ii]->muddle->ConnectTo(committee[jj]->GetMuddleAddress(), committee[jj]->GetHint());
     }
   }
 
@@ -272,7 +271,7 @@
   }
 }
 
- TEST(beacon, DISABLED_full_cycle)
+TEST(beacon, DISABLED_full_cycle)
 {
   //  SetGlobalLogLevel(LogLevel::CRITICAL);
   // TODO(tfr): Heuristically fails atm. RunHonestComitteeRenewal(100, 4, 4, 4, 10, 0.5);
