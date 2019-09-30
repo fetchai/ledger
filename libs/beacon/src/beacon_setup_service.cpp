@@ -1437,7 +1437,7 @@ uint64_t GetExpectedDKGTime(uint64_t cabinet_size)
   {
     expected_dkg_time_s = 30;
   }
-  if (cabinet_size < 5)
+  if (cabinet_size < 8)
   {
     expected_dkg_time_s = 10;
   }

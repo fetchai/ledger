@@ -627,7 +627,7 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
     uint32_t pp = cabinet_size - expected_completion_size;
     while (pp < cabinet_size)
     {
-      std::this_thread::sleep_for(std::chrono::seconds(5));
+      std::this_thread::sleep_for(std::chrono::seconds(1));
       for (auto qq = pp; qq < cabinet_size; ++qq)
       {
         if (!committee[qq]->DkgFinished())
