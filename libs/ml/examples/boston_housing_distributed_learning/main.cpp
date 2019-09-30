@@ -85,8 +85,8 @@ std::shared_ptr<TrainingClient<TensorType>> MakeClient(
  * @param label_tensor label
  * @return
  */
-DataType Test(std::shared_ptr<fetch::ml::Graph<TensorType>> g_ptr, TensorType &data_tensor,
-              TensorType &label_tensor)
+DataType Test(std::shared_ptr<fetch::ml::Graph<TensorType>> const &g_ptr,
+              TensorType const &data_tensor, TensorType const &label_tensor)
 {
   g_ptr->SetInput("Input", data_tensor);
   g_ptr->SetInput("Label", label_tensor);
@@ -121,6 +121,50 @@ std::vector<TensorType> Split(TensorType &data, SizeType number_of_parts)
   }
 
   return TensorType::Split(data, splitting_points, axis);
+}
+
+void Shuffle(TensorType &data, TensorType &labels)
+{
+  TensorType data_out   = data.Copy();
+  TensorType labels_out = labels.Copy();
+
+  std::vector<SizeType> indicies;
+  SizeType              axis = data.shape().size() - 1;
+
+  for (SizeType i{0}; i < data.shape().at(axis); i++)
+  {
+    indicies.push_back(i);
+  }
+
+  fetch::random::LaggedFibonacciGenerator<> lfg(54);
+  fetch::random::Shuffle(lfg, indicies, indicies);
+
+  for (SizeType i{0}; i < data.shape().at(axis); i++)
+  {
+    auto data_it       = data.View(i).begin();
+    auto data_out_it   = data_out.View(indicies.at(i)).begin();
+    auto labels_it     = labels.View(i).begin();
+    auto labels_out_it = labels_out.View(indicies.at(i)).begin();
+
+    while (data_it.is_valid())
+    {
+      *data_out_it = *data_it;
+
+      ++data_it;
+      ++data_out_it;
+    }
+
+    while (labels_it.is_valid())
+    {
+      *labels_out_it = *labels_it;
+
+      ++labels_it;
+      ++labels_out_it;
+    }
+  }
+
+  data   = data_out;
+  labels = labels_out;
 }
 
 /**
@@ -182,6 +226,9 @@ int main(int ac, char **av)
   TensorType data_tensor  = fetch::ml::dataloaders::ReadCSV<TensorType>(av[1]).Transpose();
   TensorType label_tensor = fetch::ml::dataloaders::ReadCSV<TensorType>(av[2]).Transpose();
 
+  // Shuffle data
+  Shuffle(data_tensor, label_tensor);
+
   // Split data
   std::vector<TensorType> data_tensors  = Split(data_tensor, number_of_clients);
   std::vector<TensorType> label_tensors = Split(label_tensor, number_of_clients);
@@ -215,6 +262,7 @@ int main(int ac, char **av)
   {
     // Start all clients
     coordinator->Reset();
+
     std::cout << "ROUND : " << it << "\t";
     std::list<std::thread> threads;
     for (auto &c : clients)
