@@ -24,7 +24,6 @@
 
 #include "beacon/block_entropy.hpp"
 #include "ledger/consensus/consensus.hpp"
-#include "ledger/consensus/consensus_verifier.hpp"
 
 constexpr char const *LOGGING_NAME = "Consensus";
 
@@ -261,7 +260,6 @@ void Consensus::UpdateCurrentBlock(Block const &current)
     FETCH_LOG_ERROR(LOGGING_NAME,
                     "Updating the current block more than one block ahead is invalid! current: ",
                     current_block_.body.block_number, " Attempt: ", current.body.block_number);
-    FETCH_SEGFAULT;
     return;
   }
 
