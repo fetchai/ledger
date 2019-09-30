@@ -715,10 +715,7 @@ bool RBC::CheckTag(RBCMessage const &msg)
  */
 bool RBC::SetPartyFlag(uint32_t sender_index, TagType tag, MessageType msg_type)
 {
-  if (sender_index >= parties_.size())
-  {
-    return false;
-  }
+  assert(parties_.size() == current_cabinet_.size());
 
   auto &iter  = parties_[sender_index].flags[tag];
   auto  index = static_cast<uint32_t>(msg_type);
