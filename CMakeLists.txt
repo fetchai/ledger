@@ -23,6 +23,7 @@ option(FETCH_ENABLE_METRICS             "Enable the collection of metrics"      
 option(FETCH_DISABLE_COLOUR_LOG         "Disable the colour logging"            OFF)
 option(FETCH_STATIC_LINK                "Enable static linking"                 OFF)
 option(FETCH_ENABLE_LTO                 "Enable link-time optimisation"         ON)
+option(FETCH_ENABLE_BACKTRACE           "Enable backtrace on errors"            ON)
 # cmake-format: on
 
 # custom string options
