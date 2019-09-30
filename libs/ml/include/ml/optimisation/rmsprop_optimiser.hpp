@@ -69,10 +69,9 @@ private:
 template <class T>
 void RMSPropOptimiser<T>::Init()
 {
-  auto weights = this->graph_->get_weights();
   for (auto &train : this->graph_trainables_)
   {
-    this->cache_.emplace_back(TensorType(train->get_weights().shape()));
+    this->cache_.emplace_back(TensorType(train->GetWeights().shape()));
   }
 
   ResetCache();

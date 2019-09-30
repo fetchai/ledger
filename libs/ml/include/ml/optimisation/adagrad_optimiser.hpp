@@ -76,7 +76,7 @@ AdaGradOptimiser<T>::AdaGradOptimiser(std::shared_ptr<Graph<T>>       graph,
 {
   for (auto &train : this->graph_trainables_)
   {
-    this->cache_.emplace_back(TensorType(train->get_weights().shape()));
+    this->cache_.emplace_back(TensorType(train->GetWeights().shape()));
   }
   ResetCache();
 }
@@ -92,7 +92,7 @@ AdaGradOptimiser<T>::AdaGradOptimiser(
 {
   for (auto &train : this->graph_trainables_)
   {
-    this->cache_.emplace_back(TensorType(train->get_weights().shape()));
+    this->cache_.emplace_back(TensorType(train->GetWeights().shape()));
   }
   ResetCache();
 }
