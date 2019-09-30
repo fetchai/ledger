@@ -30,6 +30,7 @@
 
 #include <ctime>
 #include <mutex>
+#include <utility>
 
 namespace fetch {
 namespace beacon {
@@ -101,7 +102,7 @@ BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identit
   , muddle_{muddle}
   , endpoint_{muddle_.GetEndpoint()}
   , shares_subscription_(endpoint_.Subscribe(SERVICE_DKG, CHANNEL_SECRET_KEY))
-  , certificate_{certificate}
+  , certificate_{std::move(certificate)}
   , rbc_{new CHANNEL_TYPE(endpoint_, identity_.identifier(),
                           [this](MuddleAddress const &from, ConstByteArray const &payload) -> void {
                             DKGEnvelope   env;
