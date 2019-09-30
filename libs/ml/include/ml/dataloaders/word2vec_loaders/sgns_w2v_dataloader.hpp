@@ -65,6 +65,7 @@ public:
   T    EstimatedSampleNumber();
 
   bool WordKnown(std::string const &word) const;
+  bool IsModeAvailable(DataLoaderMode mode) override;
 
   /// accessors and helper functions ///
   SizeType         Size() const override;
@@ -738,6 +739,12 @@ void GraphW2VLoader<T>::UpdateCursor()
   {
     throw std::runtime_error("Other mode than training not supported.");
   }
+}
+
+template <typename T>
+bool GraphW2VLoader<T>::IsModeAvailable(DataLoaderMode mode)
+{
+  return mode == DataLoaderMode::TRAIN;
 }
 
 }  // namespace dataloaders
