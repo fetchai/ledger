@@ -32,7 +32,7 @@ struct DAGEpoch
 {
   using ConstByteArray = byte_array::ConstByteArray;
 
-  uint64_t block_number;
+  uint64_t block_number{0};
 
   // TODO(issue 1229): The order of these nodes will need to be revised
   std::set<ConstByteArray> tips{};
