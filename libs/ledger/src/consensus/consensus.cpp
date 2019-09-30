@@ -405,8 +405,8 @@ Status Consensus::ValidBlock(Block const &current) const
   //// TODO(HUT): check signatures are an unbroken chain.
   //// Determine that the entropy is correct (a signature of the previous signature)
   // if(!dkg::BeaconManager::Verify(group_pub_key,
-  // block_preceeding.body.block_entropy.group_signature,
-  // current.body.block_entropy.group_signature))
+  // block_preceeding.body.block_entropy.group_signature.getStr(),
+  // current.body.block_entropy.group_signature.getStr()))
   //{
   //  FETCH_LOG_WARN(LOGGING_NAME, "Found block whose entropy isn't a signature of the previous!");
   //  return Status::NO;
