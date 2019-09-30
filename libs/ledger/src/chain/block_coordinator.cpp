@@ -206,6 +206,9 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
   state_machine_->RegisterHandler(State::RESET,                        this, &BlockCoordinator::OnReset);
   // clang-format on
 
+  int *thing = nullptr;
+  thing[9]   = 9;
+
   state_machine_->OnStateChange([this](State current, State previous) {
     FETCH_UNUSED(this);
     if (periodic_print_.Poll())

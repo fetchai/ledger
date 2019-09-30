@@ -45,6 +45,13 @@
 
 #include <unordered_map>
 
+#include "core/fetch_backward.hpp"
+
+std::function<void(std::string)> backward::SignalHandling::_on_signal;
+backward::SignalHandling         sh([](std::string const &fatal_msg) {
+  FETCH_LOG_ERROR("FETCH_FATAL_SIGNAL_HANDLER", fatal_msg);
+});
+
 namespace fetch {
 namespace {
 
