@@ -117,12 +117,12 @@ void AddInstruction(benchmark::State &state, char const *ETCH_CODE) {
   auto function = executable.functions.begin();
 
   // Add a push operation to the baseline tests to isolate the arithmetic operations in the main opcode tests
-  if (!(strstr(ETCH_CODE,DEF_STR) == NULL))
+  if (strstr(ETCH_CODE, DEF_STR) != nullptr)
   {
     Executable::Instruction instruction(fetch::vm::Opcodes::PushString);
     function->AddInstruction(instruction);
   }
-  else if (!(strstr(ETCH_CODE,DEF_U32) == NULL))
+  else if (strstr(ETCH_CODE, DEF_U32) != nullptr)
   {
     Executable::Instruction instruction(fetch::vm::Opcodes::PushVariable);
     function->AddInstruction(instruction);
