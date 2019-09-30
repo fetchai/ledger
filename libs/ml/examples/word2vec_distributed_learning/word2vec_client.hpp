@@ -72,7 +72,6 @@ private:
   W2VTrainingParams<DataType>                                       tp_;
   std::string                                                       skipgram_;
   std::shared_ptr<fetch::ml::dataloaders::GraphW2VLoader<DataType>> w2v_data_loader_ptr_;
-  std::shared_ptr<std::mutex>                                       console_mutex_ptr_;
 
   Translator translator_;
 
@@ -89,9 +88,8 @@ template <class TensorType>
 Word2VecClient<TensorType>::Word2VecClient(std::string const &                id,
                                            W2VTrainingParams<DataType> const &tp,
                                            std::shared_ptr<std::mutex>        console_mutex_ptr)
-  : TrainingClient<TensorType>(id, tp)
+  : TrainingClient<TensorType>(id, tp, console_mutex_ptr)
   , tp_(tp)
-  , console_mutex_ptr_(std::move(console_mutex_ptr))
 {
   PrepareDataLoader();
   PrepareModel();
@@ -249,13 +247,13 @@ void Word2VecClient<TensorType>::TestEmbeddings(std::string const &word0, std::s
 
   {
     // Lock console
-    FETCH_LOCK(*console_mutex_ptr_);
+    FETCH_LOCK(*this->console_mutex_ptr_);
 
     std::cout << std::endl;
     std::cout << "Client " << this->id_ << ", batches done = " << this->batch_counter_ << std::endl;
-    PrintKNN(embeddings->get_weights(), word0, K);
+    PrintKNN(embeddings->GetWeights(), word0, K);
     std::cout << std::endl;
-    PrintWordAnalogy(embeddings->get_weights(), word1, word2, word3, K);
+    PrintWordAnalogy(embeddings->GetWeights(), word1, word2, word3, K);
   }
 }
 
