@@ -32,6 +32,7 @@ using DKGSerializer = fetch::serializers::MsgPackSerializer;
 
 /**
  * Different messages using in distributed key generation (DKG) protocol.
+ * Connections - the cabinet connections the current node has connected directly to
  * Coefficients - contain the broadcast coefficients as strings
  * Shares - contain the secret shares which have been exposed in broadcasts as strings
  * Complaints - contain the set of miners who are being complained against
@@ -47,6 +48,7 @@ public:
 
   enum class MessageType : uint8_t
   {
+    CONNECTIONS,
     COEFFICIENT,
     SHARE,
     COMPLAINT
@@ -70,6 +72,30 @@ protected:
   explicit DKGMessage(MessageType type)
     : type_{type}
   {}
+};
+
+class ConnectionsMessage : public DKGMessage
+{
+public:
+  std::set<MuddleAddress> connections_;
+
+  explicit ConnectionsMessage(DKGSerializer &serialiser)
+    : DKGMessage{MessageType::CONNECTIONS}
+  {
+    serialiser >> connections_;
+  }
+  ConnectionsMessage(std::set<MuddleAddress> const &connections)
+    : DKGMessage{MessageType::CONNECTIONS}
+    , connections_{connections}
+  {}
+  ~ConnectionsMessage() override = default;
+
+  DKGSerializer Serialize() const override
+  {
+    DKGSerializer serializer;
+    serializer << connections_;
+    return serializer;
+  }
 };
 
 class CoefficientsMessage : public DKGMessage

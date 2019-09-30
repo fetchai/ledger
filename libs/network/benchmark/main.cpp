@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2019 Fetch.AI Limited
@@ -17,41 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include <memory>
-#include <vector>
+#include "benchmark/benchmark.h"
 
-namespace fetch {
-namespace core {
-
-/**
- * Interface class to represent
- */
-class Runnable
-{
-public:
-  // Construction / Destruction
-  Runnable()          = default;
-  virtual ~Runnable() = default;
-
-  /// @name Runnable Interface
-  /// @{
-  virtual bool IsReadyToExecute() const
-  {
-    return true;
-  }
-  virtual void Execute() = 0;
-  /// @}
-
-  // Helper operators
-  void operator()()
-  {
-    Execute();
-  }
-};
-
-using WeakRunnable  = std::weak_ptr<Runnable>;
-using WeakRunnables = std::vector<std::weak_ptr<Runnable>>;
-using RunnablePtr   = std::shared_ptr<Runnable>;
-
-}  // namespace core
-}  // namespace fetch
+BENCHMARK_MAIN();

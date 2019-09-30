@@ -31,6 +31,7 @@ static constexpr uint16_t SERVICE_EXECUTOR   = 4004;
 static constexpr uint16_t SERVICE_DAG        = 4005;
 static constexpr uint16_t SERVICE_RBC        = 5001;
 static constexpr uint16_t SERVICE_DKG        = 6001;
+static constexpr uint16_t SERVICE_PBC        = 7001;
 
 // Common Service Channels
 static constexpr uint16_t CHANNEL_RPC = 1;  // for convenience we essentially

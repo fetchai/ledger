@@ -24,6 +24,7 @@
 #include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
 
+#include "muddle/create_muddle_fake.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
@@ -107,7 +108,7 @@ struct CabinetNode
     , network_manager{"NetworkManager" + std::to_string(index), 1}
     , reactor{"ReactorName" + std::to_string(index)}
     , muddle_certificate{CreateNewCertificate()}
-    , muddle{muddle::CreateMuddle("Test", muddle_certificate, network_manager, "127.0.0.1")}
+    , muddle{muddle::CreateMuddleFake("Test", muddle_certificate, network_manager, "127.0.0.1")}
     , beacon_service{*muddle, manifest_cache, muddle_certificate, event_manager}
     , identity{muddle_certificate->identity()}
   {
@@ -192,8 +193,12 @@ void RunHonestComitteeRenewal(uint16_t delay = 100, uint16_t total_renewals = 4,
   // Attaching the cabinet logic
   for (auto &member : committee)
   {
-    member->reactor.Attach(member->beacon_service.GetMainRunnable());
-    member->reactor.Attach(member->beacon_service.GetSetupRunnable());
+    auto runnables = member->beacon_service.GetWeakRunnables();
+
+    for (auto const &i : runnables)
+    {
+      member->reactor.Attach(i);
+    }
   }
 
   // Starting the beacon

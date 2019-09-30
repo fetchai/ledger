@@ -25,6 +25,7 @@
 #include "crypto/prover.hpp"
 #include "ledger/shards/manifest.hpp"
 #include "ledger/shards/manifest_cache_interface.hpp"
+#include "muddle/create_muddle_fake.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/rbc.hpp"
 #include "muddle/rpc/client.hpp"
@@ -60,9 +61,9 @@ struct DummyManifestCache : public ManifestCacheInterface
 class HonestSetupService : public BeaconSetupService
 {
 public:
-  HonestSetupService(MuddleInterface &endpoint, Identity identity,
+  HonestSetupService(MuddleInterface &endpoint, ProverPtr prover,
                      ManifestCacheInterface &manifest_cache)
-    : BeaconSetupService{endpoint, std::move(identity), manifest_cache}
+    : BeaconSetupService{endpoint, prover->identity(), manifest_cache, prover}
   {}
 };
 
@@ -83,10 +84,10 @@ public:
     WITHOLD_RECONSTRUCTION_SHARES
   };
 
-  FaultySetupService(MuddleInterface &endpoint, Identity identity,
+  FaultySetupService(MuddleInterface &endpoint, ProverPtr prover,
                      ManifestCacheInterface &     manifest_cache,
                      const std::vector<Failures> &failures = {})
-    : BeaconSetupService{endpoint, std::move(identity), manifest_cache}
+    : BeaconSetupService{endpoint, prover->identity(), manifest_cache, prover}
   {
     for (auto f : failures)
     {
@@ -414,7 +415,7 @@ struct DkgMember
     , network_manager{"NetworkManager" + std::to_string(index), 1}
     , reactor{"ReactorName" + std::to_string(index)}
     , muddle_certificate{CreateNewCertificate()}
-    , muddle{CreateMuddle("Test", muddle_certificate, network_manager, "127.0.0.1")}
+    , muddle{CreateMuddleFake("Test", muddle_certificate, network_manager, "127.0.0.1")}
   {
     network_manager.Start();
     muddle->Start({muddle_port});
@@ -428,8 +429,8 @@ struct DkgMember
   }
 
   virtual void QueueCabinet(std::set<MuddleAddress> cabinet, uint32_t threshold) = 0;
-  virtual std::weak_ptr<core::Runnable> GetWeakRunnable()                        = 0;
-  virtual bool                          DkgFinished()                            = 0;
+  virtual std::vector<std::weak_ptr<core::Runnable>> GetWeakRunnables()          = 0;
+  virtual bool                                       DkgFinished()               = 0;
 
   static ProverPtr CreateNewCertificate()
   {
@@ -453,7 +454,7 @@ struct FaultyDkgMember : DkgMember
   FaultyDkgMember(uint16_t port_number, uint16_t index,
                   const std::vector<FaultySetupService::Failures> &failures = {})
     : DkgMember{port_number, index}
-    , dkg{*muddle, muddle_certificate->identity(), manifest_cache, failures}
+    , dkg{*muddle, muddle_certificate, manifest_cache, failures}
   {
     dkg.SetBeaconReadyCallback([this](SharedAeonExecutionUnit beacon) -> void {
       finished = true;
@@ -461,7 +462,10 @@ struct FaultyDkgMember : DkgMember
     });
   }
 
-  ~FaultyDkgMember() override = default;
+  ~FaultyDkgMember() override
+  {
+    reactor.Stop();
+  }
 
   void QueueCabinet(std::set<MuddleAddress> cabinet, uint32_t threshold) override
   {
@@ -490,9 +494,9 @@ struct FaultyDkgMember : DkgMember
     dkg.QueueSetup(beacon);
   }
 
-  std::weak_ptr<core::Runnable> GetWeakRunnable() override
+  std::vector<std::weak_ptr<core::Runnable>> GetWeakRunnables() override
   {
-    return dkg.GetWeakRunnable();
+    return dkg.GetWeakRunnables();
   }
   bool DkgFinished() override
   {
@@ -508,7 +512,7 @@ struct HonestDkgMember : DkgMember
 
   HonestDkgMember(uint16_t port_number, uint16_t index)
     : DkgMember{port_number, index}
-    , dkg{*muddle, muddle_certificate->identity(), manifest_cache}
+    , dkg{*muddle, muddle_certificate, manifest_cache}
   {
     dkg.SetBeaconReadyCallback([this](SharedAeonExecutionUnit beacon) -> void {
       finished = true;
@@ -516,7 +520,10 @@ struct HonestDkgMember : DkgMember
     });
   }
 
-  ~HonestDkgMember() override = default;
+  ~HonestDkgMember() override
+  {
+    reactor.Stop();
+  }
 
   void QueueCabinet(std::set<MuddleAddress> cabinet, uint32_t threshold) override
   {
@@ -545,9 +552,9 @@ struct HonestDkgMember : DkgMember
     dkg.QueueSetup(beacon);
   }
 
-  std::weak_ptr<core::Runnable> GetWeakRunnable() override
+  std::vector<std::weak_ptr<core::Runnable>> GetWeakRunnables() override
   {
-    return dkg.GetWeakRunnable();
+    return dkg.GetWeakRunnables();
   }
   bool DkgFinished() override
   {
@@ -607,7 +614,7 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
   {
     for (auto &member : committee)
     {
-      member->reactor.Attach(member->GetWeakRunnable());
+      member->reactor.Attach(member->GetWeakRunnables());
     }
 
     for (auto &member : committee)

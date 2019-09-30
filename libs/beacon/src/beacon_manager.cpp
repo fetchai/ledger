@@ -19,6 +19,8 @@
 #include "beacon/beacon_manager.hpp"
 #include "crypto/ecdsa.hpp"
 
+#include "network/generics/milli_timer.hpp"
+
 namespace fetch {
 namespace dkg {
 
@@ -376,7 +378,9 @@ BeaconManager::MuddleAddress BeaconManager::VerifyQualComplaint(MuddleAddress co
 void BeaconManager::ComputePublicKeys()
 {
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, " compute public keys");
+  FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, " compute public keys begin.");
+  generics::MilliTimer myTimer("BeaconManager::ComputePublicKeys");
+
   // For all parties in $QUAL$, set $y_i = A_{i0} = g^{z_i} \bmod p$.
   for (auto const &iq : qual_)
   {
@@ -401,6 +405,8 @@ void BeaconManager::ComputePublicKeys()
       crypto::mcl::UpdateRHS(jt, public_key_shares_[jt], A_ik[it]);
     }
   }
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Node ", cabinet_index_, " compute public keys end.");
 }
 
 void BeaconManager::AddReconstructionShare(MuddleAddress const &address)

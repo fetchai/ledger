@@ -117,8 +117,7 @@ public:
 
   /// Beacon runnables
   /// @{
-  std::weak_ptr<core::Runnable> GetMainRunnable();
-  std::weak_ptr<core::Runnable> GetSetupRunnable();
+  std::vector<std::weak_ptr<core::Runnable>> GetWeakRunnables();
   /// @}
 
   friend class BeaconServiceProtocol;
@@ -209,7 +208,10 @@ private:
 
   telemetry::CounterPtr         beacon_entropy_generated_total_;
   telemetry::CounterPtr         beacon_entropy_future_signature_seen_total_;
+  telemetry::CounterPtr         beacon_entropy_forced_to_time_out_total_;
   telemetry::GaugePtr<uint64_t> beacon_entropy_last_requested_;
+  telemetry::GaugePtr<uint64_t> beacon_entropy_last_generated_;
+  telemetry::GaugePtr<uint64_t> beacon_entropy_current_round_;
 };
 
 }  // namespace beacon
