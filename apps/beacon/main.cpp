@@ -167,8 +167,8 @@ int main()
   }
 
   // Ready
-  uint64_t block_number = 0;
-  uint64_t aeon_length  = 10;
+  uint64_t     block_number = 0;
+  uint64_t     aeon_length  = 10;
   BlockEntropy dummy_block_entropy;
 
   while (true)
@@ -180,17 +180,20 @@ int main()
       {
         member->beacon_service.StartNewCabinet(cabinet, static_cast<uint32_t>(cabinet.size() / 2),
                                                block_number, block_number + aeon_length,
-                                               static_cast<uint64_t>(std::time(nullptr)), dummy_block_entropy);
+                                               static_cast<uint64_t>(std::time(nullptr)),
+                                               dummy_block_entropy);
       }
     }
 
     while (committee[block_number % committee.size()]->beacon_service.GenerateEntropy(
-               block_number, dummy_block_entropy) != fetch::ledger::EntropyGeneratorInterface::Status::OK)
+               block_number, dummy_block_entropy) !=
+           fetch::ledger::EntropyGeneratorInterface::Status::OK)
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
-    FETCH_LOG_INFO("default", "Found entropy for block: ", block_number, " as ", dummy_block_entropy.EntropyAsU64());
+    FETCH_LOG_INFO("default", "Found entropy for block: ", block_number, " as ",
+                   dummy_block_entropy.EntropyAsU64());
 
     ++block_number;
   }
