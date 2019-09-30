@@ -414,14 +414,25 @@ private:
   {}
 
   /**
-   * helper function that checks no bit overflow when shifting
+   * helper function that checks there is no overflow
    * @tparam T the input original type
    * @param n the value of the datum
    * @return true if there is no overflow, false otherwise
    */
   static constexpr bool CheckOverflow(NextType x)
   {
-    return (x < NextType(MIN)) || (x > NextType(MAX));
+    return (x > NextType(MAX));
+  }
+
+  /**
+   * helper function that checks there is no underflow
+   * @tparam T the input original type
+   * @param n the value of the datum
+   * @return true if there is no overflow, false otherwise
+   */
+  static constexpr bool CheckUnderflow(NextType x)
+  {
+    return (x < NextType(MIN));
   }
 
   /**
@@ -657,7 +668,12 @@ constexpr FixedPoint<I, F>::FixedPoint(T n, meta::IfIsInteger<T> *)
   {
     fp_state |= STATE_OVERFLOW;
     data_ = MAX;
-  } else
+  } else if (CheckUnderflow(static_cast<NextType>(n)))
+  {
+    fp_state |= STATE_OVERFLOW;
+    data_ = MIN;
+  }
+  else
   {
     Type s    = (data_ < 0) - (data_ > 0);
     Type abs_ = s * data_;
@@ -680,6 +696,11 @@ constexpr FixedPoint<I, F>::FixedPoint(T n, meta::IfIsFloat<T> *)
   {
     fp_state |= STATE_OVERFLOW;
     data_ = MAX;
+  }
+  else if (CheckUnderflow(static_cast<NextType>(n) * static_cast<NextType>(ONE_MASK)))
+  {
+    fp_state |= STATE_OVERFLOW;
+    data_ = MIN;
   }
 }
 
@@ -847,6 +868,11 @@ constexpr meta::IfIsInteger<T, FixedPoint<I, F>> &FixedPoint<I, F>::operator=(T 
     fp_state |= STATE_OVERFLOW;
     data_ = MAX;
   }
+  else if (CheckUnderflow(static_cast<NextType>(n)))
+  {
+    fp_state |= STATE_OVERFLOW;
+    data_ = MIN;
+  }
   else
   {
     data_ = {static_cast<Type>(n) << static_cast<Type>(FRACTIONAL_BITS)};
@@ -867,6 +893,11 @@ constexpr meta::IfIsFloat<T, FixedPoint<I, F>> &FixedPoint<I, F>::operator=(T co
   {
     fp_state |= STATE_OVERFLOW;
     data_ = MAX;
+  }
+  else if (CheckUnderflow(static_cast<NextType>(n) * static_cast<NextType>(ONE_MASK)))
+  {
+    fp_state |= STATE_OVERFLOW;
+    data_ = MIN;
   }
   else
   {
@@ -1128,6 +1159,11 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator++()
     fp_state |= STATE_OVERFLOW;
     data_ = MAX;
   }
+  else if (CheckUnderflow(static_cast<NextType>(data_) + static_cast<NextType>(_1.Data())))
+  {
+    fp_state |= STATE_OVERFLOW;
+    data_ = MIN;
+  }
   else
   {
     data_ += ONE_MASK;
@@ -1146,6 +1182,11 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator--()
   {
     fp_state |= STATE_OVERFLOW;
     data_ = MAX;
+  }
+  else if (CheckUnderflow(static_cast<NextType>(data_) - static_cast<NextType>(_1.Data())))
+  {
+    fp_state |= STATE_OVERFLOW;
+    data_ = MIN;
   }
   else
   {
@@ -1292,10 +1333,25 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator+=(FixedPoint<I, F> const 
   }
   else
   {
-    if (CheckOverflow(static_cast<NextType>(data_) + static_cast<NextType>(n.Data())))
+    if (IsNegInfinity(n))
+    {
+      fp_state |= STATE_INFINITY;
+      *this = NEGATIVE_INFINITY;
+    }
+    else if (IsPosInfinity(n))
+    {
+      fp_state |= STATE_INFINITY;
+      *this = POSITIVE_INFINITY;
+    }
+    else if (CheckOverflow(static_cast<NextType>(data_) + static_cast<NextType>(n.Data())))
     {
       fp_state |= STATE_OVERFLOW;
       data_ = MAX;
+    }
+    else if (CheckUnderflow(static_cast<NextType>(data_) + static_cast<NextType>(n.Data())))
+    {
+      fp_state |= STATE_OVERFLOW;
+      data_ = MIN;
     }
     else
     {
@@ -1360,10 +1416,26 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator-=(FixedPoint<I, F> const 
   }
   else
   {
+    if (IsNegInfinity(n))
+    {
+      fp_state |= STATE_INFINITY;
+      *this = POSITIVE_INFINITY;
+    }
+    else if (IsPosInfinity(n))
+    {
+      fp_state |= STATE_INFINITY;
+      *this = NEGATIVE_INFINITY;
+    }
+    else 
     if (CheckOverflow(static_cast<NextType>(data_) - static_cast<NextType>(n.Data())))
     {
       fp_state |= STATE_OVERFLOW;
       data_ = MAX;
+    }
+    else if (CheckUnderflow(static_cast<NextType>(data_) - static_cast<NextType>(n.Data())))
+    {
+      fp_state |= STATE_OVERFLOW;
+      data_ = MIN;
     }
     else
     {
@@ -1430,6 +1502,11 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator*=(FixedPoint<I, F> const 
     {
       fp_state |= STATE_OVERFLOW;
       data_ = MAX;
+    }
+    else if (CheckUnderflow(static_cast<NextType>(prod >> FRACTIONAL_BITS)))
+    {
+      fp_state |= STATE_OVERFLOW;
+      data_ = MIN;
     }
     else
     {
