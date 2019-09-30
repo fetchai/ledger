@@ -38,7 +38,7 @@ public:
   using SizeType          = fetch::math::SizeType;
   using GraphType         = Graph<TensorType>;
   using DataLoaderType    = dataloaders::DataLoader<TensorType, TensorType>;
-  using OptimiserType     = typename optimisers::OptimiserType;
+  using OptimiserType     = optimisers::OptimiserType;
   using GraphPtrType      = typename std::shared_ptr<GraphType>;
   using DataLoaderPtrType = typename std::unique_ptr<DataLoaderType>;
   using OptimiserPtrType  = typename std::unique_ptr<optimisers::Optimiser<TensorType>>;
@@ -85,24 +85,27 @@ void Model<TensorType>::Compile(OptimiserType optimiser_type, ops::LossType loss
   {
     switch (loss_type)
     {
-    case (ops::LossType::NONE):
-    {
-      throw std::runtime_error("must set loss function on model compile for this model type");
-    }
     case (ops::LossType::CROSS_ENTROPY):
     {
       error_ = graph_ptr_->template AddNode<ops::CrossEntropyLoss<TensorType>>("Error",
                                                                                {output_, label_});
+      break;
     }
     case (ops::LossType::MEAN_SQUARE_ERROR):
     {
       error_ = graph_ptr_->template AddNode<ops::MeanSquareErrorLoss<TensorType>>(
           "Error", {output_, label_});
+      break;
     }
     case (ops::LossType::SOFTMAX_CROSS_ENTROPY):
     {
       error_ = graph_ptr_->template AddNode<ops::SoftmaxCrossEntropyLoss<TensorType>>(
           "Error", {output_, label_});
+      break;
+    }
+    case (ops::LossType::NONE):
+    {
+      throw std::runtime_error("must set loss function on model compile for this model type");
     }
     default:
     {
