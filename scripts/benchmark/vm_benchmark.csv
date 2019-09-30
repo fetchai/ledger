@@ -1,5 +1,5 @@
-2019-09-30 12:59:16
-Running /home/james/CLionProjects/jrr-ledger/cmake-build-release/libs/vm/benchmark/vm-benchmarks
+2019-09-30 14:16:01
+Running ../../cmake-build-release/libs/vm/benchmark/vm-benchmarks
 Run on (8 X 4000 MHz CPU s)
 CPU Caches:
   L1 Data 32K (x4)
@@ -8,24 +8,24 @@ CPU Caches:
   L3 Unified 8192K (x1)
 ***WARNING*** CPU scaling is enabled, the benchmark real time measurements may be noisy and will incur extra overhead.
 name,iterations,real_time,cpu_time,time_unit,bytes_per_second,items_per_second,label,error_occurred,error_message
-"AddInstruction/DefString_mean",7791744,93.0948,93.0871,ns,,,,,
-"AddInstruction/DefString_median",7791744,92.9498,92.9484,ns,,,,,
-"AddInstruction/DefString_stddev",7791744,2.01126,2.00408,ns,,,,,
-"AddInstruction/AddString_mean",5196851,133.179,133.177,ns,,,,,
-"AddInstruction/AddString_median",5196851,133.091,133.09,ns,,,,,
-"AddInstruction/AddString_stddev",5196851,1.09505,1.09508,ns,,,,,
-"AddInstruction/DefUint32_mean",9883878,64.4768,64.2379,ns,,,,,
-"AddInstruction/DefUint32_median",9883878,64.9775,64.615,ns,,,,,
-"AddInstruction/DefUint32_stddev",9883878,7.95934,8.06299,ns,,,,,
-"AddInstruction/AddUint32_mean",10378324,70.8083,70.6807,ns,,,,,
-"AddInstruction/AddUint32_median",10378324,70.2752,70.2745,ns,,,,,
-"AddInstruction/AddUint32_stddev",10378324,3.3434,3.27412,ns,,,,,
-"AddInstruction/SubUint32_mean",10238665,68.2511,68.2503,ns,,,,,
-"AddInstruction/SubUint32_median",10238665,68.5611,68.5604,ns,,,,,
-"AddInstruction/SubUint32_stddev",10238665,0.888142,0.888169,ns,,,,,
-"AddInstruction/MulUint32_mean",9434051,73.6129,73.5983,ns,,,,,
-"AddInstruction/MulUint32_median",9434051,73.7994,73.7986,ns,,,,,
-"AddInstruction/MulUint32_stddev",9434051,1.2616,1.24861,ns,,,,,
-"AddInstruction/DivUint32_mean",9577762,74.8982,74.8815,ns,,,,,
-"AddInstruction/DivUint32_median",9577762,75.1695,75.1547,ns,,,,,
-"AddInstruction/DivUint32_stddev",9577762,1.10788,1.08792,ns,,,,,
+"AddInstruction/DefString_mean",8079216,85.021,85.0197,ns,,,,,
+"AddInstruction/DefString_median",8079216,84.9192,84.9181,ns,,,,,
+"AddInstruction/DefString_stddev",8079216,0.570984,0.570555,ns,,,,,
+"AddInstruction/AddString_mean",5814022,121.48,121.479,ns,,,,,
+"AddInstruction/AddString_median",5814022,121.465,121.464,ns,,,,,
+"AddInstruction/AddString_stddev",5814022,0.358101,0.358194,ns,,,,,
+"AddInstruction/DefUint32_mean",13433138,51.3894,51.389,ns,,,,,
+"AddInstruction/DefUint32_median",13433138,51.3211,51.3208,ns,,,,,
+"AddInstruction/DefUint32_stddev",13433138,0.244953,0.244912,ns,,,,,
+"AddInstruction/AddUint32_mean",11247223,62.7386,62.738,ns,,,,,
+"AddInstruction/AddUint32_median",11247223,62.6284,62.6279,ns,,,,,
+"AddInstruction/AddUint32_stddev",11247223,0.41614,0.416134,ns,,,,,
+"AddInstruction/SubUint32_mean",11257926,62.5653,62.5648,ns,,,,,
+"AddInstruction/SubUint32_median",11257926,62.4573,62.4567,ns,,,,,
+"AddInstruction/SubUint32_stddev",11257926,0.278007,0.27807,ns,,,,,
+"AddInstruction/MulUint32_mean",10691992,66.4465,66.446,ns,,,,,
+"AddInstruction/MulUint32_median",10691992,66.1816,66.181,ns,,,,,
+"AddInstruction/MulUint32_stddev",10691992,0.813054,0.813089,ns,,,,,
+"AddInstruction/DivUint32_mean",10617787,70.7781,70.7774,ns,,,,,
+"AddInstruction/DivUint32_median",10617787,70.3803,70.3794,ns,,,,,
+"AddInstruction/DivUint32_stddev",10617787,1.39516,1.39525,ns,,,,,

@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include <fstream>
 #include <cstring>
 
 #include "vm/vm.hpp"
@@ -135,15 +134,15 @@ void AddInstruction(benchmark::State &state, char const *ETCH_CODE) {
     vm.Execute(executable, "main", error, output);
   }
 
-  // write opcode lists to file
-  std::ofstream ofs("opcode_lists.csv", std::fstream::app);
+  // write opcode lists to std::out
+  std::cout << "Opcodes: ";
   std::vector<uint16_t> opcodes;
   for (auto& it : function->instructions)
   {
     opcodes.push_back(it.opcode);
-    ofs << it.opcode << " ";
+    std::cout << it.opcode << " ";
   }
-  ofs << std::endl;
+  std::cout << std::endl;
 
 }
 
