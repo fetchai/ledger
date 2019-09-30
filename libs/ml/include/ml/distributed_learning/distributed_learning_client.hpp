@@ -80,7 +80,7 @@ struct Update
   Update(VectorTensorType grad, TimestampType second, std::string client_id,
          byte_array::ConstByteArray hash, UpdateType uptype = UpdateType::GRADIENTS)
     : data{std::move(grad)}
-    , update_type{std::move(uptype)}
+    , update_type{uptype}
     , timestamp{second}
     , client_id{std::move(client_id)}
     , hash{std::move(hash)}
