@@ -224,8 +224,7 @@ private:
   /// @{
   BlockStatus InsertBlock(IntBlockPtr const &block, bool evaluate_loose_blocks = true);
   bool LookupBlock(BlockHash const &hash, IntBlockPtr &block, BlockHash *next_hash = nullptr) const;
-  bool LookupBlockFromCache(BlockHash const &hash, IntBlockPtr &block,
-                            BlockHash *next_hash = nullptr) const;
+  bool LookupBlockFromCache(BlockHash const &hash, IntBlockPtr &block) const;
   bool LookupBlockFromStorage(BlockHash const &hash, IntBlockPtr &block,
                               BlockHash *next_hash = nullptr) const;
   bool IsBlockInCache(BlockHash const &hash) const;

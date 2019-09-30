@@ -23,6 +23,8 @@
 #include "meta/value_util.hpp"
 #include "network/service/protocol.hpp"
 
+#include <algorithm>
+#include <tuple>
 #include <utility>
 
 namespace fetch {
@@ -57,9 +59,23 @@ public:
   }
 
 private:
-  Blocks GetHeaviestChain(uint64_t maxsize)
+  Blocks GetHeaviestChain(uint64_t last_known_block, uint64_t limit)
   {
-    return InverseCopy(chain_.GetHeaviestChain(maxsize));
+    auto heaviest_block(chain_.GetHeaviestBlock());
+    if (heaviest_block)
+    {
+      auto heaviest_number{heaviest_block->body.block_number};
+      if (heaviest_number > last_known_block)
+      {
+        auto requested_amount = std::min(limit, heaviest_number - last_known_block);
+        return InverseCopy(chain_.GetHeaviestChain(requested_amount));
+      }
+      if (heaviest_number == last_known_block)
+      {
+        return Blocks{*heaviest_block};
+      }
+    }
+    return Blocks{};
   }
 
   Blocks GetCommonSubChain(Digest start, Digest last_seen, uint64_t limit)
@@ -76,7 +92,8 @@ private:
   TimeTravelogue TimeTravel(Digest start, int64_t limit)
   {
     auto ret_pair = chain_.TimeTravel(std::move(start), limit);
-    return TimeTravelogue{Copy(ret_pair.first), std::move(ret_pair.second)};
+    auto returned_blocks{limit > 0 ? Copy(ret_pair.first) : InverseCopy(ret_pair.first)};
+    return TimeTravelogue{std::move(returned_blocks), std::move(ret_pair.second)};
   }
 
   static Blocks Copy(MainChain::Blocks const &blocks)
@@ -112,18 +129,6 @@ private:
 
 namespace serializers {
 
-template <class F, F f>
-struct StructField
-{
-  template <class T>
-  static constexpr auto &&Ref(T &&t) noexcept
-  {
-    return std::forward<T>(t).*f;
-  }
-};
-
-#define STRUCT_FIELD(struct_field) StructField<decltype(&struct_field), &struct_field>
-
 template <class T, class D, class... Fields>
 struct MapSerializerTemplate
 {
@@ -136,9 +141,9 @@ struct MapSerializerTemplate
     value_util::Accumulate(
         [&t, map = map_constructor(sizeof...(Fields))](uint8_t key, auto field) mutable -> uint8_t {
           map.Append(key, field.Ref(t));
-          return uint8_t(key + 1);
+          return static_cast<uint8_t>(key + 1);
         },
-        uint8_t(1), Fields{}...);
+        static_cast<uint8_t>(1), Fields{}...);
   }
 
   template <class MapDeserializer>
@@ -147,12 +152,25 @@ struct MapSerializerTemplate
     value_util::Accumulate(
         [&t, &map](uint8_t key, auto field) -> uint8_t {
           map.ExpectKeyGetValue(key, field.Ref(t));
-          return uint8_t(key + 1);
+          return static_cast<uint8_t>(key + 1);
         },
-        uint8_t(1), Fields{}...);
+        static_cast<uint8_t>(1), Fields{}...);
   }
 };
 
+template <class F, F f>
+struct StructField
+{
+  template <class T>
+  static constexpr auto &&Ref(T &&t) noexcept
+  {
+    return std::forward<T>(t).*f;
+  }
+};
+
+#define STRUCT_FIELD(...) StructField<decltype(&__VA_ARGS__), &__VA_ARGS__>
+
+// All hail the Clang formatter's sense of style.
 template <class D>
 struct MapSerializer<ledger::TimeTravelogue, D>
   : MapSerializerTemplate<ledger::TimeTravelogue, D, STRUCT_FIELD(ledger::TimeTravelogue::blocks),

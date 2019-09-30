@@ -122,6 +122,9 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &endpoint, MainChain &ch
   // clang-format off
   state_machine_->RegisterHandler(State::REQUEST_HEAVIEST_CHAIN,  this, &MainChainRpcService::OnRequestHeaviestChain);
   state_machine_->RegisterHandler(State::WAIT_FOR_HEAVIEST_CHAIN, this, &MainChainRpcService::OnWaitForHeaviestChain);
+  state_machine_->RegisterHandler(State::REQUEST_FROM_TIP,  this, &MainChainRpcService::OnRequestFromTip);
+  state_machine_->RegisterHandler(State::WAIT_FROM_TIP, this, &MainChainRpcService::OnWaitFromTip);
+  state_machine_->RegisterHandler(State::FURTHER_FROM_TIP, this, &MainChainRpcService::OnFurtherFromTip);
   state_machine_->RegisterHandler(State::SYNCHRONISING,           this, &MainChainRpcService::OnSynchronising);
   state_machine_->RegisterHandler(State::WAITING_FOR_RESPONSE,    this, &MainChainRpcService::OnWaitingForResponse);
   state_machine_->RegisterHandler(State::SYNCHRONISED,            this, &MainChainRpcService::OnSynchronised);
@@ -334,9 +337,9 @@ MainChainRpcService::State MainChainRpcService::OnRequestHeaviestChain()
   if (!peer.empty())
   {
     current_peer_address_ = peer;
-    current_request_      = rpc_client_.CallSpecificAddress(current_peer_address_, RPC_MAIN_CHAIN,
-                                                       MainChainProtocol::TIME_TRAVEL,
-                                                       past_recent_tip_, MAX_CHAIN_REQUEST_SIZE);
+    current_request_      = rpc_client_.CallSpecificAddress(
+        current_peer_address_, RPC_MAIN_CHAIN, MainChainProtocol::TIME_TRAVEL, next_hash_requested_,
+        MAX_CHAIN_REQUEST_SIZE);
 
     next_state = State::WAIT_FOR_HEAVIEST_CHAIN;
   }
@@ -372,15 +375,26 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
         auto peer_response = current_request_->As<TimeTravelogue>();
         if (HandleChainResponse(current_peer_address_, std::move(peer_response.blocks)))
         {
-          past_recent_tip_ = std::move(peer_response.next_hash);
-
-          // Genesis as next tip to retrieve indicates the whole chain has been received
-          // and we can start synchronising.
-          if (past_recent_tip_ == GENESIS_DIGEST)
+          auto &next_hash = peer_response.next_hash;
+          if (next_hash.empty())
           {
-            next_state = State::SYNCHRONISING;
-            // clear the state
-            value_util::ZeroAll(current_peer_address_, current_missing_block_);
+            // The remote chain could not resolve forward reference unambiguously.
+            next_state           = State::REQUEST_FROM_TIP;
+            next_hash_requested_ = GENESIS_DIGEST;
+            left_edge_           = chain_.GetHeaviestBlock();
+            assert(left_edge_);
+          }
+          else
+          {
+            next_hash_requested_ = std::move(next_hash);
+            if (next_hash_requested_ == GENESIS_DIGEST)
+            {
+              // Genesis as next tip to retrieve indicates the whole chain has been received
+              // and we can start synchronising.
+              next_state = State::SYNCHRONISING;
+              // clear the state
+              value_util::ZeroAll(current_peer_address_, current_missing_block_);
+            }
           }
         }
       }
@@ -396,6 +410,165 @@ MainChainRpcService::State MainChainRpcService::OnWaitForHeaviestChain()
     }
   }
 
+  return next_state;
+}
+
+/**
+ * Request from a random peer the heaviest chain, starting from the newest block
+ * and going backwards. The client is free to return less blocks than requested.
+ *
+ */
+MainChainRpcService::State MainChainRpcService::OnRequestFromTip()
+{
+  state_request_heaviest_->increment();  // we're still retrieving the heaviest chain
+
+  State next_state{State::REQUEST_FROM_TIP};
+  retrieval_phase_ = State::REQUEST_FROM_TIP;
+
+  auto const peer = GetRandomTrustedPeer();
+
+  if (!peer.empty())
+  {
+    current_peer_address_ = peer;
+    current_request_      = rpc_client_.CallSpecificAddress(
+        current_peer_address_, RPC_MAIN_CHAIN, MainChainProtocol::HEAVIEST_CHAIN,
+        left_edge_->body.block_number, MAX_CHAIN_REQUEST_SIZE);
+
+    next_state = State::WAIT_FROM_TIP;
+  }
+
+  state_machine_->Delay(std::chrono::milliseconds{500});
+  return next_state;
+}
+
+MainChainRpcService::State MainChainRpcService::OnWaitFromTip()
+{
+  state_wait_heaviest_->increment();  // we're still retrieving the heaviest chain
+
+  State next_state{State::WAIT_FROM_TIP};
+
+  if (!current_request_)
+  {
+    // Something went wrong; we should attempt to request this subchain again.
+    next_state = retrieval_phase_;
+  }
+  else
+  {
+    // Determine the status of the request that is in flight.
+    auto const status = current_request_->state();
+
+    if (PromiseState::SUCCESS == status)
+    {
+      // The request was successful, simply hand off the blocks to be added to the chain.
+      auto  peer_response = current_request_->As<TimeTravelogue>();
+      auto &blocks        = peer_response.blocks;
+      if (blocks.empty())
+      {
+        // In this state handler, it indicates an error occured.
+        return retrieval_phase_;
+      }
+      if (right_edge_)
+      {
+        auto const &expected_body{right_edge_->body};
+        auto const &actual_body{blocks.back().body};
+        if (expected_body.block_number != actual_body.block_number + 1 ||
+            expected_body.previous_hash != actual_body.hash)
+        {
+          FETCH_LOG_ERROR(LOGGING_NAME,
+                          "Error: remote subchain does not end at the block expected.");
+          return retrieval_phase_;
+        }
+      }
+
+      auto const &earliest_body{blocks.front().body};
+      auto const &left_edge_body{left_edge_->body};
+      assert(earliest_body.block_number > left_edge_body.block_number);
+      assert(blocks.size() == 1 || earliest_body.block_number < blocks.back().body.block_number);
+
+      const bool gap_closed{earliest_body.block_number == left_edge_body.block_number + 1};
+      if (gap_closed)
+      {
+        if (earliest_body.previous_hash != left_edge_body.hash)
+        {
+          // This must be a wrong chain.
+          FETCH_LOG_ERROR(LOGGING_NAME, "Gluepoint mismatch at block no. ",
+                          earliest_body.block_number, ": actual 0x",
+                          earliest_body.previous_hash.ToHex(), ", expected 0x",
+                          left_edge_body.hash.ToHex());
+          return retrieval_phase_;
+        }
+      }
+
+      BlockHash earliest_hash;
+      if (!gap_closed)
+      {
+        earliest_hash = earliest_body.hash;
+      }
+
+      if (HandleChainResponse(current_peer_address_, std::move(blocks)))
+      {
+        if (gap_closed)
+        {
+          // Blocks fit together and there are no more unretrieved blocks left.
+          next_state = State::SYNCHRONISING;
+          // clear the state
+          value_util::ZeroAll(current_peer_address_, current_missing_block_, right_edge_);
+        }
+        else
+        {
+          right_edge_ = chain_.GetBlock(earliest_hash);
+          assert(right_edge_);
+
+          next_hash_requested_ = std::move(peer_response.next_hash);
+          assert(right_edge_->body.previous_hash == next_hash_requested_);
+
+          next_state = State::FURTHER_FROM_TIP;
+        }
+      }
+      else
+      {
+        next_state = retrieval_phase_;
+      }
+    }
+    else if (status != PromiseState::WAITING)
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Heaviest chain request to: ", ToBase64(current_peer_address_),
+                     " failed. Reason: ", service::ToString(status));
+
+      // since we want to sync at least with one chain before proceeding we restart the state
+      // machine back to the requesting
+      next_state = retrieval_phase_;
+    }
+  }
+
+  return next_state;
+}
+
+MainChainRpcService::State MainChainRpcService::OnFurtherFromTip()
+{
+  state_request_heaviest_->increment();  // we're still retrieving the heaviest chain
+
+  State next_state{State::FURTHER_FROM_TIP};
+  retrieval_phase_ = State::FURTHER_FROM_TIP;
+
+  auto const peer = GetRandomTrustedPeer();
+
+  if (!peer.empty())
+  {
+    current_peer_address_ = peer;
+    uint64_t gap_width    = right_edge_->body.block_number - left_edge_->body.block_number - 1;
+    constexpr uint64_t max_size         = static_cast<uint64_t>(MAX_CHAIN_REQUEST_SIZE);
+    int64_t            requested_blocks = -static_cast<int64_t>(std::min(gap_width, max_size));
+
+    assert(right_edge_->body.previous_hash == next_hash_requested_);
+
+    current_request_ = rpc_client_.CallSpecificAddress(current_peer_address_, RPC_MAIN_CHAIN,
+                                                       MainChainProtocol::TIME_TRAVEL,
+                                                       next_hash_requested_, requested_blocks);
+    next_state       = State::WAIT_FROM_TIP;
+  }
+
+  state_machine_->Delay(std::chrono::milliseconds{500});
   return next_state;
 }
 

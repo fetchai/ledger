@@ -55,6 +55,9 @@ public:
   {
     REQUEST_HEAVIEST_CHAIN,
     WAIT_FOR_HEAVIEST_CHAIN,
+    REQUEST_FROM_TIP,
+    WAIT_FROM_TIP,
+    FURTHER_FROM_TIP,
     SYNCHRONISING,
     WAITING_FOR_RESPONSE,
     SYNCHRONISED,
@@ -136,6 +139,9 @@ private:
   /// @{
   State OnRequestHeaviestChain();
   State OnWaitForHeaviestChain();
+  State OnRequestFromTip();
+  State OnWaitFromTip();
+  State OnFurtherFromTip();
   State OnSynchronising();
   State OnWaitingForResponse();
   State OnSynchronised(State current, State previous);
@@ -162,7 +168,14 @@ private:
   Address         current_peer_address_;
   BlockHash       current_missing_block_;
   Promise         current_request_;
-  BlockHash       past_recent_tip_ = GENESIS_DIGEST;
+  BlockHash       next_hash_requested_ = GENESIS_DIGEST;
+  /// @}
+
+  /// @name Transient gap that may occur when requesting main chain on startup
+  /// @{
+  MainChain::BlockPtr left_edge_;
+  MainChain::BlockPtr right_edge_;
+  State               retrieval_phase_;
   /// @}
 
   /// @name Telemetry
@@ -188,6 +201,12 @@ constexpr char const *MainChainRpcService::ToString(State state) noexcept
     return "Requesting Heaviest Chain";
   case State::WAIT_FOR_HEAVIEST_CHAIN:
     return "Waiting for Heaviest Chain";
+  case State::REQUEST_FROM_TIP:
+    return "Still Requesting Heaviest Chain";
+  case State::WAIT_FROM_TIP:
+    return "Once Again Waiting for Heaviest Chain";
+  case State::FURTHER_FROM_TIP:
+    return "Requesting Heaviest Chain Even Further";
   case State::SYNCHRONISING:
     return "Synchronising";
   case State::WAITING_FOR_RESPONSE:

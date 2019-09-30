@@ -447,15 +447,15 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) 
  * @return A pair made of an array of blocks, and the next hash in the chain in this direction
  * @throws std::runtime_error if a block lookup occurs
  */
-std::pair<MainChain::Blocks, MainChain::BlockHash> MainChain::TimeTravel(BlockHash current_hash,
+std::pair<MainChain::Blocks, MainChain::BlockHash> MainChain::TimeTravel(BlockHash start,
                                                                          int64_t   limit) const
 {
   if (limit <= 0)
   {
-    auto ret_blocks{GetChainPreceding(current_hash, static_cast<uint64_t>(-limit))};
+    auto ret_blocks{GetChainPreceding(start, static_cast<uint64_t>(-limit))};
     if (ret_blocks.empty())
     {
-      return {Blocks{}, std::move(current_hash)};
+      return {Blocks{}, std::move(start)};
     }
     auto next_hash{ret_blocks.back()->body.previous_hash};  // when next is previous
     return {std::move(ret_blocks), std::move(next_hash)};
@@ -470,7 +470,7 @@ std::pair<MainChain::Blocks, MainChain::BlockHash> MainChain::TimeTravel(BlockHa
   Blocks result;
 
   Block     block;
-  BlockHash next_hash;
+  BlockHash next_hash, current_hash{start};
 
   FETCH_LOCK(lock_);
   if (current_hash == GENESIS_DIGEST)
@@ -493,6 +493,14 @@ std::pair<MainChain::Blocks, MainChain::BlockHash> MainChain::TimeTravel(BlockHa
     auto block{GetBlock(current_hash, &next_hash)};
     if (!block)
     {
+      if (IsBlockInCache(current_hash))
+      {
+        // The block is in the cache yet GetBlock() failed.
+        // This indicates that forward reference is ambiguous, so we stop the loop here
+        // and the remote requester should now travel from the heaviest tip.
+        current_hash = BlockHash{};  // signal that forward-travelling can go no further
+        break;
+      }
       FETCH_LOG_ERROR(LOGGING_NAME, "Block lookup failure for block: ", ToBase64(current_hash));
       throw std::runtime_error("Failed to lookup block");
     }
@@ -1255,8 +1263,28 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
  */
 bool MainChain::LookupBlock(BlockHash const &hash, IntBlockPtr &block, BlockHash *next_hash) const
 {
-  return LookupBlockFromCache(hash, block, next_hash) ||
-         LookupBlockFromStorage(hash, block, next_hash);
+  if (LookupBlockFromCache(hash, block))
+  {
+    // Check if forward reference is requested.
+    if (!next_hash)
+    {
+      return true;
+    }
+    // We'll need to check if there is a unique block next to this one.
+    switch (references_.count(hash))
+    {
+    case 0:
+      *next_hash = GENESIS_DIGEST;
+      return true;
+    case 1:
+      *next_hash = references_.find(hash)->second;
+      return true;
+    default:
+      // ambiguous forward references need to be resolved from storage
+      break;
+    }
+  }
+  return LookupBlockFromStorage(hash, block, next_hash);
 }
 
 /**
@@ -1267,8 +1295,7 @@ bool MainChain::LookupBlock(BlockHash const &hash, IntBlockPtr &block, BlockHash
  * @param[out] next_hash When non-null, pointer to a hash object to put block's next into
  * @return true iff successful
  */
-bool MainChain::LookupBlockFromCache(BlockHash const &hash, IntBlockPtr &block,
-                                     BlockHash *next_hash) const
+bool MainChain::LookupBlockFromCache(BlockHash const &hash, IntBlockPtr &block) const
 {
   FETCH_LOCK(lock_);
 
@@ -1276,24 +1303,6 @@ bool MainChain::LookupBlockFromCache(BlockHash const &hash, IntBlockPtr &block,
   auto const it = block_chain_.find(hash);
   if ((block_chain_.end() != it))
   {
-    if (next_hash)
-    {
-      // We'll need to check if there is a unique block next to this one.
-      switch (references_.count(hash))
-      {
-      case 0:
-        *next_hash = GENESIS_DIGEST;
-        break;
-      case 1:
-        *next_hash = references_.find(hash)->second;
-        break;
-      default:
-        // ambiguous forward references need to be resolved from storage
-        // TODO (bipll): when this function is called from LookupBlock(), storage lookup
-        // is performed next; we'll probably need to cleanup forward references there
-        return false;
-      }
-    }
     block = it->second;
     return true;
   }
