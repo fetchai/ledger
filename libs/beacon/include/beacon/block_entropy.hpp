@@ -51,11 +51,11 @@ struct BlockEntropy : public BlockEntropyInterface
 
   BlockEntropy()
   {
-    bn::initPairing();
+    // bn::initPairing();
 
-    // Important this is cleared so the hash of it is consistent for the genesis block (?)
-    group_signature = GroupSignature{};
-    group_signature.clear();
+    //// Important this is cleared so the hash of it is consistent for the genesis block (?)
+    // group_signature = GroupSignature{};
+    // group_signature.clear();
   }
 
   Cabinet qualified;  // The members who succeeded DKG and are qualified to produce blocks (when new
