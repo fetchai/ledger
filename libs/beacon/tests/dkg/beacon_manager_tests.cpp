@@ -29,6 +29,7 @@ using namespace fetch::dkg;
 using Certificate    = Prover;
 using CertificatePtr = std::shared_ptr<Certificate>;
 using MuddleAddress  = byte_array::ConstByteArray;
+using DkgOutput      = beacon::DkgOutput;
 
 TEST(beacon_manager, dkg_and_threshold_signing)
 {
@@ -216,8 +217,8 @@ TEST(beacon_manager, dkg_and_threshold_signing)
     PublicKey               dummy_public;
     std::vector<PublicKey>  dummy_public_shares;
     std::set<MuddleAddress> dummy_qual;
-    manager->GetDkgOutput(dummy_public, computed_secret_key, dummy_public_shares, dummy_qual);
-    EXPECT_EQ(computed_secret_key, secret_key_test);
+    DkgOutput               output{manager->GetDkgOutput()};
+    EXPECT_EQ(output.private_key_share, secret_key_test);
   }
 
   // Add honest qual coefficients
@@ -291,16 +292,11 @@ TEST(beacon_manager, dkg_and_threshold_signing)
     manager->ComputePublicKeys();
   }
 
-  std::vector<DkgOutput>               outputs;
-  std::vector<std::set<MuddleAddress>> quals;
+  std::vector<DkgOutput> outputs;
   for (auto &manager : beacon_managers)
   {
-    DkgOutput               output;
-    std::set<MuddleAddress> manager_qual;
-    manager->GetDkgOutput(output.group_public_key, output.secret_key_share,
-                          output.public_key_shares, manager_qual);
+    DkgOutput output{manager->GetDkgOutput()};
     outputs.push_back(output);
-    quals.push_back(manager_qual);
   }
 
   // Check outputs agree
@@ -310,7 +306,7 @@ TEST(beacon_manager, dkg_and_threshold_signing)
     {
       EXPECT_EQ(outputs[index].group_public_key.getStr(),
                 outputs[index1].group_public_key.getStr());
-      EXPECT_EQ(quals[index], quals[index1]);
+      EXPECT_EQ(outputs[index].qual, outputs[index1].qual);
       for (uint32_t shares_index = 0; shares_index < cabinet_size; ++shares_index)
       {
         EXPECT_EQ(outputs[index].public_key_shares[shares_index],

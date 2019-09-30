@@ -92,7 +92,6 @@ public:
   using Digest                  = ledger::Digest;
   using SharedEventManager      = EventManager::SharedEventManager;
   using BeaconSetupService      = beacon::BeaconSetupService;
-  using DkgOutput               = crypto::mcl::DkgOutput;
 
   BeaconService()                      = delete;
   BeaconService(BeaconService const &) = delete;

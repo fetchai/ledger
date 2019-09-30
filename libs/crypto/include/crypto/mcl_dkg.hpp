@@ -41,24 +41,24 @@ using Generator      = bn::G2;
 using MessagePayload = byte_array::ConstByteArray;
 using CabinetIndex   = uint32_t;
 
-struct DkgOutput
+struct DkgKeyInformation
 {
-  DkgOutput()
+  DkgKeyInformation()
   {
     bn::initPairing();
     group_public_key.clear();
-    secret_key_share.clear();
+    private_key_share.clear();
   }
-  DkgOutput(PublicKey group_public_key1, std::vector<PublicKey> public_key_shares1,
-            PrivateKey secret_key_shares1)
+  DkgKeyInformation(PublicKey group_public_key1, std::vector<PublicKey> public_key_shares1,
+                    PrivateKey secret_key_shares1)
     : group_public_key{std::move(group_public_key1)}
     , public_key_shares{std::move(public_key_shares1)}
-    , secret_key_share{std::move(secret_key_shares1)}
+    , private_key_share{std::move(secret_key_shares1)}
   {}
 
   PublicKey              group_public_key;
   std::vector<PublicKey> public_key_shares{};
-  PrivateKey             secret_key_share;
+  PrivateKey             private_key_share;
 };
 
 /**
@@ -131,7 +131,8 @@ bool VerifySign(PublicKey const &y, MessagePayload const &message, Signature con
 
 Signature LagrangeInterpolation(std::unordered_map<CabinetIndex, Signature> const &shares);
 
-std::vector<DkgOutput> TrustedDealerGenerateKeys(uint32_t committee_size, uint32_t threshold);
+std::vector<DkgKeyInformation> TrustedDealerGenerateKeys(uint32_t committee_size,
+                                                         uint32_t threshold);
 
 }  // namespace mcl
 }  // namespace crypto

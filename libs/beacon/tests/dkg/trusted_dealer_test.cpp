@@ -59,10 +59,11 @@ public:
                              ledger::ManifestCacheInterface &manifest_cache,
                              CertificatePtr certificate, SharedEventManager event_manager,
                              uint64_t blocks_per_round = 1)
-    : BeaconService{muddle, manifest_cache, certificate, event_manager, blocks_per_round} {};
+    : BeaconService{muddle, manifest_cache, std::move(certificate), std::move(event_manager),
+                    blocks_per_round} {};
 
   void StartNewCabinet(CabinetMemberList members, uint32_t threshold, uint64_t round_start,
-                       uint64_t round_end, uint64_t start_time, DkgOutput const &output)
+                       uint64_t round_end, uint64_t start_time, DkgOutput output)
   {
     auto diff_time = int64_t(static_cast<uint64_t>(std::time(nullptr))) - int64_t(start_time);
     FETCH_LOG_INFO(LOGGING_NAME, "Starting new cabinet from ", round_start, " to ", round_end,
@@ -98,8 +99,7 @@ public:
     {
       beacon->manager.SetCertificate(certificate_);
       beacon->manager.NewCabinet(members, threshold);
-      beacon->manager.SetDkgOutput(output.group_public_key, output.secret_key_share,
-                                   output.public_key_shares, members);
+      beacon->manager.SetDkgOutput(output);
     }
 
     // Setting the aeon details
@@ -169,7 +169,7 @@ struct CabinetNode
 };
 
 void RunTrustedDealer(uint16_t total_renewals = 4, uint32_t cabinet_size = 4,
-                      uint16_t numbers_per_aeon = 10, double threshold = 0.5)
+                      uint32_t threshold = 3, uint16_t numbers_per_aeon = 10)
 {
   std::cout << "- Setup" << std::endl;
 
@@ -239,13 +239,11 @@ void RunTrustedDealer(uint16_t total_renewals = 4, uint32_t cabinet_size = 4,
   while (i < total_renewals)
   {
     std::cout << "- Scheduling round " << i << std::endl;
-    TrustedDealer dealer(cabinet_addresses,
-                         static_cast<uint32_t>(static_cast<double>(cabinet.size()) * threshold));
+    TrustedDealer dealer(cabinet_addresses, threshold);
     for (auto &member : cabinet)
     {
       member->beacon_service.StartNewCabinet(
-          cabinet_addresses, static_cast<uint32_t>(static_cast<double>(cabinet.size()) * threshold),
-          i * numbers_per_aeon, (i + 1) * numbers_per_aeon,
+          cabinet_addresses, threshold, i * numbers_per_aeon, (i + 1) * numbers_per_aeon,
           static_cast<uint64_t>(std::time(nullptr)), dealer.GetKeys(member->identity.identifier()));
     }
 
@@ -285,5 +283,6 @@ void RunTrustedDealer(uint16_t total_renewals = 4, uint32_t cabinet_size = 4,
 
 TEST(beacon_service, trusted_dealer)
 {
-  RunTrustedDealer(3, 4, 10, 0.5);
+  bn::initPairing();
+  RunTrustedDealer(3, 4, 3, 10);
 }
