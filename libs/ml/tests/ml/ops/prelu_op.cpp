@@ -19,7 +19,7 @@
 #include "core/serializers/main_serializer_definition.hpp"
 #include "math/base_types.hpp"
 #include "math/tensor.hpp"
-#include "ml/ops/leaky_relu_op.hpp"
+#include "ml/ops/prelu_op.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
@@ -29,16 +29,16 @@
 #include <vector>
 
 template <typename T>
-class LeakyReluOpTest : public ::testing::Test
+class PReluOpTest : public ::testing::Test
 {
 };
 
 using MyTypes = ::testing::Types<fetch::math::Tensor<float>, fetch::math::Tensor<double>,
                                  fetch::math::Tensor<fetch::fixed_point::FixedPoint<32, 32>>>;
 
-TYPED_TEST_CASE(LeakyReluOpTest, MyTypes);
+TYPED_TEST_CASE(PReluOpTest, MyTypes);
 
-TYPED_TEST(LeakyReluOpTest, forward_test)
+TYPED_TEST(PReluOpTest, forward_test)
 {
   using TensorType = TypeParam;
 
@@ -52,7 +52,7 @@ TYPED_TEST(LeakyReluOpTest, forward_test)
 
   TensorType alpha = TensorType::FromString("0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8").Transpose();
 
-  fetch::ml::ops::LeakyReluOp<TensorType> op;
+  fetch::ml::ops::PReluOp<TensorType> op;
 
   TypeParam prediction(op.ComputeOutputShape(
       {std::make_shared<TypeParam>(data), std::make_shared<TypeParam>(alpha)}));
@@ -63,7 +63,7 @@ TYPED_TEST(LeakyReluOpTest, forward_test)
       prediction.AllClose(gt, typename TypeParam::Type(1e-5), typename TypeParam::Type(1e-5)));
 }
 
-TYPED_TEST(LeakyReluOpTest, backward_test)
+TYPED_TEST(PReluOpTest, backward_test)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
@@ -87,21 +87,21 @@ TYPED_TEST(LeakyReluOpTest, backward_test)
     0, 0, 0, 0, 1, 1, 0, 0)")
                          .Transpose();
 
-  fetch::ml::ops::LeakyReluOp<TensorType> op;
-  std::vector<TensorType>                 prediction =
+  fetch::ml::ops::PReluOp<TensorType> op;
+  std::vector<TensorType>             prediction =
       op.Backward({std::make_shared<TypeParam>(data), std::make_shared<TypeParam>(alpha)}, error);
 
   // test correct values
   ASSERT_TRUE(prediction[0].AllClose(gt, DataType(1e-5), DataType(1e-5)));
 }
 
-TYPED_TEST(LeakyReluOpTest, saveparams_test)
+TYPED_TEST(PReluOpTest, saveparams_test)
 {
   using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
   using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
-  using SPType        = typename fetch::ml::ops::LeakyReluOp<TensorType>::SPType;
-  using OpType        = fetch::ml::ops::LeakyReluOp<TensorType>;
+  using SPType        = typename fetch::ml::ops::PReluOp<TensorType>::SPType;
+  using OpType        = fetch::ml::ops::PReluOp<TensorType>;
 
   TensorType data =
       TensorType::FromString("1, -2, 3,-4, 5,-6, 7,-8; -1,  2,-3, 4,-5, 6,-7, 8").Transpose();
@@ -149,10 +149,10 @@ TYPED_TEST(LeakyReluOpTest, saveparams_test)
       new_prediction.AllClose(prediction, static_cast<DataType>(0), static_cast<DataType>(0)));
 }
 
-TYPED_TEST(LeakyReluOpTest, saveparams_backward_test)
+TYPED_TEST(PReluOpTest, saveparams_backward_test)
 {
   using TensorType = TypeParam;
-  using OpType     = fetch::ml::ops::LeakyReluOp<TensorType>;
+  using OpType     = fetch::ml::ops::PReluOp<TensorType>;
   using SPType     = typename OpType::SPType;
 
   TensorType alpha = TensorType::FromString(R"(
@@ -169,8 +169,8 @@ TYPED_TEST(LeakyReluOpTest, saveparams_backward_test)
     0, 0, 0, 0, 1, 1, 0, 0)")
                          .Transpose();
 
-  fetch::ml::ops::LeakyReluOp<TensorType> op;
-  std::vector<TensorType>                 prediction =
+  fetch::ml::ops::PReluOp<TensorType> op;
+  std::vector<TensorType>             prediction =
       op.Backward({std::make_shared<TypeParam>(data), std::make_shared<TypeParam>(alpha)}, error);
 
   // extract saveparams

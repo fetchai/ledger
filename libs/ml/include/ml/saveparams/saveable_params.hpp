@@ -324,11 +324,11 @@ struct OpLeakyReluSaveableParams : public OpsSaveableParams
  * @tparam TensorType
  */
 template <typename TensorType>
-struct OpLeakyReluOpSaveableParams : public OpsSaveableParams
+struct OpPReluOpSaveableParams : public OpsSaveableParams
 {
   using DataType = typename TensorType::Type;
   DataType          a;
-  fetch::ml::OpType op_type = OpType::OP_LEAKY_RELU_OP;
+  fetch::ml::OpType op_type = OpType::OP_PRELU_OP;
 };
 
 /**
