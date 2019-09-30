@@ -239,7 +239,6 @@ bool Model<TensorType>::Test(DataType &test_loss)
   bool is_done_set;
   auto test_pair = dataloader_ptr_->PrepareBatch(test_set_size, is_done_set);
 
-  // TODO (REWORK this to used Optimiser Test method)
   this->graph_ptr_->SetInput(label_, test_pair.first);
   this->graph_ptr_->SetInput(input_, test_pair.second.at(0));
   test_loss = *(this->graph_ptr_->Evaluate(error_).begin());
