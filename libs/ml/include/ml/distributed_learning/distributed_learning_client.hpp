@@ -298,7 +298,7 @@ void TrainingClient<TensorType>::GraphAddGradients(GraphPtrType            g_ptr
   auto grad_it = gradients.begin();
   for (auto &trainable : g_ptr->GetTrainables())
   {
-    auto weights_ptr = std::dynamic_pointer_cast<ops::Weights<TensorType>>(trainable);
+      auto weights_ptr = std::dynamic_pointer_cast<ops::Weights<TensorType>>(trainable);
     weights_ptr->AddToGradient(*grad_it);
     ++grad_it;
   }
