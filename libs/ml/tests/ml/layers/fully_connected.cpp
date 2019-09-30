@@ -182,7 +182,6 @@ TYPED_TEST(FullyConnectedTest, share_weight_backward_test)
   using DataType   = typename TensorType::Type;
   using SizeType   = typename TensorType::SizeType;
   using GraphType  = fetch::ml::Graph<TensorType>;
-  //  using GraphPtrType = std::shared_ptr<GraphType>;
 
   // create an auto encoder of two dense layers, both share same weights
   auto g_shared = BuildGraph<GraphType, TensorType, DataType>(true);
