@@ -37,7 +37,7 @@ public:
   using OptimiserType     = fetch::ml::optimisers::OptimiserType;
   using DataLoaderPtrType = typename Model<TensorType>::DataLoaderPtrType;
 
-  Sequential(ModelConfig<DataType> model_config);
+  explicit Sequential(ModelConfig<DataType> model_config);
 
   template <typename LayerType, typename... Params>
   void Add(Params... params);
