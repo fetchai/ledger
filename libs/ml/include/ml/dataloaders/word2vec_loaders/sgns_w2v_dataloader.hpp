@@ -35,15 +35,15 @@ template <typename T>
 class GraphW2VLoader : public DataLoader<fetch::math::Tensor<T>, fetch::math::Tensor<T>>
 {
 public:
-  const T BufferPositionUnused = static_cast<T>(fetch::math::numeric_max<SizeType>());
-
-  using InputType = fetch::math::Tensor<T>;
-  using LabelType = fetch::math::Tensor<T>;
-
-  using SizeType     = fetch::math::SizeType;
-  using VocabType    = Vocab;
+  using InputType  = fetch::math::Tensor<T>;
+  using LabelType  = fetch::math::Tensor<T>;
+  using SizeType   = fetch::math::SizeType;
+  using VocabType  = Vocab;
   using VocabPtrType = std::shared_ptr<VocabType>;
-  using ReturnType   = std::pair<LabelType, std::vector<InputType>>;
+  using ReturnType = std::pair<LabelType, std::vector<InputType>>;
+
+  const T        BufferPositionUnusedDataType = fetch::math::numeric_max<T>();
+  const SizeType BufferPositionUnusedSizeType = fetch::math::numeric_max<SizeType>();
 
   GraphW2VLoader(SizeType window_size, SizeType negative_samples, T freq_thresh,
                  SizeType max_word_count, SizeType seed = 1337);
@@ -131,7 +131,7 @@ GraphW2VLoader<T>::GraphW2VLoader(SizeType window_size, SizeType negative_sample
       fetch::math::Tensor<SizeType>({negative_samples * window_size_ * 2 + window_size_ * 2});
   labels_ = InputType({negative_samples * window_size_ * 2 + window_size_ * 2 +
                        1});  // the extra 1 is for testing if label has ran out
-  labels_.Fill(BufferPositionUnused);
+  labels_.Fill(BufferPositionUnusedDataType);
   cur_sample_.first  = InputType({1, 1});
   cur_sample_.second = {InputType({1, 1}), InputType({1, 1})};
 }
@@ -191,7 +191,7 @@ bool GraphW2VLoader<T>::IsDone() const
   }
 
   // check if the buffer is drained
-  if (labels_.At(buffer_pos_) != BufferPositionUnused)
+  if (labels_.At(buffer_pos_) != BufferPositionUnusedDataType)
   {
     return false;
   }
@@ -216,7 +216,7 @@ void GraphW2VLoader<T>::Reset()
   current_sentence_ = 0;
   current_word_     = 0;
   unigram_table_.ResetRNG();
-  labels_.Fill(BufferPositionUnused);
+  labels_.Fill(BufferPositionUnusedDataType);
   buffer_pos_ = 0;
   reset_count_++;
 }
@@ -422,11 +422,10 @@ void GraphW2VLoader<T>::BufferNextSamples()
   // set up a counter to add samples to buffer
   SizeType counter = 0;
 
-  // reset all three buffers
   input_words_.Fill(cur_word_id);
-  labels_.Fill(BufferPositionUnused);
-  output_words_.Fill(BufferPositionUnused);
-  output_words_buffer_.Fill(static_cast<SizeType>(BufferPositionUnused));
+  labels_.Fill(BufferPositionUnusedDataType);
+  output_words_.Fill(BufferPositionUnusedDataType);
+  output_words_buffer_.Fill(BufferPositionUnusedSizeType);
 
   // set the context samples
   for (SizeType i = 0; i < dynamic_size; ++i)
@@ -487,7 +486,7 @@ typename GraphW2VLoader<T>::ReturnType GraphW2VLoader<T>::GetNext()
 
   T label = labels_.At(buffer_pos_);  // check if we have drained the buffer, either no more valid
                                       // data, or goes out of bound
-  if (label == BufferPositionUnused)
+  if (label == BufferPositionUnusedDataType)
   {
     BufferNextSamples();
   }

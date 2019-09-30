@@ -47,6 +47,7 @@ struct W2VTrainingParams : public ClientParams<DataType>
   DataType    ending_learning_rate;
   std::string vocab_file;
   std::vector<std::string> data;
+  std::string              analogies_test_file;
 
   fetch::ml::optimisers::LearningRateParam<DataType> learning_rate_param{
       fetch::ml::optimisers::LearningRateParam<DataType>::LearningRateDecay::LINEAR};
