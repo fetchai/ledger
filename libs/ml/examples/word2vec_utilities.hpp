@@ -45,13 +45,13 @@ std::vector<std::pair<typename TensorType::SizeType, typename TensorType::Type>>
   TensorType word2_vec = embeddings.Slice(word2, 1).Copy();
   TensorType word3_vec = embeddings.Slice(word3, 1).Copy();
 
-  //  word1_vec /= fetch::math::L2Norm(word1_vec);
-  //  word2_vec /= fetch::math::L2Norm(word2_vec);
-  //  word3_vec /= fetch::math::L2Norm(word3_vec);
+  word1_vec /= fetch::math::L2Norm(word1_vec);
+  word2_vec /= fetch::math::L2Norm(word2_vec);
+  word3_vec /= fetch::math::L2Norm(word3_vec);
 
   TensorType                                 word4_vec = word2_vec - word1_vec + word3_vec;
-  std::vector<std::pair<SizeType, DataType>> output;
-  output = fetch::math::clustering::KNNCosine(embeddings, word4_vec, k);
+  std::vector<std::pair<SizeType, DataType>> output =
+      fetch::math::clustering::KNNCosine(embeddings, word4_vec, k);
 
   return output;
 }

@@ -90,8 +90,9 @@ void TestEmbeddings(Graph<TensorType> const &g, std::string const &skip_gram_nam
 
 struct TrainingParams
 {
-  // TODO (#1585) something is broken here. If you set max_word_count to something smaller like
-  // 10000, there would be an error at the end of the sentence
+  // window_size(2), embedding_size(500) and min_count(100) come from the Levy et. al. paper here
+  // (https://www.aclweb.org/anthology/Q15-1016) which has state-of-the-art scores for word
+  // embedding and uses the wikipedia dataset (documents_utf8_filtered_20pageviews.csv)
   SizeType max_word_count = fetch::math::numeric_max<SizeType>();  // maximum number to be trained
   SizeType negative_sample_size = 5;      // number of negative sample per word-context pair
   SizeType window_size          = 2;      // window size for context sampling
@@ -208,7 +209,7 @@ int main(int argc, char **argv)
                      analogies_test_file);
     }
 
-    SaveLargeModel(*g, save_file + std::to_string(i));
+    SaveModel(*g, save_file + std::to_string(i));
   }
 
   return 0;
