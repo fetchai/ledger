@@ -170,9 +170,10 @@ TEST(Tensor, simple_iterator_transpose_test)
   std::vector<SizeType> perm{2, 1, 0};
   std::vector<SizeType> original_shape{2, 3, 4};
   std::vector<SizeType> new_shape;
-  for (SizeType i = 0; i < perm.size(); ++i)
+  new_shape.reserve(perm.size());
+  for (SizeType i : perm)
   {
-    new_shape.push_back(original_shape[perm[i]]);
+    new_shape.push_back(original_shape[i]);
   }
   SizeType arr_size = fetch::math::Product(original_shape);
 

@@ -24,23 +24,23 @@
 #include <cstddef>
 
 using namespace fetch::math;
-using data_type      = double;
-using container_type = fetch::memory::SharedArray<data_type>;
+using DataType      = double;
+using ContainerType = fetch::memory::SharedArray<DataType>;
 
-Tensor<data_type, container_type> RandomArray(std::size_t n, data_type adj)
+Tensor<DataType, ContainerType> RandomArray(std::size_t n, DataType adj)
 {
   static fetch::random::LinearCongruentialGenerator gen;
-  Tensor<data_type, container_type>                 a1(n);
+  Tensor<DataType, ContainerType>                   a1(n);
   for (std::size_t i = 0; i < n; ++i)
   {
-    a1.At(i) = data_type(gen.AsDouble()) + adj;
+    a1.At(i) = DataType(gen.AsDouble()) + adj;
   }
   return a1;
 }
 
-Tensor<data_type, container_type> ConstantArray(std::size_t n, data_type adj)
+Tensor<DataType, ContainerType> ConstantArray(std::size_t n, DataType adj)
 {
-  Tensor<data_type, container_type> a1(n);
+  Tensor<DataType, ContainerType> a1(n);
   for (std::size_t i = 0; i < n; ++i)
   {
     a1.At(i) = adj;
@@ -50,9 +50,9 @@ Tensor<data_type, container_type> ConstantArray(std::size_t n, data_type adj)
 
 TEST(ndarray, zeros_out)
 {
-  std::size_t                       n            = 1000;
-  Tensor<data_type, container_type> test_array   = ConstantArray(n, 0);
-  Tensor<data_type, container_type> test_array_2 = RandomArray(n, -1.0);
+  std::size_t                     n            = 1000;
+  Tensor<DataType, ContainerType> test_array   = ConstantArray(n, 0);
+  Tensor<DataType, ContainerType> test_array_2 = RandomArray(n, -1.0);
 
   // sanity check that all values equal 0
   for (std::size_t i = 0; i < n; ++i)
@@ -63,9 +63,9 @@ TEST(ndarray, zeros_out)
 
 TEST(ndarray, negative_ones)
 {
-  std::size_t                       n            = 1000;
-  Tensor<data_type, container_type> test_array   = RandomArray(n, -1.0);
-  Tensor<data_type, container_type> test_array_2 = RandomArray(n, 1.0);
+  std::size_t                     n            = 1000;
+  Tensor<DataType, ContainerType> test_array   = RandomArray(n, -1.0);
+  Tensor<DataType, ContainerType> test_array_2 = RandomArray(n, 1.0);
 
   // sanity check that all values less than 0
   for (std::size_t i = 0; i < n; ++i)
@@ -76,9 +76,9 @@ TEST(ndarray, negative_ones)
 
 TEST(ndarray, positive_ones)
 {
-  std::size_t                       n            = 1000;
-  Tensor<data_type, container_type> test_array   = RandomArray(n, 1.0);
-  Tensor<data_type, container_type> test_array_2 = RandomArray(n, -1.0);
+  std::size_t                     n            = 1000;
+  Tensor<DataType, ContainerType> test_array   = RandomArray(n, 1.0);
+  Tensor<DataType, ContainerType> test_array_2 = RandomArray(n, -1.0);
 
   // sanity check that all values gt than 0
   for (std::size_t i = 0; i < n; ++i)

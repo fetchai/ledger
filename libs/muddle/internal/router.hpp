@@ -53,7 +53,7 @@ public:
   using PacketPtr            = std::shared_ptr<Packet>;
   using Payload              = Packet::Payload;
   using ConnectionPtr        = std::weak_ptr<network::AbstractConnection>;
-  using Handle               = network::AbstractConnection::connection_handle_type;
+  using Handle               = network::AbstractConnection::ConnectionHandleType;
   using ThreadPool           = network::ThreadPool;
   using HandleDirectAddrMap  = std::unordered_map<Handle, Address>;
   using Prover               = crypto::Prover;
@@ -87,7 +87,7 @@ public:
   void Start();
   void Stop();
 
-  void Route(Handle handle, PacketPtr packet);
+  void Route(Handle handle, PacketPtr const &packet);
   void ConnectionDropped(Handle handle);
 
   /// @name Endpoint Methods (Publicly visible)
@@ -162,11 +162,11 @@ private:
   Handle LookupRandomHandle(Packet::RawAddress const &address) const;
   Handle LookupKademliaClosestHandle(Address const &address) const;
 
-  void SendToConnection(Handle handle, PacketPtr packet);
-  void RoutePacket(PacketPtr packet, bool external = true);
+  void SendToConnection(Handle handle, PacketPtr const &packet);
+  void RoutePacket(PacketPtr const &packet, bool external = true);
   void DispatchDirect(Handle handle, PacketPtr packet);
 
-  void DispatchPacket(PacketPtr packet, Address transmitter);
+  void DispatchPacket(PacketPtr const &packet, Address const &transmitter);
 
   bool IsEcho(Packet const &packet, bool register_echo = true);
   void CleanEchoCache();

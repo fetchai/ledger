@@ -18,12 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/logging.hpp"
-#include "ml/ops/abs.hpp"
-#include "ml/ops/embeddings.hpp"
-#include "ml/ops/layer_norm.hpp"
-#include "ml/ops/leaky_relu_op.hpp"
 #include "ml/ops/ops.hpp"
-#include "ml/ops/placeholder.hpp"
 #include "ml/ops/weights.hpp"
 #include "ml/saveparams/saveable_params.hpp"
 
@@ -39,7 +34,7 @@
 namespace fetch {
 namespace ml {
 
-template <typename T>
+template <typename TensorType>
 class Node
 {
 private:
@@ -51,10 +46,10 @@ private:
   };
 
 public:
-  using TensorType    = T;
-  using NodePtrType   = std::shared_ptr<Node<T>>;
-  using VecTensorType = typename fetch::ml::ops::Ops<T>::VecTensorType;
-  using SPType        = fetch::ml::NodeSaveableParams<T>;
+  using DataType      = typename TensorType::Type;
+  using NodePtrType   = std::shared_ptr<Node<TensorType>>;
+  using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
+  using SPType        = fetch::ml::NodeSaveableParams<TensorType>;
 
   ///////////////////////////////////
   /// CONSRTUCTORS / DESCTRUCTORS ///
@@ -75,7 +70,7 @@ public:
     : name_(std::move(name))
     , cached_output_status_(CachedOutputState::CHANGED_SIZE)
     , operation_type_(operation_type)
-    , op_ptr_(op_ptr)
+    , op_ptr_(std::move(op_ptr))
   {}
 
   /**
@@ -88,7 +83,7 @@ public:
     : name_(std::move(name))
     , cached_output_status_(CachedOutputState::CHANGED_SIZE)
     , operation_type_(old_node.get_op_type())
-    , op_ptr_(op_ptr)
+    , op_ptr_(std::move(op_ptr))
   {
     cached_output_ = old_node.cached_output_.Copy();
   }
@@ -101,15 +96,18 @@ public:
 
   std::shared_ptr<SPType> GetNodeSaveableParams() const;
 
-  void SetNodeSaveableParams(NodeSaveableParams<T> const &nsp, std::shared_ptr<ops::Ops<T>> op_ptr);
+  void SetNodeSaveableParams(NodeSaveableParams<TensorType> const &nsp,
+                             std::shared_ptr<ops::Ops<TensorType>> op_ptr);
 
   ///////////////////////////////////
   /// FORWARD/BACKWARD OPERATIONS ///
   ///////////////////////////////////
 
-  VecTensorType                                 GatherInputs() const;
-  std::shared_ptr<T>                            Evaluate(bool is_training);
-  std::vector<std::pair<Node<T> *, TensorType>> BackPropagate(TensorType const &error_signal);
+  VecTensorType               GatherInputs() const;
+  std::shared_ptr<TensorType> Evaluate(bool is_training);
+
+  std::vector<std::pair<Node<TensorType> *, TensorType>> BackPropagate(
+      TensorType const &error_signal);
 
   void                            AddInput(NodePtrType const &i);
   std::vector<std::string>        GetInputNames();
@@ -123,7 +121,7 @@ public:
     return name_;
   }
 
-  std::shared_ptr<ops::Ops<T>> GetOp()
+  std::shared_ptr<ops::Ops<TensorType>> GetOp()
   {
     return op_ptr_;
   }
@@ -139,11 +137,7 @@ public:
 
   bool HasValidCache()
   {
-    if (cached_output_status_ == CachedOutputState::VALID_CACHE)
-    {
-      return true;
-    }
-    return false;
+    return static_cast<bool>(cached_output_status_ == CachedOutputState::VALID_CACHE);
   }
 
 private:
@@ -155,7 +149,7 @@ private:
   CachedOutputState cached_output_status_;
   OpType            operation_type_;
 
-  std::shared_ptr<ops::Ops<T>> op_ptr_;
+  std::shared_ptr<ops::Ops<TensorType>> op_ptr_;
 };
 
 /**
@@ -163,8 +157,8 @@ private:
  * @tparam T
  * @return
  */
-template <typename T>
-std::shared_ptr<typename Node<T>::SPType> Node<T>::GetNodeSaveableParams() const
+template <typename TensorType>
+std::shared_ptr<typename Node<TensorType>::SPType> Node<TensorType>::GetNodeSaveableParams() const
 {
   auto sp_ptr = std::make_shared<SPType>();
 
@@ -180,8 +174,8 @@ std::shared_ptr<typename Node<T>::SPType> Node<T>::GetNodeSaveableParams() const
  * @tparam TensorType tensor
  * @return vector of reference_wrapped tensors
  */
-template <class T>
-typename Node<T>::VecTensorType Node<T>::GatherInputs() const
+template <class TensorType>
+typename Node<TensorType>::VecTensorType Node<TensorType>::GatherInputs() const
 {
   VecTensorType inputs;
   for (auto const &i : input_nodes_)
@@ -200,8 +194,8 @@ typename Node<T>::VecTensorType Node<T>::GatherInputs() const
  * @tparam O operation class
  * @return the tensor with the forward result
  */
-template <typename T>
-std::shared_ptr<T> Node<T>::Evaluate(bool is_training)
+template <typename TensorType>
+std::shared_ptr<TensorType> Node<TensorType>::Evaluate(bool is_training)
 {
   op_ptr_->SetTraining(is_training);
 
@@ -221,9 +215,14 @@ std::shared_ptr<T> Node<T>::Evaluate(bool is_training)
     }
     op_ptr_->Forward(inputs, cached_output_);
     cached_output_status_ = CachedOutputState::VALID_CACHE;
+
+    assert(!math::state_division_by_zero<DataType>());
+    assert(!math::state_overflow<DataType>());
+    assert(!math::state_infinity<DataType>());
+    assert(!math::state_nan<DataType>());
   }
 
-  return std::make_shared<T>(cached_output_);
+  return std::make_shared<TensorType>(cached_output_);
 }
 
 /**
@@ -233,14 +232,18 @@ std::shared_ptr<T> Node<T>::Evaluate(bool is_training)
  * @param error_signal the error signal to backpropagate
  * @return
  */
-template <typename T>
-std::vector<std::pair<Node<T> *, T>> Node<T>::BackPropagate(TensorType const &error_signal)
+template <typename TensorType>
+std::vector<std::pair<Node<TensorType> *, TensorType>> Node<TensorType>::BackPropagate(
+    TensorType const &error_signal)
 {
+  // gather inputs and backprop for this node
   VecTensorType           inputs                        = GatherInputs();
   std::vector<TensorType> back_propagated_error_signals = op_ptr_->Backward(inputs, error_signal);
-  std::vector<std::pair<Node<T> *, TensorType>> non_back_propagated_error_signals;
+
+  std::vector<std::pair<Node<TensorType> *, TensorType>> non_back_propagated_error_signals;
   assert(back_propagated_error_signals.size() == inputs.size() || inputs.empty());
 
+  // call backpropagate on the input nodes
   auto bp_it = back_propagated_error_signals.begin();
   for (auto &i : input_nodes_)
   {
@@ -268,8 +271,8 @@ std::vector<std::pair<Node<T> *, T>> Node<T>::BackPropagate(TensorType const &er
  * Resets input and output node ptr containers. Useful for graph decompiling.
  * @tparam T
  */
-template <typename T>
-void Node<T>::ResetInputsAndOutputs()
+template <typename TensorType>
+void Node<TensorType>::ResetInputsAndOutputs()
 {
   input_nodes_.clear();
   outputs_.clear();
@@ -281,8 +284,8 @@ void Node<T>::ResetInputsAndOutputs()
  * @tparam O operation class
  * @param i pointer to the input node
  */
-template <typename T>
-void Node<T>::AddInput(NodePtrType const &i)
+template <typename TensorType>
+void Node<TensorType>::AddInput(NodePtrType const &i)
 {
   input_nodes_.push_back(i);
 }
@@ -293,8 +296,8 @@ void Node<T>::AddInput(NodePtrType const &i)
  * @tparam O operation class
  * @param i pointer to the input node
  */
-template <typename T>
-std::vector<std::string> Node<T>::GetInputNames()
+template <typename TensorType>
+std::vector<std::string> Node<TensorType>::GetInputNames()
 {
   std::vector<std::string> ret{};
   for (auto const &input_node : input_nodes_)
@@ -310,8 +313,8 @@ std::vector<std::string> Node<T>::GetInputNames()
  * @tparam O operation class
  * @param o pointer to the output node
  */
-template <typename T>
-void Node<T>::AddOutput(NodePtrType const &o)
+template <typename TensorType>
+void Node<TensorType>::AddOutput(NodePtrType const &o)
 {
   outputs_.push_back(o);
 }
@@ -322,8 +325,8 @@ void Node<T>::AddOutput(NodePtrType const &o)
  * @tparam O operation class
  * @return vector of pointers to output nodes
  */
-template <typename T>
-std::vector<typename Node<T>::NodePtrType> const &Node<T>::GetOutputs() const
+template <typename TensorType>
+std::vector<typename Node<TensorType>::NodePtrType> const &Node<TensorType>::GetOutputs() const
 {
   return outputs_;
 }
@@ -334,8 +337,8 @@ std::vector<typename Node<T>::NodePtrType> const &Node<T>::GetOutputs() const
  * @tparam O operation class
  * @param input_size_changed boolean indicating whether the input size changed
  */
-template <typename T>
-void Node<T>::ResetCache(bool input_size_changed)
+template <typename TensorType>
+void Node<TensorType>::ResetCache(bool input_size_changed)
 {
   if (cached_output_status_ != CachedOutputState::CHANGED_SIZE)
   {

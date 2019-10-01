@@ -42,7 +42,7 @@ class TensorDataLoader : public DataLoader<LabelType, InputType>
 
 public:
   TensorDataLoader() = default;
-  TensorDataLoader(SizeVector const &label_shape, std::vector<SizeVector> const &data_shapes);
+  TensorDataLoader(SizeVector label_shape, std::vector<SizeVector> data_shapes);
 
   ~TensorDataLoader() override = default;
 
@@ -53,6 +53,7 @@ public:
   SizeType Size() const override;
   bool     IsDone() const override;
   void     Reset() override;
+  bool     IsModeAvailable(DataLoaderMode mode) override;
 
   void SetTestRatio(float new_test_ratio) override;
   void SetValidationRatio(float new_validation_ratio) override;
@@ -87,17 +88,18 @@ protected:
   SizeType batch_data_dim_  = fetch::math::numeric_max<SizeType>();
 
   random::Random rand;
+  SizeType       count_ = 0;
 
   void UpdateRanges();
   void UpdateCursor() override;
 };
 
 template <typename LabelType, typename InputType>
-TensorDataLoader<LabelType, InputType>::TensorDataLoader(SizeVector const &             label_shape,
-                                                         std::vector<SizeVector> const &data_shapes)
+TensorDataLoader<LabelType, InputType>::TensorDataLoader(SizeVector              label_shape,
+                                                         std::vector<SizeVector> data_shapes)
   : DataLoader<LabelType, TensorType>()
-  , label_shape_(label_shape)
-  , data_shapes_(data_shapes)
+  , label_shape_(std::move(label_shape))
+  , data_shapes_(std::move(data_shapes))
 {
   UpdateCursor();
 }
@@ -114,6 +116,7 @@ TensorDataLoader<LabelType, InputType>::GetNext()
     *this->current_cursor_ =
         this->current_min_ +
         (static_cast<SizeType>(decltype(rand)::generator()) % this->current_size_);
+    ++count_;
   }
   else
   {
@@ -152,12 +155,20 @@ TensorDataLoader<LabelType, InputType>::Size() const
 template <typename LabelType, typename InputType>
 bool TensorDataLoader<LabelType, InputType>::IsDone() const
 {
-  return *(this->current_cursor_) >= this->current_max_;
+  if (this->random_mode_)
+  {
+    return (count_ > (this->current_max_ - this->current_min_));
+  }
+  else
+  {
+    return *(this->current_cursor_) >= this->current_max_;
+  }
 }
 
 template <typename LabelType, typename InputType>
 void TensorDataLoader<LabelType, InputType>::Reset()
 {
+  count_                   = 0;
   *(this->current_cursor_) = this->current_min_;
 }
 
@@ -256,6 +267,30 @@ void TensorDataLoader<LabelType, InputType>::UpdateCursor()
     this->current_max_    = n_samples_;
     this->current_size_   = n_validation_samples_;
     break;
+  }
+  default:
+  {
+    throw std::runtime_error("Unsupported dataloader mode.");
+  }
+  }
+}
+
+template <typename LabelType, typename InputType>
+bool TensorDataLoader<LabelType, InputType>::IsModeAvailable(DataLoaderMode mode)
+{
+  switch (mode)
+  {
+  case DataLoaderMode::TRAIN:
+  {
+    return test_offset_ > 0;
+  }
+  case DataLoaderMode::TEST:
+  {
+    return test_offset_ < validation_offset_;
+  }
+  case DataLoaderMode::VALIDATE:
+  {
+    return validation_offset_ < n_samples_;
   }
   default:
   {

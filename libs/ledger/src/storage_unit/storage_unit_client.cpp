@@ -55,6 +55,11 @@ AddressList GenerateAddressList(ShardConfigs const &shards)
   return addresses;
 }
 
+constexpr char const *LOGGING_NAME = "StorageUnitClient";
+
+constexpr char const *MERKLE_FILENAME_DOC   = "merkle_stack.db";
+constexpr char const *MERKLE_FILENAME_INDEX = "merkle_stack_index.db";
+
 }  // namespace
 
 using TxStoreProtocol = fetch::storage::ObjectStoreProtocol<Transaction>;
@@ -331,12 +336,7 @@ bool StorageUnitClient::HashInStack(Hash const &hash, uint64_t index)
   assert(result);
   FETCH_UNUSED(result);
 
-  if (tree.root() == hash)
-  {
-    return true;
-  }
-
-  return false;
+  return tree.root() == hash;
 }
 
 StorageUnitClient::Address const &StorageUnitClient::LookupAddress(ShardIndex shard) const
@@ -470,8 +470,6 @@ void StorageUnitClient::IssueCallForMissingTxs(DigestSet const &tx_set)
 
 StorageUnitClient::Document StorageUnitClient::GetOrCreate(ResourceAddress const &key)
 {
-  FETCH_LOG_DEBUG(LOGGING_NAME, "GetOrCreate: ", key.address());
-
   Document doc;
 
   try
@@ -520,8 +518,6 @@ StorageUnitClient::Document StorageUnitClient::Get(ResourceAddress const &key)
 
 void StorageUnitClient::Set(ResourceAddress const &key, StateValue const &value)
 {
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Set: ", key.address(), " value: 0x", value.ToHex());
-
   try
   {
     // make the request to the RPC server

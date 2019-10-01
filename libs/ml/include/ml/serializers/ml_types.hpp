@@ -36,7 +36,6 @@ namespace serializers {
 /// OP SPECIFIC SERIALISATION FUNCTIONS ///
 ///////////////////////////////////////////
 
-namespace {
 template <class TensorType, typename D, class SP, typename MapType>
 void SerializeImplementation(MapType &map, uint8_t code,
                              std::shared_ptr<fetch::ml::OpsSaveableParams> op)
@@ -53,7 +52,6 @@ std::shared_ptr<SP> DeserializeImplementation(MapType &map, uint8_t code)
   map.ExpectKeyGetValue(code, *sp_ptr);
   return sp_ptr;
 }
-}  // namespace
 
 template <class TensorType, typename D, typename MapType>
 void SerializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_type,
@@ -154,10 +152,9 @@ void SerializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_type
                                                                                       op);
     break;
   }
-  case ml::OpType::OP_LEAKY_RELU_OP:
+  case ml::OpType::OP_PRELU_OP:
   {
-    SerializeImplementation<TensorType, D, ml::OpLeakyReluOpSaveableParams<TensorType>>(map, code,
-                                                                                        op);
+    SerializeImplementation<TensorType, D, ml::OpPReluOpSaveableParams<TensorType>>(map, code, op);
     break;
   }
   case ml::OpType::OP_LOG:
@@ -459,10 +456,10 @@ void DeserializeAnyOp(MapType &map, uint8_t code, fetch::ml::OpType const &op_ty
                                                                                              code);
     break;
   }
-  case ml::OpType::OP_LEAKY_RELU_OP:
+  case ml::OpType::OP_PRELU_OP:
   {
-    op = DeserializeImplementation<TensorType, D, ml::OpLeakyReluOpSaveableParams<TensorType>>(
-        map, code);
+    op = DeserializeImplementation<TensorType, D, ml::OpPReluOpSaveableParams<TensorType>>(map,
+                                                                                           code);
     break;
   }
   case ml::OpType::OP_LOG:
@@ -827,7 +824,7 @@ struct MapSerializer<ml::GraphSaveableParams<TensorType>, D>
     map.Append(CONNECTIONS_SECOND, connections_second);
 
     std::vector<ml::NodeSaveableParams<TensorType>> nodevec;
-    for (auto node_name : connections_first)
+    for (auto const &node_name : connections_first)
     {
       auto nsp =
           std::dynamic_pointer_cast<ml::NodeSaveableParams<TensorType>>(sp.nodes.at(node_name));
@@ -1599,13 +1596,13 @@ struct MapSerializer<ml::OpLeakyReluSaveableParams<TensorType>, D>
 };
 
 /**
- * serializer for LeakyReluOp saveable params
+ * serializer for PReluOp saveable params
  * @tparam TensorType
  */
 template <typename TensorType, typename D>
-struct MapSerializer<ml::OpLeakyReluOpSaveableParams<TensorType>, D>
+struct MapSerializer<ml::OpPReluOpSaveableParams<TensorType>, D>
 {
-  using Type       = ml::OpLeakyReluOpSaveableParams<TensorType>;
+  using Type       = ml::OpPReluOpSaveableParams<TensorType>;
   using DriverType = D;
 
   static uint8_t const BASE_OPS = 1;

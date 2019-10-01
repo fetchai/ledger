@@ -99,9 +99,6 @@ private:
   using MerkleTree           = crypto::MerkleTree;
   using PermanentMerkleStack = fetch::storage::ObjectStack<crypto::MerkleTree>;
 
-  static constexpr char const *MERKLE_FILENAME_DOC   = "merkle_stack.db";
-  static constexpr char const *MERKLE_FILENAME_INDEX = "merkle_stack_index.db";
-
   Address const &LookupAddress(ShardIndex shard) const;
   Address const &LookupAddress(storage::ResourceID const &resource) const;
 

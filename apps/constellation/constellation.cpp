@@ -84,8 +84,8 @@ using StakeManagerPtr  = std::shared_ptr<ledger::StakeManager>;
 
 constexpr char const *LOGGING_NAME = "constellation";
 
-static const std::size_t HTTP_THREADS{4};
-static char const *      GENESIS_FILENAME = "genesis_file.json";
+const std::size_t HTTP_THREADS{4};
+char const *      GENESIS_FILENAME = "genesis_file.json";
 
 bool WaitForLaneServersToStart()
 {
@@ -118,16 +118,10 @@ uint16_t LookupLocalPort(Manifest const &manifest, ServiceIdentifier::Type servi
   return it->second.local_port();
 }
 
-std::shared_ptr<ledger::DAGInterface> GenerateDAG(bool generate, std::string const &db_name,
-                                                  bool                          load_on_start,
+std::shared_ptr<ledger::DAGInterface> GenerateDAG(std::string const &db_name, bool load_on_start,
                                                   Constellation::CertificatePtr certificate)
 {
-  if (generate)
-  {
-    return std::make_shared<ledger::DAG>(db_name, load_on_start, certificate);
-  }
-
-  return nullptr;
+  return std::make_shared<ledger::DAG>(db_name, load_on_start, certificate);
 }
 
 ledger::ShardConfigs GenerateShardsConfig(Config &cfg, uint16_t start_port)
@@ -323,7 +317,6 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
         "ledger_uptime_ticks_total",
         "The number of intervals that ledger instance has been alive for")}
 {
-
   // print the start up log banner
   FETCH_LOG_INFO(LOGGING_NAME, "Constellation :: ", cfg_.num_lanes(), "x", cfg_.num_slices, "x",
                  cfg_.num_executors);
@@ -342,12 +335,12 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   }
 
   // Enable experimental features
+  assert(dag_);
+    dag_service_ = std::make_shared<ledger::DAGService>(muddle_->GetEndpoint(), dag_);
+  reactor_.Attach(dag_service_->GetWeakRunnable());
+
   if (cfg_.features.IsEnabled("synergetic"))
   {
-    assert(dag_);
-    dag_service_ = std::make_shared<ledger::DAGService>(muddle_->GetEndpoint(), dag_);
-    reactor_.Attach(dag_service_->GetWeakRunnable());
-
     auto syn_miner = std::make_unique<NaiveSynergeticMiner>(dag_, *storage_, certificate);
     if (!reactor_.Attach(syn_miner->GetWeakRunnable()))
     {

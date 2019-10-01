@@ -148,7 +148,7 @@ public:
   }
 };
 
-static const uint16_t INVALID_PORT = std::numeric_limits<uint16_t>::max();
+uint16_t const INVALID_PORT = std::numeric_limits<uint16_t>::max();
 
 }  // namespace
 

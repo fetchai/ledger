@@ -163,8 +163,9 @@ class TestInstance():
             clear_path=False
         )
 
-        # Possibly soon to be depreciated functionality - set the block interval
-        instance._block_interval = self._block_interval
+        # Possibly soon to be deprecated functionality - set the block interval
+        instance.block_interval = self._block_interval
+        instance.feature_flags = ['synergetic']
 
         # configure the lanes and slices
         instance.lanes = self._lanes
@@ -302,6 +303,10 @@ class TestInstance():
 
         time.sleep(5)  # TODO(HUT): blocking http call to node for ready state
 
+        if(self._pos_mode):
+            output("POS mode. sleep extra time.")
+            time.sleep(5)
+
     def stop(self):
         if self._nodes:
             for n, node in enumerate(self._nodes):
@@ -397,7 +402,7 @@ def setup_test(test_yaml, test_instance):
         output(
             "***** Shutting down test due to failure!. Debug YAML: {} *****\n".format(test_yaml))
         test_instance.stop()
-        test_instance.dump_debug()
+        # test_instance.dump_debug()
         os._exit(1)
 
     watchdog = TimerWatchdog(
@@ -527,7 +532,7 @@ def verify_txs(parameters, test_instance):
                 if status == "Executed" or expect_mined:
                     output("found executed TX")
                     error_message = ""
-                    break
+                        break
 
                 tx_b64 = codecs.encode(codecs.decode(
                     tx, 'hex'), 'base64').decode()
@@ -713,7 +718,7 @@ def run_test(build_directory, yaml_file, constellation_exe):
             print('Failed to parse yaml or to run test! Error: "{}"'.format(str(e)))
             traceback.print_exc()
             test_instance.stop()
-            test_instance.dump_debug()
+            # test_instance.dump_debug()
             sys.exit(1)
 
     output("\nAll end to end tests have passed")

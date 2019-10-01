@@ -36,7 +36,7 @@ struct RoutingMessage;
 class DirectMessageService
 {
 public:
-  using Handle    = network::AbstractConnection::connection_handle_type;
+  using Handle    = network::AbstractConnection::ConnectionHandleType;
   using PacketPtr = std::shared_ptr<Packet>;
 
   // Construction / Destruction

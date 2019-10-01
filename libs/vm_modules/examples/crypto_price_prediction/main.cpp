@@ -113,7 +113,8 @@ int main(int argc, char **argv)
   std::vector<std::string> errors;
 
   // Compiling
-  bool compiled = compiler->Compile(source, "myexecutable", ir, errors);
+  fetch::vm::SourceFiles files    = {{"default.etch", source}};
+  bool                   compiled = compiler->Compile(files, "default_ir", ir, errors);
 
   if (!compiled)
   {
@@ -130,7 +131,7 @@ int main(int argc, char **argv)
   // attach std::cout for printing
   vm.AttachOutputDevice(fetch::vm::VM::STDOUT, std::cout);
 
-  if (!vm.GenerateExecutable(ir, "main_ir", executable, errors))
+  if (!vm.GenerateExecutable(ir, "default_exe", executable, errors))
   {
     std::cout << "Failed to generate executable" << std::endl;
     for (auto &s : errors)

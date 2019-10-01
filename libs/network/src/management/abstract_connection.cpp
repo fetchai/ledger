@@ -21,8 +21,8 @@
 namespace fetch {
 namespace network {
 
-AbstractConnection::connection_handle_type AbstractConnection::global_handle_counter_ = 1;
-Mutex                                      AbstractConnection::global_handle_mutex_;
+AbstractConnection::ConnectionHandleType AbstractConnection::global_handle_counter_ = 1;
+Mutex                                    AbstractConnection::global_handle_mutex_;
 
 // Construction / Destruction
 AbstractConnection::AbstractConnection()
@@ -63,21 +63,21 @@ uint16_t AbstractConnection::port() const
   return port_;
 }
 
-AbstractConnection::connection_handle_type AbstractConnection::handle() const noexcept
+AbstractConnection::ConnectionHandleType AbstractConnection::handle() const noexcept
 {
   return handle_;
 }
-void AbstractConnection::SetConnectionManager(weak_register_type const &reg)
+void AbstractConnection::SetConnectionManager(WeakRegisterType const &reg)
 {
   connection_register_ = reg;
 }
 
-AbstractConnection::weak_ptr_type AbstractConnection::connection_pointer()
+AbstractConnection::WeakPointerType AbstractConnection::connection_pointer()
 {
   return shared_from_this();
 }
 
-void AbstractConnection::OnMessage(std::function<void(network::message_type const &msg)> const &f)
+void AbstractConnection::OnMessage(std::function<void(network::MessageType const &msg)> const &f)
 {
   FETCH_LOCK(callback_mutex_);
   on_message_ = f;
@@ -148,9 +148,9 @@ void AbstractConnection::SignalLeave()
   FETCH_LOG_DEBUG(LOGGING_NAME, "SignalLeave is done");
 }
 
-void AbstractConnection::SignalMessage(network::message_type const &msg)
+void AbstractConnection::SignalMessage(network::MessageType const &msg)
 {
-  std::function<void(network::message_type const &)> cb;
+  std::function<void(network::MessageType const &)> cb;
   {
     FETCH_LOCK(callback_mutex_);
     cb = on_message_;
@@ -192,9 +192,9 @@ void AbstractConnection::SignalConnectionSuccess()
   DeactivateSelfManage();
 }
 
-AbstractConnection::connection_handle_type AbstractConnection::next_handle()
+AbstractConnection::ConnectionHandleType AbstractConnection::next_handle()
 {
-  connection_handle_type ret = 0;
+  ConnectionHandleType ret = 0;
 
   {
     FETCH_LOCK(global_handle_mutex_);

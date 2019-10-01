@@ -68,7 +68,7 @@ void MomentumOptimiser<T>::Init()
 {
   for (auto &train : this->graph_trainables_)
   {
-    this->momentum_.emplace_back(TensorType(train->get_weights().shape()));
+    this->momentum_.emplace_back(TensorType(train->GetWeights().shape()));
   }
   ResetMomentum();
 }

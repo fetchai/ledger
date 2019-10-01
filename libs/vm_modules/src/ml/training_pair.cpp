@@ -19,6 +19,8 @@
 #include "vm/module.hpp"
 #include "vm_modules/ml/training_pair.hpp"
 
+#include <utility>
+
 using namespace fetch::vm;
 
 namespace fetch {
@@ -26,11 +28,11 @@ namespace vm_modules {
 namespace ml {
 
 VMTrainingPair::VMTrainingPair(VM *vm, TypeId type_id, Ptr<fetch::vm_modules::math::VMTensor> ta,
-                               Ptr<fetch::vm_modules::math::VMTensor> tb)
+                               Ptr<fetch::vm::IArray> tb)
   : Object(vm, type_id)
 {
-  this->first  = ta;
-  this->second = tb;
+  this->first  = std::move(ta);
+  this->second = std::move(tb);
 }
 
 void VMTrainingPair::Bind(Module &module)
@@ -43,12 +45,12 @@ void VMTrainingPair::Bind(Module &module)
 
 Ptr<VMTrainingPair> VMTrainingPair::Constructor(VM *vm, TypeId type_id,
                                                 Ptr<fetch::vm_modules::math::VMTensor> const &ta,
-                                                Ptr<fetch::vm_modules::math::VMTensor> const &tb)
+                                                Ptr<fetch::vm::IArray> const &                tb)
 {
-  return new VMTrainingPair(vm, type_id, ta, tb);
+  return Ptr<VMTrainingPair>{new VMTrainingPair(vm, type_id, ta, tb)};
 }
 
-Ptr<fetch::vm_modules::math::VMTensor> VMTrainingPair::data() const
+Ptr<fetch::vm::IArray> VMTrainingPair::data() const
 {
   return this->second;
 }

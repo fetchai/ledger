@@ -30,6 +30,8 @@
 #include <utility>
 #include <vector>
 
+namespace {
+
 using namespace fetch;
 using namespace fetch::storage;
 using namespace fetch::crypto;
@@ -45,14 +47,14 @@ TEST(versioned_random_access_stack_gtest, basic_example_of_commit_revert2)
   // Make some changes to the stack
   for (std::size_t i = 0; i < 17; ++i)
   {
-    stack.Push(std::to_string(i));
+    stack.Push(StringProxy(std::to_string(i)));
   }
 
   // Verify state is correct with no changes
   for (std::size_t i = 0; i < 17; ++i)
   {
-    EXPECT_NE(stack.Get(i), std::to_string(i + 11));  // counter check
-    EXPECT_EQ(stack.Get(i), std::to_string(i));
+    EXPECT_NE(stack.Get(i), StringProxy(std::to_string(i + 11)));  // counter check
+    EXPECT_EQ(stack.Get(i), StringProxy(std::to_string(i)));
   }
 
   // Create a bunch of hashes we want to bookmark with
@@ -64,35 +66,35 @@ TEST(versioned_random_access_stack_gtest, basic_example_of_commit_revert2)
   }
 
   // *** Commit this ***
-  stack.Commit(hashes[0]);
+  stack.Commit(DefaultKey(hashes[0]));
 
   // Verify state is the same
   for (std::size_t i = 0; i < 17; ++i)
   {
-    EXPECT_EQ(stack.Get(i), std::to_string(i));
+    EXPECT_EQ(stack.Get(i), StringProxy(std::to_string(i)));
   }
 
   // mash the state
   for (std::size_t i = 0; i < 17; ++i)
   {
-    stack.Set(i, std::to_string(i + 5));
+    stack.Set(i, StringProxy(std::to_string(i + 5)));
   }
 
   // Verify the change
   for (std::size_t i = 0; i < 17; ++i)
   {
-    EXPECT_EQ(stack.Get(i), std::to_string(i + 5));
+    EXPECT_EQ(stack.Get(i), StringProxy(std::to_string(i + 5)));
   }
 
-  // EXPECT_EQ(stack.HashExists(hashes[0]), true);
+  EXPECT_TRUE(stack.HashExists(DefaultKey(hashes[0])));
 
   // Revert!
-  stack.RevertToHash(hashes[0]);
+  stack.RevertToHash(DefaultKey(hashes[0]));
 
   // Verify old state is as it was
   for (std::size_t i = 0; i < 17; ++i)
   {
-    EXPECT_EQ(stack.Get(i), std::to_string(i));
+    EXPECT_EQ(stack.Get(i), StringProxy(std::to_string(i)));
   }
 }
 
@@ -112,7 +114,7 @@ TEST(versioned_random_access_stack_gtest, try_to_revert_to_bad_hash)
   // Make some changes to the stack
   for (std::size_t i = 0; i < 17; ++i)
   {
-    stack.Push(std::to_string(i));
+    stack.Push(StringProxy(std::to_string(i)));
   }
 
   // Verify state is correct with no changes
@@ -125,18 +127,18 @@ TEST(versioned_random_access_stack_gtest, try_to_revert_to_bad_hash)
 
     bool res = a == b;
 
-    EXPECT_EQ(a, b) << "thing";
-    EXPECT_EQ(res, true) << "thing";
+    EXPECT_EQ(a, b);
+    EXPECT_TRUE(res);
 
-    EXPECT_NE(stack.Get(i), std::to_string(i + 11));  // counter check
-    EXPECT_EQ(stack.Get(i), std::to_string(i));
+    EXPECT_NE(stack.Get(i), StringProxy(std::to_string(i + 11)));  // counter check
+    EXPECT_EQ(stack.Get(i), StringProxy(std::to_string(i)));
   }
 
   // *** Commit this ***
-  stack.Commit(hashes[0]);
+  stack.Commit(DefaultKey(hashes[0]));
 
   // Revert to bad hash
-  ASSERT_THROW(stack.RevertToHash(hashes[1]), StorageException);
+  ASSERT_THROW(stack.RevertToHash(DefaultKey(hashes[1])), StorageException);
 }
 
 TEST(versioned_random_access_stack_gtest, loading_file)
@@ -156,29 +158,29 @@ TEST(versioned_random_access_stack_gtest, loading_file)
     // Make some changes to the stack
     for (std::size_t i = 0; i < 17; ++i)
     {
-      stack.Push(std::to_string(i));
+      stack.Push(StringProxy(std::to_string(i)));
     }
 
     // Verify state is correct with no changes
     for (std::size_t i = 0; i < 17; ++i)
     {
-      EXPECT_NE(stack.Get(i), std::to_string(i + 11));  // counter check
-      EXPECT_EQ(stack.Get(i), std::to_string(i));
+      EXPECT_NE(stack.Get(i), StringProxy(std::to_string(i + 11)));  // counter check
+      EXPECT_EQ(stack.Get(i), StringProxy(std::to_string(i)));
     }
 
     // *** Commit this ***
-    stack.Commit(hashes[0]);
+    stack.Commit(DefaultKey(hashes[0]));
 
     // Verify state is the same
     for (std::size_t i = 0; i < 17; ++i)
     {
-      EXPECT_EQ(stack.Get(i), std::to_string(i));
+      EXPECT_EQ(stack.Get(i), StringProxy(std::to_string(i)));
     }
 
     // mash the state
     for (std::size_t i = 0; i < 17; ++i)
     {
-      stack.Set(i, std::to_string(i + 5));
+      stack.Set(i, StringProxy(std::to_string(i + 5)));
     }
   }
 
@@ -189,16 +191,18 @@ TEST(versioned_random_access_stack_gtest, loading_file)
     // Verify the change is correct after loading the file up
     for (std::size_t i = 0; i < 17; ++i)
     {
-      EXPECT_EQ(stack.Get(i), std::to_string(i + 5));
+      EXPECT_EQ(stack.Get(i), StringProxy(std::to_string(i + 5)));
     }
 
     // Revert!
-    stack.RevertToHash(hashes[0]);
+    stack.RevertToHash(DefaultKey(hashes[0]));
 
     // Verify old state is as it was
     for (std::size_t i = 0; i < 17; ++i)
     {
-      EXPECT_EQ(stack.Get(i), std::to_string(i));
+      EXPECT_EQ(stack.Get(i), StringProxy(std::to_string(i)));
     }
   }
 }
+
+}  // namespace

@@ -21,8 +21,7 @@
 namespace fetch {
 namespace network {
 
-TCPClientImplementation::TCPClientImplementation(
-    network_manager_type const &network_manager) noexcept
+TCPClientImplementation::TCPClientImplementation(NetworkManagerType const &network_manager) noexcept
   : networkManager_(network_manager)
 {}
 
@@ -42,12 +41,12 @@ void TCPClientImplementation::Connect(byte_array::ConstByteArray const &host, ui
 void TCPClientImplementation::Connect(byte_array::ConstByteArray const &host,
                                       byte_array::ConstByteArray const &port)
 {
-  self_type self = shared_from_this();
+  SelfType self = shared_from_this();
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Client posting connect");
 
   networkManager_.Post([this, self, host, port] {
-    shared_self_type selfLock = self.lock();
+    SharedSelfType selfLock = self.lock();
     if (!selfLock)
     {
       return;
@@ -55,7 +54,7 @@ void TCPClientImplementation::Connect(byte_array::ConstByteArray const &host,
 
     // We get IO objects from the network manager, they will only be strong
     // while in the post
-    auto strand = networkManager_.CreateIO<strand_type>();
+    auto strand = networkManager_.CreateIO<StrandType>();
     if (!strand)
     {
       return;
@@ -66,13 +65,13 @@ void TCPClientImplementation::Connect(byte_array::ConstByteArray const &host,
     }
 
     strand->post([this, self, host, port, strand] {
-      shared_self_type selfLock = self.lock();
+      SharedSelfType selfLock = self.lock();
       if (!selfLock)
       {
         return;
       }
 
-      std::shared_ptr<socket_type> socket = networkManager_.CreateIO<socket_type>();
+      std::shared_ptr<SocketType> socket = networkManager_.CreateIO<SocketType>();
 
       {
         FETCH_LOCK(io_creation_mutex_);
@@ -82,11 +81,11 @@ void TCPClientImplementation::Connect(byte_array::ConstByteArray const &host,
         }
       }
 
-      std::shared_ptr<resolver_type> res = networkManager_.CreateIO<resolver_type>();
+      std::shared_ptr<ResolverType> res = networkManager_.CreateIO<ResolverType>();
 
       auto cb = [this, self, res, socket, strand, port](std::error_code ec,
-                                                        resolver_type::iterator) {
-        shared_self_type selfLock = self.lock();
+                                                        ResolverType::iterator) {
+        SharedSelfType selfLock = self.lock();
         if (!selfLock)
         {
           return;
@@ -122,7 +121,7 @@ void TCPClientImplementation::Connect(byte_array::ConstByteArray const &host,
 
       if (socket && res)
       {
-        resolver_type::iterator it(res->resolve({std::string(host), std::string(port)}));
+        ResolverType::iterator it(res->resolve({std::string(host), std::string(port)}));
 
         assert(strand->running_in_this_thread());
         asio::async_connect(*socket, it, strand->wrap(cb));
@@ -142,9 +141,9 @@ bool TCPClientImplementation::is_alive() const
   return !socket_.expired() && connected_;
 }
 
-void TCPClientImplementation::Send(message_type const &omsg)
+void TCPClientImplementation::Send(MessageType const &omsg)
 {
-  message_type msg = omsg.Copy();
+  MessageType msg = omsg.Copy();
   if (!connected_)
   {
     return;
@@ -155,12 +154,12 @@ void TCPClientImplementation::Send(message_type const &omsg)
     write_queue_.push_back(msg);
   }
 
-  self_type                  self   = shared_from_this();
-  std::weak_ptr<strand_type> strand = strand_;
+  SelfType                  self   = shared_from_this();
+  std::weak_ptr<StrandType> strand = strand_;
 
   networkManager_.Post([this, self, strand] {
-    shared_self_type selfLock   = self.lock();
-    auto             strandLock = strand_.lock();
+    SharedSelfType selfLock   = self.lock();
+    auto           strandLock = strand_.lock();
     if (!selfLock || !strandLock)
     {
       return;
@@ -178,9 +177,9 @@ uint16_t TCPClientImplementation::Type() const
 void TCPClientImplementation::Close()
 {
   FETCH_LOCK(io_creation_mutex_);
-  posted_close_                         = true;
-  std::weak_ptr<socket_type> socketWeak = socket_;
-  std::weak_ptr<strand_type> strandWeak = strand_;
+  posted_close_                        = true;
+  std::weak_ptr<SocketType> socketWeak = socket_;
+  std::weak_ptr<StrandType> strandWeak = strand_;
 
   networkManager_.Post([socketWeak, strandWeak] {
     auto socket = socketWeak.lock();
@@ -211,13 +210,13 @@ void TCPClientImplementation::ReadHeader() noexcept
   }
   assert(strand->running_in_this_thread());
 
-  self_type             self   = shared_from_this();
+  SelfType              self   = shared_from_this();
   auto                  socket = socket_.lock();
   byte_array::ByteArray header;
   header.Resize(2 * sizeof(uint64_t));
 
   auto cb = [this, self, socket, header, strand](std::error_code ec, std::size_t) {
-    shared_self_type selfLock = self.lock();
+    SharedSelfType selfLock = self.lock();
     if (!selfLock)
     {
       return;
@@ -279,12 +278,12 @@ void TCPClientImplementation::ReadBody(byte_array::ByteArray const &header) noex
   byte_array::ByteArray message;
   message.Resize(size);
 
-  self_type self   = shared_from_this();
-  auto      socket = socket_.lock();
-  auto      cb     = [this, self, message, socket, strand](std::error_code ec, std::size_t len) {
+  SelfType self   = shared_from_this();
+  auto     socket = socket_.lock();
+  auto     cb     = [this, self, message, socket, strand](std::error_code ec, std::size_t len) {
     FETCH_UNUSED(len);
 
-    shared_self_type selfLock = self.lock();
+    SharedSelfType selfLock = self.lock();
     if (!selfLock)
     {
       return;
@@ -330,7 +329,7 @@ void TCPClientImplementation::SetHeader(byte_array::ByteArray &header, uint64_t 
 }
 
 // Always executed in a run(), in a strand
-void TCPClientImplementation::WriteNext(shared_self_type selfLock)
+void TCPClientImplementation::WriteNext(SharedSelfType const &selfLock)
 {
   // Only one thread can get past here at a time. Effectively a try_lock
   // except that we can't unlock a mutex in the callback (undefined behaviour)
@@ -346,7 +345,7 @@ void TCPClientImplementation::WriteNext(shared_self_type selfLock)
     }
   }
 
-  message_type buffer;
+  MessageType buffer;
   {
     FETCH_LOCK(queue_mutex_);
     if (write_queue_.empty())

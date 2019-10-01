@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/mutex.hpp"
 #include "core/random.hpp"
 #include "math/base_types.hpp"
 
@@ -58,7 +59,7 @@ public:
   using SizeType      = fetch::math::SizeType;
   using ClientPtrType = std::shared_ptr<TrainingClient<TensorType>>;
 
-  Coordinator(CoordinatorParams const &params);
+  explicit Coordinator(CoordinatorParams const &params);
 
   void IncrementIterationsCounter();
 
@@ -78,7 +79,7 @@ private:
   CoordinatorState                                         state_           = CoordinatorState::RUN;
   SizeType                                                 iterations_done_ = 0;
   SizeType                                                 iterations_count_;
-  std::mutex                                               iterations_mutex_;
+  mutable std::mutex                                       iterations_mutex_;
   std::vector<std::shared_ptr<TrainingClient<TensorType>>> clients_;
   SizeType                                                 number_of_peers_;
 
@@ -96,7 +97,7 @@ Coordinator<TensorType>::Coordinator(CoordinatorParams const &params)
 template <typename TensorType>
 void Coordinator<TensorType>::IncrementIterationsCounter()
 {
-  std::lock_guard<std::mutex> l(iterations_mutex_);
+  FETCH_LOCK(iterations_mutex_);
   iterations_done_++;
 
   if (iterations_done_ >= iterations_count_)
@@ -172,7 +173,7 @@ std::vector<std::shared_ptr<TrainingClient<TensorType>>> Coordinator<TensorType>
       shuffled_clients.begin(),
       shuffled_clients.begin() + static_cast<fetch::math::PtrDiffType>(number_of_peers_));
 
-  return std::move(new_peers);
+  return new_peers;
 }
 
 }  // namespace distributed_learning

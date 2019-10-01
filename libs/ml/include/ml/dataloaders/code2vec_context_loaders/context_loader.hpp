@@ -61,7 +61,7 @@ public:
   using umap_str_int  = std::unordered_map<std::string, SizeType>;
   using umap_int_str  = std::unordered_map<SizeType, std::string>;
 
-  C2VLoader(SizeType max_contexts_)
+  explicit C2VLoader(SizeType max_contexts_)
     : DataLoader<LabelType, InputType>()
     , iterator_position_get_next_context_(0)
     , iterator_position_get_next_(0)
@@ -77,6 +77,7 @@ public:
   bool     AddData(InputType const &data, LabelType const &label) override;
   void     SetTestRatio(float new_test_ratio) override;
   void     SetValidationRatio(float new_validation_ratio) override;
+  bool     IsModeAvailable(DataLoaderMode mode) override;
 
   void AddDataAsString(std::string const &text);
   void createIdxUMaps();
@@ -507,6 +508,12 @@ void C2VLoader<LabelType, DataType>::UpdateCursor()
   {
     throw std::runtime_error("Other mode than training not supported yet.");
   }
+}
+
+template <typename LabelType, typename DataType>
+bool C2VLoader<LabelType, DataType>::IsModeAvailable(DataLoaderMode mode)
+{
+  return mode == DataLoaderMode::TRAIN;
 }
 
 }  // namespace dataloaders

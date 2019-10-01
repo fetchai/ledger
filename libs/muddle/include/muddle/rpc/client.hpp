@@ -37,6 +37,7 @@ namespace rpc {
 class Client : protected service::ServiceClientInterface
 {
 public:
+  using Address       = MuddleEndpoint::Address;
   using ProtocolId    = service::protocol_handler_type;
   using FunctionId    = service::function_handler_type;
   using Serializer    = service::serializer_type;
@@ -69,7 +70,7 @@ public:
     service::PackCall(counter, protocol, function, args...);
 
     // pack the mesage into a buffer
-    service::serializer_type params;
+    service::SerializerType params;
     params.Reserve(counter.size());
     params << service::SERVICE_FUNCTION_CALL << prom->id();
     service::PackCall(params, protocol, function, std::forward<Args>(args)...);
@@ -97,7 +98,7 @@ public:
   Client &operator=(Client &&) = delete;
 
 protected:
-  bool DeliverRequest(muddle::Address const &address, network::message_type const &data);
+  bool DeliverRequest(muddle::Address const &address, network::MessageType const &data);
 
 private:
   using Flag            = std::atomic<bool>;

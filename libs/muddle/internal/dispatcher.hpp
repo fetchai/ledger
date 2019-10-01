@@ -59,7 +59,7 @@ public:
 
   Promise RegisterExchange(uint16_t service, uint16_t channel, uint16_t counter,
                            Packet::Address const &address);
-  bool    Dispatch(PacketPtr packet);
+  bool    Dispatch(PacketPtr const &packet);
 
   void NotifyMessage(Handle handle, uint16_t service, uint16_t channel, uint16_t counter);
   void NotifyConnectionFailure(Handle handle);

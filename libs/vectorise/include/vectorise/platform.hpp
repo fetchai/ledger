@@ -176,69 +176,6 @@ struct Parallelisation
   };
 };
 
-template <typename T>
-struct VectorRegisterSize
-{
-  enum
-  {
-#ifdef __AVX__
-    value = 256
-#elif defined __SSE__
-    value = 128
-#else
-    value = 32
-#endif
-  };
-};
-
-#define ADD_REGISTER_SIZE(type, size) \
-  template <>                         \
-  struct VectorRegisterSize<type>     \
-  {                                   \
-    enum                              \
-    {                                 \
-      value = (size)                  \
-    };                                \
-  }
-
-#ifdef __AVX2__
-
-ADD_REGISTER_SIZE(int, 256);
-
-#elif defined __AVX__
-
-ADD_REGISTER_SIZE(int, 128);
-ADD_REGISTER_SIZE(double, 256);
-ADD_REGISTER_SIZE(float, 256);
-
-#elif defined __SSE42__
-
-ADD_REGISTER_SIZE(int, 128);
-ADD_REGISTER_SIZE(double, 128);
-ADD_REGISTER_SIZE(float, 128);
-
-#elif defined __SSE3__
-
-ADD_REGISTER_SIZE(int, 128);
-ADD_REGISTER_SIZE(double, 128);
-ADD_REGISTER_SIZE(float, 128);
-
-#else
-
-ADD_REGISTER_SIZE(int, sizeof(int));
-
-#endif
-#undef ADD_REGISTER_SIZE
-
-constexpr bool has_avx()
-{
-#ifdef __AVX__
-  return true;
-#else
-  return false;
-#endif
-}
-
 constexpr bool has_avx2()
 {
 #ifdef __AVX2__
@@ -248,50 +185,7 @@ constexpr bool has_avx2()
 #endif
 }
 
-constexpr bool has_sse()
-{
-#ifdef __SSE__
-  return true;
-#else
-  return false;
-#endif
-}
-
-constexpr bool has_sse2()
-{
-#ifdef __SSE2__
-  return true;
-#else
-  return false;
-#endif
-}
-
-constexpr bool has_sse3()
-{
-#ifdef __SSE3__
-  return true;
-#else
-  return false;
-#endif
-}
-
-constexpr bool has_sse41()
-{
-#ifdef __SSE4_1__
-  return true;
-#else
-  return false;
-#endif
-}
-
-constexpr bool has_sse42()
-{
-#ifdef __SSE4_2__
-  return true;
-#else
-  return false;
-#endif
-}
+#define FETCH_ASM_LABEL(Label) __asm__("#" Label)
 
 // Allow the option of specifying our platform endianness
 #if defined(FETCH_PLATFORM_BIG_ENDIAN) || defined(FETCH_PLATFORM_LITTLE_ENDIAN)
@@ -337,6 +231,11 @@ inline uint64_t CountLeadingZeroes64(uint64_t x)
 inline uint64_t CountTrailingZeroes64(uint64_t x)
 {
   return x == 0 ? 64 : static_cast<uint64_t>(__builtin_ctzll(x));
+}
+
+inline uint64_t CountSetBits(uint64_t x)
+{
+  return static_cast<uint64_t>(__builtin_popcountll(x));
 }
 
 /**

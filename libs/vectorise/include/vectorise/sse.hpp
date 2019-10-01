@@ -55,13 +55,13 @@ template <typename T>
 class VectorRegister<T, 128>
 {
 public:
-  using type             = T;
-  using mm_register_type = __m128i;
+  using type           = T;
+  using MMRegisterType = __m128i;
 
   enum
   {
     E_VECTOR_SIZE   = 128,
-    E_REGISTER_SIZE = sizeof(mm_register_type),
+    E_REGISTER_SIZE = sizeof(MMRegisterType),
     E_BLOCK_COUNT   = E_REGISTER_SIZE / sizeof(type)
   };
 
@@ -71,59 +71,59 @@ public:
   VectorRegister() = default;
   VectorRegister(type const *d)
   {
-    data_ = _mm_load_si128((mm_register_type *)d);
+    data_ = _mm_load_si128((MMRegisterType *)d);
   }
   VectorRegister(type const &c)
   {
     alignas(16) type constant[E_BLOCK_COUNT];
     details::UnrollSet<type, E_BLOCK_COUNT>::Set(constant, c);
-    data_ = _mm_load_si128((mm_register_type *)constant);
+    data_ = _mm_load_si128((MMRegisterType *)constant);
   }
-  VectorRegister(mm_register_type const &d)
+  VectorRegister(MMRegisterType const &d)
     : data_(d)
   {}
-  VectorRegister(mm_register_type &&d)
+  VectorRegister(MMRegisterType &&d)
     : data_(d)
   {}
 
-  explicit operator mm_register_type()
+  explicit operator MMRegisterType()
   {
     return data_;
   }
 
   void Store(type *ptr) const
   {
-    _mm_store_si128(reinterpret_cast<mm_register_type *>(ptr), data_);
+    _mm_store_si128(reinterpret_cast<MMRegisterType *>(ptr), data_);
   }
   void Stream(type *ptr) const
   {
-    _mm_stream_si128(reinterpret_cast<mm_register_type *>(ptr), data_);
+    _mm_stream_si128(reinterpret_cast<MMRegisterType *>(ptr), data_);
   }
 
-  mm_register_type const &data() const
+  MMRegisterType const &data() const
   {
     return data_;
   }
-  mm_register_type &data()
+  MMRegisterType &data()
   {
     return data_;
   }
 
 private:
-  mm_register_type data_;
+  MMRegisterType data_;
 };
 
 template <>
 class VectorRegister<float, 128>
 {
 public:
-  using type             = float;
-  using mm_register_type = __m128;
+  using type           = float;
+  using MMRegisterType = __m128;
 
   enum
   {
     E_VECTOR_SIZE   = 128,
-    E_REGISTER_SIZE = sizeof(mm_register_type),
+    E_REGISTER_SIZE = sizeof(MMRegisterType),
     E_BLOCK_COUNT   = E_REGISTER_SIZE / sizeof(type)
   };
 
@@ -135,10 +135,10 @@ public:
   {
     data_ = _mm_load_ps(d);
   }
-  VectorRegister(mm_register_type const &d)
+  VectorRegister(MMRegisterType const &d)
     : data_(d)
   {}
-  VectorRegister(mm_register_type &&d)
+  VectorRegister(MMRegisterType &&d)
     : data_(d)
   {}
   VectorRegister(type const &c)
@@ -146,7 +146,7 @@ public:
     data_ = _mm_load_ps1(&c);
   }
 
-  explicit operator mm_register_type()
+  explicit operator MMRegisterType()
   {
     return data_;
   }
@@ -160,30 +160,30 @@ public:
     _mm_stream_ps(ptr, data_);
   }
 
-  mm_register_type const &data() const
+  MMRegisterType const &data() const
   {
     return data_;
   }
-  mm_register_type &data()
+  MMRegisterType &data()
   {
     return data_;
   }
 
 private:
-  mm_register_type data_;
+  MMRegisterType data_;
 };
 
 template <>
 class VectorRegister<double, 128>
 {
 public:
-  using type             = double;
-  using mm_register_type = __m128d;
+  using type           = double;
+  using MMRegisterType = __m128d;
 
   enum
   {
     E_VECTOR_SIZE   = 128,
-    E_REGISTER_SIZE = sizeof(mm_register_type),
+    E_REGISTER_SIZE = sizeof(MMRegisterType),
     E_BLOCK_COUNT   = E_REGISTER_SIZE / sizeof(type)
   };
 
@@ -195,10 +195,10 @@ public:
   {
     data_ = _mm_load_pd(d);
   }
-  VectorRegister(mm_register_type const &d)
+  VectorRegister(MMRegisterType const &d)
     : data_(d)
   {}
-  VectorRegister(mm_register_type &&d)
+  VectorRegister(MMRegisterType &&d)
     : data_(d)
   {}
   VectorRegister(type const &c)
@@ -206,7 +206,7 @@ public:
     data_ = _mm_load_pd1(&c);
   }
 
-  explicit operator mm_register_type()
+  explicit operator MMRegisterType()
   {
     return data_;
   }
@@ -220,17 +220,17 @@ public:
     _mm_stream_pd(ptr, data_);
   }
 
-  mm_register_type const &data() const
+  MMRegisterType const &data() const
   {
     return data_;
   }
-  mm_register_type &data()
+  MMRegisterType &data()
   {
     return data_;
   }
 
 private:
-  mm_register_type data_;
+  MMRegisterType data_;
 };
 
 // SSE unsigned integers
@@ -238,13 +238,13 @@ template <>
 class VectorRegister<std::size_t, 128>
 {
 public:
-  using type             = std::size_t;
-  using mm_register_type = __m128i;
+  using type           = std::size_t;
+  using MMRegisterType = __m128i;
 
   enum
   {
     E_VECTOR_SIZE   = 128,
-    E_REGISTER_SIZE = sizeof(mm_register_type),
+    E_REGISTER_SIZE = sizeof(MMRegisterType),
     E_BLOCK_COUNT   = E_REGISTER_SIZE / sizeof(type)
   };
 
@@ -254,46 +254,46 @@ public:
   VectorRegister() = default;
   VectorRegister(type const *d)
   {
-    data_ = _mm_load_si128((mm_register_type *)d);
+    data_ = _mm_load_si128((MMRegisterType *)d);
   }
   VectorRegister(type const &c)
   {
     alignas(16) type constant[E_BLOCK_COUNT];
     details::UnrollSet<type, E_BLOCK_COUNT>::Set(constant, c);
-    data_ = _mm_load_si128((mm_register_type *)constant);
+    data_ = _mm_load_si128((MMRegisterType *)constant);
   }
-  VectorRegister(mm_register_type const &d)
+  VectorRegister(MMRegisterType const &d)
     : data_(d)
   {}
-  VectorRegister(mm_register_type &&d)
+  VectorRegister(MMRegisterType &&d)
     : data_(d)
   {}
 
-  explicit operator mm_register_type()
+  explicit operator MMRegisterType()
   {
     return data_;
   }
 
   void Store(type *ptr) const
   {
-    _mm_store_si128(reinterpret_cast<mm_register_type *>(ptr), data_);
+    _mm_store_si128(reinterpret_cast<MMRegisterType *>(ptr), data_);
   }
   void Stream(type *ptr) const
   {
-    _mm_stream_si128(reinterpret_cast<mm_register_type *>(ptr), data_);
+    _mm_stream_si128(reinterpret_cast<MMRegisterType *>(ptr), data_);
   }
 
-  mm_register_type const &data() const
+  MMRegisterType const &data() const
   {
     return data_;
   }
-  mm_register_type &data()
+  MMRegisterType &data()
   {
     return data_;
   }
 
 private:
-  mm_register_type data_;
+  MMRegisterType data_;
 };
 
 #define FETCH_ADD_OPERATOR(zero, type, fnc)                                      \

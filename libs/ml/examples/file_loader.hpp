@@ -29,13 +29,14 @@ namespace fetch {
 namespace ml {
 namespace examples {
 
-// TODO - also handle a string that specifies one text file only
+// TODO(?): also handle a string that specifies one text file only
 /**
  * returns a vector of filenames of txt files
  * @param dir_name  the directory to scan
  * @return
  */
-std::vector<std::string> GetAllTextFiles(std::string const &dir_name, std::string fileext = ".txt")
+std::vector<std::string> GetAllTextFiles(std::string const &dir_name,
+                                         std::string const &fileext = ".txt")
 {
   std::vector<std::string> ret;
   DIR *                    d;

@@ -34,14 +34,14 @@ template <typename T>
 class GraphW2VLoader : public DataLoader<fetch::math::Tensor<T>, fetch::math::Tensor<T>>
 {
 public:
-  const T BufferPositionUnused = static_cast<T>(fetch::math::numeric_max<SizeType>());
-
-  using InputType = fetch::math::Tensor<T>;
-  using LabelType = fetch::math::Tensor<T>;
-
+  using InputType  = fetch::math::Tensor<T>;
+  using LabelType  = fetch::math::Tensor<T>;
   using SizeType   = fetch::math::SizeType;
   using VocabType  = Vocab;
   using ReturnType = std::pair<LabelType, std::vector<InputType>>;
+
+  const T        BufferPositionUnusedDataType = fetch::math::numeric_max<T>();
+  const SizeType BufferPositionUnusedSizeType = fetch::math::numeric_max<SizeType>();
 
   GraphW2VLoader(SizeType window_size, SizeType negative_samples, T freq_thresh,
                  SizeType max_word_count, SizeType seed = 1337);
@@ -59,12 +59,13 @@ public:
 
   void BuildVocabAndData(std::vector<std::string> const &sents, SizeType min_count = 0,
                          bool build_data = true);
-  void BuildData(const std::vector<std::string> &sents, SizeType min_count = 0);
+  void BuildData(std::vector<std::string> const &sents, SizeType min_count = 0);
   void SaveVocab(std::string const &filename);
   void LoadVocab(std::string const &filename);
   T    EstimatedSampleNumber();
 
   bool WordKnown(std::string const &word) const;
+  bool IsModeAvailable(DataLoaderMode mode) override;
 
   /// accessors and helper functions ///
   SizeType         Size() const override;
@@ -126,7 +127,7 @@ GraphW2VLoader<T>::GraphW2VLoader(SizeType window_size, SizeType negative_sample
       fetch::math::Tensor<SizeType>({negative_samples * window_size_ * 2 + window_size_ * 2});
   labels_ = InputType({negative_samples * window_size_ * 2 + window_size_ * 2 +
                        1});  // the extra 1 is for testing if label has ran out
-  labels_.Fill(BufferPositionUnused);
+  labels_.Fill(BufferPositionUnusedDataType);
   cur_sample_.first  = InputType({1, 1});
   cur_sample_.second = {InputType({1, 1}), InputType({1, 1})};
 }
@@ -139,9 +140,10 @@ GraphW2VLoader<T>::GraphW2VLoader(SizeType window_size, SizeType negative_sample
 template <typename T>
 T GraphW2VLoader<T>::EstimatedSampleNumber()
 {
-  T estimated_sample_number = T{0};
-  T word_freq;
-  T estimated_sample_number_per_word = static_cast<T>((window_size_ + 1) * (1 + negative_samples_));
+  auto estimated_sample_number = T{0};
+  T    word_freq;
+  auto estimated_sample_number_per_word =
+      static_cast<T>((window_size_ + 1) * (1 + negative_samples_));
 
   for (auto word_count : word_id_counts_)
   {
@@ -185,7 +187,7 @@ bool GraphW2VLoader<T>::IsDone() const
   }
 
   // check if the buffer is drained
-  if (labels_.At(buffer_pos_) != BufferPositionUnused)
+  if (labels_.At(buffer_pos_) != BufferPositionUnusedDataType)
   {
     return false;
   }
@@ -210,7 +212,7 @@ void GraphW2VLoader<T>::Reset()
   current_sentence_ = 0;
   current_word_     = 0;
   unigram_table_.ResetRNG();
-  labels_.Fill(BufferPositionUnused);
+  labels_.Fill(BufferPositionUnusedDataType);
   buffer_pos_ = 0;
   reset_count_++;
 }
@@ -411,16 +413,15 @@ void GraphW2VLoader<T>::BufferNextSamples()
   SizeType dynamic_size = lfg_() % window_size_ + 1;
 
   // for the interested one word
-  T cur_word_id = T(data_.at(current_sentence_).at(current_word_));
+  auto cur_word_id = T(data_.at(current_sentence_).at(current_word_));
 
   // set up a counter to add samples to buffer
   SizeType counter = 0;
 
-  // reset all three buffers
   input_words_.Fill(cur_word_id);
-  labels_.Fill(BufferPositionUnused);
-  output_words_.Fill(BufferPositionUnused);
-  output_words_buffer_.Fill(static_cast<SizeType>(BufferPositionUnused));
+  labels_.Fill(BufferPositionUnusedDataType);
+  output_words_.Fill(BufferPositionUnusedDataType);
+  output_words_buffer_.Fill(BufferPositionUnusedSizeType);
 
   // set the context samples
   for (SizeType i = 0; i < dynamic_size; ++i)
@@ -481,7 +482,7 @@ typename GraphW2VLoader<T>::ReturnType GraphW2VLoader<T>::GetNext()
 
   T label = labels_.At(buffer_pos_);  // check if we have drained the buffer, either no more valid
                                       // data, or goes out of bound
-  if (label == BufferPositionUnused)
+  if (label == BufferPositionUnusedDataType)
   {
     BufferNextSamples();
   }
@@ -737,6 +738,12 @@ void GraphW2VLoader<T>::UpdateCursor()
   {
     throw std::runtime_error("Other mode than training not supported.");
   }
+}
+
+template <typename T>
+bool GraphW2VLoader<T>::IsModeAvailable(DataLoaderMode mode)
+{
+  return mode == DataLoaderMode::TRAIN;
 }
 
 }  // namespace dataloaders

@@ -47,16 +47,7 @@ namespace {
 
 ConstByteArray const CONTRACT_SOURCE{"text"};
 ConstByteArray const CONTRACT_HASH{"digest"};
-ConstByteArray const CONTRACT_TYPE{"type"};
 
-using ContractTypeSet = std::unordered_set<ConstByteArray>;
-
-ContractTypeSet const VALID_CONTRACT_TYPES = {"smart", "synergetic"};
-
-bool IsValidContractType(ConstByteArray const &value)
-{
-  return VALID_CONTRACT_TYPES.find(value) != VALID_CONTRACT_TYPES.end();
-}
 }  // namespace
 
 SmartContractManager::SmartContractManager()
@@ -76,31 +67,17 @@ Contract::Result SmartContractManager::OnCreate(Transaction const &tx, BlockInde
 
   ConstByteArray contract_source;
   ConstByteArray contract_hash;
-  ConstByteArray contract_type;
 
   // extract the fields from the contract
   bool const extract_success = Extract(data, CONTRACT_HASH, contract_hash) &&
                                Extract(data, CONTRACT_SOURCE, contract_source);
 
-  bool const extract_type_success = Extract(data, CONTRACT_TYPE, contract_type);
-
-  if (!extract_type_success)
-  {
-    contract_type = "smart";
-  }
-
   // fail if the extraction fails
   if (!extract_success)
   {
     FETCH_LOG_WARN(LOGGING_NAME,
-                   "Failed to parse contract source from transaction body. Debug: ", contract_hash,
-                   " - ", contract_type, " : ", contract_source);
-    return {Status::FAILED};
-  }
-
-  if (!IsValidContractType(contract_type))
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Invalid contract type: ", contract_type);
+                   "Failed to extract contract data from transaction body. Debug: ", contract_hash,
+                   " : ", contract_source);
     return {Status::FAILED};
   }
 
@@ -132,69 +109,70 @@ Contract::Result SmartContractManager::OnCreate(Transaction const &tx, BlockInde
     return {Status::FAILED};
   }
 
-  if (contract_type == ConstByteArray{"smart"})
+  Identifier scope;
+  if (!scope.Parse(calculated_hash + "." + tx.from().display()))
   {
-    Identifier scope;
-    if (!scope.Parse(calculated_hash + "." + tx.from().display()))
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Failed to parse scope for smart contract");
-      return {Status::FAILED};
-    }
-    state().PushContext(scope);
-
-    // construct a smart contract - this can throw for various reasons, need to catch this
-    SmartContract smart_contract{std::string{contract_source}};
-
-    // Attempt to call the init method, if it exists
-    std::string on_init_function;
-
-    for (auto const &fn : smart_contract.executable()->functions)
-    {
-      // determine the kind of function
-      auto const kind = DetermineKind(fn);
-
-      switch (kind)
-      {
-      case FunctionDecoratorKind::ON_INIT:
-        if (!on_init_function.empty())
-        {
-          FETCH_LOG_WARN(LOGGING_NAME, "More than one init function found in SC. Terminating.");
-          return {Status::FAILED};
-        }
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Found init function for SC");
-        on_init_function = fn.name;
-        break;
-
-      case vm::FunctionDecoratorKind::INVALID:
-        FETCH_LOG_WARN(LOGGING_NAME, "Invalid function decorator found when adding SC");
-        return {Status::FAILED};
-
-      case FunctionDecoratorKind::ACTION:
-      case FunctionDecoratorKind::NONE:
-      case FunctionDecoratorKind::QUERY:
-        break;
-      }
-    }
-
-    // if there is an init function to run, do so.
-    if (!on_init_function.empty())
-    {
-      // Attach our state to the smart contract
-      smart_contract.Attach(state());
-
-      // Dispatch to the init. method
-      auto const status = smart_contract.DispatchInitialise(tx.signatories().begin()->address);
-      if (status.status != Status::OK)
-      {
-        return status;
-      }
-
-      smart_contract.Detach();
-    }
-
-    // Revert to normal context
-    state().PopContext();
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to parse scope for smart contract");
+    return {Status::FAILED};
   }
+  state().PushContext(scope);
+
+  // construct a smart contract - this can throw for various reasons, need to catch this
+  SmartContract smart_contract{std::string{contract_source}};
+
+  // Attempt to call the init method, if it exists
+  std::string on_init_function;
+
+  for (auto const &fn : smart_contract.executable()->functions)
+  {
+    // determine the kind of function
+    auto const kind = DetermineKind(fn);
+
+    switch (kind)
+    {
+    case FunctionDecoratorKind::ON_INIT:
+      if (!on_init_function.empty())
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "More than one init function found in SC. Terminating.");
+        return {Status::FAILED};
+      }
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Found init function for SC");
+      on_init_function = fn.name;
+      break;
+
+    case FunctionDecoratorKind::INVALID:
+      FETCH_LOG_WARN(LOGGING_NAME, "Invalid function decorator found when adding SC");
+      return {Status::FAILED};
+
+    case FunctionDecoratorKind::ACTION:
+    case FunctionDecoratorKind::NONE:
+    case FunctionDecoratorKind::QUERY:
+    case FunctionDecoratorKind::CLEAR:
+    case FunctionDecoratorKind::OBJECTIVE:
+    case FunctionDecoratorKind::PROBLEM:
+    case FunctionDecoratorKind::WORK:
+      break;
+    }
+  }
+
+  // if there is an init function to run, do so.
+  if (!on_init_function.empty())
+  {
+    // Attach our state to the smart contract
+    smart_contract.Attach(state());
+
+    // Dispatch to the init. method
+    auto const status = smart_contract.DispatchInitialise(tx.signatories().begin()->address);
+    if (status.status != Status::OK)
+    {
+      return status;
+    }
+
+    smart_contract.Detach();
+  }
+
+  // Revert to normal context
+  state().PopContext();
 
   auto const status = SetStateRecord(contract_source, calculated_hash);
   if (status != StateAdapter::Status::OK)
@@ -212,20 +190,10 @@ Contract::Result SmartContractManager::OnCreate(Transaction const &tx, BlockInde
  * @param contract_id The identifier for the smart contract being stored
  * @return The generated address
  */
-storage::ResourceAddress SmartContractManager::CreateAddressForContract(
-    Identifier const &contract_id)
+storage::ResourceAddress SmartContractManager::CreateAddressForContract(Digest const &digest)
 {
-  // this function is only really applicable to the storage of smart contracts
-  assert(contract_id.type() == Identifier::Type::SMART_CONTRACT);
-
   // create the resource address in the form fetch.contract.state.<digest of contract>
-  return StateAdapter::CreateAddress(Identifier{NAME}, contract_id.qualifier());
-}
-
-storage::ResourceAddress SmartContractManager::CreateAddressForSynergeticContract(
-    Digest const &contract_digest)
-{
-  return StateAdapter::CreateAddress(Identifier{NAME}, contract_digest.ToHex());
+  return StateAdapter::CreateAddress(Identifier{NAME}, digest);
 }
 
 }  // namespace ledger

@@ -66,10 +66,10 @@ public:
   auto Apply(Handler &&handler) -> decltype(protected_payload_.Apply(handler))
   {
     return protected_payload_.Apply([this, handler](auto &payload) -> decltype(handler(payload)) {
-      auto const result = handler(payload);
+      auto result = handler(payload);
       condition_.notify_all();
 
-      return std::move(result);
+      return result;
     });
   }
 
@@ -78,10 +78,10 @@ public:
   {
     return protected_payload_.Apply(
         [this, handler](auto const &payload) -> decltype(handler(payload)) {
-          auto const result = handler(payload);
+          auto result = handler(payload);
           condition_.notify_all();
 
-          return std::move(result);
+          return result;
         });
   }
 
