@@ -89,7 +89,7 @@ public:
   }
   explicit FinalStateMessage(Payload const &payload)
     : DKGMessage{MessageType::FINAL_STATE}
-    , payload_{std::move(payload)}
+    , payload_{payload}
   {}
   ~FinalStateMessage() override = default;
 

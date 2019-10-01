@@ -191,7 +191,7 @@ public:
     : Parent{TYPE, channel, id, counter, msg}
   {}
 
-  RBCMessageImpl(RBCMessage const &msg)
+  explicit RBCMessageImpl(RBCMessage const &msg)
     : Parent(msg)
   {}
 
@@ -234,7 +234,8 @@ public:
     uint8_t type;
     map.ExpectKeyGetValue(TYPE, type);
     map.ExpectKeyGetValue(CHANNEL, msg.channel_);
-    map.ExpectKeyGetValue(ADDRESS, msg.id_);  // TODO: Remove and deduce from network connection
+    map.ExpectKeyGetValue(ADDRESS,
+                          msg.id_);  // TODO (ed): Remove and deduce from network connection
     map.ExpectKeyGetValue(COUNTER, msg.counter_);
     map.ExpectKeyGetValue(PAYLOAD, msg.payload_);
 

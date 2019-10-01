@@ -50,7 +50,7 @@ struct DkgKeyInformation
     private_key_share.clear();
   }
   DkgKeyInformation(PublicKey group_public_key1, std::vector<PublicKey> public_key_shares1,
-                    PrivateKey secret_key_shares1)
+                    PrivateKey secret_key_shares1)  // NOLINT
     : group_public_key{std::move(group_public_key1)}
     , public_key_shares{std::move(public_key_shares1)}
     , private_key_share{secret_key_shares1}

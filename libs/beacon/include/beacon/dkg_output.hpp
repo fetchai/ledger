@@ -41,7 +41,8 @@ struct DkgOutput
     private_key_share.clear();
   }
 
-  DkgOutput(PublicKey group_key, std::vector<PublicKey> key_shares, PrivateKey secret_share,
+  DkgOutput(PublicKey group_key, std::vector<PublicKey> key_shares,
+            PrivateKey  secret_share,  // NOLINT
             CabinetList qual_members)
     : qual{std::move(qual_members)}
     , group_public_key{std::move(group_key)}

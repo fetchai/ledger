@@ -118,7 +118,7 @@ public:
                                     &PunishmentBroadcastChannel::OnResolvePromises);
   }
 
-  ~PunishmentBroadcastChannel() = default;
+  ~PunishmentBroadcastChannel() override = default;
   //{
   //  // TODO(HUT): reinstate this fix.
   //  /* rpc_server_->Remove(RPC_BEACON); */
