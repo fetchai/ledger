@@ -61,11 +61,11 @@ public:
   Muddle2LearnerNetworker(const std::string &cloud_config, std::size_t instance_number,
                           const std::shared_ptr<NetworkManager> &netm = std::shared_ptr<NetworkManager>(),
                           MuddleChannel                   channel_tmp = MuddleChannel::DEFAULT);
-  virtual ~Muddle2LearnerNetworker();
+  virtual ~Muddle2LearnerNetworker() override;
 
-  virtual void        pushUpdate(const std::shared_ptr<UpdateInterface> &update) override;
-  virtual void        pushUpdateType(const std::string &type, const std::shared_ptr<UpdateInterface> &update) override;
-  virtual std::size_t getPeerCount() const override;
+  void        pushUpdate(const std::shared_ptr<UpdateInterface> &update) override;
+  void        pushUpdateType(const std::string &type, const std::shared_ptr<UpdateInterface> &update) override;
+  std::size_t getPeerCount() const override;
 
   uint64_t RecvBytes(const byte_array::ByteArray &b);
 
