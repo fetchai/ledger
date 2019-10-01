@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "beacon/beacon_setup_service.hpp"
+#include "beacon/dkg_output.hpp"
 #include "core/reactor.hpp"
 #include "core/serializers/counter.hpp"
 #include "core/serializers/main_serializer.hpp"
@@ -404,11 +405,8 @@ struct DkgMember
   MuddlePtr            muddle;
 
   // Set when DKG is finished
-  bn::Fr              secret_share;
-  bn::G2              public_key;
-  RBC::CabinetMembers qual_set;
-  std::vector<bn::G2> public_key_shares{};
-  bool                finished{false};
+  DkgOutput output;
+  bool      finished{false};
 
   DkgMember(uint16_t port_number, uint16_t index)
     : muddle_port{port_number}
@@ -458,7 +456,7 @@ struct FaultyDkgMember : DkgMember
   {
     dkg.SetBeaconReadyCallback([this](SharedAeonExecutionUnit beacon) -> void {
       finished = true;
-      beacon->manager.SetDkgOutput(public_key, secret_share, public_key_shares, qual_set);
+      output   = beacon->manager.GetDkgOutput();
     });
   }
 
@@ -506,7 +504,7 @@ struct HonestDkgMember : DkgMember
   {
     dkg.SetBeaconReadyCallback([this](SharedAeonExecutionUnit beacon) -> void {
       finished = true;
-      beacon->manager.SetDkgOutput(public_key, secret_share, public_key_shares, qual_set);
+      output   = beacon->manager.GetDkgOutput();
     });
   }
 
@@ -625,21 +623,23 @@ void GenerateTest(uint32_t cabinet_size, uint32_t threshold, uint32_t qual_size,
     uint32_t start_qual = cabinet_size - expected_completion_size;
     for (uint32_t nn = start_qual + 1; nn < cabinet_size; ++nn)
     {
-      EXPECT_EQ(committee[start_qual]->qual_set, expected_qual);
+      EXPECT_EQ(committee[start_qual]->output.qual, expected_qual);
     }
 
     // Check DKG is working correctly for everyone who completes the DKG successfully
     uint32_t start_complete = cabinet_size - expected_completion_size;
     for (uint32_t nn = start_complete + 1; nn < cabinet_size; ++nn)
     {
-      EXPECT_EQ(committee[start_complete]->public_key, committee[nn]->public_key);
-      EXPECT_EQ(committee[start_complete]->public_key_shares, committee[nn]->public_key_shares);
-      EXPECT_NE(committee[start_complete]->public_key_shares[start_complete],
-                committee[nn]->public_key_shares[nn]);
+      EXPECT_EQ(committee[start_complete]->output.group_public_key,
+                committee[nn]->output.group_public_key);
+      EXPECT_EQ(committee[start_complete]->output.public_key_shares,
+                committee[nn]->output.public_key_shares);
+      EXPECT_NE(committee[start_complete]->output.public_key_shares[start_complete],
+                committee[nn]->output.public_key_shares[nn]);
       for (uint32_t qq = nn + 1; qq < cabinet_size; ++qq)
       {
-        EXPECT_NE(committee[start_complete]->public_key_shares[nn],
-                  committee[start_complete]->public_key_shares[qq]);
+        EXPECT_NE(committee[start_complete]->output.public_key_shares[nn],
+                  committee[start_complete]->output.public_key_shares[qq]);
       }
     }
   }

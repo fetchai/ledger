@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "beacon/dkg_output.hpp"
 #include "crypto/mcl_dkg.hpp"
 #include "dkg/dkg_messages.hpp"
 
@@ -27,11 +28,7 @@ class BeaconManager
 {
 public:
   using MuddleAddress    = byte_array::ConstByteArray;
-  using Share            = DKGMessage::Share;
-  using Coefficient      = DKGMessage::Coefficient;
-  using ComplaintAnswer  = std::pair<MuddleAddress, std::pair<Share, Share>>;
-  using ExposedShare     = std::pair<MuddleAddress, std::pair<Share, Share>>;
-  using SharesExposedMap = std::unordered_map<MuddleAddress, std::pair<Share, Share>>;
+  using DkgOutput        = beacon::DkgOutput;
   using Certificate      = crypto::Prover;
   using CertificatePtr   = std::shared_ptr<Certificate>;
   using Signature        = crypto::mcl::Signature;
@@ -40,6 +37,11 @@ public:
   using CabinetIndex     = crypto::mcl::CabinetIndex;
   using MessagePayload   = crypto::mcl::MessagePayload;
   using Identity         = crypto::Identity;
+  using Share            = DKGMessage::Share;
+  using Coefficient      = DKGMessage::Coefficient;
+  using ComplaintAnswer  = std::pair<MuddleAddress, std::pair<Share, Share>>;
+  using ExposedShare     = std::pair<MuddleAddress, std::pair<Share, Share>>;
+  using SharesExposedMap = std::unordered_map<MuddleAddress, std::pair<Share, Share>>;
 
   enum class AddResult
   {
@@ -80,8 +82,8 @@ public:
   void             AddReconstructionShare(MuddleAddress const &address);
   void             VerifyReconstructionShare(MuddleAddress const &from, ExposedShare const &share);
   bool             RunReconstruction();
-  void             SetDkgOutput(PublicKey &public_key, PrivateKey &secret_share,
-                                std::vector<PublicKey> &public_key_shares, std::set<MuddleAddress> &qual);
+  DkgOutput        GetDkgOutput();
+  void             SetDkgOutput(DkgOutput const &output);
   void             SetQual(std::set<MuddleAddress> qual);
   void             SetGroupPublicKey(PublicKey const &public_key);
   void             NewCabinet(std::set<MuddleAddress> const &cabinet, uint32_t threshold);

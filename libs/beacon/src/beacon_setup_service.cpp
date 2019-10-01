@@ -92,7 +92,7 @@ uint64_t GetTime()
 }
 
 //#define CHANNEL_TYPE RBC
-#define CHANNEL_TYPE muddle::PunishmentBroadcastChannel
+#define CHANNEL_TYPE muddle::RBC
 
 BeaconSetupService::BeaconSetupService(MuddleInterface &muddle, Identity identity,
                                        ManifestCacheInterface &manifest_cache,

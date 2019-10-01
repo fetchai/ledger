@@ -144,14 +144,17 @@ protected:
   SignatureInformation GetSignatureShares(uint64_t round);
   /// @}
 
+
+  mutable std::mutex                  mutex_;
+  CertificatePtr                      certificate_;
+  std::deque<SharedAeonExecutionUnit> aeon_exe_queue_;
+
 private:
   bool AddSignature(SignatureShare share);
 
-  mutable std::mutex mutex_;
-  CertificatePtr     certificate_;
-  Identity           identity_;
-  Endpoint &         endpoint_;
-  StateMachinePtr    state_machine_;
+  Identity        identity_;
+  Endpoint &      endpoint_;
+  StateMachinePtr state_machine_;
 
   /// General configuration
   /// @{
