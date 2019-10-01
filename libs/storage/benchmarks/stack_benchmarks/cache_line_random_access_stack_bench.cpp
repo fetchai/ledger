@@ -85,7 +85,7 @@ static void CacheLineRandomAccessStackBench_miss(benchmark::State &st)
   EXPECT_TRUE(stack.DirectWrite()) << "Expected cache line random access stack to be direct write";
 
   stack.SetMemoryLimit(std::size_t(1ULL << 22u));
-  N        dummy;
+  N        dummy{};
   uint64_t line_count = 0;
 
   // Pushing elements till the cache gets full
