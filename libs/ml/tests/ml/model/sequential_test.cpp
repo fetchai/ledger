@@ -18,7 +18,8 @@
 
 #include "math/tensor.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
-#include "ml/model/dnn_regressor.hpp"
+#include "ml/layers/fully_connected.hpp"
+#include "ml/model/sequential.hpp"
 
 #include "gtest/gtest.h"
 
@@ -57,7 +58,10 @@ ModelType SetupModel(fetch::ml::optimisers::OptimiserType     optimiser_type,
   data_loader_ptr->AddData(data, gt);
 
   // run model in training mode
-  auto model = ModelType(model_config, {3, 100, 100, 1});
+  auto model = ModelType(model_config);
+  model.template Add<fetch::ml::layers::FullyConnected<TypeParam>>(3, 100);
+  model.template Add<fetch::ml::layers::FullyConnected<TypeParam>>(100, 100);
+  model.template Add<fetch::ml::layers::FullyConnected<TypeParam>>(100, 1);
   model.SetDataloader(std::move(data_loader_ptr));
   model.Compile(optimiser_type);
 
@@ -70,7 +74,7 @@ bool RunTest(fetch::ml::optimisers::OptimiserType optimiser_type,
              typename TypeParam::Type             lr = static_cast<typename TypeParam::Type>(0.5))
 {
   using DataType  = typename TypeParam::Type;
-  using ModelType = fetch::ml::model::DNNRegressor<TypeParam>;
+  using ModelType = fetch::ml::model::Sequential<TypeParam>;
 
   fetch::math::SizeType n_training_steps = 10;
 
@@ -113,7 +117,7 @@ bool RunTest(fetch::ml::optimisers::OptimiserType optimiser_type,
   return true;
 }
 
-TYPED_TEST(ModelsTest, adagrad_dnnregressor)
+TYPED_TEST(ModelsTest, adagrad_sequential)
 {
 
   // TODO (1556) - ADAGRAD not currently working
@@ -121,27 +125,27 @@ TYPED_TEST(ModelsTest, adagrad_dnnregressor)
   //  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::optimisers::OptimiserType::ADAGRAD,
   //  static_cast<DataType>(1e-1)));
 }
-TYPED_TEST(ModelsTest, adam_dnnregressor)
+TYPED_TEST(ModelsTest, adam_sequential)
 {
   using DataType = typename TypeParam::Type;
   ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::optimisers::OptimiserType::ADAM,
                                  static_cast<DataType>(1e-5),
                                  static_cast<typename TypeParam::Type>(0.1)));
 }
-TYPED_TEST(ModelsTest, momentum_dnnregressor)
+TYPED_TEST(ModelsTest, momentum_sequential)
 {
   using DataType = typename TypeParam::Type;
   ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::optimisers::OptimiserType::MOMENTUM,
                                  static_cast<DataType>(1e-5)));
 }
-TYPED_TEST(ModelsTest, rmsprop_dnnregressor)
+TYPED_TEST(ModelsTest, rmsprop_sequential)
 {
   // TODO(1557) - RMSPROP diverges for fixed point
   //  using DataType = typename TypeParam::Type;
   //  ASSERT_TRUE(RunTest<TypeParam>(fetch::ml::optimisers::OptimiserType::RMSPROP,
   //                                 static_cast<DataType>(1e-5)));
 }
-TYPED_TEST(ModelsTest, sgd_dnnregressor)
+TYPED_TEST(ModelsTest, sgd_sequential)
 {
   using DataType = typename TypeParam::Type;
   ASSERT_TRUE(
