@@ -148,7 +148,6 @@ protected:
   SignatureInformation GetSignatureShares(uint64_t round);
   /// @}
 
-
   mutable std::mutex                  mutex_;
   CertificatePtr                      certificate_;
   std::deque<SharedAeonExecutionUnit> aeon_exe_queue_;
