@@ -155,10 +155,8 @@ struct hash<fetch::ledger::Address>
     {
       return 0;
     }
-    else
-    {
-      return *reinterpret_cast<std::size_t const *>(raw_address.pointer());
-    }
+
+    return *reinterpret_cast<std::size_t const *>(raw_address.pointer());
   }
 };
 

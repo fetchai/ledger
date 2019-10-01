@@ -165,7 +165,7 @@ public:
 
   Type operator()(SizeType const &index) const;
   template <typename S>
-  std::enable_if_t<std::is_integral<S>::value, Type> &operator[](S const &i);
+  std::enable_if_t<std::is_integral<S>::value, Type> &operator[](S const &n);
   template <typename S>
   std::enable_if_t<std::is_integral<S>::value, Type> const &operator[](S const &i) const;
 
@@ -288,11 +288,11 @@ public:
 
   ConstSliceType Slice() const;
   ConstSliceType Slice(SizeType index, SizeType axis = 0) const;
-  ConstSliceType Slice(SizeVector index, SizeVector axes) const;
+  ConstSliceType Slice(SizeVector indices, SizeVector axes) const;
   TensorSlice    Slice();
   TensorSlice    Slice(SizeType index, SizeType axis = 0);
   TensorSlice    Slice(std::pair<SizeType, SizeType> start_end_index, SizeType axis = 0);
-  TensorSlice    Slice(SizeVector index, SizeVector axes);
+  TensorSlice    Slice(SizeVector indices, SizeVector axes);
 
   /////////////
   /// Views ///
@@ -349,7 +349,7 @@ public:
 
     SliceIteratorType begin();
     SliceIteratorType end();
-    TensorSlice       Slice(SizeType i, SizeType axis);
+    TensorSlice       Slice(SizeType index, SizeType axis);
     void              ModifyRange(SizeType i, SizeType axis);
 
     template <typename G>
@@ -662,7 +662,7 @@ private:
     STensor &               tensor_;
     std::vector<SizeVector> range_;
     std::vector<SizeType>   axes_;
-    SizeType                axis_;
+    SizeType                axis_{};
   };
 };
 

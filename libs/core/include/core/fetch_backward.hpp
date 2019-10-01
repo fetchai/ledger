@@ -37,8 +37,9 @@
 
 #endif
 
-#include <backward.hpp>
-#include <signal.h>
+#include "backward.hpp"
+
+#include <csignal>
 
 #if defined(__clang__)
 #pragma clang diagnostic pop

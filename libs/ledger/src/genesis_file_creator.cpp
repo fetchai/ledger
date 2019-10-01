@@ -118,8 +118,6 @@ bool LoadFromFile(JSONDocument &document, std::string const &file_path)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Unable to parse input file: ", ex.what());
     }
-
-    success = true;
   }
 
   return success;

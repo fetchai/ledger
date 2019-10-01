@@ -69,7 +69,7 @@ inline std::size_t calculateNumCombinations(std::size_t n, std::size_t r)
   case 1:
     return n;
   case 2:
-    return n % 2 ? n * ((n - 1) >> 1) : (n >> 1) * (n - 1);
+    return (n % 2) != 0u ? n * ((n - 1) >> 1) : (n >> 1) * (n - 1);
   }
 
   // Sometimes faster to calculate equivalent definition "n Choose n-r" than "n Choose r"

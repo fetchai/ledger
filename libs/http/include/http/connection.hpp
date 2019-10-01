@@ -49,7 +49,6 @@ public:
   HTTPConnection(asio::ip::tcp::tcp::socket socket, HTTPConnectionManager &manager)
     : socket_(std::move(socket))
     , manager_(manager)
-    , write_mutex_{}
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "HTTP connection from ",
                     socket_.remote_endpoint().address().to_string());
@@ -117,17 +116,15 @@ public:
         this->HandleError(ec, request);
         return;
       }
-      else
+
+      // only parse the header if there is data to be parsed
+      if (len != 0u)
       {
-        // only parse the header if there is data to be parsed
-        if (len)
+        if (request->ParseHeader(*buffer_ptr, len))
         {
-          if (request->ParseHeader(*buffer_ptr, len))
+          if (is_open_)
           {
-            if (is_open_)
-            {
-              ReadBody(buffer_ptr, request);
-            }
+            ReadBody(buffer_ptr, request);
           }
         }
       }
@@ -170,12 +167,10 @@ public:
         this->HandleError(ec, request);
         return;
       }
-      else
+
+      if (is_open_)
       {
-        if (is_open_)
-        {
-          ReadBody(buffer_ptr, request);
-        }
+        ReadBody(buffer_ptr, request);
       }
     };
 
@@ -239,7 +234,7 @@ private:
   ResponseQueueType          write_queue_;
   Mutex                      write_mutex_;
 
-  HandleType handle_;
+  HandleType handle_{};
   bool       is_open_ = false;
 };
 }  // namespace http

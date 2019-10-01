@@ -677,7 +677,7 @@ bool RBC::CheckTag(RBCMessage const &msg)
     {
       return true;
     }
-    else if (msg.counter() > msg_counter)
+    if (msg.counter() > msg_counter)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Node ", id_, " has counter ", msg_counter,
                      " does not match tag counter ", std::to_string(msg.counter()), " for node ",
@@ -691,10 +691,8 @@ bool RBC::CheckTag(RBCMessage const &msg)
     }
     return false;
   }
-  else
-  {
-    return true;
-  }
+
+  return true;
 }
 
 /**

@@ -45,10 +45,10 @@ class FundamentalOperatorsNonIntTypeTest : public ::testing::Test
 
 static fetch::random::LinearCongruentialGenerator gen;
 
-using MyUnsignIntegralTypes = ::testing::Types<std::uint32_t, std::uint64_t>;
+using MyUnsignIntegralTypes = ::testing::Types<uint32_t, uint64_t>;
 TYPED_TEST_CASE(FundamentalOperatorsUIntTypeTest, MyUnsignIntegralTypes);
 
-using MySignedIntegralTypes = ::testing::Types<std::int32_t, std::int64_t>;
+using MySignedIntegralTypes = ::testing::Types<int32_t, int64_t>;
 TYPED_TEST_CASE(FundamentalOperatorsIntTypeTest, MySignedIntegralTypes);
 
 using MyNonIntegralTypes = ::testing::Types<double, fetch::fixed_point::FixedPoint<32, 32>>;

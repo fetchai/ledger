@@ -27,14 +27,14 @@ class TensorBasicTests : public ::testing::Test
 {
 };
 
-using MyTypes = ::testing::Types<std::int32_t, std::uint32_t, std::int64_t, std::uint64_t, float,
-                                 double, fetch::fixed_point::FixedPoint<32, 32>>;
+using MyTypes = ::testing::Types<int32_t, uint32_t, int64_t, uint64_t, float, double,
+                                 fetch::fixed_point::FixedPoint<32, 32>>;
 TYPED_TEST_CASE(TensorBasicTests, MyTypes);
 
 using namespace fetch::math;
 
 // template for producing a random array of FixedPoints
-template <std::uint16_t I, std::uint16_t F>
+template <uint16_t I, uint16_t F>
 Tensor<fetch::fixed_point::FixedPoint<I, F>,
        fetch::memory::SharedArray<fetch::fixed_point::FixedPoint<I, F>>>
 RandomArray(std::size_t n, fetch::fixed_point::FixedPoint<I, F> adj)

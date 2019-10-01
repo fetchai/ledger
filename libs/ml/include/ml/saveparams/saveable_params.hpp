@@ -72,7 +72,7 @@ struct GraphSaveableParams
   std::vector<std::pair<std::string, std::vector<std::string>>>                    connections;
   std::unordered_map<std::string, std::shared_ptr<NodeSaveableParams<TensorType>>> nodes;
 
-  uint8_t graph_state;
+  uint8_t graph_state{};
 };
 
 template <typename TensorType>
@@ -188,7 +188,7 @@ struct OpEluSaveableParams : public OpsSaveableParams
 {
   fetch::ml::OpType op_type = OpType::OP_ELU;
   using DataType            = typename TensorType::Type;
-  DataType a;
+  DataType a{};
 };
 
 /**
@@ -243,10 +243,10 @@ struct LayerConvolution1DSaveableParams : SubGraphSaveableParams<TensorType>
 
   using SizeType = typename TensorType::SizeType;
 
-  SizeType kernel_size;
-  SizeType input_channels;
-  SizeType output_channels;
-  SizeType stride_size;
+  SizeType kernel_size{};
+  SizeType input_channels{};
+  SizeType output_channels{};
+  SizeType stride_size{};
 };
 
 template <typename TensorType>
@@ -256,10 +256,10 @@ struct LayerConvolution2DSaveableParams : SubGraphSaveableParams<TensorType>
 
   using SizeType = typename TensorType::SizeType;
 
-  SizeType kernel_size;
-  SizeType input_channels;
-  SizeType output_channels;
-  SizeType stride_size;
+  SizeType kernel_size{};
+  SizeType input_channels{};
+  SizeType output_channels{};
+  SizeType stride_size{};
 };
 
 /**
@@ -288,8 +288,8 @@ struct OpLayerNormSaveableParams : public OpsSaveableParams
 
   fetch::ml::OpType op_type = OpType::OP_LAYER_NORM;
 
-  DataType epsilon;
-  SizeType axis;
+  DataType epsilon{};
+  SizeType axis{};
 };
 
 /**
@@ -303,8 +303,8 @@ struct OpSliceSaveableParams : public OpsSaveableParams
 
   std::vector<SizeType> axes;
   std::vector<SizeType> indices;
-  SizeType              axis;
-  SizeType              index;
+  SizeType              axis{};
+  SizeType              index{};
 
   fetch::ml::OpType op_type = OpType::OP_SLICE;
 };
@@ -317,7 +317,7 @@ template <typename TensorType>
 struct OpLeakyReluSaveableParams : public OpsSaveableParams
 {
   using DataType = typename TensorType::Type;
-  DataType          a;
+  DataType          a{};
   fetch::ml::OpType op_type = OpType::OP_LEAKY_RELU;
 };
 
@@ -329,7 +329,7 @@ template <typename TensorType>
 struct OpPReluOpSaveableParams : public OpsSaveableParams
 {
   using DataType = typename TensorType::Type;
-  DataType          a;
+  DataType          a{};
   fetch::ml::OpType op_type = OpType::OP_PRELU_OP;
 };
 
@@ -352,7 +352,7 @@ template <typename TensorType>
 struct OpLogSigmoidSaveableParams : public OpsSaveableParams
 {
   using DataType = typename TensorType::Type;
-  DataType          a;
+  DataType          a{};
   fetch::ml::OpType op_type = OpType::OP_LOGSIGMOID;
 };
 
@@ -450,8 +450,8 @@ struct LayerLayerNormSaveableParams : SubGraphSaveableParams<TensorType>
   fetch::ml::OpType op_type = OpType::LAYER_LAYER_NORM;
 
   std::vector<SizeType> data_shape;
-  SizeType              axis;
-  DataType              epsilon;
+  SizeType              axis{};
+  DataType              epsilon{};
 };
 
 /**
@@ -466,11 +466,11 @@ struct LayerMultiHeadSaveableParams : public SubGraphSaveableParams<TensorType>
 
   fetch::ml::OpType op_type = OpType::LAYER_MULTI_HEAD_ATTENTION;
 
-  SizeType value_dim;
-  SizeType key_dim;
-  SizeType n_heads;
-  SizeType model_dim;
-  DataType dropout;
+  SizeType value_dim{};
+  SizeType key_dim{};
+  SizeType n_heads{};
+  SizeType model_dim{};
+  DataType dropout{};
 };
 
 template <typename TensorType>

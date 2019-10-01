@@ -511,7 +511,7 @@ TEST_P(MainChainTests, CheckReindexingOfWithLooseTips)
     {
       continue;
     }
-    else if (i == 13 || i == 14)
+    if (i == 13 || i == 14)
     {
       ASSERT_EQ(BlockStatus::LOOSE, chain_->AddBlock(*chain[i]));
     }

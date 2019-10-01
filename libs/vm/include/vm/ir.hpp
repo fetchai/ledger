@@ -206,7 +206,7 @@ struct IRBlockNode : public IRNode
 
   IRNodePtrArray block_children;
   std::string    block_terminator_text;
-  uint16_t       block_terminator_line;
+  uint16_t       block_terminator_line{};
 };
 using IRBlockNodePtr      = std::shared_ptr<IRBlockNode>;
 using IRBlockNodePtrArray = std::vector<IRBlockNodePtr>;

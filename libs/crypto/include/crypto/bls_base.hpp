@@ -87,7 +87,7 @@ inline Signature Sign(PrivateKey const &priv, byte_array::ConstByteArray const &
 inline bool Verify(Signature const &signature, PublicKey const &pub,
                    byte_array::ConstByteArray const &msg)
 {
-  return blsVerify(&signature, &pub, msg.pointer(), msg.size());
+  return blsVerify(&signature, &pub, msg.pointer(), msg.size()) != 0;
 }
 
 inline PrivateKey HashToPrivateKey(byte_array::ConstByteArray const &seed)
@@ -100,7 +100,7 @@ inline PrivateKey HashToPrivateKey(byte_array::ConstByteArray const &seed)
 template <typename KeyType>
 KeyType PrivateKeyShare(std::vector<KeyType> &kl, Id const &id)
 {
-  KeyType ret;
+  KeyType ret{};
   int32_t error = blsSecretKeyShare(&ret, kl.data(), kl.size(), &id);
 
   if (error != 0)
@@ -123,7 +123,7 @@ inline void AddKeys(PublicKey &lhs, PublicKey const &rhs)
 
 inline bool PublicKeyIsEqual(PublicKey const &pk1, PublicKey const &pk2)
 {
-  return blsPublicKeyIsEqual(&pk1, &pk2);
+  return blsPublicKeyIsEqual(&pk1, &pk2) != 0;
 }
 
 inline PublicKey GetPublicKey(PrivateKey const &sk)

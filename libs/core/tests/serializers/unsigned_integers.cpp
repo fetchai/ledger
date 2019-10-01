@@ -31,7 +31,7 @@ using namespace fetch::byte_array;
 namespace fetch {
 namespace serializers {
 
-TEST(MsgPacker, unsigned_integers)
+TEST(MsgPacker, unsigned_integers)  // NOLINT
 {
   MsgPackSerializer stream;
   uint64_t          value;

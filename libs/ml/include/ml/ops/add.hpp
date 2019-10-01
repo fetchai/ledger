@@ -88,12 +88,10 @@ public:
       // Non-broadcast Add
       return {error_signal, error_signal};
     }
-    else
-    {
-      // Broadcast Add
-      UpdateAxes(inputs);
-      return {error_signal, fetch::math::ReduceSum(error_signal, axes_)};
-    }
+
+    // Broadcast Add
+    UpdateAxes(inputs);
+    return {error_signal, fetch::math::ReduceSum(error_signal, axes_)};
   }
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override

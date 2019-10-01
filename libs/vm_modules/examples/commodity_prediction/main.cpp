@@ -240,7 +240,7 @@ int RunEtchScript(std::string const &filename, std::shared_ptr<fetch::vm::Module
     return -1;
   }
 
-  if (!executable.FindFunction("main"))
+  if (executable.FindFunction("main") == nullptr)
   {
     std::cout << "Function 'main' not found" << std::endl;
     return -2;

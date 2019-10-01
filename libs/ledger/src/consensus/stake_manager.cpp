@@ -95,23 +95,19 @@ StakeManager::StakeSnapshotPtr StakeManager::LookupStakeSnapshot(BlockIndex bloc
   {
     return current_;
   }
-  else
-  {
-    // on catchup, or in the case of multiple forks historical entries will be used
-    auto upper_bound = stake_history_.upper_bound(block);
 
-    if (upper_bound == stake_history_.begin())
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Update to lookup stake snapshot for block ", block);
-      return {};
-    }
-    else
-    {
-      // we are not interested in the upper bound, but the preceding historical element i.e.
-      // the previous block change
-      return (--upper_bound)->second;
-    }
+  // on catchup, or in the case of multiple forks historical entries will be used
+  auto upper_bound = stake_history_.upper_bound(block);
+
+  if (upper_bound == stake_history_.begin())
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Update to lookup stake snapshot for block ", block);
+    return {};
   }
+
+  // we are not interested in the upper bound, but the preceding historical element i.e.
+  // the previous block change
+  return (--upper_bound)->second;
 }
 
 }  // namespace ledger

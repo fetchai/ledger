@@ -367,10 +367,8 @@ void PeerSelector::OnAnnouncement(Address const &from, byte_array::ConstByteArra
       {
         return a.address < b.address;
       }
-      else
-      {
-        return distance_a < distance_b;
-      }
+
+      return distance_a < distance_b;
     });
 
     // trim the kademlia cache nodes

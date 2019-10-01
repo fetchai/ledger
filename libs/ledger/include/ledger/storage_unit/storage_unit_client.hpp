@@ -80,7 +80,7 @@ public:
   byte_array::ConstByteArray CurrentHash() override;
   byte_array::ConstByteArray LastCommitHash() override;
   bool                       RevertToHash(Hash const &hash, uint64_t index) override;
-  byte_array::ConstByteArray Commit(uint64_t index) override;
+  byte_array::ConstByteArray Commit(uint64_t commit_index) override;
   bool                       HashExists(Hash const &hash, uint64_t index) override;
   bool                       Lock(ShardIndex index) override;
   bool                       Unlock(ShardIndex index) override;

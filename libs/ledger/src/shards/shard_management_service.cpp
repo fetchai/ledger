@@ -47,7 +47,7 @@ ShardManagementService::ShardManagementService(Manifest manifest, ShardManagemen
   , muddle_{muddle}
   , manifest_{std::move(manifest)}
   , log2_num_shards_{log2_num_lanes}
-  , num_shards_{1 << log2_num_shards_}
+  , num_shards_{1u << log2_num_shards_}
   , rpc_server_{muddle_.GetEndpoint(), SERVICE_SHARD_MGMT, CHANNEL_RPC}
   , mgmt_proto_{*this}
   , rpc_client_{"MgmtRpc", muddle_.GetEndpoint(), SERVICE_SHARD_MGMT, CHANNEL_RPC}
@@ -188,7 +188,7 @@ void ShardManagementService::UpdateShards(Addresses const &addresses)
     {
       auto const &manifest = it->second.manifest;
 
-      for (int32_t shard = 0; shard < num_shards_; ++shard)
+      for (uint32_t shard = 0; shard < num_shards_; ++shard)
       {
         // lookup the give output shard configuration
         auto &shard_cfg = shard_address_cfg[static_cast<std::size_t>(shard)];

@@ -151,10 +151,10 @@ public:
 
 private:
   std::string embed_in_ = "";
-  SizeType    in_size_;
-  SizeType    out_size_;
-  SizeType    vocab_size_;
-  SizeType    embedding_size_;
+  SizeType    in_size_{};
+  SizeType    out_size_{};
+  SizeType    vocab_size_{};
+  SizeType    embedding_size_{};
 
   void Initialise(TensorType &weights, WeightsInit init_mode)
   {

@@ -84,8 +84,7 @@ void YamlDocument::ExtractPrimitive(Variant &variant, YamlToken const &token,
 
   case STRING:
   case STRING_MULTILINE:
-    pos      = token.first;
-    prev_pos = pos;
+    pos = token.first;
 
     while (pos <= token.second)
     {
@@ -320,7 +319,6 @@ void YamlDocument::Parse(ConstByteArray const &document)
       {
         ExtractPrimitive(variant_, token, document);
         variant_stack.push_back({&variant_, token.ident, token.line});
-        current = &variant_stack.back();
         continue;
       }
 
@@ -390,7 +388,7 @@ void YamlDocument::Parse(ConstByteArray const &document)
       {
         throw YamlParseException("Invalid parser state: reference detected but nothing in stack!");
       }
-      else if (current->data->IsArray())
+      if (current->data->IsArray())
       {
         std::size_t const next_idx = current->data->size();
         current->data->ResizeArray(next_idx + 1);
@@ -484,7 +482,7 @@ void YamlDocument::Parse(ConstByteArray const &document)
         YamlToken const &prevToken = tokens_[idx - 1];
         if (prevToken.line == token.line && prevToken.type == NEW_MULTILINE_ENTRY)
         {
-          token.ident = prevToken.ident + (uint)(token.first - prevToken.second);
+          token.ident = prevToken.ident + static_cast<uint>(token.first - prevToken.second);
         }
         else if (prevToken.type == OPEN_OBJECT)
         {
@@ -591,7 +589,6 @@ void YamlDocument::Parse(ConstByteArray const &document)
         }
         else
         {
-          state = ObjectState::KEY;
           assert(context->data->IsObject());
           context->ident = token.ident;  // For multiline
         }
@@ -694,19 +691,17 @@ void YamlDocument::Parse(ConstByteArray const &document)
         {
           throw YamlParseException("Invalid parser state");
         }
-        else
+
+        if (variant_stack.empty())
         {
-          if (variant_stack.empty())
-          {
-            variant_ = Variant::Array(0);
-            variant_stack.push_back({&variant_, token.ident, token.line});
-          }
-          else
-          {  // TODO(issue 1524): either a bug, or need to get previous object and add value
-            throw YamlParseException("Invalid parser state");
-            // Variant next = Variant::Array(0);
-            // variant_stack.push_back({&next, token.ident, token.line});
-          }
+          variant_ = Variant::Array(0);
+          variant_stack.push_back({&variant_, token.ident, token.line});
+        }
+        else
+        {  // TODO(issue 1524): either a bug, or need to get previous object and add value
+          throw YamlParseException("Invalid parser state");
+          // Variant next = Variant::Array(0);
+          // variant_stack.push_back({&next, token.ident, token.line});
         }
       }
       else if (current->data->IsArray() && token.type == NEW_MULTILINE_ENTRY)
@@ -743,7 +738,7 @@ void YamlDocument::Parse(ConstByteArray const &document)
       YamlObject *next = (variant_stack.empty()) ? nullptr : &variant_stack.back();
 
       // based on the next item in the stack choose the correct object state
-      if (next && next->data->IsObject())
+      if ((next != nullptr) && next->data->IsObject())
       {
         state = ObjectState::KEY;
       }
@@ -1187,7 +1182,7 @@ void YamlDocument::Tokenise(ConstByteArray const &document)
 
       if (!tokens_.empty())
       {
-        lastType  = (Type)tokens_.back().type;
+        lastType  = static_cast<Type>(tokens_.back().type);
         lastLine  = tokens_.back().line;
         lastIdent = tokens_.back().ident;
       }

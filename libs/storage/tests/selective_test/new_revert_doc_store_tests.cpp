@@ -62,7 +62,7 @@ std::string GetStringForTesting(LinearCongruentialGenerator &rng)
     ret[i] = NewChar(rng);
   }
 
-  if (!(rng() % 10))
+  if ((rng() % 10) == 0u)
   {
     ret = std::string{};
   }
@@ -301,7 +301,7 @@ TEST(new_revertible_store_test, erase_functionality_works_at_scale)
     auto        rid = storage::ResourceID(hash);
     store.Set(rid, set_me);
 
-    if (i % 2)
+    if ((i % 2) != 0u)
     {
       expected_size++;
       ASSERT_EQ(store.size(), expected_size);
@@ -365,7 +365,7 @@ TEST(new_revertible_store_test, commit_and_erase)
 
     ++expected_size;
 
-    if (i % 2)
+    if ((i % 2) != 0u)
     {
       ASSERT_EQ(store.size(), expected_size);
       ASSERT_EQ(store.Get(rid).failed, false);

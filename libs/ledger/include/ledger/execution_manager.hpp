@@ -64,7 +64,7 @@ public:
   /// @name Execution Manager Interface
   /// @{
   ScheduleStatus Execute(Block::Body const &block) override;
-  void           SetLastProcessedBlock(Digest digest) override;
+  void           SetLastProcessedBlock(Digest hash) override;
   Digest         LastProcessedBlock() override;
   State          GetState() override;
   bool           Abort() override;

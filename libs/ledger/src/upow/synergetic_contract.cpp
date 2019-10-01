@@ -190,7 +190,7 @@ SynergeticContract::SynergeticContract(ConstByteArray const &source)
       break;
     }
 
-    if (function)
+    if (function != nullptr)
     {
       // sanity check
       assert(name != nullptr);
@@ -280,7 +280,7 @@ Status SynergeticContract::Work(vectorise::UInt<256> const &nonce, WorkScore &sc
 
 Status SynergeticContract::Complete(Address const &address, BitVector const &shards)
 {
-  if (!storage_)
+  if (storage_ == nullptr)
   {
     return Status::NO_STATE_ACCESS;
   }

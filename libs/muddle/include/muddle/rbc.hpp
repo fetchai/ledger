@@ -109,8 +109,8 @@ protected:
 
   /// Message communication - not thread safe.
   /// @{
-  void         Send(RBCMessage const &env, MuddleAddress const &address);
-  virtual void InternalBroadcast(RBCMessage const &env);
+  void         Send(RBCMessage const &msg, MuddleAddress const &address);
+  virtual void InternalBroadcast(RBCMessage const &msg);
   void         Deliver(SerialisedMessage const &msg, uint32_t sender_index);
 
   Endpoint &endpoint()
@@ -172,7 +172,7 @@ private:
   Endpoint &          endpoint_;           ///< The muddle endpoint to communicate on
   CabinetMembers      current_cabinet_;    ///< The set of muddle addresses of the
                                            ///< cabinet (including our own)
-  uint32_t threshold_;                     ///< Number of byzantine nodes (this is assumed
+  uint32_t threshold_{};                   ///< Number of byzantine nodes (this is assumed
                                            ///< to take the maximum allowed value satisying
                                            ///< threshold_ < current_cabinet_.size()
   CallbackFunction deliver_msg_callback_;  ///< Callback for messages which have succeeded

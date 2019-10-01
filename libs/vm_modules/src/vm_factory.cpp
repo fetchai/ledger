@@ -87,7 +87,7 @@ std::shared_ptr<Module> VMFactory::GetModule(uint64_t enabled)
   auto module = std::make_shared<Module>();
 
   // core modules
-  if (MOD_CORE & enabled)
+  if ((MOD_CORE & enabled) != 0u)
   {
     CreatePrint(*module);
     CreatePanic(*module);
@@ -101,20 +101,20 @@ std::shared_ptr<Module> VMFactory::GetModule(uint64_t enabled)
   }
 
   // math modules
-  if (MOD_MATH & enabled)
+  if ((MOD_MATH & enabled) != 0u)
   {
     math::BindMath(*module);
   }
 
   // synergetic modules
-  if (MOD_SYN & enabled)
+  if ((MOD_SYN & enabled) != 0u)
   {
     BindBitShift(*module);
     BindBitwiseOps(*module);
   }
 
   // ml modules
-  if (MOD_ML & enabled)
+  if ((MOD_ML & enabled) != 0u)
   {
     ml::BindML(*module);
   }

@@ -203,7 +203,7 @@ private:
       uint64_t magic;
       uint64_t length;
     } content;
-  } header_;
+  } header_{};
 
   void ReadHeader(StrongStrand const &strong_strand)
   {

@@ -86,10 +86,8 @@ public:
     {
       return ptr->Post(std::forward<F>(f));
     }
-    else
-    {
-      FETCH_LOG_INFO(LOGGING_NAME, "Failed to post: network man dead.");
-    }
+
+    FETCH_LOG_INFO(LOGGING_NAME, "Failed to post: network man dead.");
   }
 
   template <typename F>

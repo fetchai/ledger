@@ -130,7 +130,7 @@ Identifier::Identifier(Tokens const &tokens, std::size_t count)
     tokens_.push_back(current_token);
 
     // regenerate the full name
-    if (i)
+    if (i != 0u)
     {
       full.Append(".");
     }
@@ -153,7 +153,7 @@ Identifier Identifier::GetParent() const
 {
   std::size_t const num_tokens = tokens_.size();
 
-  return Identifier{tokens_, (num_tokens) ? (num_tokens - 1) : 0};
+  return Identifier{tokens_, (num_tokens) != 0u ? (num_tokens - 1) : 0};
 }
 
 /**
@@ -314,10 +314,8 @@ Identifier::ConstByteArray Identifier::name() const
   {
     return {};
   }
-  else
-  {
-    return tokens_.back();
-  }
+
+  return tokens_.back();
 }
 
 /**
@@ -332,10 +330,8 @@ Identifier::ConstByteArray Identifier::name_space() const
   {
     return full_.SubArray(0, full_.size() - (tokens_.back().size() + 1));
   }
-  else
-  {
-    return {};
-  }
+
+  return {};
 }
 
 /**

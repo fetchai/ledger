@@ -48,7 +48,7 @@ enum class State
   QUERY_MISSING,
   RESOLVE_MISSING,
 };
-}
+}  // namespace dag_sync
 
 /**
  * DAG implementation.

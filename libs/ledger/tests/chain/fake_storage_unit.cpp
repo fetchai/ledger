@@ -106,7 +106,7 @@ void FakeStorageUnit::IssueCallForMissingTxs(DigestSet const &digests)
   FETCH_UNUSED(digests);
 }
 
-FakeStorageUnit::TxLayouts FakeStorageUnit::PollRecentTx(uint32_t)
+FakeStorageUnit::TxLayouts FakeStorageUnit::PollRecentTx(uint32_t /*unused*/)
 {
   return {};
 }

@@ -205,7 +205,7 @@ void JSONDocument::Parse(ConstByteArray const &document)
       }
       else
       {
-        Variant *context = (variant_stack.empty()) ? nullptr : variant_stack.back();
+        Variant *context = variant_stack.back();
 
         if (ObjectState::VALUE == state)
         {
@@ -265,7 +265,7 @@ void JSONDocument::Parse(ConstByteArray const &document)
       }
       else
       {
-        Variant *context = (variant_stack.empty()) ? nullptr : variant_stack.back();
+        Variant *context = variant_stack.back();
 
         if (ObjectState::VALUE == state)
         {

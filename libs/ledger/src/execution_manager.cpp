@@ -57,7 +57,6 @@ ExecutionManager::ExecutionManager(std::size_t num_executors, uint32_t log2_num_
                                    TransactionStatusCache::ShrdPtr tx_status_cache)
   : log2_num_lanes_{log2_num_lanes}
   , storage_{std::move(storage)}
-  , idle_executors_{}
   , thread_pool_{network::MakeThreadPool(num_executors, "Executor")}
   , tx_status_cache_{std::move(tx_status_cache)}
   , tx_executed_count_(Registry::Instance().CreateCounter(
@@ -539,9 +538,9 @@ void ExecutionManager::MonitorThreadEntrypoint()
         }
 
         // only provide debug if required
-        if (num_complete + num_stalls + num_errors + num_fatal_errors)
+        if ((num_complete + num_stalls + num_errors + num_fatal_errors) != 0u)
         {
-          if (num_stalls + num_errors + num_fatal_errors)
+          if ((num_stalls + num_errors + num_fatal_errors) != 0u)
           {
             FETCH_LOG_WARN(LOGGING_NAME, "Slice ", current_slice,
                            " Execution Status - Complete: ", num_complete, " Stalls: ", num_stalls,
@@ -559,11 +558,11 @@ void ExecutionManager::MonitorThreadEntrypoint()
         ++current_slice;
 
         // decide the next monitor state based on the status of the slice execution
-        if (num_fatal_errors)
+        if (num_fatal_errors != 0u)
         {
           monitor_state = MonitorState::FAILED;
         }
-        else if (num_stalls)
+        else if (num_stalls != 0u)
         {
           monitor_state = MonitorState::STALLED;
         }

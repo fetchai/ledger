@@ -39,7 +39,7 @@ using namespace fetch::byte_array;
 
 TEST(LedgerSerializers, address)
 {
-  std::array<uint8_t, 32> raw_address;
+  std::array<uint8_t, 32> raw_address{};
   for (uint8_t i = 0; i < raw_address.size(); ++i)
   {
     raw_address[i] = i;

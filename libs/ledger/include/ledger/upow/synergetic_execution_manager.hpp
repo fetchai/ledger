@@ -46,7 +46,7 @@ public:
   using ProblemData     = std::vector<ConstByteArray>;
 
   // Construction / Destruction
-  SynergeticExecutionManager(DAGPtr dag, std::size_t num_executors, ExecutorFactory const &);
+  SynergeticExecutionManager(DAGPtr dag, std::size_t num_executors, ExecutorFactory const &factory);
   SynergeticExecutionManager(SynergeticExecutionManager const &) = delete;
   SynergeticExecutionManager(SynergeticExecutionManager &&)      = delete;
   ~SynergeticExecutionManager() override                         = default;

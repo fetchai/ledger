@@ -299,15 +299,13 @@ std::vector<typename T::SizeType> MatrixMultiply<T>::ComputeOutputShape(
     return {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(1)};
   }
   // Batchwise matmul or 3D @ 2D broadcast matmul
-  else if (inputs.at(0)->shape().size() == 3)
+  if (inputs.at(0)->shape().size() == 3)
   {
     return {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(1), inputs.at(0)->shape().at(2)};
   }
   // 2D @ 3D broadcast matmul
-  else
-  {
-    return {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(1), inputs.at(1)->shape().at(2)};
-  }
+
+  return {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(1), inputs.at(1)->shape().at(2)};
 }
 
 /**
