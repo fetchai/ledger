@@ -43,7 +43,7 @@ TYPED_TEST(PReluTest, set_input_and_evaluate_test)  // Use the class as a subgra
   fetch::ml::layers::PRelu<TypeParam> fc(100u);
   TypeParam input_data(std::vector<typename TypeParam::SizeType>({10, 10, 2}));
   fc.SetInput("PRelu_Input", input_data);
-  TypeParam output = fc.Evaluate("PRelu_LeakyReluOp", true);
+  TypeParam output = fc.Evaluate("PRelu_PReluOp", true);
 
   ASSERT_EQ(output.shape().size(), 3);
   ASSERT_EQ(output.shape()[0], 10);
@@ -174,7 +174,7 @@ TYPED_TEST(PReluTest, saveparams_test)
   using SPType    = typename LayerType::SPType;
 
   std::string input_name  = "PRelu_Input";
-  std::string output_name = "PRelu_LeakyReluOp";
+  std::string output_name = "PRelu_PReluOp";
 
   TypeParam input({5, 10, 2});
   input.FillUniformRandom();
