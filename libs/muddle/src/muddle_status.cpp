@@ -125,11 +125,41 @@ void BuildMuddleStatus(Muddle const &muddle, variant::Variant &output)
   BuildPeerSelection(muddle.peer_selector(), output["peerSelection"]);
 }
 
+MuddleRegistry::MuddleMap FilterInstances(MuddleRegistry::MuddleMap const &map,
+                                          std::string const &              target_network)
+{
+  MuddleRegistry::MuddleMap filtered_map{};
+
+  for (auto const &instance : map)
+  {
+    auto const network = instance.second.lock();
+    if (network)
+    {
+      auto const network_name = network->GetNetwork().ToString();
+
+      if (target_network.empty() || (network_name == target_network))
+      {
+        filtered_map.emplace(instance.first, instance.second);
+      }
+    }
+  }
+
+  return filtered_map;
+}
+
+MuddleRegistry::MuddleMap GetFilterInstances(std::string const &target_network)
+{
+  // get the complete set of instance
+  auto instances = MuddleRegistry::Instance().GetMap();
+
+  return FilterInstances(instances, target_network);
+}
+
 }  // namespace
 
-variant::Variant GetStatusSummary()
+variant::Variant GetStatusSummary(std::string const &network)
 {
-  auto instances = MuddleRegistry::Instance().GetMap();
+  auto instances = GetFilterInstances(network);
 
   // create the output array
   auto output = variant::Variant::Array(instances.size());
