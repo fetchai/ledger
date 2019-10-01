@@ -68,13 +68,15 @@ void SignBLSSignature(benchmark::State &state)
   for (auto _ : state)
   {
     // Sign message
-    fetch::crypto::mcl::SignShare(msg, outputs[index].secret_key_share);
+    fetch::crypto::mcl::SignShare(msg, outputs[index].private_key_share);
   }
 }
 
 void VerifyBLSSignature(benchmark::State &state)
 {
   bn::initPairing();
+  bn::G2 generator;
+  fetch::crypto::mcl::SetGenerator(generator);
   // Generate a random message
   ConstByteArray msg = GenerateRandomData<256>();
 
@@ -85,7 +87,7 @@ void VerifyBLSSignature(benchmark::State &state)
 
   // Randomly select index to sign
   auto sign_index = static_cast<uint32_t>(rng() % committee_size);
-  auto signature  = fetch::crypto::mcl::SignShare(msg, outputs[sign_index].secret_key_share);
+  auto signature  = fetch::crypto::mcl::SignShare(msg, outputs[sign_index].private_key_share);
 
   // Randomly select another index to verify
   auto verify_index = static_cast<uint32_t>(rng() % committee_size);
@@ -94,7 +96,7 @@ void VerifyBLSSignature(benchmark::State &state)
   {
     // Verify message
     check = fetch::crypto::mcl::VerifySign(outputs[verify_index].public_key_shares[sign_index], msg,
-                                           signature);
+                                           signature, generator);
   }
   assert(check);
 }
@@ -115,7 +117,7 @@ void ComputeGroupSignature(benchmark::State &state)
   while (threshold_signatures.size() < threshold)
   {
     auto sign_index = static_cast<uint32_t>(rng() % committee_size);
-    auto signature  = fetch::crypto::mcl::SignShare(msg, outputs[sign_index].secret_key_share);
+    auto signature  = fetch::crypto::mcl::SignShare(msg, outputs[sign_index].private_key_share);
     threshold_signatures.insert({sign_index, signature});
   }
 
@@ -130,6 +132,6 @@ void ComputeGroupSignature(benchmark::State &state)
 }
 }  // namespace
 
-BENCHMARK(SignBLSSignature)->Range(50, 200);
-BENCHMARK(VerifyBLSSignature)->Range(50, 200);
-BENCHMARK(ComputeGroupSignature)->Range(50, 200);
+BENCHMARK(SignBLSSignature)->RangeMultiplier(2)->Range(50, 500);
+BENCHMARK(VerifyBLSSignature)->RangeMultiplier(2)->Range(50, 500);
+BENCHMARK(ComputeGroupSignature)->RangeMultiplier(2)->Range(50, 500);
