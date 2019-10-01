@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
+#include "core/macros.hpp"
 #include "core/random/lcg.hpp"
 #include "crypto/mcl_dkg.hpp"
 
@@ -92,6 +93,7 @@ void VerifyBLSSignature(benchmark::State &state)
   // Randomly select another index to verify
   auto verify_index = static_cast<uint32_t>(rng() % committee_size);
   bool check;
+  FETCH_UNUSED(check);
   for (auto _ : state)
   {
     // Verify message
@@ -122,12 +124,14 @@ void ComputeGroupSignature(benchmark::State &state)
   }
 
   fetch::crypto::mcl::Signature group_sig;
+  FETCH_UNUSED(group_sig);
   for (auto _ : state)
   {
     // Compute group signature
     group_sig = fetch::crypto::mcl::LagrangeInterpolation(threshold_signatures);
   }
   auto index = static_cast<uint32_t>(rng() % committee_size);
+  FETCH_UNUSED(index);
   assert(fetch::crypto::mcl::VerifySign(outputs[index].group_public_key, msg, group_sig));
 }
 }  // namespace
