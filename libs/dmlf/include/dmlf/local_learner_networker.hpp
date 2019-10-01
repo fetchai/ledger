@@ -37,7 +37,7 @@ public:
   ~LocalLearnerNetworker() override;
   void pushUpdate(std::shared_ptr<UpdateInterface> update) override;
 
-  std::size_t getPeerCount() const overide
+  std::size_t getPeerCount() const override
   {
     return peers.size();
   }
