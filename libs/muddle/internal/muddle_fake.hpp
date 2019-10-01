@@ -212,7 +212,7 @@ public:
   using PacketPtr            = std::shared_ptr<Packet>;
   using Payload              = Packet::Payload;
   using ConnectionPtr        = std::weak_ptr<network::AbstractConnection>;
-  using Handle               = network::AbstractConnection::connection_handle_type;
+  using Handle               = network::AbstractConnection::ConnectionHandleType;
   using ThreadPool           = network::ThreadPool;
   using HandleDirectAddrMap  = std::unordered_map<Handle, Address>;
   using Prover               = crypto::Prover;
@@ -392,7 +392,7 @@ public:
   using Identity           = crypto::Identity;
   using Address            = Router::Address;
   using ConnectionState    = PeerConnectionList::ConnectionState;
-  using Handle             = network::AbstractConnection::connection_handle_type;
+  using Handle             = network::AbstractConnection::ConnectionHandleType;
   using Server             = std::shared_ptr<network::AbstractNetworkServer>;
   using ServerList         = std::vector<Server>;
 

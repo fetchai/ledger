@@ -108,9 +108,9 @@ public:
 
   constexpr UInt &operator=(UInt const &v);
   template <typename ArrayType>
-  meta::IfHasIndex<ArrayType, UInt> &operator=(ArrayType const &v);  // NOLINT
+  meta::IfHasIndex<ArrayType, UInt> &operator=(ArrayType const &v);
   template <typename T>
-  constexpr meta::IfHasNoIndex<T, UInt> &operator=(T const &v);  // NOLINT
+  constexpr meta::IfHasNoIndex<T, UInt> &operator=(T const &v);
 
   /////////////////////////////////////////////
   /// comparison operators for UInt objects ///
@@ -118,27 +118,27 @@ public:
 
   constexpr bool operator==(UInt const &other) const;
   constexpr bool operator!=(UInt const &other) const;
-  constexpr bool operator<(UInt const &other) const;
-  constexpr bool operator>(UInt const &other) const;
-  constexpr bool operator<=(UInt const &other) const;
-  constexpr bool operator>=(UInt const &other) const;
+  constexpr bool operator<(UInt const &o) const;
+  constexpr bool operator>(UInt const &o) const;
+  constexpr bool operator<=(UInt const &o) const;
+  constexpr bool operator>=(UInt const &o) const;
 
   ////////////////////////////////////////////////
   /// comparison operators against other types ///
   ////////////////////////////////////////////////
 
   template <typename T>
-  constexpr meta::IfIsUnsignedInteger<T, bool> operator==(T other) const;
+  constexpr meta::IfIsUnsignedInteger<T, bool> operator==(T o) const;
   template <typename T>
-  constexpr meta::IfIsUnsignedInteger<T, bool> operator!=(T other) const;
+  constexpr meta::IfIsUnsignedInteger<T, bool> operator!=(T o) const;
   template <typename T>
-  constexpr meta::IfIsUnsignedInteger<T, bool> operator<(T other) const;
+  constexpr meta::IfIsUnsignedInteger<T, bool> operator<(T o) const;
   template <typename T>
-  constexpr meta::IfIsUnsignedInteger<T, bool> operator>(T other) const;
+  constexpr meta::IfIsUnsignedInteger<T, bool> operator>(T o) const;
   template <typename T>
-  constexpr meta::IfIsUnsignedInteger<T, bool> operator<=(T other) const;
+  constexpr meta::IfIsUnsignedInteger<T, bool> operator<=(T o) const;
   template <typename T>
-  constexpr meta::IfIsUnsignedInteger<T, bool> operator>=(T other) const;
+  constexpr meta::IfIsUnsignedInteger<T, bool> operator>=(T o) const;
 
   ///////////////////////
   /// unary operators ///
@@ -201,8 +201,8 @@ public:
   template <typename T>
   constexpr meta::IfIsUnsignedInteger<T, UInt> &operator^=(T n);
 
-  constexpr UInt &operator<<=(std::size_t bits);
-  constexpr UInt &operator>>=(std::size_t bits);
+  constexpr UInt &operator<<=(std::size_t n);
+  constexpr UInt &operator>>=(std::size_t n);
 
   constexpr std::size_t msb() const;
   constexpr std::size_t lsb() const;
@@ -254,7 +254,7 @@ private:
   struct MaxValueConstructorEnabler
   {
   };
-  constexpr explicit UInt(MaxValueConstructorEnabler /*unused*/)
+  constexpr explicit UInt(MaxValueConstructorEnabler)
   {
     for (auto &itm : wide_)
     {
@@ -323,9 +323,9 @@ constexpr UInt<S> &UInt<S>::operator=(UInt const &v)
   return *this;
 }
 
-template <uint16_t S>  // NOLINT
+template <uint16_t S>
 template <typename ArrayType>
-meta::IfHasIndex<ArrayType, UInt<S>> &UInt<S>::operator=(ArrayType const &v)  // NOLINT
+meta::IfHasIndex<ArrayType, UInt<S>> &UInt<S>::operator=(ArrayType const &v)
 {
   wide_.fill(0);
   std::copy(v.pointer(), v.pointer() + v.capacity(), base());
@@ -333,9 +333,9 @@ meta::IfHasIndex<ArrayType, UInt<S>> &UInt<S>::operator=(ArrayType const &v)  //
   return *this;
 }
 
-template <uint16_t S>  // NOLINT
+template <uint16_t S>
 template <typename T>
-constexpr meta::IfHasNoIndex<T, UInt<S>> &UInt<S>::operator=(T const &v)  // NOLINT
+constexpr meta::IfHasNoIndex<T, UInt<S>> &UInt<S>::operator=(T const &v)
 {
   wide_.fill(0);
   wide_[0] = static_cast<WideType>(v);
@@ -375,8 +375,10 @@ constexpr bool UInt<S>::operator<(UInt const &other) const
     {
       continue;
     }
-
-    return wide_[WIDE_ELEMENTS - 1 - i] < other.ElementAt(WIDE_ELEMENTS - 1 - i);
+    else
+    {
+      return wide_[WIDE_ELEMENTS - 1 - i] < other.ElementAt(WIDE_ELEMENTS - 1 - i);
+    }
   }
   return false;
 }
@@ -630,8 +632,8 @@ constexpr UInt<256> &UInt<256>::operator*=(UInt<256> const &n)
   terms[2] = products[0][2] + products[1][1] + products[2][0] + carry;
   carry    = static_cast<WideType>(terms[2] >> WIDE_ELEMENT_SIZE);
   terms[3] = products[0][3] + products[1][2] + products[2][1] + products[3][0] + carry;
+  carry    = static_cast<WideType>(terms[3] >> WIDE_ELEMENT_SIZE);
   // TODO(?): decide what to do with overflow if carry > 0
-  // carry    = static_cast<WideType>(terms[3] >> WIDE_ELEMENT_SIZE);
 
   for (std::size_t i = 0; i < WIDE_ELEMENTS; ++i)
   {
@@ -912,7 +914,7 @@ constexpr UInt<S> &UInt<S>::operator<<=(std::size_t bits)
   std::size_t real_bits  = bits - full_words * sizeof(uint64_t) * 8;
   std::size_t nbits      = WIDE_ELEMENT_SIZE - real_bits;
   // No actual shifting involved, just move the elements
-  if (full_words != 0u)
+  if (full_words)
   {
     for (std::size_t i = WIDE_ELEMENTS - 1; i >= full_words; i--)
     {
@@ -924,7 +926,7 @@ constexpr UInt<S> &UInt<S>::operator<<=(std::size_t bits)
     }
   }
   // If real_bits == 0, nothing to do
-  if (real_bits != 0u)
+  if (real_bits)
   {
     WideType carry = 0;
     for (std::size_t i = 0; i < WIDE_ELEMENTS; i++)
@@ -945,7 +947,7 @@ constexpr UInt<S> &UInt<S>::operator>>=(std::size_t bits)
   std::size_t real_bits  = bits - full_words * sizeof(uint64_t) * 8;
   std::size_t nbits      = WIDE_ELEMENT_SIZE - real_bits;
   // No actual shifting involved, just move the elements
-  if (full_words != 0u)
+  if (full_words)
   {
     for (std::size_t i = 0; i < WIDE_ELEMENTS - full_words; i++)
     {
@@ -958,7 +960,7 @@ constexpr UInt<S> &UInt<S>::operator>>=(std::size_t bits)
   }
 
   // If real_bits == 0, nothing to do
-  if (real_bits != 0u)
+  if (real_bits)
   {
     WideType carry = 0;
     for (std::size_t i = 0; i < WIDE_ELEMENTS; i++)
@@ -1098,7 +1100,7 @@ inline double ToDouble(UInt<256> const &x)
   {
     double   value;
     uint64_t bits;
-  } conv{};
+  } conv;
 
   conv.bits = 0;
   conv.bits |= uint64_t(uint64_t(exponent & ((1u << 12u) - 1)) << 52u);

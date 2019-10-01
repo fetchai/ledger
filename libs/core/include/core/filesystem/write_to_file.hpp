@@ -17,21 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#ifdef __AVX2__
+#include "core/byte_array/const_byte_array.hpp"
 
-#include "vectorise/arch/avx2/info.hpp"
+namespace fetch {
+namespace core {
 
-#if !defined(__clang) && (__GNUC__ < 8)
-#define _mm256_set_m128i(v0, v1) _mm256_insertf128_si256(_mm256_castsi128_si256(v1), (v0), 1)
-#endif
+bool WriteToFile(char const *filename, byte_array::ConstByteArray const &data);
 
-#include "vectorise/arch/avx2/register_double.hpp"
-#include "vectorise/arch/avx2/register_fixed32.hpp"
-#include "vectorise/arch/avx2/register_fixed64.hpp"
-#include "vectorise/arch/avx2/register_float.hpp"
-#include "vectorise/arch/avx2/register_int32.hpp"
-#include "vectorise/arch/avx2/register_int64.hpp"
-
-#undef ADD_REGISTER_SIZE
-
-#endif
+}  // namespace core
+}  // namespace fetch

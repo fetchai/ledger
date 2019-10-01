@@ -26,28 +26,24 @@ namespace vectorise {
 
 inline VectorRegister<float, 32> approx_exp(VectorRegister<float, 32> const &x)
 {
-  auto const ret = VectorRegister<float, 32>(std::exp(x.data()));
-  return ret;
+  return VectorRegister<float, 32>(std::exp(x.data()));
 }
 
 inline VectorRegister<double, 64> approx_exp(VectorRegister<double, 64> const &x)
 {
-  auto const ret = VectorRegister<double, 64>(std::exp(x.data()));
-  return ret;
+  return VectorRegister<double, 64>(std::exp(x.data()));
 }
 
 inline VectorRegister<fixed_point::fp32_t, 32> approx_exp(
     VectorRegister<fixed_point::fp32_t, 32> const &x)
 {
-  auto const ret = VectorRegister<fixed_point::fp32_t, 32>(fixed_point::fp32_t::Exp(x.data()));
-  return ret;
+  return VectorRegister<fixed_point::fp32_t, 32>(fixed_point::fp32_t::Exp(x.data()));
 }
 
 inline VectorRegister<fixed_point::fp64_t, 64> approx_exp(
     VectorRegister<fixed_point::fp64_t, 64> const &x)
 {
-  auto const ret = VectorRegister<fixed_point::fp64_t, 64>(fixed_point::fp64_t::Exp(x.data()));
-  return ret;
+  return VectorRegister<fixed_point::fp64_t, 64>(fixed_point::fp64_t::Exp(x.data()));
 }
 
 inline VectorRegister<float, 128> approx_exp(VectorRegister<float, 128> const &x)
@@ -55,7 +51,7 @@ inline VectorRegister<float, 128> approx_exp(VectorRegister<float, 128> const &x
   enum
   {
     mantissa = 23,
-    exponent = 8
+    exponent = 8,
   };
 
   constexpr auto                   multiplier      = float(1ull << mantissa);
@@ -66,8 +62,7 @@ inline VectorRegister<float, 128> approx_exp(VectorRegister<float, 128> const &x
   VectorRegister<float, 128> y    = a * x + b;
   __m128i                    conv = _mm_cvtps_epi32(y.data());
 
-  auto const ret = VectorRegister<float, 128>(_mm_castsi128_ps(conv));
-  return ret;
+  return VectorRegister<float, 128>(_mm_castsi128_ps(conv));
 }
 
 inline VectorRegister<float, 256> approx_exp(VectorRegister<float, 256> const &x)
@@ -75,7 +70,7 @@ inline VectorRegister<float, 256> approx_exp(VectorRegister<float, 256> const &x
   enum
   {
     mantissa = 23,
-    exponent = 8
+    exponent = 8,
   };
 
   constexpr auto                   multiplier      = float(1ull << mantissa);
@@ -86,8 +81,7 @@ inline VectorRegister<float, 256> approx_exp(VectorRegister<float, 256> const &x
   VectorRegister<float, 256> y    = a * x + b;
   __m256i                    conv = _mm256_cvtps_epi32(y.data());
 
-  auto const ret = VectorRegister<float, 256>(_mm256_castsi256_ps(conv));
-  return ret;
+  return VectorRegister<float, 256>(_mm256_castsi256_ps(conv));
 }
 
 inline VectorRegister<double, 128> approx_exp(VectorRegister<double, 128> const &x)
@@ -110,8 +104,7 @@ inline VectorRegister<double, 128> approx_exp(VectorRegister<double, 128> const 
 
   conv = _mm_shuffle_epi32(conv, 3 | (0 << 2) | (3 << 4) | (1 << 6));
 
-  auto const ret = VectorRegister<double, 128>(_mm_castsi128_pd(conv));
-  return ret;
+  return VectorRegister<double, 128>(_mm_castsi128_pd(conv));
 }
 
 inline VectorRegister<double, 256> approx_exp(VectorRegister<double, 256> const &x)
@@ -119,7 +112,7 @@ inline VectorRegister<double, 256> approx_exp(VectorRegister<double, 256> const 
   enum
   {
     mantissa = 20,
-    exponent = 11
+    exponent = 11,
   };
 
   alignas(32) constexpr uint64_t    mask[4]         = {uint64_t(-1), 0, 0, 0};
@@ -135,8 +128,7 @@ inline VectorRegister<double, 256> approx_exp(VectorRegister<double, 256> const 
 
   conv = _mm256_shuffle_epi32(conv, 3 | (0 << 2) | (3 << 4) | (1 << 6));
 
-  auto const ret = VectorRegister<double, 256>(_mm256_castsi256_pd(conv));
-  return ret;
+  return VectorRegister<double, 256>(_mm256_castsi256_pd(conv));
 }
 
 }  // namespace vectorise

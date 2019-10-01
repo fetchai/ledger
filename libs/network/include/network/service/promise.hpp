@@ -55,9 +55,9 @@ public:
   using ConstByteArray = byte_array::ConstByteArray;
   using ExceptionPtr   = std::unique_ptr<serializers::SerializableException>;
   using Callback       = std::function<void()>;
-  using Clock                 = std::chrono::steady_clock;
+  using Clock          = std::chrono::steady_clock;
   using Timepoint      = Clock::time_point;
-  using Duration              = Clock::duration;
+  using Duration       = Clock::duration;
 
   enum class State
   {

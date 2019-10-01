@@ -67,8 +67,8 @@ public:
   void                     GenerateCoefficients();
   std::vector<Coefficient> GetCoefficients();
 
-  std::pair<Share, Share>  GetOwnShares(MuddleAddress const &share_receiver);
-  std::pair<Share, Share>  GetReceivedShares(MuddleAddress const &share_owner);
+  std::pair<Share, Share> GetOwnShares(MuddleAddress const &share_receiver);
+  std::pair<Share, Share> GetReceivedShares(MuddleAddress const &share_owner);
   bool AddCoefficients(MuddleAddress const &from, std::vector<Coefficient> const &coefficients);
   bool AddShares(MuddleAddress const &from, std::pair<Share, Share> const &shares);
 
@@ -91,9 +91,9 @@ public:
   void             NewCabinet(std::set<MuddleAddress> const &cabinet, uint32_t threshold);
   void             Reset();
 
-  AddResult     AddSignaturePart(Identity const &from, Signature const &signature);
-  bool          Verify();
-  bool          Verify(Signature const &signature);
+  AddResult AddSignaturePart(Identity const &from, Signature const &signature);
+  bool      Verify();
+  bool      Verify(Signature const &signature);
 
   static bool   Verify(std::string const &group_public_key, MessagePayload const &message,
                        std::string const &signature);

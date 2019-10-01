@@ -334,8 +334,8 @@ BeaconManager::MuddleAddress BeaconManager::VerifyQualComplaint(MuddleAddress co
   PrivateKey s;
   PrivateKey sprime;
 
-  bool       s_set{false};
-  bool       sprime_set{false};
+  bool s_set{false};
+  bool sprime_set{false};
   s.setStr(&s_set, answer.second.first.data());
   sprime.setStr(&sprime_set, answer.second.second.data());
 

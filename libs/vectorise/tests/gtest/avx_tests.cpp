@@ -127,14 +127,14 @@ TYPED_TEST(VectorRegisterTest, basic_tests)
       div[TypeParam::E_BLOCK_COUNT];
 
   type real_max{type(0)}, real_min{fetch::math::numeric_max<type>()};
-  for (std::size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
+  for (size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
   {
     // We don't want to check overflows right now, so we pick random numbers, but well within the
     // type's limits
-    a[i]     = static_cast<type>((static_cast<double>(random()) / static_cast<double>(RAND_MAX)) *
-                             static_cast<double>(fetch::math::numeric_max<type>()) / 2.0);
-    b[i]     = static_cast<type>((static_cast<double>(random()) / static_cast<double>(RAND_MAX)) *
-                             static_cast<double>(fetch::math::numeric_max<type>()) / 2.0);
+    a[i]     = type((double(random()) / (double)(RAND_MAX)) *
+                (double)(fetch::math::numeric_max<type>()) / 2.0);
+    b[i]     = type((double(random()) / (double)(RAND_MAX)) *
+                (double)(fetch::math::numeric_max<type>()) / 2.0);
     sum[i]   = a[i] + b[i];
     diff[i]  = a[i] - b[i];
     prod[i]  = a[i] * b[i];
@@ -160,7 +160,7 @@ TYPED_TEST(VectorRegisterTest, basic_tests)
 
   type reduce1 = reduce(vsum);
   type hsum{0};
-  for (std::size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
+  for (size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
   {
     hsum += sum[i];
   }

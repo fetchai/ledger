@@ -94,8 +94,8 @@ protected:
     packer_            = std::make_unique<StrictMock<MockBlockPacker>>();
     block_sink_        = std::make_unique<FakeBlockSink>();
     block_coordinator_ = std::make_unique<BlockCoordinator>(
-        *main_chain_, DAGPtr{}, *execution_manager_, *storage_unit_, *packer_, *block_sink_,
-        FeatureFlags{}, signer, NUM_LANES, NUM_SLICES, 1u, ConsensusPtr{});
+        *main_chain_, DAGPtr{}, *execution_manager_, *storage_unit_, *packer_, *block_sink_, signer,
+        NUM_LANES, NUM_SLICES, 1u, ConsensusPtr{});
 
     block_coordinator_->SetBlockPeriod(std::chrono::seconds{10});
     block_coordinator_->EnableMining(true);
@@ -990,10 +990,21 @@ protected:
     execution_manager_ = std::make_unique<NiceMock<MockExecutionManager>>(storage_unit_->fake);
     packer_            = std::make_unique<NiceMock<MockBlockPacker>>();
     block_sink_        = std::make_unique<FakeBlockSink>();
+
+    // BlockCoordinator(MainChain &chain, DAGPtr dag, ExecutionManagerInterface &execution_manager,
+    //               StorageUnitInterface &storage_unit, BlockPackerInterface &packer,
+    //               BlockSinkInterface &block_sink,
+    //               ProverPtr const &prover, std::size_t num_lanes, std::size_t num_slices,
+    //               std::size_t block_difficulty, ConsensusPtr consensus);
+
+    // BlockCoordinator _naaa{*main_chain_, DAGPtr{}, *execution_manager_, *storage_unit_, *packer_,
+    // *block_sink_,
+    //     signer,
+    //    NUM_LANES, NUM_SLICES, ConsensusPtr{}};
+
     block_coordinator_ = std::make_unique<BlockCoordinator>(
-        *main_chain_, DAGPtr{}, *execution_manager_, *storage_unit_, *packer_, *block_sink_,
-         signer,
-        NUM_LANES, NUM_SLICES, ConsensusPtr{});
+        *main_chain_, DAGPtr{}, *execution_manager_, *storage_unit_, *packer_, *block_sink_, signer,
+        NUM_LANES, NUM_SLICES, 1u, ConsensusPtr{});
 
     block_coordinator_->SetBlockPeriod(std::chrono::seconds{10});
     block_coordinator_->EnableMining(true);

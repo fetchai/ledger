@@ -91,7 +91,7 @@ public:
     return *this;
   }
 
-  SelfType &operator=(SharedArray const &other) noexcept  // NOLINT
+  SelfType &operator=(SharedArray const &other) noexcept
   {
     if (&other == this)
     {

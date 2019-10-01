@@ -54,14 +54,14 @@ public:
   VectorRegister() = default;
   VectorRegister(type const *d)
   {
-    data_ = _mm_load_si128(reinterpret_cast<MMRegisterType const *>(d);
+    data_ = _mm_load_si128((MMRegisterType *)d);
   }
 
   VectorRegister(type const &c)
   {
     alignas(16) type constant[E_BLOCK_COUNT];
     details::UnrollSet<type, E_BLOCK_COUNT>::Set(constant, c);
-    data_ = _mm_load_si128(reinterpret_cast<MMRegisterType const *>(constant);
+    data_ = _mm_load_si128((MMRegisterType *)constant);
   }
 
   VectorRegister(MMRegisterType const &d)

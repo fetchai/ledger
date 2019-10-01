@@ -55,13 +55,13 @@ public:
   {}
   VectorRegister(type const *d)
   {
-    data_ = _mm256_load_si256(reinterpret_cast<MMRegisterType const *>(d));
+    data_ = _mm256_load_si256((MMRegisterType *)d);
   }
   VectorRegister(type const &c)
   {
     alignas(16) type constant[E_BLOCK_COUNT];
     details::UnrollSet<type, E_BLOCK_COUNT>::Set(constant, c);
-    data_ = _mm256_load_si256(reinterpret_cast<MMRegisterType const *>(constant));
+    data_ = _mm256_load_si256((MMRegisterType *)constant);
   }
   VectorRegister(MMRegisterType const &d)
     : data_(d)
@@ -77,11 +77,11 @@ public:
 
   void Store(type *ptr) const
   {
-    _mm256_store_si256(reinterpret_cast<MMRegisterType const *>(ptr, data_));
+    _mm256_store_si256((MMRegisterType *)ptr, data_);
   }
   void Stream(type *ptr) const
   {
-    _mm256_stream_si256(reinterpret_cast<MMRegisterType const *>(ptr, data_));
+    _mm256_stream_si256((MMRegisterType *)ptr, data_);
   }
 
   MMRegisterType const &data() const

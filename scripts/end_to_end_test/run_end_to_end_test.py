@@ -532,7 +532,7 @@ def verify_txs(parameters, test_instance):
                 if status == "Executed" or expect_mined:
                     output("found executed TX")
                     error_message = ""
-                        break
+                    break
 
                 tx_b64 = codecs.encode(codecs.decode(
                     tx, 'hex'), 'base64').decode()

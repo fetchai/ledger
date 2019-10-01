@@ -120,7 +120,8 @@ public:
 
   ~PunishmentBroadcastChannel()
   {
-    rpc_server_->Remove(RPC_BEACON);
+    // TODO(HUT): reinstate this fix.
+    /* rpc_server_->Remove(RPC_BEACON); */
   }
 
   // Interface methods

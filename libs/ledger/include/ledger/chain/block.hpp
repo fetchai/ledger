@@ -47,8 +47,8 @@ public:
   using Slice        = std::vector<TransactionLayout>;
   using Slices       = std::vector<Slice>;
   using DAGEpoch     = fetch::ledger::DAGEpoch;
-  using Hash     = Digest;
-  using Weight   = uint64_t;
+  using Hash         = Digest;
+  using Weight       = uint64_t;
   using BlockEntropy = beacon::BlockEntropy;
 
   Block();

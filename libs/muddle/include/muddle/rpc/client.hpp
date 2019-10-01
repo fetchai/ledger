@@ -37,10 +37,10 @@ namespace rpc {
 class Client : protected service::ServiceClientInterface
 {
 public:
-  using Address       = MuddleEndpoint::Address;
-  using ProtocolId    = service::protocol_handler_type;
-  using FunctionId    = service::function_handler_type;
-  using Serializer    = service::serializer_type;
+  using Address       = muddle::Address;
+  using ProtocolId    = service::ProtocolHandlerType;
+  using FunctionId    = service::FunctionHandlerType;
+  using Serializer    = service::SerializerType;
   using Promise       = service::Promise;
   using Handler       = std::function<void(Promise)>;
   using SharedHandler = std::shared_ptr<Handler>;

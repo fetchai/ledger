@@ -103,9 +103,9 @@ public:
   inline type GenericRangedOpReduce(Range const &range, type const initial_value, OP &&op,
                                     F1 const &&kernel, F2 &&hkernel)
   {
-    std::size_t SF  = range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>();
-    std::size_t ST  = range.SIMDToLower<VectorRegisterType::E_BLOCK_COUNT>();
-    std::size_t STU = range.SIMDToUpper<VectorRegisterType::E_BLOCK_COUNT>();
+    size_t SF  = range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>();
+    size_t ST  = range.SIMDToLower<VectorRegisterType::E_BLOCK_COUNT>();
+    size_t STU = range.SIMDToUpper<VectorRegisterType::E_BLOCK_COUNT>();
 
     type                       ret{initial_value};
     VectorRegisterType         va, vc(initial_value);
@@ -117,8 +117,7 @@ public:
       ScalarRegisterIteratorType scalar_iter(this->pointer() + range.from(), SF);
       ScalarRegisterType         a, tmp;
 
-      while (static_cast<void const *>(scalar_iter.pointer()) <
-             static_cast<void const *>(iter.pointer()))
+      while (static_cast<void *>(scalar_iter.pointer()) < static_cast<void *>(iter.pointer()))
       {
         scalar_iter.Next(a);
         tmp = kernel(a);
@@ -128,7 +127,7 @@ public:
 
     if (ST >= VectorRegisterType::E_BLOCK_COUNT)
     {
-      for (std::size_t i = SF; i < ST; i += VectorRegisterType::E_BLOCK_COUNT)
+      for (size_t i = SF; i < ST; i += VectorRegisterType::E_BLOCK_COUNT)
       {
         VectorRegisterType tmp;
         iter.Next(va);
@@ -144,8 +143,7 @@ public:
       ScalarRegisterIteratorType scalar_iter(this->pointer() + ST, range.to() - ST);
       ScalarRegisterType         a, tmp;
 
-      while (static_cast<void const *>(scalar_iter.pointer()) <
-             static_cast<void const *>(scalar_iter.end()))
+      while (static_cast<void *>(scalar_iter.pointer()) < static_cast<void *>(scalar_iter.end()))
       {
         scalar_iter.Next(a);
         tmp = kernel(a);
@@ -182,9 +180,9 @@ public:
   inline type GenericRangedReduceMultiple(Range const &range, type const c, OP const &&op,
                                           F1 const &&kernel, F2 &&hkernel, Args &&... args)
   {
-    std::size_t SF  = range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>();
-    std::size_t ST  = range.SIMDToLower<VectorRegisterType::E_BLOCK_COUNT>();
-    std::size_t STU = range.SIMDToUpper<VectorRegisterType::E_BLOCK_COUNT>();
+    size_t SF  = range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>();
+    size_t ST  = range.SIMDToLower<VectorRegisterType::E_BLOCK_COUNT>();
+    size_t STU = range.SIMDToUpper<VectorRegisterType::E_BLOCK_COUNT>();
 
     VectorRegisterType         regs[sizeof...(args)];
     VectorRegisterIteratorType iters[sizeof...(args)];
@@ -203,8 +201,8 @@ public:
       InitializeVectorIterators<scalar_size>(range.from(), SF, scalar_iters,
                                              std::forward<Args>(args)...);
 
-      while (static_cast<void const *>(scalar_self_iter.pointer()) <
-             static_cast<void const *>(self_iter.pointer()))
+      while (static_cast<void *>(scalar_self_iter.pointer()) <
+             static_cast<void *>(self_iter.pointer()))
       {
         details::UnrollNext<sizeof...(args), ScalarRegisterType, ScalarRegisterIteratorType>::Apply(
             scalar_regs, scalar_iters);
@@ -218,7 +216,7 @@ public:
 
     if (ST >= VectorRegisterType::E_BLOCK_COUNT)
     {
-      for (std::size_t i = SF; i < ST; i += VectorRegisterType::E_BLOCK_COUNT)
+      for (size_t i = SF; i < ST; i += VectorRegisterType::E_BLOCK_COUNT)
       {
         details::UnrollNext<sizeof...(args), VectorRegisterType, VectorRegisterIteratorType>::Apply(
             regs, iters);
@@ -240,8 +238,8 @@ public:
       InitializeVectorIterators<scalar_size>(ST, range.to() - ST, scalar_iters,
                                              std::forward<Args>(args)...);
 
-      while (static_cast<void const *>(scalar_self_iter.pointer()) <
-             static_cast<void const *>(scalar_self_iter.end()))
+      while (static_cast<void *>(scalar_self_iter.pointer()) <
+             static_cast<void *>(scalar_self_iter.end()))
       {
         details::UnrollNext<sizeof...(args), ScalarRegisterType, ScalarRegisterIteratorType>::Apply(
             scalar_regs, scalar_iters);
@@ -286,9 +284,9 @@ public:
   inline type Reduce(Range const &range, F1 const &&kernel, F2 &&hkernel,
                      type const initial_value = type(0))
   {
-    std::size_t SF  = range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>();
-    std::size_t ST  = range.SIMDToLower<VectorRegisterType::E_BLOCK_COUNT>();
-    std::size_t STU = range.SIMDToUpper<VectorRegisterType::E_BLOCK_COUNT>();
+    size_t SF  = range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>();
+    size_t ST  = range.SIMDToLower<VectorRegisterType::E_BLOCK_COUNT>();
+    size_t STU = range.SIMDToUpper<VectorRegisterType::E_BLOCK_COUNT>();
 
     VectorRegisterType         va, vc(initial_value);
     VectorRegisterIteratorType iter(this->pointer() + SF, range.to() - SF);
@@ -299,8 +297,7 @@ public:
       ScalarRegisterIteratorType scalar_iter(this->pointer() + range.from(), SF);
       ScalarRegisterType         a;
 
-      while (static_cast<void const *>(scalar_iter.pointer()) <
-             static_cast<void const *>(scalar_iter.end()))
+      while (static_cast<void *>(scalar_iter.pointer()) < static_cast<void *>(scalar_iter.end()))
       {
         scalar_iter.Next(a);
         c = kernel(a, c);
@@ -310,7 +307,7 @@ public:
 
     if (ST >= VectorRegisterType::E_BLOCK_COUNT)
     {
-      for (std::size_t i = SF; i < ST; i += VectorRegisterType::E_BLOCK_COUNT)
+      for (size_t i = SF; i < ST; i += VectorRegisterType::E_BLOCK_COUNT)
       {
         iter.Next(va);
         vc = kernel(va, vc);
@@ -324,8 +321,7 @@ public:
       ScalarRegisterIteratorType scalar_iter(this->pointer() + ST, range.to() - ST);
       ScalarRegisterType         a;
 
-      while (static_cast<void const *>(scalar_iter.pointer()) <
-             static_cast<void const *>(scalar_iter.end()))
+      while (static_cast<void *>(scalar_iter.pointer()) < static_cast<void *>(scalar_iter.end()))
       {
         scalar_iter.Next(a);
         c = kernel(a, c);
@@ -415,24 +411,24 @@ public:
   template <class F>
   void RangedApply(Range const &range, F const &&apply)
   {
-    std::size_t        SF = range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>();
-    std::size_t        ST = range.SIMDToLower<VectorRegisterType::E_BLOCK_COUNT>();
+    size_t             SF = range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>();
+    size_t             ST = range.SIMDToLower<VectorRegisterType::E_BLOCK_COUNT>();
     VectorRegisterType vc(type(0));
     ScalarRegisterType c(type(0));
 
-    for (std::size_t i = range.from(); i < SF; i += ScalarRegisterType::E_BLOCK_COUNT)
+    for (size_t i = range.from(); i < SF; i += ScalarRegisterType::E_BLOCK_COUNT)
     {
       apply(c);
       c.Store(this->pointer() + i);
     }
 
-    for (std::size_t i = SF; i < ST; i += VectorRegisterType::E_BLOCK_COUNT)
+    for (size_t i = SF; i < ST; i += VectorRegisterType::E_BLOCK_COUNT)
     {
       apply(vc);
       vc.Store(this->pointer() + i);
     }
 
-    for (std::size_t i = ST; i < range.to(); i += ScalarRegisterType::E_BLOCK_COUNT)
+    for (size_t i = ST; i < range.to(); i += ScalarRegisterType::E_BLOCK_COUNT)
     {
       apply(c);
       c.Store(this->pointer() + i);
@@ -449,9 +445,9 @@ public:
   template <class F, typename... Args>
   void RangedApplyMultiple(Range const &range, F const &&apply, Args &&... args)
   {
-    std::size_t SF  = range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>();
-    std::size_t ST  = range.SIMDToLower<VectorRegisterType::E_BLOCK_COUNT>();
-    std::size_t STU = range.SIMDToUpper<VectorRegisterType::E_BLOCK_COUNT>();
+    size_t SF  = range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>();
+    size_t ST  = range.SIMDToLower<VectorRegisterType::E_BLOCK_COUNT>();
+    size_t STU = range.SIMDToUpper<VectorRegisterType::E_BLOCK_COUNT>();
 
     VectorRegisterType         regs[sizeof...(args)], vc(type(0));
     VectorRegisterIteratorType iters[sizeof...(args)];
@@ -466,7 +462,7 @@ public:
       SuperType::template InitializeVectorIterators<scalar_size>(range.from(), SF, scalar_iters,
                                                                  std::forward<Args>(args)...);
 
-      for (std::size_t i = range.from(); i < SF; i += ScalarRegisterType::E_BLOCK_COUNT)
+      for (size_t i = range.from(); i < SF; i += ScalarRegisterType::E_BLOCK_COUNT)
       {
         details::UnrollNext<sizeof...(args), ScalarRegisterType, ScalarRegisterIteratorType>::Apply(
             scalar_regs, scalar_iters);
@@ -478,7 +474,7 @@ public:
 
     if (ST >= VectorRegisterType::E_BLOCK_COUNT)
     {
-      for (std::size_t i = SF; i < ST; i += VectorRegisterType::E_BLOCK_COUNT)
+      for (size_t i = SF; i < ST; i += VectorRegisterType::E_BLOCK_COUNT)
       {
         details::UnrollNext<sizeof...(args), VectorRegisterType, VectorRegisterIteratorType>::Apply(
             regs, iters);
@@ -496,7 +492,7 @@ public:
       SuperType::template InitializeVectorIterators<scalar_size>(ST, range.to() - ST, scalar_iters,
                                                                  std::forward<Args>(args)...);
 
-      for (std::size_t i = ST; i < range.to(); i += ScalarRegisterType::E_BLOCK_COUNT)
+      for (size_t i = ST; i < range.to(); i += ScalarRegisterType::E_BLOCK_COUNT)
       {
         details::UnrollNext<sizeof...(args), ScalarRegisterType, ScalarRegisterIteratorType>::Apply(
             scalar_regs, scalar_iters);

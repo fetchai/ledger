@@ -55,8 +55,6 @@ AddressList GenerateAddressList(ShardConfigs const &shards)
   return addresses;
 }
 
-constexpr char const *LOGGING_NAME = "StorageUnitClient";
-
 constexpr char const *MERKLE_FILENAME_DOC   = "merkle_stack.db";
 constexpr char const *MERKLE_FILENAME_INDEX = "merkle_stack_index.db";
 

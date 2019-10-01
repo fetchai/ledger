@@ -265,7 +265,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   , lane_control_(internal_muddle_->GetEndpoint(), shard_cfgs_, cfg_.log2_num_lanes)
   , shard_management_(std::make_shared<ShardManagementService>(cfg_.manifest, lane_control_,
                                                                *muddle_, cfg_.log2_num_lanes))
-  , dag_{GenerateDAG(cfg_.features.IsEnabled("synergetic"), "dag_db_", true, certificate)}
+  , dag_{GenerateDAG("dag_db_", true, certificate)}
   , beacon_network_{CreateBeaconNetwork(cfg_, certificate, network_manager_)}
   , beacon_{CreateBeaconService(cfg_, *beacon_network_, *shard_management_, certificate)}
   , stake_{CreateStakeManager(cfg_)}
@@ -285,7 +285,6 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
                        *storage_,
                        block_packer_,
                        *this,
-                       cfg_.features,
                        certificate,
                        cfg_.num_lanes(),
                        cfg_.num_slices,
@@ -333,7 +332,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
 
   // Enable experimental features
   assert(dag_);
-    dag_service_ = std::make_shared<ledger::DAGService>(muddle_->GetEndpoint(), dag_);
+  dag_service_ = std::make_shared<ledger::DAGService>(muddle_->GetEndpoint(), dag_);
   reactor_.Attach(dag_service_->GetWeakRunnable());
 
   if (cfg_.features.IsEnabled("synergetic"))
