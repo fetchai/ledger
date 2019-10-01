@@ -270,7 +270,7 @@ void RunTrustedDealer(uint16_t total_renewals = 4, uint32_t cabinet_size = 4,
   }
 }
 
-TEST(beacon_service, trusted_dealer)
+TEST(beacon_service, DISABLED_trusted_dealer)
 {
   bn::initPairing();
   RunTrustedDealer(3, 4, 3, 10);

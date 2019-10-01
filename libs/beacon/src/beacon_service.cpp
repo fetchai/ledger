@@ -357,6 +357,9 @@ BeaconService::State BeaconService::OnCompleteState()
   }
   else
   {
+    EventCommitteeCompletedWork event;
+    event_manager_->Dispatch(event);
+
     return State::WAIT_FOR_SETUP_COMPLETION;
   }
 }
