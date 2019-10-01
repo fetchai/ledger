@@ -278,7 +278,7 @@ public:
 
   PacketPtr FormatPacket(Packet::Address const &from, NetworkId const &network, uint16_t service,
                          uint16_t channel, uint16_t counter, uint8_t ttl,
-                         Packet::Payload const &payload) override
+                         Packet::Payload const &payload)
   {
     auto packet = std::make_shared<Packet>(from, network.value());
     packet->SetService(service);
@@ -338,7 +338,7 @@ public:
     return registrar_.Register(service, channel);
   }
 
-  SubscriptionPtr Subscribe(Address const &address, uint16_t service, uint16_t channel)
+  SubscriptionPtr Subscribe(Address const &address, uint16_t service, uint16_t channel) override
   {
     return registrar_.Register(address, service, channel);
   }
