@@ -57,13 +57,13 @@ class BeaconServiceInsertable : public fetch::beacon::BeaconService
 {
 public:
   BeaconServiceInsertable(MuddleInterface &muddle, ledger::ManifestCacheInterface &manifest_cache,
-                          CertificatePtr certificate, SharedEventManager event_manager,
-                          uint64_t blocks_per_round = 1)
-    : BeaconService(muddle, manifest_cache, certificate, event_manager, blocks_per_round)
+                          CertificatePtr certificate, SharedEventManager event_manager)
+    : BeaconService(muddle, manifest_cache, certificate, event_manager)
   {}
 
   void PushNewExecUnit(SharedAeonExecutionUnit beacon)
   {
+    // TODO(HUT): consider whether to lock here for the test.
     // jkjkstd::lock_guard<std::mutex> lock(mutex_);
     aeon_exe_queue_.push_back(beacon);
   }
