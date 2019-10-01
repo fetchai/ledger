@@ -333,7 +333,7 @@ uint64_t BeaconSetupService::PreDKGThreshold()
 uint32_t BeaconSetupService::QualSize()
 {
   // Set to 2/3n for now
-  uint32_t proposed_qual_size =
+  auto proposed_qual_size =
       static_cast<uint32_t>(beacon_->aeon.members.size() - beacon_->aeon.members.size() / 3);
   if (proposed_qual_size <= beacon_->manager.polynomial_degree())
   {
@@ -534,14 +534,14 @@ BeaconSetupService::State BeaconSetupService::OnWaitForComplaintAnswers()
       return State::WAIT_FOR_QUAL_SHARES;
     }
 
-    else
-    {
+    
+    
       FETCH_LOG_WARN(LOGGING_NAME, "Node ", beacon_->manager.cabinet_index(),
                      " Failed to build qualified set! Resetting.");
       beacon_dkg_state_failed_on_->set(static_cast<uint64_t>(state_machine_->state()));
       SetTimeToProceed(State::RESET);
       return State::RESET;
-    }
+    
   }
   state_machine_->Delay(std::chrono::milliseconds(10));
   return State::WAIT_FOR_COMPLAINT_ANSWERS;
@@ -759,15 +759,15 @@ BeaconSetupService::State BeaconSetupService::OnDryRun()
       SetTimeToProceed(State::BEACON_READY);
       return State::BEACON_READY;
     }
-    else
-    {
+    
+    
       FETCH_LOG_INFO(LOGGING_NAME, "Failed to collect enough signatures. Collected: ",
                      beacon_->block_entropy.confirmations.size(),
                      " Desired: ", desired_signatures_min);
       SetTimeToProceed(State::RESET);
       beacon_dkg_state_failed_on_->set(static_cast<uint64_t>(state_machine_->state()));
       return State::RESET;
-    }
+    
   }
 
   state_machine_->Delay(std::chrono::milliseconds(10));
@@ -941,7 +941,7 @@ void BeaconSetupService::BroadcastReconstructionShares()
  * @param msg_ptr Pointer of DKGMessage
  */
 void BeaconSetupService::OnDkgMessage(MuddleAddress const &       from,
-                                      std::shared_ptr<DKGMessage> msg_ptr)
+                                      const std::shared_ptr<DKGMessage>& msg_ptr)
 {
   FETCH_LOCK(mutex_);
   if (state_machine_->state() == State::IDLE || !BasicMsgCheck(from, msg_ptr))
@@ -1065,7 +1065,7 @@ void BeaconSetupService::OnNewSharesPacket(muddle::Packet const &packet,
  * @param from Muddle address of sender
  * @param shares Pair of secret shares
  */
-void BeaconSetupService::OnNewShares(MuddleAddress                                from,
+void BeaconSetupService::OnNewShares(const MuddleAddress&                                from,
                                      std::pair<MessageShare, MessageShare> const &shares)
 {
   FETCH_LOCK(mutex_);
@@ -1332,7 +1332,7 @@ bool BeaconSetupService::BasicMsgCheck(MuddleAddress const &              from,
   return true;
 }
 
-void BeaconSetupService::QueueSetup(SharedAeonExecutionUnit beacon)
+void BeaconSetupService::QueueSetup(const SharedAeonExecutionUnit& beacon)
 {
   FETCH_LOCK(mutex_);
   assert(beacon != nullptr);
@@ -1349,7 +1349,7 @@ void BeaconSetupService::Abort(uint64_t abort_below)
 void BeaconSetupService::SetBeaconReadyCallback(CallbackFunction callback)
 {
   FETCH_LOCK(mutex_);
-  callback_function_ = callback;
+  callback_function_ = std::move(callback);
 }
 
 std::vector<std::weak_ptr<core::Runnable>> BeaconSetupService::GetWeakRunnables()

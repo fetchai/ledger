@@ -61,11 +61,11 @@ public:
 
   void ResetCabinet(MuddleAddress const &address, uint32_t threshold);
 
-  void AddComplaintAgainst(MuddleAddress const &address);
+  void AddComplaintAgainst(MuddleAddress const &complaint_address);
   void AddComplaintsFrom(MuddleAddress const &                    from,
                          std::unordered_set<MuddleAddress> const &complaints,
                          std::set<MuddleAddress> const &          committee);
-  void Finish(std::set<MuddleAddress> const &committee);
+  void Finish(std::set<MuddleAddress> const &cabinet);
 
   uint32_t                NumComplaintsReceived() const;
   std::set<MuddleAddress> ComplaintsAgainstSelf() const;

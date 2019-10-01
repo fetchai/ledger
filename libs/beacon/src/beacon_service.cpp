@@ -38,7 +38,7 @@ char const *ToString(BeaconService::State state);
 
 BeaconService::BeaconService(MuddleInterface &               muddle,
                              ledger::ManifestCacheInterface &manifest_cache,
-                             CertificatePtr certificate, SharedEventManager event_manager)
+                             const CertificatePtr& certificate, SharedEventManager event_manager)
   : certificate_{certificate}
   , identity_{certificate->identity()}
   , endpoint_{muddle.GetEndpoint()}
@@ -161,7 +161,7 @@ BeaconService::State BeaconService::OnWaitForSetupCompletionState()
 
   // Checking whether the next committee is ready
   // to produce random numbers.
-  if (aeon_exe_queue_.size() > 0)
+  if (!aeon_exe_queue_.empty())
   {
     active_exe_unit_ = aeon_exe_queue_.front();
     aeon_exe_queue_.pop_front();
@@ -353,13 +353,13 @@ BeaconService::State BeaconService::OnCompleteState()
 
     return State::PREPARE_ENTROPY_GENERATION;
   }
-  else
-  {
+  
+  
     EventCommitteeCompletedWork event;
     event_manager_->Dispatch(event);
 
     return State::WAIT_FOR_SETUP_COMPLETION;
-  }
+  
 }
 
 bool BeaconService::AddSignature(SignatureShare share)

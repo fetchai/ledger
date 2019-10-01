@@ -62,7 +62,7 @@ struct DummyManifestCache : public ManifestCacheInterface
 class HonestSetupService : public BeaconSetupService
 {
 public:
-  HonestSetupService(MuddleInterface &endpoint, ProverPtr prover,
+  HonestSetupService(MuddleInterface &endpoint, const ProverPtr& prover,
                      ManifestCacheInterface &manifest_cache)
     : BeaconSetupService{endpoint, prover->identity(), manifest_cache, prover}
   {}
@@ -85,7 +85,7 @@ public:
     WITHOLD_RECONSTRUCTION_SHARES
   };
 
-  FaultySetupService(MuddleInterface &endpoint, ProverPtr prover,
+  FaultySetupService(MuddleInterface &endpoint, const ProverPtr& prover,
                      ManifestCacheInterface &     manifest_cache,
                      const std::vector<Failures> &failures = {})
     : BeaconSetupService{endpoint, prover->identity(), manifest_cache, prover}

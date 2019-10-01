@@ -191,7 +191,7 @@ inline std::ostream &operator<<(std::ostream &s, VectorRegister<fixed_point::fp3
   inline VectorRegister<type, size> operator op(VectorRegister<type, size> const &x)              \
   {                                                                                               \
     VectorRegister<base_type, size> ret = operator op(VectorRegister<base_type, size>(x.data())); \
-    return VectorRegister<type, size>(ret.data());                                                \
+    return {ret.data()};                                                                          \
   }
 
 FETCH_ADD_OPERATOR(-, fixed_point::fp32_t, 128, int32_t)
@@ -204,7 +204,7 @@ FETCH_ADD_OPERATOR(-, fixed_point::fp32_t, 256, int32_t)
   {                                                                                               \
     VectorRegister<base_type, size> ret = operator op(VectorRegister<base_type, size>(a.data()),  \
                                                       VectorRegister<base_type, size>(b.data())); \
-    return VectorRegister<type, size>(ret.data());                                                \
+    return {ret.data()};                                                                          \
   }
 
 FETCH_ADD_OPERATOR(+, fixed_point::fp32_t, 128, int32_t)
@@ -245,7 +245,7 @@ inline VectorRegister<fixed_point::fp32_t, 128> operator*(
   // Extract the first 128bit lane
   VectorRegister<int32_t, 128> prod =
       VectorRegister<int32_t, 128>(_mm256_extractf128_si256(prod256, 0));
-  return VectorRegister<fixed_point::fp32_t, 128>(prod.data());
+  return {prod.data()};
 }
 
 inline VectorRegister<fixed_point::fp32_t, 256> operator*(
@@ -285,14 +285,13 @@ inline VectorRegister<fixed_point::fp32_t, 128> operator/(
   ret[2] = d1[2] / d2[2];
   ret[3] = d1[3] / d2[3];
 
-  return VectorRegister<fixed_point::fp32_t, 128>(ret);
+  return {ret};
 }
 
 inline VectorRegister<fixed_point::fp32_t, 256> operator/(
     VectorRegister<fixed_point::fp32_t, 256> const &a,
     VectorRegister<fixed_point::fp32_t, 256> const &b)
 {
-
   // TODO(private 440): SSE implementation required
   alignas(VectorRegister<fixed_point::fp32_t, 256>::E_REGISTER_SIZE) fixed_point::fp32_t d1[8];
   a.Store(d1);
@@ -304,40 +303,40 @@ inline VectorRegister<fixed_point::fp32_t, 256> operator/(
 
   // don't divide by zero
   // set each of the 4 values in the vector register to either the solution of the division or 0
-  for (size_t i = 0; i < 8; i++)
+  for (std::size_t i = 0; i < 8; i++)
   {
     ret[i] = d1[i] / d2[i];
   }
 
-  return VectorRegister<fixed_point::fp32_t, 256>(ret);
+  return {ret};
 }
 
 inline VectorRegister<fixed_point::fp32_t, 128> vector_zero_below_element(
     VectorRegister<fixed_point::fp32_t, 128> const & /*a*/, int const & /*n*/)
 {
   throw std::runtime_error("vector_zero_below_element not implemented.");
-  return VectorRegister<fixed_point::fp32_t, 128>(fixed_point::fp32_t{});
+  return {fixed_point::fp32_t{}};
 }
 
 inline VectorRegister<fixed_point::fp32_t, 128> vector_zero_above_element(
     VectorRegister<fixed_point::fp32_t, 128> const & /*a*/, int const & /*n*/)
 {
   throw std::runtime_error("vector_zero_above_element not implemented.");
-  return VectorRegister<fixed_point::fp32_t, 128>(fixed_point::fp32_t{});
+  return {fixed_point::fp32_t{}};
 }
 
 inline VectorRegister<fixed_point::fp32_t, 128> shift_elements_left(
     VectorRegister<fixed_point::fp32_t, 128> const & /*x*/)
 {
   throw std::runtime_error("shift_elements_left not implemented.");
-  return VectorRegister<fixed_point::fp32_t, 128>(fixed_point::fp32_t{});
+  return {fixed_point::fp32_t{}};
 }
 
 inline VectorRegister<fixed_point::fp32_t, 128> shift_elements_right(
     VectorRegister<fixed_point::fp32_t, 128> const & /*x*/)
 {
   throw std::runtime_error("shift_elements_right not implemented.");
-  return VectorRegister<fixed_point::fp32_t, 128>(fixed_point::fp32_t{});
+  return {fixed_point::fp32_t{}};
 }
 
 inline fixed_point::fp32_t first_element(VectorRegister<fixed_point::fp32_t, 128> const &x)

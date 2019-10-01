@@ -145,7 +145,7 @@ struct RBCNode : public AbstractRBCNode
             std::lock_guard<std::mutex> lock(mutex);
             answers[from] = payload;
           },
-          0}
+          nullptr}
   {}
 
   ~RBCNode() override
@@ -168,7 +168,7 @@ struct RBCNode : public AbstractRBCNode
     rbc.Enable(enable);
   }
 
-  void PrepareForTest(uint16_t) override
+  void PrepareForTest(uint16_t /*test*/) override
   {}
 
   RBC rbc;
@@ -251,7 +251,7 @@ void DKGWithEcho(benchmark::State &state)
   {
     RBC::CabinetMembers cabinet;
 
-    uint64_t nodes_in_test = uint64_t(state.range(0));
+    auto nodes_in_test = uint64_t(state.range(0));
 
     FETCH_LOG_INFO(LOGGING_NAME, "===============================");
     FETCH_LOG_INFO(LOGGING_NAME, "Starting test: ", nodes_in_test);

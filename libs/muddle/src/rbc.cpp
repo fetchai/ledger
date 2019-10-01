@@ -34,7 +34,7 @@ constexpr char const *LOGGING_NAME = "RBC";
  * @param threshold Threshold number of Byzantine peers
  * @param dkg
  */
-RBC::RBC(Endpoint &endpoint, MuddleAddress address, CallbackFunction call_back, CertificatePtr,
+RBC::RBC(Endpoint &endpoint, MuddleAddress address, CallbackFunction call_back, const CertificatePtr /*unused*/&,
          uint16_t channel, bool ordered_delivery)
   : channel_{channel}
   , ordered_delivery_{ordered_delivery}

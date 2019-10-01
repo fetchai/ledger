@@ -205,7 +205,7 @@ muddle::MuddlePtr CreateBeaconNetwork(Config const &cfg, CertificatePtr certific
 
   if (cfg.proof_of_stake)
   {
-    network = muddle::CreateMuddle("DKGN", certificate, nm,
+    network = muddle::CreateMuddle("DKGN", std::move(certificate), nm,
                                    cfg.manifest.FindExternalAddress(ServiceIdentifier::Type::DKG));
   }
 

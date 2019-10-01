@@ -185,7 +185,7 @@ void ComplaintAnswersManager::Finish(std::set<MuddleAddress> const &cabinet,
   if (!finished_)
   {
     // Add miners which did not send a complaint answer to complaints
-    for (auto const cab : cabinet)
+    for (auto const& cab : cabinet)
     {
       if (cab == node_id)
       {
